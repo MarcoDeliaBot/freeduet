@@ -179,3 +179,21 @@ No usage telemetry is collected; adoption is measured only through public number
 | Language of the code and docs | English; members reply in the person's language |
 | What v0.1 runs on | The person's own Claude Code login, with no API key; API credits only as an optional last step |
 | Gemini and GLM subscriptions | Off until terms allow; API keys work |
+
+## 15. Ideas imported from the maintainer's own projects
+
+The maintainer already runs a self-hosted AI office (a Chief "brain", a worker, an independent reviewer, a guardian and portable memory) and two related tools. What worked there comes into FreeDuet as features. Only the ideas and the maintainer's own code are reused; anything from third parties keeps its license.
+
+| Feature | Milestone | What it does |
+|---|---|---|
+| **F10. Guardian** | M3 | Pauses a member that loops: more than 5 runs on the same task, more than 20 runs in an hour, or 3 deliveries rejected in a row. Only the person can resume it, after a check. Protects subscription limits from runaway agents. |
+| **F11. Owner-only operations** | M1 | A fixed list that no mode, rule or delegation can lower: spending or raising a budget; messages to people outside the team; deleting data; changing permissions, keys or configuration; resuming a paused member without a check; publishing. Enforced by the gateway, tested in CI. |
+| **F12. Review before delivery** | M3 | Deliverables that matter (contracts, invoices, posts, purchases) are checked by an independent reviewer running on a different engine from the one that produced them, before the person sees them. At most 3 rounds, then Iris decides. A possible tenth member, Vera the Reviewer. |
+| **F13. Portable memory** | M3 | Every night, memory, standing rules, delegations, events and tasks are exported to plain files with a SHA-256 manifest. They can be searched without the app and imported into a new base. Removes the lock-in to any single memory service. |
+| **F14. Handoff when switching engine** | M3 | When the router moves a member to the next subscription, it passes a structured handoff (goal, decisions, last step, files touched, next step) so work resumes without losing context. Based on the maintainer's AI Continuity protocol, once it is released under MIT. |
+| **F15. Seven-phase method for big jobs** | M3 | For any job of several steps Iris follows Plan → Specify → Assign → Build → Verify → Deliver → Improve, in proportion to the job's size. |
+| **F16. Delegation ladder** | M4 | Autonomy grows step by step: allow once → saved rule → allow-list, each with its own cap, always under F11. |
+| **F17. Voice in** | M5 | Dictation for Iris and Wren, from the maintainer's Dictatum (MIT). |
+| **F18. Council** | after v1.0 | For big decisions Iris convenes several members to give opinions, then reports a recommendation to the person. |
+
+**Policy for waiting.** When every login in a chain has reached its limit, the default is to wait for the first reset and tell the person when work resumes. Switching to a metered engine happens only if the person switched metered engines on.
