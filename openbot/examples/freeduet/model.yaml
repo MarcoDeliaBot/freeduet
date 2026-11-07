@@ -1,0 +1,14 @@
+# FreeDuet's rule: logins first. Team members run through the subscription router
+# (openbot/agent-freeduet) on the subscriptions the person signed in to, starting with Claude Code.
+#
+# This file is the OpenBot deployment model. FreeDuet uses it only as a fallback for anything that has
+# not been routed through agent-freeduet yet, and only if the person chose to add a key.
+# M0 task: find every server-side model call (triage, brief, titles, check-ins) and route it through
+# agent-freeduet. M1 acceptance: FreeDuet starts and works with zero API keys.
+#
+# credential_secret_ref names the secret stored in /admin/credentials. The value never lives here.
+# M0 check: confirm the secret-ref naming against openbot/docs/configuration.md.
+model:
+  provider: anthropic
+  credential_secret_ref: anthropic-api-key
+  default_model: claude-sonnet-5-5

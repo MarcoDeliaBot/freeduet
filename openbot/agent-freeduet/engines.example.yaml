@@ -1,0 +1,84 @@
+# FreeDuet engines. Copy to engines.yaml and adjust. See docs/PROVIDERS.md before enabling any route.
+#
+# THE RULE: logins first. Subscriptions you signed in to yourself are always tried first.
+# API keys and API credits (including the credits that come with a Claude plan) are optional: they run
+# only if you switch them on, only after every login engine in the chain, and only under your caps.
+#
+# kind:     cli | app-server | acp | anthropic-api | openai-compatible
+# billing:  subscription | free | metered
+# tier:     A (best), B, C. Members can require a minimum tier for some skills.
+# enabled:  the kill switch. Routes whose provider terms are unclear ship with enabled: false.
+
+engines:
+  # ── Logins (subscriptions): tried first ──────────────────────────────────────────────────────
+  claude-code:
+    kind: cli
+    command: claude
+    billing: subscription          # your own Claude Pro, Max, Ultra or Team login
+    tier: A
+    enabled: true
+
+  codex:
+    kind: app-server
+    command: codex
+    billing: subscription          # your own ChatGPT plan
+    tier: A
+    enabled: false                 # on once FreeDuet's "Sign in with ChatGPT" client ID is approved
+    experimental_local_login: false
+
+  gemini-cli:
+    kind: acp
+    command: gemini
+    billing: subscription
+    tier: A
+    enabled: false                 # off: see docs/PROVIDERS.md (Google)
+    locked_reason: "Provider terms do not allow third-party software to use Gemini CLI's sign-in."
+
+  # ── Free: your own hardware ──────────────────────────────────────────────────────────────────
+  local:
+    kind: openai-compatible
+    base_url: http://host.docker.internal:11434/v1    # Ollama on the same machine
+    billing: free
+    model: "<local-model-name>"     # any model you pulled into Ollama
+    tier: C
+    enabled: false
+
+  # ── Metered (API keys and API credits): optional, always last ─────────────────────────────────
+  anthropic-api:
+    kind: anthropic-api
+    credential_secret_ref: anthropic-api-key   # also how you use the API credits included in Max, Ultra, Team
+    billing: metered
+    model: claude-sonnet-5-5
+    tier: A
+    enabled: false                 # your choice: switch on to use API credits as a last resort
+
+  openrouter:
+    kind: openai-compatible
+    base_url: https://openrouter.ai/api/v1
+    credential_secret_ref: openrouter-api-key
+    billing: metered
+    model: "<openrouter-model-id>"  # any model id listed on openrouter.ai/models
+    tier: B
+    enabled: false
+
+# Metered engines run only when enabled here, only after every login engine in the chain has been
+# tried, and only under the caps. Off by default. 0 means never.
+metered:
+  enabled: false
+  currency: EUR
+  daily_cap: 0
+  monthly_cap: 0
+
+# Chains per member, tried in order. The router enforces the rule whatever the order written here:
+# subscription engines first, then free, then metered. A metered engine can never be first.
+chains:
+  default: [claude-code, codex, local, anthropic-api]
+  freeduet: [claude-code, codex, anthropic-api]   # Iris
+  concierge: [claude-code, codex, anthropic-api]  # Jules: tier A only, it can reach a checkout
+  chef: [claude-code, codex, local, openrouter]
+
+# Minimum tier per member for specific skills or tools.
+quality_floor:
+  concierge:
+    request_purchase: A
+    book-an-appointment: A

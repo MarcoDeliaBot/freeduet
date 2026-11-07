@@ -1,0 +1,5 @@
+# The name people see everywhere in the app. tenant.id is also the id of the product's own Bot in
+# agents.yaml (Iris, the Chief of Staff): the app draws that Bot as the main orb. Rename them together.
+tenant:
+  id: freeduet
+  product_name: FreeDuet

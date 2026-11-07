@@ -1,0 +1,49 @@
+# The conversations people see, and which team members answer in each.
+# The main channel is Iris's: most people only ever talk to her. Every specialist also has a channel of
+# their own, so the person can open them directly.
+channels:
+  - id: freeduet
+    name: FreeDuet
+    description: Talk to Iris. She hands work to the team and brings the results back.
+    permitted_agents: [freeduet]
+    allowed_groups: [all]
+  - id: inbox
+    name: Inbox
+    description: Otto sorts your mail and drafts the replies that matter.
+    permitted_agents: [inbox]
+    allowed_groups: [all]
+  - id: counsel
+    name: Contracts
+    description: Portia reviews contracts, leases, terms and quotes.
+    permitted_agents: [counsel]
+    allowed_groups: [all]
+  - id: bookkeeper
+    name: Invoices & bills
+    description: Penny drafts invoices, tracks who owes what and keeps the ledger.
+    permitted_agents: [bookkeeper]
+    allowed_groups: [all]
+  - id: concierge
+    name: Purchases & bookings
+    description: Jules shops, plans trips and books, with your approval.
+    permitted_agents: [concierge]
+    allowed_groups: [all]
+  - id: writer
+    name: Writing
+    description: Wren turns your notes and voice memos into posts in your style.
+    permitted_agents: [writer]
+    allowed_groups: [all]
+  - id: fixer
+    name: Repairs
+    description: Gus tells you how to fix it safely, or who to call.
+    permitted_agents: [fixer]
+    allowed_groups: [all]
+  - id: chef
+    name: Kitchen
+    description: Basil turns your fridge into dinner.
+    permitted_agents: [chef]
+    allowed_groups: [all]
+  - id: creator
+    name: New team members
+    description: Leo designs new colleagues for jobs nobody covers yet.
+    permitted_agents: [creator]
+    allowed_groups: [all]

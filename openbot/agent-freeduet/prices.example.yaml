@@ -1,0 +1,20 @@
+# Your own price table for the savings meter. FreeDuet never guesses a price.
+# Copy to prices.yaml, fill it from each provider's official pricing page, and set the date you checked.
+# Prices are per million tokens, in the currency you choose. Leave a model out and its usage shows as
+# "not measured" instead of being estimated.
+
+currency: USD
+checked_on: null          # e.g. 2026-11-07
+
+models: {}
+# Example shape (fill with real numbers from the provider's pricing page):
+#   claude-sonnet-5-5:
+#     input: <price>
+#     output: <price>
+#     cached_input: <price>
+
+# What you pay for your subscriptions each month, to compute what you saved.
+subscriptions: {}
+# Example shape:
+#   claude: <monthly fee>
+#   chatgpt: <monthly fee>
