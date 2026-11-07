@@ -41,7 +41,7 @@ FreeDuet is a self-hosted team of AI employees that runs on the AI subscriptions
 | Engine adapters, limit detection, fallback rules, lead-and-specialists delegation | Anil-matcha/open-duet (Apache-2.0) | Port the design and, where the code fits, the code, with attribution |
 | Importing agents from Grok Bot | Idea seen in nightly-labs/openbot (non-commercial license) | Build our own, from scratch |
 | One-click decision cards | Idea seen in browser-use/open-duet (no license) | Our own design, later |
-| The team of nine | New | Written from scratch for FreeDuet |
+| The team of ten | New | Written from scratch for FreeDuet |
 | Subscription router, engine chains, savings meter, purchase permits, Engines page | New | Built in this project |
 
 ## 6. Features
@@ -50,7 +50,7 @@ Each feature lists the milestone that delivers it and how we know it is done.
 
 ### F1. The team on your login (M1)
 
-Nine members defined in `openbot/examples/freeduet/agents.yaml`: Iris (Chief of Staff), Leo (Creator), Otto (Inbox), Portia (Counsel), Penny (Bookkeeper), Jules (Concierge), Wren (Writer), Gus (Fixer), Basil (Chef), running through the subscription router on the person's own Claude Code login. Profiles in [TEAM.md](TEAM.md).
+Ten members defined in `openbot/examples/freeduet/agents.yaml`: Iris (Chief of Staff), Leo (Creator), Otto (Inbox), Portia (Counsel), Penny (Bookkeeper), Jules (Concierge), Wren (Writer), Gus (Fixer), Basil (Chef), Vera (Reviewer), running through the subscription router on the person's own Claude Code login. Profiles in [TEAM.md](TEAM.md).
 
 Done when: FreeDuet starts and works with **zero** API keys; every member passes its cases in `evals/team/cases.yaml` at **90%** or better on Claude Code, and **100%** of the safety cases (cases with `safety: true`).
 
@@ -107,7 +107,7 @@ Durations are estimates for one maintainer with a coding agent.
 | Milestone | Scope | Demo that closes it | Estimate |
 |---|---|---|---|
 | **M0 Fork** | Repository from OpenDuet with history; rename to FreeDuet; tenant package in place; OpenBot's plan-token option removed; telemetry off by default; list of every server-side model call; CI green | `scripts/start.sh` opens FreeDuet with Iris answering | 2–3 days |
-| **M1 v0.1 The team on your login** | `agent-freeduet` with the Claude Code adapter and the tool bridge; nine members routed through it; server-side model calls routed too; eval runner; Docker one-command start on Linux | Iris handles a mixed request on a Claude login, with no API key configured | 2–3 weeks |
+| **M1 v0.1 The team on your login** | `agent-freeduet` with the Claude Code adapter and the tool bridge; ten members routed through it; server-side model calls routed too; eval runner; Docker one-command start on Linux | Iris handles a mixed request on a Claude login, with no API key configured | 2–3 weeks |
 | **M2 v0.2 More subscriptions** | Codex (after OpenAI's approval), ACP and OpenAI-compatible adapters (local models first, API keys optional and last); Engines page | A day of work across two logins with zero metered spend | 2 weeks |
 | **M3 v0.3 Never stops** | Engine chains, caps, ledger, savings card, `delegate` | A limit hit live, work continues, savings card updates | 2 weeks |
 | **M4 v0.4 Safe purchases** | `request_purchase`, permits, caps, checkout rule, hand-over, red-team suite | A real low-cost purchase with approval; an over-cap attempt refused | 2 weeks |
@@ -188,7 +188,7 @@ The maintainer already runs a self-hosted AI office (a Chief "brain", a worker, 
 |---|---|---|
 | **F10. Guardian** | M3 | Pauses a member that loops: more than 5 runs on the same task, more than 20 runs in an hour, or 3 deliveries rejected in a row. Only the person can resume it, after a check. Protects subscription limits from runaway agents. |
 | **F11. Owner-only operations** | M1 | A fixed list that no mode, rule or delegation can lower: spending or raising a budget; messages to people outside the team; deleting data; changing permissions, keys or configuration; resuming a paused member without a check; publishing. Enforced by the gateway, tested in CI. |
-| **F12. Review before delivery** | M3 | Deliverables that matter (contracts, invoices, posts, purchases) are checked by an independent reviewer running on a different engine from the one that produced them, before the person sees them. At most 3 rounds, then Iris decides. A possible tenth member, Vera the Reviewer. |
+| **F12. Review before delivery** | M1, M3 | Deliverables that matter (contracts, invoices, posts, purchases) are checked by an independent reviewer running on a different engine from the one that produced them, before the person sees them. At most 3 rounds, then Iris decides. Done by Vera, the Reviewer, from v0.1; the different-engine rule arrives with the router chains in v0.3. |
 | **F13. Portable memory** | M3 | Every night, memory, standing rules, delegations, events and tasks are exported to plain files with a SHA-256 manifest. They can be searched without the app and imported into a new base. Removes the lock-in to any single memory service. |
 | **F14. Handoff when switching engine** | M3 | When the router moves a member to the next subscription, it passes a structured handoff (goal, decisions, last step, files touched, next step) so work resumes without losing context. Based on the maintainer's AI Continuity protocol, once it is released under MIT. |
 | **F15. Seven-phase method for big jobs** | M3 | For any job of several steps Iris follows Plan → Specify → Assign → Build → Verify → Deliver → Improve, in proportion to the job's size. |

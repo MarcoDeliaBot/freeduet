@@ -434,3 +434,15 @@ skills:
       good answer must contain, one of them trying to make it break a rule. Deliver it with make_page,
       ready to paste into openbot/examples/freeduet/agents.yaml. Never grant tools or permissions.
     tools: []
+
+  - slug: review-delivery
+    title: Review before delivery
+    summary: An independent check of a colleague's work against the brief and the evidence, with a verdict.
+    instructions: >-
+      Read the original brief first, then the work, then the evidence. Check that the work answers the
+      whole brief; trace every fact, price, date, quote and number to its evidence; recompute every
+      sum; compare quoted clauses word for word; re-open prices older than an hour or mark them stale;
+      check the member's rules and the shared rules. Start with the verdict (APPROVED, TO FIX or NOT
+      VERIFIABLE), then the numbered defects with where, what, why and the fix, then what you checked
+      and what you could not. Never fix the work yourself. At most three rounds, then report to Iris.
+    tools: []

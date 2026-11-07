@@ -24,12 +24,12 @@ _Last checked: 2026-11-07, from each project's public README and documentation, 
 | **Payments blocked without a single-use permit bound to shop and total** | ✅ v0.4 | — | ❌ | ❌ | ❌ | ❌ |
 | **Spending cap per purchase, per day and per month** | ✅ v0.4 | — | ❌ | ❌ | ❌ | ❌ |
 | **A lead agent that hands work to specialists and combines the results** | ✅ v0.3 | — | ⚠️ several agents in one channel | ✅ | ✅ | ✅ |
-| **A ready-made team of specialists** | ✅ 9 members | ❌ one agent | ⚠️ 2 agents and example templates | ❌ | — | ❌ |
+| **A ready-made team of specialists** | ✅ 10 members, with a reviewer | ❌ one agent | ⚠️ 2 agents and example templates | ❌ | — | ❌ |
 | **An agent that designs new agents, with tests** | ✅ | — | ⚠️ creator skill, no tests | — | ⚠️ skill creator | — |
 | **Guardian that pauses a looping agent to protect your limits** | ✅ v0.3 | — | — | — | — | — |
 | **Owner-only operations no mode can lower** | ✅ v0.1 | — | ⚠️ approvals, "Always allow" can lift them | — | ❌ | ⚠️ |
 | **Nightly export of memory, rules and tasks to plain files** | ✅ v0.3 | ❌ | ❌ | — | — | ⚠️ local files |
-| **Public test suite per agent, including attempts to break the rules** | ✅ 34 cases, 13 safety | — | ⚠️ inbox triage only | — | — | — |
+| **Public test suite per agent, including attempts to break the rules** | ✅ 40 cases, 15 safety | — | ⚠️ inbox triage only | — | — | — |
 | **Morning brief** | ✅ | ✅ | ✅ | ✅ | — | — |
 | **Gmail and Google Calendar** | ✅ | ✅ connected apps | ✅ | ❌ not yet | — | ⚠️ through your coding agent |
 | **Import your agents from Grok Bot** | ✅ v1.0 | ❌ | ❌ | ❌ | ✅ | ❌ |

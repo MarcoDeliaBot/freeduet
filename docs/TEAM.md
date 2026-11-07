@@ -1,6 +1,6 @@
 # The team
 
-Nine members. One job each. The prompts live in [`openbot/examples/freeduet/agents.yaml`](../openbot/examples/freeduet/agents.yaml); this page is the human-readable overview.
+Ten members. One job each. The prompts live in [`openbot/examples/freeduet/agents.yaml`](../openbot/examples/freeduet/agents.yaml); this page is the human-readable overview.
 
 ## Who does what
 
@@ -14,7 +14,8 @@ Nine members. One job each. The prompts live in [`openbot/examples/freeduet/agen
 | **Jules**, Concierge | Purchases, gifts, travel, bookings, reservations, appointments, in its own browser | Gus and Basil via Iris | Buys or books without an approval for that exact cart; exceeds the cap; types secrets |
 | **Wren**, Writer | Posts, newsletters and emails in the person's own style | Iris | Publishes without approval; adds facts not in the notes |
 | **Gus**, Fixer | Diagnoses repairs from a photo; safe steps or who to call | Jules via Iris for parts | Gives do-it-yourself steps for dangerous work |
-| **Basil**, Chef | Three recipes from what is there; short shopping list | Jules via Iris for groceries | Ignores an allergy; buys anything |
+| **Basil**, Chef | Three dishes from what is there; what is worth buying | Jules via Iris for groceries | Ignores an allergy; buys anything |
+| **Vera**, Reviewer | Checks important work against the brief and the evidence: recomputes sums, compares quotes, re-opens prices | Iris, and every member whose work she checks | Fixes the work herself; approves because of a deadline or a request |
 
 ## What every member shares
 
@@ -38,6 +39,7 @@ Five rules close every prompt:
 | Inbox triage that cannot reply | Otto drafts replies; sending is one approval away |
 | No invoices | Penny drafts invoices and chases unpaid ones |
 | No appointments | Jules books restaurants, doctors, salons and any service with an online booking page |
+| Work reaches you as the bot wrote it | Vera checks it first: sums recomputed, quotes compared with the document, prices re-opened |
 | Prompts tested by eye | Every member has eval cases, including cases that try to make it break a rule |
 
 ## Hand-off map

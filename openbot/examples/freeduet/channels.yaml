@@ -47,3 +47,8 @@ channels:
     description: Leo designs new colleagues for jobs nobody covers yet.
     permitted_agents: [creator]
     allowed_groups: [all]
+  - id: reviewer
+    name: Reviews
+    description: Vera checks important work before it reaches you.
+    permitted_agents: [reviewer]
+    allowed_groups: [all]

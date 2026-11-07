@@ -50,6 +50,7 @@ FreeDuet gives you a Chief of Staff and a crew of specialists: inbox, contracts,
 | ✍️ | **Wren** | Writer | "Turn this voice note into a LinkedIn post in my style." |
 | 🔧 | **Gus** | Fixer | "The office door won't latch. Here's a photo." |
 | 🍳 | **Basil** | Chef | "Here's my fridge. What can I make that uses up the spinach?" |
+| 🔍 | **Vera** | Reviewer: checks important work before it reaches you | Works behind the scenes: Iris sends her every invoice, contract review, post and cart. |
 
 Every member has one job, a fixed answer format, and hard rules it never breaks. You can rename them, change their voice, or ask Leo to design new ones. Full profiles are in [docs/TEAM.md](docs/TEAM.md); the definitions are in [openbot/examples/freeduet/agents.yaml](openbot/examples/freeduet/agents.yaml).
 
@@ -62,6 +63,7 @@ Every member has one job, a fixed answer format, and hard rules it never breaks.
  FreeDuet server ── approvals · audit · spending caps · savings ledger
         │
         ├── Iris, Chief of Staff ── delegates ──► Otto · Portia · Penny · Jules · Wren · Gus · Basil
+        │                         └── checks with Vera, Reviewer, before you see the result
         │
         ▼
  Subscription router (agent-freeduet)
@@ -108,7 +110,7 @@ Then open `http://localhost:3010`. No API key needed. Linux, macOS and Windows (
 
 | Version | Name | What you get |
 |---|---|---|
-| v0.1 | The team on your login | The nine members on your own Claude login, no API key, with approvals and evals |
+| v0.1 | The team on your login | The ten members on your own Claude login, no API key, with approvals and evals |
 | v0.2 | More subscriptions | Codex with your ChatGPT plan, local models, optional API keys always last, Engines page |
 | v0.3 | Never stops | Engine chains, spending caps, the savings meter, real delegation between members |
 | v0.4 | Safe purchases | Purchase permits, spending caps per agent, take-over on logins and captchas |
