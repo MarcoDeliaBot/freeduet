@@ -52,6 +52,15 @@ engines:
     tier: A
     enabled: false                 # your choice: switch on to use API credits as a last resort
 
+  kimi-api:
+    kind: openai-compatible
+    base_url: https://api.moonshot.ai/v1
+    credential_secret_ref: moonshot-api-key
+    billing: metered
+    model: "<kimi-model-id>"        # any model listed in Moonshot's docs
+    tier: B
+    enabled: false
+
   openrouter:
     kind: openai-compatible
     base_url: https://openrouter.ai/api/v1

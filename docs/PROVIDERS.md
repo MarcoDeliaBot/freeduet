@@ -27,6 +27,7 @@ FreeDuet always runs on the subscriptions the person signed in to. API keys and 
 | **Google, Gemini via Google AI Pro or Ultra** | Gemini CLI or Antigravity CLI. | Gemini CLI's terms state that directly accessing the services behind Gemini CLI with third-party software, for example through its OAuth, violates the terms and can lead to suspension. Whether an orchestrator may drive the official CLI headless is an open question on Google's forum. Gemini CLI was replaced by Antigravity CLI for unpaid and Google One users on 2026-06-18. | **Off.** Use a Gemini API key. |
 | **Z.ai, GLM Coding Plan** | Only inside the tools on Z.ai's supported-tools list. | The plan may only be used within the listed tools; benefits are for the subscriber only; violations can lead to restrictions or a ban. | **Off** until FreeDuet's route is on the list. A GLM API key works through the OpenAI-compatible engine. |
 | **xAI, Grok** | Not verified yet. | — | **Off.** API key works. |
+| **Moonshot, Kimi** | Kimi's CLI with the person's own login. | Not verified yet. | **Off** until verified. The OpenAI-compatible API works with a key. |
 | **OpenRouter** and any OpenAI-compatible API | API key. | Metered by the provider. | Optional, capped |
 | **Local models** (Ollama, LM Studio, vLLM) | OpenAI-compatible endpoint on your hardware. | No provider terms. | Optional |
 

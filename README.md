@@ -54,6 +54,10 @@ FreeDuet gives you a Chief of Staff and a crew of specialists: inbox, contracts,
 
 Every member has one job, a fixed answer format, and hard rules it never breaks. You can rename them, change their voice, or ask Leo to design new ones. Full profiles are in [docs/TEAM.md](docs/TEAM.md); the definitions are in [openbot/examples/freeduet/agents.yaml](openbot/examples/freeduet/agents.yaml).
 
+## Works with your tools
+
+Google suite, Microsoft 365, n8n, Photoshop, Affinity, Canva, Photograft, arts-and-crafts software, 3D-printing slicers, Claude Code, Codex, Kimi, Cline, Antigravity, Trae, WhatsApp, Telegram, Slack and Teams, free and paid. Official connectors first, then the browser, then screen control on your own computer, only for the programs you switch on. The catalogue, with the status of each tool: [docs/CONNECTORS.md](docs/CONNECTORS.md).
+
 ## How it works
 
 ```

@@ -196,4 +196,6 @@ The maintainer already runs a self-hosted AI office (a Chief "brain", a worker, 
 | **F17. Voice in** | M5 | Dictation for Iris and Wren, from the maintainer's Dictatum (MIT). |
 | **F18. Council** | after v1.0 | For big decisions Iris convenes several members to give opinions, then reports a recommendation to the person. |
 
+| **F19. Connectors** | M2–M5 | FreeDuet connects to the tools people already use: the whole Google suite, Microsoft 365, n8n, creative and craft programs (Photoshop, Affinity, Canva, Photograft and an arts-and-crafts set), coding agents (Claude Code, Codex, Kimi, Cline, Antigravity, Trae) and messaging (WhatsApp, Telegram). Desktop programs are reached through a FreeDuet desktop bridge on the person's computer. Catalogue and rules: [CONNECTORS.md](CONNECTORS.md). |
+
 **Policy for waiting.** When every login in a chain has reached its limit, the default is to wait for the first reset and tell the person when work resumes. Switching to a metered engine happens only if the person switched metered engines on.
