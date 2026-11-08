@@ -340,6 +340,14 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
+      # The server suite peaks near 94 of the default 100 connections; 200 leaves room for new test files.
+      - name: Raise the Postgres connection limit for the server suite
+        run: |
+          cid=$(docker ps -q --filter ancestor=pgvector/pgvector:pg17)
+          docker exec "$cid" psql -U openbot -d openbot_test -c "ALTER SYSTEM SET max_connections = 200"
+          docker restart "$cid"
+          for _ in $(seq 60); do docker exec "$cid" pg_isready -U openbot -d openbot_test && break; sleep 1; done
+          docker exec "$cid" psql -U openbot -d openbot_test -c "SHOW max_connections"
       - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
         with:
           bun-version: 1.4.3

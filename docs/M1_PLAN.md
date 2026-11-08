@@ -81,3 +81,35 @@ Added on 2026-11-08 at the maintainer's request: members must remember, pass inf
 | D19 | **Exact reasons for a missing tool.** When a member's prompt relies on `message_bot` and OpenBot did not offer it, agent-freeduet adds the exact reason it can see to the system text: a relay or a hop runs at OpenBot's hand-off depth limit (`BOT_HANDOFF_MAX_DEPTH=1`), so the next step goes out on the person's next message; otherwise OpenBot gave no reason. Every member is told to give the reason a refused tool result gives, never "unavailable" alone (`tool_notes.py`, `transcript.RUNTIME_NOTE`) | iris-2: in the relay of Jules's answer (depth 1, no `message_bot`) Iris told the person the messaging tool was unavailable and wrote a brief to paste |
 
 Tests that must exist: a seeded grant lets Iris address Penny and refuses Penny to Otto; the team log gets one line per segment with the right outcome; `team_log` is offered to Iris only; a lesson stays pending without the person's approval and a Bot's message does not activate it; an active lesson appears in the member's prompt; each person gets the daily review routine once, and not again after they delete it. Hand-offs (`server/tests/freeduet-handoff.test.ts`, `agent-freeduet/tests/test_handoffs.py`): a hop to a member and the relay back to Iris replay OpenBot's recorded payloads and run; the member's answer reaches Iris's conversation; Iris's `message_bot` runs in-band, the gate reads what the person asked, and an `ask` waits for the person and sends the hand-off once on approval; a callback refusal that needs the person ends the turn with a question to them.
+
+## 6. Conversations and memory without CopilotKit Intelligence (#42)
+
+Added on 2026-11-08 at the maintainer's request. Before #42, OpenBot refused to start without the three `INTELLIGENCE_*` settings (`openbot/server/src/config.ts`), so every FreeDuet install needed a CopilotKit account.
+
+| # | Decision | Why |
+|---|---|---|
+| D20 | **CopilotKit Intelligence optional, off by default.** `FREEDUET_INTELLIGENCE=off` or `on`. Unset is upstream OpenBot, unchanged. With `off` the server boots with no `INTELLIGENCE_*` key, keeps conversations, history and memory in FreeDuet's own Postgres, and sends nothing to CopilotKit. Telemetry is off unless `COPILOTKIT_TELEMETRY_DISABLED=false` is set. With `on` the server needs the three keys, as upstream | FreeDuet promises self-hosted, zero cost and no API key. Intelligence keeps its own copy of every thread, user memory, browser trajectory and product analytics. Its free hosted tier (1,000 interactions per organization per month) would stop a real user quickly. CopilotKit's docs say the TypeScript runtime works without Intelligence; OpenBot made it mandatory |
+
+How the default is chosen: `scripts/start.sh` writes `off` into a new `.env`. An existing `.env` with all three Intelligence settings and no `FREEDUET_INTELLIGENCE` line gets `on`, with a notice printed, so an install from before #42 keeps its conversations in Intelligence.
+
+Measured in #45: with `off` and no telemetry variable, a boot, a chat turn, a headless turn, a hop and memory create and recall sent zero requests to any `*.copilotkit.ai` host. With `COPILOTKIT_TELEMETRY_DISABLED=false` the same probe does see telemetry, so the probe can see requests at all.
+
+FreeDuet's own migrations live in `openbot/server/src/freeduet/threads/migrations/`, with their own journal and bookkeeping table, `freeduet_thread_migrations`. They are recorded by name and hash, run in one transaction behind an advisory lock, and are safe when two processes boot at once. An applied migration whose file has changed is refused.
+
+| Table | Holds |
+|---|---|
+| `freeduet_threads` | One row per conversation: thread id, user, agent, name, times |
+| `freeduet_thread_runs` | One row per run: run id, parent run, status (`running`, `finished`, `stopped`, `failed`, `interrupted`), the run's events compacted as `jsonb`, what the run was asked, and the runner that wrote it |
+| `freeduet_thread_locks` | One row per thread while a run holds it: run id, user, agent, expiry. An expired lock is taken over |
+
+Messages are not stored in a table of their own. They are rebuilt from the runs' events with AG-UI's own reducer.
+
+Limits with `off`:
+
+- Conversations already in Intelligence are not imported. An importer is a possible later phase.
+- Switching from `off` to `on` starts fresh. Neither side copies the other's conversations.
+- Memory is local. Recall is a text match, not a semantic search.
+- Learned skills are off.
+- Live tail (following a run that is still going, after a reload or from another tab) works in one server process only. FreeDuet supports one replica.
+- A server restart in the middle of a run marks that run `interrupted` and keeps the text it had written.
+- Keys and Learning variables left in `.env` are ignored, and the boot log names them once.

@@ -5,7 +5,8 @@ import "./freeduet/telemetry-off";
 // FreeDuet: before anything reads the model environment (docs/UPSTREAM_TOUCHES.md).
 import "./freeduet/plan-token";
 // FreeDuet: the team's hub grants and each person's conversations (docs/UPSTREAM_TOUCHES.md).
-import { applyFreeDuetPackage } from "./freeduet/hub-grants";
+import { applyFreeDuetPackage, isFreeDuetPackage } from "./freeduet/hub-grants";
+import { pinModelBaseToRouter } from "./freeduet/model-base";
 import { withFreeDuetTeam } from "./freeduet/person-team";
 // FreeDuet: CopilotKit Intelligence optional (#42, docs/UPSTREAM_TOUCHES.md).
 import { createThreadBackend } from "./freeduet/backend";
@@ -706,6 +707,9 @@ const storedApprovals = createApprovalStore(database);
 // Before anything reads the model environment: blank base URLs removed, Anthropic given its `/v1`.
 normalizeModelBaseUrls();
 const runtimeModel = runtimeModelForEnvironment(tenantPackage.model);
+// FreeDuet: with the router on, the server's Anthropic calls go to agent-freeduet, whatever is exported (freeduet/model-base.ts).
+if (isFreeDuetPackage(tenantPackage) && runtimeModel.provider === "anthropic")
+  pinModelBaseToRouter(process.env);
 
 /**
  * Pass one of tool selection: which skills a message needs, on the deployment's own model.

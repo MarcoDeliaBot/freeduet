@@ -31,6 +31,17 @@ FreeDuet always runs on the subscriptions the person signed in to. API keys and 
 | **OpenRouter** and any OpenAI-compatible API | API key. | Metered by the provider. | Optional, capped |
 | **Local models** (Ollama, LM Studio, vLLM) | OpenAI-compatible endpoint on your hardware. | No provider terms. | Optional |
 
+## CopilotKit Intelligence (optional)
+
+FreeDuet does not need a CopilotKit key. `FREEDUET_INTELLIGENCE` in `openbot/.env.example` picks where conversations and memory are kept. The default is `off` (decision D20 in [M1_PLAN.md](M1_PLAN.md)).
+
+| Setting | Conversations and memory | Cost | What you give up or need |
+|---|---|---|---|
+| `off` (default) | Kept in FreeDuet's own Postgres. Nothing is sent to CopilotKit. | Free. No key. | Memory is a text match, not semantic. Learned skills are off. Conversations already in Intelligence are not imported. Live tail works in one server process only. |
+| `on` | Kept in CopilotKit Intelligence, which also holds a copy of user memories, browser trajectories and product analytics. | Free hosted tier: 1,000 interactions per organization per month. Pay as you go: $49 per month for 10,000. Self-hosted Developer Edition: non-production only, with a renewable 30-day licence. | Needs `INTELLIGENCE_API_URL`, `INTELLIGENCE_GATEWAY_WS_URL` and `INTELLIGENCE_API_KEY`. Switching does not move conversations. |
+
+Prices are as of November 2026, from CopilotKit's pricing page. Check the page before you choose a plan.
+
 ## Practical notes
 
 - **What each person runs on.** A Claude subscriber runs FreeDuet from v0.1 on Claude Code with their own login, with no API key at all. A ChatGPT subscriber gets the Codex route once OpenAI approves FreeDuet's client ID. Everybody else uses a local model, or an API key they choose to add.
