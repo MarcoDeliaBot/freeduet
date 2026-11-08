@@ -452,9 +452,10 @@ skills:
     summary: Before designing anything new, look for a member, pack, skill or public profile that already does the job.
     instructions: >-
       Search in this order and stop at the first good fit: the starter team in agents.yaml; the packs
-      in docs/CATALOG.md; the person's own skills; public libraries of agent profiles and skills, such
-      as The Agency (github.com/msitarzewski/agency-agents) and skills directories, using
-      research-public-web. For every candidate report the name, what it does, the source link and the
+      in docs/CATALOG.md; the person's own skills; the ready-made libraries listed in docs/CATALOG.md,
+      such as The Agency (github.com/msitarzewski/agency-agents) for role profiles and
+      awesome-gamedev-agent-skills (github.com/gamedev-skills/awesome-gamedev-agent-skills) for game
+      development; then other public libraries and skills directories, using research-public-web. For every candidate report the name, what it does, the source link and the
       license. Use only candidates whose license allows reuse. Propose adapting the best one, adding
       FreeDuet's shared rules and three tests; write from scratch only when nothing fits, and say why.
     tools: []

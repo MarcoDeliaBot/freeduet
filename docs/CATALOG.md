@@ -23,10 +23,26 @@ Every pack member is written by Leo, with its tests, and checked by Vera before 
 | **Media** | **Clara**, Editor-in-chief | Runs the editorial desk: watches news and social sources, plans the content calendar, assigns pieces to Wren and Kai, checks sources and facts, prepares publication | News and social sources, Wren, Kai | Publishes without approval; uses a source she has not opened; copies articles | The Agency, marketing division |
 | **Media** | **Kai**, Video maker | Edits videos, subtitles, music and motion graphics from footage or a script, in every format the person needs | FilmCraft, EffectCraft, SoundCraft, ffmpeg | Uses music, footage or faces without the rights; publishes | Written for FreeDuet |
 | **Tech** | **Theo**, Tester | Actually runs things: clicks through sites and apps, runs test suites, checks forms, links, speed and phones, and files clear bug reports with steps to reproduce | Browser, the member's computer, coding-agent connectors | Tests on a live site in a way that changes real data, without the person's approval; marks something as working without running it | The Agency, testing division |
-| **Tech** | **Nico**, Game developer | Designs and builds small games: idea, rules, levels, art and sound with the ArtCraft apps, code with the coding agents, a playable build | Coding-agent connectors, PhotoCraft, VectorCraft, SoundCraft | Publishes to a store; uses assets without the rights | The Agency, game-development folder |
+| **Tech** | **Nico**, Game developer | Designs and builds small games: idea, rules, levels, art and sound with the ArtCraft apps, code with the coding agents, a playable build | Free game engines in its own computer (Godot, Phaser, three.js and others), the game-development skills library, coding-agent connectors, PhotoCraft, VectorCraft, SoundCraft | Publishes to a store; uses assets without the rights | The Agency, game-development folder, plus the game-development skills library (see Ready-made libraries) |
 | **Learning** | **Sofia**, Teacher | Explains any subject step by step, prepares exercises and quizzes, checks what the person understood and adapts the next lesson | Documents, DeckCraft | Grades or decides for a school or an exam; does the person's homework when they asked to learn | The Agency, academic folder |
 
 Developers, designers and any other role are created on request by Leo, following the same rules.
+
+## Ready-made libraries
+
+Leo and the pack members start from these public libraries before writing anything new. A library is listed here only after its license and contents have been checked.
+
+| Library | What it gives | License | Used by | Checked |
+|---|---|---|---|---|
+| [The Agency](https://github.com/msitarzewski/agency-agents) | About 185 role profiles, grouped by division | MIT | Leo, as starting profiles for pack members | 2026-11-07 |
+| [awesome-gamedev-agent-skills](https://github.com/gamedev-skills/awesome-gamedev-agent-skills) | 77 game-development skills and a router that loads only the ones a request needs: 12 engines (Godot, Unity, Unreal, Phaser, PixiJS, three.js, Bevy, pygame, LÖVE, Defold, Ebitengine, Roblox), 15 disciplines (game AI, level design, save systems, art direction with asset provenance and others), 9 genres and 4 workflows (game jam, fast prototype, Steam, itch.io). Each skill is pinned to a stated engine version and checked by the project's own validator | Apache-2.0 | Nico | 2026-11-08 |
+
+Rules for skill libraries:
+
+- **Installed unmodified, at a pinned commit**, in the skills folder of the coding agent the member drives inside its own computer. The library's LICENSE and NOTICE files ship with it. A new version is taken only by moving the pin, after the same review.
+- **Read before installing.** The skills and their scripts are reviewed for network calls, data collection and anything that asks for secrets. At the 2026-11-08 review, the game-development library's 9 scripts work only on files on disk (project and image checks, a project starter, macOS packaging), use only Python's standard library and Pillow, and make no network calls.
+- **A skill is know-how, never permission.** No skill unlocks an owner-only operation. For games this means: Nico prepares the build, the store page text and the release checklist; the person uploads to Steam or itch.io and presses release.
+- **Engines.** Free, open-source engines (Godot, Phaser, PixiJS, three.js, Bevy, pygame, LÖVE, Defold, Ebitengine) run inside Nico's own computer. Unity, Unreal and Roblox Studio have their own licenses and run only on the person's computer, through the desktop bridge, if the person has them.
 
 ### Rules for sensitive packs
 

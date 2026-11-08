@@ -46,6 +46,8 @@ Desktop programs such as Photoshop or Cricut Design Space run on the person's ow
 | **Creative** | The ArtCraft suite | Free, open source | Inside each member's own computer, through each app's MCP server or headless CLI | M2–M5 | See the next section. |
 | **Making** | Cricut Design Space | Free and paid | Desktop bridge, screen control | M5 | Sending a job to a machine is an approval, every time. |
 | **Making** | 3D-printing slicers | Free | Command line where the slicer offers one, screen control otherwise | M5 | Starting a print is an approval, every time. |
+| **Games** | Godot, Phaser, PixiJS, three.js, Bevy, pygame, LÖVE, Defold, Ebitengine | Free, open source | Inside Nico's own computer, driven by the coding agent with the game-development skills ([CATALOG.md](CATALOG.md)) | M2 onwards, with the Tech pack | Building and test runs are free; uploading to a store is an owner-only operation. |
+| **Games** | Unity, Unreal Engine, Roblox Studio | Free tiers and paid, each with its own license | Desktop bridge, on the person's computer | M4 | Only if the person already has them. |
 | **Coding agents** | Claude Code | Subscription | Engine and tool: the official CLI, the person's own login | M1 | Also FreeDuet's first engine. |
 | **Coding agents** | Codex | Subscription | Engine and tool: Codex app-server | M2 | After OpenAI approves FreeDuet's client ID. |
 | **Coding agents** | Kimi | Free, subscription and API | Engine through Moonshot's OpenAI-compatible API; tool through Kimi's CLI | M2 | Subscription terms for third-party use to be verified before the CLI route is switched on. |
