@@ -397,7 +397,10 @@ services:
   # own Claude Code login, plus the Anthropic-format `/v1/messages` the server's own short model
   # calls go to. See docs/M1_PLAN.md and docs/UPSTREAM_TOUCHES.md.
   agent-freeduet:
-    build: ./agent-freeduet
+    # Built from openbot/, like the other services: the Dockerfile copies agent-freeduet/... paths.
+    build:
+      context: .
+      dockerfile: agent-freeduet/Dockerfile
     image: ${FREEDUET_IMAGE:-freeduet-agent-freeduet:latest}
     pull_policy: ${IMAGE_PULL_POLICY:-build}
     ports:
