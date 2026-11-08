@@ -14,6 +14,7 @@ def entry(member="bookkeeper", outcome="done", summary="Invoice drafted", **chan
     return team_log.make_entry(
         member=member, thread="thread-1", run="run-1", outcome=outcome, summary=summary,
         from_iris=changes.pop("from_iris", None), approvals=changes.pop("approvals", None),
+        report_guard=changes.pop("report_guard", None),
     ) | changes
 
 
@@ -25,9 +26,19 @@ def test_one_line_per_entry_with_the_documented_fields(tmp_path):
     team_log.append(entry(from_iris=True, approvals=["apr_1"]), root=tmp_path)
     [line] = lines(tmp_path)
     record = json.loads(line)
-    assert set(record) == {"time", "member", "thread", "run", "outcome", "summary", "from_iris", "approvals"}
+    assert set(record) == {
+        "time", "member", "thread", "run", "outcome", "summary", "from_iris", "approvals", "report_guard",
+    }
     assert record["time"].endswith("Z") and record["from_iris"] is True and record["approvals"] == ["apr_1"]
+    assert record["report_guard"] is None
     assert oct((tmp_path / team_log.LOG_NAME).stat().st_mode & 0o777) == "0o600"
+
+
+def test_report_guard_is_null_added_or_failed():
+    assert entry(report_guard="added")["report_guard"] == "added"
+    assert entry(report_guard="failed")["report_guard"] == "failed"
+    with pytest.raises(ValueError):
+        entry(report_guard="yes")
 
 
 def test_entries_are_redacted_and_checked():

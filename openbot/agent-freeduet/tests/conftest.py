@@ -69,8 +69,19 @@ def fake_cli(tmp_path, monkeypatch):
         def plan(self, *plans):
             (state / "plans.json").write_text(json.dumps(list(plans)))
 
+        def followups(self, *plans):
+            """One plan per report-guard follow-up (fake_claude.py)."""
+            (state / "followups.json").write_text(json.dumps(list(plans)))
+
         def run(self, index=0) -> dict:
             return json.loads((state / f"run-{index}.json").read_text())
+
+        def followup(self, index=0) -> dict:
+            return json.loads((state / f"followup-{index}.json").read_text())
+
+        def followup_count(self) -> int:
+            counter = state / "followup-count"
+            return int(counter.read_text()) if counter.exists() else 0
 
     return Fake()
 

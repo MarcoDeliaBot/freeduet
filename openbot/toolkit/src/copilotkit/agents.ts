@@ -54,6 +54,16 @@ export type BuiltInAgentHooks = {
 export class CloningRemoteAgent extends AbstractAgent {
   headers?: AgentHeaders;
   private readonly remote: HeaderBearingAgent;
+  /*
+   * FreeDuet (#33): middleware added with `.use()` after construction, which a clone must carry
+   * too. The server adds the person's memory (copilot.ts, `buildAgents`) and the channel's purpose
+   * (openduet/run-channel.ts) that way, and a browser chat runs on the runtime's per-request clone:
+   * rebuilt from the constructor alone, the clone lost both, so a remote Bot never received them in
+   * a chat while it did on a hop. `AbstractAgent.clone` keeps every middleware; this keeps the same
+   * promise for the ones the constructor does not add again.
+   */
+  private readonly addedMiddleware: Parameters<AbstractAgent["use"]> = [];
+  private constructed = false;
 
   constructor(
     remote: AbstractAgent,
@@ -72,6 +82,12 @@ export class CloningRemoteAgent extends AbstractAgent {
       this.headers = { ...this.remote.headers };
     }
     this.attachOpenBotMiddleware(this);
+    this.constructed = true;
+  }
+
+  use(...middlewares: Parameters<AbstractAgent["use"]>): this {
+    if (this.constructed) this.addedMiddleware.push(...middlewares);
+    return super.use(...middlewares);
   }
 
   run(input: RunAgentInput): Observable<BaseEvent> {
@@ -99,6 +115,8 @@ export class CloningRemoteAgent extends AbstractAgent {
     if (this.headers) {
       clone.headers = { ...this.headers };
     }
+    // In the order they were added, after the constructor's own, as on this agent.
+    if (this.addedMiddleware.length > 0) clone.use(...this.addedMiddleware);
     return clone;
   }
 }

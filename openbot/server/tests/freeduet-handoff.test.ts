@@ -519,6 +519,15 @@ describe("a hop to a FreeDuet member and the answer coming back", () => {
     record("handoff_relay_run.json", toIris);
     expect(toIris.threadId).toBe("iris-thread");
     expect(toIris.messages[0]?.id).toBe("openduet:channel");
+    // iris-2 (#19): the relay is a hop at depth 1, and at BOT_HANDOFF_MAX_DEPTH=1 it offers Iris
+    // no message_bot. agent-freeduet tells her exactly that (tool_notes.py, test_tool_notes.py).
+    expect(
+      readRunAssertion(
+        (toIris.forwardedProps as Record<string, unknown>).openbotRun,
+        KEY,
+      )?.depth,
+    ).toBe(1);
+    expect(toIris.tools.map((tool) => tool.name)).not.toContain("message_bot");
     expect(shapeOf(toIris)).toEqual(shapeOf(fixture("handoff_relay_run.json")));
     const relayed = toIris.messages.at(-1);
     expect(relayed?.role).toBe("user");
@@ -545,7 +554,7 @@ describe("a hop to a FreeDuet member and the answer coming back", () => {
     expect(audit).not.toContain("agent.handoff_failed");
   });
 
-  test("a browser chat clones the agent and drops those rows, which is why chats always passed", async () => {
+  test("a browser chat clones the agent and keeps the memory and channel rows (#33)", async () => {
     using agentFreeduet = fakeAgentFreeduet(() => said("p", "Hello."));
     const resolver = withRunChannels(
       createActorAgentResolver({
@@ -554,21 +563,81 @@ describe("a hop to a FreeDuet member and the answer coming back", () => {
         ],
         model: { provider: "anthropic", defaultModel: "claude-test" },
         resolveModelApiKey: async () => null,
-        loadPersonalMemoryForActor: () => async () => "Some memory.",
+        loadPersonalMemoryForActor: () => async () =>
+          "The person runs a small design studio and invoices in EUR.",
       }),
-      async () => ({ channelId: "c", name: "Invoices", purpose: "Penny." }),
+      async () => ({
+        channelId: "c",
+        name: "Invoices",
+        purpose: "Penny keeps the invoices.",
+      }),
     );
     const actor = { id: ACTOR, role: "user" } as unknown as AgentActor;
-    // The runtime's per-request copy (`cloneAgentForRequest` in @copilotkit/runtime).
+    // The runtime's per-request copy (`cloneAgentForRequest` in @copilotkit/runtime). It used to
+    // be rebuilt from the constructor's middleware alone and lost the two rows a hop carries;
+    // CloningRemoteAgent.clone keeps what `.use()` added (toolkit/src/copilotkit/agents.ts).
     const chat = (
       await resolver.resolveAgentForActor(actor, "bookkeeper")
     ).clone();
     chat.setMessages([{ id: "u1", role: "user", content: "Hi" }]);
     await chat.runAgent({ runId: "chat-run" });
-    expect(agentFreeduet.requests[0]?.messages.map((m) => m.id)).toEqual([
+    const toPenny = agentFreeduet.requests[0] as RunAgentInput;
+    record("chat_clone_run.json", toPenny);
+    expect(toPenny.messages.map((m) => m.id)).toEqual([
+      "openduet:channel",
+      "openbot:personal-memory",
       "standing-role:bookkeeper",
       "u1",
     ]);
+    // Each also as a context entry, as on a hop: agent-freeduet says each once
+    // (agent-freeduet/tests/test_handoffs.py replays this payload).
+    expect(toPenny.context.map((entry) => entry.description)).toEqual([
+      "OpenBot personal memory",
+      "OpenDuet channel",
+    ]);
+    expect(shapeOf(toPenny)).toEqual(shapeOf(fixture("chat_clone_run.json")));
+  });
+});
+
+// ── iris-2: "the messaging tool was unavailable" ────────────────────────────────────────────────
+
+describe("iris-2: when Iris is not offered message_bot (#19)", () => {
+  /*
+   * Live run: "Get me a table for four on Friday at eight, somewhere quiet near the office." In one
+   * run Iris handed it to Jules; in another she wrote the person a brief to paste, "the messaging
+   * tool was unavailable". Her own turn always holds message_bot. The turn that does not is the
+   * relay of Jules's answer: OpenBot runs it as a hop at the depth of the hop it answers
+   * (handoff-runner.ts, `relay`), and at the default BOT_HANDOFF_MAX_DEPTH=1 `toolsForRun` offers
+   * no message_bot there (handoff-tool.ts, `canHandOn`; `handoffTool` returns null at the cap too).
+   * Iris could then neither pass Jules's question on nor send his result to Vera, and her prompt's
+   * "with neither ... the brief ready to paste" took over. Whether the relay landed before the eval
+   * runner stopped reading, and whether Jules's answer needed a follow-up, decided the outcome.
+   * Not the fan-out cap (per run, one hop here), not the in-band switch (static per process: off
+   * gives the "needs your approval" text, never "unavailable"), not concurrency.
+   */
+  const team = coordination(createApprovalService(memoryApprovals({}).store));
+  const irisRun: RunAssertion = {
+    botId: "freeduet",
+    actorId: ACTOR,
+    runId: "iris-run",
+    threadId: "iris-thread",
+    depth: 0,
+    initiator: PERSON,
+  };
+  const names = async (run: RunAssertion) =>
+    (await team.tools.toolsForRun(run)).map((tool) => tool.name);
+
+  test("Iris's own turn holds message_bot; the relay of Jules's answer does not", async () => {
+    // Her turn, and the person's next message after the relay: an ordinary run at depth 0.
+    expect(await names(irisRun)).toEqual(["message_bot", "ask_person"]);
+    expect(
+      await names({
+        ...irisRun,
+        runId: "relay-run",
+        depth: 1,
+        handoff: { key: "relay:iris-run:jules", owner: "replica-a" },
+      }),
+    ).toEqual(["ask_person"]);
   });
 });
 

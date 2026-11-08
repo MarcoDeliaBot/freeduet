@@ -2,8 +2,10 @@
 
 import asyncio
 import json
+import socket
 
 from freeduet.bridge import ipc, mcp_server
+from freeduet.bridge.callback import call_deployment_tool
 
 TOOLS = ipc.mcp_tools([{"name": "make_page", "description": "Make a page.", "parameters": {"$schema": "x", "type": "object", "properties": {"title": {"type": "string"}}}}])
 
@@ -67,3 +69,18 @@ def test_mcp_initialize_ping_and_unknown_methods():
     assert asyncio.run(mcp_server.handle({"jsonrpc": "2.0", "method": "notifications/initialized"})) is None
     assert asyncio.run(mcp_server.handle({"jsonrpc": "2.0", "id": 2, "method": "ping"}))["result"] == {}
     assert asyncio.run(mcp_server.handle({"jsonrpc": "2.0", "id": 3, "method": "resources/list"}))["error"]["code"] == -32601
+
+
+def test_a_callback_that_cannot_connect_says_so(monkeypatch):
+    """The member repeats this reason to the person, so it says what happened, never "unavailable"."""
+    with socket.socket() as spare:
+        spare.bind(("127.0.0.1", 0))
+        port = spare.getsockname()[1]  # closed once the block ends: nothing listens there
+    monkeypatch.setenv("AGENT_TOOL_TOKEN", "test-agent-tool-token")
+    monkeypatch.setenv("OPENBOT_TOOL_URL", f"http://127.0.0.1:{port}/api/agent-tools/call")
+    reply = asyncio.run(call_deployment_tool("ask_person", {"question": "Which office?"}, "assertion"))
+    assert reply.is_error
+    assert reply.text == (
+        "The tool callback could not be completed: agent-freeduet could not connect to OpenBot's tool route."
+    )
+    assert "unavailable" not in reply.text

@@ -20,7 +20,7 @@ from fastapi.responses import JSONResponse, StreamingResponse
 
 from . import agui, checkpoints, claude_cli, origin, report, team_log
 from .members import MemberError, resolve_member
-from .segment import run_segment
+from .segment import SegmentNotes, run_segment
 
 TOKEN_HEADER = "x-openbot-agent-token"
 SERVER_CALLS_MODULE = "freeduet.server_calls"
@@ -60,7 +60,8 @@ TERMINAL = {"RUN_FINISHED", "RUN_ERROR"}
 # After every segment (a finished turn, a turn that ended on a tool call OpenBot runs, an error):
 # the member's report becomes a checkpoint (report.py maps it, checkpoints.py writes it under
 # <FREEDUET_DATA_DIR>/handoff/<botId>/<threadId>/) and one line goes to the team log (team_log.py).
-# Each is written or logged as not written; neither ever fails the run.
+# Each is written or logged as not written; neither ever fails the run. When the report guard asked
+# for the report (report_guard.py), the team-log line says so in `report_guard`.
 def _checkpoint_writer():
     return lambda run_id, agent, phase, state: checkpoints.save_checkpoint(
         checkpoints.default_root(), run_id, agent, phase, state
@@ -76,7 +77,7 @@ async def _save_checkpoint(run: agui.RunInput, phase: str, state: dict) -> None:
         log.warning("checkpoint not written for this segment", exc_info=True)
 
 
-async def _append_team_log(run: agui.RunInput, assessment: report.Assessment) -> None:
+async def _append_team_log(run: agui.RunInput, assessment: report.Assessment, report_guard: str | None = None) -> None:
     try:
         entry = team_log.make_entry(
             member=run.bot_id,
@@ -86,6 +87,7 @@ async def _append_team_log(run: agui.RunInput, assessment: report.Assessment) ->
             summary=assessment.summary,
             from_iris=origin.from_iris(run.messages, run.assertion),
             approvals=assessment.approvals,
+            report_guard=report_guard,
         )
         await asyncio.to_thread(team_log.append, entry)
     except Exception:  # noqa: BLE001 - a missing data folder, a full disk
@@ -100,7 +102,7 @@ async def _record_segment(run: agui.RunInput, summary: "_SegmentSummary", termin
         log.warning("segment not assessed: no checkpoint and no team-log line", exc_info=True)
         return
     await _save_checkpoint(run, assessment.phase, assessment.state)
-    await _append_team_log(run, assessment)
+    await _append_team_log(run, assessment, summary.notes.report_guard)
 # ─────────────────────────────────────────────────────────────────────────────────────────────────
 
 
@@ -116,6 +118,7 @@ class _SegmentSummary:
         self.calls: dict[str, str] = {}
         self.answered: set[str] = set()
         self.recorded = False
+        self.notes = SegmentNotes()  # filled in by the segment: whether the report guard asked
 
     def see(self, event: dict) -> None:
         kind = event["type"]
@@ -149,7 +152,7 @@ async def _events(run: agui.RunInput) -> AsyncIterator[dict]:
     summary = _SegmentSummary(run)
     started = False
     try:
-        async for event in run_segment(run, member):
+        async for event in run_segment(run, member, summary.notes):
             started = started or event["type"] == "RUN_STARTED"
             summary.see(event)
             if event["type"] in TERMINAL:
