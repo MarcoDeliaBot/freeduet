@@ -429,6 +429,68 @@ jobs:
       - run: python -m pip install --requirement requirements.txt
       - run: python -m pytest -q
 
+  # FreeDuet (#21): the one-command start on a clean machine, as the README's Quick start gives it,
+  # with no API key and no Claude Code sign-in. Then what a person would get: the server, the app
+  # and agent-freeduet answer, the ten members are remote Bots at agent-freeduet, start.sh says how
+  # to sign in, and nothing asked for a key (scripts/freeduet-clean-start-check.sh).
+  #
+  # It builds every image the stack runs, so it sits behind the same cost gate as `image`: on a pull
+  # request only with the `full-ci` label, always on main and through workflow_call. Not in `verify`
+  # yet: until the server starts without a CopilotKit Intelligence key it fails at the server check,
+  # which is the open part of #21 (docs/UPSTREAM_TOUCHES.md).
+  clean-start:
+    name: clean start (no key, no sign-in)
+    runs-on: ubuntu-latest
+    if: >-
+      github.event_name != 'pull_request' ||
+      contains(github.event.pull_request.labels.*.name, 'full-ci')
+    timeout-minutes: 60
+    defaults:
+      run:
+        working-directory: ${{ github.workspace }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
+        with:
+          bun-version: 1.4.3
+      - name: Make room for the image builds
+        run: |
+          set -euo pipefail
+          df -h /
+          sudo rm -rf /usr/local/lib/android /usr/share/dotnet
+          df -h /
+      # start.sh asks lsof who holds a port.
+      - name: lsof
+        run: command -v lsof || { sudo apt-get update && sudo apt-get install -y lsof; }
+      - name: The one command, on a clean checkout
+        id: start
+        run: |
+          set -o pipefail
+          cp .env.example .env
+          status=0
+          bash scripts/start.sh 2>&1 | tee "$RUNNER_TEMP/start.log" || status=$?
+          echo "status=$status" >> "$GITHUB_OUTPUT"
+      - name: What a person gets
+        env:
+          START_STATUS: ${{ steps.start.outputs.status }}
+        run: bash openbot/scripts/freeduet-clean-start-check.sh "$RUNNER_TEMP/start.log" "$START_STATUS"
+      - if: always()
+        name: Logs
+        run: |
+          for log in openbot/.logs/*.log; do
+            [ -f "$log" ] || continue
+            echo "::group::$log"
+            tail -n 200 "$log"
+            echo "::endgroup::"
+          done
+          echo "::group::docker compose"
+          (cd openbot && docker compose ps -a && docker compose logs --tail 100 agent-freeduet) || true
+          echo "::endgroup::"
+      - if: always()
+        run: bash scripts/stop.sh || true
+
   python-harness:
     name: python harness regressions
     runs-on: ubuntu-latest
