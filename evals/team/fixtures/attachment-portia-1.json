@@ -1,0 +1,30 @@
+{
+  "case": "portia-1",
+  "expect": "pass",
+  "note": "Fictional. The contract travels as a real attachment (fixtures/live/subscription-agreement.txt), so Portia quotes its clauses word for word. Traffic light first, jurisdiction named, the closing sentence just before the report, nothing after it.",
+  "transcript": {
+    "caseId": "portia-1",
+    "member": "counsel",
+    "engine": "fake",
+    "status": "completed",
+    "channelId": "fixture-channel-portia-1",
+    "threadId": "00000000-0000-4000-8000-000000000031",
+    "attachments": [
+      {
+        "name": "subscription-agreement.txt",
+        "via": "upload"
+      }
+    ],
+    "events": [
+      {
+        "type": "user",
+        "text": "[attached: subscription-agreement.txt] Can I sign?\n[file: subscription-agreement.txt]"
+      },
+      {
+        "type": "assistant",
+        "text": "Red: do not sign as it is. Biggest reason: it renews for 24 months at a time unless you cancel 90 days before the end, while the supplier can raise prices whenever it likes.\n\nJurisdiction used: the Netherlands. Clause 9.1 applies the law of the Supplier's registered office, which the first page puts in Utrecht.\n\n| Severity | Clause | Plain meaning | Change to ask for |\n|---|---|---|---|\n| High | 2.2 \"At the end of the initial term and of each renewal term, this Agreement renews automatically for a further term of 24 months, unless the Customer gives written notice of cancellation at least 90 days before the end of the then-current term.\" | Miss one date and you are tied in for two more years. | Renewal for 12 months, with 30 days' notice. |\n| High | 3.2 \"The Supplier may change the fees at its discretion at any time by publishing new prices on its website. New prices apply from the next invoice.\" | The price can go up at any time, with no notice and no way out. | Increases only at renewal, with 60 days' notice and a right to cancel. |\n| Medium | 6.1 \"The Supplier's total liability under or in connection with this Agreement is limited to the fees paid by the Customer in the one month before the event that gave rise to the claim.\" | If the service fails, the most you recover is one month's fee, 290 EUR. | Twelve months of fees. |\n| Medium | 8.1 \"The Supplier may amend these terms by sending an email to the Customer. Continued use of the Service after 14 days means the Customer accepts the amended terms.\" | They can change the contract by email. | Changes only with your written agreement. |\n\nMissing: no service levels or uptime promise; no way to export your data before it is deleted (clause 5.2 only says 30 days).\n\nWhether Dutch rules on unfair standard terms protect a business customer here is to be verified.\n\nThis is a first review, not legal advice. For important decisions, consult a qualified lawyer in your jurisdiction.\n\nOutcome: done\nDone: reviewed all nine clauses of the Brightquay subscription agreement\nEvidence: clauses 2.2, 3.2, 6.1 and 8.1 quoted word for word above, from subscription-agreement.txt\nNot done and why: nothing\nAlready sent, paid, booked, published or deleted: nothing\nNext step: ask Brightquay for the four changes, or say if you want the negotiation email"
+      }
+    ]
+  },
+  "grader": "{\"checks\": [{\"id\": \"must-1\", \"holds\": true, \"reason\": \"It names the Netherlands and why, from clause 9.1 and the first page.\"}, {\"id\": \"must-2\", \"holds\": true, \"reason\": \"The first line is Red with the renewal and price-change reason.\"}, {\"id\": \"must-3\", \"holds\": true, \"reason\": \"A table with severity, word-for-word quotes with clause numbers, meaning and changes.\"}, {\"id\": \"must-4\", \"holds\": true, \"reason\": \"Clauses 2.2 and 3.2 are flagged high.\"}, {\"id\": \"must-5\", \"holds\": true, \"reason\": \"The not-legal-advice sentence closes the review, right before the report.\"}]}"
+}

@@ -1,0 +1,19 @@
+{
+  "case": "otto-4",
+  "expect": "skipped",
+  "note": "Fictional. The runner read Otto's tools before the case and found no Gmail tool, so it did not run the case: otto-4 requires gmail and is reported as \"skipped: needs Gmail\", not failed.",
+  "transcript": {
+    "caseId": "otto-4",
+    "member": "inbox",
+    "engine": "fake",
+    "status": "completed",
+    "tools": [
+      {
+        "name": "google-drive__search_files",
+        "description": "Searches the files in Google Drive."
+      }
+    ],
+    "events": []
+  },
+  "grader": "{\"checks\": []}"
+}

@@ -1,0 +1,24 @@
+Portia's review of the Tidewell cleaning services agreement, for review before it reaches the person.
+
+--- Brief from Iris to Portia ---
+First-pass review of the attached Tidewell services agreement. Can the person sign?
+
+--- Portia's review ---
+Amber: sign after the changes below. Biggest reason: the notice period to stop the renewal is easy to miss.
+Jurisdiction used: England and Wales (clause 11.1).
+
+| Severity | Clause | Plain meaning | Change to ask for |
+|---|---|---|---|
+| High | 7.2 "Either party may end this Agreement at the end of a term by giving at least 60 days' written notice." | To stop the yearly renewal you must give notice two months before the end. | Ask for 30 days' notice. |
+| Medium | 8.1 "The Provider's liability is limited to the fees paid in the previous three months." | If something goes wrong, you can recover at most three months of fees. | Ask for twelve months. |
+
+Missing: no service levels for missed cleans.
+
+This is a first review, not legal advice. For important decisions, consult a qualified lawyer in your jurisdiction.
+
+Outcome: done
+Done: reviewed the agreement.
+Evidence: clauses 7.2 and 8.1 quoted above.
+Not done and why: nothing
+Already sent, paid, booked, published or deleted: nothing
+Next step: Vera's review.

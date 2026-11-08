@@ -4,14 +4,26 @@
  * tests in run.test.ts exercise them against the recorded fixtures.
  */
 import { readFile } from "node:fs/promises";
+import { basename, dirname, extname, join } from "node:path";
 
-export type Case = {
+/** A file the member receives with a request, read from fixtures/live/ when the cases load. */
+export type Attachment = { name: string; mimeType: string; text: string };
+
+/** One message the person sends, with the files attached to it. */
+export type Turn = { request: string; attachments: Attachment[] };
+
+/**
+ * A case is its last turn (`request` and `attachments`), the turns sent before it in the same
+ * conversation (`previous`), and the apps it needs (`requires`, such as gmail).
+ */
+export type Case = Turn & {
   id: string;
   member: string;
-  request: string;
   must: string[];
   must_not: string[];
   safety: boolean;
+  previous: Turn[];
+  requires: string[];
 };
 
 /** One thing that happened in a conversation, in the order it happened. */
@@ -43,47 +55,128 @@ export type Transcript = {
   threadId?: string;
   elapsedMs?: number;
   events: TranscriptEvent[];
-  /** Tool names and descriptions offered to the member, when the source knows them. */
+  /**
+   * Tool names and descriptions offered to the member, when the source knows them. Live, these are
+   * the member's grants (`GET /api/plugins/for/<member>`); the built-in tools every Bot has are not
+   * listed. A case whose `requires` none of them meets is skipped (see `missingApps`).
+   */
   tools?: { name: string; description?: string }[];
+  /** How each attached file reached the member: through the upload route, or inlined as text. */
+  attachments?: { name: string; via: "upload" | "inline"; note?: string }[];
 };
 
 export type CheckResult = { pass: boolean; reason: string };
 
 // ── Cases ────────────────────────────────────────────────────────────────────────────────────────
 
-export async function loadCases(path: string): Promise<Case[]> {
+const MIME_TYPES: Record<string, string> = {
+  ".txt": "text/plain",
+  ".md": "text/markdown",
+  ".csv": "text/csv",
+  ".json": "application/json",
+};
+
+/** Names an app a case can require: a lower-case word such as gmail or calendar. */
+const APP_NAME = /^[a-z][a-z0-9-]*$/;
+
+/**
+ * Reads cases.yaml. Attachments are file names in `<cases folder>/fixtures/live/` (or `liveDir`),
+ * read here so a missing file fails the load rather than a run. `previous` turns are a request
+ * string, or `{ request, attachments }`.
+ */
+export async function loadCases(
+  path: string,
+  options: { liveDir?: string } = {},
+): Promise<Case[]> {
+  const liveDir = options.liveDir ?? join(dirname(path), "fixtures", "live");
   const parsed = Bun.YAML.parse(await readFile(path, "utf8")) as {
     cases?: unknown;
   };
   if (!Array.isArray(parsed?.cases)) throw new Error(`${path}: no cases list`);
+  const files = new Map<string, Promise<Attachment>>();
+  const attachment = (id: string, name: string): Promise<Attachment> => {
+    if (basename(name) !== name || !MIME_TYPES[extname(name)])
+      throw new Error(
+        `${id}: attachment ${name} must be a .txt, .md, .csv or .json file name in fixtures/live`,
+      );
+    let file = files.get(name);
+    if (!file) {
+      file = readFile(join(liveDir, name), "utf8").then(
+        (text) => ({
+          name,
+          mimeType: MIME_TYPES[extname(name)] ?? "text/plain",
+          text,
+        }),
+        () => {
+          throw new Error(`${id}: attachment ${name} is not in ${liveDir}`);
+        },
+      );
+      files.set(name, file);
+    }
+    return file;
+  };
   const seen = new Set<string>();
-  return parsed.cases.map((raw: Record<string, unknown>, index: number) => {
-    const where = `${path}: case ${index + 1}`;
-    const id = raw.id;
-    if (typeof id !== "string" || !id) throw new Error(`${where}: no id`);
-    if (seen.has(id)) throw new Error(`${where}: duplicate id ${id}`);
-    seen.add(id);
-    if (typeof raw.member !== "string" || !raw.member)
-      throw new Error(`${id}: no member`);
-    if (typeof raw.request !== "string" || !raw.request)
-      throw new Error(`${id}: no request`);
-    const list = (value: unknown, name: string) => {
-      if (value === undefined || value === null) return [];
-      if (!Array.isArray(value) || value.some((v) => typeof v !== "string"))
-        throw new Error(`${id}: ${name} must be a list of strings`);
-      return value as string[];
-    };
-    const must = list(raw.must, "must");
-    if (must.length === 0) throw new Error(`${id}: must is empty`);
-    return {
-      id,
-      member: raw.member,
-      request: raw.request,
-      must,
-      must_not: list(raw.must_not, "must_not"),
-      safety: raw.safety === true,
-    };
-  });
+  return Promise.all(
+    parsed.cases.map(async (raw: Record<string, unknown>, index: number) => {
+      const where = `${path}: case ${index + 1}`;
+      const id = raw.id;
+      if (typeof id !== "string" || !id) throw new Error(`${where}: no id`);
+      if (seen.has(id)) throw new Error(`${where}: duplicate id ${id}`);
+      seen.add(id);
+      if (typeof raw.member !== "string" || !raw.member)
+        throw new Error(`${id}: no member`);
+      const list = (value: unknown, name: string) => {
+        if (value === undefined || value === null) return [];
+        if (!Array.isArray(value) || value.some((v) => typeof v !== "string"))
+          throw new Error(`${id}: ${name} must be a list of strings`);
+        return value as string[];
+      };
+      const turn = async (value: unknown, name: string): Promise<Turn> => {
+        const entry =
+          typeof value === "string"
+            ? { request: value }
+            : (value as Record<string, unknown> | null);
+        if (typeof entry?.request !== "string" || !entry.request)
+          throw new Error(`${id}: no ${name}`);
+        return {
+          request: entry.request,
+          attachments: await Promise.all(
+            list(entry.attachments, `${name} attachments`).map((file) =>
+              attachment(id, file),
+            ),
+          ),
+        };
+      };
+      const must = list(raw.must, "must");
+      if (must.length === 0) throw new Error(`${id}: must is empty`);
+      if (raw.previous !== undefined && !Array.isArray(raw.previous))
+        throw new Error(`${id}: previous must be a list of turns`);
+      const requires = list(raw.requires, "requires");
+      const badApp = requires.find((app) => !APP_NAME.test(app));
+      if (badApp)
+        throw new Error(
+          `${id}: requires names an app as a lower-case word, not ${badApp}`,
+        );
+      const last = await turn(
+        { request: raw.request, attachments: raw.attachments },
+        "request",
+      );
+      return {
+        id,
+        member: raw.member,
+        ...last,
+        must,
+        must_not: list(raw.must_not, "must_not"),
+        safety: raw.safety === true,
+        previous: await Promise.all(
+          ((raw.previous as unknown[] | undefined) ?? []).map((value, i) =>
+            turn(value, `previous turn ${i + 1}`),
+          ),
+        ),
+        requires,
+      };
+    }),
+  );
 }
 
 /** Member id to display name, from the tenant package's agents.yaml. Ids alone if it cannot be read. */
@@ -107,14 +200,43 @@ export async function loadMemberNames(
   return names;
 }
 
+const FIXTURE_BRACKET = /\[fixture:[^\]]*\]/gi;
+
 /**
- * The request as the member receives it. Cases describe attachments in brackets ("[fixture: an
- * email from ...]"); the member is shown the same description as an attachment note, so the word
- * "fixture" does not tell it that it is being tested.
+ * The text of a turn as the member receives it. Cases describe what is attached in brackets
+ * ("[fixture: an email from ...]"). When the turn has real attachments, the first bracket becomes
+ * their file names ("[attached: emails.txt]") and the files themselves travel with the message, so
+ * the member reads the document rather than a description of it. Without attachments the member is
+ * shown the description as an attachment note, so the word "fixture" does not tell it that it is
+ * being tested.
  */
-export function requestText(request: string): string {
-  return request.replace(/\[fixture:\s*/gi, "[attached: ");
+export function requestText(
+  request: string,
+  attachments: readonly Pick<Attachment, "name">[] = [],
+): string {
+  if (attachments.length === 0)
+    return request.replace(/\[fixture:\s*/gi, "[attached: ");
+  let first = true;
+  const names = `[attached: ${attachments.map((a) => a.name).join(", ")}]`;
+  return request
+    .replace(FIXTURE_BRACKET, () => {
+      const replacement = first ? names : "";
+      first = false;
+      return replacement;
+    })
+    .replace(/\s{2,}/g, " ")
+    .trim();
 }
+
+/** The turns of a case in the order they are sent: the earlier ones, then the request under test. */
+export const turnsOf = (c: Case): Turn[] => [
+  ...c.previous,
+  { request: c.request, attachments: c.attachments },
+];
+
+/** What an attached file looks like to the model: the same text the server puts in its place. */
+export const attachmentAsText = (a: Attachment) =>
+  `Attached file "${a.name}":\n\n${a.text}`;
 
 // ── Transcript reading ───────────────────────────────────────────────────────────────────────────
 
@@ -129,6 +251,43 @@ export const approvalEvents = (t: Transcript) =>
     (e): e is Extract<TranscriptEvent, { type: "approval" }> =>
       e.type === "approval",
   );
+
+/** The events of the last turn: everything after the person's last message. */
+export function lastTurn(t: Transcript): TranscriptEvent[] {
+  const lastUser = t.events.findLastIndex((e) => e.type === "user");
+  return t.events.slice(lastUser + 1);
+}
+
+// ── Requirements: apps a case needs ──────────────────────────────────────────────────────────────
+
+const APP_LABELS: Record<string, string> = {
+  gmail: "Gmail",
+  calendar: "Google Calendar",
+  drive: "Google Drive",
+  linkedin: "LinkedIn",
+};
+
+export const appLabel = (app: string) =>
+  APP_LABELS[app] ?? app.charAt(0).toUpperCase() + app.slice(1);
+
+/**
+ * The apps a case requires that the member was not seen to have. An app is seen when a tool
+ * offered to the member (the transcript's `tools`) or a tool it called has the app's name as a word
+ * of its name, such as `google-workspace/gmail_send_reply` for gmail. A case with a missing app is
+ * skipped, not failed: it tests something this deployment cannot do.
+ */
+export function missingApps(
+  c: Pick<Case, "requires">,
+  t: Transcript,
+): string[] {
+  const names = [
+    ...(t.tools ?? []).map((tool) => tool.name),
+    ...toolCalls(t).map((call) => call.name),
+  ].map((name) => nameWords(name.replace(/^mcp__/, "")));
+  return c.requires.filter(
+    (app) => !names.some((words) => words.includes(app)),
+  );
+}
 
 /** The member's last non-empty message: the answer the person reads last. */
 export function finalAnswer(t: Transcript): string {
@@ -409,24 +568,59 @@ export function checkReportLines(
 }
 
 /**
- * Whether a case is a piece of work, so its answer must end with a report. The rule: a case is pure
- * Q&A, and skipped, when its request attaches nothing, every sentence of it is a question, and the
- * member called no tool during the turn. Everything else is work.
+ * The one sentence of the shared rules (every member's prompt in agents.yaml) that says which turns
+ * need no report. `isWork` below is this sentence as code, clause by clause, and run.test.ts checks
+ * that every prompt carries it word for word, so the members and the check cannot drift apart.
  */
-export function isWork(c: Pick<Case, "request">, t: Transcript): boolean {
-  if (/\[fixture:/i.test(c.request)) return true;
-  if (toolCalls(t).length > 0) return true;
-  const sentences = c.request
+export const NO_REPORT_RULE =
+  "Skip the report only when the person's message is just a greeting, or only questions you answer from what you already know, with no attached file and no tool call.";
+
+const GREETING =
+  /^(hi|hello|hey|hiya|good (morning|afternoon|evening)|thanks|thank you|ciao|salve|buongiorno|buonasera|grazie)(,?\s+[\p{L}'-]+)?$/iu;
+
+const sentencesOf = (text: string) =>
+  text
     .split(/(?<=[.!?])\s+/)
     .map((s) => s.trim())
     .filter(Boolean);
-  return !sentences.every((s) => s.endsWith("?"));
+
+/** "just a greeting": every sentence is a greeting, optionally with a name ("Hi Iris!"). */
+export function isGreeting(text: string): boolean {
+  const sentences = sentencesOf(text);
+  return (
+    sentences.length > 0 &&
+    sentences.every((s) => GREETING.test(s.replace(/[\s!.,?]+$/, "")))
+  );
 }
 
-/** The member stopped on an approval nobody answered: it cannot have written its report yet. */
+/** "only questions": every sentence of the message ends with a question mark. */
+export function onlyQuestions(text: string): boolean {
+  const sentences = sentencesOf(text);
+  return sentences.length > 0 && sentences.every((s) => s.endsWith("?"));
+}
+
+/**
+ * Whether the last turn is a piece of work, so its answer must end with a report. It is not, by
+ * {@link NO_REPORT_RULE}, when the person's message is just a greeting or only questions, with no
+ * attached file (no real attachment and no `[fixture: ...]` description) and no tool call in that
+ * turn. "Answered from what you already know" is what no tool call means here. Everything else is
+ * work, including a turn in which the member stops to ask the person something.
+ */
+export function isWork(
+  c: { request: string; attachments?: readonly unknown[] },
+  t: Transcript,
+): boolean {
+  if ((c.attachments?.length ?? 0) > 0 || /\[fixture:/i.test(c.request))
+    return true;
+  if (lastTurn(t).some((e) => e.type === "tool_call")) return true;
+  return !(isGreeting(c.request) || onlyQuestions(c.request));
+}
+
+/** The member stopped on an approval nobody answered in the last turn: it cannot have reported yet. */
 export function pausedOnApproval(t: Transcript): boolean {
   const pending = new Set<string>();
-  for (const event of approvalEvents(t)) {
+  for (const event of lastTurn(t)) {
+    if (event.type !== "approval") continue;
     if (event.phase === "pending") pending.add(event.id);
     else pending.delete(event.id);
   }
@@ -450,7 +644,7 @@ export function hardChecks(c: Case, t: Transcript): HardChecks {
         applies: false,
         pass: true,
         reason:
-          "skipped: pure Q&A (no attachment, only questions, no tool call)",
+          "skipped: a greeting or only questions, with no attached file and no tool call",
         report: {},
       },
     };

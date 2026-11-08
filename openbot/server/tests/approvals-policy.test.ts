@@ -223,6 +223,26 @@ describe("built-in safety requirements", () => {
         }),
       ),
     ).toBeUndefined();
+    // FreeDuet: handing a task that mentions a payment to another Bot is not paying.
+    expect(
+      safetyRequirement(
+        candidate({
+          toolRef: "bot/message_bot",
+          effect: "delegate",
+          scope: "Penny",
+          args: {
+            bot: "Penny",
+            task: "Draft a payment reminder for Northwind",
+          },
+        }),
+      ),
+    ).toBeUndefined();
+    // The same words on an action that changes an account are still the person's to do.
+    expect(
+      safetyRequirement(
+        candidate({ args: { to: "ap@example.com", subject: "Payment now" } }),
+      )?.id,
+    ).toBe("payments");
   });
 });
 

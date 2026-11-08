@@ -1,15 +1,26 @@
 """The team member a run is for, and its prompt, from the tenant package's agents.yaml (D2, D3).
 
 Neither the URL nor the body names the agent, so the member is the one OpenBot says it is in
-`forwardedProps.openbotBotId`, and the standing-role message OpenBot puts first in every run
-(`standing-role:<id>`, server/src/copilot.ts) must agree. A run where the two disagree is refused:
-running one member's prompt under another member's grants is the mistake this check exists for.
+`forwardedProps.openbotBotId`. That value is trusted: OpenBot's own middleware sets it on every run
+(server/src/copilot.ts, runWith) and only OpenBot reaches this service, over the managed endpoint
+with `x-openbot-agent-token` (app.py refuses anything else). A run with no bot id is refused.
 
-Only `id` and `system_prompt` are read from each row. The others (`type`, `endpoint`) hold
-`${...}` placeholders for the server to expand and mean nothing here.
+OpenBot also sends the Bot's standing role as a system message with id `standing-role:<id>`. It is
+NOT always first: other OpenBot middleware runs inside the one that adds it and puts its own system
+rows in front (`openbot:personal-memory`, `openduet:channel`, `openbot:learned-skills`). A browser
+chat clones the agent and loses those rows, so the role happened to be first there; a Bot-to-Bot hop
+(agents/handoff-delivery.ts) builds the agent without cloning and keeps them, so the role is second
+or third (tests/fixtures/handoff_hop_run.json, recorded from the server's own wiring by
+server/tests/freeduet-handoff.test.ts). This Bot's role is therefore found wherever it is.
+
+A standing role or holdings row that names ANOTHER Bot is never this member's instructions:
+transcript.py quotes it as context, outside the system prompt.
+
+Only `id` and `system_prompt` are read from each row of agents.yaml. The others (`type`, `endpoint`)
+hold `${...}` placeholders for the server to expand and mean nothing here.
 
 A Bot a person created in the app is not in agents.yaml but still reaches this endpoint, since it
-falls back to the managed one. Its prompt is its standing role, which OpenBot sends first.
+falls back to the managed one. Its prompt is its standing role.
 """
 
 import os
@@ -20,6 +31,10 @@ import yaml
 
 DEFAULT_AGENTS_FILE = "/app/tenant/agents.yaml"
 STANDING_ROLE_PREFIX = "standing-role:"
+# OpenBot's per-Bot system rows: the role (copilot.ts, standingRoleMessage) and what it holds
+# (copilot.ts, holdingsMessageFor). Each carries the Bot's id after the colon.
+BOT_ROW_PREFIXES = (STANDING_ROLE_PREFIX, "granted-tools:")
+SYSTEM_ROLES = {"system", "developer"}
 
 
 class MemberError(Exception):
@@ -64,22 +79,49 @@ def load_prompts(path: Path | None = None) -> dict[str, str]:
     return prompts
 
 
-def _standing_role(bot_id: str, messages: list[dict]) -> str | None:
-    """The standing role's text when messages[0] is this Bot's, else None."""
-    first = messages[0] if messages else {}
-    if first.get("id") != f"{STANDING_ROLE_PREFIX}{bot_id}":
+def bot_row_owner(message: dict) -> str | None:
+    """The Bot an OpenBot per-Bot system row belongs to (`standing-role:<id>`, `granted-tools:<id>`),
+    or None for any other message."""
+    message_id = message.get("id")
+    if message.get("role") not in SYSTEM_ROLES or not isinstance(message_id, str):
         return None
-    content = first.get("content")
-    return content.strip() if isinstance(content, str) else ""
+    for prefix in BOT_ROW_PREFIXES:
+        if message_id.startswith(prefix):
+            return message_id[len(prefix):]
+    return None
+
+
+def is_other_bots_row(message: dict, bot_id: str) -> bool:
+    """A standing role or holdings row that names a Bot other than `bot_id`."""
+    owner = bot_row_owner(message)
+    return owner is not None and owner != bot_id
+
+
+def _text(content) -> str:
+    if isinstance(content, str):
+        return content
+    if isinstance(content, list):
+        return "\n".join(
+            part["text"]
+            for part in content
+            if isinstance(part, dict) and part.get("type") == "text" and isinstance(part.get("text"), str)
+        )
+    return ""
+
+
+def standing_role(bot_id: str, messages: list[dict]) -> str | None:
+    """This Bot's standing role, wherever OpenBot put it; None when the run carries none."""
+    wanted = f"{STANDING_ROLE_PREFIX}{bot_id}"
+    for message in messages:
+        if message.get("id") == wanted and message.get("role") in SYSTEM_ROLES:
+            return _text(message.get("content")).strip()
+    return None
 
 
 def resolve_member(bot_id: str, messages: list[dict], path: Path | None = None) -> Member:
     if not bot_id:
         raise MemberError("This run did not say which team member it is for.")
-    standing = _standing_role(bot_id, messages)
-    if standing is None:
-        raise MemberError("This run's standing role does not match the team member it names, so it was not run.")
-    prompt = load_prompts(path).get(bot_id) or standing
+    prompt = load_prompts(path).get(bot_id) or standing_role(bot_id, messages) or ""
     if not prompt:
         raise MemberError("This team member has no instructions, so it was not run.")
     return Member(id=bot_id, system_prompt=prompt)

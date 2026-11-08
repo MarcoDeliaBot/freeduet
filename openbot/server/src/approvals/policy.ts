@@ -134,6 +134,10 @@ export function safetyRequirement(
 ): { id: string; reason: string } | undefined {
   if (candidate.effect === "read") return undefined;
   if (NOT_ACCOUNT_ACTIONS.test(candidate.toolRef)) return undefined;
+  // FreeDuet: handing a piece of work to another Bot is not an account action. "Draft a payment
+  // reminder" sent to the bookkeeper is not a payment, and the Bot it reaches meets this same check
+  // on every tool it then calls. Auto-review still reads the hand-off with the person's request.
+  if (candidate.effect === "delegate") return undefined;
   const words = [
     candidate.toolRef,
     candidate.scope,

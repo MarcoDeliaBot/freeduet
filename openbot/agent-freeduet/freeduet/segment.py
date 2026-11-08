@@ -14,6 +14,12 @@ then the call) and carry the CLI's own call id.
   under its own approval gate and POSTs again with the result.
 - Iris's own tools (iris_tools.py: team log and lessons) are answered here and never announced:
   they do not end the segment and never reach OpenBot. Other members are not offered them.
+- A hand-off (`message_bot`) the callback refused only because its approval had to be asked for
+  (OpenBot's approval gate cannot ask from that route) is never answered to the CLI: the segment
+  ends, so the CLI can neither retry it nor say it went out, and the person is asked, in the
+  conversation, for that exact hand-off (who and what). Their "yes" starts a new run in which the
+  member asks again. On a FreeDuet server the member's `message_bot` is not a callback tool at all
+  (server/src/freeduet/coordination.ts), so this only happens against a server without that change.
 
 Before the transcript is rendered, a run for Iris activates the lessons the person approved in it
 (lessons.py has the rule), and every member's active lessons join its system text.
@@ -30,7 +36,7 @@ from pathlib import Path
 from . import agui, claude_cli, iris_tools, lessons, team_log, transcript
 from .agui import RunInput
 from .bridge import ipc
-from .bridge.callback import call_deployment_tool
+from .bridge.callback import HANDOFF_TOOL, call_deployment_tool, needs_the_person
 from .members import Member
 from .stream_json import Final, MessageStart, StreamParser, TextDelta, ToolUse
 
@@ -71,6 +77,39 @@ class _Text:
             return []
         closing, self.open = self.open, None
         return [agui.text_end(closing)]
+
+
+def _one_line(value) -> str:
+    return " ".join(str(value or "").split())
+
+
+def handoff_needs_person(blocked: list[tuple[dict, str]]) -> str:
+    """What the person is told when hand-offs could not be sent because they need their approval
+    and this route cannot ask: who and what, and how to go on. Closes with the member's report."""
+    lines = [
+        "I have not handed this over yet: OpenBot's approval check wants your OK for it and could not "
+        "ask you from here, so nothing was sent.",
+        "",
+    ]
+    for arguments, _ in blocked:
+        bot = _one_line(arguments.get("bot")) or "a colleague"
+        task = _one_line(arguments.get("task")) or "(no task given)"
+        lines.append(f"Hand-off to {bot}: {task}")
+        constraints = _one_line(arguments.get("constraints"))
+        if constraints:
+            lines.append(f"Constraints: {constraints}")
+    lines += [
+        "",
+        'Reply "yes" and I will ask again from this conversation, or tell me what to change.',
+        "",
+        "Outcome: needs you",
+        "Done: nothing",
+        f"Evidence: OpenBot answered: {_one_line(blocked[0][1])}",
+        "Not done and why: the hand-off above, because it needs your approval and this route cannot ask for it",
+        "Already: nothing",
+        'Next step: your "yes", or a change to the hand-off',
+    ]
+    return "\n".join(lines)
 
 
 async def _later(delay: float, inbox: asyncio.Queue, item: tuple) -> None:
@@ -203,6 +242,17 @@ async def _drive(run: RunInput, offered: set[str], inbox: asyncio.Queue, parser:
     waiting: list[ipc.BridgeCall] = []  # bridge calls whose tool_use line has not been read yet
     in_flight = 0  # deployment calls running
     handed = 0  # calls left for OpenBot to run
+    blocked: list[tuple[dict, str]] = []  # hand-offs that need the person (arguments, refusal)
+
+    def ask_the_person() -> list[dict]:
+        message_id = agui.new_id("msg-")
+        return [
+            *text.close(),
+            agui.text_start(message_id),
+            agui.text_content(message_id, handoff_needs_person(blocked)),
+            agui.text_end(message_id),
+            agui.run_finished(run),
+        ]
 
     def claim(call: ipc.BridgeCall) -> ToolUse | None:
         for use in seen:
@@ -258,6 +308,10 @@ async def _drive(run: RunInput, offered: set[str], inbox: asyncio.Queue, parser:
                         for event in announce(call, use):
                             yield event
             elif isinstance(payload, Final):
+                if blocked:
+                    for event in ask_the_person():
+                        yield event
+                    return
                 for event in text.close():
                     yield event
                 failure = None if handed else claude_cli.failure_event(parser)
@@ -289,10 +343,17 @@ async def _drive(run: RunInput, offered: set[str], inbox: asyncio.Queue, parser:
         elif kind == "deployed":
             call, call_id, reply = payload
             in_flight -= 1
-            call.answer(reply)
+            if call.name == HANDOFF_TOOL and needs_the_person(reply):
+                blocked.append((call.arguments, reply.text))  # never answered to the CLI
+            else:
+                call.answer(reply)
             for event in text.close():
                 yield event
             yield agui.tool_call_result(call_id, reply.text)
+            if blocked and in_flight == 0:
+                for event in ask_the_person():
+                    yield event
+                return
             if handed:
                 spawn(_later(SETTLE_SECONDS, inbox, ("settle", None)))
 
@@ -304,6 +365,10 @@ async def _drive(run: RunInput, offered: set[str], inbox: asyncio.Queue, parser:
                 return
 
         elif kind == "eof":
+            if blocked:
+                for event in ask_the_person():
+                    yield event
+                return
             for event in text.close():
                 yield event
             yield agui.run_finished(run) if handed else await failed_exit()

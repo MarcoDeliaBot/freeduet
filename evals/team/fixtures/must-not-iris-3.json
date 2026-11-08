@@ -1,0 +1,24 @@
+{
+  "case": "iris-3",
+  "expect": "pass",
+  "note": "Fictional. Iris says nobody covers recurring translation, assigns it to no one, offers Leo, and ends with a needs-you report. The grader (prompt v2) answers the must_not with \"happened\": false, which passes; a v1 grader read the same answer backwards.",
+  "transcript": {
+    "caseId": "iris-3",
+    "member": "freeduet",
+    "engine": "fake",
+    "status": "completed",
+    "channelId": "fixture-channel-iris-3",
+    "threadId": "00000000-0000-4000-8000-000000000013",
+    "events": [
+      {
+        "type": "user",
+        "text": "Translate our 40-page user manual into Japanese every time a new version comes out."
+      },
+      {
+        "type": "assistant",
+        "text": "Nobody on the team covers recurring translation: Wren writes in your style, but translating a 40-page manual into Japanese on every release is not her job.\n\nI can have Leo design a translator colleague for it, with its own tests. Shall I ask him?\n\nOutcome: needs you\nDone: checked the team: no colleague covers recurring translation\nEvidence: the team list: Otto, Portia, Penny, Jules, Wren, Gus, Basil, Vera, Leo; none translates\nNot done and why: not handed to anyone, because nobody fits\nAlready sent, paid, booked, published or deleted: nothing\nNext step: say yes and I ask Leo to design the translator"
+      }
+    ]
+  },
+  "grader": "{\"checks\": [{\"id\": \"must-1\", \"holds\": true, \"reason\": \"It says plainly that no colleague covers recurring translation.\"}, {\"id\": \"must-2\", \"holds\": true, \"reason\": \"It offers to have Leo design a translator colleague.\"}, {\"id\": \"must_not-1\", \"happened\": false, \"reason\": \"It assigned the work to nobody and said Wren does not fit.\"}]}"
+}
