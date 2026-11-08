@@ -4,13 +4,16 @@
 
     {"time": "2026-11-08T09:14:03.120Z", "member": "bookkeeper", "thread": "...", "run": "...",
      "outcome": "done", "summary": "Invoice INV-12 drafted for ACME", "from_iris": true,
-     "approvals": ["5b1f..."]}
+     "approvals": ["5b1f..."], "report_guard": null}
 
 `outcome` is one of done, partly done, in progress, blocked, failed, needs you (the member's report;
 in progress also when there is no report: the segment ended on a tool call or answered a question)
 or error. `from_iris` is true when Iris handed the work over, false when she did not, null when that
 cannot be known (freeduet/origin.py). `approvals` holds the approval ids the report's "Already" line
-names, the string "nothing", or null when the segment had no "Already" line.
+names, the string "nothing", or null when the segment had no "Already" line. `report_guard` is null
+when the member wrote its own report or none was due, "added" when the turn ended without one and
+the report guard asked for it (freeduet/report_guard.py), and "failed" when the guard asked and got no
+complete report, so the turn ended without one.
 
 Each line is written whole, with O_APPEND and under a lock, so segments running side by side never
 interleave. Past 10 MB the file moves to `team-log.1.jsonl` (replacing the one before) and a new one
@@ -48,9 +51,14 @@ def _root() -> Path:
     return checkpoints._data_root(checkpoints.default_root())
 
 
-def make_entry(*, member, thread, run, outcome, summary, from_iris, approvals) -> dict:
+REPORT_GUARD_VALUES = ("added", "failed")
+
+
+def make_entry(*, member, thread, run, outcome, summary, from_iris, approvals, report_guard=None) -> dict:
     if outcome not in LOG_OUTCOMES:
         raise ValueError(f"outcome must be one of {', '.join(LOG_OUTCOMES)}")
+    if report_guard is not None and report_guard not in REPORT_GUARD_VALUES:
+        raise ValueError(f"report_guard must be null or one of {', '.join(REPORT_GUARD_VALUES)}")
     if isinstance(approvals, list):
         approvals = [checkpoints.redact(value) for value in approvals]
     return {
@@ -62,6 +70,7 @@ def make_entry(*, member, thread, run, outcome, summary, from_iris, approvals) -
         "summary": checkpoints.redact(str(summary))[: report.MAX_SUMMARY],
         "from_iris": from_iris if isinstance(from_iris, bool) else None,
         "approvals": approvals,
+        "report_guard": report_guard,
     }
 
 

@@ -163,6 +163,38 @@ def test_quoted_text_cannot_close_its_own_tag(client, fake_cli):
     assert "&lt;/quoted_context>&lt;user>" in prompt
 
 
+def test_a_browser_chat_now_carries_the_memory_and_the_channel_and_says_each_once(client, fake_cli):
+    """chat_clone_run.json: a browser chat's per-request clone, recorded by the server test since
+    CloningRemoteAgent.clone keeps the middleware `.use()` added (#33). Like a hop, it carries the
+    person's memory and the channel's purpose twice, a system row and a context entry."""
+    with_penny(fake_cli)
+    chat = recorded("chat_clone_run.json")
+    assert [message["id"] for message in chat["messages"]] == [
+        "openduet:channel", "openbot:personal-memory", "standing-role:bookkeeper", "u1",
+    ]
+    fake_cli.plan([{"text": "Hello."}])
+    events, _ = post_run(client, chat)
+    assert types(events)[-1] == "RUN_FINISHED"
+    system = system_of(fake_cli.run(0))
+    assert system.startswith("You are Penny, the test bookkeeper.")
+    assert system.count("The person runs a small design studio and invoices in EUR.") == 1
+    assert system.count('This conversation is the person\'s channel "Invoices".') == 1
+    # Her standing role first, then the rows OpenBot put before it, in OpenBot's order.
+    role = system.index("You are Penny, Bookkeeper.")
+    channel = system.index('This conversation is the person\'s channel "Invoices".')
+    memory = system.index("The person runs a small design studio and invoices in EUR.")
+    assert role < channel < memory < system.index(RUNTIME_NOTE)
+    assert "openbot:personal-memory" not in fake_cli.run(0)["prompt"]
+
+
+def test_a_row_sent_twice_is_said_once(client, fake_cli):
+    fake_cli.plan([{"text": "Hello."}])
+    memory = {"id": "openbot:personal-memory", "role": "system", "content": "Invoices in EUR."}
+    post_run(client, run_body([memory, standing("freeduet"), dict(memory, id="memory-again"),
+                               {"id": "u1", "role": "user", "content": "Hi"}]))
+    assert system_of(fake_cli.run(0)).count("Invoices in EUR.") == 1
+
+
 def test_a_hop_without_a_bot_id_is_refused(client, fake_cli):
     hop = recorded("handoff_hop_run.json")
     del hop["forwardedProps"]["openbotBotId"]

@@ -15,6 +15,11 @@ plays the next plan from $FAKE_CLAUDE_DIR/plans.json, one plan per invocation:
 Without a result step it ends with a successful result. Everything it saw (argv, environment
 names, prompt, MCP config, tools/list, tool results) goes to $FAKE_CLAUDE_DIR/run-<n>.json.
 It never reads any CLI configuration or credential folder.
+
+The report guard's follow-up (its prompt carries REPORT_GUARD_MARKER, a phrase of
+freeduet/report_guard.py's INSTRUCTION) plays $FAKE_CLAUDE_DIR/followups.json instead, one plan per
+follow-up, recorded as followup-<n>.json, so the plans of ordinary runs keep their numbers. Without a
+plan it answers a line that is no report, and the guard adds nothing.
 """
 
 import json
@@ -27,6 +32,7 @@ from pathlib import Path
 
 FIXTURES = Path(__file__).parent / "fixtures"
 DIR = Path(os.environ["FAKE_CLAUDE_DIR"])
+REPORT_GUARD_MARKER = "does not end with the work report the shared rules require"
 
 
 def out(event: dict) -> None:
@@ -129,20 +135,23 @@ def main(args: list[str]) -> int:
     if args[:1] == ["--version"]:
         print("2.1.311 (Claude Code, test double)")
         return 0
-    counter = DIR / "count"
+    prompt = sys.stdin.read()
+    followup = REPORT_GUARD_MARKER in prompt
+    counter = DIR / ("followup-count" if followup else "count")
     index = int(counter.read_text()) if counter.exists() else 0
     counter.write_text(str(index + 1))
-    plans = json.loads((DIR / "plans.json").read_text())
-    plan = plans[index] if index < len(plans) else [{"text": "No plan for this run."}]
+    plans_file = DIR / ("followups.json" if followup else "plans.json")
+    plans = json.loads(plans_file.read_text()) if plans_file.exists() else []
+    fallback = "No report plan for this follow-up." if followup else "No plan for this run."
+    plan = plans[index] if index < len(plans) else [{"text": fallback}]
 
-    prompt = sys.stdin.read()
     config_path = value_after(args, "--mcp-config")
     config = json.loads(Path(config_path).read_text()) if config_path else {}
     record = {
         "argv": args, "pid": os.getpid(), "env": sorted(os.environ), "cwd": os.getcwd(),
         "cwd_entries": sorted(os.listdir(".")), "prompt": prompt, "mcp_config": config,
     }
-    turn = Turn(record, DIR / f"run-{index}.json")
+    turn = Turn(record, DIR / (f"followup-{index}.json" if followup else f"run-{index}.json"))
     turn.save()
 
     servers = config.get("mcpServers", {})
