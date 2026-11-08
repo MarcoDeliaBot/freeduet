@@ -50,6 +50,9 @@ def fake_cli(tmp_path, monkeypatch):
     wrapper.chmod(0o755)
     agents = tmp_path / "agents.yaml"
     agents.write_text(AGENTS_YAML)
+    data = tmp_path / "data"  # checkpoints, the team log and lessons
+    data.mkdir()
+    monkeypatch.setenv("FREEDUET_DATA_DIR", str(data))
     monkeypatch.setenv("CLAUDE_BIN", str(wrapper))
     monkeypatch.setenv("FREEDUET_AGENTS_FILE", str(agents))
     monkeypatch.setenv("MANAGED_AGENT_TOKEN", MANAGED_TOKEN)
@@ -61,6 +64,7 @@ def fake_cli(tmp_path, monkeypatch):
     class Fake:
         dir = state
         agents_file = agents
+        data_dir = data
 
         def plan(self, *plans):
             (state / "plans.json").write_text(json.dumps(list(plans)))

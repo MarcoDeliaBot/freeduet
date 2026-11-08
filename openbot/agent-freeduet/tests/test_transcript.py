@@ -1,7 +1,7 @@
 """OpenBot's messages rendered for a fresh CLI: system rows to the system text, the rest to stdin."""
 
 from freeduet.members import Member
-from freeduet.transcript import RUNTIME_NOTE, render
+from freeduet.transcript import LESSONS_HEADING, RUNTIME_NOTE, render
 
 IRIS = Member(id="freeduet", system_prompt="You are Iris.")
 
@@ -59,3 +59,12 @@ def test_a_failed_tool_result_says_so_and_attachments_are_named():
     assert "See this.\n[Attached: image (image/png)." in prompt
     assert "AAAA" not in prompt
     assert '<tool_result id="c" name="send" status="error">' in prompt
+
+
+def test_active_lessons_join_the_system_text_newest_last_at_most_20():
+    lessons = [f"Lesson {index}." for index in range(22)]
+    system = render(IRIS, MESSAGES, lessons=lessons).system
+    section = system[system.index(LESSONS_HEADING):system.index(RUNTIME_NOTE)].strip()
+    assert section.splitlines()[1:] == [f"- Lesson {index}." for index in range(2, 22)]
+    assert system.index("You hold make_page.") < system.index(LESSONS_HEADING) < system.index(RUNTIME_NOTE)
+    assert LESSONS_HEADING not in render(IRIS, MESSAGES).system

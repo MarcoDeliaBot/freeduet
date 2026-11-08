@@ -12,6 +12,11 @@ then the call) and carry the CLI's own call id.
 - Any other tool is announced and never answered: after a short settle, for calls the CLI makes
   alongside it, the segment ends with RUN_FINISHED and the CLI is stopped. OpenBot runs the call
   under its own approval gate and POSTs again with the result.
+- Iris's own tools (iris_tools.py: team log and lessons) are answered here and never announced:
+  they do not end the segment and never reach OpenBot. Other members are not offered them.
+
+Before the transcript is rendered, a run for Iris activates the lessons the person approved in it
+(lessons.py has the rule), and every member's active lessons join its system text.
 """
 
 import asyncio
@@ -22,7 +27,7 @@ from collections.abc import AsyncIterator
 from contextlib import suppress
 from pathlib import Path
 
-from . import agui, claude_cli, transcript
+from . import agui, claude_cli, iris_tools, lessons, team_log, transcript
 from .agui import RunInput
 from .bridge import ipc
 from .bridge.callback import call_deployment_tool
@@ -35,6 +40,7 @@ SETTLE_SECONDS = 0.3
 MATCH_SECONDS = 1.0
 SEGMENT_TIMEOUT_SECONDS = 1800.0
 MAX_STDERR = 64 * 1024
+PIPE_DRAIN_SECONDS = 2.0
 
 
 def _same(a: dict, b: dict) -> bool:
@@ -72,10 +78,37 @@ async def _later(delay: float, inbox: asyncio.Queue, item: tuple) -> None:
     await inbox.put(item)
 
 
+async def _lessons_for(run: RunInput, member: Member) -> list[str]:
+    """Activate what the person approved in this run (Iris's runs only), then the member's active
+    lessons for its prompt. A failure is logged and never fails the run."""
+    try:
+        await asyncio.to_thread(
+            lessons.activate_from_transcript, member.id, run.messages, run.assertion,
+            thread=run.thread_id, run=run.run_id, now=team_log.now_iso(),
+        )
+    except Exception:  # noqa: BLE001 - a missing data folder, a broken file
+        log.warning("lesson approvals not checked for this segment", exc_info=True)
+    try:
+        return await asyncio.to_thread(lessons.active_for, member.id)
+    except Exception:  # noqa: BLE001
+        log.warning("lessons not read for this segment", exc_info=True)
+        return []
+
+
+async def _answer_locally(local: iris_tools.IrisTools, call: ipc.BridgeCall) -> None:
+    try:
+        reply = await asyncio.to_thread(local.call, call.name, call.arguments)
+    except Exception:  # noqa: BLE001 - the CLI gets an error, never a hang
+        log.warning("local tool %s failed", call.name, exc_info=True)
+        reply = ipc.ToolReply("The FreeDuet tool failed on this call. Try once more, or tell the person.", True)
+    call.answer(reply)
+
+
 async def run_segment(run: RunInput, member: Member) -> AsyncIterator[dict]:
     yield agui.run_started(run)
-    rendered = transcript.render(member, run.messages, run.context)
+    rendered = transcript.render(member, run.messages, run.context, await _lessons_for(run, member))
     offered = {tool["name"] for tool in run.tools}
+    local = iris_tools.for_run(run, member.id, offered)
     inbox: asyncio.Queue = asyncio.Queue()
     parser = StreamParser()
     stderr = bytearray()
@@ -89,8 +122,9 @@ async def run_segment(run: RunInput, member: Member) -> AsyncIterator[dict]:
     async def on_call(call: ipc.BridgeCall) -> None:
         await inbox.put(("call", call))
 
-    host = ipc.BridgeHost(ipc.mcp_tools(run.tools), on_call)
+    host = ipc.BridgeHost(ipc.mcp_tools(run.tools) + (local.definitions() if local else []), on_call)
     process = None
+    readers: tuple[asyncio.Task, ...] = ()
     with tempfile.TemporaryDirectory(prefix="freeduet-segment-") as folder:
         try:
             directory = Path(folder)
@@ -124,9 +158,9 @@ async def run_segment(run: RunInput, member: Member) -> AsyncIterator[dict]:
                     del stderr[:-MAX_STDERR]
 
             stderr_task = asyncio.create_task(read_stderr())
-            tasks.add(stderr_task)
-            for coroutine in (feed_stdin(), read_stdout()):
-                spawn(coroutine)
+            readers = (asyncio.create_task(read_stdout()), stderr_task)
+            tasks.update(readers)
+            spawn(feed_stdin())
 
             async def failed_exit() -> dict:
                 """The stream ended without a result line: wait for the exit, then say why."""
@@ -139,10 +173,15 @@ async def run_segment(run: RunInput, member: Member) -> AsyncIterator[dict]:
                     f"{claude_cli.LABEL} ended without an answer."
                 )
 
-            async for event in _drive(run, offered, inbox, parser, spawn, failed_exit):
+            async for event in _drive(run, offered, inbox, parser, spawn, failed_exit, local):
                 yield event
         finally:
             await claude_cli.stop(process)
+            # The CLI's process group is gone: let its pipes reach end of file, so the subprocess
+            # transport closes with the segment rather than some time after it.
+            pending = [task for task in readers if not task.done()]
+            if pending:
+                await asyncio.wait(pending, timeout=PIPE_DRAIN_SECONDS)
             for task in list(tasks):
                 task.cancel()
             for task in list(tasks):
@@ -153,8 +192,10 @@ async def run_segment(run: RunInput, member: Member) -> AsyncIterator[dict]:
                 log.info("claude stderr: %s", bytes(stderr[-2000:]).decode("utf-8", errors="replace"))
 
 
-async def _drive(run: RunInput, offered: set[str], inbox: asyncio.Queue, parser: StreamParser, spawn, failed_exit):
+async def _drive(run: RunInput, offered: set[str], inbox: asyncio.Queue, parser: StreamParser, spawn, failed_exit,
+                 local: iris_tools.IrisTools | None = None):
     """The segment's state machine. Ends with exactly one RUN_FINISHED or RUN_ERROR."""
+    local_names = local.names if local is not None else frozenset()
     loop = asyncio.get_running_loop()
     deadline = loop.time() + SEGMENT_TIMEOUT_SECONDS
     text = _Text()
@@ -207,6 +248,8 @@ async def _drive(run: RunInput, offered: set[str], inbox: asyncio.Queue, parser:
                     for event in text.delta(payload.message_id, payload.text):
                         yield event
             elif isinstance(payload, ToolUse):
+                if payload.name in local_names:
+                    continue  # answered locally, never announced
                 seen.append(payload)
                 for call in list(waiting):
                     use = claim(call)
@@ -223,6 +266,9 @@ async def _drive(run: RunInput, offered: set[str], inbox: asyncio.Queue, parser:
 
         elif kind == "call":
             call: ipc.BridgeCall = payload
+            if call.name in local_names:
+                spawn(_answer_locally(local, call))
+                continue
             if call.name not in offered:
                 call.answer(ipc.ToolReply("Refused. That tool was not offered for this turn.", True))
                 continue
