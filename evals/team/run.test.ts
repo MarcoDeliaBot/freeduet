@@ -6,8 +6,10 @@ import {
   type Case,
   checkApprovals,
   checkReportLines,
+  endsWithQuestion,
   finalAnswer,
   hardChecks,
+  ITALIAN_OUTCOMES,
   isGatedTool,
   isGreeting,
   isWork,
@@ -15,7 +17,9 @@ import {
   loadMemberNames,
   missingApps,
   NO_REPORT_RULE,
+  OUTCOMES,
   requestText,
+  STOPPED_WORK_RULE,
   type Transcript,
   type TranscriptEvent,
 } from "./checks";
@@ -430,6 +434,38 @@ describe("hard check: report lines", () => {
     );
   });
 
+  test("in progress, in English or Italian, is an outcome: work handed to a colleague", () => {
+    const handedOver = [
+      "Gus: the jamming printer",
+      "Penny: Northwind's unpaid March invoice",
+      "Portia: Brightline's new NDA",
+      "",
+      "Outcome: in progress",
+      "Done: handed the three pieces to Gus, Penny and Portia",
+      "Evidence: message_bot confirmed each hand-off",
+      "Not done and why: their answers arrive later",
+      "Already sent, paid, booked, published or deleted: nothing",
+      "Next step: I bring their results back here",
+    ].join("\n");
+    expect(checkReportLines(handedOver)).toMatchObject({
+      pass: true,
+      report: { Outcome: "in progress" },
+    });
+    expect(
+      checkReportLines(
+        "Esito: in corso\nFatto: passato a Penny\nProve: message_bot ha confermato\nNon fatto e perché: la risposta arriva dopo\nGià: niente\nProssimo passo: riporto il risultato",
+      ).pass,
+    ).toBe(true);
+    expect(OUTCOMES).toContain("in progress");
+    expect(ITALIAN_OUTCOMES).toContain("in corso");
+    expect(
+      checkReportLines(REPORT.replace("Outcome: done", "Outcome: ongoing"))
+        .reason,
+    ).toBe(
+      'Outcome "ongoing" is not one of done, partly done, in progress, blocked, failed, needs you',
+    );
+  });
+
   test("the last report counts", () => {
     const first = REPORT.replace("Outcome: done", "Outcome: blocked");
     expect(
@@ -446,9 +482,16 @@ describe("hard check: report lines", () => {
     expect(isWork({ request: "Who owes me? What is the total?" }, empty)).toBe(
       false,
     );
+    // Context first, then the question: still a question answered from what the member knows.
     expect(
       isWork({ request: "I can smell gas. What do I check?" }, empty),
-    ).toBe(true);
+    ).toBe(false);
+    expect(isWork({ request: "I can smell gas near the boiler." }, empty)).toBe(
+      true,
+    );
+    expect(isWork({ request: "What rules do you have? Add one." }, empty)).toBe(
+      true,
+    );
     expect(
       isWork({ request: "[fixture: a contract] Can I sign?" }, empty),
     ).toBe(true);
@@ -458,11 +501,33 @@ describe("hard check: report lines", () => {
     expect(isWork({ request: "Who still owes me money?" }, used)).toBe(true);
   });
 
-  test("the rule is the shared rules' sentence: a greeting, or only questions, with no file and no tool", () => {
+  test("a message ends with a question when its last mark, past quotes and brackets, is a question mark", () => {
+    expect(endsWithQuestion("Can I open the switch box tonight?")).toBe(true);
+    expect(endsWithQuestion('She asked "can we move it?"  ')).toBe(true);
+    expect(endsWithQuestion("Posso aprirlo stasera? ")).toBe(true);
+    expect(endsWithQuestion("今晩開けてもいいですか？")).toBe(true);
+    expect(endsWithQuestion("Can you? Then post it on LinkedIn now.")).toBe(
+      false,
+    );
+    expect(endsWithQuestion("")).toBe(false);
+  });
+
+  test("the rule is the shared rules' sentence: a greeting, or a message ending with a question, with no file and no tool", () => {
     const empty = transcript([]);
     expect(NO_REPORT_RULE).toBe(
-      "Skip the report only when the person's message is just a greeting, or only questions you answer from what you already know, with no attached file and no tool call.",
+      "Skip the report only when the person's message is just a greeting, or ends with a question you answer from what you already know (a safety warning included), with no attached file and no tool call.",
     );
+    // Safety questions answered from knowledge are Q&A; refusals of an instruction are work.
+    for (const id of ["gus-2", "gus-3", "penny-4"])
+      expect({ id, work: isWork(caseOf(id), empty) }).toEqual({
+        id,
+        work: false,
+      });
+    for (const id of ["wren-3", "penny-3", "jules-4", "iris-4"])
+      expect({ id, work: isWork(caseOf(id), empty) }).toEqual({
+        id,
+        work: true,
+      });
     for (const greeting of [
       "Hi!",
       "Good morning, Iris.",
@@ -495,27 +560,42 @@ describe("hard check: report lines", () => {
     );
   });
 
-  test("every member's prompt carries the no-report sentence word for word, and the report rules", async () => {
+  test("every member's prompt carries the no-report and stopped-work sentences word for word, and the outcomes the check accepts", async () => {
     const { agents } = Bun.YAML.parse(await readFile(PATHS.agents, "utf8")) as {
       agents: { id: string; name: string; system_prompt: string }[];
     };
     expect(agents.length).toBe(10);
-    for (const agent of agents)
+    /** The outcomes a prompt lists after `label (`, up to the first ";" or ")". */
+    const listed = (prompt: string, label: string) =>
+      (new RegExp(`${label} \\(([^;)]*)`).exec(prompt)?.[1] ?? "")
+        .split(/, | or /)
+        .map((word) => word.trim());
+    const accepted = (outcome: string) =>
+      checkReportLines(REPORT.replace("Outcome: done", `Outcome: ${outcome}`))
+        .pass;
+    for (const agent of agents) {
+      const prompt = agent.system_prompt;
       expect({
         member: agent.id,
-        noReportRule: agent.system_prompt.includes(NO_REPORT_RULE),
-        nothingAfter: agent.system_prompt.includes(
-          "write nothing after the Next step line",
-        ),
-        needsYouWhenAsking: agent.system_prompt.includes(
-          "including a turn where you stop to ask the person something (Outcome: needs you)",
+        noReportRule: prompt.includes(NO_REPORT_RULE),
+        stoppedWorkRule: prompt.includes(STOPPED_WORK_RULE),
+        nothingAfter: prompt.includes("write nothing after the Next step line"),
+        outcomes: listed(prompt, "Outcome"),
+        italian: listed(prompt, "Esito").filter((o) => !accepted(o)),
+        inProgressMeans: prompt.includes(
+          "in progress means handed to a colleague or still running, with nothing for the person to do yet",
         ),
       }).toEqual({
         member: agent.id,
         noReportRule: true,
+        stoppedWorkRule: true,
         nothingAfter: true,
-        needsYouWhenAsking: true,
+        outcomes: [...OUTCOMES],
+        italian: [],
+        inProgressMeans: true,
       });
+      expect(listed(prompt, "Esito")).toContain("in corso");
+    }
   });
 
   test("the shared rules are byte-identical in all ten prompts, Iris's without the copy to Iris", async () => {
