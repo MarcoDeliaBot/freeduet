@@ -34,9 +34,8 @@ const { createThreadReader } = await import("../../src/channels/thread-status");
 const { loadConfig } = await import("../../src/config");
 const { mountCopilotRuntime } = await import("../../src/copilot");
 const { createDatabase } = await import("../../src/db/client");
-const { createThreadBackend, threadReaderClient } = await import(
-  "../../src/freeduet/backend"
-);
+const { createThreadBackend, localThreadBackend, threadReaderClient } =
+  await import("../../src/freeduet/backend");
 const { guardThreadRoutes } = await import("../../src/freeduet/thread-routes");
 const { createLearningAutoAssign, probeLearningContainer } = await import(
   "../../src/learning/auto-assign"
@@ -104,13 +103,18 @@ await seedPerson(database, person);
 try {
   // Keys present on purpose: off must ignore them, not merely lack them.
   const config = loadConfig(testEnvironment({ FREEDUET_INTELLIGENCE: "off" }));
-  const fake = createFakeThreadsModule();
+  // The store that ships when FREEDUET_PROBE_STORE=real, the in-memory stand-in otherwise.
+  const realStore = process.env.FREEDUET_PROBE_STORE === "real";
+  const thread = `offline-thread-${crypto.randomUUID()}`;
+  const scratch = `offline-scratch-${crypto.randomUUID()}`;
 
   // Boot, in index.ts's order.
-  const backend = await createThreadBackend(config, database, {
-    threads: fake.module,
-    log: () => {},
-  });
+  const backend = localThreadBackend(
+    await createThreadBackend(config, database, {
+      ...(realStore ? {} : { threads: createFakeThreadsModule().module }),
+      log: () => {},
+    }),
+  );
   const learningSettings = createLearningSettingsStore(
     database,
     config.learning,
@@ -183,9 +187,9 @@ try {
       method: "POST",
       headers: { "content-type": "application/json" },
       body: JSON.stringify({
-        threadId: "offline-thread",
-        runId: "browser-run",
-        messages: [{ id: "m1", role: "user", content: "Hi" }],
+        threadId: thread,
+        runId: crypto.randomUUID(),
+        messages: [{ id: crypto.randomUUID(), role: "user", content: "Hi" }],
         tools: [],
         context: [],
         state: {},
@@ -198,7 +202,7 @@ try {
     said: (await turn.text()).includes("Hello"),
   };
   report.known = await createThreadReader(threadReaderClient(config))(
-    "offline-thread",
+    thread,
     person,
   );
 
@@ -214,26 +218,27 @@ try {
       ownerUserId: person,
       routineId: "routine",
       agentId: "bot",
-      threadId: "offline-thread",
+      threadId: thread,
       instruction: "Good morning",
     })
   ).replyText;
-  report.locksLeft = fake.store.locks.size;
+  report.threadFree = (await backend.store.activeRunId(thread)) === null;
 
   // A hop: the same runner, the adapter's lock and history.
   report.oneRunner = runtime.handoffRunner() === backend.runner;
-  report.hopLock = await runtime.threadLock.acquire({
-    threadId: "offline-scratch",
-    runId: "hop-run",
-    userId: person,
-    agentId: "bot",
-  });
-  await runtime.threadLock.release({
-    threadId: "offline-scratch",
-    runId: "hop-run",
-  });
+  const hopRun = crypto.randomUUID();
+  report.hopLock =
+    (
+      await runtime.threadLock.acquire({
+        threadId: scratch,
+        runId: hopRun,
+        userId: person,
+        agentId: "bot",
+      })
+    )?.runId === hopRun;
+  await runtime.threadLock.release({ threadId: scratch, runId: hopRun });
   report.history = (
-    await runtime.history({ threadId: "offline-thread", actorId: person })
+    await runtime.history({ threadId: thread, actorId: person })
   ).map((message) => message.role);
 
   // Memory: written and recalled in Postgres alone.

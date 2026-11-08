@@ -14,6 +14,7 @@
  * and runner.
  */
 import { describe, expect, test } from "bun:test";
+import { existsSync } from "node:fs";
 import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -25,7 +26,10 @@ const PROBE = join(
   "freeduet-intelligence-offline-probe.ts",
 );
 
-async function runProbe(telemetryOff = true): Promise<Record<string, unknown>> {
+async function runProbe(
+  telemetryOff = true,
+  extra: Record<string, string> = {},
+): Promise<Record<string, unknown>> {
   // An empty directory, so Bun loads no `.env` into the probe.
   const directory = await mkdtemp(join(tmpdir(), "freeduet-offline-"));
   const env: Record<string, string | undefined> = { ...process.env };
@@ -45,6 +49,7 @@ async function runProbe(telemetryOff = true): Promise<Record<string, unknown>> {
         ...env,
         TEST_DATABASE_URL: testDatabaseUrl(),
         ...(telemetryOff ? { COPILOTKIT_TELEMETRY_DISABLED: "true" } : {}),
+        ...extra,
       },
       stdout: "pipe",
       stderr: "pipe",
@@ -62,33 +67,49 @@ async function runProbe(telemetryOff = true): Promise<Record<string, unknown>> {
   }
 }
 
+/** The store that ships, once `threads/index.ts` is in the tree; until then the stand-in only. */
+const STORE_LANDED = existsSync(
+  new URL("../src/freeduet/threads/index.ts", import.meta.url),
+);
+
+function expectNothingSent(report: Record<string, unknown>) {
+  expect(report.error).toBeUndefined();
+
+  // It all worked, without Intelligence.
+  expect(report).toMatchObject({
+    learning: "off",
+    learningRuntime: false,
+    banner: true,
+    entitlementsAsked: 0,
+    info: { status: 200, mode: "sse" },
+    turn: { status: 200, said: true },
+    known: "known",
+    headless: "Hello",
+    threadFree: true,
+    oneRunner: true,
+    hopLock: true,
+    history: ["user", "assistant", "user", "assistant"],
+    recalled: true,
+  });
+
+  // And nothing reached CopilotKit, by any road.
+  expect(report.intelligenceCalls).toEqual([]);
+  expect(report.copilotkitRequests).toEqual([]);
+  expect(report.otherRequests).toEqual([]);
+}
+
 describe("FREEDUET_INTELLIGENCE=off sends nothing to CopilotKit", () => {
   test("across boot, a chat turn, a headless turn, a hop and memory", async () => {
-    const report = await runProbe();
-    expect(report.error).toBeUndefined();
-
-    // It all worked, without Intelligence.
-    expect(report).toMatchObject({
-      learning: "off",
-      learningRuntime: false,
-      banner: true,
-      entitlementsAsked: 0,
-      info: { status: 200, mode: "sse" },
-      turn: { status: 200, said: true },
-      known: "known",
-      headless: "Hello",
-      locksLeft: 0,
-      oneRunner: true,
-      hopLock: { runId: "hop-run" },
-      history: ["user", "assistant", "user", "assistant"],
-      recalled: true,
-    });
-
-    // And nothing reached CopilotKit, by any road.
-    expect(report.intelligenceCalls).toEqual([]);
-    expect(report.copilotkitRequests).toEqual([]);
-    expect(report.otherRequests).toEqual([]);
+    expectNothingSent(await runProbe());
   }, 60_000);
+
+  test.skipIf(!STORE_LANDED)(
+    "the same, over the real thread store and Postgres runner",
+    async () => {
+      expectNothingSent(await runProbe(true, { FREEDUET_PROBE_STORE: "real" }));
+    },
+    60_000,
+  );
 
   // The watch is real: the same probe with telemetry left on records what telemetry would send,
   // answered inside the probe so it never leaves the machine.
