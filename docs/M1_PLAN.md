@@ -57,3 +57,25 @@ OpenBot server ──Anthropic POST /v1/messages─► agent-freeduet: the serve
 | D. Evals | #18 | `evals/team/run.ts` (or Python) and its fake-engine mode |
 | E. Checkpoints | #24 | `checkpoints.py` |
 | Maintainer | #19, #20, #21 | Real-login eval run, Google Workspace grants, clean-machine start |
+
+## 5. Team memory, handoff and oversight (M1.14 to M1.16)
+
+Added on 2026-11-08 at the maintainer's request: members must remember, pass information to each other, and Iris must know every success and failure and correct what needs correcting. Checked against the code first:
+
+| Need | Already in OpenBot | Missing |
+|---|---|---|
+| Memory of the person | `server/src/memory/` personal memories; a memory a Bot formed is delivered only to that Bot (`db/schema/memory.ts`) | Nothing for M1 |
+| Memory of the work | Checkpoints (M1.13, D13) | Nobody reads them back until M3 |
+| Memory of the team (what one member learned that others need) | None | Lessons (D16) |
+| Passing work and information | `message_bot` with a typed envelope (task, constraints, expecting) and the answer relayed back to the asker, failures included (`agents/handoff*.ts`); caps `BOT_HANDOFF_MAX_DEPTH=1`, `BOT_HANDOFF_MAX_PER_RUN=3` | No Bot-to-Bot grant exists for FreeDuet: `mayAddress` reads `plugin_grants` of kind `bot` (`index.ts:1135`) and the package seeds only skill grants, so today Iris can address nobody |
+| Iris knows successes and failures | Report lines and Iris's rules (F24) | Iris sees a report only when she asked for the work. A member that fails in its own conversation with the person is invisible to her |
+| Correctives that last | None | Lessons (D16) and a daily review (D17) |
+
+| # | Decision | Why |
+|---|---|---|
+| D14 | **Hub grants.** A FreeDuet module seeds `plugin_grants` of kind `bot` after package sync: Iris to each of the nine members, each member to Iris, nothing member to member. Marked `granted_by = freeduet-package`, idempotent, removing only its own rows. Depth stays 1 | Iris hands out work and gets the answer back by relay; a member the person talks to directly can report to Iris; no chains. An admin can still add or revoke grants by hand |
+| D15 | **Team log.** After each segment agent-freeduet appends one line to `/data/team-log.jsonl`: time, member, thread, outcome, one-line summary, whether Iris asked for it, approval ids from the "Already" line. Iris gets one read-only tool `team_log(since, member?, outcome?)` from agent-freeduet's own MCP server, next to OpenBot's tools. Shared rule: when Iris did not ask for the work and the outcome is failed, blocked or needs you, the member also sends its report to Iris with `message_bot` | Iris sees every outcome, also of work she did not hand out. The tool reads FreeDuet's own data only, never the person's apps |
+| D16 | **Lessons.** Iris may propose a lesson for a member ("Penny: check the VAT number before drafting an invoice"), with the evidence. A lesson is stored `pending` in `/data/lessons/<member>.json` and becomes `active` only after the person approves it in chat; a Bot's message never approves one. agent-freeduet adds that member's active lessons to its prompt on every run. The person can list, change and remove lessons by asking Iris. A failure with the same cause twice in seven days makes Iris ask Leo for a proposal to change the member's prompt or skills; applying it stays with the person | Corrections that last, never silent: a permanent change in behaviour is the person's decision |
+| D17 | **Daily review.** A routine for Iris, every morning: read `team_log` for the last 24 hours, give the person one summary (done, failed with cause, pending lessons to approve, what she already corrected) | One place to see the team's day |
+
+Tests that must exist: a seeded grant lets Iris address Penny and refuses Penny to Otto; the team log gets one line per segment with the right outcome; `team_log` is offered to Iris only; a lesson stays pending without the person's approval and a Bot's message does not activate it; an active lesson appears in the member's prompt; the daily review routine exists in the package.
