@@ -330,7 +330,8 @@ services:
       GOOGLE_API_KEY: ${GOOGLE_API_KEY:-}
       GOOGLE_GENERATIVE_AI_BASE_URL: ${GOOGLE_GENERATIVE_AI_BASE_URL:-}
       BOT_PROVIDER: ${BOT_PROVIDER:-openai}
-      CLAUDE_CODE_OAUTH_TOKEN: ${CLAUDE_CODE_OAUTH_TOKEN:-}
+      # FreeDuet: CLAUDE_CODE_OAUTH_TOKEN is never passed on. Storing a Claude plan token breaks
+      # Anthropic's terms; see docs/PROVIDERS.md and docs/UPSTREAM_TOUCHES.md.
       # A path into the mount below, set only when a ChatGPT plan was signed in to. The file is
       # there either way; this variable is what tells the harness to read it.
       CHATGPT_AUTH_FILE: ${CHATGPT_AUTH_FILE:-}

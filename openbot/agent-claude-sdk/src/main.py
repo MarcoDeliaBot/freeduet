@@ -1,11 +1,7 @@
 """Claude Agent SDK as a Bot, through `ag-ui-claude-sdk`.
 
-This is the row where a plan can stand in for a key. `claude setup-token` mints a
-`CLAUDE_CODE_OAUTH_TOKEN` against a Pro or Max subscription and the SDK accepts it, which is why
-this harness is the one the model screen offers a subscription on.
-
-The precedence trap is the thing to get right: `ANTHROPIC_API_KEY` wins over the OAuth token, so a
-deployment that sets both silently bills the key and the plan goes unused. OpenBot sets one.
+Upstream, this is the row where a plan token can stand in for a key. FreeDuet removes that option:
+this harness runs on `ANTHROPIC_API_KEY` only (see `_refuse_plan_token` and docs/PROVIDERS.md).
 """
 
 import hmac
@@ -21,27 +17,25 @@ from .adapter import OpenBotClaudeAgentAdapter
 TOKEN_HEADER = "x-openbot-agent-token"
 
 
-def _refuse_both_credentials() -> None:
-    """One credential or the other, never both.
+def _refuse_plan_token() -> None:
+    """FreeDuet: an API key only, never a Claude plan token.
 
-    Anthropic resolves `ANTHROPIC_API_KEY` ahead of `CLAUDE_CODE_OAUTH_TOKEN`, so a container given
-    both uses the key and quietly ignores the subscription somebody chose. Failing here is the only
-    way that becomes visible: the alternative is a correct-looking Bot on the wrong credential.
+    Storing the token `claude setup-token` mints breaks Anthropic's terms, so FreeDuet removes the
+    option (docs/PROVIDERS.md). The token is dropped from this process before the SDK can read it,
+    and the log says why. A person's Claude plan reaches FreeDuet only through the official Claude
+    Code CLI, signed in by the person, which the subscription router starts (agent-freeduet).
     """
-    key = (os.environ.get("ANTHROPIC_API_KEY") or "").strip()
-    plan = (os.environ.get("CLAUDE_CODE_OAUTH_TOKEN") or "").strip()
-    if key and plan:
-        raise SystemExit(
-            "Both ANTHROPIC_API_KEY and CLAUDE_CODE_OAUTH_TOKEN are set. Anthropic prefers the key, "
-            "so the subscription would be ignored. Set one."
+    if os.environ.pop("CLAUDE_CODE_OAUTH_TOKEN", None):
+        print(
+            "FreeDuet ignores CLAUDE_CODE_OAUTH_TOKEN: storing a Claude plan token breaks "
+            "Anthropic's terms. See docs/PROVIDERS.md.",
+            flush=True,
         )
-    if not key and not plan:
-        raise SystemExit(
-            "Set ANTHROPIC_API_KEY, or CLAUDE_CODE_OAUTH_TOKEN from `claude setup-token`."
-        )
+    if not (os.environ.get("ANTHROPIC_API_KEY") or "").strip():
+        raise SystemExit("Set ANTHROPIC_API_KEY. See docs/PROVIDERS.md.")
 
 
-_refuse_both_credentials()
+_refuse_plan_token()
 
 app = FastAPI()
 

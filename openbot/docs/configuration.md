@@ -350,9 +350,13 @@ policies apply. See [OpenAI WebRTC](https://developers.openai.com/api/docs/guide
 | `SIGNIN_ALLOWED_EMAIL_DOMAINS` | Comma-separated email domains admitted at sign-in. Empty means no opinion. Exact, no wildcards. |
 | `OPENBOT_ORGANIZATION_AUTH_URL` | An OpenBot deployment that verifies employee identity and roles. Decides sign-in ahead of `OPENBOT_SINGLE_USER`. |
 
+> **FreeDuet:** `CLAUDE_CODE_OAUTH_TOKEN` is not accepted. The server drops it at start-up, compose
+> does not pass it on and the Claude Agent SDK harness refuses it, because storing a Claude plan token
+> breaks Anthropic's terms. See `docs/PROVIDERS.md` at the repository root.
+
 **Some variables belong to the desktop app, not to you.** A desktop installation writes these into
 its own deployment's `.env` and owns their values: `OPENBOT_MODEL_OAUTH_FILE`, `CHATGPT_AUTH_FILE`,
-`CLAUDE_CODE_OAUTH_TOKEN`, and the `PICKED_HARNESS_*` names that describe the Bot picked during setup
+`CLAUDE_CODE_OAUTH_TOKEN` (ignored by FreeDuet), and the `PICKED_HARNESS_*` names that describe the Bot picked during setup
 (`PICKED_HARNESS_IMAGE`, `PICKED_HARNESS_URL`, `PICKED_HARNESS_PORT` and the rest). The server reads
 `PICKED_HARNESS_IMAGE` and `PICKED_HARNESS_URL` to hand that Bot `MANAGED_AGENT_TOKEN`, and refuses to
 start when they are set without it. When a model provider is connected by OAuth rather than by key, the
