@@ -48,6 +48,11 @@ type Run = {
   envFile?: string;
   /** Nothing holds the server's port until this run launches its own server there. */
   portFree?: boolean;
+  /**
+   * What the server reports. `intelligence` is a licence-valid fixture; `sse` is FREEDUET_INTELLIGENCE=off
+   * (#42), which sends no licence, so the CopilotKit info route has no `licenseStatus` at all.
+   */
+  runtime?: "intelligence" | "sse";
 };
 
 async function runStartWithStaleServerProbe(
@@ -67,6 +72,7 @@ async function runStartWithStaleServerProbe(
     unavailableHealthPorts = [],
     envFile = ".env",
     portFree = false,
+    runtime = "intelligence",
   }: Run = {},
 ) {
   const root =
@@ -175,6 +181,17 @@ elif [ "$STOP_ONLY" != 1 ]; then
 fi
 `,
   );
+  // The two answers the server gives start.sh: the CopilotKit runtime's info (`licenseStatus` only with
+  // Intelligence) and OpenBot's own capabilities (`durableHistory` in both modes, which is what
+  // identifies it).
+  const runtimeInfo =
+    runtime === "sse"
+      ? '{"version":"test","mode":"sse","agents":{"analyst":{}},"threadEndpoints":{"list":true}}'
+      : '{"licenseStatus":"valid","mode":"test","agents":{"analyst":{}}}';
+  const capabilities =
+    runtime === "sse"
+      ? '{"mode":"local","durableHistory":true}'
+      : '{"mode":"intelligence","durableHistory":true}';
   await writeExecutable(
     join(fakeBin, "curl"),
     `#!/usr/bin/env bash
@@ -187,9 +204,9 @@ if [[ "$args" == *"/internal/routines/run"* ]]; then
   printf '${status}'
   exit 0
 fi
-if [[ "$args" == *"/api/copilotkit/info"* ]]; then
+if [[ "$args" == *"/api/copilotkit/info"* || "$args" == *"/api/capabilities"* ]]; then
   if { [ -f "$SERVER_STOPPED" ] || [ "$PORT_FREE" = 1 ]; } && [ ! -f "$SERVER_STARTED" ]; then exit 7; fi
-  printf '{"licenseStatus":"valid","mode":"test","agents":{"analyst":{}}}'
+  if [[ "$args" == *"/api/capabilities"* ]]; then printf '${capabilities}'; else printf '${runtimeInfo}'; fi
   exit 0
 fi
 if [[ "$args" == *"http://localhost:3010/"* ]]; then
@@ -285,7 +302,7 @@ fi
   // The Learning container check answers with one line, which start.sh relays.
   await writeExecutable(
     join(fakeBin, "bun"),
-    '#!/usr/bin/env bash\nif [[ "$2" == *server/src/production-entry.ts ]]; then printf "%s" "$COMPUTER_TOKEN" > "$SERVER_COMPUTER_TOKEN"; printf "%s\\n" "$*" > "$SERVER_STARTED"; fi\nif [[ "$*" == *worker/src/index.ts ]]; then printf "%s\\n" "$*" > "$WORKER_STARTED"; fi\nif [ "$1" = run ] && [ "$2" = - ]; then exec "$REAL_BUN" "$@"; fi\nif [ "$1" = scripts/setup-learning.ts ]; then echo "noise"; echo "LEARNING-CHECK $*"; fi\nexit 0\n',
+    '#!/usr/bin/env bash\nif [[ "$2" == *server/src/production-entry.ts ]]; then printf "%s" "$COMPUTER_TOKEN" > "$SERVER_COMPUTER_TOKEN"; printf "%s\\n" "$*" > "$SERVER_STARTED"; fi\nif [[ "$2" == *server/src/production-entry.ts && -n "$FAKE_SERVER_HOLDS_SECONDS" ]]; then /bin/sleep "$FAKE_SERVER_HOLDS_SECONDS"; fi\nif [[ "$*" == *worker/src/index.ts ]]; then printf "%s\\n" "$*" > "$WORKER_STARTED"; fi\nif [ "$1" = run ] && [ "$2" = - ]; then exec "$REAL_BUN" "$@"; fi\nif [ "$1" = scripts/setup-learning.ts ]; then echo "noise"; echo "LEARNING-CHECK $*"; fi\nexit 0\n',
   );
   // What `python3` is on a stock Windows machine: the Microsoft Store alias, which runs nothing. A
   // script that still needed it would stop at the health check in every test in this file.
@@ -709,6 +726,47 @@ describe("start.sh runtime health", () => {
       "licence valid · mode test · Bots: analyst",
     );
   });
+});
+
+describe("start.sh on the SSE runtime (FREEDUET_INTELLIGENCE=off, #21)", () => {
+  /**
+   * A FRESH SERVER WITH NO LICENCE IS STILL OPENBOT. The CopilotKit info route sends `licenseStatus`
+   * only with Intelligence, so identity used to be read from it, and a clean start with no key gave
+   * up at "never answered as OpenBot" after 40 seconds. Identity is now OpenBot's own capabilities.
+   */
+  test("a server that sends no licence is recognised and the run finishes", async () => {
+    const result = await runStartWithStaleServerProbe(400, {
+      portFree: true,
+      runtime: "sse",
+    });
+
+    expect({ exitCode: result.exitCode, stderr: result.stderr }).toEqual({
+      exitCode: 0,
+      stderr: "",
+    });
+    expect(result.stdout).not.toContain("never answered as OpenBot");
+    expect(result.stdout).toContain("server ready");
+    expect(result.stdout).toContain(
+      "conversations in this server's database · mode sse · Bots: analyst",
+    );
+    expect(result.serverLaunch).toContain("production-entry.ts");
+  });
+
+  /**
+   * THE CALLER'S OUTPUT CLOSES WHEN START.SH EXITS. A background job keeps the stdout it inherited,
+   * and `bash start.sh | tee` (the CI step) waits for that to close. The server never closes it, so
+   * the step hung for an hour after start.sh had already printed why it stopped. Here the server
+   * holds its stdout for 20 seconds: a run that waits for it cannot finish inside the timeout below.
+   */
+  test("a server that keeps running does not hold the caller's output open", async () => {
+    const result = await runStartWithStaleServerProbe(400, {
+      portFree: true,
+      runtime: "sse",
+      processEnvironment: { FAKE_SERVER_HOLDS_SECONDS: "20" },
+    });
+
+    expect(result.exitCode).toBe(0);
+  }, 10_000);
 });
 
 describe("start.sh under the wrong shell", () => {

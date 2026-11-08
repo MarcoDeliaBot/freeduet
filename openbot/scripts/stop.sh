@@ -96,9 +96,11 @@ info()  { printf '\033[2m%s\033[0m\n' "$1"; }
 identifies_as_openbot() {
   local port="$1" name="$2"
   case "$name" in
+    # OpenBot's own capabilities, not the CopilotKit info route: `licenseStatus` is sent only with
+    # Intelligence, so a FreeDuet server with no Intelligence was never stopped here (see start.sh).
     server)
-      curl -fsS --max-time 3 "http://localhost:$port/api/copilotkit/info" 2>/dev/null \
-        | grep -q '"licenseStatus"'
+      curl -fsS --max-time 3 "http://localhost:$port/api/capabilities" 2>/dev/null \
+        | grep -q '"durableHistory"'
       ;;
     # The marker in the app's head, as start.sh asks: FreeDuet's title does not say OpenBot, so
     # asking for the title alone left FreeDuet's app running.
