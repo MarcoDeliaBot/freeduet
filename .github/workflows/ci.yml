@@ -407,6 +407,9 @@ jobs:
           bun-version: 1.4.3
       - run: bun install --frozen-lockfile
       - run: bun test server/tests/freeduet-package.test.ts
+      # The team eval runner, its checks and graders, offline: fake mode and scripted servers only.
+      - run: bun test ../evals/team/run.test.ts ../evals/team/live-tools.test.ts
+      - run: bun ../evals/team/run.ts --fake
 
   # FreeDuet: agent-freeduet, the service that runs every member on the person's own Claude Code
   # login. Offline: a fake `claude` replays fixtures, so no login, no key and no network.

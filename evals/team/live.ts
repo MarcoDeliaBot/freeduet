@@ -11,6 +11,13 @@
  *   GET  /api/copilotkit/threads/<thread>/messages?agentId= the stored conversation, tool calls included
  *   GET  /api/approvals                                     the approval gate's requests (filtered by thread)
  *   POST /api/approvals/<id>/decision {decision:"deny"}     only with --approvals deny; never allows
+ *
+ * With `computer` (run.ts sets it unless --no-computer), also what the app does for the Bot's
+ * computer (computer.ts): GET /api/computers/<member>/status, /api/agents/<member> and
+ * /api/admin/enterprise/me decide whether its computer tools are offered; they go with every run as
+ * `tools`; a call the member makes is run through the routes the app's handler uses
+ * (/api/computers/<member>/..., /api/approvals/computer/<member> for a change,
+ * /api/sign-in-requests) and its result is posted back on a new run, as the app's SDK does.
  */
 import type {
   Attachment,
@@ -20,6 +27,23 @@ import type {
   Turn,
 } from "./checks";
 import { attachmentAsText, missingApps, requestText, turnsOf } from "./checks";
+import {
+  type AppToolsLoader,
+  appToolsLoader,
+  type ComputerOffer,
+  type ComputerRecord,
+  createHttp,
+  offerComputer,
+  runComputerCall,
+  type ToolDefinition,
+  toolContent,
+} from "./computer";
+
+/** A live transcript, with what the member was offered of its computer and every call it made. */
+export type LiveTranscript = Transcript & { computer?: ComputerRecord };
+
+/** CopilotKit core's MAX_FOLLOW_UP_DEPTH: the runs the app posts back after tool calls, per send. */
+export const MAX_FOLLOW_UPS = 100;
 
 export type LiveOptions = {
   server: string;
@@ -34,6 +58,13 @@ export type LiveOptions = {
   /** How long a wait lasts at least: after the first message, and after the runner denies. */
   minWaitMs?: number;
   resumeWaitMs?: number;
+  /**
+   * Offer the member its computer tools when the server has a computer for it, as the web app
+   * does, and run the calls it makes. Off when absent: run.ts turns it on unless --no-computer.
+   */
+  computer?: boolean;
+  /** Where the app's tool definitions come from: app-computer-tools.ts, unless a test gives one. */
+  appTools?: AppToolsLoader;
   fetchImpl?: typeof fetch;
   log?: (line: string) => void;
 };
@@ -157,6 +188,91 @@ export function messagesToEvents(
   return events;
 }
 
+/** A tool result the runner wrote, as the app's SDK keeps it in its own copy of the conversation. */
+export type LocalResult = {
+  message: { id: string; role: "tool"; toolCallId: string; content: string };
+  /** For the transcript only: the SDK sends a failed call's content as "Error: ...", no field. */
+  error?: string;
+};
+
+/** The SDK's stand-in some agents send for a call the client is to run. Not an answer. */
+const isPlaceholder = (content: unknown) =>
+  typeof content === "string" && content.trim() === "Forwarded to client";
+
+/**
+ * The stored conversation with the results the runner wrote, each right after its call (after the
+ * results already there), as the SDK inserts them; a stand-in is replaced. A result the server has
+ * stored already is not added twice. `forRun` leaves the transcript-only `error` out.
+ */
+export function withLocalResults(
+  stored: readonly StoredMessage[],
+  local: ReadonlyMap<string, LocalResult>,
+  forRun = false,
+): StoredMessage[] {
+  if (local.size === 0) return [...stored];
+  const answered = new Set(
+    stored
+      .filter((m) => m.role === "tool" && !isPlaceholder(m.content))
+      .map((m) => m.toolCallId),
+  );
+  const out: StoredMessage[] = [];
+  for (let index = 0; index < stored.length; index++) {
+    const message = stored[index] as StoredMessage;
+    if (
+      message.role === "tool" &&
+      isPlaceholder(message.content) &&
+      local.has(message.toolCallId ?? "")
+    )
+      continue;
+    out.push(message);
+    if (message.role !== "assistant" || !message.toolCalls?.length) continue;
+    while (stored[index + 1]?.role === "tool") {
+      index++;
+      const next = stored[index] as StoredMessage;
+      if (!(isPlaceholder(next.content) && local.has(next.toolCallId ?? "")))
+        out.push(next);
+    }
+    for (const call of message.toolCalls) {
+      const result = call.id ? local.get(call.id) : undefined;
+      if (!result || answered.has(call.id)) continue;
+      out.push(
+        forRun || !result.error
+          ? { ...result.message }
+          : { ...result.message, error: result.error },
+      );
+    }
+  }
+  return out;
+}
+
+/** The member's calls to its computer tools in this turn that nothing has answered yet. */
+export function unansweredComputerCalls(
+  messages: readonly StoredMessage[],
+  offered: ReadonlySet<string>,
+  handled: ReadonlySet<string>,
+): { id: string; name: string; args: unknown }[] {
+  const answered = new Set(
+    messages
+      .filter((m) => m.role === "tool" && !isPlaceholder(m.content))
+      .map((m) => m.toolCallId),
+  );
+  const lastUser = messages.findLastIndex((m) => m.role === "user");
+  return messages.slice(lastUser + 1).flatMap((message) =>
+    message.role !== "assistant"
+      ? []
+      : (message.toolCalls ?? []).flatMap((call) => {
+          const id = call.id ?? "";
+          const name = call.function?.name ?? call.name ?? "";
+          return id &&
+            offered.has(name) &&
+            !answered.has(id) &&
+            !handled.has(id)
+            ? [{ id, name, args: call.function?.arguments ?? call.args }]
+            : [];
+        }),
+  );
+}
+
 /**
  * Places each approval where it happened: asked right after its tool call, decided right before the
  * call's result (the gate runs a call only after its decision). An approval whose call id matches no
@@ -241,11 +357,16 @@ export function createServerApi(
       ...(init.body !== undefined ? { body: JSON.stringify(init.body) } : {}),
       signal: AbortSignal.timeout(60_000),
     });
-  const runInput = (threadId: string, messages: unknown[], extra = {}) => ({
+  const runInput = (
+    threadId: string,
+    messages: unknown[],
+    extra = {},
+    tools: readonly ToolDefinition[] = [],
+  ) => ({
     threadId,
     runId: crypto.randomUUID(),
     messages,
-    tools: [],
+    tools,
     context: [],
     state: {},
     forwardedProps: extra,
@@ -367,18 +488,26 @@ export function createServerApi(
     /**
      * Starts a turn with the conversation so far and the new message, as the web app does: the
      * runtime keeps the messages it already holds and stores the new one. In Intelligence mode this
-     * answers JSON at once; a stream is drained.
+     * answers JSON at once; a stream is drained. `tools` are the frontend tools offered, as the
+     * app's SDK sends them on every run. Answers the run id it sent.
      */
-    async startRun(member: string, threadId: string, messages: unknown[]) {
+    async startRun(
+      member: string,
+      threadId: string,
+      messages: unknown[],
+      tools: readonly ToolDefinition[] = [],
+    ) {
+      const input = runInput(threadId, messages, {}, tools);
       const response = await call(agentPath(member, "run"), {
         method: "POST",
-        body: runInput(threadId, messages),
+        body: input,
       });
       if (!response.ok)
         throw new Error(
           `starting the turn answered HTTP ${response.status}: ${(await response.text()).slice(0, 200)}`,
         );
       await response.text();
+      return input.runId;
     },
     async runState(
       member: string,
@@ -451,7 +580,8 @@ type Api = ReturnType<typeof createServerApi>;
  * Waits until the turn has ended: the runtime says the thread is idle (or cannot say), the
  * conversation holds the turn's message (`userMessages` messages from the person) and something
  * after it, and nothing has changed for `settleMs`. `minWaitMs` keeps a wait that starts before the
- * run claims the thread from ending at once.
+ * run claims the thread from ending at once. `changedFrom`, after a tool result was posted: the
+ * stored conversation as it was then, which the run has to change before its answer counts.
  */
 async function waitForTurn(
   api: Api,
@@ -463,6 +593,7 @@ async function waitForTurn(
     settleMs: number;
     minWaitMs: number;
     userMessages: number;
+    changedFrom?: string;
   },
 ): Promise<{ messages: StoredMessage[]; timedOut: boolean }> {
   const started = Date.now();
@@ -485,7 +616,8 @@ async function waitForTurn(
         options.userMessages &&
       messages
         .slice(lastUser + 1)
-        .some((m) => m.role === "assistant" || m.role === "tool");
+        .some((m) => m.role === "assistant" || m.role === "tool") &&
+      next !== options.changedFrom;
     const settle =
       state === "unknown" ? options.settleMs * 3 : options.settleMs;
     if (
@@ -537,10 +669,36 @@ async function userMessage(
   return { id: crypto.randomUUID(), role: "user", content: parts };
 }
 
+let sharedAppTools: AppToolsLoader | undefined;
+
+/**
+ * What the member is offered of its computer, for the transcript and for every run. A failure to
+ * read the app's tools offers none and says why; run.ts checks they can be read before it starts.
+ */
+async function computerFor(
+  member: string,
+  options: LiveOptions,
+): Promise<ComputerOffer> {
+  try {
+    sharedAppTools ??= appToolsLoader();
+    return await offerComputer(
+      createHttp(options),
+      member,
+      options.appTools ?? sharedAppTools,
+    );
+  } catch (error) {
+    return {
+      offered: false,
+      reason: error instanceof Error ? error.message : String(error),
+      tools: [],
+    };
+  }
+}
+
 export async function runCaseLive(
   c: Case,
   options: LiveOptions,
-): Promise<Transcript> {
+): Promise<LiveTranscript> {
   const api = createServerApi(options);
   const log = options.log ?? (() => {});
   const started = Date.now();
@@ -548,7 +706,7 @@ export async function runCaseLive(
     pollMs: options.pollMs ?? 2000,
     settleMs: options.settleMs ?? 4000,
   };
-  const transcript: Transcript = {
+  const transcript: LiveTranscript = {
     caseId: c.id,
     member: c.member,
     engine: options.engine,
@@ -562,6 +720,29 @@ export async function runCaseLive(
     transcript.elapsedMs = Date.now() - started;
     return transcript;
   }
+  // The Bot's computer, offered as the web app offers it, or nothing (--no-computer).
+  const computer = options.computer
+    ? await computerFor(c.member, options)
+    : undefined;
+  const offered: readonly ToolDefinition[] = computer?.tools ?? [];
+  const offeredNames = new Set(offered.map((tool) => tool.name));
+  if (computer) {
+    transcript.computer = {
+      offered: computer.offered,
+      ...(computer.reason ? { reason: computer.reason } : {}),
+      tools: offered.map((tool) => tool.name),
+      ...(computer.unsupported ? { unsupported: computer.unsupported } : {}),
+      calls: [],
+    };
+    log(
+      computer.offered
+        ? `  computer: ${offered.length} tools offered${computer.unsupported ? `; the runner cannot run ${computer.unsupported.join(", ")}` : ""}`
+        : `  computer: not offered, ${computer.reason}`,
+    );
+  }
+  // The results the runner wrote, kept as the app keeps its own copy (see withLocalResults).
+  const local = new Map<string, LocalResult>();
+  const handled = new Set<string>();
   let messages: StoredMessage[] = [];
   let approvals: PublicApproval[] = [];
   const sent: NonNullable<Transcript["attachments"]> = [];
@@ -569,6 +750,8 @@ export async function runCaseLive(
     const channel = await api.createChannel(c.member);
     transcript.channelId = channel.id;
     transcript.threadId = channel.threadId;
+    const runMessages = () =>
+      toRunMessages(withLocalResults(messages, local, true));
     const turns = turnsOf(c);
     for (const [index, turn] of turns.entries()) {
       // Every turn gets the whole time limit: an earlier turn may be a long search of its own.
@@ -578,10 +761,12 @@ export async function runCaseLive(
           `  turn ${index + 1}/${turns.length}: ${turn.request.slice(0, 60)}`,
         );
       const message = await userMessage(api, channel.id, turn, sent);
-      await api.startRun(c.member, channel.threadId, [
-        ...toRunMessages(messages),
-        message,
-      ]);
+      let runId = await api.startRun(
+        c.member,
+        channel.threadId,
+        [...runMessages(), message],
+        offered,
+      );
       let timedOut: boolean;
       ({ messages, timedOut } = await waitForTurn(
         api,
@@ -595,18 +780,123 @@ export async function runCaseLive(
         },
       ));
       approvals = await api.readApprovals(channel.threadId);
-      // Deny what the turn asked for so the member finishes and reports; at most three rounds.
-      for (
-        let round = 0;
-        round < 3 && !timedOut && options.approvals === "deny";
-        round++
-      ) {
-        const pending = approvals.filter((a) => a.status === "pending");
-        if (pending.length === 0) break;
+      /*
+       * Carry the turn on, as the app does, until nothing is left to answer: run the member's
+       * computer calls and post their results back (as many follow-ups as the app's SDK allows), and
+       * deny what the turn asked for so the member finishes and reports (at most three rounds).
+       */
+      let followUps = 0;
+      let denials = 0;
+      while (!timedOut) {
+        const calls =
+          followUps < MAX_FOLLOW_UPS
+            ? unansweredComputerCalls(
+                withLocalResults(messages, local),
+                offeredNames,
+                handled,
+              )
+            : [];
+        let followUp = false;
+        let gateAsked = false;
+        for (const call of calls) {
+          handled.add(call.id);
+          /*
+           * When the gate asks, the app stops the run (approval-tools.tsx `stopAgent`), and the SDK
+           * runs none of the calls after it and posts nothing back: the server resumes once the
+           * approval is decided, and never asks the browser to run the rest.
+           */
+          if (gateAsked) {
+            transcript.computer?.calls.push({
+              toolCallId: call.id,
+              name: call.name,
+              args: argsOf(call.args),
+              requests: [],
+              outcome: "not run",
+              ms: 0,
+            });
+            continue;
+          }
+          const requests: string[] = [];
+          const callStarted = Date.now();
+          const outcome = await runComputerCall(
+            {
+              http: createHttp(options, requests),
+              botId: c.member,
+              toolCallId: call.id,
+              deadline,
+              pollMs: timing.pollMs,
+              // approval-context.ts: the run the call came from and the conversation as it stands.
+              approval: (args) => ({
+                runId,
+                threadId: channel.threadId,
+                toolCallId: call.id,
+                toolName: call.name,
+                args,
+                messages: runMessages(),
+                state: {},
+                context: [],
+                forwardedProps: {},
+              }),
+            },
+            call.name,
+            call.args,
+          );
+          const content = toolContent(outcome);
+          transcript.computer?.calls.push({
+            toolCallId: call.id,
+            name: call.name,
+            args: argsOf(call.args),
+            requests,
+            outcome: outcome.kind,
+            ...(outcome.kind === "waiting"
+              ? outcome.approvalId
+                ? { approvalId: outcome.approvalId }
+                : {}
+              : { content }),
+            ms: Date.now() - callStarted,
+          });
+          log(
+            `  ${call.name}: ${outcome.kind === "waiting" ? "waiting for approval" : outcome.kind}`,
+          );
+          if (outcome.kind === "waiting") {
+            gateAsked = true;
+            continue;
+          }
+          local.set(call.id, {
+            message: {
+              id: crypto.randomUUID(),
+              role: "tool",
+              toolCallId: call.id,
+              content,
+            },
+            ...(outcome.kind === "error" ? { error: outcome.message } : {}),
+          });
+          // The SDK posts back after a result, not after a handler that threw.
+          if (outcome.kind === "result") followUp = true;
+        }
+        if (gateAsked) followUp = false;
+        const before = JSON.stringify(messages);
+        if (followUp) {
+          followUps++;
+          runId = await api.startRun(
+            c.member,
+            channel.threadId,
+            runMessages(),
+            offered,
+          );
+        }
+        // The gate just opened an approval for a change: read it, so it is denied with the rest.
+        if (gateAsked) approvals = await api.readApprovals(channel.threadId);
+        const pending =
+          options.approvals === "deny" && denials < 3
+            ? approvals.filter((a) => a.status === "pending")
+            : [];
         for (const a of pending) {
           log(`  deny ${a.id} (${a.action.toolRef})`);
           await api.deny(a.id);
         }
+        if (pending.length) denials++;
+        if (!followUp && pending.length === 0) break;
         ({ messages, timedOut } = await waitForTurn(
           api,
           c.member,
@@ -614,8 +904,11 @@ export async function runCaseLive(
           deadline,
           {
             ...timing,
-            minWaitMs: options.resumeWaitMs ?? 15_000,
+            minWaitMs: followUp
+              ? (options.minWaitMs ?? 5000)
+              : (options.resumeWaitMs ?? 15_000),
             userMessages: index + 1,
+            ...(followUp ? { changedFrom: before } : {}),
           },
         ));
         approvals = await api.readApprovals(channel.threadId);
@@ -630,7 +923,10 @@ export async function runCaseLive(
     transcript.status = "error";
     transcript.error = error instanceof Error ? error.message : String(error);
   }
-  transcript.events = mergeApprovals(messagesToEvents(messages), approvals);
+  transcript.events = mergeApprovals(
+    messagesToEvents(withLocalResults(messages, local)),
+    approvals,
+  );
   if (sent.length) transcript.attachments = sent;
   transcript.elapsedMs = Date.now() - started;
   return transcript;
