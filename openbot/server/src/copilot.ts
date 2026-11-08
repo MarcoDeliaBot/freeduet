@@ -49,6 +49,7 @@ import { observeModelConnection } from "./desktop-connection-failure";
 import { desktopTelemetryProperties } from "./desktop-telemetry";
 import { localThreadBackend, type ThreadBackend } from "./freeduet/backend";
 import { coordinationRunsInBand } from "./freeduet/coordination";
+import { RUNTIME_KEEP_ALIVE_SECONDS } from "./freeduet/keep-alive";
 import type { ThreadClient } from "./freeduet/local-intelligence";
 import { observeIntelligenceAuthentication } from "./intelligence-client";
 import { RemoteLearnedSkillsMiddleware } from "./learning/remote";
@@ -1844,8 +1845,12 @@ export function mountCopilotRuntime(
           licenseToken: intelligence?.licenseToken,
         }
       : // FreeDuet (#42): SSE mode on the shared runner. Who may use a thread is checked in
-        // freeduet/thread-routes.ts, which wraps this handler.
-        { runner: local().runtimeRunner }),
+        // freeduet/thread-routes.ts, which wraps this handler. The keep-alive on these streams is
+        // written there, under Bun's idle limit, not by the runtime (freeduet/keep-alive.ts).
+        {
+          runner: local().runtimeRunner,
+          sseKeepAliveIntervalSeconds: RUNTIME_KEEP_ALIVE_SECONDS,
+        }),
     // Carried on the events the runtime already sends, so OpenDuet's traffic is separable from any
     // other deployment's. Adds no events of its own. See telemetry.ts.
     telemetryProperties: {
