@@ -1,4 +1,4 @@
-import { describe, expect, test } from "bun:test";
+import { describe, expect, setDefaultTimeout, test } from "bun:test";
 import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
@@ -18,6 +18,10 @@ import { computerSummary } from "./run";
  * server: the app's own tool definitions, run through the routes the app's handlers use, results
  * posted back on a new run. No model and no real computer.
  */
+
+// Reading the app's tool definitions renders the app in a child process: about 2 s here and over
+// 5 s on a CI runner, which is bun's default per-test limit. The child has its own 120 s limit.
+setDefaultTimeout(60_000);
 
 const HERE = import.meta.dir;
 const COPILOT = resolve(HERE, "../../openbot/app/src/lib/copilot");
