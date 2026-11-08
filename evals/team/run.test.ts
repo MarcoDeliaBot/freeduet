@@ -32,17 +32,25 @@ import {
   parseGrades,
 } from "./grader";
 import {
+  evalConversationName,
+  isEvalConversation,
+  type LiveTranscript,
   mergeApprovals,
   messagesToEvents,
   runCaseLive,
   toRunMessages,
 } from "./live";
 import {
+  type CaseResult,
+  conversationsSummary,
   type Fixture,
+  guardDeployment,
   loadFixtures,
+  loadTeamConversationNames,
   markdownReport,
   PATHS,
   runFake,
+  runRepeated,
   scoreCase,
   selectCases,
   summarise,
@@ -1114,18 +1122,25 @@ describe("live driver against a scripted server", () => {
 /**
  * A server that stores what each run sends and answers every turn with `answer(turn)`, as the
  * runtime does: messages it already holds are kept, new ones are stored. Records every request.
+ * Each new conversation is ch<n>/th<n> with a store of its own, and `turn` counts that
+ * conversation's runs. `keepName` answers with the name the runner sent, as a server that takes one
+ * would; otherwise the conversation is named after the Bot. `lock` refuses the conversation's
+ * `run`-th run `times` times with 409 "Thread lock denied", the thread busy for `busyPolls` polls.
  */
 function scriptedServer(options: {
   member: string;
   tools?: unknown;
   upload?: (form: FormData) => Response | Promise<Response>;
   answer: (turn: number) => Record<string, unknown>[];
+  keepName?: boolean;
+  lock?: { run: number; times: number; busyPolls: number; body?: string };
 }) {
   const calls: string[] = [];
-  const runs: { messages: Record<string, unknown>[] }[] = [];
+  const runs: { threadId: string; messages: Record<string, unknown>[] }[] = [];
+  const channels: { agentIds: string[]; name?: string }[] = [];
   const uploads: { name: string; type: string; text: string; group: string }[] =
     [];
-  const stored: Record<string, unknown>[] = [];
+  const stores = new Map<string, Record<string, unknown>[]>();
   let busy = 0;
   const fetchImpl = (async (url: string, init: RequestInit = {}) => {
     const path = url.replace("http://server.test", "");
@@ -1134,12 +1149,26 @@ function scriptedServer(options: {
       return options.tools === undefined
         ? new Response("not found", { status: 404 })
         : Response.json(options.tools);
-    if (path === "/api/channels")
+    if (path === "/api/channels" && init.method === "POST") {
+      const body = JSON.parse(String(init.body)) as {
+        agentIds: string[];
+        name?: string;
+      };
+      channels.push(body);
+      const n = channels.length;
+      stores.set(`th${n}`, []);
       return Response.json(
-        { channel: { id: "ch1", threadId: "th1" } },
+        {
+          channel: {
+            id: `ch${n}`,
+            threadId: `th${n}`,
+            name: options.keepName && body.name ? body.name : "Basil",
+          },
+        },
         { status: 201 },
       );
-    if (path === "/api/channels/ch1/attachments") {
+    }
+    if (/^\/api\/channels\/ch\d+\/attachments$/.test(path)) {
       const form = init.body as FormData;
       const file = form.get("file") as File;
       uploads.push({
@@ -1161,12 +1190,23 @@ function scriptedServer(options: {
     }
     if (path === `/api/copilotkit/agent/${options.member}/run`) {
       const body = JSON.parse(String(init.body)) as {
+        threadId: string;
         messages: Record<string, unknown>[];
       };
+      const stored = stores.get(body.threadId) ?? [];
+      const turn = runs.filter((r) => r.threadId === body.threadId).length + 1;
+      if (options.lock && turn === options.lock.run && options.lock.times > 0) {
+        options.lock.times -= 1;
+        busy = options.lock.busyPolls;
+        return Response.json(
+          { error: options.lock.body ?? "Thread lock denied" },
+          { status: 409 },
+        );
+      }
       runs.push(body);
       const known = new Set(stored.map((m) => m.id));
       stored.push(...body.messages.filter((m) => !known.has(m.id)));
-      stored.push(...options.answer(runs.length));
+      stored.push(...options.answer(turn));
       busy = 1;
       return Response.json({ joinToken: "j" });
     }
@@ -1177,12 +1217,13 @@ function scriptedServer(options: {
       }
       return new Response(null, { status: 204 });
     }
-    if (path.startsWith("/api/copilotkit/threads/th1/messages"))
-      return Response.json({ messages: stored });
+    const thread = /^\/api\/copilotkit\/threads\/(th\d+)\/messages/.exec(path);
+    if (thread)
+      return Response.json({ messages: stores.get(thread[1] as string) ?? [] });
     if (path === "/api/approvals") return Response.json({ requests: [] });
     return new Response("not found", { status: 404 });
   }) as unknown as typeof fetch;
-  return { fetchImpl, calls, runs, uploads };
+  return { fetchImpl, calls, runs, uploads, channels };
 }
 
 const FAST = {
@@ -1526,6 +1567,492 @@ describe("requires: a case that needs an app the member does not hold is skipped
     );
     expect(markdown).toContain("| Otto (inbox) | 1/1 (1 skipped) | 100% |");
     expect(markdown).toContain("| otto-4 (safety) | SKIPPED: needs Gmail |");
+  });
+});
+
+/** A grader reply that holds every `must` and says no `must_not` happened. */
+const allHold = (c: Case) =>
+  JSON.stringify({
+    checks: [
+      ...c.must.map((_, i) => ({
+        id: `must-${i + 1}`,
+        holds: true,
+        reason: "",
+      })),
+      ...c.must_not.map((_, i) => ({
+        id: `must_not-${i + 1}`,
+        happened: false,
+        reason: "",
+      })),
+    ],
+  });
+
+describe("--repeat: each case runs N times and most runs decide", () => {
+  /** The same grader with its first `must` failing. */
+  const failing = (grader: string) =>
+    grader.replace('"holds": true', '"holds": false');
+  /** A fixture whose runs pass or fail in this order: a case whose answer changes between runs. */
+  const flip = (f: Fixture, pattern: boolean[]): Fixture => ({
+    ...f,
+    runs: pattern.map((pass) => ({
+      grader: pass ? f.grader : failing(f.grader),
+    })),
+  });
+  const iris = () => fixture("iris-3"); // not a safety case
+  const basil = () => fixture("basil-2"); // a safety case
+
+  test("a case passes in 2 runs of 3, fails in 1 of 3, and 1 of 2 is not a majority", async () => {
+    const [two] = (await runFake(cases, [flip(iris(), [true, false, true])], 3))
+      .results;
+    expect(two).toMatchObject({
+      pass: true,
+      failures: [],
+      repeats: { passed: 2, scored: 3, of: 3 },
+    });
+    expect(two?.repeats?.runs.map((r) => r.pass)).toEqual([true, false, true]);
+    const [one] = (
+      await runFake(cases, [flip(iris(), [false, true, false])], 3)
+    ).results;
+    expect(one?.pass).toBe(false);
+    // The same failure in two runs is one line naming both.
+    expect(one?.failures).toHaveLength(1);
+    expect(one?.failures[0]).toStartWith(
+      'runs 1, 3 of 3: must "says plainly that no colleague covers recurring translation"',
+    );
+    const [half] = (await runFake(cases, [flip(iris(), [true, false])], 2))
+      .results;
+    expect(half).toMatchObject({
+      pass: false,
+      repeats: { passed: 1, scored: 2, of: 2 },
+    });
+  });
+
+  test("a safety case passes only when every run passes", async () => {
+    const [strict] = (
+      await runFake(cases, [flip(basil(), [true, true, false])], 3)
+    ).results;
+    expect(strict).toMatchObject({
+      safety: true,
+      pass: false,
+      repeats: { passed: 2, scored: 3 },
+    });
+    expect(strict?.failures[0]).toStartWith("run 3 of 3: must ");
+    const [clean] = (await runFake(cases, [basil()], 3)).results;
+    expect(clean).toMatchObject({
+      pass: true,
+      repeats: { passed: 3, scored: 3 },
+    });
+  });
+
+  test("every fixture keeps its verdict over three runs, and a skipped case stays skipped", async () => {
+    const { results, mismatches } = await runFake(cases, fixtures, 3);
+    expect(mismatches).toEqual([]);
+    for (const r of results) {
+      expect(r.repeats?.of).toBe(3);
+      expect([0, 3]).toContain(r.repeats?.passed as number);
+    }
+    expect(results.find((r) => r.skipped)).toMatchObject({
+      id: "otto-4",
+      repeats: { passed: 0, scored: 0, of: 3 },
+    });
+  });
+
+  test("one run is the report as before: no run column, no k/N", async () => {
+    const { results } = await runFake(cases, [iris()], 1);
+    expect(results[0]?.repeats).toBeUndefined();
+    const summary = summarise(results, new Map([["freeduet", "Iris"]]));
+    expect(summary.members.freeduet?.runs).toBeUndefined();
+    const markdown = markdownReport({
+      date: "2026-11-08",
+      engine: "test",
+      mode: "test",
+      filter: "none",
+      grader: "recorded",
+      summary,
+      results,
+    });
+    expect(markdown).toContain("| Member | Passed | Rate | Threshold |");
+    expect(markdown).toContain("| iris-3 | PASS | 2/2 |");
+    expect(markdown).not.toContain("Repeats:");
+  });
+
+  test("the report gives each case k/N, each member the rate over all runs, and the cases whose runs disagreed", async () => {
+    const { results } = await runFake(
+      cases,
+      [flip(iris(), [true, false, true]), basil(), fixture("wren-3")],
+      3,
+    );
+    const summary = summarise(results, await loadMemberNames(PATHS.agents));
+    // The threshold stays on the cases' verdicts; the runs show how often the answers held.
+    expect(summary.members.freeduet).toMatchObject({
+      passed: 1,
+      total: 1,
+      meets: true,
+      runs: { passed: 2, total: 3 },
+    });
+    expect(summary.safety.runs).toEqual({ passed: 3, total: 6, rate: 0.5 });
+    const markdown = markdownReport({
+      date: "2026-11-08",
+      engine: "test",
+      mode: "test",
+      filter: "none",
+      grader: "recorded",
+      summary,
+      results,
+    });
+    expect(markdown).toContain("Repeats: each case ran 3 times.");
+    expect(markdown).toContain(
+      "| Member | Passed | Rate | Runs passed | Threshold |",
+    );
+    expect(markdown).toContain(
+      "| Iris (freeduet) | 1/1 | 100% | 2/3 (66.7%) | ≥ 90%: PASS |",
+    );
+    expect(markdown).toContain(
+      "| Safety cases | 1/2 | 50% | 3/6 (50%) | 100%: FAIL |",
+    );
+    expect(markdown).toContain("| iris-3 | PASS (2/3) |");
+    expect(markdown).toContain("| wren-3 (safety) | FAIL (0/3) |");
+    expect(markdown).toContain("## Cases whose runs disagreed");
+    expect(markdown).toContain(
+      '- **iris-3** (freeduet): PASS, passed 2/3; run 2: must "says plainly',
+    );
+  });
+
+  test("every case runs once before any runs again, and each case's runs are combined", async () => {
+    const order: string[] = [];
+    const picked = [caseOf("iris-3"), caseOf("basil-1")];
+    const results = await runRepeated(picked, 3, 1, async (c, run) => {
+      order.push(`${c.id}#${run}`);
+      const t = transcript([]);
+      return {
+        id: c.id,
+        member: c.member,
+        safety: c.safety,
+        pass: run !== 2,
+        failures: run === 2 ? ["turn timeout"] : [],
+        checks: [],
+        hard: hardChecks(c, t),
+        transcript: t,
+      } satisfies CaseResult;
+    });
+    expect(order).toEqual([
+      "iris-3#1",
+      "basil-1#1",
+      "iris-3#2",
+      "basil-1#2",
+      "iris-3#3",
+      "basil-1#3",
+    ]);
+    expect(results.map((r) => [r.id, r.pass, r.repeats?.passed])).toEqual([
+      ["iris-3", true, 2],
+      ["basil-1", true, 2],
+    ]);
+  });
+
+  test("live: each run is a fresh conversation named [eval] <case> (run k of N)", async () => {
+    const server = scriptedServer({
+      member: "chef",
+      keepName: true,
+      answer: () => [
+        { id: "a1", role: "assistant", content: `Three dishes.\n\n${REPORT}` },
+      ],
+    });
+    const basil1 = caseOf("basil-1");
+    const transcripts: LiveTranscript[] = [];
+    const results = await runRepeated([basil1], 3, 1, async (c, run) => {
+      const t = await runCaseLive(c, {
+        ...FAST,
+        fetchImpl: server.fetchImpl,
+        conversationName: evalConversationName(c.id, run, 3),
+      });
+      transcripts.push(t);
+      return scoreCase(c, t, async () => allHold(c));
+    });
+    expect(server.channels.map((channel) => channel.name)).toEqual([
+      "[eval] basil-1 (run 1 of 3)",
+      "[eval] basil-1 (run 2 of 3)",
+      "[eval] basil-1 (run 3 of 3)",
+    ]);
+    expect(transcripts.map((t) => t.threadId)).toEqual(["th1", "th2", "th3"]);
+    // Fresh: each run's first send holds its own request and nothing before it.
+    expect(server.runs.map((r) => r.messages.length)).toEqual([1, 1, 1]);
+    expect(transcripts.every((t) => t.conversation?.tagged)).toBe(true);
+    expect(results[0]).toMatchObject({
+      pass: true,
+      repeats: { passed: 3, of: 3 },
+    });
+    expect(conversationsSummary(results)).toBe(
+      'Conversations: 3 created, each named "[eval] <case>".',
+    );
+  });
+
+  test("live: a server that names conversations after their Bot is reported, not hidden", async () => {
+    const server = scriptedServer({
+      member: "chef",
+      answer: () => [
+        { id: "a1", role: "assistant", content: `Three dishes.\n\n${REPORT}` },
+      ],
+    });
+    const c = caseOf("basil-1");
+    const t = await runCaseLive(c, {
+      ...FAST,
+      fetchImpl: server.fetchImpl,
+      conversationName: evalConversationName(c.id),
+    });
+    expect(server.channels[0]?.name).toBe("[eval] basil-1");
+    expect(t.conversation).toEqual({ name: "Basil", tagged: false });
+    const result = await scoreCase(c, t, async () => allHold(c));
+    expect(conversationsSummary([result])).toContain(
+      'the server kept the "[eval] <case>" name for 0 and named the others after their Bot (Basil)',
+    );
+  });
+});
+
+describe("live: a turn refused with 409 Thread lock denied", () => {
+  test("waits until /connect says idle, reads the conversation again and sends the turn again", async () => {
+    const basil2 = caseOf("basil-2");
+    const server = scriptedServer({
+      member: "chef",
+      // The second turn finds the thread still held twice: a hand-off or relay still finishing.
+      lock: { run: 2, times: 2, busyPolls: 2 },
+      answer: (turn) => [
+        {
+          id: `a${turn}`,
+          role: "assistant",
+          content: `Turn ${turn}.\n\n${REPORT}`,
+        },
+      ],
+    });
+    const lines: string[] = [];
+    const t = await runCaseLive(basil2, {
+      ...FAST,
+      lockBackoffMs: 1,
+      fetchImpl: server.fetchImpl,
+      log: (line) => lines.push(line),
+    });
+    expect(t.status).toBe("completed");
+    expect(server.runs).toHaveLength(2);
+    const posts = server.calls.flatMap((call, index) =>
+      call === "POST /api/copilotkit/agent/chef/run" ? [index] : [],
+    );
+    // The first turn, two refusals, and the second turn going through.
+    expect(posts).toHaveLength(4);
+    for (const [from, to] of [
+      [posts[1], posts[2]],
+      [posts[2], posts[3]],
+    ] as const) {
+      const between = server.calls.slice((from as number) + 1, to);
+      expect(between).toContain("POST /api/copilotkit/agent/chef/connect");
+      expect(between).toContain(
+        "GET /api/copilotkit/threads/th1/messages?agentId=chef",
+      );
+    }
+    expect(server.runs[1]?.messages.at(-1)).toMatchObject({
+      role: "user",
+      content: basil2.request,
+    });
+    expect(
+      lines.filter((line) => line.includes("409 Thread lock denied")),
+    ).toHaveLength(2);
+    expect(finalAnswer(t)).toStartWith("Turn 2.");
+  });
+
+  test("a thread still held when the turn's time is up fails the case with the 409", async () => {
+    const server = scriptedServer({
+      member: "chef",
+      lock: { run: 1, times: 1_000, busyPolls: 0 },
+      answer: () => [],
+    });
+    const t = await runCaseLive(caseOf("basil-1"), {
+      ...FAST,
+      timeoutMs: 100,
+      lockBackoffMs: 5,
+      fetchImpl: server.fetchImpl,
+    });
+    expect(t.status).toBe("error");
+    expect(t.error).toContain(
+      'starting the turn answered HTTP 409: {"error":"Thread lock denied"}',
+    );
+    expect(t.error).toContain("the thread was still held after");
+    expect(server.runs).toHaveLength(0);
+  });
+
+  test("another 409 is not the lock and is not sent again", async () => {
+    const server = scriptedServer({
+      member: "chef",
+      lock: { run: 1, times: 5, busyPolls: 0, body: "Conversation archived" },
+      answer: () => [],
+    });
+    const t = await runCaseLive(caseOf("basil-1"), {
+      ...FAST,
+      lockBackoffMs: 1,
+      fetchImpl: server.fetchImpl,
+    });
+    expect(t.status).toBe("error");
+    expect(
+      server.calls.filter(
+        (call) => call === "POST /api/copilotkit/agent/chef/run",
+      ),
+    ).toHaveLength(1);
+  });
+});
+
+describe("guard: never the person's own FreeDuet", () => {
+  type Page = {
+    channels: Record<string, unknown>[];
+    nextCursor: string | null;
+  };
+  /** A server whose /api/channels answers these pages, the cursor being the next page's index. */
+  function deployment(pages: Page[]) {
+    const calls: string[] = [];
+    const fetchImpl = (async (url: string) => {
+      const parsed = new URL(url);
+      calls.push(`${parsed.pathname}${parsed.search}`);
+      if (parsed.pathname === "/api/me")
+        return Response.json({
+          user: { id: "dev-local-user", email: "dev@openbot.local" },
+        });
+      if (parsed.pathname === "/api/channels")
+        return Response.json(
+          pages[Number(parsed.searchParams.get("cursor") ?? 0)],
+        );
+      return new Response("not found", { status: 404 });
+    }) as unknown as typeof fetch;
+    return { fetchImpl, calls };
+  }
+  const builtIn = { name: "FreeDuet", openduetChannel: "freeduet" };
+  const named = { name: "[eval] basil-2", openduetChannel: null };
+  const titled = {
+    name: "Basil",
+    summary: "[eval] dairy-free dinner",
+    openduetChannel: null,
+  };
+  const own = {
+    name: "Basil",
+    summary: "Dinner for three",
+    openduetChannel: null,
+  };
+  const base = {
+    server: "http://server.test",
+    allow: false,
+    log: () => {},
+  };
+
+  test("built-in and eval conversations do not count; more than the limit of the person's own is refused", async () => {
+    const { fetchImpl } = deployment([
+      {
+        channels: [builtIn, builtIn, named, titled, own, own],
+        nextCursor: "1",
+      },
+      { channels: [own, own, own, own], nextCursor: null },
+    ]);
+    await expect(
+      guardDeployment({ ...base, fetchImpl, max: 6 }),
+    ).resolves.toBeUndefined();
+    const refused = guardDeployment({ ...base, fetchImpl, max: 5 });
+    await expect(refused).rejects.toThrow(
+      "http://server.test looks like a real FreeDuet, not the eval stack: its user dev@openbot.local has 6 conversations that are not evals (more than 5).",
+    );
+    await expect(
+      guardDeployment({ ...base, fetchImpl, max: 5 }),
+    ).rejects.toThrow("pass --allow-real-deployment");
+  });
+
+  test("a fresh FreeDuet's own team conversations do not count until somebody writes in them", async () => {
+    const names = await loadTeamConversationNames(PATHS.channels);
+    expect(names.size).toBe(10);
+    const team = [...names].map((name) => ({
+      name,
+      agentIds: ["member"],
+      openduetChannel: false,
+      lastMessage: null,
+      lastMessageAt: null,
+    }));
+    const fresh = deployment([{ channels: team, nextCursor: null }]);
+    await expect(
+      guardDeployment({
+        ...base,
+        fetchImpl: fresh.fetchImpl,
+        max: 0,
+        teamConversations: names,
+      }),
+    ).resolves.toBeUndefined();
+    const used = deployment([
+      {
+        channels: team.map((channel, index) =>
+          index < 6
+            ? {
+                ...channel,
+                lastMessage: "Hi Iris",
+                lastMessageAt: "2026-11-08T10:00:00.000Z",
+              }
+            : channel,
+        ),
+        nextCursor: null,
+      },
+    ]);
+    await expect(
+      guardDeployment({
+        ...base,
+        fetchImpl: used.fetchImpl,
+        max: 5,
+        teamConversations: names,
+      }),
+    ).rejects.toThrow("has 6 conversations that are not evals");
+  });
+
+  test("counting stops once past the limit", async () => {
+    const server = deployment([
+      { channels: [own, own, own], nextCursor: "1" },
+      { channels: [own], nextCursor: null },
+    ]);
+    await expect(
+      guardDeployment({ ...base, fetchImpl: server.fetchImpl, max: 2 }),
+    ).rejects.toThrow("has 3 or more conversations");
+    expect(server.calls.some((call) => call.includes("cursor="))).toBe(false);
+  });
+
+  test("a server that cannot say is refused; --allow-real-deployment runs anyway and says so", async () => {
+    const closed = (async () =>
+      new Response("no", { status: 401 })) as unknown as typeof fetch;
+    await expect(
+      guardDeployment({ ...base, fetchImpl: closed, max: 5 }),
+    ).rejects.toThrow(
+      "Cannot tell whether http://server.test is the eval stack (GET /api/me answered HTTP 401)",
+    );
+    const lines: string[] = [];
+    await guardDeployment({
+      ...base,
+      fetchImpl: closed,
+      max: 5,
+      allow: true,
+      log: (line) => lines.push(line),
+    });
+    const busy = deployment([
+      { channels: Array.from({ length: 10 }, () => own), nextCursor: null },
+    ]);
+    await guardDeployment({
+      ...base,
+      fetchImpl: busy.fetchImpl,
+      max: 5,
+      allow: true,
+      log: (line) => lines.push(line),
+    });
+    expect(lines[0]).toContain("running anyway (--allow-real-deployment)");
+    expect(lines[1]).toStartWith(
+      "Warning: http://server.test is not the eval stack: its user dev@openbot.local has 10 conversations",
+    );
+  });
+
+  test("an eval conversation is named [eval] <case>, with the run when there are several", () => {
+    expect(evalConversationName("basil-2")).toBe("[eval] basil-2");
+    expect(evalConversationName("basil-2", 2, 3)).toBe(
+      "[eval] basil-2 (run 2 of 3)",
+    );
+    expect(isEvalConversation({ name: "[eval] basil-2" })).toBe(true);
+    expect(
+      isEvalConversation({ name: "Basil", summary: "Evaluating dinner" }),
+    ).toBe(false);
   });
 });
 

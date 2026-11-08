@@ -1,12 +1,19 @@
 /*
  * Drives a running FreeDuet server over its HTTP API, the same routes the web app uses:
  *
+ *   GET  /api/me, GET /api/channels                         who the runner is, and how many conversations
+ *                                                           that person has that are not evals (run.ts
+ *                                                           refuses a real FreeDuet: guardDeployment)
  *   GET  /api/plugins/for/<member>                          the tools the member holds, for `requires`
- *   POST /api/channels {agentIds:[member]}                  new conversation with one Bot, as the
- *                                                           "Message <name>" button's /channel/new does
+ *   POST /api/channels {agentIds:[member], name}            new conversation with one Bot, as the
+ *                                                           "Message <name>" button's /channel/new does,
+ *                                                           named "[eval] <case>" so it is recognisable
  *   POST /api/channels/<channel>/attachments (multipart)    each attached file, as the composer uploads it
  *   POST /api/copilotkit/agent/<member>/run                 each message (AG-UI RunAgentInput), with the
- *                                                           conversation so far, as the web app sends it
+ *                                                           conversation so far, as the web app sends it;
+ *                                                           a 409 "Thread lock denied" (the thread is
+ *                                                           still finishing a hand-off or a relay) waits
+ *                                                           for /connect to say idle and tries again
  *   POST /api/copilotkit/agent/<member>/connect             204 when the thread is idle, {runId} when busy
  *   GET  /api/copilotkit/threads/<thread>/messages?agentId= the stored conversation, tool calls included
  *   GET  /api/approvals                                     the approval gate's requests (filtered by thread)
@@ -39,11 +46,46 @@ import {
   toolContent,
 } from "./computer";
 
-/** A live transcript, with what the member was offered of its computer and every call it made. */
-export type LiveTranscript = Transcript & { computer?: ComputerRecord };
+/**
+ * A live transcript, with what the member was offered of its computer and every call it made, and
+ * the name the server gave the conversation: `tagged` when it kept the runner's "[eval] ..." name.
+ */
+export type LiveTranscript = Transcript & {
+  computer?: ComputerRecord;
+  conversation?: { name: string | null; tagged: boolean };
+};
 
 /** CopilotKit core's MAX_FOLLOW_UP_DEPTH: the runs the app posts back after tool calls, per send. */
 export const MAX_FOLLOW_UPS = 100;
+
+/**
+ * What every conversation the runner creates is named with, first: "[eval] basil-2", or
+ * "[eval] basil-2 (run 2 of 3)" with --repeat. The guard below does not count these as the person's.
+ */
+export const EVAL_MARKER = "[eval]";
+export const evalConversationName = (caseId: string, run = 1, of = 1) =>
+  `${EVAL_MARKER} ${caseId}${of > 1 ? ` (run ${run} of ${of})` : ""}`;
+export const isEvalConversation = (channel: {
+  name?: unknown;
+  summary?: unknown;
+}) =>
+  [channel.name, channel.summary].some(
+    (text) =>
+      typeof text === "string" && text.trimStart().startsWith(EVAL_MARKER),
+  );
+
+/** The runtime's answer when another run still holds the thread (`run.mjs`: 409 "Thread lock denied"). */
+export class ThreadLockedError extends Error {}
+
+/** A conversation as `GET /api/channels` lists it, in the fields the guard reads. */
+export type ListedConversation = {
+  name?: unknown;
+  summary?: unknown;
+  openduetChannel?: unknown;
+  agentIds?: unknown;
+  lastMessage?: unknown;
+  lastMessageAt?: unknown;
+};
 
 export type LiveOptions = {
   server: string;
@@ -65,6 +107,14 @@ export type LiveOptions = {
   computer?: boolean;
   /** Where the app's tool definitions come from: app-computer-tools.ts, unless a test gives one. */
   appTools?: AppToolsLoader;
+  /** The conversation's name, sent when it is created: evalConversationName(...) from run.ts. */
+  conversationName?: string;
+  /**
+   * After a 409 "Thread lock denied", the first pause before trying again, once /connect says the
+   * thread is idle; it doubles each time up to `lockBackoffMaxMs`, until the turn's time limit.
+   */
+  lockBackoffMs?: number;
+  lockBackoffMaxMs?: number;
   fetchImpl?: typeof fetch;
   log?: (line: string) => void;
 };
@@ -375,23 +425,71 @@ export function createServerApi(
     `/api/copilotkit/agent/${encodeURIComponent(member)}/${verb}`;
 
   return {
-    async createChannel(member: string) {
+    /**
+     * A new conversation with the member. `name` is sent with it; a server that names conversations
+     * after their Bots ignores it, and the answer says which name it kept.
+     */
+    async createChannel(member: string, name?: string) {
       const response = await call("/api/channels", {
         method: "POST",
-        body: { agentIds: [member] },
+        body: { agentIds: [member], ...(name ? { name } : {}) },
       });
       if (!response.ok)
         throw new Error(
           `creating the conversation answered HTTP ${response.status}: ${(await response.text()).slice(0, 200)}`,
         );
       const body = (await response.json()) as {
-        channel?: { id?: string; threadId?: string };
+        channel?: { id?: string; threadId?: string; name?: unknown };
       };
       if (!body.channel?.id || !body.channel.threadId)
         throw new Error(
           "creating the conversation returned no channel or thread id",
         );
-      return { id: body.channel.id, threadId: body.channel.threadId };
+      return {
+        id: body.channel.id,
+        threadId: body.channel.threadId,
+        name: typeof body.channel.name === "string" ? body.channel.name : null,
+      };
+    },
+    /**
+     * Who the server says the runner is (`GET /api/me`), and how many of that person's
+     * conversations are neither built in (a package channel), nor named as evals, nor left out by
+     * `skip`. Counting stops once it passes `stopAfter`, so a sidebar of hundreds costs one or two
+     * pages.
+     */
+    async countPersonConversations(
+      stopAfter = Number.POSITIVE_INFINITY,
+      skip: (channel: ListedConversation) => boolean = () => false,
+    ) {
+      const me = await call("/api/me");
+      if (!me.ok) throw new Error(`GET /api/me answered HTTP ${me.status}`);
+      const { user } = (await me.json()) as {
+        user?: { id?: unknown; email?: unknown; name?: unknown };
+      };
+      const who = [user?.email, user?.name, user?.id].find(
+        (value): value is string => typeof value === "string" && value !== "",
+      );
+      let conversations = 0;
+      let cursor = "";
+      do {
+        const response = await call(
+          `/api/channels?limit=200${cursor ? `&cursor=${encodeURIComponent(cursor)}` : ""}`,
+        );
+        if (!response.ok)
+          throw new Error(`GET /api/channels answered HTTP ${response.status}`);
+        const page = (await response.json()) as {
+          channels?: ListedConversation[];
+          nextCursor?: unknown;
+        };
+        conversations += (page.channels ?? []).filter(
+          (channel) =>
+            !channel.openduetChannel &&
+            !isEvalConversation(channel) &&
+            !skip(channel),
+        ).length;
+        cursor = typeof page.nextCursor === "string" ? page.nextCursor : "";
+      } while (cursor && conversations <= stopAfter);
+      return { user: who ?? "unknown", conversations, complete: !cursor };
     },
     /**
      * The tools the member holds (its grants), or null when they cannot be read. Built-in tools that
@@ -502,10 +600,13 @@ export function createServerApi(
         method: "POST",
         body: input,
       });
-      if (!response.ok)
-        throw new Error(
-          `starting the turn answered HTTP ${response.status}: ${(await response.text()).slice(0, 200)}`,
-        );
+      if (!response.ok) {
+        const message = `starting the turn answered HTTP ${response.status}: ${(await response.text()).slice(0, 200)}`;
+        // Another run still holds the thread: the previous turn, or a hand-off or relay it set off.
+        if (response.status === 409 && /thread lock denied/i.test(message))
+          throw new ThreadLockedError(message);
+        throw new Error(message);
+      }
       await response.text();
       return input.runId;
     },
@@ -636,6 +737,20 @@ async function waitForTurn(
   return { messages, timedOut: true };
 }
 
+/** Polls /connect, as waitForTurn does, until the thread is not busy or the deadline passes. */
+async function waitUntilIdle(
+  api: Api,
+  member: string,
+  threadId: string,
+  deadline: number,
+  pollMs: number,
+) {
+  while (Date.now() < deadline) {
+    if ((await api.runState(member, threadId)) !== "busy") return;
+    await sleep(pollMs);
+  }
+}
+
 /**
  * The new user message of a turn. Attached files are uploaded through the composer's route and
  * sent as parts that point at them; a file the route refuses (an older server, a full upload
@@ -747,11 +862,57 @@ export async function runCaseLive(
   let approvals: PublicApproval[] = [];
   const sent: NonNullable<Transcript["attachments"]> = [];
   try {
-    const channel = await api.createChannel(c.member);
+    const channel = await api.createChannel(c.member, options.conversationName);
     transcript.channelId = channel.id;
     transcript.threadId = channel.threadId;
+    if (options.conversationName)
+      transcript.conversation = {
+        name: channel.name,
+        tagged: channel.name === options.conversationName,
+      };
     const runMessages = () =>
       toRunMessages(withLocalResults(messages, local, true));
+    /*
+     * Starts a run with the conversation so far (and the turn's new message), as the app does. When
+     * the runtime refuses it with 409 "Thread lock denied" (the previous turn, or a hand-off or relay
+     * it set off, still holds the thread: jules-3), it waits for /connect to say idle, reads the
+     * conversation again (the relay may have added to it) and tries again, with a pause that doubles
+     * each time, until the turn's time limit.
+     */
+    const startTurn = async (deadline: number, message?: unknown) => {
+      let pause = options.lockBackoffMs ?? 2000;
+      for (let attempt = 1; ; attempt++) {
+        try {
+          return await api.startRun(
+            c.member,
+            channel.threadId,
+            [...runMessages(), ...(message === undefined ? [] : [message])],
+            offered,
+          );
+        } catch (error) {
+          if (!(error instanceof ThreadLockedError)) throw error;
+          if (Date.now() >= deadline)
+            throw new Error(
+              `${error.message} (the thread was still held after ${attempt} ${attempt === 1 ? "try" : "tries"})`,
+            );
+          log(
+            `  the thread is still busy (409 Thread lock denied): waiting to try again (${attempt})`,
+          );
+          await waitUntilIdle(
+            api,
+            c.member,
+            channel.threadId,
+            deadline,
+            timing.pollMs,
+          );
+          await sleep(Math.max(0, Math.min(pause, deadline - Date.now())));
+          pause = Math.min(pause * 2, options.lockBackoffMaxMs ?? 16_000);
+          messages = await api
+            .readMessages(c.member, channel.threadId)
+            .catch(() => messages);
+        }
+      }
+    };
     const turns = turnsOf(c);
     for (const [index, turn] of turns.entries()) {
       // Every turn gets the whole time limit: an earlier turn may be a long search of its own.
@@ -761,12 +922,7 @@ export async function runCaseLive(
           `  turn ${index + 1}/${turns.length}: ${turn.request.slice(0, 60)}`,
         );
       const message = await userMessage(api, channel.id, turn, sent);
-      let runId = await api.startRun(
-        c.member,
-        channel.threadId,
-        [...runMessages(), message],
-        offered,
-      );
+      let runId = await startTurn(deadline, message);
       let timedOut: boolean;
       ({ messages, timedOut } = await waitForTurn(
         api,
@@ -878,12 +1034,7 @@ export async function runCaseLive(
         const before = JSON.stringify(messages);
         if (followUp) {
           followUps++;
-          runId = await api.startRun(
-            c.member,
-            channel.threadId,
-            runMessages(),
-            offered,
-          );
+          runId = await startTurn(deadline);
         }
         // The gate just opened an approval for a change: read it, so it is denied with the rest.
         if (gateAsked) approvals = await api.readApprovals(channel.threadId);

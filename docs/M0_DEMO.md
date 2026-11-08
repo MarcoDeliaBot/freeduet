@@ -112,3 +112,38 @@ Found while running this demo on the maintainer's computer on 2026-11-08.
 | Ollama is not reachable from Ubuntu and `wsl --shutdown` is not an option (it would stop other distributions' services) | Mirrored networking needs a WSL restart | Run a small stdin/stdout bridge from Windows into Ubuntu on a free local port, and point `ANTHROPIC_BASE_URL` at it. The maintainer's demo used one on port 11437 |
 | A member stops after its first step with `unknown input item type: "item_reference"` in `server.log` | Profile A was set to the OpenAI format | Use the Anthropic-format block above |
 | `wsl: Failed to start the systemd user session` | Harmless warning | None |
+
+## Eval stack
+
+The team evals ([evals/team/README.md](../evals/team/README.md)) talk to FreeDuet as its user, so they never run on the FreeDuet you use: run there on 2026-11-08 they left 282 conversations in the sidebar and 11 invented memories about the maintainer. They run on the eval stack, a second FreeDuet on the same machine, started from the same checkout through the same `scripts/start.sh` with its own settings file, `openbot/.env.eval` (git-ignored, written by the script with fresh secrets).
+
+**Once:** the eval stack needs a CopilotKit Intelligence project of its own. Intelligence keeps each person's memories by user, and with no sign-in both FreeDuets are the same user, so on your project the evals would read and change your real memories whatever database they have. Create a second project at [intelligence.copilotkit.ai](https://intelligence.copilotkit.ai) and copy its runtime key (API Keys); do not run `copilotkit project select` in the repository, which would write it into your own `.env`. Your FreeDuet must have run once with Claude Code signed in.
+
+From the repository root (`~/freeduet`), with your FreeDuet running or not:
+
+```bash
+FREEDUET_EVAL_INTELLIGENCE_API_KEY=<the second project's key> bash openbot/scripts/freeduet-eval-stack.sh up   # the first time
+bash openbot/scripts/freeduet-eval-stack.sh reset    # before every eval run: no conversations, no memories
+bun --env-file=openbot/.env.eval evals/team/run.ts --repeat 3
+bash openbot/scripts/freeduet-eval-stack.sh status   # what answers, sign-in, conversations
+bash openbot/scripts/freeduet-eval-stack.sh down     # stop it; its data stays until the next reset
+```
+
+| | Your FreeDuet | Eval stack |
+|---|---|---|
+| Settings | `openbot/.env` | `openbot/.env.eval` |
+| Compose project | `freeduet` | `freeduet-eval` |
+| App | 3010 | 3110 |
+| Server | 3001 | 3101 |
+| agent-freeduet | 4230 | 4231 |
+| Computer · supervisor · LangGraph · Postgres | 4100 · 4500 · 4201 · 5432 | 4110 · 4510 · 4211 · 5442 |
+| Bot computers (supervisor namespace) | `openbot` or yours | `freeduet-eval` |
+| Logs | `openbot/.logs/` | `openbot/.logs/eval/` |
+
+Every port is on this machine only (127.0.0.1 and ::1). To pick another, set `FREEDUET_EVAL_APP_PORT`, `..._SERVER_PORT`, `..._FREEDUET_PORT` and so on before the first `up`, or edit `.env.eval` and run `reset`.
+
+What it has of its own: the database, the files, agent-freeduet's checkpoints, the browser profiles and the Bot computers (Docker volumes of the `freeduet-eval` project), the server and worker processes (their command lines name `.env.eval`, so neither stack's scripts ever adopt or stop the other's), the Intelligence project and its `DEPLOYMENT_ID`. Automatic Learning is off, so no learned skill carries over between runs. `reset` stops it, removes the volumes the `freeduet-eval` project and its supervisor made, starts it again and removes the memories left in its Intelligence project through its own server.
+
+What it shares, on purpose: the Docker images (same checkout) and **your Claude Code sign-in**. Its agent-freeduet mounts your FreeDuet's sign-in volume (`freeduet_freeduet-claude-login`) as an external volume ([openbot/scripts/freeduet-eval-compose.yml](../openbot/scripts/freeduet-eval-compose.yml)): Compose neither creates nor removes it, and `reset` never touches it. Read-write, like your FreeDuet's: the CLI starts on a read-only folder (checked with Claude Code 2.1.319 and an empty folder), but a signed-in CLI renews its token by rewriting that folder under a lock file, so read-only it would renew in memory only, every run, and could leave the stored token behind. Both stacks are then simply two more Claude Code processes on one sign-in, as agent-freeduet already runs several. Nothing in FreeDuet reads, copies or prints it. Both stacks draw on the same plan limits.
+
+Evals use your plan like any Claude Code work: 45 cases with `--repeat 3` are 135 conversations, plus the grader's calls.

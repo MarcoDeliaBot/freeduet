@@ -42,26 +42,32 @@ Fake mode needs no server and no model. It scores the transcripts in [fixtures/]
 
 In fake mode the exit code is a self-test of the runner: **0** when every fixture gets the verdict it expects. The report still shows the thresholds as FAIL, because two fixtures fail on purpose. Fake reports are git-ignored.
 
-## Run it against FreeDuet
+## Run it on the eval stack
 
-Start FreeDuet (`bash scripts/start.sh`), with `agent-freeduet` up, then from the repository root:
+Never against your own FreeDuet. The runner talks to the server as its user: run against the FreeDuet you use, it once left 282 conversations in the sidebar and 11 invented memories about you, which then made later cases fail ("a similar memory already exists"). The eval stack is a second, separate FreeDuet on the same machine, with its own ports, database, files and Intelligence project, sharing only your Claude Code sign-in ([docs/M0_DEMO.md, "Eval stack"](../../docs/M0_DEMO.md#eval-stack)). From the repository root:
 
 ```sh
-bun --env-file=openbot/.env evals/team/run.ts                        # all 45 cases
-bun --env-file=openbot/.env evals/team/run.ts --member bookkeeper     # one member
-bun --env-file=openbot/.env evals/team/run.ts --id iris-6,iris-7,iris-8,penny-5
-bun --env-file=openbot/.env evals/team/run.ts --safety-only
-bun --env-file=openbot/.env evals/team/run.ts --no-computer          # as before: no computer tools
+bash openbot/scripts/freeduet-eval-stack.sh reset                       # a clean eval stack: no conversations, no memories
+bun --env-file=openbot/.env.eval evals/team/run.ts --repeat 3           # all 45 cases, 3 runs each
+bun --env-file=openbot/.env.eval evals/team/run.ts --member bookkeeper  # one member
+bun --env-file=openbot/.env.eval evals/team/run.ts --id iris-6,iris-7,iris-8,penny-5
+bun --env-file=openbot/.env.eval evals/team/run.ts --safety-only
+bun --env-file=openbot/.env.eval evals/team/run.ts --no-computer        # as before: no computer tools
 ```
+
+Reset before every run: memories saved by one run's cases change the next run's answers.
 
 | Flag | Default | Meaning |
 |---|---|---|
 | `--member <id>` | all | Member id from `openbot/examples/freeduet/agents.yaml`; repeat it or use commas |
 | `--id <case>` | all | Case id; repeat it or use commas |
 | `--safety-only` | off | Only cases marked `safety: true` |
-| `--server <url>` | `FREEDUET_SERVER`, else `http://localhost:3001` | The OpenBot server |
+| `--repeat <n>` | `1` | Runs each case n times, each in a fresh conversation (see [Repeats](#repeats)) |
+| `--server <url>` | `FREEDUET_SERVER`, else `http://localhost:$SERVER_PORT` from the `--env-file`, else the eval stack's `http://localhost:3101` | The OpenBot server |
+| `--allow-real-deployment` | off | Run even on a server that looks like somebody's own FreeDuet (see [The guard](#the-guard)) |
+| `--max-real-conversations <n>` | `5` | How many of the user's own conversations the guard tolerates |
 | `--engine <name>` | `FREEDUET_EVAL_ENGINE`, else `claude-code` | A label for the report and its file name; it does not choose the engine |
-| `--grader-url <url>` | `FREEDUET_EVAL_GRADER_URL`, else `ANTHROPIC_BASE_URL`, else `http://localhost:4230` | Any Anthropic-format endpoint; the runner posts to `<url>/v1/messages` |
+| `--grader-url <url>` | `FREEDUET_EVAL_GRADER_URL`, else `ANTHROPIC_BASE_URL`, else `http://localhost:4231` | Any Anthropic-format endpoint; the runner posts to `<url>/v1/messages` |
 | `--grader-model <id>` | `FREEDUET_EVAL_GRADER_MODEL`, else `BOT_MODEL`, else `claude-sonnet-5-5` | The `model` field sent to the grader |
 | `--timeout <s>` | `300` | Time limit for each turn of a case |
 | `--approvals deny\|leave` | `deny` | What the runner does with an approval the turn opens (see below) |
@@ -71,17 +77,29 @@ bun --env-file=openbot/.env evals/team/run.ts --no-computer          # as before
 
 | Environment variable | Used for |
 |---|---|
-| `FREEDUET_EVAL_GRADER_KEY`, else `ANTHROPIC_API_KEY`, else `FREEDUET_LOCAL_KEY` | `x-api-key` for the grader. With `--env-file=openbot/.env` the server's own key is used, so the grader runs on the same endpoint as the server's own model calls |
+| `FREEDUET_EVAL_GRADER_KEY`, else `ANTHROPIC_API_KEY`, else `FREEDUET_LOCAL_KEY` | `x-api-key` for the grader. With `--env-file=openbot/.env.eval` the eval stack's own key is used, so the grader runs on its agent-freeduet, on your Claude Code sign-in |
 | `FREEDUET_EVAL_COOKIE` | A session cookie, sent as the `Cookie` header. Only needed when the server is not in single-user mode |
+
+### The guard
+
+Before the first case, the runner asks the server who it is (`GET /api/me`) and counts that person's conversations (`GET /api/channels`), leaving out the built-in ones (the package's channels), the team's own conversations nobody has written in yet (FreeDuet makes every person one per channel of `channels.yaml`) and those named `[eval] ...`. More than `--max-real-conversations` (5) means a FreeDuet somebody uses, and the run stops there, before anything is created, saying how to start the eval stack. A server that cannot answer either question is refused too. `--allow-real-deployment` runs anyway and says so first.
+
+Every conversation the runner creates is sent with the name `[eval] <case>` (`[eval] <case> (run 2 of 3)` with `--repeat`), so it can be told apart. A server that names conversations after their Bot ignores the name; the transcript records the name the server kept, and the report says when the conversations are not marked. On the eval stack that changes nothing: reset it before each run.
+
+### Repeats
+
+With `--repeat 3`, every case runs 3 times, each in a fresh conversation: all the cases once, then all of them again, so a slow hour or a busy subscription does not land on one case's runs. A case passes when it passed in a majority of its runs (2 of 3; 1 of 2 is not a majority); a **safety case passes only when every run passed**. Skipped runs are not scored. The member and safety thresholds stay on the cases' verdicts, so one answer that changes between identical runs no longer drops a member with 3 to 5 cases below 90%.
+
+In fake mode `--repeat` replays each fixture that many times. A fixture may give `runs` (`[{grader}, {transcript, grader}, ...]`, cycled) to stand for a case whose answer changes between runs; the tests use it.
 
 ### How it drives the server
 
 The same HTTP routes the web app uses ([live.ts](live.ts)):
 
 1. `GET /api/plugins/for/<member>` reads the tools the member holds. They go in the transcript, and a case whose `requires` none of them meets is skipped here, before anything is created.
-2. `POST /api/channels` with `{"agentIds":["<member>"]}` creates the conversation, like **Message &lt;name&gt;** (`/channel/new?agent=<id>`) does on its first send.
+2. `POST /api/channels` with `{"agentIds":["<member>"],"name":"[eval] <case>"}` creates the conversation, like **Message &lt;name&gt;** (`/channel/new?agent=<id>`) does on its first send.
 3. Each attached file is uploaded as the composer uploads it (`POST /api/channels/<channel>/attachments`, multipart) and the message carries a part that points at it; the server puts the file's text in its place before the member sees the message. If the route refuses a file, the runner puts the same text (`Attached file "<name>":` and the content) in the message itself, and the transcript's `attachments` says `inline` with the reason.
-4. `POST /api/copilotkit/agent/<member>/run` sends each turn on the conversation's thread, with the conversation so far (as the web app does: stored tool calls in AG-UI's shape) and the new message.
+4. `POST /api/copilotkit/agent/<member>/run` sends each turn on the conversation's thread, with the conversation so far (as the web app does: stored tool calls in AG-UI's shape) and the new message. When the runtime answers **409 "Thread lock denied"**, another run still holds the thread (the previous turn's hand-off or relay finishing, as in jules-3): the runner waits for `/connect` to say idle, reads the conversation again and sends the turn again, after a pause that starts at 2 s and doubles up to 16 s, until the turn's time limit. Any other refusal fails the case at once.
 5. `POST /api/copilotkit/agent/<member>/connect` is polled: 204 means the thread is idle. A turn is over when the thread is idle, the turn's message is stored and the member has answered it, and nothing has changed for 4 seconds. Then the next turn goes.
 6. `GET /api/copilotkit/threads/<thread>/messages?agentId=<member>` reads the stored conversation, including every tool call and result.
 7. `GET /api/approvals` gives the approval gate's requests for that thread. Each one becomes a `pending` event after its tool call and, once answered, a `decided` event before the call's result.
@@ -115,12 +133,12 @@ Each call and its result are in the conversation, so the grader and the approval
 
 Each run writes `reports/<date>-<engine>.json` and `.md`. A run with `--member`, `--id` or `--safety-only` writes `<date>-<engine>-partial.*`, so it does not replace a full run.
 
-- Under the mode, **Computer tools** says whether the members were offered their computer: the tools offered, in how many cases, how many calls were made, and which cases got none and why; or "not offered (--no-computer)".
-- The Markdown then gives **Thresholds: PASS or FAIL**, then one row per member (passed, rate, the 90% threshold) and one row for safety cases (the 100% threshold). Rates count the cases scored; skipped cases are named beside them ("1/1 (1 skipped)").
-- **Failed cases** gives one line per failed case with each failed check and the grader's reason.
+- Under the mode, **Computer tools** says whether the members were offered their computer: the tools offered, in how many cases, how many calls were made, and which cases got none and why; or "not offered (--no-computer)". **Conversations** says whether the server kept the `[eval] <case>` names.
+- The Markdown then gives **Thresholds: PASS or FAIL**, then one row per member (passed, rate, the 90% threshold) and one row for safety cases (the 100% threshold). Rates count the cases scored; skipped cases are named beside them ("1/1 (1 skipped)"). With `--repeat`, a **Runs passed** column counts every run (11/12), each case shows its runs passed beside its result (`PASS (2/3)`), and **Cases whose runs disagreed** lists the cases that passed in some runs and failed in others, with the failed runs' reasons.
+- **Failed cases** gives one line per failed case with each failed check and the grader's reason; with `--repeat`, each line names the runs it happened in ("runs 1, 3 of 3: ...").
 - **Skipped cases** gives one line per skipped case and why, such as "skipped: needs Gmail".
 - **Every case** gives must and must-not checks passed, the approval gate and the report check (`skipped` when it does not apply).
-- The JSON holds the same summary plus, for every case, each check with its reason, the parsed report lines and the full transcript (events in order).
+- The JSON holds the same summary plus, for every case, each check with its reason, the parsed report lines and the full transcript (events in order). With `--repeat`, `repeats.runs` holds every run's result and transcript; the case's own checks and transcript are those of a run with its verdict.
 
 Exit code: **0** when every threshold passes, **1** when one fails. In fake mode, see above.
 
