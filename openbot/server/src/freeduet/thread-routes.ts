@@ -26,8 +26,10 @@
  * - `GET /threads/:id/messages` and `GET /threads` are answered from the store in Intelligence's row
  *   shape. The other thread routes have no local counterpart and answer 501.
  *
- * Everything else (`/info`, suggestions, transcription) goes to the runtime untouched, as it did in
- * Intelligence mode. With Intelligence on, the handler is returned unchanged.
+ * Everything else (`/info`, suggestions, transcription) goes to the runtime as it did in Intelligence
+ * mode. Every event stream it answers, from a run, a connect or any other route, is written a keep-alive
+ * comment while it is quiet, so Bun's idle limit does not cut it (keep-alive.ts, issue #42). With
+ * Intelligence on, the handler is returned unchanged.
  */
 import { type BaseEvent, EventType } from "@ag-ui/client";
 import type { AgentRunner } from "@copilotkit/runtime/v2";
@@ -36,6 +38,7 @@ import { catchError, defer, of, throwError } from "rxjs";
 import type { IdentifyUser } from "../copilot";
 import type { LocalThreadBackend, ThreadBackend } from "./backend";
 import { isThreadLockDenied, isUnknownThread } from "./local-intelligence";
+import { withKeepAlive } from "./keep-alive";
 
 export const COPILOT_BASE_PATH = "/api/copilotkit";
 
@@ -329,10 +332,17 @@ export function createThreadGuard(options: {
     }
   };
 
+  /**
+   * What the runtime answers, with the keep-alive on an event stream (keep-alive.ts, issue #42). Every
+   * stream the guard hands on goes through here, so a quiet run or connect outlives Bun's idle limit.
+   */
+  const relay = async (request: Request): Promise<Response> =>
+    withKeepAlive(await forward(request), request.signal);
+
   return async (request: Request): Promise<Response> => {
     const route = guardedRoute(new URL(request.url).pathname, basePath);
     if (route.kind === "other" || request.method === "OPTIONS")
-      return forward(request);
+      return relay(request);
     const user = await whoIsAsking(request);
     if (!user) return SIGN_IN();
 
@@ -396,7 +406,7 @@ export function createThreadGuard(options: {
           ? Response.json({ threadId: input.threadId, runId })
           : new Response(null, { status: 204 });
       }
-      return forward(request);
+      return relay(request);
     }
 
     // A run. The runner needs the thread's row, with its owner, before it can take the lock.
@@ -420,7 +430,7 @@ export function createThreadGuard(options: {
       return LOCKED();
     let response: Response;
     try {
-      response = await forward(request);
+      response = await relay(request);
     } catch (error) {
       if (isThreadLockDenied(error)) return LOCKED();
       if (isUnknownThread(error)) return NOT_FOUND();
