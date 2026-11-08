@@ -2,6 +2,9 @@
 import "./telemetry";
 // FreeDuet: before anything reads the model environment (docs/UPSTREAM_TOUCHES.md).
 import "./freeduet/plan-token";
+// FreeDuet: the team's hub grants and each person's conversations (docs/UPSTREAM_TOUCHES.md).
+import { applyFreeDuetPackage } from "./freeduet/hub-grants";
+import { withFreeDuetTeam } from "./freeduet/person-team";
 import type { AbstractAgent } from "@ag-ui/client";
 import {
   CopilotKitIntelligence,
@@ -510,6 +513,7 @@ const loadAgentsForActor = createRuntimeAgentLoader(
   config.managedAgent,
 );
 await synchronizeTenantPackage(database, tenantPackage);
+await applyFreeDuetPackage(database, tenantPackage);
 /*
  * Built before `auth`, because the deny list is consulted during sign-in and the store is what
  * holds it. It needs the administrator list too, so it can tell the screen which people the
@@ -2609,7 +2613,13 @@ const app = createApp(
   // A person's own standing instructions: the list, and a switch to stop one.
   routineStore,
   // Where each person is in first-run onboarding, read by /api/me and written by the wizard.
-  createOnboardingStore(database),
+  withFreeDuetTeam(createOnboardingStore(database), {
+    database,
+    tenantPackage,
+    channels: channelStore,
+    routines: routineStore,
+    actorFor,
+  }),
   // The same store every run reads through `loadInstructionsForActor`, so the screen a person edits
   // and the prompt their coworker is built from can never be two different pieces of text.
   userInstructionsStore,

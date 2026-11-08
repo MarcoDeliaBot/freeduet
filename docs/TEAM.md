@@ -60,6 +60,18 @@ Five rules close every prompt:
 
 Specialists for particular jobs (recruiting, documents with sources, comparisons, automations, editorial desk, video, testing, games, teaching) come as installable packs, and light helpers on free models do the small jobs for every member: see [CATALOG.md](CATALOG.md).
 
+## Team wiring
+
+What the server sets up on its own, in `openbot/server/src/freeduet/`, only when the loaded package is FreeDuet's (`tenant.id: freeduet`). Decisions D14 and D17 in [M1_PLAN.md](M1_PLAN.md).
+
+| What | When | Rule |
+|---|---|---|
+| **Hub grants** (`hub-grants.ts`) | Every server start, right after the package sync | Iris may hand work to every other member and every member may hand work to Iris, never member to member. Read from the members in the package, so adding or removing a member updates the grants. Rows carry `granted_by = freeduet-package`; a sync removes only its own rows that are no longer wanted and never touches a grant an admin made by hand. An admin can add more on a Bot's profile, under "Bots it can ask"; one of FreeDuet's grants revoked there comes back at the next start, like the package's skill grants. |
+| **Your conversations with the team** (`person-team.ts`, #25) | Once per person, on the first page load after sign-in (`GET /api/me`) | One private conversation per channel in `channels.yaml`, with that channel's member, name and description. Same access as any conversation you start: only you belong to it. A conversation you already have with that member alone is used and named instead of making a second one. |
+| **Daily review** (`person-team.ts`, D17) | Same step | A routine for Iris in your FreeDuet conversation, every morning at 08:30 Europe/Rome: she reads `team_log` for the last 24 hours and sends one short summary (done, failed and why, lessons waiting for your approval, what she already corrected). Change it or stop it on the Routines page or by asking Iris. |
+
+What was made for you is recorded in your preferences (`freeduetTeam`), so a conversation or routine you delete stays deleted, a restart repeats nothing, and a member added to the package later still gets its conversation.
+
 ## Changing the team
 
 - **Rename or re-voice** a member: edit `name` and the first paragraph of its `system_prompt`. Keep the last paragraph, the shared rules, as it is.
