@@ -722,12 +722,14 @@ describe("the first day's date", () => {
         return { channel: channel(), claimed: true };
       },
     });
+    // Today, not a fixed day: a fixed day falls outside the one-day window once it is in the past.
+    const today = new Date().toISOString().slice(0, 10);
     const response = await post(store, {
       agentId: "agent-1",
-      date: "2026-10-26",
+      date: today,
     });
     expect(response.status).toBe(200);
-    expect(calls).toEqual([[actor, "agent-1", undefined, "2026-10-26"]]);
+    expect(calls).toEqual([[actor, "agent-1", undefined, today]]);
   });
 
   /*
