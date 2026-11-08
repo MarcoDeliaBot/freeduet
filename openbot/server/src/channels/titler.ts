@@ -2,7 +2,7 @@
  * One model call for a few words. Not a Bot and not a turn: a title is not said to anybody and is
  * not part of the conversation it names, so there is no runtime work and no thread to hold.
  */
-import { chatCompletionsUrl } from "../routing/model";
+import { anthropicMessagesUrl, chatCompletionsUrl } from "../routing/model";
 import { oneLine } from "./text";
 
 /** Rules, not an example: a model copies an example's subject as readily as its shape. */
@@ -14,6 +14,12 @@ const INSTRUCTION = [
 ].join(" ");
 
 export type TitlerOptions = {
+  /**
+   * Whose API the key belongs to, from the tenant package. Unset is OpenAI, as before. An Anthropic
+   * key goes to Anthropic's own endpoint: sent to the OpenAI-format URL it was handed to another
+   * company's server on every title.
+   */
+  provider?: "openai" | "anthropic";
   /** The model to ask, from the tenant package. */
   model: string;
   /** Resolved per call, so a rotated credential is picked up without a restart. */
@@ -32,6 +38,44 @@ export function createChannelTitler(options: TitlerOptions) {
   return async (excerpt: string): Promise<string | null> => {
     const apiKey = await options.resolveApiKey();
     if (!apiKey) return null;
+
+    if (options.provider === "anthropic") {
+      const response = await call(
+        anthropicMessagesUrl(options.environment ?? process.env),
+        {
+          method: "POST",
+          headers: {
+            "content-type": "application/json",
+            "x-api-key": apiKey,
+            "anthropic-version": "2023-06-01",
+          },
+          body: JSON.stringify({
+            model: options.model,
+            system: INSTRUCTION,
+            messages: [{ role: "user", content: excerpt }],
+            max_tokens: 512,
+          }),
+          signal: AbortSignal.timeout(options.timeoutMs ?? 20_000),
+        },
+      );
+      if (!response.ok) {
+        const detail = oneLine(await response.text().catch(() => ""), 200);
+        throw new Error(
+          `The model refused to name a conversation: ${response.status} ${detail}`.trim(),
+        );
+      }
+      const body = (await response.json()) as {
+        content?: { type?: unknown; text?: unknown }[];
+      };
+      const text = (body.content ?? [])
+        .filter(
+          (block) => block.type === "text" && typeof block.text === "string",
+        )
+        .map((block) => block.text as string)
+        .join("")
+        .trim();
+      return text.length > 0 ? text : null;
+    }
 
     const response = await call(
       chatCompletionsUrl(options.environment ?? process.env),
