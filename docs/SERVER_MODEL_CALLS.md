@@ -52,7 +52,7 @@ The server also starts turns on its own, on the same path: proactive research (e
 | A free model on OpenRouter | Free, within OpenRouter's limits | `BOT_PROVIDER=openai`, `OPENAI_BASE_URL=https://openrouter.ai/api/v1`, `OPENAI_API_KEY=<your key>`, `BOT_MODEL=<a model marked free>` |
 | The API credits included in Claude Max, Ultra or Team | Included in the plan, until they run out | `ANTHROPIC_API_KEY=<key from the linked Console organization>` |
 
-Two checks for the free options: built-in members speak OpenAI's Responses API (`/v1/responses`) through the CopilotKit runtime, so the endpoint must support it, and small local models follow tools less reliably. The M0 demo only needs every member to answer; issue M0.9 records which option was used.
+Step by step, with both free options: [M0_DEMO.md](M0_DEMO.md). Two checks for the free options: built-in members speak OpenAI's Responses API (`/v1/responses`) through the CopilotKit runtime, so the endpoint must support it, and small local models follow tools less reliably. The M0 demo only needs every member to answer; issue M0.9 records which option was used.
 
 **For M1.** Every call in section 1 and every turn in section 2 goes through `agent-freeduet` (issues M1.5 and M1.6). A3 must run on a tier A engine; A1, A2, A4, A5 and A6 can run on the free assistants.
 
