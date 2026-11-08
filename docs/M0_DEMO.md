@@ -56,16 +56,16 @@ bun openbot/scripts/setup-learning.ts        # copies it where the server reads 
 
 ## 5. Choose the model: add one block at the end of `.env`
 
-**A. Ollama, on your own computer.** Free; nothing leaves the machine except what Intelligence stores.
+**A. Ollama, on your own computer.** Free; nothing leaves the machine except what Intelligence stores. Use Ollama's **Anthropic-format** endpoint: Ollama's OpenAI Responses endpoint refuses the `item_reference` items that built-in members send from the second step of a turn on (found in the maintainer's demo, 2026-11-08).
 
 ```bash
-BOT_PROVIDER=openai
-OPENAI_BASE_URL=http://localhost:11434/v1
-OPENAI_API_KEY=ollama
+BOT_PROVIDER=anthropic
+ANTHROPIC_BASE_URL=http://localhost:11434
+ANTHROPIC_API_KEY=ollama
 BOT_MODEL=qwen3.6:35b
 ```
 
-`qwen3.6:35b` is the strongest model already pulled on the maintainer's computer; `qwen3.5:9b` answers faster. Any Ollama model that calls tools works. Ollama 0.40.15 answers OpenAI's Responses API (`/v1/responses`), which built-in members use: checked on 2026-11-08.
+`qwen3.6:35b` is the strongest model already pulled on the maintainer's computer: on an RX 7900 XTX one answer takes about 1 to 3 minutes, and Ollama answers one request at a time. `qwen3.5:9b` answers faster. Any Ollama model that calls tools works.
 
 **B. A free model on OpenRouter.** Free within OpenRouter's limits; the requests go to OpenRouter and the model's provider.
 
@@ -86,13 +86,13 @@ Only one block at a time. To switch, replace the block and restart.
 bash scripts/start.sh
 ```
 
-Open `http://localhost:3010`, then check and note the result in issue M0.9:
+Open `http://localhost:3010`, go through the short onboarding, then check and note the result in issue M0.9. To talk to one member: menu, Manage, Bots, the member, then "Message <name>".
 
 | Check | Expected |
 |---|---|
 | Settings, at the bottom | An About section naming FreeDuet and the not-affiliated line |
 | The FreeDuet channel | Iris answers |
-| Each of the other 9 channels | Its member answers |
+| Each of the other 9 members, from its page | It answers |
 | A conversation's name in the sidebar | Appears after a short while |
 
 Notes:
@@ -100,3 +100,15 @@ Notes:
 - `start.sh` also starts OpenDuet's two sample Bots (`agent-bot`, `agent-langgraph`). FreeDuet's members do not use them; with profile A they cannot reach Ollama from their containers, and that does not affect the check.
 - A small local model may not use every tool well. For M0 the members only need to answer.
 - `CLAUDE_CODE_OAUTH_TOKEN` is ignored on purpose (docs/PROVIDERS.md). Your Claude plan joins in M1, through Claude Code signed in by you.
+
+## If something does not work
+
+Found while running this demo on the maintainer's computer on 2026-11-08.
+
+| Symptom | Cause | Fix |
+|---|---|---|
+| `curl` of the Bun installer answers 504 | GitHub's download was unavailable | `sudo npm install -g bun` |
+| `agent-computer never became ready`, while `docker compose ps` says healthy | Another WSL distribution has outbound firewall rules that reject private addresses; all WSL2 distributions share one network, so Docker's 172.16.0.0/12 bridges are unreachable | Put Docker on another range in `/etc/docker/daemon.json`: `{"bip": "198.19.255.1/24", "default-address-pools": [{"base": "198.18.0.0/16", "size": 24}]}`, then `docker compose down`, `docker network prune -f`, `sudo systemctl restart docker`. The other distribution's rules stay as they are |
+| Ollama is not reachable from Ubuntu and `wsl --shutdown` is not an option (it would stop other distributions' services) | Mirrored networking needs a WSL restart | Run a small stdin/stdout bridge from Windows into Ubuntu on a free local port, and point `ANTHROPIC_BASE_URL` at it. The maintainer's demo used one on port 11437 |
+| A member stops after its first step with `unknown input item type: "item_reference"` in `server.log` | Profile A was set to the OpenAI format | Use the Anthropic-format block above |
+| `wsl: Failed to start the systemd user session` | Harmless warning | None |

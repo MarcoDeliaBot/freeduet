@@ -15,6 +15,7 @@ FreeDuet is a thin fork of [OpenDuet](https://github.com/CopilotKit/OpenDuet). I
 | `openbot/docker-compose.yml` | `CLAUDE_CODE_OAUTH_TOKEN` no longer passed to the harness | No plan token anywhere | M0.5 | No |
 | `openbot/agent-claude-sdk/src/main.py` | Drops `CLAUDE_CODE_OAUTH_TOKEN` and requires `ANTHROPIC_API_KEY` | No plan token in the Claude Agent SDK harness | M0.5 | No |
 | `openbot/docs/configuration.md` | A note: FreeDuet does not accept `CLAUDE_CODE_OAUTH_TOKEN` | Docs match behaviour | M0.5 | No |
+| `openbot/app/index.html` | `<title>FreeDuet</title>` | The browser tab said OpenDuet; the file says a fork changes the title with its name | M0.6 | No |
 | `openbot/app/src/routes/_authed/settings/index.tsx` | One import and `<FreeDuetAbout />` at the end of Settings | About rows: FreeDuet, built on OpenDuet and OpenBot, not affiliated | M0.6 | No |
 | `openbot/app/src/lib/channels/run-lifecycle.ts`, `openbot/app/src/components/channels/channel-chat.tsx`, `openbot/app/src/components/duet/task-sheet.tsx`, `openbot/app/src/routes/_authed/onboarding.tsx` | "OpenDuet is still finishing something" and "The self-hosted assistant OpenDuet is built on" use the product name from the tenant package | A renamed fork showed "OpenDuet" in these messages | M0.6 | Yes |
 | `openbot/app/tests/run-lifecycle.test.ts`, `openbot/app/tests/task-thread.test.tsx` | Expect the product name instead of "OpenDuet" | Follow the change above | M0.6 | Yes |
