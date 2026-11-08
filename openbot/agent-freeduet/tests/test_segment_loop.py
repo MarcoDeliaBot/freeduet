@@ -6,7 +6,7 @@ import time
 
 import pytest
 
-from freeduet import agui
+from freeduet import agui, iris_tools
 from helpers import ASSERTION, TOOL_TOKEN, post_run, run_body, standing, tool, types
 
 TOOLS = [tool("make_page", {"title": {"type": "string"}}), tool("message_bot", {"bot": {"type": "string"}, "message": {"type": "string"}})]
@@ -47,7 +47,8 @@ def test_full_loop_tool_call_then_resume_with_the_result(client, fake_cli):
     assert "never reached" not in text_of(first)
 
     seen = fake_cli.run(0)
-    assert [t["name"] for t in seen["tools"]] == ["make_page", "message_bot"]  # exactly RunAgentInput.tools
+    # Exactly RunAgentInput.tools, then Iris's own four (this run is hers; iris_tools.py).
+    assert [t["name"] for t in seen["tools"]] == ["make_page", "message_bot", *sorted(iris_tools.NAMES)]
     assert seen["calls"] == [{"name": "make_page", "arguments": {"title": "Plan"}}]
     assert "results" not in seen  # OpenBot runs it; the CLI was never answered
     time.sleep(0.2)

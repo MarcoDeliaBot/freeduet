@@ -93,8 +93,10 @@ def test_a_checkpoint_is_written_per_segment(client, fake_cli, monkeypatch):
     post_run(client, run_body([standing(), {"id": "u1", "role": "user", "content": "Hi"}]))
     assert len(written) == 1
     run_id, agent, phase, state = written[0]
-    assert (run_id, agent, phase) == ("thread-1", "freeduet", "finished")
-    assert state["text"] == "Hello." and state["runId"] == "run-1"
+    # A reply without a report is work in progress, in the writer's own phases and fields.
+    assert (run_id, agent, phase) == ("thread-1", "freeduet", "in-progress")
+    assert state["objective"] == "Hi"
+    assert state["next_steps"] == ["Wait for the person's next message"]
 
 
 def test_a_checkpoint_that_fails_never_fails_the_run(client, fake_cli, monkeypatch):

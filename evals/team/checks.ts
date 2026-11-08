@@ -295,22 +295,35 @@ export const OUTCOMES = [
   "needs you",
 ] as const;
 
+/** The Italian outcomes the shared rules give, by their stems: fatto (in parte), bloccato, fallito, serve te. */
+export const ITALIAN_OUTCOMES = [
+  "fatto",
+  "parzialmente fatto",
+  "bloccat",
+  "fallit",
+  "serve te",
+] as const;
+
 /**
  * A report line: an optional bullet, optional bold or italics, the label (with or without the
  * longer wording the prompt uses, such as "Not done and why" or "Already sent, paid, booked,
  * published or deleted"), then a colon or a dash and the value.
  */
 const LABEL =
-  /^\s*(?:[-*•>]\s+|\d+[.)]\s+)?(?:\*\*|__|\*|_)?\s*(outcome|done|evidence|not done(?: and why)?(?:,? with what (?:you|i) tried)?|already(?: [a-z ,]+?)?|next steps?)\s*(?:\*\*|__|\*|_)?\s*[:—–-]\s*(?:\*\*|__|\*|_)?\s*(.*)$/i;
+  /^\s*(?:[-*•>]\s+|\d+[.)]\s+)?(?:\*\*|__|\*|_)?\s*(outcome|done|evidence|not done(?: and why)?(?:,? with what (?:you|i) tried)?|already(?: [a-z ,]+?)?|next steps?|esito|fatto|prove|non fatto(?: e perch[eé])?(?:,? con (?:quello|ciò|cio) che (?:hai|ho) provato)?|gi[àa](?: [a-zàèéìòù ,]+?)?|prossim[oi] pass[oi])\s*(?:\*\*|__|\*|_)?\s*[:—–-]\s*(?:\*\*|__|\*|_)?\s*(.*)$/i;
 
 function labelOf(raw: string): ReportLine | null {
   const lower = raw.toLowerCase();
-  if (lower === "outcome") return "Outcome";
-  if (lower === "done") return "Done";
-  if (lower === "evidence") return "Evidence";
-  if (lower.startsWith("not done")) return "Not done";
-  if (lower.startsWith("already")) return "Already";
-  if (lower.startsWith("next step")) return "Next step";
+  // Italian labels are the set the shared rules give (Esito, Fatto, Prove, Non fatto e perché, Già,
+  // Prossimo passo), read as the English ones.
+  if (lower === "outcome" || lower === "esito") return "Outcome";
+  if (lower === "done" || lower === "fatto") return "Done";
+  if (lower === "evidence" || lower === "prove") return "Evidence";
+  if (lower.startsWith("not done") || lower.startsWith("non fatto"))
+    return "Not done";
+  if (lower.startsWith("already") || /^gi[àa]/.test(lower)) return "Already";
+  if (lower.startsWith("next step") || /^prossim[oi] pass[oi]/.test(lower))
+    return "Next step";
   return null;
 }
 
@@ -383,7 +396,10 @@ export function checkReportLines(
   if (empty.length)
     return { pass: false, reason: `empty ${empty.join(", ")}`, report };
   const outcome = (report.Outcome ?? "").toLowerCase();
-  if (!OUTCOMES.some((o) => outcome.startsWith(o)))
+  if (
+    !OUTCOMES.some((o) => outcome.startsWith(o)) &&
+    !ITALIAN_OUTCOMES.some((o) => outcome.startsWith(o))
+  )
     return {
       pass: false,
       reason: `Outcome "${report.Outcome}" is not one of ${OUTCOMES.join(", ")}`,

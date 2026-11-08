@@ -18,7 +18,7 @@ from collections.abc import AsyncIterator
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse, StreamingResponse
 
-from . import agui, claude_cli
+from . import agui, checkpoints, claude_cli, origin, report, team_log
 from .members import MemberError, resolve_member
 from .segment import run_segment
 
@@ -56,16 +56,14 @@ async def health():
 TERMINAL = {"RUN_FINISHED", "RUN_ERROR"}
 
 
-# ── CHECKPOINT CALL SITE (stream E, D13) ─────────────────────────────────────────────────────────
-# `freeduet/checkpoints.py` comes from stream E: save_checkpoint(root, run_id, agent, phase, state),
-# with run_id = the AG-UI threadId, agent = the bot id and root = default_root(). Imported only when
-# the module exists. A checkpoint that cannot be written is logged and never fails the run.
+# ── CHECKPOINT CALL SITE (D13, D15) ──────────────────────────────────────────────────────────────
+# After every segment (a finished turn, a turn that ended on a tool call OpenBot runs, an error):
+# the member's report becomes a checkpoint (report.py maps it, checkpoints.py writes it under
+# <FREEDUET_DATA_DIR>/handoff/<botId>/<threadId>/) and one line goes to the team log (team_log.py).
+# Each is written or logged as not written; neither ever fails the run.
 def _checkpoint_writer():
-    if importlib.util.find_spec("freeduet.checkpoints") is None:
-        return None
-    module = importlib.import_module("freeduet.checkpoints")
-    return lambda run_id, agent, phase, state: module.save_checkpoint(
-        module.default_root(), run_id, agent, phase, state
+    return lambda run_id, agent, phase, state: checkpoints.save_checkpoint(
+        checkpoints.default_root(), run_id, agent, phase, state
     )
 
 
@@ -76,29 +74,68 @@ async def _save_checkpoint(run: agui.RunInput, phase: str, state: dict) -> None:
             await asyncio.to_thread(writer, run.thread_id, run.bot_id, phase, state)
     except Exception:  # noqa: BLE001 - ValueError for an invalid id, or any I/O failure
         log.warning("checkpoint not written for this segment", exc_info=True)
+
+
+async def _append_team_log(run: agui.RunInput, assessment: report.Assessment) -> None:
+    try:
+        entry = team_log.make_entry(
+            member=run.bot_id,
+            thread=run.thread_id,
+            run=run.run_id,
+            outcome=assessment.outcome,
+            summary=assessment.summary,
+            from_iris=origin.from_iris(run.messages, run.assertion),
+            approvals=assessment.approvals,
+        )
+        await asyncio.to_thread(team_log.append, entry)
+    except Exception:  # noqa: BLE001 - a missing data folder, a full disk
+        log.warning("team-log line not written for this segment", exc_info=True)
+
+
+async def _record_segment(run: agui.RunInput, summary: "_SegmentSummary", terminal: dict) -> None:
+    summary.recorded = True
+    try:
+        assessment = report.assess(summary.facts(terminal))
+    except Exception:  # noqa: BLE001
+        log.warning("segment not assessed: no checkpoint and no team-log line", exc_info=True)
+        return
+    await _save_checkpoint(run, assessment.phase, assessment.state)
+    await _append_team_log(run, assessment)
 # ─────────────────────────────────────────────────────────────────────────────────────────────────
 
 
 class _SegmentSummary:
-    """What a segment did, for its checkpoint: its text, the tools it called, how it ended."""
+    """What a segment did: the text of each message, the tools it called and which of those came
+    back within the segment (deployment tools). A call without a result is one OpenBot now runs."""
+
+    MAX_TEXT = 20000  # the report is at the end
 
     def __init__(self, run: agui.RunInput):
         self.run = run
-        self.text: list[str] = []
-        self.tools: list[str] = []
+        self.text: dict[str, list[str]] = {}
+        self.calls: dict[str, str] = {}
+        self.answered: set[str] = set()
+        self.recorded = False
 
     def see(self, event: dict) -> None:
-        if event["type"] == "TEXT_MESSAGE_CONTENT":
-            self.text.append(event["delta"])
-        elif event["type"] == "TOOL_CALL_START":
-            self.tools.append(event["toolCallName"])
+        kind = event["type"]
+        if kind == "TEXT_MESSAGE_CONTENT":
+            self.text.setdefault(event.get("messageId") or "", []).append(event["delta"])
+        elif kind == "TOOL_CALL_START":
+            self.calls[event["toolCallId"]] = event["toolCallName"]
+        elif kind == "TOOL_CALL_RESULT":
+            self.answered.add(event["toolCallId"])
 
-    def checkpoint(self, terminal: dict) -> tuple[str, dict]:
-        phase = "error" if terminal["type"] == "RUN_ERROR" else "tool_call" if self.tools else "finished"
-        state = {"runId": self.run.run_id, "text": "".join(self.text)[-4000:], "toolCalls": self.tools}
-        if terminal["type"] == "RUN_ERROR":
-            state["error"] = terminal.get("message", "")
-        return phase, state
+    def facts(self, terminal: dict) -> report.SegmentFacts:
+        objective, constraints = origin.request(self.run.messages)
+        text = "\n\n".join("".join(parts) for parts in self.text.values())
+        return report.SegmentFacts(
+            text=text[-self.MAX_TEXT:],
+            objective=objective,
+            handed_tools=[name for call_id, name in self.calls.items() if call_id not in self.answered],
+            constraints=constraints,
+            error=str(terminal.get("message") or "") if terminal["type"] == "RUN_ERROR" else None,
+        )
 
 
 async def _events(run: agui.RunInput) -> AsyncIterator[dict]:
@@ -116,13 +153,16 @@ async def _events(run: agui.RunInput) -> AsyncIterator[dict]:
             started = started or event["type"] == "RUN_STARTED"
             summary.see(event)
             if event["type"] in TERMINAL:
-                await _save_checkpoint(run, *summary.checkpoint(event))
+                await _record_segment(run, summary, event)
             yield event
     except Exception:
         log.exception("segment failed", extra={"thread_id": run.thread_id})
         if not started:
             yield agui.run_started(run)
-        yield agui.run_error("agent-freeduet failed on this turn. Send it again; if it keeps failing, check its log.")
+        error = agui.run_error("agent-freeduet failed on this turn. Send it again; if it keeps failing, check its log.")
+        if not summary.recorded:
+            await _record_segment(run, summary, error)
+        yield error
 
 
 @app.post("/")
