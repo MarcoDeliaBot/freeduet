@@ -280,7 +280,8 @@ fi
 
 # The product's name, from the tenant package the server will load, so a renamed fork prints its own.
 # The server resolves a relative TENANT_PACKAGE_DIR from server/, so this does the same.
-TENANT_DIR="$(setting TENANT_PACKAGE_DIR ../examples/openduet)"
+# FreeDuet: the default is FreeDuet's package (docs/UPSTREAM_TOUCHES.md).
+TENANT_DIR="$(setting TENANT_PACKAGE_DIR ../examples/freeduet)"
 case "$TENANT_DIR" in /*) ;; *) TENANT_DIR="$ROOT/server/$TENANT_DIR" ;; esac
 PRODUCT_NAME="$(sed -n 's/^[[:space:]]*product_name:[[:space:]]*//p' "$TENANT_DIR/brand.yaml" 2>/dev/null | head -1 || true)"
 PRODUCT_NAME="${PRODUCT_NAME:-OpenBot}"

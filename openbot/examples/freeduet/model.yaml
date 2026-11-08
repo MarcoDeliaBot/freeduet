@@ -7,7 +7,10 @@
 # agent-freeduet. M1 acceptance: FreeDuet starts and works with zero API keys.
 #
 # credential_secret_ref names the secret stored in /admin/credentials. The value never lives here.
-# M0 check: confirm the secret-ref naming against openbot/docs/configuration.md.
+# Checked in M0 against openbot/docs/configuration.md and server/src/credentials.ts: the reference is a
+# free-form id, matched with the provider against a stored key of kind "model"; with none stored the
+# server falls back to ANTHROPIC_API_KEY. `anthropic-api-key` follows the documented
+# `<provider>-api-key` pattern. Off by default: leave both empty and FreeDuet runs on your logins.
 model:
   provider: anthropic
   credential_secret_ref: anthropic-api-key
