@@ -117,7 +117,9 @@ export type IntelligenceFact =
   /** It answered, and did not confirm the entitlement. `advice` is the admin's next step. */
   | { state: "refused"; advice: string }
   /** It did not answer in time, or the read failed. */
-  | { state: "unreachable" };
+  | { state: "unreachable" }
+  /** FreeDuet (#42): FREEDUET_INTELLIGENCE=off. Not used, nothing to ask, nothing missing. */
+  | { state: "local" };
 
 /**
  * What the model provider said about the key in use now.
@@ -231,7 +233,7 @@ export function setupRows(
     deployment({
       id: "intelligence",
       title: "CopilotKit Intelligence",
-      required: true,
+      required: facts.intelligence.state !== "local",
       ...intelligenceRow(facts.intelligence, product),
     }),
     deployment({
@@ -362,6 +364,14 @@ const INTELLIGENCE_VARIABLES = [
  */
 function intelligenceRow(fact: IntelligenceFact, product: string) {
   const readyDetail = `Keeps your conversations and what ${product} remembers.`;
+  // FreeDuet (#42): turned off on purpose, so it is not a gap to close.
+  if (fact.state === "local")
+    return {
+      status: "ready" as const,
+      readyDetail: `Off. ${product} keeps your conversations and what it remembers on its own server.`,
+      gapDetail: "",
+      fix: null,
+    };
   if (fact.state === "ready")
     return {
       status: "ready" as const,
@@ -682,10 +692,13 @@ export function createSetupSources(input: {
     credentials: input.credentials,
     environment: input.environment,
   };
-  const askIntelligence = () =>
-    withinTime(input.entitlements(), INTELLIGENCE_TIMEOUT_MS).then(
-      intelligenceFact,
-    );
+  const askIntelligence = (): Promise<IntelligenceFact> =>
+    // FreeDuet (#42): with FREEDUET_INTELLIGENCE=off there is nobody to ask.
+    input.config.runtime.mode === "local"
+      ? Promise.resolve({ state: "local" })
+      : withinTime(input.entitlements(), INTELLIGENCE_TIMEOUT_MS).then(
+          intelligenceFact,
+        );
 
   const askComputer = async (): Promise<ComputerVerdict> => {
     if (!input.computer) return "needs_setup";

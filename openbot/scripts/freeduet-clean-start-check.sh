@@ -13,6 +13,7 @@
 #   - agent-freeduet answers /health with 200
 #   - the ten members of examples/freeduet/agents.yaml are remote Bots at agent-freeduet, and the
 #     runtime has them
+#   - conversations are kept in FreeDuet's own database, not in CopilotKit Intelligence (#42)
 #   - start.sh said how to sign in to Claude Code
 #   - nothing asked for a key: no API key named in start.sh's output, no key the server refused to
 #     start without
@@ -111,6 +112,16 @@ if [ "$COUNT" = 10 ] && [ -z "$PROBLEMS" ]; then
   pass "the ten members are remote Bots at agent-freeduet"
 else
   fail "the ten members are remote Bots at agent-freeduet" "${COUNT} members in agents.yaml; ${PROBLEMS:-$MEMBERS}"
+fi
+
+# FreeDuet (#42): with no Intelligence key, conversations are kept in the server's own database.
+# /api/capabilities answers anybody, signed in or not.
+MODE="$(curl -fsS --max-time 5 "$SERVER/api/capabilities" 2>/dev/null \
+  | bun -e 'try { process.stdout.write(String(JSON.parse(await Bun.stdin.text()).mode ?? "")); } catch {}' 2>/dev/null || true)"
+if [ "$MODE" = local ]; then
+  pass "conversations are kept in FreeDuet's own database (FREEDUET_INTELLIGENCE=off)"
+else
+  fail "conversations are kept in FreeDuet's own database (FREEDUET_INTELLIGENCE=off)" "the server says mode ${MODE:-nothing}"
 fi
 
 if grep -qF "Claude Code is not signed in yet" "$START_LOG"; then

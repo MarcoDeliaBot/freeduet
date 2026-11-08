@@ -19,6 +19,7 @@ import { normalizeDomain } from "./auth/email-domain";
 import { organizationAuthority } from "./auth/organization";
 import type { ActionPolicy } from "./computer/policy";
 import { parseActionPolicy } from "./computer/policy-store";
+import { localRuntimeFrom } from "./freeduet/intelligence-switch";
 import {
   type TranscriptionConfig,
   transcriptionConfig,
@@ -27,11 +28,22 @@ import type { BrokerProvider } from "./plugins/access";
 import { type VoiceConfig, voiceConfig } from "./voice/config";
 import { type WebBotAuth, webBotAuthFromEnv } from "./web-bot-auth";
 
-export type RuntimeCapabilities = {
-  mode: "intelligence";
-  durableHistory: true;
-  intelligence: IntelligenceSettings;
-};
+export type RuntimeCapabilities =
+  | {
+      mode: "intelligence";
+      durableHistory: true;
+      intelligence: IntelligenceSettings;
+    }
+  /**
+   * FreeDuet (#42): FREEDUET_INTELLIGENCE=off. Conversations and memory are kept in this server's
+   * own Postgres and nothing is sent to CopilotKit. See server/src/freeduet/backend.ts.
+   */
+  | {
+      mode: "local";
+      durableHistory: true;
+      /** Intelligence variables that are set and ignored, named once in the boot log. */
+      ignoredIntelligenceVariables: string[];
+    };
 
 /**
  * The Intelligence contract. Three values are required; see runtimeCapabilities.
@@ -989,6 +1001,9 @@ function oktaAuth(
  * deployment sets one, which is what a self-hosted Intelligence with its own licence needs.
  */
 function runtimeCapabilities(environment: Environment): RuntimeCapabilities {
+  // FreeDuet: FREEDUET_INTELLIGENCE=off runs without Intelligence (#42); unset or on is upstream.
+  const local = localRuntimeFrom(environment);
+  if (local) return local;
   const settings = {
     apiUrl: url(environment, "INTELLIGENCE_API_URL"),
     gatewayWsUrl: url(environment, "INTELLIGENCE_GATEWAY_WS_URL"),
@@ -1518,6 +1533,8 @@ function switchedOn(environment: Environment, name: string): boolean {
 function learningSetupCredential(environment: Environment): {
   learningSetup?: { serviceToken: string; projectId: string };
 } {
+  // FreeDuet: with FREEDUET_INTELLIGENCE=off these are ignored and named in the boot log (#42).
+  if (localRuntimeFrom(environment)) return {};
   const serviceToken = optional(environment, "INTELLIGENCE_SERVICE_TOKEN");
   const projectId = optional(environment, "INTELLIGENCE_PROJECT_ID");
   if (!serviceToken && !projectId) return {};
@@ -1534,6 +1551,8 @@ function learningSetupCredential(environment: Environment): {
 
 /** Optional container default; the enabled preference alone does not collect or deliver. */
 function learningDefault(environment: Environment): LearningTarget | undefined {
+  // FreeDuet: with FREEDUET_INTELLIGENCE=off this is ignored and named in the boot log (#42).
+  if (localRuntimeFrom(environment)) return undefined;
   const containerId = optional(
     environment,
     "CPK_INTELLIGENCE_LEARNING_CONTAINER_ID",

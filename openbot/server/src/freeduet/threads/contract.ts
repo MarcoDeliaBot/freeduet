@@ -19,6 +19,19 @@
  * ONE PROCESS. Live tailing of a running turn works inside one server process. The Postgres lock
  * stops two processes running the same thread, but a second replica cannot tail the first one's
  * run. FreeDuet supports a single server; see docs/M1_PLAN.md.
+ *
+ * THE LOCK. Two rules both sides keep (added 2026-11-08, #42):
+ * 1. Whoever takes a thread's lock releases it. A headless turn or a hand-off takes it through the
+ *    wiring's adapter (`ɵacquireThreadLock`, so `acquireLock`) with its run id, and releases it when
+ *    its turn ends. A browser run arrives with the thread free, and the runner takes the lock and
+ *    releases it itself. The wiring's route guard takes no lock: it asks `activeRunId`.
+ * 2. A run with the run id that holds the lock re-enters it: `acquireLock` answers true for the run
+ *    that already holds it, and the runner, given that run id, renews the lock and leaves its
+ *    release to whoever took it.
+ *
+ * THE ERRORS. The store side raises three, which `./index.ts` exports as classes. The wiring
+ * recognises them by `name` and `status` (the shapes below), so neither side imports the other's
+ * classes to tell them apart.
  */
 import type { AgentRunner } from "@copilotkit/runtime/v2";
 import type { Database } from "../../db/client";
@@ -108,6 +121,34 @@ export type PgAgentRunner = AgentRunner & {
   /** Marks runs left `running` by a previous process as `interrupted` and frees their locks. */
   sweepInterruptedRuns(): Promise<number>;
 };
+
+/**
+ * Another run holds the thread. Thrown by `run()` when this process already runs it; sent down the
+ * returned stream when the lock row says another run holds it. The wiring answers 409 "Thread lock
+ * denied", as Intelligence did.
+ */
+export type ThreadLockDeniedErrorShape = Error & {
+  name: "ThreadLockDeniedError";
+  status: 409;
+  message: "Thread lock denied";
+};
+
+/** A run on a thread with no row. The wiring creates the thread for its owner before any run. */
+export type UnknownThreadErrorShape = Error & {
+  name: "UnknownThreadError";
+  status: 404;
+};
+
+/** `getOrCreateThread` for a thread somebody else owns. The wiring answers it as not found. */
+export type ThreadOwnershipErrorShape = Error & {
+  name: "ThreadOwnershipError";
+  status: 404;
+};
+
+export type ThreadStoreError =
+  | ThreadLockDeniedErrorShape
+  | UnknownThreadErrorShape
+  | ThreadOwnershipErrorShape;
 
 /** What `./index.ts` exports. The wiring imports only these names. */
 export type ThreadsModule = {

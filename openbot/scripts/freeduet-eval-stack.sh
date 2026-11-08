@@ -3,8 +3,9 @@
 # FreeDuet's eval stack: a second, fully separate FreeDuet on this machine, for the team evals
 # (evals/team/README.md). The evals create conversations and memories as the person; run against
 # the person's own FreeDuet they filled its sidebar and its memory with invented facts. This one has
-# its own Compose project, ports, database, files, checkpoints, settings file and CopilotKit
-# Intelligence project, and is started and stopped through the same scripts/start.sh and stop.sh.
+# its own Compose project, ports, database, files, checkpoints and settings file (and, only with
+# FREEDUET_INTELLIGENCE=on, its own CopilotKit Intelligence project), and is started and stopped
+# through the same scripts/start.sh and stop.sh.
 #
 #   bash openbot/scripts/freeduet-eval-stack.sh up       start it (writes openbot/.env.eval the first time)
 #   bash openbot/scripts/freeduet-eval-stack.sh reset    wipe its database, files and memories, start clean
@@ -36,7 +37,7 @@ red()   { printf '\033[31m%s\033[0m\n' "$1"; }
 info()  { printf '\033[2m%s\033[0m\n' "$1"; }
 
 usage() {
-  sed -n '9,12p' "$0" | sed 's/^# \{0,1\}//'
+  sed -n '10,13p' "$0" | sed 's/^# \{0,1\}//'
 }
 
 # A value from a settings file, as start.sh reads one: the last line wins, quotes are dropped.
@@ -126,8 +127,17 @@ login_volume() {
 # CopilotKit Intelligence keeps each person's memories, by user id, and with no sign-in both stacks
 # are the same user. On one Intelligence project the evals would read the person's memories and
 # write invented ones into them, whatever database this stack has. So: a project of its own.
+#
+# With FREEDUET_INTELLIGENCE=off (#42; .env.example's value, and start.sh writes it when the line is
+# missing) there is no Intelligence: conversations and memories are in this stack's own database,
+# which is already separate. No key is needed and none is asked for.
 check_intelligence() {
   local key person shared
+  if [ "$(setting FREEDUET_INTELLIGENCE)" != on ]; then
+    info "  Intelligence: off. Conversations and memories are in the eval stack's own database."
+    INTELLIGENCE_SHARED=false
+    return 0
+  fi
   key="$(setting INTELLIGENCE_API_KEY)"
   person="$(value_in "$PERSON_ENV" INTELLIGENCE_API_KEY)"
   shared="${FREEDUET_EVAL_SHARE_INTELLIGENCE:-$(setting FREEDUET_EVAL_SHARE_INTELLIGENCE)}"

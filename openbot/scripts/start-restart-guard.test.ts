@@ -120,6 +120,8 @@ async function runStartWithStaleServerProbe(
     // FreeDuet: start.sh generates this key once and points the server's own model calls at it.
     "FREEDUET_LOCAL_KEY=freeduet-local-key",
     "ANTHROPIC_API_KEY=freeduet-local-key",
+    // FreeDuet (#42): start.sh writes it when missing, and restarts the server to pick it up.
+    "FREEDUET_INTELLIGENCE=off",
   ].filter(
     (line) =>
       ![...omitFromEnv, ...Object.keys(settings)].some((key) =>
@@ -859,7 +861,11 @@ describe("start.sh Learning container check", () => {
    */
   test("runs the non-interactive check when a key is set and nothing is assigned", async () => {
     const result = await runStartWithStaleServerProbe(401, {
-      settings: { INTELLIGENCE_API_KEY: "cpk-synthetic" },
+      // FreeDuet (#42): Learning is an Intelligence feature, so only with Intelligence on.
+      settings: {
+        INTELLIGENCE_API_KEY: "cpk-synthetic",
+        FREEDUET_INTELLIGENCE: "on",
+      },
     });
 
     expect(result.exitCode).toBe(0);
@@ -876,6 +882,8 @@ describe("start.sh Learning container check", () => {
     ],
     ["it is switched off", { OPENBOT_LEARNING_AUTO_ASSIGN: "false" }],
     ["it is switched off with 0", { OPENBOT_LEARNING_AUTO_ASSIGN: "0" }],
+    // FreeDuet (#42): no Intelligence, nothing to ask it.
+    ["FREEDUET_INTELLIGENCE is off", { FREEDUET_INTELLIGENCE: "off" }],
   ])("is skipped when %s", async (_, settings) => {
     const result = await runStartWithStaleServerProbe(401, {
       settings: { INTELLIGENCE_API_KEY: "cpk-synthetic", ...settings },
@@ -890,6 +898,67 @@ describe("start.sh Learning container check", () => {
 
     expect(result.exitCode).toBe(0);
     expect(result.stdout).not.toContain("LEARNING-CHECK");
+  });
+});
+
+describe("start.sh FREEDUET_INTELLIGENCE (#42)", () => {
+  test("writes off when the settings file has no line for it, and says so without naming a key", async () => {
+    const result = await runStartWithStaleServerProbe(401, {
+      omitFromEnv: ["FREEDUET_INTELLIGENCE"],
+    });
+
+    expect(result.exitCode).toBe(0);
+    expect(result.savedEnvironment).toContain("FREEDUET_INTELLIGENCE=off\n");
+    expect(result.stdout).toContain("Wrote FREEDUET_INTELLIGENCE=off to .env");
+    // freeduet-clean-start-check.sh fails a start whose output asks for a key.
+    expect(result.stdout).not.toMatch(/api[_ ]?key/i);
+  });
+
+  test("keeps a value somebody chose", async () => {
+    const result = await runStartWithStaleServerProbe(401, {
+      settings: { FREEDUET_INTELLIGENCE: "on" },
+    });
+
+    expect(result.exitCode).toBe(0);
+    expect(result.savedEnvironment).toContain("FREEDUET_INTELLIGENCE=on\n");
+    expect(result.stdout).not.toContain("Wrote FREEDUET_INTELLIGENCE");
+  });
+
+  /**
+   * An install from before #42 has all three Intelligence settings, because the server would not
+   * start without them, and its conversations are in Intelligence. Writing off would hide them.
+   */
+  test("writes on for an install already on Intelligence, and says how to switch", async () => {
+    const result = await runStartWithStaleServerProbe(401, {
+      omitFromEnv: ["FREEDUET_INTELLIGENCE"],
+      settings: {
+        INTELLIGENCE_API_URL: "https://api.intelligence.example",
+        INTELLIGENCE_GATEWAY_WS_URL: "wss://realtime.intelligence.example",
+        INTELLIGENCE_API_KEY: "cpk-synthetic",
+      },
+    });
+
+    expect(result.exitCode).toBe(0);
+    expect(result.savedEnvironment).toContain("FREEDUET_INTELLIGENCE=on\n");
+    expect(result.savedEnvironment).not.toContain("FREEDUET_INTELLIGENCE=off");
+    const said = result.stdout
+      .split("\n")
+      .filter((line) => line.includes("FREEDUET_INTELLIGENCE"));
+    expect(said).toHaveLength(1);
+    expect(said[0]).toContain(
+      "Wrote FREEDUET_INTELLIGENCE=on to .env: your conversations stay in CopilotKit Intelligence. Set it to off to keep new ones in FreeDuet's own database.",
+    );
+  });
+
+  test("a key without the addresses is not an install on Intelligence: off", async () => {
+    const result = await runStartWithStaleServerProbe(401, {
+      omitFromEnv: ["FREEDUET_INTELLIGENCE"],
+      settings: { INTELLIGENCE_API_KEY: "cpk-synthetic" },
+    });
+
+    expect(result.exitCode).toBe(0);
+    expect(result.savedEnvironment).toContain("FREEDUET_INTELLIGENCE=off\n");
+    expect(result.stdout).toContain("Wrote FREEDUET_INTELLIGENCE=off to .env");
   });
 });
 

@@ -232,6 +232,27 @@ if [ "$FREEDUET_ROUTER" != "off" ]; then
   AGENT_ENDPOINT_ALLOWED_HOSTS="$(setting AGENT_ENDPOINT_ALLOWED_HOSTS "localhost:$FREEDUET_PORT")"
   export AGENT_ENDPOINT_ALLOWED_HOSTS
 fi
+# FreeDuet: conversations and memory in this server's own database unless FREEDUET_INTELLIGENCE=on
+# (#42). Written when the settings file has no line for it, like the keys above, so a later
+# `docker compose up` by hand runs the same way. A file with all three Intelligence settings is an
+# install from before #42 whose conversations are in Intelligence: it gets `on`, and keeps them.
+# Anything else gets `off`, and the server is restarted to pick it up. A new install copies
+# `.env.example`, which already says `off`.
+if [ -z "$(setting FREEDUET_INTELLIGENCE "")" ]; then
+  if [ -n "$(setting INTELLIGENCE_API_URL "")" ] && [ -n "$(setting INTELLIGENCE_GATEWAY_WS_URL "")" ] \
+     && [ -n "$(setting INTELLIGENCE_API_KEY "")" ]; then
+    freeduet_env_line FREEDUET_INTELLIGENCE on
+    printf '\033[2m%s\033[0m\n' "Wrote FREEDUET_INTELLIGENCE=on to $ENV_NAME: your conversations stay in CopilotKit Intelligence. Set it to off to keep new ones in FreeDuet's own database."
+  else
+    SECRETS_ROTATED=true
+    freeduet_env_line FREEDUET_INTELLIGENCE off
+    printf '\033[2m%s\033[0m\n' "Wrote FREEDUET_INTELLIGENCE=off to $ENV_NAME: conversations and memory stay in FreeDuet's own database."
+    if [ -n "$(setting INTELLIGENCE_API_KEY "")" ]; then
+      printf '\033[2m%s\033[0m\n' "Your CopilotKit Intelligence settings are kept and not used. Set FREEDUET_INTELLIGENCE=on to use them."
+    fi
+  fi
+fi
+FREEDUET_INTELLIGENCE="$(setting FREEDUET_INTELLIGENCE off)"
 
 green() { printf '\033[32m%s\033[0m\n' "$1"; }
 red()   { printf '\033[31m%s\033[0m\n' "$1"; }
@@ -454,8 +475,10 @@ green "  managed coworker endpoint: $MANAGED_AGENT_AG_UI_URL"
 LEARNING_CONTAINER="$(setting CPK_INTELLIGENCE_LEARNING_CONTAINER_ID "")"
 LEARNING_AUTO_ASSIGN="$(setting OPENBOT_LEARNING_AUTO_ASSIGN true)"
 # Only for `.env`: the helper reads and writes that file, never another stack's (OPENBOT_ENV_FILE).
+# FreeDuet: Learning is an Intelligence feature, so not with FREEDUET_INTELLIGENCE=off (#42).
 if [ "$ENV_NAME" = .env ] && [ -z "$LEARNING_CONTAINER" ] && [ "$LEARNING_AUTO_ASSIGN" != "false" ] \
-   && [ "$LEARNING_AUTO_ASSIGN" != "0" ] && [ -n "$(setting INTELLIGENCE_API_KEY "")" ]; then
+   && [ "$LEARNING_AUTO_ASSIGN" != "0" ] && [ -n "$(setting INTELLIGENCE_API_KEY "")" ] \
+   && [ "$FREEDUET_INTELLIGENCE" = on ]; then
   LEARNING_LINE="$(bun scripts/setup-learning.ts --non-interactive 2>>"$LOGS/learning-setup.log" | tail -1 || true)"
   info "  ${LEARNING_LINE:-Automatic Learning: the container check did not run. Log: $LOGS/learning-setup.log}"
 fi
@@ -589,7 +612,9 @@ bun run - "$INFO" <<'JS'
 const info = JSON.parse(process.argv[2]);
 const status = info.licenseStatus;
 const agents = Object.keys(info.agents ?? {});
-if (status !== "valid") {
+// FreeDuet (#42): without Intelligence the runtime runs in SSE mode and has no licence to check.
+const local = info.mode === "sse";
+if (!local && status !== "valid") {
   console.log(`\x1b[31m  licence is '${status}', not 'valid'.\x1b[0m`);
   console.log("\x1b[31m  Check INTELLIGENCE_API_KEY. From the repository root: npx copilotkit@latest login && npx copilotkit@latest project select && bun openbot/scripts/setup-learning.ts\x1b[0m");
   console.log("\x1b[31m  The Quick start in the repository's README.md has the steps.\x1b[0m");
@@ -599,7 +624,7 @@ if (agents.length === 0) {
   console.log("\x1b[31m  No Bots registered.\x1b[0m");
   process.exit(1);
 }
-console.log(`\x1b[32m  licence valid · mode ${info.mode} · Bots: ${agents.join(", ")}\x1b[0m`);
+console.log(`\x1b[32m  ${local ? "conversations in this server's database" : "licence valid"} · mode ${info.mode} · Bots: ${agents.join(", ")}\x1b[0m`);
 JS
 
 info "4/4  App"
