@@ -19,6 +19,7 @@ FreeDuet is a thin fork of [OpenDuet](https://github.com/CopilotKit/OpenDuet). I
 | `openbot/app/src/lib/channels/run-lifecycle.ts`, `openbot/app/src/components/channels/channel-chat.tsx`, `openbot/app/src/components/duet/task-sheet.tsx`, `openbot/app/src/routes/_authed/onboarding.tsx` | "OpenDuet is still finishing something" and "The self-hosted assistant OpenDuet is built on" use the product name from the tenant package | A renamed fork showed "OpenDuet" in these messages | M0.6 | Yes |
 | `openbot/app/tests/run-lifecycle.test.ts`, `openbot/app/tests/task-thread.test.tsx` | Expect the product name instead of "OpenDuet" | Follow the change above | M0.6 | Yes |
 | `openbot/server/tests/channel-routes.test.ts` | "The first day's date" uses today instead of 2026-10-26 | The fixed date fell outside the one-day window and the test failed from 28 October (also red on OpenDuet's main) | M0.7 | Yes |
+| `openbot/app/tests/self-host-banner.test.tsx` | `afterAll` drains React with the repo's own `settleReactWork` before unregistering the document | A scheduler callback fired after the document was gone: "Unhandled error between tests", 0 failing tests and a red CI (also on OpenDuet's main) | M0.7 | Yes |
 | `.github/workflows/ci.yml` | New job `freeduet package`, added to `verify` | Checks the tenant package, evals and engines file on every pull request | M0.7 | No |
 
 ## Not changed, on purpose
