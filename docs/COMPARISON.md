@@ -30,6 +30,7 @@ _Last checked: 2026-11-07, from each project's public README and documentation, 
 | **Owner-only operations no mode can lower** | ✅ v0.1 | — | ⚠️ approvals, "Always allow" can lift them | — | ❌ | ⚠️ |
 | **Nightly export of memory, rules and tasks to plain files** | ✅ v0.3 | ❌ | ❌ | — | — | ⚠️ local files |
 | **Public test suite per agent, including attempts to break the rules** | ✅ 40 cases, 15 safety | — | ⚠️ inbox triage only | — | — | — |
+| **Free open-source creative suite (images, PDFs, vectors, video) inside each agent's computer** | ✅ v0.2 | ❌ | ❌ | ❌ | ❌ | ❌ |
 | **Morning brief** | ✅ | ✅ | ✅ | ✅ | — | — |
 | **Gmail and Google Calendar** | ✅ | ✅ connected apps | ✅ | ❌ not yet | — | ⚠️ through your coding agent |
 | **Import your agents from Grok Bot** | ✅ v1.0 | ❌ | ❌ | ❌ | ✅ | ❌ |

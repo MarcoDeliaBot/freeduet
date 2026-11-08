@@ -56,7 +56,7 @@ Every member has one job, a fixed answer format, and hard rules it never breaks.
 
 ## Works with your tools
 
-Google suite, Microsoft 365, n8n, Photoshop, Affinity, Canva, Photograft, arts-and-crafts software, 3D-printing slicers, Claude Code, Codex, Kimi, Cline, Antigravity, Trae, WhatsApp, Telegram, Slack and Teams, free and paid. Official connectors first, then the browser, then screen control on your own computer, only for the programs you switch on. The catalogue, with the status of each tool: [docs/CONNECTORS.md](docs/CONNECTORS.md).
+Google suite, Microsoft 365, n8n, Photoshop, Affinity, Canva, the free ArtCraft suite (PhotoCraft, PdfCraft, VectorCraft, FilmCraft and 12 more, built into every member's computer), Cricut, 3D-printing slicers, Claude Code, Codex, Kimi, Cline, Antigravity, Trae, WhatsApp, Telegram, Slack and Teams, free and paid. Official connectors first, then the browser, then screen control on your own computer, only for the programs you switch on. The catalogue, with the status of each tool: [docs/CONNECTORS.md](docs/CONNECTORS.md).
 
 ## How it works
 

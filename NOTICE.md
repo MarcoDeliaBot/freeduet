@@ -15,6 +15,12 @@
 | [nightly-labs/openbot](https://github.com/nightly-labs/openbot) | PolyForm Noncommercial 1.0.0 (from v0.1.12) | Not compatible with an MIT project that people may use commercially. Ideas such as importing agents from Grok Bot are implemented independently. |
 | [browser-use/open-duet](https://github.com/browser-use/open-duet) | No license file | Without a license, the code is all rights reserved. Only the general idea of one-click decision cards informed our design. |
 
+## Software FreeDuet connects to and may ship in member computers
+
+| Project | License | Use |
+|---|---|---|
+| [ArtCraft apps](https://github.com/storytold) (PhotoCraft, PdfCraft and others) | Apache-2.0; PhotoCraft MIT or Apache-2.0 | Installed unmodified in member computer images and driven through their own CLI or MCP server. Their license and NOTICE files ship with them. |
+
 ## Team prompts
 
 All FreeDuet team prompts, test cases and documentation were written from scratch for this project. They do not reproduce third-party prompt collections.

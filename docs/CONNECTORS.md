@@ -10,7 +10,7 @@ FreeDuet's team connects to the tools people already use, free or paid: creative
 2. **Browser.** For tools that live on a website, inside the member's own computer.
 3. **Screen control on the person's computer.** For desktop programs with no connector. The member sees the screen and clicks like a person would, only in programs the person allowed, one by one.
 
-Desktop programs such as Photoshop, Photograft or Cricut Design Space run on the person's own Windows or Mac, not in the members' Linux computers. They are reached through the **FreeDuet desktop bridge**: a small companion app the person installs, which exposes only the programs they switch on and passes every action through the same approvals as the rest of FreeDuet.
+Desktop programs such as Photoshop or Cricut Design Space run on the person's own Windows or Mac, not in the members' Linux computers. They are reached through the **FreeDuet desktop bridge**: a small companion app the person installs, which exposes only the programs they switch on and passes every action through the same approvals as the rest of FreeDuet.
 
 ## Rules for every connector
 
@@ -32,8 +32,7 @@ Desktop programs such as Photoshop, Photograft or Cricut Design Space run on the
 | **Creative** | Adobe Photoshop | Paid | Desktop bridge: scripting where available, screen control otherwise | M4 | |
 | **Creative** | Affinity | Paid | Affinity's own MCP server, through the desktop bridge | M4 | |
 | **Creative** | Canva | Free and paid | Canva's official connector | M3 | |
-| **Creative** | Photograft | — | Desktop bridge | M4 | Details to be added. |
-| **Arts and crafts** | The ArtCraft program set | — | Desktop bridge | M4 | Program list to be added by the maintainer. |
+| **Creative** | The ArtCraft suite | Free, open source | Inside each member's own computer, through each app's MCP server or headless CLI | M2–M5 | See the next section. |
 | **Making** | Cricut Design Space | Free and paid | Desktop bridge, screen control | M5 | Sending a job to a machine is an approval, every time. |
 | **Making** | 3D-printing slicers | Free | Command line where the slicer offers one, screen control otherwise | M5 | Starting a print is an approval, every time. |
 | **Coding agents** | Claude Code | Subscription | Engine and tool: the official CLI, the person's own login | M1 | Also FreeDuet's first engine. |
@@ -46,6 +45,39 @@ Desktop programs such as Photoshop, Photograft or Cricut Design Space run on the
 | **Messaging** | OpenWA | Free | Optional plugin | M5 | Unofficial: WhatsApp may block the number. Off by default, with a clear warning; never part of the core. |
 | **Messaging** | Telegram | Free | Bot API | M5 | |
 | **Messaging** | Slack, Microsoft Teams, SMS | Free and paid | Already in OpenBot | v0.1 | |
+
+## The ArtCraft suite: a free creative studio inside every member's computer
+
+[ArtCraft](https://getartcraft.com/apps) ([GitHub: storytold](https://github.com/storytold)) is a family of free, open-source creative apps written in Rust. Every app is built to be driven by an agent: a headless CLI, an MCP server and a JSON control channel, over one registry of commands. They run natively on Linux, so FreeDuet installs them **inside each member's own computer**, with no desktop bridge and no cost.
+
+_Checked 2026-11-08 from getartcraft.com/apps and the PhotoCraft README. Status is the project's own label._
+
+| App | What it does | Project status | Used by | Milestone |
+|---|---|---|---|---|
+| **PhotoCraft** | Image editing (`photocraft-cli run`, `batch`, `mcp`) | Early alpha | Wren, Jules, Leo | M2 |
+| **PdfCraft** | Read, organise, combine, split and secure PDFs | Early alpha | Portia, Penny, Otto | M2 |
+| **FigCraft** | Interface design and prototyping | Early alpha | Leo | M3 |
+| **Craft Anything** | Explore how software works and build your own | Early alpha | Leo | M3 |
+| **VectorCraft** | Vector illustration, logos, cutting files | In development | Wren, Gus | M4 |
+| **LightCraft** | Photo library and raw developing | In development | Wren | M4 |
+| **DesignCraft** | Page layout and publishing | In development | Wren, Penny | M4 |
+| **DeckCraft** | Slide presentations | In development | Wren, Iris | M4 |
+| **WordCraft** | Word processing | In development | Wren, Portia, Penny | M4 |
+| **GridCraft** | Spreadsheets and data analysis | In development | Penny | M4 |
+| **FilmCraft** | Video editing (desktop only) | In development | Wren | M5 |
+| **EffectCraft** | Motion graphics and visual effects | In development | Wren | M5 |
+| **SoundCraft** | Audio recording, editing and mixing | In development | Wren | M5 |
+| **CADCraft** | Computer-aided design and drafting | In development | Gus | M5 |
+| **TextureCraft** | 3D texture painting | In development | Gus | M5 |
+| **MaterialCraft** | Node-based procedural materials | In development | Gus | M5 |
+
+Rules for the suite:
+
+- An app joins FreeDuet only once it reaches at least early alpha and its agent interface passes FreeDuet's connector tests.
+- The apps are installed in the member's computer image and reached only through their own MCP server or CLI; the JSON control channel stays on loopback inside that computer.
+- Files are edited as copies; the original is replaced only when the person asks.
+- ArtCraft apps are Apache-2.0 (PhotoCraft is MIT or Apache-2.0). FreeDuet keeps their license and NOTICE files when it ships them in an image.
+- ArtCraft Studio, the project's separate AI image and video app, is not part of this plan; it can be added later as its own connector.
 
 ## Adding a connector
 
