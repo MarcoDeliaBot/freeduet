@@ -162,8 +162,12 @@ describe("an Anthropic key", () => {
     expect(calls.map((call) => call.url)).toEqual([
       "https://api.anthropic.com/v1/messages",
     ]);
-    expect(calls[0]?.headers["x-api-key"]).toBe("anthropic-key");
-    expect(calls[0]?.headers.authorization).toBeUndefined();
+    // Exactly these headers: the key travels as x-api-key and there is no bearer token at all.
+    expect(calls[0]?.headers).toEqual({
+      "content-type": "application/json",
+      "x-api-key": "anthropic-key",
+      "anthropic-version": "2023-06-01",
+    });
     expect(calls[0]?.body.model).toBe("claude-sonnet-5-5");
     expect(calls[0]?.body.max_tokens).toBe(512);
   });
