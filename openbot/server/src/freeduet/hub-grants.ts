@@ -20,6 +20,7 @@ import { HANDOFF_GRANT } from "../agents/handoff";
 import type { Database } from "../db/client";
 import { pluginGrants } from "../db/schema";
 import type { TenantPackage } from "../tenant-package";
+import { markFreeDuetPackage } from "./coordination";
 
 /** The tenant id of FreeDuet's own package (`examples/freeduet/brand.yaml`). */
 export const FREEDUET_TENANT_ID = "freeduet";
@@ -119,6 +120,8 @@ export async function applyFreeDuetPackage(
   database: Database,
   tenantPackage: TeamPackage,
 ): Promise<void> {
+  // Before the grants, so a database hiccup here cannot leave the members on the callback route.
+  markFreeDuetPackage(isFreeDuetPackage(tenantPackage));
   if (!isFreeDuetPackage(tenantPackage)) return;
   const { added, removed } = await seedHubGrants(database, tenantPackage);
   if (added > 0 || removed > 0) {

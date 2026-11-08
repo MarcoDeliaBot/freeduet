@@ -17,6 +17,11 @@ from .ipc import ToolReply
 
 DEFAULT_TOOL_URL = "http://host.docker.internal:3001/api/agent-tools/call"
 TOKEN_HEADER = "x-openbot-agent-token"
+HANDOFF_TOOL = "message_bot"
+# OpenBot's approval gate wanted to ask the person, and this route has no conversation to ask them in
+# (`ApprovalRefusedError` from `approvalAction`, server/src/approvals/types.ts). Matched on the
+# server's own words, which only that refusal uses.
+CANNOT_ASK = "not started from a conversation that can ask you"
 # message_bot waits for the other member's whole turn; the SSE keepalive covers the silence.
 TIMEOUT = httpx.Timeout(connect=10.0, read=900.0, write=30.0, pool=10.0)
 
@@ -28,6 +33,11 @@ def _refusal_reason(response: httpx.Response) -> str:
         return ""
     error = body.get("error") if isinstance(body, dict) else None
     return f" {error.strip()}" if isinstance(error, str) and error.strip() else ""
+
+
+def needs_the_person(reply: ToolReply) -> bool:
+    """The call was refused only because its approval had to be asked for, and could not be here."""
+    return reply.is_error and CANNOT_ASK in reply.text
 
 
 async def call_deployment_tool(name: str, arguments: dict, assertion: str) -> ToolReply:
