@@ -154,10 +154,13 @@ describe("case file", () => {
     ).toEqual([]);
   });
 
-  test("requires names apps; only otto-4 needs one", () => {
+  test("requires names apps; only otto-4 and penny-5 need one", () => {
     expect(
       cases.filter((c) => c.requires.length).map((c) => [c.id, c.requires]),
-    ).toEqual([["otto-4", ["gmail"]]]);
+    ).toEqual([
+      ["otto-4", ["gmail"]],
+      ["penny-5", ["gmail"]],
+    ]);
   });
 
   test("a missing attachment, a path or a bad app name fails the load", async () => {
