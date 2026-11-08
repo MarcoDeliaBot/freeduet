@@ -6,7 +6,7 @@ import os
 import stat
 import sys
 
-from freeduet import claude_cli
+from freeduet import claude_cli, iris_tools
 from helpers import post_run, run_body, standing, tool
 
 SECRETS = {
@@ -99,7 +99,8 @@ def test_the_started_cli_gets_exactly_that(client, fake_cli, monkeypatch):
     assert not set(SECRETS) & set(seen["env"])
     assert "CLAUDE_CONFIG_DIR" in seen["env"]  # passed by name; the CLI reads it, this service never does
     assert seen["cwd_entries"] == []  # an empty folder: no project files, no CLAUDE.md
-    assert [t["name"] for t in seen["tools"]] == ["make_page"]
+    # OpenBot's offered tools, then (this run is Iris's) her own four, answered by this service.
+    assert [t["name"] for t in seen["tools"]] == ["make_page", *sorted(iris_tools.NAMES)]
     # The bridge got its own line and nothing of this service's credentials.
     assert set(seen["mcp_config"]["mcpServers"]["freeduet"]["env"]) == {"FREEDUET_BRIDGE_PORT", "FREEDUET_BRIDGE_SECRET", "PYTHONPATH"}
     assert os.environ["MANAGED_AGENT_TOKEN"] not in json.dumps(seen)

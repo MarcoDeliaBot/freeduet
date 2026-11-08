@@ -5,6 +5,9 @@ each time. OpenBot's system rows (the standing role, the granted-tools guidance,
 role system or developer) and the run's application context join the member's prompt in the text
 for `--append-system-prompt`. Everything else (user, assistant with its tool calls, tool results)
 becomes the prompt the CLI reads on stdin, oldest first, in tags the model can follow.
+
+The member's active lessons (lessons.py, D16: standing corrections the person approved) follow
+OpenBot's rows under a short heading, newest last, at most 20.
 """
 
 import json
@@ -22,6 +25,9 @@ RUNTIME_NOTE = (
     "your turn while it runs or while the person approves it; when you are started again, its "
     "result is in the conversation. Never repeat a call that already has a result."
 )
+
+LESSONS_HEADING = "Lessons the person approved for you, newest last. Follow them:"
+MAX_LESSONS = 20
 
 _TAGS = re.compile(r"</?(?:conversation|user|assistant|tool_call|tool_result)\b", re.IGNORECASE)
 
@@ -65,7 +71,13 @@ def _content_text(content) -> str:
     return _as_text(content)
 
 
-def _system_text(member: Member, messages: list[dict], context: list[dict]) -> str:
+def _lessons_text(lessons) -> str:
+    items = [" ".join(str(item).split()) for item in lessons or ()]
+    items = [item for item in items if item][-MAX_LESSONS:]
+    return "\n".join([LESSONS_HEADING, *(f"- {item}" for item in items)]) if items else ""
+
+
+def _system_text(member: Member, messages: list[dict], context: list[dict], lessons=()) -> str:
     sections = [member.system_prompt]
     rows = (_content_text(message.get("content")).strip() for message in messages if message.get("role") in SYSTEM_ROLES)
     # A Bot without a row in agents.yaml runs on its standing role: that row is the prompt already.
@@ -75,6 +87,7 @@ def _system_text(member: Member, messages: list[dict], context: list[dict]) -> s
         if value:
             description = _as_text(entry.get("description")).strip()
             sections.append(f"{description}\n{value}" if description else value)
+    sections.append(_lessons_text(lessons))
     sections.append(RUNTIME_NOTE)
     return "\n\n".join(section for section in sections if section)
 
@@ -107,7 +120,9 @@ def _closing_instruction(messages: list[dict]) -> str:
     return "Start your turn as the assistant."
 
 
-def render(member: Member, messages: list[dict], context: list[dict] | None = None) -> Rendered:
+def render(member: Member, messages: list[dict], context: list[dict] | None = None, lessons=()) -> Rendered:
+    """The system text and the stdin prompt for one segment. `lessons` are this member's active
+    lessons, oldest first (lessons.active_for)."""
     names: dict[str, str] = {}
     blocks: list[str] = []
     turn = [message for message in messages if message.get("role") in {"user", "assistant", "tool"}]
@@ -136,4 +151,4 @@ def render(member: Member, messages: list[dict], context: list[dict] | None = No
             )
     conversation = "<conversation>\n" + "\n\n".join(blocks) + "\n</conversation>" if blocks else ""
     prompt = "\n\n".join(part for part in (conversation, _closing_instruction(turn)) if part)
-    return Rendered(system=_system_text(member, messages, context or []), prompt=prompt)
+    return Rendered(system=_system_text(member, messages, context or [], lessons), prompt=prompt)

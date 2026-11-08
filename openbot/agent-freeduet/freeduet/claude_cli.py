@@ -174,9 +174,12 @@ async def start(command: list[str], cwd: Path) -> asyncio.subprocess.Process:
 async def stop(process: asyncio.subprocess.Process | None) -> None:
     if process is None:
         return
+    # The whole session, even when the CLI has already exited on its own: the bridge it launched
+    # is in the same process group, holds the CLI's stderr open and would otherwise outlive the
+    # segment (the group id stays reserved while any member of it is alive).
+    with suppress(ProcessLookupError, PermissionError):
+        os.killpg(process.pid, signal.SIGKILL)
     if process.returncode is None:
-        with suppress(ProcessLookupError, PermissionError):
-            os.killpg(process.pid, signal.SIGKILL)
         with suppress(ProcessLookupError):
             process.kill()
     with suppress(Exception):
