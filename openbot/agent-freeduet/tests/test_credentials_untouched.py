@@ -85,7 +85,8 @@ for info in pkgutil.walk_packages(freeduet.__path__, "freeduet."):
     importlib.import_module(info.name)
     imported.append(info.name)
 
-from freeduet import assistants, aux, engines
+from freeduet import assistants, engines
+from freeduet import server_calls as aux
 
 # engines.py: the configured file (missing here, so the shipped example) and every chain.
 example = engines.load_engines()
@@ -278,7 +279,7 @@ def test_no_credential_directory_is_opened(tmp_path):
     assert report["control_detected"], "the audit hook did not see the deliberate decoy read"
     assert report["violations"] == [], report["violations"]
     assert not report["canary_seen"]
-    for module in ("freeduet.engines", "freeduet.aux", "freeduet.assistants"):
+    for module in ("freeduet.engines", "freeduet.server_calls", "freeduet.assistants"):
         assert module in report["imported"]
     # title (free), review (claude), unknown (claude), stream (400), wrong key (401),
     # free engine down (claude), default wiring (claude), then /health once the runtime exists.

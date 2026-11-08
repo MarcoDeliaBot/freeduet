@@ -41,7 +41,7 @@ from . import engines as engines_mod
 from .assistants import AssistantClient, AssistantError
 from .engines import Engine, EnginesConfig, EnginesFileError
 
-log = logging.getLogger("freeduet.aux")
+log = logging.getLogger("freeduet.server_calls")
 
 router = APIRouter()
 

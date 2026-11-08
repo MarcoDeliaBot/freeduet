@@ -1,4 +1,4 @@
-"""aux.py: POST /v1/messages, purpose markers, routing, fallback, auth and response shape.
+"""server_calls.py: POST /v1/messages, purpose markers, routing, fallback, auth and response shape.
 
 The prompts below are rebuilt line by line from the server code that sends them, so a marker test
 here fails when the server's wording drifts (and test_markers_match_the_server_source says where).
@@ -20,9 +20,9 @@ PACKAGE_ROOT = Path(__file__).resolve().parents[1]
 if str(PACKAGE_ROOT) not in sys.path:
     sys.path.insert(0, str(PACKAGE_ROOT))
 
-from freeduet import aux  # noqa: E402
+from freeduet import server_calls as aux  # noqa: E402
 from freeduet.assistants import AssistantClient, AssistantError, chat_completions_url  # noqa: E402
-from freeduet.aux import Purpose  # noqa: E402
+from freeduet.server_calls import Purpose  # noqa: E402
 from freeduet.engines import parse_engines  # noqa: E402
 
 REPO_ROOT = PACKAGE_ROOT.parents[1]

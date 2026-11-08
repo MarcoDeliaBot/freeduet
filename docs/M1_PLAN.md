@@ -43,7 +43,7 @@ OpenBot server ──Anthropic POST /v1/messages─► agent-freeduet: the serve
 | Routes | `GET /health`; `POST /` (AG-UI, SSE); `POST /v1/messages` (Anthropic format, text only, non-streaming) |
 | Auth | `x-openbot-agent-token == MANAGED_AGENT_TOKEN` on `POST /`; `x-api-key == FREEDUET_LOCAL_KEY` on `/v1/messages`; `hmac.compare_digest` |
 | Env | `MANAGED_AGENT_TOKEN`, `AGENT_TOOL_TOKEN`, `OPENBOT_TOOL_URL` (default `http://host.docker.internal:3001/api/agent-tools/call`), `FREEDUET_LOCAL_KEY`, `FREEDUET_AGENTS_FILE` (default `/app/tenant/agents.yaml`), `FREEDUET_ENGINES_FILE` (default `/app/engines.yaml`, falling back to `engines.example.yaml`), `FREEDUET_DATA_DIR` (default `/data`), `CLAUDE_BIN` (default `claude`) |
-| Modules | `freeduet/app.py` (routes), `freeduet/agui.py` (RunAgentInput parsing, event encoding, keepalive), `freeduet/members.py` (agents.yaml by id), `freeduet/transcript.py` (messages to prompt), `freeduet/claude_cli.py` (command, process, stream-json parsing), `freeduet/bridge/` (stdio MCP server + loopback IPC with the parent), `freeduet/engines.py` (load, validate, order, caps), `freeduet/aux.py` (`/v1/messages`, purpose routing), `freeduet/assistants.py` (OpenAI-compatible free engine), `freeduet/checkpoints.py` (AI Continuity port) |
+| Modules | `freeduet/app.py` (routes), `freeduet/agui.py` (RunAgentInput parsing, event encoding, keepalive), `freeduet/members.py` (agents.yaml by id), `freeduet/transcript.py` (messages to prompt), `freeduet/claude_cli.py` (command, process, stream-json parsing), `freeduet/bridge/` (stdio MCP server + loopback IPC with the parent), `freeduet/engines.py` (load, validate, order, caps), `freeduet/server_calls.py` (`/v1/messages`, purpose routing; not `aux.py`, a reserved file name on Windows), `freeduet/assistants.py` (OpenAI-compatible free engine), `freeduet/checkpoints.py` (AI Continuity port) |
 | Ported code | From Anil-matcha/open-duet (Apache-2.0) and AI Continuity (MIT): keep the license header, name the original file, say "Modified for FreeDuet" |
 | Tests that must exist | fake `claude` executable that replays stream-json fixtures and calls MCP tools; a full segment loop (text, tool call, `RUN_FINISHED`, resume with result); deployment-tool callback; keepalive; auth refusals; logins-first ordering (metered never first, never with caps 0); credential directory never opened (M1.8); purpose routing per marker; checkpoint written per segment |
 
@@ -52,7 +52,7 @@ OpenBot server ──Anthropic POST /v1/messages─► agent-freeduet: the serve
 | Stream | Issues | Owns |
 |---|---|---|
 | A. Member runtime | #10, #11, #12, #13 | `app.py`, `agui.py`, `members.py`, `transcript.py`, `claude_cli.py`, `bridge/`, Dockerfile |
-| B. Engines and server calls | #15, #16, #17 | `engines.py`, `aux.py`, `assistants.py`, credential-directory test |
+| B. Engines and server calls | #15, #16, #17 | `engines.py`, `server_calls.py`, `assistants.py`, credential-directory test |
 | C. Wiring | #14 | `docker-compose.yml` service, `scripts/start.sh` (start, health-wait, `FREEDUET_LOCAL_KEY`), `.env.example`, `agents.yaml` interpolation, `server/tests/freeduet-package.test.ts`, README quick start, `docs/UPSTREAM_TOUCHES.md` |
 | D. Evals | #18 | `evals/team/run.ts` (or Python) and its fake-engine mode |
 | E. Checkpoints | #24 | `checkpoints.py` |
