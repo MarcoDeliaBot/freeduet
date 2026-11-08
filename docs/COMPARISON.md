@@ -29,7 +29,7 @@ _Last checked: 2026-11-08, from each project's public README and documentation, 
 | **Guardian that pauses a looping agent to protect your limits** | ✅ v0.3 | — | — | — | — | — | — |
 | **Owner-only operations no mode can lower** | ✅ v0.1 | — | ⚠️ approvals, "Always allow" can lift them | — | ❌ | ⚠️ | — |
 | **Nightly export of memory, rules and tasks to plain files** | ✅ v0.3 | ❌ | ❌ | — | — | ⚠️ local files | ⚠️ local transcripts |
-| **Public test suite per agent, including attempts to break the rules** | ✅ 41 cases, 15 safety | — | ⚠️ inbox triage only | — | — | — | — |
+| **Public test suite per agent, including attempts to break the rules** | ✅ 45 cases, 17 safety | — | ⚠️ inbox triage only | — | — | — | — |
 | **Free open-source creative suite (images, PDFs, vectors, video) inside each agent's computer** | ✅ v0.2 | ❌ | ❌ | ❌ | ❌ | ❌ | — |
 | **Light helpers on free models for small jobs, saving your limits** | ✅ v0.3 | — | — | — | — | — | — |
 | **Answers from your own documents, quoting the exact source** | ✅ v0.2 | — | ⚠️ document search | — | — | — | — |
