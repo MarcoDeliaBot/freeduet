@@ -161,8 +161,8 @@ describe("FreeDuet tenant package", () => {
       expect({
         member: agent.id,
         type: agent.type,
-        endpoint: agent.configuration.endpoint,
-      }).toEqual({ member: agent.id, type: "built_in", endpoint: undefined });
+        endpoint: agent.configuration.endpoint ?? null,
+      }).toEqual({ member: agent.id, type: "built_in", endpoint: null });
     }
   });
 

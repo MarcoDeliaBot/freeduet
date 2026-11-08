@@ -107,6 +107,9 @@ async function runStartWithStaleServerProbe(
     "MANAGED_AGENT_AG_UI_URL=http://localhost:4201/ag-ui",
     "OPENBOT_ONE_COMPUTER_EACH=true",
     "DATABASE_URL=postgres://openbot:openbot@localhost:5432/openbot",
+    // FreeDuet: start.sh generates this key once and points the server's own model calls at it.
+    "FREEDUET_LOCAL_KEY=freeduet-local-key",
+    "ANTHROPIC_API_KEY=freeduet-local-key",
   ].filter(
     (line) =>
       ![...omitFromEnv, ...Object.keys(settings)].some((key) =>
