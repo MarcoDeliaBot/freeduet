@@ -234,13 +234,22 @@ if [ "$FREEDUET_ROUTER" != "off" ]; then
 fi
 # FreeDuet: conversations and memory in this server's own database unless FREEDUET_INTELLIGENCE=on
 # (#42). Written when the settings file has no line for it, like the keys above, so a later
-# `docker compose up` by hand runs the same way, and the server is restarted to pick it up.
+# `docker compose up` by hand runs the same way. A file with all three Intelligence settings is an
+# install from before #42 whose conversations are in Intelligence: it gets `on`, and keeps them.
+# Anything else gets `off`, and the server is restarted to pick it up. A new install copies
+# `.env.example`, which already says `off`.
 if [ -z "$(setting FREEDUET_INTELLIGENCE "")" ]; then
-  SECRETS_ROTATED=true
-  freeduet_env_line FREEDUET_INTELLIGENCE off
-  printf '\033[2m%s\033[0m\n' "Wrote FREEDUET_INTELLIGENCE=off to $ENV_NAME: conversations and memory stay in FreeDuet's own database."
-  if [ -n "$(setting INTELLIGENCE_API_KEY "")" ]; then
-    printf '\033[2m%s\033[0m\n' "Your CopilotKit Intelligence settings are kept and not used. Set FREEDUET_INTELLIGENCE=on to use them."
+  if [ -n "$(setting INTELLIGENCE_API_URL "")" ] && [ -n "$(setting INTELLIGENCE_GATEWAY_WS_URL "")" ] \
+     && [ -n "$(setting INTELLIGENCE_API_KEY "")" ]; then
+    freeduet_env_line FREEDUET_INTELLIGENCE on
+    printf '\033[2m%s\033[0m\n' "Wrote FREEDUET_INTELLIGENCE=on to $ENV_NAME: your conversations stay in CopilotKit Intelligence. Set it to off to keep new ones in FreeDuet's own database."
+  else
+    SECRETS_ROTATED=true
+    freeduet_env_line FREEDUET_INTELLIGENCE off
+    printf '\033[2m%s\033[0m\n' "Wrote FREEDUET_INTELLIGENCE=off to $ENV_NAME: conversations and memory stay in FreeDuet's own database."
+    if [ -n "$(setting INTELLIGENCE_API_KEY "")" ]; then
+      printf '\033[2m%s\033[0m\n' "Your CopilotKit Intelligence settings are kept and not used. Set FREEDUET_INTELLIGENCE=on to use them."
+    fi
   fi
 fi
 FREEDUET_INTELLIGENCE="$(setting FREEDUET_INTELLIGENCE off)"

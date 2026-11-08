@@ -923,6 +923,43 @@ describe("start.sh FREEDUET_INTELLIGENCE (#42)", () => {
     expect(result.savedEnvironment).toContain("FREEDUET_INTELLIGENCE=on\n");
     expect(result.stdout).not.toContain("Wrote FREEDUET_INTELLIGENCE");
   });
+
+  /**
+   * An install from before #42 has all three Intelligence settings, because the server would not
+   * start without them, and its conversations are in Intelligence. Writing off would hide them.
+   */
+  test("writes on for an install already on Intelligence, and says how to switch", async () => {
+    const result = await runStartWithStaleServerProbe(401, {
+      omitFromEnv: ["FREEDUET_INTELLIGENCE"],
+      settings: {
+        INTELLIGENCE_API_URL: "https://api.intelligence.example",
+        INTELLIGENCE_GATEWAY_WS_URL: "wss://realtime.intelligence.example",
+        INTELLIGENCE_API_KEY: "cpk-synthetic",
+      },
+    });
+
+    expect(result.exitCode).toBe(0);
+    expect(result.savedEnvironment).toContain("FREEDUET_INTELLIGENCE=on\n");
+    expect(result.savedEnvironment).not.toContain("FREEDUET_INTELLIGENCE=off");
+    const said = result.stdout
+      .split("\n")
+      .filter((line) => line.includes("FREEDUET_INTELLIGENCE"));
+    expect(said).toHaveLength(1);
+    expect(said[0]).toContain(
+      "Wrote FREEDUET_INTELLIGENCE=on to .env: your conversations stay in CopilotKit Intelligence. Set it to off to keep new ones in FreeDuet's own database.",
+    );
+  });
+
+  test("a key without the addresses is not an install on Intelligence: off", async () => {
+    const result = await runStartWithStaleServerProbe(401, {
+      omitFromEnv: ["FREEDUET_INTELLIGENCE"],
+      settings: { INTELLIGENCE_API_KEY: "cpk-synthetic" },
+    });
+
+    expect(result.exitCode).toBe(0);
+    expect(result.savedEnvironment).toContain("FREEDUET_INTELLIGENCE=off\n");
+    expect(result.stdout).toContain("Wrote FREEDUET_INTELLIGENCE=off to .env");
+  });
 });
 
 describe("start.sh selected provider services", () => {
