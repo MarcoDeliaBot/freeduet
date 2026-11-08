@@ -60,7 +60,9 @@ describe("deployment configuration", () => {
     expect(config.singleUser).toBe(false);
     expect(config.auth).toBeUndefined();
     expect(config.organizationAuthUrl).toBe("https://openbot.company.example");
-    expect(config.runtime.intelligence.apiKey).toBe("tenant-api-key");
+    expect(config.runtime).toMatchObject({
+      intelligence: { apiKey: "tenant-api-key" },
+    });
   });
   test("resolves the Intelligence runtime, which is the only runtime", () => {
     const config = loadConfig(baseEnvironment);

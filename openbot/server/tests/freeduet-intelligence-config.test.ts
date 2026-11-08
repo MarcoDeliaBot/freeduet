@@ -8,7 +8,7 @@ import {
   CopilotKitIntelligence,
   IntelligenceAgentRunner,
 } from "@copilotkit/runtime/v2";
-import { loadConfig } from "../src/config";
+import { loadConfig, type RuntimeCapabilities } from "../src/config";
 import { mountCopilotRuntime } from "../src/copilot";
 import type { Database } from "../src/db/client";
 import {
@@ -35,15 +35,16 @@ function withoutIntelligence(overrides: Record<string, string> = {}) {
   return { ...environment, ...overrides };
 }
 
-const UPSTREAM_RUNTIME = {
+const UPSTREAM_SETTINGS = {
+  apiUrl: "http://localhost:7100",
+  gatewayWsUrl: "ws://localhost:7103",
+  apiKey: "tenant-api-key",
+  licenseToken: "license-token",
+};
+const UPSTREAM_RUNTIME: RuntimeCapabilities = {
   mode: "intelligence",
   durableHistory: true,
-  intelligence: {
-    apiUrl: "http://localhost:7100",
-    gatewayWsUrl: "ws://localhost:7103",
-    apiKey: "tenant-api-key",
-    licenseToken: "license-token",
-  },
+  intelligence: UPSTREAM_SETTINGS,
 };
 
 // The fake store never touches the database it is given.
@@ -201,7 +202,7 @@ describe("createThreadBackend", () => {
     expect(backend.runner).toBeInstanceOf(IntelligenceAgentRunner);
     expect(backend.memory).toBeDefined();
     expect(backend.learning).toBe(true);
-    expect(backend.intelligence()).toEqual(UPSTREAM_RUNTIME.intelligence);
+    expect(backend.intelligence()).toEqual(UPSTREAM_SETTINGS);
     expect(threadReaderClient(config)).toBeInstanceOf(CopilotKitIntelligence);
   });
 
