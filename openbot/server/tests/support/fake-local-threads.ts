@@ -1,7 +1,8 @@
 /**
  * An in-memory stand-in for FreeDuet's thread store and Postgres runner (issue #42), written against
- * `src/freeduet/threads/contract.ts` and nothing else, so the wiring's tests run before the store
- * lands and keep checking the wiring once it has.
+ * `src/freeduet/threads/contract.ts` and raising the store's own error classes, so the wiring's route
+ * tests can bend the store (a race, a lost thread) in ways the real one cannot be asked to.
+ * freeduet-intelligence-store.test.ts runs the same promises over the real one.
  *
  * It behaves the way the contract says the real one does, in the parts the wiring depends on:
  * - a thread belongs to the person who created it, and creating it for anybody else is refused;
@@ -27,34 +28,23 @@ import type {
   PgAgentRunner,
   StoredThread,
   StoredThreadMessage,
-  ThreadLockDeniedErrorShape,
-  ThreadOwnershipErrorShape,
   ThreadsModule,
-  UnknownThreadErrorShape,
 } from "../../src/freeduet/threads/contract";
+import {
+  ThreadLockDeniedError,
+  ThreadOwnershipError,
+  UnknownThreadError,
+} from "../../src/freeduet/threads/index";
 
 type Lock = { runId: string; expiresAt: number };
 
-/** The store's three errors, shaped as the contract names them (`threads/contract.ts`). */
-export function lockDenied(): ThreadLockDeniedErrorShape {
-  return Object.assign(new Error("Thread lock denied"), {
-    name: "ThreadLockDeniedError",
-    status: 409,
-    message: "Thread lock denied",
-  } as const);
-}
-export function unknownThread(): UnknownThreadErrorShape {
-  return Object.assign(new Error("Thread not found"), {
-    name: "UnknownThreadError",
-    status: 404,
-  } as const);
-}
-export function notYourThread(): ThreadOwnershipErrorShape {
-  return Object.assign(new Error("Thread not found"), {
-    name: "ThreadOwnershipError",
-    status: 404,
-  } as const);
-}
+/** The store's three errors, its own classes (`threads/index.ts`), as the stand-in raises them. */
+export const lockDenied = (threadId = "thread", runId = "run") =>
+  new ThreadLockDeniedError(threadId, runId);
+export const unknownThread = (threadId = "thread") =>
+  new UnknownThreadError(threadId);
+export const notYourThread = (threadId = "thread") =>
+  new ThreadOwnershipError(threadId);
 
 export type FakeThreadStore = LocalThreadStore & {
   readonly threads: Map<string, StoredThread>;
@@ -78,7 +68,7 @@ export function createFakeThreadStore(now: () => number = Date.now) {
     async getOrCreateThread({ threadId, userId, agentId }) {
       const existing = threads.get(threadId);
       if (existing) {
-        if (existing.userId !== userId) throw notYourThread();
+        if (existing.userId !== userId) throw notYourThread(threadId);
         return existing;
       }
       const at = new Date(now());
@@ -193,14 +183,14 @@ export function createFakeRunner(
     }) {
       const { threadId, agent, input } = request;
       // This process already runs the thread: refused on the spot, as the real runner does.
-      if (running.has(threadId)) throw lockDenied();
+      if (running.has(threadId)) throw lockDenied(threadId, input.runId);
       const subject = new ReplaySubject<BaseEvent>(Infinity);
       running.set(threadId, { runId: input.runId, agent, subject });
       void (async () => {
         const thread = await store.getThread(threadId);
         if (!thread) {
           running.delete(threadId);
-          subject.error(unknownThread());
+          subject.error(unknownThread(threadId));
           return;
         }
         // Whoever takes the lock releases it: a headless turn took it already, a browser run did not.
@@ -214,7 +204,7 @@ export function createFakeRunner(
         });
         if (!held) {
           running.delete(threadId);
-          subject.error(lockDenied());
+          subject.error(lockDenied(threadId, input.runId));
           return;
         }
         runner.runs.push(input.runId);

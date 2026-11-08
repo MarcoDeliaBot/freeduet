@@ -17,16 +17,12 @@
  */
 import type { CopilotKitIntelligence } from "@copilotkit/runtime/v2";
 import { THREAD_LOCK_TTL_SECONDS } from "@openbot/toolkit/copilotkit/thread-lock";
-import type {
-  LocalThreadStore,
-  StoredThread,
-  ThreadLockDeniedErrorShape,
-  ThreadOwnershipErrorShape,
-} from "./threads/contract";
-
-/** The store's errors by the names `./threads/contract.ts` gives them; `tsc` holds the spelling. */
-const LOCK_DENIED: ThreadLockDeniedErrorShape["name"] = "ThreadLockDeniedError";
-const NOT_YOURS: ThreadOwnershipErrorShape["name"] = "ThreadOwnershipError";
+import type { LocalThreadStore, StoredThread } from "./threads/contract";
+import {
+  ThreadLockDeniedError,
+  ThreadOwnershipError,
+  UnknownThreadError,
+} from "./threads/index";
 
 /** The methods of the Intelligence client OpenBot calls on a thread, and nothing else of it. */
 export type ThreadClient = Pick<
@@ -52,17 +48,17 @@ export class LocalThreadError extends Error {
 }
 
 /**
- * Whether an error means another run holds the thread. Two spellings: this adapter's 409, and the
- * store's `ThreadLockDeniedError` (by name, as the contract says, so neither side imports the
- * other's class).
+ * Whether an error means another run holds the thread: the store's `ThreadLockDeniedError`, or this
+ * adapter's own 409.
  */
 export function isThreadLockDenied(error: unknown): boolean {
-  if (!(error instanceof Error)) return false;
-  if (error.name === LOCK_DENIED) return true;
-  return (
-    error.name === "PlatformRequestError" &&
-    (error as { status?: unknown }).status === 409
-  );
+  if (error instanceof ThreadLockDeniedError) return true;
+  return error instanceof LocalThreadError && error.status === 409;
+}
+
+/** Whether an error means there is no such thread for the runner: the store's `UnknownThreadError`. */
+export function isUnknownThread(error: unknown): boolean {
+  return error instanceof UnknownThreadError;
 }
 
 const missing = (threadId: string) =>
@@ -115,8 +111,7 @@ export class LocalIntelligence implements ThreadClient {
     } catch (error) {
       // Somebody else created the same id in the moment between the read and the create: the
       // store's `ThreadOwnershipError`, answered as the thread not being there.
-      if (error instanceof Error && error.name === NOT_YOURS)
-        throw missing(params.threadId);
+      if (error instanceof ThreadOwnershipError) throw missing(params.threadId);
       const after = await this.store.getThread(params.threadId);
       if (after && after.userId !== params.userId)
         throw missing(params.threadId);

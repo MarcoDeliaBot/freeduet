@@ -45,6 +45,11 @@ import type {
   PgAgentRunner,
   ThreadsModule,
 } from "./threads/contract";
+import {
+  applyFreeDuetThreadMigrations,
+  createLocalThreadStore,
+  createPgAgentRunner,
+} from "./threads/index";
 
 /** What the self-host banner and the setup checklist ask about entitlement. */
 type EntitlementSource = {
@@ -118,28 +123,18 @@ const INTELLIGENCE_OFF =
  */
 const booted = new WeakMap<DeploymentConfig, ThreadBackend>();
 
-/**
- * The store's module, loaded by path rather than imported, so this file builds and its tests run on
- * a branch where the store has not landed yet. `./threads/index.ts` exports `ThreadsModule`
- * (`./threads/contract.ts`); once it is in the tree a static import is equivalent.
- */
-async function loadThreadsModule(): Promise<ThreadsModule> {
-  const path = new URL("./threads/index.ts", import.meta.url).href;
-  try {
-    return (await import(path)) as ThreadsModule;
-  } catch (error) {
-    throw new Error(
-      "FREEDUET_INTELLIGENCE=off needs FreeDuet's thread store (server/src/freeduet/threads/index.ts), which could not be loaded.",
-      { cause: error },
-    );
-  }
-}
+/** The store's module (`./threads/index.ts`), by the names `ThreadsModule` fixes and no others. */
+const THREAD_STORE: ThreadsModule = {
+  applyFreeDuetThreadMigrations,
+  createLocalThreadStore,
+  createPgAgentRunner,
+};
 
 export async function createThreadBackend(
   config: DeploymentConfig,
   database: Database,
   options: {
-    /** The store's module; tests pass a fake. Loaded from `./threads/index.ts` otherwise. */
+    /** The store's module; tests may pass a stand-in. FreeDuet's own store otherwise. */
     threads?: ThreadsModule;
     log?: (line: string) => void;
   } = {},
@@ -175,7 +170,7 @@ export async function createThreadBackend(
       intelligence: () => settings,
     };
   } else {
-    const threads = options.threads ?? (await loadThreadsModule());
+    const threads = options.threads ?? THREAD_STORE;
     // Tables first, then close what a previous process left running, then accept work.
     await threads.applyFreeDuetThreadMigrations(database);
     const store = threads.createLocalThreadStore(database);

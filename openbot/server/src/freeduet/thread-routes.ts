@@ -18,7 +18,8 @@
  *   browser run is the runner's own to lock and free. So the guard asks the store who holds the
  *   thread, and the race it cannot see (two runs in the same instant) is caught where the runner
  *   refuses: `ThreadLockDeniedError`, thrown by `run()` or sent down its stream, which
- *   `runnerForRuntime` turns into one recognisable event and the guard into the same 409;
+ *   `runnerForRuntime` turns into one recognisable event and the guard into the same 409 (and a
+ *   thread gone in the meantime, `UnknownThreadError`, into a 404);
  * - the app's live-run probe (`connect` with `forwardedProps.openbotAsk === "live-run"`,
  *   `app/src/lib/channels/follow-turn.ts`) answers 204 when the thread is idle and `{ runId }` when a
  *   run holds it, the two answers Intelligence's join gave, instead of a replay;
@@ -34,12 +35,14 @@ import { Hono } from "hono";
 import { catchError, defer, of, throwError } from "rxjs";
 import type { IdentifyUser } from "../copilot";
 import type { LocalThreadBackend, ThreadBackend } from "./backend";
-import { isThreadLockDenied } from "./local-intelligence";
+import { isThreadLockDenied, isUnknownThread } from "./local-intelligence";
 
 export const COPILOT_BASE_PATH = "/api/copilotkit";
 
-/** The code on the event a refused run becomes. Read back by the guard below, nowhere else. */
+/** The codes on the event a refused run becomes. Read back by the guard below, nowhere else. */
 export const LOCK_DENIED_CODE = "THREAD_LOCK_DENIED";
+export const UNKNOWN_THREAD_CODE = "THREAD_NOT_FOUND";
+type Refusal = typeof LOCK_DENIED_CODE | typeof UNKNOWN_THREAD_CODE;
 
 /**
  * How long the guard waits for a run's first event before handing the stream on. A refusal is
@@ -49,27 +52,28 @@ export const LOCK_DENIED_CODE = "THREAD_LOCK_DENIED";
 const FIRST_EVENT_WAIT_MS = 2_000;
 
 /**
- * The shared runner as the runtime is given it: the SAME instance, with a refused lock turned into
- * an event.
+ * The shared runner as the runtime is given it: the SAME instance, with the store's two refusals
+ * turned into an event.
  *
- * Without this the runtime's SSE handler meets `ThreadLockDeniedError` as a thrown error or a
- * stream error, logs it and closes a 200 stream with nothing in it, and the person's message
- * vanishes. As an event it reaches the guard, which answers 409 as Intelligence did. Every other
- * error passes through unchanged, and `connect`, `isRunning` and `stop` go straight to the runner.
+ * Without this the runtime's SSE handler meets `ThreadLockDeniedError` (another run holds the
+ * thread) or `UnknownThreadError` (the thread is gone) as a thrown error or a stream error, logs it
+ * and closes a 200 stream with nothing in it, and the person's message vanishes. As an event it
+ * reaches the guard, which answers 409 or 404 as Intelligence did. Every other error passes through
+ * unchanged, and `connect`, `isRunning` and `stop` go straight to the runner.
  */
 export function runnerForRuntime(runner: AgentRunner): AgentRunner {
+  const refusal = (code: Refusal, message: string) =>
+    of({ type: EventType.RUN_ERROR, message, code } as BaseEvent);
   return {
     run: (request) =>
       defer(() => runner.run(request)).pipe(
-        catchError((error: unknown) =>
-          isThreadLockDenied(error)
-            ? of({
-                type: EventType.RUN_ERROR,
-                message: "Thread lock denied",
-                code: LOCK_DENIED_CODE,
-              } as BaseEvent)
-            : throwError(() => error),
-        ),
+        catchError((error: unknown) => {
+          if (isThreadLockDenied(error))
+            return refusal(LOCK_DENIED_CODE, "Thread lock denied");
+          if (isUnknownThread(error))
+            return refusal(UNKNOWN_THREAD_CODE, "Thread not found");
+          return throwError(() => error);
+        }),
       ),
     connect: (request) => runner.connect(request),
     isRunning: (request) => runner.isRunning(request),
@@ -77,8 +81,8 @@ export function runnerForRuntime(runner: AgentRunner): AgentRunner {
   };
 }
 
-/** Whether one SSE frame is the event `runnerForRuntime` makes of a refused lock. */
-function isLockDeniedFrame(frame: string): boolean {
+/** The refusal one SSE frame carries, when it is an event `runnerForRuntime` made. */
+function refusalIn(frame: string): Refusal | null {
   for (const line of frame.split("\n")) {
     if (!line.startsWith("data:")) continue;
     try {
@@ -86,27 +90,29 @@ function isLockDeniedFrame(frame: string): boolean {
         type?: unknown;
         code?: unknown;
       };
-      return (
-        event.type === EventType.RUN_ERROR && event.code === LOCK_DENIED_CODE
-      );
+      if (event.type !== EventType.RUN_ERROR) return null;
+      return event.code === LOCK_DENIED_CODE ||
+        event.code === UNKNOWN_THREAD_CODE
+        ? event.code
+        : null;
     } catch {
-      return false;
+      return null;
     }
   }
-  return false;
+  return null;
 }
 
 /**
  * Reads a run's stream up to its first event, at most `waitMs`, and says whether that event is a
- * refused lock. Otherwise hands back a response that still carries every byte, the ones read
- * included, so the browser sees the stream it would have seen.
+ * refusal. Otherwise hands back a response that still carries every byte, the ones read included,
+ * so the browser sees the stream it would have seen.
  */
-async function lockDeniedAtStart(
+async function refusalAtStart(
   response: Response,
   waitMs: number,
-): Promise<{ denied: boolean; response: Response }> {
+): Promise<{ refusal: Refusal | null; response: Response }> {
   const body = response.body;
-  if (!body) return { denied: false, response };
+  if (!body) return { refusal: null, response };
   const reader = body.getReader();
   const decoder = new TextDecoder();
   const chunks: Uint8Array[] = [];
@@ -133,9 +139,10 @@ async function lockDeniedAtStart(
   } finally {
     clearTimeout(timer);
   }
-  if (isLockDeniedFrame(text.split("\n\n")[0] ?? "")) {
+  const refusal = refusalIn(text.split("\n\n")[0] ?? "");
+  if (refusal) {
     await reader.cancel().catch(() => undefined);
-    return { denied: true, response };
+    return { refusal, response };
   }
   const stream = new ReadableStream<Uint8Array>({
     start(controller) {
@@ -152,7 +159,7 @@ async function lockDeniedAtStart(
     cancel: (reason) => reader.cancel(reason),
   });
   return {
-    denied: false,
+    refusal: null,
     response: new Response(stream, {
       status: response.status,
       statusText: response.statusText,
@@ -416,11 +423,14 @@ export function createThreadGuard(options: {
       response = await forward(request);
     } catch (error) {
       if (isThreadLockDenied(error)) return LOCKED();
+      if (isUnknownThread(error)) return NOT_FOUND();
       throw error;
     }
     if (!isEventStream(response)) return response;
-    const read = await lockDeniedAtStart(response, firstEventWaitMs);
-    return read.denied ? LOCKED() : read.response;
+    const read = await refusalAtStart(response, firstEventWaitMs);
+    if (read.refusal === LOCK_DENIED_CODE) return LOCKED();
+    if (read.refusal === UNKNOWN_THREAD_CODE) return NOT_FOUND();
+    return read.response;
   };
 }
 

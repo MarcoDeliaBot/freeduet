@@ -1,7 +1,7 @@
 /**
- * The wiring over the REAL thread store and Postgres runner (#42), once `threads/index.ts` is in the
- * tree. Skipped before: the wiring was built beside the store, against the contract, and
- * freeduet-intelligence-routes.test.ts covers it with the in-memory stand-in meanwhile.
+ * The wiring over the REAL thread store and Postgres runner (#42). The route tests
+ * (freeduet-intelligence-routes.test.ts) use an in-memory stand-in so they can bend the store; this
+ * file checks the promises hold over what ships.
  *
  * The same promises, against what ships: another person's thread is not there, a run is kept and
  * read back in Intelligence's row shape, a busy thread answers 409 and the live-run probe its run
@@ -9,7 +9,6 @@
  * database still has the conversation.
  */
 import { afterAll, describe, expect, test } from "bun:test";
-import { existsSync } from "node:fs";
 import {
   AbstractAgent,
   type BaseEvent,
@@ -26,12 +25,13 @@ import {
   localThreadBackend,
 } from "../src/freeduet/backend";
 import { guardThreadRoutes } from "../src/freeduet/thread-routes";
+import {
+  ThreadLockDeniedError,
+  ThreadOwnershipError,
+  UnknownThreadError,
+} from "../src/freeduet/threads/index";
 import { TEST_POOL, testDatabaseUrl } from "./support/database";
 import { testEnvironment } from "./support/environment";
-
-const STORE_LANDED = existsSync(
-  new URL("../src/freeduet/threads/index.ts", import.meta.url),
-);
 
 class EchoAgent extends AbstractAgent {
   static gate: Promise<void> | undefined;
@@ -68,9 +68,7 @@ class EchoAgent extends AbstractAgent {
 }
 
 const config = loadConfig(testEnvironment({ FREEDUET_INTELLIGENCE: "off" }));
-const database = STORE_LANDED
-  ? createDatabase(testDatabaseUrl(), TEST_POOL)
-  : undefined;
+const database = createDatabase(testDatabaseUrl(), TEST_POOL);
 const id = (name: string) => `${name}-${crypto.randomUUID()}`;
 const identifyUser = async (request: Request) => {
   const person = request.headers.get("x-test-person");
@@ -80,7 +78,6 @@ const identifyUser = async (request: Request) => {
 
 /** Boots the backend, the runtime and the guard over the test database, as index.ts does. */
 async function boot() {
-  if (!database) throw new Error("no database");
   const backend = localThreadBackend(
     await createThreadBackend(config, database, { log: () => {} }),
   );
@@ -134,46 +131,34 @@ const input = (
 
 afterAll(async () => {
   EchoAgent.gate = undefined;
+  // Every pool a test file opens is given back, or the suite runs out of connections.
+  await database.$client.close();
 });
 
-describe.skipIf(!STORE_LANDED)("the store's errors match the contract", () => {
-  test("by name, status and message, as threads/contract.ts names them", async () => {
-    const threads = (await import(
-      new URL("../src/freeduet/threads/index.ts", import.meta.url).href
-    )) as Record<
-      string,
-      new (
-        ...args: string[]
-      ) => Error & { status?: number }
-    >;
-    const denied = new (
-      threads.ThreadLockDeniedError as NonNullable<(typeof threads)[string]>
-    )("thread", "run");
-    expect({
-      name: denied.name,
-      status: denied.status,
-      message: denied.message,
-    }).toEqual({
+describe("the store's errors match the contract", () => {
+  test("by name, status and message, as threads/contract.ts names them", () => {
+    const shape = (error: Error & { status?: number }) => ({
+      name: error.name,
+      status: error.status,
+      message: error.message,
+    });
+    expect(shape(new ThreadLockDeniedError("thread", "run"))).toEqual({
       name: "ThreadLockDeniedError",
       status: 409,
       message: "Thread lock denied",
     });
-    for (const [name, status] of [
-      ["UnknownThreadError", 404],
-      ["ThreadOwnershipError", 404],
-    ] as const) {
-      const error = new (
-        threads[name] as NonNullable<(typeof threads)[string]>
-      )("thread");
-      expect({ name: error.name, status: error.status }).toEqual({
-        name,
-        status,
-      });
-    }
+    expect(shape(new UnknownThreadError("thread"))).toMatchObject({
+      name: "UnknownThreadError",
+      status: 404,
+    });
+    expect(shape(new ThreadOwnershipError("thread"))).toMatchObject({
+      name: "ThreadOwnershipError",
+      status: 404,
+    });
   });
 });
 
-describe.skipIf(!STORE_LANDED)("the wiring over the real store", () => {
+describe("the wiring over the real store", () => {
   test("a conversation is the owner's alone, and survives a restart", async () => {
     const { call } = await boot();
     const ada = id("ada");

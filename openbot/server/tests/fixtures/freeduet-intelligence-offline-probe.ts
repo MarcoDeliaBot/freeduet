@@ -255,6 +255,7 @@ try {
     error instanceof Error ? (error.stack ?? error.message) : String(error);
 } finally {
   await removePeople(database, [person]);
+  await database.$client.close();
 }
 
 report.intelligenceCalls = intelligenceCalls;

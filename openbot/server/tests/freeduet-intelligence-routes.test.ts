@@ -22,7 +22,10 @@ import {
   type LocalThreadBackend,
   localThreadBackend,
 } from "../src/freeduet/backend";
-import { isThreadLockDenied } from "../src/freeduet/local-intelligence";
+import {
+  isThreadLockDenied,
+  LocalThreadError,
+} from "../src/freeduet/local-intelligence";
 import {
   createThreadGuard,
   guardedRoute,
@@ -488,16 +491,34 @@ describe("the guard reads paths as the runtime's router does", () => {
   });
 });
 
-describe("the store's errors, as the contract names them", () => {
-  test("a lock denial is recognised by the store's error and by the adapter's 409", () => {
-    const platform = Object.assign(new Error("busy"), {
-      name: "PlatformRequestError",
-      status: 409,
-    });
+describe("the store's errors", () => {
+  test("a lock denial is recognised by the store's class and by the adapter's 409", () => {
     expect(isThreadLockDenied(lockDenied())).toBe(true);
-    expect(isThreadLockDenied(platform)).toBe(true);
+    expect(isThreadLockDenied(new LocalThreadError("busy", 409))).toBe(true);
+    expect(isThreadLockDenied(new LocalThreadError("gone", 404))).toBe(false);
     expect(isThreadLockDenied(unknownThread())).toBe(false);
-    expect(isThreadLockDenied(new Error("busy"))).toBe(false);
+    // A look-alike is not the store's error: the class decides, not the name.
+    const lookalike = new Error("Thread lock denied");
+    lookalike.name = "ThreadLockDeniedError";
+    expect(isThreadLockDenied(lookalike)).toBe(false);
+  });
+
+  test("UnknownThreadError, the thread gone between the guard and the runner, answers 404", async () => {
+    const getThread = fake.store.getThread;
+    // The guard and the adapter see the thread being made; the runner, a moment later, finds none.
+    let reads = 0;
+    fake.store.getThread = async (threadId) =>
+      reads++ < 2 ? getThread(threadId) : null;
+    try {
+      const turn = await chat("ada", "thread-vanished", "run-vanished");
+      expect(turn.status).toBe(404);
+      expect(JSON.parse(turn.text)).toMatchObject({
+        error: "Thread not found",
+      });
+    } finally {
+      fake.store.getThread = getThread;
+    }
+    expect(fake.runner.runs).not.toContain("run-vanished");
   });
 
   test("ThreadOwnershipError, somebody else creating the same id in the same instant, answers 404", async () => {

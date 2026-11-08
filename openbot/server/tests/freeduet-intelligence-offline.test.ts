@@ -14,7 +14,6 @@
  * and runner.
  */
 import { describe, expect, test } from "bun:test";
-import { existsSync } from "node:fs";
 import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -67,11 +66,6 @@ async function runProbe(
   }
 }
 
-/** The store that ships, once `threads/index.ts` is in the tree; until then the stand-in only. */
-const STORE_LANDED = existsSync(
-  new URL("../src/freeduet/threads/index.ts", import.meta.url),
-);
-
 function expectNothingSent(report: Record<string, unknown>) {
   expect(report.error).toBeUndefined();
 
@@ -109,13 +103,9 @@ describe("FREEDUET_INTELLIGENCE=off sends nothing to CopilotKit", () => {
     );
   }, 60_000);
 
-  test.skipIf(!STORE_LANDED)(
-    "the same, over the real thread store and Postgres runner",
-    async () => {
-      expectNothingSent(await runProbe({ FREEDUET_PROBE_STORE: "real" }));
-    },
-    60_000,
-  );
+  test("the same, over the real thread store and Postgres runner", async () => {
+    expectNothingSent(await runProbe({ FREEDUET_PROBE_STORE: "real" }));
+  }, 60_000);
 
   // A person who turns telemetry on explicitly gets it, and the watch sees it: the requests are
   // answered inside the probe, so they never leave the machine. Intelligence is still never called.
