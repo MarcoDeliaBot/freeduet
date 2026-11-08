@@ -2,8 +2,10 @@ import type { Message, RunAgentInput } from "@ag-ui/client";
 import { type AbstractAgent, HttpAgent } from "@ag-ui/client";
 import type { BuiltInAgentConfiguration } from "@copilotkit/runtime/v2";
 import {
+  type AgentRunner,
   type CopilotKitIntelligence,
   CopilotRuntime,
+  IntelligenceAgentRunner,
 } from "@copilotkit/runtime/v2";
 import { createCopilotHonoHandler } from "@copilotkit/runtime/v2/hono";
 import { PROVENANCE_GUIDANCE } from "@openbot/shared/bot-prompt";
@@ -45,7 +47,9 @@ import type { AgentFetch, StallGuard } from "./channels/stall-guard";
 import type { DeploymentConfig } from "./config";
 import { observeModelConnection } from "./desktop-connection-failure";
 import { desktopTelemetryProperties } from "./desktop-telemetry";
+import { localThreadBackend, type ThreadBackend } from "./freeduet/backend";
 import { coordinationRunsInBand } from "./freeduet/coordination";
+import type { ThreadClient } from "./freeduet/local-intelligence";
 import { observeIntelligenceAuthentication } from "./intelligence-client";
 import { RemoteLearnedSkillsMiddleware } from "./learning/remote";
 import {
@@ -1741,9 +1745,16 @@ export function mountCopilotRuntime(
       busy: boolean;
     }) => void | Promise<void>;
     learningSettings?: LearningSettingsStore;
+    /** FreeDuet (#42): required with FREEDUET_INTELLIGENCE=off. See freeduet/backend.ts. */
+    threadBackend?: ThreadBackend;
   } = {},
 ) {
-  const { intelligence } = config.runtime;
+  const intelligence =
+    config.runtime.mode === "intelligence"
+      ? config.runtime.intelligence
+      : undefined;
+  // FreeDuet (#42): without Intelligence, threads and the runner are FreeDuet's own.
+  const local = () => localThreadBackend(options.threadBackend);
   const { basePath = "/api/copilotkit", onRunBusy, learningSettings } = options;
 
   /**
@@ -1783,7 +1794,8 @@ export function mountCopilotRuntime(
    * One client, used by the runtime and by anything reading a thread beside it, so a hop reads the
    * history a person's run would read rather than a second view of it that could disagree.
    */
-  const intelligenceClient: CopilotKitIntelligence =
+  const intelligenceClient: CopilotKitIntelligence | undefined =
+    intelligence &&
     observeIntelligenceAuthentication(
       new IntelligenceKnowingANewThread({
         apiUrl: intelligence.apiUrl,
@@ -1807,24 +1819,33 @@ export function mountCopilotRuntime(
       }),
     );
 
-  const learning: LearningRuntime | undefined = learningSettings
-    ? createLearningRuntime({
-        store: learningSettings,
-        client: intelligenceClient,
-      })
-    : undefined;
+  const learning: LearningRuntime | undefined =
+    learningSettings && intelligenceClient
+      ? createLearningRuntime({
+          store: learningSettings,
+          client: intelligenceClient,
+        })
+      : undefined;
+  // FreeDuet (#42): what the lock and a hop's history read through, in either mode.
+  const threadClient: ThreadClient = intelligenceClient ?? local().client;
 
   const runtime = new CopilotRuntime({
-    // `mode` is inferred from the presence of `intelligence`; passing it is a type error.
-    //
-    // identifyUser is NOT optional in practice. Threads and memory are scoped to the user it
-    // returns, so omitting it puts every person in the deployment in the same thread space and one
-    // person's conversations become another's.
-    identifyUser,
-    // The subclass, not the base: a thread nobody has run yet reads as empty rather than as a 500.
-    // See IntelligenceKnowingANewThread.
-    intelligence: intelligenceClient,
-    licenseToken: intelligence.licenseToken,
+    ...(intelligenceClient
+      ? {
+          // `mode` is inferred from the presence of `intelligence`; passing it is a type error.
+          //
+          // identifyUser is NOT optional in practice. Threads and memory are scoped to the user
+          // it returns, so omitting it puts every person in the deployment in the same thread
+          // space and one person's conversations become another's.
+          identifyUser,
+          // The subclass, not the base: a thread nobody has run yet reads as empty rather than
+          // as a 500. See IntelligenceKnowingANewThread.
+          intelligence: intelligenceClient,
+          licenseToken: intelligence?.licenseToken,
+        }
+      : // FreeDuet (#42): SSE mode on the shared runner. Who may use a thread is checked in
+        // freeduet/thread-routes.ts, which wraps this handler.
+        { runner: local().runtimeRunner }),
     // Carried on the events the runtime already sends, so OpenDuet's traffic is separable from any
     // other deployment's. Adds no events of its own. See telemetry.ts.
     telemetryProperties: {
@@ -1867,13 +1888,19 @@ export function mountCopilotRuntime(
      * refused with `active_lock_mismatch`: a thread's active run is a lock the platform issues, and
      * the token that holds it is not the API key. The runtime asks the client for both, so anything
      * else driving a run has to ask the same client the same way.
+     *
+     * FreeDuet (#42): a hop's runner. With Intelligence, one built from that client's connection;
+     * with FREEDUET_INTELLIGENCE=off, the one runner the runtime and every headless turn share.
      */
-    runnerConnection: () => ({
-      url: intelligenceClient.ɵgetRunnerWsUrl(),
-      authToken: intelligenceClient.ɵgetRunnerAuthToken(),
-    }),
+    handoffRunner: (): AgentRunner =>
+      intelligenceClient
+        ? new IntelligenceAgentRunner({
+            url: intelligenceClient.ɵgetRunnerWsUrl(),
+            authToken: intelligenceClient.ɵgetRunnerAuthToken(),
+          })
+        : local().runner,
     threadLock: createIntelligenceThreadLock({
-      client: intelligenceClient,
+      client: threadClient,
       learning,
       onRunBusy,
     }),
@@ -1895,7 +1922,7 @@ export function mountCopilotRuntime(
       >;
       const read = await historyOrEmpty<Read>(
         () =>
-          intelligenceClient.getThreadMessages({
+          threadClient.getThreadMessages({
             threadId: input.threadId,
             userId: input.actorId,
           }),

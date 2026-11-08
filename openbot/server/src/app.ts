@@ -81,11 +81,11 @@ import type { DemonstrationStore } from "./demonstrations/store";
 import { mountDesktopConnectionFailure } from "./desktop-connection-failure";
 import { createTranscriptionProvider } from "./dictation/provider";
 import { createDictationRoutes } from "./dictation/routes";
+import { threadReaderClient } from "./freeduet/backend";
 import type { HostAccessBroker } from "./host-access/broker";
 import { createHostAccessRoutes } from "./host-access/routes";
 import { identityRoutes } from "./identity/routes";
 import type { IdentityStore } from "./identity/store";
-import { createIntelligenceClient } from "./intelligence-client";
 import {
   createLearningRoutes,
   type LearningAdminDependencies,
@@ -2005,9 +2005,8 @@ export function createApp(
         // rather than assumed, though: this is the one place besides the runtime mount itself that
         // needs to reach Intelligence, and it should keep working unmodified if that guarantee ever
         // loosens and a deployment can legitimately have no reader to build.
-        createThreadReader(
-          createIntelligenceClient(config.runtime.intelligence),
-        ),
+        // FreeDuet (#42): the same client, or with FREEDUET_INTELLIGENCE=off its own thread store.
+        createThreadReader(threadReaderClient(config)),
       ),
     );
   }

@@ -5,11 +5,10 @@ import "./freeduet/plan-token";
 // FreeDuet: the team's hub grants and each person's conversations (docs/UPSTREAM_TOUCHES.md).
 import { applyFreeDuetPackage } from "./freeduet/hub-grants";
 import { withFreeDuetTeam } from "./freeduet/person-team";
+// FreeDuet: CopilotKit Intelligence optional (#42, docs/UPSTREAM_TOUCHES.md).
+import { createThreadBackend } from "./freeduet/backend";
+import { guardThreadRoutes } from "./freeduet/thread-routes";
 import type { AbstractAgent } from "@ag-ui/client";
-import {
-  CopilotKitIntelligence,
-  IntelligenceAgentRunner,
-} from "@copilotkit/runtime/v2";
 import { COMPUTER_GUIDANCE } from "@openbot/shared/bot-prompt";
 import { LISTEN_HOST_VARIABLE } from "@openbot/shared/listen-host";
 import { workOwner } from "@openbot/shared/work-owner";
@@ -170,10 +169,6 @@ import { retireIdentityLinks, retireOwnedAccounts } from "./identity/retire";
 import { slackCodeRedeemer } from "./identity/slack-redeem";
 import { createIdentityStore } from "./identity/store";
 import {
-  createIntelligenceClient,
-  observeIntelligenceAuthentication,
-} from "./intelligence-client";
-import {
   createLearningAutoAssign,
   probeLearningContainer,
   withLearningAutoAssign,
@@ -189,7 +184,6 @@ import { clearLearningRevisionFallback } from "./learning/runtime";
 import { createLearningSettingsStore } from "./learning/settings";
 import { createMemoryDefaults } from "./memory/defaults";
 import { createMemoryIngestion } from "./memory/ingestion";
-import { createIntelligenceMemory } from "./memory/intelligence";
 import { createMemoryStore } from "./memory/store";
 import { reportModelAvailability } from "./model-availability-check";
 import { memoryTools } from "./memory/tools";
@@ -369,14 +363,14 @@ const port = config.port;
 const database = createDatabase(config.databaseUrl);
 // Every dispatch point asks this database whether its person paused the Bot. See agents/lifecycle.ts.
 configureBotLifecycle({ database });
+// FreeDuet: threads in Intelligence, or with FREEDUET_INTELLIGENCE=off in this database (#42).
+const threadBackend = await createThreadBackend(config, database);
 const learningSettingsStore = createLearningSettingsStore(
   database,
   config.learning,
 );
 // Its own client, like the self-host banner's: the constructor opens nothing.
-const learningProbeIntelligence = createIntelligenceClient(
-  config.runtime.intelligence,
-);
+const learningProbeIntelligence = threadBackend.learningProbe;
 /*
  * Who can create the `openbot` container here: never the runtime key. A service token the operator
  * configured (local evaluation installs), or a CopilotKit CLI login on this machine, which is what a
@@ -384,7 +378,7 @@ const learningProbeIntelligence = createIntelligenceClient(
  */
 const learningApiOrigin = (() => {
   try {
-    return intelligenceApiOrigin(config.runtime.intelligence.apiUrl);
+    return intelligenceApiOrigin(threadBackend.intelligence().apiUrl);
   } catch {
     return undefined;
   }
@@ -393,7 +387,7 @@ const learningCanCreate =
   learningApiOrigin !== undefined &&
   (config.learningSetup !== undefined || cliLoginPresent());
 const learningAutoAssign = createLearningAutoAssign({
-  enabled: config.learningAutoAssign,
+  enabled: config.learningAutoAssign && threadBackend.learning,
   store: learningSettingsStore,
   probe: (containerId) =>
     probeLearningContainer(learningProbeIntelligence, containerId),
@@ -409,8 +403,8 @@ const learningAutoAssign = createLearningAutoAssign({
             nonInteractive: true,
             key: keyIntelligence(
               learningApiOrigin,
-              config.runtime.intelligence.apiKey,
-              config.runtime.intelligence.gatewayWsUrl,
+              threadBackend.intelligence().apiKey,
+              threadBackend.intelligence().gatewayWsUrl,
             ),
             cliLogin: cliLoginPresent(),
             ...(config.learningSetup
@@ -744,13 +738,8 @@ const chooseSkills = createModelCompleter({
  * connection, but its `threads` map is per instance, and a runner per turn would fragment the
  * already-running check that keeps two turns off one thread. See `toolkit/run-turn.ts`.
  */
-const routineIntelligence = observeIntelligenceAuthentication(
-  new CopilotKitIntelligence({
-    apiUrl: config.runtime.intelligence.apiUrl,
-    wsUrl: config.runtime.intelligence.gatewayWsUrl,
-    apiKey: config.runtime.intelligence.apiKey,
-  }),
-);
+// FreeDuet (#42): the same client, or with FREEDUET_INTELLIGENCE=off the adapter over the local store.
+const routineIntelligence = threadBackend.client;
 const approvalComputerTools = async (
   ownerUserId: string,
   agentId: string,
@@ -1312,9 +1301,8 @@ const hostAccessBroker = createHostAccessBroker(Date.now, {
 // tables when it is not; see memory/store.ts. Its own client, like the thread reader's: the
 // constructor opens nothing.
 const personalMemoryStore = createMemoryStore(database, {
-  intelligence: createIntelligenceMemory({
-    client: createIntelligenceClient(config.runtime.intelligence),
-  }),
+  // FreeDuet (#42): undefined with FREEDUET_INTELLIGENCE=off, so the tables are the whole store.
+  intelligence: threadBackend.memory,
 });
 const demonstrationStore = createDemonstrationStore(database);
 const demonstrationRecorder = createDemonstrationRecorder({
@@ -1758,10 +1746,8 @@ const buildAgentFor = async ({
   }
   return agent;
 };
-const routineAgentRunner = new IntelligenceAgentRunner({
-  url: routineIntelligence.ɵgetRunnerWsUrl(),
-  authToken: routineIntelligence.ɵgetRunnerAuthToken(),
-});
+// FreeDuet (#42): the same runner, or with FREEDUET_INTELLIGENCE=off the one the runtime shares.
+const routineAgentRunner = threadBackend.runner;
 
 const routineRunner = createRoutineRunner({
   routineStore,
@@ -1849,6 +1835,7 @@ const copilotRuntime = mountCopilotRuntime(
         .catch(() => {});
     },
     learningSettings,
+    threadBackend,
   },
 );
 
@@ -2539,15 +2526,15 @@ auditRoutineStore(routineStore, bootAuditStore);
 
 // Asked only whether this deployment pays for Intelligence, for the self-host banner. Its own client
 // rather than the runtime's, the same as the thread reader: the constructor opens nothing.
-const selfHostBannerIntelligence = createIntelligenceClient(
-  config.runtime.intelligence,
-);
+// FreeDuet (#42): with FREEDUET_INTELLIGENCE=off, a fixed "not available" that is never sent anywhere.
+const selfHostBannerIntelligence = threadBackend.entitlements;
 
 // Said once, at boot, whether Intelligence will let this deployment use what it is licensed for. A
 // self-hosted Intelligence without a licence refuses memory quietly; this is the line that says why.
-void reportIntelligenceEntitlement({
-  entitlements: () => selfHostBannerIntelligence.getRuntimeEntitlements(),
-});
+if (threadBackend.mode === "intelligence")
+  void reportIntelligenceEntitlement({
+    entitlements: () => selfHostBannerIntelligence.getRuntimeEntitlements(),
+  });
 
 const identityGithubCallback =
   config.githubApp && config.publicUrl
@@ -2580,7 +2567,8 @@ const app = createApp(
   createPackageStatusReader(database),
   // The runtime call: the model, per-actor agent loading, and the two identity
   // functions are how a run is attributed to a person.
-  copilotRuntime.handler,
+  // FreeDuet (#42): with FREEDUET_INTELLIGENCE=off, behind the thread ownership guard.
+  guardThreadRoutes(copilotRuntime.handler, threadBackend, identifyUser),
   // The only path to an acting call.
   computerGateway,
   policyStore,
