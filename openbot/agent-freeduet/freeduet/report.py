@@ -143,9 +143,8 @@ class Report:
         return [] if _is_nothing(values) else values
 
 
-def parse_report(text: str) -> Report | None:
-    """The report at the end of `text`, or None when there is none or its outcome is not one of
-    done, partly done, in progress, blocked, failed, needs you."""
+def _scan(text: str) -> tuple[list[str], int, int, dict[str, list[str]]] | None:
+    """The last report in `text`: its lines, where it starts and ends (exclusive), its fields."""
     lines = (text or "").replace("\r\n", "\n").split("\n")
     matches = [_LABEL.match(line) for line in lines]
     starts = [i for i, match in enumerate(matches) if match and _field_of(match.group(1)) == "outcome"]
@@ -153,7 +152,9 @@ def parse_report(text: str) -> Report | None:
         return None
     fields: dict[str, list[str]] = {}
     current = None
-    for line, match in zip(lines[starts[-1]:], matches[starts[-1]:]):
+    end = starts[-1]
+    for index in range(starts[-1], len(lines)):
+        line, match = lines[index], matches[index]
         if match:
             name = _field_of(match.group(1))
             if name in fields:
@@ -161,6 +162,7 @@ def parse_report(text: str) -> Report | None:
             value = _clean(match.group(2).rstrip("*_ "))
             fields[name] = [value] if value else []
             current = name
+            end = index + 1
             continue
         if not line.strip():
             continue
@@ -170,10 +172,33 @@ def parse_report(text: str) -> Report | None:
             item = _clean(line)
             if item:
                 fields[current].append(item)
+        end = index + 1
+    return lines, starts[-1], end, fields
+
+
+def parse_report(text: str) -> Report | None:
+    """The report at the end of `text`, or None when there is none or its outcome is not one of
+    done, partly done, in progress, blocked, failed, needs you."""
+    scanned = _scan(text)
+    if scanned is None:
+        return None
+    fields = scanned[3]
     outcome = canonical_outcome(" ".join(fields.get("outcome", [])))
     if outcome is None:
         return None
     return Report(outcome=outcome, fields=fields)
+
+
+def report_block(text: str) -> str | None:
+    """The last complete report in `text`, as written: from its Outcome line to its Next step and
+    nothing around it. None unless all six lines are there and the outcome is a known one."""
+    scanned = _scan(text)
+    if scanned is None:
+        return None
+    lines, start, end, fields = scanned
+    if set(fields) != set(FIELDS) or canonical_outcome(" ".join(fields.get("outcome", []))) is None:
+        return None
+    return "\n".join(line.rstrip() for line in lines[start:end]).strip()
 
 
 def approval_ids(items: list[str]) -> list[str]:

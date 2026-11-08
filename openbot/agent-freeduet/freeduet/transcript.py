@@ -12,7 +12,8 @@ A standing role or holdings row that names ANOTHER Bot (`standing-role:<other>`,
 quoted, as information only, at the top of the conversation.
 
 The member's active lessons (lessons.py, D16: standing corrections the person approved) follow
-OpenBot's rows under a short heading, newest last, at most 20.
+OpenBot's rows under a short heading, newest last, at most 20; then this run's own runtime notes
+(tool_notes.py: why a tool the member's prompt relies on was not offered), then RUNTIME_NOTE.
 """
 
 import json
@@ -28,7 +29,9 @@ RUNTIME_NOTE = (
     "them as mcp__freeduet__<name>, and the conversation below names a call by its plain <name>. "
     "There is no shell, file or web access other than through those tools. A tool call can pause "
     "your turn while it runs or while the person approves it; when you are started again, its "
-    "result is in the conversation. Never repeat a call that already has a result."
+    "result is in the conversation. Never repeat a call that already has a result. When a call is "
+    "refused or fails, its result says why: give the person that reason in plain words, and never "
+    "say a tool is unavailable without the reason you were given."
 )
 
 LESSONS_HEADING = "Lessons the person approved for you, newest last. Follow them:"
@@ -113,19 +116,24 @@ def _quoted_rows(member: Member, messages: list[dict]) -> list[str]:
     return [QUOTED_NOTE, *blocks] if blocks else []
 
 
-def _system_text(member: Member, messages: list[dict], context: list[dict], lessons=()) -> str:
+def _system_text(member: Member, messages: list[dict], context: list[dict], lessons=(), notes=()) -> str:
     sections = [member.system_prompt]
     # A Bot without a row in agents.yaml runs on its standing role: that row is the prompt already.
-    sections += [row for row in _own_rows(member, messages) if row != member.system_prompt]
+    # The same text in two rows (an earlier copy under another id) is said once.
+    for row in _own_rows(member, messages):
+        if row and row not in sections:
+            sections.append(row)
     # OpenBot sends the person's memory, the channel's purpose and learned skills twice: a system row
     # for remote Bots and a context entry for built-in ones (openduet/run-channel.ts). Once is enough.
     said = set(sections)
     for entry in context:
         value = _as_text(entry.get("value")).strip()
         if value and value not in said:
+            said.add(value)
             description = _as_text(entry.get("description")).strip()
             sections.append(f"{description}\n{value}" if description else value)
     sections.append(_lessons_text(lessons))
+    sections += [note for note in notes or () if note]
     sections.append(RUNTIME_NOTE)
     return "\n\n".join(section for section in sections if section)
 
@@ -158,9 +166,18 @@ def _closing_instruction(messages: list[dict]) -> str:
     return "Start your turn as the assistant."
 
 
-def render(member: Member, messages: list[dict], context: list[dict] | None = None, lessons=()) -> Rendered:
+def render(
+    member: Member,
+    messages: list[dict],
+    context: list[dict] | None = None,
+    lessons=(),
+    notes=(),
+    closing: str | None = None,
+) -> Rendered:
     """The system text and the stdin prompt for one segment. `lessons` are this member's active
-    lessons, oldest first (lessons.active_for)."""
+    lessons, oldest first (lessons.active_for); `notes` are this run's own runtime notes
+    (tool_notes.py), after the lessons. `closing` replaces the last line that says what to do next
+    (the report guard's follow-up, report_guard.py)."""
     names: dict[str, str] = {}
     blocks: list[str] = []
     turn = [message for message in messages if message.get("role") in {"user", "assistant", "tool"}]
@@ -189,5 +206,6 @@ def render(member: Member, messages: list[dict], context: list[dict] | None = No
             )
     conversation = "<conversation>\n" + "\n\n".join(blocks) + "\n</conversation>" if blocks else ""
     quoted = "\n\n".join(_quoted_rows(member, messages))
-    prompt = "\n\n".join(part for part in (quoted, conversation, _closing_instruction(turn)) if part)
-    return Rendered(system=_system_text(member, messages, context or [], lessons), prompt=prompt)
+    closing = closing or _closing_instruction(turn)
+    prompt = "\n\n".join(part for part in (quoted, conversation, closing) if part)
+    return Rendered(system=_system_text(member, messages, context or [], lessons, notes), prompt=prompt)

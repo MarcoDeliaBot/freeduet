@@ -62,9 +62,29 @@ async def call_deployment_tool(name: str, arguments: dict, assertion: str) -> To
                 True,
             )
         body = response.json()
-    except (httpx.HTTPError, ValueError):
-        # Exception text can carry the URL; report the boundary, never the request.
-        return ToolReply("The tool callback could not be completed.", True)
+    # Exception text can carry the URL; report the boundary and the kind of failure, never the request.
+    # The member tells the person this reason, so it says what happened rather than "unavailable".
+    except httpx.ConnectTimeout:
+        return ToolReply(
+            f"The tool callback could not be completed: agent-freeduet could not connect to OpenBot's tool "
+            f"route within {int(TIMEOUT.connect)} s.",
+            True,
+        )
+    except httpx.TimeoutException:
+        return ToolReply(
+            f"The tool callback could not be completed: OpenBot's tool route did not answer in time "
+            f"(agent-freeduet waits {int(TIMEOUT.read)} s).",
+            True,
+        )
+    except httpx.ConnectError:
+        return ToolReply(
+            "The tool callback could not be completed: agent-freeduet could not connect to OpenBot's tool route.",
+            True,
+        )
+    except httpx.HTTPError as error:
+        return ToolReply(f"The tool callback could not be completed: {type(error).__name__}.", True)
+    except ValueError:
+        return ToolReply("The tool callback could not be completed: OpenBot's answer was not JSON.", True)
     if not isinstance(body, dict) or not isinstance(body.get("text"), str):
         return ToolReply("The tool callback returned no readable result.", True)
     return ToolReply(body["text"], bool(body.get("isError")))

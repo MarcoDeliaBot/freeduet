@@ -22,18 +22,24 @@ then the call) and carry the CLI's own call id.
   (server/src/freeduet/coordination.ts), so this only happens against a server without that change.
 
 Before the transcript is rendered, a run for Iris activates the lessons the person approved in it
-(lessons.py has the rule), and every member's active lessons join its system text.
+(lessons.py has the rule), and every member's active lessons join its system text, followed by the
+run's tool notes (tool_notes.py: the exact reason message_bot was not offered, when it was not).
+
+When the CLI's final result ends a turn that did work without the six-line report, the report guard
+(report_guard.py) asks once, with no tools, and streams the report it gets as the end of the same
+assistant message; `SegmentNotes.report_guard` tells the team log that it asked.
 """
 
 import asyncio
 import json
 import logging
 import tempfile
-from collections.abc import AsyncIterator
+from collections.abc import AsyncIterator, Awaitable, Callable
 from contextlib import suppress
+from dataclasses import dataclass
 from pathlib import Path
 
-from . import agui, claude_cli, iris_tools, lessons, team_log, transcript
+from . import agui, claude_cli, iris_tools, lessons, report_guard, team_log, tool_notes, transcript
 from .agui import RunInput
 from .bridge import ipc
 from .bridge.callback import HANDOFF_TOOL, call_deployment_tool, needs_the_person
@@ -47,6 +53,13 @@ MATCH_SECONDS = 1.0
 SEGMENT_TIMEOUT_SECONDS = 1800.0
 MAX_STDERR = 64 * 1024
 PIPE_DRAIN_SECONDS = 2.0
+
+
+@dataclass
+class SegmentNotes:
+    """What the segment did that its events do not show, for the team log (app.py)."""
+
+    report_guard: str | None = None  # report_guard.ADDED or FAILED once the guard asked
 
 
 def _same(a: dict, b: dict) -> bool:
@@ -77,6 +90,12 @@ class _Text:
             return []
         closing, self.open = self.open, None
         return [agui.text_end(closing)]
+
+    def append(self, text: str) -> list[dict]:
+        """`text` at the end of the open message, after a blank line; in a new one if none is open."""
+        if self.open is not None:
+            return [agui.text_content(self.open, "\n\n" + text)]
+        return self.delta("report-guard", text)
 
 
 def _one_line(value) -> str:
@@ -134,18 +153,23 @@ async def _lessons_for(run: RunInput, member: Member) -> list[str]:
         return []
 
 
-async def _answer_locally(local: iris_tools.IrisTools, call: ipc.BridgeCall) -> None:
+async def _answer_locally(local: iris_tools.IrisTools, call: ipc.BridgeCall, seen=None) -> None:
     try:
         reply = await asyncio.to_thread(local.call, call.name, call.arguments)
     except Exception:  # noqa: BLE001 - the CLI gets an error, never a hang
         log.warning("local tool %s failed", call.name, exc_info=True)
         reply = ipc.ToolReply("The FreeDuet tool failed on this call. Try once more, or tell the person.", True)
+    if seen is not None:
+        seen(reply)
     call.answer(reply)
 
 
-async def run_segment(run: RunInput, member: Member) -> AsyncIterator[dict]:
+async def run_segment(run: RunInput, member: Member, notes: SegmentNotes | None = None) -> AsyncIterator[dict]:
     yield agui.run_started(run)
-    rendered = transcript.render(member, run.messages, run.context, await _lessons_for(run, member))
+    notes = notes if notes is not None else SegmentNotes()
+    active_lessons = await _lessons_for(run, member)
+    run_notes = tool_notes.notes_for(run, member)
+    rendered = transcript.render(member, run.messages, run.context, active_lessons, run_notes)
     offered = {tool["name"] for tool in run.tools}
     local = iris_tools.for_run(run, member.id, offered)
     inbox: asyncio.Queue = asyncio.Queue()
@@ -160,6 +184,21 @@ async def run_segment(run: RunInput, member: Member) -> AsyncIterator[dict]:
 
     async def on_call(call: ipc.BridgeCall) -> None:
         await inbox.put(("call", call))
+
+    async def guard(story: report_guard.Story) -> str | None:
+        """The report to add to a turn that ends without one, or None (report_guard.py)."""
+        if not report_guard.applies(run.messages, story.reply(), story.called):
+            return None
+        notes.report_guard = report_guard.FAILED
+        try:
+            followup = report_guard.followup_prompt(member, run.messages, run.context, story, active_lessons, run_notes)
+            block = await report_guard.request_report(followup.system, followup.prompt)
+        except Exception:  # noqa: BLE001 - the reply stands as it is; the guard never fails a turn
+            log.warning("report guard failed", exc_info=True)
+            return None
+        if block:
+            notes.report_guard = report_guard.ADDED
+        return block
 
     host = ipc.BridgeHost(ipc.mcp_tools(run.tools) + (local.definitions() if local else []), on_call)
     process = None
@@ -212,7 +251,7 @@ async def run_segment(run: RunInput, member: Member) -> AsyncIterator[dict]:
                     f"{claude_cli.LABEL} ended without an answer."
                 )
 
-            async for event in _drive(run, offered, inbox, parser, spawn, failed_exit, local):
+            async for event in _drive(run, offered, inbox, parser, spawn, failed_exit, local, guard):
                 yield event
         finally:
             await claude_cli.stop(process)
@@ -232,12 +271,14 @@ async def run_segment(run: RunInput, member: Member) -> AsyncIterator[dict]:
 
 
 async def _drive(run: RunInput, offered: set[str], inbox: asyncio.Queue, parser: StreamParser, spawn, failed_exit,
-                 local: iris_tools.IrisTools | None = None):
+                 local: iris_tools.IrisTools | None = None,
+                 guard: Callable[[report_guard.Story], Awaitable[str | None]] | None = None):
     """The segment's state machine. Ends with exactly one RUN_FINISHED or RUN_ERROR."""
     local_names = local.names if local is not None else frozenset()
     loop = asyncio.get_running_loop()
     deadline = loop.time() + SEGMENT_TIMEOUT_SECONDS
     text = _Text()
+    story = report_guard.Story()  # this segment's reply and calls, for the report guard
     seen: list[ToolUse] = []  # tool_use lines no bridge call has claimed yet
     waiting: list[ipc.BridgeCall] = []  # bridge calls whose tool_use line has not been read yet
     in_flight = 0  # deployment calls running
@@ -266,6 +307,7 @@ async def _drive(run: RunInput, offered: set[str], inbox: asyncio.Queue, parser:
         call_id = use.id if use else agui.new_id("call-")
         parent = text.id_for(use.message_id) if use else text.last
         events = [*text.close(), *agui.tool_call_events(call_id, call.name, call.arguments, parent)]
+        story.call(call_id, call.name, call.arguments)
         if call.name in run.deployment_tools:
             in_flight += 1
 
@@ -295,6 +337,7 @@ async def _drive(run: RunInput, offered: set[str], inbox: asyncio.Queue, parser:
                     yield event
             elif isinstance(payload, TextDelta):
                 if not handed:
+                    story.text(payload.message_id, payload.text)
                     for event in text.delta(payload.message_id, payload.text):
                         yield event
             elif isinstance(payload, ToolUse):
@@ -312,16 +355,24 @@ async def _drive(run: RunInput, offered: set[str], inbox: asyncio.Queue, parser:
                     for event in ask_the_person():
                         yield event
                     return
+                failure = None if handed else claude_cli.failure_event(parser)
+                if failure is None and not handed and guard is not None:
+                    # The turn ends here: a turn that did work closes with its report (report_guard.py).
+                    added = await guard(story)
+                    if added:
+                        for event in text.append(added):
+                            yield event
                 for event in text.close():
                     yield event
-                failure = None if handed else claude_cli.failure_event(parser)
                 yield failure or agui.run_finished(run)
                 return
 
         elif kind == "call":
             call: ipc.BridgeCall = payload
             if call.name in local_names:
-                spawn(_answer_locally(local, call))
+                local_id = agui.new_id("local-")
+                story.call(local_id, call.name, call.arguments)
+                spawn(_answer_locally(local, call, lambda reply, at=local_id: story.result(at, reply.text, reply.is_error)))
                 continue
             if call.name not in offered:
                 call.answer(ipc.ToolReply("Refused. That tool was not offered for this turn.", True))
@@ -347,6 +398,7 @@ async def _drive(run: RunInput, offered: set[str], inbox: asyncio.Queue, parser:
                 blocked.append((call.arguments, reply.text))  # never answered to the CLI
             else:
                 call.answer(reply)
+                story.result(call_id, reply.text, reply.is_error)
             for event in text.close():
                 yield event
             yield agui.tool_call_result(call_id, reply.text)
