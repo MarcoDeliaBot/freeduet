@@ -90,6 +90,22 @@ def test_headings_dashes_and_short_labels():
     assert a.summary == "the VAT number is missing"
 
 
+def test_a_slash_inside_the_long_already_not_done_and_gia_labels():
+    text = (
+        "Outcome: done\nDone: the reminder\nEvidence: send_email confirmed m-1\n"
+        "Not done and why/with what I tried: the follow-up, the address bounced\n"
+        f"Already sent/published: the reminder to ACME (approval {APPROVAL})\nNext step: none"
+    )
+    report = parse_report(text)
+    assert report.items("not_done") == ["the follow-up, the address bounced"]
+    assert report.items("already") == [f"the reminder to ACME (approval {APPROVAL})"]
+    assert parse_report(text.replace("Not done and why/with what I tried", "Not done / why")).items("not_done") == [
+        "the follow-up, the address bounced"
+    ]
+    italian = "Esito: fatto\nFatto: x\nProve: y\nNon fatto e perché: niente\nGià inviato/pubblicato: il promemoria\nProssimo passo: z"
+    assert parse_report(italian).items("already") == ["il promemoria"]
+
+
 @pytest.mark.parametrize(
     "outcome, phase",
     [

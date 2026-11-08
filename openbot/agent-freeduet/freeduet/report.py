@@ -51,9 +51,9 @@ MAX_SUMMARY = 200
 
 _LABEL = re.compile(
     r"^\s*(?:#{1,6}\s+)?(?:[-*•>]\s+|\d+[.)]\s+)?(?:\*\*|__|\*|_)?\s*"
-    r"(outcome|done|evidence|not done(?: and why)?(?:,? with what (?:you|i) tried)?|already(?: [a-z ,]+?)?|next steps?"
+    r"(outcome|done|evidence|not done(?: and why| ?/ ?why)?(?:(?:,? | ?/ ?)with what (?:you|i) tried)?|already(?: [a-z ,/]+?)?|next steps?"
     r"|esito|fatto|prove|non fatto(?: e perch[eé])?(?:,? con (?:quello|ciò|cio) che (?:hai|ho) provato)?"
-    r"|gi[àa](?: [a-zàèéìòù ,]+?)?|prossim[oi] pass[oi])"
+    r"|gi[àa](?: [a-zàèéìòù ,/]+?)?|prossim[oi] pass[oi])"
     r"\s*(?:\*\*|__|\*|_)?\s*[:—–-]\s*(?:\*\*|__|\*|_)?\s*(.*)$",
     re.IGNORECASE,
 )

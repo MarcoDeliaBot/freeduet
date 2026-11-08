@@ -421,6 +421,29 @@ describe("hard check: report lines", () => {
     expect(result.report["Not done"]).toContain("SMTP 550");
   });
 
+  test("a slash inside the long Already, Not done and Già labels", () => {
+    const slashed = REPORT.replace(
+      "Not done and why",
+      "Not done and why/with what I tried",
+    ).replace(
+      "Already sent, paid, booked, published or deleted",
+      "Already sent/published",
+    );
+    expect(checkReportLines(slashed)).toMatchObject({
+      pass: true,
+      report: { "Not done": "nothing", Already: "the reminder (m-1)" },
+    });
+    expect(
+      checkReportLines(REPORT.replace("Not done and why", "Not done / why"))
+        .report["Not done"],
+    ).toBe("nothing");
+    expect(
+      checkReportLines(
+        "Esito: fatto\nFatto: x\nProve: y\nNon fatto e perché: niente\nGià inviato/pubblicato: il promemoria\nProssimo passo: z",
+      ),
+    ).toMatchObject({ pass: true, report: { Already: "il promemoria" } });
+  });
+
   test("fails a missing line, the wrong order, a bad outcome and text after the report", () => {
     expect(checkReportLines(REPORT.replace(/Evidence:.*\n/, "")).pass).toBe(
       false,
