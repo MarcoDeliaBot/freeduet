@@ -630,7 +630,7 @@ describe("Iris's message_bot through the callback, with OpenBot's default approv
     });
   });
 
-  test("a task that mentions payment is handed to the person by the safety floor before any rule or reviewer", async () => {
+  test("a task that mentions payment is not taken for a payment: the reviewer decides, not the safety floor", async () => {
     const { store, decisions } = memoryApprovals({});
     const model = reviewer(PROCEED);
     const service = createApprovalService(store, undefined, undefined, {
@@ -641,11 +641,11 @@ describe("Iris's message_bot through the callback, with OpenBot's default approv
       args: { ...toPenny, task: "Draft a payment reminder for Northwind." },
       run: irisRun,
     });
-    expect(answer?.text).toBe(REFUSED);
+    expect(answer?.text).not.toBe(REFUSED);
     expect(decisions).toEqual([
-      expect.objectContaining({ behaviour: "hand_off", source: "safety" }),
+      expect.objectContaining({ source: "auto_review" }),
     ]);
-    expect(model.prompts).toHaveLength(0);
+    expect(model.prompts).toHaveLength(1);
   });
 
   test("neither asking the person again nor a team allow rule gets it through the callback", async () => {
