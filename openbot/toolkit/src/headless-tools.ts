@@ -73,6 +73,7 @@ export class HeadlessToolsMiddleware extends Middleware {
       const tools = new Map(
         this.tools.map((tool) => [tool.definition.name, tool]),
       );
+      const offered = new Set(originalInput.tools.map((tool) => tool.name));
       const executed = new Set<string>();
       let subscription: Subscription | undefined;
       let started = false;
@@ -158,10 +159,13 @@ export class HeadlessToolsMiddleware extends Middleware {
                 )
               : [],
           );
+          // A computer call nobody here can run is refused rather than left unanswered, unless the
+          // caller offered that tool: a browser chat's frontend computer tools are the browser's.
           const owned = pending.filter(
             (call) =>
               tools.has(call.function.name) ||
-              call.function.name.startsWith("computer_"),
+              (call.function.name.startsWith("computer_") &&
+                !offered.has(call.function.name)),
           );
           if (owned.length === 0) {
             subscriber.next(terminal);
