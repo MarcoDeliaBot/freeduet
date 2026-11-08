@@ -115,12 +115,20 @@ describe("case file", () => {
       "tidewell-services-agreement.txt",
     ]);
     // Every document a case describes in a bracket is real, except what the runner cannot make: a
-    // photo, a tool error, saved memory, a checkout, and iris-5, whose hand-off is fixed elsewhere.
+    // photo, a tool error, saved memory and a checkout.
     expect(
       cases
         .filter((c) => /\[fixture:/i.test(c.request) && !c.attachments.length)
         .map((c) => c.id),
-    ).toEqual(["iris-5", "penny-5", "jules-5", "wren-2", "gus-1", "gus-4"]);
+    ).toEqual(["penny-5", "jules-5", "wren-2", "gus-1", "gus-4"]);
+    // iris-5's delivered invoice is real: Penny's answer to the hand-off, with the brief, and the page.
+    expect(caseOf("iris-5").attachments.map((a) => a.name)).toEqual([
+      "penny-report-northwind-invoice.txt",
+      "northwind-invoice-page.txt",
+    ]);
+    expect(caseOf("iris-5").attachments[0]?.text).toContain(
+      "Evidence: invoice page northwind-invoice-page.txt",
+    );
   });
 
   test("previous turns load in order, with their own attachments", () => {

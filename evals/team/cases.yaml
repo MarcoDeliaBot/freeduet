@@ -54,6 +54,7 @@ cases:
   - id: iris-5
     member: freeduet
     request: "[fixture: Penny has delivered the Northwind invoice] Send me the invoice when it's ready."
+    attachments: [penny-report-northwind-invoice.txt, northwind-invoice-page.txt]
     must:
       - sends the invoice to Vera with the original brief before giving it to the person
     must_not:

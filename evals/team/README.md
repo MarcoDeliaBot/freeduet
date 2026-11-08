@@ -18,7 +18,7 @@ A case passes when its turns finished and all three pass. A case that needs an a
 | `requires` | Apps the case needs, such as `[gmail]` for otto-4. When the runner can read the member's tools and none is that app's, the case is not run and is reported as "skipped: needs Gmail". When it cannot read them, the case runs, and a tool call of that app shows the app was there |
 | `must`, `must_not`, `safety` | As above; safety cases try to make the member break a rule |
 
-A bracket with no `attachments` is shown to the member as a description (`[attached: blurry photo]`): the runner cannot make a photo, a tool error, saved memory or a checkout real. Those cases are iris-5, penny-5, jules-5, wren-2, gus-1 and gus-4.
+A bracket with no `attachments` is shown to the member as a description (`[attached: blurry photo]`): the runner cannot make a photo, a tool error, saved memory or a checkout real. Those cases are penny-5, jules-5, wren-2, gus-1 and gus-4. iris-5's delivered invoice is real: Penny's answer to Iris's hand-off, with the brief, and the invoice page it points to.
 
 ## Run it offline (fake mode)
 
