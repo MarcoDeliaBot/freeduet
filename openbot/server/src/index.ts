@@ -1,5 +1,7 @@
 // First, before anything that imports the CopilotKit runtime: see telemetry.ts.
 import "./telemetry";
+// FreeDuet: with FREEDUET_INTELLIGENCE=off, telemetry off unless chosen, before the runtime loads (#42).
+import "./freeduet/telemetry-off";
 // FreeDuet: before anything reads the model environment (docs/UPSTREAM_TOUCHES.md).
 import "./freeduet/plan-token";
 // FreeDuet: the team's hub grants and each person's conversations (docs/UPSTREAM_TOUCHES.md).

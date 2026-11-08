@@ -1,8 +1,8 @@
 /*
- * Run in a fresh process by freeduet-intelligence-offline.test.ts, with the environment FreeDuet
- * ships (FREEDUET_INTELLIGENCE=off, COPILOTKIT_TELEMETRY_DISABLED=true), because CopilotKit decides
- * whether telemetry is on when its module is first loaded, and a test process has loaded it long
- * before any one file could say otherwise.
+ * Run in a fresh process by freeduet-intelligence-offline.test.ts, with FREEDUET_INTELLIGENCE=off and
+ * whatever telemetry setting the test gives it, because CopilotKit decides whether telemetry is on
+ * when its module is first loaded, and a test process has loaded it long before any one file could
+ * say otherwise. The modules load in index.ts's order, so `freeduet/telemetry-off` gets its say.
  *
  * Boots as index.ts wires it, then runs one browser chat turn, one headless turn on the same thread
  * through the same runner, a hop's lock and history, and a memory written and recalled in Postgres.
@@ -21,8 +21,10 @@ globalThis.fetch = (async (input: RequestInfo | URL, init?: RequestInit) => {
   return new Response("refused by the probe", { status: 503 });
 }) as typeof fetch;
 
-// The same order as the server: telemetry.ts before anything that imports the runtime.
+// The same order as the server: telemetry.ts, then FreeDuet's switch, before anything that imports
+// the runtime.
 await import("../../src/telemetry");
+await import("../../src/freeduet/telemetry-off");
 await import("eventsource");
 const { AbstractAgent, EventType } = await import("@ag-ui/client");
 const { CopilotKitIntelligence, IntelligenceAgentRunner } = await import(

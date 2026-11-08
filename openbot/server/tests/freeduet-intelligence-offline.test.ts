@@ -1,11 +1,11 @@
 /**
- * With FREEDUET_INTELLIGENCE=off nothing goes to CopilotKit (#42).
+ * With FREEDUET_INTELLIGENCE=off nothing goes to CopilotKit (#42), telemetry included.
  *
- * The scenario runs in a fresh process (fixtures/freeduet-intelligence-offline-probe.ts) with the
- * environment FreeDuet ships, because CopilotKit decides whether telemetry is on when its module is
- * first loaded, and this test process loaded it long before this file. Telemetry is FreeDuet's other
- * switch (M0.3, COPILOTKIT_TELEMETRY_DISABLED=true in `.env.example`), so what is measured here is
- * the Intelligence switch alone.
+ * The scenario runs in a fresh process (fixtures/freeduet-intelligence-offline-probe.ts), because
+ * CopilotKit decides whether telemetry is on when its module is first loaded, and this test process
+ * loaded it long before this file. The probe loads its modules in index.ts's order, so
+ * `freeduet/telemetry-off` turns telemetry off when nobody set COPILOTKIT_TELEMETRY_DISABLED, the
+ * way a `.env` without that line runs.
  *
  * The probe boots as index.ts wires it (backend, memory, Learning, the self-host banner, the setup
  * checklist, the thread reader, the runtime and its guard), runs one browser chat turn, one headless
@@ -26,8 +26,8 @@ const PROBE = join(
   "freeduet-intelligence-offline-probe.ts",
 );
 
+/** Runs the probe with FREEDUET_INTELLIGENCE=off, no telemetry setting, and `extra` on top. */
 async function runProbe(
-  telemetryOff = true,
   extra: Record<string, string> = {},
 ): Promise<Record<string, unknown>> {
   // An empty directory, so Bun loads no `.env` into the probe.
@@ -48,7 +48,7 @@ async function runProbe(
       env: {
         ...env,
         TEST_DATABASE_URL: testDatabaseUrl(),
-        ...(telemetryOff ? { COPILOTKIT_TELEMETRY_DISABLED: "true" } : {}),
+        FREEDUET_INTELLIGENCE: "off",
         ...extra,
       },
       stdout: "pipe",
@@ -92,29 +92,35 @@ function expectNothingSent(report: Record<string, unknown>) {
     recalled: true,
   });
 
-  // And nothing reached CopilotKit, by any road.
+  // And nothing reached CopilotKit, by any road: no Intelligence call and no telemetry.
   expect(report.intelligenceCalls).toEqual([]);
   expect(report.copilotkitRequests).toEqual([]);
   expect(report.otherRequests).toEqual([]);
 }
 
 describe("FREEDUET_INTELLIGENCE=off sends nothing to CopilotKit", () => {
-  test("across boot, a chat turn, a headless turn, a hop and memory", async () => {
+  test("with no telemetry setting at all: boot, a chat turn, a headless turn, a hop and memory", async () => {
     expectNothingSent(await runProbe());
+  }, 60_000);
+
+  test("with telemetry turned off by the person, the same", async () => {
+    expectNothingSent(
+      await runProbe({ COPILOTKIT_TELEMETRY_DISABLED: "true" }),
+    );
   }, 60_000);
 
   test.skipIf(!STORE_LANDED)(
     "the same, over the real thread store and Postgres runner",
     async () => {
-      expectNothingSent(await runProbe(true, { FREEDUET_PROBE_STORE: "real" }));
+      expectNothingSent(await runProbe({ FREEDUET_PROBE_STORE: "real" }));
     },
     60_000,
   );
 
-  // The watch is real: the same probe with telemetry left on records what telemetry would send,
-  // answered inside the probe so it never leaves the machine.
-  test("the probe sees a request to CopilotKit when one is made", async () => {
-    const report = await runProbe(false);
+  // A person who turns telemetry on explicitly gets it, and the watch sees it: the requests are
+  // answered inside the probe, so they never leave the machine. Intelligence is still never called.
+  test("COPILOTKIT_TELEMETRY_DISABLED=false is the person's choice, and the watch sees it", async () => {
+    const report = await runProbe({ COPILOTKIT_TELEMETRY_DISABLED: "false" });
     expect(report.error).toBeUndefined();
     expect(report.copilotkitRequests).toContain(
       "https://telemetry.copilotkit.ai/ingest",
