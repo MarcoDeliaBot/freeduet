@@ -109,7 +109,7 @@ Durations are estimates for one maintainer with a coding agent.
 | Milestone | Scope | Demo that closes it | Estimate |
 |---|---|---|---|
 | **M0 Fork** | Repository from OpenDuet with history; rename to FreeDuet; tenant package in place; OpenBot's plan-token option removed; telemetry off by default; list of every server-side model call; CI green | `scripts/start.sh` opens FreeDuet with Iris answering | 2–3 days |
-| **M1 v0.1 The team on your login** | `agent-freeduet` with the Claude Code adapter and the tool bridge; ten members routed through it; server-side model calls routed too; eval runner; Docker one-command start on Linux | Iris handles a mixed request on a Claude login, with no API key configured | 2–3 weeks |
+| **M1 v0.1 The team on your login** | `agent-freeduet` with the Claude Code adapter and the tool bridge; ten members routed through it; server-side model calls routed too; eval runner; Docker one-command start on Linux; CopilotKit Intelligence optional and off by default, conversations and memory in FreeDuet's own database (#42, decided 2026-11-08) | Iris handles a mixed request on a Claude login, with no API key configured | 2–3 weeks |
 | **M2 v0.2 More subscriptions** | Codex (after OpenAI's approval), ACP and OpenAI-compatible adapters (local models first, API keys optional and last); Engines page | A day of work across two logins with zero metered spend | 2 weeks |
 | **M3 v0.3 Never stops** | Engine chains, caps, ledger, savings card, `delegate` | A limit hit live, work continues, savings card updates | 2 weeks |
 | **M4 v0.4 Safe purchases** | `request_purchase`, permits, caps, checkout rule, hand-over, red-team suite | A real low-cost purchase with approval; an over-cap attempt refused | 2 weeks |
