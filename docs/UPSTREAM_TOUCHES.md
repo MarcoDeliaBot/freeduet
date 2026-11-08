@@ -10,6 +10,7 @@ FreeDuet is a thin fork of [OpenDuet](https://github.com/CopilotKit/OpenDuet). I
 | `openbot/scripts/start.sh` | Default `TENANT_PACKAGE_DIR` is `../examples/freeduet` | The banner prints FreeDuet when `.env` does not set it | M0.3 | No |
 | `docs/telemetry.md` | A note at the top: telemetry is off in FreeDuet | Says what FreeDuet does differently | M0.3 | No |
 | `openbot/server/src/index.ts` | One import, `./freeduet/plan-token`, right after telemetry | Drops `CLAUDE_CODE_OAUTH_TOKEN` before anything reads the environment | M0.5 | No |
+| `openbot/server/src/index.ts` | `isFreeDuetPackage` added to the hub-grants import; one import of `./freeduet/model-base`; one `if` after `normalizeModelBaseUrls()` and the runtime model: `pinModelBaseToRouter(process.env)` for FreeDuet's package on Anthropic | With the router on, the server's own model calls go to agent-freeduet even when the shell exports `ANTHROPIC_BASE_URL`: an exported `api.anthropic.com` made the boot check send the local key there (401), and server calls send their text there (`freeduet/model-base.ts`) | M1 (#42) | No |
 | `openbot/server/src/index.ts` | `provider: runtimeModel.provider` passed to the titler | Part of the titler fix below | M0.8 | Yes |
 | `openbot/server/src/channels/titler.ts` | Anthropic keys go to Anthropic's endpoint | The titler sent an Anthropic key to OpenAI's API on every title (docs/SERVER_MODEL_CALLS.md §5) | M0.8 | **Yes, security** |
 | `openbot/docker-compose.yml` | `CLAUDE_CODE_OAUTH_TOKEN` no longer passed to the harness | No plan token anywhere | M0.5 | No |
