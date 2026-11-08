@@ -15,11 +15,42 @@ cd "$(dirname "$0")/.."
 ROOT="$(pwd -P)"
 # The repository this directory sits in, where OpenDuet's README is. Only used to say where to read.
 REPO_ROOT="$(dirname "$ROOT")"
-LOGS="$ROOT/.logs"
+# FreeDuet: which settings file this stack is. `.env` is the person's own; OPENBOT_ENV_FILE names
+# another beside it (`.env.eval`, written by scripts/freeduet-eval-stack.sh) for a second, separate
+# stack started through this same script. Its own logs, its own server and worker command lines (so
+# neither stack ever adopts or stops the other's processes) and its own Compose settings.
+ENV_NAME="${OPENBOT_ENV_FILE:-.env}"
+if ! [[ "$ENV_NAME" =~ ^\.env(\.[A-Za-z0-9_-]+)?$ ]]; then
+  printf '\033[31m%s\033[0m\n' "OPENBOT_ENV_FILE must name a file beside docker-compose.yml, such as .env.eval."
+  exit 1
+fi
+ENV_FILE="$ROOT/$ENV_NAME"
+if [ "$ENV_NAME" = .env ]; then
+  LOGS="$ROOT/.logs"
+else
+  LOGS="$ROOT/.logs/${ENV_NAME#.env.}"
+fi
 mkdir -p "$LOGS"
+# Compose reads `.env` by itself; any other file has to be named on every call.
+compose() {
+  if [ "$ENV_NAME" = .env ]; then
+    docker compose "$@"
+  else
+    docker compose --env-file "$ENV_FILE" "$@"
+  fi
+}
+COMPOSE_HINT="docker compose"
+[ "$ENV_NAME" = .env ] || COMPOSE_HINT="docker compose --env-file $ENV_NAME"
+SERVER_ENTRY="bun --env-file=../$ENV_NAME src/production-entry.ts"
+SERVER_DEV_ENTRY="bun --env-file=../$ENV_NAME src/index.ts"
+if [ "$ENV_NAME" = .env ]; then
+  WORKER_ENTRY="bun worker/src/index.ts"
+else
+  WORKER_ENTRY="bun --env-file=$ENV_NAME worker/src/index.ts"
+fi
 
-if [ ! -f "$ROOT/.env" ]; then
-  printf '\033[31m%s\033[0m\n' ".env is missing. Copy .env.example to .env and fill in the required settings."
+if [ ! -f "$ENV_FILE" ]; then
+  printf '\033[31m%s\033[0m\n' "$ENV_NAME is missing. Copy .env.example to .env and fill in the required settings."
   exit 1
 fi
 
@@ -41,7 +72,7 @@ setting() {
     # `sh`, where the same code exits 1 in silence. The refusal at the top of this file now names
     # that, and this closes the trap underneath it — an absent key takes the default in either
     # shell, which is what the argument always promised.
-    value="$(grep -E "^$name=" "$ROOT/.env" | tail -1 | cut -d= -f2- | sed -e 's/^"\(.*\)"$/\1/' -e "s/^'\(.*\)'$/\1/" || true)"
+    value="$(grep -E "^$name=" "$ENV_FILE" | tail -1 | cut -d= -f2- | sed -e 's/^"\(.*\)"$/\1/' -e "s/^'\(.*\)'$/\1/" || true)"
   fi
   printf '%s' "${value:-$fallback}"
 }
@@ -57,6 +88,8 @@ SUPERVISOR_PORT="$(setting SUPERVISOR_PORT 4500)"
 # docs/configuration.md tells people to rely on. Read from the environment alone, `false` in `.env`
 # was ignored: the supervisor was still started and the server still told to use it.
 ONE_COMPUTER_EACH="$(setting OPENBOT_ONE_COMPUTER_EACH true)"
+# FreeDuet: agent-freeduet's port on this machine (docker-compose.yml publishes it from this).
+FREEDUET_PORT="$(setting FREEDUET_PORT 4230)"
 export APP_PORT SERVER_PORT
 # Where the server and the app listen (shared/listen-host.ts): unset is this machine only when there
 # is no sign-in. The server reads it from `.env` itself; the app is handed it here, because Vite
@@ -77,13 +110,13 @@ SUPERVISOR_TOKEN="$(setting SUPERVISOR_TOKEN openbot-dev-supervisor-token)"
 COMPUTER_TOKEN="$(setting COMPUTER_TOKEN openbot-dev-computer-token)"
 # Keep the file and Compose in agreement even when someone later starts Bun directly.
 # An empty example value used to leave the API unauthenticated after that restart.
-STORED_COMPUTER_TOKEN="$(grep -E '^COMPUTER_TOKEN=' "$ROOT/.env" | tail -1 | cut -d= -f2- | sed -e 's/^"\(.*\)"$/\1/' -e "s/^'\(.*\)'$/\1/" || true)"
+STORED_COMPUTER_TOKEN="$(grep -E '^COMPUTER_TOKEN=' "$ENV_FILE" | tail -1 | cut -d= -f2- | sed -e 's/^"\(.*\)"$/\1/' -e "s/^'\(.*\)'$/\1/" || true)"
 if [ "$STORED_COMPUTER_TOKEN" != "$COMPUTER_TOKEN" ]; then
   token_env="$(mktemp)"
-  grep -vE '^COMPUTER_TOKEN=' "$ROOT/.env" > "$token_env" || true
+  grep -vE '^COMPUTER_TOKEN=' "$ENV_FILE" > "$token_env" || true
   printf '\nCOMPUTER_TOKEN=%s\n' "$COMPUTER_TOKEN" >> "$token_env"
   chmod 600 "$token_env"
-  mv "$token_env" "$ROOT/.env"
+  mv "$token_env" "$ENV_FILE"
 fi
 unset STORED_COMPUTER_TOKEN
 # File equality cannot detect a token edited before this run. Record only its digest, tied below
@@ -116,7 +149,7 @@ WORKER_SHARED_SECRET="$(setting WORKER_SHARED_SECRET openbot-dev-worker-secret)"
 # FreeDuet: with the subscription router on (the default), the members live at agent-freeduet
 # (docs/M1_PLAN.md D1), so a .env from before M1 without this line must not send them to LangGraph.
 if [ "$(setting FREEDUET_ROUTER on)" != "off" ]; then
-  MANAGED_AGENT_AG_UI_DEFAULT="http://localhost:4230/"
+  MANAGED_AGENT_AG_UI_DEFAULT="http://localhost:${FREEDUET_PORT}/"
 else
   MANAGED_AGENT_AG_UI_DEFAULT="http://localhost:${LANGGRAPH_PORT}/ag-ui"
 fi
@@ -127,16 +160,16 @@ MANAGED_AGENT_TOKEN="$(setting MANAGED_AGENT_TOKEN "")"
 if [ -z "$MANAGED_AGENT_TOKEN" ]; then
   SECRETS_ROTATED=true
   MANAGED_AGENT_TOKEN="$(openssl rand -base64 32)"
-  if grep -qE '^MANAGED_AGENT_TOKEN=' "$ROOT/.env"; then
+  if grep -qE '^MANAGED_AGENT_TOKEN=' "$ENV_FILE"; then
     # A present but empty line, which is what .env.example ships.
     tmp="$(mktemp)"
-    grep -vE '^MANAGED_AGENT_TOKEN=' "$ROOT/.env" > "$tmp"
+    grep -vE '^MANAGED_AGENT_TOKEN=' "$ENV_FILE" > "$tmp"
     printf 'MANAGED_AGENT_TOKEN=%s\n' "$MANAGED_AGENT_TOKEN" >> "$tmp"
-    mv "$tmp" "$ROOT/.env"
+    mv "$tmp" "$ENV_FILE"
   else
-    printf '\nMANAGED_AGENT_TOKEN=%s\n' "$MANAGED_AGENT_TOKEN" >> "$ROOT/.env"
+    printf '\nMANAGED_AGENT_TOKEN=%s\n' "$MANAGED_AGENT_TOKEN" >> "$ENV_FILE"
   fi
-  printf '\033[2m%s\033[0m\n' "Generated MANAGED_AGENT_TOKEN and wrote it to .env."
+  printf '\033[2m%s\033[0m\n' "Generated MANAGED_AGENT_TOKEN and wrote it to $ENV_NAME."
 fi
 export MANAGED_AGENT_TOKEN
 
@@ -155,16 +188,16 @@ AGENT_TOOL_TOKEN="$(setting AGENT_TOOL_TOKEN "")"
 if [ -z "$AGENT_TOOL_TOKEN" ]; then
   SECRETS_ROTATED=true
   AGENT_TOOL_TOKEN="$(openssl rand -base64 32)"
-  if grep -qE '^AGENT_TOOL_TOKEN=' "$ROOT/.env"; then
+  if grep -qE '^AGENT_TOOL_TOKEN=' "$ENV_FILE"; then
     # A present but empty line, which is what .env.example ships.
     tmp="$(mktemp)"
-    grep -vE '^AGENT_TOOL_TOKEN=' "$ROOT/.env" > "$tmp"
+    grep -vE '^AGENT_TOOL_TOKEN=' "$ENV_FILE" > "$tmp"
     printf 'AGENT_TOOL_TOKEN=%s\n' "$AGENT_TOOL_TOKEN" >> "$tmp"
-    mv "$tmp" "$ROOT/.env"
+    mv "$tmp" "$ENV_FILE"
   else
-    printf '\nAGENT_TOOL_TOKEN=%s\n' "$AGENT_TOOL_TOKEN" >> "$ROOT/.env"
+    printf '\nAGENT_TOOL_TOKEN=%s\n' "$AGENT_TOOL_TOKEN" >> "$ENV_FILE"
   fi
-  printf '\033[2m%s\033[0m\n' "Generated AGENT_TOOL_TOKEN and wrote it to .env."
+  printf '\033[2m%s\033[0m\n' "Generated AGENT_TOOL_TOKEN and wrote it to $ENV_NAME."
 fi
 export AGENT_TOOL_TOKEN
 
@@ -173,10 +206,10 @@ FREEDUET_ROUTER="$(setting FREEDUET_ROUTER on)"
 freeduet_env_line() {
   local tmp
   tmp="$(mktemp)"
-  grep -vE "^$1=" "$ROOT/.env" > "$tmp" || true
+  grep -vE "^$1=" "$ENV_FILE" > "$tmp" || true
   printf '%s=%s\n' "$1" "$2" >> "$tmp"
   chmod 600 "$tmp"
-  mv "$tmp" "$ROOT/.env"
+  mv "$tmp" "$ENV_FILE"
 }
 if [ "$FREEDUET_ROUTER" != "off" ]; then
   # The key the server presents on agent-freeduet's /v1/messages, generated once like the two above.
@@ -185,7 +218,7 @@ if [ "$FREEDUET_ROUTER" != "off" ]; then
     SECRETS_ROTATED=true
     FREEDUET_LOCAL_KEY="$(openssl rand -hex 32)"
     freeduet_env_line FREEDUET_LOCAL_KEY "$FREEDUET_LOCAL_KEY"
-    printf '\033[2m%s\033[0m\n' "Generated FREEDUET_LOCAL_KEY and wrote it to .env."
+    printf '\033[2m%s\033[0m\n' "Generated FREEDUET_LOCAL_KEY and wrote it to $ENV_NAME."
   fi
   # The server's own model calls (titles, routing, auto-review...) go to agent-freeduet's
   # /v1/messages through ANTHROPIC_BASE_URL, so the "Anthropic key" they send is this local key.
@@ -196,7 +229,7 @@ if [ "$FREEDUET_ROUTER" != "off" ]; then
   fi
   export FREEDUET_LOCAL_KEY
   # The server refuses a localhost agent endpoint unless it is named (server/src/config.ts).
-  AGENT_ENDPOINT_ALLOWED_HOSTS="$(setting AGENT_ENDPOINT_ALLOWED_HOSTS localhost:4230)"
+  AGENT_ENDPOINT_ALLOWED_HOSTS="$(setting AGENT_ENDPOINT_ALLOWED_HOSTS "localhost:$FREEDUET_PORT")"
   export AGENT_ENDPOINT_ALLOWED_HOSTS
 fi
 
@@ -284,8 +317,8 @@ server_computer_state() {
   local pid started owned
   pid="$(port_pids "$SERVER_PORT")"
   case "$pid" in ''|*[!0-9]*) return 1 ;; esac
-  owned="$(openbot_matching_pids "bun --env-file=../.env src/production-entry.ts" "$ROOT/server")
-$(openbot_matching_pids "bun --env-file=../.env src/index.ts" "$ROOT/server")"
+  owned="$(openbot_matching_pids "$SERVER_ENTRY" "$ROOT/server")
+$(openbot_matching_pids "$SERVER_DEV_ENTRY" "$ROOT/server")"
   printf '%s\n' "$owned" | grep -Fxq "$pid" || return 1
   if [ "${OS:-}" = Windows_NT ]; then
     started="$(OPENBOT_PID="$pid" openbot_powershell '
@@ -299,15 +332,14 @@ $(openbot_matching_pids "bun --env-file=../.env src/index.ts" "$ROOT/server")"
 }
 
 stop_server_processes_for_restart() {
-  stop_matching "bun --env-file=../.env src/production-entry.ts" "$ROOT/server"
-  stop_matching "bun --env-file=../.env src/index.ts" "$ROOT/server"
+  stop_matching "$SERVER_ENTRY" "$ROOT/server"
+  stop_matching "$SERVER_DEV_ENTRY" "$ROOT/server"
 }
 
 # A pre-fix Windows launch has no absolute entry path, and CIM cannot tell us its cwd. Refuse
 # to guess which deployment owns it, including before reusing a stale API or duplicating a worker.
 if [ "${OS:-}" = Windows_NT ]; then
-  for pattern in "bun --env-file=../.env src/production-entry.ts" \
-    "bun --env-file=../.env src/index.ts" "bun worker/src/index.ts"; do
+  for pattern in "$SERVER_ENTRY" "$SERVER_DEV_ENTRY" "$WORKER_ENTRY"; do
     UNSCOPED_PIDS="$(openbot_windows_matching "$pattern" "$ROOT" unscoped)"
     if [ -n "$UNSCOPED_PIDS" ]; then
       red "A legacy Bun process uses a relative entry path; its deployment cannot be verified (PIDs: $(printf '%s' "$UNSCOPED_PIDS" | tr '\n' ' '))."
@@ -372,8 +404,8 @@ export COMPUTER_PORT BOT_PORT LANGGRAPH_PORT SUPERVISOR_PORT
 # stdout, and stops with "failed to get console: provided file is not a console". An environment
 # variable rather than `--progress`, because a Compose too old to know the flag refuses it, and one
 # too old to know the variable ignores it.
-COMPOSE_PROGRESS=quiet docker compose up -d --build "${SERVICES[@]}" >/dev/null
-if ! docker compose run --rm --build migrate >"$LOGS/migrate.log" 2>&1; then
+COMPOSE_PROGRESS=quiet compose up -d --build "${SERVICES[@]}" >/dev/null
+if ! compose run --rm --build migrate >"$LOGS/migrate.log" 2>&1; then
   red "  Migrations did not apply. The database is not the schema this server expects."
   red "  Log: $LOGS/migrate.log"
   exit 1
@@ -384,16 +416,16 @@ if [ "$BOT_PROVIDER" != "anthropic" ]; then
 fi
 wait_for "http://localhost:$LANGGRAPH_PORT/health" "agent-langgraph"
 if [ "$FREEDUET_ROUTER" != "off" ]; then
-  wait_for "http://localhost:4230/health" "agent-freeduet"
+  wait_for "http://localhost:$FREEDUET_PORT/health" "agent-freeduet"
   # Asked of the CLI itself; nothing here reads its sign-in directory.
-  CLAUDE_AUTH_STATUS="$(docker compose exec -T agent-freeduet claude auth status --json 2>/dev/null || true)"
+  CLAUDE_AUTH_STATUS="$(compose exec -T agent-freeduet claude auth status --json 2>/dev/null || true)"
   if ! [[ "$CLAUDE_AUTH_STATUS" =~ \"loggedIn\"[[:space:]]*:[[:space:]]*true ]]; then
-    info "  Claude Code is not signed in yet. Sign in once, from openbot/: docker compose exec -it agent-freeduet claude"
+    info "  Claude Code is not signed in yet. Sign in once, from openbot/: $COMPOSE_HINT exec -it agent-freeduet claude"
   fi
 fi
 
 for table in agent_profiles agent_preferences; do
-  if ! docker compose exec -T postgres \
+  if ! compose exec -T postgres \
        psql -U openbot -d openbot -tAc "select to_regclass('public.$table')" 2>/dev/null \
        | grep -q "^$table$"; then
     red "  $table is missing. Run: bun run --cwd server db:migrate"
@@ -421,7 +453,8 @@ green "  managed coworker endpoint: $MANAGED_AGENT_AG_UI_URL"
 # happens, and with nothing that can create it the line says exactly what to run.
 LEARNING_CONTAINER="$(setting CPK_INTELLIGENCE_LEARNING_CONTAINER_ID "")"
 LEARNING_AUTO_ASSIGN="$(setting OPENBOT_LEARNING_AUTO_ASSIGN true)"
-if [ -z "$LEARNING_CONTAINER" ] && [ "$LEARNING_AUTO_ASSIGN" != "false" ] \
+# Only for `.env`: the helper reads and writes that file, never another stack's (OPENBOT_ENV_FILE).
+if [ "$ENV_NAME" = .env ] && [ -z "$LEARNING_CONTAINER" ] && [ "$LEARNING_AUTO_ASSIGN" != "false" ] \
    && [ "$LEARNING_AUTO_ASSIGN" != "0" ] && [ -n "$(setting INTELLIGENCE_API_KEY "")" ]; then
   LEARNING_LINE="$(bun scripts/setup-learning.ts --non-interactive 2>>"$LOGS/learning-setup.log" | tail -1 || true)"
   info "  ${LEARNING_LINE:-Automatic Learning: the container check did not run. Log: $LOGS/learning-setup.log}"
@@ -498,11 +531,11 @@ if ! identifies_as_openbot "$SERVER_PORT" server; then
       SUPERVISOR_TOKEN="$SUPERVISOR_TOKEN" \
       COMPUTER_TOKEN="$COMPUTER_TOKEN" \
       WORKER_SHARED_SECRET="$WORKER_SHARED_SECRET" \
-      bun --env-file=../.env "$ROOT/server/src/production-entry.ts" >"$LOGS/server.log" 2>&1 &)
+      bun "--env-file=../$ENV_NAME" "$ROOT/server/src/production-entry.ts" >"$LOGS/server.log" 2>&1 &)
   else
     (cd server && PORT="$SERVER_PORT" \
       WORKER_SHARED_SECRET="$WORKER_SHARED_SECRET" \
-      bun --env-file=../.env "$ROOT/server/src/production-entry.ts" >"$LOGS/server.log" 2>&1 &)
+      bun "--env-file=../$ENV_NAME" "$ROOT/server/src/production-entry.ts" >"$LOGS/server.log" 2>&1 &)
   fi
 fi
 wait_for_openbot "$SERVER_PORT" server
@@ -527,16 +560,19 @@ fi
 #
 # The worker has no HTTP endpoint, so only a matching process owned by this checkout is reused.
 # Its absolute entry path also distinguishes deployments on Windows, where CIM cannot report cwd.
-if ! running "bun worker/src/index.ts" "$ROOT"; then
+if ! running "$WORKER_ENTRY" "$ROOT"; then
   WORKER_DATABASE_URL="$(setting DATABASE_URL postgres://openbot:openbot@localhost:5432/openbot)"
+  # Another stack's worker names its settings file, which also keeps Bun from loading `.env`.
+  WORKER_ENV_ARG=()
+  [ "$ENV_NAME" = .env ] || WORKER_ENV_ARG=("--env-file=$ENV_NAME")
   (cd "$ROOT" && \
     DATABASE_URL="$WORKER_DATABASE_URL" \
     SERVER_INTERNAL_URL="http://localhost:$SERVER_PORT" \
     WORKER_SHARED_SECRET="$WORKER_SHARED_SECRET" \
-    bun "$ROOT/worker/src/index.ts" >"$LOGS/worker.log" 2>&1 &)
+    bun ${WORKER_ENV_ARG[@]+"${WORKER_ENV_ARG[@]}"} "$ROOT/worker/src/index.ts" >"$LOGS/worker.log" 2>&1 &)
   info "  worker: started (routine sweep loop)"
   sleep 1
-  if ! running "bun worker/src/index.ts" "$ROOT"; then
+  if ! running "$WORKER_ENTRY" "$ROOT"; then
     red "  worker: did not stay up, check $LOGS/worker.log"
   fi
 else
@@ -599,7 +635,7 @@ Try:
 Logs: $LOGS
   Routine sweep worker: $LOGS/worker.log
 
-Stop all of it: bash scripts/stop.sh
+Stop all of it: $([ "$ENV_NAME" = .env ] || printf 'OPENBOT_ENV_FILE=%s ' "$ENV_NAME")bash scripts/stop.sh
   The app, the worker, the API server, the Docker services, and this deployment's Bot computers
   (those with its COMPUTER_NAMESPACE), which compose does not own because the supervisor makes them.
   Pass --keep-computers to leave the browsers signed in. No data is deleted either way: the

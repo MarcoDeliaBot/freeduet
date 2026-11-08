@@ -405,8 +405,9 @@ services:
     pull_policy: ${IMAGE_PULL_POLICY:-build}
     ports:
       # Loopback, for the same reason as agent-bot above. MANAGED_AGENT_AG_UI_URL names this port.
-      - "127.0.0.1:4230:4230"
-      - "[::1]:4230:4230"
+      # FREEDUET_PORT moves it, so a second FreeDuet (the eval stack) can run beside this one.
+      - "127.0.0.1:${FREEDUET_PORT:-4230}:4230"
+      - "[::1]:${FREEDUET_PORT:-4230}:4230"
     environment:
       # The server proves itself with this on `POST /`; the service refuses without it.
       MANAGED_AGENT_TOKEN: ${MANAGED_AGENT_TOKEN:-}

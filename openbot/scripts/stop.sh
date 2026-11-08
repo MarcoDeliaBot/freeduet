@@ -20,6 +20,26 @@ set -euo pipefail
 
 cd "$(dirname "$0")/.."
 ROOT="$(pwd -P)"
+# FreeDuet: which stack to stop, as in start.sh. `.env` is the person's own; OPENBOT_ENV_FILE names
+# another beside it, such as the eval stack's `.env.eval` (scripts/freeduet-eval-stack.sh).
+ENV_NAME="${OPENBOT_ENV_FILE:-.env}"
+if ! [[ "$ENV_NAME" =~ ^\.env(\.[A-Za-z0-9_-]+)?$ ]]; then
+  printf '\033[31m%s\033[0m\n' "OPENBOT_ENV_FILE must name a file beside docker-compose.yml, such as .env.eval."
+  exit 1
+fi
+ENV_FILE="$ROOT/$ENV_NAME"
+compose() {
+  if [ "$ENV_NAME" = .env ]; then
+    docker compose "$@"
+  else
+    docker compose --env-file "$ENV_FILE" "$@"
+  fi
+}
+if [ "$ENV_NAME" = .env ]; then
+  WORKER_ENTRY="bun worker/src/index.ts"
+else
+  WORKER_ENTRY="bun --env-file=$ENV_NAME worker/src/index.ts"
+fi
 
 KEEP_COMPUTERS=false
 for arg in "$@"; do
@@ -49,13 +69,13 @@ done
 # the defaults still find whatever a previous run left behind.
 setting() {
   local name="$1" fallback="$2" value="${!1:-}"
-  if [ -z "$value" ] && [ -f "$ROOT/.env" ]; then
+  if [ -z "$value" ] && [ -f "$ENV_FILE" ]; then
     # `|| true`, for `start.sh`'s reason: a key with a default here is routinely absent from `.env`
     # — of the two this reads, `.env.example` lists `SERVER_PORT` and not `APP_PORT` — and `grep`
     # finding nothing is an exit status of 1 that `pipefail` makes the pipeline's. The fallback on
     # the next line is what the second argument promises, and it must not depend on whether the key
     # happened to be written down.
-    value="$(grep -E "^$name=" "$ROOT/.env" | tail -1 | cut -d= -f2- | sed -e 's/^"\(.*\)"$/\1/' -e "s/^'\(.*\)'$/\1/" || true)"
+    value="$(grep -E "^$name=" "$ENV_FILE" | tail -1 | cut -d= -f2- | sed -e 's/^"\(.*\)"$/\1/' -e "s/^'\(.*\)'$/\1/" || true)"
   fi
   printf '%s' "${value:-$fallback}"
 }
@@ -80,9 +100,11 @@ identifies_as_openbot() {
       curl -fsS --max-time 3 "http://localhost:$port/api/copilotkit/info" 2>/dev/null \
         | grep -q '"licenseStatus"'
       ;;
+    # The marker in the app's head, as start.sh asks: FreeDuet's title does not say OpenBot, so
+    # asking for the title alone left FreeDuet's app running.
     app)
       curl -fsS --max-time 3 "http://localhost:$port/" 2>/dev/null \
-        | grep -qi '<title>[^<]*OpenBot'
+        | grep -qiE '<meta name="openbot" content="app"|<title>[^<]*OpenBot'
       ;;
   esac
 }
@@ -126,10 +148,10 @@ stop_port "$APP_PORT" app
 
 info "2/4  Routine worker"
 # Match the worker command and checkout together, just as start.sh does.
-if running "bun worker/src/index.ts" "$ROOT"; then
-  stop_matching "bun worker/src/index.ts" "$ROOT"
+if running "$WORKER_ENTRY" "$ROOT"; then
+  stop_matching "$WORKER_ENTRY" "$ROOT"
   green "  worker: stopped"
-elif [ "${OS:-}" = Windows_NT ] && [ -n "$(openbot_windows_matching "bun worker/src/index.ts" "$ROOT" unscoped)" ]; then
+elif [ "${OS:-}" = Windows_NT ] && [ -n "$(openbot_windows_matching "$WORKER_ENTRY" "$ROOT" unscoped)" ]; then
   red "  worker: a legacy relative launch has unknown ownership; stop it in Task Manager."
 else
   info "  worker: not running"
@@ -139,8 +161,8 @@ info "3/4  API server"
 stop_port "$SERVER_PORT" server
 
 info "4/4  Docker"
-if docker compose ps --quiet 2>/dev/null | grep -q .; then
-  docker compose down >/dev/null 2>&1
+if compose ps --quiet 2>/dev/null | grep -q .; then
+  compose down >/dev/null 2>&1
   green "  compose services: stopped"
 else
   info "  compose services: not running"
@@ -178,5 +200,5 @@ $(green "Stopped.")
 No data was deleted. PostgreSQL, each Bot's files and each Bot's browser profile are Docker
 volumes, so channels, credentials and signed-in sessions are all still there next time.
 
-Start again: bash scripts/start.sh
+Start again: $([ "$ENV_NAME" = .env ] || printf 'OPENBOT_ENV_FILE=%s ' "$ENV_NAME")bash scripts/start.sh
 EOF

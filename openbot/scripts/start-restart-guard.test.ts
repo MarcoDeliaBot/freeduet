@@ -40,6 +40,14 @@ type Run = {
   settings?: Record<string, string>;
   processEnvironment?: Record<string, string>;
   unavailableHealthPorts?: readonly number[];
+  /**
+   * FreeDuet: the settings file the run is for. Anything but `.env` is a second stack (the eval
+   * stack's `.env.eval`) started with OPENBOT_ENV_FILE; `.env` then holds the person's own settings,
+   * which that run must leave exactly as they are.
+   */
+  envFile?: string;
+  /** Nothing holds the server's port until this run launches its own server there. */
+  portFree?: boolean;
 };
 
 async function runStartWithStaleServerProbe(
@@ -57,6 +65,8 @@ async function runStartWithStaleServerProbe(
     settings = {},
     processEnvironment = {},
     unavailableHealthPorts = [],
+    envFile = ".env",
+    portFree = false,
   }: Run = {},
 ) {
   const root =
@@ -119,7 +129,9 @@ async function runStartWithStaleServerProbe(
   environment.push(
     ...Object.entries(settings).map(([key, value]) => `${key}=${value}`),
   );
-  await writeFile(join(directory, ".env"), `${environment.join("\n")}\n`);
+  await writeFile(join(directory, envFile), `${environment.join("\n")}\n`);
+  if (envFile !== ".env")
+    await writeFile(join(directory, ".env"), "PERSON=untouched\n");
   await writeFile(
     join(scripts, `${script}.sh`),
     await readFile(`scripts/${script}.sh`),
@@ -150,6 +162,8 @@ if [ "$1" = -a ]; then
       fi ;;
     *) printf 'n%s/server\\n' "$STACK_ROOT" ;;
   esac
+elif [ "$PORT_FREE" = 1 ] && [ ! -f "$SERVER_STARTED" ]; then
+  :
 elif [ "$STOP_ONLY" != 1 ] && [ "$1" = -t ]; then
   if [ -f "$SERVER_STARTED" ]; then echo 91000006
   elif [ "$SERVER_OWNER" = own ]; then echo 91000001
@@ -172,7 +186,7 @@ if [[ "$args" == *"/internal/routines/run"* ]]; then
   exit 0
 fi
 if [[ "$args" == *"/api/copilotkit/info"* ]]; then
-  if [ -f "$SERVER_STOPPED" ] && [ ! -f "$SERVER_STARTED" ]; then exit 7; fi
+  if { [ -f "$SERVER_STOPPED" ] || [ "$PORT_FREE" = 1 ]; } && [ ! -f "$SERVER_STARTED" ]; then exit 7; fi
   printf '{"licenseStatus":"valid","mode":"test","agents":{"analyst":{}}}'
   exit 0
 fi
@@ -210,7 +224,7 @@ case "$4" in
   comm=) case "$2" in 91000004) echo /bin/bash ;; *) echo /opt/bun ;; esac ;;
   args=)
     case "$2" in
-      91000006) printf 'bun --env-file=../.env %s/server/src/production-entry.ts\\n' "$STACK_ROOT" ;;
+      91000006) printf 'bun --env-file=../%s %s/server/src/production-entry.ts\\n' "\${OPENBOT_ENV_FILE:-.env}" "$STACK_ROOT" ;;
       91000001|91000003) echo 'bun --env-file=../.env src/production-entry.ts' ;;
       91000002) echo 'bun --env-file=../.env src/index.ts' ;;
       91000004) echo 'bash -c bun --env-file=../.env src/production-entry.ts' ;;
@@ -269,7 +283,7 @@ fi
   // The Learning container check answers with one line, which start.sh relays.
   await writeExecutable(
     join(fakeBin, "bun"),
-    '#!/usr/bin/env bash\nif [[ "$2" == *server/src/production-entry.ts ]]; then printf "%s" "$COMPUTER_TOKEN" > "$SERVER_COMPUTER_TOKEN"; printf "%s\\n" "$*" > "$SERVER_STARTED"; fi\nif [[ "$1" == *worker/src/index.ts ]]; then printf "%s\\n" "$*" > "$WORKER_STARTED"; fi\nif [ "$1" = run ] && [ "$2" = - ]; then exec "$REAL_BUN" "$@"; fi\nif [ "$1" = scripts/setup-learning.ts ]; then echo "noise"; echo "LEARNING-CHECK $*"; fi\nexit 0\n',
+    '#!/usr/bin/env bash\nif [[ "$2" == *server/src/production-entry.ts ]]; then printf "%s" "$COMPUTER_TOKEN" > "$SERVER_COMPUTER_TOKEN"; printf "%s\\n" "$*" > "$SERVER_STARTED"; fi\nif [[ "$*" == *worker/src/index.ts ]]; then printf "%s\\n" "$*" > "$WORKER_STARTED"; fi\nif [ "$1" = run ] && [ "$2" = - ]; then exec "$REAL_BUN" "$@"; fi\nif [ "$1" = scripts/setup-learning.ts ]; then echo "noise"; echo "LEARNING-CHECK $*"; fi\nexit 0\n',
   );
   // What `python3` is on a stock Windows machine: the Microsoft Store alias, which runs nothing. A
   // script that still needed it would stop at the health check in every test in this file.
@@ -287,6 +301,7 @@ fi
         REAL_BUN: process.execPath,
         OS: "",
         STOP_ONLY: script === "stop" ? "1" : "0",
+        PORT_FREE: portFree ? "1" : "0",
         BASH_ENV: join(directory, "bash-env"),
         STACK_ROOT: directory,
         WORKER_OWNER: worker,
@@ -302,6 +317,7 @@ fi
         SIGNAL_LOG: logPath,
         DOCKER_LOG: dockerLogPath,
         CURL_LOG: curlLogPath,
+        ...(envFile === ".env" ? {} : { OPENBOT_ENV_FILE: envFile }),
         ...processEnvironment,
       },
       stdout: "pipe",
@@ -370,7 +386,8 @@ fi
         .text()
         .catch(() => ""),
       directory,
-      savedEnvironment: await Bun.file(join(directory, ".env")).text(),
+      savedEnvironment: await Bun.file(join(directory, envFile)).text(),
+      personEnvironment: await Bun.file(join(directory, ".env")).text(),
     };
   } finally {
     await rm(directory, { recursive: true, force: true });
@@ -593,6 +610,81 @@ describe("stop.sh deployment ownership", () => {
       expect(result.signalLog).toBe(worker === "own" ? "91000005\n" : "");
     },
   );
+});
+
+/*
+ * FreeDuet's eval stack runs beside the person's FreeDuet from the same checkout, through these same
+ * scripts, with OPENBOT_ENV_FILE=.env.eval (scripts/freeduet-eval-stack.sh). Its server and worker
+ * have command lines of their own, so neither script may ever adopt, restart or stop the person's.
+ */
+describe("a second stack from OPENBOT_ENV_FILE (the eval stack)", () => {
+  test("reads and writes its own file, names it to Compose, and never touches the person's server", async () => {
+    // The API on the port is the person's (`bun --env-file=../.env ...` in this checkout).
+    const result = await runStartWithStaleServerProbe(400, {
+      envFile: ".env.eval",
+      processEnvironment: { COMPUTER_TOKEN: "eval-computer-token" },
+    });
+    expect(result.exitCode).toBe(1);
+    expect(result.stdout).toContain(
+      "cannot verify listener ownership and launch time",
+    );
+    expect(result.signalLog).toBe("");
+    expect(result.personEnvironment).toBe("PERSON=untouched\n");
+    expect(result.savedEnvironment).toMatch(
+      /^COMPUTER_TOKEN=eval-computer-token$/m,
+    );
+    const compose = result.dockerLog
+      .split("\n")
+      .filter((line) => line.startsWith("compose "));
+    expect(compose.length).toBeGreaterThan(0);
+    for (const line of compose)
+      expect(line).toStartWith(
+        `compose --env-file ${result.directory}/.env.eval `,
+      );
+  });
+
+  test("launches its own server and worker with its file, beside the person's worker", async () => {
+    // The worker already running is the person's (`bun worker/src/index.ts` in this checkout).
+    const result = await runStartWithStaleServerProbe(400, {
+      envFile: ".env.eval",
+      portFree: true,
+    });
+    expect(result.exitCode).toBe(0);
+    expect(result.signalLog).toBe("");
+    expect(result.serverLaunch).toBe(
+      `--env-file=../.env.eval ${result.directory}/server/src/production-entry.ts\n`,
+    );
+    expect(result.stdout).toContain("worker: started");
+    expect(result.workerLaunch).toBe(
+      `--env-file=.env.eval ${result.directory}/worker/src/index.ts\n`,
+    );
+    expect(result.personEnvironment).toBe("PERSON=untouched\n");
+  });
+
+  test("stop.sh leaves the person's worker running and stops its own Compose project", async () => {
+    const result = await runStartWithStaleServerProbe(400, {
+      script: "stop",
+      worker: "own",
+      envFile: ".env.eval",
+    });
+    expect(result.exitCode).toBe(0);
+    expect(result.signalLog).toBe("");
+    expect(result.dockerLog).toContain(
+      `compose --env-file ${result.directory}/.env.eval ps --quiet`,
+    );
+    expect(result.stdout).toContain(
+      "Start again: OPENBOT_ENV_FILE=.env.eval bash scripts/start.sh",
+    );
+  });
+
+  test("a path is refused, so nothing outside the checkout is read or written", async () => {
+    const result = await runStartWithStaleServerProbe(400, {
+      processEnvironment: { OPENBOT_ENV_FILE: "../.env" },
+    });
+    expect(result.exitCode).toBe(1);
+    expect(result.stdout).toContain("OPENBOT_ENV_FILE must name a file");
+    expect(result.dockerLog).toBe("");
+  });
 });
 
 describe("start.sh runtime health", () => {

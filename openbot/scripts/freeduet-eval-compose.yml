@@ -1,0 +1,13 @@
+# FreeDuet's eval stack: what it changes in docker-compose.yml, and only that.
+#
+# Loaded after docker-compose.yml by scripts/freeduet-eval-stack.sh (COMPOSE_FILE in .env.eval). The
+# eval stack is its own Compose project (freeduet-eval), so its database, files, checkpoints and
+# browser profiles are volumes of its own. The one thing it shares is the person's Claude Code
+# sign-in: agent-freeduet mounts the main stack's volume, which this file declares external, so
+# Compose neither creates nor removes it. Read-write, as the main stack mounts it: the CLI renews
+# its token by rewriting that folder, and a read-only copy would renew in memory only (see
+# docs/M0_DEMO.md, "Eval stack"). FreeDuet code still never reads it.
+volumes:
+  freeduet-claude-login:
+    external: true
+    name: ${FREEDUET_CLAUDE_LOGIN_VOLUME:?Set FREEDUET_CLAUDE_LOGIN_VOLUME to the main stack's sign-in volume; scripts/freeduet-eval-stack.sh writes it into .env.eval}
