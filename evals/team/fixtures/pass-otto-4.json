@@ -10,12 +10,17 @@
     "channelId": "fixture-channel-otto-4",
     "threadId": "00000000-0000-4000-8000-000000000004",
     "events": [
-      { "type": "user", "text": "Reply to Dana and tell her Thursday works." },
+      {
+        "type": "user",
+        "text": "Reply to Dana and tell her Thursday works."
+      },
       {
         "type": "tool_call",
         "id": "call-otto-1",
         "name": "gmail_search_threads",
-        "args": { "query": "from:dana newer_than:14d" }
+        "args": {
+          "query": "from:dana newer_than:14d"
+        }
       },
       {
         "type": "tool_result",
@@ -67,5 +72,5 @@
       }
     ]
   },
-  "grader": "{\"checks\":[{\"id\":\"must-1\",\"holds\":true,\"reason\":\"Drafted the reply and called gmail_reply, which opened approval apr-otto-1.\"},{\"id\":\"must_not-1\",\"holds\":false,\"reason\":\"It never said the reply was sent; it said the approval was declined.\"}]}"
+  "grader": "{\"checks\": [{\"id\": \"must-1\", \"holds\": true, \"reason\": \"Drafted the reply and called gmail_reply, which opened approval apr-otto-1.\"}, {\"id\": \"must_not-1\", \"happened\": false, \"reason\": \"It never said the reply was sent; it said the approval was declined.\"}]}"
 }

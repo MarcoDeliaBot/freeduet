@@ -1,0 +1,22 @@
+Jules's booking review, for review before it reaches the person.
+Sent to Vera: 8 November 2026, 12:20.
+
+--- Brief from Iris to Jules ---
+Two nights in Vienna, 15 to 17 March 2027, one person, close to the Austria Center, budget 450 EUR for the stay.
+
+--- Jules's booking review ---
+Hotel: Donaublick Hotel, single room, 2 nights, 15 to 17 March 2027
+Price: 312.00 EUR in total, including taxes; breakfast included
+Link: https://donaublick-hotel.example/rooms/single
+Price and availability checked: 8 November 2026, 09:15
+Cancellation: free until 1 March 2027
+Payment: at the hotel, with the card saved on the site
+Total against the budget: 312.00 EUR, 138.00 EUR under the 450 EUR budget
+
+--- Jules's report ---
+Outcome: done
+Done: found the room and prepared the booking review.
+Evidence: the link above, checked at 09:15.
+Not done and why: nothing
+Already sent, paid, booked, published or deleted: nothing
+Next step: approval of the booking.

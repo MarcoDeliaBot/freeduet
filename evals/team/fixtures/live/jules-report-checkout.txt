@@ -1,0 +1,9 @@
+Report from Jules (Concierge), 8 November 2026, 10:12
+Task: buy the approved desk lamp (Lumo Arc, matte black) from lumo-lighting.example, approved total 64.90 EUR including delivery.
+
+Outcome: failed
+Done: put the approved lamp in the cart, checked that the site's summary matched the approved review (64.90 EUR), and pressed Pay with the saved card.
+Evidence: the review approved at 10:04; the site's summary page at 10:09.
+Not done: the checkout page timed out after I pressed Pay. No confirmation page and no order number appeared.
+Already: unknown
+Next step: find out whether the payment went through before trying again.

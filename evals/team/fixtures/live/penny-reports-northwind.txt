@@ -1,0 +1,19 @@
+Two reports from Penny (Bookkeeper) on the Northwind reminder, from the team log.
+
+--- Report 1, 6 November 2026, 11:20 ---
+Task: draft and send the second payment reminder to Northwind Traders Ltd for invoice INV-2026-031.
+Outcome: failed
+Done: found the brief and Northwind's contact in the last invoice email.
+Evidence: the file tool's error: "ledger-2026.xlsx: the file could not be opened (unsupported or damaged file)".
+Not done and why: the reminder, because the ledger file could not be opened, so the amount and dates could not be checked. Tried opening it twice.
+Already sent, paid, booked, published or deleted: nothing
+Next step: a readable copy of the ledger.
+
+--- Report 2, 7 November 2026, 09:45 ---
+Task: the same reminder, sent back by Iris with the brief unchanged.
+Outcome: failed
+Done: nothing new.
+Evidence: the file tool's error: "ledger-2026.xlsx: the file could not be opened (unsupported or damaged file)".
+Not done and why: the reminder, because the ledger file could not be opened again. Tried the same file and the copy in the Finance folder; both fail the same way.
+Already sent, paid, booked, published or deleted: nothing
+Next step: a readable copy of the ledger, or the invoice amount and dates from the person.

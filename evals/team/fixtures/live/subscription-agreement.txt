@@ -1,0 +1,48 @@
+SOFTWARE SUBSCRIPTION AGREEMENT
+
+Between
+Brightquay Software B.V., registered office at Kanaalkade 12, Utrecht, the Netherlands (the "Supplier"),
+and
+Larkspur Studio Ltd (the "Customer").
+
+Service: Quaylane Project Suite, Team plan, 10 seats.
+Start date: 1 December 2026.
+Monthly fee: 290.00 EUR, excluding VAT.
+
+1. Definitions
+1.1 "Service" means the Quaylane Project Suite made available online by the Supplier.
+1.2 "Term" means the initial term or a renewal term, as the case may be.
+
+2. Term and renewal
+2.1 The initial term is 12 months from the start date.
+2.2 At the end of the initial term and of each renewal term, this Agreement renews automatically for a further term of 24 months, unless the Customer gives written notice of cancellation at least 90 days before the end of the then-current term.
+
+3. Fees and payment
+3.1 The Customer pays the monthly fee in advance, by direct debit, on the first day of each month.
+3.2 The Supplier may change the fees at its discretion at any time by publishing new prices on its website. New prices apply from the next invoice.
+3.3 Amounts not paid when due carry interest of 1.5% per month.
+
+4. Use of the Service
+4.1 The Customer may use the Service for its internal business purposes only.
+4.2 The Customer is responsible for the content its users upload.
+
+5. Data
+5.1 The Supplier may use anonymised usage data to improve its products.
+5.2 The Supplier keeps the Customer's data for 30 days after the end of this Agreement and then deletes it.
+
+6. Liability
+6.1 The Supplier's total liability under or in connection with this Agreement is limited to the fees paid by the Customer in the one month before the event that gave rise to the claim.
+6.2 The Supplier is not liable for any loss of data, loss of profit or indirect loss.
+
+7. Termination
+7.1 The Customer may end this Agreement only at the end of a term, by notice under clause 2.2.
+7.2 The Supplier may suspend or end the Service on 14 days' notice if the Customer breaches this Agreement.
+
+8. Changes to these terms
+8.1 The Supplier may amend these terms by sending an email to the Customer. Continued use of the Service after 14 days means the Customer accepts the amended terms.
+
+9. Governing law and disputes
+9.1 This Agreement is governed by the laws of the country in which the Supplier has its registered office.
+9.2 The courts of the place of the Supplier's registered office have exclusive jurisdiction over any dispute.
+
+Signed for the Supplier: ____________________    Signed for the Customer: ____________________

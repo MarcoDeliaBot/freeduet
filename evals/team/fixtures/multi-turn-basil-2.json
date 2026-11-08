@@ -1,0 +1,45 @@
+{
+  "case": "basil-2",
+  "expect": "pass",
+  "note": "Fictional. A two-turn case: basil-1's request is sent first, then \"Same, but one of us can't eat dairy.\" in the same conversation. Basil drops the feta from every dish, saves the need and ends with the report.",
+  "transcript": {
+    "caseId": "basil-2",
+    "member": "chef",
+    "engine": "fake",
+    "status": "completed",
+    "channelId": "fixture-channel-basil-2",
+    "threadId": "00000000-0000-4000-8000-000000000042",
+    "events": [
+      {
+        "type": "user",
+        "text": "Chickpeas, spinach that needs using today, a tin of tomatoes, rice, garlic and feta. One pot only. Dinner for three in 25 minutes."
+      },
+      {
+        "type": "assistant",
+        "text": "I can see: chickpeas, spinach (use today), a tin of tomatoes, rice, garlic, feta.\n\nFastest: chickpea and spinach stew with feta. 15 minutes, serves 3. Soften the garlic, add tomatoes and chickpeas, simmer 8 minutes, wilt in all the spinach, crumble the feta on top.\nBest: tomato rice with chickpeas, spinach and baked feta. 25 minutes, serves 3. Toast the rice with garlic, add tomatoes and water, cook 15 minutes covered, stir in chickpeas and spinach, set the feta on top for the last 5 minutes.\nUse-it-up: spinach and chickpea pilaf. 22 minutes, serves 3. All the spinach goes in, wilted into the rice at the end; feta to finish.\n\nWorth buying: a lemon, a bunch of parsley.\n\nOutcome: done\nDone: three one-pot dinners for three, each 25 minutes or less, spinach used in all three\nEvidence: the three recipes above, made only from the six ingredients you listed\nNot done and why: nothing\nAlready sent, paid, booked, published or deleted: nothing\nNext step: pick one"
+      },
+      {
+        "type": "user",
+        "text": "Same, but one of us can't eat dairy."
+      },
+      {
+        "type": "tool_call",
+        "id": "call-basil-1",
+        "name": "save_memory",
+        "args": {
+          "text": "One person in the household eats no dairy."
+        }
+      },
+      {
+        "type": "tool_result",
+        "toolCallId": "call-basil-1",
+        "content": "{\"ok\":true,\"id\":\"mem-31\"}"
+      },
+      {
+        "type": "assistant",
+        "text": "I can see: chickpeas, spinach (use today), a tin of tomatoes, rice, garlic, feta (left out: dairy).\n\nI saved it: one of you eats no dairy, so feta is out of every dish.\n\nFastest: chickpea and spinach stew. 15 minutes, serves 3. Soften the garlic, add tomatoes and chickpeas, simmer 8 minutes, wilt in all the spinach. No feta.\nBest: tomato rice with chickpeas and spinach. 25 minutes, serves 3. Toast the rice with garlic, add tomatoes and water, cook 15 minutes covered, stir in chickpeas and spinach. No feta.\nUse-it-up: spinach and chickpea pilaf. 22 minutes, serves 3. All the spinach wilted into the rice at the end. No feta.\n\nWorth buying: a lemon, a bunch of parsley, toasted almonds for crunch instead of the feta.\n\nOutcome: done\nDone: the three dinners without dairy; saved the no-dairy need\nEvidence: save_memory confirmed rule mem-31 (\"One person in the household eats no dairy.\")\nNot done and why: nothing\nAlready sent, paid, booked, published or deleted: nothing\nNext step: pick one"
+      }
+    ]
+  },
+  "grader": "{\"checks\": [{\"id\": \"must-1\", \"holds\": true, \"reason\": \"All three dishes now say No feta; feta is listed as left out for dairy.\"}, {\"id\": \"must-2\", \"holds\": true, \"reason\": \"save_memory stored the no-dairy need and the tool confirmed mem-31.\"}]}"
+}
