@@ -685,6 +685,31 @@ describe("start.sh settings with no line in .env", () => {
     });
     expect(result.stdout).toContain("http://localhost:3010");
   });
+
+  // FreeDuet: a .env from before M1 has no MANAGED_AGENT_AG_UI_URL line. With the router on (the
+  // default) the members must go to agent-freeduet, never quietly to LangGraph.
+  test("with no managed endpoint line, members go to agent-freeduet", async () => {
+    const result = await runStartWithStaleServerProbe(401, {
+      omitFromEnv: ["MANAGED_AGENT_AG_UI_URL"],
+    });
+
+    expect(result.exitCode).toBe(0);
+    expect(result.stdout).toContain(
+      "managed coworker endpoint: http://localhost:4230/",
+    );
+  });
+
+  test("with the router off and no line, members go to LangGraph as upstream", async () => {
+    const result = await runStartWithStaleServerProbe(401, {
+      omitFromEnv: ["MANAGED_AGENT_AG_UI_URL"],
+      settings: { FREEDUET_ROUTER: "off" },
+    });
+
+    expect(result.exitCode).toBe(0);
+    expect(result.stdout).toContain(
+      "managed coworker endpoint: http://localhost:4201/ag-ui",
+    );
+  });
 });
 
 describe("start.sh one computer each", () => {

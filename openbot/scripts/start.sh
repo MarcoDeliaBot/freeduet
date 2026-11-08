@@ -113,7 +113,14 @@ WORKER_SHARED_SECRET="$(setting WORKER_SHARED_SECRET openbot-dev-worker-secret)"
 # The laptop stack runs agent-langgraph on LANGGRAPH_PORT. The one-container image does not, so
 # this default stays in the script rather than in .env: a `docker run --env-file .env` must not
 # inherit a URL that points at a process the image does not contain.
-MANAGED_AGENT_AG_UI_URL="$(setting MANAGED_AGENT_AG_UI_URL "http://localhost:${LANGGRAPH_PORT}/ag-ui")"
+# FreeDuet: with the subscription router on (the default), the members live at agent-freeduet
+# (docs/M1_PLAN.md D1), so a .env from before M1 without this line must not send them to LangGraph.
+if [ "$(setting FREEDUET_ROUTER on)" != "off" ]; then
+  MANAGED_AGENT_AG_UI_DEFAULT="http://localhost:4230/"
+else
+  MANAGED_AGENT_AG_UI_DEFAULT="http://localhost:${LANGGRAPH_PORT}/ag-ui"
+fi
+MANAGED_AGENT_AG_UI_URL="$(setting MANAGED_AGENT_AG_UI_URL "$MANAGED_AGENT_AG_UI_DEFAULT")"
 export MANAGED_AGENT_AG_UI_URL
 
 MANAGED_AGENT_TOKEN="$(setting MANAGED_AGENT_TOKEN "")"
@@ -188,6 +195,9 @@ if [ "$FREEDUET_ROUTER" != "off" ]; then
     freeduet_env_line ANTHROPIC_API_KEY "$FREEDUET_LOCAL_KEY"
   fi
   export FREEDUET_LOCAL_KEY
+  # The server refuses a localhost agent endpoint unless it is named (server/src/config.ts).
+  AGENT_ENDPOINT_ALLOWED_HOSTS="$(setting AGENT_ENDPOINT_ALLOWED_HOSTS localhost:4230)"
+  export AGENT_ENDPOINT_ALLOWED_HOSTS
 fi
 
 green() { printf '\033[32m%s\033[0m\n' "$1"; }
