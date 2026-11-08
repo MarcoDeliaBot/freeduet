@@ -80,7 +80,7 @@ Every member ends a piece of work with the report its prompt defines (shared rul
 
 | Report line | Checkpoint field | Rule |
 |---|---|---|
-| Outcome: done, partly done, blocked, failed, needs you | `phase`: complete, in-progress, blocked | "Done" needs evidence and no open next step |
+| Outcome: done, partly done, in progress, blocked, failed, needs you | `phase`: complete (done), in-progress (partly done, in progress), blocked (blocked, failed, needs you) | "Done" needs evidence and no open next step. "In progress" is work handed to a colleague or still running, with nothing for the person to do yet; the team log records it as "in progress", like a segment that ended without a report |
 | Done | `completed` | |
 | Evidence | `verification` | Files, links, numbers or the tool's confirmation; never the member's word alone |
 | Not done and why, with what was tried | `blockers`, failed attempts in `decisions` | Failures are recorded, never hidden |

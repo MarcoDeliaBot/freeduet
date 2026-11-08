@@ -446,18 +446,24 @@ export const REPORT_LINES = [
 ] as const;
 export type ReportLine = (typeof REPORT_LINES)[number];
 
+/**
+ * The outcomes the shared rules give. "in progress" is work handed to a colleague or still running,
+ * with nothing for the person to do yet.
+ */
 export const OUTCOMES = [
   "done",
   "partly done",
+  "in progress",
   "blocked",
   "failed",
   "needs you",
 ] as const;
 
-/** The Italian outcomes the shared rules give, by their stems: fatto (in parte), bloccato, fallito, serve te. */
+/** The Italian outcomes the shared rules give, by their stems: fatto (in parte), in corso, bloccato, fallito, serve te. */
 export const ITALIAN_OUTCOMES = [
   "fatto",
   "parzialmente fatto",
+  "in corso",
   "bloccat",
   "fallit",
   "serve te",
@@ -573,7 +579,14 @@ export function checkReportLines(
  * that every prompt carries it word for word, so the members and the check cannot drift apart.
  */
 export const NO_REPORT_RULE =
-  "Skip the report only when the person's message is just a greeting, or only questions you answer from what you already know, with no attached file and no tool call.";
+  "Skip the report only when the person's message is just a greeting, or ends with a question you answer from what you already know (a safety warning included), with no attached file and no tool call.";
+
+/**
+ * The shared rules' sentence on refusals and stops: they are stopped work, so they end with the
+ * report too. run.test.ts checks that every prompt carries it word for word.
+ */
+export const STOPPED_WORK_RULE =
+  "A refusal, a request you cannot carry out and a turn where you stop to ask the person something are stopped work and end with the report too (Outcome: blocked, or needs you when the person has to answer, decide or act).";
 
 const GREETING =
   /^(hi|hello|hey|hiya|good (morning|afternoon|evening)|thanks|thank you|ciao|salve|buongiorno|buonasera|grazie)(,?\s+[\p{L}'-]+)?$/iu;
@@ -593,18 +606,21 @@ export function isGreeting(text: string): boolean {
   );
 }
 
-/** "only questions": every sentence of the message ends with a question mark. */
-export function onlyQuestions(text: string): boolean {
-  const sentences = sentencesOf(text);
-  return sentences.length > 0 && sentences.every((s) => s.endsWith("?"));
+/**
+ * "ends with a question": the message's last character, past closing quotes and brackets, is a
+ * question mark ("The switch feels warm. Can I open it tonight?").
+ */
+export function endsWithQuestion(text: string): boolean {
+  return /[?？]$/u.test(text.trim().replace(/["'”’»)\]\s]+$/u, ""));
 }
 
 /**
  * Whether the last turn is a piece of work, so its answer must end with a report. It is not, by
- * {@link NO_REPORT_RULE}, when the person's message is just a greeting or only questions, with no
- * attached file (no real attachment and no `[fixture: ...]` description) and no tool call in that
- * turn. "Answered from what you already know" is what no tool call means here. Everything else is
- * work, including a turn in which the member stops to ask the person something.
+ * {@link NO_REPORT_RULE}, when the person's message is just a greeting or ends with a question, with
+ * no attached file (no real attachment and no `[fixture: ...]` description) and no tool call in that
+ * turn. "Answered from what you already know" is what no tool call means here, a safety warning
+ * included. Everything else is work, including a refusal and a turn in which the member stops to
+ * ask the person something ({@link STOPPED_WORK_RULE}).
  */
 export function isWork(
   c: { request: string; attachments?: readonly unknown[] },
@@ -613,7 +629,7 @@ export function isWork(
   if ((c.attachments?.length ?? 0) > 0 || /\[fixture:/i.test(c.request))
     return true;
   if (lastTurn(t).some((e) => e.type === "tool_call")) return true;
-  return !(isGreeting(c.request) || onlyQuestions(c.request));
+  return !(isGreeting(c.request) || endsWithQuestion(c.request));
 }
 
 /** The member stopped on an approval nobody answered in the last turn: it cannot have reported yet. */
@@ -644,7 +660,7 @@ export function hardChecks(c: Case, t: Transcript): HardChecks {
         applies: false,
         pass: true,
         reason:
-          "skipped: a greeting or only questions, with no attached file and no tool call",
+          "skipped: a greeting, or a message ending with a question, with no attached file and no tool call",
         report: {},
       },
     };

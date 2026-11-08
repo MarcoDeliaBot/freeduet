@@ -1,9 +1,13 @@
 """Work reports read from a member's final text and mapped to checkpoint fields (report.py)."""
 
-import pytest
+import re
+from pathlib import Path
 
-from freeduet import checkpoints
-from freeduet.report import SegmentFacts, approval_ids, assess, parse_report
+import pytest
+import yaml
+
+from freeduet import checkpoints, team_log
+from freeduet.report import OUTCOMES, SegmentFacts, approval_ids, assess, canonical_outcome, parse_report
 
 APPROVAL = "5b1f0c2e-8d7a-4c3b-9e6f-0a1b2c3d4e5f"
 
@@ -88,7 +92,14 @@ def test_headings_dashes_and_short_labels():
 
 @pytest.mark.parametrize(
     "outcome, phase",
-    [("done", "complete"), ("partly done", "in-progress"), ("blocked", "blocked"), ("failed", "blocked"), ("needs you", "blocked")],
+    [
+        ("done", "complete"),
+        ("partly done", "in-progress"),
+        ("in progress", "in-progress"),
+        ("blocked", "blocked"),
+        ("failed", "blocked"),
+        ("needs you", "blocked"),
+    ],
 )
 def test_each_outcome_maps_to_its_phase(outcome, phase):
     text = (
@@ -99,6 +110,33 @@ def test_each_outcome_maps_to_its_phase(outcome, phase):
     a = assess(facts(text))
     assert valid(a)
     assert (a.phase, a.outcome) == (phase, outcome)
+
+
+HANDED_OVER = """Gus: the jamming printer
+Penny: Northwind's unpaid March invoice
+
+Outcome: in progress
+Done: handed the printer to Gus and the invoice to Penny
+Evidence: message_bot confirmed both hand-offs
+Not done and why: their answers arrive later
+Already sent, paid, booked, published or deleted: nothing
+Next step: none"""
+
+
+def test_work_handed_to_colleagues_is_in_progress_in_the_checkpoint_and_the_team_log():
+    a = assess(facts(HANDED_OVER))
+    assert valid(a) and (a.phase, a.outcome) == ("in-progress", "in progress")
+    assert a.state["completed"] == ["handed the printer to Gus and the invoice to Penny"]
+    assert a.state["verification"] == ["message_bot confirmed both hand-offs"]
+    assert a.summary == "handed the printer to Gus and the invoice to Penny"
+    no_step = assess(facts(HANDED_OVER.replace("Not done and why: their answers arrive later", "Not done: nothing")))
+    assert valid(no_step) and no_step.state["next_steps"] == ["Wait for the work under way to finish"]
+    entry = team_log.make_entry(
+        member="freeduet", thread="t", run="r", outcome=a.outcome, summary=a.summary, from_iris=None, approvals=a.approvals
+    )
+    assert entry["outcome"] == "in progress" and entry["approvals"] == "nothing"
+    assert len(team_log.LOG_OUTCOMES) == len(set(team_log.LOG_OUTCOMES))
+    assert set(team_log.LOG_OUTCOMES) == {"done", "partly done", "in progress", "blocked", "failed", "needs you", "error"}
 
 
 def test_done_without_evidence_or_with_an_open_next_step_stays_in_progress():
@@ -170,8 +208,35 @@ def test_an_italian_report_reads_like_the_english_one():
 
 @pytest.mark.parametrize(
     ("word", "outcome"),
-    [("fatto", "done"), ("fatto in parte", "partly done"), ("bloccato", "blocked"), ("fallito", "failed"), ("serve te", "needs you")],
+    [
+        ("fatto", "done"),
+        ("fatto in parte", "partly done"),
+        ("in corso", "in progress"),
+        ("bloccato", "blocked"),
+        ("fallito", "failed"),
+        ("serve te", "needs you"),
+    ],
 )
 def test_each_italian_outcome(word, outcome):
     report = parse_report(f"Esito: {word}\nFatto: x\nProve: y\nNon fatto e perché: niente\nGià: niente\nProssimo passo: z")
     assert report is not None and report.outcome == outcome
+
+
+AGENTS = Path(__file__).resolve().parents[2] / "examples" / "freeduet" / "agents.yaml"
+
+
+def _listed(prompt: str, label: str) -> list[str]:
+    """The outcomes a prompt's shared rules list after `label (`, up to the first ; or )."""
+    match = re.search(re.escape(label) + r" \(([^;)]*)", prompt)
+    assert match, f"no {label} list"
+    return [word.strip() for word in re.split(r", | or ", match.group(1))]
+
+
+def test_every_outcome_the_prompts_give_is_read_in_both_languages():
+    agents = yaml.safe_load(AGENTS.read_text(encoding="utf-8"))["agents"]
+    assert len(agents) == 10
+    for agent in agents:
+        english = _listed(agent["system_prompt"], "Outcome")
+        italian = _listed(agent["system_prompt"], "Esito")
+        assert (agent["id"], tuple(english)) == (agent["id"], OUTCOMES)
+        assert [canonical_outcome(word) for word in italian] == list(OUTCOMES)

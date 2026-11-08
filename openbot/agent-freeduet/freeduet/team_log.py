@@ -6,11 +6,11 @@
      "outcome": "done", "summary": "Invoice INV-12 drafted for ACME", "from_iris": true,
      "approvals": ["5b1f..."]}
 
-`outcome` is one of done, partly done, blocked, failed, needs you (the member's report), in progress
-(no report: the segment ended on a tool call or answered a question) or error. `from_iris` is true
-when Iris handed the work over, false when she did not, null when that cannot be known
-(freeduet/origin.py). `approvals` holds the approval ids the report's "Already" line names, the
-string "nothing", or null when the segment had no "Already" line.
+`outcome` is one of done, partly done, in progress, blocked, failed, needs you (the member's report;
+in progress also when there is no report: the segment ended on a tool call or answered a question)
+or error. `from_iris` is true when Iris handed the work over, false when she did not, null when that
+cannot be known (freeduet/origin.py). `approvals` holds the approval ids the report's "Already" line
+names, the string "nothing", or null when the segment had no "Already" line.
 
 Each line is written whole, with O_APPEND and under a lock, so segments running side by side never
 interleave. Past 10 MB the file moves to `team-log.1.jsonl` (replacing the one before) and a new one
@@ -36,7 +36,7 @@ MAX_BYTES = 10 * 1024 * 1024
 MAX_ID = 200
 DEFAULT_LIMIT = 20
 MAX_LIMIT = 100
-LOG_OUTCOMES = (*report.OUTCOMES, report.IN_PROGRESS, report.ERROR)
+LOG_OUTCOMES = (*report.OUTCOMES, report.ERROR)  # report.OUTCOMES holds report.IN_PROGRESS
 _RELATIVE = re.compile(r"\s*(\d{1,5})\s*([mhd])\s*", re.IGNORECASE)
 
 
