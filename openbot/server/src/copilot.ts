@@ -45,6 +45,7 @@ import type { AgentFetch, StallGuard } from "./channels/stall-guard";
 import type { DeploymentConfig } from "./config";
 import { observeModelConnection } from "./desktop-connection-failure";
 import { desktopTelemetryProperties } from "./desktop-telemetry";
+import { coordinationRunsInBand } from "./freeduet/coordination";
 import { observeIntelligenceAuthentication } from "./intelligence-client";
 import { RemoteLearnedSkillsMiddleware } from "./learning/remote";
 import {
@@ -1351,11 +1352,14 @@ function remoteAgentWithStandingRole(
       : undefined;
     // Governed vendor/host calls use the actual AG-UI client lifecycle, so approvals capture
     // the provider's toolCallId, messages and state. Coordination retains its signed callback.
+    // FreeDuet: its own members (agent-freeduet) run message_bot in-band too, so the approval gate
+    // can ask the person; empty for every other Bot. See freeduet/coordination.ts.
+    const inBand = coordinationRunsInBand(agent);
     const clientTools = tools.filter(
       (tool) =>
         typeof tool.execute === "function" &&
-        tool.name !== "message_bot" &&
-        tool.name !== "ask_person",
+        (inBand.has(tool.name) ||
+          (tool.name !== "message_bot" && tool.name !== "ask_person")),
     );
     const clientNames = new Set(clientTools.map((tool) => tool.name));
     const deploymentTools = tools

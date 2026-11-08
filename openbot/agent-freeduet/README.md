@@ -7,12 +7,15 @@ and [docs/ARCHITECTURE.md §3](../../docs/ARCHITECTURE.md).
 ## What it does (M1)
 
 1. OpenBot posts a member's turn to `POST /` (AG-UI over SSE) with `x-openbot-agent-token`. The
-   member is the one `forwardedProps.openbotBotId` names, cross-checked with the standing role; its
-   prompt comes from the tenant package's `agents.yaml`.
+   member is the one `forwardedProps.openbotBotId` names (a run without it is refused); its prompt
+   comes from the tenant package's `agents.yaml`, and its standing role is read wherever OpenBot put
+   it. Another Bot's standing role is quoted as context, never followed.
 2. Each turn is a fresh, stateless `claude -p` with no built-in tools and one MCP server, `freeduet`,
    that lists exactly the tools OpenBot offered. A tool call ends the segment: OpenBot runs it under
-   its own approval gate and posts again with the result. `message_bot` and `ask_person` go through
-   OpenBot's callback route and their answer goes straight back to the CLI.
+   its own approval gate and posts again with the result. Tools named in `openbotDeploymentTools`
+   (`ask_person`; also `message_bot` on a server without FreeDuet's in-band hand-offs) go through
+   OpenBot's callback route and their answer goes straight back to the CLI. A hand-off the callback
+   refuses because the person has to approve it ends the turn with a question to the person.
 3. After every segment the member's work report becomes a checkpoint and one line in the team log.
    Iris also gets four tools of this service (team log and lessons); lessons the person approved are
    added to that member's prompt on every run.
