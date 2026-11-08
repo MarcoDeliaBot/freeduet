@@ -444,8 +444,8 @@ jobs:
   #
   # It builds every image the stack runs, so it sits behind the same cost gate as `image`: on a pull
   # request only with the `full-ci` label, always on main and through workflow_call. Not in `verify`
-  # yet: until the server starts without a CopilotKit Intelligence key it fails at the server check,
-  # which is the open part of #21 (docs/UPSTREAM_TOUCHES.md).
+  # yet: it is new, and it runs on a pull request only with the `full-ci` label until it has passed
+  # on main (#21, docs/UPSTREAM_TOUCHES.md).
   clean-start:
     name: clean start (no key, no sign-in)
     runs-on: ubuntu-latest

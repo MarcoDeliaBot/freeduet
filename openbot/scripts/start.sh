@@ -274,10 +274,13 @@ info()  { printf '\033[2m%s\033[0m\n' "$1"; }
 identifies_as_openbot() {
   local port="$1" name="$2"
   case "$name" in
-    # A field of this server's own payload. A stray 200 does not carry it.
+    # A field of this server's own payload. A stray 200 does not carry it. Not the CopilotKit info
+    # route: its `licenseStatus` is sent only with Intelligence, so a FreeDuet server with
+    # FREEDUET_INTELLIGENCE=off (the default, #42) never matched, and start.sh gave up on it.
+    # `durableHistory` is sent in both runtime modes (server/src/app.ts).
     server)
-      curl -fsS --max-time 3 "http://localhost:$port/api/copilotkit/info" 2>/dev/null \
-        | grep -q '"licenseStatus"'
+      curl -fsS --max-time 3 "http://localhost:$port/api/capabilities" 2>/dev/null \
+        | grep -q '"durableHistory"'
       ;;
     # The app is static HTML with nothing to interrogate, so a marker in its head is the identity
     # available. Not the title: a fork that renames the product changes the title with it.
@@ -548,17 +551,21 @@ SERVER_LAUNCHED=false
 if ! identifies_as_openbot "$SERVER_PORT" server; then
   rm -f "$COMPUTER_STATE_FILE"
   SERVER_LAUNCHED=true
+  # Every background launch below has its own stdout and stderr sent to /dev/null; the server's output
+  # still goes to its log. A background job keeps the stdout it inherited open for as long as it
+  # runs, and a caller that reads that stdout (CI's `bash start.sh | tee`) waits for it to close. A
+  # server never closes it, so the caller hung after start.sh had already exited (#21).
   if [ "$ONE_COMPUTER_EACH" = "true" ]; then
     (cd server && PORT="$SERVER_PORT" \
       COMPUTER_SUPERVISOR_URL="http://localhost:$SUPERVISOR_PORT" \
       SUPERVISOR_TOKEN="$SUPERVISOR_TOKEN" \
       COMPUTER_TOKEN="$COMPUTER_TOKEN" \
       WORKER_SHARED_SECRET="$WORKER_SHARED_SECRET" \
-      bun "--env-file=../$ENV_NAME" "$ROOT/server/src/production-entry.ts" >"$LOGS/server.log" 2>&1 &)
+      bun "--env-file=../$ENV_NAME" "$ROOT/server/src/production-entry.ts" >"$LOGS/server.log" 2>&1 &) </dev/null >/dev/null 2>&1
   else
     (cd server && PORT="$SERVER_PORT" \
       WORKER_SHARED_SECRET="$WORKER_SHARED_SECRET" \
-      bun "--env-file=../$ENV_NAME" "$ROOT/server/src/production-entry.ts" >"$LOGS/server.log" 2>&1 &)
+      bun "--env-file=../$ENV_NAME" "$ROOT/server/src/production-entry.ts" >"$LOGS/server.log" 2>&1 &) </dev/null >/dev/null 2>&1
   fi
 fi
 wait_for_openbot "$SERVER_PORT" server
@@ -592,7 +599,7 @@ if ! running "$WORKER_ENTRY" "$ROOT"; then
     DATABASE_URL="$WORKER_DATABASE_URL" \
     SERVER_INTERNAL_URL="http://localhost:$SERVER_PORT" \
     WORKER_SHARED_SECRET="$WORKER_SHARED_SECRET" \
-    bun ${WORKER_ENV_ARG[@]+"${WORKER_ENV_ARG[@]}"} "$ROOT/worker/src/index.ts" >"$LOGS/worker.log" 2>&1 &)
+    bun ${WORKER_ENV_ARG[@]+"${WORKER_ENV_ARG[@]}"} "$ROOT/worker/src/index.ts" >"$LOGS/worker.log" 2>&1 &) </dev/null >/dev/null 2>&1
   info "  worker: started (routine sweep loop)"
   sleep 1
   if ! running "$WORKER_ENTRY" "$ROOT"; then
@@ -630,7 +637,7 @@ JS
 info "4/4  App"
 require_free_or_ours "$APP_PORT" app
 if ! identifies_as_openbot "$APP_PORT" app; then
-  (cd app && bun run dev --port "$APP_PORT" --strictPort >"$LOGS/app.log" 2>&1 &)
+  (cd app && bun run dev --port "$APP_PORT" --strictPort >"$LOGS/app.log" 2>&1 &) </dev/null >/dev/null 2>&1
 fi
 wait_for_openbot "$APP_PORT" app
 
