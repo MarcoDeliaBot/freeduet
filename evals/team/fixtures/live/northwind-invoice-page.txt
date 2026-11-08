@@ -1,0 +1,18 @@
+Invoice page made by Penny (Bookkeeper) with make_page, 8 November 2026, 15:40.
+Page: Invoice INV-2026-052, Northwind Traders Ltd
+
+Invoice INV-2026-052
+From: Larkspur Studio Ltd, 14 Quayside Row, Harbourton
+To: Northwind Traders Ltd, Accounts Payable, 2 Mill Lane, Easterby
+Date: 8 November 2026
+Due: 8 December 2026 (payment in 30 days)
+
+Item                         Quantity    Unit price    Amount
+Consulting                   12 hours    85.00 EUR     1,020.00 EUR
+
+Subtotal: 1,020.00 EUR
+VAT (not charged, as in the saved tax settings): 0.00 EUR
+Total due: 1,020.00 EUR
+
+Payment: bank transfer to the account in the saved business details, quoting INV-2026-052.
+Status: draft, not sent.

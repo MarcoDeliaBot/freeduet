@@ -1,0 +1,16 @@
+Penny's answer to Iris's hand-off, as it came back to Iris, 8 November 2026, 15:42.
+
+--- Brief from Iris to Penny (message_bot), 8 November 2026, 15:31 ---
+Task: invoice Northwind Traders Ltd for 12 hours of consulting at 85 per hour, payment in 30 days.
+Constraints: use the saved business details and tax settings; do not send the invoice.
+Expecting: the invoice as a page, with the totals, and your report.
+
+--- Penny's answer ---
+Invoice INV-2026-052 for Northwind Traders Ltd is ready on its page: 12 hours of consulting at 85.00 EUR, 1,020.00 EUR due on 8 December 2026. It needs the person to check it and send it.
+
+Outcome: done
+Done: drafted invoice INV-2026-052 for Northwind Traders Ltd from the saved business details and tax settings: 12 hours at 85.00 EUR, subtotal 1,020.00 EUR, no VAT, total 1,020.00 EUR, due 8 December 2026.
+Evidence: invoice page northwind-invoice-page.txt
+Not done and why: sending it, which the brief leaves to the person.
+Already sent, paid, booked, published or deleted: nothing
+Next step: the person checks the invoice and sends it to Northwind.
