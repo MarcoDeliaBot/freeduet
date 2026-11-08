@@ -393,6 +393,57 @@ services:
       timeout: 5s
       retries: 5
 
+  # FreeDuet: the subscription router. One AG-UI endpoint for all ten members, run on the person's
+  # own Claude Code login, plus the Anthropic-format `/v1/messages` the server's own short model
+  # calls go to. See docs/M1_PLAN.md and docs/UPSTREAM_TOUCHES.md.
+  agent-freeduet:
+    build: ./agent-freeduet
+    image: ${FREEDUET_IMAGE:-freeduet-agent-freeduet:latest}
+    pull_policy: ${IMAGE_PULL_POLICY:-build}
+    ports:
+      # Loopback, for the same reason as agent-bot above. MANAGED_AGENT_AG_UI_URL names this port.
+      - "127.0.0.1:4230:4230"
+      - "[::1]:4230:4230"
+    environment:
+      # The server proves itself with this on `POST /`; the service refuses without it.
+      MANAGED_AGENT_TOKEN: ${MANAGED_AGENT_TOKEN:-}
+      # Deployment-owned tools (message_bot, ask_person) go back through the server, like agent-langgraph.
+      OPENBOT_TOOL_URL: ${OPENBOT_TOOL_URL:-http://host.docker.internal:3001/api/agent-tools/call}
+      AGENT_TOOL_TOKEN: ${AGENT_TOOL_TOKEN:-}
+      # The key the server's own model calls present on `/v1/messages`. scripts/start.sh writes it.
+      FREEDUET_LOCAL_KEY: ${FREEDUET_LOCAL_KEY:-}
+      # The tenant package, mounted below. agent-freeduet reads each member's prompt from it by id.
+      FREEDUET_AGENTS_FILE: /app/tenant/agents.yaml
+      FREEDUET_ENGINES_FILE: ${FREEDUET_ENGINES_FILE:-/app/engines.yaml}
+      FREEDUET_DATA_DIR: /data
+      # Where the Claude Code CLI keeps its sign-in: the named volume below, whatever HOME is.
+      CLAUDE_CONFIG_DIR: /home/freeduet/.claude
+      # FreeDuet: never passed here, on purpose.
+      # - CLAUDE_CODE_OAUTH_TOKEN: storing a Claude plan token breaks Anthropic's terms
+      #   (docs/PROVIDERS.md). The person signs in to the CLI instead.
+      # - ANTHROPIC_API_KEY and ANTHROPIC_BASE_URL: .env sets them for the server's own calls to this
+      #   service. Handed to the CLI they would bill an API key instead of the person's plan, or point
+      #   it back at itself.
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    volumes:
+      # The tenant package, read-only. The folder rather than the one file, so an editor that saves
+      # by replacing agents.yaml is seen without a restart. start.sh points this at TENANT_PACKAGE_DIR.
+      - ${FREEDUET_TENANT_DIR:-./examples/freeduet}:/app/tenant:ro
+      # The CLI's own config directory, where `docker compose exec -it agent-freeduet claude` stores
+      # the person's sign-in. Only the CLI touches it: FreeDuet code never reads, copies or logs
+      # anything in it (docs/PROVIDERS.md rule 1, test M1.8).
+      - freeduet-claude-login:/home/freeduet/.claude
+      # Checkpoints and work reports, under /data/handoff/<botId>/<threadId>/.
+      - freeduet-data:/data
+    healthcheck:
+      test: ["CMD", "python3", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:4230/health', timeout=3)"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - default
+
 networks:
   # The database and the one service that reaches it by name. Nothing a Bot can reach is on it.
   #
@@ -411,3 +462,6 @@ volumes:
   spire-agent-socket:
   spire-agent-data:
   agent-profiles:
+  # FreeDuet: agent-freeduet's CLI sign-in and its checkpoints.
+  freeduet-claude-login:
+  freeduet-data:

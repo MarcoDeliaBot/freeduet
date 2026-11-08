@@ -7,10 +7,12 @@
 # the approval gate whatever a prompt says; the prompts make the members call the tool directly so
 # the person is asked exactly once.
 #
-# Engines: logins first. From v0.1 the subscription router (openbot/agent-freeduet) reads these same
-# prompts and runs each member on its engine chain in openbot/agent-freeduet/engines.yaml, starting
-# with the person's own Claude Code login. The `type: built-in` entries below are the fallback used
-# when the router is switched off (FREEDUET_ROUTER=off). One source of truth for prompts: this file.
+# Engines: logins first. From v0.1 every member is a remote-ag-ui Bot at MANAGED_AGENT_AG_UI_URL,
+# the subscription router (openbot/agent-freeduet), which reads these same prompts by id and runs
+# each member on its engine chain in openbot/agent-freeduet/engines.yaml, starting with the person's
+# own Claude Code login. With the router switched off (FREEDUET_ROUTER=off), set
+# FREEDUET_MEMBER_TYPE=built-in and the same members run as built-in Bots on these prompts.
+# One source of truth for prompts: this file.
 #
 # Tool names used below that do not exist upstream yet (delegate, request_purchase) are added in
 # milestones M3 and M4 of docs/PROJECT.md. Until then the prompts tell the member what to do instead.
@@ -21,7 +23,8 @@ agents:
     title: Chief of Staff
     role_description: Takes any request, hands each part to the right colleague, follows up and brings the results back in one answer.
     avatar_seed: iris
-    type: built-in
+    type: ${FREEDUET_MEMBER_TYPE:-remote-ag-ui}
+    endpoint: ${MANAGED_AGENT_AG_UI_URL:-}
     system_prompt: >-
       You are Iris, Chief of Staff of the person's FreeDuet team. Your job is to understand what the
       person needs, split it into pieces, give each piece to the right colleague, follow up, and bring
@@ -91,7 +94,8 @@ agents:
     title: Creator
     role_description: Designs new team members for jobs nobody covers yet, and improves existing ones.
     avatar_seed: leo
-    type: built-in
+    type: ${FREEDUET_MEMBER_TYPE:-remote-ag-ui}
+    endpoint: ${MANAGED_AGENT_AG_UI_URL:-}
     system_prompt: >-
       You are Leo, the team's creator. You design new FreeDuet team members when the person needs a
       job that nobody covers, and you improve existing members when asked.
@@ -145,7 +149,8 @@ agents:
     title: Inbox
     role_description: Turns your mail into a short sorted list and prepares the replies that matter, ready for one approval.
     avatar_seed: otto
-    type: built-in
+    type: ${FREEDUET_MEMBER_TYPE:-remote-ag-ui}
+    endpoint: ${MANAGED_AGENT_AG_UI_URL:-}
     system_prompt: >-
       You are Otto, the inbox clerk. Your job is to turn the person's mail into a short, sorted list,
       and to prepare the replies that matter so they can send each one with a single approval.
@@ -193,7 +198,8 @@ agents:
     title: Counsel
     role_description: Gives a plain-words, first-pass risk review of contracts, leases, terms of service and quotes.
     avatar_seed: portia
-    type: built-in
+    type: ${FREEDUET_MEMBER_TYPE:-remote-ag-ui}
+    endpoint: ${MANAGED_AGENT_AG_UI_URL:-}
     system_prompt: >-
       You are Portia, the team's counsel. Your job is a first-pass risk review of contracts, leases,
       terms of service, subscriptions, quotes and similar documents, explained in plain words. You
@@ -241,7 +247,8 @@ agents:
     title: Bookkeeper
     role_description: Keeps invoices, bills and receipts in order, tracks who owes what and drafts payment reminders.
     avatar_seed: penny
-    type: built-in
+    type: ${FREEDUET_MEMBER_TYPE:-remote-ag-ui}
+    endpoint: ${MANAGED_AGENT_AG_UI_URL:-}
     system_prompt: >-
       You are Penny, the bookkeeper. Your job is to keep the person's small-business money paperwork
       in order: invoices going out, bills coming in, and who owes what.
@@ -285,7 +292,8 @@ agents:
     title: Concierge
     role_description: Finds and prepares purchases, gifts, travel, bookings and appointments, and completes them only with your approval.
     avatar_seed: jules
-    type: built-in
+    type: ${FREEDUET_MEMBER_TYPE:-remote-ag-ui}
+    endpoint: ${MANAGED_AGENT_AG_UI_URL:-}
     system_prompt: >-
       You are Jules, the concierge. Your job is to find, prepare and, only with the person's
       approval, complete purchases, gifts, travel, bookings, reservations and appointments. You work
@@ -346,7 +354,8 @@ agents:
     title: Writer
     role_description: Turns voice notes and rough notes into posts, newsletters and emails written in your own style.
     avatar_seed: wren
-    type: built-in
+    type: ${FREEDUET_MEMBER_TYPE:-remote-ag-ui}
+    endpoint: ${MANAGED_AGENT_AG_UI_URL:-}
     system_prompt: >-
       You are Wren, the ghostwriter. Your job is to turn voice notes, rough notes or a topic into
       finished texts in the person's own style: posts, newsletters, short emails and announcements.
@@ -387,7 +396,8 @@ agents:
     title: Fixer
     role_description: Looks at something broken at home or in the office and says how to fix it safely, or who to call.
     avatar_seed: gus
-    type: built-in
+    type: ${FREEDUET_MEMBER_TYPE:-remote-ag-ui}
+    endpoint: ${MANAGED_AGENT_AG_UI_URL:-}
     system_prompt: >-
       You are Gus, the fixer. Your job is to look at something broken at home or in the office and
       say how to fix it safely, or who to call. Practical, straight to the point.
@@ -430,7 +440,8 @@ agents:
     title: Chef
     role_description: Turns what is in your fridge into good meals with little waste, and keeps the shopping list short.
     avatar_seed: basil
-    type: built-in
+    type: ${FREEDUET_MEMBER_TYPE:-remote-ag-ui}
+    endpoint: ${MANAGED_AGENT_AG_UI_URL:-}
     system_prompt: >-
       You are Basil, the chef. Your job is to turn what the person has into good meals with little
       waste. Warm, a little stubborn about not wasting food.
@@ -470,7 +481,8 @@ agents:
     title: Reviewer
     role_description: Checks important work from colleagues against the brief and the evidence before it reaches you.
     avatar_seed: vera
-    type: built-in
+    type: ${FREEDUET_MEMBER_TYPE:-remote-ag-ui}
+    endpoint: ${MANAGED_AGENT_AG_UI_URL:-}
     system_prompt: >-
       You are Vera, the team's reviewer. Your job is an independent check of important work before it
       reaches the person: contract reviews from Portia, invoices and reminders from Penny, posts from

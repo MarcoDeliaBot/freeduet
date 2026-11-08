@@ -6,6 +6,10 @@
  * are FreeDuet's own rules: Iris is the product's own Bot, every member has a channel and closes its
  * prompt with the shared rules, every eval case names a real member, and the engines file keeps
  * metered APIs off with caps of zero. See docs/PROJECT.md and docs/PROVIDERS.md.
+ *
+ * The package loads in two modes (docs/M1_PLAN.md, D1 and D2): by default every member is a
+ * remote-ag-ui Bot at MANAGED_AGENT_AG_UI_URL, which is agent-freeduet; with the router off,
+ * FREEDUET_MEMBER_TYPE=built-in makes the same members built-in Bots. Both are checked.
  */
 import { describe, expect, test } from "bun:test";
 import { readFile } from "node:fs/promises";
@@ -15,6 +19,9 @@ import { loadTenantPackage } from "../src/tenant-package";
 
 const packageDirectory = fileURLToPath(
   new URL("../../examples/freeduet", import.meta.url),
+);
+const agentsFile = fileURLToPath(
+  new URL("../../examples/freeduet/agents.yaml", import.meta.url),
 );
 const casesFile = fileURLToPath(
   new URL("../../../evals/team/cases.yaml", import.meta.url),
@@ -37,43 +44,148 @@ type EvalCase = {
 
 type Engine = { billing: string; enabled: boolean };
 
-describe("FreeDuet tenant package", () => {
-  test("loads with OpenBot's own loader and keeps FreeDuet's rules", async () => {
-    const tenantPackage = await loadTenantPackage(packageDirectory);
-    const memberIds = tenantPackage.agents.map((agent) => agent.id);
+type MemberRow = {
+  id: string;
+  type: string;
+  endpoint?: string;
+  system_prompt: string;
+};
 
-    expect(tenantPackage.tenantId).toBe("freeduet");
-    expect(tenantPackage.productName).toBe("FreeDuet");
-    // The product's own Bot is Iris: the app draws the Bot whose id is tenant.id as the main orb.
-    expect(memberIds).toContain(tenantPackage.tenantId);
-    expect(
-      tenantPackage.agents.find((agent) => agent.id === tenantPackage.tenantId)
-        ?.name,
-    ).toBe("Iris");
-    expect(memberIds.length).toBe(10);
+// The address .env.example and scripts/start.sh give agent-freeduet.
+const ROUTER_URL = "http://localhost:4230/";
+
+const MODES = {
+  // Nothing set but the endpoint: the file's own default type is remote-ag-ui.
+  remote: {
+    FREEDUET_MEMBER_TYPE: undefined,
+    MANAGED_AGENT_AG_UI_URL: ROUTER_URL,
+  },
+  // FREEDUET_ROUTER=off. No endpoint either, so built-in members cannot depend on one.
+  "built-in": {
+    FREEDUET_MEMBER_TYPE: "built-in",
+    MANAGED_AGENT_AG_UI_URL: undefined,
+  },
+} as const satisfies Record<string, Record<string, string | undefined>>;
+
+/** The package as the server loads it with `environment` set, then the environment restored. */
+async function loadWith(environment: Record<string, string | undefined>) {
+  const previous = new Map(
+    Object.keys(environment).map((key) => [key, process.env[key]]),
+  );
+  try {
+    for (const [key, value] of Object.entries(environment)) {
+      if (value === undefined) delete process.env[key];
+      else process.env[key] = value;
+    }
+    return await loadTenantPackage(packageDirectory);
+  } finally {
+    for (const [key, value] of previous) {
+      if (value === undefined) delete process.env[key];
+      else process.env[key] = value;
+    }
+  }
+}
+
+/** The rows as written: the loader keeps no prompt for a remote member, agent-freeduet reads them here. */
+async function memberRows(): Promise<MemberRow[]> {
+  const { agents } = parse(await readFile(agentsFile, "utf8")) as {
+    agents: MemberRow[];
+  };
+  return agents;
+}
+
+describe("FreeDuet tenant package", () => {
+  for (const [mode, environment] of Object.entries(MODES)) {
+    test(`loads with OpenBot's own loader and keeps FreeDuet's rules (${mode})`, async () => {
+      const tenantPackage = await loadWith(environment);
+      const rows = await memberRows();
+      const memberIds = tenantPackage.agents.map((agent) => agent.id);
+
+      expect(tenantPackage.tenantId).toBe("freeduet");
+      expect(tenantPackage.productName).toBe("FreeDuet");
+      // The product's own Bot is Iris: the app draws the Bot whose id is tenant.id as the main orb.
+      expect(memberIds).toContain(tenantPackage.tenantId);
+      expect(
+        tenantPackage.agents.find(
+          (agent) => agent.id === tenantPackage.tenantId,
+        )?.name,
+      ).toBe("Iris");
+      expect(memberIds.length).toBe(10);
+      expect(tenantPackage.omittedAgentIds).toEqual([]);
+      expect(memberIds).toEqual(rows.map((row) => row.id));
+
+      for (const agent of tenantPackage.agents) {
+        const written = rows.find((row) => row.id === agent.id)?.system_prompt;
+        const prompt = String(
+          mode === "built-in" ? agent.configuration.systemPrompt : written,
+        );
+        // Built-in, the server runs the very prompt agent-freeduet would read.
+        if (mode === "built-in") expect(prompt).toBe(String(written));
+        expect({
+          member: agent.id,
+          closesWithSharedRules: prompt.includes(SHARED_RULES_START),
+        }).toEqual({
+          member: agent.id,
+          closesWithSharedRules: true,
+        });
+        expect({
+          member: agent.id,
+          hasChannel: tenantPackage.channels.some((channel) =>
+            channel.permittedAgents.includes(agent.id),
+          ),
+        }).toEqual({ member: agent.id, hasChannel: true });
+      }
+    });
+  }
+
+  test("remote members are all at MANAGED_AGENT_AG_UI_URL, the only address given the token", async () => {
+    const tenantPackage = await loadWith(MODES.remote);
 
     for (const agent of tenantPackage.agents) {
-      const prompt = String(agent.configuration.systemPrompt ?? "");
       expect({
         member: agent.id,
-        closesWithSharedRules: prompt.includes(SHARED_RULES_START),
+        type: agent.type,
+        endpoint: agent.configuration.endpoint,
       }).toEqual({
         member: agent.id,
-        closesWithSharedRules: true,
+        type: "remote_ag_ui",
+        endpoint: ROUTER_URL,
       });
+    }
+  });
+
+  test("built-in members carry no endpoint", async () => {
+    const tenantPackage = await loadWith(MODES["built-in"]);
+
+    for (const agent of tenantPackage.agents) {
       expect({
         member: agent.id,
-        hasChannel: tenantPackage.channels.some((channel) =>
-          channel.permittedAgents.includes(agent.id),
-        ),
-      }).toEqual({ member: agent.id, hasChannel: true });
+        type: agent.type,
+        endpoint: agent.configuration.endpoint,
+      }).toEqual({ member: agent.id, type: "built_in", endpoint: undefined });
+    }
+  });
+
+  test("every row takes its type and endpoint from the environment", async () => {
+    for (const row of await memberRows()) {
+      expect({
+        member: row.id,
+        type: row.type,
+        endpoint: row.endpoint,
+      }).toEqual({
+        member: row.id,
+        // biome-ignore lint/suspicious/noTemplateCurlyInString: the unexpanded placeholder as written in agents.yaml is what this asserts.
+        type: "${FREEDUET_MEMBER_TYPE:-remote-ag-ui}",
+        // biome-ignore lint/suspicious/noTemplateCurlyInString: the unexpanded placeholder as written in agents.yaml is what this asserts.
+        endpoint: "${MANAGED_AGENT_AG_UI_URL:-}",
+      });
     }
   });
 });
 
 describe("FreeDuet team evals", () => {
   test("every case is well formed and names a real member", async () => {
-    const tenantPackage = await loadTenantPackage(packageDirectory);
+    const tenantPackage = await loadWith(MODES.remote);
     const memberIds = new Set(tenantPackage.agents.map((agent) => agent.id));
     const { cases } = parse(await readFile(casesFile, "utf8")) as {
       cases: EvalCase[];
