@@ -4,6 +4,7 @@
  * index.ts in each mode.
  */
 import { describe, expect, spyOn, test } from "bun:test";
+import { readFileSync } from "node:fs";
 import {
   CopilotKitIntelligence,
   IntelligenceAgentRunner,
@@ -17,6 +18,8 @@ import {
   threadReaderClient,
 } from "../src/freeduet/backend";
 import { LocalIntelligence } from "../src/freeduet/local-intelligence";
+// No effect on this process: FREEDUET_INTELLIGENCE is not set here.
+import { telemetryOffWithoutIntelligence } from "../src/freeduet/telemetry-off";
 import { setupRows } from "../src/openduet/setup";
 import { createFakeThreadsModule } from "./support/fake-local-threads";
 import { testEnvironment } from "./support/environment";
@@ -234,6 +237,87 @@ describe("createThreadBackend", () => {
         async () => ({ id: "person", role: "user" }),
       ),
     ).toThrow("createThreadBackend");
+  });
+});
+
+describe("telemetry with Intelligence off", () => {
+  test.each([
+    ["unset", {}, "true", true],
+    ["empty", { COPILOTKIT_TELEMETRY_DISABLED: "" }, "true", true],
+    [
+      "false, chosen",
+      { COPILOTKIT_TELEMETRY_DISABLED: "false" },
+      "false",
+      false,
+    ],
+    ["0, chosen", { COPILOTKIT_TELEMETRY_DISABLED: "0" }, "0", false],
+    ["true", { COPILOTKIT_TELEMETRY_DISABLED: "true" }, "true", false],
+  ] as const)("COPILOTKIT_TELEMETRY_DISABLED %s", (_, set, after, changed) => {
+    const environment: Record<string, string | undefined> = {
+      FREEDUET_INTELLIGENCE: "off",
+      ...set,
+    };
+    expect(telemetryOffWithoutIntelligence(environment)).toBe(changed);
+    expect(environment.COPILOTKIT_TELEMETRY_DISABLED).toBe(after);
+  });
+
+  test.each([
+    ["unset", {}],
+    ["on", { FREEDUET_INTELLIGENCE: "on" }],
+  ])("is left to upstream with the switch %s", (_, set) => {
+    const environment: Record<string, string | undefined> = { ...set };
+    expect(telemetryOffWithoutIntelligence(environment)).toBe(false);
+    expect(environment.COPILOTKIT_TELEMETRY_DISABLED).toBeUndefined();
+  });
+
+  test("index.ts loads the switch before anything that can load the runtime", () => {
+    const source = readFileSync(
+      new URL("../src/index.ts", import.meta.url),
+      "utf8",
+    );
+    const imports = [...source.matchAll(/^import [^;]*?["']([^"']+)["'];/gms)]
+      .map((match) => match[1])
+      .filter((specifier) => specifier !== undefined);
+    expect(imports.slice(0, 2)).toEqual([
+      "./telemetry",
+      "./freeduet/telemetry-off",
+    ]);
+  });
+});
+
+describe("Learning settings with Intelligence off", () => {
+  test.each([
+    ["the token alone", { INTELLIGENCE_SERVICE_TOKEN: "service-token" }],
+    ["the project alone", { INTELLIGENCE_PROJECT_ID: "not-a-number" }],
+    [
+      "a malformed Learning container",
+      { CPK_INTELLIGENCE_LEARNING_CONTAINER_ID: "Not A Container" },
+    ],
+  ])("%s does not stop the server; it is named as ignored", async (_, set) => {
+    const environment = withoutIntelligence({
+      FREEDUET_INTELLIGENCE: "off",
+      ...set,
+    });
+    const config = loadConfig(environment);
+    expect(config.learningSetup).toBeUndefined();
+    expect(config.learning).toBeUndefined();
+    const lines: string[] = [];
+    await createThreadBackend(config, NO_DATABASE, {
+      threads: createFakeThreadsModule().module,
+      log: (line) => lines.push(line),
+    });
+    expect(lines).toHaveLength(1);
+    expect(JSON.parse(lines[0] ?? "{}").ignored).toEqual(Object.keys(set));
+  });
+
+  test("with Intelligence the half-set pair still refuses, as upstream", () => {
+    expect(() =>
+      loadConfig(
+        testEnvironment({ INTELLIGENCE_SERVICE_TOKEN: "service-token" }),
+      ),
+    ).toThrow(
+      "INTELLIGENCE_SERVICE_TOKEN and INTELLIGENCE_PROJECT_ID go together",
+    );
   });
 });
 

@@ -1533,6 +1533,8 @@ function switchedOn(environment: Environment, name: string): boolean {
 function learningSetupCredential(environment: Environment): {
   learningSetup?: { serviceToken: string; projectId: string };
 } {
+  // FreeDuet: with FREEDUET_INTELLIGENCE=off these are ignored and named in the boot log (#42).
+  if (localRuntimeFrom(environment)) return {};
   const serviceToken = optional(environment, "INTELLIGENCE_SERVICE_TOKEN");
   const projectId = optional(environment, "INTELLIGENCE_PROJECT_ID");
   if (!serviceToken && !projectId) return {};
@@ -1549,6 +1551,8 @@ function learningSetupCredential(environment: Environment): {
 
 /** Optional container default; the enabled preference alone does not collect or deliver. */
 function learningDefault(environment: Environment): LearningTarget | undefined {
+  // FreeDuet: with FREEDUET_INTELLIGENCE=off this is ignored and named in the boot log (#42).
+  if (localRuntimeFrom(environment)) return undefined;
   const containerId = optional(
     environment,
     "CPK_INTELLIGENCE_LEARNING_CONTAINER_ID",
