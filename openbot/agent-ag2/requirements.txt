@@ -1,4 +1,7 @@
-ag2[ag-ui,anthropic,openai]
+# Pinned (FreeDuet, #23): unpinned, anthropic 2.x arrived through ag2's extra and stopped sending the
+# key the way tests/test_main.py expects. These are the newest versions that pass; raise them together.
+ag2[ag-ui,anthropic,openai]==1.3.0
+anthropic==1.17.0
 fastapi
 python-multipart
 uvicorn[standard]
