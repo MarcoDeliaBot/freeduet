@@ -6,7 +6,7 @@ docs/ARCHITECTURE.md §2.5 says:
 
 | Report line | Checkpoint field |
 |---|---|
-| Outcome: done / partly done / blocked, failed, needs you | phase: complete / in-progress / blocked |
+| Outcome: done / partly done, in progress / blocked, failed, needs you | phase: complete / in-progress / blocked |
 | Done | completed |
 | Evidence | verification |
 | Not done and why, with what was tried | blockers; an item that says what was tried also in decisions |
@@ -14,14 +14,17 @@ docs/ARCHITECTURE.md §2.5 says:
 | Next step | next_steps |
 
 "Done" needs evidence and no open next step or blocker; a report that says done without them is
-kept in progress, with the reason in `decisions`. A segment without a report (it ended on a tool
-call OpenBot runs, or it answered a question) is in progress, with the tool names in `in_progress`.
-A segment that ended in RUN_ERROR is blocked, with the error in `blockers`.
+kept in progress, with the reason in `decisions`. "In progress" is work handed to a colleague or
+still running, with nothing for the person to do yet. A segment without a report (it ended on a tool
+call OpenBot runs, or it answered a question) is in progress too, with the tool names in
+`in_progress`; both reach the team log as "in progress". A segment that ended in RUN_ERROR is
+blocked, with the error in `blockers`.
 
 Labels are read the way evals/team/checks.ts reads them: optional bullet, heading or bold, the label
 (short or as the prompt words it), then a colon or a dash. The last "Outcome" line starts the report.
 Italian labels and outcomes (the shared rules give the exact set: Esito, Fatto, Prove, Non fatto e
-perché, Già, Prossimo passo; fatto, fatto in parte, bloccato, fallito, serve te) read the same.
+perché, Già, Prossimo passo; fatto, fatto in parte, in corso, bloccato, fallito, serve te) read
+the same.
 """
 
 from __future__ import annotations
@@ -29,12 +32,13 @@ from __future__ import annotations
 import re
 from dataclasses import dataclass, field
 
-OUTCOMES = ("done", "partly done", "blocked", "failed", "needs you")
 IN_PROGRESS = "in progress"
+OUTCOMES = ("done", "partly done", IN_PROGRESS, "blocked", "failed", "needs you")
 ERROR = "error"
 PHASE_FOR = {
     "done": "complete",
     "partly done": "in-progress",
+    IN_PROGRESS: "in-progress",
     "blocked": "blocked",
     "failed": "blocked",
     "needs you": "blocked",
@@ -71,10 +75,20 @@ _ITALIAN_OUTCOMES = (
     ("fatto in parte", "partly done"),
     ("parzialmente fatto", "partly done"),
     ("fatto", "done"),
+    ("in corso", IN_PROGRESS),
     ("bloccat", "blocked"),
     ("fallit", "failed"),
     ("serve te", "needs you"),
 )
+
+
+# The next step a checkpoint gets when the report names none: by outcome, else by phase.
+_NEXT_STEP = {
+    "needs you": "Wait for the person's answer",
+    IN_PROGRESS: "Wait for the work under way to finish",
+    "in-progress": "Finish what is not done yet",
+    "blocked": "Resolve the blocker, then try again",
+}
 
 
 def _field_of(label: str) -> str:
@@ -131,7 +145,7 @@ class Report:
 
 def parse_report(text: str) -> Report | None:
     """The report at the end of `text`, or None when there is none or its outcome is not one of
-    done, partly done, blocked, failed, needs you."""
+    done, partly done, in progress, blocked, failed, needs you."""
     lines = (text or "").replace("\r\n", "\n").split("\n")
     matches = [_LABEL.match(line) for line in lines]
     starts = [i for i, match in enumerate(matches) if match and _field_of(match.group(1)) == "outcome"]
@@ -240,9 +254,7 @@ def _from_report(facts: SegmentFacts, report: Report) -> Assessment:
     if phase == "blocked" and not blockers:
         blockers = [f"Reported {report.outcome} without saying why"]
     if phase != "complete" and not next_steps:
-        next_steps = ["Wait for the person's answer"] if report.outcome == "needs you" else (
-            ["Finish what is not done yet"] if phase == "in-progress" else ["Resolve the blocker, then try again"]
-        )
+        next_steps = [_NEXT_STEP.get(report.outcome) or _NEXT_STEP[phase]]
     state = _state(
         facts,
         completed=[*done, *(f"Already: {item}" for item in already)],
