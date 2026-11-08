@@ -1,0 +1,5 @@
+# Fake-mode reports are a self-test of the runner, not results.
+*-fake.json
+*-fake.md
+*-fake-partial.json
+*-fake-partial.md
