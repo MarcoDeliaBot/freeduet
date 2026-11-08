@@ -1,4 +1,5 @@
 import type { Message } from "@ag-ui/core";
+import { appConfig } from "@/lib/generated/application-config";
 import { readFirstDay } from "./first-day";
 
 /**
@@ -19,7 +20,9 @@ import { readFirstDay } from "./first-day";
  */
 export class ThreadBusyError extends Error {
   constructor() {
-    super("OpenDuet is still finishing something. I'll send this next.");
+    super(
+      `${appConfig.brand.productName} is still finishing something. I'll send this next.`,
+    );
     this.name = "ThreadBusyError";
   }
 }

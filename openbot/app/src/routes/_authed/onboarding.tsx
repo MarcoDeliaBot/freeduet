@@ -382,7 +382,7 @@ function AgentsStep() {
 const MORE_FROM_COPILOTKIT = [
   {
     name: "OpenBot",
-    line: "The self-hosted assistant OpenDuet is built on.",
+    line: `The self-hosted assistant ${appConfig.brand.productName} is built on.`,
     href: "https://www.copilotkit.ai/openbot?ref=openduet_onboarding",
   },
   {

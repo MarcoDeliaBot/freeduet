@@ -20,6 +20,7 @@ import {
   withApprovalWaits,
   withoutMessages,
 } from "@/lib/channels/run-lifecycle";
+import { appConfig } from "@/lib/generated/application-config";
 
 describe("isThreadLocked", () => {
   test("reads the realtime runtime's lock error, the HTTP 409 and the server's own words", () => {
@@ -49,7 +50,7 @@ describe("ThreadBusyError", () => {
   test("says the parity spec's sentence and is recognised by name", () => {
     const error = new ThreadBusyError();
     expect(error.message).toBe(
-      "OpenDuet is still finishing something. I'll send this next.",
+      `${appConfig.brand.productName} is still finishing something. I'll send this next.`,
     );
     expect(isThreadBusyError(error)).toBe(true);
     expect(isThreadBusyError(new Error(error.message))).toBe(false);
