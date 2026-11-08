@@ -27,10 +27,34 @@ import type {
   PgAgentRunner,
   StoredThread,
   StoredThreadMessage,
+  ThreadLockDeniedErrorShape,
+  ThreadOwnershipErrorShape,
   ThreadsModule,
+  UnknownThreadErrorShape,
 } from "../../src/freeduet/threads/contract";
 
 type Lock = { runId: string; expiresAt: number };
+
+/** The store's three errors, shaped as the contract names them (`threads/contract.ts`). */
+export function lockDenied(): ThreadLockDeniedErrorShape {
+  return Object.assign(new Error("Thread lock denied"), {
+    name: "ThreadLockDeniedError",
+    status: 409,
+    message: "Thread lock denied",
+  } as const);
+}
+export function unknownThread(): UnknownThreadErrorShape {
+  return Object.assign(new Error("Thread not found"), {
+    name: "UnknownThreadError",
+    status: 404,
+  } as const);
+}
+export function notYourThread(): ThreadOwnershipErrorShape {
+  return Object.assign(new Error("Thread not found"), {
+    name: "ThreadOwnershipError",
+    status: 404,
+  } as const);
+}
 
 export type FakeThreadStore = LocalThreadStore & {
   readonly threads: Map<string, StoredThread>;
@@ -54,8 +78,7 @@ export function createFakeThreadStore(now: () => number = Date.now) {
     async getOrCreateThread({ threadId, userId, agentId }) {
       const existing = threads.get(threadId);
       if (existing) {
-        if (existing.userId !== userId)
-          throw new Error("That thread belongs to somebody else.");
+        if (existing.userId !== userId) throw notYourThread();
         return existing;
       }
       const at = new Date(now());
@@ -146,15 +169,6 @@ export function storedRow(message: Message): StoredThreadMessage {
   };
 }
 
-/** The store's refusal, recognised by its name (`threads/pg-runner.ts`, `ThreadLockDeniedError`). */
-function lockDenied() {
-  const denied = Object.assign(new Error("Thread lock denied"), {
-    status: 409,
-  });
-  denied.name = "ThreadLockDeniedError";
-  return denied;
-}
-
 export function createFakeRunner(
   store: ReturnType<typeof createFakeThreadStore>,
 ): PgAgentRunner & { sweeps: number; runs: string[] } {
@@ -186,9 +200,7 @@ export function createFakeRunner(
         const thread = await store.getThread(threadId);
         if (!thread) {
           running.delete(threadId);
-          const unknown = new Error("Thread not found");
-          unknown.name = "UnknownThreadError";
-          subject.error(unknown);
+          subject.error(unknownThread());
           return;
         }
         // Whoever takes the lock releases it: a headless turn took it already, a browser run did not.

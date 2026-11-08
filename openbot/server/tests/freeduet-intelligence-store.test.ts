@@ -136,6 +136,43 @@ afterAll(async () => {
   EchoAgent.gate = undefined;
 });
 
+describe.skipIf(!STORE_LANDED)("the store's errors match the contract", () => {
+  test("by name, status and message, as threads/contract.ts names them", async () => {
+    const threads = (await import(
+      new URL("../src/freeduet/threads/index.ts", import.meta.url).href
+    )) as Record<
+      string,
+      new (
+        ...args: string[]
+      ) => Error & { status?: number }
+    >;
+    const denied = new (
+      threads.ThreadLockDeniedError as NonNullable<(typeof threads)[string]>
+    )("thread", "run");
+    expect({
+      name: denied.name,
+      status: denied.status,
+      message: denied.message,
+    }).toEqual({
+      name: "ThreadLockDeniedError",
+      status: 409,
+      message: "Thread lock denied",
+    });
+    for (const [name, status] of [
+      ["UnknownThreadError", 404],
+      ["ThreadOwnershipError", 404],
+    ] as const) {
+      const error = new (
+        threads[name] as NonNullable<(typeof threads)[string]>
+      )("thread");
+      expect({ name: error.name, status: error.status }).toEqual({
+        name,
+        status,
+      });
+    }
+  });
+});
+
 describe.skipIf(!STORE_LANDED)("the wiring over the real store", () => {
   test("a conversation is the owner's alone, and survives a restart", async () => {
     const { call } = await boot();

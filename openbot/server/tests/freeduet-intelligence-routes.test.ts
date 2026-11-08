@@ -29,7 +29,11 @@ import {
   guardThreadRoutes,
 } from "../src/freeduet/thread-routes";
 import { testEnvironment } from "./support/environment";
-import { createFakeThreadsModule } from "./support/fake-local-threads";
+import {
+  createFakeThreadsModule,
+  lockDenied,
+  unknownThread,
+} from "./support/fake-local-threads";
 
 /**
  * Answers "Hello <what you said>", after `gate` opens when one is set: after RUN_STARTED, or before
@@ -484,14 +488,32 @@ describe("the guard reads paths as the runtime's router does", () => {
   });
 });
 
-test("a lock denial is recognised by the store's typed error and by the adapter's 409", () => {
-  const typed = new Error("busy");
-  typed.name = "ThreadLockDeniedError";
-  const platform = Object.assign(new Error("busy"), {
-    name: "PlatformRequestError",
-    status: 409,
+describe("the store's errors, as the contract names them", () => {
+  test("a lock denial is recognised by the store's error and by the adapter's 409", () => {
+    const platform = Object.assign(new Error("busy"), {
+      name: "PlatformRequestError",
+      status: 409,
+    });
+    expect(isThreadLockDenied(lockDenied())).toBe(true);
+    expect(isThreadLockDenied(platform)).toBe(true);
+    expect(isThreadLockDenied(unknownThread())).toBe(false);
+    expect(isThreadLockDenied(new Error("busy"))).toBe(false);
   });
-  expect(isThreadLockDenied(typed)).toBe(true);
-  expect(isThreadLockDenied(platform)).toBe(true);
-  expect(isThreadLockDenied(new Error("busy"))).toBe(false);
+
+  test("ThreadOwnershipError, somebody else creating the same id in the same instant, answers 404", async () => {
+    await chat("ada", "thread-contested", "run-ada");
+    const getThread = fake.store.getThread;
+    // The guard's and the adapter's first reads see no thread; the create then meets the owner.
+    let reads = 0;
+    fake.store.getThread = async (threadId) =>
+      reads++ < 2 ? null : getThread(threadId);
+    try {
+      const turn = await chat("ben", "thread-contested", "run-ben");
+      expect(turn.status).toBe(404);
+      expect(turn.text).not.toContain("Hello Ada");
+    } finally {
+      fake.store.getThread = getThread;
+    }
+    expect(fake.runner.runs).not.toContain("run-ben");
+  });
 });
