@@ -129,3 +129,61 @@ describe("asking the model for a title", () => {
     expect(answer).toBeNull();
   });
 });
+
+describe("an Anthropic key", () => {
+  test("goes to Anthropic's own endpoint and never to OpenAI's", async () => {
+    const calls: {
+      url: string;
+      headers: Record<string, string>;
+      body: Record<string, unknown>;
+    }[] = [];
+    const fetchImpl = (async (url: string | URL, init?: RequestInit) => {
+      calls.push({
+        url: String(url),
+        headers: init?.headers as Record<string, string>,
+        body: JSON.parse(String(init?.body ?? "{}")),
+      });
+      return new Response(
+        JSON.stringify({
+          content: [{ type: "text", text: "Travel receipt rules" }],
+        }),
+      );
+    }) as unknown as typeof fetch;
+
+    const answer = await createChannelTitler({
+      provider: "anthropic",
+      model: "claude-sonnet-5-5",
+      resolveApiKey: async () => "anthropic-key",
+      environment: {},
+      fetchImpl,
+    })("Asked: which receipts count as travel?");
+
+    expect(answer).toBe("Travel receipt rules");
+    expect(calls.map((call) => call.url)).toEqual([
+      "https://api.anthropic.com/v1/messages",
+    ]);
+    // Exactly these headers: the key travels as x-api-key and there is no bearer token at all.
+    expect(calls[0]?.headers).toEqual({
+      "content-type": "application/json",
+      "x-api-key": "anthropic-key",
+      "anthropic-version": "2023-06-01",
+    });
+    expect(calls[0]?.body.model).toBe("claude-sonnet-5-5");
+    expect(calls[0]?.body.max_tokens).toBe(512);
+  });
+
+  test("a refusal throws, so the queue retries it", async () => {
+    const fetchImpl = (async () =>
+      new Response("overloaded", { status: 529 })) as unknown as typeof fetch;
+
+    const thrown = await createChannelTitler({
+      provider: "anthropic",
+      model: "claude-sonnet-5-5",
+      resolveApiKey: async () => "anthropic-key",
+      environment: {},
+      fetchImpl,
+    })("Asked: anything?").catch((error: Error) => error);
+
+    expect(String(thrown)).toContain("529");
+  });
+});

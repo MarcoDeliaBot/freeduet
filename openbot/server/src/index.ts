@@ -1,5 +1,7 @@
 // First, before anything that imports the CopilotKit runtime: see telemetry.ts.
 import "./telemetry";
+// FreeDuet: before anything reads the model environment (docs/UPSTREAM_TOUCHES.md).
+import "./freeduet/plan-token";
 import type { AbstractAgent } from "@ag-ui/client";
 import {
   CopilotKitIntelligence,
@@ -2476,6 +2478,7 @@ const channelSummaries = {
   queue: createWorkQueue(database),
   transcript: routineIntelligence,
   title: createChannelTitler({
+    provider: runtimeModel.provider,
     model: runtimeModel.defaultModel,
     resolveApiKey: resolveRuntimeModelApiKey,
   }),

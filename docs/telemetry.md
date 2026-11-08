@@ -1,5 +1,7 @@
 # Intelligence sign-up and OpenDuet usage tracking
 
+> **FreeDuet:** telemetry is **off** by default. `.env.example` sets `COPILOTKIT_TELEMETRY_DISABLED=true`, so the runtime sends no usage events unless you remove that line. The rest of this page is OpenDuet's upstream description, kept for when you choose to turn it on.
+
 OpenDuet uses the telemetry the CopilotKit runtime already sends. It adds no events of its own, and
 there is no separate analytics SDK or key to configure.
 

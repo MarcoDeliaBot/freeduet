@@ -22,6 +22,7 @@ import {
   ItemTitle,
 } from "@/components/ui/item";
 import { Separator } from "@/components/ui/separator";
+import { FreeDuetAbout } from "@/freeduet/about-section";
 import { currentUserQueryOptions } from "@/lib/auth/queries";
 import { appConfig } from "@/lib/generated/application-config";
 import { formatHotkey, HOTKEYS } from "@/lib/hotkeys/hotkeys";
@@ -132,6 +133,7 @@ function RouteComponent() {
           ))}
         </PageRows>
       </PageSection>
+      <FreeDuetAbout />
     </PageShell>
   );
 }

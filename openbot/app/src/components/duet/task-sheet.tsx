@@ -6,6 +6,7 @@ import { agentListQueryOptions } from "@/lib/agents/queries";
 import { clockTime } from "@/lib/approval-view";
 import { useMarkOpenChannelRead } from "@/lib/channels/mark-read";
 import { channelQueryOptions } from "@/lib/channels/queries";
+import { appConfig } from "@/lib/generated/application-config";
 import {
   replyToTaskMutationOptions,
   resolveTaskMutationOptions,
@@ -124,8 +125,7 @@ function FailureUpdate({ task }: { task: TaskRecord }) {
 }
 
 /** What a refused Try again or reply says, when it lost to a run already going. */
-const STILL_FINISHING =
-  "OpenDuet is still finishing something. Send this again when it's done.";
+const STILL_FINISHING = `${appConfig.brand.productName} is still finishing something. Send this again when it's done.`;
 const friendly = (error: Error) =>
   /already running|couldn't finish can be tried/i.test(error.message)
     ? STILL_FINISHING

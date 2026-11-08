@@ -72,6 +72,7 @@ import { afterMs } from "@/lib/copilot/join-thread";
 import { repairUnansweredToolCalls } from "@/lib/copilot/repair-history";
 import { stoppedReason } from "@/lib/copilot/stopped-turn";
 import { readThreadMessages } from "@/lib/copilot/thread-messages";
+import { appConfig } from "@/lib/generated/application-config";
 import { useSkillCommands } from "@/lib/plugins/skill-commands";
 import {
   askChannelAgent,
@@ -357,8 +358,7 @@ function describeAttachments(attachments: readonly Attachment[]): string {
  * tab's. Said in the person's terms, never with the thread's id.
  */
 const THREAD_LOCKED = /\bthread\b.*\block/i;
-const STILL_FINISHING =
-  "OpenDuet is still finishing something. Send this again when it's done.";
+const STILL_FINISHING = `${appConfig.brand.productName} is still finishing something. Send this again when it's done.`;
 
 export function ChannelChat({
   channel,

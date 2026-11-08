@@ -43,6 +43,7 @@ import {
   readStartedTask,
   TaskCardTool,
 } from "@/lib/copilot/task-card-tool";
+import { appConfig } from "@/lib/generated/application-config";
 import {
   type ReportDecision,
   type TaskRecord,
@@ -1075,7 +1076,7 @@ test.each([undefined, "Couldn't save this reply. Try again."])(
       within(sheet).getByRole("button", { name: "Try this task again" }),
     );
     expect((await within(sheet).findByRole("alert")).textContent).toBe(
-      "OpenDuet is still finishing something. Send this again when it's done.",
+      `${appConfig.brand.productName} is still finishing something. Send this again when it's done.`,
     );
     expect(posted).toEqual(["/api/openduet/tasks/rosa/again"]);
     expect(replyBodies).toEqual([]);
