@@ -845,8 +845,11 @@ describe("the report", () => {
     );
   });
 
-  /** The CLI against a real local server: the flag, the header and the tools on the wire. */
-  async function cli(flags: string[]) {
+  /**
+   * The CLI against a real local server: the flag, the header and the tools on the wire. `real`
+   * conversations of the person's own are in its sidebar, as on a FreeDuet somebody uses.
+   */
+  async function cli(flags: string[], real = 0) {
     const runs: RunBody[] = [];
     let busy = 0;
     const stored: Stored[] = [];
@@ -862,6 +865,21 @@ describe("the report", () => {
                 text: '{"checks":[{"id":"must-1","holds":true,"reason":"ideas given"}]}',
               },
             ],
+          });
+        // The deployment guard: the eval stack's user, with no conversation of their own yet.
+        if (path === "/api/me")
+          return Response.json({ user: { email: "dev@openbot.local" } });
+        if (path === "/api/channels" && request.method === "GET")
+          return Response.json({
+            channels: [
+              { name: "FreeDuet", openduetChannel: "freeduet" },
+              ...Array.from({ length: real }, (_, i) => ({
+                name: "Basil",
+                summary: `Dinner ${i}`,
+                openduetChannel: null,
+              })),
+            ],
+            nextCursor: null,
           });
         if (path === "/api/channels")
           return Response.json({ channel: { id: "ch1", threadId: "th1" } });
@@ -961,6 +979,26 @@ describe("the report", () => {
       expect(off.markdown).toContain(
         "Computer tools: not offered (--no-computer)",
       );
+    },
+    { timeout: 120_000 },
+  );
+
+  test(
+    "the CLI refuses the person's own FreeDuet before creating anything, unless told to run there",
+    async () => {
+      const [refused, allowed] = await Promise.all([
+        cli(["--no-computer"], 282),
+        cli(["--no-computer", "--allow-real-deployment"], 282),
+      ]);
+      expect(refused.code).not.toBe(0);
+      expect(refused.stderr).toContain(
+        "looks like a real FreeDuet, not the eval stack: its user dev@openbot.local has 282 conversations that are not evals (more than 5)",
+      );
+      expect(refused.stderr).toContain("freeduet-eval-stack.sh reset");
+      expect(refused.runs).toEqual([]);
+      expect(allowed.code).toBe(0);
+      expect(allowed.stdout).toContain("Warning:");
+      expect(allowed.runs).toHaveLength(1);
     },
     { timeout: 120_000 },
   );
