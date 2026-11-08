@@ -58,8 +58,11 @@ def test_server_calls_is_configured_and_mounted(server_calls_module):
 
 
 def test_v1_is_left_to_server_calls_by_the_token_check(client):
-    # No server_calls module in this worktree: not found, rather than refused for the agent token.
-    assert client.post("/v1/messages").status_code == 404
+    # The agent-token check leaves /v1/messages alone: server_calls refuses it for its own key.
+    response = client.post("/v1/messages")
+    assert response.status_code == 401
+    assert response.json() != {"error": "unauthorised"}
+    assert response.json()["error"]["type"] == "authentication_error"
 
 
 def test_run_claude_text_answers_from_a_locked_down_cli(fake_cli, server_calls_module):
