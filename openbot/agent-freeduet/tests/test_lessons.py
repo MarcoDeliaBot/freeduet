@@ -40,7 +40,7 @@ def status(tmp_path, code):
 def test_a_proposal_is_pending_with_a_fresh_code(tmp_path):
     record = propose(tmp_path, evidence="token: abc123secret was in the draft")
     assert re.fullmatch(r"L-[A-Z2-9]{4}", record["code"]) and record["status"] == "pending"
-    assert lessons.approval_sentence(record["code"]) == f"To approve, reply: approve {record['code']}"
+    assert lessons.approval_sentence(record["code"]) == f"To approve, reply: approve {record['code']} (in Italian: approvo {record['code']})"
     stored = json.loads((tmp_path / "lessons" / "bookkeeper.json").read_text())
     assert stored["lessons"][0]["proposed_in"] == {"thread": "thread-1", "run": "run-1"}
     assert "abc123secret" not in json.dumps(stored)  # redacted
@@ -179,3 +179,15 @@ def test_from_iris_reads_openbot_s_own_attribution():
     assert origin.from_iris([user("Iris mentioned you")], assertion(depth=1)) is None  # a hop nobody names
     assert origin.from_iris([], assertion()) is None
     assert origin.request([asked | {"content": asked["content"] + "\nConstraints: before Friday"}]) == ("x", ["before Friday"])
+
+
+def test_the_italian_approvo_activates_it_and_non_approvo_does_not(tmp_path):
+    code = propose(tmp_path)["code"]
+    assert activate(tmp_path, [user(f"non approvo {code}")]) == []
+    assert status(tmp_path, code) == "pending"
+    assert activate(tmp_path, [user(f"approvo {code}")]) == [code]
+    assert status(tmp_path, code) == "active"
+
+
+def test_the_approval_sentence_carries_the_italian_form():
+    assert lessons.approval_sentence("L-7K3Q") == "To approve, reply: approve L-7K3Q (in Italian: approvo L-7K3Q)"

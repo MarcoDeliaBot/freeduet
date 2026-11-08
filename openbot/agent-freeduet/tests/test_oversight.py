@@ -117,7 +117,7 @@ def _propose(client, fake_cli, run_index=0):
         {"text": "Proposed."}])
     post_run(client, run_body([IRIS, {"id": "u1", "role": "user", "content": "Basil keeps forgetting allergies."}], bot_id="freeduet"))
     reply = tool_result(fake_cli.run(run_index), "propose_lesson")["text"]
-    code = re.search(r"To approve, reply: approve (L-[A-Z0-9]{4})$", reply).group(1)
+    code = re.search(r"To approve, reply: approve (L-[A-Z0-9]{4}) \(in Italian: approvo L-[A-Z0-9]{4}\)$", reply).group(1)
     return code
 
 

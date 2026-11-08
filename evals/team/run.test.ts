@@ -250,6 +250,21 @@ describe("hard check: report lines", () => {
     },
   );
 
+  test("reads an Italian report with the labels the shared rules give", () => {
+    const result = checkReportLines(
+      "Ho preparato la fattura.\n\nEsito: fatto in parte\nFatto: bozza per Rossi\nProve: fattura-rossi.pdf su Drive\nNon fatto e perché: manca la partita IVA\nGià: niente\nProssimo passo: dammi la partita IVA",
+    );
+    expect(result.pass).toBe(true);
+    expect(result.report).toEqual({
+      Outcome: "fatto in parte",
+      Done: "bozza per Rossi",
+      Evidence: "fattura-rossi.pdf su Drive",
+      "Not done": "manca la partita IVA",
+      Already: "niente",
+      "Next step": "dammi la partita IVA",
+    });
+  });
+
   test("reads the six values", () => {
     const { report } = checkReportLines(`Sent it.\n\n${REPORT}`);
     expect(report).toEqual({

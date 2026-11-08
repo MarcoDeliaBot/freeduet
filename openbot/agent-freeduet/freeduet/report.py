@@ -20,6 +20,8 @@ A segment that ended in RUN_ERROR is blocked, with the error in `blockers`.
 
 Labels are read the way evals/team/checks.ts reads them: optional bullet, heading or bold, the label
 (short or as the prompt words it), then a colon or a dash. The last "Outcome" line starts the report.
+Italian labels and outcomes (the shared rules give the exact set: Esito, Fatto, Prove, Non fatto e
+perché, Già, Prossimo passo; fatto, fatto in parte, bloccato, fallito, serve te) read the same.
 """
 
 from __future__ import annotations
@@ -45,7 +47,9 @@ MAX_SUMMARY = 200
 
 _LABEL = re.compile(
     r"^\s*(?:#{1,6}\s+)?(?:[-*•>]\s+|\d+[.)]\s+)?(?:\*\*|__|\*|_)?\s*"
-    r"(outcome|done|evidence|not done(?: and why)?(?:,? with what (?:you|i) tried)?|already(?: [a-z ,]+?)?|next steps?)"
+    r"(outcome|done|evidence|not done(?: and why)?(?:,? with what (?:you|i) tried)?|already(?: [a-z ,]+?)?|next steps?"
+    r"|esito|fatto|prove|non fatto(?: e perch[eé])?(?:,? con (?:quello|ciò|cio) che (?:hai|ho) provato)?"
+    r"|gi[àa](?: [a-zàèéìòù ,]+?)?|prossim[oi] pass[oi])"
     r"\s*(?:\*\*|__|\*|_)?\s*[:—–-]\s*(?:\*\*|__|\*|_)?\s*(.*)$",
     re.IGNORECASE,
 )
@@ -62,19 +66,42 @@ _APPROVAL_REF = re.compile(
 )
 
 
+# Italian outcomes, longest first, mapped to the canonical English ones.
+_ITALIAN_OUTCOMES = (
+    ("fatto in parte", "partly done"),
+    ("parzialmente fatto", "partly done"),
+    ("fatto", "done"),
+    ("bloccat", "blocked"),
+    ("fallit", "failed"),
+    ("serve te", "needs you"),
+)
+
+
 def _field_of(label: str) -> str:
     lower = label.lower()
-    if lower == "outcome":
+    if lower in ("outcome", "esito"):
         return "outcome"
-    if lower == "done":
+    if lower in ("done", "fatto"):
         return "done"
-    if lower == "evidence":
+    if lower in ("evidence", "prove"):
         return "evidence"
-    if lower.startswith("not done"):
+    if lower.startswith(("not done", "non fatto")):
         return "not_done"
-    if lower.startswith("already"):
+    if lower.startswith(("already", "già", "gia")):
         return "already"
     return "next_step"
+
+
+def canonical_outcome(raw: str) -> str | None:
+    """The outcome a report's first line names, in English, or None when it names none."""
+    raw = raw.lower().strip(" .*_")
+    for name in sorted(OUTCOMES, key=len, reverse=True):
+        if raw.startswith(name):
+            return name
+    for prefix, name in _ITALIAN_OUTCOMES:
+        if raw.startswith(prefix):
+            return name
+    return None
 
 
 def _clean(item: str) -> str:
@@ -95,7 +122,9 @@ class Report:
     def items(self, name: str) -> list[str]:
         """A field's items, with "nothing", "none" and the like read as no items."""
         values = self.fields.get(name, [])
-        if name == "already" and values and values[0].strip(" \"'“”*_").lower().startswith("nothing"):
+        if name == "already" and values and values[0].strip(" \"'“”*_").lower().startswith(
+            ("nothing", "niente", "nulla", "nessun")
+        ):
             return []
         return [] if _is_nothing(values) else values
 
@@ -127,8 +156,7 @@ def parse_report(text: str) -> Report | None:
             item = _clean(line)
             if item:
                 fields[current].append(item)
-    raw = " ".join(fields.get("outcome", [])).lower().strip(" .*_")
-    outcome = next((name for name in sorted(OUTCOMES, key=len, reverse=True) if raw.startswith(name)), None)
+    outcome = canonical_outcome(" ".join(fields.get("outcome", [])))
     if outcome is None:
         return None
     return Report(outcome=outcome, fields=fields)

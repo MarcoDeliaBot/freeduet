@@ -17,7 +17,7 @@ THE APPROVAL RULE (`activate_from_transcript`). A pending lesson becomes active 
    in the run approves anything;
 3. a message with role `user` (never assistant, tool, system or developer) that is not such an
    envelope and is not the person's answer to a Bot's question (it starts "In response to your
-   question:", which begins with the Bot's own words), has a line that starts with "approve"
+   question:", which begins with the Bot's own words), has a line that starts with "approve" (or the Italian "approvo")
    followed directly by the code, for example "approve L-7K3Q" (several codes may follow, separated
    by spaces, commas or "and"). Only the text the person wrote counts: attachments are not read, and
    a group channel's quoted transcript is cut off first.
@@ -54,7 +54,7 @@ STATUSES = ("pending", "active", "removed")
 
 _CODE = r"L-[A-Z0-9]{4}"
 _APPROVE = re.compile(
-    rf"^[ \t]*[*_\"'`“]*approve[ \t]+({_CODE}(?:(?:[ \t]*[,;&][ \t]*|[ \t]+and[ \t]+|[ \t]+){_CODE})*)(?![A-Za-z0-9-])",
+    rf"^[ \t]*[*_\"'`“]*(?:approve|approvo)[ \t]+({_CODE}(?:(?:[ \t]*[,;&][ \t]*|[ \t]+(?:and|e)[ \t]+|[ \t]+){_CODE})*)(?![A-Za-z0-9-])",
     re.IGNORECASE | re.MULTILINE,
 )
 _CODE_RE = re.compile(_CODE, re.IGNORECASE)
@@ -65,7 +65,7 @@ class LessonError(ValueError):
 
 
 def approval_sentence(code: str) -> str:
-    return f"To approve, reply: approve {code}"
+    return f"To approve, reply: approve {code} (in Italian: approvo {code})"
 
 
 def _folder(root: Path | None) -> Path:

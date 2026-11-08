@@ -145,3 +145,33 @@ def test_approval_ids():
 def test_the_summary_is_one_line_of_at_most_200_characters():
     a = assess(facts("Outcome: done\nDone: " + "word " * 100 + "\nEvidence: e\nNot done: none\nAlready: nothing\nNext step: none"))
     assert len(a.summary) <= 200 and "\n" not in a.summary and a.summary.endswith("…")
+
+
+ITALIAN = """Ho preparato la fattura.
+
+Esito: fatto in parte
+Fatto: bozza della fattura per Rossi
+Prove: il file fattura-rossi.pdf su Drive
+Non fatto e perché: non l'ho inviata, manca la partita IVA; ho provato a cercarla nelle email
+Già: niente
+Prossimo passo: dammi la partita IVA di Rossi
+"""
+
+
+def test_an_italian_report_reads_like_the_english_one():
+    report = parse_report(ITALIAN)
+    assert report is not None
+    assert report.outcome == "partly done"
+    assert report.items("done") == ["bozza della fattura per Rossi"]
+    assert report.items("evidence") == ["il file fattura-rossi.pdf su Drive"]
+    assert report.items("already") == []
+    assert report.items("next_step") == ["dammi la partita IVA di Rossi"]
+
+
+@pytest.mark.parametrize(
+    ("word", "outcome"),
+    [("fatto", "done"), ("fatto in parte", "partly done"), ("bloccato", "blocked"), ("fallito", "failed"), ("serve te", "needs you")],
+)
+def test_each_italian_outcome(word, outcome):
+    report = parse_report(f"Esito: {word}\nFatto: x\nProve: y\nNon fatto e perché: niente\nGià: niente\nProssimo passo: z")
+    assert report is not None and report.outcome == outcome
