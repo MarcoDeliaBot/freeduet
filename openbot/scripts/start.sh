@@ -161,6 +161,35 @@ if [ -z "$AGENT_TOOL_TOKEN" ]; then
 fi
 export AGENT_TOOL_TOKEN
 
+# FreeDuet: the subscription router, agent-freeduet, unless FREEDUET_ROUTER=off (docs/M1_PLAN.md).
+FREEDUET_ROUTER="$(setting FREEDUET_ROUTER on)"
+freeduet_env_line() {
+  local tmp
+  tmp="$(mktemp)"
+  grep -vE "^$1=" "$ROOT/.env" > "$tmp" || true
+  printf '%s=%s\n' "$1" "$2" >> "$tmp"
+  chmod 600 "$tmp"
+  mv "$tmp" "$ROOT/.env"
+}
+if [ "$FREEDUET_ROUTER" != "off" ]; then
+  # The key the server presents on agent-freeduet's /v1/messages, generated once like the two above.
+  FREEDUET_LOCAL_KEY="$(setting FREEDUET_LOCAL_KEY "")"
+  if [ -z "$FREEDUET_LOCAL_KEY" ]; then
+    SECRETS_ROTATED=true
+    FREEDUET_LOCAL_KEY="$(openssl rand -hex 32)"
+    freeduet_env_line FREEDUET_LOCAL_KEY "$FREEDUET_LOCAL_KEY"
+    printf '\033[2m%s\033[0m\n' "Generated FREEDUET_LOCAL_KEY and wrote it to .env."
+  fi
+  # The server's own model calls (titles, routing, auto-review...) go to agent-freeduet's
+  # /v1/messages through ANTHROPIC_BASE_URL, so the "Anthropic key" they send is this local key.
+  # Only when empty: a key somebody set is theirs to keep.
+  if [ -z "$(setting ANTHROPIC_API_KEY "")" ]; then
+    SECRETS_ROTATED=true
+    freeduet_env_line ANTHROPIC_API_KEY "$FREEDUET_LOCAL_KEY"
+  fi
+  export FREEDUET_LOCAL_KEY
+fi
+
 green() { printf '\033[32m%s\033[0m\n' "$1"; }
 red()   { printf '\033[31m%s\033[0m\n' "$1"; }
 info()  { printf '\033[2m%s\033[0m\n' "$1"; }
@@ -319,6 +348,12 @@ else
   SERVICES+=(agent-bot)
 fi
 SERVICES+=(agent-langgraph)
+if [ "$FREEDUET_ROUTER" != "off" ]; then
+  SERVICES+=(agent-freeduet)
+  # agent-freeduet reads the prompts from the package the server loads.
+  FREEDUET_TENANT_DIR="$(setting FREEDUET_TENANT_DIR "$TENANT_DIR")"
+  export FREEDUET_TENANT_DIR
+fi
 
 export SUPERVISOR_TOKEN COMPUTER_TOKEN WORKER_SHARED_SECRET
 export COMPUTER_PORT BOT_PORT LANGGRAPH_PORT SUPERVISOR_PORT
@@ -338,6 +373,14 @@ if [ "$BOT_PROVIDER" != "anthropic" ]; then
   wait_for "http://localhost:$BOT_PORT/health" "agent-bot"
 fi
 wait_for "http://localhost:$LANGGRAPH_PORT/health" "agent-langgraph"
+if [ "$FREEDUET_ROUTER" != "off" ]; then
+  wait_for "http://localhost:4230/health" "agent-freeduet"
+  # Asked of the CLI itself; nothing here reads its sign-in directory.
+  CLAUDE_AUTH_STATUS="$(docker compose exec -T agent-freeduet claude auth status --json 2>/dev/null || true)"
+  if ! [[ "$CLAUDE_AUTH_STATUS" =~ \"loggedIn\"[[:space:]]*:[[:space:]]*true ]]; then
+    info "  Claude Code is not signed in yet. Sign in once, from openbot/: docker compose exec -it agent-freeduet claude"
+  fi
+fi
 
 for table in agent_profiles agent_preferences; do
   if ! docker compose exec -T postgres \

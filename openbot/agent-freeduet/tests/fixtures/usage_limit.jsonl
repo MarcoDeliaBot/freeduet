@@ -1,0 +1,3 @@
+{"type":"rate_limit_event","rate_limit_info":{"status":"rejected","resetsAt":4102444800,"rateLimitType":"five_hour","isUsingOverage":false}}
+{"type":"assistant","message":{"id":"7f9e0c52-0000-4000-8000-000000000003","model":"<synthetic>","role":"assistant","type":"message","content":[{"type":"text","text":"You've hit your session limit · resets 3pm"}],"stop_reason":"stop_sequence"},"parent_tool_use_id":null,"error":"rate_limit"}
+{"type":"result","subtype":"success","is_error":true,"result":"You've hit your session limit · resets 3pm","permission_denials":[]}
