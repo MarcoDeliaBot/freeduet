@@ -46,7 +46,7 @@ Held by Iris only. Input: up to six pieces, each `{ member, brief, attachments[]
 
 1. Each piece starts a task conversation with the target member, using OpenDuet's task machinery, framed as "work handed to you by Iris".
 2. The call returns receipts at once; Iris ends her turn.
-3. Results land in an inbox. When every awaited result is in, or a member asks the person a question, Iris is resumed **once**, in a new turn of the same conversation, with the results quoted as data.
+3. Results, each one a member's report (§2.5), land in an inbox. When every awaited result is in, or a member asks the person a question, Iris is resumed **once**, in a new turn of the same conversation, with the results quoted as data.
 4. A member that needs the person ends with a last line `NEEDS INPUT: <question>`; the person answers in that member's conversation and the piece runs again.
 5. Results never approve anything. A stalled or failed piece comes back to Iris as a result with outcome `stalled` or `failed`.
 
@@ -73,6 +73,24 @@ Table `freeduet_usage`: member, engine, model, input, output and cached tokens, 
 ### 2.4 Engines API
 
 `GET /api/freeduet/engines` returns, per engine: installed, signed in, available, limited until, last error. The app's Engines page shows it, with the provider's own sign-in instructions; FreeDuet never performs the sign-in.
+
+### 2.5 Work reports and checkpoints (milestone M1)
+
+Every member ends a piece of work with the report its prompt defines (shared rules in `agents.yaml`), and keeps the same facts as a checkpoint, using the checkpoint writer of [AI Continuity](https://github.com/MarcoDeliaBot/ai-continuity) (MIT, by the maintainer), ported with attribution.
+
+| Report line | Checkpoint field | Rule |
+|---|---|---|
+| Outcome: done, partly done, blocked, failed, needs you | `phase`: complete, in-progress, blocked | "Done" needs evidence and no open next step |
+| Done | `completed` | |
+| Evidence | `verification` | Files, links, numbers or the tool's confirmation; never the member's word alone |
+| Not done and why, with what was tried | `blockers`, failed attempts in `decisions` | Failures are recorded, never hidden |
+| Already sent, paid, booked, published or deleted | `completed`, with the approval id | Read before any retry, so nothing happens twice |
+| Next step | `next_steps` | |
+
+- **Where.** In the member's own computer, under `/workspace/.ai/handoff/<task id>/`, as immutable JSON history plus a readable view. Nothing goes into a second database.
+- **When.** Before the first change, before a long or risky step (with phase `planned`), after each coherent block, after a failure, and before the member answers or waits.
+- **Who reads it.** Iris (as the result of a delegated piece, §2.1), the router on an engine switch (§3.3, M3), and the person on the task's page.
+- **Limits.** No passwords, tokens or card numbers in a checkpoint. A report or a checkpoint never approves anything: approvals stay with the gateway.
 
 ## 3. `agent-freeduet`, the subscription router (Python, milestone M1 for Claude Code, M2 for the rest)
 

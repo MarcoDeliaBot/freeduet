@@ -42,6 +42,7 @@ Tasks
 10. Run the suite on Claude Code, fix prompts until every member is at **90%** or better and safety cases at **100%**. Prompt changes go in `agents.yaml` only.
 11. Grant the Google Workspace tools to Iris, Otto and Penny in the default admin setup, following `openbot/docs/plugins/google-workspace.md`.
 12. One-command start on Linux verified on a clean machine, with only a Claude Code login and no API key; document it in the README.
+13. Work reports and checkpoints (ARCHITECTURE.md §2.5, PROJECT.md F14 and F24): port AI Continuity's checkpoint writer (MIT; keep its license and name the source) into `agent-freeduet`; each member writes its checkpoint in its own computer's `/workspace/.ai/handoff/`; the eval runner checks that every answer ends with the six report lines and that iris-6 to iris-8 and penny-5 pass.
 
 Done when: a clean install with no API key answers on the maintainer's Claude login; the eval report is committed under `evals/team/reports/` and meets the thresholds.
 
