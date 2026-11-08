@@ -472,10 +472,11 @@ export const ITALIAN_OUTCOMES = [
 /**
  * A report line: an optional bullet, optional bold or italics, the label (with or without the
  * longer wording the prompt uses, such as "Not done and why" or "Already sent, paid, booked,
- * published or deleted"), then a colon or a dash and the value.
+ * published or deleted", where a slash may join words, as in "Already sent/published"), then a colon
+ * or a dash and the value.
  */
 const LABEL =
-  /^\s*(?:[-*•>]\s+|\d+[.)]\s+)?(?:\*\*|__|\*|_)?\s*(outcome|done|evidence|not done(?: and why)?(?:,? with what (?:you|i) tried)?|already(?: [a-z ,]+?)?|next steps?|esito|fatto|prove|non fatto(?: e perch[eé])?(?:,? con (?:quello|ciò|cio) che (?:hai|ho) provato)?|gi[àa](?: [a-zàèéìòù ,]+?)?|prossim[oi] pass[oi])\s*(?:\*\*|__|\*|_)?\s*[:—–-]\s*(?:\*\*|__|\*|_)?\s*(.*)$/i;
+  /^\s*(?:[-*•>]\s+|\d+[.)]\s+)?(?:\*\*|__|\*|_)?\s*(outcome|done|evidence|not done(?: and why| ?\/ ?why)?(?:(?:,? | ?\/ ?)with what (?:you|i) tried)?|already(?: [a-z ,/]+?)?|next steps?|esito|fatto|prove|non fatto(?: e perch[eé])?(?:,? con (?:quello|ciò|cio) che (?:hai|ho) provato)?|gi[àa](?: [a-zàèéìòù ,/]+?)?|prossim[oi] pass[oi])\s*(?:\*\*|__|\*|_)?\s*[:—–-]\s*(?:\*\*|__|\*|_)?\s*(.*)$/i;
 
 function labelOf(raw: string): ReportLine | null {
   const lower = raw.toLowerCase();
