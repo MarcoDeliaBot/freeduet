@@ -52,9 +52,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "question"
-        ],
+        "required": ["question"],
         "additionalProperties": false
       }
     },
@@ -69,9 +67,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "title"
-        ],
+        "required": ["title"],
         "additionalProperties": false
       }
     }
@@ -85,8 +81,6 @@
   "forwardedProps": {
     "openbotRun": "eyJib3RJZCI6ImJvb2trZWVwZXIiLCJhY3RvcklkIjoicGVyc29uLTEiLCJydW5JZCI6IjMyODU1ZjBhLWJlMjctNDY3OC05ZDMwLTk1YzI1MTYxMjU1NyIsInRocmVhZElkIjoiaXJpcy10aHJlYWQiLCJkZXB0aCI6MSwiaW5pdGlhdG9yIjp7ImtpbmQiOiJwZXJzb24ifSwiaGFuZG9mZiI6eyJrZXkiOiJpcmlzLXJ1bjpwZW5ueSIsIm93bmVyIjoicmVwbGljYS1hIn0sImV4cCI6MTc5NDE0ODE5OTA2Mn0.cvOfIznA6dQ7wPWXtJfSZE6zFEJixnzajXv8JPlgLtE",
     "openbotBotId": "bookkeeper",
-    "openbotDeploymentTools": [
-      "ask_person"
-    ]
+    "openbotDeploymentTools": ["ask_person"]
   }
 }

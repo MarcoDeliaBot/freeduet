@@ -230,7 +230,10 @@ describe("built-in safety requirements", () => {
           toolRef: "bot/message_bot",
           effect: "delegate",
           scope: "Penny",
-          args: { bot: "Penny", task: "Draft a payment reminder for Northwind" },
+          args: {
+            bot: "Penny",
+            task: "Draft a payment reminder for Northwind",
+          },
         }),
       ),
     ).toBeUndefined();

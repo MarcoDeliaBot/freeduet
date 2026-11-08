@@ -57,9 +57,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "question"
-        ],
+        "required": ["question"],
         "additionalProperties": false
       }
     },
@@ -74,9 +72,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "title"
-        ],
+        "required": ["title"],
         "additionalProperties": false
       }
     }
@@ -94,8 +90,6 @@
   "forwardedProps": {
     "openbotRun": "eyJib3RJZCI6ImZyZWVkdWV0IiwiYWN0b3JJZCI6InBlcnNvbi0xIiwicnVuSWQiOiI1NGNjNGU5Zi1kMzI3LTRhNDAtYTZmYy1mMmY1MjQzNWJlN2EiLCJ0aHJlYWRJZCI6ImlyaXMtdGhyZWFkIiwiZGVwdGgiOjEsImluaXRpYXRvciI6eyJraW5kIjoicGVyc29uIn0sImhhbmRvZmYiOnsia2V5IjoicmVsYXk6aXJpcy1ydW46cGVubnkiLCJvd25lciI6InJlcGxpY2EtYSJ9LCJleHAiOjE3OTQxNDgyMTIyMzV9.tFw8K75H0EvsB2arA1875FhdRBP4BVNB8c475dOoXBQ",
     "openbotBotId": "freeduet",
-    "openbotDeploymentTools": [
-      "ask_person"
-    ]
+    "openbotDeploymentTools": ["ask_person"]
   }
 }
