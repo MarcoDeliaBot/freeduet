@@ -43,6 +43,15 @@ engines:
     tier: C
     enabled: false
 
+  openrouter-free:
+    kind: openai-compatible
+    base_url: https://openrouter.ai/api/v1
+    credential_secret_ref: openrouter-api-key
+    billing: free
+    model: "<free-model-id>"        # a model marked free on openrouter.ai; the provider's limits apply
+    tier: C
+    enabled: false
+
   # ── Metered (API keys and API credits): optional, always last ─────────────────────────────────
   anthropic-api:
     kind: anthropic-api
@@ -91,3 +100,12 @@ quality_floor:
   concierge:
     request_purchase: A
     book-an-appointment: A
+
+# Assistants: light helpers every member can call for small jobs (summaries, extraction, translation...).
+# Free engines only: they never use your subscriptions' limits or any metered API.
+assistants:
+  enabled: true
+  chain: [local, openrouter-free]
+  max_calls_per_turn: 10
+  max_input_tokens: 32000
+  tasks: [summarise, extract, classify, translate, reformat, proofread, draft-variants, tag]

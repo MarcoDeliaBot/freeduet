@@ -56,6 +56,10 @@ Five rules close every prompt:
                │  bookings  ──► Jules ◄────┴──────┘  parts and groceries, with approval
 ```
 
+## Beyond the starter team
+
+Specialists for particular jobs (recruiting, documents with sources, comparisons, automations, editorial desk, video, testing, games, teaching) come as installable packs, and light helpers on free models do the small jobs for every member: see [CATALOG.md](CATALOG.md).
+
 ## Changing the team
 
 - **Rename or re-voice** a member: edit `name` and the first paragraph of its `system_prompt`. Keep the last paragraph, the shared rules, as it is.

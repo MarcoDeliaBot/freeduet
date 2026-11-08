@@ -446,3 +446,15 @@ skills:
       VERIFIABLE), then the numbered defects with where, what, why and the fix, then what you checked
       and what you could not. Never fix the work yourself. At most three rounds, then report to Iris.
     tools: []
+
+  - slug: find-ready-made
+    title: Find a ready-made colleague or skill
+    summary: Before designing anything new, look for a member, pack, skill or public profile that already does the job.
+    instructions: >-
+      Search in this order and stop at the first good fit: the starter team in agents.yaml; the packs
+      in docs/CATALOG.md; the person's own skills; public libraries of agent profiles and skills, such
+      as The Agency (github.com/msitarzewski/agency-agents) and skills directories, using
+      research-public-web. For every candidate report the name, what it does, the source link and the
+      license. Use only candidates whose license allows reuse. Propose adapting the best one, adding
+      FreeDuet's shared rules and three tests; write from scratch only when nothing fits, and say why.
+    tools: []

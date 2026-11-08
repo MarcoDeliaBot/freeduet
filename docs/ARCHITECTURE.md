@@ -121,6 +121,22 @@ Verify in M2 against `openbot/docs/architecture.md`: the exact callback route re
 
 Each engine has a tier, set in `engines.yaml`. A member can require a minimum tier for certain skills. Jules requires tier A for `request_purchase`: on a lower tier the tool refuses and explains why.
 
+### 3.5 Assistants: light helpers on free models
+
+Every member holds an `ask_assistant` tool for small, low-risk jobs, so subscription limits go to the work that matters. Product view: [CATALOG.md](CATALOG.md#assistants).
+
+| | |
+|---|---|
+| Input | `{ task, input, instructions }`, where `task` is one of `summarise`, `extract`, `classify`, `translate`, `reformat`, `proofread`, `draft-variants`, `tag`; `input` is text or the text of attached files, within `max_input_tokens` |
+| Engine | The `assistants.chain` in `engines.yaml`. Only engines with `billing: free` are accepted: local models and free model routes. Subscription and metered engines are rejected at load time |
+| Powers | None: no tools, no MCP bridge, no browser, no memory, no network beyond the model call |
+| Output | Returned to the calling member as quoted data, never as instructions. The member checks it before using it; anything sent or published still goes through the approval gate |
+| Limits | `max_calls_per_turn` (default 10), `max_input_tokens`, a per-call timeout, up to 4 calls in parallel |
+| Fallback | If no free engine is available or a call fails, the tool says so and the member does the job itself |
+| Ledger | Each call is recorded in `freeduet_usage` with `billing: free`, so the savings meter shows it |
+
+Acceptance (M3): a member summarising ten emails through assistants uses no subscription turns for those summaries; an assistant fed a prompt-injection email returns text and cannot trigger any action; with assistants disabled, every member still completes its eval cases.
+
 ## 4. Data and privacy
 
 - Everything stays in the person's PostgreSQL and the member computers' volumes.

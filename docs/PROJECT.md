@@ -39,6 +39,8 @@ FreeDuet is a self-hosted team of AI employees that runs on the AI subscriptions
 | Server, app, approvals, audit, a computer per member, secrets, routines, connectors | OpenBot (MIT) | Fork, unchanged |
 | Morning brief, triage, tasks, pages, channels | OpenDuet (MIT) | Fork, unchanged |
 | Engine adapters, limit detection, fallback rules, lead-and-specialists delegation | Anil-matcha/open-duet (Apache-2.0) | Port the design and, where the code fits, the code, with attribution |
+| Specialist profiles for the packs | [The Agency](https://github.com/msitarzewski/agency-agents) (MIT) | Leo adapts profiles, adds FreeDuet's shared rules and tests, credits the source in each member |
+| Grok Build CLI driver, team playbooks in Markdown | [OpenMausBot](https://github.com/milind-soni/OpenMausBot) (Apache-2.0) | Port with attribution, once Grok's terms are verified |
 | Importing agents from Grok Bot | Idea seen in nightly-labs/openbot (non-commercial license) | Build our own, from scratch |
 | One-click decision cards | Idea seen in browser-use/open-duet (no license) | Our own design, later |
 | The team of ten | New | Written from scratch for FreeDuet |
@@ -199,3 +201,14 @@ The maintainer already runs a self-hosted AI office (a Chief "brain", a worker, 
 | **F19. Connectors** | M2–M5 | FreeDuet connects to the tools people already use: the whole Google suite, Microsoft 365, n8n, creative programs (Photoshop, Affinity, Canva, and the free, open-source ArtCraft suite installed inside every member's computer: PhotoCraft, PdfCraft, VectorCraft, FilmCraft and more), craft and making software (Cricut, 3D-printing slicers), coding agents (Claude Code, Codex, Kimi, Cline, Antigravity, Trae) and messaging (WhatsApp, Telegram). Desktop programs are reached through a FreeDuet desktop bridge on the person's computer. Catalogue and rules: [CONNECTORS.md](CONNECTORS.md). |
 
 **Policy for waiting.** When every login in a chain has reached its limit, the default is to wait for the first reset and tell the person when work resumes. Switching to a metered engine happens only if the person switched metered engines on.
+
+## 16. Packs, assistants and news (added 2026-11-08)
+
+| Feature | Milestone | What it does |
+|---|---|---|
+| **F20. Packs** | M2 onwards | Installable specialists beyond the starter team: Hana (Recruiter), Dewey (Archivist, answers from your documents with the exact source), Ada (Comparator), Flo (Automator), Clara (Editor-in-chief), Kai (Video maker), Theo (Tester), Nico (Game developer), Sofia (Teacher). Leo writes each with its tests from the catalogue; Vera checks it. Catalogue and rules: [CATALOG.md](CATALOG.md). |
+| **F21. Reuse before building** | M1 | Leo searches the starter team, the packs, the person's skills and public libraries such as The Agency before writing any new member, and credits what he adapts. |
+| **F22. Assistants** | M3 | Light helpers on free models for summaries, extraction, translation and other small jobs; no tools, output checked by the calling member. [ARCHITECTURE.md §3.5](ARCHITECTURE.md). |
+| **F23. News and social watch** | M3 | RSS, YouTube, Reddit, Bluesky, Mastodon, Hacker News and other official sources, summarised with link and date for Iris's morning brief and Clara's editorial desk. [CONNECTORS.md](CONNECTORS.md). |
+
+**Scope freeze.** From this point, new members go into packs and new ideas go into issues for after v0.1. The starter team and M0–M1 do not grow until v0.1 ships.

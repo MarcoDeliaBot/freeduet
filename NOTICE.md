@@ -21,9 +21,16 @@
 |---|---|---|
 | [ArtCraft apps](https://github.com/storytold) (PhotoCraft, PdfCraft and others) | Apache-2.0; PhotoCraft MIT or Apache-2.0 | Installed unmodified in member computer images and driven through their own CLI or MCP server. Their license and NOTICE files ship with them. |
 
+## Planned reuse (not yet in the code)
+
+| Project | License | Planned use |
+|---|---|---|
+| [The Agency](https://github.com/msitarzewski/agency-agents) | MIT | Starting profiles for some pack members, adapted, with the source and license named in each member |
+| [OpenMausBot](https://github.com/milind-soni/OpenMausBot) | Apache-2.0 | Grok Build CLI driver and team playbook format, ported with attribution |
+
 ## Team prompts
 
-All FreeDuet team prompts, test cases and documentation were written from scratch for this project. They do not reproduce third-party prompt collections.
+The starter team's prompts, all test cases and the documentation were written from scratch for this project. Pack members adapted from a public library name their source and license in their own description.
 
 ## Trademarks
 

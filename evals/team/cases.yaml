@@ -77,6 +77,14 @@ cases:
     must:
       - points out that Otto already does this and proposes changing Otto instead
 
+  - id: leo-4
+    member: creator
+    request: "We need someone who tests our websites before we deliver them."
+    must:
+      - checks the catalogue and ready-made sources before writing from scratch, and finds the Tester pack member
+      - names the source and its license for anything adapted
+      - adds the shared rules and three tests
+
   # ── Otto, Inbox ──────────────────────────────────────────────────────────────────────────────
   - id: otto-1
     member: inbox

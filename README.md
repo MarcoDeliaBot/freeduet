@@ -23,17 +23,17 @@ FreeDuet gives you a Chief of Staff and a crew of specialists: inbox, contracts,
 
 ## What we do that others don't
 
-| | **FreeDuet** | Claude Duet | OpenDuet / OpenBot | open-duet | openbot (nightly-labs) |
-|---|---|---|---|---|---|
-| Open source, free for business use | ✅ | ❌ | ✅ | ✅ | ❌ |
-| Available outside the United States | ✅ | ❌ | ✅ | ✅ | ✅ |
-| Runs on your subscriptions with zero API keys | ✅ v0.1 | ✅ Claude only | ⚠️ | ✅ | ✅ |
-| Switches subscription automatically at the limit | ✅ v0.3 | ❌ | ❌ | ⚠️ | — |
-| Own computer with a real browser per agent | ✅ | ✅ | ✅ | ⚠️ | ✅ |
-| Asks before every send, payment, signature, deletion | ✅ | ✅ | ✅ | ✅ | ❌ |
-| Payments blocked without a permit bound to shop and total | ✅ v0.4 | — | ❌ | ❌ | ❌ |
-| Spending caps per purchase, day and month | ✅ v0.4 | — | ❌ | ❌ | ❌ |
-| Ready-made, tested team with a Chief of Staff | ✅ | ❌ | ⚠️ | ❌ | — |
+| | **FreeDuet** | Claude Duet | OpenDuet / OpenBot | open-duet | openbot (nightly-labs) | OpenMausBot |
+|---|---|---|---|---|---|---|
+| Open source, free for business use | ✅ | ❌ | ✅ | ✅ | ❌ | ✅ |
+| Available outside the United States | ✅ | ❌ | ✅ | ✅ | ✅ | ✅ |
+| Runs on your subscriptions with zero API keys | ✅ v0.1 | ✅ Claude only | ⚠️ | ✅ | ✅ | ✅ |
+| Switches subscription automatically at the limit | ✅ v0.3 | ❌ | ❌ | ⚠️ | — | — |
+| Own computer with a real browser per agent | ✅ | ✅ | ✅ | ⚠️ | ✅ | ⚠️ |
+| Asks before every send, payment, signature, deletion | ✅ | ✅ | ✅ | ✅ | ❌ | ⚠️ |
+| Payments blocked without a permit bound to shop and total | ✅ v0.4 | — | ❌ | ❌ | ❌ | — |
+| Spending caps per purchase, day and month | ✅ v0.4 | — | ❌ | ❌ | ❌ | — |
+| Ready-made, tested team with a Chief of Staff | ✅ | ❌ | ⚠️ | ❌ | — | ⚠️ |
 
 ✅ yes · ⚠️ partly · ❌ no · — not documented. A version means planned, not available yet. Full table with sources: [docs/COMPARISON.md](docs/COMPARISON.md).
 

@@ -12,6 +12,12 @@ FreeDuet's team connects to the tools people already use, free or paid: creative
 
 Desktop programs such as Photoshop or Cricut Design Space run on the person's own Windows or Mac, not in the members' Linux computers. They are reached through the **FreeDuet desktop bridge**: a small companion app the person installs, which exposes only the programs they switch on and passes every action through the same approvals as the rest of FreeDuet.
 
+## Rules for news and social sources
+
+- Official APIs and feeds only; no scraping that breaks a site's terms.
+- Summaries always link the original, with its date. Full articles are never copied.
+- Posting to social networks is publishing: an owner-only operation, every time.
+
 ## Rules for every connector
 
 - **The tool's own terms come first.** A connector that would break a tool's terms is not shipped, or ships off with a clear warning (see [PROVIDERS.md](PROVIDERS.md)).
@@ -27,7 +33,12 @@ Desktop programs such as Photoshop or Cricut Design Space run on the person's ow
 | **Google suite** | Gmail, Calendar, Drive, Docs, Sheets, Slides, Forms, Meet, Tasks, Keep, Contacts, Chat | Free and Workspace | Google Workspace APIs and connectors | M2 | Gmail and Calendar already come from OpenDuet. Uses Google's own OAuth for these apps, which is separate from Gemini's sign-in. |
 | **Google for business** | Google Ads, Search Console, Analytics, Business Profile, YouTube | Free and paid | Official Google APIs | M3 | Read-only first; any change to a campaign or a budget is an owner-only operation. |
 | **Microsoft 365** | Outlook, Teams, OneDrive, Word, Excel | Paid | Microsoft Graph and connectors | M3 | Teams already comes from OpenBot. |
-| **Automation** | n8n | Free, self-hosted | Webhooks both ways | M2 | Members can start a workflow and workflows can hand work to a member. |
+| **Automation** | n8n | Free self-hosted, or paid n8n Cloud | Webhooks and n8n's API, both ways | M2 | Same connector for a private install and for n8n Cloud: only the address and key change. Members can start a workflow and workflows can hand work to a member. |
+| **Automation** | Activepieces, Node-RED, Windmill, Huginn, Kestra | Free, open source, self-hosted | Webhooks and each tool's API | M3 | For people who prefer another engine to n8n. |
+| **Automation** | Make, Pipedream | Free and paid, online | Webhooks and each tool's API | M3 | Zapier is covered through Composio. |
+| **News and social** | RSS and Atom feeds, Google News feeds | Free | Feed reader | M3 | The simplest and most reliable source. |
+| **News and social** | YouTube, Reddit, Bluesky, Mastodon, Hacker News | Free within each API's limits | Official APIs | M3 | Each API's own terms and rate limits apply. |
+| **News and social** | X | Paid API only | Official API | M4 | Off unless the person has X API access. |
 | **Automation** | Zapier, Make and hundreds of apps | Free and paid | Composio, already in OpenBot | M3 | |
 | **Creative** | Adobe Photoshop | Paid | Desktop bridge: scripting where available, screen control otherwise | M4 | |
 | **Creative** | Affinity | Paid | Affinity's own MCP server, through the desktop bridge | M4 | |
