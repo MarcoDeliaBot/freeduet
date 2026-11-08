@@ -104,11 +104,13 @@ Sources and the exact rules are in [docs/PROVIDERS.md](docs/PROVIDERS.md).
 git clone https://github.com/<owner>/freeduet.git
 cd freeduet
 cp .env.example .env
-bash scripts/start.sh                              # the app, the team, one computer per member
-docker compose exec -it agent-freeduet claude      # sign in once with your own Claude plan
+bash scripts/start.sh                                         # the app, the team, one computer per member
+cd openbot && docker compose exec -it agent-freeduet claude   # sign in once with your own Claude plan
 ```
 
-Then open `http://localhost:3010`. No API key needed. Linux, macOS and Windows (WSL2) with Docker.
+Then open `http://localhost:3010`. No API key needed: every member runs on your own Claude Code login through the subscription router, `agent-freeduet`, and `start.sh` writes a local key for the server's own short model calls, which go to the router too. The sign-in stays in a Docker volume that only the Claude Code CLI reads. `start.sh` tells you when it is still missing. Linux, macOS and Windows (WSL2) with Docker.
+
+To run the members as built-in Bots on a model key of your own instead, set `FREEDUET_ROUTER=off` and `FREEDUET_MEMBER_TYPE=built-in` in `.env` (the comments there list the rest).
 
 ## Roadmap
 
