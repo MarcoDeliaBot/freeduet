@@ -44,6 +44,8 @@ afterAll(async () => {
       sql`delete from freeduet_threads where thread_id = ${threadId}`,
     );
   }
+  // The suite runs in one process: a pool left open holds its connections to the end (TEST_POOL).
+  await database.$client.close();
 });
 
 describe("FreeDuet's thread migrations", () => {
@@ -60,6 +62,7 @@ describe("FreeDuet's thread migrations", () => {
     await database.execute(sql.raw(`create schema "${schema}"`));
   });
   afterAll(async () => {
+    await scoped.$client.close();
     await database.execute(sql.raw(`drop schema "${schema}" cascade`));
   });
 

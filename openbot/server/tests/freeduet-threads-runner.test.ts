@@ -44,6 +44,25 @@ function boot(db = database, options: { lockRenewMs?: number } = {}) {
   return { store, runner };
 }
 
+/**
+ * A second server process on the same database, for the length of `work`: a pool, store and runner
+ * of its own. Its runner is stopped and its pool closed afterwards, pass or fail. The suite runs in
+ * one process and an open pool holds its connections to the end (see `TEST_POOL`), so a pool left
+ * open here takes connections from every file after this one.
+ */
+async function inAnotherProcess<T>(
+  work: (peer: ReturnType<typeof boot>) => Promise<T>,
+): Promise<T> {
+  const db = createDatabase(testDatabaseUrl(), TEST_POOL);
+  const other = boot(db);
+  try {
+    return await work(other);
+  } finally {
+    for (const threadId of threadIds) await other.runner.stop({ threadId });
+    await db.$client.close();
+  }
+}
+
 async function newThread(
   store: ReturnType<typeof boot>["store"],
   userId = "ada",
@@ -70,6 +89,8 @@ afterAll(async () => {
       sql`delete from freeduet_threads where thread_id = ${threadId}`,
     );
   }
+  // Every run is stopped above, so no renewal or write is left to reach for the pool once closed.
+  await database.$client.close();
 });
 
 type Script = (context: {
@@ -297,17 +318,18 @@ describe("a conversation on FreeDuet's own database", () => {
       ),
     );
 
-    const restarted = boot(createDatabase(testDatabaseUrl(), TEST_POOL));
-    expect(await restarted.store.getThreadMessages(threadId)).toEqual([
-      { id: "u-1", role: "user", content: "Remember this." },
-      { id: "a-1", role: "assistant", content: "Noted." },
-    ]);
-    expect(
-      await browserView(await drain(restarted.runner.connect({ threadId }))),
-    ).toEqual([
-      { id: "u-1", content: "Remember this." },
-      { id: "a-1", content: "Noted." },
-    ]);
+    await inAnotherProcess(async (restarted) => {
+      expect(await restarted.store.getThreadMessages(threadId)).toEqual([
+        { id: "u-1", role: "user", content: "Remember this." },
+        { id: "a-1", role: "assistant", content: "Noted." },
+      ]);
+      expect(
+        await browserView(await drain(restarted.runner.connect({ threadId }))),
+      ).toEqual([
+        { id: "u-1", content: "Remember this." },
+        { id: "a-1", content: "Noted." },
+      ]);
+    });
     expect((await runRow(runId))?.status).toBe("finished");
   });
 
@@ -498,16 +520,17 @@ describe("one run at a time", () => {
     ).toThrow(ThreadLockDeniedError);
 
     // Another process: refused through the stream, with the same error.
-    const other = boot(createDatabase(testDatabaseUrl(), TEST_POOL));
-    const refused = drain(
-      other.runner.run(
-        request(threadId, [user("u-3", "Me too")], replies("a-3", "No.")),
-      ),
-    );
-    await expect(refused).rejects.toBeInstanceOf(ThreadLockDeniedError);
-    await expect(refused).rejects.toMatchObject({
-      status: 409,
-      message: "Thread lock denied",
+    await inAnotherProcess(async (other) => {
+      const refused = drain(
+        other.runner.run(
+          request(threadId, [user("u-3", "Me too")], replies("a-3", "No.")),
+        ),
+      );
+      await expect(refused).rejects.toBeInstanceOf(ThreadLockDeniedError);
+      await expect(refused).rejects.toMatchObject({
+        status: 409,
+        message: "Thread lock denied",
+      });
     });
 
     expect(await runner.stop({ threadId, runId: busy.input.runId })).toBe(true);
@@ -623,40 +646,48 @@ describe("a process that dies mid-run", () => {
       return JSON.stringify(row?.events ?? []).includes("Revenue grew");
     }, "the partial reply is written");
 
-    // A new process on the same database. Its boot sweep finds the run nobody is running.
-    const restarted = boot(createDatabase(testDatabaseUrl(), TEST_POOL));
-    expect(
-      await restarted.runner.sweepInterruptedRuns(),
-    ).toBeGreaterThanOrEqual(1);
-    expect((await runRow(doomed.input.runId))?.status).toBe("interrupted");
-    expect(await restarted.store.activeRunId(threadId)).toBeNull();
-    expect(await restarted.store.getThreadMessages(threadId)).toEqual([
-      { id: "u-1", role: "user", content: "Summarise the quarter" },
-      { id: "a-1", role: "assistant", content: "Revenue grew" },
-    ]);
-    // A second sweep finds nothing left to do.
-    expect(await restarted.runner.sweepInterruptedRuns()).toBe(0);
+    try {
+      // A new process on the same database. Its boot sweep finds the run nobody is running.
+      await inAnotherProcess(async (restarted) => {
+        expect(
+          await restarted.runner.sweepInterruptedRuns(),
+        ).toBeGreaterThanOrEqual(1);
+        expect((await runRow(doomed.input.runId))?.status).toBe("interrupted");
+        expect(await restarted.store.activeRunId(threadId)).toBeNull();
+        expect(await restarted.store.getThreadMessages(threadId)).toEqual([
+          { id: "u-1", role: "user", content: "Summarise the quarter" },
+          { id: "a-1", role: "assistant", content: "Revenue grew" },
+        ]);
+        // A second sweep finds nothing left to do.
+        expect(await restarted.runner.sweepInterruptedRuns()).toBe(0);
 
-    // The replay ends the cut-off run, so the next one can follow it.
-    const replayed = await drain(restarted.runner.connect({ threadId }));
-    expect(replayed.map((event) => event.type)).toContain(EventType.RUN_ERROR);
-    await drain(
-      restarted.runner.run(
-        request(
-          threadId,
-          [user("u-2", "Again please")],
-          replies("a-2", "Revenue grew 4%."),
-        ),
-      ),
-    );
-    expect(
-      (
-        await browserView(await drain(restarted.runner.connect({ threadId })))
-      ).map((message) => message.id),
-    ).toEqual(["u-1", "a-1", "u-2", "a-2"]);
-
+        // The replay ends the cut-off run, so the next one can follow it.
+        const replayed = await drain(restarted.runner.connect({ threadId }));
+        expect(replayed.map((event) => event.type)).toContain(
+          EventType.RUN_ERROR,
+        );
+        await drain(
+          restarted.runner.run(
+            request(
+              threadId,
+              [user("u-2", "Again please")],
+              replies("a-2", "Revenue grew 4%."),
+            ),
+          ),
+        );
+        expect(
+          (
+            await browserView(
+              await drain(restarted.runner.connect({ threadId })),
+            )
+          ).map((message) => message.id),
+        ).toEqual(["u-1", "a-1", "u-2", "a-2"]);
+      });
+    } finally {
+      // Stopped here rather than left to `afterAll`, so its renewal timer never outlives the test.
+      await crashed.runner.stop({ threadId });
+    }
     // The dead process's run, if it ever woke up, could not write over what is now history.
-    await crashed.runner.stop({ threadId });
     expect((await runRow(doomed.input.runId))?.status).toBe("interrupted");
   });
 });
@@ -680,19 +711,30 @@ describe("a lock that lapses", () => {
       sql`update freeduet_thread_locks set expires_at = now() - interval '1 second' where thread_id = ${threadId}`,
     );
 
-    const next = boot(createDatabase(testDatabaseUrl(), TEST_POOL));
-    const followUp = request(
-      threadId,
-      [user("u-2", "Start over")],
-      replies("a-2", "Dear Madam,"),
-    );
-    await drain(next.runner.run(followUp));
-    expect((await runRow(doomed.input.runId))?.status).toBe("interrupted");
-    expect((await runRow(followUp.input.runId))?.status).toBe("finished");
-    expect(
-      (await next.store.getThreadMessages(threadId)).map((row) => row.content),
-    ).toEqual(["Draft the letter", "Dear Sir", "Start over", "Dear Madam,"]);
-    await crashed.runner.stop({ threadId });
+    try {
+      await inAnotherProcess(async (next) => {
+        const followUp = request(
+          threadId,
+          [user("u-2", "Start over")],
+          replies("a-2", "Dear Madam,"),
+        );
+        await drain(next.runner.run(followUp));
+        expect((await runRow(doomed.input.runId))?.status).toBe("interrupted");
+        expect((await runRow(followUp.input.runId))?.status).toBe("finished");
+        expect(
+          (await next.store.getThreadMessages(threadId)).map(
+            (row) => row.content,
+          ),
+        ).toEqual([
+          "Draft the letter",
+          "Dear Sir",
+          "Start over",
+          "Dear Madam,",
+        ]);
+      });
+    } finally {
+      await crashed.runner.stop({ threadId });
+    }
   });
 
   test("a run whose lock another run took stops, and leaves that run's lock alone", async () => {
