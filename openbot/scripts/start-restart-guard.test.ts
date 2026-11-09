@@ -276,6 +276,11 @@ fi
   await writeExecutable(
     join(fakeBin, "sleep"),
     `#!/usr/bin/env bash
+# A real, short delay while a fresh launch is pending (PORT_FREE=1 and no SERVER_STARTED yet). The
+# server probe in wait_for_openbot gives the server 40 tries of one second each; with no delay here
+# those 40 tries finish in a few hundred milliseconds, so a background launch that a loaded runner
+# schedules late is never seen. 40 x 0.1 s gives it several real seconds. Other tests are untouched.
+if [ "$PORT_FREE" = 1 ] && [ ! -f "$SERVER_STARTED" ]; then /bin/sleep 0.1; fi
 # The first pause follows the signal, before the new API is launched. Later pauses wait for
 # the fake background launch to acknowledge readiness, with a bounded fixture-only deadline.
 if [ -f "$SERVER_STOPPED" ] && [ ! -f "$SERVER_STARTED" ]; then
