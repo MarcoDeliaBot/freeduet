@@ -343,7 +343,10 @@ server_computer_state() {
   case "$pid" in ''|*[!0-9]*) return 1 ;; esac
   owned="$(openbot_matching_pids "$SERVER_ENTRY" "$ROOT/server")
 $(openbot_matching_pids "$SERVER_DEV_ENTRY" "$ROOT/server")"
-  printf '%s\n' "$owned" | grep -Fxq "$pid" || return 1
+  # Not `grep -q`: it exits at the first match, but printf writes each line with its own write(2), so
+  # the next write met a closed pipe, and under `pipefail` the match failed with status 141 (SIGPIPE).
+  # Without -q, grep reads to the end of its input, so printf is never cut short.
+  printf '%s\n' "$owned" | grep -Fx "$pid" >/dev/null || return 1
   if [ "${OS:-}" = Windows_NT ]; then
     started="$(OPENBOT_PID="$pid" openbot_powershell '
       Get-Process -Id $env:OPENBOT_PID -ErrorAction SilentlyContinue |
