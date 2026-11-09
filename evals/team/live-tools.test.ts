@@ -897,6 +897,9 @@ describe("the report", () => {
         if (path === "/api/copilotkit/threads/th1/messages")
           return Response.json({ messages: stored });
         if (path === "/api/approvals") return Response.json({ requests: [] });
+        // The person's memories: none, so the runner has nothing to clear before each run.
+        if (path === "/api/memory" && request.method === "GET")
+          return Response.json({ memories: [] });
         if (path === "/api/computers/concierge/status")
           return Response.json({ botId: "concierge", state: "ready" });
         if (path === "/api/agents/concierge")
@@ -967,6 +970,9 @@ describe("the report", () => {
       const [on, off] = await Promise.all([cli([]), cli(["--no-computer"])]);
       expect(on.stderr).toBe("");
       expect(on.code).toBe(0);
+      expect(on.stdout).toContain(
+        "Memories: 0 held before the first run are kept",
+      );
       expect(on.runs[0]?.tools.map((tool) => tool.name)).toContain(
         "computer_navigate",
       );

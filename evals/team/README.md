@@ -24,7 +24,7 @@ A bracket with no `attachments` is shown to the member as a description (`[attac
 
 ```sh
 bun evals/team/run.ts --fake              # replays the recorded transcripts in fixtures/
-bun test evals/team/run.test.ts           # the hard checks, the report-line check, the grader prompt and parser, the server driver
+bun test evals/team/run.test.ts           # the hard checks, the report-line check, the grader prompt and parser, the server driver, the run's stream and time limit, the memory clear between runs
 bun test evals/team/live-tools.test.ts    # the Bot's computer: the app's tool definitions, each call's route, the results posted back
 ```
 
@@ -55,7 +55,7 @@ bun --env-file=openbot/.env.eval evals/team/run.ts --safety-only
 bun --env-file=openbot/.env.eval evals/team/run.ts --no-computer        # as before: no computer tools
 ```
 
-Reset before every run: memories saved by one run's cases change the next run's answers.
+Reset the stack before a run, as the first command above does. Within a run the runner does the rest: before each run it removes the memories the earlier runs saved (see [Memories](#memories)), so a `--repeat 3` run's second and third runs start as the first did. The reset also clears what an earlier invocation left behind, which the runner keeps as the state it started from.
 
 | Flag | Default | Meaning |
 |---|---|---|
@@ -69,10 +69,10 @@ Reset before every run: memories saved by one run's cases change the next run's 
 | `--engine <name>` | `FREEDUET_EVAL_ENGINE`, else `claude-code` | A label for the report and its file name; it does not choose the engine |
 | `--grader-url <url>` | `FREEDUET_EVAL_GRADER_URL`, else `ANTHROPIC_BASE_URL`, else `http://localhost:4231` | Any Anthropic-format endpoint; the runner posts to `<url>/v1/messages` |
 | `--grader-model <id>` | `FREEDUET_EVAL_GRADER_MODEL`, else `BOT_MODEL`, else `claude-sonnet-5-5` | The `model` field sent to the grader |
-| `--timeout <s>` | `300` | Time limit for each turn of a case |
+| `--timeout <s>` | `300` | Time limit for each turn of a case, from its message to the end of its answer. A run's streamed answer is inside it: a turn still running at the limit is cut and fails as a timeout that names the limit. Each request must answer its headers within 60 s; the answer's body has no limit of its own (see [How it drives the server](#how-it-drives-the-server)) |
 | `--approvals deny\|leave` | `deny` | What the runner does with an approval the turn opens (see below) |
 | `--no-computer` | off | Offer no computer tools, as runs before the computer tools did: members get only the tools the server adds |
-| `--concurrency <n>` | `1` | Cases run at the same time. Keep 1 on a subscription login |
+| `--concurrency <n>` | `1` | Live runs only: cases run at the same time. It must stay 1: each run removes the memories the earlier runs saved (see [Memories](#memories)), and runs at the same time would remove one another's. Above 1 a live run is refused |
 | `--out <dir>` | `evals/team/reports` | Where the report goes |
 
 | Environment variable | Used for |
@@ -92,6 +92,14 @@ With `--repeat 3`, every case runs 3 times, each in a fresh conversation: all th
 
 In fake mode `--repeat` replays each fixture that many times. A fixture may give `runs` (`[{grader}, {transcript, grader}, ...]`, cycled) to stand for a case whose answer changes between runs; the tests use it.
 
+### Memories
+
+A member saves what it learns about the person as memories (`remember_personal_fact`, `save_observed_memory`), and the rules and diets it is told to keep are memories too (Otto's standing rules, Basil's dietary needs). Those are the person's, and a run's saves would change the next run's answers, so the runner keeps a list of the memories the person holds before its first run and, before **each** run, removes every memory that is not on that list (`GET /api/memory`, then `DELETE /api/memory/<id>` for each, read again until none is left). The run then starts as the first did, and its case's earlier turns (`previous`) save what they save after the clear.
+
+What the runner removes is what the runs created: a memory the person held before the first run, or one a stack seeds, stays. A memory that the server will not remove fails the run, rather than letting the next run start with it.
+
+Two limits. The server forgets a memory by marking its row (a tombstone) rather than deleting it, and a Bot's `save_observed_memory` of content that was forgotten is refused on a later save with the same wording. The runner cannot clear those tombstones through the API, so such a save can still differ between runs; only a change on the server, or a reset of the stack, clears them. And on a FreeDuet somebody uses (`--allow-real-deployment`), a memory the person saves while the evals run is removed before the next run.
+
 ### How it drives the server
 
 The same HTTP routes the web app uses ([live.ts](live.ts)):
@@ -99,7 +107,7 @@ The same HTTP routes the web app uses ([live.ts](live.ts)):
 1. `GET /api/plugins/for/<member>` reads the tools the member holds. They go in the transcript, and a case whose `requires` none of them meets is skipped here, before anything is created.
 2. `POST /api/channels` with `{"agentIds":["<member>"],"name":"[eval] <case>"}` creates the conversation, like **Message &lt;name&gt;** (`/channel/new?agent=<id>`) does on its first send.
 3. Each attached file is uploaded as the composer uploads it (`POST /api/channels/<channel>/attachments`, multipart) and the message carries a part that points at it; the server puts the file's text in its place before the member sees the message. If the route refuses a file, the runner puts the same text (`Attached file "<name>":` and the content) in the message itself, and the transcript's `attachments` says `inline` with the reason.
-4. `POST /api/copilotkit/agent/<member>/run` sends each turn on the conversation's thread, with the conversation so far (as the web app does: stored tool calls in AG-UI's shape) and the new message. When the runtime answers **409 "Thread lock denied"**, another run still holds the thread (the previous turn's hand-off or relay finishing, as in jules-3): the runner waits for `/connect` to say idle, reads the conversation again and sends the turn again, after a pause that starts at 2 s and doubles up to 16 s, until the turn's time limit. Any other refusal fails the case at once.
+4. `POST /api/copilotkit/agent/<member>/run` sends each turn on the conversation's thread, with the conversation so far (as the web app does: stored tool calls in AG-UI's shape) and the new message. When the runtime answers **409 "Thread lock denied"**, another run still holds the thread (the previous turn's hand-off or relay finishing, as in jules-3): the runner waits for `/connect` to say idle, reads the conversation again and sends the turn again, after a pause that starts at 2 s and doubles up to 16 s, until the turn's time limit. Any other refusal fails the case at once. The request must answer its headers within 60 s. With Intelligence off the answer is an event stream, which the runner reads as it arrives until its `RUN_FINISHED` or `RUN_ERROR` (where it lets the connection go) or the end of the stream; only the turn's time limit (`--timeout`) bounds the stream, so a long turn is not cut at 60 s. A turn still running at the limit is cancelled and fails as a timeout that says so.
 5. `POST /api/copilotkit/agent/<member>/connect` is polled: 204 means the thread is idle. A turn is over when the thread is idle, the turn's message is stored and the member has answered it, and nothing has changed for 4 seconds. Then the next turn goes.
 6. `GET /api/copilotkit/threads/<thread>/messages?agentId=<member>` reads the stored conversation, including every tool call and result.
 7. `GET /api/approvals` gives the approval gate's requests for that thread. Each one becomes a `pending` event after its tool call and, once answered, a `decided` event before the call's result.

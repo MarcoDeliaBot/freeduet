@@ -32,9 +32,12 @@ import {
   parseGrades,
 } from "./grader";
 import {
+  clearMemories,
+  createServerApi,
   evalConversationName,
   isEvalConversation,
   type LiveTranscript,
+  memoriesHeld,
   mergeApprovals,
   messagesToEvents,
   runCaseLive,
@@ -1134,6 +1137,8 @@ function scriptedServer(options: {
   answer: (turn: number) => Record<string, unknown>[];
   keepName?: boolean;
   lock?: { run: number; times: number; busyPolls: number; body?: string };
+  /** The person's memories: GET /api/memory lists them, DELETE /api/memory/<id> forgets one, as the server does. */
+  memories?: { id: string }[];
 }) {
   const calls: string[] = [];
   const runs: { threadId: string; messages: Record<string, unknown>[] }[] = [];
@@ -1221,6 +1226,17 @@ function scriptedServer(options: {
     if (thread)
       return Response.json({ messages: stores.get(thread[1] as string) ?? [] });
     if (path === "/api/approvals") return Response.json({ requests: [] });
+    const memories = options.memories;
+    if (memories && path === "/api/memory")
+      return Response.json({ memories: [...memories] });
+    const forgotten = /^\/api\/memory\/(.+)$/.exec(path);
+    if (memories && forgotten) {
+      const at = memories.findIndex(
+        (memory) => memory.id === decodeURIComponent(forgotten[1] ?? ""),
+      );
+      if (at !== -1) memories.splice(at, 1);
+      return new Response(null, { status: 204 });
+    }
     return new Response("not found", { status: 404 });
   }) as unknown as typeof fetch;
   return { fetchImpl, calls, runs, uploads, channels };
@@ -1894,6 +1910,345 @@ describe("live: a turn refused with 409 Thread lock denied", () => {
         (call) => call === "POST /api/copilotkit/agent/chef/run",
       ),
     ).toHaveLength(1);
+  });
+});
+
+/** One event of a run's stream, written as the server writes it: a `data:` line and a blank line. */
+const sse = (event: Record<string, unknown>) =>
+  `data: ${JSON.stringify(event)}\n\n`;
+
+/**
+ * The body of a run's answer: `chunks`, one every `gapMs`. Then the stream closes when `close` is set;
+ * otherwise it stays open and sends a keep-alive comment every `gapMs`, as the server's stream does
+ * while it is quiet. `state.cancelled` is set when the runner lets the stream go.
+ */
+function streamOf(
+  chunks: string[],
+  options: { gapMs: number; close: boolean; state: { cancelled: boolean } },
+): ReadableStream<Uint8Array> {
+  const encoder = new TextEncoder();
+  let timer: ReturnType<typeof setInterval> | undefined;
+  let next = 0;
+  return new ReadableStream<Uint8Array>({
+    start(controller) {
+      timer = setInterval(() => {
+        if (next < chunks.length) {
+          controller.enqueue(encoder.encode(chunks[next++]));
+        } else if (options.close) {
+          clearInterval(timer);
+          controller.close();
+        } else {
+          controller.enqueue(encoder.encode(": keep-alive\n\n"));
+        }
+      }, options.gapMs);
+    },
+    cancel() {
+      clearInterval(timer);
+      options.state.cancelled = true;
+    },
+  });
+}
+
+/**
+ * A server whose runs answer an event stream, as with Intelligence off: `body` is the stream a run
+ * answers with, and `answer` is what the member has stored by then, so the turn settles as it does
+ * against the live server. `silent` never answers a run's headers: the request waits to be aborted.
+ */
+function streamingServer(options: {
+  member: string;
+  body?: () => ReadableStream<Uint8Array>;
+  answer?: Record<string, unknown>[];
+  silent?: boolean;
+}) {
+  const calls: string[] = [];
+  const stored: Record<string, unknown>[] = [];
+  let busy = 0;
+  const fetchImpl = (async (url: string, init: RequestInit = {}) => {
+    const path = url.replace("http://server.test", "");
+    calls.push(`${init.method ?? "GET"} ${path}`);
+    if (path === "/api/channels")
+      return Response.json(
+        { channel: { id: "ch1", threadId: "th1" } },
+        { status: 201 },
+      );
+    if (path === `/api/copilotkit/agent/${options.member}/run`) {
+      if (options.silent)
+        return new Promise<Response>((_, reject) =>
+          init.signal?.addEventListener("abort", () =>
+            reject(init.signal?.reason),
+          ),
+        );
+      const body = JSON.parse(String(init.body)) as {
+        messages: Record<string, unknown>[];
+      };
+      stored.push(...body.messages, ...(options.answer ?? []));
+      busy = 1;
+      return new Response(options.body?.() ?? null, {
+        headers: { "content-type": "text/event-stream" },
+      });
+    }
+    if (path === `/api/copilotkit/agent/${options.member}/connect`) {
+      if (busy > 0) {
+        busy -= 1;
+        return Response.json({ runId: "r" });
+      }
+      return new Response(null, { status: 204 });
+    }
+    if (path.startsWith("/api/copilotkit/threads/th1/messages"))
+      return Response.json({ messages: stored });
+    if (path === "/api/approvals") return Response.json({ requests: [] });
+    return new Response("not found", { status: 404 });
+  }) as unknown as typeof fetch;
+  return { fetchImpl, calls };
+}
+
+describe("live: a run's answer streams, and the turn's time limit bounds it", () => {
+  test("a run that streams longer than the request limit is read to its end, not cut at it", async () => {
+    const stream = { cancelled: false };
+    const server = streamingServer({
+      member: "chef",
+      answer: [
+        { id: "a1", role: "assistant", content: `Three dishes.\n\n${REPORT}` },
+      ],
+      body: () =>
+        streamOf(
+          [
+            sse({ type: "RUN_STARTED" }),
+            ": keep-alive\n\n",
+            ": keep-alive\n\n",
+            ": keep-alive\n\n",
+            ": keep-alive\n\n",
+            sse({ type: "RUN_FINISHED" }),
+          ],
+          { gapMs: 60, close: true, state: stream },
+        ),
+    });
+    const started = Date.now();
+    const t = await runCaseLive(caseOf("basil-1"), {
+      ...FAST,
+      requestTimeoutMs: 100,
+      fetchImpl: server.fetchImpl,
+    });
+    // Over 300 ms of stream, against a 100 ms request limit.
+    expect(Date.now() - started).toBeGreaterThan(100);
+    expect(t.status).toBe("completed");
+    expect(finalAnswer(t)).toStartWith("Three dishes.");
+  });
+
+  test("a request that never answers its headers is cut at the request limit, and says so", async () => {
+    const server = streamingServer({ member: "chef", silent: true });
+    const t = await runCaseLive(caseOf("basil-1"), {
+      ...FAST,
+      requestTimeoutMs: 100,
+      fetchImpl: server.fetchImpl,
+    });
+    expect(t.status).toBe("error");
+    expect(t.error).toBe("starting the turn did not answer within 0.1 s");
+  });
+
+  test("a turn still streaming at its time limit is cancelled and fails as a timeout that names the limit", async () => {
+    const stream = { cancelled: false };
+    const server = streamingServer({
+      member: "chef",
+      answer: [{ id: "a1", role: "assistant", content: "Still looking." }],
+      body: () => streamOf([], { gapMs: 20, close: false, state: stream }),
+    });
+    const started = Date.now();
+    const t = await runCaseLive(caseOf("basil-1"), {
+      ...FAST,
+      timeoutMs: 300,
+      fetchImpl: server.fetchImpl,
+    });
+    expect(t.status).toBe("timeout");
+    expect(t.error).toBe(
+      "turn 1 of 1 did not finish within 0.3 s, the time limit for each turn (--timeout)",
+    );
+    expect(stream.cancelled).toBe(true);
+    expect(Date.now() - started).toBeLessThan(3000);
+    // What the member had said by then is kept, for grading.
+    expect(t.events.map((e) => e.type)).toEqual(["user", "assistant"]);
+  });
+
+  test("a run is over at its RUN_FINISHED, and the runner lets the stream go even though it stays open", async () => {
+    const stream = { cancelled: false };
+    const server = streamingServer({
+      member: "chef",
+      answer: [
+        { id: "a1", role: "assistant", content: `Three dishes.\n\n${REPORT}` },
+      ],
+      body: () =>
+        streamOf(
+          [sse({ type: "RUN_STARTED" }), sse({ type: "RUN_FINISHED" })],
+          { gapMs: 10, close: false, state: stream },
+        ),
+    });
+    const started = Date.now();
+    const t = await runCaseLive(caseOf("basil-1"), {
+      ...FAST,
+      timeoutMs: 5000,
+      fetchImpl: server.fetchImpl,
+    });
+    expect(t.status).toBe("completed");
+    expect(stream.cancelled).toBe(true);
+    expect(Date.now() - started).toBeLessThan(2500);
+  });
+
+  test("a run that ends in RUN_ERROR is over at that event too", async () => {
+    const stream = { cancelled: false };
+    const server = streamingServer({
+      member: "chef",
+      body: () =>
+        streamOf([sse({ type: "RUN_ERROR", message: "The model is busy." })], {
+          gapMs: 10,
+          close: false,
+          state: stream,
+        }),
+    });
+    const started = Date.now();
+    const t = await runCaseLive(caseOf("basil-1"), {
+      ...FAST,
+      timeoutMs: 5000,
+      fetchImpl: server.fetchImpl,
+    });
+    expect(t.status).toBe("completed");
+    expect(stream.cancelled).toBe(true);
+    expect(Date.now() - started).toBeLessThan(2500);
+  });
+});
+
+describe("live: memories saved by earlier runs are removed before each run", () => {
+  test("each run starts without what an earlier run saved; the seed turn comes after the clear and is kept", async () => {
+    const memories = [{ id: "kept-1" }];
+    const seen: string[][] = [];
+    let seeds = 0;
+    const server = scriptedServer({
+      member: "chef",
+      memories,
+      answer: (turn) => {
+        if (turn === 1) {
+          // basil-2's earlier turn: the member saves a note while it answers.
+          seeds += 1;
+          seen.push(memories.map((memory) => memory.id));
+          memories.push({ id: `saved-${seeds}` });
+          return [{ id: "a1", role: "assistant", content: "Noted." }];
+        }
+        return [
+          { id: "a2", role: "assistant", content: `Feta is out.\n\n${REPORT}` },
+        ];
+      },
+    });
+    const basil2 = caseOf("basil-2");
+    const keep = { keep: new Set(["kept-1"]) };
+    const results = await runRepeated([basil2], 2, 1, async (c, run) => {
+      const t = await runCaseLive(c, {
+        ...FAST,
+        memories: keep,
+        fetchImpl: server.fetchImpl,
+        conversationName: evalConversationName(c.id, run, 2),
+      });
+      return scoreCase(c, t, async () => allHold(c));
+    });
+    expect(results).toHaveLength(1);
+    // Each run's seed found only the memory the runner keeps.
+    expect(seen).toEqual([["kept-1"], ["kept-1"]]);
+    // The first run's note was removed; the second run's seed saved its own, and nothing else.
+    expect(memories.map((memory) => memory.id)).toEqual(["kept-1", "saved-2"]);
+    expect(
+      server.calls.filter((call) =>
+        /\/api\/memory|POST \/api\/channels|\/run$/.test(call),
+      ),
+    ).toEqual([
+      "GET /api/memory",
+      "POST /api/channels",
+      "POST /api/copilotkit/agent/chef/run",
+      "POST /api/copilotkit/agent/chef/run",
+      "GET /api/memory",
+      "DELETE /api/memory/saved-1",
+      "GET /api/memory",
+      "POST /api/channels",
+      "POST /api/copilotkit/agent/chef/run",
+      "POST /api/copilotkit/agent/chef/run",
+    ]);
+  });
+
+  test("a clear the server refuses fails the run before any of its messages are sent", async () => {
+    const calls: string[] = [];
+    const fetchImpl = (async (url: string, init: RequestInit = {}) => {
+      calls.push(
+        `${init.method ?? "GET"} ${url.replace("http://server.test", "")}`,
+      );
+      if (url.endsWith("/api/memory"))
+        return new Response("unavailable", { status: 503 });
+      return new Response("not found", { status: 404 });
+    }) as unknown as typeof fetch;
+    const t = await runCaseLive(caseOf("basil-1"), {
+      ...FAST,
+      memories: { keep: new Set() },
+      fetchImpl,
+    });
+    expect(t.status).toBe("error");
+    expect(t.error).toBe("listing the memories answered HTTP 503");
+    expect(calls.some((call) => call.startsWith("POST"))).toBe(false);
+  });
+
+  test("a memory the server will not remove fails the run rather than leaving it for the next", async () => {
+    const memories = [{ id: "stuck" }];
+    const fetchImpl = (async (url: string, init: RequestInit = {}) => {
+      if (url.endsWith("/api/memory"))
+        return Response.json({ memories: [...memories] });
+      if (url.includes("/api/memory/") && init.method === "DELETE")
+        return new Response("refused", { status: 500 });
+      return new Response("not found", { status: 404 });
+    }) as unknown as typeof fetch;
+    const t = await runCaseLive(caseOf("basil-1"), {
+      ...FAST,
+      memories: { keep: new Set() },
+      fetchImpl,
+    });
+    expect(t.status).toBe("error");
+    expect(t.error).toBe("removing a memory answered HTTP 500");
+  });
+
+  test("the held memories are read once; a memory that never goes is reported after a bounded number of passes", async () => {
+    const fetchImpl = (async (_url: string, init: RequestInit = {}) => {
+      if ((init.method ?? "GET") === "DELETE")
+        return new Response(null, { status: 204 });
+      return Response.json({ memories: [{ id: "stuck" }, { id: "kept" }] });
+    }) as unknown as typeof fetch;
+    expect(
+      await memoriesHeld({ server: "http://server.test", fetchImpl }),
+    ).toEqual(new Set(["stuck", "kept"]));
+    const api = createServerApi({ server: "http://server.test", fetchImpl });
+    await expect(clearMemories(api, new Set(["kept"]))).rejects.toThrow(
+      "still there after 10 passes",
+    );
+  });
+
+  test("live runs go one at a time: --concurrency above 1 is refused before anything is sent", async () => {
+    const child = Bun.spawn(
+      [
+        process.execPath,
+        join(import.meta.dir, "run.ts"),
+        "--concurrency",
+        "2",
+        "--server",
+        "http://127.0.0.1:9",
+      ],
+      {
+        env: { ...process.env, FREEDUET_EVAL_GRADER_KEY: "test-key" },
+        stdout: "pipe",
+        stderr: "pipe",
+      },
+    );
+    const [stderr, code] = await Promise.all([
+      new Response(child.stderr).text(),
+      child.exited,
+    ]);
+    expect(code).not.toBe(0);
+    expect(stderr).toContain(
+      "--concurrency above 1 is refused on the live run",
+    );
+    expect(stderr).not.toContain("Cannot tell whether");
   });
 });
 
