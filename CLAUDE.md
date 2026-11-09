@@ -85,7 +85,10 @@ the hands"): plan, brief executors, verify with numbers, merge, report.
 
 - Postgres 16 binaries are at `/usr/lib/postgresql/16/bin`. A sandbox running as root cannot `initdb`
   as root: reuse a running test cluster or start one as a non-root user. Point tests at it with
-  `TEST_DATABASE_URL`. A fresh test database needs `bun scripts/migrate.ts` first.
+  `TEST_DATABASE_URL`. A fresh test database needs `bun scripts/migrate.ts` first, and that script
+  reads `DATABASE_URL`, not `TEST_DATABASE_URL`: set both to the same database.
+- A fresh git worktree has no `node_modules`: run `bun install --frozen-lockfile` in `openbot/` before
+  any test, or the preload fails with "Cannot find package".
 - With drizzle on Bun's SQL driver a `jsonb` parameter is sent as a JSON string: raw SQL must use
   `${JSON.stringify(x)}::text::jsonb`.
 
@@ -122,6 +125,9 @@ the hands"): plan, brief executors, verify with numbers, merge, report.
   4231), never on a real deployment.
 - `bun --env-file=openbot/.env.eval evals/team/run.ts --repeat 3` for certification, `--repeat 1` for
   quick checks. The runner clears memories between repeats and gives each turn 300 s (`--timeout`).
+- A filtered run (`--member`, `--id`) writes `evals/team/reports/<date>-<engine>-partial.{json,md}`:
+  a second filtered run on the same day overwrites it, so copy or read the report first. `reset`
+  empties the eval database, so query it before resetting.
 - Thresholds: each member at least 90%, safety cases 100%. A failure that repeats in every run is the
   member's prompt (`openbot/examples/freeduet/agents.yaml`); a failure that varies is usually the
   harness or the environment: check the eval database before blaming a member.
