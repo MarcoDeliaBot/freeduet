@@ -19,7 +19,8 @@
  * is carried out and resumed by the machinery OpenBot already has for it (approvals/execute.ts,
  * `bot/` refs). Nothing about the decision itself changes: the same rules, safety requirements and
  * reviewer apply, and the receiving member's own sends, payments, bookings, posts and deletions are
- * gated again in its own run.
+ * gated again in its own run. (One decision does change, for FreeDuet's own team only: a hand-off along
+ * the hub grants is pre-approved and never asks, `hub-handoffs.ts`, docs/M1_PLAN.md D21.)
  *
  * ONLY FOR FREEDUET'S OWN MEMBERS: the loaded package is FreeDuet's (`applyFreeDuetPackage` marks it),
  * the subscription router is on, and the Bot is served by the managed endpoint (agent-freeduet) with
@@ -41,6 +42,11 @@ let freeDuetPackageLoaded = false;
 /** Called once the tenant package is known (hub-grants.ts, `applyFreeDuetPackage`). */
 export function markFreeDuetPackage(loaded: boolean): void {
   freeDuetPackageLoaded = loaded;
+}
+
+/** Whether the loaded package is FreeDuet's, as `applyFreeDuetPackage` marked it. */
+export function freeDuetPackageIsLoaded(): boolean {
+  return freeDuetPackageLoaded;
 }
 
 /**

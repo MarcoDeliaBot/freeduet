@@ -18,6 +18,7 @@ import type { DeliveryScope } from "../delivery/types";
 import type { PeopleStore } from "../people/store";
 import type { PluginStore } from "../plugins/store";
 import { REFUSAL_MARKER } from "../plugins/tools";
+import { preApproveHubHandoffs } from "../freeduet/hub-handoffs";
 import { createPrivateShareCheck } from "../proactive/private-share";
 import { createWorkQueue } from "../work/queue";
 import { type RunAssertion, readRunAssertion } from "./callback-token";
@@ -82,7 +83,13 @@ export function wireCoordination(deps: {
   const coordination = createCoordinationTools({
     desk: handoffDesk,
     caps: config.handoff,
-    approvalGate: approvalService.gate,
+    // FreeDuet: a hand-off along the team's own grants is pre-approved; any other call is the gate's.
+    approvalGate: preApproveHubHandoffs(approvalService.gate, {
+      database,
+      profiles: agentProfileStore,
+      actorFor,
+      audit: bootAuditStore,
+    }),
     privateShare: {
       check: createPrivateShareCheck({ approvals: approvalService.store }),
       // Resolved the way the desk resolves it: an id wins, then a single visible name. Null for the
