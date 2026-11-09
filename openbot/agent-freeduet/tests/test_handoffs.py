@@ -300,7 +300,7 @@ def test_the_persons_yes_starts_a_run_that_asks_again(client, fake_cli, callback
     assert types(second)[-4:] == ["TOOL_CALL_START", "TOOL_CALL_ARGS", "TOOL_CALL_END", "RUN_FINISHED"]
     assert len(seen) == 1  # the retry did not go through the callback
     prompt = fake_cli.run(1)["prompt"]
-    assert f'<tool_result id="{call_id}" name="message_bot" status="error">' in prompt
+    assert f'<tool_result id="{call_id}" name="mcp__freeduet__message_bot" status="error">' in prompt
     assert "Hand-off to Penny" in prompt and prompt.rstrip().endswith("Reply to the last user message, as the assistant.")
 
 

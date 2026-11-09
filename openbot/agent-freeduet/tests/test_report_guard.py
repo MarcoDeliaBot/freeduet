@@ -195,7 +195,7 @@ def test_a_question_after_a_tool_call_in_this_turn_is_work(client, fake_cli):
     events, _ = post_run(client, run_body(history, bot_id="chef", tools=[tool("read_ledger")]))
     assert content_of(events).endswith(REPORT)
     assert fake_cli.followup_count() == 1
-    assert '<tool_result id="call-1" name="read_ledger">' in fake_cli.followup(0)["prompt"]
+    assert '<tool_result id="call-1" name="mcp__freeduet__read_ledger">' in fake_cli.followup(0)["prompt"]
 
 
 def test_a_deployment_call_in_the_segment_reaches_the_follow_up(client, fake_cli, callback_server):
@@ -214,7 +214,7 @@ def test_a_deployment_call_in_the_segment_reaches_the_follow_up(client, fake_cli
     assert last["delta"] == f"\n\n{in_progress}"
     assert content_of(events).endswith(f"Otto has the week plan.\n\n{in_progress}")
     prompt = fake_cli.followup(0)["prompt"]
-    assert 'name="message_bot"' in prompt and "Otto has it: Plan the week" in prompt
+    assert 'name="mcp__freeduet__message_bot"' in prompt and "Otto has it: Plan the week" in prompt
     assert team_log_of(fake_cli)[0]["outcome"] == "in progress"
 
 

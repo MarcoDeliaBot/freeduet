@@ -68,3 +68,48 @@ def test_active_lessons_join_the_system_text_newest_last_at_most_20():
     assert section.splitlines()[1:] == [f"- Lesson {index}." for index in range(2, 22)]
     assert system.index("You hold make_page.") < system.index(LESSONS_HEADING) < system.index(RUNTIME_NOTE)
     assert LESSONS_HEADING not in render(IRIS, MESSAGES).system
+
+
+# ── tool names: the CLI registers the bridge's tools as mcp__freeduet__<name> ─────────────────────
+
+
+def test_earlier_calls_to_served_tools_are_written_under_the_registered_name():
+    prompt = render(IRIS, MESSAGES, served={"make_page"}).prompt
+    assert '<tool_call id="call-1" name="mcp__freeduet__make_page">{"title":"Plan"}</tool_call>' in prompt
+    assert '<tool_result id="call-1" name="mcp__freeduet__make_page">' in prompt
+    assert 'name="make_page"' not in prompt
+
+
+def test_a_tool_this_run_does_not_serve_keeps_its_own_name():
+    # The history must not suggest a call the CLI could not make (the run did not offer the tool).
+    messages = [
+        *MESSAGES[2:3],
+        {"id": "a1", "role": "assistant", "toolCalls": [
+            {"id": "c1", "type": "function", "function": {"name": "make_page", "arguments": "{}"}},
+            {"id": "c2", "type": "function", "function": {"name": "computer_read", "arguments": "{}"}},
+        ]},
+        {"id": "t1", "role": "tool", "toolCallId": "c1", "content": "ok"},
+        {"id": "t2", "role": "tool", "toolCallId": "c2", "content": "ok"},
+    ]
+    prompt = render(IRIS, messages, served={"make_page"}).prompt
+    assert '<tool_call id="c1" name="mcp__freeduet__make_page">' in prompt
+    assert '<tool_call id="c2" name="computer_read">' in prompt
+    assert '<tool_result id="c2" name="computer_read">' in prompt
+
+
+def test_a_name_that_already_carries_the_prefix_is_not_prefixed_twice():
+    messages = [
+        {"id": "a1", "role": "assistant", "toolCalls": [
+            {"id": "c1", "type": "function", "function": {"name": "mcp__freeduet__make_page", "arguments": "{}"}}]},
+    ]
+    prompt = render(IRIS, messages, served={"make_page", "mcp__freeduet__make_page"}).prompt
+    assert 'name="mcp__freeduet__make_page"' in prompt and "mcp__freeduet__mcp__" not in prompt
+
+
+def test_the_system_text_tells_the_model_to_call_tools_by_their_full_name():
+    system = render(IRIS, MESSAGES, served={"make_page"}).system
+    assert system.endswith(RUNTIME_NOTE)
+    assert "call each one by its full name, mcp__freeduet__<name>" in RUNTIME_NOTE
+    assert "Claude Code refuses a call made under the short name" in RUNTIME_NOTE
+    # The old wording told the model its transcript names calls by the plain name: it imitated that.
+    assert "names a call by its plain" not in RUNTIME_NOTE

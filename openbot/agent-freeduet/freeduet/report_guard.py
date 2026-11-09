@@ -169,9 +169,14 @@ class Story:
         )
 
 
-def followup_prompt(member: Member, messages: list[dict], context: list[dict], story: Story, lessons=(), notes=()):
-    """The follow-up's system text and stdin: the conversation so far and INSTRUCTION."""
-    return transcript.render(member, [*messages, *story.messages], context, lessons, notes, closing=INSTRUCTION)
+def followup_prompt(
+    member: Member, messages: list[dict], context: list[dict], story: Story, lessons=(), notes=(), served=()
+):
+    """The follow-up's system text and stdin: the conversation so far and INSTRUCTION. `served` are the
+    tools the turn's bridge served: the history names them as the segment's own transcript does."""
+    return transcript.render(
+        member, [*messages, *story.messages], context, lessons, notes, closing=INSTRUCTION, served=served
+    )
 
 
 async def request_report(system: str, prompt: str, timeout: float = TIMEOUT_SECONDS) -> str | None:

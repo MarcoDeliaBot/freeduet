@@ -68,8 +68,9 @@ def test_full_loop_tool_call_then_resume_with_the_result(client, fake_cli):
     assert second[1]["messageId"] != message_id
 
     prompt = fake_cli.run(1)["prompt"]  # a fresh, stateless CLI read the whole transcript
-    assert f'<tool_call id="{call_id}" name="make_page">' in prompt
-    assert f'<tool_result id="{call_id}" name="make_page">\n{{"ok":true,"url":"/pages/1"}}\n</tool_result>' in prompt
+    # The CLI registers the tool as mcp__freeduet__make_page: the history writes the call that way.
+    assert f'<tool_call id="{call_id}" name="mcp__freeduet__make_page">' in prompt
+    assert f'<tool_result id="{call_id}" name="mcp__freeduet__make_page">\n{{"ok":true,"url":"/pages/1"}}\n</tool_result>' in prompt
     assert prompt.rstrip().endswith("the last entries above.")
 
 
