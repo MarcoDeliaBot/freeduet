@@ -39,7 +39,7 @@ from contextlib import suppress
 from dataclasses import dataclass
 from pathlib import Path
 
-from . import agui, claude_cli, iris_tools, lessons, report_guard, team_log, tool_notes, transcript
+from . import agui, claude_cli, iris_tools, lessons, origin, report_guard, team_log, tool_notes, transcript
 from .agui import RunInput
 from .bridge import ipc
 from .bridge.callback import HANDOFF_TOOL, call_deployment_tool, needs_the_person
@@ -268,6 +268,16 @@ async def run_segment(run: RunInput, member: Member, notes: SegmentNotes | None 
             await host.close()
             if stderr and parser.final is None:
                 log.info("claude stderr: %s", bytes(stderr[-2000:]).decode("utf-8", errors="replace"))
+            if parser.unavailable:
+                # The call went nowhere: the CLI answered it itself, so no stored transcript shows it.
+                log.warning(
+                    "claude answered \"No such tool available\" for %s: this %s run offered only %s (thread %s, run %s)",
+                    ", ".join(parser.unavailable),
+                    "hand-off" if origin.is_handoff_run(run.messages, run.assertion) else "person's",
+                    ", ".join(sorted(offered)) or "no tool",
+                    run.thread_id,
+                    run.run_id,
+                )
 
 
 async def _drive(run: RunInput, offered: set[str], inbox: asyncio.Queue, parser: StreamParser, spawn, failed_exit,

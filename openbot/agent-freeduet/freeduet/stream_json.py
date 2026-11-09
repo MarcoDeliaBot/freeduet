@@ -15,9 +15,13 @@ everything else, so an unknown event, a malformed line or a missing field never 
 """
 
 import json
+import re
 from dataclasses import dataclass, field
 
 MCP_PREFIX = "mcp__freeduet__"
+# The CLI's own answer to a call for a name the MCP server did not list (cli.js): the call never
+# reaches the bridge, so this line is the only trace it leaves.
+NO_SUCH_TOOL = re.compile(r"No such tool available: (\S+?)(?:</tool_use_error>|\s|$)")
 
 
 @dataclass(frozen=True)
@@ -75,6 +79,9 @@ class StreamParser:
     # A usage or rate limit refusing this account (`rate_limit_event`, status "rejected").
     limit_refused: bool = False
     limit_resets_at: float | None = None
+    # Tools the model called that the CLI answered with "No such tool available" (names without the
+    # MCP prefix): the run did not list them, so the call went nowhere.
+    unavailable: list[str] = field(default_factory=list)
     final: Final | None = None
     _current_message: str | None = None
     _messages_with_deltas: set = field(default_factory=set)
@@ -96,6 +103,8 @@ class StreamParser:
             return self._stream_event(event.get("event"))
         if kind == "system" and event.get("subtype") == "init":
             self.init_seen = True
+        elif kind == "user":
+            self._tool_errors(event.get("message"))
         elif kind == "rate_limit_event":
             self._rate_limit(event.get("rate_limit_info"))
         elif kind == "assistant":
@@ -130,6 +139,15 @@ class StreamParser:
         resets = info.get("resetsAt")
         if isinstance(resets, (int, float)) and not isinstance(resets, bool) and resets > 0:
             self.limit_resets_at = float(resets)
+
+    def _tool_errors(self, message) -> None:
+        content = message.get("content") if isinstance(message, dict) else None
+        for block in content if isinstance(content, list) else []:
+            if not isinstance(block, dict) or block.get("type") != "tool_result" or block.get("is_error") is not True:
+                continue
+            found = NO_SUCH_TOOL.search(block["content"]) if isinstance(block.get("content"), str) else None
+            if found:
+                self.unavailable.append(found.group(1).removeprefix(MCP_PREFIX))
 
     def _api_error(self, event: dict) -> bool:
         message = event.get("message") if isinstance(event.get("message"), dict) else {}
