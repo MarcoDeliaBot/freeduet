@@ -215,6 +215,8 @@ export type ChannelStore = {
     actor: AgentActor,
     agentIds: string[],
     transaction?: ChannelTransaction,
+    /** The conversation's name, trimmed and within the limit (`parseChannelInput`). Absent, its Bots name it. */
+    name?: string,
   ): Promise<AgentChannel>;
   /**
    * The one conversation this person has with this Bot alone, made if they have not had one yet.
@@ -404,6 +406,7 @@ export function createChannelStore(
     transaction: ChannelTransaction,
     actor: AgentActor,
     agentIds: string[],
+    requestedName?: string,
   ): Promise<AgentChannel> => {
     // Validated on this transaction, not through `profileStore.get`: the read has to share
     // the connection this transaction already holds, and has to hold the profile so an agent
@@ -422,14 +425,17 @@ export function createChannelStore(
     // Minted rather than a bare random id, so the thread says which deployment it belongs to
     // in a project that may hold more than one. See thread-identity.ts.
     const threadId = threadIdentity.mint();
-    // Named from the caller's ordering, which is the order the channel presents its agents in.
-    const name = channelName(
-      agentIds.map((agentId) => {
-        const profile = profilesById.get(agentId);
-        if (!profile) throw new AgentNotFoundError(agentId);
-        return profile.name;
-      }),
-    );
+    // A name the caller asked for wins. Otherwise it is named from the caller's ordering, which is the
+    // order the channel presents its agents in.
+    const name =
+      requestedName ??
+      channelName(
+        agentIds.map((agentId) => {
+          const profile = profilesById.get(agentId);
+          if (!profile) throw new AgentNotFoundError(agentId);
+          return profile.name;
+        }),
+      );
 
     await transaction.insert(channels).values({
       id,
@@ -476,10 +482,10 @@ export function createChannelStore(
   }
 
   const store: ChannelStore = {
-    create(actor, agentIds, transaction) {
-      if (transaction) return makeChannel(transaction, actor, agentIds);
+    create(actor, agentIds, transaction, name) {
+      if (transaction) return makeChannel(transaction, actor, agentIds, name);
       return database.transaction(
-        async (transaction) => makeChannel(transaction, actor, agentIds),
+        async (transaction) => makeChannel(transaction, actor, agentIds, name),
         { isolationLevel: "read committed" },
       );
     },
@@ -1162,10 +1168,10 @@ export class ChannelPackageOwnedError extends Error {
 }
 
 type ChannelInputParseResult =
-  | { ok: true; value: { agentIds: string[] } }
+  | { ok: true; value: { agentIds: string[]; name?: string } }
   | { ok: false; error: string };
 
-type ChannelInputObject = { agentIds?: unknown };
+type ChannelInputObject = { agentIds?: unknown; name?: unknown };
 
 export function parseChannelInput(input: unknown): ChannelInputParseResult {
   if (!isChannelInputObject(input)) {
@@ -1188,7 +1194,33 @@ export function parseChannelInput(input: unknown): ChannelInputParseResult {
     return { ok: false, error: "Agent IDs must be unique." };
   }
 
-  return { ok: true, value: { agentIds: agentIds.sort() } };
+  /*
+   * Optional. Absent, empty or blank means the conversation is named after its Bots, as it always
+   * was. The length is counted after trimming, in code points, the same measure `channelName` cuts by.
+   */
+  const requested = input.name;
+  let name: string | undefined;
+  if (requested !== undefined) {
+    if (typeof requested !== "string") {
+      return { ok: false, error: "Channel name must be a string." };
+    }
+    const trimmed = requested.trim();
+    if (Array.from(trimmed).length > MAX_CHANNEL_NAME_CODE_POINTS) {
+      return {
+        ok: false,
+        error: `Channel name must be ${MAX_CHANNEL_NAME_CODE_POINTS} characters or fewer.`,
+      };
+    }
+    if (trimmed.length > 0) name = trimmed;
+  }
+
+  return {
+    ok: true,
+    value:
+      name === undefined
+        ? { agentIds: agentIds.sort() }
+        : { agentIds: agentIds.sort(), name },
+  };
 }
 
 function isChannelInputObject(input: unknown): input is ChannelInputObject {
@@ -1366,6 +1398,8 @@ export function createChannelRoutes(
       const channel = await store.create(
         context.var.actor,
         parsed.value.agentIds,
+        undefined,
+        parsed.value.name,
       );
       return context.json({ channel: channelDto(channel) }, 201);
     } catch (error) {
