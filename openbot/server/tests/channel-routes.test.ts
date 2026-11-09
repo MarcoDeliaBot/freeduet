@@ -166,12 +166,68 @@ describe("channel input parser", () => {
       parseChannelInput({
         agentIds: [" agent-2 ", "agent-1"],
         id: "forged-channel",
-        name: "forged name",
         threadId: "forged-thread",
         active: false,
       }),
     ).toEqual({ ok: true, value: { agentIds: ["agent-1", "agent-2"] } });
   });
+
+  test.each([
+    ["  [eval] jules-1  ", "[eval] jules-1"],
+    ["Morning check", "Morning check"],
+  ])("keeps a name that is not blank, trimmed: %p", (name, expected) => {
+    expect(parseChannelInput({ agentIds: ["agent-1"], name })).toEqual({
+      ok: true,
+      value: { agentIds: ["agent-1"], name: expected },
+    });
+  });
+
+  test.each([[undefined], [""], ["   "], ["\t\n"]])(
+    "leaves the name to the Bot when none is sent: %p",
+    (name) => {
+      expect(parseChannelInput({ agentIds: ["agent-1"], name })).toStrictEqual({
+        ok: true,
+        value: { agentIds: ["agent-1"] },
+      });
+    },
+  );
+
+  test("accepts a name of 120 characters and refuses 121", () => {
+    expect(
+      parseChannelInput({ agentIds: ["agent-1"], name: "n".repeat(120) }),
+    ).toEqual({
+      ok: true,
+      value: { agentIds: ["agent-1"], name: "n".repeat(120) },
+    });
+    expect(
+      parseChannelInput({ agentIds: ["agent-1"], name: "n".repeat(121) }),
+    ).toEqual({
+      ok: false,
+      error: "Channel name must be 120 characters or fewer.",
+    });
+  });
+
+  test("measures the length of a name after trimming it", () => {
+    expect(
+      parseChannelInput({
+        agentIds: ["agent-1"],
+        name: ` ${"n".repeat(120)} `,
+      }),
+    ).toEqual({
+      ok: true,
+      value: { agentIds: ["agent-1"], name: "n".repeat(120) },
+    });
+  });
+
+  test.each([[42], [true], [["[eval] jules-1"]], [{}], [null]])(
+    "refuses a name that is not a string: %p",
+    (name) => {
+      expect(parseChannelInput({ agentIds: ["agent-1"], name })).toEqual({
+        ok: false,
+        error: "Channel name must be a string.",
+      });
+    },
+  );
 });
 
 describe("channel list limit", () => {
@@ -267,6 +323,72 @@ describe("channel routes", () => {
       ["get", actor, "channel-1"],
     ]);
   });
+
+  test("hands the store the name the caller asked for, trimmed", async () => {
+    const names: unknown[] = [];
+    const store = fakeStore({
+      async create(_actor, agentIds, _transaction, name) {
+        names.push(name);
+        return channel({ agentIds, name: name ?? "Assistant channel" });
+      },
+    });
+
+    const created = await appFor(store).request("http://openbot.test/", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        agentIds: ["agent-1"],
+        name: "  [eval] jules-1  ",
+      }),
+    });
+
+    expect(created.status).toBe(201);
+    expect(names).toEqual(["[eval] jules-1"]);
+    expect((await json(created)).channel.name).toBe("[eval] jules-1");
+  });
+
+  test("leaves the name to the store when the caller sends a blank one", async () => {
+    const names: unknown[] = [];
+    const store = fakeStore({
+      async create(_actor, agentIds, _transaction, name) {
+        names.push(name);
+        return channel({ agentIds });
+      },
+    });
+
+    const created = await appFor(store).request("http://openbot.test/", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ agentIds: ["agent-1"], name: "   " }),
+    });
+
+    expect(created.status).toBe(201);
+    expect(names).toEqual([undefined]);
+  });
+
+  test.each([
+    ["a number", 42, "Channel name must be a string."],
+    ["null", null, "Channel name must be a string."],
+    [
+      "121 characters",
+      "n".repeat(121),
+      "Channel name must be 120 characters or fewer.",
+    ],
+  ])(
+    "refuses a name that is %s with 400 and never reaches the store",
+    async (_label, name, error) => {
+      const store = fakeStore();
+      const response = await appFor(store).request("http://openbot.test/", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ agentIds: ["agent-1"], name }),
+      });
+
+      expect(response.status).toBe(400);
+      expect(await json(response)).toEqual({ error });
+      expect(store.calls).toEqual([]);
+    },
+  );
 
   test("returns only the channel DTO for create and get", async () => {
     const store = fakeStore({
@@ -1430,6 +1552,90 @@ describe("channel store integration", () => {
       expect(await channelTableSnapshot()).toEqual(before);
     },
   );
+});
+
+describe("channel route naming", () => {
+  function routeAs(actor: AgentActor) {
+    const middleware: MiddlewareHandler<{ Variables: AppVariables }> = async (
+      context,
+      next,
+    ) => {
+      context.set("actor", actor);
+      await next();
+    };
+    return appFor(persistentStore, middleware);
+  }
+
+  function postChannel(
+    app: ReturnType<typeof appFor>,
+    body: Record<string, unknown>,
+  ) {
+    return app.request("http://openbot.test/", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify(body),
+    });
+  }
+
+  test("names the new channel with the name the caller asked for, trimmed", async () => {
+    const owner = await createPersistentUser();
+    const agentId = await createPersistentAgent({ name: "Jules", owner });
+
+    const response = await postChannel(routeAs(owner), {
+      agentIds: [agentId],
+      name: "  [eval] jules-1  ",
+    });
+    const { channel: created } = await json(response);
+    createdChannelIds.push(created.id);
+
+    expect(response.status).toBe(201);
+    expect(created.name).toBe("[eval] jules-1");
+    expect((await persistedChannel(created.id)).channelRow?.name).toBe(
+      "[eval] jules-1",
+    );
+  });
+
+  test.each([
+    ["absent", {}],
+    ["empty", { name: "" }],
+    ["blank", { name: "   " }],
+  ])(
+    "names the channel after its Bot when the name is %s",
+    async (_label, extra) => {
+      const owner = await createPersistentUser();
+      const agentId = await createPersistentAgent({ name: "Jules", owner });
+
+      const response = await postChannel(routeAs(owner), {
+        agentIds: [agentId],
+        ...extra,
+      });
+      const { channel: created } = await json(response);
+      createdChannelIds.push(created.id);
+
+      expect(response.status).toBe(201);
+      expect(created.name).toBe("Jules");
+      expect((await persistedChannel(created.id)).channelRow?.name).toBe(
+        "Jules",
+      );
+    },
+  );
+
+  test("refuses a name of 121 characters and leaves no channel behind", async () => {
+    const owner = await createPersistentUser();
+    const agentId = await createPersistentAgent({ name: "Jules", owner });
+    const before = await channelTableSnapshot();
+
+    const response = await postChannel(routeAs(owner), {
+      agentIds: [agentId],
+      name: "n".repeat(121),
+    });
+
+    expect(response.status).toBe(400);
+    expect(await json(response)).toEqual({
+      error: "Channel name must be 120 characters or fewer.",
+    });
+    expect(await channelTableSnapshot()).toEqual(before);
+  });
 });
 
 describe("channel pinning", () => {
