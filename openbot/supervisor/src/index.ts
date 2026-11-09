@@ -1,7 +1,7 @@
 import { serve } from "bun";
 import { Hono } from "hono";
 import { authorised } from "./authorisation";
-import { environmentFor } from "./environment";
+import { computerMemoryBytes } from "./computer-memory-bytes";
 import {
   ComputerNotAnsweringError,
   DockerUnavailableError,
@@ -12,10 +12,15 @@ import {
   reset,
   stop,
 } from "./docker";
+import {
+  documentsFolderIsEmpty,
+  documentsSettings,
+  liveDocuments,
+} from "./documents";
+import { environmentFor } from "./environment";
 import { registerEntry } from "./identity";
-import { namesFor } from "./names";
-import { computerMemoryBytes } from "./computer-memory-bytes";
 import { listenPort } from "./listen-port";
+import { namesFor } from "./names";
 
 /**
  * The container supervisor: the only thing here that holds the Docker socket.
@@ -73,6 +78,30 @@ const memoryBytes = resolvedMemory.bytes;
 const spireSocketVolume =
   process.env.SPIRE_AGENT_SOCKET_VOLUME?.trim() || undefined;
 
+// A folder of the person's documents for the Bots named in the settings, read-only. A bad value is
+// said here and leaves the feature off: it never stops the supervisor, which every computer depends on.
+const documentsConfig = documentsSettings();
+if (!documentsConfig.ok) {
+  console.error(`${documentsConfig.reason} The documents folder stays off.`);
+} else if (documentsConfig.note) {
+  console.warn(documentsConfig.note);
+}
+const documentsNow = liveDocuments(
+  documentsConfig.ok ? documentsConfig.documents : undefined,
+);
+// The first check is the one at start, and says why the folder cannot be used.
+const documentsAtStart = await documentsNow();
+if (documentsAtStart) {
+  console.info(
+    `Documents folder ${documentsAtStart.path}, read-only at /workspace/documenti, for: ${documentsAtStart.bots.join(", ")}.`,
+  );
+  if (await documentsFolderIsEmpty(documentsAtStart.path)) {
+    console.warn(
+      `The documents folder ${documentsAtStart.path} is empty. If it is a network share, check that it is mounted on this machine before the stack starts.`,
+    );
+  }
+}
+
 const app = new Hono();
 
 app.use("*", async (context, next) => {
@@ -102,9 +131,12 @@ app.post("/computers/:botId/ensure", async (context) => {
     // request.
     const identity = await registerEntry(parsed.names);
 
+    // Asked each time, so a folder that has gone away is not handed to a computer being created.
+    const documents = await documentsNow();
     const state = await ensure(parsed.names, {
       image,
       environment: environmentFor(parsed.names.botId),
+      ...(documents ? { documents } : {}),
       ...(network ? { network } : {}),
       ...(runtime ? { runtime } : {}),
       ...(memoryBytes ? { memoryBytes } : {}),

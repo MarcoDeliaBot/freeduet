@@ -670,6 +670,8 @@ is still the record.
 | `AGENT_ENDPOINT_ALLOWED_HOSTS`       | Private addresses an agent may be registered at, comma separated; unset (none) by default. Host, optionally with a port. Exact match; no wildcards. Never-allowed addresses cannot be named. |
 | `AGENT_COMPUTER_POLICY`              | JSON action policy: `{"mode":"enforce","deny":[...],"allow":[...]}`.                      |
 | `COMPUTER_RUNTIME`                   | Set to `runsc` to run supervised computers under gVisor.                                  |
+| `FREEDUET_COMPUTER_DOCUMENTS`        | FreeDuet. Absolute host path of a folder of documents, mounted read-only at `/workspace/documenti` in the computers of the Bots named below. Unset or empty: off. See [Documents folder](#documents-folder-for-chosen-members). |
+| `FREEDUET_COMPUTER_DOCUMENTS_BOTS`   | FreeDuet. Bot ids that get the folder, comma separated (Iris is `freeduet`). Unset or empty: nobody, even with the path set. |
 | `COMPUTER_SANDBOX`                   | Set to `on` to enable Chromium's own sandbox where the host permits user namespaces. Which way it went is printed at start-up. |
 
 `COMPUTER_SANDBOX` is not the cluster sandbox provider. A Kubernetes deployment can instead run each
@@ -688,6 +690,35 @@ docker ps -aq --filter "label=openbot.namespace=openbot" | xargs -r docker rm -f
 ```
 
 The supervisor recreates each computer with the same named volumes on its next request.
+
+### Documents folder for chosen members
+
+FreeDuet can give chosen members read-only access to a folder of the person's documents. It appears
+in their computer at `/workspace/documenti`, under the one directory their file tools reach, so
+`computer_list_files`, `computer_read_file` and the download work on it as on any file of theirs.
+A write there fails: the folder is mounted `:ro`, whatever the member tries.
+
+```sh
+FREEDUET_COMPUTER_DOCUMENTS=/mnt/documents
+FREEDUET_COMPUTER_DOCUMENTS_BOTS=freeduet
+```
+
+- Off unless both are set and valid. A bad value (a relative path, a `:` or `,` in the path, a
+  folder that is not there, an id that is not a Bot id) is one line in the supervisor's log and the
+  feature stays off; the supervisor still starts.
+- Only the listed Bots get it. Every other computer is created as before.
+- Pick a folder that holds only documents: a member can read everything in it. What a member then
+  does with them (sending, sharing, paying) still goes through the person's approval.
+- The folder must exist on the host before the stack starts, and a network share must already be
+  mounted there. Given a missing path the engine creates an empty folder, and the supervisor says so
+  in its log when the folder it finds is empty. Compose also mounts the folder into the supervisor,
+  read-only at the same path, so it can check the folder before using it.
+- The supervisor reads the settings when it starts: after changing them run
+  `docker compose up -d supervisor` (`scripts/start.sh` does it). A computer that already exists is
+  replaced at its next request when its folder is not the one now wanted, whether the feature was
+  turned on, off or pointed elsewhere. Its profile and workspace volumes are kept.
+- A listing of the whole workspace includes the folder and stops at 500 entries; ask for
+  `documenti/<folder>` to go deeper.
 
 ### Headed or headless managed Chromium in Docker or Helm
 
