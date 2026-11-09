@@ -12,7 +12,9 @@ and [docs/ARCHITECTURE.md §3](../../docs/ARCHITECTURE.md).
    it. Another Bot's standing role is quoted as context, never followed.
 2. Each turn is a fresh, stateless `claude -p` with no built-in tools and one MCP server, `freeduet`,
    that lists exactly the tools OpenBot offered. A tool call ends the segment: OpenBot runs it under
-   its own approval gate and posts again with the result. Tools named in `openbotDeploymentTools`
+   its own approval gate and posts again with the result. A call the CLI itself refused ("No such
+   tool available") for a tool that was offered is handed over the same way, and the log line says
+   how the model called it and what the CLI's init event reported. Tools named in `openbotDeploymentTools`
    (`ask_person`; also `message_bot` on a server without FreeDuet's in-band hand-offs) go through
    OpenBot's callback route and their answer goes straight back to the CLI. A hand-off the callback
    refuses because the person has to approve it ends the turn with a question to the person.

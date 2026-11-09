@@ -18,6 +18,16 @@ plays the next plan from $FAKE_CLAUDE_DIR/plans.json, one plan per invocation:
                                           call. The names are kept in `unavailable` in the run's record.
                                           Without it the call goes to the bridge anyway, which is how the
                                           bridge's own refusal of an unoffered tool is tested.
+  {"tool": {..., "plain": true}, ...}     the model calls the tool by its plain name, without the
+                                          mcp__freeduet__ prefix the CLI registers it under. With
+                                          "real_cli" the CLI refuses it, as it refuses any name it does
+                                          not have.
+  {"tool": ..., "refuse": true}           the CLI refuses a call to a tool the server DID list (a server
+                                          that was not connected yet, a name it did not match): the same
+                                          answer, the bridge never hears of the call.
+  {"init": {"status": "pending",          the first step only: what the init event says about the
+            "tools": []}}                 freeduet server (its status, and the tools it lists). The
+                                          server itself is started either way.
 
 Without a result step it ends with a successful result. Everything it saw (argv, environment
 names, prompt, MCP config, tools/list, tool results) goes to $FAKE_CLAUDE_DIR/run-<n>.json.
@@ -97,18 +107,22 @@ class Turn:
             self.text.append(text)
         uses = []
         for tool in tools or []:
-            use = {"type": "tool_use", "id": f"toolu_{uuid.uuid4().hex[:12]}", "name": f"mcp__freeduet__{tool['name']}", "input": tool.get("input", {})}
+            called_as = tool["name"] if tool.get("plain") else f"mcp__freeduet__{tool['name']}"
+            use = {"type": "tool_use", "id": f"toolu_{uuid.uuid4().hex[:12]}", "name": called_as, "input": tool.get("input", {})}
             uses.append(use)
             out({"type": "assistant", "message": {"id": message_id, "role": "assistant", "content": [use]}, "parent_tool_use_id": None})
         out({"type": "stream_event", "event": {"type": "message_stop"}, "parent_tool_use_id": None})
         return uses
 
-    def call(self, use: dict, real_cli: bool = False) -> None:
+    def call(self, use: dict, real_cli: bool = False, refuse: bool = False) -> None:
         name = use["name"].removeprefix("mcp__freeduet__")
-        if real_cli and name not in self.listed:
-            # The real CLI answers a call to an unlisted tool itself; nothing reaches the server.
+        # The CLI registers a server's tools as mcp__<server>__<tool>: a plain name is not one of them.
+        registered = {f"mcp__freeduet__{listed}" for listed in self.listed}
+        if refuse or (real_cli and use["name"] not in registered):
+            # The real CLI answers a call to a name it does not have itself; nothing reaches the server.
             text = f"<tool_use_error>Error: No such tool available: {use['name']}</tool_use_error>"
             self.record.setdefault("unavailable", []).append(name)
+            self.record.setdefault("unavailable_as", []).append(use["name"])
             self.save()
             out({"type": "user", "message": {"role": "user", "content": [{"type": "tool_result", "tool_use_id": use["id"], "content": text, "is_error": True}]}, "parent_tool_use_id": None})
             return
@@ -125,7 +139,7 @@ class Turn:
         """Play one step; False once the turn has ended."""
         if "tool" in step:
             for use in self.message(step.get("text"), [step["tool"]]):
-                self.call(use, step.get("real_cli", False))
+                self.call(use, step.get("real_cli", False), step.get("refuse", False))
         elif "text" in step:
             self.message(step["text"])
         elif "replay" in step:
@@ -180,7 +194,9 @@ def main(args: list[str]) -> int:
         turn.listed = {tool["name"] for tool in tools}
         record["tools"] = tools
         turn.save()
-    out({"type": "system", "subtype": "init", "tools": [f"mcp__freeduet__{tool['name']}" for tool in tools], "mcp_servers": [{"name": name, "status": "connected"} for name in servers], "apiKeySource": "none"})
+    init = plan[0]["init"] if plan and "init" in plan[0] else {}
+    listed = init["tools"] if "tools" in init else [tool["name"] for tool in tools]
+    out({"type": "system", "subtype": "init", "tools": [f"mcp__freeduet__{name}" for name in listed], "mcp_servers": [{"name": name, "status": init.get("status", "connected")} for name in servers], "apiKeySource": "none"})
 
     for step in plan:
         if not turn.step(step):
