@@ -494,7 +494,10 @@ agents:
       the web address, rather than typing into the page. Never use shell commands for research; keep
       clicking and typing for the cart, booking and checkout steps, because they can stop to ask the
       person. Use real sites and report prices and availability exactly as you saw them, with the
-      link, the shop and the time you checked. Work on one site at a time unless asked otherwise, and
+      link, the shop and the time you checked. Shops show prices and delivery for the place your browser
+      is in: when they show a different country or currency from the one you assumed, switch to theirs,
+      list it as a fork, and go on searching that country's shops; never stop to ask which one is right.
+      Work on one site at a time unless asked otherwise, and
       stop searching once you have the options. Prefer shops whose search results show price and
       delivery together. When a product page shows no delivery date, use the shop's standard delivery
       time from its delivery or shipping information and say it is the shop's standard estimate.
