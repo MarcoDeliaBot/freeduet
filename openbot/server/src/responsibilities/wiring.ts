@@ -18,6 +18,10 @@ import type { AuditInitiator, AuditStore } from "../audit";
 import type { ChannelStore } from "../channels/routes";
 import type { ComputerGateway } from "../computer/gateway";
 import { createHeadlessComputerTools } from "../computer/headless-tools";
+import {
+  type CapabilitiesLookup,
+  withOfferedComputerTools,
+} from "../computer/offered";
 import type { mountCopilotRuntime } from "../copilot";
 import type { Database } from "../db/client";
 import type { DeliveryScope } from "../delivery/types";
@@ -49,6 +53,8 @@ export function createServerResponsibilityEngine(deps: {
   agentProfileStore: AgentProfileStore;
   bootAuditStore: AuditStore;
   signInService: Parameters<typeof createHeadlessComputerTools>[0]["signIn"];
+  /** FreeDuet: the person's capability switches; a computer switched off is not offered. */
+  capabilitiesOf?: CapabilitiesLookup;
   copilotRuntime: Pick<ReturnType<typeof mountCopilotRuntime>, "learning">;
   channelStore: ChannelStore;
   notify: (
@@ -68,6 +74,7 @@ export function createServerResponsibilityEngine(deps: {
     agentProfileStore,
     bootAuditStore,
     signInService,
+    capabilitiesOf,
     copilotRuntime,
     channelStore,
   } = deps;
@@ -106,13 +113,16 @@ export function createServerResponsibilityEngine(deps: {
                   .catch(() => null),
                 actor,
               )
-                ? createHeadlessComputerTools({
-                    gateway: computerGateway,
-                    botId: context.agentId,
-                    actor: { id: actor.id, userId: actor.id, initiator },
-                    auditStore: bootAuditStore,
-                    ...(signInService ? { signIn: signInService } : {}),
-                  })
+                ? withOfferedComputerTools(
+                    createHeadlessComputerTools({
+                      gateway: computerGateway,
+                      botId: context.agentId,
+                      actor: { id: actor.id, userId: actor.id, initiator },
+                      auditStore: bootAuditStore,
+                      ...(signInService ? { signIn: signInService } : {}),
+                    }),
+                    await capabilitiesOf?.(actor.id),
+                  )
                 : [];
             return [
               ...computer,

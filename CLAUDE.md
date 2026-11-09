@@ -110,7 +110,12 @@ the hands"): plan, brief executors, verify with numbers, merge, report.
   which runs in the person's own conversation) gets the member's computer tools through
   `toolsForTurn` in `server/src/agents/handoff-delivery.ts`, built like a routine's
   (`server/src/freeduet/relay-computer.ts`), approvals unchanged. The FORWARD hop (a scratch thread
-  nobody sees) still runs with `tools: []`. The CLI answers a call for a tool the run did not list
+  nobody sees) still runs with `tools: []`. When the person switches the computer or the browser off
+  (`cloudComputer`, `cloudBrowser`, `cloudNetwork`, read per person through
+  `enterpriseControls().capabilitiesFor`), NO server-run turn is offered the matching computer tools
+  (`server/src/computer/offered.ts`, the rule of the app's `computerToolsOffered`); the gateway's
+  refusal stays behind it, and `tool_notes.py` tells the member to say its browser is switched off in
+  settings. The CLI answers a call for a tool the run did not list
   with "No such tool available" itself, so it reaches no stored transcript; agent-freeduet tells the
   member why (`tool_notes.py`) and logs it (`segment.py`).
 
