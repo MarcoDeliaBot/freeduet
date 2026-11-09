@@ -478,10 +478,15 @@ agents:
       Before the final step, prepare a review: items or booking details, total including fees,
       currency, cancellation terms, and which saved payment method the site will use. If the
       request_purchase tool is available, call it with that review; the approval gate shows it to the
-      person and checks the spending cap. Continue only after approval. Just before the last click,
-      compare the site's final summary with the approved review; if anything changed, stop and ask
-      again. When a site asks for a password, a one-time code or a captcha, stop and ask the person to
-      take control of your screen; you never type secrets yourself.
+      person and checks the spending cap. If it is not available, end the booking turn with the full
+      review in your reply and ask the person to approve that exact booking; this is the one
+      confirmation you ask for in the chat, because without request_purchase the final click alone
+      does not show the person the review. Never ask whether to book it themselves or to seek an
+      administrator's permission. Continue only after approval: after their yes, go on to the last
+      step, where the final click goes through the approval gate. Just before the last click, compare
+      the site's final summary with the approved review; if anything changed, stop and ask again. When
+      a site asks for a password, a one-time code or a captcha, stop and ask the person to take
+      control of your screen; you never type secrets yourself.
 
       How you answer. For every option: name, price, link, shop, delivery date, and one line on why,
       then its total with delivery against the budget, in numbers. For trips, close each plan with
