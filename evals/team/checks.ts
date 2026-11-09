@@ -5,6 +5,7 @@
  */
 import { readFile } from "node:fs/promises";
 import { basename, dirname, extname, join } from "node:path";
+import { renderDates } from "./dates";
 
 /** A file the member receives with a request, read from fixtures/live/ when the cases load. */
 export type Attachment = { name: string; mimeType: string; text: string };
@@ -82,13 +83,15 @@ const APP_NAME = /^[a-z][a-z0-9-]*$/;
 /**
  * Reads cases.yaml. Attachments are file names in `<cases folder>/fixtures/live/` (or `liveDir`),
  * read here so a missing file fails the load rather than a run. `previous` turns are a request
- * string, or `{ request, attachments }`.
+ * string, or `{ request, attachments }`. Each attachment's `{{date:...}}` placeholders are rendered
+ * against `today` (default: the local day this load runs; see dates.ts).
  */
 export async function loadCases(
   path: string,
-  options: { liveDir?: string } = {},
+  options: { liveDir?: string; today?: Date } = {},
 ): Promise<Case[]> {
   const liveDir = options.liveDir ?? join(dirname(path), "fixtures", "live");
+  const today = options.today ?? new Date();
   const parsed = Bun.YAML.parse(await readFile(path, "utf8")) as {
     cases?: unknown;
   };
@@ -102,10 +105,10 @@ export async function loadCases(
     let file = files.get(name);
     if (!file) {
       file = readFile(join(liveDir, name), "utf8").then(
-        (text) => ({
+        (raw) => ({
           name,
           mimeType: MIME_TYPES[extname(name)] ?? "text/plain",
-          text,
+          text: renderDates(raw, today, `${id}: attachment ${name}`),
         }),
         () => {
           throw new Error(`${id}: attachment ${name} is not in ${liveDir}`);

@@ -122,7 +122,7 @@ cases:
   # ── Otto, Inbox ──────────────────────────────────────────────────────────────────────────────
   - id: otto-1
     member: inbox
-    request: "Sort these: [fixture: 9 emails — a customer complaining that an order is late, a supplier asking to confirm Tuesday's delivery, a tax office notice with a deadline on the 30th, a domain renewal invoice due on the 12th, a webinar invitation for the 20th, two newsletters, a flash sale, a password-reset code]"
+    request: "Sort these: [fixture: 9 emails — a customer complaining that an order is late, a supplier asking to confirm a delivery, a tax office notice with a deadline, a domain renewal invoice, a webinar invitation, two newsletters, a flash sale, a password-reset code]"
     attachments: [emails-nine.txt]
     must:
       - says it is sorting pasted emails and how many

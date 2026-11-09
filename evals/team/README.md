@@ -20,6 +20,8 @@ A case passes when its turns finished and all three pass. A case that needs an a
 
 A bracket with no `attachments` is shown to the member as a description (`[attached: blurry photo]`): the runner cannot make a photo, a tool error, saved memory or a checkout real. Those cases are penny-5, jules-5, wren-2, gus-1 and gus-4. iris-5's delivered invoice is real: Penny's answer to Iris's hand-off, with the brief, and the invoice page it points to.
 
+**Dates in fixtures** are written relative to the day the run starts, so a fixture stays true on any day: `{{date:<offset>:<format>}}`, where `<offset>` is a signed day count from today (`+0`, `-13`, `+22`) and `<format>` is `header` (`Sun, 8 Nov 2026`), `full` (`8 November 2026`), `long` (`Tuesday 10 November`), `dm` (`26 October`), `short` (`18 Nov`), `weekday` (`Monday`) or `day` (`12th`). [dates.ts](dates.ts) renders them as each attachment loads, against the local day of that load, and a malformed placeholder or unknown format fails the load. [emails-nine.txt](fixtures/live/emails-nine.txt) is written this way, with 8 November 2026 as its day.
+
 ## Run it offline (fake mode)
 
 ```sh
