@@ -23,7 +23,7 @@ import logging
 import pytest
 
 from freeduet import tool_notes
-from freeduet.stream_json import StreamParser
+from freeduet.stream_json import Refused, StreamParser
 from helpers import post_run, run_body, standing, tool, types
 from test_tool_notes import system_of
 
@@ -235,7 +235,9 @@ def test_the_stream_parser_reads_the_clis_refusal_of_an_unlisted_tool():
         '"is_error":true}]},"parent_tool_use_id":null}'
     )
     other = '{"type":"user","message":{"role":"user","content":[{"type":"tool_result","tool_use_id":"toolu_2","content":"ok"}]}}'
-    assert parser.feed(refusal) == [] and parser.feed(other) == []
+    # The refusal is an item now (test_refused_offered_tool.py): the segment may hand the call over.
+    assert parser.feed(refusal) == [Refused("toolu_1", "mcp__freeduet__computer_navigate", "computer_navigate", None, None)]
+    assert parser.feed(other) == []
     assert parser.unavailable == ["computer_navigate"]
 
 

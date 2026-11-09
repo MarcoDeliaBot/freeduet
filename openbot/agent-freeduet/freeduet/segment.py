@@ -21,6 +21,15 @@ then the call) and carry the CLI's own call id.
   member asks again. On a FreeDuet server the member's `message_bot` is not a callback tool at all
   (server/src/freeduet/coordination.ts), so this only happens against a server without that change.
 
+- A call to a tool this run OFFERED that the CLI itself refused ("No such tool available": the bridge
+  never heard of it, so no bridge call follows) is handed over like any other call to a tool OpenBot
+  runs, from the name and input of its own tool_use line (`Refused`, stream_json.py). The model's
+  intent is plain and the tool was offered; whatever made the CLI refuse it (the model called it by
+  its plain name instead of mcp__freeduet__<name>, a server not connected yet) is not the person's
+  problem, and OpenBot's approval gate still runs the call. A deployment tool is not handed over this
+  way (its answer would have to go back to the CLI that has already answered the model), nor is a tool
+  the run did not offer: both stay refused, and the log says so.
+
 Before the transcript is rendered, a run for Iris activates the lessons the person approved in it
 (lessons.py has the rule), and every member's active lessons join its system text, followed by the
 run's tool notes (tool_notes.py: the exact reason message_bot was not offered, when it was not).
@@ -44,7 +53,7 @@ from .agui import RunInput
 from .bridge import ipc
 from .bridge.callback import HANDOFF_TOOL, call_deployment_tool, needs_the_person
 from .members import Member
-from .stream_json import Final, MessageStart, StreamParser, TextDelta, ToolUse
+from .stream_json import MCP_PREFIX, Final, MessageStart, Refused, StreamParser, TextDelta, ToolUse
 
 log = logging.getLogger("freeduet.segment")
 
@@ -164,6 +173,18 @@ async def _answer_locally(local: iris_tools.IrisTools, call: ipc.BridgeCall, see
     call.answer(reply)
 
 
+def mcp_state(parser: StreamParser, offered: set[str]) -> str:
+    """What the CLI's init event said about the freeduet server, for the log line of a refused call."""
+    if not parser.init_seen:
+        return "no init event read"
+    status = ", ".join(f"{name}={state}" for name, state in parser.mcp_servers.items()) or "no MCP server listed"
+    listed = {tool.removeprefix(MCP_PREFIX) for tool in parser.init_tools}
+    missing = sorted(offered - listed)
+    if missing:
+        return f"{status}; init did not list {', '.join(missing)}"
+    return f"{status}; init listed all {len(offered)} offered tools"
+
+
 async def run_segment(run: RunInput, member: Member, notes: SegmentNotes | None = None) -> AsyncIterator[dict]:
     yield agui.run_started(run)
     notes = notes if notes is not None else SegmentNotes()
@@ -174,6 +195,7 @@ async def run_segment(run: RunInput, member: Member, notes: SegmentNotes | None 
     local = iris_tools.for_run(run, member.id, offered)
     inbox: asyncio.Queue = asyncio.Queue()
     parser = StreamParser()
+    handed_over: list[str] = []  # refused calls to offered tools that this segment handed to OpenBot
     stderr = bytearray()
     tasks: set[asyncio.Task] = set()
 
@@ -251,7 +273,7 @@ async def run_segment(run: RunInput, member: Member, notes: SegmentNotes | None 
                     f"{claude_cli.LABEL} ended without an answer."
                 )
 
-            async for event in _drive(run, offered, inbox, parser, spawn, failed_exit, local, guard):
+            async for event in _drive(run, offered, inbox, parser, spawn, failed_exit, local, guard, handed_over):
                 yield event
         finally:
             await claude_cli.stop(process)
@@ -271,10 +293,14 @@ async def run_segment(run: RunInput, member: Member, notes: SegmentNotes | None 
             if parser.unavailable:
                 # The call went nowhere: the CLI answered it itself, so no stored transcript shows it.
                 log.warning(
-                    "claude answered \"No such tool available\" for %s: this %s run offered only %s (thread %s, run %s)",
+                    "claude answered \"No such tool available\" for %s (called as %s; handed to OpenBot: %s): "
+                    "this %s run offered only %s; mcp: %s (thread %s, run %s)",
                     ", ".join(parser.unavailable),
+                    ", ".join(parser.unavailable_as),
+                    ", ".join(handed_over) or "nothing",
                     "hand-off" if origin.is_handoff_run(run.messages, run.assertion) else "person's",
                     ", ".join(sorted(offered)) or "no tool",
+                    mcp_state(parser, offered),
                     run.thread_id,
                     run.run_id,
                 )
@@ -282,8 +308,10 @@ async def run_segment(run: RunInput, member: Member, notes: SegmentNotes | None 
 
 async def _drive(run: RunInput, offered: set[str], inbox: asyncio.Queue, parser: StreamParser, spawn, failed_exit,
                  local: iris_tools.IrisTools | None = None,
-                 guard: Callable[[report_guard.Story], Awaitable[str | None]] | None = None):
+                 guard: Callable[[report_guard.Story], Awaitable[str | None]] | None = None,
+                 handed_over: list[str] | None = None):
     """The segment's state machine. Ends with exactly one RUN_FINISHED or RUN_ERROR."""
+    handed_over = handed_over if handed_over is not None else []
     local_names = local.names if local is not None else frozenset()
     loop = asyncio.get_running_loop()
     deadline = loop.time() + SEGMENT_TIMEOUT_SECONDS
@@ -294,6 +322,7 @@ async def _drive(run: RunInput, offered: set[str], inbox: asyncio.Queue, parser:
     in_flight = 0  # deployment calls running
     handed = 0  # calls left for OpenBot to run
     blocked: list[tuple[dict, str]] = []  # hand-offs that need the person (arguments, refusal)
+    refused: list[tuple[str, dict]] = []  # calls the CLI refused and this segment handed over (name, input)
 
     def ask_the_person() -> list[dict]:
         message_id = agui.new_id("msg-")
@@ -360,6 +389,15 @@ async def _drive(run: RunInput, offered: set[str], inbox: asyncio.Queue, parser:
                         waiting.remove(call)
                         for event in announce(call, use):
                             yield event
+            elif isinstance(payload, Refused):
+                if payload.name not in offered or payload.name in run.deployment_tools or payload.input is None:
+                    continue  # stays refused: the model has the CLI's own answer (logged at the end)
+                seen[:] = [use for use in seen if use.id != payload.id]
+                refused.append((payload.name, payload.input))
+                handed_over.append(payload.name)
+                call = ipc.BridgeCall(payload.name, payload.input, loop.create_future())
+                for event in announce(call, ToolUse(payload.message_id, payload.id, payload.name, payload.input)):
+                    yield event
             elif isinstance(payload, Final):
                 if blocked:
                     for event in ask_the_person():
@@ -386,6 +424,12 @@ async def _drive(run: RunInput, offered: set[str], inbox: asyncio.Queue, parser:
                 continue
             if call.name not in offered:
                 call.answer(ipc.ToolReply("Refused. That tool was not offered for this turn.", True))
+                continue
+            again = next((entry for entry in refused if entry[0] == call.name and _same(entry[1], call.arguments)), None)
+            if again is not None:
+                # The model repeated, under the right name, a call this segment already handed over.
+                refused.remove(again)
+                call.answer(ipc.ToolReply("This call was already handed over; its result comes with your next turn.", True))
                 continue
             use = claim(call)
             if use is None:
