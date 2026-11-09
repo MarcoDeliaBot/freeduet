@@ -243,3 +243,12 @@ def test_the_stream_parser_reads_the_clis_refusal_of_an_unlisted_tool():
 def test_the_stream_parser_ignores_user_lines_it_cannot_read(line):
     parser = StreamParser()
     assert parser.feed(line) == [] and parser.unavailable == []
+
+
+def test_notes_without_a_stated_reason_name_the_switch_the_person_may_have_turned_off():
+    for kind in ("relay", "handoff", "not_offered"):
+        note = tool_notes.computer_note(kind, ["computer_navigate"])
+        assert "switched off by the person, not broken" in note
+        assert "your browser is switched off in settings" in note
+    # The forward hop never has a browser, whatever the settings say.
+    assert "switched off" not in tool_notes.computer_note("hop", ["computer_navigate"], sender="Iris")

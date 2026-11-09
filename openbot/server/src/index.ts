@@ -118,6 +118,10 @@ import { createSandboxedStore } from "./components/sandboxed";
 import { createComponentStore } from "./components/store";
 import { createComputerGateway } from "./computer/gateway";
 import { createHeadlessComputerTools } from "./computer/headless-tools";
+import {
+  type CapabilitiesLookup,
+  withOfferedComputerTools,
+} from "./computer/offered";
 import { createPageFrameStore } from "./computer/page-frames";
 import { startPolicyListener } from "./computer/policy-listener";
 import { withPolicyPushOnWake } from "./computer/policy-network";
@@ -747,6 +751,9 @@ const chooseSkills = createModelCompleter({
  */
 // FreeDuet (#42): the same client, or with FREEDUET_INTELLIGENCE=off the adapter over the local store.
 const routineIntelligence = threadBackend.client;
+// FreeDuet: the person's capability switches, read when a turn is built (computer/offered.ts).
+const capabilitiesOf: CapabilitiesLookup = async (userId) =>
+  enterpriseControls()?.capabilitiesFor(userId);
 const approvalComputerTools = async (
   ownerUserId: string,
   agentId: string,
@@ -758,13 +765,16 @@ const approvalComputerTools = async (
     throw new ApprovalRefusedError("That Bot is no longer available to you.");
   // A Team Bot's teammate uses the Bot, not its owner's signed-in computer.
   return computerGateway && canUseComputer(profile, actor)
-    ? createHeadlessComputerTools({
-        gateway: computerGateway,
-        botId: agentId,
-        actor: { id: actor.id, userId: actor.id, initiator },
-        auditStore: bootAuditStore,
-        ...(signInService ? { signIn: signInService } : {}),
-      })
+    ? withOfferedComputerTools(
+        createHeadlessComputerTools({
+          gateway: computerGateway,
+          botId: agentId,
+          actor: { id: actor.id, userId: actor.id, initiator },
+          auditStore: bootAuditStore,
+          ...(signInService ? { signIn: signInService } : {}),
+        }),
+        await capabilitiesOf(actor.id),
+      )
     : [];
 };
 
@@ -923,6 +933,16 @@ const signInService = computerGateway
         })(request),
     })
   : undefined;
+
+// FreeDuet: the one computer offer of a server-run turn (routine, wake-up, group turn, relay).
+const serverRunComputerTools = relayComputerTools({
+  computerGateway,
+  agentProfileStore,
+  actorFor,
+  auditStore: bootAuditStore,
+  signInService,
+  capabilitiesOf,
+});
 
 /*
  * Whether a Bot may act through a Shared app at all, kept apart from the policy boundary above
@@ -1765,21 +1785,7 @@ const routineRunner = createRoutineRunner({
     runner: routineAgentRunner,
     components: componentCatalog,
     buildAgentFor,
-    toolsForTurn: async ({ ownerUserId, agentId, initiator }) => {
-      if (!computerGateway) return [];
-      const actor = await actorFor(ownerUserId);
-      const profile = await agentProfileStore.get(actor, agentId);
-      if (!profile) throw new Error("That Bot is not available to this owner.");
-      // A Team Bot's teammate uses the Bot, not its owner's signed-in computer.
-      if (!canUseComputer(profile, actor)) return [];
-      return createHeadlessComputerTools({
-        gateway: computerGateway,
-        botId: agentId,
-        actor: { id: actor.id, userId: actor.id, initiator },
-        auditStore: bootAuditStore,
-        ...(signInService ? { signIn: signInService } : {}),
-      });
-    },
+    toolsForTurn: serverRunComputerTools,
     learningContainerForThread: (input) =>
       copilotRuntime.learning?.containerForThread(input) ??
       Promise.resolve(undefined),
@@ -1858,6 +1864,7 @@ const responsibilityEngine = createServerResponsibilityEngine({
   agentProfileStore,
   bootAuditStore,
   signInService,
+  capabilitiesOf,
   copilotRuntime,
   channelStore,
   // Assigned further down, once delivery is wired.
@@ -2010,21 +2017,7 @@ const groupConversations = createGroupConversations({
     runner: routineAgentRunner,
     components: componentCatalog,
     buildAgentFor,
-    toolsForTurn: async ({ ownerUserId, agentId, initiator }) => {
-      if (!computerGateway) return [];
-      const actor = await actorFor(ownerUserId);
-      const profile = await agentProfileStore.get(actor, agentId);
-      if (!profile) throw new Error("That Bot is not available to this owner.");
-      // A Team Bot's teammate uses the Bot, not its owner's signed-in computer.
-      if (!canUseComputer(profile, actor)) return [];
-      return createHeadlessComputerTools({
-        gateway: computerGateway,
-        botId: agentId,
-        actor: { id: actor.id, userId: actor.id, initiator },
-        auditStore: bootAuditStore,
-        ...(signInService ? { signIn: signInService } : {}),
-      });
-    },
+    toolsForTurn: serverRunComputerTools,
     learningContainerForThread: (input) =>
       copilotRuntime.learning?.containerForThread(input) ??
       Promise.resolve(undefined),
@@ -2299,21 +2292,7 @@ const wakeUpRunner = createWakeUpRunner({
     runner: routineAgentRunner,
     components: componentCatalog,
     buildAgentFor,
-    toolsForTurn: async ({ ownerUserId, agentId, initiator }) => {
-      if (!computerGateway) return [];
-      const actor = await actorFor(ownerUserId);
-      const profile = await agentProfileStore.get(actor, agentId);
-      if (!profile) throw new Error("That Bot is not available to this owner.");
-      // A Team Bot's teammate uses the Bot, not its owner's signed-in computer.
-      if (!canUseComputer(profile, actor)) return [];
-      return createHeadlessComputerTools({
-        gateway: computerGateway,
-        botId: agentId,
-        actor: { id: actor.id, userId: actor.id, initiator },
-        auditStore: bootAuditStore,
-        ...(signInService ? { signIn: signInService } : {}),
-      });
-    },
+    toolsForTurn: serverRunComputerTools,
     learningContainerForThread: (input) =>
       copilotRuntime.learning?.containerForThread(input) ??
       Promise.resolve(undefined),
@@ -2424,13 +2403,7 @@ if (config.handoff.maxDepth > 0 && config.handoff.maxPerRun > 0) {
     groupConversations,
     channelStore,
     // FreeDuet (D22): a relay turn gets the computer an ordinary turn of that Bot would.
-    toolsForTurn: relayComputerTools({
-      computerGateway,
-      agentProfileStore,
-      actorFor,
-      auditStore: bootAuditStore,
-      signInService,
-    }),
+    toolsForTurn: serverRunComputerTools,
   });
 }
 

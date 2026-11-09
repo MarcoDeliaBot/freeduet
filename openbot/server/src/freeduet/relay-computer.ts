@@ -17,6 +17,9 @@
  *   decide. D21's pre-approval is for `bot/message_bot` only (`hub-handoffs.ts`) and never reaches a
  *   computer or an account action.
  *
+ * Where the person switched the computer or the browser off, none of it is offered
+ * (`computer/offered.ts`), exactly as the app filters its own offer.
+ *
  * The forward hop (the scratch thread nobody sees) is never asked: `handoff-delivery.ts`.
  */
 import type { HeadlessTool } from "@openbot/toolkit/headless-tools";
@@ -29,6 +32,10 @@ import {
   createHeadlessComputerTools,
   type HeadlessSignInRequester,
 } from "../computer/headless-tools";
+import {
+  type CapabilitiesLookup,
+  withOfferedComputerTools,
+} from "../computer/offered";
 
 export function relayComputerTools(deps: {
   /** Absent when the deployment has no computer. */
@@ -37,6 +44,8 @@ export function relayComputerTools(deps: {
   actorFor: (ownerUserId: string) => Promise<AgentActor>;
   auditStore: AuditStore;
   signInService?: HeadlessSignInRequester | undefined;
+  /** The person's capability switches; a computer they switched off is not offered (D22). */
+  capabilitiesOf?: CapabilitiesLookup | undefined;
 }) {
   const { computerGateway, agentProfileStore, actorFor, auditStore } = deps;
   return async ({
@@ -53,12 +62,15 @@ export function relayComputerTools(deps: {
     const profile = await agentProfileStore.get(actor, agentId);
     if (!profile) throw new Error("That Bot is not available to this owner.");
     if (!canUseComputer(profile, actor)) return [];
-    return createHeadlessComputerTools({
-      gateway: computerGateway,
-      botId: agentId,
-      actor: { id: actor.id, userId: actor.id, initiator },
-      auditStore,
-      ...(deps.signInService ? { signIn: deps.signInService } : {}),
-    });
+    return withOfferedComputerTools(
+      createHeadlessComputerTools({
+        gateway: computerGateway,
+        botId: agentId,
+        actor: { id: actor.id, userId: actor.id, initiator },
+        auditStore,
+        ...(deps.signInService ? { signIn: deps.signInService } : {}),
+      }),
+      await deps.capabilitiesOf?.(actor.id),
+    );
   };
 }
