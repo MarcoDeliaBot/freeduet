@@ -114,6 +114,16 @@ _NEVER_BROKEN = (
 )
 
 
+# OpenBot offers no computer tool in a server-run turn when the person switched the computer or the
+# browser off (server/src/computer/offered.ts), and the tool list never says so. This note cannot tell
+# that from the other reasons, so it names it as the one to say when the member must explain.
+_SWITCHED_OFF = (
+    "The usual reason is that the person switched your browser or computer off in their settings "
+    "(switched off by the person, not broken): if you need a page, say plainly that your browser is "
+    "switched off in settings and that the person can switch it on there."
+)
+
+
 def computer_note(kind: str, missing: list[str], sender: str = "") -> str:
     """Why these computer tools are not offered on this turn. `kind` is "relay" (the answer to work
     this member handed over, coming back), "hop" (a colleague handed this member the work, `sender`
@@ -124,7 +134,7 @@ def computer_note(kind: str, missing: list[str], sender: str = "") -> str:
             f"Your computer tools ({names}) are not offered on this turn, and OpenBot gave no reason with "
             "the tool list. Do not call them: Claude Code would answer \"No such tool available\". If you "
             "need a page, say exactly that (OpenBot did not offer your computer on this turn), never that "
-            "a tool stopped working, then follow your instructions for working without it."
+            f"a tool stopped working, then follow your instructions for working without it. {_SWITCHED_OFF}"
         )
     if kind == "hop":
         return (
@@ -136,9 +146,9 @@ def computer_note(kind: str, missing: list[str], sender: str = "") -> str:
         )
     reason = (
         "this turn brings back the answer to work that was handed over in this conversation, and "
-        "OpenBot runs it on its server without a browser"
+        "OpenBot runs it on its server where a browser is not always offered"
         if kind == "relay"
-        else "OpenBot runs this turn as a hand-off, on its server without a browser"
+        else "OpenBot runs this turn as a hand-off, on its server where a browser is not always offered"
     )
     return (
         f"Why your computer is not offered on this turn: {reason}, so none of your computer tools "
@@ -146,7 +156,7 @@ def computer_note(kind: str, missing: list[str], sender: str = "") -> str:
         "tools. If a page still has to be opened or checked, say in one sentence what you could not "
         "check here and that you will do it when the person writes in this conversation: their next "
         "message in this conversation is an ordinary turn, where your computer is offered again when "
-        "this deployment allows it. Make that your Next step."
+        "this deployment allows it. Make that your Next step. " + _SWITCHED_OFF
     )
 
 
