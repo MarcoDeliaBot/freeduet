@@ -100,13 +100,13 @@ identifies_as_openbot() {
     # Intelligence, so a FreeDuet server with no Intelligence was never stopped here (see start.sh).
     server)
       curl -fsS --max-time 3 "http://localhost:$port/api/capabilities" 2>/dev/null \
-        | grep -q '"durableHistory"'
+        | grep '"durableHistory"' >/dev/null
       ;;
     # The marker in the app's head, as start.sh asks: FreeDuet's title does not say OpenBot, so
     # asking for the title alone left FreeDuet's app running.
     app)
       curl -fsS --max-time 3 "http://localhost:$port/" 2>/dev/null \
-        | grep -qiE '<meta name="openbot" content="app"|<title>[^<]*OpenBot'
+        | grep -iE '<meta name="openbot" content="app"|<title>[^<]*OpenBot' >/dev/null
       ;;
   esac
 }
@@ -163,7 +163,7 @@ info "3/4  API server"
 stop_port "$SERVER_PORT" server
 
 info "4/4  Docker"
-if compose ps --quiet 2>/dev/null | grep -q .; then
+if compose ps --quiet 2>/dev/null | grep . >/dev/null; then
   compose down >/dev/null 2>&1
   green "  compose services: stopped"
 else
