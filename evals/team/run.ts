@@ -50,6 +50,7 @@ import {
   evalConversationName,
   type ListedConversation,
   type LiveTranscript,
+  memoriesHeld,
   runCaseLive,
 } from "./live";
 
@@ -772,6 +773,12 @@ async function main() {
       (env.SERVER_PORT?.trim()
         ? `http://localhost:${env.SERVER_PORT.trim()}`
         : EVAL_STACK_SERVER);
+    // Every run removes the memories the earlier runs saved (live.ts clearMemories). Two runs at once
+    // would each remove the other's memories mid-turn, so the live runs go one at a time.
+    if (Number(values.concurrency) > 1)
+      throw new Error(
+        "--concurrency above 1 is refused on the live run: each run removes the memories saved since the first run, so runs at the same time would remove one another's. Run one at a time (the default).",
+      );
     const maxReal = Number(values["max-real-conversations"]);
     if (!Number.isInteger(maxReal) || maxReal < 0)
       throw new Error("--max-real-conversations is a whole number");
@@ -784,6 +791,11 @@ async function main() {
       log: console.log,
       teamConversations: await loadTeamConversationNames(PATHS.channels),
     });
+    // The memories the person holds now are kept; every run starts from them (live.ts clearMemories).
+    const memories = { keep: await memoriesHeld({ server, cookie }) };
+    console.log(
+      `Memories: ${memories.keep.size} held before the first run are kept; each run starts without the ones saved by earlier runs.`,
+    );
     const graderUrl =
       values["grader-url"]?.trim() ||
       env.FREEDUET_EVAL_GRADER_URL?.trim() ||
@@ -852,6 +864,7 @@ async function main() {
           computer: !values["no-computer"],
           appTools,
           conversationName: evalConversationName(c.id, run, repeat),
+          memories,
           log: console.log,
         });
         if (transcript.conversation?.tagged === false && !warnedUntagged) {

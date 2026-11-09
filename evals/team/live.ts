@@ -16,6 +16,9 @@
  *                                                           for /connect to say idle and tries again
  *   POST /api/copilotkit/agent/<member>/connect             204 when the thread is idle, {runId} when busy
  *   GET  /api/copilotkit/threads/<thread>/messages?agentId= the stored conversation, tool calls included
+ *   GET  /api/memory, DELETE /api/memory/<id>               the person's memories, and forgetting one: before
+ *                                                           each run the ones the runner did not find there
+ *                                                           at its start are removed (clearMemories)
  *   GET  /api/approvals                                     the approval gate's requests (filtered by thread)
  *   POST /api/approvals/<id>/decision {decision:"deny"}     only with --approvals deny; never allows
  *
@@ -77,6 +80,22 @@ export const isEvalConversation = (channel: {
 /** The runtime's answer when another run still holds the thread (`run.mjs`: 409 "Thread lock denied"). */
 export class ThreadLockedError extends Error {}
 
+/**
+ * A turn still running when its time limit (`--timeout`) runs out, while its run's answer streams.
+ * runCaseLive catches it and ends the turn as a timeout, grading what the member had said.
+ */
+export class TurnBudgetError extends Error {}
+
+/**
+ * How long a request may take to answer its headers, and a JSON answer to arrive whole: every request
+ * but a turn's run. A run's answer is not bounded by this: it streams for as long as the turn takes,
+ * and the turn's time limit bounds it (startRun).
+ */
+export const REQUEST_TIMEOUT_MS = 60_000;
+
+/** A duration as the runner names it in a message: "300 s", "0.3 s". */
+export const seconds = (ms: number) => `${Number((ms / 1000).toFixed(3))} s`;
+
 /** A conversation as `GET /api/channels` lists it, in the fields the guard reads. */
 export type ListedConversation = {
   name?: unknown;
@@ -92,7 +111,18 @@ export type LiveOptions = {
   engine: string;
   /** Sent as the Cookie header; needed only when the server is not in single-user mode. */
   cookie?: string;
+  /**
+   * The time limit for each turn of a case, from its message to the end of its answer, the run's
+   * streamed answer included. A turn still running at the limit ends as a timeout.
+   */
   timeoutMs: number;
+  /** How long a request may take to answer its headers (REQUEST_TIMEOUT_MS). Tests shorten it. */
+  requestTimeoutMs?: number;
+  /**
+   * The memories the person held before the first run (memoriesHeld): kept. Before each run every
+   * other one is removed (clearMemories), so each run starts as the first did. Absent: none removed.
+   */
+  memories?: { keep: ReadonlySet<string> };
   /** `deny` answers every approval the turn opens with deny so the member finishes; `leave` does not. */
   approvals: "deny" | "leave";
   pollMs?: number;
@@ -390,10 +420,14 @@ export function mergeApprovals(
 }
 
 export function createServerApi(
-  options: Pick<LiveOptions, "server" | "cookie" | "fetchImpl">,
+  options: Pick<
+    LiveOptions,
+    "server" | "cookie" | "fetchImpl" | "requestTimeoutMs"
+  >,
 ) {
   const send = options.fetchImpl ?? fetch;
   const base = options.server.replace(/\/+$/, "");
+  const requestMs = options.requestTimeoutMs ?? REQUEST_TIMEOUT_MS;
   const call = (path: string, init: { method?: string; body?: unknown } = {}) =>
     send(`${base}${path}`, {
       method: init.method ?? "GET",
@@ -405,7 +439,7 @@ export function createServerApi(
         ...(options.cookie ? { cookie: options.cookie } : {}),
       },
       ...(init.body !== undefined ? { body: JSON.stringify(init.body) } : {}),
-      signal: AbortSignal.timeout(60_000),
+      signal: AbortSignal.timeout(requestMs),
     });
   const runInput = (
     threadId: string,
@@ -557,7 +591,7 @@ export function createServerApi(
             ...(options.cookie ? { cookie: options.cookie } : {}),
           },
           body: form,
-          signal: AbortSignal.timeout(60_000),
+          signal: AbortSignal.timeout(requestMs),
         },
       );
       const body = (await response.json().catch(() => null)) as {
@@ -585,30 +619,103 @@ export function createServerApi(
     },
     /**
      * Starts a turn with the conversation so far and the new message, as the web app does: the
-     * runtime keeps the messages it already holds and stores the new one. In Intelligence mode this
-     * answers JSON at once; a stream is drained. `tools` are the frontend tools offered, as the
-     * app's SDK sends them on every run. Answers the run id it sent.
+     * runtime keeps the messages it already holds and stores the new one. `tools` are the frontend
+     * tools offered, as the app's SDK sends them on every run. Answers the run id it sent.
+     *
+     * The request must answer its headers within REQUEST_TIMEOUT_MS. The answer is then read as it
+     * arrives (readRunAnswer), and only the turn's time limit, `deadline`, bounds it: with Intelligence
+     * off the run is one event stream that lasts as long as the member works, so a request limit on
+     * the whole body cut every long turn. Past the deadline the stream is cancelled and this throws
+     * TurnBudgetError.
      */
     async startRun(
       member: string,
       threadId: string,
       messages: unknown[],
-      tools: readonly ToolDefinition[] = [],
+      tools: readonly ToolDefinition[],
+      deadline: number,
     ) {
       const input = runInput(threadId, messages, {}, tools);
-      const response = await call(agentPath(member, "run"), {
-        method: "POST",
-        body: input,
-      });
-      if (!response.ok) {
-        const message = `starting the turn answered HTTP ${response.status}: ${(await response.text()).slice(0, 200)}`;
-        // Another run still holds the thread: the previous turn, or a hand-off or relay it set off.
-        if (response.status === 409 && /thread lock denied/i.test(message))
-          throw new ThreadLockedError(message);
-        throw new Error(message);
+      const controller = new AbortController();
+      // Why the run was stopped, when it was. A holder rather than a bare `let`, which TypeScript
+      // would read as still unset inside the timers.
+      const state: { stopped?: Error } = {};
+      const stop = (reason: Error) => {
+        state.stopped ??= reason;
+        controller.abort(reason);
+      };
+      const headers = setTimeout(
+        () =>
+          stop(
+            new Error(
+              `starting the turn did not answer within ${seconds(requestMs)}`,
+            ),
+          ),
+        requestMs,
+      );
+      const budget = setTimeout(
+        () => stop(new TurnBudgetError()),
+        Math.max(0, deadline - Date.now()),
+      );
+      try {
+        const response = await untilAborted(
+          send(`${base}${agentPath(member, "run")}`, {
+            method: "POST",
+            headers: {
+              accept: "application/json",
+              "content-type": "application/json",
+              ...(options.cookie ? { cookie: options.cookie } : {}),
+            },
+            body: JSON.stringify(input),
+            signal: controller.signal,
+          }),
+          controller.signal,
+        );
+        clearTimeout(headers);
+        if (!response.ok) {
+          const message = `starting the turn answered HTTP ${response.status}: ${(await untilAborted(response.text(), controller.signal)).slice(0, 200)}`;
+          // Another run still holds the thread: the previous turn, or a hand-off or relay it set off.
+          if (response.status === 409 && /thread lock denied/i.test(message))
+            throw new ThreadLockedError(message);
+          throw new Error(message);
+        }
+        await readRunAnswer(response.body, controller.signal);
+        if (state.stopped) throw state.stopped;
+        return input.runId;
+      } catch (error) {
+        throw state.stopped ?? error;
+      } finally {
+        clearTimeout(headers);
+        clearTimeout(budget);
       }
-      await response.text();
-      return input.runId;
+    },
+    /** The memories the person holds, as `GET /api/memory` lists them: those not forgotten. */
+    async listMemories(): Promise<{ id: string }[]> {
+      const response = await call("/api/memory");
+      if (!response.ok)
+        throw new Error(
+          `listing the memories answered HTTP ${response.status}`,
+        );
+      const body = (await response.json()) as { memories?: unknown };
+      if (!Array.isArray(body.memories))
+        throw new Error("listing the memories returned no list");
+      return body.memories.flatMap((memory: unknown) => {
+        const id = (memory as { id?: unknown } | null)?.id;
+        return typeof id === "string" && id ? [{ id }] : [];
+      });
+    },
+    /**
+     * Forgets one memory (`DELETE /api/memory/<id>`). The store keeps a forgotten memory as a
+     * tombstone rather than deleting its row, so a memory a Bot formed (save_observed_memory) is also
+     * refused when the same content is saved again. An id already gone is not an error.
+     */
+    async deleteMemory(id: string) {
+      const response = await call(`/api/memory/${encodeURIComponent(id)}`, {
+        method: "DELETE",
+      });
+      await response.body?.cancel().catch(() => undefined);
+      if (!response.ok && response.status !== 404)
+        throw new Error(`removing a memory answered HTTP ${response.status}`);
     },
     async runState(
       member: string,
@@ -752,6 +859,115 @@ async function waitUntilIdle(
 }
 
 /**
+ * `promise`, or the reason `signal` aborted with as soon as it does, so a transport that ignores the
+ * signal still lets the turn end.
+ */
+function untilAborted<T>(promise: Promise<T>, signal: AbortSignal): Promise<T> {
+  return new Promise<T>((resolve, reject) => {
+    const onAbort = () => reject(signal.reason);
+    signal.addEventListener("abort", onAbort, { once: true });
+    if (signal.aborted) onAbort();
+    promise.then(
+      (value) => {
+        signal.removeEventListener("abort", onAbort);
+        resolve(value);
+      },
+      (error) => {
+        signal.removeEventListener("abort", onAbort);
+        reject(error);
+      },
+    );
+  });
+}
+
+/** Whether a line of an event stream is the end of its run: a RUN_FINISHED or a RUN_ERROR event. */
+function endsRun(line: string): boolean {
+  if (!line.startsWith("data:")) return false;
+  try {
+    const event = JSON.parse(line.slice("data:".length)) as { type?: unknown };
+    return event.type === "RUN_FINISHED" || event.type === "RUN_ERROR";
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Reads a run's answer until the run is over. An event stream (Intelligence off) is over at its
+ * RUN_FINISHED or RUN_ERROR, where its connection is let go, or at the end of the stream. A JSON
+ * answer (Intelligence on) is read to its end. Stops early when `signal` aborts.
+ */
+async function readRunAnswer(
+  body: ReadableStream<Uint8Array> | null,
+  signal: AbortSignal,
+): Promise<void> {
+  if (!body) return;
+  const reader = body.getReader();
+  const cancel = () => reader.cancel().catch(() => undefined);
+  signal.addEventListener("abort", cancel, { once: true });
+  const decoder = new TextDecoder();
+  let pending = "";
+  try {
+    for (;;) {
+      const { done, value } = await untilAborted(reader.read(), signal);
+      if (done) return;
+      pending += decoder.decode(value, { stream: true });
+      let end = pending.indexOf("\n");
+      while (end !== -1) {
+        const line = pending.slice(0, end);
+        pending = pending.slice(end + 1);
+        if (endsRun(line)) {
+          await cancel();
+          return;
+        }
+        end = pending.indexOf("\n");
+      }
+    }
+  } finally {
+    signal.removeEventListener("abort", cancel);
+  }
+}
+
+/** Passes over the memory list before the runner gives up. Each pass removes what the list shows. */
+const MEMORY_CLEAR_PASSES = 10;
+
+/**
+ * The ids of the memories the person holds before the first run. Every run keeps these and nothing
+ * else (LiveOptions.memories): what was here before the runner started is not the runner's to remove.
+ */
+export async function memoriesHeld(
+  options: Pick<LiveOptions, "server" | "cookie" | "fetchImpl">,
+): Promise<ReadonlySet<string>> {
+  const memories = await createServerApi(options).listMemories();
+  return new Set(memories.map((memory) => memory.id));
+}
+
+/**
+ * Removes every memory of the person that is not in `keep`, and answers how many it removed. The
+ * list shows a bounded number of memories, so it is read again until nothing outside `keep` is left.
+ * A memory the server will not remove fails the run, rather than letting it start with what an earlier
+ * run saved.
+ */
+export async function clearMemories(
+  api: Api,
+  keep: ReadonlySet<string>,
+): Promise<number> {
+  let removed = 0;
+  for (let pass = 0; pass < MEMORY_CLEAR_PASSES; pass++) {
+    const stale = (await api.listMemories()).filter(
+      (memory) => !keep.has(memory.id),
+    );
+    if (stale.length === 0) return removed;
+    for (const memory of stale) {
+      await api.deleteMemory(memory.id);
+      removed++;
+    }
+  }
+  throw new Error(
+    `memories saved by earlier runs were still there after ${MEMORY_CLEAR_PASSES} passes of removing them`,
+  );
+}
+
+/**
  * The new user message of a turn. Attached files are uploaded through the composer's route and
  * sent as parts that point at them; a file the route refuses (an older server, a full upload
  * queue) is put in the message as the same text the server would have put there, and the
@@ -862,6 +1078,12 @@ export async function runCaseLive(
   let approvals: PublicApproval[] = [];
   const sent: NonNullable<Transcript["attachments"]> = [];
   try {
+    // The run starts without what the earlier runs saved. This comes before any of its own messages,
+    // so a case's earlier turns (its seeds) are sent after the clear, and are not removed by it.
+    if (options.memories) {
+      const removed = await clearMemories(api, options.memories.keep);
+      if (removed) log(`  memories: removed ${removed} saved by earlier runs`);
+    }
     const channel = await api.createChannel(c.member, options.conversationName);
     transcript.channelId = channel.id;
     transcript.threadId = channel.threadId;
@@ -878,6 +1100,9 @@ export async function runCaseLive(
      * it set off, still holds the thread: jules-3), it waits for /connect to say idle, reads the
      * conversation again (the relay may have added to it) and tries again, with a pause that doubles
      * each time, until the turn's time limit.
+     *
+     * Answers the run id, or undefined when the turn's time limit ran out while the run streamed: the
+     * conversation and the approvals as they stand are read then, and the turn is a timeout.
      */
     const startTurn = async (deadline: number, message?: unknown) => {
       let pause = options.lockBackoffMs ?? 2000;
@@ -888,8 +1113,18 @@ export async function runCaseLive(
             channel.threadId,
             [...runMessages(), ...(message === undefined ? [] : [message])],
             offered,
+            deadline,
           );
         } catch (error) {
+          if (error instanceof TurnBudgetError) {
+            messages = await api
+              .readMessages(c.member, channel.threadId)
+              .catch(() => messages);
+            approvals = await api
+              .readApprovals(channel.threadId)
+              .catch(() => approvals);
+            return undefined;
+          }
           if (!(error instanceof ThreadLockedError)) throw error;
           if (Date.now() >= deadline)
             throw new Error(
@@ -922,20 +1157,23 @@ export async function runCaseLive(
           `  turn ${index + 1}/${turns.length}: ${turn.request.slice(0, 60)}`,
         );
       const message = await userMessage(api, channel.id, turn, sent);
-      let runId = await startTurn(deadline, message);
-      let timedOut: boolean;
-      ({ messages, timedOut } = await waitForTurn(
-        api,
-        c.member,
-        channel.threadId,
-        deadline,
-        {
-          ...timing,
-          minWaitMs: options.minWaitMs ?? 5000,
-          userMessages: index + 1,
-        },
-      ));
-      approvals = await api.readApprovals(channel.threadId);
+      const started = await startTurn(deadline, message);
+      let timedOut = started === undefined;
+      let runId = started ?? "";
+      if (started !== undefined) {
+        ({ messages, timedOut } = await waitForTurn(
+          api,
+          c.member,
+          channel.threadId,
+          deadline,
+          {
+            ...timing,
+            minWaitMs: options.minWaitMs ?? 5000,
+            userMessages: index + 1,
+          },
+        ));
+        approvals = await api.readApprovals(channel.threadId);
+      }
       /*
        * Carry the turn on, as the app does, until nothing is left to answer: run the member's
        * computer calls and post their results back (as many follow-ups as the app's SDK allows), and
@@ -1034,7 +1272,12 @@ export async function runCaseLive(
         const before = JSON.stringify(messages);
         if (followUp) {
           followUps++;
-          runId = await startTurn(deadline);
+          const next = await startTurn(deadline);
+          if (next === undefined) {
+            timedOut = true;
+            break;
+          }
+          runId = next;
         }
         // The gate just opened an approval for a change: read it, so it is denied with the rest.
         if (gateAsked) approvals = await api.readApprovals(channel.threadId);
@@ -1066,7 +1309,7 @@ export async function runCaseLive(
       }
       if (timedOut) {
         transcript.status = "timeout";
-        transcript.error = `no settled answer to turn ${index + 1} of ${turns.length} within ${Math.round(options.timeoutMs / 1000)} s`;
+        transcript.error = `turn ${index + 1} of ${turns.length} did not finish within ${seconds(options.timeoutMs)}, the time limit for each turn (--timeout)`;
         break;
       }
     }
