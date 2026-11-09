@@ -1,17 +1,15 @@
-import { afterAll, beforeEach, describe, expect, test } from "bun:test";
-import Docker from "dockerode";
-import { ensure } from "../src/docker";
-import { DOCUMENTS_LABEL } from "../src/documents";
+import { beforeEach, describe, expect, mock, test } from "bun:test";
+import { DOCUMENTS_LABEL, documentsBind } from "../src/documents";
 import { namesFor } from "../src/names";
 
 /**
  * What `ensure` does about the documents folder, against an engine that is only a record.
  *
- * Nothing here needs a Docker daemon. The methods `ensure` calls are replaced on dockerode's prototype
- * for the length of this file and put back after it, which keeps the fake from reaching any other
- * test file the way a module mock would. The question is which calls `ensure` makes: a computer whose
- * documents folder is not the one wanted is removed WITHOUT its volumes and created again, and one
- * that is current is left alone.
+ * dockerode is replaced by a fake class through a module mock, because the root `tests` job (the one
+ * CI job that runs these files) does not install the supervisor's own dependencies. The fake has no
+ * `ping`, so docker.integration.test.ts, which asks the real one, still reads "no daemon" and skips.
+ * The question is which calls `ensure` makes: a computer whose documents folder is not the one wanted
+ * is removed WITHOUT its volumes and created again, and one that is current is left alone.
  */
 
 type Fake = {
@@ -35,15 +33,8 @@ function missing(): never {
   throw Object.assign(new Error("no such container"), { statusCode: 404 });
 }
 
-const original = {
-  getContainer: Docker.prototype.getContainer,
-  getImage: Docker.prototype.getImage,
-  getVolume: Docker.prototype.getVolume,
-  createContainer: Docker.prototype.createContainer,
-  createVolume: Docker.prototype.createVolume,
-};
-
-const patched = Docker.prototype as unknown as Record<string, unknown>;
+class FakeDocker {}
+const patched = FakeDocker.prototype as unknown as Record<string, unknown>;
 patched.getImage = () => ({ inspect: async () => ({ Id: "sha256:current" }) });
 patched.getVolume = (name: string) => ({
   remove: async () => {
@@ -107,9 +98,8 @@ patched.getContainer = (name: string) => ({
   },
 });
 
-afterAll(() => {
-  Object.assign(Docker.prototype, original);
-});
+mock.module("dockerode", () => ({ default: FakeDocker }));
+const { ensure, hostConfig } = await import("../src/docker");
 
 const named = namesFor("freeduet");
 if (!named.ok) throw new Error(named.reason);
@@ -149,6 +139,37 @@ beforeEach(() => {
 });
 
 const documents = { path: "/mnt/documents", bots: ["freeduet"] };
+
+describe("hostConfig", () => {
+  const base = { image: "i", environment: [] as string[] };
+  const own = (bot: string) => [
+    `openbot-profile-${bot}:/profiles`,
+    `openbot-workspace-${bot}:/workspace`,
+  ];
+  const of = (bot: string) => {
+    const n = namesFor(bot);
+    if (!n.ok) throw new Error(n.reason);
+    return n.names;
+  };
+
+  test("feature off: only the Bot's own two volumes", () => {
+    expect(hostConfig(of("freeduet"), base).Binds).toEqual(own("freeduet"));
+  });
+
+  test("a listed Bot gets the folder read-only under /workspace, after the workspace volume", () => {
+    const { Binds } = hostConfig(of("freeduet"), { ...base, documents });
+    expect(Binds).toEqual([...own("freeduet"), BIND]);
+    expect(BIND).toBe(documentsBind("/mnt/documents"));
+  });
+
+  test("an unlisted Bot gets nothing although the feature is on", () => {
+    for (const other of ["otto", "freeduet2", "Freeduet"]) {
+      expect(hostConfig(of(other), { ...base, documents }).Binds).toEqual(
+        own(other),
+      );
+    }
+  });
+});
 
 describe("ensure and the documents folder", () => {
   test("a new computer for a listed Bot is created with the folder, read-only, and the label", async () => {

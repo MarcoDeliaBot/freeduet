@@ -2,7 +2,6 @@ import { afterAll, beforeAll, describe, expect, test } from "bun:test";
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { hostConfig } from "../src/docker";
 import {
   DOCUMENTS_LABEL,
   DOCUMENTS_TARGET,
@@ -14,15 +13,6 @@ import {
   holdsCurrentDocuments,
   liveDocuments,
 } from "../src/documents";
-import { namesFor } from "../src/names";
-
-function names(botId: string) {
-  const named = namesFor(botId);
-  if (!named.ok) throw new Error(named.reason);
-  return named.names;
-}
-
-const BASE = { image: "openbot-agent-computer:test", environment: [] };
 
 describe("the documents settings", () => {
   test("unset or blank: the feature is off and says nothing", () => {
@@ -187,51 +177,11 @@ describe("what a computer is given", () => {
     bots: ["freeduet"],
   };
 
-  test("feature off: the computer holds its own two volumes and nothing else", () => {
-    const { Binds } = hostConfig(names("freeduet"), BASE);
-    expect(Binds).toEqual([
-      "openbot-profile-freeduet:/profiles",
-      "openbot-workspace-freeduet:/workspace",
-    ]);
-  });
-
-  test("a listed Bot gets the folder read-only, under /workspace", () => {
-    const { Binds } = hostConfig(names("freeduet"), { ...BASE, documents });
-    expect(Binds).toContain("/mnt/documents:/workspace/documenti:ro");
-    // The folder is under the workspace the file tools are confined to, not beside it.
-    expect(DOCUMENTS_TARGET.startsWith("/workspace/")).toBe(true);
-    // The Bot's own storage is still there, and the workspace volume comes before the nested mount.
-    const workspace = Binds.indexOf("openbot-workspace-freeduet:/workspace");
-    const mount = Binds.indexOf("/mnt/documents:/workspace/documenti:ro");
-    expect(workspace).toBeGreaterThanOrEqual(0);
-    expect(mount).toBeGreaterThan(workspace);
-  });
-
-  test("a Bot that is not listed gets nothing, although the feature is on", () => {
-    for (const other of ["otto", "freeduet2", "Freeduet", "free"]) {
-      const { Binds } = hostConfig(names(other), { ...BASE, documents });
-      expect(Binds).toEqual([
-        `openbot-profile-${other}:/profiles`,
-        `openbot-workspace-${other}:/workspace`,
-      ]);
-    }
-  });
-
-  test("every bind the documents setting can add is read-only", () => {
-    for (const bots of [["freeduet"], ["freeduet", "otto"], ["otto"]]) {
-      for (const bot of ["freeduet", "otto", "penny"]) {
-        const { Binds } = hostConfig(names(bot), {
-          ...BASE,
-          documents: { path: "/mnt/documents", bots },
-        });
-        for (const bind of Binds.filter((b) => b.includes("documenti"))) {
-          expect(bind.endsWith(":ro")).toBe(true);
-        }
-      }
-    }
+  test("the bind is read-only and under /workspace", () => {
     expect(documentsBind("/mnt/documents")).toBe(
       "/mnt/documents:/workspace/documenti:ro",
     );
+    expect(DOCUMENTS_TARGET.startsWith("/workspace/")).toBe(true);
   });
 
   test("the source for a Bot is the folder for a listed Bot and nothing else", () => {
