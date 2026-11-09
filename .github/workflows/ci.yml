@@ -443,9 +443,9 @@ jobs:
   # to sign in, and nothing asked for a key (scripts/freeduet-clean-start-check.sh).
   #
   # It builds every image the stack runs, so it sits behind the same cost gate as `image`: on a pull
-  # request only with the `full-ci` label, always on main and through workflow_call. Not in `verify`
-  # yet: it is new, and it runs on a pull request only with the `full-ci` label until it has passed
-  # on main (#21, docs/UPSTREAM_TOUCHES.md).
+  # request only with the `full-ci` label, always on main and through workflow_call. `verify` requires
+  # it where it runs. On a pull request without `full-ci` it is skipped, and `verify` treats a skip as
+  # a pass, so it does not block that pull request (#21).
   clean-start:
     name: clean start (no key, no sign-in)
     runs-on: ubuntu-latest
@@ -837,7 +837,7 @@ jobs:
     name: verify
     runs-on: ubuntu-latest
     if: always()
-    needs: [static, deployables, mobile, computer-browser, chart, test, startup, freeduet-package, agent-freeduet, python-harness, build, migrations, image, component-dockerfiles]
+    needs: [static, deployables, mobile, computer-browser, chart, test, startup, freeduet-package, agent-freeduet, python-harness, build, migrations, image, component-dockerfiles, clean-start]
     # Nothing is checked out here, so the workflow's default `openbot` folder does not exist.
     defaults:
       run:
