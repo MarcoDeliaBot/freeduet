@@ -527,7 +527,14 @@ export class PgAgentRunner
     );
   }
 
-  /** Closes the run's events, puts the run on record, lets the lock go and completes the streams. */
+  /**
+   * Closes the run's events, puts the run on record, lets the lock go and completes the streams.
+   *
+   * Closers are made only for a run that ended without a terminal event of its own: a failed
+   * stream, a stop, a lost lock. A run the Bot ended with RUN_FINISHED or RUN_ERROR gets none,
+   * however many calls it left open: a paused run (a frontend tool, an approval) is recorded as it
+   * was streamed, and the client's next run or the approvals resume answers its calls.
+   */
   private async finish(run: ActiveRun, failure: string | undefined) {
     run.ended = true;
     if (run.flushTimer) clearTimeout(run.flushTimer);

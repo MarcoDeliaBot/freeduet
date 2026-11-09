@@ -109,14 +109,37 @@ function mergeMessages(
 }
 
 /**
+ * What sealing may add before a terminal event: the END of something the agent started. Never an
+ * answer to a tool call, an error for a subagent, or a terminal event of its own.
+ */
+const SEALING_ENDS: ReadonlySet<string> = new Set([
+  EventType.REASONING_MESSAGE_END,
+  EventType.REASONING_END,
+  EventType.TEXT_MESSAGE_END,
+  EventType.TOOL_CALL_END,
+]);
+
+/**
  * Every run's events closed before its terminal event, for storage.
  *
  * AG-UI lets an agent end a run with RUN_ERROR while a text message or a tool call is still open.
  * Compaction then moves the open message to the end of the run's events, AFTER the RUN_ERROR, and a
  * replay that carries anything after a RUN_ERROR is refused by the browser's event verifier. So
- * what is stored closes what was left open just before the run ended, as the runtime's own
- * finalizer would have. The live stream is not touched: the browser that watched the run already
- * received it as the agent sent it.
+ * what is stored ends what was left open just before the run ended. The live stream is not touched:
+ * the browser that watched the run already received it as the agent sent it.
+ *
+ * A TOOL_CALL_RESULT IS NEVER MADE UP HERE. A call that was announced and ended but has no result
+ * when the Bot's own RUN_FINISHED arrives is not a call that failed: it is a call OpenBot has to run
+ * (a frontend tool, `report_refusal`) or one that waits for the person (an approval, which ends the
+ * run with an interrupt). It stays open, as in the runtime's own runners and in Intelligence, until
+ * the client's next run or the approvals resume brings the real result. The finalizer's answer for
+ * an open call, `{"status":"error","reason":"missing_terminal_event"}`, was stored here once, before
+ * every such RUN_FINISHED: a client that read the conversation back found the call answered, never
+ * ran it, and the history sanitiser kept that first answer over the real one.
+ *
+ * Runs that did end abruptly (the Bot's stream failed, a stop, a lost lock, a dead process) are
+ * closed, with their answers and a RUN_ERROR or a cancelled RUN_FINISHED, before their events reach
+ * this function: by the runner's `finish` and by `endLastRun`.
  */
 export function sealRuns(events: BaseEvent[]): BaseEvent[] {
   const sealed: BaseEvent[] = [];
@@ -131,11 +154,7 @@ export function sealRuns(events: BaseEvent[]): BaseEvent[] {
     ) {
       const closers = finalizer
         .finalize()
-        .filter(
-          (closer) =>
-            closer.type !== EventType.RUN_ERROR &&
-            closer.type !== EventType.RUN_FINISHED,
-        );
+        .filter((closer) => SEALING_ENDS.has(closer.type));
       sealed.push(...closers, event);
       finalizer = createRunEventFinalizer();
       continue;
