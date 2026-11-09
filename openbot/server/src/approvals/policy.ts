@@ -72,6 +72,98 @@ export function strictestRule(
   return best;
 }
 
+/*
+ * FreeDuet: the same three categories in Italian, the English that slipped past upstream's list, and
+ * money tools by name. Upstream's `pattern` on each requirement below is unchanged; what is added
+ * sits in `extra` (matched on the words of the action, like `pattern`) and `inToolName` (matched on
+ * the tool's own name only, for words too common in free text to stop on there).
+ *
+ * `\b` is ASCII-only: to it an accented letter is not a letter. These use Unicode-aware edges
+ * instead (a word is not preceded or followed by a letter, a mark or a digit), which keeps "paga"
+ * from matching "pagina" and "compra" from matching "compravendita". Spelled with `\\p` inside
+ * template strings, where a lone `\p` would silently lose its backslash.
+ */
+const LETTERS = "\\p{L}\\p{M}\\p{N}";
+const EDGE_START = `(?<![${LETTERS}])`;
+const EDGE_END = `(?![${LETTERS}])`;
+const SEP = "[-_ ]+";
+const SEP0 = "[-_ ]*";
+const APOS = "['’]";
+/** What may sit between a verb and its object: "completa l'acquisto", "conferma il tuo ordine". */
+const THE = `(?:${SEP}(?:il|lo|la|un|una|uno|tuo|tua|mio|mia|del|della|dello|di)|${SEP}(?:l|dell|d|un)${APOS}|(?:l|dell|d|un)${APOS})*`;
+const phrases = (...alternatives: string[]) =>
+  new RegExp(`${EDGE_START}(?:${alternatives.join("|")})${EDGE_END}`, "iu");
+
+const PAYMENTS_IT_EN = [
+  phrases(
+    // Italian: paying, buying, ordering, bank transfers, cards, subscriptions, top-ups, vouchers.
+    "paga(?:re|mento|menti)?",
+    "acquist(?:a|are|o|i)",
+    "compra(?:re)?",
+    `(?:conferma(?:re)?|invia(?:re)?|inoltra(?:re)?|completa(?:re)?|finalizza(?:re)?|effettua(?:re)?|esegui(?:re)?|piazza(?:re)?)${THE}${SEP0}(?:ordin[ei]|acquisto)${EDGE_END}(?!${SEP}del${SEP}giorno)`,
+    "bonific(?:o|i)",
+    `(?:vai|vada|andare|passa|passare|procedi|procedere)${SEP}(?:alla|in)${SEP}cassa`,
+    `cart[ae]${SEP}di${SEP}(?:credito|debito)`,
+    `cart[ae]${SEP}prepagat[ae]`,
+    `numero${SEP}(?:(?:della|di|dell${APOS})${SEP0})?carta${EDGE_END}(?!${SEP}(?:d${APOS})?identit)`,
+    "abbonati|abbonarti|abbonarsi|abbonament[oi]",
+    `rinnova(?:re)?${THE}${SEP0}(?:ora|adesso|subito|automaticamente|piano|iscrizione|licenza|dominio|hosting)`,
+    `ricarica(?:re)?${THE}${SEP0}(?:conto|credito|saldo|carta|wallet|portafoglio|prepagata|telefonica|sim)`,
+    `buon[oi]${SEP}regalo|cart[ae]${SEP}regalo`,
+    // English the first list missed.
+    `confirm${SEP0}(?:(?:your|the)${SEP0})?order`,
+    `(?:complete|finali[sz]e|submit)${SEP0}(?:(?:your|the)${SEP0})?(?:order|purchase)`,
+    "subscri(?:be|ption)s?",
+    `renew(?:al)?${SEP}(?:now|subscription|plan|membership|licen[cs]e|domain|hosting)`,
+    `top${SEP0}up${SEP}(?:(?:your|the)${SEP})?(?:balance|account|wallet|credit|card|funds)`,
+    `gift${SEP0}cards?`,
+  ),
+  // The checkout page of an Italian shop, as an address.
+  new RegExp(`/cassa${EDGE_END}`, "iu"),
+];
+
+const CREDENTIALS_IT = [
+  phrases(
+    "credenzial[ei]",
+    `codice${SEP}(?:otp|monouso|(?:di${SEP})?(?:verifica|accesso|sicurezza|recupero))`,
+    `(?:email|e-mail|mail|telefono|numero|chiave)${SEP}di${SEP}recupero`,
+    `chiave${SEP}(?:api|segreta)`,
+    `parola${SEP}d${APOS}ordine`,
+    `autenticazione${SEP}(?:a${SEP})?(?:due|2|più|piu|multi)${SEP0}(?:fattori|fattore|passaggi)`,
+    `doppia${SEP}autenticazione`,
+    `verifica${SEP}in${SEP}due${SEP}passaggi`,
+    `domand[ae]${SEP}(?:di${SEP})?sicurezza`,
+    // Lower case "pin" is mostly a verb ("pin the message"): by itself only the capitals count.
+    `pin${SEP0}(?:code|codice|number|numero)`,
+    `(?:codice|code|numero|number|tuo|your|inserisci|enter)${SEP}pin`,
+  ),
+  new RegExp(`${EDGE_START}PIN${EDGE_END}`, "u"),
+];
+
+const SECURITY_SETTINGS_IT_EN = [
+  phrases(
+    `impostazion[ei][-_ /]+(?:(?:di|dei|del)${SEP}|dell${APOS})?(?:sicurezza|condivisione|privacy|permessi|accesso)`,
+    `sicurezza${SEP}(?:dell${APOS}|(?:del|dei)${SEP})?account`,
+    `(?:elimina|eliminare|cancella|cancellare|chiudi|chiudere|disattiva|disattivare)${THE}${SEP0}account`,
+    `rend(?:i|ere)${SEP}(?:(?:il|lo|la|i|gli|le|un|una|questo|questa|quel|quella)${SEP})?(?:[${LETTERS}]+${SEP})?pubblic(?:o|a|i|he)`,
+    `condividi${SEP}con${SEP}(?:chiunque|(?:il${SEP})?pubblico)`,
+    `permess[io]${SEP}(?:(?:di|da)${SEP})?(?:amministratore|admin)`,
+    `ruol[oi]${SEP}(?:di${SEP})?(?:amministratore|admin)`,
+    `(?:rendi|rendere|nomina|nominare|promuovi|promuovere)${SEP}(?:[${LETTERS}]+${SEP}){0,2}(?:amministratore|admin)`,
+    // English, in the same category as the Italian "impostazioni privacy" above.
+    `privacy${SEP0}settings?`,
+  ),
+];
+
+/**
+ * Tool names that move money, whatever the arguments say. Substrings rather than words, because
+ * tool names come in snake_case, kebab-case, camelCase and SHOUTING_CASE. "transaction" and
+ * "transfer" are too common in free text to stop on there, so they are matched here only.
+ */
+const MONEY_TOOL_NAMES = [
+  /transaction|transazion[ei]|transfer|trasferiment[oi]|renew|ricarica|(?<![a-z])top[-_ ]?up|(?<!un)subscri(?:be|ption)|gift[-_ ]?card|buon[oi][-_ ]?regalo/i,
+];
+
 /**
  * Built-in safety requirements. These always hand the action to the person, before and regardless of
  * any rule, preference or reviewer verdict, and they are not configurable.
@@ -84,6 +176,10 @@ const SAFETY_REQUIREMENTS: readonly {
   id: string;
   reason: string;
   pattern: RegExp;
+  /** FreeDuet: more patterns for the words of the action. */
+  extra?: readonly RegExp[];
+  /** FreeDuet: patterns for the tool's own name only. */
+  inToolName?: readonly RegExp[];
 }[] = [
   {
     id: "credentials",
@@ -91,6 +187,7 @@ const SAFETY_REQUIREMENTS: readonly {
       "Changing a password, passcode, two-factor setting, recovery code or other credential is always done by the person.",
     pattern:
       /pass(word|code|phrase)|passwd|\b2fa\b|two[-_ ]?factor|\bmfa\b|one[-_ ]?time[-_ ]?code|\botp\b|recovery[-_ ]?(code|key|email|phone)|security[-_ ]?question|api[-_ ]?key|access[-_ ]?token|credential|sign[-_ ]?in[-_ ]?method/i,
+    extra: CREDENTIALS_IT,
   },
   {
     id: "security_settings",
@@ -98,12 +195,15 @@ const SAFETY_REQUIREMENTS: readonly {
       "Changing security, sharing or access settings on an account is always done by the person.",
     pattern:
       /security[-_ ]?settings?|\/settings\/security|account[-_ ]?security|sharing[-_ ]?settings?|share[-_ ]?with[-_ ]?(anyone|public)|make[-_ ]?public|admin[-_ ]?role|grant[-_ ]?admin|permission[-_ ]?settings?|delete[-_ ]?(my[-_ ]?)?account|close[-_ ]?account/i,
+    extra: SECURITY_SETTINGS_IT_EN,
   },
   {
     id: "payments",
     reason: "Paying, purchasing or moving money is always done by the person.",
     pattern:
       /payment|\bpay(ing)?\b|pay[-_ ]?now|checkout|purchase|place[-_ ]?order|buy[-_ ]?now|\bwire\b|bank[-_ ]?transfer|transfer[-_ ]?(money|funds)|send[-_ ]?money|credit[-_ ]?card|card[-_ ]?number|\bcvv\b|\biban\b|routing[-_ ]?number|billing/i,
+    extra: PAYMENTS_IT_EN,
+    inToolName: MONEY_TOOL_NAMES,
   },
 ];
 
@@ -144,7 +244,12 @@ export function safetyRequirement(
     flatten(candidate.args),
     flatten(candidate.target),
   ].join(" ");
-  const hit = SAFETY_REQUIREMENTS.find((entry) => entry.pattern.test(words));
+  const hit = SAFETY_REQUIREMENTS.find(
+    (entry) =>
+      entry.pattern.test(words) ||
+      entry.extra?.some((pattern) => pattern.test(words)) ||
+      entry.inToolName?.some((pattern) => pattern.test(candidate.toolRef)),
+  );
   return hit ? { id: hit.id, reason: hit.reason } : undefined;
 }
 
@@ -161,10 +266,29 @@ export function reviewable(candidate: ApprovalCandidate): boolean {
   );
 }
 
-/** The person's own words for this run: the user messages the Bot is acting on. */
+/**
+ * FreeDuet: a Bot-to-Bot hop reaches the addressed Bot as a user message, but it is a colleague's
+ * text, not the person's: the task a Bot wrote, the answer another Bot came back with, or the line
+ * shown for either (`agents/handoff-delivery.ts` writes all of them with this id; they keep it when
+ * stored). It may itself have come from a manipulated email, so the reviewer must not weigh it as
+ * the person asking.
+ */
+const HANDOFF_MESSAGE_ID = "handoff-";
+
+/**
+ * The person's own words for this run: the user messages the Bot is acting on, leaving out the ones
+ * a colleague wrote. A run made only of a hand-off has no request text, and the reviewer is told so.
+ */
 export function requestOf(messages: readonly Message[] | undefined): string {
   return (messages ?? [])
-    .filter((message) => message.role === "user")
+    .filter(
+      (message) =>
+        message.role === "user" &&
+        !(
+          typeof message.id === "string" &&
+          message.id.startsWith(HANDOFF_MESSAGE_ID)
+        ),
+    )
     .map((message) =>
       typeof message.content === "string"
         ? message.content
