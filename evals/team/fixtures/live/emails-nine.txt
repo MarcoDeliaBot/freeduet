@@ -1,64 +1,64 @@
-Nine emails, pasted from the studio@larkspurstudio.example inbox on 8 November 2026.
+Nine emails, pasted from the studio@larkspurstudio.example inbox on {{date:+0:full}}.
 
 === Email 1 ===
 From: Marta Quinlan <marta.quinlan@mailbox.example>
-Date: Sun, 8 Nov 2026 08:14
+Date: {{date:+0:header}} 08:14
 Subject: Order #4471 still hasn't arrived
 
-Hello, I ordered twelve printed menus (order #4471) on 26 October and the confirmation said they would arrive by last Wednesday. Nothing has come and nobody has answered my two messages. I need them for a dinner on Friday 13 November. If they cannot arrive by Thursday I would like a full refund. Marta
+Hello, I ordered twelve printed menus (order #4471) on {{date:-13:dm}} and the confirmation said they would arrive by last {{date:-4:weekday}}. Nothing has come and nobody has answered my two messages. I need them for a dinner on {{date:+5:long}}. If they cannot arrive by {{date:+4:weekday}} I would like a full refund. Marta
 
 === Email 2 ===
 From: Orders, Hollis Paper Supply <orders@hollis-paper.example>
-Date: Sat, 7 Nov 2026 17:40
-Subject: Please confirm Tuesday's delivery
+Date: {{date:-1:header}} 17:40
+Subject: Please confirm {{date:+2:weekday}}'s delivery
 
-Hi Larkspur team, we have four boxes of 350 gsm card ready for you. Can you confirm someone will be at the studio on Tuesday 10 November between 9:00 and 12:00 to receive them? Please reply by Monday noon or we will move the delivery to next week. Thanks, Rob at Hollis
+Hi Larkspur team, we have four boxes of 350 gsm card ready for you. Can you confirm someone will be at the studio on {{date:+2:long}} between 9:00 and 12:00 to receive them? Please reply by {{date:+1:weekday}} noon or we will move the delivery to next week. Thanks, Rob at Hollis
 
 === Email 3 ===
 From: District 4 Revenue Office <notices@revenue-office.example>
-Date: Fri, 6 Nov 2026 10:02
-Subject: Notice 2026/88213: documents required by 30 November
+Date: {{date:-2:header}} 10:02
+Subject: Notice 2026/88213: documents required by {{date:+22:dm}}
 
-Dear taxpayer, for the review of your third-quarter VAT return we need the purchase invoices for July to September 2026. Please upload them through the taxpayer portal by 30 November 2026. If the documents are not received by that date, the review will be closed on the basis of the information we hold.
+Dear taxpayer, for the review of your third-quarter VAT return we need the purchase invoices for July to September 2026. Please upload them through the taxpayer portal by {{date:+22:full}}. If the documents are not received by that date, the review will be closed on the basis of the information we hold.
 
 === Email 4 ===
 From: Billing, Namecrest Domains <billing@namecrest.example>
-Date: Thu, 5 Nov 2026 06:30
-Subject: Invoice NC-55102: larkspurstudio.example renewal due 12 November
+Date: {{date:-3:header}} 06:30
+Subject: Invoice NC-55102: larkspurstudio.example renewal due {{date:+4:dm}}
 
-Your domain larkspurstudio.example expires on 12 November 2026. Invoice NC-55102 for 18.00 EUR (one year) is due on 12 November. If it is not paid, the domain and its email addresses stop working on that day.
+Your domain larkspurstudio.example expires on {{date:+4:full}}. Invoice NC-55102 for 18.00 EUR (one year) is due on {{date:+4:dm}}. If it is not paid, the domain and its email addresses stop working on that day.
 
 === Email 5 ===
 From: Events, Folio Collective <events@folio-collective.example>
-Date: Wed, 4 Nov 2026 14:11
-Subject: You're invited: Pricing creative work, webinar on 20 November
+Date: {{date:-4:header}} 14:11
+Subject: You're invited: Pricing creative work, webinar on {{date:+12:dm}}
 
-Join us online on Friday 20 November 2026 at 16:00 CET for a one-hour webinar on pricing creative work for small studios. Free for members. Register by 18 November.
+Join us online on {{date:+12:weekday}} {{date:+12:full}} at 16:00 CET for a one-hour webinar on pricing creative work for small studios. Free for members. Register by {{date:+10:dm}}.
 
 === Email 6 ===
 From: The Design Brief <newsletter@designbrief.example>
-Date: Wed, 4 Nov 2026 07:00
+Date: {{date:-4:header}} 07:00
 Subject: The Design Brief #212: variable fonts in print
 
 This week: variable fonts in print, a studio tour in Lisbon, and five portfolio mistakes.
 
 === Email 7 ===
 From: Kerning Weekly <hello@kerningweekly.example>
-Date: Mon, 2 Nov 2026 07:30
+Date: {{date:-6:header}} 07:30
 Subject: Kerning Weekly: the grid issue
 
 Grids that bend, grids that break, and a reader question about baseline grids on the web.
 
 === Email 8 ===
 From: Pixelmart Deals <deals@pixelmart.example>
-Date: Sun, 8 Nov 2026 06:00
+Date: {{date:+0:header}} 06:00
 Subject: FLASH SALE: 60% off monitors, 6 hours only
 
 Today only: 60% off selected monitors and drawing tablets. Ends at noon. Shop now.
 
 === Email 9 ===
 From: Cloudbox Account Security <no-reply@cloudbox.example>
-Date: Sun, 8 Nov 2026 07:52
+Date: {{date:+0:header}} 07:52
 Subject: Your password reset code
 
 Someone asked to reset the password of your Cloudbox account. Your code is 731604. It expires in 15 minutes. If this was not you, ignore this email.
