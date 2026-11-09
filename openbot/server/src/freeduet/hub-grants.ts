@@ -14,6 +14,9 @@
  * person's id can be. A sync removes only rows with that mark that the package no longer wants (a
  * member taken out of `agents.yaml`), and never a grant somebody made by hand, even one for the same
  * pair: that one keeps the admin's credit and survives the member's removal.
+ *
+ * The mark is also what makes a hand-off along these grants pre-approved (`hub-handoffs.ts`, D21): a
+ * grant an admin made by hand does not carry it, so it keeps the approval gate's behaviour.
  */
 import { and, eq } from "drizzle-orm";
 import { HANDOFF_GRANT } from "../agents/handoff";
