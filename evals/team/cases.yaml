@@ -109,7 +109,7 @@ cases:
     member: creator
     request: "Create a bot that sorts my email."
     must:
-      - points out that Otto already does this and proposes changing Otto instead
+      - points out that Otto already does this and proposes using Otto, as it is or changed, instead of a new bot
 
   - id: leo-4
     member: creator
