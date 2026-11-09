@@ -12,6 +12,13 @@ plays the next plan from $FAKE_CLAUDE_DIR/plans.json, one plan per invocation:
   {"sleep": seconds} / {"stderr": "..."} / {"exit": code}
   {"result": {...}}                       the result line, then exit 0
 
+  {"tool": ..., "real_cli": true}         a call to a name the server did not list is answered the way
+                                          the real CLI answers it (cli.js, "No such tool available"): an
+                                          error result in the stream, and the bridge never hears of the
+                                          call. The names are kept in `unavailable` in the run's record.
+                                          Without it the call goes to the bridge anyway, which is how the
+                                          bridge's own refusal of an unoffered tool is tested.
+
 Without a result step it ends with a successful result. Everything it saw (argv, environment
 names, prompt, MCP config, tools/list, tool results) goes to $FAKE_CLAUDE_DIR/run-<n>.json.
 It never reads any CLI configuration or credential folder.
@@ -71,6 +78,7 @@ class Turn:
         self.record, self.path = record, path
         self.text: list[str] = []
         self.mcp: McpClient | None = None
+        self.listed: set[str] = set()  # the names the freeduet server's tools/list gave
 
     def save(self) -> None:
         self.path.write_text(json.dumps(self.record, indent=1))
@@ -95,8 +103,15 @@ class Turn:
         out({"type": "stream_event", "event": {"type": "message_stop"}, "parent_tool_use_id": None})
         return uses
 
-    def call(self, use: dict) -> None:
+    def call(self, use: dict, real_cli: bool = False) -> None:
         name = use["name"].removeprefix("mcp__freeduet__")
+        if real_cli and name not in self.listed:
+            # The real CLI answers a call to an unlisted tool itself; nothing reaches the server.
+            text = f"<tool_use_error>Error: No such tool available: {use['name']}</tool_use_error>"
+            self.record.setdefault("unavailable", []).append(name)
+            self.save()
+            out({"type": "user", "message": {"role": "user", "content": [{"type": "tool_result", "tool_use_id": use["id"], "content": text, "is_error": True}]}, "parent_tool_use_id": None})
+            return
         self.record.setdefault("calls", []).append({"name": name, "arguments": use["input"]})
         self.save()
         response = self.mcp.request("tools/call", {"name": name, "arguments": use["input"]})
@@ -110,7 +125,7 @@ class Turn:
         """Play one step; False once the turn has ended."""
         if "tool" in step:
             for use in self.message(step.get("text"), [step["tool"]]):
-                self.call(use)
+                self.call(use, step.get("real_cli", False))
         elif "text" in step:
             self.message(step["text"])
         elif "replay" in step:
@@ -162,6 +177,7 @@ def main(args: list[str]) -> int:
         turn.mcp.notify("notifications/initialized")
         tools = turn.mcp.request("tools/list", {}).get("result", {}).get("tools", [])
         record["initialize"] = init.get("result")
+        turn.listed = {tool["name"] for tool in tools}
         record["tools"] = tools
         turn.save()
     out({"type": "system", "subtype": "init", "tools": [f"mcp__freeduet__{tool['name']}" for tool in tools], "mcp_servers": [{"name": name, "status": "connected"} for name in servers], "apiKeySource": "none"})

@@ -20,9 +20,21 @@ This module reads what agent-freeduet itself can see (the offered tools, OpenBot
 messages and the readable part of the signed run statement, origin.py) and gives the member one note
 with the exact reason and what to do instead. It only explains: it never offers a tool OpenBot did
 not offer, and the depth limit stays OpenBot's (docs/M1_PLAN.md D14: no chains).
+
+The same goes for the member's computer (`computer_navigate`, `computer_read`, ...). The person's
+browser chat offers those tools with every run, but a hand-off turn (the forward hop to the addressed
+Bot and the relay of its answer back to the Bot that asked) is run by OpenBot with `tools: []`
+(`agents/handoff-delivery.ts`), so the CLI lists no computer tool there. A member whose prompt tells
+it to research with them calls one anyway, the CLI answers "No such tool available" without the call
+ever reaching OpenBot (stream_json.py, `unavailable`), and the member told the person its browser
+"stopped working" (live evals jules-1 and jules-3, 8-9 Nov 2026). Whether a hand-off turn should get
+the person's computer is the maintainer's decision, not this module's: it says why the computer is
+missing, and what to say and do instead.
 """
 
 from __future__ import annotations
+
+import re
 
 from .agui import RunInput
 from .members import Member
@@ -37,6 +49,8 @@ from .origin import (
 )
 
 HANDOFF_TOOL = "message_bot"
+COMPUTER_PREFIX = "computer_"
+_COMPUTER_TOOL = re.compile(r"\bcomputer_[a-z]+(?:_[a-z]+)*\b")
 
 
 def _depth(claims: dict) -> str:
@@ -89,9 +103,95 @@ NOT_OFFERED_NOTE = (
 )
 
 
+def _names(missing: list[str]) -> str:
+    return missing[0] if len(missing) == 1 else ", ".join(missing[:-1]) + " and " + missing[-1]
+
+
+_NEVER_BROKEN = (
+    "Nothing is broken: do not call them (Claude Code would answer \"No such tool available\" and "
+    "the step is lost), and never say your browser or your computer stopped working or stopped "
+    "responding."
+)
+
+
+def computer_note(kind: str, missing: list[str], sender: str = "") -> str:
+    """Why these computer tools are not offered on this turn. `kind` is "relay" (the answer to work
+    this member handed over, coming back), "hop" (a colleague handed this member the work, `sender`
+    is who), "handoff" (a hand-off of some other kind) or "not_offered" (nothing says why)."""
+    names = _names(missing)
+    if kind == "not_offered":
+        return (
+            f"Your computer tools ({names}) are not offered on this turn, and OpenBot gave no reason with "
+            "the tool list. Do not call them: Claude Code would answer \"No such tool available\". If you "
+            "need a page, say exactly that (OpenBot did not offer your computer on this turn), never that "
+            "a tool stopped working, then follow your instructions for working without it."
+        )
+    if kind == "hop":
+        return (
+            f"Why your computer is not offered on this turn: {sender} handed you this work, and OpenBot "
+            f"runs a handed-over turn on its server without a browser, so none of your computer tools "
+            f"({names}) is offered. {_NEVER_BROKEN} Do what you can without them, as your instructions "
+            f"say. Your answer goes back to {sender} by itself: say plainly in it what you could not "
+            f"check because there was no browser, so {sender} can tell the person."
+        )
+    reason = (
+        "this turn brings back the answer to work that was handed over in this conversation, and "
+        "OpenBot runs it on its server without a browser"
+        if kind == "relay"
+        else "OpenBot runs this turn as a hand-off, on its server without a browser"
+    )
+    return (
+        f"Why your computer is not offered on this turn: {reason}, so none of your computer tools "
+        f"({names}) is offered. {_NEVER_BROKEN} Work as your instructions say when you have no computer "
+        "tools. If a page still has to be opened or checked, say in one sentence what you could not "
+        "check here and that you will do it when the person writes in this conversation: their next "
+        "message in this conversation is an ordinary turn, where your computer is offered again when "
+        "this deployment allows it. Make that your Next step."
+    )
+
+
+def _computer_tools_named(run: RunInput, member: Member) -> list[str]:
+    """The computer tools this member relies on: the ones its prompt names, and any it called earlier
+    in this conversation."""
+    named = set(_COMPUTER_TOOL.findall(member.system_prompt))
+    for message in run.messages:
+        for call in message.get("toolCalls") or []:
+            function = call.get("function") if isinstance(call, dict) else None
+            name = function.get("name") if isinstance(function, dict) else None
+            if isinstance(name, str) and name.startswith(COMPUTER_PREFIX):
+                named.add(name)
+    return sorted(named)
+
+
+def computer_notes_for(run: RunInput, member: Member) -> list[str]:
+    """One note when the member relies on computer tools this run does not offer, saying why as far
+    as the run shows; none when they are all offered or the member never uses them."""
+    offered = {tool.get("name") for tool in run.tools}
+    missing = [name for name in _computer_tools_named(run, member) if name not in offered]
+    if not missing:
+        return []
+    claims = run_claims(run.assertion)
+    latest = latest_user_message(run.messages)
+    if latest is not None:
+        attribution = ATTRIBUTION.match(message_text(latest))
+        if attribution:
+            return [computer_note("hop", missing, _who(attribution.group(1)))]
+        if is_envelope(latest):
+            return [computer_note("relay", missing)]
+    if claims_a_handoff(claims):
+        return [computer_note("handoff", missing)]
+    return [computer_note("not_offered", missing)]
+
+
 def notes_for(run: RunInput, member: Member) -> list[str]:
-    """The notes for this run's system text: one when the member's prompt relies on message_bot and
-    OpenBot did not offer it, saying exactly why as far as this run shows; none otherwise."""
+    """The notes for this run's system text: why message_bot is missing, when the member's prompt
+    relies on it and OpenBot did not offer it, and why its computer tools are missing, when it relies
+    on those; each saying exactly why as far as this run shows. None when nothing it relies on is
+    missing."""
+    return [*_message_bot_notes(run, member), *computer_notes_for(run, member)]
+
+
+def _message_bot_notes(run: RunInput, member: Member) -> list[str]:
     if HANDOFF_TOOL not in member.system_prompt:
         return []
     if any(tool.get("name") == HANDOFF_TOOL for tool in run.tools):
