@@ -280,13 +280,13 @@ identifies_as_openbot() {
     # `durableHistory` is sent in both runtime modes (server/src/app.ts).
     server)
       curl -fsS --max-time 3 "http://localhost:$port/api/capabilities" 2>/dev/null \
-        | grep -q '"durableHistory"'
+        | grep '"durableHistory"' >/dev/null
       ;;
     # The app is static HTML with nothing to interrogate, so a marker in its head is the identity
     # available. Not the title: a fork that renames the product changes the title with it.
     app)
       curl -fsS --max-time 3 "http://localhost:$port/" 2>/dev/null \
-        | grep -qiE '<meta name="openbot" content="app"|<title>[^<]*OpenBot'
+        | grep -iE '<meta name="openbot" content="app"|<title>[^<]*OpenBot' >/dev/null
       ;;
     # Compose services on dedicated loopback ports, answering a route named for this stack.
     *)
@@ -343,7 +343,10 @@ server_computer_state() {
   case "$pid" in ''|*[!0-9]*) return 1 ;; esac
   owned="$(openbot_matching_pids "$SERVER_ENTRY" "$ROOT/server")
 $(openbot_matching_pids "$SERVER_DEV_ENTRY" "$ROOT/server")"
-  printf '%s\n' "$owned" | grep -Fxq "$pid" || return 1
+  # Not `grep -q`: it exits at the first match, but printf writes each line with its own write(2), so
+  # the next write met a closed pipe, and under `pipefail` the match failed with status 141 (SIGPIPE).
+  # Without -q, grep reads to the end of its input, so printf is never cut short.
+  printf '%s\n' "$owned" | grep -Fx "$pid" >/dev/null || return 1
   if [ "${OS:-}" = Windows_NT ]; then
     started="$(OPENBOT_PID="$pid" openbot_powershell '
       Get-Process -Id $env:OPENBOT_PID -ErrorAction SilentlyContinue |
@@ -451,7 +454,7 @@ fi
 for table in agent_profiles agent_preferences; do
   if ! compose exec -T postgres \
        psql -U openbot -d openbot -tAc "select to_regclass('public.$table')" 2>/dev/null \
-       | grep -q "^$table$"; then
+       | grep "^$table$" >/dev/null; then
     red "  $table is missing. Run: bun run --cwd server db:migrate"
     exit 1
   fi
