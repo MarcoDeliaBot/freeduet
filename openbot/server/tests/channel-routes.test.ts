@@ -1560,7 +1560,11 @@ describe("channel route naming", () => {
       context,
       next,
     ) => {
-      context.set("actor", actor);
+      context.set("actor", {
+        id: actor.id,
+        email: `${actor.id}@example.test`,
+        role: actor.role,
+      });
       await next();
     };
     return appFor(persistentStore, middleware);
