@@ -38,6 +38,8 @@ export async function startHandoffDelivery(deps: {
   threadIdentity: ThreadIdentity;
   groupConversations: GroupConversations;
   channelStore: ChannelStore;
+  /** The computer a relay turn gets (FreeDuet, D22); absent, no hop gets one. */
+  toolsForTurn?: Parameters<typeof createHandoffDelivery>[0]["toolsForTurn"];
 }): Promise<WorkOfferedListener> {
   const {
     config,
@@ -48,6 +50,7 @@ export async function startHandoffDelivery(deps: {
     threadIdentity,
     groupConversations,
     channelStore,
+    toolsForTurn,
   } = deps;
   const runner = createHandoffRunner({
     queue: createWorkQueue(database),
@@ -61,6 +64,7 @@ export async function startHandoffDelivery(deps: {
       signHandoffDeliveryRun(work, config.keyEncryptionKey, undefined, claim),
     delivery: createHandoffDelivery({
       admission: serverTurnAdmission,
+      ...(toolsForTurn ? { toolsForTurn } : {}),
       /*
        * Built as the person, WITH THEIR ROLE. The desk resolved it to decide the hop was allowed; a
        * delivery that then rebuilt them as an ordinary user could not find the Bot the desk had just

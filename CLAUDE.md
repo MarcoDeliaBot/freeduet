@@ -103,12 +103,13 @@ the hands"): plan, brief executors, verify with numbers, merge, report.
   while the router is on (`server/src/freeduet/model-base.ts`).
 - CopilotKit's runtime sends `licenseStatus` only with Intelligence on: identify the server by
   `/api/capabilities` instead.
-- A hand-off turn (the forward hop and the relay of the answer back to the asker) carries no computer
-  tools: `server/src/agents/handoff-delivery.ts` runs it with `tools: []`. Routines, wake-ups, group
-  turns and approval resumes get them (`toolsForTurn`). The CLI answers a call for a tool the run did
-  not list with "No such tool available" itself, so it reaches no stored transcript; agent-freeduet
-  tells the member why (`tool_notes.py`) and logs it (`segment.py`). Whether hand-offs should get the
-  person's computer is the maintainer's decision (PR for `m1-computer-tools-turn`).
+- Hand-off turns differ on the computer (D22). The RELAY (the answer coming back to the Bot that asked,
+  which runs in the person's own conversation) gets the member's computer tools through
+  `toolsForTurn` in `server/src/agents/handoff-delivery.ts`, built like a routine's
+  (`server/src/freeduet/relay-computer.ts`), approvals unchanged. The FORWARD hop (a scratch thread
+  nobody sees) still runs with `tools: []`. The CLI answers a call for a tool the run did not list
+  with "No such tool available" itself, so it reaches no stored transcript; agent-freeduet tells the
+  member why (`tool_notes.py`) and logs it (`segment.py`).
 
 ## Team evals
 

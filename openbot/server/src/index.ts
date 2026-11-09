@@ -42,6 +42,7 @@ import { createAgentFetch } from "./agents/endpoint";
 import { createHandoffDesk } from "./agents/handoff";
 import { createHandoffRunner } from "./agents/handoff-runner";
 import { startHandoffDelivery } from "./agents/handoff-wiring";
+import { relayComputerTools } from "./freeduet/relay-computer";
 import {
   configureBotLifecycle,
   createBotLifecycleStore,
@@ -2422,6 +2423,14 @@ if (config.handoff.maxDepth > 0 && config.handoff.maxPerRun > 0) {
     threadIdentity,
     groupConversations,
     channelStore,
+    // FreeDuet (D22): a relay turn gets the computer an ordinary turn of that Bot would.
+    toolsForTurn: relayComputerTools({
+      computerGateway,
+      agentProfileStore,
+      actorFor,
+      auditStore: bootAuditStore,
+      signInService,
+    }),
   });
 }
 
