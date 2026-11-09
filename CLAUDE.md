@@ -69,7 +69,8 @@ the hands"): plan, brief executors, verify with numbers, merge, report.
 ## CI
 
 - `verify` aggregates the required jobs. The clean-start job (`scripts/freeduet-clean-start-check.sh`,
-  no key, no sign-in) runs on main and on PRs labelled `full-ci`.
+  no key, no sign-in) runs on main and on PRs labelled `full-ci`; `verify` requires it where it runs,
+  and on other pull requests it is skipped and does not block.
 - Known intermittent failures, re-run once before investigating: the all-in-one `image` job
   (`migrate` races the embedded Postgres start, 57P03, issue #50) and the app keyboard tests in
   `app/tests/live-screen-keyboard.test.tsx`.
