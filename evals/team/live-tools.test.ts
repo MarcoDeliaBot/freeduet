@@ -6,9 +6,11 @@ import { SIGN_IN_TOOL_DESCRIPTION } from "../../openbot/server/src/computer/head
 import { type Case, hardChecks } from "./checks";
 import { appToolsLoader, EXECUTORS, type ToolDefinition } from "./computer";
 import {
+  endsWithComputerCall,
   type LiveTranscript,
   runCaseLive,
   unansweredComputerCalls,
+  waitForTurn,
   withLocalResults,
 } from "./live";
 import { computerSummary } from "./run";
@@ -734,6 +736,104 @@ describe("a computer call", () => {
         new Set(),
       ),
     ).toEqual([]);
+  });
+});
+
+describe("waitForTurn after a computer result is posted", () => {
+  const user = { id: "u", role: "user", content: "go" };
+  const before = JSON.stringify([user]);
+  const offered = new Set(["computer_read"]);
+  const endsWithCall = (messages: Parameters<typeof endsWithComputerCall>[0]) =>
+    endsWithComputerCall(messages, offered, new Set());
+  /** A stub of the server: the runtime's state, and the conversation as it stands; counts the reads. */
+  const stubApi = (
+    state: "idle" | "busy" | "unknown",
+    conversation: unknown[],
+  ) => {
+    const counts = { reads: 0 };
+    const api = {
+      async runState() {
+        return state;
+      },
+      async readMessages() {
+        counts.reads++;
+        return conversation;
+      },
+    };
+    return { api: api as unknown as Parameters<typeof waitForTurn>[0], counts };
+  };
+  const callAnswer = {
+    id: "a1",
+    role: "assistant",
+    content: null,
+    toolCalls: [{ id: "c1", name: "computer_read", args: "{}" }],
+  };
+  const finalAnswer = { id: "a2", role: "assistant", content: "Done." };
+
+  test("a conversation ending with an unanswered computer call returns on the first idle poll", async () => {
+    const { api, counts } = stubApi("idle", [user, callAnswer]);
+    const started = Date.now();
+    const result = await waitForTurn(
+      api,
+      "jules",
+      "thread",
+      Date.now() + 10_000,
+      {
+        pollMs: 5,
+        settleMs: 1000,
+        minWaitMs: 1000,
+        userMessages: 1,
+        changedFrom: before,
+        endsWithRunnerCall: endsWithCall,
+      },
+    );
+    expect(result.timedOut).toBe(false);
+    expect(counts.reads).toBe(1);
+    expect(Date.now() - started).toBeLessThan(500);
+  });
+
+  test("a conversation ending with a final answer still waits settleMs and minWaitMs", async () => {
+    const { api, counts } = stubApi("idle", [user, finalAnswer]);
+    const started = Date.now();
+    const result = await waitForTurn(
+      api,
+      "jules",
+      "thread",
+      Date.now() + 10_000,
+      {
+        pollMs: 5,
+        settleMs: 300,
+        minWaitMs: 500,
+        userMessages: 1,
+        changedFrom: before,
+        endsWithRunnerCall: endsWithCall,
+      },
+    );
+    expect(result.timedOut).toBe(false);
+    expect(Date.now() - started).toBeGreaterThanOrEqual(500);
+    expect(counts.reads).toBeGreaterThan(1);
+  });
+
+  test("while the runtime cannot say (unknown), a computer call still waits three settles", async () => {
+    const { api, counts } = stubApi("unknown", [user, callAnswer]);
+    const started = Date.now();
+    const result = await waitForTurn(
+      api,
+      "jules",
+      "thread",
+      Date.now() + 10_000,
+      {
+        pollMs: 5,
+        settleMs: 300,
+        minWaitMs: 0,
+        userMessages: 1,
+        changedFrom: before,
+        endsWithRunnerCall: endsWithCall,
+      },
+    );
+    expect(result.timedOut).toBe(false);
+    expect(Date.now() - started).toBeGreaterThanOrEqual(900);
+    expect(counts.reads).toBeGreaterThan(1);
   });
 });
 

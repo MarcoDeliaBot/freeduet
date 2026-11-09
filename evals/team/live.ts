@@ -126,6 +126,8 @@ export type LiveOptions = {
   /** `deny` answers every approval the turn opens with deny so the member finishes; `leave` does not. */
   approvals: "deny" | "leave";
   pollMs?: number;
+  /** How often a wait after a computer result is polled (its next step is usually a quick one). Default 500. */
+  followUpPollMs?: number;
   settleMs?: number;
   /** How long a wait lasts at least: after the first message, and after the runner denies. */
   minWaitMs?: number;
@@ -350,6 +352,25 @@ export function unansweredComputerCalls(
             ? [{ id, name, args: call.function?.arguments ?? call.args }]
             : [];
         }),
+  );
+}
+
+/**
+ * Whether the stored conversation ends with a call the runner runs next: the last call of the last
+ * assistant message is one of `unansweredComputerCalls`. Such a turn is not finished, whatever comes
+ * before it, and the runner's next step is to run that call and post its result.
+ */
+export function endsWithComputerCall(
+  messages: readonly StoredMessage[],
+  offered: ReadonlySet<string>,
+  handled: ReadonlySet<string>,
+): boolean {
+  const last = messages
+    .findLast((m) => m.role === "assistant")
+    ?.toolCalls?.at(-1);
+  if (!last?.id) return false;
+  return unansweredComputerCalls(messages, offered, handled).some(
+    (call) => call.id === last.id,
   );
 }
 
@@ -790,8 +811,11 @@ type Api = ReturnType<typeof createServerApi>;
  * after it, and nothing has changed for `settleMs`. `minWaitMs` keeps a wait that starts before the
  * run claims the thread from ending at once. `changedFrom`, after a tool result was posted: the
  * stored conversation as it was then, which the run has to change before its answer counts.
+ * `endsWithRunnerCall`, with `changedFrom`: whether the conversation ends with a call the runner
+ * runs next. Then the turn is not finished, so once the runtime says idle the wait returns at once
+ * instead of waiting for `settleMs` and `minWaitMs`.
  */
-async function waitForTurn(
+export async function waitForTurn(
   api: Api,
   member: string,
   threadId: string,
@@ -802,6 +826,7 @@ async function waitForTurn(
     minWaitMs: number;
     userMessages: number;
     changedFrom?: string;
+    endsWithRunnerCall?: (messages: StoredMessage[]) => boolean;
   },
 ): Promise<{ messages: StoredMessage[]; timedOut: boolean }> {
   const started = Date.now();
@@ -813,6 +838,12 @@ async function waitForTurn(
     const state = await api.runState(member, threadId);
     messages = await api.readMessages(member, threadId).catch(() => messages);
     const next = JSON.stringify(messages);
+    if (
+      state === "idle" &&
+      next !== options.changedFrom &&
+      options.endsWithRunnerCall?.(messages)
+    )
+      return { messages, timedOut: false };
     if (state === "busy" || next !== signature) {
       signature = next;
       stableSince = Date.now();
@@ -1298,11 +1329,24 @@ export async function runCaseLive(
           deadline,
           {
             ...timing,
+            pollMs: followUp ? (options.followUpPollMs ?? 500) : timing.pollMs,
             minWaitMs: followUp
               ? (options.minWaitMs ?? 5000)
               : (options.resumeWaitMs ?? 15_000),
             userMessages: index + 1,
-            ...(followUp ? { changedFrom: before } : {}),
+            // The loop runs the call next only while it has follow-ups left (see `calls` above).
+            ...(followUp
+              ? {
+                  changedFrom: before,
+                  endsWithRunnerCall: (stored: StoredMessage[]) =>
+                    followUps < MAX_FOLLOW_UPS &&
+                    endsWithComputerCall(
+                      withLocalResults(stored, local),
+                      offeredNames,
+                      handled,
+                    ),
+                }
+              : {}),
           },
         ));
         approvals = await api.readApprovals(channel.threadId);
