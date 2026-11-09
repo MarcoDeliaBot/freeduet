@@ -668,7 +668,10 @@ describe("a second stack from OPENBOT_ENV_FILE (the eval stack)", () => {
       envFile: ".env.eval",
       portFree: true,
     });
-    expect(result.exitCode).toBe(0);
+    expect({
+      exitCode: result.exitCode,
+      stdoutOnFailure: result.exitCode === 0 ? "" : result.stdout,
+    }).toEqual({ exitCode: 0, stdoutOnFailure: "" });
     expect(result.signalLog).toBe("");
     expect(result.serverLaunch).toBe(
       `--env-file=../.env.eval ${result.directory}/server/src/production-entry.ts\n`,
@@ -740,10 +743,11 @@ describe("start.sh on the SSE runtime (FREEDUET_INTELLIGENCE=off, #21)", () => {
       runtime: "sse",
     });
 
-    expect({ exitCode: result.exitCode, stderr: result.stderr }).toEqual({
-      exitCode: 0,
-      stderr: "",
-    });
+    expect({
+      exitCode: result.exitCode,
+      stderr: result.stderr,
+      stdoutOnFailure: result.exitCode === 0 ? "" : result.stdout,
+    }).toEqual({ exitCode: 0, stderr: "", stdoutOnFailure: "" });
     expect(result.stdout).not.toContain("never answered as OpenBot");
     expect(result.stdout).toContain("server ready");
     expect(result.stdout).toContain(
@@ -765,7 +769,10 @@ describe("start.sh on the SSE runtime (FREEDUET_INTELLIGENCE=off, #21)", () => {
       processEnvironment: { FAKE_SERVER_HOLDS_SECONDS: "20" },
     });
 
-    expect(result.exitCode).toBe(0);
+    expect({
+      exitCode: result.exitCode,
+      stdoutOnFailure: result.exitCode === 0 ? "" : result.stdout,
+    }).toEqual({ exitCode: 0, stdoutOnFailure: "" });
   }, 10_000);
 });
 
