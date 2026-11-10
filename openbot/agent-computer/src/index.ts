@@ -4,11 +4,7 @@ import { join } from "node:path";
 import { serve } from "bun";
 import type { Page } from "playwright";
 import { downloadHeaders } from "../../shared/file-download";
-import {
-  cutAtCodeUnits,
-  parseAriaSnapshot,
-  type SnapshotElement,
-} from "./aria-snapshot";
+import { parseAriaSnapshot, type SnapshotElement } from "./aria-snapshot";
 import {
   actsOnTheComputer,
   isOpenPath,
@@ -34,6 +30,7 @@ import {
   navigateWebPage,
   type PagePurpose,
 } from "./navigation";
+import { collectPageLinks, composePageText, pageBaseUrl } from "./page-links";
 import { createProfiles, numberFromEnv, VIEWPORT } from "./profiles";
 import {
   parseExecTimeout,
@@ -394,6 +391,8 @@ async function restoreHandoffPage(botId: string): Promise<void> {
  * Script and style bodies are dropped rather than included: they are the bulk of a modern page and
  * none of it is what anybody asked about, so leaving them in spends the extract on noise and pushes
  * the actual article past the limit.
+ *
+ * Followed by the address of each link, which the text of a link does not carry (page-links.ts).
  */
 async function readablePageText(
   target: Page,
@@ -408,21 +407,9 @@ async function readablePageText(
   });
 
   const collapsed = raw.replace(/\n{3,}/g, "\n\n").trim();
-  return {
-    /*
-     * Cut between characters, not through one. #539 fixed this for a control's name and value in the
-     * snapshot and left the page text, which is the same bug at thirty times the length: `slice`
-     * counts UTF-16 code units, an emoji is two, and a limit landing between the halves hands the Bot
-     * a lone high surrogate that reads as U+FFFD — a character that is not on the page.
-     *
-     * More likely to bite here than there, for the reason the limit is bigger. A 200-unit control
-     * name rarely reaches an emoji; 6000 units of somebody's page usually passes through several, and
-     * whether the cut lands mid-character is decided by whatever was above it.
-     */
-    text: cutAtCodeUnits(collapsed, TEXT_EXTRACT_LIMIT),
-    // Unaffected by the line above: dropping one more unit cannot make an over-limit string fit.
-    truncated: collapsed.length > TEXT_EXTRACT_LIMIT,
-  };
+  // The list of addresses shares the limit with the text, so the result never grows past it.
+  const { base, links } = await collectPageLinks(target);
+  return composePageText(collapsed, links, base, TEXT_EXTRACT_LIMIT);
 }
 
 /**
@@ -452,7 +439,8 @@ async function snapshotPage(
     !before.requested
   )
     session.control.snapshotTaken();
-  const parsed = parseAriaSnapshot(yaml);
+  // Playwright prints a link's address as the page wrote it, so relative: it needs the page's base.
+  const parsed = parseAriaSnapshot(yaml, await pageBaseUrl(target));
   return {
     snapshotId,
     url: target.url(),

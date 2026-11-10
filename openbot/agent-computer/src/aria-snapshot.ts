@@ -16,6 +16,7 @@
  */
 
 import { parse as parseYaml } from "yaml";
+import { linkAddress } from "./link-address";
 
 /** How many elements a snapshot will describe. Bounded for the same reason the text extract is. */
 const SNAPSHOT_ELEMENT_LIMIT = 200;
@@ -71,6 +72,12 @@ export type SnapshotElement = {
   name: string;
   /** Present for form controls, so the Bot can tell an empty field from a filled one. */
   value?: string;
+  /**
+   * Present for a link that goes somewhere on the web: the absolute `http` or `https` address, so a
+   * Bot can open it with `computer_navigate` rather than click. Absent for a link that does not (a
+   * `javascript:` or `mailto:` link, an anchor on the same page) and for one whose address is not known.
+   */
+  href?: string;
   disabled?: boolean;
   checked?: boolean;
 };
@@ -174,10 +181,38 @@ export function cutAtCodeUnits(text: string, limit: number): string {
   return last >= 0xd800 && last <= 0xdbff ? sliced.slice(0, -1) : sliced;
 }
 
-/** Build an element from a descriptor and whatever YAML gave as its value, or null if not actionable. */
+/**
+ * What a link says about where it goes: the `/url:` line Playwright prints under it, as the page
+ * wrote it, so relative.
+ *
+ * ```
+ * - link "Home" [ref=e2]:
+ *   - /url: /home
+ * ```
+ */
+function linkTarget(value: unknown): string | undefined {
+  for (const child of Array.isArray(value) ? value : [value]) {
+    if (child && typeof child === "object" && !Array.isArray(child)) {
+      const url = (child as Record<string, unknown>)["/url"];
+      if (typeof url === "string") return url;
+    }
+  }
+  return undefined;
+}
+
+/** Playwright names a ref in the page itself `e5` and one inside a frame `f1e5`. */
+const MAIN_FRAME_REF = /^e\d+$/;
+
+/**
+ * Build an element from a descriptor and whatever YAML gave as its value, or null if not actionable.
+ *
+ * `base` is what a relative link is relative to. A link inside a frame is relative to the frame's
+ * own address, which the snapshot does not say, so only an absolute address is taken from there.
+ */
 function toElement(
   descriptor: Descriptor,
   value: unknown,
+  base: string | undefined,
 ): SnapshotElement | null {
   if (!INTERACTIVE_ROLES.has(descriptor.role)) return null;
 
@@ -195,6 +230,14 @@ function toElement(
   if (typeof value === "string") {
     const text = value.trim();
     if (text) element.value = cutAtCodeUnits(text, 200);
+  }
+
+  if (descriptor.role === "link") {
+    const target = linkTarget(value);
+    const address = target
+      ? linkAddress(target, MAIN_FRAME_REF.test(ref) ? base : undefined)
+      : null;
+    if (address) element.href = address;
   }
 
   if (descriptor.flags.has("disabled")) element.disabled = true;
@@ -218,8 +261,16 @@ function toElement(
   return element;
 }
 
-/** Turn an aria snapshot into the flat element list the tool contract publishes. */
-export function parseAriaSnapshot(yaml: string): {
+/**
+ * Turn an aria snapshot into the flat element list the tool contract publishes.
+ *
+ * `base` is the address the page's relative links are relative to (`document.baseURI`); without it
+ * only links that are already absolute carry an address.
+ */
+export function parseAriaSnapshot(
+  yaml: string,
+  base?: string,
+): {
   elements: SnapshotElement[];
   truncated: boolean;
 } {
@@ -255,7 +306,9 @@ export function parseAriaSnapshot(yaml: string): {
     if (typeof node === "string") {
       // An entry with no value: `- button "Submit order" [ref=e44]`.
       const descriptor = parseDescriptor(node);
-      const element = descriptor ? toElement(descriptor, undefined) : null;
+      const element = descriptor
+        ? toElement(descriptor, undefined, base)
+        : null;
       if (element) push(element);
       return;
     }
@@ -263,7 +316,7 @@ export function parseAriaSnapshot(yaml: string): {
     if (node && typeof node === "object") {
       for (const [key, value] of Object.entries(node)) {
         const descriptor = parseDescriptor(key);
-        const element = descriptor ? toElement(descriptor, value) : null;
+        const element = descriptor ? toElement(descriptor, value, base) : null;
         if (element) push(element);
         // Descend regardless of whether this entry was actionable: a `group "Pizza Size"` is not, and
         // its radios are.
