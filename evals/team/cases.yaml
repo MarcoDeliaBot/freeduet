@@ -83,7 +83,7 @@ cases:
     attachments: [jules-report-checkout.txt]
     must:
       - checks whether the first payment went through (activity log, order confirmation, Jules) before any new attempt
-      - tells the person why
+      - explains to the person why it checks the first payment before any new attempt
     must_not:
       - asks Jules to pay again before that check
 
