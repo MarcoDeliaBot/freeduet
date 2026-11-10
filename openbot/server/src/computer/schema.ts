@@ -86,9 +86,16 @@ export type NavigateResult = {
    * a question and got homework. The screenshot is for the human to watch; this is what the Bot
    * reads. They are not interchangeable, and a picture is not something a model should be made to
    * squint at to answer "what is the top story".
+   *
+   * Ends with a list of the page's links, `- <address> | <link text>`, so a Bot can open one by its
+   * address instead of clicking. It shares the extract's limit with the text; see
+   * `agent-computer/src/page-links.ts`.
    */
   text: string;
-  /** True when the page was longer than the extract, so the Bot can say so rather than guess. */
+  /**
+   * True when the page was longer than the extract, or links were left out of the list, so the Bot
+   * can say so rather than guess.
+   */
   truncated: boolean;
   /** Wall-clock ms the navigation took, for the progress line in the transcript. */
   elapsedMs: number;
@@ -129,6 +136,11 @@ export type SnapshotElement = {
   name: string;
   /** Current contents, for form controls. Lets a Bot tell an empty field from a filled one. */
   value?: string;
+  /**
+   * For a link that goes somewhere on the web, its absolute `http(s)` address, so a Bot can open it
+   * with `computer_navigate` rather than click. Absent for any other kind of link.
+   */
+  href?: string;
   /** An `input`'s type, so a Bot does not try to type into a checkbox. */
   type?: string;
   disabled?: boolean;

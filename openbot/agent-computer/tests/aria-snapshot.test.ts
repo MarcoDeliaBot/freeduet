@@ -4,6 +4,7 @@ import {
   parseAriaSnapshot,
   parseDescriptor,
 } from "../src/aria-snapshot";
+import { MASKED_VALUE, maskSensitiveValues } from "../src/secret-masking";
 
 /**
  * The parser, tested against captured Playwright output.
@@ -323,5 +324,136 @@ describe("parseDescriptor", () => {
   test("junk yields nothing rather than a half-built descriptor", () => {
     expect(parseDescriptor("")).toBeNull();
     expect(parseDescriptor("   ")).toBeNull();
+  });
+});
+
+/**
+ * A link's address, from captured Playwright 1.62.1 output.
+ *
+ * Captured from a page of anchors with `ariaSnapshot({ mode: "ai" })`. What it shows is the reason the
+ * address has to be resolved here: Playwright prints the `href` as the page wrote it (`/rel/product`,
+ * not a web address), prints a `data:` link cut with an ellipsis, and gives a link inside a frame a
+ * ref of its own kind (`f1e2`). The one absolute link inside the frame was added by hand.
+ */
+const LINKS = `- generic [active] [ref=e1]:
+  - link "Relative product" [ref=e2] [cursor=pointer]:
+    - /url: /rel/product?x=1
+  - link "Absolute" [ref=e3] [cursor=pointer]:
+    - /url: https://shop.example/abs
+  - link "JS" [ref=e4] [cursor=pointer]:
+    - /url: javascript:alert(1)
+  - link "Mail" [ref=e5] [cursor=pointer]:
+    - /url: mailto:someone@example.com
+  - link "Frag" [ref=e6] [cursor=pointer]:
+    - /url: "#frag"
+  - link "Data" [ref=e7] [cursor=pointer]:
+    - /url: data:text/html,…
+  - link "Dup" [ref=e8] [cursor=pointer]:
+    - /url: /rel/product?x=1
+  - link [ref=e9] [cursor=pointer]:
+    - /url: /img
+    - img "Pic link" [ref=e10]
+  - text: no href
+  - button "Go" [ref=e11]
+  - textbox "Password" [ref=e13]: hunter2
+  - iframe [ref=e12]:
+    - link "Inframe link" [ref=f1e2] [cursor=pointer]:
+      - /url: /inframe
+    - link "Inframe absolute" [ref=f1e3] [cursor=pointer]:
+      - /url: https://elsewhere.example/page`;
+
+const PAGE = "https://fixture.example/page";
+
+const hrefs = (yaml: string, base?: string) =>
+  Object.fromEntries(
+    parseAriaSnapshot(yaml, base).elements.map((element) => [
+      element.name || element.ref,
+      element.href,
+    ]),
+  );
+
+describe("parseAriaSnapshot: where a link goes", () => {
+  test("the fixture is genuinely valid YAML", () => {
+    expect(() => Bun.YAML.parse(LINKS)).not.toThrow();
+  });
+
+  test("a link node carries its address, relative ones resolved against the page", () => {
+    const found = hrefs(LINKS, PAGE);
+    expect(found["Relative product"]).toBe(
+      "https://fixture.example/rel/product?x=1",
+    );
+    expect(found.Absolute).toBe("https://shop.example/abs");
+    // Every link has its own, the repeats included: a ref is something to click, not a set.
+    expect(found.Dup).toBe("https://fixture.example/rel/product?x=1");
+  });
+
+  test("a link with no name still carries its address", () => {
+    const unnamed = parseAriaSnapshot(LINKS, PAGE).elements.find(
+      (element) => element.ref === "e9",
+    );
+    expect(unnamed).toMatchObject({
+      role: "link",
+      name: "",
+      href: "https://fixture.example/img",
+    });
+  });
+
+  test("a link that is not a web address has none, and is still listed", () => {
+    const found = hrefs(LINKS, PAGE);
+    for (const name of ["JS", "Mail", "Frag", "Data"]) {
+      expect(name in found).toBe(true);
+      expect(found[name]).toBeUndefined();
+    }
+  });
+
+  test("a relative address follows the base the page gives, which a <base href> moves", () => {
+    expect(
+      hrefs(LINKS, "https://fixture.example/catalog/")["Relative product"],
+    ).toBe("https://fixture.example/rel/product?x=1");
+    const relative = `- link "Item" [ref=e2]:\n  - /url: item/1`;
+    expect(hrefs(relative, "https://fixture.example/catalog/").Item).toBe(
+      "https://fixture.example/catalog/item/1",
+    );
+  });
+
+  test("inside a frame only an absolute address is shown: the frame's own is not known", () => {
+    const found = hrefs(LINKS, PAGE);
+    expect("Inframe link" in found).toBe(true);
+    expect(found["Inframe link"]).toBeUndefined();
+    expect(found["Inframe absolute"]).toBe("https://elsewhere.example/page");
+  });
+
+  test("without a base only absolute addresses are shown", () => {
+    const found = hrefs(LINKS);
+    expect(found["Relative product"]).toBeUndefined();
+    expect(found.Absolute).toBe("https://shop.example/abs");
+  });
+
+  test("only a link has an address", () => {
+    const { elements } = parseAriaSnapshot(LINKS, PAGE);
+    for (const element of elements.filter((entry) => entry.role !== "link")) {
+      expect("href" in element).toBe(false);
+    }
+  });
+
+  test("an address too long to show is dropped, not cut", () => {
+    const long = `- link "Product" [ref=e2]:\n  - /url: /${"x".repeat(400)}`;
+    expect(hrefs(long, PAGE).Product).toBeUndefined();
+    const query = `- link "Product" [ref=e2]:\n  - /url: /p?q=${"x".repeat(400)}`;
+    expect(hrefs(query, PAGE).Product).toBe("https://fixture.example/p");
+  });
+
+  test("masking still hides a field's value, and leaves the link's address alone", () => {
+    const { elements } = parseAriaSnapshot(LINKS, PAGE);
+    const password = elements.find((element) => element.ref === "e13");
+    expect(password?.value).toBe("hunter2");
+    const masked = maskSensitiveValues(elements, new Set(["e13"]));
+    expect(JSON.stringify(masked)).not.toContain("hunter2");
+    expect(masked.find((element) => element.ref === "e13")?.value).toBe(
+      MASKED_VALUE,
+    );
+    expect(masked.find((element) => element.ref === "e2")?.href).toBe(
+      "https://fixture.example/rel/product?x=1",
+    );
   });
 });
