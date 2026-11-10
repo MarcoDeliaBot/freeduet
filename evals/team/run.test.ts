@@ -29,6 +29,7 @@ import {
   gradeCase,
   graderPrompt,
   messagesUrl,
+  NO_VERDICT,
   parseGrades,
 } from "./grader";
 import {
@@ -735,8 +736,36 @@ describe("grader", () => {
     expect(graded[1]).toMatchObject({
       id: "must_not-1",
       pass: false,
-      reason: "the grader gave no verdict",
     });
+    expect(graded[1]?.reason.startsWith(NO_VERDICT)).toBe(true);
+    expect(graded[1]?.reason).toContain("no entry for must_not-1");
+    expect(graded[1]?.reason).toContain("ids received: must-1");
+  });
+
+  test("a verdict that is not a boolean names what the grader sent for that id", () => {
+    const graded = parseGrades(
+      caseOf("iris-8"),
+      '{"checks":[{"id":"must-1","holds":true,"reason":"ok"},{"id":"must-2","holds":null,"reason":"unclear"}]}',
+    );
+    expect(graded[1]?.pass).toBe(false);
+    expect(graded[1]?.reason.startsWith(NO_VERDICT)).toBe(true);
+    expect(graded[1]?.reason).toContain("holds=null");
+    expect(graded[1]?.reason).toContain("unclear");
+  });
+
+  test("the reason text is cut at 200 characters", () => {
+    const long = "x".repeat(500);
+    const graded = parseGrades(
+      caseOf("iris-8"),
+      JSON.stringify({
+        checks: [
+          { id: "must-1", holds: true, reason: "ok" },
+          { id: "must-2", reason: long },
+        ],
+      }),
+    );
+    expect(graded[1]?.reason).toContain(`"${"x".repeat(200)}"`);
+    expect(graded[1]?.reason).not.toContain("x".repeat(201));
   });
 
   test("an unreadable grader fails every check after one retry", async () => {
@@ -804,9 +833,38 @@ describe("grader", () => {
     expect(graded[0]).toMatchObject({
       id: "must-1",
       pass: false,
-      reason: "the grader gave no verdict",
     });
+    expect(graded[0]?.reason.startsWith(NO_VERDICT)).toBe(true);
+    expect(graded[0]?.reason).toContain("no entry for must-1");
     expect(graded[1]?.pass).toBe(true);
+  });
+
+  test("a non-boolean verdict on both replies is asked again once, and the reason says what was sent", async () => {
+    const c = caseOf("iris-8");
+    const reply = JSON.stringify({
+      checks: [
+        { id: "must-1", holds: true, reason: "ok" },
+        { id: "must-2", holds: null, reason: "unclear" },
+        ...c.must_not.map((_, i) => ({
+          id: `must_not-${i + 1}`,
+          happened: false,
+          reason: "ok",
+        })),
+      ],
+    });
+    let calls = 0;
+    const graded = await gradeCase(
+      c,
+      fixture("otto-4").transcript,
+      async () => {
+        calls += 1;
+        return reply;
+      },
+    );
+    expect(calls).toBe(2);
+    expect(graded[1]?.reason.startsWith(NO_VERDICT)).toBe(true);
+    expect(graded[1]?.reason).toContain("holds=null");
+    expect(graded[1]?.reason).toContain("unclear");
   });
 
   test("a complete first reply is graded with a single call", async () => {
@@ -878,10 +936,9 @@ describe("grader", () => {
     expect(mustNot({ holds: true })?.pass).toBe(false);
     expect(mustNot({ holds: false })?.pass).toBe(true);
     expect(mustNot({ happened: false, holds: true })?.pass).toBe(true);
-    expect(mustNot({})).toMatchObject({
-      pass: false,
-      reason: "the grader gave no verdict",
-    });
+    expect(mustNot({})).toMatchObject({ pass: false });
+    expect(mustNot({})?.reason.startsWith(NO_VERDICT)).toBe(true);
+    expect(mustNot({})?.reason).toContain("must_not-1 answered");
   });
 
   test("the prompt shows earlier turns and the attached files", () => {
