@@ -755,6 +755,75 @@ describe("grader", () => {
     ).toBe(true);
   });
 
+  // A reply with no verdict for one check is asked again, as a reply that does not parse is.
+  const completeReply = (c: Case, missing: string[] = []) =>
+    JSON.stringify({
+      checks: [
+        ...c.must.map((_, i) => ({
+          id: `must-${i + 1}`,
+          holds: true,
+          reason: "ok",
+        })),
+        ...c.must_not.map((_, i) => ({
+          id: `must_not-${i + 1}`,
+          happened: false,
+          reason: "ok",
+        })),
+      ].filter((entry) => !missing.includes(entry.id)),
+    });
+
+  test("a reply missing one verdict is asked again, and the second reply grades every check", async () => {
+    const c = caseOf("otto-4");
+    const replies = [completeReply(c, ["must-1"]), completeReply(c)];
+    let calls = 0;
+    const graded = await gradeCase(
+      c,
+      fixture("otto-4").transcript,
+      async () => {
+        calls += 1;
+        return replies[calls - 1] ?? "";
+      },
+    );
+    expect(calls).toBe(2);
+    expect(graded.every((g) => g.pass)).toBe(true);
+    expect(graded[0]?.reason).toBe("ok");
+  });
+
+  test("a verdict missing on both replies fails that check with the reason, after two calls", async () => {
+    const c = caseOf("otto-4");
+    let calls = 0;
+    const graded = await gradeCase(
+      c,
+      fixture("otto-4").transcript,
+      async () => {
+        calls += 1;
+        return completeReply(c, ["must-1"]);
+      },
+    );
+    expect(calls).toBe(2);
+    expect(graded[0]).toMatchObject({
+      id: "must-1",
+      pass: false,
+      reason: "the grader gave no verdict",
+    });
+    expect(graded[1]?.pass).toBe(true);
+  });
+
+  test("a complete first reply is graded with a single call", async () => {
+    const c = caseOf("otto-4");
+    let calls = 0;
+    const graded = await gradeCase(
+      c,
+      fixture("otto-4").transcript,
+      async () => {
+        calls += 1;
+        return completeReply(c);
+      },
+    );
+    expect(calls).toBe(1);
+    expect(graded.every((g) => g.pass)).toBe(true);
+  });
+
   test("the prompt lists every statement, tool call and approval", () => {
     const { system, user } = graderPrompt(
       caseOf("otto-4"),
