@@ -17,6 +17,9 @@ most likely one, not a proven one; the log line below tells the two apart on the
   same tool by its plain `<name>` (transcript.py). A call by the plain name is answered by the CLI and
   never reaches the bridge. It used to leave no trace but a tool_result whose name the parser stripped
   of the prefix (stream_json.py), so the live log could not tell the plain name from the registered one.
+  The live log then confirmed it (every warning read `called as computer_navigate`, init listed all the
+  offered tools), and transcript.py now writes earlier calls under the registered name and says so in
+  its system text (test_tool_full_names.py). This hand-over stays as the safety net.
 
 Whatever the CLI's reason, a refused call to a tool this run OFFERED is not the model's fault, and the
 call is plain: its name and its input are in the stream. The segment hands it to OpenBot like any other

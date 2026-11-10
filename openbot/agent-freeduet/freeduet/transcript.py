@@ -14,6 +14,14 @@ quoted, as information only, at the top of the conversation.
 The member's active lessons (lessons.py, D16: standing corrections the person approved) follow
 OpenBot's rows under a short heading, newest last, at most 20; then this run's own runtime notes
 (tool_notes.py: why a tool the member's prompt relies on was not offered), then RUNTIME_NOTE.
+
+Tool names. The CLI registers the bridge's tools as `mcp__freeduet__<name>` and answers a call made
+under the plain `<name>` with "No such tool available" without the bridge ever hearing of it. Every
+segment is a fresh CLI (`--no-session-persistence`, no `--resume`): the only history the model sees
+is this rendering, and a model imitates how its earlier calls are written. So an earlier call, and its
+result, to a tool this run serves through the bridge (`served`: the run's tools and Iris's own) is
+written under the registered name; a tool the run does not serve keeps its own name, so the history
+never suggests a call the CLI could not make. RUNTIME_NOTE says the same in words.
 """
 
 import json
@@ -21,12 +29,16 @@ import re
 from dataclasses import dataclass
 
 from .members import Member, bot_row_owner, is_other_bots_row
+from .stream_json import MCP_PREFIX
 
 SYSTEM_ROLES = {"system", "developer"}
 
 RUNTIME_NOTE = (
-    "How this session works. Your only tools are the ones the freeduet MCP server lists; you see "
-    "them as mcp__freeduet__<name>, and the conversation below names a call by its plain <name>. "
+    "How this session works. Your only tools are the ones the freeduet MCP server lists, and you call "
+    "each one by its full name, mcp__freeduet__<name>, exactly as your tool list shows it (the "
+    "conversation below writes your earlier calls that way). Your instructions and the notes above may "
+    "mention a tool by its short <name>: it is the same tool, but Claude Code refuses a call made under "
+    "the short name (\"No such tool available\"), so always call mcp__freeduet__<name>. "
     "There is no shell, file or web access other than through those tools. A tool call can pause "
     "your turn while it runs or while the person approves it; when you are started again, its "
     "result is in the conversation. Never repeat a call that already has a result. When a call is "
@@ -152,6 +164,11 @@ def _attr(value: str) -> str:
     return value.replace("&", "&amp;").replace('"', "&quot;").replace("<", "&lt;")
 
 
+def _called_as(name: str, served) -> str:
+    """The name the CLI registers a bridge tool under, for a tool this run serves; any other name as it is."""
+    return MCP_PREFIX + name if name in served and not name.startswith(MCP_PREFIX) else name
+
+
 def _closing_instruction(messages: list[dict]) -> str:
     last = messages[-1].get("role") if messages else None
     if last == "tool":
@@ -173,11 +190,14 @@ def render(
     lessons=(),
     notes=(),
     closing: str | None = None,
+    served=(),
 ) -> Rendered:
     """The system text and the stdin prompt for one segment. `lessons` are this member's active
     lessons, oldest first (lessons.active_for); `notes` are this run's own runtime notes
     (tool_notes.py), after the lessons. `closing` replaces the last line that says what to do next
-    (the report guard's follow-up, report_guard.py)."""
+    (the report guard's follow-up, report_guard.py). `served` are the plain names of the tools this
+    run's bridge serves: earlier calls to them, and their results, are written under the name the CLI
+    registers them by (mcp__freeduet__<name>), so the model calls them that way too."""
     names: dict[str, str] = {}
     blocks: list[str] = []
     turn = [message for message in messages if message.get("role") in {"user", "assistant", "tool"}]
@@ -191,7 +211,7 @@ def render(
             if text:
                 parts.append(_escape(text))
             for call_id, name, arguments in _tool_calls(message):
-                names[call_id] = name
+                name = names[call_id] = _called_as(name, served)
                 parts.append(
                     f'<tool_call id="{_attr(call_id)}" name="{_attr(name)}">{_escape(arguments)}</tool_call>'
                 )

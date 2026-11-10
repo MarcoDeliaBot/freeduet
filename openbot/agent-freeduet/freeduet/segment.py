@@ -30,6 +30,11 @@ then the call) and carry the CLI's own call id.
   way (its answer would have to go back to the CLI that has already answered the model), nor is a tool
   the run did not offer: both stay refused, and the log says so.
 
+The transcript writes the model's earlier calls to the tools this run serves under the name the CLI
+registers them by (mcp__freeduet__<name>), and the system text tells the model to call them that way:
+a model that sees its own past calls by the plain name calls them by it, and the CLI refuses those
+(the cause of the "called as computer_navigate" log warnings; transcript.py).
+
 Before the transcript is rendered, a run for Iris activates the lessons the person approved in it
 (lessons.py has the rule), and every member's active lessons join its system text, followed by the
 run's tool notes (tool_notes.py: the exact reason message_bot was not offered, when it was not).
@@ -190,9 +195,12 @@ async def run_segment(run: RunInput, member: Member, notes: SegmentNotes | None 
     notes = notes if notes is not None else SegmentNotes()
     active_lessons = await _lessons_for(run, member)
     run_notes = tool_notes.notes_for(run, member)
-    rendered = transcript.render(member, run.messages, run.context, active_lessons, run_notes)
     offered = {tool["name"] for tool in run.tools}
     local = iris_tools.for_run(run, member.id, offered)
+    # What the bridge serves: the transcript writes earlier calls to these under the name the CLI
+    # registers them by, mcp__freeduet__<name> (transcript.py).
+    served = offered | (local.names if local else frozenset())
+    rendered = transcript.render(member, run.messages, run.context, active_lessons, run_notes, served=served)
     inbox: asyncio.Queue = asyncio.Queue()
     parser = StreamParser()
     handed_over: list[str] = []  # refused calls to offered tools that this segment handed to OpenBot
@@ -213,7 +221,9 @@ async def run_segment(run: RunInput, member: Member, notes: SegmentNotes | None 
             return None
         notes.report_guard = report_guard.FAILED
         try:
-            followup = report_guard.followup_prompt(member, run.messages, run.context, story, active_lessons, run_notes)
+            followup = report_guard.followup_prompt(
+                member, run.messages, run.context, story, active_lessons, run_notes, served
+            )
             block = await report_guard.request_report(followup.system, followup.prompt)
         except Exception:  # noqa: BLE001 - the reply stands as it is; the guard never fails a turn
             log.warning("report guard failed", exc_info=True)
