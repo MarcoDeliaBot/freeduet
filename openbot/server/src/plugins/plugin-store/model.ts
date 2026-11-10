@@ -26,6 +26,7 @@ import { type CatalogueEntry, resolveServerUrl } from "../catalogue";
 import { type ListedTool, McpServerError } from "../mcp";
 import type { AccountMode } from "../shared-accounts";
 import type { SharedUseGate } from "../shared-use-store";
+import type { VerifyUserSecret } from "../user-secret";
 
 /**
  * The plugin store's model: its record types, errors, how a tool schema is stored, the token
@@ -1288,6 +1289,12 @@ export type PluginStoreOptions = {
     client: OAuthClient | null;
     refreshToken: string;
   }) => Promise<VendorRevocation>;
+  /**
+   * Checking a pasted app password before it is stored: one login at the provider, and one fetch of
+   * the calendar when a link was given. Defaults to the real provider; a test injects its own so
+   * none needs a mailbox. See `../user-secret`.
+   */
+  verifyUserSecret?: VerifyUserSecret;
   /** RFC 7591 self-registration, for entries whose clientRegistration is dynamic. */
   registerClient?: (input: {
     registrationUrl: string;

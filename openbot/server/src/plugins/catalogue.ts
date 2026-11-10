@@ -31,6 +31,8 @@
 import { isNeverAllowedHostname } from "../computer/target";
 // Type-only, so naming the transport here creates no import cycle with the registry that resolves it.
 import type { CuratedTransportKind } from "./transport";
+// Imports nothing, so naming a preset here adds no dependency either.
+import type { MailPresetKey } from "./mail-presets";
 import {
   type ResearchRole,
   researchRoleOfTool,
@@ -85,7 +87,20 @@ export type CatalogueAuth =
        * an unknown parameter is a thing a strict vendor may refuse the whole request over.
        */
       authorizationParams?: Readonly<Record<string, string>>;
-    };
+    }
+  /**
+   * The asker's own pasted secret: an address, an app password and, optionally, a calendar link.
+   *
+   * No OAuth client, no consent screen and nothing for a deployment to register: the person makes
+   * the secret at the vendor and pastes it on the connection page, where it is checked with one
+   * login before it is stored. Each person's own, as `user-oauth` is, and held in the same vault,
+   * but there is no vendor-side scope: an app password opens the whole mailbox, so the entry's
+   * `readTools` and `writeTools` and the transport behind them are the ONLY limit.
+   *
+   * `preset` names the one set of pinned hosts the secret is used against (see `./mail-presets`).
+   * It is a key and not a set of addresses, so an entry cannot carry a host nobody reviewed.
+   */
+  | { kind: "user-secret"; preset: MailPresetKey };
 
 export type CatalogueEntry = {
   /** Stable slug. Prefixes every tool name, so tools from two servers can never collide. */
@@ -173,6 +188,21 @@ export function researchRoleFor(ref: string): ResearchRole | null {
 
 /** Gmail and Google Calendar, as one entry. Named because the development override keys on it. */
 export const GOOGLE_WORKSPACE = "google-workspace";
+
+/**
+ * The same two products reached with an app password and a secret calendar link instead of OAuth.
+ * A second entry rather than a mode of the first, because the two share nothing a person connects
+ * or disconnects: no client, no grant, no revoke at Google, and a different set of risks.
+ *
+ * THE KEY MUST NOT SPELL "PASSWORD", and that is why it is not `google-app-password`. The approval
+ * gate's built-in safety requirements (`approvals/policy.ts`) read the words of every write's tool
+ * ref and scope, and `pass(word|code|phrase)` is the "credentials" requirement: a write under a key
+ * with that word in it is handed to the person to do themselves, whatever the action is. For this
+ * entry that is the one write, `gmail_send_reply`, so a reply could never be approved from the chat.
+ * A test drives the real gate and holds this. The product name a person reads is the entry's
+ * `title`, which the gate does not read.
+ */
+export const GOOGLE_APP_PASSWORD = "google-imap";
 
 /** Only the reviewed search and page-reading tools can run as reads. */
 const PARALLEL_READ_TOOLS = Object.freeze(["web_search", "web_fetch"]);
@@ -421,6 +451,41 @@ const REVIEWED: readonly CatalogueEntry[] = Object.freeze([
     ]),
     writeTools: Object.freeze(["gmail_send_reply"]),
     docsUrl: "https://developers.google.com/workspace/gmail/api/guides",
+  },
+  {
+    key: GOOGLE_APP_PASSWORD,
+    title: "Gmail and Google Calendar (app password)",
+    vendor: "Google",
+    summary:
+      "Mail and calendar of whoever is asking, connected with an app password instead of a Google Cloud project.",
+    /*
+     * THE ROW'S IDENTITY, NOT AN ADDRESS ANYTHING DIALS. This transport speaks IMAP and SMTP to the
+     * hosts the `gmail` preset pins (`./mail-presets`) and fetches the calendar only from Google's
+     * own address, and it never reads this url: a row edited to say something else reaches nowhere
+     * else. It is https because every entry that is not first-party in-process is, and because the
+     * address is Google's.
+     */
+    host: "https://imap.gmail.com",
+    path: "/",
+    transport: "google-imap",
+    auth: Object.freeze({ kind: "user-secret", preset: "gmail" }),
+    /*
+     * THE SAME FOUR TOOLS AS THE ENTRY ABOVE, with the same split, so the approval gate treats
+     * `gmail_send_reply` as a write exactly as it does there. Spelled again rather than shared so
+     * that nothing about the OAuth entry changes; a test holds the two lists equal.
+     *
+     * An app password is wider than any OAuth scope: it would let a client read, move, delete and
+     * send as the person. Nothing the vendor does narrows that, so these lists and the transport
+     * behind them are the whole boundary, and a tool added to the transport and forgotten here
+     * classifies as a write.
+     */
+    readTools: Object.freeze([
+      "gmail_search_messages",
+      "gmail_read_message",
+      "calendar_list_events",
+    ]),
+    writeTools: Object.freeze(["gmail_send_reply"]),
+    docsUrl: "https://support.google.com/accounts/answer/185833",
   },
   {
     key: "notion",

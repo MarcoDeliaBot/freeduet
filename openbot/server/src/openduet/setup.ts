@@ -6,7 +6,7 @@ import { entitlementWarning } from "../intelligence-entitlement-check";
 import type { ModelCheckOutcome } from "../model-availability-check";
 import type { BrokerProvider } from "../plugins/access";
 import type { AppAccessState, Unavailable } from "../plugins/app-access";
-import { GOOGLE_WORKSPACE } from "../plugins/catalogue";
+import { GOOGLE_APP_PASSWORD, GOOGLE_WORKSPACE } from "../plugins/catalogue";
 import type { RuntimeEntitlementResponse } from "../self-host-banner";
 
 /**
@@ -156,12 +156,25 @@ export type SetupFacts = {
     added: boolean;
     /** An admin has registered the OAuth client it connects people with. */
     client: boolean;
+    /**
+     * The app-password way to connect Gmail is added to this deployment. It needs no public address
+     * and no OAuth client, so on its own it is enough for people to connect.
+     */
+    appPassword?: boolean;
   };
   /**
    * Whether the reader can use Gmail and Calendar through the primary Bot: the app-access state
    * every gate reads, with why it is switched off when it is. Null when the app has no row to ask.
    */
-  gmail: { state: AppAccessState; unavailable: Unavailable | null } | null;
+  gmail: {
+    state: AppAccessState;
+    unavailable: Unavailable | null;
+    /**
+     * Which of the two Gmail connectors this answer is about: the OAuth one (absent) or the
+     * app-password one. Where a person's connect button and the admin's page for it point.
+     */
+    server?: string;
+  } | null;
   /** The Bot the reader's first day runs on, whose page an admin grants Gmail on. */
   primaryBot: string;
   /** A Bot computer is configured. Absent, its routes are not mounted at all. */
@@ -184,6 +197,20 @@ const BROKER = {
   arcade: { key: "ARCADE_API_KEY", docs: `${DOCS}/plugins/arcade.md` },
 } as const;
 
+/**
+ * How far along a person is with Gmail, by state: the higher, the closer to using it. Only used to
+ * pick between the two connectors; a `Record` so a state added later has to be placed.
+ */
+const GMAIL_PROGRESS: Record<AppAccessState, number> = {
+  ready: 6,
+  reconnect: 5,
+  not_connected: 4,
+  not_granted: 3,
+  shared_not_approved: 2,
+  shared_not_connected: 2,
+  disabled: 0,
+};
+
 /** What a member is told about a dependency that is set up and was never checked. */
 const MEMBER_NOT_CHECKED = "Set up, not checked yet.";
 
@@ -195,7 +222,8 @@ export function setupRows(
   const { productName: product, audience } = options;
   const admin = audience === "admin";
   const googleReady =
-    facts.google.publicUrl && facts.google.added && facts.google.client;
+    (facts.google.publicUrl && facts.google.added && facts.google.client) ||
+    facts.google.appPassword === true;
 
   /**
    * A deployment row as its reader should see it. A member is told it works, that it is not checked
@@ -480,6 +508,8 @@ function gmailRow(
     ? `${without} Set up Google apps first.`
     : `${without} Your admin has to set up Google first.`;
   const state = facts.gmail?.state ?? "disabled";
+  // The connector the answer is about; the OAuth one unless the app-password one was the better.
+  const server = facts.gmail?.server ?? GOOGLE_WORKSPACE;
 
   switch (state) {
     case "ready":
@@ -493,7 +523,7 @@ function gmailRow(
     case "not_connected":
     case "reconnect": {
       if (!googleReady) return gap(googleFirst);
-      const connect: SetupFix = { kind: "connect", serverId: GOOGLE_WORKSPACE };
+      const connect: SetupFix = { kind: "connect", serverId: server };
       return state === "reconnect"
         ? gap(
             "Your connection needs reconnecting. Until then, it can't read your mail or calendar.",
@@ -506,7 +536,7 @@ function gmailRow(
         ? gap(`${product} hasn't been given Gmail and Calendar yet.`, {
             kind: "page",
             label: `${product}'s Gmail and Calendar tools`,
-            path: `/admin/plugins/${GOOGLE_WORKSPACE}/bots/${encodeURIComponent(facts.primaryBot)}`,
+            path: `/admin/plugins/${server}/bots/${encodeURIComponent(facts.primaryBot)}`,
             docsUrl: `${DOCS}/plugins/google-workspace.md`,
           })
         : gap(
@@ -723,21 +753,44 @@ export function createSetupSources(input: {
     productName: input.productName,
     localEvaluation: input.config.singleUser,
     facts: async (userId) => {
-      const [key, check, intelligenceNow, servers, gmail, computerNow] =
-        await Promise.all([
-          modelKeyOf(keyFacts),
-          modelCheck,
-          intelligence,
-          input.plugins.listServers(),
-          input.plugins.inspectApp({
-            app: GOOGLE_WORKSPACE,
-            agentId: input.primaryBot,
-            userId,
-            composioConfigured: input.apps.configured,
-          }),
-          computerStatus,
-        ]);
+      const inspectGmail = (app: string) =>
+        input.plugins.inspectApp({
+          app,
+          agentId: input.primaryBot,
+          userId,
+          composioConfigured: input.apps.configured,
+        });
+      const [
+        key,
+        check,
+        intelligenceNow,
+        servers,
+        oauthGmail,
+        appPasswordGmail,
+        computerNow,
+      ] = await Promise.all([
+        modelKeyOf(keyFacts),
+        modelCheck,
+        intelligence,
+        input.plugins.listServers(),
+        inspectGmail(GOOGLE_WORKSPACE),
+        inspectGmail(GOOGLE_APP_PASSWORD),
+        computerStatus,
+      ]);
       const google = servers.find((server) => server.id === GOOGLE_WORKSPACE);
+      /*
+       * EITHER WAY OF CONNECTING GMAIL COUNTS, and the better-placed one is the answer. The OAuth
+       * connector wins a tie, so a deployment that has only ever had it reads exactly as before; the
+       * app-password one answers only where it is strictly further along (a person connected through
+       * it while the OAuth connector is not set up, say).
+       */
+      const gmail =
+        appPasswordGmail &&
+        (!oauthGmail ||
+          GMAIL_PROGRESS[appPasswordGmail.access.state] >
+            GMAIL_PROGRESS[oauthGmail.access.state])
+          ? { ...appPasswordGmail, server: GOOGLE_APP_PASSWORD }
+          : oauthGmail;
       return {
         intelligence: intelligenceNow,
         model: {
@@ -750,9 +803,16 @@ export function createSetupSources(input: {
           publicUrl: Boolean(input.config.publicUrl),
           added: google !== undefined,
           client: google?.hasCredential === true,
+          appPassword: servers.some(
+            (server) => server.id === GOOGLE_APP_PASSWORD,
+          ),
         },
         gmail: gmail
-          ? { state: gmail.access.state, unavailable: gmail.unavailable }
+          ? {
+              state: gmail.access.state,
+              unavailable: gmail.unavailable,
+              ...("server" in gmail ? { server: gmail.server } : {}),
+            }
           : null,
         primaryBot: input.primaryBot,
         computer: input.computer,

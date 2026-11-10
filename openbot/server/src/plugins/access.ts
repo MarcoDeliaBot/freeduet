@@ -40,6 +40,11 @@ export type CredentialSource =
   | "deployment-token"
   /** The asking person's own OAuth grant, exchanged per call. */
   | "person-oauth"
+  /**
+   * The asking person's own pasted secret (an app password), held in the vault and read back for
+   * the call. Nothing is exchanged with a vendor first: the secret IS the credential.
+   */
+  | "person-secret"
   /** One key the deployment holds, with the broker keeping people apart by an id we send. */
   | "brokered"
   /** None at all, because the call never leaves this process. */
@@ -84,6 +89,7 @@ const CREDENTIAL_BY_AUTH: Record<
   none: "none",
   "deployment-bearer": "deployment-token",
   "user-oauth": "person-oauth",
+  "user-secret": "person-secret",
   builtin: "none",
 };
 
@@ -108,6 +114,7 @@ const REACHED_AS_BY_AUTH: Record<
   none: "deployment",
   "deployment-bearer": "deployment",
   "user-oauth": "person",
+  "user-secret": "person",
   builtin: "person",
 };
 

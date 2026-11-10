@@ -122,9 +122,13 @@ describe("whose credential a server uses", () => {
     // whose, and a reader who guessed would guess the deployment's, which for a user-oauth vendor
     // is the one answer that breaks the promise the connector exists to keep.
     for (const entry of CATALOGUE) {
-      expect(["none", "deployment-bearer", "user-oauth", "builtin"]).toContain(
-        entry.auth.kind,
-      );
+      expect([
+        "none",
+        "deployment-bearer",
+        "user-oauth",
+        "user-secret",
+        "builtin",
+      ]).toContain(entry.auth.kind);
     }
   });
 

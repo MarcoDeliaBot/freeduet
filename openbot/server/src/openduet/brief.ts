@@ -27,6 +27,18 @@ export const BRIEF_TOOL = MORNING_BRIEF_TOOL;
 export const GMAIL_SEARCH = "google-workspace/gmail_search_messages";
 export const CALENDAR_LIST = "google-workspace/calendar_list_events";
 
+/*
+ * The same two tools on the other way to connect Gmail and Calendar, with an app password
+ * (plugins/google-imap.ts). The answers are the same shape by construction, so the brief reads
+ * either; which one a person has is not something it asks anybody.
+ */
+const GMAIL_SEARCH_APP_PASSWORD = "google-imap/gmail_search_messages";
+const CALENDAR_LIST_APP_PASSWORD = "google-imap/calendar_list_events";
+const APP_PASSWORD_COUNTERPART: Readonly<Record<string, string>> = {
+  [GMAIL_SEARCH]: GMAIL_SEARCH_APP_PASSWORD,
+  [CALENDAR_LIST]: CALENDAR_LIST_APP_PASSWORD,
+};
+
 export type BriefMail = {
   id: string;
   threadId: string;
@@ -186,7 +198,7 @@ export async function buildMorningBrief(
   },
 ): Promise<MorningBrief> {
   const now = deps.now?.() ?? new Date();
-  const call = (ref: string, args: Record<string, unknown>) =>
+  const send = (ref: string, args: Record<string, unknown>) =>
     deps.callTool({
       ref,
       args,
@@ -194,6 +206,26 @@ export async function buildMorningBrief(
       actorId: input.actorId,
       initiator: input.initiator,
     });
+  /*
+   * THE OAUTH CONNECTION FIRST, THE APP-PASSWORD ONE WHEN THE FIRST IS REFUSED. A refusal is the
+   * store saying this Bot does not hold the tool or this person has not connected the app; a
+   * vendor's failure comes back as an error RESULT and is the answer, not a reason to ask somebody
+   * else's connector. When both refuse, the first refusal is the one raised, so a person with
+   * neither is told what they have always been told.
+   */
+  const call = async (ref: string, args: Record<string, unknown>) => {
+    try {
+      return await send(ref, args);
+    } catch (refusal) {
+      const counterpart = APP_PASSWORD_COUNTERPART[ref];
+      if (!counterpart) throw refusal;
+      try {
+        return await send(counterpart, args);
+      } catch {
+        throw refusal;
+      }
+    }
+  };
   const couldNotCheck: MorningBrief["couldNotCheck"] = [];
   const brief: MorningBrief = {
     at: now.toISOString(),

@@ -27,6 +27,7 @@ import {
 } from "../access";
 import { type Decides, type SchemeKind, schemeKind } from "../broker";
 import { type CatalogueEntry, catalogueEntry } from "../catalogue";
+import { verifyUserSecret as verifyAgainstProvider } from "../google-imap";
 import { registerDynamicClient } from "../oauth";
 import {
   type AccountAnswer,
@@ -74,6 +75,8 @@ export function createStoreContext(options: PluginStoreOptions) {
     options.exchangeRefreshToken ?? exchangeRefreshTokenOverHttp;
   const revokeAtVendor = options.revokeAtVendor ?? revokeRefreshTokenOverHttp;
   const registerClient = options.registerClient ?? registerDynamicClient;
+  // Checking a pasted app password is a login at the provider. Injected by a test, so none needs one.
+  const verifyUserSecret = options.verifyUserSecret ?? verifyAgainstProvider;
   // No default, unlike the seams above: there is no real implementation in this tree to fall back
   // to, and a deployment with no Composio key is supposed to have no broker. See `./broker`.
   const broker = options.broker;
@@ -694,6 +697,56 @@ export function createStoreContext(options: PluginStoreOptions) {
        * DEPLOYMENT_ID unable to move the account a call lands in.
        */
       return { vendorUserId: connected.vendorUserId };
+    }
+
+    /*
+     * A PERSON'S OWN PASTED SECRET, which is read back and handed to the transport and never
+     * exchanged for anything.
+     *
+     * BEFORE THE DEPLOYMENT-TOKEN BRANCH BELOW, AND THAT ORDER IS THE POINT. That branch is what
+     * every credential that is not a per-person OAuth grant falls into, and it reads the SERVER
+     * row's own credential: for this kind there is none, so a call that reached it would run with no
+     * token, and one whose row somehow held a deployment credential would run on that instead of on
+     * the asker's mailbox. This kind answers out of the asker's own row or refuses, with no fallback,
+     * for the reason the `user-oauth` branch's comment sets out.
+     *
+     * The secret is decrypted for this call and held by nothing afterwards. `secretFor` refuses a
+     * credential that has been revoked, so a disconnect takes effect on the next call.
+     */
+    if (access.credential === "person-secret") {
+      const title = entry?.title ?? row.title;
+      if (!actorId) {
+        throw new PluginRefusedError(
+          `${title} answers as the person asking, and this run is not attributed to anybody.`,
+          null,
+        );
+      }
+      const [held] = await database
+        .select({ credentialId: mcpUserCredentials.credentialId })
+        .from(mcpUserCredentials)
+        .where(
+          and(
+            eq(mcpUserCredentials.serverId, row.id),
+            eq(mcpUserCredentials.userId, actorId),
+          ),
+        )
+        .limit(1);
+      if (!held) {
+        throw new PluginRefusedError(
+          connectAppRefusal({
+            serverId: row.id,
+            title,
+            message: `You have not connected your ${title} account. Connect it and ask again.`,
+          }),
+          null,
+        );
+      }
+      return {
+        token: await secretFor(
+          held.credentialId,
+          `Your ${title} connection was ended. Connect it again on Connections and ask again.`,
+        ),
+      };
     }
 
     if (access.credential !== "person-oauth") {
@@ -2063,6 +2116,7 @@ export function createStoreContext(options: PluginStoreOptions) {
     connectionTokenFor,
     refuseAndReplaceEvictedClient,
     swapUserCredential,
+    verifyUserSecret,
     rotateConnectionToken,
     oauthClientKey,
     withOAuthClientLock,

@@ -773,9 +773,16 @@ describe("GET /api/openduet/setup", () => {
       ready: false,
       fix: { kind: "connect", serverId: "google-workspace" },
     });
+    // Both ways of connecting Gmail are asked about, the OAuth one first.
     expect(app.asked).toEqual([
       {
         app: "google-workspace",
+        agentId: "openduet",
+        userId: "member-1",
+        composioConfigured: false,
+      } as never,
+      {
+        app: "google-imap",
         agentId: "openduet",
         userId: "member-1",
         composioConfigured: false,

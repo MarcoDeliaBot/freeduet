@@ -215,7 +215,8 @@ export function createMemoryIngestion(options: {
       );
     const access = accessFor(server, catalogueEntry(server.id));
     if (
-      access.credential === "person-oauth" &&
+      (access.credential === "person-oauth" ||
+        access.credential === "person-secret") &&
       !(await plugins.connectionsFor(source.ownerUserId)).some(
         (connection) => connection.serverId === server.id,
       )

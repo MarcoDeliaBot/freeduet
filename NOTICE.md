@@ -10,6 +10,21 @@
 | [CopilotKit's SqliteAgentRunner](https://github.com/CopilotKit/CopilotKit) (`@copilotkit/sqlite-runner` 1.77.0) | MIT, © Atai Barkai | Ported to Postgres as FreeDuet's agent runner for conversations kept without CopilotKit Intelligence (#42), in `openbot/server/src/freeduet/threads/pg-runner.ts`, which carries the MIT notice, names the original file and lists the changes. |
 | [AI Continuity](https://github.com/MarcoDeliaBot/ai-continuity) | MIT, © 2026 Marco D'Elia | The checkpoint writer behind members' work reports and the handoff between engines (F14, F24), ported into `openbot/agent-freeduet/freeduet/checkpoints.py` with its MIT notice, the original files named and the changes listed. |
 
+## Libraries added to the server for Gmail and Calendar with an app password (D24)
+
+Installed from npm and used as they are, not copied into this repository. The first three are the direct dependencies of `openbot/server`; the rest come with them. None is MPL or copyleft: the one dual-licensed package, `@zone-eu/mailsplit`, offers MIT and is used under MIT.
+
+| Library | Version | License | What it does here |
+|---|---|---|---|
+| [imapflow](https://github.com/postalsys/imapflow) | 2.11.0 | MIT, © Postal Systems OÜ | Reads the person's Gmail over IMAP, read-only (`EXAMINE`, `BODY.PEEK`) |
+| [nodemailer](https://github.com/nodemailer/nodemailer) | 10.4.0 | MIT-0, © Andris Reinman | Sends an approved reply over SMTP |
+| [node-ical](https://github.com/jens-maus/node-ical) | 0.27.6 | Apache-2.0 | Parses the calendar's secret iCal address, with recurring events |
+| `@zone-eu/mailsplit` 5.4.30, `libmime` 5.6.4, `libqp` 3.0.1, `libbase64` 1.4.1 | as listed | MIT (`@zone-eu/mailsplit` is "MIT OR EUPL-1.1+", used under MIT) | Pulled in by imapflow: message and header decoding |
+| `encoding-japanese` | 2.5.0 | MIT | Pulled in by imapflow and libmime: character-set conversion |
+| `rrule-temporal` 2.2.8, `temporal-polyfill` 1.0.8, `temporal-utils` 1.0.4 | as listed | MIT | Pulled in by node-ical: recurrence rules and time zones |
+| `temporal-spec` | 1.0.1 | Apache-2.0 | Pulled in by `rrule-temporal` and `temporal-polyfill`: types |
+| `@types/nodemailer` | 8.0.2 | MIT | Development only: type declarations |
+
 ## Projects we studied but deliberately did not copy from
 
 | Project | License | Why no code was taken |

@@ -1011,7 +1011,9 @@ export function serverMethods(context: StoreContext) {
         .from(credentialRows)
         .where(
           and(
-            eq(credentialRows.kind, "mcp_user_token"),
+            // A pasted app password is somebody's grant too, and "we removed the connector" has to
+            // be true of it as well: it opens a whole mailbox.
+            inArray(credentialRows.kind, ["mcp_user_token", "mcp_user_secret"]),
             eq(credentialRows.provider, serverId),
             isNull(credentialRows.revokedAt),
           ),
