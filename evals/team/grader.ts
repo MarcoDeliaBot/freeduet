@@ -158,6 +158,9 @@ function extractJson(raw: string): unknown {
   return JSON.parse(body.slice(start, end + 1));
 }
 
+/** The reason of a check the reply left without a verdict. */
+export const NO_VERDICT = "the grader gave no verdict";
+
 export function parseGrades(c: Case, raw: string): GradedCheck[] {
   const parsed = extractJson(raw) as { checks?: unknown };
   if (!Array.isArray(parsed.checks))
@@ -194,7 +197,7 @@ export function parseGrades(c: Case, raw: string): GradedCheck[] {
         kind,
         text,
         pass: false,
-        reason: "the grader gave no verdict",
+        reason: NO_VERDICT,
       };
     return {
       id,
@@ -210,7 +213,11 @@ export function parseGrades(c: Case, raw: string): GradedCheck[] {
   ];
 }
 
-/** Grades a case; one retry when the reply cannot be read, then every check fails with the reason. */
+/**
+ * Grades a case; one retry when the reply cannot be read, then every check fails with the reason.
+ * A reply that parses but leaves a check without a verdict is asked again on the first attempt too;
+ * on the last attempt that gap is returned as parseGrades gives it.
+ */
 export async function gradeCase(
   c: Case,
   t: Transcript,
@@ -219,11 +226,18 @@ export async function gradeCase(
   const prompt = graderPrompt(c, t);
   let lastError = "";
   for (let attempt = 0; attempt < 2; attempt++) {
+    let graded: GradedCheck[];
     try {
-      return parseGrades(c, await grader(prompt));
+      graded = parseGrades(c, await grader(prompt));
     } catch (error) {
       lastError = error instanceof Error ? error.message : String(error);
+      continue;
     }
+    const missing = graded
+      .filter((g) => g.reason === NO_VERDICT)
+      .map((g) => g.id);
+    if (missing.length === 0 || attempt === 1) return graded;
+    lastError = `${NO_VERDICT} for ${missing.join(", ")}`;
   }
   return [
     ...c.must.map((text, i) => ({
