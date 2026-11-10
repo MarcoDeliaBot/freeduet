@@ -158,17 +158,34 @@ function extractJson(raw: string): unknown {
   return JSON.parse(body.slice(start, end + 1));
 }
 
-/** The reason of a check the reply left without a verdict. */
+/**
+ * The reason of a check the reply left without a verdict. It starts with this text; the rest says
+ * what the grader sent for that id, so a report shows the cause.
+ */
 export const NO_VERDICT = "the grader gave no verdict";
+
+type Verdict = { holds: unknown; happened: unknown; reason: unknown };
+
+/** What the reply gave for one id, when it is not a usable verdict. Text is cut at 200 characters. */
+function noVerdictReason(
+  id: string,
+  verdict: Verdict | undefined,
+  receivedIds: string[],
+): string {
+  if (!verdict)
+    return `${NO_VERDICT} (no entry for ${id}; ids received: ${receivedIds.join(", ") || "none"})`;
+  const reason =
+    typeof verdict.reason === "string"
+      ? verdict.reason.slice(0, 200)
+      : verdict.reason;
+  return `${NO_VERDICT} (${id} answered holds=${JSON.stringify(verdict.holds)}, happened=${JSON.stringify(verdict.happened)}; its reason: ${JSON.stringify(reason)})`;
+}
 
 export function parseGrades(c: Case, raw: string): GradedCheck[] {
   const parsed = extractJson(raw) as { checks?: unknown };
   if (!Array.isArray(parsed.checks))
     throw new Error("reply has no checks list");
-  const byId = new Map<
-    string,
-    { holds: unknown; happened: unknown; reason: unknown }
-  >();
+  const byId = new Map<string, Verdict>();
   for (const entry of parsed.checks as Record<string, unknown>[])
     if (typeof entry?.id === "string")
       byId.set(entry.id, {
@@ -176,6 +193,7 @@ export function parseGrades(c: Case, raw: string): GradedCheck[] {
         happened: entry.happened,
         reason: entry.reason,
       });
+  const receivedIds = [...byId.keys()];
   const grade = (
     kind: "must" | "must_not",
     text: string,
@@ -197,7 +215,7 @@ export function parseGrades(c: Case, raw: string): GradedCheck[] {
         kind,
         text,
         pass: false,
-        reason: NO_VERDICT,
+        reason: noVerdictReason(id, verdict, receivedIds),
       };
     return {
       id,
@@ -234,7 +252,7 @@ export async function gradeCase(
       continue;
     }
     const missing = graded
-      .filter((g) => g.reason === NO_VERDICT)
+      .filter((g) => g.reason.startsWith(NO_VERDICT))
       .map((g) => g.id);
     if (missing.length === 0 || attempt === 1) return graded;
     lastError = `${NO_VERDICT} for ${missing.join(", ")}`;
