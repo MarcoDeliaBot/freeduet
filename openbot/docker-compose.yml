@@ -219,6 +219,11 @@ services:
       # Set to runsc to run every computer under gVisor, when the host has it. Left unset each
       # computer is an ordinary container and shares the host kernel.
       COMPUTER_RUNTIME: ${COMPUTER_RUNTIME:-}
+      # FreeDuet: a folder of the person's documents, read-only at /workspace/documenti in the
+      # computers of the Bots named in the second setting, and in no other. Both empty: no Bot gets
+      # one. The path is on the host and is checked by the supervisor (supervisor/src/documents.ts).
+      FREEDUET_COMPUTER_DOCUMENTS: ${FREEDUET_COMPUTER_DOCUMENTS:-}
+      FREEDUET_COMPUTER_DOCUMENTS_BOTS: ${FREEDUET_COMPUTER_DOCUMENTS_BOTS:-}
       # Identity, when SPIRE is part of this deployment. The supervisor registers an entry per Bot
       # and mounts the agent's socket into that Bot's computer so it can fetch its own SVID.
       SPIRE_SOCKET: /tmp/spire-server/private/api.sock
@@ -252,6 +257,12 @@ services:
       - ${ENGINE_SOCKET:-/var/run/docker.sock}:/var/run/docker.sock:ro
       # To register an entry per Bot as each computer is created.
       - spire-server-socket:/tmp/spire-server/private
+      # FreeDuet: the documents folder, read-only, at the same path it has on the host. The engine
+      # resolves a computer's bind on the host, so the path given to it is the host's; this mount is
+      # only so the supervisor can check, from in here, that the folder is there before it hands it
+      # out (supervisor/src/documents.ts). With FREEDUET_COMPUTER_DOCUMENTS unset it is an empty
+      # volume at a path nothing reads, and the supervisor ignores it.
+      - ${FREEDUET_COMPUTER_DOCUMENTS:-documents-off}:${FREEDUET_COMPUTER_DOCUMENTS:-/documents-off}:ro
     security_opt:
       # The engine socket carries an SELinux label this container is not allowed to read.
       - label=disable
@@ -469,3 +480,5 @@ volumes:
   # FreeDuet: agent-freeduet's CLI sign-in and its checkpoints.
   freeduet-claude-login:
   freeduet-data:
+  # FreeDuet: stands in for the documents folder, read-only inside the supervisor, while none is set.
+  documents-off:

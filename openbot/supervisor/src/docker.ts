@@ -1,5 +1,12 @@
 import Docker from "dockerode";
 import {
+  DOCUMENTS_LABEL,
+  type DocumentsMount,
+  documentsBind,
+  documentsSourceFor,
+  holdsCurrentDocuments,
+} from "./documents";
+import {
   BOT_LABEL,
   type ComputerNames,
   DEFAULT_NAMESPACE,
@@ -218,6 +225,7 @@ async function inspectOwned(names: ComputerNames): Promise<{
   image?: string;
   startedAt?: string;
   token?: string;
+  documents?: string;
 } | null> {
   try {
     const info = await docker.getContainer(names.container).inspect();
@@ -234,6 +242,10 @@ async function inspectOwned(names: ComputerNames): Promise<{
       // The token this container was born holding, which is the one it will check callers against
       // for the rest of its life. See `holdsCurrentToken`.
       token: tokenIn(info.Config?.Env),
+      // The documents folder it was created with, from the label it was given. See `DOCUMENTS_LABEL`.
+      ...(info.Config?.Labels?.[DOCUMENTS_LABEL]
+        ? { documents: info.Config.Labels[DOCUMENTS_LABEL] }
+        : {}),
       /*
        * When this run of the container began, which is what tells two runs apart.
        *
@@ -406,6 +418,12 @@ export type EnsureOptions = {
    * failure.
    */
   spireSocketVolume?: string;
+  /**
+   * A folder of the person's documents and the Bots that get it, mounted read-only at
+   * `/workspace/documenti`. Unset means no Bot gets one. Whether a given Bot is on the list is decided
+   * in `documents.ts`, at the one place the bind is built.
+   */
+  documents?: DocumentsMount;
 };
 
 /**
@@ -415,7 +433,8 @@ export type EnsureOptions = {
  * off the host, and none of them costs a Bot anything it legitimately needs: a browser and a
  * filesystem under `/workspace`.
  */
-function hostConfig(names: ComputerNames, options: EnsureOptions) {
+export function hostConfig(names: ComputerNames, options: EnsureOptions) {
+  const documents = documentsSourceFor(names.botId, options.documents);
   return {
     // The Bot's own storage. This is what turns the path confinement inside the computer from a
     // boundary between a Bot and the host into a boundary between one Bot and another.
@@ -426,6 +445,9 @@ function hostConfig(names: ComputerNames, options: EnsureOptions) {
       ...(options.spireSocketVolume
         ? [`${options.spireSocketVolume}:/tmp/spire-agent/public:ro`]
         : []),
+      // The person's documents, for the Bots named in the deployment's settings and nobody else.
+      // Read-only, and under /workspace so the file tools' confinement is what reaches it.
+      ...(documents ? [documentsBind(documents)] : []),
     ],
     // On a shared network the computers are reached by name and nothing is published: a remote host
     // should not accumulate an open port per Bot. Off a network, a laptop, where the server runs
@@ -483,11 +505,19 @@ export async function ensure(
      * request for a person to take the wheel. Both belong to a run that the upgrade has already
      * ended, and a Bot carrying an hour-old handover prompt into a new conversation is the symptom
      * that found this.
+     *
+     * The same replacement applies when the documents folder changed. A mount is fixed when a
+     * container is created, so a computer made before the folder was set up, or with another folder,
+     * or made while a folder is now switched off, would otherwise keep what it was given: a Bot named
+     * in the settings would not see its documents, and a Bot taken off the list would keep reading
+     * them. The volumes stay either way, so the Bot's files and logins come back with it.
      */
+    const documents = documentsSourceFor(names.botId, options.documents);
     if (
       existing &&
       (!(await runsCurrentImage(existing.image, options.image)) ||
-        !holdsCurrentToken(existing.token, options.environment))
+        !holdsCurrentToken(existing.token, options.environment) ||
+        !holdsCurrentDocuments(existing.documents, documents))
     ) {
       try {
         await docker
@@ -524,7 +554,11 @@ export async function ensure(
           Image: options.image,
           // The Bot id is a label because that is what a SPIRE docker workload attestor selects on:
           // an identity per Bot then falls out of the same fact that names the container.
-          Labels: labelsFor(names),
+          Labels: {
+            ...labelsFor(names),
+            // Which folder this computer holds, read back by `holdsCurrentDocuments`. Absent for none.
+            ...(documents ? { [DOCUMENTS_LABEL]: documents } : {}),
+          },
           Env: options.environment,
           ExposedPorts: { [COMPUTER_PORT]: {} },
           Healthcheck: COMPUTER_HEALTHCHECK,
