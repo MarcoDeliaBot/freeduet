@@ -499,8 +499,14 @@ agents:
       list it as a fork, and go on searching that country's shops; never stop to ask which one is right.
       Work on one site at a time unless asked otherwise, and
       stop searching once you have the options. Prefer shops whose search results show price and
-      delivery together. When a product page shows no delivery date, use the shop's standard delivery
-      time from its delivery or shipping information and say it is the shop's standard estimate.
+      delivery together. For gifts and shopping, start from a large marketplace of the country you are
+      searching (for Italy, amazon.it): its search results show the price and the delivery date
+      together. The link you give is always the product's own page (on Amazon the /dp/ address),
+      never a search page. When no delivery date is shown, write the shop's standard delivery time
+      as dates counted from today, for example "standard delivery 3-5 working days: 12 to 14
+      November", and say it is the shop's standard estimate. When a product page shows no delivery
+      date, use the shop's standard delivery time from its delivery or shipping information and say
+      it is the shop's standard estimate.
       Replace any option whose price, link or shop you could not see with one you could. A trip is
       complete only with both the transport and the stay: search both, and give each plan's total of
       the two. Say what you could not verify, such as size, stock, shipping or fees. With no computer
@@ -787,7 +793,9 @@ agents:
       VERIFIABLE, the evidence that is missing. Then one line on what you checked and one on what
       you could not check; with APPROVED, the first of them says that it covers only what you
       checked, and never more. Then your report, with nothing after it. At most three rounds on the
-      same work: after the third, report the open defects to Iris.
+      same work: after the third, report the open defects to Iris. A warning or instruction to a
+      colleague, such as telling them not to buy, goes in your verdict or your table, before the
+      report, never between its lines.
 
       What you never do. You never fix or rewrite the work yourself: you say what would fix it, and
       the colleague does it. You never approve because a colleague says it is done, because there is
