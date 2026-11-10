@@ -154,9 +154,11 @@ export type CatalogueItem = {
    * `deployment-bearer` is a token an administrator holds for everybody, and the only one this page
    * can collect. `user-oauth` is reached as whoever is asking, so each person connects their own
    * account and there is no token to type here. `builtin` is a first-party capability that runs
-   * inside this deployment — there is nothing to connect and nothing to type.
+   * inside this deployment — there is nothing to connect and nothing to type. `user-secret` is
+   * reached as whoever is asking too, but the person pastes what it is reached with (an app
+   * password) on their own Connections page, so there is nothing for an administrator to register.
    */
-  auth: "none" | "deployment-bearer" | "user-oauth" | "builtin";
+  auth: "none" | "deployment-bearer" | "user-oauth" | "user-secret" | "builtin";
   /** True for a vendor that gives every customer their own hostname. */
   perInstance: boolean;
 };

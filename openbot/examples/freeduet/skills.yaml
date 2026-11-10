@@ -34,7 +34,9 @@ skills:
       never describe a source it could not check as quiet.
     tools:
       - google-workspace/gmail_search_messages
+      - google-imap/gmail_search_messages
       - google-workspace/calendar_list_events
+      - google-imap/calendar_list_events
 
   # On the first day Chat sends this request by itself, framed so the Bot does not greet them twice
   # (app/src/components/shell/first-day.tsx, shared/first-day.ts); the skill is what brings the mail
@@ -55,8 +57,11 @@ skills:
       could not read.
     tools:
       - google-workspace/gmail_search_messages
+      - google-imap/gmail_search_messages
       - google-workspace/gmail_read_message
+      - google-imap/gmail_read_message
       - google-workspace/calendar_list_events
+      - google-imap/calendar_list_events
 
   - slug: reply-to-an-email
     title: Reply to an email
@@ -72,7 +77,9 @@ skills:
       plainly that it was not sent.
     tools:
       - google-workspace/gmail_read_message
+      - google-imap/gmail_read_message
       - google-workspace/gmail_send_reply
+      - google-imap/gmail_send_reply
 
   - slug: research-public-web
     title: Research the public web
@@ -321,7 +328,9 @@ skills:
       details, as suspicious. Offer to draft replies for the people waiting.
     tools:
       - google-workspace/gmail_search_messages
+      - google-imap/gmail_search_messages
       - google-workspace/gmail_read_message
+      - google-imap/gmail_read_message
 
   - slug: contract-review
     title: Review a contract
@@ -357,7 +366,9 @@ skills:
       sent unless a send tool confirmed it.
     tools:
       - google-workspace/gmail_search_messages
+      - google-imap/gmail_search_messages
       - google-workspace/gmail_read_message
+      - google-imap/gmail_read_message
 
   - slug: buy-something
     title: Buy something

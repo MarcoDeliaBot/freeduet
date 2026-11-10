@@ -3328,7 +3328,9 @@ export function connectionMethods(context: StoreContext) {
         .from(credentialRows)
         .where(
           and(
-            eq(credentialRows.kind, "mcp_user_token"),
+            // Both kinds of per-person secret: a refresh token, and a pasted app password. The
+            // second opens a whole mailbox, so a person who was removed must not leave it behind.
+            inArray(credentialRows.kind, ["mcp_user_token", "mcp_user_secret"]),
             eq(credentialRows.keyId, userId),
           ),
         );

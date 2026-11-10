@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, useParams } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { IdentityConnectionPage } from "@/components/connections/identity-connection-page";
+import { SecretConnectionPage } from "@/components/connections/secret-connection-page";
 import {
   PageEmpty,
   PageRows,
@@ -511,6 +512,15 @@ function AppConnectionPage() {
         ) : null}
       </PageShell>
     );
+  }
+
+  /*
+   * AN APP CONNECTED BY PASTING A SECRET (an app password) HAS A FORM OF ITS OWN. There is no
+   * consent screen to send anybody to, no grant at the vendor to read back and no scope to list, so
+   * none of what the `user-oauth` page below draws is true of it.
+   */
+  if (entry?.auth === "user-secret") {
+    return <SecretConnectionPage back={back} enabled={enabled} entry={entry} />;
   }
 
   /*

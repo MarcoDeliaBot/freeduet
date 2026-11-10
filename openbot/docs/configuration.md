@@ -573,6 +573,34 @@ Reachability codes and account-link codes look alike, and Reachability's are che
 Reachability `link <code>` binds a conversation for delivery and is not recorded as a linked
 account; a `link <code>` from Slack's page under Connections links the Slack user.
 
+## Two ways to connect Gmail
+
+Gmail and Google Calendar have two entries under Connections. A person uses whichever suits them, and
+both can be connected at once: the morning brief and the setup checklist read mail and the calendar
+through either, asking the OAuth connection first.
+
+| | Gmail and Google Calendar | Gmail and Google Calendar (app password) |
+| --- | --- | --- |
+| Key | `google-workspace` | `google-imap` |
+| An administrator | Registers a Google OAuth client and sets a public address | Turns the entry on at `/admin/plugins/google-imap`. Nothing else: no Google Cloud project, no client |
+| Each person | Consents at Google | Pastes their Gmail address, an [app password](https://myaccount.google.com/apppasswords) and, optionally, the calendar's secret address in iCal format, at `/connections/google-imap` |
+| Reaches Google over | The Gmail and Calendar REST APIs | IMAP and SMTP (`imap.gmail.com:993`, `smtp.gmail.com:465`, both TLS) and the iCal address |
+| Limits | Google's OAuth scopes. A consent for sensitive scopes expires after seven days while the OAuth app is in testing | The Bots' tools. The app password itself reaches the whole mailbox |
+| Needs | An OAuth client | 2-Step Verification on the person's Google account |
+
+Both entries offer the same four tools with the same arguments and answers: `gmail_search_messages`,
+`gmail_read_message`, `calendar_list_events` (reads) and `gmail_send_reply` (a write, so it waits for
+the person's approval). Nothing can delete, move, label or flag a message, and a reply goes only to
+people already on the message it answers.
+
+The app-password way is Gmail only. The hosts are fixed in the code, so a row edited to name another
+server reaches nowhere else, and a calendar address is accepted only from
+`https://calendar.google.com/calendar/ical/`. The address, the app password and the calendar address
+are all kept encrypted, per person, and are never shown again: the page shows the address and whether
+a calendar is attached. A password that Gmail does not accept is not saved. Disconnecting makes this
+deployment forget it at once; the person deletes the app password at Google to end it there. Removing
+the connector, or the person, revokes it too.
+
 ## Text messages and push notifications
 
 A provider is switched on by setting its variables and is off while none of them are set. Setting

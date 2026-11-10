@@ -15,6 +15,8 @@ import { cn } from "@/lib/utils";
 
 /** The app this step connects: Gmail and Google Calendar, one consent for both. */
 export const GOOGLE_WORKSPACE = "google-workspace";
+/** The same two products connected with an app password, which needs no consent screen. */
+export const GOOGLE_APP_PASSWORD = "google-imap";
 
 const PRODUCT = appConfig.brand.productName;
 
@@ -46,6 +48,10 @@ export function ConnectAppsStep({
     ...botAppQueryOptions(bot?.id ?? "", GOOGLE_WORKSPACE),
     enabled: bot !== undefined,
   });
+  const gmailAppPassword = useQuery({
+    ...botAppQueryOptions(bot?.id ?? "", GOOGLE_APP_PASSWORD),
+    enabled: bot !== undefined,
+  });
   // Who is reading decides whose move a gap is: the server already said, for the checklist.
   const checklist = useQuery(setupChecklistQueryOptions());
   const admin = checklist.data?.audience === "admin";
@@ -70,7 +76,16 @@ export function ConnectAppsStep({
     },
   });
 
-  const state = gmail.data?.state;
+  /*
+   * THE APP-PASSWORD WAY ANSWERS ONLY WHERE THE OAUTH ONE IS NOT SET UP AND IT IS. A deployment that
+   * has the consent flow reads exactly as it always did; one that offers only the app password sends
+   * the row to its form, since there is no consent to start.
+   */
+  const viaPassword =
+    gmail.data?.state === "disabled" &&
+    gmailAppPassword.data !== undefined &&
+    gmailAppPassword.data.state !== "disabled";
+  const state = viaPassword ? gmailAppPassword.data?.state : gmail.data?.state;
   return (
     <div className="mx-auto flex w-full max-w-md flex-col items-center">
       <h1 className="type-big text-center font-semibold text-duet-ink">
@@ -86,6 +101,10 @@ export function ConnectAppsStep({
           connecting={connect.isPending}
           onConnect={() => {
             setProblem(null);
+            if (viaPassword) {
+              leaveFor(`/connections/${GOOGLE_APP_PASSWORD}`);
+              return;
+            }
             connect.mutate(GOOGLE_WORKSPACE);
           }}
           state={state}

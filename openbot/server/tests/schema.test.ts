@@ -74,6 +74,8 @@ describe("OpenBot database schema", () => {
       "mcp",
       "mcp_oauth_client",
       "mcp_user_token",
+      // A pasted app password: not a vendor-issued token, so not filed under the one above.
+      "mcp_user_secret",
     ]);
   });
 

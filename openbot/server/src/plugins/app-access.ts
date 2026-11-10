@@ -192,7 +192,9 @@ export function accountOf(facts: AppAccessFacts): AppAccount {
     return facts.accountMode === "shared" ? "shared" : "personal";
   }
   if (facts.provider === "catalogue")
-    return facts.catalogueAuth?.kind === "user-oauth"
+    // A pasted app password is as much one person's own account as an OAuth grant is.
+    return facts.catalogueAuth?.kind === "user-oauth" ||
+      facts.catalogueAuth?.kind === "user-secret"
       ? "personal"
       : "deployment";
   return "deployment";
@@ -203,6 +205,12 @@ export function connectOf(facts: AppAccessFacts): AppConnect {
     const kind = schemeKind(facts.authScheme);
     return kind === "consent" || kind === "key" ? kind : null;
   }
+  /*
+   * A pasted secret is connected on the app's own page, where its form is, and `key` is the kind
+   * every screen already sends there: nothing to open in another tab, and nothing a Bot's card can
+   * do for the person. No new kind, so no screen has to be taught one.
+   */
+  if (facts.catalogueAuth?.kind === "user-secret") return "key";
   return facts.catalogueAuth?.kind === "user-oauth" ? "oauth" : null;
 }
 

@@ -2,6 +2,7 @@ import * as arcade from "./arcade";
 import * as builtinRoutines from "./builtin-routines";
 import * as composio from "./composio";
 import * as driveRest from "./google-drive-rest";
+import * as googleImap from "./google-imap";
 import * as workspaceRest from "./google-workspace-rest";
 import type { ListedTool, McpCallResult } from "./mcp";
 import * as mcp from "./mcp";
@@ -124,6 +125,7 @@ export type TransportKind =
   | "mcp"
   | "google-drive-rest"
   | "google-workspace-rest"
+  | "google-imap"
   | "builtin-routines"
   | "composio"
   | "arcade";
@@ -154,6 +156,7 @@ const TRANSPORTS: Record<TransportKind, VendorTransport> = {
   mcp,
   "google-drive-rest": driveRest,
   "google-workspace-rest": workspaceRest,
+  "google-imap": googleImap,
   "builtin-routines": builtinRoutines,
   composio,
   arcade,

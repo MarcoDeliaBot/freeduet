@@ -59,6 +59,17 @@ export const credentialKind = pgEnum("credential_kind", [
    * that speaks for the deployment, and one row per person that speaks for them.
    */
   "mcp_user_token",
+  /*
+   * One person's pasted secret for one server: an address, an app password and, optionally, a
+   * calendar link, stored together as one encrypted value.
+   *
+   * Its own kind rather than `mcp_user_token`, because it is a different thing. A token is something
+   * a vendor issued in exchange for a consent and can revoke on its own side; this is a password the
+   * person made and pasted, which nothing here can revoke for them, and it reaches the whole mailbox
+   * rather than a scope. Keyed the same way (provider = server id, key id = user id), so the same
+   * sweeps find it, but never mistaken for a grant when the vault is read.
+   */
+  "mcp_user_secret",
 ]);
 
 export const users = pgTable("users", {

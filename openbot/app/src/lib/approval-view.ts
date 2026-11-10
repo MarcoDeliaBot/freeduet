@@ -56,6 +56,8 @@ const SENDING_APPS: Record<
   { app: string; kind: ApprovalView["kind"] }
 > = {
   "google-workspace": { app: "Gmail", kind: "mail" },
+  // The same Gmail, connected with an app password instead of OAuth.
+  "google-imap": { app: "Gmail", kind: "mail" },
   gmail: { app: "Gmail", kind: "mail" },
 };
 

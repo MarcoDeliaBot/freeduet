@@ -35,14 +35,15 @@ const GMAIL = "/gmail/v1/users/me";
 const CALENDAR = "/calendar/v3/calendars/primary";
 
 /** What "my mail" means when nobody said: what arrived in the inbox in the last day. */
-const DEFAULT_QUERY = "in:inbox newer_than:1d";
-const DEFAULT_MAX_RESULTS = 25;
+export const DEFAULT_QUERY = "in:inbox newer_than:1d";
+export const DEFAULT_MAX_RESULTS = 25;
 /** Beyond this a listing is a mailbox dump rather than an answer, and each message is one request. */
-const MAX_RESULTS = 50;
+export const MAX_RESULTS = 50;
 
 /** The longest body a result carries, marker included. */
 const BODY_MAX_CHARS = 20_000;
-const BODY_CUT_MARKER = "\n\n[truncated: the message is longer than this]";
+export const BODY_CUT_MARKER =
+  "\n\n[truncated: the message is longer than this]";
 
 /**
  * The longest header value kept. RFC 5322 caps a line at 998 characters; a value longer than that is
@@ -62,7 +63,7 @@ const LOOKUP_CONCURRENCY = 8;
  * `Auto-Submitted`, and RFC 2919's `List-Id`, which names the group a message came through so mail
  * to a team's security@ group is not read as somebody else's.
  */
-const METADATA_HEADERS = [
+export const METADATA_HEADERS = [
   "From",
   "To",
   "Cc",
@@ -372,7 +373,7 @@ function hintFor(
   return null;
 }
 
-type Header = { name?: string; value?: string };
+export type Header = { name?: string; value?: string };
 
 type GmailPart = {
   mimeType?: string;
@@ -382,7 +383,7 @@ type GmailPart = {
   parts?: GmailPart[];
 };
 
-type GmailMessage = {
+export type GmailMessage = {
   id?: string;
   threadId?: string;
   labelIds?: string[];
@@ -397,7 +398,7 @@ type GmailMessage = {
  * Whole, for the headers this code writes back out: a `References` chain cut short would thread a
  * reply under the wrong ancestor.
  */
-function headerOf(
+export function headerOf(
   headers: readonly Header[] | undefined,
   name: string,
 ): string | undefined {
@@ -449,7 +450,7 @@ function decodeEncodedWords(value: string): string {
 }
 
 /** A header as a reader is shown it: decoded, and cut at {@link HEADER_MAX_CHARS}. */
-function shownHeader(
+export function shownHeader(
   headers: readonly Header[] | undefined,
   name: string,
 ): string | undefined {
@@ -465,7 +466,7 @@ function shownHeader(
  * Commas inside a quoted display name (`"Okafor, Maya" <maya@…>`) or inside the angle brackets are
  * not separators, which is the whole reason this is not `split(",")`.
  */
-function addressList(value: string | undefined): string[] {
+export function addressList(value: string | undefined): string[] {
   if (!value) return [];
   const out: string[] = [];
   let current = "";
@@ -508,7 +509,7 @@ function isoDate(message: GmailMessage): string {
 }
 
 /** The three headers triage reads, by their own names, present only when the message carries them. */
-function passedHeaders(message: GmailMessage): Record<string, string> {
+export function passedHeaders(message: GmailMessage): Record<string, string> {
   const out: Record<string, string> = {};
   for (const name of PASSED_HEADERS) {
     const value = shownHeader(message.payload?.headers, name);
@@ -518,7 +519,7 @@ function passedHeaders(message: GmailMessage): Record<string, string> {
 }
 
 /** The fields a search and a read share, in the contract's names. */
-function summary(message: GmailMessage) {
+export function summary(message: GmailMessage) {
   const headers = message.payload?.headers;
   return {
     id: message.id ?? "",
@@ -554,7 +555,7 @@ const NAMED_ENTITIES: ReadonlyMap<string, string> = new Map([
  * wrote rather than as a `<`. A Map for the reason Drive's export table is one: the name comes off
  * somebody else's mail, and a plain object answers `constructor`.
  */
-function decodeEntities(text: string): string {
+export function decodeEntities(text: string): string {
   return text.replace(
     /&(#\d{1,7}|#x[0-9a-f]{1,6}|[a-z]{2,8});/gi,
     (whole, ref: string) => {
@@ -580,7 +581,7 @@ function decodeEntities(text: string): string {
  * mostly made of. Entities are decoded last, after the tags are gone, so an escaped `&lt;b&gt;` in
  * the text stays text instead of being read as a tag.
  */
-function htmlToText(html: string): string {
+export function htmlToText(html: string): string {
   const text = html
     .replace(/<(script|style|head|title)\b[^>]*>[\s\S]*?<\/\1\s*>/gi, "")
     .replace(/<!--[\s\S]*?-->/g, "")
@@ -658,7 +659,7 @@ function bodyText(message: GmailMessage): string {
 }
 
 /** At most {@link BODY_MAX_CHARS}, with the marker inside that budget when anything was cut. */
-function capBody(body: string): { body: string; cut: boolean } {
+export function capBody(body: string): { body: string; cut: boolean } {
   if (body.length <= BODY_MAX_CHARS) return { body, cut: false };
   return {
     body:
@@ -699,7 +700,7 @@ async function lookUpAll<T, R>(
 }
 
 /** A count argument: absent means the default, a number is clamped to the maximum, junk is refused. */
-function countArg(value: unknown): number | null | "invalid" {
+export function countArg(value: unknown): number | null | "invalid" {
   if (value === undefined || value === null || value === "") return null;
   const number = typeof value === "number" ? value : Number(value);
   if (!Number.isFinite(number) || number < 1) return "invalid";
@@ -708,8 +709,8 @@ function countArg(value: unknown): number | null | "invalid" {
 
 /** Line breaks, and the characters some parsers treat as one, in anything bound for a header. */
 /** An RFC 822 Message-ID as a header carries it: `<local@domain>`. */
-const RFC822_MESSAGE_ID = /^<[^<>\s]+@[^<>\s]+>$/;
-const HEADER_BREAK = /[\r\n\0\u0085\u2028\u2029]/;
+export const RFC822_MESSAGE_ID = /^<[^<>\s]+@[^<>\s]+>$/;
+export const HEADER_BREAK = /[\r\n\0\u0085\u2028\u2029]/;
 
 /**
  * A header value Gmail can carry whatever its characters: RFC 2047 encoded-words when it is not
@@ -819,7 +820,7 @@ function replyMessage(input: {
   return lines.join("\r\n");
 }
 
-const failure = (message: string): McpCallResult => ({
+export const failure = (message: string): McpCallResult => ({
   text: message,
   isError: true,
   truncated: false,
@@ -831,7 +832,7 @@ const failure = (message: string): McpCallResult => ({
  * An empty search is `{"messages":[],…}`, which says "nothing matched" in so many words, so the
  * empty-string problem Drive's results guard against does not arise.
  */
-const asJson = (value: unknown, truncated = false): McpCallResult => ({
+export const asJson = (value: unknown, truncated = false): McpCallResult => ({
   text: JSON.stringify(value),
   isError: false,
   truncated,
@@ -1153,7 +1154,7 @@ export async function callTool(
   );
 }
 
-type CalendarEvent = {
+export type CalendarEvent = {
   id?: string;
   summary?: string;
   status?: string;
@@ -1169,7 +1170,7 @@ type CalendarEvent = {
  * kept as Google gives it, because turning it into midnight UTC would put it on the wrong day for
  * everybody west of Greenwich.
  */
-function eventOf(event: CalendarEvent) {
+export function eventOf(event: CalendarEvent) {
   const organizer = event.organizer?.email ?? event.organizer?.displayName;
   return {
     id: event.id ?? "",
@@ -1223,7 +1224,7 @@ const DAY_MS = 86_400_000;
  * A reader of `timeZone`'s clocks: the local date and time at an instant, to the second, written as
  * the UTC milliseconds of those same digits. Throws a RangeError for a zone `Intl` does not know.
  */
-function wallClockIn(timeZone: string): (at: number) => number {
+export function wallClockIn(timeZone: string): (at: number) => number {
   const format = new Intl.DateTimeFormat("en-US", {
     timeZone,
     hourCycle: "h23",
@@ -1260,7 +1261,7 @@ function wallClockIn(timeZone: string): (at: number) => number {
  * gives. On an ordinary day, DST days included, both land on midnight. Where the clocks change at
  * midnight itself the two differ, and the earlier one that falls on the next day is its start.
  */
-function endOfDayIn(instant: Date, timeZone: string): Date {
+export function endOfDayIn(instant: Date, timeZone: string): Date {
   const wall = wallClockIn(timeZone);
   /** The local date at `at`, as the UTC milliseconds of its midnight. */
   const dateOf = (at: number) => Math.floor(wall(at) / DAY_MS) * DAY_MS;

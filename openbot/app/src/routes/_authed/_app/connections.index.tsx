@@ -183,6 +183,7 @@ const MARKS: ReadonlyMap<
 > = new Map([
   ["google-drive", IconBrandGoogleDrive],
   ["google-workspace", IconBrandGmail],
+  ["google-imap", IconBrandGmail],
   ["notion", IconBrandNotion],
 ]);
 
@@ -315,7 +316,9 @@ function RouteComponent() {
    * be connected at all, because there is no OAuth client to consent against.
    */
   const yours = (plugins.data?.catalogue ?? []).filter(
-    (entry) => entry.auth === "user-oauth" && added.has(entry.key),
+    (entry) =>
+      (entry.auth === "user-oauth" || entry.auth === "user-secret") &&
+      added.has(entry.key),
   );
 
   /*

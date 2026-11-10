@@ -30,6 +30,7 @@ import {
   PluginRefusedError,
   VendorRevocationUnreachableError,
 } from "../store";
+import { SecretRefusedError } from "../user-secret";
 import {
   type AuthorizationRefusal,
   brokerRefusal,
@@ -1193,6 +1194,78 @@ export function mountConnectionRoutes({
   );
 
   /**
+   * Whether the signed-in person has pasted a working app password for this app, and for which
+   * address. The address is the only part of the secret that ever leaves the server.
+   *
+   * Their own, by the session: nothing in the request names whose connection this is. Not
+   * admin-only, for the reason connecting is not.
+   */
+  routes.get("/servers/:id/secret-connection", requireUser, async (context) => {
+    context.header("Cache-Control", "no-store");
+    try {
+      return context.json(
+        await store.userSecretStatus({
+          serverId: context.req.param("id"),
+          userId: context.var.actor.id,
+        }),
+      );
+    } catch (error) {
+      if (error instanceof CatalogueEntryUnknownError) {
+        return context.json(
+          { error: "That app hasn't been added yet. Ask an admin to add it." },
+          409,
+        );
+      }
+      if (error instanceof PluginRefusedError) {
+        return context.json({ error: error.message }, 400);
+      }
+      throw error;
+    }
+  });
+
+  /**
+   * Connect an app by pasting what it is reached with: an address, an app password and, optionally,
+   * a calendar's secret address. Checked with one login before anything is stored.
+   *
+   * THE ANSWER NEVER REPEATS THE BODY. A refusal is fixed text chosen from what went wrong, and a
+   * success returns the address and whether a calendar is attached: the password and the calendar
+   * link are not read back to anybody by anything. The body is parsed here and handed to the store
+   * as it came, so the one place that reads it is the one place that decides what to keep.
+   */
+  routes.post(
+    "/servers/:id/secret-connection",
+    requireUser,
+    async (context) => {
+      context.header("Cache-Control", "no-store");
+      const body: unknown = await context.req.json().catch(() => null);
+      try {
+        const done = await store.connectUserSecret({
+          serverId: context.req.param("id"),
+          userId: context.var.actor.id,
+          body,
+        });
+        return context.json({ connected: true, ...done });
+      } catch (error) {
+        if (error instanceof SecretRefusedError) {
+          return context.json({ error: error.message }, error.status);
+        }
+        if (error instanceof CatalogueEntryUnknownError) {
+          return context.json(
+            {
+              error: "That app hasn't been added yet. Ask an admin to add it.",
+            },
+            409,
+          );
+        }
+        if (error instanceof PluginRefusedError) {
+          return context.json({ error: error.message }, 400);
+        }
+        throw error;
+      }
+    },
+  );
+
+  /**
    * End this account — this person's own, or the deployment's for a Shared app — at the vendor
    * first and here after.
    *
@@ -1231,6 +1304,23 @@ export function mountConnectionRoutes({
      */
     const address = await store.serverAddress(serverId);
     const entry = catalogueEntry(serverId);
+    /*
+     * A PASTED APP PASSWORD IS ENDED HERE TOO, by the same rule: the signed-in person's own row and
+     * nobody's else. There is no vendor to ask, because Google offers no way to withdraw an app
+     * password from outside the account, so the answer says what the person has left to do.
+     */
+    if (
+      address !== undefined &&
+      appOfUrl(address.url) === null &&
+      entry?.auth.kind === "user-secret"
+    ) {
+      const ended = await store.disconnectUserSecret({
+        serverId,
+        userId: context.var.actor.id,
+        by: context.var.actor.id,
+      });
+      return context.json({ ...ended, vendorRevoked: false });
+    }
     if (
       address !== undefined &&
       appOfUrl(address.url) === null &&

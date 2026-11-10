@@ -652,12 +652,14 @@ function RouteComponent() {
           description={
             auth === "user-oauth"
               ? "This vendor answers as whoever is asking. The deployment registers an OAuth client, and each person connects their own account. A Bot only sees what that person can see."
-              : auth === "builtin"
-                ? "Built into this deployment. There is no vendor to reach and no credential to keep. A call runs as whoever asked."
-                : auth === "brokered"
-                  ? /* The row below says how, at length. This says whose account it is, which is the part that decides what an admin has to do here — which is nothing. */
-                    brokeredConnectionDescription(provider)
-                  : "What this deployment sends to the vendor. One credential for everybody."
+              : auth === "user-secret"
+                ? "This vendor answers as whoever is asking. Each person pastes their own app password on their Connections page. There is nothing to register here, and the deployment keeps no password of its own."
+                : auth === "builtin"
+                  ? "Built into this deployment. There is no vendor to reach and no credential to keep. A call runs as whoever asked."
+                  : auth === "brokered"
+                    ? /* The row below says how, at length. This says whose account it is, which is the part that decides what an admin has to do here — which is nothing. */
+                      brokeredConnectionDescription(provider)
+                    : "What this deployment sends to the vendor. One credential for everybody."
           }
           title="Connection"
         >
@@ -701,6 +703,28 @@ function RouteComponent() {
                 <ItemActions>
                   <span className="text-muted-foreground text-xs">
                     Built in
+                  </span>
+                </ItemActions>
+              </Item>
+            ) : null}
+
+            {auth === "user-secret" ? (
+              /*
+               * Nothing to click. The secret is each person's own and is pasted on their own
+               * Connections page; the deployment registers no client and holds no key for it.
+               */
+              <Item size="sm">
+                <ItemContent>
+                  <ItemTitle>App password</ItemTitle>
+                  <ItemDescription>
+                    Each person makes their own at Google and pastes it on their
+                    Connections page. It reaches their whole mailbox, so what
+                    Bots may do is decided by the tools you grant below.
+                  </ItemDescription>
+                </ItemContent>
+                <ItemActions>
+                  <span className="text-muted-foreground text-xs">
+                    Per person
                   </span>
                 </ItemActions>
               </Item>

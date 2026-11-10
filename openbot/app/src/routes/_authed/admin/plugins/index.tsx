@@ -69,6 +69,7 @@ export const Route = createFileRoute("/_authed/admin/plugins/")({
 const MARKS: Record<string, React.ComponentType<{ className?: string }>> = {
   "google-drive": IconBrandGoogleDrive,
   "google-workspace": IconBrandGmail,
+  "google-imap": IconBrandGmail,
   notion: IconBrandNotion,
 };
 
@@ -97,7 +98,8 @@ function summaryFor(
   auth: CatalogueItem["auth"] | undefined,
   youConnected: boolean,
 ): string {
-  if (auth === "user-oauth" && !youConnected) return "Not connected";
+  if ((auth === "user-oauth" || auth === "user-secret") && !youConnected)
+    return "Not connected";
   if (server.tools.length === 0) return "No tools yet";
 
   const bots = new Set(server.tools.flatMap((tool) => tool.grantedTo)).size;

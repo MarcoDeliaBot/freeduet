@@ -280,13 +280,18 @@ function FirstMessage({
   };
 
   const gmail = useQuery(botAppQueryOptions(bot.id, GOOGLE_WORKSPACE));
-  const canReadMail = gmail.data?.state === "ready";
+  // The other way to connect Gmail, with an app password: mail is readable through either.
+  const gmailAppPassword = useQuery(
+    botAppQueryOptions(bot.id, GOOGLE_APP_PASSWORD),
+  );
+  const canReadMail =
+    gmail.data?.state === "ready" || gmailAppPassword.data?.state === "ready";
 
   useFirstDayGreeting({
     // Whose first day, with which Bot. Waits for the account and for whether the Bot can read their
     // mail; an account that failed to load still greets, and a state that failed reads as no mail.
     claimKey:
-      me.isPending || gmail.isPending
+      me.isPending || gmail.isPending || gmailAppPassword.isPending
         ? null
         : `${me.data?.id ?? "unknown"}:${bot.id}`,
     clear: () => !begun.current && !typed.current,
@@ -320,6 +325,8 @@ function FirstMessage({
 
 /** The app the first day reads: Gmail and Google Calendar, one connection for both. */
 const GOOGLE_WORKSPACE = "google-workspace";
+/** The same two products, connected with an app password. */
+const GOOGLE_APP_PASSWORD = "google-imap";
 
 /** A sentence in place of a screen that could not be drawn. */
 export function ScreenNotice({
