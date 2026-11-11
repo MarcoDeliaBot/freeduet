@@ -403,7 +403,13 @@ export const SILENCE_CASES: readonly SilenceCase[] = [
 ];
 
 export type SilenceResult = {
-  cases: { name: string; transcript: string; failure?: string }[];
+  cases: {
+    name: string;
+    transcript: string;
+    failure?: string;
+    /** Reported, never a reason to fail the run. */
+    measured?: true;
+  }[];
   passed: boolean;
   problems: string[];
 };
@@ -436,14 +442,83 @@ export function spliceWav(parts: readonly (Uint8Array | number)[]): Uint8Array {
   return pcm16Wav(all, SAMPLE_RATE);
 }
 
-/** The first `speechSeconds` of a 16 kHz WAV, then `silenceSeconds` of digital silence. */
-export function speechThenSilenceWav(
+/** Window length of the speech-onset finder. */
+export const ONSET_WINDOW_MS = 20;
+/** A window is speech when its RMS is above this share of the clip's own peak (about -26 dB). */
+export const ONSET_RELATIVE_THRESHOLD = 0.05;
+/** A fragment starts this long before the onset, so the first sound is not clipped. */
+export const ONSET_LEAD_MS = 100;
+
+const onsetWindow = (samples: Int16Array, index: number, size: number) => {
+  let sum = 0;
+  const end = Math.min(samples.length, index + size);
+  for (let at = index; at < end; at++) sum += (samples[at] as number) ** 2;
+  return Math.sqrt(sum / Math.max(1, end - index));
+};
+
+/**
+ * Where speech starts in a clip. The rule: cut the clip in 20 ms windows; the onset is the first window
+ * whose RMS is above 5% of the clip's peak sample. Returns the sample the window starts at and the
+ * threshold (in sample units), or undefined for a clip with no sound.
+ */
+export function findOnset(
+  samples: Int16Array,
+): { index: number; threshold: number } | undefined {
+  let peak = 0;
+  for (const sample of samples) peak = Math.max(peak, Math.abs(sample));
+  if (peak === 0) return undefined;
+  const threshold = ONSET_RELATIVE_THRESHOLD * peak;
+  const size = Math.round((SAMPLE_RATE * ONSET_WINDOW_MS) / 1000);
+  for (let index = 0; index < samples.length; index += size) {
+    if (onsetWindow(samples, index, size) > threshold)
+      return { index, threshold };
+  }
+  return undefined;
+}
+
+/**
+ * `seconds` of a clip starting 100 ms before its speech onset, and how many seconds of that are
+ * voiced (windows above the clip's threshold). Undefined when the clip has no onset or is too short.
+ */
+export function fragmentFromOnset(
+  samples: Int16Array,
+  seconds: number,
+): { samples: Int16Array; voicedSeconds: number } | undefined {
+  const onset = findOnset(samples);
+  if (!onset) return undefined;
+  const start = Math.max(
+    0,
+    onset.index - Math.round((SAMPLE_RATE * ONSET_LEAD_MS) / 1000),
+  );
+  const fragment = samples.slice(
+    start,
+    start + Math.round(seconds * SAMPLE_RATE),
+  );
+  if (fragment.length < Math.round(seconds * SAMPLE_RATE)) return undefined;
+  const size = Math.round((SAMPLE_RATE * ONSET_WINDOW_MS) / 1000);
+  let voiced = 0;
+  for (let index = 0; index < fragment.length; index += size) {
+    if (onsetWindow(fragment, index, size) > onset.threshold) voiced++;
+  }
+  return {
+    samples: fragment,
+    voicedSeconds: (voiced * ONSET_WINDOW_MS) / 1000,
+  };
+}
+
+/**
+ * `speechSeconds` of speech from the clip's onset, then `silenceSeconds` of digital silence. Undefined
+ * when fewer than `minVoicedSeconds` of the fragment are voiced: the caller picks another clip.
+ */
+export function speechFromOnsetThenSilenceWav(
   wav: Uint8Array,
-  speechSeconds = 2,
-  silenceSeconds = 10,
-): Uint8Array {
-  const speech = wavSamples(wav).slice(0, SAMPLE_RATE * speechSeconds);
-  return spliceWav([pcm16Wav(speech, SAMPLE_RATE), silenceSeconds]);
+  speechSeconds: number,
+  silenceSeconds: number,
+  minVoicedSeconds = 0,
+): Uint8Array | undefined {
+  const fragment = fragmentFromOnset(wavSamples(wav), speechSeconds);
+  if (!fragment || fragment.voicedSeconds < minVoicedSeconds) return undefined;
+  return spliceWav([pcm16Wav(fragment.samples, SAMPLE_RATE), silenceSeconds]);
 }
 
 /** A WAV with `seconds` of digital silence inserted at its middle. */
@@ -480,16 +555,18 @@ export async function measureSilence(
 ): Promise<SilenceResult> {
   const results: SilenceResult["cases"] = [];
   const problems: string[] = [];
-  const run = async (name: string, audio: Uint8Array) => {
+  const run = async (name: string, audio: Uint8Array, measuredOnly = false) => {
     await keep(name, audio);
     const answer = await timed(async () => transcribe(audio, "audio/wav"));
     results.push({
       name,
       transcript: answer.text,
       ...(answer.error ? { failure: answer.error } : {}),
+      ...(measuredOnly ? { measured: true as const } : {}),
     });
     if (answer.error) {
-      problems.push(`${name}: the request failed (${answer.error})`);
+      if (!measuredOnly)
+        problems.push(`${name}: the request failed (${answer.error})`);
       return undefined;
     }
     return answer.text;
@@ -502,16 +579,38 @@ export async function measureSilence(
   }
   const [first, second] = clips;
   if (first) {
-    const name = "2 s of speech, then 10 s of silence";
-    const heard = await run(name, speechThenSilenceWav(first.wav));
-    if (heard !== undefined) {
-      const said = normalizeText(heard).split(" ").filter(Boolean);
-      const known = new Set(normalizeText(first.reference).split(" "));
-      if (said.length === 0) {
-        problems.push(`${name}: the speech was dropped, nothing came back`);
-      } else if (!said.some((word) => known.has(word))) {
-        problems.push(
-          `${name}: none of the words heard are in the sentence (heard ${JSON.stringify(heard)})`,
+    const name = "2 s of speech from its onset, then 10 s of silence";
+    // The first clip that has at least 1 s of speech in its first 2 s from the onset.
+    const source = clips.find(
+      (clip) => speechFromOnsetThenSilenceWav(clip.wav, 2, 10, 1) !== undefined,
+    );
+    if (!source) {
+      problems.push(
+        `${name}: none of the ${clips.length} clips has 1 s of speech in 2 s from its onset, so the case could not be built`,
+      );
+    } else {
+      const heard = await run(
+        name,
+        speechFromOnsetThenSilenceWav(source.wav, 2, 10, 1) as Uint8Array,
+      );
+      if (heard !== undefined) {
+        const said = normalizeText(heard).split(" ").filter(Boolean);
+        const known = new Set(normalizeText(source.reference).split(" "));
+        if (said.length === 0) {
+          problems.push(`${name}: the speech was dropped, nothing came back`);
+        } else if (!said.some((word) => known.has(word))) {
+          problems.push(
+            `${name}: none of the words heard are in the sentence (heard ${JSON.stringify(heard)})`,
+          );
+        }
+      }
+      // Measured only: whether one short word survives. Reported, never failing.
+      const word = speechFromOnsetThenSilenceWav(source.wav, 0.6, 3);
+      if (word) {
+        await run(
+          "a short word: 0.6 s from the speech onset, then 3 s of silence (measured only)",
+          word,
+          true,
         );
       }
     }
@@ -682,7 +781,7 @@ export function renderMarkdown(report: Report): string {
     lines.push(
       "## 7c. Silence, noise, and speech that must survive",
       "",
-      "Digital silence and low room noise (white noise at about -50 dBFS), sent as WAV: every transcript must be empty. The other cases use FLEURS clips and are the guard the other way: speech must still come back after silence, around a pause, and for two clips with silence between them (at least half of each sentence's words).",
+      "Digital silence and low room noise (white noise at about -50 dBFS), sent as WAV: every transcript must be empty. The other cases use FLEURS clips and are the guard the other way: speech must still come back after silence (2 s from the speech onset, where the onset is the first 20 ms window above 5% of the clip's own peak, starting 100 ms before it, and at least 1 s of the 2 s above that level), around a pause, and for two clips with silence between them (at least half of each sentence's words). Rows marked (measured only) are reported and never fail the run.",
       "",
       "| Case | Transcript |",
       "|---|---|",
@@ -836,7 +935,8 @@ async function main() {
   }
   if (options.silence) {
     const speech = await loadClips({
-      n: 2,
+      // Four, so the onset case can move on to the next clip when one has too little speech.
+      n: 4,
       cacheDir: join(here, ".cache"),
       log,
     });

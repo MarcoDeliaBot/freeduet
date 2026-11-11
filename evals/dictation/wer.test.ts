@@ -22,7 +22,9 @@ import {
   type Report,
   silenceWav,
   spliceWav,
-  speechThenSilenceWav,
+  fragmentFromOnset,
+  findOnset,
+  speechFromOnsetThenSilenceWav,
 } from "./wer";
 import { pcm16Wav, readWav, wavDurationSeconds } from "./metrics";
 
@@ -529,7 +531,11 @@ describe("7c cases where speech must survive", () => {
     expect(wavDurationSeconds(spliceWav([a.wav, 5, b.wav, 3]))).toBe(
       6 + 5 + 6 + 3,
     );
-    expect(wavDurationSeconds(speechThenSilenceWav(a.wav))).toBe(12);
+    expect(
+      wavDurationSeconds(
+        speechFromOnsetThenSilenceWav(a.wav, 2, 10) as Uint8Array,
+      ),
+    ).toBe(12);
     const paused = pauseInMiddleWav(a.wav, 3);
     expect(wavDurationSeconds(paused)).toBe(9);
     const view = new DataView(
@@ -568,7 +574,8 @@ describe("7c cases where speech must survive", () => {
     );
     expect(result.problems).toEqual([]);
     expect(result.cases.map((item) => item.name)).toEqual([
-      "2 s of speech, then 10 s of silence",
+      "2 s of speech from its onset, then 10 s of silence",
+      "a short word: 0.6 s from the speech onset, then 3 s of silence (measured only)",
       "one whole clip with a 3 s pause in its middle",
       "two whole clips, 5 s of silence between, 3 s after",
     ]);
@@ -584,7 +591,7 @@ describe("7c cases where speech must survive", () => {
       [a],
     );
     expect(dropped.problems).toEqual([
-      "2 s of speech, then 10 s of silence: the speech was dropped, nothing came back",
+      "2 s of speech from its onset, then 10 s of silence: the speech was dropped, nothing came back",
     ]);
     const invented = await measureSilence(
       hearing({ 12: "Thank you." }),
@@ -748,8 +755,11 @@ describe("clips that are not PCM 16-bit (FLEURS is 32-bit float)", () => {
       (_, i) => Math.sin(i / 20) * 0.5,
     );
     const wav = floatWav(values);
-    const first2s = readWav(speechThenSilenceWav(wav)).samples;
+    const first2s = readWav(
+      speechFromOnsetThenSilenceWav(wav, 2, 10) as Uint8Array,
+    ).samples;
     expect(first2s).toHaveLength(16000 * 12);
+    // The sine is loud from sample 0, so the onset is 0 and the fragment starts at 0.
     expect(first2s[100]).toBe(Math.round(values[100] * 32767));
     expect(first2s[16000 * 2 - 1]).toBe(
       Math.round((values[16000 * 2 - 1] as number) * 32767),
@@ -775,16 +785,157 @@ describe("clips that are not PCM 16-bit (FLEURS is 32-bit float)", () => {
     );
     expect(kept).toEqual([
       ["digital silence, 5 s", 5],
-      ["2 s of speech, then 10 s of silence", 12],
+      ["2 s of speech from its onset, then 10 s of silence", 12],
+      [
+        "a short word: 0.6 s from the speech onset, then 3 s of silence (measured only)",
+        3.6,
+      ],
       ["one whole clip with a 3 s pause in its middle", 6],
       ["two whole clips, 5 s of silence between, 3 s after", 3 + 5 + 3 + 3],
     ]);
-    expect(fileSafe("2 s of speech, then 10 s of silence")).toBe(
-      "2-s-of-speech-then-10-s-of-silence",
+    expect(fileSafe("2 s of speech from its onset, then 10 s of silence")).toBe(
+      "2-s-of-speech-from-its-onset-then-10-s-of-silence",
     );
     expect(parseArguments(["--keep-audio", "/tmp/x"]).keepAudio).toBe("/tmp/x");
     expect(() => parseArguments(["--keep-audio"])).toThrow(
       "--keep-audio needs a value.",
     );
+  });
+});
+
+describe("speech onset", () => {
+  const RATE = 16000;
+  /** `lead` seconds of silence, then `voiced` seconds of a loud tone, then `tail` seconds of silence. */
+  const tone = (lead: number, voiced: number, tail = 0, amplitude = 8000) => {
+    const out = new Int16Array(Math.round((lead + voiced + tail) * RATE));
+    const from = Math.round(lead * RATE);
+    const to = from + Math.round(voiced * RATE);
+    for (let at = from; at < to; at++) {
+      out[at] = Math.round(amplitude * Math.sin(at / 5));
+    }
+    return out;
+  };
+
+  test("findOnset: the first 20 ms window above 5% of the clip's own peak", () => {
+    const onset = findOnset(tone(1.5, 2));
+    expect(onset?.index).toBe(Math.round(1.5 * RATE));
+    expect(onset?.threshold).toBeCloseTo(0.05 * 8000, 0);
+  });
+
+  test("findOnset: relative to the clip's own peak, so a quiet clip works too", () => {
+    expect(findOnset(tone(1, 2, 0, 300))?.index).toBe(RATE);
+  });
+
+  test("findOnset: a faint hiss before the speech is below the threshold", () => {
+    const samples = tone(1, 2);
+    for (let at = 0; at < RATE; at++) samples[at] = at % 2 === 0 ? 20 : -20;
+    expect(findOnset(samples)?.index).toBe(RATE);
+  });
+
+  test("findOnset: digital silence and an empty clip have no onset", () => {
+    expect(findOnset(new Int16Array(RATE))).toBeUndefined();
+    expect(findOnset(new Int16Array(0))).toBeUndefined();
+  });
+
+  test("fragmentFromOnset starts 100 ms before the onset and takes the seconds asked for", () => {
+    const fragment = fragmentFromOnset(tone(1.5, 4), 2);
+    expect(fragment?.samples).toHaveLength(2 * RATE);
+    // 100 ms of lead-in, then the tone.
+    expect(fragment?.samples[Math.round(0.05 * RATE)]).toBe(0);
+    const loud = fragment?.samples.findIndex((value) => value !== 0) as number;
+    expect(loud).toBeGreaterThanOrEqual(Math.round(0.1 * RATE) - 1);
+    expect(loud).toBeLessThanOrEqual(Math.round(0.1 * RATE) + 20);
+    expect(fragment?.voicedSeconds).toBeGreaterThan(1.85);
+  });
+
+  test("fragmentFromOnset: a clip that starts with speech starts at sample 0", () => {
+    const fragment = fragmentFromOnset(tone(0.04, 3), 2);
+    expect(fragment?.samples).toHaveLength(2 * RATE);
+  });
+
+  test("fragmentFromOnset: a clip too short for the seconds asked for gives nothing", () => {
+    expect(fragmentFromOnset(tone(1, 0.5), 2)).toBeUndefined();
+  });
+
+  test("the old first-2-seconds mistake: 1.7 s of lead-in leaves too little voiced, from the onset it is full", () => {
+    const clip = tone(1.7, 3);
+    const fromStart = clip.slice(0, 2 * RATE);
+    const voicedFromStart =
+      fromStart.filter((value) => value !== 0).length / RATE;
+    expect(voicedFromStart).toBeLessThan(0.5);
+    expect(fragmentFromOnset(clip, 2)?.voicedSeconds).toBeGreaterThan(1.8);
+  });
+
+  test("speechFromOnsetThenSilenceWav: the voiced minimum decides, and the tail is silence", () => {
+    const wav = pcm16Wav(tone(1.7, 0.6, 3), RATE);
+    expect(speechFromOnsetThenSilenceWav(wav, 2, 10, 1)).toBeUndefined();
+    const ok = speechFromOnsetThenSilenceWav(wav, 0.6, 3, 0.5) as Uint8Array;
+    const samples = readWav(ok).samples;
+    expect(samples).toHaveLength(Math.round(3.6 * RATE));
+    expect(samples.slice(Math.round(0.6 * RATE)).every((v) => v === 0)).toBe(
+      true,
+    );
+  });
+
+  const speechClip = (reference: string) => ({
+    wav: pcm16Wav(tone(1.7, 4, 1), RATE),
+    reference,
+  });
+  const short = {
+    wav: pcm16Wav(tone(0.1, 0.5, 0), RATE),
+    reference: "troppo breve",
+  };
+
+  test("7c: the onset case uses the next clip when the first has too little speech", async () => {
+    const sent: number[] = [];
+    const result = await measureSilence(
+      async (audio) => {
+        sent.push(readWav(audio as Uint8Array).samples.length);
+        return "gatto";
+      },
+      [],
+      [short, speechClip("il gatto dorme")],
+    );
+    expect(result.cases[0]?.name).toContain("2 s of speech from its onset");
+    expect(sent[0]).toBe(12 * RATE);
+    expect(result.problems.join("\n")).not.toContain("could not be built");
+  });
+
+  test("7c: no clip with enough speech is a problem, not a silent skip", async () => {
+    const result = await measureSilence(async () => "", [], [short]);
+    expect(result.passed).toBe(false);
+    expect(result.problems.join("\n")).toContain("could not be built");
+  });
+
+  test("7c: the short-word row is measured only, shows what came back and never fails", async () => {
+    let calls = 0;
+    const result = await measureSilence(
+      async (_audio) => {
+        calls++;
+        return calls === 2 ? "" : "gatto";
+      },
+      [],
+      [speechClip("il gatto dorme")],
+    );
+    const row = result.cases.find((item) => item.measured);
+    expect(row?.name).toContain("a short word: 0.6 s from the speech onset");
+    expect(row?.transcript).toBe("");
+    expect(result.problems.join("\n")).not.toContain("short word");
+  });
+
+  test("7c: a failing request on the short-word row is reported but does not fail the run", async () => {
+    let calls = 0;
+    const result = await measureSilence(
+      async () => {
+        calls++;
+        if (calls === 2) throw new Error("boom");
+        return "gatto";
+      },
+      [],
+      [speechClip("il gatto dorme")],
+    );
+    const row = result.cases.find((item) => item.measured);
+    expect(row?.failure).toBeDefined();
+    expect(result.problems.join("\n")).not.toContain("short word");
   });
 });
