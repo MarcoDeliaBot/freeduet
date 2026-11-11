@@ -251,6 +251,8 @@ the chat model provider; neither `OPENAI_BASE_URL` nor `OPENAI_API_KEY` is inher
 | `TRANSCRIPTION_BASE_URL` | Explicit API base URL, including the version path if required. The adapter appends `/audio/transcriptions`. |
 | `TRANSCRIPTION_MODEL` | Required model name, passed verbatim to the configured service. |
 | `TRANSCRIPTION_API_KEY` | Dedicated server-side bearer credential. Optional for services that intentionally require no authentication. |
+| `TRANSCRIPTION_LANGUAGE` | Optional. A two-letter language code Whisper supports (`it`, `en`, ...), sent as the request's `language` field. Unset, the request is the one it always was and the service decides. Anything else stops the server at start with a sentence saying so. |
+| `TRANSCRIPTION_PROMPT` | Optional, at most 500 characters. Names and terms the speaker is likely to use, sent as the request's `prompt` field. Unset, nothing is sent. |
 
 For OpenAI, set the base URL to `https://api.openai.com/v1` and select an available transcription
 model such as `gpt-transcribe`. A compatible local endpoint can instead use
@@ -271,6 +273,103 @@ process. These are concurrency limits, not a distributed usage quota; deployment
 quotas should also enforce them at their audio gateway. Provider failures never switch to another
 service. OpenBot keeps audio in memory only, retaining a failed recording in the browser for retry
 until cancellation or navigation. Your configured provider's retention policy still applies.
+
+### Local Whisper
+
+Dictation can run on a Whisper that lives beside the stack, so the recording never leaves the
+computer and no key or cloud service is involved. It is off by default. To turn it on, add one
+line to `.env` and start again:
+
+```
+FREEDUET_DICTATION=local
+```
+
+`scripts/start.sh` then starts a `whisper` service ([whisper.cpp](https://github.com/ggml-org/whisper.cpp)
+`v1.9.5`, on the CPU) and, only when you have set none of `TRANSCRIPTION_PROVIDER`,
+`TRANSCRIPTION_BASE_URL` and `TRANSCRIPTION_MODEL`, writes the three of them once, pointing at it
+(`http://127.0.0.1:4240/v1`, model name `local-whisper`). If you set any of the three yourself, nothing
+is written and yours stay. Without `FREEDUET_DICTATION` the stack is exactly what it was.
+
+| Variable | Meaning |
+| --- | --- |
+| `FREEDUET_DICTATION` | `local` switches the local Whisper on. Unset, empty or `off` is today's behaviour. Anything else is refused. |
+| `FREEDUET_WHISPER_MODEL` | One of the models below. Default `large-v3-turbo-q5_0`. A name that is not on the list is refused at start. |
+| `WHISPER_PORT` | The port the service listens on, on `127.0.0.1` only. Default `4240`. |
+
+| Model | Download | Notes |
+| --- | --- | --- |
+| `large-v3-turbo-q5_0` (default) | 574 MB | OpenAI's `large-v3-turbo` (large-v3 with a shortened decoder), quantised to 5 bits: the smallest download of the large family. |
+| `large-v3-turbo` | 1.6 GB | The same model unquantised (16 bits). |
+| `small` | 488 MB | The `small` model. whisper.cpp lists about 850 MB of memory for it. |
+| `base` | 148 MB | The `base` model, for a very small computer. whisper.cpp lists about 390 MB of memory for it. Fewer parameters: expect more mistakes. |
+
+Memory and speed of the two large models are not stated here because they were not measured:
+whisper.cpp's own table lists about 3.9 GB for the `large` family, and the run in the next section
+reports the time per request on your computer.
+
+The first start downloads the model once, into the Docker volume `whisper-models`, over https from
+the model's own repository (`huggingface.co/ggerganov/whisper.cpp`). Every model is checked against
+a SHA-256 written in the repository (`openbot/shared/whisper-models.ts`, with where each value was
+read). A file that does not match is deleted and the service stops with one sentence; nothing
+unchecked is ever loaded. Until the download has finished the microphone is there but answers that
+it cannot reach the service; later starts reuse the file. The image is built on the computer that
+runs it (`docker compose --profile whisper build whisper`), so it is not moved between an x86 and an
+ARM machine.
+
+What to know:
+
+- The service listens on `127.0.0.1` and has no sign-in. Anything that runs on the same computer can
+  send it audio, and can stop it (whisper.cpp's `/load` endpoint can be made to exit the server; run
+  `start.sh` again to bring it back). It does not publish a port to the network, and it must not be
+  put on one.
+- It detects the language itself unless `TRANSCRIPTION_LANGUAGE` is set. Whisper's detection can be
+  wrong on a very short phrase; setting `it` removes the doubt. `TRANSCRIPTION_PROMPT` helps with names.
+- It runs with `--suppress-nst` (no `[music]` or `(applause)` markers in the text) and with
+  voice-activity detection off. A recording with no speech comes back empty, and the composer says
+  "No speech was detected", the same for every service.
+- A recording is at most two minutes, as everywhere, and the service runs on the CPU only.
+- The microphone needs https or `localhost`. Opened from a phone at `http://<computer>:3010`, the
+  browser does not offer a microphone at all, and the button says so when it is pressed. Two ways
+  out: use the app on the computer itself, or put it behind https (a reverse proxy with a
+  certificate, or a tunnel that gives an https address) and open that address on the phone.
+- What is sent is the audio, the model name and the two optional fields above. The API server keeps
+  the audio in memory for as long as a request takes. The service writes each recording to `/tmp` in
+  its container, which is held in memory (`tmpfs`), while it converts it, and removes it right after.
+
+#### Proving it on your computer
+
+Three checks, and one in the browser, run on the maintainer's computer and not in CI: they need the
+real model and a public test set (the Italian test split of
+[Google FLEURS](https://huggingface.co/datasets/google/fleurs), CC BY 4.0), which is downloaded on
+first use into `evals/dictation/.cache/` (git ignores it, about 660 MB; `tar` must be installed).
+Run them from the repository root with the service up. `bun --env-file=openbot/.env` gives them the same
+`TRANSCRIPTION_*` settings the server has. Each prints a report and writes it to
+`evals/dictation/reports/<date>-<label>.{json,md}`; the exit code is `0` only when every check
+that ran passed.
+
+```
+# 7a. Word error rate on 100 clips, with the median and 95th percentile time per request and the ten worst lines
+bun --env-file=openbot/.env evals/dictation/wer.ts --model-label large-v3-turbo-q5_0
+
+# 7b. Five clips as WAV, as webm/opus and as mp4/aac, as the browsers send them (needs ffmpeg on the PATH)
+bun --env-file=openbot/.env evals/dictation/wer.ts --formats --model-label large-v3-turbo-q5_0
+
+# 7c. Silence and low room noise, 5 s and 30 s each: every transcript must be empty
+bun --env-file=openbot/.env evals/dictation/wer.ts --silence --model-label large-v3-turbo-q5_0
+
+# 7d. The whole path in Chrome: a fake microphone plays three clips, the text must reach the message box
+bun --env-file=openbot/.env openbot/scripts/freeduet-dictation-e2e.ts --app http://localhost:3010
+```
+
+7a reports a number and fails only with `--max-wer <percent>`, because what is good enough is for you
+to decide once you have seen it. 7b fails when a compressed form is worse than the WAV by more than two
+WER points. 7c fails on any text at all. 7d fails above 25 percent over its clips (`--max-wer`), or when
+the app shows an error. The word error rate counts words with the rules written at the top of
+`evals/dictation/metrics.ts` (lower case, no punctuation, numbers not rewritten, so it is slightly
+pessimistic). 7d starts a Chrome (`--chromium <path>` or `E2E_CHROMIUM` when it is not the installed
+one) and needs no sign-in in the default single-user mode; when the app asks for one, put the `Cookie`
+header of a signed-in browser in `E2E_COOKIE`. It is read from the environment, never printed and never
+written anywhere.
 
 Dictation is separate from live voice calls and does not enable them automatically.
 

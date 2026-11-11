@@ -163,6 +163,8 @@ info "3/4  API server"
 stop_port "$SERVER_PORT" server
 
 info "4/4  Docker"
+# FreeDuet: the local Whisper (D25) sits behind a profile, which `ps` and `down` leave out unless it is named.
+export COMPOSE_PROFILES="${COMPOSE_PROFILES:+$COMPOSE_PROFILES,}whisper"
 if compose ps --quiet 2>/dev/null | grep . >/dev/null; then
   compose down >/dev/null 2>&1
   green "  compose services: stopped"

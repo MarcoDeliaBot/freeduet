@@ -20,6 +20,9 @@ export function createTranscriptionProvider(
           const body = new FormData();
           body.set("file", file);
           body.set("model", config.model);
+          // Only when set, so the request is the same as it was before they existed.
+          if (config.language) body.set("language", config.language);
+          if (config.prompt) body.set("prompt", config.prompt);
           const response = await transport(
             `${config.baseUrl}/audio/transcriptions`,
             {
@@ -51,7 +54,9 @@ export function createTranscriptionProvider(
               "The transcription service returned an invalid response. Please retry.",
             );
           }
-          return result.text.trim();
+          const text = result.text.trim();
+          // The local Whisper separates its segments with line breaks; dictation is one run of text.
+          return config.joinSegments ? text.replace(/\s*\n\s*/g, " ") : text;
         },
       };
   }

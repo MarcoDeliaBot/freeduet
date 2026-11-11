@@ -128,3 +128,13 @@ test("limits simultaneous requests and releases the slot after failure", async (
   expect((await first).status).toBe(502);
   expect((await app.request("/transcriptions", recording())).status).toBe(502);
 });
+test("a transcript of only whitespace is the same 'nothing heard' answer as an empty one, whatever the provider", async () => {
+  for (const heard of ["", " ", "\n", " \n\t \n"]) {
+    const app = createDictationRoutes(user, { transcribe: async () => heard });
+    const response = await app.request("/transcriptions", recording());
+    expect(response.status).toBe(422);
+    expect(await response.json()).toEqual({
+      error: "No speech was detected. Try recording again.",
+    });
+  }
+});

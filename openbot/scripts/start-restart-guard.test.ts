@@ -138,6 +138,7 @@ async function runStartWithStaleServerProbe(
     ...Object.entries(settings).map(([key, value]) => `${key}=${value}`),
   );
   await writeFile(join(directory, envFile), `${environment.join("\n")}\n`);
+  const initialEnvironment = `${environment.join("\n")}\n`;
   if (envFile !== ".env")
     await writeFile(join(directory, ".env"), "PERSON=untouched\n");
   await writeFile(
@@ -221,6 +222,7 @@ exit 0
     `#!/usr/bin/env bash
 args="$*"
 printf '%s\\n' "$args" >> "$DOCKER_LOG"
+if [ -n "\${COMPOSE_PROFILES:-}" ]; then printf 'COMPOSE_PROFILES=%s\\n' "$COMPOSE_PROFILES" >> "$DOCKER_LOG"; fi
 if [[ "$args" == *"compose up"* ]]; then printf '%s' "$COMPUTER_TOKEN" > "$COMPOSE_COMPUTER_TOKEN"; fi
 if [[ "$args" == *"to_regclass('public.agent_profiles')"* ]]; then echo agent_profiles; fi
 if [[ "$args" == *"to_regclass('public.agent_preferences')"* ]]; then echo agent_preferences; fi
@@ -410,6 +412,7 @@ fi
         .text()
         .catch(() => ""),
       directory,
+      initialEnvironment,
       savedEnvironment: await Bun.file(join(directory, envFile)).text(),
       personEnvironment: await Bun.file(join(directory, ".env")).text(),
     };
@@ -1110,4 +1113,161 @@ test("start persists an overriding computer token for direct server restarts", a
   expect(result.savedEnvironment).toMatch(
     /^COMPUTER_TOKEN=new-development-token$/m,
   );
+});
+
+/*
+ * Dictation with a local Whisper (docs/M1_PLAN.md D25). Off unless .env says FREEDUET_DICTATION=local:
+ * a start without it must add no service, write nothing and download nothing.
+ */
+describe("start.sh local dictation (D25)", () => {
+  /** The service list of the `compose up` line, which is what Compose is asked to start. */
+  const upLine = (dockerLog: string) =>
+    dockerLog.split("\n").find((line) => line.startsWith("compose up")) ?? "";
+  /** The list as it was before D25, recorded from the script before this change. */
+  const BASELINE_UP =
+    "compose up -d --build postgres supervisor agent-computer agent-bot agent-langgraph agent-freeduet";
+
+  test.each([
+    ["unset", {}],
+    ["empty", { FREEDUET_DICTATION: "" }],
+    ["off", { FREEDUET_DICTATION: "off" }],
+  ])(
+    "with the flag %s the service list and .env are what they were",
+    async (_name, settings) => {
+      const result = await runStartWithStaleServerProbe(401, { settings });
+      expect(result.exitCode).toBe(0);
+      expect(upLine(result.dockerLog)).toBe(BASELINE_UP);
+      expect(result.dockerLog).not.toContain("whisper");
+      // Not one byte of .env changed, and nothing was said about dictation.
+      expect(result.savedEnvironment).toBe(result.initialEnvironment);
+      expect(result.savedEnvironment).not.toContain("TRANSCRIPTION");
+      expect(result.stdout).not.toContain("Dictation is local");
+      expect(result.curlLog).not.toContain("4240");
+    },
+  );
+
+  test("with the flag set the service is added and the three settings are written once", async () => {
+    const result = await runStartWithStaleServerProbe(401, {
+      settings: { FREEDUET_DICTATION: "local" },
+      repeatStart: true,
+    });
+    expect(result.exitCode).toBe(0);
+    expect(upLine(result.dockerLog)).toBe(`${BASELINE_UP} whisper`);
+    const lines = result.savedEnvironment.split("\n");
+    for (const line of [
+      "TRANSCRIPTION_PROVIDER=openai-compatible",
+      "TRANSCRIPTION_BASE_URL=http://127.0.0.1:4240/v1",
+      "TRANSCRIPTION_MODEL=local-whisper",
+    ])
+      expect(lines.filter((candidate) => candidate === line)).toEqual([line]);
+    expect(
+      lines.filter((line) => line.startsWith("TRANSCRIPTION_")).length,
+    ).toBe(3);
+    // Everything that was there is still there, in the order it was.
+    expect(result.savedEnvironment.startsWith(result.initialEnvironment)).toBe(
+      true,
+    );
+    expect(result.stdout).toContain(
+      "Dictation is local: a Whisper on this computer hears the microphone and nothing leaves it. The first start downloads the model large-v3-turbo-q5_0 (574 MB) once, and until it has finished the microphone answers that it cannot reach the service.",
+    );
+    expect(result.stdout).toContain("Wrote TRANSCRIPTION_PROVIDER");
+    // The second run finds them and writes nothing, but still says dictation is local.
+    expect(result.repeated?.exitCode).toBe(0);
+    expect(result.repeated?.stdout).not.toContain("Wrote TRANSCRIPTION");
+    expect(result.repeated?.stdout).toContain("Dictation is local");
+    // Nothing about the key a cloud service would need.
+    expect(result.stdout).not.toMatch(/api[_ ]?key/i);
+  });
+
+  test.each([
+    ["TRANSCRIPTION_PROVIDER", "openai-compatible"],
+    ["TRANSCRIPTION_BASE_URL", "https://speech.example/v1"],
+    ["TRANSCRIPTION_MODEL", "their-model"],
+  ])(
+    "a person's own %s means none of the three is written",
+    async (key, value) => {
+      const result = await runStartWithStaleServerProbe(401, {
+        settings: { FREEDUET_DICTATION: "local", [key]: value },
+      });
+      expect(result.exitCode).toBe(0);
+      const written = result.savedEnvironment
+        .split("\n")
+        .filter((line) => line.startsWith("TRANSCRIPTION_"));
+      expect(written).toEqual([`${key}=${value}`]);
+      expect(result.stdout).not.toContain("Wrote TRANSCRIPTION");
+      // The service still starts: only the three settings are theirs.
+      expect(upLine(result.dockerLog)).toBe(`${BASELINE_UP} whisper`);
+    },
+  );
+
+  test("the model and the port come from .env", async () => {
+    const result = await runStartWithStaleServerProbe(401, {
+      settings: {
+        FREEDUET_DICTATION: "local",
+        FREEDUET_WHISPER_MODEL: "small",
+        WHISPER_PORT: "4999",
+      },
+    });
+    expect(result.exitCode).toBe(0);
+    expect(result.savedEnvironment).toContain(
+      "TRANSCRIPTION_BASE_URL=http://127.0.0.1:4999/v1\n",
+    );
+    expect(result.stdout).toContain("the model small (488 MB)");
+  });
+
+  test.each([
+    [
+      "a flag that is not local",
+      { FREEDUET_DICTATION: "on" },
+      "FREEDUET_DICTATION must be local",
+    ],
+    [
+      "a model outside the closed list",
+      { FREEDUET_DICTATION: "local", FREEDUET_WHISPER_MODEL: "large-v3" },
+      "FREEDUET_WHISPER_MODEL must be one of: large-v3-turbo-q5_0, large-v3-turbo, small, base",
+    ],
+    [
+      "a port that is not a number",
+      { FREEDUET_DICTATION: "local", WHISPER_PORT: "4240/x" },
+      "WHISPER_PORT must be a port number",
+    ],
+  ])(
+    "%s is refused before anything starts or is written",
+    async (_name, settings, message) => {
+      const result = await runStartWithStaleServerProbe(401, { settings });
+      expect(result.exitCode).toBe(1);
+      expect(result.stdout).toContain(message);
+      expect(result.dockerLog).toBe("");
+      expect(result.savedEnvironment).toBe(result.initialEnvironment);
+    },
+  );
+
+  test("the models and sizes this script knows are the ones in shared/whisper-models.ts", async () => {
+    const { WHISPER_MODELS } = await import("../shared/whisper-models");
+    const script = await readFile("scripts/start.sh", "utf8");
+    const known = [
+      ...script.matchAll(
+        /^\s+([a-z0-9._-]+)\) WHISPER_MODEL_SIZE="([^"]+)" ;;$/gm,
+      ),
+    ].map((match) => [match[1], match[2]]);
+    expect(known).toEqual(
+      Object.entries(WHISPER_MODELS).map(([name, model]) => [
+        name,
+        model.sizeLabel,
+      ]),
+    );
+    expect(script).toContain(
+      `FREEDUET_WHISPER_MODEL must be one of: ${Object.keys(WHISPER_MODELS).join(", ")}.`,
+    );
+  });
+
+  test("stop.sh names the profile, so Compose stops the Whisper it started", async () => {
+    const result = await runStartWithStaleServerProbe(400, {
+      script: "stop",
+      worker: "own",
+    });
+    expect(result.exitCode).toBe(0);
+    expect(result.dockerLog).toContain("COMPOSE_PROFILES=whisper");
+    expect(result.dockerLog).toContain("compose ps --quiet");
+  });
 });

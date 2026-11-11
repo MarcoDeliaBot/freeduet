@@ -418,6 +418,9 @@ jobs:
       # The team eval runner, its checks and graders, offline: fake mode and scripted servers only.
       - run: bun test ../evals/team/run.test.ts ../evals/team/live-tools.test.ts ../evals/team/dates.test.ts
       - run: bun ../evals/team/run.ts --fake
+      # The dictation proofs' own measuring tools (word error rate, the download of a test set, the
+      # report), on made-up data and a fake service. The proofs themselves run on the maintainer's computer.
+      - run: bun test ../evals/dictation/metrics.test.ts ../evals/dictation/fleurs.test.ts ../evals/dictation/wer.test.ts
 
   # FreeDuet: agent-freeduet, the service that runs every member on the person's own Claude Code
   # login. Offline: a fake `claude` replays fixtures, so no login, no key and no network.

@@ -141,3 +141,41 @@ for (const variant of ["compact", "default"] as const) {
     });
   }
 }
+
+/**
+ * A page that is not secure (a phone opening http://<the computer's address>:3010) gets no
+ * microphone from the browser at all. The button used to sit disabled with its reason in a `title`,
+ * which a touch screen never shows: it simply did nothing.
+ */
+for (const variant of ["compact", "default"] as const) {
+  test(`${variant} dictation: on a page that is not secure the mic says why, in one sentence`, async () => {
+    queryClient.setQueryData(deploymentKeys.capabilities(), {
+      generativeUi: true,
+      transcription: true,
+    });
+    Object.defineProperty(window, "isSecureContext", {
+      value: false,
+      configurable: true,
+    });
+    try {
+      const view = render(
+        <Composer compact={variant === "compact"} onSubmit={() => {}} />,
+      );
+      const mic = view.getByRole("button", { name: "Dictate a message" });
+      expect((mic as HTMLButtonElement).disabled).toBe(false);
+      fireEvent.click(mic);
+      await waitFor(() => expect(view.getByRole("alert")).toBeDefined());
+      expect(view.getByRole("alert").textContent).toBe(
+        "The microphone only works on a secure page. Open FreeDuet on the computer where it runs (localhost), or ask whoever runs it to put it behind https.",
+      );
+      fireEvent.click(view.getByRole("button", { name: "Cancel dictation" }));
+      await waitFor(() =>
+        expect(
+          view.getByRole("button", { name: "Dictate a message" }),
+        ).toBeDefined(),
+      );
+    } finally {
+      Reflect.deleteProperty(window, "isSecureContext");
+    }
+  });
+}

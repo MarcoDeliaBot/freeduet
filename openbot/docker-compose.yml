@@ -459,6 +459,50 @@ services:
     networks:
       - default
 
+  # FreeDuet: dictation with a local Whisper (docs/M1_PLAN.md D25). Off unless .env has
+  # FREEDUET_DICTATION=local: scripts/start.sh names this service then, and only then. It is behind a
+  # profile for the same reason agent-harness is, so a plain `docker compose up` neither builds
+  # whisper.cpp nor downloads a model for a person who never asked for dictation.
+  whisper:
+    profiles: ["whisper"]
+    build:
+      context: .
+      dockerfile: whisper/Dockerfile
+    image: ${WHISPER_IMAGE:-freeduet-whisper:latest}
+    pull_policy: ${IMAGE_PULL_POLICY:-build}
+    ports:
+      # Loopback only. The server is a host process and reaches this at http://127.0.0.1:4240/v1,
+      # a literal IPv4 address, so there is no `localhost` ambiguity to publish a second address for.
+      # Whisper's server has no sign-in of its own: loopback is the whole boundary.
+      - "127.0.0.1:${WHISPER_PORT:-4240}:4240"
+    environment:
+      # A name from shared/whisper-models.ts; the container refuses any other.
+      FREEDUET_WHISPER_MODEL: ${FREEDUET_WHISPER_MODEL:-large-v3-turbo-q5_0}
+      # Read-only root below: nothing here should need a home directory or a runtime cache.
+      HOME: /tmp
+      BUN_RUNTIME_TRANSPILER_CACHE_PATH: "0"
+    volumes:
+      # The checked model, kept between restarts so it is downloaded once.
+      - whisper-models:/models
+    # The recording is audio from a person's browser, parsed by ffmpeg: give the container as little
+    # as it can work with. Only /models and a small /tmp (the converted audio) are writable.
+    read_only: true
+    tmpfs:
+      - /tmp:size=128m
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    healthcheck:
+      # Not answering while the model downloads, then 503 until it is loaded: unhealthy until ready.
+      test: ["CMD", "bun", "-e", "const r = await fetch('http://127.0.0.1:4240/health'); if (!r.ok) process.exit(1)"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 120s
+    networks:
+      - default
+
 networks:
   # The database and the one service that reaches it by name. Nothing a Bot can reach is on it.
   #
@@ -480,5 +524,7 @@ volumes:
   # FreeDuet: agent-freeduet's CLI sign-in and its checkpoints.
   freeduet-claude-login:
   freeduet-data:
+  # FreeDuet: the Whisper model the local dictation service downloaded and checked (D25).
+  whisper-models:
   # FreeDuet: stands in for the documents folder, read-only inside the supervisor, while none is set.
   documents-off:

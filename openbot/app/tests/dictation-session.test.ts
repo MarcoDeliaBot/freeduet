@@ -1,6 +1,9 @@
 import { expect, test } from "bun:test";
+import {
+  type Recording,
+  RecordingUnsupportedError,
+} from "@/lib/dictation/recording";
 import { DictationSession } from "@/lib/dictation/session";
-import type { Recording } from "@/lib/dictation/recording";
 
 const audio = new Blob(["recorded audio"], { type: "audio/webm" });
 
@@ -115,4 +118,33 @@ test("permission errors have an actionable recovery", async () => {
     error:
       "Microphone access was denied. Allow it in your browser and try again.",
   });
+});
+
+test("a page that cannot record says why, instead of asking the person to check a microphone", async () => {
+  const session = new DictationSession({
+    record: async () => {
+      throw new RecordingUnsupportedError("Open this on the computer itself.");
+    },
+    transcribe: async () => "unused",
+    onTranscript: () => {
+      throw new Error("Must not insert");
+    },
+  });
+  await session.start();
+  expect(session.getSnapshot()).toMatchObject({
+    phase: "error",
+    error: "Open this on the computer itself.",
+  });
+  // Any other failure to start keeps the generic advice.
+  const other = new DictationSession({
+    record: async () => {
+      throw new Error("device busy");
+    },
+    transcribe: async () => "unused",
+    onTranscript: () => {},
+  });
+  await other.start();
+  expect(other.getSnapshot().error).toBe(
+    "Could not start recording. Check your microphone and try again.",
+  );
 });

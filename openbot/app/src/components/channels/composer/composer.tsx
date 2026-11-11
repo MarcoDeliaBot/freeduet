@@ -39,6 +39,7 @@ import {
   mediaTypeOf,
   shouldClaimPaste,
 } from "@/lib/channels/attachments";
+import { recordingUnsupportedMessage } from "@/lib/dictation/recording";
 import { DURATION, EASE_OUT } from "@/lib/motion";
 import { newId } from "@/lib/new-id";
 import { useReducedMotionPreference } from "@/lib/reduced-motion";
@@ -1450,12 +1451,13 @@ export function Composer({
       title={
         dictation.supported
           ? "Say everything you need to do"
-          : "Dictation needs a supported browser and a secure (HTTPS) connection"
+          : recordingUnsupportedMessage()
       }
       className={actionClassName}
       // Not disabled while the sheet records: it is out of reach behind the sheet anyway, and a
-      // button disabled under the focus is one the sheet cannot hand focus back to on ×.
-      disabled={disabled || !dictation.supported}
+      // button disabled under the focus is one the sheet cannot hand focus back to on ×. Nor where
+      // the page cannot record: pressed, it says why instead of doing nothing.
+      disabled={disabled}
       onClick={openVoiceSheet}
       size="icon"
       type="button"

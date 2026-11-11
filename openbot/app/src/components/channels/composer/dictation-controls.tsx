@@ -9,6 +9,7 @@ import { type ReactNode, useEffect, useRef } from "react";
 import { DuetIcon } from "@/components/duet/icons";
 import { Button } from "@/components/ui/button";
 import { LiveWaveform } from "@/components/ui/live-waveform";
+import { recordingUnsupportedMessage } from "@/lib/dictation/recording";
 import { EASE_OUT, ENTRANCE_SECONDS } from "@/lib/motion";
 import { cn } from "@/lib/utils";
 import type { useDictation } from "./use-dictation";
@@ -32,13 +33,13 @@ export function DictationButton({
       title={
         dictation.supported
           ? "Dictate a message"
-          : "Dictation needs a supported browser and a secure (HTTPS) connection"
+          : recordingUnsupportedMessage()
       }
       className="size-[44px] shrink-0 self-end rounded-full text-duet-ink-2"
-      // Opening the voice sheet, it stays enabled under it, so × can hand the focus back.
-      disabled={
-        disabled || !dictation.supported || (dictation.busy && !onStart)
-      }
+      // Opening the voice sheet, it stays enabled under it, so × can hand the focus back. Not
+      // disabled where the page cannot record: a disabled button does nothing when tapped, and a
+      // `title` is never shown on a touch screen. Pressed, it says why (see RecordingUnsupportedError).
+      disabled={disabled || (dictation.busy && !onStart)}
       onClick={onStart ?? (() => void dictation.session.start())}
       size="icon"
       type="button"

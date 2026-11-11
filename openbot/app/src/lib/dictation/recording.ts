@@ -19,13 +19,28 @@ export function recordingSupported(): boolean {
   );
 }
 
+/** The page cannot record at all. Its message is meant to be shown to the person as it is. */
+export class RecordingUnsupportedError extends Error {
+  override name = "RecordingUnsupportedError";
+}
+
+/**
+ * One sentence on why this page has no microphone and what to do about it. A browser gives the
+ * microphone only to https pages and to localhost, so a phone that opens http://<computer>:3010
+ * has none; that is the case worth naming, the other being a browser too old to record.
+ */
+export function recordingUnsupportedMessage(): string {
+  if (typeof window !== "undefined" && window.isSecureContext === false) {
+    return "The microphone only works on a secure page. Open FreeDuet on the computer where it runs (localhost), or ask whoever runs it to put it behind https.";
+  }
+  return "This browser cannot record audio. Try an up-to-date Chrome, Edge, Firefox or Safari.";
+}
+
 export async function startRecording(
   onError: (error: Error) => void,
 ): Promise<Recording> {
   if (!recordingSupported())
-    throw new Error(
-      "Dictation requires a supported browser and HTTPS (or localhost).",
-    );
+    throw new RecordingUnsupportedError(recordingUnsupportedMessage());
   const mimeType = ["audio/webm;codecs=opus", "audio/mp4", "audio/webm"].find(
     (type) => MediaRecorder.isTypeSupported(type),
   );

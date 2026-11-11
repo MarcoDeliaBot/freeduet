@@ -87,7 +87,7 @@ export function createDictationRoutes(
           new File([file], `recording.${extension}`, { type: mediaType }),
           signal,
         );
-        if (!text)
+        if (!text.trim())
           return context.json(
             { error: "No speech was detected. Try recording again." },
             422,
