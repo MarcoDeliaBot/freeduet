@@ -21,15 +21,11 @@ export type TranscriptionConfig = {
    */
   joinSegments?: true;
   /**
-   * Local service only. When set, the request asks for whisper.cpp's verbose response and a segment
-   * whose `no_speech_prob` is above this is dropped. Unset (every other provider), the request is the
-   * plain one.
+   * Local service only: when `TRANSCRIPTION_LANGUAGE` is unset, the language the browser sends with
+   * the recording (validated by the route) is passed on as `language`.
    */
-  noSpeechThreshold?: number;
+  useRequestLanguage?: true;
 };
-
-/** whisper.cpp's own default no-speech threshold (examples/server/server.cpp:90 at v1.9.5). */
-export const DEFAULT_NO_SPEECH_THRESHOLD = 0.6;
 
 export function transcriptionConfig(
   environment: Record<string, string | undefined>,
@@ -87,7 +83,7 @@ export function transcriptionConfig(
     ...(local
       ? {
           joinSegments: true as const,
-          noSpeechThreshold: noSpeechThreshold(environment),
+          useRequestLanguage: true as const,
         }
       : {}),
   };
@@ -113,18 +109,4 @@ function localDictation(
     );
   }
   return true;
-}
-
-function noSpeechThreshold(
-  environment: Record<string, string | undefined>,
-): number {
-  const raw = environment.WHISPER_NO_SPEECH_THRESHOLD?.trim();
-  if (!raw) return DEFAULT_NO_SPEECH_THRESHOLD;
-  const value = Number(raw);
-  if (!Number.isFinite(value) || value < 0 || value > 1) {
-    throw new Error(
-      "WHISPER_NO_SPEECH_THRESHOLD must be a number from 0 to 1.",
-    );
-  }
-  return value;
 }

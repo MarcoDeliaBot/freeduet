@@ -9,12 +9,15 @@
  *   --formats        7b  five clips as WAV, as webm/opus and as mp4/aac: each compressed form must not
  *                        be worse than the WAV by more than 2 WER points. Needs ffmpeg on the PATH, or Docker and the built whisper image (it has one).
  *   --silence        7c  5 s and 30 s of digital silence and of low room noise: every transcript must
- *                        be empty, or the check fails; and 2 s of speech followed by 10 s of silence must
- *                        still come back as words. With the local service it prints the no_speech_prob and
- *                        avg_logprob of every segment, so the threshold can be chosen from measured numbers
+ *                        be empty, or the check fails; and speech must survive: 2 s of a clip then 10 s of
+ *                        silence, one clip with a 3 s pause in its middle (no more than 2 points worse than
+ *                        alone), two clips with 5 s of silence between them (half of each sentence back)
  *   --wer            run 7a too when --formats or --silence is given
  *   --n <count>      clips for 7a (default 100; the test split has more than 800)
  *   --model-label X  names the report: evals/dictation/reports/<date>-X.{json,md}
+ *   --language xx    send this language with every request (a two-letter code), over
+ *                    TRANSCRIPTION_LANGUAGE; without either the service detects it, which takes about
+ *                    twice as long on the local one
  *   --max-wer <pct>  fail when the 7a word error rate is above this percentage
  *
  * Every request goes through createTranscriptionProvider(transcriptionConfig(process.env)), the code
@@ -36,9 +39,9 @@ import {
 } from "../../openbot/server/src/dictation/config";
 import {
   createTranscriptionProvider,
-  type SegmentInspector,
   type TranscriptionProvider,
 } from "../../openbot/server/src/dictation/provider";
+import { DICTATION_LANGUAGES } from "../../openbot/server/src/dictation/languages";
 import { type Clip, loadClips } from "./fleurs";
 import {
   corpusWordErrorRate,
@@ -94,17 +97,6 @@ export function productTranscribe(provider: TranscriptionProvider): Transcribe {
   };
 }
 
-/** The local service's per-segment numbers for a WAV, asked the way the server asks. */
-export function productInspect(
-  provider: SegmentInspector,
-): (audio: Uint8Array) => Promise<SilenceSegment[]> {
-  return (audio) =>
-    provider.segments(
-      new File([new Uint8Array(audio)], "recording.wav", { type: "audio/wav" }),
-      AbortSignal.timeout(DICTATION_TIMEOUT_MS),
-    );
-}
-
 async function timed(
   action: () => Promise<string>,
 ): Promise<{ text: string; seconds: number; error?: string }> {
@@ -146,6 +138,8 @@ export type WerResult = {
   insertions: number;
   wer: number;
   medianSeconds: number;
+  /** Median length of the clips that were answered, to read the time per request against. */
+  medianAudioSeconds: number;
   p95Seconds: number;
   audioSeconds: number;
   /** Seconds of waiting per second of audio: below 1 is faster than speaking. */
@@ -199,6 +193,9 @@ export async function measureWer(
     insertions: counts.reduce((sum, c) => sum + c.insertions, 0),
     wer: corpusWordErrorRate(counts),
     medianSeconds: median(times),
+    medianAudioSeconds: median(
+      lines.filter((line) => !line.failure).map((line) => line.audioSeconds),
+    ),
     p95Seconds: percentile(times, 95),
     audioSeconds,
     realTimeFactor: answered === 0 ? 0 : waited / answered,
@@ -403,20 +400,8 @@ export const SILENCE_CASES: readonly SilenceCase[] = [
   { name: "low room noise, 30 s", seconds: 30, noise: true },
 ];
 
-export type SilenceSegment = {
-  text: string;
-  noSpeechProb: number;
-  avgLogprob: number | null;
-};
-
 export type SilenceResult = {
-  cases: {
-    name: string;
-    transcript: string;
-    failure?: string;
-    /** What the service said about each segment before any was dropped, when it can say. */
-    segments?: SilenceSegment[];
-  }[];
+  cases: { name: string; transcript: string; failure?: string }[];
   passed: boolean;
   problems: string[];
 };
@@ -429,84 +414,137 @@ export function silenceWav(seconds: number, noise: boolean): Uint8Array {
   );
 }
 
+/** The samples of a 16 kHz mono WAV. */
+function wavSamples(wav: Uint8Array): Int16Array {
+  const view = new DataView(wav.buffer, wav.byteOffset, wav.byteLength);
+  const samples = new Int16Array(Math.floor((wav.byteLength - 44) / 2));
+  for (let index = 0; index < samples.length; index++) {
+    samples[index] = view.getInt16(44 + index * 2, true);
+  }
+  return samples;
+}
+
+/** WAV files and stretches of digital silence (a number of seconds), one after the other. */
+export function spliceWav(parts: readonly (Uint8Array | number)[]): Uint8Array {
+  const pieces = parts.map((part) =>
+    typeof part === "number"
+      ? new Int16Array(Math.round(part * SAMPLE_RATE))
+      : wavSamples(part),
+  );
+  const all = new Int16Array(
+    pieces.reduce((sum, piece) => sum + piece.length, 0),
+  );
+  let at = 0;
+  for (const piece of pieces) {
+    all.set(piece, at);
+    at += piece.length;
+  }
+  return pcm16Wav(all, SAMPLE_RATE);
+}
+
 /** The first `speechSeconds` of a 16 kHz WAV, then `silenceSeconds` of digital silence. */
 export function speechThenSilenceWav(
   wav: Uint8Array,
   speechSeconds = 2,
   silenceSeconds = 10,
 ): Uint8Array {
-  const view = new DataView(wav.buffer, wav.byteOffset, wav.byteLength);
-  const speech = Math.min(
-    SAMPLE_RATE * speechSeconds,
-    Math.floor((wav.byteLength - 44) / 2),
-  );
-  const samples = new Int16Array(speech + SAMPLE_RATE * silenceSeconds);
-  for (let index = 0; index < speech; index++) {
-    samples[index] = view.getInt16(44 + index * 2, true);
-  }
-  return pcm16Wav(samples, SAMPLE_RATE);
+  const speech = wavSamples(wav).slice(0, SAMPLE_RATE * speechSeconds);
+  return spliceWav([pcm16Wav(speech, SAMPLE_RATE), silenceSeconds]);
 }
 
-export type SilenceExtras = {
-  /** The numbers behind each case, from the local service. Without it only the transcript is shown. */
-  inspect?: (audio: Uint8Array) => Promise<SilenceSegment[]>;
-  /**
-   * The guard against dropping real speech: a clip and its sentence. The first 2 s of it, followed by
-   * 10 s of silence, must still come back as words, and at least one must be in the sentence.
-   */
-  speech?: { wav: Uint8Array; reference: string };
-};
+/** A WAV with `seconds` of digital silence inserted at its middle. */
+export function pauseInMiddleWav(wav: Uint8Array, seconds = 3): Uint8Array {
+  const samples = wavSamples(wav);
+  const half = Math.floor(samples.length / 2);
+  return spliceWav([
+    pcm16Wav(samples.slice(0, half), SAMPLE_RATE),
+    seconds,
+    pcm16Wav(samples.slice(half), SAMPLE_RATE),
+  ]);
+}
+
+export type SpeechClip = { wav: Uint8Array; reference: string };
+
+/** Share of the sentence's different words that appear among the words heard. */
+export function coverage(reference: string, heard: string): number {
+  const words = new Set(normalizeText(reference).split(" ").filter(Boolean));
+  const said = new Set(normalizeText(heard).split(" ").filter(Boolean));
+  if (words.size === 0) return 0;
+  return [...words].filter((word) => said.has(word)).length / words.size;
+}
+
+/** At least this share of each sentence must come back in the two-clips case. */
+export const MIN_COVERAGE = 0.5;
 
 export async function measureSilence(
   transcribe: Transcribe,
   cases: readonly SilenceCase[] = SILENCE_CASES,
-  extras: SilenceExtras = {},
+  /** FLEURS clips for the cases where speech must survive. Two are needed for all of them. */
+  clips: readonly SpeechClip[] = [],
 ): Promise<SilenceResult> {
   const results: SilenceResult["cases"] = [];
   const problems: string[] = [];
-  const look = async (audio: Uint8Array) => {
-    if (!extras.inspect) return {};
-    try {
-      return { segments: await extras.inspect(audio) };
-    } catch {
-      return {};
-    }
-  };
-  for (const item of cases) {
-    const audio = silenceWav(item.seconds, item.noise);
-    const answer = await timed(async () => transcribe(audio, "audio/wav"));
-    results.push({
-      name: item.name,
-      transcript: answer.text,
-      ...(answer.error ? { failure: answer.error } : {}),
-      ...(await look(audio)),
-    });
-    if (answer.error) {
-      problems.push(`${item.name}: the request failed (${answer.error})`);
-    } else if (answer.text.trim() !== "") {
-      problems.push(`${item.name}: heard ${JSON.stringify(answer.text)}`);
-    }
-  }
-  if (extras.speech) {
-    const name = "2 s of speech, then 10 s of silence";
-    const audio = speechThenSilenceWav(extras.speech.wav);
+  const run = async (name: string, audio: Uint8Array) => {
     const answer = await timed(async () => transcribe(audio, "audio/wav"));
     results.push({
       name,
       transcript: answer.text,
       ...(answer.error ? { failure: answer.error } : {}),
-      ...(await look(audio)),
     });
-    const known = new Set(normalizeText(extras.speech.reference).split(" "));
-    const heard = normalizeText(answer.text).split(" ").filter(Boolean);
     if (answer.error) {
       problems.push(`${name}: the request failed (${answer.error})`);
-    } else if (heard.length === 0) {
-      problems.push(`${name}: the speech was dropped, nothing came back`);
-    } else if (!heard.some((word) => known.has(word))) {
-      problems.push(
-        `${name}: none of the words heard are in the sentence (heard ${JSON.stringify(answer.text)})`,
-      );
+      return undefined;
+    }
+    return answer.text;
+  };
+  for (const item of cases) {
+    const heard = await run(item.name, silenceWav(item.seconds, item.noise));
+    if (heard !== undefined && heard.trim() !== "") {
+      problems.push(`${item.name}: heard ${JSON.stringify(heard)}`);
+    }
+  }
+  const [first, second] = clips;
+  if (first) {
+    const name = "2 s of speech, then 10 s of silence";
+    const heard = await run(name, speechThenSilenceWav(first.wav));
+    if (heard !== undefined) {
+      const said = normalizeText(heard).split(" ").filter(Boolean);
+      const known = new Set(normalizeText(first.reference).split(" "));
+      if (said.length === 0) {
+        problems.push(`${name}: the speech was dropped, nothing came back`);
+      } else if (!said.some((word) => known.has(word))) {
+        problems.push(
+          `${name}: none of the words heard are in the sentence (heard ${JSON.stringify(heard)})`,
+        );
+      }
+    }
+    const alone = await timed(async () => transcribe(first.wav, "audio/wav"));
+    const pausedName = "one whole clip with a 3 s pause in its middle";
+    const paused = await run(pausedName, pauseInMiddleWav(first.wav));
+    if (alone.error) {
+      problems.push(`${pausedName}: the clip alone failed (${alone.error})`);
+    } else if (paused !== undefined) {
+      const before = wordErrorRate(first.reference, alone.text).wer;
+      const after = wordErrorRate(first.reference, paused).wer;
+      if (Math.round((after - before) * 1000) / 1000 > FORMAT_TOLERANCE) {
+        problems.push(
+          `${pausedName}: ${(after * 100).toFixed(1)}% against ${(before * 100).toFixed(1)}% for the clip alone; the most allowed is ${FORMAT_TOLERANCE * 100} points worse`,
+        );
+      }
+    }
+  }
+  if (first && second) {
+    const name = "two whole clips, 5 s of silence between, 3 s after";
+    const heard = await run(name, spliceWav([first.wav, 5, second.wav, 3]));
+    if (heard !== undefined) {
+      for (const [index, clip] of [first, second].entries()) {
+        const share = coverage(clip.reference, heard);
+        if (share < MIN_COVERAGE) {
+          problems.push(
+            `${name}: only ${(share * 100).toFixed(0)}% of the words of sentence ${index + 1} came back (heard ${JSON.stringify(heard)})`,
+          );
+        }
+      }
     }
   }
   return { cases: results, passed: problems.length === 0, problems };
@@ -605,7 +643,7 @@ export function renderMarkdown(report: Report): string {
       "|---|---|",
       `| Word error rate | ${percent(w.wer)} (${w.substitutions} substituted, ${w.deletions} deleted, ${w.insertions} inserted, of ${w.refWords} words) |`,
       `| Requests that failed | ${w.failed} |`,
-      `| Median time per request | ${seconds(w.medianSeconds)} |`,
+      `| Median time per request | ${seconds(w.medianSeconds)}, for clips of a median ${seconds(w.medianAudioSeconds)} |`,
       `| 95th percentile | ${seconds(w.p95Seconds)} |`,
       `| Audio sent | ${w.audioSeconds.toFixed(0)} s, waited ${w.realTimeFactor.toFixed(2)} s per second of audio |`,
       "",
@@ -636,27 +674,16 @@ export function renderMarkdown(report: Report): string {
     );
   }
   if (report.silence) {
-    const numbers = (item: NonNullable<Report["silence"]>["cases"][number]) =>
-      item.segments === undefined
-        ? ""
-        : item.segments.length === 0
-          ? "no segments"
-          : item.segments
-              .map(
-                (segment) =>
-                  `${cell(JSON.stringify(segment.text.trim()))} no_speech_prob ${segment.noSpeechProb.toFixed(3)}, avg_logprob ${segment.avgLogprob === null ? "n/a" : segment.avgLogprob.toFixed(3)}`,
-              )
-              .join("<br>");
     lines.push(
-      "## 7c. Silence and room noise",
+      "## 7c. Silence, noise, and speech that must survive",
       "",
-      "Digital silence and low room noise (white noise at about -50 dBFS), sent as WAV: every transcript must be empty. The last case, when it ran, is the guard the other way: 2 s of a FLEURS clip, then 10 s of silence, must still come back as words from its sentence. With the local service the last column is what it said about each segment before any was dropped, so a threshold can be chosen from numbers.",
+      "Digital silence and low room noise (white noise at about -50 dBFS), sent as WAV: every transcript must be empty. The other cases use FLEURS clips and are the guard the other way: speech must still come back after silence, around a pause, and for two clips with silence between them (at least half of each sentence's words).",
       "",
-      "| Case | Transcript | Segments (service's numbers) |",
-      "|---|---|---|",
+      "| Case | Transcript |",
+      "|---|---|",
       ...report.silence.cases.map(
         (item) =>
-          `| ${item.name} | ${item.failure ? `request failed: ${cell(item.failure)}` : item.transcript.trim() === "" ? "(empty)" : cell(JSON.stringify(item.transcript))} | ${numbers(item)} |`,
+          `| ${item.name} | ${item.failure ? `request failed: ${cell(item.failure)}` : item.transcript.trim() === "" ? "(empty)" : cell(JSON.stringify(item.transcript))} |`,
       ),
       "",
     );
@@ -673,6 +700,7 @@ type Options = {
   formats: boolean;
   silence: boolean;
   maxWer?: number;
+  language?: string;
 };
 
 export function parseArguments(argv: readonly string[]): Options {
@@ -699,6 +727,14 @@ export function parseArguments(argv: readonly string[]): Options {
       options.n = n;
     } else if (flag === "--model-label") {
       options.label = value(flag, index++);
+    } else if (flag === "--language") {
+      const code = value(flag, index++).trim().toLowerCase();
+      if (!DICTATION_LANGUAGES.has(code)) {
+        throw new Error(
+          "--language must be a two-letter language code Whisper supports, such as it or en.",
+        );
+      }
+      options.language = code;
     } else if (flag === "--max-wer") {
       const pct = Number(value(flag, index++));
       if (!Number.isFinite(pct) || pct < 0 || pct > 100) {
@@ -723,6 +759,8 @@ async function main() {
   try {
     options = parseArguments(process.argv.slice(2));
     config = transcriptionConfig(process.env);
+    if (config && options.language)
+      config = { ...config, language: options.language };
   } catch (error) {
     console.error(error instanceof Error ? error.message : String(error));
     process.exit(1);
@@ -789,24 +827,21 @@ async function main() {
     }
   }
   if (options.silence) {
-    const [first] = await loadClips({
-      n: 1,
+    const speech = await loadClips({
+      n: 2,
       cacheDir: join(here, ".cache"),
       log,
     });
-    report.silence = await measureSilence(transcribe, SILENCE_CASES, {
-      ...(config.noSpeechThreshold !== undefined
-        ? { inspect: productInspect(provider) }
-        : {}),
-      ...(first
-        ? {
-            speech: {
-              wav: await Bun.file(first.path).bytes(),
-              reference: first.reference,
-            },
-          }
-        : {}),
-    });
+    report.silence = await measureSilence(
+      transcribe,
+      SILENCE_CASES,
+      await Promise.all(
+        speech.map(async (clip) => ({
+          wav: await Bun.file(clip.path).bytes(),
+          reference: clip.reference,
+        })),
+      ),
+    );
     report.problems.push(...report.silence.problems.map((p) => `7c: ${p}`));
   }
   report.passed = report.problems.length === 0;

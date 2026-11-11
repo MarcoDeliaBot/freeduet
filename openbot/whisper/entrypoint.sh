@@ -16,23 +16,42 @@
 #   --no-speech-thold 0.6 is the server's own default, written out so a change is a diff: a segment
 #                     is dropped only when the no-speech probability is above it AND the average
 #                     log probability is below -1.0 (src/whisper.cpp:7780).
-# VAD stays off, which is the server's default (:123): on speech with long pauses it can cut out the
-# speech itself.
+# VAD is off in the server (:123) and ON here (--vad :260, --vad-model :261): measured on the
+# maintainer's computer, without it silence came back as "Thank you." and "Grazie a tutti." (the
+# service's no_speech_prob was 0.000 on every segment, so no filter on it can work), with it every
+# silent case was empty and speech was kept. WHISPER_VAD=off is the way out. VAD options are the
+# server's own defaults (:125-:130), see threads.sh.
 # Threads and decoding: WHISPER_THREADS (default from the machine, threads.sh) and WHISPER_BEAM_SIZE
 # (empty: the server's own greedy decoding; --beam-size at server.cpp:218, strategy at :927).
 set -eu
 
-. /app/whisper/threads.sh
+HERE="$(cd "$(dirname "$0")" && pwd)"
+. "$HERE/threads.sh"
 THREADS="$(whisper_threads "$(nproc)" "${WHISPER_THREADS:-}")"
 BEAM="$(whisper_beam_args "${WHISPER_BEAM_SIZE:-}")"
-echo "whisper: $THREADS threads, ${BEAM:-greedy decoding}" >&2
+# Voice-activity detection is on unless WHISPER_VAD=off. Checked before the downloads, so a typo stops
+# at once; the model is fetched like the Whisper one, against a pinned SHA-256.
+case "${WHISPER_VAD:-}" in
+  "" | on | off) ;;
+  *) echo "WHISPER_VAD must be on or off." >&2; exit 1 ;;
+esac
+VAD=""
+VAD_LABEL="voice-activity detection off"
+if [ "${WHISPER_VAD:-on}" != "off" ]; then
+  # A separate assignment, so a failed download stops the script (set -e) instead of being swallowed.
+  VAD_MODEL="$(bun "$HERE/fetch-model.ts" --vad)"
+  VAD="$(whisper_vad_args "${WHISPER_VAD:-}" "$VAD_MODEL")"
+  VAD_LABEL="voice-activity detection on"
+fi
+echo "whisper: $THREADS threads, ${BEAM:-greedy decoding}, $VAD_LABEL" >&2
 
-MODEL_FILE="$(bun /app/whisper/fetch-model.ts)"
+MODEL_FILE="$(bun "$HERE/fetch-model.ts")"
 
 exec whisper-server \
   --model "$MODEL_FILE" \
   --threads "$THREADS" \
   $BEAM \
+  $VAD \
   --host 0.0.0.0 \
   --port 4240 \
   --inference-path /v1/audio/transcriptions \

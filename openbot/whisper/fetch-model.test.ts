@@ -7,6 +7,8 @@ import {
   DEFAULT_WHISPER_MODEL,
   WHISPER_MODEL_REPOSITORY_URL,
   WHISPER_MODELS,
+  WHISPER_VAD_MODEL_NAME,
+  WHISPER_VAD_MODELS,
   type WhisperModel,
 } from "../shared/whisper-models";
 import { ensureModel, ModelDownloadError } from "./fetch-model";
@@ -231,5 +233,61 @@ describe("the closed list", () => {
       files.add(model.file);
     }
     expect(files.size).toBe(Object.keys(WHISPER_MODELS).length);
+  });
+});
+
+describe("the voice-activity detection model", () => {
+  test("is pinned to the checksum and size read from its repository's LFS pointer", () => {
+    expect(WHISPER_VAD_MODELS[WHISPER_VAD_MODEL_NAME]).toEqual({
+      file: "ggml-silero-v5.1.2.bin",
+      sha256:
+        "29940d98d42b91fbd05ce489f3ecf7c72f0a42f027e4875919a28fb4c04ea2cf",
+      bytes: 885098,
+      sizeLabel: "0.9 MB",
+      baseUrl: "https://huggingface.co/ggml-org/whisper-vad/resolve/main/",
+    });
+  });
+
+  test("is fetched from its own repository, checked, and kept", async () => {
+    const vad = {
+      silero: {
+        file: "ggml-silero.bin",
+        sha256: sha(content),
+        bytes: content.length,
+        sizeLabel: "1 B",
+        baseUrl: "https://example.test/vad/",
+      },
+    };
+    const served = recordingFetch(() => download(content));
+    const path = await ensureModel({
+      model: "silero",
+      models: vad,
+      dir,
+      fetch: served.fetch,
+    });
+    expect(path).toBe(join(dir, "ggml-silero.bin"));
+    expect(served.requested).toEqual([
+      "https://example.test/vad/ggml-silero.bin",
+    ]);
+  });
+
+  test("a file that is not the pinned one is deleted, as for a Whisper model", async () => {
+    const vad = {
+      silero: {
+        file: "ggml-silero.bin",
+        sha256: sha(content),
+        bytes: content.length,
+        sizeLabel: "1 B",
+        baseUrl: "https://example.test/vad/",
+      },
+    };
+    const wrong = new TextEncoder().encode(
+      "pretend these are 40 bytes of a model!",
+    );
+    const served = recordingFetch(() => download(wrong));
+    await expect(
+      ensureModel({ model: "silero", models: vad, dir, fetch: served.fetch }),
+    ).rejects.toThrow("did not download correctly");
+    expect(await readdir(dir)).toEqual([]);
   });
 });

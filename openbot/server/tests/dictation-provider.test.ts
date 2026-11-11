@@ -352,141 +352,67 @@ describe("FREEDUET_DICTATION=local", () => {
   });
 });
 
-describe("local service: silence is dropped by the service's own no-speech number", () => {
+describe("the language of the recording, for the local service", () => {
   const local = {
     ...speechConfig,
     joinSegments: true,
-    noSpeechThreshold: 0.6,
+    useRequestLanguage: true,
   } as const;
   const file = () =>
     new File(["audio"], "recording.wav", { type: "audio/wav" });
-  const answering = (
-    segments: { text: string; no_speech_prob?: number; avg_logprob?: number }[],
-    config: Parameters<typeof createTranscriptionProvider>[0] = local,
+  const signal = () => new AbortController().signal;
+  const sentFields = async (
+    config: Parameters<typeof createTranscriptionProvider>[0],
+    hint?: { language?: string },
   ) => {
     const sent: FormData[] = [];
     const provider = createTranscriptionProvider(config, async (_url, init) => {
       sent.push(init.body as FormData);
-      return Response.json({ text: "ignored", segments });
+      return Response.json({ text: "ok" });
     });
-    return { provider, sent };
+    await provider.transcribe(file(), signal(), hint);
+    return Object.fromEntries(
+      [...(sent[0] as FormData).entries()].filter(([key]) => key !== "file"),
+    );
   };
-  const signal = () => new AbortController().signal;
 
-  test("asks for the verbose response, without the 60-character wrapping", async () => {
-    const { provider, sent } = answering([
-      { text: " Ciao", no_speech_prob: 0.01 },
-    ]);
-    await provider.transcribe(file(), signal());
-    expect([...(sent[0] as FormData).keys()]).toEqual([
-      "file",
-      "model",
-      "response_format",
-      "token_timestamps",
-    ]);
-    expect((sent[0] as FormData).get("response_format")).toBe("verbose_json");
-    expect((sent[0] as FormData).get("token_timestamps")).toBe("false");
-  });
-
-  test("drops a segment above the threshold, keeps one at it, joins the rest with a space", async () => {
-    const { provider } = answering([
-      { text: " Thank you.", no_speech_prob: 0.93 },
-      { text: " Ciao a tutti.", no_speech_prob: 0.6 },
-      { text: " Come state?", no_speech_prob: 0.02 },
-    ]);
-    expect(await provider.transcribe(file(), signal())).toBe(
-      "Ciao a tutti. Come state?",
-    );
-  });
-
-  test("all segments dropped, or none sent, is the empty string", async () => {
+  test("TRANSCRIPTION_LANGUAGE first, then the person's, then none", async () => {
     expect(
-      await answering([
-        { text: " Thank you.", no_speech_prob: 0.99 },
-      ]).provider.transcribe(file(), signal()),
-    ).toBe("");
-    expect(await answering([]).provider.transcribe(file(), signal())).toBe("");
-  });
-
-  test("the threshold is the configured one", async () => {
-    const segments = [{ text: " Forse.", no_speech_prob: 0.4 }];
-    expect(
-      await answering(segments, {
-        ...local,
-        noSpeechThreshold: 0.3,
-      }).provider.transcribe(file(), signal()),
-    ).toBe("");
-    expect(
-      await answering(segments, {
-        ...local,
-        noSpeechThreshold: 0.5,
-      }).provider.transcribe(file(), signal()),
-    ).toBe("Forse.");
-  });
-
-  test("a response without segments is the usual invalid-response error", async () => {
-    const provider = createTranscriptionProvider(local, async () =>
-      Response.json({ text: "x" }),
-    );
-    await expect(provider.transcribe(file(), signal())).rejects.toThrow(
-      "invalid response",
-    );
-  });
-
-  test("segments() gives every segment's numbers, dropped or not", async () => {
-    const { provider } = answering([
-      { text: " Thank you.", no_speech_prob: 0.93, avg_logprob: -0.4 },
-      { text: " Ciao.", no_speech_prob: 0.02 },
-    ]);
-    expect(await provider.segments(file(), signal())).toEqual([
-      { text: " Thank you.", noSpeechProb: 0.93, avgLogprob: -0.4 },
-      { text: " Ciao.", noSpeechProb: 0.02, avgLogprob: null },
-    ]);
-  });
-
-  test("without the threshold (any other provider) the request stays the plain one", async () => {
-    const sent: FormData[] = [];
-    const provider = createTranscriptionProvider(
-      speechConfig,
-      async (_u, init) => {
-        sent.push(init.body as FormData);
-        return Response.json({ text: "ok" });
-      },
-    );
-    expect(await provider.transcribe(file(), signal())).toBe("ok");
-    expect([...(sent[0] as FormData).keys()]).toEqual(["file", "model"]);
-  });
-});
-
-describe("WHISPER_NO_SPEECH_THRESHOLD", () => {
-  const local = { ...environment, FREEDUET_DICTATION: "local" };
-
-  test("defaults to whisper.cpp's own 0.6 with the flag, and does not exist without it", () => {
-    expect(transcriptionConfig(local)).toMatchObject({
-      noSpeechThreshold: 0.6,
+      await sentFields({ ...local, language: "en" }, { language: "it" }),
+    ).toEqual({ model: "speech-model", language: "en" });
+    expect(await sentFields(local, { language: "it" })).toEqual({
+      model: "speech-model",
+      language: "it",
     });
-    expect(transcriptionConfig(environment)).not.toHaveProperty(
-      "noSpeechThreshold",
-    );
-    expect(
-      transcriptionConfig({
-        ...environment,
-        WHISPER_NO_SPEECH_THRESHOLD: "0.1",
-      }),
-    ).not.toHaveProperty("noSpeechThreshold");
+    expect(await sentFields(local, {})).toEqual({ model: "speech-model" });
+    expect(await sentFields(local)).toEqual({ model: "speech-model" });
   });
 
-  test("is a number from 0 to 1, blank meaning the default", () => {
+  test("any other provider ignores the hint, so its request stays what it was", async () => {
+    expect(await sentFields(speechConfig, { language: "it" })).toEqual({
+      model: "speech-model",
+    });
     expect(
-      transcriptionConfig({ ...local, WHISPER_NO_SPEECH_THRESHOLD: "0.35" }),
-    ).toMatchObject({ noSpeechThreshold: 0.35 });
+      await sentFields({ ...speechConfig, language: "en" }, { language: "it" }),
+    ).toEqual({ model: "speech-model", language: "en" });
+  });
+
+  test("the local service never asks for the verbose response", async () => {
+    expect(Object.keys(await sentFields(local, { language: "it" }))).toEqual([
+      "model",
+      "language",
+    ]);
+  });
+
+  test("the flag sets it, and nothing else does", () => {
     expect(
-      transcriptionConfig({ ...local, WHISPER_NO_SPEECH_THRESHOLD: " " }),
-    ).toMatchObject({ noSpeechThreshold: 0.6 });
-    for (const bad of ["high", "-0.1", "1.5"]) {
-      expect(() =>
-        transcriptionConfig({ ...local, WHISPER_NO_SPEECH_THRESHOLD: bad }),
-      ).toThrow("WHISPER_NO_SPEECH_THRESHOLD must be a number from 0 to 1.");
-    }
+      transcriptionConfig({ ...environment, FREEDUET_DICTATION: "local" }),
+    ).toMatchObject({ useRequestLanguage: true, joinSegments: true });
+    expect(transcriptionConfig(environment)).not.toHaveProperty(
+      "useRequestLanguage",
+    );
+    expect(
+      transcriptionConfig({ ...environment, FREEDUET_DICTATION: "local" }),
+    ).not.toHaveProperty("noSpeechThreshold");
   });
 });

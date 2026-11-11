@@ -7,7 +7,19 @@ import {
   MAX_DICTATION_BYTES,
 } from "@openbot/shared/dictation";
 import type { AppVariables } from "../auth/guards";
+import { DICTATION_LANGUAGES } from "./languages";
 import { TranscriptionError, type TranscriptionProvider } from "./provider";
+
+/**
+ * The language the browser says the person uses, or undefined. A hint, never trusted raw: it must be
+ * a string and, once trimmed and lower-cased, exactly one of the codes Whisper has. Anything else
+ * (a file, a long string, a path, "it; rm", "IT-it") is dropped and the service detects the language.
+ */
+export function requestLanguage(value: unknown): string | undefined {
+  if (typeof value !== "string" || value.length > 8) return undefined;
+  const code = value.trim().toLowerCase();
+  return DICTATION_LANGUAGES.has(code) ? code : undefined;
+}
 
 export function createDictationRoutes(
   requireUser: MiddlewareHandler<{ Variables: AppVariables }>,
@@ -86,6 +98,7 @@ export function createDictationRoutes(
         const text = await provider.transcribe(
           new File([file], `recording.${extension}`, { type: mediaType }),
           signal,
+          { language: requestLanguage(body?.get("language")) },
         );
         if (!text.trim())
           return context.json(

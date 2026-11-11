@@ -481,6 +481,8 @@ services:
       # Empty: the entrypoint picks them (whisper/threads.sh).
       WHISPER_THREADS: ${WHISPER_THREADS:-}
       WHISPER_BEAM_SIZE: ${WHISPER_BEAM_SIZE:-}
+      # on (the default) or off: voice-activity detection, so silence is never decoded.
+      WHISPER_VAD: ${WHISPER_VAD:-on}
       # Read-only root below: nothing here should need a home directory or a runtime cache.
       HOME: /tmp
       BUN_RUNTIME_TRANSPILER_CACHE_PATH: "0"

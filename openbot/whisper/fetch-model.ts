@@ -23,6 +23,8 @@ import { join } from "node:path";
 import {
   DEFAULT_WHISPER_MODEL,
   WHISPER_MODEL_REPOSITORY_URL,
+  WHISPER_VAD_MODEL_NAME,
+  WHISPER_VAD_MODELS,
   WHISPER_MODELS,
   type WhisperModel,
   whisperModelNames,
@@ -85,7 +87,7 @@ export async function ensureModel(
     await rm(path, { force: true });
   }
 
-  const url = `${WHISPER_MODEL_REPOSITORY_URL}${entry.file}`;
+  const url = `${entry.baseUrl ?? WHISPER_MODEL_REPOSITORY_URL}${entry.file}`;
   log(`Downloading model ${model} (${entry.sizeLabel}) from ${url}`);
   const mismatch = new ModelDownloadError(
     `The model "${model}" did not download correctly: its checksum is not the one its repository publishes. The file was deleted. Start again to retry, and tell the maintainer if it keeps happening.`,
@@ -148,13 +150,17 @@ export async function ensureModel(
 }
 
 if (import.meta.main) {
-  const model =
-    process.env.FREEDUET_WHISPER_MODEL?.trim() || DEFAULT_WHISPER_MODEL;
+  // `--vad`: the voice-activity-detection model instead of the Whisper one.
+  const vad = process.argv.includes("--vad");
+  const model = vad
+    ? WHISPER_VAD_MODEL_NAME
+    : process.env.FREEDUET_WHISPER_MODEL?.trim() || DEFAULT_WHISPER_MODEL;
   const dir = process.env.WHISPER_MODEL_DIR?.trim() || "/models";
   try {
     const path = await ensureModel({
       model,
       dir,
+      ...(vad ? { models: WHISPER_VAD_MODELS } : {}),
       log: (line) => console.error(`whisper: ${line}`),
     });
     console.log(path);

@@ -6,18 +6,20 @@ import type { Clip } from "./fleurs";
 import {
   DEFAULT_CLIPS,
   describeService,
+  coverage,
   ffmpegConvert,
   ffmpegInvocation,
   measureFormats,
   measureSilence,
   measureWer,
+  pauseInMiddleWav,
   parseArguments,
   productTranscribe,
   renderMarkdown,
   reportName,
   type Report,
-  SILENCE_CASES,
   silenceWav,
+  spliceWav,
   speechThenSilenceWav,
 } from "./wer";
 import { pcm16Wav, wavDurationSeconds } from "./metrics";
@@ -319,12 +321,7 @@ describe("productTranscribe", () => {
           fields: [...body.keys()],
           url,
         });
-        return Response.json({
-          segments: [
-            { text: " uno due", no_speech_prob: 0.01 },
-            { text: " tre", no_speech_prob: 0.02 },
-          ],
-        });
+        return Response.json({ text: " uno due\ntre\n" });
       },
     );
     return { seen, transcribe: productTranscribe(provider) };
@@ -340,12 +337,7 @@ describe("productTranscribe", () => {
     expect(seen).toHaveLength(1);
     expect(seen[0]?.file.name).toBe("recording.webm");
     expect(seen[0]?.file.type).toBe("audio/webm");
-    expect(seen[0]?.fields).toEqual([
-      "file",
-      "model",
-      "response_format",
-      "token_timestamps",
-    ]);
+    expect(seen[0]?.fields).toEqual(["file", "model"]);
     expect(seen[0]?.url).toBe("http://127.0.0.1:4240/v1/audio/transcriptions");
   });
 
@@ -520,67 +512,121 @@ describe("ffmpegInvocation", () => {
   });
 });
 
-describe("7c extras", () => {
-  const toneWav = () => {
-    const samples = new Int16Array(16000 * 5).fill(1000);
-    return pcm16Wav(samples, 16000);
-  };
+describe("7c cases where speech must survive", () => {
+  /** A "clip" whose samples are all 1000 and whose length is the number of seconds. */
+  const clip = (seconds: number, reference: string) => ({
+    wav: pcm16Wav(new Int16Array(16000 * seconds).fill(1000), 16000),
+    reference,
+  });
+  const [a, b] = [
+    clip(6, "il gatto dorme sul divano"),
+    clip(6, "la luna brilla sul mare"),
+  ];
 
-  test("speechThenSilenceWav is 2 s of the clip then 10 s of zeros", () => {
-    const wav = speechThenSilenceWav(toneWav());
-    expect(wavDurationSeconds(wav)).toBe(12);
-    const view = new DataView(wav.buffer, wav.byteOffset, wav.byteLength);
-    expect(view.getInt16(44 + 31999 * 2, true)).toBe(1000);
-    expect(view.getInt16(44 + 32000 * 2, true)).toBe(0);
+  test("splicing: clips and seconds of silence in order, and the speech-then-silence and pause shapes", () => {
+    expect(wavDurationSeconds(spliceWav([a.wav, 5, b.wav, 3]))).toBe(
+      6 + 5 + 6 + 3,
+    );
+    expect(wavDurationSeconds(speechThenSilenceWav(a.wav))).toBe(12);
+    const paused = pauseInMiddleWav(a.wav, 3);
+    expect(wavDurationSeconds(paused)).toBe(9);
+    const view = new DataView(
+      paused.buffer,
+      paused.byteOffset,
+      paused.byteLength,
+    );
+    expect(view.getInt16(44 + (16000 * 3 - 1) * 2, true)).toBe(1000);
+    expect(view.getInt16(44 + 16000 * 3 * 2, true)).toBe(0);
+    expect(view.getInt16(44 + (16000 * 6 - 1) * 2, true)).toBe(0);
+    expect(view.getInt16(44 + 16000 * 6 * 2, true)).toBe(1000);
   });
 
-  test("the speech case passes when words of the sentence come back", async () => {
+  test("coverage is the share of the sentence's different words that came back", () => {
+    expect(
+      coverage("Il gatto dorme sul divano.", "il gatto dorme"),
+    ).toBeCloseTo(3 / 5, 10);
+    expect(coverage("uno uno due", "due")).toBe(0.5);
+    expect(coverage("", "qualcosa")).toBe(0);
+  });
+
+  /** Answers by what it was sent: how long, which tells the cases apart. */
+  const hearing =
+    (answers: Record<number, string>) => async (audio: Uint8Array) =>
+      answers[wavDurationSeconds(audio)] ?? "";
+
+  test("a service that keeps all the speech passes every case", async () => {
     const result = await measureSilence(
-      async (audio) => (audio.byteLength === 44 + 12 * 32000 ? "il gatto" : ""),
+      hearing({
+        12: "il gatto",
+        9: "il gatto dorme sul divano",
+        20: "il gatto dorme sul divano la luna brilla sul mare",
+      }),
       [],
-      {
-        speech: { wav: toneWav(), reference: "Il gatto dorme." },
-      },
+      [a, b],
     );
-    expect(result.passed).toBe(true);
+    expect(result.problems).toEqual([]);
     expect(result.cases.map((item) => item.name)).toEqual([
       "2 s of speech, then 10 s of silence",
+      "one whole clip with a 3 s pause in its middle",
+      "two whole clips, 5 s of silence between, 3 s after",
     ]);
   });
 
-  test("dropped speech and invented words are each a problem of their own", async () => {
-    const speech = { wav: toneWav(), reference: "Il gatto dorme." };
-    const dropped = await measureSilence(async () => "", [], { speech });
+  test("dropped speech after silence, and invented words, are each a problem of their own", async () => {
+    const dropped = await measureSilence(
+      hearing({
+        9: "il gatto dorme sul divano",
+        6: "il gatto dorme sul divano",
+      }),
+      [],
+      [a],
+    );
     expect(dropped.problems).toEqual([
       "2 s of speech, then 10 s of silence: the speech was dropped, nothing came back",
     ]);
-    const invented = await measureSilence(async () => "Thank you.", [], {
-      speech,
-    });
+    const invented = await measureSilence(
+      hearing({ 12: "Thank you." }),
+      [],
+      [a],
+    );
     expect(invented.problems[0]).toContain(
       "none of the words heard are in the sentence",
     );
   });
 
-  test("the service's numbers are kept per case, and a failing inspector costs only the numbers", async () => {
-    const result = await measureSilence(
-      async () => "",
-      SILENCE_CASES.slice(0, 2),
-      {
-        inspect: async (audio) =>
-          audio.byteLength > 200000
-            ? (() => {
-                throw new Error("no");
-              })()
-            : [{ text: " Thank you.", noSpeechProb: 0.93, avgLogprob: -0.41 }],
-      },
+  test("a pause that costs more than 2 points of WER fails; one that costs nothing passes", async () => {
+    const worse = await measureSilence(
+      async (audio) =>
+        wavDurationSeconds(audio) === 9
+          ? "il gatto"
+          : "il gatto dorme sul divano",
+      [],
+      [a],
     );
-    expect(result.passed).toBe(true);
-    expect(result.cases[0]?.segments).toEqual([
-      { text: " Thank you.", noSpeechProb: 0.93, avgLogprob: -0.41 },
+    expect(
+      worse.problems.some((p) =>
+        p.startsWith(
+          "one whole clip with a 3 s pause in its middle: 60.0% against 0.0%",
+        ),
+      ),
+    ).toBe(true);
+  });
+
+  test("one of two sentences lost is named", async () => {
+    const result = await measureSilence(
+      hearing({ 20: "il gatto dorme sul divano" }),
+      [],
+      [a, b],
+    );
+    expect(
+      result.problems.filter((p) => p.includes("two whole clips")),
+    ).toEqual([
+      'two whole clips, 5 s of silence between, 3 s after: only 20% of the words of sentence 2 came back (heard "il gatto dorme sul divano")',
     ]);
-    expect(result.cases[1]?.segments).toBeUndefined();
-    const report = renderMarkdown({
+  });
+
+  test("the report has no per-segment columns and names the clips cases", () => {
+    const text = renderMarkdown({
       date: "2026-11-11",
       label: "x",
       service: describeService({
@@ -589,12 +635,56 @@ describe("7c extras", () => {
         model: "m",
       }),
       dataset: "d",
-      silence: result,
+      silence: {
+        cases: [{ name: "n", transcript: "" }],
+        passed: true,
+        problems: [],
+      },
       passed: true,
       problems: [],
     });
-    expect(report).toContain(
-      '"Thank you." no_speech_prob 0.930, avg_logprob -0.410',
+    expect(text).toContain("| Case | Transcript |");
+    expect(text).not.toContain("no_speech_prob");
+  });
+});
+
+describe("--language and the median audio length", () => {
+  test("--language is a code from Whisper's list, lower-cased", () => {
+    expect(parseArguments(["--language", " IT "]).language).toBe("it");
+    expect(() => parseArguments(["--language", "xx"])).toThrow(
+      "--language must be a two-letter language code Whisper supports",
+    );
+    expect(() => parseArguments(["--language", "ita"])).toThrow(
+      "--language must be",
+    );
+    expect(() => parseArguments(["--language"])).toThrow(
+      "--language needs a value.",
+    );
+    expect(parseArguments([]).language).toBeUndefined();
+  });
+
+  test("the result carries the median length of the clips answered, and the report shows it", async () => {
+    const clips = [3, 5, 9].map((seconds, index) => ({
+      ...textClip(`c${index}`, "uno"),
+      seconds,
+    }));
+    const result = await measureWer(clips, async () => "uno", bytesOf);
+    expect(result.medianAudioSeconds).toBe(5);
+    const text = renderMarkdown({
+      date: "d",
+      label: "l",
+      service: describeService({
+        provider: "openai-compatible",
+        baseUrl: "http://127.0.0.1:1/v1",
+        model: "m",
+      }),
+      dataset: "d",
+      wer: result,
+      passed: true,
+      problems: [],
+    });
+    expect(text).toMatch(
+      /Median time per request \| [\d.]+ s, for clips of a median 5.00 s \|/,
     );
   });
 });

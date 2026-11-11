@@ -2,7 +2,10 @@ import { expect, test } from "bun:test";
 import type { MiddlewareHandler } from "hono";
 import { MAX_DICTATION_BYTES } from "@openbot/shared/dictation";
 import type { AppVariables } from "../src/auth/guards";
-import { createDictationRoutes } from "../src/dictation/routes";
+import {
+  createDictationRoutes,
+  requestLanguage,
+} from "../src/dictation/routes";
 
 const user: MiddlewareHandler<{ Variables: AppVariables }> = async (
   context,
@@ -137,4 +140,55 @@ test("a transcript of only whitespace is the same 'nothing heard' answer as an e
       error: "No speech was detected. Try recording again.",
     });
   }
+});
+
+function withLanguage(value: string | File) {
+  const request = recording();
+  (request.body as FormData).set("language", value);
+  return request;
+}
+test("the language the browser sends reaches the provider as a validated hint", async () => {
+  const seen: (string | undefined)[] = [];
+  const app = createDictationRoutes(user, {
+    transcribe: async (_file, _signal, hint) => {
+      seen.push(hint?.language);
+      return "ok";
+    },
+  });
+  await app.request("/transcriptions", withLanguage("it"));
+  await app.request("/transcriptions", withLanguage(" IT "));
+  await app.request("/transcriptions", recording());
+  expect(seen).toEqual(["it", "it", undefined]);
+});
+test("a hostile language is dropped, not passed on and not an error", async () => {
+  const seen: (string | undefined)[] = [];
+  const app = createDictationRoutes(user, {
+    transcribe: async (_file, _signal, hint) => {
+      seen.push(hint?.language);
+      return "ok";
+    },
+  });
+  const hostile = [
+    "it; rm -rf /",
+    "../../etc/passwd",
+    "xx",
+    "ita",
+    "it\r\nX-Evil: 1",
+    "a".repeat(5000),
+    "",
+    new File(["it"], "it.txt"),
+  ];
+  for (const value of hostile) {
+    const response = await app.request("/transcriptions", withLanguage(value));
+    expect(response.status).toBe(200);
+  }
+  expect(seen).toEqual(hostile.map(() => undefined));
+});
+test("requestLanguage accepts only a string that is one of Whisper's codes", () => {
+  expect(requestLanguage("it")).toBe("it");
+  expect(requestLanguage("EN")).toBe("en");
+  expect(requestLanguage(undefined)).toBeUndefined();
+  expect(requestLanguage(null)).toBeUndefined();
+  expect(requestLanguage(7)).toBeUndefined();
+  expect(requestLanguage("it-IT")).toBeUndefined();
 });

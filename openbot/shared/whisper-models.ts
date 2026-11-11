@@ -28,6 +28,8 @@ export type WhisperModel = {
   bytes: number;
   /** For the one line start.sh prints. */
   sizeLabel: string;
+  /** Where the file is, when it is not WHISPER_MODEL_REPOSITORY_URL. Ends with a slash. */
+  baseUrl?: string;
 };
 
 export const WHISPER_MODEL_REPOSITORY_URL =
@@ -70,3 +72,22 @@ export function whisperModelNames(): string[] {
 export function whisperModel(name: string): WhisperModel | undefined {
   return Object.hasOwn(WHISPER_MODELS, name) ? WHISPER_MODELS[name] : undefined;
 }
+
+/**
+ * The voice-activity-detection model the local service loads with `--vad` (docs/M1_PLAN.md D25):
+ * Silero VAD v5.1.2 in whisper.cpp's ggml form, from https://huggingface.co/ggml-org/whisper-vad.
+ * Same rules as the table above: pinned by SHA-256 and size, read from the file's Git LFS pointer
+ *   https://huggingface.co/ggml-org/whisper-vad/raw/main/ggml-silero-v5.1.2.bin
+ * on 2026-11-11 (`oid sha256:` and `size`), and equal to the value the maintainer got by downloading it.
+ */
+export const WHISPER_VAD_MODEL_NAME = "silero-v5.1.2";
+
+export const WHISPER_VAD_MODELS: Readonly<Record<string, WhisperModel>> = {
+  [WHISPER_VAD_MODEL_NAME]: {
+    file: "ggml-silero-v5.1.2.bin",
+    sha256: "29940d98d42b91fbd05ce489f3ecf7c72f0a42f027e4875919a28fb4c04ea2cf",
+    bytes: 885098,
+    sizeLabel: "0.9 MB",
+    baseUrl: "https://huggingface.co/ggml-org/whisper-vad/resolve/main/",
+  },
+};

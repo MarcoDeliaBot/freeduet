@@ -38,3 +38,19 @@ whisper_beam_args() {
   esac
   echo "--beam-size $size"
 }
+
+# whisper_vad_args <WHISPER_VAD, may be empty> <path of the VAD model>: "--vad --vad-model <path>" when on
+# (empty means on), nothing when off. With it the server cuts the audio to the stretches that are speech
+# before Whisper sees them, so silence and room noise are never decoded (examples/server/server.cpp:260,
+# :261). The VAD's own defaults are kept: threshold 0.5 (:125), min speech 250 ms (:126), min silence 100 ms
+# (:127), speech pad 30 ms (:129), no maximum speech length (:128).
+whisper_vad_args() {
+  case "${1:-}" in
+    "" | on) echo "--vad --vad-model $2" ;;
+    off) ;;
+    *)
+      echo "WHISPER_VAD must be on or off." >&2
+      return 1
+      ;;
+  esac
+}

@@ -65,3 +65,44 @@ describe("whisper_beam_args", () => {
     }
   });
 });
+
+describe("whisper_vad_args", () => {
+  test("on, or empty, is --vad with the model; the server's own VAD options are not touched", () => {
+    expect(run('whisper_vad_args "" /models/v.bin').out).toBe(
+      "--vad --vad-model /models/v.bin",
+    );
+    expect(run("whisper_vad_args on /models/v.bin").out).toBe(
+      "--vad --vad-model /models/v.bin",
+    );
+  });
+
+  test("off is nothing", () => {
+    expect(run("whisper_vad_args off /models/v.bin").out).toBe("");
+    expect(run("whisper_vad_args off /models/v.bin").code).toBe(0);
+  });
+
+  test("anything else is refused in words", () => {
+    for (const bad of ["true", "1", "ON", "yes"]) {
+      const result = run(`whisper_vad_args '${bad}' /models/v.bin`);
+      expect(result.code).toBe(1);
+      expect(result.err).toBe("WHISPER_VAD must be on or off.");
+    }
+  });
+});
+
+describe("entrypoint.sh", () => {
+  test("refuses a WHISPER_VAD that is not on or off before it downloads anything", () => {
+    const result = Bun.spawnSync(
+      ["sh", join(import.meta.dir, "entrypoint.sh")],
+      {
+        env: { PATH: process.env.PATH ?? "", WHISPER_VAD: "maybe" },
+        stdout: "pipe",
+        stderr: "pipe",
+      },
+    );
+    expect(result.exitCode).toBe(1);
+    expect(result.stderr.toString()).toContain(
+      "WHISPER_VAD must be on or off.",
+    );
+  });
+});

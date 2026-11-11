@@ -119,6 +119,14 @@ export async function startRecording(
   };
 }
 
+/** The primary subtag of the browser's language: "it-IT" is "it". Undefined when there is none. */
+export function interfaceLanguage(): string | undefined {
+  const tag = typeof navigator === "undefined" ? undefined : navigator.language;
+  if (typeof tag !== "string") return undefined;
+  const primary = tag.split("-", 1)[0]?.trim().toLowerCase();
+  return primary && /^[a-z]{2}$/.test(primary) ? primary : undefined;
+}
+
 export async function transcribeRecording(
   audio: Blob,
   signal: AbortSignal,
@@ -132,6 +140,10 @@ export async function transcribeRecording(
   }
   const body = new FormData();
   body.set("file", audio, `recording.${extension}`);
+  // The app has no language setting of its own, so the browser's. A hint the server checks, and
+  // uses only for the local service; with `TRANSCRIPTION_LANGUAGE` set it is ignored.
+  const language = interfaceLanguage();
+  if (language) body.set("language", language);
   const response = await fetch("/api/audio/transcriptions", {
     method: "POST",
     credentials: "include",

@@ -297,7 +297,7 @@ is written and yours stay. Without `FREEDUET_DICTATION` the stack is exactly wha
 | `WHISPER_PORT` | The port the service listens on, on `127.0.0.1` only. Default `4240`. |
 | `WHISPER_THREADS` | Threads the service uses. Unset: half of the computer's hardware threads, at least 4 and at most 16 (whisper.cpp's own default is 4, however big the computer is). The service log says the number it took. |
 | `WHISPER_BEAM_SIZE` | Unset: greedy decoding, whisper.cpp's own default. A number of 2 or more switches to beam search of that size: slower, sometimes a little more exact. Measure with the proofs below before keeping it. |
-| `WHISPER_NO_SPEECH_THRESHOLD` | Read by the API server, not the service. A segment the service marks as more likely silence than speech than this (`no_speech_prob`, 0 to 1) is dropped. Default `0.6`, whisper.cpp's own threshold. Lower drops more; run `--silence` and read the numbers it prints before changing it. |
+| `WHISPER_VAD` | `on` (the default) or `off`. Voice-activity detection: the service cuts the audio to the stretches that are speech before Whisper decodes anything, so silence and room noise are never turned into invented words. `off` is the way out if it ever cuts off speech for you. |
 
 | Model | Download | Notes |
 | --- | --- | --- |
@@ -325,17 +325,24 @@ What to know:
   send it audio, and can stop it (whisper.cpp's `/load` endpoint can be made to exit the server; run
   `start.sh` again to bring it back). It does not publish a port to the network, and it must not be
   put on one.
-- It detects the language itself unless `TRANSCRIPTION_LANGUAGE` is set. Whisper's detection can be
-  wrong on a very short phrase; setting `it` removes the doubt. `TRANSCRIPTION_PROMPT` helps with names.
+- The language is told to the service, because detecting it costs a second pass over the audio:
+  measured at 4 threads, 17.26 s with detection against 8.64 s with `it`, the same 2.9% word error
+  rate. The order is: `TRANSCRIPTION_LANGUAGE` if set; otherwise the browser's language (the app
+  has no language setting of its own), sent with the recording as its two-letter primary subtag and
+  checked on the server against Whisper's list (anything else is dropped); otherwise the service
+  detects it. This applies to the local service only. A person whose browser is in English and who
+  dictates Italian should set `TRANSCRIPTION_LANGUAGE=it`. `TRANSCRIPTION_PROMPT` helps with names.
 - It runs with `--suppress-nst` (no `[music]` or `(applause)` markers in the text) and with
-  voice-activity detection off. Whisper models invent a phrase ("Thank you.") on silence, and the
-  service's own filter drops a segment only when its no-speech number is high *and* its average
-  log-probability is low (`src/whisper.cpp:7780`), which silence often escapes. So for the local
-  service the API server asks for the verbose response (`response_format=verbose_json`, and
-  `token_timestamps=false`, because with it whisper.cpp cuts segments at 60 characters in the middle
-  of a word) and drops every segment whose `no_speech_prob` is above `WHISPER_NO_SPEECH_THRESHOLD`.
-  Nothing left is the empty string, and the composer says "No speech was detected", the same for
-  every service. Other providers get the plain request, as before.
+  voice-activity detection **on** (`WHISPER_VAD`, a small Silero model of 0.9 MB, downloaded and
+  checked like the Whisper one). Without it, Whisper models invent a phrase on silence: measured here,
+  "Thank you." and "Grazie a tutti." on digital silence and "." on room noise, and the service's own
+  no-speech number was 0.000 on every segment, so nothing can be filtered on it. With it, every
+  silent case came back empty and the speech was kept. A recording with no speech is the empty
+  string, and the composer says "No speech was detected", the same for every service. The detector's
+  own settings are left at whisper.cpp's defaults (threshold 0.5, minimum speech 250 ms, minimum
+  silence 100 ms, speech padding 30 ms). One caution: detection together with a vocabulary prompt
+  (`TRANSCRIPTION_PROMPT`) on dictation with long pauses is the combination to watch; the `--silence`
+  proof has a pause case for it.
 - A recording is at most two minutes, as everywhere, and the service runs on the CPU only.
 - The microphone needs https or `localhost`. Opened from a phone at `http://<computer>:3010`, the
   browser does not offer a microphone at all, and the button says so when it is pressed. Two ways
@@ -344,6 +351,24 @@ What to know:
 - What is sent is the audio, the model name and the two optional fields above. The API server keeps
   the audio in memory for as long as a request takes. The service writes each recording to `/tmp` in
   its container, which is held in memory (`tmpfs`), while it converts it, and removes it right after.
+
+#### What it measured
+
+One computer (16 threads given to the service), 100 clips of the Italian FLEURS test split, language
+detected by the service, through the product's own adapter. Time is per request; the length of the
+clips was not recorded in these runs (`wer.ts` now prints their median next to the time).
+
+| Model | Word error rate | Median time | 95th percentile | Memory |
+| --- | --- | --- | --- | --- |
+| `large-v3-turbo-q5_0` (default) | 2.8% | 9.78 s | 17.42 s | 783 MB |
+| `large-v3-turbo` | 2.9% | 8.01 s | 8.79 s | 1.75 GB |
+| `small` | 7.9% | 1.83 s | | |
+
+The two large models are equally accurate on read Italian; the 16-bit one is a little faster and much
+steadier (95th percentile) at twice the memory and three times the download. `small` is five times
+faster and makes almost three times the mistakes. Threads on the default model (30 clips): 8 threads
+14.14 s, 16 threads about 9.8 s, 32 threads 10.92 s, which is why the default stops at 16. With the
+language told (`it`) the wait halves, see above. These are one computer's numbers: run the proofs on yours.
 
 #### Proving it on your computer
 
@@ -357,13 +382,14 @@ Run them from the repository root with the service up. `bun --env-file=openbot/.
 that ran passed.
 
 ```
-# 7a. Word error rate on 100 clips, with the median and 95th percentile time per request and the ten worst lines
+# 7a. Word error rate on 100 clips, with the median and 95th percentile time per request, the median clip length and the ten worst lines.
+# Add --language it to send the language, as the app does for an Italian browser
 bun --env-file=openbot/.env evals/dictation/wer.ts --model-label large-v3-turbo-q5_0
 
 # 7b. Five clips as WAV, as webm/opus and as mp4/aac, as the browsers send them (ffmpeg on the PATH, or else the one in the built whisper image through Docker)
 bun --env-file=openbot/.env evals/dictation/wer.ts --formats --model-label large-v3-turbo-q5_0
 
-# 7c. Silence and low room noise, 5 s and 30 s each: every transcript must be empty; 2 s of speech then 10 s of silence must still come back. Prints the service's no_speech_prob per segment
+# 7c. Silence and low room noise, 5 s and 30 s each: every transcript must be empty; speech must survive silence and pauses
 bun --env-file=openbot/.env evals/dictation/wer.ts --silence --model-label large-v3-turbo-q5_0
 
 # 7d. The whole path in Chrome: a fake microphone plays three clips, the text must reach the message box
@@ -372,7 +398,7 @@ bun --env-file=openbot/.env openbot/scripts/freeduet-dictation-e2e.ts --app http
 
 7a reports a number and fails only with `--max-wer <percent>`, because what is good enough is for you
 to decide once you have seen it. 7b fails when a compressed form is worse than the WAV by more than two
-WER points. 7c fails on any text for silence or noise, and on speech that is dropped (or replaced by words not in its sentence). 7d fails above 25 percent over its clips (`--max-wer`), or when
+WER points. 7c fails on any text for silence or noise, and when speech does not survive: 2 s of a clip then 10 s of silence, one clip with a 3 s pause in its middle (no more than 2 points worse than the clip alone), and two clips with 5 s of silence between them (at least half of each sentence's words back). 7d fails above 25 percent over its clips (`--max-wer`), or when
 the app shows an error. The word error rate counts words with the rules written at the top of
 `evals/dictation/metrics.ts` (lower case, no punctuation, numbers not rewritten, so it is slightly
 pessimistic). 7d starts a Chrome (`--chromium <path>` or `E2E_CHROMIUM` when it is not the installed
