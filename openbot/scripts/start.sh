@@ -258,6 +258,53 @@ green() { printf '\033[32m%s\033[0m\n' "$1"; }
 red()   { printf '\033[31m%s\033[0m\n' "$1"; }
 info()  { printf '\033[2m%s\033[0m\n' "$1"; }
 
+# FreeDuet: dictation with a local Whisper, off unless .env says FREEDUET_DICTATION=local (docs/M1_PLAN.md
+# D25). Unset, nothing below runs: no service is added, nothing is written to .env and nothing is
+# downloaded. The list of models, and the size of each, is shared/whisper-models.ts: a test keeps
+# these two in step.
+FREEDUET_DICTATION="$(setting FREEDUET_DICTATION "")"
+FREEDUET_WHISPER_MODEL="$(setting FREEDUET_WHISPER_MODEL large-v3-turbo-q5_0)"
+WHISPER_PORT="$(setting WHISPER_PORT 4240)"
+LOCAL_DICTATION=false
+case "$FREEDUET_DICTATION" in
+  ""|off) ;;
+  local) LOCAL_DICTATION=true ;;
+  *)
+    red "FREEDUET_DICTATION must be local, or unset. It is \"$FREEDUET_DICTATION\" in $ENV_NAME."
+    exit 1
+    ;;
+esac
+if [ "$LOCAL_DICTATION" = "true" ]; then
+  case "$FREEDUET_WHISPER_MODEL" in
+    large-v3-turbo-q5_0) WHISPER_MODEL_SIZE="574 MB" ;;
+    large-v3-turbo) WHISPER_MODEL_SIZE="1.6 GB" ;;
+    small) WHISPER_MODEL_SIZE="488 MB" ;;
+    base) WHISPER_MODEL_SIZE="148 MB" ;;
+    *)
+      red "FREEDUET_WHISPER_MODEL must be one of: large-v3-turbo-q5_0, large-v3-turbo, small, base. It is \"$FREEDUET_WHISPER_MODEL\" in $ENV_NAME."
+      exit 1
+      ;;
+  esac
+  if ! [[ "$WHISPER_PORT" =~ ^[0-9]{1,5}$ ]]; then
+    red "WHISPER_PORT must be a port number. It is \"$WHISPER_PORT\" in $ENV_NAME."
+    exit 1
+  fi
+  export FREEDUET_WHISPER_MODEL WHISPER_PORT
+  # The three settings the dictation adapter reads, pointed at this service. Only when all three are
+  # unset: a person who set any of them chose their own service, and none of them is overwritten. The
+  # model name is a label (the service serves the model it was started with); the server is restarted
+  # to read the new lines, like for the keys above.
+  if [ -z "$(setting TRANSCRIPTION_PROVIDER "")" ] && [ -z "$(setting TRANSCRIPTION_BASE_URL "")" ] \
+     && [ -z "$(setting TRANSCRIPTION_MODEL "")" ]; then
+    SECRETS_ROTATED=true
+    freeduet_env_line TRANSCRIPTION_PROVIDER openai-compatible
+    freeduet_env_line TRANSCRIPTION_BASE_URL "http://127.0.0.1:$WHISPER_PORT/v1"
+    freeduet_env_line TRANSCRIPTION_MODEL local-whisper
+    info "Wrote TRANSCRIPTION_PROVIDER, TRANSCRIPTION_BASE_URL and TRANSCRIPTION_MODEL to $ENV_NAME: dictation uses the Whisper on this computer."
+  fi
+  info "Dictation is local: a Whisper on this computer hears the microphone and nothing leaves it. The first start downloads the model $FREEDUET_WHISPER_MODEL ($WHISPER_MODEL_SIZE) once, and until it has finished the microphone answers that it cannot reach the service."
+fi
+
 # Does whatever holds this port answer as OpenBot, rather than merely answer?
 #
 # `curl -f` proves something is listening and returned 2xx. That is not the same claim, and the gap
@@ -422,6 +469,11 @@ if [ "$FREEDUET_ROUTER" != "off" ]; then
   # agent-freeduet reads the prompts from the package the server loads.
   FREEDUET_TENANT_DIR="$(setting FREEDUET_TENANT_DIR "$TENANT_DIR")"
   export FREEDUET_TENANT_DIR
+fi
+# FreeDuet: the local Whisper (D25). Named here, so Compose starts it although it sits behind a profile.
+# Not waited for: the first start downloads the model, which takes longer than a health check should.
+if [ "$LOCAL_DICTATION" = "true" ]; then
+  SERVICES+=(whisper)
 fi
 
 export SUPERVISOR_TOKEN COMPUTER_TOKEN WORKER_SHARED_SECRET

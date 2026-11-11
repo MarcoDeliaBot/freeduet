@@ -19,13 +19,28 @@ export function recordingSupported(): boolean {
   );
 }
 
+/** The page cannot record at all. Its message is meant to be shown to the person as it is. */
+export class RecordingUnsupportedError extends Error {
+  override name = "RecordingUnsupportedError";
+}
+
+/**
+ * One sentence on why this page has no microphone and what to do about it. A browser gives the
+ * microphone only to https pages and to localhost, so a phone that opens http://<computer>:3010
+ * has none; that is the case worth naming, the other being a browser too old to record.
+ */
+export function recordingUnsupportedMessage(): string {
+  if (typeof window !== "undefined" && window.isSecureContext === false) {
+    return "The microphone only works on a secure page. Open FreeDuet on the computer where it runs (localhost), or ask whoever runs it to put it behind https.";
+  }
+  return "This browser cannot record audio. Try an up-to-date Chrome, Edge, Firefox or Safari.";
+}
+
 export async function startRecording(
   onError: (error: Error) => void,
 ): Promise<Recording> {
   if (!recordingSupported())
-    throw new Error(
-      "Dictation requires a supported browser and HTTPS (or localhost).",
-    );
+    throw new RecordingUnsupportedError(recordingUnsupportedMessage());
   const mimeType = ["audio/webm;codecs=opus", "audio/mp4", "audio/webm"].find(
     (type) => MediaRecorder.isTypeSupported(type),
   );
@@ -104,6 +119,14 @@ export async function startRecording(
   };
 }
 
+/** The primary subtag of the browser's language: "it-IT" is "it". Undefined when there is none. */
+export function interfaceLanguage(): string | undefined {
+  const tag = typeof navigator === "undefined" ? undefined : navigator.language;
+  if (typeof tag !== "string") return undefined;
+  const primary = tag.split("-", 1)[0]?.trim().toLowerCase();
+  return primary && /^[a-z]{2}$/.test(primary) ? primary : undefined;
+}
+
 export async function transcribeRecording(
   audio: Blob,
   signal: AbortSignal,
@@ -117,6 +140,10 @@ export async function transcribeRecording(
   }
   const body = new FormData();
   body.set("file", audio, `recording.${extension}`);
+  // The app has no language setting of its own, so the browser's. A hint the server checks, and
+  // uses only for the local service; with `TRANSCRIPTION_LANGUAGE` set it is ignored.
+  const language = interfaceLanguage();
+  if (language) body.set("language", language);
   const response = await fetch("/api/audio/transcriptions", {
     method: "POST",
     credentials: "include",

@@ -1,0 +1,56 @@
+# How many threads whisper-server gets (docs/M1_PLAN.md D25). Sourced by entrypoint.sh.
+#
+# whisper.cpp's server uses min(4, hardware threads) unless told otherwise (examples/server/server.cpp:73
+# at v1.9.5), which leaves most of a bigger computer idle. `nproc` counts hardware threads, usually two
+# per core, so half of it is about the physical cores. At least 4 (the server's own number) and at most
+# 16 (past that, whisper.cpp's CPU code stops getting faster for one request).
+#   whisper_threads <hardware threads> [<WHISPER_THREADS, may be empty>]
+# Prints the number, or a sentence on stderr and returns 1 when the override is not a whole number >= 1.
+whisper_threads() {
+  cpus="$1"
+  override="${2:-}"
+  if [ -n "$override" ]; then
+    case "$override" in
+      *[!0-9]* | 0*)
+        echo "WHISPER_THREADS must be a whole number of 1 or more." >&2
+        return 1
+        ;;
+    esac
+    echo "$override"
+    return 0
+  fi
+  threads=$((cpus / 2))
+  [ "$threads" -lt 4 ] && threads=4
+  [ "$threads" -gt 16 ] && threads=16
+  echo "$threads"
+}
+
+# whisper_beam_args <WHISPER_BEAM_SIZE, may be empty>: the option, or nothing. Unset leaves the server's
+# own decoding, which is greedy (beam_size -1, server.cpp:82; greedy chosen unless beam_size > 1, :927).
+whisper_beam_args() {
+  size="${1:-}"
+  [ -z "$size" ] && return 0
+  case "$size" in
+    *[!0-9]* | 0* | 1)
+      echo "WHISPER_BEAM_SIZE must be a whole number of 2 or more (leave it empty for greedy decoding)." >&2
+      return 1
+      ;;
+  esac
+  echo "--beam-size $size"
+}
+
+# whisper_vad_args <WHISPER_VAD, may be empty> <path of the VAD model>: "--vad --vad-model <path>" when on
+# (empty means on), nothing when off. With it the server cuts the audio to the stretches that are speech
+# before Whisper sees them, so silence and room noise are never decoded (examples/server/server.cpp:260,
+# :261). The VAD's own defaults are kept: threshold 0.5 (:125), min speech 250 ms (:126), min silence 100 ms
+# (:127), speech pad 30 ms (:129), no maximum speech length (:128).
+whisper_vad_args() {
+  case "${1:-}" in
+    "" | on) echo "--vad --vad-model $2" ;;
+    off) ;;
+    *)
+      echo "WHISPER_VAD must be on or off." >&2
+      return 1
+      ;;
+  esac
+}

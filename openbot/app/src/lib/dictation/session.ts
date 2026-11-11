@@ -89,7 +89,11 @@ export class DictationSession {
         error:
           error instanceof Error && error.name === "NotAllowedError"
             ? "Microphone access was denied. Allow it in your browser and try again."
-            : "Could not start recording. Check your microphone and try again.",
+            : // Its message names the page's problem and the way out, which "check your microphone" would hide.
+              error instanceof Error &&
+                error.name === "RecordingUnsupportedError"
+              ? error.message
+              : "Could not start recording. Check your microphone and try again.",
       });
     }
   };

@@ -1,7 +1,17 @@
 import type { TranscriptionConfig } from "./config";
 
+/** What the person's browser says about the recording. Already validated by the route. */
+export type TranscriptionHint = {
+  /** A two-letter code from Whisper's list: the person's interface language. */
+  language?: string;
+};
+
 export interface TranscriptionProvider {
-  transcribe(file: File, signal: AbortSignal): Promise<string>;
+  transcribe(
+    file: File,
+    signal: AbortSignal,
+    hint?: TranscriptionHint,
+  ): Promise<string>;
 }
 
 /** A safe, actionable message; upstream response bodies can contain deployment secrets. */
@@ -16,10 +26,18 @@ export function createTranscriptionProvider(
   switch (config.provider) {
     case "openai-compatible":
       return {
-        async transcribe(file, signal) {
+        async transcribe(file, signal, hint) {
           const body = new FormData();
           body.set("file", file);
           body.set("model", config.model);
+          // Only when set, so the request is the same as it was before they existed. The setting
+          // wins; the person's interface language is only for the local service, where telling it
+          // halves the wait (automatic detection is a second pass over the audio).
+          const language =
+            config.language ??
+            (config.useRequestLanguage ? hint?.language : undefined);
+          if (language) body.set("language", language);
+          if (config.prompt) body.set("prompt", config.prompt);
           const response = await transport(
             `${config.baseUrl}/audio/transcriptions`,
             {
@@ -51,7 +69,9 @@ export function createTranscriptionProvider(
               "The transcription service returned an invalid response. Please retry.",
             );
           }
-          return result.text.trim();
+          const text = result.text.trim();
+          // The local Whisper separates its segments with line breaks; dictation is one run of text.
+          return config.joinSegments ? text.replace(/\s*\n\s*/g, " ") : text;
         },
       };
   }

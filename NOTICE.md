@@ -25,6 +25,18 @@ Installed from npm and used as they are, not copied into this repository. The fi
 | `temporal-spec` | 1.0.1 | Apache-2.0 | Pulled in by `rrule-temporal` and `temporal-polyfill`: types |
 | `@types/nodemailer` | 8.0.2 | MIT | Development only: type declarations |
 
+## Local Whisper for dictation (D25)
+
+Fetched or built on the person's own computer when they switch `FREEDUET_DICTATION=local` on, and used as they are. None of it is copied into this repository or shipped in an image FreeDuet publishes: `openbot/whisper/Dockerfile` downloads the source at a pinned tag and builds it there, and the model is downloaded on first start.
+
+| Project | License | What it does here |
+|---|---|---|
+| [ggml-org/whisper.cpp](https://github.com/ggml-org/whisper.cpp) `v1.9.5` (commit `d1be6fde11ac6e0407606b4e42fe72d34add8037`) | MIT, © 2023-2026 The ggml authors | Built from source in the `whisper` image; its `whisper-server` transcribes the recordings on the CPU |
+| [Whisper model files](https://huggingface.co/ggerganov/whisper.cpp) (`ggml-large-v3-turbo-q5_0.bin`, `ggml-large-v3-turbo.bin`, `ggml-small.bin`, `ggml-base.bin`), converted by whisper.cpp from [OpenAI Whisper](https://github.com/openai/whisper) | MIT, © 2022 OpenAI (the repository's own licence tag is MIT) | Downloaded on first start into a Docker volume and checked against a SHA-256 pinned in `openbot/shared/whisper-models.ts` |
+| [Silero VAD](https://github.com/snakers4/silero-vad) v5.1.2, as `ggml-silero-v5.1.2.bin` from [ggml-org/whisper-vad](https://huggingface.co/ggml-org/whisper-vad) | MIT (the Silero VAD project's licence; the model card is to be checked) | Voice-activity detection for the local service, downloaded on first start and checked against a SHA-256 pinned in `openbot/shared/whisper-models.ts` |
+| [FFmpeg](https://ffmpeg.org/), the Debian package | LGPL-2.1+ or GPL-2+, depending on the build Debian ships | Installed by `apt` while the `whisper` image is built, as a separate program the server calls (`--convert`), to read the browsers' WebM/Opus and MP4/AAC. Nothing links to it |
+| [Google FLEURS](https://huggingface.co/datasets/google/fleurs), Italian test split | CC BY 4.0, © Google | The test audio and sentences for the proofs in `evals/dictation/`. Downloaded on the maintainer's computer into a folder git ignores; none of it is in this repository, except that a report can quote its ten worst lines |
+
 ## Projects we studied but deliberately did not copy from
 
 | Project | License | Why no code was taken |
