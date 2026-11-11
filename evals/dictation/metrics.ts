@@ -213,18 +213,98 @@ export function pcm16Wav(samples: Int16Array, sampleRate: number): Uint8Array {
   return wav;
 }
 
-/** Seconds of audio in a PCM WAV written by pcm16Wav, or by anything with the same 44-byte header. */
-export function wavDurationSeconds(wav: Uint8Array): number {
-  if (
-    wav.length < 44 ||
-    new TextDecoder().decode(wav.slice(0, 4)) !== "RIFF" ||
-    new TextDecoder().decode(wav.slice(8, 12)) !== "WAVE"
-  ) {
+export const WAV_SAMPLE_RATE = 16000;
+
+/**
+ * Reads a WAV file by walking its chunks, the way the format is laid out, and gives its samples as
+ * 16-bit integers. It takes mono, 16 kHz, as PCM 16-bit (format 1) or IEEE float 32-bit (format 3,
+ * which is what the FLEURS clips are: an 18-byte `fmt ` chunk and a `fact` chunk before `data`; floats
+ * are clamped to -1..1). Chunks it does not know (`fact`, `LIST`, ...) are skipped, odd-sized ones
+ * include their padding byte, and the `data` chunk's own size is honoured. Anything else is refused
+ * with a sentence naming what the file is, because a wrong guess here makes noise out of speech.
+ */
+export function readWav(
+  wav: Uint8Array,
+  options: { anyRate?: boolean } = {},
+): {
+  sampleRate: number;
+  samples: Int16Array;
+} {
+  const text = (at: number) => new TextDecoder().decode(wav.slice(at, at + 4));
+  if (wav.length < 12 || text(0) !== "RIFF" || text(8) !== "WAVE") {
     throw new Error("Not a WAV file.");
   }
   const view = new DataView(wav.buffer, wav.byteOffset, wav.byteLength);
-  const bytesPerSecond = view.getUint32(28, true);
-  return view.getUint32(40, true) / bytesPerSecond;
+  let format:
+    | { tag: number; channels: number; rate: number; bits: number }
+    | undefined;
+  let at = 12;
+  while (at + 8 <= wav.length) {
+    const id = text(at);
+    const size = view.getUint32(at + 4, true);
+    const body = at + 8;
+    if (id === "fmt ") {
+      if (size < 16 || body + 16 > wav.length) {
+        throw new Error("The WAV file's fmt chunk is cut short.");
+      }
+      format = {
+        tag: view.getUint16(body, true),
+        channels: view.getUint16(body + 2, true),
+        rate: view.getUint32(body + 4, true),
+        bits: view.getUint16(body + 14, true),
+      };
+    } else if (id === "data") {
+      if (!format) throw new Error("The WAV file has data before its format.");
+      if (body + size > wav.length) {
+        throw new Error(
+          `The WAV file is cut short: its data chunk says ${size} bytes and ${wav.length - body} are there.`,
+        );
+      }
+      const name = `${format.tag === 3 ? "IEEE float" : format.tag === 1 ? "PCM" : `format ${format.tag}`}, ${format.bits}-bit, ${format.channels} channel${format.channels === 1 ? "" : "s"}, ${format.rate} Hz`;
+      const pcm16 = format.tag === 1 && format.bits === 16;
+      const float32 = format.tag === 3 && format.bits === 32;
+      if (!pcm16 && !float32) {
+        throw new Error(
+          `A WAV of ${name} is not supported: only PCM 16-bit and IEEE float 32-bit.`,
+        );
+      }
+      if (format.channels !== 1) {
+        throw new Error(`A WAV of ${name} is not supported: only mono.`);
+      }
+      if (!options.anyRate && format.rate !== WAV_SAMPLE_RATE) {
+        throw new Error(
+          `A WAV of ${name} is not supported: only ${WAV_SAMPLE_RATE} Hz.`,
+        );
+      }
+      const bytes = pcm16 ? 2 : 4;
+      const samples = new Int16Array(Math.floor(size / bytes));
+      for (let index = 0; index < samples.length; index++) {
+        if (pcm16) {
+          samples[index] = view.getInt16(body + index * 2, true);
+        } else {
+          const value = Math.max(
+            -1,
+            Math.min(1, view.getFloat32(body + index * 4, true)),
+          );
+          samples[index] = Math.round(value * 32767);
+        }
+      }
+      return { sampleRate: format.rate, samples };
+    }
+    // Chunks are padded to an even size.
+    at = body + size + (size % 2);
+  }
+  throw new Error(
+    format
+      ? "The WAV file has no data chunk."
+      : "The WAV file has no fmt chunk.",
+  );
+}
+
+/** Seconds of audio in a WAV that readWav accepts, at any sample rate. */
+export function wavDurationSeconds(wav: Uint8Array): number {
+  const { sampleRate, samples } = readWav(wav, { anyRate: true });
+  return samples.length / sampleRate;
 }
 
 /**

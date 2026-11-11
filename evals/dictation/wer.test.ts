@@ -6,11 +6,13 @@ import type { Clip } from "./fleurs";
 import {
   DEFAULT_CLIPS,
   describeService,
+  fileSafe,
   coverage,
   ffmpegConvert,
   ffmpegInvocation,
   measureFormats,
   measureSilence,
+  SILENCE_CASES,
   measureWer,
   pauseInMiddleWav,
   parseArguments,
@@ -22,7 +24,7 @@ import {
   spliceWav,
   speechThenSilenceWav,
 } from "./wer";
-import { pcm16Wav, wavDurationSeconds } from "./metrics";
+import { pcm16Wav, readWav, wavDurationSeconds } from "./metrics";
 
 const encoder = new TextEncoder();
 const decoder = new TextDecoder();
@@ -685,6 +687,104 @@ describe("--language and the median audio length", () => {
     });
     expect(text).toMatch(
       /Median time per request \| [\d.]+ s, for clips of a median 5.00 s \|/,
+    );
+  });
+});
+
+describe("clips that are not PCM 16-bit (FLEURS is 32-bit float)", () => {
+  const floatWav = (values: number[]) => {
+    const data = new Uint8Array(new Float32Array(values).buffer);
+    const header = new Uint8Array([
+      ...[..."RIFF"].map((c) => c.charCodeAt(0)),
+      0,
+      0,
+      0,
+      0,
+      ...[..."WAVE"].map((c) => c.charCodeAt(0)),
+      ...[..."fmt "].map((c) => c.charCodeAt(0)),
+      0x12,
+      0,
+      0,
+      0,
+      3,
+      0,
+      1,
+      0,
+      0x80,
+      0x3e,
+      0,
+      0,
+      0,
+      0xfa,
+      0,
+      0,
+      4,
+      0,
+      0x20,
+      0,
+      0,
+      0,
+      ...[..."fact"].map((c) => c.charCodeAt(0)),
+      4,
+      0,
+      0,
+      0,
+      values.length & 255,
+      values.length >> 8,
+      0,
+      0,
+      ...[..."data"].map((c) => c.charCodeAt(0)),
+      data.length & 255,
+      (data.length >> 8) & 255,
+      (data.length >> 16) & 255,
+      0,
+    ]);
+    return new Uint8Array([...header, ...data]);
+  };
+
+  test("the speech cases build their audio from the real samples, not from the header's bytes", () => {
+    const values = Array.from(
+      { length: 16000 * 3 },
+      (_, i) => Math.sin(i / 20) * 0.5,
+    );
+    const wav = floatWav(values);
+    const first2s = readWav(speechThenSilenceWav(wav)).samples;
+    expect(first2s).toHaveLength(16000 * 12);
+    expect(first2s[100]).toBe(Math.round(values[100] * 32767));
+    expect(first2s[16000 * 2 - 1]).toBe(
+      Math.round((values[16000 * 2 - 1] as number) * 32767),
+    );
+    expect(first2s[16000 * 2]).toBe(0);
+    expect(wavDurationSeconds(spliceWav([wav, 5, wav, 3]))).toBe(3 + 5 + 3 + 3);
+    expect(wavDurationSeconds(pauseInMiddleWav(wav, 3))).toBe(6);
+  });
+
+  test("--keep-audio: every file 7c sends is handed over under its own name", async () => {
+    const kept: [string, number][] = [];
+    const clip = {
+      wav: floatWav(new Array(16000 * 3).fill(0.1)),
+      reference: "uno due",
+    };
+    await measureSilence(
+      async () => "",
+      SILENCE_CASES.slice(0, 1),
+      [clip, clip],
+      (name, audio) => {
+        kept.push([name, wavDurationSeconds(audio)]);
+      },
+    );
+    expect(kept).toEqual([
+      ["digital silence, 5 s", 5],
+      ["2 s of speech, then 10 s of silence", 12],
+      ["one whole clip with a 3 s pause in its middle", 6],
+      ["two whole clips, 5 s of silence between, 3 s after", 3 + 5 + 3 + 3],
+    ]);
+    expect(fileSafe("2 s of speech, then 10 s of silence")).toBe(
+      "2-s-of-speech-then-10-s-of-silence",
+    );
+    expect(parseArguments(["--keep-audio", "/tmp/x"]).keepAudio).toBe("/tmp/x");
+    expect(() => parseArguments(["--keep-audio"])).toThrow(
+      "--keep-audio needs a value.",
     );
   });
 });

@@ -33,6 +33,7 @@ import { type Clip, loadClips } from "../../evals/dictation/fleurs";
 import {
   corpusWordErrorRate,
   pcm16Wav,
+  readWav,
   wordErrorRate,
 } from "../../evals/dictation/metrics";
 
@@ -125,12 +126,8 @@ export function parseCookieHeader(
 
 /** The clip with a second of silence before it and after it, so no first word is lost to the start. */
 export function paddedWav(wav: Uint8Array): Uint8Array {
-  const view = new DataView(wav.buffer, wav.byteOffset, wav.byteLength);
-  const sampleRate = view.getUint32(24, true);
-  const samples = new Int16Array((wav.byteLength - 44) / 2);
-  for (let index = 0; index < samples.length; index++) {
-    samples[index] = view.getInt16(44 + index * 2, true);
-  }
+  // Whatever the clip is (FLEURS is 32-bit float), what Chrome's fake microphone gets is PCM 16-bit.
+  const { sampleRate, samples } = readWav(wav);
   const lead = Math.round(LEAD_SECONDS * sampleRate);
   const tail = Math.round(TAIL_SECONDS * sampleRate);
   const padded = new Int16Array(lead + samples.length + tail);

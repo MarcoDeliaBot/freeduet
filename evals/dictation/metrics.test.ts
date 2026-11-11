@@ -1,5 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import {
+  readWav,
   corpusWordErrorRate,
   median,
   normalizeText,
@@ -251,5 +252,146 @@ describe("generated audio", () => {
     expect(rms).toBeLessThan(0.0033);
     expect(Math.max(...noise)).toBeLessThan(0.05 * 32768);
     expect(roomNoiseSamples(100)).toEqual(roomNoiseSamples(100));
+  });
+});
+
+describe("readWav", () => {
+  const u32 = (n: number) => [
+    n & 255,
+    (n >> 8) & 255,
+    (n >> 16) & 255,
+    (n >>> 24) & 255,
+  ];
+  const u16 = (n: number) => [n & 255, (n >> 8) & 255];
+  const tag = (t: string) => [...t].map((c) => c.charCodeAt(0));
+  const f32 = (values: number[]) => [
+    ...new Uint8Array(new Float32Array(values).buffer),
+  ];
+  const riff = (...chunks: number[][]) => {
+    const body = [...tag("WAVE"), ...chunks.flat()];
+    return new Uint8Array([...tag("RIFF"), ...u32(body.length), ...body]);
+  };
+  const fmt = (
+    tagNumber: number,
+    channels: number,
+    rate: number,
+    bits: number,
+    extra: number[] = [],
+  ) => [
+    ...tag("fmt "),
+    ...u32(16 + extra.length),
+    ...u16(tagNumber),
+    ...u16(channels),
+    ...u32(rate),
+    ...u32((rate * channels * bits) / 8),
+    ...u16((channels * bits) / 8),
+    ...u16(bits),
+    ...extra,
+  ];
+  const data = (bytes: number[]) => [
+    ...tag("data"),
+    ...u32(bytes.length),
+    ...bytes,
+  ];
+
+  test("PCM 16-bit with the plain 44-byte header", () => {
+    const wav = pcm16Wav(Int16Array.from([0, 1000, -1000, 32767]), 16000);
+    expect(wav.length).toBe(44 + 8);
+    expect([...readWav(wav).samples]).toEqual([0, 1000, -1000, 32767]);
+    expect(wavDurationSeconds(wav)).toBeCloseTo(4 / 16000, 10);
+  });
+
+  test("the FLEURS header exactly: IEEE float, 18-byte fmt, a fact chunk before data", () => {
+    // From the first 64 bytes of a real clip: fmt 12 00 00 00 | 03 00 | 01 00 | 80 3e 00 00 | 00 fa 00 00 | 04 00 | 20 00 | 00 00, fact 04 00 00 00.
+    const wav = riff(
+      [
+        ...tag("fmt "),
+        0x12,
+        0,
+        0,
+        0,
+        3,
+        0,
+        1,
+        0,
+        0x80,
+        0x3e,
+        0,
+        0,
+        0,
+        0xfa,
+        0,
+        0,
+        4,
+        0,
+        0x20,
+        0,
+        0,
+        0,
+      ],
+      [...tag("fact"), 4, 0, 0, 0, 3, 0, 0, 0],
+      data(f32([0, 0.5, -0.5, 1, -1])),
+    );
+    const { sampleRate, samples } = readWav(wav);
+    expect(sampleRate).toBe(16000);
+    expect([...samples]).toEqual([0, 16384, -16383, 32767, -32767]);
+    expect(wavDurationSeconds(wav)).toBeCloseTo(5 / 16000, 10);
+  });
+
+  test("floats beyond -1..1 are clamped", () => {
+    const wav = riff(fmt(3, 1, 16000, 32), data(f32([2, -3, 0.25])));
+    expect([...readWav(wav).samples]).toEqual([32767, -32767, 8192]);
+  });
+
+  test("a LIST chunk of odd size, with its padding byte, before data is skipped", () => {
+    const wav = riff(
+      fmt(1, 1, 16000, 16),
+      [...tag("LIST"), ...u32(5), 1, 2, 3, 4, 5, 0],
+      data([...u16(7), ...u16(65535)]),
+    );
+    expect([...readWav(wav).samples]).toEqual([7, -1]);
+  });
+
+  test("the data chunk's own size is honoured: bytes after it are not samples", () => {
+    const wav = riff(fmt(1, 1, 16000, 16), data([...u16(5), ...u16(6)]), [
+      ...tag("LIST"),
+      ...u32(4),
+      9,
+      9,
+      9,
+      9,
+    ]);
+    expect([...readWav(wav).samples]).toEqual([5, 6]);
+  });
+
+  test("a truncated file is refused with how much is missing", () => {
+    const wav = riff(
+      fmt(1, 1, 16000, 16),
+      data([...u16(1), ...u16(2), ...u16(3)]),
+    );
+    expect(() => readWav(wav.slice(0, wav.length - 2))).toThrow(
+      "The WAV file is cut short: its data chunk says 6 bytes and 4 are there.",
+    );
+    expect(() => readWav(riff(fmt(1, 1, 16000, 16)))).toThrow(
+      "The WAV file has no data chunk.",
+    );
+    expect(() => readWav(new Uint8Array([1, 2, 3]))).toThrow("Not a WAV file.");
+  });
+
+  test("stereo, another rate, another depth and another format are refused naming the format", () => {
+    expect(() =>
+      readWav(riff(fmt(1, 2, 16000, 16), data([0, 0, 0, 0]))),
+    ).toThrow(
+      "A WAV of PCM, 16-bit, 2 channels, 16000 Hz is not supported: only mono.",
+    );
+    expect(() => readWav(riff(fmt(1, 1, 44100, 16), data([0, 0])))).toThrow(
+      "A WAV of PCM, 16-bit, 1 channel, 44100 Hz is not supported: only 16000 Hz.",
+    );
+    expect(() => readWav(riff(fmt(1, 1, 16000, 24), data([0, 0, 0])))).toThrow(
+      "A WAV of PCM, 24-bit, 1 channel, 16000 Hz is not supported: only PCM 16-bit and IEEE float 32-bit.",
+    );
+    expect(() =>
+      readWav(riff(fmt(3, 1, 16000, 64), data(new Array(8).fill(0)))),
+    ).toThrow("IEEE float, 64-bit");
   });
 });

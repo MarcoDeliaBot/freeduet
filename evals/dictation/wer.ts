@@ -18,6 +18,7 @@
  *   --language xx    send this language with every request (a two-letter code), over
  *                    TRANSCRIPTION_LANGUAGE; without either the service detects it, which takes about
  *                    twice as long on the local one
+ *   --keep-audio <dir>  write the files 7c generates (WAV) to this folder, to listen to them
  *   --max-wer <pct>  fail when the 7a word error rate is above this percentage
  *
  * Every request goes through createTranscriptionProvider(transcriptionConfig(process.env)), the code
@@ -50,6 +51,7 @@ import {
   normalizeText,
   percentile,
   pcm16Wav,
+  readWav,
   roomNoiseSamples,
   type WordErrors,
   wordErrorRate,
@@ -414,15 +416,7 @@ export function silenceWav(seconds: number, noise: boolean): Uint8Array {
   );
 }
 
-/** The samples of a 16 kHz mono WAV. */
-function wavSamples(wav: Uint8Array): Int16Array {
-  const view = new DataView(wav.buffer, wav.byteOffset, wav.byteLength);
-  const samples = new Int16Array(Math.floor((wav.byteLength - 44) / 2));
-  for (let index = 0; index < samples.length; index++) {
-    samples[index] = view.getInt16(44 + index * 2, true);
-  }
-  return samples;
-}
+const wavSamples = (wav: Uint8Array): Int16Array => readWav(wav).samples;
 
 /** WAV files and stretches of digital silence (a number of seconds), one after the other. */
 export function spliceWav(parts: readonly (Uint8Array | number)[]): Uint8Array {
@@ -481,10 +475,13 @@ export async function measureSilence(
   cases: readonly SilenceCase[] = SILENCE_CASES,
   /** FLEURS clips for the cases where speech must survive. Two are needed for all of them. */
   clips: readonly SpeechClip[] = [],
+  /** Called with the name and bytes of every file sent, so a person can listen to them. */
+  keep: (name: string, audio: Uint8Array) => Promise<void> | void = () => {},
 ): Promise<SilenceResult> {
   const results: SilenceResult["cases"] = [];
   const problems: string[] = [];
   const run = async (name: string, audio: Uint8Array) => {
+    await keep(name, audio);
     const answer = await timed(async () => transcribe(audio, "audio/wav"));
     results.push({
       name,
@@ -585,6 +582,14 @@ export function describeService(
     promptSet: Boolean(config.prompt),
     joinSegments: Boolean(config.joinSegments),
   };
+}
+
+/** A case name as a file name: "2 s of speech, then 10 s of silence" is "2-s-of-speech-then-10-s-of-silence". */
+export function fileSafe(name: string): string {
+  return name
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
 }
 
 export function reportName(
@@ -701,6 +706,7 @@ type Options = {
   silence: boolean;
   maxWer?: number;
   language?: string;
+  keepAudio?: string;
 };
 
 export function parseArguments(argv: readonly string[]): Options {
@@ -735,6 +741,8 @@ export function parseArguments(argv: readonly string[]): Options {
         );
       }
       options.language = code;
+    } else if (flag === "--keep-audio") {
+      options.keepAudio = value(flag, index++);
     } else if (flag === "--max-wer") {
       const pct = Number(value(flag, index++));
       if (!Number.isFinite(pct) || pct < 0 || pct > 100) {
@@ -841,6 +849,15 @@ async function main() {
           reference: clip.reference,
         })),
       ),
+      options.keepAudio
+        ? async (name, audio) => {
+            mkdirSync(options.keepAudio as string, { recursive: true });
+            await Bun.write(
+              join(options.keepAudio as string, `${fileSafe(name)}.wav`),
+              audio,
+            );
+          }
+        : undefined,
     );
     report.problems.push(...report.silence.problems.map((p) => `7c: ${p}`));
   }

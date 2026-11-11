@@ -95,3 +95,67 @@ describe("paddedWav", () => {
     expect(view.getInt16(44 + (16000 + 8000) * 2, true)).toBe(0);
   });
 });
+
+describe("paddedWav on a clip that is 32-bit float, as FLEURS is", () => {
+  test("writes PCM 16-bit for Chrome's fake microphone, with the samples where they were", () => {
+    const floats = new Float32Array(8000).fill(0.5);
+    const header = new Uint8Array([
+      ...[..."RIFF"].map((c) => c.charCodeAt(0)),
+      0,
+      0,
+      0,
+      0,
+      ...[..."WAVE"].map((c) => c.charCodeAt(0)),
+      ...[..."fmt "].map((c) => c.charCodeAt(0)),
+      0x12,
+      0,
+      0,
+      0,
+      3,
+      0,
+      1,
+      0,
+      0x80,
+      0x3e,
+      0,
+      0,
+      0,
+      0xfa,
+      0,
+      0,
+      4,
+      0,
+      0x20,
+      0,
+      0,
+      0,
+      ...[..."fact"].map((c) => c.charCodeAt(0)),
+      4,
+      0,
+      0,
+      0,
+      0x40,
+      0x1f,
+      0,
+      0,
+      ...[..."data"].map((c) => c.charCodeAt(0)),
+      0x00,
+      0x7d,
+      0,
+      0,
+    ]);
+    const padded = paddedWav(
+      new Uint8Array([...header, ...new Uint8Array(floats.buffer)]),
+    );
+    const view = new DataView(
+      padded.buffer,
+      padded.byteOffset,
+      padded.byteLength,
+    );
+    expect(view.getUint16(20, true)).toBe(1);
+    expect(view.getUint16(34, true)).toBe(16);
+    expect(wavDurationSeconds(padded)).toBe(1 + 0.5 + 1.5);
+    expect(view.getInt16(44 + 16000 * 2, true)).toBe(16384);
+    expect(view.getInt16(44 + 15999 * 2, true)).toBe(0);
+  });
+});
