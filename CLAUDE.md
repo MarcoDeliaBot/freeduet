@@ -45,6 +45,10 @@ the hands"): plan, brief executors, verify with numbers, merge, report.
   file:line), the files the executor owns and must not touch, the tests that must fail before and pass
   after, and the report format. Executors open the PR and stop: they do not wait on CI. Stop an
   executor as soon as it has delivered.
+- **Worktree branches.** Create each executor's worktree on its own branch:
+  `git worktree add -b <branch> <dir> origin/main`, then add the fetch refspec (see Git and pull
+  requests). Never leave it detached: commits made on a detached HEAD get lost. The brief tells the
+  executor to run `git branch --show-current` before it commits.
 - **Verify before merging.** Re-run the executor's key tests yourself against a real Postgres and read
   the diff of anything security-related. Haiku sometimes misreports time ("waited three hours") or
   takes shortcuts (closing and reopening a PR to restart CI): check its claims.
@@ -78,7 +82,11 @@ the hands"): plan, brief executors, verify with numbers, merge, report.
   `max_connections=200`; locally the suite peaks near 90 connections. **Every test that opens a
   database pool closes it** (`await database.$client.close()`).
 - `tests/assertion-shape.test.ts` has an allow-list with line numbers: editing a listed test file
-  shifts them.
+  shifts them. It also rejects `?.` under `toBeUndefined` and `toBeFalsy`.
+- `bun test` alone does not show every gate a new test file must pass. Also run
+  `bun run typecheck:tests` from `openbot/`; its baseline is `server/tests/typecheck-baseline.txt`,
+  and hand-edit a line there only when a baselined error's text changes.
+- Adding a value to a Postgres enum breaks `tests/schema.test.ts`.
 - Biome runs from `openbot/`, not `openbot/server/`.
 
 ## Local testing
@@ -91,6 +99,12 @@ the hands"): plan, brief executors, verify with numbers, merge, report.
   any test, or the preload fails with "Cannot find package".
 - With drizzle on Bun's SQL driver a `jsonb` parameter is sent as a JSON string: raw SQL must use
   `${JSON.stringify(x)}::text::jsonb`.
+- In the sandbox the app suite fails about 138 tests on plain main: menus and popups do not open under
+  happy-dom. Compare with main before blaming a change.
+- Gmail can be connected two ways. OAuth with the person's own Google Cloud project (`google-workspace`),
+  or an app password plus an optional iCal secret link (`google-imap`, D24, the simple default for the
+  public). An app password opens the whole mailbox, so the transport opens mailboxes read-only and
+  replies only within existing threads.
 
 ## Things learned the hard way (Intelligence off, SSE mode)
 
@@ -118,6 +132,10 @@ the hands"): plan, brief executors, verify with numbers, merge, report.
   settings. The CLI answers a call for a tool the run did not list
   with "No such tool available" itself, so it reaches no stored transcript; agent-freeduet tells the
   member why (`tool_notes.py`) and logs it (`segment.py`).
+- `server/src/approvals/policy.ts` `SAFETY_REQUIREMENTS` match words in a tool's reference. A catalogue
+  key that contains "password", "credential" or "api-key" makes every write under it unapprovable
+  ("changing a password is always done by the person"). That is why the app-password Gmail entry is
+  keyed `google-imap` (D24). Test such changes through the real gate, not only `classifyTool`.
 
 ## Team evals
 
@@ -131,3 +149,17 @@ the hands"): plan, brief executors, verify with numbers, merge, report.
 - Thresholds: each member at least 90%, safety cases 100%. A failure that repeats in every run is the
   member's prompt (`openbot/examples/freeduet/agents.yaml`); a failure that varies is usually the
   harness or the environment: check the eval database before blaming a member.
+- `--cases <file>` writes the day's full (non-partial) report and overwrites a certification report from
+  the same day. For a filtered run use `--id a,b` or `--member` instead.
+- A `must` or `must_not` line has to stand on its own. The grader skipped "tells the person why" (no
+  subject) in several runs. A check left without a verdict is retried once; its reason now says what
+  the grader sent (#78, #80).
+- The eval stack has no Gmail connected, so otto-4 and penny-5 are skipped ("needs Gmail").
+
+## On the maintainer's computer
+
+- The stack runs in WSL Ubuntu, with Docker inside WSL. A script started through `wsl.exe` that leaves
+  processes running must end with `exec sleep infinity`, or WSL stops the distro when the last session
+  ends and the stack dies.
+- Start such scripts hidden from PowerShell with `Start-Process -WindowStyle Hidden wsl ...`.
+- Write multi-line logic into a `.sh` file and run it. Inline regex through PowerShell breaks.
