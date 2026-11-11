@@ -52,7 +52,7 @@ RUN groupadd --system --gid 10002 whisper \
   && chown whisper:whisper /models
 
 WORKDIR /app
-COPY whisper/fetch-model.ts whisper/entrypoint.sh /app/whisper/
+COPY whisper/fetch-model.ts whisper/entrypoint.sh whisper/threads.sh /app/whisper/
 # The same table the API server checks FREEDUET_WHISPER_MODEL against, at the path fetch-model.ts
 # imports it from.
 COPY shared/whisper-models.ts /app/shared/whisper-models.ts

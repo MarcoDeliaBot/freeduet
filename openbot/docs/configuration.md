@@ -295,6 +295,9 @@ is written and yours stay. Without `FREEDUET_DICTATION` the stack is exactly wha
 | `FREEDUET_DICTATION` | `local` switches the local Whisper on. Unset, empty or `off` is today's behaviour. Anything else is refused. |
 | `FREEDUET_WHISPER_MODEL` | One of the models below. Default `large-v3-turbo-q5_0`. A name that is not on the list is refused at start. |
 | `WHISPER_PORT` | The port the service listens on, on `127.0.0.1` only. Default `4240`. |
+| `WHISPER_THREADS` | Threads the service uses. Unset: half of the computer's hardware threads, at least 4 and at most 16 (whisper.cpp's own default is 4, however big the computer is). The service log says the number it took. |
+| `WHISPER_BEAM_SIZE` | Unset: greedy decoding, whisper.cpp's own default. A number of 2 or more switches to beam search of that size: slower, sometimes a little more exact. Measure with the proofs below before keeping it. |
+| `WHISPER_NO_SPEECH_THRESHOLD` | Read by the API server, not the service. A segment the service marks as more likely silence than speech than this (`no_speech_prob`, 0 to 1) is dropped. Default `0.6`, whisper.cpp's own threshold. Lower drops more; run `--silence` and read the numbers it prints before changing it. |
 
 | Model | Download | Notes |
 | --- | --- | --- |
@@ -325,8 +328,14 @@ What to know:
 - It detects the language itself unless `TRANSCRIPTION_LANGUAGE` is set. Whisper's detection can be
   wrong on a very short phrase; setting `it` removes the doubt. `TRANSCRIPTION_PROMPT` helps with names.
 - It runs with `--suppress-nst` (no `[music]` or `(applause)` markers in the text) and with
-  voice-activity detection off. A recording with no speech comes back empty, and the composer says
-  "No speech was detected", the same for every service.
+  voice-activity detection off. Whisper models invent a phrase ("Thank you.") on silence, and the
+  service's own filter drops a segment only when its no-speech number is high *and* its average
+  log-probability is low (`src/whisper.cpp:7780`), which silence often escapes. So for the local
+  service the API server asks for the verbose response (`response_format=verbose_json`, and
+  `token_timestamps=false`, because with it whisper.cpp cuts segments at 60 characters in the middle
+  of a word) and drops every segment whose `no_speech_prob` is above `WHISPER_NO_SPEECH_THRESHOLD`.
+  Nothing left is the empty string, and the composer says "No speech was detected", the same for
+  every service. Other providers get the plain request, as before.
 - A recording is at most two minutes, as everywhere, and the service runs on the CPU only.
 - The microphone needs https or `localhost`. Opened from a phone at `http://<computer>:3010`, the
   browser does not offer a microphone at all, and the button says so when it is pressed. Two ways
@@ -351,10 +360,10 @@ that ran passed.
 # 7a. Word error rate on 100 clips, with the median and 95th percentile time per request and the ten worst lines
 bun --env-file=openbot/.env evals/dictation/wer.ts --model-label large-v3-turbo-q5_0
 
-# 7b. Five clips as WAV, as webm/opus and as mp4/aac, as the browsers send them (needs ffmpeg on the PATH)
+# 7b. Five clips as WAV, as webm/opus and as mp4/aac, as the browsers send them (ffmpeg on the PATH, or else the one in the built whisper image through Docker)
 bun --env-file=openbot/.env evals/dictation/wer.ts --formats --model-label large-v3-turbo-q5_0
 
-# 7c. Silence and low room noise, 5 s and 30 s each: every transcript must be empty
+# 7c. Silence and low room noise, 5 s and 30 s each: every transcript must be empty; 2 s of speech then 10 s of silence must still come back. Prints the service's no_speech_prob per segment
 bun --env-file=openbot/.env evals/dictation/wer.ts --silence --model-label large-v3-turbo-q5_0
 
 # 7d. The whole path in Chrome: a fake microphone plays three clips, the text must reach the message box
@@ -363,7 +372,7 @@ bun --env-file=openbot/.env openbot/scripts/freeduet-dictation-e2e.ts --app http
 
 7a reports a number and fails only with `--max-wer <percent>`, because what is good enough is for you
 to decide once you have seen it. 7b fails when a compressed form is worse than the WAV by more than two
-WER points. 7c fails on any text at all. 7d fails above 25 percent over its clips (`--max-wer`), or when
+WER points. 7c fails on any text for silence or noise, and on speech that is dropped (or replaced by words not in its sentence). 7d fails above 25 percent over its clips (`--max-wer`), or when
 the app shows an error. The word error rate counts words with the rules written at the top of
 `evals/dictation/metrics.ts` (lower case, no punctuation, numbers not rewritten, so it is slightly
 pessimistic). 7d starts a Chrome (`--chromium <path>` or `E2E_CHROMIUM` when it is not the installed

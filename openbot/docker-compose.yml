@@ -478,6 +478,9 @@ services:
     environment:
       # A name from shared/whisper-models.ts; the container refuses any other.
       FREEDUET_WHISPER_MODEL: ${FREEDUET_WHISPER_MODEL:-large-v3-turbo-q5_0}
+      # Empty: the entrypoint picks them (whisper/threads.sh).
+      WHISPER_THREADS: ${WHISPER_THREADS:-}
+      WHISPER_BEAM_SIZE: ${WHISPER_BEAM_SIZE:-}
       # Read-only root below: nothing here should need a home directory or a runtime cache.
       HOME: /tmp
       BUN_RUNTIME_TRANSPILER_CACHE_PATH: "0"

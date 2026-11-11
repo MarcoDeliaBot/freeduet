@@ -7,9 +7,11 @@
  *
  *   (no option)      7a  word error rate on --n Italian clips (default 100)
  *   --formats        7b  five clips as WAV, as webm/opus and as mp4/aac: each compressed form must not
- *                        be worse than the WAV by more than 2 WER points. Needs ffmpeg on the PATH.
+ *                        be worse than the WAV by more than 2 WER points. Needs ffmpeg on the PATH, or Docker and the built whisper image (it has one).
  *   --silence        7c  5 s and 30 s of digital silence and of low room noise: every transcript must
- *                        be empty, or the check fails
+ *                        be empty, or the check fails; and 2 s of speech followed by 10 s of silence must
+ *                        still come back as words. With the local service it prints the no_speech_prob and
+ *                        avg_logprob of every segment, so the threshold can be chosen from measured numbers
  *   --wer            run 7a too when --formats or --silence is given
  *   --n <count>      clips for 7a (default 100; the test split has more than 800)
  *   --model-label X  names the report: evals/dictation/reports/<date>-X.{json,md}
@@ -34,6 +36,7 @@ import {
 } from "../../openbot/server/src/dictation/config";
 import {
   createTranscriptionProvider,
+  type SegmentInspector,
   type TranscriptionProvider,
 } from "../../openbot/server/src/dictation/provider";
 import { type Clip, loadClips } from "./fleurs";
@@ -41,6 +44,7 @@ import {
   corpusWordErrorRate,
   median,
   NORMALISATION_SUMMARY,
+  normalizeText,
   percentile,
   pcm16Wav,
   roomNoiseSamples,
@@ -88,6 +92,17 @@ export function productTranscribe(provider: TranscriptionProvider): Transcribe {
       AbortSignal.timeout(DICTATION_TIMEOUT_MS),
     );
   };
+}
+
+/** The local service's per-segment numbers for a WAV, asked the way the server asks. */
+export function productInspect(
+  provider: SegmentInspector,
+): (audio: Uint8Array) => Promise<SilenceSegment[]> {
+  return (audio) =>
+    provider.segments(
+      new File([new Uint8Array(audio)], "recording.wav", { type: "audio/wav" }),
+      AbortSignal.timeout(DICTATION_TIMEOUT_MS),
+    );
 }
 
 async function timed(
@@ -273,48 +288,91 @@ export async function measureFormats(
   };
 }
 
+const DEFAULT_WHISPER_IMAGE = "freeduet-whisper:latest";
+
+/**
+ * The command that turns input.wav in `directory` into output.<format>. The ffmpeg on the PATH comes
+ * first. Without one, the ffmpeg inside the built whisper image does it: no network, no capabilities,
+ * the caller's own user (so the folder it writes to stays ours), and nothing mounted but `directory`.
+ */
+export function ffmpegInvocation(options: {
+  ffmpeg?: string | null;
+  docker?: string | null;
+  image?: string;
+  directory: string;
+  format: "webm" | "mp4";
+  user?: string;
+}): string[] {
+  const { ffmpeg, docker, directory, format } = options;
+  const encode =
+    format === "webm"
+      ? ["-c:a", "libopus", "-b:a", "32k", "-ar", "48000"]
+      : [
+          "-c:a",
+          "aac",
+          "-b:a",
+          "64k",
+          "-ar",
+          "48000",
+          "-movflags",
+          "frag_keyframe+empty_moov",
+        ];
+  const run = (root: string) => [
+    "-hide_banner",
+    "-loglevel",
+    "error",
+    "-y",
+    "-i",
+    `${root}/input.wav`,
+    "-ac",
+    "1",
+    ...encode,
+    `${root}/output.${format}`,
+  ];
+  if (ffmpeg) return [ffmpeg, ...run(directory)];
+  if (docker) {
+    return [
+      docker,
+      "run",
+      "--rm",
+      "--network",
+      "none",
+      "--cap-drop",
+      "ALL",
+      "--security-opt",
+      "no-new-privileges",
+      ...(options.user ? ["--user", options.user] : []),
+      "-v",
+      `${directory}:/work`,
+      "--entrypoint",
+      "ffmpeg",
+      options.image ?? DEFAULT_WHISPER_IMAGE,
+      ...run("/work"),
+    ];
+  }
+  throw new Error(
+    "ffmpeg is needed for --formats and is on neither the PATH nor in Docker. Install it (winget install ffmpeg, brew install ffmpeg, apt install ffmpeg), or build the whisper image (it has one) and run again.",
+  );
+}
+
 /** ffmpeg as the browsers' MediaRecorder encodes: opus in webm, AAC in a fragmented mp4. */
 export const ffmpegConvert: Convert = async (wav, format) => {
-  const ffmpeg = Bun.which("ffmpeg");
-  if (!ffmpeg) {
-    throw new Error(
-      "ffmpeg is needed for --formats and is not on the PATH. Install it (winget install ffmpeg, brew install ffmpeg, apt install ffmpeg) and run again.",
-    );
-  }
+  const user =
+    process.getuid && process.getgid
+      ? `${process.getuid()}:${process.getgid()}`
+      : undefined;
   const directory = mkdtempSync(join(tmpdir(), "freeduet-dictation-"));
   try {
-    const input = join(directory, "input.wav");
-    const output = join(directory, `output.${format}`);
-    await Bun.write(input, wav);
-    const encode =
-      format === "webm"
-        ? ["-c:a", "libopus", "-b:a", "32k", "-ar", "48000"]
-        : [
-            "-c:a",
-            "aac",
-            "-b:a",
-            "64k",
-            "-ar",
-            "48000",
-            "-movflags",
-            "frag_keyframe+empty_moov",
-          ];
-    const child = Bun.spawn(
-      [
-        ffmpeg,
-        "-hide_banner",
-        "-loglevel",
-        "error",
-        "-y",
-        "-i",
-        input,
-        "-ac",
-        "1",
-        ...encode,
-        output,
-      ],
-      { stdout: "ignore", stderr: "pipe" },
-    );
+    const command = ffmpegInvocation({
+      ffmpeg: Bun.which("ffmpeg"),
+      docker: Bun.which("docker"),
+      image: process.env.WHISPER_IMAGE?.trim() || DEFAULT_WHISPER_IMAGE,
+      directory,
+      format,
+      ...(user ? { user } : {}),
+    });
+    await Bun.write(join(directory, "input.wav"), wav);
+    const child = Bun.spawn(command, { stdout: "ignore", stderr: "pipe" });
     const [message, code] = await Promise.all([
       new Response(child.stderr).text(),
       child.exited,
@@ -324,7 +382,7 @@ export const ffmpegConvert: Convert = async (wav, format) => {
         `ffmpeg could not make the ${format}: ${message.trim().slice(0, 300)}`,
       );
     }
-    return await Bun.file(output).bytes();
+    return await Bun.file(join(directory, `output.${format}`)).bytes();
   } finally {
     rmSync(directory, { recursive: true, force: true });
   }
@@ -345,8 +403,20 @@ export const SILENCE_CASES: readonly SilenceCase[] = [
   { name: "low room noise, 30 s", seconds: 30, noise: true },
 ];
 
+export type SilenceSegment = {
+  text: string;
+  noSpeechProb: number;
+  avgLogprob: number | null;
+};
+
 export type SilenceResult = {
-  cases: { name: string; transcript: string; failure?: string }[];
+  cases: {
+    name: string;
+    transcript: string;
+    failure?: string;
+    /** What the service said about each segment before any was dropped, when it can say. */
+    segments?: SilenceSegment[];
+  }[];
   passed: boolean;
   problems: string[];
 };
@@ -359,26 +429,84 @@ export function silenceWav(seconds: number, noise: boolean): Uint8Array {
   );
 }
 
+/** The first `speechSeconds` of a 16 kHz WAV, then `silenceSeconds` of digital silence. */
+export function speechThenSilenceWav(
+  wav: Uint8Array,
+  speechSeconds = 2,
+  silenceSeconds = 10,
+): Uint8Array {
+  const view = new DataView(wav.buffer, wav.byteOffset, wav.byteLength);
+  const speech = Math.min(
+    SAMPLE_RATE * speechSeconds,
+    Math.floor((wav.byteLength - 44) / 2),
+  );
+  const samples = new Int16Array(speech + SAMPLE_RATE * silenceSeconds);
+  for (let index = 0; index < speech; index++) {
+    samples[index] = view.getInt16(44 + index * 2, true);
+  }
+  return pcm16Wav(samples, SAMPLE_RATE);
+}
+
+export type SilenceExtras = {
+  /** The numbers behind each case, from the local service. Without it only the transcript is shown. */
+  inspect?: (audio: Uint8Array) => Promise<SilenceSegment[]>;
+  /**
+   * The guard against dropping real speech: a clip and its sentence. The first 2 s of it, followed by
+   * 10 s of silence, must still come back as words, and at least one must be in the sentence.
+   */
+  speech?: { wav: Uint8Array; reference: string };
+};
+
 export async function measureSilence(
   transcribe: Transcribe,
   cases: readonly SilenceCase[] = SILENCE_CASES,
+  extras: SilenceExtras = {},
 ): Promise<SilenceResult> {
   const results: SilenceResult["cases"] = [];
   const problems: string[] = [];
+  const look = async (audio: Uint8Array) => {
+    if (!extras.inspect) return {};
+    try {
+      return { segments: await extras.inspect(audio) };
+    } catch {
+      return {};
+    }
+  };
   for (const item of cases) {
-    const answer = await timed(async () =>
-      transcribe(silenceWav(item.seconds, item.noise), "audio/wav"),
-    );
-    const transcript = answer.text;
+    const audio = silenceWav(item.seconds, item.noise);
+    const answer = await timed(async () => transcribe(audio, "audio/wav"));
     results.push({
       name: item.name,
-      transcript,
+      transcript: answer.text,
       ...(answer.error ? { failure: answer.error } : {}),
+      ...(await look(audio)),
     });
     if (answer.error) {
       problems.push(`${item.name}: the request failed (${answer.error})`);
-    } else if (transcript.trim() !== "") {
-      problems.push(`${item.name}: heard ${JSON.stringify(transcript)}`);
+    } else if (answer.text.trim() !== "") {
+      problems.push(`${item.name}: heard ${JSON.stringify(answer.text)}`);
+    }
+  }
+  if (extras.speech) {
+    const name = "2 s of speech, then 10 s of silence";
+    const audio = speechThenSilenceWav(extras.speech.wav);
+    const answer = await timed(async () => transcribe(audio, "audio/wav"));
+    results.push({
+      name,
+      transcript: answer.text,
+      ...(answer.error ? { failure: answer.error } : {}),
+      ...(await look(audio)),
+    });
+    const known = new Set(normalizeText(extras.speech.reference).split(" "));
+    const heard = normalizeText(answer.text).split(" ").filter(Boolean);
+    if (answer.error) {
+      problems.push(`${name}: the request failed (${answer.error})`);
+    } else if (heard.length === 0) {
+      problems.push(`${name}: the speech was dropped, nothing came back`);
+    } else if (!heard.some((word) => known.has(word))) {
+      problems.push(
+        `${name}: none of the words heard are in the sentence (heard ${JSON.stringify(answer.text)})`,
+      );
     }
   }
   return { cases: results, passed: problems.length === 0, problems };
@@ -508,16 +636,27 @@ export function renderMarkdown(report: Report): string {
     );
   }
   if (report.silence) {
+    const numbers = (item: NonNullable<Report["silence"]>["cases"][number]) =>
+      item.segments === undefined
+        ? ""
+        : item.segments.length === 0
+          ? "no segments"
+          : item.segments
+              .map(
+                (segment) =>
+                  `${cell(JSON.stringify(segment.text.trim()))} no_speech_prob ${segment.noSpeechProb.toFixed(3)}, avg_logprob ${segment.avgLogprob === null ? "n/a" : segment.avgLogprob.toFixed(3)}`,
+              )
+              .join("<br>");
     lines.push(
       "## 7c. Silence and room noise",
       "",
-      "Digital silence and low room noise (white noise at about -50 dBFS), sent as WAV. Every transcript must be empty.",
+      "Digital silence and low room noise (white noise at about -50 dBFS), sent as WAV: every transcript must be empty. The last case, when it ran, is the guard the other way: 2 s of a FLEURS clip, then 10 s of silence, must still come back as words from its sentence. With the local service the last column is what it said about each segment before any was dropped, so a threshold can be chosen from numbers.",
       "",
-      "| Case | Transcript |",
-      "|---|---|",
+      "| Case | Transcript | Segments (service's numbers) |",
+      "|---|---|---|",
       ...report.silence.cases.map(
         (item) =>
-          `| ${item.name} | ${item.failure ? `request failed: ${cell(item.failure)}` : item.transcript.trim() === "" ? "(empty)" : cell(JSON.stringify(item.transcript))} |`,
+          `| ${item.name} | ${item.failure ? `request failed: ${cell(item.failure)}` : item.transcript.trim() === "" ? "(empty)" : cell(JSON.stringify(item.transcript))} | ${numbers(item)} |`,
       ),
       "",
     );
@@ -594,7 +733,8 @@ async function main() {
     );
     process.exit(1);
   }
-  const transcribe = productTranscribe(createTranscriptionProvider(config));
+  const provider = createTranscriptionProvider(config);
+  const transcribe = productTranscribe(provider);
   const here = import.meta.dir;
 
   // One request nobody counts: the service is up, and the model is in memory when the clock starts.
@@ -649,7 +789,24 @@ async function main() {
     }
   }
   if (options.silence) {
-    report.silence = await measureSilence(transcribe);
+    const [first] = await loadClips({
+      n: 1,
+      cacheDir: join(here, ".cache"),
+      log,
+    });
+    report.silence = await measureSilence(transcribe, SILENCE_CASES, {
+      ...(config.noSpeechThreshold !== undefined
+        ? { inspect: productInspect(provider) }
+        : {}),
+      ...(first
+        ? {
+            speech: {
+              wav: await Bun.file(first.path).bytes(),
+              reference: first.reference,
+            },
+          }
+        : {}),
+    });
     report.problems.push(...report.silence.problems.map((p) => `7c: ${p}`));
   }
   report.passed = report.problems.length === 0;

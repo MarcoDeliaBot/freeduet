@@ -7,6 +7,7 @@ import {
   DEFAULT_CLIPS,
   describeService,
   ffmpegConvert,
+  ffmpegInvocation,
   measureFormats,
   measureSilence,
   measureWer,
@@ -15,7 +16,9 @@ import {
   renderMarkdown,
   reportName,
   type Report,
+  SILENCE_CASES,
   silenceWav,
+  speechThenSilenceWav,
 } from "./wer";
 import { pcm16Wav, wavDurationSeconds } from "./metrics";
 
@@ -316,7 +319,12 @@ describe("productTranscribe", () => {
           fields: [...body.keys()],
           url,
         });
-        return Response.json({ text: "uno due\ntre\n" });
+        return Response.json({
+          segments: [
+            { text: " uno due", no_speech_prob: 0.01 },
+            { text: " tre", no_speech_prob: 0.02 },
+          ],
+        });
       },
     );
     return { seen, transcribe: productTranscribe(provider) };
@@ -332,7 +340,12 @@ describe("productTranscribe", () => {
     expect(seen).toHaveLength(1);
     expect(seen[0]?.file.name).toBe("recording.webm");
     expect(seen[0]?.file.type).toBe("audio/webm");
-    expect(seen[0]?.fields).toEqual(["file", "model"]);
+    expect(seen[0]?.fields).toEqual([
+      "file",
+      "model",
+      "response_format",
+      "token_timestamps",
+    ]);
     expect(seen[0]?.url).toBe("http://127.0.0.1:4240/v1/audio/transcriptions");
   });
 
@@ -440,5 +453,148 @@ describe("ffmpegConvert", () => {
     expect(after.filter((name) => !before.has(name))).toEqual([]);
     for (const name of before)
       rmSync(`/tmp/${name}`, { recursive: true, force: true });
+  });
+});
+
+describe("ffmpegInvocation", () => {
+  const base = { directory: "/tmp/x", format: "webm" as const };
+
+  test("the ffmpeg on the PATH comes first, even when Docker is there too", () => {
+    const command = ffmpegInvocation({
+      ...base,
+      ffmpeg: "/usr/bin/ffmpeg",
+      docker: "/usr/bin/docker",
+    });
+    expect(command[0]).toBe("/usr/bin/ffmpeg");
+    expect(command).toContain("/tmp/x/input.wav");
+    expect(command.at(-1)).toBe("/tmp/x/output.webm");
+    expect(command).not.toContain("run");
+  });
+
+  test("without one, the whisper image's ffmpeg: no network, no capabilities, our user, only the folder mounted", () => {
+    const command = ffmpegInvocation({
+      ...base,
+      format: "mp4",
+      ffmpeg: null,
+      docker: "/usr/bin/docker",
+      user: "1000:1000",
+    });
+    expect(command.slice(0, 13)).toEqual([
+      "/usr/bin/docker",
+      "run",
+      "--rm",
+      "--network",
+      "none",
+      "--cap-drop",
+      "ALL",
+      "--security-opt",
+      "no-new-privileges",
+      "--user",
+      "1000:1000",
+      "-v",
+      "/tmp/x:/work",
+    ]);
+    expect(command.filter((word) => word === "-v")).toHaveLength(1);
+    expect(command.slice(13, 16)).toEqual([
+      "--entrypoint",
+      "ffmpeg",
+      "freeduet-whisper:latest",
+    ]);
+    expect(command).toContain("/work/input.wav");
+    expect(command.at(-1)).toBe("/work/output.mp4");
+    expect(command).toContain("frag_keyframe+empty_moov");
+  });
+
+  test("the image can be named, and neither ffmpeg nor Docker is a sentence that says what to do", () => {
+    expect(
+      ffmpegInvocation({
+        ...base,
+        ffmpeg: null,
+        docker: "docker",
+        image: "mine:1",
+      }),
+    ).toContain("mine:1");
+    expect(() =>
+      ffmpegInvocation({ ...base, ffmpeg: null, docker: null }),
+    ).toThrow("on neither the PATH nor in Docker");
+  });
+});
+
+describe("7c extras", () => {
+  const toneWav = () => {
+    const samples = new Int16Array(16000 * 5).fill(1000);
+    return pcm16Wav(samples, 16000);
+  };
+
+  test("speechThenSilenceWav is 2 s of the clip then 10 s of zeros", () => {
+    const wav = speechThenSilenceWav(toneWav());
+    expect(wavDurationSeconds(wav)).toBe(12);
+    const view = new DataView(wav.buffer, wav.byteOffset, wav.byteLength);
+    expect(view.getInt16(44 + 31999 * 2, true)).toBe(1000);
+    expect(view.getInt16(44 + 32000 * 2, true)).toBe(0);
+  });
+
+  test("the speech case passes when words of the sentence come back", async () => {
+    const result = await measureSilence(
+      async (audio) => (audio.byteLength === 44 + 12 * 32000 ? "il gatto" : ""),
+      [],
+      {
+        speech: { wav: toneWav(), reference: "Il gatto dorme." },
+      },
+    );
+    expect(result.passed).toBe(true);
+    expect(result.cases.map((item) => item.name)).toEqual([
+      "2 s of speech, then 10 s of silence",
+    ]);
+  });
+
+  test("dropped speech and invented words are each a problem of their own", async () => {
+    const speech = { wav: toneWav(), reference: "Il gatto dorme." };
+    const dropped = await measureSilence(async () => "", [], { speech });
+    expect(dropped.problems).toEqual([
+      "2 s of speech, then 10 s of silence: the speech was dropped, nothing came back",
+    ]);
+    const invented = await measureSilence(async () => "Thank you.", [], {
+      speech,
+    });
+    expect(invented.problems[0]).toContain(
+      "none of the words heard are in the sentence",
+    );
+  });
+
+  test("the service's numbers are kept per case, and a failing inspector costs only the numbers", async () => {
+    const result = await measureSilence(
+      async () => "",
+      SILENCE_CASES.slice(0, 2),
+      {
+        inspect: async (audio) =>
+          audio.byteLength > 200000
+            ? (() => {
+                throw new Error("no");
+              })()
+            : [{ text: " Thank you.", noSpeechProb: 0.93, avgLogprob: -0.41 }],
+      },
+    );
+    expect(result.passed).toBe(true);
+    expect(result.cases[0]?.segments).toEqual([
+      { text: " Thank you.", noSpeechProb: 0.93, avgLogprob: -0.41 },
+    ]);
+    expect(result.cases[1]?.segments).toBeUndefined();
+    const report = renderMarkdown({
+      date: "2026-11-11",
+      label: "x",
+      service: describeService({
+        provider: "openai-compatible",
+        baseUrl: "http://127.0.0.1:1/v1",
+        model: "m",
+      }),
+      dataset: "d",
+      silence: result,
+      passed: true,
+      problems: [],
+    });
+    expect(report).toContain(
+      '"Thank you." no_speech_prob 0.930, avg_logprob -0.410',
+    );
   });
 });

@@ -18,12 +18,21 @@
 #                     log probability is below -1.0 (src/whisper.cpp:7780).
 # VAD stays off, which is the server's default (:123): on speech with long pauses it can cut out the
 # speech itself.
+# Threads and decoding: WHISPER_THREADS (default from the machine, threads.sh) and WHISPER_BEAM_SIZE
+# (empty: the server's own greedy decoding; --beam-size at server.cpp:218, strategy at :927).
 set -eu
+
+. /app/whisper/threads.sh
+THREADS="$(whisper_threads "$(nproc)" "${WHISPER_THREADS:-}")"
+BEAM="$(whisper_beam_args "${WHISPER_BEAM_SIZE:-}")"
+echo "whisper: $THREADS threads, ${BEAM:-greedy decoding}" >&2
 
 MODEL_FILE="$(bun /app/whisper/fetch-model.ts)"
 
 exec whisper-server \
   --model "$MODEL_FILE" \
+  --threads "$THREADS" \
+  $BEAM \
   --host 0.0.0.0 \
   --port 4240 \
   --inference-path /v1/audio/transcriptions \
