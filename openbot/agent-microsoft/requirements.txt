@@ -1,6 +1,8 @@
-agent-framework-ag-ui
-agent-framework-anthropic
-agent-framework-openai
+agent-framework-ag-ui==1.8.0
+agent-framework-anthropic==1.0.0b261106
+agent-framework-openai==1.18.1
+agent-framework-core==1.25.0
+anthropic==1.17.0
 fastapi
 python-multipart
 uvicorn[standard]
