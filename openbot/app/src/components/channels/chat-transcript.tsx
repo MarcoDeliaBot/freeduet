@@ -1727,9 +1727,11 @@ export function ServerToolLine({
   const failed = !refused && !declined && toolResultFailed(result);
   // A refused, declined or failed call is named plainly ("Send your email"), never as done; one
   // waiting on its card says that it waits ("Waiting for your OK to send your email").
+  const language = useCardLanguage();
   const named = readToolName(
     name,
     refused || failed || declined ? "plain" : running,
+    language,
   );
   const label =
     waiting && result === undefined

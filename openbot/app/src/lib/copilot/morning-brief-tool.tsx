@@ -183,9 +183,12 @@ function BriefToolView({
   running: boolean;
 }) {
   const live = useArrivedLive(running);
+  const language = useCardLanguage();
   const t = useCardText();
   if (running)
-    return <ToolLine label={readToolName(TOOL, true).label} running />;
+    return (
+      <ToolLine label={readToolName(TOOL, true, language).label} running />
+    );
   const brief = readBrief(result);
   if (!brief)
     return (

@@ -1,5 +1,12 @@
 import { useQuery } from "@tanstack/react-query";
-import { createContext, type ReactNode, useContext, useMemo } from "react";
+import {
+  createContext,
+  type ReactNode,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
 import { deploymentCapabilitiesQueryOptions } from "@/lib/deployment/queries";
 import {
   type CardLanguage,
@@ -7,6 +14,7 @@ import {
   cardLanguageOf,
   cardTextIn,
 } from "./cards";
+import { readStoredLanguage, storeLanguage } from "./stored-language";
 
 /**
  * The language the cards draw in, for everything below it (docs/M1_PLAN.md D26 amendment).
@@ -38,13 +46,28 @@ export function CardLanguageProvider({
  * validated it at start). It is the server's answer and not the browser's setting on purpose: the
  * person who reads Italian may well use a browser, or a borrowed one, in English, and the members
  * already write in the setting's language. The answer cannot change without the server restarting,
- * so the query is read once (`staleTime: Infinity`) and shared with every other reader of it. Until
- * it arrives, and when it fails, the cards are English, as they were.
+ * so the query is read once (`staleTime: Infinity`) and shared with every other reader of it.
+ *
+ * UNTIL THE ANSWER COMES, THE LAST ONE. The first paint draws with the code the server gave last
+ * time, kept in this browser (`./stored-language.ts`), so a person who reads Italian does not see a
+ * card in English and then redrawn. The answer always wins from the moment it arrives, and it
+ * replaces the kept code, or removes it when the server sends none (the setting was taken off). A
+ * request that fails is not an answer: the kept code stays, and with none kept the cards are
+ * English, as they were.
  */
 export function PersonLanguageProvider({ children }: { children: ReactNode }) {
   const { data } = useQuery(deploymentCapabilitiesQueryOptions());
+  // Read once, when the provider mounts: it is only for the first paint.
+  const [remembered] = useState(readStoredLanguage);
+  const answered = data !== undefined;
+  const served = data?.personLanguage;
+  useEffect(() => {
+    if (answered) storeLanguage(served ?? null);
+  }, [answered, served]);
   return (
-    <CardLanguageProvider language={cardLanguageOf(data?.personLanguage)}>
+    <CardLanguageProvider
+      language={cardLanguageOf(answered ? served : remembered)}
+    >
       {children}
     </CardLanguageProvider>
   );

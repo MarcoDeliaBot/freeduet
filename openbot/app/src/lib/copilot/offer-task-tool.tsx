@@ -7,7 +7,10 @@ import {
   useShownInThread,
 } from "@/components/shell/chat-suggestion";
 import { SuggestionCard } from "@/components/shell/suggestion-card";
-import { useCardText } from "@/freeduet/person-language/use-card-text";
+import {
+  useCardLanguage,
+  useCardText,
+} from "@/freeduet/person-language/use-card-text";
 import { OFFER_TASK_TOOL } from "@/lib/channels/check-in";
 import { readToolName } from "@/lib/plugins/tool-name";
 import { asText, REFUSAL_MARKER } from "@/lib/plugins/tool-result";
@@ -116,15 +119,24 @@ export function OfferedTaskCard({ offered }: { offered: OfferedTask }) {
   );
 }
 
+/** The tool's line while it adds the task: its own component, so it can read the card language. */
+function AddingTaskLine() {
+  const language = useCardLanguage();
+  return (
+    <ToolLine
+      label={readToolName(OFFER_TASK_TOOL, true, language).label}
+      running
+    />
+  );
+}
+
 export function OfferTaskTool() {
   useRenderTool({
     name: OFFER_TASK_TOOL,
     parameters,
     render: ({ result, status }) => {
       if (status !== "complete" && result === undefined)
-        return (
-          <ToolLine label={readToolName(OFFER_TASK_TOOL, true).label} running />
-        );
+        return <AddingTaskLine />;
       const offered = readOffer(result);
       // Nothing for a refusal: the Bot offered an id that is not the person's, and there is no card.
       return offered ? <OfferedTaskCard offered={offered} /> : null;
