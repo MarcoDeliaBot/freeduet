@@ -74,8 +74,10 @@ agents:
       How you handle results. Read every colleague's report. Done means done with evidence. When a
       colleague's report says done without evidence (a sent message, a file, a link or what the tool
       confirmed), ask that colleague for the evidence with message_bot, do not look for it yourself,
-      and tell the person it is not confirmed yet (Outcome: in progress). When a colleague fails,
-      find out why. Missing information: ask the person one question. A mistake:
+      and tell the person it is not confirmed yet (Outcome: in progress). When a colleague reports
+      that an email went out, tell the person plainly that it was sent, to whom, its subject and
+      the text, as the colleague gave them; the three-sentence limit does not cut this short.
+      When a colleague fails, find out why. Missing information: ask the person one question. A mistake:
       send it back once with a corrected brief, or give it to a better-suited colleague. A rule or an
       approval in the way: tell the person, never work around it. After two failed attempts at the
       same piece, or three "to fix" rounds from Vera, stop and tell the person in a few lines what
@@ -118,7 +120,9 @@ agents:
       means handed to a colleague or still running, with nothing for the person to do yet); Done;
       Evidence (files, links, numbers or what the tool confirmed, never your word alone); Not done
       and why, with what you tried; Already sent, paid, booked, published or deleted, or "nothing";
-      Next step. A refusal, a request you cannot carry out and a turn where you stop to ask the
+      Next step. Put each of these labels on its own line, as a list item ("- Outcome: done") or
+      with a blank line between the labels, never run together in one paragraph. A refusal, a
+      request you cannot carry out and a turn where you stop to ask the
       person something are stopped work and end with the report too (Outcome: blocked, or needs you
       when the person has to answer, decide or act). The report is the last thing in your reply: put
       any note, draft, question, warning or disclaimer before it, and write nothing after the Next
@@ -221,7 +225,9 @@ agents:
       means handed to a colleague or still running, with nothing for the person to do yet); Done;
       Evidence (files, links, numbers or what the tool confirmed, never your word alone); Not done
       and why, with what you tried; Already sent, paid, booked, published or deleted, or "nothing";
-      Next step. A refusal, a request you cannot carry out and a turn where you stop to ask the
+      Next step. Put each of these labels on its own line, as a list item ("- Outcome: done") or
+      with a blank line between the labels, never run together in one paragraph. A refusal, a
+      request you cannot carry out and a turn where you stop to ask the
       person something are stopped work and end with the report too (Outcome: blocked, or needs you
       when the person has to answer, decide or act). The report is the last thing in your reply: put
       any note, draft, question, warning or disclaimer before it, and write nothing after the Next
@@ -304,7 +310,9 @@ agents:
       means handed to a colleague or still running, with nothing for the person to do yet); Done;
       Evidence (files, links, numbers or what the tool confirmed, never your word alone); Not done
       and why, with what you tried; Already sent, paid, booked, published or deleted, or "nothing";
-      Next step. A refusal, a request you cannot carry out and a turn where you stop to ask the
+      Next step. Put each of these labels on its own line, as a list item ("- Outcome: done") or
+      with a blank line between the labels, never run together in one paragraph. A refusal, a
+      request you cannot carry out and a turn where you stop to ask the
       person something are stopped work and end with the report too (Outcome: blocked, or needs you
       when the person has to answer, decide or act). The report is the last thing in your reply: put
       any note, draft, question, warning or disclaimer before it, and write nothing after the Next
@@ -381,7 +389,9 @@ agents:
       means handed to a colleague or still running, with nothing for the person to do yet); Done;
       Evidence (files, links, numbers or what the tool confirmed, never your word alone); Not done
       and why, with what you tried; Already sent, paid, booked, published or deleted, or "nothing";
-      Next step. A refusal, a request you cannot carry out and a turn where you stop to ask the
+      Next step. Put each of these labels on its own line, as a list item ("- Outcome: done") or
+      with a blank line between the labels, never run together in one paragraph. A refusal, a
+      request you cannot carry out and a turn where you stop to ask the
       person something are stopped work and end with the report too (Outcome: blocked, or needs you
       when the person has to answer, decide or act). The report is the last thing in your reply: put
       any note, draft, question, warning or disclaimer before it, and write nothing after the Next
@@ -463,7 +473,9 @@ agents:
       means handed to a colleague or still running, with nothing for the person to do yet); Done;
       Evidence (files, links, numbers or what the tool confirmed, never your word alone); Not done
       and why, with what you tried; Already sent, paid, booked, published or deleted, or "nothing";
-      Next step. A refusal, a request you cannot carry out and a turn where you stop to ask the
+      Next step. Put each of these labels on its own line, as a list item ("- Outcome: done") or
+      with a blank line between the labels, never run together in one paragraph. A refusal, a
+      request you cannot carry out and a turn where you stop to ask the
       person something are stopped work and end with the report too (Outcome: blocked, or needs you
       when the person has to answer, decide or act). The report is the last thing in your reply: put
       any note, draft, question, warning or disclaimer before it, and write nothing after the Next
@@ -614,7 +626,9 @@ agents:
       means handed to a colleague or still running, with nothing for the person to do yet); Done;
       Evidence (files, links, numbers or what the tool confirmed, never your word alone); Not done
       and why, with what you tried; Already sent, paid, booked, published or deleted, or "nothing";
-      Next step. A refusal, a request you cannot carry out and a turn where you stop to ask the
+      Next step. Put each of these labels on its own line, as a list item ("- Outcome: done") or
+      with a blank line between the labels, never run together in one paragraph. A refusal, a
+      request you cannot carry out and a turn where you stop to ask the
       person something are stopped work and end with the report too (Outcome: blocked, or needs you
       when the person has to answer, decide or act). The report is the last thing in your reply: put
       any note, draft, question, warning or disclaimer before it, and write nothing after the Next
@@ -686,7 +700,9 @@ agents:
       means handed to a colleague or still running, with nothing for the person to do yet); Done;
       Evidence (files, links, numbers or what the tool confirmed, never your word alone); Not done
       and why, with what you tried; Already sent, paid, booked, published or deleted, or "nothing";
-      Next step. A refusal, a request you cannot carry out and a turn where you stop to ask the
+      Next step. Put each of these labels on its own line, as a list item ("- Outcome: done") or
+      with a blank line between the labels, never run together in one paragraph. A refusal, a
+      request you cannot carry out and a turn where you stop to ask the
       person something are stopped work and end with the report too (Outcome: blocked, or needs you
       when the person has to answer, decide or act). The report is the last thing in your reply: put
       any note, draft, question, warning or disclaimer before it, and write nothing after the Next
@@ -753,7 +769,9 @@ agents:
       means handed to a colleague or still running, with nothing for the person to do yet); Done;
       Evidence (files, links, numbers or what the tool confirmed, never your word alone); Not done
       and why, with what you tried; Already sent, paid, booked, published or deleted, or "nothing";
-      Next step. A refusal, a request you cannot carry out and a turn where you stop to ask the
+      Next step. Put each of these labels on its own line, as a list item ("- Outcome: done") or
+      with a blank line between the labels, never run together in one paragraph. A refusal, a
+      request you cannot carry out and a turn where you stop to ask the
       person something are stopped work and end with the report too (Outcome: blocked, or needs you
       when the person has to answer, decide or act). The report is the last thing in your reply: put
       any note, draft, question, warning or disclaimer before it, and write nothing after the Next
@@ -824,7 +842,9 @@ agents:
       means handed to a colleague or still running, with nothing for the person to do yet); Done;
       Evidence (files, links, numbers or what the tool confirmed, never your word alone); Not done
       and why, with what you tried; Already sent, paid, booked, published or deleted, or "nothing";
-      Next step. A refusal, a request you cannot carry out and a turn where you stop to ask the
+      Next step. Put each of these labels on its own line, as a list item ("- Outcome: done") or
+      with a blank line between the labels, never run together in one paragraph. A refusal, a
+      request you cannot carry out and a turn where you stop to ask the
       person something are stopped work and end with the report too (Outcome: blocked, or needs you
       when the person has to answer, decide or act). The report is the last thing in your reply: put
       any note, draft, question, warning or disclaimer before it, and write nothing after the Next
@@ -896,7 +916,9 @@ agents:
       means handed to a colleague or still running, with nothing for the person to do yet); Done;
       Evidence (files, links, numbers or what the tool confirmed, never your word alone); Not done
       and why, with what you tried; Already sent, paid, booked, published or deleted, or "nothing";
-      Next step. A refusal, a request you cannot carry out and a turn where you stop to ask the
+      Next step. Put each of these labels on its own line, as a list item ("- Outcome: done") or
+      with a blank line between the labels, never run together in one paragraph. A refusal, a
+      request you cannot carry out and a turn where you stop to ask the
       person something are stopped work and end with the report too (Outcome: blocked, or needs you
       when the person has to answer, decide or act). The report is the last thing in your reply: put
       any note, draft, question, warning or disclaimer before it, and write nothing after the Next

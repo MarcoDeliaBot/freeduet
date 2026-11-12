@@ -41,6 +41,13 @@ export function appAccessTools(options: {
   directory?: AppDirectory;
   /** The shared-use gate's answer for this person, so a Shared app it would refuse says so. */
   sharedAudience?: SharedAudienceCheck;
+  /**
+   * This deployment is one person's own (`config.singleUser`, the flag `/api/capabilities` calls
+   * `localEvaluation`): the person talking to the Bot is its administrator, so the Bot is told they can
+   * take the step themselves rather than asked to send them to somebody else. Absent is every other
+   * deployment, whose wording is unchanged.
+   */
+  singleUser?: boolean;
 }): GrantedTool[] {
   const parameters = z
     .object({
@@ -87,7 +94,7 @@ export function appAccessTools(options: {
           title: access.displayName,
           agentId: options.botId,
           reason: "access",
-          message: toldTheModel(access),
+          message: toldTheModel(access, options.singleUser === true),
         });
       },
     },
@@ -99,9 +106,21 @@ export function appAccessTools(options: {
  * already offers the next step, so the reply around it is a sentence rather than a set of
  * instructions the person can already see.
  */
-function toldTheModel(access: AppAccess): string {
+function toldTheModel(access: AppAccess, singleUser = false): string {
   const name = access.displayName;
   const owners = access.accountHolder === "owner";
+  /*
+   * ON A ONE-PERSON DEPLOYMENT THE PERSON IS THE ADMINISTRATOR. The four states below that end on
+   * "an administrator" are the ones that sent somebody with nobody to ask to ask nobody. Here the
+   * Bot is told plainly what is missing, which app, and that the person can switch it on themselves in
+   * settings. Every other deployment is told exactly what it always was.
+   */
+  const alone: Partial<Record<AppAccessState, string>> = {
+    shared_not_connected: `${name} uses one shared account for this deployment, and it has not been connected yet. This person is the only one here, so they can connect it themselves in settings: tell them plainly that ${name} is not connected and that they can do it themselves.`,
+    shared_not_approved: `${name} uses one shared account for this deployment, and it has not been approved for the people you reach, so its calls are refused. This person is the only one here, so they can approve that themselves in settings: tell them plainly that ${name} needs that approval and that they can give it themselves.`,
+    disabled: `${name} is switched off on this deployment. This person is the only one here, so they can switch ${name} on themselves in settings: tell them plainly that it is off and that they can turn it on themselves.`,
+    not_granted: `${name} is switched on, and you have not been granted it. This person is the only one here, so they can grant ${name} to you themselves in settings: tell them plainly that you have not been granted it and that they can do it themselves.`,
+  };
   const said: Record<AppAccessState, string> = {
     ready: access.asksFirst
       ? `${name} is ready for this person to use through you, on their own account; the first call will ask them to allow that. Use its tools rather than the card.`
@@ -115,5 +134,7 @@ function toldTheModel(access: AppAccess): string {
     disabled: `${name} is switched off on this deployment. The card in front of the person lets them ask an administrator to switch it on.`,
     not_granted: `${name} is switched on, and you have not been granted it. The card in front of the person lets them ask an administrator to grant it to you.`,
   };
-  return `${said[access.state]} Do not browse to its website or ask them to sign in there.`;
+  const told =
+    (singleUser ? alone[access.state] : undefined) ?? said[access.state];
+  return `${told} Do not browse to its website or ask them to sign in there.`;
 }

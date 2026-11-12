@@ -21,7 +21,10 @@ import { inspectToolArguments } from "../content-governance";
 import { isNewEmailSend, shareTargetOf } from "../share-target";
 import type { AccountMode } from "../shared-accounts";
 import { transportFor } from "../transport";
-import { recipientsTypedByPerson } from "../typed-recipients";
+import {
+  recipientsTypedByPerson,
+  recipientsTypedInHandedRequest,
+} from "../typed-recipients";
 import type { StoreContext } from "./context";
 import {
   effectiveUrl,
@@ -388,9 +391,10 @@ export function callMethods(context: StoreContext) {
        * person's own words are the only thing that stands in for the card (D27): every recipient
        * written in their latest message of their own live chat turn, read from the run the server
        * holds and never from the arguments. See `typed-recipients.ts` for each condition. Any other
-       * send, a routine's, a check-in's, a hand-off's, one to an address that came from a page or a
-       * mail or that the Bot corrected, is put to the person like any other send, and no earlier
-       * "Always allow" answers it.
+       * send, a routine's, a check-in's, a hand-off the server cannot trace to the person's own typed
+       * message (see the second place below), one to an address that came from a page or a mail or
+       * that the Bot corrected, is put to the person like any other send, and no earlier "Always
+       * allow" answers it.
        */
       if (isNewEmailSend(serverId, toolName) && !share) {
         throw new PluginRefusedError(
@@ -399,22 +403,63 @@ export function callMethods(context: StoreContext) {
         );
       }
       const approvalContext = currentApprovalContext();
-      const askedByRequest =
-        share?.askEveryTime === true &&
+      /*
+       * THE PERSON'S OWN MESSAGE, in the two places it can be: this run's own latest message, when
+       * the person is chatting with this member, or, in a run that delivers a hand-off, the message
+       * the server recorded on the hop and loads again from the conversation it came from. The
+       * receiver's own history is never read for the second: it holds a Bot's envelope.
+       */
+      const askable = share?.askEveryTime === true;
+      const direct =
+        askable &&
         recipientsTypedByPerson({
           to: vendorArgs.to,
           messages: approvalContext?.messages,
           runInitiator: approvalContext?.initiator,
           callInitiator: input.initiator,
         });
+      const handed =
+        askable &&
+        !direct &&
+        options.handedRequest !== undefined &&
+        approvalContext?.initiator?.kind === "handoff"
+          ? await options
+              .handedRequest({
+                assertion: (
+                  approvalContext.forwardedProps as
+                    | { openbotRun?: unknown }
+                    | null
+                    | undefined
+                )?.openbotRun,
+                botId: input.botId,
+                actorId: input.actorId,
+              })
+              .catch(() => null)
+          : null;
+      const askedByHandedRequest =
+        handed !== null &&
+        recipientsTypedInHandedRequest({
+          to: vendorArgs.to,
+          request: handed.message,
+          runInitiator: approvalContext?.initiator,
+          callInitiator: input.initiator,
+        });
+      const askedByRequest = direct || askedByHandedRequest;
       let requestKey: string | null = null;
       if (askedByRequest) {
         personAnswered = true;
+        /*
+         * ONE SEND PER REQUEST, wherever it was handed on. A direct request is one per run; a handed
+         * one is one per message the person typed, so two hops made from the same message cannot send
+         * the same email twice.
+         */
         requestKey = createHash("sha256")
           .update(
             JSON.stringify([
               input.actorId,
-              approvalContext?.runId,
+              askedByHandedRequest
+                ? ["handed", handed?.threadId, handed?.message.id]
+                : approvalContext?.runId,
               vendorArgs.to,
               vendorArgs.subject,
               vendorArgs.body,

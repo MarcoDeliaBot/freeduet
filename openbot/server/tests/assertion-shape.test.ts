@@ -618,7 +618,7 @@ const ALLOW: Allowed[] = [
   },
   {
     file: "server/tests/agent-handoff.test.ts",
-    line: 366,
+    line: 414,
     shape: "b",
     finding: "NEW (round 2 did not find this)",
     why: "expect(plain.events[0]?.initiator).toBe(undefined);",
@@ -807,7 +807,7 @@ const ALLOW: Allowed[] = [
   },
   {
     file: "server/tests/agent-handoff.test.ts",
-    line: 620,
+    line: 668,
     shape: "c",
     finding: "NEW (round 2 did not find this)",
     why: ').toEqual([ { eventType: "agent.handoff_offered", reason: undefined }, { eventType: "agent.handoff_refused", r',

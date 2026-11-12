@@ -18,6 +18,7 @@ import {
 import { cutAtCodeUnits } from "../channels/text";
 import { DEFAULT_MAX_ATTEMPTS, type WorkQueue } from "../work/queue";
 import { HANDOFF_KIND } from "./handoff";
+import type { HandedRequest } from "./handoff-request";
 import { ThreadBusyError } from "./handoff-delivery";
 import { BOT_PAUSED_REASON, isBotPaused } from "./lifecycle";
 
@@ -34,6 +35,11 @@ export type HandoffWork = {
   task: string;
   constraints?: string;
   expecting?: string;
+  /**
+   * The person's own request this hop was made from, recorded by the server. Absent on every relay and
+   * notice, and on any hop not made in the person's own live chat turn. See `handoff-request.ts`.
+   */
+  request?: HandedRequest;
   /** The asking Bot's display name, for the line a person reads. Absent falls back to its id. */
   fromName?: string;
   /** The addressed Bot's display name, for the same reason. */

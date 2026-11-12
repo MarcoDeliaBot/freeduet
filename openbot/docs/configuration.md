@@ -773,8 +773,10 @@ body; it takes no Cc, Bcc, attachment or other field. It is asked about every ti
 every recipient, the subject and the whole body, offers Allow once and Refuse, and "Always allow" is
 neither offered nor honoured for it. The one exception is the person's own message: when the message
 the person typed to start the turn, in their own chat, names every recipient, the email goes out
-without a second card (docs/M1_PLAN.md, D27). A routine, a check-in, a hand-off, an address that came
-from a mail or a page, and an address the member changed all still ask. The tool is granted to a
+without a second card (docs/M1_PLAN.md, D27). A routine, a check-in, an address that came from a mail
+or a page, and an address the member changed all still ask. So does a hand-off, unless the server
+recorded that it was made in the person's own live chat turn and the person's message that started that
+turn, read again from its conversation, names every recipient (D27a). The tool is granted to a
 member by an administrator like any other; in the FreeDuet package only Otto has the skill that
 carries it. It needs no new Google scope: `gmail.send` already allows it.
 

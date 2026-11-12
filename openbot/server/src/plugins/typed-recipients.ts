@@ -15,9 +15,10 @@ import { plainAddress } from "./mail-address";
  *   a turn started from the app carries. A turn the server started on the person's behalf (a task, a
  *   message delivered from another channel, a group conversation, the continuation after another
  *   approval) carries an explicit initiator and is refused here, as are routines, check-ins, memory
- *   runs and hand-offs, whose own text is written by a Bot. A hand-off is refused because nothing in
- *   the run says the conversation it came from was the person's live chat rather than a group
- *   conversation or a task, so the origin is not established with certainty (see D27's limits).
+ *   runs and hand-offs, whose own text is written by a Bot. A hand-off is refused HERE because its run
+ *   carries a Bot's envelope and not the person's message; the one hand-off that may pass has its own
+ *   rule, {@link recipientsTypedInHandedRequest}, which reads the person's message from where the
+ *   server recorded it and not from the hand-off's run.
  * - THE MESSAGE. The person's latest message of that conversation and no other (a window of one): the
  *   one that started this turn. An earlier message cannot be told from a routine's stored prompt or a check-in's text
  *   that now sits in the same history, so none is trusted, and an address typed long ago can never
@@ -109,4 +110,66 @@ export function recipientsTypedByPerson(input: TypedRequestInput): boolean {
 
   const typed = addressesTypedIn(latest.content);
   return wanted.every((address) => typed.has(address));
+}
+
+/**
+ * The hand-off case of the same decision (docs/M1_PLAN.md, D27 amendment): the person asked Iris, and
+ * Iris handed the email to Otto, who calls the tool.
+ *
+ * THE RECEIVER'S OWN RUN IS NEVER READ. Its history holds a Bot's envelope, the brief Iris wrote, and
+ * the person's earlier words copied across, and none of that is the person's request. What this rule
+ * reads is `request`: the person's message that started the asking turn, which the SERVER recorded
+ * on the hop when it was made (`agents/handoff-request.ts`) and loaded again from the origin
+ * conversation at the gate, only while it is still that conversation's latest message from the person.
+ * Whether the hop carries such a record at all is decided where it is made, and only the person's own
+ * live chat turn, one hop deep, is given one; a routine's, a check-in's, a task's, a group
+ * conversation's, a server-run turn's and a hand-off's own hops are not.
+ *
+ * The same rule then applies to THAT message and no other: {@link recipientsTypedByPerson} with the
+ * person's own live turn as its run. One message, a plain string of at most {@link MAX_REQUEST_CHARS},
+ * every recipient one whole word of it, equal ignoring case. The brief's text, the receiver's history
+ * and what the member says about itself are not consulted, so a brief that names an address the
+ * person never typed, a corrected address and an extra recipient all fall out as no.
+ *
+ * The run must be a hop from a person's request and the call must carry nothing but that hop's own
+ * initiator: a call claiming to be the person's own is not what a hop's call looks like, so it is no.
+ */
+export type HandedRequestInput = {
+  /** The recipients exactly as the call carries them. */
+  to: unknown;
+  /**
+   * The person's message as the deployment loaded it from the origin conversation, or null when it
+   * could not: no record, a record that does not match, a newer message, an unreadable conversation.
+   */
+  request: ConversationMessage | null;
+  /** The initiator of the RUN, from its approval context: what `agentFor` gave the addressed Bot. */
+  runInitiator: AuditInitiator | undefined;
+  /** The initiator the call itself carries. */
+  callInitiator: AuditInitiator | undefined;
+};
+
+export function recipientsTypedInHandedRequest(
+  input: HandedRequestInput,
+): boolean {
+  const run = input.runInitiator;
+  // A hop that started from a person's request, and nothing else: its origin is what the server
+  // recorded, never taken from text.
+  if (run?.kind !== "handoff" || run.origin?.kind !== "person") return false;
+  const call = input.callInitiator;
+  if (
+    call !== undefined &&
+    !(
+      call.kind === "handoff" &&
+      call.id === run.id &&
+      call.origin?.kind === "person"
+    )
+  )
+    return false;
+  if (input.request === null) return false;
+  return recipientsTypedByPerson({
+    to: input.to,
+    messages: [input.request],
+    runInitiator: undefined,
+    callInitiator: undefined,
+  });
 }
