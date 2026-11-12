@@ -6,6 +6,7 @@ import {
   type ConversationMessage,
   MAX_REQUEST_CHARS,
   recipientsTypedByPerson,
+  recipientsTypedInHandedRequest,
 } from "../src/plugins/typed-recipients";
 
 /**
@@ -448,7 +449,7 @@ describe("a turn the person did not start in their own live chat never passes", 
     expect(live(to, request, { runInitiator: PERSON_INITIATOR })).toBe(false);
   });
 
-  test("a hand-off, whatever its origin says, is not traced and asks", () => {
+  test("a hand-off, whatever its origin says, is not the person's own live turn: the direct rule asks", () => {
     const hop = (origin?: AuditInitiator): AuditInitiator =>
       origin
         ? { kind: "handoff", id: "bot_iris", origin }
@@ -468,5 +469,136 @@ describe("a turn the person did not start in their own live chat never passes", 
         }),
       ).toBe(false);
     }
+  });
+});
+
+/** A hop's run, as `agentFor` gives the addressed member it: handed on by `iris` for a person. */
+const HOP: AuditInitiator = {
+  kind: "handoff",
+  id: "bot_iris",
+  origin: PERSON_INITIATOR,
+};
+
+/** The hand-off rule: the person's message the server loaded from the origin conversation. */
+function handed(
+  to: unknown,
+  request: ConversationMessage | null,
+  overrides: Partial<Parameters<typeof recipientsTypedInHandedRequest>[0]> = {},
+): boolean {
+  return recipientsTypedInHandedRequest({
+    to,
+    request,
+    runInitiator: HOP,
+    callInitiator: HOP,
+    ...overrides,
+  });
+}
+
+describe("a hop that carries the person's own request: the same rule on that message alone", () => {
+  const asked = typed("Send an email to ana@example.com saying good morning");
+
+  test("passes when every recipient is a whole word of the message the server loaded", () => {
+    expect(handed(["ana@example.com"], asked)).toBe(true);
+    expect(
+      handed(
+        ["ana@example.com", "BOB@example.com"],
+        typed("Write to ana@example.com and bob@example.com"),
+      ),
+    ).toBe(true);
+  });
+
+  test("a call that carries no initiator of its own is the hop's, and passes", () => {
+    expect(
+      handed(["ana@example.com"], asked, { callInitiator: undefined }),
+    ).toBe(true);
+  });
+
+  test("asks when the server loaded no message: no mark, a stale one, an unreadable conversation", () => {
+    expect(handed(["ana@example.com"], null)).toBe(false);
+  });
+
+  test("asks for an address the person did not type, a corrected one, or an extra one", () => {
+    expect(handed(["eve@example.com"], asked)).toBe(false);
+    expect(handed(["ana@example.co"], asked)).toBe(false);
+    expect(handed(["ana@example.com", "eve@example.com"], asked)).toBe(false);
+    expect(handed(["ana.smith@example.com"], asked)).toBe(false);
+  });
+
+  test("asks when the message is a long paste, not a request", () => {
+    const paste = typed(
+      `Write to ana@example.com. ${"Notes from the meeting. ".repeat(40)}`,
+    );
+    expect(paste.content).toBeString();
+    expect((paste.content as string).length).toBeGreaterThan(MAX_REQUEST_CHARS);
+    expect(handed(["ana@example.com"], paste)).toBe(false);
+  });
+
+  test("asks when the message is not a plain string, or has no id of its own to name", () => {
+    expect(
+      handed(
+        ["ana@example.com"],
+        typed([{ type: "text", text: "ana@example.com" }]),
+      ),
+    ).toBe(false);
+    // The envelope a hand-off delivers is a Bot's text, whatever its role.
+    expect(
+      handed(
+        ["ana@example.com"],
+        typed("Write to ana@example.com", "handoff-run-1"),
+      ),
+    ).toBe(false);
+  });
+
+  test("asks when the call is not what a hop's call looks like: the person's own initiator, another Bot's, a routine's", () => {
+    for (const callInitiator of [
+      PERSON_INITIATOR,
+      { kind: "handoff", id: "bot_other", origin: PERSON_INITIATOR },
+      { kind: "handoff", id: "bot_iris" },
+      { kind: "routine", id: "rt_1" },
+      { kind: "deployment" },
+    ] as AuditInitiator[])
+      expect(handed(["ana@example.com"], asked, { callInitiator })).toBe(false);
+  });
+
+  test("asks when the run is not a hop from a person: the person's own turn, a routine's hop, one with no origin, anything else", () => {
+    for (const runInitiator of [
+      undefined,
+      PERSON_INITIATOR,
+      { kind: "routine", id: "rt_1" },
+      {
+        kind: "handoff",
+        id: "bot_iris",
+        origin: { kind: "routine", id: "rt_1" },
+      },
+      {
+        kind: "handoff",
+        id: "bot_iris",
+        origin: { kind: "responsibility", id: "c" },
+      },
+      { kind: "handoff", id: "bot_iris" },
+      { kind: "deployment" },
+    ] as (AuditInitiator | undefined)[])
+      expect(
+        handed(["ana@example.com"], asked, {
+          runInitiator,
+          callInitiator: undefined,
+        }),
+      ).toBe(false);
+  });
+
+  test("asks when the recipients are not a list of one to five plain addresses", () => {
+    expect(handed("ana@example.com", asked)).toBe(false);
+    expect(handed([], asked)).toBe(false);
+    expect(handed(["Ana <ana@example.com>"], asked)).toBe(false);
+    expect(
+      handed(
+        Array.from({ length: 6 }, (_, index) => `p${index}@example.com`),
+        typed(
+          Array.from({ length: 6 }, (_, index) => `p${index}@example.com`).join(
+            " ",
+          ),
+        ),
+      ),
+    ).toBe(false);
   });
 });

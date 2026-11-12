@@ -7,7 +7,7 @@ import pytest
 import yaml
 
 from freeduet import checkpoints, team_log
-from freeduet.report import OUTCOMES, SegmentFacts, approval_ids, assess, canonical_outcome, parse_report
+from freeduet.report import OUTCOMES, SegmentFacts, approval_ids, assess, canonical_outcome, parse_report, report_block
 
 APPROVAL = "5b1f0c2e-8d7a-4c3b-9e6f-0a1b2c3d4e5f"
 
@@ -68,6 +68,50 @@ def test_bullets_and_bold_labels():
     assert a.state["decisions"] == ["Failed attempt: the reply to the bank is not drafted; tried the bank's portal, it was down"]
     assert a.state["next_steps"] == ["ask the person to approve the landlord reply"]
     assert a.approvals == "nothing"
+
+
+# The shared rules ask for each label on its own line, as a list item or with a blank line between
+# the labels, so the chat shows six lines and not one run-on paragraph. Both must read like FULL.
+LIST_ITEMS = f"""I drafted the invoice and sent it after your approval.
+
+- Outcome: done
+- Done: Invoice INV-12 drafted for ACME and sent
+- Evidence: send_email confirmed message id m-881; total 1,240.00 EUR
+- Not done and why: nothing
+- Already sent, paid, booked, published or deleted: sent INV-12 to ACME (approval {APPROVAL})
+- Next step: none"""
+
+BLANK_LINES = f"""I drafted the invoice and sent it after your approval.
+
+Outcome: done
+
+Done: Invoice INV-12 drafted for ACME and sent
+
+Evidence: send_email confirmed message id m-881; total 1,240.00 EUR
+
+Not done and why: nothing
+
+Already sent, paid, booked, published or deleted: sent INV-12 to ACME (approval {APPROVAL})
+
+Next step: none"""
+
+
+@pytest.mark.parametrize("shape", [LIST_ITEMS, BLANK_LINES], ids=["list items", "blank lines"])
+def test_a_report_with_each_label_on_its_own_line_reads_like_the_plain_one(shape):
+    report = parse_report(shape)
+    assert report is not None and report.outcome == "done"
+    assert report.fields == parse_report(FULL).fields
+    a = assess(facts(shape))
+    assert valid(a) and a.phase == "complete" and a.outcome == "done"
+    assert a.state == assess(facts(FULL)).state
+    assert a.approvals == [APPROVAL]
+
+
+def test_the_report_block_of_each_shape_is_the_six_labelled_lines_as_written():
+    assert report_block(LIST_ITEMS) == LIST_ITEMS.split("\n\n", 1)[1]
+    block = report_block(BLANK_LINES)
+    assert block is not None and block.startswith("Outcome: done") and block.endswith("Next step: none")
+    assert block.count("\n\n") == 5  # one blank line between the labels, none lost
 
 
 def test_the_last_outcome_starts_the_report_and_extra_text_after_it_is_ignored():

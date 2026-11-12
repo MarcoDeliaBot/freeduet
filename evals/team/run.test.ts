@@ -436,6 +436,17 @@ describe("hard check: report lines", () => {
     expect(result.report["Not done"]).toContain("SMTP 550");
   });
 
+  test("accepts each label as a plain list item, or with a blank line between the labels (the shapes the shared rules ask for)", () => {
+    const labels = REPORT.split("\n");
+    const listed = `Sent it.\n\n${labels.map((line) => `- ${line}`).join("\n")}`;
+    const spaced = `Sent it.\n\n${labels.join("\n\n")}`;
+    for (const answer of [listed, spaced]) {
+      const result = checkReportLines(answer);
+      expect(result.pass).toBe(true);
+      expect(result.report).toEqual(checkReportLines(REPORT).report);
+    }
+  });
+
   test("a slash inside the long Already, Not done and Già labels", () => {
     const slashed = REPORT.replace(
       "Not done and why",
@@ -626,6 +637,9 @@ describe("hard check: report lines", () => {
         noReportRule: prompt.includes(NO_REPORT_RULE),
         stoppedWorkRule: prompt.includes(STOPPED_WORK_RULE),
         nothingAfter: prompt.includes("write nothing after the Next step line"),
+        eachLabelOnItsOwnLine: prompt.includes(
+          'Put each of these labels on its own line, as a list item ("- Outcome: done") or with a blank line between the labels, never run together in one paragraph.',
+        ),
         outcomes: listed(prompt, "Outcome"),
         italian: listed(prompt, "Esito").filter((o) => !accepted(o)),
         inProgressMeans: prompt.includes(
@@ -636,6 +650,7 @@ describe("hard check: report lines", () => {
         noReportRule: true,
         stoppedWorkRule: true,
         nothingAfter: true,
+        eachLabelOnItsOwnLine: true,
         outcomes: [...OUTCOMES],
         italian: [],
         inProgressMeans: true,

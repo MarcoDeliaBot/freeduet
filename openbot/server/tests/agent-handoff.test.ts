@@ -47,6 +47,7 @@ function desk(options?: {
   offered?: number;
   caps?: HandoffCaps;
   role?: "admin" | "user";
+  singleUser?: boolean;
 }) {
   const rows: Array<{ kind: string; key: string; payload: unknown }> = [];
   const events: Array<{
@@ -103,6 +104,9 @@ function desk(options?: {
       }),
       auditStore,
       caps: options?.caps ?? CAPS,
+      ...(options?.singleUser === undefined
+        ? {}
+        : { singleUser: options.singleUser }),
     }),
   };
 }
@@ -114,6 +118,50 @@ const FROM = {
   threadId: "thread-1",
   depth: 0,
 };
+
+/*
+ * A GRANT THE BOT LACKS, said in the words the deployment calls for. On a one-person deployment
+ * (`config.singleUser`) the person is the administrator, so the refusal tells the Bot they can give the
+ * grant themselves; every other deployment hears what it always heard, byte for byte.
+ */
+describe("a hop to a Bot the asking Bot was not given", () => {
+  const refusal = async (singleUser?: boolean) => {
+    const refused = desk({
+      granted: false,
+      ...(singleUser === undefined ? {} : { singleUser }),
+    });
+    const outcome = await refused.desk.send({
+      from: FROM,
+      target: "researcher",
+      envelope: { task: "t" },
+    });
+    return { outcome, rows: refused.rows };
+  };
+
+  test("is told to ask an administrator, exactly as before, on every deployment but a one-person one", async () => {
+    for (const singleUser of [undefined, false]) {
+      const { outcome, rows } = await refusal(singleUser);
+      expect(outcome).toEqual({
+        ok: false,
+        refusal:
+          "You have not been given Researcher to hand work to. An administrator grants that.",
+      });
+      expect(rows).toEqual([]);
+    }
+  });
+
+  test("is told, on a one-person deployment, that the person can give the grant themselves, naming the Bot", async () => {
+    const { outcome, rows } = await refusal(true);
+    expect(outcome).toEqual({
+      ok: false,
+      refusal:
+        "You have not been given Researcher to hand work to. This person is the only one here, so they can give you Researcher themselves in settings: tell them plainly that you cannot hand work to Researcher yet and that they can allow it themselves.",
+    });
+    expect(JSON.stringify(outcome)).not.toContain("dministrator");
+    // Still a refusal: nothing was queued.
+    expect(rows).toEqual([]);
+  });
+});
 
 describe("handing work to another Bot", () => {
   test("an allowed hop becomes one durable row", async () => {

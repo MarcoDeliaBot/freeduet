@@ -52,7 +52,8 @@ ADDED, FAILED = team_log.REPORT_GUARD_VALUES  # what the team log's `report_guar
 INSTRUCTION = (
     "Your reply above is finished, but it does not end with the work report the shared rules "
     "require. Write that report now and nothing else: the six lines Outcome, Done, Evidence, Not "
-    "done and why, Already, Next step, in this order, each starting with its label and a colon. "
+    "done and why, Already, Next step, in this order, each on its own line as a list item that starts "
+    "with its label and a colon (\"- Outcome: done\"). "
     "Outcome is one of done, partly done, in progress, blocked, failed or needs you. Write it in the "
     "language of your reply above; in Italian use Esito (fatto, fatto in parte, in corso, bloccato, "
     "fallito or serve te), Fatto, Prove, Non fatto e perché, Già, Prossimo passo. Report only what "

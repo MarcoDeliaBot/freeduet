@@ -105,6 +105,12 @@ def test_the_fake_cli_knows_the_follow_up_by_the_instruction():
     assert marker in report_guard.INSTRUCTION
 
 
+
+def test_the_follow_up_asks_for_each_label_on_its_own_line_as_a_list_item():
+    assert "each on its own line as a list item" in report_guard.INSTRUCTION
+    assert '"- Outcome: done"' in report_guard.INSTRUCTION
+
+
 def test_report_block_keeps_only_a_complete_report():
     assert report.report_block(f"Here it is:\n\n{REPORT}\n\nAnything else?") == REPORT
     assert report.report_block(ITALIAN_REPORT) == ITALIAN_REPORT
@@ -114,6 +120,18 @@ def test_report_block_keeps_only_a_complete_report():
 
 
 # ── end to end ───────────────────────────────────────────────────────────────────────────────────
+
+
+
+def test_a_follow_up_written_as_list_items_is_streamed_as_written(client, fake_cli):
+    listed = "\n".join(f"- {line}" for line in REPORT.split("\n"))
+    fake_cli.plan([{"text": REPLY}])
+    fake_cli.followups([{"text": f"Sure.\n\n{listed}\n\nLet me know."}])
+    events, _ = post_run(client, run_body(ask(SORT), bot_id="chef"))
+    # The six list items and nothing around them: each label keeps its own line in the chat.
+    assert content_of(events) == f"{REPLY}\n\n{listed}"
+    [entry] = team_log_of(fake_cli)
+    assert entry["outcome"] == "done" and entry["report_guard"] == "added"
 
 
 def test_a_work_turn_without_a_report_gets_one_in_the_same_message(client, fake_cli):

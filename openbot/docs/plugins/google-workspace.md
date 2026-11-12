@@ -123,9 +123,13 @@ saved one for the same address does not answer it, so an answer given for one em
 later, different one. The one case that needs no card is the person's own written request: when the
 message the person typed to start this turn, in their own live chat, contains every recipient as a whole
 address (compared ignoring case), the email goes out at once. Nothing else counts as the person's
-request: not a Bot's text, a hand-off, a mail or a page, a routine's or a check-in's stored prompt, an
-earlier message, or an address the Bot corrected or completed. Those still ask. The reasoning and its
-limits are in docs/M1_PLAN.md, D27.
+request: not a Bot's text, a mail or a page, a routine's or a check-in's stored prompt, an earlier
+message, or an address the Bot corrected or completed. Those still ask. A hand-off asks too, with one
+exception: when the person typed the request to the member they were chatting with and that member
+handed it on, the server recorded which message started that turn and, at the gate, reads that message
+again from the conversation it came from; if it is still the person's latest message and it names every
+recipient, the email goes out without a card. The reasoning and its limits are in docs/M1_PLAN.md, D27
+and D27a.
 
 What the connector itself enforces, whatever was approved:
 

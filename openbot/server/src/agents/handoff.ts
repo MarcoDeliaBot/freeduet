@@ -19,6 +19,7 @@ import { createHash } from "node:crypto";
 import { type AuditStore, recordAuditEvent } from "../audit";
 import type { WorkQueue } from "../work/queue";
 import type { RunAssertion } from "./callback-token";
+import type { HandedRequest } from "./handoff-request";
 import { isBotPaused } from "./lifecycle";
 import type { AgentProfileStore } from "./profile-store";
 import type { AgentActor } from "./profile-types";
@@ -72,6 +73,14 @@ export type HandoffDesk = {
     /** The Bot being addressed, as the model named it. */
     target: string;
     envelope: HandoffEnvelope;
+    /**
+     * Which turn of the person's this hop was made from, when it was made in their own live chat turn.
+     *
+     * RECORDED ON THE ROW AND NOWHERE A MODEL READS OR WRITES. The caller derives it from the signed
+     * run and the run's own input (`handedRequestOf`), never from the envelope or the tool's
+     * arguments; the desk only stores what it is given beside the hop. See `handoff-request.ts`.
+     */
+    request?: HandedRequest;
   }) => Promise<HandoffOutcome>;
 };
 
@@ -95,8 +104,15 @@ export function createHandoffDesk(options: {
   actorFor: (userId: string) => Promise<AgentActor | null>;
   auditStore: AuditStore;
   caps: HandoffCaps;
+  /**
+   * This deployment is one person's own (`config.singleUser`): the person is the administrator, so a
+   * refusal for a grant the Bot lacks says they can give it themselves instead of naming somebody
+   * else. Absent is every other deployment, whose wording is unchanged.
+   */
+  singleUser?: boolean;
 }): HandoffDesk {
   const { queue, profiles, mayAddress, actorFor, auditStore, caps } = options;
+  const singleUser = options.singleUser === true;
 
   /** Said once, so the trail carries the same words the Bot was given. */
   async function refuse(
@@ -131,7 +147,7 @@ export function createHandoffDesk(options: {
   }
 
   return {
-    async send({ from, target, envelope }) {
+    async send({ from, target, envelope, request }) {
       const task = envelope.task?.trim() ?? "";
       if (!task) {
         return refuse(
@@ -271,7 +287,9 @@ export function createHandoffDesk(options: {
           from,
           target,
           "not_granted",
-          `You have not been given ${found.name} to hand work to. An administrator grants that.`,
+          singleUser
+            ? `You have not been given ${found.name} to hand work to. This person is the only one here, so they can give you ${found.name} themselves in settings: tell them plainly that you cannot hand work to ${found.name} yet and that they can allow it themselves.`
+            : `You have not been given ${found.name} to hand work to. An administrator grants that.`,
         );
       }
       // Paused by this person: say so now rather than queue a hop that will be dropped.
@@ -357,6 +375,9 @@ export function createHandoffDesk(options: {
             ? { constraints: envelope.constraints }
             : {}),
           ...(envelope.expecting ? { expecting: envelope.expecting } : {}),
+          // The person's own request this hop was made from, when there is one: the server's record,
+          // read back by the gate that decides a new email. Not part of the key: the same ask is one hop.
+          ...(request ? { request } : {}),
         },
       });
 

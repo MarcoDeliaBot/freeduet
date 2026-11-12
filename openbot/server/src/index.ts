@@ -40,6 +40,7 @@ import { canUseComputer } from "./agents/computer-access";
 import { wireCoordination } from "./agents/coordination-wiring";
 import { createAgentFetch } from "./agents/endpoint";
 import { createHandoffDesk } from "./agents/handoff";
+import { createHandedRequestLoader } from "./agents/handoff-request";
 import { createHandoffRunner } from "./agents/handoff-runner";
 import { startHandoffDelivery } from "./agents/handoff-wiring";
 import { relayComputerTools } from "./freeduet/relay-computer";
@@ -1001,6 +1002,16 @@ const pluginStore = createPluginStore({
     approvals: approvalService.store,
   }),
   /*
+   * A new email handed on by another member (FreeDuet, docs/M1_PLAN.md D27): the person's own message
+   * the hop was made from, loaded from the conversation it was made in. `copilotRuntime` is built
+   * further down, which is fine: this is read when a call is made, never while this file loads.
+   */
+  handedRequest: createHandedRequestLoader({
+    database,
+    encryptionKey: config.keyEncryptionKey,
+    history: (input) => copilotRuntime.history(input),
+  }),
+  /*
    * Where a vendor sends people back, for a vendor whose client this deployment registers itself.
    *
    * The same value the connect and callback routes build, from the same config field, because it has
@@ -1171,6 +1182,7 @@ const handoffDesk = createHandoffDesk({
     actorFor(userId).catch(() => null),
   auditStore: bootAuditStore,
   caps: config.handoff,
+  singleUser: config.singleUser,
 });
 
 void recordAuditEvent(bootAuditStore, {
@@ -1502,6 +1514,7 @@ const loadToolsForActor =
       composioConfigured: Boolean(composio),
       ...(composio ? { directory: () => composio.broker.listApps() } : {}),
       sharedAudience: sharedUseStore.admitsPerson,
+      singleUser: config.singleUser,
     }),
     ...(await grantedTools({
       store: pluginStore,

@@ -39,7 +39,7 @@ function access(state: AppAccessState): AppAccess {
   };
 }
 
-function toolOver(answer: AppAccess | null) {
+function toolOver(answer: AppAccess | null, singleUser?: boolean) {
   const asked: unknown[] = [];
   const [tool] = appAccessTools({
     store: {
@@ -51,6 +51,7 @@ function toolOver(answer: AppAccess | null) {
     botId: "expenses",
     actorId: "usr_7",
     composioConfigured: true,
+    ...(singleUser === undefined ? {} : { singleUser }),
   });
   if (!tool) throw new Error("no tool");
   return { tool, asked };
@@ -99,6 +100,75 @@ describe("show_app_access", () => {
       });
       expect(prompt?.message).toMatch(said);
       expect(prompt?.message).toContain("Do not browse to its website");
+    },
+  );
+
+  /*
+   * ON A ONE-PERSON DEPLOYMENT THE PERSON IS THE ADMINISTRATOR (`config.singleUser`). The four states that
+   * ended on "an administrator" now say what is missing, name the app, and say the person can switch it on
+   * themselves in settings. Every other deployment, and every state that never named an administrator,
+   * reads as before.
+   */
+  const ADMIN_STATES: AppAccessState[] = [
+    "shared_not_connected",
+    "shared_not_approved",
+    "disabled",
+    "not_granted",
+  ];
+
+  const told = async (state: AppAccessState, singleUser?: boolean) => {
+    const { tool } = toolOver(access(state), singleUser);
+    return readConnectPrompt(await tool.execute({ app: "gmail" }))?.message;
+  };
+
+  test.each(ADMIN_STATES)(
+    "%s still sends the person to an administrator when the deployment is not a one-person one",
+    async (state) => {
+      const before = await told(state);
+      expect(before).toContain("dministrator");
+      expect(await told(state, false)).toBe(before);
+    },
+  );
+
+  test("the multi-user sentences are the ones this file always pinned, word for word", async () => {
+    expect(await told("shared_not_connected")).toBe(
+      "Gmail uses one shared account for this deployment, and an administrator has not connected it yet. The card in front of the person lets them ask an administrator for it. Do not browse to its website or ask them to sign in there.",
+    );
+    expect(await told("shared_not_approved")).toBe(
+      "Gmail uses one shared account for this deployment, and you reach more people than an administrator approved for it, so its calls are refused. Only an administrator can approve that; the card in front of the person says so. Do not browse to its website or ask them to sign in there.",
+    );
+    expect(await told("disabled")).toBe(
+      "Gmail is switched off on this deployment. The card in front of the person lets them ask an administrator to switch it on. Do not browse to its website or ask them to sign in there.",
+    );
+    expect(await told("not_granted")).toBe(
+      "Gmail is switched on, and you have not been granted it. The card in front of the person lets them ask an administrator to grant it to you. Do not browse to its website or ask them to sign in there.",
+    );
+  });
+
+  test.each(ADMIN_STATES)(
+    "%s tells the Bot on a one-person deployment what is missing, naming the app, and that the person can do it themselves in settings",
+    async (state) => {
+      const message = (await told(state, true)) ?? "";
+      expect(message).not.toContain("dministrator");
+      expect(message).toContain("Gmail");
+      expect(message).toContain("This person is the only one here");
+      expect(message).toContain("themselves in settings");
+      expect(message).toContain("tell them plainly");
+      expect(message).toEndWith(
+        "Do not browse to its website or ask them to sign in there.",
+      );
+    },
+  );
+
+  test.each([
+    ["ready", /ready for this person to use through you/],
+    ["not_connected", /offers Connect/],
+    ["reconnect", /offers Reconnect/],
+  ] as const)(
+    "%s never named an administrator and reads the same on a one-person deployment",
+    async (state, said) => {
+      expect(await told(state, true)).toBe(await told(state));
+      expect(await told(state, true)).toMatch(said);
     },
   );
 

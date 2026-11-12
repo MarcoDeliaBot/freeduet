@@ -149,6 +149,16 @@ describe("what Otto and Iris are told", () => {
     expect(prompt).not.toContain("gmail_send_reply");
   });
 
+  test("Iris, when Otto reports an email sent, tells the person it was sent, to whom, its subject and the text, whatever her chat-reply limit", async () => {
+    const iris = (await rows()).find((row) => row.id === "freeduet");
+    const prompt = iris?.system_prompt.replace(/\s+/g, " ") ?? "";
+    expect(prompt).toContain(
+      "When a colleague reports that an email went out, tell the person plainly that it was sent, to whom, its subject and the text, as the colleague gave them; the three-sentence limit does not cut this short.",
+    );
+    // The limit that sentence is an exception to is still there.
+    expect(prompt).toContain("a chat reply is at most three short sentences");
+  });
+
   test("Penny is not told about the tool", async () => {
     const penny = (await rows()).find((row) => row.id === "bookkeeper");
     expect(penny?.system_prompt).not.toContain("gmail_send_message");

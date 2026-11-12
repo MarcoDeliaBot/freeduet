@@ -26,6 +26,7 @@ import { type CatalogueEntry, resolveServerUrl } from "../catalogue";
 import { type ListedTool, McpServerError } from "../mcp";
 import type { AccountMode } from "../shared-accounts";
 import type { SharedUseGate } from "../shared-use-store";
+import type { ConversationMessage } from "../typed-recipients";
 import type { VerifyUserSecret } from "../user-secret";
 
 /**
@@ -1235,6 +1236,17 @@ export type PluginStoreOptions = {
    * See plugins/share-target.ts and proactive/private-share.ts. Absent asks nothing.
    */
   privateShareCheck?: CheckPrivateShare;
+  /**
+   * The person's own message a hand-off was made from, loaded from the conversation it was made in
+   * (`agents/handoff-request.ts`, docs/M1_PLAN.md D27). Given the run assertion the addressed member's
+   * run carries, as presented, and who is calling. Absent, or answering null, means a new email sent
+   * by a member that was handed the work asks the person like any other.
+   */
+  handedRequest?: (input: {
+    assertion: unknown;
+    botId: string;
+    actorId: string;
+  }) => Promise<{ threadId: string; message: ConversationMessage } | null>;
   /** Who may steer a run that uses a Shared app's account. Absent, every shared call is refused. */
   sharedUse?: SharedUseGate;
   database: Database;

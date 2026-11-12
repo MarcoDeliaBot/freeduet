@@ -38,6 +38,7 @@ import {
   PUT_TO,
 } from "./escalation";
 import { HANDOFF_KIND, type HandoffCaps, type HandoffDesk } from "./handoff";
+import { handedRequestOf } from "./handoff-request";
 import type { HandoffWork } from "./handoff-runner";
 
 /** What the model is offered. One name, so a transcript can find every hop by searching for it. */
@@ -177,9 +178,19 @@ export function handoffTool(options: {
         });
         if (held) return held;
       }
+      /*
+       * Which turn of the person's this hop is made from, when it is their own live chat turn.
+       *
+       * Read here, from the signed run and the continuation the server holds, and never from
+       * `parsed.data`: nothing the model wrote in the brief or the arguments reaches it. The desk
+       * writes it on the hop's row, and a new email sent by the Bot at the other end is asked about
+       * unless the person's own message there names every address. See `handoff-request.ts`.
+       */
+      const request = handedRequestOf(from, currentApprovalContext());
       const outcome = await desk.send({
         from,
         target: parsed.data.bot,
+        ...(request ? { request } : {}),
         envelope: {
           task: parsed.data.task,
           ...(parsed.data.constraints
