@@ -25,7 +25,8 @@ import {
  *   (d) nothing secret is written into a result, an error or a log
  *   (e) the mailbox is only ever read
  *   (f) a reply stays in its thread and adds nobody
- *   (g) the same four tools answer in the same shapes as the REST adapter
+ *   (g) the same five tools answer in the same shapes as the REST adapter
+ *   (h) a new message goes to the addresses it was given and nowhere else
  */
 
 const PERSON = "user_maya";
@@ -250,6 +251,11 @@ describe("(d) nothing secret is written into anything", () => {
       subject: "Friday",
       body: "Yes.",
     },
+    gmail_send_message: {
+      to: ["ana@example.com"],
+      subject: "Good morning",
+      body: "Good morning, Ana.",
+    },
     calendar_list_events: {},
   };
 
@@ -379,6 +385,24 @@ describe("(d) nothing secret is written into anything", () => {
       expect(result.text).not.toContain(secret);
     }
     expect(gmail.smtpClosed).toBe(1);
+  });
+
+  test("an SMTP failure of a new message is a fixed sentence, says it was not sent, and quotes nothing", async () => {
+    const { gmail, transport } = build();
+    gmail.smtpError = quoting({ code: "EAUTH" });
+    const result = await transport.callTool(
+      connection(),
+      "gmail_send_message",
+      ARGS.gmail_send_message ?? {},
+    );
+    expect(result.isError).toBe(true);
+    expect(result.text).toContain("The email was not sent.");
+    for (const secret of [...secretsOf(), FAKE_SECRET.address]) {
+      expect(result.text).not.toContain(secret);
+      expect(logged.join("\n")).not.toContain(secret);
+    }
+    expect(gmail.smtpClosed).toBe(1);
+    expect(gmail.sent).toEqual([]);
   });
 
   test("a stored value that cannot be read is refused without being repeated", async () => {
@@ -1380,5 +1404,187 @@ describe("(g) the same answers as the REST adapter", () => {
     expect(imapShape.sent).toBe(true);
     expect(imapShape.threadId).toBe(ANA_THREAD);
     expect(fromImap.truncated).toBe(fromRest.truncated);
+  });
+
+  test("a sent new message answers with the same three keys, of the same types", async () => {
+    stubRest(() => ({ id: "sent9", threadId: "t9", labelIds: ["SENT"] }));
+    const message = {
+      to: ["ana@example.com"],
+      subject: "Good morning",
+      body: "Good morning, Ana.",
+    };
+    const fromRest = await restCallTool(rest, "gmail_send_message", message);
+
+    const { transport } = build();
+    const fromImap = await transport.callTool(
+      connection(),
+      "gmail_send_message",
+      message,
+    );
+
+    expect(fromImap.isError).toBe(false);
+    const restShape = JSON.parse(fromRest.text);
+    const imapShape = JSON.parse(fromImap.text);
+    expect(Object.keys(imapShape)).toEqual(Object.keys(restShape));
+    expect(Object.keys(imapShape)).toEqual(["sent", "id", "threadId"]);
+    for (const key of Object.keys(restShape)) {
+      expect(typeof imapShape[key]).toBe(typeof restShape[key]);
+    }
+    expect(imapShape.sent).toBe(true);
+    expect(fromImap.truncated).toBe(fromRest.truncated);
+  });
+
+  test("a new message is refused with the same sentence, over either adapter, for every bad input", async () => {
+    for (const args of [
+      { to: [], subject: "s", body: "b" },
+      { to: ["Ana <ana@example.com>"], subject: "s", body: "b" },
+      {
+        to: ["ana@example.com\r\nBcc: x@example.org"],
+        subject: "s",
+        body: "b",
+      },
+      {
+        to: ["ana@example.com"],
+        subject: "s\r\nBcc: x@example.org",
+        body: "b",
+      },
+      { to: ["ana@example.com"], subject: "s", body: "" },
+      {
+        to: ["ana@example.com"],
+        subject: "s",
+        body: "b",
+        cc: ["x@example.org"],
+      },
+      { to: ["ana@example.com"], subject: "s".repeat(201), body: "b" },
+      { to: ["ana@example.com"], subject: "s", body: "b".repeat(20_001) },
+      {
+        to: Array.from({ length: 6 }, (_, index) => `p${index}@example.com`),
+        subject: "s",
+        body: "b",
+      },
+    ]) {
+      const calls = stubRest(() => ({ id: "x" }));
+      const fromRest = await restCallTool(rest, "gmail_send_message", args);
+      const { gmail, transport } = build();
+      const fromImap = await transport.callTool(
+        connection(),
+        "gmail_send_message",
+        args,
+      );
+      expect(fromImap.isError).toBe(true);
+      expect(fromImap.text).toBe(fromRest.text);
+      expect(calls).toHaveLength(0);
+      expect(gmail.sent).toEqual([]);
+      expect(gmail.smtpClients).toEqual([]);
+    }
+  });
+});
+
+describe("(h) a new message goes to the addresses it was given and nowhere else", () => {
+  const message = (overrides: Record<string, unknown> = {}) => ({
+    to: ["ana@example.com"],
+    subject: "Good morning",
+    body: "Good morning, Ana.\nHave a lovely day.",
+    ...overrides,
+  });
+
+  test("one SMTP send from the connected account, to exactly the given addresses, with no copies and no threading", async () => {
+    const { gmail, transport } = build();
+    const result = await transport.callTool(
+      connection(),
+      "gmail_send_message",
+      message({
+        to: ["Ana@Example.com", "bob@example.org", "ana@example.com"],
+      }),
+    );
+    expect(result.isError).toBe(false);
+    expect(JSON.parse(result.text)).toEqual({
+      sent: true,
+      id: "",
+      threadId: "",
+    });
+    expect(gmail.sent).toEqual([
+      {
+        from: "maya@example.com",
+        to: ["Ana@Example.com", "bob@example.org"],
+        cc: [],
+        subject: "Good morning",
+        text: "Good morning, Ana.\nHave a lovely day.",
+        inReplyTo: "",
+        references: [],
+        envelope: {
+          from: "maya@example.com",
+          to: ["Ana@Example.com", "bob@example.org"],
+        },
+      },
+    ]);
+    expect(gmail.smtpClosed).toBe(1);
+  });
+
+  test("it dials the preset's SMTP host and no IMAP host at all, so the mailbox is never opened", async () => {
+    const { gmail, transport } = build();
+    gmail.messages = [ANA];
+    await transport.callTool(connection(), "gmail_send_message", message());
+    expect(gmail.clients).toEqual([]);
+    expect(gmail.opened).toEqual([]);
+    expect(gmail.fetched).toEqual([]);
+    expect(gmail.methodsCalled()).toEqual([]);
+    expect(gmail.violations).toEqual([]);
+    expect(gmail.smtpClients.length).toBe(1);
+    expect({
+      host: gmail.smtpClients[0]?.host,
+      port: gmail.smtpClients[0]?.port,
+      secure: gmail.smtpClients[0]?.secure,
+      user: gmail.smtpClients[0]?.user,
+    }).toEqual({
+      host: "smtp.gmail.com",
+      port: 465,
+      secure: true,
+      user: FAKE_SECRET.address,
+    });
+  });
+
+  test("a host, a from or an envelope in the arguments is never obeyed", async () => {
+    const { gmail, transport } = build();
+    const result = await transport.callTool(
+      connection(),
+      "gmail_send_message",
+      message({
+        host: "evil.example",
+        from: "boss@example.org",
+        envelope: { to: ["spy@example.org"] },
+      }),
+    );
+    // Fields this tool does not send are refused, not ignored.
+    expect(result.isError).toBe(true);
+    expect(gmail.sent).toEqual([]);
+    expect(gmail.smtpClients).toEqual([]);
+  });
+
+  test("a recipient Gmail refuses is reported, and the others are said to have it", async () => {
+    const { gmail, transport } = build();
+    gmail.smtpRejected = ["bob@example.org"];
+    const result = await transport.callTool(
+      connection(),
+      "gmail_send_message",
+      message({ to: ["ana@example.com", "bob@example.org"] }),
+    );
+    expect(result.isError).toBe(true);
+    expect(result.text).toBe(
+      "Gmail refused at least one recipient. The email went to the others.",
+    );
+  });
+
+  test("a send that fails says it was not sent and leaves nothing recorded as sent", async () => {
+    const { gmail, transport } = build();
+    gmail.smtpError = new Error("socket hang up");
+    const result = await transport.callTool(
+      connection(),
+      "gmail_send_message",
+      message(),
+    );
+    expect(result.isError).toBe(true);
+    expect(result.text).toContain("The email was not sent.");
+    expect(gmail.sent).toEqual([]);
   });
 });

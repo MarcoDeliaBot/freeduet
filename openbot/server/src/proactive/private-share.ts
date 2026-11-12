@@ -26,6 +26,7 @@
 import { createHash } from "node:crypto";
 import {
   type ApprovalContinuation,
+  type ApprovalPolicyOutcome,
   type ApprovalStore,
   approvalAction,
   currentApprovalContext,
@@ -81,6 +82,21 @@ export type PrivateShareInput = {
     | { kind: "shared_conversation"; sharedWithUserIds: readonly string[] };
   /** The run and tool call this send belongs to; defaults to the current approval context. */
   continuation?: ApprovalContinuation;
+  /**
+   * A send that is asked about every time (a new email, plugins/share-target.ts). No saved "Always
+   * allow" answers it and none can be made for it: the request is opened as one the person was asked
+   * about, which no saved rule approves behind them, and an answer that is only "once" is the only
+   * one that lets the next send through.
+   */
+  askEveryTime?: true;
+};
+
+/** What a request that is asked about every time carries, and what the card says about it. */
+export const ASK_EVERY_TIME: ApprovalPolicyOutcome = {
+  behaviour: "ask",
+  source: "always_ask",
+  reason:
+    "A new email is asked about every time. Check who it goes to and what it says, then allow this one or refuse it.",
 };
 
 export type PrivateShareVerdict =
@@ -158,6 +174,7 @@ export function createPrivateShareCheck(deps: {
     }
     const scope = audienceScope(input.audience);
     const alwaysAllowed = async () =>
+      input.askEveryTime !== true &&
       (await deps.approvals.rules(input.ownerUserId)).some(
         (rule) =>
           !rule.revokedAt &&
@@ -222,7 +239,10 @@ export function createPrivateShareCheck(deps: {
       target: { kind: input.audience.kind, id: input.audience.id },
       continuation,
     };
-    const action = approvalAction(candidate);
+    const action = {
+      ...approvalAction(candidate),
+      ...(input.askEveryTime ? { policy: ASK_EVERY_TIME } : {}),
+    };
 
     /*
      * The send after an approval: same content, same audience, same conversation, recently. Recent
@@ -241,7 +261,7 @@ export function createPrivateShareCheck(deps: {
         record.action.actionDigest === action.actionDigest &&
         record.action.threadId === action.threadId &&
         (record.decision === "allow_once" ||
-          record.decision === "allow_always") &&
+          (record.decision === "allow_always" && !input.askEveryTime)) &&
         now().getTime() - answeredAt(record.action.runId) < ONCE_WINDOW_MS,
     );
     // One send per answer: the first to spend it sends, and nobody else can spend it after.

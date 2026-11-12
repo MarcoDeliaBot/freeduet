@@ -271,6 +271,45 @@ describe("what goes over the wire", () => {
     expect(commands.filter((command) => command === "LOGOUT").length).toBe(3);
   });
 
+  test("a new message puts nothing on the IMAP wire, and its SMTP envelope is exactly the given recipients", async () => {
+    asked.length = 0;
+    const { transport, gmail } = transportOverTheRealLibrary();
+    // Between two reads, so a send that touched the mailbox would show among their commands.
+    await transport.callTool(connection, "gmail_search_messages", {});
+    const before = lines.length;
+    const sent = await transport.callTool(connection, "gmail_send_message", {
+      to: ["ana@example.com", "bob@example.org"],
+      subject: "Good morning",
+      body: "Good morning.",
+    });
+    expect(sent.isError).toBe(false);
+    // Not one IMAP line: no login, no open, no logout, so no APPEND and nothing else either.
+    expect(lines.length).toBe(before);
+    expect(asked.length).toBe(1);
+    await transport.callTool(connection, "gmail_read_message", { id: HEX_ID });
+
+    const commands = lines.map(commandOf);
+    for (const command of commands) {
+      expect(ALLOWED_COMMANDS.has(command)).toBe(true);
+    }
+    expect(commands.filter((command) => command === "EXAMINE").length).toBe(2);
+    expect(commands).not.toContain("APPEND");
+
+    expect(gmail.sent.length).toBe(1);
+    expect(gmail.sent[0]?.envelope).toEqual({
+      from: "maya@example.com",
+      to: ["ana@example.com", "bob@example.org"],
+    });
+    expect(gmail.sent[0]?.cc).toEqual([]);
+    expect(gmail.smtpClients).toEqual([
+      expect.objectContaining({
+        host: "smtp.gmail.com",
+        port: 465,
+        secure: true,
+      }),
+    ]);
+  });
+
   test("every FETCH asks for a body with PEEK, so nothing is marked read", async () => {
     const { transport } = transportOverTheRealLibrary();
     await transport.callTool(connection, "gmail_search_messages", {});

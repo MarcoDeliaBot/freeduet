@@ -55,6 +55,8 @@ export type PairedApprovals = {
         effect: string;
         threadId: string;
         args: unknown;
+        /** Only `source` is read here: a request asked about every time is `always_ask`. */
+        policy?: { source?: string };
       };
     }>;
   };
@@ -496,6 +498,7 @@ async function approvalCard(
     effect: record.action.effect,
     // The approvals preview already redacts secrets and private content.
     fields: approvalFields(approvalPreview(record.action.args)),
+    allowAlways: record.action.policy?.source !== "always_ask",
   });
 }
 
@@ -547,6 +550,13 @@ async function decideFromCard(
     : resume.always
       ? "allow_always"
       : "allow_once";
+  if (
+    decision === "allow_always" &&
+    record.action.policy?.source === "always_ask"
+  )
+    return {
+      text: "That one is asked about every time, so nothing was decided. Allow it once or refuse it.",
+    };
   await deps.approvals.decide(binding.ownerUserId, resume.approvalId, decision);
   const bot = await deps.store.botIdentity(record.action.botId);
   const name = bot?.name ?? "Your Bot";

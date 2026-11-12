@@ -174,12 +174,13 @@ describe("what the adapter offers", () => {
     );
   });
 
-  test("exactly the four tools of the contract, in their contract names", async () => {
+  test("exactly the five tools of the contract, in their contract names", async () => {
     const tools = await listTools(connection);
     expect(tools.map((tool) => tool.name)).toEqual([
       "gmail_search_messages",
       "gmail_read_message",
       "gmail_send_reply",
+      "gmail_send_message",
       "calendar_list_events",
     ]);
   });
@@ -773,6 +774,219 @@ describe("gmail_send_reply", () => {
     const result = await callTool(connection, "gmail_send_reply", reply);
     expect(result.isError).toBe(true);
     expect(calls.map((call) => call.method)).toEqual(["GET"]);
+  });
+});
+
+describe("gmail_send_message", () => {
+  const message = {
+    to: ["ana@example.com"],
+    subject: "Good morning",
+    body: "Good morning, Ana.\nHave a lovely day.",
+  };
+
+  const stubSend = () =>
+    stubGoogle(() => ({
+      id: "sent9",
+      threadId: "thread9",
+      labelIds: ["SENT"],
+    }));
+
+  test("sends exactly the given recipients, subject and body as one new message, in no thread", async () => {
+    const calls = stubSend();
+    const result = await callTool(connection, "gmail_send_message", message);
+
+    // One request: nothing is looked up first, because there is no message being answered.
+    expect(calls).toHaveLength(1);
+    expect(calls[0].method).toBe("POST");
+    expect(calls[0].url.pathname).toBe("/gmail/v1/users/me/messages/send");
+    expect(calls[0].authorization).toBe("Bearer test-token");
+    const sent = calls[0].body as { raw: string; threadId?: string };
+    expect(Object.keys(sent)).toEqual(["raw"]);
+
+    const { headers, body } = parseRaw(sent.raw);
+    expect([...headers.keys()].sort()).toEqual([
+      "content-transfer-encoding",
+      "content-type",
+      "mime-version",
+      "subject",
+      "to",
+    ]);
+    expect(headers.get("to")).toBe("ana@example.com");
+    expect(headers.get("subject")).toBe("Good morning");
+    expect(headers.get("content-type")).toBe("text/plain; charset=UTF-8");
+    expect(
+      Buffer.from(body.replace(/\r\n/g, ""), "base64").toString("utf8"),
+    ).toBe("Good morning, Ana.\r\nHave a lovely day.");
+
+    // The answer is the reply's shape, with the ids Gmail gave.
+    expect(result.isError).toBe(false);
+    expect(result.truncated).toBe(false);
+    expect(JSON.parse(result.text)).toEqual({
+      sent: true,
+      id: "sent9",
+      threadId: "thread9",
+    });
+  });
+
+  test("several recipients go in To, in the order given, once each, as typed", async () => {
+    const calls = stubSend();
+    await callTool(connection, "gmail_send_message", {
+      ...message,
+      to: ["Ana@Example.com", "bob@example.org", "ana@example.com"],
+    });
+    const { headers } = parseRaw((calls[0].body as { raw: string }).raw);
+    expect(headers.get("to")).toBe("Ana@Example.com, bob@example.org");
+    expect(headers.has("cc")).toBe(false);
+    expect(headers.has("bcc")).toBe(false);
+    expect(headers.has("in-reply-to")).toBe(false);
+    expect(headers.has("references")).toBe(false);
+    expect(headers.has("from")).toBe(false);
+  });
+
+  test("a subject with other scripts is encoded, and the body keeps its text", async () => {
+    const calls = stubSend();
+    await callTool(connection, "gmail_send_message", {
+      ...message,
+      subject: "Buongiorno, perché no? ☕",
+      body: "Caffè alle nove?",
+    });
+    const { headers, body } = parseRaw((calls[0].body as { raw: string }).raw);
+    expect(headers.get("subject")).toMatch(/^=\?UTF-8\?/);
+    expect(
+      Buffer.from(body.replace(/\r\n/g, ""), "base64").toString("utf8"),
+    ).toBe("Caffè alle nove?");
+  });
+
+  test("an answer from Google with no ids still says it was sent", async () => {
+    stubGoogle(() => ({}));
+    const result = await callTool(connection, "gmail_send_message", message);
+    expect(JSON.parse(result.text)).toEqual({
+      sent: true,
+      id: "",
+      threadId: "",
+    });
+  });
+
+  /** A value no refusal may repeat, put in the field under test. */
+  const MARK = "marker-7f3a";
+  const REFUSED: [string, Record<string, unknown>][] = [
+    ["no recipient", { ...message, to: [] }],
+    ["no to at all", { subject: "s", body: "b" }],
+    ["a bare name", { ...message, to: [`${MARK}`] }],
+    ["a display name", { ...message, to: [`${MARK} <ana@example.com>`] }],
+    [
+      "two addresses in one",
+      { ...message, to: [`ana@example.com, ${MARK}@example.org`] },
+    ],
+    ["a recipient that is not text", { ...message, to: [7] }],
+    ["a recipient list that is not a list", { ...message, to: { 0: MARK } }],
+    [
+      "six recipients",
+      {
+        ...message,
+        to: Array.from(
+          { length: 6 },
+          (_, index) => `${MARK}${index}@example.com`,
+        ),
+      },
+    ],
+    [
+      "a line break in an address",
+      { ...message, to: [`ana@example.com\r\nBcc: ${MARK}@example.org`] },
+    ],
+    [
+      "a bare line feed in an address",
+      { ...message, to: [`ana@example.com\nBcc: ${MARK}@example.org`] },
+    ],
+    [
+      "a line break in the subject",
+      { ...message, subject: `Hello\r\nBcc: ${MARK}@example.org` },
+    ],
+    [
+      "a bare line feed in the subject",
+      { ...message, subject: `Hello\nBcc: ${MARK}@example.org` },
+    ],
+    ["a tab in the subject", { ...message, subject: `${MARK}\tx` }],
+    [
+      "a Unicode line separator in the subject",
+      { ...message, subject: `${MARK}\u2028x` },
+    ],
+    ["an empty subject", { ...message, subject: "  " }],
+    ["a subject that is not text", { ...message, subject: [MARK] }],
+    [
+      "a subject over the limit",
+      { ...message, subject: MARK.padEnd(201, "x") },
+    ],
+    ["an empty body", { ...message, body: "" }],
+    ["a body of spaces", { ...message, body: " \n\t " }],
+    ["a body that is not text", { ...message, body: { text: MARK } }],
+    ["a body over the limit", { ...message, body: MARK.padEnd(20_001, "x") }],
+    ["a NUL in the body", { ...message, body: `${MARK}\0` }],
+    ["a cc", { ...message, cc: [`${MARK}@example.org`] }],
+    ["a bcc", { ...message, bcc: [`${MARK}@example.org`] }],
+    ["a from", { ...message, from: `${MARK}@example.org` }],
+    ["a custom header", { ...message, headers: { [MARK]: "x" } }],
+    ["an attachment", { ...message, attachments: [MARK] }],
+    ["a thread", { ...message, threadId: MARK }],
+    ["html", { ...message, html: `<b>${MARK}</b>` }],
+  ];
+
+  test("every refusal is a fixed sentence that quotes nothing it was given, and nothing leaves the process", async () => {
+    for (const [name, args] of REFUSED) {
+      const calls = stubSend();
+      const result = await callTool(connection, "gmail_send_message", args);
+      expect({ name, isError: result.isError }).toEqual({
+        name,
+        isError: true,
+      });
+      expect({ name, sent: calls.length }).toEqual({ name, sent: 0 });
+      expect(result.text).toEndWith("It was not sent.");
+      expect(result.text).not.toContain(MARK);
+      expect(result.text).not.toContain("ana@");
+      expect(result.text).not.toContain("example.org");
+      expect(result.text).not.toContain("Bcc: ");
+    }
+  });
+
+  test("the cap is five recipients and the limits are inclusive", async () => {
+    const five = Array.from(
+      { length: 5 },
+      (_, index) => `p${index}@example.com`,
+    );
+    const calls = stubSend();
+    const ok = await callTool(connection, "gmail_send_message", {
+      to: five,
+      subject: "s".repeat(200),
+      body: "b".repeat(20_000),
+    });
+    expect(ok.isError).toBe(false);
+    expect(calls).toHaveLength(1);
+    const { headers } = parseRaw((calls[0].body as { raw: string }).raw);
+    expect(headers.get("to")).toBe(five.join(", "));
+  });
+
+  test("an argument left empty is the same as leaving it out", async () => {
+    const calls = stubSend();
+    const result = await callTool(connection, "gmail_send_message", {
+      ...message,
+      cc: [],
+      bcc: "",
+      threadId: null,
+    });
+    expect(result.isError).toBe(false);
+    expect(calls).toHaveLength(1);
+  });
+
+  test("Google refusing it is the reason Google gave, and nothing is claimed sent", async () => {
+    stubGoogle(() =>
+      Response.json(
+        { error: { code: 403, message: "Insufficient Permission" } },
+        { status: 403 },
+      ),
+    );
+    const result = await callTool(connection, "gmail_send_message", message);
+    expect(result.isError).toBe(true);
+    expect(result.text).not.toContain('"sent":true');
   });
 });
 

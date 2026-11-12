@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { shareTargetOf } from "../src/plugins/share-target";
+import { isNewEmailSend, shareTargetOf } from "../src/plugins/share-target";
 
 describe("which connector writes send content to other people", () => {
   test("a message, a post, a reply and an email are sends, addressed to their recipients", () => {
@@ -128,5 +128,71 @@ describe("what an email send is described as", () => {
         body: "hi",
       })?.message.to,
     ).toEqual(['"Rivera, Sam" <sam@example.test>', "ana@example.test"]);
+  });
+});
+
+/*
+ * A new email is the one send that is asked about every time (docs/M1_PLAN.md, D27). The card shows
+ * every recipient, the subject and the whole body, the same as a reply's, and the target says that no
+ * saved answer is to be used for it.
+ */
+describe("what a new email is described as", () => {
+  const BODY = `Good morning, Ana. ${"Here is a longer line so the body runs well past any preview. ".repeat(8)}`;
+  const email = {
+    to: ["ana@example.com", "bob@example.org"],
+    subject: "Good morning",
+    body: BODY,
+  };
+
+  test("both Gmail connections describe it the same way, whole, and mark it as asked about every time", () => {
+    expect(BODY.length).toBeGreaterThan(280);
+    for (const key of ["google-workspace", "google-imap"]) {
+      const target = shareTargetOf(key, "gmail_send_message", email);
+      expect(target?.askEveryTime).toBe(true);
+      expect(target?.content).toBe(BODY);
+      expect(target?.message).toEqual({
+        to: ["ana@example.com", "bob@example.org"],
+        subject: "Good morning",
+      });
+      expect(target?.audience).toMatchObject({
+        kind: "external",
+        id: "ana@example.com, bob@example.org",
+      });
+    }
+  });
+
+  test("anything else the call carries is shown with it, so nothing is sent unseen", () => {
+    const target = shareTargetOf("google-imap", "gmail_send_message", {
+      ...email,
+      cc: ["carla@example.com"],
+      bcc: ["dan@example.com"],
+      attachments: ["plan.pdf"],
+    });
+    expect(target?.message).toEqual({
+      to: ["ana@example.com", "bob@example.org"],
+      cc: ["carla@example.com"],
+      bcc: ["dan@example.com"],
+      subject: "Good morning",
+      alsoSent: { attachments: ["plan.pdf"] },
+    });
+  });
+
+  test("only this tool on these two connections is asked about every time", () => {
+    expect(isNewEmailSend("google-workspace", "gmail_send_message")).toBe(true);
+    expect(isNewEmailSend("google-imap", "gmail_send_message")).toBe(true);
+    expect(isNewEmailSend("google-imap", "gmail_send_reply")).toBe(false);
+    expect(isNewEmailSend("google-workspace", "gmail_send_reply")).toBe(false);
+    expect(isNewEmailSend("gmail", "gmail_send_message")).toBe(false);
+    for (const key of ["google-workspace", "google-imap"]) {
+      const reply = shareTargetOf(key, "gmail_send_reply", {
+        threadId: "t",
+        inReplyTo: "m",
+        to: ["ana@example.com"],
+        subject: "Re: x",
+        body: "hi",
+      });
+      expect(reply).not.toBeNull();
+      expect(Object.keys(reply ?? {})).not.toContain("askEveryTime");
+    }
   });
 });

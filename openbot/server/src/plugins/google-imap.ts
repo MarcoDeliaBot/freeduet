@@ -24,6 +24,7 @@ import {
   listTools as restListTools,
   MAX_RESULTS,
   METADATA_HEADERS,
+  parseNewMessage,
   passedHeaders,
   RFC822_MESSAGE_ID,
   shownHeader,
@@ -41,7 +42,7 @@ import {
 /**
  * Gmail and Google Calendar, reached with an app password and a secret calendar link.
  *
- * The same four tools as {@link ./google-workspace-rest}, with the same arguments and the same JSON
+ * The same five tools as {@link ./google-workspace-rest}, with the same arguments and the same JSON
  * answers, because OpenDuet's own code reads them (triage parses a search, the brief reads the
  * calendar) and a Bot is told the same thing whichever way a person connected. The tool list IS that
  * module's list, and the shapes are produced by that module's own formatters over what IMAP and the
@@ -55,9 +56,13 @@ import {
  *   read (`BODY.PEEK`, which imapflow always uses). The only calls this module makes on a mailbox
  *   are LIST, EXAMINE, SEARCH, FETCH and logout. There is no tool that moves, deletes, labels,
  *   flags or appends, and the client type below has no method that could.
- * - The only way mail leaves is `gmail_send_reply`, which the catalogue names a write, so the
- *   approval gate looks at it first. It replies inside an existing thread, to people already on the
- *   message being answered, and adds nobody.
+ * - Mail leaves in two ways, `gmail_send_reply` and `gmail_send_message`, both of which the catalogue
+ *   names writes, so the approval gate looks at each first. A reply goes inside an existing thread,
+ *   to people already on the message being answered, and adds nobody. A new message goes to at most
+ *   five plain addresses, with a subject and a plain-text body and nothing else: no Cc, no Bcc, no
+ *   attachment, no HTML, no header of the caller's choosing, and always from the connected account.
+ *   Both go out over the preset's SMTP host and nothing is appended to a mailbox (Gmail files the
+ *   sent copy itself), so the mailbox above stays read-only.
  * - The hosts are the preset's: IMAP and SMTP over implicit TLS, and the calendar only from
  *   Google's own address. No argument, stored value or redirect can name another.
  *
@@ -898,6 +903,53 @@ async function sendReply(
   return asJson({ sent: true, id: "", threadId });
 }
 
+/**
+ * A new message: the arguments checked by the same function the REST adapter uses, then one SMTP
+ * send from the connected account to exactly those addresses. The envelope is the list that was
+ * validated and nothing is added to it, and the message has no Cc, no Bcc and no threading headers.
+ */
+async function sendMessage(
+  deps: TransportDeps,
+  preset: MailPreset,
+  secret: UserSecret,
+  args: Record<string, unknown>,
+): Promise<McpCallResult> {
+  const parsed = parseNewMessage(args);
+  if (!parsed.ok) return parsed.result;
+  const smtp = deps.smtp({
+    host: preset.smtp.host,
+    port: preset.smtp.port,
+    secure: preset.smtp.secure,
+    user: secret.address,
+    pass: secret.password,
+  });
+  try {
+    const info = await smtp.sendMail({
+      from: secret.address,
+      to: parsed.to,
+      cc: [],
+      subject: parsed.subject,
+      text: parsed.body,
+      inReplyTo: "",
+      references: [],
+      envelope: { from: secret.address, to: parsed.to },
+    });
+    if (info.rejected && info.rejected.length > 0) {
+      return failure(
+        "Gmail refused at least one recipient. The email went to the others.",
+      );
+    }
+  } catch (error) {
+    return failure(
+      `${sentenceFor(error, "this email")} The email was not sent.`,
+    );
+  } finally {
+    smtp.close();
+  }
+  // Gmail files the sent message on its own side; there is no id to read back over SMTP.
+  return asJson({ sent: true, id: "", threadId: "" });
+}
+
 /* ------------------------------------------------------------------------------------------------
  * The calendar.
  * ---------------------------------------------------------------------------------------------- */
@@ -1067,6 +1119,9 @@ export function createGoogleImapTransport(
       }
       if (toolName === "gmail_send_reply") {
         return sendReply(deps, preset, secret, args);
+      }
+      if (toolName === "gmail_send_message") {
+        return sendMessage(deps, preset, secret, args);
       }
       if (toolName === "calendar_list_events") {
         return listCalendarEvents(

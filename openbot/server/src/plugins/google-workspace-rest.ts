@@ -1,4 +1,5 @@
 import { cutAtCodeUnits } from "../channels/text";
+import { plainAddress } from "./mail-address";
 import type { McpCallResult, McpTool } from "./mcp";
 
 /**
@@ -22,9 +23,13 @@ import type { McpCallResult, McpTool } from "./mcp";
  * events, header values cut at {@link HEADER_MAX_CHARS}, and a message body cut at
  * {@link BODY_MAX_CHARS} with a marker saying so.
  *
- * ONE WRITE. `gmail_send_reply` sends mail as the person, so the catalogue names it a write and the
- * approval gate looks at every call before it reaches this module. It replies within an existing
- * thread only: there is no tool here that writes to somebody who has not written first.
+ * TWO WRITES, BOTH SENDS. `gmail_send_reply` and `gmail_send_message` send mail as the person, so the
+ * catalogue names both writes and the approval gate looks at every call before it reaches this
+ * module. A reply goes within an existing thread. `gmail_send_message` starts a new one, to at most
+ * {@link NEW_MESSAGE_MAX_RECIPIENTS} plain addresses, with a subject and a plain-text body and nothing
+ * else: no Cc, no Bcc, no attachment, no HTML, no header of the caller's choosing and no sender, which
+ * is always the connected account. Both go through the same `gmail.send` scope, which can send and
+ * can neither read, label nor delete, so no scope was added for the second.
  */
 
 /** Long enough for a slow mailbox, short enough that a Bot's turn is not held open on it. */
@@ -42,6 +47,11 @@ export const MAX_RESULTS = 50;
 
 /** The longest body a result carries, marker included. */
 const BODY_MAX_CHARS = 20_000;
+
+/** What a new message may be. Over any of these it is refused, never cut: a cut message is a different one. */
+export const NEW_MESSAGE_MAX_RECIPIENTS = 5;
+export const NEW_MESSAGE_SUBJECT_MAX_CHARS = 200;
+export const NEW_MESSAGE_BODY_MAX_CHARS = 20_000;
 export const BODY_CUT_MARKER =
   "\n\n[truncated: the message is longer than this]";
 
@@ -158,6 +168,33 @@ const TOOLS: readonly McpTool[] = Object.freeze([
         body: { type: "string", description: "The reply, as plain text." },
       },
       required: ["threadId", "inReplyTo", "to", "subject", "body"],
+    },
+  },
+  {
+    name: "gmail_send_message",
+    description:
+      "Send a new plain-text email as you, to one to five recipients. Use it only to write to somebody who has not written first; to answer a message use gmail_send_reply. The address must be written exactly as the person gave it: never correct, complete or invent one. Returns JSON.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        to: {
+          type: "array",
+          items: { type: "string" },
+          minItems: 1,
+          maxItems: NEW_MESSAGE_MAX_RECIPIENTS,
+          description:
+            "The recipients, each a plain email address such as name@example.com, with no display name.",
+        },
+        subject: {
+          type: "string",
+          description: `The subject, on one line, at most ${NEW_MESSAGE_SUBJECT_MAX_CHARS} characters.`,
+        },
+        body: {
+          type: "string",
+          description: `The message, as plain text, at most ${NEW_MESSAGE_BODY_MAX_CHARS} characters.`,
+        },
+      },
+      required: ["to", "subject", "body"],
     },
   },
   {
@@ -827,6 +864,109 @@ export const failure = (message: string): McpCallResult => ({
 });
 
 /**
+ * The arguments of a new message, checked once for both adapters, or the fixed sentence refusing them.
+ *
+ * Every refusal is a sentence written here and none quotes what was handed in: an address, a subject
+ * or a body may have come from a page or a mail the Bot read, and an error is read back into its
+ * model. Nothing is trimmed into shape or corrected; a value that is not right is refused.
+ */
+const NEW_MESSAGE_REFUSALS = {
+  recipients:
+    "A new email needs one to five recipients, each a plain email address such as name@example.com, with no display name. It was not sent.",
+  tooMany: `A new email goes to at most ${NEW_MESSAGE_MAX_RECIPIENTS} recipients. It was not sent.`,
+  subject: `A new email needs a subject on one line of at most ${NEW_MESSAGE_SUBJECT_MAX_CHARS} characters. It was not sent.`,
+  body: `A new email needs a plain-text body of at most ${NEW_MESSAGE_BODY_MAX_CHARS.toLocaleString("en-US")} characters. It was not sent.`,
+  extra:
+    "A new email takes only to, subject and body: no copies, no hidden copies, no attachments and no other field. It was not sent.",
+} as const;
+
+/** The three arguments a new email has. Anything else that is filled in is refused, not ignored. */
+const NEW_MESSAGE_FIELDS = new Set(["to", "subject", "body"]);
+
+/** An argument a Bot left empty says nothing, and is the same as leaving it out. */
+const isEmptyArgument = (value: unknown) =>
+  value === undefined ||
+  value === null ||
+  value === "" ||
+  (Array.isArray(value) && value.length === 0);
+
+/** Any control character, and the line separators some parsers read as one: none belongs in a subject. */
+// biome-ignore lint/suspicious/noControlCharactersInRegex: matching them is the point.
+const CONTROL = /[\u0000-\u001f\u007f-\u009f\u2028\u2029]/;
+
+export function parseNewMessage(
+  args: Record<string, unknown>,
+):
+  | { ok: true; to: string[]; subject: string; body: string }
+  | { ok: false; result: McpCallResult } {
+  const refuse = (text: string) => ({
+    ok: false as const,
+    result: failure(text),
+  });
+  // What the person is shown is what is sent: a field this tool does not send is not accepted.
+  for (const [key, value] of Object.entries(args)) {
+    if (!NEW_MESSAGE_FIELDS.has(key) && !isEmptyArgument(value)) {
+      return refuse(NEW_MESSAGE_REFUSALS.extra);
+    }
+  }
+  const given = args.to;
+  const items = typeof given === "string" ? [given] : given;
+  if (!Array.isArray(items) || items.length === 0) {
+    return refuse(NEW_MESSAGE_REFUSALS.recipients);
+  }
+  if (items.length > NEW_MESSAGE_MAX_RECIPIENTS) {
+    return refuse(NEW_MESSAGE_REFUSALS.tooMany);
+  }
+  const to: string[] = [];
+  const seen = new Set<string>();
+  for (const item of items) {
+    const key = plainAddress(item);
+    if (key === null) return refuse(NEW_MESSAGE_REFUSALS.recipients);
+    if (seen.has(key)) continue;
+    seen.add(key);
+    to.push((item as string).trim());
+  }
+  const subject = typeof args.subject === "string" ? args.subject.trim() : "";
+  if (
+    subject === "" ||
+    subject.length > NEW_MESSAGE_SUBJECT_MAX_CHARS ||
+    CONTROL.test(subject)
+  ) {
+    return refuse(NEW_MESSAGE_REFUSALS.subject);
+  }
+  const body = typeof args.body === "string" ? args.body : "";
+  if (
+    body.trim() === "" ||
+    body.length > NEW_MESSAGE_BODY_MAX_CHARS ||
+    body.includes("\0")
+  ) {
+    return refuse(NEW_MESSAGE_REFUSALS.body);
+  }
+  return { ok: true, to, subject, body };
+}
+
+/**
+ * A new message as an RFC 5322 message for Gmail's `raw`: To, Subject and the MIME headers, and
+ * nothing else. Gmail adds the sender, the date and the Message-ID itself. The body travels as base64,
+ * as the reply's does.
+ */
+function newMessage(input: {
+  to: readonly string[];
+  subject: string;
+  body: string;
+}): string {
+  return [
+    `To: ${input.to.join(", ")}`,
+    `Subject: ${encodeWords(input.subject)}`,
+    "MIME-Version: 1.0",
+    "Content-Type: text/plain; charset=UTF-8",
+    "Content-Transfer-Encoding: base64",
+    "",
+    base64Lines(input.body.replace(/\r?\n/g, "\r\n")),
+  ].join("\r\n");
+}
+
+/**
  * A result as the JSON text a reader parses. Compact, because every character is a model's token.
  *
  * An empty search is `{"messages":[],…}`, which says "nothing matched" in so many words, so the
@@ -842,7 +982,7 @@ export const asJson = (value: unknown, truncated = false): McpCallResult => ({
  * Call one tool.
  *
  * Whether the call was permitted is decided before this module, exactly as it is for MCP: the grant,
- * the policy, and for `gmail_send_reply` the approval gate. This dispatches, validates what it was
+ * the policy, and for the two sends the approval gate. This dispatches, validates what it was
  * handed, and formats. An unknown tool is refused rather than guessed at, because a name that gets
  * here and is not in {@link TOOLS} means the stored tool list and this code have diverged.
  */
@@ -1071,6 +1211,25 @@ export async function callTool(
       sent: true,
       id: sent.value.id ?? "",
       threadId: sent.value.threadId ?? threadId,
+    });
+  }
+
+  if (toolName === "gmail_send_message") {
+    const parsed = parseNewMessage(args);
+    if (!parsed.ok) return parsed.result;
+    const raw = Buffer.from(newMessage(parsed), "utf8").toString("base64url");
+    // No thread: a new message starts its own, which is the whole difference from a reply.
+    const sent = await request<{ id?: string; threadId?: string }>(
+      connection,
+      "Gmail",
+      `${GMAIL}/messages/send`,
+      { json: { raw } },
+    );
+    if (!sent.ok) return failure(sent.message);
+    return asJson({
+      sent: true,
+      id: sent.value.id ?? "",
+      threadId: sent.value.threadId ?? "",
     });
   }
 

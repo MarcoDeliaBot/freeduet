@@ -96,8 +96,26 @@ function addressees(value: unknown): string[] {
   return [flatten(value)].filter(Boolean);
 }
 
+/**
+ * The sends that start a conversation rather than join one: a new email to somebody who has not
+ * written first. These are asked about every time. An "Always allow" is neither offered for them nor
+ * honoured, so a standing answer for one address can never send a later, different email (D27). The
+ * one exception is the person's own written request naming every recipient, which the caller checks
+ * (plugins/typed-recipients.ts) before this is used.
+ */
+const NEW_EMAIL_SENDS: Readonly<Record<string, string>> = {
+  "google-workspace": "gmail_send_message",
+  "google-imap": "gmail_send_message",
+};
+
+export function isNewEmailSend(serverId: string, toolName: string): boolean {
+  return NEW_EMAIL_SENDS[serverId] === toolName;
+}
+
 export type ShareTarget = {
   audience: ShareAudience;
+  /** Set for a new email: the answer is never remembered. See {@link isNewEmailSend}. */
+  askEveryTime?: true;
   /** The body, whole. What the person reads as the message. */
   content: string;
   /** The rest of what goes out, whole: who it goes to, the subject, and every other argument. */
@@ -151,6 +169,9 @@ export function shareTargetOf(
     Object.entries(args).filter(([key]) => !shown.has(key)),
   );
   return {
+    ...(isNewEmailSend(serverId, toolName)
+      ? { askEveryTime: true as const }
+      : {}),
     audience: {
       /*
        * Always `external`, including a Slack channel. Who can read a vendor's channel is the vendor's

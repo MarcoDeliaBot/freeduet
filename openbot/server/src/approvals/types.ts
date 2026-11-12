@@ -38,7 +38,9 @@ export type ApprovalPolicyOutcome = {
     | "auto_review"
     | "default"
     /** The person already declined this action, or an equivalent, earlier in this conversation. */
-    | "person_declined";
+    | "person_declined"
+    /** An action asked about every time: "Always allow" is neither offered nor honoured for it. */
+    | "always_ask";
   reason: string;
   ruleId?: string;
   review?: {
