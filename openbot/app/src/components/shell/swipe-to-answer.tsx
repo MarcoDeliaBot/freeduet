@@ -120,6 +120,12 @@ const SPRING_BACK = { type: "spring", stiffness: 520, damping: 48 } as const;
 
 type Answer = "start" | "hide";
 
+/** The words under the two marks. */
+export type SwipeLabels = { start: string; hide: string };
+
+/** What the marks say unless the card passes its own (Tasks never does). */
+const SWIPE_LABELS: SwipeLabels = { start: "Start", hide: "Hide" };
+
 /**
  * A card a finger or a mouse can slide off sideways. Right is Start and left is Hide; let go past
  * the threshold and the card flies off that way and answers. Let go short and it springs back.
@@ -156,6 +162,7 @@ export function SwipeToAnswer({
   disabled,
   onStart,
   onHide,
+  labels = SWIPE_LABELS,
 }: {
   children: ReactNode;
   /** True while an answer is on its way, from either a drag or a button. */
@@ -164,6 +171,8 @@ export function SwipeToAnswer({
   onStart: (comeBack: () => void) => void;
   /** The card was let go past the threshold to the left. `comeBack` returns it if hiding fails. */
   onHide: (comeBack: () => void) => void;
+  /** The words on the two marks. The card that draws this in another language passes its own. */
+  labels?: SwipeLabels;
 }) {
   // The device's setting, or a `MotionConfig` above that asks for it. Motion's own default config
   // never reduces, so the config alone would ignore a person who asked their phone for less motion.
@@ -418,11 +427,13 @@ export function SwipeToAnswer({
           style={{ opacity: hideReach }}
         />
         <Mark
+          label={labels.start}
           presence={startPresence}
           reached={reached === "start"}
           side="start"
         />
         <Mark
+          label={labels.hide}
           presence={hidePresence}
           reached={reached === "hide"}
           side="hide"
@@ -441,10 +452,13 @@ export function SwipeToAnswer({
  */
 function Mark({
   side,
+  label,
   presence,
   reached,
 }: {
   side: Answer;
+  /** The word under the ring: "Start" or "Hide" unless the card passed its own. */
+  label: string;
   /** How much of the mark is drawn: in early in the drag, so it is there before it is needed. */
   presence: MotionValue<number>;
   /** The drag is past the threshold on this side: letting go will do it. */
@@ -485,7 +499,7 @@ function Mark({
           start ? "text-(--swipe-green)" : "text-duet-ink-2",
         )}
       >
-        {start ? "Start" : "Hide"}
+        {label}
       </span>
     </motion.div>
   );

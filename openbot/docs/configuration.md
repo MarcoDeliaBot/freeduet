@@ -425,6 +425,9 @@ names no language, and the member wrote English to a person who reads Italian. W
   setting is `it`: the reasons the morning brief gives for mail it sorted by rule, what it says it could
   not sort or did not read, and the "From ..." line under a suggestion in a push, a Slack line or a
   text. The model that sorts the rest of the brief's mail is told to write its reason in the language.
+- the app draws three things in the language when it is `it` (English for any other code): the morning brief
+  card, the suggestion card and the line above a check-in. The server tells the app the code on
+  `/api/capabilities`, so a restart of the server is all it takes; the rest of the interface stays English.
 
 What it does not do:
 
@@ -434,9 +437,8 @@ What it does not do:
 - **Only members served by agent-freeduet are told.** With the router off (`FREEDUET_ROUTER=off`, built-in members) they have the prompt's fallback only: the language of the person's latest messages. The server's own sentences follow the setting in both modes.
 - **Fixed sentences exist in English and Italian only.** Any other code still tells the member the
   language, and the member writes in it, but the server's own sentences stay English.
-- **The app's own interface stays English**: the brief card's headings ("Morning.", "Needs you", "Can
-  wait", "Couldn't check"), the buttons ("Start", "Hide", "Message Iris") and the rest of what the app
-  draws. Translating the interface is a separate job (docs/M1_PLAN.md D26).
+- **The rest of the app's interface stays English**: the menus, settings, sheets, tool lines and buttons such as
+  "Message Iris". Translating the interface is a separate job (docs/M1_PLAN.md D26).
 
 To see it on a running stack: set the line in `.env`, restart the server (`bash scripts/start.sh`), then
 trigger a check-in or open the app on a new day for the morning brief.

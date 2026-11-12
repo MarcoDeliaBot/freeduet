@@ -47,6 +47,11 @@ import {
   useMessageScroller,
 } from "@/components/ui/message-scroller";
 import { Skeleton } from "@/components/ui/skeleton";
+import { type CardLanguage, cardTime } from "@/freeduet/person-language/cards";
+import {
+  useCardLanguage,
+  useCardText,
+} from "@/freeduet/person-language/use-card-text";
 import { approvalInboxOptions } from "@/lib/approvals";
 import { currentUserQueryOptions } from "@/lib/auth/queries";
 import { attachmentUrl } from "@/lib/channels/attachments";
@@ -759,13 +764,17 @@ function FirstDayReplies() {
   );
 }
 
-/** "10:32 AM" in the reader's own clock and locale, or null for a time that cannot be read. */
-export function checkInTime(checkedAt: string | null): string | null {
+/**
+ * "10:32 AM" in the reader's own clock and locale, or null for a time that cannot be read. With a
+ * language the deployment names (D26) the time is written the way that language writes it, "10:32".
+ */
+export function checkInTime(
+  checkedAt: string | null,
+  language: CardLanguage | null = null,
+): string | null {
   if (!checkedAt) return null;
   const at = new Date(checkedAt);
-  return Number.isNaN(at.getTime())
-    ? null
-    : at.toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" });
+  return Number.isNaN(at.getTime()) ? null : cardTime(at, language);
 }
 
 /**
@@ -781,10 +790,13 @@ function CheckInLine({ checkIn }: { checkIn: CheckIn }) {
   useEffect(() => {
     arrived?.(checkIn);
   }, [arrived, checkIn]);
-  const time = checkInTime(checkIn.checkedAt);
+  const language = useCardLanguage();
+  const t = useCardText();
+  const time = checkInTime(checkIn.checkedAt, language);
   return (
     <p className="type-label w-full text-center text-duet-ink-3">
-      Checked your mail and calendar{time ? ` · ${time}` : ""}
+      {t("checkIn.line")}
+      {time ? ` · ${time}` : ""}
     </p>
   );
 }
