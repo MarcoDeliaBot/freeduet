@@ -3,7 +3,7 @@
 What FreeDuet does that the others don't, row by row.
 
 **Legend:** ✅ yes · ⚠️ partly · ❌ no · — not documented by the project.
-**FreeDuet is pre-alpha.** A ✅ with a version (for example ✅ v0.3) means it is planned for that version and not available yet.
+**FreeDuet is at v0.1, an early release.** A ✅ with a later version (for example ✅ v0.3) means it is planned for that version and not available yet.
 
 _Last checked: 2026-11-08, from each project's public README and documentation, linked below. If we got something wrong about another project, open an issue and we will fix it within 48 hours._
 

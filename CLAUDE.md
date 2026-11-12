@@ -31,7 +31,11 @@ Read these before changing anything:
 - **No secrets and no personal data in the repository.** It will become public at v0.1.
 - **The person's approval stays for real account actions** (sending email, payments, purchases). Team
   hand-offs along the hub grants (Iris ↔ members) are pre-approved (D21); delegation must never
-  launder an account action.
+  launder an account action. One exception, by the maintainer's decision (D27, D27a): the person's
+  own written request is the approval. A NEW email goes out with no card when every recipient is
+  typed in the person's latest message of their own live chat turn, directly or one hop through
+  Iris; the server checks it, never the model. Everything else still asks: an address from a mail,
+  a page or a tool, a corrected address, a routine, a check-in.
 - **Change only what was asked.** A refactor nobody asked for is a regression risk.
 - **Upstream changes stay minimal** and each one gets a row in `docs/UPSTREAM_TOUCHES.md`.
 
@@ -52,6 +56,8 @@ the hands"): plan, brief executors, verify with numbers, merge, report.
 - **Verify before merging.** Re-run the executor's key tests yourself against a real Postgres and read
   the diff of anything security-related. Haiku sometimes misreports time ("waited three hours") or
   takes shortcuts (closing and reopening a PR to restart CI): check its claims.
+- **Merge without asking.** When a pull request is ready (CI green and your own checks done), merge
+  it and tell the maintainer afterwards. He asked for this on 2026-11-11, for the future too.
 - **Token economy.** The maintainer pays for tokens. Do not react to every GitHub notification: check
   a PR once, when its CI has finished. Keep long conversations short-lived; hand off with a summary
   instead of letting one conversation grow past a few hundred thousand tokens.
@@ -72,7 +78,7 @@ the hands"): plan, brief executors, verify with numbers, merge, report.
 
 ## CI
 
-- `verify` aggregates the required jobs. The clean-start job (`scripts/freeduet-clean-start-check.sh`,
+- `verify` aggregates the required jobs. The clean-start job (`openbot/scripts/freeduet-clean-start-check.sh`,
   no key, no sign-in) runs on main and on PRs labelled `full-ci`; `verify` requires it where it runs,
   and on other pull requests it is skipped and does not block.
 - Known intermittent failures, re-run once before investigating: the all-in-one `image` job
@@ -101,6 +107,16 @@ the hands"): plan, brief executors, verify with numbers, merge, report.
   `${JSON.stringify(x)}::text::jsonb`.
 - In the sandbox the app suite fails about 138 tests on plain main: menus and popups do not open under
   happy-dom. Compare with main before blaming a change.
+- A fresh worktree also needs `bun run generate:app-config` from `openbot/` before the app tests,
+  or the suite stops early with "Cannot find module '@/lib/generated/application-config'".
+- `bun run typecheck:tests` covers `server/tests` only. Three server tests fail in the sandbox on
+  plain main (the two `learning-*` "real provider" tests and the Mastra bridge): compare with main.
+- The Python harness (`openbot/agent-microsoft/requirements.txt`) is pinned since 2026-11-12: an
+  unpinned upstream release turned `python harness regressions` red on every pull request. A red job
+  in a service the diff does not touch may be dependency drift: compare the installed versions in
+  the job log with the last green run.
+- A session's server can restart and stop a background executor without a report. After a long
+  silence, check `git status` in its worktree and resume it from its transcript.
 - Gmail can be connected two ways. OAuth with the person's own Google Cloud project (`google-workspace`),
   or an app password plus an optional iCal secret link (`google-imap`, D24, the simple default for the
   public). An app password opens the whole mailbox, so the transport opens mailboxes read-only and
