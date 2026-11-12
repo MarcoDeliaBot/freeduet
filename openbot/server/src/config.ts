@@ -21,6 +21,10 @@ import type { ActionPolicy } from "./computer/policy";
 import { parseActionPolicy } from "./computer/policy-store";
 import { localRuntimeFrom } from "./freeduet/intelligence-switch";
 import {
+  type PersonLanguage,
+  personLanguageFrom,
+} from "./freeduet/person-language";
+import {
   type TranscriptionConfig,
   transcriptionConfig,
 } from "./dictation/config";
@@ -218,6 +222,11 @@ export type DeploymentConfig = {
   memoryDefaults: { sources: boolean; research: boolean };
   /** Audio configuration is independent of agent model providers. */
   transcription?: TranscriptionConfig;
+  /**
+   * FreeDuet (D26): `FREEDUET_PERSON_LANGUAGE`, the language the person reads in the turns they did
+   * not write. Absent when unset. See `freeduet/person-language.ts`.
+   */
+  personLanguage?: PersonLanguage;
   voice?: VoiceConfig;
   /** The port the API listens on. Named `PORT` or `SERVER_PORT`; see `serverPort`. */
   port: number;
@@ -1457,6 +1466,8 @@ export function loadConfig(
       ? { agentToolToken: optional(environment, "AGENT_TOOL_TOKEN") as string }
       : {}),
     ...(workerSharedSecret ? { workerSharedSecret } : {}),
+    // FreeDuet (D26): refused here, at start, when the code is not one.
+    ...personLanguageSetting(environment),
   };
   // After everything above, so its refusals keep the order they were always raised in.
   return {
@@ -1564,4 +1575,12 @@ function learningDefault(environment: Environment): LearningTarget | undefined {
     );
   const revision = optional(environment, "CPK_INTELLIGENCE_SKILLS_REVISION");
   return { containerId, ...(revision ? { revision } : {}) };
+}
+
+/** `{ personLanguage }` when `FREEDUET_PERSON_LANGUAGE` names one, nothing when it is unset. */
+function personLanguageSetting(environment: Environment): {
+  personLanguage?: PersonLanguage;
+} {
+  const personLanguage = personLanguageFrom(environment);
+  return personLanguage ? { personLanguage } : {};
 }

@@ -36,6 +36,7 @@ import { z } from "zod";
 import type { AuditInitiator } from "../audit";
 import { FIRST_DAY_KIND } from "../channels/first-day";
 import { MORNING_BRIEF_KIND } from "../channels/morning-brief";
+import { type PersonLanguage, personText } from "../freeduet/person-language";
 import type { MemoryStore } from "../memory/store";
 import { REPLIES_TOOL } from "../openduet/replies";
 import { REFUSAL_MARKER } from "../plugins/tools";
@@ -248,6 +249,8 @@ export type ProactiveEngineDeps = {
   ): Promise<string[]>;
   mintThreadId(): string;
   now?: () => Date;
+  /** FreeDuet (D26): the language the person reads, for the fixed line under a suggestion. */
+  personLanguage?: PersonLanguage | null;
   /** How long a task's turn that threw waits for its retry. Tests pass 0. */
   taskRetryMs?: number;
 };
@@ -334,12 +337,20 @@ function sameTitle(a: string, b: string) {
  */
 export function suggestionNotice(
   suggestion: Pick<ProactiveSuggestion, "title" | "detail" | "sourceApp">,
+  /** FreeDuet (D26): the language the person reads, for the one fixed line. Absent is English. */
+  language: PersonLanguage | null = null,
 ) {
   const why = suggestion.detail.split(/\n\s*\n/)[0]?.trim();
   return [
     suggestion.title,
     ...(why ? [why] : []),
-    ...(suggestion.sourceApp ? [`From ${suggestion.sourceApp}`] : []),
+    ...(suggestion.sourceApp
+      ? [
+          personText("suggestion.from", language, {
+            source: suggestion.sourceApp,
+          }),
+        ]
+      : []),
   ].join("\n");
 }
 
@@ -511,7 +522,7 @@ export function createProactiveEngine(deps: ProactiveEngineDeps) {
       await deps.notify(scope, {
         id: `suggestion:${suggestion.id}`,
         kind: "reply",
-        text: suggestionNotice(suggestion),
+        text: suggestionNotice(suggestion, deps.personLanguage ?? null),
       });
       await deps.store.markDelivered(suggestion.id);
       delivered.push(suggestion);

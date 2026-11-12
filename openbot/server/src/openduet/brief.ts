@@ -2,6 +2,7 @@ import { MORNING_BRIEF_TOOL } from "@openbot/shared/morning-brief";
 import type { GrantedTool } from "@openbot/toolkit/granted-tool";
 import type { AuditInitiator } from "../audit";
 import { z } from "zod";
+import { type PersonLanguage, personText } from "../freeduet/person-language";
 import {
   type Complete,
   type TriageMessage,
@@ -188,6 +189,8 @@ export async function buildMorningBrief(
     complete: Complete;
     model: string;
     now?: () => Date;
+    /** FreeDuet (D26): the language the person reads. Absent or null is English, as it always was. */
+    personLanguage?: PersonLanguage | null;
   },
   input: {
     actorId: string;
@@ -198,6 +201,7 @@ export async function buildMorningBrief(
   },
 ): Promise<MorningBrief> {
   const now = deps.now?.() ?? new Date();
+  const language = deps.personLanguage ?? null;
   const send = (ref: string, args: Record<string, unknown>) =>
     deps.callTool({
       ref,
@@ -252,7 +256,10 @@ export async function buildMorningBrief(
       if (messages.length >= BRIEF_MAIL_CAP && matched > messages.length)
         couldNotCheck.push({
           source: "Gmail",
-          why: `Only the newest ${messages.length} of about ${matched} messages from this window were sorted. Older ones were not checked.`,
+          why: personText("brief.capped", language, {
+            shown: messages.length,
+            matched,
+          }),
         });
     }
   } catch (error) {
@@ -291,6 +298,7 @@ export async function buildMorningBrief(
           complete: deps.complete,
           model: deps.model,
           now: () => now,
+          personLanguage: language,
         }),
       };
     } catch (error) {
@@ -311,7 +319,7 @@ export async function buildMorningBrief(
       failures.push(entry.error ?? "unknown error");
       brief.needsYou.push({
         ...item,
-        reason: "Could not be sorted, so it is here to be safe.",
+        reason: personText("brief.unsorted", language),
         decidedBy: "unsorted",
       });
       continue;
@@ -328,8 +336,12 @@ export async function buildMorningBrief(
   brief.checked.mail = messages.length;
   if (failures.length)
     couldNotCheck.push({
-      source: "Sorting",
-      why: `${failures.length} of ${messages.length} messages could not be sorted (${failures[0]}). They are listed under needs you.`,
+      source: personText("brief.sorting", language),
+      why: personText("brief.failures", language, {
+        failed: failures.length,
+        total: messages.length,
+        first: failures[0] ?? "",
+      }),
     });
 
   try {

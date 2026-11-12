@@ -51,6 +51,7 @@ import { localThreadBackend, type ThreadBackend } from "./freeduet/backend";
 import { coordinationRunsInBand } from "./freeduet/coordination";
 import { RUNTIME_KEEP_ALIVE_SECONDS } from "./freeduet/keep-alive";
 import type { ThreadClient } from "./freeduet/local-intelligence";
+import { withPersonLanguage } from "./freeduet/person-language";
 import { observeIntelligenceAuthentication } from "./intelligence-client";
 import { RemoteLearnedSkillsMiddleware } from "./learning/remote";
 import {
@@ -1370,7 +1371,8 @@ function remoteAgentWithStandingRole(
     const deploymentTools = tools
       .filter((tool) => !clientNames.has(tool.name))
       .map((tool) => tool.name);
-    const forwardedProps = {
+    // FreeDuet (D26): `withPersonLanguage` adds the deployment's person language, when it has one.
+    const forwardedProps = withPersonLanguage({
       ...(isPlainObject(input.forwardedProps) ? input.forwardedProps : {}),
       openbotBotId: agent.id,
       /*
@@ -1400,7 +1402,7 @@ function remoteAgentWithStandingRole(
            * cannot prove whose run it is should not be spending anybody's grants.
            */
           {}),
-    };
+    });
     /*
      * The same guard a built-in Bot gets in `BuiltInAgentWithSaneHistory`, applied here because a
      * remote Bot never passes through it: this middleware is the last thing between the browser's

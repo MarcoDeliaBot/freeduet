@@ -408,6 +408,39 @@ written anywhere.
 
 Dictation is separate from live voice calls and does not enable them automatically.
 
+## The person's language (FreeDuet)
+
+| Variable                   | Meaning |
+| -------------------------- | ------- |
+| `FREEDUET_PERSON_LANGUAGE` | Optional. A two-letter language code, from the same list as `TRANSCRIPTION_LANGUAGE` (`it`, `en`, ...). Unset, nothing changes. Anything else stops the server at start with a sentence saying so. Restart the server after changing it. |
+
+A member answers a message in the language it is written in. In a turn nobody wrote (a check-in, a
+routine, the morning brief, the first day's opening request, a report coming back from a colleague) that rule
+names no language, and the member wrote English to a person who reads Italian. With this set:
+
+- every run sent to agent-freeduet carries the language, and the member is told in its runtime notes to
+  write everything the person will read in it, cards and their titles included, and to answer in the
+  person's own language when they write in another;
+- the few fixed sentences the server itself writes in those turns come out in Italian when the
+  setting is `it`: the reasons the morning brief gives for mail it sorted by rule, what it says it could
+  not sort or did not read, and the "From ..." line under a suggestion in a push, a Slack line or a
+  text. The model that sorts the rest of the brief's mail is told to write its reason in the language.
+
+What it does not do:
+
+- **One language for the whole deployment.** FreeDuet is self-hosted, usually for one person, and the app
+  has no per-person language. A deployment shared by people who read different languages needs a
+  per-person setting, which this is not.
+- **Only members served by agent-freeduet are told.** With the router off (`FREEDUET_ROUTER=off`, built-in members) they have the prompt's fallback only: the language of the person's latest messages. The server's own sentences follow the setting in both modes.
+- **Fixed sentences exist in English and Italian only.** Any other code still tells the member the
+  language, and the member writes in it, but the server's own sentences stay English.
+- **The app's own interface stays English**: the brief card's headings ("Morning.", "Needs you", "Can
+  wait", "Couldn't check"), the buttons ("Start", "Hide", "Message Iris") and the rest of what the app
+  draws. Translating the interface is a separate job (docs/M1_PLAN.md D26).
+
+To see it on a running stack: set the line in `.env`, restart the server (`bash scripts/start.sh`), then
+trigger a check-in or open the app on a new day for the morning brief.
+
 ## Live voice calls
 
 The waveform button in an existing channel opens a floating call widget. The realtime voice model
