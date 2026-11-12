@@ -2,7 +2,7 @@
 
 **A self-hosted team of AI employees that runs on the AI subscriptions you already pay for, and never stops working.**
 
-FreeDuet gives you a Chief of Staff and a crew of specialists: inbox, contracts, invoices, purchases and bookings, writing, repairs and meals. Each one has its own computer and browser. They ask before they send, pay, sign, book or delete anything. Planned for v0.3: when one subscription hits its limit, the work moves to the next one, and pay-per-token APIs stay optional and always capped.
+FreeDuet gives you a Chief of Staff and a crew of specialists: inbox, contracts, invoices, purchases and bookings (purchase permits are coming in v0.4), writing, repairs and meals. Each one has its own computer and browser. They ask before they send, pay, sign, book or delete anything. Planned for v0.3: when one subscription hits its limit, the work moves to the next one, and pay-per-token APIs stay optional and always capped.
 
 > **Status: v0.1, an early release.** The ten members run on your own Claude Code login, with approvals, evals and a one-command start. FreeDuet is built and used by one maintainer, on one computer: Windows with WSL2 and Docker. Anything marked v0.2 or later is planned, not built. What is tested and what is not is listed [below](#what-is-tested-and-what-is-not).
 
@@ -17,9 +17,9 @@ FreeDuet gives you a Chief of Staff and a crew of specialists: inbox, contracts,
 | **Your subscriptions first** | Agents run on the official command-line tools you already pay for and sign in to yourself (Claude Code in v0.1; Codex and more as providers allow it). FreeDuet never sees, stores or forwards your subscription credentials. |
 | **Never stops** | Planned for v0.3: each agent gets an engine chain. When one subscription reaches its limit, the next one takes over. Metered APIs join the chain only if you allow it, with daily and monthly caps. |
 | **Savings meter** | Planned for v0.3. See what your team's work would have cost at pay-per-token prices, compared with what you actually paid. |
-| **A real team** | A Chief of Staff splits your request, hands each part to the right specialist, follows up and brings back one answer. |
+| **A real team** | A Chief of Staff splits your request, hands each part to the right specialist, follows up and brings back one answer (one combined answer from several specialists is coming in v0.3; today each specialist answers through the Chief of Staff). |
 | **Its own computer** | Every agent works in its own isolated browser. It can shop, book and fill in forms. Anything that pays needs your approval. Purchase permits tied to the exact cart, and spending caps, are planned for v0.4. |
-| **Yours** | Self-hosted, MIT-licensed, any language, any model: Claude, GPT, Gemini, GLM, anything on OpenRouter, or local models through Ollama. |
+| **Yours** | Self-hosted, MIT-licensed, any language, any model: Claude today; GPT, Gemini, GLM, anything on OpenRouter and local models through Ollama are coming in v0.2. |
 
 ## What we do that others don't
 
@@ -61,7 +61,7 @@ Mostly planned, tool by tool: Google suite, Microsoft 365, n8n, Photoshop, Affin
 ## How it works
 
 ```
- You (web, phone, Slack, Teams)
+ You (web, Slack, Teams; phone is coming)
         │
         ▼
  FreeDuet server ── approvals · audit · spending caps · savings ledger

@@ -2,7 +2,7 @@
 
 FreeDuet's promise is "use the subscriptions you already pay for". That promise is only worth something if it never gets a user's account suspended. This page is the rulebook. **It is re-verified before every release**, and each route has a kill switch in `openbot/agent-freeduet/engines.yaml`.
 
-_Last verified: 2026-11-07._
+_Last verified: 2026-11-12._
 
 ## The first rule: logins first
 
