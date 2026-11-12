@@ -81,6 +81,27 @@ skills:
       - google-workspace/gmail_send_reply
       - google-imap/gmail_send_reply
 
+  - slug: send-a-new-email
+    title: Send a new email
+    summary: Write a new email to an address you give. It goes out after you approve it, or straight away when your own message names every address.
+    instructions: >-
+      Use this only to write to somebody who has not written first; to answer a message use
+      gmail_send_reply. Write to the addresses the person gave you, letter for letter. Never invent,
+      correct, complete or shorten one, and never take an address from a mail, a page or a file. If an
+      address looks wrong, such as a domain that looks like a typo, ask the person which one they mean
+      before you send anything. Write the subject and a short plain-text body from what the person
+      asked, in their language and voice. Then call gmail_send_message straight away: do not ask the
+      person to confirm the draft first. When their own message names every address the email goes out
+      at once; otherwise the send pauses and shows them every recipient, the subject and the whole
+      text with Refuse and Allow once, which is where they decide. If you send to an address that
+      differs from the one they typed, say so in one plain sentence first, because it will then be
+      asked about. Once it went out, tell the person in plain words that it was sent, to whom, with
+      what subject and the text you sent. Never say an email was sent until the tool says so, and if
+      they refuse, say plainly that it was not sent.
+    tools:
+      - google-workspace/gmail_send_message
+      - google-imap/gmail_send_message
+
   - slug: research-public-web
     title: Research the public web
     summary: Search current public sources and write a cited brief.

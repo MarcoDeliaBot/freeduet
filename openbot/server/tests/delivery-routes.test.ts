@@ -32,6 +32,8 @@ function fixture(
     converse?: ConverseResult;
     bound?: boolean;
     identity?: IdentityAdapter;
+    /** What the approval record's policy says, as the private-share check opens a new email's. */
+    policy?: { behaviour: string; source: string; reason: string };
   } = {},
 ) {
   const calls: unknown[] = [];
@@ -124,6 +126,7 @@ function fixture(
               effect: "write",
               threadId: "canonical",
               args: { url: "https://example.com" },
+              ...(options.policy ? { policy: options.policy } : {}),
             },
           };
         },
@@ -812,5 +815,67 @@ test("a channel message from a colleague who never linked still reaches the owne
       userId: "U9COLLEAGUE",
       text: "deploy is broken",
     }),
+  ]);
+});
+
+/*
+ * A new email is asked about every time (docs/M1_PLAN.md, D27): the chat card for it offers Allow once
+ * and Refuse, and an "always" answer that arrives anyway decides nothing.
+ */
+const ASK_EVERY_TIME = {
+  behaviour: "ask",
+  source: "always_ask",
+  reason: "A new email is asked about every time.",
+};
+
+test("the chat card of a request asked about every time offers no Always allow", async () => {
+  for (const [policy, expected] of [
+    [ASK_EVERY_TIME, false],
+    [undefined, true],
+  ] as const) {
+    const f = fixture({
+      ...(policy ? { policy } : {}),
+      converse: {
+        kind: "waiting",
+        binding: bound,
+        inboxId: "in1",
+        replyText: "",
+        extras: { approvals: [APPROVAL], questions: [] },
+      },
+    });
+    const result = await run(f, {
+      context: [sender()],
+      messages: [{ id: "m9", role: "user", content: "<@UBOT> write to Ana" }],
+    });
+    const card = result.events.find(
+      (e) => e.type === "CUSTOM" && e.name === "on_interrupt",
+    );
+    expect(card.value.__copilotkit_interrupt_value__.args.allow_always).toBe(
+      expected,
+    );
+  }
+});
+
+test("an Always allow answer for a request asked about every time decides nothing", async () => {
+  const f = fixture({ policy: ASK_EVERY_TIME });
+  const resume = (value: unknown) =>
+    run(f, {
+      forwardedProps: {
+        command: { resume: { "0f8fad5bd9cb469fa16570867728950e": value } },
+      },
+    });
+  expect(
+    said(
+      (await resume({ confirmed: true, always: true, by: "slack:T1:U1" }))
+        .events,
+    ),
+  ).toContain("asked about every time");
+  expect(f.decisions).toEqual([]);
+  // Allow once and Refuse still decide.
+  await resume({ confirmed: true, by: "slack:T1:U1" });
+  await resume({ confirmed: false, by: "slack:T1:U1" });
+  expect(f.decisions).toEqual([
+    ["owner", APPROVAL, "allow_once"],
+    ["owner", APPROVAL, "deny"],
   ]);
 });

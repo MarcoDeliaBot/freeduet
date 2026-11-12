@@ -763,10 +763,20 @@ through either, asking the OAuth connection first.
 | Limits | Google's OAuth scopes. A consent for sensitive scopes expires after seven days while the OAuth app is in testing | The Bots' tools. The app password itself reaches the whole mailbox |
 | Needs | An OAuth client | 2-Step Verification on the person's Google account |
 
-Both entries offer the same four tools with the same arguments and answers: `gmail_search_messages`,
-`gmail_read_message`, `calendar_list_events` (reads) and `gmail_send_reply` (a write, so it waits for
-the person's approval). Nothing can delete, move, label or flag a message, and a reply goes only to
-people already on the message it answers.
+Both entries offer the same five tools with the same arguments and answers: `gmail_search_messages`,
+`gmail_read_message`, `calendar_list_events` (reads), `gmail_send_reply` and `gmail_send_message`
+(writes, so each waits for the person's approval, apart from the one case below). Nothing can delete,
+move, label or flag a message, and a reply goes only to people already on the message it answers.
+
+`gmail_send_message` writes a new email to one to five plain addresses, with a subject and a plain-text
+body; it takes no Cc, Bcc, attachment or other field. It is asked about every time: the card shows
+every recipient, the subject and the whole body, offers Allow once and Refuse, and "Always allow" is
+neither offered nor honoured for it. The one exception is the person's own message: when the message
+the person typed to start the turn, in their own chat, names every recipient, the email goes out
+without a second card (docs/M1_PLAN.md, D27). A routine, a check-in, a hand-off, an address that came
+from a mail or a page, and an address the member changed all still ask. The tool is granted to a
+member by an administrator like any other; in the FreeDuet package only Otto has the skill that
+carries it. It needs no new Google scope: `gmail.send` already allows it.
 
 The app-password way is Gmail only. The hosts are fixed in the code, so a row edited to name another
 server reaches nowhere else, and a calendar address is accepted only from

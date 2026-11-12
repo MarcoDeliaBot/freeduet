@@ -162,19 +162,21 @@ export function WaitingForYou({ agentId }: { agentId?: string }) {
                     >
                       Allow once
                     </Button>
-                    <Button
-                      disabled={decision.isPending}
-                      onClick={() =>
-                        decision.mutate({
-                          id: request.id,
-                          choice: "allow_always",
-                        })
-                      }
-                      size="sm"
-                      variant="outline"
-                    >
-                      Always allow
-                    </Button>
+                    {request.action.policy?.source === "always_ask" ? null : (
+                      <Button
+                        disabled={decision.isPending}
+                        onClick={() =>
+                          decision.mutate({
+                            id: request.id,
+                            choice: "allow_always",
+                          })
+                        }
+                        size="sm"
+                        variant="outline"
+                      >
+                        Always allow
+                      </Button>
+                    )}
                     <Button
                       disabled={decision.isPending}
                       onClick={() =>

@@ -161,6 +161,14 @@ export function createApprovalStore(database: Database): ApprovalStore {
           throw new ApprovalRefusedError(
             "Only an action handed to you can be marked done by you.",
           );
+        // A request asked about every time can only be allowed once: no standing rule is made for it.
+        if (
+          decision === "allow_always" &&
+          request.action.policy?.source === "always_ask"
+        )
+          throw new ApprovalRefusedError(
+            "This one is asked about every time. Allow it once or refuse it.",
+          );
         if (decision === "allow_always")
           await tx.insert(approvalRules).values({
             id: crypto.randomUUID(),

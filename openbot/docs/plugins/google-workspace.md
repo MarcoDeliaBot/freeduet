@@ -81,7 +81,7 @@ At `/admin/plugins/google-workspace`:
 1. Turn on **Enable for this deployment**.
 2. Open **OAuth client** and paste the client ID and secret. The secret is encrypted with
    `KEY_ENCRYPTION_KEY` and never read back out to the browser.
-3. Press **Refresh tools**, which records the four tools below.
+3. Press **Refresh tools**, which records the five tools below.
 
 No personal account is needed to get this far: the tool list is OpenBot's own code rather than an
 answer from a remote server. To check it actually works, use **Your account** on the same page, which
@@ -103,18 +103,29 @@ models do.
 | `gmail_search_messages` | read   | Searches with Gmail's own syntax, by default `in:inbox newer_than:1d`, 25 at a time and at most 50. Each message has its sender, recipients, subject, date, snippet, labels, and the `List-Unsubscribe`, `Precedence` and `Auto-Submitted` headers when it has them. |
 | `gmail_read_message`    | read   | Reads one message by its Gmail id: the same fields, its `Message-ID`, and its text. The plain-text part is preferred, HTML is read as text when there is none, and the body is cut at 20,000 characters with a note saying so. |
 | `gmail_send_reply`      | write  | Sends a plain-text reply in an existing thread, as the person.                                                                                                                                       |
+| `gmail_send_message`    | write  | Sends a new plain-text email, as the person, to one to five plain addresses, with a subject and a body. No Cc, Bcc, attachment or other field.                                                       |
 | `calendar_list_events`  | read   | Lists events on the primary calendar in start order, recurring events expanded. By default from now to midnight in the calendar's own time zone, at most 50.                                                        |
 
-The catalogue names the three reads and the one write explicitly, so any other tool name counts as a
+The catalogue names the three reads and the two writes explicitly, so any other tool name counts as a
 write.
 
-### Sending a reply is a write
+### Sending mail is a write
 
-`gmail_send_reply` is the only tool that changes anything, and it is classified as a write. So every
-call goes through the approval gate before it reaches Google: the action policy decides, and auto-review
-looks at it like any other write that reaches outside the deployment. Because it sends something to
-other people, the private-share check also asks the owner before a Bot sends anything from a private
-conversation or memory.
+`gmail_send_reply` and `gmail_send_message` are the only tools that change anything, and both are
+classified as writes. So every call goes through the approval gate before it reaches Google: the action
+policy decides, and auto-review looks at it like any other write that reaches outside the deployment.
+Because they send something to other people, the private-share check also asks the owner before a Bot
+sends anything from a private conversation or memory.
+
+A new email is the stricter of the two. It is asked about every time: the card shows every recipient, the
+subject and the whole body, and offers Allow once and Refuse. "Always allow" is not offered for it and a
+saved one for the same address does not answer it, so an answer given for one email can never send a
+later, different one. The one case that needs no card is the person's own written request: when the
+message the person typed to start this turn, in their own live chat, contains every recipient as a whole
+address (compared ignoring case), the email goes out at once. Nothing else counts as the person's
+request: not a Bot's text, a hand-off, a mail or a page, a routine's or a check-in's stored prompt, an
+earlier message, or an address the Bot corrected or completed. Those still ask. The reasoning and its
+limits are in docs/M1_PLAN.md, D27.
 
 What the connector itself enforces, whatever was approved:
 
@@ -122,8 +133,13 @@ What the connector itself enforces, whatever was approved:
   message at Google rather than from the model, and the message must be in the thread named.
 - A line break in a recipient or the subject is refused before anything is sent, because it would add a
   header (a `Bcc`, say) that the approval never showed.
-- There is no tool for writing to somebody who has not written first, and none that deletes, labels or
-  archives mail. The `gmail.send` scope could not do those anyway.
+- A new email goes only to the addresses given, each a plain `name@example.com` with no display name,
+  at most five. A line break or any control character in an address or the subject, a field the tool
+  does not send (a Cc, a Bcc, an attachment, a header, a "from"), an empty subject or body, and a subject
+  or body over its limit (200 and 20,000 characters) are refused before anything is sent, with a fixed
+  sentence that repeats nothing that was typed.
+- There is no tool that deletes, labels or archives mail. The `gmail.send` scope could not do those
+  anyway. It does allow sending a new message, which is why `gmail_send_message` needs no new scope.
 
 ## What each person does
 

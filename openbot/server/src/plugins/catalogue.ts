@@ -198,7 +198,7 @@ export const GOOGLE_WORKSPACE = "google-workspace";
  * gate's built-in safety requirements (`approvals/policy.ts`) read the words of every write's tool
  * ref and scope, and `pass(word|code|phrase)` is the "credentials" requirement: a write under a key
  * with that word in it is handed to the person to do themselves, whatever the action is. For this
- * entry that is the one write, `gmail_send_reply`, so a reply could never be approved from the chat.
+ * entry those are the writes, `gmail_send_reply` and `gmail_send_message`, so a send could never be approved from the chat.
  * A test drives the real gate and holds this. The product name a person reads is the entry's
  * `title`, which the gate does not read.
  */
@@ -441,15 +441,17 @@ const REVIEWED: readonly CatalogueEntry[] = Object.freeze([
     },
     /*
      * BOTH LISTS, so a tool that is on neither is a write. The transport advertises exactly these
-     * four today; a fifth added to the adapter and forgotten here classifies as a write rather than
-     * slipping through as a read, which is the direction a missed entry should fail in.
+     * five today; a sixth added to the adapter and forgotten here classifies as a write rather than
+     * slipping through as a read, which is the direction a missed entry should fail in. Both writes
+     * send mail as the person: `gmail_send_reply` inside a thread, `gmail_send_message` to somebody
+     * new. The `gmail.send` scope above covers both, so the second added no scope.
      */
     readTools: Object.freeze([
       "gmail_search_messages",
       "gmail_read_message",
       "calendar_list_events",
     ]),
-    writeTools: Object.freeze(["gmail_send_reply"]),
+    writeTools: Object.freeze(["gmail_send_reply", "gmail_send_message"]),
     docsUrl: "https://developers.google.com/workspace/gmail/api/guides",
   },
   {
@@ -470,8 +472,8 @@ const REVIEWED: readonly CatalogueEntry[] = Object.freeze([
     transport: "google-imap",
     auth: Object.freeze({ kind: "user-secret", preset: "gmail" }),
     /*
-     * THE SAME FOUR TOOLS AS THE ENTRY ABOVE, with the same split, so the approval gate treats
-     * `gmail_send_reply` as a write exactly as it does there. Spelled again rather than shared so
+     * THE SAME FIVE TOOLS AS THE ENTRY ABOVE, with the same split, so the approval gate treats
+     * `gmail_send_reply` and `gmail_send_message` as writes exactly as it does there. Spelled again rather than shared so
      * that nothing about the OAuth entry changes; a test holds the two lists equal.
      *
      * An app password is wider than any OAuth scope: it would let a client read, move, delete and
@@ -484,7 +486,7 @@ const REVIEWED: readonly CatalogueEntry[] = Object.freeze([
       "gmail_read_message",
       "calendar_list_events",
     ]),
-    writeTools: Object.freeze(["gmail_send_reply"]),
+    writeTools: Object.freeze(["gmail_send_reply", "gmail_send_message"]),
     docsUrl: "https://support.google.com/accounts/answer/185833",
   },
   {

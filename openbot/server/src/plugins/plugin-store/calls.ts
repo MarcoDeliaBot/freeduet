@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto";
 import { connectAppRefusal } from "@openbot/shared/connect-prompt";
 import { and, eq } from "drizzle-orm";
 import { currentApprovalContext } from "../../approvals/types";
@@ -17,9 +18,10 @@ import {
 import { classifyTool, tokenHeaderFor } from "../catalogue";
 import { VERSION_ARG } from "../composio";
 import { inspectToolArguments } from "../content-governance";
-import { shareTargetOf } from "../share-target";
+import { isNewEmailSend, shareTargetOf } from "../share-target";
 import type { AccountMode } from "../shared-accounts";
 import { transportFor } from "../transport";
+import { recipientsTypedByPerson } from "../typed-recipients";
 import type { StoreContext } from "./context";
 import {
   effectiveUrl,
@@ -32,6 +34,12 @@ import {
   withoutEmptyOptionals,
 } from "./model";
 
+/** What a Bot is told when it sends, again, an email the person's request already had sent this turn. */
+const SENT_THIS_TURN =
+  "Not sent again: this exact email was already tried in this turn. Tell the person what happened, and do not try it again unless they ask you to.";
+/** How many sent-by-request emails are remembered; the oldest is forgotten first. */
+const SPENT_REQUESTS_KEPT = 500;
+
 /** Deciding whether a Bot may call a tool, and calling it. */
 export function callMethods(context: StoreContext) {
   const {
@@ -43,6 +51,25 @@ export function callMethods(context: StoreContext) {
     requireServer,
     brokerProvider,
   } = context;
+  /*
+   * ONE SEND PER REQUEST. An email sent because the person's own words named its recipients has no
+   * card, so no approval to spend, and a Bot that repeats itself or a turn carried on twice would
+   * send it again. The same email (same person, same run, same recipients, subject and body) is
+   * therefore tried once per run, and a failure is not retried either: a send that the vendor
+   * half-delivered (some recipients refused) must not go to the others twice, and the Bot tells the
+   * person, who can ask again. Held in this process, which is where a run's calls are made; a
+   * restart forgets it, and a new run is a new request.
+   */
+  const spentRequests = new Set<string>();
+  const spendRequest = (key: string): boolean => {
+    if (spentRequests.has(key)) return false;
+    if (spentRequests.size >= SPENT_REQUESTS_KEPT) {
+      const oldest = spentRequests.values().next().value;
+      if (oldest !== undefined) spentRequests.delete(oldest);
+    }
+    spentRequests.add(key);
+    return true;
+  };
   return {
     /**
      * May this Bot use this plugin?
@@ -353,7 +380,49 @@ export function callMethods(context: StoreContext) {
           ? shareTargetOf(serverId, toolName, vendorArgs)
           : null;
       let personAnswered = false;
-      if (share && options.privateShareCheck) {
+      /*
+       * A NEW EMAIL IS NEVER SENT UNASKED, and this is the one place that decides it.
+       *
+       * Nothing that can ask means nothing is sent: a deployment with no private-share check would
+       * otherwise fall through to the approval gate alone, which by default allows a write. And the
+       * person's own words are the only thing that stands in for the card (D27): every recipient
+       * written in their latest message of their own live chat turn, read from the run the server
+       * holds and never from the arguments. See `typed-recipients.ts` for each condition. Any other
+       * send, a routine's, a check-in's, a hand-off's, one to an address that came from a page or a
+       * mail or that the Bot corrected, is put to the person like any other send, and no earlier
+       * "Always allow" answers it.
+       */
+      if (isNewEmailSend(serverId, toolName) && !share) {
+        throw new PluginRefusedError(
+          "A new email needs your permission, and this deployment cannot ask for it. It was not sent.",
+          null,
+        );
+      }
+      const approvalContext = currentApprovalContext();
+      const askedByRequest =
+        share?.askEveryTime === true &&
+        recipientsTypedByPerson({
+          to: vendorArgs.to,
+          messages: approvalContext?.messages,
+          runInitiator: approvalContext?.initiator,
+          callInitiator: input.initiator,
+        });
+      let requestKey: string | null = null;
+      if (askedByRequest) {
+        personAnswered = true;
+        requestKey = createHash("sha256")
+          .update(
+            JSON.stringify([
+              input.actorId,
+              approvalContext?.runId,
+              vendorArgs.to,
+              vendorArgs.subject,
+              vendorArgs.body,
+            ]),
+          )
+          .digest("hex");
+      }
+      if (share && options.privateShareCheck && !askedByRequest) {
         const shareVerdict = await options.privateShareCheck({
           ownerUserId: input.actorId,
           botId: input.botId,
@@ -361,6 +430,7 @@ export function callMethods(context: StoreContext) {
           content: share.content,
           message: share.message,
           origin: { kind: "unknown" },
+          ...(share.askEveryTime ? { askEveryTime: true as const } : {}),
         });
         if (shareVerdict.status !== "allowed") {
           await recordAuditEvent(auditStore, {
@@ -462,6 +532,25 @@ export function callMethods(context: StoreContext) {
         return approval.replay as { text: string; isError: boolean };
 
       /*
+       * The email the person's request sent is spent here, after every gate has let it through and
+       * just before it goes, so a send that was held for any reason is not counted as sent.
+       */
+      if (requestKey !== null && !spendRequest(requestKey)) {
+        await recordAuditEvent(auditStore, {
+          eventType: "mcp.call_rejected",
+          targetType: "mcp_tool",
+          targetId: input.ref,
+          ...(input.initiator ? { initiator: input.initiator } : {}),
+          payload: {
+            ...decided,
+            decision: { ...decided.decision, carriedOut: false },
+            refusal: "already_sent_this_turn",
+          },
+        });
+        throw new PluginRefusedError(SENT_THIS_TURN, null);
+      }
+
+      /*
        * Attempt first, record second.
        *
        * The row now says what HAPPENED rather than what was permitted. It used to be written here,
@@ -529,10 +618,13 @@ export function callMethods(context: StoreContext) {
           payload: result.isError
             ? {
                 ...decided,
+                ...(askedByRequest ? { approvedBy: "person_request" } : {}),
                 failure:
                   result.text.slice(0, 400) || "the tool reported an error",
               }
-            : decided,
+            : askedByRequest
+              ? { ...decided, approvedBy: "person_request" }
+              : decided,
         });
         const answer = { text: result.text, isError: result.isError };
         await approval?.complete(answer);

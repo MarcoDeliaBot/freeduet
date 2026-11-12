@@ -253,13 +253,16 @@ describe("Gmail and Google Calendar", () => {
     ]);
   });
 
-  test("names its reads and its write explicitly", () => {
+  test("names its reads and its two writes explicitly", () => {
     expect(entry?.readTools).toEqual([
       "gmail_search_messages",
       "gmail_read_message",
       "calendar_list_events",
     ]);
-    expect(entry?.writeTools).toEqual(["gmail_send_reply"]);
+    expect(entry?.writeTools).toEqual([
+      "gmail_send_reply",
+      "gmail_send_message",
+    ]);
   });
 
   test("sending a reply is a write, and nothing can talk it down to a read", () => {
@@ -339,7 +342,10 @@ describe("pointing Gmail and Calendar at a fake Google", () => {
       reviewed.auth.authorizationParams,
     );
     expect(workspace.readTools).toEqual(reviewed.readTools);
-    expect(workspace.writeTools).toEqual(["gmail_send_reply"]);
+    expect(workspace.writeTools).toEqual([
+      "gmail_send_reply",
+      "gmail_send_message",
+    ]);
   });
 
   test("an unset NODE_ENV is development, which is what a laptop has", () => {

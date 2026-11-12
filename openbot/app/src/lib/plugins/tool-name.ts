@@ -195,6 +195,13 @@ const PERSONAL_TOOLS: Record<
     plain: "Send your email",
     waiting: "Waiting for your OK to send your email",
   },
+  // A new email: the same words, because to the person it is the same act.
+  gmail_send_message: {
+    running: "Sending your email",
+    done: "Sent your email",
+    plain: "Send your email",
+    waiting: "Waiting for your OK to send your email",
+  },
 };
 
 /**

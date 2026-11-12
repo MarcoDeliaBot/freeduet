@@ -94,7 +94,7 @@ describe("(a) the catalogue lists the app-password entry", () => {
   });
 });
 
-describe("(b) the approval gate treats sending a reply as a write", () => {
+describe("(b) the approval gate treats sending an email, a reply or a new one, as a write", () => {
   const READS = [
     "gmail_search_messages",
     "gmail_read_message",
@@ -105,7 +105,10 @@ describe("(b) the approval gate treats sending a reply as a write", () => {
     expect(entry?.readTools).toEqual(oauth?.readTools);
     expect(entry?.writeTools).toEqual(oauth?.writeTools);
     expect(entry?.readTools).toEqual(READS);
-    expect(entry?.writeTools).toEqual(["gmail_send_reply"]);
+    expect(entry?.writeTools).toEqual([
+      "gmail_send_reply",
+      "gmail_send_message",
+    ]);
   });
 
   test("gmail_send_reply is a write, and a recorded read cannot narrow it", () => {
@@ -113,6 +116,24 @@ describe("(b) the approval gate treats sending a reply as a write", () => {
     expect(classifyTool(entry, "gmail_send_reply", true, "read")).toBe("write");
     expect(classifyTool(entry, "gmail_send_reply", true, null)).toBe("write");
     expect(classifyTool(entry, "gmail_send_reply", true, "")).toBe("write");
+  });
+
+  test("gmail_send_message is a write on both entries, and a recorded read cannot narrow it", () => {
+    for (const candidate of [entry, oauth]) {
+      expect(classifyTool(candidate, "gmail_send_message", true)).toBe("write");
+      expect(classifyTool(candidate, "gmail_send_message", true, "read")).toBe(
+        "write",
+      );
+      expect(classifyTool(candidate, "gmail_send_message", true, null)).toBe(
+        "write",
+      );
+      expect(classifyTool(candidate, "gmail_send_message", true, "")).toBe(
+        "write",
+      );
+      expect(classifyTool(candidate, "gmail_send_message", false)).toBe(
+        "write",
+      );
+    }
   });
 
   test("the three reads are reads, and a tool nobody listed is a write however it is advertised", () => {
@@ -126,7 +147,7 @@ describe("(b) the approval gate treats sending a reply as a write", () => {
       "gmail_move_message",
       "gmail_mark_read",
       "gmail_add_label",
-      "gmail_send_message",
+      "gmail_forward_message",
       "calendar_create_event",
     ]) {
       expect(classifyTool(entry, name, true)).toBe("write");
@@ -137,7 +158,7 @@ describe("(b) the approval gate treats sending a reply as a write", () => {
     expect(classifyTool(entry, "gmail_search_messages", false)).toBe("write");
   });
 
-  test("the transport offers the same four tools the OAuth adapter does, and no fifth", async () => {
+  test("the transport offers the same five tools the OAuth adapter does, and no sixth", async () => {
     const imap = await imapListTools();
     const rest = await restListTools({ url: "" });
     expect(imap.map((tool) => tool.name)).toEqual(
@@ -145,7 +166,7 @@ describe("(b) the approval gate treats sending a reply as a write", () => {
     );
     expect(imap).toEqual(rest);
     expect(imap.map((tool) => tool.name).sort()).toEqual(
-      [...READS, "gmail_send_reply"].sort(),
+      [...READS, "gmail_send_reply", "gmail_send_message"].sort(),
     );
     // Every tool it offers is on one of the entry's two lists, so none can classify by default.
     const named = new Set([
@@ -156,7 +177,7 @@ describe("(b) the approval gate treats sending a reply as a write", () => {
     const writes = imap
       .filter((tool) => classifyTool(entry, tool.name, true) === "write")
       .map((tool) => tool.name);
-    expect(writes).toEqual(["gmail_send_reply"]);
+    expect(writes.sort()).toEqual(["gmail_send_message", "gmail_send_reply"]);
   });
 
   test("the gate's built-in safety words do not read the entry's own key as a credential change, so a reply can be approved", () => {

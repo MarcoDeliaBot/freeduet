@@ -98,6 +98,8 @@ export function ApprovalCard({
   const arrives = decidedNow || sawWaiting;
   const reduced = useReducedMotionPreference();
   const handOff = request.action.policy?.behaviour === "hand_off";
+  // A new email is asked about every time: there is nothing to "always allow" (server/src/proactive).
+  const askEveryTime = request.action.policy?.source === "always_ask";
   const outcome = approvalOutcome(request);
   const receipt = waiting ? null : decisionReceipt(request);
   const caption = [botName, view.app, approvalPlace(request)]
@@ -189,7 +191,7 @@ export function ApprovalCard({
               </>
             )}
           </div>
-          {handOff ? null : (
+          {handOff || askEveryTime ? null : (
             <button
               className="type-sub mx-auto mt-1 flex h-11 items-center rounded-full px-3 font-medium text-duet-ink-2 transition-colors hover:text-duet-ink focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-duet-accent/40 disabled:opacity-50"
               disabled={busy}
