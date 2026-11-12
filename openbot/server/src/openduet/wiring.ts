@@ -4,6 +4,7 @@ import { eq } from "drizzle-orm";
 import type { AuditInitiator } from "../audit";
 import type { Database } from "../db/client";
 import { users } from "../db/schema";
+import type { PersonLanguage } from "../freeduet/person-language";
 import { createProactiveStore } from "../proactive/store";
 import { ProactiveNotFoundError } from "../proactive/types";
 import { buildMorningBrief, type CallTool, openduetTools } from "./brief";
@@ -144,6 +145,8 @@ export function createOpenDuetTools(deps: {
     ownerUserId: string,
     agentId: string,
   ) => Promise<{ id: string; threadId: string }>;
+  /** FreeDuet (D26): the language the person reads, for the brief's own sentences. */
+  personLanguage?: PersonLanguage | null;
   /** Where `make_page` saves. The same store answers /api/openduet/pages. */
   pages?: PageStore;
   /**
@@ -195,6 +198,7 @@ export function createOpenDuetTools(deps: {
             callTool: deps.callTool,
             complete: deps.complete,
             model: deps.model,
+            personLanguage: deps.personLanguage ?? null,
           },
           input,
         ),

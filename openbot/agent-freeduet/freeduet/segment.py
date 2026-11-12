@@ -53,7 +53,18 @@ from contextlib import suppress
 from dataclasses import dataclass
 from pathlib import Path
 
-from . import agui, claude_cli, iris_tools, lessons, origin, report_guard, team_log, tool_notes, transcript
+from . import (
+    agui,
+    claude_cli,
+    iris_tools,
+    lessons,
+    origin,
+    person_language,
+    report_guard,
+    team_log,
+    tool_notes,
+    transcript,
+)
 from .agui import RunInput
 from .bridge import ipc
 from .bridge.callback import HANDOFF_TOOL, call_deployment_tool, needs_the_person
@@ -194,7 +205,8 @@ async def run_segment(run: RunInput, member: Member, notes: SegmentNotes | None 
     yield agui.run_started(run)
     notes = notes if notes is not None else SegmentNotes()
     active_lessons = await _lessons_for(run, member)
-    run_notes = tool_notes.notes_for(run, member)
+    # The tool notes, then the person's language when the deployment set one (person_language.py).
+    run_notes = [*tool_notes.notes_for(run, member), *person_language.notes_for(run)]
     offered = {tool["name"] for tool in run.tools}
     local = iris_tools.for_run(run, member.id, offered)
     # What the bridge serves: the transcript writes earlier calls to these under the name the CLI

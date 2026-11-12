@@ -1458,6 +1458,7 @@ const openDuetTools = createOpenDuetTools({
   complete: chooseSkills,
   model: runtimeModel.defaultModel,
   directChannel: openDuetDirectChannel,
+  personLanguage: config.personLanguage,
 });
 /*
  * A task's report, read from its conversation as the runtime holds it (openduet/task-report.ts).
@@ -2203,6 +2204,7 @@ const taskReplyContext = createTaskReplyContext({
   skillsFor: (agentId) => pluginStore.listForAgent(agentId),
 });
 const proactiveEngine = createProactiveEngine({
+  personLanguage: config.personLanguage,
   acceptReplyContext: taskReplyContext.accept,
   store: proactiveStore,
   memory: personalMemoryStore,
