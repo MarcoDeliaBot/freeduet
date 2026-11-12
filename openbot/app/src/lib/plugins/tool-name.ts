@@ -3,6 +3,8 @@ import {
   RESEARCH_ROLE_LABELS,
   researchRoleOfTool,
 } from "@openbot/shared/research";
+import type { CardLanguage } from "@/freeduet/person-language/cards";
+import { ownToolLineIn } from "@/freeduet/person-language/tool-lines";
 
 /**
  * A tool call, named the way the person watching would name it.
@@ -32,8 +34,9 @@ export type ToolState = boolean | "plain";
 export function readToolName(
   name: string,
   running: ToolState = false,
+  language: CardLanguage | null = null,
 ): ToolName {
-  const own = ownToolLabel(name, running === true);
+  const own = ownToolLabel(name, running === true, language);
   if (own) return { label: running === "plain" ? humanise(name) : own };
   const parts = name.split("__");
   // Not an MCP name and not one of this deployment's: still never the bare identifier.
@@ -231,11 +234,14 @@ const UNNAMED_TOOLS = new Set(["suggest_replies", "ask_person"]);
  * person connected, the web, their browser, their memory. Anything not recognised is "Working on it",
  * never its identifier humanised, since "Calendar list events" is still an identifier.
  */
-export function stepPhrase(name: string): string | null {
+export function stepPhrase(
+  name: string,
+  language: CardLanguage | null = null,
+): string | null {
   if (UNNAMED_TOOLS.has(name)) return null;
   // A gallery interface: `askForm`, `askChoice`, `showBarChart`, `showTable`.
   if (/^(ask|show)[A-Z]/.test(name)) return null;
-  const own = ownToolLabel(name, true);
+  const own = ownToolLabel(name, true, language);
   if (own) return own;
   if (name.startsWith("computer_")) return STEP_PHRASES.browser;
 
@@ -269,9 +275,13 @@ export function stepPhrase(name: string): string | null {
 export function personToolLabel(
   name: string,
   state: "running" | "done" | "waiting" = "done",
+  language: CardLanguage | null = null,
 ): string | null {
   const own = OWN_TOOLS[name];
-  if (own) return state === "waiting" ? null : own[state];
+  if (own)
+    return state === "waiting"
+      ? null
+      : (ownToolLineIn(name, state === "running", language) ?? own[state]);
   const parts = name.split("__");
   if (parts.length < 3 || parts[0] !== "mcp") return null;
   const personal = PERSONAL_TOOLS[parts.slice(2).join("__")];
@@ -279,11 +289,22 @@ export function personToolLabel(
   return state === "waiting" ? (personal.waiting ?? null) : personal[state];
 }
 
-/** One of this deployment's own tools in words, or null for any other name. */
-export function ownToolLabel(name: string, running = false): string | null {
+/**
+ * One of this deployment's own tools in words, or null for any other name. The two FreeDuet tools
+ * that announce a card have these words in the person's language too (`ownToolLineIn`); every other
+ * tool, and no language, answer from the table above. The pill and the tool's own line both come
+ * through here, which is what keeps them saying the same thing.
+ */
+export function ownToolLabel(
+  name: string,
+  running = false,
+  language: CardLanguage | null = null,
+): string | null {
   const own = OWN_TOOLS[name];
   if (!own) return null;
-  return running ? own.running : own.done;
+  return (
+    ownToolLineIn(name, running, language) ?? (running ? own.running : own.done)
+  );
 }
 
 /**

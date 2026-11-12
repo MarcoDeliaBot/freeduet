@@ -17,6 +17,7 @@ import {
 } from "react";
 import { toVisibleChatItems } from "@/components/channels/chat-messages";
 import { FINISH_MS, type MicOrbState } from "@/components/duet/mic-orb";
+import type { CardLanguage } from "@/freeduet/person-language/cards";
 import { primaryBot } from "@/lib/agents/primary-bot";
 import { agentListQueryOptions } from "@/lib/agents/queries";
 import {
@@ -153,6 +154,7 @@ export function stepFor(
   messages: readonly Message[],
   working: boolean,
   approvals: readonly ApprovalRequest[] = [],
+  language: CardLanguage | null = null,
 ): string | null {
   if (!working) return null;
   const items = toVisibleChatItems(messages);
@@ -173,7 +175,7 @@ export function stepFor(
           request.action.toolCallId === item.toolCall.id &&
           (request.decision === "deny" || request.decision === "handled"),
       )
-        ? [stepPhrase(item.toolCall.function.name)]
+        ? [stepPhrase(item.toolCall.function.name, language)]
         : [],
     )
     .findLast((phrase) => phrase !== null);

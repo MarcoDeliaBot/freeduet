@@ -7,6 +7,9 @@
  * lines) and none of them is here. Only what those cards draw is, because those are the ones the
  * person opens first and the member's own text under them already follows the language. A real
  * interface translation is a later job, and when it comes this table is the part of it that exists.
+ * What is here besides the cards themselves is what belongs to them: the two running lines that
+ * announce them (and the pill under the header's orb, which says the same words), the browser
+ * notification a check-in raises, and the onboarding demo's own example brief.
  *
  * HOW THE LANGUAGE ARRIVES. The server reads `FREEDUET_PERSON_LANGUAGE` and puts the validated code
  * on `/api/capabilities` (`personLanguage`, server/src/app.ts); `PersonLanguageProvider`
@@ -95,6 +98,32 @@ const EN = {
   "suggestion.start": "Start",
   // The line above a check-in (components/channels/chat-transcript.tsx)
   "checkIn.line": "Checked your mail and calendar",
+  // The browser notification a check-in raises (components/shell/check-in-notifier.ts)
+  "checkIn.notification.more": {
+    one: "{title}, and {count} more",
+    other: "{title}, and {count} more",
+  },
+  /*
+   * The two FreeDuet tools' running and finished lines (person-language/tool-lines.ts). The shared
+   * vocabulary in lib/plugins/tool-name.ts holds the same English, and a test pins that the two agree,
+   * so the line and the pill under the header's orb (which reads the same vocabulary) cannot drift.
+   */
+  "tool.morningBrief.running": "Reading your mail and calendar",
+  "tool.morningBrief.done": "Read your mail and calendar",
+  "tool.offerTask.running": "Adding a task",
+  "tool.offerTask.done": "Added a task",
+  // The onboarding demo's example brief (components/onboarding/capability-demo.tsx)
+  "demo.greeting": "Your day, at a glance.",
+  "demo.delivery.title": "Confirm the delivery",
+  "demo.delivery.why": "Ana needs a yes for Friday.",
+  "demo.visit.title": "Studio visit at 2",
+  "demo.visit.why": "The samples are ready.",
+  "demo.caption.searching": "Searching your email",
+  "demo.caption.done": "Here's what needs you today",
+  "demo.label.brief":
+    "Example: a morning brief arrives with a delivery to confirm and a studio visit today",
+  "demo.label.search":
+    "Example: the Bot searches your email, then brings you a morning brief",
 } satisfies Entries;
 
 export type CardTextId = keyof typeof EN;
@@ -147,6 +176,25 @@ const IT: SameShape<typeof EN> = {
   "suggestion.hide": "Nascondi",
   "suggestion.start": "Avvia",
   "checkIn.line": "Ho controllato posta e calendario",
+  "checkIn.notification.more": {
+    one: "{title} e un'altra",
+    other: "{title} e altre {count}",
+  },
+  "tool.morningBrief.running": "Leggo posta e calendario",
+  "tool.morningBrief.done": "Ho letto posta e calendario",
+  "tool.offerTask.running": "Aggiungo un'attività",
+  "tool.offerTask.done": "Ho aggiunto un'attività",
+  "demo.greeting": "La tua giornata, in breve.",
+  "demo.delivery.title": "Conferma la consegna",
+  "demo.delivery.why": "Ana aspetta un sì per venerdì.",
+  "demo.visit.title": "Visita in studio alle 14",
+  "demo.visit.why": "I campioni sono pronti.",
+  "demo.caption.searching": "Cerco tra le tue email",
+  "demo.caption.done": "Ecco cosa ti aspetta oggi",
+  "demo.label.brief":
+    "Esempio: arriva un riepilogo del mattino con una consegna da confermare e una visita in studio oggi",
+  "demo.label.search":
+    "Esempio: il Bot cerca tra le tue email, poi ti porta un riepilogo del mattino",
 };
 
 /** Every language with a table of its own. English is the table everything else falls back to. */

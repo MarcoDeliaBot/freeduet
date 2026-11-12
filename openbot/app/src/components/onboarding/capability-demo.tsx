@@ -5,6 +5,11 @@ import { DuetCard } from "@/components/duet/kit";
 import { MicOrb } from "@/components/duet/mic-orb";
 import { MorningBriefCard } from "@/components/duet/morning-brief-card";
 import { TaskRow } from "@/components/duet/task-card";
+import { type CardLanguage, cardDate } from "@/freeduet/person-language/cards";
+import {
+  useCardLanguage,
+  useCardText,
+} from "@/freeduet/person-language/use-card-text";
 import type { ApprovalRequest } from "@/lib/approvals";
 import { IllustrationFrame } from "./illustration-frame";
 
@@ -29,11 +34,14 @@ const APPROVAL: ApprovalRequest = {
   },
 };
 
-const LABELS: Record<CapabilityDemoKind, string> = {
-  brief:
-    "Example: a morning brief arrives with a delivery to confirm and a studio visit today",
-  search:
-    "Example: the Bot searches your email, then brings you a morning brief",
+/*
+ * The labels of the two demos that draw something not translated. The brief demos' labels are in the
+ * card language's table (`demo.label.brief`, `demo.label.search`).
+ */
+const LABELS: Record<
+  Exclude<CapabilityDemoKind, "brief" | "search">,
+  string
+> = {
   approval:
     "Example: the Bot asks before sending an email, with Refuse and Allow once",
   task: "Example: a task moves from Working to Ready for review",
@@ -45,17 +53,21 @@ const LABELS: Record<CapabilityDemoKind, string> = {
  * It was a fixed "Friday, October 23", which was right on the day it was written and wrong, with
  * a weekday that no longer matched, on every day after. The rows under it name a day ("Friday")
  * and never a date, so today is the one date the card can always show truthfully.
+ *
+ * In the card language (D26) when there is one ("giovedì 12 novembre"); with none, the browser's own
+ * locale, as it always was.
  */
-export function demoDate(now: Date = new Date()): string {
-  return now.toLocaleDateString(undefined, {
-    weekday: "long",
-    month: "long",
-    day: "numeric",
-  });
+export function demoDate(
+  now: Date = new Date(),
+  language: CardLanguage | null = null,
+): string {
+  return cardDate(now, language);
 }
 
 /** Real cards, isolated from input. A hidden/offscreen demo stops its clock and orb. */
 export function CapabilityDemo({ kind }: { kind: CapabilityDemoKind }) {
+  const language = useCardLanguage();
+  const t = useCardText();
   const reduced = useReducedMotion() === true;
   const container = useRef<HTMLDivElement>(null);
   const [visible, setVisible] = useState(true);
@@ -91,6 +103,12 @@ export function CapabilityDemo({ kind }: { kind: CapabilityDemoKind }) {
   const done = phase === 2;
   const approval = kind === "approval";
   const task = kind === "task";
+  /*
+   * The two demos that draw the morning brief (`brief`, `search`) are in the card language from the
+   * line above the card to the rows in it, so the demo reads in one language. The approval and task
+   * demos draw cards that are not translated (nothing but the brief, the suggestion and the check-in
+   * line is, D26), so they stay English whole.
+   */
   const caption = approval
     ? done
       ? "Only after your OK"
@@ -100,8 +118,14 @@ export function CapabilityDemo({ kind }: { kind: CapabilityDemoKind }) {
         ? "Ready when you are"
         : "Taking care of it"
       : done
-        ? "Here's what needs you today"
-        : "Searching your email";
+        ? t("demo.caption.done")
+        : t("demo.caption.searching");
+  const label =
+    kind === "brief"
+      ? t("demo.label.brief")
+      : kind === "search"
+        ? t("demo.label.search")
+        : LABELS[kind];
 
   return (
     <div
@@ -110,10 +134,7 @@ export function CapabilityDemo({ kind }: { kind: CapabilityDemoKind }) {
       data-demo-phase={phase}
       ref={container}
     >
-      <IllustrationFrame
-        className="min-w-0 space-y-5 p-4 sm:p-6"
-        label={LABELS[kind]}
-      >
+      <IllustrationFrame className="min-w-0 space-y-5 p-4 sm:p-6" label={label}>
         <div className="flex min-w-0 items-center gap-4 px-2 py-3">
           <MicOrb
             size={48}
@@ -156,20 +177,20 @@ export function CapabilityDemo({ kind }: { kind: CapabilityDemoKind }) {
           ) : (
             <MorningBriefCard
               canWait={[]}
-              date={demoDate()}
-              greeting="Your day, at a glance."
+              date={demoDate(new Date(), language)}
+              greeting={t("demo.greeting")}
               needsYou={[
                 {
                   id: "delivery",
-                  title: "Confirm the delivery",
-                  why: "Ana needs a yes for Friday.",
+                  title: t("demo.delivery.title"),
+                  why: t("demo.delivery.why"),
                 },
               ]}
               today={[
                 {
                   id: "visit",
-                  title: "Studio visit at 2",
-                  why: "The samples are ready.",
+                  title: t("demo.visit.title"),
+                  why: t("demo.visit.why"),
                 },
               ]}
             />

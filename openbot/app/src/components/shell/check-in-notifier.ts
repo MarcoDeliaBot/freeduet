@@ -1,4 +1,6 @@
 import { useCallback, useRef } from "react";
+import { type CardLanguage, cardText } from "@/freeduet/person-language/cards";
+import { useCardLanguage } from "@/freeduet/person-language/use-card-text";
 import type { CheckIn } from "@/lib/channels/check-in";
 
 /**
@@ -7,17 +9,29 @@ import type { CheckIn } from "@/lib/channels/check-in";
  */
 export const CHECK_IN_ARRIVAL_SLACK_MS = 3 * 60_000;
 
-/** The notification for a check-in: the Bot's name, then the first task it offers. */
+/**
+ * The notification for a check-in: the Bot's name, then the first task it offers.
+ *
+ * The one fixed sentence in it ("<task>, and 2 more") is in `language`, the card language (D26):
+ * English for none, exactly as it was. The task's own title is the Bot's text and is left alone.
+ */
 export function checkInNotice(
   botName: string,
   checkIn: CheckIn,
+  language: CardLanguage | null = null,
 ): { title: string; body: string } | null {
   const [first, ...rest] = checkIn.offers;
   if (!first) return null;
   return {
     title: botName,
     body:
-      rest.length > 0 ? `${first.title}, and ${rest.length} more` : first.title,
+      rest.length > 0
+        ? cardText(
+            "checkIn.notification.more",
+            { title: first.title, count: rest.length },
+            language,
+          )
+        : first.title,
   };
 }
 
@@ -40,8 +54,21 @@ export function useCheckInNotifications(bot: { name: string; muted: boolean }) {
   const seen = useRef(new Set<string>());
   const current = useRef(bot);
   current.current = bot;
+  /*
+   * The language is read where this hook runs, from the same context the cards below it use, and
+   * kept in a ref like `bot`: the callback is told by the transcript later and outside any render,
+   * so it reads what the last render held. No second request: the context is fed by the
+   * capabilities query the app already runs (and, until it answers, by the kept first-paint code).
+   */
+  const language = useCardLanguage();
+  const currentLanguage = useRef(language);
+  currentLanguage.current = language;
   return useCallback((checkIn: CheckIn) => {
-    const notice = checkInNotice(current.current.name, checkIn);
+    const notice = checkInNotice(
+      current.current.name,
+      checkIn,
+      currentLanguage.current,
+    );
     const key = checkInKey(checkIn);
     if (!notice || seen.current.has(key)) return;
     seen.current.add(key);

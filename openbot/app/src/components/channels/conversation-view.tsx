@@ -33,6 +33,7 @@ import {
   useReportChatPresence,
 } from "@/components/shell/chat-presence";
 import { ChatSuggestionCard } from "@/components/shell/chat-suggestion";
+import { useCardLanguage } from "@/freeduet/person-language/use-card-text";
 import type { ApprovalRequest } from "@/lib/approvals";
 import { attachmentUrl } from "@/lib/channels/attachments";
 import { isThreadBusyError } from "@/lib/channels/run-lifecycle";
@@ -231,10 +232,12 @@ export function ConversationView({
   const progress = `${messages.length}:${JSON.stringify(last?.content ?? "").length}:${
     last && "toolCalls" in last ? (last.toolCalls?.length ?? 0) : 0
   }`;
+  // The language of the cards, for the two own tools the pill names in it (`stepPhrase`).
+  const language = useCardLanguage();
   const step = usePatientStep(
     // Read off the messages on every render, as the transcript reads them, because the agent
     // grows the same array in place. Only Chat's conversation has a pill to say it in.
-    inShell ? stepFor(messages, working, approvals) : null,
+    inShell ? stepFor(messages, working, approvals, language) : null,
     progress,
   );
   const presence = useReportChatPresence(inShell, {
