@@ -1,5 +1,6 @@
 import type { ComponentProps } from "react";
 import { DuetCard } from "@/components/duet/kit";
+import { useCardText } from "@/freeduet/person-language/use-card-text";
 import type { ProactiveSuggestion } from "@/lib/proactive";
 import { cn } from "@/lib/utils";
 import { SwipeToAnswer } from "./swipe-to-answer";
@@ -42,6 +43,8 @@ export function SuggestionCard({
   glass?: boolean;
   onAnswer: AnswerSuggestion;
 }) {
+  // The card's own words, in the language the deployment names (D26); English when it names none.
+  const t = useCardText();
   const face = (
     <DuetCard
       aria-label={heading}
@@ -60,7 +63,7 @@ export function SuggestionCard({
       ) : null}
       {suggestion.sourceApp ? (
         <p className="type-label mt-0.5 text-duet-ink-3">
-          From {suggestion.sourceApp}
+          {t("suggestion.from", { source: suggestion.sourceApp })}
         </p>
       ) : null}
       {error ? (
@@ -76,15 +79,17 @@ export function SuggestionCard({
             answered === "started" ? "text-duet-green" : "text-duet-ink-3",
           )}
         >
-          {answered === "started" ? "Started" : "Hidden"}
+          {answered === "started"
+            ? t("suggestion.started")
+            : t("suggestion.hidden")}
         </p>
       ) : (
         <div className="mt-2.5 flex gap-2">
           <SmallPill disabled={busy} onClick={() => onAnswer("dismiss")}>
-            Hide
+            {t("suggestion.hide")}
           </SmallPill>
           <SmallPill disabled={busy} onClick={() => onAnswer("start")} primary>
-            Start
+            {t("suggestion.start")}
           </SmallPill>
         </div>
       )}
@@ -95,6 +100,7 @@ export function SuggestionCard({
   return (
     <SwipeToAnswer
       disabled={busy}
+      labels={{ start: t("suggestion.start"), hide: t("suggestion.hide") }}
       onHide={(comeBack) => onAnswer("dismiss", comeBack)}
       onStart={(comeBack) => onAnswer("start", comeBack)}
     >

@@ -1,5 +1,6 @@
 import { AnimatePresence, motion } from "motion/react";
 import { Fragment, type ReactNode, useState } from "react";
+import { useCardText } from "@/freeduet/person-language/use-card-text";
 import { DURATION, EASE_OUT } from "@/lib/motion";
 import { useReducedMotionPreference } from "@/lib/reduced-motion";
 import { cn } from "@/lib/utils";
@@ -60,6 +61,8 @@ export function MorningBriefCard({
   today?: BriefItem[];
   notes?: BriefItem[];
 }) {
+  // The card's own words, in the language the deployment names (D26); English when it names none.
+  const t = useCardText();
   const nothing =
     needsYou.length === 0 && canWait.length === 0 && today.length === 0;
   /*
@@ -67,10 +70,10 @@ export function MorningBriefCard({
    * the date and greeting first, then each section's label and the rows it shows, top to bottom.
    */
   const sections = [
-    { items: needsYou, label: "Needs you", tone: "accent" },
-    { items: canWait, label: "Can wait", tone: "muted" },
-    { items: today, label: "Today", tone: "muted" },
-    { items: notes, label: "Couldn't check", tone: "muted" },
+    { items: needsYou, label: t("brief.needsYou"), tone: "accent" },
+    { items: canWait, label: t("brief.canWaitLabel"), tone: "muted" },
+    { items: today, label: t("brief.today"), tone: "muted" },
+    { items: notes, label: t("brief.couldNotCheck"), tone: "muted" },
   ] as const;
   let next = 1;
   const starts = sections.map((section) => {
@@ -80,13 +83,13 @@ export function MorningBriefCard({
   });
   return (
     <BuildIn order={0}>
-      <DuetCard aria-label="Morning brief" role="region">
+      <DuetCard aria-label={t("brief.region")} role="region">
         <BuildIn className="px-4 pt-[18px]" order={0}>
           <p className="type-sub font-medium text-duet-ink-2">{date}</p>
           <p className="type-display mt-0.5 font-semibold">{greeting}</p>
           {nothing && notes.length === 0 ? (
             <p className="type-sub mt-2 text-duet-ink-2">
-              Nothing new needs you, and nothing is on your calendar today.
+              {t("brief.nothing")}
             </p>
           ) : null}
         </BuildIn>
@@ -137,6 +140,7 @@ function BriefSection({
   start: number;
 }) {
   const [open, setOpen] = useState(false);
+  const t = useCardText();
   if (items.length === 0) return null;
   const folded = !open && items.length > SECTION_ROWS + 1;
   const shown = folded ? items.slice(0, SECTION_ROWS) : items;
@@ -199,13 +203,16 @@ function BriefSection({
       {folded ? (
         <BuildIn className="px-4 pt-0.5 pb-1" order={start + 1 + arrived}>
           <button
-            aria-label={`Show ${hidden} more in ${label}`}
+            aria-label={t("brief.showMoreIn", {
+              count: hidden,
+              section: label,
+            })}
             // The Start line's look and 44px target, so the card has one kind of text action.
             className="type-sub -mx-2 inline-flex h-11 items-center gap-1 rounded-full px-2 font-medium text-duet-accent transition-opacity hover:opacity-80 focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-duet-accent/40 active:opacity-60"
             onClick={() => setOpen(true)}
             type="button"
           >
-            Show {hidden} more
+            {t("brief.showMore", { count: hidden })}
           </button>
         </BuildIn>
       ) : null}

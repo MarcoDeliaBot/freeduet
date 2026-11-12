@@ -31,6 +31,12 @@ export type DeploymentCapabilities = {
   localEvaluation: boolean;
   transcription?: boolean;
   voice?: boolean;
+  /**
+   * FreeDuet (D26): the two-letter code of the language the person reads, when the deployment sets
+   * `FREEDUET_PERSON_LANGUAGE`. Absent when it does not. Which cards have a translation is
+   * `app/src/freeduet/person-language/cards.ts`'s to say; a code it has no table for reads English.
+   */
+  personLanguage?: string;
 };
 
 export const deploymentKeys = {
@@ -70,6 +76,7 @@ export function deploymentCapabilitiesQueryOptions() {
         localEvaluation?: boolean;
         transcription?: boolean;
         voice?: boolean;
+        personLanguage?: unknown;
       };
 
       return {
@@ -78,6 +85,11 @@ export function deploymentCapabilitiesQueryOptions() {
         localEvaluation: body.localEvaluation === true,
         transcription: body.transcription === true,
         voice: body.voice === true,
+        // Only a two-letter lowercase code is kept, so nothing else can reach a card's locale.
+        ...(typeof body.personLanguage === "string" &&
+        /^[a-z]{2}$/.test(body.personLanguage)
+          ? { personLanguage: body.personLanguage }
+          : {}),
       };
     },
   });

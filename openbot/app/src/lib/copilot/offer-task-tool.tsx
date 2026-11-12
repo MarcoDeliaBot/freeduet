@@ -7,6 +7,7 @@ import {
   useShownInThread,
 } from "@/components/shell/chat-suggestion";
 import { SuggestionCard } from "@/components/shell/suggestion-card";
+import { useCardText } from "@/freeduet/person-language/use-card-text";
 import { OFFER_TASK_TOOL } from "@/lib/channels/check-in";
 import { readToolName } from "@/lib/plugins/tool-name";
 import { asText, REFUSAL_MARKER } from "@/lib/plugins/tool-result";
@@ -58,6 +59,7 @@ export function readOffer(result: unknown): OfferedTask | null {
 export function OfferedTaskCard({ offered }: { offered: OfferedTask }) {
   const queryClient = useQueryClient();
   const chatBot = useChatBot();
+  const t = useCardText();
   useShownInThread(offered.id);
   // What the tool saw when it offered the card stands in until the suggestion itself is read.
   const current = useQuery({
@@ -93,7 +95,9 @@ export function OfferedTaskCard({ offered }: { offered: OfferedTask }) {
       busy={act.isPending}
       error={act.error?.message ?? null}
       heading={
-        chatBot ? `${chatBot.name} could take this on` : "Ready to start"
+        chatBot
+          ? t("suggestion.heading", { bot: chatBot.name })
+          : t("suggestion.headingNoBot")
       }
       onAnswer={(action, comeBack) =>
         act.mutate(

@@ -534,6 +534,19 @@ export function createApp(
       transcription: Boolean(config.transcription),
       voice: Boolean(config.voice),
       /*
+       * FreeDuet (D26): the two-letter code of the language the person reads, so the app can draw the
+       * morning brief and the suggestion card in it. Absent, not null, when `FREEDUET_PERSON_LANGUAGE`
+       * is unset, so an unset deployment answers exactly as it did.
+       *
+       * Safe to serve to anybody: `config.personLanguage` only exists after `personLanguageFrom`
+       * checked the value against the dictation language list, so this is a known two-letter code and
+       * nothing the environment could smuggle in. It is read at start, like every other field here, so
+       * a change to `.env` and a restart is all it takes; the app has no build step to repeat.
+       */
+      ...(config.personLanguage
+        ? { personLanguage: config.personLanguage.code }
+        : {}),
+      /*
        * Which identity providers this deployment can sign somebody in with.
        *
        * Ids only, never the credentials: `configuredAuthProviders` returns names, and the clients

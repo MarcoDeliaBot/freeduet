@@ -8,6 +8,18 @@ import {
   type BriefItem,
   MorningBriefCard,
 } from "@/components/duet/morning-brief-card";
+import {
+  type CardLanguage,
+  cardDate,
+  cardGreeting,
+  cardText,
+  cardTextIn,
+  cardTime,
+} from "@/freeduet/person-language/cards";
+import {
+  useCardLanguage,
+  useCardText,
+} from "@/freeduet/person-language/use-card-text";
 import { MORNING_BRIEF_TOOL } from "@/lib/channels/morning-brief";
 import { readToolName } from "@/lib/plugins/tool-name";
 
@@ -61,26 +73,28 @@ export function readBrief(result: unknown): Brief | null {
   }
 }
 
-function greetingFor(at: Date, name: string | null): string {
-  const hour = at.getHours();
-  const part = hour < 12 ? "Morning" : hour < 18 ? "Afternoon" : "Evening";
-  return name ? `${part}, ${name}.` : `${part}.`;
-}
-
-/** "3:00 PM" for a timed event, "All day" for a date. */
-function timeOf(start: string): string {
-  if (/^\d{4}-\d{2}-\d{2}$/.test(start)) return "All day";
+/**
+ * "3:00 PM" for a timed event, "All day" for a date; "15:00" and "Tutto il giorno" in Italian.
+ * The language is the deployment's (D26); null is English with the browser's own clock, as it was.
+ */
+function timeOf(start: string, language: CardLanguage | null): string {
+  if (/^\d{4}-\d{2}-\d{2}$/.test(start))
+    return cardText("brief.allDay", {}, language);
   const when = new Date(start);
-  return Number.isNaN(when.getTime())
-    ? start
-    : when.toLocaleTimeString(undefined, {
-        hour: "numeric",
-        minute: "2-digit",
-      });
+  return Number.isNaN(when.getTime()) ? start : cardTime(when, language);
 }
 
-/** The card's rows. Can wait folds into one row: the film's "I'll handle these", not a second inbox. */
-export function briefCard(brief: Brief): {
+/**
+ * The card's rows. Can wait folds into one row: the film's "I'll handle these", not a second inbox.
+ *
+ * `language` is the card's table language (null for English, the default, which is today's text).
+ * Only the words the app writes change; a row's title, reason and the sender names are the mail's
+ * and the member's own.
+ */
+export function briefCard(
+  brief: Brief,
+  language: CardLanguage | null = null,
+): {
   date: string;
   greeting: string;
   needsYou: BriefItem[];
@@ -89,16 +103,13 @@ export function briefCard(brief: Brief): {
   notes: BriefItem[];
 } {
   const at = new Date(brief.at);
+  const t = cardTextIn(language);
   const senders = [...new Set(brief.canWait.map((item) => item.from))];
   const named = senders.slice(0, 3).join(", ");
   const rest = senders.length - 3;
   return {
-    date: at.toLocaleDateString(undefined, {
-      weekday: "long",
-      month: "long",
-      day: "numeric",
-    }),
-    greeting: greetingFor(at, brief.name),
+    date: cardDate(at, language),
+    greeting: cardGreeting(at, brief.name, language),
     /*
      * What was sorted as needing the person first, and what could not be sorted after it. Those
      * are only here to be safe, and the card shows its first few rows before "Show more", so they
@@ -119,15 +130,20 @@ export function briefCard(brief: Brief): {
       ? [
           {
             id: "can-wait",
-            title: `${brief.canWait.length} ${brief.canWait.length === 1 ? "email" : "emails"} can wait`,
-            why: rest > 0 ? `${named} and ${rest} more` : named,
+            title: t("brief.canWait", { count: brief.canWait.length }),
+            why:
+              rest > 0
+                ? t("brief.andMore", { names: named, count: rest })
+                : named,
           },
         ]
       : [],
     today: brief.calendar.map((event) => ({
       id: event.id,
       title: event.summary,
-      why: [timeOf(event.start), event.location].filter(Boolean).join(" · "),
+      why: [timeOf(event.start, language), event.location]
+        .filter(Boolean)
+        .join(" · "),
     })),
     notes: brief.couldNotCheck.map((gap, index) => ({
       id: `gap-${index}`,
@@ -167,13 +183,14 @@ function BriefToolView({
   running: boolean;
 }) {
   const live = useArrivedLive(running);
+  const t = useCardText();
   if (running)
     return <ToolLine label={readToolName(TOOL, true).label} running />;
   const brief = readBrief(result);
   if (!brief)
     return (
       <ToolLine
-        label="Couldn't make the brief"
+        label={t("brief.couldNotMake")}
         detail={typeof result === "string" ? result : undefined}
         refused
       />
@@ -189,10 +206,17 @@ function BriefToolView({
  * What Start sends for a row that needs the person: their own words, in the thread, asking the Bot
  * to take it on. A reply that goes out still stops for Allow once like any other.
  */
-export function startRequest(item: Brief["needsYou"][number]): string {
+export function startRequest(
+  item: Brief["needsYou"][number],
+  language: CardLanguage | null = null,
+): string {
   return item.subject
-    ? `Take care of ${item.from}'s email: ${item.subject}`
-    : `Take care of ${item.from}'s email.`;
+    ? cardText(
+        "brief.startRequest",
+        { from: item.from, subject: item.subject },
+        language,
+      )
+    : cardText("brief.startRequestNoSubject", { from: item.from }, language);
 }
 
 /**
@@ -202,8 +226,10 @@ export function startRequest(item: Brief["needsYou"][number]): string {
  */
 export function StartableBrief({ brief }: { brief: Brief }) {
   const conversation = useConversationSend();
+  const language = useCardLanguage();
+  const t = useCardText();
   const [started, setStarted] = useState<ReadonlySet<string>>(new Set());
-  const card = briefCard(brief);
+  const card = briefCard(brief, language);
   // By id, not position: the card puts mail that could not be sorted last.
   const mailById = new Map(brief.needsYou.map((item) => [item.id, item]));
   const needsYou = conversation
@@ -213,11 +239,11 @@ export function StartableBrief({ brief }: { brief: Brief }) {
         return {
           ...row,
           action: {
-            label: "Start",
-            name: `Start: ${row.title}`,
-            ...(started.has(row.id) ? { done: "Started" } : {}),
+            label: t("brief.start"),
+            name: t("brief.startNamed", { title: row.title }),
+            ...(started.has(row.id) ? { done: t("brief.started") } : {}),
             onPress: () => {
-              if (conversation.send(startRequest(item)))
+              if (conversation.send(startRequest(item, language)))
                 setStarted((current) => new Set(current).add(row.id));
             },
           },

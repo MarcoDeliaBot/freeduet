@@ -8,6 +8,7 @@ import {
   useMemo,
   useState,
 } from "react";
+import { useCardText } from "@/freeduet/person-language/use-card-text";
 import {
   proactiveSuggestionsQueryOptions,
   resolveSuggestionMutationOptions,
@@ -31,6 +32,7 @@ export function StartedLine({
   botName: string;
   className?: string;
 }) {
+  const t = useCardText();
   return (
     <p
       className={cn(
@@ -39,7 +41,7 @@ export function StartedLine({
       )}
       role="status"
     >
-      Started. {botName} is on it.
+      {t("suggestion.startedLine", { bot: botName })}
     </p>
   );
 }
@@ -128,6 +130,7 @@ function SuggestionFor({
   inThread: ReadonlySet<string>;
 }) {
   const queryClient = useQueryClient();
+  const t = useCardText();
   const suggestions = useQuery(proactiveSuggestionsQueryOptions());
   const act = useMutation(resolveSuggestionMutationOptions(queryClient));
   const [started, setStarted] = useState(false);
@@ -150,7 +153,7 @@ function SuggestionFor({
       busy={act.isPending && mine}
       error={act.error && mine ? act.error.message : null}
       glass
-      heading={`${bot.name} could take this on`}
+      heading={t("suggestion.heading", { bot: bot.name })}
       key={suggestion.id}
       onAnswer={(action, comeBack) =>
         act.mutate(
