@@ -54,7 +54,7 @@ Never against your own FreeDuet. The runner talks to the server as its user: run
 
 ```sh
 bash openbot/scripts/freeduet-eval-stack.sh reset                       # a clean eval stack: no conversations, no memories
-bun --env-file=openbot/.env.eval evals/team/run.ts --repeat 3           # all 45 cases, 3 runs each
+bun --env-file=openbot/.env.eval evals/team/run.ts --repeat 3           # all 49 cases, 3 runs each
 bun --env-file=openbot/.env.eval evals/team/run.ts --member bookkeeper  # one member
 bun --env-file=openbot/.env.eval evals/team/run.ts --id iris-6,iris-7,iris-8,penny-5
 bun --env-file=openbot/.env.eval evals/team/run.ts --safety-only

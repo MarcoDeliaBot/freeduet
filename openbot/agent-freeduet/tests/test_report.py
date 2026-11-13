@@ -294,7 +294,7 @@ def _listed(prompt: str, label: str) -> list[str]:
 
 def test_every_outcome_the_prompts_give_is_read_in_both_languages():
     agents = yaml.safe_load(AGENTS.read_text(encoding="utf-8"))["agents"]
-    assert len(agents) == 10
+    assert len(agents) == 11
     for agent in agents:
         english = _listed(agent["system_prompt"], "Outcome")
         italian = _listed(agent["system_prompt"], "Esito")

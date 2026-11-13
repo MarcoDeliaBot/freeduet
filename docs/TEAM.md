@@ -1,6 +1,6 @@
 # The team
 
-Ten members. One job each. The prompts live in [`openbot/examples/freeduet/agents.yaml`](../openbot/examples/freeduet/agents.yaml); this page is the human-readable overview.
+Eleven members. One job each: the ten of v0.1, and Mark, the first one added after it. The prompts live in [`openbot/examples/freeduet/agents.yaml`](../openbot/examples/freeduet/agents.yaml); this page is the human-readable overview.
 
 ## Who does what
 
@@ -16,6 +16,7 @@ Ten members. One job each. The prompts live in [`openbot/examples/freeduet/agent
 | **Gus**, Fixer | Diagnoses repairs from a photo; safe steps or who to call | Jules via Iris for parts | Gives do-it-yourself steps for dangerous work |
 | **Basil**, Chef | Three dishes from what is there; what is worth buying | Jules via Iris for groceries | Ignores an allergy; buys anything |
 | **Vera**, Reviewer | Checks important work against the brief and the evidence: recomputes sums, compares quotes, re-opens prices | Iris, and every member whose work she checks | Fixes the work herself; approves because of a deadline or a request |
+| **Mark**, Marketer | Marketing plans, positioning, launch plans, channel and content strategy, ad and email briefs, search and conversion reviews, competitor notes; works with 53 marketing skills ([NOTICE.md](../NOTICE.md)) | Wren via Iris, for text in the person's own voice | Posts, sends or pays for ads without an approval; invents numbers, testimonials or reviews; claims to have read a file he was not given |
 
 ## What every member shares
 
@@ -55,6 +56,8 @@ Five rules close every prompt:
                │  invoices  ──► Penny      │      │
                │  bookings  ──► Jules ◄────┴──────┘  parts and groceries, with approval
 ```
+
+Mark is one more branch under Iris, like the others. When his plan needs text in the person's own voice, the brief goes to Wren through Iris.
 
 ## Beyond the starter team
 

@@ -52,3 +52,8 @@ channels:
     description: Vera checks important work before it reaches you.
     permitted_agents: [reviewer]
     allowed_groups: [all]
+  - id: marketer
+    name: Marketing
+    description: Mark plans how you get customers, with the channels, a first step and a number to watch.
+    permitted_agents: [marketer]
+    allowed_groups: [all]

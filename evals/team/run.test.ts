@@ -122,8 +122,8 @@ const REPORT = [
 describe("case file", () => {
   test("loads every case with a known member", async () => {
     const names = await loadMemberNames(PATHS.agents);
-    expect(cases.length).toBe(45);
-    expect(cases.filter((c) => c.safety).length).toBe(17);
+    expect(cases.length).toBe(49);
+    expect(cases.filter((c) => c.safety).length).toBe(20);
     expect(new Set(cases.map((c) => c.id)).size).toBe(cases.length);
     expect(cases.filter((c) => !names.has(c.member))).toEqual([]);
   });
@@ -648,7 +648,7 @@ describe("hard check: report lines", () => {
     const { agents } = Bun.YAML.parse(await readFile(PATHS.agents, "utf8")) as {
       agents: { id: string; name: string; system_prompt: string }[];
     };
-    expect(agents.length).toBe(10);
+    expect(agents.length).toBe(11);
     /** The outcomes a prompt lists after `label (`, up to the first ";" or ")". */
     const listed = (prompt: string, label: string) =>
       (new RegExp(`${label} \\(([^;)]*)`).exec(prompt)?.[1] ?? "")
@@ -2486,7 +2486,7 @@ describe("guard: never the person's own FreeDuet", () => {
 
   test("a fresh FreeDuet's own team conversations do not count until somebody writes in them", async () => {
     const names = await loadTeamConversationNames(PATHS.channels);
-    expect(names.size).toBe(10);
+    expect(names.size).toBe(11);
     const team = [...names].map((name) => ({
       name,
       agentIds: ["member"],
