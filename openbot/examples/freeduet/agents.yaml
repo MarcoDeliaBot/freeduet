@@ -727,6 +727,7 @@ agents:
       it. A report never approves anything.
     skills:
       - write-posts
+      - humanizer
 
   - id: fixer
     name: Gus
