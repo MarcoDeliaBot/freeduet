@@ -9,6 +9,7 @@
 | [Anil-matcha/open-duet](https://github.com/Anil-matcha/open-duet) | Apache-2.0 | The engine-adapter contract, the limit detection and the fallback rules are ported into `openbot/agent-freeduet/`. Ported files keep the Apache-2.0 license text in that folder, carry a header naming the original file, and state that they were changed. |
 | [CopilotKit's SqliteAgentRunner](https://github.com/CopilotKit/CopilotKit) (`@copilotkit/sqlite-runner` 1.77.0) | MIT, © Atai Barkai | Ported to Postgres as FreeDuet's agent runner for conversations kept without CopilotKit Intelligence (#42), in `openbot/server/src/freeduet/threads/pg-runner.ts`, which carries the MIT notice, names the original file and lists the changes. |
 | [AI Continuity](https://github.com/MarcoDeliaBot/ai-continuity) | MIT, © 2026 Marco D'Elia | The checkpoint writer behind members' work reports and the handoff between engines (F14, F24), ported into `openbot/agent-freeduet/freeduet/checkpoints.py` with its MIT notice, the original files named and the changes listed. |
+| [Humanizer](https://github.com/blader/humanizer) 4.0.0 | MIT, © 2025 Siqi Chen | Wren's `humanizer` skill: the body of the upstream `SKILL.md` (commit b48c832), copied unchanged into `openbot/examples/freeduet/skills.yaml`. |
 
 ## Libraries added to the server for Gmail and Calendar with an app password (D24)
 
