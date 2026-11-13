@@ -9,6 +9,7 @@ plays the next plan from $FAKE_CLAUDE_DIR/plans.json, one plan per invocation:
   {"tool": {"name": ..., "input": {...}}, a message with a tool_use block (and optional text),
    "text": "..."}                         then the call through the bridge, like the real CLI
   {"replay": "fixture.jsonl"}             print a fixture's lines as they are
+  {"events": [{...}, ...]}                print these stream-json events as they are
   {"sleep": seconds} / {"stderr": "..."} / {"exit": code}
   {"result": {...}}                       the result line, then exit 0
 
@@ -142,6 +143,9 @@ class Turn:
                 self.call(use, step.get("real_cli", False), step.get("refuse", False))
         elif "text" in step:
             self.message(step["text"])
+        elif "events" in step:
+            for event in step["events"]:
+                out(event)
         elif "replay" in step:
             for line in (FIXTURES / step["replay"]).read_text().splitlines():
                 if line.strip():

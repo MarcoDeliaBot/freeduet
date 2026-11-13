@@ -121,10 +121,10 @@ class _Text:
         closing, self.open = self.open, None
         return [agui.text_end(closing)]
 
-    def append(self, text: str) -> list[dict]:
-        """`text` at the end of the open message, after a blank line; in a new one if none is open."""
+    def append(self, text: str, separator: str = "\n\n") -> list[dict]:
+        """`text` at the end of the open message, after `separator` (a blank line); in a new one if none is open."""
         if self.open is not None:
-            return [agui.text_content(self.open, "\n\n" + text)]
+            return [agui.text_content(self.open, separator + text)]
         return self.delta("report-guard", text)
 
 
@@ -232,8 +232,9 @@ async def run_segment(run: RunInput, member: Member, notes: SegmentNotes | None 
     async def on_call(call: ipc.BridgeCall) -> None:
         await inbox.put(("call", call))
 
-    async def guard(story: report_guard.Story) -> str | None:
-        """The report to add to a turn that ends without one, or None (report_guard.py)."""
+    async def guard(story: report_guard.Story) -> tuple[str, str] | None:
+        """The report lines to add to a turn that ends without a complete one, with the separator to
+        put before them, or None (report_guard.py)."""
         if not report_guard.applies(run.messages, story.reply(), story.called):
             return None
         notes.report_guard = report_guard.FAILED
@@ -245,9 +246,10 @@ async def run_segment(run: RunInput, member: Member, notes: SegmentNotes | None 
         except Exception:  # noqa: BLE001 - the reply stands as it is; the guard never fails a turn
             log.warning("report guard failed", exc_info=True)
             return None
-        if block:
+        added = report_guard.missing_report_lines(story.reply(), block) if block else None
+        if added:
             notes.report_guard = report_guard.ADDED
-        return block
+        return added
 
     host = ipc.BridgeHost(ipc.mcp_tools(run.tools) + (local.definitions() if local else []), on_call)
     process = None
@@ -432,16 +434,19 @@ async def _drive(run: RunInput, offered: set[str], inbox: asyncio.Queue, parser:
                     return
                 failure = None if handed else claude_cli.failure_event(parser)
                 if failure is None and not handed:
-                    # The turn ends here. The CLI's result can carry the answer when no delta did.
-                    answer = (payload.text or "").strip()
-                    if answer and not story.reply().strip():
-                        story.text("result", answer)
-                        for event in text.delta("result", answer):
+                    # The turn ends here. The CLI's result text can carry what no delta did: all of the
+                    # answer, or the end of it. Only text that is not on the person's screen is sent,
+                    # compared exactly; in any doubt nothing is (report_guard.unsent_tail).
+                    shown = story.last_text()
+                    unsent = report_guard.unsent_tail(shown, payload.text or "")
+                    if unsent is not None:
+                        story.extend_last(unsent)
+                        for event in text.append(unsent, "") if shown.strip() else text.delta("result", unsent):
                             yield event
                     # A turn that did work closes with its report (report_guard.py).
                     added = await guard(story) if guard is not None else None
                     if added:
-                        for event in text.append(added):
+                        for event in text.append(*added):
                             yield event
                     elif not story.reply().strip():
                         # Nothing for the person: never end a turn in silence (report_guard.py).
