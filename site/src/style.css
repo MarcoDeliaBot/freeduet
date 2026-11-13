@@ -42,6 +42,16 @@ p{margin:0;max-width:64ch}
 .nav{display:flex;gap:24px;margin-left:auto;flex-wrap:wrap}
 .nav a{color:var(--ink-soft);text-decoration:none;font-size:.95rem;padding:10px 0;transition:color .12s}
 .nav a:hover{color:var(--ink)}
+.coffee{display:inline-flex;align-items:center;gap:8px;font-family:var(--display);font-weight:700;font-size:.92rem;text-decoration:none;color:var(--ink);background:#FFE9A8;border:1px solid #E9C766;border-radius:8px;padding:8px 14px;min-height:40px;transition:background .12s,transform .12s}
+.coffee:hover{background:var(--amber);transform:translateY(-1px)}
+.coffee svg{width:18px;height:18px;color:#C2255C;flex:none}
+.band{background:#FFF4D1;border-top:1px solid #EFD98F;border-bottom:1px solid #EFD98F;padding:56px 0}
+.band .wrap{display:flex;align-items:center;justify-content:space-between;gap:32px;flex-wrap:wrap}
+.band h2{margin-bottom:10px}
+.band .lead{color:var(--ink)}
+.btn-coffee{background:var(--ink);color:#fff;font-size:1.2rem;padding:18px 30px;min-height:60px;border-radius:12px;box-shadow:0 8px 24px -10px rgba(14,27,51,.6)}
+.btn-coffee:hover{background:#1B2B4B;transform:translateY(-2px)}
+.btn-coffee svg{width:24px;height:24px;color:#FF8FA8}
 .langs select{font:inherit;font-size:.92rem;color:var(--ink);background-color:var(--card);border:1px solid var(--line);border-radius:8px;padding:8px 30px 8px 12px;min-height:40px;appearance:none;-webkit-appearance:none;cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cpath d='M2.5 4.5L6 8l3.5-3.5' stroke='%2352607A' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 10px center;background-size:12px}
 
 .btn{display:inline-flex;align-items:center;gap:10px;font-family:var(--display);font-weight:700;font-size:1rem;text-decoration:none;border-radius:10px;padding:13px 20px;min-height:48px;border:1px solid transparent;cursor:pointer;transition:transform .12s ease,background .12s ease,box-shadow .12s ease,border-color .12s}
@@ -207,7 +217,7 @@ footer a{color:var(--ink)}
   .road li{border-left:0;border-top:1px solid var(--line)}
   .road li:first-child{border-top:0}
   .nav{display:none}
-  .langs{margin-left:auto}
+  .coffee{margin-left:auto}
 }
 @media (max-width:620px){
   body{font-size:16px}
@@ -223,6 +233,8 @@ footer a{color:var(--ink)}
   .score{grid-template-columns:1fr;gap:12px}
   .cta .btn{width:100%;justify-content:center}
   .card-ask,.done{margin-left:0}
+  .coffee span{display:none}
+  .btn-coffee{width:100%;justify-content:center}
   .demo-bar{flex-wrap:wrap}
   .demo-bar em{flex-basis:100%;text-align:left;margin:2px 0 0}
 }
