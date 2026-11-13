@@ -93,6 +93,10 @@ the hands"): plan, brief executors, verify with numbers, merge, report.
   `bun run typecheck:tests` from `openbot/`; its baseline is `server/tests/typecheck-baseline.txt`,
   and hand-edit a line there only when a baselined error's text changes.
 - Adding a value to a Postgres enum breaks `tests/schema.test.ts`.
+- Some jobs run only on main (and on pull requests labelled `full-ci`): `component dockerfiles`,
+  `image`, clean-start. A green pull request does not prove main is green: after a merge that adds a
+  Dockerfile, a service or a compose change, look at main's own run. A new `*/Dockerfile` under
+  `openbot/` must be added to `openbot/.github/published-images.json`.
 - Biome runs from `openbot/`, not `openbot/server/`.
 
 ## Local testing
