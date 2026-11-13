@@ -1,0 +1,35 @@
+name: I can help fix this
+description: Offer to fix an issue, or propose a fix.
+title: "Fix offer: "
+labels: ["help offered"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        You can write in English or Italian.
+
+        Never paste subscription credentials, or the contents of the Claude login folders.
+  - type: input
+    id: issue
+    attributes:
+      label: Which issue or problem?
+      description: A link to the issue, or a short description.
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: What do you propose?
+      description: A few lines.
+    validations:
+      required: true
+  - type: dropdown
+    id: pr
+    attributes:
+      label: Do you want to send a pull request yourself?
+      options:
+        - Yes
+        - I prefer to describe the fix
+        - Not sure
+    validations:
+      required: true

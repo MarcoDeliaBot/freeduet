@@ -1,0 +1,5 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Security problem
+    url: https://github.com/MarcoDeliaBot/freeduet/security/policy
+    about: Report a vulnerability privately. Do not open a public issue for it.
