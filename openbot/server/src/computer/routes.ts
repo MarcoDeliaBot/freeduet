@@ -1,10 +1,11 @@
+import { downloadHeaders } from "@openbot/shared/file-download";
 import type { Context, MiddlewareHandler } from "hono";
 import { Hono } from "hono";
-import { downloadHeaders } from "@openbot/shared/file-download";
 import type { BotAccessCheck } from "../agents/profile-policy";
 import type { AuditReader } from "../audit";
 import type { AppVariables } from "../auth/guards";
 import { requireAdmin } from "../auth/guards";
+import { BROWSER_ROUTES } from "./browser-routes";
 import { DEPLOYMENT_ROUTES } from "./deployment-routes";
 import {
   type ActionActor,
@@ -15,6 +16,7 @@ import {
   HandoffRequestError,
   HumanHasControlError,
   NavigationRefusedError,
+  PageNotUsableError,
   StaleSnapshotError,
   WorkspaceNotFoundError,
   WorkspaceRefusedError,
@@ -53,6 +55,12 @@ export function createComputerRoutes(
    * endpoint says it cannot answer rather than answering from nothing.
    */
   auditReader?: AuditReader,
+  /**
+   * Where the line for a browser call that failed, was abandoned or ran long goes. Defaults to the
+   * server log; a test passes its own.
+   */
+  log: (entry: Record<string, unknown>) => void = (entry) =>
+    console.warn(JSON.stringify(entry)),
 ) {
   const routes = new Hono<{ Variables: AppVariables }>();
 
@@ -91,6 +99,36 @@ export function createComputerRoutes(
       return context.json({ error: "There is no such Bot." }, 404);
     }
     await next();
+  });
+
+  /*
+   * One line for a browser call that went wrong on this side, so the next time a person is told the
+   * computer "could not be reached" there is something to read besides a container that looks fine.
+   *
+   * The page that tells a Bot about a failure is drawn in the browser of the person, from a request
+   * this server answered, so whether the server answered, how long it took and whether the caller was
+   * still there are the facts the message does not carry. Quiet for a call that went well, and for
+   * anything that is not a plain browser route. Carries the route, the Bot and numbers: never the
+   * address a navigate was for, a query string or a body.
+   */
+  routes.use("/:botId/*", async (context, next) => {
+    const startedAt = Date.now();
+    await next();
+    const botId = context.req.param("botId");
+    const route = browserRouteOf(context.req.path, botId);
+    if (!route) return;
+    const ms = Date.now() - startedAt;
+    const status = context.res.status;
+    const clientGone = context.req.raw.signal.aborted;
+    if (status < 500 && !clientGone && ms < SLOW_CALL_MS) return;
+    log({
+      type: "computer-route-call",
+      botId,
+      route,
+      status,
+      ms,
+      clientGone,
+    });
   });
 
   routes.get("/:botId/status", async (context) => {
@@ -994,7 +1032,31 @@ function errorBody(error: unknown): Record<string, unknown> {
     ...(error instanceof HandoffRequestError
       ? { controlRequestError: true }
       : {}),
+    ...(error instanceof PageNotUsableError ? { pageNotReady: true } : {}),
   };
+}
+
+/** A browser call that takes this long is worth a line even when it succeeds. */
+const SLOW_CALL_MS = 20_000;
+
+/**
+ * The browser route a path is, if it is one, by the name after the Bot's id.
+ *
+ * A fixed list and exactly one segment after the Bot, so a route that carries an id, a file name or a
+ * secret of its own (`/files/read`, `/control/...`, `/page-frame/...`) is never named in a log line.
+ */
+function browserRouteOf(path: string, botId: string): string | undefined {
+  const parts = path.split("/").filter(Boolean);
+  const at = parts.findIndex((part) => {
+    try {
+      return decodeURIComponent(part) === botId;
+    } catch {
+      return part === botId;
+    }
+  });
+  if (at < 0 || parts.length !== at + 2) return undefined;
+  const route = parts[at + 1];
+  return route && BROWSER_ROUTES.has(route) ? route : undefined;
 }
 
 function handoffId(body: Record<string, unknown> | null): string {
@@ -1007,8 +1069,14 @@ function handoffId(body: Record<string, unknown> | null): string {
   return body.requestId;
 }
 
-function statusFor(error: unknown): 400 | 403 | 404 | 409 | 413 | 500 | 503 {
+function statusFor(
+  error: unknown,
+): 400 | 403 | 404 | 409 | 413 | 500 | 502 | 503 {
   if (error instanceof HandoffRequestError) return error.status;
+  // A page that would not settle: the computer answered and is running, and no ref is involved. Not
+  // 409, which the surface renders as stale refs, and not 503, which sends an operator to a container
+  // that is fine.
+  if (error instanceof PageNotUsableError) return 502;
   if (error instanceof StaleSnapshotError) return 409;
   // Same status as a stale snapshot and for the same reason: nothing is broken, the caller has to do
   // something else first. What differs is what that something is, which the body carries.

@@ -14,7 +14,7 @@ import {
 } from "./authorisation";
 import { isPlainBotId } from "./bot-id";
 import { browserRuntimeFromEnv } from "./browser-runtime";
-import { detectChallenge } from "./challenge";
+import { raiseChallenge, readChallengeSignal } from "./challenge";
 import {
   ControlError,
   ControlRequestError,
@@ -47,6 +47,16 @@ import {
   sensitiveRefs,
 } from "./secret-masking";
 import { type BotSession, createSessions } from "./sessions";
+import {
+  collectWhenSettled,
+  isInterruptedByAnotherNavigation,
+  PAGE_MOVED_AWAY_MESSAGE,
+  PageNotSettledError,
+  pageLoadTimeoutMessage,
+  pageMovedOn,
+  SETTLE_QUIET_MS,
+  watchNavigations,
+} from "./settle";
 import { createShell } from "./shell";
 import {
   fillSignIn,
@@ -54,6 +64,12 @@ import {
   parseSignInCode,
   parseSignInFill,
 } from "./sign-in";
+import {
+  DEFAULT_TURN_WAIT_MS,
+  TurnAbandonedError,
+  TurnBusyError,
+  takesATurn,
+} from "./turns";
 import { startVirtualDisplay } from "./virtual-display";
 import { applyWebBotAuthPush } from "./web-bot-auth";
 import {
@@ -149,6 +165,18 @@ const NAVIGATION_TIMEOUT_MS = numberFromEnv("NAVIGATION_TIMEOUT_MS", 30000);
 const ACTION_TIMEOUT_MS = numberFromEnv("ACTION_TIMEOUT_MS", 10000);
 
 /**
+ * How long a call waits for the call ahead of it on the same Bot's page (turns.ts).
+ *
+ * Bounded so a call that cannot get its turn says so, in words, inside the 45 s the server gives it.
+ * Not plumbed through Compose or the chart, like the two timeouts above: it is a backstop, and the
+ * default is chosen to fit the longest thing that can be ahead of a call, a navigation.
+ */
+const TURN_WAIT_MS = numberFromEnv(
+  "COMPUTER_TURN_WAIT_MS",
+  DEFAULT_TURN_WAIT_MS,
+);
+
+/**
  * How much page text a navigation hands back.
  *
  * Bounded because a page can be megabytes and the text goes into a model's context, where a single
@@ -174,6 +202,7 @@ const TEXT_EXTRACT_LIMIT = 6000;
 const sessions = createSessions({
   isLive: (botId) => profiles.isLive(botId),
   profilesDirectory: process.env.PROFILES_DIR?.trim() || "/profiles",
+  turnWaitMs: TURN_WAIT_MS,
 });
 
 /**
@@ -511,6 +540,38 @@ class StaleSnapshotError extends Error {
   }
 }
 
+/**
+ * One line, in the computer's log, for a call to the page that did not go the usual way.
+ *
+ * Written for the next time a Bot is told its computer could not be reached while the computer was
+ * running: this says which call, what became of it and how long it took, so the answer is in the log
+ * and not in a guess. What it never holds: an address, a query string, page text or a person's data.
+ */
+function logPageCall(entry: Record<string, unknown>): void {
+  console.info(JSON.stringify({ type: "computer-page-call", ...entry }));
+}
+
+/** The answer to a read or a snapshot that failed: the page's own behaviour, or the call's. */
+function pageReadFailure(
+  error: unknown,
+  fallback: string,
+  context: { botId: string; tool: string; startedAt: number; aborted: boolean },
+): Response {
+  if (context.aborted) return json({ error: "Stopped.", stopped: true }, 499);
+  const elapsedMs = Date.now() - context.startedAt;
+  if (error instanceof PageNotSettledError) {
+    logPageCall({
+      botId: context.botId,
+      tool: context.tool,
+      outcome: "page-not-settled",
+      attempts: error.attempts,
+      elapsedMs,
+    });
+    return json({ error: error.message, pageNotReady: true }, 502);
+  }
+  return json({ error: describe(error, fallback) }, 502);
+}
+
 function json(body: unknown, status = 200): Response {
   return new Response(JSON.stringify(body), {
     status,
@@ -771,7 +832,25 @@ serve<StreamData>({
      * refused by being added to it rather than by remembering to repeat this.
      */
     let releaseAction: (() => void) | undefined;
+    let releaseTurn: (() => void) | undefined;
     try {
+      /*
+       * A call that reads or acts on the page waits for the one ahead of it on the same Bot, in order
+       * and for a bounded time (turns.ts). Before the wheel is asked about: a call must not hold an
+       * admitted slot, which a person taking control waits for, while it is only standing in line.
+       * The wheel is asked when its turn comes, so a person who took it meanwhile is still honoured.
+       */
+      if (takesATurn(request.method, url.pathname)) {
+        const turn = await session.turns.enter(request.signal);
+        releaseTurn = turn.release;
+        if (turn.waitedMs >= 1_000)
+          logPageCall({
+            botId,
+            tool: url.pathname.slice(1),
+            outcome: "waited-for-turn",
+            waitedMs: turn.waitedMs,
+          });
+      }
       if (actsOnTheComputer(url.pathname)) {
         releaseAction = session.control.admitBotAction(
           mutatesBrowser(url.pathname),
@@ -1113,30 +1192,88 @@ serve<StreamData>({
         }
 
         const startedAt = Date.now();
+        let watch: ReturnType<typeof watchNavigations> | undefined;
         try {
           const target = await currentPage(botId, "navigate");
           session.control.assertBotMayAct(true);
-          const response = await navigateWebPage(
-            target,
-            parsed.url,
-            RUNTIME.backend,
-            NAVIGATION_TIMEOUT_MS,
-          );
+          // Watching from before the load, so a page that moves on by itself while `goto` is still
+          // waiting is counted as well as one that moves on while it is read.
+          watch = watchNavigations(target);
+          let response: Awaited<ReturnType<typeof navigateWebPage>> | null =
+            null;
+          try {
+            response = await navigateWebPage(
+              target,
+              parsed.url,
+              RUNTIME.backend,
+              NAVIGATION_TIMEOUT_MS,
+            );
+          } catch (error) {
+            // The page rewrote or redirected itself before its first load event, which cancels the
+            // load `goto` was waiting for. The page is there, so it is read below. Anything else,
+            // including an aborted load with no navigation behind it, is the address failing.
+            if (!pageMovedOn(error, watch.count())) throw error;
+          }
           // A new document wipes every stamp, so every ref handed out before now is meaningless.
           // Bumping the generation makes an action carrying one fail with "take a new snapshot" rather
           // than fall through to a selector that matches nothing and read as a missing element.
           session.snapshotId += 1;
-          const extract = await readablePageText(target);
+          const cfMitigated = response
+            ? await response.headerValue("cf-mitigated").catch(() => undefined)
+            : undefined;
+          /*
+           * Read until the page holds still around the read (settle.ts), and read only: everything in
+           * this closure can be done twice. The challenge is read here and decided below, once.
+           */
+          const { value: page, attempts } = await collectWhenSettled(
+            target,
+            async () => {
+              // A redirect can land on a page this backend may not read; the check made after the
+              // load is made again on the page that is actually about to be read.
+              assertPageAccess(RUNTIME.backend, target.url());
+              const extract = await readablePageText(target);
+              return {
+                url: target.url(),
+                title: await target.title(),
+                extract,
+                signal: await readChallengeSignal(target, { cfMitigated }),
+              };
+            },
+            {
+              quietMs: SETTLE_QUIET_MS,
+              signal: request.signal,
+              watch,
+              // A page that swaps its body after its script runs never navigates, so the document the
+              // read was made on is held and asked about after the quiet pause.
+              holdDocument: async () => {
+                const body = await target.evaluateHandle(() => document.body);
+                return {
+                  intact: () =>
+                    body.evaluate(
+                      (element) =>
+                        element === null ||
+                        (element.isConnected && element === document.body),
+                    ),
+                  release: () => body.dispose(),
+                };
+              },
+            },
+          );
+          if (attempts > 1)
+            logPageCall({
+              botId,
+              tool: "navigate",
+              outcome: "settled-after-retry",
+              attempts,
+              elapsedMs: Date.now() - startedAt,
+            });
           return json({
-            url: target.url(),
-            title: await target.title(),
-            text: extract.text,
-            truncated: extract.truncated,
+            url: page.url,
+            title: page.title,
+            text: page.extract.text,
+            truncated: page.extract.truncated,
             elapsedMs: Date.now() - startedAt,
-            challenge: await detectChallenge(target, session.control, {
-              cfMitigated: response
-                ? await response.headerValue("cf-mitigated")
-                : undefined,
+            challenge: raiseChallenge(target, session.control, page.signal, {
               toolCallId:
                 typeof body?.toolCallId === "string"
                   ? body.toolCallId
@@ -1149,6 +1286,47 @@ serve<StreamData>({
             error instanceof SnapshotRequiredError
           )
             throw error;
+          if (request.signal.aborted)
+            return json({ error: "Stopped.", stopped: true }, 499);
+          // The page's own behaviour, said as that: not a missing element, and not an unreachable
+          // computer. The server maps `pageNotReady` to a refusal of its own (client.ts).
+          if (error instanceof PageNotSettledError) {
+            logPageCall({
+              botId,
+              tool: "navigate",
+              outcome: "page-not-settled",
+              attempts: error.attempts,
+              elapsedMs: Date.now() - startedAt,
+            });
+            return json({ error: error.message, pageNotReady: true }, 502);
+          }
+          if (isInterruptedByAnotherNavigation(error)) {
+            logPageCall({
+              botId,
+              tool: "navigate",
+              outcome: "interrupted-by-the-open-page",
+              elapsedMs: Date.now() - startedAt,
+            });
+            return json(
+              { error: PAGE_MOVED_AWAY_MESSAGE, pageNotReady: true },
+              502,
+            );
+          }
+          if (error instanceof Error && error.name === "TimeoutError") {
+            logPageCall({
+              botId,
+              tool: "navigate",
+              outcome: "load-timeout",
+              elapsedMs: Date.now() - startedAt,
+            });
+            return json(
+              {
+                error: pageLoadTimeoutMessage(NAVIGATION_TIMEOUT_MS),
+                pageNotReady: true,
+              },
+              502,
+            );
+          }
           // The page is the Bot's working surface, so a failed navigation is reported rather than
           // thrown: the transcript needs to say what happened, and the browser stays usable.
           return json(
@@ -1158,6 +1336,8 @@ serve<StreamData>({
             },
             502,
           );
+        } finally {
+          watch?.stop();
         }
       }
 
@@ -1317,21 +1497,37 @@ serve<StreamData>({
       // "Submit order", the page becomes a confirmation, and it has no way to find out what the
       // confirmation said. "I clicked the button" is not an answer to what happened.
       if (url.pathname === "/read" && request.method === "GET") {
+        const startedAt = Date.now();
         try {
           const target = await currentPage(botId);
-          const extract = await readablePageText(target);
+          /*
+           * Read until the page holds still around the read (settle.ts). Everything in the closure is
+           * a read, so doing it again costs nothing; the challenge is decided once, below.
+           */
+          const { value: page } = await collectWhenSettled(
+            target,
+            async () => ({
+              url: target.url(),
+              title: await target.title(),
+              extract: await readablePageText(target),
+              signal: await readChallengeSignal(target),
+            }),
+            { signal: request.signal },
+          );
           return json({
-            url: target.url(),
-            title: await target.title(),
-            text: extract.text,
-            truncated: extract.truncated,
-            challenge: await detectChallenge(target, session.control),
+            url: page.url,
+            title: page.title,
+            text: page.extract.text,
+            truncated: page.extract.truncated,
+            challenge: raiseChallenge(target, session.control, page.signal),
           });
         } catch (error) {
-          return json(
-            { error: describe(error, "Reading the page failed.") },
-            502,
-          );
+          return pageReadFailure(error, "Reading the page failed.", {
+            botId,
+            tool: "read",
+            startedAt,
+            aborted: request.signal.aborted,
+          });
         }
       }
 
@@ -1339,15 +1535,30 @@ serve<StreamData>({
       // page, stamping every element it describes, and a GET that changes the document is a lie that
       // caches and prefetchers eventually punish.
       if (url.pathname === "/snapshot" && request.method === "POST") {
+        const startedAt = Date.now();
         try {
           const target = await currentPage(botId);
-          const snapshot = await snapshotPage(session, target);
+          // Read until the page holds still around the read (settle.ts). A snapshot that is retried
+          // simply takes a newer generation; the one handed back is the one that was kept.
+          const { value: page } = await collectWhenSettled(
+            target,
+            async () => ({
+              snapshot: await snapshotPage(session, target),
+              signal: await readChallengeSignal(target),
+            }),
+            { signal: request.signal },
+          );
           return json({
-            ...snapshot,
-            challenge: await detectChallenge(target, session.control),
+            ...page.snapshot,
+            challenge: raiseChallenge(target, session.control, page.signal),
           });
         } catch (error) {
-          return json({ error: describe(error, "Snapshot failed.") }, 502);
+          return pageReadFailure(error, "Snapshot failed.", {
+            botId,
+            tool: "snapshot",
+            startedAt,
+            aborted: request.signal.aborted,
+          });
         }
       }
 
@@ -1439,9 +1650,24 @@ serve<StreamData>({
           { error: error.message, controlRequestError: true },
           error.status,
         );
+      // The line ahead did not move in time. Said as what it is, with the numbers in the log: this
+      // computer is working, and a caller told it "could not be reached" would go looking for a fault.
+      if (error instanceof TurnBusyError) {
+        logPageCall({
+          botId,
+          tool: url.pathname.slice(1),
+          outcome: "turn-busy",
+          waitedMs: error.waitedMs,
+          waiting: session.turns.waiting(),
+        });
+        return json({ error: error.message, busy: true }, 503);
+      }
+      if (error instanceof TurnAbandonedError)
+        return json({ error: error.message, stopped: true }, 499);
       throw error;
     } finally {
       releaseAction?.();
+      releaseTurn?.();
     }
   },
 });

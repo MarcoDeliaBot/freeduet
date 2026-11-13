@@ -166,6 +166,43 @@ describe.skipIf(!asked)(
       await profiles.closeAll();
     }, 60_000);
 
+    test("calls that arrive while the idle sweep is closing the browser all get the one page that replaces it", async () => {
+      // The window a Bot's next calls fall into when they land on a browser that is being closed for
+      // being idle: the first of them has to wait for the close and start the new browser, and the
+      // rest have to wait for that launch instead of starting a second one against the same profile
+      // directory. Pinned as the behaviour a person was reported to meet as "could not be reached"
+      // (it was not the cause, and this keeps it from becoming one).
+      process.env.COMPUTER_BROWSER_IDLE_MS = "1";
+      const { createProfiles } = (await import(
+        `../src/profiles?sweeping=${Date.now()}`
+      )) as typeof import("../src/profiles");
+      const told: string[] = [];
+      const profiles = createProfiles(join(root, "sweeping"), (botId) => {
+        told.push(botId);
+      });
+
+      const original = await profiles.page("sleeper");
+      await new Promise((resolve) => setTimeout(resolve, 25));
+
+      // Not awaited: the calls arrive while the close is still in progress.
+      const sweeping = profiles.sweepIdleNow();
+      const arriving = await Promise.all([
+        profiles.page("sleeper"),
+        profiles.page("sleeper"),
+        profiles.page("sleeper"),
+      ]);
+      await sweeping;
+
+      expect(told).toEqual(["sleeper"]);
+      // One browser, one page, and it is not the one that was closed.
+      expect(profiles.liveCount()).toBe(1);
+      expect(arriving[1]).toBe(arriving[0]);
+      expect(arriving[2]).toBe(arriving[0]);
+      expect(arriving[0]).not.toBe(original);
+      expect(arriving[0].isClosed()).toBe(false);
+      await profiles.closeAll();
+    }, 60_000);
+
     test("the cap tells the Bot whose browser it closed", async () => {
       // One browser allowed, so the second Bot's launch is what closes the first Bot's browser. The
       // person watching the first one never asked for anything and is owed the message just the same.

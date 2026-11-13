@@ -27,6 +27,7 @@
 import type { Page } from "playwright";
 import { type Control, createControl } from "./control";
 import { createControlStore } from "./control-store";
+import { createTurnQueue, DEFAULT_TURN_WAIT_MS, type TurnQueue } from "./turns";
 import { createViewerSlot, type ViewerSlot } from "./viewer";
 
 /** Per-Bot browser-control state. Profiles are isolated, but this process is not a security boundary. */
@@ -58,6 +59,12 @@ export type BotSession = {
    * navigating, so it never moves a page out from under someone who has started driving.
    */
   humanInputs: number;
+  /**
+   * The line the calls that read or act on this Bot's page wait in, one at a time. See turns.ts.
+   *
+   * Per Bot, like the page itself: one Bot's long navigation must not hold up another's snapshot.
+   */
+  turns: TurnQueue;
 };
 
 export type SessionsOptions = {
@@ -69,6 +76,8 @@ export type SessionsOptions = {
   profilesDirectory?: string;
   /** Injected so a test can name the run it expects rather than match a uuid. */
   mintRun?: () => string;
+  /** How long a call waits for the one ahead of it on the same Bot's page. See turns.ts. */
+  turnWaitMs?: number;
 };
 
 /**
@@ -133,6 +142,9 @@ export function createSessions(options: SessionsOptions) {
       run: mintRun(),
       viewer: createViewerSlot(),
       humanInputs: 0,
+      turns: createTurnQueue({
+        waitMs: options.turnWaitMs ?? DEFAULT_TURN_WAIT_MS,
+      }),
     };
     sessions.set(botId, created);
     // Cheap, and only ever on the path that adds one, so the map cannot grow without this running.
