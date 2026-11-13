@@ -49,6 +49,7 @@ const julesCase = (request: string): Case => ({
   must: [],
   must_not: [],
   measure: [],
+  position: [],
   safety: false,
 });
 

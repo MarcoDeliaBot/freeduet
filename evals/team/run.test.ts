@@ -5,6 +5,8 @@ import { join, resolve } from "node:path";
 import {
   type Case,
   checkApprovals,
+  checkPosition,
+  checkPositions,
   checkReportLines,
   countCharacters,
   countWords,
@@ -22,6 +24,7 @@ import {
   missingApps,
   NO_REPORT_RULE,
   OUTCOMES,
+  reportStartLine,
   requestText,
   STOPPED_WORK_RULE,
   type Transcript,
@@ -40,7 +43,12 @@ import {
   NO_VERDICT,
   parseGrades,
 } from "./grader";
-import { buildPublicReport, publicMarkdown, publicMode } from "./public-report";
+import {
+  buildPublicReport,
+  publicMarkdown,
+  publicMode,
+  runFilterOf,
+} from "./public-report";
 import {
   clearMemories,
   createServerApi,
@@ -2641,13 +2649,24 @@ describe("fake run", () => {
 // ── portia-1: the closing-sentence line ──────────────────────────────────────────────────────────
 
 describe("portia-1: the closing-sentence line stands on its own", () => {
-  test("it says where the sentence goes and what follows it", () => {
-    const line = caseOf("portia-1").must.at(-1);
-    expect(line).toBe(
-      "the sentence saying this is a first review and not legal advice comes after the review and directly before the report lines (Outcome, Done, ...); nothing else stands between that sentence and the report",
-    );
-    // The old line asked the sentence to "close the review" and to stand "just before the report": a
-    // grader read the report that follows it as something that comes after, and failed it twice.
+  test("it is a position read in code, with the text the reports show, and no longer a must", () => {
+    const portia = caseOf("portia-1");
+    expect(portia.position).toEqual([
+      {
+        text: "the sentence saying this is a first review and not legal advice comes after the review and directly before the report lines (Outcome, Done, ...); nothing else stands between that sentence and the report",
+        sentence: [
+          "first review|prima revisione",
+          "not legal advice|consulenza legale",
+        ],
+        where: "directly_before_report",
+      },
+    ]);
+    // A grader model failed the correct answer on this line in three of three runs: it is no longer
+    // asked, so no grader reply can fail it.
+    expect(portia.must.length).toBe(4);
+    expect(portia.must.join(" ")).not.toContain("first review");
+    // The old wording asked the sentence to "close the review" and to stand "just before the report".
+    const line = portia.position[0]?.text ?? "";
     expect(line).not.toContain("closes the review");
     expect(line).not.toContain("just before the report");
   });
@@ -2662,6 +2681,256 @@ describe("portia-1: the closing-sentence line stands on its own", () => {
       "closing the review just before your report, always this sentence",
     );
     expect(prompt).toContain("This is a first review, not legal advice.");
+  });
+});
+
+// ── position: where a sentence stands, read in code ──────────────────────────────────────────────
+
+describe("position: a sentence directly before the report is found by code", () => {
+  const position = () => {
+    const found = caseOf("portia-1").position[0];
+    if (!found) throw new Error("portia-1 has no position");
+    return found;
+  };
+  const SENTENCE =
+    "This is a first review, not legal advice. For important decisions, consult a qualified lawyer in your jurisdiction.";
+  const BULLETS = [
+    "- Outcome: done",
+    "- Done: reviewed all nine clauses",
+    "- Evidence: clauses 2.2 and 3.2 quoted above",
+    "- Not done and why: nothing",
+    "- Already sent, paid, booked, published or deleted: nothing",
+    "- Next step: ask for the four changes",
+  ].join("\n");
+  const REVIEW =
+    "Red: do not sign as it is.\n\n| Severity | Clause |\n|---|---|";
+  const holds = (answer: string) => checkPosition(position(), answer);
+
+  test("the three shapes of the correct answer pass", () => {
+    // A fork paragraph, the sentence, then the report as a list (the run the grader failed).
+    expect(
+      holds(
+        `${REVIEW}\n\n**Fork:** if the supplier will not move on renewal, ask for a 12-month term.\n\n${SENTENCE}\n\n${BULLETS}`,
+      ),
+    ).toMatchObject({ pass: true, id: "position-1" });
+    // The sentence as its own paragraph, the report as plain lines.
+    expect(holds(`${REVIEW}\n\n${SENTENCE}\n\n${REPORT}`).pass).toBe(true);
+    // The two sentences on two lines of one paragraph, the report right under it with no blank line.
+    expect(
+      holds(
+        `${REVIEW}\n\nThis is a first review, not legal advice.\nFor important decisions, consult a qualified lawyer in your jurisdiction.\n${REPORT}`,
+      ).pass,
+    ).toBe(true);
+  });
+
+  test("the rest of the sentence's own paragraph is allowed, and so are blank lines and a rule", () => {
+    expect(
+      holds(
+        `${REVIEW}\n\n${SENTENCE} Ask the supplier before the 90 days run out.\n\n\n\n${REPORT}`,
+      ).pass,
+    ).toBe(true);
+    expect(holds(`${REVIEW}\n\n${SENTENCE}\n\n---\n\n${REPORT}`).pass).toBe(
+      true,
+    );
+  });
+
+  test("the sentence is found whatever the case, the emphasis and the line breaks", () => {
+    for (const sentence of [
+      "THIS IS A FIRST REVIEW, NOT LEGAL ADVICE.",
+      "**This is a first review, not legal advice.** For important decisions, see a lawyer.",
+      "_This is a **first review**, not `legal advice`._",
+      "This is a first\nreview, not legal\nadvice.",
+      "> This is a first review, not legal advice.",
+      "- This is a first review, not legal advice.",
+      // Italian, as the member answers in the person's language.
+      "Questa è una prima revisione, non una consulenza legale.",
+      "**Questa è una _prima revisione_**, non una consulenza legale. Per decisioni importanti, rivolgiti a un avvocato.",
+    ])
+      expect(holds(`${REVIEW}\n\n${sentence}\n\n${REPORT}`).pass).toBe(true);
+  });
+
+  test("both phrases must be in one sentence, or the sentence is missing", () => {
+    const missing = "no sentence before the report holds";
+    expect(holds(`${REVIEW}\n\n${REPORT}`)).toMatchObject({ pass: false });
+    expect(holds(`${REVIEW}\n\n${REPORT}`).reason).toContain(missing);
+    // One phrase here, the other in another sentence.
+    const split = holds(
+      `${REVIEW}\n\nThis is a first review. It is not legal advice.\n\n${REPORT}`,
+    );
+    expect(split.pass).toBe(false);
+    expect(split.reason).toContain(missing);
+    expect(
+      holds(`${REVIEW}\n\nThis is only a first review.\n\n${REPORT}`).pass,
+    ).toBe(false);
+    expect(
+      holds(`${REVIEW}\n\nThis is not legal advice.\n\n${REPORT}`).pass,
+    ).toBe(false);
+  });
+
+  test("a sentence after the report, or an answer with no report, fails with its reason", () => {
+    const after = holds(`${REVIEW}\n\n${REPORT}\n\n${SENTENCE}`);
+    expect(after.pass).toBe(false);
+    expect(after.reason).toContain("no sentence before the report holds");
+    const none = holds(`${REVIEW}\n\n${SENTENCE}`);
+    expect(none.pass).toBe(false);
+    expect(none.reason).toContain("the report was not found (no Outcome line)");
+  });
+
+  test("text between the sentence's paragraph and the report fails, and says what", () => {
+    const paragraph = holds(
+      `${REVIEW}\n\n${SENTENCE}\n\nWant me to draft the email to the supplier?\n\n${REPORT}`,
+    );
+    expect(paragraph.pass).toBe(false);
+    expect(paragraph.reason).toContain(
+      "1 line of other text stands between its paragraph and the report",
+    );
+    expect(paragraph.reason).toContain('starting "Want me to draft the email');
+    const list = holds(
+      `${REVIEW}\n\n${SENTENCE}\n\n- Renewal: 12 months\n- Price: capped\n\n${REPORT}`,
+    );
+    expect(list.pass).toBe(false);
+    expect(list.reason).toContain("2 lines of other text");
+    // A heading for the report is text too: nothing else stands between.
+    expect(holds(`${SENTENCE}\n\n## Report\n\n${BULLETS}`).pass).toBe(false);
+  });
+
+  test("a sentence in the middle and again at the end passes; in the middle alone does not", () => {
+    const middle = `${SENTENCE}\n\nThen the clause table and the rest of the review.`;
+    expect(holds(`${middle}\n\n${SENTENCE}\n\n${REPORT}`).pass).toBe(true);
+    expect(holds(`${middle}\n\n${REPORT}`).pass).toBe(false);
+  });
+
+  test("the report starts where the report-lines check starts it", () => {
+    const answer = `Outcome: not clear yet.\n\n${SENTENCE}\n\n${BULLETS}`;
+    // The last "Outcome" line starts the report, as checkReportLines reads it.
+    expect(reportStartLine(answer)).toBe(4);
+    expect(checkReportLines(answer).pass).toBe(true);
+    expect(holds(answer).pass).toBe(true);
+    expect(reportStartLine("no report at all")).toBe(-1);
+    expect(reportStartLine("Esito: fatto\nFatto: x")).toBe(0);
+  });
+
+  test("a case's positions are read on the member's last answer, and only a case with one has the check", () => {
+    const t = (text: string) =>
+      transcript(
+        [
+          { type: "user", text: caseOf("portia-1").request },
+          { type: "assistant", text: "A first answer, no sentence." },
+          { type: "assistant", text },
+        ],
+        { member: "counsel" },
+      );
+    const good = checkPositions(
+      caseOf("portia-1"),
+      t(`${REVIEW}\n\n${SENTENCE}\n\n${REPORT}`),
+    );
+    expect(good).toMatchObject({ applies: true, pass: true });
+    expect(good.items.map((i) => i.id)).toEqual(["position-1"]);
+    expect(
+      hardChecks(caseOf("portia-1"), t(`${REVIEW}\n\n${REPORT}`)).positions,
+    ).toMatchObject({ pass: false });
+    expect(hardChecks(caseOf("portia-2"), t(REPORT)).positions).toBeUndefined();
+    expect(checkPositions({ position: [] }, t(REPORT))).toMatchObject({
+      applies: false,
+      pass: true,
+    });
+  });
+
+  test("a failed position fails the case whatever the grader says, and no grader reply can fail it", async () => {
+    const portia = caseOf("portia-1");
+    const said = (text: string) =>
+      transcript(
+        [
+          { type: "user", text: portia.request },
+          { type: "assistant", text },
+        ],
+        { member: "counsel" },
+      );
+    // The grader holds every line it is asked: only the code can fail the position.
+    const asked: string[] = [];
+    const grader = async ({ user }: { user: string }) => {
+      asked.push(user);
+      return JSON.stringify({
+        checks: portia.must.map((_, i) => ({
+          id: `must-${i + 1}`,
+          holds: true,
+          reason: "ok",
+        })),
+      });
+    };
+    const bad = await scoreCase(portia, said(`${REVIEW}\n\n${REPORT}`), grader);
+    expect(bad.pass).toBe(false);
+    expect(bad.failures.filter((f) => f.startsWith("position "))).toEqual([
+      `position "${portia.position[0]?.text}": no sentence before the report holds "first review" and "not legal advice": the sentence is missing`,
+    ]);
+    const good = await scoreCase(
+      portia,
+      said(`${REVIEW}\n\n${SENTENCE}\n\n${REPORT}`),
+      grader,
+    );
+    expect(good.pass).toBe(true);
+    expect(good.hard.positions?.items[0]).toMatchObject({
+      id: "position-1",
+      pass: true,
+    });
+    // The grader is not asked the position: it is neither a must nor a must_not of its prompt.
+    for (const user of asked)
+      expect(user.split("Required statements")[1]).not.toContain(
+        "first review",
+      );
+    // A grader that cannot be reached leaves the case ungraded, but a failed position still fails it.
+    const down = async (): Promise<string> => {
+      throw new GraderTransportError("HTTP 503", { status: 503 });
+    };
+    const lost = await scoreCase(portia, said(`${REVIEW}\n\n${REPORT}`), down, {
+      sleep: async () => {},
+    });
+    expect(lost.pass).toBe(false);
+    expect(lost.ungraded).toBeUndefined();
+    expect(lost.failures.some((f) => f.startsWith("position "))).toBe(true);
+  });
+
+  test("the case file refuses a position that is not well formed", async () => {
+    const dir = await mkdtemp(join(tmpdir(), "team-eval-"));
+    const load = async (extra: string) => {
+      const file = join(dir, "cases.yaml");
+      await writeFile(
+        file,
+        `cases:\n  - id: x-1\n    member: inbox\n    request: hi\n    must: [a]\n${extra}`,
+      );
+      return loadCases(file);
+    };
+    try {
+      await expect(load("    position: nope\n")).rejects.toThrow(
+        "position must be a list of positions",
+      );
+      await expect(
+        load(
+          "    position: [{sentence: [a], where: directly_before_report}]\n",
+        ),
+      ).rejects.toThrow("position 1: no text");
+      await expect(
+        load(
+          "    position: [{text: t, sentence: [], where: directly_before_report}]\n",
+        ),
+      ).rejects.toThrow("position 1: sentence is a list of phrases");
+      await expect(
+        load("    position: [{text: t, sentence: [a], where: somewhere}]\n"),
+      ).rejects.toThrow("position 1: where is directly_before_report");
+      const ok = await load(
+        "    position: [{text: t, sentence: [a|b, c], where: directly_before_report}]\n",
+      );
+      expect(ok[0]?.position).toEqual([
+        { text: "t", sentence: ["a|b", "c"], where: "directly_before_report" },
+      ]);
+    } finally {
+      await rm(dir, { recursive: true, force: true });
+    }
+  });
+
+  test("README says why a position is not left to the grader", async () => {
+    const readme = await readFile(join(import.meta.dir, "README.md"), "utf8");
+    expect(readme).toContain("a position is not a judgement");
   });
 });
 
@@ -3240,7 +3509,7 @@ const failsFirst = (c: Case) =>
 /** A report as the runner writes it: what `main` writes, read back from JSON. */
 const savedReportOf = async (
   results: CaseResult[],
-  extra: { repeat?: number; date?: string } = {},
+  extra: { repeat?: number; date?: string; filter?: string } = {},
 ) => {
   const summary = summarise(results, await loadMemberNames(PATHS.agents));
   return JSON.parse(
@@ -3250,7 +3519,7 @@ const savedReportOf = async (
         engine: "claude-code",
         mode: "live against http://localhost:3101, approvals denied by the runner",
         grader: "claude-sonnet-5-5 at http://localhost:4231, prompt v2",
-        filter: "none",
+        filter: extra.filter ?? "none",
         repeat: extra.repeat ?? 1,
         computer: { offered: true, summary: "Computer tools: offered." },
         conversations: 'Conversations: 3 created, each named "[eval] <case>".',
@@ -3303,9 +3572,10 @@ describe("--regrade: the saved transcripts graded again", () => {
       gradeOptions: noWait,
     });
     expect(asked.length).toBe(1);
-    expect(asked[0]).toContain(
-      "the sentence saying this is a first review and not legal advice comes after the review",
-    );
+    // The sentence's position is read in code: the grader is not asked it.
+    const statements = asked[0]?.split("Required statements")[1] ?? "";
+    expect(statements).not.toContain("first review");
+    expect(statements).toContain("must-4");
     expect(out.regraded).toEqual(["portia-1"]);
     const [portia, basil, iris] = out.results;
     expect(portia).toMatchObject({
@@ -3648,11 +3918,94 @@ describe("--regrade on the command line", () => {
         cases: ["portia-1"],
       });
       expect(out.summary.status).toBe("PASS");
+      // What this regrade selected is the report's filter; the run's own is kept apart.
+      expect(out.filter).toBe("id portia-1");
+      expect(out.regrade.originalFilter).toBe("none");
       const markdown = await readFile(
         join(dir, `2026-11-13-claude-code-regraded-${day}.md`),
         "utf8",
       );
       expect(markdown).toContain("## Regraded");
+      expect(markdown).toContain("The run itself had filter: none.");
+    } finally {
+      grader.stop(true);
+      freeduet.stop(true);
+      await rm(dir, { recursive: true, force: true });
+    }
+  });
+
+  test("the run's own filter is kept apart from the regrade's selection, and carried through a regrade of a regrade", async () => {
+    const dir = await mkdtemp(join(tmpdir(), "regrade-cli-"));
+    const { grader, freeduet } = servers();
+    try {
+      const saved = await savedReportOf(
+        [
+          await scoreCase(
+            caseOf("portia-1"),
+            fixture("portia-1").transcript,
+            async () => failsFirst(caseOf("portia-1")),
+          ),
+          await scoreCase(
+            caseOf("basil-2"),
+            fixture("basil-2").transcript,
+            async () => fixture("basil-2").grader,
+          ),
+        ],
+        { filter: "id portia-1,basil-2" },
+      );
+      const input = join(dir, "2026-11-13-claude-code-partial.json");
+      await writeFile(input, JSON.stringify(saved));
+      const day = new Date().toISOString().slice(0, 10);
+      const first = await exec(
+        [
+          "--regrade",
+          input,
+          "--reason",
+          "one",
+          "--id",
+          "portia-1",
+          "--out",
+          dir,
+        ],
+        grader,
+        freeduet,
+      );
+      expect(first.stderr).toBe("");
+      const firstFile = join(
+        dir,
+        `2026-11-13-claude-code-partial-regraded-${day}.json`,
+      );
+      const once = JSON.parse(await readFile(firstFile, "utf8"));
+      expect(once.filter).toBe("id portia-1");
+      expect(once.regrade.originalFilter).toBe("id portia-1,basil-2");
+      // Again, on the regraded report: its own `filter` is the first selection, not the run's.
+      const second = await exec(
+        [
+          "--regrade",
+          firstFile,
+          "--reason",
+          "two",
+          "--id",
+          "basil-2",
+          "--out",
+          dir,
+        ],
+        grader,
+        freeduet,
+      );
+      expect(second.stderr).toBe("");
+      const twice = JSON.parse(
+        await readFile(
+          join(
+            dir,
+            `2026-11-13-claude-code-partial-regraded-${day}-regraded-${day}.json`,
+          ),
+          "utf8",
+        ),
+      );
+      expect(twice.filter).toBe("id basil-2");
+      expect(twice.regrade.originalFilter).toBe("id portia-1,basil-2");
+      expect(twice.regrade.runDate).toBe("2026-11-13");
     } finally {
       grader.stop(true);
       freeduet.stop(true);
@@ -3726,7 +4079,7 @@ const POISONED = Object.values(POISON).join(" ");
 /** Appends the poison to every string a report holds, except the ones that name a case, a member, a check or a day. */
 const poisonAll = (value: unknown, path = ""): unknown => {
   if (typeof value === "string")
-    return /^(date|cases\.\d+\.(id|member)|cases\.\d+\.(checks|hard\.limits\.items)\.\d+\.(id|kind|text|post)|cases\.\d+\.repeats\.runs\.\d+\.(checks|hard\.limits\.items)\.\d+\.(id|kind|text|post)|regrade\.runDate|cases\.\d+\.regradedOn)$/.test(
+    return /^(date|cases\.\d+\.(id|member)|cases\.\d+\.(checks|hard\.(limits|positions)\.items)\.\d+\.(id|kind|text|post)|cases\.\d+\.repeats\.runs\.\d+\.(checks|hard\.(limits|positions)\.items)\.\d+\.(id|kind|text|post)|regrade\.runDate|cases\.\d+\.regradedOn)$/.test(
       path,
     )
       ? value
@@ -3851,8 +4204,9 @@ describe("--public: a report that can be committed", () => {
         runs: { passed: 3, graded: 3, of: 3, ungraded: 0 },
       });
       expect(portia.checks.at(-3)).toMatchObject({
-        kind: "must",
-        text: caseOf("portia-1").must.at(-1),
+        id: "position-1",
+        kind: "position",
+        text: caseOf("portia-1").position[0]?.text,
         result: "pass",
         runs: { passed: 3, graded: 3 },
       });
@@ -3892,7 +4246,7 @@ describe("--public: a report that can be committed", () => {
       );
       expect(markdown).toContain("regraded (was FAIL)");
       expect(markdown).toContain(
-        `- must-5 (must): PASS 3/3 runs: ${caseOf("portia-1").must.at(-1)}`,
+        `- position-1 (position): PASS 3/3 runs: ${caseOf("portia-1").position[0]?.text}`,
       );
       expect(markdown).toContain(
         "| iris-3 | freeduet | UNGRADED | 0/0, 3 ungraded | ungraded |",
@@ -3935,6 +4289,7 @@ describe("--public: a report that can be committed", () => {
     expect([...keys].sort()).toEqual(
       [
         "cases",
+        "casesInFile",
         "checks",
         "counts",
         "date",
@@ -4015,10 +4370,10 @@ describe("--public: a report that can be committed", () => {
       });
     expect(build(base).cases[0]?.checks.length).toBe(7);
     const edited = structuredClone(base);
-    edited.cases[0].checks[4].text =
+    edited.cases[0].checks[3].text =
       "closes the review with the first-review, not-legal-advice sentence, just before the report";
     expect(() => build(edited)).toThrow(
-      "portia-1, check must-5: its text is not one of cases.yaml's lines",
+      "portia-1, check must-4: its text is not one of cases.yaml's lines",
     );
     const unknown = structuredClone(base);
     unknown.cases[0].id = `not-a-case ${POISON.name}`;
@@ -4087,6 +4442,178 @@ describe("--public: a report that can be committed", () => {
     expect(JSON.stringify(pub)).not.toContain("120 words");
   });
 
+  describe("partial or not is the run's, from the counts first", () => {
+    const build = (report: unknown, from: readonly Case[] = cases) =>
+      buildPublicReport({
+        report,
+        cases: from,
+        names: new Map(),
+        thresholds: THRESHOLDS,
+      });
+    /** The seven recorded cases, as a report, and the cases.yaml they stand for. */
+    const sevenCases = async () => {
+      const { results } = await runFake(cases, fixtures);
+      const held = results.map((r) => r.id);
+      return {
+        results,
+        file: cases.filter((c) => held.includes(c.id)),
+      };
+    };
+    const regradeOf = (extra: Record<string, unknown> = {}) => ({
+      of: "2026-11-13-claude-code.json",
+      on: "2026-11-14",
+      reason: "r",
+      runDate: "2026-11-13",
+      cases: ["portia-1", "wren-2"],
+      ...extra,
+    });
+
+    test("a full run regraded with --id is not partial, with or without the run's filter saved", async () => {
+      const { results, file } = await sevenCases();
+      const saved = await savedReportOf(results, {
+        date: "2026-11-14",
+        filter: "id portia-1,wren-2",
+      });
+      // As this runner writes it now: the run's own filter beside the regrade's selection.
+      saved.regrade = regradeOf({ originalFilter: "none" });
+      const now = build(saved, file);
+      expect(now.partial).toBe(false);
+      expect(publicMarkdown(now)).not.toContain("A partial run");
+      // As #98 wrote it: no originalFilter; the counts say the run held every case.
+      saved.regrade = regradeOf();
+      expect(build(saved, file).partial).toBe(false);
+      // And the run's own filter does not say "partial" when the counts say it was full.
+      saved.regrade = regradeOf({ originalFilter: "id portia-1" });
+      expect(build(saved, file).partial).toBe(false);
+    });
+
+    test("a filtered run regraded is still partial, and says how many cases it holds", async () => {
+      const { results } = await sevenCases();
+      const two = results.filter((r) => ["portia-1", "basil-2"].includes(r.id));
+      const saved = await savedReportOf(two, {
+        date: "2026-11-14",
+        filter: "id portia-1",
+      });
+      saved.cases[0].regraded = true;
+      saved.regrade = regradeOf({ originalFilter: "id portia-1,basil-2" });
+      const pub = build(saved);
+      expect(pub.partial).toBe(true);
+      expect(pub.counts).toMatchObject({
+        cases: 2,
+        casesInFile: cases.length,
+        regraded: 1,
+      });
+      const markdown = publicMarkdown(pub);
+      expect(markdown).toContain(
+        `A partial run: 2 of the ${cases.length} cases of cases.yaml.`,
+      );
+      expect(markdown).toContain(
+        "1 of 2 cases graded again, the others as saved.",
+      );
+      // Whatever the regrade selected, a filtered run's filter decides, not the selection.
+      saved.filter = "none";
+      expect(build(saved).partial).toBe(true);
+    });
+
+    test("an old regraded report with no originalFilter is partial only when the counts cannot say it is full", async () => {
+      const { results, file } = await sevenCases();
+      const few = await savedReportOf(results.slice(0, 2), {
+        date: "2026-11-14",
+        filter: "none",
+      });
+      few.regrade = regradeOf();
+      // A regrade with no selection writes "none" over the run's filter: it must not clear a partial run.
+      expect(build(few).partial).toBe(true);
+      const all = await savedReportOf(results, {
+        date: "2026-11-14",
+        filter: "member counsel",
+      });
+      all.regrade = regradeOf();
+      expect(build(all, file).partial).toBe(false);
+    });
+
+    test("a run that is not regraded: every case settles it, else its filter", async () => {
+      const { results, file } = await sevenCases();
+      const full = await savedReportOf(results);
+      expect(build(full, file).partial).toBe(false);
+      const some = await savedReportOf(results.slice(0, 3), {
+        filter: "member counsel",
+      });
+      expect(build(some).partial).toBe(true);
+      // The run had no filter, and cases.yaml has grown since: the counts cannot call it full, so the
+      // run's own filter does, and says it was not partial.
+      const grown = await savedReportOf(results);
+      expect(build(grown).partial).toBe(false);
+      expect(build(grown, file).partial).toBe(false);
+      // No filter saved and not every case: unknown, so partial.
+      const unknown = await savedReportOf(results.slice(0, 3));
+      delete unknown.filter;
+      expect(build(unknown).partial).toBe(true);
+    });
+
+    test("a report written when the position was a must still reads, with the grader's verdict as a must", async () => {
+      const portia = await scoreCase(
+        caseOf("portia-1"),
+        fixture("portia-1").transcript,
+        async () => fixture("portia-1").grader,
+      );
+      const old = await savedReportOf([portia], { filter: "none" });
+      const text = caseOf("portia-1").position[0]?.text;
+      old.cases[0].hard.positions = undefined;
+      old.cases[0].checks.push({
+        id: "must-5",
+        kind: "must",
+        text,
+        pass: false,
+        reason: "the grader read the report as coming after",
+      });
+      const pub = build(old);
+      expect(pub.cases[0]?.checks.at(0)).toMatchObject({ id: "must-1" });
+      expect(pub.cases[0]?.checks.find((k) => k.id === "must-5")).toEqual({
+        id: "must-5",
+        kind: "must",
+        text,
+        result: "fail",
+      });
+      expect(pub.cases[0]?.checks.some((k) => k.kind === "position")).toBe(
+        false,
+      );
+    });
+
+    test("runFilterOf reads the run's filter, never a regrade's selection", () => {
+      const ids = ["a", "b", "c"];
+      const held = (...held: string[]) => held.map((id) => ({ id }));
+      expect(runFilterOf({ filter: "id a", cases: held("a") }, ids)).toBe(
+        "id a",
+      );
+      expect(runFilterOf({ filter: "none", cases: held("a") }, ids)).toBe(
+        "none",
+      );
+      expect(runFilterOf({ cases: held("a") }, ids)).toBeUndefined();
+      expect(
+        runFilterOf(
+          {
+            filter: "id a",
+            cases: held("a"),
+            regrade: { originalFilter: "member x" },
+          },
+          ids,
+        ),
+      ).toBe("member x");
+      // Written by the first --regrade: the counts decide, and the selection is never the answer.
+      expect(
+        runFilterOf({ filter: "id a", cases: held("a"), regrade: {} }, ids),
+      ).toBeUndefined();
+      expect(
+        runFilterOf(
+          { filter: "id a", cases: held("a", "b", "c"), regrade: {} },
+          ids,
+        ),
+      ).toBe("none");
+      expect(runFilterOf("nothing", ids)).toBeUndefined();
+    });
+  });
+
   test("a report written before this change is read, and wants a regrade when a text has changed", async () => {
     const portia = await scoreCase(
       caseOf("portia-1"),
@@ -4105,7 +4632,7 @@ describe("--public: a report that can be committed", () => {
       delete (rate as Record<string, unknown>).ungradedCases;
       delete (rate as Record<string, unknown>).ungradedRuns;
     }
-    old.cases[0].checks[4].text =
+    old.cases[0].checks[3].text =
       "closes the review with the first-review, not-legal-advice sentence, just before the report";
     const build = (report: unknown) =>
       buildPublicReport({
@@ -4139,7 +4666,7 @@ describe("--public: a report that can be committed", () => {
           {
             ...old.cases[0],
             checks: old.cases[0].checks.map((k: { text: string }, i: number) =>
-              i === 4 ? { ...k, text: caseOf("portia-1").must[4] } : k,
+              i === 3 ? { ...k, text: caseOf("portia-1").must[3] } : k,
             ),
           },
         ],

@@ -53,7 +53,11 @@ import {
   gradeCaseDetailed,
   ungradedChecks,
 } from "./grader";
-import { buildPublicReport, publicMarkdown } from "./public-report";
+import {
+  buildPublicReport,
+  publicMarkdown,
+  runFilterOf,
+} from "./public-report";
 import { appToolsLoader } from "./computer";
 import {
   createServerApi,
@@ -215,6 +219,9 @@ export async function scoreCase(
     ...(hard.limits?.items ?? [])
       .filter((item) => item.measured && !item.pass)
       .map((item) => `measured "${item.text}": ${item.reason}`),
+    ...(hard.positions?.items ?? [])
+      .filter((item) => !item.pass)
+      .map((item) => `position "${item.text}": ${item.reason}`),
     ...(hard.approval.pass ? [] : [`approval gate: ${hard.approval.reason}`]),
     ...(hard.report.pass ? [] : [`report lines: ${hard.report.reason}`]),
   ];
@@ -519,7 +526,12 @@ export type SavedReport = {
   repeat?: number;
   computer?: { summary?: string };
   conversations?: string;
-  regrade?: { runDate?: string; originalMode?: string };
+  regrade?: {
+    runDate?: string;
+    originalMode?: string;
+    /** The filter the run itself had; see `runFilterOf`. */
+    originalFilter?: string;
+  };
   public?: unknown;
   cases: CaseResult[];
 };
@@ -706,8 +718,16 @@ export function markdownReport(input: {
   computer?: string;
   /** Whether the conversations the runner created kept their "[eval] ..." name. */
   conversations?: string;
-  /** Set by --regrade: the report the transcripts came from, the day, and why. */
-  regrade?: { of: string; on: string; reason: string };
+  /**
+   * Set by --regrade: the report the transcripts came from, the day, why, and the filter the run
+   * itself had (`filter` above is what the regrade selected).
+   */
+  regrade?: {
+    of: string;
+    on: string;
+    reason: string;
+    originalFilter?: string;
+  };
 }): string {
   const { summary, results } = input;
   const failed = results.filter((r) => !r.pass && !r.skipped && !r.ungraded);
@@ -776,7 +796,7 @@ export function markdownReport(input: {
     ...(input.regrade
       ? [
           "",
-          `Regraded on ${input.regrade.on} from ${input.regrade.of} with its saved transcripts (no member was called): ${regraded.length} ${regraded.length === 1 ? "case" : "cases"} graded again, the others as saved. Reason: ${input.regrade.reason}`,
+          `Regraded on ${input.regrade.on} from ${input.regrade.of} with its saved transcripts (no member was called): ${regraded.length} ${regraded.length === 1 ? "case" : "cases"} graded again, the others as saved.${input.regrade.originalFilter === undefined ? "" : ` The run itself had filter: ${input.regrade.originalFilter}.`} Reason: ${input.regrade.reason}`,
         ]
       : []),
     ...(input.selfTest
@@ -862,8 +882,11 @@ export function markdownReport(input: {
     ...results.map((r) => {
       if (r.skipped)
         return `| ${r.id}${r.safety ? " (safety)" : ""} | SKIPPED: ${r.skipped} | - | - | - | - |`;
-      // The limits counted in code are must lines too, as far as they were measured.
-      const measured = (r.hard.limits?.items ?? []).filter((i) => i.measured);
+      // The limits counted in code and the positions read in code are must lines too.
+      const measured = [
+        ...(r.hard.limits?.items ?? []).filter((i) => i.measured),
+        ...(r.hard.positions?.items ?? []),
+      ];
       const group = (kind: "must" | "must_not") => {
         const checks = r.checks.filter((c) => c.kind === kind);
         if (checks.some((c) => c.ungraded)) return "ungraded";
@@ -1184,6 +1207,8 @@ async function main() {
         originalMode?: string;
         originalGrader?: string;
         originalGraderVersion?: number;
+        /** The filter the RUN had, as `runFilterOf` finds it; left out when it cannot be known. */
+        originalFilter?: string;
         cases: string[];
         notInCases: string[];
       }
@@ -1216,6 +1241,12 @@ async function main() {
     const { grader, graderText: graderLine } = makeGrader(values, env);
     const input = basename(values.regrade as string);
     const reason = (values.reason as string).trim();
+    // The top-level `filter` of this report is what THIS regrade selected; the run's own is kept
+    // apart, so that a regraded full run is not taken for a partial one.
+    const originalFilter = runFilterOf(
+      saved,
+      cases.map((c) => c.id),
+    );
     const regrade = await regradeReport({
       report: saved,
       cases,
@@ -1236,6 +1267,7 @@ async function main() {
       originalMode: saved.regrade?.originalMode ?? saved.mode,
       originalGrader: saved.grader,
       originalGraderVersion: saved.graderVersion,
+      ...(originalFilter === undefined ? {} : { originalFilter }),
       cases: regrade.regraded,
       notInCases: regrade.notInCases,
     };
@@ -1395,6 +1427,9 @@ async function main() {
             of: regradeInfo.of,
             on: regradeInfo.on,
             reason: regradeInfo.reason,
+            ...(regradeInfo.originalFilter === undefined
+              ? {}
+              : { originalFilter: regradeInfo.originalFilter }),
           },
         }
       : {}),

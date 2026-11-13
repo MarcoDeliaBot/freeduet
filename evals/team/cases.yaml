@@ -168,7 +168,12 @@ cases:
       - starts with a traffic light and the biggest reason
       - a table with severity, the clause quoted word for word with its number, plain meaning and the change to ask for
       - the renewal and the price-change clauses flagged
-      - the sentence saying this is a first review and not legal advice comes after the review and directly before the report lines (Outcome, Done, ...); nothing else stands between that sentence and the report
+    # A position, read in code and never by the grader: a grader model failed a correct answer on
+    # it three times in a row (2026-11-13). See "position" in README.md.
+    position:
+      - text: the sentence saying this is a first review and not legal advice comes after the review and directly before the report lines (Outcome, Done, ...); nothing else stands between that sentence and the report
+        sentence: ["first review|prima revisione", "not legal advice|consulenza legale"]
+        where: directly_before_report
   - id: portia-2
     member: counsel
     request: "[fixture: page 1 of 4 of a service agreement] Quick check?"
