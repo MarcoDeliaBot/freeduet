@@ -34,6 +34,22 @@ export class ElementNotFoundError extends Error {
   }
 }
 
+/**
+ * The page could not be read because it would not settle.
+ *
+ * A page that kept reloading, redirected while it was being read, or did not finish loading in time.
+ * Its own type, and not an unavailable computer or a missing element, because what a Bot does next
+ * is neither: the computer answered and is running, and no ref is involved, so "take a fresh
+ * snapshot" is the wrong instruction. The page is what failed, so the answer is to wait or try
+ * another page. The message is the computer's own plain sentence and never carries the address.
+ */
+export class PageNotUsableError extends Error {
+  constructor(reason: string) {
+    super(reason);
+    this.name = "PageNotUsableError";
+  }
+}
+
 /** The navigation target is not permitted. */
 export class NavigationRefusedError extends Error {
   constructor(reason: string) {
@@ -132,6 +148,11 @@ export type ComputerTransportOptions = {
   allowPrivateHosts?: boolean;
   timeoutMs?: number;
   fetchImpl?: typeof fetch;
+  /**
+   * Where the one line saying why a call to the computer failed goes. Defaults to the server log.
+   * It receives the route and the cause and never the address, the query string or a body.
+   */
+  log?: (entry: Record<string, unknown>) => void;
 };
 
 /** Internal HTTP interface used only by ComputerGateway. */
@@ -180,6 +201,7 @@ export function createComputerTransport(
 ): ComputerTransport {
   const doFetch = options.fetchImpl ?? fetch;
   const defaultTimeoutMs = options.timeoutMs ?? 45_000;
+  const log = options.log ?? ((entry) => console.warn(JSON.stringify(entry)));
 
   async function request(
     baseUrl: string,
@@ -203,6 +225,7 @@ export function createComputerTransport(
      */
     const timeoutMs = timeoutMsOverride ?? defaultTimeoutMs;
     const target = baseUrl.replace(/\/$/, "");
+    const startedAt = Date.now();
     let response: Response;
     try {
       response = await doFetch(`${target}${path}`, {
@@ -231,10 +254,30 @@ export function createComputerTransport(
       if (caller?.aborted) {
         throw new ComputerStoppedError("The action was stopped.");
       }
+      const reason = failureReason(error);
+      /*
+       * One sentence reaches the person for several different causes, and the container's own logs
+       * look healthy for all of them, so the cause is written down here, where it is known. Nothing
+       * the call carried goes in: the route without its query string, the Bot, the cause and how
+       * long it had been waiting.
+       */
+      log({
+        type: "computer-transport-failure",
+        reason,
+        path: routeOf(path),
+        botId,
+        ms: Date.now() - startedAt,
+        ...(reason === "timeout" ? { limitMs: timeoutMs } : {}),
+        ...(reason === "other" && error instanceof Error
+          ? { errorName: error.name }
+          : {}),
+      });
       throw new ComputerUnavailableError(
-        error instanceof Error && error.name === "TimeoutError"
+        reason === "timeout"
           ? "The Bot's computer didn't respond in time."
-          : "The Bot's computer isn't running.",
+          : reason === "connection-closed"
+            ? "The Bot's computer closed the connection before it answered."
+            : "The Bot's computer isn't running.",
       );
     }
     return response;
@@ -261,7 +304,7 @@ export function createComputerTransport(
       unknown
     > | null;
     if (!response.ok) {
-      throwMappedError(response.status, body);
+      throwMappedError(response.status, body, path);
     }
     return body as T;
   }
@@ -286,7 +329,7 @@ export function createComputerTransport(
         string,
         unknown
       > | null;
-      throwMappedError(response.status, body);
+      throwMappedError(response.status, body, path);
     }
 
     const length = response.headers.get("content-length");
@@ -347,10 +390,53 @@ export function createComputerTransport(
   return { call, post, navigate, download };
 }
 
+/** The routes that read a page, as opposed to acting on a ref in it. */
+const PAGE_READ_ROUTES = new Set([
+  "/navigate",
+  "/snapshot",
+  "/read",
+  "/screenshot",
+]);
+
+/** The route a request went to, without its query string, so a log line cannot carry a file name. */
+function routeOf(path: string): string {
+  return path.split("?")[0] ?? path;
+}
+
+/**
+ * Why a fetch to the computer threw, as one of a few causes an operator can act on.
+ *
+ * Read from the error's name, code and wording, which Bun and Node both vary, so each cause is a
+ * short list of what either runtime says. Anything unrecognised stays `other`, and is reported as it
+ * always was.
+ */
+function failureReason(
+  error: unknown,
+): "timeout" | "connection-refused" | "connection-closed" | "other" {
+  if (!(error instanceof Error)) return "other";
+  if (error.name === "TimeoutError") return "timeout";
+  const code = String((error as { code?: unknown }).code ?? "");
+  const text = `${code} ${error.message}`;
+  if (
+    /ECONNREFUSED|ConnectionRefused|ENOTFOUND|EHOSTUNREACH|ENETUNREACH|Unable to connect/i.test(
+      text,
+    )
+  )
+    return "connection-refused";
+  if (
+    /ECONNRESET|ConnectionClosed|EPIPE|socket connection was closed|closed unexpectedly|other side closed|terminated/i.test(
+      text,
+    )
+  )
+    return "connection-closed";
+  return "other";
+}
+
 /** Map agent-computer responses to errors that a caller can act on. */
 function throwMappedError(
   status: number,
   body: Record<string, unknown> | null,
+  path: string,
 ): never {
   const detail =
     typeof body?.error === "string" ? body.error : `HTTP ${status}`;
@@ -384,7 +470,24 @@ function throwMappedError(
   if (status === 413) {
     throw new WorkspaceTooLargeError(detail);
   }
+  /*
+   * The computer says so when it gave up on a page that would not settle, in its own plain words.
+   * That is a statement about the page, so it is passed on as one and never read for its text.
+   */
+  if (body?.pageNotReady === true) throw new PageNotUsableError(detail);
   if (/waiting for locator|Timeout .* exceeded/i.test(detail)) {
+    /*
+     * `Timeout 20000ms exceeded` is Playwright's wording for every wait that ran out, and only some
+     * of them are about a ref. The words alone said "that element is gone" for a navigate that ran
+     * out of time as well, which no ref was ever part of, and a Bot told to snapshot a page it never
+     * reached asked for the same page again and got the same answer. Which wait it was is told by
+     * the route it came back on, with the computer's own flag above taking precedence.
+     */
+    if (PAGE_READ_ROUTES.has(routeOf(path))) {
+      throw new PageNotUsableError(
+        "The page did not answer in time, so nothing could be read from it. Try again in a moment.",
+      );
+    }
     const ref = detail.match(/aria-ref=([A-Za-z0-9_-]+)/)?.[1];
     throw new ElementNotFoundError(
       `${ref ? `Element ${ref} is` : "That element is"} not on the page any more. Take a fresh snapshot and use the refs from it.`,

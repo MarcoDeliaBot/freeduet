@@ -1029,12 +1029,25 @@ data root, separate from managed computer volumes.
 
 - `ACTION_TIMEOUT_MS`
 - `NAVIGATION_TIMEOUT_MS`
+- `COMPUTER_TURN_WAIT_MS`
 - `WORKSPACE_DIR`
 - `PROFILES_DIR`
 - `COMPUTER_BOT_ID`
 - `EGRESS_PROXY_DEFAULT` (in `egress.env`, see below)
 - `EGRESS_PROXY_<BOT_ID>` (in `egress.env`, see below)
 - `COMPUTER_SHELL_ENV`
+
+A Bot's page serves one browser call at a time. A call that arrives while another of the same Bot's
+is running (a navigate, a snapshot, a read, a click, a keypress, a scroll) waits for its turn, at most
+`COMPUTER_TURN_WAIT_MS` (25 seconds by default), and then answers "This computer is still busy with
+an earlier action" instead of running over it. A navigate or a read that meets a page redirecting,
+reloading or rebuilding itself collects its text again, at most four times and within eight seconds,
+and says in plain words that the page kept reloading if it never settled. Only the reading is
+repeated: a click, a typed text or a keypress is never run twice. Each such call leaves one JSON
+line, `computer-page-call`, with the route, the outcome and the numbers; the OpenBot server leaves
+`computer-transport-failure` (why a call to the computer failed: `timeout`, `connection-refused`,
+`connection-closed`) and `computer-route-call` (a browser call that failed on the server, ran past
+20 seconds or lost its caller). None of them carries an address, a query string or page content.
 
 A command on the computer inherits PATH, locale and terminal names, and the proxy variables, not
 the rest of the process environment. Userinfo is stripped from a proxy URL, so a password in

@@ -18,13 +18,13 @@
  * The refs are opaque to the caller precisely so that the server holds the mapping.
  */
 
+import { HeadlessToolSuspension } from "@openbot/toolkit/headless-tools";
 import { type ApprovalGate, currentApprovalContext } from "../approvals/types";
 import {
   type AuditInitiator,
   type AuditStore,
   recordAuditEvent,
 } from "../audit";
-import { HeadlessToolSuspension } from "@openbot/toolkit/headless-tools";
 import { withUntrustedNotice } from "../untrusted-content";
 import {
   ComputerStoppedError,
@@ -40,6 +40,7 @@ export {
   HandoffRequestError,
   HumanHasControlError,
   NavigationRefusedError,
+  PageNotUsableError,
   StaleSnapshotError,
   WorkspaceNotFoundError,
   WorkspaceRefusedError,
