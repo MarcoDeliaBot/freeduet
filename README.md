@@ -148,6 +148,16 @@ The full plan, with acceptance criteria for each milestone, is in [docs/PROJECT.
 
 See [NOTICE.md](NOTICE.md) for attributions and what we deliberately did **not** reuse.
 
+## Testers
+
+Be the first: open an 'I am using it' issue.
+
+## Contributing
+
+- Read [CONTRIBUTING.md](CONTRIBUTING.md) for how to help and how a fix gets in.
+- Use the forms in [.github/ISSUE_TEMPLATE](.github/ISSUE_TEMPLATE) to tell us you use it, report an error or offer a fix.
+- Propose a change with the [pull request template](.github/PULL_REQUEST_TEMPLATE.md).
+
 ## Contributing · Security · License
 
 - [CONTRIBUTING.md](CONTRIBUTING.md): upstream-first, signed-off commits, no credentials or private data ever.

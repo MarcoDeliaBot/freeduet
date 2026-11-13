@@ -1,0 +1,28 @@
+name: Question
+description: Ask how to do something with FreeDuet.
+labels: ["question"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        You can write in English or Italian.
+
+        Never paste subscription credentials, or the contents of the Claude login folders.
+  - type: textarea
+    id: goal
+    attributes:
+      label: What are you trying to do?
+    validations:
+      required: true
+  - type: textarea
+    id: tried
+    attributes:
+      label: What did you try?
+    validations:
+      required: true
+  - type: textarea
+    id: stuck
+    attributes:
+      label: Where did you get stuck?
+    validations:
+      required: true

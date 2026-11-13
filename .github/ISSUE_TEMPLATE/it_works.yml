@@ -1,0 +1,58 @@
+name: I am using it
+description: Tell us you use FreeDuet, and what works for you.
+title: "Using it: "
+labels: ["tester"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        You can write in English or Italian.
+
+        Never paste subscription credentials, or the contents of the Claude login folders.
+  - type: dropdown
+    id: os
+    attributes:
+      label: Operating system
+      options:
+        - Windows with WSL2
+        - Linux
+        - macOS
+        - Other
+    validations:
+      required: true
+  - type: input
+    id: duration
+    attributes:
+      label: How long have you used it?
+      placeholder: for example, two weeks
+    validations:
+      required: true
+  - type: checkboxes
+    id: members
+    attributes:
+      label: Which members do you use?
+      options:
+        - label: Iris
+        - label: Leo
+        - label: Otto
+        - label: Portia
+        - label: Penny
+        - label: Jules
+        - label: Wren
+        - label: Gus
+        - label: Basil
+        - label: Vera
+  - type: textarea
+    id: works
+    attributes:
+      label: What works well?
+  - type: textarea
+    id: confusing
+    attributes:
+      label: What is confusing or missing? (optional)
+  - type: checkboxes
+    id: listing
+    attributes:
+      label: Listing
+      options:
+        - label: You may list my GitHub username among the testers in the README.
