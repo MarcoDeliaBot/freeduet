@@ -6,6 +6,11 @@
 
 [![Sponsor](https://img.shields.io/badge/Sponsor-%E2%9D%A4-ffc0cb?style=for-the-badge&logo=github&labelColor=555555)](https://github.com/sponsors/MarcoDeliaBot)
 
+<p align="center">
+  <a href="assets/freeduet-launch.mp4"><img src="assets/freeduet-launch.jpg" alt="Watch FreeDuet in 24 seconds" width="720"></a>
+  <br><sub>▶ Watch FreeDuet in 24 seconds (demo with made-up examples)</sub>
+</p>
+
 FreeDuet gives you a Chief of Staff and a crew of specialists: inbox, contracts, invoices, purchases and bookings (purchase permits are coming in v0.4), writing, repairs and meals. Each one has its own computer and browser. They ask before they send, pay, sign, book or delete anything. Planned for v0.3: when one subscription hits its limit, the work moves to the next one, and pay-per-token APIs stay optional and always capped.
 
 > **Status: v0.1, an early release.** The ten members run on your own Claude Code login, with approvals, evals and a one-command start. FreeDuet is built and used by one maintainer, on one computer: Windows with WSL2 and Docker. Anything marked v0.2 or later is planned, not built. What is tested and what is not is listed [below](#what-is-tested-and-what-is-not).
