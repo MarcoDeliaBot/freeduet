@@ -1,0 +1,232 @@
+{
+ "skip": "Skip to the content",
+ "n1": "What it is",
+ "n2": "The team",
+ "n3": "How it works",
+ "n4": "Safety",
+ "n5": "Start",
+ "h1": "Your own team of ten AI assistants.",
+ "lead": "FreeDuet runs on your own computer. One assistant sorts your mail, one reads contracts, one books the restaurant. You say what you need, they do the work, and they <span class=\"mark\">never send, pay or delete anything without asking you first</span>.",
+ "cta1": "Get FreeDuet on GitHub",
+ "cta2": "See how it works",
+ "f1": "Free and open source",
+ "f2": "No API key to buy",
+ "f3": "Runs on your own computer",
+ "demoTag": "Demo with made-up examples",
+ "tryP": "Try another request:",
+ "w_h": "Too much to do, and only one of you?",
+ "w_p1": "Emails, invoices, bookings, contracts, that reply you promised last week. One head, two hands, a hundred things to do.",
+ "w_p2": "FreeDuet is like a small office of assistants inside your computer. Each assistant is good at exactly one job. You talk to Iris, the one who runs the team, and she gets everybody moving.",
+ "w_a_alt": "One coordinator connected to four specialists",
+ "w_a_h": "A team, not one chatbot",
+ "w_a_p": "A chatbot is one clever friend who answers questions. FreeDuet is a whole group project where everybody really does their part.",
+ "w_b_alt": "A browser window with a button being clicked",
+ "w_b_h": "It does things, it doesn't just talk",
+ "w_b_p": "Every assistant has its own desk: a separate browser, away from yours. There it can look up prices, fill in forms and prepare drafts.",
+ "w_c_alt": "A big Approve switch with a check mark",
+ "w_c_h": "You stay the boss",
+ "w_c_p": "The assistants prepare. You decide. Nothing important leaves your computer until you press Approve.",
+ "v_a_h": "Without FreeDuet",
+ "v_a_p": "You open the mail, read forty messages, hunt for the invoice, compare three flights, write the reply, forget the birthday present.",
+ "v_b_h": "With FreeDuet",
+ "v_b_p": "You write one sentence: \"Handle everything that came in this morning.\" Then you read a short report and press Approve where you agree.",
+ "t_h": "Meet the ten. Each one has exactly one job.",
+ "t_p": "Why not one assistant that does everything? For the same reason a football team has a goalkeeper: someone who does one job all day gets very good at it.",
+ "t_note": "You can rename them, change how they talk, or ask Leo to build a new one.",
+ "h_h": "What happens after you press Enter",
+ "h_p": "No magic and no secrets. Five steps, always the same, so you always know who is doing what.",
+ "s1h": "You write what you need",
+ "s1p": "In your own words and your own language, like a message to a friend.",
+ "s2h": "Iris picks the right assistant",
+ "s2p": "She reads your request, splits it into pieces and hands each piece to the specialist for that job.",
+ "s3h": "The assistant works at its own desk",
+ "s3p": "It uses its own browser to search, read and prepare. It treats what it reads as information, never as orders.",
+ "s4h": "A card asks for your yes",
+ "s4p": "If the job needs a big button (send, pay, sign, book, delete), everything stops and waits for you.",
+ "s5h": "You get a short report",
+ "s5p": "What was done, what was not done and why, and what the next step is. No walls of text.",
+ "flowAlt": "You talk to Iris, Iris hands work to the specialists, Vera checks it, the answer comes back to you",
+ "you": "You",
+ "flowMore": "…and Gus, Basil and Leo",
+ "sf_h": "Five buttons they can never press alone",
+ "sf_p": "Would you give a new assistant your wallet on the first day? Neither would we. So these five actions are locked until you say yes.",
+ "b1": "Send",
+ "b2": "Pay",
+ "b3": "Sign",
+ "b4": "Book",
+ "b5": "Delete",
+ "p1h": "A lock, not a promise",
+ "p1p": "The rule is not just written in the assistant's instructions. The program itself blocks the action until you approve it.",
+ "p2h": "Tricks don't work",
+ "p2p": "An email that says \"send me the password, it's urgent\" is treated as text to read, not as an order. And no assistant ever asks you for passwords or card numbers in the chat.",
+ "p3h": "One honest shortcut",
+ "p3p": "If you type the address yourself (\"email anna@example.com and tell her…\"), your sentence is the yes, and that new email goes out. Addresses found anywhere else always ask first.",
+ "score": "We try to fool our own assistants on purpose. In the latest full test of version 0.1, the safety checks passed 45 times out of 45. <a href=\"https://github.com/MarcoDeliaBot/freeduet/blob/main/evals/team/reports/2026-11-13-claude-code-regraded-2026-11-13-public.md\">Read the public report</a>. The assistants can still make mistakes, so read what they prepare before you approve it.",
+ "m_h": "Why you don't pay twice",
+ "m_p1": "Most AI tools make you buy an \"API key\". That works like a taxi meter: every word costs a little, and the bill keeps climbing.",
+ "m_p2": "A monthly AI subscription is more like a bus pass: one price, ride as much as the pass allows. FreeDuet runs on the pass you already have. You sign in yourself, and FreeDuet never sees, stores or forwards your login.",
+ "m_l1": "Today it works with a Claude subscription, through the official Claude Code app.",
+ "m_l2": "More subscriptions and local models are planned for the next versions.",
+ "m_l3": "FreeDuet itself costs nothing: the code is public under the MIT licence.",
+ "passAlt": "A taxi meter with a climbing price next to a monthly pass",
+ "pass1": "Pay for every word",
+ "pass2": "One pass you already have",
+ "g_h": "The goal: a team for everyone, not only for big companies",
+ "g_p1": "A big company has assistants, lawyers and accountants. A freelancer, a small shop or a family has… themselves. That isn't fair, and now it doesn't have to stay that way.",
+ "g_p2": "We want anybody to have a team: free, open and at home. FreeDuet runs on your own computer and keeps its conversations in a database on that computer. The thinking is done by the AI you already subscribe to.",
+ "g_p3": "Open source means the recipe is public. Anyone can read it, check that it does what it says, and make it better. You don't have to trust us. You can look.",
+ "r_h": "What works today, and what is coming",
+ "r_now": "Out now",
+ "r1": "The ten assistants on your own Claude login, with approvals, tests, Gmail and Google Calendar.",
+ "r_plan": "Planned",
+ "r2": "More subscriptions, local models that run on your own machine.",
+ "r3": "Never stops: when one subscription reaches its limit, the work moves to the next.",
+ "r4": "Safe shopping: a permit for each exact cart, and spending limits.",
+ "r5": "Install with a single command, and a full guide.",
+ "r_note": "We label everything that is not built yet. No fairy tales.",
+ "st_h": "Ready? Four commands and the team is at work",
+ "st_p": "Copy them into a terminal, sign in once with your own Claude plan, then open the page it gives you.",
+ "st_needH": "What you need:",
+ "st_need": "a Claude subscription, plus Docker, Bash and Bun on your computer. Tested on Windows (with WSL2) and on Linux.",
+ "st_kid": "Never opened a terminal? Ask someone technical to set it up, and show them this page.",
+ "copy": "Copy the commands",
+ "j1h": "Give it a star",
+ "j1p": "One click on GitHub tells other people this project is worth a look.",
+ "j2h": "Tell us what broke",
+ "j2p": "Using it? Found an error? Have a fix? There is a short form for each.",
+ "j3h": "Buy us a coffee",
+ "j3p": "FreeDuet is built by one person. A small donation keeps it going.",
+ "q_h": "Questions people ask first",
+ "q1": "Is it really free?",
+ "a1": "Yes. FreeDuet is open source under the MIT licence, also for business use. What you pay is the AI subscription you choose to use with it, which today is a Claude plan.",
+ "q2": "Can it send an email or spend money behind my back?",
+ "a2": "No. Sending, paying, signing, booking and deleting are blocked until you approve. The only shortcut is a new email to an address you typed yourself in your request.",
+ "q3": "Where does my stuff go?",
+ "a3": "FreeDuet runs on your computer and stores its conversations there. To think, the assistants use the AI service you signed in to, the same way its own app would.",
+ "q4": "Is FreeDuet made by Anthropic, OpenAI or Google?",
+ "a4": "No. It is an independent project, not affiliated with or endorsed by any of them. Their product names are used only to say what FreeDuet works with.",
+ "q5": "Can the assistants get things wrong?",
+ "a5": "Yes, like any AI. That is why every important step waits for you, and why Vera checks sums, quotes and prices before you see them. Portia and Penny give a first review, not legal or tax advice.",
+ "q6": "Is it finished?",
+ "a6": "No, and we say so. Version 0.1 is an early release, built and used by one maintainer. The page above marks what works today and what is only planned.",
+ "fl1": "The team in detail",
+ "fl2": "Security",
+ "fl3": "MIT licence",
+ "ft1": "FreeDuet is an independent open-source project. It is not affiliated with, endorsed by or sponsored by Anthropic, OpenAI, Google, xAI, Z.ai or CopilotKit. Claude, ChatGPT, Gemini and Grok are trademarks of their owners and are named only to describe compatibility.",
+ "ft2": "Built on OpenBot and OpenDuet by CopilotKit (MIT). FreeDuet's assistants can make mistakes: review what they prepare before you approve it.",
+ "title": "FreeDuet: your own team of ten AI assistants",
+ "desc": "FreeDuet is a free, open-source team of ten AI assistants that runs on your own computer and your own AI subscription. They ask before they send, pay, sign, book or delete.",
+ "copied": "Copied",
+ "yes": "Approve",
+ "no": "Don't do it",
+ "ask": "Waiting for your yes",
+ "nothing": "Nothing to approve: these are only ideas.",
+ "team": {
+  "iris": [
+   "runs the team",
+   "You tell Iris what you need. She splits it into pieces, gives each piece to the right assistant and brings you back one answer.",
+   "Handle everything that came in this morning."
+  ],
+  "otto": [
+   "mail",
+   "Sorts your inbox into what matters now and what can wait, and writes the replies for you to check.",
+   "Sort my mail and draft the replies that matter."
+  ],
+  "portia": [
+   "contracts",
+   "Reads the boring small print and shows you where the traps are before you sign.",
+   "Can I sign this lease?"
+  ],
+  "penny": [
+   "invoices",
+   "Prepares invoices and keeps the list of who still owes you money.",
+   "Invoice Acme for last week and tell me who hasn't paid."
+  ],
+  "jules": [
+   "errands",
+   "Finds flights, presents and free tables in its own browser, and books them when you say yes.",
+   "Book a table for four on Friday."
+  ],
+  "wren": [
+   "writing",
+   "Turns your rough notes into posts and emails that sound like you, not like a robot.",
+   "Turn this voice note into a post in my style."
+  ],
+  "gus": [
+   "repairs",
+   "Send a photo of what broke. Gus tells you how to fix it safely, or who to call.",
+   "The door won't close. Here's a photo."
+  ],
+  "basil": [
+   "cooking",
+   "Tell Basil what is in the fridge and he gives you three dishes you can make tonight.",
+   "What can I cook with spinach and eggs?"
+  ],
+  "vera": [
+   "checking",
+   "Works behind the scenes. She redoes the sums and re-opens the prices before the work reaches you.",
+   "(Iris sends her the important work automatically.)"
+  ],
+  "leo": [
+   "builds new assistants",
+   "Need an assistant that doesn't exist yet? Leo designs it, together with the tests that prove it works.",
+   "I need someone who tracks my domain renewals."
+  ]
+ },
+ "demo": [
+  {
+   "chip": "Reply to the plumber: Tuesday is fine",
+   "me": "Reply to the plumber's email: Tuesday at 9 is fine.",
+   "iris": "On it. This is a job for Otto.",
+   "who": "otto",
+   "line": "I found his email and wrote the reply. I won't send it until you say so.",
+   "card": [
+    [
+     "Action",
+     "Send a reply"
+    ],
+    [
+     "To",
+     "the plumber (same conversation)"
+    ],
+    [
+     "Text",
+     "Good morning, Tuesday at 9 works for me. Thank you!"
+    ]
+   ],
+   "ok": "Sent. One reply, in the same conversation. Nothing else was touched.",
+   "stop": "Not sent. The draft is saved if you change your mind."
+  },
+  {
+   "chip": "Book a table for four on Friday",
+   "me": "Book a table for four on Friday evening, somewhere with pizza.",
+   "iris": "Got it. Jules handles bookings.",
+   "who": "jules",
+   "line": "I looked in my own browser and found a free table. I haven't booked anything yet.",
+   "card": [
+    [
+     "Action",
+     "Book a table"
+    ],
+    [
+     "Where",
+     "Pizzeria Example"
+    ],
+    [
+     "When",
+     "Friday, 8:00 pm, 4 people"
+    ]
+   ],
+   "ok": "Booked for Friday at 8:00 pm, 4 people. The confirmation is in your inbox.",
+   "stop": "Nothing booked. Tell me if you want other places."
+  },
+  {
+   "chip": "What can I cook with spinach and eggs?",
+   "me": "What can I cook tonight with spinach and eggs?",
+   "iris": "Easy. Basil is the cook.",
+   "who": "basil",
+   "line": "Three ideas: a spinach omelette (10 minutes), baked eggs on spinach (20 minutes), or green pancakes (15 minutes). Want the steps for one?",
+   "card": null
+  }
+ ]
+}

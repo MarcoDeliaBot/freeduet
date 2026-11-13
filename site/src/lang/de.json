@@ -1,0 +1,232 @@
+{
+ "skip": "Zum Inhalt springen",
+ "n1": "Was es ist",
+ "n2": "Das Team",
+ "n3": "So funktioniert's",
+ "n4": "Sicherheit",
+ "n5": "Loslegen",
+ "h1": "Dein eigenes Team aus zehn KI-Assistenten.",
+ "lead": "FreeDuet läuft auf deinem eigenen Computer. Ein Assistent sortiert deine Post, einer liest Verträge, einer reserviert den Tisch im Restaurant. Du sagst, was du brauchst, sie erledigen die Arbeit, und sie <span class=\"mark\">senden, bezahlen oder löschen nie etwas, ohne vorher dich zu fragen</span>.",
+ "cta1": "FreeDuet auf GitHub holen",
+ "cta2": "Sieh dir an, wie es funktioniert",
+ "f1": "Kostenlos und Open Source",
+ "f2": "Kein API-Schlüssel nötig",
+ "f3": "Läuft auf deinem eigenen Computer",
+ "demoTag": "Demo mit ausgedachten Beispielen",
+ "tryP": "Probier eine andere Anfrage:",
+ "w_h": "Zu viel zu tun, und du bist nur einer?",
+ "w_p1": "E-Mails, Rechnungen, Buchungen, Verträge, die Antwort, die du letzte Woche versprochen hast. Ein Kopf, zwei Hände, hundert Dinge zu erledigen.",
+ "w_p2": "FreeDuet ist wie ein kleines Büro voller Assistenten in deinem Computer. Jeder Assistent kann genau eine Sache richtig gut. Du sprichst mit Iris, die das Team leitet, und sie bringt alle in Bewegung.",
+ "w_a_alt": "Eine Koordinatorin, verbunden mit vier Spezialisten",
+ "w_a_h": "Ein Team, nicht nur ein Chatbot",
+ "w_a_p": "Ein Chatbot ist ein kluger Freund, der Fragen beantwortet. FreeDuet ist ein ganzes Gruppenprojekt, in dem jeder wirklich seinen Teil erledigt.",
+ "w_b_alt": "Ein Browserfenster, in dem ein Button angeklickt wird",
+ "w_b_h": "Es handelt, statt nur zu reden",
+ "w_b_p": "Jeder Assistent hat seinen eigenen Schreibtisch: einen eigenen Browser, getrennt von deinem. Dort kann er Preise nachschlagen, Formulare ausfüllen und Entwürfe vorbereiten.",
+ "w_c_alt": "Ein großer Schalter „Genehmigen“ mit einem Häkchen",
+ "w_c_h": "Du bleibst der Chef",
+ "w_c_p": "Die Assistenten bereiten vor. Du entscheidest. Nichts Wichtiges verlässt deinen Computer, bevor du auf „Genehmigen“ drückst.",
+ "v_a_h": "Ohne FreeDuet",
+ "v_a_p": "Du öffnest die Post, liest vierzig Nachrichten, suchst die Rechnung, vergleichst drei Flüge, schreibst die Antwort und vergisst das Geburtstagsgeschenk.",
+ "v_b_h": "Mit FreeDuet",
+ "v_b_p": "Du schreibst einen Satz: „Kümmere dich um alles, was heute Morgen reingekommen ist.“ Dann liest du einen kurzen Bericht und drückst auf „Genehmigen“, wo du einverstanden bist.",
+ "t_h": "Lern die Zehn kennen. Jeder hat genau eine Aufgabe.",
+ "t_p": "Warum nicht einfach ein Assistent, der alles macht? Aus demselben Grund, aus dem eine Fußballmannschaft einen Torwart hat: Wer den ganzen Tag nur eine Sache macht, wird darin richtig gut.",
+ "t_note": "Du kannst ihnen andere Namen geben, ihre Art zu sprechen ändern oder Leo bitten, einen neuen Assistenten zu bauen.",
+ "h_h": "Was passiert, nachdem du die Eingabetaste gedrückt hast",
+ "h_p": "Keine Magie und keine Geheimnisse. Fünf Schritte, immer dieselben, damit du immer weißt, wer gerade was tut.",
+ "s1h": "Du schreibst, was du brauchst",
+ "s1p": "Mit deinen eigenen Worten und in deiner eigenen Sprache, wie eine Nachricht an einen Freund.",
+ "s2h": "Iris wählt den passenden Assistenten",
+ "s2p": "Sie liest deine Anfrage, teilt sie in Teile auf und gibt jedes Teil an den Spezialisten für diese Aufgabe.",
+ "s3h": "Der Assistent arbeitet an seinem Schreibtisch",
+ "s3p": "Er nutzt seinen eigenen Browser, um zu suchen, zu lesen und vorzubereiten. Was er liest, behandelt er als Information, nie als Befehl.",
+ "s4h": "Eine Karte bittet um dein Ja",
+ "s4p": "Wenn für die Aufgabe ein großer Knopf nötig ist (senden, bezahlen, unterschreiben, buchen, löschen), hält alles an und wartet auf dich.",
+ "s5h": "Du bekommst einen kurzen Bericht",
+ "s5p": "Was erledigt wurde, was nicht und warum, und wie es weitergeht. Keine Textwüsten.",
+ "flowAlt": "Du sprichst mit Iris, Iris gibt die Arbeit an die Spezialisten, Vera prüft sie, die Antwort kommt zu dir zurück",
+ "you": "Du",
+ "flowMore": "…und Gus, Basil und Leo",
+ "sf_h": "Fünf Knöpfe, die sie niemals allein drücken dürfen",
+ "sf_p": "Würdest du einem neuen Assistenten am ersten Tag deinen Geldbeutel anvertrauen? Wir auch nicht. Deshalb bleiben diese fünf Aktionen gesperrt, bis du Ja sagst.",
+ "b1": "Senden",
+ "b2": "Bezahlen",
+ "b3": "Unterschreiben",
+ "b4": "Buchen",
+ "b5": "Löschen",
+ "p1h": "Ein Schloss, kein Versprechen",
+ "p1p": "Die Regel steht nicht nur in den Anweisungen des Assistenten. Das Programm selbst blockiert die Aktion, bis du sie genehmigst.",
+ "p2h": "Tricks funktionieren nicht",
+ "p2p": "Eine E-Mail mit „Schick mir das Passwort, es ist dringend“ wird als Text zum Lesen behandelt, nicht als Befehl. Und kein Assistent fragt dich im Chat jemals nach Passwörtern oder Kartennummern.",
+ "p3h": "Eine ehrliche Abkürzung",
+ "p3p": "Wenn du die Adresse selbst eintippst („Schreib an anna@example.com und sag ihr …“), ist dein Satz das Ja, und diese neue E-Mail geht raus. Adressen, die woanders gefunden wurden, fragen immer zuerst nach.",
+ "score": "Wir versuchen absichtlich, unsere eigenen Assistenten auszutricksen. Im letzten vollständigen Test der Version 0.1 wurden die Sicherheitsprüfungen 45 von 45 Mal bestanden. <a href=\"https://github.com/MarcoDeliaBot/freeduet/blob/main/evals/team/reports/2026-11-13-claude-code-regraded-2026-11-13-public.md\">Lies den öffentlichen Bericht</a>. Die Assistenten können trotzdem Fehler machen. Lies deshalb, was sie vorbereiten, bevor du es genehmigst.",
+ "m_h": "Warum du nicht doppelt zahlst",
+ "m_p1": "Die meisten KI-Werkzeuge lassen dich einen „API-Schlüssel“ kaufen. Das funktioniert wie ein Taxameter: Jedes Wort kostet ein bisschen, und die Rechnung wird immer länger.",
+ "m_p2": "Ein monatliches KI-Abo ist eher wie eine Monatskarte für den Bus: ein Preis, und du fährst so viel, wie die Karte erlaubt. FreeDuet nutzt das Abo, das du schon hast. Du meldest dich selbst an, und FreeDuet sieht, speichert oder leitet deine Zugangsdaten nie weiter.",
+ "m_l1": "Heute funktioniert es mit einem Claude-Abo, über die offizielle Claude-Code-App.",
+ "m_l2": "Weitere Abos und lokale Modelle sind für die nächsten Versionen geplant.",
+ "m_l3": "FreeDuet selbst kostet nichts: Der Code ist öffentlich, unter der MIT-Lizenz.",
+ "passAlt": "Ein Taxameter mit steigendem Preis neben einer Monatskarte",
+ "pass1": "Du zahlst für jedes Wort",
+ "pass2": "Eine Karte, die du schon hast",
+ "g_h": "Das Ziel: ein Team für alle, nicht nur für große Firmen",
+ "g_p1": "Ein großes Unternehmen hat Assistenten, Anwälte und Buchhalter. Eine Freiberuflerin, ein kleiner Laden oder eine Familie haben … sich selbst. Das ist nicht fair, und jetzt muss es nicht mehr so bleiben.",
+ "g_p2": "Wir wollen, dass jeder ein Team haben kann: kostenlos, offen und bei dir zu Hause. FreeDuet läuft auf deinem eigenen Computer und speichert seine Unterhaltungen in einer Datenbank auf diesem Computer. Das Denken übernimmt die KI, die du schon abonniert hast.",
+ "g_p3": "Open Source heißt: Das Rezept ist öffentlich. Jeder kann es lesen, prüfen, ob es hält, was es verspricht, und es verbessern. Du musst uns nicht vertrauen. Du kannst nachsehen.",
+ "r_h": "Was heute funktioniert und was noch kommt",
+ "r_now": "Schon da",
+ "r1": "Die zehn Assistenten mit deinem eigenen Claude-Zugang, mit Genehmigungen, Tests, Gmail und Google Calendar.",
+ "r_plan": "Geplant",
+ "r2": "Weitere Abos und lokale Modelle, die auf deinem eigenen Rechner laufen.",
+ "r3": "Hört nie auf: Wenn ein Abo sein Limit erreicht, macht das nächste weiter.",
+ "r4": "Sicheres Einkaufen: eine Freigabe für jeden genauen Warenkorb und Ausgabenlimits.",
+ "r5": "Installation mit einem einzigen Befehl und eine vollständige Anleitung.",
+ "r_note": "Wir kennzeichnen alles, was noch nicht gebaut ist. Keine Märchen.",
+ "st_h": "Bereit? Vier Befehle, und das Team legt los",
+ "st_p": "Kopiere sie in ein Terminal, melde dich einmal mit deinem eigenen Claude-Tarif an und öffne dann die Seite, die dir angezeigt wird.",
+ "st_needH": "Was du brauchst:",
+ "st_need": "ein Claude-Abo sowie Docker, Bash und Bun auf deinem Computer. Getestet unter Windows (mit WSL2) und unter Linux.",
+ "st_kid": "Noch nie ein Terminal geöffnet? Bitte jemanden, der sich auskennt, es einzurichten, und zeig ihm diese Seite.",
+ "copy": "Befehle kopieren",
+ "j1h": "Gib uns einen Stern",
+ "j1p": "Ein Klick auf GitHub zeigt anderen, dass sich dieses Projekt lohnt.",
+ "j2h": "Sag uns, was kaputt ist",
+ "j2p": "Du nutzt es? Hast einen Fehler gefunden? Hast eine Lösung? Für jedes davon gibt es ein kurzes Formular.",
+ "j3h": "Spendier uns einen Kaffee",
+ "j3p": "FreeDuet wird von einer einzigen Person gebaut. Eine kleine Spende hält es am Leben.",
+ "q_h": "Die Fragen, die zuerst gestellt werden",
+ "q1": "Ist es wirklich kostenlos?",
+ "a1": "Ja. FreeDuet ist Open Source unter der MIT-Lizenz, auch für die geschäftliche Nutzung. Bezahlen musst du nur das KI-Abo, das du dafür wählst, und das ist heute ein Claude-Tarif.",
+ "q2": "Kann es hinter meinem Rücken eine E-Mail senden oder Geld ausgeben?",
+ "a2": "Nein. Senden, Bezahlen, Unterschreiben, Buchen und Löschen sind gesperrt, bis du genehmigst. Die einzige Abkürzung ist eine neue E-Mail an eine Adresse, die du selbst in deiner Anfrage getippt hast.",
+ "q3": "Wohin gehen meine Daten?",
+ "a3": "FreeDuet läuft auf deinem Computer und speichert seine Unterhaltungen dort. Zum Denken nutzen die Assistenten den KI-Dienst, bei dem du angemeldet bist, so wie es dessen eigene App auch tun würde.",
+ "q4": "Wird FreeDuet von Anthropic, OpenAI oder Google gemacht?",
+ "a4": "Nein. Es ist ein unabhängiges Projekt, weder mit einem von ihnen verbunden noch von ihnen empfohlen. Die Namen ihrer Produkte stehen nur da, um zu sagen, womit FreeDuet funktioniert.",
+ "q5": "Können die Assistenten sich irren?",
+ "a5": "Ja, wie jede KI. Deshalb wartet jeder wichtige Schritt auf dich, und deshalb prüft Vera Summen, Zitate und Preise, bevor du sie siehst. Portia und Penny geben eine erste Einschätzung, keine Rechts- oder Steuerberatung.",
+ "q6": "Ist es fertig?",
+ "a6": "Nein, und das sagen wir offen. Version 0.1 ist eine frühe Version, gebaut und genutzt von einem einzigen Entwickler. Die Seite oben zeigt, was heute funktioniert und was nur geplant ist.",
+ "fl1": "Das Team im Detail",
+ "fl2": "Sicherheit",
+ "fl3": "MIT-Lizenz",
+ "ft1": "FreeDuet ist ein unabhängiges Open-Source-Projekt. Es steht in keiner Verbindung zu Anthropic, OpenAI, Google, xAI, Z.ai oder CopilotKit und wird von ihnen weder empfohlen noch gesponsert. Claude, ChatGPT, Gemini und Grok sind Marken ihrer jeweiligen Inhaber und werden nur genannt, um die Kompatibilität zu beschreiben.",
+ "ft2": "Aufgebaut auf OpenBot und OpenDuet von CopilotKit (MIT). Die Assistenten von FreeDuet können Fehler machen: Prüfe, was sie vorbereiten, bevor du es genehmigst.",
+ "title": "FreeDuet: dein eigenes Team aus zehn KI-Assistenten",
+ "desc": "FreeDuet ist ein kostenloses Open-Source-Team aus zehn KI-Assistenten, das auf deinem eigenen Computer und mit deinem eigenen KI-Abo läuft. Sie fragen nach, bevor sie senden, bezahlen, unterschreiben, buchen oder löschen.",
+ "copied": "Kopiert",
+ "yes": "Genehmigen",
+ "no": "Nicht ausführen",
+ "ask": "Wartet auf dein Ja",
+ "nothing": "Nichts zu genehmigen: Das sind nur Ideen.",
+ "team": {
+  "iris": [
+   "leitet das Team",
+   "Du sagst Iris, was du brauchst. Sie teilt es in Teile auf, gibt jedes Teil an den richtigen Assistenten und bringt dir eine einzige Antwort zurück.",
+   "Kümmere dich um alles, was heute Morgen reingekommen ist."
+  ],
+  "otto": [
+   "Post",
+   "Sortiert dein Postfach in das, was jetzt wichtig ist, und das, was warten kann, und schreibt die Antworten, die du dann prüfst.",
+   "Sortiere meine Post und entwirf die wichtigen Antworten."
+  ],
+  "portia": [
+   "Verträge",
+   "Liest das langweilige Kleingedruckte und zeigt dir, wo die Fallen sind, bevor du unterschreibst.",
+   "Kann ich diesen Mietvertrag unterschreiben?"
+  ],
+  "penny": [
+   "Rechnungen",
+   "Bereitet Rechnungen vor und führt die Liste derer, die dir noch Geld schulden.",
+   "Stell Acme die Rechnung für letzte Woche und sag mir, wer noch nicht bezahlt hat."
+  ],
+  "jules": [
+   "Besorgungen",
+   "Findet Flüge, Geschenke und freie Tische in seinem eigenen Browser und bucht, wenn du Ja sagst.",
+   "Reserviere für Freitag einen Tisch für vier."
+  ],
+  "wren": [
+   "Schreiben",
+   "Macht aus deinen groben Notizen Beiträge und E-Mails, die nach dir klingen und nicht nach einem Roboter.",
+   "Mach aus dieser Sprachnachricht einen Beitrag in meinem Stil."
+  ],
+  "gus": [
+   "Reparaturen",
+   "Schick ein Foto von dem, was kaputt ist. Gus sagt dir, wie du es sicher reparierst oder wen du anrufen kannst.",
+   "Die Tür schließt nicht. Hier ist ein Foto."
+  ],
+  "basil": [
+   "Kochen",
+   "Sag Basil, was im Kühlschrank ist, und er gibt dir drei Gerichte, die du heute Abend kochen kannst.",
+   "Was kann ich mit Spinat und Eiern kochen?"
+  ],
+  "vera": [
+   "Prüfen",
+   "Arbeitet im Hintergrund. Sie rechnet nach und öffnet die Preise noch einmal, bevor die Arbeit bei dir ankommt.",
+   "(Iris schickt ihr die wichtige Arbeit automatisch.)"
+  ],
+  "leo": [
+   "baut neue Assistenten",
+   "Du brauchst einen Assistenten, den es noch nicht gibt? Leo entwirft ihn, zusammen mit den Tests, die beweisen, dass er funktioniert.",
+   "Ich brauche jemanden, der die Verlängerungen meiner Domains im Blick behält."
+  ]
+ },
+ "demo": [
+  {
+   "chip": "Dem Klempner antworten: Dienstag passt",
+   "me": "Antworte auf die E-Mail des Klempners: Dienstag um 9 Uhr passt.",
+   "iris": "Mache ich. Das ist ein Job für Otto.",
+   "who": "otto",
+   "line": "Ich habe seine E-Mail gefunden und die Antwort geschrieben. Ich sende sie erst, wenn du es sagst.",
+   "card": [
+    [
+     "Aktion",
+     "Eine Antwort senden"
+    ],
+    [
+     "An",
+     "den Klempner (gleiche Unterhaltung)"
+    ],
+    [
+     "Text",
+     "Guten Morgen, Dienstag um 9 Uhr passt mir. Vielen Dank!"
+    ]
+   ],
+   "ok": "Gesendet. Eine Antwort, in derselben Unterhaltung. Sonst wurde nichts angerührt.",
+   "stop": "Nicht gesendet. Der Entwurf bleibt gespeichert, falls du es dir anders überlegst."
+  },
+  {
+   "chip": "Reserviere für Freitag einen Tisch für vier",
+   "me": "Reserviere für Freitagabend einen Tisch für vier, irgendwo mit Pizza.",
+   "iris": "Verstanden. Jules kümmert sich um Buchungen.",
+   "who": "jules",
+   "line": "Ich habe in meinem eigenen Browser nachgesehen und einen freien Tisch gefunden. Gebucht habe ich noch nichts.",
+   "card": [
+    [
+     "Aktion",
+     "Einen Tisch buchen"
+    ],
+    [
+     "Wo",
+     "Pizzeria Beispiel"
+    ],
+    [
+     "Wann",
+     "Freitag, 20:00 Uhr, 4 Personen"
+    ]
+   ],
+   "ok": "Gebucht für Freitag um 20:00 Uhr, 4 Personen. Die Bestätigung liegt in deinem Postfach.",
+   "stop": "Nichts gebucht. Sag mir, wenn du andere Lokale sehen willst."
+  },
+  {
+   "chip": "Was kann ich mit Spinat und Eiern kochen?",
+   "me": "Was kann ich heute Abend mit Spinat und Eiern kochen?",
+   "iris": "Ganz einfach. Basil ist der Koch.",
+   "who": "basil",
+   "line": "Drei Ideen: ein Spinatomelett (10 Minuten), Spinat mit Ei aus dem Ofen (20 Minuten) oder grüne Pfannkuchen (15 Minuten). Soll ich dir die Schritte für eines zeigen?",
+   "card": null
+  }
+ ]
+}
