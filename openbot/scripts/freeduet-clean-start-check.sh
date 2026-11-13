@@ -11,7 +11,7 @@
 #   - the server answers /health with 200
 #   - the app answers, as FreeDuet's app
 #   - agent-freeduet answers /health with 200
-#   - the ten members of examples/freeduet/agents.yaml are remote Bots at agent-freeduet, and the
+#   - the eleven members of examples/freeduet/agents.yaml are remote Bots at agent-freeduet, and the
 #     runtime has them
 #   - conversations are kept in FreeDuet's own database, not in CopilotKit Intelligence (#42)
 #   - start.sh said how to sign in to Claude Code
@@ -108,10 +108,10 @@ MEMBERS="$(bun -e '
 ' "$ROOT/examples/freeduet/agents.yaml" "$SERVER" "$FREEDUET" 2>&1 | tail -n 1)"
 COUNT="${MEMBERS%%|*}"
 PROBLEMS="${MEMBERS#*|}"
-if [ "$COUNT" = 10 ] && [ -z "$PROBLEMS" ]; then
-  pass "the ten members are remote Bots at agent-freeduet"
+if [ "$COUNT" = 11 ] && [ -z "$PROBLEMS" ]; then
+  pass "the eleven members are remote Bots at agent-freeduet"
 else
-  fail "the ten members are remote Bots at agent-freeduet" "${COUNT} members in agents.yaml; ${PROBLEMS:-$MEMBERS}"
+  fail "the eleven members are remote Bots at agent-freeduet" "${COUNT} members in agents.yaml; ${PROBLEMS:-$MEMBERS}"
 fi
 
 # FreeDuet (#42): with no Intelligence key, conversations are kept in the server's own database.

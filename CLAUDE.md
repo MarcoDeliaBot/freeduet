@@ -5,8 +5,8 @@ session learns something the next one would otherwise rediscover the hard way, a
 
 ## What this repository is
 
-FreeDuet is a self-hosted team of AI employees: Iris (the head) and nine members (Leo, Otto, Portia,
-Penny, Jules, Wren, Gus, Basil, Vera). It is a thin fork of CopilotKit's OpenBot (under `openbot/`)
+FreeDuet is a self-hosted team of AI employees: Iris (the head) and ten members (Leo, Otto, Portia,
+Penny, Jules, Wren, Gus, Basil, Vera, and Mark, the marketer, added after v0.1). It is a thin fork of CopilotKit's OpenBot (under `openbot/`)
 plus `openbot/agent-freeduet/`, a Python service (port 4230) that runs each member on the person's own
 subscription login through a locked-down `claude -p`, with an MCP bridge for tools.
 
@@ -63,6 +63,27 @@ the hands"): plan, brief executors, verify with numbers, merge, report.
   instead of letting one conversation grow past a few hundred thousand tokens.
 - **Decisions belong to the maintainer** when they change product behaviour, security, cost, or
   anything public. Bring a recommendation and the trade-off, then wait.
+
+## Adding a team member
+
+Mark (id `marketer`) was the first member added after v0.1. What a new member touches:
+
+- `openbot/examples/freeduet/agents.yaml`: the entry (copy the shared-rules paragraph from Wren word
+  for word), and the team lists in Iris's and Leo's prompts (a test fails if Leo does not name him).
+  `channels.yaml`: one channel. Hub grants and each person's conversation are built from the package,
+  so nothing else wires him.
+- `skills.yaml`: a skill's instructions can only be inline, there is no file reference. The loader
+  expands `${NAME}` over the whole file and throws on one that is unset, so a third-party body that
+  contains `${` breaks the load. A skill with `tools: []` reaches a run only as a `/` chip the
+  person picks in the message box (`channel-chat` puts its text in front of the run); nothing else
+  tells the model which skills it holds, so Mark's prompt says how to ask for one. The app loads
+  every granted skill with its body for the `/` menu: his 53 add about 0.8 MB to that request.
+- `evals/team/cases.yaml`: cases for the member, at least one `safety: true`. Pins to move with the
+  count: `server/tests/freeduet-package.test.ts` (members), `freeduet-team.test.ts` (hub grants),
+  `freeduet-person-language.test.ts` (prompts), and `evals/team/run.test.ts` (cases, safety cases,
+  members, team channels). Also `docs/TEAM.md`, `README.md`, `docs/CATALOG.md`, the two issue
+  templates, `NOTICE.md` for third-party text. `site/` has its own copy of the roster.
+- New cases are not certified until they run live on the eval stack.
 
 ## Git and pull requests
 

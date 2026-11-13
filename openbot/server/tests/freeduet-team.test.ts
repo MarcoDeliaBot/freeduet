@@ -64,8 +64,10 @@ describe("hub grants (D14)", () => {
       .filter((id) => id !== iris);
     const grants = hubGrants(tenantPackage);
 
-    expect(members.length).toBe(9);
-    expect(grants.length).toBe(18);
+    expect(members.length).toBe(10);
+    expect(grants.length).toBe(20);
+    // Mark, added after v0.1, is wired like every other member: nothing names him but the package.
+    expect(members).toContain("marketer");
     for (const member of members) {
       expect(grants).toContainEqual({ agentId: iris, ref: member });
       expect(grants).toContainEqual({ agentId: member, ref: iris });

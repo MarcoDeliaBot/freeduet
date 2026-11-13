@@ -4,7 +4,7 @@ FreeDuet has three layers of help.
 
 | Layer | What it is | Installed |
 |---|---|---|
-| **Starter team** | Ten members everyone needs: Iris, Vera, Leo, Otto, Portia, Penny, Jules, Wren, Gus, Basil ([TEAM.md](TEAM.md)) | Always |
+| **Starter team** | Ten members everyone needs: Iris, Vera, Leo, Otto, Portia, Penny, Jules, Wren, Gus, Basil, and Mark, the marketer, the first member added after v0.1 ([TEAM.md](TEAM.md)) | Always |
 | **Packs** | Specialists for particular jobs, installed with one request to Leo | When the person needs them |
 | **Assistants** | Light helpers every member calls for small jobs, on free models | Always, if a free engine is available |
 
