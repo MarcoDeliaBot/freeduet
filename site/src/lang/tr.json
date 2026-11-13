@@ -1,0 +1,232 @@
+{
+ "skip": "İçeriğe geç",
+ "n1": "Nedir?",
+ "n2": "Ekip",
+ "n3": "Nasıl çalışır?",
+ "n4": "Güvenlik",
+ "n5": "Başla",
+ "h1": "On yapay zekâ asistanından oluşan kendi ekibin.",
+ "lead": "FreeDuet kendi bilgisayarında çalışır. Bir asistan postanı düzenler, biri sözleşmeleri okur, biri restoran ayırtır. Sen ne istediğini söylersin, onlar işi yapar. Üstelik <span class=\"mark\">sana sormadan hiçbir şey göndermez, ödemez ve silmez</span>.",
+ "cta1": "FreeDuet'i GitHub'dan al",
+ "cta2": "Nasıl çalıştığına bak",
+ "f1": "Ücretsiz ve açık kaynak",
+ "f2": "Satın alınacak API anahtarı yok",
+ "f3": "Kendi bilgisayarında çalışır",
+ "demoTag": "Uydurma örneklerle gösterim",
+ "tryP": "Başka bir istek dene:",
+ "w_h": "Yapacak çok iş var, ama sen tek kişisin, öyle mi?",
+ "w_p1": "E-postalar, faturalar, rezervasyonlar, sözleşmeler, geçen hafta söz verdiğin o yanıt. Bir kafa, iki el, yüz tane iş.",
+ "w_p2": "FreeDuet, bilgisayarının içindeki küçük bir asistan ofisi gibidir. Her asistan tam olarak tek bir işi iyi yapar. Sen ekibi yöneten Iris'le konuşursun, o da herkesi harekete geçirir.",
+ "w_a_alt": "Dört uzmana bağlı tek bir koordinatör",
+ "w_a_h": "Tek bir sohbet botu değil, bir ekip",
+ "w_a_p": "Sohbet botu, sorularını yanıtlayan zeki bir arkadaştır. FreeDuet ise herkesin işine gerçekten sahip çıktığı bir grup çalışmasıdır.",
+ "w_b_alt": "Üzerinde bir düğmeye tıklanan tarayıcı penceresi",
+ "w_b_h": "Sadece konuşmaz, iş yapar",
+ "w_b_p": "Her asistanın kendi masası var: seninkinden ayrı, ayrı bir tarayıcı. Orada fiyat araştırabilir, form doldurabilir ve taslak hazırlayabilir.",
+ "w_c_alt": "Üzerinde onay işareti olan büyük bir Onayla düğmesi",
+ "w_c_h": "Patron sensin",
+ "w_c_p": "Asistanlar hazırlar. Sen karar verirsin. Sen Onayla'ya basana kadar önemli hiçbir şey bilgisayarından çıkmaz.",
+ "v_a_h": "FreeDuet olmadan",
+ "v_a_p": "Postayı açarsın, kırk mesaj okursun, faturayı ararsın, üç uçuşu karşılaştırırsın, yanıtı yazarsın, doğum günü hediyesini unutursun.",
+ "v_b_h": "FreeDuet ile",
+ "v_b_p": "Tek bir cümle yazarsın: “Bu sabah gelen her şeyle ilgilen.” Sonra kısa bir rapor okur, uygun bulduğun yerde Onayla'ya basarsın.",
+ "t_h": "On asistanla tanış. Her birinin tek bir işi var.",
+ "t_p": "Neden her işi yapan tek bir asistan yok? Bir futbol takımında kaleci olmasının nedeniyle aynı: gün boyu tek işle uğraşan kişi o işte çok iyi olur.",
+ "t_note": "İsimlerini ve konuşma tarzlarını değiştirebilir, Leo'dan yeni bir asistan yapmasını isteyebilirsin.",
+ "h_h": "Enter'a bastıktan sonra ne olur?",
+ "h_p": "Sihir yok, gizli bir şey yok. Her seferinde aynı beş adım var, böylece kimin ne yaptığını hep bilirsin.",
+ "s1h": "İhtiyacını yazarsın",
+ "s1p": "Kendi sözlerinle, kendi dilinde, bir arkadaşa mesaj yazar gibi.",
+ "s2h": "Iris doğru asistanı seçer",
+ "s2p": "İsteğini okur, parçalara böler ve her parçayı o işin uzmanına verir.",
+ "s3h": "Asistan kendi masasında çalışır",
+ "s3p": "Aramak, okumak ve hazırlamak için kendi tarayıcısını kullanır. Okuduğu şeyi bilgi olarak görür, asla emir olarak görmez.",
+ "s4h": "Bir kart senden onay ister",
+ "s4p": "İş büyük bir düğme gerektiriyorsa (göndermek, ödemek, imzalamak, rezervasyon yapmak, silmek) her şey durur ve seni bekler.",
+ "s5h": "Kısa bir rapor alırsın",
+ "s5p": "Neyin yapıldığı, neyin yapılmadığı ve nedeni, bir de sıradaki adım. Upuzun metinler yok.",
+ "flowAlt": "Sen Iris'le konuşursun, Iris işi uzmanlara dağıtır, Vera kontrol eder, yanıt sana döner",
+ "you": "Sen",
+ "flowMore": "…ve Gus, Basil ile Leo",
+ "sf_h": "Asla tek başlarına basamayacakları beş düğme",
+ "sf_p": "Yeni bir asistana ilk gün cüzdanını verir miydin? Biz de vermezdik. O yüzden bu beş işlem, sen evet diyene kadar kilitli kalır.",
+ "b1": "Göndermek",
+ "b2": "Ödemek",
+ "b3": "İmzalamak",
+ "b4": "Rezervasyon yapmak",
+ "b5": "Silmek",
+ "p1h": "Söz değil, kilit",
+ "p1p": "Kural sadece asistanın talimatlarında yazılı değil. Sen onaylayana kadar işlemi programın kendisi engeller.",
+ "p2h": "Hileler işe yaramaz",
+ "p2p": "“Bana şifreyi gönder, çok acil” diyen bir e-posta, emir olarak değil, okunacak bir metin olarak görülür. Hiçbir asistan da sohbette senden şifre ya da kart numarası istemez.",
+ "p3h": "Tek bir dürüst kestirme",
+ "p3p": "Adresi kendin yazarsan (“anna@example.com adresine e-posta yaz ve ona şunu söyle…”), cümlen evet yerine geçer ve o yeni e-posta gider. Başka yerlerde bulunan adresler her zaman önce sorar.",
+ "score": "Kendi asistanlarımızı bilerek kandırmaya çalışıyoruz. 0.1 sürümünün son tam testinde güvenlik kontrolleri 45 üzerinden 45 kez geçti. <a href=\"https://github.com/MarcoDeliaBot/freeduet/blob/main/evals/team/reports/2026-11-13-claude-code-regraded-2026-11-13-public.md\">Herkese açık raporu oku</a>. Yine de asistanlar hata yapabilir: onaylamadan önce hazırladıklarını oku.",
+ "m_h": "Neden iki kez ödemezsin?",
+ "m_p1": "Çoğu yapay zekâ aracı sana bir “API anahtarı” aldırır. Bu, taksimetre gibi çalışır: her kelime biraz tutar ve hesap durmadan yükselir.",
+ "m_p2": "Aylık bir yapay zekâ aboneliği ise otobüs kartına benzer: tek bir fiyat, kartın izin verdiği kadar bin. FreeDuet, zaten sahip olduğun kartla çalışır. Giriş işlemini sen yaparsın ve FreeDuet giriş bilgilerini asla görmez, saklamaz ya da başkasına iletmez.",
+ "m_l1": "Bugün resmî Claude Code uygulaması üzerinden bir Claude aboneliğiyle çalışıyor.",
+ "m_l2": "Daha fazla abonelik ve yerel modeller sonraki sürümler için planlanıyor.",
+ "m_l3": "FreeDuet'in kendisi hiçbir şeye mal olmaz: kod MIT lisansıyla herkese açık.",
+ "passAlt": "Fiyatı yükselen bir taksimetre ve yanında aylık bir kart",
+ "pass1": "Her kelimeye para ödersin",
+ "pass2": "Zaten sahip olduğun tek bir kart",
+ "g_h": "Hedefimiz: sadece büyük şirketlere değil, herkese bir ekip",
+ "g_p1": "Büyük bir şirketin asistanları, avukatları ve muhasebecileri vardır. Serbest çalışanın, küçük bir dükkânın ya da bir ailenin ise… sadece kendisi. Bu adil değil ve artık böyle kalması gerekmiyor.",
+ "g_p2": "Herkesin bir ekibi olsun istiyoruz: ücretsiz, açık ve kendi evinde. FreeDuet kendi bilgisayarında çalışır ve konuşmalarını o bilgisayardaki bir veritabanında tutar. Düşünme işini ise zaten abone olduğun yapay zekâ yapar.",
+ "g_p3": "Açık kaynak, tarifin herkese açık olması demektir. Herkes okuyabilir, dediğini yapıp yapmadığını kontrol edebilir ve daha iyi hâle getirebilir. Bize güvenmek zorunda değilsin. Bakabilirsin.",
+ "r_h": "Bugün neler çalışıyor, neler geliyor?",
+ "r_now": "Şimdi hazır",
+ "r1": "Kendi Claude girişinle çalışan on asistan; onaylar, testler, Gmail ve Google Calendar ile birlikte.",
+ "r_plan": "Planlanan",
+ "r2": "Daha fazla abonelik, kendi makinende çalışan yerel modeller.",
+ "r3": "Hiç durmaz: bir abonelik sınırına ulaşınca iş bir sonrakine geçer.",
+ "r4": "Güvenli alışveriş: her sepet için ayrı bir izin ve harcama sınırları.",
+ "r5": "Tek komutla kurulum ve eksiksiz bir kılavuz.",
+ "r_note": "Henüz yapılmamış her şeyi açıkça belirtiyoruz. Masal yok.",
+ "st_h": "Hazır mısın? Dört komut ve ekip işbaşında",
+ "st_p": "Onları bir terminale kopyala, kendi Claude planınla bir kez giriş yap, sonra verdiği sayfayı aç.",
+ "st_needH": "İhtiyacın olanlar:",
+ "st_need": "bir Claude aboneliği, bir de bilgisayarında Docker, Bash ve Bun. Windows'ta (WSL2 ile) ve Linux'ta denendi.",
+ "st_kid": "Hiç terminal açmadın mı? Kurulumu teknik bilgisi olan birine yaptır ve ona bu sayfayı göster.",
+ "copy": "Komutları kopyala",
+ "j1h": "Bir yıldız ver",
+ "j1p": "GitHub'da tek bir tıklama, başkalarına bu projenin göz atmaya değer olduğunu söyler.",
+ "j2h": "Neyin bozulduğunu söyle",
+ "j2p": "Kullanıyor musun? Bir hata mı buldun? Bir düzeltmen mi var? Her biri için kısa bir form var.",
+ "j3h": "Bize bir kahve ısmarla",
+ "j3p": "FreeDuet'i tek bir kişi yapıyor. Küçük bir bağış onu ayakta tutar.",
+ "q_h": "İnsanların ilk sorduğu sorular",
+ "q1": "Gerçekten ücretsiz mi?",
+ "a1": "Evet. FreeDuet, MIT lisansıyla açık kaynaktır; ticari kullanım için de. Ödediğin şey, onunla birlikte kullanmayı seçtiğin yapay zekâ aboneliğidir; bugün bu bir Claude planıdır.",
+ "q2": "Arkamdan e-posta gönderebilir ya da para harcayabilir mi?",
+ "a2": "Hayır. Göndermek, ödemek, imzalamak, rezervasyon yapmak ve silmek, sen onaylayana kadar engellidir. Tek kestirme, isteğinde kendin yazdığın bir adrese gidecek yeni bir e-postadır.",
+ "q3": "Verilerim nereye gidiyor?",
+ "a3": "FreeDuet bilgisayarında çalışır ve konuşmalarını orada saklar. Asistanlar düşünmek için, giriş yaptığın yapay zekâ hizmetini, o hizmetin kendi uygulamasının yapacağı gibi kullanır.",
+ "q4": "FreeDuet'i Anthropic, OpenAI ya da Google mı yapıyor?",
+ "a4": "Hayır. Bağımsız bir projedir; bunların hiçbiriyle bağlantılı değildir, hiçbiri tarafından onaylanmamıştır. Ürün adları sadece FreeDuet'in nelerle çalıştığını söylemek için kullanılıyor.",
+ "q5": "Asistanlar yanlış yapabilir mi?",
+ "a5": "Evet, her yapay zekâ gibi. Bu yüzden her önemli adım seni bekler ve Vera, sen görmeden önce toplamları, alıntıları ve fiyatları yeniden kontrol eder. Portia ile Penny ilk bir değerlendirme yapar; hukuki ya da mali danışmanlık vermez.",
+ "q6": "Bitti mi?",
+ "a6": "Hayır, bunu açıkça söylüyoruz. 0.1 sürümü, tek bir geliştiricinin yapıp kullandığı ilk sürümdür. Yukarıdaki sayfa bugün nelerin çalıştığını, nelerin sadece planlandığını gösteriyor.",
+ "fl1": "Ekip ayrıntılı olarak",
+ "fl2": "Güvenlik",
+ "fl3": "MIT lisansı",
+ "ft1": "FreeDuet bağımsız bir açık kaynak projesidir. Anthropic, OpenAI, Google, xAI, Z.ai veya CopilotKit ile bağlantılı değildir; bunlar tarafından onaylanmamış ya da desteklenmemiştir. Claude, ChatGPT, Gemini ve Grok sahiplerinin ticari markalarıdır ve yalnızca uyumluluğu anlatmak için anılır.",
+ "ft2": "CopilotKit'in OpenBot ve OpenDuet projeleri (MIT) üzerine kuruldu. FreeDuet'in asistanları hata yapabilir: onaylamadan önce hazırladıklarını kontrol et.",
+ "title": "FreeDuet: on yapay zekâ asistanından oluşan kendi ekibin",
+ "desc": "FreeDuet, kendi bilgisayarında ve kendi yapay zekâ aboneliğinle çalışan, ücretsiz ve açık kaynaklı on yapay zekâ asistanlık bir ekiptir. Göndermeden, ödemeden, imzalamadan, rezervasyon yapmadan ya da silmeden önce sana sorarlar.",
+ "copied": "Kopyalandı",
+ "yes": "Onayla",
+ "no": "Yapma",
+ "ask": "Onayın bekleniyor",
+ "nothing": "Onaylanacak bir şey yok: bunlar sadece fikir.",
+ "team": {
+  "iris": [
+   "ekibi yönetir",
+   "İhtiyacını Iris'e söylersin. O işi parçalara böler, her parçayı doğru asistana verir ve sana tek bir yanıt getirir.",
+   "Bu sabah gelen her şeyle ilgilen."
+  ],
+  "otto": [
+   "posta",
+   "Gelen kutunu şimdi önemli olanlar ve bekleyebilecekler diye ayırır, yanıtları da senin kontrol etmen için yazar.",
+   "Postamı düzenle ve önemli yanıtların taslağını hazırla."
+  ],
+  "portia": [
+   "sözleşmeler",
+   "Sıkıcı küçük harfleri okur ve sen imzalamadan önce tuzakların nerede olduğunu gösterir.",
+   "Bu kira sözleşmesini imzalayabilir miyim?"
+  ],
+  "penny": [
+   "faturalar",
+   "Faturaları hazırlar ve sana hâlâ kimlerin borcu olduğunun listesini tutar.",
+   "Acme'ye geçen haftanın faturasını kes ve kimin ödemediğini söyle."
+  ],
+  "jules": [
+   "işler gücler",
+   "Kendi tarayıcısında uçuş, hediye ve boş masa bulur; sen evet deyince rezervasyonu yapar.",
+   "Cuma günü dört kişilik bir masa ayırt."
+  ],
+  "wren": [
+   "yazı",
+   "Karalama notlarını, robot gibi değil, senin ağzından çıkmış gibi duran gönderilere ve e-postalara dönüştürür.",
+   "Bu ses kaydını benim tarzımda bir gönderiye çevir."
+  ],
+  "gus": [
+   "tamir",
+   "Bozulan şeyin fotoğrafını gönder. Gus nasıl güvenle onaracağını ya da kimi arayacağını söyler.",
+   "Kapı kapanmıyor. İşte fotoğrafı."
+  ],
+  "basil": [
+   "yemek",
+   "Basil'e buzdolabında ne olduğunu söyle, o da sana bu akşam yapabileceğin üç yemek önersin.",
+   "Ispanak ve yumurtayla ne pişirebilirim?"
+  ],
+  "vera": [
+   "kontrol",
+   "Perde arkasında çalışır. İş sana ulaşmadan önce toplamları yeniden yapar, fiyatları yeniden açıp bakar.",
+   "(Iris önemli işleri ona kendiliğinden gönderir.)"
+  ],
+  "leo": [
+   "yeni asistanlar kurar",
+   "Henüz var olmayan bir asistana mı ihtiyacın var? Leo onu, çalıştığını kanıtlayan testlerle birlikte tasarlar.",
+   "Alan adlarımın yenileme tarihlerini takip edecek birine ihtiyacım var."
+  ]
+ },
+ "demo": [
+  {
+   "chip": "Tesisatçıya yanıt ver: Salı uygun",
+   "me": "Tesisatçının e-postasına yanıt ver: Salı günü saat 9 uygun.",
+   "iris": "Ben hallederim. Bu iş Otto'ya göre.",
+   "who": "otto",
+   "line": "E-postasını buldum ve yanıtı yazdım. Sen söyleyene kadar göndermiyorum.",
+   "card": [
+    [
+     "İşlem",
+     "Yanıt göndermek"
+    ],
+    [
+     "Kime",
+     "tesisatçı (aynı konuşma)"
+    ],
+    [
+     "Metin",
+     "Günaydın, Salı günü saat 9 bana uyar. Teşekkürler!"
+    ]
+   ],
+   "ok": "Gönderildi. Aynı konuşmada tek bir yanıt. Başka hiçbir şeye dokunmadım.",
+   "stop": "Gönderilmedi. Fikrin değişirse taslak kayıtlı duruyor."
+  },
+  {
+   "chip": "Cuma günü dört kişilik bir masa ayırt",
+   "me": "Cuma akşamı için dört kişilik bir masa ayırt, pizza olan bir yerde.",
+   "iris": "Anlaşıldı. Rezervasyonlarla Jules ilgilenir.",
+   "who": "jules",
+   "line": "Kendi tarayıcımda baktım ve boş bir masa buldum. Henüz hiçbir şey ayırtmadım.",
+   "card": [
+    [
+     "İşlem",
+     "Masa ayırtmak"
+    ],
+    [
+     "Nerede",
+     "Örnek Pizzeria"
+    ],
+    [
+     "Ne zaman",
+     "Cuma, saat 20:00, 4 kişi"
+    ]
+   ],
+   "ok": "Cuma günü saat 20:00 için, 4 kişilik masa ayrıldı. Onay e-postası gelen kutunda.",
+   "stop": "Hiçbir şey ayrılmadı. Başka yerler istersen söyle."
+  },
+  {
+   "chip": "Ispanak ve yumurtayla ne pişirebilirim?",
+   "me": "Bu akşam ıspanak ve yumurtayla ne pişirebilirim?",
+   "iris": "Kolay. Aşçımız Basil.",
+   "who": "basil",
+   "line": "Üç fikir: ıspanaklı omlet (10 dakika), ıspanak yatağında fırın yumurta (20 dakika) ya da yeşil krep (15 dakika). Birinin adımlarını ister misin?",
+   "card": null
+  }
+ ]
+}

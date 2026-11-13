@@ -1,0 +1,232 @@
+{
+ "skip": "Pular para o conteúdo",
+ "n1": "O que é",
+ "n2": "A equipe",
+ "n3": "Como funciona",
+ "n4": "Segurança",
+ "n5": "Começar",
+ "h1": "Sua própria equipe de dez assistentes de IA.",
+ "lead": "O FreeDuet roda no seu próprio computador. Um assistente organiza seus e-mails, outro lê contratos, outro reserva o restaurante. Você diz o que precisa, eles fazem o trabalho e <span class=\"mark\">nunca enviam, pagam ou apagam nada sem perguntar antes a você</span>.",
+ "cta1": "Baixar o FreeDuet no GitHub",
+ "cta2": "Ver como funciona",
+ "f1": "Gratuito e de código aberto",
+ "f2": "Sem chave de API para comprar",
+ "f3": "Roda no seu próprio computador",
+ "demoTag": "Demonstração com exemplos inventados",
+ "tryP": "Experimente outro pedido:",
+ "w_h": "Coisa demais para fazer, e só você para dar conta?",
+ "w_p1": "E-mails, faturas, reservas, contratos, aquela resposta que você prometeu na semana passada. Uma cabeça, duas mãos, cem tarefas.",
+ "w_p2": "O FreeDuet é como um pequeno escritório de assistentes dentro do seu computador. Cada assistente é ótimo em um único trabalho. Você fala com a Iris, que coordena a equipe, e ela coloca todo mundo para trabalhar.",
+ "w_a_alt": "Uma coordenadora ligada a quatro especialistas",
+ "w_a_h": "Uma equipe, não um único chatbot",
+ "w_a_p": "Um chatbot é um amigo esperto que responde a perguntas. O FreeDuet é um grupo inteiro em que cada um realmente faz a sua parte.",
+ "w_b_alt": "Uma janela de navegador com um botão sendo clicado",
+ "w_b_h": "Ele faz as coisas, não só conversa",
+ "w_b_p": "Cada assistente tem a sua própria mesa: um navegador separado, longe do seu. Ali ele pode pesquisar preços, preencher formulários e preparar rascunhos.",
+ "w_c_alt": "Um grande interruptor Aprovar com um sinal de visto",
+ "w_c_h": "Quem manda é você",
+ "w_c_p": "Os assistentes preparam. Você decide. Nada importante sai do seu computador até você apertar Aprovar.",
+ "v_a_h": "Sem o FreeDuet",
+ "v_a_p": "Você abre o e-mail, lê quarenta mensagens, procura a fatura, compara três voos, escreve a resposta e esquece o presente de aniversário.",
+ "v_b_h": "Com o FreeDuet",
+ "v_b_p": "Você escreve uma frase: “Cuide de tudo o que chegou hoje de manhã.” Depois lê um relatório curto e aperta Aprovar onde concordar.",
+ "t_h": "Conheça os dez. Cada um tem um único trabalho.",
+ "t_p": "Por que não um assistente que faz tudo? Pelo mesmo motivo que um time de futebol tem goleiro: quem faz um trabalho só o dia inteiro fica muito bom nele.",
+ "t_note": "Você pode mudar o nome deles, mudar o jeito como falam ou pedir ao Leo que crie um novo.",
+ "h_h": "O que acontece depois que você aperta Enter",
+ "h_p": "Sem mágica e sem segredos. Cinco passos, sempre os mesmos, para você saber sempre quem está fazendo o quê.",
+ "s1h": "Você escreve o que precisa",
+ "s1p": "Com suas palavras e no seu idioma, como numa mensagem para um amigo.",
+ "s2h": "A Iris escolhe o assistente certo",
+ "s2p": "Ela lê o seu pedido, divide em partes e entrega cada parte ao especialista daquele trabalho.",
+ "s3h": "O assistente trabalha na própria mesa",
+ "s3p": "Ele usa o seu próprio navegador para pesquisar, ler e preparar. O que lê é tratado como informação, nunca como ordem.",
+ "s4h": "Um cartão pede o seu sim",
+ "s4p": "Se o trabalho precisar de um botão importante (enviar, pagar, assinar, reservar, apagar), tudo para e espera por você.",
+ "s5h": "Você recebe um relatório curto",
+ "s5p": "O que foi feito, o que não foi feito e por quê, e qual é o próximo passo. Sem textão.",
+ "flowAlt": "Você fala com a Iris, a Iris passa o trabalho aos especialistas, a Vera confere, a resposta volta para você",
+ "you": "Você",
+ "flowMore": "…e Gus, Basil e Leo",
+ "sf_h": "Cinco botões que eles nunca apertam sozinhos",
+ "sf_p": "Você daria a carteira a um assistente novo no primeiro dia? Nós também não. Por isso, estas cinco ações ficam travadas até você dizer sim.",
+ "b1": "Enviar",
+ "b2": "Pagar",
+ "b3": "Assinar",
+ "b4": "Reservar",
+ "b5": "Apagar",
+ "p1h": "Uma trava, não uma promessa",
+ "p1p": "A regra não está escrita só nas instruções do assistente. O próprio programa bloqueia a ação até você aprovar.",
+ "p2h": "Truques não funcionam",
+ "p2p": "Um e-mail que diz “me mande a senha, é urgente” é tratado como um texto para ler, não como uma ordem. E nenhum assistente pede senhas ou números de cartão no chat.",
+ "p3h": "Um atalho honesto",
+ "p3p": "Se você mesmo digitar o endereço (“escreva para anna@example.com e diga que…”), a sua frase já é o sim, e esse novo e-mail é enviado. Endereços encontrados em qualquer outro lugar sempre pedem confirmação antes.",
+ "score": "Nós tentamos enganar os nossos próprios assistentes de propósito. No teste completo mais recente da versão 0.1, as verificações de segurança passaram 45 vezes em 45. <a href=\"https://github.com/MarcoDeliaBot/freeduet/blob/main/evals/team/reports/2026-11-13-claude-code-regraded-2026-11-13-public.md\">Leia o relatório público</a>. Os assistentes ainda podem errar, então leia o que eles preparam antes de aprovar.",
+ "m_h": "Por que você não paga duas vezes",
+ "m_p1": "A maioria das ferramentas de IA obriga você a comprar uma “chave de API”. Funciona como o taxímetro de um táxi: cada palavra custa um pouquinho, e a conta só sobe.",
+ "m_p2": "Uma assinatura mensal de IA é mais como um passe de ônibus: um preço só, e você usa até o limite do passe. O FreeDuet funciona com o passe que você já tem. Você mesmo faz o login, e o FreeDuet nunca vê, guarda ou repassa o seu login.",
+ "m_l1": "Hoje ele funciona com uma assinatura do Claude, por meio do aplicativo oficial Claude Code.",
+ "m_l2": "Mais assinaturas e modelos locais estão previstos para as próximas versões.",
+ "m_l3": "O FreeDuet em si não custa nada: o código é público, sob a licença MIT.",
+ "passAlt": "Um taxímetro com o preço subindo ao lado de um passe mensal",
+ "pass1": "Pagar por cada palavra",
+ "pass2": "Um passe que você já tem",
+ "g_h": "O objetivo: uma equipe para todos, não só para as grandes empresas",
+ "g_p1": "Uma grande empresa tem assistentes, advogados e contadores. Um profissional autônomo, uma lojinha ou uma família tem… a si mesmo. Isso não é justo, e agora não precisa continuar assim.",
+ "g_p2": "Queremos que qualquer pessoa tenha uma equipe: gratuita, aberta e em casa. O FreeDuet roda no seu próprio computador e guarda as conversas em um banco de dados nesse computador. Quem faz o raciocínio é a IA que você já assina.",
+ "g_p3": "Código aberto quer dizer que a receita é pública. Qualquer pessoa pode ler, conferir se ele faz o que promete e deixá-lo melhor. Você não precisa confiar em nós. Pode olhar.",
+ "r_h": "O que funciona hoje e o que vem por aí",
+ "r_now": "Já disponível",
+ "r1": "Os dez assistentes no seu próprio login do Claude, com aprovações, testes, Gmail e Google Calendar.",
+ "r_plan": "Planejado",
+ "r2": "Mais assinaturas e modelos locais que rodam na sua própria máquina.",
+ "r3": "Nunca para: quando uma assinatura chega ao limite, o trabalho passa para a próxima.",
+ "r4": "Compras seguras: uma autorização para cada carrinho exato e limites de gastos.",
+ "r5": "Instalação com um único comando e um guia completo.",
+ "r_note": "Marcamos tudo o que ainda não está pronto. Sem contos de fadas.",
+ "st_h": "Pronto? Quatro comandos e a equipe já está trabalhando",
+ "st_p": "Copie-os em um terminal, faça login uma vez com o seu próprio plano do Claude e abra a página que ele indicar.",
+ "st_needH": "O que você precisa:",
+ "st_need": "uma assinatura do Claude, mais Docker, Bash e Bun no seu computador. Testado no Windows (com WSL2) e no Linux.",
+ "st_kid": "Nunca abriu um terminal? Peça a alguém da área de tecnologia para instalar e mostre esta página.",
+ "copy": "Copiar os comandos",
+ "j1h": "Dê uma estrela",
+ "j1p": "Um clique no GitHub mostra a outras pessoas que este projeto vale uma olhada.",
+ "j2h": "Conte o que deu errado",
+ "j2p": "Está usando? Encontrou um erro? Tem uma correção? Há um formulário curto para cada caso.",
+ "j3h": "Pague um cafezinho",
+ "j3p": "O FreeDuet é feito por uma só pessoa. Uma pequena doação ajuda a manter o projeto.",
+ "q_h": "As perguntas que todo mundo faz primeiro",
+ "q1": "É gratuito mesmo?",
+ "a1": "Sim. O FreeDuet é de código aberto, sob a licença MIT, inclusive para uso comercial. O que você paga é a assinatura de IA que escolher usar com ele, que hoje é um plano do Claude.",
+ "q2": "Ele pode enviar um e-mail ou gastar dinheiro pelas minhas costas?",
+ "a2": "Não. Enviar, pagar, assinar, reservar e apagar ficam bloqueados até você aprovar. O único atalho é um novo e-mail para um endereço que você mesmo digitou no seu pedido.",
+ "q3": "Para onde vão as minhas coisas?",
+ "a3": "O FreeDuet roda no seu computador e guarda as conversas ali. Para pensar, os assistentes usam o serviço de IA em que você fez login, do mesmo jeito que o aplicativo dele faria.",
+ "q4": "O FreeDuet é feito pela Anthropic, pela OpenAI ou pelo Google?",
+ "a4": "Não. É um projeto independente, sem vínculo nem aprovação de nenhuma delas. Os nomes dos produtos são usados só para dizer com o que o FreeDuet funciona.",
+ "q5": "Os assistentes podem errar?",
+ "a5": "Podem, como qualquer IA. Por isso cada passo importante espera por você, e a Vera confere contas, citações e preços antes de você ver. A Portia e a Penny fazem uma primeira revisão, não dão aconselhamento jurídico nem fiscal.",
+ "q6": "Já está pronto?",
+ "a6": "Não, e dizemos isso abertamente. A versão 0.1 é um lançamento inicial, feito e usado por um único mantenedor. A página acima marca o que funciona hoje e o que ainda é só planejamento.",
+ "fl1": "A equipe em detalhe",
+ "fl2": "Segurança",
+ "fl3": "Licença MIT",
+ "ft1": "O FreeDuet é um projeto independente de código aberto. Não tem vínculo, aprovação nem patrocínio da Anthropic, da OpenAI, do Google, da xAI, da Z.ai ou da CopilotKit. Claude, ChatGPT, Gemini e Grok são marcas de seus respectivos donos e são citados apenas para descrever a compatibilidade.",
+ "ft2": "Construído sobre o OpenBot e o OpenDuet, da CopilotKit (MIT). Os assistentes do FreeDuet podem errar: revise o que eles preparam antes de aprovar.",
+ "title": "FreeDuet: sua própria equipe de dez assistentes de IA",
+ "desc": "O FreeDuet é uma equipe gratuita e de código aberto de dez assistentes de IA que roda no seu próprio computador e na sua própria assinatura de IA. Eles perguntam antes de enviar, pagar, assinar, reservar ou apagar.",
+ "copied": "Copiado",
+ "yes": "Aprovar",
+ "no": "Não fazer",
+ "ask": "Esperando o seu sim",
+ "nothing": "Nada para aprovar: são apenas ideias.",
+ "team": {
+  "iris": [
+   "coordena a equipe",
+   "Você diz à Iris o que precisa. Ela divide em partes, entrega cada parte ao assistente certo e traz de volta uma única resposta.",
+   "Cuide de tudo o que chegou hoje de manhã."
+  ],
+  "otto": [
+   "e-mails",
+   "Separa a sua caixa de entrada entre o que importa agora e o que pode esperar, e escreve as respostas para você conferir.",
+   "Organize meus e-mails e escreva as respostas que importam."
+  ],
+  "portia": [
+   "contratos",
+   "Lê as letras miúdas chatas e mostra onde estão as armadilhas antes de você assinar.",
+   "Posso assinar este contrato de aluguel?"
+  ],
+  "penny": [
+   "faturas",
+   "Prepara faturas e mantém a lista de quem ainda deve dinheiro a você.",
+   "Faça a fatura da Acme da semana passada e diga quem ainda não pagou."
+  ],
+  "jules": [
+   "tarefas do dia a dia",
+   "Encontra voos, presentes e mesas livres no seu próprio navegador e faz a reserva quando você diz sim.",
+   "Reserve uma mesa para quatro na sexta."
+  ],
+  "wren": [
+   "textos",
+   "Transforma suas anotações soltas em posts e e-mails que soam como você, não como um robô.",
+   "Transforme este áudio em um post no meu estilo."
+  ],
+  "gus": [
+   "consertos",
+   "Mande uma foto do que quebrou. O Gus diz como consertar com segurança, ou quem chamar.",
+   "A porta não fecha. Aqui está uma foto."
+  ],
+  "basil": [
+   "cozinha",
+   "Conte ao Basil o que tem na geladeira e ele sugere três pratos que você pode fazer hoje à noite.",
+   "O que posso cozinhar com espinafre e ovos?"
+  ],
+  "vera": [
+   "conferência",
+   "Trabalha nos bastidores. Ela refaz as contas e abre de novo os preços antes de o trabalho chegar até você.",
+   "(A Iris envia a ela o trabalho importante automaticamente.)"
+  ],
+  "leo": [
+   "cria novos assistentes",
+   "Precisa de um assistente que ainda não existe? O Leo o projeta, junto com os testes que provam que ele funciona.",
+   "Preciso de alguém que acompanhe a renovação dos meus domínios."
+  ]
+ },
+ "demo": [
+  {
+   "chip": "Responder ao encanador: terça está bom",
+   "me": "Responda ao e-mail do encanador: terça às 9h está bom.",
+   "iris": "Pode deixar. Isso é trabalho para o Otto.",
+   "who": "otto",
+   "line": "Encontrei o e-mail dele e escrevi a resposta. Só envio quando você mandar.",
+   "card": [
+    [
+     "Ação",
+     "Enviar uma resposta"
+    ],
+    [
+     "Para",
+     "o encanador (na mesma conversa)"
+    ],
+    [
+     "Texto",
+     "Bom dia, terça às 9h está ótimo para mim. Obrigado!"
+    ]
+   ],
+   "ok": "Enviado. Uma resposta, na mesma conversa. Nada mais foi mexido.",
+   "stop": "Não enviado. O rascunho está salvo, se você mudar de ideia."
+  },
+  {
+   "chip": "Reservar uma mesa para quatro na sexta",
+   "me": "Reserve uma mesa para quatro na sexta à noite, num lugar com pizza.",
+   "iris": "Entendido. A Jules cuida das reservas.",
+   "who": "jules",
+   "line": "Procurei no meu próprio navegador e encontrei uma mesa livre. Ainda não reservei nada.",
+   "card": [
+    [
+     "Ação",
+     "Reservar uma mesa"
+    ],
+    [
+     "Onde",
+     "Pizzaria Exemplo"
+    ],
+    [
+     "Quando",
+     "Sexta, 20h, 4 pessoas"
+    ]
+   ],
+   "ok": "Reservado para sexta às 20h, 4 pessoas. A confirmação está na sua caixa de entrada.",
+   "stop": "Nada reservado. Diga se quiser ver outros lugares."
+  },
+  {
+   "chip": "O que posso cozinhar com espinafre e ovos?",
+   "me": "O que posso cozinhar hoje à noite com espinafre e ovos?",
+   "iris": "Fácil. O Basil é o cozinheiro.",
+   "who": "basil",
+   "line": "Três ideias: omelete de espinafre (10 minutos), ovos assados sobre espinafre (20 minutos) ou panqueca verde (15 minutos). Quer o passo a passo de uma delas?",
+   "card": null
+  }
+ ]
+}
