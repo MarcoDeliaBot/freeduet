@@ -2,7 +2,9 @@
 
 **A self-hosted team of AI employees that runs on the AI subscriptions you already pay for, and never stops working.**
 
-**Website: [freeduet.com](https://freeduet.com)** (12 languages) · [Sponsor](https://github.com/sponsors/MarcoDeliaBot)
+**Website: [freeduet.com](https://freeduet.com)** (12 languages)
+
+[![Sponsor](https://img.shields.io/badge/Sponsor-%E2%9D%A4-ffc0cb?style=for-the-badge&logo=github&labelColor=555555)](https://github.com/sponsors/MarcoDeliaBot)
 
 FreeDuet gives you a Chief of Staff and a crew of specialists: inbox, contracts, invoices, purchases and bookings (purchase permits are coming in v0.4), writing, repairs and meals. Each one has its own computer and browser. They ask before they send, pay, sign, book or delete anything. Planned for v0.3: when one subscription hits its limit, the work moves to the next one, and pay-per-token APIs stay optional and always capped.
 
