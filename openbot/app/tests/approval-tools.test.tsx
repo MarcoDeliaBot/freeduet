@@ -155,3 +155,109 @@ test("a change goes to the server's gate even when nothing about approvals has l
     global.fetch = originalFetch;
   }
 });
+
+/**
+ * A change the server's gate could not make is a result for the Bot, never a throw.
+ *
+ * The SDK turns a handler that throws into an "Error: <message>" tool message and runs no follow-up
+ * (core executeSpecificTool: `if (!handlerResult.error && tool?.followUp !== false) return true`), so
+ * the conversation ended on the message with nothing from the Bot. Found in a live run (jules-3): a
+ * click on a page that had moved answered "Element f356e718 is not on the page any more" through the
+ * gate's 500, the handler threw it, and the booking turn ended in silence.
+ */
+async function handlerAnswer(answer: Response) {
+  const originalFetch = global.fetch;
+  global.fetch = Object.assign(async () => answer, {
+    preconnect: originalFetch.preconnect,
+  });
+  try {
+    render(
+      <QueryClientProvider client={new QueryClient()}>
+        <Tools />
+      </QueryClientProvider>,
+    );
+    const tool = registered.find((entry) => entry.name === "computer_click");
+    const toolCall = {
+      id: "click-call",
+      type: "function" as const,
+      function: {
+        name: "computer_click",
+        arguments: '{"ref":"f356e718","snapshotId":68}',
+      },
+    };
+    const subscribers: {
+      onRunInitialized?: (input: { input: unknown }) => void;
+    }[] = [];
+    const agent = {
+      threadId: "thread",
+      state: {},
+      messages: [
+        { id: "u1", role: "user", content: "Book the best-value plan." },
+        { id: "a1", role: "assistant", content: "", toolCalls: [toolCall] },
+      ],
+      subscribe: (subscriber: (typeof subscribers)[number]) => {
+        subscribers.push(subscriber);
+        return { unsubscribe: () => undefined };
+      },
+    };
+    const stop = observeApprovalAgent(agent as never);
+    for (const subscriber of subscribers)
+      subscriber.onRunInitialized?.({
+        input: {
+          runId: "run-1",
+          threadId: "thread",
+          messages: agent.messages,
+          tools: [],
+          context: [],
+          state: {},
+          forwardedProps: {},
+        },
+      });
+    try {
+      return await tool?.handler?.({ ref: "f356e718", snapshotId: 68 }, {
+        agent,
+        toolCall,
+      } as never);
+    } finally {
+      stop();
+    }
+  } finally {
+    global.fetch = originalFetch;
+  }
+}
+
+test("a change the computer could not make comes back as a result the Bot reads, not a throw", async () => {
+  const stale =
+    "Element f356e718 is not on the page any more. Take a fresh snapshot and use the refs from it.";
+  const result = await handlerAnswer(
+    Response.json({ error: stale }, { status: 500 }),
+  );
+  expect(result).toEqual({ ok: false, reason: stale });
+});
+
+test("a gate answer with no reason, no result or no JSON at all is a failed result too", async () => {
+  expect(await handlerAnswer(Response.json({}, { status: 500 }))).toEqual({
+    ok: false,
+    reason: "The computer action could not be approved.",
+  });
+  expect(
+    await handlerAnswer(
+      new Response("<html>Bad gateway</html>", { status: 502 }),
+    ),
+  ).toEqual({
+    ok: false,
+    reason: "The computer action could not be approved.",
+  });
+  expect(await handlerAnswer(Response.json({ done: true }))).toEqual({
+    ok: false,
+    reason: "The computer action returned no result.",
+  });
+});
+
+test("a change the gate lets through still returns the server's result", async () => {
+  expect(
+    await handlerAnswer(
+      Response.json({ result: { ok: true, clicked: "Book" } }),
+    ),
+  ).toEqual({ ok: true, clicked: "Book" });
+});

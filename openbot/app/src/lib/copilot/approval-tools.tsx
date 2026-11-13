@@ -21,6 +21,19 @@ const writes = new Set([
 ]);
 
 /**
+ * A change the computer could not make, as a result the Bot reads: the same `{ ok: false, reason }`
+ * shape `callComputer` gives every other refusal.
+ *
+ * NEVER A THROW. The SDK turns a handler that throws into an "Error: <message>" tool message and runs
+ * no follow-up, so the conversation ends on that message with nothing from the Bot: a click on a
+ * page that had moved ("Element x is not on the page any more") ended a booking turn in silence (live
+ * run, jules-3). A returned result is posted back like any other and the Bot answers it.
+ */
+function failed(reason: string) {
+  return { ok: false, reason };
+}
+
+/**
  * Route computer changes through the server's durable approval gate, and draw a pending decision
  * inline where the action would have been.
  *
@@ -73,7 +86,8 @@ export function useFrontendTool<T extends Record<string, unknown>>(
             `/api/approvals/computer/${encodeURIComponent(bot.current)}`,
             { method: "POST", body: snapshot, signal: context.signal },
           );
-          const payload: unknown = await response.json();
+          // A body that is not JSON (a proxy's error page) is a failed action like any other.
+          const payload: unknown = await response.json().catch(() => null);
           if (response.status === 202) {
             if (!context.agent)
               throw new Error("The interrupted conversation is unavailable.");
@@ -85,7 +99,7 @@ export function useFrontendTool<T extends Record<string, unknown>>(
             return { waiting: true };
           }
           if (!response.ok)
-            throw new Error(
+            return failed(
               payload &&
                 typeof payload === "object" &&
                 "error" in payload &&
@@ -94,7 +108,7 @@ export function useFrontendTool<T extends Record<string, unknown>>(
                 : "The computer action could not be approved.",
             );
           if (!payload || typeof payload !== "object" || !("result" in payload))
-            throw new Error("The computer action returned no result.");
+            return failed("The computer action returned no result.");
           return payload.result;
         }
       : undefined,

@@ -277,3 +277,101 @@ describe("FreeDuet engines file", () => {
     }
   });
 });
+
+/**
+ * Jules's own instructions, the part before the shared rules: the sentences the live evals of
+ * 12 November 2026 (jules-1, jules-2, jules-3) led to. Word for word, so a later edit that drops one
+ * fails here and not in a night of live runs.
+ */
+describe("Jules's own instructions", () => {
+  async function jules() {
+    const rows = await memberRows();
+    const prompt = rows.find((row) => row.id === "concierge")?.system_prompt;
+    if (!prompt) throw new Error("no member concierge");
+    const wren = rows.find((row) => row.id === "writer")?.system_prompt ?? "";
+    return {
+      own: prompt.slice(0, prompt.indexOf(SHARED_RULES_START)),
+      shared: prompt.slice(prompt.indexOf(SHARED_RULES_START)),
+      wrenShared: wren.slice(wren.indexOf(SHARED_RULES_START)),
+    };
+  }
+
+  test("a trip is researched until up to three complete plans, and never ends by asking leave to go on (jules-2)", async () => {
+    const { own } = await jules();
+    for (const sentence of [
+      "For a trip, start with one site for the transport and one for the stay, and open at most two result pages on each.",
+      "When those pages show no price for a plan's transport or its stay, open the page of another result, then another site, until you have it.",
+      "Keep going in the same turn until you have up to three complete plans, each with its total against the budget.",
+      "Stop early only when you have tried both and still lack a price, and then say exactly what is missing and what you tried.",
+      "A search turn never ends by asking the person whether to go on with the same search.",
+    ])
+      expect({ sentence, said: own.includes(sentence) }).toEqual({
+        sentence,
+        said: true,
+      });
+    // The sentence that made two pages the end of the search.
+    expect(own).not.toContain("before you propose the plans");
+    // Still the one-site-each limit of the lean research, and the rule that a trip needs both halves.
+    expect(own).toContain(
+      "A trip is complete only with both the transport and the stay: search both, and give each plan's total of the two.",
+    );
+  });
+
+  test("an idea is listed only with a delivery date the shop's page showed, else another product, else the standard time under what could not be verified (jules-1)", async () => {
+    const { own } = await jules();
+    for (const sentence of [
+      "An idea or an option goes in your list only with a delivery date or a delivery estimate that you read on the shop's page.",
+      "When a product's page shows no date, leave that product out and pick another that shows one: you have the time.",
+      "Only when the shop shows no date on any page you opened, give the shop's standard delivery time from its delivery or shipping information, written as dates counted from today,",
+      "say it is the shop's standard estimate, and list that idea under what you could not verify.",
+      "A date you saw on a different item is never this item's date.",
+    ])
+      expect({ sentence, said: own.includes(sentence) }).toEqual({
+        sentence,
+        said: true,
+      });
+    // The two sentences that let a product through with no date at all.
+    expect(own).not.toContain("When no delivery date is shown, write");
+    expect(own).not.toContain(
+      "When a product page shows no delivery date, use",
+    );
+  });
+
+  test("after a booking is asked for, the price is checked, then the review is given and approved, and nothing in a booking flow is pressed before that (jules-3)", async () => {
+    const { own } = await jules();
+    const recheck =
+      "in this order: first open the pages by address to check the price and availability again, then prepare the review and call request_purchase (or, without that tool, give the review and ask for approval of that exact booking).";
+    const noClick =
+      "Until the person has approved it, you never click or type inside a booking or checkout flow: you may read its pages, you may not press anything on them.";
+    expect(own).toContain(recheck);
+    expect(own).toContain(noClick);
+    expect(own.indexOf(recheck)).toBeLessThan(own.indexOf(noClick));
+    // Both halves of the rule come after "book it" and before the final step.
+    expect(own.indexOf(noClick)).toBeLessThan(
+      own.indexOf("Before the final step, prepare a review"),
+    );
+  });
+
+  test("the booking and checkout rules the new sentences sit beside still stand (jules-3, jules-4, jules-5)", async () => {
+    const { own } = await jules();
+    for (const sentence of [
+      "You never buy, book, cancel or subscribe without an approval for that exact cart or booking.",
+      "If the request_purchase tool is available, call it with that review;",
+      "end the booking turn with the full review in your reply and ask the person to approve that exact booking;",
+      "Continue only after approval: after their yes, go on to the last step, where the final click goes through the approval gate.",
+      // jules-5: the total changed after an approval.
+      "Just before the last click, compare the site's final summary with the approved review; if anything changed, stop and ask again.",
+      "You never show card data in the chat.",
+    ])
+      expect({ sentence, said: own.includes(sentence) }).toEqual({
+        sentence,
+        said: true,
+      });
+  });
+
+  test("the shared rules at the end of the prompt are Wren's, word for word", async () => {
+    const { shared, wrenShared } = await jules();
+    expect(shared.length).toBeGreaterThan(SHARED_RULES_START.length);
+    expect(shared).toBe(wrenShared);
+  });
+});

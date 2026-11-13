@@ -534,6 +534,45 @@ describe("a computer call", () => {
     expect(t.computer?.calls[0]).toMatchObject({ outcome: "result" });
   });
 
+  test("a change the gate could not make comes back as a result, and the member answers it", async () => {
+    const stale =
+      "Element f356e718 is not on the page any more. Take a fresh snapshot and use the refs from it.";
+    const server = scriptedServer({
+      answer: (run) =>
+        run === 1
+          ? [
+              assistant("a1", null, [
+                call("c1", "computer_click", {
+                  ref: "f356e718",
+                  snapshotId: 68,
+                }),
+              ]),
+            ]
+          : [assistant("a2", `The page moved under me.\n\n${REPORT}`)],
+      route: (method, path) =>
+        method === "POST" && path === "/api/approvals/computer/concierge"
+          ? Response.json({ error: stale }, { status: 500 })
+          : undefined,
+    });
+    const t = await runCaseLive(julesCase("Book the best-value plan."), {
+      ...FAST,
+      fetchImpl: server.fetchImpl,
+    });
+    expect(t.status).toBe("completed");
+    // Not a thrown handler: the SDK posts a result back and the member is run again to answer it.
+    expect(server.runs).toHaveLength(2);
+    expect(server.runs[1]?.messages.at(-1)).toMatchObject({
+      role: "tool",
+      toolCallId: "c1",
+      content: JSON.stringify({ ok: false, reason: stale }),
+    });
+    expect(t.computer?.calls[0]).toMatchObject({
+      outcome: "result",
+      content: JSON.stringify({ ok: false, reason: stale }),
+    });
+    expect(kinds(t).at(-1)).toBe("assistant");
+  });
+
   test("the runner is not a person: help and a sign-in are cancelled, and both results go back in one run", async () => {
     const control: Record<string, string> = { h1: "waiting" };
     const signIn = { status: "pending" };

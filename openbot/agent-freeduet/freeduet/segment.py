@@ -42,6 +42,11 @@ run's tool notes (tool_notes.py: the exact reason message_bot was not offered, w
 When the CLI's final result ends a turn that did work without the six-line report, the report guard
 (report_guard.py) asks once, with no tools, and streams the report it gets as the end of the same
 assistant message; `SegmentNotes.report_guard` tells the team log that it asked.
+
+A turn never ends with no text for the person. When the final result comes with no words at all (the
+CLI ended its turn on a tool's error result and said nothing) and the guard adds nothing either, the
+segment streams report_guard.no_answer_text: one fixed sentence that says the member stopped and names
+the last tool it called. The CLI's own result text stands in for the answer when no delta carried it.
 """
 
 import asyncio
@@ -426,11 +431,25 @@ async def _drive(run: RunInput, offered: set[str], inbox: asyncio.Queue, parser:
                         yield event
                     return
                 failure = None if handed else claude_cli.failure_event(parser)
-                if failure is None and not handed and guard is not None:
-                    # The turn ends here: a turn that did work closes with its report (report_guard.py).
-                    added = await guard(story)
+                if failure is None and not handed:
+                    # The turn ends here. The CLI's result can carry the answer when no delta did.
+                    answer = (payload.text or "").strip()
+                    if answer and not story.reply().strip():
+                        story.text("result", answer)
+                        for event in text.delta("result", answer):
+                            yield event
+                    # A turn that did work closes with its report (report_guard.py).
+                    added = await guard(story) if guard is not None else None
                     if added:
                         for event in text.append(added):
+                            yield event
+                    elif not story.reply().strip():
+                        # Nothing for the person: never end a turn in silence (report_guard.py).
+                        log.warning(
+                            "segment ended with no text for the person (thread %s, run %s, last call %s)",
+                            run.thread_id, run.run_id, report_guard.last_attempt(run.messages, story),
+                        )
+                        for event in text.append(report_guard.no_answer_text(run.messages, story)):
                             yield event
                 for event in text.close():
                     yield event
