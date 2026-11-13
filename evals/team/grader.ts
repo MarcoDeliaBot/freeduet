@@ -31,6 +31,11 @@ export type GradedCheck = {
   /** must: the statement holds. must_not: the forbidden thing did not happen. */
   pass: boolean;
   reason: string;
+  /**
+   * True when the grader could not be reached: the check has no verdict, and `pass: false` says
+   * nothing about the member. See {@link GraderUnavailable}.
+   */
+  ungraded?: true;
 };
 
 /**
@@ -232,47 +237,129 @@ export function parseGrades(c: Case, raw: string): GradedCheck[] {
 }
 
 /**
- * Grades a case; one retry when the reply cannot be read, then every check fails with the reason.
- * A reply that parses but leaves a check without a verdict is asked again on the first attempt too;
- * on the last attempt that gap is returned as parseGrades gives it.
+ * A grader call that failed before it gave a reply: an HTTP error, no answer in time, no
+ * connection, no text. `retryable` is false for a refusal that waiting cannot change (401, 403, 400,
+ * 404...); a 408, 425, 429 or any 5xx is retryable. Any other error a grader throws is retried too.
  */
-export async function gradeCase(
+export class GraderTransportError extends Error {
+  readonly status?: number;
+  readonly retryable: boolean;
+  constructor(
+    message: string,
+    options: { status?: number; retryable?: boolean } = {},
+  ) {
+    super(message);
+    this.name = "GraderTransportError";
+    this.status = options.status;
+    this.retryable = options.retryable ?? true;
+  }
+}
+
+/**
+ * Raised by gradeCase when every attempt failed to give a readable reply: the grader was not
+ * reachable, so the case is not graded. That says nothing about the member: the runner records the
+ * run as ungraded (neither passed nor failed), with this message as the reason.
+ */
+export class GraderUnavailable extends Error {
+  constructor(
+    message: string,
+    readonly attempts: number,
+  ) {
+    super(message);
+    this.name = "GraderUnavailable";
+  }
+}
+
+/**
+ * The bounds on asking the grader again when a call fails or its reply cannot be read: the first
+ * call and up to three more, waiting 2 s, 6 s and 20 s before them. A call that fails with a
+ * refusal waiting cannot fix (see GraderTransportError) is not asked again. The separate retry
+ * for a reply that leaves a check without a verdict (#78, #80) stays: one more call, no wait.
+ */
+export const GRADER_ATTEMPTS = 4;
+export const GRADER_BACKOFF_MS: readonly number[] = [2_000, 6_000, 20_000];
+
+export type GradeOptions = {
+  /** Calls to the grader at most, the first included. Default {@link GRADER_ATTEMPTS}. */
+  attempts?: number;
+  /** The wait before the second call, the third, and so on (the last is reused). Default {@link GRADER_BACKOFF_MS}. */
+  backoffMs?: readonly number[];
+  /** Injected so tests do not wait. */
+  sleep?: (ms: number) => Promise<void>;
+};
+
+const waitFor = (ms: number) =>
+  new Promise<void>((resolve) => setTimeout(resolve, ms));
+
+/**
+ * Grades a case and says how many calls it took. A call that fails, or a reply that cannot be read,
+ * is asked again after a short wait, up to {@link GRADER_ATTEMPTS} calls in all; when none gives a
+ * readable reply it throws {@link GraderUnavailable}. A reply that parses but leaves a check
+ * without a verdict is asked again once; when the second reply (or the last call allowed) still has
+ * the gap, that gap is returned as parseGrades gives it: the check fails with its reason.
+ */
+export async function gradeCaseDetailed(
   c: Case,
   t: Transcript,
   grader: Grader,
-): Promise<GradedCheck[]> {
+  options: GradeOptions = {},
+): Promise<{ checks: GradedCheck[]; attempts: number }> {
+  const max = Math.max(1, options.attempts ?? GRADER_ATTEMPTS);
+  const backoff = options.backoffMs ?? GRADER_BACKOFF_MS;
+  const sleep = options.sleep ?? waitFor;
   const prompt = graderPrompt(c, t);
   let lastError = "";
-  for (let attempt = 0; attempt < 2; attempt++) {
+  let verdictAsked = false;
+  let calls = 0;
+  for (let attempt = 1; attempt <= max; attempt++) {
+    calls = attempt;
     let graded: GradedCheck[];
     try {
       graded = parseGrades(c, await grader(prompt));
     } catch (error) {
       lastError = error instanceof Error ? error.message : String(error);
+      const worthAsking = !(
+        error instanceof GraderTransportError && !error.retryable
+      );
+      if (!worthAsking || attempt === max) break;
+      await sleep(backoff[Math.min(attempt - 1, backoff.length - 1)] ?? 0);
       continue;
     }
     const missing = graded
       .filter((g) => g.reason.startsWith(NO_VERDICT))
       .map((g) => g.id);
-    if (missing.length === 0 || attempt === 1) return graded;
+    if (missing.length === 0 || verdictAsked || attempt === max)
+      return { checks: graded, attempts: attempt };
+    verdictAsked = true;
     lastError = `${NO_VERDICT} for ${missing.join(", ")}`;
   }
-  return [
-    ...c.must.map((text, i) => ({
-      id: `must-${i + 1}`,
-      kind: "must" as const,
-      text,
-      pass: false,
-      reason: `grader failed: ${lastError}`,
-    })),
-    ...c.must_not.map((text, i) => ({
-      id: `must_not-${i + 1}`,
-      kind: "must_not" as const,
-      text,
-      pass: false,
-      reason: `grader failed: ${lastError}`,
-    })),
-  ];
+  throw new GraderUnavailable(
+    `the grader gave no readable reply after ${calls} call${calls === 1 ? "" : "s"}: ${lastError}`,
+    calls,
+  );
+}
+
+/** {@link gradeCaseDetailed}, without the number of calls. Throws GraderUnavailable. */
+export async function gradeCase(
+  c: Case,
+  t: Transcript,
+  grader: Grader,
+  options: GradeOptions = {},
+): Promise<GradedCheck[]> {
+  return (await gradeCaseDetailed(c, t, grader, options)).checks;
+}
+
+/** The checks of a case the grader could not grade: no verdict, `ungraded`, and why. */
+export function ungradedChecks(c: Case, reason: string): GradedCheck[] {
+  const check = (kind: "must" | "must_not") => (text: string, i: number) => ({
+    id: `${kind}-${i + 1}`,
+    kind,
+    text,
+    pass: false,
+    reason: `ungraded: ${reason}`,
+    ungraded: true as const,
+  });
+  return [...c.must.map(check("must")), ...c.must_not.map(check("must_not"))];
 }
 
 /** Joins a base URL the way the Anthropic SDK does: `<base>/v1/messages`, whether or not it ends in /v1. */
@@ -293,34 +380,56 @@ export function anthropicGrader(options: {
 }): Grader {
   const send = options.fetchImpl ?? fetch;
   return async ({ system, user }) => {
-    const response = await send(messagesUrl(options.baseUrl), {
-      method: "POST",
-      headers: {
-        "content-type": "application/json",
-        "x-api-key": options.apiKey,
-        "anthropic-version": "2023-06-01",
-      },
-      body: JSON.stringify({
-        model: options.model,
-        max_tokens: 2000,
-        temperature: 0,
-        system,
-        messages: [{ role: "user", content: user }],
-      }),
-      signal: AbortSignal.timeout(options.timeoutMs ?? 180_000),
-    });
-    if (!response.ok)
-      throw new Error(
-        `grader endpoint answered HTTP ${response.status}: ${(await response.text()).slice(0, 200)}`,
+    let response: Response;
+    try {
+      response = await send(messagesUrl(options.baseUrl), {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+          "x-api-key": options.apiKey,
+          "anthropic-version": "2023-06-01",
+        },
+        body: JSON.stringify({
+          model: options.model,
+          max_tokens: 2000,
+          temperature: 0,
+          system,
+          messages: [{ role: "user", content: user }],
+        }),
+        signal: AbortSignal.timeout(options.timeoutMs ?? 180_000),
+      });
+    } catch (error) {
+      // No answer in time, no connection: a transport failure, asked again by gradeCase.
+      throw new GraderTransportError(
+        `grader endpoint did not answer: ${error instanceof Error ? error.message : String(error)}`,
       );
-    const body = (await response.json()) as {
-      content?: { type?: string; text?: string }[];
-    };
+    }
+    if (!response.ok)
+      throw new GraderTransportError(
+        `grader endpoint answered HTTP ${response.status}: ${(await response.text()).slice(0, 200)}`,
+        {
+          status: response.status,
+          retryable:
+            response.status >= 500 ||
+            response.status === 408 ||
+            response.status === 425 ||
+            response.status === 429,
+        },
+      );
+    let body: { content?: { type?: string; text?: string }[] };
+    try {
+      body = (await response.json()) as typeof body;
+    } catch (error) {
+      throw new GraderTransportError(
+        `grader endpoint sent a reply that is not JSON: ${error instanceof Error ? error.message : String(error)}`,
+      );
+    }
     const text = (body.content ?? [])
       .filter((part) => part.type === "text" && typeof part.text === "string")
       .map((part) => part.text)
       .join("");
-    if (!text) throw new Error("grader endpoint returned no text");
+    if (!text)
+      throw new GraderTransportError("grader endpoint returned no text");
     return text;
   };
 }

@@ -1,5 +1,10 @@
-# Fake-mode reports are a self-test of the runner, not results.
-*-fake.json
-*-fake.md
-*-fake-partial.json
-*-fake-partial.md
+# A full report holds every transcript: the person's own words, tool arguments, page text, the names
+# in their memories, conversation and thread ids. Nothing in this folder is committed except a public
+# report (run.ts --public <report.json>), which is built field by field from verdicts and the texts
+# of cases.yaml, and this file.
+*
+!.gitignore
+!*-public.md
+!*-public.json
+# A fake-mode report is a self-test of the runner, not a result.
+*fake*

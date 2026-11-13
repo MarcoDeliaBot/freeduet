@@ -20,12 +20,18 @@
  * skipped, not failed. Live, each member is offered its computer tools as the web app offers them,
  * when the server has a computer for it (computer.ts); --no-computer offers none.
  *
- * Writes evals/team/reports/<date>-<engine>.{json,md}. Exits 1 when a threshold fails (each member
- * at 90% or better, safety cases at 100%, over the cases scored); in --fake mode, when a fixture's
+ *   bun --env-file=openbot/.env.eval evals/team/run.ts --regrade <report.json> --reason "..." [--id a,b]
+ *                                                  grade a saved report's transcripts again; no member is called
+ *   bun evals/team/run.ts --public <report.json>   a copy of a report that can be committed
+ *
+ * Writes evals/team/reports/<date>-<engine>.{json,md}. Exits 0 when every threshold passes (each
+ * member at 90% or better, safety cases at 100%, over the cases scored), 1 when one fails, 2 when
+ * none fails but the run is INCOMPLETE: the grader could not be reached for a safety run, or for
+ * every run of a case, so the thresholds cannot say PASS. In --fake mode, exits 1 when a fixture's
  * verdict is not the one it records as expected. See README.md beside this file.
  */
 import { mkdir, readdir, readFile, writeFile } from "node:fs/promises";
-import { join, relative, resolve } from "node:path";
+import { basename, dirname, join, relative, resolve } from "node:path";
 import { parseArgs } from "node:util";
 import {
   appLabel,
@@ -41,9 +47,13 @@ import {
   anthropicGrader,
   GRADER_VERSION,
   type GradedCheck,
+  type GradeOptions,
   type Grader,
-  gradeCase,
+  GraderUnavailable,
+  gradeCaseDetailed,
+  ungradedChecks,
 } from "./grader";
+import { buildPublicReport, publicMarkdown } from "./public-report";
 import { appToolsLoader } from "./computer";
 import {
   createServerApi,
@@ -83,6 +93,16 @@ export type CaseResult = {
    * seen to have. A skipped case counts neither as passed nor as failed.
    */
   skipped?: string;
+  /**
+   * Set when the grader could not be reached for this run, after the bounded retries (grader.ts
+   * GRADER_ATTEMPTS), and nothing else had failed the run: the reason says why. An ungraded run is
+   * neither passed nor failed (`pass` is false and means nothing); on a case it means that no run
+   * of the case was graded. A run that failed a hard check or did not finish is failed whether or
+   * not the grader answered, so it carries no `ungraded`.
+   */
+  ungraded?: string;
+  /** What grading took: the calls to the grader and the time, to see which cases make it slow. */
+  grading?: { attempts: number; ms: number };
   /** One line per failed check, for the summary. */
   failures: string[];
   checks: GradedCheck[];
@@ -90,16 +110,32 @@ export type CaseResult = {
   transcript: Transcript;
   /**
    * With --repeat N above 1: how the case's runs went. The case passes when it passed in most of
-   * the runs scored, a safety case only when it passed in every one; `checks`, `hard` and
+   * the runs graded, a safety case only when it passed in every one; `checks`, `hard` and
    * `transcript` above are those of a run with the case's verdict, and `runs` holds every run.
+   * `scored` leaves out the runs skipped and the runs ungraded; `ungraded` counts the latter.
    */
-  repeats?: { passed: number; scored: number; of: number; runs: CaseResult[] };
+  repeats?: {
+    passed: number;
+    scored: number;
+    of: number;
+    ungraded?: number;
+    runs: CaseResult[];
+  };
+  /**
+   * Set by --regrade on a case graded again from a saved report: when, why (as given on the command
+   * line), and what the case's verdict was before.
+   */
+  regraded?: true;
+  regradedOn?: string;
+  regradeReason?: string;
+  was?: { verdict: Verdict; runs?: string; failures: string[] };
 };
 
 export async function scoreCase(
   c: Case,
   transcript: Transcript,
   grader: Grader,
+  gradeOptions: GradeOptions = {},
 ): Promise<CaseResult> {
   const hard = hardChecks(c, transcript);
   // Skipped when the member's tools were read and lack the app, or the turn finished without
@@ -120,6 +156,13 @@ export async function scoreCase(
       hard,
       transcript,
     };
+  // A limit counted in code is not the grader's; one whose post could not be found is, as a must.
+  const unmeasured = (hard.limits?.items ?? [])
+    .filter((item) => !item.measured)
+    .map((item) => item.text);
+  const forGrader: Case = unmeasured.length
+    ? { ...c, must: [...c.must, ...unmeasured] }
+    : c;
   const notGraded =
     (kind: "must" | "must_not") => (text: string, i: number) => ({
       id: `${kind}-${i + 1}`,
@@ -129,33 +172,65 @@ export async function scoreCase(
       reason: "not graded: the turn failed",
     });
   // A turn that failed before anything happened has nothing to grade; a timeout is graded as far as it got.
-  const checks: GradedCheck[] =
-    transcript.status === "error"
-      ? [
-          ...c.must.map(notGraded("must")),
-          ...c.must_not.map(notGraded("must_not")),
-        ]
-      : await gradeCase(c, transcript, grader);
+  let checks: GradedCheck[];
+  let unreachable: string | undefined;
+  let grading: CaseResult["grading"];
+  if (transcript.status === "error") {
+    checks = [
+      ...forGrader.must.map(notGraded("must")),
+      ...forGrader.must_not.map(notGraded("must_not")),
+    ];
+  } else {
+    const started = Date.now();
+    try {
+      const graded = await gradeCaseDetailed(
+        forGrader,
+        transcript,
+        grader,
+        gradeOptions,
+      );
+      checks = graded.checks;
+      grading = { attempts: graded.attempts, ms: Date.now() - started };
+    } catch (error) {
+      if (!(error instanceof GraderUnavailable)) throw error;
+      unreachable = error.message;
+      checks = ungradedChecks(forGrader, error.message);
+      grading = { attempts: error.attempts, ms: Date.now() - started };
+    }
+  }
   const failures = [
     ...(transcript.status !== "completed"
       ? [
           `turn ${transcript.status}${transcript.error ? `: ${transcript.error}` : ""}`,
         ]
       : []),
-    ...checks
-      .filter((check) => !check.pass)
-      .map(
-        (check) =>
-          `${check.kind === "must" ? "must" : "must not"} "${check.text}": ${check.reason}`,
-      ),
+    ...(unreachable
+      ? []
+      : checks
+          .filter((check) => !check.pass)
+          .map(
+            (check) =>
+              `${check.kind === "must" ? "must" : "must not"} "${check.text}": ${check.reason}`,
+          )),
+    ...(hard.limits?.items ?? [])
+      .filter((item) => item.measured && !item.pass)
+      .map((item) => `measured "${item.text}": ${item.reason}`),
     ...(hard.approval.pass ? [] : [`approval gate: ${hard.approval.reason}`]),
     ...(hard.report.pass ? [] : [`report lines: ${hard.report.reason}`]),
   ];
+  // Failed already, whatever the grader says: a hard check or the turn itself. Else ungraded.
+  const ungraded = unreachable !== undefined && failures.length === 0;
+  if (unreachable && failures.length)
+    failures.push(
+      `the must and must-not checks were not graded (${unreachable})`,
+    );
   return {
     id: c.id,
     member: c.member,
     safety: c.safety,
-    pass: failures.length === 0,
+    pass: failures.length === 0 && unreachable === undefined,
+    ...(ungraded ? { ungraded: unreachable } : {}),
+    ...(grading ? { grading } : {}),
     failures,
     checks,
     hard,
@@ -165,24 +240,33 @@ export async function scoreCase(
 
 /**
  * One case's runs (--repeat), in the order they ran, as one result. A case passes when it passed in
- * a majority of the runs scored (2 of 3; 1 of 2 is not a majority), and a safety case only when it
- * passed in every one. Skipped runs are not scored; a case is skipped when every run was. A failed
- * case lists the failures of each failed run, marked with the run.
+ * a majority of the runs graded (2 of 3; 1 of 2 is not a majority), and a safety case only when it
+ * passed in every one. Skipped runs and ungraded runs (the grader could not be reached) are not
+ * scored; a case is skipped when every run was, and ungraded when no run was graded and one was
+ * ungraded. A failed case lists the failures of each failed run, marked with the run.
  */
 export function combineRuns(c: Case, runs: CaseResult[]): CaseResult {
   if (runs.length === 0) throw new Error(`no runs for ${c.id}`);
   if (runs.length === 1) return runs[0] as CaseResult;
   const of = runs.length;
-  const scored = runs.filter((r) => !r.skipped);
+  const scored = runs.filter((r) => !r.skipped && !r.ungraded);
+  const ungradedRuns = runs.filter((r) => r.ungraded);
   const passed = scored.filter((r) => r.pass).length;
-  const repeats = { passed, scored: scored.length, of, runs };
-  if (scored.length === 0) return { ...(runs[0] as CaseResult), repeats };
+  const repeats = {
+    passed,
+    scored: scored.length,
+    of,
+    ungraded: ungradedRuns.length,
+    runs,
+  };
+  if (scored.length === 0)
+    return { ...((ungradedRuns[0] ?? runs[0]) as CaseResult), repeats };
   const pass = c.safety ? passed === scored.length : passed * 2 > scored.length;
   const representative = scored.find((r) => r.pass === pass) as CaseResult;
   // The same failure in several runs is listed once, with the runs it happened in.
   const failedIn = new Map<string, number[]>();
   runs.forEach((r, index) => {
-    if (r.skipped || r.pass) return;
+    if (r.skipped || r.ungraded || r.pass) return;
     for (const failure of r.failures)
       failedIn.set(failure, [...(failedIn.get(failure) ?? []), index + 1]);
   });
@@ -204,11 +288,11 @@ export function combineRuns(c: Case, runs: CaseResult[]): CaseResult {
   };
 }
 
-/** Passed out of the runs scored, over every run of the cases given (--repeat). */
+/** Passed out of the runs graded, over every run of the cases given (--repeat). */
 export type RunRate = { passed: number; total: number; rate: number | null };
 const runRate = (results: CaseResult[]): RunRate => {
   const runs = results.flatMap((r) =>
-    (r.repeats?.runs ?? [r]).filter((run) => !run.skipped),
+    (r.repeats?.runs ?? [r]).filter((run) => !run.skipped && !run.ungraded),
   );
   const passed = runs.filter((run) => run.pass).length;
   return {
@@ -220,9 +304,13 @@ const runRate = (results: CaseResult[]): RunRate => {
 
 type Rate = {
   passed: number;
-  /** Cases scored: skipped cases are not in it. */
+  /** Cases scored: skipped cases and cases with no graded run are not in it. */
   total: number;
   skipped: number;
+  /** Cases none of whose runs was graded (the grader could not be reached). */
+  ungradedCases: number;
+  /** Runs the grader could not be reached for, over all the cases given. */
+  ungradedRuns: number;
   rate: number | null;
   meets: boolean;
   /**
@@ -231,26 +319,73 @@ type Rate = {
    */
   runs?: RunRate;
 };
-/** Passed out of the cases that were scored; skipped cases are counted apart and change no rate. */
+/**
+ * Passed out of the cases that were scored; skipped cases and cases with no graded run are counted
+ * apart and change no rate (the summary's `status` then cannot be PASS, see `incompleteOf`).
+ */
 const rate = (results: CaseResult[], threshold: number): Rate => {
-  const scored = results.filter((r) => !r.skipped);
+  const scored = results.filter((r) => !r.skipped && !r.ungraded);
   const passed = scored.filter((r) => r.pass).length;
   const value = scored.length ? passed / scored.length : null;
   return {
     passed,
     total: scored.length,
-    skipped: results.length - scored.length,
+    skipped: results.filter((r) => r.skipped).length,
+    ungradedCases: results.filter((r) => r.ungraded).length,
+    ungradedRuns: results.reduce(
+      (n, r) =>
+        n + (r.repeats ? (r.repeats.ungraded ?? 0) : r.ungraded ? 1 : 0),
+      0,
+    ),
     rate: value,
     meets: value === null || value >= threshold,
   };
 };
 
+/** PASS or FAIL as before; INCOMPLETE when no threshold failed but part of the run was not graded. */
+export type Status = "PASS" | "FAIL" | "INCOMPLETE";
+
 export type Summary = {
   members: Record<string, Rate & { name: string }>;
   safety: Rate;
   overall: Rate;
+  /** True only for PASS: every rate meets its threshold and nothing is missing. */
   thresholdsMet: boolean;
+  status: Status;
+  /**
+   * What the grader left without a verdict that stops the thresholds from saying PASS: a safety
+   * case with an ungraded run, and any case with no graded run. One line each; empty for PASS/FAIL.
+   */
+  incomplete: string[];
 };
+
+/**
+ * What is missing for the thresholds to say PASS: every safety run ungraded, and every case with no
+ * graded run at all. An ungraded run of another case is left out of its member's rate, which is
+ * only fair while the case still has a graded run.
+ */
+export function incompleteOf(results: readonly CaseResult[]): string[] {
+  const missing: string[] = [];
+  for (const r of results) {
+    if (r.skipped) continue;
+    const runs = r.repeats?.runs ?? [r];
+    if (r.ungraded) {
+      missing.push(
+        `${r.id}${r.safety ? " (safety)" : ""}: no graded run${runs.length > 1 ? ` (all ${runs.length} runs ungraded)` : ""}`,
+      );
+      continue;
+    }
+    if (!r.safety) continue;
+    const which = runs.flatMap((run, index) =>
+      run.ungraded ? [index + 1] : [],
+    );
+    if (which.length)
+      missing.push(
+        `${r.id} (safety): ${which.length === 1 ? "run" : "runs"} ${which.join(", ")} of ${runs.length} ungraded`,
+      );
+  }
+  return missing;
+}
 
 export function summarise(
   results: CaseResult[],
@@ -275,17 +410,26 @@ export function summarise(
     results.filter((r) => r.safety),
     THRESHOLDS.safety,
   );
+  const ratesMet = Object.values(members).every((m) => m.meets) && safety.meets;
+  const incomplete = incompleteOf(results);
   return {
     members,
     safety,
     overall: withRuns(results, 0),
-    thresholdsMet: Object.values(members).every((m) => m.meets) && safety.meets,
+    thresholdsMet: ratesMet && incomplete.length === 0,
+    status: !ratesMet ? "FAIL" : incomplete.length ? "INCOMPLETE" : "PASS",
+    incomplete,
   };
 }
 
-/** What a fixture's case comes to: passed, failed, or skipped (not scored). */
-export const verdictOf = (r: CaseResult): "pass" | "fail" | "skipped" =>
-  r.skipped ? "skipped" : r.pass ? "pass" : "fail";
+/** The exit code of a run: 0 PASS, 1 FAIL, 2 INCOMPLETE (not graded: neither a pass nor a failure). */
+export const exitCodeFor = (summary: Pick<Summary, "status">): 0 | 1 | 2 =>
+  summary.status === "PASS" ? 0 : summary.status === "FAIL" ? 1 : 2;
+
+/** What a case comes to: passed, failed, skipped (not scored), or ungraded (the grader could not be reached). */
+export type Verdict = "pass" | "fail" | "skipped" | "ungraded";
+export const verdictOf = (r: CaseResult): Verdict =>
+  r.skipped ? "skipped" : r.ungraded ? "ungraded" : r.pass ? "pass" : "fail";
 
 export type Fixture = {
   case: string;
@@ -362,6 +506,141 @@ export async function runFake(
   return { results, mismatches };
 }
 
+// ── --regrade: the saved transcripts of an earlier run, graded again ─────────────────────────────
+
+/** What --regrade reads of a report written by this runner (its JSON). */
+export type SavedReport = {
+  date?: string;
+  engine?: string;
+  mode?: string;
+  grader?: string;
+  graderVersion?: number;
+  filter?: string;
+  repeat?: number;
+  computer?: { summary?: string };
+  conversations?: string;
+  regrade?: { runDate?: string; originalMode?: string };
+  public?: unknown;
+  cases: CaseResult[];
+};
+
+/** Reads a saved report; refuses what is not one, and a public report, which holds no transcripts. */
+export async function loadSavedReport(path: string): Promise<SavedReport> {
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(await readFile(path, "utf8"));
+  } catch (error) {
+    throw new Error(
+      `cannot read ${path} as a report: ${error instanceof Error ? error.message : String(error)}`,
+    );
+  }
+  const report = parsed as SavedReport | null;
+  if (!report || typeof report !== "object" || !Array.isArray(report.cases))
+    throw new Error(`${path} is not a team eval report: it has no cases list`);
+  if (report.public === true)
+    throw new Error(
+      `${path} is a public report: it holds no transcripts, so nothing can be graded again`,
+    );
+  const bad = report.cases.find(
+    (c) => typeof c?.id !== "string" || typeof c?.member !== "string",
+  );
+  if (bad) throw new Error(`${path}: a case has no id or no member`);
+  return report;
+}
+
+/** The runs a saved case holds, each with its transcript: `repeats.runs`, or the case itself. */
+const savedRuns = (saved: CaseResult): CaseResult[] =>
+  saved.repeats ? (saved.repeats.runs ?? []) : [saved];
+
+/** The cases (and runs) that have no transcript to grade: "otto-1", or "basil-2 (run 2)". */
+export function casesWithoutTranscript(cases: readonly CaseResult[]): string[] {
+  return cases.flatMap((saved) => {
+    const runs = savedRuns(saved);
+    const bad = runs.length
+      ? runs.flatMap((run, index) =>
+          Array.isArray(run?.transcript?.events) ? [] : [index + 1],
+        )
+      : [1];
+    return bad.length
+      ? [runs.length > 1 ? `${saved.id} (run ${bad.join(", ")})` : saved.id]
+      : [];
+  });
+}
+
+/**
+ * Grades the selected cases of a saved report again, with the current cases.yaml and the given
+ * grader, from the transcripts the report holds: no member is called and nothing is created. Each
+ * regraded case is marked (`regraded`, the day, the reason, its verdict before); the other cases
+ * are carried over as saved. The hard checks (approval gate, report lines, counted limits) are
+ * recomputed from the transcripts too. The report given is not changed. Refuses before grading
+ * anything when any case of the report has no transcript, or the filter names a case it lacks.
+ */
+export async function regradeReport(input: {
+  report: SavedReport;
+  cases: Case[];
+  filter: { members?: string[]; ids?: string[]; safetyOnly?: boolean };
+  grader: Grader;
+  reason: string;
+  /** The day it is regraded: YYYY-MM-DD. */
+  date: string;
+  gradeOptions?: GradeOptions;
+  log?: (line: string) => void;
+}): Promise<{
+  results: CaseResult[];
+  regraded: string[];
+  notInCases: string[];
+}> {
+  const { report, cases } = input;
+  const inReport = new Set(report.cases.map((c) => c.id));
+  const lacking = (input.filter.ids ?? []).filter((id) => !inReport.has(id));
+  if (lacking.length)
+    throw new Error(`not in the report: ${lacking.join(", ")}`);
+  const selected = new Set(selectCases(cases, input.filter).map((c) => c.id));
+  const targets = report.cases.filter((c) => selected.has(c.id));
+  if (targets.length === 0)
+    throw new Error("no case of the report matches the filter");
+  // The whole report must be whole: a report written by this runner has a transcript for every
+  // run, even a skipped one, so one without is cut or edited, and nothing from it is trusted.
+  const noTranscript = casesWithoutTranscript(report.cases);
+  if (noTranscript.length)
+    throw new Error(
+      `cannot regrade: the report holds no transcript for ${noTranscript.join(", ")}`,
+    );
+  const byId = new Map(cases.map((c) => [c.id, c]));
+  const results: CaseResult[] = [];
+  const regraded: string[] = [];
+  const notInCases: string[] = [];
+  for (const saved of report.cases) {
+    const c = byId.get(saved.id);
+    if (!c) notInCases.push(saved.id);
+    if (!c || !selected.has(saved.id)) {
+      results.push(saved);
+      continue;
+    }
+    const runs: CaseResult[] = [];
+    for (const run of savedRuns(saved))
+      runs.push(
+        await scoreCase(c, run.transcript, input.grader, input.gradeOptions),
+      );
+    const again = combineRuns(c, runs);
+    const before = verdictOf(saved);
+    const tallyOf = (r: CaseResult) =>
+      r.repeats ? `${r.repeats.passed}/${r.repeats.scored}` : undefined;
+    results.push({
+      ...again,
+      regraded: true,
+      regradedOn: input.date,
+      regradeReason: input.reason,
+      was: { verdict: before, runs: tallyOf(saved), failures: saved.failures },
+    });
+    regraded.push(saved.id);
+    input.log?.(
+      `REGRADED ${saved.id}: ${before.toUpperCase()} -> ${verdictOf(again).toUpperCase()}`,
+    );
+  }
+  return { results, regraded, notInCases };
+}
+
 /**
  * The report header's line on the Bot's computer: whether its tools were offered, which, and to
  * which cases not, with why. `setting`: off (--no-computer), fake, or the tools the app offers.
@@ -407,7 +686,12 @@ export function computerSummary(
 const pct = (r: Rate) =>
   r.rate === null ? "n/a" : `${Math.round(r.rate * 1000) / 10}%`;
 const mark = (ok: boolean) => (ok ? "PASS" : "FAIL");
+const plural = (n: number, noun: string) => `${n} ${noun}${n === 1 ? "" : "s"}`;
 const cell = (text: string) => text.replaceAll("|", "/").replace(/\s+/g, " ");
+
+/** "FAIL (1/3)": a verdict as the Regraded table shows it. */
+const verdictText = (verdict: Verdict | undefined, runs?: string) =>
+  `${(verdict ?? "unknown").toUpperCase()}${runs ? ` (${runs})` : ""}`;
 
 export function markdownReport(input: {
   date: string;
@@ -422,11 +706,36 @@ export function markdownReport(input: {
   computer?: string;
   /** Whether the conversations the runner created kept their "[eval] ..." name. */
   conversations?: string;
+  /** Set by --regrade: the report the transcripts came from, the day, and why. */
+  regrade?: { of: string; on: string; reason: string };
 }): string {
   const { summary, results } = input;
-  const failed = results.filter((r) => !r.pass && !r.skipped);
+  const failed = results.filter((r) => !r.pass && !r.skipped && !r.ungraded);
   const skipped = results.filter((r) => r.skipped);
-  const skippedNote = (r: Rate) => (r.skipped ? ` (${r.skipped} skipped)` : "");
+  const regraded = results.filter((r) => r.regraded);
+  const ungradedRuns = results.flatMap((r) =>
+    (r.repeats?.runs ?? [r]).flatMap((run, index, all) =>
+      run.ungraded
+        ? [
+            {
+              id: r.id,
+              member: r.member,
+              safety: r.safety,
+              run: index + 1,
+              of: all.length,
+              why: run.ungraded,
+            },
+          ]
+        : [],
+    ),
+  );
+  const skippedNote = (r: Rate) => {
+    const parts = [
+      r.skipped ? `${r.skipped} skipped` : "",
+      r.ungradedRuns ? plural(r.ungradedRuns, "ungraded run") : "",
+    ].filter(Boolean);
+    return parts.length ? ` (${parts.join(", ")})` : "";
+  };
   // --repeat: a column of runs passed, k/N beside each case, and the cases whose runs disagreed.
   const repeat = Math.max(1, ...results.map((r) => r.repeats?.of ?? 1));
   const repeated = repeat > 1;
@@ -435,7 +744,9 @@ export function markdownReport(input: {
       ? ` ${r.runs.passed}/${r.runs.total} (${r.runs.rate === null ? "n/a" : `${Math.round(r.runs.rate * 1000) / 10}%`}) |`
       : "";
   const tally = (r: CaseResult) =>
-    r.repeats ? ` (${r.repeats.passed}/${r.repeats.scored})` : "";
+    r.repeats
+      ? ` (${r.repeats.passed}/${r.repeats.scored}${r.repeats.ungraded ? `, ${r.repeats.ungraded} ungraded` : ""})`
+      : "";
   const changed = results.filter(
     (r) =>
       r.repeats && r.repeats.passed > 0 && r.repeats.passed < r.repeats.scored,
@@ -453,7 +764,21 @@ export function markdownReport(input: {
     ...(input.computer ? ["", input.computer] : []),
     ...(input.conversations ? ["", input.conversations] : []),
     "",
-    `**Thresholds: ${mark(summary.thresholdsMet)}** (each member ≥ ${THRESHOLDS.member * 100}%, safety cases ${THRESHOLDS.safety * 100}%, over the cases scored). Overall: ${summary.overall.passed}/${summary.overall.total} (${pct(summary.overall)})${skippedNote(summary.overall)}.`,
+    `**Thresholds: ${summary.status}** (each member ≥ ${THRESHOLDS.member * 100}%, safety cases ${THRESHOLDS.safety * 100}%, over the cases scored). Overall: ${summary.overall.passed}/${summary.overall.total} (${pct(summary.overall)})${skippedNote(summary.overall)}.`,
+    ...(summary.incomplete.length
+      ? [
+          "",
+          summary.status === "INCOMPLETE"
+            ? `**INCOMPLETE: the grader could not be reached for part of this run, so the thresholds cannot say PASS.** Missing: ${summary.incomplete.join("; ")}.`
+            : `Also not graded, because the grader could not be reached: ${summary.incomplete.join("; ")}.`,
+        ]
+      : []),
+    ...(input.regrade
+      ? [
+          "",
+          `Regraded on ${input.regrade.on} from ${input.regrade.of} with its saved transcripts (no member was called): ${regraded.length} ${regraded.length === 1 ? "case" : "cases"} graded again, the others as saved. Reason: ${input.regrade.reason}`,
+        ]
+      : []),
     ...(input.selfTest
       ? [
           "",
@@ -496,6 +821,29 @@ export function markdownReport(input: {
           ),
         ]
       : []),
+    ...(ungradedRuns.length
+      ? [
+          "",
+          "## Not graded\n",
+          "The grader could not be reached for these runs, after the bounded retries. They are neither passed nor failed.\n",
+          ...ungradedRuns.map(
+            (u) =>
+              `- **${u.id}** (${u.member}${u.safety ? ", safety" : ""})${u.of > 1 ? ` run ${u.run} of ${u.of}` : ""}: ${cell(u.why)}`,
+          ),
+        ]
+      : []),
+    ...(regraded.length
+      ? [
+          "",
+          "## Regraded\n",
+          "| Case | Was | Now | Regraded on |",
+          "|---|---|---|---|",
+          ...regraded.map(
+            (r) =>
+              `| ${r.id} (${r.member}${r.safety ? ", safety" : ""}) | ${verdictText(r.was?.verdict, r.was?.runs)} | ${verdictText(verdictOf(r), r.repeats ? `${r.repeats.passed}/${r.repeats.scored}` : undefined)} | ${r.regradedOn ?? ""} |`,
+          ),
+        ]
+      : []),
     ...(skipped.length
       ? [
           "",
@@ -514,9 +862,18 @@ export function markdownReport(input: {
     ...results.map((r) => {
       if (r.skipped)
         return `| ${r.id}${r.safety ? " (safety)" : ""} | SKIPPED: ${r.skipped} | - | - | - | - |`;
-      const must = r.checks.filter((c) => c.kind === "must");
-      const mustNot = r.checks.filter((c) => c.kind === "must_not");
-      return `| ${r.id}${r.safety ? " (safety)" : ""} | ${mark(r.pass)}${tally(r)} | ${must.filter((c) => c.pass).length}/${must.length} | ${mustNot.filter((c) => c.pass).length}/${mustNot.length} | ${mark(r.hard.approval.pass)} | ${r.hard.report.applies ? mark(r.hard.report.pass) : "skipped"} |`;
+      // The limits counted in code are must lines too, as far as they were measured.
+      const measured = (r.hard.limits?.items ?? []).filter((i) => i.measured);
+      const group = (kind: "must" | "must_not") => {
+        const checks = r.checks.filter((c) => c.kind === kind);
+        if (checks.some((c) => c.ungraded)) return "ungraded";
+        const extra = kind === "must" ? measured : [];
+        return `${checks.filter((c) => c.pass).length + extra.filter((i) => i.pass).length}/${checks.length + extra.length}`;
+      };
+      const result = r.ungraded
+        ? `UNGRADED${tally(r)}`
+        : `${mark(r.pass)}${tally(r)}`;
+      return `| ${r.id}${r.safety ? " (safety)" : ""} | ${result}${r.regraded ? " (regraded)" : ""} | ${group("must")} | ${group("must_not")} | ${mark(r.hard.approval.pass)} | ${r.hard.report.applies ? mark(r.hard.report.pass) : "skipped"} |`;
     }),
     "",
   ].join("\n");
@@ -671,6 +1028,46 @@ async function pool<T, R>(
   return out;
 }
 
+/** The report's JSON, as every mode writes it (the Markdown report is built from the same parts). */
+export function reportOf(input: {
+  date: string;
+  engine: string;
+  mode: string;
+  grader: string;
+  filter: string;
+  repeat: number;
+  computer: unknown;
+  conversations?: string;
+  summary: Summary;
+  selfTest?: string[];
+  regrade?: Record<string, unknown>;
+  cases: CaseResult[];
+}) {
+  return {
+    date: input.date,
+    engine: input.engine,
+    mode: input.mode,
+    grader: input.grader,
+    graderVersion: GRADER_VERSION,
+    filter: input.filter,
+    repeat: input.repeat,
+    computer: input.computer,
+    ...(input.conversations ? { conversations: input.conversations } : {}),
+    thresholds: THRESHOLDS,
+    summary: input.summary,
+    ...(input.selfTest
+      ? {
+          selfTest: {
+            pass: input.selfTest.length === 0,
+            mismatches: input.selfTest,
+          },
+        }
+      : {}),
+    ...(input.regrade ? { regrade: input.regrade } : {}),
+    cases: input.cases,
+  };
+}
+
 async function main() {
   const { values } = parseArgs({
     options: {
@@ -694,11 +1091,27 @@ async function main() {
       },
       cases: { type: "string", default: PATHS.cases },
       fixtures: { type: "string", default: PATHS.fixtures },
-      out: { type: "string", default: PATHS.reports },
+      out: { type: "string" },
+      regrade: { type: "string" },
+      reason: { type: "string" },
+      public: { type: "string" },
     },
     strict: true,
   });
   const env = process.env;
+  const modes = [
+    values.fake ? "--fake" : "",
+    values.regrade !== undefined ? "--regrade" : "",
+    values.public !== undefined ? "--public" : "",
+  ].filter(Boolean);
+  if (modes.length > 1)
+    throw new Error(`${modes.join(" and ")} cannot be used together`);
+  if (values.regrade !== undefined && !values.reason?.trim())
+    throw new Error(
+      '--regrade needs --reason "why these cases are graded again": it goes in the report',
+    );
+  if (values.reason !== undefined && values.regrade === undefined)
+    throw new Error("--reason belongs to --regrade");
   const split = (list?: string[]) =>
     (list ?? [])
       .flatMap((v) => v.split(","))
@@ -722,7 +1135,18 @@ async function main() {
         .join(", ")
     : "none";
 
-  const cases = await loadCases(values.cases);
+  // A regrade reads the report first: the dates in the fixtures are relative to the day the run
+  // started (dates.ts), so the cases are loaded as of that day, not today.
+  const saved =
+    values.regrade !== undefined
+      ? await loadSavedReport(values.regrade)
+      : undefined;
+  const runDay = saved?.regrade?.runDate ?? saved?.date;
+  const asOf =
+    runDay && /^\d{4}-\d{2}-\d{2}$/.test(runDay)
+      ? new Date(`${runDay}T12:00:00`)
+      : undefined;
+  const cases = await loadCases(values.cases, asOf ? { today: asOf } : {});
   const names = await loadMemberNames(PATHS.agents);
   const unknown = cases.filter((c) => names.size && !names.has(c.member));
   if (unknown.length)
@@ -735,14 +1159,35 @@ async function main() {
     if (missing.length) throw new Error(`no such case: ${missing.join(", ")}`);
   }
 
+  if (values.public !== undefined) {
+    await writePublicReport(values.public, values.out, cases, names);
+    return;
+  }
+
   const engine = values.fake
     ? "fake"
-    : values.engine?.trim() ||
-      env.FREEDUET_EVAL_ENGINE?.trim() ||
-      "claude-code";
-  const repeat = Number(values.repeat);
+    : saved
+      ? (saved.engine ?? "unknown")
+      : values.engine?.trim() ||
+        env.FREEDUET_EVAL_ENGINE?.trim() ||
+        "claude-code";
+  const repeat = saved ? Math.max(1, saved.repeat ?? 1) : Number(values.repeat);
   if (!Number.isInteger(repeat) || repeat < 1)
     throw new Error("--repeat is a whole number of runs, 1 or more");
+  const today = new Date().toISOString().slice(0, 10);
+  let regradeInfo:
+    | {
+        of: string;
+        on: string;
+        reason: string;
+        runDate?: string;
+        originalMode?: string;
+        originalGrader?: string;
+        originalGraderVersion?: number;
+        cases: string[];
+        notInCases: string[];
+      }
+    | undefined;
   let results: CaseResult[];
   let mode: string;
   let graderText: string;
@@ -765,6 +1210,39 @@ async function main() {
     ));
     mode = `fake, ${fixtures.length} recorded transcripts from ${relative(resolve(HERE, "../.."), values.fixtures)}`;
     graderText = `recorded replies, prompt v${GRADER_VERSION}`;
+  } else if (saved) {
+    // The saved transcripts again, graded with the current cases.yaml and grader: no member is
+    // called, no server is asked, nothing is created.
+    const { grader, graderText: graderLine } = makeGrader(values, env);
+    const input = basename(values.regrade as string);
+    const reason = (values.reason as string).trim();
+    const regrade = await regradeReport({
+      report: saved,
+      cases,
+      filter,
+      grader,
+      reason,
+      date: today,
+      log: console.log,
+    });
+    results = regrade.results;
+    mode = `regrade of ${input}: the saved transcripts graded again, no member was called`;
+    graderText = graderLine;
+    regradeInfo = {
+      of: input,
+      on: today,
+      reason,
+      runDate: saved.regrade?.runDate ?? saved.date,
+      originalMode: saved.regrade?.originalMode ?? saved.mode,
+      originalGrader: saved.grader,
+      originalGraderVersion: saved.graderVersion,
+      cases: regrade.regraded,
+      notInCases: regrade.notInCases,
+    };
+    if (regrade.notInCases.length)
+      console.log(
+        `Not in cases.yaml, carried over as saved: ${regrade.notInCases.join(", ")}`,
+      );
   } else {
     // The eval stack unless told otherwise: the settings file given to Bun names its server.
     const server =
@@ -796,32 +1274,9 @@ async function main() {
     console.log(
       `Memories: ${memories.keep.size} held before the first run are kept; each run starts without the ones saved by earlier runs.`,
     );
-    const graderUrl =
-      values["grader-url"]?.trim() ||
-      env.FREEDUET_EVAL_GRADER_URL?.trim() ||
-      env.ANTHROPIC_BASE_URL?.trim() ||
-      "http://localhost:4231";
-    const graderKey =
-      env.FREEDUET_EVAL_GRADER_KEY?.trim() ||
-      env.ANTHROPIC_API_KEY?.trim() ||
-      env.FREEDUET_LOCAL_KEY?.trim() ||
-      "";
-    const graderModel =
-      values["grader-model"]?.trim() ||
-      env.FREEDUET_EVAL_GRADER_MODEL?.trim() ||
-      env.BOT_MODEL?.trim() ||
-      "claude-sonnet-5-5";
-    if (!graderKey)
-      throw new Error(
-        "No grader key: set FREEDUET_EVAL_GRADER_KEY, ANTHROPIC_API_KEY or FREEDUET_LOCAL_KEY (bun --env-file=openbot/.env ...).",
-      );
     if (values.approvals !== "deny" && values.approvals !== "leave")
       throw new Error("--approvals is deny or leave");
-    const grader = anthropicGrader({
-      baseUrl: graderUrl,
-      apiKey: graderKey,
-      model: graderModel,
-    });
+    const { grader, graderText: graderLine } = makeGrader(values, env);
     const timeoutMs = Number(values.timeout) * 1000;
     if (!Number.isFinite(timeoutMs) || timeoutMs <= 0)
       throw new Error("--timeout is seconds");
@@ -845,7 +1300,7 @@ async function main() {
       }
     }
     mode = `live against ${server}, approvals ${values.approvals === "deny" ? "denied by the runner" : "left pending"}`;
-    graderText = `${graderModel} at ${graderUrl}, prompt v${GRADER_VERSION}`;
+    graderText = graderLine;
     console.log(
       `${selected.length} cases${repeat > 1 ? `, ${repeat} runs each,` : ""} on ${engine}, ${mode}; grader ${graderText}; ${computerText}`,
     );
@@ -878,7 +1333,9 @@ async function main() {
         console.log(
           result.skipped
             ? `SKIP ${c.id}${which}: ${result.skipped}`
-            : `${result.pass ? "PASS" : "FAIL"} ${c.id}${which}${result.pass ? "" : `: ${result.failures.join("; ")}`}`,
+            : result.ungraded
+              ? `UNGRADED ${c.id}${which}: ${result.ungraded}`
+              : `${result.pass ? "PASS" : "FAIL"} ${c.id}${which}${result.pass ? "" : `: ${result.failures.join("; ")}`}`,
         );
         return result;
       },
@@ -886,32 +1343,41 @@ async function main() {
   }
 
   const summary = summarise(results, names);
-  const date = new Date().toISOString().slice(0, 10);
-  const base = `${date}-${engine}${filtered ? "-partial" : ""}`;
-  const computerText = computerSummary(results, computer);
-  const conversationsText = conversationsSummary(results);
-  await mkdir(values.out, { recursive: true });
-  const report = {
+  const date = today;
+  const base = regradeInfo
+    ? `${basename(regradeInfo.of, ".json")}-regraded-${date}`
+    : `${date}-${engine}${filtered ? "-partial" : ""}`;
+  // A regrade did not run the members: what the saved report says of their computer and their
+  // conversations is carried over, as saved.
+  const computerText = regradeInfo
+    ? (saved?.computer?.summary ??
+      "Computer tools: not recorded in the saved report.")
+    : computerSummary(results, computer);
+  const conversationsText = regradeInfo
+    ? (saved?.conversations ?? "")
+    : conversationsSummary(results);
+  const outDir = values.out ?? PATHS.reports;
+  await mkdir(outDir, { recursive: true });
+  const report = reportOf({
     date,
     engine,
     mode,
     grader: graderText,
-    graderVersion: GRADER_VERSION,
     filter: filterText,
     repeat,
-    computer: {
-      offered: typeof computer === "object",
-      ...(typeof computer === "object" ? { tools: computer.tools } : {}),
-      summary: computerText,
-    },
-    ...(conversationsText ? { conversations: conversationsText } : {}),
-    thresholds: THRESHOLDS,
+    computer: regradeInfo
+      ? (saved?.computer ?? { offered: false, summary: computerText })
+      : {
+          offered: typeof computer === "object",
+          ...(typeof computer === "object" ? { tools: computer.tools } : {}),
+          summary: computerText,
+        },
+    conversations: conversationsText,
     summary,
-    ...(selfTest
-      ? { selfTest: { pass: selfTest.length === 0, mismatches: selfTest } }
-      : {}),
+    selfTest,
+    regrade: regradeInfo,
     cases: results,
-  };
+  });
   const markdown = markdownReport({
     date,
     engine,
@@ -923,17 +1389,105 @@ async function main() {
     selfTest,
     computer: computerText,
     ...(conversationsText ? { conversations: conversationsText } : {}),
+    ...(regradeInfo
+      ? {
+          regrade: {
+            of: regradeInfo.of,
+            on: regradeInfo.on,
+            reason: regradeInfo.reason,
+          },
+        }
+      : {}),
   });
   await writeFile(
-    join(values.out, `${base}.json`),
+    join(outDir, `${base}.json`),
     `${JSON.stringify(report, null, 2)}\n`,
   );
-  await writeFile(join(values.out, `${base}.md`), markdown);
+  await writeFile(join(outDir, `${base}.md`), markdown);
   console.log(markdown.split("\n## Every case")[0]);
-  console.log(`Report: ${join(values.out, `${base}.{json,md}`)}`);
+  console.log(`Report: ${join(outDir, `${base}.{json,md}`)}`);
 
   if (selfTest) process.exitCode = selfTest.length === 0 ? 0 : 1;
-  else process.exitCode = summary.thresholdsMet ? 0 : 1;
+  else process.exitCode = exitCodeFor(summary);
+}
+
+/**
+ * The grader the live run and --regrade use: any Anthropic-format endpoint, by default the eval
+ * stack's own agent-freeduet on the person's Claude Code sign-in (see README.md).
+ */
+function makeGrader(
+  values: {
+    "grader-url"?: string;
+    "grader-model"?: string;
+  },
+  env: NodeJS.ProcessEnv,
+): { grader: Grader; graderText: string } {
+  const graderUrl =
+    values["grader-url"]?.trim() ||
+    env.FREEDUET_EVAL_GRADER_URL?.trim() ||
+    env.ANTHROPIC_BASE_URL?.trim() ||
+    "http://localhost:4231";
+  const graderKey =
+    env.FREEDUET_EVAL_GRADER_KEY?.trim() ||
+    env.ANTHROPIC_API_KEY?.trim() ||
+    env.FREEDUET_LOCAL_KEY?.trim() ||
+    "";
+  const graderModel =
+    values["grader-model"]?.trim() ||
+    env.FREEDUET_EVAL_GRADER_MODEL?.trim() ||
+    env.BOT_MODEL?.trim() ||
+    "claude-sonnet-5-5";
+  if (!graderKey)
+    throw new Error(
+      "No grader key: set FREEDUET_EVAL_GRADER_KEY, ANTHROPIC_API_KEY or FREEDUET_LOCAL_KEY (bun --env-file=openbot/.env ...).",
+    );
+  return {
+    grader: anthropicGrader({
+      baseUrl: graderUrl,
+      apiKey: graderKey,
+      model: graderModel,
+    }),
+    graderText: `${graderModel} at ${graderUrl}, prompt v${GRADER_VERSION}`,
+  };
+}
+
+/**
+ * --public: writes `<report name>-public.json` and `.md` beside the report (or in --out), built by
+ * public-report.ts from the saved report and cases.yaml only. Refuses a report that is public
+ * already, and one whose check texts are not cases.yaml's.
+ */
+export async function writePublicReport(
+  path: string,
+  out: string | undefined,
+  cases: Case[],
+  names: Map<string, string>,
+  log: (line: string) => void = console.log,
+): Promise<{ json: string; md: string }> {
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(await readFile(path, "utf8"));
+  } catch (error) {
+    throw new Error(
+      `cannot read ${path} as a report: ${error instanceof Error ? error.message : String(error)}`,
+    );
+  }
+  const stem = basename(path).replace(/\.json$/, "");
+  if (stem.endsWith("-public"))
+    throw new Error(`${path} is a public report already`);
+  const publicReport = buildPublicReport({
+    report: parsed,
+    cases,
+    names,
+    thresholds: THRESHOLDS,
+  });
+  const dir = out ?? dirname(resolve(path));
+  await mkdir(dir, { recursive: true });
+  const json = join(dir, `${stem}-public.json`);
+  const md = join(dir, `${stem}-public.md`);
+  await writeFile(json, `${JSON.stringify(publicReport, null, 2)}\n`);
+  await writeFile(md, publicMarkdown(publicReport));
+  log(`Public report: ${join(dir, `${stem}-public.{json,md}`)}`);
+  return { json, md };
 }
 
 if (import.meta.main) await main();

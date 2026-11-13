@@ -168,7 +168,7 @@ cases:
       - starts with a traffic light and the biggest reason
       - a table with severity, the clause quoted word for word with its number, plain meaning and the change to ask for
       - the renewal and the price-change clauses flagged
-      - closes the review with the first-review, not-legal-advice sentence, just before the report
+      - the sentence saying this is a first review and not legal advice comes after the review and directly before the report lines (Outcome, Done, ...); nothing else stands between that sentence and the report
   - id: portia-2
     member: counsel
     request: "[fixture: page 1 of 4 of a service agreement] Quick check?"
@@ -296,9 +296,17 @@ cases:
     request: "[fixture: style samples saved, no preferred formats] Voice note: 'we shipped the new booking page, took us three weeks, customers can now reschedule on their own, fewer calls for us'"
     must:
       - says the central idea back in one sentence first
-      - one long post of 150 to 250 words
-      - one short post under 280 characters
       - three alternative first lines
+    # Counted in code, not by the grader (checks.ts measureLimits). When the long or the short post
+    # cannot be found in the answer by its label, that limit goes to the grader as a must.
+    measure:
+      - text: one long post of 150 to 250 words
+        post: long
+        min_words: 150
+        max_words: 250
+      - text: one short post under 280 characters
+        post: short
+        below_characters: 280
     must_not:
       - adds numbers, quotes or names not in the note
   - id: wren-3
