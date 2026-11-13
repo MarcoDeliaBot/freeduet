@@ -386,3 +386,79 @@ def test_a_reply_with_text_is_never_given_the_fixed_sentence(client, fake_cli):
     fake_cli.followups([{"exit": 1}])
     events, _ = post_run(client, run_body(ask(SORT), bot_id="chef"))
     assert content_of(events) == REPLY
+
+
+# ── text the person was sent is never sent twice ─────────────────────────────────────────────────
+
+TAIL = "Next step: approve the 315 EUR booking above; confirm the traveller's name"
+BODY = "Here is the booking review.\n\n" + REPORT.rsplit("\n", 1)[0]
+FULL = f"{BODY}\n{TAIL}"
+
+
+def _start(message_id="m1"):
+    return {"type": "stream_event", "event": {"type": "message_start", "message": {"id": message_id, "role": "assistant", "content": []}}, "parent_tool_use_id": None}
+
+
+def _delta(text):
+    return {"type": "stream_event", "event": {"type": "content_block_delta", "index": 0, "delta": {"type": "text_delta", "text": text}}, "parent_tool_use_id": None}
+
+
+def _snapshot(text, message_id="m1"):
+    return {"type": "assistant", "message": {"id": message_id, "role": "assistant", "content": [{"type": "text", "text": text}]}, "parent_tool_use_id": None}
+
+
+def _result(text):
+    return {"type": "result", "subtype": "success", "is_error": False, "result": text}
+
+
+@pytest.mark.parametrize(
+    "events",
+    [
+        # the deltas end before the last line, the snapshot and the result carry it
+        [_start(), _delta(BODY + "\n"), _snapshot(FULL), _result(FULL)],
+        # the last line has no newline, in the deltas and in the result
+        [_start(), _delta(BODY + "\n" + TAIL), _snapshot(FULL), _result(FULL)],
+        # the result is a suffix of what was streamed (the CLI's result is the last text block)
+        [_start(), _delta("Intro.\n\n"), _delta(FULL), _result(FULL)],
+        # the result is longer than what was streamed
+        [_start(), _delta(BODY), _result(FULL)],
+        # a snapshot lagging behind the deltas, the same message id
+        [_start(), _delta(FULL), _snapshot(BODY), _result(FULL)],
+        # the message start is read twice
+        [_start(), _delta(BODY + "\n"), _start(), _delta(TAIL), _result(FULL)],
+    ],
+)
+def test_the_answer_reaches_the_person_once(client, fake_cli, events):
+    fake_cli.plan([{"events": events}])
+    out, _ = post_run(client, run_body(ask(SORT), bot_id="chef"))
+    said = content_of(out)
+    assert said.count(TAIL) == 1, said
+
+
+def test_a_follow_up_that_returns_lines_already_in_the_answer_adds_nothing(client, fake_cli):
+    fake_cli.plan([{"events": [_start(), _delta(BODY + "\n" + TAIL.replace("Next step", "Next  step")), _result("x")]}])
+    fake_cli.followups([{"text": REPORT}])
+    out, _ = post_run(client, run_body(ask("Sort these emails."), bot_id="chef"))
+    # The answer has no complete report, the follow-up wrote one: whatever it adds, no line is said twice.
+    lines = [line for line in content_of(out).splitlines() if line.strip()]
+    assert len(lines) == len(set(lines))
+
+
+def test_unsent_tail_is_exact():
+    tail = report_guard.unsent_tail
+    assert tail("", "All of it.") == "All of it."
+    assert tail("Start.", "Start.\nEnd.") == "\nEnd."
+    assert tail("Start.\nEnd.", "Start.\nEnd.") is None  # equal
+    assert tail("Intro.\n\nStart.\nEnd.", "Start.\nEnd.") is None  # a suffix
+    assert tail("Start.", "Other.\nEnd.") is None  # different
+    assert tail("Start.\nEnd. And more.", "Start.") is None  # shorter
+    assert tail("Start.", "") is None
+
+
+def test_missing_report_lines_never_repeats_a_line():
+    block = REPORT
+    lines = block.split("\n")
+    assert report_guard.missing_report_lines("Intro.", block) == (block, "\n\n")
+    assert report_guard.missing_report_lines("\n".join(["Intro.", *lines[:5]]), block) == (lines[5], "\n")
+    assert report_guard.missing_report_lines("\n".join(["Intro.", *lines]), block) is None
+    assert report_guard.missing_report_lines("\n".join(["Intro.", *(f"- {line}" for line in lines)]), block) == (block, "\n\n")

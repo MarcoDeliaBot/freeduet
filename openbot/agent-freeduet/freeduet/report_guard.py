@@ -172,6 +172,17 @@ class Story:
             message["error"] = text
         self.messages.append(message)
 
+    def last_text(self) -> str:
+        """The text of the last message this segment streamed, which is what the CLI's result carries."""
+        last = self.messages[-1] if self.messages else None
+        return last["content"] if last and last["role"] == "assistant" and not last.get("toolCalls") else ""
+
+    def extend_last(self, chunk: str) -> None:
+        if self.last_text():
+            self.messages[-1]["content"] += chunk
+        else:
+            self.text("result", chunk)
+
     def reply(self) -> str:
         return "\n\n".join(
             message["content"] for message in self.messages if message["role"] == "assistant" and message["content"]
@@ -236,3 +247,33 @@ def no_answer_text(messages: list[dict], story: Story) -> str:
     if name is None:
         return f"{NO_ANSWER} {NO_ANSWER_TAIL}"
     return f"{NO_ANSWER} The last thing I tried was {name}. {NO_ANSWER_TAIL}"
+
+
+# ── text the person was sent is never sent again ─────────────────────────────────────────────────
+
+
+def unsent_tail(shown: str, result: str) -> str | None:
+    """What the CLI's result text holds that `shown`, the last message already streamed, does not: all of
+    it when nothing was streamed, the rest when `shown` is exactly its beginning, else None. Never a
+    guess: a result that equals, ends or differs from what was streamed adds nothing."""
+    result = (result or "").strip()
+    seen = (shown or "").strip()
+    if not result:
+        return None
+    if not seen:
+        return result
+    rest = result[len(seen):] if result.startswith(seen) else ""
+    return rest if rest.strip() else None
+
+
+def missing_report_lines(reply: str, block: str) -> tuple[str, str] | None:
+    """The part of the guard's report the reply does not already end with, and the separator that joins
+    it: a report whose first lines are already the end of the reply (the stream lost its last line)
+    adds only the lines after them, on the next line; one already all there adds nothing."""
+    lines = [line.rstrip() for line in block.splitlines() if line.strip()]
+    said = [line.strip() for line in (reply or "").splitlines() if line.strip()]
+    for count in range(len(lines), 0, -1):
+        if said[-count:] == [line.strip() for line in lines[:count]]:
+            rest = lines[count:]
+            return ("\n".join(rest), "\n") if rest else None
+    return ("\n".join(lines), "\n\n") if lines else None
