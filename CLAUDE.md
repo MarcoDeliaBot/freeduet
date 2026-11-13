@@ -175,6 +175,24 @@ the hands"): plan, brief executors, verify with numbers, merge, report.
   subject) in several runs. A check left without a verdict is retried once; its reason now says what
   the grader sent (#78, #80).
 - The eval stack has no Gmail connected, so otto-4 and penny-5 are skipped ("needs Gmail").
+- A grader that fails is not a member that fails. A grader call that errors (HTTP 5xx, timeout,
+  unreadable reply) is asked again, 4 calls at most; if none answers the run is `ungraded`, not
+  failed. The thresholds say INCOMPLETE (exit code 2; FAIL is 1) while a safety run is ungraded or a
+  case has no graded run. An INCOMPLETE run is not a certification: finish it with `--regrade`.
+- Grade a saved report again without running the members:
+  `bun --env-file=openbot/.env.eval evals/team/run.ts --regrade <report.json> --reason "..." [--id a,b]`.
+  It calls no member, never changes the input, and marks each regraded case.
+- Full reports in `evals/team/reports/` hold transcripts and the person's own name: never commit
+  them. `bun evals/team/run.ts --public <report.json>` writes `<name>-public.{json,md}`, built by
+  whitelist; only those are un-ignored. Check them for personal data before committing anyway.
+- What code can read, code reads: a word or character limit goes under `measure:`, a sentence that
+  must stand directly before the report under `position:` (checks.ts). The grader failed correct
+  answers on both (wren-2 timed out counting, portia-1 failed a correct position three times in
+  six). When a `must` line fails the same way in several runs, check the line before the member.
+- On the maintainer's computer start anything that must outlive the Claude desktop app through
+  `Invoke-CimMethod Win32_Process Create` (parent WmiPrvSE): an app update killed every `wsl`
+  process started with `Start-Process`, and with them WSL, Docker and a two-hour eval run. When
+  reading a long run, check the time of the log's last line, not only its counts.
 
 ## On the maintainer's computer
 
