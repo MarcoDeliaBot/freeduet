@@ -14,14 +14,31 @@ export type Attachment = { name: string; mimeType: string; text: string };
 export type Turn = { request: string; attachments: Attachment[] };
 
 /**
+ * A limit on a piece of the answer that code can count: the words of the long post, the characters
+ * of the short one. `text` is the sentence the case states, as a `must` line would. See
+ * {@link measureLimits}.
+ */
+export type Measure = {
+  text: string;
+  /** Which post of the answer it is: found by its label ("Long post:", "Short post:"). */
+  post: "long" | "short";
+  minWords?: number;
+  maxWords?: number;
+  /** "under 280 characters" is `belowCharacters: 280`. */
+  belowCharacters?: number;
+};
+
+/**
  * A case is its last turn (`request` and `attachments`), the turns sent before it in the same
- * conversation (`previous`), and the apps it needs (`requires`, such as gmail).
+ * conversation (`previous`), and the apps it needs (`requires`, such as gmail). `measure` holds the
+ * limits counted in code; a limit whose post cannot be found goes to the grader as a `must`.
  */
 export type Case = Turn & {
   id: string;
   member: string;
   must: string[];
   must_not: string[];
+  measure: Measure[];
   safety: boolean;
   previous: Turn[];
   requires: string[];
@@ -76,6 +93,45 @@ const MIME_TYPES: Record<string, string> = {
   ".csv": "text/csv",
   ".json": "application/json",
 };
+
+/** The `measure` list of a case: each entry names a post and at least one limit, all whole numbers. */
+function measures(id: string, value: unknown): Measure[] {
+  if (value === undefined || value === null) return [];
+  if (!Array.isArray(value))
+    throw new Error(`${id}: measure must be a list of limits`);
+  return value.map((entry: Record<string, unknown>, index) => {
+    const where = `${id}: measure ${index + 1}`;
+    if (typeof entry?.text !== "string" || !entry.text)
+      throw new Error(`${where}: no text`);
+    if (entry.post !== "long" && entry.post !== "short")
+      throw new Error(`${where}: post is long or short`);
+    const count = (key: string): number | undefined => {
+      const n = entry[key];
+      if (n === undefined) return undefined;
+      if (typeof n !== "number" || !Number.isInteger(n) || n < 1)
+        throw new Error(`${where}: ${key} is a whole number, 1 or more`);
+      return n;
+    };
+    const minWords = count("min_words");
+    const maxWords = count("max_words");
+    const belowCharacters = count("below_characters");
+    if (
+      minWords === undefined &&
+      maxWords === undefined &&
+      belowCharacters === undefined
+    )
+      throw new Error(
+        `${where}: give min_words, max_words or below_characters`,
+      );
+    return {
+      text: entry.text,
+      post: entry.post,
+      ...(minWords !== undefined ? { minWords } : {}),
+      ...(maxWords !== undefined ? { maxWords } : {}),
+      ...(belowCharacters !== undefined ? { belowCharacters } : {}),
+    };
+  });
+}
 
 /** Names an app a case can require: a lower-case word such as gmail or calendar. */
 const APP_NAME = /^[a-z][a-z0-9-]*$/;
@@ -152,6 +208,7 @@ export async function loadCases(
       };
       const must = list(raw.must, "must");
       if (must.length === 0) throw new Error(`${id}: must is empty`);
+      const measure = measures(id, raw.measure);
       if (raw.previous !== undefined && !Array.isArray(raw.previous))
         throw new Error(`${id}: previous must be a list of turns`);
       const requires = list(raw.requires, "requires");
@@ -170,6 +227,7 @@ export async function loadCases(
         ...last,
         must,
         must_not: list(raw.must_not, "must_not"),
+        measure,
         safety: raw.safety === true,
         previous: await Promise.all(
           ((raw.previous as unknown[] | undefined) ?? []).map((value, i) =>
@@ -647,16 +705,241 @@ export function pausedOnApproval(t: Transcript): boolean {
   return pending.size > 0;
 }
 
+// ── Hard check (c): limits that code can count ───────────────────────────────────────────────────
+
+/*
+ * A grader model is slow and unreliable at counting: asked for the words of a 200-word post and the
+ * characters of a 270-character one, it spends its time on arithmetic, and a grader call that does
+ * not answer in time used to fail the case. A case can therefore list its counted limits under
+ * `measure` (wren-2: "one long post of 150 to 250 words", "one short post under 280 characters"),
+ * and this code counts them.
+ *
+ * The rule for finding a post. Counting is only as good as the cut, and members label their
+ * versions in their own words ("under short labels, ready to copy"), so a post is found only when
+ * the answer leaves no doubt about it, and otherwise the limit goes to the grader, as a `must`, as
+ * before:
+ *
+ * - The long post starts at the one line whose label is "Long post", "Long version" (or the like,
+ *   with an optional "(...)" and a colon), and the short post at the one line labelled "Short post"
+ *   or "Short version". Markdown around the label (heading, list marker, bold) is ignored. Italian
+ *   labels ("Post lungo", "Versione breve") are read too. Text after the colon on the label's line
+ *   is the start of the post.
+ * - The post runs to the next labelled section: the other post, "Central idea", "First lines" and
+ *   the like, a note or a word-count label, the report's "Outcome:", a heading or a rule; or to the
+ *   end of the answer. Blank lines inside a post are part of it.
+ * - Not found, so left to the grader: no such label, two of them, an empty post, or a line inside the
+ *   post that is a short capitalised label alone on its line ("What changed:"), which may be the
+ *   start of another section.
+ * - A "(198 words)" or "Word count: 198" line at the end of a post is not part of it. A pair of
+ *   quotes around the whole post is not counted. Quote marks (">") in front of its lines are not.
+ *
+ * Words are the whitespace-separated pieces that hold a letter or a digit ("three-week" is one, a
+ * lone dash or emoji is none). Characters are Unicode code points of the post as the person would
+ * copy it, a line break counting as one; "under 280" means 279 at most.
+ */
+
+const POST_SIZE = {
+  long: "long|lungo|lunga",
+  short: "short|breve|corto|corta",
+};
+const POST_KIND = "post|version|form|format|draft|text|copy|one|versione|testo";
+const POST_LABEL = new RegExp(
+  `^(?:(?:the|one|your)\\s+)?(?:(?<before>${POST_SIZE.long}|${POST_SIZE.short})(?:\\s+(?:linkedin|social))?\\s+(?:${POST_KIND})|(?:post|versione|testo)(?:\\s+linkedin)?\\s+(?<after>${POST_SIZE.long}|${POST_SIZE.short}))(?:\\s*\\([^)]{0,60}\\))?\\s*(?::\\s*(?<rest>.*))?$`,
+  "iu",
+);
+/** The other labelled sections of an answer: where a post ends. */
+const OTHER_SECTION =
+  /^(?:central idea|idea centrale|(?:(?:the|my|three|3|some|alternative|alternate|other|opening|first)\s+)*(?:first|opening|alternative|alternate)\s+(?:lines?|openers?|hooks?|openings?|options?|variants?|versions?)|(?:three|3|alternative|alternate|other)\s+(?:lines?|openers?|hooks?|openings?|options?|variants?)|openers?|hooks?|alternatives|variants|(?:prime|altre|tre)\s+[\p{L} ]{0,30}righe|righe iniziali|aperture|outcome|esito|(?:word|character|char) count|conteggio|notes?|nota|tone|why|tip)(?:\s*\([^)]{0,60}\))?\s*(?::|$)/iu;
+const COUNT_NOTE =
+  /^\(?\s*[~≈]?\s*(?:about|circa|ca\.?)?\s*\d+\s*(?:words?|characters?|chars?|parole|caratteri)\b/iu;
+const LONE_LABEL = /^\p{Lu}[^.!?:]{1,40}:$/u;
+const RULE = /^\s*([-*_])(?:\s*\1){2,}\s*$/;
+const HEADING = /^\s{0,3}#{1,6}\s/;
+
+/** A line without the markdown around its words: heading marks, quote marks, list markers, bold, italics. */
+const bareLine = (line: string) =>
+  line
+    .replace(/^[\s>]*(?:(?:#{1,6}|[-*•]|\d+[.)])\s+)*/u, "")
+    .replace(/[*_]+/g, "")
+    .trim();
+
+type PostLabel = { index: number; post: "long" | "short"; rest: string };
+
+function postLabels(lines: string[]): PostLabel[] {
+  const found: PostLabel[] = [];
+  lines.forEach((line, index) => {
+    const m = POST_LABEL.exec(bareLine(line));
+    if (!m?.groups) return;
+    const size = (m.groups.before ?? m.groups.after ?? "").toLowerCase();
+    found.push({
+      index,
+      post: /^lung|^long/.test(size) ? "long" : "short",
+      rest: m.groups.rest ?? "",
+    });
+  });
+  return found;
+}
+
+export type PostFound =
+  | { found: true; text: string }
+  | { found: false; why: string };
+
+/** The long or short post of an answer by the rule above, or why it could not be found. */
+export function findPost(answer: string, post: "long" | "short"): PostFound {
+  const lines = answer.replace(/\r\n/g, "\n").split("\n");
+  const labelled = postLabels(lines);
+  const mine = labelled.filter((l) => l.post === post);
+  if (mine.length === 0)
+    return { found: false, why: `no line is labelled as the ${post} post` };
+  if (mine.length > 1)
+    return {
+      found: false,
+      why: `${mine.length} lines are labelled as the ${post} post`,
+    };
+  const start = mine[0] as PostLabel;
+  const body = [start.rest];
+  for (let i = start.index + 1; i < lines.length; i++) {
+    const raw = lines[i] ?? "";
+    const bare = bareLine(raw);
+    if (
+      labelled.some((l) => l.index === i) ||
+      OTHER_SECTION.test(bare) ||
+      HEADING.test(raw) ||
+      RULE.test(raw)
+    )
+      break;
+    if (LONE_LABEL.test(bare))
+      return {
+        found: false,
+        why: `the ${post} post holds a line that may start another section ("${bare}")`,
+      };
+    body.push(raw.replace(/^\s*>\s?/, ""));
+  }
+  const kept = body.join("\n").trim().split("\n");
+  while (
+    kept.length &&
+    (!kept.at(-1)?.trim() || COUNT_NOTE.test(bareLine(kept.at(-1) ?? "")))
+  )
+    kept.pop();
+  let text = kept.join("\n").trim();
+  const quoted = /^["“«](.*)["”»]$/su.exec(text);
+  if (quoted) text = (quoted[1] ?? "").trim();
+  if (!text) return { found: false, why: `the ${post} post is empty` };
+  return { found: true, text };
+}
+
+/** Whitespace-separated pieces that hold a letter or a digit. */
+export const countWords = (text: string) =>
+  text.split(/\s+/u).filter((piece) => /[\p{L}\p{N}]/u.test(piece)).length;
+/** Unicode code points: an emoji is one, a line break is one. */
+export const countCharacters = (text: string) => [...text].length;
+
+export type LimitItem = {
+  id: string;
+  text: string;
+  post: "long" | "short";
+  /** False when the post could not be found: the limit is then a `must` for the grader. */
+  measured: boolean;
+  pass: boolean;
+  reason: string;
+  words?: number;
+  characters?: number;
+};
+
+export type LimitsCheck = CheckResult & {
+  applies: boolean;
+  items: LimitItem[];
+};
+
+const plural = (n: number, noun: string) => `${n} ${noun}${n === 1 ? "" : "s"}`;
+
+/**
+ * Counts the limits a case lists under `measure` in the member's answer to the last turn (all the
+ * text the member wrote in it). Each limit is measured, with the numbers in its reason, or not
+ * measured, with why: such a limit is left to the grader (see {@link findPost}). `pass` is whether
+ * every measured limit holds.
+ */
+export function measureLimits(
+  c: Pick<Case, "measure">,
+  t: Transcript,
+): LimitsCheck {
+  const answer = lastTurn(t)
+    .flatMap((e) => (e.type === "assistant" && e.text.trim() ? [e.text] : []))
+    .join("\n\n");
+  const items = c.measure.map((limit, index): LimitItem => {
+    const id = `measure-${index + 1}`;
+    const base = { id, text: limit.text, post: limit.post };
+    const found = findPost(answer, limit.post);
+    if (!found.found)
+      return {
+        ...base,
+        measured: false,
+        pass: false,
+        reason: `not measured, left to the grader: ${found.why}`,
+      };
+    const words = countWords(found.text);
+    const characters = countCharacters(found.text);
+    const counted = [
+      limit.minWords !== undefined || limit.maxWords !== undefined
+        ? plural(words, "word")
+        : "",
+      limit.belowCharacters !== undefined
+        ? plural(characters, "character")
+        : "",
+    ].filter(Boolean);
+    const wanted = [
+      limit.minWords !== undefined && limit.maxWords !== undefined
+        ? `${limit.minWords} to ${limit.maxWords} words`
+        : limit.minWords !== undefined
+          ? `at least ${limit.minWords} words`
+          : limit.maxWords !== undefined
+            ? `at most ${limit.maxWords} words`
+            : "",
+      limit.belowCharacters !== undefined
+        ? `under ${limit.belowCharacters} characters`
+        : "",
+    ].filter(Boolean);
+    const holds =
+      (limit.minWords === undefined || words >= limit.minWords) &&
+      (limit.maxWords === undefined || words <= limit.maxWords) &&
+      (limit.belowCharacters === undefined ||
+        characters < limit.belowCharacters);
+    return {
+      ...base,
+      measured: true,
+      pass: holds,
+      reason: `the ${limit.post} post has ${counted.join(" and ")}; wanted ${wanted.join(" and ")}`,
+      words,
+      characters,
+    };
+  });
+  const measured = items.filter((item) => item.measured);
+  const failed = measured.filter((item) => !item.pass);
+  return {
+    applies: items.length > 0,
+    pass: failed.length === 0,
+    reason: measured.length
+      ? failed.length
+        ? failed.map((item) => item.reason).join("; ")
+        : measured.map((item) => item.reason).join("; ")
+      : "nothing measured: every limit is left to the grader",
+    items,
+  };
+}
+
 export type HardChecks = {
   approval: ReturnType<typeof checkApprovals>;
   report: CheckResult & {
     applies: boolean;
     report: ParsedReport;
   };
+  /** The limits counted in code; present only for a case with `measure`. */
+  limits?: LimitsCheck;
 };
 
 export function hardChecks(c: Case, t: Transcript): HardChecks {
   const approval = checkApprovals(t);
+  const limits = c.measure.length ? { limits: measureLimits(c, t) } : {};
   if (!isWork(c, t))
     return {
       approval,
@@ -667,6 +950,7 @@ export function hardChecks(c: Case, t: Transcript): HardChecks {
           "skipped: a greeting, or a message ending with a question, with no attached file and no tool call",
         report: {},
       },
+      ...limits,
     };
   if (pausedOnApproval(t))
     return {
@@ -677,9 +961,11 @@ export function hardChecks(c: Case, t: Transcript): HardChecks {
         reason: "skipped: the turn is paused on an unanswered approval",
         report: {},
       },
+      ...limits,
     };
   return {
     approval,
     report: { applies: true, ...checkReportLines(finalAnswer(t)) },
+    ...limits,
   };
 }
