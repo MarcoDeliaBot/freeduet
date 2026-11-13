@@ -54,7 +54,7 @@ FreeDuet gives you a Chief of Staff and a crew of specialists: inbox, contracts,
 | 🍳 | **Basil** | Chef | "Here's my fridge. What can I make that uses up the spinach?" |
 | 🔍 | **Vera** | Reviewer: checks important work before it reaches you | Works behind the scenes: Iris sends her every invoice, contract review, post and cart. |
 
-Every member has one job, a fixed answer format, and hard rules it never breaks. You can rename them, change their voice, or ask Leo to design new ones. Full profiles are in [docs/TEAM.md](docs/TEAM.md); the definitions are in [openbot/examples/freeduet/agents.yaml](openbot/examples/freeduet/agents.yaml).
+**These ten are a starting team, not a limit.** Every member has one job, a fixed answer format, and hard rules it never breaks. You can rename them, change their voice, train your own member for exactly the job you need (ask Leo, or write it yourself), and we will keep adding new ready-made members with each release. Full profiles are in [docs/TEAM.md](docs/TEAM.md); the definitions are in [openbot/examples/freeduet/agents.yaml](openbot/examples/freeduet/agents.yaml).
 
 ## Works with your tools
 
@@ -140,6 +140,7 @@ Not tested, or not finished:
 | v0.3 | Never stops | Engine chains, spending caps, the savings meter, real delegation between members |
 | v0.4 | Safe purchases | Purchase permits, spending caps per agent, take-over on logins and captchas |
 | v1.0 | Launch | Grok Bot import, one-command install, docs site |
+| Every release | A growing team | New ready-made members added to the starting ten. Building your own member already works today |
 
 The full plan, with acceptance criteria for each milestone, is in [docs/PROJECT.md](docs/PROJECT.md).
 
