@@ -31,6 +31,13 @@ assistant message. Anything else (a refusal, a rewrite of the reply, a partial r
 a timeout) adds nothing. Never more than once per turn: the follow-up has no tools, so it cannot
 start another segment, and it is never retried. The team log records that the guard asked
 (`report_guard`: "added" or "failed").
+
+NO TEXT AT ALL. A turn must never end with nothing for the person. When the engine's final message is
+empty (the CLI ended its turn on a tool's error result with no words, found in a live run: jules-3),
+the guard above asks for the report as for any turn that did work. If that adds nothing too, or the
+turn did no work and the guard never asked, the person gets `no_answer_text`: one fixed sentence that
+says the member stopped without an answer and names the last tool it called (its name only: never a
+tool result, a page or an argument). segment.py streams it.
 """
 
 from __future__ import annotations
@@ -42,6 +49,7 @@ import re
 from . import claude_cli, report, team_log, transcript
 from .members import Member
 from .origin import GROUP_TRANSCRIPT, latest_user_message, message_text
+from .stream_json import MCP_PREFIX
 
 log = logging.getLogger("freeduet.report_guard")
 
@@ -191,3 +199,40 @@ async def request_report(system: str, prompt: str, timeout: float = TIMEOUT_SECO
     if block is None:
         log.warning("report guard: the follow-up wrote no complete report")
     return block
+
+
+# ── a turn that ends with no text at all ─────────────────────────────────────────────────────────
+
+NO_ANSWER = "I stopped without an answer."
+NO_ANSWER_TAIL = "Tell me to go on, or tell me what you want me to do instead."
+_TOOL_NAME = re.compile(r"[A-Za-z][\w.-]{0,63}")
+
+
+def _last_tool_name(messages: list[dict]) -> str | None:
+    for message in reversed(messages):
+        if message.get("role") != "assistant":
+            continue
+        for call in reversed(message.get("toolCalls") or []):
+            function = call.get("function") if isinstance(call, dict) else None
+            name = function.get("name") if isinstance(function, dict) else None
+            if isinstance(name, str):
+                name = name.removeprefix(MCP_PREFIX)
+                if _TOOL_NAME.fullmatch(name):
+                    return name
+    return None
+
+
+def last_attempt(messages: list[dict], story: Story) -> str | None:
+    """The name of the last tool the member called in this turn: this segment's own calls first, then
+    the calls since the person's message. The name only, so nothing a page or a tool said can get in."""
+    latest = latest_user_message(messages)
+    start = next((i for i, message in enumerate(messages) if message is latest), -1) + 1
+    return _last_tool_name([*messages[start:], *story.messages])
+
+
+def no_answer_text(messages: list[dict], story: Story) -> str:
+    """The fixed sentence for a turn that ended with no text for the person at all."""
+    name = last_attempt(messages, story)
+    if name is None:
+        return f"{NO_ANSWER} {NO_ANSWER_TAIL}"
+    return f"{NO_ANSWER} The last thing I tried was {name}. {NO_ANSWER_TAIL}"

@@ -608,6 +608,16 @@ export const EXECUTORS: Record<string, Executor | "gate"> = {
 };
 
 /**
+ * approval-tools.tsx `failed`: a change the computer could not make is a RESULT the member reads, in
+ * the `{ ok: false, reason }` shape of every other refusal, never a throw. The SDK posts nothing back
+ * after a handler that threw (the `error` outcome below), so a thrown "Element x is not on the page
+ * any more" ended a turn with no word from the member (jules-3).
+ */
+function failedChange(reason: string): CallOutcome {
+  return { kind: "result", value: { ok: false, reason } };
+}
+
+/**
  * approval-tools.tsx: a change is sent to the server's gate with the conversation, and the server
  * runs it. 202 means the gate asked the person; the app stops there and the server resumes the
  * conversation once the approval is decided.
@@ -624,15 +634,8 @@ async function throughGate(
       signal: signalFor(context),
     },
   );
-  let payload: unknown;
-  try {
-    payload = await response.json();
-  } catch (error) {
-    return {
-      kind: "error",
-      message: error instanceof Error ? error.message : String(error),
-    };
-  }
+  // A body that is not JSON is a failed action like any other (approval-tools.tsx).
+  const payload: unknown = await response.json().catch(() => null);
   if (response.status === 202)
     return {
       kind: "waiting",
@@ -643,20 +646,15 @@ async function throughGate(
         : {}),
     };
   if (!response.ok)
-    return {
-      kind: "error",
-      message:
-        payload &&
+    return failedChange(
+      payload &&
         typeof payload === "object" &&
         typeof (payload as { error?: unknown }).error === "string"
-          ? (payload as { error: string }).error
-          : "The computer action could not be approved.",
-    };
+        ? (payload as { error: string }).error
+        : "The computer action could not be approved.",
+    );
   if (!payload || typeof payload !== "object" || !("result" in payload))
-    return {
-      kind: "error",
-      message: "The computer action returned no result.",
-    };
+    return failedChange("The computer action returned no result.");
   return { kind: "result", value: (payload as { result: unknown }).result };
 }
 

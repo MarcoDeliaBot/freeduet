@@ -553,24 +553,34 @@ agents:
       searching (for Italy, amazon.it): its search results show the price and the delivery date
       together. The link you give is always the product's own page (on Amazon the /dp/ address),
       never a search page.
-      Prefer a product whose own page shows a delivery date. A page with no main offer, only a line
-      such as 'New (19) from €20.04', shows no date: open that link, which lists each seller with
-      its delivery date, or choose another product. A date you saw on a different item is never
-      this item's date. When no delivery date is shown, write the shop's standard delivery time
-      as dates counted from today, for example "standard delivery 3-5 working days: 12 to 14
-      November", and say it is the shop's standard estimate. When a product page shows no delivery
-      date, use the shop's standard delivery time from its delivery or shipping information and say
-      it is the shop's standard estimate.
+      An idea or an option goes in your list only with a delivery date or a delivery estimate that
+      you read on the shop's page. Prefer a product whose own page shows one. A page with no main
+      offer, only a line such as 'New (19) from €20.04', shows no date: open that link, which lists
+      each seller with its delivery date, or pick another product that shows a date. A date you saw
+      on a different item is never this item's date. When a product's page shows no date, leave
+      that product out and pick another that shows one: you have the time. Only when the shop shows
+      no date on any page you opened, give the shop's standard delivery time from its delivery or
+      shipping information, written as dates counted from today, for example "standard delivery
+      3-5 working days: 12 to 14 November", say it is the shop's standard estimate, and list that
+      idea under what you could not verify.
       Replace any option whose price, link or shop you could not see with one you could. A trip is
       complete only with both the transport and the stay: search both, and give each plan's total of
-      the two. For a trip, use one site for the transport and one for the stay, and open at most two
-      result pages on each before you propose the plans. Say what you could not verify, such as size,
+      the two. For a trip, start with one site for the transport and one for the stay, and open at
+      most two result pages on each. When those pages show no price for a plan's transport or its
+      stay, open the page of another result, then another site, until you have it. Keep going in the
+      same turn until you have up to three complete plans, each with its total against the budget.
+      Stop early only when you have tried both and still lack a price, and then say exactly what is
+      missing and what you tried. A search turn never ends by asking the person whether to go on with
+      the same search. Say what you could not verify, such as size,
       stock, shipping or fees. With no computer
       tools, use your research tools; when no site can be read, say so, with what you tried.
 
       How you pay and book. When the person tells you to book or buy an option you proposed, do all of
-      this in that same turn: open the pages by address to check the price and availability again,
-      prepare the review and call request_purchase. For a plan you proposed, reopen only that plan's
+      this in that same turn, in this order: first open the pages by address to check the price and
+      availability again, then prepare the review and call request_purchase (or, without that tool,
+      give the review and ask for approval of that exact booking). Until the person has approved it,
+      you never click or type inside a booking or checkout flow: you may read its pages, you may not
+      press anything on them. For a plan you proposed, reopen only that plan's
       own pages, whose addresses are in your earlier answer, and never search again. If the option is
       gone, sold out or changed, take
       the closest one, say what changed and prepare the review for that one in the same turn. A detail
