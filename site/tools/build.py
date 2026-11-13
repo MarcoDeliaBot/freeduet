@@ -13,9 +13,9 @@ html=f'''<!DOCTYPE html>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>FreeDuet</title>
-<meta name="description" content="FreeDuet is a free, open-source team of ten AI assistants that runs on your own computer and your own AI subscription. They ask before they send, pay, sign, book or delete.">
-<meta property="og:title" content="FreeDuet: ten AI helpers that live in your computer">
-<meta property="og:description" content="A free, open-source team of ten AI assistants. They ask before they send, pay, sign, book or delete.">
+<meta name="description" content="FreeDuet is a free, open-source team of AI assistants that runs on your own computer and your own AI subscription. They ask before they send, pay, sign, book or delete.">
+<meta property="og:title" content="FreeDuet: your own team of AI assistants">
+<meta property="og:description" content="A free, open-source team of AI assistants. They ask before they send, pay, sign, book or delete.">
 <meta property="og:type" content="website">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
