@@ -1,7 +1,7 @@
 {
   "case": "portia-1",
   "expect": "pass",
-  "note": "Fictional. The contract travels as a real attachment (fixtures/live/subscription-agreement.txt), so Portia quotes its clauses word for word. Traffic light first, jurisdiction named, the closing sentence just before the report, nothing after it.",
+  "note": "Fictional. The contract travels as a real attachment (fixtures/live/subscription-agreement.txt), so Portia quotes its clauses word for word. Traffic light first, jurisdiction named, the closing sentence just before the report, nothing after it (the sentence's place is read in code, so the recorded grader reply has no line for it).",
   "transcript": {
     "caseId": "portia-1",
     "member": "counsel",
@@ -26,5 +26,5 @@
       }
     ]
   },
-  "grader": "{\"checks\": [{\"id\": \"must-1\", \"holds\": true, \"reason\": \"It names the Netherlands and why, from clause 9.1 and the first page.\"}, {\"id\": \"must-2\", \"holds\": true, \"reason\": \"The first line is Red with the renewal and price-change reason.\"}, {\"id\": \"must-3\", \"holds\": true, \"reason\": \"A table with severity, word-for-word quotes with clause numbers, meaning and changes.\"}, {\"id\": \"must-4\", \"holds\": true, \"reason\": \"Clauses 2.2 and 3.2 are flagged high.\"}, {\"id\": \"must-5\", \"holds\": true, \"reason\": \"The not-legal-advice sentence closes the review, right before the report.\"}]}"
+  "grader": "{\"checks\": [{\"id\": \"must-1\", \"holds\": true, \"reason\": \"It names the Netherlands and why, from clause 9.1 and the first page.\"}, {\"id\": \"must-2\", \"holds\": true, \"reason\": \"The first line is Red with the renewal and price-change reason.\"}, {\"id\": \"must-3\", \"holds\": true, \"reason\": \"A table with severity, word-for-word quotes with clause numbers, meaning and changes.\"}, {\"id\": \"must-4\", \"holds\": true, \"reason\": \"Clauses 2.2 and 3.2 are flagged high.\"}]}"
 }

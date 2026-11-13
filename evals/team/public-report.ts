@@ -43,7 +43,7 @@ const MEMBER = /^[a-z][a-z0-9-]{0,30}$/;
 export type PublicVerdict = "pass" | "fail" | "skipped" | "ungraded";
 export type PublicCheck = {
   id: string;
-  kind: "must" | "must_not" | "measure" | "hard";
+  kind: "must" | "must_not" | "measure" | "position" | "hard";
   text: string;
   result: "pass" | "fail" | "ungraded" | "skipped";
   /** With --repeat: in how many of the graded runs the check held. */
@@ -90,6 +90,8 @@ export type PublicReport = {
   status: "PASS" | "FAIL" | "INCOMPLETE";
   counts: {
     cases: number;
+    /** How many cases cases.yaml has: a report with fewer is a partial run. */
+    casesInFile: number;
     safety: number;
     pass: number;
     fail: number;
@@ -143,6 +145,34 @@ type RunLike = Json;
 const runsOf = (saved: Json): RunLike[] => {
   const runs = records(record(saved.repeats)?.runs);
   return runs.length ? runs : [saved];
+};
+
+/**
+ * The filter the RUN had ("none" for a full run), as a saved report tells it; undefined when it
+ * cannot be known. A report's own `filter` is the run's only when the report is not a regraded one:
+ * a regraded report writes there what the REGRADE selected (`--id portia-1,wren-2`), and keeps the
+ * run's in `regrade.originalFilter`. A report written before that field (the first --regrade) has
+ * none: when it holds every case of `caseIds` the run was a full one, else the filter is unknown.
+ */
+export function runFilterOf(
+  report: unknown,
+  caseIds: readonly string[],
+): string | undefined {
+  const r = record(report);
+  if (!r) return undefined;
+  const regrade = record(r.regrade);
+  if (regrade) {
+    if (typeof regrade.originalFilter === "string")
+      return regrade.originalFilter;
+    return holdsEvery(r, caseIds) ? "none" : undefined;
+  }
+  return typeof r.filter === "string" ? r.filter : undefined;
+}
+
+/** Whether a saved report has a case for every id given. */
+const holdsEvery = (report: Json, caseIds: readonly string[]): boolean => {
+  const held = new Set(records(report.cases).map((c) => c.id));
+  return caseIds.length > 0 && caseIds.every((id) => held.has(id));
 };
 
 /**
@@ -212,10 +242,12 @@ export function buildPublicReport(input: {
     };
     if (verdict === "skipped") return result;
 
+    // A report written before a line became a counted limit or a position holds it as a must.
     const allowed = new Set([
       ...c.must,
       ...c.must_not,
       ...c.measure.map((m) => m.text),
+      ...c.position.map((p) => p.text),
     ]);
     // How many of the graded runs a check held in, by the check's id.
     const across = (
@@ -285,6 +317,30 @@ export function buildPublicReport(input: {
       result.checks.push({
         id: itemId,
         kind: "measure",
+        text,
+        result: item.pass === true ? "pass" : "fail",
+        ...(counted ? { runs: counted } : {}),
+      });
+    }
+    for (const raw of list(record(hard?.positions)?.items)) {
+      const item = record(raw);
+      const itemId = typeof item?.id === "string" ? item.id : "";
+      const index = /^position-(\d+)$/.exec(itemId)?.[1];
+      if (!item || !index) continue;
+      const text = c.position[Number(index) - 1]?.text;
+      if (text === undefined || item.text !== text)
+        throw new Error(
+          `case ${c.id}, check ${itemId}: its text is not one of cases.yaml's position lines for the case. The cases changed since this report`,
+        );
+      const counted = across((run) => {
+        const same = records(record(record(run.hard)?.positions)?.items).find(
+          (x) => x.id === itemId,
+        );
+        return same ? { pass: same.pass === true, ungraded: false } : undefined;
+      });
+      result.checks.push({
+        id: itemId,
+        kind: "position",
         text,
         result: item.pass === true ? "pass" : "fail",
         ...(counted ? { runs: counted } : {}),
@@ -387,7 +443,15 @@ export function buildPublicReport(input: {
   const regrade = record(report.regrade);
   const count = (v: PublicVerdict) =>
     cases.filter((c) => c.verdict === v).length;
-  const filter = typeof report.filter === "string" ? report.filter : "none";
+  // Partial or not is the RUN's: every case of cases.yaml in the report settles it (not partial);
+  // else the filter the run had; unknown counts as partial. Never the regrade's own selection.
+  const caseIds = input.cases.map((c) => c.id);
+  const runFilter = runFilterOf(report, caseIds);
+  const partial = holdsEvery(report, caseIds)
+    ? false
+    : runFilter === undefined
+      ? true
+      : runFilter !== "none";
   return {
     public: true,
     date: report.date,
@@ -408,11 +472,12 @@ export function buildPublicReport(input: {
           ),
         }
       : {}),
-    partial: filter !== "none",
+    partial,
     repeat: Math.max(1, num(report.repeat) ?? 1),
     status,
     counts: {
       cases: cases.length,
+      casesInFile: input.cases.length,
       safety: cases.filter((c) => c.safety).length,
       pass: count("pass"),
       fail: count("fail"),
@@ -448,11 +513,11 @@ export function publicMarkdown(r: PublicReport): string {
   return [
     `# Team eval, ${r.date}, ${r.engine} (public report)`,
     "",
-    `Mode: ${r.mode}. Grader: ${r.grader.name}, prompt v${r.grader.promptVersion ?? "?"}. ${r.partial ? "A partial run (a filter was given). " : ""}${r.repeat > 1 ? `Each case ran ${r.repeat} times. ` : ""}This report holds only the verdicts and the check texts of cases.yaml: no transcript, no grader reason, no tool call, no conversation.`,
+    `Mode: ${r.mode}. Grader: ${r.grader.name}, prompt v${r.grader.promptVersion ?? "?"}. ${r.partial ? `A partial run: ${r.counts.cases} of the ${r.counts.casesInFile} cases of cases.yaml. ` : ""}${r.repeat > 1 ? `Each case ran ${r.repeat} times. ` : ""}This report holds only the verdicts and the check texts of cases.yaml: no transcript, no grader reason, no tool call, no conversation.`,
     ...(r.runDate
       ? [
           "",
-          `Regraded on ${r.date} from the saved transcripts of the run of ${r.runDate}${r.originalGrader ? ` (graded then by ${r.originalGrader.name}, prompt v${r.originalGrader.promptVersion ?? "?"})` : ""}: ${r.counts.regraded} ${r.counts.regraded === 1 ? "case" : "cases"} graded again.`,
+          `Regraded on ${r.date} from the saved transcripts of the run of ${r.runDate}${r.originalGrader ? ` (graded then by ${r.originalGrader.name}, prompt v${r.originalGrader.promptVersion ?? "?"})` : ""}: ${r.counts.regraded} of ${r.counts.cases} ${r.counts.cases === 1 ? "case" : "cases"} graded again, the others as saved.`,
         ]
       : []),
     "",

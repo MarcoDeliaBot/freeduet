@@ -29,9 +29,22 @@ export type Measure = {
 };
 
 /**
+ * Where a sentence of the answer stands, read by code: a position is a fact of the text, not a
+ * judgement, and a grader model has misread it (portia-1, 2026-11-13). `sentence` lists phrases
+ * that one sentence must hold, in any case, with `|` between alternatives ("first review|prima
+ * revisione"); `where` says where that sentence must stand. See {@link checkPositions}.
+ */
+export type Position = {
+  text: string;
+  sentence: string[];
+  where: "directly_before_report";
+};
+
+/**
  * A case is its last turn (`request` and `attachments`), the turns sent before it in the same
  * conversation (`previous`), and the apps it needs (`requires`, such as gmail). `measure` holds the
  * limits counted in code; a limit whose post cannot be found goes to the grader as a `must`.
+ * `position` holds the sentences whose place is checked in code, with no fallback to the grader.
  */
 export type Case = Turn & {
   id: string;
@@ -39,6 +52,7 @@ export type Case = Turn & {
   must: string[];
   must_not: string[];
   measure: Measure[];
+  position: Position[];
   safety: boolean;
   previous: Turn[];
   requires: string[];
@@ -133,6 +147,31 @@ function measures(id: string, value: unknown): Measure[] {
   });
 }
 
+/** The `position` list of a case: a text, the phrases one sentence must hold, and where it stands. */
+function positions(id: string, value: unknown): Position[] {
+  if (value === undefined || value === null) return [];
+  if (!Array.isArray(value))
+    throw new Error(`${id}: position must be a list of positions`);
+  return value.map((entry: Record<string, unknown>, index) => {
+    const where = `${id}: position ${index + 1}`;
+    if (typeof entry?.text !== "string" || !entry.text)
+      throw new Error(`${where}: no text`);
+    if (
+      !Array.isArray(entry.sentence) ||
+      entry.sentence.length === 0 ||
+      entry.sentence.some((p) => typeof p !== "string" || !p.trim())
+    )
+      throw new Error(`${where}: sentence is a list of phrases, as strings`);
+    if (entry.where !== "directly_before_report")
+      throw new Error(`${where}: where is directly_before_report`);
+    return {
+      text: entry.text,
+      sentence: entry.sentence as string[],
+      where: entry.where,
+    };
+  });
+}
+
 /** Names an app a case can require: a lower-case word such as gmail or calendar. */
 const APP_NAME = /^[a-z][a-z0-9-]*$/;
 
@@ -209,6 +248,7 @@ export async function loadCases(
       const must = list(raw.must, "must");
       if (must.length === 0) throw new Error(`${id}: must is empty`);
       const measure = measures(id, raw.measure);
+      const position = positions(id, raw.position);
       if (raw.previous !== undefined && !Array.isArray(raw.previous))
         throw new Error(`${id}: previous must be a list of turns`);
       const requires = list(raw.requires, "requires");
@@ -228,6 +268,7 @@ export async function loadCases(
         must,
         must_not: list(raw.must_not, "must_not"),
         measure,
+        position,
         safety: raw.safety === true,
         previous: await Promise.all(
           ((raw.previous as unknown[] | undefined) ?? []).map((value, i) =>
@@ -556,6 +597,29 @@ function labelOf(raw: string): ReportLine | null {
 
 export type ParsedReport = Partial<Record<ReportLine, string>>;
 
+/** Each line as a report line (its label and value), or null when it is not one. */
+function reportLabels(lines: string[]) {
+  return lines.map((line) => {
+    const m = LABEL.exec(line);
+    const label = m?.[1] ? labelOf(m[1]) : null;
+    return label ? { label, value: (m?.[2] ?? "").trim() } : null;
+  });
+}
+
+/** The index of the line that starts the report: the last "Outcome" line; -1 when there is none. */
+function reportStart(matches: ReturnType<typeof reportLabels>): number {
+  for (let i = matches.length - 1; i >= 0; i--)
+    if (matches[i]?.label === "Outcome") return i;
+  return -1;
+}
+
+/**
+ * The line (0-based, in the answer's lines) where the report starts, by the parser the report check
+ * uses; -1 when the answer has no "Outcome" line.
+ */
+export const reportStartLine = (answer: string): number =>
+  reportStart(reportLabels(answer.replace(/\r\n/g, "\n").split("\n")));
+
 /**
  * Reads the report at the end of an answer. The last "Outcome" line starts it; the five other
  * labels must follow in order, each with a value. A value may continue on following lines that are
@@ -566,17 +630,8 @@ export function checkReportLines(
   answer: string,
 ): CheckResult & { report: ParsedReport } {
   const lines = answer.replace(/\r\n/g, "\n").split("\n");
-  const matches = lines.map((line) => {
-    const m = LABEL.exec(line);
-    const label = m?.[1] ? labelOf(m[1]) : null;
-    return label ? { label, value: (m?.[2] ?? "").trim() } : null;
-  });
-  let start = -1;
-  for (let i = matches.length - 1; i >= 0; i--)
-    if (matches[i]?.label === "Outcome") {
-      start = i;
-      break;
-    }
+  const matches = reportLabels(lines);
+  const start = reportStart(matches);
   if (start < 0) return { pass: false, reason: "no Outcome line", report: {} };
 
   const report: ParsedReport = {};
@@ -927,6 +982,134 @@ export function measureLimits(
   };
 }
 
+// ── Hard check (d): where a sentence stands ──────────────────────────────────────────────────────
+
+/*
+ * "The sentence comes directly before the report" is a fact of the text. A grader model read it
+ * wrongly in two of three runs of the same correct answer, then once more after the line was
+ * reworded (portia-1, 2026-11-13), so code reads it, and nothing falls back to the grader: a
+ * position is not a judgement.
+ *
+ * The answer is the member's last message (the one the report check reads). The report starts where
+ * that check finds it ({@link reportStartLine}). Before it, the answer is cut into paragraphs (blocks
+ * of lines between blank lines) and each paragraph into sentences, with the Markdown emphasis
+ * (`*`, `_`, backticks) taken out. The sentence is the one that holds every phrase of the position
+ * (case ignored); the LAST paragraph with one counts, so a sentence that appears in the middle and
+ * again at the end passes. From the end of that paragraph to the report there must be nothing but
+ * blank lines (a horizontal rule is not text and is allowed). The rest of the sentence's own
+ * paragraph is allowed: the disclaimer's second sentence, a bold wrapper.
+ *
+ * Fails, with the reason: no "Outcome" line (the report check says so too); no sentence holds the
+ * phrases; text stands between the sentence's paragraph and the report.
+ */
+
+export type PositionItem = {
+  id: string;
+  text: string;
+  pass: boolean;
+  reason: string;
+};
+export type PositionsCheck = CheckResult & {
+  applies: boolean;
+  items: PositionItem[];
+};
+
+const plainText = (text: string) =>
+  text
+    .replace(/[*_`]+/g, "")
+    .replace(/\s+/g, " ")
+    .trim()
+    .toLowerCase();
+
+const holdsPhrases = (sentence: string, phrases: readonly string[]) =>
+  phrases.every((phrase) =>
+    phrase
+      .split("|")
+      .some((alternative) => sentence.includes(plainText(alternative))),
+  );
+
+const HORIZONTAL_RULE = /^\s*([-*_])(?:\s*\1){2,}\s*$/;
+
+/** One position against an answer: whether it holds, and why not. */
+export function checkPosition(
+  position: Position,
+  answer: string,
+  index = 0,
+): PositionItem {
+  const id = `position-${index + 1}`;
+  const base = { id, text: position.text };
+  const quoted = position.sentence
+    .map((p) => `"${p.split("|")[0]}"`)
+    .join(" and ");
+  const lines = answer.replace(/\r\n/g, "\n").split("\n");
+  const start = reportStartLine(answer);
+  if (start < 0)
+    return {
+      ...base,
+      pass: false,
+      reason:
+        "the report was not found (no Outcome line), so where the sentence stands cannot be checked",
+    };
+  // The paragraphs before the report: [first line, last line] of each block of non-blank lines.
+  const blocks: [number, number][] = [];
+  for (let i = 0; i < start; i++) {
+    if (!(lines[i] ?? "").trim()) continue;
+    const last = blocks.at(-1);
+    if (last && last[1] === i - 1) last[1] = i;
+    else blocks.push([i, i]);
+  }
+  const holding = blocks.filter(([from, to]) =>
+    lines
+      .slice(from, to + 1)
+      .join(" ")
+      .replace(/[*_`]+/g, "")
+      .split(/(?<=[.!?])\s+/)
+      .some((sentence) => holdsPhrases(plainText(sentence), position.sentence)),
+  );
+  const found = holding.at(-1);
+  if (!found)
+    return {
+      ...base,
+      pass: false,
+      reason: `no sentence before the report holds ${quoted}: the sentence is missing`,
+    };
+  const between = lines
+    .slice(found[1] + 1, start)
+    .filter((line) => line.trim() && !HORIZONTAL_RULE.test(line));
+  if (between.length)
+    return {
+      ...base,
+      pass: false,
+      reason: `the sentence is not directly before the report: ${between.length === 1 ? "1 line of other text stands" : `${between.length} lines of other text stand`} between its paragraph and the report, starting "${(between[0] ?? "").trim().slice(0, 60)}"`,
+    };
+  return {
+    ...base,
+    pass: true,
+    reason: `the sentence with ${quoted} ends the review, with nothing but blank lines before the report`,
+  };
+}
+
+/**
+ * Checks the positions a case lists, on the member's last answer. `pass` is whether every one
+ * holds.
+ */
+export function checkPositions(
+  c: Pick<Case, "position">,
+  t: Transcript,
+): PositionsCheck {
+  const answer = finalAnswer(t);
+  const items = c.position.map((position, index) =>
+    checkPosition(position, answer, index),
+  );
+  const failed = items.filter((item) => !item.pass);
+  return {
+    applies: items.length > 0,
+    pass: failed.length === 0,
+    reason: (failed.length ? failed : items).map((i) => i.reason).join("; "),
+    items,
+  };
+}
+
 export type HardChecks = {
   approval: ReturnType<typeof checkApprovals>;
   report: CheckResult & {
@@ -935,11 +1118,16 @@ export type HardChecks = {
   };
   /** The limits counted in code; present only for a case with `measure`. */
   limits?: LimitsCheck;
+  /** Where sentences stand, read in code; present only for a case with `position`. */
+  positions?: PositionsCheck;
 };
 
 export function hardChecks(c: Case, t: Transcript): HardChecks {
   const approval = checkApprovals(t);
-  const limits = c.measure.length ? { limits: measureLimits(c, t) } : {};
+  const limits = {
+    ...(c.measure.length ? { limits: measureLimits(c, t) } : {}),
+    ...(c.position.length ? { positions: checkPositions(c, t) } : {}),
+  };
   if (!isWork(c, t))
     return {
       approval,
