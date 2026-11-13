@@ -1049,6 +1049,11 @@ line, `computer-page-call`, with the route, the outcome and the numbers; the Ope
 `connection-closed`) and `computer-route-call` (a browser call that failed on the server, ran past
 20 seconds or lost its caller). None of them carries an address, a query string or page content.
 
+The OpenBot server lets the nine browser routes of a Bot's computer (`status`, `screenshot`, `read`,
+`navigate`, `snapshot`, `click`, `type`, `key`, `scroll`) wait on the computer for 60 seconds before
+Bun's idle limit would close them, 15 seconds above the 45 seconds the server gives the computer.
+Every other route keeps Bun's default of 10 seconds.
+
 A command on the computer inherits PATH, locale and terminal names, and the proxy variables, not
 the rest of the process environment. Userinfo is stripped from a proxy URL, so a password in
 `HTTP_PROXY` is not in `env`. `COMPUTER_SHELL_ENV` is a comma-separated list of extra names to

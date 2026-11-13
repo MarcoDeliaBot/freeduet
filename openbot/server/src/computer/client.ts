@@ -137,6 +137,9 @@ export class HandoffRequestError extends Error {
   }
 }
 
+/** How long the transport waits for the computer before it says so. */
+export const DEFAULT_COMPUTER_TIMEOUT_MS = 45_000;
+
 /**
  * Transport options used inside the computer gateway.
  *
@@ -200,7 +203,7 @@ export function createComputerTransport(
   options: ComputerTransportOptions,
 ): ComputerTransport {
   const doFetch = options.fetchImpl ?? fetch;
-  const defaultTimeoutMs = options.timeoutMs ?? 45_000;
+  const defaultTimeoutMs = options.timeoutMs ?? DEFAULT_COMPUTER_TIMEOUT_MS;
   const log = options.log ?? ((entry) => console.warn(JSON.stringify(entry)));
 
   async function request(

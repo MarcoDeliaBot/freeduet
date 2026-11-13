@@ -6,6 +6,10 @@ import type { AgentProfileStore } from "./agents/profile-store";
 import type { OpenBotRole } from "./auth/roles";
 import { appOrigins, crossSiteRefusal } from "./auth/same-origin";
 import { websocket as channelSocket } from "./channels/socket";
+import {
+  COMPUTER_ROUTE_IDLE_SECONDS,
+  isComputerBrowserPath,
+} from "./computer/browser-routes";
 import type { ComputerGateway } from "./computer/gateway";
 import { streamPathBotId } from "./computer/stream-path";
 import type { DeploymentConfig } from "./config";
@@ -112,6 +116,14 @@ export function startHttpServer(deps: {
       }
       if (url.pathname === "/api/voice/calls") server.timeout(request, 30);
       if (url.pathname === "/api/voice/sessions") server.timeout(request, 30);
+      /*
+       * The Bot's browser routes, which may wait on the computer for up to the transport's 45 s. Bun's
+       * default cuts a request with no body (a read, a snapshot) after ten silent seconds, and the
+       * caller saw a closed connection. Only these routes: nothing else gets a longer leash.
+       */
+      if (isComputerBrowserPath(url.pathname)) {
+        server.timeout(request, COMPUTER_ROUTE_IDLE_SECONDS);
+      }
       const streamBotId = streamPathBotId(url.pathname);
       if (
         streamBotId !== null &&

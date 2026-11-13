@@ -5,6 +5,7 @@ import type { BotAccessCheck } from "../agents/profile-policy";
 import type { AuditReader } from "../audit";
 import type { AppVariables } from "../auth/guards";
 import { requireAdmin } from "../auth/guards";
+import { BROWSER_ROUTES } from "./browser-routes";
 import { DEPLOYMENT_ROUTES } from "./deployment-routes";
 import {
   type ActionActor,
@@ -1037,18 +1038,6 @@ function errorBody(error: unknown): Record<string, unknown> {
 
 /** A browser call that takes this long is worth a line even when it succeeds. */
 const SLOW_CALL_MS = 20_000;
-
-const BROWSER_ROUTES = new Set([
-  "status",
-  "screenshot",
-  "read",
-  "navigate",
-  "snapshot",
-  "click",
-  "type",
-  "key",
-  "scroll",
-]);
 
 /**
  * The browser route a path is, if it is one, by the name after the Bot's id.
