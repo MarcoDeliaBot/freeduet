@@ -120,7 +120,7 @@
    "name": "Telefonumdan kullanabilir miyim?",
    "acceptedAnswer": {
     "@type": "Answer",
-    "text": "Henüz değil. Bugün FreeDuet, bilgisayarındaki tarayıcıda açılır. Bir şey senin Onayla'nı beklediğinde bildirim gönderen bir telefon sürümü planlanıyor."
+    "text": "Henüz değil. Bugün FreeDuet, bilgisayarındaki tarayıcıda açılır. Onay isteklerinin de geldiği bir telefon sürümü üzerinde çalışılıyor."
    }
   },
   {
@@ -975,10 +975,10 @@ footer a{color:var(--ink)}
     <h3 class="road-h rv" data-i="r_h">Bugün neler çalışıyor, neler geliyor?</h3>
     <ol class="road rv">
       <li><b data-i="rl_today">Bugün</b><span class="tag" data-i="r_now">Şimdi hazır</span><p data-i="r1">Kendi Claude girişinle çalışan ekip; onaylar, testler, Gmail ve Google Calendar ile birlikte.</p></li>
-      <li><b data-i="rl_now">Şimdi</b><span class="tag" data-i="r_plan">Planlanan</span><p data-i="r2">Birinci öncelik: Windows, macOS ve Ubuntu için tek dosyalık kurulum programı. Sonra test edilmiş yeni üyeler.</p></li>
-      <li><b data-i="rl_next">Sırada</b><span class="tag" data-i="r_plan">Planlanan</span><p data-i="r3">Her üye için motoru seç ve ekip içinde gerçek görev devri.</p></li>
-      <li><b data-i="rl_next">Sırada</b><span class="tag" data-i="r_design">Tasarım aşamasında</span><p data-i="r4">Sohbette yazılan otomasyonlar, daha fazla bağlı uygulama, telefon sürümü, uzaktan erişim.</p></li>
-      <li><b data-i="rl_later">Daha sonra</b><span class="tag" data-i="r_plan">Planlanan</span><p data-i="r5">Ses, güvenli alışveriş. Full access hazır, ama gerçek kullanımda henüz sınanmadı. Cam (video) ekipte; testleri gerçek kullanımda henüz çalıştırılmadı ve sohbetten artık bir dosyayı İndir düğmesiyle teslim edebilir (hazır, ama gerçek kullanımda henüz sınanmadı).</p></li>
+      <li><b data-i="rl_now">Şimdi</b><span class="tag" data-i="r_prog">Devam ediyor</span><p data-i="r2">Birinci öncelik: Windows, macOS ve Ubuntu için tek dosyalık kurulum programı. Ubuntu için ilk adımlar CI'da sınanıyor. Hazır, ama gerçek kullanımda henüz sınanmadı: her üyenin bilgisayarına özel bir token ve erişimi kapattığında kapanan ev ağı bağlantıları. Sonra test edilmiş yeni üyeler.</p></li>
+      <li><b data-i="rl_next">Sırada</b><span class="tag" data-i="r_prog">Devam ediyor</span><p data-i="r3">Her üye için motoru seç: otomatik geçiş hazır ve yalnızca deneme motorlarıyla sınandı. Sohbette değiştirdiğin ayarlar, Geri Al ile birlikte, devam ediyor. Gerçek görev devri planlanıyor.</p></li>
+      <li><b data-i="rl_next">Sırada</b><span class="tag" data-i="r_prog">Devam ediyor</span><p data-i="r4">Sohbette yazılan otomasyonlar ve telefon sürümü (oturum açma listesi hazır) devam ediyor. Daha fazla bağlı uygulama ve uzaktan erişim tasarım aşamasında.</p></li>
+      <li><b data-i="rl_later">Daha sonra</b><span class="tag" data-i="r_prog">Devam ediyor</span><p data-i="r5">Ses: sesli okuma hazır ve varsayılan olarak kapalı; çağrılar henüz hazır değil. Güvenli alışveriş: planlanıyor. Full access ve Cam (video) hazır, ama gerçek kullanımda henüz sınanmadı; Cam, bir dosyayı İndir düğmesiyle teslim edebilir.</p></li>
     </ol>
     <p class="soft road-note rv" data-i="r_note">Henüz yapılmamış her şeyi açıkça belirtiyoruz. Masal yok. <a href="https://github.com/MarcoDeliaBot/freeduet/blob/main/docs/ROADMAP.md">Yol haritasının tamamı GitHub'da</a>.</p>
   </div>
@@ -1068,7 +1068,7 @@ cd openbot &amp;&amp; docker compose exec -it agent-freeduet claude
       <details class="rv"><summary data-i="q3">Windows, Mac ve Linux'ta çalışıyor mu?</summary><p data-i="a3">Geliştirici onu Windows'ta WSL2 ve Docker ile kullanıyor; otomatik kontrollerimiz ise Linux'ta başlatıyor. Mac'te denenmedi, bu yüzden orada çalışacağını vaat edemeyiz. FreeDuet, tek bir geliştiricinin yapıp kullandığı erken bir sürümdür (0.1).</p></details>
       <details class="rv"><summary data-i="q4">Bir asistan bana sormadan neler yapabilir?</summary><p data-i="a4">Bir şeyleri araştırabilir, okuyabilir, taslak ve rapor hazırlayabilir. Varsayılan olarak beş düğme senin Onayla'nı bekler; tek istisna, kendi yazdığın bir adrese giden yeni e-postadır. Full access, bir üye için açılabilir; kendi sohbetlerinde beklemeyi kaldırır, ama şifre ve güvenlik ayarları sana kalır. Asistanlar yine de hata yapabilir; onaylamadan önce hazırladıklarını oku.</p></details>
       <details class="rv"><summary data-i="q5">Verilerim nerede?</summary><p data-i="a5">FreeDuet bilgisayarında çalışır ve konuşmalarını orada bir veritabanında tutar. Claude girişin, yalnızca Claude Code programının okuduğu bir Docker biriminde kalır. Asistanlar düşünmek için isteğini, giriş yaptığın yapay zekâ hizmetine, o hizmetin kendi uygulamasının yapacağı gibi gönderir.</p></details>
-      <details class="rv"><summary data-i="q6">Telefonumdan kullanabilir miyim?</summary><p data-i="a6">Henüz değil. Bugün FreeDuet, bilgisayarındaki tarayıcıda açılır. Bir şey senin Onayla'nı beklediğinde bildirim gönderen bir telefon sürümü planlanıyor.</p></details>
+      <details class="rv"><summary data-i="q6">Telefonumdan kullanabilir miyim?</summary><p data-i="a6">Henüz değil. Bugün FreeDuet, bilgisayarındaki tarayıcıda açılır. Onay isteklerinin de geldiği bir telefon sürümü üzerinde çalışılıyor.</p></details>
       <details class="rv"><summary data-i="q7">Kendi ekip üyemi ekleyebilir miyim?</summary><p data-i="a7">Evet. Yeni asistanlar kuran Leo'dan ihtiyacın olan iş için bir tane tasarlamasını iste ya da tanımını kendin yaz. Üyelerin adını ve konuşma tarzını da değiştirebilirsin. <a href="https://github.com/MarcoDeliaBot/freeduet/blob/main/docs/TEAM.md">Üyeler nasıl tanımlanıyor</a>.</p></details>
       <details class="rv"><summary data-i="q8">Yardımı nereden alırım?</summary><p data-i="a8">GitHub'da bir issue aç. <a href="https://github.com/MarcoDeliaBot/freeduet/issues/new/choose">Kısa bir form var</a>: soru, hata, düzeltme ya da kullandığını bildirmek için. İngilizce veya İtalyanca yazabilirsin.</p></details>
     </div>

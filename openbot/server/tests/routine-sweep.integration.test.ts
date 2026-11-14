@@ -30,6 +30,8 @@ import { createRoutineStore } from "../src/routines/store";
 import {
   DEFAULT_GRACE_MS,
   dispatchClaimedRoutines,
+  MISSED_REASON,
+  MISSED_SETTLE_MS,
   offerDueRoutines,
   ROUTINE_FIRE_KIND,
 } from "../src/routines/sweep";
@@ -263,6 +265,12 @@ test("the grace window stays under the schedule floor, as a compile/test-time fa
   // would make a routine's own next firing look like a re-offer of a stale one. The floor between
   // two occurrences is `MINIMUM_INTERVAL_MS`, so the grace window has to stay strictly under it.
   expect(DEFAULT_GRACE_MS).toBeLessThan(MINIMUM_INTERVAL_MS);
+});
+
+test("the miss window, the grace plus the settle margin, stays under the schedule floor too", () => {
+  // A run counts as this occurrence's only if it starts inside the window; the next occurrence is at least
+  // the floor away, so its own run can never be mistaken for this one's.
+  expect(DEFAULT_GRACE_MS + MISSED_SETTLE_MS).toBeLessThan(MINIMUM_INTERVAL_MS);
 });
 
 describe("offering the firings that are due", () => {
@@ -732,7 +740,7 @@ describe("consuming a claimed firing", () => {
    * claimed long after the occurrence it names. Firing it then posts "here is your morning summary"
    * in the afternoon, which is exactly what the stale-stamp policy exists to prevent.
    */
-  test("a firing claimed after its window has passed is finished without dispatching, and leaves no run row", async () => {
+  test("a firing claimed after its window has passed is finished without dispatching, and is written down as missed", async () => {
     const { routine } = await makeRoutine();
     await offerFiring(
       routine.id,
@@ -750,11 +758,17 @@ describe("consuming a claimed firing", () => {
     expect(report.skipped[0]?.routineId).toBe(routine.id);
     expect(dispatched).toEqual([]);
     /*
-     * NO ORPHAN. The check sits beside the deleted/disabled branch, before `insertRun`, so a skipped
-     * firing leaves nothing in `routine_runs` — a run row with no outcome and nothing coming to give
-     * it one would show on the routines page as a firing that started and never ended.
+     * NO OPEN ROW. The check sits beside the deleted/disabled branch, before `insertRun`, so a skipped
+     * firing never opens a run: a row with no outcome and nothing coming to give it one would show on the
+     * routines page as a firing that started and never ended. What it leaves is the miss itself, finished at
+     * once and dated to the occurrence. Twenty minutes late is past the settle margin, so it is written.
      */
-    expect(await runsFor(routine.id)).toHaveLength(0);
+    const runs = await runsFor(routine.id);
+    expect(runs).toHaveLength(1);
+    expect(runs[0]?.status).toBe("skipped");
+    expect(runs[0]?.scheduledFor?.toISOString()).toBe(
+      "2001-01-01T09:25:00.000Z",
+    );
     // Finished rather than released: re-delivery cannot make a past occurrence current.
     const [row] = await firingsFor(routine.id);
     expect(row?.finishedAt).not.toBeNull();
@@ -1086,10 +1100,15 @@ describe("consuming a claimed firing", () => {
     expect(report.skipped[0]?.routineId).toBe(routine.id);
 
     // Nothing about this firing is still open: attempt one's row is closed as skipped — no turn ran,
-    // so the fatigue rule must not count it — and attempt two never opened one.
+    // so the fatigue rule must not count it — and attempt two opened none. Its one row is the miss itself,
+    // finished at once and dated to the occurrence it was due for.
     const runs = await runsFor(routine.id);
-    expect(runs).toHaveLength(1);
-    expect(runs[0]?.status).toBe("skipped");
+    expect(runs.map((run) => run.status)).toEqual(["skipped", "skipped"]);
+    expect(
+      runs
+        .filter((run) => run.scheduledFor !== null)
+        .map((run) => run.scheduledFor?.toISOString()),
+    ).toEqual(["2001-01-01T09:25:00.000Z"]);
     expect(await store.consecutiveFailures(routine.id)).toBe(0);
     const [finished] = await firingsFor(routine.id);
     expect(finished?.finishedAt).not.toBeNull();
@@ -1261,6 +1280,143 @@ describe("consuming a claimed firing", () => {
         leaseMs: 30_000,
       }),
     ).toEqual([]);
+  });
+});
+
+describe("writing down the firings the server did not run", () => {
+  const sweptAt = (moment: string) => () => new Date(moment);
+
+  test("a stale stamp is passed over, written down once, and dated to the occurrence it names", async () => {
+    const { routine } = await makeRoutine();
+    await makeDueAt(routine.id, new Date("2001-01-01T09:00:00Z"));
+
+    // Three hours late: past the grace window, so the sweep drains the stamp rather than offering it.
+    const { offered } = await offerDueRoutines(
+      sweepOptions({ now: sweptAt("2001-01-01T12:00:00Z") }),
+    );
+
+    expect(offered).toEqual([]);
+    expect(await firingsFor(routine.id)).toHaveLength(0);
+    const runs = await runsFor(routine.id);
+    expect(runs).toHaveLength(1);
+    expect(runs[0]?.status).toBe("skipped");
+    expect(runs[0]?.scheduledFor?.toISOString()).toBe(
+      "2001-01-01T09:00:00.000Z",
+    );
+    expect(runs[0]?.startedAt.toISOString()).toBe("2001-01-01T09:00:00.000Z");
+    expect(runs[0]?.error).toBe(MISSED_REASON);
+    // The clock moved on as before: the next occurrence, not a replay of the stale one.
+    expect((await readRoutine(routine.id))?.nextRunAt.toISOString()).toBe(
+      "2001-01-02T09:00:00.000Z",
+    );
+  });
+
+  test("two passes that both find the same stale stamp write one row between them", async () => {
+    const { routine } = await makeRoutine();
+    await makeDueAt(routine.id, new Date("2001-01-01T09:00:00Z"));
+
+    await Promise.all([
+      offerDueRoutines(sweepOptions({ now: sweptAt("2001-01-01T12:00:00Z") })),
+      offerDueRoutines(sweepOptions({ now: sweptAt("2001-01-01T12:00:00Z") })),
+    ]);
+
+    expect(await runsFor(routine.id)).toHaveLength(1);
+  });
+
+  test("the same occurrence recorded twice is one row, and the second write says it wrote nothing", async () => {
+    const { routine } = await makeRoutine();
+    const due = new Date("2001-01-01T09:00:00Z");
+
+    expect(
+      await store.recordMissed(routine.id, due, MISSED_REASON, 11 * 60_000),
+    ).toBe(true);
+    expect(
+      await store.recordMissed(routine.id, due, MISSED_REASON, 11 * 60_000),
+    ).toBe(false);
+    expect(await runsFor(routine.id)).toHaveLength(1);
+  });
+
+  test("a run that started for the occurrence inside the window means it was not missed", async () => {
+    const { routine } = await makeRoutine();
+    await makeDueAt(routine.id, new Date("2001-01-01T09:00:00Z"));
+    // A dispatch that passed its grace check: its run starts two minutes after the occurrence.
+    const { runId } = await store.insertRun(routine.id);
+    await database
+      .update(routineRuns)
+      .set({ startedAt: new Date("2001-01-01T09:02:00Z") })
+      .where(eq(routineRuns.id, runId));
+
+    await offerDueRoutines(
+      sweepOptions({ now: sweptAt("2001-01-01T12:00:00Z") }),
+    );
+
+    const runs = await runsFor(routine.id);
+    expect(runs.map((run) => run.scheduledFor)).toEqual([null]);
+  });
+
+  test("a stale stamp inside the settle margin is passed over and not written down", async () => {
+    const { routine } = await makeRoutine();
+    await makeDueAt(routine.id, new Date("2001-01-01T09:00:00Z"));
+
+    // Ten and a half minutes late: past the grace window, but inside the margin a run in flight needs.
+    await offerDueRoutines(
+      sweepOptions({ now: sweptAt("2001-01-01T09:10:30Z") }),
+    );
+
+    expect(await runsFor(routine.id)).toHaveLength(0);
+    expect((await readRoutine(routine.id))?.nextRunAt.toISOString()).toBe(
+      "2001-01-02T09:00:00.000Z",
+    );
+  });
+
+  test("a claim inside the settle margin is dropped, and not written down", async () => {
+    const { routine } = await makeRoutine();
+    await offerFiring(
+      routine.id,
+      new Date("2001-01-01T09:25:00Z"),
+      new Date("2001-01-01T09:26:00Z"),
+    );
+
+    // Ten and a half minutes after the occurrence: past the window, inside the margin.
+    const report = await dispatchClaimedRoutines(
+      sweepOptions({ now: sweptAt("2001-01-01T09:35:30Z") }),
+    );
+
+    expect(report.fired).toEqual([]);
+    expect(report.skipped[0]?.routineId).toBe(routine.id);
+    expect(dispatched).toEqual([]);
+    expect(await runsFor(routine.id)).toHaveLength(0);
+  });
+
+  test("a miss the server cannot write is warned about, and the clock still moves", async () => {
+    const { routine } = await makeRoutine();
+    await makeDueAt(routine.id, new Date("2001-01-01T09:00:00Z"));
+    const failing = {
+      ...store,
+      recordMissed: async () => {
+        throw new Error("the database refused the write");
+      },
+    };
+
+    const warn = spyOn(console, "warn").mockImplementation(() => {});
+    try {
+      await offerDueRoutines(
+        sweepOptions({
+          routineStore: failing,
+          now: sweptAt("2001-01-01T12:00:00Z"),
+        }),
+      );
+      expect(warn).toHaveBeenCalledWith(
+        expect.stringContaining("routine-missed-unrecorded"),
+      );
+    } finally {
+      warn.mockRestore();
+    }
+
+    expect((await readRoutine(routine.id))?.nextRunAt.toISOString()).toBe(
+      "2001-01-02T09:00:00.000Z",
+    );
+    expect(await runsFor(routine.id)).toHaveLength(0);
   });
 });
 

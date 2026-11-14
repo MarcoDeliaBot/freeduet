@@ -1,0 +1,2 @@
+ALTER TABLE "routine_runs" ADD COLUMN "scheduled_for" timestamp with time zone;--> statement-breakpoint
+CREATE UNIQUE INDEX "routine_runs_missed_once_idx" ON "routine_runs" USING btree ("routine_id","scheduled_for") WHERE "routine_runs"."scheduled_for" is not null;
