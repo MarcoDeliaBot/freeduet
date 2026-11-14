@@ -1,0 +1,28 @@
+{
+ "streams": [
+  {
+   "events": [
+    {
+     "type": "RUN_STARTED",
+     "threadId": "thread-1",
+     "runId": "run-1"
+    },
+    {
+     "type": "RUN_ERROR",
+     "message": "This team member has no instructions, so it was not run.",
+     "code": "FREEDUET_UNKNOWN_MEMBER"
+    }
+   ],
+   "keepalives": 0,
+   "sha256": "92a1b0c774976dcc9cc22069656a9348f5ba48883f6672a01c7a22e7e847016a"
+  }
+ ],
+ "launches": [],
+ "cli_runs": [],
+ "cli_followups": [],
+ "cli_gone": [],
+ "callbacks": [],
+ "team_log": [],
+ "checkpoints": [],
+ "logs": []
+}

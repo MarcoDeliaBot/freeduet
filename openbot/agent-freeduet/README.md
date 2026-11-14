@@ -32,6 +32,8 @@ and [docs/ARCHITECTURE.md §3](../../docs/ARCHITECTURE.md).
 | `freeduet/app.py` | Routes, the token check, and the call site that records each segment |
 | `freeduet/agui.py`, `members.py`, `transcript.py` | RunAgentInput parsing and SSE; the member by id; the conversation rendered for the CLI |
 | `freeduet/segment.py`, `claude_cli.py`, `stream_json.py`, `engine_errors.py` | One segment: start the locked-down CLI, read its stream, end on a tool call |
+| `freeduet/engine_adapter.py`, `claude_engine.py` | The engine seam: the interface a segment drives, and Claude Code behind it (process, stream, failures, environment) |
+| `tests/test_engine_goldens.py`, `tests/goldens/` | The run path pinned scenario by scenario (stream, launch, logs); regenerate on purpose only, `FREEDUET_UPDATE_GOLDENS=1` |
 | `freeduet/bridge/` | The stdio MCP server the CLI starts, and its loopback line to the parent |
 | `freeduet/report.py`, `checkpoints.py` | The six report lines read from a member's final text, mapped to a checkpoint and saved |
 | `freeduet/report_guard.py` | A turn that did work and ended without its report: one follow-up with no tools asks for it, added to the same message. A turn that ends with no text at all gets one fixed sentence naming the last tool it called |

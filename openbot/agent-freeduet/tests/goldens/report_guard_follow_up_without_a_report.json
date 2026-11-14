@@ -1,0 +1,322 @@
+{
+ "streams": [
+  {
+   "events": [
+    {
+     "type": "RUN_STARTED",
+     "threadId": "thread-1",
+     "runId": "run-1"
+    },
+    {
+     "type": "TEXT_MESSAGE_START",
+     "messageId": "<msg-1>",
+     "role": "assistant"
+    },
+    {
+     "type": "TEXT_MESSAGE_CONTENT",
+     "messageId": "<msg-1>",
+     "delta": "Act now: the late-order compla"
+    },
+    {
+     "type": "TEXT_MESSAGE_CONTENT",
+     "messageId": "<msg-1>",
+     "delta": "int.\nFiltered: two newsletters."
+    },
+    {
+     "type": "TEXT_MESSAGE_END",
+     "messageId": "<msg-1>"
+    },
+    {
+     "type": "RUN_FINISHED",
+     "threadId": "thread-1",
+     "runId": "run-1"
+    }
+   ],
+   "keepalives": 0,
+   "sha256": "d9d44bcce014b426847c24db05a6252db0a8ad18fabcef3f84a4e37770f36647"
+  }
+ ],
+ "launches": [
+  {
+   "argv": [
+    "<tmp>/claude",
+    "-p",
+    "--output-format",
+    "stream-json",
+    "--verbose",
+    "--include-partial-messages",
+    "--no-session-persistence",
+    "--tools",
+    "",
+    "--strict-mcp-config",
+    "--disable-slash-commands",
+    "--allowedTools",
+    "mcp__freeduet",
+    "--permission-mode",
+    "dontAsk",
+    "--mcp-config",
+    "<segment>/mcp.json",
+    "--append-system-prompt",
+    {
+     "sha256": "98ca6e56286c41d122de6cfdb68d7416844780ac984ed6dd8277ae2e08f262cb",
+     "bytes": 939,
+     "head": "You are Basil, the test chef.\n\nYou are Basil.\n\nHow this session works. Your only tools are the ones "
+    }
+   ],
+   "cwd": "<segment>/work",
+   "kwargs": {
+    "stdin": "PIPE",
+    "stdout": "PIPE",
+    "stderr": "PIPE",
+    "limit": 16777216,
+    "start_new_session": true
+   },
+   "env": {
+    "PATH": "/golden/bin:/usr/bin:/bin",
+    "HOME": "/golden/home",
+    "USER": "golden",
+    "LOGNAME": "golden",
+    "LANG": "C.UTF-8",
+    "LANGUAGE": "en",
+    "LC_ALL": "C.UTF-8",
+    "LC_CTYPE": "C.UTF-8",
+    "TZ": "UTC",
+    "TMPDIR": "/golden/tmp",
+    "CLAUDE_CONFIG_DIR": "/golden/cli-config-never-opened",
+    "HTTP_PROXY": "http://golden-proxy:3128",
+    "HTTPS_PROXY": "http://golden-proxy:3128",
+    "NO_PROXY": "127.0.0.1,localhost",
+    "http_proxy": "http://golden-proxy:3128",
+    "https_proxy": "http://golden-proxy:3128",
+    "no_proxy": "127.0.0.1,localhost",
+    "NODE_EXTRA_CA_CERTS": "/golden/ca.pem",
+    "SSL_CERT_FILE": "/golden/ca.pem",
+    "SSL_CERT_DIR": "/golden/certs",
+    "DISABLE_AUTOUPDATER": "1",
+    "CLAUDE_CODE_DISABLE_AUTO_MEMORY": "1"
+   },
+   "files": {
+    "mcp.json": {
+     "mode": "0o600",
+     "content": {
+      "mcpServers": {
+       "freeduet": {
+        "type": "stdio",
+        "command": "<python>",
+        "args": [
+         "-m",
+         "freeduet.bridge"
+        ],
+        "env": {
+         "FREEDUET_BRIDGE_PORT": "<port>",
+         "FREEDUET_BRIDGE_SECRET": "<secret of 43 characters>",
+         "PYTHONPATH": "<package root>"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  {
+   "argv": [
+    "<tmp>/claude",
+    "-p",
+    "--output-format",
+    "stream-json",
+    "--verbose",
+    "--no-session-persistence",
+    "--tools",
+    "",
+    "--strict-mcp-config",
+    "--disable-slash-commands",
+    "--permission-mode",
+    "dontAsk",
+    "--append-system-prompt",
+    {
+     "sha256": "98ca6e56286c41d122de6cfdb68d7416844780ac984ed6dd8277ae2e08f262cb",
+     "bytes": 939,
+     "head": "You are Basil, the test chef.\n\nYou are Basil.\n\nHow this session works. Your only tools are the ones "
+    }
+   ],
+   "cwd": "<segment>/work",
+   "kwargs": {
+    "stdin": "PIPE",
+    "stdout": "PIPE",
+    "stderr": "PIPE",
+    "limit": 16777216,
+    "start_new_session": true
+   },
+   "env": {
+    "PATH": "/golden/bin:/usr/bin:/bin",
+    "HOME": "/golden/home",
+    "USER": "golden",
+    "LOGNAME": "golden",
+    "LANG": "C.UTF-8",
+    "LANGUAGE": "en",
+    "LC_ALL": "C.UTF-8",
+    "LC_CTYPE": "C.UTF-8",
+    "TZ": "UTC",
+    "TMPDIR": "/golden/tmp",
+    "CLAUDE_CONFIG_DIR": "/golden/cli-config-never-opened",
+    "HTTP_PROXY": "http://golden-proxy:3128",
+    "HTTPS_PROXY": "http://golden-proxy:3128",
+    "NO_PROXY": "127.0.0.1,localhost",
+    "http_proxy": "http://golden-proxy:3128",
+    "https_proxy": "http://golden-proxy:3128",
+    "no_proxy": "127.0.0.1,localhost",
+    "NODE_EXTRA_CA_CERTS": "/golden/ca.pem",
+    "SSL_CERT_FILE": "/golden/ca.pem",
+    "SSL_CERT_DIR": "/golden/certs",
+    "DISABLE_AUTOUPDATER": "1",
+    "CLAUDE_CODE_DISABLE_AUTO_MEMORY": "1"
+   },
+   "files": {}
+  }
+ ],
+ "cli_runs": [
+  {
+   "prompt": "<conversation>\n<user>\nSort these: [fixture: 9 emails — a customer complaining that an order is late, two newsletters]\n</user>\n</conversation>\n\nReply to the last user message, as the assistant.",
+   "cwd_entries": [],
+   "mcp_config": {
+    "mcpServers": {
+     "freeduet": {
+      "type": "stdio",
+      "command": "<python>",
+      "args": [
+       "-m",
+       "freeduet.bridge"
+      ],
+      "env": {
+       "FREEDUET_BRIDGE_PORT": "<value>",
+       "FREEDUET_BRIDGE_SECRET": "<value>",
+       "PYTHONPATH": "<value>"
+      }
+     }
+    }
+   },
+   "env_seen_of_interest": [
+    "CLAUDE_CODE_DISABLE_AUTO_MEMORY",
+    "CLAUDE_CONFIG_DIR",
+    "DISABLE_AUTOUPDATER",
+    "HOME",
+    "HTTPS_PROXY",
+    "HTTP_PROXY",
+    "LANG",
+    "LANGUAGE",
+    "LC_ALL",
+    "LC_CTYPE",
+    "LOGNAME",
+    "NODE_EXTRA_CA_CERTS",
+    "NO_PROXY",
+    "PATH",
+    "SSL_CERT_DIR",
+    "SSL_CERT_FILE",
+    "TMPDIR",
+    "TZ",
+    "USER",
+    "http_proxy",
+    "https_proxy",
+    "no_proxy"
+   ],
+   "tools": {
+    "names": [],
+    "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+   },
+   "initialize": {
+    "protocolVersion": "2025-06-18",
+    "capabilities": {
+     "tools": {
+      "listChanged": false
+     }
+    },
+    "serverInfo": {
+     "name": "freeduet",
+     "version": "0.1.0"
+    }
+   }
+  }
+ ],
+ "cli_followups": [
+  {
+   "prompt": {
+    "sha256": "d1a028a4dd0364764753a94773496c215386bdc3841550b7d29c339ecfe67b77",
+    "bytes": 1266,
+    "head": "<conversation>\n<user>\nSort these: [fixture: 9 emails — a customer complaining that an order is late,"
+   },
+   "cwd_entries": [],
+   "mcp_config": {},
+   "env_seen_of_interest": [
+    "CLAUDE_CODE_DISABLE_AUTO_MEMORY",
+    "CLAUDE_CONFIG_DIR",
+    "DISABLE_AUTOUPDATER",
+    "HOME",
+    "HTTPS_PROXY",
+    "HTTP_PROXY",
+    "LANG",
+    "LANGUAGE",
+    "LC_ALL",
+    "LC_CTYPE",
+    "LOGNAME",
+    "NODE_EXTRA_CA_CERTS",
+    "NO_PROXY",
+    "PATH",
+    "SSL_CERT_DIR",
+    "SSL_CERT_FILE",
+    "TMPDIR",
+    "TZ",
+    "USER",
+    "http_proxy",
+    "https_proxy",
+    "no_proxy"
+   ]
+  }
+ ],
+ "cli_gone": [
+  true
+ ],
+ "callbacks": [],
+ "team_log": [
+  {
+   "member": "chef",
+   "thread": "thread-1",
+   "run": "run-1",
+   "outcome": "in progress",
+   "summary": "Act now: the late-order complaint.",
+   "from_iris": false,
+   "approvals": null,
+   "report_guard": "failed"
+  }
+ ],
+ "checkpoints": [
+  {
+   "schema_version": 1,
+   "writer_version": "1.2.0+freeduet.1",
+   "created_at": "<time>",
+   "agent": "chef",
+   "run": "thread-1",
+   "phase": "in-progress",
+   "state": {
+    "objective": "Sort these: [fixture: 9 emails — a customer complaining that an order is late, two newsletters]",
+    "constraints": [],
+    "completed": [],
+    "decisions": [],
+    "in_progress": [],
+    "changed_files": [],
+    "verification": [],
+    "blockers": [],
+    "next_steps": [
+     "Wait for the person's next message"
+    ]
+   }
+  }
+ ],
+ "logs": [
+  [
+   "freeduet.report_guard",
+   "WARNING",
+   "report guard: the follow-up wrote no complete report",
+   null
+  ]
+ ]
+}

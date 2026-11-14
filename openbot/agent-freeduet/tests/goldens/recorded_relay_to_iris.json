@@ -1,0 +1,333 @@
+{
+ "streams": [
+  {
+   "events": [
+    {
+     "type": "RUN_STARTED",
+     "threadId": "iris-thread",
+     "runId": "hop-run-2"
+    },
+    {
+     "type": "TEXT_MESSAGE_START",
+     "messageId": "<msg-1>",
+     "role": "assistant"
+    },
+    {
+     "type": "TEXT_MESSAGE_CONTENT",
+     "messageId": "<msg-1>",
+     "delta": "Penny says Northwind owes 1,200.00 EU"
+    },
+    {
+     "type": "TEXT_MESSAGE_CONTENT",
+     "messageId": "<msg-1>",
+     "delta": "R for March; the reminder is drafted."
+    },
+    {
+     "type": "TEXT_MESSAGE_END",
+     "messageId": "<msg-1>"
+    },
+    {
+     "type": "RUN_FINISHED",
+     "threadId": "iris-thread",
+     "runId": "hop-run-2"
+    }
+   ],
+   "keepalives": 0,
+   "sha256": "1aa6c2f9e98612710b7778769573112c484bbdf0982acc343fd53ae7cc276ce0"
+  }
+ ],
+ "launches": [
+  {
+   "argv": [
+    "<tmp>/claude",
+    "-p",
+    "--output-format",
+    "stream-json",
+    "--verbose",
+    "--include-partial-messages",
+    "--no-session-persistence",
+    "--tools",
+    "",
+    "--strict-mcp-config",
+    "--disable-slash-commands",
+    "--allowedTools",
+    "mcp__freeduet",
+    "--permission-mode",
+    "dontAsk",
+    "--mcp-config",
+    "<segment>/mcp.json",
+    "--append-system-prompt",
+    {
+     "sha256": "2d296247bc90807b59c9bb4342b5f404653d6f47394d6286781f05fa95f7fe59",
+     "bytes": 3998,
+     "head": "You are Iris, Chief of Staff of the test team.\n\nYou are Iris, Chief of Staff.\n\nIris's role descripti"
+    }
+   ],
+   "cwd": "<segment>/work",
+   "kwargs": {
+    "stdin": "PIPE",
+    "stdout": "PIPE",
+    "stderr": "PIPE",
+    "limit": 16777216,
+    "start_new_session": true
+   },
+   "env": {
+    "PATH": "/golden/bin:/usr/bin:/bin",
+    "HOME": "/golden/home",
+    "USER": "golden",
+    "LOGNAME": "golden",
+    "LANG": "C.UTF-8",
+    "LANGUAGE": "en",
+    "LC_ALL": "C.UTF-8",
+    "LC_CTYPE": "C.UTF-8",
+    "TZ": "UTC",
+    "TMPDIR": "/golden/tmp",
+    "CLAUDE_CONFIG_DIR": "/golden/cli-config-never-opened",
+    "HTTP_PROXY": "http://golden-proxy:3128",
+    "HTTPS_PROXY": "http://golden-proxy:3128",
+    "NO_PROXY": "127.0.0.1,localhost",
+    "http_proxy": "http://golden-proxy:3128",
+    "https_proxy": "http://golden-proxy:3128",
+    "no_proxy": "127.0.0.1,localhost",
+    "NODE_EXTRA_CA_CERTS": "/golden/ca.pem",
+    "SSL_CERT_FILE": "/golden/ca.pem",
+    "SSL_CERT_DIR": "/golden/certs",
+    "DISABLE_AUTOUPDATER": "1",
+    "CLAUDE_CODE_DISABLE_AUTO_MEMORY": "1"
+   },
+   "files": {
+    "mcp.json": {
+     "mode": "0o600",
+     "content": {
+      "mcpServers": {
+       "freeduet": {
+        "type": "stdio",
+        "command": "<python>",
+        "args": [
+         "-m",
+         "freeduet.bridge"
+        ],
+        "env": {
+         "FREEDUET_BRIDGE_PORT": "<port>",
+         "FREEDUET_BRIDGE_SECRET": "<secret of 43 characters>",
+         "PYTHONPATH": "<package root>"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  {
+   "argv": [
+    "<tmp>/claude",
+    "-p",
+    "--output-format",
+    "stream-json",
+    "--verbose",
+    "--no-session-persistence",
+    "--tools",
+    "",
+    "--strict-mcp-config",
+    "--disable-slash-commands",
+    "--permission-mode",
+    "dontAsk",
+    "--append-system-prompt",
+    {
+     "sha256": "2d296247bc90807b59c9bb4342b5f404653d6f47394d6286781f05fa95f7fe59",
+     "bytes": 3998,
+     "head": "You are Iris, Chief of Staff of the test team.\n\nYou are Iris, Chief of Staff.\n\nIris's role descripti"
+    }
+   ],
+   "cwd": "<segment>/work",
+   "kwargs": {
+    "stdin": "PIPE",
+    "stdout": "PIPE",
+    "stderr": "PIPE",
+    "limit": 16777216,
+    "start_new_session": true
+   },
+   "env": {
+    "PATH": "/golden/bin:/usr/bin:/bin",
+    "HOME": "/golden/home",
+    "USER": "golden",
+    "LOGNAME": "golden",
+    "LANG": "C.UTF-8",
+    "LANGUAGE": "en",
+    "LC_ALL": "C.UTF-8",
+    "LC_CTYPE": "C.UTF-8",
+    "TZ": "UTC",
+    "TMPDIR": "/golden/tmp",
+    "CLAUDE_CONFIG_DIR": "/golden/cli-config-never-opened",
+    "HTTP_PROXY": "http://golden-proxy:3128",
+    "HTTPS_PROXY": "http://golden-proxy:3128",
+    "NO_PROXY": "127.0.0.1,localhost",
+    "http_proxy": "http://golden-proxy:3128",
+    "https_proxy": "http://golden-proxy:3128",
+    "no_proxy": "127.0.0.1,localhost",
+    "NODE_EXTRA_CA_CERTS": "/golden/ca.pem",
+    "SSL_CERT_FILE": "/golden/ca.pem",
+    "SSL_CERT_DIR": "/golden/certs",
+    "DISABLE_AUTOUPDATER": "1",
+    "CLAUDE_CODE_DISABLE_AUTO_MEMORY": "1"
+   },
+   "files": {}
+  }
+ ],
+ "cli_runs": [
+  {
+   "prompt": {
+    "sha256": "cf3d7ef2ba8ccd0b4a950f844f6787c346dbec8afd24aa6547fd66da982e155f",
+    "bytes": 678,
+    "head": "<conversation>\n<user>\nNorthwind still hasn't paid March's invoice.\n</user>\n\n<assistant>\nI have asked"
+   },
+   "cwd_entries": [],
+   "mcp_config": {
+    "mcpServers": {
+     "freeduet": {
+      "type": "stdio",
+      "command": "<python>",
+      "args": [
+       "-m",
+       "freeduet.bridge"
+      ],
+      "env": {
+       "FREEDUET_BRIDGE_PORT": "<value>",
+       "FREEDUET_BRIDGE_SECRET": "<value>",
+       "PYTHONPATH": "<value>"
+      }
+     }
+    }
+   },
+   "env_seen_of_interest": [
+    "CLAUDE_CODE_DISABLE_AUTO_MEMORY",
+    "CLAUDE_CONFIG_DIR",
+    "DISABLE_AUTOUPDATER",
+    "HOME",
+    "HTTPS_PROXY",
+    "HTTP_PROXY",
+    "LANG",
+    "LANGUAGE",
+    "LC_ALL",
+    "LC_CTYPE",
+    "LOGNAME",
+    "NODE_EXTRA_CA_CERTS",
+    "NO_PROXY",
+    "PATH",
+    "SSL_CERT_DIR",
+    "SSL_CERT_FILE",
+    "TMPDIR",
+    "TZ",
+    "USER",
+    "http_proxy",
+    "https_proxy",
+    "no_proxy"
+   ],
+   "tools": {
+    "names": [
+     "ask_person",
+     "make_page",
+     "list_lessons",
+     "propose_lesson",
+     "remove_lesson",
+     "team_log"
+    ],
+    "sha256": "912cea5fb780e2d404227c41ec60423ad568de61a2fd8939e0588f61e48ea6dc"
+   },
+   "initialize": {
+    "protocolVersion": "2025-06-18",
+    "capabilities": {
+     "tools": {
+      "listChanged": false
+     }
+    },
+    "serverInfo": {
+     "name": "freeduet",
+     "version": "0.1.0"
+    }
+   }
+  }
+ ],
+ "cli_followups": [
+  {
+   "prompt": {
+    "sha256": "947b0b2d8792aad00db4a9b59b0847cdce5a9dbd9949fee27990c4e784f2d203",
+    "bytes": 1763,
+    "head": "<conversation>\n<user>\nNorthwind still hasn't paid March's invoice.\n</user>\n\n<assistant>\nI have asked"
+   },
+   "cwd_entries": [],
+   "mcp_config": {},
+   "env_seen_of_interest": [
+    "CLAUDE_CODE_DISABLE_AUTO_MEMORY",
+    "CLAUDE_CONFIG_DIR",
+    "DISABLE_AUTOUPDATER",
+    "HOME",
+    "HTTPS_PROXY",
+    "HTTP_PROXY",
+    "LANG",
+    "LANGUAGE",
+    "LC_ALL",
+    "LC_CTYPE",
+    "LOGNAME",
+    "NODE_EXTRA_CA_CERTS",
+    "NO_PROXY",
+    "PATH",
+    "SSL_CERT_DIR",
+    "SSL_CERT_FILE",
+    "TMPDIR",
+    "TZ",
+    "USER",
+    "http_proxy",
+    "https_proxy",
+    "no_proxy"
+   ]
+  }
+ ],
+ "cli_gone": [
+  true
+ ],
+ "callbacks": [],
+ "team_log": [
+  {
+   "member": "freeduet",
+   "thread": "iris-thread",
+   "run": "hop-run-2",
+   "outcome": "in progress",
+   "summary": "Penny says Northwind owes 1,200.00 EUR for March; the reminder is drafted.",
+   "from_iris": false,
+   "approvals": null,
+   "report_guard": "failed"
+  }
+ ],
+ "checkpoints": [
+  {
+   "schema_version": 1,
+   "writer_version": "1.2.0+freeduet.1",
+   "created_at": "<time>",
+   "agent": "freeduet",
+   "run": "iris-thread",
+   "phase": "in-progress",
+   "state": {
+    "objective": "You asked Penny to help with this: Check what Northwind owes for March and draft a polite reminder. It answered: Northwind owes 1,200.00 EUR for March, 41 days late. A polite reminder is drafted on the page Northwind reminder. Give the person the outcome. Keep what matters, drop the pleasantries, a…",
+    "constraints": [],
+    "completed": [],
+    "decisions": [],
+    "in_progress": [],
+    "changed_files": [],
+    "verification": [],
+    "blockers": [],
+    "next_steps": [
+     "Wait for the person's next message"
+    ]
+   }
+  }
+ ],
+ "logs": [
+  [
+   "freeduet.report_guard",
+   "WARNING",
+   "report guard: the follow-up wrote no complete report",
+   null
+  ]
+ ]
+}
