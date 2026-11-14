@@ -85,6 +85,8 @@ const TOOLS: readonly McpTool[] = Object.freeze([
     description: [
       "Set up a standing instruction that you carry out on a schedule for the person you are talking to.",
       "",
+      "Creating or changing a routine always asks the person with a card first, and nothing is scheduled or changed until they allow it, even with Full access on.",
+      "",
       "Write the `instruction` as the work of ONE firing, in the imperative, and do not restate the schedule",
       'inside it: `Append the current UTC time to the page "Log"`, not `Every 15 minutes, append the current',
       'UTC time to the page "Log"`. The schedule belongs in `cron`, and the instruction is handed to a turn',
@@ -149,6 +151,8 @@ const TOOLS: readonly McpTool[] = Object.freeze([
     description: [
       "Change one of this person's routines: its instruction, its schedule, its timezone, the channel it",
       "posts into, or whether it is switched on.",
+      "",
+      "Creating or changing a routine always asks the person with a card first, and nothing is scheduled or changed until they allow it, even with Full access on.",
       "",
       "Give the id from `list_routines` and only the fields that change; anything left out stays as it is. A",
       "new `cron` follows exactly the same five-field rules as `create_routine`, and a routine switched back",
