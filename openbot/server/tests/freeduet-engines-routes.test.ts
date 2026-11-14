@@ -13,6 +13,7 @@ import {
 } from "../src/auth/guards";
 import { loadConfig } from "../src/config";
 import {
+  cleanRefusal,
   createEnginesRoutes,
   type EnginesReach,
   readEngines,
@@ -59,7 +60,10 @@ function stubAgent(reply: (request: Request) => Response) {
 }
 
 /** The agent's own answer, checked the way agent-freeduet checks it. */
-function listing(request: Request, rows = ENGINE_ROWS): Response {
+function listing(
+  request: Request,
+  rows: readonly unknown[] = ENGINE_ROWS,
+): Response {
   if (request.headers.get("x-openbot-agent-token") !== TOKEN) {
     return Response.json({ error: "unauthorised" }, { status: 401 });
   }
@@ -96,6 +100,10 @@ describe("the breaker's states, named for a person", () => {
     expect(stateOf("something new", null)).toBe("unknown");
   });
 
+  test("the agent's refused row is named refused, and is not a breaker state", () => {
+    expect(stateOf("refused", null)).toBe("refused");
+  });
+
   test("only a waiting state keeps its time, and an unreadable time is no time", () => {
     const limited = summaryOf({
       id: "a",
@@ -107,8 +115,10 @@ describe("the breaker's states, named for a person", () => {
     expect(limited).toEqual({
       id: "a",
       name: "A",
+      kind: "other",
       state: "limited",
       until: "2026-11-14T16:00:00.000Z",
+      refusal: null,
     });
     const ready = summaryOf({
       id: "b",
@@ -116,7 +126,14 @@ describe("the breaker's states, named for a person", () => {
       state: "ready",
       limited_until: "2026-11-14T16:00:00Z",
     });
-    expect(ready).toEqual({ id: "b", name: "B", state: "ready", until: null });
+    expect(ready).toEqual({
+      id: "b",
+      name: "B",
+      kind: "other",
+      state: "ready",
+      until: null,
+      refusal: null,
+    });
     const garbled = summaryOf({
       id: "c",
       state: "open",
@@ -126,8 +143,10 @@ describe("the breaker's states, named for a person", () => {
     expect(garbled).toEqual({
       id: "c",
       name: "c",
+      kind: "other",
       state: "not_answering",
       until: null,
+      refusal: null,
     });
   });
 
@@ -135,6 +154,192 @@ describe("the breaker's states, named for a person", () => {
     expect(summaryOf({ label: "no id", state: "ready" })).toBeNull();
     expect(summaryOf("text")).toBeNull();
     expect(summaryOf(null)).toBeNull();
+  });
+});
+
+/** The rest of the sentence agent-freeduet writes for a paid gateway it will not run (engines.py, PAID_GATEWAY_NOT_RUN). */
+const PAID_REST =
+  "FreeDuet does not run paid gateways yet, because it cannot yet enforce the limits you set. Free gateways and your own logins work.";
+/** The whole sentence for an engine called `my-gateway`, as agent-freeduet writes it (engines.py, paid_gateway_refusal). */
+const GATEWAY_SENTENCE = `my-gateway is a paid gateway. ${PAID_REST}`;
+
+/** A refused row, as agent-freeduet lists it (engine_state.py): the breaker's fields, with `refusal` set. */
+function refusedRow(id: string, refusal: string) {
+  return {
+    id,
+    label: id,
+    kind: "anthropic-compatible",
+    state: "refused",
+    available: false,
+    limited_until: null,
+    last_failure_kind: null,
+    consecutive_failures: 0,
+    installed: null,
+    version: null,
+    signed_in: null,
+    probed_at: null,
+    probe_problem: null,
+    refusal,
+  };
+}
+
+describe("an engine's kind: one of agent-freeduet's names, else other", () => {
+  test("a known kind is passed by its name", () => {
+    expect(
+      summaryOf({
+        id: "claude",
+        label: "Claude Code",
+        state: "ready",
+        kind: "cli",
+      }),
+    ).toEqual({
+      id: "claude",
+      name: "Claude Code",
+      kind: "cli",
+      state: "ready",
+      until: null,
+      refusal: null,
+    });
+    expect(
+      summaryOf({ id: "gw", state: "ready", kind: "anthropic-compatible" }),
+    ).toEqual({
+      id: "gw",
+      name: "gw",
+      kind: "anthropic-compatible",
+      state: "ready",
+      until: null,
+      refusal: null,
+    });
+  });
+
+  test("a gateway whose key was refused is signed out, and is still named a gateway", () => {
+    expect(
+      summaryOf({
+        id: "gw",
+        state: "signed_out",
+        kind: "anthropic-compatible",
+        last_failure_kind: "auth",
+      }),
+    ).toEqual({
+      id: "gw",
+      name: "gw",
+      kind: "anthropic-compatible",
+      state: "signed_out",
+      until: null,
+      refusal: null,
+    });
+  });
+
+  test("any other kind, a kind spelt differently, a kind that is not text, and no kind are other", () => {
+    for (const kind of ["shell", "CLI", "cli ", 7, null, "__proto__"]) {
+      expect(summaryOf({ id: "x", state: "ready", kind })).toEqual({
+        id: "x",
+        name: "x",
+        kind: "other",
+        state: "ready",
+        until: null,
+        refusal: null,
+      });
+    }
+    expect(summaryOf({ id: "x", state: "ready" })).toEqual({
+      id: "x",
+      name: "x",
+      kind: "other",
+      state: "ready",
+      until: null,
+      refusal: null,
+    });
+  });
+});
+
+describe("a refused engine's sentence, as the person may see it", () => {
+  test("a clean sentence is passed as it is, with its state and no time", () => {
+    expect(summaryOf(refusedRow("my-gateway", GATEWAY_SENTENCE))).toEqual({
+      id: "my-gateway",
+      name: "my-gateway",
+      kind: "anthropic-compatible",
+      state: "refused",
+      until: null,
+      refusal: GATEWAY_SENTENCE,
+    });
+  });
+
+  test("only a refused row carries its sentence", () => {
+    expect(
+      summaryOf({
+        id: "gw",
+        state: "ready",
+        kind: "anthropic-compatible",
+        refusal: GATEWAY_SENTENCE,
+      }),
+    ).toEqual({
+      id: "gw",
+      name: "gw",
+      kind: "anthropic-compatible",
+      state: "ready",
+      until: null,
+      refusal: null,
+    });
+    expect(
+      summaryOf({ id: "gw", state: "refused", kind: "anthropic-compatible" }),
+    ).toEqual({
+      id: "gw",
+      name: "gw",
+      kind: "anthropic-compatible",
+      state: "refused",
+      until: null,
+      refusal: null,
+    });
+  });
+
+  test("an address, a host name with a port, an e-mail-like text, a key and a long token are replaced by [removed]", () => {
+    const names = [
+      "https://user:hunter2@203.0.113.7:3001/v1",
+      "gw.example.com:8080/v1",
+      "203.0.113.7:3001",
+      "localhost:3001",
+      "[2001:db8::1]:443",
+      "ops@example.com",
+      "sk-or-v1-0123456789abcdef0123456789abcdef",
+      "abcdefghijklmnopqrstuvwxyzABCDEFGH",
+    ];
+    for (const name of names) {
+      expect(cleanRefusal(`${name} is a paid gateway. ${PAID_REST}`)).toBe(
+        `[removed] is a paid gateway. ${PAID_REST}`,
+      );
+    }
+  });
+
+  test("an ordinary name is kept whole: hyphens are fine, and a long name without a digit is no token", () => {
+    const name = "my-openrouter-gateway-eu";
+    expect(cleanRefusal(`${name} is a paid gateway. ${PAID_REST}`)).toBe(
+      `${name} is a paid gateway. ${PAID_REST}`,
+    );
+  });
+
+  test("line breaks and control characters become spaces, so the sentence stays on one line", () => {
+    expect(
+      cleanRefusal(`my-gateway is\na paid gateway.\u0007\t${PAID_REST}`),
+    ).toBe(GATEWAY_SENTENCE);
+  });
+
+  test("a sentence longer than 300 characters is cut to 300 or fewer", () => {
+    const cleaned = cleanRefusal("word ".repeat(500)) ?? "";
+    expect(cleaned.length).toBeLessThanOrEqual(300);
+    expect(cleaned.length).toBeGreaterThan(290);
+  });
+
+  test("nothing to say, or only spaces and control characters, is no sentence", () => {
+    expect(cleanRefusal("")).toBeNull();
+    expect(cleanRefusal("  \n\t \u0001 ")).toBeNull();
+    expect(summaryOf(refusedRow("gw", "   "))).toEqual({
+      id: "gw",
+      name: "gw",
+      kind: "anthropic-compatible",
+      state: "refused",
+      until: null,
+      refusal: null,
+    });
   });
 });
 
@@ -232,8 +437,10 @@ describe("readEngines: what the person is told, and never an error", () => {
         {
           id: "claude",
           name: "Claude Code",
+          kind: "cli",
           state: "limited",
           until: "2026-11-14T16:00:00.123Z",
+          refusal: null,
         },
       ],
     });
@@ -244,10 +451,38 @@ describe("readEngines: what the person is told, and never an error", () => {
     expect(sent).not.toContain("file missing");
     expect(Object.keys(reading.engines[0] ?? {}).sort()).toEqual([
       "id",
+      "kind",
       "name",
+      "refusal",
       "state",
       "until",
     ]);
+  });
+
+  test("a refused engine reaches the person as its state and its cleaned sentence, with no address or key", async () => {
+    const hostile = refusedRow(
+      "gw",
+      `https://user:hunter2@203.0.113.7:3001/v1 is a paid gateway. ${PAID_REST}`,
+    );
+    const agent = stubAgent((request) => listing(request, [hostile]));
+    stubs.push(agent);
+    const reading = await readEngines(agentReach(agent.url));
+    expect(reading).toEqual({
+      reason: null,
+      engines: [
+        {
+          id: "gw",
+          name: "gw",
+          kind: "anthropic-compatible",
+          state: "refused",
+          until: null,
+          refusal: `[removed] is a paid gateway. ${PAID_REST}`,
+        },
+      ],
+    });
+    const sent = JSON.stringify(reading);
+    expect(sent).not.toContain("hunter2");
+    expect(sent).not.toContain("203.0.113.7");
   });
 });
 
@@ -323,8 +558,10 @@ describe("GET /api/freeduet/engines: administrators only", () => {
         {
           id: "claude",
           name: "Claude Code",
+          kind: "cli",
           state: "limited",
           until: "2026-11-14T16:00:00.123Z",
+          refusal: null,
         },
       ],
     });
@@ -379,8 +616,10 @@ describe("createApp mounts the route behind the same guard", () => {
         {
           id: "claude",
           name: "Claude Code",
+          kind: "cli",
           state: "limited",
           until: "2026-11-14T16:00:00.123Z",
+          refusal: null,
         },
       ],
     });

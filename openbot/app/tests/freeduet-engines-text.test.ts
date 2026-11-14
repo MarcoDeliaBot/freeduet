@@ -96,6 +96,81 @@ describe("what each engine's state says", () => {
   });
 });
 
+describe("a gateway's rejected key, and an engine that is not run", () => {
+  const GATEWAY_REFUSAL =
+    "my-gateway is a paid gateway. FreeDuet does not run paid gateways yet, because it cannot yet enforce the limits you set. Free gateways and your own logins work.";
+
+  test("a gateway that refused its key is told to check the key, not to sign in", () => {
+    expect(
+      engineStateText(
+        {
+          state: "signed_out",
+          until: null,
+          kind: "anthropic-compatible",
+          refusal: null,
+        },
+        NOW,
+        ROME,
+      ),
+    ).toBe("Its gateway did not accept the key. Check the key you gave it.");
+  });
+
+  test("the Claude engine signed out keeps its own sign-in sentence", () => {
+    expect(
+      engineStateText(
+        { state: "signed_out", until: null, kind: "cli", refusal: null },
+        NOW,
+        ROME,
+      ),
+    ).toBe("Signed out: sign in again with the engine's own login");
+  });
+
+  test("a gateway in any other state reads as it did", () => {
+    expect(
+      engineStateText(
+        {
+          state: "limited",
+          until: "2026-11-14T16:00:00.000Z",
+          kind: "anthropic-compatible",
+          refusal: null,
+        },
+        NOW,
+        ROME,
+      ),
+    ).toBe("Reached its limit until 17:00");
+  });
+
+  test("a refused engine says it is not run, and gives the reason", () => {
+    expect(
+      engineStateText(
+        {
+          state: "refused",
+          until: null,
+          kind: "anthropic-compatible",
+          refusal: GATEWAY_REFUSAL,
+        },
+        NOW,
+        ROME,
+      ),
+    ).toBe(`Not run: ${GATEWAY_REFUSAL}`);
+  });
+
+  test("a refused engine with no reason says the reason is not known", () => {
+    expect(
+      engineStateText(
+        {
+          state: "refused",
+          until: null,
+          kind: "anthropic-compatible",
+          refusal: null,
+        },
+        NOW,
+        ROME,
+      ),
+    ).toBe("Not run: the reason is not known.");
+  });
+});
+
 describe("why the page lists nothing", () => {
   test("each reason is one plain sentence", () => {
     expect(engineReasonText("off")).toBe(
