@@ -130,10 +130,21 @@ const after = (row: Row) =>
     row.recorded,
   );
 
+/*
+ * Connectors added after this table was generated from main. Each one is classified by its own tests:
+ * `settings` (settings in chat, slice 1) in `settings-in-chat-allow-list.test.ts`.
+ */
+const ADDED_AFTER_TABLE = ["settings"];
+
 describe("classification against the table generated from main", () => {
-  test("the table covers every catalogue entry", () => {
+  test("the table covers every catalogue entry that main had", () => {
     expect([...new Set(BEFORE.map((row) => row.entry))].sort()).toEqual(
-      [...CATALOGUE.map((entry) => entry.key), null].sort(),
+      [
+        ...CATALOGUE.map((entry) => entry.key).filter(
+          (key) => !ADDED_AFTER_TABLE.includes(key),
+        ),
+        null,
+      ].sort(),
     );
   });
 
