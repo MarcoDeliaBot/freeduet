@@ -13,7 +13,6 @@ import json
 from pathlib import Path
 
 import pytest
-from fastapi.testclient import TestClient
 
 from freeduet import engines, segment
 from freeduet.app import app
