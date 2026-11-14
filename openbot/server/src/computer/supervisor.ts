@@ -24,6 +24,8 @@ type SupervisorComputerLocation = {
   /** Where to reach it, decided by the supervisor rather than assembled here. */
   url?: string;
   startedAt?: string;
+  /** The token this computer takes. Said by `/ensure`, and never by a listing. */
+  token?: string;
 };
 
 export type SupervisorOptions = {
@@ -33,7 +35,24 @@ export type SupervisorOptions = {
   hostForPort?: (port: number) => string;
   fetchImpl?: typeof fetch;
   timeoutMs?: number;
+  /** The clock the token memory reads, so a test can move it. */
+  now?: () => number;
 };
+
+/**
+ * How many Bots' tokens are remembered at once, and for how long.
+ *
+ * A token is remembered to save a call, and never to be right: the supervisor is the one that knows
+ * what a computer holds, and every `/ensure` (which every governed action makes) says it again and
+ * replaces what was remembered. What a memory has to do is stay small and stop being believed. Small:
+ * a token is 64 characters, so a thousand of them are about 100 KB, and a Bot beyond the thousandth
+ * pushes out the one remembered longest ago. Not believed for long: a computer that another replica
+ * replaced holds a new token, and a minute is the longest this replica goes on presenting the old one
+ * to it from a read that is not an `/ensure` (the policy push to every running computer, the live
+ * screen), before it asks again.
+ */
+export const TOKEN_MEMORY_MAX_BOTS = 1024;
+export const TOKEN_MEMORY_MAX_AGE_MS = 60_000;
 
 export class SupervisorError extends Error {
   constructor(message: string) {
@@ -74,6 +93,27 @@ export function createDockerSupervisorProvider(
    * `sessionOf` falls back to asking rather than letting an empty map quietly stop checking.
    */
   const sessions = new Map<string, string>();
+
+  /**
+   * The token each Bot's computer takes, as the supervisor last said it (see TOKEN_MEMORY_MAX_BOTS).
+   *
+   * Per provider for the reason `sessions` is. Insertion order is age order, because an entry is
+   * deleted before it is written again, so the first key is always the one remembered longest ago.
+   */
+  const now = options.now ?? Date.now;
+  const tokens = new Map<string, { token: string; at: number }>();
+  /** A question about one Bot's token that is already out, so a crowd of callers asks it once. */
+  const asking = new Map<string, Promise<string>>();
+
+  function remember(botId: string, token: string): void {
+    tokens.delete(botId);
+    tokens.set(botId, { token, at: now() });
+    while (tokens.size > TOKEN_MEMORY_MAX_BOTS) {
+      const oldest = tokens.keys().next().value;
+      if (oldest === undefined) break;
+      tokens.delete(oldest);
+    }
+  }
 
   async function call(path: string, method = "POST"): Promise<unknown> {
     let response: Response;
@@ -209,6 +249,11 @@ export function createDockerSupervisorProvider(
       )) as SupervisorComputerLocation;
       // Recorded on every ensure, so a replaced container is visible to whatever asks next.
       if (state?.startedAt) sessions.set(botId, state.startedAt);
+      // The token it takes, from the same answer, so the call this `locate` is for does not need a
+      // second trip to learn it. An answer without one is left for `tokenFor` to refuse, which is the
+      // one place that says what it means.
+      if (typeof state?.token === "string" && state.token)
+        remember(botId, state.token);
       // The supervisor says where it is, because only it knows whether these computers sit on a
       // shared network or answer on a published port.
       if (state?.url) return state.url;
@@ -216,6 +261,63 @@ export function createDockerSupervisorProvider(
       throw new SupervisorError(
         `The computer for ${botId} started but reported no address, so it cannot be reached.`,
       );
+    },
+
+    /**
+     * The token this Bot's computer takes, asked of the supervisor and never of the computer.
+     *
+     * Remembered from the last `/ensure`, and otherwise asked for once: a Bot nothing here has
+     * located (a computer that was already running when this server started, and the next policy
+     * push reaches it before any action does) has a miss, and the supervisor answers it with what the
+     * container actually holds, which is the old shared token for a computer that has not yet been
+     * replaced. Not waking anything: it reads, it never ensures.
+     *
+     * Refuses rather than guesses. A supervisor too old to say gives no token, and the deployment's
+     * `COMPUTER_TOKEN` is not tried in its place: a computer with a token of its own must never be
+     * sent the one that opens the others (provider.ts `tokenFor`).
+     */
+    async tokenFor(botId: string): Promise<string> {
+      const known = tokens.get(botId);
+      if (known && now() - known.at < TOKEN_MEMORY_MAX_AGE_MS) {
+        return known.token;
+      }
+      const pending = asking.get(botId);
+      if (pending) return pending;
+
+      const startedAt = now();
+      const question = (async () => {
+        let body: { token?: unknown } | null;
+        try {
+          body = (await call(
+            `/computers/${encodeURIComponent(botId)}/token`,
+            "GET",
+          )) as { token?: unknown } | null;
+        } catch (error) {
+          // A 404 with no sentence in it is a supervisor that has no such route, which is what an
+          // older one answers; the one that has it says "no computer" in words.
+          if (
+            error instanceof SupervisorError &&
+            error.message === "The supervisor answered 404."
+          ) {
+            throw new SupervisorError(
+              "The container supervisor did not answer the request for this computer's token, so it may be older than this server. Update it to the same release.",
+            );
+          }
+          throw error;
+        }
+        if (typeof body?.token !== "string" || body.token.length === 0) {
+          throw new SupervisorError(
+            "The container supervisor did not say which token this computer takes, so it may be older than this server. Update it to the same release.",
+          );
+        }
+        // Written only if nothing newer has been: an `/ensure` that finished while this was out
+        // knows what the computer holds now, and this answer may be from before it replaced it.
+        const current = tokens.get(botId);
+        if (!current || current.at < startedAt) remember(botId, body.token);
+        return body.token;
+      })().finally(() => asking.delete(botId));
+      asking.set(botId, question);
+      return question;
     },
 
     async status(botId: string): Promise<ComputerStatus> {
@@ -248,6 +350,8 @@ export function createDockerSupervisorProvider(
       const result = (await call(
         `/computers/${encodeURIComponent(botId)}/reset`,
       )) as { reset?: boolean } | null;
+      // The computer the token belonged to is gone; the next `/ensure` says the one that replaces it.
+      tokens.delete(botId);
       return { cleared: result?.reset === true };
     },
 

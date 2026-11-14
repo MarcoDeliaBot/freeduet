@@ -214,8 +214,10 @@ services:
       # installation and `.env` carries it, so `docker compose up -d` by hand configures the same stack
       # the script does, and with none the supervisor refuses to start rather than run on a public one.
       SUPERVISOR_TOKEN: ${SUPERVISOR_TOKEN:-}
-      # Handed to every computer this creates, so the server and the computers share one secret.
-      COMPUTER_TOKEN: ${COMPUTER_TOKEN:-}
+      # The token of each computer this creates is made from SUPERVISOR_TOKEN and the Bot's id
+      # (supervisor/src/computer-token.ts), so no two Bots' computers share one and the server asks
+      # this service for a Bot's. COMPUTER_TOKEN, the shared computer's above, is deliberately not
+      # given to this service: a copy of it inside a Bot's computer would open every other.
       # Forwarded into every per-Bot computer the supervisor creates. Headed, as above.
       COMPUTER_BROWSER_MODE: ${COMPUTER_BROWSER_MODE:-headed}
       COMPUTER_IMAGE: ${COMPUTER_IMAGE:-openbot-agent-computer:latest}

@@ -26,7 +26,7 @@ import {
 } from "../../../agent-computer/src/egress";
 import type { NetworkPolicyRow } from "../admin/settings-store";
 import type { WebBotAuth } from "../web-bot-auth";
-import type { ComputerProvider } from "./provider";
+import { type ComputerProvider, tokenForBot } from "./provider";
 
 export type { EgressPolicy, EgressRule };
 export { DEFAULT_EGRESS_DESTINATIONS, egressDecision, parseEgressRules };
@@ -100,6 +100,10 @@ export type EgressPushReport = {
  * Only running computers, read from `provider.list()`, which never wakes one. A computer that answers
  * 404 is running an agent-computer without the `/egress-policy` route and is reported, not retried
  * in a loop.
+ *
+ * Each computer is pushed with ITS OWN token when its provider gives one (`tokenForBot`), asked of
+ * whatever made the computer; `token` is the deployment's one, for providers whose computers all take
+ * it. A computer whose token cannot be learned is reported like any other failed push.
  */
 export async function pushEgressPolicies(options: {
   provider: ComputerProvider;
@@ -115,8 +119,13 @@ export async function pushEgressPolicies(options: {
     if (computer.status !== "running" || !computer.url) continue;
     try {
       const policy = await options.policyForBot(computer.botId);
+      const token = await tokenForBot(
+        options.provider,
+        computer.botId,
+        options.token,
+      );
       await pushEgressPolicy(computer.url, computer.botId, policy, {
-        ...(options.token ? { token: options.token } : {}),
+        ...(token ? { token } : {}),
         ...(options.webBotAuth ? { webBotAuth: options.webBotAuth } : {}),
         fetchImpl,
       });
@@ -222,8 +231,11 @@ export function withPolicyPushOnWake(
       // failed push rather than failing the action.
       const policy = await options.policyForBot(botId);
       if (!policy) return;
+      // The token of the computer that was just located, which its provider remembers from the
+      // `locate` that is on this very path; a deployment with one shared token has `options.token`.
+      const token = await tokenForBot(provider, botId, options.token);
       await pushEgressPolicy(url, botId, policy, {
-        ...(options.token ? { token: options.token } : {}),
+        ...(token ? { token } : {}),
         ...(options.webBotAuth ? { webBotAuth: options.webBotAuth } : {}),
         ...(options.fetchImpl ? { fetchImpl: options.fetchImpl } : {}),
       });
