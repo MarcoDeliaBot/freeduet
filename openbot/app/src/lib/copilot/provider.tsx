@@ -1,6 +1,7 @@
 import { CopilotKitProvider } from "@copilotkit/react-core/v2";
 import { useQuery } from "@tanstack/react-query";
 import type { ReactNode } from "react";
+import { MemberFileTool } from "@/freeduet/member-file-card";
 import { deploymentCapabilitiesQueryOptions } from "@/lib/deployment/queries";
 import { a2uiProviderOptions } from "./a2ui";
 import { SignInTool } from "./sign-in-tool";
@@ -97,6 +98,8 @@ export function CopilotProvider({ children }: { children: ReactNode }) {
         <PageCardTool />
         {/* A task a check-in offers, drawn as the card with Start and Hide. See offer-task-tool.tsx. */}
         <OfferTaskTool />
+        {/* FreeDuet (D38): a file a member made, drawn as a card with Download. See freeduet/member-file-card.tsx. */}
+        <MemberFileTool />
         {/* A task started from Chat, drawn as a card that opens it. See task-card-tool.tsx. */}
         <TaskCardTool />
         <EscalationTool />

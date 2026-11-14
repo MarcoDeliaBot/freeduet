@@ -15,6 +15,8 @@ import { describe, expect, test } from "bun:test";
 import { readFile } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
 import { parse } from "yaml";
+import { DEFAULT_WORKSPACE_LIMITS } from "../../agent-computer/src/workspace";
+import { OFFER_FILE_TOOL } from "../../shared/member-file";
 import { loadTenantPackage } from "../src/tenant-package";
 
 const packageDirectory = fileURLToPath(
@@ -632,7 +634,7 @@ describe("Cam, the video maker", () => {
     expect(shared).toBe(wrenShared);
   });
 
-  test("works in his own computer, asks for the rights, labels AI-made work, never publishes, and says that a file cannot be attached to the chat yet", async () => {
+  test("works in his own computer, asks for the rights, labels AI-made work, never publishes, and hands a finished file over with offer_file, which is not sending", async () => {
     const { own } = await cam();
     for (const sentence of [
       "You work in your own computer, with ffmpeg.",
@@ -644,8 +646,11 @@ describe("Cam, the video maker", () => {
       // One command is stopped after about two minutes, and the approval gate shows each command.
       "the approval gate shows each one to the person, and one is stopped after about two minutes, so start a long render in the background with its output sent to a log file, and read that file with a later command.",
       "When a tool you need is missing from your computer, say which one and what to install; install it only if the person asks, say so when the computer refuses, and never pretend that something ran.",
-      // A member has no tool that hands a file to the person: the truth of today, to change with that feature.
-      "Handing a file over from the chat is not available yet: say where the file is, say that you cannot attach it, and never say that you sent it.",
+      // The tool that hands a file to the person (server/src/freeduet/member-files.ts, D38): a card with a
+      // Download button, no approval, and never "sent".
+      "To hand a finished file to the person, call offer_file with its path in your workspace, relative to it (for example out/final.mp4), after its render has ended: the chat then shows a card with the file's name, its size and a Download button, and the person saves the file on their own device.",
+      "It asks for no approval, because nothing leaves your computer until the person presses Download. Offering is not sending: say that the file is offered in the chat, never that you sent, emailed or uploaded it.",
+      "When a file is larger, or offer_file refuses it, say so plainly with the reason, and make a smaller export (a lower bitrate or resolution, a shorter cut, or parts) instead of leaving the person with a path.",
       "read with ffprobe after the render and never from memory.",
       "You never publish, upload, post, schedule or send a video anywhere: that is the person's own step, or a tool that the approval gate shows the person.",
       "You never use music, footage, photos, faces or voices without the person's word that the rights are theirs.",
@@ -662,6 +667,16 @@ describe("Cam, the video maker", () => {
       });
     // The house style of the prompts: no em dash.
     expect(own).not.toContain("\u2014");
+    // The old truth, that a file could not be handed over, is gone with the feature that changed it.
+    expect(own).not.toContain("cannot attach it");
+  });
+
+  test("names the tool the server offers, and the size limit he names is the computer's own", async () => {
+    const { own } = await cam();
+    // A renamed tool with the prompt left behind would send him to a tool that does not exist.
+    expect(own).toContain(`call ${OFFER_FILE_TOOL} with its path`);
+    const mebibytes = DEFAULT_WORKSPACE_LIMITS.downloadBytes / (1024 * 1024);
+    expect(own).toContain(`A file up to ${mebibytes} MB can be offered.`);
   });
 
   test("Iris and Leo name him, and Leo no longer lists him among the pack members", async () => {
