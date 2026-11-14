@@ -46,10 +46,21 @@ from datetime import datetime
 from . import agui, engine_notices as notices
 from .agui import RunInput
 from .claude_cli import ENGINE_LIMITED
+from .compatible_engine import adapters_from_config
 from .engine_adapter import EngineAdapter, Gate, Health, Outcome, ProbeResult, Sink, TurnContext
 
 from .engine_state import SIGNED_OUT, EngineState
-from .engines import EnginesConfig, Switching, ordered_chain, switching_for, tier_at_least
+from .engines import (
+    COMPATIBLE_KIND,
+    Engine,
+    EnginesConfig,
+    Switching,
+    chain_ids,
+    exclusion_reason,
+    ordered_chain,
+    switching_for,
+    tier_at_least,
+)
 from .failure_classifier import AUTH, CREDITS, RATE_LIMIT, TRANSIENT, USAGE_LIMIT, Failure
 from .members import Member
 from .segment import SegmentNotes, run_segment
@@ -154,8 +165,37 @@ class Router:
         return [e.id for e in ordered_chain(member_id, self.config) if e.id in self.adapters]
 
     def engaged(self, member_id: str) -> bool:
-        """More than one engine to walk, or a pin. Otherwise the member's turn is the one it always was."""
-        return len(self._runnable(member_id)) > 1 or switching_for(member_id, self.config).pin is not None
+        """More than one engine to walk, or a pin, or a paid gateway the person put in the chain and did not switch on
+        (the turn goes through here then, so that the person is told why that gateway did not answer, in the words
+        of ``all_limited``, and not left with the first engine's own message). Otherwise the member's turn is the
+        one it always was."""
+        return (
+            len(self._runnable(member_id)) > 1
+            or switching_for(member_id, self.config).pin is not None
+            or bool(self._paid_left_out(member_id))
+        )
+
+    def _is_paid_left_out(self, engine: Engine | None) -> bool:
+        """A metered gateway that is switched on and not locked, and is left out only because paid engines are not
+        switched on (E3)."""
+        return (
+            engine is not None
+            and engine.kind == COMPATIBLE_KIND
+            and engine.billing == "metered"
+            and engine.enabled
+            and not engine.locked_reason
+            and exclusion_reason(engine, self.config) is not None
+        )
+
+    def _paid_left_out(self, member_id: str) -> list[str]:
+        """The metered gateways of the member's chain that are left out for that reason: the person is told so, in
+        plain words, when nothing else can answer."""
+        engines = (self.config.engines[engine_id] for engine_id in chain_ids(member_id, self.config))
+        return [engine.id for engine in engines if self._is_paid_left_out(engine)]
+
+    def _notice_kind(self, key: str, kind: str) -> str:
+        """A missing or refused key is not a Claude sign-in: the notice for an engine that runs on a key says so."""
+        return notices.KEY if kind == AUTH and self.adapters[key].kind == COMPATIBLE_KIND else kind
 
     # -- probing --------------------------------------------------------------------------------
 
@@ -193,9 +233,14 @@ class Router:
         order = self._runnable(member.id)
         if choice.pin is not None:
             pinned_engine = self.config.engines.get(choice.pin)
-            if choice.pin not in self.adapters or pinned_engine is None or not pinned_engine.enabled:
+            # The person's switch and the metered opt-in hold for a pin exactly as for any chain: a pin never lifts them.
+            left_out = pinned_engine is None or exclusion_reason(pinned_engine, self.config) is not None
+            if choice.pin not in self.adapters or left_out:
                 label = self.adapters[choice.pin].label if choice.pin in self.adapters else choice.pin
-                yield agui.run_error(notices.pinned_off(lang, label), ENGINE_LIMITED)
+                if self._is_paid_left_out(pinned_engine):
+                    yield agui.run_error(notices.pinned_paid_off(lang, label), ENGINE_LIMITED)
+                else:
+                    yield agui.run_error(notices.pinned_off(lang, label), ENGINE_LIMITED)
                 return
             order = [choice.pin]
         await self._probe_signed_out(order)
@@ -243,7 +288,10 @@ class Router:
                     yield agui.run_error(notices.pinned(lang, *blocked[-1]), ENGINE_LIMITED)
                     return
                 until = min((b[2] for b in blocked if b[2] is not None), default=None)
-                yield agui.run_error(notices.all_limited(lang, until), ENGINE_LIMITED)
+                key_off = [label for label, kind, _ in blocked if kind == notices.KEY]
+                yield agui.run_error(
+                    notices.all_limited(lang, until, self._paid_left_out(member.id), key_off), ENGINE_LIMITED
+                )
                 return
             if stopped is None and blocked:
                 stopped = blocked[0]  # the first engine of the chain was not available at the start
@@ -335,7 +383,7 @@ class Router:
                 return
             row = self.state.row(key)
             until = (row.limited_until if row else None) or failure.retry_at
-            stopped = (self.adapters[key].label, failure.kind, until)
+            stopped = (self.adapters[key].label, self._notice_kind(key, failure.kind), until)
             blocked.append(stopped)
 
     def _pick(self, order: list[str], tried: set[str], floors: dict[str, str],
@@ -350,7 +398,7 @@ class Router:
             if row is not None and not row.available:
                 tried.add(key)
                 kind = AUTH if row.state == SIGNED_OUT else (row.last_failure_kind or USAGE_LIMIT)
-                blocked.append((self.adapters[key].label, kind, row.limited_until))
+                blocked.append((self.adapters[key].label, self._notice_kind(key, kind), row.limited_until))
                 continue
             available.append(key)
         if not available:
@@ -416,7 +464,16 @@ def router_from_environment(state: EngineState, adapters: Mapping[str, EngineAda
     from .engines import load_engines
 
     try:
-        return Router(state, adapters, load_engines())
+        config = load_engines()
+        engines = dict(adapters)
+        # An `anthropic-compatible` entry of the file that is switched on and allowed to run (docs/ENGINES_PLAN.md
+        # slice 5). A default install has none, so it gets exactly the adapters it was given.
+        for key, adapter in adapters_from_config(config).items():
+            if key in engines:
+                log.warning("engine %s is defined twice: the engine the service already runs keeps the name", key)
+                continue
+            engines[key] = adapter
+        return Router(state, engines, config)
     except Exception:  # noqa: BLE001
         log.warning("engine router not started: members run on Claude Code alone", exc_info=True)
         return None

@@ -93,6 +93,8 @@ class StreamParser:
     # (`authentication_failed`, `rate_limit`, `billing_error`, ...), never shown as the answer.
     api_error: str | None = None
     api_error_kind: str | None = None
+    # The HTTP status the CLI says that error had (`api_error_status`), when it says one: a gateway's answer, as an int.
+    api_error_status: int | None = None
     # A usage or rate limit refusing this account (`rate_limit_event`, status "rejected").
     limit_refused: bool = False
     limit_resets_at: float | None = None
@@ -201,6 +203,8 @@ class StreamParser:
         error = event.get("error")
         self.api_error_kind = error if isinstance(error, str) else None
         self.api_error = _text_of(message.get("content")).strip() or self.api_error_kind or "API error"
+        status = event.get("api_error_status")
+        self.api_error_status = status if isinstance(status, int) and not isinstance(status, bool) else None
         return True
 
     def _stream_event(self, inner) -> list[Item]:

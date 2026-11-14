@@ -280,14 +280,14 @@ class _NotStarted(Exception):
     TimeoutError is an OSError, so a start that failed is told apart from a deadline by this class."""
 
 
-async def _short(args: list[str], cwd: Path, timeout: float) -> bytes:
+async def _short(args: list[str], cwd: Path, timeout: float, env: dict[str, str] | None = None) -> bytes:
     """What one short CLI command printed on stdout: at most PROBE_MAX_BYTES and one byte more, so that a
     caller can tell an answer that is too long (reading stops there). Started like any turn (`start`: the
-    allowlisted environment, a folder of its own, its own process group), its stdin closed at once, its stderr
-    read and dropped, and stopped, with everything it started, whatever happens. Raises _NotStarted when it
-    cannot start, and TimeoutError at the deadline."""
+    allowlisted environment, or the `env` an engine of its own gives, a folder of its own, its own process group),
+    its stdin closed at once, its stderr read and dropped, and stopped, with everything it started, whatever
+    happens. Raises _NotStarted when it cannot start, and TimeoutError at the deadline."""
     try:
-        process = await start(args, cwd)
+        process = await start(args, cwd, env)
     except (OSError, ValueError) as error:
         raise _NotStarted from error
     dropping: asyncio.Task | None = None
