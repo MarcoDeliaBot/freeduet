@@ -834,6 +834,12 @@ async function decide(
     say("Nothing was changed.");
     return EXIT.ok;
   }
+  if (fromEnvironment !== "" && fromEnvironment === current) {
+    complain(
+      `${KEY_NAME} is also set in your environment, to the same example key as in ${envName}. start.sh and the server read the environment first, so after this change they would still use the old key and could not open what was sealed again. Remove it from your environment (in this terminal: unset ${KEY_NAME}, and from any file that sets it for you) and run this again. Nothing was changed.`,
+    );
+    return EXIT.refused;
+  }
   if (current === "" || !isPublishedExampleKey(current)) {
     say(
       current === ""

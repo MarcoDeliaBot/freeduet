@@ -93,6 +93,11 @@ dir=$(dirname "$0")
 if [ "$1" = "--version" ]; then cat "$dir/version.txt" 2>/dev/null || echo "pg_dump (PostgreSQL) 99.0"; exit 0; fi
 printf '%s\\n' "$@" > "$dir/args.txt"
 env | grep '^PGPASSWORD=' > "$dir/password.txt"
+if [ -f "$dir/hold.txt" ]; then
+  : > "$dir/holding.txt"
+  n=0
+  while [ ! -f "$dir/release.txt" ] && [ "$n" -lt 400 ]; do sleep 0.05; n=$((n+1)); done
+fi
 cat "$dir/dump.sql"
 if [ -f "$dir/stderr.txt" ]; then cat "$dir/stderr.txt" >&2; fi
 exit $(cat "$dir/exit.txt" 2>/dev/null || echo 0)
@@ -106,6 +111,8 @@ beforeEach(async () => {
   await rm(join(shimDirectory, "exit.txt"), { force: true });
   await rm(join(shimDirectory, "stderr.txt"), { force: true });
   await rm(join(shimDirectory, "version.txt"), { force: true });
+  for (const name of ["hold.txt", "holding.txt", "release.txt"])
+    await rm(join(shimDirectory, name), { force: true });
 });
 
 afterEach(async () => {
@@ -370,6 +377,30 @@ describe("before it does anything", () => {
     expect(ran.text).toContain("set in your environment");
     expectNothingSecret(ran.text, [own]);
     expect(await opensWith(EXAMPLE_KEY)).toMatchObject({ open: 7 });
+  });
+
+  test("the same example key set in the environment is refused: it would be read ahead of the new key in .env", async () => {
+    const { root, envPath, text } = await installation();
+    const before = await snapshot(database);
+
+    for (const argv of [["--yes"], ["--apply", "--yes"]]) {
+      const ran = await runIn(root, argv, {
+        env: {
+          PATH: process.env.PATH,
+          PG_DUMP: join(shimDirectory, "pg_dump"),
+          KEY_ENCRYPTION_KEY: EXAMPLE_KEY,
+        },
+      });
+
+      expect(ran.code).toBe(EXIT.refused);
+      expect(ran.text).toContain("is also set in your environment");
+      expect(ran.text).toContain("unset KEY_ENCRYPTION_KEY");
+      expect(ran.text).toContain("Nothing was changed.");
+      expectNothingSecret(ran.text, []);
+    }
+    expect(await snapshot(database)).toBe(before);
+    expect(await readFile(envPath, "utf8")).toBe(text);
+    expect(await filesIn(root)).toEqual([".env"]);
   });
 
   test("a settings file with no key line is nothing to do", async () => {
@@ -837,6 +868,80 @@ describe("--apply, when it cannot finish", () => {
     expect(await readFile(envPath, "utf8")).toBe(text);
     expect(await filesIn(root)).toEqual([".env"]);
   });
+
+  test("a real Ctrl-C while the backup is being made stops it at the next safe point, with the database and the settings as they were", async () => {
+    // The script itself, as a person runs it, in the folder it belongs to: its own settings file there,
+    // named for this test and ignored by git like every `.env.*`, and removed at the end.
+    const openbot = join(import.meta.dir, "..", "..");
+    const name = `.env.rekey-signal-${Math.random().toString(36).slice(2, 10)}`;
+    const envPath = join(openbot, name);
+    const { text } = await installation();
+    await writeFile(envPath, text, { mode: 0o600 });
+    await stageDump();
+    await writeFile(join(shimDirectory, "hold.txt"), "");
+    const before = await snapshot(database);
+    const home = await mkdtemp(join(tmpdir(), "rekey-home-"));
+    created.push(home);
+
+    try {
+      const child = Bun.spawn(
+        [
+          process.execPath,
+          join(openbot, "scripts", "rekey-vault.ts"),
+          "--apply",
+          "--yes",
+        ],
+        {
+          cwd: home,
+          stdout: "pipe",
+          stderr: "pipe",
+          env: {
+            PATH: process.env.PATH,
+            HOME: home,
+            OPENBOT_ENV_FILE: name,
+            PG_DUMP: join(shimDirectory, "pg_dump"),
+          },
+        },
+      );
+      const out = new Response(child.stdout).text();
+      const err = new Response(child.stderr).text();
+      // It is in the middle of the backup once the stand-in for pg_dump says it is holding.
+      for (let waited = 0; waited < 400; waited += 1) {
+        if (
+          await stat(join(shimDirectory, "holding.txt")).then(
+            () => true,
+            () => false,
+          )
+        )
+          break;
+        await Bun.sleep(50);
+      }
+      child.kill("SIGINT");
+      await Bun.sleep(300);
+      await writeFile(join(shimDirectory, "release.txt"), "");
+
+      const code = await child.exited;
+      const said = `${await out}\n${await err}`;
+
+      expect(code).toBe(EXIT.interrupted);
+      expect(said).toContain("Stopping at the next safe point.");
+      expect(said).toContain("Interrupted. Nothing was changed.");
+      expect(await snapshot(database)).toBe(before);
+      expect(await opensWith(EXAMPLE_KEY)).toMatchObject({ open: 7 });
+      expect(await readFile(envPath, "utf8")).toBe(text);
+      expect(
+        (await readdir(openbot)).filter((entry) =>
+          entry.startsWith(`${name}.vault-`),
+        ),
+      ).toEqual([]);
+      expectNothingSecret(said, []);
+    } finally {
+      await rm(envPath, { force: true });
+      for (const entry of await readdir(openbot))
+        if (entry.startsWith(`${name}.vault-`))
+          await rm(join(openbot, entry), { force: true });
+    }
+  }, 60_000);
 
   test("a table that changed after the backup was made undoes everything", async () => {
     const { root, envPath, text } = await installation();
@@ -1455,13 +1560,14 @@ describe("the real pg_dump", () => {
       expect(await snapshot(database)).not.toBe(before);
 
       // The documented restore (docs/design/vault-rekey.md): one transaction, foreign keys not checked
-      // for the three tables' own deletes and inserts, the backup played in.
+      // for the three tables' own deletes and inserts, the backup played in. The four lines and the
+      // backup, in that order, on the standard input of psql, as the document has the person do it.
       const script = [
         "set session_replication_role = replica;",
         "delete from public.sso_providers;",
         "delete from public.saved_logins;",
         "delete from public.credentials;",
-        `\\i ${path}`,
+        await readFile(path, "utf8"),
       ].join("\n");
       const child = Bun.spawn(
         [
