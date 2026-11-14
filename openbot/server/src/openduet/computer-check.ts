@@ -2,7 +2,7 @@ import {
   type EgressPolicy,
   pushEgressPolicy,
 } from "../computer/policy-network";
-import type { ComputerProvider } from "../computer/provider";
+import { type ComputerProvider, tokenForBot } from "../computer/provider";
 import type { WebBotAuth } from "../web-bot-auth";
 import type { ComputerVerdict } from "./setup";
 
@@ -19,7 +19,7 @@ import type { ComputerVerdict } from "./setup";
  * not running; one that starts gets its policy then.
  */
 export function createComputerCheck(input: {
-  provider?: Pick<ComputerProvider, "list">;
+  provider?: Pick<ComputerProvider, "list" | "tokenFor">;
   controls: () =>
     | { policyForBot: (botId: string) => Promise<EgressPolicy> }
     | undefined;
@@ -55,8 +55,17 @@ export function createComputerCheck(input: {
     for (const computer of running) {
       if (!computer.url) continue;
       const policy = await bounded(controls.policyForBot(computer.botId));
+      // Each computer is asked with its own token when its provider gives one, so a pass here means
+      // the token the supervisor says opens THIS computer does.
+      const token = await bounded(
+        tokenForBot(input.provider, computer.botId, input.token),
+      );
       await bounded(
-        pushEgressPolicy(computer.url, computer.botId, policy, input),
+        pushEgressPolicy(computer.url, computer.botId, policy, {
+          ...(token ? { token } : {}),
+          ...(input.webBotAuth ? { webBotAuth: input.webBotAuth } : {}),
+          ...(input.fetchImpl ? { fetchImpl: input.fetchImpl } : {}),
+        }),
       );
     }
     return "ready";

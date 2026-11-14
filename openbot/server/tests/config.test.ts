@@ -750,7 +750,6 @@ describe("deployment configuration", () => {
       ...baseEnvironment,
       COMPUTER_SUPERVISOR_URL: "http://localhost:4000",
       SUPERVISOR_TOKEN: "supervisor-token",
-      COMPUTER_TOKEN: "computer-token",
     });
 
     expect(config.computer?.provider).toBe("docker");
@@ -758,9 +757,25 @@ describe("deployment configuration", () => {
       provider: "docker",
       baseUrl: "http://localhost:4000",
       supervisorToken: "supervisor-token",
-      token: "computer-token",
       allowPrivateHosts: false,
     });
+  });
+
+  // With a supervisor each Bot's computer holds a token of its own and the supervisor says which, so
+  // the `COMPUTER_TOKEN` a deployment also has set (it opens the shared computer) is not carried into
+  // the configuration the computer provider is built from, and nothing can present it to a Bot's
+  // computer by reading it from there.
+  test("does not carry COMPUTER_TOKEN into the Docker computer configuration", () => {
+    const config = loadConfig({
+      ...baseEnvironment,
+      COMPUTER_SUPERVISOR_URL: "http://localhost:4000",
+      SUPERVISOR_TOKEN: "supervisor-token",
+      COMPUTER_TOKEN: "computer-token",
+    });
+
+    expect(config.computer?.provider).toBe("docker");
+    expect(config.computer).not.toHaveProperty("token");
+    expect(JSON.stringify(config.computer)).not.toContain("computer-token");
   });
 
   test("configures one shared computer", () => {
