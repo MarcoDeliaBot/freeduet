@@ -29,7 +29,7 @@ _Last checked: 2026-11-08, from each project's public README and documentation, 
 | **Guardian that pauses a looping agent to protect your limits** | ✅ v0.3 | — | — | — | — | — | — |
 | **Owner-only operations no mode can lower** | ⚠️ v0.1: one exception only you can make, Full access (off by default, per member). Permissions, passwords, keys and security settings stay with you either way | — | ⚠️ approvals, "Always allow" can lift them | — | ❌ | ⚠️ | — |
 | **Nightly export of memory, rules and tasks to plain files** | ✅ v0.3 | ❌ | ❌ | — | — | ⚠️ local files | ⚠️ local transcripts |
-| **Public test suite per agent, including attempts to break the rules** | ✅ 59 cases, 25 safety | — | ⚠️ inbox triage only | — | — | — | — |
+| **Public test suite per agent, including attempts to break the rules** | ✅ 60 cases, 25 safety | — | ⚠️ inbox triage only | — | — | — | — |
 | **Free open-source creative suite (images, PDFs, vectors, video) inside each agent's computer** | ✅ v0.2 | ❌ | ❌ | ❌ | ❌ | ❌ | — |
 | **Light helpers on free models for small jobs, saving your limits** | ✅ v0.3 | — | — | — | — | — | — |
 | **Answers from your own documents, quoting the exact source** | ✅ v0.2 | — | ⚠️ document search | — | — | — | — |
@@ -37,7 +37,7 @@ _Last checked: 2026-11-08, from each project's public README and documentation, 
 | **Gmail and Google Calendar** | ✅ | ✅ connected apps | ✅ | ❌ not yet | — | ⚠️ through your coding agent | ✅ through Composio |
 | **Import your agents from Grok Bot** | ✅ v1.0 | ❌ | ❌ | ❌ | ✅ | ❌ | — |
 | **Phone** | In design | ✅ | ✅ | ⚠️ early, from source | ✅ | ❌ | ⚠️ in development |
-| **Any language** | ✅ | — | — | ✅ 13 interface languages | ✅ 5 interface languages | — | — |
+| **Any language** | The app's interface is English for now, with some cards also in Italian; members answer in the person's language. | — | — | ✅ 13 interface languages | ✅ 5 interface languages | — | — |
 
 ## What others have that FreeDuet does not have yet
 
