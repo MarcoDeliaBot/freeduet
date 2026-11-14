@@ -19,7 +19,8 @@ import {
  * because what a browser does with a proxy is not something a unit test can know: Playwright forces
  * `<-loopback>` into Chromium's proxy bypass list, which makes loopback go THROUGH the filter, and
  * that is what lets the filter refuse a Bot's own `localhost`. Each case counts connections that
- * reached a server on this machine, so a refusal that connected first would fail it.
+ * reached a server on this machine, so a refusal that connected first would fail it. The last case is
+ * about a connection that is already open when the switch is turned off.
  *
  * Asked for by name, like `web-bot-auth-browser.test.ts`: it launches a real Chromium.
  *
@@ -125,6 +126,24 @@ async function closedWithin(closing: Promise<void>, ms = 2_000) {
     }),
   ]);
   clearTimeout(timer);
+}
+
+/** Wait for something, but not for ever: a run that fails says what it was waiting for. */
+async function within<T>(promise: Promise<T>, what: string, ms = 10_000) {
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  try {
+    return await Promise.race([
+      promise,
+      new Promise<never>((_, reject) => {
+        timer = setTimeout(
+          () => reject(new Error(`${what} did not happen within ${ms} ms`)),
+          ms,
+        );
+      }),
+    ]);
+  } finally {
+    clearTimeout(timer);
+  }
 }
 
 /**
@@ -357,6 +376,105 @@ describe.skipIf(!asked)("a Bot's browser and the home network", () => {
       await closedWithin(stopEgressFilter());
       await closedWithin(net.close());
       local.stop();
+    }
+  }, 120_000);
+
+  /**
+   * A page's WebSocket to a service on the computer is a CONNECT tunnel through the filter, the same
+   * kind a page served over HTTPS opens for everything it fetches. (This one is `ws://`, so no
+   * certificate is needed for a service on this machine to answer it, and the filter sees what it
+   * sees of an HTTPS page: a CONNECT, and bytes it cannot read.)
+   *
+   * Measured before the filter kept track of its tunnels: with the switch turned off, the socket went
+   * on echoing, and only a new one was refused. Now the tunnel is ended at both ends when the switch is
+   * turned off, in the same turn, so nothing sent after that reaches the service. The two ends are
+   * waited for by their events, with a bound, and what the page sends after the switch is read from
+   * the service's own log.
+   */
+  test("a page's open WebSocket to a service on the computer is closed when the switch is turned off, and what the page sends after that never reaches the service", async () => {
+    const received: string[] = [];
+    let serviceSawClose: () => void = () => undefined;
+    const serviceClosed = new Promise<void>((resolve) => {
+      serviceSawClose = resolve;
+    });
+    const service = Bun.serve({
+      hostname: "127.0.0.1",
+      port: 0,
+      fetch(request, server) {
+        return server.upgrade(request)
+          ? undefined
+          : new Response("a service on this computer");
+      },
+      websocket: {
+        open(socket) {
+          socket.send("hello");
+        },
+        message(socket, message) {
+          received.push(String(message));
+          socket.send(`echo ${message}`);
+        },
+        close() {
+          serviceSawClose();
+        },
+      },
+    });
+    await startEgressFilter({ env: {} });
+    const browser = await launch();
+    try {
+      const page = await browser.page();
+      setEgressPolicy(BOT, switchedOn);
+      await page.goto("about:blank");
+      type Probe = { events: string[]; socket: WebSocket };
+      await page.evaluate((url) => {
+        const probe = window as unknown as Probe;
+        probe.events = [];
+        probe.socket = new WebSocket(url);
+        probe.socket.onmessage = (event) =>
+          probe.events.push(`message:${event.data}`);
+        probe.socket.onclose = (event) =>
+          probe.events.push(`close:${event.code}`);
+      }, `ws://127.0.0.1:${service.port}/`);
+      const seen = (event: string) =>
+        page.waitForFunction(
+          (wanted) => (window as unknown as Probe).events.includes(wanted),
+          event,
+          { timeout: 10_000 },
+        );
+
+      // Open, and carrying data both ways.
+      await seen("message:hello");
+      await page.evaluate(() =>
+        (window as unknown as Probe).socket.send("before"),
+      );
+      await seen("message:echo before");
+
+      // The person switches it off. The tunnel is ended in the same turn, so what the page sends from
+      // here on (if its socket still looks open to it) goes nowhere.
+      setEgressPolicy(BOT, blocked);
+      await page.evaluate(() => {
+        try {
+          (window as unknown as Probe).socket.send("after");
+        } catch {
+          // Already closed: nothing to send it on.
+        }
+      });
+      // Both ends hear of it: the page's socket closes, and so does the service's.
+      await page.waitForFunction(
+        () =>
+          (window as unknown as Probe).events.some((event) =>
+            event.startsWith("close:"),
+          ),
+        undefined,
+        { timeout: 10_000 },
+      );
+      await within(serviceClosed, "the service's end of the socket to close");
+      expect(received).toEqual(["before"]);
+      expect(
+        await page.evaluate(() => (window as unknown as Probe).events),
+      ).not.toContain("message:echo after");
+    } finally {
+      await browser.done();
+      service.stop(true);
     }
   }, 120_000);
 });

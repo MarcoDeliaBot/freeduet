@@ -1232,10 +1232,24 @@ other modes (an administrator's own range and domain rules decide there, as befo
 link-local addresses. `AGENT_COMPUTER_ALLOW_PRIVATE_HOSTS` does not lift it either: that variable
 only governs the server's own check of the first address a Bot types.
 
+**A stricter policy reaches what is already open.** A pushed policy applies to the connections the
+filter is carrying as well as to the next one. When the switch goes off, when **Cloud network access**
+goes off, or when a rule is taken away, the filter judges every open connection again, the way it
+would judge a new one, and closes both ends of each one that would now be refused: an HTTPS
+connection or a page's WebSocket to an address on the home network, a download that is still coming,
+a command's connection. The page or command sees the connection drop, and its next attempt is refused
+with the reason. A policy that becomes wider closes nothing. A connection from a browser or a shell
+carries no Bot in its proxy credentials, so it is judged the way a new one of its kind is: by the only
+policy on the computer, or by every policy at once with the strictest winning. On a computer that
+serves several Bots that can close a connection a moment before its own Bot's policy alone would have
+refused it, and never keeps one that a new connection would be refused. What was measured and what is
+not verified are in `docs/design/home-network.md`.
+
 What it does not cover: behind an upstream proxy (`EGRESS_PROXY_*`) the proxy resolves names, so the
-filter can judge only an address written out and every redirect; a command that opens a raw socket
-instead of using the proxy variables is not stopped by the filter at all, and Compose has no
-network-level control for it (on Kubernetes, `networkPolicy.enabled` is that control); and a
+filter can judge only an address written out and every redirect, and an open tunnel there is judged by
+what it was asked for, because the filter cannot know where the proxy took it; a command that opens a
+raw socket instead of using the proxy variables is not stopped by the filter at all, and Compose has
+no network-level control for it (on Kubernetes, `networkPolicy.enabled` is that control); and a
 command's own `localhost`, which is `NO_PROXY` so that a Bot can test a server it started, is not
 judged. The reasoning and the callers it was checked against are in `docs/M1_PLAN.md`, D36.
 
