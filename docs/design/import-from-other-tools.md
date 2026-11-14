@@ -1,6 +1,6 @@
 # Import from other agent tools: design
 
-Design only, no product code. Written 2026-11-14 for two ROADMAP rows: "Bring your data from other agents" [code: docs/ROADMAP.md:45] and "Import from Grok Bot" [code: docs/ROADMAP.md:63]. Base: commit 452e060, where the branch started.
+Design, and slice 1 (the parsers) is on main through PR #168; nothing is stored, routed or shown yet. Written 2026-11-14 for two ROADMAP rows: "Bring your data from other agents" [code: docs/ROADMAP.md:45] and "Import from Grok Bot" [code: docs/ROADMAP.md:63]. Base: commit 452e060, where the branch started.
 
 Tags: [code: path:line] = read in this repository at commit 452e060. [doc: URL] = stated by a public page, read 2026-11-14 through a summarising fetch; no text is copied. [assumed] = not checked. Design choices carry no tag: they are proposals.
 
