@@ -1,12 +1,16 @@
 """Segments end to end through the real bridge and a fake CLI (D4, D5, D6, D8, D12)."""
 
+import asyncio
 import json
 import os
+import socket
+import threading
 import time
 
 import pytest
 
-from freeduet import agui, iris_tools
+from freeduet import agui, iris_tools, segment
+from freeduet.bridge import ipc
 from helpers import ASSERTION, TOOL_TOKEN, post_run, run_body, standing, tool, types
 
 TOOLS = [tool("make_page", {"title": {"type": "string"}}), tool("message_bot", {"bot": {"type": "string"}, "message": {"type": "string"}})]
@@ -160,3 +164,41 @@ def test_a_missing_cli_is_a_plain_error(client, fake_cli, monkeypatch, tmp_path)
     events, _ = post_run(client, run_body(ASK))
     assert events[-1]["type"] == "RUN_ERROR"
     assert "not installed" in events[-1]["message"]
+
+
+def test_a_timer_that_fires_late_does_not_overtake_a_bridge_call_already_on_the_socket():
+    # The bridge sends each call on a connection of its own, which asyncio hands to its reader a few passes
+    # after the timer's wake-up (segment._later). The loop is busy while the call arrives and the timer
+    # comes due: the call, written before the deadline, goes in the inbox first.
+    async def play():
+        inbox: asyncio.Queue = asyncio.Queue()
+
+        async def on_call(call):
+            await inbox.put(("call", call))
+
+        host = ipc.BridgeHost([], on_call)
+        port = await host.start()
+        sent, connections = threading.Event(), []
+
+        def bridge():
+            connections.append(socket.create_connection(("127.0.0.1", port)))
+            line = json.dumps({"op": "call", "name": "make_page", "arguments": {}, "secret": host.secret})
+            connections[0].sendall(line.encode() + b"\n")
+            sent.set()
+
+        loop = asyncio.get_running_loop()
+        timer = asyncio.create_task(segment._later(0.05, inbox, ("settle", None)))
+        await asyncio.sleep(0)  # the timer is armed
+        threading.Thread(target=bridge, daemon=True).start()
+        due, give_up = loop.time() + 0.05, time.monotonic() + 10
+        while (not sent.is_set() or loop.time() < due) and time.monotonic() < give_up:
+            time.sleep(0.005)  # noqa: ASYNC251 - the loop is busy on purpose: the call arrives, the timer comes due
+        try:
+            return [(await asyncio.wait_for(inbox.get(), 5))[0] for _ in range(2)]
+        finally:
+            await timer
+            for connection in connections:
+                connection.close()
+            await host.close()
+
+    assert asyncio.run(play()) == ["call", "settle"]

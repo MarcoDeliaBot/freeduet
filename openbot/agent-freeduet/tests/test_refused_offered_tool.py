@@ -29,12 +29,15 @@ and what the CLI's init event reported: `called as computer_navigate` is the pla
 `init did not list ...` is a list the CLI did not take.
 """
 
+import asyncio
 import json
 import logging
+import os
+import time
 
 import pytest
 
-from freeduet import segment
+from freeduet import claude_cli, segment
 from freeduet.stream_json import Refused, StreamParser
 from helpers import SETTLE_NEVER, post_run, run_body, standing, tool, types
 
@@ -113,6 +116,57 @@ def test_several_refused_calls_of_one_message_are_all_handed_over(client, fake_c
         {"tool": {"name": "make_page", "input": {"title": "Ideas"}, "plain": True}, "real_cli": True},
     ])
     events, _ = post_run(client, run_body(ASK, tools=TOOLS))
+    assert [event["toolCallName"] for event in starts(events)] == ["computer_navigate", "make_page"]
+    assert types(events).count("RUN_FINISHED") == 1
+
+
+def running(pid):
+    try:
+        return os.waitid(os.P_PID, pid, os.WEXITED | os.WNOHANG | os.WNOWAIT) is None
+    except ChildProcessError:  # the loop's child watcher has already collected it
+        return False
+
+
+def a_loop_busy_past_the_deadline(monkeypatch):
+    """The segment's loop is stuck from the moment its first settle timer is armed until that timer is
+    overdue and the CLI has finished (a starved process, a long collection, a blocking call): the timer
+    and everything the CLI wrote are both waiting when the loop runs again. Which one the loop takes
+    first is what segment._later settles. Returns the list that says the loop was stuck."""
+    processes: list = []
+    stuck: list = []
+    start, later = claude_cli.start, segment._later
+
+    async def started(*args, **kwargs):
+        processes.append(await start(*args, **kwargs))
+        return processes[-1]
+
+    async def busy(delay, inbox, item):
+        timer = asyncio.ensure_future(later(delay, inbox, item))
+        await asyncio.sleep(0)  # the timer is armed
+        if not stuck:
+            loop = asyncio.get_running_loop()
+            due, give_up = loop.time() + delay, time.monotonic() + 10
+            while (loop.time() < due or running(processes[0].pid)) and time.monotonic() < give_up:
+                time.sleep(0.005)  # noqa: ASYNC251 - the loop is busy on purpose
+            stuck.append(True)
+        await timer
+
+    monkeypatch.setattr(claude_cli, "start", started)
+    monkeypatch.setattr(segment, "_later", busy)
+    return stuck
+
+
+def test_a_busy_loop_does_not_lose_the_second_refused_call(client, fake_cli, monkeypatch):
+    # The settle window is the default here (0.1 s): the CLI wrote the second refusal before it ran out,
+    # the loop only got to read it afterwards.
+    stuck = a_loop_busy_past_the_deadline(monkeypatch)
+    fake_cli.plan([
+        {"tool": {"name": "computer_navigate", "input": OPEN, "plain": True}, "real_cli": True},
+        {"sleep": 0.05},  # the first refusal is read before the second is written
+        {"tool": {"name": "make_page", "input": {"title": "Ideas"}, "plain": True}, "real_cli": True},
+    ])
+    events, _ = post_run(client, run_body(ASK, tools=TOOLS))
+    assert stuck == [True]
     assert [event["toolCallName"] for event in starts(events)] == ["computer_navigate", "make_page"]
     assert types(events).count("RUN_FINISHED") == 1
 
