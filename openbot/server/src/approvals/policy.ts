@@ -5,6 +5,7 @@ import type {
   ApprovalPolicyOutcome,
   ApprovalRule,
   ApprovalTeamRule,
+  FullAccessMode,
   HostCommandPolicy,
   RuleBehaviour,
 } from "./types";
@@ -255,26 +256,39 @@ export function safetyRequirement(
 
 /**
  * FreeDuet, Full access (docs/FULL_ACCESS.md): what the gate answers for a member the person switched
- * to Full access. Never for a read, so the trail only holds actions.
+ * to Full access, in one of its two settings. Never for a read, so the trail only holds actions.
  *
- * It lifts one safety category, payments, because the maintainer's decision covers payments and
- * purchases. Credentials and security settings are still handed to the person, and an admin's team
- * rule that asks or hands off still wins. It overrides the person's own rules, "ask before making
- * changes" and auto-review, and does not call the reviewer.
+ * `full` lifts one safety category, payments, because the maintainer's decision covers payments and
+ * purchases. `no_payments` lifts none: a payment is found by the same floor, `safety` here, and gets
+ * no answer from this function, so the gate hands it to the person exactly as it does with the switch
+ * off. Credentials and security settings are still handed to the person in both, and an admin's team
+ * rule that asks or hands off still wins. Both override the person's own rules, "ask before making
+ * changes" and auto-review, and do not call the reviewer.
+ *
+ * Fail closed: a mode this build does not know answers nothing, so the gate carries on as if the
+ * switch were off.
  */
 export function fullAccessOutcome(
   candidate: ApprovalCandidate,
   safety: { id: string } | undefined,
   team: readonly ApprovalTeamRule[],
+  mode: FullAccessMode,
 ): ApprovalPolicyOutcome | undefined {
   if (candidate.effect === "read") return undefined;
+  if (mode !== "full" && mode !== "no_payments") return undefined;
   if (safety && safety.id !== "payments") return undefined;
+  // "Without payments" lifts nothing the floor holds, so a payment goes on to the hand-off below.
+  if (safety && mode !== "full") return undefined;
   const locked = strictestRule(candidate, team, [])?.rule.behaviour;
   if (locked === "ask" || locked === "hand_off") return undefined;
   return {
     behaviour: "allow",
     source: "full_access",
-    reason: "Full access is on for this member.",
+    reason:
+      mode === "full"
+        ? "Full access is on for this member."
+        : "Full access without payments is on for this member.",
+    fullAccessMode: mode,
   };
 }
 
@@ -438,13 +452,21 @@ export async function decideAction(input: {
   autoReview: boolean;
   askBeforeChanges: boolean;
   model?: ReviewModel;
-  /** FreeDuet: the person switched this member to Full access, in a turn it applies to. */
-  fullAccess?: boolean;
+  /**
+   * FreeDuet: the setting of Full access the person gave this member, in a turn it applies to.
+   * Absent means the switch is off for this action.
+   */
+  fullAccess?: FullAccessMode;
 }): Promise<ApprovalPolicyOutcome> {
   const { candidate } = input;
   const safety = safetyRequirement(candidate);
   if (input.fullAccess) {
-    const granted = fullAccessOutcome(candidate, safety, input.team);
+    const granted = fullAccessOutcome(
+      candidate,
+      safety,
+      input.team,
+      input.fullAccess,
+    );
     if (granted) return granted;
   }
   if (safety)

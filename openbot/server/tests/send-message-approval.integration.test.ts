@@ -1828,3 +1828,90 @@ describe("Full access: a new email, with the switch on for Otto", () => {
     );
   });
 });
+
+/*
+ * FULL ACCESS WITHOUT PAYMENTS (docs/FULL_ACCESS.md), through the same real machinery: Iris hands the
+ * email to Otto in the person's own turn, the hop waits on the real queue and is delivered with its
+ * signed assertion, and the gate traces it to the person's own message. A payment is found by the
+ * safety floor, which reads the words of the call, so the email that stands for one here talks of
+ * paying. What is asked is each member's own setting: Otto sends a payment with no card only when
+ * neither he nor Iris, who handed it on, is "without payments". A plain email goes out in all four.
+ */
+describe("Full access without payments: Iris hands Otto the work in the person's own turn", () => {
+  const PLAIN = email({ to: ["bob@example.com"] });
+  const PAYING = email({
+    to: ["bob@example.com"],
+    subject: "The kiln invoice",
+    body: `${BODY} Please complete the payment of the kiln invoice this week.`,
+  });
+  type Setting = "off" | "full" | "no_payments";
+  const give = (member: string, setting: Setting) =>
+    setting === "off"
+      ? fullAccess.set(owner, member, false)
+      : fullAccess.set(owner, member, true, setting);
+
+  /** The send was held for the person by the safety floor, not by the share check: one card, nothing sent. */
+  async function expectPaymentHeld() {
+    const hop = await viaHop(FULL_BACKEND, askedIris(), PAYING);
+    expect(hop.error).toBeInstanceOf(HeadlessToolSuspension);
+    expect(FULL_BACKEND.sent()).toEqual([]);
+    const asked = await pending();
+    expect(asked).toHaveLength(1);
+    expect(asked[0]?.action.policy).toMatchObject({
+      behaviour: "hand_off",
+      source: "safety",
+    });
+    await clearPending();
+  }
+
+  afterAll(async () => {
+    await give(irisId, "off");
+    await give(botId, "off");
+  });
+
+  const combinations = [
+    { iris: "no_payments", otto: "no_payments", payment: "is held" },
+    { iris: "full", otto: "no_payments", payment: "is held" },
+    { iris: "no_payments", otto: "full", payment: "is held" },
+    { iris: "full", otto: "full", payment: "goes out" },
+    { iris: "off", otto: "no_payments", payment: "is held" },
+    { iris: "off", otto: "full", payment: "goes out" },
+  ] as const satisfies readonly {
+    iris: Setting;
+    otto: Setting;
+    payment: "is held" | "goes out";
+  }[];
+
+  for (const { iris, otto, payment } of combinations)
+    test(`Iris ${iris}, Otto ${otto}: a plain email goes out, a payment ${payment}`, async () => {
+      await give(irisId, iris);
+      await give(botId, otto);
+      await expectHopSends(FULL_BACKEND, askedIris(), PLAIN);
+      if (payment === "goes out")
+        await expectHopSends(FULL_BACKEND, askedIris(), PAYING);
+      else await expectPaymentHeld();
+    });
+
+  test("Otto without payments on his own, in the person's own turn: a plain email goes out, a payment is held", async () => {
+    await give(irisId, "off");
+    await give(botId, "no_payments");
+    FULL_BACKEND.reset();
+    await clearPending();
+    const plain = (await inTurn(
+      { messages: [typed("write to the team about the kiln")] },
+      () => callNew(FULL_BACKEND, PLAIN),
+    )) as { text: string; isError: boolean };
+    expect(plain.isError).toBe(false);
+    expect(FULL_BACKEND.sent()).toEqual([
+      { to: ["bob@example.com"], subject: "Good morning", body: BODY },
+    ]);
+    FULL_BACKEND.reset();
+    const held = await inTurn(
+      { messages: [typed("write to the team about the kiln")] },
+      () => callNew(FULL_BACKEND, PAYING),
+    ).catch((error: unknown) => error);
+    expect(held).toBeInstanceOf(HeadlessToolSuspension);
+    expect(FULL_BACKEND.sent()).toEqual([]);
+    await clearPending();
+  });
+});

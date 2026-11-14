@@ -329,14 +329,16 @@ export function createApprovalService(
       store.rules(candidate.actorId),
     ]);
     const continuation = candidate.continuation ?? currentApprovalContext();
-    // FreeDuet: Full access, for an action and a turn it applies to (docs/FULL_ACCESS.md).
+    // FreeDuet: Full access, for an action and a turn it applies to, and in which of its two
+    // settings (docs/FULL_ACCESS.md). Undefined is the switch off.
     const fullAccess =
-      candidate.effect !== "read" &&
-      (await options.fullAccess?.applies({
-        actorId: candidate.actorId,
-        botId: candidate.botId,
-        continuation,
-      })) === true;
+      candidate.effect !== "read"
+        ? await options.fullAccess?.effective({
+            actorId: candidate.actorId,
+            botId: candidate.botId,
+            continuation,
+          })
+        : undefined;
     const outcome = await decideAction({
       candidate,
       fullAccess,
