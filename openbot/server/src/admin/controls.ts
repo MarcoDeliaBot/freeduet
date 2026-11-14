@@ -193,16 +193,24 @@ export function decideFromSnapshot(
    * and this server does not.
    */
   if (context.intent === "navigate" && context.page.host) {
-    const policy = effectiveNetworkPolicy(snapshot.network, member, true);
+    const policy = effectiveNetworkPolicy(
+      snapshot.network,
+      member,
+      true,
+      resolveCapability(snapshot.rows, member, "cloudPrivateNetwork").allowed,
+    );
     const hasRanges = policy.rules.some((rule) => rule.type === "cidr");
     if (!hasRanges || /^[\d.:[\]]+$/.test(context.page.host)) {
       const port = portOf(context.page.url);
       const decision = egressDecision(policy, context.page.host, port);
       if (!decision.allowed) {
-        return refusal(
-          `network:${policy.from}`,
-          `${decision.reason} An admin can add it.`,
-        );
+        // The home and office network is the person's own switch, not an allowlist an admin adds to.
+        return decision.privateNetwork
+          ? refusal("capability:cloudPrivateNetwork", decision.reason)
+          : refusal(
+              `network:${policy.from}`,
+              `${decision.reason} An admin can add it.`,
+            );
       }
     }
   }
@@ -368,10 +376,16 @@ export async function installEnterpriseControls(
       member,
       "cloudNetwork",
     ).allowed;
+    const privateNetwork = resolveCapability(
+      current.rows,
+      member,
+      "cloudPrivateNetwork",
+    ).allowed;
     const { from: _from, ...policy } = effectiveNetworkPolicy(
       current.network,
       member,
       cloudNetwork,
+      privateNetwork,
     );
     return policy;
   };

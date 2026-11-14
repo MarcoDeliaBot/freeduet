@@ -129,9 +129,9 @@ jobs:
 
   # The agent-computer tests that launch a real Chromium. They are asked for by name because a
   # machine running `bun test` is not required to have a browser, and these are the only tests that
-  # would catch a password reaching the snapshot a model reads, a session cookie lost on restart, or
-  # WebRTC leaving around the egress filter. The browser is the one the computer image installs,
-  # pinned by agent-computer's own lockfile.
+  # would catch a password reaching the snapshot a model reads, a session cookie lost on restart,
+  # WebRTC leaving around the egress filter, or a page reaching the home network (D36). The browser
+  # is the one the computer image installs, pinned by agent-computer's own lockfile.
   computer-browser:
     name: computer (real browser)
     runs-on: ubuntu-latest
@@ -153,7 +153,7 @@ jobs:
           bun test tests/sign-in.test.ts tests/session-cookies.test.ts tests/follows-popup.test.ts
           tests/demonstration-live.test.ts tests/webrtc-proxy.test.ts tests/web-bot-auth-browser.test.ts
           tests/handoff-page-restore.test.ts tests/page-links-browser.test.ts
-          tests/navigation-settle-browser.test.ts
+          tests/navigation-settle-browser.test.ts tests/private-network-browser.test.ts
         working-directory: openbot/agent-computer
         env:
           OPENBOT_COMPUTER_BROWSER: '1'
