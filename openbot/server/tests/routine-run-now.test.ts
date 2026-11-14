@@ -106,6 +106,7 @@ test("run history maps an open run to running and serializes times", async () =>
         startedAt: "2026-09-29T10:00:00.000Z",
         finishedAt: null,
         error: null,
+        channelId: null,
       },
       {
         id: "r1",
@@ -113,6 +114,7 @@ test("run history maps an open run to running and serializes times", async () =>
         startedAt: "2026-09-29T09:00:00.000Z",
         finishedAt: "2026-09-29T09:01:00.000Z",
         error: "boom",
+        channelId: null,
       },
     ],
   });
