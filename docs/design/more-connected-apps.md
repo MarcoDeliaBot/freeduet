@@ -142,3 +142,28 @@ Each PR that touches policy.ts or catalogue.ts adds or updates its row in docs/U
 - Size estimates are judgements, not measurements.
 - Code claims come from reading; no test was run.
 - The model reviewer's behaviour was read in code, not observed.
+
+## 8. Built so far
+
+Recorded on 2026-11-14 on branch `connected-apps-slice-1`, from origin/main at 99ff3e8. `[code]` markers below were read at 99ff3e8.
+
+**On main before this slice.** S1 (Drive and Notion read lists) and S2 (Drive's write list matches its scope) landed through PR #156, commit 2c27caf, which is decision D33 in `docs/M1_PLAN.md` section 16. Drive has four read tools and an empty write list, with scope `drive.readonly` [code: openbot/server/src/plugins/catalogue.ts:376, 395-401]. Notion has two read tools [code: openbot/server/src/plugins/catalogue.ts:557]. Routines has two read tools [code: openbot/server/src/plugins/catalogue.ts:585].
+
+**This slice: no catalogue entry added.**
+
+- S5 needs a no-console vendor whose hosted server supports dynamic client registration, confirmed on the vendor's own page. The only such candidate the doc names is Xero (row 8 of section 3.4).
+- The Xero FAQ [doc: https://developer.xero.com/faq/remote-mcp], read on 2026-11-14, gives the server address `https://api.xero.com/mcp/v1` and says the server "authorises through Xero's OAuth 2.0 flow with PKCE". It also says "Custom Connections apps are not eligible to access the Remote MCP Server". It does not mention dynamic client registration and does not say how to get a client ID, so registration is not confirmed. It lists no tool names either, so no read list could be verified.
+- The other named apps are left out, following sections 3.1 and 3.4. These are the doc's own statements and were not re-checked here: Google Docs (decision D-d; Google's route needs a Cloud project), Google Calendar writes (S6, D-d), Microsoft Outlook and OneDrive (D-f), DocuSign (integration key, phase 3) and Slack (registered app, no dynamic registration, phase 3).
+- The sandbox proxy refuses the connection to developer.xero.com, so the FAQ was read with a fetch tool, not curl. That tool returns model-written extracts, so the quotes above are as extracted, not a byte copy of the page.
+
+**Still blocked, not built.**
+
+| Slice | Blocked by |
+|---|---|
+| S3, S4 | D-c, the word check: a security change the maintainer decides |
+| S5 | No confirmed no-console candidate (Xero's registration is not confirmed) |
+| S6 | D-d, the Google route |
+| S7 | D-a, the broker role: its cost and custody wording is public text |
+| S8 | D-b, loopback MCP: needs a security review |
+
+**Not verified.** No live connection, MCP handshake, account or sandbox run was used. No test was added or run, so there is no test count for this slice. Vendor prices and plan limits were not re-read.
