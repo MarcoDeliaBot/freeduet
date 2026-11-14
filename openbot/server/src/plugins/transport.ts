@@ -1,5 +1,6 @@
 import * as arcade from "./arcade";
 import * as builtinRoutines from "./builtin-routines";
+import * as builtinSettings from "./builtin-settings";
 import * as composio from "./composio";
 import * as driveRest from "./google-drive-rest";
 import * as googleImap from "./google-imap";
@@ -127,6 +128,7 @@ export type TransportKind =
   | "google-workspace-rest"
   | "google-imap"
   | "builtin-routines"
+  | "builtin-settings"
   | "composio"
   | "arcade";
 
@@ -158,6 +160,7 @@ const TRANSPORTS: Record<TransportKind, VendorTransport> = {
   "google-workspace-rest": workspaceRest,
   "google-imap": googleImap,
   "builtin-routines": builtinRoutines,
+  "builtin-settings": builtinSettings,
   composio,
   arcade,
 };
@@ -190,6 +193,7 @@ const LISTS_FROM_CODE: Record<TransportKind, boolean> = {
   "google-workspace-rest": true,
   "google-imap": true,
   "builtin-routines": true,
+  "builtin-settings": true,
   composio: false,
   arcade: false,
 };

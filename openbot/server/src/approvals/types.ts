@@ -97,6 +97,11 @@ export type ApprovalCandidate = {
   /** The call is a write on the Routines connector: it creates, changes, switches or deletes one. */
   configuresAutomation?: true;
   /**
+   * The call changes one of the person's settings from chat (settings-in-chat, slice 1): a write on the
+   * Settings connector, read off its transport and never off a name or an argument. Held to a card.
+   */
+  changesSetting?: true;
+  /**
    * The person just allowed this exact send on its own card, the check that asks about a new email
    * every time. Asked about again, it would be a second card for one email.
    */

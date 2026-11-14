@@ -20,6 +20,8 @@ import {
 import type { BotAccessCheck } from "./agents/profile-policy";
 import type { AgentProfileStore } from "./agents/profile-store";
 import { createAgentRoutes } from "./agents/routes";
+import type { SettingChanges } from "./settings-in-chat/changes";
+import { createSettingChangeRoutes } from "./settings-in-chat/routes";
 import { createApprovalRoutes } from "./approvals/routes";
 import type { ApprovalService } from "./approvals/service";
 import {
@@ -451,6 +453,8 @@ export function createApp(
     teamBots?: TeamBots;
     /** Pause, reset, Activity and attention for a person's own Bots. See agents/lifecycle.ts. */
     lifecycle?: BotLifecycleServices;
+    /** Settings in chat (docs/design/settings-in-chat.md, slice 1): the person's Undo of a change from chat. */
+    settingChanges?: SettingChanges;
     /**
      * What OpenDuet made for the person, and the tasks it is working on: the Pages tab and the viewer,
      * and Chat's task cards, the task page and Tasks. See openduet/pages.ts and openduet/task-store.ts.
@@ -1686,6 +1690,11 @@ export function createApp(
     app.route(
       "/api/bots",
       createBotLifecycleRoutes(coworker.lifecycle, requireUser),
+    );
+  if (coworker?.settingChanges)
+    app.route(
+      "/api/settings-changes",
+      createSettingChangeRoutes(coworker.settingChanges, requireUser),
     );
   if (coworker?.groups)
     app.route("/api/groups", createGroupRoutes(coworker.groups, requireUser));
