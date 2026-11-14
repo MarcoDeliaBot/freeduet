@@ -8,7 +8,7 @@ import {
 } from "bun:test";
 import { GlobalRegistrator } from "@happy-dom/global-registrator";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { cleanup, render, waitFor } from "@testing-library/react";
+import { cleanup, render, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { FreeDuetEngines } from "@/freeduet/engines-section";
 import type {
@@ -274,11 +274,15 @@ const INTERACTIVE =
 
 test("each member is a row: its engines in order by name, what is left out and why, and two answers with one sentence each", async () => {
   const view = draw();
-  await view.findByText("Each member's engines");
+  await view.findByRole("heading", { name: "Who uses what" });
   await view.findByText("Iris");
   expect(view.getByText("Leo")).toBeTruthy();
-  expect(view.getByText("Tries Claude Code, then Codex.")).toBeTruthy();
-  expect(view.getByText("Tries only Claude Code.")).toBeTruthy();
+  expect(
+    view.getByRole("list", { name: "Tries Claude Code, then Codex." }),
+  ).toBeTruthy();
+  expect(
+    view.getByRole("list", { name: "Tries only Claude Code." }),
+  ).toBeTruthy();
   expect(
     view.getByText(
       "Not used: A gateway, because it is a paid gateway, which FreeDuet does not run yet.",
@@ -304,7 +308,7 @@ test("each member is a row: its engines in order by name, what is left out and w
 test("a member is named by its id when the list of Bots does not answer, and the page says nothing about it", async () => {
   server.agentsDown = true;
   const view = draw();
-  await view.findByText("Each member's engines");
+  await view.findByRole("heading", { name: "Who uses what" });
   expect(view.getByText("leo")).toBeTruthy();
   expect(
     view.getByRole("radio", { name: "Ask me first for leo" }),
@@ -485,7 +489,9 @@ test("away from the computer every control is disabled, the sentence says where 
   expect(sent).toEqual([]);
   expect(selected(view, "Iris")).toEqual(["Switch automatically"]);
   // The information is all still there.
-  expect(view.getByText("Tries Claude Code, then Codex.")).toBeTruthy();
+  expect(
+    view.getByRole("list", { name: "Tries Claude Code, then Codex." }),
+  ).toBeTruthy();
 });
 
 test("an agent too old to honour a choice leaves the controls disabled and says to update FreeDuet", async () => {
@@ -517,7 +523,7 @@ test("a server that keeps no choices gives the read-only page of before: the eng
   server.withoutMembers = true;
   const view = draw();
   await view.findByText("Claude Code");
-  expect(view.queryByText("Each member's engines")).toBeNull();
+  expect(view.queryByRole("heading", { name: "Who uses what" })).toBeNull();
   expect(view.container.querySelectorAll(INTERACTIVE).length).toBe(0);
   // It asks for what it asked for before and nothing more.
   expect(reads).toEqual(["/api/freeduet/engines"]);
@@ -527,7 +533,7 @@ test("with no list to show there is no member section", async () => {
   server.reason = "unreachable";
   const view = draw();
   await view.findByText(/did not answer/);
-  expect(view.queryByText("Each member's engines")).toBeNull();
+  expect(view.queryByRole("heading", { name: "Who uses what" })).toBeNull();
   expect(view.container.querySelectorAll(INTERACTIVE).length).toBe(0);
   expect(reads).toEqual(["/api/freeduet/engines"]);
 });
@@ -557,14 +563,69 @@ test("the only controls on the page are the two answers for each member and an U
   expect(view.container.querySelector("a")).toBeNull();
 });
 
-test("the engine rows stay as they were: nothing in them can be clicked", async () => {
+test("the engine cards stay as they were: nothing in them can be clicked", async () => {
   const view = draw();
   await view.findByText("Iris");
-  for (const name of ["Claude Code", "Codex", "A gateway"]) {
-    const row = view.getByText(name).closest('[data-slot="item"]');
-    expect(row).not.toBeNull();
-    expect(row?.querySelectorAll(INTERACTIVE).length).toBe(0);
+  const cards = Array.from(
+    view.container.querySelectorAll('[data-slot="engine"]'),
+  );
+  expect(cards).toHaveLength(3);
+  for (const card of cards) {
+    expect(card.querySelectorAll(INTERACTIVE).length).toBe(0);
   }
+});
+
+test("the members are a table: a column heading for each column, a row heading for each member, and the answers inside the row", async () => {
+  const view = draw();
+  await view.findByText("Iris");
+  const table = view.getByRole("table", { name: "Who uses what" });
+  const headings = within(table).getAllByRole("columnheader");
+  expect(headings.map((cell) => cell.textContent)).toEqual([
+    "Member",
+    "Order of engines",
+    "When an engine runs out",
+  ]);
+  for (const heading of headings)
+    expect(heading.getAttribute("scope")).toBe("col");
+  const rows = within(table).getAllByRole("rowheader");
+  expect(rows.map((cell) => cell.textContent)).toEqual(["Iris", "Leo"]);
+  for (const cell of rows) expect(cell.getAttribute("scope")).toBe("row");
+  // The two answers of each member sit in that member's own row.
+  const iris = rows[0]?.closest("tr") as HTMLElement;
+  expect(
+    within(iris).getByRole("radio", { name: "Ask me first for Iris" }),
+  ).toBeTruthy();
+  const leo = rows[1]?.closest("tr") as HTMLElement;
+  expect(
+    within(leo).getByRole("radio", { name: "Switch automatically for Leo" }),
+  ).toBeTruthy();
+});
+
+test("the engines a member tries are a numbered list in the order they are tried", async () => {
+  const view = draw();
+  await view.findByText("Iris");
+  const list = view.getByRole("list", {
+    name: "Tries Claude Code, then Codex.",
+  });
+  const items = within(list).getAllByRole("listitem");
+  expect(items.map((item) => item.textContent)).toEqual([
+    "1Claude Code",
+    "2Codex",
+  ]);
+  // The number is for the eye: a screen reader hears the list's order and the names.
+  for (const item of items)
+    expect(item.querySelector('[aria-hidden="true"]')).not.toBeNull();
+});
+
+test("the table sits in a named box that a narrow screen can scroll, and every cell's answer is a focusable control", async () => {
+  const view = draw();
+  await view.findByText("Iris");
+  const box = view.getByRole("region", { name: "Who uses what" });
+  expect(box.contains(view.getByRole("table"))).toBe(true);
+  // A scrolled-away row is reached by its own answers, which a keyboard can focus: no tabindex is needed on the box.
+  expect(box.getAttribute("tabindex")).toBeNull();
+  for (const radio of within(box).getAllByRole("radio"))
+    expect((radio as HTMLInputElement).disabled).toBe(false);
 });
 
 test("the page sends nothing but reads until the person chooses", async () => {

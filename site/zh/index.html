@@ -96,7 +96,7 @@
    "name": "能在 Windows、Mac 和 Linux 上用吗？",
    "acceptedAnswer": {
     "@type": "Answer",
-    "text": "维护者在 Windows（配合 WSL2 和 Docker）上使用它，我们的自动检查会在 Linux 上启动它。它没有在 Mac 上测试过，所以我们不能保证能在那里运行。FreeDuet 是早期版本（0.1），由一位维护者开发并使用。"
+    "text": "维护者在 Windows（配合 WSL2 和 Docker）上使用它，我们的自动检查会在 Linux 上启动它。它没有在 Mac 上测试过，所以我们不能保证能在那里运行。FreeDuet 是早期版本（0.2），由一位维护者开发并使用。"
    }
   },
   {
@@ -975,8 +975,8 @@ footer a{color:var(--ink)}
     <h3 class="road-h rv" data-i="r_h">现在能用什么，接下来有什么</h3>
     <ol class="road rv">
       <li><b data-i="rl_today">今天</b><span class="tag" data-i="r_now">已经推出</span><p data-i="r1">整个团队，使用你自己的 Claude 登录，带有审批、测试，支持 Gmail 和 Google Calendar。</p></li>
-      <li><b data-i="rl_now">现在</b><span class="tag" data-i="r_prog">进行中</span><p data-i="r2">首要任务：适用于 Windows、macOS 和 Ubuntu 的单文件安装程序。Ubuntu 的前几步已在 CI 中测试。已经做好，但还没在真实环境中运行：每位成员的电脑各有一个专用令牌，家庭网络连接会在你关闭访问时断开。之后陆续加入经过测试的新成员。</p></li>
-      <li><b data-i="rl_next">接下来</b><span class="tag" data-i="r_prog">进行中</span><p data-i="r3">为每位成员选择引擎：自动切换已经做好，只用测试引擎测试过。在聊天中更改的设置（包括撤销按钮）仍在进行中。真正的任务委派还在计划中。</p></li>
+      <li><b data-i="rl_now">现在</b><span class="tag" data-i="r_prog">进行中</span><p data-i="r2">首要任务：适用于 Windows、macOS 和 Ubuntu 的单文件安装程序。Ubuntu 以及通过 WSL2 的 Windows 已有首批安装脚本，Ubuntu 的步骤在 CI 中测试。还没有双击安装程序。已经做好，但还没在真实环境中运行：每位成员的电脑各有一个专用令牌，家庭网络连接会在你关闭访问时断开。之后陆续加入经过测试的新成员。</p></li>
+      <li><b data-i="rl_next">接下来</b><span class="tag" data-i="r_prog">进行中</span><p data-i="r3">为每位成员选择引擎：引擎页面显示每位成员的引擎链，以及自动或先询问的选择。这些已经做好，但还没在真实环境中运行，切换只用测试引擎测试过。在聊天中更改的设置（包括撤销按钮）仍在进行中。真正的任务委派还在计划中。</p></li>
       <li><b data-i="rl_next">接下来</b><span class="tag" data-i="r_prog">进行中</span><p data-i="r4">聊天中编写的自动化，以及手机版（登录名单已经做好），都在进行中。更多已连接的应用和远程访问还在设计中。</p></li>
       <li><b data-i="rl_later">以后</b><span class="tag" data-i="r_prog">进行中</span><p data-i="r5">语音：朗读功能已经做好并默认关闭；通话功能尚未做好。安全购物：计划中。Full access 和视频成员 Cam 已经做好，但还没在真实环境中运行；Cam 可以通过聊天交付做好的文件，带下载按钮。</p></li>
     </ol>
@@ -1065,7 +1065,7 @@ cd openbot &amp;&amp; docker compose exec -it agent-freeduet claude
     <div class="faq">
       <details class="rv" open><summary data-i="q1">什么是免费的，我要为什么付费？</summary><p data-i="a1">FreeDuet 免费，以 MIT 许可证开源，商业用途也可以。你唯一要付的，是搭配使用的 AI 订阅，目前是 Claude 套餐。不需要购买 API 密钥。</p></details>
       <details class="rv"><summary data-i="q2">安装需要准备什么？</summary><p data-i="a2">一个 Claude 订阅，以及电脑上的 Docker、Bash 和 Bun。上面的四个步骤就是全部安装过程。从没打开过终端？请懂技术的朋友帮你装好，把这个页面给他看就行。</p></details>
-      <details class="rv"><summary data-i="q3">能在 Windows、Mac 和 Linux 上用吗？</summary><p data-i="a3">维护者在 Windows（配合 WSL2 和 Docker）上使用它，我们的自动检查会在 Linux 上启动它。它没有在 Mac 上测试过，所以我们不能保证能在那里运行。FreeDuet 是早期版本（0.1），由一位维护者开发并使用。</p></details>
+      <details class="rv"><summary data-i="q3">能在 Windows、Mac 和 Linux 上用吗？</summary><p data-i="a3">维护者在 Windows（配合 WSL2 和 Docker）上使用它，我们的自动检查会在 Linux 上启动它。它没有在 Mac 上测试过，所以我们不能保证能在那里运行。FreeDuet 是早期版本（0.2），由一位维护者开发并使用。</p></details>
       <details class="rv"><summary data-i="q4">助理不用问我就能做什么？</summary><p data-i="a4">它可以查资料、阅读，并准备草稿和报告。默认情况下，五个按钮都要等你按下“批准”，只有发给你亲自输入地址的新邮件例外。为某个成员开启 Full access 后，它在你的对话中不再等待；密码和安全设置仍归你。助理仍可能出错，请先看过它准备的内容。</p></details>
       <details class="rv"><summary data-i="q5">我的数据在哪里？</summary><p data-i="a5">FreeDuet 运行在你的电脑上，对话记录保存在那里的数据库中。你的 Claude 登录信息留在一个只有 Claude Code 程序会读取的 Docker 卷里。思考时，助理会把你的请求发给你已登录的 AI 服务，就和该服务自己的应用一样。</p></details>
       <details class="rv"><summary data-i="q6">能在手机上用吗？</summary><p data-i="a6">还不行。目前 FreeDuet 在你电脑的浏览器里打开。我们正在做手机版，也能在手机上收到需要你批准的请求。</p></details>

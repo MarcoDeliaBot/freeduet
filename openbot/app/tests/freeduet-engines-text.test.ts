@@ -1,7 +1,11 @@
 import { describe, expect, test } from "bun:test";
 import {
+  enginePill,
   engineReasonText,
   engineStateText,
+  KEYS_NOT_BUILT,
+  KEYS_TEXT,
+  SPENDING_TEXT,
   untilText,
 } from "@/freeduet/engines-text";
 
@@ -182,5 +186,40 @@ describe("why the page lists nothing", () => {
     expect(engineReasonText("unreachable")).toBe(
       "The FreeDuet agent did not answer, so the engines cannot be read right now. This page asks again every 30 seconds.",
     );
+  });
+});
+
+describe("the word on each engine's card", () => {
+  test("each state the server names has a word and one of the five tones", () => {
+    const tones = ["green", "red", "blue", "amber", "neutral"];
+    const expected: Record<string, string> = {
+      ready: "Working",
+      degraded: "Working",
+      checking: "Checking",
+      limited: "Limited",
+      out_of_credit: "Out of credit",
+      not_answering: "Not answering",
+      signed_out: "Signed out",
+      refused: "Locked",
+      unknown: "Not known",
+    };
+    for (const [state, label] of Object.entries(expected)) {
+      const pill = enginePill(state);
+      expect({ state, label: pill.label }).toEqual({ state, label });
+      expect(tones).toContain(pill.tone);
+    }
+  });
+
+  test("a state the page was not written for reads as not known, and a name on the object is never taken for one", () => {
+    expect(enginePill("made_up").label).toBe("Not known");
+    expect(enginePill("constructor").label).toBe("Not known");
+  });
+
+  test("the Keys and Spending panels say what the page does not do, and show no amount", () => {
+    expect(KEYS_NOT_BUILT).toBe(
+      "Adding a key from this page is not available yet.",
+    );
+    expect(SPENDING_TEXT).not.toMatch(/\d|EUR|€|\$/);
+    expect(KEYS_TEXT).not.toMatch(/api[ _-]?key|paste/i);
   });
 });
