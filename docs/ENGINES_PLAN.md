@@ -25,7 +25,7 @@ Size: S under 300 changed lines, M 300 to 1000, L over 1000 or touches the segme
 
 | Component | What it does | Need it answers | Where | Size |
 |---|---|---|---|---|
-| Four-state breaker | Per-engine state: ready, degraded, open, half-open. Failures carry weights by kind, waiting grows on repeats, the state survives a restart. | A limited engine is skipped until reset (ARCH 3.3 rule 5); a sick engine is not hammered. | agent-freeduet | M |
+| Five-state breaker | Per-engine state: ready, degraded, open, half-open. Failures carry weights by kind, waiting grows on repeats, the state survives a restart. | A limited engine is skipped until reset (ARCH 3.3 rule 5); a sick engine is not hammered. | agent-freeduet | M |
 | Limit classifier | Sorts an error into rate limit (wait about a minute), quota exhausted (wait long) or transient (retry soon). A bare 429 is never taken as quota. Reads `Retry-After`. | Limit detection for API-style engines; `engine_errors.py` reads only CLI text today. | agent-freeduet | S |
 | Liveness probe and call guards | A listing is not proof an engine answers, so a short bounded probe decides. One `may_use(engine)` check that every call passes: no metered engine unless allowed and under caps, no silent move below the quality floor. | `probe()`; "metered never on by default". | agent-freeduet | S |
 | Per-engine environment | Builds the Claude Code child's environment from one engine's entry (base URL, one credential, model overrides) and from nothing else. | The Anthropic-compatible class (section 4). | agent-freeduet | S |
