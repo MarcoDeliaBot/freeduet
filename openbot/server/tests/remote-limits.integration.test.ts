@@ -724,12 +724,13 @@ describe("the live screen, which the server upgrades itself", () => {
   });
 
   test("forged headers do not make it paired", async () => {
-    for (const headers of [
+    const forged: Record<string, string>[] = [
       { "x-forwarded-for": "127.0.0.1" },
       { "user-agent": "FreeDuet-Computer/1.0" },
       { "x-real-ip": "127.0.0.1" },
       { cookie: `${setup.sessions.admin}; freeduet_install_3001=nope` },
-    ]) {
+    ];
+    for (const headers of forged) {
       const answer = await send(port, path, {
         cookie: setup.sessions.admin,
         ...headers,

@@ -113,7 +113,7 @@ function registeredRoutes(): Route[] {
   };
   coworker.delivery = { authenticated: stub(), webhooks: stub() };
   args[34] = coworker;
-  const app = (createApp as (...values: unknown[]) => Hono)(...args);
+  const app = (createApp as unknown as (...values: unknown[]) => Hono)(...args);
   const seen = new Set<string>();
   const routes: Route[] = [];
   for (const route of app.routes) {
@@ -181,7 +181,7 @@ describe("every route the app registers is decided", () => {
         .sort(),
     ).toEqual(["ALL /*", "ALL /api/*"]);
   });
-}, 60_000);
+});
 
 // ---------------------------------------------------------------------------------------------------
 // What is allowed, pinned.
