@@ -26,6 +26,10 @@ import {
   personLanguageFrom,
 } from "./freeduet/person-language";
 import {
+  SIGNIN_ALLOWED_EMAILS_VARIABLE,
+  signInAllowedEmails,
+} from "./freeduet/signin-allowlist";
+import {
   type TranscriptionConfig,
   transcriptionConfig,
 } from "./dictation/config";
@@ -133,6 +137,12 @@ export type AuthConfig = {
    * `auth/email-domain.ts` for why the provider's own answer is not this question.
    */
   allowedEmailDomains: string[];
+  /**
+   * FreeDuet: the exact addresses this deployment admits, on top of the domain list and the provider.
+   * Present only when `SIGNIN_ALLOWED_EMAILS` is set, so a deployment that has not heard of it has the
+   * shape it always had. An address must pass each list that exists. See `freeduet/signin-allowlist.ts`.
+   */
+  allowedEmails?: string[];
   google?: OAuthClient;
   /**
    * `tenantId` decides who may sign in at all, so it is not a detail. `common` admits any Microsoft
@@ -939,6 +949,23 @@ function authConfig(
     );
   }
 
+  /*
+   * FreeDuet: who may sign in, by exact address. Unset is the deployment as it was; set, it refuses
+   * what cannot work (an entry that is no address, a multi-tenant Microsoft audience, an administrator
+   * or an address the domain list shuts out) at start-up. The rules are in freeduet/signin-allowlist.ts.
+   */
+  const audience = microsoft?.tenantId;
+  const allowedEmails = signInAllowedEmails(
+    optional(environment, SIGNIN_ALLOWED_EMAILS_VARIABLE),
+    {
+      initialAdminEmails,
+      allowedEmailDomains,
+      ...(audience !== undefined && namesNoDirectory(audience)
+        ? { multiTenantAudience: audience }
+        : {}),
+    },
+  );
+
   return {
     baseUrl,
     secret,
@@ -952,6 +979,7 @@ function authConfig(
         ["http://127.0.0.1:3010", "http://[::1]:3010", "http://localhost:3010"],
     initialAdminEmails,
     allowedEmailDomains,
+    ...(allowedEmails ? { allowedEmails } : {}),
     ...(google ? { google } : {}),
     ...(microsoft ? { microsoft } : {}),
     ...(okta ? { okta } : {}),

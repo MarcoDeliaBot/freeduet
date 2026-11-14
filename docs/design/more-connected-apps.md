@@ -1,6 +1,6 @@
 # Design: connected apps beyond today's few
 
-- Status: design only, no code change. Date: 2026-11-14. Base: origin/main at 452e060.
+- Status: design. Slices S1 and S2 (D33) are on main, through PR #156; nothing else is built. Date: 2026-11-14. Base: origin/main at 452e060.
 - Roadmap row: "Many more connected apps" [code: docs/ROADMAP.md:49], status In design.
 - Markers: `[code: path:line]` was read on origin/main at 452e060, paths from the repository root. `[doc: URL]` was read on 2026-11-14. `[assumed]` was not checked here; section 7 lists each one.
 - The golden rule ("keep the person's life simple": connecting an app must not need a developer console) comes from the brief. The phrase is not in the repository: a search of docs/, CLAUDE.md and README.md finds nothing [assumed].
@@ -18,7 +18,7 @@ Connectors
 - Dynamic client registration (RFC 7591) is an option of the user-OAuth kind [code: openbot/server/src/plugins/catalogue.ts:81-83]. Only Notion uses it: host mcp.notion.com, endpoints from the vendor's own discovery, registration at /register [code: openbot/server/src/plugins/catalogue.ts:502, 506-510, 517-518]. The two Google OAuth entries need a Google OAuth client [code: openbot/server/src/plugins/catalogue.ts:369-370, 421-422]; among the OAuth entries, only Notion registers its client on the fly.
 - Gmail has two routes. OAuth (google-workspace) asks for gmail.readonly, gmail.send and calendar.readonly [code: openbot/server/src/plugins/catalogue.ts:432-434] and lists gmail_send_reply and gmail_send_message as writes [code: openbot/server/src/plugins/catalogue.ts:454]. The app-password route (google-imap) needs no console, but needs 2-Step Verification and opens the whole mailbox [code: docs/M1_PLAN.md:125, 131]. Neither route has a calendar write tool [code: openbot/server/src/plugins/catalogue.ts:454, 489].
 - Google Drive asks for drive.readonly [code: openbot/server/src/plugins/catalogue.ts:375] and lists two write tools, create_file and copy_file [code: openbot/server/src/plugins/catalogue.ts:393]. Either the writes cannot succeed, or the real scope is wider than the entry says [assumed; to check].
-- Eight of the eleven entries carry a readTools list [code: openbot/server/src/plugins/catalogue.ts:266, 279, 292, 306, 319, 332, 449, 484]. google-drive, notion and routines do not [code: openbot/server/src/plugins/catalogue.ts:337-563].
+- Every entry has a required readTools list (D33) [code: openbot/server/src/plugins/catalogue.ts:177]. A tool an entry does not name as a read is a write, which goes to the approval gate [code: openbot/server/src/plugins/catalogue.ts:859].
 
 Classification and the gate
 - A tool is a write when it is not advertised, when it is on the write list, when its entry has a readTools list and the tool is not on it, or when a recorded vendor label is anything but exactly "read" [code: openbot/server/src/plugins/catalogue.ts:817-826]. A server added by URL has no entry, so its tools are writes [code: openbot/server/src/plugins/catalogue.ts:827-829]. Otherwise a curated tool is a read [code: openbot/server/src/plugins/catalogue.ts:832].

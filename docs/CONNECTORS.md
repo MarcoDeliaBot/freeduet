@@ -57,7 +57,7 @@ Desktop programs such as Photoshop or Cricut Design Space run on the person's ow
 | **Messaging** | WhatsApp Business Platform | Paid per conversation | Official API | M5 | The supported WhatsApp route. |
 | **Messaging** | OpenWA | Free | Optional plugin | M5 | Unofficial: WhatsApp may block the number. Off by default, with a clear warning; never part of the core. |
 | **Messaging** | Telegram | Free | Bot API | M5 | |
-| **Messaging** | Slack, Microsoft Teams, SMS | Free and paid | Already in OpenBot | v0.1 | |
+| **Messaging** | Slack, Microsoft Teams, SMS | Free and paid | Already in OpenBot, as chat channels | v0.1 | Slack's connector was removed from the curated catalogue, because each entry was a reviewed source contract for a vendor nobody had connected; re-adding it is a review of that vendor |
 
 ## The ArtCraft suite: a free creative studio inside every member's computer
 

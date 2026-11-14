@@ -1214,7 +1214,7 @@ describe("each missing tool triggers exactly its own install step", () => {
   );
 
   test(
-    "Docker on WSL without systemd is started with service, and the plan says it will not start by itself",
+    "Docker without systemd (WSL 2 with systemd off): the packages go in, then the installer stops at the start, says why, and runs no service command",
     async () => {
       const machine = await build({
         missing: ["docker"],
@@ -1228,11 +1228,19 @@ describe("each missing tool triggers exactly its own install step", () => {
 
       const result = await machine.run(["--yes"]);
 
-      expect(result.exitCode).toBe(3);
-      expect(await machine.sudo()).toContain("service docker start");
-      expect(await machine.log("systemctl.log")).toEqual([]);
+      // Ubuntu's docker.io ships no service script, so `service docker start` cannot start it here.
+      expect(result.exitCode).toBe(1);
       expect(result.stdout).toContain("does not run systemd");
-      expect(result.stdout).toContain("wsl --terminate");
+      expect(result.stderr).toContain("The Docker service is not running");
+      expect(result.stderr).toContain("wsl --shutdown");
+      expect(await machine.sudo()).toEqual([
+        UPDATE,
+        install(...DOCKER_PACKAGES),
+      ]);
+      expect(await machine.log("service.log")).toEqual([]);
+      expect(await machine.log("systemctl.log")).toEqual([]);
+      expect(await machine.log("usermod.log")).toEqual([]);
+      expect(await machine.started()).toBe("");
     },
     slow,
   );

@@ -21,6 +21,8 @@ Read these before changing anything:
 | `NOTICE.md` | Third-party code we carry and its licence |
 | `evals/team/README.md` | The team evals: cases, live runner, thresholds |
 
+`docs/M1_PLAN.md` sections are out of numeric order on purpose (parallel work): "the last section" means the last one in the file, which is section 22.
+
 ## Rules that never bend
 
 - **Logins first.** Members run on the person's subscription logins. A metered API is never first in
@@ -145,6 +147,7 @@ Mark (id `marketer`) was the first member added after v0.1, Cam (id `video`) the
 - `verify` aggregates the required jobs. The clean-start job (`openbot/scripts/freeduet-clean-start-check.sh`,
   no key, no sign-in) runs on main and on PRs labelled `full-ci`; `verify` requires it where it runs,
   and on other pull requests it is skipped and does not block.
+- `installer-clean-machine` runs `openbot/scripts/install.sh` in fresh `ubuntu:22.04` and `ubuntu:24.04` containers (no privilege, no Docker daemon), on main and on PRs labelled `full-ci`, like clean-start. Green means the installer stops at the Docker start with its reason, as built; it does not prove Docker, the first start or WSL (`docs/design/installer.md`, section 11).
 - Known intermittent failures, re-run once before investigating: the all-in-one `image` job
   (`migrate` races the embedded Postgres start, 57P03, issue #50) and the app keyboard tests in
   `app/tests/live-screen-keyboard.test.tsx`.
@@ -200,10 +203,12 @@ Mark (id `marketer`) was the first member added after v0.1, Cam (id `video`) the
 - The remaining gap in single-user mode is Docker Desktop: there containers appear as this machine's
   loopback, so who the person is still rests on network position alone. The planned fix, a
   per-installation secret, is tracked in `docs/ROADMAP.md`.
-- In the sandbox the app suite fails about 138 tests on plain main: menus and popups do not open under
-  happy-dom. Compare with main before blaming a change.
+- With `bun run generate:app-config` run first, `bun test app/` from `openbot/` passes in full on main: 2770 pass, 0 fail in 292 files (14 November 2026).
 - A fresh worktree also needs `bun run generate:app-config` from `openbot/` before the app tests,
   or the suite stops early with "Cannot find module '@/lib/generated/application-config'".
+- In this sandbox Playwright needs `PLAYWRIGHT_BROWSERS_PATH=/tmp/pn-pw-browsers`: `/opt/pw-browsers` holds Chromium 1243, and Playwright 1.62 asks for revision 1234, which only the shim maps.
+- CI runs the `agent-freeduet` and `python harness regressions` jobs on Python 3.12; this sandbox's default `python3` is 3.13.
+- `bun test <x>` filters by a substring of the file path, run from `openbot/`: `bun test freeduet-team-file` ran one file, 57 tests.
 - `bun run typecheck:tests` covers `server/tests` only. Three server tests fail in the sandbox on
   plain main (the two `learning-*` "real provider" tests and the Mastra bridge): compare with main.
 - The Python harness (`openbot/agent-microsoft/requirements.txt`) is pinned since 2026-11-12: an
@@ -294,3 +299,6 @@ Mark (id `marketer`) was the first member added after v0.1, Cam (id `video`) the
   ends and the stack dies.
 - Start such scripts hidden from PowerShell with `Start-Process -WindowStyle Hidden wsl ...`.
 - Write multi-line logic into a `.sh` file and run it. Inline regex through PowerShell breaks.
+- A Windows watchdog restarts the stack whenever port 3010 stops answering. Before an update, expect it: stopping the
+  stack by hand makes it run its own `start.sh` within a minute, and two starts collide once (container name conflict)
+  before one wins. Back up the database first (`pg_dump -Fc` from the postgres container), then update.

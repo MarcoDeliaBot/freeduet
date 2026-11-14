@@ -10,6 +10,10 @@
  * It implements the transport interface as module-level exports, as `builtin-routines.ts` does, because
  * `transportFor` resolves a kind to a module. The store arrives once, through {@link useSettingsTools}.
  */
+import {
+  CHANGE_SETTING_TOOL,
+  settingChangeResult,
+} from "@openbot/shared/setting-change";
 import { decideSettingRequest } from "../settings-in-chat/allow-list";
 import {
   type SettingChanges,
@@ -17,7 +21,7 @@ import {
 } from "../settings-in-chat/changes";
 import type { McpCallResult, McpTool } from "./mcp";
 
-export const CHANGE_SETTING_TOOL = "change_setting";
+export { CHANGE_SETTING_TOOL };
 
 let installed: SettingChanges | null = null;
 
@@ -130,8 +134,19 @@ export async function callTool(
         isError: false,
         truncated: false,
       };
+    // The card in the app is drawn from this result (shared/setting-change.ts), so it is structured. The
+    // note is the sentence the member reads.
     return {
-      text: `Done: notifications for this Bot went from ${outcome.previousValue} to ${outcome.newValue}. The change is recorded as ${outcome.changeId}, so it can be undone.`,
+      text: settingChangeResult(
+        {
+          changeId: outcome.changeId,
+          agentId: outcome.agentId,
+          setting: outcome.setting,
+          previousValue: outcome.previousValue,
+          newValue: outcome.newValue,
+        },
+        `Done: notifications for this Bot went from ${outcome.previousValue} to ${outcome.newValue}. The change is recorded as ${outcome.changeId}, so it can be undone.`,
+      ),
       isError: false,
       truncated: false,
     };
