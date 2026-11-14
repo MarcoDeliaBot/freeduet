@@ -1,9 +1,9 @@
 /*
  * The engine a team eval run certifies (engine.ts, docs/ENGINES_PLAN.md section 9.1, slice 4): the name
  * the runner is given, checked against the eval stack's own report before anything is created, the
- * engine each case records (never the one asked for: the stack reports none), thresholds that stay with
- * one engine, and the engine name a public report carries. Offline: a scripted stack and a scripted
- * grader, no model and no eval stack.
+ * engine each case records (the one the stack lists alone, else unknown: the stack reports no engine per
+ * answer), thresholds that stay with one engine, and the engine name a public report carries. Offline: a
+ * scripted stack and a scripted grader, no model and no eval stack.
  */
 import { describe, expect, test } from "bun:test";
 import { mkdtemp, readdir, readFile, rm, writeFile } from "node:fs/promises";
@@ -11,7 +11,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import {
   askTheStack,
-  assertOneEngine,
+  attributeAnswers,
   checkEngine,
   chooseEngine,
   DEFAULT_ENGINE,
@@ -38,6 +38,10 @@ const ready: StackEngine = {
   installed: true,
 };
 const answer = (...engines: StackEngine[]): StackAnswer => ({ engines });
+
+/** What the check says of Claude Code when the stack lists it alone. */
+const ALONE =
+  "claude-code is available on the eval stack (state ready). The stack lists claude-code alone, so it ran every turn (docs/M1_PLAN.md, D34 point 1), and each case records it.";
 
 /** A fetch that answers with `reply` and records the address, the agent token and the redirect rule of each request. */
 function stubFetch(reply: () => Response) {
@@ -344,41 +348,53 @@ describe("the verdict on the chosen engine", () => {
 });
 
 describe("checking the engine before a run", () => {
-  test("the default engine is not asked about: nothing is sent", async () => {
-    const { fetchImpl, seen } = stubFetch(() => Response.json({ engines: [] }));
-    const line = await checkEngine(
+  test("the default engine is asked about too: a stack that lists Claude Code alone gives its check, which main's output does not show", async () => {
+    const { fetchImpl, seen } = stubFetch(() => Response.json({ engines: [ready] }));
+    const check = await checkEngine(
       { name: DEFAULT_ENGINE, from: "default" },
       { MANAGED_AGENT_AG_UI_URL: "http://agent.test/", MANAGED_AGENT_TOKEN: "t" },
       fetchImpl,
     );
-    expect(line).toBe(
-      "claude-code is the default engine, not checked against the eval stack.",
-    );
-    expect(seen).toEqual([]);
+    expect(check).toEqual({
+      text: ALONE,
+      answeredBy: "claude-code",
+      unchangedFromMain: true,
+    });
+    expect(seen.map((request) => request.url)).toEqual([
+      "http://agent.test/engines",
+    ]);
   });
 
-  test("without the agent's address, or without its token, the check is not done and says which setting is missing", async () => {
+  test("without the agent's address, or without its token, the check is not done and says which setting is missing; each case records unknown", async () => {
     const choice: EngineChoice = { name: "cli-test", from: "flag" };
-    expect(await checkEngine(choice, {})).toBe(
-      "cli-test was not checked against the eval stack: the settings name no agent address (MANAGED_AGENT_AG_UI_URL).",
+    expect(await checkEngine(choice, {})).toEqual({
+      text: "cli-test was not checked against the eval stack: the settings name no agent address (MANAGED_AGENT_AG_UI_URL). The stack's list of engines could not be read, so each case records its answering engine as unknown.",
+      answeredBy: UNKNOWN_ENGINE,
+      unchangedFromMain: false,
+    });
+    const noToken = await checkEngine(choice, {
+      MANAGED_AGENT_AG_UI_URL: "http://agent.test/",
+    });
+    expect(noToken.text).toBe(
+      "cli-test was not checked against the eval stack: the settings hold no agent token (MANAGED_AGENT_TOKEN). The stack's list of engines could not be read, so each case records its answering engine as unknown.",
     );
-    expect(
-      await checkEngine(choice, { MANAGED_AGENT_AG_UI_URL: "http://agent.test/" }),
-    ).toBe(
-      "cli-test was not checked against the eval stack: the settings hold no agent token (MANAGED_AGENT_TOKEN).",
-    );
+    expect(noToken.answeredBy).toBe(UNKNOWN_ENGINE);
   });
 
-  test("an available engine passes with its check line, and the token goes to the agent only", async () => {
+  test("an available engine passes with its check, and the token goes to the agent only", async () => {
     const { fetchImpl, seen } = stubFetch(() =>
       Response.json({ engines: [ready] }),
     );
-    const line = await checkEngine(
+    const check = await checkEngine(
       { name: "claude-code", from: "flag" },
       { MANAGED_AGENT_AG_UI_URL: "http://agent.test:4231/", MANAGED_AGENT_TOKEN: "tok-9" },
       fetchImpl,
     );
-    expect(line).toBe("claude-code is available on the eval stack (state ready).");
+    expect(check).toEqual({
+      text: ALONE,
+      answeredBy: "claude-code",
+      unchangedFromMain: false,
+    });
     expect(seen).toEqual([
       {
         url: "http://agent.test:4231/engines",
@@ -400,6 +416,58 @@ describe("checking the engine before a run", () => {
     await expect(
       checkEngine({ name: "codex", from: "env" }, env, fetchImpl),
     ).rejects.toThrow("named by FREEDUET_EVAL_ENGINE");
+  });
+
+  test("the default engine is refused before anything is created when the stack does not list Claude Code", async () => {
+    const { fetchImpl } = stubFetch(() =>
+      Response.json({ engines: [{ ...ready, id: "codex" }] }),
+    );
+    await expect(
+      checkEngine(
+        { name: DEFAULT_ENGINE, from: "default" },
+        { MANAGED_AGENT_AG_UI_URL: "http://agent.test/", MANAGED_AGENT_TOKEN: "t" },
+        fetchImpl,
+      ),
+    ).rejects.toThrow(
+      'The eval stack has no engine "claude-code", which a run without --engine or FREEDUET_EVAL_ENGINE certifies: its engines are codex. Nothing was created.',
+    );
+  });
+
+  test("the default engine is not refused when the stack lists it but cannot run it now: its cases show the limit, as before", async () => {
+    const limited: StackEngine = {
+      ...ready,
+      state: "open",
+      available: false,
+      limited_until: "2026-11-15T09:00:00+00:00",
+    };
+    const { fetchImpl } = stubFetch(() => Response.json({ engines: [limited] }));
+    const check = await checkEngine(
+      { name: DEFAULT_ENGINE, from: "default" },
+      { MANAGED_AGENT_AG_UI_URL: "http://agent.test/", MANAGED_AGENT_TOKEN: "t" },
+      fetchImpl,
+    );
+    expect(check.answeredBy).toBe("claude-code");
+    expect(check.unchangedFromMain).toBe(true);
+    expect(check.text).toContain(
+      "claude-code is not available on the eval stack: it has hit its limit until 2026-11-15T09:00:00+00:00.",
+    );
+  });
+
+  test("two engines listed: each case records unknown, for the default and for a chosen engine, and the check says which engines the stack lists", async () => {
+    const codex: StackEngine = { id: "codex", state: "ready", available: true, installed: true };
+    const { fetchImpl } = stubFetch(() => Response.json({ engines: [ready, codex] }));
+    const env = { MANAGED_AGENT_AG_UI_URL: "http://agent.test/", MANAGED_AGENT_TOKEN: "t" };
+    const expected = {
+      text: "claude-code is available on the eval stack (state ready). The stack lists 2 engines (claude-code, codex). A member's chain and pin decide which one runs a turn, and the list shows neither, so each case records its answering engine as unknown.",
+      answeredBy: UNKNOWN_ENGINE,
+      unchangedFromMain: false,
+    };
+    expect(
+      await checkEngine({ name: DEFAULT_ENGINE, from: "default" }, env, fetchImpl),
+    ).toEqual(expected);
+    expect(
+      await checkEngine({ name: "claude-code", from: "flag" }, env, fetchImpl),
+    ).toEqual(expected);
   });
 });
 
@@ -438,34 +506,54 @@ describe("a regrade and the thresholds keep to one engine", () => {
     ).toContain("FREEDUET_EVAL_ENGINE codex cannot apply");
   });
 
-  test("a case the stack names as answered by another engine is refused; unknown is not another engine", () => {
-    const cases = [
-      { transcript: { engine: UNKNOWN_ENGINE } },
-      { transcript: { engine: "claude-code" } },
-    ];
-    expect(() => assertOneEngine(cases, "claude-code")).not.toThrow();
-    expect(() =>
-      assertOneEngine([...cases, { transcript: { engine: "codex" } }], "claude-code"),
-    ).toThrow(
-      "a case was answered by codex, not by claude-code: the thresholds of one run are for one engine, so no report is written.",
+  test("the Engine line says what the check said and which engine the answers are attributed to; a regrade keeps the text its report recorded", () => {
+    expect(
+      engineNote({ engine: "claude-code", text: ALONE, regraded: false }),
+    ).toBe(
+      `Engine: claude-code. ${ALONE} The thresholds are for claude-code, the engine this run certifies, and say nothing about any other engine.`,
+    );
+    expect(
+      engineNote({ engine: "claude-code", text: ALONE, regraded: true }),
+    ).toBe(
+      `Engine: claude-code. ${ALONE} A regrade calls no member, so the stack was not asked again.`,
     );
   });
+});
 
-  test("the Engine line says what the check said and what the answers are not attributed to", () => {
+describe("which engine answered each case", () => {
+  test("one engine listed: it ran every turn, whatever its state, and each case records it", () => {
+    expect(attributeAnswers(answer(ready))).toEqual({
+      answeredBy: "claude-code",
+      alone: true,
+      note: "The stack lists claude-code alone, so it ran every turn (docs/M1_PLAN.md, D34 point 1), and each case records it.",
+    });
     expect(
-      engineNote({
-        engine: "claude-code",
-        check: "claude-code is available on the eval stack (state ready).",
-        regraded: false,
-      }),
-    ).toBe(
-      "Engine: claude-code. claude-code is available on the eval stack (state ready). The stack reports no engine per answer, so each case records its answering engine as unknown. The thresholds are for claude-code, the engine this run certifies, and say nothing about any other engine.",
-    );
+      attributeAnswers(answer({ ...ready, state: "open", available: false })),
+    ).toMatchObject({ answeredBy: "claude-code", alone: true });
+  });
+
+  test("two or more engines listed: unknown, whichever of them can run now", () => {
+    const codex: StackEngine = { ...ready, id: "codex" };
+    expect(attributeAnswers(answer(ready, codex))).toEqual({
+      answeredBy: UNKNOWN_ENGINE,
+      alone: false,
+      note: "The stack lists 2 engines (claude-code, codex). A member's chain and pin decide which one runs a turn, and the list shows neither, so each case records its answering engine as unknown.",
+    });
+  });
+
+  test("a list that cannot be read is unknown; a list with no engine attributes no answer", () => {
     expect(
-      engineNote({ engine: "claude-code", check: undefined, regraded: true }),
-    ).toBe(
-      "Engine: claude-code. The saved report kept no engine check. A regrade calls no member, so the stack was not asked again.",
-    );
+      attributeAnswers({ problem: "the agent answered HTTP 404" }),
+    ).toEqual({
+      answeredBy: UNKNOWN_ENGINE,
+      alone: false,
+      note: "The stack's list of engines could not be read, so each case records its answering engine as unknown.",
+    });
+    expect(attributeAnswers(answer())).toEqual({
+      answeredBy: UNKNOWN_ENGINE,
+      alone: false,
+      note: "The stack lists no engine, so no answer is attributed.",
+    });
   });
 });
 
@@ -732,7 +820,7 @@ describe("the runner against the eval stack", () => {
   );
 
   test(
-    "an available engine runs: its report names the engine, the check and the answering engine as unknown; the public report and a regrade keep the engine",
+    "an available engine runs: its report names the engine, the check, and the engine that answered each case; the public report and a regrade keep the engine",
     () =>
       withCases(async (dir) => {
         const stack = scriptedStack({ engines: [ready] });
@@ -745,20 +833,19 @@ describe("the runner against the eval stack", () => {
           expect(live.code).toBe(0);
           expect(live.stderr).toBe("");
           expect(live.stdout).toContain(
-            "Engine: claude-code is available on the eval stack (state ready).",
+            `Engine: claude-code. ${ALONE} The thresholds are for claude-code, the engine this run certifies, and say nothing about any other engine.`,
           );
           const report = JSON.parse(
             live.files[`${TODAY}-claude-code.json`] ?? "null",
           );
           expect(report).toMatchObject({
             engine: "claude-code",
-            engineCheck:
-              "claude-code is available on the eval stack (state ready).",
+            engineCheck: ALONE,
           });
-          expect(report.cases[0].transcript.engine).toBe(UNKNOWN_ENGINE);
+          expect(report.cases[0].transcript.engine).toBe("claude-code");
           const markdown = live.files[`${TODAY}-claude-code.md`] ?? "";
           expect(markdown).toContain(
-            "Engine: claude-code. claude-code is available on the eval stack (state ready). The stack reports no engine per answer, so each case records its answering engine as unknown.",
+            `Engine: claude-code. ${ALONE} The thresholds are for claude-code, the engine this run certifies, and say nothing about any other engine.`,
           );
           expect(markdown).toContain("**Thresholds: PASS**");
 
@@ -818,11 +905,10 @@ describe("the runner against the eval stack", () => {
             JSON.parse(regraded.files[`${name}.json`] ?? "null"),
           ).toMatchObject({
             engine: "claude-code",
-            engineCheck:
-              "claude-code is available on the eval stack (state ready).",
+            engineCheck: ALONE,
           });
           expect(regraded.files[`${name}.md`]).toContain(
-            "Engine: claude-code. claude-code is available on the eval stack (state ready). A regrade calls no member, so the stack was not asked again.",
+            `Engine: claude-code. ${ALONE} A regrade calls no member, so the stack was not asked again.`,
           );
         } finally {
           stack.stop();
@@ -843,17 +929,16 @@ describe("the runner against the eval stack", () => {
             agentEnv(stack.url, "tok-engine"),
           );
           expect(out.code).toBe(0);
-          expect(out.stdout).toContain(
-            "Engine: cli-test was not checked against the eval stack: the agent answered HTTP 404.",
-          );
+          const unreadable =
+            "cli-test was not checked against the eval stack: the agent answered HTTP 404. The stack's list of engines could not be read, so each case records its answering engine as unknown.";
+          expect(out.stdout).toContain(`Engine: cli-test. ${unreadable}`);
           const report = JSON.parse(
             out.files[`${TODAY}-cli-test.json`] ?? "null",
           );
-          expect(report.engineCheck).toBe(
-            "cli-test was not checked against the eval stack: the agent answered HTTP 404.",
-          );
+          expect(report.engineCheck).toBe(unreadable);
+          expect(report.cases[0].transcript.engine).toBe(UNKNOWN_ENGINE);
           expect(out.files[`${TODAY}-cli-test.md`]).toContain(
-            "Engine: cli-test. cli-test was not checked against the eval stack: the agent answered HTTP 404.",
+            `Engine: cli-test. ${unreadable} The thresholds are for cli-test, the engine this run certifies, and say nothing about any other engine.`,
           );
         } finally {
           stack.stop();
@@ -863,7 +948,7 @@ describe("the runner against the eval stack", () => {
   );
 
   test(
-    "the default engine is not asked about, even with the stack's address and token set",
+    "a default run asks the stack, and on a stack that lists Claude Code alone it prints and reports what main did: no Engine line, no check, and each case records claude-code",
     () =>
       withCases(async (dir) => {
         const stack = scriptedStack({ engines: [ready] });
@@ -874,19 +959,105 @@ describe("the runner against the eval stack", () => {
             agentEnv(stack.url, "tok-engine"),
           );
           expect(out.code).toBe(0);
-          expect(
-            stack.seen.some((request) => request.path === "/engines"),
-          ).toBe(false);
-          expect(out.stdout).toContain(
-            "Engine: claude-code is the default engine, not checked against the eval stack.",
+          expect(out.stderr).toBe("");
+          expect(stack.seen).toContainEqual({
+            method: "GET",
+            path: "/engines",
+            token: "tok-engine",
+          });
+          expect(out.stdout).not.toContain("Engine:");
+          const markdown = out.files[`${TODAY}-claude-code.md`] ?? "";
+          expect(markdown).not.toContain("Engine:");
+          expect(markdown).toContain("**Thresholds: PASS**");
+          const report = JSON.parse(
+            out.files[`${TODAY}-claude-code.json`] ?? "null",
           );
-          expect(out.files[`${TODAY}-claude-code.md`]).toContain(
-            "**Thresholds: PASS**",
+          expect(report).not.toHaveProperty("engineCheck");
+          expect(report).toMatchObject({ engine: "claude-code" });
+          expect(report.cases[0].transcript.engine).toBe("claude-code");
+        } finally {
+          stack.stop();
+        }
+      }),
+    LIVE,
+  );
+
+  test(
+    "a default run on a stack that lists two engines records unknown for each case, and says why",
+    () =>
+      withCases(async (dir) => {
+        const stack = scriptedStack({
+          engines: [ready, { ...ready, id: "codex" }],
+        });
+        try {
+          const out = await runIn(
+            dir,
+            liveArgs(dir, stack.url, []),
+            agentEnv(stack.url, "tok-engine"),
+          );
+          expect(out.code).toBe(0);
+          expect(out.stdout).toContain(
+            "Engine: claude-code. claude-code is available on the eval stack (state ready). The stack lists 2 engines (claude-code, codex). A member's chain and pin decide which one runs a turn, and the list shows neither, so each case records its answering engine as unknown.",
           );
           const report = JSON.parse(
             out.files[`${TODAY}-claude-code.json`] ?? "null",
           );
           expect(report.cases[0].transcript.engine).toBe(UNKNOWN_ENGINE);
+          expect(out.files[`${TODAY}-claude-code.md`]).toContain(
+            "**Thresholds: PASS**",
+          );
+        } finally {
+          stack.stop();
+        }
+      }),
+    LIVE,
+  );
+
+  test(
+    "a default run on a stack that does not answer about its engines goes on, and each case records unknown",
+    () =>
+      withCases(async (dir) => {
+        const stack = scriptedStack("missing");
+        try {
+          const out = await runIn(
+            dir,
+            liveArgs(dir, stack.url, []),
+            agentEnv(stack.url, "tok-engine"),
+          );
+          expect(out.code).toBe(0);
+          expect(out.stdout).toContain(
+            "Engine: claude-code. claude-code was not checked against the eval stack: the agent answered HTTP 404. The stack's list of engines could not be read, so each case records its answering engine as unknown.",
+          );
+          const report = JSON.parse(
+            out.files[`${TODAY}-claude-code.json`] ?? "null",
+          );
+          expect(report.cases[0].transcript.engine).toBe(UNKNOWN_ENGINE);
+        } finally {
+          stack.stop();
+        }
+      }),
+    LIVE,
+  );
+
+  test(
+    "a default run is refused before anything is created when the stack does not list Claude Code",
+    () =>
+      withCases(async (dir) => {
+        const stack = scriptedStack({ engines: [{ ...ready, id: "codex" }] });
+        try {
+          const out = await runIn(
+            dir,
+            liveArgs(dir, stack.url, []),
+            agentEnv(stack.url, "tok-engine"),
+          );
+          expect(out.code).not.toBe(0);
+          expect(out.stderr).toContain(
+            'The eval stack has no engine "claude-code", which a run without --engine or FREEDUET_EVAL_ENGINE certifies: its engines are codex. Nothing was created.',
+          );
+          expect(stack.seen).toEqual([
+            { method: "GET", path: "/engines", token: "tok-engine" },
+          ]);
+          expect(out.files).toEqual({});
         } finally {
           stack.stop();
         }
@@ -917,7 +1088,7 @@ describe("the runner against the eval stack", () => {
             token: "tok-engine",
           });
           expect(out.stdout).toContain(
-            "Engine: cli-test is available on the eval stack (state ready).",
+            "Engine: cli-test. cli-test is available on the eval stack (state ready). The stack lists cli-test alone, so it ran every turn",
           );
           expect(out.files[`${TODAY}-cli-test.md`]).toContain(
             "Engine: cli-test.",

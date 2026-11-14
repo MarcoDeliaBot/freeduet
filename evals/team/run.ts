@@ -12,8 +12,9 @@
  *   bun --env-file=openbot/.env.eval evals/team/run.ts --engine claude-code   the engine this run certifies
  *
  * --engine (or FREEDUET_EVAL_ENGINE) is checked against the eval stack's own report of its engines
- * before anything is created, and refused when the stack has no such engine or cannot run it now
- * (engine.ts; README.md, "Which engine").
+ * before anything is created, and refused when the stack has no such engine or cannot run it now. The
+ * default engine is checked too, and refused only when the stack does not list it (engine.ts; README.md,
+ * "Which engine").
  *
  * Live runs go to the eval stack (openbot/scripts/freeduet-eval-stack.sh), never to the person's own
  * FreeDuet: a server whose user has more than a few conversations that are not evals is refused
@@ -73,10 +74,9 @@ import {
   runCaseLive,
 } from "./live";
 import {
-  assertOneEngine,
   checkEngine,
   chooseEngine,
-  DEFAULT_ENGINE,
+  type EngineCheck,
   type EngineChoice,
   engineNote,
   regradeClash,
@@ -566,7 +566,10 @@ export type SavedReport = {
   repeat?: number;
   computer?: { summary?: string };
   conversations?: string;
-  /** What the live run's engine check said (engine.ts `checkEngine`); absent in a fake report. */
+  /**
+   * What a live run's engine check said, and what it says about the answers (engine.ts `checkEngine`).
+   * Absent in a fake report, and in a default run on a stack that lists Claude Code alone (main's output).
+   */
   engineCheck?: string;
   regrade?: {
     runDate?: string;
@@ -1190,7 +1193,8 @@ async function main() {
     throw new Error(
       "--engine does not apply to --public: a public report keeps the engine of the report it is made from.",
     );
-  // A name given with --engine is checked in every mode (engine.ts); a live run's choice is made below.
+  // --engine is read here in every mode: a regrade compares it with its report (regradeClash), and a live run
+  // chooses below.
   const flagged =
     values.engine === undefined
       ? undefined
@@ -1247,17 +1251,17 @@ async function main() {
     return;
   }
 
-  // A live run certifies the engine chosen: --engine, else FREEDUET_EVAL_ENGINE, else Claude Code. A
-  // regrade keeps its report's engine and calls no member, so only an explicit --engine is looked at.
-  const choice: EngineChoice | undefined =
+  // A live run certifies the engine chosen: --engine, else FREEDUET_EVAL_ENGINE, else Claude Code. A fake run
+  // and a regrade keep no choice of their own: a regrade keeps its report's engine (regradeClash, below).
+  const choice: EngineChoice =
     values.fake || saved
-      ? flagged
+      ? chooseEngine({})
       : chooseEngine({ flag: values.engine, env: env.FREEDUET_EVAL_ENGINE });
   const engine = values.fake
     ? "fake"
     : saved
       ? (saved.engine ?? UNKNOWN_ENGINE)
-      : (choice?.name ?? DEFAULT_ENGINE);
+      : choice.name;
   const repeat = saved ? Math.max(1, saved.repeat ?? 1) : Number(values.repeat);
   if (!Number.isInteger(repeat) || repeat < 1)
     throw new Error("--repeat is a whole number of runs, 1 or more");
@@ -1281,8 +1285,8 @@ async function main() {
   let mode: string;
   let graderText: string;
   let selfTest: string[] | undefined;
-  /** A live run's engine check, as the report keeps it (engine.ts `checkEngine`). */
-  let engineCheck: string | undefined;
+  /** A live run's engine check (engine.ts `checkEngine`): what the report keeps, and which engine each case records. */
+  let engineCheck: EngineCheck | undefined;
   let computer: Parameters<typeof computerSummary>[1] = values.fake
     ? "fake"
     : "off";
@@ -1367,8 +1371,11 @@ async function main() {
       throw new Error("--max-real-conversations is a whole number");
     // The engine, checked against the eval stack's own report before anything is created: a refusal
     // here names the engines the stack has, and no conversation, memory or run exists yet.
-    engineCheck = await checkEngine(choice, env);
-    console.log(`Engine: ${engineCheck}`);
+    const check = await checkEngine(choice, env);
+    engineCheck = check;
+    // A default run on a stack that lists Claude Code alone prints what main printed: no Engine line.
+    if (!check.unchangedFromMain)
+      console.log(engineNote({ engine, text: check.text, regraded: false }));
     const cookie =
       env.FREEDUET_EVAL_COOKIE?.trim() || installCookie(server, env);
     await guardDeployment({
@@ -1422,7 +1429,7 @@ async function main() {
       async (c, run) => {
         const transcript = await runCaseLive(c, {
           server,
-          engine,
+          engine: check.answeredBy,
           cookie,
           timeoutMs,
           approvals: values.approvals as "deny" | "leave",
@@ -1449,10 +1456,7 @@ async function main() {
         );
         return result;
       },
-    );
-    // The thresholds below are for this engine alone: a case answered by another one is refused here.
-    assertOneEngine(results, engine);
-  }
+    );  }
 
   const summary = summarise(results, names);
   const date = today;
@@ -1468,16 +1472,17 @@ async function main() {
   const conversationsText = regradeInfo
     ? (saved?.conversations ?? "")
     : conversationsSummary(results);
-  // The engine check and its Engine line: a regrade keeps the check its saved report recorded; a fake
-  // run has none.
-  const checkKept = regradeInfo ? saved?.engineCheck : engineCheck;
-  const engineLine = values.fake
-    ? undefined
-    : engineNote({
-        engine,
-        check: checkKept,
-        regraded: regradeInfo !== undefined,
-      });
+  // What the report keeps of the engine check, and its Engine line. A regrade keeps the text its saved report
+  // recorded. A fake run has none, and neither does a default run on a stack that lists Claude Code alone.
+  const kept = regradeInfo
+    ? saved?.engineCheck
+    : engineCheck && !engineCheck.unchangedFromMain
+      ? engineCheck.text
+      : undefined;
+  const engineLine =
+    values.fake || kept === undefined
+      ? undefined
+      : engineNote({ engine, text: kept, regraded: regradeInfo !== undefined });
   const outDir = values.out ?? PATHS.reports;
   await mkdir(outDir, { recursive: true });
   const report = reportOf({
@@ -1495,7 +1500,7 @@ async function main() {
           summary: computerText,
         },
     conversations: conversationsText,
-    engineCheck: checkKept,
+    engineCheck: kept,
     summary,
     selfTest,
     regrade: regradeInfo,

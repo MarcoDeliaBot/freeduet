@@ -1,20 +1,22 @@
 /*
  * Which engine a team eval run certifies (docs/ENGINES_PLAN.md section 9.1, slice 4).
  *
- *   --engine <name>, else FREEDUET_EVAL_ENGINE, else claude-code. The default is not a choice, so it
- *   is not checked. A chosen name is checked before anything is created, against the eval stack's own
- *   report of its engines (GET /engines on its agent-freeduet, at the address and with the token the
- *   eval settings name). A name the stack does not run, or runs but cannot run now, is refused with a
- *   plain message. A stack that does not answer leaves the check not done, and the report says so.
+ *   --engine <name>, else FREEDUET_EVAL_ENGINE, else claude-code. Every live run asks the eval stack's agent
+ *   (GET /engines, with the token the eval settings hold) before anything is created, the default run too. A
+ *   chosen name the stack does not run, or runs but cannot run now, is refused in plain words. The default is
+ *   refused only when the stack does not list claude-code at all: a Claude Code that is limited runs as it
+ *   always did, and its cases show the limit. A stack that does not answer leaves the check not done.
  *
- * What the stack does not report: which engine answered a case. agent-freeduet's run events name no
- * engine, and its engine state is kept per engine, not per turn. So every case records its answering
- * engine as UNKNOWN_ENGINE, never as the engine the run asked for. The thresholds of a run are for the
- * one engine it asked to certify, and a certification never carries over to another engine.
+ * Which engine answered each case. agent-freeduet's run events name no engine, so the runner works it out
+ * from the stack's own list (attributeAnswers). With ONE engine listed, that engine ran every turn: a member
+ * with one engine and no pin runs no router (docs/M1_PLAN.md, D34 point 1), and a pin can name only an engine
+ * the service runs. Each case records that engine. With two or more listed, or a list that cannot be read,
+ * each case records UNKNOWN_ENGINE: a member's chain and pin decide which engine runs a turn, and the list
+ * shows neither. The thresholds of a run are for the one engine it certifies, and a certification never
+ * carries over to another engine.
  *
- * What the runner does not do: set the engine a member's chain uses on the stack. That needs
- * agent-freeduet and the server to honour a per-run choice, which is not built here (README.md, "Which
- * engine").
+ * What the runner does not do: set the engine a member's chain uses on the stack. That needs agent-freeduet
+ * and the server to honour a per-run choice, which is not built here (README.md, "Which engine").
  */
 
 /** How a case's answering engine is recorded when the stack does not say which engine answered it. */
@@ -171,8 +173,8 @@ export function engineVerdict(name: string, answer: StackAnswer): EngineVerdict 
 }
 
 /**
- * The refusal a verdict makes, or undefined when the run may go on. It is raised before the run
- * creates anything: before the deployment guard, the memories and the first conversation.
+ * The refusal a verdict makes for a chosen engine, or undefined when the run may go on. It is raised before
+ * the run creates anything: before the deployment guard, the memories and the first conversation.
  */
 export function engineRefusal(
   name: string,
@@ -184,6 +186,15 @@ export function engineRefusal(
   if (verdict.verdict === "unavailable")
     return `"${name}" is not available on the eval stack: ${verdict.why}. Nothing was created. Make it available there, or name another engine.`;
   return undefined;
+}
+
+/**
+ * The refusal for the default engine. It is made only when the stack does not list Claude Code at all: a limited
+ * Claude Code runs as it always did, and a stack without it cannot have its cases certified as Claude Code's.
+ */
+function defaultRefusal(verdict: EngineVerdict): string | undefined {
+  if (verdict.verdict !== "absent") return undefined;
+  return `The eval stack has no engine "${DEFAULT_ENGINE}", which a run without --engine or FREEDUET_EVAL_ENGINE certifies: ${verdict.engines.length ? `its engines are ${verdict.engines.join(", ")}` : "it reports no engines"}. Nothing was created. Name one of its engines with --engine or FREEDUET_EVAL_ENGINE.`;
 }
 
 /** The sentence the console and the report keep about a check that did not refuse. */
@@ -201,6 +212,45 @@ export function engineCheckText(name: string, verdict: EngineVerdict): string {
 }
 
 /**
+ * Which engine ran the turns of a run, from the stack's own list. The list holds the engines the service has a
+ * breaker for: the one it registers at start-up, and any a turn has been asked about. One engine listed: it ran
+ * every turn, so each case records it (docs/M1_PLAN.md, D34 point 1). Two or more: the list does not say which
+ * one a member's turn used, so each case records UNKNOWN_ENGINE. A list that cannot be read is unknown too.
+ * `alone` says the list held exactly one engine.
+ */
+export function attributeAnswers(answer: StackAnswer): {
+  answeredBy: string;
+  alone: boolean;
+  note: string;
+} {
+  if ("problem" in answer)
+    return {
+      answeredBy: UNKNOWN_ENGINE,
+      alone: false,
+      note: "The stack's list of engines could not be read, so each case records its answering engine as unknown.",
+    };
+  const ids = answer.engines.map((engine) => engine.id);
+  const [only] = ids;
+  if (ids.length === 1 && only !== undefined)
+    return {
+      answeredBy: only,
+      alone: true,
+      note: `The stack lists ${only} alone, so it ran every turn (docs/M1_PLAN.md, D34 point 1), and each case records it.`,
+    };
+  if (ids.length === 0)
+    return {
+      answeredBy: UNKNOWN_ENGINE,
+      alone: false,
+      note: "The stack lists no engine, so no answer is attributed.",
+    };
+  return {
+    answeredBy: UNKNOWN_ENGINE,
+    alone: false,
+    note: `The stack lists ${ids.length} engines (${ids.join(", ")}). A member's chain and pin decide which one runs a turn, and the list shows neither, so each case records its answering engine as unknown.`,
+  };
+}
+
+/**
  * A regrade calls no member and keeps the engine its report was run on. A chosen engine that is not
  * that one is refused, so a regraded report never changes whose certification it is.
  */
@@ -214,39 +264,31 @@ export function regradeClash(input: {
   return `${input.report} was run on ${input.ran}. A regrade keeps that engine, so ${source} ${input.chosen.name} cannot apply: leave it out, or name ${input.ran}.`;
 }
 
-/**
- * The thresholds of a live run are for one engine. A case the stack names as answered by another
- * engine is refused rather than counted here. "unknown" is not another engine: it names none, and the
- * report says the answers are not attributed.
- */
-export function assertOneEngine(
-  results: readonly { transcript: { engine: string } }[],
-  engine: string,
-): void {
-  const other = results.find((result) => {
-    const answered = result.transcript.engine;
-    return answered !== UNKNOWN_ENGINE && answered !== engine;
-  })?.transcript.engine;
-  if (other !== undefined)
-    throw new Error(
-      `a case was answered by ${other}, not by ${engine}: the thresholds of one run are for one engine, so no report is written. Run each engine on its own.`,
-    );
-}
+/** What a live run's check keeps: the sentences its report shows, and the engine each case records. */
+export type EngineCheck = {
+  /** What the check said about the chosen engine, and what the stack's list says about the answers. */
+  text: string;
+  /** The engine each case records as answering it: the one engine the stack lists alone, else UNKNOWN_ENGINE. */
+  answeredBy: string;
+  /**
+   * A default run on a stack that lists Claude Code alone: its console, its report and its Engine line are
+   * exactly main's, so nothing of the check is shown (the cases still record claude-code).
+   */
+  unchangedFromMain: boolean;
+};
 
 /**
- * Checks the chosen engine against the eval stack's report, before anything is created, and returns
- * the sentence the report keeps. It throws the refusal when the stack has no such engine or cannot run
- * it now. The default is not a choice and is not asked about. The address and the token are the eval
- * stack's own settings (MANAGED_AGENT_AG_UI_URL and MANAGED_AGENT_TOKEN, written by
- * openbot/scripts/freeduet-eval-stack.sh); the token goes to that agent only.
+ * Checks the chosen engine against the eval stack's report before anything is created, and returns what the
+ * report keeps. It throws the refusal when the stack does not run the chosen engine, or cannot run it now; for
+ * the default, only when the stack does not list it at all. The address and the token are the eval stack's own
+ * settings (MANAGED_AGENT_AG_UI_URL and MANAGED_AGENT_TOKEN, written by openbot/scripts/freeduet-eval-stack.sh);
+ * the token goes to that agent only.
  */
 export async function checkEngine(
-  choice: EngineChoice | undefined,
+  choice: EngineChoice,
   env: Readonly<Record<string, string | undefined>>,
   fetchImpl?: typeof fetch,
-): Promise<string> {
-  if (choice === undefined || choice.from === "default")
-    return `${DEFAULT_ENGINE} is the default engine, not checked against the eval stack.`;
+): Promise<EngineCheck> {
   const agentUrl = env.MANAGED_AGENT_AG_UI_URL?.trim();
   const token = env.MANAGED_AGENT_TOKEN?.trim();
   const answer: StackAnswer = !agentUrl
@@ -256,21 +298,29 @@ export async function checkEngine(
       : await askTheStack({ agentUrl, token, fetchImpl });
   const verdict = engineVerdict(choice.name, answer);
   const source = choice.from === "env" ? "FREEDUET_EVAL_ENGINE" : "--engine";
-  const refusal = engineRefusal(choice.name, verdict, source);
+  const refusal =
+    choice.from === "default"
+      ? defaultRefusal(verdict)
+      : engineRefusal(choice.name, verdict, source);
   if (refusal !== undefined) throw new Error(refusal);
-  return engineCheckText(choice.name, verdict);
+  const attribution = attributeAnswers(answer);
+  return {
+    text: `${engineCheckText(choice.name, verdict)} ${attribution.note}`,
+    answeredBy: attribution.answeredBy,
+    unchangedFromMain: choice.from === "default" && attribution.alone,
+  };
 }
 
 /**
- * The report's Engine line: the engine, what the check said, and what the report can and cannot say
- * about its answers. A regraded report keeps the check its saved report recorded: no member is called.
+ * The Engine line of a live run, in the console and in the report, or of a regrade. A regrade calls no member
+ * and keeps the text its saved report recorded: the stack is not asked again.
  */
 export function engineNote(input: {
   engine: string;
-  check: string | undefined;
+  text: string;
   regraded: boolean;
 }): string {
   if (input.regraded)
-    return `Engine: ${input.engine}. ${input.check ?? "The saved report kept no engine check."} A regrade calls no member, so the stack was not asked again.`;
-  return `Engine: ${input.engine}. ${input.check ?? "Not checked against the eval stack."} The stack reports no engine per answer, so each case records its answering engine as ${UNKNOWN_ENGINE}. The thresholds are for ${input.engine}, the engine this run certifies, and say nothing about any other engine.`;
+    return `Engine: ${input.engine}. ${input.text} A regrade calls no member, so the stack was not asked again.`;
+  return `Engine: ${input.engine}. ${input.text} The thresholds are for ${input.engine}, the engine this run certifies, and say nothing about any other engine.`;
 }

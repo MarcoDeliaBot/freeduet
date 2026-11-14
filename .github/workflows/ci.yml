@@ -417,7 +417,7 @@ jobs:
       - run: bun install --frozen-lockfile
       - run: bun test server/tests/freeduet-package.test.ts
       # The team eval runner, its checks and graders, offline: fake mode and scripted servers only.
-      - run: bun test ../evals/team/run.test.ts ../evals/team/live-tools.test.ts ../evals/team/dates.test.ts
+      - run: bun test ../evals/team/run.test.ts ../evals/team/engine.test.ts ../evals/team/live-tools.test.ts ../evals/team/dates.test.ts
       - run: bun ../evals/team/run.ts --fake
       # The dictation proofs' own measuring tools (word error rate, the download of a test set, the
       # report), on made-up data and a fake service. The proofs themselves run on the maintainer's computer.
