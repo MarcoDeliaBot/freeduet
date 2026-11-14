@@ -242,6 +242,8 @@ describe("what the card says about an app the Bot can use but lacks tools of", (
         name: NEW_WRITE,
         label: "Send a new message",
         read: false,
+        // No entry says what it does, so approving never gives it: it is allowed in settings.
+        settingsOnly: "unreviewed",
       },
     ]);
     expect(app.requestKind).toBe("grant");
@@ -440,27 +442,30 @@ describe("answering it", () => {
     ]);
   });
 
-  test("naming the tools gives exactly those, a write included, and the Bot is then offered them", async () => {
+  // This test used to name a write too and see it granted. Since 14 November 2026 an approval never
+  // gives a tool that sends, and for an app with no entry that is every tool its vendor did not
+  // label a read, so the write is allowed in settings instead (`inbox-never-grants-send.integration`).
+  test("(guard) naming a tool gives exactly that one, and the Bot is then offered it", async () => {
     await seed();
     const requestId = await fileRequest();
 
     const response = await appAs(admin, "admin").request(
       `/api/plugins/access-requests/${requestId}/approve`,
-      post({ refs: [ref(NEW_READ), ref(NEW_WRITE)] }),
+      post({ refs: [ref(NEW_READ)] }),
     );
 
     expect(response.status).toBe(200);
-    expect(await heldBy(bot)).toEqual(
-      [ref(HELD), ref(NEW_READ), ref(NEW_WRITE)].sort(),
-    );
+    expect(await heldBy(bot)).toEqual([ref(HELD), ref(NEW_READ)].sort());
+    // What is still missing is still asked for, and is the one that only settings gives.
     const app = await stateOf();
-    expect(app.requestKind).toBeNull();
-    expect("wants" in app).toBe(false);
+    expect(app.requestKind).toBe("grant");
+    expect(app.wants?.map((want) => want.name)).toEqual([NEW_WRITE]);
     // Offered to the model only now.
     const offered = (
       await grantedTools({ store, botId: bot, actorId: person })
     ).map((tool) => tool.name);
-    expect(offered).toContain(`mcp__${SERVER}__${NEW_WRITE}`);
+    expect(offered).toContain(`mcp__${SERVER}__${NEW_READ}`);
+    expect(offered).not.toContain(`mcp__${SERVER}__${NEW_WRITE}`);
   });
 
   test("a plain press with only writes wanted gives nothing and leaves the request waiting", async () => {
@@ -472,10 +477,11 @@ describe("answering it", () => {
       post(),
     );
 
-    expect(response.status).toBe(409);
-    expect((await json<{ error: string }>(response)).error).toContain(
-      NEW_WRITE,
-    );
+    // Refused for the reason it is not given here, and the sentence says where it is.
+    expect(response.status).toBe(403);
+    const { error } = await json<{ error: string }>(response);
+    expect(error).toContain(NEW_WRITE);
+    expect(error).toContain("in settings");
     expect(await heldBy(bot)).toEqual([ref(HELD)]);
     const [still] = await database
       .select({ status: appAccessRequests.status })
@@ -533,9 +539,49 @@ describe("what the Bot is told, and by whom", () => {
     const told = await toldBy(true);
 
     expect(told).toContain("only one here");
-    expect(told).toContain("they can allow them themselves");
+    // The read goes through the card, as it did.
+    expect(told).toContain(`they can allow ${NEW_READ} themselves`);
     expect(told).not.toContain("lets them ask an administrator");
     expect(told).toContain(NEW_READ);
+    // The write is told apart: not through Request access, but in settings.
+    expect(told).toContain(`${NEW_WRITE}`);
+    expect(told).toContain("Approving a request never gives a tool like that");
+    expect(told).toContain("they can allow that themselves");
+  });
+
+  test("(guard) when every tool it wants can be approved, the Bot is told what it always was", async () => {
+    await seed({ skillDeclares: [ref(NEW_READ)] });
+
+    const alone = await toldBy(true);
+    const team = await toldBy(false);
+
+    expect(alone).toContain(
+      `they can allow it themselves: the card in front of them has Request access, and they approve it under Requests on the Plugins page of Admin, in settings. Tell them plainly that you have not been granted it and that they can do it themselves. Do not try another tool`,
+    );
+    expect(team).toContain(
+      "The card in front of the person lets them ask an administrator to grant it to you. Say plainly that you cannot do that part yet because you have not been granted it. Do not try another tool",
+    );
+    for (const told of [alone, team])
+      expect(told).not.toContain("never gives a tool like that");
+  });
+
+  test("when it wants only what settings gives, the Bot is not sent to Request access for it", async () => {
+    await seed({ skillDeclares: [ref(NEW_WRITE)] });
+
+    const alone = await toldBy(true);
+    const team = await toldBy(false);
+
+    for (const told of [alone, team]) {
+      expect(told).toContain(`${NEW_WRITE} (Send a new message)`);
+      expect(told).toContain(
+        "Approving a request never gives a tool like that: allow it in settings",
+      );
+      expect(told).not.toContain("Request access");
+      expect(told).not.toContain("lets them ask an administrator");
+      expect(told).toContain("say plainly that you have not been granted it");
+    }
+    expect(alone).toContain("only one here");
+    expect(team).toContain("Only an administrator can allow that");
   });
 
   test("an app with nothing wanted is told exactly as it always was", async () => {
