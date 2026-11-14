@@ -26,16 +26,25 @@ anywhere. A file in a folder whose name starts with a dot, or in this service's 
 opened (:func:`read_key`).
 
 THE SUBSCRIPTION STAYS OUT. Claude Code, given a base URL alone, keeps using the saved Claude sign-in and sends that
-token to the new address. So this kind never starts the CLI without its own key, never copies ``HOME`` or
+token to the new address. So this kind never starts the CLI without a key of its own, never copies ``HOME`` or
 ``CLAUDE_CONFIG_DIR`` from this service (the child gets empty ones inside the segment's private folder, deleted with
 it), never copies any ``ANTHROPIC_*`` name from this service, and sets the key as the bearer token with the other
 credential variable blank, which is what OpenRouter's documentation asks for. This module opens no file but the key
 file the person named.
 
+THE KEY-FREE ENTRY. An entry with ``no_key: true`` is a local server that takes no key, such as Ollama's Anthropic-compatible
+endpoint. ``engines.py`` accepts it only at a plain http address on this machine or at host.docker.internal. Its CLI gets
+the placeholder ``NO_KEY_TOKEN`` as the bearer token; everything else above is unchanged (the same empty folders, the same
+allowlist, no ``ANTHROPIC_*`` name from this service, no Claude sign-in in reach). Nothing is replaced in its output,
+because the placeholder is not a secret.
+
 WHAT THE PROBE CAN SAY. There is no free health call on an arbitrary gateway: any request to it is a request it may
 bill, count or refuse. So the probe is "the CLI is installed (``claude --version``, run with no key and no base URL
 in its environment) and a usable key is configured". It says exactly that and nothing about whether the gateway
 answers: the first real turn does, and its failure is classified like any other (``claude_cli.turn_failure``).
+A key-free entry is the one place where this module asks an address itself: ``answers_on_this_machine`` sends one
+``GET /api/version`` to the entry's own host and port, for at most two seconds, with no key and no body. Any HTTP status
+line counts as an answer; silence, a refused connection and a reply that is not HTTP do not.
 
 WHAT IT CANNOT PROMISE. Which model answers, and how well it calls tools, is the gateway's. Anthropic and OpenRouter
 do not promise it for a non-Claude model, so an entry's ``tier`` defaults to C and the router's quality floor keeps
@@ -60,6 +69,7 @@ from . import agui, claude_cli
 from .claude_engine import MAX_STDERR, PIPE_DRAIN_SECONDS, mcp_state
 from .engine_adapter import (
     COULD_NOT_RUN,
+    NOT_ANSWERING,
     NOT_INSTALLED,
     TIMED_OUT,
     EngineAdapter,
@@ -100,6 +110,14 @@ KEY_FILE_MAX_BYTES = 4096
 #: credential.
 SUBSCRIPTION_TOKEN_MARKERS = ("sk-ant-oat", "sk-ant-ort")
 REDACTED = "[key]"
+#: The bearer token of a key-free entry (`no_key: true`). It is not a secret: it is written in this file, and a local server
+#: that takes no key ignores it (docs.ollama.com/api/anthropic-compatibility: "required but ignored"). Setting it as the bearer
+#: is also what keeps the CLI from looking for a sign-in of its own.
+NO_KEY_TOKEN = "no-key-needed"
+#: What a key-free entry's probe asks its own address for: Ollama's documented version route (docs.ollama.com/api-reference/
+#: get-version), which takes no key and does no model work, and the time it may take.
+LOCAL_PROBE_PATH = "/api/version"
+LOCAL_PROBE_SECONDS = 2.0
 
 #: What the CLI process may see of this service's environment: the Claude engine's allowlist, without the two names
 #: that say where a Claude sign-in lives. Every ANTHROPIC_* name is absent by construction.
@@ -184,8 +202,9 @@ class Scrubber:
     """Replaces the key with ``[key]`` wherever a captured output holds it: the exact value, and the form it takes
     inside a JSON string. What it does not recognise is a key that was changed on its way out (cut in two, encoded)."""
 
-    def __init__(self, key: str):
-        forms = sorted({key, json.dumps(key)[1:-1]}, key=len, reverse=True)
+    def __init__(self, key: str | None):
+        """``None`` for a key-free entry: its placeholder is not a secret, so nothing is replaced."""
+        forms = sorted({key, json.dumps(key)[1:-1]}, key=len, reverse=True) if key else []
         self._text = tuple(forms)
         self._data = tuple(form.encode("utf-8") for form in forms)
 
@@ -272,7 +291,9 @@ def note_stream_end(health: Health, parser: StreamParser, said: str, exit_code: 
         return
 
 
-def failure_event(parser: StreamParser, label: str, scrub: Scrubber, stderr: str = "", exit_code: int | None = None) -> dict | None:
+def failure_event(
+    parser: StreamParser, label: str, scrub: Scrubber, stderr: str = "", exit_code: int | None = None, *, keyless: bool = False
+) -> dict | None:
     """The RUN_ERROR this turn ended in, or None when it answered. The verdict is :func:`turn_verdict`, so what the
     person is told and what the breaker records are one; the words are this engine's label and the gateway's,
     scrubbed. A refused key is not Claude's sign-in: the message never carries ``OPENBOT_MODEL_AUTH_REQUIRED``, which
@@ -282,10 +303,16 @@ def failure_event(parser: StreamParser, label: str, scrub: Scrubber, stderr: str
         return None
     reported = _reported(parser)
     if failure.kind == AUTH:
-        message = (
-            f"{label} did not accept its key. Check the key that `credential_secret_ref` names in engines.yaml, "
-            "then send your message again."
-        )
+        if keyless:
+            message = (
+                f"{label} refused the request, and its entry says it takes no key (`no_key: true` in engines.yaml). If that "
+                "endpoint asks for a key, write `credential_secret_ref` for it instead, then send your message again."
+            )
+        else:
+            message = (
+                f"{label} did not accept its key. Check the key that `credential_secret_ref` names in engines.yaml, "
+                "then send your message again."
+            )
         return agui.run_error(scrub.text(message))
     if failure.kind in LIMIT_KINDS:
         said = " ".join((reported or stderr).split())[:300]
@@ -295,6 +322,40 @@ def failure_event(parser: StreamParser, label: str, scrub: Scrubber, stderr: str
         return agui.run_error(scrub.text(f"{label} could not finish this turn: {claude_cli._clip(reported)}"))
     code = f" (exit code {exit_code})" if exit_code not in (None, 0) else ""
     return agui.run_error(f"{label} ended without an answer{code}.")
+
+
+async def _answered(host: str, port: int, request: bytes) -> bool:
+    """One request on one connection, read as far as the status line: True when the reply starts like HTTP."""
+    reader, writer = await asyncio.open_connection(host, port)  # a direct connection: no proxy is ever used
+    try:
+        writer.write(request)
+        await writer.drain()
+        status = await reader.readline()
+    finally:
+        writer.close()
+        with suppress(Exception):
+            await writer.wait_closed()
+    return status.startswith(b"HTTP/1.")
+
+
+async def answers_on_this_machine(base_url: str | None, seconds: float = LOCAL_PROBE_SECONDS) -> bool:
+    """Whether a key-free endpoint answers HTTP within ``seconds``: ``GET /api/version`` on the entry's own host and port,
+    with no key and no body. Any status line is an answer, because a server that lacks that route still answers; a refused
+    connection, a silence past the bound and a reply that is not HTTP are not. Only an address on this machine is ever
+    asked (``engines.py`` allows nothing else for such an entry), no redirect is followed. Never raises."""
+    try:
+        parts = urlsplit(base_url or "")
+        host = parts.hostname
+        if parts.scheme != "http" or not is_local_host(host):
+            return False
+        port = parts.port or 80
+        shown = f"[{host}]" if ":" in host else host
+        request = (
+            f"GET {parts.path.rstrip('/')}{LOCAL_PROBE_PATH} HTTP/1.1\r\nHost: {shown}:{port}\r\nConnection: close\r\n\r\n"
+        ).encode("ascii")
+        return await asyncio.wait_for(_answered(host, port, request), seconds)
+    except Exception:  # noqa: BLE001 - asked in a failure path: whatever went wrong, it did not answer
+        return False
 
 
 class CompatibleEngine(EngineAdapter):
@@ -328,12 +389,19 @@ class CompatibleEngine(EngineAdapter):
             _bypass_proxy(env, host)
         return env
 
+    def _token(self, source: Mapping[str, str]) -> str | None:
+        """The bearer token the CLI is started with: the placeholder of a key-free entry, else the key the entry names.
+        None when the entry names no usable key, and then the CLI is not started."""
+        if self._engine.no_key:
+            return NO_KEY_TOKEN
+        return read_key(self._engine.credential_secret_ref, source)
+
     def child_env(self, source: dict[str, str] | None = None) -> dict[str, str]:
         """The environment the CLI is started with, less the two private folders ``run_turn`` adds. Raises
         :class:`NoKey` when the entry names no usable key, because a CLI started without one would have nothing to
         authenticate with but whatever sign-in it could find."""
         source = os.environ if source is None else source
-        key = read_key(self._engine.credential_secret_ref, source)
+        key = self._token(source)
         if key is None:
             raise NoKey(f"{self.label} has no usable key")
         return self._environment(source, key)
@@ -341,9 +409,10 @@ class CompatibleEngine(EngineAdapter):
     # -- the probe -------------------------------------------------------------------------------
 
     async def probe(self) -> ProbeResult:
-        """Installed, its version, and ``signed_in`` meaning "a usable key is configured". Never a model call, never a
-        request to the gateway, never spends anything: ``claude --version`` only, with no key and no base URL in its
-        environment. Never raises."""
+        """Installed, its version, and ``signed_in`` meaning "a usable key is configured" (for a key-free entry: that its own
+        address answered). Never a model call and never a request to a gateway. The probe's one request of its own is
+        ``GET /api/version`` to a key-free entry's address on this machine; otherwise ``claude --version`` only, with no key
+        and no base URL in its environment. Never raises."""
         try:
             return await self._probe()
         except Exception:  # noqa: BLE001 - asked in a failure path: whatever went wrong, the answer is "could not tell"
@@ -367,7 +436,13 @@ class CompatibleEngine(EngineAdapter):
                 return ProbeResult(installed=False, problem=NOT_INSTALLED)
             except TimeoutError:
                 return ProbeResult(problem=TIMED_OUT)
-        return ProbeResult(installed=True, version=claude_cli._version_of(printed), signed_in=has_key)
+        version = claude_cli._version_of(printed)
+        if self._engine.no_key:
+            # A key-free endpoint has no sign-in to check: "signed in" here means that its own address answered.
+            if await answers_on_this_machine(self._engine.base_url, LOCAL_PROBE_SECONDS):
+                return ProbeResult(installed=True, version=version, signed_in=True)
+            return ProbeResult(installed=True, version=version, problem=NOT_ANSWERING)
+        return ProbeResult(installed=True, version=version, signed_in=has_key)
 
     # -- the turn --------------------------------------------------------------------------------
 
@@ -388,7 +463,7 @@ class CompatibleEngine(EngineAdapter):
             if paid_gateway_refused(self._engine):
                 log.warning("%s", refusal)
             return Outcome(agui.run_error(refusal))
-        key = read_key(self._engine.credential_secret_ref, os.environ)
+        key = self._token(os.environ)
         if key is None:
             health.failure = Failure(AUTH)
             log.warning("engine %s: its credential_secret_ref names no usable key; no turn was started", self.key)
@@ -398,7 +473,8 @@ class CompatibleEngine(EngineAdapter):
                     "engines.yaml, then send your message again."
                 )
             )
-        scrub = Scrubber(key)
+        keyless = self._engine.no_key
+        scrub = Scrubber(None if keyless else key)
         parser = StreamParser()
         stderr = bytearray()  # raw, bounded, and only ever read through said()
         tasks: set[asyncio.Task] = set()
@@ -451,7 +527,7 @@ class CompatibleEngine(EngineAdapter):
                         for item in parser.feed(scrub.data(line)):
                             if isinstance(item, Final):
                                 note_result(health, parser)
-                                item = Finished(item.text, lambda: failure_event(parser, self.label, scrub))
+                                item = Finished(item.text, lambda: failure_event(parser, self.label, scrub, keyless=keyless))
                             else:
                                 health.answered = True  # a message started, text came, or a tool was called
                             await sink.put(item)
@@ -475,7 +551,7 @@ class CompatibleEngine(EngineAdapter):
                 await asyncio.wait_for(asyncio.shield(stderr_task), 2)
             note_stream_end(health, parser, said(), process.returncode)
             return Outcome(
-                failure_event(parser, self.label, scrub, said(), process.returncode)
+                failure_event(parser, self.label, scrub, said(), process.returncode, keyless=keyless)
                 or agui.run_error(f"{self.label} ended without an answer.")
             )
         finally:

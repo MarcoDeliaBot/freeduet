@@ -209,7 +209,7 @@ One PR each. Sizes follow [ENGINES_PLAN.md](../ENGINES_PLAN.md) section 2 [code:
 
 ## Built so far
 
-Slice S1 (section 4) is built on branch `team-file-slice-1`: the two formats and the reader, with tests. S2 to S10 are not started. The reader is pure: it writes nothing, touches no database, and makes no card or Bot.
+Slice S1 (section 4) is on main, merged through PR #174: the two formats and the reader, with tests. S2 to S10 are not started. The reader is pure: it writes nothing, touches no database, and makes no card or Bot.
 
 **Built**
 - `openbot/server/src/freeduet/team-file.ts`: the formats `freeduet-member/1` and `freeduet-team/1`, and `readTeamFile(text, package)`. It returns the first refusal, with the path of the field and one plain sentence, or the file read, with its notices.

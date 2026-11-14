@@ -158,7 +158,7 @@ Two more public routes:
 
 ## Built so far
 
-Slice 1 (parsers), on branch `import-slice-1`, from origin/main 99ff3e8. Nothing is stored, routed or shown yet: a parse writes no row, sends no request and runs no code.
+Slice 1 (parsers), on main through PR #168, from origin/main 99ff3e8. Nothing is stored, routed or shown yet: a parse writes no row, sends no request and runs no code.
 
 **Built**
 
