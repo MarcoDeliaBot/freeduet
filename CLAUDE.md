@@ -26,9 +26,13 @@ Read these before changing anything:
 - **Logins first.** Members run on the person's subscription logins. A metered API is never first in
   any chain and never on by default. CopilotKit Intelligence is optional and off by default
   (`FREEDUET_INTELLIGENCE=off`, D20).
+- **Third-party gateways are configuration only.** The engine plan is `docs/ENGINES_PLAN.md`: a
+  gateway's code is never shipped, and AGPL gateway code is never copied.
 - **Never read, copy or forward subscription credentials.** Never open the Claude CLI's login or
   config directories, in any container or volume.
 - **No secrets and no personal data in the repository.** It will become public at v0.1.
+- **Public wording.** The repository, PR titles, docs and site never describe private sources of ideas
+  or other private projects of the maintainer; the public comparison table (`docs/COMPARISON.md`) is fine.
 - **The person's approval stays for real account actions** (sending email, payments, purchases). Team
   hand-offs along the hub grants (Iris ↔ members) are pre-approved (D21); delegation must never
   launder an account action. One exception, by the maintainer's decision (D27, D27a): the person's
@@ -36,6 +40,11 @@ Read these before changing anything:
   typed in the person's latest message of their own live chat turn, directly or one hop through
   Iris; the server checks it, never the model. Everything else still asks: an address from a mail,
   a page or a tool, a corrected address, a routine, a check-in.
+- **Full access** (`openbot/server/src/freeduet/full-access.ts`, `fullAccessOutcome` in
+  `openbot/server/src/approvals/policy.ts`) is per person and per member, off by default, and applies
+  only in the person's own live turn (a hand-off counts only when the server traces it to the person's
+  typed message), never to routines. It lifts only the payments safety requirement; credentials and
+  security settings still go to the person.
 - **Change only what was asked.** A refactor nobody asked for is a regression risk.
 - **Upstream changes stay minimal** and each one gets a row in `docs/UPSTREAM_TOUCHES.md`.
 
@@ -49,6 +58,8 @@ the hands"): plan, brief executors, verify with numbers, merge, report.
   file:line), the files the executor owns and must not touch, the tests that must fail before and pass
   after, and the report format. Executors open the PR and stop: they do not wait on CI. Stop an
   executor as soon as it has delivered.
+- **Parallel executors.** When several executors run at once, give each its own files: two executors
+  must never own the same file.
 - **Worktree branches.** Create each executor's worktree on its own branch:
   `git worktree add -b <branch> <dir> origin/main`, then add the fetch refspec (see Git and pull
   requests). Never leave it detached: commits made on a detached HEAD get lost. The brief tells the
@@ -121,6 +132,14 @@ Mark (id `marketer`) was the first member added after v0.1. What a new member to
   `openbot/` must be added to `openbot/.github/published-images.json`.
 - Biome runs from `openbot/`, not `openbot/server/`.
 
+## Site (`site/`)
+
+- No CI job covers `site/`: `site/index.html` is the build output and must equal a fresh build
+  (`python3 site/tools/build.py site/src site/index.html`), and `node site/tools/checklang.js` checks that
+  every language has the same keys and tags as English. Text-only changes must not touch layout, motion
+  or spacing (PR #120 restyled the page on 2026-11-14), and in this sandbox the proxy returns 403 for
+  Google Fonts, so screenshots need the fonts served locally.
+
 ## Local testing
 
 - Postgres 16 binaries are at `/usr/lib/postgresql/16/bin`. A sandbox running as root cannot `initdb`
@@ -134,6 +153,9 @@ Mark (id `marketer`) was the first member added after v0.1. What a new member to
 - In single-user mode the implicit administrator is this machine's loopback only (`server/src/auth/peer.ts`).
   `app.request(...)` in a test has no TCP peer and is nobody, so a test that needs the person passes
   `LOOPBACK_PEER` from `server/tests/support/loopback-peer.ts` as the third argument.
+- The remaining gap in single-user mode is Docker Desktop: there containers appear as this machine's
+  loopback, so who the person is still rests on network position alone. The planned fix, a
+  per-installation secret, is tracked in `docs/ROADMAP.md`.
 - In the sandbox the app suite fails about 138 tests on plain main: menus and popups do not open under
   happy-dom. Compare with main before blaming a change.
 - A fresh worktree also needs `bun run generate:app-config` from `openbot/` before the app tests,
