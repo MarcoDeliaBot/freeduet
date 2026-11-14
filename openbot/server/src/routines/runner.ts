@@ -135,6 +135,25 @@ export function createRoutineRunner(options: {
       return;
     }
 
+    /*
+     * The conversation this run posts into, written on its row so History can link to it. Written here,
+     * where the channel has been read as the owner's, and not when the run was queued: the routine's
+     * channel can change in between, and the link has to name the one this run used. A write that fails
+     * is logged and the run goes on, because the link is a courtesy and the outcome is not.
+     */
+    try {
+      await routineStore.recordRunChannel(routineRunId, channelId);
+    } catch (error) {
+      console.error(
+        JSON.stringify({
+          type: "routine-run-channel-unrecorded",
+          routineId,
+          routineRunId,
+          reason: reasonOf(error),
+        }),
+      );
+    }
+
     // A paused Bot's firing is skipped, not failed, so a long pause never trips the fatigue rule.
     if (await isBotPaused(ownerUserId, agentId)) {
       await routineStore.finishRun(routineRunId, "skipped", BOT_PAUSED_REASON);
