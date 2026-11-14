@@ -30,7 +30,7 @@ Read these before changing anything:
   gateway's code is never shipped, and AGPL gateway code is never copied.
 - **Never read, copy or forward subscription credentials.** Never open the Claude CLI's login or
   config directories, in any container or volume.
-- **No secrets and no personal data in the repository.** It will become public at v0.1.
+- **No secrets and no personal data in the repository.** It has been public since 13 November 2026.
 - **Public wording.** The repository, PR titles, docs and site never describe private sources of ideas
   or other private projects of the maintainer; the public comparison table (`docs/COMPARISON.md`) is fine.
 - **The person's approval stays for real account actions** (sending email, payments, purchases). Team
@@ -62,6 +62,8 @@ the hands"): plan, brief executors, verify with numbers, merge, report.
   executor as soon as it has delivered.
 - **Parallel executors.** When several executors run at once, give each its own files: two executors
   must never own the same file.
+- **Decision numbers.** When several executors work in parallel, the brief assigns each one its D-numbers,
+  so no two executors pick the same number.
 - **Worktree branches.** Create each executor's worktree on its own branch:
   `git worktree add -b <branch> <dir> origin/main`, then add the fetch refspec (see Git and pull
   requests). Never leave it detached: commits made on a detached HEAD get lost. The brief tells the
@@ -128,6 +130,8 @@ Mark (id `marketer`) was the first member added after v0.1, Cam (id `video`) the
 - A new branch needs its fetch refspec before stop hooks are happy:
   `git config --add remote.origin.fetch '+refs/heads/<b>:refs/remotes/origin/<b>'`, then
   `git push -u origin <b>` and `git branch -u origin/<b>`.
+- `git fetch origin` (no arguments) fails once a branch that is not yet pushed has a fetch refspec:
+  use `git fetch origin main`.
 - Never rebase, amend or force-push a shared branch; merge `origin/main` into it instead. Never close
   and reopen a PR to restart CI. A job may be re-run once, after its run has completed.
 - Commit messages and PR bodies end with the attribution lines the harness gives the session.
@@ -162,6 +166,8 @@ Mark (id `marketer`) was the first member added after v0.1, Cam (id `video`) the
   every language has the same keys and tags as English. Text-only changes must not touch layout, motion
   or spacing (PR #120 restyled the page on 2026-11-14), and in this sandbox the proxy returns 403 for
   Google Fonts, so screenshots need the fonts served locally.
+- The build writes twelve pages (`site/index.html` and `site/<code>/index.html`) and `site/sitemap.xml`:
+  commit all of them. `node site/tools/checklang.js` also runs `tools/checkpages.py`.
 
 ## Local testing
 
@@ -195,6 +201,8 @@ Mark (id `marketer`) was the first member added after v0.1, Cam (id `video`) the
   or an app password plus an optional iCal secret link (`google-imap`, D24, the simple default for the
   public). An app password opens the whole mailbox, so the transport opens mailboxes read-only and
   replies only within existing threads.
+- On this shared machine never use `pkill -f` with a pattern: stop only the PIDs you started, because
+  other executors share the machine and the Postgres cluster.
 
 ## Things learned the hard way (Intelligence off, SSE mode)
 
