@@ -14,7 +14,7 @@ _Decided by the maintainer on 2026-11-14; its second setting, "without payments"
 
 ## Where the gate lives
 
-Every account action a member takes reaches `approvalService.gate` (`openbot/server/src/approvals/service.ts:444`, which calls `evaluate` (defined at `:321`) and then the pure `decideAction`, `approvals/policy.ts:468`): connector tools (`plugins/plugin-store/calls.ts:640`), the computer (`computer/gateway.ts:669`), host commands (`host-access/broker.ts:299`) and hand-offs (`agents/handoff-tool.ts:139`). The safety floor, team and personal rules, auto-review and "ask before making changes" all live there. One more place asks: the private-share check on a connector send, which asks for every new email (`calls.ts:544`, D24 and D27).
+Every account action a member takes reaches `approvalService.gate` (`openbot/server/src/approvals/service.ts:444`, which calls `evaluate` (defined at `:321`) and then the pure `decideAction`, `approvals/policy.ts:468`): connector tools (`plugins/plugin-store/calls.ts:640`), the computer (`computer/gateway.ts:686`), host commands (`host-access/broker.ts:299`) and hand-offs (`agents/handoff-tool.ts:139`). The safety floor, team and personal rules, auto-review and "ask before making changes" all live there. One more place asks: the private-share check on a connector send, which asks for every new email (`calls.ts:544`, D24 and D27).
 
 ## The change
 
