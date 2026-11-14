@@ -526,6 +526,7 @@ policies apply. See [OpenAI WebRTC](https://developers.openai.com/api/docs/guide
 | `OPENBOT_PUBLIC_URL`         | Public address of this API. Defaults to `BETTER_AUTH_URL`.                              |
 | `OPENBOT_APP_URL`            | Where the browser app is served. Defaults to the first `TRUSTED_ORIGINS` entry.          |
 | `SIGNIN_ALLOWED_EMAIL_DOMAINS` | Comma-separated email domains admitted at sign-in. Empty means no opinion. Exact, no wildcards. |
+| `SIGNIN_ALLOWED_EMAILS`      | Comma-separated exact email addresses admitted at sign-in. Empty means no opinion. An address must pass this list and the domain list. Every `INITIAL_ADMIN_EMAILS` address must be on it. |
 | `OPENBOT_ORGANIZATION_AUTH_URL` | An OpenBot deployment that verifies employee identity and roles. Decides sign-in ahead of `OPENBOT_SINGLE_USER`. |
 
 > **FreeDuet:** `CLAUDE_CODE_OAUTH_TOKEN` is not accepted. The server drops it at start-up, compose
@@ -566,6 +567,25 @@ list combined with a `MICROSOFT_OAUTH_TENANT_ID` that names no directory (`commo
 or `consumers`), because there the address the list is checked against is one the signing-in tenant
 writes for itself. A production deployment that names no domains and leaves the tenant multi-tenant
 is warned rather than refused.
+
+**`SIGNIN_ALLOWED_EMAILS` decides who may sign in, by name.** The domain list lets in a whole domain,
+and at a public one such as `gmail.com` that is every account there; this list names the people, as
+`alice@example.com,bob@example.com`. Unset or blank it does nothing and nobody is refused who was
+admitted before. Set, an address has to pass it and the domain list (each list that exists), so it
+can only narrow what the domain list admits. Both sides go through one normalisation (lower case,
+IDNA domain, no trailing dot) and the local part is otherwise left alone, so `a.b@example.com`,
+`ab@example.com` and `a+tag@example.com` are three different addresses, and a lookalike such as
+`alice@example.com.attacker.test` is not `alice@example.com`. The list is checked when an account is
+made and again when a session is made for an account that already exists, so an address taken off the
+list gets no new sign-in, and an address that was never on it leaves no account behind. It does not
+end a session that already exists (People, Remove access does that), and it is checked against the
+address the provider returns, which OpenBot does not require to be a verified one. Start-up refuses
+what cannot work: a set value that names no address (`,`), an entry that is not an address (a bare
+domain, `Name <a@b.c>`, two addresses with no comma, a wildcard such as `*@example.com`), an
+administrator in `INITIAL_ADMIN_EMAILS` who is not on the list and could never sign in, an address
+at a domain `SIGNIN_ALLOWED_EMAIL_DOMAINS` does not admit, and a `MICROSOFT_OAUTH_TENANT_ID` that
+names no directory, for the reason the domain list refuses it. With no provider configured nobody
+signs in and the variable does nothing.
 
 **`OPENBOT_ORGANIZATION_AUTH_URL` names an authority, not a provider.** It must be an HTTPS OpenBot
 origin, or HTTP on loopback, and a bare origin: a username, password, query, fragment or any path
@@ -1203,10 +1223,24 @@ other modes (an administrator's own range and domain rules decide there, as befo
 link-local addresses. `AGENT_COMPUTER_ALLOW_PRIVATE_HOSTS` does not lift it either: that variable
 only governs the server's own check of the first address a Bot types.
 
+**A stricter policy reaches what is already open.** A pushed policy applies to the connections the
+filter is carrying as well as to the next one. When the switch goes off, when **Cloud network access**
+goes off, or when a rule is taken away, the filter judges every open connection again, the way it
+would judge a new one, and closes both ends of each one that would now be refused: an HTTPS
+connection or a page's WebSocket to an address on the home network, a download that is still coming,
+a command's connection. The page or command sees the connection drop, and its next attempt is refused
+with the reason. A policy that becomes wider closes nothing. A connection from a browser or a shell
+carries no Bot in its proxy credentials, so it is judged the way a new one of its kind is: by the only
+policy on the computer, or by every policy at once with the strictest winning. On a computer that
+serves several Bots that can close a connection a moment before its own Bot's policy alone would have
+refused it, and never keeps one that a new connection would be refused. What was measured and what is
+not verified are in `docs/design/home-network.md`.
+
 What it does not cover: behind an upstream proxy (`EGRESS_PROXY_*`) the proxy resolves names, so the
-filter can judge only an address written out and every redirect; a command that opens a raw socket
-instead of using the proxy variables is not stopped by the filter at all, and Compose has no
-network-level control for it (on Kubernetes, `networkPolicy.enabled` is that control); and a
+filter can judge only an address written out and every redirect, and an open tunnel there is judged by
+what it was asked for, because the filter cannot know where the proxy took it; a command that opens a
+raw socket instead of using the proxy variables is not stopped by the filter at all, and Compose has
+no network-level control for it (on Kubernetes, `networkPolicy.enabled` is that control); and a
 command's own `localhost`, which is `NO_PROXY` so that a Bot can test a server it started, is not
 judged. The reasoning and the callers it was checked against are in `docs/M1_PLAN.md`, D36.
 
