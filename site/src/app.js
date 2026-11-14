@@ -54,7 +54,7 @@ var chat=document.getElementById("chat"),tries=document.getElementById("tries");
 function bubble(id,name,text){return '<div class="msg">'+av(id)+'<div class="bub"><span class="who">'+name+'</span>'+esc(text)+'</div></div>';}
 function mine(text){return '<div class="msg me"><div class="bub">'+esc(text)+'</div></div>';}
 function askCard(s){var t=L(),rows="";s.card.forEach(function(r){rows+="<dt>"+esc(r[0])+"</dt><dd>"+esc(r[1])+"</dd>";});
- return '<div class="card-ask" id="ask"><h4><svg aria-hidden="true"><use href="#i-hand"/></svg>'+esc(t.ask)+'</h4><dl>'+rows+'</dl><div class="row"><button type="button" class="yes" data-a="ok">'+esc(t.yes)+'</button><button type="button" class="no" data-a="stop">'+esc(t.no)+'</button></div></div>';}
+ return '<div class="card-ask" id="ask"><p class="ask-title"><svg aria-hidden="true"><use href="#i-hand"/></svg>'+esc(t.ask)+'</p><dl>'+rows+'</dl><div class="row"><button type="button" class="yes" data-a="ok">'+esc(t.yes)+'</button><button type="button" class="no" data-a="stop">'+esc(t.no)+'</button></div></div>';}
 function doneRow(kind,text){return '<div class="done '+kind+'"><svg aria-hidden="true"><use href="#'+(kind==="ok"?"i-check":"i-hand")+'"/></svg><span>'+esc(text)+'</span></div>';}
 function parts(s){var m=byId[s.who],p=[mine(s.me),bubble("iris","Iris",s.iris),bubble(s.who,m[1],s.line)];
  p.push(s.card?askCard(s):doneRow("stop",L().nothing));return p;}
