@@ -18,6 +18,7 @@ finds its own sign-in there, and this module only passes `CLAUDE_CONFIG_DIR` thr
 import asyncio
 import json
 import os
+import re
 import signal
 import sys
 import tempfile
@@ -26,7 +27,9 @@ from pathlib import Path
 
 from . import agui
 from .bridge import ipc
+from .engine_adapter import COULD_NOT_RUN, NOT_INSTALLED, TIMED_OUT, UNREADABLE, ProbeResult
 from .engine_errors import classify, describe, is_sign_in_failure
+from .failure_classifier import AUTH, LIMIT_KINDS, Failure, classify_failure
 from .stream_json import StreamParser, TextDelta
 
 SERVER_NAME = "freeduet"
@@ -67,6 +70,15 @@ TEXT_ARGS = [
 ]
 # The server gives up on these calls after 10 s; answer, or say why, before it does.
 TEXT_TIMEOUT_SECONDS = 9.0
+
+# The probe (ENGINES_PLAN section 5, ARCHITECTURE 3.1): `claude --version` and `claude auth status`. Neither
+# sends a prompt, so neither spends the person's subscription. The deadline is for both together.
+VERSION_ARGS = ["--version"]
+AUTH_STATUS_ARGS = ["auth", "status"]
+PROBE_TIMEOUT_SECONDS = 8.0
+# `auth status` prints about 200 bytes. Past this the answer is not read at all.
+PROBE_MAX_BYTES = 16 * 1024
+_VERSION = re.compile(r"\A(\d{1,4}(?:\.\d{1,4}){1,3})(?![\w.])")
 
 # One argument may not exceed 128 KiB on Linux (MAX_ARG_STRLEN). Past this, the member prompt goes
 # through the CLI's `--append-system-prompt-file` (present in 2.1.311, not listed by --help).
@@ -213,6 +225,27 @@ def failure_event(parser: StreamParser, stderr: str = "", exit_code: int | None 
     return agui.run_error(f"{LABEL} ended without an answer{code}.")
 
 
+def turn_failure(parser: StreamParser, stderr: str = "", exit_code: int | None = None) -> Failure | None:
+    """How this run went, for the engine breaker: None when the CLI answered, else the classifier's verdict on
+    what the CLI itself said (its result text, the API error it reported, its stderr), with the reset time it
+    stated. It decides from the same facts as `failure_event`, in the same order (sign-in, then a limit, the
+    CLI's own hint that an account limit refused the call included), so the sign-in and the limit a person is
+    told about are the ones recorded. It reads and writes nothing, and never raises on what the CLI printed."""
+    final = parser.final
+    failed = final is None or final.is_error or parser.api_error_kind == "authentication_failed"
+    if not failed:
+        return None
+    if parser.api_error_kind == "authentication_failed":
+        return Failure(AUTH)
+    said = " ".join(part for part in (final.text if final else None, parser.api_error, stderr) if part)
+    failure = classify_failure(said, resets_at=parser.limit_resets_at)
+    refused = parser.limit_refused or parser.api_error_kind in {"rate_limit", "billing_error"}
+    if refused and failure.kind != AUTH and failure.kind not in LIMIT_KINDS:
+        # The CLI said the account's limit refused the call, in words that do not say so.
+        failure = classify_failure(f"Usage limit reached. {said}", resets_at=parser.limit_resets_at)
+    return failure
+
+
 class TextCallFailed(Exception):
     """A server-side text call got no answer. The message is plain and safe to show."""
 
@@ -240,3 +273,103 @@ async def run_text(system: str, prompt: str, model: str | None = None, timeout: 
         raise TextCallFailed(failure["message"])
     final = parser.final.text if parser.final and parser.final.text else ""
     return final.strip() or "".join(streamed).strip()
+
+
+class _NotStarted(Exception):
+    """The CLI could not be started: no such file, not executable, or an argument no process can take. A
+    TimeoutError is an OSError, so a start that failed is told apart from a deadline by this class."""
+
+
+async def _short(args: list[str], cwd: Path, timeout: float) -> bytes:
+    """What one short CLI command printed on stdout: at most PROBE_MAX_BYTES and one byte more, so that a
+    caller can tell an answer that is too long (reading stops there). Started like any turn (`start`: the
+    allowlisted environment, a folder of its own, its own process group), its stdin closed at once, its stderr
+    read and dropped, and stopped, with everything it started, whatever happens. Raises _NotStarted when it
+    cannot start, and TimeoutError at the deadline."""
+    try:
+        process = await start(args, cwd)
+    except (OSError, ValueError) as error:
+        raise _NotStarted from error
+    dropping: asyncio.Task | None = None
+    try:
+        with suppress(Exception):
+            process.stdin.close()
+        kept = bytearray()
+
+        async def read_stdout() -> None:
+            while len(kept) <= PROBE_MAX_BYTES and (chunk := await process.stdout.read(4096)):
+                kept.extend(chunk)
+
+        async def drop_stderr() -> None:
+            while await process.stderr.read(4096):
+                pass
+
+        dropping = asyncio.create_task(drop_stderr())
+        await asyncio.wait_for(read_stdout(), timeout)
+        return bytes(kept[: PROBE_MAX_BYTES + 1])
+    finally:
+        if dropping is not None:
+            dropping.cancel()
+            with suppress(asyncio.CancelledError, Exception):
+                await dropping
+        await stop(process)
+
+
+def _version_of(stdout: bytes) -> str | None:
+    found = _VERSION.match(stdout.decode("utf-8", errors="replace").strip())
+    return found.group(1) if found else None
+
+
+def _signed_in(stdout: bytes) -> bool | None:
+    """`loggedIn` from `claude auth status`, and nothing else of what it prints: the account's email, its
+    organisation and the folders it names are never read out of the answer. None when it is not an answer."""
+    if not stdout or len(stdout) > PROBE_MAX_BYTES:
+        return None
+    try:
+        document = json.loads(stdout.decode("utf-8"))
+    except (ValueError, RecursionError):
+        return None
+    logged_in = document.get("loggedIn") if isinstance(document, dict) else None
+    return logged_in if isinstance(logged_in, bool) else None
+
+
+async def probe(timeout: float = PROBE_TIMEOUT_SECONDS) -> ProbeResult:
+    """Whether the CLI is installed, its version, and whether it holds a sign-in: `claude --version`, then
+    `claude auth status`, under one deadline. No prompt goes in and no model answers, so a probe costs the
+    person's subscription nothing; about a quarter of a second each on a laptop. What the CLI's sign-in
+    holds is read by the CLI itself, as in any turn: this module never opens its config directory.
+
+    It judges the sign-in, not the model path. Whether the engine answers right now is told by the real turns
+    (the half-open turn is the probe, ENGINES_PLAN section 5). `auth status` can say "signed in" for a login
+    the provider has since revoked; the next turn then reports it. Never raises; says "could not tell" (None)
+    for what it could not read, and never what the CLI printed.
+    """
+    try:
+        return await _probe(timeout)
+    except Exception:  # noqa: BLE001 - asked in a failure path: whatever went wrong, the answer is "could not tell"
+        return ProbeResult(problem=COULD_NOT_RUN)
+
+
+async def _probe(timeout: float) -> ProbeResult:
+    loop = asyncio.get_running_loop()
+    deadline = loop.time() + max(timeout, 0.0)
+    with tempfile.TemporaryDirectory(prefix="freeduet-probe-") as folder:
+        work = Path(folder) / "work"
+        work.mkdir()
+        try:
+            printed = await _short([claude_bin(), *VERSION_ARGS], work, deadline - loop.time())
+        except _NotStarted:
+            return ProbeResult(installed=False, problem=NOT_INSTALLED)
+        except TimeoutError:
+            return ProbeResult(problem=TIMED_OUT)
+        version = _version_of(printed)
+        try:
+            printed = await _short([claude_bin(), *AUTH_STATUS_ARGS], work, deadline - loop.time())
+        except _NotStarted:
+            return ProbeResult(installed=False, problem=NOT_INSTALLED)
+        except TimeoutError:
+            return ProbeResult(installed=True, version=version, problem=TIMED_OUT)
+        signed_in = _signed_in(printed)
+        return ProbeResult(
+            installed=True, version=version, signed_in=signed_in, problem=None if signed_in is not None else UNREADABLE
+        )

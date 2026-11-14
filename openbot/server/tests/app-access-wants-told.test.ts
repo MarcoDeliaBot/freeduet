@@ -13,7 +13,7 @@ import { grantedToolGuidance } from "../src/plugins/tools";
 
 /**
  * What a Bot is told when its own skills need a tool it was never given (issue #102, docs/M1_PLAN.md
- * D30): the sentence the model reads, in the words of a one-person deployment and of every other, and
+ * D31): the sentence the model reads, in the words of a one-person deployment and of every other, and
  * the one request the card carries.
  *
  * Pure: the store is a stub, so nothing here depends on a database. What the store puts in `wants` is

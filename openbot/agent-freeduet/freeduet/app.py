@@ -14,11 +14,14 @@ import importlib.util
 import logging
 import os
 from collections.abc import AsyncIterator
+from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse, StreamingResponse
 
-from . import agui, checkpoints, claude_cli, origin, report, team_log
+from . import agui, checkpoints, claude_cli, engine_state, origin, report, team_log
+from .claude_engine import ClaudeEngine
+from .engine_adapter import EngineAdapter
 from .members import MemberError, resolve_member
 from .segment import SegmentNotes, run_segment
 
@@ -29,7 +32,22 @@ OPEN_PATHS = {"/health"}
 
 log = logging.getLogger("freeduet")
 
-app = FastAPI(title="agent-freeduet", docs_url=None, redoc_url=None, openapi_url=None)
+
+@asynccontextmanager
+async def lifespan(target: FastAPI):
+    # The engine state reads its file here, once, so that no turn reads (or logs) it.
+    try:
+        target.state.engine_state = engine_state.from_environment(ClaudeEngine())
+    except Exception:  # noqa: BLE001 - recording is never a reason for the service not to start
+        log.warning("engine state not started: it is made on first use", exc_info=True)
+        target.state.engine_state = None
+    try:
+        yield
+    finally:
+        target.state.engine_state = None
+
+
+app = FastAPI(title="agent-freeduet", docs_url=None, redoc_url=None, openapi_url=None, lifespan=lifespan)
 
 
 def _token_ok(offered: str) -> bool:
@@ -51,6 +69,34 @@ async def refuse_without_the_server_token(request: Request, call_next):
 @app.get("/health")
 async def health():
     return {"ok": True, "service": "agent-freeduet"}
+
+
+# ── ENGINE STATE (ENGINES_PLAN slice 2) ──────────────────────────────────────────────────────────
+# RECORDING ONLY. Each member turn is reported to the engine breaker when it ends (engine_state.py); no
+# run path asks the breaker anything, so a turn behaves the same whatever the breaker says. `GET /engines`
+# is the agent's side of the server's `GET /api/freeduet/engines`: read-only, behind the same token check
+# as `POST /` (it is in no OPEN_PATHS and not under /v1/).
+def _engine_state() -> engine_state.EngineState:
+    state = getattr(app.state, "engine_state", None)
+    if state is None:  # the start-up did not run (a test client used without `with`)
+        state = app.state.engine_state = engine_state.from_environment(ClaudeEngine())
+    return state
+
+
+def _engine_for_a_turn() -> EngineAdapter | None:
+    """Claude Code with its turns recorded. If the state cannot be had the turn runs unrecorded (None is
+    the segment's own default engine): recording is never a reason to fail it."""
+    try:
+        return _engine_state().recorded(ClaudeEngine())
+    except Exception:  # noqa: BLE001
+        log.warning("engine state unavailable: this turn is not recorded", exc_info=True)
+        return None
+
+
+@app.get("/engines")
+async def engines():
+    return JSONResponse(_engine_state().snapshot().as_json(), headers={"Cache-Control": "no-store"})
+# ─────────────────────────────────────────────────────────────────────────────────────────────────
 
 
 TERMINAL = {"RUN_FINISHED", "RUN_ERROR"}
@@ -151,8 +197,9 @@ async def _events(run: agui.RunInput) -> AsyncIterator[dict]:
         return
     summary = _SegmentSummary(run)
     started = False
+    engine = _engine_for_a_turn()
     try:
-        async for event in run_segment(run, member, summary.notes):
+        async for event in run_segment(run, member, summary.notes, engine):
             started = started or event["type"] == "RUN_STARTED"
             summary.see(event)
             if event["type"] in TERMINAL:
