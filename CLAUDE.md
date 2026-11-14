@@ -148,6 +148,11 @@ Mark (id `marketer`) was the first member added after v0.1, Cam (id `video`) the
 - Known intermittent failures, re-run once before investigating: the all-in-one `image` job
   (`migrate` races the embedded Postgres start, 57P03, issue #50) and the app keyboard tests in
   `app/tests/live-screen-keyboard.test.tsx`.
+- agent-freeduet tests: the settle timer (`segment.SETTLE_SECONDS`, 0.1 s in `fake_cli`) is a wall-clock
+  race against the fake CLI's subprocess. A test or golden scenario whose CLI plays several steps and ends
+  by itself sets `SETTLE_NEVER` (`tests/helpers.py`), so the CLI's result line ends the segment and no timer
+  decides. Two such flakes cost CI re-runs on 14 November 2026 (`cli_runs differs from its golden`, and
+  `assert ['computer_navigate'] == [...]` in `test_refused_offered_tool.py`).
 - The server suite runs in one process and every open pool is held to the end. CI Postgres has
   `max_connections=200`; locally the suite peaks near 90 connections. **Every test that opens a
   database pool closes it** (`await database.$client.close()`).
@@ -155,7 +160,7 @@ Mark (id `marketer`) was the first member added after v0.1, Cam (id `video`) the
   shifts them. It also rejects `?.` under `toBeUndefined` and `toBeFalsy`.
 - `bun test` alone does not show every gate a new test file must pass. Also run
   `bun run typecheck:tests` from `openbot/`; its baseline is `server/tests/typecheck-baseline.txt`,
-  and hand-edit a line there only when a baselined error's text changes.
+  and hand-edit a line there only when a baselined error's text changes. A `tsc` killed mid-run (exit 137, out of memory) now fails that gate with exit 2 and "tsc did not finish"; before, it passed as clean.
 - Adding a value to a Postgres enum breaks `tests/schema.test.ts`.
 - Some jobs run only on main (and on pull requests labelled `full-ci`): `component dockerfiles`,
   `image`, clean-start. A green pull request does not prove main is green: after a merge that adds a

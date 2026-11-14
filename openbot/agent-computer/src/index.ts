@@ -24,6 +24,7 @@ import {
 } from "./control";
 import { describeHumanGesture } from "./demonstration";
 import { handleEgressPolicyRequest, startEgressFilter } from "./egress";
+import { allowedHostsFrom, createHostGuard } from "./host-guard";
 import { identity } from "./identity";
 import {
   assertPageAccess,
@@ -124,6 +125,20 @@ if (!COMPUTER_TOKEN) {
   );
   process.exit(1);
 }
+
+/**
+ * Which names a caller on this machine's loopback may use (host-guard.ts, docs/M1_PLAN.md D40).
+ *
+ * A name this deployment points at this machine itself goes in `COMPUTER_ALLOWED_HOSTS`. A value that
+ * is set and is not a list of host names stops the boot, because dropping it would show up as a caller
+ * refused with a 421 and nothing to say why.
+ */
+const ALLOWED_HOSTS = allowedHostsFrom(process.env.COMPUTER_ALLOWED_HOSTS);
+if (!ALLOWED_HOSTS.ok) {
+  console.error(ALLOWED_HOSTS.reason);
+  process.exit(1);
+}
+const hostGuard = createHostGuard(ALLOWED_HOSTS.hosts);
 
 /*
  * No multi-address connect anywhere in this process. Bun turns it on by default, and its timer can
@@ -777,6 +792,18 @@ serve<StreamData>({
     },
   },
   async fetch(request, server) {
+    /*
+     * The name this machine was reached by, before anything else, the token included.
+     *
+     * A page whose name was re-pointed at this machine's loopback sends the public development token
+     * in a header and reads the answer, so the token alone is not what stops it: the name it was
+     * addressed to is. One entry covers every route and the `/stream` upgrade, and it comes before
+     * `new URL(request.url)` because Bun hands over a bare path, which that call throws on, when the
+     * header is missing or malformed.
+     */
+    const misdirected = hostGuard(request, server);
+    if (misdirected) return misdirected;
+
     const url = new URL(request.url);
 
     /*

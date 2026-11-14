@@ -20,6 +20,8 @@ import {
 import type { BotAccessCheck } from "./agents/profile-policy";
 import type { AgentProfileStore } from "./agents/profile-store";
 import { createAgentRoutes } from "./agents/routes";
+import type { SettingChanges } from "./settings-in-chat/changes";
+import { createSettingChangeRoutes } from "./settings-in-chat/routes";
 import { createApprovalRoutes } from "./approvals/routes";
 import type { ApprovalService } from "./approvals/service";
 import {
@@ -83,6 +85,7 @@ import { mountDesktopConnectionFailure } from "./desktop-connection-failure";
 import { createTranscriptionProvider } from "./dictation/provider";
 import { createDictationRoutes } from "./dictation/routes";
 import { threadReaderClient } from "./freeduet/backend";
+import { createEnginesRoutes } from "./freeduet/engines-routes";
 import type { HostAccessBroker } from "./host-access/broker";
 import { createHostAccessRoutes } from "./host-access/routes";
 import { identityRoutes } from "./identity/routes";
@@ -451,6 +454,8 @@ export function createApp(
     teamBots?: TeamBots;
     /** Pause, reset, Activity and attention for a person's own Bots. See agents/lifecycle.ts. */
     lifecycle?: BotLifecycleServices;
+    /** Settings in chat (docs/design/settings-in-chat.md, slice 1): the person's Undo of a change from chat. */
+    settingChanges?: SettingChanges;
     /**
      * What OpenDuet made for the person, and the tasks it is working on: the Pages tab and the viewer,
      * and Chat's task cards, the task page and Tasks. See openduet/pages.ts and openduet/task-store.ts.
@@ -697,6 +702,14 @@ export function createApp(
   // govern, the admin screen's API, and the SCIM verbs the GET/POST auth handler above does not take.
   app.use("/api/*", createEnterpriseGate(requireUser));
   app.route("/api/admin/enterprise", createEnterpriseAdminRoutes(requireUser));
+  // The Engines dashboard's read (ENGINES_PLAN slice 6): administrators only, read at each request.
+  app.route(
+    "/api/freeduet/engines",
+    createEnginesRoutes(requireUser, () => ({
+      environment: process.env,
+      managedAgent: config.managedAgent,
+    })),
+  );
   app.on(["PUT", "PATCH", "DELETE"], "/api/auth/scim/*", (context) =>
     auth
       ? auth.handler(context.req.raw)
@@ -1686,6 +1699,11 @@ export function createApp(
     app.route(
       "/api/bots",
       createBotLifecycleRoutes(coworker.lifecycle, requireUser),
+    );
+  if (coworker?.settingChanges)
+    app.route(
+      "/api/settings-changes",
+      createSettingChangeRoutes(coworker.settingChanges, requireUser),
     );
   if (coworker?.groups)
     app.route("/api/groups", createGroupRoutes(coworker.groups, requireUser));

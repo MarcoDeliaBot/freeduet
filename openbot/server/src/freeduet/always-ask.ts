@@ -1,6 +1,6 @@
 /**
  * What the server holds to an approval card every time, whatever the person switched on (D35,
- * docs/M1_PLAN.md section 18). Two cases, and nothing else:
+ * docs/M1_PLAN.md section 18). Three cases, and nothing else:
  *
  * 1. A WRITE MADE BY A RUN NOBODY WAS WATCHING. A routine, an event trigger (a responsibility's run)
  *    and a hand-off whose chain began in one. In the person's own live chat turn the person is there
@@ -11,6 +11,10 @@
  * 2. CHANGING WHAT RUNS UNATTENDED. Creating, changing, switching or deleting a routine or a trigger
  *    (every write on the Routines connector) is how a Bot sets up case 1 for later, so it asks in the
  *    person's own live turn too, with Full access on or off.
+ *
+ * 3. CHANGING ONE OF THE PERSON'S SETTINGS FROM CHAT. The Settings connector's change tool
+ *    (`plugins/builtin-settings.ts`, settings-in-chat slice 1) is a write that asks the person before
+ *    anything changes, whatever Full access says. Its list of settings is decided in its own module.
  *
  * WHO DECIDES. Only facts the server holds: the run's initiator (the approval context and the signed
  * run, never a word of the model's), the transport the connector call resolved to, and the answer of
@@ -35,6 +39,12 @@ export const UNATTENDED_WRITE_REASON =
 /** What the person reads on the card when a Bot is setting up, changing or removing one. */
 export const AUTOMATION_CHANGE_REASON =
   "Routines and triggers act later without you, so setting one up, changing it or deleting it always asks you first.";
+/**
+ * What the person reads on the card when a Bot changes one of their settings from chat
+ * (docs/design/settings-in-chat.md, slice 1).
+ */
+export const SETTING_CHANGE_REASON =
+  "A Bot changing one of your settings from chat always asks you first, with Full access on or off.";
 
 /** A chain of hand-offs is at most this long here; the desk caps it far lower, this only ends a loop. */
 const MAX_HOPS = 16;
@@ -79,6 +89,11 @@ export type AlwaysAskFacts = {
   /** The call is a write on the Routines connector: it creates, changes, switches or deletes one. */
   configuresAutomation: boolean;
   /**
+   * The call is a write on the Settings connector, which changes one of the person's settings from chat
+   * (settings-in-chat). Read off the transport the row resolved to, like `configuresAutomation`.
+   */
+  changesSetting?: boolean;
+  /**
    * The person just allowed this exact send on its own card (the check that asks about a new email
    * every time). A second card for the same email would be noise, and the answer being spent, one
    * that could never be honoured, so the send has the card the rule asks for.
@@ -100,5 +115,6 @@ export function alwaysAskReason(facts: AlwaysAskFacts): string | undefined {
   )
     return UNATTENDED_WRITE_REASON;
   if (facts.configuresAutomation) return AUTOMATION_CHANGE_REASON;
+  if (facts.changesSetting) return SETTING_CHANGE_REASON;
   return undefined;
 }

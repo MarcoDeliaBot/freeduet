@@ -101,6 +101,14 @@ jobs:
         working-directory: openbot/${{ matrix.package }}
       - run: bun run typecheck
         working-directory: openbot/${{ matrix.package }}
+      # The supervisor's Host rule (docs/M1_PLAN.md D40) is asked of the real process, with a fake Docker
+      # behind it. That needs the supervisor's own Hono and Dockerode, which this job has just installed
+      # and the `tests` job has not: installing them there would also switch on
+      # `docker.integration.test.ts`, which runs wherever Dockerode can be imported and Docker answers.
+      # The computer's equivalent runs in the `tests` job, where its dependencies are installed.
+      - run: bun test tests/host-guard.test.ts tests/host-guard-http.test.ts
+        if: matrix.package == 'supervisor'
+        working-directory: openbot/supervisor
 
   mobile:
     name: native types
@@ -121,9 +129,9 @@ jobs:
 
   # The agent-computer tests that launch a real Chromium. They are asked for by name because a
   # machine running `bun test` is not required to have a browser, and these are the only tests that
-  # would catch a password reaching the snapshot a model reads, a session cookie lost on restart, or
-  # WebRTC leaving around the egress filter. The browser is the one the computer image installs,
-  # pinned by agent-computer's own lockfile.
+  # would catch a password reaching the snapshot a model reads, a session cookie lost on restart,
+  # WebRTC leaving around the egress filter, or a page reaching the home network (D36). The browser
+  # is the one the computer image installs, pinned by agent-computer's own lockfile.
   computer-browser:
     name: computer (real browser)
     runs-on: ubuntu-latest
@@ -145,7 +153,7 @@ jobs:
           bun test tests/sign-in.test.ts tests/session-cookies.test.ts tests/follows-popup.test.ts
           tests/demonstration-live.test.ts tests/webrtc-proxy.test.ts tests/web-bot-auth-browser.test.ts
           tests/handoff-page-restore.test.ts tests/page-links-browser.test.ts
-          tests/navigation-settle-browser.test.ts
+          tests/navigation-settle-browser.test.ts tests/private-network-browser.test.ts
         working-directory: openbot/agent-computer
         env:
           OPENBOT_COMPUTER_BROWSER: '1'
@@ -417,7 +425,7 @@ jobs:
       - run: bun install --frozen-lockfile
       - run: bun test server/tests/freeduet-package.test.ts
       # The team eval runner, its checks and graders, offline: fake mode and scripted servers only.
-      - run: bun test ../evals/team/run.test.ts ../evals/team/live-tools.test.ts ../evals/team/dates.test.ts
+      - run: bun test ../evals/team/run.test.ts ../evals/team/engine.test.ts ../evals/team/live-tools.test.ts ../evals/team/dates.test.ts
       - run: bun ../evals/team/run.ts --fake
       # The dictation proofs' own measuring tools (word error rate, the download of a test set, the
       # report), on made-up data and a fake service. The proofs themselves run on the maintainer's computer.

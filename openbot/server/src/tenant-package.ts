@@ -203,6 +203,23 @@ type TenantChannel = {
   allowedGroups: string[];
 };
 
+/**
+ * Every coworker the package declares, whether or not this deployment runs it.
+ *
+ * `agents` leaves out a remote coworker that has no endpoint, and a remote coworker's instructions
+ * are in no row at all: the router reads them from `agents.yaml` by id. The team-file reader needs
+ * both, the names a file may not take and the shared rules it adds to an imported member, and it
+ * needs them whatever this deployment routes. So they are kept here, and written to no row.
+ */
+export type DeclaredAgent = {
+  id: string;
+  name: string;
+  /** The package skills this coworker is given, by slug. */
+  skills: string[];
+  /** The instructions, or null when the declaration gives none. */
+  systemPrompt: string | null;
+};
+
 export type TenantPackage = {
   tenantId: string;
   productName: string;
@@ -232,6 +249,12 @@ export type TenantPackage = {
   }[];
   /** What `skills.yaml` ships, or empty for a package that has none. */
   skills: TenantSkill[];
+  /**
+   * Every coworker the package declares, deployed or not, in declaration order.
+   *
+   * Optional, because a package built by hand in a test need not carry it. The loader always sets it.
+   */
+  declaredAgents?: DeclaredAgent[];
   themeCss: string;
 };
 
@@ -359,6 +382,7 @@ function parseAgents(
   values: unknown[],
   source: string,
   omittedAgentIds: Set<string>,
+  declared: DeclaredAgent[],
 ): TenantAgent[] {
   return values.flatMap((value) => {
     const agent = asRecord(value, "agent");
@@ -393,6 +417,19 @@ function parseAgents(
         `${source}: agent.id "${id}" is reserved for a deployment route and cannot name a Bot`,
       );
     }
+    // Recorded before the endpoint check, so a coworker this deployment does not run is still declared.
+    // Read leniently: a field that is wrong for a coworker that is not run is not this deployment's error.
+    declared.push({
+      id,
+      name: typeof agent.name === "string" ? agent.name : "",
+      skills: Array.isArray(agent.skills)
+        ? agent.skills.filter(
+            (slug): slug is string => typeof slug === "string",
+          )
+        : [],
+      systemPrompt:
+        typeof agent.system_prompt === "string" ? agent.system_prompt : null,
+    });
     if (type === "remote_ag_ui" || type === "remote_mastra") {
       const endpoint =
         typeof agent.endpoint === "string" ? agent.endpoint.trim() : "";
@@ -463,11 +500,13 @@ function collectAgents(
   agentsYaml: Record<string, unknown>,
   agentFiles: PackageAgentFile[],
   omittedAgentIds: Set<string>,
+  declared: DeclaredAgent[],
 ): TenantAgent[] {
   const agents = parseAgents(
     asList(agentsYaml.agents, "agents.yaml agents"),
     "agents.yaml",
     omittedAgentIds,
+    declared,
   );
   // The same refusal within `agents.yaml` as across files. Sync upserts one row per entry, so a
   // repeated id there was not refused but silently became whichever entry came last.
@@ -485,7 +524,12 @@ function collectAgents(
       document.agents === undefined
         ? [document]
         : asList(document.agents, `${source} agents`);
-    for (const agent of parseAgents(values, source, omittedAgentIds)) {
+    for (const agent of parseAgents(
+      values,
+      source,
+      omittedAgentIds,
+      declared,
+    )) {
       const existing = declaredIn.get(agent.id);
       if (existing) {
         throw new Error(
@@ -517,10 +561,12 @@ export function validateTenantPackage(files: PackageFiles): TenantPackage {
   const skin =
     brand.skin === undefined ? undefined : asRecord(brand.skin, "brand.skin");
   const omittedAgentIds = new Set<string>();
+  const declaredAgents: DeclaredAgent[] = [];
   const agents = collectAgents(
     agentsYaml,
     files.agentFiles ?? [],
     omittedAgentIds,
+    declaredAgents,
   );
   const agentIds = new Set(agents.map((agent) => agent.id));
   /*
@@ -632,6 +678,7 @@ export function validateTenantPackage(files: PackageFiles): TenantPackage {
     },
     knowledgeSources: sources,
     skills: packageSkills,
+    declaredAgents,
     themeCss: files.themeCss,
   };
 }

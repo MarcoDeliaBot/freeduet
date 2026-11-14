@@ -19,7 +19,7 @@ import pytest
 
 from freeduet import claude_cli, segment
 from golden_support import Launches, LogTap, Normalizer, blob, cli_view, compare, launch_view, pin_environment
-from helpers import MANAGED_TOKEN, post_run, run_body, standing, tool
+from helpers import MANAGED_TOKEN, SETTLE_NEVER, post_run, run_body, standing, tool
 from test_handoffs import PENNY_ROW, REFUSAL, TO_PENNY
 
 FIXTURES = Path(__file__).parent / "fixtures"
@@ -288,6 +288,7 @@ def refused_by_the_registered_name_is_handed_over(rig):
 
 @scenario
 def several_refused_calls_are_all_handed_over(rig):
+    rig.monkeypatch.setattr(segment, "SETTLE_SECONDS", SETTLE_NEVER)  # the CLI plays both steps, then ends the segment
     rig.plan([
         {"tool": {"name": "computer_navigate", "input": OPEN, "plain": True}, "real_cli": True},
         {"tool": {"name": "make_page", "input": {"title": "Ideas"}, "plain": True}, "real_cli": True},
@@ -297,6 +298,7 @@ def several_refused_calls_are_all_handed_over(rig):
 
 @scenario
 def refused_then_retried_with_the_right_name(rig):
+    rig.monkeypatch.setattr(segment, "SETTLE_SECONDS", SETTLE_NEVER)  # the retry's round trip is not a race with the timer
     rig.plan([
         {"tool": {"name": "computer_navigate", "input": OPEN, "plain": True}, "real_cli": True},
         {"tool": {"name": "computer_navigate", "input": OPEN}},
