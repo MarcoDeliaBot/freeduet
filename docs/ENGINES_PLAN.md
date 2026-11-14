@@ -1,71 +1,89 @@
 # Engines plan: every engine, chosen per member
 
-Plan only, no product code. Written 2026-11-14 for the maintainer's decision "every engine, chosen per member, and a member never stops when one engine hits its limit" ([ROADMAP.md](ROADMAP.md), [PROJECT.md](PROJECT.md) v0.2 and v0.3). It builds on the engine design already in [ARCHITECTURE.md](ARCHITECTURE.md) section 3 and on what Nexus, the maintainer's earlier project, already solved.
+Plan only, no product code. Written 2026-11-14 for the maintainer's decision "every engine, chosen per member, and a member never stops when one engine hits its limit" ([ROADMAP.md](ROADMAP.md), [PROJECT.md](PROJECT.md) v0.2 and v0.3). It builds on the engine design already in [ARCHITECTURE.md](ARCHITECTURE.md) section 3. The decisions the maintainer took on 14 November 2026 are in 9.2; this plan treats them as settled.
 
-Tags: **[code]** read in this repository or in Nexus. **[doc]** stated by the vendor's official page (URLs in section 10, read 2026-11-14). **[assumed]** my inference, not checked. **[verify]** unknown; a spike on a real install must settle it. Nothing tagged [verify] may be built on as if it were true.
+Tags: **[code]** read in this repository. **[doc]** stated by the vendor's official page (URLs in section 10, read 2026-11-14). **[assumed]** my inference, not checked. **[verify]** unknown; a spike on a real install must settle it. Nothing tagged [verify] may be built on as if it were true.
 
 ## 1. Goal and constraints
 
-Each member gets an ordered chain of engines. When one cannot take a turn, the next does, and the person is told. If every engine in the chain is limited, the member says so plainly with the earliest reset time. "Never stops" means "never fails silently and never loses the message", not "has unlimited capacity".
+Each member gets an ordered chain of engines. When one cannot take a turn, the next does, by itself, and the person is told. The person can see and change all of it in an Engines dashboard. If every engine in the chain is limited, the member says so plainly with the earliest reset time. "Never stops" means "never fails silently and never loses the message", not "has unlimited capacity".
 
 | # | Constraint | Source |
 |---|---|---|
-| 1 | Logins first: subscription engines, then free, then metered. A metered engine is never first, never on by default, and only under the person's daily and monthly caps. | [PROVIDERS.md](PROVIDERS.md); `engines.py` `order_logins_first`, `metered_allowed` [code] |
+| 1 | Logins first: subscription engines, then free, then metered. A metered engine is never first in a chain and never on by default; it runs only under the person's daily and monthly caps. | [PROVIDERS.md](PROVIDERS.md); `engines.py` `order_logins_first`, `metered_allowed` [code] |
 | 2 | Tools and approvals work the same on every engine. The engine sees only the `freeduet` tool bridge (or function schemas), never host tools, and every call still goes through OpenBot's approval gate. An engine that cannot be locked down is not offered. | ARCHITECTURE 3.2; D4 in [M1_PLAN.md](M1_PLAN.md) |
 | 3 | FreeDuet never reads, copies or forwards a subscription credential. The person signs in with the provider's own tool; its login state lives in a volume FreeDuet code never opens. | CLAUDE.md; [SECURITY.md](../SECURITY.md) |
-| 4 | An engine is offered for a member only after that member passes its evals on that engine: each member at least 90%, safety cases 100% ([evals/team/README.md](../evals/team/README.md)). `--engine` on the runner is only a label today, so the runner must really select the engine first (slice 5). | CLAUDE.md [code] |
-| 5 | Change only what a slice asks. Upstream OpenBot files change minimally, each with a row in `docs/UPSTREAM_TOUCHES.md`. | CLAUDE.md |
+| 4 | An engine and model are labelled supported for a member only after that member passes its evals on them: each member at least 90%, safety cases 100% ([evals/team/README.md](../evals/team/README.md)). `--engine` on the runner is only a label today, so the runner must really select the engine first (slice 4). | CLAUDE.md [code] |
+| 5 | A switch never silently repeats an action already done in the turn (section 5). | Maintainer, 14 Nov 2026 |
+| 6 | Change only what a slice asks. Upstream OpenBot files change minimally, each with a row in `docs/UPSTREAM_TOUCHES.md`. | CLAUDE.md |
 
-Where we start [code]. A member turn runs through `segment.run_segment`, which calls `claude_cli` directly: there is no engine seam. `engines.py` already parses and validates `engines.yaml`, orders logins first and checks quality tiers, but only `server_calls.py` (text-only calls such as titles, checkpoints, assistants) uses it. `engine_errors.py` (ported from open-duet, Apache-2.0) classifies Claude's limit text as `usage_limit`, `rate_limit` or `credits` and takes the reset time from the stream's `rate_limit_event`; today a limit ends the run with a `FREEDUET_ENGINE_LIMITED` error and nothing switches. The tool bridge in `freeduet/bridge/` is already engine-agnostic. agent-freeduet runs as one uvicorn process (no `--workers`, `Dockerfile`), so in-memory engine state is not split across workers.
+Where we start [code]. A member turn runs through `segment.run_segment`, which calls `claude_cli` directly: there is no engine seam. `engines.py` already parses and validates `engines.yaml` (kinds `cli`, `app-server`, `acp`, `anthropic-api`, `openai-compatible`), orders logins first and checks quality tiers, but only `server_calls.py` (text-only calls such as titles, checkpoints, assistants) uses it. `engine_errors.py` classifies Claude's limit text as `usage_limit`, `rate_limit` or `credits`, with the reset time taken from the stream's `rate_limit_event`; today a limit ends the run with a `FREEDUET_ENGINE_LIMITED` error and nothing switches. The tool bridge in `freeduet/bridge/` is already engine-agnostic. agent-freeduet runs as one uvicorn process (`Dockerfile`), so in-memory engine state is not split across workers.
 
-## 2. What Nexus has, mapped to FreeDuet
+## 2. Components
 
-Nexus is TypeScript; its engine code lives in `packages/core/src/engine/`. Verdicts: **Port** = translate nearly line for line, keeping origin notices. **Rewrite** = new code from the idea, with Nexus's test cases as the specification. **Idea** = take the rule, no code. **No** = not useful. Size: S under 300 changed lines, M 300 to 1000, L over 1000 or touches the segment state machine and the server together.
+Size: S under 300 changed lines, M 300 to 1000, L over 1000 or touches the segment state machine and the server together.
 
-| Nexus module | What it does (own words) | FreeDuet need it answers | Verdict | Why | Size |
-|---|---|---|---|---|---|
-| `ModelCircuitBreaker` (250 lines) | Per-model breaker with four states (closed, degraded, open, half-open). Failures carry weights by kind, waiting grows on repeats, a quarantine survives restarts. | "A limited engine is skipped until reset" (ARCH 3.3 rule 5); stop hammering a sick local engine. | Rewrite | A subscription engine says when it returns, so open must last until that time, not a capped backoff. Add a signed-out state. Its tests are a good spec; Nexus's notes say it was itself inspired by an MIT project, not copied. | M |
-| `FailureClassifier` | Sorts an error into rate limit (wait about a minute), quota exhausted (wait long) or transient (retry soon). A bare 429 is never taken as quota. Reads `Retry-After`. | Limit detection for API-style engines (Ollama errors, API keys). | Port | `engine_errors.py` only reads CLI text; this adds the HTTP path and the bare-429 rule. Code derived from an MIT project, so that credit follows the port. | S |
-| `ModelLatencyTracker` | Rolling window of response times per model; ignores gateway rejections; needs a minimum of samples before it affects choice. | Local models: cold start, "too slow, move on". | Port, later | Small, optional; also MIT-derived. Only worth it once Ollama is in. | S |
-| `JsonSalvage` | Pulls JSON out of fenced, chatty or truncated model text. | Small local models fail to return clean JSON (assistants `classify` and `extract`, an Iris router). | Port | Self-contained, about 180 lines, Nexus's own code. | S |
-| `CostTracker` (310 lines) | One record per call (layer, provider, tokens, cost), appended locally, summed by layer and total. | Savings meter, `freeduet_usage` (ARCH 2.3). | Rewrite (TypeScript, server) | Keep the record shape and sums; storage is Postgres, prices come from the person's dated `prices.yaml`. See section 7. | M |
-| `Triage` (770 lines) | Decides how hard a goal is: known patterns by regex first (no model call), then a model, then a keyword heuristic with a reason. | Deterministic-first routing for Iris. | Idea | Its patterns are about code tasks. Keep the order and the reason string. Its own notes record a misroute from a pattern that read only the first clause. See section 6. | M |
-| `RolePoolRouter`, `RoleMapper` | Picks a model for a role (builder, reviewer, judge), penalising the builder's own model family; fails open when nothing fits. | Reviewer on a different engine (F12). | Idea | FreeDuet has fixed members, not role pools. Keep "different engine than the member, else fail open". | S |
-| Ollama liveness and call-site guards (inside `OpenRouterClient`, 6,000+ lines) | A catalogue listing is not proof a model answers, so a fast bounded preflight decides "any usable engine". Hard guards refuse a paid model at the call site and refuse a silent downgrade. | Local `probe()`; "metered never on by default"; "no silent quality downgrade". | Idea | Port the rules, not the file: one `may_use(engine)` check every adapter call passes through, with tests. | S |
-| `ModelIntelligence` | Scores models by capability from a catalogue. | Quality tier A/B/C. | No | Tiers are set by hand in `engines.yaml` and proven by evals; a score would be a second source of truth. Idea-only in Nexus too. | none |
-| `TruncationDetector` | Detects code files cut off mid-way. | Nothing in the member path. | No | Members do not produce multi-file code as their main output [assumed]. | none |
+| Component | What it does | Need it answers | Where | Size |
+|---|---|---|---|---|
+| Four-state breaker | Per-engine state: ready, degraded, open, half-open. Failures carry weights by kind, waiting grows on repeats, the state survives a restart. | A limited engine is skipped until reset (ARCH 3.3 rule 5); a sick engine is not hammered. | agent-freeduet | M |
+| Limit classifier | Sorts an error into rate limit (wait about a minute), quota exhausted (wait long) or transient (retry soon). A bare 429 is never taken as quota. Reads `Retry-After`. | Limit detection for API-style engines; `engine_errors.py` reads only CLI text today. | agent-freeduet | S |
+| Liveness probe and call guards | A listing is not proof an engine answers, so a short bounded probe decides. One `may_use(engine)` check that every call passes: no metered engine unless allowed and under caps, no silent move below the quality floor. | `probe()`; "metered never on by default". | agent-freeduet | S |
+| Per-engine environment | Builds the Claude Code child's environment from one engine's entry (base URL, one credential, model overrides) and from nothing else. | The Anthropic-compatible class (section 4). | agent-freeduet | S |
+| Latency window | Rolling response times per engine; ignores gateway rejections; needs a minimum of samples before it counts. | Local models: cold start, "too slow, move on". Optional, after Ollama. | agent-freeduet | S |
+| JSON salvage | Pulls JSON out of fenced, chatty or truncated model text. | Small local models fail to return clean JSON (assistants `classify` and `extract`, an Iris router). | agent-freeduet | S |
+| Usage ledger | One record per call (when, member, engine, model, tokens, cost); sums by member, engine and day; a write never blocks the call. | Savings meter, `freeduet_usage` (ARCH 2.3). See section 7. | server (TypeScript) | M |
+| Reviewer on another engine | Chooses an engine other than the member's own for the reviewer (F12); fails open when none fits. | F12. | agent-freeduet | S |
+| Rule-then-model routing | A rule decides with no model call; otherwise the model; otherwise a keyword heuristic that gives its reason. | Deterministic-first routing for Iris. See section 6. | agent-freeduet [assumed] | M |
+| Engines dashboard and API | Shows the chain, state and usage per member and engine, and holds the person's choices (section 5). | Maintainer decision, 14 Nov 2026. | server and app | M, then L |
 
-Licence and attribution [code]. Nexus is Apache-2.0 with the maintainer as copyright holder (its `LICENSE` and `NOTICE`), contributions under a DCO. He can therefore move his own code into MIT FreeDuet, but two things follow. First, Nexus's own third-party parts keep their terms: the failure classifier and latency tracker derive from an MIT project (OmniRoute) and carry its credit; the breaker and the capability scorer were only inspired by it; one design source (Fugu) has no licence and is never copied. Second, FreeDuet already ships Apache-2.0 code (`engine_errors.py`, from open-duet) with a header, so a ported Nexus file gets the same: a header naming the origin and licence, the Apache text kept beside it in `openbot/agent-freeduet/`, and rows in [NOTICE.md](../NOTICE.md) (Nexus as the origin, OmniRoute where derived). This plan does not edit NOTICE.md; slice 2 does, with the maintainer's approval. Nothing private from Nexus (strategy, diagnostics, personal data) belongs in this repository.
+Not planned: an automatic capability score for engines. Tiers are set by hand in `engines.yaml` and proven by evals; a score would be a second source of truth.
 
 ## 3. Language and placement
 
 | Option | For | Against |
 |---|---|---|
-| **A. Router inside agent-freeduet (Python). Recommended.** | The child processes, stream parsers, limit detection, tool bridge, `engines.yaml` and the fake-CLI tests are already there [code]. The "before the engine accepted the turn" rule needs the segment state machine, which lives there. One place decides. No upstream OpenBot change for routing. | Nexus code is rewritten, not copied (about 700 lines of TypeScript become Python, with the tests as the spec). The ledger and the Engines page are in the TypeScript server, so engine events cross a process boundary. |
-| B. Router in the OpenBot server (TypeScript on Bun) | Nexus ports are near line for line; ledger and UI sit beside it. | The server would call agent-freeduet once per engine attempt, splitting "did the engine accept the turn" across HTTP. The server is wired to one managed agent URL (`MANAGED_AGENT_AG_UI_URL`) [code]. More upstream touches, each one a row and a merge risk. |
-| C. A TypeScript sidecar running a Nexus-style engine package | Maximum reuse of Nexus. | A third process and a third language to start, test and keep alive; still needs the segment knowledge from Python. |
+| **A. Router inside agent-freeduet (Python). Recommended.** | The child processes, stream parsers, limit detection, tool bridge, `engines.yaml` and the fake-CLI tests are already there [code]. The "before the engine accepted the turn" rule needs the segment state machine, which lives there. One place decides. No upstream OpenBot change for routing. | The ledger and the Engines dashboard are in the TypeScript server and app, so engine events and the person's settings cross a process boundary. |
+| B. Router in the OpenBot server (TypeScript on Bun) | Same language as the server; ledger and UI sit beside it. | The server would call agent-freeduet once per engine attempt, splitting "did the engine accept the turn" across HTTP. The server is wired to one managed agent URL (`MANAGED_AGENT_AG_UI_URL`) [code]. More upstream touches, each one a row and a merge risk. |
+| C. A separate TypeScript router service | Keeps routing out of the Python service. | A third process and language to start, test and keep alive; it still needs the segment knowledge from Python. |
 
-Recommendation: A. The server keeps only what it already owns: the `freeduet_usage` table, `GET /api/freeduet/engines` (a read-through of agent-freeduet's state, ARCH 2.4) and the app's Engines page. Per-run facts from server to agent-freeduet already travel in `forwardedProps` (for example `openbotPersonLanguage`, D26) and the engines file is mounted through `FREEDUET_ENGINES_FILE` [code]; no new channel is needed. Consequences for porting: no file is copied across languages; each port starts from Nexus's test names and cases; the three Python modules (breaker, classifier, latency) are about 700 lines with tests. To decide: where limited-until and quarantine are persisted across restarts (a small JSON file in agent-freeduet's own volume is the cheapest; no credential ever goes in it).
+Recommendation: A. The server keeps what it already owns or will own: the `freeduet_usage` table, `GET /api/freeduet/engines` (a read-through of agent-freeduet's state, ARCH 2.4), the person's engine settings and the dashboard page in the app. Per-run facts from server to agent-freeduet already travel in `forwardedProps` (for example `openbotPersonLanguage`, D26), and the engines file is mounted through `FREEDUET_ENGINES_FILE` [code]; the person's engine settings use the same road, so no new channel is needed (one upstream touch in `copilot.ts`, with its row). The breaker, classifier and probe are about 700 lines of Python with tests [assumed]. To decide (E4): where limited-until is kept across restarts; a small JSON file in agent-freeduet's own volume is the cheapest, and no credential ever goes in it.
 
 ## 4. Engine adapters
 
-Contract: ARCHITECTURE 3.1 (`key`, `kind`, `capabilities`, `probe()`, `run_turn()`, `limit`). Claude exists; the others are new. Build order: Ollama, then Codex, then Grok, then metered keys.
+Contract: ARCHITECTURE 3.1 (`key`, `kind`, `capabilities`, `probe()`, `run_turn()`, `limit`). Claude exists; the rest are new. Build order: Anthropic-compatible endpoints (least new code), then Ollama, Codex, Grok, then direct API keys.
 
 | Engine | Sign-in | Tools and approvals | How "limit reached" shows up | Unknown |
 |---|---|---|---|---|
-| **Claude Code** (exists) | The person signs in with the CLI in a terminal; token variables are stripped [code]. | `--mcp-config` with the `freeduet` stdio server, `--tools ""`, `--strict-mcp-config`, `--allowedTools mcp__freeduet`, `--permission-mode dontAsk` [code]. A tool call ends the segment (D4); OpenBot runs it under its gate and posts again with the result. | Text through `classify`, plus `rate_limit_event` `resetsAt`; ends as `FREEDUET_ENGINE_LIMITED`. Sign-in loss ends as `OPENBOT_MODEL_AUTH_REQUIRED` [code]. | Terms: the legal page lets an end user sign in to the unmodified binary on a hosted platform [doc]; re-read it before each release. |
-| **Codex CLI**, ChatGPT plan | Route (a): the person signs in with Codex's own flow, state kept in a volume we never open [assumed; exact command and storage to verify]. Route (b): the "Sign in with ChatGPT" program for third-party apps, where the app holds the person's access token and passes it in an environment variable [doc]. (b) conflicts with constraint 3. | `codex app-server` (JSON-RPC over stdio) or `codex exec --json` (JSON events) [doc]. MCP servers are declared in `config.toml` with per-tool approval modes [doc]; exact key names [verify]. The shell tool can be switched off, but the docs do not say every built-in tool (for example `apply_patch`) can be removed [doc, verify]. | Plans have 5-hour and weekly windows and a running turn may finish [doc]. Exact error text or event: [verify]. Only "You've hit your usage limit." seen, in third-party issue titles. | Does the server emit an MCP call before running it (needed to end the segment as D4 does)? Full lockdown. Terms for a self-hosted wrapper on a ChatGPT plan. Is there a call that reads remaining limits? |
-| **Grok CLI** (Grok Build) | Browser sign-in or `--device-auth`. `XAI_API_KEY` also works but is metered, so never first [doc]. | Headless `grok -p` with `--output-format streaming-json`, or `grok agent stdio` (Agent Client Protocol) [doc]. MCP servers come from a TOML config file; no per-run flag is documented [doc]. Loaders that read Claude or Cursor configs exist [doc], so an isolated config directory is mandatory. | Not found in the pages read [verify]. | Per-run MCP config. Can built-in tools be disabled? Limit shape. Terms for subscription use by a third-party app. Which plans include Grok Build. |
+| **Claude Code** (exists) | The person signs in with the CLI in a terminal; token variables are stripped [code]. | `--mcp-config` with the `freeduet` stdio server, `--tools ""`, `--strict-mcp-config`, `--allowedTools mcp__freeduet`, `--permission-mode dontAsk` [code]. A tool call ends the segment (D4); OpenBot runs it under its gate and posts again with the result. | Text through `classify`, plus `rate_limit_event` `resetsAt`; ends as `FREEDUET_ENGINE_LIMITED`. Sign-in loss ends as `OPENBOT_MODEL_AUTH_REQUIRED` [code]. | The legal page lets an end user sign in to the unmodified binary on a hosted platform [doc]; re-read it before each release. |
+| **Anthropic-compatible endpoint** (new class, 4.1) | None from FreeDuet: the person's own key at the provider, kept as a secret (`credential_secret_ref` exists in `engines.yaml` [code]). | Identical to Claude Code: same CLI, lockdown, bridge and D4 segments. Nothing new to bridge. | The provider's own HTTP errors (429, credits) arrive as the CLI's text; shape [verify]. No `rate_limit_event` from a non-Anthropic provider [assumed]. | Terms and limits are the provider's. Tool quality per model [verify]; evals decide. |
 | **Ollama** (local, free) | None; a local server [doc]. | FreeDuet runs the loop itself over the OpenAI-compatible API: tools and streaming are supported, `tool_choice` is not [doc]. The model sees only the function schemas we send, so it has no host tools by construction. A call ends the segment (D4). | No vendor limit. Failures are server down, model not loaded, timeout, out of memory; no reset time, so the one-minute default applies. `/api/tags` lists installed models, which is not liveness [doc]. | Tool-calling quality per model (the docs list none), so tier C until evals say otherwise. Speed on the person's hardware. Context size for transcript replay. |
-| **API keys**, always last (`anthropic-api`, `openai-compatible`) | The person's own key, metered, off by default, capped [code: `engines.py`]. | Same function-calling loop as Ollama. | HTTP 429 with `Retry-After`, or a credits-exhausted body; a bare 429 is a rate limit, not an exhausted quota (Nexus classifier). | Each provider's exact "out of credits" body [verify]. Whether to offer keys in v0.2 at all. |
+| **Codex CLI**, ChatGPT plan | Route (a): the person signs in with Codex's own flow, state kept in a volume we never open [assumed; exact command and storage to verify]. Route (b): the "Sign in with ChatGPT" program for third-party apps, where the app holds the person's access token and passes it in an environment variable [doc]. (b) conflicts with constraint 3. | `codex app-server` (JSON-RPC over stdio) or `codex exec --json` (JSON events) [doc]. MCP servers are declared in `config.toml` with per-tool approval modes [doc]; key names [verify]. The shell tool can be switched off, but the docs do not say every built-in tool (for example `apply_patch`) can be removed [doc, verify]. | Plans have 5-hour and weekly windows and a running turn may finish [doc]. Exact error text or event: [verify]. Only "You've hit your usage limit." seen, in third-party issue titles. | Does the server emit an MCP call before running it (needed to end the segment as D4 does)? Full lockdown. Terms for a self-hosted wrapper on a ChatGPT plan. Is there a call that reads remaining limits? |
+| **Grok CLI** (Grok Build) | Browser sign-in or `--device-auth`. `XAI_API_KEY` also works but is metered, so never first [doc]. | Headless `grok -p` with `--output-format streaming-json`, or `grok agent stdio` (Agent Client Protocol) [doc]. MCP servers come from a TOML config file; no per-run flag is documented [doc]. Loaders that read other tools' configs exist [doc], so an isolated config directory is mandatory. | Not found in the pages read [verify]. | Per-run MCP config. Can built-in tools be disabled? Limit shape. Terms for subscription use by a third-party app. Which plans include Grok Build. |
+| **Direct API keys** (`anthropic-api`, `openai-compatible`), always last | The person's own key, metered, off by default, capped [code: `engines.py`]. | The function-calling loop built for Ollama. | HTTP 429 with `Retry-After`, or a credits-exhausted body; a bare 429 is a rate limit, not an exhausted quota (classifier). | Each provider's exact "out of credits" body [verify]. |
 
-Notes. (1) Codex and Grok start the existing stdio bridge as their MCP server, so no new tool code is written; their approvals are not trusted, the gate stays at OpenBot. (2) Lockdown proof is a test, not a claim: for every CLI engine a test starts it against a fake bridge with a prompt that asks for a shell command and a file write, and fails if either happens. No proof, no offer. (3) Ollama is first because it needs no login, has no terms risk and is locked down by design; it also unlocks the assistants chain.
+Notes. (1) Codex and Grok start the existing stdio bridge as their MCP server, so no new tool code is written; their own approvals are not trusted, the gate stays at OpenBot. (2) Lockdown proof is a test, not a claim: for every CLI engine a test starts it against a fake bridge with a prompt that asks for a shell command and a file write, and fails if either happens. No proof, no offer. (3) Ollama comes before Codex and Grok because it needs no login, has no terms risk and is locked down by design; it also unlocks the assistants chain.
 
-## 5. The chain
+### 4.1 The Anthropic-compatible endpoint class
 
-**Config.** Per member in `engines.yaml` [code]: ordered list, logins first, tier floor. New: per engine `capabilities` and a context size, so "the next engine must cover what the turn needs" (ARCH 3.3 rule 2) can be checked; `engines.py` has no context-size field today [code].
+Members already run inside the Claude Code CLI, so pointing its base URL at another endpoint needs the least new code. The CLI takes `ANTHROPIC_BASE_URL` plus one credential: `ANTHROPIC_AUTH_TOKEN` (sent as a bearer token) or `ANTHROPIC_API_KEY` (sent as `x-api-key`). A credential variable takes precedence over the saved Claude login, which stays unused and untouched, and a base URL alone does not replace the subscription [doc]. OpenRouter is the first target: base `https://openrouter.ai/api`, key in `ANTHROPIC_AUTH_TOKEN`, `ANTHROPIC_API_KEY` set blank, models mapped with `ANTHROPIC_DEFAULT_OPUS_MODEL`, `_SONNET_MODEL` and `_HAIKU_MODEL` [doc]. Any endpoint the person runs or chooses works the same way, for example a local gateway or proxy that lets the harness reach other providers, free tiers included.
 
-**Engine states** (Nexus's four, adapted):
+**What must change [code].**
+
+| Where | Today | Change |
+|---|---|---|
+| `engines.py` | `KINDS` has no such class | A new kind `anthropic-compatible`: needs `base_url`, `credential_secret_ref` and a model map; `billing` is `free` or `metered` as the person declares (never `subscription`); an entry with no credential is invalid, because a base URL alone would silently keep the subscription. Adding a gateway is a new entry in `engines.yaml` (and a dashboard form), not code. |
+| `claude_cli.child_env` | Strips every `ANTHROPIC_*` name and the OAuth token, so a key can never reach the subscription engine | Keep that for the Claude subscription engine. For this class build the environment from the engine's own entry only: base URL, one credential, model map. Never copy them from the service's own environment. The two engines share one binary and one login volume; only the environment differs. |
+| `claude_cli.LABEL` | Hardcoded "Claude Code" | The notice names the engine ("OpenRouter hit its limit"). |
+| `server/src/freeduet/model-base.ts` | Pins the server's own Anthropic-format calls (titles, triage) to agent-freeduet and replaces any exported provider address; CLAUDE.md: an exported `ANTHROPIC_BASE_URL` beats `.env`, so the server pins it | **No change.** It stays right. It also means a gateway can never be reached by exporting `ANTHROPIC_BASE_URL`: the server overwrites it and the CLI never inherits it. The address lives in the engine's entry only. |
+| `docs/PROVIDERS.md` | Lists no gateway route | A row for the class, written by the slice. |
+
+**Constraints, stated plainly.** (1) The key is the person's own at that provider; FreeDuet never holds a subscription credential for it. (2) Logins-first still orders the engine after subscription logins; the person can move it in the dashboard (E3 covers a metered one). (3) Limits, prices and terms are the provider's. (4) Anthropic's page says it does not endorse, maintain or audit third-party gateways and does not support routing Claude Code to non-Claude models through any gateway [doc]; OpenRouter's page says Claude Code is "only guaranteed to work with the Anthropic first-party provider" [doc]. So a model is labelled supported only for the pair (endpoint, model) that passed the evals with tools; the default label is tier C. (5) A gateway must forward what the CLI sends; some reject fields with a 400, and the docs name a switch for it (`CLAUDE_CODE_DISABLE_EXPERIMENTAL_BETAS`) [doc]. (6) Whether free OpenRouter models work with tools through the CLI is [verify]; the OpenRouter page does not mention free models. (7) FreeDuet ships no third-party gateway code. The person installs any gateway separately; some are under copyleft licences such as AGPL, so nothing from them is copied or bundled into this MIT repository; FreeDuet only sends HTTP requests to the address in the entry.
+
+## 5. The chain and the Engines dashboard
+
+**Config.** `engines.yaml` is the baseline [code]: ordered list per member, logins first, tier floor. New: per engine `capabilities` and a context size, so "the next engine must cover what the turn needs" (ARCH 3.3 rule 2) can be checked; `engines.py` has no context-size field today [code].
+
+**Engine states.**
 
 | State | Meaning | Enters when | Leaves when |
 |---|---|---|---|
@@ -75,23 +93,35 @@ Notes. (1) Codex and Grok start the existing stdio bridge as their MCP server, s
 | Half-open | The next real turn is the probe | Open time passed | Success, then Ready. Failure before the engine accepted the turn, then Open again and the turn moves on at no cost |
 | Signed out | Not a timer: needs the person | `is_sign_in_failure`, or `probe()` | `probe()` sees a signed-in engine; the person was told "sign in to X" |
 
-**Switch rules.**
+A reset time stated by the engine always wins over a guessed wait: Open lasts until then, not shorter and not longer.
 
-| Situation | Rule |
+**Switch rules.** Mode is per member: **automatic** (the default) or **ask-first**. Ask-first asks in every row below ("Claude is limited until 09:00. Switch to Codex, wait, or pick another?").
+
+| Situation | Automatic mode |
 |---|---|
 | Limit or error before the engine accepted the turn (no output, no tool call, no approval question) | Move to the next engine in the same turn and show the switch (ARCH rule 1). |
-| Limit after output started | Never re-run. Show what arrived and the error, and offer "Continue on <engine>", which starts a new turn from the transcript. The person decides. |
-| A tool call already ran and was approved | It ran once; the transcript carries its result and tells the model "never repeat a call that already has a result" [code: `transcript.py`]. A switch is allowed only at that segment boundary, before the new segment produces output, and every write still meets the gate. Open risk: D27 sends a new email without a card when the person typed every recipient in the latest message, so a repeated send after a switch could slip through. The server check should refuse the shortcut when an equal send already completed in the turn [verify in code; maintainer decision]. |
+| Limit after text started, no tool call yet | Keep and show the cut-off text, continue on the next engine, which is told the answer was interrupted and must not repeat what was said. The line says so. An eval case injects this limit [assumed quality]. |
+| A tool call already ran and was approved | It ran once; the transcript carries its result and tells the model "never repeat a call that already has a result" [code: `transcript.py`]. A switch is allowed at that segment boundary, and every write still meets the gate. Open risk: D27 sends a new email without a card when the person typed every recipient in the latest message, so a repeated send after a switch could slip through. The server check should refuse the shortcut when an equal send already completed in the turn [verify in code; E2]. |
 | Approval pending | The turn waits at OpenBot, not on an engine; the next segment goes to whichever engine is Ready. |
 | Below the member's quality tier | The chain skips the engine for that turn; if none is left the tool refuses and says why (Jules, purchases). |
 | Unattended turns (routines, check-ins) | Same rules; the switch is written into the report. Metered engines never turn on by themselves. |
 | Loop guard | At most two switches per turn, then a plain message. |
 
-**What the person sees.** One line per switch in the conversation ("Switched to Codex because Claude's weekly limit resets Thursday 09:00", ARCH rule 4). The Engines page: installed, signed in, state, limited until, last error, no account details (ARCH 2.4). When every engine is limited: the earliest reset and "your message is kept". The conversation keeps its main engine and tries it again on the next message unless it is Open (ARCH rule 6). A switch replays the whole transcript on the new engine (D6); long ones use the checkpoint handoff (F14), and an engine whose window cannot hold it is skipped [assumed].
+**The Engines dashboard** (a page in the app, reading `GET /api/freeduet/engines`; ARCH 2.4). It shows and, once editable, sets everything:
+
+| Part | Content |
+|---|---|
+| Chain per member | The engines in order, each with its state: available, limited until a time, not signed in, disabled, probing. Last error in plain words, never account details. |
+| Per engine | Installed, signed in (yes or no, never which account), billing (subscription, free, metered) and caps spent, tier, models labelled supported, usage: turns, limits hit and switches from agent-freeduet's counters; tokens and money only once the ledger exists (slice 12), otherwise "not measured". |
+| Choices | Order of the chain per member; switch mode per member (automatic or ask-first); pin one engine for a member (no fallback); disable an engine; add a gateway from a form (base URL, key shown only as set or not set, model map, billing). Defaults: automatic, the `engines.yaml` order, nothing pinned. |
+| Not changeable here | The approval gate, the lockdown, the quality floor (Jules and purchases) and the metered caps. |
+| Storage | The person's choices sit on the server as overrides on top of `engines.yaml`, never edited into the file, and travel in `forwardedProps` per run [assumed; E4]. |
+
+**What the person sees in the conversation.** One line per switch ("Switched to Codex because Claude's weekly limit resets Thursday 09:00", ARCH rule 4). When every engine is limited: the earliest reset and "your message is kept". The conversation keeps its main engine and tries it again on the next message unless it is Open (ARCH rule 6). A switch replays the whole transcript on the new engine (D6); long ones use the checkpoint handoff (F14), and an engine whose window cannot hold it is skipped [assumed].
 
 ## 6. Deterministic-first routing for Iris
 
-Nexus's order is rule, then model, then heuristic with a reason. For Iris, candidates [assumed; Iris's real traffic is not measured]:
+The order is rule, then model, then heuristic with a reason. Candidates for Iris [assumed; Iris's real traffic is not measured]:
 
 | Request | Without a model call | Rule | Risk |
 |---|---|---|---|
@@ -101,64 +131,68 @@ Nexus's order is rule, then model, then heuristic with a reason. For Iris, candi
 | Savings and usage questions | Answer from the ledger, labelled "estimate" | Same | Numbers must come from the ledger only. |
 | "thanks", "ok" | No model turn | Whole message only | "ok, send it" is an instruction; never match a prefix. |
 
-Never by rule: anything that sends, buys, pays, deletes, books or shares; multi-clause requests; a member name anywhere but the start. Uncertain or two rules disagree: the model decides.
+Never by rule: anything that sends, buys, pays, deletes, books or shares; multi-clause requests (a rule that reads only the first clause misroutes the rest); a member name anywhere but the start. Uncertain or two rules disagree: the model decides.
 
 Measure before turning on. (1) A labelled set of Iris requests in `evals/team/`, synthetic only (the repository is public), each marked with its right handler or "must go to the model". (2) Shadow mode on the maintainer's own stack: the rule logs its id and what it would have done, never the text, and Iris still answers; compare afterwards. (3) Proposed gate: precision on routed requests at least 99%, zero action requests short-circuited, coverage reported as it is. If coverage is small the live switch is not built; that is a valid outcome. (4) Live only behind a setting, off by default, switchable per rule.
 
 ## 7. Savings meter
 
-Reuse from `CostTracker`: one append-only record per call (when, who asked, engine, model, tokens in and out, cost); sums by member, engine and day; a write that never blocks or fails the call. Change: Postgres table `freeduet_usage` (ARCH 2.3) instead of a file; `source` says `reported` or `estimated`; `api_equivalent_cost` comes from the person's dated `prices.yaml` and an unknown model price shows "not measured", never zero; Nexus's layer names and provider ids are dropped. Add two counters the person cares about: limits hit and switches made. Whether Codex and Grok report tokens at all is [verify]; where they do not, the meter counts turns and says so. Adding an enum value to Postgres breaks `tests/schema.test.ts` [code], so the table uses text columns.
+The ledger keeps one append-only record per call (when, member, engine, model, tokens in and out, cost), sums by member, engine and day, and a write never blocks or fails the call. Storage is the Postgres table `freeduet_usage` (ARCH 2.3); `source` says `reported` or `estimated`; `api_equivalent_cost` comes from the person's dated `prices.yaml` and an unknown model price shows "not measured", never zero. Add two counters the person cares about: limits hit and switches made. Whether Codex, Grok and gateways report tokens at all is [verify]; where they do not, the meter counts turns and says so. Adding an enum value to Postgres breaks `tests/schema.test.ts` [code], so the table uses text columns.
 
-## 8. Lessons from Nexus's failures, as rules
-
-Nexus's private problem log records these; they are summarised here, not quoted.
+## 8. Rules we adopt
 
 | Rule | Test that keeps it true |
 |---|---|
 | Every engine call has a hard timeout enforced by the router (kill the process), not only by the engine: first output, and whole turn. `probe()` too. | Fake engine that hangs: the turn ends and the next engine is tried. |
 | Tests start from clean state: no breaker file shared between tests, a temp directory and a fake clock for each, no test touches a real engine or a real login. | The suite passes in any order, twice in a row. |
 | No long autonomous pipelines. A turn is one engine and its segments; at most two switches; a routine cannot chain turns past its existing limits. | A fake chain that always fails ends after two switches. |
-| A catalogue listing is not liveness; a bare 429 is not a quota. | `probe()` against a fake server that lists a model but never answers. |
+| A listing is not liveness; a bare 429 is not a quota. | `probe()` against a fake server that lists a model but never answers. |
 | A routing rule ships only after it was measured (section 6). | The shadow report exists before the setting does. |
-| Failure paths are tested, not only success: limit during output, signed out, killed child, bridge down. | Fixtures like `usage_limit.jsonl` and `not_signed_in.jsonl`, one per engine. |
+| Failure paths are tested, not only success: limit during output, signed out, killed child, bridge down, gateway rejecting a field. | Fixtures like `usage_limit.jsonl` and `not_signed_in.jsonl`, one per engine. |
 
 ## 9. Work plan
 
-One PR each, in this order. "E" numbers are the open decisions in 9.2 (M1_PLAN keeps its own D numbers).
+One PR each, in this order. "E" numbers are the open decisions in 9.3 (M1_PLAN keeps its own D numbers).
 
 ### 9.1 Slices
 
 | # | Slice | Ships | Proof | Needs | Size |
 |---|---|---|---|---|---|
-| 1 | Adapter seam | `EngineAdapter` interface (ARCH 3.1); Claude moved behind it; no behaviour change | Existing pytest suite unchanged; AG-UI output byte-identical on recorded fixtures | none | M |
-| 2 | Engine state and detection | Breaker (section 5), classifier port, `probe()`, persisted limited-until, read-only `GET /api/freeduet/engines`, NOTICE rows | Fake-clock unit tests from Nexus's cases; limit and sign-in fixtures | 1; decisions E6, E9 | M |
-| 3 | Chain in the member path | Pick the engine per turn, the switch rules, notices, quality floor, loop guard; Claude plus a second fake engine (generalise `tests/fake_claude.py`) | Limit before output switches; after output it does not; tool-boundary case; approvals unchanged; Claude evals unchanged | 1, 2; decisions E4, E5 | L |
-| 4 | Engines page in the app | Page reading the API; plain switch lines | App tests | 2 | S |
-| 5 | Eval runner selects the engine | `--engine` really sets the member's chain on the eval stack | Runner tests; a Claude run reproduces its certified score | 3 | M |
-| 6 | Ollama adapter (free) | OpenAI-compatible loop with in-band tool calls (M1_PLAN D4), probe with a real tiny generation, tier C, assistants reuse it | Fake-server tests; then each member at least 90% and safety 100% on a named local model before it is offered | 3, 5; decision E3 | M |
-| 7 | Codex spike, then adapter | Spike: written findings on a disposable machine (limit shape, tool-call event, lockdown, sign-in route). Adapter after. | Lockdown test of section 4; fixtures; evals at the thresholds | 3, 5; decisions E1, E2 | S, then L |
-| 8 | Grok spike, then adapter | Same shape as slice 7 | Same | 3, 5; decision E2 | S, then M |
-| 9 | Metered keys, last in chains | `anthropic-api` and `openai-compatible`, HTTP classifier path, caps | Cap tests; never first; off by default | 3; decision E7 | M |
-| 10 | Ledger and savings card | `freeduet_usage`, usage events from the router, the card | Server and app tests; numbers match fixtures | 3 (and 6 or 7 for real data); decision E8 | L |
-| 11 | Iris routing, shadow only | Labelled set, rules, shadow log, report | Section 6 gate | 3; decision E10 | M |
+| 1 | Adapter seam | `EngineAdapter` interface (ARCH 3.1); Claude moved behind it; the child's environment built per engine; no behaviour change | Existing pytest suite unchanged; AG-UI output byte-identical on recorded fixtures | none | M |
+| 2 | Engine state and detection | Breaker (section 5), classifier, `probe()`, persisted limited-until | Fake-clock unit tests; limit and sign-in fixtures | 1; E4 | M |
+| 3 | Chain in the member path | Per turn engine choice, automatic and ask-first modes, pin, disable, switch rules, notices, quality floor, loop guard; Claude plus a second fake engine (generalise `tests/fake_claude.py`) | Limit before output switches; limit after text continues; tool-boundary case; approvals unchanged; Claude evals unchanged | 1, 2; E2 | L |
+| 4 | Eval runner selects the engine | `--engine` really sets the member's chain on the eval stack | Runner tests; a Claude run reproduces its certified score | 3 | M |
+| 5 | Anthropic-compatible endpoint | The class of 4.1; OpenRouter as the first entry; PROVIDERS.md row | Fake gateway tests (limit, 401, a rejected field); lockdown unchanged; the key never reaches the Claude subscription engine; offered only after the evals of slice 4 | 1, 3 (offered after 4); E3 | M |
+| 6 | Engines dashboard, read-only | `GET /api/freeduet/engines` and the page: chain, states, usage counters | Server and app tests | 2, 3 | M |
+| 7 | Engines dashboard, editable | Order, mode, pin, disable, add a gateway; settings stored on the server and sent in `forwardedProps`; one upstream touch row | Round-trip tests; a pinned engine never falls back; defaults unchanged when nothing is set | 6; E3, E4 | L |
+| 8 | Ollama adapter (free) | OpenAI-compatible loop with in-band tool calls (M1_PLAN D4), probe with a real tiny generation, tier C, assistants reuse it | Fake-server tests; then each member at least 90% and safety 100% on a named local model before it is labelled supported | 3, 4 | M |
+| 9 | Codex spike, then adapter | Spike: written findings on a disposable machine (limit shape, tool-call event, lockdown, sign-in route). Adapter after. | Lockdown test of section 4; fixtures; evals at the thresholds | 3, 4; E1 | S, then L |
+| 10 | Grok spike, then adapter | Same shape as slice 9 | Same | 3, 4 | S, then M |
+| 11 | Direct API keys, last in chains | `anthropic-api` and `openai-compatible` without the CLI, caps | Cap tests; never first in a chain; off by default | 8 | M |
+| 12 | Ledger and savings card | `freeduet_usage`, usage events from the router, the card; dashboard usage fills in | Server and app tests; numbers match fixtures | 3 and one real engine; E5 | L |
+| 13 | Iris routing, shadow only | Labelled set, rules, shadow log, report | Section 6 gate | 3; E6 | M |
 
-Slices 6 to 8 are independent after slice 5 and can run in parallel. Rough total: 3 L, 7 M and 3 S (two of the S are the spikes). The first useful result, Claude with a local fallback (slices 1 to 6), is 1 L, 4 M and 1 S.
+Slices 5 and 6 can run in parallel after slice 3; slices 8 to 10 are independent after slice 4. Rough total: 4 L, 9 M and 2 S (the two spikes). The first useful result, Claude with an automatic fallback to a gateway engine and a read-only dashboard (slices 1 to 6), is 1 L and 5 M.
 
-### 9.2 Open decisions for the maintainer
+### 9.2 Decided on 14 November 2026
+
+| Decision | Consequence here |
+|---|---|
+| When an engine hits its limit FreeDuet switches to the next engine in the member's chain **automatically by default**. An Engines dashboard shows every option (chain per member, signed in, state, usage) and is where the person chooses or presets everything: chain order, automatic or ask-first, pin one engine, disable an engine. A switch never silently repeats an action already done in the turn. | Sections 1, 5; slices 3, 6, 7. The safety concern stays open as E2. |
+| Metered API keys stay off by default and last in every chain. Gateways must work in the first engines release: OpenRouter and any Anthropic-compatible endpoint the person runs or chooses. FreeDuet ships no third-party gateway code. | Section 4.1; slice 5 is one of the first useful slices. Adding a gateway is configuration, not code. |
+| Codex and Grok are offered only after their spikes. Local models stay tier C until evals say otherwise. | Slices 8 to 10. |
+
+### 9.3 Still open for the maintainer
 
 | # | Decision | Recommendation |
 |---|---|---|
-| E1 | Codex sign-in: Codex's own login in a volume FreeDuet never opens, or the ChatGPT token program where the app holds the token | The first; the second breaks rule 1 unless he makes an explicit exception |
-| E2 | Offer Codex and Grok at all until their terms for a self-hosted wrapper are read and confirmed | Not before the spikes report |
-| E3 | Which local models and how much hardware count as supported | Tier C by default; list only models that pass the evals |
-| E4 | After a limit mid-answer: a "Continue on <engine>" choice, or automatic at the next segment boundary | The choice |
-| E5 | D27 (no card for an email to addresses the person typed) after a switch | Refuse the shortcut when an equal send already completed |
-| E6 | Where limited-until is stored | A file in agent-freeduet's volume |
-| E7 | Metered keys in v0.2 | Defer; Claude, Codex and a local model already make a chain |
-| E8 | When the ledger and savings card ship (ARCH puts them in M3) | After slice 6 or 7, so there is real data |
-| E9 | NOTICE rows and Apache text for ported Nexus files | Approve; he owns the copyright |
-| E10 | Build Iris shadow routing, or drop it | Build the shadow only; decide on its coverage |
+| E1 | Codex sign-in: Codex's own login in a volume FreeDuet never opens, or the ChatGPT token program where the app holds the token | The first; the second breaks constraint 3 unless he makes an explicit exception |
+| E2 | D27 (no card for an email to addresses the person typed) after a switch | Refuse the shortcut when an equal send already completed in the turn |
+| E3 | A metered or gateway engine in the dashboard: may the person move one above the subscription logins, or pin it? That touches "a metered API is never first in any chain" | Free gateway entries move freely; a metered one moves up or is pinned only with an explicit confirmation showing the caps, and PROVIDERS.md says so |
+| E4 | Where limited-until and the person's dashboard choices are kept | Limited-until in a file in agent-freeduet's volume; choices on the server |
+| E5 | When the ledger and savings card ship (ARCH puts them in M3) | After a real engine beyond Claude exists, so there is real data |
+| E6 | Build Iris shadow routing, or drop it | Build the shadow only; decide on its coverage |
 
 ## 10. Sources
 
-[doc] Codex: `https://developers.openai.com/codex/app-server`, `/codex/noninteractive`, `/codex/config-reference`, `/codex/pricing`, `/siwc/token-sharing-open-source/codex-app-server` (these redirect to learn.chatgpt.com). The help article on using Codex with a ChatGPT plan could not be fetched, so limit wording stays [verify]. Grok Build: `https://docs.x.ai/build/cli/reference`, `/build/cli/headless-scripting`, `/build/features/mcp-servers`, `/build/overview`. Ollama: `https://docs.ollama.com/api/openai-compatibility`, `/capabilities/tool-calling`, `/api/tags`. Claude Code: `https://code.claude.com/docs/en/legal-and-compliance`. Vendor pages change; a slice that depends on one re-reads it first.
+[doc] Claude Code gateways: `https://code.claude.com/docs/en/llm-gateway` and `/llm-gateway-connect`; legal terms: `/legal-and-compliance`. OpenRouter with Claude Code: `https://openrouter.ai/docs/guides/guides/claude-code-integration`. Codex: `https://developers.openai.com/codex/app-server`, `/codex/noninteractive`, `/codex/config-reference`, `/codex/pricing`, `/siwc/token-sharing-open-source/codex-app-server` (these redirect to learn.chatgpt.com). The help article on using Codex with a ChatGPT plan could not be fetched, so limit wording stays [verify]. Grok Build: `https://docs.x.ai/build/cli/reference`, `/build/cli/headless-scripting`, `/build/features/mcp-servers`, `/build/overview`. Ollama: `https://docs.ollama.com/api/openai-compatibility`, `/capabilities/tool-calling`, `/api/tags`. Vendor pages change; a slice that depends on one re-reads it first.

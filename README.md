@@ -171,7 +171,7 @@ Nothing here has a date. In the order we currently think it matters:
 |---|---|---|---|
 | Now | **One-file installer** for Windows, macOS and Ubuntu | Download, double-click, start. No Docker, Bash or Bun by hand. Top priority: it is today's biggest barrier | Planned |
 | Now | **A growing team** | New ready-made members added to the starting team (Mark, the marketer, was the first). Building your own member already works today | In progress |
-| Next | **Every engine, chosen per member** | Claude, Codex, Grok and others, picked per member. Logins first: a metered API key is never first and never on by default | Planned |
+| Next | **Every engine, chosen per member** | Claude, Codex, Grok, local models and others, picked per member. When one reaches its limit, FreeDuet moves to the next by itself, and an Engines dashboard lets you set the order or choose ask-first. OpenRouter and your own Anthropic-compatible endpoint are included. Logins first: a metered API key is never first and never on by default | Planned |
 | Next | **Teams and members from one file** | Export and import a whole team or one member as one file, with no credentials and no chat history in it | Planned |
 | Next | **Automations written in chat** | "Every Monday at 9…", with a calendar of scheduled runs and a history | In design |
 | Next | **Many more connected apps** | Hundreds of apps instead of a handful. A connector hub is one option under evaluation. Account actions keep asking | In design |
