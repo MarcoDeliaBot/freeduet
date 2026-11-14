@@ -1,8 +1,8 @@
 import type { Context } from "hono";
 import { type AppVariables, requireAdmin } from "../../auth/guards";
 import { BROKERED_PROFILE, type BrokerProvider } from "../access";
-import type { Unavailable } from "../app-access";
-import type { CatalogueEntry } from "../catalogue";
+import { settingsOnlySentence, type Unavailable } from "../app-access";
+import type { CatalogueEntry, SettingsOnly } from "../catalogue";
 import type {
   AppAccessRequestRecord,
   AppDirectory,
@@ -376,6 +376,13 @@ export function mountAppAccessRoutes({
    * the Bot's page for the app or by naming them here. An app with no read-only action is refused
    * with that sentence rather than granted everything. A ref outside the app is refused rather than
    * dropped.
+   *
+   * A TOOL THAT SENDS IS NEVER GIVEN HERE, NAMED OR NOT (decided 14 November 2026). It is allowed
+   * from the Bot's page for the app, in settings, by the person, and a press that names one is
+   * refused whole with 403 and the reason `settings_only_tool`, so the refusal is the server's and
+   * does not depend on the card having left the tool out. What sends is each entry's own `sendTools`;
+   * an app with no entry gives only what its vendor labelled a read. See `settingsOnlyBecause`.
+   * Full access, the approval gate and who the sender is are not touched by this.
    */
   routes.post("/access-requests/:id/approve", requireUser, async (context) => {
     const forbidden = requireAdmin(context);
@@ -397,7 +404,7 @@ export function mountAppAccessRoutes({
       const deny = (
         reason: string,
         error: string,
-        status: 400 | 404 | 409 | 502 | 503,
+        status: 400 | 403 | 404 | 409 | 502 | 503,
       ) =>
         refused(context, {
           app: request.appKey,
@@ -519,10 +526,27 @@ export function mountAppAccessRoutes({
           return deny("no_such_bot", "That Bot is no longer here.", 409);
         const tools = await store.appTools(serverId);
         const advertised = tools.map((tool) => tool.ref);
+        /*
+         * WHAT NO APPROVAL MAY GIVE, READ FROM THE APP'S OWN TOOLS HERE AND NOT FROM THE REQUEST, THE
+         * ROW OR THE BROWSER. Decided by the maintainer on 14 November 2026: approving in the inbox
+         * never grants a tool that sends. The card leaves such a tool out of what its press names and
+         * says where to allow it, but the card is a view; this is the rule, and it holds for a call
+         * that never saw the card. See `settingsOnlyBecause` for what makes a tool one.
+         */
+        const settingsOnly = new Map<
+          string,
+          { name: string; because: SettingsOnly }
+        >();
+        for (const tool of tools)
+          if (tool.settingsOnly)
+            settingsOnly.set(tool.ref, {
+              name: tool.name,
+              because: tool.settingsOnly,
+            });
         const refs =
           chosen ??
           (topUp ? wants : tools)
-            .filter((tool) => tool.read)
+            .filter((tool) => tool.read && !settingsOnly.has(tool.ref))
             .map((tool) => tool.ref);
         const outside = refs.filter((ref) => !advertised.includes(ref));
         if (outside.length > 0)
@@ -536,6 +560,31 @@ export function mountAppAccessRoutes({
             "no_tools",
             `${name} has no tools to give yet. Refresh its tools on its page under Plugins, then approve this request again.`,
             409,
+          );
+        /*
+         * ALL OR NOTHING. A press that names a send beside a read is refused whole, so nothing is
+         * closed as approved over fewer tools than it asked for and the refusal cannot be missed. The
+         * request goes back to waiting, with the same row saying where the send is allowed.
+         */
+        const heldBack = refs.flatMap((ref) => settingsOnly.get(ref) ?? []);
+        if (heldBack.length > 0)
+          return deny(
+            "settings_only_tool",
+            settingsOnlySentence({ app: name, tools: heldBack }),
+            403,
+          );
+        /*
+         * Nothing to give, and not for want of a read: what this Bot still needs are sends, which only
+         * settings gives. The same sentence, because it is the same reason.
+         */
+        const heldBackWants = topUp
+          ? wants.flatMap((tool) => settingsOnly.get(tool.ref) ?? [])
+          : [];
+        if (refs.length === 0 && heldBackWants.length > 0)
+          return deny(
+            "settings_only_tool",
+            settingsOnlySentence({ app: name, tools: heldBackWants }),
+            403,
           );
         if (refs.length === 0)
           return deny(
