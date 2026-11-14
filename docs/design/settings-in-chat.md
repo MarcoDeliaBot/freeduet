@@ -1,6 +1,6 @@
 # Settings changed in chat, with Undo, and a control dashboard
 
-Design, and slice 1 built on the branch `settings-in-chat-slice-1` (see "Built so far" at the end). Written 2026-11-14 for two rows of [ROADMAP.md](../ROADMAP.md): "Settings changed in chat, with Undo" (row 47) and "A control dashboard" (row 48). Base: origin/main 021cad8.
+Design, and slice 1 on main through PR #175 (see "Built so far" at the end). Written 2026-11-14 for two rows of [ROADMAP.md](../ROADMAP.md): "Settings changed in chat, with Undo" (row 47) and "A control dashboard" (row 48). Base: origin/main 021cad8.
 
 Tags: **[code: path:line]** read on origin/main. Code paths start at `openbot/`; doc paths start at the repository root. **[assumed]** my inference, not checked. **[verify]** unknown; a spike on a real install must settle it. Nothing tagged [verify] ships unchecked.
 
@@ -167,7 +167,7 @@ Slice 1 was built on the branch `settings-in-chat-slice-1` and merged in pull re
 - No model has run `change_setting`. Its tool text is "not yet run live". The Settings connector has to be granted to the member in the eval stack first.
 - The app had no Undo button and no list of changes when 8.1 to 8.5 were written. Section 8.7 builds both; it is not run in a browser yet.
 - The card's wording and placement were not checked in the app. The Italian card wording was written without the maintainer's review (8.7).
-- No CI run: the pull request was opened and not waited on.
+- CI on slice 1's pull request head (7a9767a) passed: 20 checks succeeded and 3 were skipped.
 - No browser test. The Undo route is exercised through the app in the integration test.
 - No member prompt was changed. The model learns the tool from its listing.
 
