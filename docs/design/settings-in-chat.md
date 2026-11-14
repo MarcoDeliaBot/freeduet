@@ -155,10 +155,10 @@ Slice 1 is built on the branch `settings-in-chat-slice-1`. It is not merged and 
 
 - **Before** (origin/main, copy taken at 4f14465): the three new files do not load. The modules `plugins/builtin-settings` and `settings-in-chat/allow-list` are missing, and `SETTING_CHANGE_REASON` is not exported. The catalogue test fails on its own (no `settings` entry; two tests). Total: 0 pass, 5 fail.
 - **After**: the three new files have 59 passing tests (allow-list 37, gate 9, integration 13). The six-file set, which adds `unclassified-tools-ask`, `plugin-catalogue` and `assertion-shape`, has 152 pass and 0 fail.
-- **Full server suite** (`bun test server/`, on the branch merged with origin/main): 7754 pass, 20 skip, 4 fail, out of 7778 tests in 492 files. The four failures:
-  - `learning-langgraph.test.ts`: two "real provider" tests, about 10 s each. They fail the same way on origin/main.
+- **Full server suite** (`bun test server/`, on the branch merged with origin/main at 48243c1): 7821 pass, 20 skip, 3 fail, out of 7844 tests in 495 files. The three failures:
+  - `learning-langgraph.test.ts`: two "real provider" tests, about 10 s each. They fail the same way on origin/main (the files are unchanged there since the earlier comparison).
   - `learning-mastra.test.ts`: the Mastra AG-UI bridge test. It fails the same way on origin/main.
-  - `plugin-store.integration.test.ts`: "an answer this deployment could not read is filed under the same name as a vendor refusal", a 5.4 s timeout in the full run. Run on its own it passes, on origin/main and on this branch. The sandbox had a load average near 10 on two CPUs.
+  - An earlier full run, on the previous merge, also had `plugin-store.integration.test.ts` "an answer this deployment could not read is filed under the same name as a vendor refusal" time out at 5.4 s. It passes on its own, on origin/main and on this branch, and it passed in the final run. The sandbox had a load average near 10 on two CPUs.
 - **Static checks** on the merged branch: `bun run format:check` and `bun run lint` exit 0; `bun run typecheck:tests` exits 0, with no new error against `server/tests/typecheck-baseline.txt` (not changed here); `tsc --noEmit` in `openbot/server` exits 0.
 - Under the same load, `tool-selection-environment-restoration.test.ts` timed out (5 s) on this branch and on origin/main alike (on origin/main, 2 of its 5 tests in one run). It passed in the full run. It is not changed here.
 
