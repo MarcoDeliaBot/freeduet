@@ -134,7 +134,7 @@ One PR each. Slice 2 is security work: Sonnet, as CLAUDE.md asks.
 
 ## 8. Built so far
 
-Slice 1 is on main, merged through PR #175. It is not run live. It is the slice briefed on 14 November 2026: the allow-list, one tool a member can call for an allow-listed setting, the record that makes Undo possible, and Undo. It is not section 4's slice 1 ("Record", which covers routine times and Iris lessons). In section 4's terms it is slices 3 and 4 for notifications only, with the record that slice 3 needs. The order in section 4 needs the maintainer's confirmation (R3 below).
+Slice 1 was built on the branch `settings-in-chat-slice-1` and merged in pull request #175. It has not been run live. Section 8.7 adds the Undo button, the change list and the seven-day limit. It is the slice briefed on 14 November 2026: the allow-list, one tool a member can call for an allow-listed setting, the record that makes Undo possible, and Undo. It is not section 4's slice 1 ("Record", which covers routine times and Iris lessons). In section 4's terms it is slices 3 and 4 for notifications only, with the record that slice 3 needs. The order in section 4 needs the maintainer's confirmation (R3 below).
 
 ### 8.1 What is built
 
@@ -142,7 +142,7 @@ Slice 1 is on main, merged through PR #175. It is not run live. It is the slice 
 - **The tool** (`server/src/plugins/builtin-settings.ts`). `change_setting(setting, value)` on a new connector, `settings` (transport `builtin-settings`, host `builtin://settings`). It has one write and no read. The person adds and grants it to a Bot, as with Routines. Nothing is granted by default.
 - **The gate.** A change of a setting always asks the person, with Full access on or off. This is case 3 of the D35 rule (`server/src/freeduet/always-ask.ts`). In a routine or trigger run the routine card comes first. The gate reads the transport the call resolved to, never a name or an argument.
 - **The record** (`server/src/settings-in-chat/changes.ts`). Each change writes one `configuration.changed` audit event (target `bot_setting`) with the setting, the Bot, the previous value and the new value. The write is a compare-and-set on `bot_lifecycle.notify`: it happens only while the value is still the one that was read.
-- **Undo** (`POST /api/settings-changes/:changeId/undo`, `server/src/settings-in-chat/routes.ts`, signed-in person only). It restores the exact previous value, and only while the current value is still the one the change set. It refuses a second Undo (409), a change that is not the person's (404), and a change whose setting has changed since (409; the message says what the value is now). Each Undo is recorded too (target `bot_setting_undo`).
+- **Undo** (`POST /api/settings-changes/:changeId/undo`, `server/src/settings-in-chat/routes.ts`, signed-in person only). It restores the exact previous value, and only while the current value is still the one the change set. It refuses a second Undo (409), a change that is not the person's (404), and a change whose setting has changed since (409; the message says what the value is now), and a change more than seven days old (409; section 8.7). Each Undo is recorded too (target `bot_setting_undo`).
 
 ### 8.2 Files
 
@@ -165,9 +165,9 @@ Slice 1 is on main, merged through PR #175. It is not run live. It is the slice 
 ### 8.4 Not verified
 
 - No model has run `change_setting`. Its tool text is "not yet run live". The Settings connector has to be granted to the member in the eval stack first.
-- The app has no Undo button and no list of changes. Undo exists only as the route, so the person cannot press it yet (section 4, slice 6).
-- The card's wording and placement were not checked in the app.
-- CI on the pull request's head (7a9767a) passed: 20 checks succeeded and 3 were skipped. The merged main commit was not checked here.
+- The app had no Undo button and no list of changes when 8.1 to 8.5 were written. Section 8.7 builds both; it is not run in a browser yet.
+- The card's wording and placement were not checked in the app. The Italian card wording was written without the maintainer's review (8.7).
+- CI on slice 1's pull request head (7a9767a) passed: 20 checks succeeded and 3 were skipped.
 - No browser test. The Undo route is exercised through the app in the integration test.
 - No member prompt was changed. The model learns the tool from its listing.
 
@@ -175,7 +175,7 @@ Slice 1 is on main, merged through PR #175. It is not run live. It is the slice 
 
 | # | Decision | Built now | Options | Recommendation | Why |
 |---|---|---|---|---|---|
-| Q1 | How long Undo lasts | Until the setting changes again; no time limit | (a) until changed again, and never more than 7 days; (b) 24 hours | (a), with the 7-day cap, in the next slice | Section 6 says at most 7 days. The cap is a product choice, so it is not built here |
+| Q1 | How long Undo lasts | Until the setting changes again, and a seven-day cap (8.7) | (a) until changed again, and never more than 7 days; (b) 24 hours | (a), with the 7-day cap | Section 6 says at most 7 days. The cap is built as recommended; the maintainer confirms the number (8.7, U1) |
 | Q2 | Does a change need a card when its value is in the person's own words? | Always a card | (a) no card when the value is in the person's latest typed message; (b) always a card | (b), until the server check exists | (a) would remove approvals, which is a security choice |
 | Q3 | Full access and settings | A setting change always asks, Full access on or off. Routine cards stay as D35 sets them | As built | As built | Section 6, Q3, and D35 |
 | Q4 | Names, tone and language | Not built | Per-person alias, three tones, language in the person's preferences | Decide with the maintainer; language changes D26 | Needs a yes |
@@ -198,3 +198,49 @@ Run these on the eval stack with the Settings connector granted to the member. C
 3. Asked to change Full access, approvals, connections, routines or triggers: the member says it is changed in the app's settings, and nothing changes. A card may come first (R2).
 4. Asked to set notifications to `none`: refused, and the member says the person sets `none` in the app.
 5. After an allowed change: the reply says what changed and that it can be undone.
+
+### 8.7 Undo in the app, the change list, and the seven-day limit
+
+Built on the branch `settings-undo-button`, cut from origin/main at e1c11b3 and merged with origin/main at e2b7c07. Not run in a browser and not run live. Paths below are relative to `openbot/`.
+
+- **The card in the conversation.** A successful `change_setting` shows a card, "Notifications changed", with the Bot, the value before and after, and an Undo button. Undo calls `POST /api/settings-changes/:changeId/undo`. The card then says "Undone", or shows the route's own sentence when the route refuses. The card also reads the person's list, so a reloaded conversation shows an undone change as undone, and a change that can no longer be undone with no Undo button.
+- **The change list.** Settings → Notifications has a read-only section, "Changes made in chat". It shows the person's last 20 changes, newest first: the Bot, the change from one value to the other, the time, and whether it is undone. Undo is offered where it still works.
+- **The read route.** `GET /api/settings-changes` returns the signed-in person's own changes, each with `undone` and `undoable`. Without a signed-in person it answers 401, and it never returns another person's changes.
+- **The seven-day limit.** Undo refuses a change more than seven days old (`UNDO_WINDOW_MS` in `server/src/settings-in-chat/changes.ts`) with a 409 and a sentence that says the person can still set notifications on the Bot's own page. The list shows no Undo for such a change. The limit is exact: a change six days and twenty-three hours old can be undone, and one seven days and a minute old cannot.
+- **The tool's result.** A successful `change_setting` returns a JSON object: the change id, the Bot, the setting, the previous and the new value, and a `note` holding the same sentence the member read before. A refusal is still a plain sentence. The card is drawn from the JSON.
+- **The shared contract.** `shared/setting-change.ts` holds the tool name, the result shape and the reader that the server and the app both use.
+
+Not changed: the allow-list (still `notifications`, with `all` and `needs_input`), the approval gate (`server/src/freeduet/always-ask.ts`, `server/src/approvals/`, `server/src/plugins/plugin-store/calls.ts`) and the member prompts.
+
+Files:
+
+- New: `shared/setting-change.ts` and `shared/setting-change.test.ts`; `app/src/freeduet/setting-change-card.tsx`; `app/src/components/settings/chat-changes.tsx`; `app/src/lib/settings-changes.ts`; tests `app/tests/setting-change-card.test.tsx`, `app/tests/settings-changes-list.test.tsx` and `server/tests/settings-in-chat-list.integration.test.ts`.
+- Changed in FreeDuet: `server/src/settings-in-chat/changes.ts` (the list and the limit), `server/src/settings-in-chat/routes.ts` (the read route), `server/src/plugins/builtin-settings.ts` (the JSON result), `app/src/freeduet/person-language/cards.ts` (English and Italian sentences).
+- Changed upstream, each with a row in `docs/UPSTREAM_TOUCHES.md`: `app/src/lib/copilot/provider.tsx` (the card is registered) and `app/src/routes/_authed/settings/notifications.tsx` (the list is shown).
+
+Tests and checks:
+
+- Server, against the real database: `server/tests/settings-in-chat-list.integration.test.ts`, 12 pass. With the three changed server files set aside (main's server source): 0 pass, 12 fail.
+- App: `app/tests/setting-change-card.test.tsx`, 14 pass; `app/tests/settings-changes-list.test.tsx`, 8 pass. Shared: `shared/setting-change.test.ts`, 6 pass. On main these fail because the modules do not exist. That shows the files are new; it does not test the behaviour against main.
+- Related server suites after the merge (`assertion-shape`, `plugin-catalogue`, `unclassified-tools-ask`, the three slice 1 `settings-in-chat` files and the list file): 164 pass, 0 fail, in 7 files.
+- Related app and shared suites after the merge, including the two new app files and the shared file: 130 pass, 0 fail, in 11 files.
+- `typecheck:tests` finds no error beyond the 239 known in `server/tests/typecheck-baseline.txt`. `tsc --noEmit` exits 0 in `app` and `shared`. `bun run format:check` and `bun run lint` exit 0 for the repository.
+
+Not verified:
+
+- The card and the list were tested with happy-dom and the real route. They were not looked at on screen.
+- No member has run the new JSON result. Case 5 in 8.6 is the test for it, and it has not been run.
+- The full server and app suites were not run. Only the related suites above were.
+- The Italian sentences in `app/src/freeduet/person-language/cards.ts` have not been reviewed by the maintainer.
+- No CI run. The pull request is opened and not waited on.
+
+Decisions left to the maintainer:
+
+| # | Decision | Built now | Options | Recommendation | Why |
+|---|---|---|---|---|---|
+| U1 | How long Undo lasts | Seven days from the change, exact | (a) seven days; (b) 24 hours; (c) until changed again | (a) | Section 6, Q1, says at most seven days. The number is the maintainer's to confirm |
+| U2 | How many changes the list shows | The last 20, newest first, no paging | (a) 20, no paging; (b) paging; (c) all | (a), until a person has more than 20 | The list shows recent changes; the audit trail keeps the rest |
+| U3 | Where the list sits | Settings → Notifications, after recent deliveries | (a) there; (b) its own page under Settings | (a) | The setting the list describes is changed on that page |
+| U4 | The refusal sentence after a later change | "It is now needs_input", with the raw value | (a) the raw value; (b) a label, such as "needs input only" | (b), decided with the Italian review | The person reads this sentence in the card |
+| U5 | The member's tool result | JSON with the change id, the values and the sentence in `note` | (a) as built; (b) a plain sentence with the change id in it | (a), once case 5 in 8.6 has run live | The card needs the change id; the member still gets the sentence |
+| U6 | Italian card and list text | Written without review | (a) review and keep; (b) rewrite | The maintainer reviews it before release | The person reads it in `app/src/freeduet/person-language/cards.ts` |
