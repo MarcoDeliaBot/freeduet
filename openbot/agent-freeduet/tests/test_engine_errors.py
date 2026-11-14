@@ -7,12 +7,13 @@ unmodified main before the hardening, so a change that alters what a person is t
 
 import ast
 import json
-from datetime import UTC, datetime
+import time
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
 import pytest
 
-from freeduet.engine_errors import classify
+from freeduet.engine_errors import RATE_LIMIT, classify
 
 TESTS = Path(__file__).resolve().parent
 NOW = datetime(2026, 11, 14, 10, 0, tzinfo=UTC)
@@ -127,3 +128,51 @@ def test_an_engine_reset_time_still_wins_over_the_text():
     for text in ("You've hit your session limit · resets 3pm", "usage limit"):
         limit = classify(text, resets_at=ENGINE_RESETS, now=NOW)
         assert limit.resets_at == datetime(2100, 1, 1, tzinfo=UTC)
+
+
+# A wait over the 30-day cap, or too large to count, is no usable reset time (never an exception).
+ABSURD_WAITS = [
+    pytest.param("rate limit, try again in 99999999999999 days", id="days_too_large_to_count"),
+    pytest.param("rate limit, try again in 1" + "0" * 400 + "s", id="seconds_infinite"),
+    pytest.param("rate limit, try again in " + "9" * 200_000 + " days", id="absurd_digits_200k_days"),
+    pytest.param("rate limit, try again in 31 days", id="31_days"),
+    pytest.param("rate limit, try again in 30 days and 1 second", id="30_days_and_1_second"),
+    pytest.param("rate limit, try again in 99999999 s", id="99999999_seconds"),
+]
+
+
+@pytest.mark.parametrize("text", ABSURD_WAITS)
+def test_a_wait_over_the_cap_is_no_usable_time_and_does_not_raise(text):
+    limit = classify(text, now=NOW)
+    assert limit.kind == RATE_LIMIT
+    assert limit.resets_at is None
+
+
+def test_a_reset_number_no_date_can_hold_is_no_usable_time_and_does_not_raise():
+    assert classify("rate limit", resets_at=1e300, now=NOW).resets_at is None
+    assert classify("rate limit", resets_at=float("inf"), now=NOW).resets_at is None
+    # the wait in the text still counts when the engine's number cannot be a date
+    assert classify("rate limit, try again in 20s", resets_at=1e300, now=NOW).resets_at == NOW + timedelta(seconds=20)
+
+
+# Hostile text, each case finishing in well under 0.5 s with a rate limit read from it.
+HOSTILE = [
+    pytest.param("rate limit, try again in " + "9" * 200_000 + "x", id="digits_200k"),
+    pytest.param("rate limit, try again in 1." + "2" * 200_000 + "x", id="decimal_digits_200k"),
+    pytest.param("rate limit, try again in 1" + " " * 200_000 + "!", id="spaces_after_number_200k"),
+    pytest.param("rate limit, try again" + " " * 200_000 + "in 5 s", id="spaces_between_words_200k"),
+    pytest.param("rate limit, try again in " + "1d " * 100_000, id="day_units_100k"),
+    pytest.param("rate limit, try again in 1" + "ms" * 100_000, id="ms_letters_100k"),
+    pytest.param("rate limit, try again in " + "1x " * 100_000, id="non_unit_letters_100k"),
+    pytest.param("rate limit " + "word " * 200_000, id="words_1mb"),
+    pytest.param("rate limit " + "try again in 5s " * 70_000, id="repeated_waits_1mb"),
+]
+
+
+@pytest.mark.parametrize("text", HOSTILE)
+def test_hostile_text_is_read_in_linear_time(text):
+    started = time.perf_counter()
+    limit = classify(text, now=NOW)
+    elapsed = time.perf_counter() - started
+    assert elapsed < 0.5, f"{elapsed:.3f} s"
+    assert limit is not None and limit.kind == RATE_LIMIT
