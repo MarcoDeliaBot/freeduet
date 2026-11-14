@@ -214,9 +214,10 @@ p{margin:0;max-width:64ch}
 .mem.boss{grid-column:span 3;grid-template-columns:56px minmax(0,.7fr) minmax(0,1.3fr);align-items:center;background:var(--ink);border-color:var(--ink);color:#fff;gap:12px 28px;padding:clamp(1.6rem,2.6vw,2.25rem)}
 .mem.boss:hover{border-color:var(--ink)}
 @media (min-width:981px){
-  /* a lone last card (the roster is boss + a multiple of three, plus one) takes the whole row instead of sitting in a corner */
+  /* a lone last card (the roster is boss + a multiple of three, plus one) takes the whole row instead of sitting in a corner; two left over, the last one takes the two free columns */
   .mem:last-child:nth-child(3n+2):not(.boss){grid-column:span 3;grid-template-columns:44px minmax(0,.7fr) minmax(0,1.3fr);align-items:center;gap:12px 28px}
   .mem:last-child:nth-child(3n+2):not(.boss) p{grid-column:auto}
+  .mem:last-child:nth-child(3n):not(.boss){grid-column:span 2}
 }
 .mem.boss .av{width:56px;height:56px}
 .mem.boss h3{font-size:1.5rem}
@@ -417,6 +418,7 @@ footer a{color:var(--ink)}
   .team{grid-template-columns:repeat(2,minmax(0,1fr))}
   .mem.boss{grid-column:span 2;grid-template-columns:56px minmax(0,1fr)}
   .mem.boss p{grid-column:1/-1}
+  .mem:last-child:nth-child(2n):not(.boss){grid-column:span 2}
   .road{grid-template-columns:minmax(0,1fr)}
   .road li{border-left:0;border-top:1px solid var(--line)}
   .road li:first-child{border-top:0}
@@ -436,6 +438,7 @@ footer a{color:var(--ink)}
   body{font-size:16px}
   .team{grid-template-columns:minmax(0,1fr)}
   .mem.boss{grid-column:auto}
+  .mem:last-child:nth-child(2n):not(.boss){grid-column:auto}
   .versus{grid-template-columns:minmax(0,1fr)}
   .versus div+div{border-left:0;border-top:1px solid var(--line)}
   .score{grid-template-columns:minmax(0,1fr);gap:1rem}

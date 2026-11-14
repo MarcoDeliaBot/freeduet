@@ -25,6 +25,7 @@
   "jules": "Found a free table on Friday.",
   "wren": "Your post is ready to read.",
   "mark": "A first plan for next month.",
+  "video": "A first cut list to check.",
   "gus": "Check the latch plate first.",
   "basil": "Three dinner ideas for tonight.",
   "vera": "Checked: the totals add up.",
@@ -87,7 +88,7 @@
  "s5p": "What was done, what was not done and why, and what the next step is. No walls of text.",
  "flowAlt": "You talk to Iris, Iris hands work to the specialists, Vera checks it, the answer comes back to you",
  "you": "You",
- "flowMore": "…and Gus, Basil, Mark and Leo",
+ "flowMore": "…and Gus, Basil, Mark, Cam and Leo",
  "sf_h": "Five buttons that wait for your yes",
  "sf_p": "Would you give a new assistant your wallet on the first day? Neither would we. So these five wait for your yes by default. Only you can switch that off, per member.",
  "b1": "Send",
@@ -127,7 +128,7 @@
  "r2": "Top priority: a one-file installer for Windows, macOS and Ubuntu. New members follow, each tested.",
  "r3": "Choose the engine for each member, and real delegation across the team.",
  "r4": "Automations written in chat, more connected apps, a phone version, remote access.",
- "r5": "Voice, Cam the video member, safe purchases. Full access is built, not yet run live.",
+ "r5": "Voice, safe purchases. Full access is built, not yet run live. Cam, the video member, is in the team; his tests are not yet run live, and he cannot hand a file over from the chat yet.",
  "r_note": "We label everything that is not built yet. No fairy tales. <a href=\"https://github.com/MarcoDeliaBot/freeduet/blob/main/docs/ROADMAP.md\">Full roadmap on GitHub</a>.",
  "in_h": "From install to your first useful task",
  "in_p": "Four steps, in the real order. All the commands are also in one box further down, ready to copy.",
@@ -216,6 +217,11 @@
    "marketing",
    "Builds your marketing plan, launch plan and channel strategy, and reviews your site, SEO and ads. He publishes and spends nothing without your yes.",
    "Give me a three-month marketing plan for my shop."
+  ],
+  "video": [
+   "video",
+   "Cuts, subtitles, music and sound for short videos from your footage or a script, in landscape, vertical and square sizes. He never publishes or uploads one.",
+   "Make a 30-second vertical video from this script, with subtitles."
   ],
   "gus": [
    "repairs",
