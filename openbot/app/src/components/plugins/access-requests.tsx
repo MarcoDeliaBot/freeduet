@@ -1,7 +1,7 @@
 import { IconInbox } from "@tabler/icons-react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
-import { Fragment } from "react";
+import { Fragment, type ReactNode } from "react";
 import { PageRows, PageSection } from "@/components/layout/page-shell";
 import { Button } from "@/components/ui/button";
 import {
@@ -20,6 +20,7 @@ import {
 } from "@/lib/app-access/mutations";
 import {
   type AppAccessRequest,
+  type AppWant,
   appAccessInboxQueryOptions,
 } from "@/lib/app-access/queries";
 import { relativeTime } from "@/lib/relative-time";
@@ -44,6 +45,11 @@ import { queryClient } from "@/query-client";
  * app offers — Gmail's include sending and deleting mail — so approving gives the Bot the app's
  * read-only actions and nothing else, and an app with none is refused with a sentence pointing at the
  * Bot's page. The row says so before the press, and links to that page where it can.
+ *
+ * A TOOL THAT SENDS IS NEVER GIVEN HERE (decided 14 November 2026). It is allowed on that same page, in
+ * settings, by the person. A row that wants one says so in plain words with the link, leaves the tool
+ * out of what its press names, and has no Approve at all when every tool it wants is one. The server
+ * refuses such a tool whatever a press names, so this is the explanation and not the rule.
  *
  * REQUESTS, NOT CONNECTIONS. Each row names who asked, because they asked; nothing here says who has
  * connected what, which stays private to each person (see the note on `admin/plugins/$key.tsx`).
@@ -112,6 +118,10 @@ function AccessRequestRow({ request }: { request: AppAccessRequest }) {
   const busy = approve.isPending || dismiss.isPending;
   const error = approve.error ?? dismiss.error;
   const who = request.requesterName ?? request.requesterEmail ?? "Somebody";
+  // What a press may name: the tools the row wants, less the ones only settings gives.
+  const approvable = (request.wants ?? []).filter((want) => !want.settingsOnly);
+  const wantsOnlySettings =
+    (request.wants?.length ?? 0) > 0 && approvable.length === 0;
   return (
     <Item data-request={request.id} size="sm">
       <ItemMedia variant="icon">
@@ -139,22 +149,25 @@ function AccessRequestRow({ request }: { request: AppAccessRequest }) {
         >
           {dismiss.isPending ? "Dismissing…" : "Dismiss"}
         </Button>
-        <Button
-          disabled={busy}
-          onClick={() => {
-            dismiss.reset();
-            approve.mutate({
-              id: request.id,
-              // The tools the row names, so the press gives what was read and nothing the app has since added.
-              ...(request.wants && request.wants.length > 0
-                ? { refs: request.wants.map((want) => want.ref) }
-                : {}),
-            });
-          }}
-          size="sm"
-        >
-          {approve.isPending ? "Approving…" : "Approve"}
-        </Button>
+        {wantsOnlySettings ? null : (
+          <Button
+            disabled={busy}
+            onClick={() => {
+              dismiss.reset();
+              approve.mutate({
+                id: request.id,
+                // The tools the row names, so the press gives what was read and nothing the app has since
+                // added. Never one that only settings gives: the server would refuse the whole press.
+                ...(request.wants && request.wants.length > 0
+                  ? { refs: approvable.map((want) => want.ref) }
+                  : {}),
+              });
+            }}
+            size="sm"
+          >
+            {approve.isPending ? "Approving…" : "Approve"}
+          </Button>
+        )}
       </ItemActions>
       {error ? (
         <ItemFooter>
@@ -175,24 +188,6 @@ function AccessRequestRow({ request }: { request: AppAccessRequest }) {
 function GrantNote({ request }: { request: AppAccessRequest }) {
   if (request.kind === "connect_shared" || !request.agentId) return null;
   const bot = request.botName ?? "the Bot";
-  /*
-   * A request for tools a Bot's skills need and it was never given is approved for exactly those,
-   * and the row names them — each one that changes something is said to, because one press here is
-   * what lets the Bot ask to do it.
-   */
-  if (request.wants && request.wants.length > 0)
-    return (
-      <>
-        Approving gives {bot} exactly these tools and nothing else:{" "}
-        {request.wants
-          .map(
-            (want) =>
-              `${want.name} (${want.read ? "read-only" : "changes something"})`,
-          )
-          .join(", ")}
-        .
-      </>
-    );
   const where = `the Bot's page under ${request.appTitle}`;
   const page =
     request.kind === "grant" ? (
@@ -205,12 +200,87 @@ function GrantNote({ request }: { request: AppAccessRequest }) {
     ) : (
       where
     );
+  /*
+   * A request for tools a Bot's skills need and it was never given is approved for exactly those,
+   * and the row names them — each one that changes something is said to, because one press here is
+   * what lets the Bot ask to do it. The ones that only settings gives are not among them: they are
+   * said to be, with where to allow them, and the press does not name them.
+   */
+  if (request.wants && request.wants.length > 0) {
+    const given = request.wants.filter((want) => !want.settingsOnly);
+    const heldBack = request.wants.filter((want) => want.settingsOnly);
+    return (
+      <>
+        {given.length > 0 ? (
+          <>
+            Approving gives {bot} exactly these tools and nothing else:{" "}
+            {given
+              .map(
+                (want) =>
+                  `${want.name} (${want.read ? "read-only" : "changes something"})`,
+              )
+              .join(", ")}
+            .
+          </>
+        ) : null}
+        {given.length > 0 && heldBack.length > 0 ? " " : null}
+        {heldBack.length > 0 ? (
+          <SettingsOnlyNote
+            app={request.appTitle}
+            page={page}
+            tools={heldBack}
+          />
+        ) : null}
+      </>
+    );
+  }
   return (
     <>
       Approving gives {bot} only {request.appTitle}'s read-only actions. Choose
       any others on {page}.
     </>
   );
+}
+
+/**
+ * Why the tools that only settings gives are not in what a press names, and where to allow them.
+ *
+ * The same story as the sentence the server refuses a direct call with, which is plain text: this one
+ * draws the link. A tool the app's own list says sends, and a tool nothing reviewed describes, are told
+ * apart, because the second is a precaution and not a finding.
+ */
+function SettingsOnlyNote({
+  app,
+  page,
+  tools,
+}: {
+  app: string;
+  page: ReactNode;
+  tools: AppWant[];
+}) {
+  const sends = tools.filter((want) => want.settingsOnly === "send");
+  const unreviewed = tools.filter((want) => want.settingsOnly === "unreviewed");
+  const many = tools.length > 1;
+  return (
+    <>
+      {sends.length > 0
+        ? `${named(sends)} can ${sends.length > 1 ? "each " : ""}send on the person's behalf. `
+        : null}
+      {unreviewed.length > 0
+        ? `No reviewed list says what ${named(unreviewed)} ${unreviewed.length > 1 ? "do" : "does"} in ${app}, so ${unreviewed.length > 1 ? "each" : "it"} may send on the person's behalf. `
+        : null}
+      Approving never gives {many ? "tools" : "a tool"} like that: allow{" "}
+      {many ? "them" : "it"} in settings, on {page}.
+    </>
+  );
+}
+
+/** Tool names as a person reads a list: "a", "a and b", "a, b and c". */
+function named(tools: AppWant[]): string {
+  const names = tools.map((want) => want.name);
+  return names.length < 3
+    ? names.join(" and ")
+    : `${names.slice(0, -1).join(", ")} and ${names[names.length - 1]}`;
 }
 
 /**
