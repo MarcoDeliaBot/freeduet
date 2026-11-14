@@ -1,0 +1,28 @@
+{
+ "streams": [
+  {
+   "events": [
+    {
+     "type": "RUN_STARTED",
+     "threadId": "penny-scratch-thread",
+     "runId": "hop-run-1"
+    },
+    {
+     "type": "RUN_ERROR",
+     "message": "This run did not say which team member it is for.",
+     "code": "FREEDUET_UNKNOWN_MEMBER"
+    }
+   ],
+   "keepalives": 0,
+   "sha256": "88395aff2bee7f92c31d8e92cc2d164b4e6dfbdfc5c876a5c02d49c3c32465cf"
+  }
+ ],
+ "launches": [],
+ "cli_runs": [],
+ "cli_followups": [],
+ "cli_gone": [],
+ "callbacks": [],
+ "team_log": [],
+ "checkpoints": [],
+ "logs": []
+}

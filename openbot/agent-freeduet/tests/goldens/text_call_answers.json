@@ -1,0 +1,271 @@
+{
+ "streams": [
+  {
+   "events": [],
+   "keepalives": 0,
+   "sha256": "f4ca7741fd549049fdfe8e98e448bde530cd30a9c8c948729a482d3682d2f709"
+  },
+  {
+   "events": [],
+   "keepalives": 0,
+   "sha256": "a6ef15ead523257e28426515780942c8fd960017721df39788e7549c48e627a3"
+  },
+  {
+   "events": [],
+   "keepalives": 0,
+   "sha256": "230147847ebdad06b0419b2c454cbe8cd530c536b14461a21ae2ccaf95b4005f"
+  }
+ ],
+ "launches": [
+  {
+   "argv": [
+    "<tmp>/claude",
+    "-p",
+    "--output-format",
+    "stream-json",
+    "--verbose",
+    "--no-session-persistence",
+    "--tools",
+    "",
+    "--strict-mcp-config",
+    "--disable-slash-commands",
+    "--permission-mode",
+    "dontAsk",
+    "--model",
+    "haiku",
+    "--append-system-prompt",
+    "Write a short title."
+   ],
+   "cwd": "<segment>/work",
+   "kwargs": {
+    "stdin": "PIPE",
+    "stdout": "PIPE",
+    "stderr": "PIPE",
+    "limit": 16777216,
+    "start_new_session": true
+   },
+   "env": {
+    "PATH": "/golden/bin:/usr/bin:/bin",
+    "HOME": "/golden/home",
+    "USER": "golden",
+    "LOGNAME": "golden",
+    "LANG": "C.UTF-8",
+    "LANGUAGE": "en",
+    "LC_ALL": "C.UTF-8",
+    "LC_CTYPE": "C.UTF-8",
+    "TZ": "UTC",
+    "TMPDIR": "/golden/tmp",
+    "CLAUDE_CONFIG_DIR": "/golden/cli-config-never-opened",
+    "HTTP_PROXY": "http://golden-proxy:3128",
+    "HTTPS_PROXY": "http://golden-proxy:3128",
+    "NO_PROXY": "127.0.0.1,localhost",
+    "http_proxy": "http://golden-proxy:3128",
+    "https_proxy": "http://golden-proxy:3128",
+    "no_proxy": "127.0.0.1,localhost",
+    "NODE_EXTRA_CA_CERTS": "/golden/ca.pem",
+    "SSL_CERT_FILE": "/golden/ca.pem",
+    "SSL_CERT_DIR": "/golden/certs",
+    "DISABLE_AUTOUPDATER": "1",
+    "CLAUDE_CODE_DISABLE_AUTO_MEMORY": "1"
+   },
+   "files": {}
+  },
+  {
+   "argv": [
+    "<tmp>/claude",
+    "-p",
+    "--output-format",
+    "stream-json",
+    "--verbose",
+    "--no-session-persistence",
+    "--tools",
+    "",
+    "--strict-mcp-config",
+    "--disable-slash-commands",
+    "--permission-mode",
+    "dontAsk"
+   ],
+   "cwd": "<segment>/work",
+   "kwargs": {
+    "stdin": "PIPE",
+    "stdout": "PIPE",
+    "stderr": "PIPE",
+    "limit": 16777216,
+    "start_new_session": true
+   },
+   "env": {
+    "PATH": "/golden/bin:/usr/bin:/bin",
+    "HOME": "/golden/home",
+    "USER": "golden",
+    "LOGNAME": "golden",
+    "LANG": "C.UTF-8",
+    "LANGUAGE": "en",
+    "LC_ALL": "C.UTF-8",
+    "LC_CTYPE": "C.UTF-8",
+    "TZ": "UTC",
+    "TMPDIR": "/golden/tmp",
+    "CLAUDE_CONFIG_DIR": "/golden/cli-config-never-opened",
+    "HTTP_PROXY": "http://golden-proxy:3128",
+    "HTTPS_PROXY": "http://golden-proxy:3128",
+    "NO_PROXY": "127.0.0.1,localhost",
+    "http_proxy": "http://golden-proxy:3128",
+    "https_proxy": "http://golden-proxy:3128",
+    "no_proxy": "127.0.0.1,localhost",
+    "NODE_EXTRA_CA_CERTS": "/golden/ca.pem",
+    "SSL_CERT_FILE": "/golden/ca.pem",
+    "SSL_CERT_DIR": "/golden/certs",
+    "DISABLE_AUTOUPDATER": "1",
+    "CLAUDE_CODE_DISABLE_AUTO_MEMORY": "1"
+   },
+   "files": {}
+  },
+  {
+   "argv": [
+    "<tmp>/claude",
+    "-p",
+    "--output-format",
+    "stream-json",
+    "--verbose",
+    "--no-session-persistence",
+    "--tools",
+    "",
+    "--strict-mcp-config",
+    "--disable-slash-commands",
+    "--permission-mode",
+    "dontAsk"
+   ],
+   "cwd": "<segment>/work",
+   "kwargs": {
+    "stdin": "PIPE",
+    "stdout": "PIPE",
+    "stderr": "PIPE",
+    "limit": 16777216,
+    "start_new_session": true
+   },
+   "env": {
+    "PATH": "/golden/bin:/usr/bin:/bin",
+    "HOME": "/golden/home",
+    "USER": "golden",
+    "LOGNAME": "golden",
+    "LANG": "C.UTF-8",
+    "LANGUAGE": "en",
+    "LC_ALL": "C.UTF-8",
+    "LC_CTYPE": "C.UTF-8",
+    "TZ": "UTC",
+    "TMPDIR": "/golden/tmp",
+    "CLAUDE_CONFIG_DIR": "/golden/cli-config-never-opened",
+    "HTTP_PROXY": "http://golden-proxy:3128",
+    "HTTPS_PROXY": "http://golden-proxy:3128",
+    "NO_PROXY": "127.0.0.1,localhost",
+    "http_proxy": "http://golden-proxy:3128",
+    "https_proxy": "http://golden-proxy:3128",
+    "no_proxy": "127.0.0.1,localhost",
+    "NODE_EXTRA_CA_CERTS": "/golden/ca.pem",
+    "SSL_CERT_FILE": "/golden/ca.pem",
+    "SSL_CERT_DIR": "/golden/certs",
+    "DISABLE_AUTOUPDATER": "1",
+    "CLAUDE_CODE_DISABLE_AUTO_MEMORY": "1"
+   },
+   "files": {}
+  }
+ ],
+ "cli_runs": [
+  {
+   "prompt": "Plan the kitchen.",
+   "cwd_entries": [],
+   "mcp_config": {},
+   "env_seen_of_interest": [
+    "CLAUDE_CODE_DISABLE_AUTO_MEMORY",
+    "CLAUDE_CONFIG_DIR",
+    "DISABLE_AUTOUPDATER",
+    "HOME",
+    "HTTPS_PROXY",
+    "HTTP_PROXY",
+    "LANG",
+    "LANGUAGE",
+    "LC_ALL",
+    "LC_CTYPE",
+    "LOGNAME",
+    "NODE_EXTRA_CA_CERTS",
+    "NO_PROXY",
+    "PATH",
+    "SSL_CERT_DIR",
+    "SSL_CERT_FILE",
+    "TMPDIR",
+    "TZ",
+    "USER",
+    "http_proxy",
+    "https_proxy",
+    "no_proxy"
+   ]
+  },
+  {
+   "prompt": "Plan the kitchen.",
+   "cwd_entries": [],
+   "mcp_config": {},
+   "env_seen_of_interest": [
+    "CLAUDE_CODE_DISABLE_AUTO_MEMORY",
+    "CLAUDE_CONFIG_DIR",
+    "DISABLE_AUTOUPDATER",
+    "HOME",
+    "HTTPS_PROXY",
+    "HTTP_PROXY",
+    "LANG",
+    "LANGUAGE",
+    "LC_ALL",
+    "LC_CTYPE",
+    "LOGNAME",
+    "NODE_EXTRA_CA_CERTS",
+    "NO_PROXY",
+    "PATH",
+    "SSL_CERT_DIR",
+    "SSL_CERT_FILE",
+    "TMPDIR",
+    "TZ",
+    "USER",
+    "http_proxy",
+    "https_proxy",
+    "no_proxy"
+   ]
+  },
+  {
+   "prompt": "Plan the kitchen.",
+   "cwd_entries": [],
+   "mcp_config": {},
+   "env_seen_of_interest": [
+    "CLAUDE_CODE_DISABLE_AUTO_MEMORY",
+    "CLAUDE_CONFIG_DIR",
+    "DISABLE_AUTOUPDATER",
+    "HOME",
+    "HTTPS_PROXY",
+    "HTTP_PROXY",
+    "LANG",
+    "LANGUAGE",
+    "LC_ALL",
+    "LC_CTYPE",
+    "LOGNAME",
+    "NODE_EXTRA_CA_CERTS",
+    "NO_PROXY",
+    "PATH",
+    "SSL_CERT_DIR",
+    "SSL_CERT_FILE",
+    "TMPDIR",
+    "TZ",
+    "USER",
+    "http_proxy",
+    "https_proxy",
+    "no_proxy"
+   ]
+  }
+ ],
+ "cli_followups": [],
+ "cli_gone": [
+  true,
+  true,
+  true
+ ],
+ "callbacks": [],
+ "team_log": [],
+ "checkpoints": [],
+ "logs": []
+}

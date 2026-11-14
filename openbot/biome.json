@@ -12,7 +12,8 @@
       "!desktop/src-tauri/gen",
       "!**/target",
       "!server/drizzle",
-      "!server/tests/fixtures/arcade-catalogue.json"
+      "!server/tests/fixtures/arcade-catalogue.json",
+      "!agent-freeduet/tests/goldens"
     ]
   },
   "formatter": {

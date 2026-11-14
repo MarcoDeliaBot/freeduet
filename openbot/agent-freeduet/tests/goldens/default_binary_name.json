@@ -1,0 +1,144 @@
+{
+ "streams": [
+  {
+   "events": [
+    {
+     "type": "RUN_STARTED",
+     "threadId": "thread-1",
+     "runId": "run-1"
+    },
+    {
+     "type": "RUN_ERROR",
+     "message": "Claude Code is not installed in this service."
+    }
+   ],
+   "keepalives": 0,
+   "sha256": "b58bc549234231d85a9b9ec2603ac9429cba7013795782aa8a06da78be01f3ab"
+  }
+ ],
+ "launches": [
+  {
+   "argv": [
+    "claude",
+    "-p",
+    "--output-format",
+    "stream-json",
+    "--verbose",
+    "--include-partial-messages",
+    "--no-session-persistence",
+    "--tools",
+    "",
+    "--strict-mcp-config",
+    "--disable-slash-commands",
+    "--allowedTools",
+    "mcp__freeduet",
+    "--permission-mode",
+    "dontAsk",
+    "--mcp-config",
+    "<segment>/mcp.json",
+    "--append-system-prompt",
+    {
+     "sha256": "a6c734eaf2a5827bcfe185045d61bbc8aec436f284b644f11bee6c7e8e49b45a",
+     "bytes": 971,
+     "head": "You are Iris, Chief of Staff of the test team.\n\nYou are Iris, Chief of Staff.\n\nHow this session work"
+    }
+   ],
+   "cwd": "<segment>/work",
+   "kwargs": {
+    "stdin": "PIPE",
+    "stdout": "PIPE",
+    "stderr": "PIPE",
+    "limit": 16777216,
+    "start_new_session": true
+   },
+   "env": {
+    "PATH": "/golden/bin:/usr/bin:/bin",
+    "HOME": "/golden/home",
+    "USER": "golden",
+    "LOGNAME": "golden",
+    "LANG": "C.UTF-8",
+    "LANGUAGE": "en",
+    "LC_ALL": "C.UTF-8",
+    "LC_CTYPE": "C.UTF-8",
+    "TZ": "UTC",
+    "TMPDIR": "/golden/tmp",
+    "CLAUDE_CONFIG_DIR": "/golden/cli-config-never-opened",
+    "HTTP_PROXY": "http://golden-proxy:3128",
+    "HTTPS_PROXY": "http://golden-proxy:3128",
+    "NO_PROXY": "127.0.0.1,localhost",
+    "http_proxy": "http://golden-proxy:3128",
+    "https_proxy": "http://golden-proxy:3128",
+    "no_proxy": "127.0.0.1,localhost",
+    "NODE_EXTRA_CA_CERTS": "/golden/ca.pem",
+    "SSL_CERT_FILE": "/golden/ca.pem",
+    "SSL_CERT_DIR": "/golden/certs",
+    "DISABLE_AUTOUPDATER": "1",
+    "CLAUDE_CODE_DISABLE_AUTO_MEMORY": "1"
+   },
+   "files": {
+    "mcp.json": {
+     "mode": "0o600",
+     "content": {
+      "mcpServers": {
+       "freeduet": {
+        "type": "stdio",
+        "command": "<python>",
+        "args": [
+         "-m",
+         "freeduet.bridge"
+        ],
+        "env": {
+         "FREEDUET_BRIDGE_PORT": "<port>",
+         "FREEDUET_BRIDGE_SECRET": "<secret of 43 characters>",
+         "PYTHONPATH": "<package root>"
+        }
+       }
+      }
+     }
+    }
+   }
+  }
+ ],
+ "cli_runs": [],
+ "cli_followups": [],
+ "cli_gone": [],
+ "callbacks": [],
+ "team_log": [
+  {
+   "member": "freeduet",
+   "thread": "thread-1",
+   "run": "run-1",
+   "outcome": "error",
+   "summary": "Claude Code is not installed in this service.",
+   "from_iris": false,
+   "approvals": null,
+   "report_guard": null
+  }
+ ],
+ "checkpoints": [
+  {
+   "schema_version": 1,
+   "writer_version": "1.2.0+freeduet.1",
+   "created_at": "<time>",
+   "agent": "freeduet",
+   "run": "thread-1",
+   "phase": "blocked",
+   "state": {
+    "objective": "Write the plan as a page.",
+    "constraints": [],
+    "completed": [],
+    "decisions": [],
+    "in_progress": [],
+    "changed_files": [],
+    "verification": [],
+    "blockers": [
+     "Error: Claude Code is not installed in this service."
+    ],
+    "next_steps": [
+     "Run the turn again once the error is resolved"
+    ]
+   }
+  }
+ ],
+ "logs": []
+}
