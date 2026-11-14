@@ -1,6 +1,6 @@
 import { afterAll, afterEach, describe, expect, test } from "bun:test";
 import { randomUUID } from "node:crypto";
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import type { MiddlewareHandler } from "hono";
 import { Hono } from "hono";
 import { createAgentProfileStore } from "../src/agents/profile-store";
@@ -143,8 +143,42 @@ const requireTestUser: MiddlewareHandler<{ Variables: AppVariables }> = async (
 
 function app() {
   const routes = new Hono<{ Variables: AppVariables }>();
+  routes.route(
+    "/",
+    createRoutineRoutes(store, requireTestUser, { channelStore }),
+  );
+  return routes;
+}
+
+/** The same routes with no channel store, so nothing is openable and no run may name a conversation. */
+function appWithoutChannelStore() {
+  const routes = new Hono<{ Variables: AppVariables }>();
   routes.route("/", createRoutineRoutes(store, requireTestUser));
   return routes;
+}
+
+/** The thread a person's conversation runs in. Private to that person, so it must never leave the server. */
+async function threadIdOf(userId: string, channelId: string): Promise<string> {
+  const [row] = await database
+    .select({ threadId: intelligenceChannelMappings.threadId })
+    .from(intelligenceChannelMappings)
+    .where(
+      and(
+        eq(intelligenceChannelMappings.userId, userId),
+        eq(intelligenceChannelMappings.channelId, channelId),
+      ),
+    )
+    .limit(1);
+  if (!row) throw new Error("the person has no thread in that conversation");
+  return row.threadId;
+}
+
+/** One finished firing that posted into the given conversation, or into none when it is null. */
+async function runIn(routineId: string, channelId: string | null) {
+  const run = await store.insertRun(routineId);
+  if (channelId !== null) await store.recordRunChannel(run.runId, channelId);
+  await store.finishRun(run.runId, "succeeded");
+  return run.runId;
 }
 
 describe("the calendar's and the history's owner guard, on real rows", () => {
@@ -441,5 +475,182 @@ describe("GET /calendar and GET /runs through the real store, for two people", (
     expect(body.runs.map((item) => [item.id, item.status, item.error])).toEqual(
       [[leoRun.runId, "failed", "The stock file was empty."]],
     );
+  });
+});
+
+describe("the conversation a run posted into, shown to its owner only", () => {
+  const asOwner = (f: { owner: AgentActor }) => ({
+    headers: { "x-test-user": f.owner.id },
+  });
+  const asStranger = (f: { stranger: AgentActor }) => ({
+    headers: { "x-test-user": f.stranger.id },
+  });
+
+  test("a run names the conversation it posted into, and no thread leaves the server", async () => {
+    const f = await setUp();
+    const iris = await store.create({
+      ownerUserId: f.owner.id,
+      agentId: f.irisId,
+      channelId: f.irisChannel,
+      instruction: "Summarise the inbox.",
+      cron: DAILY,
+    });
+    const runId = await runIn(iris.id, f.irisChannel);
+    const thread = await threadIdOf(f.owner.id, f.irisChannel);
+
+    const listed = await app().request("http://openbot.test/runs", asOwner(f));
+    const listedText = await listed.text();
+    expect(
+      (
+        JSON.parse(listedText) as {
+          runs: { id: string; channelId: string | null }[];
+        }
+      ).runs.map((run) => [run.id, run.channelId]),
+    ).toEqual([[runId, f.irisChannel]]);
+
+    const perRoutine = await app().request(
+      `http://openbot.test/${iris.id}/runs`,
+      asOwner(f),
+    );
+    const perRoutineText = await perRoutine.text();
+    expect(
+      (
+        JSON.parse(perRoutineText) as { runs: { channelId: string | null }[] }
+      ).runs.map((run) => run.channelId),
+    ).toEqual([f.irisChannel]);
+
+    for (const text of [listedText, perRoutineText]) {
+      expect(text).not.toContain(thread);
+      expect(text).not.toContain("threadId");
+    }
+  });
+
+  test("a stranger gets none of the owner's runs, conversations or threads", async () => {
+    const f = await setUp();
+    const iris = await store.create({
+      ownerUserId: f.owner.id,
+      agentId: f.irisId,
+      channelId: f.irisChannel,
+      instruction: "Summarise the inbox.",
+      cron: DAILY,
+    });
+    await runIn(iris.id, f.irisChannel);
+    const thread = await threadIdOf(f.owner.id, f.irisChannel);
+
+    const listed = await app().request(
+      "http://openbot.test/runs",
+      asStranger(f),
+    );
+    const perRoutine = await app().request(
+      `http://openbot.test/${iris.id}/runs`,
+      asStranger(f),
+    );
+    const both = `${await listed.text()}${await perRoutine.text()}`;
+
+    expect(listed.status).toBe(200);
+    expect(perRoutine.status).toBe(404);
+    expect(both).not.toContain(f.irisChannel);
+    expect(both).not.toContain(thread);
+  });
+
+  test("a conversation the person can no longer open is left out, and its run stays listed", async () => {
+    const f = await setUp();
+    const iris = await store.create({
+      ownerUserId: f.owner.id,
+      agentId: f.irisId,
+      channelId: f.irisChannel,
+      instruction: "Summarise the inbox.",
+      cron: DAILY,
+    });
+    const runId = await runIn(iris.id, f.irisChannel);
+    await database
+      .update(channels)
+      .set({ deletedAt: new Date() })
+      .where(eq(channels.id, f.irisChannel));
+
+    const response = await app().request(
+      "http://openbot.test/runs",
+      asOwner(f),
+    );
+    const body = (await response.json()) as {
+      runs: { id: string; channelId: string | null }[];
+    };
+
+    expect(body.runs.map((run) => [run.id, run.channelId])).toEqual([
+      [runId, null],
+    ]);
+  });
+
+  test("the link names the conversation the run posted into, not the routine's current one", async () => {
+    const f = await setUp();
+    const iris = await store.create({
+      ownerUserId: f.owner.id,
+      agentId: f.irisId,
+      channelId: f.irisChannel,
+      instruction: "Summarise the inbox.",
+      cron: DAILY,
+    });
+    const runId = await runIn(iris.id, f.irisChannel);
+    // A second conversation with the same Bot, so the routine can be moved there after the run.
+    const moved = await createChannel(f.owner, [f.irisId]);
+    await store.update(f.owner.id, iris.id, { channelId: moved.id });
+
+    const response = await app().request(
+      "http://openbot.test/runs",
+      asOwner(f),
+    );
+    const body = (await response.json()) as {
+      runs: { id: string; channelId: string | null }[];
+    };
+
+    expect(body.runs.map((run) => [run.id, run.channelId])).toEqual([
+      [runId, f.irisChannel],
+    ]);
+  });
+
+  test("a run that never reached a conversation, or was recorded before the link, names none", async () => {
+    const f = await setUp();
+    const iris = await store.create({
+      ownerUserId: f.owner.id,
+      agentId: f.irisId,
+      channelId: f.irisChannel,
+      instruction: "Summarise the inbox.",
+      cron: DAILY,
+    });
+    const runId = await runIn(iris.id, null);
+
+    const response = await app().request(
+      "http://openbot.test/runs",
+      asOwner(f),
+    );
+    const body = (await response.json()) as {
+      runs: { id: string; channelId: string | null }[];
+    };
+
+    expect(body.runs.map((run) => [run.id, run.channelId])).toEqual([
+      [runId, null],
+    ]);
+  });
+
+  test("with no channel store to ask, nothing is openable and no run names a conversation", async () => {
+    const f = await setUp();
+    const iris = await store.create({
+      ownerUserId: f.owner.id,
+      agentId: f.irisId,
+      channelId: f.irisChannel,
+      instruction: "Summarise the inbox.",
+      cron: DAILY,
+    });
+    await runIn(iris.id, f.irisChannel);
+
+    const response = await appWithoutChannelStore().request(
+      "http://openbot.test/runs",
+      asOwner(f),
+    );
+    const body = (await response.json()) as {
+      runs: { channelId: string | null }[];
+    };
+
+    expect(body.runs.map((run) => run.channelId)).toEqual([null]);
   });
 });

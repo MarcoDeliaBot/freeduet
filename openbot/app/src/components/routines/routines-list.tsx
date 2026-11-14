@@ -177,15 +177,15 @@ function RoutineRuns({ routine }: { routine: RoutineRecord }) {
                   : "Scheduled"}{" "}
               · {relativeTime(run.startedAt)}
             </span>
-            {routine.channel.gone ? null : (
+            {run.channelId ? (
               <Link
                 className="text-muted-foreground underline underline-offset-2 hover:text-foreground"
-                params={{ channelId: routine.channel.id }}
+                params={{ channelId: run.channelId }}
                 to="/channel/$channelId"
               >
                 Open conversation
               </Link>
-            )}
+            ) : null}
             {run.error ? (
               <span className="basis-full text-muted-foreground">
                 {run.error}

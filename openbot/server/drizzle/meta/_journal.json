@@ -484,6 +484,13 @@
       "when": 1794295935582,
       "tag": "0068_user_secret_credential_kind",
       "breakpoints": true
+    },
+    {
+      "idx": 69,
+      "version": "7",
+      "when": 1794688339433,
+      "tag": "0069_routine_run_channel",
+      "breakpoints": true
     }
   ]
 }

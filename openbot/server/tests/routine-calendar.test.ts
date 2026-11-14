@@ -420,6 +420,7 @@ describe("GET /runs", () => {
           finishedAt: null,
           error: null,
           source: "schedule",
+          channelId: null,
         },
         {
           id: "parked",
@@ -430,6 +431,7 @@ describe("GET /runs", () => {
           finishedAt: "2027-02-28T09:00:40.000Z",
           error: null,
           source: "schedule",
+          channelId: null,
         },
       ],
     });

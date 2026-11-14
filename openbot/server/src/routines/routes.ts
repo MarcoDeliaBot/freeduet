@@ -2,6 +2,7 @@ import type { Context, MiddlewareHandler } from "hono";
 import { Hono } from "hono";
 import { type AuditStore, recordAuditEvent } from "../audit";
 import type { AppVariables } from "../auth/guards";
+import type { ChannelStore } from "../channels/routes";
 import { calendarWindow, upcomingRuns } from "./calendar";
 import type { RoutineRunner } from "./runner";
 import { MINIMUM_INTERVAL_MS } from "./schedule";
@@ -37,7 +38,15 @@ export type { RoutineStore } from "./store";
 export function createRoutineRoutes(
   routineStore: RoutineStore,
   requireUser: MiddlewareHandler<{ Variables: AppVariables }>,
-  options: { runner?: RoutineRunner; auditStore?: AuditStore } = {},
+  options: {
+    runner?: RoutineRunner;
+    auditStore?: AuditStore;
+    /**
+     * Asked, as the person, whether each run's conversation is still theirs to open. Without it nothing
+     * is openable and no run carries a link: the link is left out rather than guessed.
+     */
+    channelStore?: ChannelStore;
+  } = {},
 ) {
   const routes = new Hono<{ Variables: AppVariables }>();
 
@@ -78,6 +87,11 @@ export function createRoutineRoutes(
         context.var.actor.id,
         context.req.param("id"),
       );
+      const openable = await openableConversations(
+        options.channelStore,
+        context.var.actor.id,
+        runs.map((run) => run.channelId),
+      );
       return context.json({
         runs: runs.map((run) => ({
           id: run.id,
@@ -86,6 +100,7 @@ export function createRoutineRoutes(
           finishedAt: run.finishedAt?.toISOString() ?? null,
           error: run.error,
           source: run.source,
+          channelId: conversationOf(run.channelId, openable),
         })),
       });
     } catch (error) {
@@ -139,8 +154,9 @@ export function createRoutineRoutes(
   /*
    * The run history across all the person's routines, newest first, at most 100 and no older than
    * ninety days (`HISTORY_WINDOW_DAYS`, a read window: nothing is deleted). The 100 protects the page
-   * and the query. Each row names its routine and Bot, so the page can say which member ran and link
-   * to the conversation the routine posts into. Read-only: a run is never changed from here.
+   * and the query. Each row names its routine and Bot, and the conversation the run posted into, but
+   * only while the person may still open it (`channelId`, null otherwise). Read-only: a run is never
+   * changed from here.
    */
   routes.get("/runs", requireUser, async (context) => {
     const limit = runsLimit(context.req.query("limit"));
@@ -160,7 +176,14 @@ export function createRoutineRoutes(
         limit,
         agentId,
       );
-      return context.json({ runs: runs.map(ownedRunDto) });
+      const openable = await openableConversations(
+        options.channelStore,
+        context.var.actor.id,
+        runs.map((run) => run.channelId),
+      );
+      return context.json({
+        runs: runs.map((run) => ownedRunDto(run, openable)),
+      });
     } catch (error) {
       return mapStoreError(context, error);
     }
@@ -276,7 +299,7 @@ function routineDto(routine: RoutineSummary): RoutineDto {
 }
 
 /** One firing in the cross-routine history. `status: null` is in flight, shown as "running". */
-function ownedRunDto(run: OwnedRunSummary) {
+function ownedRunDto(run: OwnedRunSummary, openable: ReadonlySet<string>) {
   return {
     id: run.id,
     routineId: run.routineId,
@@ -286,7 +309,40 @@ function ownedRunDto(run: OwnedRunSummary) {
     finishedAt: run.finishedAt?.toISOString() ?? null,
     error: run.error,
     source: run.source,
+    channelId: conversationOf(run.channelId, openable),
   };
+}
+
+/**
+ * The conversations among a person's runs that they may still open, as a set of channel ids.
+ *
+ * Asked of the channel store as the person, the same question the runner asks before it posts into a
+ * channel: a conversation they have left, one that was deleted, or one they were never in is absent, and
+ * so is the link to it. Nothing is guessed: with no channel store there is nothing openable. The channel
+ * store's answer carries the conversation's thread too; that stays server-side, and no row here names it.
+ */
+async function openableConversations(
+  channelStore: ChannelStore | undefined,
+  ownerUserId: string,
+  channelIds: readonly (string | null)[],
+): Promise<ReadonlySet<string>> {
+  const openable = new Set<string>();
+  if (!channelStore) return openable;
+  for (const channelId of new Set(channelIds)) {
+    if (channelId === null) continue;
+    if (await channelStore.get({ id: ownerUserId, role: "user" }, channelId)) {
+      openable.add(channelId);
+    }
+  }
+  return openable;
+}
+
+/** The run's conversation when the person may still open it, else null. */
+function conversationOf(
+  channelId: string | null,
+  openable: ReadonlySet<string>,
+): string | null {
+  return channelId !== null && openable.has(channelId) ? channelId : null;
 }
 
 /** The history's row limit: absent is 50, a whole number from 1 to 100 is that, anything else is refused. */

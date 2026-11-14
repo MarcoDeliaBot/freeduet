@@ -45,8 +45,16 @@ const routine = {
   lastRun: null,
 };
 
-/** Answers the reads the screen makes. `routinesFail` makes the routines read fail. */
-function serving(options: { routinesFail?: boolean } = {}) {
+/**
+ * Answers the reads the screen makes. `routinesFail` makes the routines read fail. `runChannelId` is the
+ * conversation the mocked runs posted into: a different one from the routine's own, so a link that
+ * follows the routine instead of the run would show as the wrong conversation.
+ */
+function serving(
+  options: { routinesFail?: boolean; runChannelId?: string | null } = {},
+) {
+  const runChannelId =
+    options.runChannelId === undefined ? "c_run" : options.runChannelId;
   const sent: string[] = [];
   global.fetch = (async (input: RequestInfo | URL) => {
     const url = String(input);
@@ -78,6 +86,21 @@ function serving(options: { routinesFail?: boolean } = {}) {
             finishedAt: "2026-11-15T08:01:00.000Z",
             error: null,
             source: "schedule",
+            channelId: runChannelId,
+          },
+        ],
+      });
+    if (url.startsWith("/api/routines/r1/runs"))
+      return Response.json({
+        runs: [
+          {
+            id: "run_1",
+            status: "succeeded",
+            startedAt: "2026-11-15T08:00:00.000Z",
+            finishedAt: "2026-11-15T08:01:00.000Z",
+            error: null,
+            source: "schedule",
+            channelId: runChannelId,
           },
         ],
       });
@@ -168,4 +191,38 @@ test("a routines read that fails says so in every view", async () => {
   fireEvent.click(view.getByRole("button", { name: "Next runs" }));
   expect(view.getByText(message)).toBeTruthy();
   expect(view.queryByText(/Nothing is scheduled/)).toBeNull();
+});
+
+test("a history row links to the conversation its run posted into, not the routine's current one", async () => {
+  serving();
+  const view = draw(() => <RoutinesList />);
+  await view.findByText("Every weekday at 9:00");
+  fireEvent.click(view.getByRole("button", { name: "History" }));
+  expect(await view.findByText("Succeeded")).toBeTruthy();
+  const link = view.getByRole("link", { name: "Open conversation" });
+  expect(link.getAttribute("href")).toBe("/channel/c_run");
+});
+
+test("a history row names no conversation when the run's is not open to the person", async () => {
+  // The routine still posts into "Bills" (c1), which is open; the run's own conversation is not.
+  serving({ runChannelId: null });
+  const view = draw(() => <RoutinesList />);
+  await view.findByText("Every weekday at 9:00");
+  fireEvent.click(view.getByRole("button", { name: "History" }));
+  expect(await view.findByText("Succeeded")).toBeTruthy();
+  expect(view.queryByRole("link", { name: "Open conversation" })).toBeNull();
+});
+
+test("a routine's own runs link to the conversation each one posted into", async () => {
+  serving();
+  const view = draw(() => <RoutinesList />);
+  await view.findByText("Every weekday at 9:00");
+  fireEvent.click(
+    view.getByRole("button", {
+      name: "Run history for the routine scheduled Every weekday at 9:00",
+    }),
+  );
+  expect(await view.findByText("Succeeded")).toBeTruthy();
+  const link = view.getByRole("link", { name: "Open conversation" });
+  expect(link.getAttribute("href")).toBe("/channel/c_run");
 });

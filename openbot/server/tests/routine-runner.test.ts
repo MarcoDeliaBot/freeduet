@@ -48,6 +48,7 @@ const CHANNEL: AgentChannel = {
 const RUN_ID = "routine_run_1";
 
 type Recorded = {
+  conversations: { runId: string; channelId: string }[];
   finished: { runId: string; status: RoutineRunOutcome; error?: string }[];
   activity: {
     actor: AgentActor;
@@ -68,8 +69,11 @@ function harness(options: {
   failures?: number;
   runTurn?: TurnRunner;
   recordActivity?: () => Promise<void>;
+  /** The write that notes the run's conversation fails with this, when given. */
+  recordRunChannelError?: Error;
 }) {
   const recorded: Recorded = {
+    conversations: [],
     finished: [],
     activity: [],
     enabled: [],
@@ -88,6 +92,10 @@ function harness(options: {
     async runContext(runId) {
       expect(runId).toBe(RUN_ID);
       return options.context === undefined ? CONTEXT : options.context;
+    },
+    async recordRunChannel(runId, channelId) {
+      if (options.recordRunChannelError) throw options.recordRunChannelError;
+      recorded.conversations.push({ runId, channelId });
     },
     async finishRun(runId, status, error) {
       recorded.finished.push({ runId, status, error });
@@ -177,6 +185,40 @@ describe("createRoutineRunner", () => {
     expect(recorded.enabled).toEqual([]);
   });
 
+  test("notes the conversation the run posts into on its own row, once", async () => {
+    const { runner, recorded } = harness({});
+
+    await runner.run(RUN_ID);
+
+    expect(recorded.conversations).toEqual([
+      { runId: RUN_ID, channelId: CONTEXT.channelId },
+    ]);
+  });
+
+  test("a run whose channel is gone notes no conversation", async () => {
+    const { runner, recorded } = harness({ channel: null });
+
+    await runner.run(RUN_ID);
+
+    expect(recorded.conversations).toEqual([]);
+    expect(recorded.finished).toEqual([
+      { runId: RUN_ID, status: "skipped", error: "the channel is gone" },
+    ]);
+  });
+
+  test("a conversation that cannot be noted does not stop the run from succeeding", async () => {
+    const { runner, recorded } = harness({
+      recordRunChannelError: new Error("the database is busy"),
+    });
+
+    await runner.run(RUN_ID);
+
+    expect(recorded.activity).toHaveLength(1);
+    expect(recorded.finished).toStrictEqual([
+      { runId: RUN_ID, status: "succeeded", error: undefined },
+    ]);
+  });
+
   test("records a thrown turn as a failure carrying its message", async () => {
     const { runner, recorded } = harness({
       runTurn: throwingTurn,
@@ -258,6 +300,7 @@ describe("createRoutineRunner", () => {
     await runner.run(RUN_ID);
 
     expect(recorded).toEqual({
+      conversations: [],
       finished: [],
       activity: [],
       enabled: [],

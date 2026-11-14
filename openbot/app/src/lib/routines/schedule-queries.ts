@@ -35,6 +35,8 @@ export type OwnedRunRecord = {
   finishedAt: string | null;
   error: string | null;
   source: "schedule" | "run_now" | "trigger";
+  /** The conversation the run posted into, when the person may still open it; null otherwise. */
+  channelId: string | null;
 };
 
 export function routineCalendarQueryOptions(window: {

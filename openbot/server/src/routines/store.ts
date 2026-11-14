@@ -178,6 +178,12 @@ export type RoutineRunSummary = {
   error: string | null;
   /** What started it: the schedule, a person's Run now, or an event trigger. */
   source: "schedule" | "run_now" | "trigger";
+  /**
+   * The conversation the run posted into, as the runner recorded it, or null (never reached a channel,
+   * or recorded before the column existed). Whether the person may still open it is decided by the
+   * route, not here: this is what the run did, not what the person can see now.
+   */
+  channelId: string | null;
 };
 
 /** One firing in a person's history across all their routines, with the routine it belongs to. */
@@ -277,6 +283,12 @@ export type RoutineStore = {
   routineForFiring(
     id: string,
   ): Promise<{ id: string; enabled: boolean } | null>;
+  /**
+   * Note the conversation a run posts into. The runner calls it once the channel is known to be open to
+   * the owner, so the History can link the run to it. Not owner-scoped, like `finishRun`: the run id
+   * comes from the queue, not from a person. A failure is the caller's to log; it never fails the run.
+   */
+  recordRunChannel(runId: string, channelId: string): Promise<void>;
   /** Close a run row with its outcome, and the capped error when there was one. */
   finishRun(
     runId: string,
@@ -766,6 +778,7 @@ export function createRoutineStore(database: Database): RoutineStore {
           finishedAt: routineRuns.finishedAt,
           error: routineRuns.error,
           source: routineRuns.source,
+          channelId: routineRuns.channelId,
         })
         .from(routineRuns)
         .where(and(eq(routineRuns.routineId, id), withinHistoryWindow()))
@@ -801,6 +814,7 @@ export function createRoutineStore(database: Database): RoutineStore {
           finishedAt: routineRuns.finishedAt,
           error: routineRuns.error,
           source: routineRuns.source,
+          channelId: routineRuns.channelId,
         })
         .from(routineRuns)
         .innerJoin(routines, eq(routines.id, routineRuns.routineId))
@@ -947,6 +961,13 @@ export function createRoutineStore(database: Database): RoutineStore {
         .where(eq(routines.id, id))
         .limit(1);
       return row ?? null;
+    },
+
+    async recordRunChannel(runId, channelId) {
+      await database
+        .update(routineRuns)
+        .set({ channelId })
+        .where(eq(routineRuns.id, runId));
     },
 
     async finishRun(runId, status, error, waiting) {

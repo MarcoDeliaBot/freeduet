@@ -154,10 +154,11 @@ function HistoryRow({
       {run.error ? (
         <p className="break-words text-muted-foreground text-xs">{run.error}</p>
       ) : null}
-      {routine && !routine.channel.gone ? (
+      {/* The conversation this run posted into, not the routine's current one; absent when none is open to the person. */}
+      {run.channelId ? (
         <Link
           className="self-start text-muted-foreground text-xs underline underline-offset-2 hover:text-foreground"
-          params={{ channelId: routine.channel.id }}
+          params={{ channelId: run.channelId }}
           to="/channel/$channelId"
         >
           Open conversation
