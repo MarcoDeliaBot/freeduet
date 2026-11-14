@@ -147,6 +147,104 @@ Before anyone uses it from outside the home network, slices 1 to 3 must ship. No
 3. Same-network pairing, only if decision 4 says yes.
 4. A web app manifest and service worker, for install and possibly web push. Both need https.
 
+### 3.5 Slice 4: what a remote session may reach
+
+Decided 14 November 2026: decision E, option (a), and decision 5, option (a). This section is the design of slice 4 and the list its code is held to. `openbot/server/src/auth/remote-limits.ts` holds the same list as data, and `openbot/server/tests/remote-limits-ledger.test.ts` fails when the two differ.
+
+#### 3.5.1 Who is remote
+
+Only a deployment with sign-in and an installation secret has the question. The secret is `FREEDUET_INSTALL_SECRET`, which `scripts/start.sh` writes (D28).
+
+| Deployment | A request is |
+|---|---|
+| No sign-in (single-user mode) | Not changed. D28 stays as it is: a loopback peer that holds the cookie. |
+| Sign-in, no installation secret (a hand-started server, the Helm chart) | Not limited. Nothing tells a browser at the computer from one elsewhere. The boot log says so. |
+| Sign-in and a secret: a session, and the installation cookie | At the computer. Nothing is limited. |
+| Sign-in and a secret: a session, no cookie, or a cookie that is not the secret | Remote. Limited to the list below. |
+| Sign-in and a secret: no session | Nobody. The route's own guard answers as it always did: 401, or its own credential (a member's tool token, the worker's secret, a signature). |
+
+What the sender cannot forge: the classification reads the session, which the server holds, and the value of one cookie, which is a secret. It never reads a header, the user agent or the peer address. A tunnel or reverse proxy on the same machine makes a far-away request arrive from loopback, so with sign-in on, loopback alone is never "at the computer". The cookie alone signs nobody in: a request that has the cookie and no session is still nobody.
+
+The cookie is the one D28 uses, `freeduet_install_<port>`, set only by a pairing link. With sign-in, the link is redeemed under three conditions together: the request arrives from this machine's loopback; it carries the session of a signed-in administrator; and the link is a live one-time link, minted by `POST /internal/pairing` with the secret as bearer. The session is checked before the link is used up, so a link survives the minute it takes to sign in. The cookie is HttpOnly and SameSite=Strict, host-only, `Path=/api`, lasts 400 days, and is Secure when the app's address is https.
+
+The Engines page (PR 200) asks "at the computer" too. There is one notion, not two: `atTheComputer` takes the pairing marker as an optional third argument, and where there is one, it adds the cookie to its own two conditions (loopback, and none of the headers a proxy adds).
+
+#### 3.5.2 The list
+
+A remote session is refused everything that is not on this list. A route added later is refused until someone adds it here, and the test fails until they do. The list is matched on the method and the path, as every spelling of the path the server could read (as sent, decoded once, decoded fully); all must be on the list. `HEAD` follows `GET`.
+
+The table gives every route family the app registers, in `createApp` and `http-server.ts`, and the reason for its verdict. `allowed` means the routes named; `partly` means the routes named are allowed and the rest of the family is refused; `refused` means all of it.
+
+<!-- remote-ledger:start -->
+| Family | Routes | Remote session | Why |
+|---|---|---|---|
+| `app` | `GET` and `HEAD` of any path outside `/api` and `/internal` | allowed | The app's own files hold no person's data, and the app has to load before it can ask for anything. |
+| `health` | `GET /health` | allowed | Liveness, no data. |
+| `keys` | `GET /.well-known/http-message-signatures-directory` (only when Web Bot Auth is on) | allowed | The public key, public by design. |
+| `capabilities` | `GET /api/capabilities` | allowed | What the deployment offers, with no person's data and no secret. The app draws itself from it. |
+| `sign-in` | `/api/auth/*`: `get-session`, `sign-out`, `sign-in/social`, `sign-in/sso`, `callback/:id`, the SSO callbacks, `error`, `ok` | partly | These sign a person in or out. Every other call acts on the account (link or unlink, change email or password, update or delete the user, sessions, tokens, SSO registration) and is refused. A new Better Auth call is refused until it is listed. |
+| `directory` | `PUT`, `PATCH`, `DELETE /api/auth/scim/*` | refused | Directory provisioning, with its own bearer token and never a person's session. |
+| `pairing` | `GET /api/pair` allowed; `POST /internal/pairing` refused | partly | `GET /api/pair` is how a browser becomes the computer's, and checks loopback, an administrator session and a one-time link itself. The launcher's call carries the secret and never a session. |
+| `me` | `GET /api/me`, `POST /api/me/onboarding` | allowed | Who is signed in, and the person's own progress marker. |
+| `conversations` | `GET /api/channels`, `GET /api/channels/events`, `GET /api/channels/:channelId`, `POST /api/channels`, `POST /api/channels/first-day`, `POST /api/channels/morning-brief`, `POST /api/channels/:channelId/activity`, `POST /api/channels/:channelId/busy`, `PUT /api/channels/:channelId/read`, `POST /api/channels/:channelId/attachments` allowed; `PUT /api/channels/:channelId/pin` and `DELETE /api/channels/:channelId` refused | partly | Reading and chatting. Deleting a conversation destroys it and pinning arranges the person's own list, so both wait for the computer. |
+| `attachments` | `GET /api/attachments/:id` allowed; `DELETE /api/attachments/:id` refused | partly | A picture or a file in a conversation is read like the conversation. Deleting is not. |
+| `groups` | `GET /api/groups/:channelId` and `POST /api/groups/:channelId` allowed; `POST /api/groups`, `POST /api/groups/:channelId/members`, `DELETE /api/groups/:channelId/members/:userId` refused | partly | A group conversation is read and written like any other. Who is in it is sharing. |
+| `chat` | `/api/copilotkit`: `GET info`, `POST agent/:agentId/run`, `POST agent/:agentId/connect`, `POST agent/:agentId/stop/:threadId`, `GET threads`, `GET threads/:threadId/messages`; `POST /api/route`; `POST /api/threads/mint`; `GET /api/threads/:threadId` allowed; the rest of the runtime refused | partly | Chatting with the members. Exact shapes only, because the runtime routes on the last words of a path. Refused: `transcribe`, `agent/:agentId/suggest`, `inspector-metadata`, `inspector-learning`, `cpk-debug-events`, `trajectory/*`, and every `threads` call that subscribes, clears, archives, renames or deletes. |
+| `roster` | `GET /api/agents`, `GET /api/agents/:agentId` allowed; the rest of `/api/agents` refused | partly | Names and pictures, to draw a conversation. A member's setup, its callback token and its hand-off reach are the computer's. |
+| `bots` | `GET /api/bots/attention`, `GET /api/bots/:agentId/activity`, `POST /api/bots/:agentId/activity/handoffs/stop` allowed; routing, lifecycle, pause, resume, notifications, reset and follow-ups refused | partly | What needs the person, what a member is doing, and the Stop button. Pausing, resetting and routing change how the team works. |
+| `approvals` | `GET /api/approvals`, `POST /api/approvals/:id/decision` (section 3.5.3), `POST /api/approvals/questions/:id/respond` allowed; Full access (read and write), `computer`, `preferences`, `rules`, `team` settings and rules refused | partly | See the whole request and answer an ordinary one once. Everything that changes what the assistants may do is done at the computer. |
+| `shared-use` | `/api/approvals/shared-use/*` | refused | Approving a member's use of a team account is sharing. |
+| `drawer` | `GET /api/openduet/channels` allowed; create, rename, archive, unarchive, keep refused | partly | The list of conversations. Arranging it is not chatting. |
+| `work` | `/api/openduet/pages`, `/api/openduet/setup`, `/api/openduet/tasks` | refused | Not a conversation. The phone screens of slice 1 do not need them [assumed]. Decision G. |
+| `admin` | `/api/admin/*`, `/api/admin/enterprise/*` | refused | The administrator is the person, so the role cannot keep a remote session out, and the list has to. |
+| `engines` | `/api/freeduet/engines/*` | refused | It changes how the team's engines run, and wants the computer anyway (PR 200). |
+| `settings` | `/api/settings/preferences`, `/api/settings/instructions`, `/api/settings-changes/*` | refused | Settings and standing instructions shape every conversation. |
+| `accounts` | `/api/identity/*`, `/api/plugins/*`, `/api/components/*`, `/api/delivery/*` except the webhooks | refused | Connected accounts and apps, and the channels that reach the person outside the app. |
+| `secrets` | `/api/sign-in-requests/*`, `/api/passwords/*` | refused | The saved sign-ins of the members. |
+| `computers` | `/api/computers/*`, `/api/host-access/*` | refused | They drive a member's computer, and the person's own, from the browser. The routes answer to the computer policy, and the card for a change comes from the app's tool wrapper and from `POST /api/approvals/computer/:botId`, not from the route [assumed: read in `computer/routes.ts` and `app/src/lib/copilot/approval-tools.tsx`; no live run]. |
+| `automation` | `/api/routines/*`, `/api/responsibilities/*`, `/api/proactive/*`, `/api/demonstrations/*` | refused | Routines, triggers, suggestions and recorded demonstrations are standing instructions that act later. |
+| `memory` | `/api/memory/*` | refused | What the assistants remember. |
+| `team` | `/api/team-bots/*` | refused | Publishing a Bot to a team is sharing. |
+| `voice` | `POST /api/audio/transcriptions`, `/api/voice/*` | refused | Not one of the three powers. Decision G. |
+| `sandboxed` | `/api/sandboxed/*` | refused | Pages that run what the assistants wrote. |
+| `doors` | `POST /api/agent-tools/call`, `POST /api/model-provider/v1/chat/completions`, `POST /internal/routines/run`, `GET /api/desktop/connection-failure`, `/api/events/*`, `/api/delivery/webhooks/*` | refused | Doors with a credential of their own: a member, the worker, a signed sender, the desktop shell. Never a person's session. |
+| `rest` | any other path under `/api` or `/internal` | refused | A route added later. |
+<!-- remote-ledger:end -->
+
+The refusal is a 403 with one plain sentence and the code `remote_session_limited`. The sentence says that this browser is not paired with the computer FreeDuet runs on, so it can read, chat and answer a plain request once, and that the rest is done at the computer; it ends with how to pair (section 3.5.4). The app already shows the `error` text of a refused call.
+
+The live screen is a WebSocket the server upgrades itself in `http-server.ts`, outside `createApp`, so the middleware never sees it. It asks the same question where it already has the actor: a signed-in request without the cookie is refused with the same sentence, a request with no session still gets "Sign in first."
+
+#### 3.5.3 Which approvals a remote session may answer
+
+A remote session may answer only with `allow once` or `deny`, and only a request that is an ordinary card. It is refused, with a sentence that says to answer at the computer, when any of these holds:
+
+- The answer is `allow always` (it saves a rule) or `handled` (it says the person did the thing).
+- The gate's verdict on the request was `hand_off`: the person must do it themselves (credentials, security settings, payments, legal commitments), or the request was settled by a built-in safety requirement.
+- The built-in safety check, run again at the moment of answering with the same function the gate uses, matches the action: a payment or purchase, a credential, a security or sharing setting.
+- The action sets up a routine or a trigger, changes a setting from chat, changes Full access, or connects or authorises an app.
+- The request has no recorded verdict from the gate, or anything else cannot be classified. It fails closed.
+
+The person can still read every request in full. A refused answer leaves the request pending, so it is there at the computer. `deny` is refused for these too (decision I). `POST /api/approvals/questions/:id/respond` is a reply to a question a member asked and is allowed as chat.
+
+#### 3.5.4 An installation that already has sign-in
+
+An installation started by `scripts/start.sh` already has the secret, because start.sh wrote it on the first start after D28, and no browser holds the cookie, because only single-user mode ever used it. After the update every browser is remote, including the administrator's at the computer. They see the app load and conversations and chat work, and ordinary requests can be answered once. Any other screen, settings or accounts or Full access or routines, answers with the one sentence. To pair, on the computer FreeDuet runs on, sign in as the administrator in the browser to pair, and run once:
+
+```
+bash scripts/open.sh
+```
+
+It asks the server for a link that is good once and for two minutes, and opens it in that browser, at the app's own address. A browser that is not signed in as the administrator gets a sentence that says so and the link survives. The same command pairs another browser at the computer. A phone is not paired, by design.
+
+Every person who signs in is remote unless their browser is paired, and only an administrator at the loopback can pair one. In a deployment that several people use, that makes all of them remote. Decision F.
+
+#### 3.5.5 What is not changed
+
+- Single-user mode, byte for byte: the pairing routes, the guard, the Host guard and the same-origin guard behave as before, and the new middleware is not mounted without sign-in.
+- A remote chat cannot use a member's computer tools. The browser runs them, through `/api/computers/*` and, for a change, `POST /api/approvals/computer/:botId`; both are refused, so a member asked to use its computer from a remote session is told it cannot, with the sentence. Server-side tools (mail, calendar and the other connected apps) are not affected: they run on the server and raise their cards in the conversation. Decision J.
+- Full access and the typed-recipient shortcut (D27, D27a) still apply in a chat turn a remote session starts. A remote session cannot change them, but it can talk to a member that already has them. Section 3.3 says a phone does not send a new email without a card; keeping that needs the run to carry a server-set marker that the person was remote. That is not built. Decision H.
+
 ## 4. Slices
 
 Size: S under 300 changed lines, M 300 to 1000, L over 1000.
@@ -237,3 +335,13 @@ Slice 1 (section 4) is built on branch `phone-v1-slice-1`: the exact-address sig
 | C | Both lists set | (a) The address must pass both, as built. (b) Either list admits. | (a). | The domain list is a filter, so (a) can only narrow it and adding the exact list never widens access. With (b) a stray domain entry silently admits a whole domain. A person who wants a few named addresses at several domains leaves the domain list unset. |
 | D | Entra `consumers` | (a) Refused with `common` and `organizations`, as built. (b) Allowed, because personal Microsoft accounts are the account's own address. | (a) until someone needs it. | I have no evidence that the address of a personal Microsoft account is verified [assumed], and a refused start-up is cheap to relax later. |
 | E | How the server knows a request is "at the computer", for slice 4 | (a) Extend D28's installation secret cookie to deployments with sign-in: a request is local only if it holds the cookie, and every other signed-in request is remote. (b) Mark sessions as phone sessions at sign-in. (c) Read the browser's user agent. | (a), if the maintainer agrees to change D28's "a deployment with sign-in is exactly as it was". Not (c). | (a) cannot be claimed by the sender: a phone that does not hold the cookie is remote whatever it says. (b) needs the phone to declare itself, so it fails open. (c) is spoofable. (a) changes a recorded decision, so it is the maintainer's call, and slice 3 comes before slice 4 in section 4 as it stands. |
+
+**Slice 4: decisions left to the maintainer**
+
+| | Decision | Options | Recommendation | Reason |
+|---|---|---|---|---|
+| F | Who is remote in a deployment several people use | (a) As built: every browser that is not paired is remote, and only an administrator at the loopback can pair one; the secret is the switch, so a deployment with no secret is unlimited. (b) An explicit setting that turns the limits off for a deployment started by `scripts/start.sh`. (c) Limit only the administrator's account. | (a) now. | Only a deployment that has the secret is affected, and `scripts/start.sh` is the personal installation, which has one person. A team deployment (Helm, hand-started) has no secret and is unchanged. (b) is an off switch for a security rule and can wait until a team runs through start.sh. |
+| G | Reads and writes a phone's screens may need that the three powers do not name | (a) As built: refused (tasks, pages, setup, suggestions, pinning, deleting, voice and dictation, memory, the app status in a conversation). (b) Add read-only entries for tasks and pages. (c) Also dictation. | (a) until slice 1's screens say what they use. | Each one is a line in the list and a test. Dictation is the first to add: it runs on the same provider as chat. A refused read only shows the sentence, and nothing breaks. |
+| H | Chat from a remote session and the shortcuts that skip a card | (a) As built: Full access and the typed-recipient shortcut (D27, D27a) still apply. (b) The signed run carries a server-set marker that the session was remote, and the gate asks a card for a send that either would have let through, and for a payment under plain Full access. (c) Turn both off for remote chat. | (b), as slice 4b. | Section 3.3 says a lost phone must not send mail without a card. Today it can, in a conversation with a member that has Full access. (c) is simpler and also removes a feature the person chose. |
+| I | A remote session answers `deny` to a request it may not allow | (a) As built: refused with the rest. (b) Allowed: a denial lets nothing happen. | (b) later. | A phone that sees a payment card and cannot say no is odd. It was kept out of v1 only because the maintainer's list names what a remote session may answer and `deny` of these is not on it. |
+| J | Computer tools in a chat from a remote session | (a) As built: refused, because the browser runs them. (b) Allow only `POST /api/approvals/computer/:botId`, which goes through the gate and raises its card. | (a) now. | (b) lets a lost phone start a member's browser work, with Full access on a member that has it and no card. It should come after (H). Direct `/api/computers/*` calls are not on any option: they carry no card. |
