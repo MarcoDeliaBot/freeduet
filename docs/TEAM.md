@@ -1,6 +1,6 @@
 # The team
 
-Eleven members. One job each: the ten of v0.1, and Mark, the first one added after it. The prompts live in [`openbot/examples/freeduet/agents.yaml`](../openbot/examples/freeduet/agents.yaml); this page is the human-readable overview.
+More than ten members, and growing. One job each: the ten of v0.1, and Mark, the first one added after it. The prompts live in [`openbot/examples/freeduet/agents.yaml`](../openbot/examples/freeduet/agents.yaml); this page is the human-readable overview.
 
 ## Who does what
 
