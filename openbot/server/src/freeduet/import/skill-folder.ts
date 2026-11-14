@@ -86,7 +86,13 @@ export function parseSkillFolder(files: readonly SkillFile[]): ImportOutcome {
     );
   return {
     ok: true,
-    result: { format: "skill-md", items, refused, notImported },
+    result: {
+      format: "skill-md",
+      items,
+      refused,
+      notImported,
+      factDrops: [],
+    },
   };
 }
 

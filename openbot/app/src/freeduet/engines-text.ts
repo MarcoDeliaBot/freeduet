@@ -183,6 +183,90 @@ export function engineReasonText(reason: EngineReason): string {
   }
 }
 
+/** The page's title, and the one sentence under it (the approved direction, 14 November 2026). */
+export const ENGINES_TITLE = "Engines";
+export const ENGINES_INTRO =
+  "The engine is what does the thinking for each member. Your own sign-ins always answer first; anything paid stays off until you say so.";
+
+/** Said when the list cannot be read at all; the page is not reloaded for the person. */
+export const LOAD_FAILED = "Couldn't load the engines. Reload the page.";
+/** The message the request helper uses when the server gives no sentence of its own. */
+export const ENGINES_FALLBACK = "The engines could not be listed.";
+/** Said when the server answers with a list that holds no engine. */
+export const NO_ENGINES = "No engines are reported yet.";
+/** The name of the section that holds the engine cards, for screen readers. */
+export const ENGINE_STATES_TITLE = "Engines and their state";
+
+/** The tones a state's word can be drawn in. Each one is a duet status pair that clears 4.5:1 in both themes. */
+export type EnginePillTone = "green" | "red" | "blue" | "amber" | "neutral";
+
+/**
+ * The word on an engine's card for each state the server names. Each word is the state in plain English: no state is
+ * added here. The server has nine states and every one has a word. "Off" and "Not built yet" have no state behind them,
+ * so the page does not show them.
+ */
+export const ENGINE_PILLS: Record<
+  EngineState,
+  { label: string; tone: EnginePillTone }
+> = {
+  ready: { label: "Working", tone: "green" },
+  degraded: { label: "Working", tone: "green" },
+  checking: { label: "Checking", tone: "blue" },
+  limited: { label: "Limited", tone: "neutral" },
+  out_of_credit: { label: "Out of credit", tone: "amber" },
+  not_answering: { label: "Not answering", tone: "red" },
+  signed_out: { label: "Signed out", tone: "amber" },
+  refused: { label: "Locked", tone: "amber" },
+  unknown: { label: "Not known", tone: "neutral" },
+};
+
+/** The word and tone for a state. A state this page was not written for reads as "Not known", never as a guess. */
+export function enginePill(state: string): {
+  label: string;
+  tone: EnginePillTone;
+} {
+  return Object.hasOwn(ENGINE_PILLS, state)
+    ? ENGINE_PILLS[state as EngineState]
+    : ENGINE_PILLS.unknown;
+}
+
+/** The Keys panel: words only. The place to add a key is not built (design doc slice 7d), so it has no field. */
+export const KEYS_TITLE = "Keys";
+export const KEYS_TEXT =
+  "Only keys for gateways will be kept here. Your Claude and ChatGPT sign-ins are never stored by FreeDuet.";
+export const KEYS_NOT_BUILT =
+  "Adding a key from this page is not available yet.";
+
+/**
+ * The Spending panel. The server sends no spending figure yet, so the page shows no amount. It says what it cannot show,
+ * because a member's metered engine joins its order when the installation's file enables it.
+ */
+export const SPENDING_TITLE = "Spending";
+export const SPENDING_TEXT =
+  "Spending is not shown on this page yet. A paid engine runs only if this installation allows it.";
+
+/** The aside beside the engines, for screen readers. */
+export const ASIDE_LABEL = "Keys and spending";
+
+/** The members section: its title, what it says, and the three column headings of its table. */
+export const MEMBERS_TITLE = "Who uses what";
+export const MEMBERS_DESCRIPTION =
+  "The engines each member tries, in the order it tries them, and what happens when one runs out. A change applies from the member's next message, and you can undo it.";
+export const MEMBER_COLUMNS = {
+  member: "Member",
+  order: "Order of engines",
+  switching: "When an engine runs out",
+} as const;
+
+/** The name of the two-answer group in a member's row, and of each answer's control (the words a screen reader reads). */
+export const modeGroupLabel = (name: string): string =>
+  `When an engine runs out, for ${name}`;
+export const modeControlLabel = (label: string, name: string): string =>
+  `${label} for ${name}`;
+export const undoLabel = (name: string): string =>
+  `Undo the change for ${name}`;
+export const UNDO_BUTTON = "Undo";
+
 /** The two modes, each with the words the router itself uses to the person when an engine runs out (engine_notices.py). */
 export const ENGINE_MODES: readonly {
   mode: EngineMode;
