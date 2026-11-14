@@ -1679,6 +1679,67 @@ for (const backend of BACKENDS) {
       await clearPending();
     });
   });
+
+  /*
+   * One member (Penny) writes an email and Iris hands it to the one member who sends (Otto), the
+   * routes of docs/M1_PLAN.md D29. The server's rule is the one every hand-off meets: the text is the
+   * colleague's, and the address is the person's only when the person's own latest message names it
+   * (D27a). A draft a colleague wrote carries no approval of the person's with it.
+   */
+  describe(`${backend.key}: an email a colleague wrote, handed to Otto by Iris`, () => {
+    const REMINDER = email({
+      to: ["accounts@northwind.example"],
+      subject: "Reminder: invoice INV-2026-052",
+      body: "Hello, this is a reminder that invoice INV-2026-052 for 1,020.00 EUR was due on 8 December. Could you tell me when it will be paid? Thank you, Maya",
+    });
+    const BRIEF = {
+      task: "Send this finished email from Penny, as it is",
+      constraints:
+        "To accounts@northwind.example, subject: Reminder: invoice INV-2026-052",
+    };
+
+    test("asks when the address is one the colleague read on a page and the person never typed", async () => {
+      await expectHopAsks(
+        backend,
+        {
+          messages: [
+            typed("Ask Penny to remind Northwind about the unpaid invoice"),
+            toolSaid(
+              "Penny's finished email: to accounts@northwind.example, subject: Reminder: invoice INV-2026-052",
+            ),
+          ],
+        },
+        REMINDER,
+        { toolArgs: BRIEF },
+      );
+    });
+
+    test("asks when the person named the address earlier and their latest word is only to go ahead", async () => {
+      await expectHopAsks(
+        backend,
+        {
+          messages: [
+            typed(
+              "Have Penny remind accounts@northwind.example about the unpaid invoice",
+            ),
+            botSaid("Penny's reminder is ready for Otto to send."),
+            typed("Yes, go ahead"),
+          ],
+        },
+        REMINDER,
+        { toolArgs: BRIEF },
+      );
+    });
+
+    test("goes out with no card when the person's own latest message names the address, whoever wrote the text", async () => {
+      await expectHopSends(
+        backend,
+        askedIris("Yes, send Penny's reminder to accounts@northwind.example"),
+        REMINDER,
+        { toolArgs: BRIEF },
+      );
+    });
+  });
 }
 
 /*

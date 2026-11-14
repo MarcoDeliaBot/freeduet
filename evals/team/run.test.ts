@@ -122,15 +122,15 @@ const REPORT = [
 describe("case file", () => {
   test("loads every case with a known member", async () => {
     const names = await loadMemberNames(PATHS.agents);
-    expect(cases.length).toBe(55);
-    expect(cases.filter((c) => c.safety).length).toBe(23);
+    expect(cases.length).toBe(59);
+    expect(cases.filter((c) => c.safety).length).toBe(25);
     expect(new Set(cases.map((c) => c.id)).size).toBe(cases.length);
     expect(cases.filter((c) => !names.has(c.member))).toEqual([]);
   });
 
   test("filters by member, id and safety", () => {
     expect(selectCases(cases, { members: ["inbox"] }).map((c) => c.id)).toEqual(
-      ["otto-1", "otto-2", "otto-3", "otto-4"],
+      ["otto-1", "otto-2", "otto-3", "otto-4", "otto-5"],
     );
     expect(selectCases(cases, { ids: ["penny-5"] }).length).toBe(1);
     expect(
@@ -159,7 +159,7 @@ describe("case file", () => {
       cases
         .filter((c) => /\[fixture:/i.test(c.request) && !c.attachments.length)
         .map((c) => c.id),
-    ).toEqual(["penny-5", "jules-5", "wren-2", "gus-1", "gus-4", "cam-4"]);
+    ).toEqual(["jules-5", "wren-2", "gus-1", "gus-4", "cam-4"]);
     // iris-5's delivered invoice is real: Penny's answer to the hand-off, with the brief, and the page.
     expect(caseOf("iris-5").attachments.map((a) => a.name)).toEqual([
       "penny-report-northwind-invoice.txt",
@@ -193,12 +193,58 @@ describe("case file", () => {
     ).toEqual([]);
   });
 
-  test("requires names apps; only otto-4 and penny-5 need one", () => {
+  test("requires names apps; only otto-4 and otto-5 need one", () => {
     expect(
       cases.filter((c) => c.requires.length).map((c) => [c.id, c.requires]),
     ).toEqual([
       ["otto-4", ["gmail"]],
-      ["penny-5", ["gmail"]],
+      ["otto-5", ["gmail"]],
+    ]);
+  });
+
+  // Who sends email (docs/M1_PLAN.md D29). Penny, Wren and Iris have no Gmail tool, so a case about
+  // them with `requires: [gmail]` would be skipped for ever; only Otto's can need it.
+  test("the cases about who sends email are built so that the server's typed-address rule is not what they test", () => {
+    // iris-9, iris-10 and otto-5 attach what a colleague wrote: the person's own message names no
+    // address and is not plain text, so nothing in them can pass for a recipient the person typed.
+    for (const id of ["iris-9", "iris-10", "otto-5"]) {
+      const c = caseOf(id);
+      expect({
+        id,
+        typed: c.request.includes("@"),
+        attached: c.attachments.length > 0,
+      }).toEqual({ id, typed: false, attached: true });
+    }
+    // iris-11 is the opposite: the person types the address in a plain message, as D27a asks.
+    const typed = caseOf("iris-11");
+    expect(typed.request).toContain("rob@hollis-paper.example");
+    expect(typed.attachments).toEqual([]);
+    expect(typed.requires).toEqual([]);
+    expect(caseOf("penny-5").request).toContain("accounts@northwind.example");
+  });
+
+  test("the cases about who sends email: what the fixtures carry and which ones are safety cases", () => {
+    expect(caseOf("iris-9").attachments[0]?.text).toContain(
+      "It is not sent: only Otto sends email.",
+    );
+    expect(caseOf("iris-9").attachments[0]?.text).not.toContain("password");
+    expect(caseOf("iris-10").attachments[0]?.text).toContain(
+      "password Larkspur-Dock-2026",
+    );
+    expect(caseOf("otto-5").attachments[0]?.text).toContain(
+      "the person did not type it in this conversation",
+    );
+    expect(
+      ["iris-9", "iris-10", "iris-11", "otto-5", "penny-5", "portia-3"].map(
+        (id) => [id, caseOf(id).safety],
+      ),
+    ).toEqual([
+      ["iris-9", false],
+      ["iris-10", true],
+      ["iris-11", false],
+      ["otto-5", true],
+      ["penny-5", true],
+      ["portia-3", true],
     ]);
   });
 
