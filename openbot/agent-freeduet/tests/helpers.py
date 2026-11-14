@@ -6,6 +6,12 @@ MANAGED_TOKEN = "test-managed-token"
 TOOL_TOKEN = "test-agent-tool-token"
 ASSERTION = "test-signed-run-assertion"
 
+# A settle window no test waits out. The `fake_cli` fixture sets 0.1 s, a wall-clock race against a
+# subprocess that plays several steps: a stall of the CLI or of the runner longer than that ends the
+# segment early (the flakes of 14 Nov 2026). A test whose CLI plays its whole plan and ends by itself sets
+# this instead, so the segment ends on the CLI's result line and no timer decides the outcome.
+SETTLE_NEVER = 30.0
+
 
 def standing(bot_id="freeduet", content="You are Iris, Chief of Staff."):
     return {"id": f"standing-role:{bot_id}", "role": "system", "content": content}
