@@ -10,16 +10,33 @@ One short sentence per switch. Where the plan was silent the choices are named i
 
 from __future__ import annotations
 
-from collections.abc import Sequence
+from collections.abc import Mapping, Sequence
 from datetime import UTC, datetime
 
-from .engines import PAID_GATEWAY_NOT_RUN
+from .engines import GAP_CLOSED, GAP_COST, GAP_SETUP, PAID_GATEWAY_NO_COST, PAID_GATEWAY_NOT_RUN, PAID_GATEWAY_SETUP
 from .failure_classifier import AUTH, CREDITS, RATE_LIMIT, TRANSIENT, USAGE_LIMIT
+from .ledger import DAILY, MONTHLY
 
 NONE, TEXT, TOOL = "none", "text", "tool"  # how far the turn got on the engine that stopped
 #: A kind of its own for an engine that runs on a key (an `anthropic-compatible` gateway): the key is missing or
 #: refused, which is not a sign-in the person can do in a terminal. Chosen by the router, never by the classifier.
 KEY = "key"
+
+
+class Held(str):
+    """The kind of an engine the spend ledger holds back (ledger.py), in the place of a failure kind: a limit the person set
+    was reached, or the ledger cannot tell what was spent. It is a string, so everything that passes a kind around keeps
+    working; ``which`` is the ledger's ``DAILY``, ``MONTHLY`` or ``UNKNOWN`` and ``cap`` the limit as the person wrote it
+    ("1.00 EUR"; empty when the hold is not a limit)."""
+
+    which: str
+    cap: str
+
+    def __new__(cls, which: str, cap: str = ""):
+        held = super().__new__(cls, f"held-{which}")
+        held.which, held.cap = which, cap
+        return held
+
 
 #: Words the ask-first question always carries, so the answer to it can be told from any other message.
 ASK_MARK = {"en": 'Reply "switch"', "it": 'Rispondi "passa"'}
@@ -34,8 +51,25 @@ def clock(moment: datetime | None) -> str | None:
     return moment.astimezone(UTC).strftime("%H:%M UTC") if moment is not None else None
 
 
+def _held(lang: str, label: str, held: Held) -> str:
+    """Why the spend ledger holds `label` back: a limit the person set was reached, or FreeDuet cannot tell what it cost."""
+    if lang == "it":
+        if held.which == DAILY:
+            return f"{label} ha raggiunto il limite giornaliero che hai impostato ({held.cap})"
+        if held.which == MONTHLY:
+            return f"{label} ha raggiunto il limite mensile che hai impostato ({held.cap})"
+        return f"{label} è sospeso perché FreeDuet non sa quanto è costato"
+    if held.which == DAILY:
+        return f"{label} reached the daily limit you set ({held.cap})"
+    if held.which == MONTHLY:
+        return f"{label} reached the monthly limit you set ({held.cap})"
+    return f"{label} is held back because FreeDuet cannot tell what it has cost"
+
+
 def _reason(lang: str, label: str, kind: str, until: str | None) -> str:
     """The first half of a notice: why `label` cannot take the turn."""
+    if isinstance(kind, Held):
+        return _held(lang, label, kind)
     limited = kind in (RATE_LIMIT, USAGE_LIMIT, CREDITS)
     if lang == "it":
         if limited:
@@ -113,35 +147,56 @@ def pinned_off(lang: str, label: str) -> str:
     return f"This assistant is pinned to {label}, but {label} is switched off, so I stopped here and did not switch to another engine."
 
 
-#: The Italian of `engines.PAID_GATEWAY_NOT_RUN`: what a paid gateway is told, whatever the `metered:` block says.
+#: The Italian of `engines.PAID_GATEWAY_NOT_RUN`: what a paid gateway is told while the maintainer's switch is closed, whatever
+#: the `metered:` block says.
 _PAID_NOT_RUN_IT = (
     "FreeDuet non esegue ancora i gateway a pagamento, perché non può ancora far rispettare i limiti che hai impostato. "
     "I gateway gratuiti e i motori su cui hai effettuato l'accesso funzionano."
 )
+#: The Italian of `engines.PAID_GATEWAY_SETUP` and `engines.PAID_GATEWAY_NO_COST`: the switch is open, and something else is missing.
+_PAID_SETUP_IT = (
+    "Funziona solo se engines.yaml attiva `metered`, con un limite giornaliero e uno mensile maggiori di 0 e `enforce: ledger`, "
+    "così FreeDuet rispetta i limiti che hai impostato. I gateway gratuiti e i motori su cui hai effettuato l'accesso funzionano."
+)
+_PAID_NO_COST_IT = (
+    "Non indica quanto costa ogni turno, nella valuta dei tuoi limiti, quindi FreeDuet non può tenerlo entro un limite di spesa. "
+    "I gateway gratuiti e i motori su cui hai effettuato l'accesso funzionano."
+)
+_PAID_WHY = {
+    GAP_CLOSED: (PAID_GATEWAY_NOT_RUN, _PAID_NOT_RUN_IT),
+    GAP_SETUP: (PAID_GATEWAY_SETUP, _PAID_SETUP_IT),
+    GAP_COST: (PAID_GATEWAY_NO_COST, _PAID_NO_COST_IT),
+}
 
 
-def _paid_refusal(lang: str, labels: Sequence[str]) -> str:
+def _paid_refusal(lang: str, labels: Sequence[str], gap: str = GAP_CLOSED) -> str:
     """"X is a paid gateway. FreeDuet does not run paid gateways yet ..." for one or several gateways, in the words of
-    `engines.paid_gateway_refusal` (English) or their Italian. Nothing here tells the person to set the `metered:`
-    block, because nothing in it makes a paid gateway run yet."""
+    `engines.paid_gateway_refusal` (English) or their Italian. `gap` is why they do not run (`engines.paid_gateway_gap`).
+    While the switch is closed nothing here tells the person to set the `metered:` block, because nothing in it makes a paid
+    gateway run."""
     names = ", ".join(labels)
     many = len(labels) > 1
+    english, italian = _PAID_WHY[gap]
     if lang == "it":
-        return f"{names} {'sono gateway a pagamento' if many else 'è un gateway a pagamento'}. {_PAID_NOT_RUN_IT}"
-    return f"{names} {'are paid gateways' if many else 'is a paid gateway'}. {PAID_GATEWAY_NOT_RUN}"
+        return f"{names} {'sono gateway a pagamento' if many else 'è un gateway a pagamento'}. {italian}"
+    return f"{names} {'are paid gateways' if many else 'is a paid gateway'}. {english}"
 
 
-def paid_off(lang: str, labels: Sequence[str]) -> str:
-    """Why a paid gateway of the chain was not used: FreeDuet does not run paid gateways yet. Empty when there is none."""
+def paid_off(lang: str, labels: Sequence[str], gaps: Mapping[str, str] | None = None) -> str:
+    """Why a paid gateway of the chain was not used. Empty when there is none. `gaps` says why each did not run (label to
+    `engines.paid_gateway_gap`); without it the switch is closed, which is the only reason there was before the ledger."""
     if not labels:
         return ""
-    return f" {_paid_refusal(lang, labels)}"
+    by_gap: dict[str, list[str]] = {}
+    for label in labels:
+        by_gap.setdefault((gaps or {}).get(label) or GAP_CLOSED, []).append(label)
+    return "".join(f" {_paid_refusal(lang, names, gap)}" for gap, names in by_gap.items())
 
 
-def pinned_paid_off(lang: str, label: str) -> str:
+def pinned_paid_off(lang: str, label: str, gap: str = GAP_CLOSED) -> str:
     if lang == "it":
-        return f"{_paid_refusal(lang, [label])} Questo assistente è fissato su di esso: mi fermo qui e non passo a un altro motore."
-    return f"{_paid_refusal(lang, [label])} This assistant is pinned to it, so I stopped here and did not switch to another engine."
+        return f"{_paid_refusal(lang, [label], gap)} Questo assistente è fissato su di esso: mi fermo qui e non passo a un altro motore."
+    return f"{_paid_refusal(lang, [label], gap)} This assistant is pinned to it, so I stopped here and did not switch to another engine."
 
 
 def key_refused(lang: str, labels: Sequence[str]) -> str:
@@ -152,9 +207,23 @@ def key_refused(lang: str, labels: Sequence[str]) -> str:
     return "".join(f" {reason(lang, label, KEY, None)}." for label in labels)
 
 
-def all_limited(lang: str, until: datetime | None, paid_off_labels: Sequence[str] = (), key_labels: Sequence[str] = ()) -> str:
+def held_off(lang: str, held: Sequence[tuple[str, str]]) -> str:
+    """The engines of the chain the spend ledger holds back, each with the sentence of why (label and `Held` kind): a limit
+    the person set, or a ledger that cannot tell what was spent. They are said, and not folded into "unavailable", because
+    the person set the limit and can change it. Empty when there is none."""
+    return "".join(f" {reason(lang, label, kind, None)}." for label, kind in held)
+
+
+def all_limited(
+    lang: str,
+    until: datetime | None,
+    paid_off_labels: Sequence[str] = (),
+    key_labels: Sequence[str] = (),
+    held: Sequence[tuple[str, str]] = (),
+    paid_gaps: Mapping[str, str] | None = None,
+) -> str:
     when = clock(until)
-    extra = key_refused(lang, key_labels) + paid_off(lang, paid_off_labels)
+    extra = key_refused(lang, key_labels) + held_off(lang, held) + paid_off(lang, paid_off_labels, paid_gaps)
     if lang == "it":
         back = f" Il primo torna alle {when}." if when else ""
         return f"Ora nessun motore è disponibile.{back}{extra} Il tuo messaggio è conservato: rimandalo più tardi."
