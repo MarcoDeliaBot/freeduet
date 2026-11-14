@@ -22,6 +22,13 @@ import {
   type Server,
 } from "node:http";
 import { BlockList, connect, isIP, type Socket } from "node:net";
+import {
+  describePrivateRange,
+  ipv4Readings,
+  ipv4Text,
+  type PrivateRange,
+  privateRangeOf,
+} from "./private-network";
 
 /** A proxy as Playwright wants it: credentials separated from the URL. */
 export type Egress = {
@@ -176,6 +183,15 @@ export function egressLabel(
  *
  * WHAT THIS CANNOT STOP: a process that ignores proxy variables and opens a raw socket. That is the
  * Kubernetes NetworkPolicy's job, which this narrows rather than replaces.
+ *
+ * THE HOME AND OFFICE NETWORK (D36). `allow_all` means "the internet", not "whatever this computer
+ * can route to": the computer sits inside somebody's home or office, and the router's admin page, a
+ * NAS, a printer, another computer and the host this container runs on are all on addresses a page
+ * or a prompt injection could name. So under `allow_all` the private and special ranges of
+ * `private-network.ts` are refused, on the address the connection really goes to, unless the policy
+ * carries `allowPrivateNetwork`. Which is one switch, "Home and office network access", per person.
+ * The metadata and link-local addresses below are refused in every mode and the switch does not lift
+ * them.
  * ---------------------------------------------------------------------------------------------------
  */
 
@@ -189,7 +205,20 @@ export type EgressMode =
   | "allowlist_only"
   | "deny_all";
 
-export type EgressPolicy = { mode: EgressMode; rules: EgressRule[] };
+export type EgressPolicy = {
+  mode: EgressMode;
+  rules: EgressRule[];
+  /**
+   * The person allowed this computer onto the home and office network: under `allow_all`, the
+   * private ranges are reachable. Absent is off, which is the default, so a policy from a server that
+   * has never heard of the switch blocks them. It does not lift {@link isAlwaysDenied}.
+   *
+   * It has no effect in the other modes. There a destination is allowed only by an administrator's
+   * own rule (a domain, or an IP range written out), which is already the explicit permission this
+   * switch stands for under `allow_all`.
+   */
+  allowPrivateNetwork?: boolean;
+};
 
 export const EGRESS_MODES: readonly EgressMode[] = [
   "allow_all",
@@ -315,7 +344,11 @@ export function parseEgressRules(
 export function parseEgressPolicy(
   input: unknown,
 ): { ok: true; policy: EgressPolicy } | { ok: false; error: string } {
-  const candidate = input as { mode?: unknown; rules?: unknown } | null;
+  const candidate = input as {
+    mode?: unknown;
+    rules?: unknown;
+    allowPrivateNetwork?: unknown;
+  } | null;
   if (
     !candidate ||
     typeof candidate !== "object" ||
@@ -328,9 +361,22 @@ export function parseEgressPolicy(
   }
   const rules = parseEgressRules(candidate.rules ?? []);
   if (!rules.ok) return rules;
+  // Only a real boolean: "false" and 0 are not a decision, and a switch that opens a network is not
+  // read generously.
+  if (
+    candidate.allowPrivateNetwork !== undefined &&
+    typeof candidate.allowPrivateNetwork !== "boolean"
+  ) {
+    return { ok: false, error: "allowPrivateNetwork must be true or false." };
+  }
   return {
     ok: true,
-    policy: { mode: candidate.mode as EgressMode, rules: rules.rules },
+    policy: {
+      mode: candidate.mode as EgressMode,
+      rules: rules.rules,
+      // Left out when off, so a policy that never mentioned it reads back exactly as it was sent.
+      ...(candidate.allowPrivateNetwork ? { allowPrivateNetwork: true } : {}),
+    },
   };
 }
 
@@ -349,7 +395,16 @@ function addressMatches(rule: EgressRule, address: string, port: number) {
   return list.check(address, version === 4 ? "ipv4" : "ipv6");
 }
 
-export type EgressDecision = { allowed: boolean; reason: string };
+export type EgressDecision = {
+  allowed: boolean;
+  reason: string;
+  /**
+   * Set when the refusal is the home and office network block, and says which range the address is
+   * in. The API server uses it to word the refusal: this one is the person's own switch, not an
+   * administrator's allowlist.
+   */
+  privateNetwork?: PrivateRange;
+};
 
 /**
  * Addresses no Bot may reach, whatever its policy says, allow_all included.
@@ -403,10 +458,45 @@ function nat64Ipv4(address: string): string | null {
 export function isAlwaysDenied(addressInput: string): boolean {
   const address = normalizeHost(addressInput);
   const mapped = /^::ffff:(\d+\.\d+\.\d+\.\d+)$/i.exec(address)?.[1];
-  const candidate = mapped ?? nat64Ipv4(address) ?? address;
-  const version = isIP(candidate);
-  if (version === 0) return false;
-  return alwaysDenied.check(candidate, version === 4 ? "ipv4" : "ipv6");
+  /*
+   * A number a resolver reads as an IPv4 address is that address: `2852039166`, `0xa9fea9fe` and
+   * `169.254.43518` all reach 169.254.169.254 when `connect()` is given the text. `isIP` calls none of
+   * them an address, so through an upstream proxy (which resolves the text itself and is never given a
+   * checked address) they were not looked at. Every reading of the text counts (`private-network.ts`).
+   */
+  const spelled =
+    isIP(address) === 0 ? ipv4Readings(address).map(ipv4Text) : [];
+  const candidates =
+    mapped !== undefined
+      ? [mapped]
+      : spelled.length > 0
+        ? spelled
+        : [nat64Ipv4(address) ?? address];
+  return candidates.some((candidate) => {
+    const version = isIP(candidate);
+    if (version === 0) return false;
+    return alwaysDenied.check(candidate, version === 4 ? "ipv4" : "ipv6");
+  });
+}
+
+/**
+ * What the home and office network block says about a destination: the first of the host and the
+ * addresses it resolved to that is inside a private or special range (`private-network.ts`).
+ *
+ * The host is read as it arrived, brackets and `:port` and all, which is how the API server hands
+ * over `URL.host`; `subject` is that text, or the address the name resolved to.
+ */
+function privateDestination(
+  hostInput: string,
+  resolved: readonly string[],
+): { subject: string; ofHost: boolean; range: PrivateRange } | null {
+  const range = privateRangeOf(hostInput);
+  if (range) return { subject: hostInput.trim(), ofHost: true, range };
+  for (const address of resolved) {
+    const inside = privateRangeOf(address);
+    if (inside) return { subject: address, ofHost: false, range: inside };
+  }
+  return null;
 }
 
 /**
@@ -432,6 +522,21 @@ export function egressDecision(
     };
   }
   if (policy.mode === "allow_all") {
+    const inside = policy.allowPrivateNetwork
+      ? null
+      : privateDestination(hostInput, resolved);
+    if (inside) {
+      // The sentence a Bot reads, and tells the person: what the address is, and the one setting
+      // that changes it.
+      const where = inside.ofHost
+        ? inside.subject
+        : `${hostInput.trim()}, which resolves to ${inside.subject},`;
+      return {
+        allowed: false,
+        reason: `${where} is ${describePrivateRange(inside.range)}. A Bot's computer may not reach the home or office network unless "Home and office network access" is switched on for its owner.`,
+        privateNetwork: inside.range,
+      };
+    }
     return {
       allowed: true,
       reason: "The network policy allows all destinations.",
@@ -513,6 +618,20 @@ export function egressPolicyFor(botId: string): EgressPolicy | undefined {
 }
 
 /**
+ * What judges a connection on a computer with EGRESS_POLICY_REQUIRED=0 that has been pushed nothing.
+ *
+ * That setting is for a computer run with no API server (a developer's, a test's), and nobody holds
+ * the "Home and office network access" switch for a computer like that: there is no person to ask.
+ * It keeps what it always did, which is the whole network except the metadata addresses, and the
+ * first policy that is pushed to it brings the block. A deployment the API server pushes to never
+ * judges by this: it pushes before the computer acts and whenever it wakes (`policy-network.ts`), so
+ * the default of every real computer is the block.
+ */
+const NO_SERVER_POLICY: readonly EgressPolicy[] = [
+  { mode: "allow_all", rules: [], allowPrivateNetwork: true },
+];
+
+/**
  * Which policies judge a connection.
  *
  * A connection carrying a Bot in its proxy credentials is judged by that Bot's policy. One without
@@ -565,9 +684,7 @@ async function decide(
     }
   }
   // Checked even with no policy to judge by, which EGRESS_POLICY_REQUIRED=0 allows.
-  for (const policy of judging.length > 0
-    ? judging
-    : [{ mode: "allow_all" as const, rules: [] }]) {
+  for (const policy of judging.length > 0 ? judging : NO_SERVER_POLICY) {
     const decision = egressDecision(policy, host, port, resolved);
     if (!decision.allowed) return decision;
   }
