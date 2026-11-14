@@ -22,7 +22,7 @@ Especially valuable reports:
 
 | Asset | Threat | Control |
 |---|---|---|
-| Money | An agent buys or books what you did not approve | Single-use purchase permits bound to merchant host and total, valid 10 minutes; caps per purchase, day and month; no "Always allow" for purchases; gateway rule on checkout clicks; final summary re-checked before the last click; minimum engine tier for buying |
+| Money | An agent buys or books what you did not approve | Single-use purchase permits bound to merchant host and total, valid 10 minutes; caps per purchase, day and month (planned for v0.4, not built); no "Always allow" for purchases; gateway rule on checkout clicks; final summary re-checked before the last click; minimum engine tier for buying |
 | Subscription accounts | Credentials stolen or misused; account suspended | FreeDuet never handles subscription credentials; only official, unmodified CLIs; routes off when provider terms are unclear ([docs/PROVIDERS.md](docs/PROVIDERS.md)) |
 | Site logins and payment details | Leaked into chat, logs or the model | Masked secret box and take-over; credentials encrypted, write-only, redacted from audit; agents never type secrets |
 | Your data | Exfiltrated by prompt injection | Read content is data, never instructions; outgoing messages checked for sensitive data; every send needs approval; telemetry off by default |
@@ -33,11 +33,16 @@ Especially valuable reports:
 
 ## Safe defaults
 
-- Spending cap: **0** until you set one. Jules cannot buy before you do.
-- Metered APIs: off in every chain until you enable them and set caps.
+- No spending cap is built yet: caps per purchase, day and month are planned for v0.4. Until then, payments and purchases ask you, unless you turn on plain Full access for a member, which has no limit on the amount.
+- Metered APIs: off in every chain until you enable them. A paid engine gateway is refused until FreeDuet can enforce your spending limits; the caps in `engines.yaml` are read but not yet enforced.
 - Full access: off for every member until you turn it on, one member at a time, after a warning, in one of two settings (with or without payments).
 - Home and office network: a member's computer cannot reach it until you switch on "Home and office network access" (Admin > Enterprise controls > Capabilities).
 - Telemetry: off.
 - Secrets: none ships with the repository. The first `bash scripts/start.sh` makes a value of its own for each secret FreeDuet needs (the tokens of the computers and the supervisor, the routines worker's secret, the database's password, the key that seals saved logins), writes them to your `.env`, readable by you alone, and shows none of them. No two installations share one. An installation that started before this is moved off the old shared values on its next start and keeps its data; `start.sh` says what it could not change, and why. Details in `docs/M1_PLAN.md` (D39).
 - The app listens on localhost. Put TLS and sign-in in front of it before exposing it to a network.
 - With no sign-in, a request from this machine is answered only when it names one of this machine's own hosts (`localhost`, `127.0.0.1`, `[::1]`) or a host you configured in `TRUSTED_ORIGINS`; any other `Host` gets 421. This keeps a web page that re-points its own name at 127.0.0.1 from reading your local FreeDuet. Details in `openbot/docs/configuration.md`.
+
+## Independent checks
+
+- CodeQL (GitHub code scanning, JavaScript/TypeScript and Python) runs on every pull request and once a week; zizmor checks the workflow files themselves whenever one changes and once a week.
+- The OpenSSF Scorecard, which scores how the repository is run, runs on every push to `main` and once a week.

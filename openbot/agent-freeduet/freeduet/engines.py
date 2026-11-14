@@ -64,6 +64,7 @@ _ENGINE_KEYS = frozenset(
         "base_url",
         "model",
         "credential_secret_ref",
+        "no_key",
     }
 )
 _TOP_KEYS = frozenset({"engines", "metered", "chains", "quality_floor", "assistants", "switching"})
@@ -103,6 +104,7 @@ class Engine:
     credential_secret_ref: str | None = None
     locked_reason: str | None = None
     experimental_local_login: bool = False
+    no_key: bool = False  # an `anthropic-compatible` endpoint on this machine that takes no key (see _compatible_problems)
 
 
 @dataclass(frozen=True)
@@ -291,7 +293,19 @@ def _base_url_problem(base_url: str) -> str | None:
     return None
 
 
-def _compatible_problems(where: str, base_url: str | None, secret_ref: str | None, command: str | None) -> list[str]:
+def _plain_local(base_url: str) -> bool:
+    """Whether an address is plain `http://` to this machine or to the host of a container: the only addresses an entry
+    that takes no key may name, so that no request without a key leaves this machine."""
+    try:
+        parts = urlsplit(base_url)
+        return parts.scheme == "http" and is_local_host(parts.hostname)
+    except ValueError:
+        return False
+
+
+def _compatible_problems(
+    where: str, base_url: str | None, secret_ref: str | None, command: str | None, no_key: bool = False
+) -> list[str]:
     found: list[str] = []
     if command is not None:
         found.append(
@@ -303,7 +317,17 @@ def _compatible_problems(where: str, base_url: str | None, secret_ref: str | Non
         reason = _base_url_problem(base_url)
         if reason is not None:
             found.append(f"{where}: {reason}")
-    if secret_ref is None:
+    if no_key:
+        # An entry that takes no key sends no credential, so its address must be this machine (docs/ENGINES_PLAN.md 9.1).
+        # It names a key or it needs none, never both.
+        if secret_ref is not None:
+            found.append(f"{where}: `no_key: true` and `credential_secret_ref` cannot both be set")
+        if base_url is not None and not _plain_local(base_url):
+            found.append(
+                f"{where}: `no_key: true` is accepted only for a plain http:// address on this machine (localhost, a "
+                "127.x.x.x or ::1 address) or host.docker.internal; any other endpoint needs `credential_secret_ref`"
+            )
+    elif secret_ref is None:
         found.append(
             f"{where}: an `{COMPATIBLE_KIND}` engine needs `credential_secret_ref`; with a base URL alone the CLI "
             "would keep using a Claude sign-in"
@@ -360,6 +384,11 @@ def _parse_engine(engine_id: str, entry: Any, problems: list[str]) -> Engine | N
     experimental = entry.get("experimental_local_login", False)
     if not _is_bool(experimental):
         problems.append(f"{where}: `experimental_local_login` must be true or false")
+    no_key = entry.get("no_key", False)
+    if not _is_bool(no_key):
+        problems.append(f"{where}: `no_key` must be true or false, not {no_key!r}")
+    elif no_key and kind != COMPATIBLE_KIND:
+        problems.append(f"{where}: `no_key` is only for an `{COMPATIBLE_KIND}` engine")
 
     command = _optional_text(entry, "command", where, problems)
     base_url = _optional_text(entry, "base_url", where, problems)
@@ -389,7 +418,7 @@ def _parse_engine(engine_id: str, entry: Any, problems: list[str]) -> Engine | N
         elif not re.match(r"^https?://", base_url):
             problems.append(f"{where}: `base_url` must start with http:// or https://")
     if kind == COMPATIBLE_KIND:
-        problems.extend(_compatible_problems(where, base_url, secret_ref, command))
+        problems.extend(_compatible_problems(where, base_url, secret_ref, command, no_key is True))
     if kind in API_KINDS and model is None:
         problems.append(f"{where}: a `{kind}` engine needs `model`")
     if enabled is True and model is not None and _PLACEHOLDER.match(model):
@@ -409,6 +438,7 @@ def _parse_engine(engine_id: str, entry: Any, problems: list[str]) -> Engine | N
         credential_secret_ref=secret_ref,
         locked_reason=locked_reason,
         experimental_local_login=experimental,
+        no_key=no_key is True,
     )
 
 
