@@ -44,6 +44,7 @@ import { createHandedRequestLoader } from "./agents/handoff-request";
 import { createHandoffRunner } from "./agents/handoff-runner";
 import { startHandoffDelivery } from "./agents/handoff-wiring";
 import { createFullAccess, withFullAccess } from "./freeduet/full-access";
+import { memberFileTools } from "./freeduet/member-files";
 import { relayComputerTools } from "./freeduet/relay-computer";
 import {
   configureBotLifecycle,
@@ -1546,10 +1547,19 @@ const openDuetIntake = createTaskIntake({
   startTask: openDuetStartTask,
 });
 
+// FreeDuet (D38): a member hands the person a file it made, as a card with Download (freeduet/member-files.ts).
+const memberFiles = memberFileTools({
+  computerGateway,
+  agentProfileStore,
+  actorFor,
+  capabilitiesOf,
+});
+
 const loadToolsForActor =
   (actorId: string, initiator: AuditInitiator = PERSON_INITIATOR) =>
   async (botId: string) => [
     ...openDuetTools(actorId, botId, initiator),
+    ...(await memberFiles({ ownerUserId: actorId, agentId: botId, initiator })),
     ...wakeUpTools({
       store: wakeUpStore,
       ownerUserId: actorId,
