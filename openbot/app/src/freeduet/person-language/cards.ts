@@ -135,6 +135,13 @@ const EN = {
   "setting.name.change": "You now call {bot} {to}. It was {from}.",
   "setting.name.own": "its own name",
   "setting.name.undone": "Undone. The name is back to {value}.",
+  "setting.tone.heading": "Tone changed",
+  "setting.tone.change":
+    "{bot} now talks to you in a {to} tone. It was {from}.",
+  "setting.tone.undone": "Undone. The tone is back to {value}.",
+  "setting.tone.plain": "plain",
+  "setting.tone.warm": "warm",
+  "setting.tone.formal": "formal",
   // The onboarding demo's example brief (components/onboarding/capability-demo.tsx)
   "demo.greeting": "Your day, at a glance.",
   "demo.delivery.title": "Confirm the delivery",
@@ -226,6 +233,13 @@ const IT: SameShape<typeof EN> = {
   "setting.name.change": "Ora chiami {bot} {to}. Prima era {from}.",
   "setting.name.own": "il suo nome",
   "setting.name.undone": "Annullato. Il nome è tornato {value}.",
+  "setting.tone.heading": "Tono modificato",
+  "setting.tone.change":
+    "{bot} ora ti parla con un tono {to}. Prima era {from}.",
+  "setting.tone.undone": "Annullato. Il tono è tornato {value}.",
+  "setting.tone.plain": "neutro",
+  "setting.tone.warm": "caloroso",
+  "setting.tone.formal": "formale",
   "demo.greeting": "La tua giornata, in breve.",
   "demo.delivery.title": "Conferma la consegna",
   "demo.delivery.why": "Ana aspetta un sì per venerdì.",

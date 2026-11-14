@@ -84,12 +84,21 @@ export const agentPreferences = pgTable(
      * to this person only. Null is the member's own name. The `agents` row is never renamed.
      */
     displayName: text("display_name"),
+    /**
+     * FreeDuet (8.10): how THIS member talks to THIS person: `warm` or `formal`. Null is `plain`, the
+     * default, which adds nothing to the member's run.
+     */
+    tone: text("tone"),
   },
   (table) => [
     primaryKey({ columns: [table.userId, table.agentId] }),
     check(
       "agent_preferences_display_name_check",
       sql`${table.displayName} is null or (char_length(${table.displayName}) between 1 and 40 and ${table.displayName} = btrim(${table.displayName}))`,
+    ),
+    check(
+      "agent_preferences_tone_check",
+      sql`${table.tone} is null or ${table.tone} in ('warm', 'formal')`,
     ),
     uniqueIndex("agent_preferences_user_display_name_idx")
       .on(table.userId, sql`lower(${table.displayName})`)

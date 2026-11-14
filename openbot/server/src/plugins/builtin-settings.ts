@@ -37,13 +37,16 @@ const TOOLS: readonly McpTool[] = Object.freeze([
   {
     name: CHANGE_SETTING_TOOL,
     description: [
-      "Change one of this person's settings. There are two.",
+      "Change one of this person's settings. There are three.",
       "`notifications`: how much this Bot may interrupt the person. Its value is `all` (everything) or",
       "`needs_input` (questions and approvals only).",
       "`name`: what this person calls a member of the team, shown to this person only (the member keeps its",
       "own name everywhere else). Its value is the name, 1 to 40 letters, numbers and spaces. Give `member`",
       "(the member's own name) when the person means another member than you; leave it out for yourself.",
       "Giving a member its own name back clears the name the person chose.",
+      "`tone`: how a member talks to this person. Its value is `plain` (the default), `warm` or `formal`. It",
+      "changes only the member's own messages to this person, never emails or documents for others, safety",
+      "rules, or the wording of approvals. Give `member` as for `name`. `plain` clears the choice.",
       "",
       "Use it only when the person has asked for that change in their own words. Every change asks the",
       "person to allow it on a card first, and nothing changes until they do. The change is recorded with the",
@@ -58,17 +61,17 @@ const TOOLS: readonly McpTool[] = Object.freeze([
       properties: {
         setting: {
           type: "string",
-          description: "The setting's name: `notifications` or `name`.",
+          description: "The setting's name: `notifications`, `name` or `tone`.",
         },
         member: {
           type: "string",
           description:
-            "For `name` only: the team member to name, by its own name. Absent means the Bot making the call.",
+            "For `name` and `tone` only: the team member, by its own name. Absent means the Bot making the call.",
         },
         value: {
           type: "string",
           description:
-            "The new value. For `notifications`: `all` or `needs_input`.",
+            "The new value. For `notifications`: `all` or `needs_input`. For `tone`: `plain`, `warm` or `formal`.",
         },
       },
       required: ["setting", "value"],
@@ -154,6 +157,34 @@ export async function callTool(
             newValue: named.newValue,
           },
           `Done: the person now sees this member as ${named.newValue ?? "its own name"}. Nobody else does, and you still call it by its own name. The change is recorded as ${named.changeId}, so it can be undone.`,
+        ),
+        isError: false,
+        truncated: false,
+      };
+    }
+    if (decision.setting === "tone") {
+      const toned = await changes.changeTone({
+        ownerUserId,
+        callerId: agentId,
+        member: decision.member,
+        value: decision.value,
+      });
+      if (toned.status === "unchanged")
+        return {
+          text: `That member already talks to this person in a ${toned.value} tone, so nothing changed.`,
+          isError: false,
+          truncated: false,
+        };
+      return {
+        text: settingChangeResult(
+          {
+            changeId: toned.changeId,
+            agentId: toned.agentId,
+            setting: "tone",
+            previousValue: toned.previousValue,
+            newValue: toned.newValue,
+          },
+          `Done: the tone is now ${toned.newValue}. It applies from the next message, to this member's own messages to this person only. The change is recorded as ${toned.changeId}, so it can be undone.`,
         ),
         isError: false,
         truncated: false,

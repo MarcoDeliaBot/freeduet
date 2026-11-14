@@ -53,6 +53,10 @@ import { withEngineChoices } from "./freeduet/engine-choices";
 import { RUNTIME_KEEP_ALIVE_SECONDS } from "./freeduet/keep-alive";
 import type { ThreadClient } from "./freeduet/local-intelligence";
 import { withPersonLanguage } from "./freeduet/person-language";
+import {
+  type LoadPersonTone,
+  PersonToneMiddleware,
+} from "./freeduet/person-tone";
 import { observeIntelligenceAuthentication } from "./intelligence-client";
 import { RemoteLearnedSkillsMiddleware } from "./learning/remote";
 import {
@@ -581,6 +585,8 @@ export async function buildAgents(
   markAttachmentsSent?: MarkAttachmentsSent,
   acquireLearnedSkills?: AcquireLearnedSkills,
   loadPersonalMemory?: LoadPersonalMemory,
+  /** The tone this person chose for a member (freeduet/person-tone.ts). Absent means no tone is sent. */
+  loadPersonTone?: LoadPersonTone,
 ): Promise<Record<string, AbstractAgent>> {
   let vendors: readonly string[] = [];
   try {
@@ -640,6 +646,9 @@ export async function buildAgents(
         );
         if (loadPersonalMemory)
           built.use(new PersonalMemoryMiddleware(agent.id, loadPersonalMemory));
+        // Last on purpose: innermost, so it sets the tone after every other middleware has run.
+        if (loadPersonTone)
+          built.use(new PersonToneMiddleware(agent.id, loadPersonTone));
         return [agent.id, built];
       }),
     ),
@@ -1649,6 +1658,7 @@ export async function resolveRuntimeAgents(
   markAttachmentsSent?: MarkAttachmentsSent,
   acquireLearnedSkills?: AcquireLearnedSkills,
   loadPersonalMemory?: LoadPersonalMemory,
+  loadPersonTone?: LoadPersonTone,
 ): Promise<Record<string, AbstractAgent>> {
   const all = await loadAgents();
   if (all.length === 0) {
@@ -1685,6 +1695,7 @@ export async function resolveRuntimeAgents(
     markAttachmentsSent,
     acquireLearnedSkills,
     loadPersonalMemory,
+    loadPersonTone,
   );
 }
 

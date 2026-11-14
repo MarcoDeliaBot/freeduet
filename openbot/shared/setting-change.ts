@@ -23,6 +23,10 @@ export const SETTING_CHANGES_PATH = "/api/settings-changes";
  */
 export type ChatNotifyLevel = "all" | "needs_input";
 
+/** How a member talks to this person. `plain` is the default: today's behaviour, nothing added to the member. */
+export type ChatTone = "plain" | "warm" | "formal";
+export const CHAT_TONES: readonly ChatTone[] = ["plain", "warm", "formal"];
+
 /** What a successful change tells the card: the change, the Bot, and the value before and after it. */
 export type SettingChangeResult =
   | {
@@ -39,6 +43,14 @@ export type SettingChangeResult =
       setting: "name";
       previousValue: string | null;
       newValue: string | null;
+    }
+  | {
+      changeId: string;
+      agentId: string;
+      /** How a team member talks to this person. */
+      setting: "tone";
+      previousValue: ChatTone;
+      newValue: ChatTone;
     };
 
 /** The longest name the contract carries (server/src/settings-in-chat/member-name.ts holds the rules). */
@@ -70,6 +82,10 @@ export function settingChangeResult(
 
 export function isChatNotifyLevel(value: unknown): value is ChatNotifyLevel {
   return value === "all" || value === "needs_input";
+}
+
+export function isChatTone(value: unknown): value is ChatTone {
+  return value === "plain" || value === "warm" || value === "formal";
 }
 
 function isNameValue(value: unknown): value is string | null {
@@ -114,6 +130,8 @@ export function readSettingChange(result: unknown): SettingChangeResult | null {
   )
     return { changeId, agentId, setting, previousValue, newValue };
   if (setting === "name" && isNameValue(previousValue) && isNameValue(newValue))
+    return { changeId, agentId, setting, previousValue, newValue };
+  if (setting === "tone" && isChatTone(previousValue) && isChatTone(newValue))
     return { changeId, agentId, setting, previousValue, newValue };
   return null;
 }

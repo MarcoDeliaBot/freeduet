@@ -14,7 +14,11 @@
  */
 import { randomUUID } from "node:crypto";
 import { and, eq, isNotNull, isNull, sql } from "drizzle-orm";
-import type { SettingChangeRecord } from "@openbot/shared/setting-change";
+import {
+  type ChatTone,
+  isChatTone,
+  type SettingChangeRecord,
+} from "@openbot/shared/setting-change";
 import type { AuditEvent, AuditReader, AuditStore } from "../audit";
 import { recordAuditEvent } from "../audit";
 import type { Database } from "../db/client";
@@ -58,12 +62,12 @@ export type SettingChangeOutcome =
       status: "changed";
       changeId: string;
       agentId: string;
-      setting: ChatSettingName;
+      setting: "notifications";
       /** Never `none`: a change from none is refused before anything is written. */
       previousValue: ChatNotifyValue;
       newValue: ChatNotifyValue;
     }
-  | { status: "unchanged"; setting: ChatSettingName; value: ChatNotifyValue };
+  | { status: "unchanged"; setting: "notifications"; value: ChatNotifyValue };
 
 export type SettingUndoOutcome = {
   changeId: string;
@@ -84,11 +88,22 @@ export type NameChangeOutcome =
     }
   | { status: "unchanged"; value: string | null };
 
+export type ToneChangeOutcome =
+  | {
+      status: "changed";
+      changeId: string;
+      agentId: string;
+      setting: "tone";
+      previousValue: ChatTone;
+      newValue: ChatTone;
+    }
+  | { status: "unchanged"; value: ChatTone };
+
 export type SettingChanges = {
   change(input: {
     ownerUserId: string;
     agentId: string;
-    setting: ChatSettingName;
+    setting: "notifications";
     value: ChatNotifyValue;
   }): Promise<SettingChangeOutcome>;
   /**
@@ -101,6 +116,16 @@ export type SettingChanges = {
     member: string | undefined;
     value: string;
   }): Promise<NameChangeOutcome>;
+  /**
+   * How a team member talks to this person (`plain`, `warm` or `formal`), for this person only. `member` is
+   * as for `changeName`. `plain` is the default and clears the choice.
+   */
+  changeTone(input: {
+    ownerUserId: string;
+    callerId: string;
+    member: string | undefined;
+    value: ChatTone;
+  }): Promise<ToneChangeOutcome>;
   undo(input: {
     ownerUserId: string;
     changeId: string;
@@ -130,6 +155,8 @@ function recordOf(payload: Record<string, unknown>) {
     (previousValue === null || isWellFormedName(previousValue)) &&
     (newValue === null || isWellFormedName(newValue))
   )
+    return { setting, agentId, previousValue, newValue } as const;
+  if (setting === "tone" && isChatTone(previousValue) && isChatTone(newValue))
     return { setting, agentId, previousValue, newValue } as const;
   throw new Error("A recorded setting change could not be read back.");
 }
@@ -288,6 +315,142 @@ export function createSettingChanges(deps: {
       .map(([, n]) => n),
   });
 
+  /** The one team member a person means, by id, real name or the name they gave it. Throws when none or several. */
+  function resolveMember(
+    members: { id: string; name: string }[],
+    aliases: Map<string, string>,
+    given: string,
+  ): { id: string; name: string } {
+    const reference = given.trim();
+    const folded = foldName(reference);
+    const matches = members.filter(
+      (m) =>
+        m.id === reference ||
+        foldName(m.name) === folded ||
+        foldName(aliases.get(m.id) ?? "\u0000") === folded,
+    );
+    const exact = matches.filter((m) => m.id === reference);
+    const target =
+      exact.length === 1
+        ? exact[0]
+        : matches.length === 1
+          ? matches[0]
+          : undefined;
+    if (!target)
+      throw new SettingRefusedError(
+        matches.length > 1
+          ? "More than one member fits that. Say which one."
+          : "That is not a member of the team. You can rename a Bot you made yourself on its own page.",
+        404,
+      );
+    return target;
+  }
+
+  /** The tones this person chose, by member id. A member not here is `plain`. */
+  async function tonesOf(
+    executor: Pick<Database, "select">,
+    ownerUserId: string,
+  ): Promise<Map<string, ChatTone>> {
+    const rows = await executor
+      .select({
+        agentId: agentPreferences.agentId,
+        tone: agentPreferences.tone,
+      })
+      .from(agentPreferences)
+      .where(
+        and(
+          eq(agentPreferences.userId, ownerUserId),
+          isNotNull(agentPreferences.tone),
+        ),
+      );
+    return new Map(
+      rows.flatMap((row) =>
+        row.tone === "warm" || row.tone === "formal"
+          ? [[row.agentId, row.tone] as const]
+          : [],
+      ),
+    );
+  }
+
+  /** Writes tone `to` only while it is still `from`. `plain` is no stored value. Says whether it did. */
+  async function swapTone(
+    executor: Pick<Database, "insert" | "update">,
+    ownerUserId: string,
+    agentId: string,
+    from: ChatTone,
+    to: ChatTone,
+  ): Promise<boolean> {
+    await executor
+      .insert(agentPreferences)
+      .values({ userId: ownerUserId, agentId })
+      .onConflictDoNothing({
+        target: [agentPreferences.userId, agentPreferences.agentId],
+      });
+    const rows = await executor
+      .update(agentPreferences)
+      .set({ tone: to === "plain" ? null : to })
+      .where(
+        and(
+          eq(agentPreferences.userId, ownerUserId),
+          eq(agentPreferences.agentId, agentId),
+          from === "plain"
+            ? isNull(agentPreferences.tone)
+            : eq(agentPreferences.tone, from),
+        ),
+      )
+      .returning({ agentId: agentPreferences.agentId });
+    return rows.length === 1;
+  }
+
+  async function undoTone(
+    ownerUserId: string,
+    changeId: string,
+    recorded: { agentId: string; previousValue: ChatTone; newValue: ChatTone },
+  ) {
+    await database.transaction(async (tx) => {
+      await lockPerson(tx, ownerUserId);
+      const now =
+        (await tonesOf(tx, ownerUserId)).get(recorded.agentId) ?? "plain";
+      if (now !== recorded.newValue)
+        throw new SettingRefusedError(
+          `That tone has changed since, so nothing was undone. It is now ${now}.`,
+          409,
+        );
+      await swapTone(
+        tx,
+        ownerUserId,
+        recorded.agentId,
+        recorded.newValue,
+        recorded.previousValue,
+      );
+    });
+    try {
+      await recordAuditEvent(audit, {
+        eventType: "configuration.changed",
+        targetType: SETTING_UNDO_TARGET,
+        targetId: changeId,
+        actorUserId: ownerUserId,
+        payload: {
+          change: "setting_change_undone",
+          changeId,
+          setting: "tone",
+          agentId: recorded.agentId,
+          previousValue: recorded.newValue,
+          newValue: recorded.previousValue,
+        },
+      });
+    } catch (error) {
+      await swapTone(
+        database,
+        ownerUserId,
+        recorded.agentId,
+        recorded.previousValue,
+        recorded.newValue,
+      );
+      throw error;
+    }
+  }
+
   async function undoName(
     ownerUserId: string,
     changeId: string,
@@ -409,28 +572,11 @@ export function createSettingChanges(deps: {
         await lockPerson(tx, ownerUserId);
         const members = await teamMembers(tx);
         const aliases = await aliasesOf(tx, ownerUserId);
-        const reference = (input.member ?? callerId).trim();
-        const folded = foldName(reference);
-        const matches = members.filter(
-          (m) =>
-            m.id === reference ||
-            foldName(m.name) === folded ||
-            foldName(aliases.get(m.id) ?? "\u0000") === folded,
+        const target = resolveMember(
+          members,
+          aliases,
+          input.member ?? callerId,
         );
-        const exact = matches.filter((m) => m.id === reference);
-        const target =
-          exact.length === 1
-            ? exact[0]
-            : matches.length === 1
-              ? matches[0]
-              : undefined;
-        if (!target)
-          throw new SettingRefusedError(
-            matches.length > 1
-              ? "More than one member fits that. Say which one."
-              : "That is not a member of the team. You can rename a Bot you made yourself on its own page.",
-            404,
-          );
         const check = checkMemberName(
           value,
           nameContextFor(members, aliases, target),
@@ -492,6 +638,66 @@ export function createSettingChanges(deps: {
       };
     },
 
+    async changeTone(input) {
+      const { ownerUserId, callerId, value } = input;
+      const outcome = await database.transaction(async (tx) => {
+        await lockPerson(tx, ownerUserId);
+        const members = await teamMembers(tx);
+        const aliases = await aliasesOf(tx, ownerUserId);
+        const target = resolveMember(
+          members,
+          aliases,
+          input.member ?? callerId,
+        );
+        const previous =
+          (await tonesOf(tx, ownerUserId)).get(target.id) ?? "plain";
+        if (previous === value)
+          return { status: "unchanged" as const, value: previous };
+        if (!(await swapTone(tx, ownerUserId, target.id, previous, value)))
+          throw new SettingRefusedError(
+            "The tone changed a moment ago, so nothing was changed. Ask again.",
+            409,
+          );
+        return { status: "changed" as const, target, previous, next: value };
+      });
+      if (outcome.status === "unchanged") return outcome;
+      const changeId = randomUUID();
+      try {
+        await recordAuditEvent(audit, {
+          eventType: "configuration.changed",
+          targetType: SETTING_CHANGE_TARGET,
+          targetId: changeId,
+          actorUserId: ownerUserId,
+          payload: {
+            change: "setting_changed_in_chat",
+            changeId,
+            setting: "tone",
+            agentId: outcome.target.id,
+            agentName: outcome.target.name,
+            previousValue: outcome.previous,
+            newValue: outcome.next,
+          },
+        });
+      } catch (error) {
+        await swapTone(
+          database,
+          ownerUserId,
+          outcome.target.id,
+          outcome.next,
+          outcome.previous,
+        );
+        throw error;
+      }
+      return {
+        status: "changed",
+        changeId,
+        agentId: outcome.target.id,
+        setting: "tone",
+        previousValue: outcome.previous,
+        newValue: outcome.next,
+      };
+    },
+
     async undo(input) {
       const { ownerUserId, changeId } = input;
       const [change] = (
@@ -528,9 +734,19 @@ export function createSettingChanges(deps: {
         throw new SettingRefusedError(
           recorded.setting === "name"
             ? "That change is more than seven days old, so it can no longer be undone. You can still ask for the name you want."
-            : "That change is more than seven days old, so it can no longer be undone. You can still set notifications on the Bot's own page.",
+            : recorded.setting === "tone"
+              ? "That change is more than seven days old, so it can no longer be undone. You can still ask for the tone you want."
+              : "That change is more than seven days old, so it can no longer be undone. You can still set notifications on the Bot's own page.",
           409,
         );
+      if (recorded.setting === "tone") {
+        await undoTone(ownerUserId, changeId, recorded);
+        return {
+          changeId,
+          setting: "tone" as const,
+          value: recorded.previousValue,
+        };
+      }
       if (recorded.setting === "name") {
         await undoName(ownerUserId, changeId, recorded);
         return {
@@ -619,6 +835,7 @@ export function createSettingChanges(deps: {
         levels.map((row) => [row.agentId, row.notify]),
       );
       const aliases = await aliasesOf(database, ownerUserId);
+      const tones = await tonesOf(database, ownerUserId);
       const now = clock();
 
       return rows.map(({ event, changeId, undone }): SettingChangeRecord => {
@@ -628,7 +845,10 @@ export function createSettingChanges(deps: {
         const stillSet =
           recorded.setting === "name"
             ? (aliases.get(recorded.agentId) ?? null) === recorded.newValue
-            : (levelOfBot.get(recorded.agentId) ?? "all") === recorded.newValue;
+            : recorded.setting === "tone"
+              ? (tones.get(recorded.agentId) ?? "plain") === recorded.newValue
+              : (levelOfBot.get(recorded.agentId) ?? "all") ===
+                recorded.newValue;
         const common = {
           changeId,
           agentId: recorded.agentId,

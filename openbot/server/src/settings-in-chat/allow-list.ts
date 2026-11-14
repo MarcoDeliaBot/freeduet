@@ -13,13 +13,22 @@
  * listed.
  */
 
+import {
+  CHAT_TONES,
+  type ChatTone,
+  isChatTone,
+} from "@openbot/shared/setting-change";
+
 /** The settings a member may change from chat. Matched exactly. */
-export const CHAT_SETTING_NAMES = ["notifications", "name"] as const;
+export const CHAT_SETTING_NAMES = ["notifications", "name", "tone"] as const;
 export type ChatSettingName = (typeof CHAT_SETTING_NAMES)[number];
 
 /** The values a member may give `notifications`: everything, or questions and approvals only. */
 export const CHAT_NOTIFY_VALUES = ["all", "needs_input"] as const;
 export type ChatNotifyValue = (typeof CHAT_NOTIFY_VALUES)[number];
+
+/** The three tones a member may be given from chat (docs/design/settings-in-chat.md, 8.10.2). */
+export const CHAT_TONE_VALUES = CHAT_TONES;
 
 /** The one sentence every refusal of a setting that is not on the list gives, whatever the name. */
 export const NOT_ON_THE_LIST =
@@ -33,6 +42,11 @@ export type SettingRequest =
    * roster. `value` is checked by `member-name.ts`, not here.
    */
   | { ok: true; setting: "name"; value: string; member: string | undefined }
+  /**
+   * How a team member talks to this person: `plain` (the default), `warm` or `formal`. `member` is as for
+   * `name`. Three fixed values and nothing else.
+   */
+  | { ok: true; setting: "tone"; value: ChatTone; member: string | undefined }
   | { ok: false; message: string };
 
 function isChatSettingName(value: string): value is ChatSettingName {
@@ -67,6 +81,21 @@ export function decideSettingRequest(
     return {
       ok: true,
       setting: "name",
+      value,
+      member: typeof member === "string" ? member.trim() : undefined,
+    };
+  }
+  if (setting === "tone") {
+    if (!isChatTone(value))
+      return {
+        ok: false,
+        message: "A tone can only be plain, warm or formal.",
+      };
+    if (member !== undefined && (typeof member !== "string" || !member.trim()))
+      return { ok: false, message: "Say which member to change." };
+    return {
+      ok: true,
+      setting: "tone",
       value,
       member: typeof member === "string" ? member.trim() : undefined,
     };

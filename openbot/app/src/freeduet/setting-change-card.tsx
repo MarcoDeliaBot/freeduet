@@ -47,6 +47,15 @@ function levelText(level: ChatNotifyLevel): CardTextId {
   return level === "all" ? "setting.level.all" : "setting.level.needs_input";
 }
 
+/** The card's words for a tone: one of the three fixed values, else plain. */
+function toneText(value: string | null): CardTextId {
+  return value === "warm"
+    ? "setting.tone.warm"
+    : value === "formal"
+      ? "setting.tone.formal"
+      : "setting.tone.plain";
+}
+
 type CardState =
   | { kind: "idle" }
   | { kind: "busy" }
@@ -63,6 +72,7 @@ export function SettingChangeCard({ change }: { change: SettingChangeResult }) {
   const botReal = useBotNames();
   // A name change says which member by its own name: the label is the name it just got.
   const botName = change.setting === "name" ? botReal : botLabel;
+  const isTone = change.setting === "tone";
   const queryClient = useQueryClient();
   const list = useQuery(settingChangesQueryOptions());
   const [state, setState] = useState<CardState>({ kind: "idle" });
@@ -77,14 +87,32 @@ export function SettingChangeCard({ change }: { change: SettingChangeResult }) {
   const isName = change.setting === "name";
   // A name is the person's own label, drawn as text: React escapes it, so markup shows as itself.
   const own = t("setting.name.own");
-  const from =
-    change.setting === "name"
-      ? (change.previousValue ?? own)
-      : t(levelText(change.previousValue));
-  const to =
-    change.setting === "name"
-      ? (change.newValue ?? own)
-      : t(levelText(change.newValue));
+  const wording = (
+    value: string | null,
+    kind: "name" | "tone" | "notifications",
+  ): string =>
+    kind === "name"
+      ? (value ?? own)
+      : kind === "tone"
+        ? t(toneText(value))
+        : t(levelText(value as ChatNotifyLevel));
+  const from = wording(change.previousValue, change.setting);
+  const to = wording(change.newValue, change.setting);
+  const heading: CardTextId = isName
+    ? "setting.name.heading"
+    : isTone
+      ? "setting.tone.heading"
+      : "setting.heading";
+  const changed: CardTextId = isName
+    ? "setting.name.change"
+    : isTone
+      ? "setting.tone.change"
+      : "setting.change";
+  const undoneText: CardTextId = isName
+    ? "setting.name.undone"
+    : isTone
+      ? "setting.tone.undone"
+      : "setting.undone";
 
   // The roster carries the name, so it is read again once a name has changed.
   useEffect(() => {
@@ -106,19 +134,13 @@ export function SettingChangeCard({ change }: { change: SettingChangeResult }) {
   }
 
   return (
-    <DuetCard
-      aria-label={isName ? t("setting.name.heading") : t("setting.heading")}
-      className="px-4 py-3"
-      role="region"
-    >
+    <DuetCard aria-label={t(heading)} className="px-4 py-3" role="region">
       <div className="flex items-center gap-3">
         <Tile icon="bell" />
         <div className="min-w-0 flex-1">
-          <p className="type-row font-semibold">
-            {isName ? t("setting.name.heading") : t("setting.heading")}
-          </p>
+          <p className="type-row font-semibold">{t(heading)}</p>
           <p className="type-label text-duet-ink-3">
-            {t(isName ? "setting.name.change" : "setting.change", {
+            {t(changed, {
               bot: botName(change.agentId),
               from,
               to,
@@ -129,7 +151,7 @@ export function SettingChangeCard({ change }: { change: SettingChangeResult }) {
               className="type-label mt-1 font-semibold text-duet-green"
               role="status"
             >
-              {t(isName ? "setting.name.undone" : "setting.undone", {
+              {t(undoneText, {
                 value: from,
               })}
             </p>

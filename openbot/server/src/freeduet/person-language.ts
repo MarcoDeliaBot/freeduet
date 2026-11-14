@@ -20,6 +20,7 @@
  * Unset means today, exactly: no key in `forwardedProps`, every sentence in English.
  */
 import { DICTATION_LANGUAGES } from "../dictation/languages";
+import { PERSON_TONE_PROP } from "./person-tone";
 
 export const PERSON_LANGUAGE_VARIABLE = "FREEDUET_PERSON_LANGUAGE";
 /** The `forwardedProps` key agent-freeduet reads (agent-freeduet/freeduet/agui.py). */
@@ -72,10 +73,16 @@ function englishName(code: string): string {
 export function withPersonLanguage<T extends Record<string, unknown>>(
   forwarded: T,
   environment: Environment = process.env,
-): Omit<T, typeof PERSON_LANGUAGE_PROP> & {
+): Omit<T, typeof PERSON_LANGUAGE_PROP | typeof PERSON_TONE_PROP> & {
   openbotPersonLanguage?: PersonLanguage;
 } {
-  const { [PERSON_LANGUAGE_PROP]: _fromCaller, ...own } = forwarded;
+  // The tone key is dropped here too (person-tone.ts sets it per person, later in the run): a request
+  // must not name a tone even where no per-person source is wired.
+  const {
+    [PERSON_LANGUAGE_PROP]: _fromCaller,
+    [PERSON_TONE_PROP]: _toneFromCaller,
+    ...own
+  } = forwarded;
   const language = personLanguageFrom(environment);
   return language ? { ...own, [PERSON_LANGUAGE_PROP]: language } : own;
 }

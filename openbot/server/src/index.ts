@@ -8,6 +8,7 @@ import "./freeduet/plan-token";
 import { applyFreeDuetPackage, isFreeDuetPackage } from "./freeduet/hub-grants";
 import { pinModelBaseToRouter } from "./freeduet/model-base";
 import { withFreeDuetTeam } from "./freeduet/person-team";
+import { personToneReaderFor } from "./freeduet/person-tone";
 // FreeDuet: CopilotKit Intelligence optional (#42, docs/UPSTREAM_TOUCHES.md).
 import { createThreadBackend } from "./freeduet/backend";
 import { guardThreadRoutes } from "./freeduet/thread-routes";
@@ -1930,6 +1931,9 @@ const baseAgentResolver = createActorAgentResolver({
     return copilotRuntime.learning?.acquire;
   },
   loadPersonalMemoryForActor,
+  // FreeDuet (settings-in-chat 8.10.2): the tone each member talks to this person in.
+  loadPersonToneForActor: (ownerUserId) =>
+    personToneReaderFor(database, ownerUserId),
 });
 // Every Bot a person runs learns which OpenDuet channel its run is in. See openduet/run-channel.ts.
 const actorAgentResolver = withRunChannels(baseAgentResolver, (owner, thread) =>
