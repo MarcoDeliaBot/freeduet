@@ -23,12 +23,22 @@ import { HeadlessToolSuspension } from "@openbot/toolkit/headless-tools";
 import { createApprovalService } from "../src/approvals/service";
 import { createApprovalStore } from "../src/approvals/store";
 import type { ApprovalCandidate } from "../src/approvals/types";
-import { createAuditReader, createAuditStore } from "../src/audit";
+import {
+  type AuditInitiator,
+  createAuditReader,
+  createAuditStore,
+} from "../src/audit";
 import { createDatabase } from "../src/db/client";
 import { agents, users } from "../src/db/schema";
 import { botLifecycle } from "../src/db/schema/lifecycle";
 import { createFullAccess } from "../src/freeduet/full-access";
 import { callTool, useSettingsTools } from "../src/plugins/builtin-settings";
+import {
+  allowedForRun,
+  checkInInitiator,
+  createReadOnlyClassifier,
+  proactiveInitiator,
+} from "../src/proactive/restriction";
 import { NOT_ON_THE_LIST } from "../src/settings-in-chat/allow-list";
 import { createSettingChangeRoutes } from "../src/settings-in-chat/routes";
 import {
@@ -390,6 +400,125 @@ describe("through the real gate and the tool: a card every time, and no security
     expect(undone.status).toBe(200);
     expect(undone.body.undone).toBeTrue();
     expect(undone.body.value).toBe("all");
+    expect(await notifyNow()).toBe("all");
+  });
+});
+
+/*
+ * GUARDS OF TODAY'S BEHAVIOUR, NOT NEW BEHAVIOUR (docs/design/settings-in-chat.md, section 8.8). Each test
+ * passes on main as it is. They pin what a change does in a run nobody is watching, and that name, tone
+ * and language are refused by the real tool. A routine's change asks a card; the 14 November rule asks for
+ * a refusal, which is not built. A later change has to change these tests on purpose.
+ */
+describe("guards of today's behaviour, section 8.8: unattended runs and the three settings not built", () => {
+  /** The same change, made in a run that the given initiator started, as the plugin store makes it. */
+  function startedBy(
+    initiator: AuditInitiator,
+    args: Record<string, unknown>,
+  ): ApprovalCandidate {
+    const call = settingCall(args);
+    if (!call.continuation)
+      throw new Error("A call made inside a run has a continuation.");
+    return {
+      ...call,
+      initiator,
+      continuation: { ...call.continuation, initiator },
+    };
+  }
+
+  test("a routine's run: a change asks a card and writes nothing", async () => {
+    await setNotify("all");
+    const outcome = await gatedOutcome(
+      startedBy(
+        { kind: "routine", id: `${prefix}-routine` },
+        { setting: "notifications", value: "needs_input" },
+      ),
+    );
+    expect(outcome).toBe("ask/always_ask");
+    expect(await notifyNow()).toBe("all");
+  });
+
+  test("a hand-off chain a routine began (a forward hop, or a relay of one): a card, and nothing written", async () => {
+    await setNotify("all");
+    const outcome = await gatedOutcome(
+      startedBy(
+        {
+          kind: "handoff",
+          id: bot,
+          origin: { kind: "routine", id: `${prefix}-routine` },
+        },
+        { setting: "notifications", value: "needs_input" },
+      ),
+    );
+    expect(outcome).toBe("ask/always_ask");
+    expect(await notifyNow()).toBe("all");
+  });
+
+  test("a hand-off chain the person began (a relay in their own conversation): a card, and nothing written", async () => {
+    await setNotify("all");
+    const outcome = await gatedOutcome(
+      startedBy(
+        { kind: "handoff", id: bot, origin: { kind: "person" } },
+        { setting: "notifications", value: "needs_input" },
+      ),
+    );
+    expect(outcome).toBe("ask/always_ask");
+    expect(await notifyNow()).toBe("all");
+  });
+
+  test("a check-in and a research run are not offered the settings tool, whatever the catalogue lists", async () => {
+    const readOnly = createReadOnlyClassifier({
+      listServers: async () => [
+        {
+          id: "settings",
+          title: "Settings",
+          tools: [
+            {
+              ref: "settings/change_setting",
+              effect: "write",
+              destructive: false,
+            },
+          ],
+        },
+        {
+          id: "crm",
+          title: "CRM",
+          tools: [
+            { ref: "crm/list_contacts", effect: "read", destructive: false },
+          ],
+        },
+      ],
+    });
+    const research = await allowedForRun(
+      proactiveInitiator(`${prefix}-research`),
+      readOnly,
+    );
+    const checkIn = await allowedForRun(
+      checkInInitiator(`${prefix}-check-in`),
+      readOnly,
+    );
+    // The classifier is live: a read it was given reaches research, so an empty answer is not an accident.
+    expect(research.has("crm/list_contacts")).toBeTrue();
+    expect(research.has("settings/change_setting")).toBeFalse();
+    expect(checkIn.has("crm/list_contacts")).toBeFalse();
+    expect(checkIn.has("settings/change_setting")).toBeFalse();
+  });
+
+  test("name, tone and language are refused by the real tool, and nothing is written", async () => {
+    await setNotify("all");
+    useSettingsTools(changes);
+    const before = await settingEventsFor(alice);
+    for (const setting of ["name", "tone", "language"])
+      for (const value of ["Ada", "formal", "it"]) {
+        const result = await callTool(
+          { url: "", actorId: alice, botId: bot },
+          "change_setting",
+          { setting, value },
+        );
+        expect(result.isError).toBeTrue();
+        expect(result.text).toBe(NOT_ON_THE_LIST);
+      }
+    expect(await settingEventsFor(alice)).toBe(before);
     expect(await notifyNow()).toBe("all");
   });
 });

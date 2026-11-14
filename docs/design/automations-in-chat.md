@@ -70,9 +70,9 @@ Three gaps matter most:
    - the runs per day and the budget left (item 8).
    Buttons: Allow, Change, No. No "Always allowed" is offered for a routine write (D6). The daily review is set up by FreeDuet, not in chat, so it keeps its own path (S8).
 2. **A missed run is a row.** When the sweep passes a stale stamp ([code: openbot/server/src/routines/sweep.ts:203-210]), it writes one `skipped` row for the gap, with the first missed time in a new nullable `scheduled_for` column. It writes that row only when `advanceNextRun` returns true. Today the return value is ignored in both branches ([code: sweep.ts:199-209]). `markUnschedulable` already writes a `skipped` row for a firing that never became a turn ([code: store.ts:943-948]), and the fatigue rule does not count skipped rows ([code: store.ts:981]). A new column adds no enum value ([code: CLAUDE.md:147]).
-3. **A run links to its messages.** The turn mints its own run id ([code: openbot/toolkit/src/run-turn.ts:699]) and returns none ([code: run-turn.ts:601-608]). Its input takes an optional run id ([code: run-turn.ts:93]). S2 returns the turn's run id and stores it, with the thread id, on the routine run row, as one nullable pair with one migration. History then links to that run's place in the thread.
+3. **A run links to its messages.** The turn mints its own run id ([code: openbot/toolkit/src/run-turn.ts:699]) and returns none ([code: run-turn.ts:601-608]). Its input takes an optional run id ([code: run-turn.ts:93]). S2 returns the turn's run id and stores it, with the thread id, on the routine run row, as one nullable pair with one migration. History then links to that run's place in the thread. Decided 14 November 2026: a run has a link to its conversation.
 4. **Calendar read.** `GET /api/routines/calendar?from&to` lists the next occurrences of enabled routines. It uses `nextOccurrence` ([code: openbot/server/src/routines/schedule.ts:143-176]), which calls cron-parser's `next()` ([code: schedule.ts:159-166]). At most 14 days and 500 items; the rest shows as "and more". Paused routines show as paused.
-5. **History with paging.** Cursor paging on `GET /api/routines/:id/runs`. Rows with `scheduled_for` set (item 2) show "Missed". Pruning after 90 days [assumed: a chosen length, not measured].
+5. **History with paging.** Cursor paging on `GET /api/routines/:id/runs`. Rows with `scheduled_for` set (item 2) show "Missed". Decided 14 November 2026: run history is kept 90 days.
 6. **Pause, run now and delete stay as they are.** Delete keeps its confirm dialog and says the history goes too, because runs are deleted with their routine ([code: openbot/server/src/db/schema/coworker.ts:157]).
 7. **Edit is a chat act.** "Change it to 10:00" calls `update_routine`, and the card shows the old and new values.
 8. **Limits.** Keep 20 enabled routines and the 15-minute floor ([code: schedule.ts:4]). Add a daily budget of routine turns per person, scheduled or run now, checked in the runner before `runTurn` ([code: openbot/server/src/routines/runner.ts:142-145]). Add a 60-minute floor for routines made in chat. The numbers are D3. Routines may not chain turns past their limits ([code: docs/ENGINES_PLAN.md:148]).
@@ -164,9 +164,9 @@ Not built, and why:
 
 For the maintainer to decide (none is taken here):
 
-1. Missed runs: S1 changes the sweep and adds one nullable column (`scheduled_for`). Build it now, or wait?
-2. Run links: S2 adds a run id and a thread id to each run, with one migration and a change to what the turn returns. Build it?
-3. History size: paging with 90-day pruning (S4), or the latest 100 rows?
+1. Missed runs: S1 changes the sweep and adds one nullable column (`scheduled_for`). Build it now, or wait? Decided 14 November 2026: build it, with the "Missed" label.
+2. Run links: S2 adds a run id and a thread id to each run, with one migration and a change to what the turn returns. Build it? Decided 14 November 2026: build it, so that a run links to its conversation.
+3. History size: paging with 90-day pruning (S4), or the latest 100 rows? Decided 14 November 2026: paging with 90-day pruning (S4).
 4. Caps: 14 days, 500 runs and 100 history rows are proposals. Confirm or change them.
 5. Time zone (D5): until each person has a zone, times show in the device's zone. Should the calendar wait for D5?
 6. Event triggers on this view (V4): now, or after S2?

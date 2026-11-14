@@ -48,7 +48,7 @@ Guards already in code:
 ### 3.1 The smallest version worth shipping
 
 1. The person pastes the Grok JSON, or picks a folder of SKILL.md files. No zip. [assumed] A browser folder picker can send file text to the server.
-2. The server runs the checks in 3.2 and writes a draft batch. The draft is the only write before confirmation (decision 7). It expires after seven days (proposal).
+2. The server runs the checks in 3.2 and shows a draft. Decided 14 November 2026: nothing is saved before confirmation (decision 7), so the browser keeps the file and sends it again at confirm.
 3. Settings → Import lists each item with its kind, its full text, its warnings, its licence and its provenance. Nothing is ticked by default. The whole text is shown, as the email card shows the whole body [code: docs/M1_PLAN.md:147].
 4. Leo proposes, for each skill, one Bot the person owns, or none, with one line of reason. The person picks. A skill never goes on a shared member, because a person's own skill is theirs alone.
 5. Confirm writes the ticked items in one transaction. The server compares each item's hash with the hash that was shown, and refuses a changed item.
@@ -56,8 +56,8 @@ Guards already in code:
 What confirm writes:
 - Instructions: a new private Bot through the profile store [code: openbot/server/src/agents/profile-store.ts:402; openbot/server/src/db/schema/coworker.ts:24-27], with the shared rules appended. The Grok spec promises the same [code: docs/import/grok-export-prompt.md:33]. The F8 acceptance says imported members get the shared rules added automatically [code: docs/PROJECT.md:97-99].
 - Skill: a `skills` row with origin `imported`, owned by the importing person (`ownerUserId`), so nobody else sees it in their `/` menu [code: openbot/server/src/db/schema/plugins.ts:709-713; openbot/server/src/plugins/plugin-store/skills.ts:17], and optionally a `pluginGrants` row of kind `skill` to the Bot the person picked, which must be one they own [code: plugins.ts:796-812; plugin-store/skills.ts:287]. No `skillTools` row.
-- Fact: a `personalMemories` row, `formedBy` `import`, `reviewState` `confirmed`, provenance naming the export [code: memory.ts:61-80; openbot/server/src/memory/store.ts:425-428]. Who may recall it is decision 1.
-- Schedule: a `routines` row, enabled only on confirm, with its cron passed through the same check as the tool boundary [code: coworker.ts:112].
+- Fact: a `personalMemories` row, `formedBy` `import`, `reviewState` `confirmed`, provenance naming the export [code: memory.ts:61-80; openbot/server/src/memory/store.ts:425-428]. Who may recall it is decision 1. Decided 14 November 2026: Iris holds it and passes it to the member who needs it.
+- Schedule: a `routines` row, switched off when confirm writes it, with its cron passed through the same check as the tool boundary [code: coworker.ts:112]. Decided 14 November 2026: the person switches each one on with its card.
 - Connected-app name: a suggestion to connect in the tool's own sign-in flow, as FreeDuet's rule requires. No grant [code: docs/ROADMAP.md:49].
 
 Never imported: credentials, tokens, passwords, cookies, API keys and iCal secrets [code: CLAUDE.md:31-33; docs/ROADMAP.md:44]; chat history [code: docs/import/grok-export-prompt.md:41]; approval rules, Full access, grants (`pluginGrants`, every kind), connected accounts, members' permissions and paid engines [code: docs/ROADMAP.md:47; openbot/server/src/db/schema/plugins.ts:786-812].
@@ -74,7 +74,7 @@ The server runs these before the review screen. Each adds a warning or refuses t
 | Zero-width or bidirectional control characters, HTML comments | Refused, so the reviewer sees what the member reads |
 | Phrases that ask for approval changes or tool grants ("always allow", "do not ask") | Flagged in red. A heuristic, not a boundary |
 | Key-shaped strings, card-number-shaped digit runs, long base64 | Refused, with the line number |
-| Caps (proposed): 64 KiB per item; 1 MiB per file [code: openbot/shared/attachments.ts:66]; 50 items per batch [code: openbot/server/src/memory/ingestion.ts:49] | Refused above the cap |
+| Caps (proposed): 64 KiB per item; 1 MiB per file [code: openbot/shared/attachments.ts:66]; 50 items per batch, with imported facts counted inside it (decided 14 November 2026) [code: openbot/server/src/memory/ingestion.ts:49] | Refused above the cap |
 | A `license` field, or non-commercial wording | Shown. Non-commercial marks the item restricted: kept for the person, excluded from any export or share. No licence: shown as "none stated" |
 | A `scripts/` folder | Listed. Never read by the server, never run, never copied [doc: https://agentskills.io/specification] |
 
@@ -113,11 +113,11 @@ Two more public routes:
 | # | Slice | Builds | Tests that prove it | Needs first | Size |
 |---|---|---|---|---|---|
 | S1 | Parsers | `freeduet-import/1` and SKILL.md parsers; the checks in 3.2; the caps | The Grok example in grok-export-prompt.md:11-22 parses; `${NAME}` stays literal; `allowed-tools` is dropped; a zero-width character is refused; a file of 1 MiB + 1 byte is refused | nothing | M |
-| S2 | Draft store | A FreeDuet migration (own journal) for a batch table and an item table; create, list, discard, seven-day expiry | Row counts of skills, personal memories, routines, agents and approval rules are unchanged by a draft; another person cannot read a batch; the migration is recorded by name | S1, decision 7 | M |
+| S2 | Draft store (dropped: decided 14 November 2026, decision 7, nothing is saved before confirmation) | A FreeDuet migration (own journal) for a batch table and an item table; create, list, discard, seven-day expiry | Row counts of skills, personal memories, routines, agents and approval rules are unchanged by a draft; another person cannot read a batch; the migration is recorded by name | S1, decision 7 | M |
 | S3 | Review screen | `settings/import.tsx`, one line in `settings/index.tsx`, the folder picker | Full text shown; nothing ticked by default; confirm sends only ticked ids; the upstream row is added | S2 | M |
 | S4 | Confirm: Bots and facts | Instructions become Bots with shared rules; facts become confirmed memories; an audit row per write | A changed text after review is refused; a fact is not recalled before confirm; the Bot prompt ends with the shared rules; a static test: the import code names no approval or Full-access table | S2, decision 1 | M |
 | S5 | Confirm: skills | `skills` row (origin `imported`); optional skill grant | No `skillTools` row; the grant offers no tool (run through the real gate); a slug clash is refused; `${` is literal in the database; another person's `/` menu does not list it | S4 | S |
-| S6 | Schedules | Routine created enabled only on confirm | An invalid cron is refused; no routine before confirm; a routine's send still asks | S4, decision 5 | M |
+| S6 | Schedules | Routine created switched off on confirm; the person switches it on with its card (decided 14 November 2026) | An invalid cron is refused; no routine before confirm; a routine's send still asks | S4, decision 5 | M |
 | S7 | Leo's proposal | Mapping proposal; the server accepts only ids of Bots the person owns | An unknown or another person's id is refused; proposal text is shown as data | S5 | S |
 | S8 | Docs and rows | `docs/import/` update, README line, upstream rows, NOTICE rows for any third-party text | A check that every upstream row names a real file | S3 | S |
 
@@ -135,13 +135,13 @@ Two more public routes:
 
 | # | Decision | Options | Recommendation | Reason |
 |---|---|---|---|---|
-| 1 | Who may recall an imported fact | (a) all the person's Bots; (b) only the Bot it came from | (b) | A fact without a source reaches every Bot of the person [code: openbot/server/src/memory/store.ts:308-316]; a Bot-formed row reaches only its Bot [code: store.ts:293-297] |
+| 1 | Who may recall an imported fact | (a) all the person's Bots; (b) only the Bot it came from | Decided 14 November 2026: neither option. Iris holds an imported fact and passes it to the member who needs it. | A fact without a source reaches every Bot of the person [code: openbot/server/src/memory/store.ts:308-316]; a Bot-formed row reaches only its Bot [code: store.ts:293-297] |
 | 2 | What v1 accepts | (a) pasted JSON; (b) plus a SKILL.md folder; (c) plus zip | (b) | SKILL.md is the common format; zip adds an archive parser and no named need |
 | 3 | Non-commercial licences | (a) refuse; (b) import for the person, show the licence, exclude from any export; (c) import silently | (b) | The person decides their own use, and FreeDuet still never redistributes. The repo's licence rule limits the code FreeDuet ships [code: docs/PROJECT.md:134] |
 | 4 | How confirmation is given | (a) a click on the review screen, against stored hashes; (b) a typed "approve" line, as for lessons | (a) | A click cannot be written by a model or relayed; the typed rule cannot tell the person from a relay [code: lessons.py:26-28] |
-| 5 | Schedules | (a) Leo proposes a cron, the person confirms with the next three runs shown; (b) the person writes it; (c) keep as text | (a) | The export gives schedules in plain words [code: docs/import/grok-export-prompt.md:18] |
+| 5 | Schedules | (a) Leo proposes a cron, the person confirms with the next three runs shown; (b) the person writes it; (c) keep as text | Decided 14 November 2026: (a), and imported schedules arrive switched off; the person switches each one on with its card. | The export gives schedules in plain words [code: docs/import/grok-export-prompt.md:18] |
 | 6 | Other tools in v1 | (a) paste route and SKILL.md only; (b) Gemini Gems, after the maintainer checks a sample export; (c) ChatGPT or Claude archives | (a) now, (b) later | The ChatGPT and Claude pages name no agent or memory list [doc: https://help.openai.com/articles/7260999]; the Gems format is not named [doc: https://support.google.com/gemini/answer/16920332] |
-| 7 | Staged copy before confirmation | (a) a staging table, visible only to the person, expires after seven days; (b) no server copy: the browser keeps the file and sends it again at confirm | (a), if the confirmation rule means that nothing becomes theirs; otherwise (b) | The ROADMAP row sets the confirmation rule [code: docs/ROADMAP.md:45]. A staged copy is written before confirmation, so the maintainer must say whether the rule covers it. (b) keeps the literal reading, at the cost of a second upload |
+| 7 | Staged copy before confirmation | (a) a staging table, visible only to the person, expires after seven days; (b) no server copy: the browser keeps the file and sends it again at confirm | Decided 14 November 2026: (b). A draft is shown before confirmation, and nothing is saved before it. | The ROADMAP row sets the confirmation rule [code: docs/ROADMAP.md:45]. A staged copy is written before confirmation, so the maintainer must say whether the rule covers it. (b) keeps the literal reading, at the cost of a second upload |
 
 ## 7. What was not verified
 
