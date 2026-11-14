@@ -61,6 +61,8 @@ interface ItemBase {
 
 export interface BotItem extends ItemBase {
   kind: "bot";
+  /** Where the agent is in the file, for example `agents[0]`. */
+  where: string;
   name: string;
   title: string | null;
   instructions: string;
@@ -78,6 +80,8 @@ export interface SkillItem extends ItemBase {
 
 export interface FactItem extends ItemBase {
   kind: "fact";
+  /** Where the fact is in the file, for example `agents[0].facts[2]`. */
+  where: string;
   text: string;
   /** The agent the fact was listed under, when that agent's name passed the checks. */
   fromAgent: string | null;
@@ -105,11 +109,31 @@ export interface NotImported {
   reason: NotImportedReason;
 }
 
+/**
+ * Why a fact was not kept. A refused fact is also in `refused`, with the same reasons; a blank fact is
+ * in this list only. The preview labels each drop with its code.
+ */
+export type FactDropCode =
+  | "blank"
+  | "not-text"
+  | "too-long"
+  | "secret"
+  | "check";
+
+/** A fact the parser did not keep. A refused fact's text is not kept, so none is shown for it. */
+export interface FactDrop {
+  where: string;
+  code: FactDropCode;
+  reasons: string[];
+}
+
 export interface ParsedImport {
   format: typeof IMPORT_FORMAT | "skill-md";
   items: ImportItem[];
   refused: RefusedItem[];
   notImported: NotImported[];
+  /** Facts that were not kept, in file order. */
+  factDrops: FactDrop[];
 }
 
 /** Either a parsed import, or a refusal of the whole input with one reason. */
