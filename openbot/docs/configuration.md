@@ -1444,6 +1444,25 @@ conversations stay tellable from the other's.
 
 Set `OPENBOT_ONE_COMPUTER_EACH=false` when using `start.sh` to run all Bots against one shared computer.
 
+## Moving from no sign-in to sign-in
+
+With no sign-in, everything you did belongs to one fixed person. When you turn a sign-in provider on, your first sign-in makes a new person, who owns nothing. This tool moves what the fixed person owns to the address you sign in with. You run it yourself, once, before your first sign-in. Nothing runs it for you.
+
+1. Do not sign in yet. If you already did, but only signed in and never opened the app, it still works. If you opened the app, the dry run says so and stops.
+2. Make a copy of the database yourself as well (`pg_dump -Fc` from the postgres container). The tool takes its own backup, but two are better than one.
+3. If something restarts the stack when the server stops (a watchdog on the computer), pause it first. It would start the server in the middle of the move, and the tool stops if it sees that.
+4. In `.env`, set the sign-in provider and your address in `INITIAL_ADMIN_EMAILS` (and in `SIGNIN_ALLOWED_EMAILS` if you use it). The address you give the tool must be one of these.
+5. Stop the server and the worker. Leave postgres running.
+6. From the `openbot` folder, look first. This writes nothing:
+   `bun scripts/adopt-single-user-data.ts --to you@example.com`
+   Read what moves, the standing permissions that become yours (Full access, always-allow rules), and the connected apps that may ask you to connect again.
+7. Move it:
+   `bun scripts/adopt-single-user-data.ts --to you@example.com --apply --yes`
+   It first writes a backup of the whole database to `.logs/` (readable only by you, and it holds every secret: keep it private), then moves everything in one step or nothing. It prints the backup path and how to go back. Use `--backup-dir <folder>` for another folder, and `PG_DUMP=/path/to/pg_dump` if the `pg_dump` on the computer is older than the database.
+8. Start the server and sign in with that address. You find everything as you left it.
+
+The fixed person is left with nothing. The way back is the backup: stop the server and run the `pg_restore` line the tool printed. Running the tool again is safe: it finds nothing to move and says when it was moved. The tool refuses, and changes nothing, when the provider is not configured, the address is not an administrator address, the server or anything else is using the database, an approval request is still waiting (answer it first), or the address already owns data.
+
 ## Tenant package
 
 The tenant package contains five required YAML files, and two optional:

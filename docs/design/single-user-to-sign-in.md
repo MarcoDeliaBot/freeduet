@@ -139,7 +139,7 @@ The row the tool makes:
 |---|---|---|
 | `id` | a new UUID | any text does; the sign-in reuses it as it is |
 | `email` | the address, lower-cased and trimmed | the sign-in looks an address up in lower case |
-| `email_verified` | `true` | **[proved: `server/tests/single-user-adoption-signin.test.ts`]** a row that is not verified is not linked to by the sign-in, which makes a second user. The test shows both. |
+| `email_verified` | `true` | **[proved: `server/tests/single-user-adoption-signin.test.ts`]** a row that is not verified is refused by the sign-in (`account_not_linked`): no session, and the person is locked out of their own data. The test shows both, and a row with the address in capitals, which the sign-in does not find and so makes a second user. |
 | `name` | the address | the same as the single-user row; the provider's name is not known yet |
 | `preferences`, `groups`, `onboarding_*` | the single-user person's | they are the person's own |
 
@@ -220,8 +220,45 @@ All against a real PostgreSQL scratch database, through the real `createApp`; th
 
 ## 8. Built so far
 
-Filled in at the end of the work.
+**Built.** The first slice: `bun scripts/adopt-single-user-data.ts --to <address>` (dry run) and `--apply --yes` (backup, then the move). Run by the person, never by the server, never over HTTP.
+
+| Part | Where |
+|---|---|
+| Registry of every place that names a person, checked against the live schema | `server/src/freeduet/adopt/registry.ts`, `schema-scan.ts` |
+| Dry run and every refusal | `plan.ts`, `preconditions.ts`, `command.ts` |
+| Backup: file `0600` from creation, real dump or nothing, no password on a command line | `backup.ts` |
+| The move: one transaction, table locks, re-read under the locks, verification, one audit event | `apply.ts` |
+| Audit type | `server/src/audit.ts` |
+
+**Tests** (real PostgreSQL scratch database, real app; all of them fail on main because the tool does not exist, except the problem test, which passes on main because it asserts the problem).
+
+| File | Result after |
+|---|---|
+| `single-user-to-sign-in-problem.test.ts` | pass (also on main) |
+| `single-user-adoption-registry.test.ts` | pass |
+| `single-user-adoption-plan.test.ts` | 30 pass |
+| `single-user-adoption-apply.test.ts` | 23 pass, including an error injected after each of about 75 steps (no change each time), a process killed with SIGKILL mid-move, a writer arriving under the locks |
+| `single-user-adoption-signin.test.ts` | 8 pass: the real sign-in lands on the same user and sees every family |
+| `single-user-adoption-backup.test.ts` | 18 pass with a real `pg_dump`/`pg_restore`: move, printed way back, every table identical to before |
+| `single-user-adoption-unreachable.test.ts` | 5 pass |
+
+Each check was also broken on purpose (mutation) and the tests failed: skipped column, verification off, weaker locks, old row not emptied, no audit event, unverified row, preferences not carried, file mode, dump header, container identity, password on the command line.
+
+**Found on the way.** `pg_stat_activity` is read as a snapshot inside a transaction, so a check for other connections made late in the transaction saw nothing; it now clears the snapshot first.
+
+**Not verified.** No real installation was moved. No real Google sign-in: the provider is a stand-in, which proves what the deployment does with an answer, not what Google sends. The real-`pg_dump` tests skip where no `pg_dump` as new as the server exists (the CI runner has 16 against a server 17), so CI does not run them. The refusal for a file system that keeps no permissions is read, not run. The Windows watchdog was not exercised.
 
 ## 9. Decisions left to the maintainer
 
-Filled in at the end of the work.
+| Decision | Options | Recommendation | Why |
+|---|---|---|---|
+| Pausing the watchdog during the move | a command to pause it; or stop it by hand | give the maintainer the exact pause command | stopping the server makes it start the stack again within a minute; the tool stops if it sees the server, but the person should not have to race it |
+| Someone who signed in and opened the app before running the tool | refuse (built); or merge two people's data | refuse, restore the earlier backup, run the tool, sign in | merging mixes two people's data and cannot be undone cleanly; not built |
+| Microsoft as the only provider | refuse (built); or support | refuse | the sign-in is not expected to link to the prepared row; the maintainer is turning on Google |
+| Connected apps | leave (built, listed in the dry run); or reconnect automatically | leave | a vendor may ask for the connection again; the tool cannot know |
+| The old single-user row | left, empty (built); or deleted | left | audit rows keep its id, and it is the way back's anchor |
+| Name on the new row | the address (built); or ask | the address | the provider's name replaces it at sign-in |
+| Intelligence on | unsupported (refused by the checks); or supported | unsupported | conversation history lives elsewhere and was not moved |
+| Wrong address typed | none: the move cannot be redirected, only undone with the backup | accept | a second move would mix data |
+| A killed run | may leave a private partial dump in `.logs` | accept; delete it by hand | it is never deleted automatically because it may be the only way back |
+| Roadmap row | add to `docs/ROADMAP.md` | coordinator adds it | this brief did not allow editing it |
