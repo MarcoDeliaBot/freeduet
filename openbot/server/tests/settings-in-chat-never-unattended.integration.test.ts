@@ -1020,6 +1020,7 @@ describe("what is offered, and what is not (documents the finding; update it if 
 describe("every setting on the list is covered, now and later", () => {
   test("a setting added to the list is refused in a routine and asked in the person's turn, without being named", async () => {
     const names = CHAT_SETTING_NAMES as unknown as string[];
+    const listed = [...names];
     names.push("future_setting");
     const seenByService: string[] = [];
     useSettingsTools({
@@ -1059,7 +1060,8 @@ describe("every setting on the list is covered, now and later", () => {
       names.pop();
       useSettingsTools(changes);
     }
-    expect(CHAT_SETTING_NAMES).toEqual(["notifications"]);
+    // The list is back as it was: a test that widened it must not leave it widened.
+    expect([...(CHAT_SETTING_NAMES as readonly string[])]).toEqual(listed);
   });
 
   test("the refusal does not read the arguments: a name nobody listed gets the same sentence in a routine", async () => {
