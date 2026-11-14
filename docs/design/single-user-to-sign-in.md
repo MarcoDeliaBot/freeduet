@@ -57,13 +57,13 @@ Classes:
 - **identity**: how somebody signs in. Never moved. The single-user person has none; if it has any, this is not a single-user installation and the tool stops.
 - **reviewed**: a column whose name looks like a person and is not one.
 
-Every `table.column` below is a literal in the registry (`server/src/freeduet/adopt/registry.ts`), and a test fails when the registry and this table disagree, and when the live schema has a column that is in neither. [proved: `server/tests/single-user-adoption-registry.test.ts`]
+Every column below, written as its table and its column joined by a dot, is a literal in the registry (`server/src/freeduet/adopt/registry.ts`), and a test fails when the registry and this table disagree, and when the live schema has a column that is in neither. [proved: `server/tests/single-user-adoption-registry.test.ts`]
 
 **Move: the person's own data**
 
 | Family | Columns | Notes |
 |---|---|---|
-| The person's row | `users` (its `preferences`, `groups`, `onboarding_step`, `onboarding_completed_at`) | `preferences` holds the team mark, the Full access choices and the person's own settings. Special handler, section 6.3. |
+| The person's row | `users.preferences`, `users.groups`, `users.onboarding_step`, `users.onboarding_completed_at` | `preferences` holds the team mark, the Full access choices and the person's own settings. Special handler, section 6.3. |
 | Settings | `user_instructions.user_id`, `update_routing_preferences.owner_user_id`, `default_opt_outs.owner_user_id`, `proactive_settings.owner_user_id`, `push_devices.owner_user_id`, `voice_sessions.user_id` | |
 | Conversations | `channel_memberships.user_id`, `attachments.uploaded_by`, `group_bot_threads.owner_user_id`, `group_messages.owner_user_id`, `learning_thread_bindings.user_id`, `intelligence_channel_mappings.user_id` | The history of a conversation is in the next row. |
 | Conversation history, Intelligence off | `freeduet_threads.user_id`, `freeduet_thread_locks.user_id` | Tables made by the FreeDuet thread store, present only on that mode. [code: server/src/freeduet/threads/migrations/0000_freeduet_threads.sql] A thread owned by another user is refused on open, so without this the conversations move and cannot be opened. [code: server/src/freeduet/threads/store.ts] |
