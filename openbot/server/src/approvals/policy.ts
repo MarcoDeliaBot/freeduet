@@ -227,7 +227,7 @@ function flatten(value: unknown, depth = 0): string {
  * a config file that mentions a password is not a password change. Host commands are also shown
  * verbatim in the native dialog on that computer.
  */
-const NOT_ACCOUNT_ACTIONS =
+export const NOT_ACCOUNT_ACTIONS =
   /^(computer_(write_file|read_file|list_files|run_command)|host\/)/;
 
 export function safetyRequirement(
@@ -245,13 +245,35 @@ export function safetyRequirement(
     flatten(candidate.args),
     flatten(candidate.target),
   ].join(" ");
-  const hit = SAFETY_REQUIREMENTS.find(
-    (entry) =>
-      entry.pattern.test(words) ||
-      entry.extra?.some((pattern) => pattern.test(words)) ||
-      entry.inToolName?.some((pattern) => pattern.test(candidate.toolRef)),
+  const hit = SAFETY_REQUIREMENTS.find((entry) =>
+    safetyEntryMatches(entry, words, candidate.toolRef),
   );
   return hit ? { id: hit.id, reason: hit.reason } : undefined;
+}
+
+function safetyEntryMatches(
+  entry: (typeof SAFETY_REQUIREMENTS)[number],
+  words: string,
+  toolRef: string,
+): boolean {
+  return (
+    entry.pattern.test(words) ||
+    Boolean(entry.extra?.some((pattern) => pattern.test(words))) ||
+    Boolean(entry.inToolName?.some((pattern) => pattern.test(toolRef)))
+  );
+}
+
+/**
+ * D33: does this tool's own name carry the words of a built-in safety category (a credential, a
+ * security setting, money)? Used by `classifyTool` for a tool a hub hosts, where nothing but the
+ * provider's own label says it only reads: a name with these words is not taken as a read on that
+ * label alone. The same lists and the same test as {@link safetyRequirement}, so there is no second
+ * classifier to keep in step.
+ */
+export function toolNameHitsSafetyWords(toolName: string): boolean {
+  return SAFETY_REQUIREMENTS.some((entry) =>
+    safetyEntryMatches(entry, toolName, toolName),
+  );
 }
 
 /**
@@ -457,10 +479,20 @@ export async function decideAction(input: {
    * Absent means the switch is off for this action.
    */
   fullAccess?: FullAccessMode;
+  /**
+   * FreeDuet, D35 (`freeduet/always-ask.ts`): why the server holds this action to a card every time.
+   * Present, Full access is not looked at, and no rule, preference or reviewer verdict lets the action
+   * through: the answer is an `ask` that can only be allowed once. A hand-off, by a safety
+   * requirement, a rule or the reviewer, is stricter than a card and still comes first. Absent is
+   * every action as before.
+   */
+  alwaysAsk?: string;
 }): Promise<ApprovalPolicyOutcome> {
   const { candidate } = input;
   const safety = safetyRequirement(candidate);
-  if (input.fullAccess) {
+  // D35: never for a read, whatever the caller passes.
+  const alwaysAsk = candidate.effect === "read" ? undefined : input.alwaysAsk;
+  if (input.fullAccess && !alwaysAsk) {
     const granted = fullAccessOutcome(
       candidate,
       safety,
@@ -536,7 +568,7 @@ export async function decideAction(input: {
         review,
         ...(rule ? { ruleId: rule.ruleId } : {}),
       };
-    if (review.verdict === "needs_approval")
+    if (review.verdict === "needs_approval" && !alwaysAsk)
       return {
         behaviour: "ask",
         source: "auto_review",
@@ -545,6 +577,15 @@ export async function decideAction(input: {
         ...(rule ? { ruleId: rule.ruleId } : {}),
       };
   }
+  // D35: after every hand-off above, before every way of being allowed or asked in a way that could
+  // be remembered. "Always allow" is neither offered nor honoured for this source (`approvals/store.ts`).
+  if (alwaysAsk)
+    return {
+      behaviour: "ask",
+      source: "always_ask",
+      reason: alwaysAsk,
+      ...(review ? { review } : {}),
+    };
   if (matched?.rule.behaviour === "ask")
     return {
       behaviour: "ask",

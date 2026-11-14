@@ -19,7 +19,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse, StreamingResponse
 
-from . import agui, checkpoints, claude_cli, engine_state, origin, report, team_log
+from . import agui, checkpoints, claude_cli, engine_router, engine_state, origin, report, team_log
 from .claude_engine import ClaudeEngine
 from .engine_adapter import EngineAdapter
 from .members import MemberError, resolve_member
@@ -41,10 +41,15 @@ async def lifespan(target: FastAPI):
     except Exception:  # noqa: BLE001 - recording is never a reason for the service not to start
         log.warning("engine state not started: it is made on first use", exc_info=True)
         target.state.engine_state = None
+    target.state.engine_router = None
+    if target.state.engine_state is not None:
+        engines_now = {engine.key: engine for engine in (ClaudeEngine(),)}
+        target.state.engine_router = engine_router.router_from_environment(target.state.engine_state, engines_now)
     try:
         yield
     finally:
         target.state.engine_state = None
+        target.state.engine_router = None
 
 
 app = FastAPI(title="agent-freeduet", docs_url=None, redoc_url=None, openapi_url=None, lifespan=lifespan)
@@ -72,8 +77,8 @@ async def health():
 
 
 # ── ENGINE STATE (ENGINES_PLAN slice 2) ──────────────────────────────────────────────────────────
-# RECORDING ONLY. Each member turn is reported to the engine breaker when it ends (engine_state.py); no
-# run path asks the breaker anything, so a turn behaves the same whatever the breaker says. `GET /engines`
+# Each member turn is reported to the engine breaker when it ends (engine_state.py). A member with ONE engine
+# (the default install) behaves the same whatever the breaker says; with a chain the router asks it (slice 3). `GET /engines`
 # is the agent's side of the server's `GET /api/freeduet/engines`: read-only, behind the same token check
 # as `POST /` (it is in no OPEN_PATHS and not under /v1/).
 def _engine_state() -> engine_state.EngineState:
@@ -197,9 +202,13 @@ async def _events(run: agui.RunInput) -> AsyncIterator[dict]:
         return
     summary = _SegmentSummary(run)
     started = False
-    engine = _engine_for_a_turn()
+    router = getattr(app.state, "engine_router", None)
+    if router is not None and router.engaged(member.id):  # a chain of more than one engine, or a pin (ENGINES_PLAN slice 3)
+        stream = router.run(run, member, summary.notes)
+    else:  # the default install: Claude Code alone, exactly as before
+        stream = run_segment(run, member, summary.notes, _engine_for_a_turn())
     try:
-        async for event in run_segment(run, member, summary.notes, engine):
+        async for event in stream:
             started = started or event["type"] == "RUN_STARTED"
             summary.see(event)
             if event["type"] in TERMINAL:

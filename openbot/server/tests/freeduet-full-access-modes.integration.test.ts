@@ -169,11 +169,13 @@ const ACTION_NAMES = Object.keys(ACTIONS) as Action[];
 
 /**
  * What the gate does with one action:
- *   allowed     no card, the action runs
- *   asks        a card, because of the person's own "ask before making changes" (source `default`)
- *   handed_off  a card, because a safety requirement hands it to the person (source `safety`)
+ *   allowed      no card, the action runs
+ *   asks         a card, because of the person's own "ask before making changes" (source `default`)
+ *   always_asks  a card, because the server holds it to one whatever the person switched on (source
+ *                `always_ask`, D35): a write made by a routine's or a trigger's run
+ *   handed_off   a card, because a safety requirement hands it to the person (source `safety`)
  */
-type Outcome = "allowed" | "asks" | "handed_off";
+type Outcome = "allowed" | "asks" | "always_asks" | "handed_off";
 
 type Situation =
   | "live"
@@ -216,6 +218,18 @@ const ASKS: Record<Action, Outcome> = {
   credential: "handed_off",
   security: "handed_off",
 };
+/**
+ * A routine's or a trigger's run (D35): what a safety requirement hands to the person is still handed
+ * to them, and every other write asks on the server's own account, with the person's settings and
+ * Full access in either setting having no say.
+ */
+const UNATTENDED: Record<Action, Outcome> = {
+  ...ASKS,
+  email: "always_asks",
+  sign: "always_asks",
+  book: "always_asks",
+  delete: "always_asks",
+};
 /** Full access in a turn it applies to: everything but a password or a security setting. */
 const FULL_LIFTED: Record<Action, Outcome> = {
   ...ASKS,
@@ -235,27 +249,28 @@ const NO_PAYMENTS_LIFTED: Record<Action, Outcome> = {
 
 /**
  * THE SPECIFICATION. Setting, then kind of turn, then kind of action. A turn Full access does not
- * apply to (a routine, a check-in, a hop the server cannot trace to the person) is the switch off.
+ * apply to (a routine, a check-in, a hop the server cannot trace to the person) is the switch off,
+ * and a routine's or a check-in's own write asks besides (D35), in every setting.
  */
 const TABLE: Record<Mode, Record<Situation, Record<Action, Outcome>>> = {
   off: {
     live: ASKS,
-    routine: ASKS,
-    check_in: ASKS,
+    routine: UNATTENDED,
+    check_in: UNATTENDED,
     handoff_traced: ASKS,
     handoff_untraced: ASKS,
   },
   full: {
     live: FULL_LIFTED,
-    routine: ASKS,
-    check_in: ASKS,
+    routine: UNATTENDED,
+    check_in: UNATTENDED,
     handoff_traced: FULL_LIFTED,
     handoff_untraced: ASKS,
   },
   no_payments: {
     live: NO_PAYMENTS_LIFTED,
-    routine: ASKS,
-    check_in: ASKS,
+    routine: UNATTENDED,
+    check_in: UNATTENDED,
     handoff_traced: NO_PAYMENTS_LIFTED,
     handoff_untraced: ASKS,
   },
@@ -320,6 +335,7 @@ async function policyOf(c: ApprovalCandidate): Promise<string> {
 async function outcomeOf(c: ApprovalCandidate): Promise<Outcome | string> {
   const seen = await policyOf(c);
   if (seen === "ask/default") return "asks";
+  if (seen === "ask/always_ask") return "always_asks";
   if (seen === "hand_off/safety") return "handed_off";
   return seen;
 }
@@ -359,7 +375,10 @@ describe("the table: each setting, each kind of turn, each kind of action, throu
       const differing = ACTION_NAMES.filter(
         (action) => full[action] !== without[action],
       );
-      expect(differing).toEqual(full === ASKS ? [] : ["payment", "purchase"]);
+      // Where Full access does not apply, both settings are the switch off, and so equal.
+      expect(differing).toEqual(
+        full === TABLE.off[situation] ? [] : ["payment", "purchase"],
+      );
     }
   });
 

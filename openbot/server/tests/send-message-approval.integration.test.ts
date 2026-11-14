@@ -41,6 +41,7 @@ import {
   approvalRequests,
   approvalPreferences,
   approvalRules,
+  auditEvents,
   credentials,
   mcpServers,
   mcpTools,
@@ -56,7 +57,12 @@ import {
 import { createFullAccess, withFullAccess } from "../src/freeduet/full-access";
 import { createGoogleImapTransport } from "../src/plugins/google-imap";
 import { callTool as callGoogle } from "../src/plugins/google-workspace-rest";
-import { createPluginStore, PluginRefusedError } from "../src/plugins/store";
+import {
+  createPluginStore,
+  PluginRefusedError,
+  type PluginStoreOptions,
+} from "../src/plugins/store";
+import { grantedTools, REFUSAL_MARKER } from "../src/plugins/tools";
 import {
   createPrivateShareCheck,
   PRIVATE_SHARE_EFFECT,
@@ -142,7 +148,7 @@ const sharedOptions = {
   }),
 };
 
-const oauthStore = createPluginStore({
+const oauthOptions = {
   ...sharedOptions,
   exchangeRefreshToken: async ({ refreshToken: presented }) => {
     const response = await fetch(`${fake.url}/token`, {
@@ -164,14 +170,29 @@ const oauthStore = createPluginStore({
       toolName,
       args,
     ),
-});
+} satisfies PluginStoreOptions;
+const oauthStore = createPluginStore(oauthOptions);
 
-const appPasswordStore = createPluginStore({
+const appPasswordOptions = {
   ...sharedOptions,
   verifyUserSecret: async () => ({ ok: true, calendar: false }),
   callVendor: (connection, toolName, args) =>
     imapTransport.callTool(connection, toolName, args),
-});
+} satisfies PluginStoreOptions;
+const appPasswordStore = createPluginStore(appPasswordOptions);
+
+/** The same two stores for a person who reads Italian (FREEDUET_PERSON_LANGUAGE=it, D26, D37). */
+const ITALIAN = { code: "it", name: "Italian" };
+const italianStores = {
+  [GOOGLE_WORKSPACE]: createPluginStore({
+    ...oauthOptions,
+    personLanguage: ITALIAN,
+  }),
+  [GOOGLE_APP_PASSWORD]: createPluginStore({
+    ...appPasswordOptions,
+    personLanguage: ITALIAN,
+  }),
+};
 
 type Backend = {
   key: string;
@@ -312,10 +333,41 @@ const callNew = (
     initiator,
   });
 
+/*
+ * WHAT THE PERSON READS when the same new email is sent again in the same request (D37). Written out
+ * here, not read from the language table, so that a change of wording is a change of this file: the
+ * sentences are a promise to the person.
+ */
+const SENT_AGAIN_EN =
+  "This email was already sent a moment ago in this same request, so I did not send it again.";
+const SENT_AGAIN_IT =
+  "Questa email è già stata inviata poco fa in questa stessa richiesta, quindi non l'ho inviata di nuovo.";
+const UNCONFIRMED_EN =
+  "I tried to send this email a moment ago in this same request, but I could not confirm that it went out, so I did not try again. Check your sent mail, and ask me again if it is not there.";
+const UNCONFIRMED_IT =
+  "Poco fa, in questa stessa richiesta, ho provato a inviare questa email ma non ho potuto confermare che sia partita, quindi non ho riprovato. Controlla la posta inviata e chiedimelo di nuovo se non c'è.";
+
 const pending = async () =>
   (await approvals.list(owner)).filter(
     (request) => request.status === "pending",
   );
+
+/** The rows the trail holds for sends refused as repeats, oldest first, as their payloads read. */
+const repeatRefusals = async (backend: Backend) =>
+  (
+    await database
+      .select({ payload: auditEvents.payload })
+      .from(auditEvents)
+      .where(
+        and(
+          eq(auditEvents.eventType, "mcp.call_rejected"),
+          eq(auditEvents.targetId, `${backend.key}/gmail_send_message`),
+          sql`${auditEvents.payload}->>'actor' = ${owner}`,
+          sql`${auditEvents.payload}->>'refusal' = 'already_sent_this_turn'`,
+        ),
+      )
+      .orderBy(auditEvents.createdAt)
+  ).map((row) => row.payload as Record<string, unknown>);
 
 /** Refuse whatever is waiting, so one test's question never answers the next one's. */
 async function clearPending() {
@@ -876,7 +928,8 @@ for (const backend of BACKENDS) {
         callNew(backend, args),
       ).catch((error: unknown) => error);
       expect(again).toBeInstanceOf(PluginRefusedError);
-      expect(String((again as Error).message)).toContain("Not sent again");
+      // The person is told, in words, that it already went (D37).
+      expect((again as Error).message).toBe(SENT_AGAIN_EN);
       expect(backend.sent()).toHaveLength(1);
       expect(await pending()).toEqual([]);
     });
@@ -896,6 +949,8 @@ for (const backend of BACKENDS) {
         callNew(backend, args),
       ).catch((error: unknown) => error);
       expect(again).toBeInstanceOf(PluginRefusedError);
+      // It was handed to the vendor and not known to have gone: the person is told exactly that (D37).
+      expect((again as Error).message).toBe(UNCONFIRMED_EN);
       expect(backend.sent()).toEqual([]);
     });
   });
@@ -1361,9 +1416,7 @@ for (const backend of BACKENDS) {
       expect(refused).toHaveLength(1);
       const error = refused[0]?.error;
       expect(error).toBeInstanceOf(PluginRefusedError);
-      expect(String((error as Error | undefined)?.message)).toContain(
-        "Not sent again",
-      );
+      expect((error as Error).message).toBe(SENT_AGAIN_EN);
       expect(backend.sent()).toHaveLength(1);
       expect(await pending()).toEqual([]);
     });
@@ -1384,6 +1437,7 @@ for (const backend of BACKENDS) {
         | undefined;
       expect(value?.sent.isError).toBe(false);
       expect(value?.again).toBeInstanceOf(PluginRefusedError);
+      expect((value?.again as Error | undefined)?.message).toBe(SENT_AGAIN_EN);
       expect(backend.sent()).toHaveLength(1);
     });
 
@@ -1976,3 +2030,293 @@ describe("Full access without payments: Iris hands Otto the work in the person's
     await clearPending();
   });
 });
+
+/*
+ * ONE SEND PER REQUEST, AND THE PERSON IS TOLD (docs/M1_PLAN.md D37, docs/ENGINES_PLAN.md E2).
+ *
+ * A new email the person's own words named goes out with no card, so nothing but the server stands
+ * between a run that is carried on (the Bot trying again, a turn continued, the next engine taking
+ * over a run whose first engine hit its limit; the run id is the same through all of them) and the
+ * same email going out twice. The server therefore remembers, per run, which emails the person's
+ * request sent. A repeat is not sent, nobody is asked, and the person reads, in the language they
+ * read, what happened. Each case that is a repeat is named "repeat".
+ */
+for (const backend of BACKENDS) {
+  describe(`${backend.key}: the same new email twice in one request (D37)`, () => {
+    const asked = () => ({
+      runId: randomUUID(),
+      messages: [typed("Write to ana@example.com saying good morning")],
+    });
+    const again = (turn: Turn): Turn => ({ ...turn, toolCallId: randomUUID() });
+    const italian: Backend = {
+      ...backend,
+      store: italianStores[backend.key as keyof typeof italianStores],
+    };
+
+    test("repeat: the second is not sent, nobody is asked, and the person is told it already went", async () => {
+      backend.reset();
+      await clearPending();
+      const before = (await repeatRefusals(backend)).length;
+      const turn = asked();
+      const args = email({ subject: "Told once" });
+      const first = await inTurn(turn, () => callNew(backend, args));
+      expect(first.isError).toBe(false);
+      for (const _attempt of [1, 2]) {
+        const outcome = await inTurn(again(turn), () =>
+          callNew(backend, args),
+        ).catch((error: unknown) => error);
+        expect(outcome).toBeInstanceOf(PluginRefusedError);
+        expect((outcome as Error).message).toBe(SENT_AGAIN_EN);
+      }
+      expect(backend.sent()).toHaveLength(1);
+      expect(await pending()).toEqual([]);
+      // The trail says it was a repeat of an email that went, and that this call carried nothing out.
+      const refusals = (await repeatRefusals(backend)).slice(before);
+      expect(refusals).toHaveLength(2);
+      for (const refusal of refusals)
+        expect(refusal).toMatchObject({
+          earlierSend: "sent",
+          decision: { carriedOut: false },
+        });
+    });
+
+    test("repeat: a person who reads Italian is told in Italian, in both cases", async () => {
+      italian.reset();
+      await clearPending();
+      // It went: the vendor answered and reported nothing wrong.
+      const sent = asked();
+      const args = email({ subject: "Una volta sola" });
+      expect((await inTurn(sent, () => callNew(italian, args))).isError).toBe(
+        false,
+      );
+      const repeated = await inTurn(again(sent), () =>
+        callNew(italian, args),
+      ).catch((error: unknown) => error);
+      expect(repeated).toBeInstanceOf(PluginRefusedError);
+      expect((repeated as Error).message).toBe(SENT_AGAIN_IT);
+      expect(italian.sent()).toHaveLength(1);
+
+      // It was handed to the vendor and not known to have gone (a body over the limit fails inside).
+      const failed = asked();
+      const tooLong = email({
+        subject: "Troppo lunga",
+        body: "x".repeat(20_001),
+      });
+      expect(
+        (await inTurn(failed, () => callNew(italian, tooLong))).isError,
+      ).toBe(true);
+      const retried = await inTurn(again(failed), () =>
+        callNew(italian, tooLong),
+      ).catch((error: unknown) => error);
+      expect(retried).toBeInstanceOf(PluginRefusedError);
+      expect((retried as Error).message).toBe(UNCONFIRMED_IT);
+      expect(italian.sent()).toHaveLength(1);
+      expect(await pending()).toEqual([]);
+    });
+
+    test("repeat: an email the vendor failed is not tried again, and the trail says it was not confirmed", async () => {
+      backend.reset();
+      await clearPending();
+      const before = (await repeatRefusals(backend)).length;
+      const turn = asked();
+      const args = email({ subject: "Too long", body: "x".repeat(20_001) });
+      expect((await inTurn(turn, () => callNew(backend, args))).isError).toBe(
+        true,
+      );
+      const outcome = await inTurn(again(turn), () =>
+        callNew(backend, args),
+      ).catch((error: unknown) => error);
+      expect(outcome).toBeInstanceOf(PluginRefusedError);
+      expect((outcome as Error).message).toBe(UNCONFIRMED_EN);
+      expect(backend.sent()).toEqual([]);
+      expect(await pending()).toEqual([]);
+      const refusals = (await repeatRefusals(backend)).slice(before);
+      expect(refusals).toHaveLength(1);
+      expect(refusals[0]).toMatchObject({
+        earlierSend: "unconfirmed",
+        decision: { carriedOut: false },
+      });
+    });
+
+    test("repeat: the same recipients spelled another way (case, order, listed twice) are the same email", async () => {
+      backend.reset();
+      await clearPending();
+      const turn: Turn = {
+        runId: randomUUID(),
+        messages: [
+          typed("Mail ANA@Example.com and Bob@example.org: lunch is at one"),
+        ],
+      };
+      const first = await inTurn(turn, () =>
+        callNew(backend, email({ to: ["ana@example.com", "bob@example.org"] })),
+      );
+      expect(first.isError).toBe(false);
+      for (const to of [
+        ["BOB@example.org", "Ana@Example.com"],
+        ["ana@example.com", "ana@example.com", "bob@example.org"],
+      ]) {
+        const outcome = await inTurn(again(turn), () =>
+          callNew(backend, email({ to })),
+        ).catch((error: unknown) => error);
+        expect(outcome).toBeInstanceOf(PluginRefusedError);
+        expect((outcome as Error).message).toBe(SENT_AGAIN_EN);
+      }
+      expect(backend.sent()).toHaveLength(1);
+      expect(await pending()).toEqual([]);
+    });
+
+    test("a different email in the same request is still sent, with no card: another subject, another text, other recipients the person typed", async () => {
+      backend.reset();
+      await clearPending();
+      const turn: Turn = {
+        runId: randomUUID(),
+        messages: [
+          typed("Write to ana@example.com and bob@example.org: good morning"),
+        ],
+      };
+      const sends = [
+        email({ subject: "First" }),
+        email({ subject: "Second" }),
+        email({ subject: "First", body: `${BODY} PS: bring the mugs.` }),
+        email({ subject: "First", to: ["bob@example.org"] }),
+        email({ subject: "First", to: ["ana@example.com", "bob@example.org"] }),
+      ];
+      for (const args of sends) {
+        const result = await inTurn(again(turn), () => callNew(backend, args));
+        expect(result.isError).toBe(false);
+      }
+      expect(backend.sent()).toEqual(
+        sends.map((args) => ({
+          to: args.to,
+          subject: args.subject,
+          body: args.body,
+        })),
+      );
+      expect(await pending()).toEqual([]);
+    });
+
+    test("the same email in a new request is sent: a new run is a new request", async () => {
+      backend.reset();
+      await clearPending();
+      const args = email({ subject: "Every Monday" });
+      const messages = [typed("Write to ana@example.com saying good morning")];
+      for (const _request of [1, 2]) {
+        const result = await inTurn({ runId: randomUUID(), messages }, () =>
+          callNew(backend, args),
+        );
+        expect(result.isError).toBe(false);
+      }
+      expect(backend.sent()).toHaveLength(2);
+      expect(await pending()).toEqual([]);
+    });
+
+    test("a send that never reached the vendor can be tried again in the same request", async () => {
+      backend.reset();
+      await clearPending();
+      const turn = asked();
+      const args = email({ subject: "After reconnecting" });
+      // The person's connection is gone for a moment: the call is refused before the vendor is dialled.
+      const [held] = await database
+        .select()
+        .from(mcpUserCredentials)
+        .where(
+          and(
+            eq(mcpUserCredentials.serverId, backend.key),
+            eq(mcpUserCredentials.userId, owner),
+          ),
+        );
+      if (!held) throw new Error("the person had no connection to take away");
+      await database
+        .delete(mcpUserCredentials)
+        .where(
+          and(
+            eq(mcpUserCredentials.serverId, backend.key),
+            eq(mcpUserCredentials.userId, owner),
+          ),
+        );
+      let refused: unknown;
+      try {
+        refused = await inTurn(turn, () => callNew(backend, args)).catch(
+          (error: unknown) => error,
+        );
+      } finally {
+        await database.insert(mcpUserCredentials).values(held);
+      }
+      expect(refused).toBeInstanceOf(PluginRefusedError);
+      expect((refused as Error).message).toContain("You have not connected");
+      expect(backend.sent()).toEqual([]);
+
+      // Nothing went out, so the same email, asked again in the same request, is not a repeat.
+      const retried = await inTurn(again(turn), () => callNew(backend, args));
+      expect(retried.isError).toBe(false);
+      expect(backend.sent()).toEqual([
+        { to: ["ana@example.com"], subject: "After reconnecting", body: BODY },
+      ]);
+      expect(await pending()).toEqual([]);
+
+      // And now it did go: a third time is a repeat.
+      const third = await inTurn(again(turn), () =>
+        callNew(backend, args),
+      ).catch((error: unknown) => error);
+      expect((third as Error).message).toBe(SENT_AGAIN_EN);
+      expect(backend.sent()).toHaveLength(1);
+    });
+
+    test("repeat: two equal calls at once send one email, and the other is told", async () => {
+      backend.reset();
+      await clearPending();
+      const turn = asked();
+      const args = email({ subject: "At once" });
+      const outcomes = await Promise.all(
+        [1, 2].map(() =>
+          inTurn(again(turn), () => callNew(backend, args)).catch(
+            (error: unknown) => error,
+          ),
+        ),
+      );
+      const refused = outcomes.filter(
+        (outcome) => outcome instanceof PluginRefusedError,
+      );
+      expect(refused).toHaveLength(1);
+      // Whether the first had already answered when the second came in decides which of the two it is.
+      expect([SENT_AGAIN_EN, UNCONFIRMED_EN]).toContain(
+        (refused[0] as Error).message,
+      );
+      expect(backend.sent()).toHaveLength(1);
+      expect(await pending()).toEqual([]);
+    });
+
+    test("a single send is as it always was: sent once, no card, and no refusal is written", async () => {
+      backend.reset();
+      await clearPending();
+      const before = (await repeatRefusals(backend)).length;
+      const result = await inTurn(asked(), () =>
+        callNew(backend, email({ subject: "Only one" })),
+      );
+      expect(result.isError).toBe(false);
+      expect(JSON.parse(result.text)).toMatchObject({ sent: true });
+      expect(backend.sent()).toEqual([
+        { to: ["ana@example.com"], subject: "Only one", body: BODY },
+      ]);
+      expect(await pending()).toEqual([]);
+      expect(await repeatRefusals(backend)).toHaveLength(before);
+    });
+
+    test("the person's door: the repeat comes back as the tool's own answer, marked as a refusal, with the sentence", async () => {
+      backend.reset();
+      await clearPending();
+      const tool = (
+        await grantedTools({ store: backend.store, botId, actorId: owner })
+      ).find((granted) => granted.ref === `${backend.key}/gmail_send_message`);
+      if (!tool) throw new Error("the send tool was not granted");
+      const turn = asked();
+      const args = email({ subject: "Through the door" });
+      const first = await inTurn(turn, () => tool.execute(args));
+      expect(first.startsWith(REFUSAL_MARKER)).toBe(false);
+      const repeated = await inTurn(again(turn), () => tool.execute(args));
+      expect(repeated).toBe(`${REFUSAL_MARKER} ${SENT_AGAIN_EN}`);
+      expect(backend.sent()).toHaveLength(1);
+      expect(await pending()).toEqual([]);
+    });
+  });
+}

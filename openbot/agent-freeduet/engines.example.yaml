@@ -23,7 +23,7 @@ engines:
     command: codex
     billing: subscription          # your own ChatGPT plan
     tier: A
-    enabled: false                 # on once FreeDuet's "Sign in with ChatGPT" client ID is approved
+    enabled: false                 # planned, not built: on once its checks pass (PROVIDERS.md)
     experimental_local_login: false
 
   gemini-cli:
@@ -109,3 +109,12 @@ assistants:
   max_calls_per_turn: 10
   max_input_tokens: 32000
   tasks: [summarise, extract, classify, translate, reformat, proofread, draft-variants, tag]
+
+# How a member's chain behaves when an engine cannot take a turn. Per member id (agents.yaml) or `default`.
+# mode: automatic (the default: move to the next engine and say so) or ask-first (stop and ask the person).
+# pin:  an engine id; that member never falls back to another engine and stops with a plain message instead.
+# To switch an engine off for everyone, set `enabled: false` on it above.
+# switching:
+#   default: {mode: automatic}
+#   concierge: {mode: ask-first}
+#   freeduet: {pin: claude-code}
