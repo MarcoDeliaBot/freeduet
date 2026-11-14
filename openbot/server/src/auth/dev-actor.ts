@@ -2,6 +2,7 @@ import type { MiddlewareHandler } from "hono";
 import type { Database } from "../db/client";
 import { users } from "../db/schema";
 import type { AppVariables, AuthenticatedActor } from "./guards";
+import { isLoopbackRequest } from "./peer";
 
 /**
  * A signed-in person, without signing in.
@@ -84,11 +85,27 @@ export function singleUserEnabled(
   );
 }
 
-/** A guard that admits everybody as {@link DEV_ACTOR}. Only ever mounted when singleUserEnabled(). */
-export function createDevRequireUser(): MiddlewareHandler<{
+/**
+ * A guard that admits as {@link DEV_ACTOR}. Only ever mounted when singleUserEnabled().
+ *
+ * `loopbackOnly` is `personIsLoopbackOnly(config)` (auth/peer.ts): where the server listens on this
+ * machine alone, only a request whose TCP peer is loopback is the person, and any other peer (a
+ * container on the Docker bridge) answers 401. Where somebody opened the server with `OPENBOT_HOST`,
+ * everybody who reaches it is admitted, as that setting has always documented.
+ */
+export function createDevRequireUser(loopbackOnly: boolean): MiddlewareHandler<{
   Variables: AppVariables;
 }> {
   return async (context, next) => {
+    if (loopbackOnly && !isLoopbackRequest(context.env, context.req.raw)) {
+      return context.json(
+        {
+          error:
+            "Authentication required. With no sign-in, only this machine's own loopback address is the person.",
+        },
+        401,
+      );
+    }
     context.set("actor", DEV_ACTOR);
     await next();
   };

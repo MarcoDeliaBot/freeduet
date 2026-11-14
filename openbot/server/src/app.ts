@@ -35,6 +35,7 @@ import {
   recordAuditEvent,
 } from "./audit";
 import { createDevRequireUser } from "./auth/dev-actor";
+import { personIsLoopbackOnly } from "./auth/peer";
 import {
   type AppVariables,
   type AuthService,
@@ -673,7 +674,7 @@ export function createApp(
   // One administrator, when nothing is configured to sign anybody in. Checked first, and only ever
   // true when there is no provider, so a configured deployment cannot fall back to it.
   const requireUser = config.singleUser
-    ? createDevRequireUser()
+    ? createDevRequireUser(personIsLoopbackOnly(config))
     : auth && roleRepository
       ? createRequireUser(auth, roleRepository)
       : authenticationUnavailable;
@@ -1409,6 +1410,10 @@ export function createApp(
   // The CopilotKit runtime, behind the same session guard as every other API route. Mounted last so
   // its own routing under /api/copilotkit cannot shadow an OpenBot route declared above.
   if (copilotHandler) {
+    // The runtime resolves its own caller from the request and sits behind no `requireUser`, so with
+    // no sign-in the peer rule (auth/peer.ts) has to be asked in front of it. The wildcard covers
+    // the bare base path too. Only where that rule applies: a deployment with sign-in is unchanged.
+    if (personIsLoopbackOnly(config)) app.use("/api/copilotkit/*", requireUser);
     // Mounted at the ROOT with the handler carrying its own basePath. Mounting it at
     // "/api/copilotkit" as well double-prefixes it: Hono strips the prefix before the handler sees
     // the path, so every route lands at /api/copilotkit/api/copilotkit/* and /info 404s. The browser

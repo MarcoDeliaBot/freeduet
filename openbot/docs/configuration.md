@@ -614,6 +614,14 @@ machine at `host.docker.internal`; Docker Desktop carries that to loopback itsel
 provider the server listens on every interface, as it always has, because every route asks who is
 calling.
 
+**With no sign-in and nothing opened beyond this machine, only loopback is the administrator.** A
+request whose connection comes from 127.0.0.0/8 or ::1 is the person; one that arrives from any
+other address, such as a container on the Docker bridge, is not, and a route that asks who is
+calling answers 401. The address is the one the connection came from, and no header is read for
+it. What a container may still do is what it can prove: a Bot's callback with its tool token, and
+the worker with its secret. `OPENBOT_HOST` is the exception below, and Docker Desktop, which
+delivers a container's calls from loopback, is not changed by this.
+
 `OPENBOT_HOST` changes that for both. Set it to `0.0.0.0` to listen on every interface, or to a
 comma-separated list of addresses. With no sign-in, everybody who can reach those addresses is the
 administrator, and the server says so at every boot. The container image sets `0.0.0.0`, because a
