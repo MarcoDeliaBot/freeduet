@@ -53,7 +53,9 @@ _ENGINE_KEYS = frozenset(
         "credential_secret_ref",
     }
 )
-_TOP_KEYS = frozenset({"engines", "metered", "chains", "quality_floor", "assistants"})
+_TOP_KEYS = frozenset({"engines", "metered", "chains", "quality_floor", "assistants", "switching"})
+_SWITCHING_KEYS = frozenset({"mode", "pin"})
+MODES = ("automatic", "ask-first")
 _METERED_KEYS = frozenset({"enabled", "currency", "daily_cap", "monthly_cap"})
 _ASSISTANT_KEYS = frozenset(
     {"enabled", "chain", "max_calls_per_turn", "max_input_tokens", "tasks"}
@@ -104,6 +106,14 @@ class Assistants:
 
 
 @dataclass(frozen=True)
+class Switching:
+    """How one member's chain behaves when an engine cannot take a turn (ENGINES_PLAN section 5)."""
+
+    mode: str = "automatic"
+    pin: str | None = None  # an engine id: the member never falls back to another
+
+
+@dataclass(frozen=True)
 class EnginesConfig:
     engines: Mapping[str, Engine]
     metered: Metered
@@ -111,6 +121,7 @@ class EnginesConfig:
     quality_floor: Mapping[str, Mapping[str, str]]
     assistants: Assistants
     source: str = "<memory>"
+    switching: Mapping[str, Switching] = MappingProxyType({})
 
 
 # ── Loading ──────────────────────────────────────────────────────────────────────────────────────
@@ -155,6 +166,7 @@ def parse_engines(data: Any, source: str = "<memory>") -> EnginesConfig:
     chains = _parse_chains(data.get("chains"), engines, problems)
     floor = _parse_quality_floor(data.get("quality_floor"), problems)
     assistants = _parse_assistants(data.get("assistants"), engines, problems)
+    switching = _parse_switching(data.get("switching"), engines, problems)
 
     if problems:
         raise EnginesFileError(source, problems)
@@ -165,6 +177,7 @@ def parse_engines(data: Any, source: str = "<memory>") -> EnginesConfig:
         quality_floor=MappingProxyType(floor),
         assistants=assistants,
         source=source,
+        switching=MappingProxyType(switching),
     )
 
 
@@ -410,6 +423,39 @@ def _parse_assistants(
         max_input_tokens=_positive_int(raw, "max_input_tokens", 32000, problems),
         tasks=tuple(tasks),
     )
+
+
+def _parse_switching(raw: Any, engines: Mapping[str, Engine], problems: list[str]) -> dict[str, Switching]:
+    """``switching: {default|<member>: {mode: automatic|ask-first, pin: <engine id>}}``. Absent: every member is
+    automatic with nothing pinned, which is what a file without this section always meant."""
+    if raw is None:
+        return {}
+    if not isinstance(raw, Mapping):
+        problems.append("`switching` must be a mapping of member to {mode, pin}")
+        return {}
+    found: dict[str, Switching] = {}
+    for member, entry in raw.items():
+        where = f"switching `{member}`"
+        if not isinstance(member, str) or not isinstance(entry, Mapping):
+            problems.append(f"{where} must be a mapping")
+            continue
+        for key in sorted(set(entry) - _SWITCHING_KEYS, key=str):
+            problems.append(f"{where}: unknown key `{key}`")
+        mode = entry.get("mode", "automatic")
+        if mode not in MODES:
+            problems.append(f"{where}: `mode` must be one of {', '.join(MODES)}")
+            mode = "automatic"
+        pin = entry.get("pin")
+        if pin is not None and (not isinstance(pin, str) or pin not in engines):
+            problems.append(f"{where}: `pin` must name an engine defined under `engines`")
+            pin = None
+        found[member] = Switching(mode=mode, pin=pin)
+    return found
+
+
+def switching_for(member: str, config: EnginesConfig) -> Switching:
+    """The member's switching choices: its own entry, else `default`, else automatic with nothing pinned."""
+    return config.switching.get(member) or config.switching.get(DEFAULT_CHAIN) or Switching()
 
 
 # ── Ordering and exclusion ───────────────────────────────────────────────────────────────────────
