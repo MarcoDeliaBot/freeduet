@@ -176,6 +176,8 @@ Slices 5 and 6 can run in parallel after slice 3; slices 8 to 10 are independent
 
 **Built so far (14 November 2026):** the limit and failure classifier of slice 2, `openbot/agent-freeduet/freeduet/failure_classifier.py` with `tests/test_failure_classifier.py`, wired into no run path; the breaker, `probe()` and the persisted limited-until (E4) are not built, so slice 2 stays open.
 
+**Slice 1 built (14 November 2026):** `EngineAdapter` in `freeduet/engine_adapter.py`, Claude Code behind it in `freeduet/claude_engine.py`, `segment.py` drives any adapter; `tests/test_engine_goldens.py` pins 52 scenarios recorded before the change, byte-identical after.
+
 ### 9.2 Decided on 14 November 2026
 
 | Decision | Consequence here |
