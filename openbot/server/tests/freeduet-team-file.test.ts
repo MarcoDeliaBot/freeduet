@@ -40,7 +40,7 @@ const EMAIL_START = "Email. You do not send email.";
 /**
  * The two numbers of decision 2 (docs/design/team-file.md), written out here so that changing a
  * constant in the reader fails a test, not just a comment. 8,000 is an imported member's instructions;
- * 1,000 is what the create form, the create route and the edit route still take for a Bot's text.
+ * 1,000 is what the create form and the create and edit routes take for a Bot made in the app.
  */
 const IMPORTED_INSTRUCTIONS_LIMIT = 8000;
 const CREATE_TEXT_LIMIT = 1000;
@@ -239,7 +239,7 @@ describe("a valid member file", () => {
     expect(member.instructionsCharacters).toBe(member.instructions.length);
   });
 
-  test("accepts instructions over the create limit, and says the create and edit screens still refuse them", () => {
+  test("accepts instructions over the create limit, and says the create screen still refuses them", () => {
     const file = fileRead(read(fileOf(memberDocument())));
     const [member] = file.members;
 
@@ -253,7 +253,7 @@ describe("a valid member file", () => {
         (notice) =>
           notice.includes("may have up to 8,000") &&
           notice.includes("1,000 for a Bot's text") &&
-          notice.includes("cannot be created or edited yet"),
+          notice.includes("cannot be created yet"),
       ),
     ).toBe(true);
   });

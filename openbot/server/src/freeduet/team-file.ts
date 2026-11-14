@@ -42,9 +42,10 @@ export const TEAM_FILE_LIMITS = {
   roleDescriptionCharacters: 1000,
   instructionsCharacters: 8000,
   /**
-   * What the create form, the create route and the edit route still take for a Bot's standing text:
-   * app/src/lib/agents/form.ts:19-23 and server/src/agents/routes.ts:70-74. This file does not change
-   * them. An imported member above this length is reported as not yet creatable (see `notices`).
+   * What the create form and the create and edit routes take for a Bot made in the app: the app's
+   * create form (app/src/lib/agents/form.ts) and the server's ROLE_DESCRIPTION_LIMIT
+   * (server/src/agents/role-description-limit.ts). This file does not change them. An imported member
+   * above this length is reported as not yet creatable (see `notices`).
    */
   createTextCharacters: 1000,
 } as const;
@@ -113,7 +114,7 @@ export type ReadMember = {
   instructions: string;
   /** `instructions.length`, in UTF-16 code units. At most `TEAM_FILE_LIMITS.instructionsCharacters`. */
   instructionsCharacters: number;
-  /** Whether the create form, the create route and the edit route, which take `createTextCharacters`, would take it too. */
+  /** Whether a Bot made in the app, which takes `createTextCharacters`, would take it too. */
   instructionsWithinCreateLimit: boolean;
   skills: ReadSkill[];
   testRequests: ReadTestRequest[];
@@ -792,11 +793,12 @@ function unknownKeyReason(key: string): string {
 
 function noticesFor(member: ReadMember): string[] {
   const notes: string[] = [];
-  // Not a refusal: an imported member may be up to 8,000. But the create and edit screens and the
-  // server still take 1,000 for a Bot's text, so until they change, this notice is the only warning.
+  // Not a refusal: an imported member may be up to 8,000, and the server takes that for an imported
+  // Bot. The create screen still takes 1,000 and nothing imports a file yet, so this notice is the
+  // only warning until the import is built.
   if (!member.instructionsWithinCreateLimit) {
     notes.push(
-      `${member.name}: its instructions, with the Email paragraph and the shared rules added, are ${member.instructionsCharacters.toLocaleString("en-US")} characters. An imported member may have up to ${TEAM_FILE_LIMITS.instructionsCharacters.toLocaleString("en-US")}, but FreeDuet's create and edit screens and its server still take ${TEAM_FILE_LIMITS.createTextCharacters.toLocaleString("en-US")} for a Bot's text, so this member cannot be created or edited yet.`,
+      `${member.name}: its instructions, with the Email paragraph and the shared rules added, are ${member.instructionsCharacters.toLocaleString("en-US")} characters. An imported member may have up to ${TEAM_FILE_LIMITS.instructionsCharacters.toLocaleString("en-US")}, and FreeDuet's server takes that for an imported Bot, but the create screen still takes ${TEAM_FILE_LIMITS.createTextCharacters.toLocaleString("en-US")} for a Bot's text and no import exists yet, so this member cannot be created yet.`,
     );
   }
   for (const removed of member.removedTools) {

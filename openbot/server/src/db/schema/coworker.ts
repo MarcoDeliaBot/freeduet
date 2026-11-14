@@ -40,6 +40,14 @@ export const agentProfiles = pgTable(
     avatarSeed: text("avatar_seed").notNull(),
     visibility: agentVisibility("visibility").notNull(),
     /*
+     * Whether this coworker's instructions came from a team file, through `createImportedMember`.
+     *
+     * Written by that one server-side path and by nothing else: no route reads it from a request, and
+     * no update writes it, so it is never cleared. It decides how long `roleDescription` may be
+     * (`role-description-limit.ts`).
+     */
+    importedMember: boolean("imported_member").notNull().default(false),
+    /*
      * The credential this Bot's agent presents when it calls a tool back.
      *
      * A hash, never the token. We issue it, the agent's owner holds it, and this side only ever needs

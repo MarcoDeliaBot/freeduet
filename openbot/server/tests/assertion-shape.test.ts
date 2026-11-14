@@ -583,7 +583,7 @@ const ALLOW: Allowed[] = [
   },
   {
     file: "app/tests/bot-setup.test.tsx",
-    line: 178,
+    line: 183,
     shape: "b",
     finding: "NEW (round 2 did not find this)",
     why: "expect(updates[0]?.endpoint).toBeUndefined();",

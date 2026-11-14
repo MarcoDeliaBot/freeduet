@@ -14,6 +14,12 @@ export type AgentProfile = {
   name: string;
   title: string;
   roleDescription: string;
+  /**
+   * The most characters `roleDescription` may hold, decided by the server: 8,000 for a coworker
+   * imported from a team file, 1,000 for every other. The edit form reads it, so it carries no copy
+   * of the rule.
+   */
+  roleDescriptionLimit: number;
   avatarSeed: string;
   visibility: AgentVisibility;
   /** Where this coworker runs. Null for the Bot in the box. */

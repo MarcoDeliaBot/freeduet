@@ -278,3 +278,43 @@ Layers that do not refuse, so the text survives them: the database column `agent
 | B | Whether the checker refuses 1,001 to 8,000 until A is done | 1. Accept, with the notice (built). 2. Refuse, with the same sentence | 1. The decision sets 8,000 as the limit, and the notice is shown in the preview before anyone presses Create. S4 must not create a member while the notice applies. |
 | C | What 8,000 counts | 1. The whole stored text: the author's text, the Email paragraph and the shared rules (built). 2. The author's text alone | 1. The cap has always limited the stored text (`form.ts:23`, `routes.ts:72`). Under option 1 the author's own text may have 4,482 characters; under option 2 the stored text may reach 11,518. Confirm which the maintainer meant. |
 | D | Which field holds an imported member's instructions | 1. `roleDescription`, as the app stores it, which the standing role message reads for a managed or remote Bot (`copilot.ts:185`). 2. The file's one-sentence `role_description` there, with the instructions only in `systemPrompt` | 1. Option 2 would leave a managed or remote member without its instructions at run time, unless the runtime changes too. The cost of option 1 is the whole text on the routing roster and the voice agent. Decide in S4. |
+
+### Imported member layers (14 November 2026)
+
+What this slice builds, on top of the reader above: the stored fact that lets an imported member take 8,000 characters, and the create, edit and dialog layers that read it. The importer that calls the fact (S3) is not built, so no member can be imported yet.
+
+**Built**
+- Decision A, option 1: `agent_profiles.imported_member` (boolean, not null, default false; migration `0069_imported_member`). Only the internal `createImportedMember(store, actor, input)` (`openbot/server/src/agents/imported-member.ts`) writes it, through `store.create(..., importedMember: true)`. No public route, and no request body (POST or PATCH) can set or clear it.
+- `createImportedMember` checks the text with `parseAgentInput` at 8,000, forces visibility private, and stores the text as both `roleDescription` and, for the built-in prompt, `systemPrompt`.
+- Limits (`openbot/server/src/agents/role-description-limit.ts`): 1,000 for every Bot, 8,000 for an imported one, counted in UTF-16 code units (decision E, option 1).
+- `POST /api/agents` keeps 1,000 for a hand-made Bot, so a body that claims the fact does not lift it.
+- `PATCH /api/agents/:agentId` reads the stored Bot before it parses the body and picks the limit from that Bot: 8,000 if it is imported. A copy of an imported Bot that is not imported keeps its text while unchanged, and a changed text is held to 1,000. A body's `importedMember` is ignored.
+- `GET` reports `roleDescriptionLimit` for each Bot (8,000 or 1,000). The app's "What it does" edit dialog reads that limit: it shows "n of limit characters" and refuses over it. The create sheet stays at 1,000, and Leo's save-bot card is unchanged.
+- Decision C, option 1: 8,000 counts the whole stored text.
+- Decision D, as the app stores it: the instructions are `roleDescription` (and `systemPrompt` for built-in). Option 2 is not built.
+
+**Tests**
+- `server/tests/imported-member.integration.test.ts` (13 tests, real database, real routes): the import path, the 8,000 and 8,001 edges (ASCII, four-thousand emoji against 4,001, and 8,000 accented letters), the PATCH edges, the unchanged-copy rule, the body that claims the fact, and the reader constants pinned to `TEAM_FILE_LIMITS`.
+- `server/tests/agent-instructions-limit.integration.test.ts`: a guard. A hand-made Bot takes 1,000 and refuses 1,001 on create and edit, and a body that claims the fact does not lift it. It uses only existing modules and is meant to pass on main.
+- `server/tests/schema.test.ts`: the new column.
+- `app/tests/bot-setup.test.tsx`: 8,000 taken, 8,001 refused, a hand-made Bot still refused at 1,001 (a guard), and the counter.
+- `server/tests/freeduet-team-file.test.ts`: the notice's wording follows the new layers.
+
+**Verified** (14 November 2026, on this worktree, Postgres 16 at a non-default port, migrated with `bun scripts/migrate.ts`)
+- `biome format` and `biome lint --error-on-warnings` on the 17 changed TypeScript files: clean.
+- Server: `imported-member`, `agent-instructions-limit`, `schema`, `freeduet-team-file` and `assertion-shape`, 96 tests. 94 pass at the default 5 s limit; two `assertion-shape` tests time out under load. With `--timeout 120000`, `assertion-shape` passes 10 of 10. The run of the four other files is in the same count.
+- App: `bot-setup` and `composing-enter` from `openbot/` (`bun test app/tests/bot-setup.test.tsx app/tests/composing-enter.test.tsx`): 10 pass, 0 fail. Run from `openbot/app` alone, `composing-enter` fails on `import.meta.glob`, a runner difference and not a result.
+- `bun run typecheck:tests` was not finished: killed by memory pressure (SIGKILL) three times, while other executors' `tsc` runs held the machine. Not a result.
+
+**Not verified**
+- Fail before on a clean origin/main was not run. The new `imported-member` file cannot load on main (the module does not exist), and the new `bot-setup` cases for 8,000 and the counter would fail on main's dialog. The guards are meant to pass on main.
+- No real import (S3 is not built), no browser run of the dialog, no live member run.
+- The cost of 8,000 characters on each turn is not measured. The routing roster (`openbot/server/src/routing/classify.ts`, a line per candidate per routed turn), the voice agent (`openbot/server/src/voice/routes.ts`) and the standing role message (`openbot/server/src/copilot.ts`) each receive the whole text. An imported Bot of 8,000 code units adds up to 8,000 characters to each of those, per use. Listed as a cost, not changed.
+- A duplicate of an imported Bot does not inherit the fact (only the importer writes it). Its text may be longer than 1,000 and can be saved only while unchanged. Option: copy the flag, or refuse to copy above 1,000. Maintainer's call.
+- `createImportedMember` forces visibility private; the import path must decide whether that is the final rule.
+
+**Decisions taken for this slice** (section 6)
+- A, how an imported member passes the create and edit layers: option 1, the stored fact.
+- C, what 8,000 counts: option 1, the whole stored text.
+- E, unit: option 1, UTF-16 code units.
+- D: as the app stores it (`roleDescription`).

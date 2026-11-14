@@ -69,12 +69,16 @@ beforeEach(() => {
   updates = [];
 });
 
-function serve(endpoint: string, ownerUserId = actor.id) {
+function serve(
+  endpoint: string,
+  ownerUserId = actor.id,
+  options: { importedMember?: boolean; roleDescription?: string } = {},
+) {
   let profile: AgentProfile = {
     id: "expenses",
     name: "Expenses",
     title: "Finance Operations",
-    roleDescription: "Review receipts.",
+    roleDescription: options.roleDescription ?? "Review receipts.",
     avatarSeed: "expenses",
     ownerUserId,
     visibility: ownerUserId === actor.id ? "private" : "public",
@@ -82,6 +86,7 @@ function serve(endpoint: string, ownerUserId = actor.id) {
     hidden: false,
     pinned: false,
     deletedAt: null,
+    importedMember: options.importedMember === true,
     endpoint,
     hasAuth: false,
     hasCallbackToken: false,
@@ -197,4 +202,69 @@ test("someone who cannot manage the Bot reads its setup but cannot open an edito
 
   expect(await view.findByText("Expenses")).toBeTruthy();
   expect(view.queryByRole("button", { name: /^Name/ })).toBeNull();
+});
+
+/**
+ * Opens What it does, types one character at its end, and presses Save. The text the Bot starts
+ * with is set by the fixture: typing a long text key by key takes longer than a test is allowed.
+ */
+async function addToInstructions(view: ReturnType<typeof draw>) {
+  const user = userEvent.setup({ document: view.baseElement.ownerDocument });
+  await user.click(await view.findByRole("button", { name: /^What it does/ }));
+  const field = await view.findByRole("textbox", { name: "What it does" });
+  await user.type(field, "a");
+  await user.click(view.getByRole("button", { name: "Save" }));
+}
+
+test("an imported coworker's What it does takes 8,000 characters", async () => {
+  serve(MANAGED, actor.id, {
+    importedMember: true,
+    roleDescription: "a".repeat(7999),
+  });
+  const view = draw();
+
+  await addToInstructions(view);
+
+  await waitFor(() => expect(updates).toHaveLength(1));
+  expect(updates[0]).toMatchObject({ roleDescription: "a".repeat(8000) });
+});
+
+test("an imported coworker's What it does refuses 8,001 characters before anything is sent", async () => {
+  serve(MANAGED, actor.id, {
+    importedMember: true,
+    roleDescription: "a".repeat(8000),
+  });
+  const view = draw();
+
+  await addToInstructions(view);
+
+  expect((await view.findByRole("alert")).textContent).toBe(
+    "What it does must be 8000 characters or fewer.",
+  );
+  expect(updates).toEqual([]);
+});
+
+test("a coworker made in the app still refuses 1,001 characters in What it does", async () => {
+  serve(MANAGED, actor.id, { roleDescription: "a".repeat(1000) });
+  const view = draw();
+
+  await addToInstructions(view);
+
+  expect((await view.findByRole("alert")).textContent).toBe(
+    "What it does must be 1000 characters or fewer.",
+  );
+  expect(updates).toEqual([]);
+});
+
+test("What it does counts its characters against the limit the coworker reports", async () => {
+  serve(MANAGED, actor.id, {
+    importedMember: true,
+    roleDescription: "a".repeat(7999),
+  });
+  const view = draw();
+  const user = userEvent.setup({ document: view.baseElement.ownerDocument });
+
+  await user.click(await view.findByRole("button", { name: /^What it does/ }));
+
+  expect(await view.findByText("7,999 of 8,000 characters")).toBeTruthy();
 });
