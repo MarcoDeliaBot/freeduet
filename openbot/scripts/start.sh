@@ -8,6 +8,9 @@
 . "$(dirname "$0")/require-bash.sh"
 # `holder`, `running` and `stop_matching`, which also work in Git Bash on Windows. See that file.
 . "$(dirname "$0")/processes.sh"
+# FreeDuet (docs/M1_PLAN.md D39): the values this repository used to publish as defaults, so that a
+# `.env` still holding one is told from a secret somebody chose. Only questions, no side effects.
+. "$(dirname "$0")/secrets.sh"
 
 set -euo pipefail
 
@@ -77,6 +80,63 @@ setting() {
   printf '%s' "${value:-$fallback}"
 }
 
+# The settings file's own line for NAME, read as `setting` reads it from the file (the last one wins, one
+# pair of quotes is dropped) but without the environment, which `own_secret` has to tell apart.
+file_setting() {
+  grep -E "^$1=" "$ENV_FILE" | tail -1 | cut -d= -f2- | sed -e 's/^"\(.*\)"$/\1/' -e "s/^'\(.*\)'$/\1/" || true
+}
+
+# FreeDuet: writes NAME=VALUE into the settings file, replacing the line that was there. Mode 600, because
+# the file holds secrets. Defined here, before the first secret is made below.
+freeduet_env_line() {
+  local tmp
+  tmp="$(mktemp)"
+  grep -vE "^$1=" "$ENV_FILE" > "$tmp" || true
+  printf '%s=%s\n' "$1" "$2" >> "$tmp"
+  chmod 600 "$tmp"
+  mv "$tmp" "$ENV_FILE"
+}
+
+# FreeDuet (docs/M1_PLAN.md D39): a secret this installation makes for itself, so that no two installations
+# share one. Settings that used to fall back to a value published in this repository (the computer, the
+# supervisor and the worker's secrets, the database's password, the key that seals saved logins) get a
+# random one instead, once, the way FREEDUET_INSTALL_SECRET does below.
+#
+#   own_secret NAME BYTES hex|base64
+#
+# - A value in the ENVIRONMENT is the person's own and is used as it is, never written anywhere.
+# - Otherwise the settings file's value is kept, unless it is empty or one of the examples this repository
+#   used to publish (secrets.sh). Those are no choice anybody made: an older start.sh wrote them, or an
+#   older .env.example said them, and every other installation holds the same one.
+# - Otherwise a value is made, written to the settings file with freeduet_env_line, and never printed.
+#
+# Sets NAME, and OWN_SECRET_MADE to whether a value was made. Not for the key that seals saved logins, or
+# the database's password: replacing those can lose data, so each has a step of its own further down.
+OWN_SECRET_MADE=false
+PUBLIC_SECRETS_REPLACED=false
+own_secret() {
+  local name="$1" bytes="$2" encoding="$3" value="${!1:-}" stored
+  OWN_SECRET_MADE=false
+  if [ -z "$value" ]; then
+    stored="$(file_setting "$name")"
+    if [ -n "$stored" ] && ! secret_is_public_default "$name" "$stored"; then
+      value="$stored"
+    else
+      value="$(openssl rand "-$encoding" "$bytes")"
+      freeduet_env_line "$name" "$value"
+      OWN_SECRET_MADE=true
+      SECRETS_ROTATED=true
+      if [ -n "$stored" ]; then
+        PUBLIC_SECRETS_REPLACED=true
+        printf '\033[2m%s\033[0m\n' "Replaced $name, which was the example value published in this repository, with one generated for this installation, and wrote it to $ENV_NAME."
+      else
+        printf '\033[2m%s\033[0m\n' "Generated $name and wrote it to $ENV_NAME."
+      fi
+    fi
+  fi
+  printf -v "$name" '%s' "$value"
+}
+
 APP_PORT="$(setting APP_PORT 3010)"
 SERVER_PORT="$(setting SERVER_PORT 3001)"
 COMPUTER_PORT="$(setting COMPUTER_PORT 4100)"
@@ -105,9 +165,18 @@ fi
 # the two are easy to confuse because one is observable and the other is not. Everything below that
 # skips work because a service "is already up" has to consult this first.
 SECRETS_ROTATED=false
+# Whether this run made a value the worker holds. The worker is started once and left running, so one
+# started before this run keeps the old value for as long as it lives: see where it is launched.
+WORKER_SETTINGS_CHANGED=false
 
-SUPERVISOR_TOKEN="$(setting SUPERVISOR_TOKEN openbot-dev-supervisor-token)"
-COMPUTER_TOKEN="$(setting COMPUTER_TOKEN openbot-dev-computer-token)"
+# FreeDuet (docs/M1_PLAN.md D39): these three used to fall back to a fixed string published in this
+# repository, the same one on every installation. Each is now made for this installation, once, and kept
+# in the settings file (own_secret, above). A `.env` that still holds the old string gets a new value on
+# this start: the containers that hold the token are recreated by Compose (the Bots' computers, which
+# Compose does not own, are replaced by the supervisor the next time each is used, with their files and
+# logins kept), and the server and the worker are restarted below.
+own_secret SUPERVISOR_TOKEN 32 hex
+own_secret COMPUTER_TOKEN 32 hex
 # Keep the file and Compose in agreement even when someone later starts Bun directly.
 # An empty example value used to leave the API unauthenticated after that restart.
 STORED_COMPUTER_TOKEN="$(grep -E '^COMPUTER_TOKEN=' "$ENV_FILE" | tail -1 | cut -d= -f2- | sed -e 's/^"\(.*\)"$/\1/' -e "s/^'\(.*\)'$/\1/" || true)"
@@ -124,22 +193,21 @@ unset STORED_COMPUTER_TOKEN
 COMPUTER_TOKEN_FINGERPRINT="$(printf '%s' "$COMPUTER_TOKEN" | openssl dgst -sha256 -r | cut -d ' ' -f1)"
 COMPUTER_STATE_FILE="$LOGS/server-computer.state"
 
-# A fixed default is fine here, unlike `AGENT_TOOL_TOKEN` below, but not because of where the server
-# listens — it binds no hostname, so this port is reachable from the network like any other. It is
-# fine because this is a dev-only default on a machine's own dev stack, and the endpoint it guards
-# accepts nothing but an unguessable `routine_run_<uuid>` id: the server re-reads the routine, the
-# owner and the channel from its own tables rather than trusting anything else the caller says, so
-# the fixed default gates nothing sensitive here. That is also why it is generated fresh and
-# persisted for AGENT_TOOL_TOKEN (see the SECRETS_ROTATED block) but not for this one — production
-# must set a real WORKER_SHARED_SECRET.
-WORKER_SHARED_SECRET="$(setting WORKER_SHARED_SECRET openbot-dev-worker-secret)"
+# What the worker presents to the server's /internal/routines/run to hand it a due routine. It used to be
+# a fixed string, on the argument that the endpoint accepts nothing but an unguessable `routine_run_<uuid>`
+# id and so guards nothing sensitive. That holds, and it is still no reason to publish a credential: a
+# secret that is the same on every installation is not a secret, and D39 makes none of them so. Made for
+# this installation like the two above. The worker keeps its copy until it is restarted, so a run that
+# made a new one restarts the worker too (see where it is launched).
+own_secret WORKER_SHARED_SECRET 32 hex
+[ "$OWN_SECRET_MADE" = false ] || WORKER_SETTINGS_CHANGED=true
 
 # The secret the server sends to a managed Bot, generated and written back on first run.
 #
-# Not a fixed default like the two above. Those reach services bound to loopback; a Bot publishes a
-# port, so a well-known token from a public repository would be no boundary at all. Generated once
-# per machine and persisted, because the server and the Bot are separate processes that have to
-# agree on it across restarts.
+# Made for this installation like the three above (D39), and it was the first of them to be: a Bot
+# publishes a port, so a well-known token from a public repository would be no boundary at all.
+# Generated once per machine and persisted, because the server and the Bot are separate processes
+# that have to agree on it across restarts.
 #
 # Written into .env rather than exported for this run alone, so `docker compose up` by hand later
 # sees the same value the script used.
@@ -203,14 +271,6 @@ export AGENT_TOOL_TOKEN
 
 # FreeDuet: the subscription router, agent-freeduet, unless FREEDUET_ROUTER=off (docs/M1_PLAN.md).
 FREEDUET_ROUTER="$(setting FREEDUET_ROUTER on)"
-freeduet_env_line() {
-  local tmp
-  tmp="$(mktemp)"
-  grep -vE "^$1=" "$ENV_FILE" > "$tmp" || true
-  printf '%s=%s\n' "$1" "$2" >> "$tmp"
-  chmod 600 "$tmp"
-  mv "$tmp" "$ENV_FILE"
-}
 if [ "$FREEDUET_ROUTER" != "off" ]; then
   # The key the server presents on agent-freeduet's /v1/messages, generated once like the two above.
   FREEDUET_LOCAL_KEY="$(setting FREEDUET_LOCAL_KEY "")"
@@ -510,6 +570,28 @@ if [ "$LOCAL_DICTATION" = "true" ]; then
   SERVICES+=(whisper)
 fi
 
+# FreeDuet (docs/M1_PLAN.md D39): the database's password. Not made with own_secret like the others,
+# because a database that already exists keeps the password it was created with: writing a new one to the
+# settings file alone would lock the server out of its own data. So it is decided here, done after Compose
+# has started the database, and written to the settings file last, once the database holds it.
+#
+# What is replaced is the password the example always named, `openbot`, on Compose's own database on this
+# machine, or a DATABASE_URL with no line at all. A DATABASE_URL anybody set (another password, user, host
+# or database, or one in the environment) is theirs, and is left exactly as it is.
+DATABASE_PASSWORD_NEW=""
+DATABASE_URL_NEW=""
+DATABASE_URL_STORED=""
+if [ -z "${DATABASE_URL:-}" ]; then
+  DATABASE_URL_STORED="$(file_setting DATABASE_URL)"
+  if [ -z "$DATABASE_URL_STORED" ]; then
+    DATABASE_PASSWORD_NEW="$(new_database_password)"
+    DATABASE_URL_NEW="postgres://openbot:$DATABASE_PASSWORD_NEW@localhost:$(setting POSTGRES_PORT 5432)/openbot"
+  elif database_url_is_public_default "$DATABASE_URL_STORED"; then
+    DATABASE_PASSWORD_NEW="$(new_database_password)"
+    DATABASE_URL_NEW="$(database_url_with_password "$DATABASE_URL_STORED" "$DATABASE_PASSWORD_NEW")"
+  fi
+fi
+
 export SUPERVISOR_TOKEN COMPUTER_TOKEN WORKER_SHARED_SECRET
 export COMPUTER_PORT BOT_PORT LANGGRAPH_PORT SUPERVISOR_PORT
 # Quiet progress, because stdout is /dev/null while stderr is still the terminal. Seeing that
@@ -518,6 +600,49 @@ export COMPUTER_PORT BOT_PORT LANGGRAPH_PORT SUPERVISOR_PORT
 # variable rather than `--progress`, because a Compose too old to know the flag refuses it, and one
 # too old to know the variable ignores it.
 COMPOSE_PROGRESS=quiet compose up -d --build "${SERVICES[@]}" >/dev/null
+
+# FreeDuet (D39): the new database password, set on the running database and only then written down.
+# Through the container's own socket, which trusts the local user (the checks below rely on it too), so
+# the old password is not needed whatever it was; and the new one goes in on standard input, so it is on
+# no command line. `-d postgres`, because that database exists before a first start has finished making
+# ours. A database that is still starting is asked again for half a minute.
+set_database_password() {
+  local password="$1"
+  for _ in $(seq 1 30); do
+    if printf "ALTER ROLE openbot WITH PASSWORD '%s';\n" "$password" \
+       | compose exec -T postgres psql -U openbot -d postgres -v ON_ERROR_STOP=1 -q >/dev/null 2>&1; then
+      return 0
+    fi
+    sleep 1
+  done
+  return 1
+}
+if [ -n "$DATABASE_PASSWORD_NEW" ]; then
+  if set_database_password "$DATABASE_PASSWORD_NEW"; then
+    # Written last: from here the file and the database agree, and so does a start that dies right now.
+    freeduet_env_line POSTGRES_PASSWORD "$DATABASE_PASSWORD_NEW"
+    freeduet_env_line DATABASE_URL "$DATABASE_URL_NEW"
+    SECRETS_ROTATED=true
+    WORKER_SETTINGS_CHANGED=true
+    if [ -n "$DATABASE_URL_STORED" ]; then
+      PUBLIC_SECRETS_REPLACED=true
+      info "  database: its password was the example one this repository publishes. It is now one generated for this installation, written to $ENV_NAME. Your data is untouched."
+    else
+      info "  database: generated its password and wrote it to $ENV_NAME."
+    fi
+    # Compose's copy of the password (what a database made from nothing would be created with), so that
+    # the next run compares equal and leaves the database container alone.
+    COMPOSE_PROGRESS=quiet compose up -d postgres >/dev/null
+  elif [ -z "$DATABASE_URL_STORED" ]; then
+    red "  database: its password could not be set, and $ENV_NAME has no DATABASE_URL to fall back to."
+    red "  Run this again. If it keeps failing: $COMPOSE_HINT logs postgres"
+    exit 1
+  else
+    red "  database: its password is still the example one this repository publishes, because it could not be changed just now."
+    red "  Everything works as it did. Anything that can reach this computer's port $(setting POSTGRES_PORT 5432) can open the database with it."
+    red "  Run this again; if it keeps failing, $COMPOSE_HINT logs postgres says why."
+  fi
+fi
 if ! compose run --rm --build migrate >"$LOGS/migrate.log" 2>&1; then
   red "  Migrations did not apply. The database is not the schema this server expects."
   red "  Log: $LOGS/migrate.log"
@@ -546,6 +671,41 @@ for table in agent_profiles agent_preferences; do
   fi
 done
 green "  coworker tables migrated"
+
+# FreeDuet (docs/M1_PLAN.md D39): the key that seals what the database keeps secret: saved logins, the
+# connections to Gmail and the rest, a company sign-in provider's secret. The example key every clone
+# used to start with is public, so a copy of the database would open all of it.
+#
+# Not made like the other secrets, because it cannot simply be replaced: whatever was sealed with the old
+# key is unreadable under a new one, and nothing here re-seals it. So a key that is missing is made, and
+# the public example is replaced only when the database is asked and holds nothing it could have sealed
+# (a first start, or one before anything was saved). Otherwise it is left, and said so, on every start.
+# A key somebody set is theirs, and a database that cannot be asked is taken to be in use.
+#
+# After the migration, because the tables it asks about are made by it, and before the server starts,
+# which reads the key once.
+vault_rows() {
+  compose exec -T postgres psql -U openbot -d openbot -tA -v ON_ERROR_STOP=1 -c "$(vault_rows_query)" 2>/dev/null | tr -d '[:space:]'
+}
+KEY_LEFT_PUBLIC=""
+if [ -z "${KEY_ENCRYPTION_KEY:-}" ] && secret_is_public_default KEY_ENCRYPTION_KEY "$(file_setting KEY_ENCRYPTION_KEY)"; then
+  VAULT_ROWS="$(vault_rows || true)"
+  case "$VAULT_ROWS" in
+    0) ;;
+    ''|*[!0-9]*) KEY_LEFT_PUBLIC="could not be checked" ;;
+    *) KEY_LEFT_PUBLIC="already holds saved logins or connections" ;;
+  esac
+fi
+if [ -z "$KEY_LEFT_PUBLIC" ]; then
+  own_secret KEY_ENCRYPTION_KEY 32 base64
+else
+  red "  KEY_ENCRYPTION_KEY is still the example key this repository publishes. Your database $KEY_LEFT_PUBLIC, and"
+  red "  a new key would make anything sealed with this one unreadable, so it was left as it is. Whoever gets a copy"
+  red "  of the database can read what it holds. docs/M1_PLAN.md D39 says what changing it takes."
+fi
+if [ "$PUBLIC_SECRETS_REPLACED" = "true" ]; then
+  info "  Secrets that were the same on every installation have been replaced. The server and the worker restart once to use them, and so do the Docker services and Bot computers that held them. Nothing you saved is lost."
+fi
 
 # Resolved at the top, where the default that .env deliberately does not carry is applied. Reading
 # .env again here would have demanded the line be present in a file the comment above that default
@@ -679,8 +839,26 @@ fi
 #
 # The worker has no HTTP endpoint, so only a matching process owned by this checkout is reused.
 # Its absolute entry path also distinguishes deployments on Windows, where CIM cannot report cwd.
+# FreeDuet (D39): a worker started before this run holds the secret and the database password it was
+# started with, and a run that made new ones has made them useless to it: the server refuses its secret
+# and the database its password, and every routine silently stops firing. So it is stopped here and
+# started again below, with this run's.
+if [ "$WORKER_SETTINGS_CHANGED" = "true" ] && running "$WORKER_ENTRY" "$ROOT"; then
+  info "  worker: its secret or the database's password changed, so it is restarted"
+  stop_matching "$WORKER_ENTRY" "$ROOT"
+  for _ in 1 2 3 4 5; do
+    running "$WORKER_ENTRY" "$ROOT" || break
+    sleep 1
+  done
+fi
 if ! running "$WORKER_ENTRY" "$ROOT"; then
-  WORKER_DATABASE_URL="$(setting DATABASE_URL postgres://openbot:openbot@localhost:5432/openbot)"
+  # No fallback address: the one this used to have named the public password. By here the settings file
+  # holds a DATABASE_URL, one way or another, because the server could not have started without one.
+  WORKER_DATABASE_URL="$(setting DATABASE_URL "")"
+  if [ -z "$WORKER_DATABASE_URL" ]; then
+    red "  worker: $ENV_NAME has no DATABASE_URL, so there is no database to give it."
+    exit 1
+  fi
   # Another stack's worker names its settings file, which also keeps Bun from loading `.env`.
   WORKER_ENV_ARG=()
   [ "$ENV_NAME" = .env ] || WORKER_ENV_ARG=("--env-file=$ENV_NAME")
