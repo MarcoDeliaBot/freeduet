@@ -25,6 +25,7 @@
   "jules": "Achei uma mesa livre na sexta.",
   "wren": "Seu post está pronto para ler.",
   "mark": "Um primeiro plano para o mês que vem.",
+  "video": "Uma primeira lista de cortes para revisar.",
   "gus": "Confira primeiro a chapa da fechadura.",
   "basil": "Três ideias de jantar para hoje à noite.",
   "vera": "Conferido: os totais batem.",
@@ -87,7 +88,7 @@
  "s5p": "O que foi feito, o que não foi feito e por quê, e qual é o próximo passo. Sem textão.",
  "flowAlt": "Você fala com a Iris, a Iris passa o trabalho aos especialistas, a Vera confere, a resposta volta para você",
  "you": "Você",
- "flowMore": "…e Gus, Basil, Mark e Leo",
+ "flowMore": "…e Gus, Basil, Mark, Cam e Leo",
  "sf_h": "Cinco botões que esperam o seu sim",
  "sf_p": "Você daria a carteira a um assistente novo no primeiro dia? Nós também não. Por padrão, estas cinco ações esperam o seu sim. Só você pode desligar isso, membro a membro.",
  "b1": "Enviar",
@@ -127,7 +128,7 @@
  "r2": "Prioridade máxima: um instalador de arquivo único para Windows, macOS e Ubuntu. Novos membros seguem, cada um testado.",
  "r3": "Escolha o motor de cada membro e uma delegação real entre os membros.",
  "r4": "Automações escritas no chat, mais apps conectados, versão para celular e acesso remoto.",
- "r5": "Voz, Cam, o membro de vídeo, compras seguras. Full access está construído, mas ainda sem teste em uso real.",
+ "r5": "Voz, compras seguras. Full access está construído, mas ainda sem teste em uso real. Cam, o membro de vídeo, está na equipe; os testes dele ainda não foram rodados em uso real, e ele ainda não consegue entregar um arquivo pelo chat.",
  "r_note": "Marcamos tudo o que ainda não está pronto. Sem contos de fadas. <a href=\"https://github.com/MarcoDeliaBot/freeduet/blob/main/docs/ROADMAP.md\">Roadmap completo no GitHub</a>.",
  "in_h": "Da instalação à sua primeira tarefa útil",
  "in_p": "Quatro passos, na ordem real. Todos os comandos também estão em uma única caixa mais abaixo, prontos para copiar.",
@@ -216,6 +217,11 @@
    "marketing",
    "Monta seu plano de marketing, seu plano de lançamento e a estratégia de canais, e revisa seu site, o SEO e os anúncios. Não publica nem gasta nada sem o seu sim.",
    "Faça um plano de marketing de três meses para a minha loja."
+  ],
+  "video": [
+   "vídeo",
+   "Corta, legenda e põe música e som em vídeos curtos com suas gravações ou um roteiro, nos formatos horizontal, vertical e quadrado. Nunca publica nem carrega um vídeo online.",
+   "Faça um vídeo vertical de 30 segundos com legendas a partir deste roteiro."
   ],
   "gus": [
    "consertos",

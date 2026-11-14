@@ -1,0 +1,574 @@
+{
+ "streams": [
+  {
+   "events": [
+    {
+     "type": "RUN_STARTED",
+     "threadId": "thread-1",
+     "runId": "run-1"
+    },
+    {
+     "type": "TEXT_MESSAGE_START",
+     "messageId": "<msg-1>",
+     "role": "assistant"
+    },
+    {
+     "type": "TEXT_MESSAGE_CONTENT",
+     "messageId": "<msg-1>",
+     "delta": "Let me wri"
+    },
+    {
+     "type": "TEXT_MESSAGE_CONTENT",
+     "messageId": "<msg-1>",
+     "delta": "te that up."
+    },
+    {
+     "type": "TEXT_MESSAGE_END",
+     "messageId": "<msg-1>"
+    },
+    {
+     "type": "TOOL_CALL_START",
+     "toolCallId": "<toolu-1>",
+     "toolCallName": "make_page",
+     "parentMessageId": "<msg-1>"
+    },
+    {
+     "type": "TOOL_CALL_ARGS",
+     "toolCallId": "<toolu-1>",
+     "delta": "{\"title\": \"Plan\"}"
+    },
+    {
+     "type": "TOOL_CALL_END",
+     "toolCallId": "<toolu-1>"
+    },
+    {
+     "type": "RUN_FINISHED",
+     "threadId": "thread-1",
+     "runId": "run-1"
+    }
+   ],
+   "keepalives": 0,
+   "sha256": "7f8a2136cfb31e0b2eb7479cf56353304dc43f7993180153d4b907b0cb6ad058"
+  },
+  {
+   "events": [
+    {
+     "type": "RUN_STARTED",
+     "threadId": "thread-1",
+     "runId": "run-1"
+    },
+    {
+     "type": "TEXT_MESSAGE_START",
+     "messageId": "<msg-2>",
+     "role": "assistant"
+    },
+    {
+     "type": "TEXT_MESSAGE_CONTENT",
+     "messageId": "<msg-2>",
+     "delta": "The page "
+    },
+    {
+     "type": "TEXT_MESSAGE_CONTENT",
+     "messageId": "<msg-2>",
+     "delta": "is ready."
+    },
+    {
+     "type": "TEXT_MESSAGE_END",
+     "messageId": "<msg-2>"
+    },
+    {
+     "type": "RUN_FINISHED",
+     "threadId": "thread-1",
+     "runId": "run-1"
+    }
+   ],
+   "keepalives": 0,
+   "sha256": "9a7fe5425a1fa0f479229ae47c78f0172cf5d42faac459ee2aa1aa146de9e6fa"
+  }
+ ],
+ "launches": [
+  {
+   "argv": [
+    "<tmp>/claude",
+    "-p",
+    "--output-format",
+    "stream-json",
+    "--verbose",
+    "--include-partial-messages",
+    "--no-session-persistence",
+    "--tools",
+    "",
+    "--strict-mcp-config",
+    "--disable-slash-commands",
+    "--allowedTools",
+    "mcp__freeduet",
+    "--permission-mode",
+    "dontAsk",
+    "--mcp-config",
+    "<segment>/mcp.json",
+    "--append-system-prompt",
+    {
+     "sha256": "a6c734eaf2a5827bcfe185045d61bbc8aec436f284b644f11bee6c7e8e49b45a",
+     "bytes": 971,
+     "head": "You are Iris, Chief of Staff of the test team.\n\nYou are Iris, Chief of Staff.\n\nHow this session work"
+    }
+   ],
+   "cwd": "<segment>/work",
+   "kwargs": {
+    "stdin": "PIPE",
+    "stdout": "PIPE",
+    "stderr": "PIPE",
+    "limit": 16777216,
+    "start_new_session": true
+   },
+   "env": {
+    "PATH": "/golden/bin:/usr/bin:/bin",
+    "HOME": "/golden/home",
+    "USER": "golden",
+    "LOGNAME": "golden",
+    "LANG": "C.UTF-8",
+    "LANGUAGE": "en",
+    "LC_ALL": "C.UTF-8",
+    "LC_CTYPE": "C.UTF-8",
+    "TZ": "UTC",
+    "TMPDIR": "/golden/tmp",
+    "CLAUDE_CONFIG_DIR": "/golden/cli-config-never-opened",
+    "HTTP_PROXY": "http://golden-proxy:3128",
+    "HTTPS_PROXY": "http://golden-proxy:3128",
+    "NO_PROXY": "127.0.0.1,localhost",
+    "http_proxy": "http://golden-proxy:3128",
+    "https_proxy": "http://golden-proxy:3128",
+    "no_proxy": "127.0.0.1,localhost",
+    "NODE_EXTRA_CA_CERTS": "/golden/ca.pem",
+    "SSL_CERT_FILE": "/golden/ca.pem",
+    "SSL_CERT_DIR": "/golden/certs",
+    "DISABLE_AUTOUPDATER": "1",
+    "CLAUDE_CODE_DISABLE_AUTO_MEMORY": "1"
+   },
+   "files": {
+    "mcp.json": {
+     "mode": "0o600",
+     "content": {
+      "mcpServers": {
+       "freeduet": {
+        "type": "stdio",
+        "command": "<python>",
+        "args": [
+         "-m",
+         "freeduet.bridge"
+        ],
+        "env": {
+         "FREEDUET_BRIDGE_PORT": "<port>",
+         "FREEDUET_BRIDGE_SECRET": "<secret of 43 characters>",
+         "PYTHONPATH": "<package root>"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  {
+   "argv": [
+    "<tmp>/claude",
+    "-p",
+    "--output-format",
+    "stream-json",
+    "--verbose",
+    "--include-partial-messages",
+    "--no-session-persistence",
+    "--tools",
+    "",
+    "--strict-mcp-config",
+    "--disable-slash-commands",
+    "--allowedTools",
+    "mcp__freeduet",
+    "--permission-mode",
+    "dontAsk",
+    "--mcp-config",
+    "<segment>/mcp.json",
+    "--append-system-prompt",
+    {
+     "sha256": "a6c734eaf2a5827bcfe185045d61bbc8aec436f284b644f11bee6c7e8e49b45a",
+     "bytes": 971,
+     "head": "You are Iris, Chief of Staff of the test team.\n\nYou are Iris, Chief of Staff.\n\nHow this session work"
+    }
+   ],
+   "cwd": "<segment>/work",
+   "kwargs": {
+    "stdin": "PIPE",
+    "stdout": "PIPE",
+    "stderr": "PIPE",
+    "limit": 16777216,
+    "start_new_session": true
+   },
+   "env": {
+    "PATH": "/golden/bin:/usr/bin:/bin",
+    "HOME": "/golden/home",
+    "USER": "golden",
+    "LOGNAME": "golden",
+    "LANG": "C.UTF-8",
+    "LANGUAGE": "en",
+    "LC_ALL": "C.UTF-8",
+    "LC_CTYPE": "C.UTF-8",
+    "TZ": "UTC",
+    "TMPDIR": "/golden/tmp",
+    "CLAUDE_CONFIG_DIR": "/golden/cli-config-never-opened",
+    "HTTP_PROXY": "http://golden-proxy:3128",
+    "HTTPS_PROXY": "http://golden-proxy:3128",
+    "NO_PROXY": "127.0.0.1,localhost",
+    "http_proxy": "http://golden-proxy:3128",
+    "https_proxy": "http://golden-proxy:3128",
+    "no_proxy": "127.0.0.1,localhost",
+    "NODE_EXTRA_CA_CERTS": "/golden/ca.pem",
+    "SSL_CERT_FILE": "/golden/ca.pem",
+    "SSL_CERT_DIR": "/golden/certs",
+    "DISABLE_AUTOUPDATER": "1",
+    "CLAUDE_CODE_DISABLE_AUTO_MEMORY": "1"
+   },
+   "files": {
+    "mcp.json": {
+     "mode": "0o600",
+     "content": {
+      "mcpServers": {
+       "freeduet": {
+        "type": "stdio",
+        "command": "<python>",
+        "args": [
+         "-m",
+         "freeduet.bridge"
+        ],
+        "env": {
+         "FREEDUET_BRIDGE_PORT": "<port>",
+         "FREEDUET_BRIDGE_SECRET": "<secret of 43 characters>",
+         "PYTHONPATH": "<package root>"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  {
+   "argv": [
+    "<tmp>/claude",
+    "-p",
+    "--output-format",
+    "stream-json",
+    "--verbose",
+    "--no-session-persistence",
+    "--tools",
+    "",
+    "--strict-mcp-config",
+    "--disable-slash-commands",
+    "--permission-mode",
+    "dontAsk",
+    "--append-system-prompt",
+    {
+     "sha256": "a6c734eaf2a5827bcfe185045d61bbc8aec436f284b644f11bee6c7e8e49b45a",
+     "bytes": 971,
+     "head": "You are Iris, Chief of Staff of the test team.\n\nYou are Iris, Chief of Staff.\n\nHow this session work"
+    }
+   ],
+   "cwd": "<segment>/work",
+   "kwargs": {
+    "stdin": "PIPE",
+    "stdout": "PIPE",
+    "stderr": "PIPE",
+    "limit": 16777216,
+    "start_new_session": true
+   },
+   "env": {
+    "PATH": "/golden/bin:/usr/bin:/bin",
+    "HOME": "/golden/home",
+    "USER": "golden",
+    "LOGNAME": "golden",
+    "LANG": "C.UTF-8",
+    "LANGUAGE": "en",
+    "LC_ALL": "C.UTF-8",
+    "LC_CTYPE": "C.UTF-8",
+    "TZ": "UTC",
+    "TMPDIR": "/golden/tmp",
+    "CLAUDE_CONFIG_DIR": "/golden/cli-config-never-opened",
+    "HTTP_PROXY": "http://golden-proxy:3128",
+    "HTTPS_PROXY": "http://golden-proxy:3128",
+    "NO_PROXY": "127.0.0.1,localhost",
+    "http_proxy": "http://golden-proxy:3128",
+    "https_proxy": "http://golden-proxy:3128",
+    "no_proxy": "127.0.0.1,localhost",
+    "NODE_EXTRA_CA_CERTS": "/golden/ca.pem",
+    "SSL_CERT_FILE": "/golden/ca.pem",
+    "SSL_CERT_DIR": "/golden/certs",
+    "DISABLE_AUTOUPDATER": "1",
+    "CLAUDE_CODE_DISABLE_AUTO_MEMORY": "1"
+   },
+   "files": {}
+  }
+ ],
+ "cli_runs": [
+  {
+   "prompt": "<conversation>\n<user>\nWrite the plan as a page.\n</user>\n</conversation>\n\nReply to the last user message, as the assistant.",
+   "cwd_entries": [],
+   "mcp_config": {
+    "mcpServers": {
+     "freeduet": {
+      "type": "stdio",
+      "command": "<python>",
+      "args": [
+       "-m",
+       "freeduet.bridge"
+      ],
+      "env": {
+       "FREEDUET_BRIDGE_PORT": "<value>",
+       "FREEDUET_BRIDGE_SECRET": "<value>",
+       "PYTHONPATH": "<value>"
+      }
+     }
+    }
+   },
+   "env_seen_of_interest": [
+    "CLAUDE_CODE_DISABLE_AUTO_MEMORY",
+    "CLAUDE_CONFIG_DIR",
+    "DISABLE_AUTOUPDATER",
+    "HOME",
+    "HTTPS_PROXY",
+    "HTTP_PROXY",
+    "LANG",
+    "LANGUAGE",
+    "LC_ALL",
+    "LC_CTYPE",
+    "LOGNAME",
+    "NODE_EXTRA_CA_CERTS",
+    "NO_PROXY",
+    "PATH",
+    "SSL_CERT_DIR",
+    "SSL_CERT_FILE",
+    "TMPDIR",
+    "TZ",
+    "USER",
+    "http_proxy",
+    "https_proxy",
+    "no_proxy"
+   ],
+   "tools": {
+    "names": [
+     "make_page",
+     "message_bot",
+     "list_lessons",
+     "propose_lesson",
+     "remove_lesson",
+     "team_log"
+    ],
+    "sha256": "9a4e1582a136a305ca8af9d7bbe4c35411f5aaeb3016dee0b90949cbd39b50c1"
+   },
+   "initialize": {
+    "protocolVersion": "2025-06-18",
+    "capabilities": {
+     "tools": {
+      "listChanged": false
+     }
+    },
+    "serverInfo": {
+     "name": "freeduet",
+     "version": "0.1.0"
+    }
+   },
+   "calls": [
+    {
+     "name": "make_page",
+     "arguments": {
+      "title": "Plan"
+     }
+    }
+   ]
+  },
+  {
+   "prompt": {
+    "sha256": "805b80f55176829add14781615c244358e48b437898001f0ac85e5a68aab6f90",
+    "bytes": 415,
+    "head": "<conversation>\n<user>\nWrite the plan as a page.\n</user>\n\n<assistant>\nLet me write that up.\n<tool_cal"
+   },
+   "cwd_entries": [],
+   "mcp_config": {
+    "mcpServers": {
+     "freeduet": {
+      "type": "stdio",
+      "command": "<python>",
+      "args": [
+       "-m",
+       "freeduet.bridge"
+      ],
+      "env": {
+       "FREEDUET_BRIDGE_PORT": "<value>",
+       "FREEDUET_BRIDGE_SECRET": "<value>",
+       "PYTHONPATH": "<value>"
+      }
+     }
+    }
+   },
+   "env_seen_of_interest": [
+    "CLAUDE_CODE_DISABLE_AUTO_MEMORY",
+    "CLAUDE_CONFIG_DIR",
+    "DISABLE_AUTOUPDATER",
+    "HOME",
+    "HTTPS_PROXY",
+    "HTTP_PROXY",
+    "LANG",
+    "LANGUAGE",
+    "LC_ALL",
+    "LC_CTYPE",
+    "LOGNAME",
+    "NODE_EXTRA_CA_CERTS",
+    "NO_PROXY",
+    "PATH",
+    "SSL_CERT_DIR",
+    "SSL_CERT_FILE",
+    "TMPDIR",
+    "TZ",
+    "USER",
+    "http_proxy",
+    "https_proxy",
+    "no_proxy"
+   ],
+   "tools": {
+    "names": [
+     "make_page",
+     "message_bot",
+     "list_lessons",
+     "propose_lesson",
+     "remove_lesson",
+     "team_log"
+    ],
+    "sha256": "9a4e1582a136a305ca8af9d7bbe4c35411f5aaeb3016dee0b90949cbd39b50c1"
+   },
+   "initialize": {
+    "protocolVersion": "2025-06-18",
+    "capabilities": {
+     "tools": {
+      "listChanged": false
+     }
+    },
+    "serverInfo": {
+     "name": "freeduet",
+     "version": "0.1.0"
+    }
+   }
+  }
+ ],
+ "cli_followups": [
+  {
+   "prompt": {
+    "sha256": "f4ea0db6b281b155dc16962577f714a434a6c086406a321b8aab3597532ce8d2",
+    "bytes": 1393,
+    "head": "<conversation>\n<user>\nWrite the plan as a page.\n</user>\n\n<assistant>\nLet me write that up.\n<tool_cal"
+   },
+   "cwd_entries": [],
+   "mcp_config": {},
+   "env_seen_of_interest": [
+    "CLAUDE_CODE_DISABLE_AUTO_MEMORY",
+    "CLAUDE_CONFIG_DIR",
+    "DISABLE_AUTOUPDATER",
+    "HOME",
+    "HTTPS_PROXY",
+    "HTTP_PROXY",
+    "LANG",
+    "LANGUAGE",
+    "LC_ALL",
+    "LC_CTYPE",
+    "LOGNAME",
+    "NODE_EXTRA_CA_CERTS",
+    "NO_PROXY",
+    "PATH",
+    "SSL_CERT_DIR",
+    "SSL_CERT_FILE",
+    "TMPDIR",
+    "TZ",
+    "USER",
+    "http_proxy",
+    "https_proxy",
+    "no_proxy"
+   ]
+  }
+ ],
+ "cli_gone": [
+  true,
+  true
+ ],
+ "callbacks": [],
+ "team_log": [
+  {
+   "member": "freeduet",
+   "thread": "thread-1",
+   "run": "run-1",
+   "outcome": "in progress",
+   "summary": "Waiting on make_page",
+   "from_iris": false,
+   "approvals": null,
+   "report_guard": null
+  },
+  {
+   "member": "freeduet",
+   "thread": "thread-1",
+   "run": "run-1",
+   "outcome": "in progress",
+   "summary": "The page is ready.",
+   "from_iris": false,
+   "approvals": null,
+   "report_guard": "failed"
+  }
+ ],
+ "checkpoints": [
+  {
+   "schema_version": 1,
+   "writer_version": "1.2.0+freeduet.1",
+   "created_at": "<time>",
+   "agent": "freeduet",
+   "run": "thread-1",
+   "phase": "in-progress",
+   "state": {
+    "objective": "Write the plan as a page.",
+    "constraints": [],
+    "completed": [],
+    "decisions": [],
+    "in_progress": [
+     "make_page"
+    ],
+    "changed_files": [],
+    "verification": [],
+    "blockers": [],
+    "next_steps": [
+     "Continue once make_page has a result"
+    ]
+   }
+  },
+  {
+   "schema_version": 1,
+   "writer_version": "1.2.0+freeduet.1",
+   "created_at": "<time>",
+   "agent": "freeduet",
+   "run": "thread-1",
+   "phase": "in-progress",
+   "state": {
+    "objective": "Write the plan as a page.",
+    "constraints": [],
+    "completed": [],
+    "decisions": [],
+    "in_progress": [],
+    "changed_files": [],
+    "verification": [],
+    "blockers": [],
+    "next_steps": [
+     "Wait for the person's next message"
+    ]
+   }
+  }
+ ],
+ "logs": [
+  [
+   "freeduet.report_guard",
+   "WARNING",
+   "report guard: the follow-up wrote no complete report",
+   null
+  ]
+ ]
+}

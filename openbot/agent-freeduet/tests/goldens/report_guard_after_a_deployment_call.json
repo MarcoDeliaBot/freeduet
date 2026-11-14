@@ -1,0 +1,396 @@
+{
+ "streams": [
+  {
+   "events": [
+    {
+     "type": "RUN_STARTED",
+     "threadId": "thread-1",
+     "runId": "run-1"
+    },
+    {
+     "type": "TEXT_MESSAGE_START",
+     "messageId": "<msg-1>",
+     "role": "assistant"
+    },
+    {
+     "type": "TEXT_MESSAGE_CONTENT",
+     "messageId": "<msg-1>",
+     "delta": "Asking"
+    },
+    {
+     "type": "TEXT_MESSAGE_CONTENT",
+     "messageId": "<msg-1>",
+     "delta": " Otto."
+    },
+    {
+     "type": "TEXT_MESSAGE_END",
+     "messageId": "<msg-1>"
+    },
+    {
+     "type": "TOOL_CALL_START",
+     "toolCallId": "<toolu-1>",
+     "toolCallName": "message_bot",
+     "parentMessageId": "<msg-1>"
+    },
+    {
+     "type": "TOOL_CALL_ARGS",
+     "toolCallId": "<toolu-1>",
+     "delta": "{\"bot\": \"Otto\", \"message\": \"Plan the week\"}"
+    },
+    {
+     "type": "TOOL_CALL_END",
+     "toolCallId": "<toolu-1>"
+    },
+    {
+     "type": "TOOL_CALL_RESULT",
+     "messageId": "<tool-1>",
+     "toolCallId": "<toolu-1>",
+     "role": "tool",
+     "content": "Otto has it: Plan the week"
+    },
+    {
+     "type": "TEXT_MESSAGE_START",
+     "messageId": "<msg-2>",
+     "role": "assistant"
+    },
+    {
+     "type": "TEXT_MESSAGE_CONTENT",
+     "messageId": "<msg-2>",
+     "delta": "Otto has th"
+    },
+    {
+     "type": "TEXT_MESSAGE_CONTENT",
+     "messageId": "<msg-2>",
+     "delta": "e week plan."
+    },
+    {
+     "type": "TEXT_MESSAGE_CONTENT",
+     "messageId": "<msg-2>",
+     "delta": "\n\nOutcome: in progress\nDone: sorted the nine pasted emails\nEvidence: the nine emails in this conversation\nNot done and why: nothing\nAlready: nothing\nNext step: answer the late-order complaint"
+    },
+    {
+     "type": "TEXT_MESSAGE_END",
+     "messageId": "<msg-2>"
+    },
+    {
+     "type": "RUN_FINISHED",
+     "threadId": "thread-1",
+     "runId": "run-1"
+    }
+   ],
+   "keepalives": 0,
+   "sha256": "360b80c8f9a49d2c8c5a239de735cef9c5f93a2c0687f7a8671add380622d962"
+  }
+ ],
+ "launches": [
+  {
+   "argv": [
+    "<tmp>/claude",
+    "-p",
+    "--output-format",
+    "stream-json",
+    "--verbose",
+    "--include-partial-messages",
+    "--no-session-persistence",
+    "--tools",
+    "",
+    "--strict-mcp-config",
+    "--disable-slash-commands",
+    "--allowedTools",
+    "mcp__freeduet",
+    "--permission-mode",
+    "dontAsk",
+    "--mcp-config",
+    "<segment>/mcp.json",
+    "--append-system-prompt",
+    {
+     "sha256": "98ca6e56286c41d122de6cfdb68d7416844780ac984ed6dd8277ae2e08f262cb",
+     "bytes": 939,
+     "head": "You are Basil, the test chef.\n\nYou are Basil.\n\nHow this session works. Your only tools are the ones "
+    }
+   ],
+   "cwd": "<segment>/work",
+   "kwargs": {
+    "stdin": "PIPE",
+    "stdout": "PIPE",
+    "stderr": "PIPE",
+    "limit": 16777216,
+    "start_new_session": true
+   },
+   "env": {
+    "PATH": "/golden/bin:/usr/bin:/bin",
+    "HOME": "/golden/home",
+    "USER": "golden",
+    "LOGNAME": "golden",
+    "LANG": "C.UTF-8",
+    "LANGUAGE": "en",
+    "LC_ALL": "C.UTF-8",
+    "LC_CTYPE": "C.UTF-8",
+    "TZ": "UTC",
+    "TMPDIR": "/golden/tmp",
+    "CLAUDE_CONFIG_DIR": "/golden/cli-config-never-opened",
+    "HTTP_PROXY": "http://golden-proxy:3128",
+    "HTTPS_PROXY": "http://golden-proxy:3128",
+    "NO_PROXY": "127.0.0.1,localhost",
+    "http_proxy": "http://golden-proxy:3128",
+    "https_proxy": "http://golden-proxy:3128",
+    "no_proxy": "127.0.0.1,localhost",
+    "NODE_EXTRA_CA_CERTS": "/golden/ca.pem",
+    "SSL_CERT_FILE": "/golden/ca.pem",
+    "SSL_CERT_DIR": "/golden/certs",
+    "DISABLE_AUTOUPDATER": "1",
+    "CLAUDE_CODE_DISABLE_AUTO_MEMORY": "1"
+   },
+   "files": {
+    "mcp.json": {
+     "mode": "0o600",
+     "content": {
+      "mcpServers": {
+       "freeduet": {
+        "type": "stdio",
+        "command": "<python>",
+        "args": [
+         "-m",
+         "freeduet.bridge"
+        ],
+        "env": {
+         "FREEDUET_BRIDGE_PORT": "<port>",
+         "FREEDUET_BRIDGE_SECRET": "<secret of 43 characters>",
+         "PYTHONPATH": "<package root>"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  {
+   "argv": [
+    "<tmp>/claude",
+    "-p",
+    "--output-format",
+    "stream-json",
+    "--verbose",
+    "--no-session-persistence",
+    "--tools",
+    "",
+    "--strict-mcp-config",
+    "--disable-slash-commands",
+    "--permission-mode",
+    "dontAsk",
+    "--append-system-prompt",
+    {
+     "sha256": "98ca6e56286c41d122de6cfdb68d7416844780ac984ed6dd8277ae2e08f262cb",
+     "bytes": 939,
+     "head": "You are Basil, the test chef.\n\nYou are Basil.\n\nHow this session works. Your only tools are the ones "
+    }
+   ],
+   "cwd": "<segment>/work",
+   "kwargs": {
+    "stdin": "PIPE",
+    "stdout": "PIPE",
+    "stderr": "PIPE",
+    "limit": 16777216,
+    "start_new_session": true
+   },
+   "env": {
+    "PATH": "/golden/bin:/usr/bin:/bin",
+    "HOME": "/golden/home",
+    "USER": "golden",
+    "LOGNAME": "golden",
+    "LANG": "C.UTF-8",
+    "LANGUAGE": "en",
+    "LC_ALL": "C.UTF-8",
+    "LC_CTYPE": "C.UTF-8",
+    "TZ": "UTC",
+    "TMPDIR": "/golden/tmp",
+    "CLAUDE_CONFIG_DIR": "/golden/cli-config-never-opened",
+    "HTTP_PROXY": "http://golden-proxy:3128",
+    "HTTPS_PROXY": "http://golden-proxy:3128",
+    "NO_PROXY": "127.0.0.1,localhost",
+    "http_proxy": "http://golden-proxy:3128",
+    "https_proxy": "http://golden-proxy:3128",
+    "no_proxy": "127.0.0.1,localhost",
+    "NODE_EXTRA_CA_CERTS": "/golden/ca.pem",
+    "SSL_CERT_FILE": "/golden/ca.pem",
+    "SSL_CERT_DIR": "/golden/certs",
+    "DISABLE_AUTOUPDATER": "1",
+    "CLAUDE_CODE_DISABLE_AUTO_MEMORY": "1"
+   },
+   "files": {}
+  }
+ ],
+ "cli_runs": [
+  {
+   "prompt": "<conversation>\n<user>\nWhat's for dinner this week?\n</user>\n</conversation>\n\nReply to the last user message, as the assistant.",
+   "cwd_entries": [],
+   "mcp_config": {
+    "mcpServers": {
+     "freeduet": {
+      "type": "stdio",
+      "command": "<python>",
+      "args": [
+       "-m",
+       "freeduet.bridge"
+      ],
+      "env": {
+       "FREEDUET_BRIDGE_PORT": "<value>",
+       "FREEDUET_BRIDGE_SECRET": "<value>",
+       "PYTHONPATH": "<value>"
+      }
+     }
+    }
+   },
+   "env_seen_of_interest": [
+    "CLAUDE_CODE_DISABLE_AUTO_MEMORY",
+    "CLAUDE_CONFIG_DIR",
+    "DISABLE_AUTOUPDATER",
+    "HOME",
+    "HTTPS_PROXY",
+    "HTTP_PROXY",
+    "LANG",
+    "LANGUAGE",
+    "LC_ALL",
+    "LC_CTYPE",
+    "LOGNAME",
+    "NODE_EXTRA_CA_CERTS",
+    "NO_PROXY",
+    "PATH",
+    "SSL_CERT_DIR",
+    "SSL_CERT_FILE",
+    "TMPDIR",
+    "TZ",
+    "USER",
+    "http_proxy",
+    "https_proxy",
+    "no_proxy"
+   ],
+   "tools": {
+    "names": [
+     "message_bot"
+    ],
+    "sha256": "d093a6cb6d1f227ee1f23df4eedbe52c78ba83fd99db12d1a85c215e809c932f"
+   },
+   "initialize": {
+    "protocolVersion": "2025-06-18",
+    "capabilities": {
+     "tools": {
+      "listChanged": false
+     }
+    },
+    "serverInfo": {
+     "name": "freeduet",
+     "version": "0.1.0"
+    }
+   },
+   "calls": [
+    {
+     "name": "message_bot",
+     "arguments": {
+      "bot": "Otto",
+      "message": "Plan the week"
+     }
+    }
+   ],
+   "results": [
+    {
+     "name": "message_bot",
+     "text": "Otto has it: Plan the week",
+     "isError": false
+    }
+   ]
+  }
+ ],
+ "cli_followups": [
+  {
+   "prompt": {
+    "sha256": "1ca8beebe168488e0522825957f155cc693221a1ab2ee4af37d8167b2cceb8fa",
+    "bytes": 1446,
+    "head": "<conversation>\n<user>\nWhat's for dinner this week?\n</user>\n\n<assistant>\nAsking Otto.\n</assistant>\n\n<"
+   },
+   "cwd_entries": [],
+   "mcp_config": {},
+   "env_seen_of_interest": [
+    "CLAUDE_CODE_DISABLE_AUTO_MEMORY",
+    "CLAUDE_CONFIG_DIR",
+    "DISABLE_AUTOUPDATER",
+    "HOME",
+    "HTTPS_PROXY",
+    "HTTP_PROXY",
+    "LANG",
+    "LANGUAGE",
+    "LC_ALL",
+    "LC_CTYPE",
+    "LOGNAME",
+    "NODE_EXTRA_CA_CERTS",
+    "NO_PROXY",
+    "PATH",
+    "SSL_CERT_DIR",
+    "SSL_CERT_FILE",
+    "TMPDIR",
+    "TZ",
+    "USER",
+    "http_proxy",
+    "https_proxy",
+    "no_proxy"
+   ]
+  }
+ ],
+ "cli_gone": [
+  true
+ ],
+ "callbacks": [
+  {
+   "path": "/api/agent-tools/call",
+   "token": "test-agent-tool-token",
+   "body": {
+    "name": "message_bot",
+    "args": {
+     "bot": "Otto",
+     "message": "Plan the week"
+    },
+    "run": "test-signed-run-assertion"
+   }
+  }
+ ],
+ "team_log": [
+  {
+   "member": "chef",
+   "thread": "thread-1",
+   "run": "run-1",
+   "outcome": "in progress",
+   "summary": "sorted the nine pasted emails",
+   "from_iris": false,
+   "approvals": "nothing",
+   "report_guard": "added"
+  }
+ ],
+ "checkpoints": [
+  {
+   "schema_version": 1,
+   "writer_version": "1.2.0+freeduet.1",
+   "created_at": "<time>",
+   "agent": "chef",
+   "run": "thread-1",
+   "phase": "in-progress",
+   "state": {
+    "objective": "What's for dinner this week?",
+    "constraints": [],
+    "completed": [
+     "sorted the nine pasted emails"
+    ],
+    "decisions": [],
+    "in_progress": [],
+    "changed_files": [],
+    "verification": [
+     "the nine emails in this conversation"
+    ],
+    "blockers": [],
+    "next_steps": [
+     "answer the late-order complaint"
+    ]
+   }
+  }
+ ],
+ "logs": []
+}

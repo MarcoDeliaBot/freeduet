@@ -25,6 +25,7 @@
   "jules": "J'ai trouvé une table libre vendredi.",
   "wren": "Ton post est prêt à relire.",
   "mark": "Un premier plan pour le mois prochain.",
+  "video": "Une première liste de coupes à vérifier.",
   "gus": "Vérifie d'abord la gâche de la serrure.",
   "basil": "Trois idées de dîner pour ce soir.",
   "vera": "Vérifié : les totaux sont justes.",
@@ -87,7 +88,7 @@
  "s5p": "Ce qui a été fait, ce qui ne l'a pas été et pourquoi, et la prochaine étape. Pas de pavés de texte.",
  "flowAlt": "Tu parles à Iris, Iris confie le travail aux spécialistes, Vera le vérifie, la réponse te revient",
  "you": "Toi",
- "flowMore": "…et Gus, Basil, Mark et Leo",
+ "flowMore": "…et Gus, Basil, Mark, Cam et Leo",
  "sf_h": "Cinq boutons qui attendent ton oui",
  "sf_p": "Donnerais-tu ton portefeuille à un nouvel assistant dès le premier jour ? Nous non plus. Par défaut, ces cinq actions attendent ton oui. Toi seul peux désactiver cela, membre par membre.",
  "b1": "Envoyer",
@@ -127,7 +128,7 @@
  "r2": "Priorité absolue : un installeur en un seul fichier pour Windows, macOS et Ubuntu. Puis de nouveaux membres, testés.",
  "r3": "Choisir le moteur de chaque membre et une vraie délégation entre les membres.",
  "r4": "Automatisations écrites dans le chat, plus d'applis connectées, version téléphone, accès à distance.",
- "r5": "Voix, Cam le membre vidéo, achats sûrs. Full access est construit, pas encore testé en conditions réelles.",
+ "r5": "Voix, achats sûrs. Full access est construit, mais pas encore testé en conditions réelles. Cam, le membre vidéo, fait partie de l'équipe, mais ses tests n'ont pas encore été lancés en conditions réelles, et il ne peut pas encore transmettre de fichier depuis le chat.",
  "r_note": "Nous signalons tout ce qui n'est pas encore construit. Pas de contes de fées. <a href=\"https://github.com/MarcoDeliaBot/freeduet/blob/main/docs/ROADMAP.md\">Feuille de route complète sur GitHub</a>.",
  "in_h": "De l'installation à ta première tâche utile",
  "in_p": "Quatre étapes, dans l'ordre réel. Toutes les commandes sont aussi réunies dans un seul encadré plus bas, prêtes à copier.",
@@ -216,6 +217,11 @@
    "marketing",
    "Élabore ton plan marketing, ton plan de lancement et ta stratégie de canaux, et passe en revue ton site, ton SEO et tes publicités. Il ne publie ni ne dépense rien sans ton accord.",
    "Fais-moi un plan marketing sur trois mois pour ma boutique."
+  ],
+  "video": [
+   "vidéo",
+   "Coupe, sous-titre et ajoute musique et son à de courtes vidéos, à partir de tes rushs ou d'un scénario, en formats horizontal, vertical et carré. Il ne publie ni ne met jamais une vidéo en ligne.",
+   "Fais-moi une vidéo verticale de 30 secondes à partir de ce scénario, avec des sous-titres."
   ],
   "gus": [
    "réparations",
