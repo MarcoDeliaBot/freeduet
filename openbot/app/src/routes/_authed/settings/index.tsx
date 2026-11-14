@@ -12,6 +12,7 @@ import {
   PageSection,
   PageShell,
 } from "@/components/layout/page-shell";
+import { ReadAloudSetting } from "@/components/settings/read-aloud-setting";
 import { StandingInstructions } from "@/components/settings/standing-instructions";
 import { useTheme } from "@/components/theme-provider";
 import {
@@ -82,6 +83,9 @@ function RouteComponent() {
             value={preference}
           />
         </div>
+      </PageSection>
+      <PageSection title="Voice">
+        <ReadAloudSetting />
       </PageSection>
       <nav aria-label="Settings" className="mt-8 flex flex-col gap-0.5">
         {PLACES.filter(

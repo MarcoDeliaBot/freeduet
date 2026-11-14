@@ -37,6 +37,21 @@ class Gate:
     secret: str = field(repr=False)
 
 
+@dataclass(frozen=True)
+class Usage:
+    """What an engine itself reported about one turn's use, for the spend ledger (ledger.py): numbers only.
+
+    A field the engine did not report is None, never 0 and never a guess. `cost` is money, in `currency`, and it
+    is set ONLY when the engine states a cost it charged or was charged; a price worked out here from tokens, or a
+    figure the engine's own client estimates, is not one (docs/ENGINES_PLAN.md section 7: an unknown price is "not
+    measured", never zero). `input_tokens` counts every token the model was given, cached ones included."""
+
+    input_tokens: int | None = None
+    output_tokens: int | None = None
+    cost: float | None = None
+    currency: str | None = None
+
+
 @dataclass
 class Health:
     """How the engine says one turn went, for the engine breaker (engine_state.py). The engine fills it in as
@@ -47,10 +62,14 @@ class Health:
     engine accepted the turn". A failure outweighs an answer: a limit that arrives after the first words is
     still a limit. Neither set means the engine said nothing about its health (it could not start, or the
     segment stopped it before it spoke).
+
+    `usage` is what the engine reported about the turn's use (tokens, and a cost only when it states one). Only an
+    engine whose turns cost money is recorded from it (the ledger); None is "reported nothing".
     """
 
     answered: bool = False
     failure: Failure | None = None
+    usage: Usage | None = None
 
 
 @dataclass(frozen=True)

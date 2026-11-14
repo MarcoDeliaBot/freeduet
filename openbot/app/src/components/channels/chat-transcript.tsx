@@ -79,6 +79,14 @@ import {
 import { readTeamBotConsent } from "@/lib/team-bots";
 import { cn } from "@/lib/utils";
 import { VOICE_CHAT_ACTIVITY, type VoiceChatEntry } from "@/lib/voice/archive";
+import {
+  installedVoices,
+  speakPlan,
+  speechAvailable,
+  speechPlan,
+  stopSpeaking,
+  useReadAloudEnabled,
+} from "@/lib/voice/speech";
 import { queryClient } from "@/query-client";
 import { AppAccessCard } from "./app-access-card";
 import {
@@ -226,6 +234,41 @@ function RestoringTranscript() {
  * It borrows the shimmer a running tool line uses, so "working on it" reads the same whether the
  * work is a tool call or a model that has not spoken yet.
  */
+/**
+ * "Read aloud" under a member's reply, drawn only while the person has switched read aloud on
+ * (Settings). Pressing it reads this reply with a local Italian voice; pressing again stops it. The
+ * decision and the text cleaning are in `lib/voice/speech.ts`, where they are tested.
+ */
+export function ReadAloudControl({ reply }: { reply: string }) {
+  const enabled = useReadAloudEnabled();
+  const [speaking, setSpeaking] = useState(false);
+  if (!enabled || !speechAvailable()) return null;
+  return (
+    <button
+      aria-pressed={speaking}
+      className="type-label text-duet-ink-3 underline-offset-2 hover:underline"
+      onClick={() => {
+        if (speaking) {
+          stopSpeaking();
+          setSpeaking(false);
+          return;
+        }
+        const plan = speechPlan({
+          enabled,
+          voices: installedVoices(),
+          reply,
+        });
+        if (!plan) return;
+        setSpeaking(true);
+        speakPlan(plan, () => setSpeaking(false));
+      }}
+      type="button"
+    >
+      {speaking ? "Stop reading" : "Read aloud"}
+    </button>
+  );
+}
+
 function Thinking() {
   // The film's three dots in a grey bubble. The word stays for screen readers, in a `status`.
   return <TypingDots label="Thinking" />;
@@ -1003,6 +1046,7 @@ const TranscriptMessage = memo(function TranscriptMessage({
                   </BubbleContent>
                 </Bubble>
               ))}
+              <ReadAloudControl reply={text} />
             </div>
           )}
           {seen ? <Seen /> : null}

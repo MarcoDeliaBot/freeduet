@@ -14,7 +14,8 @@
  *
  * APPLIED LIVE by pushing to every running computer: on the enterprise LISTEN/NOTIFY announcement
  * (see `admin/controls.ts`) and on a short interval so a computer that started since the last push
- * catches up. The computer consults the pushed policy on its next connection, so nothing restarts.
+ * catches up. The computer judges its next connection by the pushed policy, and every connection that
+ * is already open again, ending the ones it now refuses, so nothing restarts.
  */
 import {
   DEFAULT_EGRESS_DESTINATIONS,
