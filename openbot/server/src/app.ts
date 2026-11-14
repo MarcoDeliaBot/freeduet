@@ -1686,6 +1686,7 @@ export function createApp(
       createRoutineRoutes(routineStore, requireUser, {
         runner: routineRunner,
         auditStore,
+        channelStore,
       }),
     );
   }
