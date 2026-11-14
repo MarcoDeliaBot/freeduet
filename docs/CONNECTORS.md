@@ -49,7 +49,7 @@ Desktop programs such as Photoshop or Cricut Design Space run on the person's ow
 | **Games** | Godot, Phaser, PixiJS, three.js, Bevy, pygame, LÖVE, Defold, Ebitengine | Free, open source | Inside Nico's own computer, driven by the coding agent with the game-development skills ([CATALOG.md](CATALOG.md)) | M2 onwards, with the Tech pack | Building and test runs are free; uploading to a store is an owner-only operation. |
 | **Games** | Unity, Unreal Engine, Roblox Studio | Free tiers and paid, each with its own license | Desktop bridge, on the person's computer | M4 | Only if the person already has them. |
 | **Coding agents** | Claude Code | Subscription | Engine and tool: the official CLI, the person's own login | M1 | Also FreeDuet's first engine. |
-| **Coding agents** | Codex | Subscription | Engine and tool: Codex app-server | M2 | After OpenAI approves FreeDuet's client ID. |
+| **Coding agents** | Codex | Subscription | Engine and tool: Codex app-server | M2 | Through Codex's own official login, which FreeDuet never reads. Planned, not built. |
 | **Coding agents** | Kimi | Free, subscription and API | Engine through Moonshot's OpenAI-compatible API; tool through Kimi's CLI | M2 | Subscription terms for third-party use to be verified before the CLI route is switched on. |
 | **Coding agents** | Cline | Free, open source | Tool: hand a coding job to Cline in the person's editor through the desktop bridge | M3 | |
 | **Coding agents** | Antigravity | Free and paid | Tool only, through the desktop bridge | M3 | FreeDuet never uses the Google sign-in behind it (PROVIDERS.md). |
