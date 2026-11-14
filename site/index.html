@@ -3,11 +3,119 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>FreeDuet</title>
+<title>FreeDuet: your own team of AI assistants</title>
 <meta name="description" content="FreeDuet is a free, open-source team of AI assistants that runs on your own computer and your own AI subscription. They ask before they send, pay, sign, book or delete.">
+<link rel="canonical" href="https://freeduet.com/">
+<meta name="theme-color" content="#0E1B33">
+<link rel="icon" href="/favicon.ico" sizes="32x32">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
 <meta property="og:title" content="FreeDuet: your own team of AI assistants">
 <meta property="og:description" content="A free, open-source team of AI assistants. They ask before they send, pay, sign, book or delete.">
 <meta property="og:type" content="website">
+<meta property="og:url" content="https://freeduet.com/">
+<meta property="og:site_name" content="FreeDuet">
+<meta property="og:locale" content="en_US">
+<meta property="og:image" content="https://freeduet.com/og-image.png">
+<meta property="og:image:type" content="image/png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="FreeDuet logo with the words: Your own team of AI assistants">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="FreeDuet: your own team of AI assistants">
+<meta name="twitter:description" content="A free, open-source team of AI assistants. They ask before they send, pay, sign, book or delete.">
+<meta name="twitter:image" content="https://freeduet.com/og-image.png">
+<meta name="twitter:image:alt" content="FreeDuet logo with the words: Your own team of AI assistants">
+<script type="application/ld+json">
+{
+ "@context": "https://schema.org",
+ "@type": "SoftwareApplication",
+ "name": "FreeDuet",
+ "description": "FreeDuet is a free, open-source team of AI assistants that runs on your own computer and your own AI subscription. They ask before they send, pay, sign, book or delete.",
+ "applicationCategory": "BusinessApplication",
+ "operatingSystem": "Windows, Linux",
+ "offers": {
+  "@type": "Offer",
+  "price": "0",
+  "priceCurrency": "USD"
+ },
+ "license": "https://opensource.org/license/mit",
+ "url": "https://freeduet.com/",
+ "codeRepository": "https://github.com/MarcoDeliaBot/freeduet"
+}
+</script>
+<script type="application/ld+json">
+{
+ "@context": "https://schema.org",
+ "@type": "FAQPage",
+ "mainEntity": [
+  {
+   "@type": "Question",
+   "name": "What is free, and what do I pay for?",
+   "acceptedAnswer": {
+    "@type": "Answer",
+    "text": "FreeDuet is free and open source under the MIT licence, also for business use. The only thing you pay for is the AI subscription you use with it, which today is a Claude plan. There is no API key to buy."
+   }
+  },
+  {
+   "@type": "Question",
+   "name": "What do I need to install it?",
+   "acceptedAnswer": {
+    "@type": "Answer",
+    "text": "A Claude subscription, and Docker, Bash and Bun on your computer. The four steps above are the whole install. Never opened a terminal? Ask someone technical to set it up, and show them this page."
+   }
+  },
+  {
+   "@type": "Question",
+   "name": "Does it work on Windows, Mac and Linux?",
+   "acceptedAnswer": {
+    "@type": "Answer",
+    "text": "The maintainer uses it on Windows with WSL2 and Docker, and our automatic checks start it on Linux. It has not been tested on a Mac, so we can't promise it works there. FreeDuet is an early release (version 0.1), built and used by one maintainer."
+   }
+  },
+  {
+   "@type": "Question",
+   "name": "What can an assistant do without asking me?",
+   "acceptedAnswer": {
+    "@type": "Answer",
+    "text": "It can look things up, read, and prepare drafts and reports. Sending, paying, signing, booking and deleting wait for your Approve. The one shortcut is a new email to an address you typed yourself in your request. Assistants can still make mistakes, so read what they prepare before you approve it."
+   }
+  },
+  {
+   "@type": "Question",
+   "name": "Where is my data?",
+   "acceptedAnswer": {
+    "@type": "Answer",
+    "text": "FreeDuet runs on your computer and keeps its conversations in a database there. Your Claude login stays in a Docker volume that only the Claude Code program reads. To think, the assistants send your request to the AI service you signed in to, as its own app would."
+   }
+  },
+  {
+   "@type": "Question",
+   "name": "Can I use it from my phone?",
+   "acceptedAnswer": {
+    "@type": "Answer",
+    "text": "Not yet. Today FreeDuet opens in the browser on your computer. A phone version, with a notification when something needs your Approve, is planned."
+   }
+  },
+  {
+   "@type": "Question",
+   "name": "Can I add my own team member?",
+   "acceptedAnswer": {
+    "@type": "Answer",
+    "text": "Yes. Ask Leo, who builds new assistants, to design one for the job you need, or write its definition yourself. You can also rename members and change how they talk. How the members are defined."
+   }
+  },
+  {
+   "@type": "Question",
+   "name": "Where do I get help?",
+   "acceptedAnswer": {
+    "@type": "Answer",
+    "text": "Open an issue on GitHub. There is a short form for a question, an error, a fix, or to say you are using it. You can write in English or Italian."
+   }
+  }
+ ]
+}
+</script>
 <script>document.documentElement.className+=" js";setTimeout(function(){if(document.documentElement.getAttribute("data-rv")!=="ready")document.documentElement.className+=" no-rv"},3000)</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
