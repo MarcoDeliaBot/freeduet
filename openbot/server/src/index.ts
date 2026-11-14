@@ -209,7 +209,9 @@ import { createAccountModeSwitch } from "./plugins/account-mode";
 import { assertActivatable, providerDecision } from "./plugins/broker";
 import { BROKERED_PROFILE } from "./plugins/access";
 import { useRoutineTools } from "./plugins/builtin-routines";
+import { useSettingsTools } from "./plugins/builtin-settings";
 import { useArcadeClient } from "./plugins/arcade";
+import { createSettingChanges } from "./settings-in-chat/changes";
 import { createArcadeClient } from "./plugins/arcade-adapter";
 import { useComposioClient } from "./plugins/composio";
 import { createComposioClient } from "./plugins/composio-adapter";
@@ -1116,6 +1118,17 @@ void pluginStore
  */
 const routineStore = createRoutineStore(database);
 useRoutineTools(routineStore);
+/*
+ * Settings in chat (docs/design/settings-in-chat.md, slice 1): the one tool a Bot changes a setting
+ * with, and the change service the person's Undo goes through. Installed once, here, as the routine
+ * store is, because the transport registry is built at import time.
+ */
+const settingChanges = createSettingChanges({
+  database,
+  audit: createAuditStore(database),
+  reader: createAuditReader(database),
+});
+useSettingsTools(settingChanges);
 const responsibilityStore = createResponsibilityStore(database, {
   resolveTarget: async (ownerUserId, agentId, channelId) => {
     const actor = await actorFor(ownerUserId);
@@ -2841,6 +2854,7 @@ const app = createApp(
       profiles: agentProfileStore,
       auditStore: bootAuditStore,
     },
+    settingChanges,
   },
   createSelfHostBanner({
     enabled: config.selfHostBanner,

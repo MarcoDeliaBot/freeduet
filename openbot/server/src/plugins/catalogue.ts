@@ -585,6 +585,27 @@ const REVIEWED: readonly CatalogueEntry[] = Object.freeze([
     readTools: Object.freeze(["list_routines", "list_triggers"]),
     docsUrl: "https://github.com/CopilotKit/OpenBot/blob/main/docs/routines.md",
   },
+  {
+    key: "settings",
+    title: "Settings in chat",
+    vendor: "OpenBot",
+    summary:
+      "Lets a Bot change, from chat, the few harmless settings on its list, such as how much it may interrupt you. Each change asks you first and can be undone.",
+    /*
+     * First-party and in-process, like Routines: no host to dial and no credential to hold. In the
+     * catalogue so the person decides which Bots may change a setting from chat, as deliberately as they
+     * grant a vendor. The list of settings is the server's own, in settings-in-chat/allow-list.ts.
+     */
+    host: "builtin://settings",
+    path: "/",
+    transport: "builtin-settings",
+    auth: Object.freeze({ kind: "builtin" }),
+    writeTools: Object.freeze(["change_setting"]),
+    // Nothing in this connector only reads.
+    readTools: Object.freeze([]),
+    docsUrl:
+      "https://github.com/MarcoDeliaBot/freeduet/blob/main/docs/design/settings-in-chat.md",
+  },
 ]);
 
 /** The environment variable that points {@link GOOGLE_WORKSPACE} at a stand-in for Google. */

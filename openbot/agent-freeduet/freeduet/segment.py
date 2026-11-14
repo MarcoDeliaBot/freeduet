@@ -83,6 +83,7 @@ log = logging.getLogger("freeduet.segment")
 SETTLE_SECONDS = 0.3
 MATCH_SECONDS = 1.0
 SEGMENT_TIMEOUT_SECONDS = 1800.0
+TIMER_PASSES = 10  # loop passes a timer waits after it fires: a pipe's line needs 1, a bridge call 4 (_later)
 
 
 @dataclass
@@ -162,7 +163,18 @@ def handoff_needs_person(blocked: list[tuple[dict, str]]) -> str:
 
 
 async def _later(delay: float, inbox: asyncio.Queue, item: tuple) -> None:
+    """Put `item` in the inbox after `delay`, behind whatever the CLI had already written by then.
+
+    A loop that was busy past the deadline finds this timer due together with the output that came in
+    meanwhile. asyncio wakes the timer first and hands the bytes to their reader a few passes later: one
+    for a line on the CLI's pipe, four for a call on the bridge's socket (3.12 and 3.13). A marker put at
+    once would sit in the inbox ahead of what the CLI wrote before the deadline, and the segment would end
+    without it: test_a_busy_loop_does_not_lose_the_second_refused_call and
+    test_a_timer_that_fires_late_does_not_overtake_a_bridge_call_already_on_the_socket fail with fewer
+    passes. The passes let that output in first; on a loop that was not late they cost microseconds."""
     await asyncio.sleep(delay)
+    for _ in range(TIMER_PASSES):
+        await asyncio.sleep(0)
     await inbox.put(item)
 
 

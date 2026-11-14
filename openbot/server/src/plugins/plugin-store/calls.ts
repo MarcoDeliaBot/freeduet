@@ -658,6 +658,10 @@ export function callMethods(context: StoreContext) {
         ...(effect === "write" && access.transport === "builtin-routines"
           ? { configuresAutomation: true as const }
           : {}),
+        // settings-in-chat (slice 1): a write on the Settings connector changes a setting from chat.
+        ...(effect === "write" && access.transport === "builtin-settings"
+          ? { changesSetting: true as const }
+          : {}),
         ...(answeredByCard ? { answeredByCard: true as const } : {}),
       });
       if (approval && "replay" in approval)

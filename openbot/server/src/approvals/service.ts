@@ -339,6 +339,7 @@ export function createApprovalService(
       runInitiator: continuation?.initiator,
       callInitiator: candidate.initiator,
       configuresAutomation: candidate.configuresAutomation === true,
+      changesSetting: candidate.changesSetting === true,
       answeredByCard: candidate.answeredByCard === true,
     });
     // FreeDuet: Full access, for an action and a turn it applies to, and in which of its two

@@ -25,6 +25,10 @@
 // Usage:
 //   bun scripts/typecheck-tests.ts            # check against the baseline; exit 1 on a new error
 //   bun scripts/typecheck-tests.ts --update   # rewrite the baseline from the current output
+//
+// Exit 2 means tsc did not finish (killed, could not start, or ended with no diagnostic). That is not
+// a result: the gate neither compares nor writes the baseline, so a dead run can neither pass nor
+// erase the record of debt.
 
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
@@ -61,21 +65,46 @@ const header = [
 // indented, so anchoring on a non-space first character drops them.
 const DIAGNOSTIC = /^(\S[^(]*)\((\d+),\d+\): error (TS\d+): (.*)$/;
 
-function runTsc(): string {
-  const result = Bun.spawnSync({
-    cmd: ["bunx", "tsc", "--noEmit", "--pretty", "false", "-p", project],
-    cwd: repoRoot,
-    // The suite outgrew Node's default heap on GitHub's runners: tsc died with "heap out of
-    // memory" on most pull requests, which reads as a type error nobody made.
-    env: {
-      ...process.env,
-      NODE_OPTIONS:
-        `${process.env.NODE_OPTIONS ?? ""} --max-old-space-size=6144`.trim(),
-    },
-    stdout: "pipe",
-    stderr: "pipe",
-  });
-  return `${result.stdout.toString()}${result.stderr.toString()}`;
+// How one tsc run ended. The exit status is the evidence that tsc finished; what it printed is not,
+// because a run that is killed part-way may print nothing at all.
+interface TscRun {
+  // null when a signal ended the process instead of an exit
+  exitCode: number | null;
+  signal: string | null;
+  output: string;
+  // set when tsc never started (Bun throws, for example, when bunx is not on PATH)
+  spawnError: string | null;
+}
+
+function runTsc(): TscRun {
+  try {
+    const result = Bun.spawnSync({
+      cmd: ["bunx", "tsc", "--noEmit", "--pretty", "false", "-p", project],
+      cwd: repoRoot,
+      // The suite outgrew Node's default heap on GitHub's runners: tsc died with "heap out of
+      // memory" on most pull requests, which reads as a type error nobody made.
+      env: {
+        ...process.env,
+        NODE_OPTIONS:
+          `${process.env.NODE_OPTIONS ?? ""} --max-old-space-size=6144`.trim(),
+      },
+      stdout: "pipe",
+      stderr: "pipe",
+    });
+    return {
+      exitCode: result.exitCode,
+      signal: result.signalCode ?? null,
+      output: `${result.stdout.toString()}${result.stderr.toString()}`,
+      spawnError: null,
+    };
+  } catch (error) {
+    return {
+      exitCode: null,
+      signal: null,
+      output: "",
+      spawnError: error instanceof Error ? error.message : String(error),
+    };
+  }
 }
 
 // One diagnostic: `key` is what the baseline compares on (file, code, message — no position);
@@ -105,6 +134,31 @@ function parse(output: string): Diagnostic[] {
   );
 }
 
+// Why tsc did not finish, or null when it did. The exit status decides: tsc exits 0 when it found
+// nothing, and 1 (or 2) once it has printed diagnostics. Anything else is not a result, whatever it
+// printed: a signal, 128 + N (137 is SIGKILL from the out-of-memory killer, 143 is SIGTERM), a spawn
+// failure, or an exit with no diagnostic for the gate to compare.
+function unfinishedReason(
+  run: TscRun,
+  diagnostics: Diagnostic[],
+): string | null {
+  if (run.spawnError !== null) return `could not start it: ${run.spawnError}`;
+  if (run.signal !== null) return `killed, signal ${run.signal}`;
+  if (run.exitCode === null) return "no exit status";
+  if (run.exitCode >= 128) return `killed, exit ${run.exitCode}`;
+  if (run.exitCode === 0) {
+    return diagnostics.length === 0 && run.output.trim() !== ""
+      ? "printed output that is not a diagnostic"
+      : null;
+  }
+  if ((run.exitCode === 1 || run.exitCode === 2) && diagnostics.length > 0) {
+    return null;
+  }
+  return diagnostics.length === 0
+    ? `exit ${run.exitCode}, no diagnostic printed`
+    : `exit ${run.exitCode}`;
+}
+
 function readBaseline(): string[] {
   if (!existsSync(baselinePath)) return [];
   return readFileSync(baselinePath, "utf8")
@@ -128,17 +182,20 @@ function subtract(from: string[], remove: string[]): string[] {
   return left;
 }
 
-const output = runTsc();
-const diagnostics = parse(output);
+const run = runTsc();
+const diagnostics = parse(run.output);
 const actual = diagnostics.map((d) => d.key);
 
-// A tsc crash, a bad config or a missing dependency produces output with no parseable diagnostic
-// and a non-empty body. Treat that as a failure rather than as "zero errors, all good" — a gate
-// that goes green when its checker did not run is the defect this whole exercise exists to kill.
-if (actual.length === 0 && output.trim() !== "") {
-  console.error("tsc produced output but no parseable diagnostics:\n");
-  console.error(output);
-  process.exit(1);
+// A gate that goes green when its checker did not run is the defect this whole exercise exists to
+// kill. A tsc crash, a bad config, a missing dependency or an out-of-memory kill is not a result, and
+// the exit status is what tells those apart from a run that finished.
+const notFinished = unfinishedReason(run, diagnostics);
+if (notFinished !== null) {
+  console.error(
+    `tsc did not finish (${notFinished}): this is not a result; run it again on a free machine.`,
+  );
+  if (run.output.trim() !== "") console.error(`\n${run.output}`);
+  process.exit(2);
 }
 
 if (process.argv.includes("--update")) {
