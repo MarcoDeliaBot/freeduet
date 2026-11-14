@@ -5,8 +5,10 @@ outcome. segment.py owns everything that is not the engine: the transcript, the 
 state machine that decides when a segment ends, the report guard. An engine owns its process, its
 stream, its failures and the environment it is started with.
 
-Only `run_turn` and `child_env` are in the contract so far. The plan's `probe()` and `limit` belong to
-slice 2 and are not here.
+The contract is `run_turn`, `child_env` and `probe` (slice 2). The plan's `limit` ("usage limit, rate limit
+or credits exhausted, with reset time when the engine reports one", ARCHITECTURE 3.1) is not a member of
+the adapter: a limit is a fact about one turn, so an engine states it through `Diagnostics.health`, as a
+`Failure` of failure_classifier (its kind and the moment it said it would be back).
 """
 
 from abc import ABC, abstractmethod
@@ -15,6 +17,15 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Protocol
 
+from .failure_classifier import Failure
+
+# What a probe says when it could not finish. Fixed phrases, never what the engine printed: an engine's
+# own words can hold an account (an email, an organisation), and a probe never carries those.
+NOT_INSTALLED = "not installed"
+TIMED_OUT = "timed out"
+UNREADABLE = "unreadable answer"
+COULD_NOT_RUN = "could not run"
+
 
 @dataclass(frozen=True)
 class Gate:
@@ -22,6 +33,36 @@ class Gate:
 
     port: int
     secret: str = field(repr=False)
+
+
+@dataclass
+class Health:
+    """How the engine says one turn went, for the engine breaker (engine_state.py). The engine fills it in as
+    it reads its own output; it is read once, when the segment is over. Nothing here is text the engine sent.
+
+    `failure` is what the engine reported when the turn did not go through: its kind and the reset time it
+    stated. `answered` is that the engine produced something (text or a tool call), which is the plan's "the
+    engine accepted the turn". A failure outweighs an answer: a limit that arrives after the first words is
+    still a limit. Neither set means the engine said nothing about its health (it could not start, or the
+    segment stopped it before it spoke).
+    """
+
+    answered: bool = False
+    failure: Failure | None = None
+
+
+@dataclass(frozen=True)
+class ProbeResult:
+    """What a probe found. None is "could not tell", never "no": a probe that timed out says nothing about
+    the sign-in. Never an account: whether the engine is signed in, not which account it is.
+
+    `problem` is one of NOT_INSTALLED, TIMED_OUT, UNREADABLE, COULD_NOT_RUN when the probe could not finish.
+    """
+
+    installed: bool | None = None
+    version: str | None = None
+    signed_in: bool | None = None
+    problem: str | None = None
 
 
 @dataclass
@@ -35,6 +76,8 @@ class Diagnostics:
     handed_over: list[str] = field(default_factory=list)  # refused calls the segment handed to OpenBot
     # What the engine wants logged once the whole segment is over (not while its turn is still going).
     at_close: list[Callable[[], None]] = field(default_factory=list)
+    # How the engine says the turn went. Read after the segment, by the wrapper that records it.
+    health: Health = field(default_factory=Health)
 
 
 @dataclass(frozen=True)
@@ -85,6 +128,13 @@ class EngineAdapter(ABC):
         own environment by default) and the engine's own entry, never copied wholesale."""
 
     @abstractmethod
+    async def probe(self) -> ProbeResult:
+        """Whether the engine is installed, which version, and whether it is signed in: bounded to a few
+        seconds, never a model call (it must not spend the person's subscription), never an account in
+        the answer or in a log, and started like any turn (the engine's own environment, no secret of this
+        service, a folder of its own, stopped at the deadline). Never raises."""
+
+    @abstractmethod
     async def run_turn(self, ctx: TurnContext, sink: Sink, gate: Gate) -> Outcome:
         """Run one segment's turn. Stops the engine's process and tasks before it returns or when it
-        is cancelled."""
+        is cancelled. Says how it went in `ctx.diagnostics.health`."""

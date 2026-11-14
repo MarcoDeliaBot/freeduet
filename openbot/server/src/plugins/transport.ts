@@ -163,6 +163,43 @@ const TRANSPORTS: Record<TransportKind, VendorTransport> = {
 };
 
 /**
+ * Which transports answer `listTools` from THIS CODE and from nothing else: no request, no
+ * credential, no vendor.
+ *
+ * CRITERION. A kind is `true` only if listing it cannot touch the network and cannot need anybody's
+ * account, so asking it at start-up is as safe as reading a constant.
+ *
+ * REASON. A connector's tool list is stored in `mcp_tools` when somebody adds it or presses
+ * Refresh, and nothing else ever rewrites it. A build that gives one of these a new tool therefore
+ * leaves every deployment that already had the connector without that tool until an administrator
+ * remembers to refresh (issue #102). For the four below the list is a constant of the build, so
+ * the deployment can bring the stored copy up to date on its own, at start, with nothing to ask.
+ *
+ * NOT `listNeedsCredential`, though it looks like the same question. That flag says whether a
+ * credential must be SELECTED for the listing, and it is false for Composio and Arcade too: they
+ * hold one deployment key and never receive a credential through the connection, but they still
+ * list by asking a vendor over the network. "No credential" is not "no network", and an unattended
+ * start-up must never dial out, so the answer is written down per kind here instead of inferred.
+ *
+ * A RECORD OVER {@link TransportKind}, so the compiler asks the question again for any kind added
+ * later and a new transport cannot become one of these by being forgotten.
+ */
+const LISTS_FROM_CODE: Record<TransportKind, boolean> = {
+  mcp: false,
+  "google-drive-rest": true,
+  "google-workspace-rest": true,
+  "google-imap": true,
+  "builtin-routines": true,
+  composio: false,
+  arcade: false,
+};
+
+/** Whether this kind's tool list is this build's own code. See {@link LISTS_FROM_CODE}. */
+export function listsFromCode(kind: TransportKind): boolean {
+  return LISTS_FROM_CODE[kind];
+}
+
+/**
  * The transport for a resolved kind.
  *
  * A kind rather than a catalogue entry, because deciding the kind is no longer this file's business.

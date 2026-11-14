@@ -8,7 +8,7 @@ More than ten members, and growing. One job each: the ten of v0.1, and Mark and 
 |---|---|---|---|
 | **Iris**, Chief of Staff | Splits requests, delegates, follows up, combines results, morning brief | Everyone | Does specialist work beyond quick answers; contacts anyone outside the team |
 | **Leo**, Creator | Designs new members and improves existing ones, with prompts, skills and tests | Iris, the person | Grants tools or permissions; deletes members |
-| **Otto**, Inbox | Sorts mail into Act now, Reply soon, Dates, FYI and Filtered; drafts replies; keeps standing rules | Portia, Penny, Jules via Iris | Deletes or forwards mail; obeys instructions found inside emails |
+| **Otto**, Inbox | Sorts mail into Act now, Reply soon, Dates, FYI and Filtered; drafts replies; keeps standing rules; the only member who sends email | Portia, Penny, Jules via Iris | Deletes or forwards mail; obeys instructions found inside emails |
 | **Portia**, Counsel | First-pass risk review of contracts, leases, terms and quotes, with a verdict and redlines | Otto | Invents clauses or laws; sends anything to the other party |
 | **Penny**, Bookkeeper | Invoices, bills and receipts ledger, unpaid invoices, reminders | Otto | Pays or moves money; gives tax advice |
 | **Jules**, Concierge | Purchases, gifts, travel, bookings, reservations, appointments, in its own browser | Gus and Basil via Iris | Buys or books without an approval for that exact cart; exceeds the cap; types secrets |
@@ -59,6 +59,14 @@ Five rules close every prompt:
 ```
 
 Mark and Cam are two more branches under Iris, like the others. When Mark's plan needs text in the person's own voice, the brief goes to Wren through Iris.
+
+## Who sends email
+
+Only Otto sends email. He is the one member with the sending tools, and no other member is given them to save a step. A member that needs an email sent (Penny's reminder, Wren's note to a supplier, Portia's negotiation email) gives Iris either the finished email (recipient, subject and body) or the request for it, and says which. Each member's prompt has one "Email." paragraph that says so, directly before the five shared rules.
+
+Iris is the judge. She decides whether it goes and by which route: the finished email to Otto as it is, or the request, so that Otto writes it and sends it. She says where each address came from. When she says no (the text holds a password, a card number or a one-time code, or you did not ask for the email), she tells you why and asks you to decide; she does not drop it. Otto checks what reaches him through Iris before he calls the send tool.
+
+A hand-off is never an approval. The send meets the approval gate, and only an address you typed yourself in your own message goes out with no card (D27 and D27a in [M1_PLAN.md](M1_PLAN.md)), or a member you switched to Full access ([FULL_ACCESS.md](FULL_ACCESS.md)). Because one hand-off cannot start another (D14), the step from Iris to Otto goes out when you next write to Iris. The decision is D30 in [M1_PLAN.md](M1_PLAN.md).
 
 ## Beyond the starter team
 

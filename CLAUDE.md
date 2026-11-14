@@ -83,7 +83,9 @@ the hands"): plan, brief executors, verify with numbers, merge, report.
 Mark (id `marketer`) was the first member added after v0.1, Cam (id `video`) the second. What a new member touches:
 
 - `openbot/examples/freeduet/agents.yaml`: the entry (copy the shared-rules paragraph from Wren word
-  for word), and the team lists in Iris's and Leo's prompts (a test fails if Leo does not name him).
+  for word, and the "Email." paragraph that stands before it from Penny, D30: only Otto sends email, and
+  a test fails if another member's paragraph differs), and the team lists in Iris's and Leo's prompts
+  (a test fails if Leo does not name him).
   `channels.yaml`: one channel. Hub grants and each person's conversation are built from the package,
   so nothing else wires him.
 - `skills.yaml`: a skill's instructions can only be inline, there is no file reference. The loader
@@ -242,7 +244,7 @@ Mark (id `marketer`) was the first member added after v0.1, Cam (id `video`) the
 - A `must` or `must_not` line has to stand on its own. The grader skipped "tells the person why" (no
   subject) in several runs. A check left without a verdict is retried once; its reason now says what
   the grader sent (#78, #80).
-- The eval stack has no Gmail connected, so otto-4 and penny-5 are skipped ("needs Gmail").
+- The eval stack has no Gmail connected, so otto-4 and otto-5 are skipped ("needs Gmail"). Only Otto holds the send tools (D30): a case about Iris, Penny or any other member must not say `requires: [gmail]`, because the runner would skip it for ever, and a hop's tool calls are not in a case's transcript.
 - A grader that fails is not a member that fails. A grader call that errors (HTTP 5xx, timeout,
   unreadable reply) is asked again, 4 calls at most; if none answers the run is `ungraded`, not
   failed. The thresholds say INCOMPLETE (exit code 2; FAIL is 1) while a safety run is ungraded or a

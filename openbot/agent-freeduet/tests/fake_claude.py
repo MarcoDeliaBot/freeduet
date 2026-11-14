@@ -34,6 +34,19 @@ Without a result step it ends with a successful result. Everything it saw (argv,
 names, prompt, MCP config, tools/list, tool results) goes to $FAKE_CLAUDE_DIR/run-<n>.json.
 It never reads any CLI configuration or credential folder.
 
+The probe's two commands, `--version` and `auth status`, are not runs: no plan is played and nothing
+is counted, so the numbers of the runs stay what they were. Each is recorded in
+$FAKE_CLAUDE_DIR/probe-<n>.json (argv, working folder, environment names, and what arrived on stdin:
+"" when it was closed at once). $FAKE_CLAUDE_DIR/probe.json may shape them:
+
+  {"version": {"text": "...", "exit": 0, "sleep": 0, "stderr": "..."},
+   "auth": {"text": "...", "fixture": "auth_status_signed_out.json", "exit": 1, "sleep": 0, "stderr": "...",
+            "bytes": 100000}}
+
+`fixture` prints a file of tests/fixtures as it is; `bytes` prints that many bytes of filler. Without
+a file, `--version` prints a version and `auth status` the signed-in fixture. `auth status` exits 1
+when what it prints says `"loggedIn": false`, like the real CLI, unless "exit" says otherwise.
+
 The report guard's follow-up (its prompt carries REPORT_GUARD_MARKER, a phrase of
 freeduet/report_guard.py's INSTRUCTION) plays $FAKE_CLAUDE_DIR/followups.json instead, one plan per
 follow-up, recorded as followup-<n>.json, so the plans of ordinary runs keep their numbers. Without a
@@ -42,6 +55,7 @@ plan it answers a line that is no report, and the guard adds nothing.
 
 import json
 import os
+import select
 import subprocess
 import sys
 import time
@@ -164,10 +178,56 @@ class Turn:
         return True
 
 
-def main(args: list[str]) -> int:
+def probe_call(args: list[str]) -> int | None:
+    """`claude --version` and `claude auth status`, the two commands the probe runs; None for anything else."""
     if args[:1] == ["--version"]:
-        print("2.1.311 (Claude Code, test double)")
+        which, text = "version", "2.1.311 (Claude Code, test double)"
+    elif args == ["auth", "status"]:
+        which, text = "auth", (FIXTURES / "auth_status_signed_in.json").read_text()
+    else:
+        return None
+    # The next free name, claimed atomically: probes may run side by side.
+    index = 0
+    while True:
+        try:
+            handle = os.open(DIR / f"probe-{index}.json", os.O_CREAT | os.O_EXCL | os.O_WRONLY)
+            break
+        except FileExistsError:
+            index += 1
+    ready, _, _ = select.select([sys.stdin], [], [], 1.0)
+    arrived = sys.stdin.read() if ready else "<stdin left open>"  # closed at once: EOF, so ""
+    with os.fdopen(handle, "w") as record:
+        json.dump({
+            "command": which, "argv": args, "pid": os.getpid(), "cwd": os.getcwd(), "cwd_entries": sorted(os.listdir(".")),
+            "env": sorted(os.environ), "stdin": arrived,
+        }, record, indent=1)
+    plan_file = DIR / "probe.json"
+    plan = (json.loads(plan_file.read_text()) if plan_file.exists() else {}).get(which, {})
+    if "fixture" in plan:
+        text = (FIXTURES / plan["fixture"]).read_text()
+    if "text" in plan:
+        text = plan["text"]
+    if plan.get("sleep"):
+        time.sleep(plan["sleep"])
+    if plan.get("stderr"):
+        sys.stderr.write(plan["stderr"] + "\n")
+        sys.stderr.flush()
+    if "bytes" in plan:
+        text = "x" * plan["bytes"]
+    sys.stdout.write(text if text.endswith("\n") or "bytes" in plan else text + "\n")
+    sys.stdout.flush()
+    if "exit" in plan:
+        return plan["exit"]
+    try:
+        return 1 if which == "auth" and json.loads(text).get("loggedIn") is False else 0
+    except (ValueError, AttributeError):
         return 0
+
+
+def main(args: list[str]) -> int:
+    probed = probe_call(args)
+    if probed is not None:
+        return probed
     prompt = sys.stdin.read()
     followup = REPORT_GUARD_MARKER in prompt
     counter = DIR / ("followup-count" if followup else "count")
