@@ -25,6 +25,7 @@
   "jules": "Freitag einen freien Tisch gefunden.",
   "wren": "Dein Beitrag ist zum Lesen bereit.",
   "mark": "Ein erster Plan für nächsten Monat.",
+  "video": "Eine erste Schnittliste zum Prüfen.",
   "gus": "Prüf zuerst das Schließblech.",
   "basil": "Drei Ideen fürs Abendessen.",
   "vera": "Geprüft: Die Summen stimmen.",
@@ -87,7 +88,7 @@
  "s5p": "Was erledigt wurde, was nicht und warum, und wie es weitergeht. Keine Textwüsten.",
  "flowAlt": "Du sprichst mit Iris, Iris gibt die Arbeit an die Spezialisten, Vera prüft sie, die Antwort kommt zu dir zurück",
  "you": "Du",
- "flowMore": "…und Gus, Basil, Mark und Leo",
+ "flowMore": "…und Gus, Basil, Mark, Cam und Leo",
  "sf_h": "Fünf Knöpfe, die auf dein Ja warten",
  "sf_p": "Würdest du einem neuen Assistenten am ersten Tag deinen Geldbeutel anvertrauen? Wir auch nicht. Deshalb warten diese fünf standardmäßig auf dein Ja. Nur du kannst das pro Mitglied abschalten.",
  "b1": "Senden",
@@ -127,7 +128,7 @@
  "r2": "Oberste Priorität: ein Installer in einer Datei für Windows, macOS und Ubuntu. Neue Mitglieder folgen, jeweils getestet.",
  "r3": "Für jedes Mitglied den KI-Dienst wählen und echte Aufgabenverteilung im Team.",
  "r4": "Per Chat geschriebene Automationen, mehr verbundene Apps, Telefon-Version, Fernzugriff.",
- "r5": "Stimme, Cam, sichere Einkäufe. Full access ist gebaut, aber noch nicht im Echtbetrieb getestet.",
+ "r5": "Stimme, sichere Einkäufe. Full access ist gebaut, aber noch nicht im Echtbetrieb getestet. Cam, das Video-Mitglied, gehört zum Team; seine Tests sind noch nicht im Echtbetrieb gelaufen, und er kann über den Chat noch keine Datei übergeben.",
  "r_note": "Wir kennzeichnen alles, was noch nicht gebaut ist. Keine Märchen. <a href=\"https://github.com/MarcoDeliaBot/freeduet/blob/main/docs/ROADMAP.md\">Vollständige Roadmap auf GitHub</a>.",
  "in_h": "Von der Installation bis zur ersten nützlichen Aufgabe",
  "in_p": "Vier Schritte, in der echten Reihenfolge. Alle Befehle stehen weiter unten auch in einem Kasten, bereit zum Kopieren.",
@@ -216,6 +217,11 @@
    "Marketing",
    "Erstellt deinen Marketingplan, deinen Launch-Plan und deine Kanalstrategie und prüft deine Website, SEO und Anzeigen. Er veröffentlicht nichts und gibt nichts aus, ohne dass du Ja sagst.",
    "Erstelle mir einen Marketingplan für drei Monate für meinen Laden."
+  ],
+  "video": [
+   "Video",
+   "Schneidet kurze Videos aus deinem Material oder nach einem Skript, mit Untertiteln, Musik und Ton, im Quer-, Hoch- und Quadratformat. Er veröffentlicht oder lädt nie ein Video hoch.",
+   "Mach aus diesem Skript ein 30-Sekunden-Hochformatvideo mit Untertiteln."
   ],
   "gus": [
    "Reparaturen",

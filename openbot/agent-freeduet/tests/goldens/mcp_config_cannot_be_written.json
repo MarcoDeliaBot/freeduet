@@ -1,0 +1,69 @@
+{
+ "streams": [
+  {
+   "events": [
+    {
+     "type": "RUN_STARTED",
+     "threadId": "thread-1",
+     "runId": "run-1"
+    },
+    {
+     "type": "RUN_ERROR",
+     "message": "agent-freeduet failed on this turn. Send it again; if it keeps failing, check its log."
+    }
+   ],
+   "keepalives": 0,
+   "sha256": "cd24d7196f994f64a88cd4a8805119809b9245e564f93370bf2ad0646e3860d0"
+  }
+ ],
+ "launches": [],
+ "cli_runs": [],
+ "cli_followups": [],
+ "cli_gone": [],
+ "callbacks": [],
+ "team_log": [
+  {
+   "member": "freeduet",
+   "thread": "thread-1",
+   "run": "run-1",
+   "outcome": "error",
+   "summary": "agent-freeduet failed on this turn. Send it again; if it keeps failing, check its log.",
+   "from_iris": false,
+   "approvals": null,
+   "report_guard": null
+  }
+ ],
+ "checkpoints": [
+  {
+   "schema_version": 1,
+   "writer_version": "1.2.0+freeduet.1",
+   "created_at": "<time>",
+   "agent": "freeduet",
+   "run": "thread-1",
+   "phase": "blocked",
+   "state": {
+    "objective": "Write the plan as a page.",
+    "constraints": [],
+    "completed": [],
+    "decisions": [],
+    "in_progress": [],
+    "changed_files": [],
+    "verification": [],
+    "blockers": [
+     "Error: agent-freeduet failed on this turn. Send it again; if it keeps failing, check its log."
+    ],
+    "next_steps": [
+     "Run the turn again once the error is resolved"
+    ]
+   }
+  }
+ ],
+ "logs": [
+  [
+   "freeduet",
+   "ERROR",
+   "segment failed",
+   "OSError"
+  ]
+ ]
+}

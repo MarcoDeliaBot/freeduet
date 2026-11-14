@@ -157,7 +157,7 @@ def build_text_command(executable: str, system_text: str, model: str | None, dir
     return [*command, *_system_args(system_text, directory)]
 
 
-async def start(command: list[str], cwd: Path) -> asyncio.subprocess.Process:
+async def start(command: list[str], cwd: Path, env: dict[str, str] | None = None) -> asyncio.subprocess.Process:
     # A session of its own, so stopping it stops the bridge it launched as well.
     return await asyncio.create_subprocess_exec(
         *command,
@@ -165,7 +165,7 @@ async def start(command: list[str], cwd: Path) -> asyncio.subprocess.Process:
         stdout=asyncio.subprocess.PIPE,
         stderr=asyncio.subprocess.PIPE,
         cwd=cwd,
-        env=child_env(),
+        env=child_env() if env is None else env,
         limit=MAX_LINE,
         start_new_session=True,
     )
