@@ -627,14 +627,30 @@ test("hands no service the installation's secret, and none can read the file it 
   const named = renderEveryProfile({ FREEDUET_INSTALL_SECRET: secret }, [
     "--no-env-resolution",
   ]);
+  // What Compose renders depends on its version and on whether an optional file exists on this
+  // machine (an older Compose drops an `env_file` whose optional file is missing), so the files read
+  // are also taken from the compose file's own text, which is the same on every runner.
   const readFiles = Object.values(named.services).flatMap((service) =>
     (service.env_file ?? []).map((entry) =>
       typeof entry === "string" ? entry : (entry.path ?? ""),
     ),
   );
-  // Positive control: the files that are read at all show up here, so an empty list is not a blind one.
-  expect(readFiles.some((path) => path.endsWith("egress.env"))).toBe(true);
-
+  const declared: string[] = [];
+  const lines = composeFile().split("\n");
+  for (let i = 0; i < lines.length; i++) {
+    const header = lines[i].match(/^(\s*)env_file:\s*(\S.*)?$/);
+    if (!header) continue;
+    if (header[2]) declared.push(header[2].replace(/^\[|\]$/g, ""));
+    for (let j = i + 1; j < lines.length; j++) {
+      const indent = lines[j].match(/^(\s*)/)?.[1].length ?? 0;
+      if (lines[j].trim() !== "" && indent <= header[1].length) break;
+      const entry = lines[j].match(/^\s*-?\s*(?:path:\s*)?(\S+)\s*$/);
+      if (entry && !entry[1].startsWith("required")) declared.push(entry[1]);
+    }
+  }
+  readFiles.push(...declared);
+  // Positive control on the text, not on a rendering: the files read are named at all.
+  expect(declared.some((path) => path.endsWith("egress.env"))).toBe(true);
   const composeDirectory = join(import.meta.dir, "..");
   const settingsFile = join(composeDirectory, ".env");
   const isSettingsFile = (path: string) => /(^|\/)\.env(\.[^/]*)?$/.test(path);
