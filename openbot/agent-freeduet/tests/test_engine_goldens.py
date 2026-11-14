@@ -223,7 +223,7 @@ def usage_limit_recorded(rig):
 
 @scenario
 def usage_limit_on_stderr_without_a_result(rig):
-    rig.plan([{"stderr": "Claude usage limit reached. Your limit will reset at 2100-01-01 00:00 UTC."}, {"exit": 1}])
+    rig.plan([{"stderr": "usage limit"}, {"exit": 1}])
     rig.post(run_body(ASK))
 
 

@@ -9,12 +9,12 @@
     },
     {
      "type": "RUN_ERROR",
-     "message": "Claude Code has reached its usage limit (Claude Code says: \"Claude usage limit reached. Your limit will reset at 2100-01-01 00:00 UTC\"). Try again after it resets.",
+     "message": "Claude Code has reached its usage limit (Claude Code says: \"usage limit\"). Try again after it resets.",
      "code": "FREEDUET_ENGINE_LIMITED"
     }
    ],
    "keepalives": 0,
-   "sha256": "090ee40293af6088c8787075252509c81b6c0e2ddc2e03375d5cc29013ef16ab"
+   "sha256": "17a77618a1d8b2d3af39d329feaea963c8ba5be546bb552a69eacceec81e34f3"
   }
  ],
  "launches": [
@@ -179,7 +179,7 @@
    "thread": "thread-1",
    "run": "run-1",
    "outcome": "error",
-   "summary": "Claude Code has reached its usage limit (Claude Code says: \"Claude usage limit reached. Your limit will reset at 2100-01-01 00:00 UTC\"). Try again after it resets.",
+   "summary": "Claude Code has reached its usage limit (Claude Code says: \"usage limit\"). Try again after it resets.",
    "from_iris": false,
    "approvals": null,
    "report_guard": null
@@ -202,7 +202,7 @@
     "changed_files": [],
     "verification": [],
     "blockers": [
-     "Error: Claude Code has reached its usage limit (Claude Code says: \"Claude usage limit reached. Your limit will reset at 2100-01-01 00:00 UTC\"). Try again after it resets."
+     "Error: Claude Code has reached its usage limit (Claude Code says: \"usage limit\"). Try again after it resets."
     ],
     "next_steps": [
      "Run the turn again once the error is resolved"
@@ -214,7 +214,7 @@
   [
    "freeduet.segment",
    "INFO",
-   "claude stderr: Claude usage limit reached. Your limit will reset at 2100-01-01 00:00 UTC.\n",
+   "claude stderr: usage limit\n",
    null
   ]
  ]
