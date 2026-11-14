@@ -108,7 +108,7 @@ describe("show_app_access for an app whose Bot is missing a tool its skills need
   test("tells the Bot on a one-person deployment that the person can allow it themselves, and where", async () => {
     const { message } = await told(access("ready", [SEND]), true);
     expect(message).toBe(
-      "Gmail is ready for this person to use through you, except for GMAIL_SEND_EMAIL (Send a new email): your skills need this tool and you have not been granted it. This person is the only one here, so they can allow it themselves: the card in front of them has Request access, and they approve it under Requests on the Plugins page in settings. Tell them plainly that you have not been granted it and that they can do it themselves. Do not try another tool to get around it, and do not browse to its website or ask them to sign in there.",
+      "Gmail is ready for this person to use through you, except for GMAIL_SEND_EMAIL (Send a new email): your skills need this tool and you have not been granted it. This person is the only one here, so they can allow it themselves: the card in front of them has Request access, and they approve it under Requests on the Plugins page of Admin, in settings. Tell them plainly that you have not been granted it and that they can do it themselves. Do not try another tool to get around it, and do not browse to its website or ask them to sign in there.",
     );
     expect(message).not.toContain("dministrator");
   });

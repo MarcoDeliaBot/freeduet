@@ -123,7 +123,7 @@ function toldTheModel(access: AppAccess, singleUser = false): string {
     const list = wants.map((tool) => `${tool.name} (${tool.label})`).join(", ");
     const these = wants.length === 1 ? "it" : "them";
     const whoCanGive = singleUser
-      ? `This person is the only one here, so they can allow ${these} themselves: the card in front of them has Request access, and they approve it under Requests on the Plugins page in settings. Tell them plainly that you have not been granted ${these} and that they can do it themselves.`
+      ? `This person is the only one here, so they can allow ${these} themselves: the card in front of them has Request access, and they approve it under Requests on the Plugins page of Admin, in settings. Tell them plainly that you have not been granted ${these} and that they can do it themselves.`
       : `The card in front of the person lets them ask an administrator to grant ${these} to you. Say plainly that you cannot do that part yet because you have not been granted ${these}.`;
     return `${name} is ready for this person to use through you, except for ${list}: your skills need ${wants.length === 1 ? "this tool" : "these tools"} and you have not been granted ${these}. ${whoCanGive} Do not try another tool to get around it, and do not browse to its website or ask them to sign in there.`;
   }
