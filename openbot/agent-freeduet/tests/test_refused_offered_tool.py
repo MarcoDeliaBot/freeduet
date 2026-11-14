@@ -34,8 +34,9 @@ import logging
 
 import pytest
 
+from freeduet import segment
 from freeduet.stream_json import Refused, StreamParser
-from helpers import post_run, run_body, standing, tool, types
+from helpers import SETTLE_NEVER, post_run, run_body, standing, tool, types
 
 NAVIGATE = {"url": {"type": "string"}}
 TOOLS = [tool("computer_navigate", NAVIGATE), tool("computer_read"), tool("make_page", {"title": {"type": "string"}})]
@@ -100,9 +101,15 @@ def test_the_handed_over_call_carries_the_clis_own_call_id_and_its_text(client, 
     assert start["toolCallId"].startswith("toolu_")
 
 
-def test_several_refused_calls_of_one_message_are_all_handed_over(client, fake_cli):
+def test_several_refused_calls_of_one_message_are_all_handed_over(client, fake_cli, monkeypatch):
+    # The CLI plays both steps and ends by itself, and that ends the segment: no timer is part of this
+    # test. With the 0.1 s window of the other tests, a CLI that is slow between the two refusals loses
+    # the second one. The pause below is that slowness, on purpose; a slow file write on a busy CI runner
+    # did it by itself (14 Nov 2026).
+    monkeypatch.setattr(segment, "SETTLE_SECONDS", SETTLE_NEVER)
     fake_cli.plan([
         {"tool": {"name": "computer_navigate", "input": OPEN, "plain": True}, "real_cli": True},
+        {"sleep": 0.25},
         {"tool": {"name": "make_page", "input": {"title": "Ideas"}, "plain": True}, "real_cli": True},
     ])
     events, _ = post_run(client, run_body(ASK, tools=TOOLS))
