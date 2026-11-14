@@ -49,6 +49,7 @@ import { observeModelConnection } from "./desktop-connection-failure";
 import { desktopTelemetryProperties } from "./desktop-telemetry";
 import { localThreadBackend, type ThreadBackend } from "./freeduet/backend";
 import { coordinationRunsInBand } from "./freeduet/coordination";
+import { withEngineChoices } from "./freeduet/engine-choices";
 import { RUNTIME_KEEP_ALIVE_SECONDS } from "./freeduet/keep-alive";
 import type { ThreadClient } from "./freeduet/local-intelligence";
 import { withPersonLanguage } from "./freeduet/person-language";
@@ -1483,7 +1484,8 @@ function remoteAgentWithStandingRole(
                 ]
               : input.context,
           // Who the Bot is calling back as, so the audit row names it rather than "an agent".
-          forwardedProps,
+          // FreeDuet (engines dashboard): the person's engine choices for this Bot, after removing any the caller sent.
+          forwardedProps: withEngineChoices(forwardedProps, agent.id),
         };
         if (clientTools.length === 0) return next.run(prepared);
         return new HeadlessToolsMiddleware(
