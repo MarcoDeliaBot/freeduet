@@ -206,3 +206,38 @@ One PR each. Sizes follow [ENGINES_PLAN.md](../ENGINES_PLAN.md) section 2 [code:
 - The two outside pages were read through a summarising fetch, so their wording is a paraphrase. The OWASP page gave only its entry names.
 - That `routes.ts`, `profile-store.ts` and `form.ts` are upstream code is inferred from the commit that added them [assumed].
 - Whether the engine seam changes member turns beyond the call at `claude_engine.py:70` [assumed].
+
+## Built so far
+
+Slice S1 (section 4) is built on branch `team-file-slice-1`: the two formats and the reader, with tests. S2 to S10 are not started. The reader is pure: it writes nothing, touches no database, and makes no card or Bot.
+
+**Built**
+- `openbot/server/src/freeduet/team-file.ts`: the formats `freeduet-member/1` and `freeduet-team/1`, and `readTeamFile(text, package)`. It returns the first refusal, with the path of the field and one plain sentence, or the file read, with its notices.
+- `openbot/server/src/tenant-package.ts`: one addition to the loader. `validateTenantPackage` also returns `declaredAgents`, every coworker the package declares, including one this deployment does not run (a remote coworker with no endpoint), with its name, skill slugs and instructions. Nothing else in the loader changes (+48 −1; the row is in `docs/UPSTREAM_TOUCHES.md`). The reader needs it because `agents` leaves out a remote coworker with no endpoint, so the shared rules and the names of those coworkers would be invisible.
+- The refusals of section 3.2, each with its own test and a path that names the field: `${` in any text; hidden and control characters (every Cc and Cf character except tab and line feed, checked before the trim, so a byte-order mark at either end is refused too); any key a file may not set, and any unknown key; a repeated key, with both lines; a format line that is missing, unknown or another version; a content hash, which is optional and, when present, must be SHA-256 of the content; a starter member's name (compared with NFKC, lowercase, letters and digits only), the product's name, and a deployment route's word; a skill slug outside the package pattern or already shipped by the package; a repeated slug in one member, or one slug with different text in two members of a team; a tool ref not written `serverId/toolName`, or listed twice; a sending tool; a test request with no `must` or `must_not` line, a `safety` flag that is not true or false, or an unknown key; a file over 1 MB; one text over 64 KB; a file that starts with a byte-order mark; a team with no members, or two members with one name.
+- Composition: an imported member's instructions are its author's text, then the package's "Email." paragraph, then the shared rules, word for word from the package. An author's text that already carries either paragraph is refused.
+- Tool allowance: a tool ref is kept only when a skill attached to a declared coworker of the package holds it. The others are removed and listed in the notices (section 3.3).
+- Sending tools are refused by name: a tool whose name holds the word send, reply or forward. In the current package this matches exactly the four Gmail send refs, which a guard test pins.
+- `openbot/server/tests/freeduet-team-file.test.ts`: 57 tests. Fixtures are invented, and every test reads the real package through the real loader.
+
+**Verified** (14 November 2026)
+- The new test file: 57 pass, 0 fail.
+- Fail before: on origin/main the module does not exist, so the file cannot load (57 of 57). With only origin/main's loader put in place and my reader kept, 45 fail and 12 pass. The 12 are nine refusals decided before the package is read (not JSON, a byte-order mark at the start, over 1 MB, a format missing or unknown, a repeated key, a hash that does not match, a hash that is not SHA-256, a list instead of an object) and three guards of unchanged behaviour (the two package refusals and the slug rule checked against the loader's own rule).
+- A review before the PR found one gap: the trim ran before the hidden-character check, so a byte-order mark at the end of a text was dropped without a word. The check now runs first. The test for it failed before the fix (56 pass, 1 fail) and passes after.
+- Related suites (assertion-shape, tenant-package, freeduet-package, freeduet-team, freeduet-person-language, and the new file): 173 pass, 0 fail.
+- `bun run typecheck:tests`: clean against the baseline (239 known errors, none new). `bun run format:check` and `bun run lint --error-on-warnings`: clean.
+- Full server suite (`bun test server/tests`): 7,614 pass and 3 fail, of 7,637 tests in 486 files. The three are the ones the brief lists as failing on plain main (the two `learning-*` real-provider tests and the Mastra bridge). Plain main was not run again for this branch.
+
+**Not verified or not built**
+- No live run, no eval and no UI. Nothing here has been run against a real member file or against the eval stack.
+- The 64 KB and 1 MB limits are the design's proposals [assumed].
+- The reader takes text. The importer (S3) must decode the bytes strictly (`fatal: true`) and keep the byte-order mark (`ignoreBOM: true`), or the refusal of a leading byte-order mark never fires.
+- A skill slug already held by another owner needs the database, so that check waits for S4.
+- The sending check is by name, and it fails closed: a tool with one of the three words is refused even if it sends nothing, and its refusal then says it sends email. Today's package has no such tool.
+- The Email paragraph ends at the first line break of the loaded prompt. That is right while the package's prompts are folded (`>-`, as all twelve are). The guard test checks that the paragraph ends with its last sentence, so a literal block (`|`) in the package would fail it.
+- Every Cc and Cf character except tab and line feed is refused, so a zero-width joiner inside an emoji sequence is refused too.
+
+**Decisions** (section 6)
+- Decision 2, instruction cap: not built. The reader reports the length and enforces no cap. The appended text alone is 3,518 characters (the shared rules 3,062, the Email paragraph 452, and two separators of 2 characters each), so option A, keeping 1,000, leaves no room for an author's text. The table's 8% to 21% figure is 1,000 characters as a share of the starter prompts. It leaves out the appended text, which alone is over three times the cap. Option B changes the create form and the cost of every run, so it is the maintainer's call.
+- Decision 3, endpoints in a file: built as recommended. A file that names an endpoint is refused as a key a file may never set.
+- Decisions 1, 4, 5 and 6 belong to S4, S5, S6 and S2 respectively.
