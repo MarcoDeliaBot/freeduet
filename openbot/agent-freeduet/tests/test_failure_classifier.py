@@ -500,7 +500,7 @@ ALLOWED_IMPORTS = {
     "__future__", "collections.abc", "dataclasses", "datetime", "email.utils", "re", "typing",
     "freeduet.engine_errors",
 }
-FORBIDDEN_CALLS = {"open", "exec", "eval", "__import__", "input"}
+FORBIDDEN_CALLS = {"open", "exec", "eval", "__import__", "input", "print"}
 
 
 def test_the_module_imports_only_the_standard_library_and_engine_errors():
