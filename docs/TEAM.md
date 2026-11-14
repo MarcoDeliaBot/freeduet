@@ -1,6 +1,6 @@
 # The team
 
-More than ten members, and growing. One job each: the ten of v0.1, and Mark, the first one added after it. The prompts live in [`openbot/examples/freeduet/agents.yaml`](../openbot/examples/freeduet/agents.yaml); this page is the human-readable overview.
+More than ten members, and growing. One job each: the ten of v0.1, and Mark and Cam, the first ones added after it. The prompts live in [`openbot/examples/freeduet/agents.yaml`](../openbot/examples/freeduet/agents.yaml); this page is the human-readable overview.
 
 ## Who does what
 
@@ -17,6 +17,7 @@ More than ten members, and growing. One job each: the ten of v0.1, and Mark, the
 | **Basil**, Chef | Three dishes from what is there; what is worth buying | Jules via Iris for groceries | Ignores an allergy; buys anything |
 | **Vera**, Reviewer | Checks important work against the brief and the evidence: recomputes sums, compares quotes, re-opens prices | Iris, and every member whose work she checks | Fixes the work herself; approves because of a deadline or a request |
 | **Mark**, Marketer | Marketing plans, positioning, launch plans, channel and content strategy, ad and email briefs, search and conversion reviews, competitor notes; works with 53 marketing skills ([NOTICE.md](../NOTICE.md)) | Wren via Iris, for text in the person's own voice | Posts, sends or pays for ads without an approval; invents numbers, testimonials or reviews; claims to have read a file he was not given |
+| **Cam**, Video maker | Cuts, subtitles, music and sound for short videos from the person's footage or a script, as 16:9, 9:16 and 1:1 files, with ffmpeg in his own computer. His files stay there: handing a file over from the chat is not built yet. Five skills of his own; one points at an optional outside library that the person installs | Iris | Publishes or uploads a video; uses music, footage, photos, faces or voices without the person's word that the rights are theirs; makes a real person say or do what they did not |
 
 ## What every member shares
 
@@ -57,11 +58,11 @@ Five rules close every prompt:
                │  bookings  ──► Jules ◄────┴──────┘  parts and groceries, with approval
 ```
 
-Mark is one more branch under Iris, like the others. When his plan needs text in the person's own voice, the brief goes to Wren through Iris.
+Mark and Cam are two more branches under Iris, like the others. When Mark's plan needs text in the person's own voice, the brief goes to Wren through Iris.
 
 ## Beyond the starter team
 
-Specialists for particular jobs (recruiting, documents with sources, comparisons, automations, editorial desk, video, testing, games, teaching) come as installable packs, and light helpers on free models do the small jobs for every member: see [CATALOG.md](CATALOG.md).
+Specialists for particular jobs (recruiting, documents with sources, comparisons, automations, editorial desk, testing, games, teaching) come as installable packs, and light helpers on free models do the small jobs for every member: see [CATALOG.md](CATALOG.md).
 
 ## Team wiring
 

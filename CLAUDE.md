@@ -5,8 +5,8 @@ session learns something the next one would otherwise rediscover the hard way, a
 
 ## What this repository is
 
-FreeDuet is a self-hosted team of AI employees: Iris (the head) and ten members (Leo, Otto, Portia,
-Penny, Jules, Wren, Gus, Basil, Vera, and Mark, the marketer, added after v0.1). It is a thin fork of CopilotKit's OpenBot (under `openbot/`)
+FreeDuet is a self-hosted team of AI employees: Iris (the head) and eleven members (Leo, Otto, Portia,
+Penny, Jules, Wren, Gus, Basil, Vera, and, added after v0.1, Mark, the marketer, and Cam, the video maker). It is a thin fork of CopilotKit's OpenBot (under `openbot/`)
 plus `openbot/agent-freeduet/`, a Python service (port 4230) that runs each member on the person's own
 subscription login through a locked-down `claude -p`, with an MCP bridge for tools.
 
@@ -78,7 +78,7 @@ the hands"): plan, brief executors, verify with numbers, merge, report.
 
 ## Adding a team member
 
-Mark (id `marketer`) was the first member added after v0.1. What a new member touches:
+Mark (id `marketer`) was the first member added after v0.1, Cam (id `video`) the second. What a new member touches:
 
 - `openbot/examples/freeduet/agents.yaml`: the entry (copy the shared-rules paragraph from Wren word
   for word), and the team lists in Iris's and Leo's prompts (a test fails if Leo does not name him).
@@ -93,9 +93,28 @@ Mark (id `marketer`) was the first member added after v0.1. What a new member to
 - `evals/team/cases.yaml`: cases for the member, at least one `safety: true`. Pins to move with the
   count: `server/tests/freeduet-package.test.ts` (members), `freeduet-team.test.ts` (hub grants),
   `freeduet-person-language.test.ts` (prompts), and `evals/team/run.test.ts` (cases, safety cases,
-  members, team channels). Also `docs/TEAM.md`, `README.md`, `docs/CATALOG.md`, the two issue
-  templates, `NOTICE.md` for third-party text. `site/` has its own copy of the roster.
-- New cases are not certified until they run live on the eval stack.
+  members, team channels, and the list of cases whose `[fixture: ...]` bracket has no `attachments`),
+  `openbot/agent-freeduet/tests/test_report.py` and `openbot/scripts/freeduet-clean-start-check.sh`
+  (members). Also `docs/TEAM.md`, `README.md`, `docs/CATALOG.md`, `docs/ROADMAP.md`, `docs/COMPARISON.md`
+  and `docs/M0_DEMO.md` (case counts), `docs/PROJECT.md` (F20, the packs), `evals/team/README.md`, the
+  two issue templates, `NOTICE.md` for third-party text. `site/` has its own copy of the roster.
+- New cases are not certified until they run live on the eval stack. A case cannot send a skill picked
+  with `/`, so it can only test what the member's own prompt says.
+- A member that needs tools in his computer (Cam: ffmpeg, git, python3 with venv) gets them in the first
+  `apt-get` line of `openbot/agent-computer/Dockerfile`, the image that Compose and the supervisor give
+  each Bot (a Bot there runs as root with every capability dropped, `supervisor/src/docker.ts`, and the
+  image has no sudo, so installing at run time is not something to rely on). The all-in-one
+  `openbot/Dockerfile` is another image, where a Bot may `sudo apt-get`. Label the pull
+  request `full-ci`, because `component dockerfiles` and `image` run only on main and on that label.
+- A member cannot hand a file to the person from the chat yet. Chat attachments are pictures and text,
+  person to member only (`shared/attachments.ts`); `GET /api/computers/:botId/files/download` exists
+  but no screen and no member tool uses it. Say so in the prompt and change it with the feature.
+- `computer_run_command` has no timeout parameter and stops a command after about two minutes (and then
+  kills its whole process group, `agent-computer/src/shell.ts`); every call goes through the approval
+  gate. A member who renders starts long jobs in the background with the output sent to a file: a job
+  that keeps the command's output open holds the command until the two minutes are over.
+- An outside tool with split licences (Lemo-Opuscar: code MIT, every `*.md` CC BY-NC): wire it only as an
+  optional tool the person installs, and write the skill text yourself; never copy or paraphrase its docs.
 
 ## Git and pull requests
 

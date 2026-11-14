@@ -5,11 +5,11 @@ This page lists what is planned, in the order we currently think it matters. **N
 ## Where FreeDuet is today
 
 - **Version:** v0.1, 13 November 2026, an early release built and used by one maintainer.
-- **Team:** eleven members. Iris is the Chief of Staff; the others each have one job ([TEAM.md](TEAM.md)).
+- **Team:** twelve members. Iris is the Chief of Staff; the others each have one job ([TEAM.md](TEAM.md)).
 - **Engine:** your own Claude subscription, through the unmodified Claude Code login. No API key.
 - **Where it runs:** Windows with WSL2, and Linux. macOS has not been tested.
 - **What you need:** Docker, Bash and Bun, set up by hand.
-- **Tests:** the team evals passed on v0.1 (each member at 100% of its scored cases, safety cases 45 of 45 runs). Mark's four cases have not been run live yet.
+- **Tests:** the team evals passed on v0.1 (each member at 100% of its scored cases, safety cases 45 of 45 runs). The cases of Mark (four) and Cam (six) have not been run live yet.
 
 ## How to read the tables
 
@@ -29,8 +29,8 @@ The order inside a group is not a ranking, except that the one-file installer is
 | Item | What you get | Status | Constraints |
 |---|---|---|---|
 | **One-file installer** for Windows, macOS and Ubuntu | You download one file, double-click it, and FreeDuet starts. No Docker, Bash or Bun to set up by hand. | Planned | Top priority. FreeDuet must still start with no API key, and the Claude sign-in stays yours: FreeDuet never reads or stores it. A platform is called supported only after a test run on that platform. |
-| **A growing team** | New ready-made members added over time. Mark, the marketer, was the first after v0.1. Anyone can already train their own member (ask Leo, or write it yourself). | In progress (ongoing) | A member is added with its own evals. The catalogue of planned members is in [CATALOG.md](CATALOG.md). |
-| **More evals for each new member** | A new member is tested before it is called ready. | Planned | Each member must reach at least 90% of its cases and the safety cases 100% ([evals/team/README.md](../evals/team/README.md)). Mark's cases still need their first live run. Evals run by hand on a separate stack. |
+| **A growing team** | New ready-made members added over time. Mark, the marketer, and Cam, the video maker, are the first two after v0.1. Anyone can already train their own member (ask Leo, or write it yourself). | In progress (ongoing) | A member is added with its own evals. The catalogue of planned members is in [CATALOG.md](CATALOG.md). |
+| **More evals for each new member** | A new member is tested before it is called ready. | Planned | Each member must reach at least 90% of its cases and the safety cases 100% ([evals/team/README.md](../evals/team/README.md)). The cases of Mark and Cam still need their first live run. Evals run by hand on a separate stack. |
 | **New connector tools reach existing connections** (issue #102) | Today a connector connected before a tool existed never gets that tool. This would fix it, so a new tool appears without reconnecting. | Planned | Approvals do not change: a tool that sends, pays, signs, books or deletes still asks. |
 | **A secret per installation for the no-sign-in mode** | On installs where containers reach the server as if they were this machine (Docker Desktop), who you are must not rest on network position alone. | Planned | Closed on 14 November 2026 for Linux and WSL: the implicit administrator is this machine's loopback only. The Docker Desktop case is what this item is for. |
 
@@ -57,7 +57,7 @@ The order inside a group is not a ranking, except that the one-file installer is
 | Item | What you get | Status | Constraints |
 |---|---|---|---|
 | **Voice** | Members read answers aloud, and you can call them. | Planned | Optional local dictation exists today and is off by default. The voice engine for reading aloud and calls is not chosen yet. |
-| **Cam, the video member** | A member that makes and edits video for you. | Planned | Needs git, python and ffmpeg in the member's computer, and a way to download files from chat. Publishing a video is always an approval. |
+| **Cam, the video member** | A member that cuts and assembles short videos from your footage (given as a link) or from a script, adds subtitles, music and sound, and exports 16:9, 9:16 and 1:1 MP4 files, with ffmpeg in his own computer. | Built; not yet run live | **Built:** his prompt, six eval cases, five skills of his own (cut and assemble, subtitles, music and sound, export formats, and an optional outside library for films drawn by code that you install yourself), and ffmpeg, git and python3 with venv in the computer image. **Not built:** handing a finished file over from the chat (the files stay in his computer and he says where; the server has a download route that no screen or member tool uses yet, and what to do about it is not decided), footage attached to the chat (it takes pictures and text, not video), and a live eval run. He never publishes or uploads: publishing a video is always your own step or an approval, and music, footage, faces and voices are used only after you say the rights are yours. |
 | **"Full access" option** | An optional switch, set per member in Settings, that lets a member act without approval cards. It covers every action, payments and purchases included. | Built; not yet run live | Safe by default: off for every member until you turn it on, after a warning. Passwords, credentials and security settings still go to you; it applies to your own chats and never to routines or check-ins; admin team rules still apply. What it does and does not cover: [FULL_ACCESS.md](FULL_ACCESS.md). |
 | **Safe purchases** (v0.4) | Purchase permits tied to the exact shop and total, and spending caps. | Planned | Needs the engine work above. Payments stay blocked without an approval. |
 | **Import from Grok Bot** (v1.0) | Bring the agents you built in Grok Bot into FreeDuet ([how](import/grok-export-prompt.md)). | Planned | Nothing is saved without your confirmation. Our own code, written from scratch ([NOTICE.md](../NOTICE.md)). |
