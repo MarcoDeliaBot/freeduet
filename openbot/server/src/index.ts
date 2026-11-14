@@ -1079,6 +1079,27 @@ if (composio) {
   });
 }
 
+/*
+ * A connector connected before a newer build gave it a tool never had the tool, because its stored
+ * list is rewritten only when somebody adds it or presses Refresh (issue #102). The connectors whose
+ * list is this build's own code learn the new one here, at start. Nothing is asked of any vendor and
+ * nothing is granted — see `refreshBuiltInTools`. Not awaited and never fatal: the lists stay as they
+ * were if this cannot run, and Refresh on a connector's page still brings one up to date.
+ */
+void pluginStore
+  .refreshBuiltInTools()
+  .then(({ refreshed }) => {
+    for (const change of refreshed)
+      console.info(
+        JSON.stringify({ type: "builtin-tools-refreshed-at-start", ...change }),
+      );
+  })
+  .catch(() => {
+    console.warn(
+      "The tool lists of the built-in connectors could not be checked at start. They stay as they were; Refresh on a connector's page brings one up to date.",
+    );
+  });
+
 /**
  * Routines, and the one moment its tools are told what to act on.
  *

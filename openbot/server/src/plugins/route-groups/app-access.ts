@@ -494,10 +494,23 @@ export function mountAppAccessRoutes({
       }
 
       let granted: string[] = [];
+      /*
+       * A BOT THAT HOLDS SOME OF THE APP AND WHOSE SKILLS STILL NEED MORE OF IT (issue #102): a tool a
+       * newer build added is never granted by arriving, so it waits here for somebody to say yes. The
+       * same rule as a first grant decides what one press gives — only the read-only ones — and the
+       * same `refs` narrow or widen it; what differs is the set it draws from, which is the tools
+       * this Bot's skills need and not the whole app. The inbox row names them and sends them, so
+       * the press an administrator makes is for the tools they read.
+       */
+      const wants = inspected.access.wants ?? [];
+      const topUp =
+        request.kind === "grant" &&
+        inspected.access.granted &&
+        wants.length > 0;
       if (
         request.kind !== "connect_shared" &&
         request.agentId &&
-        !inspected.access.granted
+        (!inspected.access.granted || topUp)
       ) {
         const agentId = request.agentId;
         const serverId = inspected.answeringId;
@@ -507,7 +520,10 @@ export function mountAppAccessRoutes({
         const tools = await store.appTools(serverId);
         const advertised = tools.map((tool) => tool.ref);
         const refs =
-          chosen ?? tools.filter((tool) => tool.read).map((tool) => tool.ref);
+          chosen ??
+          (topUp ? wants : tools)
+            .filter((tool) => tool.read)
+            .map((tool) => tool.ref);
         const outside = refs.filter((ref) => !advertised.includes(ref));
         if (outside.length > 0)
           return deny(
@@ -524,7 +540,9 @@ export function mountAppAccessRoutes({
         if (refs.length === 0)
           return deny(
             "no_read_only_tools",
-            `None of ${name}'s actions are marked read-only, so approving here gives this Bot nothing. Choose its actions on ${name}'s page under Plugins, then approve this request again.`,
+            topUp
+              ? `None of what this Bot still needs from ${name} (${wants.map((tool) => tool.name).join(", ")}) is marked read-only, so approving without choosing them gives it nothing. Choose them on ${name}'s page under Plugins, or approve from the inbox row, which names them.`
+              : `None of ${name}'s actions are marked read-only, so approving here gives this Bot nothing. Choose its actions on ${name}'s page under Plugins, then approve this request again.`,
             409,
           );
         for (const ref of refs) {
