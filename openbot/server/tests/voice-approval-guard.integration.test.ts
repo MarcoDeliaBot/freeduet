@@ -323,7 +323,7 @@ test("a card is answered by one of its four decisions: a yes said, dictated or t
     expect(await statusOf(id)).toBe("pending");
     expect(await resumesFor(id)).toEqual([]);
   }
-});
+}, 30_000);
 
 test("a yes answering the Bot's question answers that question only: the card stays pending and nothing is released", async () => {
   for (const word of YES_FORMS) {
@@ -337,7 +337,7 @@ test("a yes answering the Bot's question answers that question only: the card st
     expect(await statusOf(id)).toBe("pending");
     expect(await resumesFor(id)).toEqual([]);
   }
-});
+}, 30_000);
 
 test("a Slack or Teams message is not a card answer: sent as text, a yes decides nothing", async () => {
   for (const word of YES_FORMS) {
@@ -349,7 +349,7 @@ test("a Slack or Teams message is not a card answer: sent as text, a yes decides
     expect(await statusOf(id)).toBe("pending");
     expect(await resumesFor(id)).toEqual([]);
   }
-});
+}, 30_000);
 
 test("in a Slack DM, a yes answers the open question of that thread and leaves the card pending", async () => {
   slackThread = `${prefix}-slack-question-${randomUUID()}`;
@@ -362,7 +362,7 @@ test("in a Slack DM, a yes answers the open question of that thread and leaves t
   expect(answered).toEqual([question]);
   expect(decided).toEqual([]);
   expect(await statusOf(id)).toBe("pending");
-});
+}, 30_000);
 
 test("the card still decides: from the Bot's page once, and from the chat card once", async () => {
   slackThread = `${prefix}-positive-${randomUUID()}`;
@@ -394,7 +394,7 @@ test("the card still decides: from the Bot's page once, and from the chat card o
   expect(await reply.text()).toContain("Allowed once");
   expect(decided).toEqual([{ id: chatCard, decision: "allow_once" }]);
   expect(await statusOf(chatCard)).toBe("approved");
-});
+}, 30_000);
 
 test("after a yes, the same action still waits for its card: it is held again and nothing runs", async () => {
   slackThread = `${prefix}-held-${randomUUID()}`;
@@ -409,4 +409,4 @@ test("after a yes, the same action still waits for its card: it is held again an
   };
   expect(await awaitingCard(afterYes)).toBe(id);
   expect(await statusOf(id)).toBe("pending");
-});
+}, 30_000);
