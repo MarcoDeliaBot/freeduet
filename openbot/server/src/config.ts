@@ -72,7 +72,14 @@ export type DockerComputerConfig = {
   provider: "docker";
   baseUrl: string;
   supervisorToken?: string;
-  token?: string;
+  /**
+   * Never set. Each Bot's computer holds a token of its own, made by the supervisor, and this
+   * deployment learns it from the supervisor and never from configuration (computer/supervisor.ts
+   * `tokenFor`). The `COMPUTER_TOKEN` a deployment sets belongs to the one computer it runs without a
+   * supervisor, and is not presented to a computer that holds another. Declared as `never` so a
+   * `.token` read on any computer configuration still compiles and says nothing here.
+   */
+  token?: never;
   allowPrivateHosts: boolean;
   policy?: ActionPolicy;
 };
@@ -1213,9 +1220,11 @@ function computerConfig(environment: Environment): ComputerConfig | undefined {
   }
 
   /*
-   * The secret the computers require. Without it every call to a computer is refused, and that is the
-   * intended failure: `agent-computer` drives a browser holding real logins and must not answer
-   * unauthenticated callers that can reach its port.
+   * The secret the computers require, where every computer takes the same one: the one shared
+   * computer, and a cluster's Sandboxes. Without it every call to a computer is refused, and that is
+   * the intended failure: `agent-computer` drives a browser holding real logins and must not answer
+   * unauthenticated callers that can reach its port. Not read for a Docker supervisor, whose
+   * computers each take a token of their own.
    */
   const computerToken = optional(environment, "COMPUTER_TOKEN");
 
@@ -1246,12 +1255,13 @@ function computerConfig(environment: Environment): ComputerConfig | undefined {
   const supervisorUrl = url(environment, "COMPUTER_SUPERVISOR_URL");
   if (supervisorUrl) {
     const supervisorToken = optional(environment, "SUPERVISOR_TOKEN");
+    // No `token` here, though `COMPUTER_TOKEN` may be set: with a supervisor, every Bot's computer
+    // takes a token of its own and the supervisor says which (see `DockerComputerConfig`).
     return {
       provider: "docker",
       baseUrl: supervisorUrl,
       allowPrivateHosts,
       ...(supervisorToken ? { supervisorToken } : {}),
-      ...(computerToken ? { token: computerToken } : {}),
       ...(policy ? { policy } : {}),
     };
   }
