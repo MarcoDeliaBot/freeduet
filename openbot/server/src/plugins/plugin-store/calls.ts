@@ -383,6 +383,8 @@ export function callMethods(context: StoreContext) {
           ? shareTargetOf(serverId, toolName, vendorArgs)
           : null;
       let personAnswered = false;
+      // D35: the send check has just put this exact new email on its own card, and the person said yes.
+      let answeredByCard = false;
       /*
        * A NEW EMAIL IS NEVER SENT UNASKED, and this is the one place that decides it.
        *
@@ -498,6 +500,8 @@ export function callMethods(context: StoreContext) {
           throw new PluginRefusedError(shareVerdict.message, null);
         }
         personAnswered = shareVerdict.byPerson === true;
+        // Only for a send asked about every time, whose answer is never a saved "Always allow".
+        answeredByCard = personAnswered && share.askEveryTime === true;
       }
 
       /*
@@ -572,6 +576,17 @@ export function callMethods(context: StoreContext) {
         continuation: currentApprovalContext(),
         // Asked once: the share check just put this exact send in front of the person.
         ...(personAnswered ? { personAnswered } : {}),
+        /*
+         * D35 (freeduet/always-ask.ts): what the gate cannot read from the call. The signed run's
+         * initiator, for a call made with no approval context (the callback door); whether this is a
+         * write on the Routines connector, which is read off the transport the row resolved to and
+         * never off a name or an argument; and whether the person just answered this send's own card.
+         */
+        ...(input.initiator ? { initiator: input.initiator } : {}),
+        ...(effect === "write" && access.transport === "builtin-routines"
+          ? { configuresAutomation: true as const }
+          : {}),
+        ...(answeredByCard ? { answeredByCard: true as const } : {}),
       });
       if (approval && "replay" in approval)
         return approval.replay as { text: string; isError: boolean };
