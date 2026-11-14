@@ -174,7 +174,9 @@ One PR each, in this order. "E" numbers are the open decisions in 9.3 (M1_PLAN k
 
 Slices 5 and 6 can run in parallel after slice 3; slices 8 to 10 are independent after slice 4. Rough total: 4 L, 9 M and 2 S (the two spikes). The first useful result, Claude with an automatic fallback to a gateway engine and a read-only dashboard (slices 1 to 6), is 1 L and 5 M.
 
-**Built so far (14 November 2026):** the limit and failure classifier of slice 2, `openbot/agent-freeduet/freeduet/failure_classifier.py` with `tests/test_failure_classifier.py`, wired into no run path; the breaker, `probe()` and the persisted limited-until (E4) are not built, so slice 2 stays open.
+**Built so far (14 November 2026):** the limit and failure classifier of slice 2, `openbot/agent-freeduet/freeduet/failure_classifier.py` with `tests/test_failure_classifier.py`, wired into no run path; the breaker of section 5 (`engine_breaker.py` with `tests/test_engine_breaker.py`: the five states, a registry per engine id, an in-memory and an atomic file store for limited-until, E4), also wired into no run path and with nothing instantiating the file store yet; `probe()` and the wiring are not built, so slice 2 stays open.
+
+**Built so far (14 November 2026):** the JSON salvage block of section 2, `openbot/agent-freeduet/freeduet/json_salvage.py` with `tests/test_json_salvage.py`, wired into no run path; no member imports it yet.
 
 ### 9.2 Decided on 14 November 2026
 
