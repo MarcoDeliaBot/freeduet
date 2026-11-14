@@ -212,13 +212,17 @@ class _InboxSink:
 
 
 async def run_segment(run: RunInput, member: Member, notes: SegmentNotes | None = None,
-                      engine: EngineAdapter | None = None) -> AsyncIterator[dict]:
-    yield agui.run_started(run)
+                      engine: EngineAdapter | None = None, *, announce: bool = True,
+                      extra_notes: tuple[str, ...] = ()) -> AsyncIterator[dict]:
+    """`announce=False` and `extra_notes` are for the engine chain (engine_router.py), which runs this once per
+    engine it tries inside one turn: it has already sent RUN_STARTED, and tells the next engine what happened."""
+    if announce:
+        yield agui.run_started(run)
     engine = engine if engine is not None else ClaudeEngine()
     notes = notes if notes is not None else SegmentNotes()
     active_lessons = await _lessons_for(run, member)
     # The tool notes, then the person's language when the deployment set one (person_language.py).
-    run_notes = [*tool_notes.notes_for(run, member), *person_language.notes_for(run)]
+    run_notes = [*tool_notes.notes_for(run, member), *person_language.notes_for(run), *extra_notes]
     offered = {tool["name"] for tool in run.tools}
     local = iris_tools.for_run(run, member.id, offered)
     # What the bridge serves: the transcript writes earlier calls to these under the name the CLI
