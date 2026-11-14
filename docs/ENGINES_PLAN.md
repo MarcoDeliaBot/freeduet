@@ -101,7 +101,7 @@ A reset time stated by the engine always wins over a guessed wait: Open lasts un
 |---|---|
 | Limit or error before the engine accepted the turn (no output, no tool call, no approval question) | Move to the next engine in the same turn and show the switch (ARCH rule 1). |
 | Limit after text started, no tool call yet | Keep and show the cut-off text, continue on the next engine, which is told the answer was interrupted and must not repeat what was said. The line says so. An eval case injects this limit [assumed quality]. |
-| A tool call already ran and was approved | It ran once; the transcript carries its result and tells the model "never repeat a call that already has a result" [code: `transcript.py`]. A switch is allowed at that segment boundary, and every write still meets the gate. Open risk: D27 sends a new email without a card when the person typed every recipient in the latest message, so a repeated send after a switch could slip through. The server check should refuse the shortcut when an equal send already completed in the turn [verify in code; E2]. |
+| A tool call already ran and was approved | It ran once; the transcript carries its result and tells the model "never repeat a call that already has a result" [code: `transcript.py`]. A switch is allowed at that segment boundary, and every write still meets the gate. D27 sends a new email without a card when the person typed every recipient in the latest message, so a repeated send after a switch could have slipped through. E2 closes it on the server (M1_PLAN D37, built 14 November 2026, not yet run live with a real switch): a send equal to one already sent or tried in the run is not sent, nobody is asked, and the person reads a sentence in their language saying so. The run id is the same across the switch and the run stays in one process, which is where that memory lives. |
 | Approval pending | The turn waits at OpenBot, not on an engine; the next segment goes to whichever engine is Ready. |
 | Below the member's quality tier | The chain skips the engine for that turn; if none is left the tool refuses and says why (Jules, purchases). |
 | Unattended turns (routines, check-ins) | Same rules; the switch is written into the report. Metered engines never turn on by themselves. |
@@ -180,6 +180,8 @@ Slices 5 and 6 can run in parallel after slice 3; slices 8 to 10 are independent
 
 **Slice 1 built (14 November 2026):** `EngineAdapter` in `freeduet/engine_adapter.py`, Claude Code behind it in `freeduet/claude_engine.py`, `segment.py` drives any adapter; `tests/test_engine_goldens.py` pins 52 scenarios recorded before the change, byte-identical after.
 
+**E2 built on the server (14 November 2026):** the check that a send equal to one already sent or tried in the run is refused, with a sentence for the person, in `openbot/server/src/plugins/plugin-store/calls.ts` (M1_PLAN D37). Tested through the real gate on both Gmail backends by making the same run's call twice, as a switch would; not run live, because no switch exists yet (slice 3), and no eval case is added.
+
 **Built so far (14 November 2026):** the JSON salvage block of section 2, `openbot/agent-freeduet/freeduet/json_salvage.py` with `tests/test_json_salvage.py`, wired into no run path; no member imports it yet.
 
 ### 9.2 Decided on 14 November 2026
@@ -197,7 +199,7 @@ The maintainer decided all six on 14 November 2026. Nothing is left open in this
 | # | Decision | Decided |
 |---|---|---|
 | E1 | Codex sign-in | Codex's own official login, in a volume FreeDuet never opens. The token program, where the app would hold the token, is not used: it breaks "never read, copy or forward subscription credentials". |
-| E2 | D27 (no card for an email to addresses the person typed) after an engine switch | The server refuses the shortcut when an equal send already completed in the turn, and tells the person it did so. |
+| E2 | D27 (no card for an email to addresses the person typed) after an engine switch | The server refuses the shortcut when an equal send already completed in the turn, and tells the person it did so. Built on the server on 14 November 2026 (M1_PLAN D37): the attempt is what is counted, as the stricter reading, and a send that never reached the vendor is not; not yet run live. |
 | E3 | A metered or gateway engine above the subscription logins, or pinned | Free gateway entries move freely. A metered one moves up or is pinned only after an explicit confirmation that shows its caps. PROVIDERS.md says so when the dashboard ships. |
 | E4 | Where limited-until and the person's dashboard choices are kept | Limited-until in a file in agent-freeduet's volume, next to the engine. The person's choices on the server. |
 | E5 | When the ledger and savings card ship | After a real engine beyond Claude exists, so the numbers are real. |
