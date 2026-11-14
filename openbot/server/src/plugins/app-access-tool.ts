@@ -110,6 +110,24 @@ function toldTheModel(access: AppAccess, singleUser = false): string {
   const name = access.displayName;
   const owners = access.accountHolder === "owner";
   /*
+   * AN APP THE BOT CAN USE, WITH TOOLS ITS OWN SKILLS NEED THAT IT WAS NEVER GIVEN (issue #102). A
+   * build can add a tool to a connector the Bot already holds, and a new tool is granted to nobody by
+   * arriving — so the app reads `ready` and the Bot would otherwise say nothing about the part it
+   * cannot do, or the generic "an administrator can grant it". Named here, with the one request the
+   * card carries, so the reply is a sentence about which tool and who can give it.
+   *
+   * Only for `ready`: any other state has a step of its own to take first, and says it below.
+   */
+  const wants = access.state === "ready" ? (access.wants ?? []) : [];
+  if (wants.length > 0) {
+    const list = wants.map((tool) => `${tool.name} (${tool.label})`).join(", ");
+    const these = wants.length === 1 ? "it" : "them";
+    const whoCanGive = singleUser
+      ? `This person is the only one here, so they can allow ${these} themselves: the card in front of them has Request access, and they approve it under Requests on the Plugins page of Admin, in settings. Tell them plainly that you have not been granted ${these} and that they can do it themselves.`
+      : `The card in front of the person lets them ask an administrator to grant ${these} to you. Say plainly that you cannot do that part yet because you have not been granted ${these}.`;
+    return `${name} is ready for this person to use through you, except for ${list}: your skills need ${wants.length === 1 ? "this tool" : "these tools"} and you have not been granted ${these}. ${whoCanGive} Do not try another tool to get around it, and do not browse to its website or ask them to sign in there.`;
+  }
+  /*
    * ON A ONE-PERSON DEPLOYMENT THE PERSON IS THE ADMINISTRATOR. The four states below that end on
    * "an administrator" are the ones that sent somebody with nobody to ask to ask nobody. Here the
    * Bot is told plainly what is missing, which app, and that the person can switch it on themselves in

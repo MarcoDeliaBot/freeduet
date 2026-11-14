@@ -243,7 +243,13 @@ function Granted({ agentId }: { agentId: string }) {
                   </ItemContent>
                   <ItemActions>
                     {app.state === "ready" ? (
-                      <ToolCount count={labels.length} />
+                      <>
+                        <ToolCount count={labels.length} />
+                        {/* A ready app whose skills need a tool the Bot was never given. */}
+                        {app.requestKind ? (
+                          <AppAccessAction access={app} agentId={agentId} />
+                        ) : null}
+                      </>
                     ) : (
                       <AppAccessAction access={app} agentId={agentId} />
                     )}

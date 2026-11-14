@@ -7,7 +7,7 @@ import logging
 from contextlib import suppress
 
 from . import agui, claude_cli
-from .engine_adapter import EngineAdapter, Finished, Gate, Outcome, Sink, TurnContext
+from .engine_adapter import EngineAdapter, Finished, Gate, Health, Outcome, ProbeResult, Sink, TurnContext
 from .stream_json import MCP_PREFIX, Final, StreamParser
 
 # The log lines keep the segment's logger: they are the ones its operators already grep for.
@@ -29,6 +29,27 @@ def mcp_state(parser: StreamParser, offered) -> str:
     return f"{status}; init listed all {len(offered)} offered tools"
 
 
+def note_result(health: Health, parser: StreamParser) -> None:
+    """The CLI's result line was read: say how the turn went, from what the CLI itself said. Only notes;
+    whatever goes wrong here is swallowed, because the turn must run exactly as it did before anyone recorded it."""
+    try:
+        failure = claude_cli.turn_failure(parser)
+    except Exception:  # noqa: BLE001
+        return
+    health.failure = failure
+    health.answered = health.answered or failure is None
+
+
+def note_stream_end(health: Health, parser: StreamParser, said: str, exit_code: int | None) -> None:
+    """The output ended with no result line: the verdict is what the CLI said on stderr and how it exited."""
+    try:
+        if parser.final is not None:
+            return  # the result line already said how it went
+        health.failure = claude_cli.turn_failure(parser, said, exit_code)
+    except Exception:  # noqa: BLE001
+        return
+
+
 class ClaudeEngine(EngineAdapter):
     key = "claude-code"
     label = claude_cli.LABEL
@@ -38,8 +59,12 @@ class ClaudeEngine(EngineAdapter):
     def child_env(self, source: dict[str, str] | None = None) -> dict[str, str]:
         return claude_cli.child_env(source)
 
+    async def probe(self) -> ProbeResult:
+        return await claude_cli.probe()
+
     async def run_turn(self, ctx: TurnContext, sink: Sink, gate: Gate) -> Outcome:
         parser = StreamParser()
+        health = ctx.diagnostics.health
         stderr = bytearray()
         tasks: set[asyncio.Task] = set()
         readers: tuple[asyncio.Task, ...] = ()
@@ -85,7 +110,10 @@ class ClaudeEngine(EngineAdapter):
                     while line := await process.stdout.readline():
                         for item in parser.feed(line):
                             if isinstance(item, Final):
+                                note_result(health, parser)
                                 item = Finished(item.text, lambda: claude_cli.failure_event(parser))
+                            else:
+                                health.answered = True  # a message started, text came, or a tool was called
                             await sink.put(item)
                 await sink.end()
 
@@ -106,6 +134,7 @@ class ClaudeEngine(EngineAdapter):
             with suppress(TimeoutError, asyncio.CancelledError):
                 await asyncio.wait_for(asyncio.shield(stderr_task), 2)
             said = bytes(stderr).decode("utf-8", errors="replace")
+            note_stream_end(health, parser, said, process.returncode)
             return Outcome(claude_cli.failure_event(parser, said, process.returncode) or agui.run_error(
                 f"{claude_cli.LABEL} ended without an answer."
             ))

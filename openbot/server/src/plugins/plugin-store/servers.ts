@@ -34,7 +34,7 @@ import {
   type AccountRef,
   asAccountRef,
 } from "../shared-accounts";
-import { transportFor } from "../transport";
+import { listsFromCode, transportFor } from "../transport";
 import type { StoreContext } from "./context";
 import {
   BROKERED_ID_PREFIXES,
@@ -53,6 +53,79 @@ import {
   storableTools,
   unlistedAdvertisedTools,
 } from "./model";
+
+/**
+ * A value as one string that does not depend on the order an object's keys were written in.
+ *
+ * Postgres hands a `jsonb` column back with its keys in its own order, and the code that produced
+ * the same schema wrote them in another, so comparing the two by `JSON.stringify` would call equal
+ * schemas different on every start. `undefined` properties vanish the way the database drops them.
+ */
+function canonicalJson(value: unknown): string {
+  return JSON.stringify(value, (_key, nested: unknown) =>
+    nested !== null && typeof nested === "object" && !Array.isArray(nested)
+      ? Object.fromEntries(
+          Object.entries(nested as Record<string, unknown>).sort(
+            ([left], [right]) => (left < right ? -1 : left > right ? 1 : 0),
+          ),
+        )
+      : nested,
+  );
+}
+
+/**
+ * What one stored tool says, and what one about to be stored would say, as comparable strings.
+ *
+ * `vendor_name` is read through `coalesce` the way every reader reads it — a row a replica of the
+ * previous build wrote has none, and means "the same as `name`" — so an older row is not called
+ * different from the newer one that spells the same thing out.
+ */
+const storedSignature = (row: typeof mcpTools.$inferSelect) =>
+  canonicalJson([
+    row.vendorName ?? row.name,
+    row.description,
+    row.inputSchema,
+    row.effect ?? null,
+    row.destructive,
+    row.version ?? null,
+  ]);
+const listedSignature = (tool: StorableTool) =>
+  canonicalJson([
+    tool.vendorName,
+    tool.description,
+    tool.inputSchema,
+    tool.effect,
+    tool.destructive,
+    tool.version,
+  ]);
+
+/** How a build's own tool list differs from the stored one, by tool name; all three empty when it does not. */
+function toolListDifference(
+  held: (typeof mcpTools.$inferSelect)[],
+  listed: StorableTool[],
+) {
+  const heldByName = new Map(held.map((row) => [row.name, row]));
+  const listedNames = new Set(listed.map((tool) => tool.name));
+  const added = listed.filter((tool) => !heldByName.has(tool.name));
+  const changed = listed.filter((tool) => {
+    const stored = heldByName.get(tool.name);
+    return (
+      stored !== undefined && storedSignature(stored) !== listedSignature(tool)
+    );
+  });
+  const removed = held
+    .map((row) => row.name)
+    .filter((name) => !listedNames.has(name));
+  return { added, changed, removed };
+}
+
+/** What {@link serverMethods}'s `refreshBuiltInTools` did for one connector it wrote. */
+export type BuiltInToolsRefresh = {
+  serverId: string;
+  added: string[];
+  changed: string[];
+  removed: string[];
+};
 
 /** Adding, removing, refreshing and listing MCP servers and brokered apps, and an app's account mode. */
 export function serverMethods(context: StoreContext) {
@@ -1897,6 +1970,220 @@ export function serverMethods(context: StoreContext) {
       // the listing instead reported a duplicate the vendor named twice as two actions the
       // deployment holds, when `mcp_tools` holds one row for it.
       return { tools: storable.length };
+    },
+
+    /**
+     * At start, bring the stored tool list of every connector whose list is this build's own code up
+     * to date, and touch nothing else.
+     *
+     * WHY. `mcp_tools` is written when somebody adds a connector or presses Refresh, and by nothing
+     * else, so a connector connected before a build gave it a new tool never had the tool: no row to
+     * grant, no row to offer, nothing for a skill that names it to find (issue #102). For the
+     * connectors whose list is a constant of the build — {@link listsFromCode} — the deployment can
+     * learn the new list itself, so it does, once, at start.
+     *
+     * CRITERION ONE. NOTHING LEAVES THE PROCESS AND NOBODY'S ACCOUNT IS USED. Only a kind whose
+     * listing is code is asked at all, and it is asked with no token. A remote MCP server, Composio
+     * and Arcade are never asked here: a start-up that dialled a vendor would make every restart a
+     * request to somebody else, and a vendor that was down would be a reason a deployment is slow to
+     * come up. Their lists still change when an administrator presses Refresh, as before.
+     *
+     * CRITERION TWO. NOTHING IS GRANTED. This writes `mcp_tools` and a row in the trail, and no row
+     * of `plugin_grants` — a tool a build adds is offered to nobody until a person gives it to a Bot,
+     * a read included, because what a Bot holds is the person's decision and not a side effect of an
+     * upgrade. The part that asks for it is the app-access card (`show_app_access`).
+     *
+     * CRITERION THREE. NO WRITE WHEN NOTHING DIFFERS, AND NO TWO REPLICAS FIGHT. `mcp_tools` is
+     * shared, so every replica that starts runs this. The stored list is compared first and nothing
+     * is written when it already says what the build says. When it differs, the server's row is
+     * locked and the comparison is made AGAIN under the lock, so the second of two replicas that
+     * start together finds the first one's work and writes nothing — without the lock, both would
+     * decide to insert the same new row and one would die on the primary key. Only what differs is
+     * written (new tools inserted, changed ones updated, withdrawn ones removed), so the rows that
+     * were already right are not rewritten.
+     *
+     * CRITERION FOUR. IT CAN NEVER MAKE A START FAIL OR EMPTY A LIST. One connector that cannot be
+     * resolved or whose list cannot be stored is skipped with a line in the log and the others go
+     * on, and a list that comes out empty is left alone for the reason `refreshTools` keeps what it
+     * holds on an empty answer.
+     *
+     * The columns an administrator's Refresh stamps are stamped the same way when something was
+     * written — `toolsRefreshedAt`, `lastError` cleared, `skippedTools` — because this IS that
+     * refresh, run for them on the servers where it needs nobody.
+     */
+    async refreshBuiltInTools(): Promise<{
+      checked: number;
+      refreshed: BuiltInToolsRefresh[];
+    }> {
+      const servers = await database
+        .select({ id: mcpServers.id })
+        .from(mcpServers)
+        .orderBy(asc(mcpServers.id));
+      const refreshed: BuiltInToolsRefresh[] = [];
+      let checked = 0;
+
+      for (const { id: serverId } of servers) {
+        try {
+          const { row, entry, access } = await requireServer(serverId);
+          if (!listsFromCode(access.transport)) continue;
+          checked += 1;
+
+          const { rows: storable, skipped } = storableTools(
+            serverId,
+            await transportFor(access.transport).listTools({
+              url: effectiveUrl(row, entry),
+              tokenHeader: tokenHeaderFor(entry),
+            }),
+          );
+          // An empty list is never written over a held one; see `refreshTools` on an empty answer.
+          if (storable.length === 0) continue;
+
+          const sameSkipped = (stored: string[] | null) =>
+            canonicalJson([...(stored ?? [])].sort()) ===
+            canonicalJson([...skipped].sort());
+          const differs = (
+            held: (typeof mcpTools.$inferSelect)[],
+            stored: string[] | null,
+          ) => {
+            const change = toolListDifference(held, storable);
+            return (
+              change.added.length +
+                change.changed.length +
+                change.removed.length >
+                0 || !sameSkipped(stored)
+            );
+          };
+
+          // Read first and outside any lock: on almost every start this is the whole of the work.
+          const heldNow = await database
+            .select()
+            .from(mcpTools)
+            .where(eq(mcpTools.serverId, serverId));
+          if (!differs(heldNow, row.skippedTools)) continue;
+
+          const written = await database.transaction(async (transaction) => {
+            const [locked] = await transaction
+              .select({ skippedTools: mcpServers.skippedTools })
+              .from(mcpServers)
+              .where(eq(mcpServers.id, serverId))
+              .for("update");
+            // Removed while this waited: nothing left to bring up to date.
+            if (!locked) return null;
+
+            // Again, now that nobody else can be writing this connector's list.
+            const held = await transaction
+              .select()
+              .from(mcpTools)
+              .where(eq(mcpTools.serverId, serverId));
+            if (!differs(held, locked.skippedTools)) return null;
+            const change = toolListDifference(held, storable);
+
+            if (change.removed.length > 0) {
+              await transaction
+                .delete(mcpTools)
+                .where(
+                  and(
+                    eq(mcpTools.serverId, serverId),
+                    inArray(mcpTools.name, change.removed),
+                  ),
+                );
+            }
+            if (change.added.length > 0) {
+              await transaction.insert(mcpTools).values(change.added);
+            }
+            for (const tool of change.changed) {
+              await transaction
+                .update(mcpTools)
+                .set({
+                  vendorName: tool.vendorName,
+                  description: tool.description,
+                  inputSchema: tool.inputSchema,
+                  effect: tool.effect,
+                  destructive: tool.destructive,
+                  version: tool.version,
+                })
+                .where(
+                  and(
+                    eq(mcpTools.serverId, serverId),
+                    eq(mcpTools.name, tool.name),
+                  ),
+                );
+            }
+            await transaction
+              .update(mcpServers)
+              .set({
+                toolsRefreshedAt: new Date(),
+                lastError: null,
+                skippedTools: skipped.length > 0 ? skipped : null,
+                updatedAt: new Date(),
+              })
+              .where(eq(mcpServers.id, serverId));
+            return {
+              serverId,
+              added: change.added.map((tool) => tool.name).sort(),
+              changed: change.changed.map((tool) => tool.name).sort(),
+              removed: [...change.removed].sort(),
+            };
+          });
+          if (!written) continue;
+          refreshed.push(written);
+
+          await recordAuditEvent(auditStore, {
+            eventType: "configuration.changed",
+            targetType: "mcp_server",
+            targetId: serverId,
+            payload: {
+              actor: DEPLOYMENT_ACTOR,
+              change: "builtin_tools_refreshed_at_start",
+              server: serverId,
+              added: written.added,
+              changed: written.changed,
+              removed: written.removed,
+              note: "This connector's tool list is part of the build, and the build's list differed from the one stored, so the stored list was brought up to date at start. Nothing was granted: a Bot holds a new tool only when a person gives it.",
+            },
+          });
+
+          // A grant a removed tool leaves pointing at nothing, as `refreshTools` records it.
+          if (written.removed.length > 0) {
+            const stranded = [
+              ...(await mcpGrantsForServers([serverId])).entries(),
+            ]
+              .filter(([ref]) =>
+                written.removed.includes(ref.slice(serverId.length + 1)),
+              )
+              .sort(([left], [right]) => left.localeCompare(right));
+            if (stranded.length > 0) {
+              await recordAuditEvent(auditStore, {
+                eventType: "configuration.changed",
+                targetType: "mcp_server",
+                targetId: serverId,
+                payload: {
+                  actor: DEPLOYMENT_ACTOR,
+                  change: "grants_not_advertised",
+                  server: serverId,
+                  refs: stranded.map(([ref]) => ref),
+                  bots: [...new Set(stranded.flatMap(([, agents]) => agents))],
+                  note: "Held by a Bot and not offered to any model, because this server no longer advertises the tool. Offered again if it starts.",
+                },
+              });
+            }
+          }
+        } catch (error) {
+          /*
+           * Skipped, said once, and never thrown: this runs while the server is starting. The reason
+           * goes through the same door every other recorded failure does, so a database error's
+           * statement and bound values stay out of the log.
+           */
+          console.warn(
+            JSON.stringify({
+              type: "builtin-tools-refresh-skipped",
+              serverId,
+              reason: reasonWithoutStatement(error).slice(0, 400),
+            }),
+          );
+        }
+      }
+      return { checked, refreshed };
     },
 
     async listServers(): Promise<ServerRecord[]> {

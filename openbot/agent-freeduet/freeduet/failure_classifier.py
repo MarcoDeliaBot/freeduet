@@ -5,8 +5,9 @@ engine reported goes in: its words, the HTTP status of its reply, its headers, a
 :class:`Failure` comes out. The function reads no file, calls nothing, starts nothing and keeps no state; it
 runs in a failure path, so it never raises and its work is bounded, whatever an engine or a gateway sends.
 
-NOT WIRED INTO ANY RUN PATH. `claude_cli.failure_event` still decides what a member's run says, through
-`engine_errors`, exactly as before. The breaker (plan section 5) is the first intended reader of this module.
+FOR RECORDING ONLY (slice 2). `claude_cli.turn_failure` classifies how a member's turn ended, for the engine
+breaker (plan section 5, engine_state.py); `claude_cli.failure_event` still decides what a member's run says,
+through `engine_errors`, exactly as before. Nothing a person sees comes from this module.
 
 The kinds, and what the plan's engine states do with each:
 
