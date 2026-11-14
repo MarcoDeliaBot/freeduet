@@ -549,6 +549,8 @@ const context = {
   forwardedProps: {},
   initiator: { kind: "routine" as const, id: "routine-1" },
 };
+// D35 holds a routine's write to a card whatever a rule or the reviewer says: the person's own turn is where those answer.
+const ownTurn = { ...context, initiator: { kind: "person" as const } };
 
 describe("the approval gate", () => {
   test("a team-enforced reviewer that cannot answer suspends the action for approval and audits it", async () => {
@@ -559,7 +561,7 @@ describe("the approval gate", () => {
     const service = createApprovalService(store, undefined, undefined, {
       review: model(new Error("model down")),
     });
-    const error = await withApprovalContext(context, () =>
+    const error = await withApprovalContext(ownTurn, () =>
       service.gate(candidate()),
     ).catch((failure: unknown) => failure);
     expect(error).toBeInstanceOf(HeadlessToolSuspension);
@@ -578,7 +580,7 @@ describe("the approval gate", () => {
     });
     const service = createApprovalService(store);
     await expect(
-      withApprovalContext(context, () => service.gate(candidate())),
+      withApprovalContext(ownTurn, () => service.gate(candidate())),
     ).resolves.toBeUndefined();
     expect(requests.size).toBe(0);
     expect(decisions[0]).toMatchObject({

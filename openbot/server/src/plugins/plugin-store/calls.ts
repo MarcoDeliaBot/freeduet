@@ -15,9 +15,11 @@ import {
   pluginGrants,
   vendorNameOf,
 } from "../../db/schema";
+import { personText } from "../../freeduet/person-language";
 import { classifyTool, tokenHeaderFor } from "../catalogue";
 import { VERSION_ARG } from "../composio";
 import { inspectToolArguments } from "../content-governance";
+import { plainAddress } from "../mail-address";
 import { isNewEmailSend, shareTargetOf } from "../share-target";
 import type { AccountMode } from "../shared-accounts";
 import { transportFor } from "../transport";
@@ -37,11 +39,28 @@ import {
   withoutEmptyOptionals,
 } from "./model";
 
-/** What a Bot is told when it sends, again, an email the person's request already had sent this turn. */
-const SENT_THIS_TURN =
-  "Not sent again: this exact email was already tried in this turn. Tell the person what happened, and do not try it again unless they ask you to.";
 /** How many sent-by-request emails are remembered; the oldest is forgotten first. */
 const SPENT_REQUESTS_KEPT = 500;
+/**
+ * What is known of an email the person's request sent: `sent` when the vendor answered and reported
+ * nothing wrong, `tried` when it was handed to the vendor and no clean answer came back.
+ */
+type SpentRequest = "sent" | "tried";
+
+/**
+ * An email's recipients as one string however the call spelled them: lower case, in order, once each.
+ * Only called for a call whose recipients the person's own words named, so each is a plain address.
+ */
+function recipientsKey(to: unknown): string {
+  const addresses = Array.isArray(to) ? to : [];
+  return JSON.stringify(
+    [
+      ...new Set(
+        addresses.map((address) => plainAddress(address) ?? String(address)),
+      ),
+    ].sort(),
+  );
+}
 
 /** Deciding whether a Bot may call a tool, and calling it. */
 export function callMethods(context: StoreContext) {
@@ -56,21 +75,35 @@ export function callMethods(context: StoreContext) {
   } = context;
   /*
    * ONE SEND PER REQUEST. An email sent because the person's own words named its recipients has no
-   * card, so no approval to spend, and a Bot that repeats itself or a turn carried on twice would
-   * send it again. The same email (same person, same run, same recipients, subject and body) is
-   * therefore tried once per run, and a failure is not retried either: a send that the vendor
-   * half-delivered (some recipients refused) must not go to the others twice, and the Bot tells the
-   * person, who can ask again. Held in this process, which is where a run's calls are made; a
-   * restart forgets it, and a new run is a new request.
+   * card, so no approval to spend, and a Bot that repeats itself, a turn carried on twice, or a turn
+   * carried on by another engine after the first one hit its limit (docs/ENGINES_PLAN.md, E2; the run
+   * id stays the same across all of those) would send it again. The same email (same person, same
+   * run, the same recipients however they are spelled, same subject and body) is therefore sent once
+   * per run. What is remembered is the ATTEMPT, and whether it is known to have gone:
+   *
+   * - `sent`: the vendor answered and reported nothing wrong. A repeat is refused, and the person is
+   *   told it went.
+   * - `tried`: it was handed to the vendor and no clean answer came back (an error, some recipients
+   *   refused, a timeout). Whether it arrived is not known, so a repeat is refused too: a send the
+   *   vendor half-delivered must not go to the others twice, and the person is told it could not be
+   *   confirmed and can look in their sent mail and ask again. This is the stricter reading, kept on
+   *   purpose: counting only COMPLETED sends would let a repeat of an unknown one go out with no card.
+   * - nothing: it never reached the vendor (no connection, a token that could not be had). Nothing
+   *   went out, so the same email may be tried again.
+   *
+   * Held in this process, which is where a run's calls are made: the engine switch happens between two
+   * segments of one run, inside the process that serves it. A restart takes the run with it, and a
+   * run resumed after a card carries an initiator, which D27 never lets skip the card. A new run is a
+   * new request.
    */
-  const spentRequests = new Set<string>();
+  const spentRequests = new Map<string, SpentRequest>();
   const spendRequest = (key: string): boolean => {
     if (spentRequests.has(key)) return false;
     if (spentRequests.size >= SPENT_REQUESTS_KEPT) {
-      const oldest = spentRequests.values().next().value;
+      const oldest = spentRequests.keys().next().value;
       if (oldest !== undefined) spentRequests.delete(oldest);
     }
-    spentRequests.add(key);
+    spentRequests.set(key, "tried");
     return true;
   };
   return {
@@ -383,6 +416,8 @@ export function callMethods(context: StoreContext) {
           ? shareTargetOf(serverId, toolName, vendorArgs)
           : null;
       let personAnswered = false;
+      // D35: the send check has just put this exact new email on its own card, and the person said yes.
+      let answeredByCard = false;
       /*
        * A NEW EMAIL IS NEVER SENT UNASKED, and this is the one place that decides it.
        *
@@ -445,6 +480,35 @@ export function callMethods(context: StoreContext) {
           callInitiator: input.initiator,
         });
       const askedByRequest = direct || askedByHandedRequest;
+      /*
+       * THE REFUSAL OF AN EMAIL THAT ALREADY WENT, written for the person first (docs/M1_PLAN.md D37).
+       *
+       * A refusal reaches the person as the detail of a "Blocked" line in the transcript and reaches
+       * the model as the tool's answer, and both are this sentence, in the language the person reads
+       * (D26). So the fact is told by the server, in plain words, and does not depend on what the model
+       * goes on to say. The audit row says which of the two cases it was.
+       */
+      const repeatRefusal = async (earlier: SpentRequest) => {
+        await recordAuditEvent(auditStore, {
+          eventType: "mcp.call_rejected",
+          targetType: "mcp_tool",
+          targetId: input.ref,
+          ...(input.initiator ? { initiator: input.initiator } : {}),
+          payload: {
+            ...decided,
+            decision: { ...decided.decision, carriedOut: false },
+            refusal: "already_sent_this_turn",
+            earlierSend: earlier === "sent" ? "sent" : "unconfirmed",
+          },
+        });
+        return new PluginRefusedError(
+          personText(
+            earlier === "sent" ? "send.repeated" : "send.unconfirmed",
+            options.personLanguage,
+          ),
+          null,
+        );
+      };
       let requestKey: string | null = null;
       if (askedByRequest) {
         personAnswered = true;
@@ -460,12 +524,22 @@ export function callMethods(context: StoreContext) {
               askedByHandedRequest
                 ? ["handed", handed?.threadId, handed?.message.id]
                 : approvalContext?.runId,
-              vendorArgs.to,
+              recipientsKey(vendorArgs.to),
               vendorArgs.subject,
               vendorArgs.body,
             ]),
           )
           .digest("hex");
+        /*
+         * THE PERSON'S TYPED WORDS APPROVE AN EMAIL ONCE (docs/ENGINES_PLAN.md, E2). They named these
+         * recipients to start this request, and the email they asked for has already gone, or been
+         * tried: sending it again is not something they asked, whichever engine is carrying the turn.
+         * Asked here, before the card is decided and before any other gate, so the shortcut is never
+         * applied to a repeat; the check where the email is spent below is the atomic one and answers
+         * the same way for two calls that arrive together.
+         */
+        const earlier = spentRequests.get(requestKey);
+        if (earlier !== undefined) throw await repeatRefusal(earlier);
       }
       if (share && options.privateShareCheck && !askedByRequest) {
         const shareVerdict = await options.privateShareCheck({
@@ -498,6 +572,8 @@ export function callMethods(context: StoreContext) {
           throw new PluginRefusedError(shareVerdict.message, null);
         }
         personAnswered = shareVerdict.byPerson === true;
+        // Only for a send asked about every time, whose answer is never a saved "Always allow".
+        answeredByCard = personAnswered && share.askEveryTime === true;
       }
 
       /*
@@ -572,6 +648,17 @@ export function callMethods(context: StoreContext) {
         continuation: currentApprovalContext(),
         // Asked once: the share check just put this exact send in front of the person.
         ...(personAnswered ? { personAnswered } : {}),
+        /*
+         * D35 (freeduet/always-ask.ts): what the gate cannot read from the call. The signed run's
+         * initiator, for a call made with no approval context (the callback door); whether this is a
+         * write on the Routines connector, which is read off the transport the row resolved to and
+         * never off a name or an argument; and whether the person just answered this send's own card.
+         */
+        ...(input.initiator ? { initiator: input.initiator } : {}),
+        ...(effect === "write" && access.transport === "builtin-routines"
+          ? { configuresAutomation: true as const }
+          : {}),
+        ...(answeredByCard ? { answeredByCard: true as const } : {}),
       });
       if (approval && "replay" in approval)
         return approval.replay as { text: string; isError: boolean };
@@ -580,20 +667,8 @@ export function callMethods(context: StoreContext) {
        * The email the person's request sent is spent here, after every gate has let it through and
        * just before it goes, so a send that was held for any reason is not counted as sent.
        */
-      if (requestKey !== null && !spendRequest(requestKey)) {
-        await recordAuditEvent(auditStore, {
-          eventType: "mcp.call_rejected",
-          targetType: "mcp_tool",
-          targetId: input.ref,
-          ...(input.initiator ? { initiator: input.initiator } : {}),
-          payload: {
-            ...decided,
-            decision: { ...decided.decision, carriedOut: false },
-            refusal: "already_sent_this_turn",
-          },
-        });
-        throw new PluginRefusedError(SENT_THIS_TURN, null);
-      }
+      if (requestKey !== null && !spendRequest(requestKey))
+        throw await repeatRefusal(spentRequests.get(requestKey) ?? "tried");
 
       /*
        * Attempt first, record second.
@@ -609,6 +684,7 @@ export function callMethods(context: StoreContext) {
        * itself failed has not completed the call, and a reader counting successes should not be told
        * it did.
        */
+      let reachedVendor = false;
       try {
         const { token, vendorUserId } = await connectionTokenFor(
           row,
@@ -619,6 +695,8 @@ export function callMethods(context: StoreContext) {
         );
         const vendor =
           injectedVendor ?? transportFor(access.transport).callTool;
+        // From the next line the vendor may hold the email, whatever it answers or fails to.
+        reachedVendor = true;
         const result = await vendor(
           {
             url: effectiveUrl(row, entry),
@@ -643,6 +721,9 @@ export function callMethods(context: StoreContext) {
           advertised[0]?.vendorName ?? toolName,
           vendorArgs,
         );
+        // The vendor answered and reported nothing wrong: the email went, and a repeat is told so.
+        if (requestKey !== null && !result.isError && !result.accountGone)
+          spentRequests.set(requestKey, "sent");
         await recordAuditEvent(auditStore, {
           eventType: result.isError ? "mcp.call_failed" : "mcp.call_succeeded",
           targetType: "mcp_tool",
@@ -679,6 +760,13 @@ export function callMethods(context: StoreContext) {
          */
         if (!result.accountGone) return answer;
       } catch (error) {
+        /*
+         * An email that never reached the vendor (no connection, a token that could not be had) did
+         * not go, so it is not spent: the same email may be tried again in this request. One that did
+         * reach it stays spent, `tried`, because what the vendor did with it is not known.
+         */
+        if (requestKey !== null && !reachedVendor)
+          spentRequests.delete(requestKey);
         /*
          * Recorded, then rethrown unchanged. The caller's behaviour is unaffected — what changes is
          * that the failure now exists in the trail, which is where somebody asking "is this connector
