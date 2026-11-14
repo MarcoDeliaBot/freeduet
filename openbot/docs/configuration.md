@@ -656,9 +656,40 @@ environment and no folder a Bot's computer can reach, and the calls that carry t
 (the Bot's callback, the worker) are not asked for it. A request from loopback without it, such as
 a container's on Docker Desktop, answers 401 `pairing_required`. The cookie is for `localhost`, so
 `127.0.0.1` asks to be paired again. A server started by hand with no `FREEDUET_INSTALL_SECRET`
-keeps the loopback rule alone and says so at boot; a sign-in deployment, and one opened with
-`OPENBOT_HOST`, ask nothing new. To make a new secret, delete the line and run `scripts/start.sh`:
-every browser is paired again.
+keeps the loopback rule alone and says so at boot; one opened with `OPENBOT_HOST` asks nothing new. A
+deployment with sign-in uses the same secret for a different question, in the next paragraph. To make a new
+secret, delete the line and run `scripts/start.sh`: every browser is paired again.
+
+**With sign-in and an installation secret, a signed-in browser that is not paired with this computer is a
+remote session, and it is limited.** Sign-in says who you are; the secret says where you are. A browser that
+holds the cookie above was paired on the computer FreeDuet runs on, and a session in it is at the computer: it
+can do everything it could before. A session in any other browser, such as a phone reaching the app through a
+tunnel or a reverse proxy, is remote. A remote session can read your conversations, chat with the members, see
+a whole approval request and allow it once or deny it. It cannot change Full access (either setting), approval
+rules, settings or standing instructions, connected accounts and apps, sharing, secrets or saved sign-ins; it
+cannot pair a browser, use the admin screens, drive a member's computer, set up routines or triggers, or reach
+anything added to FreeDuet later until that is listed. Each refused call answers 403 with one sentence that says
+to do it at the computer. Of the approval requests, a remote session answers only an ordinary one, with allow
+once or deny: not allow always, not one that is yours to do (a password, a security setting, a payment), not a
+routine, not Full access, not connecting an app. The refused request stays waiting at the computer. The list is
+in `openbot/server/src/auth/remote-limits.ts` and its reasons are in `docs/design/phone-and-remote.md`, section 3.5.
+Nothing in a header, the browser's name, the address it connects from or a tunnel in front of the server can
+make a request paired; only the cookie can, and the cookie signs nobody in.
+
+*To pair a browser with sign-in on*, sign in to FreeDuet in that browser as an administrator, then on the
+computer FreeDuet runs on run `bash scripts/open.sh`. It asks the server for a link that is good once and for
+two minutes and opens it at the app's own address (`OPENBOT_APP_URL`, else the first of `TRUSTED_ORIGINS`, else
+`OPENBOT_PUBLIC_URL`, else `BETTER_AUTH_URL`), so the link is opened where the session is.
+Open the app at that address and not at another name for this machine: the session and the cookie belong to one
+host. The same command pairs another browser at the computer. A phone is not paired, by design. *An installation
+that already had sign-in:* its secret was written by `scripts/start.sh` on the first start after D28, and no
+browser holds the cookie, so after the update every browser, the administrator's at the computer included, is
+remote. They see the app load, conversations and chat work and ordinary requests can be answered once; any
+other screen answers with the sentence. Run `bash scripts/open.sh` once in the administrator's browser. *In a
+deployment several people use,* every person is remote unless their browser is paired, and only an administrator
+at this machine can pair one. A deployment with sign-in and **no** `FREEDUET_INSTALL_SECRET` is not limited at
+all: nothing could tell one browser from another, and the boot log says so. Not covered by this limit: a chat a
+remote session starts still runs with Full access, and with the typed-recipient shortcut, if the member has them.
 
 **With no sign-in, a request from this machine is answered only under this machine's own names.**
 A page on the internet can point its own name at 127.0.0.1, and the browser then sends the person's

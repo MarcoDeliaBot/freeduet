@@ -1,8 +1,8 @@
-import { MAX_IMAGE_BYTES } from "@openbot/shared/attachments";
 import type { Hono as HonoApp, MiddlewareHandler } from "hono";
 import { Hono } from "hono";
 import { bodyLimit } from "hono/body-limit";
 import { serveStatic } from "hono/bun";
+import { MAX_IMAGE_BYTES } from "@openbot/shared/attachments";
 import { enterpriseControls } from "./admin/controls";
 import { createEnterpriseGate } from "./admin/gate";
 import { createEnterpriseAdminRoutes } from "./admin/routes";
@@ -20,21 +20,29 @@ import {
 import type { BotAccessCheck } from "./agents/profile-policy";
 import type { AgentProfileStore } from "./agents/profile-store";
 import { createAgentRoutes } from "./agents/routes";
+import type { SettingChanges } from "./settings-in-chat/changes";
+import { createSettingChangeRoutes } from "./settings-in-chat/routes";
 import { createApprovalRoutes } from "./approvals/routes";
 import type { ApprovalService } from "./approvals/service";
 import {
   type AuditEventType,
   type AuditInitiator,
+  auditEventsToCsv,
   AuditQueryError,
   type AuditReader,
   type AuditStore,
-  auditEventsToCsv,
   auditQueryFromUrl,
   DEPLOYMENT_INITIATOR,
   readAuditExportRows,
   recordAuditEvent,
 } from "./audit";
 import { createDevRequireUser } from "./auth/dev-actor";
+import {
+  createInstallPairingRoutes,
+  personRule,
+  signInGate,
+} from "./auth/install-secret";
+import { createRemoteLimits } from "./auth/remote-limits";
 import {
   type AppVariables,
   type AuthService,
@@ -43,13 +51,7 @@ import {
   requireAdmin,
 } from "./auth/guards";
 import type { IdentityProviderStore } from "./auth/identity-provider-store";
-import {
-  createInstallPairingRoutes,
-  personRule,
-  signInGate,
-} from "./auth/install-secret";
 import { desktopAuthPage } from "./auth/native-browser";
-import { createRemoteLimits } from "./auth/remote-limits";
 import { createSameOriginGuard } from "./auth/same-origin";
 import {
   createAttachmentRoutes,
@@ -101,6 +103,23 @@ import {
 import type { MemoryIngestion } from "./memory/ingestion";
 import { createMemoryRoutes } from "./memory/routes";
 import type { MemoryStore } from "./memory/store";
+import { parsePageLimit } from "./paging";
+import { createPasswordRoutes, createSignInRoutes } from "./passwords/routes";
+import type { SignInService } from "./passwords/service";
+import type { OnboardingStore } from "./people/onboarding";
+import { MAX_PAGE, type PeopleStore } from "./people/store";
+import type { AccountModeSwitch } from "./plugins/account-mode";
+import type { ComposioBroker } from "./plugins/broker";
+import type { BrokerProvider } from "./plugins/access";
+import { createPluginRoutes } from "./plugins/routes";
+import { createSharedUseRoutes } from "./plugins/shared-use-routes";
+import type { SharedUseStore } from "./plugins/shared-use-store";
+import {
+  isDeploymentFault,
+  PluginRefusedError,
+  type PluginStore,
+} from "./plugins/store";
+import { REFUSAL_MARKER, vendorAnswer } from "./plugins/tools";
 import {
   createDuetChannelRoutes,
   type DuetChannelStore,
@@ -113,23 +132,6 @@ import {
   type TaskIntake,
   type TaskStore,
 } from "./openduet/task-store";
-import { parsePageLimit } from "./paging";
-import { createPasswordRoutes, createSignInRoutes } from "./passwords/routes";
-import type { SignInService } from "./passwords/service";
-import type { OnboardingStore } from "./people/onboarding";
-import { MAX_PAGE, type PeopleStore } from "./people/store";
-import type { BrokerProvider } from "./plugins/access";
-import type { AccountModeSwitch } from "./plugins/account-mode";
-import type { ComposioBroker } from "./plugins/broker";
-import { createPluginRoutes } from "./plugins/routes";
-import { createSharedUseRoutes } from "./plugins/shared-use-routes";
-import type { SharedUseStore } from "./plugins/shared-use-store";
-import {
-  isDeploymentFault,
-  PluginRefusedError,
-  type PluginStore,
-} from "./plugins/store";
-import { REFUSAL_MARKER, vendorAnswer } from "./plugins/tools";
 import type { ProactiveEngine } from "./proactive/engine";
 import { createProactiveRoutes } from "./proactive/routes";
 import type { ProactiveStore } from "./proactive/store";
@@ -149,8 +151,6 @@ import type { IntentRouter } from "./routing/classify";
 import { createRoutingRoutes } from "./routing/routes";
 import { createCoworkerRoutingService } from "./routing/service";
 import type { SelfHostBanner } from "./self-host-banner";
-import type { SettingChanges } from "./settings-in-chat/changes";
-import { createSettingChangeRoutes } from "./settings-in-chat/routes";
 import { createTeamBotRoutes } from "./team-bots/routes";
 import type { TeamBots } from "./team-bots/team-bots";
 import type { PackageStatusReader } from "./tenant-package";
