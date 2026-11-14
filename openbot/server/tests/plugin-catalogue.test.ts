@@ -73,6 +73,7 @@ describe("which servers this deployment will talk to", () => {
       path: "/mcp",
       auth: { kind: "deployment-bearer" },
       writeTools: [],
+      readTools: [],
       docsUrl: "",
     } as const;
 
@@ -801,6 +802,7 @@ describe("which credential a curated server is given", () => {
     path: "/mcp",
     auth: { kind: "deployment-bearer" },
     writeTools: [],
+    readTools: [],
     docsUrl: "https://vendor.example/docs",
   };
 

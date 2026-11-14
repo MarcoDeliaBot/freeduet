@@ -211,7 +211,19 @@ function SignScreen() {
           ) : null}
           {providers.length > 0 && !options?.ssoRequired ? (
             providerButtons
-          ) : options?.sso || options?.ssoRequired ? null : (
+          ) : options?.sso ||
+            options?.ssoRequired ? null : options?.installPairing ? (
+            /*
+             * FreeDuet (D28): there is no sign-in here, and what makes a browser the person is a
+             * pairing with this installation, which only the computer it runs on can start.
+             */
+            <p className="text-center text-sm text-muted-foreground">
+              This browser is not paired with {appConfig.brand.productName} yet.
+              On the computer it runs on, run{" "}
+              <code className="font-mono">bash scripts/open.sh</code>: it opens{" "}
+              {appConfig.brand.productName} here, ready to use.
+            </p>
+          ) : (
             <p className="text-center text-sm text-muted-foreground">
               Sign-in isn't set up yet. An admin has to set it up first.
             </p>

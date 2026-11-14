@@ -1,15 +1,24 @@
 import { describe, expect, test } from "bun:test";
 import { createHash } from "node:crypto";
+import { existsSync, readFileSync } from "node:fs";
 import {
   chmod,
   mkdir,
   readFile,
   realpath,
   rm,
+  stat,
   writeFile,
 } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+
+/**
+ * FreeDuet (docs/M1_PLAN.md D28): the installation secret every fixture `.env` already holds, so the
+ * tests that are about something else never meet a start that has to make one (which restarts the
+ * server). The tests about the secret itself leave it out with `omitFromEnv`.
+ */
+const FIXTURE_INSTALL_SECRET = "ab".repeat(32);
 
 async function writeExecutable(path: string, contents: string) {
   await writeFile(path, contents);
@@ -28,7 +37,9 @@ async function writeExecutable(path: string, contents: string) {
  * all.
  */
 type Run = {
-  script?: "start" | "stop";
+  script?: "start" | "stop" | "open";
+  /** Arguments after the script's name (`scripts/open.sh --print`). */
+  args?: readonly string[];
   worker?: "own" | "other";
   server?: "own" | "other";
   serverStops?: boolean;
@@ -59,6 +70,7 @@ async function runStartWithStaleServerProbe(
   status: 400 | 401 | 404,
   {
     script = "start",
+    args = [],
     worker = "own",
     server = "own",
     serverStops = true,
@@ -83,6 +95,18 @@ async function runStartWithStaleServerProbe(
   const logPath = join(directory, "signals.log");
   const dockerLogPath = join(directory, "docker.log");
   const curlLogPath = join(directory, "curl.log");
+  // FreeDuet (D28): what the fakes record about the installation secret. The config files curl was
+  // handed (-K), the programs asked to open an address, and every child that was given the secret in
+  // its environment.
+  const curlConfigLogPath = join(directory, "curl-config.log");
+  const browserLogPath = join(directory, "browser.log");
+  const leakLogPath = join(directory, "leak.log");
+  // Whether this file system keeps permission bits at all (a Windows drive mounted into WSL does
+  // not): a mode is only asserted where it can be read back.
+  const modeProbe = join(directory, "mode-probe");
+  await writeFile(modeProbe, "");
+  await chmod(modeProbe, 0o600);
+  const modesSupported = ((await stat(modeProbe)).mode & 0o777) === 0o600;
   await mkdir(fakeBin, { recursive: true });
   await mkdir(scripts, { recursive: true });
   await mkdir(join(directory, "server"));
@@ -128,6 +152,8 @@ async function runStartWithStaleServerProbe(
     "ANTHROPIC_API_KEY=freeduet-local-key",
     // FreeDuet (#42): start.sh writes it when missing, and restarts the server to pick it up.
     "FREEDUET_INTELLIGENCE=off",
+    // FreeDuet (D28): made once by start.sh, and a start that has to make it restarts the server.
+    `FREEDUET_INSTALL_SECRET=${FIXTURE_INSTALL_SECRET}`,
   ].filter(
     (line) =>
       ![...omitFromEnv, ...Object.keys(settings)].some((key) =>
@@ -155,6 +181,35 @@ async function runStartWithStaleServerProbe(
   await writeFile(
     join(scripts, "processes.sh"),
     await readFile("scripts/processes.sh"),
+  );
+  // FreeDuet (D28): start.sh hands a browser to this one when it has just made the installation secret.
+  await writeExecutable(
+    join(scripts, "open.sh"),
+    await readFile("scripts/open.sh"),
+  );
+
+  // The programs that could open an address on a real machine. Each one records the call and fails, so
+  // a run that reaches one is seen and no window ever opens; `fake-browser` is the one that is named
+  // through BROWSER, and the one a test lets succeed.
+  for (const name of [
+    "wslview",
+    "xdg-open",
+    "open",
+    "explorer.exe",
+    "cmd.exe",
+  ]) {
+    await writeExecutable(
+      join(fakeBin, name),
+      `#!/usr/bin/env bash\nprintf 'UNEXPECTED ${name} %s\\n' "$*" >> "$BROWSER_LOG"\nexit 1\n`,
+    );
+  }
+  await writeExecutable(
+    join(fakeBin, "fake-browser"),
+    `#!/usr/bin/env bash
+printf 'fake-browser %s\\n' "$*" >> "$BROWSER_LOG"
+if [ "\${OPENER:-works}" = fails ]; then exit 1; fi
+exit 0
+`,
   );
 
   await writeExecutable(
@@ -198,6 +253,18 @@ fi
     `#!/usr/bin/env bash
 args="$*"
 printf '%s\\n' "$args" >> "$CURL_LOG"
+# FreeDuet (D28): what a -K config file held at the moment of the call and how it was protected, as
+# one line: its mode, its path, what it held, then the whole command line. Only the person's own calls
+# (curl as the person, scripts/open.sh) hand curl one.
+prev=""
+for arg in "$@"; do
+  if [ "$prev" = -K ] && [ -f "$arg" ]; then
+    mode="$(stat -c %a "$arg" 2>/dev/null || stat -f %Lp "$arg" 2>/dev/null || true)"
+    printf '%s\\t%s\\t%s\\t%s\\n' "$mode" "$arg" "$(cat "$arg")" "$args" >> "$CURL_CONFIG_LOG"
+  fi
+  prev="$arg"
+done
+if [ -n "\${FREEDUET_INSTALL_SECRET:-}" ]; then printf 'curl\\n' >> "$LEAK_LOG"; fi
 for port in ${unavailableHealthPorts.join(" ")}; do
   if [[ "$args" == *"http://localhost:$port/health"* ]]; then exit 7; fi
 done
@@ -205,6 +272,17 @@ if [[ "$args" == *"/internal/routines/run"* ]]; then
   printf '${status}'
   exit 0
 fi
+# The one route only the person's script asks: a link that pairs a browser (or why there is none).
+if [[ "$args" == *"/internal/pairing"* ]]; then
+  case "\${PAIRING:-200}" in
+    200) printf '{"path":"/api/pair?token=pairing-token-fixture_123"}\\n200' ;;
+    bad-link) printf '{"path":"https://elsewhere.example/steal"}\\n200' ;;
+    down) exit 7 ;;
+    *) printf '{"error":"fixture"}\\n%s' "$PAIRING" ;;
+  esac
+  exit 0
+fi
+if [ -n "\${APP_DOWN:-}" ] && [[ "$args" == *"http://localhost:3010/"* ]]; then exit 7; fi
 if [[ "$args" == *"/api/copilotkit/info"* || "$args" == *"/api/capabilities"* ]]; then
   if { [ -f "$SERVER_STOPPED" ] || [ "$PORT_FREE" = 1 ]; } && [ ! -f "$SERVER_STARTED" ]; then exit 7; fi
   if [[ "$args" == *"/api/capabilities"* ]]; then printf '${capabilities}'; else printf '${runtimeInfo}'; fi
@@ -222,6 +300,7 @@ exit 0
     `#!/usr/bin/env bash
 args="$*"
 printf '%s\\n' "$args" >> "$DOCKER_LOG"
+if [ -n "\${FREEDUET_INSTALL_SECRET:-}" ]; then printf 'docker\\n' >> "$LEAK_LOG"; fi
 if [ -n "\${COMPOSE_PROFILES:-}" ]; then printf 'COMPOSE_PROFILES=%s\\n' "$COMPOSE_PROFILES" >> "$DOCKER_LOG"; fi
 if [[ "$args" == *"compose up"* ]]; then printf '%s' "$COMPUTER_TOKEN" > "$COMPOSE_COMPUTER_TOKEN"; fi
 if [[ "$args" == *"to_regclass('public.agent_profiles')"* ]]; then echo agent_profiles; fi
@@ -309,7 +388,7 @@ fi
   // The Learning container check answers with one line, which start.sh relays.
   await writeExecutable(
     join(fakeBin, "bun"),
-    '#!/usr/bin/env bash\nif [[ "$2" == *server/src/production-entry.ts ]]; then printf "%s" "$COMPUTER_TOKEN" > "$SERVER_COMPUTER_TOKEN"; printf "%s\\n" "$*" > "$SERVER_STARTED"; fi\nif [[ "$2" == *server/src/production-entry.ts && -n "$FAKE_SERVER_HOLDS_SECONDS" ]]; then /bin/sleep "$FAKE_SERVER_HOLDS_SECONDS"; fi\nif [[ "$*" == *worker/src/index.ts ]]; then printf "%s\\n" "$*" > "$WORKER_STARTED"; fi\nif [ "$1" = run ] && [ "$2" = - ]; then exec "$REAL_BUN" "$@"; fi\nif [ "$1" = scripts/setup-learning.ts ]; then echo "noise"; echo "LEARNING-CHECK $*"; fi\nexit 0\n',
+    '#!/usr/bin/env bash\nif [ -n "$FREEDUET_INSTALL_SECRET" ]; then printf "bun\\n" >> "$LEAK_LOG"; fi\nif [[ "$2" == *server/src/production-entry.ts ]]; then printf "%s" "$COMPUTER_TOKEN" > "$SERVER_COMPUTER_TOKEN"; printf "%s\\n" "$*" > "$SERVER_STARTED"; fi\nif [[ "$2" == *server/src/production-entry.ts && -n "$FAKE_SERVER_HOLDS_SECONDS" ]]; then /bin/sleep "$FAKE_SERVER_HOLDS_SECONDS"; fi\nif [[ "$*" == *worker/src/index.ts ]]; then printf "%s\\n" "$*" > "$WORKER_STARTED"; fi\nif [ "$1" = run ] && [ "$2" = - ]; then exec "$REAL_BUN" "$@"; fi\nif [ "$1" = scripts/setup-learning.ts ]; then echo "noise"; echo "LEARNING-CHECK $*"; fi\nexit 0\n',
   );
   // What `python3` is on a stock Windows machine: the Microsoft Store alias, which runs nothing. A
   // script that still needed it would stop at the health check in every test in this file.
@@ -320,10 +399,17 @@ fi
 
   try {
     const spawnOptions = {
-      cmd: [shell, `scripts/${script}.sh`],
+      cmd: [shell, `scripts/${script}.sh`, ...args],
       cwd: directory,
       env: {
         PATH: `${fakeBin}:${process.env.PATH ?? ""}`,
+        // FreeDuet (D28): a run of these scripts never opens a real window. A test about the browser
+        // names the fake one through BROWSER and clears FREEDUET_NO_BROWSER.
+        BROWSER: "fake-browser",
+        FREEDUET_NO_BROWSER: "1",
+        BROWSER_LOG: browserLogPath,
+        LEAK_LOG: leakLogPath,
+        CURL_CONFIG_LOG: curlConfigLogPath,
         REAL_BUN: process.execPath,
         OS: "",
         STOP_ONLY: script === "stop" ? "1" : "0",
@@ -369,6 +455,10 @@ fi
     )
       .text()
       .catch(() => "");
+    // What the first run left in the settings file, before a repeat can change it.
+    const firstSavedEnvironment = await Bun.file(
+      join(directory, envFile),
+    ).text();
     let repeated:
       | { exitCode: number; stdout: string; stderr: string; signalLog: string }
       | undefined;
@@ -413,8 +503,29 @@ fi
         .catch(() => ""),
       directory,
       initialEnvironment,
+      firstSavedEnvironment,
       savedEnvironment: await Bun.file(join(directory, envFile)).text(),
+      savedEnvironmentMode: (await stat(join(directory, envFile))).mode & 0o777,
+      modesSupported,
       personEnvironment: await Bun.file(join(directory, ".env")).text(),
+      // FreeDuet (D28): over the whole run, a repeat included.
+      browserLog: await Bun.file(browserLogPath)
+        .text()
+        .catch(() => ""),
+      leakLog: await Bun.file(leakLogPath)
+        .text()
+        .catch(() => ""),
+      curlConfigs: (
+        await Bun.file(curlConfigLogPath)
+          .text()
+          .catch(() => "")
+      )
+        .split("\n")
+        .filter(Boolean)
+        .map((line) => {
+          const [mode, path, held, command] = line.split("\t");
+          return { mode, path, held, command };
+        }),
     };
   } finally {
     await rm(directory, { recursive: true, force: true });
@@ -1269,5 +1380,399 @@ describe("start.sh local dictation (D25)", () => {
     expect(result.exitCode).toBe(0);
     expect(result.dockerLog).toContain("COMPOSE_PROFILES=whisper");
     expect(result.dockerLog).toContain("compose ps --quiet");
+  });
+});
+
+/*
+ * The installation secret (docs/M1_PLAN.md D28). With no sign-in the person is whoever reaches the
+ * server from this machine's loopback, and on Docker Desktop a Bot's computer reaches it as loopback
+ * too, so what tells the person's browser from a Bot's computer is one random secret per installation.
+ * start.sh makes it, once, in the settings file. Nothing else may carry it: not an argument (every
+ * process on the machine reads those), not the environment of a child (Compose and the Bots'
+ * containers are children), and not the output.
+ */
+describe("start.sh installation secret (D28)", () => {
+  const secretIn = (environment: string) =>
+    environment.match(/^FREEDUET_INSTALL_SECRET=([0-9a-f]{64})$/m)?.[1] ?? "";
+  /** An install from before the secret existed: nothing in its settings file. */
+  const fresh = { omitFromEnv: ["FREEDUET_INSTALL_SECRET"] } as const;
+  const pairedLink =
+    "http://localhost:3010/api/pair?token=pairing-token-fixture_123";
+
+  test("an install with no secret gets one on its first start, and keeps its other settings", async () => {
+    const result = await runStartWithStaleServerProbe(400, fresh);
+
+    expect({ exitCode: result.exitCode, stderr: result.stderr }).toEqual({
+      exitCode: 0,
+      stderr: "",
+    });
+    expect(secretIn(result.savedEnvironment)).toMatch(/^[0-9a-f]{64}$/);
+    expect(
+      result.savedEnvironment.match(/^FREEDUET_INSTALL_SECRET=/gm),
+    ).toHaveLength(1);
+    // Every setting the file already had is still there.
+    for (const line of result.initialEnvironment.split("\n").filter(Boolean))
+      expect(result.savedEnvironment).toContain(`${line}\n`);
+  });
+
+  /** `.env.example` ships the line empty, like FREEDUET_LOCAL_KEY: an empty line is no secret. */
+  test("an empty line in the file is replaced, not repeated", async () => {
+    const result = await runStartWithStaleServerProbe(400, {
+      settings: { FREEDUET_INSTALL_SECRET: "" },
+    });
+
+    expect(result.exitCode).toBe(0);
+    expect(secretIn(result.savedEnvironment)).toMatch(/^[0-9a-f]{64}$/);
+    expect(result.savedEnvironment).not.toMatch(/^FREEDUET_INSTALL_SECRET=$/m);
+    expect(
+      result.savedEnvironment.match(/^FREEDUET_INSTALL_SECRET=/gm),
+    ).toHaveLength(1);
+  });
+
+  test("no two installations get the same one", async () => {
+    const [first, second] = await Promise.all([
+      runStartWithStaleServerProbe(400, fresh),
+      runStartWithStaleServerProbe(400, fresh),
+    ]);
+
+    expect(secretIn(first.savedEnvironment)).not.toBe("");
+    expect(secretIn(second.savedEnvironment)).not.toBe("");
+    expect(secretIn(first.savedEnvironment)).not.toBe(
+      secretIn(second.savedEnvironment),
+    );
+  });
+
+  test("the file is readable by its owner alone, and the run says it made the secret without saying what it is", async () => {
+    const result = await runStartWithStaleServerProbe(400, fresh);
+    const secret = secretIn(result.savedEnvironment);
+
+    expect(secret).not.toBe("");
+    // Where this file system keeps permission bits at all.
+    expect(result.modesSupported ? result.savedEnvironmentMode : 0o600).toBe(
+      0o600,
+    );
+    expect(result.stdout).toContain(
+      "Generated FREEDUET_INSTALL_SECRET and wrote it to .env.",
+    );
+    expect(result.stdout).not.toContain(secret);
+    expect(result.stderr).not.toContain(secret);
+  });
+
+  /** The server reads its settings once, at its start: one that was running cannot know the new secret. */
+  test("a server that was already running is restarted to read it", async () => {
+    const result = await runStartWithStaleServerProbe(400, fresh);
+
+    expect(result.exitCode).toBe(0);
+    expect(result.signalLog).toBe("91000001\n91000002\n");
+    expect(result.serverLaunch).toBe(
+      `--env-file=../.env ${result.directory}/server/src/production-entry.ts\n`,
+    );
+  });
+
+  test("an install that has it is left alone: nothing written, nothing said, no restart", async () => {
+    const result = await runStartWithStaleServerProbe(400);
+
+    expect(result.exitCode).toBe(0);
+    expect(result.signalLog).toBe("");
+    expect(secretIn(result.savedEnvironment)).toBe(FIXTURE_INSTALL_SECRET);
+    expect(result.stdout).not.toContain("FREEDUET_INSTALL_SECRET");
+  });
+
+  test("a later start keeps the same secret, restarts nothing and opens no second window", async () => {
+    const result = await runStartWithStaleServerProbe(400, {
+      ...fresh,
+      repeatStart: true,
+      processEnvironment: { FREEDUET_NO_BROWSER: "" },
+    });
+    const first = secretIn(result.firstSavedEnvironment);
+
+    expect(first).not.toBe("");
+    expect(secretIn(result.savedEnvironment)).toBe(first);
+    expect(result.repeated).toMatchObject({
+      exitCode: 0,
+      stderr: "",
+      signalLog: "",
+    });
+    expect(result.repeated?.stdout ?? "").not.toContain(
+      "FREEDUET_INSTALL_SECRET",
+    );
+    // The first start opened one, because it had just made the secret and no browser held it yet.
+    expect(result.browserLog).toBe(`fake-browser ${pairedLink}\n`);
+  });
+
+  /**
+   * `export`, which the tokens above it need so that Compose can read them, is what this must not do:
+   * everything exported reaches every child, and the Bots' containers are started by one.
+   */
+  test("no program the script starts is given the secret in its environment", async () => {
+    const result = await runStartWithStaleServerProbe(400, fresh);
+
+    // The probes saw Compose and the server's own launch at all.
+    expect(result.dockerLog).toContain("compose up");
+    expect(result.serverLaunch).not.toBe("");
+    expect(result.leakLog).toBe("");
+  });
+
+  test.each([
+    ["with no secret yet", fresh],
+    ["with one already", {}],
+  ] as const)(
+    "the call it makes as the person carries the cookie in a file of its own, never in an argument (%s)",
+    async (_name, run) => {
+      const result = await runStartWithStaleServerProbe(400, run);
+      const secret = secretIn(result.savedEnvironment);
+      const asPerson = result.curlConfigs.filter((call) =>
+        call.command.includes("/api/copilotkit/info"),
+      );
+
+      expect(secret).not.toBe("");
+      expect(asPerson).toHaveLength(1);
+      expect(asPerson[0].held).toBe(
+        `header = "Cookie: freeduet_install_3001=${secret}"`,
+      );
+      expect(result.modesSupported ? asPerson[0].mode : "600").toBe("600");
+      // Gone as soon as the call is over, and no call of the run carries the secret as an argument.
+      expect(existsSync(asPerson[0].path)).toBe(false);
+      expect(result.curlLog).not.toContain(secret);
+    },
+  );
+
+  describe("the browser", () => {
+    const opens = { FREEDUET_NO_BROWSER: "" };
+
+    test("is opened on the paired link when the secret was just made, and told nothing else", async () => {
+      const result = await runStartWithStaleServerProbe(400, {
+        ...fresh,
+        processEnvironment: opens,
+      });
+      const secret = secretIn(result.savedEnvironment);
+      const asked = result.curlConfigs.filter((call) =>
+        call.command.includes("/internal/pairing"),
+      );
+
+      expect(result.exitCode).toBe(0);
+      expect(result.browserLog).toBe(`fake-browser ${pairedLink}\n`);
+      // The link was asked for with the secret in a file of its own, and the secret is in none of what
+      // the browser, the screen or the process list could show.
+      expect(asked).toHaveLength(1);
+      expect(asked[0].held).toBe(`header = "Authorization: Bearer ${secret}"`);
+      expect(asked[0].command).toContain("-X POST");
+      expect(result.browserLog).not.toContain(secret);
+      expect(result.stdout).not.toContain(secret);
+      expect(result.curlLog).not.toContain(secret);
+    });
+
+    test.each([
+      ["CI is set", { CI: "true" }],
+      ["FREEDUET_NO_BROWSER is 1", { FREEDUET_NO_BROWSER: "1" }],
+    ] as const)("is not opened when %s", async (_name, environment) => {
+      const result = await runStartWithStaleServerProbe(400, {
+        ...fresh,
+        processEnvironment: { ...opens, ...environment },
+      });
+
+      expect(result.exitCode).toBe(0);
+      expect(secretIn(result.savedEnvironment)).not.toBe("");
+      expect(result.browserLog).toBe("");
+      // And the way to a browser is on the screen for whoever wants one.
+      expect(result.stdout).toContain("bash scripts/open.sh");
+    });
+
+    test("is not opened on a start that made no secret: that browser holds it already", async () => {
+      const result = await runStartWithStaleServerProbe(400, {
+        processEnvironment: opens,
+      });
+
+      expect(result.exitCode).toBe(0);
+      expect(result.browserLog).toBe("");
+      expect(result.curlConfigs.map((call) => call.command)).not.toContain(
+        "/internal/pairing",
+      );
+    });
+
+    test("is not opened for a second stack (the eval stack has nobody to look at it)", async () => {
+      const result = await runStartWithStaleServerProbe(400, {
+        ...fresh,
+        envFile: ".env.eval",
+        portFree: true,
+        processEnvironment: opens,
+      });
+
+      expect(result.exitCode).toBe(0);
+      expect(secretIn(result.savedEnvironment)).not.toBe("");
+      expect(result.browserLog).toBe("");
+      expect(result.personEnvironment).toBe("PERSON=untouched\n");
+    });
+
+    test("a browser that cannot be opened does not stop the start, and says how to open one", async () => {
+      const result = await runStartWithStaleServerProbe(400, {
+        ...fresh,
+        processEnvironment: { ...opens, PAIRING: "401" },
+      });
+
+      expect(result.exitCode).toBe(0);
+      expect(result.stdout).toContain("Ready. http://localhost:3010");
+      expect(result.stdout).toContain(
+        "Could not open a browser. Run: bash scripts/open.sh",
+      );
+      expect(result.browserLog).toBe("");
+    });
+  });
+});
+
+/*
+ * scripts/open.sh (D28): the way a browser gets the secret. It asks the server for a link that is good
+ * once and for two minutes, and hands the browser that, so the secret itself is never in a URL.
+ */
+describe("scripts/open.sh (D28)", () => {
+  const open = (run: Run = {}) =>
+    runStartWithStaleServerProbe(400, { script: "open", ...run });
+  const link = "http://localhost:3010/api/pair?token=pairing-token-fixture_123";
+  // The branch that falls through every program is the one a WSL kernel never reaches, since there the
+  // address is always handed to Windows.
+  const onWsl = /microsoft/i.test(
+    existsSync("/proc/version") ? readFileSync("/proc/version", "utf8") : "",
+  );
+
+  test("asks for a link with the secret in a file of its own and opens the browser on it", async () => {
+    const result = await open();
+    const asked = result.curlConfigs.filter((call) =>
+      call.command.includes("/internal/pairing"),
+    );
+
+    expect({ exitCode: result.exitCode, stderr: result.stderr }).toEqual({
+      exitCode: 0,
+      stderr: "",
+    });
+    expect(result.stdout).toContain("Opened FreeDuet in your browser.");
+    expect(result.browserLog).toBe(`fake-browser ${link}\n`);
+    expect(asked).toHaveLength(1);
+    expect(asked[0].held).toBe(
+      `header = "Authorization: Bearer ${FIXTURE_INSTALL_SECRET}"`,
+    );
+    expect(asked[0].command).toContain("-X POST");
+    expect(asked[0].command).toEndWith(
+      "http://localhost:3001/internal/pairing",
+    );
+    expect(result.modesSupported ? asked[0].mode : "600").toBe("600");
+    expect(existsSync(asked[0].path)).toBe(false);
+    // Nowhere it could be read from: not an argument, not the screen, not the browser, not a child.
+    for (const place of [
+      result.curlLog,
+      result.stdout,
+      result.stderr,
+      result.browserLog,
+      result.leakLog,
+    ])
+      expect(place).not.toContain(FIXTURE_INSTALL_SECRET);
+    expect(result.leakLog).toBe("");
+  });
+
+  test("--print prints the link and opens nothing", async () => {
+    const result = await open({ args: ["--print"] });
+
+    expect(result.exitCode).toBe(0);
+    expect(result.stdout).toBe(`${link}\n`);
+    expect(result.browserLog).toBe("");
+  });
+
+  test("a stack with its own settings file reads that one, and leaves the person's alone", async () => {
+    const result = await open({ envFile: ".env.eval" });
+
+    expect(result.exitCode).toBe(0);
+    expect(result.browserLog).toBe(`fake-browser ${link}\n`);
+    expect(result.personEnvironment).toBe("PERSON=untouched\n");
+  });
+
+  test("a server with nothing to pair (sign-in, or open beyond this machine) gets the plain address", async () => {
+    const result = await open({ processEnvironment: { PAIRING: "404" } });
+
+    expect(result.exitCode).toBe(0);
+    expect(result.stdout).toContain("has nothing to pair with");
+    expect(result.browserLog).toBe("fake-browser http://localhost:3010/\n");
+  });
+
+  test("a server that does not accept the secret is a start that did not finish, and says so", async () => {
+    const result = await open({ processEnvironment: { PAIRING: "401" } });
+
+    expect(result.exitCode).toBe(1);
+    expect(result.stdout).toContain(
+      "The server did not accept this installation's secret.",
+    );
+    expect(result.stdout).toContain("Run: bash scripts/start.sh");
+    expect(result.browserLog).toBe("");
+  });
+
+  test("any other answer from the server opens nothing", async () => {
+    const result = await open({ processEnvironment: { PAIRING: "500" } });
+
+    expect(result.exitCode).toBe(1);
+    expect(result.stdout).toContain("answered HTTP 500");
+    expect(result.browserLog).toBe("");
+  });
+
+  test("a server that is not answering opens nothing", async () => {
+    const result = await open({ processEnvironment: { PAIRING: "down" } });
+
+    expect(result.exitCode).toBe(1);
+    expect(result.stdout).toContain("not answering on port 3001");
+    expect(result.browserLog).toBe("");
+  });
+
+  /** A link opened at an app that is not there is a link spent: it is good once. */
+  test("asks for no link while the app is not answering", async () => {
+    const result = await open({ processEnvironment: { APP_DOWN: "1" } });
+
+    expect(result.exitCode).toBe(1);
+    expect(result.stdout).toContain("app is not answering on port 3010");
+    expect(result.curlLog).not.toContain("/internal/pairing");
+    expect(result.browserLog).toBe("");
+  });
+
+  /** What the server answers is data: only a path of this app's own, with a token, is ever opened. */
+  test("opens nothing but a link of the app's own", async () => {
+    const result = await open({ processEnvironment: { PAIRING: "bad-link" } });
+
+    expect(result.exitCode).toBe(1);
+    expect(result.stdout).toContain("was not a link");
+    expect(result.browserLog).toBe("");
+  });
+
+  test("a settings file with no secret says to start, and asks the server nothing", async () => {
+    const result = await open({ omitFromEnv: ["FREEDUET_INSTALL_SECRET"] });
+
+    expect(result.exitCode).toBe(1);
+    expect(result.stdout).toContain(
+      ".env has no FREEDUET_INSTALL_SECRET. Run: bash scripts/start.sh",
+    );
+    expect(result.curlLog).toBe("");
+    expect(result.browserLog).toBe("");
+  });
+
+  test.skipIf(onWsl)(
+    "when no program can open it, prints the link once, for the person to open",
+    async () => {
+      const result = await open({ processEnvironment: { OPENER: "fails" } });
+
+      expect(result.exitCode).toBe(0);
+      expect(result.stdout.split("\n")).toContain(link);
+      expect(result.stdout).toContain("within two minutes");
+      expect(result.stdout).not.toContain("Opened FreeDuet");
+      // The named program was tried first, then each of the usual ones in turn.
+      expect(result.browserLog.split("\n")[0]).toBe(`fake-browser ${link}`);
+      expect(result.browserLog).toContain("UNEXPECTED xdg-open");
+    },
+  );
+
+  test("--help says what it is for, and an unknown argument is refused", async () => {
+    const help = await open({ args: ["--help"] });
+    expect(help.exitCode).toBe(0);
+    expect(help.stdout).toContain("bash scripts/open.sh --print");
+    expect(help.stdout).not.toContain("set -euo pipefail");
+
+    const refused = await open({ args: ["--secret"] });
+    expect(refused.exitCode).toBe(1);
+    expect(refused.stdout).toContain("Unknown argument: --secret");
+    expect(refused.curlLog).toBe("");
   });
 });
