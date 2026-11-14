@@ -42,7 +42,13 @@ import {
   type WantedTool,
 } from "../app-access";
 import type { BrokerApp } from "../broker";
-import { CATALOGUE, type CatalogueEntry, catalogueEntry } from "../catalogue";
+import {
+  CATALOGUE,
+  type CatalogueEntry,
+  catalogueEntry,
+  type SettingsOnly,
+  settingsOnlyBecause,
+} from "../catalogue";
 import type { StoreContext } from "./context";
 import { iso } from "./model";
 
@@ -678,6 +684,16 @@ export function appAccessMethods(context: StoreContext) {
       const ref = `${tool.serverId}/${tool.name}`;
       const titles = needed.get(ref);
       if (!titles) continue;
+      /*
+       * Whether an approval may give it is decided here, from the entry's own send list, so the inbox
+       * row is drawn from the server's answer and the approve route asks the same question again for
+       * itself. Set only when there is a reason: a tool an approval may give carries nothing extra.
+       */
+      const settingsOnly = settingsOnlyBecause(
+        catalogueEntry(tool.serverId),
+        tool.name,
+        tool.effect,
+      );
       wanted.set(tool.serverId, [
         ...(wanted.get(tool.serverId) ?? []),
         {
@@ -685,6 +701,7 @@ export function appAccessMethods(context: StoreContext) {
           name: tool.name,
           label: [...new Set(titles)].join(", "),
           read: tool.effect === "read",
+          ...(settingsOnly ? { settingsOnly } : {}),
         },
       ]);
     }
@@ -997,22 +1014,36 @@ export function appAccessMethods(context: StoreContext) {
     },
 
     /**
-     * Every tool the app's answering row advertises, as grant refs, and whether each is a read.
+     * Every tool the app's answering row advertises, as grant refs, whether each is a read, and
+     * whether approving a request may give it at all.
      *
      * `read` IS THE EXACT WORD AND NOTHING ELSE, as `classifyTool` reads `effect`: a null or an
      * unrecognised value is a write, so a tool nobody classified is never handed out as a read.
+     *
+     * `settingsOnly` IS NOT THE COLUMN'S. It comes from the entry's own send list and, for an app with
+     * no entry, from whether the vendor labelled the tool a read (`settingsOnlyBecause`), so a value
+     * written into the column by hand cannot make a send look approvable. A tool can be `read` and
+     * `settingsOnly` together only through that hand, and the route leaves it out either way.
      */
-    async appTools(
-      serverId: string,
-    ): Promise<{ ref: string; read: boolean }[]> {
+    async appTools(serverId: string): Promise<
+      {
+        ref: string;
+        name: string;
+        read: boolean;
+        settingsOnly: SettingsOnly | null;
+      }[]
+    > {
       const rows = await database
         .select({ name: mcpTools.name, effect: mcpTools.effect })
         .from(mcpTools)
         .where(eq(mcpTools.serverId, serverId))
         .orderBy(asc(mcpTools.name));
+      const entry = catalogueEntry(serverId);
       return rows.map((row) => ({
         ref: `${serverId}/${row.name}`,
+        name: row.name,
         read: row.effect === "read",
+        settingsOnly: settingsOnlyBecause(entry, row.name, row.effect),
       }));
     },
 
