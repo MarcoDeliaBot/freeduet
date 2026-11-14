@@ -153,6 +153,12 @@ Mark (id `marketer`) was the first member added after v0.1, Cam (id `video`) the
   by itself sets `SETTLE_NEVER` (`tests/helpers.py`), so the CLI's result line ends the segment and no timer
   decides. Two such flakes cost CI re-runs on 14 November 2026 (`cli_runs differs from its golden`, and
   `assert ['computer_navigate'] == [...]` in `test_refused_offered_tool.py`).
+- Real-browser tests (`computer (real browser)`): a browser asks for each page's `/favicon.ico` by itself,
+  tens of milliseconds after the page and with as much jitter, so it lands on either side of a test's next
+  step and is judged by the policy of the moment it arrives, like any request. A case that reads the
+  proxy's request list across a policy change or a reset must not assert an exact list: it names the icons
+  it can meet there (`askedFor` in `private-network-browser.test.ts`, whose third case failed 1 run in 10
+  on a quiet machine and cost a CI re-run on 14 November 2026).
 - The server suite runs in one process and every open pool is held to the end. CI Postgres has
   `max_connections=200`; locally the suite peaks near 90 connections. **Every test that opens a
   database pool closes it** (`await database.$client.close()`).

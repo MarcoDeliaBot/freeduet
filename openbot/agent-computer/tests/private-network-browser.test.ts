@@ -127,6 +127,25 @@ async function closedWithin(closing: Promise<void>, ms = 2_000) {
   clearTimeout(timer);
 }
 
+/**
+ * The icons a browser asks for by itself, one for each page it has shown (`/favicon.ico` of the page's
+ * own origin).
+ *
+ * It asks some tens of milliseconds after the page, give or take as much, which is about when a case
+ * moves on: it lands on either side of the next step, and it is judged by the policy of the moment it
+ * arrives, like any request. Measured, one run in ten (on a quiet machine) saw the router's icon come
+ * after the case had switched the network on and cleared what the proxy had seen. So a case that reads
+ * the list of requests across such a step names the icons it can meet there, and nothing else is let
+ * pass: an icon of any other place is a request that must not have been made.
+ */
+const PUBLIC_ICON = "http://public.test/favicon.ico";
+const ROUTER_ICON = "http://192.168.1.1/favicon.ico";
+
+/** What a proxy was asked for, except the named icons. */
+function askedFor(seen: readonly string[], icons: readonly string[]) {
+  return seen.filter((url) => !icons.includes(url));
+}
+
 /** Navigate, and say what came back: the status and the text of the page. */
 async function visit(page: Page, url: string) {
   try {
@@ -302,7 +321,11 @@ describe.skipIf(!asked)("a Bot's browser and the home network", () => {
       expect(redirected.url).toBe("http://192.168.1.1/admin");
       expect(redirected.status).toBe(403);
       expect(redirected.refused).toBe(true);
-      expect(net.seen).toEqual(["http://public.test/redirect"]);
+      // The switch is off, so the proxy was asked for the redirect and for nothing at the router: not
+      // the page, and not its icon either. (The icon of the page before this one may still arrive.)
+      expect(askedFor(net.seen, [PUBLIC_ICON])).toEqual([
+        "http://public.test/redirect",
+      ]);
 
       // To metadata too, with the switch on.
       setEgressPolicy(BOT, switchedOn);
@@ -310,7 +333,11 @@ describe.skipIf(!asked)("a Bot's browser and the home network", () => {
       net.redirectTo.location = "http://169.254.169.254/latest/meta-data/";
       const toMetadata = await visit(page, "http://public.test/redirect");
       expect(toMetadata.status).toBe(403);
-      expect(net.seen).toEqual(["http://public.test/redirect"]);
+      // The page the router's refusal came as may ask for its icon only now, with the switch on, and be
+      // answered: that one is let by. Metadata is not: neither its address nor its icon may be asked for.
+      expect(askedFor(net.seen, [PUBLIC_ICON, ROUTER_ICON])).toEqual([
+        "http://public.test/redirect",
+      ]);
 
       // With the switch on, a redirect inside the network is followed.
       net.seen.length = 0;
