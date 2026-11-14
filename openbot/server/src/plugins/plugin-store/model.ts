@@ -9,6 +9,7 @@ import type {
 import type { Database } from "../../db/client";
 import { isQueryFailure, withoutStatement } from "../../db/query-failure";
 import { pendingAuthorizations } from "../../db/schema";
+import type { PersonLanguage } from "../../freeduet/person-language";
 import type { CheckPrivateShare } from "../../proactive/private-share";
 import {
   BROKERED_PROFILE,
@@ -1247,6 +1248,12 @@ export type PluginStoreOptions = {
     botId: string;
     actorId: string;
   }) => Promise<{ threadId: string; message: ConversationMessage } | null>;
+  /**
+   * FreeDuet (docs/M1_PLAN.md D26, D37): the language the person reads, for the one refusal this
+   * store writes to the person and not only to the model: a new email sent again in the same request.
+   * Absent is English, like every other sentence this store writes.
+   */
+  personLanguage?: PersonLanguage | null;
   /** Who may steer a run that uses a Shared app's account. Absent, every shared call is refused. */
   sharedUse?: SharedUseGate;
   database: Database;
