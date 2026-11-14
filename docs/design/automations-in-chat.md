@@ -173,9 +173,9 @@ For the maintainer to decide (none is taken here):
 
 Verified:
 
-- Server: the four routine suites pass against Postgres, 55 tests in all (`routine-calendar`, `routine-history.integration`, `routine-routes`, `routine-runner`). On main the new calendar module and the two store reads do not exist, so the new suites cannot pass there.
-- The assertion-shape guard passes (10 tests). The server test typecheck shows no new error. Two baselined lines changed text, because the store interface gained two methods.
-- App: the 18 new tests pass, and the four view tests fail against main's list file. The app typecheck is clean. Biome format and lint pass on every changed file.
+- Server: the four routine suites pass against Postgres, 55 tests in all (`routine-calendar`, `routine-history.integration`, `routine-routes`, `routine-runner`). All 16 routine suites together: 330 pass. The whole server suite: 7,902 pass and 3 fail. The 3 are the two real-provider learning tests and the Mastra bridge test, and they fail the same way on origin/main in this sandbox. On main the new calendar module and the two store reads do not exist, so the new suites cannot pass there.
+- The assertion-shape guard passes (10 tests). The project gate, `bun run typecheck:tests`, is clean against the baseline (239 known errors). Two baselined lines were edited, because the store interface gained two methods. The server and app source typechecks are clean.
+- App: the 18 new tests pass, and the four view tests fail against main's list file. The app typecheck is clean. Biome format and lint pass on the whole `openbot` tree.
 
 Not verified:
 
