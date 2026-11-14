@@ -382,7 +382,6 @@ describe("computer provider factory", () => {
       provider: "docker",
       baseUrl: "http://supervisor:4300",
       supervisorToken: "supervisor-secret",
-      token: "computer-secret",
       allowPrivateHosts: false,
     };
 
