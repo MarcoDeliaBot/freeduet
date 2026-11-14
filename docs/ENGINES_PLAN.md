@@ -176,6 +176,8 @@ Slices 5 and 6 can run in parallel after slice 3; slices 8 to 10 are independent
 
 **Built so far (14 November 2026):** the limit and failure classifier of slice 2, `openbot/agent-freeduet/freeduet/failure_classifier.py` with `tests/test_failure_classifier.py`, wired into no run path; the breaker, `probe()` and the persisted limited-until (E4) are not built, so slice 2 stays open.
 
+**Built so far (14 November 2026):** the JSON salvage block of section 2, `openbot/agent-freeduet/freeduet/json_salvage.py` with `tests/test_json_salvage.py`, wired into no run path; no member imports it yet.
+
 ### 9.2 Decided on 14 November 2026
 
 | Decision | Consequence here |
