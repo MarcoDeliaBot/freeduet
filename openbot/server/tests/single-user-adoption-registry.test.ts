@@ -65,7 +65,7 @@ beforeAll(async () => {
 
 afterAll(async () => {
   await scratch.drop();
-});
+}, 60_000);
 
 /** The part of the document that lists every column, between its headings. */
 function section22(): string {

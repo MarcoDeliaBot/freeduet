@@ -507,17 +507,67 @@ export function freePort(): number {
  * Every table's row count and a hash of its rows, so a test can say "nothing was written" and mean
  * every table. Rows are hashed as text, in the text's own order.
  */
-export async function snapshot(database: Database) {
+export async function snapshot(database: Database, only?: readonly string[]) {
   const tables = (await database.execute(sql`
     select table_name as name from information_schema.tables
     where table_schema = 'public' and table_type = 'BASE TABLE' order by 1
   `)) as unknown as { name: string }[];
   const taken: Record<string, string> = {};
   for (const { name } of tables) {
+    if (only && !only.includes(name)) continue;
     const [row] = (await database.execute(
       sql`select count(*)::int as n, md5(coalesce(string_agg(t::text, '|' order by t::text), '')) as h from ${sql.identifier(name)} t`,
     )) as unknown as { n: number; h: string }[];
     taken[name] = `${row?.n}:${row?.h}`;
   }
   return taken;
+}
+
+/** What a person is shown, read through the app's own routes and stores. */
+export type Seen = {
+  conversations: string[];
+  instructions: string;
+  routines: string[];
+  rules: number;
+  questions: number;
+  fullAccessBots: string[];
+  memories: number;
+  savedLogins: number;
+  /** The Bots this person made, as the Bots list shows them to this person. */
+  bots: string[];
+};
+
+export async function seenBy(
+  server: ReturnType<World["boot"]>,
+  userId: string,
+  cookie?: string,
+): Promise<Seen> {
+  const channels = (await server.get("/api/channels", cookie)).body as {
+    channels: { id: string }[];
+  };
+  const instructions = (await server.get("/api/settings/instructions", cookie))
+    .body as { instructions: string };
+  const routineList = (await server.get("/api/routines", cookie)).body as {
+    routines: { id: string }[];
+  };
+  const approvals = (await server.get("/api/approvals", cookie)).body as {
+    rules: unknown[];
+    questions: unknown[];
+  };
+  const fullAccess = (await server.get("/api/approvals/full-access", cookie))
+    .body as { bots: Record<string, unknown> };
+  return {
+    conversations: channels.channels.map((channel) => channel.id).sort(),
+    instructions: instructions.instructions,
+    routines: routineList.routines.map((routine) => routine.id).sort(),
+    rules: approvals.rules.length,
+    questions: approvals.questions.length,
+    fullAccessBots: Object.keys(fullAccess.bots).sort(),
+    memories: (await server.memory.list(userId)).length,
+    savedLogins: (await server.passwords.logins(userId)).length,
+    bots: (await server.profiles.list({ id: userId, role: "user" }))
+      .filter((profile) => profile.ownerUserId === userId)
+      .map((profile) => profile.id)
+      .sort(),
+  };
 }

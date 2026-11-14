@@ -176,6 +176,10 @@ export type OtherConnection = {
 export async function otherConnections(
   database: Pick<Database, "execute">,
 ): Promise<OtherConnection[]> {
+  // Inside a transaction PostgreSQL answers from the first look it took, for the rest of that
+  // transaction, so a second look would see the same connections as the first and a connection that
+  // appeared in between would not be seen at all. Forget the first look.
+  await database.execute(sql`select pg_stat_clear_snapshot()`);
   const rows = (await database.execute(sql`
     select usename as "user", application_name as application, state
     from pg_stat_activity

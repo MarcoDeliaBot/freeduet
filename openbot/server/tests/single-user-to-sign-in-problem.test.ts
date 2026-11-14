@@ -31,55 +31,14 @@ import {
   createWorld,
   IRIS,
   PERSON_ADDRESS,
+  type Seen,
   seedAsSingleUser,
+  seenBy,
   userByEmail,
   type World,
 } from "./support/single-user-world";
 
 let world: World;
-
-type Seen = {
-  conversations: string[];
-  instructions: string;
-  routines: string[];
-  rules: number;
-  questions: number;
-  fullAccessBots: string[];
-  memories: number;
-  savedLogins: number;
-};
-
-/** What a person is shown, read through the app's own routes and stores. */
-async function seenBy(
-  server: ReturnType<World["boot"]>,
-  userId: string,
-  cookie?: string,
-): Promise<Seen> {
-  const channels = (await server.get("/api/channels", cookie)).body as {
-    channels: { id: string }[];
-  };
-  const instructions = (await server.get("/api/settings/instructions", cookie))
-    .body as { instructions: string };
-  const routineList = (await server.get("/api/routines", cookie)).body as {
-    routines: { id: string }[];
-  };
-  const approvals = (await server.get("/api/approvals", cookie)).body as {
-    rules: unknown[];
-    questions: unknown[];
-  };
-  const fullAccess = (await server.get("/api/approvals/full-access", cookie))
-    .body as { bots: Record<string, unknown> };
-  return {
-    conversations: channels.channels.map((channel) => channel.id).sort(),
-    instructions: instructions.instructions,
-    routines: routineList.routines.map((routine) => routine.id).sort(),
-    rules: approvals.rules.length,
-    questions: approvals.questions.length,
-    fullAccessBots: Object.keys(fullAccess.bots).sort(),
-    memories: (await server.memory.list(userId)).length,
-    savedLogins: (await server.passwords.logins(userId)).length,
-  };
-}
 
 beforeAll(async () => {
   world = await createWorld();
@@ -87,7 +46,7 @@ beforeAll(async () => {
 
 afterAll(async () => {
   await world.dispose();
-});
+}, 60_000);
 
 describe("turning sign-in on for an installation that ran with none", () => {
   let before: Seen;
@@ -110,6 +69,7 @@ describe("turning sign-in on for an installation that ran with none", () => {
     expect(before.fullAccessBots).toEqual([IRIS]);
     expect(before.memories).toBe(1);
     expect(before.savedLogins).toBe(1);
+    expect(before.bots).toHaveLength(1);
   });
 
   test("the first sign-in is a different person, who finds none of it", async () => {
@@ -135,6 +95,7 @@ describe("turning sign-in on for an installation that ran with none", () => {
     expect(after.fullAccessBots).toEqual([]);
     expect(after.memories).toBe(0);
     expect(after.savedLogins).toBe(0);
+    expect(after.bots).toEqual([]);
     // What looks like the same conversations are new ones, which the first request made for this
     // new person: not one of the old ids is among them, and the history is not there.
     expect(after.conversations).toHaveLength(2);

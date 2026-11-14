@@ -66,13 +66,13 @@ export type Plan = {
   /** What the person should know before saying yes. */
   standing: { fullAccess: string[]; alwaysAllowRules: number };
   apps: string[];
-  /** An earlier move to this address, from the audit trail. */
-  earlier: { at: string } | null;
+  /** The latest earlier move, to any address, from the audit trail. */
+  earlier: { at: string; toEmail: string } | null;
 };
 
-const identifier = (name: string) => sql.identifier(name);
+export const identifier = (name: string) => sql.identifier(name);
 
-function whereOf(
+export function whereOf(
   column: string,
   value: string,
   conditions: readonly Condition[] = [],
@@ -102,7 +102,7 @@ async function countRows(
 }
 
 /** A jsonb value that holds this string anywhere inside it, at any depth. */
-const holdsString = (column: ReturnType<typeof sql>, value: string) =>
+export const holdsString = (column: ReturnType<typeof sql>, value: string) =>
   sql`jsonb_path_exists(${column}, '$.** ? (@ == $v)', jsonb_build_object('v', ${value}::text))`;
 
 const inKinds = sql.join(
@@ -111,7 +111,7 @@ const inKinds = sql.join(
 );
 
 /** The special columns' counts for one person id. */
-async function countSpecial(
+export async function countSpecial(
   executor: Executor,
   id: string,
 ): Promise<Counted[]> {
@@ -145,7 +145,7 @@ async function countSpecial(
 }
 
 /** The registry's move columns, counted for one person id. Tables that are not there are skipped. */
-async function countMoves(
+export async function countMoves(
   executor: Executor,
   id: string,
   tables: ReadonlySet<string>,
@@ -356,16 +356,19 @@ export async function readPlan(
   const [source] = await userRowsFor(executor, sql`id = ${from}`);
   const sameAddress = await userRowsFor(executor, sql`lower(email) = ${to}`);
   const targetRow = sameAddress[0];
+  // What is wrong with the target matters only if something is going to be moved to it: a run that
+  // finds nothing to move says so, and does not stop on an account it would never have touched.
+  const aboutTarget: string[] = [];
   if (sameAddress.length > 1)
-    blockers.push(
+    aboutTarget.push(
       `More than one account has the address ${to} in some spelling. Fix that by hand first.`,
     );
   if (targetRow && targetRow.email !== to)
-    blockers.push(
+    aboutTarget.push(
       `An account exists for ${to} with the address written as ${targetRow.email}. The sign-in would not find it. Fix that by hand first.`,
     );
   if (targetRow && targetRow.id === from)
-    blockers.push(`${to} is the single-user person itself.`);
+    aboutTarget.push(`${to} is the single-user person itself.`);
 
   const moves = await countMoves(executor, from, tables);
   const special = await countSpecial(executor, from);
@@ -400,7 +403,7 @@ export async function readPlan(
       ...(await countSpecial(executor, target.id)),
     ].filter((entry) => entry.count > 0);
     if (owned.length > 0) {
-      blockers.push(
+      aboutTarget.push(
         `${to} already owns data: ${owned
           .slice(0, 8)
           .map((entry) => `${entry.what} (${entry.count})`)
@@ -409,7 +412,7 @@ export async function readPlan(
           )}${owned.length > 8 ? ", and more" : ""}. That is what a first sign-in makes. Moving the single-user person's data in as well would mix two people's data, which this tool does not do. Restore the backup you took before turning sign-in on, run this, and then sign in.`,
       );
     } else if (!target.shell) {
-      blockers.push(
+      aboutTarget.push(
         `${to} has already signed in and has settings of its own (a profile, groups or a started onboarding). Moving would overwrite them, which this tool does not do. Restore the backup you took before turning sign-in on, run this, and then sign in.`,
       );
     }
@@ -426,6 +429,7 @@ export async function readPlan(
     (sum, entry) => sum + entry.count,
     0,
   );
+  if (total > 0) blockers.push(...aboutTarget);
 
   // What the person should read before saying yes.
   const preferences = asObject(source?.preferences);
@@ -455,13 +459,15 @@ export async function readPlan(
 
   const earlierRows = await rowsOf(
     executor,
-    sql`select created_at as at from audit_events
+    sql`select created_at as at, payload ->> 'toEmail' as to_email from audit_events
         where event_type = 'person.single_user_data_adopted'
-          and payload ->> 'toEmail' = ${to}
         order by created_at desc limit 1`,
   );
   const earlier = earlierRows[0]
-    ? { at: new Date(String(earlierRows[0].at)).toISOString() }
+    ? {
+        at: new Date(String(earlierRows[0].at)).toISOString(),
+        toEmail: String(earlierRows[0].to_email ?? ""),
+      }
     : null;
 
   return {

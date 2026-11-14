@@ -1,3 +1,4 @@
+import type { AuditInitiator } from "@openbot/toolkit/initiator";
 import {
   and,
   desc,
@@ -13,7 +14,6 @@ import type { PgColumn } from "drizzle-orm/pg-core";
 import type { Database } from "./db/client";
 import { auditEvents } from "./db/schema";
 import { parsePageLimit } from "./paging";
-import type { AuditInitiator } from "@openbot/toolkit/initiator";
 
 const sensitiveKeys = new Set([
   "access_token",
@@ -594,6 +594,13 @@ export const auditEventTypes = [
   "routine.enabled_changed",
   /* A run refused because its model is not on the team model allowlist. */
   "model.refused",
+  /*
+   * FreeDuet: the data of the person who had no sign-in handed to the account that signs in, by the
+   * command line tool only (freeduet/adopt, scripts/adopt-single-user-data.ts). Target and actor are
+   * the account that now owns it; payload `fromId`, `toEmail`, `total`, `rows` (counts by table and
+   * column) and `backup` (the file's name, never its path). Every older row keeps the old id.
+   */
+  "person.single_user_data_adopted",
 ] as const;
 
 export type AuditEventType = (typeof auditEventTypes)[number];

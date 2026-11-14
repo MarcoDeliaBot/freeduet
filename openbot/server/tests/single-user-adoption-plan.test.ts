@@ -105,7 +105,7 @@ describe("the dry run, for an installation that ran with no sign-in", () => {
 
   afterAll(async () => {
     await world.dispose();
-  });
+  }, SLOW);
 
   test(
     "says what would move, family by family, and writes nothing to any table",
@@ -538,7 +538,7 @@ describe("an address that has signed in already", () => {
 
   afterAll(async () => {
     await world.dispose();
-  });
+  }, SLOW);
 
   test(
     "an account with nothing in it is fine: the move fills it in, and the dry run says so",
@@ -595,7 +595,7 @@ describe("an installation with nothing to move, and addresses that are not clean
 
   afterAll(async () => {
     await world.dispose();
-  });
+  }, SLOW);
 
   test(
     "an empty database is nothing to move, and not an error",
@@ -622,12 +622,19 @@ describe("an installation with nothing to move, and addresses that are not clean
   );
 
   test(
-    "an account for the address written in other capitals, which the sign-in would not find",
+    "an account for the address written in other capitals, which the sign-in would not find, once there is something to move",
     async () => {
       await world.database.execute(
         sql`insert into users (id, email, email_verified) values ('mixed-case', 'You@Example.com', true)`,
       );
       try {
+        // With nothing to move the account is none of the tool's business.
+        const idle = await stopped(world, ["--to", PERSON_ADDRESS]);
+        expect(idle.code).toBe(EXIT.ok);
+        expect(idle.out).toContain("Nothing to move");
+
+        const single = await world.startSingleUser();
+        await single.instructions.write(DEV_ACTOR.id, "Be brief.");
         const ran = await stopped(world, ["--to", PERSON_ADDRESS]);
         expect(ran.code).toBe(EXIT.refused);
         expect(ran.err).toContain(
@@ -653,16 +660,46 @@ describe("an installation with nothing to move, and addresses that are not clean
 
 describe("the command line", () => {
   test("reads --to in both spellings, and --help", () => {
-    expect(parseArguments(["--to", "a@example.com"])).toEqual({
+    expect(parseArguments(["--to", "a@example.com"])).toMatchObject({
       to: "a@example.com",
       help: false,
+      apply: false,
+      yes: false,
     });
-    expect(parseArguments(["--to=a@example.com"])).toEqual({
+    expect(parseArguments(["--to=a@example.com"])).toMatchObject({
       to: "a@example.com",
-      help: false,
     });
-    expect(parseArguments(["--help"])).toEqual({ to: undefined, help: true });
-    expect(parseArguments(["-h"])).toEqual({ to: undefined, help: true });
+    expect(parseArguments(["--help"])).toMatchObject({ help: true });
+    expect(parseArguments(["-h"])).toMatchObject({ help: true });
+  });
+
+  test("the move needs both --apply and --yes, and --backup-dir takes a folder", () => {
+    expect(
+      parseArguments(["--to", "a@example.com", "--apply", "--yes"]),
+    ).toMatchObject({ apply: true, yes: true });
+    expect(
+      parseArguments([
+        "--to",
+        "a@example.com",
+        "--apply",
+        "--yes",
+        "--backup-dir",
+        "/tmp/there",
+      ]),
+    ).toMatchObject({ backupDir: "/tmp/there" });
+    expect(parseArguments(["--backup-dir=/tmp/here"])).toMatchObject({
+      backupDir: "/tmp/here",
+    });
+    expect(parseArguments(["--to", "a@example.com", "--apply"])).toEqual({
+      error:
+        "--apply writes to the database. Add --yes to say you have read the dry run and want it: --apply --yes.",
+    });
+    expect(parseArguments(["--to", "a@example.com", "--yes"])).toEqual({
+      error: "--yes only goes with --apply. Run it with --help.",
+    });
+    expect(parseArguments(["--backup-dir"])).toEqual({
+      error: "--backup-dir needs a folder: --backup-dir <folder>",
+    });
   });
 
   test("an unknown flag, and --to with nothing after it, are mistakes in the command and not guessed at", async () => {
@@ -684,6 +721,14 @@ describe("the command line", () => {
     const noAddress = await invoke([], {});
     expect(noAddress.code).toBe(EXIT.usage);
     expect(noAddress.err).toContain("Say whose data this becomes");
+
+    // Writing is never half asked for: neither flag alone does anything.
+    const apply = await invoke(["--to", PERSON_ADDRESS, "--apply"], {});
+    expect(apply.code).toBe(EXIT.usage);
+    expect(apply.err).toContain("Add --yes");
+    const yes = await invoke(["--to", PERSON_ADDRESS, "--yes"], {});
+    expect(yes.code).toBe(EXIT.usage);
+    expect(yes.err).toContain("--yes only goes with --apply");
   });
 
   test("--help prints how to use it and touches nothing, not even the settings", async () => {
@@ -704,7 +749,7 @@ describe("the script itself, run the way the person runs it", () => {
 
   afterAll(async () => {
     await world.dispose();
-  });
+  }, SLOW);
 
   /** `bun scripts/adopt-single-user-data.ts ...` from the openbot folder, with only these settings. */
   async function script(argv: string[], environment: Env) {
