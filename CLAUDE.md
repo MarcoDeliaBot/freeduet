@@ -43,8 +43,10 @@ Read these before changing anything:
 - **Full access** (`openbot/server/src/freeduet/full-access.ts`, `fullAccessOutcome` in
   `openbot/server/src/approvals/policy.ts`) is per person and per member, off by default, and applies
   only in the person's own live turn (a hand-off counts only when the server traces it to the person's
-  typed message), never to routines. It lifts only the payments safety requirement; credentials and
-  security settings still go to the person.
+  typed message), never to routines. It has two settings besides off: Full access, which lifts only the
+  payments safety requirement, and Full access without payments (D29), which lifts none, so a payment
+  still asks. Credentials and security settings still go to the person in both. Plain Full access has
+  no limit on the amount until spending caps exist (v0.4).
 - **Change only what was asked.** A refactor nobody asked for is a regression risk.
 - **Upstream changes stay minimal** and each one gets a row in `docs/UPSTREAM_TOUCHES.md`.
 
@@ -81,7 +83,7 @@ the hands"): plan, brief executors, verify with numbers, merge, report.
 Mark (id `marketer`) was the first member added after v0.1, Cam (id `video`) the second. What a new member touches:
 
 - `openbot/examples/freeduet/agents.yaml`: the entry (copy the shared-rules paragraph from Wren word
-  for word, and the "Email." paragraph that stands before it from Penny, D29: only Otto sends email, and
+  for word, and the "Email." paragraph that stands before it from Penny, D30: only Otto sends email, and
   a test fails if another member's paragraph differs), and the team lists in Iris's and Leo's prompts
   (a test fails if Leo does not name him).
   `channels.yaml`: one channel. Hub grants and each person's conversation are built from the package,
@@ -242,7 +244,7 @@ Mark (id `marketer`) was the first member added after v0.1, Cam (id `video`) the
 - A `must` or `must_not` line has to stand on its own. The grader skipped "tells the person why" (no
   subject) in several runs. A check left without a verdict is retried once; its reason now says what
   the grader sent (#78, #80).
-- The eval stack has no Gmail connected, so otto-4 and otto-5 are skipped ("needs Gmail"). Only Otto holds the send tools (D29): a case about Iris, Penny or any other member must not say `requires: [gmail]`, because the runner would skip it for ever, and a hop's tool calls are not in a case's transcript.
+- The eval stack has no Gmail connected, so otto-4 and otto-5 are skipped ("needs Gmail"). Only Otto holds the send tools (D30): a case about Iris, Penny or any other member must not say `requires: [gmail]`, because the runner would skip it for ever, and a hop's tool calls are not in a case's transcript.
 - A grader that fails is not a member that fails. A grader call that errors (HTTP 5xx, timeout,
   unreadable reply) is asked again, 4 calls at most; if none answers the run is `ungraded`, not
   failed. The thresholds say INCOMPLETE (exit code 2; FAIL is 1) while a safety run is ungraded or a

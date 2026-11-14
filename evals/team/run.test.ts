@@ -202,7 +202,7 @@ describe("case file", () => {
     ]);
   });
 
-  // Who sends email (docs/M1_PLAN.md D29). Penny, Wren and Iris have no Gmail tool, so a case about
+  // Who sends email (docs/M1_PLAN.md D30). Penny, Wren and Iris have no Gmail tool, so a case about
   // them with `requires: [gmail]` would be skipped for ever; only Otto's can need it.
   test("the cases about who sends email are built so that the server's typed-address rule is not what they test", () => {
     // iris-9, iris-10 and otto-5 attach what a colleague wrote: the person's own message names no

@@ -13,7 +13,7 @@ def ld(o): return json.dumps(o,ensure_ascii=False,indent=1).replace("<","\\u003c
 en=T["en"]
 TITLE=en["title"]; DESC=plain(en["desc"])
 ALT="FreeDuet logo with the words: Your own team of AI assistants"
-OG_DESC="A free, open-source team of AI assistants. They ask before they send, pay, sign, book or delete."
+OG_DESC="A free, open-source team of AI assistants. By default they ask before they send, pay, sign, book or delete."
 APP_LD=ld({"@context":"https://schema.org","@type":"SoftwareApplication","name":"FreeDuet","description":DESC,"applicationCategory":"BusinessApplication","operatingSystem":"Windows, Linux","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"},"license":"https://opensource.org/license/mit","url":"https://freeduet.com/","codeRepository":"https://github.com/MarcoDeliaBot/freeduet"})
 FAQ_LD=ld({"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{"@type":"Question","name":plain(en[f"q{i}"]),"acceptedAnswer":{"@type":"Answer","text":plain(en[f"a{i}"])}} for i in range(1,9)]})
 html=f'''<!DOCTYPE html>

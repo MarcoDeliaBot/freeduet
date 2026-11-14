@@ -66,7 +66,7 @@ Only Otto sends email. He is the one member with the sending tools, and no other
 
 Iris is the judge. She decides whether it goes and by which route: the finished email to Otto as it is, or the request, so that Otto writes it and sends it. She says where each address came from. When she says no (the text holds a password, a card number or a one-time code, or you did not ask for the email), she tells you why and asks you to decide; she does not drop it. Otto checks what reaches him through Iris before he calls the send tool.
 
-A hand-off is never an approval. The send meets the approval gate, and only an address you typed yourself in your own message goes out with no card (D27 and D27a in [M1_PLAN.md](M1_PLAN.md)), or a member you switched to Full access ([FULL_ACCESS.md](FULL_ACCESS.md)). Because one hand-off cannot start another (D14), the step from Iris to Otto goes out when you next write to Iris. The decision is D29 in [M1_PLAN.md](M1_PLAN.md).
+A hand-off is never an approval. The send meets the approval gate, and only an address you typed yourself in your own message goes out with no card (D27 and D27a in [M1_PLAN.md](M1_PLAN.md)), or a member you switched to Full access ([FULL_ACCESS.md](FULL_ACCESS.md)). Because one hand-off cannot start another (D14), the step from Iris to Otto goes out when you next write to Iris. The decision is D30 in [M1_PLAN.md](M1_PLAN.md).
 
 ## Beyond the starter team
 

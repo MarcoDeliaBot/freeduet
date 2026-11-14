@@ -27,6 +27,13 @@ export const RULE_BEHAVIOURS = [
 ] as const satisfies readonly RuleBehaviour[];
 /** Commands on the person's own computer. */
 export type HostCommandPolicy = "ask" | "allow" | "never";
+/**
+ * FreeDuet: the two settings of Full access the person can give a member (docs/FULL_ACCESS.md).
+ * `full` also lifts the payments safety requirement; `no_payments` lifts nothing the safety floor
+ * holds, so a payment asks exactly as it does with the switch off. Off is not a mode: it is the
+ * absence of one.
+ */
+export type FullAccessMode = "full" | "no_payments";
 /** Why the gate settled an action the way it did; stored on the request and in the audit row. */
 export type ApprovalPolicyOutcome = {
   behaviour: "allow" | "ask" | "hand_off" | "deny";
@@ -45,6 +52,8 @@ export type ApprovalPolicyOutcome = {
     | "full_access";
   reason: string;
   ruleId?: string;
+  /** FreeDuet: which setting of Full access decided, when `source` is `full_access`. */
+  fullAccessMode?: FullAccessMode;
   review?: {
     verdict: "proceed" | "needs_approval" | "hand_off";
     preApproved: boolean;

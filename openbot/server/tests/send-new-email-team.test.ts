@@ -15,7 +15,7 @@ import {
 import { loadTenantPackage } from "../src/tenant-package";
 
 /**
- * Who on the team can send an email, and what each member is told about it (docs/M1_PLAN.md D29).
+ * Who on the team can send an email, and what each member is told about it (docs/M1_PLAN.md D30).
  *
  * What a Bot may call is its grants. The package seeds no tool grant at all: the `gmail_send_message`
  * and `gmail_send_reply` grants are an administrator's to give on a deployment. What the package
@@ -172,7 +172,7 @@ describe("what Otto and Iris are told", () => {
 });
 
 /*
- * WHO SENDS EMAIL, AND HOW THE OTHERS GET ONE SENT (docs/M1_PLAN.md D29).
+ * WHO SENDS EMAIL, AND HOW THE OTHERS GET ONE SENT (docs/M1_PLAN.md D30).
  *
  * Only Otto has the send tools. A member that needs an email sent gives Iris the finished email or the
  * request for it, and says which; Iris judges it, chooses the route, and asks Otto; Otto checks it and
