@@ -37,7 +37,7 @@ _Last checked: 2026-11-08, from each project's public README and documentation, 
 | **Gmail and Google Calendar** | ✅ | ✅ connected apps | ✅ | ❌ not yet | — | ⚠️ through your coding agent | ✅ through Composio |
 | **Import your agents from Grok Bot** | ✅ v1.0 | ❌ | ❌ | ❌ | ✅ | ❌ | — |
 | **Phone** | In design | ✅ | ✅ | ⚠️ early, from source | ✅ | ❌ | ⚠️ in development |
-| **Any language** | ✅ | — | — | ✅ 13 interface languages | ✅ 5 interface languages | — | — |
+| **Any language** | The app's interface is English for now, with some cards also in Italian; members answer in the person's language. | — | — | ✅ 13 interface languages | ✅ 5 interface languages | — | — |
 
 ## What others have that FreeDuet does not have yet
 
