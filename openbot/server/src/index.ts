@@ -83,6 +83,7 @@ import {
 import { startRetentionSweeps } from "./audit-retention";
 import { createAuth } from "./auth";
 import { DEV_ACTOR, initializeDevActorUser } from "./auth/dev-actor";
+import { INSTALL_SECRET_VARIABLE } from "./auth/install-secret";
 import type { AuthService } from "./auth/guards";
 import { createRoleRepository } from "./auth/guards";
 import { createIdentityProviderStore } from "./auth/identity-provider-store";
@@ -2866,6 +2867,16 @@ if (config.singleUser) {
     console.warn(
       `${LISTEN_HOST_VARIABLE} has this server listening beyond this machine (${listening.join(", ")}) with no sign-in, so anybody who can reach port ${port} is that administrator.`,
     );
+  // FreeDuet (D28): on this machine alone, only a loopback peer is the person, and on Docker Desktop
+  // a container calling this port arrives as loopback. The installation secret is what tells them
+  // apart. Said every boot, and never with its value.
+  if (listensLocally) {
+    console.info(
+      config.installSecret
+        ? `${INSTALL_SECRET_VARIABLE} is set: a browser has to be paired with this installation (bash scripts/open.sh), and a container that reaches this port is not you.`
+        : `${INSTALL_SECRET_VARIABLE} is not set, so where a container's request arrives as this machine's loopback (Docker Desktop) it is taken for you. Run scripts/start.sh once: it writes one.`,
+    );
+  }
 }
 
 // Each listener holds a connection of its own for the life of the process. Released on the way out,

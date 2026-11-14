@@ -1,6 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import { pcm16Wav, wavDurationSeconds } from "../../evals/dictation/metrics";
 import {
+  installCookie,
   paddedWav,
   parseArguments,
   parseCookieHeader,
@@ -76,6 +77,39 @@ describe("parseCookieHeader", () => {
       message = error instanceof Error ? error.message : "";
     }
     expect(message).toBe("E2E_COOKIE must look like name=value; name2=value2.");
+  });
+});
+
+describe("installCookie", () => {
+  const SECRET = "d3adb33f".repeat(8);
+
+  test("is the installation secret under the name of the server's port", () => {
+    expect(
+      installCookie({ FREEDUET_INSTALL_SECRET: SECRET, SERVER_PORT: "3101" }),
+    ).toBe(`freeduet_install_3101=${SECRET}`);
+    expect(installCookie({ FREEDUET_INSTALL_SECRET: ` ${SECRET} ` })).toBe(
+      `freeduet_install_3001=${SECRET}`,
+    );
+  });
+
+  test("is none when the settings file has no secret", () => {
+    expect(installCookie({})).toBeUndefined();
+    expect(installCookie({ FREEDUET_INSTALL_SECRET: "  " })).toBeUndefined();
+  });
+
+  test("is a cookie the app's browser can take", () => {
+    expect(
+      parseCookieHeader(
+        installCookie({ FREEDUET_INSTALL_SECRET: SECRET }) as string,
+        "http://localhost:3010",
+      ),
+    ).toEqual([
+      {
+        name: "freeduet_install_3001",
+        value: SECRET,
+        url: "http://localhost:3010",
+      },
+    ]);
   });
 });
 
