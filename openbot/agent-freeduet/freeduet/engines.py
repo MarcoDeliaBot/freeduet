@@ -5,22 +5,30 @@ are always tried first, then free engines, then metered engines, whatever order 
 in. A metered engine joins a chain only while ``metered.enabled`` is true and both caps are above 0.
 A disabled engine, or one carrying a ``locked_reason``, is never chosen.
 
+ONE EXCEPTION, STRICTER: a metered ``anthropic-compatible`` gateway is never run, whatever the ``metered:``
+block says, until FreeDuet can enforce the caps (the usage ledger, docs/ENGINES_PLAN.md slice 12). Caps that are
+written and not enforced must not let money be spent. The block is still read and checked, so the file format does
+not change when the ledger arrives (:func:`exclusion_reason`, :func:`paid_gateway_refusal`).
+
 Everything here is a pure function of the parsed file. Nothing is started, probed or called; the only
 I/O is reading the one YAML file in :func:`load_engines`.
 """
 
 from __future__ import annotations
 
+import ipaddress
 import os
 import re
 from dataclasses import dataclass
 from pathlib import Path
 from types import MappingProxyType
 from typing import Any, Iterable, Mapping
+from urllib.parse import urlsplit
 
 import yaml
 
-KINDS = ("cli", "app-server", "acp", "anthropic-api", "openai-compatible")
+COMPATIBLE_KIND = "anthropic-compatible"
+KINDS = ("cli", "app-server", "acp", "anthropic-api", "openai-compatible", COMPATIBLE_KIND)
 BILLINGS = ("subscription", "free", "metered")
 TIERS = ("A", "B", "C")
 
@@ -31,8 +39,9 @@ TIER_RANK = MappingProxyType({"A": 0, "B": 1, "C": 2})
 
 #: Kinds that drive an official tool the person signed in to themselves.
 LOGIN_KINDS = frozenset({"cli", "app-server", "acp"})
-#: Kinds that call an HTTP API directly.
-API_KINDS = frozenset({"anthropic-api", "openai-compatible"})
+#: Kinds that reach a provider over HTTP with a key the person owns: directly, or (`anthropic-compatible`) through
+#: the same locked-down Claude Code CLI pointed at the person's own endpoint (docs/ENGINES_PLAN.md slice 5).
+API_KINDS = frozenset({"anthropic-api", "openai-compatible", COMPATIBLE_KIND})
 
 DEFAULT_CHAIN = "default"
 DEFAULT_ENGINES_FILE = "/app/engines.yaml"
@@ -201,6 +210,104 @@ def _optional_text(
     return value.strip()
 
 
+# ── The `anthropic-compatible` kind (docs/ENGINES_PLAN.md slice 5) ────────────────────────────────
+
+#: The only hosts a plain `http://` endpoint may name: this machine, or the machine a container runs on (the name
+#: Docker gives it). The key travels with every request, so any other endpoint must be `https://`.
+LOCAL_HOSTS = frozenset({"localhost", "host.docker.internal"})
+_ENV_NAME = re.compile(r"[A-Za-z_][A-Za-z0-9_]{0,127}")
+_MAX_SECRET_PATH = 1024
+
+
+def is_local_host(host: str | None) -> bool:
+    """Whether a URL's host is this machine (a loopback address, `localhost`) or the host of a container."""
+    name = (host or "").strip().lower()
+    if name in LOCAL_HOSTS:
+        return True
+    try:
+        return ipaddress.ip_address(name).is_loopback
+    except ValueError:
+        return False
+
+
+def in_hidden_folder(path: str) -> bool:
+    """Whether a path has a part whose name starts with a dot. That is where a program keeps its own sign-in, so a
+    key is never read from there, whatever the file holds. Looks at the name only: it opens nothing."""
+    return any(part.startswith(".") for part in path.split("/") if part)
+
+
+def parse_secret_ref(reference: Any) -> tuple[str, str] | None:
+    """The two forms an `anthropic-compatible` entry's `credential_secret_ref` may take: ``env:NAME`` (an
+    environment variable of this service) or ``file:/absolute/path`` (a file that holds the key, not inside a folder
+    whose name starts with a dot). ``("env", NAME)`` or ``("file", path)``; None for anything else, which includes a
+    key written into the file by mistake."""
+    if not isinstance(reference, str):
+        return None
+    scheme, colon, rest = reference.partition(":")
+    if not colon:
+        return None
+    if scheme == "env" and _ENV_NAME.fullmatch(rest):
+        return "env", rest
+    if (
+        scheme == "file"
+        and rest.startswith("/")
+        and len(rest) <= _MAX_SECRET_PATH
+        and rest.isprintable()
+        and not in_hidden_folder(rest)
+    ):
+        return "file", rest
+    return None
+
+
+def _base_url_problem(base_url: str) -> str | None:
+    """Why an endpoint address is not usable, in words that never repeat the address (it could hold a secret)."""
+    if re.search(r"\s", base_url):
+        return "`base_url` must not contain spaces"
+    try:
+        parts = urlsplit(base_url)
+        _ = parts.port  # an invalid port raises here
+    except ValueError:
+        return "`base_url` is not a valid address"
+    if parts.scheme not in ("http", "https") or not parts.hostname:
+        return "`base_url` must be an http:// or https:// address with a host name"
+    if parts.username is not None or parts.password is not None or "@" in parts.netloc:
+        return "`base_url` must not carry a user name or a password; the key goes in `credential_secret_ref`"
+    if parts.query or parts.fragment or "?" in base_url or "#" in base_url:
+        return "`base_url` must not carry a query or a fragment"
+    if parts.scheme == "http" and not is_local_host(parts.hostname):
+        return (
+            "`base_url` must be https:// unless it points at this machine (localhost, 127.0.0.1, ::1 or "
+            "host.docker.internal): the key travels with every request"
+        )
+    return None
+
+
+def _compatible_problems(where: str, base_url: str | None, secret_ref: str | None, command: str | None) -> list[str]:
+    found: list[str] = []
+    if command is not None:
+        found.append(
+            f"{where}: an `{COMPATIBLE_KIND}` engine runs the same Claude Code CLI as `claude-code`; it takes no `command`"
+        )
+    if base_url is None:
+        found.append(f"{where}: an `{COMPATIBLE_KIND}` engine needs `base_url`")
+    else:
+        reason = _base_url_problem(base_url)
+        if reason is not None:
+            found.append(f"{where}: {reason}")
+    if secret_ref is None:
+        found.append(
+            f"{where}: an `{COMPATIBLE_KIND}` engine needs `credential_secret_ref`; with a base URL alone the CLI "
+            "would keep using a Claude sign-in"
+        )
+    elif parse_secret_ref(secret_ref) is None:
+        found.append(
+            f"{where}: `credential_secret_ref` must be `env:NAME` (an environment variable) or "
+            "`file:/absolute/path` (a file that holds the key, in no folder whose name starts with a dot); "
+            "the key itself never goes in this file"
+        )
+    return found
+
+
 def _parse_engine_table(raw: Any, problems: list[str]) -> dict[str, Engine]:
     if not isinstance(raw, Mapping) or not raw:
         problems.append("`engines` must be a non-empty mapping of engine id to settings")
@@ -232,7 +339,8 @@ def _parse_engine(engine_id: str, entry: Any, problems: list[str]) -> Engine | N
     billing = entry.get("billing")
     if billing not in BILLINGS:
         problems.append(f"{where}: `billing` must be one of {', '.join(BILLINGS)}")
-    tier = entry.get("tier")
+    # The conservative default for a model the engine file cannot vouch for (ENGINES_PLAN 4.1, constraint 3).
+    tier = entry.get("tier", "C" if kind == COMPATIBLE_KIND else None)
     if tier not in TIERS:
         problems.append(f"{where}: `tier` must be one of {', '.join(TIERS)}")
 
@@ -271,6 +379,8 @@ def _parse_engine(engine_id: str, entry: Any, problems: list[str]) -> Engine | N
             problems.append(f"{where}: an `openai-compatible` engine needs `base_url`")
         elif not re.match(r"^https?://", base_url):
             problems.append(f"{where}: `base_url` must start with http:// or https://")
+    if kind == COMPATIBLE_KIND:
+        problems.extend(_compatible_problems(where, base_url, secret_ref, command))
     if kind in API_KINDS and model is None:
         problems.append(f"{where}: a `{kind}` engine needs `model`")
     if enabled is True and model is not None and _PLACEHOLDER.match(model):
@@ -467,12 +577,44 @@ def metered_allowed(config: EnginesConfig) -> bool:
     return metered.enabled and metered.daily_cap > 0 and metered.monthly_cap > 0
 
 
+#: Said to the person, in the log and by ``GET /engines`` when a gateway they switched on is paid and is not run. It does
+#: not tell them to set the ``metered:`` block, because nothing in it makes the gateway run yet.
+PAID_GATEWAY_NOT_RUN = (
+    "FreeDuet does not run paid gateways yet, because it cannot yet enforce the limits you set. "
+    "Free gateways and your own logins work."
+)
+
+
+def paid_gateway_refusal(label: str) -> str:
+    return f"{label} is a paid gateway. {PAID_GATEWAY_NOT_RUN}"
+
+
+def is_paid_gateway(engine: Engine) -> bool:
+    """An ``anthropic-compatible`` entry whose billing is ``metered``: a gateway that may charge the person per use."""
+    return engine.kind == COMPATIBLE_KIND and engine.billing == "metered"
+
+
+def paid_gateway_refused(engine: Engine) -> bool:
+    """A paid gateway the person switched on (on, and not locked) and that FreeDuet will not run. One that is off or
+    locked is not in this group: the person never asked for it, so nothing is said."""
+    return is_paid_gateway(engine) and engine.enabled and not engine.locked_reason
+
+
+def refused_paid_gateways(config: EnginesConfig) -> list[Engine]:
+    return [engine for engine in config.engines.values() if paid_gateway_refused(engine)]
+
+
 def exclusion_reason(engine: Engine, config: EnginesConfig) -> str | None:
-    """Why an engine is left out of every chain, or None when it may run."""
+    """Why an engine is left out of every chain, or None when it may run.
+
+    A paid gateway that is switched on gets :func:`paid_gateway_refusal` whatever ``metered:`` says: that sentence is
+    complete (it names the entry and says what works), so callers use it as it is."""
     if engine.locked_reason:
         return f"locked: {engine.locked_reason}"
     if not engine.enabled:
         return "disabled in engines.yaml"
+    if is_paid_gateway(engine):
+        return paid_gateway_refusal(engine.id)
     if engine.billing == "metered":
         if not config.metered.enabled:
             return "metered engines are off (`metered.enabled: false`)"

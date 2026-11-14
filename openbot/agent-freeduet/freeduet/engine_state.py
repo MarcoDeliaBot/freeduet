@@ -51,7 +51,9 @@ What is shown. :meth:`EngineState.snapshot` is the agent's side of the future se
 ``GET /api/freeduet/engines`` (ARCHITECTURE 2.4: installed, signed in, available, limited until, last error),
 served read-only by ``GET /engines`` in app.py behind the service's token check. It holds ids, labels, kinds,
 states, a time, counters, the kind of the last failure, the version of an engine and fixed phrases: never an
-account, never a message, never what an engine printed.
+account, never a message, never what an engine printed. An engine the person switched on and the service will
+not run (a paid gateway, until the ledger can enforce caps) is a row too: state ``refused``, not available, with
+a ``refusal`` sentence (a fixed phrase and the entry's name). It has no breaker and no saved state.
 
 Recording never fails a turn: every call here is guarded, and a failure is one warning in the log.
 """
@@ -78,6 +80,9 @@ STATE_FILE_ENV = "FREEDUET_ENGINE_STATE_FILE"
 STATE_FILE_NAME = "engine-state.json"
 #: The states in which the next turn may run (``half_open``: as the one probe turn).
 AVAILABLE_STATES = frozenset({READY, DEGRADED, HALF_OPEN})
+#: Not one of the breaker's states: the row of an engine the person switched on and the service will not run (a paid
+#: gateway, until the ledger can enforce caps). It has no breaker, no adapter and no saved state; ``refusal`` says why.
+REFUSED = "refused"
 
 
 def state_file() -> Path:
@@ -120,9 +125,12 @@ class EngineRow:
     signed_in: bool | None
     probed_at: datetime | None
     probe_problem: str | None
+    #: Only a refused engine has one (state ``refused``): the sentence the person is told. The key is left out of every
+    #: other row, so a default install shows exactly the rows it always showed.
+    refusal: str | None = None
 
     def as_json(self) -> dict[str, Any]:
-        return {
+        shown = {
             "id": self.id,
             "label": self.label,
             "kind": self.kind,
@@ -137,6 +145,9 @@ class EngineRow:
             "probed_at": _iso(self.probed_at),
             "probe_problem": self.probe_problem,
         }
+        if self.refusal is not None:
+            shown["refusal"] = self.refusal
+        return shown
 
 
 @dataclass(frozen=True)
@@ -157,6 +168,16 @@ class Probed:
     at: datetime
 
 
+@dataclass(frozen=True)
+class Refused:
+    """An engine the person switched on and the service will not run, and the sentence that says why."""
+
+    id: str
+    label: str
+    kind: str
+    reason: str
+
+
 # ── The state ────────────────────────────────────────────────────────────────────────────────────
 
 
@@ -175,6 +196,7 @@ class EngineState:
         self._registry = BreakerRegistry(now=now, store=store, timing=timing)
         self._engines: dict[str, EngineAdapter] = {}
         self._probed: dict[str, Probed] = {}
+        self._refused: dict[str, Refused] = {}
         self._lock = threading.Lock()
 
     # -- engines --------------------------------------------------------------------------------
@@ -185,6 +207,14 @@ class EngineState:
         with self._lock:
             self._engines[engine.key] = engine
         self._registry.get(engine.key)
+
+    def register_refused(self, engine_id: str, label: str, kind: str, reason: str) -> None:
+        """Make an engine the person switched on, and the service will not run, known to the snapshot as not runnable
+        with ``reason``. It gets no breaker (nothing can fail on it, because nothing ever runs it) and nothing is
+        saved for it. An id that is a running engine is not replaced."""
+        with self._lock:
+            if engine_id not in self._engines:
+                self._refused[engine_id] = Refused(engine_id, label, kind, reason)
 
     def recorded(self, engine: EngineAdapter) -> EngineAdapter:
         """The engine, wrapped so that every turn it runs is recorded."""
@@ -273,7 +303,7 @@ class EngineState:
 
     def snapshot(self) -> StateSnapshot:
         with self._lock:
-            engines, probed = dict(self._engines), dict(self._probed)
+            engines, probed, refused = dict(self._engines), dict(self._probed), dict(self._refused)
         rows = []
         for shown in self._registry.snapshots():
             engine = engines.get(shown.engine_id)
@@ -295,6 +325,28 @@ class EngineState:
                     signed_in=result.signed_in if result is not None else None,
                     probed_at=found.at if found is not None else None,
                     probe_problem=result.problem if result is not None else None,
+                )
+            )
+        shown = {row.id for row in rows}
+        for item in sorted(refused.values(), key=lambda entry: entry.id):
+            if item.id in shown:
+                continue  # a running engine of the same name keeps the name
+            rows.append(
+                EngineRow(
+                    id=item.id,
+                    label=item.label,
+                    kind=item.kind,
+                    state=REFUSED,
+                    available=False,
+                    limited_until=None,
+                    last_failure_kind=None,
+                    consecutive_failures=0,
+                    installed=None,
+                    version=None,
+                    signed_in=None,
+                    probed_at=None,
+                    probe_problem=None,
+                    refusal=item.reason,
                 )
             )
         return StateSnapshot(tuple(rows), tuple(getattr(self._store, "problems", ()) or ()))

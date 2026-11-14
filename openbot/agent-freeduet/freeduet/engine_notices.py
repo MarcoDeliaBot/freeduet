@@ -10,11 +10,16 @@ One short sentence per switch. Where the plan was silent the choices are named i
 
 from __future__ import annotations
 
+from collections.abc import Sequence
 from datetime import UTC, datetime
 
+from .engines import PAID_GATEWAY_NOT_RUN
 from .failure_classifier import AUTH, CREDITS, RATE_LIMIT, TRANSIENT, USAGE_LIMIT
 
 NONE, TEXT, TOOL = "none", "text", "tool"  # how far the turn got on the engine that stopped
+#: A kind of its own for an engine that runs on a key (an `anthropic-compatible` gateway): the key is missing or
+#: refused, which is not a sign-in the person can do in a terminal. Chosen by the router, never by the classifier.
+KEY = "key"
 
 #: Words the ask-first question always carries, so the answer to it can be told from any other message.
 ASK_MARK = {"en": 'Reply "switch"', "it": 'Rispondi "passa"'}
@@ -37,11 +42,15 @@ def _reason(lang: str, label: str, kind: str, until: str | None) -> str:
             return f"{label} ha raggiunto il limite fino alle {until}" if until else f"{label} ha raggiunto il limite"
         if kind == AUTH:
             return f"{label} non ha effettuato l'accesso"
+        if kind == KEY:
+            return f"{label} non ha una chiave accettata dal suo gateway"
         return f"{label} non risponde"
     if limited:
         return f"{label} reached its limit until {until}" if until else f"{label} reached its limit"
     if kind == AUTH:
         return f"{label} is not signed in"
+    if kind == KEY:
+        return f"{label} has no key its gateway accepts"
     return f"{label} is not answering"
 
 
@@ -104,13 +113,53 @@ def pinned_off(lang: str, label: str) -> str:
     return f"This assistant is pinned to {label}, but {label} is switched off, so I stopped here and did not switch to another engine."
 
 
-def all_limited(lang: str, until: datetime | None) -> str:
+#: The Italian of `engines.PAID_GATEWAY_NOT_RUN`: what a paid gateway is told, whatever the `metered:` block says.
+_PAID_NOT_RUN_IT = (
+    "FreeDuet non esegue ancora i gateway a pagamento, perché non può ancora far rispettare i limiti che hai impostato. "
+    "I gateway gratuiti e i motori su cui hai effettuato l'accesso funzionano."
+)
+
+
+def _paid_refusal(lang: str, labels: Sequence[str]) -> str:
+    """"X is a paid gateway. FreeDuet does not run paid gateways yet ..." for one or several gateways, in the words of
+    `engines.paid_gateway_refusal` (English) or their Italian. Nothing here tells the person to set the `metered:`
+    block, because nothing in it makes a paid gateway run yet."""
+    names = ", ".join(labels)
+    many = len(labels) > 1
+    if lang == "it":
+        return f"{names} {'sono gateway a pagamento' if many else 'è un gateway a pagamento'}. {_PAID_NOT_RUN_IT}"
+    return f"{names} {'are paid gateways' if many else 'is a paid gateway'}. {PAID_GATEWAY_NOT_RUN}"
+
+
+def paid_off(lang: str, labels: Sequence[str]) -> str:
+    """Why a paid gateway of the chain was not used: FreeDuet does not run paid gateways yet. Empty when there is none."""
+    if not labels:
+        return ""
+    return f" {_paid_refusal(lang, labels)}"
+
+
+def pinned_paid_off(lang: str, label: str) -> str:
+    if lang == "it":
+        return f"{_paid_refusal(lang, [label])} Questo assistente è fissato su di esso: mi fermo qui e non passo a un altro motore."
+    return f"{_paid_refusal(lang, [label])} This assistant is pinned to it, so I stopped here and did not switch to another engine."
+
+
+def key_refused(lang: str, labels: Sequence[str]) -> str:
+    """The engines of the chain that run on a key and were left because that key is missing or refused: the person can
+    mend it, so it is said, and not folded into "unavailable". Empty when there is none."""
+    if not labels:
+        return ""
+    return "".join(f" {reason(lang, label, KEY, None)}." for label in labels)
+
+
+def all_limited(lang: str, until: datetime | None, paid_off_labels: Sequence[str] = (), key_labels: Sequence[str] = ()) -> str:
     when = clock(until)
+    extra = key_refused(lang, key_labels) + paid_off(lang, paid_off_labels)
     if lang == "it":
         back = f" Il primo torna alle {when}." if when else ""
-        return f"Ora nessun motore è disponibile.{back} Il tuo messaggio è conservato: rimandalo più tardi."
+        return f"Ora nessun motore è disponibile.{back}{extra} Il tuo messaggio è conservato: rimandalo più tardi."
     back = f" The earliest is back at {when}." if when else ""
-    return f"Every engine is unavailable right now.{back} Your message is kept: send it again later."
+    return f"Every engine is unavailable right now.{back}{extra} Your message is kept: send it again later."
 
 
 def loop_stop(lang: str, switches: int) -> str:
