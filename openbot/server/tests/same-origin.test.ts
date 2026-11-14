@@ -4,6 +4,7 @@ import type { ApprovalService } from "../src/approvals/service";
 import { appOrigins, crossSiteRefusal } from "../src/auth/same-origin";
 import { loadConfig } from "../src/config";
 import { testEnvironment } from "./support/environment";
+import { LOOPBACK_PEER } from "./support/loopback-peer";
 
 /**
  * Only this deployment's own pages may change anything through `/api`.
@@ -451,16 +452,22 @@ describe("the assembled app", () => {
     expect(smuggled.status).toBe(415);
     expect(created).toEqual([]);
 
+    // The app's own page and the mobile app both reach a default install from this machine, so the
+    // server is told the peer is loopback (auth/peer.ts), as it is for a socket on 127.0.0.1.
     const own = await served.request(
       request(API, {
         origin: "http://localhost:3010",
         type: "application/json",
         body: RULE,
       }),
+      undefined,
+      LOOPBACK_PEER,
     );
     expect(own.status).toBe(201);
     const mobile = await served.request(
       request(API, { type: "application/json", body: RULE }),
+      undefined,
+      LOOPBACK_PEER,
     );
     expect(mobile.status).toBe(201);
     expect(created).toHaveLength(2);

@@ -20,6 +20,7 @@ import {
   type ServerRecord,
 } from "../src/plugins/store";
 import { testEnvironment } from "./support/environment";
+import { LOOPBACK_PEER } from "./support/loopback-peer";
 
 /**
  * The sentence a PERSON is shown where no broker is configured, written out rather than imported
@@ -1900,7 +1901,7 @@ function brokeredApp(
     },
   });
 
-  const app = createApp(
+  const created = createApp(
     loadConfig(testEnvironment(deployment.environment)),
     {
       handler: () => new Response(null, { status: 204 }),
@@ -1940,6 +1941,11 @@ function brokeredApp(
         } as never)
       : undefined,
   );
+  // The deployments here with no sign-in are the person's own machine, so the requests come from it.
+  const app = {
+    request: (input: string, init?: RequestInit) =>
+      created.request(input, init, LOOPBACK_PEER),
+  };
 
   return {
     authorized,

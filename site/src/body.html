@@ -13,6 +13,10 @@
     <symbol id="i-star" viewBox="0 0 24 24"><path d="M12 3l2.700 5.800 6.300.800-4.600 4.300 1.200 6.200L12 17l-5.600 3.100 1.200-6.200L3 9.600l6.300-.800z" stroke="currentColor" stroke-width="2" fill="none" stroke-linejoin="round"/></symbol>
     <symbol id="i-bug" viewBox="0 0 24 24"><rect x="7.500" y="8" width="9" height="11" rx="4.500" stroke="currentColor" stroke-width="2" fill="none"/><path d="M9 6.500a3 3 0 016 0M3.500 10l4 1.500M20.500 10l-4 1.500M3.500 18l4-1.500M20.500 18l-4-1.500M12 12v7" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round"/></symbol>
     <symbol id="i-heart" viewBox="0 0 24 24"><path d="M12 20s-7.500-4.600-7.500-10.200A4.300 4.300 0 0112 7.500a4.300 4.300 0 017.500 2.300C19.500 15.400 12 20 12 20z" stroke="currentColor" stroke-width="2" fill="none" stroke-linejoin="round"/></symbol>
+    <symbol id="i-lock" viewBox="0 0 24 24"><rect x="5" y="10.500" width="14" height="10" rx="2.500" stroke="currentColor" stroke-width="2" fill="none"/><path d="M8 10.500V8a4 4 0 018 0v2.500" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round"/></symbol>
+    <symbol id="i-folder" viewBox="0 0 24 24"><path d="M3.500 7.500a2 2 0 012-2h4l2 2.500h7a2 2 0 012 2v8a2 2 0 01-2 2h-13a2 2 0 01-2-2z" stroke="currentColor" stroke-width="2" fill="none" stroke-linejoin="round"/></symbol>
+    <symbol id="i-db" viewBox="0 0 24 24"><ellipse cx="12" cy="6" rx="7.500" ry="3" stroke="currentColor" stroke-width="2" fill="none"/><path d="M4.500 6v6c0 1.700 3.400 3 7.500 3s7.500-1.300 7.500-3V6M4.500 12v6c0 1.700 3.400 3 7.500 3s7.500-1.300 7.500-3v-6" stroke="currentColor" stroke-width="2" fill="none"/></symbol>
+    <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2.200" fill="none" stroke-linecap="round"/></symbol>
     <symbol id="logo" viewBox="0 0 40 40"><rect width="40" height="40" rx="10" fill="#0E1B33"/><circle cx="16" cy="20" r="7.5" fill="none" stroke="#fff" stroke-width="3"/><circle cx="24" cy="20" r="7.5" fill="none" stroke="#6C97FF" stroke-width="3"/></symbol>
   </defs>
 </svg>
@@ -25,8 +29,9 @@
       <a href="#team" data-i="n2">The team</a>
       <a href="#how" data-i="n3">How it works</a>
       <a href="#safe" data-i="n4">Safety</a>
-      <a href="#start" data-i="n5">Start</a>
+      <a href="#install" data-i="n5">Start</a>
     </nav>
+    <a class="ghlink" href="https://github.com/MarcoDeliaBot/freeduet"><svg aria-hidden="true"><use href="#i-gh"/></svg><span class="ght">GitHub</span><b class="stars" id="stars" hidden><svg aria-hidden="true"><use href="#i-star"/></svg><span id="starsN"></span><span class="sr" data-i="gh_stars">stars</span></b></a>
     <a class="coffee" href="https://github.com/sponsors/MarcoDeliaBot"><svg aria-hidden="true"><use href="#i-heart"/></svg><span data-i="j3h">Buy us a coffee</span></a>
     <div class="langs"><select id="lang" aria-label="Language"></select></div>
   </div>
@@ -36,7 +41,7 @@
 
 <section class="hero">
   <div class="wrap">
-    <div>
+    <div class="hero-copy">
       <h1 data-i="h1">Your own team of AI assistants.</h1>
       <p class="lead" data-i="lead">FreeDuet runs on your own computer. One assistant sorts your mail, one reads contracts, one books the restaurant. You say what you need, they do the work, and they <span class="mark">never send, pay or delete anything without asking you first</span>.</p>
       <div class="cta">
@@ -49,16 +54,27 @@
         <li><svg aria-hidden="true"><use href="#i-check"/></svg><span data-i="f3">Runs on your own computer</span></li>
       </ul>
     </div>
-    <div>
-      <div class="demo" aria-label="FreeDuet demo">
-        <div class="demo-bar"><i></i><i></i><i></i><span>FreeDuet</span><em data-i="demoTag">Demo with made-up examples</em></div>
-        <div class="chat" id="chat" aria-live="polite"></div>
-        <div class="tries">
-          <p data-i="tryP">Try another request:</p>
-          <div id="tries"></div>
+    <figure class="appfig">
+      <div class="appwin" role="group" aria-label="FreeDuet">
+        <div class="aw-bar"><i></i><i></i><i></i><span>FreeDuet</span><em data-i="demoTag">Demo with made-up examples</em></div>
+        <div class="aw-body">
+          <aside class="aw-side" aria-hidden="true">
+            <p class="aw-sh" data-i="appSide">Your team</p>
+            <ul id="side"></ul>
+          </aside>
+          <div class="aw-main">
+            <div class="aw-head" id="awHead" aria-hidden="true"></div>
+            <div class="chat" id="chat" aria-live="polite"></div>
+            <div class="tries">
+              <p data-i="tryP">Try another request:</p>
+              <div id="tries"></div>
+            </div>
+            <div class="aw-field" aria-hidden="true"><span data-i="appPh">Write what you need…</span><i><svg><use href="#b-send"/></svg></i></div>
+          </div>
         </div>
       </div>
-    </div>
+      <figcaption class="aw-cap" data-i="appCap">An illustrated example, not a recording of a real session. Every name and message in it is made up.</figcaption>
+    </figure>
   </div>
 </section>
 
@@ -145,6 +161,68 @@
   </div>
 </section>
 
+<section class="sec" id="features">
+  <div class="wrap">
+    <div class="head">
+      <h2 data-i="ft_h">Six things worth knowing</h2>
+      <p class="lead" data-i="ft_p">Each small picture shows a real part of FreeDuet. The names and messages in them are made up.</p>
+    </div>
+    <div class="fgrid">
+      <article class="fc">
+        <div class="mini m-br" aria-hidden="true">
+          <div class="bw"><div class="bwb"><i></i><i></i><i></i><span class="bt" data-i="you">You</span></div><div class="bwc"><span class="ln"></span><span class="ln"></span><span class="ln sh"></span></div></div>
+          <div class="bw on"><div class="bwb"><i></i><i></i><i></i><span class="bt">Jules</span></div><div class="bwc"><span class="ln"></span><span class="ln sh"></span><span class="ln go"></span>
+            <svg class="cur" viewBox="0 0 24 24"><path d="M3 2l15 9-6.500 1.800 4 6.700-3 1.700-4-6.800L3 19z" fill="#0E1B33" stroke="#fff" stroke-width="1.500" stroke-linejoin="round"/></svg></div></div>
+        </div>
+        <h3 data-i="fe1h">Its own desk and its own browser</h3>
+        <p data-i="fe1p">Each assistant works in a separate browser, away from yours. It can look things up, fill in forms and prepare drafts while you get on with your day.</p>
+      </article>
+      <article class="fc">
+        <div class="mini m-ap" aria-hidden="true">
+          <div class="five"><svg class="hot"><use href="#b-send"/></svg><svg><use href="#b-pay"/></svg><svg><use href="#b-sign"/></svg><svg><use href="#b-book"/></svg><svg><use href="#b-del"/></svg></div>
+          <div class="apc"><b data-i="apTitle">Send this email?</b><span class="ln"></span><span class="ln sh"></span><div class="row"><span class="y" data-i="yes">Approve</span><span class="n" data-i="no">Don't do it</span></div></div>
+        </div>
+        <h3 data-i="fe2h">Five buttons always ask you</h3>
+        <p data-i="fe2p">Send, pay, sign, book and delete wait for your Approve. The program itself blocks them. It is not only a written rule.</p>
+      </article>
+      <article class="fc">
+        <div class="mini m-rt" aria-hidden="true">
+          <div class="wk" id="wk"><span></span><span class="d">M</span><span class="d">T</span><span class="d">W</span><span class="d">T</span><span class="d">F</span><span class="d">S</span><span class="d">S</span>
+            <span class="tm">08:30</span><i class="a"></i><i class="a"></i><i class="a"></i><i class="a"></i><i class="a"></i><i class="a"></i><i class="a"></i>
+            <span class="tm">17:00</span><i></i><i></i><i></i><i></i><i class="b"></i><i></i><i></i></div>
+          <ul class="lg"><li><i class="a"></i><span data-i="rt1">Morning summary</span></li><li><i class="b"></i><span data-i="rt2">Weekly check</span></li></ul>
+        </div>
+        <h3 data-i="fe3h">Routines on a schedule</h3>
+        <p data-i="fe3p">Ask once and a routine repeats, like a summary every morning. Iris starts with one already. If a routine needs one of the five buttons, it waits for you.</p>
+      </article>
+      <article class="fc">
+        <div class="mini m-si" aria-hidden="true">
+          <div class="sp"><svg><use href="#i-lock"/></svg><b>Claude Code</b><span class="ok"><svg><use href="#i-check"/></svg><span data-i="signedIn">Signed in</span></span></div>
+          <div class="sp off"><b>API key</b><span data-i="notNeeded">Not needed</span></div>
+        </div>
+        <h3 data-i="fe4h">Your plan, no API key</h3>
+        <p data-i="fe4p">FreeDuet runs on the Claude subscription you already pay for. You sign in yourself through the official Claude Code app, and there is no key to buy or paste.</p>
+      </article>
+      <article class="fc">
+        <div class="mini m-pc" aria-hidden="true">
+          <div class="pcbox"><span class="pctag"><svg><use href="#i-lock"/></svg><span data-i="yourPc">Your computer</span></span>
+            <div class="chips"><span><svg><use href="#i-folder"/></svg>FreeDuet</span><span><svg><use href="#i-db"/></svg><span data-i="convs">Conversations</span></span></div></div>
+          <div class="out"><i></i><span data-i="aiSvc">AI service you signed in to</span></div>
+        </div>
+        <h3 data-i="fe5h">Your conversations stay on your computer</h3>
+        <p data-i="fe5p">The app, its database and the assistants' browsers run on your computer, and the conversations are stored there. To think, the assistants use the AI service you signed in to.</p>
+      </article>
+      <article class="fc">
+        <div class="mini m-tm" aria-hidden="true">
+          <ul><li><span data-av="iris"></span><b>Iris</b></li><li><span data-av="mark"></span><b>Mark</b></li><li><span data-av="leo"></span><b>Leo</b></li><li class="new"><i><svg><use href="#i-plus"/></svg></i><span data-i="newMem">New member</span></li></ul>
+        </div>
+        <h3 data-i="fe6h">A team that grows</h3>
+        <p data-i="fe6p">Start with the ready-made team. Rename members, change how they talk, or ask Leo to build a new one for the job you need. New ready-made members arrive with each release.</p>
+      </article>
+    </div>
+  </div>
+</section>
+
 <section class="sec dark" id="safe">
   <div class="wrap">
     <div class="head">
@@ -216,7 +294,42 @@
   </div>
 </section>
 
-<section class="sec" id="start">
+<section class="sec" id="install">
+  <div class="wrap">
+    <div class="head">
+      <h2 data-i="in_h">From install to your first useful task</h2>
+      <p class="lead" data-i="in_p">Four steps, in the real order. All the commands are also in one box further down, ready to copy.</p>
+    </div>
+    <ol class="inst">
+      <li>
+        <div class="pnl term" aria-hidden="true"><div class="tbar"><i></i><i></i><i></i></div><pre><span class="pr">$</span> git clone https://github.com/<wbr>MarcoDeliaBot/freeduet.git
+<span class="pr">$</span> cd freeduet
+<span class="pr">$</span> cp .env.example .env</pre></div>
+        <h3 data-i="in1h">Get the code</h3>
+        <p data-i="in1p">One command downloads FreeDuet from GitHub, and one copies the example settings file.</p>
+      </li>
+      <li>
+        <div class="pnl term" aria-hidden="true"><div class="tbar"><i></i><i></i><i></i></div><pre><span class="pr">$</span> bash scripts/start.sh</pre><ul class="pills"><li>Docker</li><li>Bash</li><li>Bun</li><li>Windows + WSL2</li></ul></div>
+        <h3 data-i="in2h">Run the start script</h3>
+        <p data-i="in2p">One script starts the app, the team and a separate computer for each member. It needs Docker, Bash and Bun. On Windows, run it inside WSL2.</p>
+      </li>
+      <li>
+        <div class="pnl term" aria-hidden="true"><div class="tbar"><i></i><i></i><i></i></div><pre><span class="pr">$</span> cd openbot &amp;&amp; docker compose exec -it agent-freeduet claude</pre>
+          <div class="sp"><svg><use href="#i-lock"/></svg><b>Claude Code</b><span class="ok"><svg><use href="#i-check"/></svg><span data-i="signedIn">Signed in</span></span></div></div>
+        <h3 data-i="in3h">Sign in once with your Claude plan</h3>
+        <p data-i="in3p">Open the official Claude Code sign-in and log in yourself. FreeDuet never sees, stores or forwards your login.</p>
+      </li>
+      <li>
+        <div class="pnl brw" aria-hidden="true"><div class="tbar"><i></i><i></i><i></i><span class="url">http://localhost:3010</span></div>
+          <div class="bd"><div class="msg me"><div class="bub" data-i="in4ex">What can I cook tonight with spinach and eggs?</div></div><div class="msg"><span data-av="iris"></span><div class="bub"><span class="typing"><i></i><i></i><i></i></span></div></div></div></div>
+        <h3 data-i="in4h">Open the page and give Iris a small task</h3>
+        <p data-i="in4p">Go to localhost:3010 in your browser and write one small request. Iris picks the right assistant and brings you the answer.</p>
+      </li>
+    </ol>
+  </div>
+</section>
+
+<section class="sec alt" id="start">
   <div class="wrap">
     <div class="split">
       <div class="stack">
@@ -260,12 +373,14 @@ cd openbot &amp;&amp; docker compose exec -it agent-freeduet claude
   <div class="wrap">
     <div class="head"><h2 data-i="q_h">Questions people ask first</h2></div>
     <div class="faq">
-      <details open><summary data-i="q1">Is it really free?</summary><p data-i="a1">Yes. FreeDuet is open source under the MIT licence, also for business use. What you pay is the AI subscription you choose to use with it, which today is a Claude plan.</p></details>
-      <details><summary data-i="q2">Can it send an email or spend money behind my back?</summary><p data-i="a2">No. Sending, paying, signing, booking and deleting are blocked until you approve. The only shortcut is a new email to an address you typed yourself in your request.</p></details>
-      <details><summary data-i="q3">Where does my stuff go?</summary><p data-i="a3">FreeDuet runs on your computer and stores its conversations there. To think, the assistants use the AI service you signed in to, the same way its own app would.</p></details>
-      <details><summary data-i="q4">Is FreeDuet made by Anthropic, OpenAI or Google?</summary><p data-i="a4">No. It is an independent project, not affiliated with or endorsed by any of them. Their product names are used only to say what FreeDuet works with.</p></details>
-      <details><summary data-i="q5">Can the assistants get things wrong?</summary><p data-i="a5">Yes, like any AI. That is why every important step waits for you, and why Vera checks sums, quotes and prices before you see them. Portia and Penny give a first review, not legal or tax advice.</p></details>
-      <details><summary data-i="q6">Is it finished?</summary><p data-i="a6">No, and we say so. Version 0.1 is an early release, built and used by one maintainer. The page above marks what works today and what is only planned.</p></details>
+      <details open><summary data-i="q1">What is free, and what do I pay for?</summary><p data-i="a1">FreeDuet is free and open source under the MIT licence, also for business use. The only thing you pay for is the AI subscription you use with it, which today is a Claude plan. There is no API key to buy.</p></details>
+      <details><summary data-i="q2">What do I need to install it?</summary><p data-i="a2">A Claude subscription, and Docker, Bash and Bun on your computer. The four steps above are the whole install. Never opened a terminal? Ask someone technical to set it up, and show them this page.</p></details>
+      <details><summary data-i="q3">Does it work on Windows, Mac and Linux?</summary><p data-i="a3">The maintainer uses it on Windows with WSL2 and Docker, and our automatic checks start it on Linux. It has not been tested on a Mac, so we can't promise it works there. FreeDuet is an early release (version 0.1), built and used by one maintainer.</p></details>
+      <details><summary data-i="q4">What can an assistant do without asking me?</summary><p data-i="a4">It can look things up, read, and prepare drafts and reports. Sending, paying, signing, booking and deleting wait for your Approve. The one shortcut is a new email to an address you typed yourself in your request. Assistants can still make mistakes, so read what they prepare before you approve it.</p></details>
+      <details><summary data-i="q5">Where is my data?</summary><p data-i="a5">FreeDuet runs on your computer and keeps its conversations in a database there. Your Claude login stays in a Docker volume that only the Claude Code program reads. To think, the assistants send your request to the AI service you signed in to, as its own app would.</p></details>
+      <details><summary data-i="q6">Can I use it from my phone?</summary><p data-i="a6">Not yet. Today FreeDuet opens in the browser on your computer. A phone version, with a notification when something needs your Approve, is planned.</p></details>
+      <details><summary data-i="q7">Can I add my own team member?</summary><p data-i="a7">Yes. Ask Leo, who builds new assistants, to design one for the job you need, or write its definition yourself. You can also rename members and change how they talk. <a href="https://github.com/MarcoDeliaBot/freeduet/blob/main/docs/TEAM.md">How the members are defined</a>.</p></details>
+      <details><summary data-i="q8">Where do I get help?</summary><p data-i="a8">Open an issue on GitHub. <a href="https://github.com/MarcoDeliaBot/freeduet/issues/new/choose">There is a short form</a> for a question, an error, a fix, or to say you are using it. You can write in English or Italian.</p></details>
     </div>
   </div>
 </section>
