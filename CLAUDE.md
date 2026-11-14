@@ -145,6 +145,7 @@ Mark (id `marketer`) was the first member added after v0.1, Cam (id `video`) the
 - `verify` aggregates the required jobs. The clean-start job (`openbot/scripts/freeduet-clean-start-check.sh`,
   no key, no sign-in) runs on main and on PRs labelled `full-ci`; `verify` requires it where it runs,
   and on other pull requests it is skipped and does not block.
+- `installer-clean-machine` runs `openbot/scripts/install.sh` in fresh `ubuntu:22.04` and `ubuntu:24.04` containers (no privilege, no Docker daemon), on main and on PRs labelled `full-ci`, like clean-start. Green means the installer stops at the Docker start with its reason, as built; it does not prove Docker, the first start or WSL (`docs/design/installer.md`, section 11).
 - Known intermittent failures, re-run once before investigating: the all-in-one `image` job
   (`migrate` races the embedded Postgres start, 57P03, issue #50) and the app keyboard tests in
   `app/tests/live-screen-keyboard.test.tsx`.
