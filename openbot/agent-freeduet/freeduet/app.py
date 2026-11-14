@@ -19,10 +19,10 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse, StreamingResponse
 
-from . import agui, checkpoints, claude_cli, engine_router, engine_state, origin, report, team_log
+from . import agui, checkpoints, claude_cli, engine_choices, engine_router, engine_state, origin, report, team_log
 from .claude_engine import ClaudeEngine
 from .engine_adapter import EngineAdapter
-from .members import MemberError, resolve_member
+from .members import MemberError, load_prompts, resolve_member
 from .segment import SegmentNotes, run_segment
 
 TOKEN_HEADER = "x-openbot-agent-token"
@@ -98,9 +98,28 @@ def _engine_for_a_turn() -> EngineAdapter | None:
         return None
 
 
+def _members_overview() -> list[dict]:
+    """Each member's engines and switching as the engines file gives them (``Router.overview``), for the server's
+    Engines page. Empty when there is no router or no team file to name the members: the page then shows the
+    engines and no members. Reading it never fails the endpoint."""
+    router = getattr(app.state, "engine_router", None)
+    if router is None:
+        return []
+    try:
+        return router.overview(list(load_prompts()))
+    except Exception:  # noqa: BLE001 - the members are an addition to the state, never a reason to refuse it
+        log.warning("members overview unavailable", exc_info=True)
+        return []
+
+
 @app.get("/engines")
 async def engines():
-    return JSONResponse(_engine_state().snapshot().as_json(), headers={"Cache-Control": "no-store"})
+    body = _engine_state().snapshot().as_json()
+    body["members"] = _members_overview()
+    # The version of the person's choices this service honours (engine_choices.py): the server's page turns a
+    # control on only where it is here.
+    body["choices_version"] = engine_choices.VERSION
+    return JSONResponse(body, headers={"Cache-Control": "no-store"})
 # ─────────────────────────────────────────────────────────────────────────────────────────────────
 
 

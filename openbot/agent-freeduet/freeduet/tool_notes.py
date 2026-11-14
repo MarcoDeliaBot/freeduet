@@ -22,14 +22,15 @@ with the exact reason and what to do instead. It only explains: it never offers 
 not offer, and the depth limit stays OpenBot's (docs/M1_PLAN.md D14: no chains).
 
 The same goes for the member's computer (`computer_navigate`, `computer_read`, ...). The person's
-browser chat offers those tools with every run, but a hand-off turn (the forward hop to the addressed
-Bot and the relay of its answer back to the Bot that asked) is run by OpenBot with `tools: []`
-(`agents/handoff-delivery.ts`), so the CLI lists no computer tool there. A member whose prompt tells
+browser chat offers those tools with every run. A relay (the answer coming back to the Bot that asked)
+gets them too, as D22 decided (`agents/handoff-delivery.ts`, `toolsForTurn`), unless the person has
+switched the computer or the browser off. The forward hop (the scratch thread to the addressed Bot) is
+run by OpenBot with `tools: []`, so the CLI lists no computer tool there. A member whose prompt tells
 it to research with them calls one anyway, the CLI answers "No such tool available" without the call
 ever reaching OpenBot (stream_json.py, `unavailable`), and the member told the person its browser
-"stopped working" (live evals jules-1 and jules-3, 8-9 Nov 2026). Whether a hand-off turn should get
-the person's computer is the maintainer's decision, not this module's: it says why the computer is
-missing, and what to say and do instead.
+"stopped working" (live evals jules-1 and jules-3, 8-9 Nov 2026). Which hand-off turns get the
+person's computer is settled by D22, not by this module: it says why the computer is missing from a
+forward hop, and what to say and do instead.
 """
 
 from __future__ import annotations

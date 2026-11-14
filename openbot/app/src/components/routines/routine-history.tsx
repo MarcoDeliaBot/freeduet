@@ -39,6 +39,25 @@ export const RUN_STATUS: Record<
   waiting: { text: "Waiting for you", dot: "bg-sky-500", className: "" },
 };
 
+/**
+ * A firing the server did not run. It is stored as `skipped`, which reads like a choice, so it has its
+ * own word: nobody skipped it; the server reached it too late to run it.
+ */
+const MISSED_STATUS = {
+  text: "Missed",
+  dot: "bg-amber-500",
+  className: "text-amber-600 dark:text-amber-500",
+};
+
+/** The word and tone for one run: a missed firing says so, anything else reads its outcome. */
+export function runStatusOf(run: {
+  status: RoutineRunRecord["status"];
+  missed: boolean;
+}): { text: string; dot: string; className: string } {
+  if (run.missed) return MISSED_STATUS;
+  return RUN_STATUS[run.status] ?? RUN_STATUS.skipped;
+}
+
 const SOURCE_TEXT: Record<OwnedRunRecord["source"], string> = {
   schedule: "Scheduled",
   run_now: "Run now",
@@ -113,7 +132,7 @@ function HistoryRow({
   routine: RoutineRecord | undefined;
   memberName: string;
 }) {
-  const status = RUN_STATUS[run.status] ?? RUN_STATUS.skipped;
+  const status = runStatusOf(run);
   return (
     <div className="flex flex-col gap-1 py-3">
       <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs">
@@ -154,10 +173,11 @@ function HistoryRow({
       {run.error ? (
         <p className="break-words text-muted-foreground text-xs">{run.error}</p>
       ) : null}
-      {routine && !routine.channel.gone ? (
+      {/* The conversation this run posted into, not the routine's current one; absent when none is open to the person. */}
+      {run.channelId ? (
         <Link
           className="self-start text-muted-foreground text-xs underline underline-offset-2 hover:text-foreground"
-          params={{ channelId: routine.channel.id }}
+          params={{ channelId: run.channelId }}
           to="/channel/$channelId"
         >
           Open conversation

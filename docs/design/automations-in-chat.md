@@ -70,9 +70,9 @@ Three gaps matter most:
    - the runs per day and the budget left (item 8).
    Buttons: Allow, Change, No. No "Always allowed" is offered for a routine write (D6). The daily review is set up by FreeDuet, not in chat, so it keeps its own path (S8).
 2. **A missed run is a row.** When the sweep passes a stale stamp ([code: openbot/server/src/routines/sweep.ts:203-210]), it writes one `skipped` row for the gap, with the first missed time in a new nullable `scheduled_for` column. It writes that row only when `advanceNextRun` returns true. Today the return value is ignored in both branches ([code: sweep.ts:199-209]). `markUnschedulable` already writes a `skipped` row for a firing that never became a turn ([code: store.ts:943-948]), and the fatigue rule does not count skipped rows ([code: store.ts:981]). A new column adds no enum value ([code: CLAUDE.md:147]).
-3. **A run links to its messages.** The turn mints its own run id ([code: openbot/toolkit/src/run-turn.ts:699]) and returns none ([code: run-turn.ts:601-608]). Its input takes an optional run id ([code: run-turn.ts:93]). S2 returns the turn's run id and stores it, with the thread id, on the routine run row, as one nullable pair with one migration. History then links to that run's place in the thread.
+3. **A run links to its messages.** The turn mints its own run id ([code: openbot/toolkit/src/run-turn.ts:699]) and returns none ([code: run-turn.ts:601-608]). Its input takes an optional run id ([code: run-turn.ts:93]). S2 returns the turn's run id and stores it, with the thread id, on the routine run row, as one nullable pair with one migration. History then links to that run's place in the thread. Decided 14 November 2026: a run has a link to its conversation.
 4. **Calendar read.** `GET /api/routines/calendar?from&to` lists the next occurrences of enabled routines. It uses `nextOccurrence` ([code: openbot/server/src/routines/schedule.ts:143-176]), which calls cron-parser's `next()` ([code: schedule.ts:159-166]). At most 14 days and 500 items; the rest shows as "and more". Paused routines show as paused.
-5. **History with paging.** Cursor paging on `GET /api/routines/:id/runs`. Rows with `scheduled_for` set (item 2) show "Missed". Pruning after 90 days [assumed: a chosen length, not measured].
+5. **History with paging.** Cursor paging on `GET /api/routines/:id/runs`. Rows with `scheduled_for` set (item 2) show "Missed". Decided 14 November 2026: run history is kept 90 days.
 6. **Pause, run now and delete stay as they are.** Delete keeps its confirm dialog and says the history goes too, because runs are deleted with their routine ([code: openbot/server/src/db/schema/coworker.ts:157]).
 7. **Edit is a chat act.** "Change it to 10:00" calls `update_routine`, and the card shows the old and new values.
 8. **Limits.** Keep 20 enabled routines and the 15-minute floor ([code: schedule.ts:4]). Add a daily budget of routine turns per person, scheduled or run now, checked in the runner before `runTurn` ([code: openbot/server/src/routines/runner.ts:142-145]). Add a 60-minute floor for routines made in chat. The numbers are D3. Routines may not chain turns past their limits ([code: docs/ENGINES_PLAN.md:148]).
@@ -164,9 +164,9 @@ Not built, and why:
 
 For the maintainer to decide (none is taken here):
 
-1. Missed runs: S1 changes the sweep and adds one nullable column (`scheduled_for`). Build it now, or wait?
-2. Run links: S2 adds a run id and a thread id to each run, with one migration and a change to what the turn returns. Build it?
-3. History size: paging with 90-day pruning (S4), or the latest 100 rows?
+1. Missed runs: S1 changes the sweep and adds one nullable column (`scheduled_for`). Build it now, or wait? Decided 14 November 2026: build it, with the "Missed" label.
+2. Run links: S2 adds a run id and a thread id to each run, with one migration and a change to what the turn returns. Build it? Decided 14 November 2026: build it, so that a run links to its conversation.
+3. History size: paging with 90-day pruning (S4), or the latest 100 rows? Decided 14 November 2026: paging with 90-day pruning (S4).
 4. Caps: 14 days, 500 runs and 100 history rows are proposals. Confirm or change them.
 5. Time zone (D5): until each person has a zone, times show in the device's zone. Should the calendar wait for D5?
 6. Event triggers on this view (V4): now, or after S2?
@@ -183,3 +183,56 @@ Not verified:
 - The eval stack was not run. No member's prompt changed, so no case was added or moved.
 - The whole app test suite was not run. The sandbox fails about 138 of its tests on plain main under happy-dom, so only the new and changed app files were run.
 - The zone rules are tested with fixed zones only, not with a person's own zone.
+
+### Second slice, branch `routines-missed-link-90` (14 November 2026)
+
+Three pieces, one commit each, smallest first. Each is read from the code on main at `c93c947` and each was tested against real Postgres.
+
+**1. Retention (done).** What bounds the history today, with the number and what it bounds:
+
+| Number | Where | What it bounds |
+|---|---|---|
+| 14 days | `openbot/server/src/routines/calendar.ts:13` (`CALENDAR_MAX_DAYS`) | The longest window the "Next runs" view may ask for. It bounds the calendar, not the history. |
+| 500 runs | `calendar.ts:14` (`CALENDAR_MAX_RUNS`) | The number of upcoming runs one calendar answer lists. It bounds the calendar's size. |
+| 100 rows | `openbot/server/src/routines/store.ts:775` (`listRuns`) and `:817` (`listRunsFor`), `routes.ts:149` and `:297` | The most rows one history read may return. It protects the page and the query. The app asks for 100 (`app/src/lib/routines/schedule-queries.ts:67`) and names the cap when it gets 100 (`routine-history.tsx:49`, `HISTORY_LIMIT`). |
+| 50 rows | `routes.ts:294` (default), `store.ts:759` (`listRuns`) and `:793` (`listRunsFor`) default `limit = 50` | The history read when no limit is given. |
+| 400 characters | `store.ts:70` (`MAX_RUN_ERROR`) | The error text kept on a run row. |
+| 20 runs | `store.ts:86` (`FAILURE_SCAN_LIMIT`) | How far back the fatigue rule counts failures. It is not a display limit. |
+| 10 minutes | `openbot/server/src/routines/sweep.ts:58` (`DEFAULT_GRACE_MS`) | How late a firing may be and still be offered. |
+
+Built: the history reads now answer only runs that started within ninety days of the database's clock (`HISTORY_WINDOW_DAYS`, `store.ts`, `withinHistoryWindow()`). It is a read filter. Nothing is deleted, and the 100-row cap stays. Verified: `routine-history.integration.test.ts` ("the history keeps ninety days of runs, and deletes none": a run at 91 days is left out of both reads and is still in the table; it fails on main's source, where the 91-day run is listed). Not built: pruning. Deleting runs older than ninety days is a separate decision, because it removes data (decision 3 below).
+
+**2. The conversation link (done).** Each run now records the conversation it posted into: `routine_runs.channel_id` (migration 0069, nullable, no foreign key). The runner writes it once it has read the channel as the owner (`runner.ts`), so a routine moved to another channel later does not move the link of an earlier run. Both history reads return `channelId` only while the owner may still open that conversation, asked of the channel store as the owner (`routes.ts`, `openableConversations`). With no channel store nothing is openable. The thread id is never in a response. The app's "Open conversation" uses that `channelId` (the routine history and each routine's own History), through the existing `/channel/$channelId` route. Verified: `routine-history.integration.test.ts` (six cases on real Postgres with two people: the link, a stranger sees no run and no thread, a link is dropped when the conversation is deleted, a moved routine keeps its runs' links, a run with no conversation names none, no channel store means no link), `routine-runner.test.ts` (the write, and a failed write does not stop the run), `routines-views.test.tsx` (three cases). Each fails on the source before the change. Not built: a link to the message the run posted (the conversation is the link). Runs recorded before this change have no link. A backfill from the routine's current channel would be a guess when the routine has since moved, so it is not done.
+
+**3. Missed runs (done, with limits).** A firing the server did not run is written down once, as a `skipped` row whose `started_at` and `finished_at` are the time it was due and whose `scheduled_for` is that same time (`routine_runs.scheduled_for`, migration 0070, with a unique index per routine and occurrence). Its error text is "The server reached this occurrence too late to run it, so no run was started." History and each routine's own list show it as "Missed", and it names no conversation. Two places write it, and only where the server holds the fact that the firing was dropped: a stale stamp that the sweep moves past instead of offering (`sweep.ts`, the branch that advances without offering), and a queued firing claimed more than the grace window after its occurrence (`sweep.ts`, before the claim is finished). Each waits a settle margin of 60 seconds past the grace window (`MISSED_SETTLE_MS`). The write (`store.ts`, `recordMissed`) is one statement. It writes nothing when a run already started for that occurrence inside the window, and nothing when the occurrence has a row already. A missed row does not change the fatigue rule, which already leaves skipped rows out (`consecutiveFailures`), and it does not change when or whether a routine fires. A long outage writes one row, for the first occurrence it passed (decision M1).
+
+Not written, on purpose: a paused, switched-off or deleted routine; a firing given up after repeated dispatch failures; a firing whose queue item another replica holds. The server stores no fact that says those occurrences were missed, rather than chosen, given up, or possibly still running (decisions M2 and M3).
+
+This slice answers items 1 and 2 of the maintainer list in section 8: missed runs are built, with the limits in the decisions below, and run links are built to the conversation, not to the message.
+
+Verified:
+
+- Server, against real Postgres: `routine-sweep.integration.test.ts`, 33 pass. Eight of them are new, in "writing down the firings the server did not run" and the schedule-floor check for the miss window. Two existing expectations changed: a firing claimed late, and a firing abandoned by the grace window, now each write one missed row for their occurrence (the second beside its closed attempt row). `routine-history.integration.test.ts`, 17 pass, three new: History and the list name the miss, a stranger sees none of it, and a missed firing does not break the fatigue streak.
+- All 15 server routine suites together: 320 pass.
+- App: `routines-views.test.tsx`, 9 pass, two new: History reads Missed with the reason and no conversation link, and the routines list reads Missed. The three app routine files together: 28 pass.
+- On the piece-2 source, the new cases fail: 7 sweep cases (the two changed expectations and five new), 3 history cases and 2 app cases. Three new cases pass there too, because the old source writes nothing: the two guards that assert nothing is written inside the settle margin, and the schedule-floor check.
+- Gates: `bun run typecheck:tests` is clean against the baseline (239 known errors). Two baselined lines were re-worded, because the two typed fakes' member lists changed with the store interface, and their missing methods did not change. Server and app `tsc --noEmit` are clean. Biome format and lint are clean on the changed files. `assertion-shape.test.ts`, 10 pass.
+
+Not verified:
+
+- Migration 0070 was applied to a local test database on the shared Postgres 16 cluster (port 5561). Nothing was applied to a deployment, and the whole server suite was not run for this slice; the server routine suites were.
+- The settle margin is timing, not a lock. A dispatch that waits more than 60 seconds between its grace check and its insert could still have its run recorded beside a missed row. No test forces that stall.
+- A run started with Run now inside the window of a missed occurrence hides that miss, because the check reads any run. That errs toward not writing a miss. It is not tested.
+- The label, the reason line and the amber tone have not been looked at on a screen.
+- No routine ran on the eval stack or on a real deployment.
+
+Decisions left to the maintainer (none is taken here):
+
+| # | Decision | Options | Recommendation | Reason |
+|---|---|---|---|---|
+| M1 | A long outage | (a) one row, for the first occurrence it passed (built); (b) one row per occurrence it passed; (c) one row for the whole outage, saying how many occurrences it covers | (c) | (b) writes about 2,900 rows for a fifteen-minute routine that was down for a month. (a) shows one time where many were missed. (c) needs a count in the row or its text; the count comes from the schedule the sweep already reads. |
+| M2 | Paused, switched-off or deleted routines | (a) write nothing (built); (b) write a row saying the routine was paused | (a) | A pause is a choice. The stored clock is recomputed when a routine is switched back on, so the occurrences that passed while it was paused are not stored anywhere, and a row would be a guess. |
+| M3 | Firings given up after repeated dispatch failures | (a) write nothing (built); (b) write a miss once the reaper has closed their attempts | (a) | A dispatch that timed out can still come back and finish its run (the comment at the dispatch in `sweep.ts`). Nothing stored says the attempts are dead, so the server cannot say the firing was missed. |
+| M4 | The settle margin | (a) 60 seconds (built); (b) a longer margin; (c) write misses from the reaper, after open attempts are closed | (a) | A minute covers an ordinary database round trip. (b) only delays rows. (c) moves the write to another pass, a larger change than the risk it removes. Revisit only if the database can stall for longer than a minute. |
+| M5 | The words a person reads | (a) "Missed", with the reason above (built); (b) other words; (c) no label, only the reason | (a), unless the maintainer prefers other words | The person needs to read a miss as a miss, and the reason must not blame them. The text is English, as the interface is. |
+| M6 | Missed in other places | (a) History and each routine's list only (built); (b) also the calendar, notifications or the Bot's page | (a) for now | Those surfaces answer other questions (the calendar shows future runs). Who is told, and how, is a product decision. |

@@ -74,6 +74,7 @@ describe("which servers this deployment will talk to", () => {
       auth: { kind: "deployment-bearer" },
       writeTools: [],
       readTools: [],
+      sendTools: [],
       docsUrl: "",
     } as const;
 
@@ -803,6 +804,7 @@ describe("which credential a curated server is given", () => {
     auth: { kind: "deployment-bearer" },
     writeTools: [],
     readTools: [],
+    sendTools: [],
     docsUrl: "https://vendor.example/docs",
   };
 

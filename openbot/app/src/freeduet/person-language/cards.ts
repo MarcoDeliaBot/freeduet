@@ -1,7 +1,8 @@
 /**
  * The text of the cards the person sees every day, in the language the person reads
  * (docs/M1_PLAN.md D26, amendment of 2026-11-12): the morning brief card, the suggestion card, and the
- * quiet line above a check-in; and, since D38, the card a member's file is drawn as.
+ * quiet line above a check-in; and, since D38, the card a member's file is drawn as, and the card a change
+ * made from chat is drawn as (docs/design/settings-in-chat.md, section 8).
  *
  * NOT AN i18N OF THE INTERFACE. The app has about 500 other strings (menus, settings, sheets, tool
  * lines) and none of them is here. Only what those cards draw is, because those are the ones the
@@ -118,6 +119,18 @@ const EN = {
   "file.started": "Download started",
   "file.couldNot": "Couldn't download the file. Try again.",
   "file.running": "Getting the file ready",
+  // The card a change made from chat is drawn as, with its Undo (freeduet/setting-change-card.tsx,
+  // docs/design/settings-in-chat.md section 8). The levels are the words of the Bot's notification setting.
+  "setting.running": "Changing a setting",
+  "setting.heading": "Notifications changed",
+  "setting.change": "{bot}'s notifications went from {from} to {to}.",
+  "setting.level.all": "everything",
+  "setting.level.needs_input": "only when it needs you",
+  "setting.undo": "Undo",
+  "setting.undoing": "Undoing…",
+  "setting.undone": "Undone. Notifications are back to {value}.",
+  "setting.couldNotUndo": "Couldn't undo the change. Try again.",
+  "setting.noLongerUndoable": "Undo is no longer possible.",
   // The onboarding demo's example brief (components/onboarding/capability-demo.tsx)
   "demo.greeting": "Your day, at a glance.",
   "demo.delivery.title": "Confirm the delivery",
@@ -195,6 +208,16 @@ const IT: SameShape<typeof EN> = {
   "file.started": "Download avviato",
   "file.couldNot": "Non ho potuto scaricare il file. Riprova.",
   "file.running": "Preparo il file",
+  "setting.running": "Cambio un'impostazione",
+  "setting.heading": "Notifiche modificate",
+  "setting.change": "Le notifiche di {bot} sono passate da {from} a {to}.",
+  "setting.level.all": "ogni aggiornamento",
+  "setting.level.needs_input": "solo quando ha bisogno di te",
+  "setting.undo": "Annulla",
+  "setting.undoing": "Annullo…",
+  "setting.undone": "Annullato. Le notifiche sono tornate a {value}.",
+  "setting.couldNotUndo": "Non ho potuto annullare la modifica. Riprova.",
+  "setting.noLongerUndoable": "Non si può più annullare.",
   "demo.greeting": "La tua giornata, in breve.",
   "demo.delivery.title": "Conferma la consegna",
   "demo.delivery.why": "Ana aspetta un sì per venerdì.",

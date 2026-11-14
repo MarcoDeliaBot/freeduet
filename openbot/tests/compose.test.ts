@@ -745,7 +745,6 @@ test("takes the computer's and the supervisor's tokens from the settings, and gi
   const bare = runComposeConfig({});
   expect(bare.services["agent-computer"].environment.COMPUTER_TOKEN).toBe("");
   expect(bare.services.supervisor.environment.SUPERVISOR_TOKEN).toBe("");
-  expect(bare.services.supervisor.environment.COMPUTER_TOKEN).toBe("");
   // Not under any other service or key either: none of the strings this file used to publish is left.
   const rendered = JSON.stringify(bare);
   for (const published of [
@@ -755,7 +754,10 @@ test("takes the computer's and the supervisor's tokens from the settings, and gi
   ])
     expect(rendered).not.toContain(published);
 
-  // Set: the same tokens the server holds, to the computer and to the supervisor that hands them on.
+  // Set: the computer the stack runs by itself gets the deployment's token, and the supervisor gets its
+  // own and NOT the computer's. It makes each Bot's computer a token from its own and that Bot's id
+  // (docs/design/per-computer-token.md), and a copy of the shared one in this service would be a
+  // second way for it to reach a Bot's computer, which is what a token of its own is there to end.
   const set = runComposeConfig({
     COMPUTER_TOKEN: "computer-token-fixture",
     SUPERVISOR_TOKEN: "supervisor-token-fixture",
@@ -763,11 +765,14 @@ test("takes the computer's and the supervisor's tokens from the settings, and gi
   expect(set.services["agent-computer"].environment.COMPUTER_TOKEN).toBe(
     "computer-token-fixture",
   );
-  expect(set.services.supervisor.environment.COMPUTER_TOKEN).toBe(
-    "computer-token-fixture",
-  );
   expect(set.services.supervisor.environment.SUPERVISOR_TOKEN).toBe(
     "supervisor-token-fixture",
+  );
+  expect(Object.keys(set.services.supervisor.environment)).not.toContain(
+    "COMPUTER_TOKEN",
+  );
+  expect(JSON.stringify(set.services.supervisor)).not.toContain(
+    "computer-token-fixture",
   );
 });
 

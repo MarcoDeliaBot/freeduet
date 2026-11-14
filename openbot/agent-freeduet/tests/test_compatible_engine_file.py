@@ -293,9 +293,9 @@ def test_the_shipped_example_has_no_active_entry_of_this_kind():
     assert not any(COMPATIBLE_KIND in chain for chain in example.chains.values())
 
 
-def test_the_two_commented_out_examples_are_valid_and_off():
+def test_the_commented_out_examples_are_valid_and_off():
     entries = commented_entries()
-    assert set(entries) == {"my-gateway", "local-free-router"}
+    assert set(entries) == {"my-gateway", "local-free-router", "local-models"}
     data = {
         "engines": {"claude-code": dict(CLAUDE_ENTRY), **copy.deepcopy(entries)},
         "chains": {"default": ["claude-code"]},
@@ -304,9 +304,23 @@ def test_the_two_commented_out_examples_are_valid_and_off():
     for name in entries:
         engine = config.engines[name]
         assert engine.kind == COMPATIBLE_KIND and engine.enabled is False and engine.tier == "C"
-        assert parse_secret_ref(engine.credential_secret_ref) is not None
+        if engine.no_key:
+            assert engine.credential_secret_ref is None  # the key-free example names no key at all
+        else:
+            assert parse_secret_ref(engine.credential_secret_ref) is not None
     assert config.engines["my-gateway"].billing == "metered"
     assert config.engines["local-free-router"].billing == "free"
+    assert config.engines["local-models"].billing == "free"
+
+
+def test_the_local_models_example_takes_no_key_and_says_how_a_container_reaches_ollama():
+    entry = commented_entries()["local-models"]
+    assert entry["no_key"] is True and "credential_secret_ref" not in entry
+    assert entry["base_url"] == "http://host.docker.internal:11434"  # no /v1 here: the CLI adds /v1/messages itself
+    assert entry["billing"] == "free" and entry["tier"] == "C" and entry["enabled"] is False
+    text = example_text()
+    assert "OLLAMA_HOST=0.0.0.0:11434" in text
+    assert "On Linux the" in text and "host.docker.internal" in text
 
 
 def test_the_local_router_example_uses_another_port_than_the_servers_and_says_why():

@@ -33,6 +33,10 @@ afterEach(() => {
 
 const SOON = new Date(Date.now() + 60 * 60_000).toISOString();
 
+/** The server's words for a firing it did not run; the History shows them under the row. */
+const MISSED_TEXT =
+  "The server reached this occurrence too late to run it, so no run was started.";
+
 const routine = {
   id: "r1",
   agentId: "expenses",
@@ -45,8 +49,21 @@ const routine = {
   lastRun: null,
 };
 
-/** Answers the reads the screen makes. `routinesFail` makes the routines read fail. */
-function serving(options: { routinesFail?: boolean } = {}) {
+/**
+ * Answers the reads the screen makes. `routinesFail` makes the routines read fail. `runChannelId` is the
+ * conversation the mocked runs posted into: a different one from the routine's own, so a link that
+ * follows the routine instead of the run would show as the wrong conversation.
+ */
+function serving(
+  options: {
+    routinesFail?: boolean;
+    runChannelId?: string | null;
+    missed?: boolean;
+  } = {},
+) {
+  const runChannelId =
+    options.runChannelId === undefined ? "c_run" : options.runChannelId;
+  const missed = options.missed === true;
   const sent: string[] = [];
   global.fetch = (async (input: RequestInfo | URL) => {
     const url = String(input);
@@ -55,7 +72,18 @@ function serving(options: { routinesFail?: boolean } = {}) {
       if (options.routinesFail)
         return Response.json({ error: "The server is busy." }, { status: 500 });
       return Response.json({
-        routines: [routine],
+        routines: [
+          missed
+            ? {
+                ...routine,
+                lastRun: {
+                  status: "skipped",
+                  at: "2026-11-15T08:00:00.000Z",
+                  missed: true,
+                },
+              }
+            : routine,
+        ],
         sweep: { lastSweptAt: new Date().toISOString(), working: true },
       });
     }
@@ -73,11 +101,32 @@ function serving(options: { routinesFail?: boolean } = {}) {
             id: "run_1",
             routineId: "r1",
             agentId: "expenses",
-            status: "succeeded",
+            status: missed ? "skipped" : "succeeded",
             startedAt: "2026-11-15T08:00:00.000Z",
-            finishedAt: "2026-11-15T08:01:00.000Z",
-            error: null,
+            finishedAt: missed
+              ? "2026-11-15T08:00:00.000Z"
+              : "2026-11-15T08:01:00.000Z",
+            error: missed ? MISSED_TEXT : null,
             source: "schedule",
+            channelId: runChannelId,
+            missed,
+          },
+        ],
+      });
+    if (url.startsWith("/api/routines/r1/runs"))
+      return Response.json({
+        runs: [
+          {
+            id: "run_1",
+            status: missed ? "skipped" : "succeeded",
+            startedAt: "2026-11-15T08:00:00.000Z",
+            finishedAt: missed
+              ? "2026-11-15T08:00:00.000Z"
+              : "2026-11-15T08:01:00.000Z",
+            error: missed ? MISSED_TEXT : null,
+            source: "schedule",
+            channelId: runChannelId,
+            missed,
           },
         ],
       });
@@ -168,4 +217,56 @@ test("a routines read that fails says so in every view", async () => {
   fireEvent.click(view.getByRole("button", { name: "Next runs" }));
   expect(view.getByText(message)).toBeTruthy();
   expect(view.queryByText(/Nothing is scheduled/)).toBeNull();
+});
+
+test("a history row links to the conversation its run posted into, not the routine's current one", async () => {
+  serving();
+  const view = draw(() => <RoutinesList />);
+  await view.findByText("Every weekday at 9:00");
+  fireEvent.click(view.getByRole("button", { name: "History" }));
+  expect(await view.findByText("Succeeded")).toBeTruthy();
+  const link = view.getByRole("link", { name: "Open conversation" });
+  expect(link.getAttribute("href")).toBe("/channel/c_run");
+});
+
+test("a history row names no conversation when the run's is not open to the person", async () => {
+  // The routine still posts into "Bills" (c1), which is open; the run's own conversation is not.
+  serving({ runChannelId: null });
+  const view = draw(() => <RoutinesList />);
+  await view.findByText("Every weekday at 9:00");
+  fireEvent.click(view.getByRole("button", { name: "History" }));
+  expect(await view.findByText("Succeeded")).toBeTruthy();
+  expect(view.queryByRole("link", { name: "Open conversation" })).toBeNull();
+});
+
+test("a routine's own runs link to the conversation each one posted into", async () => {
+  serving();
+  const view = draw(() => <RoutinesList />);
+  await view.findByText("Every weekday at 9:00");
+  fireEvent.click(
+    view.getByRole("button", {
+      name: "Run history for the routine scheduled Every weekday at 9:00",
+    }),
+  );
+  expect(await view.findByText("Succeeded")).toBeTruthy();
+  const link = view.getByRole("link", { name: "Open conversation" });
+  expect(link.getAttribute("href")).toBe("/channel/c_run");
+});
+
+test("a missed firing reads Missed in History, with the server's reason and no conversation", async () => {
+  serving({ missed: true, runChannelId: null });
+  const view = draw(() => <RoutinesList />);
+  await view.findByText("Every weekday at 9:00");
+  fireEvent.click(view.getByRole("button", { name: "History" }));
+  expect(await view.findByText("Missed")).toBeTruthy();
+  expect(view.queryByText("Skipped")).toBeNull();
+  expect(view.getByText(MISSED_TEXT)).toBeTruthy();
+  expect(view.queryByRole("link", { name: "Open conversation" })).toBeNull();
+});
+
+test("the routines list says Missed, not Skipped, when the last firing was missed", async () => {
+  serving({ missed: true, runChannelId: null });
+  const view = draw(() => <RoutinesList />);
+  expect(await view.findByText(/^Missed /)).toBeTruthy();
+  expect(view.queryByText(/^Skipped /)).toBeNull();
 });

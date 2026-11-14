@@ -55,6 +55,15 @@ account, never a message, never what an engine printed. An engine the person swi
 not run (a paid gateway, until the ledger can enforce caps) is a row too: state ``refused``, not available, with
 a ``refusal`` sentence (a fixed phrase and the entry's name). It has no breaker and no saved state.
 
+THE SPEND LEDGER (ledger.py, docs/ENGINES_PLAN.md slice 12, first part). When the router attaches one
+(:meth:`EngineState.attach_ledger`, only when engines.yaml has a metered engine the ledger holds to the limits), ``finish``
+also records what such an engine's turn reported (its tokens, and a cost only when it stated one), and the snapshot
+adds, for those engines only, ``spend``: the limits, what all of them have cost today and this month (UTC), and the
+engine's own totals. An engine the ledger holds back (a limit reached, or a ledger that cannot tell) is a row in state
+``refused``, not available, with the sentence in ``refusal`` and the time it lifts in ``limited_until``: the same
+degraded display the engines page already has for an engine that is not run. Free engines, logins and every engine of a
+default install never get a ``spend`` key, a ledger or a file.
+
 Recording never fails a turn: every call here is guarded, and a failure is one warning in the log.
 """
 
@@ -73,11 +82,14 @@ from . import checkpoints
 from .engine_adapter import COULD_NOT_RUN, EngineAdapter, Gate, Health, Outcome, ProbeResult, Sink, TurnContext
 from .engine_breaker import DEGRADED, HALF_OPEN, READY, SIGNED_OUT, BreakerRegistry, FileStore, Store, Ticket, Timing  # noqa: F401 - SIGNED_OUT is read through here (engine_router.py)
 from .failure_classifier import UNKNOWN, Failure
+from .ledger import Hold, Ledger, Limits
 
 log = logging.getLogger("freeduet.engine_state")
 
 STATE_FILE_ENV = "FREEDUET_ENGINE_STATE_FILE"
 STATE_FILE_NAME = "engine-state.json"
+LEDGER_FILE_ENV = "FREEDUET_ENGINE_LEDGER_FILE"
+LEDGER_FILE_NAME = "engine-ledger.json"
 #: The states in which the next turn may run (``half_open``: as the one probe turn).
 AVAILABLE_STATES = frozenset({READY, DEGRADED, HALF_OPEN})
 #: Not one of the breaker's states: the row of an engine the person switched on and the service will not run (a paid
@@ -98,6 +110,20 @@ def state_file() -> Path:
     except RuntimeError:  # `~name` of a user this machine does not know: a wrong setting is not a reason not to start
         return base / STATE_FILE_NAME
     return path if path.is_absolute() else base / path
+
+
+def ledger_file() -> Path:
+    """Where what the metered engines cost is kept: ``FREEDUET_ENGINE_LEDGER_FILE``, else ``engine-ledger.json`` next to the
+    engine state file (so in the data directory unless the state file was moved). A name without a folder is a file of the
+    data directory, never of the working folder, like the state file's."""
+    raw = (os.environ.get(LEDGER_FILE_ENV) or "").strip()
+    if not raw:
+        return state_file().parent / LEDGER_FILE_NAME
+    try:
+        path = Path(raw).expanduser()
+    except RuntimeError:  # `~name` of a user this machine does not know
+        return state_file().parent / LEDGER_FILE_NAME
+    return path if path.is_absolute() else checkpoints.default_root() / path
 
 
 # ── What the endpoint shows ──────────────────────────────────────────────────────────────────────
@@ -128,6 +154,9 @@ class EngineRow:
     #: Only a refused engine has one (state ``refused``): the sentence the person is told. The key is left out of every
     #: other row, so a default install shows exactly the rows it always showed.
     refusal: str | None = None
+    #: Only an engine the spend ledger holds to the limits has one (numbers: the limits, what was spent, the engine's own
+    #: totals; see :meth:`freeduet.ledger.Ledger.view`). Left out of every other row, so a default install is unchanged.
+    spend: dict[str, Any] | None = None
 
     def as_json(self) -> dict[str, Any]:
         shown = {
@@ -147,6 +176,8 @@ class EngineRow:
         }
         if self.refusal is not None:
             shown["refusal"] = self.refusal
+        if self.spend is not None:
+            shown["spend"] = self.spend
         return shown
 
 
@@ -198,6 +229,9 @@ class EngineState:
         self._probed: dict[str, Probed] = {}
         self._refused: dict[str, Refused] = {}
         self._lock = threading.Lock()
+        self._ledger: Ledger | None = None  # set by attach_ledger, only when an engine is held to the limits
+        self._limits: Limits | None = None
+        self._ledgered: frozenset[str] = frozenset()
 
     # -- engines --------------------------------------------------------------------------------
 
@@ -215,6 +249,18 @@ class EngineState:
         with self._lock:
             if engine_id not in self._engines:
                 self._refused[engine_id] = Refused(engine_id, label, kind, reason)
+
+    def attach_ledger(self, ledger: Ledger, limits: Limits, engine_ids: frozenset[str]) -> None:
+        """Hold these engines to ``limits`` by ``ledger``: their turns are recorded, the router asks :meth:`hold_of` before it
+        starts one, and the snapshot shows their spend. Never called for an install with no such engine."""
+        self._ledger, self._limits, self._ledgered = ledger, limits, frozenset(engine_ids)
+
+    def hold_of(self, key: str) -> Hold | None:
+        """Why this engine may not start a turn now because of what it has cost, or None. Always None for an engine the
+        ledger does not hold to the limits (a login, a free engine, any engine of a default install)."""
+        if self._ledger is None or self._limits is None or key not in self._ledgered:
+            return None
+        return self._ledger.hold(self._limits)
 
     def recorded(self, engine: EngineAdapter) -> EngineAdapter:
         """The engine, wrapped so that every turn it runs is recorded."""
@@ -249,6 +295,20 @@ class EngineState:
                 ticket.failure(Failure(UNKNOWN))  # said nothing: settle the ticket, change nothing
         except Exception:  # noqa: BLE001
             log.warning("engine state: a turn was not recorded at its end", exc_info=True)
+        self._count_spend(key, health)
+
+    def _count_spend(self, key: str, health: Health) -> None:
+        """An engine the ledger holds to the limits has ended a turn: write down what it reported. A turn that reported
+        nothing and said nothing never started as far as anyone saw, so it is not a turn; one that answered and reported no
+        usage is recorded with nothing known, and the ledger counts its cost as unknown. Never raises."""
+        try:
+            if self._ledger is None or self._limits is None or key not in self._ledgered:
+                return
+            if health.usage is None and not health.answered:
+                return
+            self._ledger.record(key, health.usage, self._limits.currency)
+        except Exception:  # noqa: BLE001
+            log.warning("engine state: a turn's spend was not recorded", exc_info=True)
 
     # -- probing --------------------------------------------------------------------------------
 
@@ -304,20 +364,31 @@ class EngineState:
     def snapshot(self) -> StateSnapshot:
         with self._lock:
             engines, probed, refused = dict(self._engines), dict(self._probed), dict(self._refused)
+        ledger, limits, ledgered = self._ledger, self._limits, self._ledgered
+        hold = ledger.hold(limits) if ledger is not None and limits is not None and ledgered else None
         rows = []
         for shown in self._registry.snapshots():
             engine = engines.get(shown.engine_id)
             found = probed.get(shown.engine_id)
             result = found.result if found is not None else None
             installed = result.installed if result is not None else None
+            label = engine.label if engine is not None else shown.engine_id
+            state = shown.state
+            available = shown.state in AVAILABLE_STATES and installed is not False
+            limited_until, refusal, spend = shown.limited_until, None, None
+            if ledger is not None and limits is not None and shown.engine_id in ledgered:
+                spend = {**ledger.view(shown.engine_id, limits), "held": hold.kind if hold is not None else None}
+                if hold is not None:  # held back by what it has cost: not run, and the sentence says why
+                    state, available, refusal = REFUSED, False, hold.sentence(label)
+                    limited_until = limited_until or hold.until
             rows.append(
                 EngineRow(
                     id=shown.engine_id,
-                    label=engine.label if engine is not None else shown.engine_id,
+                    label=label,
                     kind=engine.kind if engine is not None else "",
-                    state=shown.state,
-                    available=shown.state in AVAILABLE_STATES and installed is not False,
-                    limited_until=shown.limited_until,
+                    state=state,
+                    available=available,
+                    limited_until=limited_until,
                     last_failure_kind=shown.last_failure_kind,
                     consecutive_failures=shown.consecutive_failures,
                     installed=installed,
@@ -325,6 +396,8 @@ class EngineState:
                     signed_in=result.signed_in if result is not None else None,
                     probed_at=found.at if found is not None else None,
                     probe_problem=result.problem if result is not None else None,
+                    refusal=refusal,
+                    spend=spend,
                 )
             )
         shown = {row.id for row in rows}
@@ -349,7 +422,8 @@ class EngineState:
                     refusal=item.reason,
                 )
             )
-        return StateSnapshot(tuple(rows), tuple(getattr(self._store, "problems", ()) or ()))
+        problems = tuple(getattr(self._store, "problems", ()) or ()) + (ledger.problems if ledger is not None else ())
+        return StateSnapshot(tuple(rows), problems)
 
 
 def from_environment(*engines: EngineAdapter) -> EngineState:

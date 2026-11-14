@@ -6,7 +6,8 @@
 # final result) in stream order instead of strings plus side lists; tool uses are kept only for the
 # `freeduet` MCP server and carry their input; approval control requests, tool summaries, usage and
 # the stored-message bookkeeping were removed (approvals belong to OpenBot, D4); the structured
-# `error` an API-error assistant message carries is kept, for the sign-in check (D12).
+# `error` an API-error assistant message carries is kept, for the sign-in check (D12). Token counts are read again,
+# for the spend ledger only (ledger.py): the numbers the CLI reports, nothing else of `usage`, no cost.
 """Claude Code's `--output-format stream-json` lines as the few things a segment acts on.
 
 The CLI interleaves many other events with the ones that matter (`system/init`, `system/status`,
@@ -79,6 +80,23 @@ def _text_of(content) -> str:
     )
 
 
+def _count(value) -> int | None:
+    """A token count as the CLI reports it: a whole number of 0 or more, else None (never a guess)."""
+    return value if isinstance(value, int) and not isinstance(value, bool) and value >= 0 else None
+
+
+_GIVEN = ("input_tokens", "cache_creation_input_tokens", "cache_read_input_tokens")
+
+
+def _given(usage) -> int | None:
+    """Every token the model was given in one call, cached ones included: the three input counts of a `usage` block
+    that are numbers, added. None when the block has none of them."""
+    if not isinstance(usage, dict):
+        return None
+    found = [count for count in (_count(usage.get(name)) for name in _GIVEN) if count is not None]
+    return sum(found) if found else None
+
+
 @dataclass
 class StreamParser:
     """Feed it one raw line at a time; it returns the items that line adds, in order.
@@ -111,6 +129,13 @@ class StreamParser:
     _snapshot_seen: dict = field(default_factory=dict)
     _tools_seen: set = field(default_factory=set)
     _calls: dict = field(default_factory=dict)  # tool_use id -> (message id, name as sent, input), any name
+    # Token use, for the spend ledger (read through :meth:`usage`). Per message: [given, wrote], from the stream's
+    # `message_start` (what the model was given) and `message_delta` (what it wrote, final), else from the `assistant`
+    # snapshot (whose count of what the model wrote is a placeholder while the message is still streaming). The result
+    # line's own totals for the whole run win when that line was read; a segment that ends on a tool never reads it.
+    _use_by_message: dict = field(default_factory=dict)
+    _use_key: str | None = None
+    _result_use: tuple | None = None
 
     def feed(self, raw: bytes | str) -> list[Item]:
         if self.final is not None:
@@ -134,8 +159,10 @@ class StreamParser:
         elif kind == "assistant":
             if self._api_error(event):
                 return []
+            self._usage_of_snapshot(event.get("message"))
             return self._assistant(event.get("message"))
         elif kind == "result":
+            self._usage_of_result(event.get("usage"))
             text = event.get("result")
             self.final = Final(text=text if isinstance(text, str) else None, is_error=bool(event.get("is_error")))
             return [self.final]
@@ -215,7 +242,11 @@ class StreamParser:
             message = inner.get("message")
             message_id = message.get("id") if isinstance(message, dict) else None
             self._current_message = message_id if isinstance(message_id, str) else None
+            self._usage_of_start(message)
             return [MessageStart(self._current_message)]
+        if inner_type == "message_delta":
+            self._usage_of_delta(inner.get("usage"))
+            return []
         if inner_type == "content_block_delta":
             delta = inner.get("delta")
             if not isinstance(delta, dict) or delta.get("type") != "text_delta":
@@ -259,3 +290,54 @@ class StreamParser:
             self._tools_seen.add(tool_id)
             items.append(ToolUse(message_id, tool_id, name[len(MCP_PREFIX):], tool_input))
         return items
+
+    # -- token use (the spend ledger) -----------------------------------------------------------
+
+    def _usage_of_start(self, message) -> None:
+        message = message if isinstance(message, dict) else {}
+        message_id = message.get("id") if isinstance(message.get("id"), str) else None
+        self._use_key = message_id if message_id is not None else f"#{len(self._use_by_message)}"
+        usage = message.get("usage")
+        entry = self._use_by_message.setdefault(self._use_key, [None, None])
+        given = _given(usage)
+        wrote = _count(usage.get("output_tokens")) if isinstance(usage, dict) else None
+        entry[0] = given if given is not None else entry[0]
+        entry[1] = wrote if entry[1] is None else entry[1]  # a placeholder: `message_delta` says the real one
+
+    def _usage_of_delta(self, usage) -> None:
+        entry = self._use_by_message.get(self._use_key) if self._use_key is not None else None
+        if entry is None or not isinstance(usage, dict):
+            return
+        wrote, given = _count(usage.get("output_tokens")), _given(usage)
+        entry[1] = wrote if wrote is not None else entry[1]
+        entry[0] = given if given is not None else entry[0]
+
+    def _usage_of_snapshot(self, message) -> None:
+        """A message the stream events did not carry (no partial messages): its snapshot's own counts, once."""
+        if not isinstance(message, dict) or not isinstance(message.get("id"), str):
+            return
+        if message["id"] in self._use_by_message:
+            return
+        usage = message.get("usage")
+        if isinstance(usage, dict):
+            self._use_by_message[message["id"]] = [_given(usage), _count(usage.get("output_tokens"))]
+
+    def _usage_of_result(self, usage) -> None:
+        if not isinstance(usage, dict):
+            return
+        given, wrote = _given(usage), _count(usage.get("output_tokens"))
+        if given is not None or wrote is not None:
+            self._result_use = (given, wrote)
+
+    def usage(self) -> tuple[int | None, int | None] | None:
+        """What the CLI reported about token use so far: (given, wrote), each None when it reported no number, or None
+        when it reported nothing at all. The result line's totals when it was read, else the sum over the messages seen."""
+        if self._result_use is not None:
+            return self._result_use
+        if not self._use_by_message:
+            return None
+        given = [entry[0] for entry in self._use_by_message.values() if entry[0] is not None]
+        wrote = [entry[1] for entry in self._use_by_message.values() if entry[1] is not None]
+        if not given and not wrote:
+            return None
+        return (sum(given) if given else None, sum(wrote) if wrote else None)

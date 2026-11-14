@@ -3,8 +3,9 @@
 Parsing is tolerant on purpose. OpenBot adds fields of its own to messages (a tool message's
 `error`, attachment parts) and a strict schema would refuse a turn over a field this service never
 reads. Only what the runtime needs is checked: the ids, the message list, the tool list and the
-three `forwardedProps` OpenBot sets on every run (server/src/copilot.ts, runWith), and a fourth
-when the deployment names the person's language (person_language.py).
+three `forwardedProps` OpenBot sets on every run (server/src/copilot.ts, runWith), a fourth
+when the deployment names the person's language (person_language.py), and a fifth when the person has chosen
+something on the Engines page for this member (engine_choices.py).
 """
 
 import asyncio
@@ -14,6 +15,9 @@ from collections.abc import AsyncIterator
 from contextlib import suppress
 from dataclasses import dataclass, field
 
+from .engine_choices import PROP as ENGINE_CHOICES_PROP
+from .engine_choices import Choices
+from .engine_choices import from_props as engine_choices_from_props
 from .person_language import PROP as PERSON_LANGUAGE_PROP
 from .person_language import from_props as person_language_from_props
 
@@ -38,6 +42,8 @@ class RunInput:
     assertion: str = field(default="", repr=False)
     # The person's language as (two-letter code, English name), when the deployment set one (D26).
     person_language: tuple[str, str] | None = None
+    # What the person chose for this member on the Engines page, when they chose anything (engine_choices.py).
+    engine_choices: Choices | None = None
 
 
 def _strings(value) -> list[str]:
@@ -75,6 +81,7 @@ def parse_run_input(body) -> RunInput:
         deployment_tools=frozenset(_strings(props.get("openbotDeploymentTools"))),
         assertion=assertion if isinstance(assertion, str) else "",
         person_language=person_language_from_props(props.get(PERSON_LANGUAGE_PROP)),
+        engine_choices=engine_choices_from_props(props.get(ENGINE_CHOICES_PROP)),
     )
 
 

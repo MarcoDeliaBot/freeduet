@@ -26,8 +26,13 @@ export const TEAM_FORMAT = "freeduet-team/1";
 
 /**
  * The sizes a file may have. The byte limits are the design's proposals (section 3.2, marked
- * [assumed] there). The instruction cap is the create form's own limit, which decision 2 leaves
- * open. It is reported, not enforced: the shared rules alone are longer than it (see `notices`).
+ * [assumed] there).
+ *
+ * `instructionsCharacters` is the limit for an IMPORTED member's instructions: its author's text,
+ * then the Email paragraph, then the shared rules, counted in UTF-16 code units (`String.length`),
+ * as every other limit here is counted. The maintainer decided 8,000 on 14 November 2026
+ * (docs/design/team-file.md, decision 2). It applies to imported members only. A Bot made in the
+ * app, by Leo or through the API is still held to `createTextCharacters`.
  */
 export const TEAM_FILE_LIMITS = {
   fileBytes: 1_048_576,
@@ -35,7 +40,13 @@ export const TEAM_FILE_LIMITS = {
   nameCharacters: 60,
   titleCharacters: 120,
   roleDescriptionCharacters: 1000,
-  instructionsCharacters: 1000,
+  instructionsCharacters: 8000,
+  /**
+   * What the create form, the create route and the edit route still take for a Bot's standing text:
+   * app/src/lib/agents/form.ts:19-23 and server/src/agents/routes.ts:70-74. This file does not change
+   * them. An imported member above this length is reported as not yet creatable (see `notices`).
+   */
+  createTextCharacters: 1000,
 } as const;
 
 /** A skill slug. The same pattern the package loader uses (`tenant-package.ts`, `parseTenantSkills`). */
@@ -100,8 +111,10 @@ export type ReadMember = {
   systemPrompt: string;
   /** What an imported member carries: the author's text, then the "Email." paragraph, then the shared rules. */
   instructions: string;
+  /** `instructions.length`, in UTF-16 code units. At most `TEAM_FILE_LIMITS.instructionsCharacters`. */
   instructionsCharacters: number;
-  instructionsWithinCap: boolean;
+  /** Whether the create form, the create route and the edit route, which take `createTextCharacters`, would take it too. */
+  instructionsWithinCreateLimit: boolean;
   skills: ReadSkill[];
   testRequests: ReadTestRequest[];
   source: { author: string; licence: string; derivedFrom: string | null };
@@ -397,6 +410,18 @@ function readMember(
       "already has the shared rules or the Email paragraph. FreeDuet adds both to every imported member, so remove them from this text.",
     );
   }
+  // The instructions as the member will carry them. The limit is on this whole text, checked here
+  // so the refusal comes at the field that makes it too long, in the order the file lists them.
+  const instructions = [systemPrompt, context.email, context.shared].join(
+    "\n\n",
+  );
+  if (instructions.length > TEAM_FILE_LIMITS.instructionsCharacters) {
+    const over = instructions.length - TEAM_FILE_LIMITS.instructionsCharacters;
+    refuse(
+      child(base, "system_prompt"),
+      `is ${instructions.length.toLocaleString("en-US")} characters once the Email paragraph and the shared rules are added to it. An imported member's instructions may be at most ${TEAM_FILE_LIMITS.instructionsCharacters.toLocaleString("en-US")} characters, so shorten the system prompt by ${over.toLocaleString("en-US")} ${over === 1 ? "character" : "characters"}.`,
+    );
+  }
 
   const skillsPath = child(base, "skills");
   const skills: ReadSkill[] = [];
@@ -420,9 +445,6 @@ function readMember(
   );
   const source = readSource(object.source, child(base, "source"));
 
-  const instructions = [systemPrompt, context.email, context.shared].join(
-    "\n\n",
-  );
   return {
     member: {
       name,
@@ -431,8 +453,8 @@ function readMember(
       systemPrompt,
       instructions,
       instructionsCharacters: instructions.length,
-      instructionsWithinCap:
-        instructions.length <= TEAM_FILE_LIMITS.instructionsCharacters,
+      instructionsWithinCreateLimit:
+        instructions.length <= TEAM_FILE_LIMITS.createTextCharacters,
       skills,
       testRequests,
       source,
@@ -770,9 +792,11 @@ function unknownKeyReason(key: string): string {
 
 function noticesFor(member: ReadMember): string[] {
   const notes: string[] = [];
-  if (!member.instructionsWithinCap) {
+  // Not a refusal: an imported member may be up to 8,000. But the create and edit screens and the
+  // server still take 1,000 for a Bot's text, so until they change, this notice is the only warning.
+  if (!member.instructionsWithinCreateLimit) {
     notes.push(
-      `${member.name}: its instructions, with the Email paragraph and the shared rules added, are ${member.instructionsCharacters.toLocaleString("en-US")} characters. The create form allows ${TEAM_FILE_LIMITS.instructionsCharacters.toLocaleString("en-US")}, so this member cannot be created until that limit changes.`,
+      `${member.name}: its instructions, with the Email paragraph and the shared rules added, are ${member.instructionsCharacters.toLocaleString("en-US")} characters. An imported member may have up to ${TEAM_FILE_LIMITS.instructionsCharacters.toLocaleString("en-US")}, but FreeDuet's create and edit screens and its server still take ${TEAM_FILE_LIMITS.createTextCharacters.toLocaleString("en-US")} for a Bot's text, so this member cannot be created or edited yet.`,
     );
   }
   for (const removed of member.removedTools) {
