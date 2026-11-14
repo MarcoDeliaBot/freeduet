@@ -1487,8 +1487,9 @@ export function loadConfig(
  * to the host's loopback, but Docker Engine on Linux maps it to the default bridge's own address on
  * the host, `docker0`, which a loopback listener never answers: every tool call a Bot made would
  * fail. So where `docker0` exists, its address is listened on too. It is an address on this machine
- * that only this machine and its containers route to, the same reach loopback already has for a
- * server whose Bots are its containers. Not required, because a missing bridge is not a failure.
+ * that only this machine and its containers route to. Not required, because a missing bridge is not
+ * a failure. A request on it is not the administrator: with no sign-in only a loopback peer is, so
+ * the containers reach this server with their own credentials and nothing else (auth/peer.ts).
  */
 export function listenAddresses(
   environment: Environment,
