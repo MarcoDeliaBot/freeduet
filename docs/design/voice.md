@@ -1,6 +1,6 @@
 # Voice plan: read aloud and a call
 
-Plan only, no product code. Written 2026-11-14 for the roadmap row "Voice" ([ROADMAP.md](../ROADMAP.md), Later). Read on origin/main at commit 452e060.
+Plan, with slice S1 built (section 8). Written 2026-11-14 for the roadmap row "Voice" ([ROADMAP.md](../ROADMAP.md), Later). Read on origin/main at commit 452e060.
 
 Tags: **[code: path:line]** read in this repository on origin/main. **[doc: URL]** stated by a public page, read 2026-11-14. **[assumed]** my inference, or not checked. Nothing tagged [assumed] may be built on as fact.
 
@@ -157,3 +157,46 @@ A real person's voice needs that person's consent. XTTS-v2 clones from a short c
 - Local full-duplex speech models: not surveyed.
 - Firefox 160 recognition support: taken from the feature page, not tested.
 - Three licence statements come from secondary pages, not the project's own licence file: Piper's MIT code licence and sherpa-onnx's Apache-2.0 (both from an aggregator page), and XTTS-v2's Coqui Public Model License (read from the XTTS-v1 repository). Read each project's licence file before use.
+
+## 8. Built so far
+
+Slice S1 (section 4) is built on branch `voice-slice-1`. Slices S2 to S6 are not built.
+
+What S1 does:
+
+- A "Read aloud" control under each member reply in chat (`ReadAloudControl`, `openbot/app/src/components/channels/chat-transcript.tsx`). It is drawn only when the switch is on and the browser has speech synthesis. It reads the reply with the first local Italian voice, and a second press stops it.
+- A "Read replies aloud" switch under a "Voice" section in settings (`openbot/app/src/components/settings/read-aloud-setting.tsx`). It is off by default. Turning it on with no local Italian voice keeps it off and says so.
+- The switch is kept in this browser's local storage, under `freeduet.read-aloud` with the value `on`. A browser that refuses storage keeps it off.
+- Only voices with `localService` true and a language that starts with `it` are used (`italianLocalVoice`). A network voice is never used, so this path does not send the reply to a remote voice service.
+- Text is cleaned before it is read (`speechText`): code blocks and table rows are skipped, a link reads as its text, bare web addresses and images are dropped, and headings, quotes, list markers and rules are removed.
+
+Files:
+
+- New: `openbot/app/src/lib/voice/speech.ts`, `openbot/app/src/components/settings/read-aloud-setting.tsx`, `openbot/app/tests/voice-speech.test.ts`, `openbot/app/tests/read-aloud-components.test.tsx`, `openbot/server/tests/voice-approval-guard.integration.test.ts`.
+- Changed, additions only, upstream files: `openbot/app/src/components/channels/chat-transcript.tsx` (+44) and `openbot/app/src/routes/_authed/settings/index.tsx` (+4). Both have rows in `docs/UPSTREAM_TOUCHES.md`.
+- No file under `openbot/server/src` changed. The cloud voice route (`openbot/server/src/voice`) and its default are unchanged: off unless `VOICE_PROVIDER`, `VOICE_MODEL` and `VOICE_API_KEY` are set.
+
+Tests (sandbox, Postgres on a local test cluster):
+
+- `voice-speech.test.ts`: 13 pass. Voice filter (`it`, `it_IT` and `it-IT` accepted, a network voice refused), text cleaning, and a null plan when the switch is off, no voice is installed, or the reply is empty.
+- `read-aloud-components.test.tsx`: 5 pass, with `speechSynthesis` stubbed. Nothing is spoken with the switch off.
+- `voice-approval-guard.integration.test.ts`: 6 pass, against real Postgres and the real approval service. It is a guard of unchanged behaviour, so it passes on main's server code too. It shows that about 50 yes forms sent to the decision route are refused and the card stays pending; that a yes answering an open question answers only the question; that a yes sent as paired-chat text decides nothing; and that a press on the card approves the action once, the next identical action is held again, and a chat resume carrying the interrupt id also approves.
+- Fail before: the two app test files import `lib/voice/speech` and the settings component, which do not exist on `origin/main` (checked with `git cat-file`), so they cannot load there.
+
+Not verified:
+
+- Not run in a real browser or with a real voice. Voices are read when the person presses the control or turns the switch on, not on the `voiceschanged` event, so a browser that lists its voices late may show no voice until the person tries again. The control is drawn whenever the switch is on and speech synthesis exists, even with no local Italian voice; pressing it then does nothing and says nothing (`chat-transcript.tsx:245`, `:256-261`). Nothing is spoken in either case without the switch.
+- Text cleaning is a pattern pass, not a Markdown parser. It removes every asterisk (so `2*3` reads as `23`) and leaves underscores and HTML as they are.
+- The guard covers the decision route, questions and paired-chat text. It does not run the voice model or any provider; no provider was called.
+- Dictated and voice requests are not told apart from typed text. S1 does not change that (section 9).
+
+## 9. Decisions left to the maintainer
+
+D2 is followed in S1 (browser voices, local only, recommendation (a)). D3 is decided (section 3.6). S1 does not touch D1, D4, D5 or D6.
+
+| # | Decision | Options | Recommendation | Reason |
+|---|---|---|---|---|
+| D7 | Does a dictated address count as typed for D27, so that a new email goes out with no card? Today it does. The transcript becomes an ordinary user message (`composer.tsx:388-389`, `1289-1290`; `channel-chat.tsx:1115-1119`). "Transcribe and send" submits it with no review (`dictation-controls.tsx:214`). The gate reads only that message (`typed-recipients.ts:107-112`) | (a) keep as it is; (b) the app marks a message sent without review with an id prefix that D27 refuses, as `handoff-` is refused (`typed-recipients.ts:108`); (c) dictation never sends a message that holds an address before the person has read it | (b): one card press for a dictated address, and the dictation flow stays. (c) if the maintainer wants no extra press | A speech engine can mishear an address, and an address sent unread goes to whoever it names. D27 says every doubt resolves to no (`typed-recipients.ts:9-10`). Cost of (b), not built: about 25 production lines in four app files and the server (an estimate; the queued-send path was not read in full) |
+| D8 | Does a voice request count as typed for D27? This is the wider gap, and it is on main, not caused by S1. The voice model writes the request (`openbot/server/src/voice/provider.ts:94-95`). `askAgent` sends it through `say` (`channel-chat.tsx:1421-1429`) as an ordinary user message (`channel-chat.tsx:1115-1119`). The model also reads recent thread messages, and assistant replies may quote mail (`channel-chat.tsx:1415-1416`; `openbot/app/src/lib/voice/agent-bridge.ts:21-28`). So an address the model writes, in a short request, counts as typed. It applies only where a cloud voice is set up (`openbot/server/src/voice/config.ts:16-22`) | (a) keep; (b) mark voice requests as in D7(b), so D27 refuses them; (c) a voice request may not lead to a send to a new recipient | (b). Until it is decided, keep the cloud voice off for anyone who sends email through FreeDuet | The request is the model's words, not the person's, so an address in it is not the person's written approval. Full access is judged the same way on the person's own live turn (CLAUDE.md, "Full access"), so under Full access a model-written payment request would also pass without a card. The gate cannot tell the difference, so only a change to the rule closes it |
+
+Not decided here and not changed: the cloud voice route and its default, the call transcripts (D1 in section 6), and the speech-to-text model (D4).
