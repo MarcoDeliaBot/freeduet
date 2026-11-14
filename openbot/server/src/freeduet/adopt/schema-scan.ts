@@ -21,12 +21,19 @@ export type Executor = Pick<Database, "execute">;
 export type LiveColumn = {
   table: string;
   column: string;
+  /** information_schema's `data_type`: text, character varying, ARRAY, jsonb, ... */
   type: string;
+  /** The element type's name for an array (`_text`), else the type's own. */
+  udt: string;
 };
 
-type Row = Record<string, unknown>;
+export type Row = Record<string, unknown>;
 
-async function rowsOf(executor: Executor, query: ReturnType<typeof sql>) {
+/** The rows a statement answered, as plain objects. */
+export async function rowsOf(
+  executor: Executor,
+  query: ReturnType<typeof sql>,
+) {
   return (await executor.execute(query)) as unknown as Row[];
 }
 
@@ -35,7 +42,8 @@ export async function readColumns(executor: Executor): Promise<LiveColumn[]> {
   const rows = await rowsOf(
     executor,
     sql`
-      select c.table_name as "table", c.column_name as "column", c.data_type as "type"
+      select c.table_name as "table", c.column_name as "column", c.data_type as "type",
+             c.udt_name as udt
       from information_schema.columns c
       join information_schema.tables t
         on t.table_schema = c.table_schema
@@ -49,6 +57,7 @@ export async function readColumns(executor: Executor): Promise<LiveColumn[]> {
     table: String(row.table),
     column: String(row.column),
     type: String(row.type),
+    udt: String(row.udt),
   }));
 }
 

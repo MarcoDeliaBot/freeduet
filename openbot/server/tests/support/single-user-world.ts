@@ -18,7 +18,7 @@
 // up builds them, so a cache a process keeps (the team pass remembers whom it has settled) does not
 // survive a restart the test is about.
 import { randomUUID } from "node:crypto";
-import { eq } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 import { createAgentProfileStore } from "../../src/agents/profile-store";
 import { createApprovalQuestions } from "../../src/approvals/questions";
 import { createApprovalService } from "../../src/approvals/service";
@@ -30,7 +30,7 @@ import { createRoleRepository } from "../../src/auth/guards";
 import { createChannelStore } from "../../src/channels/routes";
 import { createThreadIdentity } from "../../src/channels/thread-identity";
 import { loadConfig } from "../../src/config";
-import type { Database } from "../../src/db/client";
+import { createDatabase, type Database } from "../../src/db/client";
 import {
   agentProfiles,
   agents,
@@ -121,7 +121,11 @@ export function environmentFor(mode: Mode, issuer: string) {
       INITIAL_ADMIN_EMAILS: _admins,
       ...rest
     } = testEnvironment();
-    return { ...rest, OPENBOT_SINGLE_USER: "true" };
+    return {
+      ...rest,
+      OPENBOT_SINGLE_USER: "true",
+      FREEDUET_INTELLIGENCE: "off",
+    };
   }
   const {
     GOOGLE_OAUTH_CLIENT_ID: _id,
@@ -133,6 +137,7 @@ export function environmentFor(mode: Mode, issuer: string) {
     OKTA_OAUTH_CLIENT_ID: "okta-client",
     OKTA_OAUTH_CLIENT_SECRET: "okta-client-secret-long-enough",
     OKTA_OAUTH_ISSUER: issuer,
+    FREEDUET_INTELLIGENCE: "off",
     INITIAL_ADMIN_EMAILS: mode.adminEmails ?? PERSON_ADDRESS,
     ...(mode.signInAllowedEmails
       ? { SIGNIN_ALLOWED_EMAILS: mode.signInAllowedEmails }
@@ -152,7 +157,8 @@ export type World = Awaited<ReturnType<typeof createWorld>>;
 
 export async function createWorld() {
   const scratch = await createScratchDatabase({ max: 4 });
-  const { database } = scratch;
+  /** The pool the world's stores use. Replaced when "the server" is stopped and started again. */
+  let database: Database = scratch.database;
 
   /** Who the stand-in provider says is signing in. Set before a sign-in starts. */
   let signingIn = PERSON_ADDRESS;
@@ -341,10 +347,50 @@ export async function createWorld() {
   }
 
   return {
-    database,
+    get database() {
+      return database;
+    },
     url: scratch.url,
+    /**
+     * The settings the adoption command is run with: this installation's database, the mode's
+     * provider settings, and a port nothing listens on, which is where "the server" is not.
+     */
+    environment(
+      mode: Mode = { kind: "provider" },
+      overrides: Record<string, string> = {},
+    ) {
+      return {
+        ...environmentFor(mode, issuer),
+        DATABASE_URL: scratch.url,
+        PORT: String(freePort()),
+        ...overrides,
+      } as Record<string, string | undefined>;
+    },
     stores,
     boot,
+    /**
+     * Stops "the server": closes every connection the world holds, so that nothing is using the
+     * database, as it is when the person has stopped the server and the worker. The adoption command
+     * refuses while anything else is connected, so it is run in here.
+     */
+    async disconnect() {
+      await database.$client.close().catch(() => undefined);
+      await scratch.idle();
+    },
+    /** Starts "the server" again: a new pool, and stores built over it by the next `boot`. */
+    reconnect() {
+      database = createDatabase(scratch.url, { max: 4 });
+    },
+    /** Runs `action` with nothing connected but whatever `action` opens itself. */
+    async whileStopped<T>(action: () => Promise<T>): Promise<T> {
+      await database.$client.close().catch(() => undefined);
+      await scratch.idle();
+      try {
+        return await action();
+      } finally {
+        database = createDatabase(scratch.url, { max: 4 });
+      }
+    },
     /** The dev person's row, as a single-user server's boot leaves it. */
     async startSingleUser() {
       await initializeDevActorUser(database, true);
@@ -352,6 +398,7 @@ export async function createWorld() {
     },
     async dispose() {
       idp.stop(true);
+      await database.$client.close().catch(() => undefined);
       await scratch.drop();
     },
   };
@@ -446,4 +493,31 @@ export async function userByEmail(database: Database, email: string) {
     .where(eq(users.email, email))
     .limit(1);
   return row;
+}
+
+/** A port nothing is listening on at this moment. */
+export function freePort(): number {
+  const probe = Bun.serve({ port: 0, fetch: () => new Response("") });
+  const port = probe.port as number;
+  probe.stop(true);
+  return port;
+}
+
+/**
+ * Every table's row count and a hash of its rows, so a test can say "nothing was written" and mean
+ * every table. Rows are hashed as text, in the text's own order.
+ */
+export async function snapshot(database: Database) {
+  const tables = (await database.execute(sql`
+    select table_name as name from information_schema.tables
+    where table_schema = 'public' and table_type = 'BASE TABLE' order by 1
+  `)) as unknown as { name: string }[];
+  const taken: Record<string, string> = {};
+  for (const { name } of tables) {
+    const [row] = (await database.execute(
+      sql`select count(*)::int as n, md5(coalesce(string_agg(t::text, '|' order by t::text), '')) as h from ${sql.identifier(name)} t`,
+    )) as unknown as { n: number; h: string }[];
+    taken[name] = `${row?.n}:${row?.h}`;
+  }
+  return taken;
 }

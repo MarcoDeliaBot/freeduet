@@ -30,6 +30,12 @@ export type ScratchDatabase = {
   database: Database;
   /** Closes the pool and drops the database. Safe to call twice. */
   drop: () => Promise<void>;
+  /**
+   * Waits until nothing at all is connected to this database, which is how a stopped server leaves
+   * it. Closing a pool returns before the server has finished with the connections, and a test that
+   * is about "nothing else is using the database" has to look after they are gone, not before.
+   */
+  idle: (timeoutMs?: number) => Promise<void>;
 };
 
 const MIGRATIONS = join(import.meta.dir, "..", "..", "drizzle");
@@ -61,10 +67,24 @@ export async function createScratchDatabase(
   return {
     url,
     database,
+    idle: async (timeoutMs = 10_000) => {
+      const deadline = Date.now() + timeoutMs;
+      for (;;) {
+        const [row] = (await admin.execute(
+          sql`select count(*)::int as n from pg_stat_activity where datname = ${name}`,
+        )) as unknown as { n: number }[];
+        if ((row?.n ?? 0) === 0) return;
+        if (Date.now() > deadline) {
+          throw new Error(`Connections to ${name} did not close in time.`);
+        }
+        await new Promise((resolve) => setTimeout(resolve, 25));
+      }
+    },
     drop: async () => {
       if (dropped) return;
       dropped = true;
-      await database.$client.close();
+      // Already closed by a test that stopped "the server", which is allowed.
+      await database.$client.close().catch(() => undefined);
       await admin.execute(
         sql.raw(`drop database if exists "${name}" with (force)`),
       );
