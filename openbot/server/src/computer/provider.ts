@@ -104,6 +104,19 @@ export interface ComputerProvider {
   /** Prepare provider resources before the first computer request. */
   warm?(): Promise<void>;
   /**
+   * The token this Bot's own computer checks its callers against, for a provider that gives each Bot
+   * a computer with a token of its own (the Docker supervisor does; the one shared computer and a
+   * cluster's Sandboxes take the deployment's one `COMPUTER_TOKEN`, and have no such method).
+   *
+   * Learned from whatever created the computer and never from the computer, and thrown when it cannot
+   * be learned rather than guessed. Where a provider has this, it is the ONLY token ever presented to
+   * that Bot's computer, and the deployment's `COMPUTER_TOKEN` is never a fallback: whatever runs a
+   * command in a Bot's computer can read what the computer is sent, so a token that opens other
+   * computers must not be sent to it. Callers go through {@link tokenForBot}, which keeps that rule in
+   * one place.
+   */
+  tokenFor?(botId: string): Promise<string>;
+  /**
    * Which run of this Bot's computer is current, if the provider can tell.
    *
    * A snapshot's generation only orders snapshots within one run: a replaced container counts from
@@ -118,6 +131,22 @@ export interface ComputerProvider {
    * exactly as it was before any of this existed.
    */
   sessionOf?(botId: string): Promise<string | undefined>;
+}
+
+/**
+ * The token to present to this Bot's computer, whichever way its provider arranges them.
+ *
+ * A provider that gives each Bot a token of its own answers for it, and when it cannot say (it
+ * throws) the deployment's `shared` token is not used in its place: the rule is not "prefer", it is
+ * that a computer with a token of its own is never sent the one that opens the others. A provider
+ * without `tokenFor` has one token for every computer, and that is what is presented.
+ */
+export async function tokenForBot(
+  provider: Pick<ComputerProvider, "tokenFor"> | undefined,
+  botId: string,
+  shared: string | undefined,
+): Promise<string | undefined> {
+  return provider?.tokenFor ? provider.tokenFor(botId) : shared;
 }
 
 export type SharedComputerProviderOptions = {

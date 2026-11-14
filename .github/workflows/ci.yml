@@ -106,7 +106,9 @@ jobs:
       # and the `tests` job has not: installing them there would also switch on
       # `docker.integration.test.ts`, which runs wherever Dockerode can be imported and Docker answers.
       # The computer's equivalent runs in the `tests` job, where its dependencies are installed.
-      - run: bun test tests/host-guard.test.ts tests/host-guard-http.test.ts
+      # The token each Bot's computer holds (docs/design/per-computer-token.md) is asked of the real
+      # process the same way, and for the same reason.
+      - run: bun test tests/host-guard.test.ts tests/host-guard-http.test.ts tests/computer-token-http.test.ts
         if: matrix.package == 'supervisor'
         working-directory: openbot/supervisor
 
