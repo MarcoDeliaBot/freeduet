@@ -169,7 +169,8 @@ beforeEach(() => {
         sent.push({
           method,
           path: url,
-          body: init?.body ? JSON.parse(String(init.body)) : undefined,
+          // null is "no body": a request that carried one is recorded as the body itself.
+          body: init?.body ? JSON.parse(String(init.body)) : null,
         });
       if (url === "/api/freeduet/engines" && method === "GET")
         return Response.json(listing());
@@ -405,7 +406,7 @@ test("Undo sends one request for that change, says so, and goes away", async () 
       {
         method: "POST",
         path: "/api/freeduet/engines/changes/00000000-0000-4000-8000-000000000001/undo",
-        body: undefined,
+        body: null,
       },
     ]),
   );
