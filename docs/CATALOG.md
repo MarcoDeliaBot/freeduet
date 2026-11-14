@@ -4,7 +4,7 @@ FreeDuet has three layers of help.
 
 | Layer | What it is | Installed |
 |---|---|---|
-| **Starter team** | Ten members everyone needs: Iris, Vera, Leo, Otto, Portia, Penny, Jules, Wren, Gus, Basil, and Mark, the marketer, the first member added after v0.1 ([TEAM.md](TEAM.md)) | Always |
+| **Starter team** | Ten members everyone needs: Iris, Vera, Leo, Otto, Portia, Penny, Jules, Wren, Gus, Basil, and Mark, the marketer, and Cam, the video maker, the first members added after v0.1 ([TEAM.md](TEAM.md)) | Always |
 | **Packs** | Specialists for particular jobs, installed with one request to Leo | When the person needs them |
 | **Assistants** | Light helpers every member calls for small jobs, on free models | Always, if a free engine is available |
 
@@ -21,7 +21,6 @@ Every pack member is written by Leo, with its tests, and checked by Vera before 
 | **Business** | **Ada**, Comparator | Side-by-side tests of products, suppliers, services or AI models: criteria first, same conditions for all, sources and date, a clear winner per use | Browser, GridCraft | Takes money or gifts into account; hides the criteria; declares a winner without data | Written for FreeDuet |
 | **Business** | **Flo**, Automator | Builds, documents and maintains automations in the person's tool: n8n (self-hosted or cloud), Activepieces, Node-RED, Make, Zapier and others | Automation connectors ([CONNECTORS.md](CONNECTORS.md)) | Switches on an automation that sends, pays, deletes or publishes without the person's approval | Written for FreeDuet |
 | **Media** | **Clara**, Editor-in-chief | Runs the editorial desk: watches news and social sources, plans the content calendar, assigns pieces to Wren and Cam, checks sources and facts, prepares publication | News and social sources, Wren, Cam | Publishes without approval; uses a source she has not opened; copies articles | The Agency, marketing division |
-| **Media** | **Cam**, Video maker | Edits videos, subtitles, music and motion graphics from footage or a script, in every format the person needs | FilmCraft, EffectCraft, SoundCraft, ffmpeg | Uses music, footage or faces without the rights; publishes | Written for FreeDuet |
 | **Tech** | **Theo**, Tester | Actually runs things: clicks through sites and apps, runs test suites, checks forms, links, speed and phones, and files clear bug reports with steps to reproduce | Browser, the member's computer, coding-agent connectors | Tests on a live site in a way that changes real data, without the person's approval; marks something as working without running it | The Agency, testing division |
 | **Tech** | **Nico**, Game developer | Designs and builds small games: idea, rules, levels, art and sound with the ArtCraft apps, code with the coding agents, a playable build | Free game engines in its own computer (Godot, Phaser, three.js and others), the game-development skills library, coding-agent connectors, PhotoCraft, VectorCraft, SoundCraft | Publishes to a store; uses assets without the rights | The Agency, game-development folder, plus the game-development skills library (see Ready-made libraries) |
 | **Learning** | **Sofia**, Teacher | Explains any subject step by step, prepares exercises and quizzes, checks what the person understood and adapts the next lesson | Documents, DeckCraft | Grades or decides for a school or an exam; does the person's homework when they asked to learn | The Agency, academic folder |
@@ -50,7 +49,7 @@ These are design choices to keep people safe and within the law. They are not le
 
 - **Hana (recruiting).** In the EU, AI used to select or evaluate candidates is a high-risk use under the AI Act. After the Digital Omnibus on AI (in force from 27 July 2026), those obligations apply from 2 December 2027. Hana is built to assist, never to decide: she proposes a shortlist with the reasons for each name, a person makes every decision, and candidates' data stays in the person's own database. Messages to candidates say that an AI assistant helped prepare them.
 - **Sofia (teaching).** AI that evaluates learning outcomes for an education institution is also a high-risk use under the same rules. Sofia is for self-study: practice, feedback and explanations, never official grades or admissions. FreeDuet is made for adults; Sofia does not work with children unless a parent is present.
-- **Clara and Cam (media).** Summaries always link the original, with its date. No full articles, music, footage or images are copied without the rights. AI-generated images, audio and video are labelled as such.
+- **Clara (media).** Summaries always link the original, with its date. No full articles, music, footage or images are copied without the rights. AI-generated images, audio and video are labelled as such. Cam, the video maker, left the packs for the starter team and holds the same rules for videos ([TEAM.md](TEAM.md)).
 
 ## Assistants
 

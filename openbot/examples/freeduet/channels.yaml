@@ -57,3 +57,8 @@ channels:
     description: Mark plans how you get customers, with the channels, a first step and a number to watch.
     permitted_agents: [marketer]
     allowed_groups: [all]
+  - id: video
+    name: Video
+    description: Cam makes and edits your videos, with cuts, subtitles, music and sound in the sizes you need.
+    permitted_agents: [video]
+    allowed_groups: [all]

@@ -43,6 +43,7 @@ body:
         - label: Basil
         - label: Vera
         - label: Mark
+        - label: Cam
   - type: textarea
     id: works
     attributes:

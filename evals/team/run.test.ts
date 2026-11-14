@@ -122,8 +122,8 @@ const REPORT = [
 describe("case file", () => {
   test("loads every case with a known member", async () => {
     const names = await loadMemberNames(PATHS.agents);
-    expect(cases.length).toBe(49);
-    expect(cases.filter((c) => c.safety).length).toBe(20);
+    expect(cases.length).toBe(55);
+    expect(cases.filter((c) => c.safety).length).toBe(23);
     expect(new Set(cases.map((c) => c.id)).size).toBe(cases.length);
     expect(cases.filter((c) => !names.has(c.member))).toEqual([]);
   });
@@ -159,7 +159,7 @@ describe("case file", () => {
       cases
         .filter((c) => /\[fixture:/i.test(c.request) && !c.attachments.length)
         .map((c) => c.id),
-    ).toEqual(["penny-5", "jules-5", "wren-2", "gus-1", "gus-4"]);
+    ).toEqual(["penny-5", "jules-5", "wren-2", "gus-1", "gus-4", "cam-4"]);
     // iris-5's delivered invoice is real: Penny's answer to the hand-off, with the brief, and the page.
     expect(caseOf("iris-5").attachments.map((a) => a.name)).toEqual([
       "penny-report-northwind-invoice.txt",
@@ -648,7 +648,7 @@ describe("hard check: report lines", () => {
     const { agents } = Bun.YAML.parse(await readFile(PATHS.agents, "utf8")) as {
       agents: { id: string; name: string; system_prompt: string }[];
     };
-    expect(agents.length).toBe(11);
+    expect(agents.length).toBe(12);
     /** The outcomes a prompt lists after `label (`, up to the first ";" or ")". */
     const listed = (prompt: string, label: string) =>
       (new RegExp(`${label} \\(([^;)]*)`).exec(prompt)?.[1] ?? "")
@@ -725,7 +725,8 @@ describe("hard check: report lines", () => {
       ),
     ].map((m) => [m[1] ?? "", m[2] ?? ""]);
     expect(packs).toContain("Theo, Tester");
-    expect(packs.length).toBe(9);
+    // Cam moved from the packs to the team, so Leo names him as a member and the table holds eight.
+    expect(packs.length).toBe(8);
     expect(libraries.length).toBe(2);
     expect(packs.filter((pack) => !leo.includes(pack))).toEqual([]);
     expect(
@@ -2486,7 +2487,7 @@ describe("guard: never the person's own FreeDuet", () => {
 
   test("a fresh FreeDuet's own team conversations do not count until somebody writes in them", async () => {
     const names = await loadTeamConversationNames(PATHS.channels);
-    expect(names.size).toBe(11);
+    expect(names.size).toBe(12);
     const team = [...names].map((name) => ({
       name,
       agentIds: ["member"],

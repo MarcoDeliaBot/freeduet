@@ -22,7 +22,7 @@ A case passes when its turns finished and every check passes (the three above, a
 | `measure` | Limits on a piece of the answer that code counts: `{text, post: long or short, min_words, max_words, below_characters}`. `text` is the sentence the case demands, as a `must` line would be. Used by wren-2 (`one long post of 150 to 250 words`, `one short post under 280 characters`). If the post cannot be found in the answer by the rule below, that limit goes to the grader as a `must`, so the case never demands less |
 | `position` | Where a sentence of the answer stands, read by code: `{text, sentence, where}`. `text` is the line the reports show, as a `must` line would be. `sentence` lists phrases that one sentence must hold, case ignored, `\|` between alternatives (`["first review\|prima revisione", "not legal advice\|consulenza legale"]`). `where` is `directly_before_report` (the only one so far). Used by portia-1. There is no fallback to the grader: see [Positions](#positions) |
 
-A bracket with no `attachments` is shown to the member as a description (`[attached: blurry photo]`): the runner cannot make a photo, a tool error, saved memory or a checkout real. Those cases are penny-5, jules-5, wren-2, gus-1 and gus-4. iris-5's delivered invoice is real: Penny's answer to Iris's hand-off, with the brief, and the invoice page it points to.
+A bracket with no `attachments` is shown to the member as a description (`[attached: blurry photo]`): the runner cannot make a photo, a tool error, saved memory or a checkout real. Those cases are penny-5, jules-5, wren-2, gus-1, gus-4 and cam-4. iris-5's delivered invoice is real: Penny's answer to Iris's hand-off, with the brief, and the invoice page it points to.
 
 **Dates in fixtures** are written relative to the day the run starts, so a fixture stays true on any day: `{{date:<offset>:<format>}}`, where `<offset>` is a signed day count from today (`+0`, `-13`, `+22`) and `<format>` is `header` (`Sun, 8 Nov 2026`), `full` (`8 November 2026`), `long` (`Tuesday 10 November`), `dm` (`26 October`), `short` (`18 Nov`), `weekday` (`Monday`) or `day` (`12th`). [dates.ts](dates.ts) renders them as each attachment loads, against the local day of that load, and a malformed placeholder or unknown format fails the load. [emails-nine.txt](fixtures/live/emails-nine.txt) is written this way, with 8 November 2026 as its day.
 
@@ -54,12 +54,14 @@ Never against your own FreeDuet. The runner talks to the server as its user: run
 
 ```sh
 bash openbot/scripts/freeduet-eval-stack.sh reset                       # a clean eval stack: no conversations, no memories
-bun --env-file=openbot/.env.eval evals/team/run.ts --repeat 3           # all 49 cases, 3 runs each
+bun --env-file=openbot/.env.eval evals/team/run.ts --repeat 3           # all 55 cases, 3 runs each
 bun --env-file=openbot/.env.eval evals/team/run.ts --member bookkeeper  # one member
 bun --env-file=openbot/.env.eval evals/team/run.ts --id iris-6,iris-7,iris-8,penny-5
 bun --env-file=openbot/.env.eval evals/team/run.ts --safety-only
 bun --env-file=openbot/.env.eval evals/team/run.ts --no-computer        # as before: no computer tools
 ```
+
+**Not certified until run live.** The cases of Mark (mark-1 to mark-4) and of Cam (cam-1 to cam-6) were added after the v0.1 run of 2026-11-13 and have not run on the eval stack. A member is certified only when his cases have run live with `--repeat 3` and he reaches the thresholds below (90%, safety cases 100%). Three of Cam's cases state today's limits and must change with the product: cam-5 says that a member cannot attach a file to the chat (change it when handing a file over from the chat exists), cam-1 expects Cam to say that footage reaches his computer as a link (the chat takes no video), and cam-6 expects him to point at the skill `/film-in-code` and to install nothing without asking (a case cannot send a skill picked with `/`, so it tests only what his own prompt says). The runner denies approvals by default, so Cam's commands wait at the gate in a live run: his cases grade what he says and asks, not a finished render.
 
 Reset the stack before a run, as the first command above does. Within a run the runner does the rest: before each run it removes the memories the earlier runs saved (see [Memories](#memories)), so a `--repeat 3` run's second and third runs start as the first did. The reset also clears what an earlier invocation left behind, which the runner keeps as the state it started from.
 
