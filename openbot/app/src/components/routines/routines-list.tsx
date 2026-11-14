@@ -16,7 +16,7 @@ import {
 import { RoutineCalendar } from "@/components/routines/routine-calendar";
 import {
   RoutineHistory,
-  RUN_STATUS,
+  runStatusOf,
 } from "@/components/routines/routine-history";
 import { Button } from "@/components/ui/button";
 import {
@@ -84,6 +84,14 @@ function lastRunLabel(lastRun: RoutineRecord["lastRun"]): {
     };
   }
   const when = lastRun.at ? relativeTime(lastRun.at) : "recently";
+  // Before the skip: a missed firing is stored as skipped, and the list must not call it a choice.
+  if (lastRun.missed) {
+    return {
+      text: `Missed ${when}`,
+      className: "text-amber-600 dark:text-amber-500",
+      dot: "bg-amber-500",
+    };
+  }
   if (lastRun.status === "failed") {
     return {
       text: `Failed ${when}`,
@@ -154,7 +162,7 @@ function RoutineRuns({ routine }: { routine: RoutineRecord }) {
   return (
     <ul className="flex w-full flex-col gap-1.5">
       {runs.data.map((run) => {
-        const status = RUN_STATUS[run.status] ?? RUN_STATUS.skipped;
+        const status = runStatusOf(run);
         return (
           <li
             className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs"
@@ -177,15 +185,15 @@ function RoutineRuns({ routine }: { routine: RoutineRecord }) {
                   : "Scheduled"}{" "}
               · {relativeTime(run.startedAt)}
             </span>
-            {routine.channel.gone ? null : (
+            {run.channelId ? (
               <Link
                 className="text-muted-foreground underline underline-offset-2 hover:text-foreground"
-                params={{ channelId: routine.channel.id }}
+                params={{ channelId: run.channelId }}
                 to="/channel/$channelId"
               >
                 Open conversation
               </Link>
-            )}
+            ) : null}
             {run.error ? (
               <span className="basis-full text-muted-foreground">
                 {run.error}

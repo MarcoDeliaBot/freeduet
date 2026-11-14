@@ -31,6 +31,7 @@ function summary(overrides: Partial<RoutineSummary> = {}): RoutineSummary {
     lastRun: {
       status: "succeeded",
       finishedAt: new Date("2026-08-26T09:00:00.000Z"),
+      missed: false,
     },
     ...overrides,
   };
@@ -43,6 +44,12 @@ function fakeStore(
 ): RoutineStore & { calls: StoreCall[] } {
   const calls: StoreCall[] = [];
   const base: RoutineStore = {
+    async recordRunChannel() {
+      throw new Error("not used by these tests");
+    },
+    async recordMissed() {
+      throw new Error("not used by these tests");
+    },
     async create() {
       throw new Error("not used by these tests");
     },
@@ -129,7 +136,11 @@ describe("GET /", () => {
           channel: { id: "channel-1", name: "Assistant channel", gone: false },
           enabled: true,
           nextRunAt: "2026-08-27T09:00:00.000Z",
-          lastRun: { status: "succeeded", at: "2026-08-26T09:00:00.000Z" },
+          lastRun: {
+            status: "succeeded",
+            at: "2026-08-26T09:00:00.000Z",
+            missed: false,
+          },
         },
       ],
     });
@@ -148,7 +159,7 @@ describe("GET /", () => {
   test("an open run stays an object with a null status, never collapsed to null", async () => {
     const store = fakeStore({
       listFor: async () => [
-        summary({ lastRun: { status: null, finishedAt: null } }),
+        summary({ lastRun: { status: null, finishedAt: null, missed: false } }),
       ],
     });
     const response = await appFor(store).request("http://openbot.test/");
@@ -156,6 +167,7 @@ describe("GET /", () => {
     expect((await json(response)).routines[0].lastRun).toEqual({
       status: null,
       at: null,
+      missed: false,
     });
   });
 
