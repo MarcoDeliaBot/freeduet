@@ -81,13 +81,14 @@ write_settings() {
     port="${!token:-${pair#*=}}"
     set_line "$name" "$port"
   done
-  local server app freeduet postgres
+  local server app freeduet
   server="$(setting SERVER_PORT)"
   app="$(setting APP_PORT)"
   freeduet="$(setting FREEDUET_PORT)"
-  postgres="$(setting POSTGRES_PORT)"
   set_line PORT "$server"
-  set_line DATABASE_URL "postgres://openbot:openbot@localhost:$postgres/openbot"
+  # No DATABASE_URL: the example leaves it empty, and scripts/start.sh makes a password for this stack's
+  # own database and writes the address, with this stack's port (docs/M1_PLAN.md D39). Writing one here
+  # put the public password `openbot` in every eval stack.
   set_line OPENBOT_PUBLIC_URL "http://localhost:$server"
   set_line TRUSTED_ORIGINS "http://localhost:$app"
   # Its own Compose project, with the overlay that shares the person's sign-in volume.
@@ -102,13 +103,9 @@ write_settings() {
   set_line AGENT_ENDPOINT_ALLOWED_HOSTS "localhost:$freeduet"
   set_line ANTHROPIC_BASE_URL "http://localhost:$freeduet"
   set_line OPENBOT_TOOL_URL "http://host.docker.internal:$server/api/agent-tools/call"
-  # Fresh secrets of its own. start.sh generates MANAGED_AGENT_TOKEN, AGENT_TOOL_TOKEN and
-  # FREEDUET_LOCAL_KEY (the example leaves them empty); these four it would otherwise take from
-  # fixed development defaults, the same ones the person's FreeDuet uses.
-  set_line KEY_ENCRYPTION_KEY "$(openssl rand -base64 32)"
-  set_line COMPUTER_TOKEN "$(openssl rand -hex 32)"
-  set_line SUPERVISOR_TOKEN "$(openssl rand -hex 32)"
-  set_line WORKER_SHARED_SECRET "$(openssl rand -hex 32)"
+  # Secrets of its own, none of them written here: the example leaves every one empty, and
+  # scripts/start.sh makes a value for each (the tokens, the vault key, the database's password) the
+  # first time it runs on this file, as it does for the person's FreeDuet (D39).
   # Evals never feed Automatic Learning: a learned skill would change the next run's answers.
   set_line OPENBOT_LEARNING_AUTO_ASSIGN false
   # A self-hosted Intelligence is the same service for both stacks; the key is not (see below).
