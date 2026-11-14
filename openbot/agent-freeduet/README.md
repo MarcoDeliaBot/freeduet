@@ -44,6 +44,7 @@ and [docs/ARCHITECTURE.md §3](../../docs/ARCHITECTURE.md).
 | `freeduet/team_log.py`, `lessons.py`, `iris_tools.py`, `origin.py`, `locking.py` | The team log, lessons and Iris's tools; who handed a run over; file locks |
 | `freeduet/engines.py`, `server_calls.py`, `assistants.py` | `engines.yaml`, `/v1/messages` and the free OpenAI-compatible engine |
 | `freeduet/compatible_engine.py` | The `anthropic-compatible` engine, off by default: the same locked-down CLI on an Anthropic-compatible address and the person's own key at it (see "A gateway or a local router" below) |
+| `freeduet/ledger.py` | The spend ledger: what an engine that costs money has cost, kept in `engine-ledger.json`, and the verdict on the person's limits. Built and closed: no paid gateway runs in this release (see "The spend ledger and the limits" below) |
 | `engines.example.yaml`, `prices.example.yaml` | Engines and chains; your own dated price table. Copy to `engines.yaml` and `prices.yaml` |
 | `tests/` | Offline pytest suite with a fake `claude` CLI: `pip install -r requirements.txt && pytest` (Python 3.12) |
 | `Dockerfile`, `LICENSE-APACHE-2.0` | The image; the license of the files ported from Anil-matcha/open-duet |
@@ -56,13 +57,16 @@ and [docs/ARCHITECTURE.md §3](../../docs/ARCHITECTURE.md).
 | `team-log.jsonl` | One line per segment: time, member, thread, run, outcome, summary, `from_iris`, approvals, `report_guard` (whether the report guard had to ask). Rotated at 10 MB |
 | `lessons/<member>.json` | Lessons, pending until the person replies `approve <code>` to Iris (rule in `freeduet/lessons.py`) |
 | `engine-state.json` | Each engine's state (ready, degraded, open, half-open, signed out), limited-until and counters, so a limit survives a restart. No engine text, no account, no key. `FREEDUET_ENGINE_STATE_FILE` moves it (a bare name is a file of this directory). A missing or corrupt file starts clean and is named in `GET /engines` |
+| `engine-ledger.json` | Only when a paid engine is held to the person's limits, which no release so far does: per turn what the engine reported (tokens, and a cost only if it stated one), the totals per UTC day and month. No message, key, path or member. `FREEDUET_ENGINE_LEDGER_FILE` moves it (a bare name is a file of this directory). A damaged file is never read as "nothing spent" (see "The spend ledger and the limits" below) |
 
 ## Hard rules for this service
 
 - It **never** reads, copies, logs or transmits a provider's credential files or tokens. The CLI keeps its own login in its own config directory (a volume); a test fails if any FreeDuet code opens it.
 - It **never** starts a CLI with its built-in host tools enabled.
 - It **never** adds a metered engine to a chain unless `metered.enabled` is true and the caps allow it, and it never runs a
-  paid `anthropic-compatible` gateway at all until the usage ledger can enforce the caps (see below).
+  paid `anthropic-compatible` gateway unless four things hold, none of which does in this release: the maintainer's
+  switch, the person's `metered.enforce: ledger`, a kind that reports what a turn costs, and an entry that is on (see
+  "The spend ledger and the limits" below).
 - A report, a checkpoint or a lesson never approves anything: approvals stay with OpenBot's gateway.
 
 ## A gateway or a local router (`anthropic-compatible`, off by default)
@@ -87,14 +91,14 @@ CLI, so it is not certified; [docs/ENGINES_PLAN.md](../../docs/ENGINES_PLAN.md) 
   refused, and so is any value that holds a Claude plan token.
 - **Free or paid, said by you, and a paid one is not run yet.** `billing: free` or `billing: metered` is required and
   never guessed. It is your own statement: FreeDuet cannot see what an endpoint charges, so write `metered` for anything
-  that can charge you. FreeDuet cannot yet enforce the limits you set (the usage ledger is slice 12 of the plan), and
-  limits that are written and not enforced must not let money be spent, so a `metered` gateway you switched on is
-  refused, whatever the `metered:` block says. Nothing starts it. The log says so when the service starts ("my-gateway is
+  that can charge you. The spend ledger (below) is what would keep the limits you set, and its gate is closed in this
+  release; limits that are written and not enforced must not let money be spent, so a `metered` gateway you switched on
+  is refused, whatever the `metered:` block says. Nothing starts it. The log says so when the service starts ("my-gateway is
   a paid gateway. FreeDuet does not run paid gateways yet, because it cannot yet enforce the limits you set. Free
   gateways and your own logins work."), a member that would use it is told the same in chat when nothing else can answer
   or when it is pinned to it, and `GET /engines` lists it with `"state": "refused"`, `"available": false` and the
-  sentence in `"refusal"`. The `metered:` block is still read and checked, so the file format will not change when the
-  ledger arrives. A free gateway and your own logins work as before.
+  sentence in `"refusal"`. The `metered:` block is still read and checked, and has one more word, `enforce`, for the ledger
+  (below). A free gateway and your own logins work as before.
 - **Addresses.** Plain `http` only for this machine: `localhost`, a loopback address or `host.docker.internal`. Every
   other address must be `https`. Inside the container `localhost` is the container itself: use `host.docker.internal`
   for a router on your computer, and let the router listen on an address the container can reach.
@@ -156,6 +160,47 @@ checks `--engine local-free-router` against the stack's `GET /engines` but does 
 `unknown` for every case on a stack that lists two engines, which a stack with this engine always does. Pin the gateway
 for every member in the eval stack's engines file (`switching: {default: {pin: local-free-router}}`) to run the trial; a
 certified label needs the runner's per-run engine, the part of slice 4 that is not built.
+
+### The spend ledger and the limits (slice 12, first part; the gate is closed)
+
+A paid (`billing: metered`) gateway would run only if FreeDuet can stop it at the limits you set. The part that counts and
+stops is built. **The lock in front of it is closed in this release, so no paid gateway runs, and on every installation
+nothing below happens**: no ledger is made, no file is written, and no row of `GET /engines` changes. Design, evidence and the
+decisions left to the maintainer: [docs/design/engines-ledger.md](../../docs/design/engines-ledger.md).
+
+- **The gate.** A paid gateway runs only when all four hold. (1) `PAID_GATEWAYS_OPEN` in `freeduet/engines.py` is true: the
+  maintainer's decision about money (E3 of the plan); it is `False`. (2) You wrote `metered: {enabled: true, daily_cap: ..,
+  monthly_cap: .., enforce: ledger}` with both caps above 0. (3) The kind of engine reports what each turn costs, in the
+  currency of your limits, as a fact checked against public documentation (`COST_REPORTING_KINDS` in the same file; empty).
+  The Claude Code CLI, which this kind runs, prints only an estimate from a price table of its own, so it does not qualify.
+  (4) The entry is on and not locked. The refusal sentence says which one is missing.
+- **What is recorded**, only for an engine held to the limits (never a login, never a free engine): per turn, what the engine
+  itself reported. Tokens given (cached ones included) and written, and a cost only when the engine states one. FreeDuet
+  works out no price. A turn with no stated cost is recorded with its tokens as "cost unknown", and then the limits cannot
+  be checked: the engines stay held until the month turns, or until you delete the ledger file and restart (that forgets
+  what was spent: look at the provider's own usage page first). No message text, key, path or member is written.
+- **Where, and for how long.** `engine-ledger.json`, in the same folder as `engine-state.json` (`FREEDUET_ENGINE_LEDGER_FILE`
+  moves it; a bare name is a file of the data folder). Written whole and atomically, so it survives a restart. It keeps the
+  last 200 turns, the totals per day for the last 62 days and per month for the last 14 months, per engine; the current day
+  and month are never dropped. One service process writes it.
+- **Days and months are UTC**: 00:00 UTC to the next 00:00 UTC, and the first of the month to the next first. Money is
+  in the currency of your limits (`metered.currency`) and is added as exact decimals. A cost in another currency is never
+  converted: it counts as "cost unknown".
+- **The limits are for all held engines together** and are checked before each turn. At or over a limit the engine is skipped
+  as a limited one is, with the same one-line notices in English or Italian ("gw reached the daily limit you set (1.00 EUR),
+  so Claude Code is answering instead."), and a member pinned to it stops and says so. It runs again when the UTC day or month
+  turns. **A turn that crosses a limit while it runs finishes and counts**, so what you spend can pass a limit by what the
+  turns already running cost; the next turn is held.
+- **A ledger file that cannot be trusted** (empty, damaged, unreadable, too big, not written by this service) is never read as
+  "nothing spent". Every held engine is refused until you mend the file or delete it; deleting it resets the ledger, and this
+  one needs no restart. The sentence in `GET /engines` says so.
+- **`GET /engines`** gains, for an engine held to the limits only, a `spend` block of numbers: `currency`, `time_zone`
+  (`UTC`), `held` (`daily`, `monthly`, `unknown` or null), and for `day` and `month` the period, the limit (`cap`), what all
+  held engines spent, how many turns had no stated cost, and the engine's own turns, tokens and cost. A held engine is shown as
+  `refused`, with its sentence in `refusal`. The row of any other engine is what it was.
+- **Not verified.** No paid gateway has ever run, no cost has been compared with a provider's own usage page, and the notices
+  have not been seen live. A segment that ends on a tool call stops the CLI before it prints a result, so a turn is
+  counted as far as its stream had said.
 
 ### Ollama on your computer, with no key (`local-models`)
 

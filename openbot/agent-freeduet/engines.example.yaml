@@ -61,14 +61,15 @@ engines:
   # dot), never the key itself. `billing` has no default and is never guessed: say whether the endpoint is free or
   # paid. It is your own statement, because FreeDuet cannot see what an endpoint charges: write `metered` for anything
   # that can charge you.
-  # A PAID ENDPOINT IS NOT RUN YET. FreeDuet cannot yet enforce the limits you set (the spend ledger comes later), so a
-  # `billing: metered` endpoint is refused whatever the `metered:` block below says: nothing starts it, and the log, the
-  # chat and the engine list say so. The `metered:` block is still read and checked, so what you write now keeps its
-  # meaning when the ledger exists. Free endpoints and your own logins work.
+  # A PAID ENDPOINT IS NOT RUN YET. FreeDuet keeps the limits you set with a spend ledger (see `metered:` below), but the
+  # lock in front of it is closed in this release, so a `billing: metered` endpoint
+  # is refused whatever the `metered:` block below says: nothing starts it, and the log, the chat and the engine list say so.
+  # The `metered:` block is still read and checked, so what you write now keeps its meaning when the lock is opened.
+  # Free endpoints and your own logins work.
   # It is never first in a chain (logins come first), and `tier` is C unless you say otherwise: the quality floor
   # keeps a skill that needs a better model off it. Plain http is accepted only for this machine; anything else is https.
   #
-  # A paid gateway, as it will be written once its limits can be enforced. Refused for now (see above).
+  # A paid gateway, as it would be written once its limits can be kept (with `metered.enforce: ledger` below). Refused for now.
   # my-gateway:
   #   kind: anthropic-compatible
   #   base_url: https://openrouter.ai/api               # the address a Claude Code client is given, without /v1/messages
@@ -138,13 +139,29 @@ engines:
     enabled: false
 
 # Metered engines run only when enabled here, only after every login engine in the chain has been
-# tried, and only under the caps. Off by default. 0 means never. Until the spend ledger exists a paid
-# `anthropic-compatible` gateway is not run at all, whatever is written here; the block is still read and checked.
+# tried, and only under the caps. Off by default. 0 means never.
+#
+# A PAID `anthropic-compatible` GATEWAY IS NOT RUN YET, whatever is written here; the block is still read and
+# checked. It would run only when ALL of these hold: this block says `enabled: true`, both caps above 0 and `enforce: ledger`;
+# the maintainer has opened the switch in freeduet/engines.py (`PAID_GATEWAYS_OPEN`, closed); the kind of engine reports what
+# each turn costs, in `currency`, as a verified fact (`COST_REPORTING_KINDS`, empty: the Claude Code CLI prints only an
+# estimate from a price table of its own); and the entry is on and not locked.
+#
+# When one does run, its limits are kept by the spend ledger (`engine-ledger.json` in the data directory):
+#  - the two caps are for ALL paid engines together, in `currency`; a day and a month are counted in UTC;
+#  - they are checked before each turn. At or over a cap the engine is skipped like a limited one and runs again when the day
+#    or the month turns. A turn that crosses a cap while it runs finishes and counts, so what is spent can pass a cap by what
+#    the turns already running cost;
+#  - only what the engine itself reports is recorded. A turn with no stated cost is counted as unknown, and then the caps
+#    cannot be checked: the engines stay held until the month turns, or until you delete the ledger file and restart (that
+#    forgets what was spent: look at the provider's own usage page first). A damaged ledger file holds them too, and is never
+#    read as "nothing spent": mend it or delete it.
 metered:
   enabled: false
   currency: EUR
   daily_cap: 0
   monthly_cap: 0
+  # enforce: ledger    # `none` (the default) or `ledger`: say that FreeDuet keeps these caps with its spend ledger
 
 # Chains per member, tried in order. The router enforces the rule whatever the order written here:
 # subscription engines first, then free, then metered. A metered engine can never be first.

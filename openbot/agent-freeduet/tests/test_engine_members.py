@@ -29,6 +29,7 @@ from freeduet.engines import (
 )
 from fake_engines import SPECS, build
 from helpers import MANAGED_TOKEN
+from ledger_support import open_the_gate
 
 AUTH = {"x-openbot-agent-token": MANAGED_TOKEN}
 WORDS = {*EXCLUSION_CODES, "not_set_up"}
@@ -258,3 +259,39 @@ def test_the_word_and_the_sentence_say_the_same_thing_for_every_combination():
         # the sentence is the one for this word and for no other
         assert [word for word, fragment in _SENTENCE_FOR.items() if fragment in sentence] == [code], where
     assert seen == set(EXCLUSION_CODES)  # the combinations reach every word
+
+
+def test_the_word_and_the_sentence_still_agree_once_the_switch_for_paid_gateways_is_open(monkeypatch):
+    """A paid gateway that meets every condition to run is not left out, and both functions say so. One that misses a
+    condition is left out, with the word `paid_gateway` and the sentence of a paid gateway. The switch is the
+    maintainer's and is closed in this release, so the test opens it for itself (ledger_support.open_the_gate)."""
+    open_the_gate(monkeypatch)  # the switch, and a kind that reports its cost in EUR
+    runs, left_out = 0, 0
+    for kind, billing, enforce, metered_on, daily, monthly, currency in itertools.product(
+        ("anthropic-compatible", "anthropic-api"), ("free", "metered"), ("none", "ledger"),
+        (True, False), (0, 2), (0, 3), ("EUR", "USD"),
+    ):
+        engine = Engine(id="e", kind=kind, billing=billing, tier="C", enabled=True, locked_reason=None)
+        config = EnginesConfig(
+            engines={"e": engine},
+            metered=Metered(enabled=metered_on, currency=currency, daily_cap=daily, monthly_cap=monthly, enforce=enforce),
+            chains={"default": ("e",)}, quality_floor={}, assistants=Assistants(),
+        )
+        code, sentence = exclusion_code(engine, config), exclusion_reason(engine, config)
+        where = (kind, billing, enforce, metered_on, daily, monthly, currency)
+        assert (code is None) == (sentence is None), where
+        if code is None:
+            runs += 1
+            continue
+        left_out += 1
+        assert [word for word, fragment in _SENTENCE_FOR.items() if fragment in sentence] == [code], where
+        if kind == "anthropic-compatible" and billing == "metered":
+            assert code == "paid_gateway", where  # whatever else is missing, the person is told it is a paid gateway
+    # the gateway that meets every condition is among those that run, and the gateways that miss one are among those left out
+    gateway = Engine(id="e", kind="anthropic-compatible", billing="metered", tier="C", enabled=True, locked_reason=None)
+    ready = EnginesConfig(
+        engines={"e": gateway}, metered=Metered(enabled=True, currency="EUR", daily_cap=2, monthly_cap=3, enforce="ledger"),
+        chains={"default": ("e",)}, quality_floor={}, assistants=Assistants(),
+    )
+    assert exclusion_code(gateway, ready) is None and exclusion_reason(gateway, ready) is None
+    assert runs > 0 and left_out > 0
