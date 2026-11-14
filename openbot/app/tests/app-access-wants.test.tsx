@@ -439,3 +439,152 @@ test("a request for the app itself reads and approves as it always did, with no 
   // No tools named: the server gives the Bot the app's read-only ones, as it always did.
   expect(approve.body).toBeUndefined();
 });
+
+/* ---- a tool that only settings gives (decided 14 November 2026) ---- */
+
+/*
+ * Approving never gives a tool that sends. The server marks such a tool `settingsOnly` and refuses it
+ * whoever names it; the row is the explanation. These fixtures are what the server now sends for a
+ * Notion Bot that wants a read and a comment (a send on Notion's own list), and for a hub app, whose
+ * writes nothing reviewed describes.
+ */
+const FETCH_PAGE: AppWant = {
+  ref: "notion/notion-fetch",
+  name: "notion-fetch",
+  label: "Read a page",
+  read: true,
+};
+const COMMENT: AppWant = {
+  ref: "notion/notion-create-comment",
+  name: "notion-create-comment",
+  label: "Comment on a page",
+  read: false,
+  settingsOnly: "send",
+};
+const MENTION: AppWant = {
+  ref: "notion/notion-create-mention",
+  name: "notion-create-mention",
+  label: "Tell a colleague",
+  read: false,
+  settingsOnly: "send",
+};
+const HUB_SEND: AppWant = { ...SEND, settingsOnly: "unreviewed" };
+const HUB_REPLY: AppWant = { ...REPLY, settingsOnly: "unreviewed" };
+
+const inNotion = (wants: AppWant[]) =>
+  filed({ appKey: "notion", appTitle: "Notion", wants });
+
+const rowFor = async (view: ReturnType<typeof draw>, title: string) =>
+  within(
+    (await view.findByText(title)).closest("[data-request]") as HTMLElement,
+  );
+
+test("a request that wants a send says it cannot be approved here, links to where it is allowed, and Approve names only the rest", async () => {
+  const sent = servingInbox([inNotion([FETCH_PAGE, COMMENT])]);
+  const view = draw(<AccessRequestsSection app="notion" />);
+  const row = await rowFor(
+    view,
+    "Give Expenses more of Notion: Read a page, Comment on a page",
+  );
+
+  const note =
+    row.getByText(/Approving gives Expenses exactly these tools/).textContent ??
+    "";
+  expect(note).toContain(
+    "Approving gives Expenses exactly these tools and nothing else: notion-fetch (read-only). notion-create-comment can send on the person's behalf. Approving never gives a tool like that: allow it in settings, on ",
+  );
+  // The link is to the Bot's page under the app, which is where the person allows it.
+  expect(
+    row
+      .getByRole("link", { name: "the Bot's page under Notion" })
+      .getAttribute("href"),
+  ).toBe("/admin/plugins/notion/bots/expenses");
+
+  fireEvent.click(row.getByRole("button", { name: "Approve" }));
+  const approve = await waitFor(() => {
+    const call = sent.find((each) => each.url.endsWith("/approve"));
+    if (!call) throw new Error("not approved yet");
+    return call;
+  });
+  // The press names what an approval may give, and never the send.
+  expect(approve.body).toEqual({ refs: [FETCH_PAGE.ref] });
+});
+
+test("a request that wants only sends has no Approve, says why with the link, and can still be dismissed", async () => {
+  const sent = servingInbox([inNotion([COMMENT])]);
+  const view = draw(<AccessRequestsSection app="notion" />);
+  const row = await rowFor(
+    view,
+    "Give Expenses more of Notion: Comment on a page",
+  );
+
+  expect(row.queryByRole("button", { name: "Approve" })).toBeNull();
+  expect(row.queryByText(/Approving gives Expenses exactly/)).toBeNull();
+  expect(
+    row.getByText(/notion-create-comment can send on the person's behalf\./)
+      .textContent,
+  ).toContain(
+    "notion-create-comment can send on the person's behalf. Approving never gives a tool like that: allow it in settings, on ",
+  );
+  expect(
+    row
+      .getByRole("link", { name: "the Bot's page under Notion" })
+      .getAttribute("href"),
+  ).toBe("/admin/plugins/notion/bots/expenses");
+
+  fireEvent.click(row.getByRole("button", { name: "Dismiss" }));
+  await waitFor(() =>
+    expect(
+      sent.some(
+        (call) =>
+          call.method === "POST" &&
+          call.url === "/api/plugins/access-requests/req_1/dismiss",
+      ),
+    ).toBe(true),
+  );
+  expect(sent.some((call) => call.url.endsWith("/approve"))).toBe(false);
+});
+
+test("several sends are said together, in the plural", async () => {
+  servingInbox([inNotion([COMMENT, MENTION])]);
+  const row = await rowFor(
+    draw(<AccessRequestsSection app="notion" />),
+    "Give Expenses more of Notion: Comment on a page, Tell a colleague",
+  );
+
+  expect(row.queryByRole("button", { name: "Approve" })).toBeNull();
+  expect(
+    row.getByText(/can each send on the person's behalf/).textContent,
+  ).toContain(
+    "notion-create-comment and notion-create-mention can each send on the person's behalf. Approving never gives tools like that: allow them in settings, on ",
+  );
+});
+
+test("an app nobody has reviewed is told apart from a send: it is a precaution, and the wording says so", async () => {
+  servingInbox([filed({ wants: [HUB_SEND, HUB_REPLY] })]);
+  const row = await rowFor(
+    draw(<AccessRequestsSection app="composio-gmail" />),
+    "Give Expenses more of Gmail: Send a new email, Answer a customer",
+  );
+
+  expect(row.queryByRole("button", { name: "Approve" })).toBeNull();
+  const note = row.getByText(/No reviewed list says what/).textContent ?? "";
+  expect(note).toContain(
+    "No reviewed list says what GMAIL_SEND_EMAIL and GMAIL_REPLY do in Gmail, so each may send on the person's behalf. Approving never gives tools like that: allow them in settings, on ",
+  );
+  expect(note).not.toContain("can send on the person's behalf.");
+});
+
+test("(guard) a request whose tools carry no mark is approved by naming all of them, as before", async () => {
+  const sent = servingInbox([filed({ wants: [SEND, DRAFTS] })]);
+  const view = draw(<AccessRequestsSection app="composio-gmail" />);
+
+  fireEvent.click(await view.findByRole("button", { name: "Approve" }));
+  const approve = await waitFor(() => {
+    const call = sent.find((each) => each.url.endsWith("/approve"));
+    if (!call) throw new Error("not approved yet");
+    return call;
+  });
+  expect(approve.body).toEqual({ refs: [SEND.ref, DRAFTS.ref] });
+  expect(view.queryByText(/Approving never gives/)).toBeNull();
+});

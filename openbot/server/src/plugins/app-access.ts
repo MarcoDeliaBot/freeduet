@@ -1,6 +1,6 @@
 import { type BrokerProvider, brokeredProvenance } from "./access";
 import { schemeKind } from "./broker";
-import type { CatalogueEntry } from "./catalogue";
+import type { CatalogueEntry, SettingsOnly } from "./catalogue";
 
 /**
  * Whether one person can use one work app through one Bot, and if not, what the next step is and
@@ -100,7 +100,55 @@ export type WantedTool = {
    * it: a tool nobody classified is a write, so it is never handed out as a read.
    */
   read: boolean;
+  /**
+   * Set when approving a request can never give the Bot this tool, and why: the entry's own list says
+   * it sends on the person's behalf (`send`), or nothing reviewed says what it does (`unreviewed`).
+   * Such a tool is allowed from the Bot's page under the app, in settings, by the person. The inbox
+   * row says so, links there and leaves it out of what its press sends; the approve route refuses it
+   * whoever names it, because the row is only a view of what the server decides. Absent on a tool an
+   * approval may give.
+   */
+  settingsOnly?: SettingsOnly;
 };
+
+/**
+ * The sentence that says why approving cannot give these tools and where they are given instead.
+ *
+ * The one place the words are, so the refusal a direct call gets and the note the model is told
+ * (`app-access-tool.ts`) cannot drift apart. The browser's inbox row says the same thing in its own
+ * words, with a link, because it draws a link and this is plain text.
+ *
+ * A TOOL IS NAMED AS THE APP SPELLS IT, and the two reasons are told apart: a send is a fact about
+ * the tool, and an unreviewed one is a fact about the app (nobody has said what its tools do), so a
+ * person who reads "may send" knows it is a precaution and not a finding. Mixed lists say both.
+ */
+export function settingsOnlySentence(input: {
+  /** The app's name as a person reads it. */
+  app: string;
+  tools: readonly { name: string; because: SettingsOnly }[];
+}): string {
+  const named = (names: readonly string[]) =>
+    names.length < 3
+      ? names.join(" and ")
+      : `${names.slice(0, -1).join(", ")} and ${names[names.length - 1]}`;
+  const sends = input.tools
+    .filter((tool) => tool.because === "send")
+    .map((tool) => tool.name);
+  const unreviewed = input.tools
+    .filter((tool) => tool.because === "unreviewed")
+    .map((tool) => tool.name);
+  const clauses: string[] = [];
+  if (sends.length > 0)
+    clauses.push(
+      `${named(sends)} can ${sends.length === 1 ? "" : "each "}send on the person's behalf`,
+    );
+  if (unreviewed.length > 0)
+    clauses.push(
+      `${clauses.length === 0 ? "No" : "no"} reviewed list says what ${named(unreviewed)} ${unreviewed.length === 1 ? "does" : "do"} in ${input.app}, so ${unreviewed.length === 1 ? "it" : "each"} may send on the person's behalf`,
+    );
+  const many = sends.length + unreviewed.length > 1;
+  return `${clauses.join(", and ")}. Approving a request never gives ${many ? "tools" : "a tool"} like that: allow ${many ? "them" : "it"} in settings, on this Bot's page for ${input.app} under Plugins.`;
+}
 
 /**
  * The request a press of Request access files for an app in this state, and null where the next step

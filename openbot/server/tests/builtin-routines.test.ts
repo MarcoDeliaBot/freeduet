@@ -61,6 +61,7 @@ const SUMMARY: RoutineSummary = {
   lastRun: {
     status: "succeeded",
     finishedAt: new Date("2026-01-02T08:00:03.000Z"),
+    missed: false,
   },
 };
 
@@ -176,6 +177,20 @@ describe("the tool list", () => {
 
     const update = tools.find((tool) => tool.name === "update_routine");
     expect(update?.description ?? "").toContain("restate the schedule");
+  });
+
+  test("says that a routine asks the person with a card, with Full access on too", async () => {
+    // D35 (docs/M1_PLAN.md section 18): creating or changing a routine always asks the person with a
+    // card, in the person's own live turn, with Full access on or off. The gate holds it; the model
+    // was never told, so both tools that create or change a routine say it.
+    const tools = await listTools();
+    for (const name of ["create_routine", "update_routine"]) {
+      const description =
+        tools.find((tool) => tool.name === name)?.description ?? "";
+      expect(description).toContain("asks the person with a card first");
+      expect(description).toContain("until they allow it");
+      expect(description).toContain("with Full access on");
+    }
   });
 
   test("needs no actor, no arguments and no store", async () => {
