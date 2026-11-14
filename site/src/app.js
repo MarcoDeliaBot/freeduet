@@ -27,6 +27,26 @@ function drawTeam(){
  g.innerHTML=h;
 }
 
+function hydrateAv(){Array.prototype.forEach.call(document.querySelectorAll("[data-av]"),function(el){el.innerHTML=av(el.getAttribute("data-av"));});}
+hydrateAv();
+function drawSide(){
+ var t=L(),h="";
+ M.forEach(function(m){var d=t.team[m[0]],lm=t.lm&&t.lm[m[0]]||"";
+  h+='<li class="sm'+(m[0]==="iris"?" on":"")+'" data-m="'+m[0]+'"><span class="avw">'+av(m[0])+'<i class="sdot"></i></span><div><b>'+m[1]+'<span>'+esc(d[0])+'</span></b><small>'+esc(lm)+'</small></div></li>';});
+ document.getElementById("side").innerHTML=h;
+ document.getElementById("awHead").innerHTML=av("iris")+'<div><b>Iris</b><small>'+esc(t.team.iris[0])+'</small></div>';
+}
+function side(id,state){
+ Array.prototype.forEach.call(document.querySelectorAll("#side .sm"),function(li){li.classList.remove("wait","ok");});
+ var li=id&&state?document.querySelector('#side .sm[data-m="'+id+'"]'):null;if(li)li.classList.add(state);
+}
+function drawWeek(){
+ var days=document.querySelectorAll("#wk .d"),f;
+ try{f=new Intl.DateTimeFormat(lang,{weekday:"narrow"});}catch(x){f=null;}
+ if(!f)return;
+ Array.prototype.forEach.call(days,function(el,i){el.textContent=f.format(new Date(2024,0,1+i));});
+}
+
 var chat=document.getElementById("chat"),tries=document.getElementById("tries");
 function bubble(id,name,text){return '<div class="msg">'+av(id)+'<div class="bub"><span class="who">'+name+'</span>'+esc(text)+'</div></div>';}
 function mine(text){return '<div class="msg me"><div class="bub">'+esc(text)+'</div></div>';}
@@ -38,6 +58,7 @@ function parts(s){var m=byId[s.who],p=[mine(s.me),bubble("iris","Iris",s.iris),b
 function clearT(){timers.forEach(clearTimeout);timers=[];}
 function show(i,animate){
  clearT();cur=i;var s=L().demo[i],p=parts(s);
+ side(s.who,s.card?"wait":"");
  Array.prototype.forEach.call(tries.children,function(b,k){b.setAttribute("aria-pressed",k===i?"true":"false");});
  if(!animate||reduce){chat.innerHTML=p.join("");return;}
  chat.innerHTML=p[0];var step=1;
@@ -51,7 +72,7 @@ function show(i,animate){
 function drawTries(){var h="";L().demo.forEach(function(s,i){h+='<button type="button" data-s="'+i+'" aria-pressed="'+(i===cur)+'">'+esc(s.chip)+'</button>';});tries.innerHTML=h;}
 tries.addEventListener("click",function(e){var b=e.target.closest("button");if(b)show(+b.getAttribute("data-s"),true);});
 chat.addEventListener("click",function(e){var b=e.target.closest("button[data-a]");if(!b)return;var a=b.getAttribute("data-a"),s=L().demo[cur],c=document.getElementById("ask");
- if(c)c.outerHTML=doneRow(a==="ok"?"ok":"stop",s[a]);});
+ if(c){c.outerHTML=doneRow(a==="ok"?"ok":"stop",s[a]);side(s.who,a==="ok"?"ok":"");}});
 
 function apply(l){
  lang=T[l]?l:"en";var t=L();
@@ -60,7 +81,7 @@ function apply(l){
  Array.prototype.forEach.call(document.querySelectorAll("[data-i]"),function(el){var k=el.getAttribute("data-i");
   var v=t[k];if(v!=null)el.innerHTML=v;});
  sel.value=lang;
- drawTeam();drawTries();show(cur,false);
+ drawTeam();drawSide();drawWeek();drawTries();show(cur,false);
 }
 var sel=document.getElementById("lang");
 LANGS.forEach(function(l){var o=document.createElement("option");o.value=l[0];o.textContent=l[1];sel.appendChild(o);});
@@ -76,3 +97,24 @@ cp.addEventListener("click",function(){
  var okk=function(){cp.textContent=L().copied;setTimeout(function(){cp.textContent=L().copy;},1800);};
  try{navigator.clipboard.writeText(txt).then(okk,function(){});}catch(x){}
 });
+
+(function(){
+ var box=document.getElementById("stars"),num=document.getElementById("starsN");
+ if(!box||!num)return;
+ function put(n){
+  if(typeof n!=="number"||!isFinite(n)||n<0)return;
+  num.textContent=n>=1000?(n/1000).toFixed(n>=10000?0:1).replace(/\.0$/,"")+"k":String(n);
+  box.hidden=false;
+ }
+ var c=null;
+ try{c=JSON.parse(sessionStorage.getItem("fd-stars")||"null");}catch(x){c=null;}
+ if(c&&typeof c.n==="number"&&typeof c.t==="number"&&Date.now()-c.t<600000){put(c.n);return;}
+ try{
+  fetch(GH.replace("https://github.com/","https://api.github.com/repos/")).then(function(r){return r.ok?r.json():null;}).then(function(j){
+   var n=j&&j.stargazers_count;
+   if(typeof n!=="number")return;
+   put(n);
+   try{sessionStorage.setItem("fd-stars",JSON.stringify({n:n,t:Date.now()}));}catch(x){}
+  }).catch(function(){});
+ }catch(x){}
+})();
