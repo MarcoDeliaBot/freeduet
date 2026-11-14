@@ -18,6 +18,7 @@ import {
   liveDocuments,
 } from "./documents";
 import { environmentFor } from "./environment";
+import { allowedHostsFrom, createHostGuard } from "./host-guard";
 import { registerEntry } from "./identity";
 import { listenPort } from "./listen-port";
 import { namesFor } from "./names";
@@ -65,6 +66,16 @@ if (!token) {
   );
   process.exit(1);
 }
+// Which names a caller on this machine's loopback may use (host-guard.ts, docs/M1_PLAN.md D40). A name
+// this deployment points at this machine itself goes in `SUPERVISOR_ALLOWED_HOSTS`. A value that is set
+// and is not a list of host names stops the boot: dropping it would show up as a caller refused with a
+// 421 and nothing to say why.
+const allowedHosts = allowedHostsFrom(process.env.SUPERVISOR_ALLOWED_HOSTS);
+if (!allowedHosts.ok) {
+  console.error(allowedHosts.reason);
+  process.exit(1);
+}
+const hostGuard = createHostGuard(allowedHosts.hosts);
 const image =
   process.env.COMPUTER_IMAGE?.trim() || "openbot-agent-computer:latest";
 const network = process.env.COMPUTER_NETWORK?.trim() || undefined;
@@ -205,7 +216,19 @@ app.get("/computers", async (context) => {
   }
 });
 
-serve({ port, fetch: app.fetch, idleTimeout: 120 });
+serve({
+  port,
+  /*
+   * The name this machine was reached by, before Hono reads the URL, before the token and before any
+   * verb. A page whose name was re-pointed at this machine's loopback sends the public development
+   * token in a header and reads the answer, so the token alone is not what stops it: the name it was
+   * addressed to is (host-guard.ts). `server` goes on as Hono's `env`, as it did when `app.fetch` was
+   * the handler.
+   */
+  fetch: (request, server) =>
+    hostGuard(request, server) ?? app.fetch(request, server),
+  idleTimeout: 120,
+});
 
 console.info(
   `Supervisor listening on http://localhost:${port} (image ${image}${runtime ? `, runtime ${runtime}` : ""})`,
