@@ -5,10 +5,14 @@ are always tried first, then free engines, then metered engines, whatever order 
 in. A metered engine joins a chain only while ``metered.enabled`` is true and both caps are above 0.
 A disabled engine, or one carrying a ``locked_reason``, is never chosen.
 
-ONE EXCEPTION, STRICTER: a metered ``anthropic-compatible`` gateway is never run, whatever the ``metered:``
-block says, until FreeDuet can enforce the caps (the usage ledger, docs/ENGINES_PLAN.md slice 12). Caps that are
-written and not enforced must not let money be spent. The block is still read and checked, so the file format does
-not change when the ledger arrives (:func:`exclusion_reason`, :func:`paid_gateway_refusal`).
+ONE EXCEPTION, STRICTER: a metered ``anthropic-compatible`` gateway (a paid gateway) runs only when FreeDuet can hold
+it to the limits the person set (the spend ledger, ledger.py, docs/ENGINES_PLAN.md slice 12). Caps that are written and
+not enforced must not let money be spent. Four things must hold: the maintainer's switch is open (``PAID_GATEWAYS_OPEN``,
+closed); the person wrote ``metered.enabled: true``, both caps above 0 and ``metered.enforce: ledger``; the kind of the
+engine reports what each turn costs, in the currency of the limits (``COST_REPORTING_KINDS``, empty: none is verified);
+and the entry is on and not locked. Until they do, the gateway gets no adapter, so nothing can start it, and the person
+is told why (:func:`paid_gateway_gap`, :func:`paid_gateway_refusal`, :func:`exclusion_reason`). The ``metered:`` block was
+always read and checked, so the file format did not change when the ledger arrived.
 
 Everything here is a pure function of the parsed file. Nothing is started, probed or called; the only
 I/O is reading the one YAML file in :func:`load_engines`.
@@ -65,7 +69,11 @@ _ENGINE_KEYS = frozenset(
 _TOP_KEYS = frozenset({"engines", "metered", "chains", "quality_floor", "assistants", "switching"})
 _SWITCHING_KEYS = frozenset({"mode", "pin"})
 MODES = ("automatic", "ask-first")
-_METERED_KEYS = frozenset({"enabled", "currency", "daily_cap", "monthly_cap"})
+_METERED_KEYS = frozenset({"enabled", "currency", "daily_cap", "monthly_cap", "enforce"})
+#: `metered.enforce`: `none` (the default) or `ledger`, which holds every metered engine to the caps by what the spend
+#: ledger has recorded (ledger.py). The person's own word: a paid gateway does not run without it.
+NO_ENFORCEMENT, LEDGER = "none", "ledger"
+ENFORCEMENTS = (NO_ENFORCEMENT, LEDGER)
 _ASSISTANT_KEYS = frozenset(
     {"enabled", "chain", "max_calls_per_turn", "max_input_tokens", "tasks"}
 )
@@ -103,6 +111,7 @@ class Metered:
     currency: str = "EUR"
     daily_cap: float = 0
     monthly_cap: float = 0
+    enforce: str = NO_ENFORCEMENT
 
 
 @dataclass(frozen=True)
@@ -429,7 +438,11 @@ def _parse_metered(raw: Any, problems: list[str]) -> Metered:
             problems.append(f"metered: `{key}` must be a number of 0 or more")
             value = 0
         caps[key] = value
-    return Metered(enabled=enabled, currency=currency.strip(), **caps)
+    enforce = raw.get("enforce", NO_ENFORCEMENT)
+    if enforce not in ENFORCEMENTS:
+        problems.append(f"metered: `enforce` must be one of {', '.join(ENFORCEMENTS)}")
+        enforce = NO_ENFORCEMENT
+    return Metered(enabled=enabled, currency=currency.strip(), enforce=enforce, **caps)
 
 
 def _engine_id_list(
@@ -577,15 +590,52 @@ def metered_allowed(config: EnginesConfig) -> bool:
     return metered.enabled and metered.daily_cap > 0 and metered.monthly_cap > 0
 
 
-#: Said to the person, in the log and by ``GET /engines`` when a gateway they switched on is paid and is not run. It does
-#: not tell them to set the ``metered:`` block, because nothing in it makes the gateway run yet.
+#: THE ONE SWITCH for paid gateways, and it is the maintainer's, not the code's (docs/ENGINES_PLAN.md E3). False: a paid
+#: gateway is refused whatever engines.yaml says, which is the behaviour of every release so far. Opening it is a
+#: decision about money, so it is made by changing this value and nothing else; it still runs nothing by itself, because
+#: a gateway must also meet :func:`paid_gateway_gap`'s other two conditions (the person's words, and cost reporting).
+PAID_GATEWAYS_OPEN = False
+
+#: What each kind of engine reports about what a turn cost, as a fact checked against public documentation or a recorded
+#: stream: kind -> the currency it reports in. A kind is listed only when its own report states a cost that can be taken
+#: as what it charged. EMPTY: none qualifies yet. `anthropic-compatible` (the Claude Code CLI pointed at a gateway) prints
+#: `total_cost_usd`, and Anthropic's documentation calls it a "client-side estimate, not authoritative billing data", worked
+#: out from a price table bundled with the CLI, and says not to bill users or trigger financial decisions from it
+#: (https://code.claude.com/docs/en/agent-sdk/cost-tracking, read 14 November 2026). Seen with CLI 2.1.325 against a loopback
+#: test double: a model name the CLI does not know still got a cost (`costBasis: "unknown"`); a Claude model name got
+#: Anthropic's list price whatever the gateway charges (`costBasis: "list"`); and a segment that ends on a tool never reads the
+#: result line that carries it (segment.py, D4). So it does not qualify (docs/design/engines-ledger.md has the evidence).
+COST_REPORTING_KINDS: Mapping[str, str] = MappingProxyType({})
+
+#: Why a paid gateway does not run (:func:`paid_gateway_gap`).
+GAP_CLOSED = "closed"  # the maintainer's switch is closed
+GAP_SETUP = "setup"  # engines.yaml does not yet say how the limits are kept
+GAP_COST = "cost"  # the kind does not report what a turn costs, in the currency of the limits
+
+
+#: Said to the person, in the log and by ``GET /engines`` when a gateway they switched on is paid and the switch is closed.
+#: It does not tell them to set the ``metered:`` block, because nothing in it makes the gateway run while the switch is closed.
 PAID_GATEWAY_NOT_RUN = (
     "FreeDuet does not run paid gateways yet, because it cannot yet enforce the limits you set. "
     "Free gateways and your own logins work."
 )
+#: The same, for a gateway whose switch is open but whose limits are not yet written down the way the ledger needs.
+PAID_GATEWAY_SETUP = (
+    "It runs only when engines.yaml turns `metered` on, with a daily and a monthly limit above 0 and `enforce: ledger`, "
+    "so that FreeDuet keeps the limits you set. Free gateways and your own logins work."
+)
+#: The same, for a gateway that does not report what a turn costs: a money limit cannot be kept on a cost nobody states.
+PAID_GATEWAY_NO_COST = (
+    "It does not report what each turn costs, in the currency of your limits, so FreeDuet cannot hold it to a money limit. "
+    "Free gateways and your own logins work."
+)
 
 
-def paid_gateway_refusal(label: str) -> str:
+def paid_gateway_refusal(label: str, gap: str = GAP_CLOSED) -> str:
+    if gap == GAP_SETUP:
+        return f"{label} is a paid gateway. {PAID_GATEWAY_SETUP}"
+    if gap == GAP_COST:
+        return f"{label} is a paid gateway. {PAID_GATEWAY_NO_COST}"
     return f"{label} is a paid gateway. {PAID_GATEWAY_NOT_RUN}"
 
 
@@ -594,27 +644,46 @@ def is_paid_gateway(engine: Engine) -> bool:
     return engine.kind == COMPATIBLE_KIND and engine.billing == "metered"
 
 
-def paid_gateway_refused(engine: Engine) -> bool:
+def paid_gateway_gap(engine: Engine, config: EnginesConfig) -> str | None:
+    """Why a paid gateway does not run, or None when it may: the first of the switch (``GAP_CLOSED``), the person's words
+    (``GAP_SETUP``: ``metered.enabled``, both caps above 0, ``metered.enforce: ledger``) and the kind's cost reporting
+    (``GAP_COST``: it reports in the currency of the limits) that does not hold. Says nothing of being on or locked."""
+    if not PAID_GATEWAYS_OPEN:
+        return GAP_CLOSED
+    if not metered_allowed(config) or config.metered.enforce != LEDGER:
+        return GAP_SETUP
+    reported = COST_REPORTING_KINDS.get(engine.kind)
+    if reported is None or reported.strip().upper() != config.metered.currency.strip().upper():
+        return GAP_COST
+    return None
+
+
+def paid_gateway_refused(engine: Engine, config: EnginesConfig | None = None) -> bool:
     """A paid gateway the person switched on (on, and not locked) and that FreeDuet will not run. One that is off or
-    locked is not in this group: the person never asked for it, so nothing is said."""
-    return is_paid_gateway(engine) and engine.enabled and not engine.locked_reason
+    locked is not in this group: the person never asked for it, so nothing is said. Without ``config`` the conditions
+    that depend on it cannot be looked at, so an open switch does not let the gateway through."""
+    if not (is_paid_gateway(engine) and engine.enabled and not engine.locked_reason):
+        return False
+    return config is None or paid_gateway_gap(engine, config) is not None
 
 
 def refused_paid_gateways(config: EnginesConfig) -> list[Engine]:
-    return [engine for engine in config.engines.values() if paid_gateway_refused(engine)]
+    return [engine for engine in config.engines.values() if paid_gateway_refused(engine, config)]
 
 
 def exclusion_reason(engine: Engine, config: EnginesConfig) -> str | None:
     """Why an engine is left out of every chain, or None when it may run.
 
-    A paid gateway that is switched on gets :func:`paid_gateway_refusal` whatever ``metered:`` says: that sentence is
-    complete (it names the entry and says what works), so callers use it as it is."""
+    A paid gateway that is switched on and does not meet :func:`paid_gateway_gap` gets :func:`paid_gateway_refusal`: that
+    sentence is complete (it names the entry and says what works), so callers use it as it is."""
     if engine.locked_reason:
         return f"locked: {engine.locked_reason}"
     if not engine.enabled:
         return "disabled in engines.yaml"
     if is_paid_gateway(engine):
-        return paid_gateway_refusal(engine.id)
+        gap = paid_gateway_gap(engine, config)
+        if gap is not None:
+            return paid_gateway_refusal(engine.id, gap)
     if engine.billing == "metered":
         if not config.metered.enabled:
             return "metered engines are off (`metered.enabled: false`)"
@@ -625,6 +694,16 @@ def exclusion_reason(engine: Engine, config: EnginesConfig) -> str | None:
 
 def is_allowed(engine: Engine, config: EnginesConfig) -> bool:
     return exclusion_reason(engine, config) is None
+
+
+def ledger_engine_ids(config: EnginesConfig) -> frozenset[str]:
+    """The engines the spend ledger holds to the limits: metered, allowed to run, and the person wrote
+    ``metered.enforce: ledger``. Free engines and logins are never in it. Empty on a default install."""
+    if config.metered.enforce != LEDGER:
+        return frozenset()
+    return frozenset(
+        engine.id for engine in config.engines.values() if engine.billing == "metered" and is_allowed(engine, config)
+    )
 
 
 def order_logins_first(engines: Iterable[Engine]) -> list[Engine]:
