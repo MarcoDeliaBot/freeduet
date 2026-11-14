@@ -98,7 +98,8 @@ Validation writes nothing to the database. It refuses:
 - any field that names an endpoint, a type, a grant, a credential, an approval setting, Full access, a visibility or a Bot id. The format has no such field, so each one is an unknown key;
 - an id that a deployment route uses [code: tenant-package.ts:391-395], and an id or name that a starter member uses. Today's check covers routes only, so the starter check is new;
 - a skill slug outside the package pattern [code: tenant-package.ts:658], or one another owner holds [code: openbot/server/src/db/schema/plugins.ts:738];
-- sizes above 64 KB per prompt or 1 MB per file [assumed: proposed limits].
+- sizes above 64 KB per prompt or 1 MB per file [assumed: proposed limits];
+- an imported member's instructions above 8,000 characters, counted in UTF-16 code units, the instructions being the author's text with the Email paragraph and the shared rules added (decision 2, decided 14 November 2026; built, see "Built so far").
 
 The importer never writes into `TENANT_PACKAGE_DIR`. So the loader and its `${NAME}` expansion never read a shared file [code: openbot/server/src/index.ts:455].
 
@@ -178,7 +179,7 @@ One PR each. Sizes follow [ENGINES_PLAN.md](../ENGINES_PLAN.md) section 2 [code:
 - **Logins first.** A file never sets an engine, a metered key or an order. The person sets those [code: docs/ROADMAP.md:74].
 - **Never read, copy or forward subscription credentials.** Export never opens the Claude login or config directories, and the format has no credential field.
 - **No secrets and no personal data in the repository.** Fixtures are invented, canary strings are synthetic, and no real member file or run report is committed.
-- **The person's approval.** Each write by an imported member meets the gate. Hand-offs stay unapproved in advance: the pre-approval needs the package mark (decision 5).
+- **The person's approval.** Each write by an imported member meets the gate. Hand-offs stay unapproved in advance: the pre-approval needs the package mark (decision 5). Decided 14 November 2026: send tools are never recognised by name; an explicit list names them, and everything else asks.
 - **Change only what was asked.** The importer does not touch the package loader, the router or the starter team.
 - **Upstream changes stay minimal.** `openbot/server/src/agents/routes.ts`, `profile-store.ts` and `openbot/app/src/lib/agents/form.ts` were added in commit 6ca80ef [code: git log --diff-filter=A]. None has a row in [UPSTREAM_TOUCHES.md](../UPSTREAM_TOUCHES.md) [code: docs/UPSTREAM_TOUCHES.md]. Each change to them adds one.
 - **Public wording.** Nothing here names a private project of the maintainer or a source of ideas.
@@ -188,11 +189,13 @@ One PR each. Sizes follow [ENGINES_PLAN.md](../ENGINES_PLAN.md) section 2 [code:
 | # | Decision | Options | Recommendation and reason |
 |---|---|---|---|
 | 1 | Where an imported member lives | A. A private Bot of the person, through the existing create route. B. A member of the deployment's package. C. A file in `agents/` | A. The package loads once at boot [code: openbot/server/src/index.ts:455]. It expands `${NAME}` from the environment [code: tenant-package.ts:333]. The router reads `agents.yaml` only [code: members.py:50-51]. |
-| 2 | How much instruction a Bot can carry | A. Keep 1000 characters: an imported member keeps 8% to 21% of a starter prompt's length. B. Raise the cap for imported Bots only [code: form.ts:23; routes.ts:72]. C. A separate router channel for imported prompts | B. The router already receives `roleDescription` on every remote run [code: copilot.ts:177-190, 317]. Only the cap changes. C adds a channel that must be trusted. |
+| 2 | How much instruction a Bot can carry | A. Keep 1000 characters: an imported member keeps 8% to 21% of a starter prompt's length. B. Raise the cap for imported Bots only [code: form.ts:23; routes.ts:72]. C. A separate router channel for imported prompts | Decided 14 November 2026: B, raised to 8,000 characters for imported Bots only; other Bots keep their limit. B. The router already receives `roleDescription` on every remote run [code: copilot.ts:177-190, 317]. Only the cap changes. C adds a channel that must be trusted. |
 | 3 | Remote endpoints in a file | A. Refused. B. Allowed to an address the person types on the card, checked by `checkAgentEndpoint` | A for v1. Conversation content goes to that address [code: openbot/server/src/agents/routes.ts:541-543]. |
 | 4 | How a shared member is tested | A. A test run without tools, in the person's conversation, labelled "not certified". B. Certification by the maintainer only, on the eval stack. C. Test runs with tools on | A now, and B for certification. C could act on the person's accounts. The grader is a model that reads statements [code: evals/team/grader.ts:47-49], so a file cannot certify itself. |
 | 5 | Hand-offs for an imported team | A. No grants: each hand-off asks the person. B. A new mark that pre-approves hand-offs for imported teams | A. Pre-approval is tied to the package mark [code: openbot/server/src/freeduet/hub-handoffs.ts:19-31]. A second mark is a security decision for the maintainer. |
 | 6 | Memories and lessons in an export | A. Never in v1. B. Each one ticked by the person, shown in the preview, and imported as unreviewed | A. Both are personal, and the file is meant to be sent. Revisit with the preview of slice S2. |
+
+**Decision 2 is decided (14 November 2026): option B, for imported members only, at 8,000 characters.** Every other limit and every other path keeps its size. The checker is built; the layers that still refuse are listed under "Built so far".
 
 ## 7. What was not verified
 
@@ -216,9 +219,10 @@ Slice S1 (section 4) is on main, merged through PR #174: the two formats and the
 - `openbot/server/src/tenant-package.ts`: one addition to the loader. `validateTenantPackage` also returns `declaredAgents`, every coworker the package declares, including one this deployment does not run (a remote coworker with no endpoint), with its name, skill slugs and instructions. Nothing else in the loader changes (+48 −1; the row is in `docs/UPSTREAM_TOUCHES.md`). The reader needs it because `agents` leaves out a remote coworker with no endpoint, so the shared rules and the names of those coworkers would be invisible.
 - The refusals of section 3.2, each with its own test and a path that names the field: `${` in any text; hidden and control characters (every Cc and Cf character except tab and line feed, checked before the trim, so a byte-order mark at either end is refused too); any key a file may not set, and any unknown key; a repeated key, with both lines; a format line that is missing, unknown or another version; a content hash, which is optional and, when present, must be SHA-256 of the content; a starter member's name (compared with NFKC, lowercase, letters and digits only), the product's name, and a deployment route's word; a skill slug outside the package pattern or already shipped by the package; a repeated slug in one member, or one slug with different text in two members of a team; a tool ref not written `serverId/toolName`, or listed twice; a sending tool; a test request with no `must` or `must_not` line, a `safety` flag that is not true or false, or an unknown key; a file over 1 MB; one text over 64 KB; a file that starts with a byte-order mark; a team with no members, or two members with one name.
 - Composition: an imported member's instructions are its author's text, then the package's "Email." paragraph, then the shared rules, word for word from the package. An author's text that already carries either paragraph is refused.
+- The instruction limit (decision 2, decided 14 November 2026): `TEAM_FILE_LIMITS.instructionsCharacters` is 8,000 for an imported member's instructions, which are the composed text above, counted in UTF-16 code units (`String.length`, as every other limit here). Above 8,000 the file is refused at `system_prompt` (or `members[n].system_prompt`), and the sentence names the limit and how many characters to cut. From 1,001 to 8,000 the file is read, with a notice that FreeDuet's create and edit screens and its server still take 1,000 for a Bot's text, so the member cannot be created or edited yet. `TEAM_FILE_LIMITS.createTextCharacters` (1,000) names that layer's limit and is not changed here. No upstream file changed, so no row is added to `docs/UPSTREAM_TOUCHES.md`.
 - Tool allowance: a tool ref is kept only when a skill attached to a declared coworker of the package holds it. The others are removed and listed in the notices (section 3.3).
 - Sending tools are refused by name: a tool whose name holds the word send, reply or forward. In the current package this matches exactly the four Gmail send refs, which a guard test pins.
-- `openbot/server/tests/freeduet-team-file.test.ts`: 57 tests. Fixtures are invented, and every test reads the real package through the real loader.
+- `openbot/server/tests/freeduet-team-file.test.ts`: 63 tests (57 from slice S1, one of them rewritten for decision 2, and six for the limit). Fixtures are invented, and every test reads the real package through the real loader.
 
 **Verified** (14 November 2026)
 - The new test file: 57 pass, 0 fail.
@@ -229,8 +233,19 @@ Slice S1 (section 4) is on main, merged through PR #174: the two formats and the
 - Full server suite (`bun test server/tests`) on the tree merged with origin/main: 7,743 pass and 4 fail, of 7,767 tests in 489 files. Three of the failures are the ones known to fail on plain main (the two `learning-*` real-provider tests and the Mastra bridge). The fourth is a concurrency test in `arcade-verify.test.ts` that passed when its file ran alone (2 of 2) and that no code in this slice touches. Plain main was not run again for this branch.
 - Type check on the same tree: `bun run typecheck:tests` clean against the baseline, 239 known errors, none new. One earlier run was killed by the machine's memory limit, and the script then printed a clean result with zero known errors, because it does not treat empty output as a failure. That result is not counted here.
 
+**Verified for the 8,000 limit** (14 November 2026)
+- `bun test freeduet-team-file`: 63 pass, 0 fail (199 expect calls, about a second, no database).
+- The same test file against main's `team-file.ts`: 57 pass, 6 fail. The six are the rewritten S1 test ("accepts instructions over the create limit, and says the create and edit screens still refuse them"), the test that pins 8,000 and 1,000 as constants, the test for exactly 8,000 characters with an emoji at the edge, the refusal at one code unit over 8,000 (a text of 8,000 code points), the refusal at one plain character over, and the refusal inside a team. The guard "a Bot made in the app is still refused at 1,001 characters" passes on both, as a guard of unchanged behaviour should.
+- Biome format and lint clean on the two changed files. `bun run typecheck:tests` clean against the baseline (239 known errors, none new).
+- Related suites, by path: `assertion-shape`, `freeduet-team-file`, `freeduet-package`, `freeduet-team`, `freeduet-person-language`, `freeduet-person-language-capabilities` and `agent-routes`: 178 pass, 0 fail. `tenant-package.test.ts` was not run: it opens a database when it loads (`TEST_DATABASE_URL`), and this change touches neither the loader nor that file (the reader imports only its types from the loader).
+
 **Not verified or not built**
 - No live run, no eval and no UI. Nothing here has been run against a real member file or against the eval stack.
+- No create, edit or run of an imported member above 1,000 characters. The layers below are read from code. The refusal is pinned only by the route's own test of 1,001 characters (`server/tests/agent-routes.test.ts`, lines 158-160).
+- The reader counts UTF-16 code units, so an emoji counts as two. An editor shows one. The refusal and the notice say "characters" and do not explain the difference.
+- No preview (slice S3) exists, so nobody has yet seen the notice.
+- No live run or team eval with an imported prompt of this length. A model reads these instructions, so they are not yet run live.
+- The cost of up to 8,000 characters on each turn (the routing roster, the voice agent and the standing role) is [assumed], not measured.
 - The 64 KB and 1 MB limits are the design's proposals [assumed].
 - The reader takes text. The importer (S3) must decode the bytes strictly (`fatal: true`) and keep the byte-order mark (`ignoreBOM: true`), or the refusal of a leading byte-order mark never fires.
 - A skill slug already held by another owner needs the database, so that check waits for S4.
@@ -239,6 +254,27 @@ Slice S1 (section 4) is on main, merged through PR #174: the two formats and the
 - Every Cc and Cf character except tab and line feed is refused, so a zero-width joiner inside an emoji sequence is refused too.
 
 **Decisions** (section 6)
-- Decision 2, instruction cap: not built. The reader reports the length and enforces no cap. The appended text alone is 3,518 characters (the shared rules 3,062, the Email paragraph 452, and two separators of 2 characters each), so option A, keeping 1,000, leaves no room for an author's text. The table's 8% to 21% figure is 1,000 characters as a share of the starter prompts. It leaves out the appended text, which alone is over three times the cap. Option B changes the create form and the cost of every run, so it is the maintainer's call.
+- Decision 2, instruction limit: decided on 14 November 2026 as option B, for imported members only, at 8,000 characters of stored text. The checker enforces it (above). The create and edit layers below do not change in this slice, so an imported member cannot be created or edited yet. The appended text alone is 3,518 characters (the shared rules 3,062, the Email paragraph 452, and two separators of 2 characters each), so under the measure built here an author's own text may have at most 4,482 characters. The open questions are in "Decisions left to the maintainer" below.
 - Decision 3, endpoints in a file: built as recommended. A file that names an endpoint is refused as a key a file may never set.
 - Decisions 1, 4, 5 and 6 belong to S4, S5, S6 and S2 respectively.
+
+**Layers that still refuse an imported member above 1,000 characters.** Read on origin/main at c93c947, 14 November 2026. None of these changed in this slice, because each one is shared with a member made in the app, by Leo or through the API, and those keep 1,000.
+
+| Layer | Where | What happens to 1,001 to 8,000 characters |
+|---|---|---|
+| Create route, `POST /api/agents` | `openbot/server/src/agents/routes.ts:514-516`, through `parseAgentInput`, which bounds `roleDescription` at 1,000 at `routes.ts:70-74` | Refused: "What it does must be text between 1 and 1000 characters." |
+| Edit route, `PATCH /api/agents/:agentId` | `routes.ts:561-563`, the same parser | Every save is refused, even a change of visibility, because the whole profile goes in each save (`openbot/app/src/lib/agents/form.ts:78`, `profileUpdateInput`) |
+| Create screen | `openbot/app/src/components/agents/new-bot-sheet.tsx:578` (`maxLength={1000}`), and the form schema at `openbot/app/src/lib/agents/form.ts:19-23` | The text box stops at 1,000 |
+| "What it does" edit dialog | `openbot/app/src/components/bot-profile/setup.tsx:145` (the field's schema) and `:243` (`schema.safeParse`) | Refused on save |
+| Save-bot card for Leo's proposals | `openbot/app/src/lib/agents/proposal.ts:163-169` (`checkProposal`); the model is told "up to 1000 characters" at `proposal.ts:133` | Refused. Leo's path, unchanged |
+
+Layers that do not refuse, so the text survives them: the database column `agent_profiles.role_description` is `text` (`openbot/server/src/db/schema/coworker.ts:39`); the store writes it with no length check (`openbot/server/src/agents/profile-store.ts:500`, and `:559` for a built-in Bot's `systemPrompt`); the standing role message carries `roleDescription` whole (`openbot/server/src/copilot.ts:177-190`, attached at `copilot.ts:317`); the built-in prompt is passed whole (`copilot.ts:285-295`); and the router's reader takes the standing role whole (`openbot/agent-freeduet/freeduet/members.py:112-127`). Two places take the whole text on every routed turn but refuse nothing: the routing roster (`openbot/server/src/routing/classify.ts:95`) and the voice agent (`openbot/server/src/voice/routes.ts:186`). Their cost is not measured.
+
+**Decisions left to the maintainer**
+
+| # | Decision | Options | Recommendation and reason |
+|---|---|---|---|
+| A | How an imported member gets past the create and edit layers above | 1. A stored mark on the Bot's profile, set only by the importer, so the create and edit routes take 8,000 for that Bot and 1,000 for every other. It needs a migration. 2. A server-only import path that calls the store directly, plus an edit rule that keeps unchanged long text. 3. Raise the limit for every Bot | 1. The routes can check a stored fact, not a guess from the length of the text. Option 2 makes "long" mean "imported" by accident. Option 3 changes the paths the decision keeps as they are. Not built here: it needs the database and an upstream change. |
+| B | Whether the checker refuses 1,001 to 8,000 until A is done | 1. Accept, with the notice (built). 2. Refuse, with the same sentence | 1. The decision sets 8,000 as the limit, and the notice is shown in the preview before anyone presses Create. S4 must not create a member while the notice applies. |
+| C | What 8,000 counts | 1. The whole stored text: the author's text, the Email paragraph and the shared rules (built). 2. The author's text alone | 1. The cap has always limited the stored text (`form.ts:23`, `routes.ts:72`). Under option 1 the author's own text may have 4,482 characters; under option 2 the stored text may reach 11,518. Confirm which the maintainer meant. |
+| D | Which field holds an imported member's instructions | 1. `roleDescription`, as the app stores it, which the standing role message reads for a managed or remote Bot (`copilot.ts:185`). 2. The file's one-sentence `role_description` there, with the instructions only in `systemPrompt` | 1. Option 2 would leave a managed or remote member without its instructions at run time, unless the runtime changes too. The cost of option 1 is the whole text on the routing roster and the voice agent. Decide in S4. |

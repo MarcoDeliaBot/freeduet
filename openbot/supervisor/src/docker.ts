@@ -103,6 +103,18 @@ export type ComputerState = {
 };
 
 /**
+ * What `ensure` answers: the computer, and the token it checks its callers against.
+ *
+ * Only `ensure` and `tokenOfOwned` say a token. A listing does not: it names every computer, and a
+ * reply that held every token would be one request away from the keys to all of them. The caller that
+ * needs a token asks for the one computer it is about to speak to.
+ *
+ * Absent only when the environment it was made from carried none, which `environmentFor` never
+ * produces. The server treats an answer without one as an error rather than guessing a token.
+ */
+export type EnsuredComputer = ComputerState & { token?: string };
+
+/**
  * The name this Bot's computer would have is held by a container this supervisor does not own.
  *
  * Separate from {@link DockerUnavailableError} because the daemon is fine and an operator sent
@@ -324,9 +336,16 @@ const TOKEN_NAME = "COMPUTER_TOKEN";
  * the screen says "Not authorised" while naming nothing. Found on a first run of v0.0.9 against a
  * computer container created by the install before it, five days earlier.
  *
+ * The same replacement carries a computer from the one token every computer used to share to one of
+ * its own (computer-token.ts). A computer made before that holds the shared value, which is not what
+ * is wanted now, so it is replaced the next time its Bot is used, with its volumes kept, and what
+ * comes back holds only the token derived for that Bot. Nothing else has to be done to an existing
+ * deployment, and until a Bot is used its old computer keeps working with the token it has.
+ *
  * A deployment that sets no token is not a mismatch. That is a computer with no door on it, which is
  * a choice the environment makes, and replacing a working browser over it would be this function
- * inventing a policy of its own.
+ * inventing a policy of its own. A supervisor always sets one now (`environmentFor` throws without
+ * its key), so this is the case of a caller that builds its own environment.
  */
 function holdsCurrentToken(
   existingToken: string | undefined,
@@ -382,8 +401,8 @@ async function waitUntilAnswering(
    * The deadline is a failure, not an answer.
    *
    * Returning here reported every computer that never came up as ready, which is the exact thing
-   * this function exists to prevent: the caller is handed an address, sends the deployment's
-   * computer token to it, and gets a transport error it cannot tell from a computer that is broken
+   * this function exists to prevent: the caller is handed an address, sends that computer's
+   * token to it, and gets a transport error it cannot tell from a computer that is broken
    * in some other way. A wait that cannot fail is a sleep.
    */
   throw new ComputerNotAnsweringError(container, timeoutMs);
@@ -490,7 +509,7 @@ export function hostConfig(names: ComputerNames, options: EnsureOptions) {
 export async function ensure(
   names: ComputerNames,
   options: EnsureOptions,
-): Promise<ComputerState> {
+): Promise<EnsuredComputer> {
   for (let attempt = ATTEMPTS; attempt > 0; attempt--) {
     let existing = await inspectOwned(names);
 
@@ -617,10 +636,19 @@ export async function ensure(
     const settled = await inspectOwned(names);
     await waitUntilAnswering(names.container, options.readyTimeoutMs);
 
+    /*
+     * The token the container holds, read back from it rather than assumed from what was asked for.
+     * Every path above ends with a container created from `options.environment`, or one that already
+     * held that token (a mismatch was replaced), so the two agree; reading it is what makes the answer
+     * true by construction and not by the reader's trust in that argument.
+     */
+    const token = settled?.token ?? tokenIn(options.environment);
+
     return {
       botId: names.botId,
       container: names.container,
       status: settled?.status ?? "unknown",
+      ...(token ? { token } : {}),
       ...(settled?.startedAt ? { startedAt: settled.startedAt } : {}),
       ...(settled?.port ? { port: settled.port } : {}),
       // How to reach it. A name on a shared network, a host port otherwise, the caller does not have
@@ -636,6 +664,23 @@ export async function ensure(
   throw new DockerUnavailableError(
     `The computer for ${names.botId} was removed while it was being started.`,
   );
+}
+
+/**
+ * The token this Bot's computer holds right now, or nothing when this supervisor has no such computer.
+ *
+ * Read off the container, not derived again, because the two differ for as long as a computer made
+ * before tokens were per Bot is still running: it holds the one every computer used to share, and a
+ * caller that is told anything else is refused by it. `ensure` is what replaces such a computer, and
+ * it does that when a Bot is next used; until then this says the truth about what is there.
+ *
+ * Ownership is checked like everywhere else (`inspectOwned`): a container that merely has a matching
+ * name is not this supervisor's and tells nothing.
+ */
+export async function tokenOfOwned(
+  names: ComputerNames,
+): Promise<string | null> {
+  return (await inspectOwned(names))?.token ?? null;
 }
 
 /** Stop this Bot's computer. Its storage is untouched, so its logins survive. */

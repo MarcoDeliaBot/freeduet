@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/item";
 import { Separator } from "@/components/ui/separator";
 import { client } from "@/lib/client";
+import { EngineMembers } from "./engines-members";
 import {
   type EnginesReading,
   engineReasonText,
@@ -21,10 +22,11 @@ import {
 } from "./engines-text";
 
 /**
- * The Engines page, administrators only (docs/ENGINES_PLAN.md section 9.1, slice 6): each engine by name, with
- * one plain sentence for its state and, where it waits, the time it waits until in the person's own time zone.
- * Read-only: no row can be clicked to change anything. Kept in app/src/freeduet/ so the upstream admin page only
- * gains one row and the route file one import (docs/UPSTREAM_TOUCHES.md).
+ * The Engines page, administrators only (docs/ENGINES_PLAN.md section 9.1, slices 6 and 7): each engine by name, with
+ * one plain sentence for its state and, where it waits, the time it waits until in the person's own time zone. No engine
+ * row can be clicked to change anything. Below them, where the server keeps the person's choices, each member's engines
+ * and one choice for what happens when an engine runs out (engines-members.tsx). Kept in app/src/freeduet/ so the
+ * upstream admin page only gains one row and the route file one import (docs/UPSTREAM_TOUCHES.md).
  */
 
 /** How often the page asks again, so a time it shows does not go stale while it stays open. */
@@ -56,7 +58,7 @@ export function FreeDuetEngines() {
 
   return (
     <PageShell
-      description="The AI engines this installation's members can run on, and whether each one can answer now. This page only shows them: nothing here enables, disables or changes an engine."
+      description="The AI engines this installation's members can run on, and whether each one can answer now. You can choose what happens when an engine runs out. Nothing here turns an engine on or off."
       title="Engines"
     >
       {engines.error ? (
@@ -94,6 +96,13 @@ export function FreeDuetEngines() {
             ))}
           </PageRows>
         </PageSection>
+      ) : null}
+
+      {reading && !reading.reason && (reading.members?.length ?? 0) > 0 ? (
+        <EngineMembers
+          onChanged={() => void engines.refetch()}
+          reading={reading}
+        />
       ) : null}
     </PageShell>
   );

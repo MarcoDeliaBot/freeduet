@@ -309,7 +309,13 @@ describe("a computer built from an older image", () => {
    *
    * Found on a first run of v0.0.9 against a computer container the install before it had made.
    */
-  test("is replaced when it holds a token this deployment no longer uses", async () => {
+  test("is replaced when it holds a token this deployment no longer uses, and keeps its volumes", async () => {
+    /*
+     * The same replacement carries a computer made when every computer shared one token to the token
+     * made for its own Bot (docs/design/per-computer-token.md): what it holds is not what is wanted,
+     * so it goes and comes back on the same profile and workspace. The volumes are compared by their
+     * creation time, as the image case above does, because a volume made again would have a new one.
+     */
     await withDocker().supervisor.ensure(names, {
       image: IMAGE,
       environment: [`COMPUTER_TOKEN=${"old-token"}`],
@@ -317,6 +323,11 @@ describe("a computer built from an older image", () => {
     const before = await withDocker()
       .docker.getContainer(names.container)
       .inspect();
+    const volumes = await Promise.all(
+      [names.profileVolume, names.workspaceVolume].map((volume) =>
+        withDocker().docker.getVolume(volume).inspect(),
+      ),
+    );
 
     const state = await withDocker().supervisor.ensure(names, {
       image: IMAGE,
@@ -325,11 +336,21 @@ describe("a computer built from an older image", () => {
     const after = await withDocker()
       .docker.getContainer(names.container)
       .inspect();
+    const kept = await Promise.all(
+      [names.profileVolume, names.workspaceVolume].map((volume) =>
+        withDocker().docker.getVolume(volume).inspect(),
+      ),
+    );
 
     expect(state).not.toBeNull();
+    // The answer says the token the container really holds, which is what a caller will present.
+    expect(state.token).toBe("new-token");
     expect(after.Id).not.toBe(before.Id);
     expect(after.Config.Env).toContain("COMPUTER_TOKEN=new-token");
+    // And not the old one, anywhere in what the new container was made with.
+    expect(after.Config.Env).not.toContain("COMPUTER_TOKEN=old-token");
     expect(after.State.Health?.Status).toBe("healthy");
+    expect(kept.map(createdAt)).toEqual(volumes.map(createdAt));
   }, 180_000);
 
   test("is left alone when it holds the token asked for", async () => {
