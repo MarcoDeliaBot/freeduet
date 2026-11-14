@@ -20,11 +20,14 @@ var reduce=window.matchMedia&&window.matchMedia("(prefers-reduced-motion: reduce
 function L(){return T[lang];}
 function esc(s){return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;");}
 
+var memSeen={};
 function drawTeam(){
  var g=document.getElementById("teamGrid"),t=L().team,h="";
  M.forEach(function(m,i){var d=t[m[0]];
-  h+='<article class="mem'+(i===0?" boss":"")+'" style="--mc:'+m[2]+'">'+av(m[0])+'<h3>'+m[1]+'<span>'+esc(d[0])+'</span></h3><p>'+esc(d[1])+'</p><q>'+esc(d[2])+'</q></article>';});
+  h+='<article class="mem'+(i===0?" boss":"")+(memSeen[i]?"":" rv")+'" data-k="'+i+'" style="--mc:'+m[2]+'">'+av(m[0])+'<h3>'+m[1]+'<span>'+esc(d[0])+'</span></h3><p>'+esc(d[1])+'</p><q>'+esc(d[2])+'</q></article>';});
+ Array.prototype.forEach.call(g.children,function(c){unwatch(c);});
  g.innerHTML=h;
+ Array.prototype.forEach.call(g.querySelectorAll(".rv"),function(c){watch(c);});
 }
 
 function hydrateAv(){Array.prototype.forEach.call(document.querySelectorAll("[data-av]"),function(el){el.innerHTML=av(el.getAttribute("data-av"));});}
@@ -74,6 +77,102 @@ tries.addEventListener("click",function(e){var b=e.target.closest("button");if(b
 chat.addEventListener("click",function(e){var b=e.target.closest("button[data-a]");if(!b)return;var a=b.getAttribute("data-a"),s=L().demo[cur],c=document.getElementById("ask");
  if(c){c.outerHTML=doneRow(a==="ok"?"ok":"stop",s[a]);side(s.who,a==="ok"?"ok":"");}});
 
+/* ---------- motion: reveal on scroll, word-by-word headings, light parallax, capsule shadow ---------- */
+var root=document.documentElement;
+var mqReduce=window.matchMedia?window.matchMedia("(prefers-reduced-motion: reduce)"):null;
+function reduced(){return !!(mqReduce&&mqReduce.matches);}
+function qsa(s){return Array.prototype.slice.call(document.querySelectorAll(s));}
+var io=null;
+function watch(el){if(io)io.observe(el);else el.classList.add("in");}
+function unwatch(el){if(io)io.unobserve(el);}
+function onSee(entries){
+ var vis=entries.filter(function(e){return e.isIntersecting;}).sort(function(a,b){return (a.target.compareDocumentPosition(b.target)&4)?-1:1;});
+ var hasHead=vis.some(function(e){return e.target.classList.contains("wd");});
+ vis.forEach(function(e,i){
+  var el=e.target,own=el.getAttribute("data-d"),k=el.getAttribute("data-k");
+  io.unobserve(el);
+  if(k!==null)memSeen[k]=1;
+  if(el.classList.contains("wd")){el.style.setProperty("--bd",(own!==null?+own:0)+"ms");}
+  else{el.style.setProperty("--d",(own!==null?+own:(hasHead?160:0)+Math.min(i,6)*90)+"ms");}
+  el.classList.add("in");
+ });
+}
+if("IntersectionObserver" in window){io=new IntersectionObserver(onSee,{threshold:.15,rootMargin:"0px 0px -4% 0px"});}
+qsa(".rv,.wd").forEach(watch);
+
+/* Headings are cut into words. Intl.Segmenter finds the words of Chinese and Japanese, which have no spaces.
+   Without it those two languages reveal the whole heading at once; the others split on spaces. */
+var seg=null,segLang="";
+function segmenter(){
+ if(typeof Intl==="undefined"||!Intl.Segmenter)return null;
+ if(segLang!==lang){try{seg=new Intl.Segmenter(lang,{granularity:"word"});}catch(x){seg=null;}segLang=lang;}
+ return seg;
+}
+function pieces(text){
+ var S=segmenter(),out=[];
+ if(S){
+  var cur=null,buf="";
+  Array.from(S.segment(text)).forEach(function(g){
+   var t=g.segment;
+   if(/^\s+$/.test(t)){cur=null;if(buf){out.push({w:buf});buf="";}out.push({s:t});return;}
+   if(g.isWordLike){cur={w:buf+t};buf="";out.push(cur);return;}
+   if(cur)cur.w+=t;else buf+=t;
+  });
+  if(buf)out.push({w:buf});
+  return out;
+ }
+ if(lang==="ja"||lang==="zh")return [{w:text}];
+ text.split(/(\s+)/).forEach(function(p){if(p)out.push(/^\s+$/.test(p)?{s:p}:{w:p});});
+ return out;
+}
+function splitHeading(h){
+ var n=0,w=document.createTreeWalker(h,NodeFilter.SHOW_TEXT,null),nodes=[],t;
+ while((t=w.nextNode()))nodes.push(t);
+ nodes.forEach(function(tn){
+  if(!tn.nodeValue.trim())return;
+  var f=document.createDocumentFragment();
+  pieces(tn.nodeValue).forEach(function(p){
+   if(p.s){f.appendChild(document.createTextNode(p.s));return;}
+   var sp=document.createElement("span");sp.className="w";sp.style.setProperty("--w",n++);sp.textContent=p.w;f.appendChild(sp);
+  });
+  tn.parentNode.replaceChild(f,tn);
+ });
+}
+function words(){
+ var rd=reduced();
+ qsa(".wd").forEach(function(h){
+  var was=h.classList.contains("in");
+  if(rd){h.classList.add("rv","wsp");return;}
+  h.classList.remove("rv");
+  splitHeading(h);h.classList.add("wsp");
+  if(was){h.classList.remove("in");void h.offsetWidth;h.classList.add("in");}   /* the new words play again */
+ });
+}
+
+var layers=qsa("[data-par]"),bar=document.querySelector(".top"),ticking=false,moved=false;
+function frame(){
+ ticking=false;
+ var y=window.pageYOffset||0,vh=window.innerHeight||1;
+ if(bar)bar.classList.toggle("scrolled",y>8);
+ if(reduced()){if(moved){layers.forEach(function(l){l.style.transform="";});moved=false;}return;}
+ var todo=[];   /* read every position first, then write, so the frame forces no extra layout */
+ layers.forEach(function(el){
+  var v=el.getAttribute("data-par").split(":"),k=parseFloat(v[1])||0,host=el.closest("section,footer");
+  if(!host)return;
+  var r=host.getBoundingClientRect();
+  if(r.bottom<-300||r.top>vh+300)return;
+  todo.push([el,v[0]==="lag"?Math.min(Math.max(0,-r.top)*k,160):Math.min(Math.max(0,r.bottom-vh)*k,90)]);
+ });
+ todo.forEach(function(t){t[0].style.transform="translate3d(0,"+t[1].toFixed(1)+"px,0)";moved=true;});
+}
+function tick(){if(!ticking){ticking=true;requestAnimationFrame(frame);}}
+window.addEventListener("scroll",tick,{passive:true});
+window.addEventListener("resize",tick,{passive:true});
+if(mqReduce&&mqReduce.addEventListener)mqReduce.addEventListener("change",function(){apply(lang);tick();});
+else if(mqReduce&&mqReduce.addListener)mqReduce.addListener(function(){apply(lang);tick();});
+root.setAttribute("data-rv","ready");
+frame();
+
 function apply(l){
  lang=T[l]?l:"en";var t=L();
  document.documentElement.lang=lang;document.title=t.title;
@@ -82,6 +181,7 @@ function apply(l){
   var v=t[k];if(v!=null)el.innerHTML=v;});
  sel.value=lang;
  drawTeam();drawSide();drawWeek();drawTries();show(cur,false);
+ words();
 }
 var sel=document.getElementById("lang");
 LANGS.forEach(function(l){var o=document.createElement("option");o.value=l[0];o.textContent=l[1];sel.appendChild(o);});

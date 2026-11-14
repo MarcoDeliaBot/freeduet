@@ -17,9 +17,10 @@ html=f'''<!DOCTYPE html>
 <meta property="og:title" content="FreeDuet: your own team of AI assistants">
 <meta property="og:description" content="A free, open-source team of AI assistants. They ask before they send, pay, sign, book or delete.">
 <meta property="og:type" content="website">
+<script>document.documentElement.className+=" js";setTimeout(function(){{if(document.documentElement.getAttribute("data-rv")!=="ready")document.documentElement.className+=" no-rv"}},3000)</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;600;700&family=Schibsted+Grotesk:wght@700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;600;700&family=Schibsted+Grotesk:wght@500;700;800&display=swap" rel="stylesheet">
 <style>
 {(s/"style.css").read_text()}</style>
 </head>
