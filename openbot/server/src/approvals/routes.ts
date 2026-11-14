@@ -1,6 +1,7 @@
 import { Hono, type MiddlewareHandler } from "hono";
 import { z } from "zod";
 import { type AppVariables, requireAdmin } from "../auth/guards";
+import { createFullAccessRoutes } from "../freeduet/full-access-routes";
 import type { ApprovalService } from "./service";
 import {
   ApprovalNotFoundError,
@@ -59,6 +60,12 @@ export function createApprovalRoutes(
   routes.get("/", async (context) =>
     context.json(await service.inbox(context.var.actor.id)),
   );
+  // FreeDuet: the person's own Full access switches (docs/FULL_ACCESS.md).
+  if (service.fullAccess)
+    routes.route(
+      "/full-access",
+      createFullAccessRoutes(service.fullAccess, requireUser),
+    );
   routes.post("/computer/:botId", async (context) => {
     try {
       return context.json({

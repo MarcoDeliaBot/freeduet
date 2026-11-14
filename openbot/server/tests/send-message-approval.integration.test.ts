@@ -53,6 +53,7 @@ import {
   GOOGLE_APP_PASSWORD,
   GOOGLE_WORKSPACE,
 } from "../src/plugins/catalogue";
+import { createFullAccess, withFullAccess } from "../src/freeduet/full-access";
 import { createGoogleImapTransport } from "../src/plugins/google-imap";
 import { callTool as callGoogle } from "../src/plugins/google-workspace-rest";
 import { createPluginStore, PluginRefusedError } from "../src/plugins/store";
@@ -1679,3 +1680,151 @@ for (const backend of BACKENDS) {
     });
   });
 }
+
+/*
+ * FULL ACCESS (docs/FULL_ACCESS.md), through the same real plugin store, approval service, private-share
+ * check and hand-off machinery. Otto (`botId`) is the member the person switches on. With it on, his
+ * new emails go out with no card, to an address the person never typed; in every case that is not the
+ * person's own live turn, and for every member that was not switched on, nothing changes.
+ */
+const fullAccess = createFullAccess({
+  database,
+  known: async () => true,
+  handedRequest: sharedOptions.handedRequest,
+  audit: createAuditStore(database),
+});
+const fullService = createApprovalService(approvals, undefined, undefined, {
+  review: async () =>
+    JSON.stringify({ ...reviewer, safety: "none", reason: "Test reviewer." }),
+  fullAccess,
+});
+const fullStore = createPluginStore({
+  ...sharedOptions,
+  approvalGate: (candidate: Parameters<typeof service.gate>[0]) =>
+    fullService.gate(candidate),
+  privateShareCheck: withFullAccess(privateShareCheck, fullAccess),
+  exchangeRefreshToken: async ({ refreshToken: presented }) => {
+    const response = await fetch(`${fake.url}/token`, {
+      method: "POST",
+      headers: { "content-type": "application/x-www-form-urlencoded" },
+      body: new URLSearchParams({
+        grant_type: "refresh_token",
+        refresh_token: presented,
+        client_id: CLIENT.clientId,
+        client_secret: CLIENT.clientSecret,
+      }),
+    });
+    const body = (await response.json()) as { access_token: string };
+    return { accessToken: body.access_token };
+  },
+  callVendor: (connection, toolName, args) =>
+    callGoogle(
+      { url: fake.url, token: connection.token ?? "" },
+      toolName,
+      args,
+    ),
+});
+const FULL_BACKEND: Backend = { ...(BACKENDS[0] as Backend), store: fullStore };
+
+describe("Full access: a new email, with the switch on for Otto", () => {
+  const STRANGER = email({ to: ["bob@example.com"] });
+  const ROUTINE: AuditInitiator = { kind: "routine", id: "routine-full" };
+
+  test("off, it asks, to an address the person never typed", async () => {
+    await expectAsks(
+      FULL_BACKEND,
+      { messages: [typed("write to the team about the kiln")] },
+      STRANGER,
+    );
+  });
+
+  test("on, the same email goes out with no card, and the trail says it ran without asking", async () => {
+    await fullAccess.set(owner, botId, true);
+    FULL_BACKEND.reset();
+    await clearPending();
+    const result = (await inTurn(
+      { messages: [typed("write to the team about the kiln")] },
+      () => callNew(FULL_BACKEND, STRANGER),
+    )) as { text: string; isError: boolean };
+    expect(result.isError).toBe(false);
+    expect(FULL_BACKEND.sent()).toEqual([
+      { to: ["bob@example.com"], subject: "Good morning", body: BODY },
+    ]);
+    expect(await pending()).toEqual([]);
+    const [last] = await fullAccess.recent(owner);
+    expect(last).toMatchObject({ bot: botId });
+    expect(last?.tool).toContain("gmail_send_message");
+  });
+
+  test("a routine's send asks, though the switch is on", async () => {
+    await expectAsks(
+      FULL_BACKEND,
+      { messages: [typed("every morning")], initiator: ROUTINE },
+      STRANGER,
+      ROUTINE,
+    );
+  });
+
+  test("a member that was not switched on asks", async () => {
+    FULL_BACKEND.reset();
+    await clearPending();
+    const outcome = await inTurn(
+      { messages: [typed("write to the team about the kiln")] },
+      () => callNew(FULL_BACKEND, STRANGER, PERSON, thirdId),
+    ).catch((error: unknown) => error);
+    expect(outcome).toBeInstanceOf(HeadlessToolSuspension);
+    expect(FULL_BACKEND.sent()).toEqual([]);
+    await clearPending();
+  });
+
+  test("handed the work in the person's own turn, Otto sends with no card; the member next to him asks", async () => {
+    const hop = await viaHop(FULL_BACKEND, askedIris(), STRANGER);
+    expect(hop.error).toBeUndefined();
+    expect(FULL_BACKEND.sent()).toEqual([
+      { to: ["bob@example.com"], subject: "Good morning", body: BODY },
+    ]);
+    expect(await pending()).toEqual([]);
+
+    FULL_BACKEND.reset();
+    await clearPending();
+    await handOn(askedIris(), {}, thirdId);
+    const [third] = await deliverHops((delivery) =>
+      sendsInHop(FULL_BACKEND, delivery, STRANGER, { member: thirdId }),
+    );
+    expect(third?.error).toBeInstanceOf(HeadlessToolSuspension);
+    expect(FULL_BACKEND.sent()).toEqual([]);
+    await clearPending();
+  });
+
+  test("a hop a routine made asks, because the server cannot trace it to the person's own message", async () => {
+    await expectHopAsks(
+      FULL_BACKEND,
+      {
+        ...askedIris(),
+        initiator: ROUTINE,
+        asserts: { initiator: ROUTINE },
+      },
+      STRANGER,
+    );
+  });
+
+  test("a hop made after the person spoke again asks", async () => {
+    await expectHopAsks(FULL_BACKEND, askedIris(), STRANGER, {
+      between: ({ threadId }) => {
+        conversations.set(threadId, [
+          ...(conversations.get(threadId) ?? []),
+          typed("never mind, hold on"),
+        ]);
+      },
+    });
+  });
+
+  test("turned off, the very next email asks again", async () => {
+    await fullAccess.set(owner, botId, false);
+    await expectAsks(
+      FULL_BACKEND,
+      { messages: [typed("write to the team about the kiln")] },
+      STRANGER,
+    );
+  });
+});

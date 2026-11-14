@@ -8,6 +8,7 @@ import { type AuditInitiator, PERSON_INITIATOR } from "../audit";
 import type { DeploymentConfig } from "../config";
 import type { Database } from "../db/client";
 import type { DeliveryScope } from "../delivery/types";
+import type { FullAccess } from "../freeduet/full-access";
 import type { ReviewModel } from "./policy";
 import { createApprovalQuestions, type PersonQuestion } from "./questions";
 import { createApprovalService } from "./service";
@@ -38,6 +39,8 @@ export function createServerApprovalService(deps: {
     initiator: AuditInitiator,
   ) => Promise<HeadlessTool[]>;
   review: ReviewModel;
+  /** FreeDuet: the Full access setting (docs/FULL_ACCESS.md). */
+  fullAccess?: FullAccess;
   notify: (
     scope: DeliveryScope,
     input: { id: string; kind: "approval"; requestId: string; text: string },
@@ -167,6 +170,9 @@ export function createServerApprovalService(deps: {
         signal: new AbortController().signal,
       });
     },
-    { review: deps.review },
+    {
+      review: deps.review,
+      ...(deps.fullAccess ? { fullAccess: deps.fullAccess } : {}),
+    },
   );
 }

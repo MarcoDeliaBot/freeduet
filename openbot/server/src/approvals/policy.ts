@@ -254,6 +254,31 @@ export function safetyRequirement(
 }
 
 /**
+ * FreeDuet, Full access (docs/FULL_ACCESS.md): what the gate answers for a member the person switched
+ * to Full access. Never for a read, so the trail only holds actions.
+ *
+ * It lifts one safety category, payments, because the maintainer's decision covers payments and
+ * purchases. Credentials and security settings are still handed to the person, and an admin's team
+ * rule that asks or hands off still wins. It overrides the person's own rules, "ask before making
+ * changes" and auto-review, and does not call the reviewer.
+ */
+export function fullAccessOutcome(
+  candidate: ApprovalCandidate,
+  safety: { id: string } | undefined,
+  team: readonly ApprovalTeamRule[],
+): ApprovalPolicyOutcome | undefined {
+  if (candidate.effect === "read") return undefined;
+  if (safety && safety.id !== "payments") return undefined;
+  const locked = strictestRule(candidate, team, [])?.rule.behaviour;
+  if (locked === "ask" || locked === "hand_off") return undefined;
+  return {
+    behaviour: "allow",
+    source: "full_access",
+    reason: "Full access is on for this member.",
+  };
+}
+
+/**
  * Whether auto-review looks at this action at all: anything that could affect an account or share
  * information, which is every effect other than a read, less memory writes and settings changes.
  */
@@ -413,9 +438,15 @@ export async function decideAction(input: {
   autoReview: boolean;
   askBeforeChanges: boolean;
   model?: ReviewModel;
+  /** FreeDuet: the person switched this member to Full access, in a turn it applies to. */
+  fullAccess?: boolean;
 }): Promise<ApprovalPolicyOutcome> {
   const { candidate } = input;
   const safety = safetyRequirement(candidate);
+  if (input.fullAccess) {
+    const granted = fullAccessOutcome(candidate, safety, input.team);
+    if (granted) return granted;
+  }
   if (safety)
     return {
       behaviour: "hand_off",

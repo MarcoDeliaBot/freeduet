@@ -2,6 +2,7 @@ import { AsyncLocalStorage } from "node:async_hooks";
 import { createHash } from "node:crypto";
 import { isDeepStrictEqual } from "node:util";
 import { PERSON_INITIATOR } from "../audit";
+import type { FullAccess } from "../freeduet/full-access";
 import { HeadlessToolSuspension } from "@openbot/toolkit/headless-tools";
 import {
   decideAction,
@@ -224,6 +225,8 @@ export function createApprovalService(
   options: {
     /** The deployment's configured model, for auto-review and pre-approval checks. */
     review?: ReviewModel;
+    /** FreeDuet: members the person switched to Full access (docs/FULL_ACCESS.md). Absent, none is. */
+    fullAccess?: FullAccess;
   } = {},
 ) {
   /**
@@ -326,8 +329,17 @@ export function createApprovalService(
       store.rules(candidate.actorId),
     ]);
     const continuation = candidate.continuation ?? currentApprovalContext();
+    // FreeDuet: Full access, for an action and a turn it applies to (docs/FULL_ACCESS.md).
+    const fullAccess =
+      candidate.effect !== "read" &&
+      (await options.fullAccess?.applies({
+        actorId: candidate.actorId,
+        botId: candidate.botId,
+        continuation,
+      })) === true;
     const outcome = await decideAction({
       candidate,
+      fullAccess,
       messages: continuation?.messages,
       team: teamRules,
       personal,
@@ -357,6 +369,8 @@ export function createApprovalService(
   }
   return {
     store,
+    /** FreeDuet: the Full access setting, for the routes that let the person change it. */
+    fullAccess: options.fullAccess,
     async frontendAction(ownerUserId: string, botId: string, input: unknown) {
       if (!frontend)
         throw new ApprovalRefusedError(
