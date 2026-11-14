@@ -2333,14 +2333,17 @@ describe("start.sh secrets made for each installation (D39)", () => {
       });
 
       const warning = `KEY_ENCRYPTION_KEY is still the example key this repository publishes. Your database ${why}`;
+      // The same warning names the tool that changes the key (scripts/rekey-vault.ts), once per start.
+      const tool = "To change it, run: bun scripts/rekey-vault.ts";
       for (const [start, output] of [
         ["first", result.stdout],
         ["next", result.repeated?.stdout ?? ""],
       ])
-        expect({ start, said: output.includes(warning) }).toEqual({
+        expect({
           start,
-          said: true,
-        });
+          said: output.includes(warning),
+          namesTheTool: output.includes(tool),
+        }).toEqual({ start, said: true, namesTheTool: true });
       expect(result.exitCode).toBe(0);
       expect(valueIn(result.savedEnvironment, "KEY_ENCRYPTION_KEY")).toBe(
         PUBLIC_KEY,

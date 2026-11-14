@@ -718,6 +718,15 @@ The server and the routines worker restart once. `docs/M1_PLAN.md` section 22 ha
 To make a new token, delete its line and run `scripts/start.sh`. Do not delete `KEY_ENCRYPTION_KEY` on an
 installation with saved logins or connections: it makes a new key and leaves what was saved unreadable.
 
+**An installation that holds saved logins or connections and still has the example key** is told so in red at
+every start. `bun scripts/rekey-vault.ts`, typed in this folder with FreeDuet stopped, seals them again with a key
+made for this installation. With `--yes` alone it only checks: it opens every saved secret with the current key and
+reports counts. With `--apply --yes` it first saves a backup next to `.env` (it needs `pg_dump`, or the Compose
+database running), then seals every saved login, connection and sign-in secret again in one step that is undone
+completely if anything fails, checks that each opens with the new key, and only then writes the key into `.env`.
+It refuses while FreeDuet's server answers or anything else is connected to the database, and it never prints a
+secret. The steps, what it leaves behind and how to go back are in `docs/design/vault-rekey.md`.
+
 ### SCIM provisioning
 
 A directory such as Okta or Entra ID can create, update and remove people through SCIM 2.0 at
