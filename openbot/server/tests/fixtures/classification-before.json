@@ -1,0 +1,2746 @@
+[
+ {
+  "entry": "parallel",
+  "tool": "web_fetch",
+  "recorded": null,
+  "advertised": true,
+  "before": "read"
+ },
+ {
+  "entry": "parallel",
+  "tool": "web_fetch",
+  "recorded": "read",
+  "advertised": true,
+  "before": "read"
+ },
+ {
+  "entry": "parallel",
+  "tool": "web_fetch",
+  "recorded": "write",
+  "advertised": true,
+  "before": "write"
+ },
+ {
+  "entry": "parallel",
+  "tool": "web_search",
+  "recorded": null,
+  "advertised": true,
+  "before": "read"
+ },
+ {
+  "entry": "parallel",
+  "tool": "web_search",
+  "recorded": "read",
+  "advertised": true,
+  "before": "read"
+ },
+ {
+  "entry": "parallel",
+  "tool": "web_search",
+  "recorded": "write",
+  "advertised": true,
+  "before": "write"
+ },
+ {
+  "entry": "parallel",
+  "tool": "zz_unlisted_tool",
+  "recorded": null,
+  "advertised": true,
+  "before": "write"
+ },
+ {
+  "entry": "parallel",
+  "tool": "zz_unlisted_tool",
+  "recorded": "read",
+  "advertised": true,
+  "before": "write"
+ },
+ {
+  "entry": "parallel",
+  "tool": "zz_unlisted_tool",
+  "recorded": "write",
+  "advertised": true,
+  "before": "write"
+ },
+ {
+  "entry": "parallel",
+  "tool": "zz_unlisted_tool",
+  "recorded": null,
+  "advertised": false,
+  "before": "write"
+ },
+ {
+  "entry": "parallel-authenticated",
+  "tool": "web_fetch",
+  "recorded": null,
+  "advertised": true,
+  "before": "read"
+ },
+ {
+  "entry": "parallel-authenticated",
+  "tool": "web_fetch",
+  "recorded": "read",
+  "advertised": true,
+  "before": "read"
+ },
+ {
+  "entry": "parallel-authenticated",
+  "tool": "web_fetch",
+  "recorded": "write",
+  "advertised": true,
+  "before": "write"
+ },
+ {
+  "entry": "parallel-authenticated",
+  "tool": "web_search",
+  "recorded": null,
+  "advertised": true,
+  "before": "read"
+ },
+ {
+  "entry": "parallel-authenticated",
+  "tool": "web_search",
+  "recorded": "read",
+  "advertised": true,
+  "before": "read"
+ },
+ {
+  "entry": "parallel-authenticated",
+  "tool": "web_search",
+  "recorded": "write",
+  "advertised": true,
+  "before": "write"
+ },
+ {
+  "entry": "parallel-authenticated",
+  "tool": "zz_unlisted_tool",
+  "recorded": null,
+  "advertised": true,
+  "before": "write"
+ },
+ {
+  "entry": "parallel-authenticated",
+  "tool": "zz_unlisted_tool",
+  "recorded": "read",
+  "advertised": true,
+  "before": "write"
+ },
+ {
+  "entry": "parallel-authenticated",
+  "tool": "zz_unlisted_tool",
+  "recorded": "write",
+  "advertised": true,
+  "before": "write"
+ },
+ {
+  "entry": "parallel-authenticated",
+  "tool": "zz_unlisted_tool",
+  "recorded": null,
+  "advertised": false,
+  "before": "write"
+ },
+ {
+  "entry": "exa",
+  "tool": "web_fetch_exa",
+  "recorded": null,
+  "advertised": true,
+  "before": "read"
+ },
+ {
+  "entry": "exa",
+  "tool": "web_fetch_exa",
+  "recorded": "read",
+  "advertised": true,
+  "before": "read"
+ },
+ {
+  "entry": "exa",
+  "tool": "web_fetch_exa",
+  "recorded": "write",
+  "advertised": true,
+  "before": "write"
+ },
+ {
+  "entry": "exa",
+  "tool": "web_search_advanced_exa",
+  "recorded": null,
+  "advertised": true,
+  "before": "read"
+ },
+ {
+  "entry": "exa",
+  "tool": "web_search_advanced_exa",
+  "recorded": "read",
+  "advertised": true,
+  "before": "read"
+ },
+ {
+  "entry": "exa",
+  "tool": "web_search_advanced_exa",
+  "recorded": "write",
+  "advertised": true,
+  "before": "write"
+ },
+ {
+  "entry": "exa",
+  "tool": "web_search_exa",
+  "recorded": null,
+  "advertised": true,
+  "before": "read"
+ },
+ {
+  "entry": "exa",
+  "tool": "web_search_exa",
+  "recorded": "read",
+  "advertised": true,
+  "before": "read"
+ },
+ {
+  "entry": "exa",
+  "tool": "web_search_exa",
+  "recorded": "write",
+  "advertised": true,
+  "before": "write"
+ },
+ {
+  "entry": "exa",
+  "tool": "zz_unlisted_tool",
+  "recorded": null,
+  "advertised": true,
+  "before": "write"
+ },
+ {
+  "entry": "exa",
+  "tool": "zz_unlisted_tool",
+  "recorded": "read",
+  "advertised": true,
+  "before": "write"
+ },
+ {
+  "entry": "exa",
+  "tool": "zz_unlisted_tool",
+  "recorded": "write",
+  "advertised": true,
+  "before": "write"
+ },
+ {
+  "entry": "exa",
+  "tool": "zz_unlisted_tool",
+  "recorded": null,
+  "advertised": false,
+  "before": "write"
+ },
+ {
+  "entry": "exa-authenticated",
+  "tool": "web_fetch_exa",
+  "recorded": null,
+  "advertised": true,
+  "before": "read"
+ },
+ {
+  "entry": "exa-authenticated",
+  "tool": "web_fetch_exa",
+  "recorded": "read",
+  "advertised": true,
+  "before": "read"
+ },
+ {
+  "entry": "exa-authenticated",
+  "tool": "web_fetch_exa",
+  "recorded": "write",
+  "advertised": true,
+  "before": "write"
+ },
+ {
+  "entry": "exa-authenticated",
+  "tool": "web_search_advanced_exa",
+  "recorded": null,
+  "advertised": true,
+  "before": "read"
+ },
+ {
+  "entry": "exa-authenticated",
+  "tool": "web_search_advanced_exa",
+  "recorded": "read",
+  "advertised": true,
+  "before": "read"
+ },
+ {
+  "entry": "exa-authenticated",
+  "tool": "web_search_advanced_exa",
+  "recorded": "write",
+  "advertised": true,
+  "before": "write"
+ },
+ {
+  "entry": "exa-authenticated",
+  "tool": "web_search_exa",
+  "recorded": null,
+  "advertised": true,
+  "before": "read"
+ },
+ {
+  "entry": "exa-authenticated",
+  "tool": "web_search_exa",
+  "recorded": "read",
+  "advertised": true,
+  "before": "read"
+ },
+ {
+  "entry": "exa-authenticated",
+  "tool": "web_search_exa",
+  "recorded": "write",
+  "advertised": true,
+  "before": "write"
+ },
+ {
+  "entry": "exa-authenticated",
+  "tool": "zz_unlisted_tool",
+  "recorded": null,
+  "advertised": true,
+  "before": "write"
+ },
+ {
+  "entry": "exa-authenticated",
+  "tool": "zz_unlisted_tool",
+  "recorded": "read",
+  "advertised": true,
+  "before": "write"
+ },
+ {
+  "entry": "exa-authenticated",
+  "tool": "zz_unlisted_tool",
+  "recorded": "write",
+  "advertised": true,
+  "before": "write"
+ },
+ {
+  "entry": "exa-authenticated",
+  "tool": "zz_unlisted_tool",
+  "recorded": null,
+  "advertised": false,
+  "before": "write"
+ },
+ {
+  "entry": "firecrawl",
+  "tool": "firecrawl_agent",
+  "recorded": null,
+  "advertised": true,
+  "before": "write"
+ },
+ {
+  "entry": "firecrawl",
+  "tool": "firecrawl_agent",
+  "recorded": "read",
+  "advertised": true,
+  "before": "write"
+ },
+ {
+  "entry": "firecrawl",
+  "tool": "firecrawl_agent",
+  "recorded": "write",
+  "advertised": true,
+  "before": "write"
+ },
+ {
+  "entry": "firecrawl",
+  "tool": "firecrawl_crawl",
+  "recorded": null,
+  "advertised": true,
+  "before": "write"
+ },
+ {
+  "entry": "firecrawl",
+  "tool": "firecrawl_crawl",
+  "recorded": "read",
+  "advertised": true,
+  "before": "write"
+ },
+ {
+  "entry": "firecrawl",
+  "tool": "firecrawl_crawl",
+  "recorded": "write",
+  "advertised": true,
+  "before": "write"
+ },
+ {
+  "entry": "firecrawl",
+  "tool": "firecrawl_feedback",
+  "recorded": null,
+  "advertised": true,
+  "before": "write"
+ },
+ {
+  "entry": "firecrawl",
+  "tool": "firecrawl_feedback",
+  "recorded": "read",
+  "advertised": true,
+  "before": "write"
+ },
+ {
+  "entry": "firecrawl",
+  "tool": "firecrawl_feedback",
+  "recorded": "write",
+  "advertised": true,
+  "before": "write"
+ },
+ {
+  "entry": "firecrawl",
+  "tool": "firecrawl_interact",
+  "recorded": null,
+  "advertised": true,
+  "before": "write"
+ },
+ {
+  "entry": "firecrawl",
+  "tool": "firecrawl_interact",
+  "recorded": "read",
+  "advertised": true,
+  "before": "write"
+ },
+ {
+  "entry": "firecrawl",
+  "tool": "firecrawl_interact",
+  "recorded": "write",
+  "advertised": true,
+  "before": "write"
+ },
+ {
+  "entry": "firecrawl",
+  "tool": "firecrawl_interact_stop",
+  "recorded": null,
+  "advertised": true,
+  "before": "write"
+ },
+ {
+  "entry": "firecrawl",
+  "tool": "firecrawl_interact_stop",
+  "recorded": "read",
+  "advertised": true,
+  "before": "write"
+ },
+ {
+  "entry": "firecrawl",
+  "tool": "firecrawl_interact_stop",
+  "recorded": "write",
+  "advertised": true,
+  "before": "write"
+ },
+ {
+  "entry": "firecrawl",
+  "tool": "firecrawl_map",
+  "recorded": null,
+  "advertised": true,
+  "before": "read"
+ },
+ {
+  "entry": "firecrawl",
+  "tool": "firecrawl_map",
+  "recorded": "read",
+  "advertised": true,
+  "before": "read"
+ },
+ {
+  "entry": "firecrawl",
+  "tool": "firecrawl_map",
+  "recorded": "write",
+  "advertised": true,
+  "before": "write"
+ },
+ {
+  "entry": "firecrawl",
+  "tool": "firecrawl_parse",
+  "recorded": null,
+  "advertised": true,
+  "before": "read"
+ },
+ {
+  "entry": "firecrawl",
+  "tool": "firecrawl_parse",
+  "recorded": "read",
+  "advertised": true,
+  "before": "read"
+ },
+ {
+  "entry": "firecrawl",
+  "tool": "firecrawl_parse",
+  "recorded": "write",
+  "advertised": true,
+  "before": "write"
+ },
+ {
+  "entry": "firecrawl",
+  "tool": "firecrawl_scrape",
+  "recorded": null,
+  "advertised": true,
+  "before": "read"
+ },
+ {
+  "entry": "firecrawl",
+  "tool": "firecrawl_scrape",
+  "recorded": "read",
+  "advertised": true,
+  "before": "read"
+ },
+ {
+  "entry": "firecrawl",
+  "tool": "firecrawl_scrape",
+  "recorded": "write",
+  "advertised": true,
+  "before": "write"
+ },
+ {
+  "entry": "firecrawl",
+  "tool": "firecrawl_search",
+  "recorded": null,
+  "advertised": true,
+  "before": "read"
+ },
+ {
+  "entry": "firecrawl",
+  "tool": "firecrawl_search",
+  "recorded": "read",
+  "advertised": true,
+  "before": "read"
+ },
+ {
+  "entry": "firecrawl",
+  "tool": "firecrawl_search",
+  "recorded": "write",
+  "advertised": true,
+  "before": "write"
+ },
+ {
+  "entry": "firecrawl",
+  "tool": "firecrawl_search_feedback",
+  "recorded": null,
+  "advertised": true,
+  "before": "write"
+ },
+ {
+  "entry": "firecrawl",
+  "tool": "firecrawl_search_feedback",
+  "recorded": "read",
+  "advertised": true,
+  "before": "write"
+ },
+ {
+  "entry": "firecrawl",
+  "tool": "firecrawl_search_feedback",
+  "recorded": "write",
+  "advertised": true,
+  "before": "write"
+ },
+ {
+  "entry": "firecrawl",
+  "tool": "zz_unlisted_tool",
+  "recorded": null,
+  "advertised": true,
+  "before": "write"
+ },
+ {
+  "entry": "firecrawl",
+  "tool": "zz_unlisted_tool",
+  "recorded": "read",
+  "advertised": true,
+  "before": "write"
+ },
+ {
+  "entry": "firecrawl",
+  "tool": "zz_unlisted_tool",
+  "recorded": "write",
+  "advertised": true,
+  "before": "write"
+ },
+ {
+  "entry": "firecrawl",
+  "tool": "zz_unlisted_tool",
+  "recorded": null,
+  "advertised": false,
+  "before": "write"
+ },
+ {
+  "entry": "firecrawl-authenticated",
+  "tool": "firecrawl_agent",
+  "recorded": null,
+  "advertised": true,
+  "before": "write"
+ },
+ {
+  "entry": "firecrawl-authenticated",
+  "tool": "firecrawl_agent",
+  "recorded": "read",
+  "advertised": true,
+  "before": "write"
+ },
+ {
+  "entry": "firecrawl-authenticated",
+  "tool": "firecrawl_agent",
+  "recorded": "write",
+  "advertised": true,
+  "before": "write"
+ },
+ {
+  "entry": "firecrawl-authenticated",
+  "tool": "firecrawl_crawl",
+  "recorded": null,
+  "advertised": true,
+  "before": "write"
+ },
+ {
+  "entry": "firecrawl-authenticated",
+  "tool": "firecrawl_crawl",
+  "recorded": "read",
+  "advertised": true,
+  "before": "write"
+ },
+ {
+  "entry": "firecrawl-authenticated",
+  "tool": "firecrawl_crawl",
+  "recorded": "write",
+  "advertised": true,
+  "before": "write"
+ },
+ {
+  "entry": "firecrawl-authenticated",
+  "tool": "firecrawl_feedback",
+  "recorded": null,
+  "advertised": true,
+  "before": "write"
+ },
+ {
+  "entry": "firecrawl-authenticated",
+  "tool": "firecrawl_feedback",
+  "recorded": "read",
+  "advertised": true,
+  "before": "write"
+ },
+ {
+  "entry": "firecrawl-authenticated",
+  "tool": "firecrawl_feedback",
+  "recorded": "write",
+  "advertised": true,
+  "before": "write"
+ },
+ {
+  "entry": "firecrawl-authenticated",
+  "tool": "firecrawl_interact",
+  "recorded": null,
+  "advertised": true,
+  "before": "write"
+ },
+ {
+  "entry": "firecrawl-authenticated",
+  "tool": "firecrawl_interact",
+  "recorded": "read",
+  "advertised": true,
+  "before": "write"
+ },
+ {
+  "entry": "firecrawl-authenticated",
+  "tool": "firecrawl_interact",
+  "recorded": "write",
+  "advertised": true,
+  "before": "write"
+ },
+ {
+  "entry": "firecrawl-authenticated",
+  "tool": "firecrawl_interact_stop",
+  "recorded": null,
+  "advertised": true,
+  "before": "write"
+ },
+ {
+  "entry": "firecrawl-authenticated",
+  "tool": "firecrawl_interact_stop",
+  "recorded": "read",
+  "advertised": true,
+  "before": "write"
+ },
+ {
+  "entry": "firecrawl-authenticated",
+  "tool": "firecrawl_interact_stop",
+  "recorded": "write",
+  "advertised": true,
+  "before": "write"
+ },
+ {
+  "entry": "firecrawl-authenticated",
+  "tool": "firecrawl_map",
+  "recorded": null,
+  "advertised": true,
+  "before": "read"
+ },
+ {
+  "entry": "firecrawl-authenticated",
+  "tool": "firecrawl_map",
+  "recorded": "read",
+  "advertised": true,
+  "before": "read"
+ },
+ {
+  "entry": "firecrawl-authenticated",
+  "tool": "firecrawl_map",
+  "recorded": "write",
+  "advertised": true,
+  "before": "write"
+ },
+ {
+  "entry": "firecrawl-authenticated",
+  "tool": "firecrawl_parse",
+  "recorded": null,
+  "advertised": true,
+  "before": "read"
+ },
+ {
+  "entry": "firecrawl-authenticated",
+  "tool": "firecrawl_parse",
+  "recorded": "read",
+  "advertised": true,
+  "before": "read"
+ },
+ {
+  "entry": "firecrawl-authenticated",
+  "tool": "firecrawl_parse",
+  "recorded": "write",
+  "advertised": true,
+  "before": "write"
+ },
+ {
+  "entry": "firecrawl-authenticated",
+  "tool": "firecrawl_scrape",
+  "recorded": null,
+  "advertised": true,
+  "before": "read"
+ },
+ {
+  "entry": "firecrawl-authenticated",
+  "tool": "firecrawl_scrape",
+  "recorded": "read",
+  "advertised": true,
+  "before": "read"
+ },
+ {
+  "entry": "firecrawl-authenticated",
+  "tool": "firecrawl_scrape",
+  "recorded": "write",
+  "advertised": true,
+  "before": "write"
+ },
+ {
+  "entry": "firecrawl-authenticated",
+  "tool": "firecrawl_search",
+  "recorded": null,
+  "advertised": true,
+  "before": "read"
+ },
+ {
+  "entry": "firecrawl-authenticated",
+  "tool": "firecrawl_search",
+  "recorded": "read",
+  "advertised": true,
+  "before": "read"
+ },
+ {
+  "entry": "firecrawl-authenticated",
+  "tool": "firecrawl_search",
+  "recorded": "write",
+  "advertised": true,
+  "before": "write"
+ },
+ {
+  "entry": "firecrawl-authenticated",
+  "tool": "firecrawl_search_feedback",
+  "recorded": null,
+  "advertised": true,
+  "before": "write"
+ },
+ {
+  "entry": "firecrawl-authenticated",
+  "tool": "firecrawl_search_feedback",
+  "recorded": "read",
+  "advertised": true,
+  "before": "write"
+ },
+ {
+  "entry": "firecrawl-authenticated",
+  "tool": "firecrawl_search_feedback",
+  "recorded": "write",
+  "advertised": true,
+  "before": "write"
+ },
+ {
+  "entry": "firecrawl-authenticated",
+  "tool": "zz_unlisted_tool",
+  "recorded": null,
+  "advertised": true,
+  "before": "write"
+ },
+ {
+  "entry": "firecrawl-authenticated",
+  "tool": "zz_unlisted_tool",
+  "recorded": "read",
+  "advertised": true,
+  "before": "write"
+ },
+ {
+  "entry": "firecrawl-authenticated",
+  "tool": "zz_unlisted_tool",
+  "recorded": "write",
+  "advertised": true,
+  "before": "write"
+ },
+ {
+  "entry": "firecrawl-authenticated",
+  "tool": "zz_unlisted_tool",
+  "recorded": null,
+  "advertised": false,
+  "before": "write"
+ },
+ {
+  "entry": "google-drive",
+  "tool": "copy_file",
+  "recorded": null,
+  "advertised": true,
+  "before": "write"
+ },
+ {
+  "entry": "google-drive",
+  "tool": "copy_file",
+  "recorded": "read",
+  "advertised": true,
+  "before": "write"
+ },
+ {
+  "entry": "google-drive",
+  "tool": "copy_file",
+  "recorded": "write",
+  "advertised": true,
+  "before": "write"
+ },
+ {
+  "entry": "google-drive",
+  "tool": "create_file",
+  "recorded": null,
+  "advertised": true,
+  "before": "write"
+ },
+ {
+  "entry": "google-drive",
+  "tool": "create_file",
+  "recorded": "read",
+  "advertised": true,
+  "before": "write"
+ },
+ {
+  "entry": "google-drive",
+  "tool": "create_file",
+  "recorded": "write",
+  "advertised": true,
+  "before": "write"
+ },
+ {
+  "entry": "google-drive",
+  "tool": "download_file_content",
+  "recorded": null,
+  "advertised": true,
+  "before": "read"
+ },
+ {
+  "entry": "google-drive",
+  "tool": "download_file_content",
+  "recorded": "read",
+  "advertised": true,
+  "before": "read"
+ },
+ {
+  "entry": "google-drive",
+  "tool": "download_file_content",
+  "recorded": "write",
+  "advertised": true,
+  "before": "write"
+ },
+ {
+  "entry": "google-drive",
+  "tool": "get_file_metadata",
+  "recorded": null,
+  "advertised": true,
+  "before": "read"
+ },
+ {
+  "entry": "google-drive",
+  "tool": "get_file_metadata",
+  "recorded": "read",
+  "advertised": true,
+  "before": "read"
+ },
+ {
+  "entry": "google-drive",
+  "tool": "get_file_metadata",
+  "recorded": "write",
+  "advertised": true,
+  "before": "write"
+ },
+ {
+  "entry": "google-drive",
+  "tool": "get_file_permissions",
+  "recorded": null,
+  "advertised": true,
+  "before": "read"
+ },
+ {
+  "entry": "google-drive",
+  "tool": "get_file_permissions",
+  "recorded": "read",
+  "advertised": true,
+  "before": "read"
+ },
+ {
+  "entry": "google-drive",
+  "tool": "get_file_permissions",
+  "recorded": "write",
+  "advertised": true,
+  "before": "write"
+ },
+ {
+  "entry": "google-drive",
+  "tool": "get_shared_drive_metadata",
+  "recorded": null,
+  "advertised": true,
+  "before": "read"
+ },
+ {
+  "entry": "google-drive",
+  "tool": "get_shared_drive_metadata",
+  "recorded": "read",
+  "advertised": true,
+  "before": "read"
+ },
+ {
+  "entry": "google-drive",
+  "tool": "get_shared_drive_metadata",
+  "recorded": "write",
+  "advertised": true,
+  "before": "write"
+ },
+ {
+  "entry": "google-drive",
+  "tool": "list_file_revisions",
+  "recorded": null,
+  "advertised": true,
+  "before": "read"
+ },
+ {
+  "entry": "google-drive",
+  "tool": "list_file_revisions",
+  "recorded": "read",
+  "advertised": true,
+  "before": "read"
+ },
+ {
+  "entry": "google-drive",
+  "tool": "list_file_revisions",
+  "recorded": "write",
+  "advertised": true,
+  "before": "write"
+ },
+ {
+  "entry": "google-drive",
+  "tool": "list_recent_files",
+  "recorded": null,
+  "advertised": true,
+  "before": "read"
+ },
+ {
+  "entry": "google-drive",
+  "tool": "list_recent_files",
+  "recorded": "read",
+  "advertised": true,
+  "before": "read"
+ },
+ {
+  "entry": "google-drive",
+  "tool": "list_recent_files",
+  "recorded": "write",
+  "advertised": true,
+  "before": "write"
+ },
+ {
+  "entry": "google-drive",
+  "tool": "list_shared_drives",
+  "recorded": null,
+  "advertised": true,
+  "before": "read"
+ },
+ {
+  "entry": "google-drive",
+  "tool": "list_shared_drives",
+  "recorded": "read",
+  "advertised": true,
+  "before": "read"
+ },
+ {
+  "entry": "google-drive",
+  "tool": "list_shared_drives",
+  "recorded": "write",
+  "advertised": true,
+  "before": "write"
+ },
+ {
+  "entry": "google-drive",
+  "tool": "read_file_content",
+  "recorded": null,
+  "advertised": true,
+  "before": "read"
+ },
+ {
+  "entry": "google-drive",
+  "tool": "read_file_content",
+  "recorded": "read",
+  "advertised": true,
+  "before": "read"
+ },
+ {
+  "entry": "google-drive",
+  "tool": "read_file_content",
+  "recorded": "write",
+  "advertised": true,
+  "before": "write"
+ },
+ {
+  "entry": "google-drive",
+  "tool": "search_files",
+  "recorded": null,
+  "advertised": true,
+  "before": "read"
+ },
+ {
+  "entry": "google-drive",
+  "tool": "search_files",
+  "recorded": "read",
+  "advertised": true,
+  "before": "read"
+ },
+ {
+  "entry": "google-drive",
+  "tool": "search_files",
+  "recorded": "write",
+  "advertised": true,
+  "before": "write"
+ },
+ {
+  "entry": "google-drive",
+  "tool": "share_file",
+  "recorded": null,
+  "advertised": true,
+  "before": "read"
+ },
+ {
+  "entry": "google-drive",
+  "tool": "share_file",
+  "recorded": "read",
+  "advertised": true,
+  "before": "read"
+ },
+ {
+  "entry": "google-drive",
+  "tool": "share_file",
+  "recorded": "write",
+  "advertised": true,
+  "before": "write"
+ },
+ {
+  "entry": "google-drive",
+  "tool": "trash_file",
+  "recorded": null,
+  "advertised": true,
+  "before": "read"
+ },
+ {
+  "entry": "google-drive",
+  "tool": "trash_file",
+  "recorded": "read",
+  "advertised": true,
+  "before": "read"
+ },
+ {
+  "entry": "google-drive",
+  "tool": "trash_file",
+  "recorded": "write",
+  "advertised": true,
+  "before": "write"
+ },
+ {
+  "entry": "google-drive",
+  "tool": "update_file",
+  "recorded": null,
+  "advertised": true,
+  "before": "read"
+ },
+ {
+  "entry": "google-drive",
+  "tool": "update_file",
+  "recorded": "read",
+  "advertised": true,
+  "before": "read"
+ },
+ {
+  "entry": "google-drive",
+  "tool": "update_file",
+  "recorded": "write",
+  "advertised": true,
+  "before": "write"
+ },
+ {
+  "entry": "google-drive",
+  "tool": "zz_unlisted_tool",
+  "recorded": null,
+  "advertised": true,
+  "before": "read"
+ },
+ {
+  "entry": "google-drive",
+  "tool": "zz_unlisted_tool",
+  "recorded": "read",
+  "advertised": true,
+  "before": "read"
+ },
+ {
+  "entry": "google-drive",
+  "tool": "zz_unlisted_tool",
+  "recorded": "write",
+  "advertised": true,
+  "before": "write"
+ },
+ {
+  "entry": "google-drive",
+  "tool": "zz_unlisted_tool",
+  "recorded": null,
+  "advertised": false,
+  "before": "write"
+ },
+ {
+  "entry": "google-workspace",
+  "tool": "calendar_list_events",
+  "recorded": null,
+  "advertised": true,
+  "before": "read"
+ },
+ {
+  "entry": "google-workspace",
+  "tool": "calendar_list_events",
+  "recorded": "read",
+  "advertised": true,
+  "before": "read"
+ },
+ {
+  "entry": "google-workspace",
+  "tool": "calendar_list_events",
+  "recorded": "write",
+  "advertised": true,
+  "before": "write"
+ },
+ {
+  "entry": "google-workspace",
+  "tool": "gmail_read_message",
+  "recorded": null,
+  "advertised": true,
+  "before": "read"
+ },
+ {
+  "entry": "google-workspace",
+  "tool": "gmail_read_message",
+  "recorded": "read",
+  "advertised": true,
+  "before": "read"
+ },
+ {
+  "entry": "google-workspace",
+  "tool": "gmail_read_message",
+  "recorded": "write",
+  "advertised": true,
+  "before": "write"
+ },
+ {
+  "entry": "google-workspace",
+  "tool": "gmail_search_messages",
+  "recorded": null,
+  "advertised": true,
+  "before": "read"
+ },
+ {
+  "entry": "google-workspace",
+  "tool": "gmail_search_messages",
+  "recorded": "read",
+  "advertised": true,
+  "before": "read"
+ },
+ {
+  "entry": "google-workspace",
+  "tool": "gmail_search_messages",
+  "recorded": "write",
+  "advertised": true,
+  "before": "write"
+ },
+ {
+  "entry": "google-workspace",
+  "tool": "gmail_send_message",
+  "recorded": null,
+  "advertised": true,
+  "before": "write"
+ },
+ {
+  "entry": "google-workspace",
+  "tool": "gmail_send_message",
+  "recorded": "read",
+  "advertised": true,
+  "before": "write"
+ },
+ {
+  "entry": "google-workspace",
+  "tool": "gmail_send_message",
+  "recorded": "write",
+  "advertised": true,
+  "before": "write"
+ },
+ {
+  "entry": "google-workspace",
+  "tool": "gmail_send_reply",
+  "recorded": null,
+  "advertised": true,
+  "before": "write"
+ },
+ {
+  "entry": "google-workspace",
+  "tool": "gmail_send_reply",
+  "recorded": "read",
+  "advertised": true,
+  "before": "write"
+ },
+ {
+  "entry": "google-workspace",
+  "tool": "gmail_send_reply",
+  "recorded": "write",
+  "advertised": true,
+  "before": "write"
+ },
+ {
+  "entry": "google-workspace",
+  "tool": "zz_unlisted_tool",
+  "recorded": null,
+  "advertised": true,
+  "before": "write"
+ },
+ {
+  "entry": "google-workspace",
+  "tool": "zz_unlisted_tool",
+  "recorded": "read",
+  "advertised": true,
+  "before": "write"
+ },
+ {
+  "entry": "google-workspace",
+  "tool": "zz_unlisted_tool",
+  "recorded": "write",
+  "advertised": true,
+  "before": "write"
+ },
+ {
+  "entry": "google-workspace",
+  "tool": "zz_unlisted_tool",
+  "recorded": null,
+  "advertised": false,
+  "before": "write"
+ },
+ {
+  "entry": "google-imap",
+  "tool": "calendar_list_events",
+  "recorded": null,
+  "advertised": true,
+  "before": "read"
+ },
+ {
+  "entry": "google-imap",
+  "tool": "calendar_list_events",
+  "recorded": "read",
+  "advertised": true,
+  "before": "read"
+ },
+ {
+  "entry": "google-imap",
+  "tool": "calendar_list_events",
+  "recorded": "write",
+  "advertised": true,
+  "before": "write"
+ },
+ {
+  "entry": "google-imap",
+  "tool": "gmail_read_message",
+  "recorded": null,
+  "advertised": true,
+  "before": "read"
+ },
+ {
+  "entry": "google-imap",
+  "tool": "gmail_read_message",
+  "recorded": "read",
+  "advertised": true,
+  "before": "read"
+ },
+ {
+  "entry": "google-imap",
+  "tool": "gmail_read_message",
+  "recorded": "write",
+  "advertised": true,
+  "before": "write"
+ },
+ {
+  "entry": "google-imap",
+  "tool": "gmail_search_messages",
+  "recorded": null,
+  "advertised": true,
+  "before": "read"
+ },
+ {
+  "entry": "google-imap",
+  "tool": "gmail_search_messages",
+  "recorded": "read",
+  "advertised": true,
+  "before": "read"
+ },
+ {
+  "entry": "google-imap",
+  "tool": "gmail_search_messages",
+  "recorded": "write",
+  "advertised": true,
+  "before": "write"
+ },
+ {
+  "entry": "google-imap",
+  "tool": "gmail_send_message",
+  "recorded": null,
+  "advertised": true,
+  "before": "write"
+ },
+ {
+  "entry": "google-imap",
+  "tool": "gmail_send_message",
+  "recorded": "read",
+  "advertised": true,
+  "before": "write"
+ },
+ {
+  "entry": "google-imap",
+  "tool": "gmail_send_message",
+  "recorded": "write",
+  "advertised": true,
+  "before": "write"
+ },
+ {
+  "entry": "google-imap",
+  "tool": "gmail_send_reply",
+  "recorded": null,
+  "advertised": true,
+  "before": "write"
+ },
+ {
+  "entry": "google-imap",
+  "tool": "gmail_send_reply",
+  "recorded": "read",
+  "advertised": true,
+  "before": "write"
+ },
+ {
+  "entry": "google-imap",
+  "tool": "gmail_send_reply",
+  "recorded": "write",
+  "advertised": true,
+  "before": "write"
+ },
+ {
+  "entry": "google-imap",
+  "tool": "zz_unlisted_tool",
+  "recorded": null,
+  "advertised": true,
+  "before": "write"
+ },
+ {
+  "entry": "google-imap",
+  "tool": "zz_unlisted_tool",
+  "recorded": "read",
+  "advertised": true,
+  "before": "write"
+ },
+ {
+  "entry": "google-imap",
+  "tool": "zz_unlisted_tool",
+  "recorded": "write",
+  "advertised": true,
+  "before": "write"
+ },
+ {
+  "entry": "google-imap",
+  "tool": "zz_unlisted_tool",
+  "recorded": null,
+  "advertised": false,
+  "before": "write"
+ },
+ {
+  "entry": "notion",
+  "tool": "notion-connector-search",
+  "recorded": null,
+  "advertised": true,
+  "before": "read"
+ },
+ {
+  "entry": "notion",
+  "tool": "notion-connector-search",
+  "recorded": "read",
+  "advertised": true,
+  "before": "read"
+ },
+ {
+  "entry": "notion",
+  "tool": "notion-connector-search",
+  "recorded": "write",
+  "advertised": true,
+  "before": "write"
+ },
+ {
+  "entry": "notion",
+  "tool": "notion-convert-page-to-skill",
+  "recorded": null,
+  "advertised": true,
+  "before": "write"
+ },
+ {
+  "entry": "notion",
+  "tool": "notion-convert-page-to-skill",
+  "recorded": "read",
+  "advertised": true,
+  "before": "write"
+ },
+ {
+  "entry": "notion",
+  "tool": "notion-convert-page-to-skill",
+  "recorded": "write",
+  "advertised": true,
+  "before": "write"
+ },
+ {
+  "entry": "notion",
+  "tool": "notion-create-attachment",
+  "recorded": null,
+  "advertised": true,
+  "before": "write"
+ },
+ {
+  "entry": "notion",
+  "tool": "notion-create-attachment",
+  "recorded": "read",
+  "advertised": true,
+  "before": "write"
+ },
+ {
+  "entry": "notion",
+  "tool": "notion-create-attachment",
+  "recorded": "write",
+  "advertised": true,
+  "before": "write"
+ },
+ {
+  "entry": "notion",
+  "tool": "notion-create-comment",
+  "recorded": null,
+  "advertised": true,
+  "before": "write"
+ },
+ {
+  "entry": "notion",
+  "tool": "notion-create-comment",
+  "recorded": "read",
+  "advertised": true,
+  "before": "write"
+ },
+ {
+  "entry": "notion",
+  "tool": "notion-create-comment",
+  "recorded": "write",
+  "advertised": true,
+  "before": "write"
+ },
+ {
+  "entry": "notion",
+  "tool": "notion-create-database",
+  "recorded": null,
+  "advertised": true,
+  "before": "write"
+ },
+ {
+  "entry": "notion",
+  "tool": "notion-create-database",
+  "recorded": "read",
+  "advertised": true,
+  "before": "write"
+ },
+ {
+  "entry": "notion",
+  "tool": "notion-create-database",
+  "recorded": "write",
+  "advertised": true,
+  "before": "write"
+ },
+ {
+  "entry": "notion",
+  "tool": "notion-create-file-upload",
+  "recorded": null,
+  "advertised": true,
+  "before": "write"
+ },
+ {
+  "entry": "notion",
+  "tool": "notion-create-file-upload",
+  "recorded": "read",
+  "advertised": true,
+  "before": "write"
+ },
+ {
+  "entry": "notion",
+  "tool": "notion-create-file-upload",
+  "recorded": "write",
+  "advertised": true,
+  "before": "write"
+ },
+ {
+  "entry": "notion",
+  "tool": "notion-create-folder",
+  "recorded": null,
+  "advertised": true,
+  "before": "write"
+ },
+ {
+  "entry": "notion",
+  "tool": "notion-create-folder",
+  "recorded": "read",
+  "advertised": true,
+  "before": "write"
+ },
+ {
+  "entry": "notion",
+  "tool": "notion-create-folder",
+  "recorded": "write",
+  "advertised": true,
+  "before": "write"
+ },
+ {
+  "entry": "notion",
+  "tool": "notion-create-pages",
+  "recorded": null,
+  "advertised": true,
+  "before": "write"
+ },
+ {
+  "entry": "notion",
+  "tool": "notion-create-pages",
+  "recorded": "read",
+  "advertised": true,
+  "before": "write"
+ },
+ {
+  "entry": "notion",
+  "tool": "notion-create-pages",
+  "recorded": "write",
+  "advertised": true,
+  "before": "write"
+ },
+ {
+  "entry": "notion",
+  "tool": "notion-create-suggested-edit",
+  "recorded": null,
+  "advertised": true,
+  "before": "read"
+ },
+ {
+  "entry": "notion",
+  "tool": "notion-create-suggested-edit",
+  "recorded": "read",
+  "advertised": true,
+  "before": "read"
+ },
+ {
+  "entry": "notion",
+  "tool": "notion-create-suggested-edit",
+  "recorded": "write",
+  "advertised": true,
+  "before": "write"
+ },
+ {
+  "entry": "notion",
+  "tool": "notion-create-view",
+  "recorded": null,
+  "advertised": true,
+  "before": "write"
+ },
+ {
+  "entry": "notion",
+  "tool": "notion-create-view",
+  "recorded": "read",
+  "advertised": true,
+  "before": "write"
+ },
+ {
+  "entry": "notion",
+  "tool": "notion-create-view",
+  "recorded": "write",
+  "advertised": true,
+  "before": "write"
+ },
+ {
+  "entry": "notion",
+  "tool": "notion-delete-comment",
+  "recorded": null,
+  "advertised": true,
+  "before": "read"
+ },
+ {
+  "entry": "notion",
+  "tool": "notion-delete-comment",
+  "recorded": "read",
+  "advertised": true,
+  "before": "read"
+ },
+ {
+  "entry": "notion",
+  "tool": "notion-delete-comment",
+  "recorded": "write",
+  "advertised": true,
+  "before": "write"
+ },
+ {
+  "entry": "notion",
+  "tool": "notion-delete-databases",
+  "recorded": null,
+  "advertised": true,
+  "before": "read"
+ },
+ {
+  "entry": "notion",
+  "tool": "notion-delete-databases",
+  "recorded": "read",
+  "advertised": true,
+  "before": "read"
+ },
+ {
+  "entry": "notion",
+  "tool": "notion-delete-databases",
+  "recorded": "write",
+  "advertised": true,
+  "before": "write"
+ },
+ {
+  "entry": "notion",
+  "tool": "notion-delete-pages",
+  "recorded": null,
+  "advertised": true,
+  "before": "read"
+ },
+ {
+  "entry": "notion",
+  "tool": "notion-delete-pages",
+  "recorded": "read",
+  "advertised": true,
+  "before": "read"
+ },
+ {
+  "entry": "notion",
+  "tool": "notion-delete-pages",
+  "recorded": "write",
+  "advertised": true,
+  "before": "write"
+ },
+ {
+  "entry": "notion",
+  "tool": "notion-download-attachment",
+  "recorded": null,
+  "advertised": true,
+  "before": "read"
+ },
+ {
+  "entry": "notion",
+  "tool": "notion-download-attachment",
+  "recorded": "read",
+  "advertised": true,
+  "before": "read"
+ },
+ {
+  "entry": "notion",
+  "tool": "notion-download-attachment",
+  "recorded": "write",
+  "advertised": true,
+  "before": "write"
+ },
+ {
+  "entry": "notion",
+  "tool": "notion-duplicate-page",
+  "recorded": null,
+  "advertised": true,
+  "before": "write"
+ },
+ {
+  "entry": "notion",
+  "tool": "notion-duplicate-page",
+  "recorded": "read",
+  "advertised": true,
+  "before": "write"
+ },
+ {
+  "entry": "notion",
+  "tool": "notion-duplicate-page",
+  "recorded": "write",
+  "advertised": true,
+  "before": "write"
+ },
+ {
+  "entry": "notion",
+  "tool": "notion-fetch",
+  "recorded": null,
+  "advertised": true,
+  "before": "read"
+ },
+ {
+  "entry": "notion",
+  "tool": "notion-fetch",
+  "recorded": "read",
+  "advertised": true,
+  "before": "read"
+ },
+ {
+  "entry": "notion",
+  "tool": "notion-fetch",
+  "recorded": "write",
+  "advertised": true,
+  "before": "write"
+ },
+ {
+  "entry": "notion",
+  "tool": "notion-get-comments",
+  "recorded": null,
+  "advertised": true,
+  "before": "read"
+ },
+ {
+  "entry": "notion",
+  "tool": "notion-get-comments",
+  "recorded": "read",
+  "advertised": true,
+  "before": "read"
+ },
+ {
+  "entry": "notion",
+  "tool": "notion-get-comments",
+  "recorded": "write",
+  "advertised": true,
+  "before": "write"
+ },
+ {
+  "entry": "notion",
+  "tool": "notion-get-file-download-urls",
+  "recorded": null,
+  "advertised": true,
+  "before": "read"
+ },
+ {
+  "entry": "notion",
+  "tool": "notion-get-file-download-urls",
+  "recorded": "read",
+  "advertised": true,
+  "before": "read"
+ },
+ {
+  "entry": "notion",
+  "tool": "notion-get-file-download-urls",
+  "recorded": "write",
+  "advertised": true,
+  "before": "write"
+ },
+ {
+  "entry": "notion",
+  "tool": "notion-get-self",
+  "recorded": null,
+  "advertised": true,
+  "before": "read"
+ },
+ {
+  "entry": "notion",
+  "tool": "notion-get-self",
+  "recorded": "read",
+  "advertised": true,
+  "before": "read"
+ },
+ {
+  "entry": "notion",
+  "tool": "notion-get-self",
+  "recorded": "write",
+  "advertised": true,
+  "before": "write"
+ },
+ {
+  "entry": "notion",
+  "tool": "notion-get-suggested-edit",
+  "recorded": null,
+  "advertised": true,
+  "before": "read"
+ },
+ {
+  "entry": "notion",
+  "tool": "notion-get-suggested-edit",
+  "recorded": "read",
+  "advertised": true,
+  "before": "read"
+ },
+ {
+  "entry": "notion",
+  "tool": "notion-get-suggested-edit",
+  "recorded": "write",
+  "advertised": true,
+  "before": "write"
+ },
+ {
+  "entry": "notion",
+  "tool": "notion-get-teams",
+  "recorded": null,
+  "advertised": true,
+  "before": "read"
+ },
+ {
+  "entry": "notion",
+  "tool": "notion-get-teams",
+  "recorded": "read",
+  "advertised": true,
+  "before": "read"
+ },
+ {
+  "entry": "notion",
+  "tool": "notion-get-teams",
+  "recorded": "write",
+  "advertised": true,
+  "before": "write"
+ },
+ {
+  "entry": "notion",
+  "tool": "notion-get-users",
+  "recorded": null,
+  "advertised": true,
+  "before": "read"
+ },
+ {
+  "entry": "notion",
+  "tool": "notion-get-users",
+  "recorded": "read",
+  "advertised": true,
+  "before": "read"
+ },
+ {
+  "entry": "notion",
+  "tool": "notion-get-users",
+  "recorded": "write",
+  "advertised": true,
+  "before": "write"
+ },
+ {
+  "entry": "notion",
+  "tool": "notion-get-version-changes",
+  "recorded": null,
+  "advertised": true,
+  "before": "read"
+ },
+ {
+  "entry": "notion",
+  "tool": "notion-get-version-changes",
+  "recorded": "read",
+  "advertised": true,
+  "before": "read"
+ },
+ {
+  "entry": "notion",
+  "tool": "notion-get-version-changes",
+  "recorded": "write",
+  "advertised": true,
+  "before": "write"
+ },
+ {
+  "entry": "notion",
+  "tool": "notion-list-private-pages",
+  "recorded": null,
+  "advertised": true,
+  "before": "read"
+ },
+ {
+  "entry": "notion",
+  "tool": "notion-list-private-pages",
+  "recorded": "read",
+  "advertised": true,
+  "before": "read"
+ },
+ {
+  "entry": "notion",
+  "tool": "notion-list-private-pages",
+  "recorded": "write",
+  "advertised": true,
+  "before": "write"
+ },
+ {
+  "entry": "notion",
+  "tool": "notion-list-recent-pages",
+  "recorded": null,
+  "advertised": true,
+  "before": "read"
+ },
+ {
+  "entry": "notion",
+  "tool": "notion-list-recent-pages",
+  "recorded": "read",
+  "advertised": true,
+  "before": "read"
+ },
+ {
+  "entry": "notion",
+  "tool": "notion-list-recent-pages",
+  "recorded": "write",
+  "advertised": true,
+  "before": "write"
+ },
+ {
+  "entry": "notion",
+  "tool": "notion-list-shared-pages",
+  "recorded": null,
+  "advertised": true,
+  "before": "read"
+ },
+ {
+  "entry": "notion",
+  "tool": "notion-list-shared-pages",
+  "recorded": "read",
+  "advertised": true,
+  "before": "read"
+ },
+ {
+  "entry": "notion",
+  "tool": "notion-list-shared-pages",
+  "recorded": "write",
+  "advertised": true,
+  "before": "write"
+ },
+ {
+  "entry": "notion",
+  "tool": "notion-move-pages",
+  "recorded": null,
+  "advertised": true,
+  "before": "write"
+ },
+ {
+  "entry": "notion",
+  "tool": "notion-move-pages",
+  "recorded": "read",
+  "advertised": true,
+  "before": "write"
+ },
+ {
+  "entry": "notion",
+  "tool": "notion-move-pages",
+  "recorded": "write",
+  "advertised": true,
+  "before": "write"
+ },
+ {
+  "entry": "notion",
+  "tool": "notion-query-data-sources",
+  "recorded": null,
+  "advertised": true,
+  "before": "read"
+ },
+ {
+  "entry": "notion",
+  "tool": "notion-query-data-sources",
+  "recorded": "read",
+  "advertised": true,
+  "before": "read"
+ },
+ {
+  "entry": "notion",
+  "tool": "notion-query-data-sources",
+  "recorded": "write",
+  "advertised": true,
+  "before": "write"
+ },
+ {
+  "entry": "notion",
+  "tool": "notion-resolve-suggested-edit",
+  "recorded": null,
+  "advertised": true,
+  "before": "read"
+ },
+ {
+  "entry": "notion",
+  "tool": "notion-resolve-suggested-edit",
+  "recorded": "read",
+  "advertised": true,
+  "before": "read"
+ },
+ {
+  "entry": "notion",
+  "tool": "notion-resolve-suggested-edit",
+  "recorded": "write",
+  "advertised": true,
+  "before": "write"
+ },
+ {
+  "entry": "notion",
+  "tool": "notion-restore-pages",
+  "recorded": null,
+  "advertised": true,
+  "before": "read"
+ },
+ {
+  "entry": "notion",
+  "tool": "notion-restore-pages",
+  "recorded": "read",
+  "advertised": true,
+  "before": "read"
+ },
+ {
+  "entry": "notion",
+  "tool": "notion-restore-pages",
+  "recorded": "write",
+  "advertised": true,
+  "before": "write"
+ },
+ {
+  "entry": "notion",
+  "tool": "notion-restore-version",
+  "recorded": null,
+  "advertised": true,
+  "before": "read"
+ },
+ {
+  "entry": "notion",
+  "tool": "notion-restore-version",
+  "recorded": "read",
+  "advertised": true,
+  "before": "read"
+ },
+ {
+  "entry": "notion",
+  "tool": "notion-restore-version",
+  "recorded": "write",
+  "advertised": true,
+  "before": "write"
+ },
+ {
+  "entry": "notion",
+  "tool": "notion-search",
+  "recorded": null,
+  "advertised": true,
+  "before": "read"
+ },
+ {
+  "entry": "notion",
+  "tool": "notion-search",
+  "recorded": "read",
+  "advertised": true,
+  "before": "read"
+ },
+ {
+  "entry": "notion",
+  "tool": "notion-search",
+  "recorded": "write",
+  "advertised": true,
+  "before": "write"
+ },
+ {
+  "entry": "notion",
+  "tool": "notion-set-comment-reaction",
+  "recorded": null,
+  "advertised": true,
+  "before": "read"
+ },
+ {
+  "entry": "notion",
+  "tool": "notion-set-comment-reaction",
+  "recorded": "read",
+  "advertised": true,
+  "before": "read"
+ },
+ {
+  "entry": "notion",
+  "tool": "notion-set-comment-reaction",
+  "recorded": "write",
+  "advertised": true,
+  "before": "write"
+ },
+ {
+  "entry": "notion",
+  "tool": "notion-set-discussion-resolved",
+  "recorded": null,
+  "advertised": true,
+  "before": "read"
+ },
+ {
+  "entry": "notion",
+  "tool": "notion-set-discussion-resolved",
+  "recorded": "read",
+  "advertised": true,
+  "before": "read"
+ },
+ {
+  "entry": "notion",
+  "tool": "notion-set-discussion-resolved",
+  "recorded": "write",
+  "advertised": true,
+  "before": "write"
+ },
+ {
+  "entry": "notion",
+  "tool": "notion-update-comment",
+  "recorded": null,
+  "advertised": true,
+  "before": "read"
+ },
+ {
+  "entry": "notion",
+  "tool": "notion-update-comment",
+  "recorded": "read",
+  "advertised": true,
+  "before": "read"
+ },
+ {
+  "entry": "notion",
+  "tool": "notion-update-comment",
+  "recorded": "write",
+  "advertised": true,
+  "before": "write"
+ },
+ {
+  "entry": "notion",
+  "tool": "notion-update-data-source",
+  "recorded": null,
+  "advertised": true,
+  "before": "write"
+ },
+ {
+  "entry": "notion",
+  "tool": "notion-update-data-source",
+  "recorded": "read",
+  "advertised": true,
+  "before": "write"
+ },
+ {
+  "entry": "notion",
+  "tool": "notion-update-data-source",
+  "recorded": "write",
+  "advertised": true,
+  "before": "write"
+ },
+ {
+  "entry": "notion",
+  "tool": "notion-update-folder",
+  "recorded": null,
+  "advertised": true,
+  "before": "write"
+ },
+ {
+  "entry": "notion",
+  "tool": "notion-update-folder",
+  "recorded": "read",
+  "advertised": true,
+  "before": "write"
+ },
+ {
+  "entry": "notion",
+  "tool": "notion-update-folder",
+  "recorded": "write",
+  "advertised": true,
+  "before": "write"
+ },
+ {
+  "entry": "notion",
+  "tool": "notion-update-page",
+  "recorded": null,
+  "advertised": true,
+  "before": "write"
+ },
+ {
+  "entry": "notion",
+  "tool": "notion-update-page",
+  "recorded": "read",
+  "advertised": true,
+  "before": "write"
+ },
+ {
+  "entry": "notion",
+  "tool": "notion-update-page",
+  "recorded": "write",
+  "advertised": true,
+  "before": "write"
+ },
+ {
+  "entry": "notion",
+  "tool": "notion-update-view",
+  "recorded": null,
+  "advertised": true,
+  "before": "write"
+ },
+ {
+  "entry": "notion",
+  "tool": "notion-update-view",
+  "recorded": "read",
+  "advertised": true,
+  "before": "write"
+ },
+ {
+  "entry": "notion",
+  "tool": "notion-update-view",
+  "recorded": "write",
+  "advertised": true,
+  "before": "write"
+ },
+ {
+  "entry": "notion",
+  "tool": "notion-view-version",
+  "recorded": null,
+  "advertised": true,
+  "before": "read"
+ },
+ {
+  "entry": "notion",
+  "tool": "notion-view-version",
+  "recorded": "read",
+  "advertised": true,
+  "before": "read"
+ },
+ {
+  "entry": "notion",
+  "tool": "notion-view-version",
+  "recorded": "write",
+  "advertised": true,
+  "before": "write"
+ },
+ {
+  "entry": "notion",
+  "tool": "zz_unlisted_tool",
+  "recorded": null,
+  "advertised": true,
+  "before": "read"
+ },
+ {
+  "entry": "notion",
+  "tool": "zz_unlisted_tool",
+  "recorded": "read",
+  "advertised": true,
+  "before": "read"
+ },
+ {
+  "entry": "notion",
+  "tool": "zz_unlisted_tool",
+  "recorded": "write",
+  "advertised": true,
+  "before": "write"
+ },
+ {
+  "entry": "notion",
+  "tool": "zz_unlisted_tool",
+  "recorded": null,
+  "advertised": false,
+  "before": "write"
+ },
+ {
+  "entry": "routines",
+  "tool": "create_routine",
+  "recorded": null,
+  "advertised": true,
+  "before": "write"
+ },
+ {
+  "entry": "routines",
+  "tool": "create_routine",
+  "recorded": "read",
+  "advertised": true,
+  "before": "write"
+ },
+ {
+  "entry": "routines",
+  "tool": "create_routine",
+  "recorded": "write",
+  "advertised": true,
+  "before": "write"
+ },
+ {
+  "entry": "routines",
+  "tool": "create_trigger",
+  "recorded": null,
+  "advertised": true,
+  "before": "write"
+ },
+ {
+  "entry": "routines",
+  "tool": "create_trigger",
+  "recorded": "read",
+  "advertised": true,
+  "before": "write"
+ },
+ {
+  "entry": "routines",
+  "tool": "create_trigger",
+  "recorded": "write",
+  "advertised": true,
+  "before": "write"
+ },
+ {
+  "entry": "routines",
+  "tool": "delete_routine",
+  "recorded": null,
+  "advertised": true,
+  "before": "write"
+ },
+ {
+  "entry": "routines",
+  "tool": "delete_routine",
+  "recorded": "read",
+  "advertised": true,
+  "before": "write"
+ },
+ {
+  "entry": "routines",
+  "tool": "delete_routine",
+  "recorded": "write",
+  "advertised": true,
+  "before": "write"
+ },
+ {
+  "entry": "routines",
+  "tool": "delete_trigger",
+  "recorded": null,
+  "advertised": true,
+  "before": "write"
+ },
+ {
+  "entry": "routines",
+  "tool": "delete_trigger",
+  "recorded": "read",
+  "advertised": true,
+  "before": "write"
+ },
+ {
+  "entry": "routines",
+  "tool": "delete_trigger",
+  "recorded": "write",
+  "advertised": true,
+  "before": "write"
+ },
+ {
+  "entry": "routines",
+  "tool": "list_routines",
+  "recorded": null,
+  "advertised": true,
+  "before": "read"
+ },
+ {
+  "entry": "routines",
+  "tool": "list_routines",
+  "recorded": "read",
+  "advertised": true,
+  "before": "read"
+ },
+ {
+  "entry": "routines",
+  "tool": "list_routines",
+  "recorded": "write",
+  "advertised": true,
+  "before": "write"
+ },
+ {
+  "entry": "routines",
+  "tool": "list_triggers",
+  "recorded": null,
+  "advertised": true,
+  "before": "read"
+ },
+ {
+  "entry": "routines",
+  "tool": "list_triggers",
+  "recorded": "read",
+  "advertised": true,
+  "before": "read"
+ },
+ {
+  "entry": "routines",
+  "tool": "list_triggers",
+  "recorded": "write",
+  "advertised": true,
+  "before": "write"
+ },
+ {
+  "entry": "routines",
+  "tool": "pause_trigger",
+  "recorded": null,
+  "advertised": true,
+  "before": "write"
+ },
+ {
+  "entry": "routines",
+  "tool": "pause_trigger",
+  "recorded": "read",
+  "advertised": true,
+  "before": "write"
+ },
+ {
+  "entry": "routines",
+  "tool": "pause_trigger",
+  "recorded": "write",
+  "advertised": true,
+  "before": "write"
+ },
+ {
+  "entry": "routines",
+  "tool": "resume_trigger",
+  "recorded": null,
+  "advertised": true,
+  "before": "write"
+ },
+ {
+  "entry": "routines",
+  "tool": "resume_trigger",
+  "recorded": "read",
+  "advertised": true,
+  "before": "write"
+ },
+ {
+  "entry": "routines",
+  "tool": "resume_trigger",
+  "recorded": "write",
+  "advertised": true,
+  "before": "write"
+ },
+ {
+  "entry": "routines",
+  "tool": "run_routine_now",
+  "recorded": null,
+  "advertised": true,
+  "before": "read"
+ },
+ {
+  "entry": "routines",
+  "tool": "run_routine_now",
+  "recorded": "read",
+  "advertised": true,
+  "before": "read"
+ },
+ {
+  "entry": "routines",
+  "tool": "run_routine_now",
+  "recorded": "write",
+  "advertised": true,
+  "before": "write"
+ },
+ {
+  "entry": "routines",
+  "tool": "update_routine",
+  "recorded": null,
+  "advertised": true,
+  "before": "write"
+ },
+ {
+  "entry": "routines",
+  "tool": "update_routine",
+  "recorded": "read",
+  "advertised": true,
+  "before": "write"
+ },
+ {
+  "entry": "routines",
+  "tool": "update_routine",
+  "recorded": "write",
+  "advertised": true,
+  "before": "write"
+ },
+ {
+  "entry": "routines",
+  "tool": "zz_unlisted_tool",
+  "recorded": null,
+  "advertised": true,
+  "before": "read"
+ },
+ {
+  "entry": "routines",
+  "tool": "zz_unlisted_tool",
+  "recorded": "read",
+  "advertised": true,
+  "before": "read"
+ },
+ {
+  "entry": "routines",
+  "tool": "zz_unlisted_tool",
+  "recorded": "write",
+  "advertised": true,
+  "before": "write"
+ },
+ {
+  "entry": "routines",
+  "tool": "zz_unlisted_tool",
+  "recorded": null,
+  "advertised": false,
+  "before": "write"
+ },
+ {
+  "entry": null,
+  "tool": "GOOGLEDRIVE_LIST_FILES",
+  "recorded": null,
+  "advertised": true,
+  "before": "write"
+ },
+ {
+  "entry": null,
+  "tool": "GOOGLEDRIVE_LIST_FILES",
+  "recorded": "read",
+  "advertised": true,
+  "before": "read"
+ },
+ {
+  "entry": null,
+  "tool": "GOOGLEDRIVE_LIST_FILES",
+  "recorded": "write",
+  "advertised": true,
+  "before": "write"
+ },
+ {
+  "entry": null,
+  "tool": "GITHUB_LIST_REPOSITORY_SECRETS",
+  "recorded": null,
+  "advertised": true,
+  "before": "write"
+ },
+ {
+  "entry": null,
+  "tool": "GITHUB_LIST_REPOSITORY_SECRETS",
+  "recorded": "read",
+  "advertised": true,
+  "before": "read"
+ },
+ {
+  "entry": null,
+  "tool": "GITHUB_LIST_REPOSITORY_SECRETS",
+  "recorded": "write",
+  "advertised": true,
+  "before": "write"
+ },
+ {
+  "entry": null,
+  "tool": "GITHUB_LIST_DEPLOY_KEYS",
+  "recorded": null,
+  "advertised": true,
+  "before": "write"
+ },
+ {
+  "entry": null,
+  "tool": "GITHUB_LIST_DEPLOY_KEYS",
+  "recorded": "read",
+  "advertised": true,
+  "before": "read"
+ },
+ {
+  "entry": null,
+  "tool": "GITHUB_LIST_DEPLOY_KEYS",
+  "recorded": "write",
+  "advertised": true,
+  "before": "write"
+ },
+ {
+  "entry": null,
+  "tool": "OKTA_LIST_PASSWORD_POLICIES",
+  "recorded": null,
+  "advertised": true,
+  "before": "write"
+ },
+ {
+  "entry": null,
+  "tool": "OKTA_LIST_PASSWORD_POLICIES",
+  "recorded": "read",
+  "advertised": true,
+  "before": "read"
+ },
+ {
+  "entry": null,
+  "tool": "OKTA_LIST_PASSWORD_POLICIES",
+  "recorded": "write",
+  "advertised": true,
+  "before": "write"
+ },
+ {
+  "entry": null,
+  "tool": "AUTH0_GET_API_KEYS",
+  "recorded": null,
+  "advertised": true,
+  "before": "write"
+ },
+ {
+  "entry": null,
+  "tool": "AUTH0_GET_API_KEYS",
+  "recorded": "read",
+  "advertised": true,
+  "before": "read"
+ },
+ {
+  "entry": null,
+  "tool": "AUTH0_GET_API_KEYS",
+  "recorded": "write",
+  "advertised": true,
+  "before": "write"
+ },
+ {
+  "entry": null,
+  "tool": "STRIPE_LIST_CUSTOMERS",
+  "recorded": null,
+  "advertised": true,
+  "before": "write"
+ },
+ {
+  "entry": null,
+  "tool": "STRIPE_LIST_CUSTOMERS",
+  "recorded": "read",
+  "advertised": true,
+  "before": "read"
+ },
+ {
+  "entry": null,
+  "tool": "STRIPE_LIST_CUSTOMERS",
+  "recorded": "write",
+  "advertised": true,
+  "before": "write"
+ },
+ {
+  "entry": null,
+  "tool": "STRIPE_CREATE_REFUND",
+  "recorded": null,
+  "advertised": true,
+  "before": "write"
+ },
+ {
+  "entry": null,
+  "tool": "STRIPE_CREATE_REFUND",
+  "recorded": "read",
+  "advertised": true,
+  "before": "read"
+ },
+ {
+  "entry": null,
+  "tool": "STRIPE_CREATE_REFUND",
+  "recorded": "write",
+  "advertised": true,
+  "before": "write"
+ },
+ {
+  "entry": null,
+  "tool": "STRIPE_LIST_PAYMENT_INTENTS",
+  "recorded": null,
+  "advertised": true,
+  "before": "write"
+ },
+ {
+  "entry": null,
+  "tool": "STRIPE_LIST_PAYMENT_INTENTS",
+  "recorded": "read",
+  "advertised": true,
+  "before": "read"
+ },
+ {
+  "entry": null,
+  "tool": "STRIPE_LIST_PAYMENT_INTENTS",
+  "recorded": "write",
+  "advertised": true,
+  "before": "write"
+ },
+ {
+  "entry": null,
+  "tool": "GMAIL_FETCH_EMAILS",
+  "recorded": null,
+  "advertised": true,
+  "before": "write"
+ },
+ {
+  "entry": null,
+  "tool": "GMAIL_FETCH_EMAILS",
+  "recorded": "read",
+  "advertised": true,
+  "before": "read"
+ },
+ {
+  "entry": null,
+  "tool": "GMAIL_FETCH_EMAILS",
+  "recorded": "write",
+  "advertised": true,
+  "before": "write"
+ },
+ {
+  "entry": null,
+  "tool": "SLACK_SEARCH_MESSAGES",
+  "recorded": null,
+  "advertised": true,
+  "before": "write"
+ },
+ {
+  "entry": null,
+  "tool": "SLACK_SEARCH_MESSAGES",
+  "recorded": "read",
+  "advertised": true,
+  "before": "read"
+ },
+ {
+  "entry": null,
+  "tool": "SLACK_SEARCH_MESSAGES",
+  "recorded": "write",
+  "advertised": true,
+  "before": "write"
+ },
+ {
+  "entry": null,
+  "tool": "GITHUB_DELETE_A_REPOSITORY",
+  "recorded": null,
+  "advertised": true,
+  "before": "write"
+ },
+ {
+  "entry": null,
+  "tool": "GITHUB_DELETE_A_REPOSITORY",
+  "recorded": "read",
+  "advertised": true,
+  "before": "read"
+ },
+ {
+  "entry": null,
+  "tool": "GITHUB_DELETE_A_REPOSITORY",
+  "recorded": "write",
+  "advertised": true,
+  "before": "write"
+ },
+ {
+  "entry": null,
+  "tool": "ONEPASSWORD_LIST_VAULTS",
+  "recorded": null,
+  "advertised": true,
+  "before": "write"
+ },
+ {
+  "entry": null,
+  "tool": "ONEPASSWORD_LIST_VAULTS",
+  "recorded": "read",
+  "advertised": true,
+  "before": "read"
+ },
+ {
+  "entry": null,
+  "tool": "ONEPASSWORD_LIST_VAULTS",
+  "recorded": "write",
+  "advertised": true,
+  "before": "write"
+ }
+]

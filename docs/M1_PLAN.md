@@ -306,3 +306,21 @@ Added on 2026-11-14, by the maintainer's explicit decision. He kept "Full access
 - **A command in the member's own computer is not read by the floor** (`computer_run_command` and the computer's file tools are exempt, `NOT_ACCOUNT_ACTIONS`), as they always were, so a payment made through a command-line call is not held in "without payments".
 - **Plain Full access still has no limit on the amount.** That ends with the spending caps (v0.4), which should be limits and not cards, so neither setting should lift them.
 - **A bare `true` stored for a member reads as off.** The first version's tests already pinned that; the value it writes is `{ since }`.
+
+## 13. A tool nobody calls a read is a write (D33)
+
+**Decision.** For every catalogue entry, an advertised tool counts as a read only when the entry's `readTools` names it. Anything else the entry advertises is a write and asks the person (`classifyTool`, `openbot/server/src/plugins/catalogue.ts`). `readTools` is now required on every entry. For a tool a hub hosts (no catalogue entry), the provider's own "read" label is no longer enough when the tool's name carries a word of the credentials, security-settings or payments floor; such a tool is a write and the floor hands it to the person.
+
+**Why.** Before this, an entry with no read list treated an advertised tool that the write list had missed as a read, so it ran with no card. Notion had 14 names on its write list against a server that advertises dozens, so `notion-delete-pages` and `notion-delete-databases` ran unasked. Drive and routines had the same shape. A hub tool's label is the provider's word, and a "read" on a name like `..._LIST_PASSWORD_POLICIES` was taken at face value.
+
+**What changed.**
+
+- Read lists derived from evidence only. Drive: its four adapter tools (`google-drive-rest.ts`). Notion: `notion-search` and `notion-fetch`, the two reads the recorded fixtures use. Routines: `list_routines` and `list_triggers`.
+- Drive's entry no longer names `create_file` and `copy_file`. The scope is `drive.readonly` and the REST adapter only issues GET requests, so the connector never had a write; the old list described tools it does not offer. A tool added later by widening the scope asks until somebody reads it and lists it.
+- Gmail (both connections), Calendar, and the search connectors classify exactly as before; `tests/fixtures/classification-before.json` is the table generated from main before the change and pins it.
+
+**Limits, for the maintainer.**
+
+- Notion's other reads (`notion-get-comments`, `notion-get-users`, `notion-query-data-sources`, the `notion-list-*` family and more) now ask. Notion's documentation describes them but labels none of them, so they are not listed until the first Refresh tools shows the live names and a person adds them to `readTools`.
+- The hub name check is the same word lists as the floor, applied to the name. It catches real reads too (`STRIPE_LIST_PAYMENT_INTENTS`, `ONEPASSWORD_LIST_VAULTS`) and hands them to the person. Measured on a list of 52 plain read names from common apps: 14 would be caught. Alternatives are an ask card instead of a hand-off, or a check that only demotes when the label contradicts the name.
+- Not run live: no eval. The cases that could be affected are those that use Notion, Drive or routines tools, or a hub app, on a stack where they are connected; the eval stack connects none of these.
