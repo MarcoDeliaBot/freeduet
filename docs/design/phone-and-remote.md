@@ -223,7 +223,8 @@ A remote session may answer only with `allow once` or `deny`, and only a request
 - The gate's verdict on the request was `hand_off`: the person must do it themselves (credentials, security settings, payments, legal commitments), or the request was settled by a built-in safety requirement.
 - The built-in safety check, run again at the moment of answering with the same function the gate uses, matches the action: a payment or purchase, a credential, a security or sharing setting.
 - The action sets up a routine or a trigger, changes a setting from chat, changes Full access, or connects or authorises an app.
-- The request has no recorded verdict from the gate, or anything else cannot be classified. It fails closed.
+- The action is on a member's computer or the person's own (`computer_*`, `host/*`), or its tool name says it connects, authorises, installs, grants, invites or shares.
+- The request has no recorded verdict from the gate, or a verdict this build does not know, or anything else cannot be classified. It fails closed.
 
 The person can still read every request in full. A refused answer leaves the request pending, so it is there at the computer. `deny` is refused for these too (decision I). `POST /api/approvals/questions/:id/respond` is a reply to a question a member asked and is allowed as chat.
 

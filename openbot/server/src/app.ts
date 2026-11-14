@@ -1767,7 +1767,7 @@ export function createApp(
   if (coworker?.approvals)
     app.route(
       "/api/approvals",
-      createApprovalRoutes(coworker.approvals, requireUser),
+      createApprovalRoutes(coworker.approvals, requireUser, pairingGate),
     );
   if (coworker?.passwords) {
     app.route(

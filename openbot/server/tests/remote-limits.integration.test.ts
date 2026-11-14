@@ -19,6 +19,7 @@ import { afterAll, beforeAll, describe, expect, spyOn, test } from "bun:test";
 import { randomUUID } from "node:crypto";
 import { connect } from "node:net";
 import { inArray } from "drizzle-orm";
+import { REMOTE_ANSWER_SENTENCE } from "../src/approvals/remote-answer";
 import { createAuditStore } from "../src/audit";
 import { createAuth } from "../src/auth";
 import { createRoleRepository } from "../src/auth/guards";
@@ -153,6 +154,17 @@ async function signIn(
   return cookie;
 }
 
+/** What the store holds for any request here: a plain email, which the gate settled as "ask". */
+const ORDINARY_REQUEST = {
+  actorId: "u-admin",
+  botId: "otto",
+  toolRef: "mcp__gmail__GMAIL_SEND_EMAIL",
+  effect: "send",
+  scope: "friend@example.test",
+  args: { to: "friend@example.test", subject: "Lunch" },
+  policy: { behaviour: "ask", source: "default", reason: "Asked every time." },
+};
+
 type Setup = {
   config: ReturnType<typeof signInConfig>;
   app: ReturnType<typeof assembleSignIn>["app"];
@@ -170,10 +182,11 @@ async function deployment(withSecret = true): Promise<Setup> {
     async () => false,
     createAuditStore(database),
   );
-  const { app, calls } = assembleSignIn(config, {
-    1: auth,
-    2: createRoleRepository(database),
-  });
+  const { app, calls } = assembleSignIn(
+    config,
+    { 1: auth, 2: createRoleRepository(database) },
+    { action: ORDINARY_REQUEST },
+  );
   // The first sign-in of an address in INITIAL_ADMIN_EMAILS makes the administrator.
   const admin = await signIn(auth, ADMIN);
   const alice = await signIn(auth, ALICE);
@@ -230,7 +243,9 @@ async function isLimited(answer: Response): Promise<boolean> {
     code?: string;
   } | null;
   if (body?.code !== REMOTE_SESSION_LIMITED) return false;
-  expect(body.error).toBe(REMOTE_SESSION_SENTENCE);
+  expect([REMOTE_SESSION_SENTENCE, REMOTE_ANSWER_SENTENCE]).toContain(
+    body.error as string,
+  );
   return true;
 }
 
@@ -345,6 +360,22 @@ describe("a remote session: signed in, and not paired with this computer", () =>
     expect((await ask("/api/approvals")).status).toBe(200);
   });
 
+  test("answers an ordinary approval request once, and only once: allow always is left for the computer", async () => {
+    const decide = (decision: string) =>
+      ask("/api/approvals/req-1/decision", {
+        method: "POST",
+        body: { decision },
+      });
+    expect((await decide("allow_once")).status).toBe(200);
+    expect(setup.calls.decisions).toEqual([
+      { id: "req-1", decision: "allow_once" },
+    ]);
+    const refused = await decide("allow_always");
+    expect(refused.status).toBe(403);
+    expect(await isLimited(refused)).toBe(true);
+    expect(setup.calls.decisions).toHaveLength(1);
+  });
+
   test("no allowed family is refused by the list, whatever else its handler says", async () => {
     const allowed: [string, string, unknown?][] = [
       ["GET", "/api/channels/c1"],
@@ -384,6 +415,9 @@ describe("a remote session: signed in, and not paired with this computer", () =>
   });
 
   test("everything that changes what the assistants may do, or who may reach them, is refused with the sentence", async () => {
+    // Counted from here: the tests before this one may have answered a request.
+    setup.calls.decisions.length = 0;
+    setup.calls.rules.length = 0;
     const before = JSON.stringify(setup.calls);
     for (const [method, path, body] of [...POWERS, ...ACCOUNT_CALLS]) {
       const answer = await ask(path, { method, body });

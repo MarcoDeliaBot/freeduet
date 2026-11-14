@@ -1,7 +1,10 @@
 import { Hono, type MiddlewareHandler } from "hono";
 import { z } from "zod";
 import { type AppVariables, requireAdmin } from "../auth/guards";
+import type { InstallGate } from "../auth/install-secret";
+import { isRemote } from "../auth/remote-limits";
 import { createFullAccessRoutes } from "../freeduet/full-access-routes";
+import { remoteAnswerRefusal, remoteMayAnswer } from "./remote-answer";
 import type { ApprovalService } from "./service";
 import {
   ApprovalNotFoundError,
@@ -39,6 +42,11 @@ import { HeadlessToolSuspension } from "@openbot/toolkit/headless-tools";
 export function createApprovalRoutes(
   service: ApprovalService,
   requireUser: MiddlewareHandler<{ Variables: AppVariables }>,
+  /**
+   * FreeDuet: the installation's pairing gate, where there is sign-in and a secret. A browser that does not
+   * hold its cookie is a remote session and may answer only an ordinary request, once (remote-answer.ts).
+   */
+  pairing?: InstallGate,
 ) {
   const routes = new Hono<{ Variables: AppVariables }>();
   routes.use("*", requireUser);
@@ -189,6 +197,19 @@ export function createApprovalRoutes(
         decision: z.enum(["allow_once", "allow_always", "deny", "handled"]),
       })
       .parse(await context.req.json());
+    if (isRemote(pairing, context.req.raw)) {
+      // The request is read as it was recorded, not as this call describes it. One that is not there is
+      // left to `decide`, which says so.
+      const held = await service.store.get(
+        context.var.actor.id,
+        context.req.param("id"),
+      );
+      if (held && !remoteMayAnswer(input.decision, held.action).allowed) {
+        return context.json(remoteAnswerRefusal(), 403, {
+          "Cache-Control": "no-store",
+        });
+      }
+    }
     const request = await service.decide(
       context.var.actor.id,
       context.req.param("id"),
