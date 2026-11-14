@@ -58,6 +58,20 @@ const DISPATCH_RETRY_DELAY_MS = 60_000;
 export const DEFAULT_GRACE_MS = 10 * 60_000;
 
 /**
+ * How long after the grace window a dropped firing waits before it is written down as missed.
+ *
+ * A dispatch that passed its own grace check a moment before the drop is still writing its run row:
+ * the check and the insert are two statements. Writing the miss only once this much longer has passed
+ * means such a run has landed, and `recordMissed`'s window check sees it. A firing dropped inside this
+ * margin is not written at all: a gap in the history is honest, a miss beside a run that happened is not.
+ */
+export const MISSED_SETTLE_MS = 60_000;
+
+/** What a missed row says. The routines page shows it under the row, so it is written for the person. */
+export const MISSED_REASON =
+  "The server reached this occurrence too late to run it, so no run was started.";
+
+/**
  * How long a run row may sit open with no outcome before a pass declares it abandoned.
  *
  * A server that dies mid-turn strands its run row for ever: the queue item was finished on the 202,
@@ -202,11 +216,28 @@ export async function offerDueRoutines(
         );
       } else {
         // The CAS still compares against the stale stamp it read — only the landing point moves.
-        await options.routineStore.advanceNextRun(
+        const moved = await options.routineStore.advanceNextRun(
           routine.id,
           routine.nextRunAt,
           now,
         );
+        /*
+         * WRITTEN DOWN AS MISSED BY THE PASS THAT MOVED THE CLOCK, AND ONLY PAST THE SETTLE MARGIN. A pass
+         * that lost the compare-and-set writes nothing: the winner is the one that knows this occurrence was
+         * passed over. The row is the stamp's own occurrence. The other occurrences this one step covers
+         * (a month of them, after a long outage) are NOT written, because a row per firing for as long as an
+         * outage lasted is a decision for the maintainer; the History shows one miss for the outage's first
+         * occurrence, not one for each occurrence it passed.
+         */
+        if (moved && lateBy > graceMs + MISSED_SETTLE_MS) {
+          await recordMissedFiring(
+            options,
+            routine.id,
+            routine.nextRunAt,
+            MISSED_REASON,
+            graceMs,
+          );
+        }
       }
     } catch (error) {
       /*
@@ -402,6 +433,25 @@ export async function dispatchClaimedRoutines(
         !Number.isNaN(scheduledFor.getTime()) &&
         now.getTime() - scheduledFor.getTime() > graceMs
       ) {
+        /*
+         * A MISS, WRITTEN BEFORE THE FINISH. The item is finished either way, so the record is taken first:
+         * if the write fails, the warning says so and the firing is dropped all the same; if the finish then
+         * loses its lease, the record is already true, and another replica's claim of this item writes
+         * nothing new (the unique index). Claimed inside the settle margin, the firing is dropped and NOT
+         * written: a gap, not an invented row.
+         */
+        if (
+          now.getTime() - scheduledFor.getTime() >
+          graceMs + MISSED_SETTLE_MS
+        ) {
+          await recordMissedFiring(
+            options,
+            routineId,
+            scheduledFor,
+            MISSED_REASON,
+            graceMs,
+          );
+        }
         const reason = "claimed too long after the occurrence it was due for";
         await finishOrSay(options, item.key, routineId, reason);
         report.skipped.push({ routineId, reason });
@@ -521,6 +571,39 @@ export async function dispatchClaimedRoutines(
   }
 
   return report;
+}
+
+/**
+ * Write one firing the server did not run as `missed`, and say so if the write failed.
+ *
+ * Best-effort, like the reaper: a miss that could not be written is a gap in the history, and the pass
+ * has other firings to get through. The warning is the trace. `graceMs + MISSED_SETTLE_MS` is the window
+ * `recordMissed` checks for a run of the same occurrence.
+ */
+async function recordMissedFiring(
+  options: RoutineSweepOptions,
+  routineId: string,
+  scheduledFor: Date,
+  missedReason: string,
+  graceMs: number,
+): Promise<void> {
+  try {
+    await options.routineStore.recordMissed(
+      routineId,
+      scheduledFor,
+      missedReason,
+      graceMs + MISSED_SETTLE_MS,
+    );
+  } catch (error) {
+    console.warn(
+      JSON.stringify({
+        type: "routine-missed-unrecorded",
+        routineId,
+        scheduledFor: scheduledFor.toISOString(),
+        reason: error instanceof Error ? error.message : String(error),
+      }),
+    );
+  }
 }
 
 /**

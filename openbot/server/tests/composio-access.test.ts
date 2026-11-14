@@ -173,6 +173,7 @@ describe("accessFor", () => {
       auth: { kind: "none" },
       writeTools: [],
       readTools: [],
+      sendTools: [],
       docsUrl: "https://example.com/docs",
     };
     expect(

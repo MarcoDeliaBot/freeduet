@@ -313,7 +313,12 @@ describe("a send tool that arrived after the Bot was set up", () => {
       app: {
         state: string;
         requestKind: string | null;
-        wants?: { ref: string; label: string; read: boolean }[];
+        wants?: {
+          ref: string;
+          label: string;
+          read: boolean;
+          settingsOnly?: string;
+        }[];
       };
     };
     expect(app.state).toBe("ready");
@@ -324,11 +329,16 @@ describe("a send tool that arrived after the Bot was set up", () => {
         label: "Send a new email",
         // A send is never a read, whatever else the vendor says.
         read: false,
+        // And never given by approving a request: the entry's own list says it sends.
+        settingsOnly: "send",
       }),
     ]);
   });
 
-  test("the person asks, the administrator names the tool, and the Bot holds it", async () => {
+  // This test used to name the tool in the approval and see the Bot hold it. Since 14 November 2026 an
+  // approval never gives a tool that sends: the administrator allows it in settings, and the rest of
+  // this file runs as it did, because what the gate does with the grant did not change.
+  test("the person asks, the inbox cannot give the tool, and the administrator allows it in settings, so the Bot holds it", async () => {
     const filed = await appAs(owner, "user").request(
       "/api/plugins/access-requests",
       post({ agentId: botId, app: GOOGLE_APP_PASSWORD }),
@@ -336,19 +346,31 @@ describe("a send tool that arrived after the Bot was set up", () => {
     expect(filed.status).toBe(201);
     const { request } = (await filed.json()) as { request: { id: string } };
 
-    // Pressed with no tool named, a send is not among the read-only tools, so nothing is given.
+    // Pressed with no tool named, a send is not among the tools an approval may give, so nothing is given.
     const plain = await appAs(admin, "admin").request(
       `/api/plugins/access-requests/${request.id}/approve`,
       post(),
     );
-    expect(plain.status).toBe(409);
+    expect(plain.status).toBe(403);
     expect(await grantedRefs()).not.toContain(SEND);
 
+    // Naming it changes nothing: the server refuses it, in words that say where it is allowed.
     const named = await appAs(admin, "admin").request(
       `/api/plugins/access-requests/${request.id}/approve`,
       post({ refs: [SEND] }),
     );
-    expect(named.status).toBe(200);
+    expect(named.status).toBe(403);
+    expect(((await named.json()) as { error: string }).error).toContain(
+      "in settings",
+    );
+    expect(await grantedRefs()).not.toContain(SEND);
+
+    // The settings page, where the person chooses it, grants it.
+    const allowed = await appAs(admin, "admin").request(
+      "/api/plugins/grants",
+      post({ kind: "mcp", ref: SEND, agentId: botId }),
+    );
+    expect(allowed.status).toBe(200);
     expect(await grantedRefs()).toContain(SEND);
   });
 
