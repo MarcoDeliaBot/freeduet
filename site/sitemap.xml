@@ -1,7 +1,207 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml">
   <url>
     <loc>https://freeduet.com/</loc>
     <lastmod>2026-11-14</lastmod>
+    <xhtml:link rel="alternate" hreflang="en" href="https://freeduet.com/"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://freeduet.com/it/"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://freeduet.com/es/"/>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://freeduet.com/fr/"/>
+    <xhtml:link rel="alternate" hreflang="de" href="https://freeduet.com/de/"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://freeduet.com/pt/"/>
+    <xhtml:link rel="alternate" hreflang="pl" href="https://freeduet.com/pl/"/>
+    <xhtml:link rel="alternate" hreflang="tr" href="https://freeduet.com/tr/"/>
+    <xhtml:link rel="alternate" hreflang="ru" href="https://freeduet.com/ru/"/>
+    <xhtml:link rel="alternate" hreflang="zh" href="https://freeduet.com/zh/"/>
+    <xhtml:link rel="alternate" hreflang="ja" href="https://freeduet.com/ja/"/>
+    <xhtml:link rel="alternate" hreflang="ko" href="https://freeduet.com/ko/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://freeduet.com/"/>
+  </url>
+  <url>
+    <loc>https://freeduet.com/it/</loc>
+    <lastmod>2026-11-14</lastmod>
+    <xhtml:link rel="alternate" hreflang="en" href="https://freeduet.com/"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://freeduet.com/it/"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://freeduet.com/es/"/>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://freeduet.com/fr/"/>
+    <xhtml:link rel="alternate" hreflang="de" href="https://freeduet.com/de/"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://freeduet.com/pt/"/>
+    <xhtml:link rel="alternate" hreflang="pl" href="https://freeduet.com/pl/"/>
+    <xhtml:link rel="alternate" hreflang="tr" href="https://freeduet.com/tr/"/>
+    <xhtml:link rel="alternate" hreflang="ru" href="https://freeduet.com/ru/"/>
+    <xhtml:link rel="alternate" hreflang="zh" href="https://freeduet.com/zh/"/>
+    <xhtml:link rel="alternate" hreflang="ja" href="https://freeduet.com/ja/"/>
+    <xhtml:link rel="alternate" hreflang="ko" href="https://freeduet.com/ko/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://freeduet.com/"/>
+  </url>
+  <url>
+    <loc>https://freeduet.com/es/</loc>
+    <lastmod>2026-11-14</lastmod>
+    <xhtml:link rel="alternate" hreflang="en" href="https://freeduet.com/"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://freeduet.com/it/"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://freeduet.com/es/"/>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://freeduet.com/fr/"/>
+    <xhtml:link rel="alternate" hreflang="de" href="https://freeduet.com/de/"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://freeduet.com/pt/"/>
+    <xhtml:link rel="alternate" hreflang="pl" href="https://freeduet.com/pl/"/>
+    <xhtml:link rel="alternate" hreflang="tr" href="https://freeduet.com/tr/"/>
+    <xhtml:link rel="alternate" hreflang="ru" href="https://freeduet.com/ru/"/>
+    <xhtml:link rel="alternate" hreflang="zh" href="https://freeduet.com/zh/"/>
+    <xhtml:link rel="alternate" hreflang="ja" href="https://freeduet.com/ja/"/>
+    <xhtml:link rel="alternate" hreflang="ko" href="https://freeduet.com/ko/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://freeduet.com/"/>
+  </url>
+  <url>
+    <loc>https://freeduet.com/fr/</loc>
+    <lastmod>2026-11-14</lastmod>
+    <xhtml:link rel="alternate" hreflang="en" href="https://freeduet.com/"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://freeduet.com/it/"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://freeduet.com/es/"/>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://freeduet.com/fr/"/>
+    <xhtml:link rel="alternate" hreflang="de" href="https://freeduet.com/de/"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://freeduet.com/pt/"/>
+    <xhtml:link rel="alternate" hreflang="pl" href="https://freeduet.com/pl/"/>
+    <xhtml:link rel="alternate" hreflang="tr" href="https://freeduet.com/tr/"/>
+    <xhtml:link rel="alternate" hreflang="ru" href="https://freeduet.com/ru/"/>
+    <xhtml:link rel="alternate" hreflang="zh" href="https://freeduet.com/zh/"/>
+    <xhtml:link rel="alternate" hreflang="ja" href="https://freeduet.com/ja/"/>
+    <xhtml:link rel="alternate" hreflang="ko" href="https://freeduet.com/ko/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://freeduet.com/"/>
+  </url>
+  <url>
+    <loc>https://freeduet.com/de/</loc>
+    <lastmod>2026-11-14</lastmod>
+    <xhtml:link rel="alternate" hreflang="en" href="https://freeduet.com/"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://freeduet.com/it/"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://freeduet.com/es/"/>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://freeduet.com/fr/"/>
+    <xhtml:link rel="alternate" hreflang="de" href="https://freeduet.com/de/"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://freeduet.com/pt/"/>
+    <xhtml:link rel="alternate" hreflang="pl" href="https://freeduet.com/pl/"/>
+    <xhtml:link rel="alternate" hreflang="tr" href="https://freeduet.com/tr/"/>
+    <xhtml:link rel="alternate" hreflang="ru" href="https://freeduet.com/ru/"/>
+    <xhtml:link rel="alternate" hreflang="zh" href="https://freeduet.com/zh/"/>
+    <xhtml:link rel="alternate" hreflang="ja" href="https://freeduet.com/ja/"/>
+    <xhtml:link rel="alternate" hreflang="ko" href="https://freeduet.com/ko/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://freeduet.com/"/>
+  </url>
+  <url>
+    <loc>https://freeduet.com/pt/</loc>
+    <lastmod>2026-11-14</lastmod>
+    <xhtml:link rel="alternate" hreflang="en" href="https://freeduet.com/"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://freeduet.com/it/"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://freeduet.com/es/"/>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://freeduet.com/fr/"/>
+    <xhtml:link rel="alternate" hreflang="de" href="https://freeduet.com/de/"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://freeduet.com/pt/"/>
+    <xhtml:link rel="alternate" hreflang="pl" href="https://freeduet.com/pl/"/>
+    <xhtml:link rel="alternate" hreflang="tr" href="https://freeduet.com/tr/"/>
+    <xhtml:link rel="alternate" hreflang="ru" href="https://freeduet.com/ru/"/>
+    <xhtml:link rel="alternate" hreflang="zh" href="https://freeduet.com/zh/"/>
+    <xhtml:link rel="alternate" hreflang="ja" href="https://freeduet.com/ja/"/>
+    <xhtml:link rel="alternate" hreflang="ko" href="https://freeduet.com/ko/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://freeduet.com/"/>
+  </url>
+  <url>
+    <loc>https://freeduet.com/pl/</loc>
+    <lastmod>2026-11-14</lastmod>
+    <xhtml:link rel="alternate" hreflang="en" href="https://freeduet.com/"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://freeduet.com/it/"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://freeduet.com/es/"/>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://freeduet.com/fr/"/>
+    <xhtml:link rel="alternate" hreflang="de" href="https://freeduet.com/de/"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://freeduet.com/pt/"/>
+    <xhtml:link rel="alternate" hreflang="pl" href="https://freeduet.com/pl/"/>
+    <xhtml:link rel="alternate" hreflang="tr" href="https://freeduet.com/tr/"/>
+    <xhtml:link rel="alternate" hreflang="ru" href="https://freeduet.com/ru/"/>
+    <xhtml:link rel="alternate" hreflang="zh" href="https://freeduet.com/zh/"/>
+    <xhtml:link rel="alternate" hreflang="ja" href="https://freeduet.com/ja/"/>
+    <xhtml:link rel="alternate" hreflang="ko" href="https://freeduet.com/ko/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://freeduet.com/"/>
+  </url>
+  <url>
+    <loc>https://freeduet.com/tr/</loc>
+    <lastmod>2026-11-14</lastmod>
+    <xhtml:link rel="alternate" hreflang="en" href="https://freeduet.com/"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://freeduet.com/it/"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://freeduet.com/es/"/>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://freeduet.com/fr/"/>
+    <xhtml:link rel="alternate" hreflang="de" href="https://freeduet.com/de/"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://freeduet.com/pt/"/>
+    <xhtml:link rel="alternate" hreflang="pl" href="https://freeduet.com/pl/"/>
+    <xhtml:link rel="alternate" hreflang="tr" href="https://freeduet.com/tr/"/>
+    <xhtml:link rel="alternate" hreflang="ru" href="https://freeduet.com/ru/"/>
+    <xhtml:link rel="alternate" hreflang="zh" href="https://freeduet.com/zh/"/>
+    <xhtml:link rel="alternate" hreflang="ja" href="https://freeduet.com/ja/"/>
+    <xhtml:link rel="alternate" hreflang="ko" href="https://freeduet.com/ko/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://freeduet.com/"/>
+  </url>
+  <url>
+    <loc>https://freeduet.com/ru/</loc>
+    <lastmod>2026-11-14</lastmod>
+    <xhtml:link rel="alternate" hreflang="en" href="https://freeduet.com/"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://freeduet.com/it/"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://freeduet.com/es/"/>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://freeduet.com/fr/"/>
+    <xhtml:link rel="alternate" hreflang="de" href="https://freeduet.com/de/"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://freeduet.com/pt/"/>
+    <xhtml:link rel="alternate" hreflang="pl" href="https://freeduet.com/pl/"/>
+    <xhtml:link rel="alternate" hreflang="tr" href="https://freeduet.com/tr/"/>
+    <xhtml:link rel="alternate" hreflang="ru" href="https://freeduet.com/ru/"/>
+    <xhtml:link rel="alternate" hreflang="zh" href="https://freeduet.com/zh/"/>
+    <xhtml:link rel="alternate" hreflang="ja" href="https://freeduet.com/ja/"/>
+    <xhtml:link rel="alternate" hreflang="ko" href="https://freeduet.com/ko/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://freeduet.com/"/>
+  </url>
+  <url>
+    <loc>https://freeduet.com/zh/</loc>
+    <lastmod>2026-11-14</lastmod>
+    <xhtml:link rel="alternate" hreflang="en" href="https://freeduet.com/"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://freeduet.com/it/"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://freeduet.com/es/"/>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://freeduet.com/fr/"/>
+    <xhtml:link rel="alternate" hreflang="de" href="https://freeduet.com/de/"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://freeduet.com/pt/"/>
+    <xhtml:link rel="alternate" hreflang="pl" href="https://freeduet.com/pl/"/>
+    <xhtml:link rel="alternate" hreflang="tr" href="https://freeduet.com/tr/"/>
+    <xhtml:link rel="alternate" hreflang="ru" href="https://freeduet.com/ru/"/>
+    <xhtml:link rel="alternate" hreflang="zh" href="https://freeduet.com/zh/"/>
+    <xhtml:link rel="alternate" hreflang="ja" href="https://freeduet.com/ja/"/>
+    <xhtml:link rel="alternate" hreflang="ko" href="https://freeduet.com/ko/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://freeduet.com/"/>
+  </url>
+  <url>
+    <loc>https://freeduet.com/ja/</loc>
+    <lastmod>2026-11-14</lastmod>
+    <xhtml:link rel="alternate" hreflang="en" href="https://freeduet.com/"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://freeduet.com/it/"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://freeduet.com/es/"/>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://freeduet.com/fr/"/>
+    <xhtml:link rel="alternate" hreflang="de" href="https://freeduet.com/de/"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://freeduet.com/pt/"/>
+    <xhtml:link rel="alternate" hreflang="pl" href="https://freeduet.com/pl/"/>
+    <xhtml:link rel="alternate" hreflang="tr" href="https://freeduet.com/tr/"/>
+    <xhtml:link rel="alternate" hreflang="ru" href="https://freeduet.com/ru/"/>
+    <xhtml:link rel="alternate" hreflang="zh" href="https://freeduet.com/zh/"/>
+    <xhtml:link rel="alternate" hreflang="ja" href="https://freeduet.com/ja/"/>
+    <xhtml:link rel="alternate" hreflang="ko" href="https://freeduet.com/ko/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://freeduet.com/"/>
+  </url>
+  <url>
+    <loc>https://freeduet.com/ko/</loc>
+    <lastmod>2026-11-14</lastmod>
+    <xhtml:link rel="alternate" hreflang="en" href="https://freeduet.com/"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://freeduet.com/it/"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://freeduet.com/es/"/>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://freeduet.com/fr/"/>
+    <xhtml:link rel="alternate" hreflang="de" href="https://freeduet.com/de/"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://freeduet.com/pt/"/>
+    <xhtml:link rel="alternate" hreflang="pl" href="https://freeduet.com/pl/"/>
+    <xhtml:link rel="alternate" hreflang="tr" href="https://freeduet.com/tr/"/>
+    <xhtml:link rel="alternate" hreflang="ru" href="https://freeduet.com/ru/"/>
+    <xhtml:link rel="alternate" hreflang="zh" href="https://freeduet.com/zh/"/>
+    <xhtml:link rel="alternate" hreflang="ja" href="https://freeduet.com/ja/"/>
+    <xhtml:link rel="alternate" hreflang="ko" href="https://freeduet.com/ko/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://freeduet.com/"/>
   </url>
 </urlset>
