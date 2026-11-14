@@ -1,0 +1,11 @@
+Hand-off from Iris to Otto (message_bot), 13 November 2026, 10:20.
+
+Task: send the finished email below to Rob at Hollis Paper Supply, as it is.
+Constraints: the address rob@hollis-paper.example was read by Penny on Hollis's contact page (hollis-paper.example/contact); the person did not type it in this conversation. The person asked in the chat for an email to Rob about the delivery.
+Expecting: the email sent, and your report.
+
+Finished email
+To: rob@hollis-paper.example
+Subject: Friday's delivery
+Body:
+Hi Rob, Friday between 9:00 and 12:00 works. Someone will be at the studio to receive the four boxes of card. Thanks for the notice. Maya
