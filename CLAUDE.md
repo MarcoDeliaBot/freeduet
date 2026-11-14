@@ -141,6 +141,8 @@ Mark (id `marketer`) was the first member added after v0.1, Cam (id `video`) the
 - Never rebase, amend or force-push a shared branch; merge `origin/main` into it instead. Never close
   and reopen a PR to restart CI. A job may be re-run once, after its run has completed.
 - Commit messages and PR bodies end with the attribution lines the harness gives the session.
+- Worktrees share `refs/remotes/origin/main`: another executor's `git fetch origin main` moves it under you, so run `git rev-list --left-right --count origin/main...HEAD` right before a push.
+- Rows appended to `docs/UPSTREAM_TOUCHES.md` conflict between parallel PRs: keep main's rows first, then your own.
 
 ## CI
 
@@ -193,6 +195,7 @@ Mark (id `marketer`) was the first member added after v0.1, Cam (id `video`) the
   as root: reuse a running test cluster or start one as a non-root user. Point tests at it with
   `TEST_DATABASE_URL`. A fresh test database needs `bun scripts/migrate.ts` first, and that script
   reads `DATABASE_URL`, not `TEST_DATABASE_URL`: set both to the same database.
+- `migrate.ts` lives in `openbot/server/scripts`: run it from `openbot/server`, as `bun scripts/migrate.ts`.
 - A fresh git worktree has no `node_modules`: run `bun install --frozen-lockfile` in `openbot/` before
   any test, or the preload fails with "Cannot find package".
 - With drizzle on Bun's SQL driver a `jsonb` parameter is sent as a JSON string: raw SQL must use
@@ -223,6 +226,8 @@ Mark (id `marketer`) was the first member added after v0.1, Cam (id `video`) the
   replies only within existing threads.
 - On this shared machine never use `pkill -f` with a pattern: stop only the PIDs you started, because
   other executors share the machine and the Postgres cluster.
+- Under load, `production-loader-boundary`, `tool-selection-environment-restoration`, `assertion-shape` and the D25 case of `openbot/scripts/start-restart-guard.test.ts` can exceed bun's 5 s test limit; they fail the same way on main, so compare with main first.
+- Under Bun, a fake upstream proxy in a test must be a raw `net` server: the socket that an `http` server's `connect` handler receives emits only `end`.
 
 ## Things learned the hard way (Intelligence off, SSE mode)
 
