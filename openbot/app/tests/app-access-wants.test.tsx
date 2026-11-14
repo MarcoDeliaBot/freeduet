@@ -35,7 +35,7 @@ import { appAccess } from "./app-access-fixture";
 import { settleReactWork } from "./settle-react-work";
 
 /**
- * A ready app whose Bot is missing a tool its own skills need (issue #102, docs/M1_PLAN.md D29).
+ * A ready app whose Bot is missing a tool its own skills need (issue #102, docs/M1_PLAN.md D30).
  *
  * A build can add a tool to a connector a Bot already holds, and nothing grants it by arriving, so
  * the app is still `ready` — the Bot can use everything it was given — and the server says what is
