@@ -12,6 +12,7 @@ import { resolve } from "node:path";
 import {
   Interrupted,
   runRekey,
+  shellEnvironment,
 } from "../server/src/freeduet/vault-rekey-command";
 
 async function main(): Promise<number> {
@@ -37,10 +38,14 @@ async function main(): Promise<number> {
   process.on("SIGINT", onSignal);
   process.on("SIGTERM", onSignal);
 
+  // Not `process.env`: Bun has put the `.env` of this folder into it, which would make the key in .env
+  // look like one the person exported.
+  const shell = await shellEnvironment(process.env);
   return await runRekey({
     argv: process.argv.slice(2),
     root: resolve(import.meta.dir, ".."),
-    env: process.env,
+    env: shell.env,
+    exactEnvironment: shell.exact,
     out: (line) => process.stdout.write(`${line}\n`),
     err: (line) => process.stderr.write(`${line}\n`),
     checkpoint: () => {

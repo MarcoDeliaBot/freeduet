@@ -9,12 +9,14 @@ import {
 } from "bun:test";
 import {
   chmod,
+  copyFile,
   mkdir,
   mkdtemp,
   readdir,
   readFile,
   rm,
   stat,
+  symlink,
   writeFile,
 } from "node:fs/promises";
 import { tmpdir } from "node:os";
@@ -45,6 +47,7 @@ import {
   runRekey,
   settingFrom,
   type Stage,
+  writeSetting,
 } from "../src/freeduet/vault-rekey-command";
 import { TEST_POOL, testDatabaseUrl } from "./support/database";
 import { throwawayDatabase } from "./support/throwaway-database";
@@ -398,6 +401,66 @@ describe("before it does anything", () => {
       expect(ran.text).toContain("Nothing was changed.");
       expectNothingSecret(ran.text, []);
     }
+    expect(await snapshot(database)).toBe(before);
+    expect(await readFile(envPath, "utf8")).toBe(text);
+    expect(await filesIn(root)).toEqual([".env"]);
+  });
+
+  test("where it cannot tell what the shell exported from what Bun read out of a file, it says how to start it so that it can", async () => {
+    const { root, envPath, text } = await installation();
+    const before = await snapshot(database);
+    const own = Buffer.alloc(32, 7).toString("base64");
+    const environment = {
+      PATH: process.env.PATH,
+      PG_DUMP: join(shimDirectory, "pg_dump"),
+      KEY_ENCRYPTION_KEY: EXAMPLE_KEY,
+    };
+    const started = "bun --no-env-file scripts/rekey-vault.ts";
+
+    const check = await runIn(root, ["--yes"], {
+      env: environment,
+      exactEnvironment: false,
+    });
+    const apply = await runIn(root, ["--apply", "--yes"], {
+      env: environment,
+      exactEnvironment: false,
+    });
+    const different = await runIn(root, ["--yes"], {
+      env: { ...environment, KEY_ENCRYPTION_KEY: own },
+      exactEnvironment: false,
+    });
+    const database_ = await runIn(root, ["--yes"], {
+      env: {
+        PATH: process.env.PATH,
+        DATABASE_URL: "postgres://someone@127.0.0.1:1/another",
+      },
+      exactEnvironment: false,
+    });
+    const known = await runIn(root, ["--apply", "--yes"], {
+      env: environment,
+      exactEnvironment: true,
+    });
+
+    expect(check.code).toBe(EXIT.refused);
+    expect(check.text).toContain("is also set in your environment");
+    expect(check.text).toContain(
+      "If you did not set KEY_ENCRYPTION_KEY yourself, Bun read it from a file in this folder when it started.",
+    );
+    expect(check.text).toContain(`${started} --yes`);
+    expect(apply.code).toBe(EXIT.refused);
+    expect(apply.text).toContain(`${started} --apply --yes`);
+    // A different key is left alone, and it still says how to be sure it was the shell's.
+    expect(different.code).toBe(EXIT.ok);
+    expect(different.text).toContain(`${started} --yes`);
+    expect(database_.code).toBe(EXIT.refused);
+    expect(database_.text).toContain(
+      "If you did not set DATABASE_URL yourself",
+    );
+    // When it does know, there is nothing to guess and nothing more to say.
+    expect(known.code).toBe(EXIT.refused);
+    expect(known.text).not.toContain("--no-env-file");
+    for (const ran of [check, apply, different, database_, known])
+      expectNothingSecret(ran.text, [own]);
     expect(await snapshot(database)).toBe(before);
     expect(await readFile(envPath, "utf8")).toBe(text);
     expect(await filesIn(root)).toEqual([".env"]);
@@ -1142,6 +1205,194 @@ describe("--apply, when .env cannot be written after the database was changed", 
     expectNothingSecret(ran.text, [newKey]);
   });
 
+  /**
+   * A writer that does its work and leaves the file that holds the key unremovable (a directory in its
+   * place does that for a user who is root as well as for one who is not), which is what a failing disk
+   * or a locked file would be when the command comes to remove it.
+   */
+  const writesThenBlocksTheKeyFile =
+    (root: string): NonNullable<RekeyOptions["writeSetting"]> =>
+    async (path, name, value) => {
+      await writeSetting(path, name, value);
+      const kept = (await filesIn(root)).find((file) =>
+        file.startsWith(".env.vault-new-key-"),
+      );
+      await rm(join(root, kept ?? ""), { force: true });
+      await mkdir(join(root, kept ?? "", "in-the-way"), { recursive: true });
+    };
+
+  test("a key file that cannot be removed after everything else is done is said, and the run is not taken for one that changed nothing", async () => {
+    const { root, envPath, text } = await installation();
+    await stageDump();
+
+    const ran = await runIn(root, ["--apply", "--yes"], {
+      writeSetting: writesThenBlocksTheKeyFile(root),
+    });
+
+    const newKey = settingFrom(
+      await readFile(envPath, "utf8"),
+      "KEY_ENCRYPTION_KEY",
+    );
+    expect(isPublishedExampleKey(newKey)).toBe(false);
+    expect(ran.code).toBe(EXIT.ok);
+    expect(ran.text).not.toContain("Nothing was changed");
+    expect(ran.out).toContain("Done. The new key is in .env.");
+    expect(ran.err).toContain(
+      "The file that kept the new key could not be removed",
+    );
+    const left = (await filesIn(root)).find((file) =>
+      file.startsWith(".env.vault-new-key-"),
+    );
+    expect(ran.err).toContain(join(root, left ?? ""));
+    expect(ran.err).toContain("delete it yourself");
+    expect(await readFile(envPath, "utf8")).toBe(
+      replaceSetting(text, "KEY_ENCRYPTION_KEY", newKey),
+    );
+    expect(await opensWith(newKey)).toMatchObject({ sealed: 7, open: 7 });
+    expectNothingSecret(ran.text, [newKey]);
+  });
+
+  test("the same when it is the run that finishes an earlier one", async () => {
+    const { root, envPath, text, keyFile } = await failedWrite();
+    const newKey = (await readFile(keyFile, "utf8")).trim();
+
+    const ran = await runIn(root, ["--apply", "--yes"], {
+      writeSetting: writesThenBlocksTheKeyFile(root),
+    });
+
+    expect(ran.code).toBe(EXIT.ok);
+    expect(ran.text).not.toContain("Nothing was changed");
+    expect(ran.out).toContain(
+      "Done. The new key is in .env. The database was not changed.",
+    );
+    expect(ran.err).toContain(
+      "The file that kept the new key could not be removed",
+    );
+    expect(await readFile(envPath, "utf8")).toBe(
+      replaceSetting(text, "KEY_ENCRYPTION_KEY", newKey),
+    );
+    expectNothingSecret(ran.text, [newKey]);
+  });
+
+  test("something that connected after the commit may hold the old key: it is named, and stopping it comes before starting FreeDuet", async () => {
+    const { root, envPath, text } = await installation();
+    await stageDump();
+    let latecomer: ReturnType<typeof postgres> | undefined;
+
+    const ran = await runIn(root, ["--apply", "--yes"], {
+      // The moment between the commit and the new key reaching .env, which is when a server that comes
+      // up by itself reads the old key and keeps it in memory. start.sh leaves a running server alone.
+      writeSetting: async (path, name, value) => {
+        latecomer = postgres(throwaway.url, {
+          max: 1,
+          onnotice: () => {},
+          connection: { application_name: "a-server-that-came-up-by-itself" },
+        });
+        await latecomer`select 1`;
+        await writeSetting(path, name, value);
+      },
+    });
+    await latecomer?.end({ timeout: 5 });
+
+    const newKey = settingFrom(
+      await readFile(envPath, "utf8"),
+      "KEY_ENCRYPTION_KEY",
+    );
+    // The work itself is done, and said to be.
+    expect(ran.code).toBe(EXIT.ok);
+    expect(ran.out).toContain("Done. The new key is in .env.");
+    expect(await readFile(envPath, "utf8")).toBe(
+      replaceSetting(text, "KEY_ENCRYPTION_KEY", newKey),
+    );
+    expect(await opensWith(newKey)).toMatchObject({ sealed: 7, open: 7 });
+    // And what came up meanwhile is named, with what to do about it, before the step that starts FreeDuet.
+    expect(ran.err).toContain("came up while this was running");
+    expect(ran.err).toContain("a-server-that-came-up-by-itself");
+    expect(ran.err).toContain("start.sh does not restart a server");
+    expect(ran.out).toContain(
+      "1. Stop what came up (bash scripts/stop.sh), then start FreeDuet again: bash scripts/start.sh",
+    );
+    expect(ran.out).not.toContain("1. Start FreeDuet again");
+    expectNothingSecret(ran.text, [newKey]);
+  });
+
+  test("a FreeDuet server that answers after the commit is named too", async () => {
+    const { root, port } = await installation();
+    await stageDump();
+    let server: ReturnType<typeof Bun.serve> | undefined;
+    try {
+      const ran = await runIn(root, ["--apply", "--yes"], {
+        // Free when the command began, which is what its first check saw, and up by the time it looks again.
+        writeSetting: async (path, name, value) => {
+          server = Bun.serve({
+            port,
+            hostname: "127.0.0.1",
+            fetch: (request) =>
+              new URL(request.url).pathname === "/api/capabilities"
+                ? Response.json({ durableHistory: true })
+                : new Response("not found", { status: 404 }),
+          });
+          await writeSetting(path, name, value);
+        },
+      });
+
+      expect(ran.code).toBe(EXIT.ok);
+      expect(ran.out).toContain("Done. The new key is in .env.");
+      expect(ran.err).toContain(`a FreeDuet server answers on port ${port}`);
+      expect(ran.out).toContain(
+        "1. Stop what came up (bash scripts/stop.sh), then start FreeDuet again: bash scripts/start.sh",
+      );
+    } finally {
+      await server?.stop(true);
+    }
+  });
+
+  test("the run that finishes an earlier one says the same of what came up while it wrote the key", async () => {
+    const { root, envPath, text, keyFile } = await failedWrite();
+    const newKey = (await readFile(keyFile, "utf8")).trim();
+    let latecomer: ReturnType<typeof postgres> | undefined;
+
+    const ran = await runIn(root, ["--apply", "--yes"], {
+      writeSetting: async (path, name, value) => {
+        latecomer = postgres(throwaway.url, {
+          max: 1,
+          onnotice: () => {},
+          connection: { application_name: "a-server-that-came-up-by-itself" },
+        });
+        await latecomer`select 1`;
+        await writeSetting(path, name, value);
+      },
+    });
+    await latecomer?.end({ timeout: 5 });
+
+    expect(ran.code).toBe(EXIT.ok);
+    expect(ran.out).toContain(
+      "Done. The new key is in .env. The database was not changed.",
+    );
+    expect(await readFile(envPath, "utf8")).toBe(
+      replaceSetting(text, "KEY_ENCRYPTION_KEY", newKey),
+    );
+    expect(ran.err).toContain("came up while this was running");
+    expect(ran.err).toContain("a-server-that-came-up-by-itself");
+    expect(ran.out).toContain(
+      "Next: stop what came up (bash scripts/stop.sh), then start FreeDuet again (bash scripts/start.sh)",
+    );
+    expectNothingSecret(ran.text, [newKey]);
+  });
+
+  // Not new behaviour: holds before the change above and after it, so that it cannot cry wolf.
+  test("when nothing came up meanwhile the run says nothing of the kind, and the first step is to start FreeDuet", async () => {
+    const { root } = await installation();
+    await stageDump();
+
+    const ran = await runIn(root, ["--apply", "--yes"]);
+
+    expect(ran.code).toBe(EXIT.ok);
+    expect(ran.err).toBe("");
+    expect(ran.out).toContain("1. Start FreeDuet again: bash scripts/start.sh");
+    expect(ran.out).not.toContain("came up");
+  });
+
   test("a writer that reports success and wrote something else is caught by reading the file back", async () => {
     const { root, envPath, text } = await installation();
     await stageDump();
@@ -1621,4 +1872,132 @@ describe("the real pg_dump", () => {
       expect(await readdir(folder)).toEqual([]);
     },
   );
+});
+
+// ---------------------------------------------------------------------------------------------------
+// The script a person types
+// ---------------------------------------------------------------------------------------------------
+
+/**
+ * Everything above calls `runRekey` with an environment the test chose. This is the one place the entry
+ * point is run, because the entry point decides what the environment is, and `bun scripts/rekey-vault.ts`
+ * (the command the steps give, typed in the `openbot` folder) does not start with the one the shell
+ * gave: Bun reads `.env` from the folder it is started in into `process.env` before the first line
+ * runs. Read as it stood, the key in `.env` looked exported by the person, and the documented command
+ * refused to run (docs/design/vault-rekey.md, "Built so far").
+ *
+ * The script is copied into a folder of its own, with `server` linked in, so that it works on that
+ * folder's `.env` and not on the repository's.
+ */
+const serverFolder = join(import.meta.dir, "..");
+const openbotFolder = join(serverFolder, "..");
+
+async function scriptInstallation() {
+  const installed = await installation();
+  await mkdir(join(installed.root, "scripts"));
+  await copyFile(
+    join(openbotFolder, "scripts", "rekey-vault.ts"),
+    join(installed.root, "scripts", "rekey-vault.ts"),
+  );
+  await symlink(serverFolder, join(installed.root, "server"));
+  return installed;
+}
+
+/** `bun scripts/rekey-vault.ts ...` in that folder, with the environment of a shell that exports only `exported`. */
+async function runScript(
+  root: string,
+  argv: string[],
+  exported: Record<string, string> = {},
+): Promise<Ran> {
+  const child = Bun.spawn(
+    [process.execPath, "scripts/rekey-vault.ts", ...argv],
+    {
+      cwd: root,
+      env: {
+        PATH: process.env.PATH ?? "",
+        HOME: root,
+        PG_DUMP: join(shimDirectory, "pg_dump"),
+        ...exported,
+      },
+      stdout: "pipe",
+      stderr: "pipe",
+    },
+  );
+  const [out, err] = await Promise.all([
+    new Response(child.stdout).text(),
+    new Response(child.stderr).text(),
+  ]);
+  return { code: await child.exited, out, err, text: `${out}\n${err}` };
+}
+
+describe("the script itself, started the way the steps say", () => {
+  test("the example key that is only in .env is not taken for one the person exported", async () => {
+    const { root, envPath, text } = await scriptInstallation();
+    const before = await snapshot(database);
+
+    const ran = await runScript(root, ["--yes"]);
+
+    expect(ran.text).not.toContain("also set in your environment");
+    expect(ran.code).toBe(EXIT.ok);
+    expect(ran.out).toContain("All 7 saved secrets open with the current key");
+    expectNothingSecret(ran.text, []);
+    expect(await snapshot(database)).toBe(before);
+    expect(await readFile(envPath, "utf8")).toBe(text);
+  });
+
+  test("--apply --yes does its work from there: the rows open with a new key, and .env has it", async () => {
+    const { root, envPath, text } = await scriptInstallation();
+    await stageDump();
+
+    const ran = await runScript(root, ["--apply", "--yes"]);
+
+    expect(ran.code).toBe(EXIT.ok);
+    expect(ran.out).toContain("Done. The new key is in .env.");
+    const newKey = settingFrom(
+      await readFile(envPath, "utf8"),
+      "KEY_ENCRYPTION_KEY",
+    );
+    expect(isValidKey(newKey)).toBe(true);
+    expect(isPublishedExampleKey(newKey)).toBe(false);
+    expect(await readFile(envPath, "utf8")).toBe(
+      replaceSetting(text, "KEY_ENCRYPTION_KEY", newKey),
+    );
+    expect(await opensWith(newKey)).toMatchObject({ sealed: 7, open: 7 });
+    expect(await opensWith(EXAMPLE_KEY)).toMatchObject({ open: 0 });
+    expectNothingSecret(ran.text, [newKey]);
+  });
+
+  // Not new behaviour: these two hold for the script before and after the change above, and are here so
+  // that the change cannot make the check blind to a key the shell really exports.
+  test("the same example key that the shell exports is still refused", async () => {
+    const { root, envPath, text } = await scriptInstallation();
+    const before = await snapshot(database);
+
+    for (const argv of [["--yes"], ["--apply", "--yes"]]) {
+      const ran = await runScript(root, argv, {
+        KEY_ENCRYPTION_KEY: EXAMPLE_KEY,
+      });
+      expect(ran.code).toBe(EXIT.refused);
+      expect(ran.text).toContain("is also set in your environment");
+      expect(ran.text).toContain("Nothing was changed.");
+      expectNothingSecret(ran.text, []);
+    }
+    expect(await snapshot(database)).toBe(before);
+    expect(await readFile(envPath, "utf8")).toBe(text);
+  });
+
+  test("a different key that the shell exports is the person's own, and is left alone", async () => {
+    const { root, envPath, text } = await scriptInstallation();
+    const own = Buffer.alloc(32, 9).toString("base64");
+
+    const ran = await runScript(root, ["--apply", "--yes"], {
+      KEY_ENCRYPTION_KEY: own,
+    });
+
+    expect(ran.code).toBe(EXIT.ok);
+    expect(ran.text).toContain("set in your environment");
+    expectNothingSecret(ran.text, [own]);
+    expect(await opensWith(EXAMPLE_KEY)).toMatchObject({ open: 7 });
+    expect(await readFile(envPath, "utf8")).toBe(text);
+  });
 });

@@ -2,6 +2,7 @@ import { describe, expect, test } from "bun:test";
 import { readFileSync } from "node:fs";
 import {
   chmod,
+  mkdir,
   mkdtemp,
   readdir,
   readFile,
@@ -14,9 +15,11 @@ import { join } from "node:path";
 import {
   manualRecoveryCommand,
   parseArguments,
+  parseEnvironmentBlock,
   replaceSetting,
   rowsInDump,
   settingFrom,
+  shellEnvironment,
   writeSetting,
 } from "../src/freeduet/vault-rekey-command";
 
@@ -220,6 +223,113 @@ describe("the way to finish by hand", () => {
       expect((await stat(env)).mode & 0o777).toBe(0o600);
       // The key is read from its file by the shell: it is not in the text that is printed.
       expect(command).not.toContain("the-new-key-value");
+    } finally {
+      await rm(directory, { recursive: true, force: true });
+    }
+  });
+});
+
+describe("the environment the shell gave", () => {
+  test("is read from the block Linux keeps for a process: NAME=VALUE entries, each ended by a NUL", () => {
+    expect(parseEnvironmentBlock("A=1\0B=two words\0C=a=b=c\0D=\0")).toEqual({
+      A: "1",
+      B: "two words",
+      C: "a=b=c",
+      D: "",
+    });
+    expect(parseEnvironmentBlock("")).toEqual({});
+  });
+
+  test("keeps a value that holds a newline, and drops what is not a variable", () => {
+    expect(
+      parseEnvironmentBlock("A=one\ntwo\0no equals sign\0=nameless\0\0"),
+    ).toEqual({ A: "one\ntwo" });
+  });
+
+  test("a variable named __proto__ is a variable like another and changes nothing else", () => {
+    const parsed = parseEnvironmentBlock("__proto__=x\0B=1\0");
+    expect(Object.keys(parsed).sort()).toEqual(["B", "__proto__"]);
+    expect(Object.getPrototypeOf(parsed)).toBe(Object.prototype);
+  });
+
+  test("is the shell's block and not what Bun put in process.env: a key that is only in .env is not in it", async () => {
+    const loaded = { KEY_ENCRYPTION_KEY: "read-from-.env", PATH: "/bin" };
+
+    const seen = await shellEnvironment(loaded, {
+      read: async () => "PATH=/bin\0HOME=/home/someone\0",
+    });
+
+    expect(seen).toEqual({
+      env: { PATH: "/bin", HOME: "/home/someone" },
+      exact: true,
+    });
+  });
+
+  test("a key the shell did export is in it", async () => {
+    const seen = await shellEnvironment(
+      { KEY_ENCRYPTION_KEY: "x" },
+      { read: async () => "KEY_ENCRYPTION_KEY=exported\0" },
+    );
+    expect(seen.env.KEY_ENCRYPTION_KEY).toBe("exported");
+    expect(seen.exact).toBe(true);
+  });
+
+  test("where the block cannot be read it is what Bun has, and that is the shell's alone only if Bun was told to read no file", async () => {
+    const loaded = { A: "1" };
+    const unreadable = async (): Promise<string> => {
+      throw new Error("ENOENT: no such file or directory");
+    };
+
+    expect(
+      await shellEnvironment(loaded, { read: unreadable, flags: [] }),
+    ).toEqual({ env: loaded, exact: false });
+    expect(
+      await shellEnvironment(loaded, {
+        read: unreadable,
+        flags: ["--env-file=.env.eval"],
+      }),
+    ).toEqual({ env: loaded, exact: false });
+    expect(
+      await shellEnvironment(loaded, {
+        read: unreadable,
+        flags: ["--no-env-file"],
+      }),
+    ).toEqual({ env: loaded, exact: true });
+  });
+});
+
+describe("the way to finish by hand, on a machine whose default umask is 022", () => {
+  test("makes the new file private from the moment it exists: it holds every secret in .env", async () => {
+    const directory = await mkdtemp(join(tmpdir(), "rekey-umask-"));
+    try {
+      const shims = join(directory, "shims");
+      await mkdir(shims);
+      // The mode the new file has when `chmod` is first run on it is the mode it has had until then,
+      // so it is the one thing that tells whether anybody else could have read it in between.
+      await writeFile(
+        join(shims, "chmod"),
+        `#!/bin/sh\n(stat -c %a "$2" || stat -f %Lp "$2") > "${directory}/mode-before-chmod.txt" 2>/dev/null\nexec /bin/chmod "$@"\n`,
+        { mode: 0o755 },
+      );
+      const env = join(directory, ".env");
+      const keyFile = join(directory, ".env.vault-new-key-1");
+      await writeFile(env, "A=1\nKEY_ENCRYPTION_KEY=old\n", { mode: 0o600 });
+      await writeFile(keyFile, "the-new-key-value=\n", { mode: 0o600 });
+
+      const ran = await inBash(
+        `umask 022; PATH="${shims}:$PATH"; ${manualRecoveryCommand(env, keyFile)}`,
+      );
+
+      expect(ran.code).toBe(0);
+      expect(
+        (
+          await readFile(join(directory, "mode-before-chmod.txt"), "utf8")
+        ).trim(),
+      ).toBe("600");
+      expect(await readFile(env, "utf8")).toBe(
+        "A=1\nKEY_ENCRYPTION_KEY=the-new-key-value=\n",
+      );
+      expect((await stat(env)).mode & 0o777).toBe(0o600);
     } finally {
       await rm(directory, { recursive: true, force: true });
     }

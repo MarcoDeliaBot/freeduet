@@ -87,6 +87,66 @@ class Refusal extends Error {
 }
 
 // ---------------------------------------------------------------------------------------------------
+// The environment the shell gave
+// ---------------------------------------------------------------------------------------------------
+
+/**
+ * The variables of an environment block as Linux shows it in /proc/self/environ: `NAME=VALUE`
+ * entries, each ended by a NUL byte. An entry with no name or no `=` is not a variable.
+ */
+export function parseEnvironmentBlock(block: string): Record<string, string> {
+  const entries: [string, string][] = [];
+  for (const entry of block.split("\0")) {
+    const at = entry.indexOf("=");
+    if (at > 0) entries.push([entry.slice(0, at), entry.slice(at + 1)]);
+  }
+  return Object.fromEntries(entries);
+}
+
+/**
+ * The environment the shell gave this program, which is what the check for an exported key has to look
+ * at, and which `process.env` is not: Bun reads `.env` from the folder it is started in into
+ * `process.env` before the first line of the script runs, and the documented command is typed in that
+ * folder. A key it read from that file looks exactly like one the person exported, and the command
+ * refused to run, telling the person to unset a variable they had never set.
+ *
+ * Linux keeps the block the program was started with, unchanged, in /proc/self/environ. Where that
+ * cannot be read, `process.env` is what there is, and it is the shell's alone only when Bun was told to
+ * read no file (`--no-env-file`); otherwise `exact` is false and the refusals say how to start it so
+ * that it is.
+ */
+export async function shellEnvironment(
+  loaded: Record<string, string | undefined>,
+  options: {
+    read?: () => Promise<string>;
+    flags?: readonly string[];
+  } = {},
+): Promise<{ env: Record<string, string | undefined>; exact: boolean }> {
+  const read = options.read ?? (() => readFile("/proc/self/environ", "utf8"));
+  try {
+    return { env: parseEnvironmentBlock(await read()), exact: true };
+  } catch {
+    const flags = options.flags ?? process.execArgv;
+    return { env: loaded, exact: flags.includes("--no-env-file") };
+  }
+}
+
+/**
+ * Where the shell's environment could not be told from what Bun read out of a file, the way to start
+ * the command so that it can. Nothing otherwise.
+ */
+function startedWithAFile(
+  options: RekeyOptions,
+  apply: boolean,
+  was: string,
+): string[] {
+  if (options.exactEnvironment !== false) return [];
+  return [
+    `If you did not set ${was} yourself, Bun read it from a file in this folder when it started. Run this instead: bun --no-env-file scripts/rekey-vault.ts ${apply ? "--apply " : ""}--yes`,
+  ];
+}
+
+// ---------------------------------------------------------------------------------------------------
 // The settings file, read and written the way scripts/start.sh does it
 // ---------------------------------------------------------------------------------------------------
 
@@ -622,6 +682,8 @@ function shellQuote(value: string): string {
 /**
  * The same thing `start.sh` does to write a setting, as one line for a person to paste, with the key
  * read from its file and never written out. `|| true` because `grep -v` exits 1 when no line is left.
+ * The new file holds everything `.env` holds, so it is made under `umask 077`: with the usual 022 a
+ * file made by `>` is readable by every user until the `chmod` that follows it.
  */
 export function manualRecoveryCommand(
   envPath: string,
@@ -629,7 +691,7 @@ export function manualRecoveryCommand(
 ): string {
   const env = shellQuote(envPath);
   const fresh = shellQuote(`${envPath}.new`);
-  return `{ grep -v '^${KEY_NAME}=' ${env} || true; } > ${fresh} && printf '${KEY_NAME}=%s\\n' "$(cat ${shellQuote(keyPath)})" >> ${fresh} && chmod 600 ${fresh} && mv ${fresh} ${env}`;
+  return `( umask 077; { grep -v '^${KEY_NAME}=' ${env} || true; } > ${fresh} && printf '${KEY_NAME}=%s\\n' "$(cat ${shellQuote(keyPath)})" >> ${fresh} ) && chmod 600 ${fresh} && mv ${fresh} ${env}`;
 }
 
 // ---------------------------------------------------------------------------------------------------
@@ -642,7 +704,14 @@ export type RekeyOptions = {
   argv: string[];
   /** The folder docker-compose.yml and the settings file are in (the `openbot` folder). */
   root: string;
+  /** What the shell gave this program; see `shellEnvironment`. */
   env: Record<string, string | undefined>;
+  /**
+   * False when `env` may hold settings that Bun read from a file in the folder it was started in, so
+   * that a value in it is not known to be one the person exported. Anything else (a test, a program
+   * that knows) leaves it out.
+   */
+  exactEnvironment?: boolean;
   out: (line: string) => void;
   err: (line: string) => void;
   now?: () => Date;
@@ -831,6 +900,8 @@ async function decide(
     say(
       "start.sh and the server use the environment's value, a key you chose yourself, so this command leaves it alone.",
     );
+    for (const line of startedWithAFile(options, parsed.apply, KEY_NAME))
+      say(line);
     say("Nothing was changed.");
     return EXIT.ok;
   }
@@ -838,6 +909,8 @@ async function decide(
     complain(
       `${KEY_NAME} is also set in your environment, to the same example key as in ${envName}. start.sh and the server read the environment first, so after this change they would still use the old key and could not open what was sealed again. Remove it from your environment (in this terminal: unset ${KEY_NAME}, and from any file that sets it for you) and run this again. Nothing was changed.`,
     );
+    for (const line of startedWithAFile(options, parsed.apply, KEY_NAME))
+      complain(line);
     return EXIT.refused;
   }
   if (current === "" || !isPublishedExampleKey(current)) {
@@ -924,6 +997,60 @@ function announce(voice: Voice, start: Start) {
     );
 }
 
+/** The port the server listens on: the environment, then the settings file, then 3001. */
+function serverPort(options: RekeyOptions, settings: string): number {
+  const text =
+    options.env.SERVER_PORT?.trim() ||
+    settingFrom(settings, "SERVER_PORT") ||
+    "3001";
+  const number = Number(text);
+  return Number.isInteger(number) && number > 0 && number < 65536
+    ? number
+    : 3001;
+}
+
+/**
+ * What is connected or answering now that the change is made. The checks before it ran before the
+ * commit. Something that came up after the commit and before the new key was in .env read the old key
+ * and holds it in memory, and start.sh leaves a server that is already running alone, so nothing else
+ * would ever tell the person. Looked for once more at the end, on the connection already open. It is
+ * advice: if the looking itself fails, the run is not made to fail for it.
+ */
+async function cameUpMeanwhile(
+  options: RekeyOptions,
+  start: Start,
+  database: Database,
+): Promise<string[]> {
+  const found: string[] = [];
+  try {
+    const sessions = await otherSessions(database);
+    if (sessions.count > 0)
+      found.push(`connected to the database: ${sessions.names.join(", ")}`);
+    const port = serverPort(options, start.settings);
+    if (await serverIsUp(port))
+      found.push(`a FreeDuet server answers on port ${port}`);
+  } catch {
+    return found;
+  }
+  return found;
+}
+
+/** Says what came up, and what to do about it. Whether there was anything, because the next steps depend on it. */
+function warnAboutWhatCameUp(
+  voice: Voice,
+  envName: string,
+  found: string[],
+): boolean {
+  if (found.length === 0) return false;
+  voice.complain(
+    `Something came up while this was running: ${found.join("; ")}.`,
+  );
+  voice.complain(
+    `It may have read the old key before ${envName} had the new one, and start.sh does not restart a server that is already running. Stop it before you use FreeDuet: bash scripts/stop.sh`,
+  );
+  return true;
+}
+
 /**
  * The checks that need no database: the server is not running (it holds the old key in memory and would
  * go on sealing new rows with it), and the settings name one database and agree with the environment.
@@ -934,15 +1061,7 @@ async function preflight(
   start: Start,
 ): Promise<number | { databaseUrl: string; address: Address }> {
   const { say, complain, hide } = voice;
-  const portText =
-    options.env.SERVER_PORT?.trim() ||
-    settingFrom(start.settings, "SERVER_PORT") ||
-    "3001";
-  const portNumber = Number(portText);
-  const port =
-    Number.isInteger(portNumber) && portNumber > 0 && portNumber < 65536
-      ? portNumber
-      : 3001;
+  const port = serverPort(options, start.settings);
   if (await serverIsUp(port)) {
     complain(
       `FreeDuet is running: its server answered on port ${port}. Stop it first (bash scripts/stop.sh), start the database alone (docker compose up -d postgres) and run this again. Nothing was changed.`,
@@ -959,6 +1078,8 @@ async function preflight(
     complain(
       `DATABASE_URL is set in your environment to a different database than the one in ${start.envName}. This command will not guess which one the server uses. Unset it, or make them the same, and run this again. Nothing was changed.`,
     );
+    for (const line of startedWithAFile(options, start.apply, "DATABASE_URL"))
+      complain(line);
     return EXIT.refused;
   }
   const databaseUrl = fromFile || fromShell;
@@ -1055,7 +1176,9 @@ async function examine(
       return EXIT.ok;
     }
     return await finishEarlierRun({
+      options,
       voice,
+      database,
       file: { path: file.path, key: file.key },
       start,
       others: start.keyFiles.filter((other) => other !== file),
@@ -1097,9 +1220,30 @@ async function examine(
   return { inspection, sums };
 }
 
+/**
+ * Removes the file that kept the new key, now that the settings file has it. The work is finished by
+ * then, so a file that will not go is said and left. It must never stop the run: the handler of last
+ * resort says "Nothing was changed", and that would be said about a database that was.
+ */
+async function removeKeyFile(
+  path: string,
+  envName: string,
+  complain: (line: string) => void,
+): Promise<void> {
+  try {
+    await rm(path, { force: true });
+  } catch (error) {
+    complain(
+      `The file that kept the new key could not be removed (${reasonOf(error)}). ${envName} has the key now, so delete it yourself: ${path}`,
+    );
+  }
+}
+
 /** The key is in a file and the database already holds what it seals: put it into the settings file. */
 async function finishEarlierRun(context: {
+  options: RekeyOptions;
   voice: Voice;
+  database: Database;
   file: { path: string; key: string };
   start: Start;
   others: KeyFile[];
@@ -1125,12 +1269,19 @@ async function finishEarlierRun(context: {
     );
     return EXIT.keyNotWritten;
   }
-  await rm(file.path, { force: true });
+  await removeKeyFile(file.path, start.envName, complain);
   say(
     `Done. The new key is in ${start.envName}. The database was not changed.`,
   );
+  const cameUp = warnAboutWhatCameUp(
+    context.voice,
+    start.envName,
+    await cameUpMeanwhile(context.options, start, context.database),
+  );
   say(
-    "Next: start FreeDuet again (bash scripts/start.sh) and check that your connections and saved logins still work.",
+    cameUp
+      ? "Next: stop what came up (bash scripts/stop.sh), then start FreeDuet again (bash scripts/start.sh) and check that your connections and saved logins still work."
+      : "Next: start FreeDuet again (bash scripts/start.sh) and check that your connections and saved logins still work.",
   );
   if (context.others.length > 0)
     say(
@@ -1280,7 +1431,8 @@ async function applyRekey(context: {
     );
     return EXIT.failed;
   }
-  await rm(keyPath, { force: true });
+  await removeKeyFile(keyPath, envName, complain);
+  const found = await cameUpMeanwhile(options, start, database);
 
   say();
   say(`Done. The new key is in ${envName}.`);
@@ -1293,8 +1445,13 @@ async function applyRekey(context: {
       : `  Checked: all ${checkedOpen} open with the new key, and none opens with the old one.`,
   );
   say();
+  const cameUp = warnAboutWhatCameUp(voice, envName, found);
   say("Next:");
-  say("  1. Start FreeDuet again: bash scripts/start.sh");
+  say(
+    cameUp
+      ? "  1. Stop what came up (bash scripts/stop.sh), then start FreeDuet again: bash scripts/start.sh"
+      : "  1. Start FreeDuet again: bash scripts/start.sh",
+  );
   say("  2. Check that your connections and saved logins still work.");
   say(
     `  3. The backup (${backupPath}) holds everything sealed with the OLD key, which is public, so anyone who gets that file can read your saved secrets. When step 2 is fine, delete it.`,
