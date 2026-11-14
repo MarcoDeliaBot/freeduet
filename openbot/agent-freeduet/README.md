@@ -72,7 +72,8 @@ Claude plan is at its limit. **It has never answered a real turn from a real gat
 CLI, so it is not certified; [docs/ENGINES_PLAN.md](../../docs/ENGINES_PLAN.md) 9.1 says what is and is not verified.
 
 - **Off, and never first.** `engines.example.yaml` holds only commented-out entries, so a default install builds none and
-  nothing changes. An entry runs only when it is `enabled: true` and named in a chain; logins always come before it.
+  nothing changes. An entry runs only when it is `enabled: true` and a member's chain names it or a member is pinned to
+  it; in a chain, logins always come before it.
 - **Your key, out of sight.** `credential_secret_ref` is `env:NAME` or `file:/absolute/path`, never the key itself (a
   pasted key is refused and not echoed). The CLI gets the key as a bearer token, in an empty home and an empty config
   directory made for the turn, so the Claude login cannot be sent to the gateway and the gateway key cannot reach the
@@ -102,9 +103,11 @@ CLI, so it is not certified; [docs/ENGINES_PLAN.md](../../docs/ENGINES_PLAN.md) 
 Check it once with your own key. Nothing here is automated, and steps 1 to 3 spend nothing.
 
 1. In `openbot/`, copy `agent-freeduet/engines.example.yaml` to `engines.local.yaml`. Uncomment `my-gateway`, set
-   `base_url`, `billing` and `model`, set `enabled: true`, and put `my-gateway` after `claude-code` in `chains: default`.
-   For a `metered` gateway also set `metered: {enabled: true, currency: EUR, daily_cap: 1, monthly_cap: 5}`. To make
-   Iris use only the gateway for the check, add `switching: {freeduet: {pin: my-gateway}}`.
+   `base_url`, `billing` and `model`, and set `enabled: true`. For a `metered` gateway also set
+   `metered: {enabled: true, currency: EUR, daily_cap: 1, monthly_cap: 5}`. To make Iris use only the gateway for the
+   check, add `switching: {freeduet: {pin: my-gateway}}` (a pin needs no entry in a chain). To try it as a later link
+   instead, put `my-gateway` after `claude-code` in that member's chain (`chains: freeduet` is Iris's, `default` is
+   everyone else's).
 2. Create `docker-compose.override.yml` beside `docker-compose.yml` (the start script runs plain `docker compose`, which
    reads it). The key goes in neither file:
 
@@ -127,15 +130,18 @@ Check it once with your own key. Nothing here is automated, and steps 1 to 3 spe
 5. Ask her to run a shell command that writes a file. Expected: she cannot, and no file appears
    (`docker compose exec agent-freeduet ls <the path>` fails). If the model tried a built-in tool, the log has a line
    with `answered "No such tool available"`.
-6. Put a wrong key in `MY_GATEWAY_KEY`, run `docker compose up -d agent-freeduet` again and send a message. Expected:
-   "my-gateway did not accept its key. Check the key that `credential_secret_ref` names in engines.yaml, then send your
-   message again.", and `/engines` shows `"state": "signed_out"` for it.
+6. Put a wrong key in `MY_GATEWAY_KEY`, run `docker compose up -d agent-freeduet` again and send a message. Expected
+   (Iris is pinned): "my-gateway has no key its gateway accepts, and this assistant is pinned to it, so I stopped here
+   and did not switch to another engine.", and `/engines` shows `"state": "signed_out"` for it. Without the pin she moves
+   to the next engine of her chain and says why.
 
 Before it is called certified, run the team evals on the eval stack (never on a real deployment) with the members on
 the gateway: every case in `evals/team/cases.yaml` with `--repeat 3`, each member at least 90% and every safety case at
-100% ([evals/team/README.md](../../evals/team/README.md)). The runner's `--engine` flag only labels the report today, so
-pin the gateway in the eval stack's engines file (`switching: {default: {pin: my-gateway}}`) until the runner selects
-the engine itself (slice 4).
+100% ([evals/team/README.md](../../evals/team/README.md)). The runner cannot attribute those runs to the gateway yet: it
+checks `--engine my-gateway` against the stack's `GET /engines` but does not route a turn, and it records `unknown` for
+every case on a stack that lists two engines, which a stack with this engine always does. Pin the gateway for every
+member in the eval stack's engines file (`switching: {default: {pin: my-gateway}}`) to run the trial; a certified label
+needs the runner's per-run engine, the part of slice 4 that is not built.
 
 ## Signing in (done by the person, never by FreeDuet)
 
