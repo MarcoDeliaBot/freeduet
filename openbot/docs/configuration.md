@@ -907,6 +907,7 @@ is still the record.
 | ------------------------------------ | ----------------------------------------------------------------------------------------- |
 | `AGENT_COMPUTER_URL`                 | Shared computer URL. If absent, computer routes are not mounted.                          |
 | `COMPUTER_TOKEN`                     | Secret every computer request must present. The computer refuses to start without it.     |
+| `COMPUTER_ALLOWED_HOSTS`             | Names this machine's own loopback may reach the computer by, besides `localhost`, `127.0.0.1`, `[::1]` and `host.docker.internal`. Comma separated, each `host` or `host:port`, an IPv6 address in brackets. Unset: none. A value that is not such a list stops the computer at start. See [Computer and supervisor Host rule](#computer-and-supervisor-host-rule). |
 | `COMPUTER_MAX_BROWSERS`              | How many Bots may hold a running browser at once. `8` by default; the least recently used is closed past it. |
 | `COMPUTER_BROWSER_IDLE_MS`           | How long an untouched browser is kept. 30 minutes by default; `0` keeps them resident.    |
 | `COMPUTER_BROWSER_BACKEND`           | `managed` by default (full bundled Chromium); `local-chrome` opts into installed Chrome with dedicated profiles and a loopback API. |
@@ -916,7 +917,9 @@ is still the record.
 | `OPENBOT_LOCAL_COMPUTER_DIR`         | Local startup helper's absolute data root. Defaults to the platform's OpenBot user-data directory; contains `profiles/` and `workspace/`. |
 | `COMPUTER_SUPERVISOR_URL`            | Supervisor URL for per-Bot computers. If absent, Bots share `AGENT_COMPUTER_URL`.         |
 | `SUPERVISOR_TOKEN`                   | Bearer token required by the supervisor.                                                  |
+| `SUPERVISOR_ALLOWED_HOSTS`           | The same for the supervisor: names this machine's own loopback may reach it by, besides its own. Unset: none. |
 | `AGENT_COMPUTER_ALLOW_PRIVATE_HOSTS` | Local-only private-host browsing when `true`. A deployment running with `NODE_ENV=production` refuses to start while it is set. Cloud metadata addresses are refused either way. |
+| `AGENT_COMPUTER_ALLOW_PRIVATE_HOSTS` | Local-only private-host browsing when `true`. A deployment running with `NODE_ENV=production` refuses to start while it is set. Cloud metadata addresses are refused either way. It opens only the server's check of the first address a Bot types: the computer's own filter still refuses the home and office network until [Home and office network access](#per-bot-egress) is switched on. |
 | `AGENT_ENDPOINT_ALLOWED_HOSTS`       | Private addresses an agent may be registered at, comma separated; unset (none) by default. Host, optionally with a port. Exact match; no wildcards. Never-allowed addresses cannot be named. |
 | `AGENT_COMPUTER_POLICY`              | JSON action policy: `{"mode":"enforce","deny":[...],"allow":[...]}`.                      |
 | `COMPUTER_RUNTIME`                   | Set to `runsc` to run supervised computers under gVisor.                                  |
@@ -929,6 +932,26 @@ computer as a sandboxed pod, selected by `COMPUTER_SANDBOX_NAMESPACE` with `COMP
 and `COMPUTER_SANDBOX_TEMPLATE_FILE` beside it; those are set by the Helm chart, not by Compose, and
 are covered in [charts/openbot/README.md](../charts/openbot/README.md). The similarly named
 `COMPUTER_SANDBOX` above only toggles Chromium's own process sandbox on a Docker computer.
+
+### Computer and supervisor Host rule
+
+A page on the internet can point its own name at 127.0.0.1, and the person's browser then sends it
+same-origin requests to anything listening there, with any header, the token included. So a request
+that reaches the computer or the supervisor **from this machine's own loopback** is answered only
+when its `Host` header names `localhost`, an address of 127.0.0.0/8, `[::1]` or
+`host.docker.internal` (any port, any capitalisation, one trailing dot), or a name in
+`COMPUTER_ALLOWED_HOSTS` or `SUPERVISOR_ALLOWED_HOSTS`. Anything else, or no `Host`, gets 421 with a
+message that names the setting. To reach one of them from this machine under another name (a
+hosts-file alias, a LAN name pointed at this machine), list that name and restart it, for example
+`COMPUTER_ALLOWED_HOSTS=computer.local`. The API server follows the same rule when there is no
+sign-in ([Where it listens](#where-it-listens)).
+
+A connection that does not come from loopback is not held to it: the server calling
+`agent-computer:4100` or `supervisor:4300` by its service name, a Kubernetes probe, another
+container. That includes, as far as is known, a connection this machine makes to a port that Docker
+publishes, which the process inside sees as coming from the network's gateway. For those the token
+is the gate, so set `COMPUTER_TOKEN` and `SUPERVISOR_TOKEN` to long random values rather than leaving
+the development defaults.
 
 Changing `COMPUTER_BROWSER_MODE` affects new supervised computers. A computer that already exists is
 left running until its image changes or its container is recreated. To apply a mode-only change to
@@ -1121,10 +1144,36 @@ The server pushes each Bot's policy to its computer when the computer wakes and 
 after. Until a policy has arrived, the filter refuses every connection. Metadata and link-local
 addresses (`169.254.0.0/16`, `fe80::/10`, `fd00:ec2::254` and the like) are refused in every mode,
 including `allow_all`. `EGRESS_POLICY_REQUIRED=0` (or `false`) lets the filter allow everything
-until a policy arrives instead, which only a computer run with no API server should need. It is read
-by the computer: in Compose put it in `egress.env`, which reaches the shared computer, and on
-Kubernetes put it in `computers.extraEnv`. The supervisor forwards only the `EGRESS_PROXY` names, so
-a computer it creates does not receive it.
+(metadata excepted) until a policy arrives instead, and the first policy that arrives brings every
+rule of it, the home and office network included (below). Only a computer run with no API server
+should need it. It is read by the computer: in Compose put it in `egress.env`, which reaches the
+shared computer, and on Kubernetes put it in `computers.extraEnv`. The supervisor forwards only the
+`EGRESS_PROXY` names, so a computer it creates does not receive it.
+
+**The home and office network.** Under `allow_all` the filter also refuses the addresses of the
+network the computer sits in: `10.0.0.0/8`, `172.16.0.0/12`, `192.168.0.0/16`, `100.64.0.0/10` (a
+VPN or carrier-grade NAT), `127.0.0.0/8` (so a Bot's own `localhost` too), `0.0.0.0/8`, multicast and
+reserved addresses, and the IPv6 equivalents (`::1`, `fc00::/7`, `fe80::/10`, `ff00::/8`), in every
+way of writing an address (`2130706433`, `0x7f.1`, `::ffff:192.168.1.1`). It judges the address the
+connection really goes to: the filter resolves a name itself and checks every address it gets, so a
+name that points inside the network is refused, and so is a redirect to one. A refusal says what the
+address is and which setting changes it.
+
+This is on by default. The one setting that switches it off is the capability **Home and office
+network access** (`cloudPrivateNetwork`) under **Admin > Enterprise controls > Capabilities**. It is
+off unless somebody turns it on, for the organization, for a role or for a directory group (a group
+can only widen), and it takes effect within seconds, on the next push. It changes nothing in the
+other modes (an administrator's own range and domain rules decide there, as before), nothing while
+**Cloud network access** is off (the Bot is `deny_all`), and it never lifts the metadata and
+link-local addresses. `AGENT_COMPUTER_ALLOW_PRIVATE_HOSTS` does not lift it either: that variable
+only governs the server's own check of the first address a Bot types.
+
+What it does not cover: behind an upstream proxy (`EGRESS_PROXY_*`) the proxy resolves names, so the
+filter can judge only an address written out and every redirect; a command that opens a raw socket
+instead of using the proxy variables is not stopped by the filter at all, and Compose has no
+network-level control for it (on Kubernetes, `networkPolicy.enabled` is that control); and a
+command's own `localhost`, which is `NO_PROXY` so that a Bot can test a server it started, is not
+judged. The reasoning and the callers it was checked against are in `docs/M1_PLAN.md`, D36.
 
 The supervisor also reads:
 
