@@ -1,5 +1,7 @@
 import { describe, expect, test } from "bun:test";
+import { computerTokenFor } from "../src/computer-token";
 import { environmentFor } from "../src/environment";
+import { NAMESPACE } from "../src/names";
 
 /**
  * What a Bot's computer is told, and the installation's secret (docs/M1_PLAN.md D28).
@@ -35,12 +37,24 @@ const WHOLE_ENV_FILE = {
 
 describe("a Bot's computer and the installation's secret", () => {
   test("is told what it is for, and nothing the settings file holds beyond that", () => {
+    // Its own token, made from the supervisor's secret (computer-token.ts), and not the
+    // `COMPUTER_TOKEN` this file also holds, which belongs to the computer a deployment runs without
+    // a supervisor.
     expect(environmentFor("freeduet", WHOLE_ENV_FILE)).toEqual([
       "COMPUTER_BOT_ID=freeduet",
-      "COMPUTER_TOKEN=computer-token-value",
+      `COMPUTER_TOKEN=${computerTokenFor("supervisor-token-value", NAMESPACE, "freeduet")}`,
       "COMPUTER_BROWSER_MODE=headless",
       "EGRESS_PROXY_DEFAULT=http://proxy.example:3128",
     ]);
+  });
+
+  test("is handed neither the deployment's shared token nor the secret its own is made from", () => {
+    // The shared `COMPUTER_TOKEN` opens the computer a deployment runs without a supervisor, and the
+    // supervisor's secret opens every Bot's: a computer that held either could open the others.
+    const told = environmentFor("freeduet", WHOLE_ENV_FILE).join("\n");
+    expect(told).not.toContain("computer-token-value");
+    expect(told).not.toContain("supervisor-token-value");
+    expect(told).not.toContain("SUPERVISOR_TOKEN");
   });
 
   test("is never handed the secret, by name or by value", () => {

@@ -2,6 +2,7 @@ import { serve } from "bun";
 import { Hono } from "hono";
 import { authorised } from "./authorisation";
 import { computerMemoryBytes } from "./computer-memory-bytes";
+import { MIN_DERIVATION_KEY_LENGTH } from "./computer-token";
 import {
   ComputerNotAnsweringError,
   DockerUnavailableError,
@@ -11,6 +12,7 @@ import {
   reachable,
   reset,
   stop,
+  tokenOfOwned,
 } from "./docker";
 import {
   documentsFolderIsEmpty,
@@ -38,9 +40,14 @@ import { namesFor } from "./names";
  * can ask for a Bot's computer to be restarted. It cannot ask for anything else, because nothing
  * else is expressible.
  *
+ * Next to them stands one read, the token of one Bot's computer. Each computer holds a token of its
+ * own, made from `SUPERVISOR_TOKEN` (computer-token.ts), and the API server, which has to present it,
+ * learns it here and never from a computer. It names one Bot at a time and is not part of a listing.
+ *
  * The shared secret is not the boundary; the vocabulary is. `SUPERVISOR_TOKEN` keeps other
  * processes on the same network from driving it, but even with the token the worst available action
- * is cycling a computer that already belongs to a Bot.
+ * is cycling a computer that already belongs to a Bot. It is also the key every computer's token is
+ * made from, so it goes into no computer, and it is long.
  *
  * Neither is the network the boundary, but it is the layer in front of both. Compose publishes this
  * port on `127.0.0.1` rather than on every address the host has, for the same reason the computer's
@@ -65,6 +72,13 @@ if (!token) {
     "SUPERVISOR_TOKEN is not set. This process holds the Docker socket and will not start without the secret its caller must present.",
   );
   process.exit(1);
+}
+// A short secret is accepted, as it always was, and said so: every computer's own token is made from it, so
+// a computer that holds its own can test guesses at the secret and, once right, make the others'.
+if (token.length < MIN_DERIVATION_KEY_LENGTH) {
+  console.warn(
+    `SUPERVISOR_TOKEN is ${token.length} characters. Each computer's own token is made from it, so a short one lets a computer guess it and open the other Bots' computers. Use ${MIN_DERIVATION_KEY_LENGTH} or more random characters; scripts/start.sh makes one.`,
+  );
 }
 // Which names a caller on this machine's loopback may use (host-guard.ts, docs/M1_PLAN.md D40). A name
 // this deployment points at this machine itself goes in `SUPERVISOR_ALLOWED_HOSTS`. A value that is set
@@ -171,6 +185,30 @@ app.post("/computers/:botId/ensure", async (context) => {
       error instanceof DockerUnavailableError ||
       error instanceof ComputerNotAnsweringError
     ) {
+      return context.json({ error: error.message }, 503);
+    }
+    throw error;
+  }
+});
+
+/**
+ * The token this Bot's computer holds, for the caller that has to present it.
+ *
+ * Asked for by the API server when it must speak to a computer it did not just ask for (the policy it
+ * pushes to every computer on a timer, the live screen), and read off the container so it is right for
+ * a computer that has not yet been replaced by `ensure` as well as for one that has.
+ */
+app.get("/computers/:botId/token", async (context) => {
+  const parsed = resolve(context.req.param("botId"));
+  if (!parsed.ok) return context.json({ error: parsed.reason }, 400);
+  try {
+    const held = await tokenOfOwned(parsed.names);
+    if (held === null) {
+      return context.json({ error: "This Bot has no computer." }, 404);
+    }
+    return context.json({ botId: parsed.names.botId, token: held });
+  } catch (error) {
+    if (error instanceof DockerUnavailableError) {
       return context.json({ error: error.message }, 503);
     }
     throw error;

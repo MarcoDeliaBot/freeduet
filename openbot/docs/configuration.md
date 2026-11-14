@@ -675,7 +675,8 @@ of them. A later start finds them and does nothing.
 
 | Setting | Made | For |
 | --- | --- | --- |
-| `SUPERVISOR_TOKEN`, `COMPUTER_TOKEN` | 32 random bytes, hex | The server's calls to the supervisor and to every Bot's computer |
+| `SUPERVISOR_TOKEN` | 32 random bytes, hex | The server's calls to the supervisor, and the key each Bot's own computer token is made from ([Each Bot's computer has its own token](#each-bots-computer-has-its-own-token)) |
+| `COMPUTER_TOKEN` | 32 random bytes, hex | The server's calls to the one shared computer, where there is no supervisor |
 | `WORKER_SHARED_SECRET` | 32 random bytes, hex | The routines worker's call to `/internal/routines/run` |
 | `POSTGRES_PASSWORD`, `DATABASE_URL` | 24 random bytes, hex | The database Compose starts, and the address that carries its password |
 | `KEY_ENCRYPTION_KEY` | 32 random bytes, base64 | What stored credentials, saved logins and company sign-in secrets are sealed with |
@@ -941,7 +942,7 @@ is still the record.
 | Variable                             | Meaning                                                                                   |
 | ------------------------------------ | ----------------------------------------------------------------------------------------- |
 | `AGENT_COMPUTER_URL`                 | Shared computer URL. If absent, computer routes are not mounted.                          |
-| `COMPUTER_TOKEN`                     | Secret every computer request must present. The computer refuses to start without it. `scripts/start.sh` generates one for the installation. |
+| `COMPUTER_TOKEN`                     | Secret every request to the shared computer (`AGENT_COMPUTER_URL`), and to a Kubernetes Sandbox, must present. The computer refuses to start without it. A Docker computer made by the supervisor does not take this value: it has a token of its own ([Each Bot's computer has its own token](#each-bots-computer-has-its-own-token)). `scripts/start.sh` generates one for the installation. |
 | `COMPUTER_ALLOWED_HOSTS`             | Names this machine's own loopback may reach the computer by, besides `localhost`, `127.0.0.1`, `[::1]` and `host.docker.internal`. Comma separated, each `host` or `host:port`, an IPv6 address in brackets. Unset: none. A value that is not such a list stops the computer at start. See [Computer and supervisor Host rule](#computer-and-supervisor-host-rule). |
 | `COMPUTER_MAX_BROWSERS`              | How many Bots may hold a running browser at once. `8` by default; the least recently used is closed past it. |
 | `COMPUTER_BROWSER_IDLE_MS`           | How long an untouched browser is kept. 30 minutes by default; `0` keeps them resident.    |
@@ -951,7 +952,7 @@ is still the record.
 | `WEB_BOT_AUTH_KEY`                   | The Web Bot Auth signing key, an Ed25519 private JWK. Unset derives one from `KEY_ENCRYPTION_KEY`. Never logged. |
 | `OPENBOT_LOCAL_COMPUTER_DIR`         | Local startup helper's absolute data root. Defaults to the platform's OpenBot user-data directory; contains `profiles/` and `workspace/`. |
 | `COMPUTER_SUPERVISOR_URL`            | Supervisor URL for per-Bot computers. If absent, Bots share `AGENT_COMPUTER_URL`.         |
-| `SUPERVISOR_TOKEN`                   | Bearer token required by the supervisor. `scripts/start.sh` generates one for the installation. |
+| `SUPERVISOR_TOKEN`                   | Bearer token required by the supervisor, and the key each Bot's computer token is made from, together with the Bot's id. Given to no computer. Use 32 random characters or more: a shorter one still works, with a warning at start. `scripts/start.sh` generates one for the installation. |
 | `SUPERVISOR_ALLOWED_HOSTS`           | The same for the supervisor: names this machine's own loopback may reach it by, besides its own. Unset: none. |
 | `AGENT_COMPUTER_ALLOW_PRIVATE_HOSTS` | Local-only private-host browsing when `true`. A deployment running with `NODE_ENV=production` refuses to start while it is set. Cloud metadata addresses are refused either way. |
 | `AGENT_COMPUTER_ALLOW_PRIVATE_HOSTS` | Local-only private-host browsing when `true`. A deployment running with `NODE_ENV=production` refuses to start while it is set. Cloud metadata addresses are refused either way. It opens only the server's check of the first address a Bot types: the computer's own filter still refuses the home and office network until [Home and office network access](#per-bot-egress) is switched on. |
@@ -985,8 +986,9 @@ A connection that does not come from loopback is not held to it: the server call
 `agent-computer:4100` or `supervisor:4300` by its service name, a Kubernetes probe, another
 container. That includes, as far as is known, a connection this machine makes to a port that Docker
 publishes, which the process inside sees as coming from the network's gateway. For those the token
-is the gate, so set `COMPUTER_TOKEN` and `SUPERVISOR_TOKEN` to long random values rather than leaving
-the development defaults.
+is the gate. That is the computer's own token (the shared computer's `COMPUTER_TOKEN`, or the one the
+supervisor made for a Bot's computer from `SUPERVISOR_TOKEN`) and the supervisor's `SUPERVISOR_TOKEN`, so
+set both to long random values rather than leaving the development defaults.
 
 Changing `COMPUTER_BROWSER_MODE` affects new supervised computers. A computer that already exists is
 left running until its image changes or its container is recreated. To apply a mode-only change to
@@ -998,6 +1000,41 @@ docker ps -aq --filter "label=openbot.namespace=openbot" | xargs -r docker rm -f
 ```
 
 The supervisor recreates each computer with the same named volumes on its next request.
+
+### Each Bot's computer has its own token
+
+Where the container supervisor runs (`COMPUTER_SUPERVISOR_URL` is set, which `scripts/start.sh` does
+unless `OPENBOT_ONE_COMPUTER_EACH=false`), every Bot's computer checks its callers against a token of
+its own. Before, every computer took the deployment's one `COMPUTER_TOKEN`. A Bot's shell can read the
+environment of the computer process it runs under, so a command run in one Bot's computer by a
+prompt-injected page could read the secret that opened every other Bot's computer. Design and tests:
+[docs/design/per-computer-token.md](../../docs/design/per-computer-token.md).
+
+- **How it is made.** The supervisor derives it: an HMAC-SHA256 of the deployment's namespace and the
+  Bot's id, keyed by `SUPERVISOR_TOKEN`. Nothing new is set and nothing new is stored, and a computer
+  made again (an image upgrade, a reset) gets the same token. Neither `SUPERVISOR_TOKEN` nor
+  `COMPUTER_TOKEN` is given to any computer.
+- **How the server learns it.** From the supervisor, over the bearer it already uses: the answer to
+  `ensure` carries it, and `GET /computers/<botId>/token` says what a computer holds. Never from a
+  computer. The server never sends a Bot's computer the deployment's `COMPUTER_TOKEN`, even when the
+  supervisor cannot answer. It remembers at most 1024 Bots' tokens, each for at most 60 seconds.
+- **Keep `SUPERVISOR_TOKEN` long and random.** 32 characters or more; `scripts/start.sh` makes 64. A
+  shorter one still works and the supervisor says so at start, because a computer holds a value (its
+  own token) to test guesses at the secret against.
+- **Update the server and the supervisor together.** A server that cannot get a token from its
+  supervisor (one too old to have the route) refuses to call the computer, with a message that says to
+  update the supervisor. It does not fall back to `COMPUTER_TOKEN`.
+- **A deployment that already has computers.** A computer made before holds the old shared token. The
+  supervisor replaces it the next time its Bot is used: the container is removed and made again with
+  its own token, and its profile and workspace volumes are kept, so logins and files survive. Lost,
+  once per Bot, are the open page and a pending request for a person to take over. Until a Bot is
+  used, its old computer keeps working with the token it has. Changing `SUPERVISOR_TOKEN` does the same
+  to every computer. To replace them all now, remove the owned containers with the command above
+  (volumes stay).
+- **Not covered.** The one shared computer (`AGENT_COMPUTER_URL`, no supervisor) and a Kubernetes
+  Sandbox still take the deployment's one `COMPUTER_TOKEN`, so a shell in one of them can read the
+  token that opens the others. The Helm chart gives every Sandbox pod the same Secret, and its
+  `networkPolicy`, which limits what may reach a pod, is off by default.
 
 ### Documents folder for chosen members
 

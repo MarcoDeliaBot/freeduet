@@ -118,7 +118,8 @@ describe("Compose, for the Bot's computer", () => {
 describe("the supervisor, for each computer it starts", () => {
   test("passes an identity, the token, the browser mode and the per-Bot outbound addresses, and no proxy or address of the stack", () => {
     const variables = environmentFor("sales", {
-      COMPUTER_TOKEN: "token",
+      // The computer's own token is made from this (supervisor/src/computer-token.ts).
+      SUPERVISOR_TOKEN: "supervisor-secret",
       COMPUTER_BROWSER_MODE: "headed",
       EGRESS_PROXY_DEFAULT: "http://gateway.example:8080",
       EGRESS_PROXY_SALES: "http://sales.example:8080",

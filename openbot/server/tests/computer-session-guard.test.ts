@@ -61,7 +61,8 @@ function fakeSupervisor(startedAt: () => string, known: string[] = []) {
         path.slice("/computers/".length, -"/ensure".length),
       );
       ensured.add(asked);
-      return Response.json(describe(asked));
+      // `/ensure` says the token this computer takes; a listing never does.
+      return Response.json({ ...describe(asked), token: `token-of-${asked}` });
     }
     return Response.json({
       computers: [...ensured].map((botId) => describe(botId)),
