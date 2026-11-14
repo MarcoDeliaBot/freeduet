@@ -1,0 +1,19 @@
+{
+  "origin": "https://freeduet.com",
+  "lastmod": "2026-11-14",
+  "default": "en",
+  "languages": [
+    {"code": "en", "name": "English",   "locale": "en_US", "week": ["M","T","W","T","F","S","S"]},
+    {"code": "it", "name": "Italiano",  "locale": "it_IT", "week": ["L","M","M","G","V","S","D"]},
+    {"code": "es", "name": "Español",   "locale": "es_ES", "week": ["L","M","X","J","V","S","D"]},
+    {"code": "fr", "name": "Français",  "locale": "fr_FR", "week": ["L","M","M","J","V","S","D"]},
+    {"code": "de", "name": "Deutsch",   "locale": "de_DE", "week": ["M","D","M","D","F","S","S"]},
+    {"code": "pt", "name": "Português", "locale": "pt_BR", "week": ["S","T","Q","Q","S","S","D"]},
+    {"code": "pl", "name": "Polski",    "locale": "pl_PL", "week": ["P","W","Ś","C","P","S","N"]},
+    {"code": "tr", "name": "Türkçe",    "locale": "tr_TR", "week": ["P","S","Ç","P","C","C","P"]},
+    {"code": "ru", "name": "Русский",   "locale": "ru_RU", "week": ["П","В","С","Ч","П","С","В"]},
+    {"code": "zh", "name": "中文",       "locale": "zh_CN", "week": ["一","二","三","四","五","六","日"]},
+    {"code": "ja", "name": "日本語",     "locale": "ja_JP", "week": ["月","火","水","木","金","土","日"]},
+    {"code": "ko", "name": "한국어",     "locale": "ko_KR", "week": ["월","화","수","목","금","토","일"]}
+  ]
+}
