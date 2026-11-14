@@ -245,13 +245,35 @@ export function safetyRequirement(
     flatten(candidate.args),
     flatten(candidate.target),
   ].join(" ");
-  const hit = SAFETY_REQUIREMENTS.find(
-    (entry) =>
-      entry.pattern.test(words) ||
-      entry.extra?.some((pattern) => pattern.test(words)) ||
-      entry.inToolName?.some((pattern) => pattern.test(candidate.toolRef)),
+  const hit = SAFETY_REQUIREMENTS.find((entry) =>
+    safetyEntryMatches(entry, words, candidate.toolRef),
   );
   return hit ? { id: hit.id, reason: hit.reason } : undefined;
+}
+
+function safetyEntryMatches(
+  entry: (typeof SAFETY_REQUIREMENTS)[number],
+  words: string,
+  toolRef: string,
+): boolean {
+  return (
+    entry.pattern.test(words) ||
+    Boolean(entry.extra?.some((pattern) => pattern.test(words))) ||
+    Boolean(entry.inToolName?.some((pattern) => pattern.test(toolRef)))
+  );
+}
+
+/**
+ * D33: does this tool's own name carry the words of a built-in safety category (a credential, a
+ * security setting, money)? Used by `classifyTool` for a tool a hub hosts, where nothing but the
+ * provider's own label says it only reads: a name with these words is not taken as a read on that
+ * label alone. The same lists and the same test as {@link safetyRequirement}, so there is no second
+ * classifier to keep in step.
+ */
+export function toolNameHitsSafetyWords(toolName: string): boolean {
+  return SAFETY_REQUIREMENTS.some((entry) =>
+    safetyEntryMatches(entry, toolName, toolName),
+  );
 }
 
 /**

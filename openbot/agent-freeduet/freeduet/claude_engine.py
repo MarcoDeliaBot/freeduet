@@ -56,6 +56,15 @@ class ClaudeEngine(EngineAdapter):
     kind = "cli"
     capabilities = frozenset({"tools", "approvals", "mcp"})
 
+    def __init__(self, key: str | None = None, label: str | None = None, binary: str | None = None):
+        """No argument is Claude Code, as ever. A key, label or binary of its own is how the tests make a
+        second engine out of the same adapter (tests/fake_engines.py); nothing in the service passes one."""
+        if key is not None:
+            self.key = key
+        if label is not None:
+            self.label = label
+        self._binary = binary
+
     def child_env(self, source: dict[str, str] | None = None) -> dict[str, str]:
         return claude_cli.child_env(source)
 
@@ -92,7 +101,7 @@ class ClaudeEngine(EngineAdapter):
         ctx.diagnostics.at_close.append(log_the_end)
         try:
             config = claude_cli.write_mcp_config(ctx.directory, gate.port, gate.secret)
-            command = claude_cli.build_command(claude_cli.claude_bin(), config, ctx.system, ctx.directory)
+            command = claude_cli.build_command(self._binary or claude_cli.claude_bin(), config, ctx.system, ctx.directory)
             try:
                 process = await claude_cli.start(command, ctx.work, self.child_env())
             except OSError:

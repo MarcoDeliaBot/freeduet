@@ -48,6 +48,11 @@ export type SignInOptions = {
   sso: boolean;
   /** An administrator requires SSO; social sign-in stays only as the administrators' break-glass. */
   ssoRequired: boolean;
+  /**
+   * FreeDuet (D28): this installation has no sign-in, and a browser is its person only once it has
+   * been paired with it (`bash scripts/open.sh` on the computer it runs on). Absent is false.
+   */
+  installPairing?: boolean;
 };
 
 async function signInOptions(): Promise<SignInOptions> {
@@ -60,12 +65,14 @@ async function signInOptions(): Promise<SignInOptions> {
     authProviders?: AuthProviderId[];
     ssoConfigured?: boolean;
     ssoRequired?: boolean;
+    installPairing?: boolean;
   };
 
   return {
     providers: body.authProviders ?? [],
     sso: body.ssoConfigured === true,
     ssoRequired: body.ssoRequired === true,
+    installPairing: body.installPairing === true,
   };
 }
 

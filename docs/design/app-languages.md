@@ -1,5 +1,7 @@
 # The app in more languages
 
+**Decided 14 November 2026: no translation of the app for now.** Status: Not planned for now. The app stays in English. FreeDuet aims at a worldwide public, English first. Members still answer in the person's language (D26, unchanged). The analysis below stays as it was written.
+
 Design only, no product code. Written 2026-11-14 for the roadmap row [The app in more languages](../ROADMAP.md) (line 53). Checked against origin/main at commit 021cad8.
 
 Markers: [code: path:line] is a line of this repository, read or grepped at 021cad8. A folder marker names a folder. [doc: URL] is an outside page. [assumed] is not checked here. Candidate strings are text that may reach the screen. They are counted by a TypeScript parse (method in section 2).
@@ -153,7 +155,7 @@ Counts per file come from the parse in section 2 [code: openbot/app/src/routes/s
 
 | # | Decision | Options | Recommendation | Reason |
 |---|---|---|---|---|
-| 1 | Scope of v1 | (a) four daily areas; (b) plus admin; (c) whole app | **(a)** | It covers what a person sees every day. Admin alone holds 620 candidates, and the whole app about 2,400. |
+| 1 | Scope of v1 | (a) four daily areas; (b) plus admin; (c) whole app | **(a)**, now superseded. Decided 14 November 2026: no translation of the app for now; it stays in English, and members still reply in the person's language (D26). | It covers what a person sees every day. Admin alone holds 620 candidates, and the whole app about 2,400. |
 | 2 | Where the language comes from | (a) deployment setting now, per person later; (b) browser language on sign-in only; (c) per person now | **(a)** | One language per deployment is the chosen design [code: openbot/server/src/freeduet/person-language.ts:16]. The capabilities answer is public by code and by test [code: openbot/server/src/app.ts:503-505]. |
 | 3 | Catalogue format and library | (a) typed TypeScript tables; (b) JSON files; (c) a library such as i18next or FormatJS | **(a), no library** | `SameShape` already checks keys [code: openbot/app/src/freeduet/person-language/cards.ts:45-47]. JSON needs `resolveJsonModule`, which is off [code: openbot/tsconfig.base.json:6]. No new dependency. |
 | 4 | Upstream strategy | (a) wrap strings in place, one row per file; (b) copy screens into FreeDuet folders; (c) propose a text layer to the upstream project first | **(a)** | One row per file is the rule [code: CLAUDE.md:49]. Copies drift apart. A proposal upstream needs the maintainer's approval first [code: docs/UPSTREAM_TOUCHES.md:5]. |
