@@ -63,6 +63,7 @@ the hands"): plan, brief executors, verify with numbers, merge, report.
   instead of letting one conversation grow past a few hundred thousand tokens.
 - **Decisions belong to the maintainer** when they change product behaviour, security, cost, or
   anything public. Bring a recommendation and the trade-off, then wait.
+- **Roadmap follows decisions at once.** When the maintainer takes a decision (a feature, a priority, a rule), update `docs/ROADMAP.md` in the same session, before reporting the decision as recorded, and the README roadmap table if a row there changes. A decision that is not in the roadmap is not recorded. (Asked on 2026-11-14.)
 
 ## Adding a team member
 
@@ -130,6 +131,9 @@ Mark (id `marketer`) was the first member added after v0.1. What a new member to
   any test, or the preload fails with "Cannot find package".
 - With drizzle on Bun's SQL driver a `jsonb` parameter is sent as a JSON string: raw SQL must use
   `${JSON.stringify(x)}::text::jsonb`.
+- In single-user mode the implicit administrator is this machine's loopback only (`server/src/auth/peer.ts`).
+  `app.request(...)` in a test has no TCP peer and is nobody, so a test that needs the person passes
+  `LOOPBACK_PEER` from `server/tests/support/loopback-peer.ts` as the third argument.
 - In the sandbox the app suite fails about 138 tests on plain main: menus and popups do not open under
   happy-dom. Compare with main before blaming a change.
 - A fresh worktree also needs `bun run generate:app-config` from `openbot/` before the app tests,
