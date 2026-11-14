@@ -526,6 +526,7 @@ policies apply. See [OpenAI WebRTC](https://developers.openai.com/api/docs/guide
 | `OPENBOT_PUBLIC_URL`         | Public address of this API. Defaults to `BETTER_AUTH_URL`.                              |
 | `OPENBOT_APP_URL`            | Where the browser app is served. Defaults to the first `TRUSTED_ORIGINS` entry.          |
 | `SIGNIN_ALLOWED_EMAIL_DOMAINS` | Comma-separated email domains admitted at sign-in. Empty means no opinion. Exact, no wildcards. |
+| `SIGNIN_ALLOWED_EMAILS`      | Comma-separated exact email addresses admitted at sign-in. Empty means no opinion. An address must pass this list and the domain list. Every `INITIAL_ADMIN_EMAILS` address must be on it. |
 | `OPENBOT_ORGANIZATION_AUTH_URL` | An OpenBot deployment that verifies employee identity and roles. Decides sign-in ahead of `OPENBOT_SINGLE_USER`. |
 
 > **FreeDuet:** `CLAUDE_CODE_OAUTH_TOKEN` is not accepted. The server drops it at start-up, compose
@@ -566,6 +567,25 @@ list combined with a `MICROSOFT_OAUTH_TENANT_ID` that names no directory (`commo
 or `consumers`), because there the address the list is checked against is one the signing-in tenant
 writes for itself. A production deployment that names no domains and leaves the tenant multi-tenant
 is warned rather than refused.
+
+**`SIGNIN_ALLOWED_EMAILS` decides who may sign in, by name.** The domain list lets in a whole domain,
+and at a public one such as `gmail.com` that is every account there; this list names the people, as
+`alice@example.com,bob@example.com`. Unset or blank it does nothing and nobody is refused who was
+admitted before. Set, an address has to pass it and the domain list (each list that exists), so it
+can only narrow what the domain list admits. Both sides go through one normalisation (lower case,
+IDNA domain, no trailing dot) and the local part is otherwise left alone, so `a.b@example.com`,
+`ab@example.com` and `a+tag@example.com` are three different addresses, and a lookalike such as
+`alice@example.com.attacker.test` is not `alice@example.com`. The list is checked when an account is
+made and again when a session is made for an account that already exists, so an address taken off the
+list gets no new sign-in, and an address that was never on it leaves no account behind. It does not
+end a session that already exists (People, Remove access does that), and it is checked against the
+address the provider returns, which OpenBot does not require to be a verified one. Start-up refuses
+what cannot work: a set value that names no address (`,`), an entry that is not an address (a bare
+domain, `Name <a@b.c>`, two addresses with no comma, a wildcard such as `*@example.com`), an
+administrator in `INITIAL_ADMIN_EMAILS` who is not on the list and could never sign in, an address
+at a domain `SIGNIN_ALLOWED_EMAIL_DOMAINS` does not admit, and a `MICROSOFT_OAUTH_TENANT_ID` that
+names no directory, for the reason the domain list refuses it. With no provider configured nobody
+signs in and the variable does nothing.
 
 **`OPENBOT_ORGANIZATION_AUTH_URL` names an authority, not a provider.** It must be an HTTPS OpenBot
 origin, or HTTP on loopback, and a bare origin: a username, password, query, fragment or any path
