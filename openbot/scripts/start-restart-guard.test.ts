@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import { createHash } from "node:crypto";
-import { existsSync, readFileSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync } from "node:fs";
 import {
   chmod,
   mkdir,
@@ -19,6 +19,21 @@ import { join } from "node:path";
  * server). The tests about the secret itself leave it out with `omitFromEnv`.
  */
 const FIXTURE_INSTALL_SECRET = "ab".repeat(32);
+
+/**
+ * FreeDuet (docs/M1_PLAN.md D39): the database password and the vault key every fixture `.env` already
+ * holds, neither of them a public example, so the tests that are about something else never meet a start
+ * that has to replace them (which restarts the server and the worker). The tests about D39 swap them for
+ * the public ones, or leave them out, with `settings` and `omitFromEnv`.
+ */
+const FIXTURE_DATABASE_PASSWORD = "fixture-database-password";
+const FIXTURE_KEY = "Zml4dHVyZS1rZXktZm9yLXRlc3RzLW9ubHktbm90LXJlYWw=";
+/** What this repository used to publish, as literals a test writes into a `.env`: see scripts/secrets.sh. */
+const PUBLIC_COMPUTER_TOKEN = "openbot-dev-computer-token";
+const PUBLIC_SUPERVISOR_TOKEN = "openbot-dev-supervisor-token";
+const PUBLIC_WORKER_SECRET = "openbot-dev-worker-secret";
+const PUBLIC_KEY = "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=";
+const PUBLIC_DATABASE_URL = "postgres://openbot:openbot@localhost:5432/openbot";
 
 async function writeExecutable(path: string, contents: string) {
   await writeFile(path, contents);
@@ -64,6 +79,19 @@ type Run = {
    * (#42), which sends no licence, so the CopilotKit info route has no `licenseStatus` at all.
    */
   runtime?: "intelligence" | "sse";
+  /**
+   * FreeDuet (D39): whether the database accepts the `ALTER ROLE` that start.sh sends it (`works`) or
+   * refuses it every time (`fails`), and what the vault question answers: how many rows hold something
+   * sealed with the key, or `unreadable` when the database cannot be asked.
+   */
+  databaseAlter?: "works" | "fails";
+  vaultRows?: number | "unreadable";
+  /**
+   * FreeDuet (D39): the settings file is `.env.example` as it ships, which is what the README's
+   * `cp .env.example .env` and CI's clean-start job start from, plus `settings`. Nothing else of the
+   * fixture is written, so what start.sh makes is made from what a new clone really has.
+   */
+  exampleEnvironment?: boolean;
 };
 
 async function runStartWithStaleServerProbe(
@@ -85,6 +113,9 @@ async function runStartWithStaleServerProbe(
     envFile = ".env",
     portFree = false,
     runtime = "intelligence",
+    databaseAlter = "works",
+    vaultRows = 0,
+    exampleEnvironment = false,
   }: Run = {},
 ) {
   const root =
@@ -101,6 +132,9 @@ async function runStartWithStaleServerProbe(
   const curlConfigLogPath = join(directory, "curl-config.log");
   const browserLogPath = join(directory, "browser.log");
   const leakLogPath = join(directory, "leak.log");
+  // FreeDuet (D39): the SQL the fake database was sent on standard input (where the new password goes,
+  // never on a command line), and how many times the worker was stopped.
+  const sqlLogPath = join(directory, "psql-stdin.log");
   // Whether this file system keeps permission bits at all (a Windows drive mounted into WSL does
   // not): a mode is only asserted where it can be read back.
   const modeProbe = join(directory, "mode-probe");
@@ -130,9 +164,11 @@ async function runStartWithStaleServerProbe(
   if [ "$SERVER_STOPS" = 1 ]; then
     case "$1" in 91000001|91000002) : > "$SERVER_STOPPED" ;; esac
   fi
+  # FreeDuet (D39): a worker that was signalled is gone until a new one is launched.
+  case "$1" in 91000005) : > "$WORKER_KILLED" ;; esac
 }\n`,
   );
-  const environment = [
+  const fixtureEnvironment = [
     "APP_PORT=3010",
     "SERVER_PORT=3001",
     "COMPUTER_PORT=4100",
@@ -146,7 +182,10 @@ async function runStartWithStaleServerProbe(
     "AGENT_TOOL_TOKEN=agent-tool-token",
     "MANAGED_AGENT_AG_UI_URL=http://localhost:4201/ag-ui",
     "OPENBOT_ONE_COMPUTER_EACH=true",
-    "DATABASE_URL=postgres://openbot:openbot@localhost:5432/openbot",
+    // FreeDuet (D39): a database password and a vault key that are nobody's example.
+    `DATABASE_URL=postgres://openbot:${FIXTURE_DATABASE_PASSWORD}@localhost:5432/openbot`,
+    `POSTGRES_PASSWORD=${FIXTURE_DATABASE_PASSWORD}`,
+    `KEY_ENCRYPTION_KEY=${FIXTURE_KEY}`,
     // FreeDuet: start.sh generates this key once and points the server's own model calls at it.
     "FREEDUET_LOCAL_KEY=freeduet-local-key",
     "ANTHROPIC_API_KEY=freeduet-local-key",
@@ -160,6 +199,9 @@ async function runStartWithStaleServerProbe(
         line.startsWith(`${key}=`),
       ),
   );
+  const environment = exampleEnvironment
+    ? (await readFile(".env.example", "utf8")).trimEnd().split("\n")
+    : fixtureEnvironment;
   environment.push(
     ...Object.entries(settings).map(([key, value]) => `${key}=${value}`),
   );
@@ -181,6 +223,11 @@ async function runStartWithStaleServerProbe(
   await writeFile(
     join(scripts, "processes.sh"),
     await readFile("scripts/processes.sh"),
+  );
+  // FreeDuet (D39): the public defaults start.sh tells from a secret somebody chose. Sourced like the two above.
+  await writeFile(
+    join(scripts, "secrets.sh"),
+    await readFile("scripts/secrets.sh"),
   );
   // FreeDuet (D28): start.sh hands a browser to this one when it has just made the installation secret.
   await writeExecutable(
@@ -219,7 +266,9 @@ if [ "$1" = -a ]; then
   case "$3" in
     91000003) printf 'n%s/other/server\\n' "$STACK_ROOT" ;;
     91000005)
-      if [ "$WORKER_OWNER" = own ] || [ -f "$WORKER_STARTED" ]; then
+      if [ -f "$WORKER_KILLED" ] && [ ! -f "$WORKER_STARTED" ]; then
+        printf 'n%s/other\\n' "$STACK_ROOT"
+      elif [ "$WORKER_OWNER" = own ] || [ -f "$WORKER_STARTED" ]; then
         printf 'n%s\\n' "$STACK_ROOT"
       else
         printf 'n%s/other\\n' "$STACK_ROOT"
@@ -265,6 +314,7 @@ for arg in "$@"; do
   prev="$arg"
 done
 if [ -n "\${FREEDUET_INSTALL_SECRET:-}" ]; then printf 'curl\\n' >> "$LEAK_LOG"; fi
+if [ -n "\${KEY_ENCRYPTION_KEY:-}" ]; then printf 'curl KEY_ENCRYPTION_KEY\\n' >> "$LEAK_LOG"; fi
 for port in ${unavailableHealthPorts.join(" ")}; do
   if [[ "$args" == *"http://localhost:$port/health"* ]]; then exit 7; fi
 done
@@ -301,8 +351,21 @@ exit 0
 args="$*"
 printf '%s\\n' "$args" >> "$DOCKER_LOG"
 if [ -n "\${FREEDUET_INSTALL_SECRET:-}" ]; then printf 'docker\\n' >> "$LEAK_LOG"; fi
+# FreeDuet (D39): the database's password and the vault key reach Compose through the settings file and
+# nothing else, so a Compose that finds either in its environment was handed it by start.sh.
+if [ -n "\${POSTGRES_PASSWORD:-}" ]; then printf 'docker POSTGRES_PASSWORD\\n' >> "$LEAK_LOG"; fi
+if [ -n "\${KEY_ENCRYPTION_KEY:-}" ]; then printf 'docker KEY_ENCRYPTION_KEY\\n' >> "$LEAK_LOG"; fi
 if [ -n "\${COMPOSE_PROFILES:-}" ]; then printf 'COMPOSE_PROFILES=%s\\n' "$COMPOSE_PROFILES" >> "$DOCKER_LOG"; fi
-if [[ "$args" == *"compose up"* ]]; then printf '%s' "$COMPUTER_TOKEN" > "$COMPOSE_COMPUTER_TOKEN"; fi
+# The one statement start.sh sends a database on standard input, and the one question it asks of the vault.
+if [[ "$args" == *"psql -U openbot -d postgres -v ON_ERROR_STOP=1 -q"* ]]; then
+  cat >> "$SQL_LOG"
+  if [ "$DATABASE_ALTER" = fails ]; then exit 1; fi
+fi
+if [[ "$args" == *"query_to_xml"* ]]; then
+  if [ "$VAULT_ROWS" = unreadable ]; then exit 1; fi
+  printf '%s\\n' "$VAULT_ROWS"
+fi
+if [[ "$args" == *"compose up"* ]]; then printf '%s' "$COMPUTER_TOKEN" > "$COMPOSE_COMPUTER_TOKEN"; printf '%s' "$SUPERVISOR_TOKEN" > "$COMPOSE_SUPERVISOR_TOKEN"; fi
 if [[ "$args" == *"to_regclass('public.agent_profiles')"* ]]; then echo agent_profiles; fi
 if [[ "$args" == *"to_regclass('public.agent_preferences')"* ]]; then echo agent_preferences; fi
 exit 0
@@ -388,7 +451,7 @@ fi
   // The Learning container check answers with one line, which start.sh relays.
   await writeExecutable(
     join(fakeBin, "bun"),
-    '#!/usr/bin/env bash\nif [ -n "$FREEDUET_INSTALL_SECRET" ]; then printf "bun\\n" >> "$LEAK_LOG"; fi\nif [[ "$2" == *server/src/production-entry.ts ]]; then printf "%s" "$COMPUTER_TOKEN" > "$SERVER_COMPUTER_TOKEN"; printf "%s\\n" "$*" > "$SERVER_STARTED"; fi\nif [[ "$2" == *server/src/production-entry.ts && -n "$FAKE_SERVER_HOLDS_SECONDS" ]]; then /bin/sleep "$FAKE_SERVER_HOLDS_SECONDS"; fi\nif [[ "$*" == *worker/src/index.ts ]]; then printf "%s\\n" "$*" > "$WORKER_STARTED"; fi\nif [ "$1" = run ] && [ "$2" = - ]; then exec "$REAL_BUN" "$@"; fi\nif [ "$1" = scripts/setup-learning.ts ]; then echo "noise"; echo "LEARNING-CHECK $*"; fi\nexit 0\n',
+    '#!/usr/bin/env bash\nif [ -n "$FREEDUET_INSTALL_SECRET" ]; then printf "bun\\n" >> "$LEAK_LOG"; fi\nif [ -n "$KEY_ENCRYPTION_KEY" ]; then printf "bun KEY_ENCRYPTION_KEY\\n" >> "$LEAK_LOG"; fi\nif [[ "$2" == *server/src/production-entry.ts ]]; then printf "%s" "$COMPUTER_TOKEN" > "$SERVER_COMPUTER_TOKEN"; printf "%s\\n" "$*" > "$SERVER_STARTED"; printf "%s\\n%s\\n%s\\n" "$SUPERVISOR_TOKEN" "$COMPUTER_TOKEN" "$WORKER_SHARED_SECRET" > "$SERVER_ENV"; fi\nif [[ "$2" == *server/src/production-entry.ts && -n "$FAKE_SERVER_HOLDS_SECONDS" ]]; then /bin/sleep "$FAKE_SERVER_HOLDS_SECONDS"; fi\nif [[ "$*" == *worker/src/index.ts ]]; then printf "%s\\n" "$*" > "$WORKER_STARTED"; printf "%s\\n%s\\n" "$DATABASE_URL" "$WORKER_SHARED_SECRET" > "$WORKER_ENV"; fi\nif [ "$1" = run ] && [ "$2" = - ]; then exec "$REAL_BUN" "$@"; fi\nif [ "$1" = scripts/setup-learning.ts ]; then echo "noise"; echo "LEARNING-CHECK $*"; fi\nexit 0\n',
   );
   // What `python3` is on a stock Windows machine: the Microsoft Store alias, which runs nothing. A
   // script that still needed it would stop at the health check in every test in this file.
@@ -423,6 +486,13 @@ fi
         COMPOSE_COMPUTER_TOKEN: join(directory, "compose-computer-token"),
         WORKER_STARTED: join(directory, "worker-started"),
         WORKER_CHECKED: join(directory, "worker-checked"),
+        WORKER_KILLED: join(directory, "worker-killed"),
+        WORKER_ENV: join(directory, "worker-env"),
+        SERVER_ENV: join(directory, "server-env"),
+        COMPOSE_SUPERVISOR_TOKEN: join(directory, "compose-supervisor-token"),
+        SQL_LOG: sqlLogPath,
+        DATABASE_ALTER: databaseAlter,
+        VAULT_ROWS: String(vaultRows),
         SERVER_STOPPED: join(directory, "server-stopped"),
         SERVER_STARTED: join(directory, "server-started"),
         SERVER_RESTART_PAUSED: join(directory, "server-restart-paused"),
@@ -460,7 +530,14 @@ fi
       join(directory, envFile),
     ).text();
     let repeated:
-      | { exitCode: number; stdout: string; stderr: string; signalLog: string }
+      | {
+          exitCode: number;
+          stdout: string;
+          stderr: string;
+          signalLog: string;
+          /** Both starts' Docker calls, the first one's included. */
+          dockerLog: string;
+        }
       | undefined;
     if (repeatStart && exitCode === 0) {
       await writeFile(logPath, "");
@@ -475,6 +552,7 @@ fi
         stdout: nextStdout,
         stderr: nextStderr,
         signalLog: await readFile(logPath, "utf8"),
+        dockerLog: await readFile(dockerLogPath, "utf8"),
       };
     }
     return {
@@ -513,6 +591,26 @@ fi
         .text()
         .catch(() => ""),
       leakLog: await Bun.file(leakLogPath)
+        .text()
+        .catch(() => ""),
+      // FreeDuet (D39): everything the fake database was sent on standard input.
+      sqlLog: await Bun.file(sqlLogPath)
+        .text()
+        .catch(() => ""),
+      // What the server and the worker that this run launched were handed, and what Compose was.
+      serverEnvironment: (
+        await Bun.file(join(directory, "server-env"))
+          .text()
+          .catch(() => "")
+      ).split("\n"),
+      workerEnvironment: (
+        await Bun.file(join(directory, "worker-env"))
+          .text()
+          .catch(() => "")
+      ).split("\n"),
+      composeSupervisorToken: await Bun.file(
+        join(directory, "compose-supervisor-token"),
+      )
         .text()
         .catch(() => ""),
       curlConfigs: (
@@ -648,23 +746,21 @@ describe("start.sh server restart guard", () => {
     expect(result.stdout).toContain("ownership");
   });
 
-  test.each(["default", "process environment"])(
-    "an unchanged resolved %s token leaves the API running",
-    async (source) => {
-      const token =
-        source === "default" ? "openbot-dev-computer-token" : "process-token";
-      const result = await runStartWithStaleServerProbe(400, {
-        settings: { COMPUTER_TOKEN: "" },
-        runningComputerToken: token,
-        processEnvironment:
-          source === "process environment" ? { COMPUTER_TOKEN: token } : {},
-      });
-      expect(result.exitCode).toBe(0);
-      expect(result.signalLog).toBe("");
-      expect(result.savedEnvironment).toContain(`COMPUTER_TOKEN=${token}\n`);
-      expect(result.composeComputerToken).toBe(result.runtimeComputerToken);
-    },
-  );
+  test("an unchanged token from the process environment leaves the API running", async () => {
+    // FreeDuet (D39): there is no default token any more to leave it running on. A blank setting is a
+    // token made for this installation, which a server holding another one is restarted to read; the
+    // tests of that are the D39 ones below.
+    const token = "process-token";
+    const result = await runStartWithStaleServerProbe(400, {
+      settings: { COMPUTER_TOKEN: "" },
+      runningComputerToken: token,
+      processEnvironment: { COMPUTER_TOKEN: token },
+    });
+    expect(result.exitCode).toBe(0);
+    expect(result.signalLog).toBe("");
+    expect(result.savedEnvironment).toContain(`COMPUTER_TOKEN=${token}\n`);
+    expect(result.composeComputerToken).toBe(result.runtimeComputerToken);
+  });
 
   test.each([
     ["unquoted", "computer-token"],
@@ -1774,5 +1870,826 @@ describe("scripts/open.sh (D28)", () => {
     expect(refused.exitCode).toBe(1);
     expect(refused.stdout).toContain("Unknown argument: --secret");
     expect(refused.curlLog).toBe("");
+  });
+});
+
+/*
+ * The secrets start.sh makes for each installation (docs/M1_PLAN.md D39).
+ *
+ * Until D39 a start without them fell back to strings published in this repository, the same ones on
+ * every installation: the computer's, the supervisor's and the worker's secrets, the database's
+ * password, and the key that seals saved logins. What these tests hold start.sh to:
+ *
+ *   - a start with none of them makes each one, different on every installation, kept in the settings
+ *     file (mode 600) and shown nowhere: not in the output, not in a command line, not in the
+ *     environment of Compose, curl or the server;
+ *   - a later start finds them and does nothing;
+ *   - a value somebody set is never replaced, and the environment is theirs;
+ *   - an installation still on the old public values is moved off them without losing its data: the
+ *     database gets its new password on the running database before the file says so, the key is
+ *     replaced only when the vault is empty, and a server and a worker that held the old values are
+ *     restarted;
+ *   - what cannot be changed safely is left, and said, in plain words.
+ */
+const SECRET_NAMES = [
+  "SUPERVISOR_TOKEN",
+  "COMPUTER_TOKEN",
+  "WORKER_SHARED_SECRET",
+  "KEY_ENCRYPTION_KEY",
+  "POSTGRES_PASSWORD",
+  "DATABASE_URL",
+] as const;
+/** The last line for NAME in a settings file, the one start.sh reads; nothing when there is none. */
+const valueIn = (environment: string, name: string) =>
+  environment
+    .split("\n")
+    .filter((line) => line.startsWith(`${name}=`))
+    .at(-1)
+    ?.slice(name.length + 1) ?? "";
+const linesFor = (environment: string, name: string) =>
+  environment.split("\n").filter((line) => line.startsWith(`${name}=`)).length;
+const HEX_64 = /^[0-9a-f]{64}$/;
+const HEX_48 = /^[0-9a-f]{48}$/;
+/** Thirty-two random bytes, base64: what `openssl rand -base64 32` prints. */
+const KEY_SHAPE = /^[A-Za-z0-9+/]{43}=$/;
+/** What the one-command start's clean-start check refuses to find in start.sh's output. */
+const ASKED_FOR_A_KEY = /api[_ ]?key|licen[cs]e is /i;
+
+describe("start.sh secrets made for each installation (D39)", () => {
+  /** A clone that has just copied `.env.example`: none of them is set, and no server or worker runs. */
+  const newClone = {
+    omitFromEnv: [...SECRET_NAMES],
+    portFree: true,
+    worker: "other",
+  } as const;
+  /** An installation from before D39: every one of them is the string this repository published. */
+  const onPublicDefaults = {
+    settings: {
+      SUPERVISOR_TOKEN: `"${PUBLIC_SUPERVISOR_TOKEN}"`,
+      COMPUTER_TOKEN: PUBLIC_COMPUTER_TOKEN,
+      WORKER_SHARED_SECRET: PUBLIC_WORKER_SECRET,
+      KEY_ENCRYPTION_KEY: PUBLIC_KEY,
+      DATABASE_URL: PUBLIC_DATABASE_URL,
+    },
+    omitFromEnv: ["POSTGRES_PASSWORD"],
+  } as const;
+  const everywhere = (
+    result: Awaited<ReturnType<typeof runStartWithStaleServerProbe>>,
+  ) => ({
+    stdout: result.stdout,
+    stderr: result.stderr,
+    docker: result.dockerLog,
+    curl: result.curlLog,
+    signals: result.signalLog,
+    serverLaunch: result.serverLaunch,
+    workerLaunch: result.workerLaunch,
+  });
+
+  test("a start with none of them makes each, in the shape it needs, one line each", async () => {
+    const result = await runStartWithStaleServerProbe(400, newClone);
+
+    expect({ exitCode: result.exitCode, stderr: result.stderr }).toEqual({
+      exitCode: 0,
+      stderr: "",
+    });
+    const saved = result.savedEnvironment;
+    expect(valueIn(saved, "SUPERVISOR_TOKEN")).toMatch(HEX_64);
+    expect(valueIn(saved, "COMPUTER_TOKEN")).toMatch(HEX_64);
+    expect(valueIn(saved, "WORKER_SHARED_SECRET")).toMatch(HEX_64);
+    expect(valueIn(saved, "KEY_ENCRYPTION_KEY")).toMatch(KEY_SHAPE);
+    const password = valueIn(saved, "POSTGRES_PASSWORD");
+    expect(password).toMatch(HEX_48);
+    expect(valueIn(saved, "DATABASE_URL")).toBe(
+      `postgres://openbot:${password}@localhost:5432/openbot`,
+    );
+    for (const name of SECRET_NAMES) expect(linesFor(saved, name)).toBe(1);
+    // None of the strings this repository used to publish is anywhere in it.
+    for (const old of ["openbot-dev-", PUBLIC_KEY, "openbot:openbot@"])
+      expect(saved).not.toContain(old);
+  });
+
+  test("the file is for its owner alone, and nothing shows what was made", async () => {
+    const result = await runStartWithStaleServerProbe(400, newClone);
+    const saved = result.savedEnvironment;
+
+    // Where this file system keeps permission bits at all.
+    expect(result.modesSupported ? result.savedEnvironmentMode : 0o600).toBe(
+      0o600,
+    );
+    for (const name of SECRET_NAMES) {
+      expect(result.stdout).toContain(
+        name === "POSTGRES_PASSWORD" || name === "DATABASE_URL"
+          ? "database: generated its password and wrote it to .env."
+          : `Generated ${name} and wrote it to .env.`,
+      );
+    }
+    // The value of a secret is in no output, no command line and no log of one, and in the
+    // environment of no child that does not need it: Compose, curl and the server's launcher.
+    const password = valueIn(saved, "POSTGRES_PASSWORD");
+    for (const name of SECRET_NAMES) {
+      const secret = name === "DATABASE_URL" ? password : valueIn(saved, name);
+      for (const [where, text] of Object.entries(everywhere(result)))
+        expect({ name, where, shown: text.includes(secret) }).toEqual({
+          name,
+          where,
+          shown: false,
+        });
+    }
+    expect(result.leakLog).toBe("");
+    // What the clean-start check reads for a request of the person's for a key.
+    expect(result.stdout).not.toMatch(ASKED_FOR_A_KEY);
+  });
+
+  test("the database learns its password on standard input, before the migration, and Compose and the server are handed the same tokens", async () => {
+    const result = await runStartWithStaleServerProbe(400, newClone);
+    const saved = result.savedEnvironment;
+    const password = valueIn(saved, "POSTGRES_PASSWORD");
+
+    expect(result.sqlLog).toBe(
+      `ALTER ROLE openbot WITH PASSWORD '${password}';\n`,
+    );
+    const at = (needle: string) => result.dockerLog.indexOf(needle);
+    const started = at("compose up -d --build");
+    const altered = at("psql -U openbot -d postgres -v ON_ERROR_STOP=1 -q");
+    const recreated = at("compose up -d postgres");
+    const migrated = at("compose run --rm --build migrate");
+    expect(started).toBeGreaterThanOrEqual(0);
+    expect(altered).toBeGreaterThan(started);
+    expect(recreated).toBeGreaterThan(altered);
+    expect(migrated).toBeGreaterThan(recreated);
+    expect(result.composeComputerToken).toBe(valueIn(saved, "COMPUTER_TOKEN"));
+    expect(result.composeSupervisorToken).toBe(
+      valueIn(saved, "SUPERVISOR_TOKEN"),
+    );
+    // The server and the worker that this run launched hold what the file now says.
+    expect(result.serverEnvironment.slice(0, 3)).toEqual([
+      valueIn(saved, "SUPERVISOR_TOKEN"),
+      valueIn(saved, "COMPUTER_TOKEN"),
+      valueIn(saved, "WORKER_SHARED_SECRET"),
+    ]);
+    expect(result.workerEnvironment.slice(0, 2)).toEqual([
+      valueIn(saved, "DATABASE_URL"),
+      valueIn(saved, "WORKER_SHARED_SECRET"),
+    ]);
+  });
+
+  test("no two installations get the same ones", async () => {
+    const [first, second] = await Promise.all([
+      runStartWithStaleServerProbe(400, newClone),
+      runStartWithStaleServerProbe(400, newClone),
+    ]);
+
+    for (const name of SECRET_NAMES) {
+      expect(valueIn(first.savedEnvironment, name)).not.toBe("");
+      expect(valueIn(second.savedEnvironment, name)).not.toBe("");
+      expect(valueIn(first.savedEnvironment, name)).not.toBe(
+        valueIn(second.savedEnvironment, name),
+      );
+    }
+  }, 20_000);
+
+  test("a later start finds them, says nothing, restarts nothing and leaves the database alone", async () => {
+    const result = await runStartWithStaleServerProbe(400, {
+      ...newClone,
+      repeatStart: true,
+    });
+
+    for (const name of SECRET_NAMES) {
+      expect(valueIn(result.firstSavedEnvironment, name)).not.toBe("");
+      expect(valueIn(result.savedEnvironment, name)).toBe(
+        valueIn(result.firstSavedEnvironment, name),
+      );
+    }
+    expect(result.repeated).toMatchObject({
+      exitCode: 0,
+      stderr: "",
+      signalLog: "",
+    });
+    expect(result.repeated?.stdout ?? "").not.toMatch(/Generated|Replaced/);
+    // One password was ever sent, and the database container was made to match once.
+    expect(result.sqlLog).toBe(
+      `ALTER ROLE openbot WITH PASSWORD '${valueIn(result.savedEnvironment, "POSTGRES_PASSWORD")}';\n`,
+    );
+    const recreations = (result.repeated?.dockerLog ?? "")
+      .split("\n")
+      .filter((line) => line.includes("compose up -d postgres"));
+    expect(recreations).toHaveLength(1);
+  }, 20_000);
+
+  /**
+   * The one test here that passes on the start.sh before D39 as well, and is meant to: an installation
+   * that set every one of them itself, which is what a deployment is told to do, must find a start
+   * after `git pull` exactly as it was. Not a byte of its file, no restart, no word to the database.
+   */
+  test("an installation that set every one of them itself is left exactly as it was", async () => {
+    const result = await runStartWithStaleServerProbe(400);
+
+    expect(result.exitCode).toBe(0);
+    expect(result.savedEnvironment).toBe(result.initialEnvironment);
+    expect(result.stdout).not.toMatch(/Generated|Replaced/);
+    expect(result.signalLog).toBe("");
+    expect(result.sqlLog).toBe("");
+    // Nobody asks the vault when the key is somebody's own.
+    expect(result.dockerLog).not.toContain("query_to_xml");
+  });
+
+  test("a value somebody set is kept, byte for byte, while the ones they left out are made", async () => {
+    // The person's own supervisor token, key and database address, in the file; the rest are missing.
+    const result = await runStartWithStaleServerProbe(400, {
+      omitFromEnv: [
+        "COMPUTER_TOKEN",
+        "WORKER_SHARED_SECRET",
+        "POSTGRES_PASSWORD",
+      ],
+      portFree: true,
+      worker: "other",
+    });
+
+    expect(result.exitCode).toBe(0);
+    const saved = result.savedEnvironment;
+    for (const name of [
+      "SUPERVISOR_TOKEN",
+      "KEY_ENCRYPTION_KEY",
+      "DATABASE_URL",
+    ])
+      expect({ name, line: valueIn(saved, name) }).toEqual({
+        name,
+        line: valueIn(result.initialEnvironment, name),
+      });
+    expect(valueIn(saved, "COMPUTER_TOKEN")).toMatch(HEX_64);
+    expect(valueIn(saved, "WORKER_SHARED_SECRET")).toMatch(HEX_64);
+    // A database address that is theirs has no password of ours to set.
+    expect(linesFor(saved, "POSTGRES_PASSWORD")).toBe(0);
+    expect(result.sqlLog).toBe("");
+    expect(result.dockerLog).not.toContain("query_to_xml");
+    expect(result.stdout).toContain(
+      "Generated COMPUTER_TOKEN and wrote it to .env.",
+    );
+    expect(result.stdout).not.toContain("SUPERVISOR_TOKEN");
+    // And the server holds the person's value next to the made ones.
+    expect(result.serverEnvironment.slice(0, 3)).toEqual([
+      valueIn(saved, "SUPERVISOR_TOKEN"),
+      valueIn(saved, "COMPUTER_TOKEN"),
+      valueIn(saved, "WORKER_SHARED_SECRET"),
+    ]);
+  });
+
+  test.each([
+    "postgres://openbot:openbot@db.internal:5432/openbot",
+    "postgres://someone:openbot@localhost:5432/openbot",
+    "postgres://openbot:openbot@localhost:5432/other",
+    "postgres://openbot:my-own-password@localhost:5432/openbot",
+  ])(
+    "a database address that is not the example one is left exactly as it is, whatever else is made: %s",
+    async (address) => {
+      const result = await runStartWithStaleServerProbe(400, {
+        settings: { DATABASE_URL: address },
+        omitFromEnv: [
+          "SUPERVISOR_TOKEN",
+          "COMPUTER_TOKEN",
+          "WORKER_SHARED_SECRET",
+          "POSTGRES_PASSWORD",
+        ],
+        portFree: true,
+        worker: "other",
+      });
+
+      expect(result.exitCode).toBe(0);
+      expect(valueIn(result.savedEnvironment, "DATABASE_URL")).toBe(address);
+      expect(linesFor(result.savedEnvironment, "POSTGRES_PASSWORD")).toBe(0);
+      expect(result.sqlLog).toBe("");
+      // The tokens the person left out are still made.
+      expect(valueIn(result.savedEnvironment, "SUPERVISOR_TOKEN")).toMatch(
+        HEX_64,
+      );
+      expect(result.workerEnvironment[0]).toBe(address);
+    },
+  );
+
+  test("a value in the environment is the person's: used as it is, written nowhere, and the file's example values are still replaced", async () => {
+    const result = await runStartWithStaleServerProbe(400, {
+      ...onPublicDefaults,
+      portFree: true,
+      worker: "other",
+      processEnvironment: {
+        SUPERVISOR_TOKEN: "person-supervisor-token",
+        KEY_ENCRYPTION_KEY: "person-key",
+        DATABASE_URL: "postgres://elsewhere:secret@db.internal:5432/mine",
+      },
+    });
+
+    expect(result.exitCode).toBe(0);
+    expect(result.serverEnvironment[0]).toBe("person-supervisor-token");
+    // Left in the file as it was, and no new one made beside it.
+    expect(valueIn(result.savedEnvironment, "SUPERVISOR_TOKEN")).toBe(
+      `"${PUBLIC_SUPERVISOR_TOKEN}"`,
+    );
+    expect(result.stdout).not.toContain("SUPERVISOR_TOKEN");
+    expect(valueIn(result.savedEnvironment, "KEY_ENCRYPTION_KEY")).toBe(
+      PUBLIC_KEY,
+    );
+    expect(result.stdout).not.toContain("KEY_ENCRYPTION_KEY");
+    expect(valueIn(result.savedEnvironment, "DATABASE_URL")).toBe(
+      PUBLIC_DATABASE_URL,
+    );
+    expect(result.sqlLog).toBe("");
+    expect(result.dockerLog).not.toContain("query_to_xml");
+    // The two the environment does not name are the file's to be replaced, as for anybody.
+    expect(valueIn(result.savedEnvironment, "COMPUTER_TOKEN")).toMatch(HEX_64);
+    expect(valueIn(result.savedEnvironment, "WORKER_SHARED_SECRET")).toMatch(
+      HEX_64,
+    );
+  });
+
+  /**
+   * The case the whole change exists for, and the one that must not hurt: an installation that has been
+   * running for weeks on the strings this repository published, updated with `git pull` and started
+   * again. What it holds that cannot be replaced by writing a line is the database's password, and the
+   * server and the worker are running with the old ones.
+   */
+  test("an installation on the old public values is moved off them, its server and worker restarted to read the new ones", async () => {
+    const result = await runStartWithStaleServerProbe(400, onPublicDefaults);
+
+    expect({ exitCode: result.exitCode, stderr: result.stderr }).toEqual({
+      exitCode: 0,
+      stderr: "",
+    });
+    const saved = result.savedEnvironment;
+    expect(valueIn(saved, "SUPERVISOR_TOKEN")).toMatch(HEX_64);
+    expect(valueIn(saved, "COMPUTER_TOKEN")).toMatch(HEX_64);
+    expect(valueIn(saved, "WORKER_SHARED_SECRET")).toMatch(HEX_64);
+    expect(valueIn(saved, "KEY_ENCRYPTION_KEY")).toMatch(KEY_SHAPE);
+    const password = valueIn(saved, "POSTGRES_PASSWORD");
+    expect(password).toMatch(HEX_48);
+    expect(valueIn(saved, "DATABASE_URL")).toBe(
+      `postgres://openbot:${password}@localhost:5432/openbot`,
+    );
+    for (const name of SECRET_NAMES) expect(linesFor(saved, name)).toBe(1);
+    for (const old of ["openbot-dev-", PUBLIC_KEY, "openbot:openbot@"])
+      expect(saved).not.toContain(old);
+    // Everything else it held is still there, as it was.
+    for (const line of result.initialEnvironment.split("\n").filter(Boolean))
+      if (!SECRET_NAMES.some((name) => line.startsWith(`${name}=`)))
+        expect(saved).toContain(`${line}\n`);
+
+    // Said in plain words, without a value in them.
+    expect(result.stdout).toContain(
+      "Replaced COMPUTER_TOKEN, which was the example value published in this repository",
+    );
+    expect(result.stdout).toContain(
+      "database: its password was the example one this repository publishes",
+    );
+    expect(result.stdout).toContain("Replaced KEY_ENCRYPTION_KEY");
+    expect(result.stdout).toContain(
+      "Secrets that were the same on every installation have been replaced.",
+    );
+    expect(result.stdout).not.toMatch(ASKED_FOR_A_KEY);
+    for (const name of SECRET_NAMES) {
+      const secret = name === "DATABASE_URL" ? password : valueIn(saved, name);
+      for (const [where, text] of Object.entries(everywhere(result)))
+        expect({ name, where, shown: text.includes(secret) }).toEqual({
+          name,
+          where,
+          shown: false,
+        });
+    }
+
+    // The database was asked whether the vault holds anything before its key was touched, and was
+    // given the new password before the file said so.
+    expect(result.dockerLog).toContain("query_to_xml");
+    expect(result.sqlLog).toBe(
+      `ALTER ROLE openbot WITH PASSWORD '${password}';\n`,
+    );
+    // The server that was running is restarted, then the worker that was running, and both come back
+    // holding what the file holds.
+    expect(result.signalLog).toBe("91000001\n91000002\n91000005\n");
+    expect(result.stdout).toContain(
+      "worker: its secret or the database's password changed, so it is restarted",
+    );
+    expect(result.serverEnvironment.slice(0, 3)).toEqual([
+      valueIn(saved, "SUPERVISOR_TOKEN"),
+      valueIn(saved, "COMPUTER_TOKEN"),
+      valueIn(saved, "WORKER_SHARED_SECRET"),
+    ]);
+    expect(result.workerEnvironment.slice(0, 2)).toEqual([
+      valueIn(saved, "DATABASE_URL"),
+      valueIn(saved, "WORKER_SHARED_SECRET"),
+    ]);
+    expect(result.workerLaunch).toBe(
+      `${result.directory}/worker/src/index.ts\n`,
+    );
+    expect(result.leakLog).toBe("");
+  });
+
+  test("a database that cannot be changed just now keeps the example password, and the start goes on, and says so", async () => {
+    const result = await runStartWithStaleServerProbe(400, {
+      settings: { DATABASE_URL: PUBLIC_DATABASE_URL },
+      omitFromEnv: ["POSTGRES_PASSWORD"],
+      databaseAlter: "fails",
+    });
+
+    expect(result.exitCode).toBe(0);
+    // Nothing about the database was written: the file and the database still agree.
+    expect(valueIn(result.savedEnvironment, "DATABASE_URL")).toBe(
+      PUBLIC_DATABASE_URL,
+    );
+    expect(linesFor(result.savedEnvironment, "POSTGRES_PASSWORD")).toBe(0);
+    expect(result.stdout).toContain(
+      "database: its password is still the example one this repository publishes, because it could not be changed just now.",
+    );
+    expect(result.stdout).toContain("Everything works as it did.");
+    // It was asked again before giving up, and nothing else was restarted for it.
+    expect(result.sqlLog.split("\n").filter(Boolean).length).toBeGreaterThan(1);
+    expect(result.dockerLog).not.toContain("compose up -d postgres");
+    expect(result.signalLog).toBe("");
+    expect(result.workerLaunch).toBe("");
+  });
+
+  test("with no database address at all and no way to set one, it stops rather than start without", async () => {
+    const result = await runStartWithStaleServerProbe(400, {
+      settings: { DATABASE_URL: "" },
+      omitFromEnv: ["POSTGRES_PASSWORD"],
+      databaseAlter: "fails",
+    });
+
+    expect(result.exitCode).toBe(1);
+    expect(result.stdout).toContain(
+      "database: its password could not be set, and .env has no DATABASE_URL to fall back to.",
+    );
+    expect(result.serverLaunch).toBe("");
+    expect(linesFor(result.savedEnvironment, "POSTGRES_PASSWORD")).toBe(0);
+  });
+
+  test.each([
+    [4, "already holds saved logins or connections"],
+    ["unreadable", "could not be checked"],
+  ] as const)(
+    "a database that holds %p keeps the example key, and every start says why",
+    async (rows, why) => {
+      const result = await runStartWithStaleServerProbe(400, {
+        settings: { KEY_ENCRYPTION_KEY: PUBLIC_KEY },
+        vaultRows: rows,
+        repeatStart: true,
+      });
+
+      const warning = `KEY_ENCRYPTION_KEY is still the example key this repository publishes. Your database ${why}`;
+      for (const [start, output] of [
+        ["first", result.stdout],
+        ["next", result.repeated?.stdout ?? ""],
+      ])
+        expect({ start, said: output.includes(warning) }).toEqual({
+          start,
+          said: true,
+        });
+      expect(result.exitCode).toBe(0);
+      expect(valueIn(result.savedEnvironment, "KEY_ENCRYPTION_KEY")).toBe(
+        PUBLIC_KEY,
+      );
+      expect(result.stdout).not.toContain("Replaced KEY_ENCRYPTION_KEY");
+      expect(result.stdout).not.toMatch(ASKED_FOR_A_KEY);
+      // Nothing was changed, so nothing is restarted for it.
+      expect(result.signalLog).toBe("");
+    },
+    20_000,
+  );
+
+  test("a key that is missing is made without asking the vault, since nothing can be sealed under none", async () => {
+    const result = await runStartWithStaleServerProbe(400, {
+      omitFromEnv: ["KEY_ENCRYPTION_KEY"],
+      vaultRows: 4,
+    });
+
+    expect(result.exitCode).toBe(0);
+    expect(valueIn(result.savedEnvironment, "KEY_ENCRYPTION_KEY")).toMatch(
+      KEY_SHAPE,
+    );
+    expect(result.stdout).toContain(
+      "Generated KEY_ENCRYPTION_KEY and wrote it to .env.",
+    );
+    expect(result.dockerLog).not.toContain("query_to_xml");
+    expect(result.signalLog).toBe("91000001\n91000002\n");
+  });
+
+  test("a clone of the shipped .env.example starts with all of them made, and says nothing the clean-start check refuses", async () => {
+    // What the README's Quick start and CI's clean-start job do: copy the example, run start.sh.
+    const result = await runStartWithStaleServerProbe(400, {
+      exampleEnvironment: true,
+      portFree: true,
+      worker: "other",
+    });
+
+    expect({ exitCode: result.exitCode, stderr: result.stderr }).toEqual({
+      exitCode: 0,
+      stderr: "",
+    });
+    const saved = result.savedEnvironment;
+    const password = valueIn(saved, "POSTGRES_PASSWORD");
+    expect(password).toMatch(HEX_48);
+    expect(valueIn(saved, "DATABASE_URL")).toBe(
+      `postgres://openbot:${password}@localhost:5432/openbot`,
+    );
+    expect(valueIn(saved, "KEY_ENCRYPTION_KEY")).toMatch(KEY_SHAPE);
+    for (const name of [
+      "SUPERVISOR_TOKEN",
+      "COMPUTER_TOKEN",
+      "WORKER_SHARED_SECRET",
+    ])
+      expect(valueIn(saved, name)).toMatch(HEX_64);
+    // The example's own settings are still there.
+    expect(saved).toContain("COMPOSE_PROJECT_NAME=freeduet\n");
+    expect(result.stdout).not.toMatch(ASKED_FOR_A_KEY);
+  });
+
+  test("the eval stack's own settings file is made the same way, with its own port, and the person's .env is not touched", async () => {
+    const result = await runStartWithStaleServerProbe(400, {
+      envFile: ".env.eval",
+      portFree: true,
+      worker: "other",
+      settings: { DATABASE_URL: "", POSTGRES_PORT: "5442" },
+      omitFromEnv: [
+        "SUPERVISOR_TOKEN",
+        "COMPUTER_TOKEN",
+        "WORKER_SHARED_SECRET",
+        "KEY_ENCRYPTION_KEY",
+        "POSTGRES_PASSWORD",
+      ],
+    });
+
+    expect(result.exitCode).toBe(0);
+    const saved = result.savedEnvironment;
+    const password = valueIn(saved, "POSTGRES_PASSWORD");
+    expect(password).toMatch(HEX_48);
+    expect(valueIn(saved, "DATABASE_URL")).toBe(
+      `postgres://openbot:${password}@localhost:5442/openbot`,
+    );
+    expect(valueIn(saved, "COMPUTER_TOKEN")).toMatch(HEX_64);
+    expect(result.personEnvironment).toBe("PERSON=untouched\n");
+    // Every call it made to Compose, the one that sets the password included, named its own file.
+    const compose = result.dockerLog
+      .split("\n")
+      .filter((line) => line.startsWith("compose "));
+    expect(
+      compose.some((line) => line.includes(" exec -T postgres psql ")),
+    ).toBe(true);
+    for (const line of compose)
+      expect(line).toStartWith(
+        `compose --env-file ${result.directory}/.env.eval `,
+      );
+    expect(result.workerLaunch).toBe(
+      `--env-file=.env.eval ${result.directory}/worker/src/index.ts\n`,
+    );
+    expect(result.workerEnvironment[0]).toBe(valueIn(saved, "DATABASE_URL"));
+  });
+});
+
+describe("what start.sh calls a public default (scripts/secrets.sh)", () => {
+  async function asks(name: string, value: string) {
+    const child = Bun.spawn(
+      [
+        "bash",
+        "-c",
+        '. scripts/secrets.sh; secret_is_public_default "$1" "$2"',
+        "_",
+        name,
+        value,
+      ],
+      { stdout: "pipe", stderr: "pipe" },
+    );
+    return (await child.exited) === 0;
+  }
+
+  test.each([
+    ["COMPUTER_TOKEN", PUBLIC_COMPUTER_TOKEN],
+    ["SUPERVISOR_TOKEN", PUBLIC_SUPERVISOR_TOKEN],
+    ["WORKER_SHARED_SECRET", PUBLIC_WORKER_SECRET],
+    ["KEY_ENCRYPTION_KEY", PUBLIC_KEY],
+    ["DATABASE_URL", PUBLIC_DATABASE_URL],
+    ["DATABASE_URL", "postgresql://openbot:openbot@127.0.0.1:5442/openbot"],
+    ["DATABASE_URL", "postgres://openbot:openbot@[::1]:5432/openbot"],
+    ["DATABASE_URL", "postgres://openbot:openbot@localhost/openbot"],
+    [
+      "DATABASE_URL",
+      "postgres://openbot:openbot@localhost:5432/openbot?sslmode=disable",
+    ],
+  ])("%s %s is one", async (name, value) => {
+    expect(await asks(name, value)).toBe(true);
+  });
+
+  test.each([
+    // A value of somebody's own, however close it looks to the example.
+    ["COMPUTER_TOKEN", `${PUBLIC_COMPUTER_TOKEN}-2`],
+    ["COMPUTER_TOKEN", ""],
+    ["COMPUTER_TOKEN", "a".repeat(64)],
+    // Each name has its own public value, not the others'.
+    ["SUPERVISOR_TOKEN", PUBLIC_COMPUTER_TOKEN],
+    ["WORKER_SHARED_SECRET", PUBLIC_SUPERVISOR_TOKEN],
+    ["KEY_ENCRYPTION_KEY", `${PUBLIC_KEY}A`],
+    ["KEY_ENCRYPTION_KEY", `${"A".repeat(43)}B`],
+    // A setting start.sh does not make a value for is never one.
+    ["SERVER_PORT", PUBLIC_COMPUTER_TOKEN],
+    // A database that is not the example one: another user, password, host or database.
+    ["DATABASE_URL", ""],
+    ["DATABASE_URL", "postgres://openbot:openbot@db.internal:5432/openbot"],
+    ["DATABASE_URL", "postgres://other:openbot@localhost:5432/openbot"],
+    ["DATABASE_URL", "postgres://openbot:openbotx@localhost:5432/openbot"],
+    ["DATABASE_URL", "postgres://openbot:openbot@localhost:5432/other"],
+    [
+      "DATABASE_URL",
+      "postgres://openbot:openbot@localhost.evil.example/openbot",
+    ],
+    ["DATABASE_URL", "mysql://openbot:openbot@localhost:3306/openbot"],
+  ])("%s %p is not", async (name, value) => {
+    expect(await asks(name, value)).toBe(false);
+  });
+
+  test("the new password goes into the address and touches nothing else in it", async () => {
+    const child = Bun.spawn(
+      [
+        "bash",
+        "-c",
+        '. scripts/secrets.sh; database_url_with_password "$1" "$2"',
+        "_",
+        "postgresql://openbot:openbot@[::1]:5442/openbot?sslmode=disable",
+        "abc123",
+      ],
+      { stdout: "pipe", stderr: "pipe" },
+    );
+    expect(await new Response(child.stdout).text()).toBe(
+      "postgresql://openbot:abc123@[::1]:5442/openbot?sslmode=disable",
+    );
+  });
+});
+
+/*
+ * The single-user start path holds no secret with a value the repository publishes. The strings are
+ * written down in one place, scripts/secrets.sh, so that a value in a settings file can be told to be
+ * one; this keeps them out of everywhere else that path reads, so a default cannot quietly come back.
+ */
+describe("no public default is left on the one-command start (D39)", () => {
+  const read = (path: string) => readFileSync(path, "utf8");
+  /** Everything the start path reads, relative to openbot/. The folder of the tenant package is walked. */
+  const startPath = [
+    "scripts/start.sh",
+    "scripts/stop.sh",
+    "scripts/open.sh",
+    "scripts/processes.sh",
+    "scripts/require-bash.sh",
+    "scripts/freeduet-eval-stack.sh",
+    "scripts/freeduet-eval-compose.yml",
+    "scripts/freeduet-clean-start-check.sh",
+    "docker-compose.yml",
+    ".env.example",
+    "../scripts/start.sh",
+    "../scripts/stop.sh",
+    "../scripts/env.sh",
+    ...readdirSync("examples/freeduet", { recursive: true })
+      .map(String)
+      .filter((name) => /\.(ya?ml|md|txt|json)$/.test(name))
+      .map((name) => `examples/freeduet/${name}`),
+  ].filter((path) => existsSync(path));
+  const published = [
+    PUBLIC_COMPUTER_TOKEN,
+    PUBLIC_SUPERVISOR_TOKEN,
+    PUBLIC_WORKER_SECRET,
+    PUBLIC_KEY,
+    "openbot:openbot@",
+  ];
+
+  test("none of the published strings is in a file the start reads, but the one that names them", () => {
+    expect(startPath.length).toBeGreaterThan(10);
+    for (const path of startPath)
+      for (const literal of published)
+        expect({ path, literal, found: read(path).includes(literal) }).toEqual({
+          path,
+          literal,
+          found: false,
+        });
+    // The file that names them still does, so the check above is not asking for nothing.
+    const names = read("scripts/secrets.sh");
+    for (const literal of [
+      PUBLIC_COMPUTER_TOKEN,
+      PUBLIC_SUPERVISOR_TOKEN,
+      PUBLIC_WORKER_SECRET,
+      PUBLIC_KEY,
+    ])
+      expect(names).toContain(literal);
+  });
+
+  test("Compose falls back to no secret but the database's, which the desktop app and a hand-started Compose rely on", () => {
+    // Every `${NAME:-fallback}` of a setting that is a secret by its name, with a fallback that says something.
+    const fallbacks = [
+      ...read("docker-compose.yml").matchAll(
+        /\$\{([A-Z0-9_]*(?:TOKEN|SECRET|PASSWORD|KEY)[A-Z0-9_]*):-([^}$]+)\}/g,
+      ),
+    ].map((match) => `${match[1]}=${match[2]}`);
+    expect(fallbacks).toEqual([
+      // What a database made from nothing is created with, and what the migration connects with.
+      "POSTGRES_PASSWORD=openbot",
+      "POSTGRES_PASSWORD=openbot",
+      // The SPIRE agent's join token: SPIRE is not part of the one-command start.
+      "SPIRE_JOIN_TOKEN=openbot-dev-token",
+      "SPIRE_JOIN_TOKEN=openbot-dev-token",
+    ]);
+  });
+
+  test("the example ships every one of them empty, so a clone has no value to share", () => {
+    const example = read(".env.example");
+    for (const name of [
+      "DATABASE_URL",
+      "KEY_ENCRYPTION_KEY",
+      "COMPUTER_TOKEN",
+      "SUPERVISOR_TOKEN",
+      "WORKER_SHARED_SECRET",
+    ])
+      expect({
+        name,
+        value: valueIn(example, name),
+        lines: linesFor(example, name),
+      }).toEqual({
+        name,
+        value: "",
+        lines: 1,
+      });
+  });
+});
+
+/*
+ * The eval stack writes its settings file from the same example (scripts/freeduet-eval-stack.sh), with
+ * ports of its own, and then starts through the same start.sh. It must not put a secret in that file
+ * itself, so start.sh makes them, the same way and from the same place as for the person's FreeDuet.
+ */
+describe("the eval stack's settings file (D39)", () => {
+  test("holds no database password and no secret of its own writing, and the ports it always had", async () => {
+    const root = await realpath(
+      (
+        await Bun.$`mktemp -d ${tmpdir()}/openbot-eval-settings-XXXXXX`.text()
+      ).trim(),
+    );
+    try {
+      await mkdir(join(root, "openbot/scripts"), { recursive: true });
+      await mkdir(join(root, "scripts"));
+      await mkdir(join(root, "bin"));
+      for (const name of ["freeduet-eval-stack.sh", "require-bash.sh"])
+        await writeExecutable(
+          join(root, "openbot/scripts", name),
+          await readFile(`scripts/${name}`),
+        );
+      await writeFile(
+        join(root, "openbot/.env.example"),
+        await readFile(".env.example"),
+      );
+      // The one command the stack runs through, here only saying that it was reached, with what.
+      await writeExecutable(
+        join(root, "scripts/start.sh"),
+        '#!/usr/bin/env bash\necho "stack started on $OPENBOT_ENV_FILE"\n',
+      );
+      await writeExecutable(
+        join(root, "bin/docker"),
+        "#!/usr/bin/env bash\nexit 0\n",
+      );
+      const child = Bun.spawn(
+        ["bash", "openbot/scripts/freeduet-eval-stack.sh", "up"],
+        {
+          cwd: root,
+          env: {
+            PATH: `${join(root, "bin")}:${process.env.PATH ?? ""}`,
+            HOME: root,
+            FREEDUET_CLAUDE_LOGIN_VOLUME: "fixture-login-volume",
+          },
+          stdout: "pipe",
+          stderr: "pipe",
+        },
+      );
+      const [exitCode, stdout, stderr] = await Promise.all([
+        child.exited,
+        new Response(child.stdout).text(),
+        new Response(child.stderr).text(),
+      ]);
+      expect({ exitCode, stderr }).toEqual({ exitCode: 0, stderr: "" });
+      expect(stdout).toContain("stack started on .env.eval");
+
+      const file = join(root, "openbot/.env.eval");
+      const written = await readFile(file, "utf8");
+      for (const name of [
+        "DATABASE_URL",
+        "KEY_ENCRYPTION_KEY",
+        "COMPUTER_TOKEN",
+        "SUPERVISOR_TOKEN",
+        "WORKER_SHARED_SECRET",
+      ])
+        expect({ name, value: valueIn(written, name) }).toEqual({
+          name,
+          value: "",
+        });
+      expect(written).not.toContain("openbot:openbot@");
+      // Its own ports and its own Compose project are what made it a second stack.
+      expect(valueIn(written, "POSTGRES_PORT")).toBe("5442");
+      expect(valueIn(written, "SERVER_PORT")).toBe("3101");
+      expect(valueIn(written, "COMPOSE_PROJECT_NAME")).toBe("freeduet-eval");
+      const mode = (await stat(file)).mode & 0o777;
+      expect(mode === 0o600 || process.platform === "win32").toBe(true);
+    } finally {
+      await rm(root, { recursive: true, force: true });
+    }
   });
 });

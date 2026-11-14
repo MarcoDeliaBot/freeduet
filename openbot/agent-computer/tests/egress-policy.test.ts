@@ -396,7 +396,12 @@ describe("the filter proxy", () => {
     const port = typeof address === "object" && address ? address.port : 0;
     // As the computer starts it: the shell pointed at the filter.
     const filter = await startEgressFilter({ env: {}, forShell: true });
-    setEgressPolicy("sales", { mode: "allow_all", rules: [] });
+    // The origin is on loopback, which `allow_all` refuses unless the person allowed it (D36).
+    setEgressPolicy("sales", {
+      mode: "allow_all",
+      rules: [],
+      allowPrivateNetwork: true,
+    });
     const secret = egressFor("sales", {})?.password;
     try {
       const answer = await new Promise<string>((resolve, reject) => {
@@ -451,7 +456,12 @@ describe("the filter proxy", () => {
     );
     const port = await listenOnIpv6Loopback(server);
     const filter = await startEgressFilter({ env: {} });
-    setEgressPolicy("sales", { mode: "allow_all", rules: [] });
+    // ::1 is loopback, which `allow_all` refuses unless the person allowed it (D36).
+    setEgressPolicy("sales", {
+      mode: "allow_all",
+      rules: [],
+      allowPrivateNetwork: true,
+    });
     try {
       const answer = await throughFilter(
         filter.port,
@@ -511,7 +521,12 @@ describe("the filter proxy", () => {
   test("an anonymous connection is judged by every policy on the computer", async () => {
     const target = await origin();
     const filter = await startEgressFilter({ env: {} });
-    setEgressPolicy("a", { mode: "allow_all", rules: [] });
+    // "a" allows this loopback origin on its own, so the refusal is "b"'s: the strictest wins.
+    setEgressPolicy("a", {
+      mode: "allow_all",
+      rules: [],
+      allowPrivateNetwork: true,
+    });
     setEgressPolicy("b", { mode: "deny_all", rules: [] });
     expect(
       await connectThrough(filter.port, `127.0.0.1:${target.port}`),
