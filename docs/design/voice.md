@@ -185,7 +185,7 @@ Tests (sandbox, Postgres on a local test cluster):
 
 Not verified:
 
-- Not run in a real browser or with a real voice. Speech voices are read when the person acts, not on the `voiceschanged` event. A browser that lists its voices late may show no voice until the person tries again. Nothing is spoken in either case without the switch.
+- Not run in a real browser or with a real voice. Voices are read when the person presses the control or turns the switch on, not on the `voiceschanged` event, so a browser that lists its voices late may show no voice until the person tries again. The control is drawn whenever the switch is on and speech synthesis exists, even with no local Italian voice; pressing it then does nothing and says nothing (`chat-transcript.tsx:245`, `:256-261`). Nothing is spoken in either case without the switch.
 - Text cleaning is a pattern pass, not a Markdown parser. It removes every asterisk (so `2*3` reads as `23`) and leaves underscores and HTML as they are.
 - The guard covers the decision route, questions and paired-chat text. It does not run the voice model or any provider; no provider was called.
 - Dictated and voice requests are not told apart from typed text. S1 does not change that (section 9).
