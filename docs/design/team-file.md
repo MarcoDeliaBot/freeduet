@@ -284,7 +284,7 @@ Layers that do not refuse, so the text survives them: the database column `agent
 What this slice builds, on top of the reader above: the stored fact that lets an imported member take 8,000 characters, and the create, edit and dialog layers that read it. The importer that calls the fact (S3) is not built, so no member can be imported yet.
 
 **Built**
-- Decision A, option 1: `agent_profiles.imported_member` (boolean, not null, default false; migration `0069_imported_member`). Only the internal `createImportedMember(store, actor, input)` (`openbot/server/src/agents/imported-member.ts`) writes it, through `store.create(..., importedMember: true)`. No public route, and no request body (POST or PATCH) can set or clear it.
+- Decision A, option 1: `agent_profiles.imported_member` (boolean, not null, default false; migration `0071_imported_member`). Only the internal `createImportedMember(store, actor, input)` (`openbot/server/src/agents/imported-member.ts`) writes it, through `store.create(..., importedMember: true)`. No public route, and no request body (POST or PATCH) can set or clear it.
 - `createImportedMember` checks the text with `parseAgentInput` at 8,000, forces visibility private, and stores the text as both `roleDescription` and, for the built-in prompt, `systemPrompt`.
 - Limits (`openbot/server/src/agents/role-description-limit.ts`): 1,000 for every Bot, 8,000 for an imported one, counted in UTF-16 code units (decision E, option 1).
 - `POST /api/agents` keeps 1,000 for a hand-made Bot, so a body that claims the fact does not lift it.

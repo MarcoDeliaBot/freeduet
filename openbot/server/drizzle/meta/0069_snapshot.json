@@ -1,5 +1,5 @@
 {
-  "id": "1fb6da7d-0a94-4615-8942-759ab044f5dd",
+  "id": "49d0df59-fd3c-41df-b285-06d90f373cb8",
   "prevId": "30e10e88-8698-45c1-a33a-06a6745d34cb",
   "version": "7",
   "dialect": "postgresql",
@@ -1931,13 +1931,6 @@
           "primaryKey": false,
           "notNull": true
         },
-        "imported_member": {
-          "name": "imported_member",
-          "type": "boolean",
-          "primaryKey": false,
-          "notNull": true,
-          "default": false
-        },
         "callback_token_hash": {
           "name": "callback_token_hash",
           "type": "text",
@@ -2082,6 +2075,12 @@
           "primaryKey": false,
           "notNull": true,
           "default": "'schedule'"
+        },
+        "channel_id": {
+          "name": "channel_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
         }
       },
       "indexes": {
