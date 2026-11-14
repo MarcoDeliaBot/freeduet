@@ -2,7 +2,11 @@ import type { MiddlewareHandler } from "hono";
 import type { Database } from "../db/client";
 import { users } from "../db/schema";
 import type { AppVariables, AuthenticatedActor } from "./guards";
-import { isLoopbackRequest } from "./peer";
+import {
+  PAIRING_REQUIRED,
+  type PersonRule,
+  personVerdict,
+} from "./install-secret";
 
 /**
  * A signed-in person, without signing in.
@@ -88,20 +92,33 @@ export function singleUserEnabled(
 /**
  * A guard that admits as {@link DEV_ACTOR}. Only ever mounted when singleUserEnabled().
  *
- * `loopbackOnly` is `personIsLoopbackOnly(config)` (auth/peer.ts): where the server listens on this
- * machine alone, only a request whose TCP peer is loopback is the person, and any other peer (a
- * container on the Docker bridge) answers 401. Where somebody opened the server with `OPENBOT_HOST`,
- * everybody who reaches it is admitted, as that setting has always documented.
+ * `rule` is `personRule(config)` (auth/install-secret.ts). Where the server listens on this machine
+ * alone, only a request whose TCP peer is loopback is the person (auth/peer.ts), and any other peer (a
+ * container on the Docker bridge) answers 401. Where the installation also has a secret, a loopback
+ * peer that does not hold it answers 401 too, which is how a container on Docker Desktop, whose
+ * request arrives as loopback, is told from the person's browser. Where somebody opened the server
+ * with `OPENBOT_HOST`, everybody who reaches it is admitted, as that setting has always documented.
  */
-export function createDevRequireUser(loopbackOnly: boolean): MiddlewareHandler<{
+export function createDevRequireUser(rule: PersonRule): MiddlewareHandler<{
   Variables: AppVariables;
 }> {
   return async (context, next) => {
-    if (loopbackOnly && !isLoopbackRequest(context.env, context.req.raw)) {
+    const verdict = personVerdict(rule, context.env, context.req.raw);
+    if (verdict === "elsewhere") {
       return context.json(
         {
           error:
             "Authentication required. With no sign-in, only this machine's own loopback address is the person.",
+        },
+        401,
+      );
+    }
+    if (verdict === "unpaired") {
+      return context.json(
+        {
+          error:
+            "This browser is not paired with this installation. On the computer it runs on, run: bash scripts/open.sh",
+          code: PAIRING_REQUIRED,
         },
         401,
       );

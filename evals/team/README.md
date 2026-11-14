@@ -92,6 +92,7 @@ Reset the stack before a run, as the first command above does. Within a run the 
 |---|---|
 | `FREEDUET_EVAL_GRADER_KEY`, else `ANTHROPIC_API_KEY`, else `FREEDUET_LOCAL_KEY` | `x-api-key` for the grader. With `--env-file=openbot/.env.eval` the eval stack's own key is used, so the grader runs on its agent-freeduet, on your Claude Code sign-in |
 | `FREEDUET_EVAL_COOKIE` | A session cookie, sent as the `Cookie` header. Only needed when the server is not in single-user mode |
+| `FREEDUET_INSTALL_SECRET` | With `--env-file=openbot/.env.eval` the eval stack's installation secret (D28), sent as the cookie that makes the runner the person on a server with no sign-in. Only for a server on this machine, and the stack's own: `scripts/start.sh` writes it to `.env.eval` the first time |
 
 ### The guard
 

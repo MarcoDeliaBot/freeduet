@@ -69,7 +69,7 @@ from typing import Any
 
 from . import checkpoints
 from .engine_adapter import COULD_NOT_RUN, EngineAdapter, Gate, Health, Outcome, ProbeResult, Sink, TurnContext
-from .engine_breaker import DEGRADED, HALF_OPEN, READY, BreakerRegistry, FileStore, Store, Ticket, Timing
+from .engine_breaker import DEGRADED, HALF_OPEN, READY, SIGNED_OUT, BreakerRegistry, FileStore, Store, Ticket, Timing  # noqa: F401 - SIGNED_OUT is read through here (engine_router.py)
 from .failure_classifier import UNKNOWN, Failure
 
 log = logging.getLogger("freeduet.engine_state")
@@ -258,6 +258,18 @@ class EngineState:
         return moment.replace(tzinfo=UTC) if moment.tzinfo is None else moment.astimezone(UTC)
 
     # -- reading --------------------------------------------------------------------------------
+
+    def row(self, key: str) -> EngineRow | None:
+        """One engine as the snapshot shows it, or None when it is not known. Reads only; hands no ticket."""
+        return next((row for row in self.snapshot().engines if row.id == key), None)
+
+    def record_failure(self, key: str, ticket: Ticket | None, failure: Failure) -> None:
+        """A failure the router saw and the engine did not say itself (a timeout): settle the ticket with it."""
+        try:
+            if ticket is not None:
+                ticket.failure(failure)
+        except Exception:  # noqa: BLE001
+            log.warning("engine state: a failure was not recorded", exc_info=True)
 
     def snapshot(self) -> StateSnapshot:
         with self._lock:

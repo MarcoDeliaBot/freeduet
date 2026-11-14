@@ -36,3 +36,4 @@ Especially valuable reports:
 - Full access: off for every member until you turn it on, one member at a time, after a warning, in one of two settings (with or without payments).
 - Telemetry: off.
 - The app listens on localhost. Put TLS and sign-in in front of it before exposing it to a network.
+- With no sign-in, a request from this machine is answered only when it names one of this machine's own hosts (`localhost`, `127.0.0.1`, `[::1]`) or a host you configured in `TRUSTED_ORIGINS`; any other `Host` gets 421. This keeps a web page that re-points its own name at 127.0.0.1 from reading your local FreeDuet. Details in `openbot/docs/configuration.md`.

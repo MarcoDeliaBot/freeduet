@@ -254,6 +254,27 @@ if [ -z "$(setting FREEDUET_INTELLIGENCE "")" ]; then
 fi
 FREEDUET_INTELLIGENCE="$(setting FREEDUET_INTELLIGENCE off)"
 
+# FreeDuet (docs/M1_PLAN.md D28): this installation's own secret, which tells the person's browser
+# from a Bot's computer. With no sign-in the person is whoever reaches the server from this machine's
+# loopback, and on Docker Desktop a container calling the server arrives as loopback too. Generated
+# once and kept in the settings file like the keys above, for the same reason (the server and anything
+# started by hand later must agree on it), and for an install from before this existed it is made on
+# the first start after the update, which restarts the server through SECRETS_ROTATED.
+#
+# NOT EXPORTED, unlike the tokens above: those are exported so Compose can read them, and anything
+# exported reaches every child, Compose and the Bots' containers included. The server reads it from
+# the settings file by itself. Never printed, and never in a URL: scripts/open.sh hands a browser a
+# link that is good once, and the secret itself is only ever sent in a header or a cookie.
+FREEDUET_INSTALL_SECRET="$(setting FREEDUET_INSTALL_SECRET "")"
+INSTALL_SECRET_NEW=false
+if [ -z "$FREEDUET_INSTALL_SECRET" ]; then
+  SECRETS_ROTATED=true
+  INSTALL_SECRET_NEW=true
+  FREEDUET_INSTALL_SECRET="$(openssl rand -hex 32)"
+  freeduet_env_line FREEDUET_INSTALL_SECRET "$FREEDUET_INSTALL_SECRET"
+  printf '\033[2m%s\033[0m\n' "Generated FREEDUET_INSTALL_SECRET and wrote it to $ENV_NAME."
+fi
+
 green() { printf '\033[32m%s\033[0m\n' "$1"; }
 red()   { printf '\033[31m%s\033[0m\n' "$1"; }
 info()  { printf '\033[2m%s\033[0m\n' "$1"; }
@@ -304,6 +325,19 @@ if [ "$LOCAL_DICTATION" = "true" ]; then
   fi
   info "Dictation is local: a Whisper on this computer hears the microphone and nothing leaves it. The first start downloads the model $FREEDUET_WHISPER_MODEL ($WHISPER_MODEL_SIZE) once, and until it has finished the microphone answers that it cannot reach the service."
 fi
+
+# curl as the person (D28), for the calls this script makes that only the person may make. The
+# cookie goes in a config file of its own, readable by this user alone and removed at once, because a
+# command-line argument is visible to every process on this machine and the secret must not be.
+person_curl() {
+  local config status=0
+  config="$(mktemp)"
+  chmod 600 "$config"
+  printf 'header = "Cookie: freeduet_install_%s=%s"\n' "$SERVER_PORT" "$FREEDUET_INSTALL_SECRET" > "$config"
+  curl -K "$config" "$@" || status=$?
+  rm -f "$config"
+  return "$status"
+}
 
 # Does whatever holds this port answer as OpenBot, rather than merely answer?
 #
@@ -665,7 +699,7 @@ else
 fi
 
 info "3/4  Runtime health"
-INFO="$(curl -fsS --max-time 8 "http://localhost:$SERVER_PORT/api/copilotkit/info")"
+INFO="$(person_curl -fsS --max-time 8 "http://localhost:$SERVER_PORT/api/copilotkit/info")"
 # Read with Bun, which every run of this script already needs, rather than python3, which not every
 # machine has. On Windows `python3` is usually the Microsoft Store alias, which prints "Python was not
 # found" and exits 49, so the run stopped here with the server and worker up and the app never
@@ -696,6 +730,15 @@ if ! identifies_as_openbot "$APP_PORT" app; then
 fi
 wait_for_openbot "$APP_PORT" app
 
+# FreeDuet (D28): a secret made this run is one no browser holds yet, so open one now, paired. A browser
+# that already holds it (every later start) is left alone. Only the person's own stack: the eval stack
+# and CI have nobody to look at a window. FREEDUET_NO_BROWSER=1 skips it. scripts/open.sh is also the
+# way to pair another browser, or this one after its cookies were cleared.
+if [ "$INSTALL_SECRET_NEW" = "true" ] && [ "$ENV_NAME" = .env ] && [ -z "${CI:-}" ] \
+   && [ "${FREEDUET_NO_BROWSER:-}" != "1" ]; then
+  bash "$ROOT/scripts/open.sh" || info "  Could not open a browser. Run: bash scripts/open.sh"
+fi
+
 cat <<EOF
 
 $(green "Ready. http://localhost:$APP_PORT")
@@ -703,6 +746,7 @@ $(green "Ready. http://localhost:$APP_PORT")
 Next steps:
 
   - The app:               http://localhost:$APP_PORT/
+  - Another browser, or one that says it is not paired:   bash scripts/open.sh
   - Setup checklist:       http://localhost:$APP_PORT/settings/setup
   - Approval rules:        http://localhost:$APP_PORT/settings/approvals
   - Routines:              http://localhost:$APP_PORT/routines

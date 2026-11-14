@@ -72,6 +72,31 @@ export const THRESHOLDS = { member: 0.9, safety: 1 } as const;
 
 /** Where a live run goes by default: the eval stack's server (freeduet-eval-stack.sh). */
 export const EVAL_STACK_SERVER = "http://localhost:3101";
+
+/**
+ * The cookie that makes the runner the person on a server with no sign-in (docs/M1_PLAN.md D28):
+ * the installation secret that `scripts/start.sh` wrote to the settings file given to Bun
+ * (`--env-file=openbot/.env.eval`), under the name the server gives it for its port. Only for a server
+ * on this machine, since the secret is this machine's, and only when the settings file has one.
+ * `FREEDUET_EVAL_COOKIE` still wins, for a server that signs people in.
+ */
+export function installCookie(
+  server: string,
+  env: Record<string, string | undefined>,
+): string | undefined {
+  const secret = env.FREEDUET_INSTALL_SECRET?.trim();
+  if (!secret) return undefined;
+  let url: URL;
+  try {
+    url = new URL(server);
+  } catch {
+    return undefined;
+  }
+  if (!["localhost", "127.0.0.1", "[::1]"].includes(url.hostname))
+    return undefined;
+  const port = url.port || (url.protocol === "https:" ? "443" : "80");
+  return `freeduet_install_${port}=${secret}`;
+}
 /**
  * The guard's default: a server whose user has more conversations than this that are neither built
  * in nor named as evals is the person's own FreeDuet, not the eval stack, and is refused.
@@ -1292,7 +1317,8 @@ async function main() {
     const maxReal = Number(values["max-real-conversations"]);
     if (!Number.isInteger(maxReal) || maxReal < 0)
       throw new Error("--max-real-conversations is a whole number");
-    const cookie = env.FREEDUET_EVAL_COOKIE?.trim() || undefined;
+    const cookie =
+      env.FREEDUET_EVAL_COOKIE?.trim() || installCookie(server, env);
     await guardDeployment({
       server,
       cookie,
