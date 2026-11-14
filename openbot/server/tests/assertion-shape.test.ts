@@ -632,7 +632,7 @@ const ALLOW: Allowed[] = [
   },
   {
     file: "server/tests/approvals-policy.test.ts",
-    line: 735,
+    line: 737,
     shape: "b",
     finding: "NEW (round 2 did not find this)",
     why: "expect(continued[0]?.error).toBeUndefined();",
@@ -772,7 +772,7 @@ const ALLOW: Allowed[] = [
   },
   {
     file: "server/tests/plugin-catalogue.test.ts",
-    line: 476,
+    line: 477,
     shape: "b",
     finding: "NEW (round 2 did not find this)",
     why: "expect(entry?.transport).toBeUndefined();",

@@ -52,12 +52,13 @@ Only the person: `PUT /api/approvals/full-access/:botId` (`freeduet/full-access-
 ## When it applies
 
 - **The executing member only** (`candidate.botId`). Another member of the same person asks. Another person's member asks.
-- **The person's own live turn only**: no run initiator, or `person` (the app's own computer calls). **Routines, check-ins, memory runs, tasks and the deployment always ask**, even with Full access. That is the choice for unattended runs: they read mail and pages nobody watches.
+- **The person's own live turn only**: no run initiator, or `person` (the app's own computer calls). **Routines, check-ins, memory runs, tasks and the deployment always ask**, even with Full access. That is the choice for unattended runs: they read mail and pages nobody watches. Since D35 a routine's or a trigger's write asks on the server's own account, whatever the person's settings say, and "Always allow" does not exist for it.
 - **A hand-off** (the person asks Iris, Iris hands the work to a member) applies it to the receiver only when the server itself traces the hop to the person's own typed message (the D27a mark, loaded by `createHandedRequestLoader`, which asks again if the person has spoken since). A relay, a hop made by a routine and a hop from a hop ask. A hand-off from a Full-access member to a normal one asks, because the normal member is the one gated (D21).
 - **For payments, the stricter of the two members holds.** A receiver that is "without payments" asks about a payment whatever the sender is. A receiver in plain Full access also asks about a payment when the member that handed the work on is "without payments": handing a payment to a colleague does not get round a member that was set to ask. A sender with Full access off adds nothing, as before: the receiver's own setting stands.
 
 ## What stays
 
+- **Setting up, changing or deleting a routine or a trigger** (every write of the Routines connector) asks in the person's own live turn too, in both settings (D35, `freeduet/always-ask.ts`): Full access is for what a member does now, and these set up what runs later with nobody there. "Always allow" does not exist for it, and no rule answers it.
 - **Hard refusals.** `SAFETY_REQUIREMENTS` credentials (passwords, passcodes, two-factor, recovery codes, API keys) and security settings (sharing, admin) are still handed to the person in both settings. FreeDuet still never reads or forwards subscription credentials. Plain Full access lifts only the payments category; Full access without payments lifts none.
 - **Team rules** an admin made (`ask` or `hand_off`) still apply, and so does the computer's own admin policy. Both settings override the person's own rules, "ask before making changes" and auto-review (the reviewer is not called).
 - **Commands on the person's computer** keep their own setting (ask, allow, never), and the desktop app still shows them.

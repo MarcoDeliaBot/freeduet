@@ -126,6 +126,20 @@ const TEXT = {
     en: "From {source}",
     it: "Da {source}",
   },
+  /*
+   * What the person reads when a Bot sends again, in the same request, an email that already went (or
+   * was tried): the refusal's own text, which the transcript draws as the line's detail and the model
+   * reads as the tool's answer (plugins/plugin-store/calls.ts, docs/M1_PLAN.md D37). Written in the
+   * Bot's own voice, for the person first.
+   */
+  "send.repeated": {
+    en: "This email was already sent a moment ago in this same request, so I did not send it again.",
+    it: "Questa email è già stata inviata poco fa in questa stessa richiesta, quindi non l'ho inviata di nuovo.",
+  },
+  "send.unconfirmed": {
+    en: "I tried to send this email a moment ago in this same request, but I could not confirm that it went out, so I did not try again. Check your sent mail, and ask me again if it is not there.",
+    it: "Poco fa, in questa stessa richiesta, ho provato a inviare questa email ma non ho potuto confermare che sia partita, quindi non ho riprovato. Controlla la posta inviata e chiedimelo di nuovo se non c'è.",
+  },
 } as const;
 
 export type PersonTextKey = keyof typeof TEXT;

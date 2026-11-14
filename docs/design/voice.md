@@ -105,7 +105,7 @@ Read from public pages on 2026-11-14. Nothing was installed or measured here.
 - Rule: a spoken "yes" never approves a send, a payment or any account action ([code: CLAUDE.md, "Rules that never bend"]).
 - Today: no code connects a spoken answer to an approval card (section 2.2).
 - V1: the call reads a short line about the card and handles no spoken yes or no.
-- Open: decision D3.
+- Decided 14 November 2026: D3, a spoken yes never approves.
 
 ### 3.7 Voice cloning: out
 
@@ -140,7 +140,7 @@ A real person's voice needs that person's consent. XTTS-v2 clones from a short c
 |---|---|---|---|---|
 | D1 | Keep call transcripts? Today they are saved at call end and kept in the browser until saved | (a) keep as is; (b) opt-in, off by default; (c) delete after N days | (b) | Nothing is kept unless the person asks (section 5) |
 | D2 | Engine for the first read-aloud | (a) browser voices, local only; (b) local neural voice on the server (Piper or Kokoro); (c) cloud voice with own key | (a) now; (b) after a benchmark and the licence check | (a) costs nothing, needs no install, writes no file |
-| D3 | Can a spoken answer ever approve an action? | (a) never by voice; (b) spoken yes for low-risk items; (c) spoken phrase bound to the card on screen | (a) for every version in this plan | A spoken yes is not the person's written approval; (c) can be designed later |
+| D3 | Can a spoken answer ever approve an action? | (a) never by voice; (b) spoken yes for low-risk items; (c) spoken phrase bound to the card on screen | (a) for every version in this plan. Decided 14 November 2026: (a). An approval is always a press on the card; voice can read the card out, never approve it. | A spoken yes is not the person's written approval; (c) can be designed later |
 | D4 | Which local speech-to-text model for calls | (a) default `large-v3-turbo-q5_0`: WER 2.8%, median 9.78 s; (b) `small`: WER 7.9%, 1.83 s; (c) measure both on call-like clips first | (c), then choose | 9.78 s per request is slow for a conversation; `small` makes more errors. The figures come from read speech |
 | D5 | Licences of voices and tools | (a) only MIT or Apache-2.0 code and voices with clear licences; (b) a GPL component as a separate program the person installs; (c) CC BY voices with attribution | (a) and (c); no GPL component in the image | A copyleft component in an MIT product needs a licence review [assumed] |
 | D6 | Status of the existing cloud call in the roadmap and docs | (a) describe the two cloud engines, off by default; (b) hide until the design is chosen; (c) remove one engine | (a) | The code works behind `VOICE_*`; the roadmap says "not chosen yet" |

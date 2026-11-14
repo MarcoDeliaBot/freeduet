@@ -290,6 +290,27 @@ describe("fixed text the server writes, in Italian with the setting and in Engli
     );
   });
 
+  test("what the person reads when an email that already went is sent again in the same request (D37)", () => {
+    const sentAgain = {
+      en: "This email was already sent a moment ago in this same request, so I did not send it again.",
+      it: "Questa email è già stata inviata poco fa in questa stessa richiesta, quindi non l'ho inviata di nuovo.",
+    };
+    const unconfirmed = {
+      en: "I tried to send this email a moment ago in this same request, but I could not confirm that it went out, so I did not try again. Check your sent mail, and ask me again if it is not there.",
+      it: "Poco fa, in questa stessa richiesta, ho provato a inviare questa email ma non ho potuto confermare che sia partita, quindi non ho riprovato. Controlla la posta inviata e chiedimelo di nuovo se non c'è.",
+    };
+    const german = { code: "de", name: "German" };
+    for (const [key, text] of [
+      ["send.repeated", sentAgain],
+      ["send.unconfirmed", unconfirmed],
+    ] as const) {
+      expect(personText(key, null)).toBe(text.en);
+      expect(personText(key, undefined)).toBe(text.en);
+      expect(personText(key, german)).toBe(text.en);
+      expect(personText(key, ITALIAN)).toBe(text.it);
+    }
+  });
+
   const MAIL: TriageMessage = {
     id: "m1",
     from: "Ceramics Monthly <news@ceramicsmonthly.example>",

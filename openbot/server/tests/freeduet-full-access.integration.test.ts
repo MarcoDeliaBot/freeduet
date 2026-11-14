@@ -287,17 +287,19 @@ describe("on for one member", () => {
     ).resolves.toBeUndefined();
   });
 
-  for (const initiator of [
-    { kind: "routine", id: "r1" },
-    { kind: "responsibility", id: "check-in" },
-    { kind: "memory", id: "m1" },
-    { kind: "deployment" },
-  ] satisfies AuditInitiator[]) {
+  // Whose own account the card is for: a routine's and a trigger's write asks on the server's own
+  // account (D35, `always_ask`), the others on the person's "ask before making changes" (`default`).
+  for (const [initiator, source] of [
+    [{ kind: "routine", id: "r1" }, "always_ask"],
+    [{ kind: "responsibility", id: "check-in" }, "always_ask"],
+    [{ kind: "memory", id: "m1" }, "default"],
+    [{ kind: "deployment" }, "default"],
+  ] as [AuditInitiator, "always_ask" | "default"][]) {
     test(`it never applies unattended: a ${initiator.kind} still asks`, async () => {
       const send = candidate({}, { initiator });
       expect(await suspends(service.gate(send))).toBeTrue();
       const [asked] = await requestsFor(send);
-      expect(asked?.action.policy?.source).toBe("default");
+      expect(asked?.action.policy?.source).toBe(source);
     });
   }
 

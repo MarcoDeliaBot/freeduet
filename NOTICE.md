@@ -39,6 +39,28 @@ Fetched or built on the person's own computer when they switch `FREEDUET_DICTATI
 | [FFmpeg](https://ffmpeg.org/), the Debian package | LGPL-2.1+ or GPL-2+, depending on the build Debian ships | Installed by `apt` while the `whisper` image is built, as a separate program the server calls (`--convert`), to read the browsers' WebM/Opus and MP4/AAC. Nothing links to it |
 | [Google FLEURS](https://huggingface.co/datasets/google/fleurs), Italian test split | CC BY 4.0, © Google | The test audio and sentences for the proofs in `evals/dictation/`. Downloaded on the maintainer's computer into a folder git ignores; none of it is in this repository, except that a report can quote its ten worst lines |
 
+The `whisper` image is listed in `openbot/.github/published-images.json`. Once an image is published, its FFmpeg (the Debian package, installed with `apt-get` in `openbot/whisper/Dockerfile`) brings GPL obligations that must be stated in this file at that time, if the Debian build is the GPL one (to confirm).
+
+## Font used by the app
+
+Installed from npm and used as it is, not copied into this repository. No font file is tracked by git.
+
+| Font | License | What FreeDuet uses |
+|---|---|---|
+| Inter (variable), through [`@fontsource-variable/inter`](https://www.npmjs.com/package/@fontsource-variable/inter) 5.3.0 | SIL Open Font License 1.1 (to confirm: the npm registry gives `OFL-1.1` for 5.3.0; the licence file ships in the npm package, not in this repository) | The app's sans-serif face (`--font-sans` in `openbot/app/src/styles.css`), imported in `openbot/app/src/routes/__root.tsx` and `openbot/app/src/styles.css`, pinned in `openbot/bun.lock` |
+
+## Crates of the desktop shell under MPL-2.0 (to confirm)
+
+These are transitive dependencies locked in `openbot/desktop/src-tauri/Cargo.lock`; none is named in `openbot/desktop/src-tauri/Cargo.toml`. The lock file carries no licences, so each licence is to confirm with `cargo-license`.
+
+| Crate | Version | License | What FreeDuet uses |
+|---|---|---|---|
+| `cssparser` | 0.36.0 | MPL-2.0 (to confirm) | Locked as a transitive dependency |
+| `cssparser-macros` | 0.6.1 | MPL-2.0 (to confirm) | Locked as a transitive dependency |
+| `dtoa-short` | 0.3.5 | MPL-2.0 (to confirm) | Locked as a transitive dependency |
+| `option-ext` | 0.2.0 | MPL-2.0 (to confirm) | Locked as a transitive dependency |
+| `selectors` | 0.36.1 | MPL-2.0 (to confirm) | Locked as a transitive dependency |
+
 ## Projects we studied but deliberately did not copy from
 
 | Project | License | Why no code was taken |

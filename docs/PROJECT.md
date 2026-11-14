@@ -29,7 +29,7 @@ FreeDuet is a self-hosted team of AI employees that runs on the AI subscriptions
 3. **Never hold a subscription secret.** The person signs in to official tools through the provider's own flow.
 4. **One member, one job.** Small, testable, replaceable members; a Chief of Staff in front.
 5. **Thin fork, upstream first.** Extension points before patches; generic fixes go back to OpenBot.
-6. **Every language.** Members reply in the language the person writes in; the interface is translatable.
+6. **Every language.** Members reply in the language the person writes in; the interface is English for now, with some cards also in Italian; translation is not planned for now.
 7. **Measure before claiming.** Every member has evals; every release publishes its pass rate.
 
 ## 5. What we reuse, what we port, what we build
@@ -41,8 +41,8 @@ FreeDuet is a self-hosted team of AI employees that runs on the AI subscriptions
 | Engine adapters, limit detection, fallback rules, lead-and-specialists delegation | Anil-matcha/open-duet (Apache-2.0) | Port the design and, where the code fits, the code, with attribution |
 | Specialist profiles for the packs | [The Agency](https://github.com/msitarzewski/agency-agents) (MIT) | Leo adapts profiles, adds FreeDuet's shared rules and tests, credits the source in each member |
 | Grok Build CLI driver, team playbooks in Markdown | [OpenMausBot](https://github.com/milind-soni/OpenMausBot) (Apache-2.0) | Port with attribution, once Grok's terms are verified |
-| Importing agents from Grok Bot | Idea seen in nightly-labs/openbot (non-commercial license) | Build our own, from scratch |
-| One-click decision cards | Idea seen in browser-use/open-duet (no license) | Our own design, later |
+| Importing agents from Grok Bot | New | Build our own, from scratch |
+| One-click decision cards | New | Our own design, later |
 | The team of ten | New | Written from scratch for FreeDuet |
 | Subscription router, engine chains, savings meter, purchase permits, Engines page | New | Built in this project |
 
@@ -138,7 +138,7 @@ The full threat model is in [SECURITY.md](../SECURITY.md). The controls, in shor
 ## 10. Quality
 
 - **Evals** (`evals/team/`): per-member cases with must-include and must-not checks, including safety cases. Run in CI on every change to a prompt, a skill or an adapter, against a fixed reference engine.
-- **Tests**: adapter tests with fake CLIs (the approach Anil-matcha/open-duet uses), gateway rule tests for permits, ledger arithmetic tests.
+- **Tests**: adapter tests with fake CLIs, gateway rule tests for permits, ledger arithmetic tests.
 - **Releases**: semantic versions; signed container images; a changelog entry for every user-visible change; PROVIDERS.md date bumped.
 
 ## 11. Launch plan (M5)
@@ -182,9 +182,9 @@ No usage telemetry is collected; adoption is measured only through public number
 | What v0.1 runs on | The person's own Claude Code login, with no API key; API credits only as an optional last step |
 | Gemini and GLM subscriptions | Off until terms allow; API keys work |
 
-## 15. Ideas imported from the maintainer's own projects
+## 15. How the team runs
 
-The maintainer already runs a self-hosted AI office (a Chief "brain", a worker, an independent reviewer, a guardian and portable memory) and two related tools. What worked there comes into FreeDuet as features. Only the ideas and the maintainer's own code are reused; anything from third parties keeps its license.
+The features below are how the team works day to day. Third-party code keeps its license, listed in [NOTICE.md](../NOTICE.md).
 
 | Feature | Milestone | What it does |
 |---|---|---|
@@ -192,10 +192,10 @@ The maintainer already runs a self-hosted AI office (a Chief "brain", a worker, 
 | **F11. Owner-only operations** | M1 | A fixed list that no mode, rule or delegation can lower: spending or raising a budget; messages to people outside the team; deleting data; changing permissions, keys or configuration; resuming a paused member without a check; publishing. Enforced by the gateway, tested in CI. One exception, and only the person can make it: Full access, an off-by-default switch per member that removes the approval card for spending, messages, deleting and publishing, in the person's own chats ([FULL_ACCESS.md](FULL_ACCESS.md)). Changing permissions, passwords, keys, security settings and configuration stays with the person under Full access, and so does resuming a paused member without a check. |
 | **F12. Review before delivery** | M1, M3 | Deliverables that matter (contracts, invoices, posts, purchases) are checked by an independent reviewer running on a different engine from the one that produced them, before the person sees them. At most 3 rounds, then Iris decides. Done by Vera, the Reviewer, from v0.1; the different-engine rule arrives with the router chains in v0.3. |
 | **F13. Portable memory** | M3 | Every night, memory, standing rules, delegations, events and tasks are exported to plain files with a SHA-256 manifest. They can be searched without the app and imported into a new base. Removes the lock-in to any single memory service. |
-| **F14. Continuity and handoff** | M1, M3 | **M1:** every member keeps a checkpoint of its work (goal, decisions, what is done, evidence, failures and attempts, what was already sent or paid, next step) with the checkpoint writer of the maintainer's [AI Continuity](https://github.com/MarcoDeliaBot/ai-continuity) (MIT). Its report to Iris is that checkpoint (F24). After a restart nothing is redone, and anything that sends or pays is checked before it is tried again. **M3:** when the router moves a member to the next subscription, it hands over the latest checkpoint, so work resumes without losing context. |
+| **F14. Continuity and handoff** | M1, M3 | **M1:** every member keeps a checkpoint of its work (goal, decisions, what is done, evidence, failures and attempts, what was already sent or paid, next step) with a checkpoint writer under the MIT licence (see [NOTICE.md](../NOTICE.md)). Its report to Iris is that checkpoint (F24). After a restart nothing is redone, and anything that sends or pays is checked before it is tried again. **M3:** when the router moves a member to the next subscription, it hands over the latest checkpoint, so work resumes without losing context. |
 | **F15. Seven-phase method for big jobs** | M3 | For any job of several steps Iris follows Plan → Specify → Assign → Build → Verify → Deliver → Improve, in proportion to the job's size. |
 | **F16. Delegation ladder** | M4 | Autonomy grows step by step: allow once → saved rule → allow-list, each with its own cap, always under F11. |
-| **F17. Voice in** | M5 | Dictation for Iris and Wren, from Dictatum, a dictation app made by the same group as FreeDuet (more about it later). |
+| **F17. Voice in** | M5 | Dictation for Iris and Wren (more about it later). |
 | **F18. Council** | after v1.0 | For big decisions Iris convenes several members to give opinions, then reports a recommendation to the person. |
 
 | **F19. Connectors** | M2–M5 | FreeDuet connects to the tools people already use: the whole Google suite, Microsoft 365, n8n, creative programs (Photoshop, Affinity, Canva, and the free, open-source ArtCraft suite installed inside every member's computer: PhotoCraft, PdfCraft, VectorCraft, FilmCraft and more), craft and making software (Cricut, 3D-printing slicers), coding agents (Claude Code, Codex, Kimi, Cline, Antigravity, Trae) and messaging (WhatsApp, Telegram). Desktop programs are reached through a FreeDuet desktop bridge on the person's computer. Catalogue and rules: [CONNECTORS.md](CONNECTORS.md). |

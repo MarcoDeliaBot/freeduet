@@ -172,6 +172,7 @@ describe("accessFor", () => {
       path: "/mcp",
       auth: { kind: "none" },
       writeTools: [],
+      readTools: [],
       docsUrl: "https://example.com/docs",
     };
     expect(

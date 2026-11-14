@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;600;700&family=Schibsted+Grotesk:wght@500;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{--ink:#0E1B33;--ink-soft:#52607A;--paper:#F6F8FB;--blue:#1B4FD8;--mint:#0F7B58;}
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{width:1200px;height:630px;overflow:hidden}
+  body{position:relative;background:
+      radial-gradient(70rem 34rem at 88% -8%,rgba(27,79,216,.09),transparent 62%),
+      radial-gradient(52rem 28rem at -6% 38%,rgba(15,123,88,.07),transparent 62%),
+      var(--paper);
+      font-family:"IBM Plex Sans","Segoe UI",system-ui,sans-serif;color:var(--ink)}
+  .mega{position:absolute;left:0;right:0;bottom:-58px;text-align:center;white-space:nowrap;
+      font-family:"Schibsted Grotesk",sans-serif;font-weight:500;font-size:262px;line-height:.8;letter-spacing:-.05em;
+      color:rgba(14,27,51,.055);-webkit-text-stroke:1px rgba(14,27,51,.06)}
+  .wrap{position:absolute;left:84px;top:78px;width:1032px}
+  .brand{display:flex;align-items:center;gap:18px}
+  .brand svg{width:64px;height:64px;display:block}
+  .brand span{font-family:"Schibsted Grotesk",sans-serif;font-weight:800;font-size:38px;letter-spacing:-.02em}
+  h1{margin-top:56px;font-family:"Schibsted Grotesk",sans-serif;font-weight:800;font-size:96px;line-height:1.02;letter-spacing:-.035em;color:var(--ink)}
+  h1 .acc{color:var(--blue)}
+  .lead{margin-top:30px;font-size:31px;line-height:1.4;color:var(--ink-soft);max-width:900px}
+  .facts{position:absolute;left:84px;bottom:76px;display:flex;gap:44px;list-style:none;font-size:24px;color:var(--ink-soft)}
+  .facts li{display:flex;align-items:center;gap:12px}
+  .facts svg{width:26px;height:26px;flex:none}
+  .url{position:absolute;right:84px;top:100px;font-family:"Schibsted Grotesk",sans-serif;font-weight:700;font-size:28px;color:var(--ink-soft)}
+</style>
+</head>
+<body>
+  <div class="mega">FreeDuet</div>
+  <div class="wrap">
+    <div class="brand">
+      <svg viewBox="0 0 40 40" aria-hidden="true"><rect width="40" height="40" rx="10" fill="#0E1B33"/><circle cx="16" cy="20" r="7.5" fill="none" stroke="#fff" stroke-width="3"/><circle cx="24" cy="20" r="7.5" fill="none" stroke="#6C97FF" stroke-width="3"/></svg>
+      <span>FreeDuet</span>
+    </div>
+    <h1>Your own team of <span class="acc">AI assistants.</span></h1>
+    <p class="lead">A free, open-source team of AI assistants. By default they ask before they send, pay, sign, book or delete.</p>
+  </div>
+  <ul class="facts">
+    <li><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12.5l5 5L20 6.5" stroke="#0F7B58" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>Free and open source</li>
+    <li><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12.5l5 5L20 6.5" stroke="#0F7B58" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>No API key to buy</li>
+    <li><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12.5l5 5L20 6.5" stroke="#0F7B58" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>Runs on your own computer</li>
+  </ul>
+  <div class="url">freeduet.com</div>
+</body>
+</html>

@@ -1,6 +1,6 @@
 # Automations written in chat: calendar, history and limits
 
-Design only. No product code. Written 2026-11-14 against origin/main 452e060. Roadmap row: "Automations written in chat, with a calendar and history", status In design ([code: docs/ROADMAP.md:46]). Nothing here is decided. Section 6 lists what the maintainer must choose.
+Design only. No product code. Written 2026-11-14 against origin/main 452e060. Roadmap row: "Automations written in chat, with a calendar and history", status In design ([code: docs/ROADMAP.md:46]). Decided 14 November 2026: D6 (section 6). Nothing else here is decided; section 6 lists what the maintainer must still choose.
 
 Paths start in `openbot/` unless they start with `docs/` or `CLAUDE.md`, which sit at the repository root.
 
@@ -126,7 +126,7 @@ S1 to S7 edit OpenBot files, so each needs a row in `docs/UPSTREAM_TOUCHES.md` (
 | D3 | Limits | (a) keep the 15-minute floor and 20 routines; (b) a 60-minute floor for chat-made routines, plus a daily budget per person; (c) a budget per Bot | (b); set the budget from a measured run on the eval stack | 20 routines at a 15-minute floor allow 1,920 turns a day for one person ([code: openbot/server/src/routines/store.ts:66]; [code: schedule.ts:4]). Run cost is not measured ([code: openbot/agent-freeduet/freeduet/server_calls.py:225-226]). Wake-up allows 20 a day ([code: wake-up.ts:38]). |
 | D4 | Who creates for whom | (a) each member for itself; (b) Iris holds routines that hand work to members; (c) a member names another member | (a) now; (b) later | No member may address another ([code: hub-grants.ts:9-11]). (b) costs two turns per firing [assumed]. |
 | D5 | Time zone | (a) per routine, UTC when none is given; (b) a zone per person, for new routines and the daily review | (b) | The daily review uses one constant zone for everyone ([code: person-team.ts:58-59]). "9 o'clock" should mean the person's 9. |
-| D6 | Setup and approval gate | (a) as today: a rule or the switch can skip the card, and the reviewer decides the rest; (b) routine writes always ask: no rule, switch or reviewer skips them, and "Always allowed" is not offered | (b) | FULL_ACCESS.md says routines always ask ([code: docs/FULL_ACCESS.md:24]). The gate can skip the card for a routine write ([code: openbot/server/src/approvals/policy.ts:508-570]). |
+| D6 | Setup and approval gate | (a) as today: a rule or the switch can skip the card, and the reviewer decides the rest; (b) routine writes always ask: no rule, switch or reviewer skips them, and "Always allowed" is not offered | Decided 14 November 2026: (b). A routine or trigger that writes, and any change to a routine's or trigger's configuration, always shows the approval card. Full access does not unlock it. | FULL_ACCESS.md says routines always ask ([code: docs/FULL_ACCESS.md:24]). The gate can skip the card for a routine write ([code: openbot/server/src/approvals/policy.ts:508-570]). |
 
 ## 7. What was not verified
 
