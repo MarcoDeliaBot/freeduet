@@ -61,6 +61,7 @@ const SUMMARY: RoutineSummary = {
   lastRun: {
     status: "succeeded",
     finishedAt: new Date("2026-01-02T08:00:03.000Z"),
+    missed: false,
   },
 };
 

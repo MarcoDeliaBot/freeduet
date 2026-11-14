@@ -33,6 +33,10 @@ afterEach(() => {
 
 const SOON = new Date(Date.now() + 60 * 60_000).toISOString();
 
+/** The server's words for a firing it did not run; the History shows them under the row. */
+const MISSED_TEXT =
+  "The server reached this occurrence too late to run it, so no run was started.";
+
 const routine = {
   id: "r1",
   agentId: "expenses",
@@ -51,10 +55,15 @@ const routine = {
  * follows the routine instead of the run would show as the wrong conversation.
  */
 function serving(
-  options: { routinesFail?: boolean; runChannelId?: string | null } = {},
+  options: {
+    routinesFail?: boolean;
+    runChannelId?: string | null;
+    missed?: boolean;
+  } = {},
 ) {
   const runChannelId =
     options.runChannelId === undefined ? "c_run" : options.runChannelId;
+  const missed = options.missed === true;
   const sent: string[] = [];
   global.fetch = (async (input: RequestInfo | URL) => {
     const url = String(input);
@@ -63,7 +72,18 @@ function serving(
       if (options.routinesFail)
         return Response.json({ error: "The server is busy." }, { status: 500 });
       return Response.json({
-        routines: [routine],
+        routines: [
+          missed
+            ? {
+                ...routine,
+                lastRun: {
+                  status: "skipped",
+                  at: "2026-11-15T08:00:00.000Z",
+                  missed: true,
+                },
+              }
+            : routine,
+        ],
         sweep: { lastSweptAt: new Date().toISOString(), working: true },
       });
     }
@@ -81,12 +101,15 @@ function serving(
             id: "run_1",
             routineId: "r1",
             agentId: "expenses",
-            status: "succeeded",
+            status: missed ? "skipped" : "succeeded",
             startedAt: "2026-11-15T08:00:00.000Z",
-            finishedAt: "2026-11-15T08:01:00.000Z",
-            error: null,
+            finishedAt: missed
+              ? "2026-11-15T08:00:00.000Z"
+              : "2026-11-15T08:01:00.000Z",
+            error: missed ? MISSED_TEXT : null,
             source: "schedule",
             channelId: runChannelId,
+            missed,
           },
         ],
       });
@@ -95,12 +118,15 @@ function serving(
         runs: [
           {
             id: "run_1",
-            status: "succeeded",
+            status: missed ? "skipped" : "succeeded",
             startedAt: "2026-11-15T08:00:00.000Z",
-            finishedAt: "2026-11-15T08:01:00.000Z",
-            error: null,
+            finishedAt: missed
+              ? "2026-11-15T08:00:00.000Z"
+              : "2026-11-15T08:01:00.000Z",
+            error: missed ? MISSED_TEXT : null,
             source: "schedule",
             channelId: runChannelId,
+            missed,
           },
         ],
       });
@@ -225,4 +251,22 @@ test("a routine's own runs link to the conversation each one posted into", async
   expect(await view.findByText("Succeeded")).toBeTruthy();
   const link = view.getByRole("link", { name: "Open conversation" });
   expect(link.getAttribute("href")).toBe("/channel/c_run");
+});
+
+test("a missed firing reads Missed in History, with the server's reason and no conversation", async () => {
+  serving({ missed: true, runChannelId: null });
+  const view = draw(() => <RoutinesList />);
+  await view.findByText("Every weekday at 9:00");
+  fireEvent.click(view.getByRole("button", { name: "History" }));
+  expect(await view.findByText("Missed")).toBeTruthy();
+  expect(view.queryByText("Skipped")).toBeNull();
+  expect(view.getByText(MISSED_TEXT)).toBeTruthy();
+  expect(view.queryByRole("link", { name: "Open conversation" })).toBeNull();
+});
+
+test("the routines list says Missed, not Skipped, when the last firing was missed", async () => {
+  serving({ missed: true, runChannelId: null });
+  const view = draw(() => <RoutinesList />);
+  expect(await view.findByText(/^Missed /)).toBeTruthy();
+  expect(view.queryByText(/^Skipped /)).toBeNull();
 });

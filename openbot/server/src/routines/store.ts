@@ -137,7 +137,12 @@ export type RoutineSummary = {
   /** Whether the target channel was deleted. A broken routine is shown, not hidden. */
   channelDeleted: boolean;
   /** The most recent firing, or null when it has never fired. */
-  lastRun: { status: RoutineRunOutcome | null; finishedAt: Date | null } | null;
+  lastRun: {
+    status: RoutineRunOutcome | null;
+    finishedAt: Date | null;
+    /** A missed firing: its status is `skipped` and its `finishedAt` is the due time. */
+    missed: boolean;
+  } | null;
 };
 
 export type RoutineInput = {
@@ -184,6 +189,11 @@ export type RoutineRunSummary = {
    * route, not here: this is what the run did, not what the person can see now.
    */
   channelId: string | null;
+  /**
+   * True for a firing the server did not run and recorded so (`recordMissed`): a `skipped` row whose
+   * `startedAt` and `finishedAt` are the occurrence's due time. Never true for a run that started.
+   */
+  missed: boolean;
 };
 
 /** One firing in a person's history across all their routines, with the routine it belongs to. */
@@ -289,6 +299,23 @@ export type RoutineStore = {
    * comes from the queue, not from a person. A failure is the caller's to log; it never fails the run.
    */
   recordRunChannel(runId: string, channelId: string): Promise<void>;
+  /**
+   * Record a firing the server did not run, as a `skipped` row that names the occurrence it was due for.
+   *
+   * Called by the sweep and by nothing else, and only for a firing it dropped as a true miss: a stale
+   * stamp it advanced past, or a claim that came too late. Returns false when nothing was written: a run
+   * had already started for this occurrence within `windowMs` of it (so it was not missed), or another
+   * pass recorded it first. One statement, so the look and the write are one round trip; it takes no
+   * lock, so a run that commits after the snapshot is not seen, and the sweep's settle margin is what
+   * keeps that from happening. The unique index on (routine_id, scheduled_for) answers two passes that
+   * both missed one occurrence.
+   */
+  recordMissed(
+    routineId: string,
+    scheduledFor: Date,
+    reason: string,
+    windowMs: number,
+  ): Promise<boolean>;
   /** Close a run row with its outcome, and the capped error when there was one. */
   finishRun(
     runId: string,
@@ -679,7 +706,11 @@ export function createRoutineStore(database: Database): RoutineStore {
       const routineIds = rows.map((row) => row.routine.id);
       const lastRuns = new Map<
         string,
-        { status: RoutineRunOutcome | null; finishedAt: Date | null }
+        {
+          status: RoutineRunOutcome | null;
+          finishedAt: Date | null;
+          missed: boolean;
+        }
       >();
       if (routineIds.length > 0) {
         const runRows = await database
@@ -687,6 +718,7 @@ export function createRoutineStore(database: Database): RoutineStore {
             routineId: routineRuns.routineId,
             status: routineRuns.status,
             finishedAt: routineRuns.finishedAt,
+            missed: sql<boolean>`(${routineRuns.scheduledFor} is not null)`,
           })
           .from(routineRuns)
           .where(inArray(routineRuns.routineId, routineIds))
@@ -703,6 +735,7 @@ export function createRoutineStore(database: Database): RoutineStore {
           lastRuns.set(run.routineId, {
             status: run.status,
             finishedAt: run.finishedAt,
+            missed: run.missed,
           });
         }
       }
@@ -779,6 +812,7 @@ export function createRoutineStore(database: Database): RoutineStore {
           error: routineRuns.error,
           source: routineRuns.source,
           channelId: routineRuns.channelId,
+          missed: sql<boolean>`(${routineRuns.scheduledFor} is not null)`,
         })
         .from(routineRuns)
         .where(and(eq(routineRuns.routineId, id), withinHistoryWindow()))
@@ -815,6 +849,7 @@ export function createRoutineStore(database: Database): RoutineStore {
           error: routineRuns.error,
           source: routineRuns.source,
           channelId: routineRuns.channelId,
+          missed: sql<boolean>`(${routineRuns.scheduledFor} is not null)`,
         })
         .from(routineRuns)
         .innerJoin(routines, eq(routines.id, routineRuns.routineId))
@@ -968,6 +1003,42 @@ export function createRoutineStore(database: Database): RoutineStore {
         .update(routineRuns)
         .set({ channelId })
         .where(eq(routineRuns.id, runId));
+    },
+
+    async recordMissed(routineId, scheduledFor, reason, windowMs) {
+      /*
+       * ONE STATEMENT, so the look and the write are one round trip and cannot be split by a pass of
+       * ours. It takes no lock: a run for this occurrence that commits after this statement's snapshot is
+       * not seen here. That race is what `MISSED_SETTLE_MS` in sweep.ts is for (the miss is only written
+       * a minute past the window, by which time any run that passed its grace check has landed). Two
+       * passes that both miss the same occurrence are answered by the unique index on
+       * (routine_id, scheduled_for): one row, however many passes or replicas. The row takes no time:
+       * its finish is its due time, so it reads as the moment it was due, and it never reached a
+       * channel, so there is nothing for History to open.
+       */
+      const windowEnd = new Date(scheduledFor.getTime() + windowMs);
+      const written = await database.execute(sql`
+        insert into routine_runs (id, routine_id, started_at, finished_at, status, error, source, scheduled_for)
+        select
+          ${`routine_run_${crypto.randomUUID()}`}::text,
+          ${routineId}::text,
+          ${scheduledFor}::timestamptz,
+          ${scheduledFor}::timestamptz,
+          'skipped'::routine_run_status,
+          ${reason}::text,
+          'schedule'::text,
+          ${scheduledFor}::timestamptz
+        where not exists (
+          select 1
+          from routine_runs
+          where routine_id = ${routineId}::text
+            and started_at >= ${scheduledFor}::timestamptz
+            and started_at < ${windowEnd}::timestamptz
+        )
+        on conflict (routine_id, scheduled_for) where scheduled_for is not null do nothing
+        returning id
+      `);
+      return written.length > 0;
     },
 
     async finishRun(runId, status, error, waiting) {

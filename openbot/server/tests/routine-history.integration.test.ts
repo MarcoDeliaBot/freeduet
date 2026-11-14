@@ -20,6 +20,7 @@ import {
 } from "../src/db/schema";
 import { createRoutineRoutes } from "../src/routines/routes";
 import { createRoutineStore } from "../src/routines/store";
+import { MISSED_REASON } from "../src/routines/sweep";
 import { TEST_POOL, testDatabaseUrl } from "./support/database";
 
 /*
@@ -652,5 +653,146 @@ describe("the conversation a run posted into, shown to its owner only", () => {
     };
 
     expect(body.runs.map((run) => run.channelId)).toEqual([null]);
+  });
+});
+
+describe("a firing the server did not run, shown to its owner as missed", () => {
+  const asOwner = (f: { owner: AgentActor }) => ({
+    headers: { "x-test-user": f.owner.id },
+  });
+  const asStranger = (f: { stranger: AgentActor }) => ({
+    headers: { "x-test-user": f.stranger.id },
+  });
+  const hoursAgo = (hours: number) => new Date(Date.now() - hours * 3_600_000);
+
+  test("History and the routine's own list name the miss, dated to when it was due, with no conversation", async () => {
+    const f = await setUp();
+    const iris = await store.create({
+      ownerUserId: f.owner.id,
+      agentId: f.irisId,
+      channelId: f.irisChannel,
+      instruction: "Summarise the inbox.",
+      cron: DAILY,
+    });
+    // A run five hours ago, then an occurrence the server did not run two hours ago.
+    const ranAt = hoursAgo(5);
+    const missedDue = hoursAgo(2);
+    const ran = await runIn(iris.id, f.irisChannel);
+    await setStartedAt(ran, ranAt.toISOString());
+    expect(
+      await store.recordMissed(iris.id, missedDue, MISSED_REASON, 11 * 60_000),
+    ).toBe(true);
+
+    const listed = await app().request("http://openbot.test/runs", asOwner(f));
+    const body = (await listed.json()) as {
+      runs: {
+        status: string;
+        missed: boolean;
+        startedAt: string;
+        finishedAt: string | null;
+        channelId: string | null;
+        error: string | null;
+      }[];
+    };
+    expect(
+      body.runs.map((run) => [
+        run.status,
+        run.missed,
+        run.startedAt,
+        run.finishedAt,
+        run.channelId,
+        run.error,
+      ]),
+    ).toEqual([
+      [
+        "skipped",
+        true,
+        missedDue.toISOString(),
+        missedDue.toISOString(),
+        null,
+        MISSED_REASON,
+      ],
+      [
+        "succeeded",
+        false,
+        ranAt.toISOString(),
+        expect.any(String),
+        f.irisChannel,
+        null,
+      ],
+    ]);
+
+    const perRoutine = await app().request(
+      `http://openbot.test/${iris.id}/runs`,
+      asOwner(f),
+    );
+    const perBody = (await perRoutine.json()) as {
+      runs: { missed: boolean }[];
+    };
+    expect(perBody.runs.map((run) => run.missed)).toEqual([true, false]);
+
+    const page = await app().request("http://openbot.test/", asOwner(f));
+    const pageBody = (await page.json()) as {
+      routines: {
+        id: string;
+        lastRun: {
+          status: string | null;
+          at: string | null;
+          missed: boolean;
+        } | null;
+      }[];
+    };
+    expect(pageBody.routines.find((r) => r.id === iris.id)?.lastRun).toEqual({
+      status: "skipped",
+      at: missedDue.toISOString(),
+      missed: true,
+    });
+  });
+
+  test("a stranger sees none of the owner's missed firings", async () => {
+    const f = await setUp();
+    const iris = await store.create({
+      ownerUserId: f.owner.id,
+      agentId: f.irisId,
+      channelId: f.irisChannel,
+      instruction: "Summarise the inbox.",
+      cron: DAILY,
+    });
+    await store.recordMissed(iris.id, hoursAgo(2), MISSED_REASON, 11 * 60_000);
+
+    const response = await app().request(
+      "http://openbot.test/runs",
+      asStranger(f),
+    );
+    const body = (await response.json()) as { runs: unknown[] };
+
+    expect(body.runs).toEqual([]);
+  });
+
+  test("a missed firing does not break the fatigue streak, and does not count toward it", async () => {
+    const f = await setUp();
+    const iris = await store.create({
+      ownerUserId: f.owner.id,
+      agentId: f.irisId,
+      channelId: f.irisChannel,
+      instruction: "Summarise the inbox.",
+      cron: DAILY,
+    });
+    // The streak is read since the routine was last switched on; make the window cover these rows.
+    await database
+      .update(routines)
+      .set({ enabledAt: new Date("2000-01-01T00:00:00Z") })
+      .where(eq(routines.id, iris.id));
+    const failedRun = async (startedAt: Date) => {
+      const run = await store.insertRun(iris.id);
+      await setStartedAt(run.runId, startedAt.toISOString());
+      await store.finishRun(run.runId, "failed", "the turn failed");
+    };
+    await failedRun(hoursAgo(3));
+    await store.recordMissed(iris.id, hoursAgo(2), MISSED_REASON, 11 * 60_000);
+    await failedRun(hoursAgo(1));
+
+    // Two failures in a row: the missed occurrence between them neither breaks the count nor adds to it.
+    expect(await store.consecutiveFailures(iris.id)).toBe(2);
   });
 });

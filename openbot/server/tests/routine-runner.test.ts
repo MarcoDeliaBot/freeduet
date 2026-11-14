@@ -97,6 +97,8 @@ function harness(options: {
       if (options.recordRunChannelError) throw options.recordRunChannelError;
       recorded.conversations.push({ runId, channelId });
     },
+    // Written by the sweep, never by a run: a run that reached this would be the wrong writer.
+    recordMissed: () => unreachable("recordMissed"),
     async finishRun(runId, status, error) {
       recorded.finished.push({ runId, status, error });
     },

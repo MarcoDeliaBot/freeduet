@@ -4,6 +4,7 @@
  * Split by owner so two people can add tables all day without touching the same lines. Add tables
  * here; never edit core.ts or computer.ts to do it.
  */
+import { sql } from "drizzle-orm";
 import {
   boolean,
   index,
@@ -12,6 +13,7 @@ import {
   primaryKey,
   text,
   timestamp,
+  uniqueIndex,
 } from "drizzle-orm/pg-core";
 import { agents, users } from "./core";
 import { jsonb } from "./json";
@@ -177,8 +179,17 @@ export const routineRuns = pgTable(
      * the runner, not at insertion, because the routine's channel can change while a run is queued.
      */
     channelId: text("channel_id"),
+    /**
+     * The occurrence a missed firing was due for, set only on a row the server recorded as missed: a
+     * `skipped` row whose `started_at` is that same time. Null on every other run. The unique index makes
+     * a missed firing one row per routine, however many passes or replicas see it (`recordMissed`).
+     */
+    scheduledFor: timestamp("scheduled_for", { withTimezone: true }),
   },
   (table) => [
     index("routine_runs_by_routine_idx").on(table.routineId, table.startedAt),
+    uniqueIndex("routine_runs_missed_once_idx")
+      .on(table.routineId, table.scheduledFor)
+      .where(sql`${table.scheduledFor} is not null`),
   ],
 );

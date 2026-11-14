@@ -283,6 +283,8 @@ function firing(overrides: Partial<OwnedRunSummary> = {}): OwnedRunSummary {
     finishedAt: new Date("2027-02-28T09:00:40.000Z"),
     error: null,
     source: "schedule",
+    channelId: null,
+    missed: false,
     ...overrides,
   };
 }
@@ -421,6 +423,7 @@ describe("GET /runs", () => {
           error: null,
           source: "schedule",
           channelId: null,
+          missed: false,
         },
         {
           id: "parked",
@@ -432,6 +435,7 @@ describe("GET /runs", () => {
           error: null,
           source: "schedule",
           channelId: null,
+          missed: false,
         },
       ],
     });

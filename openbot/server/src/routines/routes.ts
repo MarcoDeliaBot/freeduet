@@ -100,6 +100,7 @@ export function createRoutineRoutes(
           finishedAt: run.finishedAt?.toISOString() ?? null,
           error: run.error,
           source: run.source,
+          missed: run.missed,
           channelId: conversationOf(run.channelId, openable),
         })),
       });
@@ -257,7 +258,12 @@ type RoutineDto = {
   channel: { id: string; name: string | null; gone: boolean };
   enabled: boolean;
   nextRunAt: string;
-  lastRun: { status: RoutineRunOutcome | null; at: string | null } | null;
+  lastRun: {
+    status: RoutineRunOutcome | null;
+    at: string | null;
+    /** A missed firing: `at` is the time it was due, not the time the server noticed. */
+    missed: boolean;
+  } | null;
 };
 
 export const SWEEP_SILENCE_MS = MINIMUM_INTERVAL_MS;
@@ -293,6 +299,7 @@ function routineDto(routine: RoutineSummary): RoutineDto {
       ? {
           status: routine.lastRun.status,
           at: routine.lastRun.finishedAt?.toISOString() ?? null,
+          missed: routine.lastRun.missed,
         }
       : null,
   };
@@ -309,6 +316,7 @@ function ownedRunDto(run: OwnedRunSummary, openable: ReadonlySet<string>) {
     finishedAt: run.finishedAt?.toISOString() ?? null,
     error: run.error,
     source: run.source,
+    missed: run.missed,
     channelId: conversationOf(run.channelId, openable),
   };
 }
