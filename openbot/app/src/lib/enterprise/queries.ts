@@ -5,6 +5,7 @@ export type CapabilityKey =
   | "useBots"
   | "cloudBrowser"
   | "cloudNetwork"
+  | "cloudPrivateNetwork"
   | "cloudComputer"
   | "localComputer"
   | "customRules"

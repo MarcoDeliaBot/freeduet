@@ -18,6 +18,10 @@
  * forgery primitive pointed at the deployment's own network.
  */
 
+import {
+  type ResearchRole,
+  researchRoleOfTool,
+} from "@openbot/shared/research";
 /**
  * How a server is authenticated, and whose credential does it.
  *
@@ -28,15 +32,12 @@
  */
 // The one place browsing and this check agree on: the addresses that hold the deployment's own
 // cloud credentials. `target.ts` imports nothing itself, so asking it here adds no dependency.
+import { toolNameHitsSafetyWords } from "../approvals/policy";
 import { isNeverAllowedHostname } from "../computer/target";
-// Type-only, so naming the transport here creates no import cycle with the registry that resolves it.
-import type { CuratedTransportKind } from "./transport";
 // Imports nothing, so naming a preset here adds no dependency either.
 import type { MailPresetKey } from "./mail-presets";
-import {
-  type ResearchRole,
-  researchRoleOfTool,
-} from "@openbot/shared/research";
+// Type-only, so naming the transport here creates no import cycle with the registry that resolves it.
+import type { CuratedTransportKind } from "./transport";
 
 export type CatalogueAuth =
   /** Answers without any credential at all. */
@@ -136,16 +137,13 @@ export type CatalogueEntry = {
    */
   auth: CatalogueAuth;
   /**
-   * The tools this vendor's server exposes that change something.
+   * The tools this vendor's server exposes that are known to change something.
    *
    * Kept so the policy can be written about effect rather than about tool names a rule author would
-   * have to look up. Known-incomplete for some vendors, which is why {@link classifyTool} treats an
-   * unknown tool as a write rather than as a read: a tool the server never advertised, so nothing
-   * here could have named it, is safe to over-scrutinize as a write. The opposite direction is the
-   * one that matters for this list: a tool the server DOES advertise but that is missing from here
-   * classifies as a read unless the vendor itself recorded an effect for it, so for a vendor that
-   * records nothing — which is every one here today — an incomplete list is the failure mode rather
-   * than a safe default, and this list has to lean over-inclusive.
+   * have to look up, and so a reviewed write stays a write whatever a vendor recorded for it.
+   * It is NOT what makes the rest safe: {@link CatalogueEntry.readTools} is. Anything an entry
+   * advertises that its read list does not name is a write, so a name missing from this list still
+   * asks.
    *
    * Nothing outside review can shorten it, either. A name this list holds is a write no matter what
    * a vendor recorded for that action, because this list is what a person read and the recorded
@@ -166,14 +164,17 @@ export type CatalogueEntry = {
    */
   transport?: CuratedTransportKind;
   /**
-   * The only tools on this server that read, when the vendor's list is too long or moves too fast
-   * for {@link CatalogueEntry.writeTools} to be trusted complete.
+   * The only tools on this server that read. Every advertised tool NOT named here is a write.
    *
-   * With it, every advertised tool NOT named here is a write. Firecrawl is why: it publishes tool
-   * families (`firecrawl_monitor_*`) rather than names, a write list can only hold names, and a
-   * monitor deletion nobody listed would otherwise classify as a read.
+   * Required for every entry, because a list of writes can only hold names somebody knew about: a
+   * tool the vendor adds later, or one nobody listed, would otherwise classify as a read and run
+   * without the person's approval (D33). Firecrawl is the sharpest case: it publishes tool families
+   * (`firecrawl_monitor_*`) rather than names. An empty list is a legitimate answer ("this entry
+   * reads nothing"), and a name missing from here asks the person, which is the cost of an incomplete
+   * list. A name goes in only on evidence: the adapter's own code, a recorded fixture, or the vendor's
+   * documentation.
    */
-  readTools?: readonly string[];
+  readTools: readonly string[];
   docsUrl: string;
 };
 
@@ -384,13 +385,20 @@ const REVIEWED: readonly CatalogueEntry[] = Object.freeze([
       }),
     },
     /*
-     * Named writes even though the scope above makes Google refuse them.
-     *
-     * Belt and braces on purpose. The scope is what stops them; this list is what keeps a boundary
-     * written about writes covering them, so widening the scope later cannot quietly turn a write
-     * into something the policy engine has never heard of.
+     * This entry offers no write. The scope above is read-only and the REST adapter is GET-only, so
+     * `create_file` and `copy_file`, which this list used to name, were never reachable: it listed
+     * writes the connector does not have (D33). The four tools below are the adapter's own list
+     * (`google-drive-rest.ts`); everything else is a write by {@link classifyTool}, so a tool added
+     * by widening the scope or by switching to Google's MCP server asks until somebody reads it and
+     * adds it here.
      */
-    writeTools: Object.freeze(["create_file", "copy_file"]),
+    writeTools: Object.freeze([]),
+    readTools: Object.freeze([
+      "search_files",
+      "list_recent_files",
+      "get_file_metadata",
+      "read_file_content",
+    ]),
     docsUrl:
       "https://developers.google.com/workspace/guides/configure-mcp-servers",
   },
@@ -518,14 +526,10 @@ const REVIEWED: readonly CatalogueEntry[] = Object.freeze([
       registrationUrl: "https://mcp.notion.com/register",
     },
     /*
-     * The writing tools as the hosted server advertises them today. The hosted server advertises
-     * its tools, so a name here that does not match an advertised tool is not the risk — an
-     * advertised tool that is missing from this list is: {@link classifyTool} reads an unlisted
-     * but advertised name as a read, never as a write. Notion's MCP listing carries no per-action
-     * effect, so this list is the only thing that can say otherwise and nothing backstops it. That
-     * makes under-inclusion the failure mode, so this list has to lean over-inclusive rather than
-     * minimal, and reconciling it against the live tool list on the first Refresh tools is
-     * required, not cosmetic.
+     * The writing tools as the hosted server advertises them today. Since D33 this list is no longer
+     * the barrier: an advertised tool that `readTools` below does not name is a write, so a tool
+     * Notion adds, or one missing here, asks the person. Notion's MCP listing carries no per-action
+     * effect, so the read list is the only thing that can say a tool only reads.
      */
     writeTools: Object.freeze([
       "notion-convert-page-to-skill",
@@ -543,6 +547,14 @@ const REVIEWED: readonly CatalogueEntry[] = Object.freeze([
       "notion-update-page",
       "notion-update-view",
     ]),
+    /*
+     * Only the two reads this repository has evidence for: the recorded Notion fixtures and the
+     * tests built on them use `notion-search` and `notion-fetch`. Notion's documentation describes
+     * more reads (`notion-get-comments`, `notion-get-users`, `notion-query-data-sources` and so on),
+     * but it labels them only by inference from their names, so they ask until the first Refresh
+     * tools shows which of them the live server advertises and a person adds them here.
+     */
+    readTools: Object.freeze(["notion-search", "notion-fetch"]),
     docsUrl: "https://developers.notion.com/guides/mcp/build-mcp-client",
   },
   {
@@ -569,7 +581,30 @@ const REVIEWED: readonly CatalogueEntry[] = Object.freeze([
       "resume_trigger",
       "delete_trigger",
     ]),
+    // The two tools that list and change nothing (`builtin-routines.ts`, `trigger-tools.ts`).
+    readTools: Object.freeze(["list_routines", "list_triggers"]),
     docsUrl: "https://github.com/CopilotKit/OpenBot/blob/main/docs/routines.md",
+  },
+  {
+    key: "settings",
+    title: "Settings in chat",
+    vendor: "OpenBot",
+    summary:
+      "Lets a Bot change, from chat, the few harmless settings on its list, such as how much it may interrupt you. Each change asks you first and can be undone.",
+    /*
+     * First-party and in-process, like Routines: no host to dial and no credential to hold. In the
+     * catalogue so the person decides which Bots may change a setting from chat, as deliberately as they
+     * grant a vendor. The list of settings is the server's own, in settings-in-chat/allow-list.ts.
+     */
+    host: "builtin://settings",
+    path: "/",
+    transport: "builtin-settings",
+    auth: Object.freeze({ kind: "builtin" }),
+    writeTools: Object.freeze(["change_setting"]),
+    // Nothing in this connector only reads.
+    readTools: Object.freeze([]),
+    docsUrl:
+      "https://github.com/MarcoDeliaBot/freeduet/blob/main/docs/design/settings-in-chat.md",
   },
 ]);
 
@@ -779,16 +814,16 @@ export function resolveServerUrl(
  * reviewed write list, which settles a name it holds as a write. Then what the vendor recorded, where
  * exactly `read` is a read and every other value it holds — a recorded write, an unrecognised label,
  * a different case, the empty string — is a write. Where the column holds nothing at all the reviewed
- * list finishes the job: an advertised name it declines to call a write is a read.
+ * list finishes the job: an advertised name it declines to call a read is a write.
  *
  * Unknown counts as a write throughout. A server with no catalogue entry behind it is a write unless
  * the vendor recorded a read for that action — there is no reviewed list to consult, so an unlabelled
  * action of theirs has nothing saying it is safe.
  *
  * So there are two ways to earn a read, and both require somebody to have said so. Either the vendor
- * labelled the action a read and no reviewed list contradicts them, or the server advertised it and a
- * reviewed list declined to call it a write. Guessing permissively is recoverable only in those two
- * cases; everywhere else the answer is a write.
+ * labelled the action a read for a tool a hub hosts (and its name carries no safety word), or a
+ * reviewed read list names it. Everything else is a write (D33): an entry's advertised tool that its
+ * read list does not name asks, however complete the write list looked.
  */
 export function classifyTool(
   entry: CatalogueEntry | null,
@@ -818,17 +853,23 @@ export function classifyTool(
   // The reviewed list outranks the column, and only in this direction: a name a person reviewed as a
   // write stays a write whatever the listing recorded about it.
   if (entry?.writeTools.includes(toolName)) return "write";
-  // An entry that names its reads names all of them, so anything else it advertises is a write.
-  if (entry?.readTools && !entry.readTools.includes(toolName)) return "write";
+  // D33: an entry names ALL of its reads, so anything else it advertises is a write. This used to
+  // hold only for an entry that happened to carry a read list; for the others an advertised name
+  // the write list had missed was a read, and ran without asking.
+  if (entry && !entry.readTools.includes(toolName)) return "write";
   // Anything the column holds settles the rest. `typeof` rather than truthiness so the empty string
   // is treated as the value it is instead of as an absence of one.
-  if (typeof recorded === "string")
-    return recorded === "read" ? "read" : "write";
+  if (typeof recorded === "string") {
+    if (recorded !== "read") return "write";
+    // D33: for a tool a hub hosts (no entry) the recorded read is the provider's own word and nothing
+    // reviewed backs it. A name that carries the words of a credential, a security setting or money is
+    // not taken as a read on that word alone: it is a write, and the built-in safety floor handles it.
+    return !entry && toolNameHitsSafetyWords(toolName) ? "write" : "read";
+  }
   // A server an administrator added by URL has no reviewed tool catalogue behind it, so nothing here
   // can say a tool of theirs only reads. Everything it offers is a write.
   if (!entry) return "write";
-  // Advertised, not on the reviewed write list, and nothing recorded. Two sources had the chance to
-  // call it a write and neither did.
+  // Advertised, named by the reviewed read list, and nothing recorded against it.
   return "read";
 }
 

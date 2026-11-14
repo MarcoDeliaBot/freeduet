@@ -30,7 +30,7 @@ Read these before changing anything:
   gateway's code is never shipped, and AGPL gateway code is never copied.
 - **Never read, copy or forward subscription credentials.** Never open the Claude CLI's login or
   config directories, in any container or volume.
-- **No secrets and no personal data in the repository.** It will become public at v0.1.
+- **No secrets and no personal data in the repository.** It has been public since 13 November 2026.
 - **Public wording.** The repository, PR titles, docs and site never describe private sources of ideas
   or other private projects of the maintainer; the public comparison table (`docs/COMPARISON.md`) is fine.
 - **The person's approval stays for real account actions** (sending email, payments, purchases). Team
@@ -62,6 +62,8 @@ the hands"): plan, brief executors, verify with numbers, merge, report.
   executor as soon as it has delivered.
 - **Parallel executors.** When several executors run at once, give each its own files: two executors
   must never own the same file.
+- **Decision numbers.** When several executors work in parallel, the brief assigns each one its D-numbers,
+  so no two executors pick the same number.
 - **Worktree branches.** Create each executor's worktree on its own branch:
   `git worktree add -b <branch> <dir> origin/main`, then add the fetch refspec (see Git and pull
   requests). Never leave it detached: commits made on a detached HEAD get lost. The brief tells the
@@ -110,9 +112,13 @@ Mark (id `marketer`) was the first member added after v0.1, Cam (id `video`) the
   image has no sudo, so installing at run time is not something to rely on). The all-in-one
   `openbot/Dockerfile` is another image, where a Bot may `sudo apt-get`. Label the pull
   request `full-ci`, because `component dockerfiles` and `image` run only on main and on that label.
-- A member cannot hand a file to the person from the chat yet. Chat attachments are pictures and text,
-  person to member only (`shared/attachments.ts`); `GET /api/computers/:botId/files/download` exists
-  but no screen and no member tool uses it. Say so in the prompt and change it with the feature.
+- A member hands a file to the person with `offer_file` (D38, `server/src/freeduet/member-files.ts`):
+  a card with the name, the size and a Download button (`app/src/freeduet/member-file-card.tsx`) that
+  fetches `GET /api/computers/:botId/files/download` as the signed-in person when it is pressed. The
+  tool looks at the file through `computerGateway.downloadFile`, so the deployment's policy, the
+  computer's confinement and its 100 MiB limit decide, and it moves no bytes. Chat attachments are
+  still pictures and text, person to member only (`shared/attachments.ts`). A public member's computer
+  is shared by everyone who can sign in, so any of them can press the button (`computer-access.ts`).
 - `computer_run_command` has no timeout parameter and stops a command after about two minutes (and then
   kills its whole process group, `agent-computer/src/shell.ts`); every call goes through the approval
   gate. A member who renders starts long jobs in the background with the output sent to a file: a job
@@ -128,6 +134,8 @@ Mark (id `marketer`) was the first member added after v0.1, Cam (id `video`) the
 - A new branch needs its fetch refspec before stop hooks are happy:
   `git config --add remote.origin.fetch '+refs/heads/<b>:refs/remotes/origin/<b>'`, then
   `git push -u origin <b>` and `git branch -u origin/<b>`.
+- `git fetch origin` (no arguments) fails once a branch that is not yet pushed has a fetch refspec:
+  use `git fetch origin main`.
 - Never rebase, amend or force-push a shared branch; merge `origin/main` into it instead. Never close
   and reopen a PR to restart CI. A job may be re-run once, after its run has completed.
 - Commit messages and PR bodies end with the attribution lines the harness gives the session.
@@ -140,6 +148,17 @@ Mark (id `marketer`) was the first member added after v0.1, Cam (id `video`) the
 - Known intermittent failures, re-run once before investigating: the all-in-one `image` job
   (`migrate` races the embedded Postgres start, 57P03, issue #50) and the app keyboard tests in
   `app/tests/live-screen-keyboard.test.tsx`.
+- agent-freeduet tests: the settle timer (`segment.SETTLE_SECONDS`, 0.1 s in `fake_cli`) is a wall-clock
+  race against the fake CLI's subprocess. A test or golden scenario whose CLI plays several steps and ends
+  by itself sets `SETTLE_NEVER` (`tests/helpers.py`), so the CLI's result line ends the segment and no timer
+  decides. Two such flakes cost CI re-runs on 14 November 2026 (`cli_runs differs from its golden`, and
+  `assert ['computer_navigate'] == [...]` in `test_refused_offered_tool.py`).
+- Real-browser tests (`computer (real browser)`): a browser asks for each page's `/favicon.ico` by itself,
+  tens of milliseconds after the page and with as much jitter, so it lands on either side of a test's next
+  step and is judged by the policy of the moment it arrives, like any request. A case that reads the
+  proxy's request list across a policy change or a reset must not assert an exact list: it names the icons
+  it can meet there (`askedFor` in `private-network-browser.test.ts`, whose third case failed 1 run in 10
+  on a quiet machine and cost a CI re-run on 14 November 2026).
 - The server suite runs in one process and every open pool is held to the end. CI Postgres has
   `max_connections=200`; locally the suite peaks near 90 connections. **Every test that opens a
   database pool closes it** (`await database.$client.close()`).
@@ -147,7 +166,7 @@ Mark (id `marketer`) was the first member added after v0.1, Cam (id `video`) the
   shifts them. It also rejects `?.` under `toBeUndefined` and `toBeFalsy`.
 - `bun test` alone does not show every gate a new test file must pass. Also run
   `bun run typecheck:tests` from `openbot/`; its baseline is `server/tests/typecheck-baseline.txt`,
-  and hand-edit a line there only when a baselined error's text changes.
+  and hand-edit a line there only when a baselined error's text changes. A `tsc` killed mid-run (exit 137, out of memory) now fails that gate with exit 2 and "tsc did not finish"; before, it passed as clean.
 - Adding a value to a Postgres enum breaks `tests/schema.test.ts`.
 - Some jobs run only on main (and on pull requests labelled `full-ci`): `component dockerfiles`,
   `image`, clean-start. A green pull request does not prove main is green: after a merge that adds a
@@ -162,6 +181,8 @@ Mark (id `marketer`) was the first member added after v0.1, Cam (id `video`) the
   every language has the same keys and tags as English. Text-only changes must not touch layout, motion
   or spacing (PR #120 restyled the page on 2026-11-14), and in this sandbox the proxy returns 403 for
   Google Fonts, so screenshots need the fonts served locally.
+- The build writes twelve pages (`site/index.html` and `site/<code>/index.html`) and `site/sitemap.xml`:
+  commit all of them. `node site/tools/checklang.js` also runs `tools/checkpages.py`.
 
 ## Local testing
 
@@ -195,6 +216,8 @@ Mark (id `marketer`) was the first member added after v0.1, Cam (id `video`) the
   or an app password plus an optional iCal secret link (`google-imap`, D24, the simple default for the
   public). An app password opens the whole mailbox, so the transport opens mailboxes read-only and
   replies only within existing threads.
+- On this shared machine never use `pkill -f` with a pattern: stop only the PIDs you started, because
+  other executors share the machine and the Postgres cluster.
 
 ## Things learned the hard way (Intelligence off, SSE mode)
 

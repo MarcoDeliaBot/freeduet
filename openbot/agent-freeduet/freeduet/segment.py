@@ -83,6 +83,7 @@ log = logging.getLogger("freeduet.segment")
 SETTLE_SECONDS = 0.3
 MATCH_SECONDS = 1.0
 SEGMENT_TIMEOUT_SECONDS = 1800.0
+TIMER_PASSES = 10  # loop passes a timer waits after it fires: a pipe's line needs 1, a bridge call 4 (_later)
 
 
 @dataclass
@@ -162,7 +163,18 @@ def handoff_needs_person(blocked: list[tuple[dict, str]]) -> str:
 
 
 async def _later(delay: float, inbox: asyncio.Queue, item: tuple) -> None:
+    """Put `item` in the inbox after `delay`, behind whatever the CLI had already written by then.
+
+    A loop that was busy past the deadline finds this timer due together with the output that came in
+    meanwhile. asyncio wakes the timer first and hands the bytes to their reader a few passes later: one
+    for a line on the CLI's pipe, four for a call on the bridge's socket (3.12 and 3.13). A marker put at
+    once would sit in the inbox ahead of what the CLI wrote before the deadline, and the segment would end
+    without it: test_a_busy_loop_does_not_lose_the_second_refused_call and
+    test_a_timer_that_fires_late_does_not_overtake_a_bridge_call_already_on_the_socket fail with fewer
+    passes. The passes let that output in first; on a loop that was not late they cost microseconds."""
     await asyncio.sleep(delay)
+    for _ in range(TIMER_PASSES):
+        await asyncio.sleep(0)
     await inbox.put(item)
 
 
@@ -212,13 +224,17 @@ class _InboxSink:
 
 
 async def run_segment(run: RunInput, member: Member, notes: SegmentNotes | None = None,
-                      engine: EngineAdapter | None = None) -> AsyncIterator[dict]:
-    yield agui.run_started(run)
+                      engine: EngineAdapter | None = None, *, announce: bool = True,
+                      extra_notes: tuple[str, ...] = ()) -> AsyncIterator[dict]:
+    """`announce=False` and `extra_notes` are for the engine chain (engine_router.py), which runs this once per
+    engine it tries inside one turn: it has already sent RUN_STARTED, and tells the next engine what happened."""
+    if announce:
+        yield agui.run_started(run)
     engine = engine if engine is not None else ClaudeEngine()
     notes = notes if notes is not None else SegmentNotes()
     active_lessons = await _lessons_for(run, member)
     # The tool notes, then the person's language when the deployment set one (person_language.py).
-    run_notes = [*tool_notes.notes_for(run, member), *person_language.notes_for(run)]
+    run_notes = [*tool_notes.notes_for(run, member), *person_language.notes_for(run), *extra_notes]
     offered = {tool["name"] for tool in run.tools}
     local = iris_tools.for_run(run, member.id, offered)
     # What the bridge serves: the transcript writes earlier calls to these under the name the CLI

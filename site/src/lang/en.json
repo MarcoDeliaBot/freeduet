@@ -128,7 +128,7 @@
  "r2": "Top priority: a one-file installer for Windows, macOS and Ubuntu. New members follow, each tested.",
  "r3": "Choose the engine for each member, and real delegation across the team.",
  "r4": "Automations written in chat, more connected apps, a phone version, remote access.",
- "r5": "Voice, safe purchases. Full access is built, not yet run live. Cam, the video member, is in the team; his tests are not yet run live, and he cannot hand a file over from the chat yet.",
+ "r5": "Voice, safe purchases. Full access is built, not yet run live. Cam, the video member, is in the team; his tests are not yet run live, and he can now offer a finished file in the chat with a Download button (built, not yet run live).",
  "r_note": "We label everything that is not built yet. No fairy tales. <a href=\"https://github.com/MarcoDeliaBot/freeduet/blob/main/docs/ROADMAP.md\">Full roadmap on GitHub</a>.",
  "in_h": "From install to your first useful task",
  "in_p": "Four steps, in the real order. All the commands are also in one box further down, ready to copy.",

@@ -2,9 +2,11 @@ import type { Context, MiddlewareHandler } from "hono";
 import { Hono } from "hono";
 import { type AuditStore, recordAuditEvent } from "../audit";
 import type { AppVariables } from "../auth/guards";
+import { calendarWindow, upcomingRuns } from "./calendar";
 import type { RoutineRunner } from "./runner";
 import { MINIMUM_INTERVAL_MS } from "./schedule";
 import {
+  type OwnedRunSummary,
   RoutineNotFoundError,
   RoutineRefusedError,
   type RoutineRunOutcome,
@@ -86,6 +88,78 @@ export function createRoutineRoutes(
           source: run.source,
         })),
       });
+    } catch (error) {
+      return mapStoreError(context, error);
+    }
+  });
+
+  /*
+   * The calendar: when each switched-on routine runs next, inside a window of at most fourteen days. It
+   * reads the same stored clock the sweep advances (see `calendar.ts`), owner-scoped through `scheduleFor`.
+   * Paused routines are left out; the routines list still shows them as paused.
+   */
+  routes.get("/calendar", requireUser, async (context) => {
+    const range = calendarWindow(
+      context.req.query("from"),
+      context.req.query("to"),
+      new Date(),
+    );
+    if (typeof range === "string") {
+      return context.json({ error: range }, 400);
+    }
+    const agentId = context.req.query("agentId");
+    if (agentId !== undefined && agentId.trim() === "") {
+      return context.json({ error: "agentId must not be empty." }, 400);
+    }
+    try {
+      const schedules = await routineStore.scheduleFor(context.var.actor.id);
+      const { runs, truncated } = upcomingRuns(
+        schedules.filter(
+          (schedule) =>
+            schedule.enabled &&
+            (agentId === undefined || schedule.agentId === agentId),
+        ),
+        range,
+      );
+      return context.json({
+        from: range.from.toISOString(),
+        to: range.to.toISOString(),
+        runs: runs.map((run) => ({
+          routineId: run.routineId,
+          agentId: run.agentId,
+          at: run.at.toISOString(),
+        })),
+        truncated,
+      });
+    } catch (error) {
+      return mapStoreError(context, error);
+    }
+  });
+
+  /*
+   * The run history across all the person's routines, newest first, at most 100. Each row names its
+   * routine and Bot, so the page can say which member ran and link to the conversation the routine
+   * posts into. Read-only: a run is never changed from here.
+   */
+  routes.get("/runs", requireUser, async (context) => {
+    const limit = runsLimit(context.req.query("limit"));
+    if (limit === null) {
+      return context.json(
+        { error: "limit must be a whole number from 1 to 100." },
+        400,
+      );
+    }
+    const agentId = context.req.query("agentId");
+    if (agentId !== undefined && agentId.trim() === "") {
+      return context.json({ error: "agentId must not be empty." }, 400);
+    }
+    try {
+      const runs = await routineStore.listRunsFor(
+        context.var.actor.id,
+        limit,
+        agentId,
+      );
+      return context.json({ runs: runs.map(ownedRunDto) });
     } catch (error) {
       return mapStoreError(context, error);
     }
@@ -198,6 +272,28 @@ function routineDto(routine: RoutineSummary): RoutineDto {
         }
       : null,
   };
+}
+
+/** One firing in the cross-routine history. `status: null` is in flight, shown as "running". */
+function ownedRunDto(run: OwnedRunSummary) {
+  return {
+    id: run.id,
+    routineId: run.routineId,
+    agentId: run.agentId,
+    status: run.status ?? "running",
+    startedAt: run.startedAt.toISOString(),
+    finishedAt: run.finishedAt?.toISOString() ?? null,
+    error: run.error,
+    source: run.source,
+  };
+}
+
+/** The history's row limit: absent is 50, a whole number from 1 to 100 is that, anything else is refused. */
+function runsLimit(text: string | undefined): number | null {
+  if (text === undefined) return 50;
+  if (!/^\d{1,3}$/.test(text)) return null;
+  const value = Number.parseInt(text, 10);
+  return value >= 1 && value <= 100 ? value : null;
 }
 
 function mapStoreError(context: Context, error: unknown): Response {

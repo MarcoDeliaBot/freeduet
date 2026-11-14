@@ -73,6 +73,7 @@ describe("which servers this deployment will talk to", () => {
       path: "/mcp",
       auth: { kind: "deployment-bearer" },
       writeTools: [],
+      readTools: [],
       docsUrl: "",
     } as const;
 
@@ -108,7 +109,7 @@ describe("which servers this deployment will talk to", () => {
         // First-party and in-process: there is no host outside this process to reach, so the
         // https requirement below does not apply. Asserted positively instead, so this branch
         // cannot quietly become a loophole for a future entry that DOES dial a real host.
-        expect(entry.host).toBe("builtin://routines");
+        expect(entry.host).toMatch(/^builtin:\/\/(routines|settings)$/);
       } else {
         expect(entry.host.startsWith("https://")).toBe(true);
       }
@@ -801,6 +802,7 @@ describe("which credential a curated server is given", () => {
     path: "/mcp",
     auth: { kind: "deployment-bearer" },
     writeTools: [],
+    readTools: [],
     docsUrl: "https://vendor.example/docs",
   };
 

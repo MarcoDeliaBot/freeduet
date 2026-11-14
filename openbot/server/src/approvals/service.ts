@@ -2,6 +2,7 @@ import { AsyncLocalStorage } from "node:async_hooks";
 import { createHash } from "node:crypto";
 import { isDeepStrictEqual } from "node:util";
 import { PERSON_INITIATOR } from "../audit";
+import { alwaysAskReason } from "../freeduet/always-ask";
 import type { FullAccess } from "../freeduet/full-access";
 import { HeadlessToolSuspension } from "@openbot/toolkit/headless-tools";
 import {
@@ -329,19 +330,34 @@ export function createApprovalService(
       store.rules(candidate.actorId),
     ]);
     const continuation = candidate.continuation ?? currentApprovalContext();
+    // FreeDuet, D35 (freeduet/always-ask.ts): a write by a routine's or a trigger's run, and any write
+    // that sets one up, changes it or removes it, is held to a card whatever else the person switched
+    // on. Decided here, from what the server holds, so no door has to remember to ask.
+    const alwaysAsk = alwaysAskReason({
+      effect: candidate.effect,
+      toolRef: candidate.toolRef,
+      runInitiator: continuation?.initiator,
+      callInitiator: candidate.initiator,
+      configuresAutomation: candidate.configuresAutomation === true,
+      changesSetting: candidate.changesSetting === true,
+      answeredByCard: candidate.answeredByCard === true,
+    });
     // FreeDuet: Full access, for an action and a turn it applies to, and in which of its two
-    // settings (docs/FULL_ACCESS.md). Undefined is the switch off.
+    // settings (docs/FULL_ACCESS.md). Undefined is the switch off, and so is any action D35 holds.
     const fullAccess =
-      candidate.effect !== "read"
+      candidate.effect !== "read" && !alwaysAsk
         ? await options.fullAccess?.effective({
             actorId: candidate.actorId,
             botId: candidate.botId,
             continuation,
           })
         : undefined;
+    // A call made with no approval context (the callback door) names its run's initiator itself.
+    const initiator = continuation?.initiator ?? candidate.initiator;
     const outcome = await decideAction({
       candidate,
       fullAccess,
+      ...(alwaysAsk ? { alwaysAsk } : {}),
       messages: continuation?.messages,
       team: teamRules,
       personal,
@@ -363,9 +379,7 @@ export function createApprovalService(
         effect: candidate.effect,
         scope: candidate.scope,
         outcome,
-        ...(continuation?.initiator
-          ? { initiator: continuation.initiator }
-          : {}),
+        ...(initiator ? { initiator } : {}),
       });
     return outcome;
   }

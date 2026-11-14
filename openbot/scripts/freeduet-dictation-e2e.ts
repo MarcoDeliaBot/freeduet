@@ -19,8 +19,10 @@
  *                              either, the Google Chrome that is installed is used.
  *           --headed           show the browser
  *
- * Sign-in. Out of the box the app is single-user and asks for nothing. When it asks (OIDC), this script
- * has no sign-in of its own, and no way around one: put the Cookie header of a signed-in browser
+ * Sign-in. Out of the box the app is single-user and asks for nothing but the installation secret
+ * (D28): the one `scripts/start.sh` wrote to the settings file given to Bun above, which this script
+ * sends as the cookie the app's own browser holds. When the app asks for more (OIDC), this script has
+ * no sign-in of its own, and no way around one: put the Cookie header of a signed-in browser
  * session in the environment variable E2E_COOKIE. It is read from the environment only, is never
  * printed, and is never written anywhere. Without it the script stops and says so.
  */
@@ -105,6 +107,19 @@ export function parseArguments(
       );
   }
   return options;
+}
+
+/**
+ * The cookie that makes the browser the person on a single-user stack (docs/M1_PLAN.md D28): the
+ * installation secret under the name the server gives it for its port, from the settings file Bun was
+ * given. None when that file has no secret.
+ */
+export function installCookie(
+  environment: Record<string, string | undefined>,
+): string | undefined {
+  const secret = environment.FREEDUET_INSTALL_SECRET?.trim();
+  if (!secret) return undefined;
+  return `freeduet_install_${environment.SERVER_PORT?.trim() || "3001"}=${secret}`;
 }
 
 /** "a=1; b=2" as the cookies a browser context takes, for the app's own address. */
@@ -260,7 +275,8 @@ async function main() {
     console.error(error instanceof Error ? error.message : String(error));
     process.exit(2);
   }
-  const cookie = process.env.E2E_COOKIE?.trim() || undefined;
+  const cookie =
+    process.env.E2E_COOKIE?.trim() || installCookie(process.env) || undefined;
   try {
     if (cookie) parseCookieHeader(cookie, options.app);
   } catch (error) {

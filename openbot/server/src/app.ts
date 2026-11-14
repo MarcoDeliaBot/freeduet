@@ -20,6 +20,8 @@ import {
 import type { BotAccessCheck } from "./agents/profile-policy";
 import type { AgentProfileStore } from "./agents/profile-store";
 import { createAgentRoutes } from "./agents/routes";
+import type { SettingChanges } from "./settings-in-chat/changes";
+import { createSettingChangeRoutes } from "./settings-in-chat/routes";
 import { createApprovalRoutes } from "./approvals/routes";
 import type { ApprovalService } from "./approvals/service";
 import {
@@ -35,7 +37,7 @@ import {
   recordAuditEvent,
 } from "./audit";
 import { createDevRequireUser } from "./auth/dev-actor";
-import { personIsLoopbackOnly } from "./auth/peer";
+import { createInstallPairingRoutes, personRule } from "./auth/install-secret";
 import {
   type AppVariables,
   type AuthService,
@@ -83,6 +85,7 @@ import { mountDesktopConnectionFailure } from "./desktop-connection-failure";
 import { createTranscriptionProvider } from "./dictation/provider";
 import { createDictationRoutes } from "./dictation/routes";
 import { threadReaderClient } from "./freeduet/backend";
+import { createEnginesRoutes } from "./freeduet/engines-routes";
 import type { HostAccessBroker } from "./host-access/broker";
 import { createHostAccessRoutes } from "./host-access/routes";
 import { identityRoutes } from "./identity/routes";
@@ -451,6 +454,8 @@ export function createApp(
     teamBots?: TeamBots;
     /** Pause, reset, Activity and attention for a person's own Bots. See agents/lifecycle.ts. */
     lifecycle?: BotLifecycleServices;
+    /** Settings in chat (docs/design/settings-in-chat.md, slice 1): the person's Undo of a change from chat. */
+    settingChanges?: SettingChanges;
     /**
      * What OpenDuet made for the person, and the tasks it is working on: the Pages tab and the viewer,
      * and Chat's task cards, the task page and Tasks. See openduet/pages.ts and openduet/task-store.ts.
@@ -500,12 +505,27 @@ export function createApp(
       webBotAuthDirectory(context.req.raw, webBotAuth),
     );
   }
+  /*
+   * Who the person is when there is no sign-in: a loopback peer (auth/peer.ts) that, where this
+   * installation has a secret, also holds it (auth/install-secret.ts, D28). Built once, so the
+   * guard, the CopilotKit mount and the live-screen upgrade in http-server.ts answer the same way.
+   */
+  const person = personRule(config);
+  // The two doors that hand a browser the secret, only where it is asked for. Neither is behind
+  // `requireUser`: they are how a browser gets to be the person, and each checks its own credential.
+  if (config.singleUser && person.install) {
+    app.route("/", createInstallPairingRoutes(person.install));
+  }
   // Projected, never the raw runtime. config.runtime carries the Intelligence contract, including
   // INTELLIGENCE_API_KEY and the licence token, and this endpoint is reachable by anyone. Returning
   // the object wholesale would serve deployment secrets to the browser. Add fields here explicitly.
   app.get("/api/capabilities", async (context) =>
     context.json({
       mode: config.runtime.mode,
+      // Whether a browser has to be paired with this installation (D28). A flag, never the secret,
+      // present only when it is true like the person's language below: the sign-in screen reads it to
+      // say what to do instead of "an admin has to set it up", and the answer is otherwise as it was.
+      ...(person.install ? { installPairing: true } : {}),
       durableHistory: config.runtime.durableHistory,
       /*
        * Whether a Bot may answer with an interface it wrote itself.
@@ -674,7 +694,7 @@ export function createApp(
   // One administrator, when nothing is configured to sign anybody in. Checked first, and only ever
   // true when there is no provider, so a configured deployment cannot fall back to it.
   const requireUser = config.singleUser
-    ? createDevRequireUser(personIsLoopbackOnly(config))
+    ? createDevRequireUser(person)
     : auth && roleRepository
       ? createRequireUser(auth, roleRepository)
       : authenticationUnavailable;
@@ -682,6 +702,14 @@ export function createApp(
   // govern, the admin screen's API, and the SCIM verbs the GET/POST auth handler above does not take.
   app.use("/api/*", createEnterpriseGate(requireUser));
   app.route("/api/admin/enterprise", createEnterpriseAdminRoutes(requireUser));
+  // The Engines dashboard's read (ENGINES_PLAN slice 6): administrators only, read at each request.
+  app.route(
+    "/api/freeduet/engines",
+    createEnginesRoutes(requireUser, () => ({
+      environment: process.env,
+      managedAgent: config.managedAgent,
+    })),
+  );
   app.on(["PUT", "PATCH", "DELETE"], "/api/auth/scim/*", (context) =>
     auth
       ? auth.handler(context.req.raw)
@@ -1411,9 +1439,10 @@ export function createApp(
   // its own routing under /api/copilotkit cannot shadow an OpenBot route declared above.
   if (copilotHandler) {
     // The runtime resolves its own caller from the request and sits behind no `requireUser`, so with
-    // no sign-in the peer rule (auth/peer.ts) has to be asked in front of it. The wildcard covers
-    // the bare base path too. Only where that rule applies: a deployment with sign-in is unchanged.
-    if (personIsLoopbackOnly(config)) app.use("/api/copilotkit/*", requireUser);
+    // no sign-in the peer rule (auth/peer.ts), and the installation secret where there is one, have
+    // to be asked in front of it. The wildcard covers the bare base path too. Only where that rule
+    // applies: a deployment with sign-in is unchanged.
+    if (person.loopbackOnly) app.use("/api/copilotkit/*", requireUser);
     // Mounted at the ROOT with the handler carrying its own basePath. Mounting it at
     // "/api/copilotkit" as well double-prefixes it: Hono strips the prefix before the handler sees
     // the path, so every route lands at /api/copilotkit/api/copilotkit/* and /info 404s. The browser
@@ -1670,6 +1699,11 @@ export function createApp(
     app.route(
       "/api/bots",
       createBotLifecycleRoutes(coworker.lifecycle, requireUser),
+    );
+  if (coworker?.settingChanges)
+    app.route(
+      "/api/settings-changes",
+      createSettingChangeRoutes(coworker.settingChanges, requireUser),
     );
   if (coworker?.groups)
     app.route("/api/groups", createGroupRoutes(coworker.groups, requireUser));

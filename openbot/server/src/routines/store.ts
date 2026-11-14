@@ -173,6 +173,25 @@ export type RoutineRunSummary = {
   source: "schedule" | "run_now" | "trigger";
 };
 
+/** One firing in a person's history across all their routines, with the routine it belongs to. */
+export type OwnedRunSummary = RoutineRunSummary & {
+  routineId: string;
+  agentId: string;
+};
+
+/**
+ * What the calendar needs about one routine: its schedule and its clock. The cron is read here and
+ * expanded on the server; the page never receives it, only the words from `listFor`.
+ */
+export type RoutineSchedule = {
+  id: string;
+  agentId: string;
+  cron: string;
+  timezone: string;
+  enabled: boolean;
+  nextRunAt: Date;
+};
+
 export type RoutinePatch = Partial<{
   instruction: string;
   cron: string;
@@ -202,6 +221,21 @@ export type RoutineStore = {
     id: string,
     limit?: number,
   ): Promise<RoutineRunSummary[]>;
+  /**
+   * Every routine the owner has, with the schedule the calendar expands. Owner-scoped like `listFor`:
+   * a stranger's routines are not in the answer, so nothing is listed for them.
+   */
+  scheduleFor(ownerUserId: string): Promise<RoutineSchedule[]>;
+  /**
+   * The owner's firings across all their routines, newest first, at most `limit` (1 to 100). Passing
+   * `agentId` keeps only the routines one Bot carries out, before the limit applies. A run is listed
+   * only through its routine, so a stranger's runs never reach this answer.
+   */
+  listRunsFor(
+    ownerUserId: string,
+    limit?: number,
+    agentId?: string,
+  ): Promise<OwnedRunSummary[]>;
 
   /* The sweep's half. Deliberately not owner-scoped — see the boundary comment below. */
 
@@ -720,6 +754,47 @@ export function createRoutineStore(database: Database): RoutineStore {
         })
         .from(routineRuns)
         .where(eq(routineRuns.routineId, id))
+        .orderBy(desc(routineRuns.startedAt), desc(routineRuns.id))
+        .limit(Math.min(Math.max(limit, 1), 100));
+    },
+
+    async scheduleFor(ownerUserId) {
+      return await database
+        .select({
+          id: routines.id,
+          agentId: routines.agentId,
+          cron: routines.cron,
+          timezone: routines.timezone,
+          enabled: routines.enabled,
+          nextRunAt: routines.nextRunAt,
+        })
+        .from(routines)
+        .where(eq(routines.ownerUserId, ownerUserId))
+        .orderBy(desc(routines.createdAt), desc(routines.id));
+    },
+
+    async listRunsFor(ownerUserId, limit = 50, agentId) {
+      // The join is the owner guard: a run row has no owner of its own, so it is the owner's only
+      // through the routine it belongs to, the same way `listRuns` reaches it through `loadOwned`.
+      return await database
+        .select({
+          id: routineRuns.id,
+          routineId: routineRuns.routineId,
+          agentId: routines.agentId,
+          status: routineRuns.status,
+          startedAt: routineRuns.startedAt,
+          finishedAt: routineRuns.finishedAt,
+          error: routineRuns.error,
+          source: routineRuns.source,
+        })
+        .from(routineRuns)
+        .innerJoin(routines, eq(routines.id, routineRuns.routineId))
+        .where(
+          and(
+            eq(routines.ownerUserId, ownerUserId),
+            agentId === undefined ? undefined : eq(routines.agentId, agentId),
+          ),
+        )
         .orderBy(desc(routineRuns.startedAt), desc(routineRuns.id))
         .limit(Math.min(Math.max(limit, 1), 100));
     },

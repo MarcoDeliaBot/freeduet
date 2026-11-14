@@ -70,6 +70,7 @@ import {
   type Fixture,
   guardDeployment,
   incompleteOf,
+  installCookie,
   loadFixtures,
   loadSavedReport,
   loadTeamConversationNames,
@@ -122,7 +123,7 @@ const REPORT = [
 describe("case file", () => {
   test("loads every case with a known member", async () => {
     const names = await loadMemberNames(PATHS.agents);
-    expect(cases.length).toBe(59);
+    expect(cases.length).toBe(60);
     expect(cases.filter((c) => c.safety).length).toBe(25);
     expect(new Set(cases.map((c) => c.id)).size).toBe(cases.length);
     expect(cases.filter((c) => !names.has(c.member))).toEqual([]);
@@ -4793,5 +4794,38 @@ describe("--public: a report that can be committed", () => {
         name,
         ignored: false,
       });
+  });
+});
+
+describe("the cookie that makes the runner the person (D28)", () => {
+  const SECRET = "d3adb33f".repeat(8);
+
+  test("is the installation secret under the name of the server's port, for a server on this machine", () => {
+    expect(
+      installCookie("http://localhost:3101", {
+        FREEDUET_INSTALL_SECRET: SECRET,
+      }),
+    ).toBe(`freeduet_install_3101=${SECRET}`);
+    expect(
+      installCookie("http://127.0.0.1:3001/", {
+        FREEDUET_INSTALL_SECRET: ` ${SECRET} `,
+      }),
+    ).toBe(`freeduet_install_3001=${SECRET}`);
+  });
+
+  test("is none without a secret, and none for a server that is not this machine's", () => {
+    expect(installCookie("http://localhost:3101", {})).toBeUndefined();
+    expect(
+      installCookie("http://localhost:3101", { FREEDUET_INSTALL_SECRET: " " }),
+    ).toBeUndefined();
+    for (const server of [
+      "https://freeduet.example",
+      "http://192.168.1.10:3101",
+      "http://host.docker.internal:3101",
+      "not a url",
+    ])
+      expect(
+        installCookie(server, { FREEDUET_INSTALL_SECRET: SECRET }),
+      ).toBeUndefined();
   });
 });

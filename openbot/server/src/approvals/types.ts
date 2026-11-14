@@ -84,6 +84,28 @@ export type ApprovalCandidate = {
    * Rules, the safety floor and "ask before every change" still apply. Not part of the digest.
    */
   personAnswered?: boolean;
+  /**
+   * FreeDuet, D35 (`freeduet/always-ask.ts`): facts the call site holds and the gate cannot read from
+   * the call. None is part of the digest, and none comes from the model: they are set from the signed
+   * run, the connector's transport and the answer of the send check.
+   *
+   * `initiator`: what the call itself says started its run, for a call made with no approval context
+   * (the callback door carries the signed run's initiator and no continuation). A routine's or a
+   * trigger's in either place is a routine's.
+   */
+  initiator?: AuditInitiator;
+  /** The call is a write on the Routines connector: it creates, changes, switches or deletes one. */
+  configuresAutomation?: true;
+  /**
+   * The call changes one of the person's settings from chat (settings-in-chat, slice 1): a write on the
+   * Settings connector, read off its transport and never off a name or an argument. Held to a card.
+   */
+  changesSetting?: true;
+  /**
+   * The person just allowed this exact send on its own card, the check that asks about a new email
+   * every time. Asked about again, it would be a second card for one email.
+   */
+  answeredByCard?: true;
 };
 export type ApprovalAction = ApprovalCandidate & {
   runId: string;

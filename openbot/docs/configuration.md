@@ -28,6 +28,11 @@ All five above stop server startup if missing. The three `INTELLIGENCE_` values 
 checked as a set, so a partial set is refused as a misconfiguration rather than treated as
 unconfigured.
 
+With the one-command start you set neither `DATABASE_URL` nor `KEY_ENCRYPTION_KEY`:
+`scripts/start.sh` makes a password for the database Compose starts and a key for the vault, once, the
+first time it runs, and writes them to `.env` (see
+[Secrets the one-command start makes](#secrets-the-one-command-start-makes)). A value you set is kept.
+
 `COPILOTKIT_LICENSE_TOKEN` is optional: managed Intelligence issues no licence token, and a
 self-hosted Intelligence that has one sets this and has it forwarded to the runtime. That
 Intelligence needs the same licence on its own deployment as well, or it refuses memory and the
@@ -66,7 +71,7 @@ at `agent-langgraph` on a laptop.
 | `AGENT_TOOL_TOKEN`   | unset; `start.sh` generates one    | The secret a framework Bot presents when it calls a granted tool back through this server. |
 | `APP_DIST_DIR`       | unset                              | Where the built app is, when this process serves it. Set inside the container image; unset in development, where Vite serves the app. |
 | `AUDIT_RETENTION_DAYS` | unset                            | Whole number of days to keep audit rows; older ones are removed. Unset keeps the trail forever. |
-| `WORKER_SHARED_SECRET` | unset; `start.sh` uses a fixed local default | The secret the routines worker presents to fire a due routine. Without it the server refuses every handoff, whether or not a worker exists to send one. |
+| `WORKER_SHARED_SECRET` | unset; `start.sh` generates one | The secret the routines worker presents to fire a due routine. Without it the server refuses every handoff, whether or not a worker exists to send one. |
 | `OPENBOT_GENERATIVE_UI` | unset (capability on)               | Set `false` or `0` to stop Bots from answering with generated interfaces. |
 | `OPENBOT_SELF_HOST_BANNER` | unset (banner on)               | Set `false` or `0` to hide the bar offering help self-hosting OpenBot, for everybody. It never shows on a paid Intelligence plan, and each person can also close it for themselves. |
 | `OPENBOT_ACCESSIBILITY_DISABLED` | unset | `true` or `1` stops naming OpenDuet on the analytics the runtime already sends. |
@@ -130,17 +135,15 @@ API server refuses a handoff without one configured, and the worker refuses to s
 all. See [routines.md](routines.md) for what a deployment with no worker at all looks like — the
 Routines page says so when nothing has swept.
 
-Unlike `AGENT_TOOL_TOKEN`, `start.sh` does not generate and persist this one. It supplies a fixed
-local default, `openbot-dev-worker-secret`, the same value every clone of this repository gets. That
-is fine here not because of where the server listens — it binds no hostname, so the port itself is
-reachable like any other — but because this is a dev-only default on a machine's own dev stack, and
-the endpoint it guards accepts nothing but an unguessable `routine_run_<uuid>` id: the server
-re-reads the routine, the owner and the channel from its own tables rather than trusting anything
-else the caller says, so a well-known value from a public repository gates nothing sensitive here.
-`AGENT_TOOL_TOKEN` is generated fresh and written to `.env` precisely because it is not that: it is
-copied into every Bot container, and a framework Bot holding it may be running on a machine of its
-own, so a fixed default there would be no boundary at all. Production deployments must set a real
-`WORKER_SHARED_SECRET`.
+Like `AGENT_TOOL_TOKEN`, `start.sh` generates this one and writes it to `.env`, once. It used to
+supply a fixed default, `openbot-dev-worker-secret`, the same value every clone of this repository got,
+on the argument that the endpoint it guards accepts nothing but an unguessable `routine_run_<uuid>` id:
+the server re-reads the routine, the owner and the channel from its own tables rather than trusting
+anything else the caller says. That held, and it was still a credential published to everybody (the
+server binds no hostname, so the port is reachable like any other), and a secret that is the same on
+every installation is not a secret. A `.env` that still holds the old value gets a new one on its next
+start, and the worker is restarted to read it, because it keeps the one it started with. Production
+deployments must set a real `WORKER_SHARED_SECRET`.
 
 **`SERVER_INTERNAL_URL`** is read by the worker, not by the API server, so it is not in the table
 above: it says where the worker's own process can reach this deployment's API, which is a fact about
@@ -619,8 +622,35 @@ request whose connection comes from 127.0.0.0/8 or ::1 is the person; one that a
 other address, such as a container on the Docker bridge, is not, and a route that asks who is
 calling answers 401. The address is the one the connection came from, and no header is read for
 it. What a container may still do is what it can prove: a Bot's callback with its tool token, and
-the worker with its secret. `OPENBOT_HOST` is the exception below, and Docker Desktop, which
-delivers a container's calls from loopback, is not changed by this.
+the worker with its secret. `OPENBOT_HOST` is the exception below. Docker Desktop delivers a
+container's calls from loopback, so there the address alone is not enough, and the next paragraph
+is what tells a container from you.
+
+**On this machine's loopback, the administrator is also the one who holds this installation's
+secret.** `scripts/start.sh` writes `FREEDUET_INSTALL_SECRET` to `.env` the first time it runs (an
+install from before this gets one on its first start after the update, which restarts the server).
+Your browser holds it as a cookie that only a one-time link sets: that first start opens the link by
+itself, and `bash scripts/open.sh` opens one for another browser, or for this one after its cookies
+were cleared. Nobody types or pastes anything. The secret is in no URL, no log, no container's
+environment and no folder a Bot's computer can reach, and the calls that carry their own credentials
+(the Bot's callback, the worker) are not asked for it. A request from loopback without it, such as
+a container's on Docker Desktop, answers 401 `pairing_required`. The cookie is for `localhost`, so
+`127.0.0.1` asks to be paired again. A server started by hand with no `FREEDUET_INSTALL_SECRET`
+keeps the loopback rule alone and says so at boot; a sign-in deployment, and one opened with
+`OPENBOT_HOST`, ask nothing new. To make a new secret, delete the line and run `scripts/start.sh`:
+every browser is paired again.
+
+**With no sign-in, a request from this machine is answered only under this machine's own names.**
+A page on the internet can point its own name at 127.0.0.1, and the browser then sends the person's
+reads to this server as if the page were theirs. So a request whose connection comes from loopback
+must name `localhost`, an address of 127.0.0.0/8, `[::1]` or `host.docker.internal` in its `Host`
+header (any port, any capitalisation, one trailing dot), or a host of `OPENBOT_PUBLIC_URL`,
+`OPENBOT_APP_URL` or `TRUSTED_ORIGINS`; anything else, or no `Host`, gets 421 with a message that
+names `TRUSTED_ORIGINS`. To open FreeDuet at another name on your own network, put that origin
+there (for example `TRUSTED_ORIGINS=http://nas.local:3010`) and restart. A public name cannot be
+set with no sign-in at all (the server refuses to start); reach it from afar with a sign-in
+provider, where this rule does not apply. A deployment with sign-in, one opened with `OPENBOT_HOST`,
+and a connection from the Docker bridge are not changed.
 
 `OPENBOT_HOST` changes that for both. Set it to `0.0.0.0` to listen on every interface, or to a
 comma-separated list of addresses. With no sign-in, everybody who can reach those addresses is the
@@ -635,6 +665,38 @@ every WebSocket must come from one of this deployment's origins (`OPENBOT_PUBLIC
 `APP_PORT` and the server's own port, or the IP address the request came to), or from something that
 is not a browser page and so sends no `Origin`. A body must be JSON or an upload. A page opened at a
 name none of those lists is refused with 403; add its origin to `TRUSTED_ORIGINS`.
+
+### Secrets the one-command start makes
+
+Until D39 `scripts/start.sh` started on values published in this repository: the same computer token,
+supervisor token, worker secret, database password and vault key on every installation. It now makes its
+own for each, once, the first time it runs, writes them to `.env` (readable by you alone) and prints none
+of them. A later start finds them and does nothing.
+
+| Setting | Made | For |
+| --- | --- | --- |
+| `SUPERVISOR_TOKEN`, `COMPUTER_TOKEN` | 32 random bytes, hex | The server's calls to the supervisor and to every Bot's computer |
+| `WORKER_SHARED_SECRET` | 32 random bytes, hex | The routines worker's call to `/internal/routines/run` |
+| `POSTGRES_PASSWORD`, `DATABASE_URL` | 24 random bytes, hex | The database Compose starts, and the address that carries its password |
+| `KEY_ENCRYPTION_KEY` | 32 random bytes, base64 | What stored credentials, saved logins and company sign-in secrets are sealed with |
+
+A value you set is yours. In the environment it is used as it is and written nowhere. In `.env` it is
+kept, unless it is exactly one of the values this repository used to publish (`openbot-dev-computer-token`,
+`openbot-dev-supervisor-token`, `openbot-dev-worker-secret`, the all-zero key and
+`postgres://openbot:openbot@localhost:5432/openbot`): an older start wrote those for you, and they are the
+same on every installation. A `DATABASE_URL` that names another password, user, host or database is never
+changed.
+
+**An installation that already has the old values** gets new ones on its next start and keeps its data.
+The three tokens are replaced, and the Docker services and Bots' computers that held them restart. The
+database keeps its data and its volume: its password is changed on the running database first, and `.env`
+says so only once that worked; if it cannot be changed, the run says so in red and goes on with the old one.
+The vault key is replaced only when the database holds nothing sealed with it; otherwise it stays, and
+`start.sh` says so on every start, because a new key would make every saved login and connection unreadable.
+The server and the routines worker restart once. `docs/M1_PLAN.md` section 22 has the steps in order.
+
+To make a new token, delete its line and run `scripts/start.sh`. Do not delete `KEY_ENCRYPTION_KEY` on an
+installation with saved logins or connections: it makes a new key and leaves what was saved unreadable.
 
 ### SCIM provisioning
 
@@ -879,7 +941,8 @@ is still the record.
 | Variable                             | Meaning                                                                                   |
 | ------------------------------------ | ----------------------------------------------------------------------------------------- |
 | `AGENT_COMPUTER_URL`                 | Shared computer URL. If absent, computer routes are not mounted.                          |
-| `COMPUTER_TOKEN`                     | Secret every computer request must present. The computer refuses to start without it.     |
+| `COMPUTER_TOKEN`                     | Secret every computer request must present. The computer refuses to start without it. `scripts/start.sh` generates one for the installation. |
+| `COMPUTER_ALLOWED_HOSTS`             | Names this machine's own loopback may reach the computer by, besides `localhost`, `127.0.0.1`, `[::1]` and `host.docker.internal`. Comma separated, each `host` or `host:port`, an IPv6 address in brackets. Unset: none. A value that is not such a list stops the computer at start. See [Computer and supervisor Host rule](#computer-and-supervisor-host-rule). |
 | `COMPUTER_MAX_BROWSERS`              | How many Bots may hold a running browser at once. `8` by default; the least recently used is closed past it. |
 | `COMPUTER_BROWSER_IDLE_MS`           | How long an untouched browser is kept. 30 minutes by default; `0` keeps them resident.    |
 | `COMPUTER_BROWSER_BACKEND`           | `managed` by default (full bundled Chromium); `local-chrome` opts into installed Chrome with dedicated profiles and a loopback API. |
@@ -888,8 +951,10 @@ is still the record.
 | `WEB_BOT_AUTH_KEY`                   | The Web Bot Auth signing key, an Ed25519 private JWK. Unset derives one from `KEY_ENCRYPTION_KEY`. Never logged. |
 | `OPENBOT_LOCAL_COMPUTER_DIR`         | Local startup helper's absolute data root. Defaults to the platform's OpenBot user-data directory; contains `profiles/` and `workspace/`. |
 | `COMPUTER_SUPERVISOR_URL`            | Supervisor URL for per-Bot computers. If absent, Bots share `AGENT_COMPUTER_URL`.         |
-| `SUPERVISOR_TOKEN`                   | Bearer token required by the supervisor.                                                  |
+| `SUPERVISOR_TOKEN`                   | Bearer token required by the supervisor. `scripts/start.sh` generates one for the installation. |
+| `SUPERVISOR_ALLOWED_HOSTS`           | The same for the supervisor: names this machine's own loopback may reach it by, besides its own. Unset: none. |
 | `AGENT_COMPUTER_ALLOW_PRIVATE_HOSTS` | Local-only private-host browsing when `true`. A deployment running with `NODE_ENV=production` refuses to start while it is set. Cloud metadata addresses are refused either way. |
+| `AGENT_COMPUTER_ALLOW_PRIVATE_HOSTS` | Local-only private-host browsing when `true`. A deployment running with `NODE_ENV=production` refuses to start while it is set. Cloud metadata addresses are refused either way. It opens only the server's check of the first address a Bot types: the computer's own filter still refuses the home and office network until [Home and office network access](#per-bot-egress) is switched on. |
 | `AGENT_ENDPOINT_ALLOWED_HOSTS`       | Private addresses an agent may be registered at, comma separated; unset (none) by default. Host, optionally with a port. Exact match; no wildcards. Never-allowed addresses cannot be named. |
 | `AGENT_COMPUTER_POLICY`              | JSON action policy: `{"mode":"enforce","deny":[...],"allow":[...]}`.                      |
 | `COMPUTER_RUNTIME`                   | Set to `runsc` to run supervised computers under gVisor.                                  |
@@ -902,6 +967,26 @@ computer as a sandboxed pod, selected by `COMPUTER_SANDBOX_NAMESPACE` with `COMP
 and `COMPUTER_SANDBOX_TEMPLATE_FILE` beside it; those are set by the Helm chart, not by Compose, and
 are covered in [charts/openbot/README.md](../charts/openbot/README.md). The similarly named
 `COMPUTER_SANDBOX` above only toggles Chromium's own process sandbox on a Docker computer.
+
+### Computer and supervisor Host rule
+
+A page on the internet can point its own name at 127.0.0.1, and the person's browser then sends it
+same-origin requests to anything listening there, with any header, the token included. So a request
+that reaches the computer or the supervisor **from this machine's own loopback** is answered only
+when its `Host` header names `localhost`, an address of 127.0.0.0/8, `[::1]` or
+`host.docker.internal` (any port, any capitalisation, one trailing dot), or a name in
+`COMPUTER_ALLOWED_HOSTS` or `SUPERVISOR_ALLOWED_HOSTS`. Anything else, or no `Host`, gets 421 with a
+message that names the setting. To reach one of them from this machine under another name (a
+hosts-file alias, a LAN name pointed at this machine), list that name and restart it, for example
+`COMPUTER_ALLOWED_HOSTS=computer.local`. The API server follows the same rule when there is no
+sign-in ([Where it listens](#where-it-listens)).
+
+A connection that does not come from loopback is not held to it: the server calling
+`agent-computer:4100` or `supervisor:4300` by its service name, a Kubernetes probe, another
+container. That includes, as far as is known, a connection this machine makes to a port that Docker
+publishes, which the process inside sees as coming from the network's gateway. For those the token
+is the gate, so set `COMPUTER_TOKEN` and `SUPERVISOR_TOKEN` to long random values rather than leaving
+the development defaults.
 
 Changing `COMPUTER_BROWSER_MODE` affects new supervised computers. A computer that already exists is
 left running until its image changes or its container is recreated. To apply a mode-only change to
@@ -1094,10 +1179,36 @@ The server pushes each Bot's policy to its computer when the computer wakes and 
 after. Until a policy has arrived, the filter refuses every connection. Metadata and link-local
 addresses (`169.254.0.0/16`, `fe80::/10`, `fd00:ec2::254` and the like) are refused in every mode,
 including `allow_all`. `EGRESS_POLICY_REQUIRED=0` (or `false`) lets the filter allow everything
-until a policy arrives instead, which only a computer run with no API server should need. It is read
-by the computer: in Compose put it in `egress.env`, which reaches the shared computer, and on
-Kubernetes put it in `computers.extraEnv`. The supervisor forwards only the `EGRESS_PROXY` names, so
-a computer it creates does not receive it.
+(metadata excepted) until a policy arrives instead, and the first policy that arrives brings every
+rule of it, the home and office network included (below). Only a computer run with no API server
+should need it. It is read by the computer: in Compose put it in `egress.env`, which reaches the
+shared computer, and on Kubernetes put it in `computers.extraEnv`. The supervisor forwards only the
+`EGRESS_PROXY` names, so a computer it creates does not receive it.
+
+**The home and office network.** Under `allow_all` the filter also refuses the addresses of the
+network the computer sits in: `10.0.0.0/8`, `172.16.0.0/12`, `192.168.0.0/16`, `100.64.0.0/10` (a
+VPN or carrier-grade NAT), `127.0.0.0/8` (so a Bot's own `localhost` too), `0.0.0.0/8`, multicast and
+reserved addresses, and the IPv6 equivalents (`::1`, `fc00::/7`, `fe80::/10`, `ff00::/8`), in every
+way of writing an address (`2130706433`, `0x7f.1`, `::ffff:192.168.1.1`). It judges the address the
+connection really goes to: the filter resolves a name itself and checks every address it gets, so a
+name that points inside the network is refused, and so is a redirect to one. A refusal says what the
+address is and which setting changes it.
+
+This is on by default. The one setting that switches it off is the capability **Home and office
+network access** (`cloudPrivateNetwork`) under **Admin > Enterprise controls > Capabilities**. It is
+off unless somebody turns it on, for the organization, for a role or for a directory group (a group
+can only widen), and it takes effect within seconds, on the next push. It changes nothing in the
+other modes (an administrator's own range and domain rules decide there, as before), nothing while
+**Cloud network access** is off (the Bot is `deny_all`), and it never lifts the metadata and
+link-local addresses. `AGENT_COMPUTER_ALLOW_PRIVATE_HOSTS` does not lift it either: that variable
+only governs the server's own check of the first address a Bot types.
+
+What it does not cover: behind an upstream proxy (`EGRESS_PROXY_*`) the proxy resolves names, so the
+filter can judge only an address written out and every redirect; a command that opens a raw socket
+instead of using the proxy variables is not stopped by the filter at all, and Compose has no
+network-level control for it (on Kubernetes, `networkPolicy.enabled` is that control); and a
+command's own `localhost`, which is `NO_PROXY` so that a Bot can test a server it started, is not
+judged. The reasoning and the callers it was checked against are in `docs/M1_PLAN.md`, D36.
 
 The supervisor also reads:
 

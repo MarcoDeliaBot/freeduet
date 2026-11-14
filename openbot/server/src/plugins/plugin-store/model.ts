@@ -9,6 +9,7 @@ import type {
 import type { Database } from "../../db/client";
 import { isQueryFailure, withoutStatement } from "../../db/query-failure";
 import { pendingAuthorizations } from "../../db/schema";
+import type { PersonLanguage } from "../../freeduet/person-language";
 import type { CheckPrivateShare } from "../../proactive/private-share";
 import {
   BROKERED_PROFILE,
@@ -798,14 +799,13 @@ export function refFromToolName(toolName: string): string | null {
 }
 
 /**
- * Advertised tool names this deployment's write list does not name, where that list is the whole
- * barrier.
+ * Advertised tool names that neither list of the entry names, where the lists are the whole barrier.
  *
- * WHY THIS IS WORTH A ROW. {@link classifyTool} reads an advertised name absent from `writeTools` as
- * a READ. So under-inclusion is the failure mode of that list, and it is silent: a write the vendor
- * offers and the entry forgot is offered to a model as a read, and nothing anywhere says so. Notion's
- * entry says reconciling its list against the live tool list "is required, not cosmetic" — this is
- * the mechanical half of that, so the reconciliation is somebody reading a trail rather than somebody
+ * WHY THIS IS WORTH A ROW. Since D33 {@link classifyTool} reads an advertised name as a read only when
+ * the entry's `readTools` names it, so a name in neither list is a write and asks. That is the safe
+ * direction, but a vendor read the lists miss asks every time, and nothing says so. Notion's entry
+ * says reconciling its lists against the live tool list "is required, not cosmetic" — this is the
+ * mechanical half of that, so the reconciliation is somebody reading a trail rather than somebody
  * remembering.
  *
  * Only where the list stands alone. A vendor that expresses SCOPES has something behind the list: a
@@ -829,8 +829,8 @@ export function unlistedAdvertisedTools(
   if (entry.auth.kind !== "user-oauth" || entry.auth.scopes.length > 0) {
     return [];
   }
-  const writes = new Set(entry.writeTools);
-  return advertised.filter((name) => !writes.has(name)).sort();
+  const known = new Set([...entry.writeTools, ...entry.readTools]);
+  return advertised.filter((name) => !known.has(name)).sort();
 }
 
 export const iso = (value: Date | string | null): string | null =>
@@ -1247,6 +1247,12 @@ export type PluginStoreOptions = {
     botId: string;
     actorId: string;
   }) => Promise<{ threadId: string; message: ConversationMessage } | null>;
+  /**
+   * FreeDuet (docs/M1_PLAN.md D26, D37): the language the person reads, for the one refusal this
+   * store writes to the person and not only to the model: a new email sent again in the same request.
+   * Absent is English, like every other sentence this store writes.
+   */
+  personLanguage?: PersonLanguage | null;
   /** Who may steer a run that uses a Shared app's account. Absent, every shared call is refused. */
   sharedUse?: SharedUseGate;
   database: Database;

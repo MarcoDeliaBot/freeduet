@@ -128,7 +128,7 @@
  "r2": "Prioridade máxima: um instalador de arquivo único para Windows, macOS e Ubuntu. Novos membros seguem, cada um testado.",
  "r3": "Escolha o motor de cada membro e uma delegação real entre os membros.",
  "r4": "Automações escritas no chat, mais apps conectados, versão para celular e acesso remoto.",
- "r5": "Voz, compras seguras. Full access está construído, mas ainda sem teste em uso real. Cam, o membro de vídeo, está na equipe; os testes dele ainda não foram rodados em uso real, e ele ainda não consegue entregar um arquivo pelo chat.",
+ "r5": "Voz, compras seguras. Full access está construído, mas ainda sem teste em uso real. Cam, o membro de vídeo, está na equipe; os testes dele ainda não foram rodados em uso real, e ele já consegue entregar um arquivo pronto pelo chat, com um botão de download (construído, mas ainda sem teste em uso real).",
  "r_note": "Marcamos tudo o que ainda não está pronto. Sem contos de fadas. <a href=\"https://github.com/MarcoDeliaBot/freeduet/blob/main/docs/ROADMAP.md\">Roadmap completo no GitHub</a>.",
  "in_h": "Da instalação à sua primeira tarefa útil",
  "in_p": "Quatro passos, na ordem real. Todos os comandos também estão em uma única caixa mais abaixo, prontos para copiar.",

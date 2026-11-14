@@ -128,7 +128,7 @@
  "r2": "Birinci öncelik: Windows, macOS ve Ubuntu için tek dosyalık kurulum programı. Sonra test edilmiş yeni üyeler.",
  "r3": "Her üye için motoru seç ve ekip içinde gerçek görev devri.",
  "r4": "Sohbette yazılan otomasyonlar, daha fazla bağlı uygulama, telefon sürümü, uzaktan erişim.",
- "r5": "Ses, güvenli alışveriş. Full access hazır, ama gerçek kullanımda henüz sınanmadı. Cam (video) ekipte; testleri gerçek kullanımda henüz çalıştırılmadı ve sohbetten henüz dosya teslim edemez.",
+ "r5": "Ses, güvenli alışveriş. Full access hazır, ama gerçek kullanımda henüz sınanmadı. Cam (video) ekipte; testleri gerçek kullanımda henüz çalıştırılmadı ve sohbetten artık bir dosyayı İndir düğmesiyle teslim edebilir (hazır, ama gerçek kullanımda henüz sınanmadı).",
  "r_note": "Henüz yapılmamış her şeyi açıkça belirtiyoruz. Masal yok. <a href=\"https://github.com/MarcoDeliaBot/freeduet/blob/main/docs/ROADMAP.md\">Yol haritasının tamamı GitHub'da</a>.",
  "in_h": "Kurulumdan ilk işe yarar görevine",
  "in_p": "Dört adım, gerçek sırasıyla. Tüm komutlar ayrıca aşağıda tek bir kutuda, kopyalamaya hazır duruyor.",

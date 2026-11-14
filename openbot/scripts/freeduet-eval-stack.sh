@@ -47,6 +47,15 @@ value_in() {
 }
 setting() { value_in "$ENV_FILE" "$1"; }
 
+# The cookie that makes a request this stack's person (docs/M1_PLAN.md D28): its installation secret,
+# which scripts/start.sh wrote to .env.eval, under the name the server gives it for its port. Handed to
+# the one Bun command that needs it through its environment, never on a command line, and never printed.
+install_cookie() {
+  local secret
+  secret="$(setting FREEDUET_INSTALL_SECRET)"
+  [ -z "$secret" ] || printf 'freeduet_install_%s=%s' "$(setting SERVER_PORT)" "$secret"
+}
+
 # Writes NAME=VALUE into .env.eval, replacing the line that was there.
 set_line() {
   local tmp
@@ -72,13 +81,14 @@ write_settings() {
     port="${!token:-${pair#*=}}"
     set_line "$name" "$port"
   done
-  local server app freeduet postgres
+  local server app freeduet
   server="$(setting SERVER_PORT)"
   app="$(setting APP_PORT)"
   freeduet="$(setting FREEDUET_PORT)"
-  postgres="$(setting POSTGRES_PORT)"
   set_line PORT "$server"
-  set_line DATABASE_URL "postgres://openbot:openbot@localhost:$postgres/openbot"
+  # No DATABASE_URL: the example leaves it empty, and scripts/start.sh makes a password for this stack's
+  # own database and writes the address, with this stack's port (docs/M1_PLAN.md D39). Writing one here
+  # put the public password `openbot` in every eval stack.
   set_line OPENBOT_PUBLIC_URL "http://localhost:$server"
   set_line TRUSTED_ORIGINS "http://localhost:$app"
   # Its own Compose project, with the overlay that shares the person's sign-in volume.
@@ -93,13 +103,9 @@ write_settings() {
   set_line AGENT_ENDPOINT_ALLOWED_HOSTS "localhost:$freeduet"
   set_line ANTHROPIC_BASE_URL "http://localhost:$freeduet"
   set_line OPENBOT_TOOL_URL "http://host.docker.internal:$server/api/agent-tools/call"
-  # Fresh secrets of its own. start.sh generates MANAGED_AGENT_TOKEN, AGENT_TOOL_TOKEN and
-  # FREEDUET_LOCAL_KEY (the example leaves them empty); these four it would otherwise take from
-  # fixed development defaults, the same ones the person's FreeDuet uses.
-  set_line KEY_ENCRYPTION_KEY "$(openssl rand -base64 32)"
-  set_line COMPUTER_TOKEN "$(openssl rand -hex 32)"
-  set_line SUPERVISOR_TOKEN "$(openssl rand -hex 32)"
-  set_line WORKER_SHARED_SECRET "$(openssl rand -hex 32)"
+  # Secrets of its own, none of them written here: the example leaves every one empty, and
+  # scripts/start.sh makes a value for each (the tokens, the vault key, the database's password) the
+  # first time it runs on this file, as it does for the person's FreeDuet (D39).
   # Evals never feed Automatic Learning: a learned skill would change the next run's answers.
   set_line OPENBOT_LEARNING_AUTO_ASSIGN false
   # A self-hosted Intelligence is the same service for both stacks; the key is not (see below).
@@ -205,17 +211,18 @@ answers() {
 # Intelligence project. Never run when that project is shared with the person's FreeDuet.
 wipe_memories() {
   local server="http://localhost:$(setting SERVER_PORT)"
-  bun -e '
+  FREEDUET_COOKIE="$(install_cookie)" bun -e '
     const server = process.argv[1];
+    const headers = process.env.FREEDUET_COOKIE ? { cookie: process.env.FREEDUET_COOKIE } : {};
     let removed = 0;
     for (let pass = 0; pass < 10; pass++) {
-      const response = await fetch(`${server}/api/memory`);
+      const response = await fetch(`${server}/api/memory`, { headers });
       if (response.status === 404) break;
       if (!response.ok) throw new Error(`listing memories answered HTTP ${response.status}`);
       const { memories = [] } = await response.json();
       if (memories.length === 0) break;
       for (const memory of memories) {
-        const gone = await fetch(`${server}/api/memory/${encodeURIComponent(memory.id)}`, { method: "DELETE" });
+        const gone = await fetch(`${server}/api/memory/${encodeURIComponent(memory.id)}`, { method: "DELETE", headers });
         if (!gone.ok && gone.status !== 404) throw new Error(`removing a memory answered HTTP ${gone.status}`);
         removed++;
       }
@@ -314,11 +321,12 @@ status() {
     printf '  Claude Code     not signed in, or agent-freeduet is down\n'
   fi
   if answers "$server/health"; then
-    bun -e '
+    FREEDUET_COOKIE="$(install_cookie)" bun -e '
       const server = process.argv[1];
+      const headers = process.env.FREEDUET_COOKIE ? { cookie: process.env.FREEDUET_COOKIE } : {};
       let cursor = "", count = 0, mine = 0;
       do {
-        const response = await fetch(`${server}/api/channels?limit=200${cursor ? `&cursor=${encodeURIComponent(cursor)}` : ""}`);
+        const response = await fetch(`${server}/api/channels?limit=200${cursor ? `&cursor=${encodeURIComponent(cursor)}` : ""}`, { headers });
         if (!response.ok) process.exit(0);
         const page = await response.json();
         for (const channel of page.channels ?? []) {

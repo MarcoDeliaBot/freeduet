@@ -4,7 +4,7 @@
 # API keys and API credits (including the credits that come with a Claude plan) are optional: they run
 # only if you switch them on, only after every login engine in the chain, and only under your caps.
 #
-# kind:     cli | app-server | acp | anthropic-api | openai-compatible
+# kind:     cli | app-server | acp | anthropic-api | openai-compatible | anthropic-compatible
 # billing:  subscription | free | metered
 # tier:     A (best), B, C. Members can require a minimum tier for some skills.
 # enabled:  the kill switch. Routes whose provider terms are unclear ship with enabled: false.
@@ -23,7 +23,7 @@ engines:
     command: codex
     billing: subscription          # your own ChatGPT plan
     tier: A
-    enabled: false                 # on once FreeDuet's "Sign in with ChatGPT" client ID is approved
+    enabled: false                 # planned, not built: on once its checks pass (PROVIDERS.md)
     experimental_local_login: false
 
   gemini-cli:
@@ -51,6 +51,47 @@ engines:
     model: "<free-model-id>"        # a model marked free on openrouter.ai; the provider's limits apply
     tier: C
     enabled: false
+
+  # ── An Anthropic-compatible endpoint you name: the same Claude Code CLI, on your own key at that endpoint ──
+  # Both blocks below are examples and stay off. To use one: uncomment it, set `enabled: true` and write its name in a
+  # chain under `chains:` below, after `claude-code`. The member runs exactly as on `claude-code` (same lockdown, same
+  # tools, same approvals); only where it sends its requests, which key it sends and which model it asks for change.
+  # The key is one you hold at that endpoint, never your Claude sign-in: write where to find it (`env:NAME` for a
+  # variable of this service, `file:/absolute/path` for a file that holds it, in no folder whose name starts with a
+  # dot), never the key itself. `billing` has no default and is never guessed: say whether the endpoint is free or
+  # paid. It is your own statement, because FreeDuet cannot see what an endpoint charges: write `metered` for anything
+  # that can charge you.
+  # A PAID ENDPOINT IS NOT RUN YET. FreeDuet cannot yet enforce the limits you set (the spend ledger comes later), so a
+  # `billing: metered` endpoint is refused whatever the `metered:` block below says: nothing starts it, and the log, the
+  # chat and the engine list say so. The `metered:` block is still read and checked, so what you write now keeps its
+  # meaning when the ledger exists. Free endpoints and your own logins work.
+  # It is never first in a chain (logins come first), and `tier` is C unless you say otherwise: the quality floor
+  # keeps a skill that needs a better model off it. Plain http is accepted only for this machine; anything else is https.
+  #
+  # A paid gateway, as it will be written once its limits can be enforced. Refused for now (see above).
+  # my-gateway:
+  #   kind: anthropic-compatible
+  #   base_url: https://openrouter.ai/api               # the address a Claude Code client is given, without /v1/messages
+  #   credential_secret_ref: env:MY_GATEWAY_KEY
+  #   billing: metered
+  #   model: "<model-id-at-the-gateway>"                # the one model every request asks for
+  #   tier: C
+  #   enabled: false
+  #
+  # A local free router is a tool you install yourself that puts one address and one key in front of several free
+  # providers (for example FreeLLMAPI). FreeDuet neither ships nor installs it, and the terms of the providers behind
+  # it are yours to respect. Such a router may be a later link in a chain, never the first. Its own default port, 3001,
+  # is the port FreeDuet's server uses, so start the router on another one (3002 here). From a container, `localhost`
+  # is the container itself: use host.docker.internal for a router on this machine.
+  #
+  # local-free-router:
+  #   kind: anthropic-compatible
+  #   base_url: http://host.docker.internal:3002
+  #   credential_secret_ref: env:LOCAL_ROUTER_KEY
+  #   billing: free
+  #   model: "<model-id-the-router-lists>"
+  #   tier: C
+  #   enabled: false
 
   # ── Metered (API keys and API credits): optional, always last ─────────────────────────────────
   anthropic-api:
@@ -80,7 +121,8 @@ engines:
     enabled: false
 
 # Metered engines run only when enabled here, only after every login engine in the chain has been
-# tried, and only under the caps. Off by default. 0 means never.
+# tried, and only under the caps. Off by default. 0 means never. Until the spend ledger exists a paid
+# `anthropic-compatible` gateway is not run at all, whatever is written here; the block is still read and checked.
 metered:
   enabled: false
   currency: EUR
@@ -109,3 +151,12 @@ assistants:
   max_calls_per_turn: 10
   max_input_tokens: 32000
   tasks: [summarise, extract, classify, translate, reformat, proofread, draft-variants, tag]
+
+# How a member's chain behaves when an engine cannot take a turn. Per member id (agents.yaml) or `default`.
+# mode: automatic (the default: move to the next engine and say so) or ask-first (stop and ask the person).
+# pin:  an engine id; that member never falls back to another engine and stops with a plain message instead.
+# To switch an engine off for everyone, set `enabled: false` on it above.
+# switching:
+#   default: {mode: automatic}
+#   concierge: {mode: ask-first}
+#   freeduet: {pin: claude-code}

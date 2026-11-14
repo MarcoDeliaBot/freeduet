@@ -44,6 +44,7 @@ import { createHandedRequestLoader } from "./agents/handoff-request";
 import { createHandoffRunner } from "./agents/handoff-runner";
 import { startHandoffDelivery } from "./agents/handoff-wiring";
 import { createFullAccess, withFullAccess } from "./freeduet/full-access";
+import { memberFileTools } from "./freeduet/member-files";
 import { relayComputerTools } from "./freeduet/relay-computer";
 import {
   configureBotLifecycle,
@@ -83,6 +84,7 @@ import {
 import { startRetentionSweeps } from "./audit-retention";
 import { createAuth } from "./auth";
 import { DEV_ACTOR, initializeDevActorUser } from "./auth/dev-actor";
+import { INSTALL_SECRET_VARIABLE } from "./auth/install-secret";
 import type { AuthService } from "./auth/guards";
 import { createRoleRepository } from "./auth/guards";
 import { createIdentityProviderStore } from "./auth/identity-provider-store";
@@ -207,7 +209,9 @@ import { createAccountModeSwitch } from "./plugins/account-mode";
 import { assertActivatable, providerDecision } from "./plugins/broker";
 import { BROKERED_PROFILE } from "./plugins/access";
 import { useRoutineTools } from "./plugins/builtin-routines";
+import { useSettingsTools } from "./plugins/builtin-settings";
 import { useArcadeClient } from "./plugins/arcade";
+import { createSettingChanges } from "./settings-in-chat/changes";
 import { createArcadeClient } from "./plugins/arcade-adapter";
 import { useComposioClient } from "./plugins/composio";
 import { createComposioClient } from "./plugins/composio-adapter";
@@ -1033,6 +1037,8 @@ const pluginStore = createPluginStore({
    * further down, which is fine: this is read when a call is made, never while this file loads.
    */
   handedRequest,
+  // FreeDuet (D26, D37): the language of the one refusal the person reads, a new email sent twice.
+  personLanguage: config.personLanguage,
   /*
    * Where a vendor sends people back, for a vendor whose client this deployment registers itself.
    *
@@ -1112,6 +1118,17 @@ void pluginStore
  */
 const routineStore = createRoutineStore(database);
 useRoutineTools(routineStore);
+/*
+ * Settings in chat (docs/design/settings-in-chat.md, slice 1): the one tool a Bot changes a setting
+ * with, and the change service the person's Undo goes through. Installed once, here, as the routine
+ * store is, because the transport registry is built at import time.
+ */
+const settingChanges = createSettingChanges({
+  database,
+  audit: createAuditStore(database),
+  reader: createAuditReader(database),
+});
+useSettingsTools(settingChanges);
 const responsibilityStore = createResponsibilityStore(database, {
   resolveTarget: async (ownerUserId, agentId, channelId) => {
     const actor = await actorFor(ownerUserId);
@@ -1530,10 +1547,19 @@ const openDuetIntake = createTaskIntake({
   startTask: openDuetStartTask,
 });
 
+// FreeDuet (D38): a member hands the person a file it made, as a card with Download (freeduet/member-files.ts).
+const memberFiles = memberFileTools({
+  computerGateway,
+  agentProfileStore,
+  actorFor,
+  capabilitiesOf,
+});
+
 const loadToolsForActor =
   (actorId: string, initiator: AuditInitiator = PERSON_INITIATOR) =>
   async (botId: string) => [
     ...openDuetTools(actorId, botId, initiator),
+    ...(await memberFiles({ ownerUserId: actorId, agentId: botId, initiator })),
     ...wakeUpTools({
       store: wakeUpStore,
       ownerUserId: actorId,
@@ -2828,6 +2854,7 @@ const app = createApp(
       profiles: agentProfileStore,
       auditStore: bootAuditStore,
     },
+    settingChanges,
   },
   createSelfHostBanner({
     enabled: config.selfHostBanner,
@@ -2864,6 +2891,16 @@ if (config.singleUser) {
     console.warn(
       `${LISTEN_HOST_VARIABLE} has this server listening beyond this machine (${listening.join(", ")}) with no sign-in, so anybody who can reach port ${port} is that administrator.`,
     );
+  // FreeDuet (D28): on this machine alone, only a loopback peer is the person, and on Docker Desktop
+  // a container calling this port arrives as loopback. The installation secret is what tells them
+  // apart. Said every boot, and never with its value.
+  if (listensLocally) {
+    console.info(
+      config.installSecret
+        ? `${INSTALL_SECRET_VARIABLE} is set: a browser has to be paired with this installation (bash scripts/open.sh), and a container that reaches this port is not you.`
+        : `${INSTALL_SECRET_VARIABLE} is not set, so where a container's request arrives as this machine's loopback (Docker Desktop) it is taken for you. Run scripts/start.sh once: it writes one.`,
+    );
+  }
 }
 
 // Each listener holds a connection of its own for the life of the process. Released on the way out,
