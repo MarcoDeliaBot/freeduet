@@ -236,6 +236,17 @@ const OPEN_SIGN_IN = [
   "taken_over",
 ] as const;
 
+/**
+ * What to do about a request that is still waiting, in the one way that does not undo the move.
+ *
+ * The request can only be answered in the app, and the app answers as the person it is running as:
+ * with the provider settings in .env (which this tool needs, to read the address), the app is the
+ * sign-in one, and signing in is what makes the account that this tool then refuses to fill ("already
+ * owns data"). So the instruction names the way round, and the one thing not to do.
+ */
+const ANSWER_AS_BEFORE =
+  "To do that, the app has to run as it did before you turned sign-in on: take the sign-in provider settings out of .env for now (keep OPENBOT_SINGLE_USER=true), start the server, do it, stop the server, put the settings back, and run this again. Do not sign in with your address in between: the account that makes is one this tool will not fill in.";
+
 const list = (values: readonly string[]) =>
   sql.join(
     values.map((value) => sql`${value}`),
@@ -255,21 +266,21 @@ async function openBlockers(
       one: "approval request still waiting for an answer",
       many: "approval requests still waiting for an answer",
       where: sql`${identifier("owner_user_id")} = ${id} and ${identifier("status")} in (${list(OPEN_APPROVAL)})`,
-      what: "Answer or dismiss them in the app, then stop the server again.",
+      what: "Answer or dismiss them in the app.",
     },
     {
       table: "sign_in_requests",
       one: "sign-in form still open",
       many: "sign-in forms still open",
       where: sql`${identifier("owner_user_id")} = ${id} and ${identifier("status")} in (${list(OPEN_SIGN_IN)})`,
-      what: "Finish or cancel them in the app, then stop the server again.",
+      what: "Finish or cancel them in the app.",
     },
     {
       table: "pending_authorizations",
       one: "connection to an app still being made",
       many: "connections to an app still being made",
       where: sql`${identifier("actor_id")} = ${id} and ${identifier("completed_at")} is null`,
-      what: "Finish or cancel them in the app, then stop the server again.",
+      what: "Finish or cancel them in the app.",
     },
   ];
   for (const entry of open) {
@@ -282,6 +293,7 @@ async function openBlockers(
         : `There are ${count} ${entry.many}. They are bound to who asked, so they cannot be moved. ${entry.what}`,
     );
   }
+  if (blockers.length > 0) blockers.push(ANSWER_AS_BEFORE);
   return blockers;
 }
 
@@ -414,6 +426,34 @@ export async function readPlan(
     } else if (!target.shell) {
       aboutTarget.push(
         `${to} has already signed in and has settings of its own (a profile, groups or a started onboarding). Moving would overwrite them, which this tool does not do. Restore the backup you took before turning sign-in on, run this, and then sign in.`,
+      );
+    }
+    /*
+     * An account whose address no provider ever vouched for is not filled in, for two reasons that
+     * are the same fact. The sign-in joins a provider to an existing account only when the address on
+     * it is marked verified, so data moved into one the person cannot sign in to is data they are
+     * locked out of. And an account is left unverified exactly when the sign-in that made it could not
+     * prove the address (a Microsoft tenant writes the address of its own users itself), so the
+     * account may be somebody else's, made by typing the person's address before they ever signed in:
+     * filling it in would hand them the person's data and standing permissions. An account the person
+     * made by signing in with Google or Okta is marked verified by that sign-in and is not affected.
+     */
+    if (!target.emailVerified) {
+      const linked = tables.has("accounts")
+        ? (
+            await rowsOf(
+              executor,
+              sql`select provider_id from accounts where user_id = ${target.id} order by provider_id`,
+            )
+          ).map((row) => String(row.provider_id))
+        : [];
+      const quoted = target.id.replaceAll("'", "''");
+      aboutTarget.push(
+        `An account for ${to} exists, and no sign-in provider ever vouched for its address: it is not marked verified${linked.length > 0 ? ` (it is linked to a sign-in with ${linked.join(", ")})` : " (and no sign-in is linked to it)"}. The sign-in will not join a provider to it, so data moved into it would be out of your reach, and an account like this can be one that somebody else made by typing your address. ${
+          owned.length === 0
+            ? `It owns nothing, so it is safe to remove: in psql, delete from users where id = '${quoted}'; and then run this again.`
+            : "It also owns data (above), so do not remove it."
+        }`,
       );
     }
   }

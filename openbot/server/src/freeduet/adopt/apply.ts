@@ -81,34 +81,51 @@ export type Applied = {
   total: number;
 };
 
-/** `value` with every string equal to `from` replaced by `to`, at any depth, and how many there were. */
-export function replaceExactStrings(
-  value: unknown,
+/**
+ * `text`, which is JSON as PostgreSQL prints a jsonb, with every string VALUE equal to `from` replaced
+ * by `to`, at any depth, and how many there were. Every other character is copied as it was.
+ *
+ * WHY TEXT AND NOT A PARSED VALUE. Parsed in JavaScript every number is a 64-bit float, so an integer
+ * past 2^53 (the 19-digit identifier a service sends as a number, which a tool call can carry in its
+ * arguments) comes back as a different number, and 1.10 as 1.1, in a row that was only meant to change
+ * its owner. The row count matches, so nothing says so. Here nothing but the id's own token is touched.
+ *
+ * A key equal to the id is left as it is: only a string that is not followed by a colon is a value. A
+ * string is read to its closing quote with its escapes, so the id is found only as a whole string and
+ * never inside a longer one.
+ */
+export function replaceJsonStrings(
+  text: string,
   from: string,
   to: string,
-): { value: unknown; count: number } {
-  if (typeof value === "string") {
-    return value === from ? { value: to, count: 1 } : { value, count: 0 };
+): { text: string; count: number } {
+  const fromToken = JSON.stringify(from);
+  const toToken = JSON.stringify(to);
+  let out = "";
+  let count = 0;
+  let at = 0;
+  while (at < text.length) {
+    const open = text.indexOf('"', at);
+    if (open === -1) {
+      out += text.slice(at);
+      break;
+    }
+    out += text.slice(at, open);
+    let end = open + 1;
+    while (end < text.length && text[end] !== '"')
+      end += text[end] === "\\" ? 2 : 1;
+    const token = text.slice(open, end + 1);
+    let after = end + 1;
+    while (after < text.length && /\s/.test(text[after] as string)) after += 1;
+    if (token === fromToken && text[after] !== ":") {
+      out += toToken;
+      count += 1;
+    } else {
+      out += token;
+    }
+    at = end + 1;
   }
-  if (Array.isArray(value)) {
-    let count = 0;
-    const next = value.map((item) => {
-      const replaced = replaceExactStrings(item, from, to);
-      count += replaced.count;
-      return replaced.value;
-    });
-    return { value: next, count };
-  }
-  if (value && typeof value === "object") {
-    let count = 0;
-    const entries = Object.entries(value).map(([key, item]) => {
-      const replaced = replaceExactStrings(item, from, to);
-      count += replaced.count;
-      return [key, replaced.value] as const;
-    });
-    return { value: Object.fromEntries(entries), count };
-  }
-  return { value, count: 0 };
+  return { text: out, count };
 }
 
 /** All the move needs of its transaction: it runs statements. */
@@ -174,6 +191,7 @@ async function rewriteJson(
   toId: string,
 ): Promise<number> {
   // The rows are named by where they sit, which cannot change under the table lock the move holds.
+  // Read and written as text, so that no number in them passes through a float (replaceJsonStrings).
   const rows = await rowsOf(
     tx,
     sql`select ctid::text as at, ${identifier(column)}::text as body
@@ -182,15 +200,11 @@ async function rewriteJson(
   );
   let changed = 0;
   for (const row of rows) {
-    const replaced = replaceExactStrings(
-      JSON.parse(String(row.body)),
-      fromId,
-      toId,
-    );
+    const replaced = replaceJsonStrings(String(row.body), fromId, toId);
     if (replaced.count === 0) continue;
     await tx.execute(
       sql`update ${identifier(table)}
-          set ${identifier(column)} = ${JSON.stringify(replaced.value)}::text::jsonb
+          set ${identifier(column)} = ${replaced.text}::text::jsonb
           where ctid = ${String(row.at)}::tid`,
     );
     changed += 1;

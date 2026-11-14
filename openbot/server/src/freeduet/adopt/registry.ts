@@ -318,7 +318,9 @@ export const MOVE: readonly MoveEntry[] = [
  * Columns with a handler of their own, because the value is not simply equal to the id.
  *
  * `users` is the person's row itself, made or filled in for the target. `credentials.key_id` is the
- * user id only for two kinds. The other two are JSON, where the id is a string somewhere inside.
+ * user id only for two kinds. The others are JSON, where the id is a string somewhere inside: the
+ * request an approval card was shown for names who it was asked of (`actorId`), and a request that
+ * was never answered is not moved at all (plan.ts, `openBlockers`).
  */
 export type SpecialEntry = {
   table: string;
@@ -357,6 +359,12 @@ export const SPECIAL: readonly SpecialEntry[] = [
     column: "key_id",
     family: "Connected apps",
     what: "connected-server tokens and pasted secrets",
+  },
+  {
+    table: "approval_requests",
+    column: "action",
+    family: "Approvals",
+    what: "who each approval request was asked of, kept inside the request",
   },
   {
     table: "work_items",

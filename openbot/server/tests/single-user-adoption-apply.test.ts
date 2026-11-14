@@ -25,7 +25,7 @@ import { createDatabase, type Database } from "../src/db/client";
 import {
   type ApplyOptions,
   applyAdoption,
-  replaceExactStrings,
+  replaceJsonStrings,
   tablesToLock,
 } from "../src/freeduet/adopt/apply";
 import {
@@ -1042,18 +1042,18 @@ describe("telling the person how to go back", () => {
 describe("rewriting the person's id inside JSON", () => {
   test("replaces a string equal to the id at any depth, and only that", () => {
     const from = "dev-local-user";
-    const result = replaceExactStrings(
-      {
+    const result = replaceJsonStrings(
+      JSON.stringify({
         actorId: from,
         nested: { members: [from, "someone-else", `${from}-and-more`] },
         counts: [1, null, true],
         key: "stays",
-      },
+      }),
       from,
       "new-id",
     );
     expect(result.count).toBe(2);
-    expect(result.value).toEqual({
+    expect(JSON.parse(result.text)).toEqual({
       actorId: "new-id",
       nested: { members: ["new-id", "someone-else", `${from}-and-more`] },
       counts: [1, null, true],
@@ -1062,14 +1062,13 @@ describe("rewriting the person's id inside JSON", () => {
   });
 
   test("keeps a key named __proto__ as a key, and does not change the object's own shape", () => {
-    const parsed = JSON.parse(
+    const result = replaceJsonStrings(
       '{"__proto__": {"by": "dev-local-user"}, "ok": 1}',
+      "dev-local-user",
+      "new-id",
     );
-    const result = replaceExactStrings(parsed, "dev-local-user", "new-id");
     expect(result.count).toBe(1);
-    expect(JSON.stringify(result.value)).toBe(
-      '{"__proto__":{"by":"new-id"},"ok":1}',
-    );
+    expect(result.text).toBe('{"__proto__": {"by": "new-id"}, "ok": 1}');
     expect(({} as Record<string, unknown>).by).toBeUndefined();
   });
 });

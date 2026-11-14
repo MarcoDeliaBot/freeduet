@@ -212,7 +212,7 @@ describe("the document and the registry name the same columns", () => {
 
   test("the lists are not empty and the move list has the families the document shows", () => {
     expect(MOVE.length).toBeGreaterThan(50);
-    expect(SPECIAL.length).toBe(7);
+    expect(SPECIAL.length).toBe(8);
     expect(LEAVE.length).toBeGreaterThan(25);
     expect(IDENTITY.length).toBe(7);
     expect(REVIEWED.length).toBeGreaterThan(15);

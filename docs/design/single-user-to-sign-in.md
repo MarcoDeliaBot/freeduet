@@ -75,6 +75,7 @@ Every column below, written as its table and its column joined by a dot, is a li
 | Bots the person made | `agent_profiles.owner_user_id`, `agent_preferences.user_id`, `bot_lifecycle.owner_user_id`, `skills.owner_user_id`, `demonstrations.owner_user_id` | |
 | Team Bots | `team_bot_consents.user_id`, `team_bot_consent_defaults.user_id`, `team_bot_assignments.assigned_by`, `team_bot_publications.published_by`, `team_bot_audience.value`, `shared_use_approval_members.value` | The last two move only where `kind = 'user'`. The two `*_by` columns are foreign keys that cascade: left on a user who is later removed, they would take the assignments with them. |
 | Authored configuration | `approval_team_rules.created_by`, `approval_team_settings.updated_by`, `sso_providers.user_id`, `app_access_requests.requested_by` | Foreign keys the administrator owns. Moved for the reason above. |
+| Approvals, inside the request | `approval_requests.action` | Special handler: every JSON string equal to the id, at any depth. The request is stored whole, and its `actorId` names who it was asked of; the column that owns the row moves, and this keeps the two saying the same person. A request that was started and not finished is moved the same way. [code: server/src/approvals/service.ts, `resume`] |
 | Work and Activity | `work_items.payload` | Special handler: every JSON string equal to the id, at any depth. The Activity list, wake-ups and waiting questions all read it by the id. [code: server/src/activity/activity.ts:122, 377, 515], [code: server/src/approvals/questions.ts:74-96] |
 | Pages and tasks | `openduet_pages.owner_user_id`, `openduet_tasks.owner_user_id` | |
 | Usage | `model_usage.user_id` | The administrator's usage summary counts distinct people; left alone it would count one person twice. |
@@ -145,7 +146,20 @@ The row the tool makes:
 
 The sign-in's own checks apply to the address before the row is made: the domain list, the exact address list `SIGNIN_ALLOWED_EMAILS`, and the removed-people list. A row the sign-in would refuse is never made. [code: server/src/auth/index.ts:398-445]
 
-**Which providers can link.** [proved: the same test, with the stand-in provider configured as Okta] Google and any provider that sends a verified-address claim link to a row made this way. Microsoft sign-in is not expected to ([assumed]: it does not send the claim the library needs for linking), so a deployment whose only provider is Microsoft is refused, with the reason. The maintainer is turning on Google.
+**Which providers can link.** [proved: the same test, with the stand-in provider configured as Okta] Better Auth joins a provider sign-in to an existing account only when the provider says the address is verified AND the account's own `email_verified` is true; this deployment sets no `accountLinking` or `trustedProviders`. [read: `better-auth/dist/oauth2/link-account.mjs`, `handleOAuthUserInfo`]
+
+| Provider | Where `emailVerified` comes from | First sign-in lands on the prepared row |
+|---|---|---|
+| Google | the ID token's `email_verified` | yes |
+| Okta | the userinfo or ID token's `email_verified` (Okta sends it for a verified address) | yes |
+| Microsoft | `false` unless the app registration adds the optional claim `email_verified` (or lists the address in `verified_primary_email`); `mapEntraProfile` adds only the address. [read: `@better-auth/core` `microsoft-entra-id.ts`, `getUserInfo`] | **no**: the sign-in is refused (`account_not_linked`) and the person is locked out of the moved data |
+| A provider an administrator registered (SSO) | the provider's claim | as the provider says; only an administrator can register one (`ADMIN_ONLY_AUTH_ROUTES`, `app.ts`) |
+
+A deployment whose only provider is Microsoft is refused, with the reason. With Google and Microsoft both configured the move runs, and the person signs in with Google; a Microsoft sign-in is refused. The maintainer is turning on Google.
+
+**What the verified row grants.** Nothing is granted to a person: no session, no role, no password. It makes one thing possible, which is that a provider that vouches for exactly this address (compared in lower case) can join itself to the row and so becomes the owner of everything on it. Who that can be is decided by the providers, not by the tool: Google and Okta vouch only for an address they have verified; Microsoft does not vouch, so it cannot; an administrator-registered provider says what its administrator made it say. Requiring the address to be in `INITIAL_ADMIN_EMAILS` (and `SIGNIN_ALLOWED_EMAILS` when it is set) decides which address may be given the data, and it keeps the data from going to an address the settings do not already trust with the administrator role. It does not prove that the person who types `--to` owns the address: that is the operator's word, backed by the dry run's echo of the address and `--apply --yes`. The first sign-in with that address wins, so a wrong address that is somebody else's real one hands the data to them.
+
+**An account for the address that is not verified.** An account that exists already for the address and is not marked verified is refused, not filled in. [proved: `server/tests/single-user-adoption-review.test.ts`] Two ways one exists. Nobody signed in to it (made by hand or by SCIM): the sign-in would refuse the person, so moving data into it locks them out. Or a sign-in made it that could not prove the address (a Microsoft tenant writes the address of its own users): then it may be somebody else's, made by typing the person's address before they ever signed in, and filling it in would give them the data and the standing permissions. The refusal names the account, says which provider it is linked to, and, when the account owns nothing, gives the one statement that removes it.
 
 **A person who signed in first.** The first request after sign-in makes the team's conversations for the new person, so the target already owns data and the tool refuses it. The runbook says: run the tool before the first sign-in. If it is too late, section 6.6 says what to do.
 
@@ -162,6 +176,8 @@ The sign-in's own checks apply to the address before the row is made: the domain
 | T7 | **An installation that is not single-user** (people already signed in). | The source having a sign-in account, session, role or SCIM row stops the tool. |
 | T8 | **A new feature stores the person's id somewhere new**, and the tool silently skips it. | Section 2.3: the plan-time search and the schema test. |
 | T9 | **An imported or untrusted value is read as an instruction.** | The tool reads the database and the environment and nothing else. Nothing in a row is executed or followed. |
+| T10 | **An account for the address that nobody verified** is filled in: it locks the person out, or belongs to whoever made it. | Refused (section 4). |
+| T11 | **The tool works on another database than the server's**: a `DATABASE_URL` exported in the shell, or a run from another folder, beats the `.env` the server reads, and Bun adds the `.env` of the current folder without saying so. | Every answer the tool gives, the dry run, the move and "nothing to move", says which database it is about (`In    the database <name> on <host>:<port> (as <user>)`, never the password), so the person can compare it with the settings file they mean. |
 
 ## 6. The tool
 
@@ -177,12 +193,12 @@ Each refusal names what is wrong and what to do, and exits with a non-zero code.
 | The address | `--to` is missing, is `dev@openbot.local`, is not in `INITIAL_ADMIN_EMAILS`, is outside `SIGNIN_ALLOWED_EMAIL_DOMAINS` when that is set, is not in `SIGNIN_ALLOWED_EMAILS` when that is set, or is in the removed-people list. |
 | The server | Something answers as the OpenBot server on its port (127.0.0.1 and ::1), or another connection to the database exists (the worker, a console, a restarted stack). |
 | The source | It has an identity row (section 2.2), a request still waiting for the person (approval, sign-in form), or a connection being made. Or the residue search found the id in an unlisted column. |
-| The target | It owns anything in the move list, or its row has a preferences value, a group or onboarding progress, or a differently-cased row for the address exists. |
+| The target | It owns anything in the move list, or its row has a preferences value, a group or onboarding progress, or its address is not marked verified, or a differently-cased row for the address exists. |
 | Nothing to do | The source owns nothing: it says so, and exits 0. |
 
 ### 6.2 The default run is a dry run
 
-It prints, writes nothing, and says it wrote nothing: who will own the data, how many rows per table, the standing permissions (Full access members, always-allow rules), the connected apps that may need connecting again, and the exact command to apply. Everything it can refuse for, it refuses for here too, so a clean dry run is a real forecast.
+It prints, writes nothing, and says it wrote nothing: which database it is about, who will own the data, how many rows per table, the standing permissions (Full access members, always-allow rules), the connected apps that may need connecting again, and the exact command to apply. Everything it can refuse for, it refuses for here too, so a clean dry run is a real forecast.
 
 ### 6.3 `--apply --yes`
 
@@ -202,7 +218,9 @@ It does not run by itself, listen on a port, read or write a recording, call a p
 ### 6.6 The way back, and the case of "I signed in first"
 
 - **Back out** after a commit: stop the server, restore the backup the tool printed (`pg_restore --clean --if-exists`), set the environment file back to single-user, start. The backup is of the whole database, so it also brings back anything written after the move; that is the price of the simplest way back.
-- **Signed in first**: the tool refuses and says the address already owns data. The way out is the backup the person took before turning sign-in on: restore it, then run the tool, then sign in. Merging is not built (D2).
+- **Signed in first**: the tool refuses and says the address already owns data. Nothing is written. The first request after a sign-in makes the team of the new account, so this is what almost every person who signed in and saw an empty FreeDuet will meet. The way out is the backup the person took before turning sign-in on: restore it, then run the tool, then sign in. Without such a backup there is no way out that the tool offers: it will not delete an account that owns data, and merging is not built (D2).
+- **A request still waiting** (an approval card, a sign-in form, a connection being made) also stops the tool, because it is bound to who asked. It can only be answered in the app, and with the provider settings in `.env` the app is the sign-in one, so the refusal says to take the provider settings out of `.env` for now (keeping `OPENBOT_SINGLE_USER=true`), answer it, stop the server, put the settings back and run the tool again, and not to sign in with the address in between.
+- **After the move, what the person is not shown.** The audit trail keeps the old id (section 3), and two readers find a person's entries by that id: the list of what members did under Full access, and the list and undo of settings changed in chat (seven days). Entries from before the move are not in them; they are in the audit trail. [code: `server/src/freeduet/full-access.ts` `recent`, `server/src/settings-in-chat/changes.ts`] Decision in section 9.
 
 ## 7. Tests
 
@@ -216,6 +234,7 @@ All against a real PostgreSQL scratch database, through the real `createApp`; th
 | `single-user-adoption-apply.test.ts` | Before and after visibility for each family, collisions, interruption, a second run, a wrong target, a running server. Fails on main. |
 | `single-user-adoption-signin.test.ts` | After the move, the real sign-in lands on the same user and sees the data; an unverified row would not. Fails on main. |
 | `single-user-adoption-unreachable.test.ts` | Nothing in the server imports the tool. |
+| `single-user-adoption-review.test.ts` | The defects an independent review found (section 8), each test red on the source the review started from. |
 | `single-user-adoption-backup.test.ts` | The real `pg_dump` runs, the file is `0600` and a dump. Skipped where `pg_dump` is missing. |
 
 ## 8. Built so far
@@ -241,19 +260,35 @@ All against a real PostgreSQL scratch database, through the real `createApp`; th
 | `single-user-adoption-signin.test.ts` | 8 pass: the real sign-in lands on the same user and sees every family |
 | `single-user-adoption-backup.test.ts` | 18 pass with a real `pg_dump`/`pg_restore`: move, printed way back, every table identical to before |
 | `single-user-adoption-unreachable.test.ts` | 5 pass |
+| `single-user-adoption-review.test.ts` | 14 pass: the review's findings below, each red on the source the review started from |
+
+All eight files together: 112 pass, 0 fail, 714 `expect()` calls (98 pass, 652 before the review).
 
 Each check was also broken on purpose (mutation) and the tests failed: skipped column, verification off, weaker locks, old row not emptied, no audit event, unverified row, preferences not carried, file mode, dump header, container identity, password on the command line.
 
-**Found on the way.** `pg_stat_activity` is read as a snapshot inside a transaction, so a check for other connections made late in the transaction saw nothing; it now clears the snapshot first.
+**Found on the way.** `pg_stat_activity` is read as a snapshot inside a transaction, so a check for other connections made late in the transaction saw nothing; it now clears the snapshot first. [re-proved by the review: with the reset removed, four tests of "what appears while the move is under way" fail]
 
-**Not verified.** No real installation was moved. No real Google sign-in: the provider is a stand-in, which proves what the deployment does with an answer, not what Google sends. The real-`pg_dump` tests skip where no `pg_dump` as new as the server exists (the CI runner has 16 against a server 17), so CI does not run them. The refusal for a file system that keeps no permissions is read, not run. The Windows watchdog was not exercised.
+**Independent review (2026-11-15).** A reviewer who had not written the code tried to break it, against a real PostgreSQL, with the real store and the real command. Every finding has a test that was red on the source the review started from, in `single-user-adoption-review.test.ts`.
+
+| # | Severity | What it was | State |
+|---|---|---|---|
+| R1 | High: the tool refused on almost every real installation | `approval_requests.action` is the whole request, including `actorId`. The registry moved the row and had no rule for the JSON inside it, so the plan-time search stopped the move for anybody who had ever answered an approval card. The existing tests inserted a request with an empty `action` by hand, so they never met it. | Fixed: a special handler, like `work_items.payload` (section 2.2). A request that was started and not finished is moved the same way. |
+| R2 | High: silent corruption | The JSON that names the person was re-addressed in JavaScript, where every number is a float: `1234567890123456789` came back as `1234567890123456800` and `1.10` as `1.1`, in the very row that was only being re-addressed. The row counts agreed, so nothing said so. It affected `work_items.payload` and `shared_use_requests.proposed_members` as well. | Fixed: the replacement is made on the JSON text and copies every other character as it was (`replaceJsonStrings`). |
+| R3 | High: a way to hand the data to someone else, and a way to lock the person out | An existing account for the address that owned nothing was filled in whatever made it, though the sign-in joins a provider only to an account whose address is verified. If nobody had signed in to it, the person was locked out of the moved data. If somebody had, with a provider that cannot vouch for the address (Microsoft), it was theirs. | Fixed: refused, naming the provider, and giving the statement that removes an empty one (section 4). |
+| R4 | Medium | The tool never said which database it worked on, and Bun adds the `.env` of the current folder, and a shell's exported `DATABASE_URL` beats it. A run on the wrong database said "Nothing to move" or moved another installation's data. | Fixed: every answer names the database, host, port and user, never the password (T11). |
+| R5 | Medium | The advice for a request still waiting ("answer it in the app") can only be followed with the provider settings in `.env`, which makes the app the sign-in one. Following it meant signing in with the address, which makes the account the tool then refuses. | Fixed: the refusal says how to answer it as the app ran before, and what not to do (section 6.6). |
+| R6 | Low | The audit trail keeps the old id, and the list of what members did under Full access, and the list and undo of settings changed in chat, find entries by that id. Entries from before the move are not in them. | Not changed: decision in section 9. |
+
+Checked and found sound: the move is atomic (an error injected at every step, a killed process); the late check for other connections works (above); the backup is private from the moment it exists, holds the whole database, and the printed way back restores every table (real `pg_dump` and `pg_restore`); the encrypted credentials still open after their `key_id` moves (no data is bound to the key); nothing the tool prints, or the one audit event it writes, holds a secret (ids, the address, counts and the backup's file name only); a different address cannot land on the prepared row, and neither can an address a provider has not verified (section 4).
+
+**Not verified.** No real installation was moved, so any other column of real data that holds the person's id is unknown until the dry run, which names it and writes nothing (the review found one this way, R1). No real Google sign-in: the provider is a stand-in, which proves what the deployment does with an answer, not what Google sends; that Microsoft does not send a verified address is read from the library, not run. The backup through the stack's postgres container (`docker compose exec`) is tested with a stand-in for `docker`, not a real one, and it is the route a WSL and Docker installation uses unless `pg_dump` 16 or newer is installed there. The real-`pg_dump` tests skip where no `pg_dump` as new as the server exists (the CI runner has 16 against a server 17), so CI does not run them. The refusal for a file system that keeps no permissions is read, not run. The Windows watchdog was not exercised. The JSON rewrite reads every row that names the person into memory at once: nothing measured it on an approval history of many thousands of requests, each of which stores the conversation it was asked in.
 
 ## 9. Decisions left to the maintainer
 
 | Decision | Options | Recommendation | Why |
 |---|---|---|---|
 | Pausing the watchdog during the move | a command to pause it; or stop it by hand | give the maintainer the exact pause command | stopping the server makes it start the stack again within a minute; the tool stops if it sees the server, but the person should not have to race it |
-| Someone who signed in and opened the app before running the tool | refuse (built); or merge two people's data | refuse, restore the earlier backup, run the tool, sign in | merging mixes two people's data and cannot be undone cleanly; not built |
+| Someone who signed in and opened the app before running the tool | refuse (built); or merge two people's data | refuse, restore the earlier backup, run the tool, sign in | merging mixes two people's data and cannot be undone cleanly; not built. This is the usual case of a person who already saw the empty app (the first request after a sign-in makes the team), and without a backup from before sign-in was turned on the tool offers no way out. |
 | Microsoft as the only provider | refuse (built); or support | refuse | the sign-in is not expected to link to the prepared row; the maintainer is turning on Google |
 | Connected apps | leave (built, listed in the dry run); or reconnect automatically | leave | a vendor may ask for the connection again; the tool cannot know |
 | The old single-user row | left, empty (built); or deleted | left | audit rows keep its id, and it is the way back's anchor |
@@ -261,4 +296,6 @@ Each check was also broken on purpose (mutation) and the tests failed: skipped c
 | Intelligence on | unsupported (refused by the checks); or supported | unsupported | conversation history lives elsewhere and was not moved |
 | Wrong address typed | none: the move cannot be redirected, only undone with the backup | accept | a second move would mix data |
 | A killed run | may leave a private partial dump in `.logs` | accept; delete it by hand | it is never deleted automatically because it may be the only way back |
+| Entries from before the move in the Full access list and in the settings-changes list and undo | leave (built: they are in the audit trail, not in those lists); or make the two readers also find a person's earlier id through the `person.single_user_data_adopted` event | leave | the lists are views, not records, and the undo window is seven days; the change touches two readers in the approval path for little |
+| An account for the address that is not verified | refuse, and say how to remove an empty one (built); or mark it verified and fill it in | refuse | marking it verified is what an impostor's account needs, and what a locked-out account cannot do for itself; an empty account is one statement to remove |
 | Roadmap row | add to `docs/ROADMAP.md` | coordinator adds it | this brief did not allow editing it |

@@ -230,6 +230,29 @@ export function shellWord(value: string): string {
 }
 
 /**
+ * Which database this run is reading or changing, in words, and never the password.
+ *
+ * WHY IT IS SAID. The tool takes its settings from the environment it is started in, and Bun adds the
+ * `.env` of the folder it is started from to that without saying so. A shell that still has a
+ * `DATABASE_URL` exported from other work, or a run from another folder, points the tool at a
+ * different database than the server's, and before this line nothing the tool printed could tell the
+ * person: a run on the wrong database either said "Nothing to move" or moved a different
+ * installation's data. Said first in the dry run, the move and the "nothing to move" answer, it is
+ * the one thing the person can compare with the settings file they mean.
+ */
+export function databaseLine(databaseUrl: string): string {
+  try {
+    const { user, database, env } = connectionOf(databaseUrl);
+    const host = env.PGHOST ? env.PGHOST : "this computer";
+    const port = env.PGPORT ? `:${env.PGPORT}` : "";
+    return `In    the database ${database} on ${host}${port} (as ${user})`;
+  } catch {
+    // The address connected, but this tool cannot split it. Say that and nothing of it.
+    return "In    the database in DATABASE_URL (its address could not be split into parts)";
+  }
+}
+
+/**
  * How to go back, written for how the backup was taken: a dump made by the pg_dump on this computer
  * is restored by the pg_restore on it, and one made inside the stack's postgres container is restored
  * inside it, where the version is the server's own.
@@ -277,6 +300,7 @@ async function execute(
     // need the server stopped or the address checked, because it changes nothing.
     if (plan.total === 0 && plan.blockers.length === 0) {
       io.out(nothingToMove(plan, address));
+      io.out(databaseLine(config.databaseUrl));
       return EXIT.ok;
     }
 
@@ -294,6 +318,7 @@ async function execute(
     if (!parsed.apply) {
       io.out(`This is a dry run. Nothing is written.`);
       io.out("");
+      io.out(databaseLine(config.databaseUrl));
       for (const line of describePlan(plan)) io.out(line);
       for (const line of beforeYouSayYes(address)) io.out(line);
       io.out("");
@@ -303,6 +328,7 @@ async function execute(
 
     io.out(`Moving ${plan.total} rows to ${address}.`);
     io.out("");
+    io.out(databaseLine(config.databaseUrl));
     for (const line of describePlan(plan)) io.out(line);
 
     // The way back comes first, and the move does not start without it.

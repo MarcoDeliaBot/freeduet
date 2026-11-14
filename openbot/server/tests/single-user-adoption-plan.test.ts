@@ -603,9 +603,11 @@ describe("an installation with nothing to move, and addresses that are not clean
       const ran = await stopped(world, ["--to", PERSON_ADDRESS]);
       expect(ran.code).toBe(EXIT.ok);
       expect(ran.err).toBe("");
-      expect(ran.out).toBe(
+      // The answer, and which database it is the answer for (single-user-adoption-review.test.ts).
+      expect(ran.out.split("\n")).toEqual([
         `Nothing to move: ${DEV_ACTOR.email} owns nothing in this database.`,
-      );
+        expect.stringMatching(/^In {4}the database su2si_scratch_\w+ on /),
+      ]);
     },
     SLOW,
   );
