@@ -27,6 +27,7 @@ from freeduet.engine_adapter import (
     Health,
     Outcome,
     ProbeResult,
+    Usage,
 )
 from freeduet.engine_breaker import (
     CORRUPT,
@@ -441,7 +442,10 @@ def test_no_engine_text_and_no_secret_is_ever_written_to_the_file_or_the_snapsho
     for canary in CANARIES:
         assert canary not in written and canary not in shown and canary not in repr(failure)
     assert set(saved(path)["engines"][KEY]) == {"state", "limited_until", "consecutive_failures", "opens", "last_failure_kind"}
-    assert set(Failure.__dataclass_fields__) == {"kind", "retry_at"} and set(Health.__dataclass_fields__) == {"answered", "failure"}
+    assert set(Failure.__dataclass_fields__) == {"kind", "retry_at"}
+    # `usage` (the spend ledger's input) is numbers and a currency code: the same guard holds for it, field by field.
+    assert set(Health.__dataclass_fields__) == {"answered", "failure", "usage"}
+    assert set(Usage.__dataclass_fields__) == {"input_tokens", "output_tokens", "cost", "currency"}
 
 
 # ── Recording never fails a turn ────────────────────────────────────────────────────────────────

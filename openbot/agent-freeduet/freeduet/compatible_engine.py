@@ -8,12 +8,18 @@ and they are all in the process's environment: where it sends its requests, whic
 
 WHAT IT IS NOT. It is off unless the person wrote an ``anthropic-compatible`` entry with ``enabled: true`` in
 engines.yaml, and it is never first in a chain by default: ``engines.order_logins_first`` puts every login first,
-whatever order the file lists. A metered (paid) endpoint is not run at all yet, whatever the ``metered:`` block says:
-FreeDuet cannot enforce the caps until the usage ledger exists (docs/ENGINES_PLAN.md slice 12), and caps that are written
-and not enforced must not let money be spent. It gets no adapter, so nothing can start it; the refusal is said in plain
-words to the person, in the log and by ``GET /engines`` (:func:`engines.paid_gateway_refusal`). ``billing`` is the
-person's own statement: FreeDuet cannot see what a gateway charges. Nothing here ever calls the network itself: the CLI
-does, and a probe never starts a turn (see ``probe``).
+whatever order the file lists. A metered (paid) endpoint runs only when FreeDuet can hold it to the limits the person set
+(the spend ledger, ledger.py, docs/ENGINES_PLAN.md slice 12): the maintainer's switch open, the person's words in the
+``metered:`` block, and a kind that reports what each turn costs (:func:`engines.paid_gateway_gap`). None of the three holds
+today, because this kind reports no cost it can vouch for (``engines.COST_REPORTING_KINDS``), so a paid endpoint gets no
+adapter and nothing can start it; the refusal is said in plain words to the person, in the log and by ``GET /engines``
+(:func:`engines.paid_gateway_refusal`). ``billing`` is the person's own statement: FreeDuet cannot see what a gateway
+charges. Nothing here ever calls the network itself: the CLI does, and a probe never starts a turn (see ``probe``).
+
+TOKENS, NOT MONEY. The turn's token counts, as far as the CLI printed them, go to the ledger through ``Health.usage``
+(:func:`note_usage`). The cost the CLI prints (``total_cost_usd``) is never read: Anthropic's documentation calls it a
+client-side estimate from a price table bundled with the CLI and says not to take financial decisions from it, and the CLI
+prints one even for a model it does not know, so it is not what the gateway charged.
 
 THE KEY. It is the person's own key at the gateway, never a subscription credential. It is read from an environment
 variable of this service or from a file the person names (``credential_secret_ref``: ``env:NAME`` or
@@ -80,6 +86,7 @@ from .engine_adapter import (
     ProbeResult,
     Sink,
     TurnContext,
+    Usage,
 )
 from .engine_errors import EngineLimit, describe
 from .engines import (
@@ -291,6 +298,18 @@ def note_stream_end(health: Health, parser: StreamParser, said: str, exit_code: 
         return
 
 
+def note_usage(health: Health, parser: StreamParser) -> None:
+    """The token counts the CLI printed, as far as it did, go to ``health.usage`` for the spend ledger: tokens only, never a
+    cost (see the module docstring). Called however the turn ends, so a segment that stops the engine before its result line
+    still leaves what the stream had said. Swallows whatever goes wrong, as ``note_result`` does."""
+    try:
+        used = parser.usage()
+        if used is not None:
+            health.usage = Usage(input_tokens=used[0], output_tokens=used[1])
+    except Exception:  # noqa: BLE001
+        return
+
+
 def failure_event(
     parser: StreamParser, label: str, scrub: Scrubber, stderr: str = "", exit_code: int | None = None, *, keyless: bool = False
 ) -> dict | None:
@@ -450,7 +469,7 @@ class CompatibleEngine(EngineAdapter):
         reason = exclusion_reason(self._engine, self._config)
         if reason is None:
             return None
-        if paid_gateway_refused(self._engine):
+        if paid_gateway_refused(self._engine, self._config):
             return reason  # the whole sentence: it names the entry and says what works
         return f"{self.label} is not used: {reason}."
 
@@ -460,7 +479,7 @@ class CompatibleEngine(EngineAdapter):
         if refusal is not None:
             # The person's switch (or the refusal of a paid gateway), not the engine's health: nothing is recorded
             # against it, and nothing was started, so nothing was billed.
-            if paid_gateway_refused(self._engine):
+            if paid_gateway_refused(self._engine, self._config):
                 log.warning("%s", refusal)
             return Outcome(agui.run_error(refusal))
         key = self._token(os.environ)
@@ -555,6 +574,7 @@ class CompatibleEngine(EngineAdapter):
                 or agui.run_error(f"{self.label} ended without an answer.")
             )
         finally:
+            note_usage(health, parser)  # whatever the stream said so far, even when the segment stops this engine early
             await claude_cli.stop(process)
             # The CLI's process group is gone: let its pipes reach end of file, so the subprocess
             # transport closes with the segment rather than some time after it.
@@ -569,8 +589,9 @@ class CompatibleEngine(EngineAdapter):
 
 
 def adapters_from_config(config: EnginesConfig, binary: str | None = None) -> dict[str, EngineAdapter]:
-    """One adapter for each ``anthropic-compatible`` entry that may run: on, not locked, and not a paid gateway. A paid
-    gateway that is switched on is named in one log line, in the words the person is told, and given no adapter, so
+    """One adapter for each ``anthropic-compatible`` entry that may run: on, not locked, and, if it is a paid gateway, one
+    that meets :func:`engines.paid_gateway_gap` (the maintainer's switch, the person's words, cost reporting). A paid gateway
+    that is switched on and does not is named in one log line, in the words the person is told, and given no adapter, so
     nothing can start it and it is not a link of any chain; the router still lists it, as refused (``refused_paid_gateways``).
     A default install has no such entry and gets none."""
     built: dict[str, EngineAdapter] = {}
@@ -579,7 +600,7 @@ def adapters_from_config(config: EnginesConfig, binary: str | None = None) -> di
             continue
         reason = exclusion_reason(engine, config)
         if reason is not None:
-            if paid_gateway_refused(engine):
+            if paid_gateway_refused(engine, config):
                 log.warning("%s", reason)
             continue
         built[engine.id] = CompatibleEngine(engine, config, binary)

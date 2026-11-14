@@ -24,6 +24,20 @@ MODES (``switching`` in the engines file, per member or ``default``): ``automati
 answer. ``pin`` never falls back: the turn stops with a plain message that names the limited engine and until
 when. DISABLE is ``enabled: false`` in the file, which ``ordered_chain`` already honours.
 
+THE LEDGER (ledger.py). An engine that costs money and that the person put under ``metered.enforce: ledger`` is checked before
+it starts a turn: at or over today's or this month's cap, or with a ledger that cannot tell what was spent, it is skipped
+exactly like a limited engine (the same notices, the pin stops and says so, ask-first asks), and it is available again when the
+UTC day or month turns. Its turns are recorded when they end (``EngineState.finish``). A turn that crosses a cap while it runs
+finishes: the limit is checked before a turn, not during it. No engine of a default install is in this group, and for them
+nothing here runs.
+
+THE PERSON'S MODE. The server sends what the person chose on the Engines page for this member with the run
+(``RunInput.engine_choices``, engine_choices.py). Their mode replaces the file's; the pin stays the file's. Without a
+choice, or with one this service cannot read, the file's ``switching:`` entry is used as before. The mode decides only
+whether the router asks before it switches. It never decides what may run: the ledger's check is made in ``_pick`` for every
+engine of the order, whatever the mode, and whatever the person answers to a question (``switch``, or the name of an
+engine), so an engine held by a cap is skipped in either mode and no answer lifts the hold.
+
 BOUNDS. ``MAX_SWITCHES`` (2, the plan's loop guard) engine switches per turn, then a plain message.
 ``FIRST_OUTPUT_SECONDS`` without a word or a tool call from an engine is a ``transient`` failure of that engine
 and the turn moves on; the segment's own whole-turn timeout stays the segment's and is recorded as ``transient``
@@ -43,21 +57,24 @@ import time
 from collections.abc import AsyncIterator, Mapping
 from datetime import datetime
 
-from . import agui, engine_notices as notices
+from . import agui, engine_choices, engine_notices as notices
 from .agui import RunInput
 from .claude_cli import ENGINE_LIMITED
 from .compatible_engine import adapters_from_config
 from .engine_adapter import EngineAdapter, Gate, Health, Outcome, ProbeResult, Sink, TurnContext
 
-from .engine_state import SIGNED_OUT, EngineState
+from .engine_state import SIGNED_OUT, EngineState, ledger_file
 from .engines import (
     COMPATIBLE_KIND,
     Engine,
     EnginesConfig,
     Switching,
     chain_ids,
+    exclusion_code,
     exclusion_reason,
+    ledger_engine_ids,
     ordered_chain,
+    paid_gateway_gap,
     paid_gateway_refusal,
     paid_gateway_refused,
     refused_paid_gateways,
@@ -65,6 +82,7 @@ from .engines import (
     tier_at_least,
 )
 from .failure_classifier import AUTH, CREDITS, RATE_LIMIT, TRANSIENT, USAGE_LIMIT, Failure
+from .ledger import DAILY, Ledger, Limits
 from .members import Member
 from .segment import SegmentNotes, run_segment
 
@@ -117,7 +135,7 @@ class _Attempt(EngineAdapter):
         self._settled = True
         health = self.health if self.health is not None else Health()
         if health.failure is None and (self.hint == "first_output" or (self.hint == "whole_turn" and not health.answered)):
-            health = Health(answered=health.answered, failure=Failure(TRANSIENT))
+            health = dataclasses.replace(health, failure=Failure(TRANSIENT))  # what the engine reported of its use stays
         self._state.finish(self.key, self._ticket, health)
 
     @property
@@ -156,16 +174,22 @@ _RANK = {notices.NONE: 0, notices.TEXT: 1, notices.TOOL: 2}
 
 class Router:
     def __init__(self, state: EngineState, adapters: Mapping[str, EngineAdapter], config: EnginesConfig,
-                 clock=time.monotonic):
+                 clock=time.monotonic, ledger: Ledger | None = None):
         self.state, self.adapters, self.config, self._clock = state, dict(adapters), config, clock
         self._probed_at: dict[str, float] = {}
         for adapter in self.adapters.values():
             state.register(adapter)
-        # A paid gateway the person switched on is not run (it has no adapter), and `GET /engines` lists it as refused,
-        # with the reason, so the person can see it did not simply vanish.
+        # The engines that cost money and that the person put under `metered.enforce: ledger` are held to the limits by a
+        # ledger, which is made here so that none of them can ever run without one (`ledger` is for tests). A default
+        # install has none of them: no ledger is made, no file is read, and nothing below runs.
+        held = ledger_engine_ids(config) & set(self.adapters)
+        if held:
+            state.attach_ledger(ledger if ledger is not None else Ledger(ledger_file()), Limits.of(config.metered), frozenset(held))
+        # A paid gateway the person switched on and that does not run (it has no adapter): `GET /engines` lists it as
+        # refused, with the reason, so the person can see it did not simply vanish.
         for engine in refused_paid_gateways(config):
             if engine.id not in self.adapters:
-                state.register_refused(engine.id, engine.id, engine.kind, paid_gateway_refusal(engine.id))
+                state.register_refused(engine.id, engine.id, engine.kind, paid_gateway_refusal(engine.id, paid_gateway_gap(engine, config)))
 
     # -- the plan for a member ------------------------------------------------------------------
 
@@ -183,17 +207,42 @@ class Router:
             or bool(self._paid_left_out(member_id))
         )
 
-    @staticmethod
-    def _is_paid_left_out(engine: Engine | None) -> bool:
-        """A paid gateway that is switched on and not locked: it is left out whatever the `metered:` block says,
-        because the caps cannot be enforced yet (docs/ENGINES_PLAN.md slice 12)."""
-        return engine is not None and paid_gateway_refused(engine)
+    def overview(self, member_ids) -> list[dict]:
+        """What the engines file gives each member, for ``GET /engines`` (docs/design/engines-dashboard.md 3.2).
+        Read-only, and a closed vocabulary: engine ids, one word per reason (``engines.exclusion_code``) and the
+        two switching values. The person's own choices are not here: the server holds them and lays them over this.
+
+        ``chain`` is the engines that will be tried, in order (logins first, every excluded engine removed, and only
+        those this service has an adapter for). ``left_out`` is each engine the member's list names that will not run,
+        with the word for why: ``not_set_up`` when it is allowed but this service has no way to run it."""
+        members = []
+        for member_id in member_ids:
+            running = self._runnable(member_id)
+            left_out = []
+            for engine_id in chain_ids(member_id, self.config):
+                if engine_id in running:
+                    continue
+                engine = self.config.engines.get(engine_id)
+                left_out.append({"id": engine_id, "why": (exclusion_code(engine, self.config) if engine else None) or "not_set_up"})
+            choice = switching_for(member_id, self.config)
+            members.append({"id": member_id, "chain": running, "left_out": left_out, "mode": choice.mode, "pin": choice.pin})
+        return members
+
+    def _is_paid_left_out(self, engine: Engine | None) -> bool:
+        """A paid gateway that is switched on and not locked and that does not meet the conditions for running
+        (`engines.paid_gateway_gap`: the maintainer's switch, the person's `metered:` words, cost reporting), so that FreeDuet
+        cannot hold it to the limits (docs/ENGINES_PLAN.md slice 12)."""
+        return engine is not None and paid_gateway_refused(engine, self.config)
 
     def _paid_left_out(self, member_id: str) -> list[str]:
         """The paid gateways of the member's chain that are left out for that reason: the person is told so, in
         plain words, when nothing else can answer."""
         engines = (self.config.engines[engine_id] for engine_id in chain_ids(member_id, self.config))
         return [engine.id for engine in engines if self._is_paid_left_out(engine)]
+
+    def _paid_gaps(self, engine_ids: list[str]) -> dict[str, str | None]:
+        """Why each of these left-out gateways does not run (`engines.paid_gateway_gap`), by its name."""
+        return {engine_id: paid_gateway_gap(self.config.engines[engine_id], self.config) for engine_id in engine_ids}
 
     def _notice_kind(self, key: str, kind: str) -> str:
         """A missing or refused key is not a Claude sign-in: the notice for an engine that runs on a key says so."""
@@ -231,7 +280,7 @@ class Router:
     async def run(self, run: RunInput, member: Member, notes: SegmentNotes) -> AsyncIterator[dict]:
         yield agui.run_started(run)
         lang = notices.language_of(run)
-        choice: Switching = switching_for(member.id, self.config)
+        choice: Switching = engine_choices.apply(switching_for(member.id, self.config), run.engine_choices)
         order = self._runnable(member.id)
         if choice.pin is not None:
             pinned_engine = self.config.engines.get(choice.pin)
@@ -240,7 +289,8 @@ class Router:
             if choice.pin not in self.adapters or left_out:
                 label = self.adapters[choice.pin].label if choice.pin in self.adapters else choice.pin
                 if self._is_paid_left_out(pinned_engine):
-                    yield agui.run_error(notices.pinned_paid_off(lang, label), ENGINE_LIMITED)
+                    gap = paid_gateway_gap(pinned_engine, self.config)
+                    yield agui.run_error(notices.pinned_paid_off(lang, label, gap), ENGINE_LIMITED)
                 else:
                     yield agui.run_error(notices.pinned_off(lang, label), ENGINE_LIMITED)
                 return
@@ -249,27 +299,29 @@ class Router:
 
         authorised, chosen = False, None
         extra: list[str] = []
-        if choice.mode == "ask-first":
-            answer = self._answer(run.messages, lang)
-            if answer is not None:
-                what, said = answer
-                if what == "wait":
-                    row = self.state.row(order[0]) if order else None
-                    label = self.adapters[order[0]].label if order else ""
-                    for event in _say(notices.waiting(lang, label, row.limited_until if row else None)):
-                        yield event
-                    yield agui.run_finished(run)
-                    return
-                if what == "switch":
-                    authorised = True
-                elif what == "name":
-                    chosen = next((k for k in order if said in {k.lower(), self.adapters[k].label.lower()}), None)
-                    authorised = chosen is not None
-                if authorised:
-                    extra.append(
-                        "The person's last message only answered a question about which engine should continue. "
-                        "It is not a new request: carry on with their earlier request."
-                    )
+        # The reply to the ask-first question is read whatever the mode is now: the question stands in the
+        # conversation, and the person may have changed the mode on the Engines page since it was asked. Without a
+        # question directly before it, `_answer` finds nothing, so a mode that was never ask-first never gets here.
+        answer = self._answer(run.messages, lang)
+        if answer is not None:
+            what, said = answer
+            if what == "wait":
+                row = self.state.row(order[0]) if order else None
+                label = self.adapters[order[0]].label if order else ""
+                for event in _say(notices.waiting(lang, label, row.limited_until if row else None)):
+                    yield event
+                yield agui.run_finished(run)
+                return
+            if what == "switch":
+                authorised = True
+            elif what == "name":
+                chosen = next((k for k in order if said in {k.lower(), self.adapters[k].label.lower()}), None)
+                authorised = chosen is not None
+            if authorised:
+                extra.append(
+                    "The person's last message only answered a question about which engine should continue. "
+                    "It is not a new request: carry on with their earlier request."
+                )
         if chosen is not None:
             order = [chosen, *[k for k in order if k != chosen]]
 
@@ -291,8 +343,10 @@ class Router:
                     return
                 until = min((b[2] for b in blocked if b[2] is not None), default=None)
                 key_off = [label for label, kind, _ in blocked if kind == notices.KEY]
+                held_off = [(label, kind) for label, kind, _ in blocked if isinstance(kind, notices.Held)]
+                paid = self._paid_left_out(member.id)
                 yield agui.run_error(
-                    notices.all_limited(lang, until, self._paid_left_out(member.id), key_off), ENGINE_LIMITED
+                    notices.all_limited(lang, until, paid, key_off, held_off, self._paid_gaps(paid)), ENGINE_LIMITED
                 )
                 return
             if stopped is None and blocked:
@@ -395,6 +449,12 @@ class Router:
         available: list[str] = []
         for key in order:
             if key in tried:
+                continue
+            hold = self.state.hold_of(key)  # what the engine has cost: a limit the person set, or a ledger that cannot tell
+            if hold is not None:
+                tried.add(key)
+                # "Back at 00:00 UTC" is only true of a day's limit: a month's is weeks away, and the notices write a time, not a date.
+                blocked.append((self.adapters[key].label, notices.Held(hold.kind, hold.cap_text), hold.until if hold.kind == DAILY else None))
                 continue
             row = self.state.row(key)
             if row is not None and not row.available:
