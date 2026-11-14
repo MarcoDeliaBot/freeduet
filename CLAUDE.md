@@ -295,3 +295,6 @@ Mark (id `marketer`) was the first member added after v0.1, Cam (id `video`) the
   ends and the stack dies.
 - Start such scripts hidden from PowerShell with `Start-Process -WindowStyle Hidden wsl ...`.
 - Write multi-line logic into a `.sh` file and run it. Inline regex through PowerShell breaks.
+- A Windows watchdog restarts the stack whenever port 3010 stops answering. Before an update, expect it: stopping the
+  stack by hand makes it run its own `start.sh` within a minute, and two starts collide once (container name conflict)
+  before one wins. Back up the database first (`pg_dump -Fc` from the postgres container), then update.
