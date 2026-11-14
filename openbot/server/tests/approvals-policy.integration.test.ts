@@ -95,6 +95,18 @@ function candidate(over: Partial<ApprovalCandidate> = {}): ApprovalCandidate {
   };
 }
 
+/**
+ * The same call in the person's own live turn. A routine's write is held to a card whatever a saved
+ * rule or a preference says (D35: `routines-always-ask.integration.test.ts`), so the tests that are
+ * about a rule or an "Always allow" answer run as the person's turn, which a rule does answer.
+ */
+function attended(over: Partial<ApprovalCandidate> = {}): ApprovalCandidate {
+  const { continuation, ...rest } = candidate(over);
+  if (!continuation) throw new Error("the fixture carries a continuation");
+  const { initiator: _routine, ...own } = continuation;
+  return { ...rest, continuation: own };
+}
+
 const suspends = (promise: Promise<unknown>) =>
   promise.then(
     () => false,
@@ -109,7 +121,7 @@ test("personal and team rules layer, the strictest wins, and switching custom ru
     scope: "*",
     behaviour: "allow",
   });
-  await expect(service.gate(candidate())).resolves.toBeUndefined();
+  await expect(service.gate(attended())).resolves.toBeUndefined();
 
   const locked = await service.createTeamRule(admin, {
     botId: "*",
@@ -119,7 +131,7 @@ test("personal and team rules layer, the strictest wins, and switching custom ru
     behaviour: "ask",
   });
   teamRuleIds.push(locked.id);
-  expect(await suspends(service.gate(candidate()))).toBeTrue();
+  expect(await suspends(service.gate(attended()))).toBeTrue();
 
   await service.setTeamSettings(admin, { customRulesEnabled: false });
   await expect(
@@ -133,7 +145,7 @@ test("personal and team rules layer, the strictest wins, and switching custom ru
   ).rejects.toThrow("switched custom rules off");
   await service.revokeTeamRule(admin, locked.id);
   // Personal allow no longer applies; with no preference that is the default (allow).
-  await expect(service.gate(candidate())).resolves.toBeUndefined();
+  await expect(service.gate(attended())).resolves.toBeUndefined();
   await service.setTeamSettings(admin, { customRulesEnabled: true });
 
   const inbox = await service.inbox(owner);
@@ -167,7 +179,7 @@ test("a safety hand-off is stored, cannot be allowed, and is marked done by the 
 test("'Always allow here' saves a personal allow rule that the gate then honours", async () => {
   await store.policy?.setPreferences(owner, { enabled: true });
   await store.setEnabled(owner, true);
-  const first = candidate({ toolRef: "mcp/drive/share", scope: "drive" });
+  const first = attended({ toolRef: "mcp/drive/share", scope: "drive" });
   expect(await suspends(service.gate(first))).toBeTrue();
   const [request] = (await store.list(owner)).filter(
     (row) => row.action.toolCallId === first.continuation?.toolCallId,
@@ -179,7 +191,7 @@ test("'Always allow here' saves a personal allow rule that the gate then honours
     expect.objectContaining({ toolRef: "mcp/drive/share", behaviour: "allow" }),
   );
   await expect(
-    service.gate(candidate({ toolRef: "mcp/drive/share", scope: "drive" })),
+    service.gate(attended({ toolRef: "mcp/drive/share", scope: "drive" })),
   ).resolves.toBeUndefined();
   await store.setEnabled(owner, false);
 });
