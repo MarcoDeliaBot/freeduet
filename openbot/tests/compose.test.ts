@@ -728,3 +728,65 @@ test("names the secret in no file a Bot's computer, a Compose service or the bro
   for (const entry of entries) walk(join(root, entry));
   expect(found).toEqual([]);
 });
+
+/**
+ * The tokens and the database's password come from the settings, and none has a value of its own
+ * that is the same on every installation (docs/M1_PLAN.md D39).
+ *
+ * `scripts/start.sh` makes a value for each installation, writes it to `.env`, and Compose reads that
+ * file to fill the `${...}` placeholders. What this file must not do is carry a value for the computer
+ * or the supervisor that anybody who has read the repository knows: a clone that skipped the script, or
+ * a Compose started by hand before it, would answer to it, and those two are a browser holding real
+ * logins and the Docker socket. With no value both services refuse to start, which is the safe way for
+ * that to end.
+ */
+test("takes the computer's and the supervisor's tokens from the settings, and gives them none of their own to fall back on", () => {
+  // Nothing set: empty, so each service refuses to start, and no string published here is in its place.
+  const bare = runComposeConfig({});
+  expect(bare.services["agent-computer"].environment.COMPUTER_TOKEN).toBe("");
+  expect(bare.services.supervisor.environment.SUPERVISOR_TOKEN).toBe("");
+  expect(bare.services.supervisor.environment.COMPUTER_TOKEN).toBe("");
+  // Not under any other service or key either: none of the strings this file used to publish is left.
+  const rendered = JSON.stringify(bare);
+  for (const published of [
+    "openbot-dev-computer-token",
+    "openbot-dev-supervisor-token",
+    "openbot-dev-worker-secret",
+  ])
+    expect(rendered).not.toContain(published);
+
+  // Set: the same tokens the server holds, to the computer and to the supervisor that hands them on.
+  const set = runComposeConfig({
+    COMPUTER_TOKEN: "computer-token-fixture",
+    SUPERVISOR_TOKEN: "supervisor-token-fixture",
+  });
+  expect(set.services["agent-computer"].environment.COMPUTER_TOKEN).toBe(
+    "computer-token-fixture",
+  );
+  expect(set.services.supervisor.environment.COMPUTER_TOKEN).toBe(
+    "computer-token-fixture",
+  );
+  expect(set.services.supervisor.environment.SUPERVISOR_TOKEN).toBe(
+    "supervisor-token-fixture",
+  );
+});
+
+test("creates the database with the password in the settings and migrates with the same one", () => {
+  const set = runComposeConfig({ POSTGRES_PASSWORD: "password-fixture" });
+  expect(set.services.postgres.environment.POSTGRES_PASSWORD).toBe(
+    "password-fixture",
+  );
+  expect(set.services.migrate.environment.DATABASE_URL).toBe(
+    "postgres://openbot:password-fixture@postgres:5432/openbot",
+  );
+
+  // The one fallback that stays, for a Compose started by hand and for the desktop app, which starts
+  // this file with a database address of its own and no POSTGRES_PASSWORD: a database made from nothing
+  // needs some password, and the port it protects is published to loopback only (see "publishes every
+  // service that holds a secret on loopback only" above).
+  const bare = runComposeConfig({});
+  expect(bare.services.postgres.environment.POSTGRES_PASSWORD).toBe("openbot");
+  expect(bare.services.migrate.environment.DATABASE_URL).toBe(
+    "postgres://openbot:openbot@postgres:5432/openbot",
+  );
+});
