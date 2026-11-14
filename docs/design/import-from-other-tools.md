@@ -155,3 +155,54 @@ Two more public routes:
 - Recall with Intelligence on: not read.
 - Licence detection by wording: a heuristic, not yet tested on real skills.
 - origin/main had moved to b6541e6 when this was checked. The citations refer to 452e060 and were not read again at the new head.
+
+## Built so far
+
+Slice 1 (parsers), on branch `import-slice-1`, from origin/main 99ff3e8. Nothing is stored, routed or shown yet: a parse writes no row, sends no request and runs no code.
+
+**Built**
+
+- `openbot/server/src/freeduet/import/freeduet-json.ts`: reads a `freeduet-import/1` export pasted as text. Each agent becomes a Bot item and each non-empty fact a fact item. One code fence around the JSON is accepted.
+- `openbot/server/src/freeduet/import/skill-folder.ts`: reads a folder of `SKILL.md` files. The frontmatter is YAML in the failsafe schema, so every value is text, and aliases and duplicate keys are refused. The body is the instructions. `scripts/` is listed and its files are never read. Other files are listed as not read.
+- `openbot/server/src/freeduet/import/checks.ts`: the checks of 3.2. Hidden and direction characters, HTML comments, key-shaped strings, card numbers (confirmed with the Luhn check), long base64 runs and the line of each refuse the item. `${` is kept and flagged. Approval wording is flagged in red. Non-commercial wording marks the item restricted. Keys that would grant a tool, an approval, a policy or Full access are dropped; other unknown keys are listed.
+- `openbot/server/src/freeduet/import/model.ts`: the item shape, the caps, and a SHA-256 digest over the fields as shown, for confirm to compare.
+- `openbot/server/tests/freeduet-import-parse.test.ts`: 38 tests. Every fixture is invented.
+
+**Caps as built**
+
+| Limit | Value | Source |
+|---|---|---|
+| One file (a pasted reply or one `SKILL.md`) | 1 MiB | `MAX_FILE_BYTES`, `openbot/shared/attachments.ts` |
+| One item (each text field of it) | 64 KiB | section 3.2 |
+| One batch | 50 items; each Bot, skill and fact counts once | section 3.2; `openbot/server/src/memory/ingestion.ts` uses 50 |
+| One fact | 6,000 characters | the memory store's content limit (`memoryInputSchema`) |
+
+The 500-character provenance limit applies when a fact is stored, so it is slice 4's.
+
+**Memory store, as found**
+
+- A memory the person writes (`memoryInputSchema`): content up to 6,000 characters, provenance up to 500 (`openbot/server/src/memory/types.ts`). A member writes one only when the person asks, through `remember_personal_fact` (`openbot/server/src/memory/tools.ts`).
+- A memory a Bot observes (`formedMemorySchema`): content up to 2,000 characters. `formMemory` cuts provenance to 500 (`openbot/server/src/memory/store.ts:425-428`) and writes `reviewState` `unreviewed`.
+- `formedBy` already has the value `import` (`openbot/server/src/memory/types.ts:91`), and connector sync writes it (`openbot/server/src/memory/store.ts:732`). Slice 4 needs no enum change.
+
+**Decisions**
+
+- Built as recommended: 2 (pasted JSON and a SKILL.md folder, no zip), 3 (non-commercial items shown and restricted, excluded from any export, of which there is none yet) and 6 (the paste route and SKILL.md only).
+- Not built, left to slices 2 to 6: 1 (who may recall a fact), 4 (confirm), 5 (schedules, kept as the text the export gave), 7 (the staged copy).
+
+**Verified**
+
+- `bun test tests/freeduet-import-parse.test.ts` in `openbot/server`: 38 pass, 0 fail.
+- Before: with the module absent, the test file does not load and none of its tests run.
+- Sixteen one-rule mutations (a check switched off, or a cap doubled) each fail at least one test. The source was restored after each.
+- `biome format` and `biome lint --error-on-warnings`: clean.
+- The new files under the project's test configuration, narrowed to those files: no type errors.
+- `assertion-shape.test.ts`: 10 pass, with a 120-second per-test timeout. The default 5-second timeout failed two tests on the loaded sandbox.
+
+**Not verified or not built**
+
+- Slices 2 to 8: no table, no route, no review screen, no confirm, no routine, no proposal, no documentation changes.
+- The full `bun run typecheck:tests` gate did not complete on this shared sandbox: `tsc` was killed under memory pressure, and the gate reports a run that prints nothing as clean.
+- Nothing was run on a real export or on a real `SKILL.md` from outside the repository. The licence check is a heuristic and is untested on real skills (section 7).
+- Whether the folder picker sends file text to the server is [assumed] and belongs to slice 3.
+- No upstream file changed, so `docs/UPSTREAM_TOUCHES.md` has no new row.
