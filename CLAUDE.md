@@ -43,8 +43,10 @@ Read these before changing anything:
 - **Full access** (`openbot/server/src/freeduet/full-access.ts`, `fullAccessOutcome` in
   `openbot/server/src/approvals/policy.ts`) is per person and per member, off by default, and applies
   only in the person's own live turn (a hand-off counts only when the server traces it to the person's
-  typed message), never to routines. It lifts only the payments safety requirement; credentials and
-  security settings still go to the person.
+  typed message), never to routines. It has two settings besides off: Full access, which lifts only the
+  payments safety requirement, and Full access without payments (D29), which lifts none, so a payment
+  still asks. Credentials and security settings still go to the person in both. Plain Full access has
+  no limit on the amount until spending caps exist (v0.4).
 - **Change only what was asked.** A refactor nobody asked for is a regression risk.
 - **Upstream changes stay minimal** and each one gets a row in `docs/UPSTREAM_TOUCHES.md`.
 
