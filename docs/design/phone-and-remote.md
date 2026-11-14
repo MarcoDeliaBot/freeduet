@@ -173,6 +173,7 @@ Size: S under 300 changed lines, M 300 to 1000, L over 1000.
 - A sign-in allowlist matches exact addresses. A domain list is a filter, not a boundary [code: openbot/server/src/auth/email-domain.ts:10-15].
 - The docs say what a third party sees: the tailnet's certificate log; Expo, Apple and Google for push.
 - Each upstream file touched gets a row in `docs/UPSTREAM_TOUCHES.md`: for example `auth/email-domain.ts`, `auth/index.ts`, `auth/dev-actor.ts`, `config.ts` and `delivery/*`.
+- **Member computers and the home network.** Decided 14 November 2026: a member's computer cannot reach devices on the person's home network unless the person switches that on. Off by default; one switch, which the person turns on.
 
 ## 6. Open decisions for the maintainer
 
@@ -180,9 +181,9 @@ Size: S under 300 changed lines, M 300 to 1000, L over 1000.
 |---|---|---|---|---|
 | 1 | Remote route for v1 | (a) Own tailnet with HTTPS. (b) Own domain, reverse proxy, port 443. (c) A tunnel the person runs. | (a), if the provider accepts a tailnet name; test that first. Otherwise (b). | (a) exposes nothing to the internet. (b) makes the login page public, so it needs sign-in and slice 1. |
 | 2 | Who may sign in | (a) Exact-address list. (b) Domain list only. (c) No list: anyone the provider accepts. | (a). Unset means unchanged. | A domain list admits every account at that domain, and a public domain such as gmail.com admits every such account. Members share one Claude login. |
-| 3 | Phone client in v1 | (a) Browser, responsive. (b) Native app with push. (c) Web app with manifest and service worker. | (a) now; (b) as slice 6. | (a) needs no build. (b) needs an EAS project and builds, and push text passes through Expo, Apple and Google. |
+| 3 | Phone client in v1 | (a) Browser, responsive. (b) Native app with push. (c) Web app with manifest and service worker. | (a) now; (b) as slice 6. Decided 14 November 2026: (a), the phone's browser, with a real sign-in (section 3.1). | (a) needs no build. (b) needs an EAS project and builds, and push text passes through Expo, Apple and Google. |
 | 4 | Pairing without sign-in | (a) Not in v1. (b) Same-network pairing, with TLS on the LAN. | (a). | Pairing gives no remote access. It needs a new admission path beside PR 129, and TLS on the LAN. Sign-in gives the phone the same access, with less new code. |
-| 5 | What a phone may do | (a) Read, chat, allow once, deny. (b) Also Full access, rules, accounts, sharing, security, and sending without a card. | (a). | A lost or unlocked phone must not change what the assistant may do, or send mail without a card. |
+| 5 | What a phone may do | (a) Read, chat, allow once, deny. (b) Also Full access, rules, accounts, sharing, security, and sending without a card. | (a). Decided 14 November 2026: (a), limited powers (section 3.3). | A lost or unlocked phone must not change what the assistant may do, or send mail without a card. |
 | 6 | Forwarded requests in single-user mode | (a) Refuse the implicit administrator when forwarding headers are present. (b) Keep as is. | (a), even after PR 129, as a second line. | Without it, a request forwarded from this machine is treated as the administrator for reads [assumed]. Common reverse proxies add forwarding headers, so the check catches them; a proxy that adds none is not caught [assumed]. |
 
 ## 7. What was not verified
