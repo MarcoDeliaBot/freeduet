@@ -329,7 +329,7 @@ Slice 7a, built on 14 November 2026. It stores no secret, gives no member a tool
 
 **Not built, on purpose.** A pin, an order, an engine off or on, the credentials panel and any field that takes a key (7b to 7e); a standing "Use the installation's setting" control (the Undo of the change just made does it, and a person who later wants the file's value can choose it, which is then kept as their choice).
 
-**Not verified.** No live run, no real engine running out (the fake command line and fake engines stand in), no real browser (the page tests run under happy-dom), and no check of the loopback and header guard through Docker Desktop, a tunnel or a proxy: it was tested with a hand-made peer and hand-made headers. One server process is assumed, as in 5.4. No member prompt or tool text changed, so no team eval case needs to run for this slice; 7d, which adds a tool-facing channel for a key, will.
+**Not verified.** No live run, no real engine running out (the fake command line and fake engines stand in), no real browser (the page tests run under happy-dom), and no check of the loopback and header guard through Docker Desktop, a tunnel or a proxy: it was tested with a hand-made peer and hand-made headers. One server process is assumed, as in 5.4. The rest of the design was not run at all: the paths of section 6 were read in code and not exercised, and how a gateway answers a request is the open question the plan already carries (`ENGINES_PLAN.md` slice 5, "not verified"). No member prompt or tool text changed, so no team eval case needs to run for this slice; 7d, which adds a tool-facing channel for a key, will.
 
 ## 10. Decisions left to the maintainer
 
@@ -346,7 +346,3 @@ Each recommendation is one the design follows only where it changes no security,
 | 7 | How a key reaches the agent | A. On demand, inside a live run. B. Only through `env:` or `file:` as today | A | B means no panel. A keeps the key out of runs, files and logs; failure is closed. |
 | 8 | The credential kind | A. A new `engine` kind (a migration). B. Reuse `model` | A | `model` has another meaning and its route is closed on purpose. |
 | 9 | Text that tells a member the page exists | A. Leave it. B. Add a sentence to each member's prompt | A | B changes what a model reads: it needs the team evals before it ships. |
-
-## 11. Not verified
-
-Nothing in this design was run live. The paths of section 6 were read in code and not exercised. How a gateway answers a request is the open question the plan already carries (`ENGINES_PLAN.md` slice 5, "not verified").
