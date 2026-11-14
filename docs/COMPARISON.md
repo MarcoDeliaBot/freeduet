@@ -9,7 +9,7 @@ _Last checked: 2026-11-08, from each project's public README and documentation, 
 
 | | **FreeDuet** | Claude Duet | OpenDuet / OpenBot | open-duet (Anil-matcha) | openbot (nightly-labs) | Agency (browser-use) | OpenMausBot |
 |---|---|---|---|---|---|---|---|
-| **Open source, free for business use** | ✅ MIT | ❌ closed product | ✅ MIT | ✅ Apache-2.0 | ❌ non-commercial license | ⚠️ code public, no license | ✅ Apache-2.0 |
+| **Open source, free for business use** | ✅ MIT | ❌ closed product | ✅ MIT | ✅ Apache-2.0 | ❌ non-commercial license | ⚠️ code public, no license | ✅ Apache-2.0, with an `enterprise/` folder under its own licence |
 | **Self-hosted, your data stays with you** | ✅ | ❌ | ✅ | ✅ | ✅ | ✅ local only | ✅ local-first |
 | **Available outside the United States** | ✅ | ❌ US waitlist | ✅ | ✅ | ✅ | ✅ | ✅ |
 | **Runs on subscriptions you already pay for, through the official login** | ✅ v0.1 | ✅ Claude plans only | ⚠️ only by storing a plan token | ✅ | ✅ | ✅ | ✅ Claude, Codex, Grok |
@@ -24,7 +24,7 @@ _Last checked: 2026-11-08, from each project's public README and documentation, 
 | **Payments blocked without a single-use permit bound to shop and total** | ✅ v0.4 | — | ❌ | ❌ | ❌ | ❌ | — |
 | **Spending cap per purchase, per day and per month** | ✅ v0.4 | — | ❌ | ❌ | ❌ | ❌ | — |
 | **A lead agent that hands work to specialists and combines the results** | ✅ v0.3 | — | ⚠️ several agents in one channel | ✅ | ✅ | ✅ | ⚠️ channels with responder rules |
-| **A ready-made team of specialists** | ✅ 10 members with a reviewer, 9 more in packs | ❌ one agent | ⚠️ 2 agents and example templates | ❌ | — | ❌ | ⚠️ teams from Markdown playbooks |
+| **A ready-made team of specialists** | ✅ 10+ members with a reviewer, more in packs | ❌ one agent | ⚠️ 2 agents and example templates | ❌ | — | ❌ | ⚠️ teams from Markdown playbooks |
 | **An agent that designs new agents, with tests** | ✅ | — | ⚠️ creator skill, no tests | — | ⚠️ skill creator | — | ⚠️ creates bots through MCP, no tests |
 | **Guardian that pauses a looping agent to protect your limits** | ✅ v0.3 | — | — | — | — | — | — |
 | **Owner-only operations no mode can lower** | ✅ v0.1 | — | ⚠️ approvals, "Always allow" can lift them | — | ❌ | ⚠️ | — |
@@ -36,7 +36,7 @@ _Last checked: 2026-11-08, from each project's public README and documentation, 
 | **Morning brief** | ✅ | ✅ | ✅ | ✅ | — | — | — |
 | **Gmail and Google Calendar** | ✅ | ✅ connected apps | ✅ | ❌ not yet | — | ⚠️ through your coding agent | ✅ through Composio |
 | **Import your agents from Grok Bot** | ✅ v1.0 | ❌ | ❌ | ❌ | ✅ | ❌ | — |
-| **Phone** | ✅ | ✅ | ✅ | ⚠️ early, from source | ✅ | ❌ | ⚠️ in development |
+| **Phone** | Planned | ✅ | ✅ | ⚠️ early, from source | ✅ | ❌ | ⚠️ in development |
 | **Any language** | ✅ | — | — | ✅ 13 interface languages | ✅ 5 interface languages | — | — |
 
 ## The short version
