@@ -3,6 +3,7 @@ import { listenAddress } from "@openbot/shared/listen-host";
 import { serve } from "bun";
 import { computerAccessCheck } from "./agents/computer-access";
 import type { AgentProfileStore } from "./agents/profile-store";
+import { createHostGuard } from "./auth/host-guard";
 import { personRule, personVerdict } from "./auth/install-secret";
 import type { OpenBotRole } from "./auth/roles";
 import { appOrigins, crossSiteRefusal } from "./auth/same-origin";
@@ -111,10 +112,16 @@ export function startHttpServer(deps: {
   // (auth/peer.ts), and where the installation has a secret, one that holds it (auth/install-secret.ts,
   // D28). The upgrade below resolves its actor outside the app, so it asks here as well.
   const person = personRule(config);
+  // In that same case, a loopback request under a name that is not this machine's own is a page that
+  // rebound its address (auth/host-guard.ts). Asked first, of every request and every upgrade, and
+  // before the URL is read: a request with no usable `Host` has no URL to read.
+  const misdirected = createHostGuard(config);
 
   const options: Parameters<typeof serve<SocketData>>[0] = {
     port,
     async fetch(request, server) {
+      const refused = misdirected(request, server);
+      if (refused) return refused;
       const url = new URL(request.url);
       if (url.pathname === "/api/audio/transcriptions") {
         server.timeout(request, DICTATION_HTTP_IDLE_SECONDS);
