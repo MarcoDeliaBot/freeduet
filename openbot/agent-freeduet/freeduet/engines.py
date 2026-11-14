@@ -623,6 +623,31 @@ def exclusion_reason(engine: Engine, config: EnginesConfig) -> str | None:
     return None
 
 
+#: The closed list of words ``exclusion_code`` answers with. `GET /engines` sends these instead of the sentences of
+#: ``exclusion_reason``: a sentence can carry what the person wrote in the file (``locked_reason``, an engine's name),
+#: and a code cannot, so the server and the page choose the words.
+EXCLUSION_CODES = ("locked", "disabled", "paid_gateway", "metered_off", "cap_zero")
+
+
+def exclusion_code(engine: Engine, config: EnginesConfig) -> str | None:
+    """Why an engine is left out of every chain, as one word of :data:`EXCLUSION_CODES`, or None when it may run.
+
+    The same decisions in the same order as :func:`exclusion_reason`, which stays the one the router and the adapters
+    use; a test holds the two together."""
+    if engine.locked_reason:
+        return "locked"
+    if not engine.enabled:
+        return "disabled"
+    if is_paid_gateway(engine):
+        return "paid_gateway"
+    if engine.billing == "metered":
+        if not config.metered.enabled:
+            return "metered_off"
+        if config.metered.daily_cap <= 0 or config.metered.monthly_cap <= 0:
+            return "cap_zero"
+    return None
+
+
 def is_allowed(engine: Engine, config: EnginesConfig) -> bool:
     return exclusion_reason(engine, config) is None
 

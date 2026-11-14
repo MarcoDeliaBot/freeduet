@@ -85,6 +85,7 @@ import { mountDesktopConnectionFailure } from "./desktop-connection-failure";
 import { createTranscriptionProvider } from "./dictation/provider";
 import { createDictationRoutes } from "./dictation/routes";
 import { threadReaderClient } from "./freeduet/backend";
+import type { EngineChoices } from "./freeduet/engine-choices";
 import { createEnginesRoutes } from "./freeduet/engines-routes";
 import type { HostAccessBroker } from "./host-access/broker";
 import { createHostAccessRoutes } from "./host-access/routes";
@@ -456,6 +457,8 @@ export function createApp(
     lifecycle?: BotLifecycleServices;
     /** Settings in chat (docs/design/settings-in-chat.md, slice 1): the person's Undo of a change from chat. */
     settingChanges?: SettingChanges;
+    /** The person's engine choices, changed from the Engines page (docs/design/engines-dashboard.md). */
+    engineChoices?: EngineChoices;
     /**
      * What OpenDuet made for the person, and the tasks it is working on: the Pages tab and the viewer,
      * and Chat's task cards, the task page and Tasks. See openduet/pages.ts and openduet/task-store.ts.
@@ -702,13 +705,17 @@ export function createApp(
   // govern, the admin screen's API, and the SCIM verbs the GET/POST auth handler above does not take.
   app.use("/api/*", createEnterpriseGate(requireUser));
   app.route("/api/admin/enterprise", createEnterpriseAdminRoutes(requireUser));
-  // The Engines dashboard's read (ENGINES_PLAN slice 6): administrators only, read at each request.
+  // The Engines dashboard (ENGINES_PLAN slices 6 and 7): administrators only, read at each request; the choices of slice 7 where kept.
   app.route(
     "/api/freeduet/engines",
-    createEnginesRoutes(requireUser, () => ({
-      environment: process.env,
-      managedAgent: config.managedAgent,
-    })),
+    createEnginesRoutes(
+      requireUser,
+      () => ({
+        environment: process.env,
+        managedAgent: config.managedAgent,
+      }),
+      coworker?.engineChoices,
+    ),
   );
   app.on(["PUT", "PATCH", "DELETE"], "/api/auth/scim/*", (context) =>
     auth

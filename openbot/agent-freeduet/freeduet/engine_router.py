@@ -24,6 +24,10 @@ MODES (``switching`` in the engines file, per member or ``default``): ``automati
 answer. ``pin`` never falls back: the turn stops with a plain message that names the limited engine and until
 when. DISABLE is ``enabled: false`` in the file, which ``ordered_chain`` already honours.
 
+THE PERSON'S MODE. The server sends what the person chose on the Engines page for this member with the run
+(``RunInput.engine_choices``, engine_choices.py). Their mode replaces the file's; the pin stays the file's. Without a
+choice, or with one this service cannot read, the file's ``switching:`` entry is used as before.
+
 BOUNDS. ``MAX_SWITCHES`` (2, the plan's loop guard) engine switches per turn, then a plain message.
 ``FIRST_OUTPUT_SECONDS`` without a word or a tool call from an engine is a ``transient`` failure of that engine
 and the turn moves on; the segment's own whole-turn timeout stays the segment's and is recorded as ``transient``
@@ -43,7 +47,7 @@ import time
 from collections.abc import AsyncIterator, Mapping
 from datetime import datetime
 
-from . import agui, engine_notices as notices
+from . import agui, engine_choices, engine_notices as notices
 from .agui import RunInput
 from .claude_cli import ENGINE_LIMITED
 from .compatible_engine import adapters_from_config
@@ -56,6 +60,7 @@ from .engines import (
     EnginesConfig,
     Switching,
     chain_ids,
+    exclusion_code,
     exclusion_reason,
     ordered_chain,
     paid_gateway_refusal,
@@ -183,6 +188,27 @@ class Router:
             or bool(self._paid_left_out(member_id))
         )
 
+    def overview(self, member_ids) -> list[dict]:
+        """What the engines file gives each member, for ``GET /engines`` (docs/design/engines-dashboard.md 3.2).
+        Read-only, and a closed vocabulary: engine ids, one word per reason (``engines.exclusion_code``) and the
+        two switching values. The person's own choices are not here: the server holds them and lays them over this.
+
+        ``chain`` is the engines that will be tried, in order (logins first, every excluded engine removed, and only
+        those this service has an adapter for). ``left_out`` is each engine the member's list names that will not run,
+        with the word for why: ``not_set_up`` when it is allowed but this service has no way to run it."""
+        members = []
+        for member_id in member_ids:
+            running = self._runnable(member_id)
+            left_out = []
+            for engine_id in chain_ids(member_id, self.config):
+                if engine_id in running:
+                    continue
+                engine = self.config.engines.get(engine_id)
+                left_out.append({"id": engine_id, "why": (exclusion_code(engine, self.config) if engine else None) or "not_set_up"})
+            choice = switching_for(member_id, self.config)
+            members.append({"id": member_id, "chain": running, "left_out": left_out, "mode": choice.mode, "pin": choice.pin})
+        return members
+
     @staticmethod
     def _is_paid_left_out(engine: Engine | None) -> bool:
         """A paid gateway that is switched on and not locked: it is left out whatever the `metered:` block says,
@@ -231,7 +257,7 @@ class Router:
     async def run(self, run: RunInput, member: Member, notes: SegmentNotes) -> AsyncIterator[dict]:
         yield agui.run_started(run)
         lang = notices.language_of(run)
-        choice: Switching = switching_for(member.id, self.config)
+        choice: Switching = engine_choices.apply(switching_for(member.id, self.config), run.engine_choices)
         order = self._runnable(member.id)
         if choice.pin is not None:
             pinned_engine = self.config.engines.get(choice.pin)
@@ -249,27 +275,29 @@ class Router:
 
         authorised, chosen = False, None
         extra: list[str] = []
-        if choice.mode == "ask-first":
-            answer = self._answer(run.messages, lang)
-            if answer is not None:
-                what, said = answer
-                if what == "wait":
-                    row = self.state.row(order[0]) if order else None
-                    label = self.adapters[order[0]].label if order else ""
-                    for event in _say(notices.waiting(lang, label, row.limited_until if row else None)):
-                        yield event
-                    yield agui.run_finished(run)
-                    return
-                if what == "switch":
-                    authorised = True
-                elif what == "name":
-                    chosen = next((k for k in order if said in {k.lower(), self.adapters[k].label.lower()}), None)
-                    authorised = chosen is not None
-                if authorised:
-                    extra.append(
-                        "The person's last message only answered a question about which engine should continue. "
-                        "It is not a new request: carry on with their earlier request."
-                    )
+        # The reply to the ask-first question is read whatever the mode is now: the question stands in the
+        # conversation, and the person may have changed the mode on the Engines page since it was asked. Without a
+        # question directly before it, `_answer` finds nothing, so a mode that was never ask-first never gets here.
+        answer = self._answer(run.messages, lang)
+        if answer is not None:
+            what, said = answer
+            if what == "wait":
+                row = self.state.row(order[0]) if order else None
+                label = self.adapters[order[0]].label if order else ""
+                for event in _say(notices.waiting(lang, label, row.limited_until if row else None)):
+                    yield event
+                yield agui.run_finished(run)
+                return
+            if what == "switch":
+                authorised = True
+            elif what == "name":
+                chosen = next((k for k in order if said in {k.lower(), self.adapters[k].label.lower()}), None)
+                authorised = chosen is not None
+            if authorised:
+                extra.append(
+                    "The person's last message only answered a question about which engine should continue. "
+                    "It is not a new request: carry on with their earlier request."
+                )
         if chosen is not None:
             order = [chosen, *[k for k in order if k != chosen]]
 
