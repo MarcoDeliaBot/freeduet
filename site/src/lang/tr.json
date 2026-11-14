@@ -25,6 +25,7 @@
   "jules": "Cuma için boş bir masa buldum.",
   "wren": "Gönderin okumaya hazır.",
   "mark": "Gelecek ay için ilk plan.",
+  "video": "İlk kesim listesi hazır.",
   "gus": "Önce kilidin yuvasına bak.",
   "basil": "Bu akşam için üç yemek fikri.",
   "vera": "Kontrol edildi: toplamlar tutuyor.",
@@ -87,7 +88,7 @@
  "s5p": "Neyin yapıldığı, neyin yapılmadığı ve nedeni, bir de sıradaki adım. Upuzun metinler yok.",
  "flowAlt": "Sen Iris'le konuşursun, Iris işi uzmanlara dağıtır, Vera kontrol eder, yanıt sana döner",
  "you": "Sen",
- "flowMore": "…ve Gus, Basil, Mark ile Leo",
+ "flowMore": "…ve Gus, Basil, Mark, Cam ile Leo",
  "sf_h": "Sen onaylayana kadar bekleyen beş düğme",
  "sf_p": "Yeni bir asistana ilk gün cüzdanını verir miydin? Biz de vermezdik. Bu beş işlem varsayılan olarak senin onayını bekler. Bunu yalnızca sen kapatabilirsin, üye üye.",
  "b1": "Göndermek",
@@ -127,7 +128,7 @@
  "r2": "Birinci öncelik: Windows, macOS ve Ubuntu için tek dosyalık kurulum programı. Sonra test edilmiş yeni üyeler.",
  "r3": "Her üye için motoru seç ve ekip içinde gerçek görev devri.",
  "r4": "Sohbette yazılan otomasyonlar, daha fazla bağlı uygulama, telefon sürümü, uzaktan erişim.",
- "r5": "Ses, Cam (video), güvenli alışveriş. Full access hazır, ama gerçek kullanımda henüz sınanmadı.",
+ "r5": "Ses, güvenli alışveriş. Full access hazır, ama gerçek kullanımda henüz sınanmadı. Cam (video) ekipte; testleri gerçek kullanımda henüz çalıştırılmadı ve sohbetten henüz dosya teslim edemez.",
  "r_note": "Henüz yapılmamış her şeyi açıkça belirtiyoruz. Masal yok. <a href=\"https://github.com/MarcoDeliaBot/freeduet/blob/main/docs/ROADMAP.md\">Yol haritasının tamamı GitHub'da</a>.",
  "in_h": "Kurulumdan ilk işe yarar görevine",
  "in_p": "Dört adım, gerçek sırasıyla. Tüm komutlar ayrıca aşağıda tek bir kutuda, kopyalamaya hazır duruyor.",
@@ -216,6 +217,11 @@
    "pazarlama",
    "Pazarlama planını, lansman planını ve kanal stratejini hazırlar; sitene, SEO'na ve reklamlarına göz atar. Senin onayın olmadan hiçbir şey yayınlamaz, hiçbir şey harcamaz.",
    "Dükkânım için üç aylık bir pazarlama planı hazırla."
+  ],
+  "video": [
+   "video",
+   "Kısa videoları çekimlerinden ya da bir senaryodan kurgular; altyazı, müzik ve ses ekler; yatay, dikey ve kare boyutlarda hazırlar. Hiçbir videoyu yayınlamaz ya da yüklemez.",
+   "Bu senaryodan altyazılı, 30 saniyelik dikey bir video yap."
   ],
   "gus": [
    "tamir",
