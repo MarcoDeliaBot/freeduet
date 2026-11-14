@@ -56,7 +56,7 @@ Classes: **C1** a member may change it in chat, from the person's own words, wit
 
 ### 3.1 Rules
 
-- **R1. The person's own live turn only.** A C1 change needs its new value in the person's latest typed message, checked on the server as the email check is [code: server/src/plugins/typed-recipients.ts:79]. When the value is not there, the person gets a card. A routine run, a check-in, or a hand-off the server cannot trace to the person's words cannot change a setting.
+- **R1. The person's own live turn only.** A C1 change needs its new value in the person's latest typed message, checked on the server as the email check is [code: server/src/plugins/typed-recipients.ts:79]. Decided 14 November 2026: the person always gets a card, even when the value is in the person's own words. A routine run, a check-in, or a hand-off the server cannot trace to the person's words cannot change a setting.
 - **R2. The list lives in code.** A member can change only keys on a server list, whatever the model asks. The reviewer is not asked about a setting: its `preApproved` answer is a model's judgement [code: server/src/approvals/policy.ts:388].
 - **R3. Every change is recorded.** One `configuration.changed` event per change, with the old value, the new value, the turn and the actor [code: server/src/audit.ts:51]. Secret values are never written; redaction keys on field names [code: server/src/plugins/catalogue.ts:919]. The trail is append-only [code: server/src/db/schema/core.ts:471].
 - **R4. Undo is compare-and-set.** It restores the old value only while the current value is still the one the change set. Otherwise it refuses and says what changed. Undo is the person's button, so it may resume a trigger that a member paused.
@@ -73,7 +73,7 @@ The first version adds controls to two changes members can already make: a routi
 
 ### 3.3 What comes after
 
-- Notifications (all or needs_input), tone (three fixed choices) and language, per person, through one new tool with its own list. Names as a per-person alias. The run note follows the D26 pattern: a forwarded prop and a line for the member [code: server/src/freeduet/person-language.ts:72] (slices 4 and 5).
+- Tone (three fixed choices) and language, per person, through one new tool with its own list. Names as a per-person alias. Decided 14 November 2026: besides notifications (already built), the only other settings changed from chat are a member's name, tone and language. The run note follows the D26 pattern: a forwarded prop and a line for the member [code: server/src/freeduet/person-language.ts:72] (slices 4 and 5).
 - A change list in the app that reads the record, with Undo (slice 6).
 - The control dashboard: one row per setting, with a switch that lets members change it in chat. The effective permission is the stricter of the server list and the switch. It builds on the Engines dashboard [docs/ENGINES_PLAN.md, section 2] (slice 7).
 - The credentials panel (row 48), after the Engines work. Subscription logins are never stored there [docs/ROADMAP.md, row 48] (slice 8).
@@ -81,7 +81,7 @@ The first version adds controls to two changes members can already make: a routi
 
 ### 3.4 What it never does
 
-No member opens the dashboard, reads another person's settings or undoes a change. No change happens in a routine run.
+No member opens the dashboard, reads another person's settings or undoes a change. Decided 14 November 2026: a setting is never changed inside a routine run.
 
 ## 4. Slices
 
@@ -114,11 +114,11 @@ One PR each. Slice 2 is security work: Sonnet, as CLAUDE.md asks.
 
 | # | Decision | Options | Recommendation | Reason |
 |---|---|---|---|---|
-| Q1 | How long Undo lasts, and who may use it | (a) until the setting changes again; (b) 24 hours; (c) 7 days. Person only, or member too | (a), and never longer than 7 days; the person only | The person keeps the last word. A member that can undo can also redo a change silently |
-| Q2 | Does a harmless change need a card? | (a) no card when the new value is in the person's latest typed message, checked on the server; (b) a card every time | (a); a card whenever the value is not in the person's words | Keeps "done in chat" (row 47). A server check replaces a model's judgement |
+| Q1 | How long Undo lasts, and who may use it | (a) until the setting changes again; (b) 24 hours; (c) 7 days. Person only, or member too | Decided 14 November 2026: Undo lasts 7 days. Who may use it is not part of this decision. | The person keeps the last word. A member that can undo can also redo a change silently |
+| Q2 | Does a harmless change need a card? | (a) no card when the new value is in the person's latest typed message, checked on the server; (b) a card every time | Decided 14 November 2026: (b), a card every time, even when the value is in the person's own words. | Keeps "done in chat" (row 47). A server check replaces a model's judgement |
 | Q3 | Full access and configuration | (a) Full access never lifts a routine or trigger change; (b) keep the code and amend F11 and docs/FULL_ACCESS.md | (a) | F11 says configuration stays with the person. The code lifts it [code: server/src/approvals/policy.ts:265-279]. A real-gate test must prove the change |
-| Q4 | Names, tone and language | (a) per-person alias, three tone choices and language in the person's preferences, with a run note (the D26 pattern); (b) use the unused `override` column for names; (c) let a member rename the package row and skip it on sync | (a); the three tones are the maintainer's choice | Sync overwrites package names. Language moves from the deployment to the person, which changes D26 [docs/M1_PLAN.md, D26] and needs a yes |
-| Q5 | Notification level `none` | (a) members choose all or needs_input; `none` is the person's choice in the app; (b) members choose any of the three | (a) | `none` stops every ping, approvals included. The web inbox still shows them [code: server/src/agents/lifecycle.ts:385-387] |
+| Q4 | Names, tone and language | (a) per-person alias, three tone choices and language in the person's preferences, with a run note (the D26 pattern); (b) use the unused `override` column for names; (c) let a member rename the package row and skip it on sync | Decided 14 November 2026, in part: (a), with name, tone and language as the only settings changed from chat (section 3.3). The three tones are still the maintainer's choice, and the change to D26 is not decided here. | Sync overwrites package names. Language moves from the deployment to the person, which changes D26 [docs/M1_PLAN.md, D26] and needs a yes |
+| Q5 | Notification level `none` | (a) members choose all or needs_input; `none` is the person's choice in the app; (b) members choose any of the three | Decided 14 November 2026: notifications stay changeable from chat as built (all or needs_input); `none` stays the person's choice in the app. | `none` stops every ping, approvals included. The web inbox still shows them [code: server/src/agents/lifecycle.ts:385-387] |
 | Q6 | Dashboard default for member switches | (a) every switch starts off until the person turns it on; (b) starts on, and the person turns it off | (a) | The person sees a setting before a member may change it. The switch is the only thing the dashboard adds to the rules |
 
 ## 7. What was not verified
@@ -175,13 +175,13 @@ Slice 1 was built on the branch `settings-in-chat-slice-1` and merged in pull re
 
 | # | Decision | Built now | Options | Recommendation | Why |
 |---|---|---|---|---|---|
-| Q1 | How long Undo lasts | Until the setting changes again, and a seven-day cap (8.7) | (a) until changed again, and never more than 7 days; (b) 24 hours | (a), with the 7-day cap | Section 6 says at most 7 days. The cap is built as recommended; the maintainer confirms the number (8.7, U1) |
-| Q2 | Does a change need a card when its value is in the person's own words? | Always a card | (a) no card when the value is in the person's latest typed message; (b) always a card | (b), until the server check exists | (a) would remove approvals, which is a security choice |
+| Q1 | How long Undo lasts | Until the setting changes again, and a seven-day cap (8.7) | (a) until changed again, and never more than 7 days; (b) 24 hours | (a), with the 7-day cap. Decided 14 November 2026: 7 days, confirmed. | Section 6 says at most 7 days. The cap is built as recommended; the maintainer confirms the number (8.7, U1) |
+| Q2 | Does a change need a card when its value is in the person's own words? | Always a card | (a) no card when the value is in the person's latest typed message; (b) always a card | (b), until the server check exists. Decided 14 November 2026: (b), always a card, as built. | (a) would remove approvals, which is a security choice |
 | Q3 | Full access and settings | A setting change always asks, Full access on or off. Routine cards stay as D35 sets them | As built | As built | Section 6, Q3, and D35 |
-| Q4 | Names, tone and language | Not built | Per-person alias, three tones, language in the person's preferences | Decide with the maintainer; language changes D26 | Needs a yes |
-| Q5 | The `none` level | A member cannot set `none`, and cannot change a `none` the person set | (a) as built; (b) any of the three levels | (a) | `none` silences the person; it is the person's own choice |
+| Q4 | Names, tone and language | Not built | Per-person alias, three tones, language in the person's preferences | Decide with the maintainer; language changes D26. Decided 14 November 2026 (section 3.3): besides notifications, name, tone and language are the only other settings changed from chat. | Needs a yes |
+| Q5 | The `none` level | A member cannot set `none`, and cannot change a `none` the person set | (a) as built; (b) any of the three levels | (a). Decided 14 November 2026: notifications stay changeable from chat as built. | `none` silences the person; it is the person's own choice |
 | Q6 | Dashboard default | No dashboard. The connector is off until the person grants it to a Bot | (a) off until turned on; (b) on | (a) | Section 6 |
-| R1 | A change in a routine run (section 3.4 says none happen) | A card, which the person answers before anything changes (D35) | (a) keep the card; (b) refuse outright in routine runs | (a), and amend section 3.4 to say so | Matches D35; the person's yes is the approval |
+| R1 | A change in a routine run (section 3.4 says none happen) | A card, which the person answers before anything changes (D35) | (a) keep the card; (b) refuse outright in routine runs | Decided 14 November 2026: (b), refuse outright in routine runs. Not built: the code still gives a card, and section 3.4 now says none happen. | Matches D35; the person's yes is the approval |
 | R2 | A key that is not on the list gets a card first | The gate asks before the tool refuses. Approving a card for Full access or approvals changes nothing | (a) as built; (b) refuse before the gate by checking the arguments in `calls.ts` | (b), in a follow-up slice, reviewed by Sonnet | Fewer cards that cannot change anything, same safety |
 | R3 | Slice order | The briefed slice 1, not section 4's | (a) keep; (b) follow section 4 | Maintainer to confirm | Section 4 names a different first slice |
 | R4 | A routine's time in chat (the "morning brief hour" example) | Not on the list: a routine's time is a routine write and always asks (D35) | (a) as built; (b) allow it through a card | (a) | Allowing it would need an exception to D35 |
