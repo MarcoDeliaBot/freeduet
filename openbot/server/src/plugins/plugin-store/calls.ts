@@ -16,6 +16,7 @@ import {
   vendorNameOf,
 } from "../../db/schema";
 import { personText } from "../../freeduet/person-language";
+import { settingChangeRefusal } from "../../settings-in-chat/own-turn";
 import { classifyTool, tokenHeaderFor } from "../catalogue";
 import { VERSION_ARG } from "../composio";
 import { inspectToolArguments } from "../content-governance";
@@ -626,6 +627,40 @@ export function callMethods(context: StoreContext) {
           });
           throw new PluginRefusedError(verdict.message, null);
         }
+      }
+
+      /*
+       * A SETTING IS CHANGED ONLY IN A CONVERSATION WITH THE PERSON (docs/design/settings-in-chat.md,
+       * 8.9). Refused here, before the gate, so no card is opened for a routine's, a trigger's, a
+       * check-in's, a forward hop's or any other run the person is not in: there is then nothing to
+       * answer later, and nothing is recorded as a change. Read off the transport the row resolved to,
+       * like `changesSetting` below, so it covers every setting on the list, now and later, and never
+       * the name of one. The person's own turn goes on to the gate and is asked, as before.
+       */
+      const settingRefusal =
+        effect === "write" && access.transport === "builtin-settings"
+          ? settingChangeRefusal({
+              context: approvalContext,
+              callInitiator: input.initiator,
+              botId: input.botId,
+              actorId: input.actorId,
+              encryptionKey: options.encryptionKey,
+            })
+          : null;
+      if (settingRefusal) {
+        await recordAuditEvent(auditStore, {
+          eventType: "mcp.call_rejected",
+          targetType: "mcp_tool",
+          targetId: input.ref,
+          ...(input.initiator ? { initiator: input.initiator } : {}),
+          payload: {
+            ...decided,
+            decision: { ...decided.decision, carriedOut: false },
+            refusal: "setting_change_outside_own_turn",
+            why: settingRefusal.why,
+          },
+        });
+        throw new PluginRefusedError(settingRefusal.message, null);
       }
 
       /*

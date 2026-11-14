@@ -96,7 +96,7 @@
    "name": "Does it work on Windows, Mac and Linux?",
    "acceptedAnswer": {
     "@type": "Answer",
-    "text": "The maintainer uses it on Windows with WSL2 and Docker, and our automatic checks start it on Linux. It has not been tested on a Mac, so we can't promise it works there. FreeDuet is an early release (version 0.1), built and used by one maintainer."
+    "text": "The maintainer uses it on Windows with WSL2 and Docker, and our automatic checks start it on Linux. It has not been tested on a Mac, so we can't promise it works there. FreeDuet is an early release (version 0.2), built and used by one maintainer."
    }
   },
   {
@@ -975,8 +975,8 @@ footer a{color:var(--ink)}
     <h3 class="road-h rv" data-i="r_h">What works today, and what is coming</h3>
     <ol class="road rv">
       <li><b data-i="rl_today">Today</b><span class="tag" data-i="r_now">Out now</span><p data-i="r1">The team on your own Claude login, with approvals, tests, Gmail and Google Calendar.</p></li>
-      <li><b data-i="rl_now">Now</b><span class="tag" data-i="r_prog">In progress</span><p data-i="r2">Top priority: a one-file installer for Windows, macOS and Ubuntu. Its first Ubuntu steps are tested in CI. Built, not yet run live: a token for each member's computer, and home network connections that close when you switch it off. New members follow, each tested.</p></li>
-      <li><b data-i="rl_next">Next</b><span class="tag" data-i="r_prog">In progress</span><p data-i="r3">Choose the engine for each member: the automatic switch is built and tested with test engines only. Settings you change in chat, with Undo, are in progress. Real delegation is planned.</p></li>
+      <li><b data-i="rl_now">Now</b><span class="tag" data-i="r_prog">In progress</span><p data-i="r2">Top priority: a one-file installer for Windows, macOS and Ubuntu. First-step scripts exist for Ubuntu and for Windows through WSL2; the Ubuntu steps are tested in CI. No double-click installer yet. Built, not yet run live: a token for each member's computer, and home network connections that close when you switch it off. New members follow, each tested.</p></li>
+      <li><b data-i="rl_next">Next</b><span class="tag" data-i="r_prog">In progress</span><p data-i="r3">Choose the engine for each member: the Engines page shows each member's chain and the automatic or ask-first choice, built and not yet run live; the switch has only been tested with test engines. Settings you change in chat, with Undo, are in progress. Real delegation is planned.</p></li>
       <li><b data-i="rl_next">Next</b><span class="tag" data-i="r_prog">In progress</span><p data-i="r4">Automations written in chat, and a phone version (its sign-in list is built), are in progress. More connected apps and remote access are in design.</p></li>
       <li><b data-i="rl_later">Later</b><span class="tag" data-i="r_prog">In progress</span><p data-i="r5">Voice: read aloud is built and off by default; calls are not built yet. Safe purchases are planned. Full access and Cam, the video member, are built, not yet run live; Cam can offer a finished file with a Download button.</p></li>
     </ol>
@@ -1065,7 +1065,7 @@ cd openbot &amp;&amp; docker compose exec -it agent-freeduet claude
     <div class="faq">
       <details class="rv" open><summary data-i="q1">What is free, and what do I pay for?</summary><p data-i="a1">FreeDuet is free and open source under the MIT licence, also for business use. The only thing you pay for is the AI subscription you use with it, which today is a Claude plan. There is no API key to buy.</p></details>
       <details class="rv"><summary data-i="q2">What do I need to install it?</summary><p data-i="a2">A Claude subscription, and Docker, Bash and Bun on your computer. The four steps above are the whole install. Never opened a terminal? Ask someone technical to set it up, and show them this page.</p></details>
-      <details class="rv"><summary data-i="q3">Does it work on Windows, Mac and Linux?</summary><p data-i="a3">The maintainer uses it on Windows with WSL2 and Docker, and our automatic checks start it on Linux. It has not been tested on a Mac, so we can't promise it works there. FreeDuet is an early release (version 0.1), built and used by one maintainer.</p></details>
+      <details class="rv"><summary data-i="q3">Does it work on Windows, Mac and Linux?</summary><p data-i="a3">The maintainer uses it on Windows with WSL2 and Docker, and our automatic checks start it on Linux. It has not been tested on a Mac, so we can't promise it works there. FreeDuet is an early release (version 0.2), built and used by one maintainer.</p></details>
       <details class="rv"><summary data-i="q4">What can an assistant do without asking me?</summary><p data-i="a4">It can look things up, read, and prepare drafts and reports. By default, the five buttons wait for your Approve, except a new email to an address you typed. Full access, per member, lifts the waiting in your own chats. Passwords and security settings still come to you. Assistants can still make mistakes, so read what they prepare before you approve it.</p></details>
       <details class="rv"><summary data-i="q5">Where is my data?</summary><p data-i="a5">FreeDuet runs on your computer and keeps its conversations in a database there. Your Claude login stays in a Docker volume that only the Claude Code program reads. To think, the assistants send your request to the AI service you signed in to, as its own app would.</p></details>
       <details class="rv"><summary data-i="q6">Can I use it from my phone?</summary><p data-i="a6">Not yet. Today FreeDuet opens in the browser on your computer. A phone version, where you also get approval requests, is in progress.</p></details>
