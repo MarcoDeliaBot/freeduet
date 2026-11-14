@@ -8,12 +8,15 @@
 <meta property="og:title" content="FreeDuet: your own team of AI assistants">
 <meta property="og:description" content="A free, open-source team of AI assistants. They ask before they send, pay, sign, book or delete.">
 <meta property="og:type" content="website">
+<script>document.documentElement.className+=" js";setTimeout(function(){if(document.documentElement.getAttribute("data-rv")!=="ready")document.documentElement.className+=" no-rv"},3000)</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;600;700&family=Schibsted+Grotesk:wght@700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;600;700&family=Schibsted+Grotesk:wght@500;700;800&display=swap" rel="stylesheet">
 <style>
-/* Layout idea: a calm, left-aligned product page. White and cool grey surfaces, navy text, one blue accent.
-   The product's own interface (the chat with its approval card) is the single loud element; diagrams stay thin-lined and quiet. */
+/* Layout idea: a calm, left-aligned product page on a generous spacing scale. White and cool grey surfaces, navy text, one blue accent.
+   The product's own interface (the chat with its approval card) is the single loud element; diagrams stay thin-lined and quiet.
+   Motion: sections reveal once on scroll (opacity, translate, blur), headings reveal word by word, a floating capsule carries the navigation.
+   Only transform, translate, scale, opacity and filter are ever animated. Without JavaScript, or with reduced motion, nothing is hidden. */
 :root{
   --ink:#0E1B33;        /* navy: text */
   --ink-soft:#52607A;   /* secondary text */
@@ -27,75 +30,105 @@
   --amber:#F2B735;      /* text highlighter only */
   --display:"Schibsted Grotesk","IBM Plex Sans","Segoe UI","Hiragino Sans","Noto Sans CJK SC","Microsoft YaHei","Malgun Gothic",system-ui,sans-serif;
   --body:"IBM Plex Sans","Segoe UI","Hiragino Sans","Noto Sans CJK SC","Microsoft YaHei","Malgun Gothic",system-ui,sans-serif;
-  --wrap:1120px;
-  --shadow:0 1px 2px rgba(14,27,51,.06),0 12px 32px -12px rgba(14,27,51,.18);
+  --mf:clamp(5.5rem,21.5vw,27rem);               /* size of the giant wordmark */
+  --wrap:80rem;                                   /* wide container */
+  --gut:clamp(1.25rem,4vw,2.5rem);                /* side padding */
+  --sec:clamp(6rem,4.2rem + 5vw,9rem);            /* vertical air above and below a section */
+  --head-gap:clamp(3.5rem,6vw,5.5rem);            /* heading block to content */
+  --r-lg:24px;--r-md:20px;--r-sm:14px;
+  --ease:cubic-bezier(.22,1,.36,1);
+  --shadow:0 2px 4px rgba(14,27,51,.04),0 24px 56px -24px rgba(14,27,51,.26);
+  --shadow-xl:0 4px 10px rgba(14,27,51,.04),0 44px 110px -34px rgba(14,27,51,.38);
+  --arr-ur:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M7 17L17 7M8 7h9v9' fill='none' stroke='black' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  --arr-dn:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M12 5v14M6 13l6 6 6-6' fill='none' stroke='black' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
   color-scheme:light;
 }
 *{box-sizing:border-box}
 html{scroll-behavior:smooth;-webkit-text-size-adjust:100%}
-body{margin:0;background:var(--card);color:var(--ink);font-family:var(--body);font-size:17px;line-height:1.6}
+body{margin:0;background:var(--card);color:var(--ink);font-family:var(--body);font-size:17px;line-height:1.65}
 img,svg{max-width:100%}
 a{color:var(--blue)}
-a:focus-visible,button:focus-visible,summary:focus-visible,select:focus-visible,.code:focus-visible{outline:3px solid var(--blue);outline-offset:3px;border-radius:6px}
-.wrap{max-width:var(--wrap);margin:0 auto;padding:0 24px}
-h1,h2,h3{font-family:var(--display);margin:0;text-wrap:balance;letter-spacing:-.02em}
-h1{font-size:clamp(2.4rem,5.2vw,4.1rem);font-weight:800;line-height:1.04}
-h2{font-size:clamp(1.8rem,3.4vw,2.6rem);font-weight:700;line-height:1.12;max-width:22ch}
-h3{font-size:1.15rem;font-weight:700;line-height:1.3;letter-spacing:-.01em}
+a:focus-visible,button:focus-visible,summary:focus-visible,select:focus-visible,.code:focus-visible{outline:3px solid var(--blue);outline-offset:3px}
+.sec.dark a:focus-visible{outline-color:#8FB0FF}
+.wrap{max-width:var(--wrap);margin:0 auto;padding:0 var(--gut)}
+h1,h2,h3{font-family:var(--display);margin:0;text-wrap:balance}
+h1{font-size:clamp(2.6rem,1.5rem + 5.4vw,5.75rem);font-weight:500;line-height:1;letter-spacing:-.04em;overflow-wrap:break-word}
+h2{font-size:clamp(2rem,1.1rem + 3.3vw,3.6rem);font-weight:500;line-height:1.06;letter-spacing:-.035em;max-width:22ch;overflow-wrap:break-word}
+h3{font-size:1.2rem;font-weight:700;line-height:1.3;letter-spacing:-.015em}
 p{margin:0;max-width:64ch}
-.lead{font-size:1.2rem;line-height:1.55;max-width:56ch}
+.lead{font-size:clamp(1.1rem,1rem + .4vw,1.3rem);line-height:1.6;max-width:44rem}
 .soft{color:var(--ink-soft)}
 .mark{background:linear-gradient(transparent 68%,rgba(242,183,53,.55) 68%)}
-.skip{position:absolute;left:-999px;top:8px;background:var(--ink);color:#fff;padding:10px 14px;border-radius:8px;z-index:50}
+.skip{position:absolute;left:-999px;top:8px;background:var(--ink);color:#fff;padding:10px 14px;border-radius:8px;z-index:60}
 .skip:focus{left:16px}
 
-.top{position:sticky;top:0;z-index:20;background:rgba(255,255,255,.9);backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
-.top .wrap{display:flex;align-items:center;gap:20px;min-height:64px;max-width:1280px}
-.logo{display:flex;align-items:center;gap:10px;font-family:var(--display);font-weight:800;font-size:1.2rem;color:var(--ink);text-decoration:none;letter-spacing:-.02em}
-.logo svg{width:30px;height:30px}
-.nav{display:flex;gap:24px;margin-left:auto;flex-wrap:nowrap;white-space:nowrap}
-.nav a{color:var(--ink-soft);text-decoration:none;font-size:.95rem;padding:10px 0;transition:color .12s}
-.nav a:hover{color:var(--ink)}
-.coffee{display:inline-flex;align-items:center;gap:8px;font-family:var(--display);font-weight:700;font-size:.92rem;text-decoration:none;color:var(--ink);background:#FFE9A8;border:1px solid #E9C766;border-radius:8px;padding:8px 14px;min-height:40px;transition:background .12s,transform .12s}
-.coffee:hover{background:var(--amber);transform:translateY(-1px)}
+/* ---------- floating capsule navigation ---------- */
+.top{position:fixed;top:clamp(.6rem,1.6vw,1.1rem);left:0;right:0;z-index:40;display:flex;justify-content:center;padding:0 12px;pointer-events:none;animation:navin 1s var(--ease) both}
+.top .wrap{pointer-events:auto;display:flex;align-items:center;gap:4px;width:max-content;max-width:100%;margin:0;padding:6px 6px 6px 16px;background:rgba(255,255,255,.86);-webkit-backdrop-filter:blur(16px) saturate(1.4);backdrop-filter:blur(16px) saturate(1.4);border:1px solid rgba(14,27,51,.08);border-radius:999px;box-shadow:0 18px 50px -20px rgba(14,27,51,.34),0 2px 6px rgba(14,27,51,.05);transition:box-shadow .5s var(--ease),background-color .5s var(--ease)}
+.top.scrolled .wrap{background:rgba(255,255,255,.94);box-shadow:0 24px 60px -18px rgba(14,27,51,.42),0 2px 6px rgba(14,27,51,.06)}
+@keyframes navin{from{opacity:0;transform:translateY(-1.6rem)}}
+.logo{display:flex;align-items:center;gap:10px;margin-right:6px;font-family:var(--display);font-weight:800;font-size:1.15rem;color:var(--ink);text-decoration:none;letter-spacing:-.02em;white-space:nowrap}
+.logo svg{width:28px;height:28px;flex:none}
+.nav{display:flex;gap:2px;margin:0 6px 0 0;flex-wrap:nowrap;white-space:nowrap}
+.nav a{color:var(--ink-soft);text-decoration:none;font-size:.92rem;padding:9px 13px;border-radius:999px;transition:color .3s var(--ease),background-color .3s var(--ease)}
+.nav a:hover{color:var(--ink);background:rgba(14,27,51,.06)}
+.coffee{display:inline-flex;align-items:center;gap:8px;font-family:var(--display);font-weight:700;font-size:.9rem;text-decoration:none;white-space:nowrap;color:var(--ink);background:#FFE9A8;border:1px solid #E9C766;border-radius:999px;padding:8px 16px;min-height:40px;transition:background-color .3s var(--ease),transform .4s var(--ease),box-shadow .4s var(--ease)}
+.coffee:hover{background:var(--amber);transform:translateY(-1px);box-shadow:0 8px 18px -8px rgba(194,120,0,.55)}
+.coffee:active{transform:scale(.95)}
 .coffee svg{width:18px;height:18px;color:#C2255C;flex:none}
-.ghlink{display:inline-flex;align-items:center;gap:8px;font-family:var(--display);font-weight:700;font-size:.92rem;text-decoration:none;color:var(--ink);background:var(--card);border:1px solid var(--line);border-radius:8px;padding:8px 12px;min-height:40px;transition:border-color .12s}
-.ghlink:hover{border-color:var(--ink)}
+.ghlink{display:inline-flex;align-items:center;gap:8px;font-family:var(--display);font-weight:700;font-size:.9rem;text-decoration:none;white-space:nowrap;color:#fff;background:var(--ink);border:1px solid var(--ink);border-radius:999px;padding:8px 14px;min-height:40px;transition:background-color .3s var(--ease),transform .4s var(--ease),box-shadow .4s var(--ease)}
+.ghlink:hover{background:#1B2B4B;transform:translateY(-1px);box-shadow:0 10px 22px -10px rgba(14,27,51,.7)}
+.ghlink:active{transform:scale(.95)}
 .ghlink>svg{width:18px;height:18px;flex:none}
-.stars{display:inline-flex;align-items:center;gap:4px;margin-left:2px;padding-left:10px;border-left:1px solid var(--line);font-variant-numeric:tabular-nums}
+.stars{display:inline-flex;align-items:center;gap:4px;margin-left:2px;padding-left:10px;border-left:1px solid rgba(255,255,255,.28);font-variant-numeric:tabular-nums}
 .stars[hidden]{display:none}
-.stars svg{width:15px;height:15px;color:#B7791F}
+.stars svg{width:15px;height:15px;color:var(--amber)}
 .sr{position:absolute;width:1px;height:1px;margin:-1px;padding:0;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
-.band{background:#FFF4D1;border-top:1px solid #EFD98F;border-bottom:1px solid #EFD98F;padding:56px 0}
-.band .wrap{display:flex;align-items:center;justify-content:space-between;gap:32px;flex-wrap:wrap}
-.band h2{margin-bottom:10px}
-.band .lead{color:var(--ink)}
-.btn-coffee{background:var(--ink);color:#fff;font-size:1.2rem;padding:18px 30px;min-height:60px;border-radius:12px;box-shadow:0 8px 24px -10px rgba(14,27,51,.6)}
-.btn-coffee:hover{background:#1B2B4B;transform:translateY(-2px)}
-.btn-coffee svg{width:24px;height:24px;color:#FF8FA8}
-.langs select{font:inherit;font-size:.92rem;color:var(--ink);background-color:var(--card);border:1px solid var(--line);border-radius:8px;padding:8px 30px 8px 12px;min-height:40px;appearance:none;-webkit-appearance:none;cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cpath d='M2.5 4.5L6 8l3.5-3.5' stroke='%2352607A' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 10px center;background-size:12px}
+.langs select{font:inherit;font-size:.9rem;color:var(--ink);background-color:transparent;border:1px solid rgba(14,27,51,.14);border-radius:999px;padding:8px 30px 8px 14px;min-height:40px;appearance:none;-webkit-appearance:none;cursor:pointer;transition:border-color .3s var(--ease),background-color .3s var(--ease);background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cpath d='M2.5 4.5L6 8l3.5-3.5' stroke='%2352607A' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 11px center;background-size:12px}
+.langs select:hover{border-color:var(--ink);background-color:rgba(14,27,51,.04)}
 
-.btn{display:inline-flex;align-items:center;gap:10px;font-family:var(--display);font-weight:700;font-size:1rem;text-decoration:none;border-radius:10px;padding:13px 20px;min-height:48px;border:1px solid transparent;cursor:pointer;transition:transform .12s ease,background .12s ease,box-shadow .12s ease,border-color .12s}
-.btn-main{background:var(--blue);color:#fff;box-shadow:0 1px 2px rgba(14,27,51,.2)}
-.btn-main:hover{background:#143FB5;transform:translateY(-1px);box-shadow:0 6px 16px -6px rgba(27,79,216,.6)}
-.btn-main:active{transform:translateY(1px)}
+/* ---------- buttons ---------- */
+.btn{display:inline-flex;align-items:center;gap:10px;font-family:var(--display);font-weight:700;font-size:1rem;text-decoration:none;border-radius:999px;padding:14px 26px;min-height:52px;border:1px solid transparent;cursor:pointer;transition:transform .4s var(--ease),background-color .3s var(--ease),box-shadow .4s var(--ease),border-color .3s var(--ease),color .3s var(--ease)}
+.btn-main{background:var(--blue);color:#fff;box-shadow:0 12px 28px -14px rgba(27,79,216,.75)}
+.btn-main:hover{background:#143FB5;transform:translateY(-2px);box-shadow:0 20px 38px -16px rgba(27,79,216,.8)}
 .btn-quiet{background:var(--card);color:var(--ink);border-color:var(--line)}
-.btn-quiet:hover{border-color:var(--ink)}
+.btn-quiet:hover{border-color:var(--ink);transform:translateY(-2px);box-shadow:0 14px 28px -16px rgba(14,27,51,.35)}
+.btn:active{transform:scale(.95)}
 .btn svg{width:20px;height:20px;flex:none}
+.btn-main::after,.btn-quiet::after,.join a::after{content:"";width:1.05em;height:1.05em;flex:none;background:currentColor;-webkit-mask:var(--arr-ur) center/contain no-repeat;mask:var(--arr-ur) center/contain no-repeat;transition:transform .4s var(--ease)}
+.btn-quiet::after{-webkit-mask-image:var(--arr-dn);mask-image:var(--arr-dn)}
+.btn-main:hover::after{transform:translate(3px,-3px)}
+.btn-quiet:hover::after{transform:translateY(3px)}
 
-.hero{padding:64px 0 72px;background:var(--paper);border-bottom:1px solid var(--line)}
-.hero .wrap{display:grid;grid-template-columns:minmax(0,1fr);gap:52px}
-.hero-copy{max-width:800px}
-.hero h1{margin-bottom:22px}
-.hero .lead{margin-bottom:30px;color:var(--ink-soft)}
+/* ---------- hero ---------- */
+.hero{position:relative;overflow:hidden;isolation:isolate;padding:clamp(7.5rem,13vw,10.5rem) 0 calc(var(--mf)*.62 + 2.5rem);background:radial-gradient(70rem 34rem at 88% -8%,rgba(27,79,216,.09),transparent 62%),radial-gradient(52rem 28rem at -6% 38%,rgba(15,123,88,.07),transparent 62%),var(--paper);border-bottom:1px solid var(--line)}
+.hero .wrap{position:relative;z-index:1;display:grid;grid-template-columns:minmax(0,1fr);gap:clamp(3.5rem,6vw,6rem)}
+.hero-copy{max-width:64rem}
+.hero h1{margin-bottom:clamp(1.5rem,2.4vw,2.25rem)}
+.hero .lead{margin-bottom:clamp(2rem,3vw,2.75rem);color:var(--ink-soft)}
 .hero .lead .mark{color:var(--ink)}
-.cta{display:flex;flex-wrap:wrap;gap:12px;margin-bottom:24px}
-.facts{display:flex;flex-wrap:wrap;gap:8px 22px;list-style:none;padding:0;margin:0;color:var(--ink-soft);font-size:.95rem}
+.cta{display:flex;flex-wrap:wrap;gap:14px;margin-bottom:clamp(1.75rem,2.6vw,2.5rem)}
+.facts{display:flex;flex-wrap:wrap;gap:10px 28px;list-style:none;padding:0;margin:0;color:var(--ink-soft);font-size:.95rem}
 .facts li{display:flex;align-items:center;gap:8px}
 .facts svg{width:16px;height:16px;color:var(--mint);flex:none}
+.hero-fx{position:absolute;inset:0;z-index:0;pointer-events:none}
+.orbs{position:absolute;inset:0}  /* orbs sit at fixed rem offsets, so late content above them never makes them jump */
+.orb{position:absolute;aspect-ratio:1;border-radius:50%;background:radial-gradient(circle at 30% 26%,rgba(255,255,255,.95),rgba(27,79,216,.15) 46%,rgba(27,79,216,.04) 78%);border:1px solid rgba(255,255,255,.85);box-shadow:inset 0 0 46px rgba(255,255,255,.75),0 34px 70px -34px rgba(27,79,216,.32)}
+.o1{top:6rem;left:3%;width:clamp(7rem,17vw,16rem);animation:drift1 16s ease-in-out infinite}
+.o2{top:13rem;right:5%;width:clamp(5rem,12vw,12rem);border-radius:42%;background:radial-gradient(circle at 30% 26%,rgba(255,255,255,.95),rgba(15,123,88,.16) 46%,rgba(15,123,88,.04) 78%);box-shadow:inset 0 0 40px rgba(255,255,255,.75),0 34px 70px -34px rgba(15,123,88,.32);animation:drift2 21s ease-in-out infinite}
+.o3{top:23rem;left:58%;width:clamp(3.5rem,7vw,7rem);animation:drift3 26s ease-in-out infinite}
+.o4{top:5rem;left:56%;width:clamp(2.5rem,4.5vw,4.5rem);border-radius:45%;background:radial-gradient(circle at 30% 26%,rgba(255,255,255,.95),rgba(15,123,88,.14) 55%,rgba(15,123,88,.03));animation:drift2 18s ease-in-out infinite}
+.o5{top:38rem;right:1.5%;width:clamp(3rem,5.5vw,5.5rem);animation:drift1 23s ease-in-out infinite reverse}
+@keyframes drift1{0%,100%{transform:translate(0,0) rotate(0)}50%{transform:translate(30px,-40px) rotate(8deg)}}
+@keyframes drift2{0%,100%{transform:translate(0,0) rotate(0)}50%{transform:translate(-40px,30px) rotate(-6deg)}}
+@keyframes drift3{0%,100%{transform:translate(0,0) scale(1)}50%{transform:translate(20px,50px) scale(1.06)}}
+/* the giant wordmark, cropped at the bottom edge of its box */
+.mega{font-family:var(--display);font-weight:500;font-size:var(--mf);line-height:.8;letter-spacing:-.05em;text-align:center;white-space:nowrap;color:rgba(14,27,51,.055);-webkit-text-stroke:1px rgba(14,27,51,.06);user-select:none;-webkit-user-select:none}
+.hero .mega{position:absolute;left:0;right:0;bottom:calc(var(--mf)*-.2)}
+.mega-wrap{overflow:hidden;height:calc(var(--mf)*.6);margin-top:clamp(2rem,4vw,3.5rem)}
 
 .appfig{margin:0}
-.appwin{background:var(--card);border:1px solid var(--line);border-radius:16px;box-shadow:var(--shadow);overflow:hidden}
+.appwin{background:var(--card);border:1px solid var(--line);border-radius:var(--r-lg);box-shadow:var(--shadow-xl);overflow:hidden}
 .aw-bar{display:flex;align-items:center;gap:7px;padding:12px 16px;border-bottom:1px solid var(--line);background:var(--card);font-family:var(--display);font-weight:700;font-size:.95rem}
 .aw-bar i{width:10px;height:10px;border-radius:50%;background:var(--line);flex:none}
 .aw-bar span{margin-left:8px}
@@ -120,12 +153,12 @@ p{margin:0;max-width:64ch}
 .aw-head .av{width:34px;height:34px;flex:none}
 .aw-head b{display:block;font-family:var(--display);line-height:1.2}
 .aw-head small{display:block;color:var(--ink-soft);font-size:.82rem;line-height:1.3}
-.aw-field{margin:0 20px 18px;border:1px solid var(--line);border-radius:12px;padding:8px 8px 8px 16px;display:flex;align-items:center;justify-content:space-between;gap:12px;color:var(--ink-soft);font-size:.95rem;background:var(--card)}
+.aw-field{margin:0 20px 20px;border:1px solid var(--line);border-radius:14px;padding:8px 8px 8px 16px;display:flex;align-items:center;justify-content:space-between;gap:12px;color:var(--ink-soft);font-size:.95rem;background:var(--card)}
 .aw-field span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .aw-field i{width:34px;height:34px;border-radius:9px;background:var(--blue);color:#fff;display:grid;place-items:center;flex:none}
 .aw-field svg{width:17px;height:17px}
-.aw-cap{margin-top:14px;font-size:.88rem;color:var(--ink-soft);max-width:none}
-.chat{flex:1;padding:18px 22px;display:flex;flex-direction:column;gap:12px;min-height:380px;background:var(--paper)}
+.aw-cap{margin-top:20px;font-size:.88rem;color:var(--ink-soft);max-width:none}
+.chat{flex:1;padding:22px 26px;display:flex;flex-direction:column;gap:14px;min-height:400px;background:var(--paper)}
 .msg{display:flex;gap:10px;align-items:flex-start;max-width:92%}
 .msg .av{width:34px;height:34px;flex:none}
 .msg .bub{max-width:560px;background:var(--card);border:1px solid var(--line);border-radius:4px 14px 14px 14px;padding:10px 14px;font-size:.95rem;line-height:1.45}
@@ -139,8 +172,8 @@ p{margin:0;max-width:64ch}
 .card-ask dt{color:var(--ink-soft)}
 .card-ask dd{margin:0}
 .card-ask .row{display:flex;gap:10px;flex-wrap:wrap}
-.card-ask button{font:inherit;font-family:var(--display);font-weight:700;font-size:.95rem;border-radius:8px;padding:10px 16px;min-height:44px;border:1px solid var(--line);cursor:pointer;transition:transform .1s,background .12s,border-color .12s}
-.card-ask button:active{transform:translateY(1px)}
+.card-ask button{font:inherit;font-family:var(--display);font-weight:700;font-size:.95rem;border-radius:8px;padding:10px 16px;min-height:44px;border:1px solid var(--line);cursor:pointer;transition:transform .3s var(--ease),background-color .3s var(--ease),border-color .3s var(--ease)}
+.card-ask button:active{transform:scale(.95)}
 .card-ask .yes{background:var(--mint);color:#fff;border-color:var(--mint)}
 .card-ask .yes:hover{background:#0B6347}
 .card-ask .no{background:var(--card);color:var(--ink)}
@@ -156,110 +189,150 @@ p{margin:0;max-width:64ch}
 .tries{border-top:1px solid var(--line);padding:14px 20px;background:var(--card)}
 .tries p{font-size:.85rem;color:var(--ink-soft);margin-bottom:8px}
 .tries div{display:flex;flex-wrap:wrap;gap:8px}
-.tries button{max-width:100%;font:inherit;font-size:.9rem;text-align:left;background:var(--card);border:1px solid var(--line);border-radius:999px;padding:9px 14px;min-height:44px;cursor:pointer;color:var(--ink);transition:border-color .12s,background .12s}
+.tries button{max-width:100%;font:inherit;font-size:.9rem;text-align:left;background:var(--card);border:1px solid var(--line);border-radius:999px;padding:9px 14px;min-height:44px;cursor:pointer;color:var(--ink);transition:border-color .3s var(--ease),background-color .3s var(--ease),color .3s var(--ease)}
 .tries button:hover{border-color:var(--blue);background:var(--blue-tint)}
 .tries button[aria-pressed="true"]{background:var(--ink);color:#fff;border-color:var(--ink)}
 
-.sec{padding:96px 0}
+
+/* ---------- sections ---------- */
+.sec{padding:var(--sec) 0}
 .sec.alt{background:var(--paper);border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
-.sec.dark{background:var(--ink);color:#fff}
+.sec.dark{position:relative;overflow:hidden;background:radial-gradient(60rem 28rem at 92% -6%,rgba(27,79,216,.3),transparent 62%),radial-gradient(44rem 24rem at -8% 108%,rgba(15,123,88,.22),transparent 62%),var(--ink);color:#fff}
 .sec.dark .soft{color:#AEBBD2}
 .sec.dark a{color:#fff}
-.head{display:grid;gap:18px;margin-bottom:48px}
+.head{display:grid;gap:clamp(1.25rem,2vw,1.75rem);margin-bottom:var(--head-gap)}
 .head .lead{color:var(--ink-soft)}
+.head p:not(.lead){color:var(--ink-soft);max-width:46rem}
 .sec.dark .head .lead{color:#C9D3E5}
-.split{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:64px;align-items:center}
-.stack{display:grid;gap:18px}
+.split{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:clamp(3rem,7vw,7rem);align-items:center}
+.stack{display:grid;gap:clamp(1.25rem,2vw,1.75rem)}
 
-.three{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:32px;margin-top:8px}
-.three article{display:grid;gap:10px;align-content:start}
-.three svg{width:100%;height:auto;border:1px solid var(--line);border-radius:14px;background:var(--paper);margin-bottom:6px}
+.three{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:clamp(2.25rem,4vw,3.5rem)}
+.three article{display:grid;gap:12px;align-content:start}
+.three svg{width:100%;height:auto;border:1px solid var(--line);border-radius:var(--r-md);background:var(--paper);margin-bottom:10px;transition:border-color .5s var(--ease),box-shadow .5s var(--ease)}
+.three article:hover svg{border-color:#C5CEDC;box-shadow:var(--shadow)}
 .three p{color:var(--ink-soft)}
-.versus{margin-top:56px;display:grid;grid-template-columns:1fr 1fr;border:1px solid var(--line);border-radius:14px;overflow:hidden}
-.versus div{padding:24px 28px;display:grid;gap:8px;align-content:start;color:var(--ink-soft)}
+.versus{margin-top:clamp(4rem,7vw,6rem);display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);border:1px solid var(--line);border-radius:var(--r-lg);overflow:hidden;box-shadow:var(--shadow)}
+.versus div{padding:clamp(1.75rem,3vw,2.5rem);display:grid;gap:10px;align-content:start;color:var(--ink-soft)}
 .versus div+div{background:var(--blue-tint);border-left:1px solid var(--line);color:var(--ink)}
-.versus strong{font-family:var(--display);font-size:1.1rem;color:var(--ink)}
+.versus strong{font-family:var(--display);font-size:1.2rem;color:var(--ink)}
 
-.team{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
-.mem{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:20px;display:grid;grid-template-columns:44px 1fr;gap:10px 14px;align-content:start;transition:transform .14s ease,box-shadow .14s ease,border-color .14s}
-.mem:hover{transform:translateY(-2px);box-shadow:var(--shadow);border-color:#C5CEDC}
+.team{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:clamp(1rem,1.8vw,1.5rem)}
+.team-note{margin-top:clamp(1.75rem,3vw,2.5rem)}
+.mem{background:var(--card);border:1px solid var(--line);border-radius:var(--r-md);padding:clamp(1.4rem,2vw,1.75rem);display:grid;grid-template-columns:44px 1fr;gap:12px 16px;align-content:start;transition:transform .5s var(--ease),box-shadow .5s var(--ease),border-color .5s var(--ease)}
+.mem:hover{transform:translateY(-4px);box-shadow:var(--shadow);border-color:#C5CEDC}
 .mem .av{width:44px;height:44px}
 .mem h3{align-self:center}
 .mem h3 span{display:block;font-family:var(--body);font-weight:400;font-size:.88rem;color:var(--ink-soft);letter-spacing:0}
 .mem p{grid-column:1/-1;font-size:.95rem;color:var(--ink-soft)}
-.mem q{grid-column:1/-1;quotes:none;font-size:.9rem;border-top:1px solid var(--line);padding-top:10px;color:var(--ink)}
-.mem.boss{grid-column:span 3;grid-template-columns:56px minmax(0,.7fr) minmax(0,1.3fr);align-items:center;background:var(--ink);border-color:var(--ink);color:#fff;gap:10px 24px;padding:26px}
+.mem q{grid-column:1/-1;quotes:none;font-size:.9rem;border-top:1px solid var(--line);padding-top:12px;color:var(--ink)}
+.mem.boss{grid-column:span 3;grid-template-columns:56px minmax(0,.7fr) minmax(0,1.3fr);align-items:center;background:var(--ink);border-color:var(--ink);color:#fff;gap:12px 28px;padding:clamp(1.6rem,2.6vw,2.25rem)}
+.mem.boss:hover{border-color:var(--ink)}
+@media (min-width:981px){
+  /* a lone last card (the roster is boss + a multiple of three, plus one) takes the whole row instead of sitting in a corner */
+  .mem:last-child:nth-child(3n+2):not(.boss){grid-column:span 3;grid-template-columns:44px minmax(0,.7fr) minmax(0,1.3fr);align-items:center;gap:12px 28px}
+  .mem:last-child:nth-child(3n+2):not(.boss) p{grid-column:auto}
+}
 .mem.boss .av{width:56px;height:56px}
 .mem.boss h3{font-size:1.5rem}
 .mem.boss h3 span{color:#AEBBD2}
 .mem.boss p{grid-column:auto;font-size:1.02rem;color:#DCE3F0}
 .mem.boss q{border-top-color:rgba(255,255,255,.18);color:#fff}
 
-.steps{list-style:none;margin:0;padding:0;display:grid;gap:24px;counter-reset:s}
-.steps li{counter-increment:s;display:grid;grid-template-columns:36px 1fr;gap:16px;align-items:start}
-.steps li::before{content:counter(s);font-family:var(--display);font-weight:700;font-size:.95rem;width:36px;height:36px;border-radius:50%;display:grid;place-items:center;background:var(--card);border:1px solid var(--ink);font-variant-numeric:tabular-nums}
-.steps h3{margin-bottom:4px}
+.steps{list-style:none;margin:0;padding:0;display:grid;gap:clamp(1.75rem,3vw,2.5rem);counter-reset:s}
+.steps li{counter-increment:s;display:grid;grid-template-columns:40px 1fr;gap:18px;align-items:start}
+.steps li::before{content:counter(s);font-family:var(--display);font-weight:700;font-size:.95rem;width:40px;height:40px;border-radius:50%;display:grid;place-items:center;background:var(--card);border:1px solid var(--ink);font-variant-numeric:tabular-nums}
+.steps h3{margin-bottom:6px}
 .steps p{color:var(--ink-soft)}
-.flow{border:1px solid var(--line);border-radius:16px;background:var(--card);box-shadow:var(--shadow)}
+.flow{border:1px solid var(--line);border-radius:var(--r-lg);background:var(--card);box-shadow:var(--shadow)}
 .flow text{font-family:var(--display);font-weight:700;fill:var(--ink)}
 .flow .wire{stroke:#9AA8BF;stroke-width:1.5;fill:none;stroke-dasharray:4 6;animation:run 1.6s linear infinite}
 @keyframes run{to{stroke-dashoffset:-20}}
 
-.buttons5{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px;margin:0 0 48px;padding:0;list-style:none}
-.buttons5 li{border:1px solid rgba(255,255,255,.2);border-radius:12px;padding:20px 12px;display:grid;justify-items:center;gap:10px;font-family:var(--display);font-weight:700;font-size:1.05rem;background:rgba(255,255,255,.04);text-align:center}
-.buttons5 svg{width:28px;height:28px;color:#FF8A73}
-.proof{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:32px}
-.proof h3{margin-bottom:8px}
+/* the five buttons: a full-bleed dark band, one hairline row each */
+.buttons5{counter-reset:b;list-style:none;margin:0 0 clamp(4rem,7vw,6.5rem);padding:0;border-top:1px solid rgba(255,255,255,.16)}
+.buttons5 li{counter-increment:b;display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;gap:clamp(1rem,2.4vw,2rem);padding:clamp(1.2rem,2.4vw,2rem) 0;border-bottom:1px solid rgba(255,255,255,.16);font-family:var(--display);font-weight:500;font-size:clamp(1.7rem,1rem + 3.2vw,3.5rem);line-height:1.1;letter-spacing:-.035em;color:rgba(255,255,255,.82)}
+.buttons5 li:hover{color:#fff;border-bottom-color:rgba(143,194,255,.55)}
+.buttons5 li::after{content:"0" counter(b);font-family:var(--body);font-weight:400;font-size:.85rem;letter-spacing:.06em;color:rgba(255,255,255,.58);transition:color .5s var(--ease)}
+.buttons5 li:hover::after{color:#8FD9BD}
+.buttons5 span{display:block;transition:transform .5s var(--ease)}
+.buttons5 li:hover span{transform:translateX(.6rem)}
+.buttons5 svg{width:clamp(1.7rem,3.2vw,2.5rem);height:auto;aspect-ratio:1;color:#FF8A73;transition:transform .5s var(--ease)}
+.buttons5 li:hover svg{transform:scale(1.12)}
+.proof{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:clamp(2rem,4vw,3.5rem)}
+.proof>div{border-top:1px solid rgba(255,255,255,.16);padding-top:clamp(1.25rem,2vw,1.75rem)}
+.proof h3{margin-bottom:10px}
 .proof p{color:#C9D3E5}
-.score{margin-top:48px;border-top:1px solid rgba(255,255,255,.2);padding-top:32px;display:grid;grid-template-columns:auto 1fr;gap:32px;align-items:center}
-.score b{font-family:var(--display);font-size:clamp(2.8rem,6vw,4.2rem);line-height:1;font-variant-numeric:tabular-nums;letter-spacing:-.03em}
-.score p{color:#C9D3E5}
+.score{margin-top:clamp(4rem,7vw,6rem);border-top:1px solid rgba(255,255,255,.2);padding-top:clamp(2rem,4vw,3rem);display:grid;grid-template-columns:auto minmax(0,1fr);gap:clamp(1.5rem,4vw,3.5rem);align-items:center}
+.score b{font-family:var(--display);font-weight:500;font-size:clamp(3.4rem,8vw,7rem);line-height:1;font-variant-numeric:tabular-nums;letter-spacing:-.05em}
+.score p{color:#C9D3E5;max-width:56ch}
 
-.pass svg{border:1px solid var(--line);border-radius:16px;background:var(--card);box-shadow:var(--shadow)}
+.pass svg{border:1px solid var(--line);border-radius:var(--r-lg);background:var(--card);box-shadow:var(--shadow)}
 .pass text{font-family:var(--display);font-weight:700}
-.todo{list-style:none;padding:0;margin:0;display:grid;gap:10px}
+.todo{list-style:none;padding:0;margin:0;display:grid;gap:12px}
 .todo li{display:grid;grid-template-columns:22px 1fr;gap:10px;align-items:start}
 .todo svg{width:18px;height:18px;margin-top:5px;color:var(--mint)}
 #free .stack p:not(.lead){color:var(--ink-soft)}
 
-.road{list-style:none;padding:0;margin:0;display:grid;grid-template-columns:repeat(5,minmax(0,1fr));border:1px solid var(--line);border-radius:14px;overflow:hidden;background:var(--card)}
-.road li{padding:20px;display:grid;gap:8px;align-content:start;border-left:1px solid var(--line)}
+.road-h{margin-bottom:clamp(1.25rem,2vw,1.75rem)}
+.road-note{margin-top:clamp(1.25rem,2vw,1.75rem)}
+.road{list-style:none;padding:0;margin:0;display:grid;grid-template-columns:repeat(5,minmax(0,1fr));border:1px solid var(--line);border-radius:var(--r-lg);overflow:hidden;background:var(--card);box-shadow:var(--shadow)}
+.road li{padding:clamp(1.4rem,2vw,1.75rem);display:grid;gap:10px;align-content:start;border-left:1px solid var(--line);transition:background-color .5s var(--ease)}
+.road li:hover{background:var(--paper)}
 .road li:first-child{border-left:0;background:#EEF8F4}
-.road b{font-family:var(--display);font-size:1.25rem}
+.road b{font-family:var(--display);font-size:1.3rem}
 .road .tag{justify-self:start;font-size:.78rem;border-radius:999px;padding:2px 10px;border:1px solid var(--line);color:var(--ink-soft)}
 .road li:first-child .tag{background:var(--mint);color:#fff;border-color:var(--mint)}
 .road p{font-size:.92rem;color:var(--ink-soft)}
 
-.code{background:var(--ink);color:#E6ECF7;border-radius:14px;padding:22px 24px;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:.88rem;line-height:1.75;white-space:pre-wrap;overflow-wrap:anywhere}
+.code{background:var(--ink);color:#E6ECF7;border-radius:var(--r-lg);padding:clamp(1.5rem,2.4vw,2rem);font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:.88rem;line-height:1.8;white-space:pre-wrap;overflow-wrap:anywhere;box-shadow:var(--shadow-xl)}
 .code .c{color:#8C9CB8}
-.copy{font:inherit;font-family:var(--display);font-weight:700;font-size:.95rem;margin-top:12px;background:var(--card);border:1px solid var(--line);border-radius:8px;padding:10px 16px;min-height:44px;cursor:pointer;color:var(--ink);transition:border-color .12s}
-.copy:hover{border-color:var(--ink)}
-.needs{display:grid;gap:10px;margin-top:8px}
-.join{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;margin-top:64px}
-.join a{display:grid;gap:8px;align-content:start;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:22px;color:var(--ink-soft);text-decoration:none;transition:transform .14s,box-shadow .14s,border-color .14s}
-.join a:hover{transform:translateY(-2px);box-shadow:var(--shadow);border-color:#C5CEDC}
+.copy{font:inherit;font-family:var(--display);font-weight:700;font-size:.95rem;margin-top:16px;background:var(--card);border:1px solid var(--line);border-radius:999px;padding:10px 22px;min-height:46px;cursor:pointer;color:var(--ink);transition:border-color .3s var(--ease),transform .4s var(--ease),box-shadow .4s var(--ease)}
+.copy:hover{border-color:var(--ink);transform:translateY(-2px);box-shadow:0 12px 24px -14px rgba(14,27,51,.4)}
+.copy:active{transform:scale(.95)}
+.needs{display:grid;gap:12px;margin-top:6px}
+.join{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:clamp(1rem,1.8vw,1.5rem);margin-top:clamp(4.5rem,8vw,7rem)}
+.join a{position:relative;display:grid;gap:8px;align-content:start;background:var(--card);border:1px solid var(--line);border-radius:var(--r-md);padding:clamp(1.5rem,2.2vw,2rem);color:var(--ink-soft);text-decoration:none;transition:transform .5s var(--ease),box-shadow .5s var(--ease),border-color .5s var(--ease)}
+.join a:hover{transform:translateY(-4px);box-shadow:var(--shadow);border-color:#C5CEDC}
+.join a::after{position:absolute;top:clamp(1.5rem,2.2vw,2rem);right:clamp(1.5rem,2.2vw,2rem);width:20px;height:20px;color:var(--ink-soft)}
+.join a:hover::after{transform:translate(3px,-3px);color:var(--blue)}
 .join svg{width:26px;height:26px;color:var(--blue)}
-.join strong{font-family:var(--display);font-size:1.1rem;color:var(--ink)}
+.join strong{font-family:var(--display);font-size:1.15rem;color:var(--ink)}
 
-.faq{display:grid;max-width:820px;border-top:1px solid var(--line)}
-.faq details{border-bottom:1px solid var(--line)}
-.faq summary{font-family:var(--display);font-weight:700;font-size:1.08rem;padding:20px 0;cursor:pointer;list-style:none;display:flex;justify-content:space-between;gap:16px;align-items:center}
+.band{background:#FFF4D1;border-top:1px solid #EFD98F;border-bottom:1px solid #EFD98F;padding:clamp(4.5rem,8vw,7rem) 0}
+.band .wrap{display:flex;align-items:center;justify-content:space-between;gap:clamp(2rem,4vw,3rem);flex-wrap:wrap}
+.band h2{margin-bottom:clamp(.75rem,1.4vw,1.1rem)}
+.band .lead{color:var(--ink)}
+.btn-coffee{background:var(--ink);color:#fff;font-size:1.2rem;padding:18px 34px;min-height:64px;box-shadow:0 14px 32px -14px rgba(14,27,51,.7)}
+.btn-coffee:hover{background:#1B2B4B;transform:translateY(-3px);box-shadow:0 22px 40px -16px rgba(14,27,51,.75)}
+.btn-coffee svg{width:24px;height:24px;color:#FF8FA8}
+
+.faq{display:grid;max-width:56rem;border-top:1px solid var(--line)}
+.faq details{border-bottom:1px solid var(--line);transition:border-color .4s var(--ease)}
+.faq details:hover{border-bottom-color:#B3BFD3}
+.faq summary{font-family:var(--display);font-weight:700;font-size:1.15rem;padding:clamp(1.3rem,2.2vw,1.75rem) 0;cursor:pointer;list-style:none;display:flex;justify-content:space-between;gap:20px;align-items:center;transition:color .4s var(--ease)}
+.faq summary:hover{color:var(--blue)}
 .faq summary::-webkit-details-marker{display:none}
-.faq summary::after{content:"+";font-size:1.4rem;font-weight:400;line-height:1;flex:none;color:var(--ink-soft)}
-.faq details[open] summary::after{content:"–"}
-.faq details p{padding:0 0 22px;color:var(--ink-soft)}
+.faq summary::after{content:"";width:14px;height:14px;flex:none;color:var(--ink-soft);background:linear-gradient(currentColor,currentColor) center/100% 2px no-repeat,linear-gradient(currentColor,currentColor) center/2px 100% no-repeat;transition:transform .5s var(--ease),color .4s var(--ease)}
+.faq details[open] summary::after{transform:rotate(135deg);color:var(--blue)}
+.faq details[open]>p{animation:faqin .6s var(--ease) both}
+@keyframes faqin{from{opacity:0;transform:translateY(-10px)}to{opacity:1;transform:none}}
+.faq details p{padding:0 0 clamp(1.5rem,2.4vw,2rem);color:var(--ink-soft);max-width:60ch}
 
-footer{padding:48px 0 64px;font-size:.9rem;color:var(--ink-soft);border-top:1px solid var(--line)}
-footer .wrap{display:grid;gap:14px}
+footer{position:relative;overflow:hidden;padding:clamp(4rem,7vw,6rem) 0 0;font-size:.9rem;color:var(--ink-soft);border-top:1px solid var(--line)}
+footer .wrap{display:grid;gap:18px}
 footer p{max-width:90ch}
-footer nav{display:flex;flex-wrap:wrap;gap:8px 22px}
+footer nav{display:flex;flex-wrap:wrap;gap:10px 28px;margin-bottom:6px}
+footer nav a{color:var(--ink);padding:2px 0;text-decoration:underline;text-decoration-color:transparent;text-underline-offset:4px;transition:color .3s var(--ease),text-decoration-color .3s var(--ease)}
+footer nav a:hover{color:var(--blue);text-decoration-color:currentColor}
 footer a{color:var(--ink)}
 
 [data-av]{display:flex;flex:none}
-.fgrid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:40px 28px}
-.fc{display:grid;gap:10px;align-content:start}
+.fgrid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:clamp(3rem,5vw,4.5rem) clamp(1.75rem,3vw,2.75rem)}
+.fc{display:grid;gap:12px;align-content:start}
 .fc p{color:var(--ink-soft);font-size:.96rem}
-.mini{height:196px;background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:16px;overflow:hidden;display:flex;margin-bottom:6px}
+.mini{height:212px;background:var(--paper);border:1px solid var(--line);border-radius:var(--r-md);padding:20px;overflow:hidden;display:flex;margin-bottom:10px;transition:border-color .5s var(--ease),box-shadow .5s var(--ease)}
+.fc:hover .mini{border-color:#C5CEDC;box-shadow:var(--shadow)}
 .ln{display:block;height:7px;border-radius:4px;background:#DDE3EC}
 .ln.sh{width:60%}
 .ln.go{height:20px;width:55%;background:var(--blue);border-radius:5px;margin-top:4px}
@@ -317,12 +390,12 @@ footer a{color:var(--ink)}
 .m-tm .new i{width:28px;height:28px;display:grid;place-items:center;border-radius:8px;background:var(--blue-tint);flex:none}
 .m-tm .new svg{width:15px;height:15px}
 
-.inst{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:36px 20px;counter-reset:n}
-.inst>li{counter-increment:n;display:grid;gap:10px;align-content:start;min-width:0}
-.inst h3{display:flex;gap:10px;align-items:flex-start;margin-top:6px}
+.inst{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:clamp(3rem,5vw,4rem) clamp(1.25rem,2.2vw,2rem);counter-reset:n}
+.inst>li{counter-increment:n;display:grid;gap:12px;align-content:start;min-width:0}
+.inst h3{display:flex;gap:10px;align-items:flex-start;margin-top:10px}
 .inst h3::before{content:counter(n);flex:none;width:30px;height:30px;border-radius:50%;display:grid;place-items:center;font-size:.9rem;border:1px solid var(--ink);background:var(--card);font-variant-numeric:tabular-nums}
 .inst p{color:var(--ink-soft);font-size:.96rem}
-.pnl{height:196px;border-radius:12px;overflow:hidden;border:1px solid var(--line);display:flex;flex-direction:column;min-width:0}
+.pnl{height:200px;border-radius:var(--r-sm);overflow:hidden;border:1px solid var(--line);display:flex;flex-direction:column;min-width:0}
 .tbar{display:flex;align-items:center;gap:6px;padding:9px 12px;border-bottom:1px solid rgba(255,255,255,.12);flex:none}
 .tbar i{width:8px;height:8px;border-radius:50%;background:rgba(255,255,255,.28);flex:none}
 .term{background:var(--ink);border-color:var(--ink);color:#E6ECF7}
@@ -341,23 +414,25 @@ footer a{color:var(--ink)}
 .brw .msg .av{width:28px;height:28px}
 .brw .bub{font-size:.8rem;padding:8px 11px;line-height:1.4}
 
+
+/* ---------- the capsule keeps one line: the section links go first, then the labels ---------- */
 @media (max-width:1279px){
-  .top .wrap{gap:14px}
-  .nav{gap:18px}
+  .nav{display:none}
+  .logo{margin-right:10px}
+}
+@media (max-width:860px){
   .coffee span{position:absolute;width:1px;height:1px;margin:-1px;padding:0;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
   .coffee{padding:8px 12px}
 }
-@media (max-width:1080px){
-  .nav{display:none}
-  .ghlink{margin-left:auto}
-}
 @media (max-width:980px){
-  .hero .wrap,.split{grid-template-columns:minmax(0,1fr);gap:40px}
+  .hero .wrap,.split{grid-template-columns:minmax(0,1fr)}
+  .split{gap:clamp(2.5rem,6vw,4rem)}
   .three,.proof,.join{grid-template-columns:minmax(0,1fr)}
+  .proof>div{padding-top:1.5rem}
   .team{grid-template-columns:repeat(2,minmax(0,1fr))}
-  .mem.boss{grid-column:span 2;grid-template-columns:56px 1fr}
+  .mem.boss{grid-column:span 2;grid-template-columns:56px minmax(0,1fr)}
   .mem.boss p{grid-column:1/-1}
-  .road{grid-template-columns:1fr}
+  .road{grid-template-columns:minmax(0,1fr)}
   .road li{border-left:0;border-top:1px solid var(--line)}
   .road li:first-child{border-top:0}
   .fgrid,.inst{grid-template-columns:repeat(2,minmax(0,1fr))}
@@ -374,21 +449,17 @@ footer a{color:var(--ink)}
 }
 @media (max-width:620px){
   body{font-size:16px}
-  .wrap{padding:0 18px}
-  .sec{padding:64px 0}
-  .hero{padding:36px 0 56px}
   .team{grid-template-columns:minmax(0,1fr)}
   .mem.boss{grid-column:auto}
-  .buttons5{grid-template-columns:repeat(2,minmax(0,1fr))}
-  .buttons5 li:last-child{grid-column:span 2}
-  .versus{grid-template-columns:1fr}
+  .versus{grid-template-columns:minmax(0,1fr)}
   .versus div+div{border-left:0;border-top:1px solid var(--line)}
-  .score{grid-template-columns:1fr;gap:12px}
+  .score{grid-template-columns:minmax(0,1fr);gap:1rem}
   .cta .btn{width:100%;justify-content:center}
   .card-ask,.done{margin-left:0}
   .ghlink .ght{position:absolute;width:1px;height:1px;margin:-1px;padding:0;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
-  .top .wrap{gap:10px}
-  .coffee,.ghlink{padding:8px 10px}
+  .top .wrap{gap:3px;padding-left:12px}
+  .coffee,.ghlink{padding:8px 11px}
+  .langs select{padding-left:12px}
   .btn-coffee{width:100%;justify-content:center}
   .aw-bar{flex-wrap:wrap}
   .aw-bar em{flex-basis:100%;text-align:left;margin:2px 0 0}
@@ -399,13 +470,41 @@ footer a{color:var(--ink)}
   .fgrid,.inst{grid-template-columns:minmax(0,1fr)}
   .pnl{height:auto}
   .term .sp{margin-top:10px}
+  .orb{opacity:.7}
+  .o3,.o5{display:none}
+  .buttons5 li{grid-template-columns:auto minmax(0,1fr) auto}
 }
 @media (max-width:440px){
   .logo span{display:none}
+  .logo{margin-right:4px}
+}
+
+/* ---------- reveal on scroll ----------
+   Hidden states exist only while JavaScript has marked the page (.js) and nothing has gone wrong (.no-rv is a 3 s failsafe).
+   Only opacity, translate, scale and filter move. The transition list on .in also keeps the hover transitions of cards and buttons. */
+.js:not(.no-rv) .rv{opacity:0;translate:0 48px;filter:blur(10px)}
+.js:not(.no-rv) .rv.rv-panel{translate:0 64px;scale:.97;filter:blur(6px)}
+.js:not(.no-rv) .rv.in{opacity:1;translate:none;scale:none;filter:none;transition:opacity .9s var(--ease) var(--d,0ms),translate .9s var(--ease) var(--d,0ms),scale 1.1s var(--ease) var(--d,0ms),filter .9s var(--ease) var(--d,0ms),transform .5s var(--ease),box-shadow .5s var(--ease),border-color .5s var(--ease),background-color .3s var(--ease),color .3s var(--ease)}
+/* headings: word by word */
+.js:not(.no-rv) .wd:not(.wsp){opacity:0}
+.js:not(.no-rv) .wd .w{display:inline-block;opacity:0;translate:0 .3em;filter:blur(8px)}
+.js:not(.no-rv) .wd.in .w{opacity:1;translate:none;filter:none;transition:opacity .8s var(--ease) calc(var(--bd,0ms) + var(--w,0)*45ms),translate .8s var(--ease) calc(var(--bd,0ms) + var(--w,0)*45ms),filter .8s var(--ease) calc(var(--bd,0ms) + var(--w,0)*45ms)}
+/* mocks settle from slightly large to rest */
+.js:not(.no-rv) .mini>*{scale:1.06}
+.js:not(.no-rv) .fc.in .mini>*{scale:1;transition:scale 1.3s var(--ease) calc(var(--d,0ms) + .1s)}
+@media print{
+  .js .rv,.js .wd,.js .wd .w,.js .mini>*{opacity:1!important;translate:none!important;scale:none!important;filter:none!important}
+  .top{display:none}
 }
 @media (prefers-reduced-motion:reduce){
   html{scroll-behavior:auto}
-  *{animation:none!important;transition:none!important}
+  *,*::before,*::after{animation:none!important}
+  .orbs,.mega{transform:none!important}
+  /* no drift, no parallax, no blur or travel: a plain fade of 0.4 s is all that is left */
+  .js:not(.no-rv) .rv,.js:not(.no-rv) .rv.rv-panel{translate:none;scale:none;filter:none}
+  .js:not(.no-rv) .rv.in{transition:opacity .4s ease!important}
+  .js:not(.no-rv) .mini>*{scale:none}
+  .btn:hover,.coffee:hover,.ghlink:hover,.mem:hover,.join a:hover,.copy:hover,.btn:active,.coffee:active,.ghlink:active,.btn-main:hover::after,.btn-quiet:hover::after,.join a:hover::after,.buttons5 li:hover span,.buttons5 li:hover svg{transform:none}
 }
 </style>
 </head>
@@ -452,21 +551,25 @@ footer a{color:var(--ink)}
 <main id="main">
 
 <section class="hero">
+  <div class="hero-fx" aria-hidden="true">
+    <div class="orbs" data-par="lag:.1"><i class="orb o1"></i><i class="orb o2"></i><i class="orb o3"></i><i class="orb o4"></i><i class="orb o5"></i></div>
+    <div class="mega" data-par="rise:.12">FreeDuet</div>
+  </div>
   <div class="wrap">
     <div class="hero-copy">
-      <h1 data-i="h1">Your own team of AI assistants.</h1>
-      <p class="lead" data-i="lead">FreeDuet runs on your own computer. One assistant sorts your mail, one reads contracts, one books the restaurant. You say what you need, they do the work, and they <span class="mark">never send, pay or delete anything without asking you first</span>.</p>
-      <div class="cta">
+      <h1 class="wd" data-d="100" data-i="h1">Your own team of AI assistants.</h1>
+      <p class="lead rv" data-d="420" data-i="lead">FreeDuet runs on your own computer. One assistant sorts your mail, one reads contracts, one books the restaurant. You say what you need, they do the work, and they <span class="mark">never send, pay or delete anything without asking you first</span>.</p>
+      <div class="cta rv" data-d="540">
         <a class="btn btn-main" href="https://github.com/MarcoDeliaBot/freeduet"><svg aria-hidden="true"><use href="#i-gh"/></svg><span data-i="cta1">Get FreeDuet on GitHub</span></a>
         <a class="btn btn-quiet" href="#how" data-i="cta2">See how it works</a>
       </div>
-      <ul class="facts">
+      <ul class="facts rv" data-d="640">
         <li><svg aria-hidden="true"><use href="#i-check"/></svg><span data-i="f1">Free and open source</span></li>
         <li><svg aria-hidden="true"><use href="#i-check"/></svg><span data-i="f2">No API key to buy</span></li>
         <li><svg aria-hidden="true"><use href="#i-check"/></svg><span data-i="f3">Runs on your own computer</span></li>
       </ul>
     </div>
-    <figure class="appfig">
+    <figure class="appfig rv rv-panel" data-d="420">
       <div class="appwin" role="group" aria-label="FreeDuet">
         <div class="aw-bar"><i></i><i></i><i></i><span>FreeDuet</span><em data-i="demoTag">Demo with made-up examples</em></div>
         <div class="aw-body">
@@ -493,12 +596,12 @@ footer a{color:var(--ink)}
 <section class="sec alt" id="what">
   <div class="wrap">
     <div class="head">
-      <h2 data-i="w_h">Too much to do, and only one of you?</h2>
-      <p class="lead" data-i="w_p1">Emails, invoices, bookings, contracts, that reply you promised last week. One head, two hands, a hundred things to do.</p>
-      <p data-i="w_p2">FreeDuet is like a small office of assistants inside your computer. Each assistant is good at exactly one job. You talk to Iris, the one who runs the team, and she gets everybody moving.</p>
+      <h2 class="wd" data-i="w_h">Too much to do, and only one of you?</h2>
+      <p class="lead rv" data-i="w_p1">Emails, invoices, bookings, contracts, that reply you promised last week. One head, two hands, a hundred things to do.</p>
+      <p class="rv" data-i="w_p2">FreeDuet is like a small office of assistants inside your computer. Each assistant is good at exactly one job. You talk to Iris, the one who runs the team, and she gets everybody moving.</p>
     </div>
     <div class="three">
-      <article>
+      <article class="rv">
         <svg viewBox="0 0 320 190" role="img" aria-labelledby="t3a"><title id="t3a" data-i="w_a_alt">One coordinator connected to four specialists</title>
           <path d="M160 82v22M62 104h196M62 104v16M127 104v16M193 104v16M258 104v16" stroke="#9AA8BF" stroke-width="1.5" fill="none"/>
           <rect x="112" y="38" width="96" height="44" rx="10" fill="#0E1B33"/><text x="160" y="66" text-anchor="middle" fill="#fff" font-family="Schibsted Grotesk,IBM Plex Sans,sans-serif" font-weight="700" font-size="16">Iris</text>
@@ -509,7 +612,7 @@ footer a{color:var(--ink)}
         <h3 data-i="w_a_h">A team, not one chatbot</h3>
         <p data-i="w_a_p">A chatbot is one clever friend who answers questions. FreeDuet is a whole group project where everybody really does their part.</p>
       </article>
-      <article>
+      <article class="rv">
         <svg viewBox="0 0 320 190" role="img" aria-labelledby="t3b"><title id="t3b" data-i="w_b_alt">A browser window with a button being clicked</title>
           <rect x="50" y="28" width="220" height="134" rx="10" fill="#fff" stroke="#C9D2E0" stroke-width="1.5"/><path d="M50 52h220" stroke="#DDE3EC" stroke-width="1.5"/><circle cx="66" cy="40" r="3.5" fill="#C9D2E0"/><circle cx="78" cy="40" r="3.5" fill="#C9D2E0"/><circle cx="90" cy="40" r="3.5" fill="#C9D2E0"/><rect x="108" y="35" width="120" height="10" rx="5" fill="#EEF1F6"/>
           <rect x="70" y="70" width="110" height="9" rx="4.5" fill="#DDE3EC"/><rect x="70" y="88" width="170" height="9" rx="4.5" fill="#EEF1F6"/><rect x="70" y="106" width="140" height="9" rx="4.5" fill="#EEF1F6"/><rect x="70" y="128" width="84" height="24" rx="6" fill="#1B4FD8"/>
@@ -518,7 +621,7 @@ footer a{color:var(--ink)}
         <h3 data-i="w_b_h">It does things, it doesn't just talk</h3>
         <p data-i="w_b_p">Every assistant has its own desk: a separate browser, away from yours. There it can look up prices, fill in forms and prepare drafts.</p>
       </article>
-      <article>
+      <article class="rv">
         <svg viewBox="0 0 320 190" aria-hidden="true">
           <rect x="56" y="36" width="208" height="118" rx="10" fill="#fff" stroke="#EBC3BA" stroke-width="1.5"/><rect x="56" y="36" width="4" height="118" fill="#C8402A"/>
           <rect x="76" y="56" width="90" height="9" rx="4.5" fill="#C8402A" opacity=".8"/><rect x="76" y="78" width="160" height="8" rx="4" fill="#DDE3EC"/><rect x="76" y="94" width="120" height="8" rx="4" fill="#EEF1F6"/>
@@ -529,7 +632,7 @@ footer a{color:var(--ink)}
         <p data-i="w_c_p">The assistants prepare. You decide. Nothing important leaves your computer until you press Approve.</p>
       </article>
     </div>
-    <div class="versus">
+    <div class="versus rv">
       <div><strong data-i="v_a_h">Without FreeDuet</strong><p data-i="v_a_p">You open the mail, read forty messages, hunt for the invoice, compare three flights, write the reply, forget the birthday present.</p></div>
       <div><strong data-i="v_b_h">With FreeDuet</strong><p data-i="v_b_p">You write one sentence: "Handle everything that came in this morning." Then you read a short report and press Approve where you agree.</p></div>
     </div>
@@ -539,29 +642,29 @@ footer a{color:var(--ink)}
 <section class="sec" id="team">
   <div class="wrap">
     <div class="head">
-      <h2 data-i="t_h">Meet the team. Each one has exactly one job.</h2>
-      <p class="lead" data-i="t_p">Why not one assistant that does everything? For the same reason a football team has a goalkeeper: someone who does one job all day gets very good at it.</p>
+      <h2 class="wd" data-i="t_h">Meet the team. Each one has exactly one job.</h2>
+      <p class="lead rv" data-i="t_p">Why not one assistant that does everything? For the same reason a football team has a goalkeeper: someone who does one job all day gets very good at it.</p>
     </div>
     <div class="team" id="teamGrid"></div>
-    <p class="soft" style="margin-top:22px" data-i="t_note">This is the starting team, not a limit. You can rename them, change how they talk, train your own for exactly the job you need, and we add new ready-made members with each release.</p>
+    <p class="soft team-note rv" data-i="t_note">This is the starting team, not a limit. You can rename them, change how they talk, train your own for exactly the job you need, and we add new ready-made members with each release.</p>
   </div>
 </section>
 
 <section class="sec alt" id="how">
   <div class="wrap">
     <div class="head">
-      <h2 data-i="h_h">What happens after you press Enter</h2>
-      <p class="lead" data-i="h_p">No magic and no secrets. Five steps, always the same, so you always know who is doing what.</p>
+      <h2 class="wd" data-i="h_h">What happens after you press Enter</h2>
+      <p class="lead rv" data-i="h_p">No magic and no secrets. Five steps, always the same, so you always know who is doing what.</p>
     </div>
     <div class="split">
       <ol class="steps">
-        <li><div><h3 data-i="s1h">You write what you need</h3><p data-i="s1p">In your own words and your own language, like a message to a friend.</p></div></li>
-        <li><div><h3 data-i="s2h">Iris picks the right assistant</h3><p data-i="s2p">She reads your request, splits it into pieces and hands each piece to the specialist for that job.</p></div></li>
-        <li><div><h3 data-i="s3h">The assistant works at its own desk</h3><p data-i="s3p">It uses its own browser to search, read and prepare. It treats what it reads as information, never as orders.</p></div></li>
-        <li><div><h3 data-i="s4h">A card asks for your yes</h3><p data-i="s4p">If the job needs a big button (send, pay, sign, book, delete), everything stops and waits for you.</p></div></li>
-        <li><div><h3 data-i="s5h">You get a short report</h3><p data-i="s5p">What was done, what was not done and why, and what the next step is. No walls of text.</p></div></li>
+        <li class="rv"><div><h3 data-i="s1h">You write what you need</h3><p data-i="s1p">In your own words and your own language, like a message to a friend.</p></div></li>
+        <li class="rv"><div><h3 data-i="s2h">Iris picks the right assistant</h3><p data-i="s2p">She reads your request, splits it into pieces and hands each piece to the specialist for that job.</p></div></li>
+        <li class="rv"><div><h3 data-i="s3h">The assistant works at its own desk</h3><p data-i="s3p">It uses its own browser to search, read and prepare. It treats what it reads as information, never as orders.</p></div></li>
+        <li class="rv"><div><h3 data-i="s4h">A card asks for your yes</h3><p data-i="s4p">If the job needs a big button (send, pay, sign, book, delete), everything stops and waits for you.</p></div></li>
+        <li class="rv"><div><h3 data-i="s5h">You get a short report</h3><p data-i="s5p">What was done, what was not done and why, and what the next step is. No walls of text.</p></div></li>
       </ol>
-      <svg class="flow" viewBox="0 0 520 330" role="img" aria-labelledby="flowT"><title id="flowT" data-i="flowAlt">You talk to Iris, Iris hands work to the specialists, Vera checks it, the answer comes back to you</title>
+      <svg class="flow rv rv-panel" viewBox="0 0 520 330" role="img" aria-labelledby="flowT"><title id="flowT" data-i="flowAlt">You talk to Iris, Iris hands work to the specialists, Vera checks it, the answer comes back to you</title>
         <path class="wire" d="M260 58v40"/><path class="wire" d="M260 146v40M70 186h380M70 186v34M165 186v34M260 186v34M355 186v34M450 186v34"/><path class="wire" d="M330 122h60"/>
         <rect x="205" y="18" width="110" height="40" rx="20" fill="#0E1B33"/><text x="260" y="44" text-anchor="middle" font-size="16" style="fill:#fff" data-i="you">You</text>
         <rect x="190" y="98" width="140" height="48" rx="10" fill="#1B4FD8"/><text x="260" y="128" text-anchor="middle" font-size="17" style="fill:#fff">Iris</text>
@@ -576,11 +679,11 @@ footer a{color:var(--ink)}
 <section class="sec" id="features">
   <div class="wrap">
     <div class="head">
-      <h2 data-i="ft_h">Six things worth knowing</h2>
-      <p class="lead" data-i="ft_p">Each small picture shows a real part of FreeDuet. The names and messages in them are made up.</p>
+      <h2 class="wd" data-i="ft_h">Six things worth knowing</h2>
+      <p class="lead rv" data-i="ft_p">Each small picture shows a real part of FreeDuet. The names and messages in them are made up.</p>
     </div>
     <div class="fgrid">
-      <article class="fc">
+      <article class="fc rv">
         <div class="mini m-br" aria-hidden="true">
           <div class="bw"><div class="bwb"><i></i><i></i><i></i><span class="bt" data-i="you">You</span></div><div class="bwc"><span class="ln"></span><span class="ln"></span><span class="ln sh"></span></div></div>
           <div class="bw on"><div class="bwb"><i></i><i></i><i></i><span class="bt">Jules</span></div><div class="bwc"><span class="ln"></span><span class="ln sh"></span><span class="ln go"></span>
@@ -589,7 +692,7 @@ footer a{color:var(--ink)}
         <h3 data-i="fe1h">Its own desk and its own browser</h3>
         <p data-i="fe1p">Each assistant works in a separate browser, away from yours. It can look things up, fill in forms and prepare drafts while you get on with your day.</p>
       </article>
-      <article class="fc">
+      <article class="fc rv">
         <div class="mini m-ap" aria-hidden="true">
           <div class="five"><svg class="hot"><use href="#b-send"/></svg><svg><use href="#b-pay"/></svg><svg><use href="#b-sign"/></svg><svg><use href="#b-book"/></svg><svg><use href="#b-del"/></svg></div>
           <div class="apc"><b data-i="apTitle">Send this email?</b><span class="ln"></span><span class="ln sh"></span><div class="row"><span class="y" data-i="yes">Approve</span><span class="n" data-i="no">Don't do it</span></div></div>
@@ -597,7 +700,7 @@ footer a{color:var(--ink)}
         <h3 data-i="fe2h">Five buttons always ask you</h3>
         <p data-i="fe2p">Send, pay, sign, book and delete wait for your Approve. The program itself blocks them. It is not only a written rule.</p>
       </article>
-      <article class="fc">
+      <article class="fc rv">
         <div class="mini m-rt" aria-hidden="true">
           <div class="wk" id="wk"><span></span><span class="d">M</span><span class="d">T</span><span class="d">W</span><span class="d">T</span><span class="d">F</span><span class="d">S</span><span class="d">S</span>
             <span class="tm">08:30</span><i class="a"></i><i class="a"></i><i class="a"></i><i class="a"></i><i class="a"></i><i class="a"></i><i class="a"></i>
@@ -607,7 +710,7 @@ footer a{color:var(--ink)}
         <h3 data-i="fe3h">Routines on a schedule</h3>
         <p data-i="fe3p">Ask once and a routine repeats, like a summary every morning. Iris starts with one already. If a routine needs one of the five buttons, it waits for you.</p>
       </article>
-      <article class="fc">
+      <article class="fc rv">
         <div class="mini m-si" aria-hidden="true">
           <div class="sp"><svg><use href="#i-lock"/></svg><b>Claude Code</b><span class="ok"><svg><use href="#i-check"/></svg><span data-i="signedIn">Signed in</span></span></div>
           <div class="sp off"><b>API key</b><span data-i="notNeeded">Not needed</span></div>
@@ -615,7 +718,7 @@ footer a{color:var(--ink)}
         <h3 data-i="fe4h">Your plan, no API key</h3>
         <p data-i="fe4p">FreeDuet runs on the Claude subscription you already pay for. You sign in yourself through the official Claude Code app, and there is no key to buy or paste.</p>
       </article>
-      <article class="fc">
+      <article class="fc rv">
         <div class="mini m-pc" aria-hidden="true">
           <div class="pcbox"><span class="pctag"><svg><use href="#i-lock"/></svg><span data-i="yourPc">Your computer</span></span>
             <div class="chips"><span><svg><use href="#i-folder"/></svg>FreeDuet</span><span><svg><use href="#i-db"/></svg><span data-i="convs">Conversations</span></span></div></div>
@@ -624,7 +727,7 @@ footer a{color:var(--ink)}
         <h3 data-i="fe5h">Your conversations stay on your computer</h3>
         <p data-i="fe5p">The app, its database and the assistants' browsers run on your computer, and the conversations are stored there. To think, the assistants use the AI service you signed in to.</p>
       </article>
-      <article class="fc">
+      <article class="fc rv">
         <div class="mini m-tm" aria-hidden="true">
           <ul><li><span data-av="iris"></span><b>Iris</b></li><li><span data-av="mark"></span><b>Mark</b></li><li><span data-av="leo"></span><b>Leo</b></li><li class="new"><i><svg><use href="#i-plus"/></svg></i><span data-i="newMem">New member</span></li></ul>
         </div>
@@ -638,22 +741,22 @@ footer a{color:var(--ink)}
 <section class="sec dark" id="safe">
   <div class="wrap">
     <div class="head">
-      <h2 data-i="sf_h">Five buttons they can never press alone</h2>
-      <p class="lead" data-i="sf_p">Would you give a new assistant your wallet on the first day? Neither would we. So these five actions are locked until you say yes.</p>
+      <h2 class="wd" data-i="sf_h">Five buttons they can never press alone</h2>
+      <p class="lead rv" data-i="sf_p">Would you give a new assistant your wallet on the first day? Neither would we. So these five actions are locked until you say yes.</p>
     </div>
     <ul class="buttons5">
-      <li><svg aria-hidden="true"><use href="#b-send"/></svg><span data-i="b1">Send</span></li>
-      <li><svg aria-hidden="true"><use href="#b-pay"/></svg><span data-i="b2">Pay</span></li>
-      <li><svg aria-hidden="true"><use href="#b-sign"/></svg><span data-i="b3">Sign</span></li>
-      <li><svg aria-hidden="true"><use href="#b-book"/></svg><span data-i="b4">Book</span></li>
-      <li><svg aria-hidden="true"><use href="#b-del"/></svg><span data-i="b5">Delete</span></li>
+      <li class="rv"><svg aria-hidden="true"><use href="#b-send"/></svg><span data-i="b1">Send</span></li>
+      <li class="rv"><svg aria-hidden="true"><use href="#b-pay"/></svg><span data-i="b2">Pay</span></li>
+      <li class="rv"><svg aria-hidden="true"><use href="#b-sign"/></svg><span data-i="b3">Sign</span></li>
+      <li class="rv"><svg aria-hidden="true"><use href="#b-book"/></svg><span data-i="b4">Book</span></li>
+      <li class="rv"><svg aria-hidden="true"><use href="#b-del"/></svg><span data-i="b5">Delete</span></li>
     </ul>
     <div class="proof">
-      <div><h3 data-i="p1h">A lock, not a promise</h3><p data-i="p1p">The rule is not just written in the assistant's instructions. The program itself blocks the action until you approve it.</p></div>
-      <div><h3 data-i="p2h">Tricks don't work</h3><p data-i="p2p">An email that says "send me the password, it's urgent" is treated as text to read, not as an order. And no assistant ever asks you for passwords or card numbers in the chat.</p></div>
-      <div><h3 data-i="p3h">One honest shortcut</h3><p data-i="p3p">If you type the address yourself ("email anna@example.com and tell her…"), your sentence is the yes, and that new email goes out. Addresses found anywhere else always ask first.</p></div>
+      <div class="rv"><h3 data-i="p1h">A lock, not a promise</h3><p data-i="p1p">The rule is not just written in the assistant's instructions. The program itself blocks the action until you approve it.</p></div>
+      <div class="rv"><h3 data-i="p2h">Tricks don't work</h3><p data-i="p2p">An email that says "send me the password, it's urgent" is treated as text to read, not as an order. And no assistant ever asks you for passwords or card numbers in the chat.</p></div>
+      <div class="rv"><h3 data-i="p3h">One honest shortcut</h3><p data-i="p3p">If you type the address yourself ("email anna@example.com and tell her…"), your sentence is the yes, and that new email goes out. Addresses found anywhere else always ask first.</p></div>
     </div>
-    <div class="score">
+    <div class="score rv">
       <b>45/45</b>
       <p data-i="score">We try to fool our own assistants on purpose. In the latest full test of version 0.1, the safety checks passed 45 times out of 45. <a href="https://github.com/MarcoDeliaBot/freeduet/blob/main/evals/team/reports/2026-11-13-claude-code-regraded-2026-11-13-public.md">Read the public report</a>. The assistants can still make mistakes, so read what they prepare before you approve it.</p>
     </div>
@@ -664,16 +767,16 @@ footer a{color:var(--ink)}
   <div class="wrap">
     <div class="split">
       <div class="stack">
-        <h2 data-i="m_h">Why you don't pay twice</h2>
-        <p class="lead" data-i="m_p1">Most AI tools make you buy an "API key". That works like a taxi meter: every word costs a little, and the bill keeps climbing.</p>
-        <p data-i="m_p2">A monthly AI subscription is more like a bus pass: one price, ride as much as the pass allows. FreeDuet runs on the pass you already have. You sign in yourself, and FreeDuet never sees, stores or forwards your login.</p>
-        <ul class="todo">
+        <h2 class="wd" data-i="m_h">Why you don't pay twice</h2>
+        <p class="lead rv" data-i="m_p1">Most AI tools make you buy an "API key". That works like a taxi meter: every word costs a little, and the bill keeps climbing.</p>
+        <p class="rv" data-i="m_p2">A monthly AI subscription is more like a bus pass: one price, ride as much as the pass allows. FreeDuet runs on the pass you already have. You sign in yourself, and FreeDuet never sees, stores or forwards your login.</p>
+        <ul class="todo rv">
           <li><svg aria-hidden="true"><use href="#i-check"/></svg><span data-i="m_l1">Today it works with a Claude subscription, through the official Claude Code app.</span></li>
           <li><svg aria-hidden="true"><use href="#i-check"/></svg><span data-i="m_l2">More subscriptions and local models are planned for the next versions.</span></li>
           <li><svg aria-hidden="true"><use href="#i-check"/></svg><span data-i="m_l3">FreeDuet itself costs nothing: the code is public under the MIT licence.</span></li>
         </ul>
       </div>
-      <div class="pass">
+      <div class="pass rv rv-panel">
         <svg viewBox="0 0 520 290" aria-hidden="true">
           <path d="M60 36v204h420" stroke="#C9D2E0" stroke-width="1.5" fill="none"/><path d="M60 190h420M60 140h420M60 90h420" stroke="#E6EAF1" stroke-dasharray="3 5"/>
           <path d="M60 232C160 222 240 190 320 140S430 76 470 58" stroke="#C8402A" stroke-width="3" fill="none" stroke-linecap="round"/><circle cx="470" cy="58" r="5" fill="#C8402A"/>
@@ -689,49 +792,49 @@ footer a{color:var(--ink)}
 <section class="sec alt" id="goal">
   <div class="wrap">
     <div class="head">
-      <h2 data-i="g_h">The goal: a team for everyone, not only for big companies</h2>
-      <p class="lead" data-i="g_p1">A big company has assistants, lawyers and accountants. A freelancer, a small shop or a family has… themselves. That isn't fair, and now it doesn't have to stay that way.</p>
-      <p data-i="g_p2">We want anybody to have a team: free, open and at home. FreeDuet runs on your own computer and keeps its conversations in a database on that computer. The thinking is done by the AI you already subscribe to.</p>
-      <p data-i="g_p3">Open source means the recipe is public. Anyone can read it, check that it does what it says, and make it better. You don't have to trust us. You can look.</p>
+      <h2 class="wd" data-i="g_h">The goal: a team for everyone, not only for big companies</h2>
+      <p class="lead rv" data-i="g_p1">A big company has assistants, lawyers and accountants. A freelancer, a small shop or a family has… themselves. That isn't fair, and now it doesn't have to stay that way.</p>
+      <p class="rv" data-i="g_p2">We want anybody to have a team: free, open and at home. FreeDuet runs on your own computer and keeps its conversations in a database on that computer. The thinking is done by the AI you already subscribe to.</p>
+      <p class="rv" data-i="g_p3">Open source means the recipe is public. Anyone can read it, check that it does what it says, and make it better. You don't have to trust us. You can look.</p>
     </div>
-    <h3 style="margin-bottom:16px" data-i="r_h">What works today, and what is coming</h3>
-    <ol class="road">
+    <h3 class="road-h rv" data-i="r_h">What works today, and what is coming</h3>
+    <ol class="road rv">
       <li><b>v0.1</b><span class="tag" data-i="r_now">Out now</span><p data-i="r1">The team on your own Claude login, with approvals, tests, Gmail and Google Calendar.</p></li>
       <li><b>v0.2</b><span class="tag" data-i="r_plan">Planned</span><p data-i="r2">More subscriptions, local models that run on your own machine.</p></li>
       <li><b>v0.3</b><span class="tag" data-i="r_plan">Planned</span><p data-i="r3">Never stops: when one subscription reaches its limit, the work moves to the next.</p></li>
       <li><b>v0.4</b><span class="tag" data-i="r_plan">Planned</span><p data-i="r4">Safe shopping: a permit for each exact cart, and spending limits.</p></li>
       <li><b>v1.0</b><span class="tag" data-i="r_plan">Planned</span><p data-i="r5">Install with a single command, and a full guide.</p></li>
     </ol>
-    <p class="soft" style="margin-top:16px" data-i="r_note">We label everything that is not built yet. No fairy tales.</p>
+    <p class="soft road-note rv" data-i="r_note">We label everything that is not built yet. No fairy tales.</p>
   </div>
 </section>
 
 <section class="sec" id="install">
   <div class="wrap">
     <div class="head">
-      <h2 data-i="in_h">From install to your first useful task</h2>
-      <p class="lead" data-i="in_p">Four steps, in the real order. All the commands are also in one box further down, ready to copy.</p>
+      <h2 class="wd" data-i="in_h">From install to your first useful task</h2>
+      <p class="lead rv" data-i="in_p">Four steps, in the real order. All the commands are also in one box further down, ready to copy.</p>
     </div>
     <ol class="inst">
-      <li>
+      <li class="rv">
         <div class="pnl term" aria-hidden="true"><div class="tbar"><i></i><i></i><i></i></div><pre><span class="pr">$</span> git clone https://github.com/<wbr>MarcoDeliaBot/freeduet.git
 <span class="pr">$</span> cd freeduet
 <span class="pr">$</span> cp .env.example .env</pre></div>
         <h3 data-i="in1h">Get the code</h3>
         <p data-i="in1p">One command downloads FreeDuet from GitHub, and one copies the example settings file.</p>
       </li>
-      <li>
+      <li class="rv">
         <div class="pnl term" aria-hidden="true"><div class="tbar"><i></i><i></i><i></i></div><pre><span class="pr">$</span> bash scripts/start.sh</pre><ul class="pills"><li>Docker</li><li>Bash</li><li>Bun</li><li>Windows + WSL2</li></ul></div>
         <h3 data-i="in2h">Run the start script</h3>
         <p data-i="in2p">One script starts the app, the team and a separate computer for each member. It needs Docker, Bash and Bun. On Windows, run it inside WSL2.</p>
       </li>
-      <li>
+      <li class="rv">
         <div class="pnl term" aria-hidden="true"><div class="tbar"><i></i><i></i><i></i></div><pre><span class="pr">$</span> cd openbot &amp;&amp; docker compose exec -it agent-freeduet claude</pre>
           <div class="sp"><svg><use href="#i-lock"/></svg><b>Claude Code</b><span class="ok"><svg><use href="#i-check"/></svg><span data-i="signedIn">Signed in</span></span></div></div>
         <h3 data-i="in3h">Sign in once with your Claude plan</h3>
         <p data-i="in3p">Open the official Claude Code sign-in and log in yourself. FreeDuet never sees, stores or forwards your login.</p>
       </li>
-      <li>
+      <li class="rv">
         <div class="pnl brw" aria-hidden="true"><div class="tbar"><i></i><i></i><i></i><span class="url">http://localhost:3010</span></div>
           <div class="bd"><div class="msg me"><div class="bub" data-i="in4ex">What can I cook tonight with spinach and eggs?</div></div><div class="msg"><span data-av="iris"></span><div class="bub"><span class="typing"><i></i><i></i><i></i></span></div></div></div></div>
         <h3 data-i="in4h">Open the page and give Iris a small task</h3>
@@ -745,14 +848,14 @@ footer a{color:var(--ink)}
   <div class="wrap">
     <div class="split">
       <div class="stack">
-        <h2 data-i="st_h">Ready? Four commands and the team is at work</h2>
-        <p class="lead" data-i="st_p">Copy them into a terminal, sign in once with your own Claude plan, then open the page it gives you.</p>
-        <div class="needs">
+        <h2 class="wd" data-i="st_h">Ready? Four commands and the team is at work</h2>
+        <p class="lead rv" data-i="st_p">Copy them into a terminal, sign in once with your own Claude plan, then open the page it gives you.</p>
+        <div class="needs rv">
           <p><strong data-i="st_needH">What you need:</strong> <span data-i="st_need">a Claude subscription, plus Docker, Bash and Bun on your computer. Tested on Windows (with WSL2) and on Linux.</span></p>
           <p class="soft" data-i="st_kid">Never opened a terminal? Ask someone technical to set it up, and show them this page.</p>
         </div>
       </div>
-      <div>
+      <div class="rv" data-d="150">
         <div class="code" id="code" tabindex="0">git clone https://github.com/MarcoDeliaBot/freeduet.git
 cd freeduet
 cp .env.example .env
@@ -764,9 +867,9 @@ cd openbot &amp;&amp; docker compose exec -it agent-freeduet claude
       </div>
     </div>
     <div class="join">
-      <a href="https://github.com/MarcoDeliaBot/freeduet"><svg aria-hidden="true"><use href="#i-star"/></svg><strong data-i="j1h">Give it a star</strong><span data-i="j1p">One click on GitHub tells other people this project is worth a look.</span></a>
-      <a href="https://github.com/MarcoDeliaBot/freeduet/issues/new/choose"><svg aria-hidden="true"><use href="#i-bug"/></svg><strong data-i="j2h">Tell us what broke</strong><span data-i="j2p">Using it? Found an error? Have a fix? There is a short form for each.</span></a>
-      <a href="https://github.com/sponsors/MarcoDeliaBot"><svg aria-hidden="true"><use href="#i-heart"/></svg><strong data-i="j3h">Buy us a coffee</strong><span data-i="j3p">FreeDuet is built by one person. A small donation keeps it going.</span></a>
+      <a class="rv" href="https://github.com/MarcoDeliaBot/freeduet"><svg aria-hidden="true"><use href="#i-star"/></svg><strong data-i="j1h">Give it a star</strong><span data-i="j1p">One click on GitHub tells other people this project is worth a look.</span></a>
+      <a class="rv" href="https://github.com/MarcoDeliaBot/freeduet/issues/new/choose"><svg aria-hidden="true"><use href="#i-bug"/></svg><strong data-i="j2h">Tell us what broke</strong><span data-i="j2p">Using it? Found an error? Have a fix? There is a short form for each.</span></a>
+      <a class="rv" href="https://github.com/sponsors/MarcoDeliaBot"><svg aria-hidden="true"><use href="#i-heart"/></svg><strong data-i="j3h">Buy us a coffee</strong><span data-i="j3p">FreeDuet is built by one person. A small donation keeps it going.</span></a>
     </div>
   </div>
 </section>
@@ -774,25 +877,25 @@ cd openbot &amp;&amp; docker compose exec -it agent-freeduet claude
 <section class="band" id="coffee">
   <div class="wrap">
     <div>
-      <h2 data-i="j3h">Buy us a coffee</h2>
-      <p class="lead" data-i="j3p">FreeDuet is built by one person. A small donation keeps it going.</p>
+      <h2 class="wd" data-i="j3h">Buy us a coffee</h2>
+      <p class="lead rv" data-i="j3p">FreeDuet is built by one person. A small donation keeps it going.</p>
     </div>
-    <a class="btn btn-coffee" href="https://github.com/sponsors/MarcoDeliaBot"><svg aria-hidden="true"><use href="#i-heart"/></svg><span data-i="j3h">Buy us a coffee</span></a>
+    <a class="btn btn-coffee rv" data-d="200" href="https://github.com/sponsors/MarcoDeliaBot"><svg aria-hidden="true"><use href="#i-heart"/></svg><span data-i="j3h">Buy us a coffee</span></a>
   </div>
 </section>
 
 <section class="sec alt" id="faq">
   <div class="wrap">
-    <div class="head"><h2 data-i="q_h">Questions people ask first</h2></div>
+    <div class="head"><h2 class="wd" data-i="q_h">Questions people ask first</h2></div>
     <div class="faq">
-      <details open><summary data-i="q1">What is free, and what do I pay for?</summary><p data-i="a1">FreeDuet is free and open source under the MIT licence, also for business use. The only thing you pay for is the AI subscription you use with it, which today is a Claude plan. There is no API key to buy.</p></details>
-      <details><summary data-i="q2">What do I need to install it?</summary><p data-i="a2">A Claude subscription, and Docker, Bash and Bun on your computer. The four steps above are the whole install. Never opened a terminal? Ask someone technical to set it up, and show them this page.</p></details>
-      <details><summary data-i="q3">Does it work on Windows, Mac and Linux?</summary><p data-i="a3">The maintainer uses it on Windows with WSL2 and Docker, and our automatic checks start it on Linux. It has not been tested on a Mac, so we can't promise it works there. FreeDuet is an early release (version 0.1), built and used by one maintainer.</p></details>
-      <details><summary data-i="q4">What can an assistant do without asking me?</summary><p data-i="a4">It can look things up, read, and prepare drafts and reports. Sending, paying, signing, booking and deleting wait for your Approve. The one shortcut is a new email to an address you typed yourself in your request. Assistants can still make mistakes, so read what they prepare before you approve it.</p></details>
-      <details><summary data-i="q5">Where is my data?</summary><p data-i="a5">FreeDuet runs on your computer and keeps its conversations in a database there. Your Claude login stays in a Docker volume that only the Claude Code program reads. To think, the assistants send your request to the AI service you signed in to, as its own app would.</p></details>
-      <details><summary data-i="q6">Can I use it from my phone?</summary><p data-i="a6">Not yet. Today FreeDuet opens in the browser on your computer. A phone version, with a notification when something needs your Approve, is planned.</p></details>
-      <details><summary data-i="q7">Can I add my own team member?</summary><p data-i="a7">Yes. Ask Leo, who builds new assistants, to design one for the job you need, or write its definition yourself. You can also rename members and change how they talk. <a href="https://github.com/MarcoDeliaBot/freeduet/blob/main/docs/TEAM.md">How the members are defined</a>.</p></details>
-      <details><summary data-i="q8">Where do I get help?</summary><p data-i="a8">Open an issue on GitHub. <a href="https://github.com/MarcoDeliaBot/freeduet/issues/new/choose">There is a short form</a> for a question, an error, a fix, or to say you are using it. You can write in English or Italian.</p></details>
+      <details class="rv" open><summary data-i="q1">What is free, and what do I pay for?</summary><p data-i="a1">FreeDuet is free and open source under the MIT licence, also for business use. The only thing you pay for is the AI subscription you use with it, which today is a Claude plan. There is no API key to buy.</p></details>
+      <details class="rv"><summary data-i="q2">What do I need to install it?</summary><p data-i="a2">A Claude subscription, and Docker, Bash and Bun on your computer. The four steps above are the whole install. Never opened a terminal? Ask someone technical to set it up, and show them this page.</p></details>
+      <details class="rv"><summary data-i="q3">Does it work on Windows, Mac and Linux?</summary><p data-i="a3">The maintainer uses it on Windows with WSL2 and Docker, and our automatic checks start it on Linux. It has not been tested on a Mac, so we can't promise it works there. FreeDuet is an early release (version 0.1), built and used by one maintainer.</p></details>
+      <details class="rv"><summary data-i="q4">What can an assistant do without asking me?</summary><p data-i="a4">It can look things up, read, and prepare drafts and reports. Sending, paying, signing, booking and deleting wait for your Approve. The one shortcut is a new email to an address you typed yourself in your request. Assistants can still make mistakes, so read what they prepare before you approve it.</p></details>
+      <details class="rv"><summary data-i="q5">Where is my data?</summary><p data-i="a5">FreeDuet runs on your computer and keeps its conversations in a database there. Your Claude login stays in a Docker volume that only the Claude Code program reads. To think, the assistants send your request to the AI service you signed in to, as its own app would.</p></details>
+      <details class="rv"><summary data-i="q6">Can I use it from my phone?</summary><p data-i="a6">Not yet. Today FreeDuet opens in the browser on your computer. A phone version, with a notification when something needs your Approve, is planned.</p></details>
+      <details class="rv"><summary data-i="q7">Can I add my own team member?</summary><p data-i="a7">Yes. Ask Leo, who builds new assistants, to design one for the job you need, or write its definition yourself. You can also rename members and change how they talk. <a href="https://github.com/MarcoDeliaBot/freeduet/blob/main/docs/TEAM.md">How the members are defined</a>.</p></details>
+      <details class="rv"><summary data-i="q8">Where do I get help?</summary><p data-i="a8">Open an issue on GitHub. <a href="https://github.com/MarcoDeliaBot/freeduet/issues/new/choose">There is a short form</a> for a question, an error, a fix, or to say you are using it. You can write in English or Italian.</p></details>
     </div>
   </div>
 </section>
@@ -810,6 +913,7 @@ cd openbot &amp;&amp; docker compose exec -it agent-freeduet claude
     <p data-i="ft1">FreeDuet is an independent open-source project. It is not affiliated with, endorsed by or sponsored by Anthropic, OpenAI, Google, xAI, Z.ai or CopilotKit. Claude, ChatGPT, Gemini and Grok are trademarks of their owners and are named only to describe compatibility.</p>
     <p data-i="ft2">Built on OpenBot and OpenDuet by CopilotKit (MIT). FreeDuet's assistants can make mistakes: review what they prepare before you approve it.</p>
   </div>
+  <div class="mega-wrap" aria-hidden="true"><div class="mega" data-par="rise:.12">FreeDuet</div></div>
 </footer>
 
 <script>
@@ -840,11 +944,14 @@ var reduce=window.matchMedia&&window.matchMedia("(prefers-reduced-motion: reduce
 function L(){return T[lang];}
 function esc(s){return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;");}
 
+var memSeen={};
 function drawTeam(){
  var g=document.getElementById("teamGrid"),t=L().team,h="";
  M.forEach(function(m,i){var d=t[m[0]];
-  h+='<article class="mem'+(i===0?" boss":"")+'" style="--mc:'+m[2]+'">'+av(m[0])+'<h3>'+m[1]+'<span>'+esc(d[0])+'</span></h3><p>'+esc(d[1])+'</p><q>'+esc(d[2])+'</q></article>';});
+  h+='<article class="mem'+(i===0?" boss":"")+(memSeen[i]?"":" rv")+'" data-k="'+i+'" style="--mc:'+m[2]+'">'+av(m[0])+'<h3>'+m[1]+'<span>'+esc(d[0])+'</span></h3><p>'+esc(d[1])+'</p><q>'+esc(d[2])+'</q></article>';});
+ Array.prototype.forEach.call(g.children,function(c){unwatch(c);});
  g.innerHTML=h;
+ Array.prototype.forEach.call(g.querySelectorAll(".rv"),function(c){watch(c);});
 }
 
 function hydrateAv(){Array.prototype.forEach.call(document.querySelectorAll("[data-av]"),function(el){el.innerHTML=av(el.getAttribute("data-av"));});}
@@ -894,6 +1001,102 @@ tries.addEventListener("click",function(e){var b=e.target.closest("button");if(b
 chat.addEventListener("click",function(e){var b=e.target.closest("button[data-a]");if(!b)return;var a=b.getAttribute("data-a"),s=L().demo[cur],c=document.getElementById("ask");
  if(c){c.outerHTML=doneRow(a==="ok"?"ok":"stop",s[a]);side(s.who,a==="ok"?"ok":"");}});
 
+/* ---------- motion: reveal on scroll, word-by-word headings, light parallax, capsule shadow ---------- */
+var root=document.documentElement;
+var mqReduce=window.matchMedia?window.matchMedia("(prefers-reduced-motion: reduce)"):null;
+function reduced(){return !!(mqReduce&&mqReduce.matches);}
+function qsa(s){return Array.prototype.slice.call(document.querySelectorAll(s));}
+var io=null;
+function watch(el){if(io)io.observe(el);else el.classList.add("in");}
+function unwatch(el){if(io)io.unobserve(el);}
+function onSee(entries){
+ var vis=entries.filter(function(e){return e.isIntersecting;}).sort(function(a,b){return (a.target.compareDocumentPosition(b.target)&4)?-1:1;});
+ var hasHead=vis.some(function(e){return e.target.classList.contains("wd");});
+ vis.forEach(function(e,i){
+  var el=e.target,own=el.getAttribute("data-d"),k=el.getAttribute("data-k");
+  io.unobserve(el);
+  if(k!==null)memSeen[k]=1;
+  if(el.classList.contains("wd")){el.style.setProperty("--bd",(own!==null?+own:0)+"ms");}
+  else{el.style.setProperty("--d",(own!==null?+own:(hasHead?160:0)+Math.min(i,6)*90)+"ms");}
+  el.classList.add("in");
+ });
+}
+if("IntersectionObserver" in window){io=new IntersectionObserver(onSee,{threshold:.15,rootMargin:"0px 0px -4% 0px"});}
+qsa(".rv,.wd").forEach(watch);
+
+/* Headings are cut into words. Intl.Segmenter finds the words of Chinese and Japanese, which have no spaces.
+   Without it those two languages reveal the whole heading at once; the others split on spaces. */
+var seg=null,segLang="";
+function segmenter(){
+ if(typeof Intl==="undefined"||!Intl.Segmenter)return null;
+ if(segLang!==lang){try{seg=new Intl.Segmenter(lang,{granularity:"word"});}catch(x){seg=null;}segLang=lang;}
+ return seg;
+}
+function pieces(text){
+ var S=segmenter(),out=[];
+ if(S){
+  var cur=null,buf="";
+  Array.from(S.segment(text)).forEach(function(g){
+   var t=g.segment;
+   if(/^\s+$/.test(t)){cur=null;if(buf){out.push({w:buf});buf="";}out.push({s:t});return;}
+   if(g.isWordLike){cur={w:buf+t};buf="";out.push(cur);return;}
+   if(cur)cur.w+=t;else buf+=t;
+  });
+  if(buf)out.push({w:buf});
+  return out;
+ }
+ if(lang==="ja"||lang==="zh")return [{w:text}];
+ text.split(/(\s+)/).forEach(function(p){if(p)out.push(/^\s+$/.test(p)?{s:p}:{w:p});});
+ return out;
+}
+function splitHeading(h){
+ var n=0,w=document.createTreeWalker(h,NodeFilter.SHOW_TEXT,null),nodes=[],t;
+ while((t=w.nextNode()))nodes.push(t);
+ nodes.forEach(function(tn){
+  if(!tn.nodeValue.trim())return;
+  var f=document.createDocumentFragment();
+  pieces(tn.nodeValue).forEach(function(p){
+   if(p.s){f.appendChild(document.createTextNode(p.s));return;}
+   var sp=document.createElement("span");sp.className="w";sp.style.setProperty("--w",n++);sp.textContent=p.w;f.appendChild(sp);
+  });
+  tn.parentNode.replaceChild(f,tn);
+ });
+}
+function words(){
+ var rd=reduced();
+ qsa(".wd").forEach(function(h){
+  var was=h.classList.contains("in");
+  if(rd){h.classList.add("rv","wsp");return;}
+  h.classList.remove("rv");
+  splitHeading(h);h.classList.add("wsp");
+  if(was){h.classList.remove("in");void h.offsetWidth;h.classList.add("in");}   /* the new words play again */
+ });
+}
+
+var layers=qsa("[data-par]"),bar=document.querySelector(".top"),ticking=false,moved=false;
+function frame(){
+ ticking=false;
+ var y=window.pageYOffset||0,vh=window.innerHeight||1;
+ if(bar)bar.classList.toggle("scrolled",y>8);
+ if(reduced()){if(moved){layers.forEach(function(l){l.style.transform="";});moved=false;}return;}
+ var todo=[];   /* read every position first, then write, so the frame forces no extra layout */
+ layers.forEach(function(el){
+  var v=el.getAttribute("data-par").split(":"),k=parseFloat(v[1])||0,host=el.closest("section,footer");
+  if(!host)return;
+  var r=host.getBoundingClientRect();
+  if(r.bottom<-300||r.top>vh+300)return;
+  todo.push([el,v[0]==="lag"?Math.min(Math.max(0,-r.top)*k,160):Math.min(Math.max(0,r.bottom-vh)*k,90)]);
+ });
+ todo.forEach(function(t){t[0].style.transform="translate3d(0,"+t[1].toFixed(1)+"px,0)";moved=true;});
+}
+function tick(){if(!ticking){ticking=true;requestAnimationFrame(frame);}}
+window.addEventListener("scroll",tick,{passive:true});
+window.addEventListener("resize",tick,{passive:true});
+if(mqReduce&&mqReduce.addEventListener)mqReduce.addEventListener("change",function(){apply(lang);tick();});
+else if(mqReduce&&mqReduce.addListener)mqReduce.addListener(function(){apply(lang);tick();});
+root.setAttribute("data-rv","ready");
+frame();
+
 function apply(l){
  lang=T[l]?l:"en";var t=L();
  document.documentElement.lang=lang;document.title=t.title;
@@ -902,6 +1105,7 @@ function apply(l){
   var v=t[k];if(v!=null)el.innerHTML=v;});
  sel.value=lang;
  drawTeam();drawSide();drawWeek();drawTries();show(cur,false);
+ words();
 }
 var sel=document.getElementById("lang");
 LANGS.forEach(function(l){var o=document.createElement("option");o.value=l[0];o.textContent=l[1];sel.appendChild(o);});
