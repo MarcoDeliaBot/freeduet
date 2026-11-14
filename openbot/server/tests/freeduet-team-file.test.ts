@@ -21,6 +21,7 @@ import {
   type TeamFileReading,
   type TeamFileRefusal,
 } from "../src/freeduet/team-file";
+import { parseAgentInput } from "../src/agents/routes";
 import {
   expandEnvironment,
   loadTenantPackage,
@@ -35,6 +36,14 @@ const packageDirectory = fileURLToPath(
 const SHARED_RULES_START =
   "Shared rules. Reply in the language the person writes in.";
 const EMAIL_START = "Email. You do not send email.";
+
+/**
+ * The two numbers of decision 2 (docs/design/team-file.md), written out here so that changing a
+ * constant in the reader fails a test, not just a comment. 8,000 is an imported member's instructions;
+ * 1,000 is what the create form, the create route and the edit route still take for a Bot's text.
+ */
+const IMPORTED_INSTRUCTIONS_LIMIT = 8000;
+const CREATE_TEXT_LIMIT = 1000;
 
 let tenantPackage: TenantPackage;
 
@@ -230,17 +239,21 @@ describe("a valid member file", () => {
     expect(member.instructionsCharacters).toBe(member.instructions.length);
   });
 
-  test("reports, and does not refuse, instructions over the create form's cap", () => {
+  test("accepts instructions over the create limit, and says the create and edit screens still refuse them", () => {
     const file = fileRead(read(fileOf(memberDocument())));
     const [member] = file.members;
 
-    expect(member.instructionsCharacters).toBeGreaterThan(
-      TEAM_FILE_LIMITS.instructionsCharacters,
+    expect(member.instructionsCharacters).toBeGreaterThan(CREATE_TEXT_LIMIT);
+    expect(member.instructionsCharacters).toBeLessThanOrEqual(
+      IMPORTED_INSTRUCTIONS_LIMIT,
     );
-    expect(member.instructionsWithinCap).toBe(false);
+    expect(member.instructionsWithinCreateLimit).toBe(false);
     expect(
-      file.notices.some((notice) =>
-        notice.includes("The create form allows 1,000"),
+      file.notices.some(
+        (notice) =>
+          notice.includes("may have up to 8,000") &&
+          notice.includes("1,000 for a Bot's text") &&
+          notice.includes("cannot be created or edited yet"),
       ),
     ).toBe(true);
   });
@@ -328,6 +341,123 @@ describe("a valid member file", () => {
 
     expect(file.members[0].skills[0].slug).toBe("renewal-check");
     expect(file.members[1].skills[0].slug).toBe("renewal-check");
+  });
+});
+
+describe("the instruction limit for an imported member", () => {
+  /**
+   * The characters the reader adds to an author's text: the two separators, the Email paragraph and
+   * the shared rules. Measured from the reader itself, so the test does not copy the package's wording.
+   * The appended text has no character outside the Basic Multilingual Plane, so it is the same number
+   * in code units and in code points, which the code-unit tests below rely on.
+   */
+  function appendedLength(): number {
+    const probe = fileRead(read(fileOf(memberDocument({ system_prompt: "a" }))))
+      .members[0];
+    const appended = probe.instructions.slice(1);
+    expect([...appended].length).toBe(appended.length);
+    return appended.length;
+  }
+
+  test("the decided limit is 8,000 for an imported member, and the create route's own is 1,000", () => {
+    expect(TEAM_FILE_LIMITS.instructionsCharacters).toBe(
+      IMPORTED_INSTRUCTIONS_LIMIT,
+    );
+    expect(TEAM_FILE_LIMITS.createTextCharacters).toBe(CREATE_TEXT_LIMIT);
+  });
+
+  test("accepts instructions of exactly 8,000 characters, whose last character is an emoji", () => {
+    const authorUnits = IMPORTED_INSTRUCTIONS_LIMIT - appendedLength();
+    const file = fileRead(
+      read(
+        fileOf(
+          memberDocument({ system_prompt: `${"a".repeat(authorUnits - 2)}😀` }),
+        ),
+      ),
+    );
+    const [member] = file.members;
+
+    expect(member.instructionsCharacters).toBe(IMPORTED_INSTRUCTIONS_LIMIT);
+    // The emoji is two code units and one code point, so the code points are one fewer.
+    expect([...member.instructions].length).toBe(
+      IMPORTED_INSTRUCTIONS_LIMIT - 1,
+    );
+    expect(
+      file.notices.some((notice) => notice.includes("may have up to 8,000")),
+    ).toBe(true);
+  });
+
+  test("refuses one code unit more than 8,000, though the text has 8,000 code points, and names the limit", () => {
+    const authorUnits = IMPORTED_INSTRUCTIONS_LIMIT - appendedLength();
+    // Eight thousand and one code units: the last emoji is two of them, so the text has 8,000 code points.
+    const refusal = refusalOf(
+      read(
+        fileOf(
+          memberDocument({ system_prompt: `${"a".repeat(authorUnits - 1)}😀` }),
+        ),
+      ),
+    );
+
+    expect(refusal.path).toBe("system_prompt");
+    expect(refusal.reason).toContain("is 8,001 characters");
+    expect(refusal.reason).toContain("at most 8,000 characters");
+    expect(refusal.reason).toContain("by 1 character.");
+  });
+
+  test("refuses one plain character more than 8,000 allows, at the system prompt, and names the limit", () => {
+    const authorUnits = IMPORTED_INSTRUCTIONS_LIMIT - appendedLength();
+    const refusal = refusalOf(
+      read(
+        fileOf(memberDocument({ system_prompt: "a".repeat(authorUnits + 1) })),
+      ),
+    );
+
+    expect(refusal.path).toBe("system_prompt");
+    expect(refusal.reason).toContain("at most 8,000 characters");
+  });
+
+  test("refuses one member's instructions inside a team, and names that member's system prompt", () => {
+    const authorUnits = IMPORTED_INSTRUCTIONS_LIMIT - appendedLength();
+    const refusal = refusalOf(
+      read(
+        fileOf(
+          teamDocument([
+            teamMemberDocument(),
+            teamMemberDocument({
+              name: "Invoice Desk",
+              system_prompt: "a".repeat(authorUnits + 1),
+            }),
+          ]),
+        ),
+      ),
+    );
+
+    expect(refusal.path).toBe("members[1].system_prompt");
+    expect(refusal.reason).toContain("at most 8,000 characters");
+  });
+
+  test("guard of unchanged behaviour: a Bot made in the app is still refused at 1,001 characters", () => {
+    const input = {
+      name: "Renewal Desk",
+      title: "Contract renewals",
+      visibility: "private",
+    };
+
+    expect(
+      parseAgentInput({
+        ...input,
+        roleDescription: "r".repeat(CREATE_TEXT_LIMIT),
+      }).ok,
+    ).toBe(true);
+    expect(
+      parseAgentInput({
+        ...input,
+        roleDescription: "r".repeat(CREATE_TEXT_LIMIT + 1),
+      }),
+    ).toEqual({
+      ok: false,
+      error: "What it does must be text between 1 and 1000 characters.",
+    });
   });
 });
 
