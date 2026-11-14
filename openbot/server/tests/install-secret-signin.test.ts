@@ -12,6 +12,7 @@
  * cookie of a pairing that succeeded, and a refusal for any reason but the link leaves the link alive.
  */
 import { afterEach, describe, expect, spyOn, test } from "bun:test";
+import { createRequireUser } from "../src/auth/guards";
 import {
   createInstallPairingRoutes,
   installCookieName,
@@ -22,6 +23,7 @@ import {
   signInGate,
 } from "../src/auth/install-secret";
 import { loadConfig } from "../src/config";
+import { testEnvironment } from "./support/environment";
 import { LOOPBACK_PEER } from "./support/loopback-peer";
 import {
   assembleSignIn,
@@ -32,8 +34,6 @@ import {
   stubAuth,
   stubRoles,
 } from "./support/signin-app";
-import { testEnvironment } from "./support/environment";
-import { createRequireUser } from "../src/auth/guards";
 
 const ORIGIN = "http://localhost:3001";
 const quiet = spyOn(console, "info").mockImplementation(() => {});
@@ -181,8 +181,6 @@ describe("the doors, with sign-in", () => {
         headers: { authorization: `Bearer ${SECRET}` },
         peer: peerAt("172.17.0.1"),
       }),
-      // A session is not the secret.
-      ask(app, PAIRING_MINT_PATH, { method: "POST", session: "admin" }),
     ]);
     for (const answer of answers) {
       expect(answer.status).toBe(401);
@@ -190,6 +188,28 @@ describe("the doors, with sign-in", () => {
         error: "This endpoint is the launcher's.",
       });
     }
+  });
+
+  test("a session is not the secret: a signed-in browser that is not paired is refused before the door, a paired one by the door", async () => {
+    const config = signInConfig();
+    const { app } = assembleSignIn(config);
+    const remote = await ask(app, PAIRING_MINT_PATH, {
+      method: "POST",
+      session: "admin",
+    });
+    expect(remote.status).toBe(403);
+    expect(((await remote.json()) as { code?: string }).code).toBe(
+      "remote_session_limited",
+    );
+    const paired = await ask(app, PAIRING_MINT_PATH, {
+      method: "POST",
+      session: "admin",
+      headers: { cookie: pairedCookie(config) },
+    });
+    expect(paired.status).toBe(401);
+    expect(await paired.json()).toEqual({
+      error: "This endpoint is the launcher's.",
+    });
   });
 
   test("a signed-in administrator on this machine pairs a browser: the cookie, once, and the app", async () => {
