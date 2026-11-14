@@ -1892,8 +1892,10 @@ describe("the real pg_dump", () => {
 const serverFolder = join(import.meta.dir, "..");
 const openbotFolder = join(serverFolder, "..");
 
-async function scriptInstallation() {
-  const installed = await installation();
+async function scriptInstallation(
+  options: Parameters<typeof installation>[0] = {},
+) {
+  const installed = await installation(options);
   await mkdir(join(installed.root, "scripts"));
   await copyFile(
     join(openbotFolder, "scripts", "rekey-vault.ts"),
@@ -1965,6 +1967,38 @@ describe("the script itself, started the way the steps say", () => {
     expect(await opensWith(newKey)).toMatchObject({ sealed: 7, open: 7 });
     expect(await opensWith(EXAMPLE_KEY)).toMatchObject({ open: 0 });
     expectNothingSecret(ran.text, [newKey]);
+  });
+
+  test("a stack named by OPENBOT_ENV_FILE is not mistaken for the .env that Bun read beside it", async () => {
+    // A machine with two stacks: .env holds a key of its own, which Bun reads into process.env, and
+    // .env.eval holds the example key and is the one the person means. Before the change the command
+    // took the key from .env for one the person had exported, said it was left alone, and did nothing.
+    const { root, envPath, text } = await scriptInstallation({
+      file: ".env.eval",
+    });
+    const own = Buffer.alloc(32, 11).toString("base64");
+    const main = join(root, ".env");
+    await writeFile(main, `KEY_ENCRYPTION_KEY=${own}\n`, { mode: 0o600 });
+    await stageDump();
+
+    const ran = await runScript(root, ["--apply", "--yes"], {
+      OPENBOT_ENV_FILE: ".env.eval",
+    });
+
+    expect(ran.code).toBe(EXIT.ok);
+    expect(ran.out).toContain("Done. The new key is in .env.eval.");
+    const newKey = settingFrom(
+      await readFile(envPath, "utf8"),
+      "KEY_ENCRYPTION_KEY",
+    );
+    expect(isPublishedExampleKey(newKey)).toBe(false);
+    expect(await readFile(envPath, "utf8")).toBe(
+      replaceSetting(text, "KEY_ENCRYPTION_KEY", newKey),
+    );
+    expect(await opensWith(newKey)).toMatchObject({ sealed: 7, open: 7 });
+    // The other stack's file is as it was.
+    expect(await readFile(main, "utf8")).toBe(`KEY_ENCRYPTION_KEY=${own}\n`);
+    expectNothingSecret(ran.text, [newKey, own]);
   });
 
   // Not new behaviour: these two hold for the script before and after the change above, and are here so
