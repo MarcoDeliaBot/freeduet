@@ -1,0 +1,67 @@
+{
+ "streams": [
+  {
+   "events": [],
+   "keepalives": 0,
+   "sha256": "16db96ec0b175f3bb5c67f64460f45fd7b84997066694526f642dafed9a32446"
+  }
+ ],
+ "launches": [
+  {
+   "argv": [
+    "<tmp>/no-such-claude",
+    "-p",
+    "--output-format",
+    "stream-json",
+    "--verbose",
+    "--no-session-persistence",
+    "--tools",
+    "",
+    "--strict-mcp-config",
+    "--disable-slash-commands",
+    "--permission-mode",
+    "dontAsk"
+   ],
+   "cwd": "<segment>/work",
+   "kwargs": {
+    "stdin": "PIPE",
+    "stdout": "PIPE",
+    "stderr": "PIPE",
+    "limit": 16777216,
+    "start_new_session": true
+   },
+   "env": {
+    "PATH": "/golden/bin:/usr/bin:/bin",
+    "HOME": "/golden/home",
+    "USER": "golden",
+    "LOGNAME": "golden",
+    "LANG": "C.UTF-8",
+    "LANGUAGE": "en",
+    "LC_ALL": "C.UTF-8",
+    "LC_CTYPE": "C.UTF-8",
+    "TZ": "UTC",
+    "TMPDIR": "/golden/tmp",
+    "CLAUDE_CONFIG_DIR": "/golden/cli-config-never-opened",
+    "HTTP_PROXY": "http://golden-proxy:3128",
+    "HTTPS_PROXY": "http://golden-proxy:3128",
+    "NO_PROXY": "127.0.0.1,localhost",
+    "http_proxy": "http://golden-proxy:3128",
+    "https_proxy": "http://golden-proxy:3128",
+    "no_proxy": "127.0.0.1,localhost",
+    "NODE_EXTRA_CA_CERTS": "/golden/ca.pem",
+    "SSL_CERT_FILE": "/golden/ca.pem",
+    "SSL_CERT_DIR": "/golden/certs",
+    "DISABLE_AUTOUPDATER": "1",
+    "CLAUDE_CODE_DISABLE_AUTO_MEMORY": "1"
+   },
+   "files": {}
+  }
+ ],
+ "cli_runs": [],
+ "cli_followups": [],
+ "cli_gone": [],
+ "callbacks": [],
+ "team_log": [],
+ "checkpoints": [],
+ "logs": []
+}

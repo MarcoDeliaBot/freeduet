@@ -1,0 +1,297 @@
+{
+ "streams": [
+  {
+   "events": [
+    {
+     "type": "RUN_STARTED",
+     "threadId": "thread-1",
+     "runId": "run-1"
+    },
+    {
+     "type": "TEXT_MESSAGE_START",
+     "messageId": "<msg-1>",
+     "role": "assistant"
+    },
+    {
+     "type": "TEXT_MESSAGE_CONTENT",
+     "messageId": "<msg-1>",
+     "delta": "Asking"
+    },
+    {
+     "type": "TEXT_MESSAGE_CONTENT",
+     "messageId": "<msg-1>",
+     "delta": " Penny."
+    },
+    {
+     "type": "TEXT_MESSAGE_END",
+     "messageId": "<msg-1>"
+    },
+    {
+     "type": "TOOL_CALL_START",
+     "toolCallId": "<toolu-1>",
+     "toolCallName": "message_bot",
+     "parentMessageId": "<msg-1>"
+    },
+    {
+     "type": "TOOL_CALL_ARGS",
+     "toolCallId": "<toolu-1>",
+     "delta": "{\"bot\": \"Penny\", \"task\": \"Check what Northwind owes for March and draft a polite reminder.\", \"constraints\": \"Do not send anything.\"}"
+    },
+    {
+     "type": "TOOL_CALL_END",
+     "toolCallId": "<toolu-1>"
+    },
+    {
+     "type": "TOOL_CALL_RESULT",
+     "messageId": "<tool-1>",
+     "toolCallId": "<toolu-1>",
+     "role": "tool",
+     "content": "Refused. That handoff was not sent: This action needs your approval, but it was not started from a conversation that can ask you. Nothing was done. Ask for it in a chat with this Bot, or change your rules in Settings → Approvals."
+    },
+    {
+     "type": "TEXT_MESSAGE_START",
+     "messageId": "<msg-2>",
+     "role": "assistant"
+    },
+    {
+     "type": "TEXT_MESSAGE_CONTENT",
+     "messageId": "<msg-2>",
+     "delta": "I have not handed this over yet: OpenBot's approval check wants your OK for it and could not ask you from here, so nothing was sent.\n\nHand-off to Penny: Check what Northwind owes for March and draft a polite reminder.\nConstraints: Do not send anything.\n\nReply \"yes\" and I will ask again from this conversation, or tell me what to change.\n\nOutcome: needs you\nDone: nothing\nEvidence: OpenBot answered: Refused. That handoff was not sent: This action needs your approval, but it was not started from a conversation that can ask you. Nothing was done. Ask for it in a chat with this Bot, or change your rules in Settings → Approvals.\nNot done and why: the hand-off above, because it needs your approval and this route cannot ask for it\nAlready: nothing\nNext step: your \"yes\", or a change to the hand-off"
+    },
+    {
+     "type": "TEXT_MESSAGE_END",
+     "messageId": "<msg-2>"
+    },
+    {
+     "type": "RUN_FINISHED",
+     "threadId": "thread-1",
+     "runId": "run-1"
+    }
+   ],
+   "keepalives": 0,
+   "sha256": "a82687961aa0d11e2142881ee1b373df96b7b78f08c9197fafea3e1b7f663cbe"
+  }
+ ],
+ "launches": [
+  {
+   "argv": [
+    "<tmp>/claude",
+    "-p",
+    "--output-format",
+    "stream-json",
+    "--verbose",
+    "--include-partial-messages",
+    "--no-session-persistence",
+    "--tools",
+    "",
+    "--strict-mcp-config",
+    "--disable-slash-commands",
+    "--allowedTools",
+    "mcp__freeduet",
+    "--permission-mode",
+    "dontAsk",
+    "--mcp-config",
+    "<segment>/mcp.json",
+    "--append-system-prompt",
+    {
+     "sha256": "a6c734eaf2a5827bcfe185045d61bbc8aec436f284b644f11bee6c7e8e49b45a",
+     "bytes": 971,
+     "head": "You are Iris, Chief of Staff of the test team.\n\nYou are Iris, Chief of Staff.\n\nHow this session work"
+    }
+   ],
+   "cwd": "<segment>/work",
+   "kwargs": {
+    "stdin": "PIPE",
+    "stdout": "PIPE",
+    "stderr": "PIPE",
+    "limit": 16777216,
+    "start_new_session": true
+   },
+   "env": {
+    "PATH": "/golden/bin:/usr/bin:/bin",
+    "HOME": "/golden/home",
+    "USER": "golden",
+    "LOGNAME": "golden",
+    "LANG": "C.UTF-8",
+    "LANGUAGE": "en",
+    "LC_ALL": "C.UTF-8",
+    "LC_CTYPE": "C.UTF-8",
+    "TZ": "UTC",
+    "TMPDIR": "/golden/tmp",
+    "CLAUDE_CONFIG_DIR": "/golden/cli-config-never-opened",
+    "HTTP_PROXY": "http://golden-proxy:3128",
+    "HTTPS_PROXY": "http://golden-proxy:3128",
+    "NO_PROXY": "127.0.0.1,localhost",
+    "http_proxy": "http://golden-proxy:3128",
+    "https_proxy": "http://golden-proxy:3128",
+    "no_proxy": "127.0.0.1,localhost",
+    "NODE_EXTRA_CA_CERTS": "/golden/ca.pem",
+    "SSL_CERT_FILE": "/golden/ca.pem",
+    "SSL_CERT_DIR": "/golden/certs",
+    "DISABLE_AUTOUPDATER": "1",
+    "CLAUDE_CODE_DISABLE_AUTO_MEMORY": "1"
+   },
+   "files": {
+    "mcp.json": {
+     "mode": "0o600",
+     "content": {
+      "mcpServers": {
+       "freeduet": {
+        "type": "stdio",
+        "command": "<python>",
+        "args": [
+         "-m",
+         "freeduet.bridge"
+        ],
+        "env": {
+         "FREEDUET_BRIDGE_PORT": "<port>",
+         "FREEDUET_BRIDGE_SECRET": "<secret of 43 characters>",
+         "PYTHONPATH": "<package root>"
+        }
+       }
+      }
+     }
+    }
+   }
+  }
+ ],
+ "cli_runs": [
+  {
+   "prompt": "<conversation>\n<user>\nNorthwind still hasn't paid March. Ask Penny.\n</user>\n</conversation>\n\nReply to the last user message, as the assistant.",
+   "cwd_entries": [],
+   "mcp_config": {
+    "mcpServers": {
+     "freeduet": {
+      "type": "stdio",
+      "command": "<python>",
+      "args": [
+       "-m",
+       "freeduet.bridge"
+      ],
+      "env": {
+       "FREEDUET_BRIDGE_PORT": "<value>",
+       "FREEDUET_BRIDGE_SECRET": "<value>",
+       "PYTHONPATH": "<value>"
+      }
+     }
+    }
+   },
+   "env_seen_of_interest": [
+    "CLAUDE_CODE_DISABLE_AUTO_MEMORY",
+    "CLAUDE_CONFIG_DIR",
+    "DISABLE_AUTOUPDATER",
+    "HOME",
+    "HTTPS_PROXY",
+    "HTTP_PROXY",
+    "LANG",
+    "LANGUAGE",
+    "LC_ALL",
+    "LC_CTYPE",
+    "LOGNAME",
+    "NODE_EXTRA_CA_CERTS",
+    "NO_PROXY",
+    "PATH",
+    "SSL_CERT_DIR",
+    "SSL_CERT_FILE",
+    "TMPDIR",
+    "TZ",
+    "USER",
+    "http_proxy",
+    "https_proxy",
+    "no_proxy"
+   ],
+   "tools": {
+    "names": [
+     "message_bot",
+     "ask_person",
+     "list_lessons",
+     "propose_lesson",
+     "remove_lesson",
+     "team_log"
+    ],
+    "sha256": "8f3968ccce70a44c79c6e13ce1190966db4db6d9e2636e422827bd608f6c0876"
+   },
+   "initialize": {
+    "protocolVersion": "2025-06-18",
+    "capabilities": {
+     "tools": {
+      "listChanged": false
+     }
+    },
+    "serverInfo": {
+     "name": "freeduet",
+     "version": "0.1.0"
+    }
+   },
+   "calls": [
+    {
+     "name": "message_bot",
+     "arguments": {
+      "bot": "Penny",
+      "task": "Check what Northwind owes for March and draft a polite reminder.",
+      "constraints": "Do not send anything."
+     }
+    }
+   ]
+  }
+ ],
+ "cli_followups": [],
+ "cli_gone": [
+  true
+ ],
+ "callbacks": [
+  {
+   "path": "/api/agent-tools/call",
+   "token": "test-agent-tool-token",
+   "body": {
+    "name": "message_bot",
+    "args": {
+     "bot": "Penny",
+     "task": "Check what Northwind owes for March and draft a polite reminder.",
+     "constraints": "Do not send anything."
+    },
+    "run": "test-signed-run-assertion"
+   }
+  }
+ ],
+ "team_log": [
+  {
+   "member": "freeduet",
+   "thread": "thread-1",
+   "run": "run-1",
+   "outcome": "needs you",
+   "summary": "the hand-off above, because it needs your approval and this route cannot ask for it",
+   "from_iris": false,
+   "approvals": "nothing",
+   "report_guard": null
+  }
+ ],
+ "checkpoints": [
+  {
+   "schema_version": 1,
+   "writer_version": "1.2.0+freeduet.1",
+   "created_at": "<time>",
+   "agent": "freeduet",
+   "run": "thread-1",
+   "phase": "blocked",
+   "state": {
+    "objective": "Northwind still hasn't paid March. Ask Penny.",
+    "constraints": [],
+    "completed": [],
+    "decisions": [],
+    "in_progress": [],
+    "changed_files": [],
+    "verification": [
+     "OpenBot answered: Refused. That handoff was not sent: This action needs your approval, but it was not started from a conversation that can ask you. Nothing was done. Ask for it in a chat with this Bot, or change your rules in Settings → Approvals."
+    ],
+    "blockers": [
+     "the hand-off above, because it needs your approval and this route cannot ask for it"
+    ],
+    "next_steps": [
+     "your \"yes\", or a change to the hand-off"
+    ]
+   }
+  }
+ ],
+ "logs": []
+}
