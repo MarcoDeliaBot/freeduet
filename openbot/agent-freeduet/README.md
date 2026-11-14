@@ -43,6 +43,7 @@ and [docs/ARCHITECTURE.md §3](../../docs/ARCHITECTURE.md).
 | `freeduet/person_language.py` | `forwardedProps.openbotPersonLanguage` (from `FREEDUET_PERSON_LANGUAGE`, D26) read as a code and a name, and the one run note that tells the member which language the person reads in a turn nobody wrote |
 | `freeduet/team_log.py`, `lessons.py`, `iris_tools.py`, `origin.py`, `locking.py` | The team log, lessons and Iris's tools; who handed a run over; file locks |
 | `freeduet/engines.py`, `server_calls.py`, `assistants.py` | `engines.yaml`, `/v1/messages` and the free OpenAI-compatible engine |
+| `freeduet/compatible_engine.py` | The `anthropic-compatible` engine, off by default: the same locked-down CLI on an Anthropic-compatible address and the person's own key at it (see "A gateway or a local router" below) |
 | `engines.example.yaml`, `prices.example.yaml` | Engines and chains; your own dated price table. Copy to `engines.yaml` and `prices.yaml` |
 | `tests/` | Offline pytest suite with a fake `claude` CLI: `pip install -r requirements.txt && pytest` (Python 3.12) |
 | `Dockerfile`, `LICENSE-APACHE-2.0` | The image; the license of the files ported from Anil-matcha/open-duet |
@@ -62,6 +63,79 @@ and [docs/ARCHITECTURE.md §3](../../docs/ARCHITECTURE.md).
 - It **never** starts a CLI with its built-in host tools enabled.
 - It **never** adds a metered engine to a chain unless `metered.enabled` is true and the caps allow it.
 - A report, a checkpoint or a lesson never approves anything: approvals stay with OpenBot's gateway.
+
+## A gateway or a local router (`anthropic-compatible`, off by default)
+
+A second kind of engine runs the same locked-down `claude -p` against an Anthropic-compatible address you write in
+`engines.yaml`: a gateway such as OpenRouter, or a free router on your own computer. It lets a member carry on when the
+Claude plan is at its limit. **It has never answered a real turn from a real gateway.** Every test here uses the fake
+CLI, so it is not certified; [docs/ENGINES_PLAN.md](../../docs/ENGINES_PLAN.md) 9.1 says what is and is not verified.
+
+- **Off, and never first.** `engines.example.yaml` holds only commented-out entries, so a default install builds none and
+  nothing changes. An entry runs only when it is `enabled: true` and named in a chain; logins always come before it.
+- **Your key, out of sight.** `credential_secret_ref` is `env:NAME` or `file:/absolute/path`, never the key itself (a
+  pasted key is refused and not echoed). The CLI gets the key as a bearer token, in an empty home and an empty config
+  directory made for the turn, so the Claude login cannot be sent to the gateway and the gateway key cannot reach the
+  Claude engine. The tool bridge never sees it, and it is removed from everything the service reads back. With no usable
+  key the CLI is not started at all: an address alone would keep the Claude login and send it there.
+- **A sign-in is never taken for a key.** A key file is not opened when it lies in a folder whose name starts with a dot
+  or in the service's own `CLAUDE_CONFIG_DIR`, which is where a sign-in is kept. What is read must look like a bearer
+  token (letters, digits and `- . _ ~ + /`, then `=`; 8 to 512 characters), so a sign-in file, which is JSON, is
+  refused, and so is any value that holds a Claude plan token.
+- **Free or paid, said by you.** `billing: free` or `billing: metered` is required and never guessed. A metered gateway
+  runs only when the `metered:` block is `enabled: true` with both caps above 0. Those caps are not enforced until the
+  usage ledger exists (slice 12 of the plan), and the log says so when the service starts and on every such turn.
+  Otherwise it is left out and, when nothing else can answer, the person is told why.
+- **Addresses.** Plain `http` only for this machine: `localhost`, a loopback address or `host.docker.internal`. Every
+  other address must be `https`. Inside the container `localhost` is the container itself: use `host.docker.internal`
+  for a router on your computer, and let the router listen on an address the container can reach.
+- **Same lockdown.** The same flags, the same `freeduet` bridge and the same approvals. A call to a built-in tool gets
+  "No such tool available" from the CLI, as on the Claude engine.
+- **Probe.** `claude --version` and "a key is present". It does not call the gateway, so it cannot tell a refused key
+  from a good one: the first turn finds out, and a refused key is tried again at most once a minute.
+- **Failures** are read from the CLI's own output and the HTTP status it reports. 401 is a refused key (the engine is
+  signed out and the person is asked to check the key); 402 is out of credits; 429 a rate limit; 5xx or an unreachable
+  address is transient; 400 and 404 are a rejected request and change nothing; 403 and anything else stay `unknown`.
+- **Quality.** `tier` is C unless the entry says otherwise, so the quality floor keeps a skill that needs a better model
+  (a purchase) off it. A model counts as supported only for the pair (endpoint, model) that passed the team evals.
+
+Check it once with your own key. Nothing here is automated, and steps 1 to 3 spend nothing.
+
+1. In `openbot/`, copy `agent-freeduet/engines.example.yaml` to `engines.local.yaml`. Uncomment `my-gateway`, set
+   `base_url`, `billing` and `model`, set `enabled: true`, and put `my-gateway` after `claude-code` in `chains: default`.
+   For a `metered` gateway also set `metered: {enabled: true, currency: EUR, daily_cap: 1, monthly_cap: 5}`. To make
+   Iris use only the gateway for the check, add `switching: {freeduet: {pin: my-gateway}}`.
+2. Create `docker-compose.override.yml` beside `docker-compose.yml` (the start script runs plain `docker compose`, which
+   reads it). The key goes in neither file:
+
+   ```yaml
+   services:
+     agent-freeduet:
+       environment:
+         FREEDUET_ENGINES_FILE: /app/engines.local.yaml
+         MY_GATEWAY_KEY: ${MY_GATEWAY_KEY}
+       volumes:
+         - ./engines.local.yaml:/app/engines.local.yaml:ro
+   ```
+
+3. Run `export MY_GATEWAY_KEY=...` (your own key at the gateway), then `docker compose up -d agent-freeduet`, then
+   `curl -s -H "x-openbot-agent-token: <MANAGED_AGENT_TOKEN from .env>" http://127.0.0.1:4230/engines`. Expected: a row
+   with `"id": "my-gateway"`, `"kind": "anthropic-compatible"` and `"state": "ready"`, and neither the key nor the
+   address anywhere in the output (the same command piped to `grep -c "$MY_GATEWAY_KEY"` prints `0`).
+4. Send Iris one short message that needs no tool ("Reply with one word."). Expected: an answer, and the usage shows at
+   the gateway, not on your Claude plan.
+5. Ask her to run a shell command that writes a file. Expected: she cannot, and no file appears
+   (`docker compose exec agent-freeduet ls <the path>` fails). If the model tried a built-in tool, the log has a line
+   with `answered "No such tool available"`.
+6. Put a wrong key in `MY_GATEWAY_KEY`, run `docker compose up -d agent-freeduet` again and send a message. Expected:
+   "my-gateway did not accept its key. Check the key that `credential_secret_ref` names in engines.yaml, then send your
+   message again.", and `/engines` shows `"state": "signed_out"` for it.
+
+Before it is called certified, run the team evals on the eval stack (never on a real deployment) with the members on
+the gateway: every case in `evals/team/cases.yaml` with `--repeat 3`, each member at least 90% and every safety case at
+100% ([evals/team/README.md](../../evals/team/README.md)). The runner's `--engine` flag only labels the report today, so
+pin the gateway in the eval stack's engines file (`switching: {default: {pin: my-gateway}}`) until the runner selects
+the engine itself (slice 4).
 
 ## Signing in (done by the person, never by FreeDuet)
 

@@ -225,10 +225,17 @@ def is_local_host(host: str | None) -> bool:
         return False
 
 
+def in_hidden_folder(path: str) -> bool:
+    """Whether a path has a part whose name starts with a dot. That is where a program keeps its own sign-in, so a
+    key is never read from there, whatever the file holds. Looks at the name only: it opens nothing."""
+    return any(part.startswith(".") for part in path.split("/") if part)
+
+
 def parse_secret_ref(reference: Any) -> tuple[str, str] | None:
     """The two forms an `anthropic-compatible` entry's `credential_secret_ref` may take: ``env:NAME`` (an
-    environment variable of this service) or ``file:/absolute/path`` (a file that holds the key). ``("env", NAME)``
-    or ``("file", path)``; None for anything else, which includes a key written into the file by mistake."""
+    environment variable of this service) or ``file:/absolute/path`` (a file that holds the key, not inside a folder
+    whose name starts with a dot). ``("env", NAME)`` or ``("file", path)``; None for anything else, which includes a
+    key written into the file by mistake."""
     if not isinstance(reference, str):
         return None
     scheme, colon, rest = reference.partition(":")
@@ -236,7 +243,13 @@ def parse_secret_ref(reference: Any) -> tuple[str, str] | None:
         return None
     if scheme == "env" and _ENV_NAME.fullmatch(rest):
         return "env", rest
-    if scheme == "file" and rest.startswith("/") and len(rest) <= _MAX_SECRET_PATH and rest.isprintable():
+    if (
+        scheme == "file"
+        and rest.startswith("/")
+        and len(rest) <= _MAX_SECRET_PATH
+        and rest.isprintable()
+        and not in_hidden_folder(rest)
+    ):
         return "file", rest
     return None
 
@@ -284,7 +297,8 @@ def _compatible_problems(where: str, base_url: str | None, secret_ref: str | Non
     elif parse_secret_ref(secret_ref) is None:
         found.append(
             f"{where}: `credential_secret_ref` must be `env:NAME` (an environment variable) or "
-            "`file:/absolute/path` (a file that holds the key); the key itself never goes in this file"
+            "`file:/absolute/path` (a file that holds the key, in no folder whose name starts with a dot); "
+            "the key itself never goes in this file"
         )
     return found
 

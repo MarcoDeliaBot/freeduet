@@ -27,8 +27,11 @@ TESTS = Path(__file__).parent
 #: The invented gateway key every test uses: distinctive, so that a search for it finds a leak and nothing else.
 KEY = "canary-gw-key-7c1e5b09d2a44f83"
 KEY_ENV = "FREEDUET_TEST_GATEWAY_KEY"
-#: A key with the two characters that a JSON string escapes, for the test of the form the key takes inside a stream line.
+#: A value with the two characters that a JSON string escapes, for the test of the form a secret takes inside a stream
+#: line. It is not a key (a key has no quote), so it only goes to the scrubber, never through ``read_key``.
 AWKWARD_KEY = 'canary"gw\\key-91d0c7e2b3a5'
+#: A key that uses every punctuation mark a bearer token may hold, for the tests that a key is found wherever it is echoed.
+SYMBOL_KEY = "canary+gw/key.v1~91d0c7e2b3a5=="
 BASE_URL = "http://127.0.0.1:18080"
 MODEL = "gw-test-model"
 

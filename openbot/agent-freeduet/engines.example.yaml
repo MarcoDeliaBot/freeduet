@@ -53,12 +53,14 @@ engines:
     enabled: false
 
   # ── An Anthropic-compatible endpoint you name: the same Claude Code CLI, on your own key at that endpoint ──
-  # Both blocks below are examples and stay off. The member runs exactly as on `claude-code` (same lockdown, same tools,
-  # same approvals); only where it sends its requests, which key it sends and which model it asks for change.
+  # Both blocks below are examples and stay off. To use one: uncomment it, set `enabled: true` and write its name in a
+  # chain under `chains:` below, after `claude-code`. The member runs exactly as on `claude-code` (same lockdown, same
+  # tools, same approvals); only where it sends its requests, which key it sends and which model it asks for change.
   # The key is one you hold at that endpoint, never your Claude sign-in: write where to find it (`env:NAME` for a
-  # variable of this service, `file:/absolute/path` for a file that holds it), never the key itself. `billing` has no
-  # default and is never guessed: say whether the endpoint is free or paid. A paid one also needs the `metered:`
-  # block below switched on, with caps, and until the spend ledger exists those caps are written down but not enforced.
+  # variable of this service, `file:/absolute/path` for a file that holds it, in no folder whose name starts with a
+  # dot), never the key itself. `billing` has no default and is never guessed: say whether the endpoint is free or
+  # paid. A paid one also needs the `metered:` block below switched on, with caps, and until the spend ledger exists
+  # those caps are written down but not enforced.
   # It is never first in a chain (logins come first), and `tier` is C unless you say otherwise: the quality floor
   # keeps a skill that needs a better model off it. Plain http is accepted only for this machine; anything else is https.
   #

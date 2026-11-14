@@ -7,8 +7,9 @@ NEVER ANSWERED A REAL TURN FROM A REAL GATEWAY: what these tests prove is what t
 environment it is given, what it reads back and keeps, how it classifies a failure), not what a gateway does.
 
 The failure fixtures `gateway_*.jsonl` are what Claude Code 2.1.325 printed when a loopback test double answered each
-request with the status in the name (the unreachable one: with nothing listening). Their ids are replaced, the long
-init line and the usage blocks are dropped, and the repeated retry lines are cut to one.
+request with the status in the name (the unreachable one: with nothing listening). Claude Code 2.1.311, the version the
+image pins, printed the same fields for each of them. Their ids are replaced, the long init line and the usage blocks
+are dropped, and the repeated retry lines are cut to one.
 """
 
 from __future__ import annotations
@@ -38,6 +39,7 @@ from gateway_support import (
     KEY,
     KEY_ENV,
     MODEL,
+    SYMBOL_KEY,
     config_with,
     decoys,
     everything_on_disk,
@@ -360,10 +362,17 @@ def test_no_key_means_no_turn_and_a_plain_message(fake_cli, tmp_path, monkeypatc
 
 @pytest.mark.parametrize("key", [
     "sk-ant-oat01-" + "a" * 40,   # the token `claude setup-token` prints: a Claude plan credential, never a gateway key
+    "sk-ant-ort01-" + "a" * 40,   # its refresh token
+    "gateway-" + "sk-ant-oat01-" + "a" * 20,   # one of them inside a longer value
+    # What a Claude sign-in file looks like (invented values): compact JSON with no space, well under 512 characters.
+    '{"claudeAiOauth":{"accessToken":"sk-ant-oat01-' + "a" * 20 + '","expiresAt":1,"scopes":["user:inference"]}}',
+    '{"token":"' + "b" * 30 + '"}',    # the same shape with no plan token in it: still not a key
     "has a space in it 12345",
     "short",
     "x" * 513,
     "café-key-non-ascii-1234",
+    'quote"in-the-middle-12345',
+    "user:colon-12345678",
 ])
 def test_a_value_that_is_not_a_gateway_key_is_not_sent_anywhere(fake_cli, tmp_path, monkeypatch, caplog, key):
     caplog.set_level(logging.DEBUG)
@@ -372,6 +381,7 @@ def test_a_value_that_is_not_a_gateway_key_is_not_sent_anywhere(fake_cli, tmp_pa
     assert events[-1]["type"] == "RUN_ERROR" and "has no key it can use" in events[-1]["message"]
     assert gw.starts() == [] and gw.runs() == 0
     assert key not in json.dumps(events) and key not in caplog.text
+    assert json.dumps(key)[1:-1] not in json.dumps(events)  # nor in the form a JSON string gives it
 
 
 def test_a_key_that_is_too_long_or_a_file_that_is_too_big_is_refused(tmp_path):
@@ -392,6 +402,88 @@ def test_read_key_never_raises_and_never_says_what_it_read(tmp_path):
     assert ce.read_key("env:X", {"X": "sk-ant-api03-" + "b" * 30}) == "sk-ant-api03-" + "b" * 30  # an API key is not a plan token
 
 
+# ── A sign-in is never opened, whatever engines.yaml names ───────────────────────────────────────
+
+
+@pytest.fixture
+def opened(monkeypatch):
+    """The paths the process opens from now on (the call itself goes through), as text."""
+    import builtins
+
+    real, seen = builtins.open, []
+
+    def spy(file, *args, **kwargs):
+        seen.append(os.fsdecode(file) if not isinstance(file, int) else str(file))
+        return real(file, *args, **kwargs)
+
+    monkeypatch.setattr(builtins, "open", spy)
+    return seen
+
+
+@pytest.fixture
+def plain_tmp(tmp_path):
+    """A temporary folder that is itself in no hidden folder, so that a hidden one made inside it is the only one."""
+    if ce.in_hidden_folder(os.path.realpath(tmp_path)):
+        pytest.skip("the temporary folder of this machine is inside a folder whose name starts with a dot")
+    return tmp_path
+
+
+def test_a_key_file_in_an_ordinary_folder_is_read(plain_tmp, opened):
+    folder = plain_tmp / "gateway"
+    folder.mkdir()
+    (folder / "key").write_text(KEY)
+    assert ce.read_key(f"file:{folder}/key", {}) == KEY
+    assert str(folder / "key") in opened  # the control of the three tests below: the spy does see an open
+
+
+def test_a_key_file_in_a_folder_whose_name_starts_with_a_dot_is_refused_and_never_opened(plain_tmp, opened):
+    folder = plain_tmp / ".gateway"
+    folder.mkdir()
+    (folder / "key").write_text(KEY)  # a perfectly good key: only where it lies is wrong
+    assert ce.read_key(f"file:{folder}/key", {}) is None
+    assert not any(str(folder) in path for path in opened)
+
+
+def test_a_link_from_an_ordinary_folder_into_a_hidden_one_is_refused_too(plain_tmp, opened):
+    hidden = plain_tmp / ".state"
+    hidden.mkdir()
+    (hidden / "key").write_text(KEY)
+    link = plain_tmp / "key-link"
+    link.symlink_to(hidden / "key")
+    assert ce.read_key(f"file:{link}", {}) is None
+    assert not any(str(hidden) in path or str(link) in path for path in opened)
+
+
+def test_a_key_file_inside_the_services_own_claude_config_folder_is_refused_and_never_opened(plain_tmp, opened):
+    login = plain_tmp / "login-state"  # a name with no dot: only the variable says what this folder is
+    login.mkdir()
+    (login / "key").write_text(KEY)
+    assert ce.read_key(f"file:{login}/key", {"CLAUDE_CONFIG_DIR": str(login)}) is None
+    assert not any(str(login) in path for path in opened)
+    assert ce.read_key(f"file:{login}/key", {}) == KEY  # the control: with no such variable it is a key
+
+
+def test_a_gateway_whose_key_file_is_in_the_claude_config_folder_gets_no_turn_and_the_file_is_not_opened(
+    fake_cli, plain_tmp, monkeypatch, opened
+):
+    login = plain_tmp / "claude-state"
+    login.mkdir()
+    credentials = login / "credentials"
+    credentials.write_text(KEY)  # the shape of a key, so that only its place refuses it
+    monkeypatch.setenv("CLAUDE_CONFIG_DIR", str(login))
+    gw = rig(plain_tmp, monkeypatch, {"credential_secret_ref": f"file:{credentials}"}, key=None)
+    events = play(gw.engine)
+    assert events[-1]["type"] == "RUN_ERROR" and "has no key it can use" in events[-1]["message"]
+    assert gw.starts() == [] and gw.runs() == 0
+    assert str(credentials) not in opened and str(credentials) not in json.dumps(events)
+
+
+def test_what_a_sign_in_file_holds_is_not_a_key_even_where_it_may_be_read(plain_tmp):
+    sign_in = plain_tmp / "account"  # invented content in the shape of a sign-in file: compact JSON, well under 512 characters
+    sign_in.write_text('{"claudeAiOauth":{"accessToken":"sk-ant-oat01-' + "a" * 20 + '","refreshToken":"sk-ant-ort01-' + "b" * 20 + '"}}')
+    assert ce.read_key(f"file:{sign_in}", {}) is None
+
+
 # ── Scrubbing ────────────────────────────────────────────────────────────────────────────────────
 
 
@@ -405,7 +497,7 @@ def test_the_scrubber_replaces_the_key_as_text_as_bytes_and_as_it_looks_inside_a
     assert ce.Scrubber(KEY).text("nothing to hide") == "nothing to hide"
 
 
-@pytest.mark.parametrize("key", [KEY, AWKWARD_KEY])
+@pytest.mark.parametrize("key", [KEY, SYMBOL_KEY])
 def test_a_key_a_gateway_echoes_in_an_error_never_reaches_the_person_the_log_or_the_state(fake_cli, tmp_path, monkeypatch, caplog, key):
     caplog.set_level(logging.DEBUG)
     gw = rig(tmp_path, monkeypatch, key=key)

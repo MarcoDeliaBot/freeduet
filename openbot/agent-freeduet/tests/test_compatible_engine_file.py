@@ -117,6 +117,10 @@ def test_the_two_forms_of_a_key_reference(reference, parsed):
     "file:",
     "file:relative/key",
     "file:/with\nnewline",
+    "file:/data/.secrets/key",  # a folder whose name starts with a dot is where a program keeps its own sign-in
+    "file:/run/secrets/.key",
+    "file:/run/secrets/../key",
+    "file:/.hidden",
     "http://example.com/key",
     KEY,                        # the key itself, pasted into the file by mistake
     "",
@@ -132,6 +136,14 @@ def test_a_key_pasted_into_the_file_is_refused_and_never_repeated():
         config_with({"credential_secret_ref": KEY})
     assert any("`credential_secret_ref` must be `env:NAME`" in line for line in caught.value.problems)
     assert KEY not in str(caught.value) and KEY not in repr(caught.value.problems)
+
+
+def test_a_key_file_in_a_hidden_folder_is_a_problem_of_the_file_that_says_so_and_does_not_repeat_the_path():
+    reference = "file:/data/.secrets/gateway-key"
+    with pytest.raises(EnginesFileError) as caught:
+        config_with({"credential_secret_ref": reference})
+    assert any("in no folder whose name starts with a dot" in line for line in caught.value.problems)
+    assert reference not in str(caught.value) and ".secrets" not in repr(caught.value.problems)
 
 
 # ── Where the endpoint is ────────────────────────────────────────────────────────────────────────

@@ -13,7 +13,7 @@ FreeDuet always runs on the subscriptions the person signed in to. API keys and 
 1. **FreeDuet never collects, stores or forwards subscription credentials or session tokens.** The person signs in to the provider's own, unmodified tool through the provider's own sign-in flow. FreeDuet only starts that tool and reads its output.
 2. **One person, one login.** No account sharing, no pooling of plans across users. A FreeDuet install shared by a team uses one login per person, or API keys.
 3. **Official tools only, unmodified.** No patched binaries, no removed authentication methods, no reverse-engineered endpoints.
-4. **Metered APIs are opt-in, last and capped.** They join an engine chain only if the person enabled them, always after every login engine, with daily and monthly caps.
+4. **Metered APIs are opt-in, last and capped.** They join an engine chain only if the person enabled them, always after every login engine, with daily and monthly caps. Until the usage ledger exists ([ENGINES_PLAN.md](ENGINES_PLAN.md) slice 12) the caps are written down but not enforced: no other metered engine runs yet, and a metered gateway that the person switched on runs without a cap check, which the service says in its log.
 5. **When a provider's terms are unclear, the route ships off.** It can be switched on only after the terms are clarified in writing.
 
 ## Status by provider
@@ -29,6 +29,7 @@ FreeDuet always runs on the subscriptions the person signed in to. API keys and 
 | **xAI, Grok** | Grok Build CLI with the person's own login, the route OpenMausBot uses. | Not verified yet. | **Off** until verified. API key works. |
 | **Moonshot, Kimi** | Kimi's CLI with the person's own login. | Not verified yet. | **Off** until verified. The OpenAI-compatible API works with a key. |
 | **OpenRouter** and any OpenAI-compatible API | API key. | Metered by the provider. | Optional, capped |
+| **A gateway or a router that speaks Anthropic's API** (OpenRouter, or a free router you run yourself) | The unmodified Claude Code CLI, pointed at the address in `engines.yaml`, with the person's own key at that address. It runs in an empty home, so no Claude credential is near it. | Anthropic does not endorse, maintain or audit third-party gateway products and does not support routing Claude Code to non-Claude models through any gateway. OpenRouter says Claude Code with it is only guaranteed to work with the Anthropic first-party provider. Prices, limits and terms are the gateway's. Both pages read 2026-11-14. | **Off.** Commented out in `engines.example.yaml`, never first in a chain, tier C until the evals say otherwise. A free one may be a later link; a metered one only under rule 4 and the person's separate opt-in |
 | **Local models** (Ollama, LM Studio, vLLM) | OpenAI-compatible endpoint on your hardware. | No provider terms. | Optional |
 
 ## CopilotKit Intelligence (optional)
@@ -46,6 +47,7 @@ Prices are as of November 2026, from CopilotKit's pricing page. Check the page b
 
 - **What each person runs on.** A Claude subscriber runs FreeDuet from v0.1 on Claude Code with their own login, with no API key at all. A ChatGPT subscriber gets the Codex route, through Codex's own login, once both checks in the table above pass. Everybody else uses a local model, or an API key they choose to add.
 - **API credits are a safety net, not the engine.** The API credits included in Max, Ultra and Team can be switched on as the last step of a chain, for when every login is at its limit.
+- **Free routers on your own computer.** A router you run yourself that puts one address and one key in front of several free providers may be a later link in a chain (decision E3 in [ENGINES_PLAN.md](ENGINES_PLAN.md)), never the first and never on by default. Its models and their tool calling are not Claude's, so it is tier C and the quality floor applies. Free quotas change without notice, and the terms of the providers behind it are yours to respect. FreeDuet neither ships nor installs one.
 - **Quality floor for money.** Jules (purchases and bookings) refuses to reach a checkout on an engine below the quality tier set in `engines.yaml`, so a small local model can research but cannot buy.
 - **Hosted FreeDuet is a different product.** Running FreeDuet for other people, or paying for their usage, falls under each provider's commercial terms. Anthropic, for example, requires its Commercial Terms for products that run Claude Code, and forbids paying for, reselling or intermediating end users' usage.
 
@@ -63,5 +65,7 @@ Prices are as of November 2026, from CopilotKit's pricing page. Check the page b
 
 - Anthropic, Claude Code legal and compliance: https://code.claude.com/docs/en/legal-and-compliance
 - Anthropic, monthly API credits for Max, Ultra and Team: https://support.claude.com/en/articles/17154008-monthly-api-credits-for-max-and-team-plans
+- Anthropic, Claude Code with other LLM gateways (read 2026-11-14): https://code.claude.com/docs/en/llm-gateway
+- OpenRouter, Claude Code integration (read 2026-11-14): https://openrouter.ai/docs/guides/guides/claude-code-integration
 - Google, Gemini CLI terms and privacy: https://www.geminicli.com/docs/resources/tos-privacy
 - Z.ai, GLM Coding Plan usage policy: https://docs.z.ai/devpack/usage-policy

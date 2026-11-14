@@ -16,9 +16,11 @@ THE KEY. It is the person's own key at the gateway, never a subscription credent
 variable of this service or from a file the person names (``credential_secret_ref``: ``env:NAME`` or
 ``file:/absolute/path``), once per turn, and it goes to the CLI through the environment and nowhere else: never
 into a file, an argument, the state file, a log line, a notice, an error message or the transcript. Whatever the CLI
-or the gateway prints, the exact key is replaced by ``[key]`` before anything reads it (:class:`Scrubber`). A key that
-is not one visible-ASCII token, or that looks like a Claude plan token (``sk-ant-oat``), is treated as no key: the
-person pasted the wrong thing, and it is not sent anywhere.
+or the gateway prints, the exact key is replaced by ``[key]`` before anything reads it (:class:`Scrubber`). A value that
+is not a bearer token as RFC 6750 writes it (so no sign-in file, which is JSON), or that holds a Claude plan token
+(``sk-ant-oat`` or ``sk-ant-ort``), is treated as no key: the person pointed at the wrong thing, and it is not sent
+anywhere. A file in a folder whose name starts with a dot, or in this service's own ``CLAUDE_CONFIG_DIR``, is not even
+opened (:func:`read_key`).
 
 THE SUBSCRIPTION STAYS OUT. Claude Code, given a base URL alone, keeps using the saved Claude sign-in and sends that
 token to the new address. So this kind never starts the CLI without its own key, never copies ``HOME`` or
@@ -67,20 +69,32 @@ from .engine_adapter import (
     TurnContext,
 )
 from .engine_errors import EngineLimit, describe
-from .engines import COMPATIBLE_KIND, Engine, EnginesConfig, exclusion_reason, is_local_host, parse_secret_ref
+from .engines import (
+    COMPATIBLE_KIND,
+    Engine,
+    EnginesConfig,
+    exclusion_reason,
+    in_hidden_folder,
+    is_local_host,
+    parse_secret_ref,
+)
 from .failure_classifier import AUTH, LIMIT_KINDS, UNKNOWN, Failure, classify_failure
 from .stream_json import Final, StreamParser
 
 log = logging.getLogger("freeduet.compatible_engine")
 
-#: A key is one token of visible ASCII, at least 8 characters (a shorter one cannot be scrubbed safely: it would
-#: be found inside the stream's own field names) and at most 512.
-KEY_SHAPE = re.compile(r"[\x21-\x7e]{8,512}")
+#: A key is a bearer token as RFC 6750 writes it, which is how it travels: letters, digits and `- . _ ~ + /`, then any
+#: number of `=`. It has no space, quote, brace or comma, so a file that holds a sign-in (JSON) or any other text is
+#: never a key, whatever its size. At least 8 characters (a shorter one cannot be scrubbed safely: it would be found
+#: inside the stream's own field names) and at most 512.
+KEY_SHAPE = re.compile(r"[A-Za-z0-9\-._~+/]+=*")
+KEY_MIN_LENGTH, KEY_MAX_LENGTH = 8, 512
 #: A key file larger than this is not a key file.
 KEY_FILE_MAX_BYTES = 4096
-#: What a Claude plan's own token starts with (the long-lived token `claude setup-token` prints). It is never a
-#: gateway key, and sending it to a third party would hand over a subscription credential.
-SUBSCRIPTION_TOKEN_PREFIX = "sk-ant-oat"
+#: What a Claude plan's own tokens start with: the long-lived token `claude setup-token` prints, and the refresh token
+#: kept beside it. Neither is ever a gateway key, and sending one to a third party would hand over a subscription
+#: credential.
+SUBSCRIPTION_TOKEN_MARKERS = ("sk-ant-oat", "sk-ant-ort")
 REDACTED = "[key]"
 
 #: What the CLI process may see of this service's environment: the Claude engine's allowlist, without the two names
@@ -120,9 +134,22 @@ class NoKey(ValueError):
     """The entry names no usable key. Carries no value, and no name of where it looked."""
 
 
+def _inside(path: str, folder: str | None) -> bool:
+    """Whether ``path`` is ``folder`` or lies below it, symbolic links resolved. Looks at names only: it opens nothing."""
+    if not folder:
+        return False
+    base = os.path.realpath(folder).rstrip("/")
+    return path == base or path.startswith(base + "/")
+
+
 def read_key(reference: str | None, environ: Mapping[str, str]) -> str | None:
     """The key ``reference`` names, or None when there is none or it is not usable. Never raises, and never says
-    what it read: not in an exception, not in a log line."""
+    what it read: not in an exception, not in a log line.
+
+    A file is opened only after its real path (links resolved) is known to lie in no folder whose name starts with a
+    dot and not in this service's own ``CLAUDE_CONFIG_DIR``: a Claude sign-in is kept in such a place, and this module
+    never opens it, whatever engines.yaml names. What was read must then look like a key (``KEY_SHAPE``) and must not
+    be a Claude plan token."""
     parsed = parse_secret_ref(reference)
     if parsed is None:
         return None
@@ -131,7 +158,10 @@ def read_key(reference: str | None, environ: Mapping[str, str]) -> str | None:
         if scheme == "env":
             raw = environ.get(where) or ""
         else:
-            with open(where, "rb") as handle:
+            path = os.path.realpath(where)
+            if in_hidden_folder(path) or _inside(path, environ.get("CLAUDE_CONFIG_DIR")):
+                return None
+            with open(path, "rb") as handle:
                 data = handle.read(KEY_FILE_MAX_BYTES + 1)
             if len(data) > KEY_FILE_MAX_BYTES:
                 return None
@@ -139,7 +169,9 @@ def read_key(reference: str | None, environ: Mapping[str, str]) -> str | None:
     except (OSError, UnicodeDecodeError, ValueError):
         return None
     key = raw.strip()
-    if not KEY_SHAPE.fullmatch(key) or key.startswith(SUBSCRIPTION_TOKEN_PREFIX):
+    if not KEY_MIN_LENGTH <= len(key) <= KEY_MAX_LENGTH or not KEY_SHAPE.fullmatch(key):
+        return None
+    if any(marker in key for marker in SUBSCRIPTION_TOKEN_MARKERS):
         return None
     return key
 
