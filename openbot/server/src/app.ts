@@ -87,6 +87,7 @@ import { createDictationRoutes } from "./dictation/routes";
 import { threadReaderClient } from "./freeduet/backend";
 import type { EngineChoices } from "./freeduet/engine-choices";
 import { createEnginesRoutes } from "./freeduet/engines-routes";
+import { createImportPreviewRoutes } from "./freeduet/import/preview-routes";
 import type { HostAccessBroker } from "./host-access/broker";
 import { createHostAccessRoutes } from "./host-access/routes";
 import { identityRoutes } from "./identity/routes";
@@ -717,6 +718,12 @@ export function createApp(
       coworker?.engineChoices,
     ),
   );
+  // The import preview (docs/design/import-from-other-tools.md, slice 2): signed in, the person's own facts, nothing saved.
+  if (coworker?.memory)
+    app.route(
+      "/api/freeduet/import",
+      createImportPreviewRoutes(requireUser, coworker.memory.store),
+    );
   app.on(["PUT", "PATCH", "DELETE"], "/api/auth/scim/*", (context) =>
     auth
       ? auth.handler(context.req.raw)
