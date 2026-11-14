@@ -188,15 +188,74 @@ Not verified:
 - Not run in a real browser or with a real voice. Voices are read when the person presses the control or turns the switch on, not on the `voiceschanged` event, so a browser that lists its voices late may show no voice until the person tries again. The control is drawn whenever the switch is on and speech synthesis exists, even with no local Italian voice; pressing it then does nothing and says nothing (`chat-transcript.tsx:245`, `:256-261`). Nothing is spoken in either case without the switch.
 - Text cleaning is a pattern pass, not a Markdown parser. It removes every asterisk (so `2*3` reads as `23`) and leaves underscores and HTML as they are.
 - The guard covers the decision route, questions and paired-chat text. It does not run the voice model or any provider; no provider was called.
-- Dictated and voice requests are not told apart from typed text. S1 does not change that (section 9).
+- Dictated and voice requests were not told apart from typed text when S1 shipped. That is decided and built in section 10 (D7 and D8).
 
-## 9. Decisions left to the maintainer
+## 9. Decisions on the gate (D7, D8) and what is left
 
-D2 is followed in S1 (browser voices, local only, recommendation (a)). D3 is decided (section 3.6). S1 does not touch D1, D4, D5 or D6.
+D7 and D8 were decided on 14 November 2026 and are built (section 10); the table keeps the evidence they were decided on, as it stood on main before the change. What is left is in section 11. D2 is followed in S1 (browser voices, local only, recommendation (a)). D3 is decided (section 3.6). S1 does not touch D1, D4, D5 or D6.
 
 | # | Decision | Options | Recommendation | Reason |
 |---|---|---|---|---|
-| D7 | Does a dictated address count as typed for D27, so that a new email goes out with no card? Today it does. The transcript becomes an ordinary user message (`composer.tsx:388-389`, `1289-1290`; `channel-chat.tsx:1115-1119`). "Transcribe and send" submits it with no review (`dictation-controls.tsx:214`). The gate reads only that message (`typed-recipients.ts:107-112`) | (a) keep as it is; (b) the app marks a message sent without review with an id prefix that D27 refuses, as `handoff-` is refused (`typed-recipients.ts:108`); (c) dictation never sends a message that holds an address before the person has read it | (b): one card press for a dictated address, and the dictation flow stays. (c) if the maintainer wants no extra press | A speech engine can mishear an address, and an address sent unread goes to whoever it names. D27 says every doubt resolves to no (`typed-recipients.ts:9-10`). Cost of (b), not built: about 25 production lines in four app files and the server (an estimate; the queued-send path was not read in full) |
-| D8 | Does a voice request count as typed for D27? This is the wider gap, and it is on main, not caused by S1. The voice model writes the request (`openbot/server/src/voice/provider.ts:94-95`). `askAgent` sends it through `say` (`channel-chat.tsx:1421-1429`) as an ordinary user message (`channel-chat.tsx:1115-1119`). The model also reads recent thread messages, and assistant replies may quote mail (`channel-chat.tsx:1415-1416`; `openbot/app/src/lib/voice/agent-bridge.ts:21-28`). So an address the model writes, in a short request, counts as typed. It applies only where a cloud voice is set up (`openbot/server/src/voice/config.ts:16-22`) | (a) keep; (b) mark voice requests as in D7(b), so D27 refuses them; (c) a voice request may not lead to a send to a new recipient | (b). Until it is decided, keep the cloud voice off for anyone who sends email through FreeDuet | The request is the model's words, not the person's, so an address in it is not the person's written approval. Full access is judged the same way on the person's own live turn (CLAUDE.md, "Full access"), so under Full access a model-written payment request would also pass without a card. The gate cannot tell the difference, so only a change to the rule closes it |
+| D7 | DECIDED 14 November 2026: (b), built, section 10. Does a dictated address count as typed for D27, so that a new email goes out with no card? Today it does. The transcript becomes an ordinary user message (`composer.tsx:388-389`, `1289-1290`; `channel-chat.tsx:1115-1119`). "Transcribe and send" submits it with no review (`dictation-controls.tsx:214`). The gate reads only that message (`typed-recipients.ts:107-112`) | (a) keep as it is; (b) the app marks a message sent without review with an id prefix that D27 refuses, as `handoff-` is refused (`typed-recipients.ts:108`); (c) dictation never sends a message that holds an address before the person has read it | (b): one card press for a dictated address, and the dictation flow stays. (c) if the maintainer wants no extra press | A speech engine can mishear an address, and an address sent unread goes to whoever it names. D27 says every doubt resolves to no (`typed-recipients.ts:9-10`). Cost of (b), not built: about 25 production lines in four app files and the server (an estimate; the queued-send path was not read in full) |
+| D8 | DECIDED 14 November 2026: (b), built, section 10. Does a voice request count as typed for D27? This is the wider gap, and it is on main, not caused by S1. The voice model writes the request (`openbot/server/src/voice/provider.ts:94-95`). `askAgent` sends it through `say` (`channel-chat.tsx:1421-1429`) as an ordinary user message (`channel-chat.tsx:1115-1119`). The model also reads recent thread messages, and assistant replies may quote mail (`channel-chat.tsx:1415-1416`; `openbot/app/src/lib/voice/agent-bridge.ts:21-28`). So an address the model writes, in a short request, counts as typed. It applies only where a cloud voice is set up (`openbot/server/src/voice/config.ts:16-22`) | (a) keep; (b) mark voice requests as in D7(b), so D27 refuses them; (c) a voice request may not lead to a send to a new recipient | (b). Until it is decided, keep the cloud voice off for anyone who sends email through FreeDuet | The request is the model's words, not the person's, so an address in it is not the person's written approval. Full access is judged the same way on the person's own live turn (CLAUDE.md, "Full access"), so under Full access a model-written payment request would also pass without a card. The gate cannot tell the difference, so only a change to the rule closes it |
+
+Not decided here and not changed: the cloud voice route and its default, the call transcripts (D1 in section 6), and the speech-to-text model (D4).
+
+## 10. Built so far: D7 and D8, option (b)
+
+The rule. A message that came from the microphone never earns the two shortcuts that stand in for an approval card because the person's own written words ask for the action: D27/D27a (a new email goes out with no card when every recipient is typed in the person's latest message) and Full access (D29, a member acts with no card in the person's own live turn). Such a turn asks with the card, as a hand-off's does. Two things are "from the microphone": dictation sent with the one press "Transcribe and send" (also the spoken-message sheet's "Send"), and any request the voice call's model writes (`ask_agent`). Text placed in the box, with "Stop and transcribe" or the sheet's "Type instead", and sent with the Send button counts as typed: it was on screen and editable. This split was checked against the code (`composer.tsx` `sendDictatedDraft`, the sheet's `finish("send")` and `finish("draft")`, `ChannelChat.askAgent`) and is pinned by tests.
+
+The mark. The id of the person's message starts with `voice-`, as a hand-off's envelope starts with `handoff-`. Carried in the id, not in a new field, because the D27 check and the Full access check already read the latest user message and its id, the id is stored with the message (a continuation after an approval, a reloaded conversation and a hop's record all see it), and it needs no schema change. Shared definition: `openbot/shared/voice-message.ts`.
+
+Where it is set. The app sets it, and only on those two paths: the composer marks the draft (`voice: true`), the draft keeps the mark through the queue (parked, joined, restored), and the id of the message made from it is `voice-<id>`. That covers a channel, a task's reply (the id sent to the task; the server keeps the mark when it derives a retry id, `taskExecutionId`), a first message of a new channel (the stash carries the mark, so the channel that opens sends it marked), and a group message (the id; the server keeps the mark in the id of each Bot's turn, `keepVoiceMark`).
+
+What the server can and cannot know. It sees only the run the browser sent. It never receives the audio of a call or the voice model's tool call, and the dictation route returns text and sees nothing after. So it cannot tell by itself that a message came from the microphone: an absent mark means only "the app did not say so". It can promise the other direction: nothing a Bot, a tool, a page or a mail contains can set the mark (only the person's own `user` messages are read for it, and their ids are the app's), and a marked message never earns either shortcut, on every path that reads the person's message: D27 direct, D27a (`handedRequestOf` writes no record for a marked message, so the hop gets neither D27a nor Full access), and Full access in both settings, for the person's own turn. A client that leaves the mark off is the person's own browser. That is inside D27's trust boundary today: whoever can send the person's messages can type the address too. The rule closes the honest mistake (a misheard address sent unread, a model-written request), not a hostile browser.
+
+Behaviour, by case:
+
+| Case | Before | Now |
+|---|---|---|
+| Typed, Send button, address typed | no card (D27) | no card, unchanged |
+| Dictated into the box, then Send | no card | no card, unchanged |
+| One-press dictation, address in it | no card | card |
+| Voice-call model's request, address in it | no card | card |
+| Marked message, member in Full access or Full access without payments | no card | card (both settings) |
+| Voice-model request that is a payment | no card under Full access | card |
+| Next typed message after a marked one | | typed rule again (the latest message decides) |
+
+Every line touched outside new code (all additions unless said):
+
+- Server, FreeDuet's own files: `plugins/typed-recipients.ts` (import, doc bullet, one `if` after the `handoff-` check); `agents/handoff-request.ts` (import, doc bullet, one `if` in `handedRequestOf`); `freeduet/full-access.ts` (import, header paragraph, one `if` in `effective()`).
+- Server, upstream files: `proactive/engine.ts` (`taskExecutionId`: the last return now goes through `keepVoiceMark`, same results for unmarked ids; +8 -3); `channels/group.ts` (import, and the id of the run's user message goes through `keepVoiceMark`; +6 -1).
+- App, upstream files: `composer/draft.ts` (`voice?: true`), `composer/queue.ts` (the mark through submit, join, restore), `composer/composer.tsx` (the send body takes `voice`; the dictation effect passes `true`; Enter and the button pass `false`), `channel-chat.tsx` (`deliver`/`say` take `voice`; `askAgent` passes it; the task reply id; the seed is sent with the mark it was stashed with), `transcript-messages.ts` (the stash holds the mark; `takeFirstMessage` is unchanged), `lib/channels/start.ts` (`start`, `startChosen`, `startGroup` take a required `voice`: a caller that forgot it would send dictation as typed, so the compiler asks), `routes/_authed/_app/start.tsx`, `routes/_authed/_app/channel/new.tsx`, `components/shell/chat-screen.tsx` (one line each, `draft.voice === true`), `components/channels/group-chat.tsx` (the id).
+- `approvals/policy.ts` is not touched. The Composer in `routes/_authed/onboarding.tsx` is a picture and sends nothing.
+
+Tests (real Postgres 16 on a private cluster; `bun test`). New and all passing; on main's source the number that fails is shown:
+
+| File | Tests | Fail on main |
+|---|---|---|
+| `server/tests/voice-message-gate.integration.test.ts` (real plugin store, approval service, Full access, hand-off desk; D27, D27a, both Full access settings, a payment, a table of other actions) | 33 | 18 |
+| `server/tests/voice-message-id.test.ts` (pure rules, `handedRequestOf`, `taskExecutionId`) | 17 | 7 |
+| `server/tests/voice-message-group.integration.test.ts` (group turns and Full access) | 8 | 4 |
+| `app/tests/voice-queue-mark.test.ts` | 7 | 4 |
+| `app/tests/composer-voice-mark.test.tsx` (inline controls, compact and default, and the spoken-message sheet) | 14 | 9 |
+| `app/tests/channel-voice-mark.test.tsx` (real channel: wire ids, `ask_agent`, a task reply, a stashed first message) | 8 | 4 |
+| `app/tests/first-message-voice-mark.test.tsx` (stash, home screen, group chat) | 6 | 4 |
+| `app/tests/chat-screen-voice-mark.test.tsx` (first-day screen) | 2 | 1 |
+| `shared/voice-message.test.ts` | 9 | not run on main (the file does not exist there) |
+
+The cases that pass on main are named guards (typed paths that must not change). `tsc --noEmit` is clean for shared, server and app; Biome format and lint are clean; `assertion-shape.test.ts` passes. The related existing suites pass: 431 server tests in 15 files and 852 app and shared tests in 79 files.
+
+Not verified: no real microphone, no real voice call, no real browser, no provider called. The voice model's tool call and the spoken sheet are driven through the app's own seams (the recorder, the transcriber and the voice connection are stubs). `/channel/new` is wired like the home and first-day screens but has no rendering test of its own.
+
+## 11. Decisions left to the maintainer
+
+| # | Decision | Options | Recommendation | Reason |
+|---|---|---|---|---|
+| D9 | Auto-review (`requestOf`, `pre_approved` in `approvals/policy.ts`) still reads the person's message as the person's request, voice or not. Should a marked message stop counting there too? | (a) leave it; (b) a marked message is not a request for auto-review | (b), as its own small change | It decides a different thing (what the reviewer may pre-approve), the brief kept `policy.ts` out, and nothing here weakens it. Not changed |
+| D10 | A message that mixes typed and dictated words and is sent with one press is marked whole. Keep that? | (a) whole message marked; (b) track which words were dictated | (a) | The person did not read the dictated part when sending, and a split would let typed words vouch for dictated ones. Cost: one card more |
+| D11 | Should the server also refuse a marked id outside a window in which a call or dictation could have happened? | (a) no; (b) server-side window | (a) | A client that lies is the person's own browser; a window adds state and catches nothing new |
+| D12 | A tap on a button or a suggestion chip inside a card sends a message (`askFromComponent`) unmarked. Fine? | (a) yes, it is a tap on text the person saw; (b) mark it | (a) | The person sees the text before tapping |
+| D13 | The old advice "keep the cloud voice off for anyone who sends email" can go. | (a) drop it; (b) keep | (a) | The hole it covered is closed. Not tested with a real call |
 
 Not decided here and not changed: the cloud voice route and its default, the call transcripts (D1 in section 6), and the speech-to-text model (D4).

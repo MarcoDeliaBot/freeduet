@@ -31,7 +31,17 @@
  * `createHandedRequestLoader`). Then the stricter of the two members' settings holds for payments: a
  * receiver in plain Full access still asks about a payment when the member that handed the work on is
  * "without payments", and a receiver "without payments" asks whatever the sender is.
+ *
+ * WORDS FROM THE MICROPHONE ARE NOT THE PERSON'S OWN WRITTEN TURN (docs/design/voice.md, D7 and D8). A
+ * turn whose latest message of the person's carries the `voice-` id mark, which the app puts on
+ * dictation sent with one press and on the voice call's model's requests
+ * (`@openbot/shared/voice-message`), gets no Full access, in either setting: it asks as a hop does
+ * that the server cannot trace to a typed message, and a payment in it goes to the person. A hop made
+ * from such a message carries no D27a mark (`agents/handoff-request.ts`), so it falls out the same
+ * way. The server cannot tell the origin of a message by itself: a message without the mark is only
+ * "the app did not say so", and a client that leaves it off is the person's own browser.
  */
+import { latestUserMessageIsVoice } from "@openbot/shared/voice-message";
 import { and, desc, eq, sql } from "drizzle-orm";
 import {
   type ApprovalContinuation,
@@ -147,6 +157,10 @@ export function createFullAccess(deps: {
     const ownTurn = initiator === undefined || initiator.kind === "person";
     const handedOn = initiator?.kind === "handoff";
     if (!ownTurn && !(handedOn && deps.handedRequest)) return undefined;
+    // Words that came from the microphone are not the person's own written turn (D7, D8). A hop is
+    // refused on the same ground by `handedRequestOf`, which writes no mark for such a message.
+    if (ownTurn && latestUserMessageIsVoice(continuation.messages))
+      return undefined;
     // One read, so the member and the one that handed the work on are judged from the same state.
     const setting = await list(input.actorId);
     const entry = setting[input.botId];
