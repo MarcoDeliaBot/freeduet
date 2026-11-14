@@ -469,6 +469,40 @@ describe("a tunnel the filter opened itself", () => {
     expect(lookups).toBe(1);
   });
 
+  test("a name that resolves to two addresses is judged by the one its tunnel reached: a policy that keeps that one closes nothing, and one that keeps only the other closes it", async () => {
+    // Two servers on one port, on two addresses of this machine's loopback.
+    const first = await echoOrigin("127.0.0.1");
+    const second = await echoOrigin("127.0.0.2", first.port);
+    const filter = await startEgressFilter({ env: {} });
+    setEgressResolver(async () => ["127.0.0.1", "127.0.0.2"]);
+    const covering = (...addresses: string[]): EgressPolicy => ({
+      mode: "allowlist_only",
+      rules: addresses.map((address) => ({
+        type: "cidr",
+        value: `${address}/32`,
+        ports: String(first.port),
+      })),
+    });
+    await push(BOT, covering("127.0.0.1", "127.0.0.2"));
+    const tunnel = await openTunnel(
+      filter.port,
+      `two.example.test:${first.port}`,
+      asBot(BOT),
+    );
+    await tunnel.roundTrip("before");
+    // The first of the two, IPv4 first and in the order the name gave them.
+    expect(first.connections.length).toBe(1);
+    expect(second.connections.length).toBe(0);
+
+    // Still allowed where it went, though a new connection to the name would be refused now (its
+    // other address is not allowed): nothing to close.
+    await push(BOT, covering("127.0.0.1"));
+    await tunnel.roundTrip("still allowed");
+    // Allowed only where it did not go.
+    await push(BOT, covering("127.0.0.2"));
+    await closedAtBothEnds(tunnel, first.connections[0]!.closed);
+  });
+
   test("a policy that becomes wider, or is pushed again as it was, closes nothing (a guard: nothing is closed on main either)", async () => {
     const a = await echoOrigin();
     const b = await echoOrigin();
@@ -967,6 +1001,69 @@ describe("plain HTTP", () => {
   });
 });
 
+/* ------------------------------ a policy that arrives while a name is looked up ------------------------------ */
+
+describe("a policy that arrives while a name is still being looked up", () => {
+  /** A resolver that answers 127.0.0.1 for every name, but only when it is told to. */
+  function heldResolver() {
+    let lookups = 0;
+    let finish: () => void = () => undefined;
+    const held = new Promise<void>((resolve) => {
+      finish = resolve;
+    });
+    setEgressResolver(async () => {
+      lookups += 1;
+      await held;
+      return ["127.0.0.1"];
+    });
+    return {
+      started: () => until(() => lookups === 1, "the lookup to start"),
+      finish,
+    };
+  }
+
+  test("a CONNECT is judged by the policy that is in force when the lookup ends, not by the one it started under, and nothing is connected to", async () => {
+    const origin = await echoOrigin();
+    const filter = await startEgressFilter({ env: {} });
+    await push(BOT, on);
+    const lookup = heldResolver();
+    const attempt = beginTunnel(
+      filter.port,
+      `looked-up.example.test:${origin.port}`,
+      asBot(BOT),
+    );
+    await lookup.started();
+
+    // The person switches it off while the filter is still looking the name up.
+    await push(BOT, off);
+    lookup.finish();
+
+    expect(await within(attempt.status, "an answer")).toContain("403");
+    await within(attempt.closed, "the refused CONNECT's socket to close");
+    expect(origin.connections.length).toBe(0);
+  });
+
+  test("a plain request is judged the same way, and is not forwarded", async () => {
+    const origin = await plainOrigin("must not be reached");
+    const filter = await startEgressFilter({ env: {} });
+    await push(BOT, on);
+    const lookup = heldResolver();
+    const answer = getVia(
+      filter.port,
+      `looked-up.example.test:${origin.port}`,
+      asBot(BOT),
+    );
+    await lookup.started();
+
+    await push(BOT, off);
+    lookup.finish();
+
+    expect(await answer).toContain("403");
+    expect(origin.reached()).toBe(0);
+    expect(origin.connections.length).toBe(0);
+  });
+});
+
 /* --------------------------- what the filter keeps, and what it lets go of --------------------------- */
 
 describe("what the filter keeps track of", () => {
@@ -1049,6 +1146,48 @@ describe("what the filter keeps track of", () => {
       "done",
     );
     await until(countIs(0), "nothing in flight after an answered request");
+  });
+
+  test("a plain client that goes away while its name is still being looked up leaves nothing counted", async () => {
+    const origin = await plainOrigin("done");
+    const filter = await startEgressFilter({ env: {} });
+    await push(BOT, on);
+    let lookups = 0;
+    let finishLookup: () => void = () => undefined;
+    const held = new Promise<void>((resolve) => {
+      finishLookup = resolve;
+    });
+    setEgressResolver(async () => {
+      lookups += 1;
+      await held;
+      return ["127.0.0.1"];
+    });
+    const client = connect(filter.port, "127.0.0.1");
+    cleanups.push(() => client.destroy());
+    client.on("error", () => undefined);
+    const gone = new Promise<void>((resolve) =>
+      client.once("close", () => resolve()),
+    );
+    client.write(
+      `GET http://leaves.example.test:${origin.port}/ HTTP/1.1\r\nHost: leaves.example.test:${origin.port}\r\n\r\n`,
+    );
+    await until(() => lookups === 1, "the filter to start the lookup");
+
+    client.destroy();
+    await within(gone, "the client to close");
+    // The filter runs in this process and reads the close in a turn or two of the event loop, and
+    // nothing outside it says when it has, so the lookup is held for twenty turns. A filter that had
+    // not read the close by then would count the request and let go of it when it does, and this case
+    // would pass without reaching the branch it guards: it can miss a defect, never report one that is
+    // not there.
+    for (let turn = 0; turn < 20; turn++) {
+      await new Promise((resolve) => setImmediate(resolve));
+    }
+    finishLookup();
+    // Everything after the lookup is a chain of promise continuations, so one macrotask later the
+    // request has been counted or not: a request whose client is already gone must not stay counted.
+    await new Promise((resolve) => setImmediate(resolve));
+    await until(countIs(0), "nothing counted once the lookup was done");
   });
 
   test("a client that goes away while its tunnel is still being set up leaves nothing behind, and the proxy's late answer is dropped", async () => {

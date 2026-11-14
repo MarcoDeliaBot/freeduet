@@ -17,9 +17,10 @@ Tags: **[code: path:line]** read on origin/main 5b96410 (code paths start at `op
 | A tunnel (CONNECT) opened to a home-network address with the switch on | Kept carrying data after the switch went off. Only a new CONNECT got 403. A page's WebSocket to a service on the computer kept echoing in a real Chromium [measured] | The two sockets are piped and the policy is never read again [code: agent-computer/src/egress.ts:969-1008, the pipes at 999-1000]. `setEgressPolicy` only stores the policy [code: egress.ts:611] |
 | A plain-HTTP response that was still streaming | Kept streaming after the switch went off [measured] | Judged once, when the request arrived [code: egress.ts:966] |
 | A later plain-HTTP request to the same name and port | Could leave on a keep-alive socket opened for an earlier request, so to an address that the policy of that moment refuses [measured: a name moved from one address to another, the policy allowed only the new one, the request still reached the old one] | `httpRequest` without its own agent pools by name and port under Bun [code: egress.ts:1063] |
+| A policy that arrived while a name was being looked up | The connection was judged by the policy in force when the lookup started: a switch turned off during the lookup still let a tunnel and a plain request through (200 on both) [measured, with a lookup held open] | `decide` reads the policy before the lookup and judges with it after [code: egress.ts:660, 678, 684-687] |
 | Stopping the filter | Waited for every open tunnel to end of its own accord [measured] | [code: egress.ts:1023-1030] |
 
-So plain HTTP was not entirely "judged per request and fine": the two plain cases above are the same hole, and are closed here.
+So plain HTTP was not entirely "judged per request and fine": the streaming response, the pooled socket and the lookup window above are holes of the same kind, and are closed here.
 
 ## 3. Built so far
 
@@ -29,6 +30,7 @@ So plain HTTP was not entirely "judged per request and fine": the two plain case
 - Every change to a policy (`setEgressPolicy`, which the server's push calls) judges all of it again, before the call returns, with `judge`, the function a new connection meets (`decide` uses it too). Both sides of a connection that would now be refused are destroyed. Nothing is slept on or retried.
 - The address a direct tunnel is judged by is the one its socket reached, not looked up again. While a tunnel is still being set up it is every address that was checked, since any of them may be the one.
 - A wider policy, or the same one pushed again, ends nothing. This follows from the rule: a connection is ended only when the same function, given the same inputs, now says no.
+- A connection is judged once more, by the policies in force at that moment, just before it is carried: a policy pushed while the name was being looked up is not missed.
 - A connection still being set up when the policy arrives is judged too. Its client is refused with the reason a new CONNECT would get, and the socket being made is destroyed the moment it exists, with nothing sent through it.
 - A request leaves on a connection of its own (`agent: false`), which ends with it. That closes the pooling hole in section 2.
 - `stopEgressFilter` ends everything it carries. Before, it waited for the tunnels.
@@ -49,15 +51,15 @@ So plain HTTP was not entirely "judged per request and fine": the two plain case
 
 | What | Result |
 |---|---|
-| `egress-tighten.test.ts` (26 tests, real sockets, a fake upstream that echoes, bounded waits on close events, no sleeps) | 26 pass on the branch in every run: nine runs of the file alone (six on Bun 1.4.4, three on Bun 1.4.3, the version CI pins) and again inside the whole-suite run. On main's `egress.ts`: 1 pass, 25 fail. The pass is a guard, labelled in its title (nothing is closed on main either). 4 of the 25 fail on main only because the counter they read does not exist; 21 fail on behaviour |
+| `egress-tighten.test.ts` (30 tests, real sockets, a fake upstream that echoes, bounded waits on close events, no sleeps) | 30 pass on the branch in every run (the 26 first written passed in nine runs of the file alone, six on Bun 1.4.4 and three on Bun 1.4.3, the version CI pins; the last four were added after those runs and passed in every run since, all on Bun 1.4.4). On main's `egress.ts`: 1 pass, 29 fail. The pass is a guard, labelled in its title (nothing is closed on main either). 5 of the 29 fail on main only because the counter they read does not exist; 24 fail on behaviour |
 | `private-network-browser.test.ts`, real Chromium, one new case (a page's WebSocket opened with the switch on, switch turned off) | 4 pass on the branch (Bun 1.4.4 and 1.4.3), and the new case alone passed 6 runs in 6. On main's `egress.ts` the new case fails (the page's socket does not close within 10 s) and the other three pass |
 | The CI list `computer (real browser)`, ten files in one process | 44 pass, 0 fail |
-| The whole `agent-computer` suite | 655 pass, 74 skip, 2 fail. The two are the IPv6 cases that cannot listen on `::1` here (`EAFNOSUPPORT`); they fail the same way on main |
-| `biome format`, `biome lint`, `tsc --noEmit` in `agent-computer` and in `server`, `server/tests/assertion-shape.test.ts` | Clean, clean, 0 errors in both, 10 pass |
+| The whole `agent-computer` suite | 659 pass, 74 skip, 2 fail. The two are the IPv6 cases that cannot listen on `::1` here (`EAFNOSUPPORT`); they fail the same way on main |
+| `biome format` and `biome lint` over `openbot/`, `tsc --noEmit` in `agent-computer` and in `server`, `bun run typecheck:tests`, `server/tests/assertion-shape.test.ts` | All clean. `typecheck:tests` is clean against its baseline (239 known errors) on its second run (see section 3.5). Assertion-shape: 10 pass |
 
-The tests cover: the switch off, `allow_all` to `deny_all`, an allowlist rule removed (and only that tunnel closes), a name judged by the address it reached, a Bot with credentials and one without, a Bot's policy taken away, `EGRESS_POLICY_REQUIRED=0`, tunnels behind an upstream proxy, a tunnel being set up when the policy arrives, forty tunnels at once, a tunnel closing at either end when the policy arrives, tighten then widen, a streaming response, the pooling hole, and the filter's own count of what it carries.
+The tests cover: the switch off, `allow_all` to `deny_all`, an allowlist rule removed (and only that tunnel closes), a name judged by the address it reached, a Bot with credentials and one without, a Bot's policy taken away, `EGRESS_POLICY_REQUIRED=0`, tunnels behind an upstream proxy, a tunnel being set up when the policy arrives, forty tunnels at once, a tunnel closing at either end when the policy arrives, tighten then widen, a streaming response, the pooling hole, a policy arriving during a name lookup (tunnel and plain request), a name with two addresses judged by the one the tunnel reached, and the filter's own count of what it carries.
 
-The browser case uses a `ws://` socket, not an HTTPS page. A `ws://` socket reaches the filter as a CONNECT tunnel, which is also how an HTTPS page's traffic arrives, and a service on this machine needs no certificate to answer it. An HTTPS page to a home-network address would need a certificate the profile trusts for that address, which is not practical in a test and would exercise the same path.
+The code was also broken on purpose in fifteen ways, each run against these tests. Twelve were caught (among them: the policy change not ending anything, anonymous connections skipped, the far side or a late socket left open, the judging before a connection is carried removed, the stop not ending connections, a plain request not let go of when its client had already gone, `agent: false` removed). Three were not, because the code they break is redundant under Bun: a plain request's explicit `outbound.destroy()` (the response's close does it too), a tunnel's explicit `client.destroy()` (Bun closes the client when the far side is destroyed), and releasing a tunnel when only its client has closed (under Bun both ends close together, so no half-open state could be built to show it).
 
 ### 3.5 Not verified
 
@@ -68,7 +70,7 @@ The browser case uses a `ws://` socket, not an HTTPS page. A `ws://` socket reac
 - `EGRESS_POLICY_REQUIRED` is read when the filter starts, not on a push. Changing it on a running filter does not re-judge what is open. Nothing in the product changes it while running.
 - A raw socket that ignores the proxy variables never reaches the filter, so nothing here stops it ([SECURITY.md](../../SECURITY.md)).
 - The whole-suite and the ten-file browser runs were on Bun 1.4.4 (this machine). CI pins 1.4.3, where only the socket file and the browser file were run.
-- `bun run typecheck:tests` was killed (SIGKILL) under load once on this machine. A killed run is not a result.
+- `bun run typecheck:tests` was killed once on this machine (SIGKILL, other work was using the memory). That run is not a result; the second run, on a quieter machine, is the one reported.
 
 ### 3.6 Decisions left to the maintainer
 
