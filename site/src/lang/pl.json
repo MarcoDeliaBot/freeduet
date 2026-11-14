@@ -128,7 +128,7 @@
  "r2": "Priorytet numer jeden: instalator w jednym pliku dla Windows, macOS i Ubuntu. Kolejni członkowie, każdy przetestowany.",
  "r3": "Wybór silnika dla każdego członka i prawdziwe delegowanie zadań w zespole.",
  "r4": "Automatyzacje pisane w czacie, więcej połączonych aplikacji, wersja na telefon, dostęp zdalny.",
- "r5": "Głos, bezpieczne zakupy. Funkcja Full access: zbudowana, jeszcze nie sprawdzona w praktyce. Cam, członek zespołu od wideo; jego testy nie zostały jeszcze uruchomione w praktyce, a z czatu nie może jeszcze przekazać pliku.",
+ "r5": "Głos, bezpieczne zakupy. Funkcja Full access: zbudowana, jeszcze nie sprawdzona w praktyce. Cam, członek zespołu od wideo; jego testy nie zostały jeszcze uruchomione w praktyce, a z czatu może już przekazać gotowy plik z przyciskiem pobierania (funkcja zbudowana, ale jeszcze nie sprawdzona w praktyce).",
  "r_note": "Opisujemy wszystko, czego jeszcze nie zbudowano. Żadnych bajek. <a href=\"https://github.com/MarcoDeliaBot/freeduet/blob/main/docs/ROADMAP.md\">Pełna mapa drogowa na GitHubie</a>.",
  "in_h": "Od instalacji do pierwszego pożytecznego zadania",
  "in_p": "Cztery kroki, w prawdziwej kolejności. Wszystkie polecenia są też w jednym polu niżej, gotowe do skopiowania.",
