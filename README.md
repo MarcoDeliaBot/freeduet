@@ -46,6 +46,30 @@ FreeDuet gives you a Chief of Staff and a crew of specialists: inbox, contracts,
 
 ✅ yes · ⚠️ partly · ❌ no · — not documented. A version means planned, not available yet. Full table with sources: [docs/COMPARISON.md](docs/COMPARISON.md).
 
+## How FreeDuet differs
+
+At the time of writing (November 2026), against two kinds of product. The others are described from their own public documentation; they change, so check them before you decide. The feature-by-feature table is [docs/COMPARISON.md](docs/COMPARISON.md).
+
+| | **FreeDuet** | Closed hosted bot teams (for example Grok Bot) | Other open-source bot-team apps (for example OpenMausBot) |
+|---|---|---|---|
+| **Approvals by default** | Send, pay, sign, book and delete ask first. One narrow exception: a new email to an address you typed yourself | Grok Bot's documentation says an automatic review decides per action; most actions run on their own, and turning it off removes the check | Varies. OpenMausBot shows approval cards for commands and file edits. Another project in our comparison runs agents with full access by design |
+| **Cost** | FreeDuet itself is free. You use your own Claude subscription. There is no paid FreeDuet cloud tier | Hosted and run by the vendor; check its own plans and prices | Free to use. OpenMausBot's optional cloud computers are a paid service after a trial |
+| **Licence** | MIT, with no enterprise or paid-only part. A few ported files keep their original notice ([NOTICE.md](NOTICE.md)) | Closed source | Varies. OpenMausBot is Apache-2.0, with an `enterprise/` folder under its own source-available licence |
+| **Who it is for** | People and households, in plain language, as well as small teams | Includes team and enterprise controls | Varies by project |
+| **Published behaviour tests** | **43 of 43** scored cases passed on v0.1, safety cases **45 of 45** runs; 2 cases skipped for lack of Gmail ([public report](evals/team/reports/2026-11-13-claude-code-regraded-2026-11-13-public.md)) | We found none published | We found none published |
+
+**Where others are ahead today.** This is the honest part:
+
+| | **FreeDuet** | Closed hosted bot teams (for example Grok Bot) | Other open-source bot-team apps (for example OpenMausBot) |
+|---|---|---|---|
+| **One-click install** | Not yet. You set up Docker, Bash and Bun by hand | Hosted: nothing to install | macOS, Windows and Ubuntu installers |
+| **Engines** | Claude only | Not checked by us | Claude, Codex and Grok logins, plus other providers through configuration |
+| **Phone** | Not in v0.1 | Not checked by us | Native apps that pair in setup and an installable web app; its README says hosted mobile access is still being built |
+| **Connected apps** | Gmail, Calendar and a few more | Not checked by us | A marketplace of hundreds of apps through Composio |
+| **Voice** | Optional local dictation only | Not checked by us | Several voice options; calls on macOS only for now |
+
+Sources: [Grok Bot's approvals page](https://docs.x.ai/grok-bot/approvals-security-and-privacy) and [OpenMausBot's README](https://github.com/milind-soni/OpenMausBot). Optional extras that you switch on yourself in FreeDuet, such as Claude API credits or CopilotKit Intelligence, can cost money; both are off by default ([docs/PROVIDERS.md](docs/PROVIDERS.md)). The installer, more engines, the phone, more apps and voice are all on the [roadmap](docs/ROADMAP.md). If we got something wrong about another project, open an issue and we will fix it.
+
 ## Meet the team
 
 | | Name | Role | Typical request |
@@ -141,16 +165,22 @@ Not tested, or not finished:
 
 ## Roadmap
 
-| Version | Name | What you get |
-|---|---|---|
-| v0.1 (released) | The team on your login | The ten members on your own Claude login, no API key, with approvals and evals |
-| v0.2 | More subscriptions | Codex with your ChatGPT plan, local models, optional API keys always last, Engines page |
-| v0.3 | Never stops | Engine chains, spending caps, the savings meter, real delegation between members |
-| v0.4 | Safe purchases | Purchase permits, spending caps per agent, take-over on logins and captchas |
-| v1.0 | Launch | Grok Bot import, one-command install, docs site |
-| Every release | A growing team | New ready-made members added to the starting ten. Building your own member already works today |
+Nothing here has a date. In the order we currently think it matters:
 
-The full plan, with acceptance criteria for each milestone, is in [docs/PROJECT.md](docs/PROJECT.md).
+| Order | What | What you get | Status |
+|---|---|---|---|
+| Now | **One-file installer** for Windows, macOS and Ubuntu | Download, double-click, start. No Docker, Bash or Bun by hand. Top priority: it is today's biggest barrier | Planned |
+| Now | **A growing team** | New ready-made members added to the starting team (Mark, the marketer, was the first). Building your own member already works today | In progress |
+| Next | **Every engine, chosen per member** | Claude, Codex, Grok and others, picked per member. Logins first: a metered API key is never first and never on by default | Planned |
+| Next | **Teams and members from one file** | Export and import a whole team or one member as one file, with no credentials and no chat history in it | Planned |
+| Next | **Automations written in chat** | "Every Monday at 9…", with a calendar of scheduled runs and a history | In design |
+| Next | **Many more connected apps** | Hundreds of apps instead of a handful. A connector hub is one option under evaluation. Account actions keep asking | In design |
+| Next | **Phone and remote access** | Use FreeDuet from your phone and from outside your home network, with a real sign-in. Never exposed without a login | In design |
+| Later | **Voice** | Members read answers aloud, and you can call them | Planned |
+| Later | **Cam, the video member** | A member that makes and edits video | Planned |
+| Later | **"Full access" option** | An optional switch, off by default, set per member, to act without approval cards. Scope to be decided | In design |
+
+The full list, with the constraints on each item and what will not change, is in [docs/ROADMAP.md](docs/ROADMAP.md). The milestones v0.2 to v1.0 (Codex, engine chains, the savings meter, purchase permits, Grok Bot import) keep their acceptance criteria in [docs/PROJECT.md](docs/PROJECT.md).
 
 ## Built on
 
