@@ -2,6 +2,7 @@ import { CopilotKitProvider } from "@copilotkit/react-core/v2";
 import { useQuery } from "@tanstack/react-query";
 import type { ReactNode } from "react";
 import { MemberFileTool } from "@/freeduet/member-file-card";
+import { SettingChangeTool } from "@/freeduet/setting-change-card";
 import { deploymentCapabilitiesQueryOptions } from "@/lib/deployment/queries";
 import { a2uiProviderOptions } from "./a2ui";
 import { SignInTool } from "./sign-in-tool";
@@ -100,6 +101,8 @@ export function CopilotProvider({ children }: { children: ReactNode }) {
         <OfferTaskTool />
         {/* FreeDuet (D38): a file a member made, drawn as a card with Download. See freeduet/member-file-card.tsx. */}
         <MemberFileTool />
+        {/* Settings in chat: a change a Bot made, drawn as a card with Undo. See freeduet/setting-change-card.tsx. */}
+        <SettingChangeTool />
         {/* A task started from Chat, drawn as a card that opens it. See task-card-tool.tsx. */}
         <TaskCardTool />
         <EscalationTool />

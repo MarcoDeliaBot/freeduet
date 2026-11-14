@@ -25,6 +25,8 @@ NOT_INSTALLED = "not installed"
 TIMED_OUT = "timed out"
 UNREADABLE = "unreadable answer"
 COULD_NOT_RUN = "could not run"
+# A key-free local endpoint (`no_key: true`) that did not answer its one request on this machine.
+NOT_ANSWERING = "not answering"
 
 
 @dataclass(frozen=True)
@@ -56,7 +58,7 @@ class ProbeResult:
     """What a probe found. None is "could not tell", never "no": a probe that timed out says nothing about
     the sign-in. Never an account: whether the engine is signed in, not which account it is.
 
-    `problem` is one of NOT_INSTALLED, TIMED_OUT, UNREADABLE, COULD_NOT_RUN when the probe could not finish.
+    `problem` is one of NOT_INSTALLED, TIMED_OUT, UNREADABLE, COULD_NOT_RUN, NOT_ANSWERING when the probe could not finish.
     """
 
     installed: bool | None = None

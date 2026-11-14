@@ -21,7 +21,7 @@ Markers: [code: path:line] is a line of this repository, read or grepped at 021c
 - Strings are literal in JSX and props. A TypeScript parse of the 502 non-test source files finds 2,400 candidate strings in 204 files: 1,123 JSX text nodes, 506 attribute strings, 486 literal JSX children and 285 property strings. The parse counts text with two or more letters. It is an upper bound: not de-duplicated, and some values are data. Example: [code: openbot/app/src/components/approvals/approval-card.tsx:201].
 - 202 of the 204 files are upstream. Admin route files hold 620 candidates [code: openbot/app/src/routes/_authed/admin/computers.tsx:176]. Settings components hold 87 in 10 files [code: openbot/app/src/components/settings/].
 - The "about 500 strings" figure in the card file [code: openbot/app/src/freeduet/person-language/cards.ts:6] and in the M1 plan [code: docs/M1_PLAN.md:219] comes from a grep. It is about a fifth of the parse.
-- The project already states the goal: "the interface is translatable" [code: docs/PROJECT.md:32].
+- The project already states its position: "the interface is English for now, with some cards also in Italian; translation is not planned for now" [code: docs/PROJECT.md:32].
 
 **Two parts are already translated.**
 
