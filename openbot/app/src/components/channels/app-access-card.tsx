@@ -80,7 +80,10 @@ function LiveAppAccessCard({
            */}
           {live.isPending ? null : access ? (
             <p className="text-muted-foreground text-sm">
-              {access.state === "ready" && prompt.reason !== "access"
+              {/* Not "ask again" when the Bot still lacks a tool its skills need: that is the sentence below. */}
+              {access.state === "ready" &&
+              prompt.reason !== "access" &&
+              !(access.wants && access.wants.length > 0)
                 ? `${name} is ready now. Ask again and the Bot can use it.`
                 : refusedSentence(access, prompt)}
             </p>
@@ -91,7 +94,7 @@ function LiveAppAccessCard({
           )}
         </div>
       </div>
-      {access && access.state !== "ready" ? (
+      {access && (access.state !== "ready" || access.requestKind) ? (
         <div className="flex justify-end">
           <AppAccessAction access={access} agentId={agentId} />
         </div>

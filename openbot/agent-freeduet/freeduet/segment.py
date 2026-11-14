@@ -73,16 +73,16 @@ from . import (
 from .agui import RunInput
 from .bridge import ipc
 from .bridge.callback import HANDOFF_TOOL, call_deployment_tool, needs_the_person
+from .claude_engine import ClaudeEngine, mcp_state  # noqa: F401 - mcp_state stays importable from here
+from .engine_adapter import Diagnostics, EngineAdapter, Finished, Gate, TurnContext
 from .members import Member
-from .stream_json import MCP_PREFIX, Final, MessageStart, Refused, StreamParser, TextDelta, ToolUse
+from .stream_json import MessageStart, Refused, TextDelta, ToolUse
 
 log = logging.getLogger("freeduet.segment")
 
 SETTLE_SECONDS = 0.3
 MATCH_SECONDS = 1.0
 SEGMENT_TIMEOUT_SECONDS = 1800.0
-MAX_STDERR = 64 * 1024
-PIPE_DRAIN_SECONDS = 2.0
 
 
 @dataclass
@@ -194,20 +194,27 @@ async def _answer_locally(local: iris_tools.IrisTools, call: ipc.BridgeCall, see
     call.answer(reply)
 
 
-def mcp_state(parser: StreamParser, offered: set[str]) -> str:
-    """What the CLI's init event said about the freeduet server, for the log line of a refused call."""
-    if not parser.init_seen:
-        return "no init event read"
-    status = ", ".join(f"{name}={state}" for name, state in parser.mcp_servers.items()) or "no MCP server listed"
-    listed = {tool.removeprefix(MCP_PREFIX) for tool in parser.init_tools}
-    missing = sorted(offered - listed)
-    if missing:
-        return f"{status}; init did not list {', '.join(missing)}"
-    return f"{status}; init listed all {len(offered)} offered tools"
+class _InboxSink:
+    """What an engine writes to: the segment's inbox, in the order the engine read it."""
+
+    def __init__(self, inbox: asyncio.Queue, ready: asyncio.Future):
+        self.inbox, self.ready = inbox, ready
+
+    async def put(self, item) -> None:
+        await self.inbox.put(("stream", item))
+
+    async def end(self) -> None:
+        await self.inbox.put(("eof", None))
+
+    def started(self) -> None:
+        if not self.ready.done():
+            self.ready.set_result(None)
 
 
-async def run_segment(run: RunInput, member: Member, notes: SegmentNotes | None = None) -> AsyncIterator[dict]:
+async def run_segment(run: RunInput, member: Member, notes: SegmentNotes | None = None,
+                      engine: EngineAdapter | None = None) -> AsyncIterator[dict]:
     yield agui.run_started(run)
+    engine = engine if engine is not None else ClaudeEngine()
     notes = notes if notes is not None else SegmentNotes()
     active_lessons = await _lessons_for(run, member)
     # The tool notes, then the person's language when the deployment set one (person_language.py).
@@ -219,9 +226,7 @@ async def run_segment(run: RunInput, member: Member, notes: SegmentNotes | None 
     served = offered | (local.names if local else frozenset())
     rendered = transcript.render(member, run.messages, run.context, active_lessons, run_notes, served=served)
     inbox: asyncio.Queue = asyncio.Queue()
-    parser = StreamParser()
     handed_over: list[str] = []  # refused calls to offered tools that this segment handed to OpenBot
-    stderr = bytearray()
     tasks: set[asyncio.Task] = set()
 
     def spawn(coroutine) -> None:
@@ -252,90 +257,48 @@ async def run_segment(run: RunInput, member: Member, notes: SegmentNotes | None 
         return added
 
     host = ipc.BridgeHost(ipc.mcp_tools(run.tools) + (local.definitions() if local else []), on_call)
-    process = None
-    readers: tuple[asyncio.Task, ...] = ()
+    engine_task: asyncio.Task | None = None
+    diagnostics = Diagnostics(
+        run.thread_id, run.run_id, lambda: origin.is_handoff_run(run.messages, run.assertion),
+        frozenset(offered), handed_over,
+    )
     with tempfile.TemporaryDirectory(prefix="freeduet-segment-") as folder:
         try:
             directory = Path(folder)
             work = directory / "work"  # an empty folder: no project files, no CLAUDE.md
             work.mkdir()
             port = await host.start()
-            config = claude_cli.write_mcp_config(directory, port, host.secret)
-            command = claude_cli.build_command(claude_cli.claude_bin(), config, rendered.system, directory)
-            try:
-                process = await claude_cli.start(command, work)
-            except OSError:
-                yield agui.run_error(f"{claude_cli.LABEL} is not installed in this service.")
+            ready = asyncio.get_running_loop().create_future()
+            turn = TurnContext(rendered.system, rendered.prompt, directory, work, diagnostics)
+            engine_task = asyncio.create_task(engine.run_turn(turn, _InboxSink(inbox, ready), Gate(port, host.secret)))
+            await asyncio.wait({engine_task, ready}, return_when=asyncio.FIRST_COMPLETED)
+            if not ready.done():
+                outcome = engine_task.result()  # the engine could not start: a crash raises here
+                yield outcome.error
                 return
 
-            async def feed_stdin():
-                with suppress(BrokenPipeError, ConnectionError):
-                    process.stdin.write(rendered.prompt.encode("utf-8"))
-                    await process.stdin.drain()
-                    process.stdin.close()
-
-            async def read_stdout():
-                with suppress(ValueError, ConnectionError):  # ValueError: a line past MAX_LINE
-                    while line := await process.stdout.readline():
-                        for item in parser.feed(line):
-                            await inbox.put(("stream", item))
-                await inbox.put(("eof", None))
-
-            async def read_stderr():
-                while chunk := await process.stderr.read(65536):
-                    stderr.extend(chunk)
-                    del stderr[:-MAX_STDERR]
-
-            stderr_task = asyncio.create_task(read_stderr())
-            readers = (asyncio.create_task(read_stdout()), stderr_task)
-            tasks.update(readers)
-            spawn(feed_stdin())
-
             async def failed_exit() -> dict:
-                """The stream ended without a result line: wait for the exit, then say why."""
-                with suppress(TimeoutError):
-                    await asyncio.wait_for(process.wait(), 5)
-                with suppress(TimeoutError, asyncio.CancelledError):
-                    await asyncio.wait_for(asyncio.shield(stderr_task), 2)
-                said = bytes(stderr).decode("utf-8", errors="replace")
-                return claude_cli.failure_event(parser, said, process.returncode) or agui.run_error(
-                    f"{claude_cli.LABEL} ended without an answer."
-                )
+                """The stream ended without a result line: the engine says why."""
+                return (await engine_task).error
 
-            async for event in _drive(run, offered, inbox, parser, spawn, failed_exit, local, guard, handed_over):
+            async for event in _drive(run, offered, inbox, spawn, failed_exit, local, guard, handed_over):
                 yield event
         finally:
-            await claude_cli.stop(process)
-            # The CLI's process group is gone: let its pipes reach end of file, so the subprocess
-            # transport closes with the segment rather than some time after it.
-            pending = [task for task in readers if not task.done()]
-            if pending:
-                await asyncio.wait(pending, timeout=PIPE_DRAIN_SECONDS)
+            if engine_task is not None:
+                engine_task.cancel()
+                with suppress(asyncio.CancelledError, Exception):
+                    await engine_task
             for task in list(tasks):
                 task.cancel()
             for task in list(tasks):
                 with suppress(asyncio.CancelledError, Exception):
                     await task
             await host.close()
-            if stderr and parser.final is None:
-                log.info("claude stderr: %s", bytes(stderr[-2000:]).decode("utf-8", errors="replace"))
-            if parser.unavailable:
-                # The call went nowhere: the CLI answered it itself, so no stored transcript shows it.
-                log.warning(
-                    "claude answered \"No such tool available\" for %s (called as %s; handed to OpenBot: %s): "
-                    "this %s run offered only %s; mcp: %s (thread %s, run %s)",
-                    ", ".join(parser.unavailable),
-                    ", ".join(parser.unavailable_as),
-                    ", ".join(handed_over) or "nothing",
-                    "hand-off" if origin.is_handoff_run(run.messages, run.assertion) else "person's",
-                    ", ".join(sorted(offered)) or "no tool",
-                    mcp_state(parser, offered),
-                    run.thread_id,
-                    run.run_id,
-                )
+            for line in diagnostics.at_close:
+                line()
 
 
-async def _drive(run: RunInput, offered: set[str], inbox: asyncio.Queue, parser: StreamParser, spawn, failed_exit,
+async def _drive(run: RunInput, offered: set[str], inbox: asyncio.Queue, spawn, failed_exit,
                  local: iris_tools.IrisTools | None = None,
                  guard: Callable[[report_guard.Story], Awaitable[str | None]] | None = None,
                  handed_over: list[str] | None = None):
@@ -427,12 +390,12 @@ async def _drive(run: RunInput, offered: set[str], inbox: asyncio.Queue, parser:
                 call = ipc.BridgeCall(payload.name, payload.input, loop.create_future())
                 for event in announce(call, ToolUse(payload.message_id, payload.id, payload.name, payload.input)):
                     yield event
-            elif isinstance(payload, Final):
+            elif isinstance(payload, Finished):
                 if blocked:
                     for event in ask_the_person():
                         yield event
                     return
-                failure = None if handed else claude_cli.failure_event(parser)
+                failure = None if handed else payload.failure()
                 if failure is None and not handed:
                     # The turn ends here. The CLI's result text can carry what no delta did: all of the
                     # answer, or the end of it. Only text that is not on the person's screen is sent,

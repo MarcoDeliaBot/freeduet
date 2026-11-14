@@ -6,6 +6,7 @@ var M=[
  ["jules","Jules","#C2255C","f1","M6 16v-5a6 6 0 0112 0v5l2 2H4zM10 21h4"],
  ["wren","Wren","#2B8A3E","f3","M4 20h16M6 16L16 5l3 3L9 19l-4 1z"],
  ["mark","Mark","#C92A2A","f1","M4 10v4h3l7 4V6l-7 4H4zM17.5 9.5a4 4 0 010 5"],
+ ["video","Cam","#7950F2","f2","M2.5 7h12v10h-12zM14.5 10.5l7-3.5v10l-7-3.5"],
  ["gus","Gus","#B5540B","f1","M14.5 5.5a4 4 0 004 4l-9 9-3-3 9-9z"],
  ["basil","Basil","#5C940D","f3","M5 19C5 9 11 5 19 5c0 8-4 14-14 14zM5 19l8-8"],
  ["vera","Vera","#5C6B80","f2","M10.5 4a6.5 6.5 0 100 13 6.5 6.5 0 000-13zM15.5 15.5L20 20"],
@@ -54,7 +55,7 @@ var chat=document.getElementById("chat"),tries=document.getElementById("tries");
 function bubble(id,name,text){return '<div class="msg">'+av(id)+'<div class="bub"><span class="who">'+name+'</span>'+esc(text)+'</div></div>';}
 function mine(text){return '<div class="msg me"><div class="bub">'+esc(text)+'</div></div>';}
 function askCard(s){var t=L(),rows="";s.card.forEach(function(r){rows+="<dt>"+esc(r[0])+"</dt><dd>"+esc(r[1])+"</dd>";});
- return '<div class="card-ask" id="ask"><h4><svg aria-hidden="true"><use href="#i-hand"/></svg>'+esc(t.ask)+'</h4><dl>'+rows+'</dl><div class="row"><button type="button" class="yes" data-a="ok">'+esc(t.yes)+'</button><button type="button" class="no" data-a="stop">'+esc(t.no)+'</button></div></div>';}
+ return '<div class="card-ask" id="ask"><p class="ask-title"><svg aria-hidden="true"><use href="#i-hand"/></svg>'+esc(t.ask)+'</p><dl>'+rows+'</dl><div class="row"><button type="button" class="yes" data-a="ok">'+esc(t.yes)+'</button><button type="button" class="no" data-a="stop">'+esc(t.no)+'</button></div></div>';}
 function doneRow(kind,text){return '<div class="done '+kind+'"><svg aria-hidden="true"><use href="#'+(kind==="ok"?"i-check":"i-hand")+'"/></svg><span>'+esc(text)+'</span></div>';}
 function parts(s){var m=byId[s.who],p=[mine(s.me),bubble("iris","Iris",s.iris),bubble(s.who,m[1],s.line)];
  p.push(s.card?askCard(s):doneRow("stop",L().nothing));return p;}

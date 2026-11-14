@@ -76,6 +76,50 @@ export const REQUEST_KIND_FOR: Record<
   not_granted: "grant",
 };
 
+/**
+ * One tool this Bot's own skills need from an app, that the app offers, and that the Bot has not
+ * been given.
+ *
+ * WHERE A NEW TOOL ENDS UP. A build can give a connector a tool after a Bot was already granted the
+ * rest of it, and a tool is never granted by arriving — so the Bot is on the app, a skill of its
+ * names the tool, the tool exists, and the Bot cannot use it. That is a request waiting to be made,
+ * not a state of the app: the Bot can still use everything it holds, so the app stays `ready`.
+ */
+export type WantedTool = {
+  /** The grant ref, `<server>/<tool>`. */
+  ref: string;
+  /** The tool's own name, which is how the Bot's skills spell it. */
+  name: string;
+  /**
+   * The titles of this Bot's skills that need it, so a person reads what it is for ("Send a new
+   * email") and not the name of a tool.
+   */
+  label: string;
+  /**
+   * Whether the app marks it read-only. The exact word `read` and nothing else, as `appTools` reads
+   * it: a tool nobody classified is a write, so it is never handed out as a read.
+   */
+  read: boolean;
+};
+
+/**
+ * The request a press of Request access files for an app in this state, and null where the next step
+ * is the person's own.
+ *
+ * {@link REQUEST_KIND_FOR}'s answer, except for one case it cannot see: a `ready` app whose Bot is
+ * still missing tools its own skills need. Nothing about the app is wrong, so the state stays `ready`
+ * — it is what the first-day greeting and the setup checklist read, and a Bot that can read mail has
+ * not lost the ability to — and the request is the same `grant` a Bot holding nothing files.
+ */
+export function requestKindFor(
+  state: AppAccessState,
+  wants: readonly WantedTool[],
+): AppAccessRequestKind | null {
+  return state === "ready" && wants.length > 0
+    ? "grant"
+    : REQUEST_KIND_FOR[state];
+}
+
 /** Whose account the app's calls land in. */
 export type AppAccount =
   /** Each person's own, which each person connects. */
@@ -136,6 +180,12 @@ export type AppAccess = {
   asksFirst: boolean;
   /** Whether this Bot holds any of the app's tools. */
   granted: boolean;
+  /**
+   * What this Bot's skills need from the app and it has not been given, when it holds some of the
+   * app already. ABSENT, not empty, for the great majority of apps — everything that is not this one
+   * case reads exactly as it did before the field existed. See {@link WantedTool}.
+   */
+  wants?: WantedTool[];
   /**
    * When the account this app runs in for this person was connected — their own, or the team's for
    * a Shared app — and null where none is, or where no account is involved.

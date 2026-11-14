@@ -29,9 +29,12 @@ and [docs/ARCHITECTURE.md §3](../../docs/ARCHITECTURE.md).
 
 | Path | Purpose |
 |---|---|
-| `freeduet/app.py` | Routes, the token check, and the call site that records each segment |
+| `freeduet/app.py` | Routes (`POST /`, `GET /engines`, `GET /health`), the token check, and the call site that records each segment |
 | `freeduet/agui.py`, `members.py`, `transcript.py` | RunAgentInput parsing and SSE; the member by id; the conversation rendered for the CLI |
 | `freeduet/segment.py`, `claude_cli.py`, `stream_json.py`, `engine_errors.py` | One segment: start the locked-down CLI, read its stream, end on a tool call |
+| `freeduet/engine_adapter.py`, `claude_engine.py` | The engine seam: the interface a segment drives, and Claude Code behind it (process, stream, failures, environment, and its `probe()`: `claude --version` and `claude auth status`, never a model call) |
+| `freeduet/engine_state.py`, `engine_breaker.py`, `failure_classifier.py` | What the service knows about its engines. Each member turn is recorded in the engine breaker by how it ended (recording only: nothing is skipped or switched because of it yet), limited-until is kept in a file in the data volume, and `GET /engines` shows it, behind the token check |
+| `tests/test_engine_goldens.py`, `tests/goldens/` | The run path pinned scenario by scenario (stream, launch, logs); regenerate on purpose only, `FREEDUET_UPDATE_GOLDENS=1` |
 | `freeduet/bridge/` | The stdio MCP server the CLI starts, and its loopback line to the parent |
 | `freeduet/report.py`, `checkpoints.py` | The six report lines read from a member's final text, mapped to a checkpoint and saved |
 | `freeduet/report_guard.py` | A turn that did work and ended without its report: one follow-up with no tools asks for it, added to the same message. A turn that ends with no text at all gets one fixed sentence naming the last tool it called |
@@ -50,6 +53,7 @@ and [docs/ARCHITECTURE.md §3](../../docs/ARCHITECTURE.md).
 | `handoff/<botId>/<threadId>/` | Checkpoints: immutable JSON history and a readable `HANDOFF.md` |
 | `team-log.jsonl` | One line per segment: time, member, thread, run, outcome, summary, `from_iris`, approvals, `report_guard` (whether the report guard had to ask). Rotated at 10 MB |
 | `lessons/<member>.json` | Lessons, pending until the person replies `approve <code>` to Iris (rule in `freeduet/lessons.py`) |
+| `engine-state.json` | Each engine's state (ready, degraded, open, half-open, signed out), limited-until and counters, so a limit survives a restart. No engine text, no account, no key. `FREEDUET_ENGINE_STATE_FILE` moves it (a bare name is a file of this directory). A missing or corrupt file starts clean and is named in `GET /engines` |
 
 ## Hard rules for this service
 

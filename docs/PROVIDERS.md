@@ -23,7 +23,7 @@ FreeDuet always runs on the subscriptions the person signed in to. API keys and 
 | **Anthropic, Claude Pro, Max, Ultra, Team** | The unmodified Claude Code CLI, signed in by the person with their own account; FreeDuet starts it and reads its stream. | Developers may not offer Claude.ai login in their apps or route requests through plan credentials on users' behalf, and may not collect, store or intermediate Claude.ai credentials or session tokens. This does **not** prevent an end user from signing in to the unmodified Claude Code binary with their own subscription, including where a platform hosts Claude Code. Plan limits assume ordinary individual use. | **On** |
 | **Anthropic, monthly API credits** | An API key from the Console organization linked under claude.ai > Settings > Billing > API credits. | Included with Max ($100/month), Ultra ($200/month) and Team (pooled, up to $500/month). They cover the Claude API and the Agent SDK, do not roll over, and requests stop when they run out, with no charge to the plan. | **Off.** Optional, the person's choice, always last in a chain |
 | **Anthropic, OpenBot's `CLAUDE_CODE_OAUTH_TOKEN` option** | The app stores a plan token minted with `claude setup-token`. | Conflicts with "may not collect, store or intermediate" plan tokens. | **Removed** in FreeDuet |
-| **OpenAI, ChatGPT plans** | Codex app-server. OpenAI documents a "Sign in with ChatGPT" integration for open-source apps that runs `codex app-server` with the user's token. | The integration requires a client ID and is in preview; eligibility for self-hosted apps is confirmed when applying. | **On after approval.** Until then, Codex with the person's own local login is marked experimental. |
+| **OpenAI, ChatGPT plans** | Codex app-server, signed in through Codex's own official login, which FreeDuet never reads. | Not checked yet. OpenAI's terms for Codex's own login are checked before the route is offered. | **Off** until both checks pass: a hands-on check of its limits, tool calls and lockdown, and the terms check. Until then, Codex with the person's own local login is marked experimental. |
 | **Google, Gemini via Google AI Pro or Ultra** | Gemini CLI or Antigravity CLI. | Gemini CLI's terms state that directly accessing the services behind Gemini CLI with third-party software, for example through its OAuth, violates the terms and can lead to suspension. Whether an orchestrator may drive the official CLI headless is an open question on Google's forum. Gemini CLI was replaced by Antigravity CLI for unpaid and Google One users on 2026-06-18. | **Off.** Use a Gemini API key. |
 | **Z.ai, GLM Coding Plan** | Only inside the tools on Z.ai's supported-tools list. | The plan may only be used within the listed tools; benefits are for the subscriber only; violations can lead to restrictions or a ban. | **Off** until FreeDuet's route is on the list. A GLM API key works through the OpenAI-compatible engine. |
 | **xAI, Grok** | Grok Build CLI with the person's own login, the route OpenMausBot uses. | Not verified yet. | **Off** until verified. API key works. |
@@ -44,7 +44,7 @@ Prices are as of November 2026, from CopilotKit's pricing page. Check the page b
 
 ## Practical notes
 
-- **What each person runs on.** A Claude subscriber runs FreeDuet from v0.1 on Claude Code with their own login, with no API key at all. A ChatGPT subscriber gets the Codex route once OpenAI approves FreeDuet's client ID. Everybody else uses a local model, or an API key they choose to add.
+- **What each person runs on.** A Claude subscriber runs FreeDuet from v0.1 on Claude Code with their own login, with no API key at all. A ChatGPT subscriber gets the Codex route, through Codex's own login, once both checks in the table above pass. Everybody else uses a local model, or an API key they choose to add.
 - **API credits are a safety net, not the engine.** The API credits included in Max, Ultra and Team can be switched on as the last step of a chain, for when every login is at its limit.
 - **Quality floor for money.** Jules (purchases and bookings) refuses to reach a checkout on an engine below the quality tier set in `engines.yaml`, so a small local model can research but cannot buy.
 - **Hosted FreeDuet is a different product.** Running FreeDuet for other people, or paying for their usage, falls under each provider's commercial terms. Anthropic, for example, requires its Commercial Terms for products that run Claude Code, and forbids paying for, reselling or intermediating end users' usage.
@@ -53,7 +53,7 @@ Prices are as of November 2026, from CopilotKit's pricing page. Check the page b
 
 | Action | Owner | Status |
 |---|---|---|
-| Apply for an OpenAI "Sign in with ChatGPT" client ID for FreeDuet | Maintainer | To do |
+| Check OpenAI's terms for Codex's own login, and run the hands-on check of its limits, tool calls and lockdown | Maintainer | To do |
 | Ask Z.ai whether FreeDuet can be added to the supported-tools list | Maintainer | To do |
 | Ask Google, on the Gemini developer forum, whether driving the official CLI headless from a self-hosted orchestrator is allowed | Maintainer | To do |
 | Check xAI's terms for Grok CLI | Maintainer | To do |
@@ -63,6 +63,5 @@ Prices are as of November 2026, from CopilotKit's pricing page. Check the page b
 
 - Anthropic, Claude Code legal and compliance: https://code.claude.com/docs/en/legal-and-compliance
 - Anthropic, monthly API credits for Max, Ultra and Team: https://support.claude.com/en/articles/17154008-monthly-api-credits-for-max-and-team-plans
-- OpenAI, Sign in with ChatGPT for open-source apps with Codex app-server: https://developers.openai.com/siwc/token-sharing-open-source/codex-app-server
 - Google, Gemini CLI terms and privacy: https://www.geminicli.com/docs/resources/tos-privacy
 - Z.ai, GLM Coding Plan usage policy: https://docs.z.ai/devpack/usage-policy

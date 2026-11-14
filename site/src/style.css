@@ -151,8 +151,8 @@ p{margin:0;max-width:64ch}
 .msg.me{align-self:flex-end}
 .msg.me .bub{background:var(--ink);color:#fff;border-color:var(--ink);border-radius:14px 4px 14px 14px}
 .card-ask{align-self:stretch;max-width:520px;margin-left:44px;border:1px solid #EBC3BA;border-left:3px solid var(--coral);border-radius:10px;background:var(--card);padding:14px 16px}
-.card-ask h4{font-family:var(--display);font-size:.95rem;margin:0 0 8px;display:flex;align-items:center;gap:8px;color:var(--coral)}
-.card-ask h4 svg{width:18px;height:18px}
+.card-ask .ask-title{font-family:var(--display);font-weight:700;font-size:.95rem;margin:0 0 8px;max-width:none;display:flex;align-items:center;gap:8px;color:var(--coral)}
+.card-ask .ask-title svg{width:18px;height:18px}
 .card-ask dl{margin:0 0 14px;font-size:.92rem;display:grid;grid-template-columns:auto 1fr;gap:3px 14px}
 .card-ask dt{color:var(--ink-soft)}
 .card-ask dd{margin:0}
@@ -214,9 +214,10 @@ p{margin:0;max-width:64ch}
 .mem.boss{grid-column:span 3;grid-template-columns:56px minmax(0,.7fr) minmax(0,1.3fr);align-items:center;background:var(--ink);border-color:var(--ink);color:#fff;gap:12px 28px;padding:clamp(1.6rem,2.6vw,2.25rem)}
 .mem.boss:hover{border-color:var(--ink)}
 @media (min-width:981px){
-  /* a lone last card (the roster is boss + a multiple of three, plus one) takes the whole row instead of sitting in a corner */
+  /* a lone last card (the roster is boss + a multiple of three, plus one) takes the whole row instead of sitting in a corner; two left over, the last one takes the two free columns */
   .mem:last-child:nth-child(3n+2):not(.boss){grid-column:span 3;grid-template-columns:44px minmax(0,.7fr) minmax(0,1.3fr);align-items:center;gap:12px 28px}
   .mem:last-child:nth-child(3n+2):not(.boss) p{grid-column:auto}
+  .mem:last-child:nth-child(3n):not(.boss){grid-column:span 2}
 }
 .mem.boss .av{width:56px;height:56px}
 .mem.boss h3{font-size:1.5rem}
@@ -417,6 +418,7 @@ footer a{color:var(--ink)}
   .team{grid-template-columns:repeat(2,minmax(0,1fr))}
   .mem.boss{grid-column:span 2;grid-template-columns:56px minmax(0,1fr)}
   .mem.boss p{grid-column:1/-1}
+  .mem:last-child:nth-child(2n):not(.boss){grid-column:span 2}
   .road{grid-template-columns:minmax(0,1fr)}
   .road li{border-left:0;border-top:1px solid var(--line)}
   .road li:first-child{border-top:0}
@@ -436,6 +438,7 @@ footer a{color:var(--ink)}
   body{font-size:16px}
   .team{grid-template-columns:minmax(0,1fr)}
   .mem.boss{grid-column:auto}
+  .mem:last-child:nth-child(2n):not(.boss){grid-column:auto}
   .versus{grid-template-columns:minmax(0,1fr)}
   .versus div+div{border-left:0;border-top:1px solid var(--line)}
   .score{grid-template-columns:minmax(0,1fr);gap:1rem}
@@ -490,4 +493,32 @@ footer a{color:var(--ink)}
   .js:not(.no-rv) .rv.in{transition:opacity .4s ease!important}
   .js:not(.no-rv) .mini>*{scale:none}
   .btn:hover,.coffee:hover,.ghlink:hover,.mem:hover,.join a:hover,.copy:hover,.btn:active,.coffee:active,.ghlink:active,.btn-main:hover::after,.btn-quiet:hover::after,.join a:hover::after,.buttons5 li:hover span,.buttons5 li:hover svg{transform:none}
+}
+
+/* ---------- from 1100 px: the app window sits beside the headline ----------
+   Below 1100 px none of these rules apply, so the page is the one on main. The team roster is hidden only inside
+   the hero window (it is still in the team section further down). */
+@media (min-width:1100px){
+  .hero{padding-top:6rem}
+  .hero .wrap{max-width:88rem;grid-template-columns:minmax(0,1fr) minmax(0,1fr);align-items:center;gap:clamp(2.5rem,4vw,3.5rem)}
+  .hero h1{font-size:clamp(3rem,2.2rem + 3.2vw,5rem)}
+  html[lang="ru"] .hero h1{font-size:4.5rem}
+  .hero .appfig{min-width:0}
+  .aw-side{display:none}
+  .aw-body{grid-template-columns:minmax(0,1fr)}
+  .aw-head{padding:6px 16px;min-height:50px}
+  .chat{padding:12px 20px;gap:8px;min-height:437px}
+  .msg .bub{padding:8px 12px}
+  .tries{padding:8px 16px;min-height:139px}
+  .tries p{margin-bottom:4px}
+  .aw-field{margin:0 16px 12px}
+  .aw-cap{margin-top:12px}
+  /* the window keeps the height of its tallest demo in each language, so filling a demo moves nothing */
+  html[lang="fr"] .chat,html[lang="ru"] .chat{min-height:459px}
+  html[lang="ja"] .chat{min-height:461px}
+  html[lang="zh"] .chat{min-height:415px}
+  html[lang="pl"] .tries,html[lang="ru"] .tries{min-height:191px}
+  html[lang="zh"] .tries{min-height:87px}
+  /* the orb that sat behind the headline moves to the lower right, behind the window */
+  .o1{top:auto;bottom:-4rem;left:auto;right:-2rem}
 }

@@ -42,11 +42,18 @@ _IN = re.compile(
     r"\b(?:try again|retry|resets?)\s+(?:in|after)\s+((?:\d+(?:\.\d+)?\s*[a-z]+[\s,]*(?:and\s+)?)+)",
     re.IGNORECASE,
 )
+# A number and its unit. `(?<!\d)` lets a match start only at the first digit of a digit run, so each run is
+# read once: a start at every digit made a long run quadratic. The matches are the same, since a later start
+# inside a run ends where the first one does and fails the same way.
 _UNIT = re.compile(
-    r"(\d+(?:\.\d+)?)\s*(d|day|days|h|hr|hrs|hour|hours|m|min|mins|minute|minutes|s|sec|secs|second|seconds|ms)\b",
+    r"(?<!\d)(\d+(?:\.\d+)?)\s*"
+    r"(d|day|days|h|hr|hrs|hour|hours|m|min|mins|minute|minutes|s|sec|secs|second|seconds|ms)\b",
     re.IGNORECASE,
 )
 _SECONDS = {"d": 86400, "h": 3600, "m": 60, "s": 1}
+# The longest wait an engine's words may give: 30 days. A longer wait, or one too large to count, is no usable
+# reset time, so reset_time gives None for it, as for a text with no time. A wait up to the cap reads as before.
+MAX_WAIT_SECONDS = 30 * 86400
 
 # Claude Code 2.1.311's own wording (read from the binary's strings, not from a sign-in):
 # "Not logged in · Please run /login", "Invalid API key · Please run /login",
@@ -71,9 +78,11 @@ def is_sign_in_failure(text: str | None) -> bool:
 
 def _duration(text: str) -> timedelta | None:
     total = 0.0
-    for amount, unit in _UNIT.findall(text):
+    for amount, unit in (match.groups() for match in _UNIT.finditer(text)):
         unit = unit.lower()
         total += float(amount) / 1000 if unit == "ms" else float(amount) * _SECONDS[unit[0]]
+        if total > MAX_WAIT_SECONDS:
+            return None  # the sum only grows: the wait is over the cap, and the rest is not read
     return timedelta(seconds=total) if total > 0 else None
 
 
@@ -92,6 +101,14 @@ def reset_time(text: str, now: datetime | None = None) -> datetime | None:
     return None
 
 
+def _from_epoch(seconds: float) -> datetime | None:
+    """The UTC moment `seconds` after 1970, or None when no date can hold that number (an engine's own)."""
+    try:
+        return datetime.fromtimestamp(seconds, UTC)
+    except (OverflowError, OSError, ValueError):
+        return None
+
+
 def classify(text: str | None, *, resets_at: float | None = None, now: datetime | None = None) -> EngineLimit | None:
     """The limit `text` (an engine's own error) describes, or None."""
     if not text:
@@ -105,11 +122,9 @@ def classify(text: str | None, *, resets_at: float | None = None, now: datetime 
     else:
         return None
     now = now or datetime.now(UTC)
-    when = None
-    if resets_at:
-        when = datetime.fromtimestamp(resets_at, UTC)
-        if when <= now:
-            when = None
+    when = _from_epoch(resets_at) if resets_at else None
+    if when is not None and when <= now:
+        when = None
     if when is None:
         when = reset_time(text, now)
     said = _EPOCH.sub("", " ".join(text.split()))[:300]

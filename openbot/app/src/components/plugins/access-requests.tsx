@@ -92,7 +92,10 @@ export function askedFor(request: AppAccessRequest): string {
     case "enable":
       return `Turn on ${request.appTitle} for ${bot}`;
     case "grant":
-      return `Give ${request.appTitle} to ${bot}`;
+      // A Bot that holds some of the app already and whose skills need more of it: say which.
+      return request.wants && request.wants.length > 0
+        ? `Give ${bot} more of ${request.appTitle}: ${[...new Set(request.wants.map((want) => want.label))].join(", ")}`
+        : `Give ${request.appTitle} to ${bot}`;
     case "connect_shared":
       return `Connect the shared ${request.appTitle} account`;
   }
@@ -140,7 +143,13 @@ function AccessRequestRow({ request }: { request: AppAccessRequest }) {
           disabled={busy}
           onClick={() => {
             dismiss.reset();
-            approve.mutate({ id: request.id });
+            approve.mutate({
+              id: request.id,
+              // The tools the row names, so the press gives what was read and nothing the app has since added.
+              ...(request.wants && request.wants.length > 0
+                ? { refs: request.wants.map((want) => want.ref) }
+                : {}),
+            });
           }}
           size="sm"
         >
@@ -166,6 +175,24 @@ function AccessRequestRow({ request }: { request: AppAccessRequest }) {
 function GrantNote({ request }: { request: AppAccessRequest }) {
   if (request.kind === "connect_shared" || !request.agentId) return null;
   const bot = request.botName ?? "the Bot";
+  /*
+   * A request for tools a Bot's skills need and it was never given is approved for exactly those,
+   * and the row names them — each one that changes something is said to, because one press here is
+   * what lets the Bot ask to do it.
+   */
+  if (request.wants && request.wants.length > 0)
+    return (
+      <>
+        Approving gives {bot} exactly these tools and nothing else:{" "}
+        {request.wants
+          .map(
+            (want) =>
+              `${want.name} (${want.read ? "read-only" : "changes something"})`,
+          )
+          .join(", ")}
+        .
+      </>
+    );
   const where = `the Bot's page under ${request.appTitle}`;
   const page =
     request.kind === "grant" ? (

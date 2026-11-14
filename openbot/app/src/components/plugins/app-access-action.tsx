@@ -37,6 +37,13 @@ export function appAccessSentence(access: AppAccess): string {
   const owners = access.accountHolder === "owner";
   switch (access.state) {
     case "ready":
+      /*
+       * Still ready: the Bot can use everything it holds. What it lacks is a tool one of its own skills
+       * needs, which a newer build added and nothing grants by arriving, so it is said in the words of
+       * the skills and not of the tool.
+       */
+      if (access.wants && access.wants.length > 0)
+        return `Ready to use, but this Bot hasn't been given everything its skills need: ${[...new Set(access.wants.map((want) => want.label))].join(", ")}. Only an admin can give it.`;
       if (owners)
         return `Ready to use. This Bot uses its owner's ${name} account.`;
       if (access.asksFirst)
@@ -82,7 +89,8 @@ function disabledSentence(access: AppAccess): string {
 /**
  * The button for the person's next move, and what it says while it happens.
  *
- * - `ready` — nothing.
+ * - `ready` — nothing, unless the Bot's own skills need tools it was never given (`requestKind` is then
+ *   the `grant` it files): the same Request access.
  * - `shared_not_approved` — nothing either: the call that was refused already filed the
  *   administrator's request, so there is no second one to make.
  * - `reconnect` on an account the Bot's owner holds — nothing. Only the owner can reconnect their
@@ -101,8 +109,8 @@ export function AppAccessAction({
   agentId: string;
   access: AppAccess;
 }) {
-  if (access.state === "ready" || access.state === "shared_not_approved")
-    return null;
+  if (access.state === "shared_not_approved") return null;
+  if (access.state === "ready" && !access.requestKind) return null;
   if (access.state === "reconnect" && access.accountHolder === "owner")
     return null;
   if (access.state === "not_connected" || access.state === "reconnect")

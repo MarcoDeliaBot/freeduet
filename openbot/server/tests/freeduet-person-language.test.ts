@@ -6,7 +6,7 @@
  * the members wrote English; the few fixed sentences this server writes in those turns were English
  * too. `FREEDUET_PERSON_LANGUAGE` names the language once. Pinned here: the setting is validated, it
  * reaches agent-freeduet in `forwardedProps` and nowhere else when unset, the shared rule is the same
- * in all eleven prompts, and the fixed sentences come out in Italian with the setting and in English
+ * in all twelve prompts, and the fixed sentences come out in Italian with the setting and in English
  * without it.
  */
 import { describe, expect, spyOn, test } from "bun:test";
@@ -221,7 +221,7 @@ describe("what OpenBot sends agent-freeduet", () => {
   });
 });
 
-describe("the shared rule in the eleven members' prompts", () => {
+describe("the shared rule in the twelve members' prompts", () => {
   const agentsFile = fileURLToPath(
     new URL("../../examples/freeduet/agents.yaml", import.meta.url),
   );
@@ -239,9 +239,9 @@ describe("the shared rule in the eleven members' prompts", () => {
     }));
   }
 
-  test("all eleven say it, in the same words, right after the first sentence", async () => {
+  test("all twelve say it, in the same words, right after the first sentence", async () => {
     const rows = await prompts();
-    expect(rows.length).toBe(11);
+    expect(rows.length).toBe(12);
     for (const { id, prompt } of rows) {
       expect({
         id,
@@ -250,7 +250,7 @@ describe("the shared rule in the eleven members' prompts", () => {
     }
   });
 
-  test("the language part of the shared rules is identical in all eleven", async () => {
+  test("the language part of the shared rules is identical in all twelve", async () => {
     const parts = (await prompts()).map(({ prompt }) =>
       prompt.slice(
         prompt.indexOf(START),

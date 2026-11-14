@@ -174,7 +174,13 @@ One PR each, in this order. "E" numbers are the open decisions in 9.3 (M1_PLAN k
 
 Slices 5 and 6 can run in parallel after slice 3; slices 8 to 10 are independent after slice 4. Rough total: 4 L, 9 M and 2 S (the two spikes). The first useful result, Claude with an automatic fallback to a gateway engine and a read-only dashboard (slices 1 to 6), is 1 L and 5 M.
 
-**Built so far (14 November 2026):** the limit and failure classifier of slice 2, `openbot/agent-freeduet/freeduet/failure_classifier.py` with `tests/test_failure_classifier.py`, wired into no run path; the breaker, `probe()` and the persisted limited-until (E4) are not built, so slice 2 stays open.
+**Built so far (14 November 2026):** the limit and failure classifier of slice 2, `openbot/agent-freeduet/freeduet/failure_classifier.py` with `tests/test_failure_classifier.py`; the breaker of section 5 (`engine_breaker.py` with `tests/test_engine_breaker.py`: the five states, a registry per engine id, an in-memory and an atomic file store for limited-until, E4). Both were merged wired into no run path; slice 2, below, wires them.
+
+**Slice 2 built (14 November 2026):** `probe()` on the adapter (Claude: `claude --version` and `claude auth status`, never a model call, launched like a turn); `engine_state.py` records every member turn in the breaker and keeps limited-until in `FREEDUET_ENGINE_STATE_FILE` (default `engine-state.json` in the data volume), recording only; `GET /engines` on agent-freeduet serves it behind the service token. Not built: nothing calls `probe()` yet and no run path reads the breaker's verdict (slice 3); the server read-through is slice 5.
+
+**Slice 1 built (14 November 2026):** `EngineAdapter` in `freeduet/engine_adapter.py`, Claude Code behind it in `freeduet/claude_engine.py`, `segment.py` drives any adapter; `tests/test_engine_goldens.py` pins 52 scenarios recorded before the change, byte-identical after.
+
+**Built so far (14 November 2026):** the JSON salvage block of section 2, `openbot/agent-freeduet/freeduet/json_salvage.py` with `tests/test_json_salvage.py`, wired into no run path; no member imports it yet.
 
 ### 9.2 Decided on 14 November 2026
 
