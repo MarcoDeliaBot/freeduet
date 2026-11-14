@@ -180,8 +180,9 @@ export function ApprovalSettings() {
         description={
           <>
             The strictest matching rule wins. An "ask" rule beats an "allow"
-            rule. Team rules are locked. Passwords, security settings and
-            payments are always handed to you. Rules for one Bot are on{" "}
+            rule. Team rules are locked. Passwords and security settings are
+            always handed to you, and so are payments unless you turn on Full
+            access for a Bot below. Rules for one Bot are on{" "}
             <Link className="underline underline-offset-4" to="/bots">
               that Bot's page
             </Link>

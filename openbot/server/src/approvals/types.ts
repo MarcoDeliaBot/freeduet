@@ -40,7 +40,9 @@ export type ApprovalPolicyOutcome = {
     /** The person already declined this action, or an equivalent, earlier in this conversation. */
     | "person_declined"
     /** An action asked about every time: "Always allow" is neither offered nor honoured for it. */
-    | "always_ask";
+    | "always_ask"
+    /** FreeDuet: the person switched this member to Full access (docs/FULL_ACCESS.md). */
+    | "full_access";
   reason: string;
   ruleId?: string;
   review?: {

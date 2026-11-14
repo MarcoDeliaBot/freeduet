@@ -43,6 +43,7 @@ import { createHandoffDesk } from "./agents/handoff";
 import { createHandedRequestLoader } from "./agents/handoff-request";
 import { createHandoffRunner } from "./agents/handoff-runner";
 import { startHandoffDelivery } from "./agents/handoff-wiring";
+import { createFullAccess, withFullAccess } from "./freeduet/full-access";
 import { relayComputerTools } from "./freeduet/relay-computer";
 import {
   configureBotLifecycle,
@@ -779,7 +780,28 @@ const approvalComputerTools = async (
     : [];
 };
 
+/*
+ * FreeDuet: Full access, the person's own switch per member (docs/FULL_ACCESS.md). The loader reads
+ * `copilotRuntime`, built further down, when a call is made and never while this file loads.
+ */
+const handedRequest = createHandedRequestLoader({
+  database,
+  encryptionKey: config.keyEncryptionKey,
+  history: (input) => copilotRuntime.history(input),
+});
+const fullAccess = createFullAccess({
+  database,
+  handedRequest,
+  audit: bootAuditStore,
+  known: async (userId, botId) =>
+    Boolean(
+      await agentProfileStore
+        .get(await actorFor(userId), botId)
+        .catch(() => null),
+    ),
+});
 const approvalService = createServerApprovalService({
+  fullAccess,
   storedApprovals,
   config,
   sourceForCoordinationRun,
@@ -997,20 +1019,20 @@ const pluginStore = createPluginStore({
   policy: () => policyStore.get(),
   approvalGate: approvalService.gate,
   sharedUse: createSharedUseGate(sharedUseStore, bootAuditStore),
-  // A connector send to other people asks the owner first. See plugins/share-target.ts.
-  privateShareCheck: createPrivateShareCheck({
-    approvals: approvalService.store,
-  }),
+  // A connector send to other people asks the owner first. See plugins/share-target.ts. FreeDuet: a
+  // member the person switched to Full access is not asked about its own sends (docs/FULL_ACCESS.md).
+  privateShareCheck: withFullAccess(
+    createPrivateShareCheck({
+      approvals: approvalService.store,
+    }),
+    fullAccess,
+  ),
   /*
    * A new email handed on by another member (FreeDuet, docs/M1_PLAN.md D27): the person's own message
    * the hop was made from, loaded from the conversation it was made in. `copilotRuntime` is built
    * further down, which is fine: this is read when a call is made, never while this file loads.
    */
-  handedRequest: createHandedRequestLoader({
-    database,
-    encryptionKey: config.keyEncryptionKey,
-    history: (input) => copilotRuntime.history(input),
-  }),
+  handedRequest,
   /*
    * Where a vendor sends people back, for a vendor whose client this deployment registers itself.
    *

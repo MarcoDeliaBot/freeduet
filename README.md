@@ -27,7 +27,7 @@ FreeDuet gives you a Chief of Staff and a crew of specialists: inbox, contracts,
 | **Never stops** | Planned for v0.3: each agent gets an engine chain. When one subscription reaches its limit, the next one takes over. Metered APIs join the chain only if you allow it, with daily and monthly caps. |
 | **Savings meter** | Planned for v0.3. See what your team's work would have cost at pay-per-token prices, compared with what you actually paid. |
 | **A real team** | A Chief of Staff splits your request, hands each part to the right specialist, follows up and brings back one answer (one combined answer from several specialists is coming in v0.3; today each specialist answers through the Chief of Staff). |
-| **Its own computer** | Every agent works in its own isolated browser. It can shop, book and fill in forms. Anything that pays needs your approval. Purchase permits tied to the exact cart, and spending caps, are planned for v0.4. |
+| **Its own computer** | Every agent works in its own isolated browser. It can shop, book and fill in forms. Anything that pays needs your approval, unless you turn on Full access for that member. Purchase permits tied to the exact cart, and spending caps, are planned for v0.4. |
 | **Yours** | Self-hosted, MIT-licensed, any language, any model: Claude today; GPT, Gemini, GLM, anything on OpenRouter and local models through Ollama are coming in v0.2. |
 
 ## What we do that others don't
@@ -52,7 +52,7 @@ At the time of writing (November 2026), against two kinds of product. The others
 
 | | **FreeDuet** | Closed hosted bot teams (for example Grok Bot) | Other open-source bot-team apps (for example OpenMausBot) |
 |---|---|---|---|
-| **Approvals by default** | Send, pay, sign, book and delete ask first. One narrow exception: a new email to an address you typed yourself | Grok Bot's documentation says an automatic review decides per action; most actions run on their own, and turning it off removes the check | Varies. OpenMausBot shows approval cards for commands and file edits. Another project in our comparison runs agents with full access by design |
+| **Approvals by default** | Send, pay, sign, book and delete ask first. If you want, you can turn on Full access for one member. One narrow exception: a new email to an address you typed yourself | Grok Bot's documentation says an automatic review decides per action; most actions run on their own, and turning it off removes the check | Varies. OpenMausBot shows approval cards for commands and file edits. Another project in our comparison runs agents with full access by design |
 | **Cost** | FreeDuet itself is free. You use your own Claude subscription. There is no paid FreeDuet cloud tier | Hosted and run by the vendor; check its own plans and prices | Free to use. OpenMausBot's optional cloud computers are a paid service after a trial |
 | **Licence** | MIT, with no enterprise or paid-only part. A few ported files keep their original notice ([NOTICE.md](NOTICE.md)) | Closed source | Varies. OpenMausBot is Apache-2.0, with an `enterprise/` folder under its own source-available licence |
 | **Who it is for** | People and households, in plain language, as well as small teams | Includes team and enterprise controls | Varies by project |
@@ -178,7 +178,7 @@ Nothing here has a date. In the order we currently think it matters:
 | Next | **Phone and remote access** | Use FreeDuet from your phone and from outside your home network, with a real sign-in. Never exposed without a login | In design |
 | Later | **Voice** | Members read answers aloud, and you can call them | Planned |
 | Later | **Cam, the video member** | A member that makes and edits video | Planned |
-| Later | **"Full access" option** | An optional switch, off by default, set per member, to act without approval cards. Scope to be decided | In design |
+| Later | **"Full access" option** | An optional switch, off by default, set per member, to act without approval cards, payments included. Passwords and security settings still need you ([docs/FULL_ACCESS.md](docs/FULL_ACCESS.md)) | Built, not yet run live |
 
 The full list, with the constraints on each item and what will not change, is in [docs/ROADMAP.md](docs/ROADMAP.md). The milestones v0.2 to v1.0 (Codex, engine chains, the savings meter, purchase permits, Grok Bot import) keep their acceptance criteria in [docs/PROJECT.md](docs/PROJECT.md).
 
