@@ -1,6 +1,6 @@
 import { afterAll, afterEach, describe, expect, test } from "bun:test";
 import { randomUUID } from "node:crypto";
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import type { MiddlewareHandler } from "hono";
 import { Hono } from "hono";
 import { createAgentProfileStore } from "../src/agents/profile-store";
@@ -20,6 +20,7 @@ import {
 } from "../src/db/schema";
 import { createRoutineRoutes } from "../src/routines/routes";
 import { createRoutineStore } from "../src/routines/store";
+import { MISSED_REASON } from "../src/routines/sweep";
 import { TEST_POOL, testDatabaseUrl } from "./support/database";
 
 /*
@@ -143,8 +144,42 @@ const requireTestUser: MiddlewareHandler<{ Variables: AppVariables }> = async (
 
 function app() {
   const routes = new Hono<{ Variables: AppVariables }>();
+  routes.route(
+    "/",
+    createRoutineRoutes(store, requireTestUser, { channelStore }),
+  );
+  return routes;
+}
+
+/** The same routes with no channel store, so nothing is openable and no run may name a conversation. */
+function appWithoutChannelStore() {
+  const routes = new Hono<{ Variables: AppVariables }>();
   routes.route("/", createRoutineRoutes(store, requireTestUser));
   return routes;
+}
+
+/** The thread a person's conversation runs in. Private to that person, so it must never leave the server. */
+async function threadIdOf(userId: string, channelId: string): Promise<string> {
+  const [row] = await database
+    .select({ threadId: intelligenceChannelMappings.threadId })
+    .from(intelligenceChannelMappings)
+    .where(
+      and(
+        eq(intelligenceChannelMappings.userId, userId),
+        eq(intelligenceChannelMappings.channelId, channelId),
+      ),
+    )
+    .limit(1);
+  if (!row) throw new Error("the person has no thread in that conversation");
+  return row.threadId;
+}
+
+/** One finished firing that posted into the given conversation, or into none when it is null. */
+async function runIn(routineId: string, channelId: string | null) {
+  const run = await store.insertRun(routineId);
+  if (channelId !== null) await store.recordRunChannel(run.runId, channelId);
+  await store.finishRun(run.runId, "succeeded");
+  return run.runId;
 }
 
 describe("the calendar's and the history's owner guard, on real rows", () => {
@@ -300,6 +335,46 @@ describe("the calendar's and the history's owner guard, on real rows", () => {
   });
 });
 
+describe("the history keeps ninety days of runs, and deletes none", () => {
+  /** A day in milliseconds, written out so the cases read as days, not as numbers. */
+  const DAY = 24 * 60 * 60 * 1000;
+
+  test("a run older than ninety days is left out of both histories, and stays in the table", async () => {
+    const f = await setUp();
+    const iris = await store.create({
+      ownerUserId: f.owner.id,
+      agentId: f.irisId,
+      channelId: f.irisChannel,
+      instruction: "Summarise the inbox.",
+      cron: DAILY,
+    });
+    const recent = await store.insertRun(iris.id);
+    await store.finishRun(recent.runId, "succeeded");
+    await setStartedAt(
+      recent.runId,
+      new Date(Date.now() - 89 * DAY).toISOString(),
+    );
+    const old = await store.insertRun(iris.id);
+    await store.finishRun(old.runId, "succeeded");
+    await setStartedAt(
+      old.runId,
+      new Date(Date.now() - 91 * DAY).toISOString(),
+    );
+
+    const everyRoutine = await store.listRunsFor(f.owner.id);
+    expect(everyRoutine.map((run) => run.id)).toEqual([recent.runId]);
+    const oneRoutine = await store.listRuns(f.owner.id, iris.id);
+    expect(oneRoutine.map((run) => run.id)).toEqual([recent.runId]);
+
+    // Not pruned: the old row is still there, and only the read has a window.
+    const stillStored = await database
+      .select({ id: routineRuns.id })
+      .from(routineRuns)
+      .where(eq(routineRuns.id, old.runId));
+    expect(stillStored).toHaveLength(1);
+  });
+});
+
 describe("GET /calendar and GET /runs through the real store, for two people", () => {
   test("the owner sees their switched-on routines' runs and their own history; a stranger sees nothing", async () => {
     const f = await setUp();
@@ -401,5 +476,323 @@ describe("GET /calendar and GET /runs through the real store, for two people", (
     expect(body.runs.map((item) => [item.id, item.status, item.error])).toEqual(
       [[leoRun.runId, "failed", "The stock file was empty."]],
     );
+  });
+});
+
+describe("the conversation a run posted into, shown to its owner only", () => {
+  const asOwner = (f: { owner: AgentActor }) => ({
+    headers: { "x-test-user": f.owner.id },
+  });
+  const asStranger = (f: { stranger: AgentActor }) => ({
+    headers: { "x-test-user": f.stranger.id },
+  });
+
+  test("a run names the conversation it posted into, and no thread leaves the server", async () => {
+    const f = await setUp();
+    const iris = await store.create({
+      ownerUserId: f.owner.id,
+      agentId: f.irisId,
+      channelId: f.irisChannel,
+      instruction: "Summarise the inbox.",
+      cron: DAILY,
+    });
+    const runId = await runIn(iris.id, f.irisChannel);
+    const thread = await threadIdOf(f.owner.id, f.irisChannel);
+
+    const listed = await app().request("http://openbot.test/runs", asOwner(f));
+    const listedText = await listed.text();
+    expect(
+      (
+        JSON.parse(listedText) as {
+          runs: { id: string; channelId: string | null }[];
+        }
+      ).runs.map((run) => [run.id, run.channelId]),
+    ).toEqual([[runId, f.irisChannel]]);
+
+    const perRoutine = await app().request(
+      `http://openbot.test/${iris.id}/runs`,
+      asOwner(f),
+    );
+    const perRoutineText = await perRoutine.text();
+    expect(
+      (
+        JSON.parse(perRoutineText) as { runs: { channelId: string | null }[] }
+      ).runs.map((run) => run.channelId),
+    ).toEqual([f.irisChannel]);
+
+    for (const text of [listedText, perRoutineText]) {
+      expect(text).not.toContain(thread);
+      expect(text).not.toContain("threadId");
+    }
+  });
+
+  test("a stranger gets none of the owner's runs, conversations or threads", async () => {
+    const f = await setUp();
+    const iris = await store.create({
+      ownerUserId: f.owner.id,
+      agentId: f.irisId,
+      channelId: f.irisChannel,
+      instruction: "Summarise the inbox.",
+      cron: DAILY,
+    });
+    await runIn(iris.id, f.irisChannel);
+    const thread = await threadIdOf(f.owner.id, f.irisChannel);
+
+    const listed = await app().request(
+      "http://openbot.test/runs",
+      asStranger(f),
+    );
+    const perRoutine = await app().request(
+      `http://openbot.test/${iris.id}/runs`,
+      asStranger(f),
+    );
+    const both = `${await listed.text()}${await perRoutine.text()}`;
+
+    expect(listed.status).toBe(200);
+    expect(perRoutine.status).toBe(404);
+    expect(both).not.toContain(f.irisChannel);
+    expect(both).not.toContain(thread);
+  });
+
+  test("a conversation the person can no longer open is left out, and its run stays listed", async () => {
+    const f = await setUp();
+    const iris = await store.create({
+      ownerUserId: f.owner.id,
+      agentId: f.irisId,
+      channelId: f.irisChannel,
+      instruction: "Summarise the inbox.",
+      cron: DAILY,
+    });
+    const runId = await runIn(iris.id, f.irisChannel);
+    await database
+      .update(channels)
+      .set({ deletedAt: new Date() })
+      .where(eq(channels.id, f.irisChannel));
+
+    const response = await app().request(
+      "http://openbot.test/runs",
+      asOwner(f),
+    );
+    const body = (await response.json()) as {
+      runs: { id: string; channelId: string | null }[];
+    };
+
+    expect(body.runs.map((run) => [run.id, run.channelId])).toEqual([
+      [runId, null],
+    ]);
+  });
+
+  test("the link names the conversation the run posted into, not the routine's current one", async () => {
+    const f = await setUp();
+    const iris = await store.create({
+      ownerUserId: f.owner.id,
+      agentId: f.irisId,
+      channelId: f.irisChannel,
+      instruction: "Summarise the inbox.",
+      cron: DAILY,
+    });
+    const runId = await runIn(iris.id, f.irisChannel);
+    // A second conversation with the same Bot, so the routine can be moved there after the run.
+    const moved = await createChannel(f.owner, [f.irisId]);
+    await store.update(f.owner.id, iris.id, { channelId: moved.id });
+
+    const response = await app().request(
+      "http://openbot.test/runs",
+      asOwner(f),
+    );
+    const body = (await response.json()) as {
+      runs: { id: string; channelId: string | null }[];
+    };
+
+    expect(body.runs.map((run) => [run.id, run.channelId])).toEqual([
+      [runId, f.irisChannel],
+    ]);
+  });
+
+  test("a run that never reached a conversation, or was recorded before the link, names none", async () => {
+    const f = await setUp();
+    const iris = await store.create({
+      ownerUserId: f.owner.id,
+      agentId: f.irisId,
+      channelId: f.irisChannel,
+      instruction: "Summarise the inbox.",
+      cron: DAILY,
+    });
+    const runId = await runIn(iris.id, null);
+
+    const response = await app().request(
+      "http://openbot.test/runs",
+      asOwner(f),
+    );
+    const body = (await response.json()) as {
+      runs: { id: string; channelId: string | null }[];
+    };
+
+    expect(body.runs.map((run) => [run.id, run.channelId])).toEqual([
+      [runId, null],
+    ]);
+  });
+
+  test("with no channel store to ask, nothing is openable and no run names a conversation", async () => {
+    const f = await setUp();
+    const iris = await store.create({
+      ownerUserId: f.owner.id,
+      agentId: f.irisId,
+      channelId: f.irisChannel,
+      instruction: "Summarise the inbox.",
+      cron: DAILY,
+    });
+    await runIn(iris.id, f.irisChannel);
+
+    const response = await appWithoutChannelStore().request(
+      "http://openbot.test/runs",
+      asOwner(f),
+    );
+    const body = (await response.json()) as {
+      runs: { channelId: string | null }[];
+    };
+
+    expect(body.runs.map((run) => run.channelId)).toEqual([null]);
+  });
+});
+
+describe("a firing the server did not run, shown to its owner as missed", () => {
+  const asOwner = (f: { owner: AgentActor }) => ({
+    headers: { "x-test-user": f.owner.id },
+  });
+  const asStranger = (f: { stranger: AgentActor }) => ({
+    headers: { "x-test-user": f.stranger.id },
+  });
+  const hoursAgo = (hours: number) => new Date(Date.now() - hours * 3_600_000);
+
+  test("History and the routine's own list name the miss, dated to when it was due, with no conversation", async () => {
+    const f = await setUp();
+    const iris = await store.create({
+      ownerUserId: f.owner.id,
+      agentId: f.irisId,
+      channelId: f.irisChannel,
+      instruction: "Summarise the inbox.",
+      cron: DAILY,
+    });
+    // A run five hours ago, then an occurrence the server did not run two hours ago.
+    const ranAt = hoursAgo(5);
+    const missedDue = hoursAgo(2);
+    const ran = await runIn(iris.id, f.irisChannel);
+    await setStartedAt(ran, ranAt.toISOString());
+    expect(
+      await store.recordMissed(iris.id, missedDue, MISSED_REASON, 11 * 60_000),
+    ).toBe(true);
+
+    const listed = await app().request("http://openbot.test/runs", asOwner(f));
+    const body = (await listed.json()) as {
+      runs: {
+        status: string;
+        missed: boolean;
+        startedAt: string;
+        finishedAt: string | null;
+        channelId: string | null;
+        error: string | null;
+      }[];
+    };
+    expect(
+      body.runs.map((run) => [
+        run.status,
+        run.missed,
+        run.startedAt,
+        run.finishedAt,
+        run.channelId,
+        run.error,
+      ]),
+    ).toEqual([
+      [
+        "skipped",
+        true,
+        missedDue.toISOString(),
+        missedDue.toISOString(),
+        null,
+        MISSED_REASON,
+      ],
+      [
+        "succeeded",
+        false,
+        ranAt.toISOString(),
+        expect.any(String),
+        f.irisChannel,
+        null,
+      ],
+    ]);
+
+    const perRoutine = await app().request(
+      `http://openbot.test/${iris.id}/runs`,
+      asOwner(f),
+    );
+    const perBody = (await perRoutine.json()) as {
+      runs: { missed: boolean }[];
+    };
+    expect(perBody.runs.map((run) => run.missed)).toEqual([true, false]);
+
+    const page = await app().request("http://openbot.test/", asOwner(f));
+    const pageBody = (await page.json()) as {
+      routines: {
+        id: string;
+        lastRun: {
+          status: string | null;
+          at: string | null;
+          missed: boolean;
+        } | null;
+      }[];
+    };
+    expect(pageBody.routines.find((r) => r.id === iris.id)?.lastRun).toEqual({
+      status: "skipped",
+      at: missedDue.toISOString(),
+      missed: true,
+    });
+  });
+
+  test("a stranger sees none of the owner's missed firings", async () => {
+    const f = await setUp();
+    const iris = await store.create({
+      ownerUserId: f.owner.id,
+      agentId: f.irisId,
+      channelId: f.irisChannel,
+      instruction: "Summarise the inbox.",
+      cron: DAILY,
+    });
+    await store.recordMissed(iris.id, hoursAgo(2), MISSED_REASON, 11 * 60_000);
+
+    const response = await app().request(
+      "http://openbot.test/runs",
+      asStranger(f),
+    );
+    const body = (await response.json()) as { runs: unknown[] };
+
+    expect(body.runs).toEqual([]);
+  });
+
+  test("a missed firing does not break the fatigue streak, and does not count toward it", async () => {
+    const f = await setUp();
+    const iris = await store.create({
+      ownerUserId: f.owner.id,
+      agentId: f.irisId,
+      channelId: f.irisChannel,
+      instruction: "Summarise the inbox.",
+      cron: DAILY,
+    });
+    // The streak is read since the routine was last switched on; make the window cover these rows.
+    await database
+      .update(routines)
+      .set({ enabledAt: new Date("2000-01-01T00:00:00Z") })
+      .where(eq(routines.id, iris.id));
+    const failedRun = async (startedAt: Date) => {
+      const run = await store.insertRun(iris.id);
+      await setStartedAt(run.runId, startedAt.toISOString());
+      await store.finishRun(run.runId, "failed", "the turn failed");
+    };
+    await failedRun(hoursAgo(3));
+    await store.recordMissed(iris.id, hoursAgo(2), MISSED_REASON, 11 * 60_000);
+    await failedRun(hoursAgo(1));
+
+    // Two failures in a row: the missed occurrence between them neither breaks the count nor adds to it.
+    expect(await store.consecutiveFailures(iris.id)).toBe(2);
   });
 });

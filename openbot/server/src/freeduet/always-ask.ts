@@ -15,6 +15,10 @@
  * 3. CHANGING ONE OF THE PERSON'S SETTINGS FROM CHAT. The Settings connector's change tool
  *    (`plugins/builtin-settings.ts`, settings-in-chat slice 1) is a write that asks the person before
  *    anything changes, whatever Full access says. Its list of settings is decided in its own module.
+ *    That is the person's own live turn. In a run nobody is attending (case 1) the call never gets
+ *    here: `callTool` refuses it first (`settings-in-chat/own-turn.ts`, docs/design/settings-in-chat.md
+ *    section 8.9), so no card is opened for it. The unattended-write branch below still names such a run
+ *    as defence in depth, for a caller that reached the gate some other way.
  *
  * WHO DECIDES. Only facts the server holds: the run's initiator (the approval context and the signed
  * run, never a word of the model's), the transport the connector call resolved to, and the answer of

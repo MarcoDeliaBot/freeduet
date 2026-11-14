@@ -58,6 +58,13 @@ export type AppWant = {
   label: string;
   /** Read-only. Anything else changes something somewhere, and is named so. */
   read: boolean;
+  /**
+   * Present when approving a request never gives this tool, and why: `send` — the app's own list says
+   * it sends something on the person's behalf — or `unreviewed` — nothing says what it does, so it
+   * is treated as one that may. It is allowed in settings, on the Bot's page under the app, and the
+   * server refuses it from the inbox whatever a press names. Absent on a tool an approval may give.
+   */
+  settingsOnly?: "send" | "unreviewed";
 };
 
 export type AppAccess = {

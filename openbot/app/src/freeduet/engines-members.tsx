@@ -1,14 +1,8 @@
 import { useMutation, useQuery } from "@tanstack/react-query";
-import React, { useState } from "react";
-import { PageRows, PageSection } from "@/components/layout/page-shell";
+import { useState } from "react";
+import { DuetCard } from "@/components/duet/kit";
+import { PageSection } from "@/components/layout/page-shell";
 import { Button } from "@/components/ui/button";
-import {
-  Item,
-  ItemContent,
-  ItemDescription,
-  ItemTitle,
-} from "@/components/ui/item";
-import { Separator } from "@/components/ui/separator";
 import { agentListQueryOptions } from "@/lib/agents/queries";
 import { client } from "@/lib/client";
 import {
@@ -20,22 +14,31 @@ import {
   type EngineMode,
   type EnginesReading,
   leftOutText,
+  MEMBER_COLUMNS,
+  MEMBERS_DESCRIPTION,
+  MEMBERS_TITLE,
   type MemberSummary,
+  modeControlLabel,
+  modeGroupLabel,
   pinText,
   SAVED_TEXT,
   sourceText,
+  UNDO_BUTTON,
   UNDONE_TEXT,
+  undoLabel,
 } from "./engines-text";
 
 /**
- * Each member's engines, and what happens when one runs out (docs/design/engines-dashboard.md, slice 7a).
+ * Each member's engines, and what happens when one runs out (docs/design/engines-dashboard.md, slices 7a and the
+ * dashboard's table).
  *
- * One row per member: the engines it will try, in order, the ones left out and why, and one choice, with a sentence for
- * each answer. A change is saved on the server, applies from the member's next message, and offers an Undo. The page
- * holds no choice of its own: it draws what the server says and sends the person's click, so a refused change shows as it
- * was. Nothing here takes text, a key or a switch for an engine: the only controls are the two answers for each member
- * and an Undo, and they are disabled when the server says the person may not change them (not at the computer, an agent
- * too old to honour a choice, or choices it cannot read). Kept in app/src/freeduet/ (docs/UPSTREAM_TOUCHES.md).
+ * One table with a row per member: the engines it will try, in order (numbered pills), the ones left out and why, and one
+ * choice, with a sentence for each answer. A change is saved on the server, applies from the member's next message, and
+ * offers an Undo. The page holds no choice of its own: it draws what the server says and sends the person's click, so a
+ * refused change shows as it was. Nothing here takes text, a key or a switch for an engine: the only controls are the two
+ * answers for each member and an Undo, and they are disabled when the server says the person may not change them (not at
+ * the computer, an agent too old to honour a choice, or choices it cannot read). The table sits in a box that scrolls on a
+ * narrow screen. Kept in app/src/freeduet/ (docs/UPSTREAM_TOUCHES.md).
  */
 
 const ENGINES_PATH = "/api/freeduet/engines";
@@ -133,8 +136,9 @@ export function EngineMembers({
 
   return (
     <PageSection
-      description="The engines each member tries, in the order it tries them, and what happens when one runs out. A change applies from the member's next message, and you can undo it."
-      title="Each member's engines"
+      className="mt-0"
+      description={MEMBERS_DESCRIPTION}
+      title={MEMBERS_TITLE}
     >
       {reading.choices?.state === "unreadable" ? (
         <p
@@ -145,96 +149,154 @@ export function EngineMembers({
         </p>
       ) : null}
       {!usable && block && block !== "choices_unreadable" ? (
-        <p className="mt-3 text-muted-foreground text-sm">{blockText(block)}</p>
+        <p className="mt-3 text-duet-ink-2 text-sm">{blockText(block)}</p>
       ) : null}
       {failure ? (
         <p className="mt-3 mb-2 text-destructive text-sm" role="alert">
           {failure.message}
         </p>
       ) : null}
-      <PageRows>
-        {members.map((member, index) => {
-          const name = memberName(member.id);
-          const alone = aloneText(member.chain, engineName);
-          const undoId = undoable[member.id];
-          return (
-            <React.Fragment key={member.id}>
-              <Item size="sm">
-                <ItemContent>
-                  <ItemTitle>{name}</ItemTitle>
-                  <ItemDescription className="line-clamp-none">
-                    {chainText(member.chain, engineName)}
-                  </ItemDescription>
-                  {member.leftOut.map((entry) => (
-                    <p className="text-muted-foreground text-sm" key={entry.id}>
-                      {leftOutText(entry, engineName)}
-                    </p>
-                  ))}
-                  {member.pin ? (
-                    <p className="text-muted-foreground text-sm">
-                      {pinText(member.pin, engineName)}
-                    </p>
-                  ) : null}
-                  <fieldset className="mt-2 flex flex-col gap-2 text-sm">
-                    <legend className="mb-1 font-medium">
-                      When an engine runs out
-                    </legend>
-                    {ENGINE_MODES.map(({ mode, label, effect }) => (
-                      <label className="flex items-start gap-2" key={mode}>
-                        <input
-                          aria-label={`${label} for ${name}`}
-                          checked={member.mode === mode}
-                          className="mt-1"
-                          disabled={!usable || busy}
-                          name={`engine-mode-${member.id}`}
-                          onChange={() => choose(member, mode)}
-                          type="radio"
-                          value={mode}
-                        />
-                        <span>
-                          <span className="font-medium">{label}</span>
-                          <span className="block text-muted-foreground">
-                            {effect}
-                          </span>
-                        </span>
-                      </label>
-                    ))}
-                  </fieldset>
-                  <p className="mt-1 text-muted-foreground text-sm">
-                    {sourceText(member)}
-                  </p>
-                  {alone ? (
-                    <p className="text-muted-foreground text-sm">{alone}</p>
-                  ) : null}
-                  {said[member.id] ? (
-                    <p className="mt-1 flex flex-wrap items-center gap-2 text-sm">
-                      <span role="status">{said[member.id]}</span>
-                      {undoId ? (
-                        <Button
-                          aria-label={`Undo the change for ${name}`}
-                          disabled={busy}
-                          onClick={() => {
-                            change.reset();
-                            undo.mutate({
-                              memberId: member.id,
-                              changeId: undoId,
-                            });
-                          }}
-                          size="sm"
-                          variant="outline"
+      <DuetCard className="mt-4">
+        <section
+          aria-label={MEMBERS_TITLE}
+          className="overflow-x-auto px-4 py-2"
+        >
+          <table className="w-full min-w-[40rem] border-collapse text-sm">
+            <caption className="sr-only">{MEMBERS_TITLE}</caption>
+            <thead>
+              <tr className="text-left text-duet-ink-2">
+                <th className="px-3 py-3 font-medium" scope="col">
+                  {MEMBER_COLUMNS.member}
+                </th>
+                <th className="px-3 py-3 font-medium" scope="col">
+                  {MEMBER_COLUMNS.order}
+                </th>
+                <th className="px-3 py-3 font-medium" scope="col">
+                  {MEMBER_COLUMNS.switching}
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              {members.map((member) => {
+                const name = memberName(member.id);
+                const alone = aloneText(member.chain, engineName);
+                const undoId = undoable[member.id];
+                return (
+                  <tr
+                    className="border-duet-hair-2 border-t align-top"
+                    key={member.id}
+                  >
+                    <th
+                      className="whitespace-nowrap px-3 py-4 text-left font-semibold"
+                      scope="row"
+                    >
+                      {name}
+                    </th>
+                    <td className="px-3 py-4">
+                      {member.chain.length > 0 ? (
+                        <ol
+                          aria-label={chainText(member.chain, engineName)}
+                          className="flex flex-wrap gap-1.5"
                         >
-                          Undo
-                        </Button>
+                          {member.chain.map((id, at) => (
+                            <li
+                              className="inline-flex items-center gap-1.5 rounded-full border border-duet-hair bg-duet-tile px-2.5 py-1 text-duet-ink"
+                              key={id}
+                            >
+                              <span
+                                aria-hidden="true"
+                                className="font-semibold text-duet-ink-2"
+                              >
+                                {at + 1}
+                              </span>
+                              <span>{engineName(id)}</span>
+                            </li>
+                          ))}
+                        </ol>
+                      ) : (
+                        <p className="text-duet-ink-2">
+                          {chainText(member.chain, engineName)}
+                        </p>
+                      )}
+                      {member.leftOut.map((entry) => (
+                        <p
+                          className="mt-2 text-duet-ink-2 text-sm"
+                          key={entry.id}
+                        >
+                          {leftOutText(entry, engineName)}
+                        </p>
+                      ))}
+                      {member.pin ? (
+                        <p className="mt-2 text-duet-ink-2 text-sm">
+                          {pinText(member.pin, engineName)}
+                        </p>
                       ) : null}
-                    </p>
-                  ) : null}
-                </ItemContent>
-              </Item>
-              {index !== members.length - 1 && <Separator />}
-            </React.Fragment>
-          );
-        })}
-      </PageRows>
+                    </td>
+                    <td className="px-3 py-4">
+                      <fieldset className="flex flex-col gap-2 text-sm">
+                        <legend className="sr-only">
+                          {modeGroupLabel(name)}
+                        </legend>
+                        {ENGINE_MODES.map(({ mode, label, effect }) => (
+                          <label
+                            className="flex min-h-11 items-start gap-2"
+                            key={mode}
+                          >
+                            <input
+                              aria-label={modeControlLabel(label, name)}
+                              checked={member.mode === mode}
+                              className="mt-1 size-4"
+                              disabled={!usable || busy}
+                              name={`engine-mode-${member.id}`}
+                              onChange={() => choose(member, mode)}
+                              type="radio"
+                              value={mode}
+                            />
+                            <span>
+                              <span className="font-medium">{label}</span>
+                              <span className="block text-duet-ink-2">
+                                {effect}
+                              </span>
+                            </span>
+                          </label>
+                        ))}
+                      </fieldset>
+                      <p className="mt-2 text-duet-ink-2 text-sm">
+                        {sourceText(member)}
+                      </p>
+                      {alone ? (
+                        <p className="mt-1 text-duet-ink-2 text-sm">{alone}</p>
+                      ) : null}
+                      {said[member.id] ? (
+                        <p className="mt-2 flex flex-wrap items-center gap-2 text-sm">
+                          <span role="status">{said[member.id]}</span>
+                          {undoId ? (
+                            <Button
+                              aria-label={undoLabel(name)}
+                              disabled={busy}
+                              onClick={() => {
+                                change.reset();
+                                undo.mutate({
+                                  memberId: member.id,
+                                  changeId: undoId,
+                                });
+                              }}
+                              size="sm"
+                              variant="outline"
+                            >
+                              {UNDO_BUTTON}
+                            </Button>
+                          ) : null}
+                        </p>
+                      ) : null}
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </section>
+      </DuetCard>
     </PageSection>
   );
 }

@@ -96,7 +96,7 @@
    "name": "¿Funciona en Windows, Mac y Linux?",
    "acceptedAnswer": {
     "@type": "Answer",
-    "text": "El desarrollador lo usa en Windows con WSL2 y Docker, y nuestras comprobaciones automáticas lo arrancan en Linux. No se ha probado en Mac, así que no podemos prometer que funcione allí. FreeDuet es una primera entrega (versión 0.1), construida y usada por un solo desarrollador."
+    "text": "El desarrollador lo usa en Windows con WSL2 y Docker, y nuestras comprobaciones automáticas lo arrancan en Linux. No se ha probado en Mac, así que no podemos prometer que funcione allí. FreeDuet es una primera entrega (versión 0.2), construida y usada por un solo desarrollador."
    }
   },
   {
@@ -120,7 +120,7 @@
    "name": "¿Puedo usarlo desde el móvil?",
    "acceptedAnswer": {
     "@type": "Answer",
-    "text": "Todavía no. Hoy FreeDuet se abre en el navegador de tu ordenador. Está prevista una versión para el móvil, con un aviso cuando algo necesite tu Aprobar."
+    "text": "Todavía no. Hoy FreeDuet se abre en el navegador de tu ordenador. Está en curso una versión para el móvil, en la que también recibes solicitudes de aprobación."
    }
   },
   {
@@ -975,10 +975,10 @@ footer a{color:var(--ink)}
     <h3 class="road-h rv" data-i="r_h">Qué funciona hoy y qué llegará</h3>
     <ol class="road rv">
       <li><b data-i="rl_today">Hoy</b><span class="tag" data-i="r_now">Disponible</span><p data-i="r1">El equipo con tu sesión de Claude, con aprobaciones, pruebas, Gmail y Google Calendar.</p></li>
-      <li><b data-i="rl_now">Ahora</b><span class="tag" data-i="r_plan">Previsto</span><p data-i="r2">Máxima prioridad: un instalador de un solo archivo para Windows, macOS y Ubuntu. Llegan nuevos miembros, cada uno probado.</p></li>
-      <li><b data-i="rl_next">Después</b><span class="tag" data-i="r_plan">Previsto</span><p data-i="r3">Elige el motor de cada miembro y una delegación real en todo el equipo.</p></li>
-      <li><b data-i="rl_next">Después</b><span class="tag" data-i="r_design">En diseño</span><p data-i="r4">Automatizaciones escritas en el chat, más apps conectadas, versión para el teléfono y acceso remoto.</p></li>
-      <li><b data-i="rl_later">Más adelante</b><span class="tag" data-i="r_plan">Previsto</span><p data-i="r5">Voz, compras seguras. Full access está construido, pero sin probar en uso real. Cam, el miembro de vídeo, está en el equipo; sus pruebas todavía no se han hecho en uso real, y ya puede entregar un archivo terminado desde el chat, con un botón de descarga (construido, pero sin probar en uso real).</p></li>
+      <li><b data-i="rl_now">Ahora</b><span class="tag" data-i="r_prog">En curso</span><p data-i="r2">Máxima prioridad: un instalador de un solo archivo para Windows, macOS y Ubuntu. Ya existen primeros scripts de instalación para Ubuntu y para Windows con WSL2; los pasos de Ubuntu se prueban en CI. Todavía no hay instalador con doble clic. Construidos, pero sin probar en uso real: un token propio para el ordenador de cada miembro, y conexiones a la red de casa que se cierran al desactivar el acceso. Llegan nuevos miembros, cada uno probado.</p></li>
+      <li><b data-i="rl_next">Después</b><span class="tag" data-i="r_prog">En curso</span><p data-i="r3">Elige el motor de cada miembro: la página de Motores muestra la cadena de cada miembro y la elección entre automático o preguntar antes. Está construido, pero sin probar en uso real, y el cambio solo se ha probado con motores de prueba. Los ajustes que cambias en el chat, con Deshacer, están en curso. La delegación real está prevista.</p></li>
+      <li><b data-i="rl_next">Después</b><span class="tag" data-i="r_prog">En curso</span><p data-i="r4">Automatizaciones escritas en el chat, y una versión para el teléfono (su lista de acceso ya está construida), están en curso. Más apps conectadas y acceso remoto están en diseño.</p></li>
+      <li><b data-i="rl_later">Más adelante</b><span class="tag" data-i="r_prog">En curso</span><p data-i="r5">Voz: la lectura en voz alta está construida y desactivada por defecto; las llamadas aún no están construidas. Compras seguras: previstas. Full access y Cam, el miembro de vídeo, están construidos, pero sin probar en uso real; Cam puede entregar un archivo terminado con un botón de descarga.</p></li>
     </ol>
     <p class="soft road-note rv" data-i="r_note">Marcamos todo lo que aún no está construido. Sin cuentos. <a href="https://github.com/MarcoDeliaBot/freeduet/blob/main/docs/ROADMAP.md">Hoja de ruta completa en GitHub</a>.</p>
   </div>
@@ -1065,10 +1065,10 @@ cd openbot &amp;&amp; docker compose exec -it agent-freeduet claude
     <div class="faq">
       <details class="rv" open><summary data-i="q1">¿Qué es gratis y qué pago?</summary><p data-i="a1">FreeDuet es gratuito y de código abierto con licencia MIT, también para uso profesional. Lo único que pagas es la suscripción de IA que uses con él, que hoy es un plan de Claude. No hay ninguna clave de API que comprar.</p></details>
       <details class="rv"><summary data-i="q2">¿Qué necesito para instalarlo?</summary><p data-i="a2">Una suscripción de Claude, más Docker, Bash y Bun en tu ordenador. Los cuatro pasos de arriba son toda la instalación. ¿Nunca has abierto una terminal? Pide a alguien técnico que lo instale y enséñale esta página.</p></details>
-      <details class="rv"><summary data-i="q3">¿Funciona en Windows, Mac y Linux?</summary><p data-i="a3">El desarrollador lo usa en Windows con WSL2 y Docker, y nuestras comprobaciones automáticas lo arrancan en Linux. No se ha probado en Mac, así que no podemos prometer que funcione allí. FreeDuet es una primera entrega (versión 0.1), construida y usada por un solo desarrollador.</p></details>
+      <details class="rv"><summary data-i="q3">¿Funciona en Windows, Mac y Linux?</summary><p data-i="a3">El desarrollador lo usa en Windows con WSL2 y Docker, y nuestras comprobaciones automáticas lo arrancan en Linux. No se ha probado en Mac, así que no podemos prometer que funcione allí. FreeDuet es una primera entrega (versión 0.2), construida y usada por un solo desarrollador.</p></details>
       <details class="rv"><summary data-i="q4">¿Qué puede hacer un asistente sin preguntarme?</summary><p data-i="a4">Puede buscar información, leer y preparar borradores. Por defecto, los cinco botones esperan tu Aprobar, salvo un correo nuevo a una dirección que escribiste tú. Full access, activable por miembro, quita esa espera en tus chats; contraseñas y ajustes de seguridad siguen siendo tuyos. Los asistentes aún pueden equivocarse, así que lee lo que preparan antes de aprobarlo.</p></details>
       <details class="rv"><summary data-i="q5">¿Dónde están mis datos?</summary><p data-i="a5">FreeDuet funciona en tu ordenador y guarda allí sus conversaciones en una base de datos. Tu inicio de sesión de Claude queda en un volumen de Docker que solo lee el programa Claude Code. Para pensar, los asistentes envían tu petición al servicio de IA en el que iniciaste sesión, igual que lo haría su propia app.</p></details>
-      <details class="rv"><summary data-i="q6">¿Puedo usarlo desde el móvil?</summary><p data-i="a6">Todavía no. Hoy FreeDuet se abre en el navegador de tu ordenador. Está prevista una versión para el móvil, con un aviso cuando algo necesite tu Aprobar.</p></details>
+      <details class="rv"><summary data-i="q6">¿Puedo usarlo desde el móvil?</summary><p data-i="a6">Todavía no. Hoy FreeDuet se abre en el navegador de tu ordenador. Está en curso una versión para el móvil, en la que también recibes solicitudes de aprobación.</p></details>
       <details class="rv"><summary data-i="q7">¿Puedo añadir un miembro propio?</summary><p data-i="a7">Sí. Pídele a Leo, que crea nuevos asistentes, que diseñe uno para el trabajo que necesitas, o escribe tú mismo su definición. También puedes cambiar el nombre de los miembros y su forma de hablar. <a href="https://github.com/MarcoDeliaBot/freeduet/blob/main/docs/TEAM.md">Cómo se definen los miembros</a>.</p></details>
       <details class="rv"><summary data-i="q8">¿Dónde consigo ayuda?</summary><p data-i="a8">Abre una incidencia en GitHub. <a href="https://github.com/MarcoDeliaBot/freeduet/issues/new/choose">Hay un formulario corto</a> para una pregunta, un error, un arreglo, o para contarnos que lo usas. Puedes escribir en inglés o en italiano.</p></details>
     </div>

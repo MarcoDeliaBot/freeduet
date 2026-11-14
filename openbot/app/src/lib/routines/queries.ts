@@ -28,6 +28,8 @@ export type RoutineRecord = {
   lastRun: {
     status: "succeeded" | "failed" | "skipped" | null;
     at: string | null;
+    /** A firing the server did not run: its status is `skipped` and `at` is when it was due. */
+    missed: boolean;
   } | null;
 };
 
@@ -63,6 +65,10 @@ export type RoutineRunRecord = {
   error: string | null;
   /** What started it: the schedule, a person's Run now, or an event trigger. */
   source: "schedule" | "run_now" | "trigger";
+  /** The conversation the run posted into, when the person may still open it; null otherwise. */
+  channelId: string | null;
+  /** A firing the server did not run and recorded as such: shown as Missed, never as a choice. */
+  missed: boolean;
 };
 
 export function routineRunsQueryOptions(id: string) {
