@@ -157,6 +157,26 @@ checks `--engine local-free-router` against the stack's `GET /engines` but does 
 for every member in the eval stack's engines file (`switching: {default: {pin: local-free-router}}`) to run the trial; a
 certified label needs the runner's per-run engine, the part of slice 4 that is not built.
 
+### Ollama on your computer, with no key (`local-models`)
+
+Ollama 0.14.0 or later serves an Anthropic-compatible API on port 11434 (the plan's note is in
+[ENGINES_PLAN.md](../../docs/ENGINES_PLAN.md) 9.1). Such an entry needs no key: write `no_key: true` in place of
+`credential_secret_ref`. It is accepted only for plain `http` to this machine (`localhost`, a 127.x.x.x or `::1`
+address) or to `host.docker.internal`. Any other address, or a key written beside `no_key`, is refused. The CLI gets a
+placeholder token and no key, in the same empty home as any other entry. No real local model has answered a turn yet.
+
+- **Linux.** Ollama listens on 127.0.0.1 by default, which the container cannot reach. Start it with
+  `OLLAMA_HOST=0.0.0.0:11434` (on systemd, `Environment="OLLAMA_HOST=0.0.0.0:11434"`). That also listens on your
+  network, and Ollama has no login, so add a firewall rule for port 11434 unless you accept that.
+- **Docker inside WSL, Ollama on Windows.** Do not assume the container reaches Ollama at `host.docker.internal`.
+  This has not been tested.
+- **The check.** `curl -s http://127.0.0.1:11434/api/version` should print a version. In `engines.local.yaml`, uncomment
+  `local-models`, set its `model` to one you pulled with `ollama pull`, and set `enabled: true`. Then follow the
+  numbered steps above with `local-models` in place of `local-free-router`. The `LOCAL_ROUTER_KEY` lines and step 3's
+  `export` do not apply, because this entry has no key. Not run on a real install yet.
+- **Not verified.** Whether Ollama accepts or ignores what Claude Code sends (`metadata`, `thinking`, `output_config`
+  and the `beta=true` query string), whether `tool_choice` ever reaches it, and what any model answers.
+
 ## Signing in (done by the person, never by FreeDuet)
 
 ```bash
