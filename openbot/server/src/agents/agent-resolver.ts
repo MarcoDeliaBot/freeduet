@@ -14,6 +14,7 @@ import {
   type ToolSelection,
 } from "../copilot";
 import type { AcquireLearnedSkills } from "../learning/runtime";
+import type { LoadPersonLanguage } from "../freeduet/person-language-choice";
 import type { LoadPersonTone } from "../freeduet/person-tone";
 import type { LoadPersonalMemory } from "../memory/tools";
 import type { AgentActor } from "./profile-types";
@@ -72,6 +73,8 @@ export type ActorAgentResolverDependencies = {
   loadPersonalMemoryForActor?: (actorId: string) => LoadPersonalMemory;
   /** The tone each of this person's members talks to them in (freeduet/person-tone.ts). */
   loadPersonToneForActor?: (actorId: string) => LoadPersonTone;
+  /** The language this person chose for the team (freeduet/person-language-choice.ts). */
+  loadPersonLanguageForActor?: (actorId: string) => LoadPersonLanguage;
 };
 
 /**
@@ -116,6 +119,7 @@ export function createActorAgentResolver(
       deps.acquireLearnedSkills,
       deps.loadPersonalMemoryForActor?.(actor.id),
       deps.loadPersonToneForActor?.(actor.id),
+      deps.loadPersonLanguageForActor?.(actor.id),
     );
 
   const resolveAgentsForActor = async (actor: AgentActor) =>

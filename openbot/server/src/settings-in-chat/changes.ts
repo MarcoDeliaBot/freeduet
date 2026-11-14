@@ -25,6 +25,11 @@ import type { Database } from "../db/client";
 import { agentPreferences, agentProfiles } from "../db/schema/coworker";
 import { agents } from "../db/schema/core";
 import { botLifecycle } from "../db/schema/lifecycle";
+import {
+  parseChoice,
+  readLanguageChoice,
+  swapLanguageChoice,
+} from "../freeduet/person-language-choice";
 import { checkMemberName, foldName, isWellFormedName } from "./member-name";
 import type { ChatNotifyValue, ChatSettingName } from "./allow-list";
 
@@ -99,6 +104,18 @@ export type ToneChangeOutcome =
     }
   | { status: "unchanged"; value: ChatTone };
 
+export type LanguageChangeOutcome =
+  | {
+      status: "changed";
+      changeId: string;
+      /** The Bot that was asked: the language belongs to the person. */
+      agentId: string;
+      setting: "language";
+      previousValue: string | null;
+      newValue: string | null;
+    }
+  | { status: "unchanged"; value: string | null };
+
 export type SettingChanges = {
   change(input: {
     ownerUserId: string;
@@ -126,6 +143,15 @@ export type SettingChanges = {
     member: string | undefined;
     value: ChatTone;
   }): Promise<ToneChangeOutcome>;
+  /**
+   * The language this person reads, one for the whole team. `value` is a code from D26's list, or null for the
+   * deployment's own. `callerId` is the Bot asked, kept in the record.
+   */
+  changeLanguage(input: {
+    ownerUserId: string;
+    callerId: string;
+    value: string | null;
+  }): Promise<LanguageChangeOutcome>;
   undo(input: {
     ownerUserId: string;
     changeId: string;
@@ -158,6 +184,17 @@ function recordOf(payload: Record<string, unknown>) {
     return { setting, agentId, previousValue, newValue } as const;
   if (setting === "tone" && isChatTone(previousValue) && isChatTone(newValue))
     return { setting, agentId, previousValue, newValue } as const;
+  if (
+    setting === "language" &&
+    (previousValue === null || parseChoice(previousValue) !== null) &&
+    (newValue === null || parseChoice(newValue) !== null)
+  )
+    return {
+      setting,
+      agentId,
+      previousValue: previousValue as string | null,
+      newValue: newValue as string | null,
+    } as const;
   throw new Error("A recorded setting change could not be read back.");
 }
 
@@ -451,6 +488,56 @@ export function createSettingChanges(deps: {
     }
   }
 
+  async function undoLanguage(
+    ownerUserId: string,
+    changeId: string,
+    recorded: {
+      agentId: string;
+      previousValue: string | null;
+      newValue: string | null;
+    },
+  ) {
+    await database.transaction(async (tx) => {
+      await lockPerson(tx, ownerUserId);
+      const now = await readLanguageChoice(tx, ownerUserId);
+      if (now !== recorded.newValue)
+        throw new SettingRefusedError(
+          `That language has changed since, so nothing was undone. It is now ${now ?? "the deployment's own"}.`,
+          409,
+        );
+      await swapLanguageChoice(
+        tx,
+        ownerUserId,
+        recorded.newValue,
+        recorded.previousValue,
+      );
+    });
+    try {
+      await recordAuditEvent(audit, {
+        eventType: "configuration.changed",
+        targetType: SETTING_UNDO_TARGET,
+        targetId: changeId,
+        actorUserId: ownerUserId,
+        payload: {
+          change: "setting_change_undone",
+          changeId,
+          setting: "language",
+          agentId: recorded.agentId,
+          previousValue: recorded.newValue,
+          newValue: recorded.previousValue,
+        },
+      });
+    } catch (error) {
+      await swapLanguageChoice(
+        database,
+        ownerUserId,
+        recorded.previousValue,
+        recorded.newValue,
+      );
+      throw error;
+    }
+  }
+
   async function undoName(
     ownerUserId: string,
     changeId: string,
@@ -698,6 +785,56 @@ export function createSettingChanges(deps: {
       };
     },
 
+    async changeLanguage(input) {
+      const { ownerUserId, callerId, value } = input;
+      const outcome = await database.transaction(async (tx) => {
+        await lockPerson(tx, ownerUserId);
+        const previous = await readLanguageChoice(tx, ownerUserId);
+        if (previous === value)
+          return { status: "unchanged" as const, value: previous };
+        if (!(await swapLanguageChoice(tx, ownerUserId, previous, value)))
+          throw new SettingRefusedError(
+            "The language changed a moment ago, so nothing was changed. Ask again.",
+            409,
+          );
+        return { status: "changed" as const, previous, next: value };
+      });
+      if (outcome.status === "unchanged") return outcome;
+      const changeId = randomUUID();
+      try {
+        await recordAuditEvent(audit, {
+          eventType: "configuration.changed",
+          targetType: SETTING_CHANGE_TARGET,
+          targetId: changeId,
+          actorUserId: ownerUserId,
+          payload: {
+            change: "setting_changed_in_chat",
+            changeId,
+            setting: "language",
+            agentId: callerId,
+            previousValue: outcome.previous,
+            newValue: outcome.next,
+          },
+        });
+      } catch (error) {
+        await swapLanguageChoice(
+          database,
+          ownerUserId,
+          outcome.next,
+          outcome.previous,
+        );
+        throw error;
+      }
+      return {
+        status: "changed",
+        changeId,
+        agentId: callerId,
+        setting: "language",
+        previousValue: outcome.previous,
+        newValue: outcome.next,
+      };
+    },
+
     async undo(input) {
       const { ownerUserId, changeId } = input;
       const [change] = (
@@ -736,9 +873,19 @@ export function createSettingChanges(deps: {
             ? "That change is more than seven days old, so it can no longer be undone. You can still ask for the name you want."
             : recorded.setting === "tone"
               ? "That change is more than seven days old, so it can no longer be undone. You can still ask for the tone you want."
-              : "That change is more than seven days old, so it can no longer be undone. You can still set notifications on the Bot's own page.",
+              : recorded.setting === "language"
+                ? "That change is more than seven days old, so it can no longer be undone. You can still ask for the language you want."
+                : "That change is more than seven days old, so it can no longer be undone. You can still set notifications on the Bot's own page.",
           409,
         );
+      if (recorded.setting === "language") {
+        await undoLanguage(ownerUserId, changeId, recorded);
+        return {
+          changeId,
+          setting: "language" as const,
+          value: recorded.previousValue,
+        };
+      }
       if (recorded.setting === "tone") {
         await undoTone(ownerUserId, changeId, recorded);
         return {
@@ -836,6 +983,7 @@ export function createSettingChanges(deps: {
       );
       const aliases = await aliasesOf(database, ownerUserId);
       const tones = await tonesOf(database, ownerUserId);
+      const language = await readLanguageChoice(database, ownerUserId);
       const now = clock();
 
       return rows.map(({ event, changeId, undone }): SettingChangeRecord => {
@@ -845,10 +993,12 @@ export function createSettingChanges(deps: {
         const stillSet =
           recorded.setting === "name"
             ? (aliases.get(recorded.agentId) ?? null) === recorded.newValue
-            : recorded.setting === "tone"
-              ? (tones.get(recorded.agentId) ?? "plain") === recorded.newValue
-              : (levelOfBot.get(recorded.agentId) ?? "all") ===
-                recorded.newValue;
+            : recorded.setting === "language"
+              ? language === recorded.newValue
+              : recorded.setting === "tone"
+                ? (tones.get(recorded.agentId) ?? "plain") === recorded.newValue
+                : (levelOfBot.get(recorded.agentId) ?? "all") ===
+                  recorded.newValue;
         const common = {
           changeId,
           agentId: recorded.agentId,

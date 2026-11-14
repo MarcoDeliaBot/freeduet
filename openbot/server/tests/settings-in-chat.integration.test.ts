@@ -504,11 +504,11 @@ describe("guards of today's behaviour, section 8.8: unattended runs and the thre
     expect(checkIn.has("settings/change_setting")).toBeFalse();
   });
 
-  test("language is refused by the real tool (name and tone are built: settings-in-chat-name and -tone integration tests), and nothing is written", async () => {
+  test("a setting that is not on the list, routineTime or fullAccess, is refused by the real tool (name, tone and language are built: their own integration tests), and nothing is written", async () => {
     await setNotify("all");
     useSettingsTools(changes);
     const before = await settingEventsFor(alice);
-    for (const setting of ["language"])
+    for (const setting of ["routineTime", "fullAccess"])
       for (const value of ["Ada", "formal", "it"]) {
         const result = await callTool(
           { url: "", actorId: alice, botId: bot },

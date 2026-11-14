@@ -13,6 +13,7 @@
  * listed.
  */
 
+import { languageCodeFrom } from "../freeduet/person-language";
 import {
   CHAT_TONES,
   type ChatTone,
@@ -20,7 +21,12 @@ import {
 } from "@openbot/shared/setting-change";
 
 /** The settings a member may change from chat. Matched exactly. */
-export const CHAT_SETTING_NAMES = ["notifications", "name", "tone"] as const;
+export const CHAT_SETTING_NAMES = [
+  "notifications",
+  "name",
+  "tone",
+  "language",
+] as const;
 export type ChatSettingName = (typeof CHAT_SETTING_NAMES)[number];
 
 /** The values a member may give `notifications`: everything, or questions and approvals only. */
@@ -47,6 +53,11 @@ export type SettingRequest =
    * `name`. Three fixed values and nothing else.
    */
   | { ok: true; setting: "tone"; value: ChatTone; member: string | undefined }
+  /**
+   * The language this person reads, one for the whole team: a two-letter code from the list D26 accepts, or
+   * `null` for `default`, the deployment's own. Never per member.
+   */
+  | { ok: true; setting: "language"; value: string | null }
   | { ok: false; message: string };
 
 function isChatSettingName(value: string): value is ChatSettingName {
@@ -84,6 +95,16 @@ export function decideSettingRequest(
       value,
       member: typeof member === "string" ? member.trim() : undefined,
     };
+  }
+  if (setting === "language") {
+    const code = languageCodeFrom(value);
+    if (code === undefined)
+      return {
+        ok: false,
+        message:
+          "Say a language by its two-letter code or its English name, such as it or German, or default for the deployment's own language.",
+      };
+    return { ok: true, setting: "language", value: code };
   }
   if (setting === "tone") {
     if (!isChatTone(value))

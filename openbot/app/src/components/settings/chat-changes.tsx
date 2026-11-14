@@ -88,9 +88,11 @@ function ChangeRow({
         <ItemTitle>
           {change.setting === "name"
             ? `${botName}: your name for it went from ${change.previousValue ?? "its own name"} to ${change.newValue ?? "its own name"}`
-            : change.setting === "tone"
-              ? `${botName}: tone went from ${change.previousValue} to ${change.newValue}`
-              : `${botName}: notifications went from ${LEVEL[change.previousValue]} to ${LEVEL[change.newValue]}`}
+            : change.setting === "language"
+              ? `Your language for the team went from ${change.previousValue ?? "the deployment's own"} to ${change.newValue ?? "the deployment's own"}`
+              : change.setting === "tone"
+                ? `${botName}: tone went from ${change.previousValue} to ${change.newValue}`
+                : `${botName}: notifications went from ${LEVEL[change.previousValue]} to ${LEVEL[change.newValue]}`}
         </ItemTitle>
         <ItemDescription>
           {new Date(change.at).toLocaleString()}

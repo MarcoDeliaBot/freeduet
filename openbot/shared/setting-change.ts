@@ -51,6 +51,15 @@ export type SettingChangeResult =
       setting: "tone";
       previousValue: ChatTone;
       newValue: ChatTone;
+    }
+  | {
+      changeId: string;
+      /** The Bot the person asked. The language is the person's, not the Bot's. */
+      agentId: string;
+      /** The language this person reads, one for the team: a two-letter code. Null is the deployment's own. */
+      setting: "language";
+      previousValue: string | null;
+      newValue: string | null;
     };
 
 /** The longest name the contract carries (server/src/settings-in-chat/member-name.ts holds the rules). */
@@ -86,6 +95,12 @@ export function isChatNotifyLevel(value: unknown): value is ChatNotifyLevel {
 
 export function isChatTone(value: unknown): value is ChatTone {
   return value === "plain" || value === "warm" || value === "formal";
+}
+
+function isLanguageValue(value: unknown): value is string | null {
+  return (
+    value === null || (typeof value === "string" && /^[a-z]{2}$/.test(value))
+  );
 }
 
 function isNameValue(value: unknown): value is string | null {
@@ -132,6 +147,12 @@ export function readSettingChange(result: unknown): SettingChangeResult | null {
   if (setting === "name" && isNameValue(previousValue) && isNameValue(newValue))
     return { changeId, agentId, setting, previousValue, newValue };
   if (setting === "tone" && isChatTone(previousValue) && isChatTone(newValue))
+    return { changeId, agentId, setting, previousValue, newValue };
+  if (
+    setting === "language" &&
+    isLanguageValue(previousValue) &&
+    isLanguageValue(newValue)
+  )
     return { changeId, agentId, setting, previousValue, newValue };
   return null;
 }

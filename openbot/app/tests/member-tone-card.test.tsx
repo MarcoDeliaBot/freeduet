@@ -100,3 +100,39 @@ describe("the tone card", () => {
     ).toBeTruthy();
   });
 });
+
+describe("the language card (docs/design/settings-in-chat.md, 8.10.3)", () => {
+  const LANGUAGE: SettingChangeResult = {
+    changeId: "3d2a6f1e-0000-4000-8000-00000000000d",
+    agentId: "otto",
+    setting: "language",
+    previousValue: null,
+    newValue: "de",
+  };
+
+  test("names the language and what it was, and offers Undo", async () => {
+    const view = card(LANGUAGE);
+    const shown = await view.findByRole("region", { name: "Language changed" });
+    expect(
+      await within(shown).findByText(
+        "The language your team writes to you in is now German (de). It was the deployment's own language.",
+      ),
+    ).toBeTruthy();
+    expect(within(shown).getByRole("button", { name: "Undo" })).toBeTruthy();
+  });
+
+  test("in Italian the card's words are Italian", async () => {
+    const view = card(
+      { ...LANGUAGE, previousValue: "de", newValue: null },
+      "it",
+    );
+    const shown = await view.findByRole("region", {
+      name: "Lingua modificata",
+    });
+    expect(
+      await within(shown).findByText(
+        "La lingua in cui il tuo team ti scrive ora è quella predefinita dell'installazione. Prima era German (de).",
+      ),
+    ).toBeTruthy();
+  });
+});

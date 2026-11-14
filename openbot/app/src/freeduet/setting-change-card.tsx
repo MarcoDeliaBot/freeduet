@@ -47,6 +47,16 @@ function levelText(level: ChatNotifyLevel): CardTextId {
   return level === "all" ? "setting.level.all" : "setting.level.needs_input";
 }
 
+/** A language by its English name and code, such as "German (de)". The code alone when the runtime has no name. */
+function languageName(code: string): string {
+  try {
+    const name = new Intl.DisplayNames(["en"], { type: "language" }).of(code);
+    return name && name !== code ? `${name} (${code})` : code;
+  } catch {
+    return code;
+  }
+}
+
 /** The card's words for a tone: one of the three fixed values, else plain. */
 function toneText(value: string | null): CardTextId {
   return value === "warm"
@@ -73,6 +83,7 @@ export function SettingChangeCard({ change }: { change: SettingChangeResult }) {
   // A name change says which member by its own name: the label is the name it just got.
   const botName = change.setting === "name" ? botReal : botLabel;
   const isTone = change.setting === "tone";
+  const isLanguage = change.setting === "language";
   const queryClient = useQueryClient();
   const list = useQuery(settingChangesQueryOptions());
   const [state, setState] = useState<CardState>({ kind: "idle" });
@@ -89,30 +100,40 @@ export function SettingChangeCard({ change }: { change: SettingChangeResult }) {
   const own = t("setting.name.own");
   const wording = (
     value: string | null,
-    kind: "name" | "tone" | "notifications",
+    kind: "name" | "tone" | "notifications" | "language",
   ): string =>
     kind === "name"
       ? (value ?? own)
-      : kind === "tone"
-        ? t(toneText(value))
-        : t(levelText(value as ChatNotifyLevel));
+      : kind === "language"
+        ? value === null
+          ? t("setting.language.default")
+          : languageName(value)
+        : kind === "tone"
+          ? t(toneText(value))
+          : t(levelText(value as ChatNotifyLevel));
   const from = wording(change.previousValue, change.setting);
   const to = wording(change.newValue, change.setting);
   const heading: CardTextId = isName
     ? "setting.name.heading"
     : isTone
       ? "setting.tone.heading"
-      : "setting.heading";
+      : isLanguage
+        ? "setting.language.heading"
+        : "setting.heading";
   const changed: CardTextId = isName
     ? "setting.name.change"
     : isTone
       ? "setting.tone.change"
-      : "setting.change";
+      : isLanguage
+        ? "setting.language.change"
+        : "setting.change";
   const undoneText: CardTextId = isName
     ? "setting.name.undone"
     : isTone
       ? "setting.tone.undone"
-      : "setting.undone";
+      : isLanguage
+        ? "setting.language.undone"
+        : "setting.undone";
 
   // The roster carries the name, so it is read again once a name has changed.
   useEffect(() => {

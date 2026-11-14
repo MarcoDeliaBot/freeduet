@@ -1081,6 +1081,40 @@ describe("every setting on the list is covered, now and later", () => {
     expect(await pending()).toHaveLength(1);
   });
 
+  test("a member's tone (docs/design/settings-in-chat.md, 8.10): refused in a routine, asked in the person's turn", async () => {
+    const args = { setting: "tone", member: "Otto", value: "warm" };
+    const routine = await inTurn(fresh({ initiator: ROUTINE }), () =>
+      change(IRIS, ROUTINE, args),
+    ).catch((error: unknown) => error);
+    expect(routine).toBeInstanceOf(PluginRefusedError);
+    expect((routine as Error).message).toBe(NOT_IN_A_CONVERSATION);
+    expect(await pending()).toEqual([]);
+
+    const turn = fresh({ messages: [typed("be warm with me")], args });
+    const held = await inTurn(turn, () => change(IRIS, PERSON, args)).catch(
+      (error: unknown) => error,
+    );
+    expect(held).toBeInstanceOf(HeadlessToolSuspension);
+    expect(await pending()).toHaveLength(1);
+  });
+
+  test("the person's language (docs/design/settings-in-chat.md, 8.10): refused in a routine, asked in the person's turn", async () => {
+    const args = { setting: "language", value: "de" };
+    const routine = await inTurn(fresh({ initiator: ROUTINE }), () =>
+      change(IRIS, ROUTINE, args),
+    ).catch((error: unknown) => error);
+    expect(routine).toBeInstanceOf(PluginRefusedError);
+    expect((routine as Error).message).toBe(NOT_IN_A_CONVERSATION);
+    expect(await pending()).toEqual([]);
+
+    const turn = fresh({ messages: [typed("write to me in German")], args });
+    const held = await inTurn(turn, () => change(IRIS, PERSON, args)).catch(
+      (error: unknown) => error,
+    );
+    expect(held).toBeInstanceOf(HeadlessToolSuspension);
+    expect(await pending()).toHaveLength(1);
+  });
+
   test("the refusal does not read the arguments: a name nobody listed gets the same sentence in a routine", async () => {
     const args = { setting: "full_access", value: "on" };
     const routine = await inTurn(fresh({ initiator: ROUTINE }), () =>

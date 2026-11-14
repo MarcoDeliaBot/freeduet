@@ -55,12 +55,31 @@ export function personLanguageFrom(
   return { code: value, name: englishName(value) };
 }
 
-function englishName(code: string): string {
+export function englishName(code: string): string {
   try {
     return new Intl.DisplayNames(["en"], { type: "language" }).of(code) ?? code;
   } catch {
     return code;
   }
+}
+
+/** The word that gives the deployment's language back. */
+export const DEFAULT_LANGUAGE_WORD = "default";
+
+/**
+ * A code from what a person or a member wrote: a two-letter code on the list (`de`), or the English name
+ * of one (`German`), in any case. `null` for the word `default` (the deployment's own language) and
+ * `undefined` for anything else, which is refused.
+ */
+export function languageCodeFrom(value: unknown): string | null | undefined {
+  if (typeof value !== "string") return undefined;
+  const word = value.trim().toLowerCase();
+  if (word === DEFAULT_LANGUAGE_WORD) return null;
+  if (DICTATION_LANGUAGES.has(word)) return word;
+  for (const code of DICTATION_LANGUAGES)
+    if (englishName(code).toLowerCase() === word && englishName(code) !== code)
+      return code;
+  return undefined;
 }
 
 /**

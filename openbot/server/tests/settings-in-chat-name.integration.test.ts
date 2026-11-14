@@ -165,7 +165,7 @@ describe("who sees the name", () => {
       .select()
       .from(agents)
       .where(eq(agents.id, otto));
-    expect(row?.name).toBe(realNames.get(otto));
+    expect(row?.name).toBe(realNames.get(otto) ?? "");
     // The store's own name stays the real one, for everything server-side that reads it.
     const profile = await store.get({ id: alice, role: "user" }, otto);
     expect(profile?.name).toBe(realNames.get(otto));

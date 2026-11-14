@@ -473,3 +473,49 @@ Not certified. Eval cases to add to `evals/team/cases.yaml` before any claim tha
 ```
 
 Decisions left: the names of the values (built: plain, warm, formal; alternatives are free); whether the note should also say the tone for turns nobody wrote (built: it does not distinguish, and it covers the member's own messages only); an app control for the tone (not built).
+
+#### 8.10.3 Language (built, NOT certified, not run live)
+
+Result: a person can ask, in chat, which language the team writes to them in. It is one language for the person, not one per member. The deployment's `FREEDUET_PERSON_LANGUAGE` stays the default; the person's choice wins over it.
+
+- **Stored** in `users.preferences.freeduetLanguage` as a two-letter code (`server/src/freeduet/person-language-choice.ts`), the way `freeduetFullAccess` and `freeduetTeam` are kept. **No migration.** A compare-and-set in SQL; two changes together keep one of them.
+- **Accepted values:** a code from `DICTATION_LANGUAGES` (the list D26 already accepts, about 98 codes), or the English name of one in any case (`German`), or `default`, which clears the choice and gives the deployment's variable back. Nothing else (`it-IT`, free text and names that are not on the list are refused). No support is invented: the list is the existing one.
+- **What changes:** the language note a member gets in its run (D26, `agent-freeduet/freeduet/person_language.py`, unchanged). `PersonLanguageMiddleware` (`person-language-choice.ts`, registered after the tone middleware in `buildAgents`) puts the person's code and its English name in `forwardedProps.openbotPersonLanguage` over the variable's, for the person the run belongs to. `withPersonLanguage` already drops a caller's value. A failed read leaves the variable's language.
+- **What does not change, exactly:** (1) the app's own card texts exist in English and Italian only and follow `/api/capabilities`, which is the same for everybody, so they keep following the deployment's variable; a person who chooses German still sees English cards from the app (the member's own words, and the titles it writes into cards, follow the note); (2) the few fixed sentences this server writes (the brief's reasons, the line under a suggestion, a send refusal) are Italian when the variable says `it` and English otherwise, and keep doing so; (3) an installation that never sets the variable and where nobody chooses gets a run byte for byte as on main (test: "with no choice the run is what the variable alone made it, and with neither, what it was").
+- **Chat:** `change_setting` with `setting: "language"` and `value`; always a card, refused in a run nobody attends (8.9, one test added), audit with the Bot asked as `agentId` (the language is the person's), Undo exact, listed in "Changes made in chat". The card says the language by its English name and code, in the person's card language. **From the app:** not built.
+
+Tests: `server/tests/settings-in-chat-language.integration.test.ts` (12, real Postgres, real tool, real run builder, real gate), `app/tests/member-tone-card.test.tsx` (the language describe, 2). The never-unattended file has one test each for name, tone and language (41 pass). The two guards of 8.8 that said "tone and language are not on the list" now say that other unlisted settings (`routineTime`, `fullAccess`) are refused.
+
+Not certified. Eval cases to add to `evals/team/cases.yaml` (not written there, not run):
+
+```yaml
+  - id: basil-language-1       # the member follows the person's chosen language
+    member: chef
+    request: "From now on please write to me in German. Then suggest a simple dinner for tonight."
+    must:
+      - the dinner suggestion is written in German
+      - the member does not ask the person to change a setting in the app
+    must_not:
+      - answers in English after the change
+  - id: iris-language-2        # a language not on the list is refused, nothing is invented
+    member: freeduet
+    request: "Switch my language to Klingon."
+    must:
+      - says plainly that it cannot set that language
+      - keeps writing in the person's current language
+    must_not:
+      - claims the language was changed
+  - id: leo-language-3         # the language does not carry across to someone else's text
+    member: creator
+    request: "Write to me in French from now on. Then draft a two-line email in Italian to my Italian supplier."
+    must:
+      - the member's own words to the person are in French
+      - the email for the supplier is in Italian
+```
+
+Decisions left (see the table in the report): whether the app's own cards and the server's fixed sentences should follow the person's choice (needs a per-person, authenticated source: `/api/capabilities` is deployment-wide and unauthenticated); an app control; whether the member should be told the person's language in turns the person did write (built: the existing note, unchanged).
+
+#### 8.10.4 Exact sentences for the coordinator (not edited here)
+
+- **D26 (docs/M1_PLAN.md), the sentence that says "one language for the deployment, not one per person"** should become: "The language is the person's: `FREEDUET_PERSON_LANGUAGE` is the default, and a person who asks a member in chat for another language gets it from their next run (`users.preferences.freeduetLanguage`, settings-in-chat 8.10.3). The app's own cards and the server's fixed sentences still follow the variable."
+- **Roadmap row (docs/ROADMAP.md) for settings in chat** should end: "Built and reviewed, not certified: a person's own name for a member (per person, chat only), the tone of a member (plain, warm or formal, per person and member), and the language of the team (per person, over the deployment's default). Tone and language have eval cases in docs/design/settings-in-chat.md 8.10 that have not been run."

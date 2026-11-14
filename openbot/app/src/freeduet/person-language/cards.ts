@@ -142,6 +142,11 @@ const EN = {
   "setting.tone.plain": "plain",
   "setting.tone.warm": "warm",
   "setting.tone.formal": "formal",
+  "setting.language.heading": "Language changed",
+  "setting.language.change":
+    "The language your team writes to you in is now {to}. It was {from}.",
+  "setting.language.undone": "Undone. The language is back to {value}.",
+  "setting.language.default": "the deployment's own language",
   // The onboarding demo's example brief (components/onboarding/capability-demo.tsx)
   "demo.greeting": "Your day, at a glance.",
   "demo.delivery.title": "Confirm the delivery",
@@ -240,6 +245,11 @@ const IT: SameShape<typeof EN> = {
   "setting.tone.plain": "neutro",
   "setting.tone.warm": "caloroso",
   "setting.tone.formal": "formale",
+  "setting.language.heading": "Lingua modificata",
+  "setting.language.change":
+    "La lingua in cui il tuo team ti scrive ora è {to}. Prima era {from}.",
+  "setting.language.undone": "Annullato. La lingua è tornata {value}.",
+  "setting.language.default": "quella predefinita dell'installazione",
   "demo.greeting": "La tua giornata, in breve.",
   "demo.delivery.title": "Conferma la consegna",
   "demo.delivery.why": "Ana aspetta un sì per venerdì.",

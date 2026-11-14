@@ -37,7 +37,7 @@ const TOOLS: readonly McpTool[] = Object.freeze([
   {
     name: CHANGE_SETTING_TOOL,
     description: [
-      "Change one of this person's settings. There are three.",
+      "Change one of this person's settings. There are four.",
       "`notifications`: how much this Bot may interrupt the person. Its value is `all` (everything) or",
       "`needs_input` (questions and approvals only).",
       "`name`: what this person calls a member of the team, shown to this person only (the member keeps its",
@@ -47,6 +47,10 @@ const TOOLS: readonly McpTool[] = Object.freeze([
       "`tone`: how a member talks to this person. Its value is `plain` (the default), `warm` or `formal`. It",
       "changes only the member's own messages to this person, never emails or documents for others, safety",
       "rules, or the wording of approvals. Give `member` as for `name`. `plain` clears the choice.",
+      "`language`: the language this person reads, one for the whole team (not per member). Its value is a",
+      "two-letter code such as `it` or `en`, or the language's English name, or `default` for the",
+      "deployment's own. It tells members which language to write in; the app's own cards are not",
+      "translated by it.",
       "",
       "Use it only when the person has asked for that change in their own words. Every change asks the",
       "person to allow it on a card first, and nothing changes until they do. The change is recorded with the",
@@ -61,7 +65,8 @@ const TOOLS: readonly McpTool[] = Object.freeze([
       properties: {
         setting: {
           type: "string",
-          description: "The setting's name: `notifications`, `name` or `tone`.",
+          description:
+            "The setting's name: `notifications`, `name`, `tone` or `language`.",
         },
         member: {
           type: "string",
@@ -71,7 +76,7 @@ const TOOLS: readonly McpTool[] = Object.freeze([
         value: {
           type: "string",
           description:
-            "The new value. For `notifications`: `all` or `needs_input`. For `tone`: `plain`, `warm` or `formal`.",
+            "The new value. For `notifications`: `all` or `needs_input`. For `tone`: `plain`, `warm` or `formal`. For `language`: a two-letter code, an English name, or `default`.",
         },
       },
       required: ["setting", "value"],
@@ -157,6 +162,33 @@ export async function callTool(
             newValue: named.newValue,
           },
           `Done: the person now sees this member as ${named.newValue ?? "its own name"}. Nobody else does, and you still call it by its own name. The change is recorded as ${named.changeId}, so it can be undone.`,
+        ),
+        isError: false,
+        truncated: false,
+      };
+    }
+    if (decision.setting === "language") {
+      const spoken = await changes.changeLanguage({
+        ownerUserId,
+        callerId: agentId,
+        value: decision.value,
+      });
+      if (spoken.status === "unchanged")
+        return {
+          text: "That is already this person's language for the team, so nothing changed.",
+          isError: false,
+          truncated: false,
+        };
+      return {
+        text: settingChangeResult(
+          {
+            changeId: spoken.changeId,
+            agentId: spoken.agentId,
+            setting: "language",
+            previousValue: spoken.previousValue,
+            newValue: spoken.newValue,
+          },
+          `Done: this person's language for the team is now ${spoken.newValue ?? "the deployment's own"}. It applies from the next message. Cards drawn by the app keep the language they have. The change is recorded as ${spoken.changeId}, so it can be undone.`,
         ),
         isError: false,
         truncated: false,
