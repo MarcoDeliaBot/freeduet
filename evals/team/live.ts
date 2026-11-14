@@ -48,6 +48,7 @@ import {
   type ToolDefinition,
   toolContent,
 } from "./computer";
+import { UNKNOWN_ENGINE } from "./engine";
 
 /**
  * A live transcript, with what the member was offered of its computer and every call it made, and
@@ -108,6 +109,10 @@ export type ListedConversation = {
 
 export type LiveOptions = {
   server: string;
+  /**
+   * The engine the run certifies: the report's label. A case does not record it as the engine that
+   * answered it: the stack reports none (engine.ts, UNKNOWN_ENGINE).
+   */
   engine: string;
   /** Sent as the Cookie header; needed only when the server is not in single-user mode. */
   cookie?: string;
@@ -1071,7 +1076,8 @@ export async function runCaseLive(
   const transcript: LiveTranscript = {
     caseId: c.id,
     member: c.member,
-    engine: options.engine,
+    // The engine that answered: the stack reports none, so it is never the one asked for (engine.ts).
+    engine: UNKNOWN_ENGINE,
     status: "completed",
     events: [],
   };
