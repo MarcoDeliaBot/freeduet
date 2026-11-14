@@ -21,6 +21,7 @@ import {
   mcpTools,
   mcpUserCredentials,
   pluginGrants,
+  skills,
   teamBotConsentDefaults,
   teamBotConsents,
   teamBotPublications,
@@ -35,9 +36,10 @@ import {
   accountOf,
   appAccessState,
   connectOf,
-  REQUEST_KIND_FOR,
+  requestKindFor,
   type Unavailable,
   unavailableReason,
+  type WantedTool,
 } from "../app-access";
 import type { BrokerApp } from "../broker";
 import { CATALOGUE, type CatalogueEntry, catalogueEntry } from "../catalogue";
@@ -139,6 +141,13 @@ export type AppAccessRequestRecord = {
   createdAt: string;
   resolvedAt: string | null;
   resolvedBy: string | null;
+  /**
+   * For a `grant` request on a Bot that already holds some of the app: the tools its skills need
+   * and it has not been given, so the administrator reads what approving gives before pressing it.
+   * Absent for every other request. Read when the inbox is listed, never stored, so it says what is
+   * missing now and not what was missing when the person asked.
+   */
+  wants?: WantedTool[];
 };
 
 /**
@@ -164,7 +173,13 @@ function isUniqueViolation(error: unknown): boolean {
  * no brokered app to any other reader in the store.
  */
 export function appAccessMethods(context: StoreContext) {
-  const { database, auditStore, brokeredAppRowsAt, brokerProvider } = context;
+  const {
+    database,
+    auditStore,
+    brokeredAppRowsAt,
+    brokerProvider,
+    toolsDeclaredBy,
+  } = context;
   const { scheme, idPrefix } = BROKERED_PROFILE[brokerProvider];
   /** Whether an id is in the namespace `addBrokeredApp` mints this broker's rows into. */
   const isBrokeredId = (id: string) => id.startsWith(idPrefix);
@@ -597,6 +612,88 @@ export function appAccessMethods(context: StoreContext) {
   }
 
   /**
+   * What this Bot's own skills need from apps it already holds, and it has not been given — keyed by
+   * server id, and empty for every Bot and app this does not apply to.
+   *
+   * A TOOL A BUILD ADDED LATER (issue #102). A connector's list can grow after a Bot was granted the
+   * rest of it, and a new tool is never granted by arriving, a read included. A skill of the Bot's
+   * that names the tool is how this deployment knows the Bot is meant to have it: the Bot's own
+   * skills, because those are what it was set up to do, and not every skill that mentions the tool.
+   *
+   * CRITERION. A tool is listed only if ALL of these hold: one of the skills this Bot holds declares
+   * it, the app advertises it right now (a declared ref nothing offers has nothing to ask for), the
+   * Bot does not hold it, and the Bot holds at least one other tool of the same app. The last one
+   * keeps this to a Bot that is already on the app. A Bot holding none of it is the `not_granted`
+   * state's business and its request, and a skill naming tools of an app the person never connected
+   * must not put a request in front of them for it.
+   *
+   * NOTHING HERE GRANTS. It reads grants, skills, what skills declare and what the app lists, and
+   * answers a list. Declaring a tool is not holding it, which `listForAgent` says in the other
+   * direction: a skill can never widen what a Bot may call.
+   */
+  async function wantedFor(
+    agentId: string,
+  ): Promise<Map<string, WantedTool[]>> {
+    const wanted = new Map<string, WantedTool[]>();
+    const held = await database
+      .select({ kind: pluginGrants.kind, ref: pluginGrants.ref })
+      .from(pluginGrants)
+      .where(eq(pluginGrants.agentId, agentId));
+    const grantedRefs = new Set(
+      held.filter((row) => row.kind === "mcp").map((row) => row.ref),
+    );
+    const slugs = held
+      .filter((row) => row.kind === "skill")
+      .map((row) => row.ref);
+    if (grantedRefs.size === 0 || slugs.length === 0) return wanted;
+    const serverOf = (ref: string) => ref.split("/")[0] ?? "";
+    const onApps = new Set([...grantedRefs].map(serverOf));
+
+    const skillRows = await database
+      .select({ id: skills.id, title: skills.title })
+      .from(skills)
+      .where(inArray(skills.slug, slugs));
+    const declared = await toolsDeclaredBy(skillRows.map((row) => row.id));
+    const needed = new Map<string, string[]>();
+    for (const skill of skillRows)
+      for (const ref of declared.get(skill.id) ?? []) {
+        if (grantedRefs.has(ref) || !onApps.has(serverOf(ref))) continue;
+        needed.set(ref, [...(needed.get(ref) ?? []), skill.title]);
+      }
+    if (needed.size === 0) return wanted;
+
+    const advertised = await database
+      .select({
+        serverId: mcpTools.serverId,
+        name: mcpTools.name,
+        effect: mcpTools.effect,
+      })
+      .from(mcpTools)
+      .where(
+        inArray(mcpTools.serverId, [
+          ...new Set([...needed.keys()].map(serverOf)),
+        ]),
+      );
+    for (const tool of advertised) {
+      const ref = `${tool.serverId}/${tool.name}`;
+      const titles = needed.get(ref);
+      if (!titles) continue;
+      wanted.set(tool.serverId, [
+        ...(wanted.get(tool.serverId) ?? []),
+        {
+          ref,
+          name: tool.name,
+          label: [...new Set(titles)].join(", "),
+          read: tool.effect === "read",
+        },
+      ]);
+    }
+    for (const list of wanted.values())
+      list.sort((left, right) => left.name.localeCompare(right.name));
+    return wanted;
+  }
+
+  /**
    * Every candidate described for one person and one Bot.
    *
    * THE ACCOUNT IS THE ONE THE CALL WILL USE. On somebody else's published Team Bot, a personal
@@ -617,7 +714,7 @@ export function appAccessMethods(context: StoreContext) {
   ): Promise<AppInspection[]> {
     const { userId } = input;
     const owner = userId ? await teamBotOwnerFor(input.agentId, userId) : null;
-    const [granted, connections, ownerConnections, consented, pending] =
+    const [granted, connections, ownerConnections, consented, pending, wanted] =
       await Promise.all([
         grantedServerIds(input.agentId),
         connectionFacts(apps, userId),
@@ -632,6 +729,7 @@ export function appAccessMethods(context: StoreContext) {
               apps.map((app) => app.key),
             )
           : [],
+        wantedFor(input.agentId),
       ]);
     const personalIn = (
       found: Awaited<ReturnType<typeof connectionFacts>>,
@@ -693,7 +791,15 @@ export function appAccessMethods(context: StoreContext) {
             : known;
         const state = appAccessState(facts);
         const holder = owners !== undefined ? "owner" : "you";
-        const requestKind = REQUEST_KIND_FOR[state];
+        // Per ref, so a brokered app reached through two rows is not told twice about one tool.
+        const wants = [
+          ...new Map(
+            ids
+              .flatMap((rowId) => wanted.get(rowId) ?? [])
+              .map((tool) => [tool.ref, tool]),
+          ).values(),
+        ];
+        const requestKind = requestKindFor(state, wants);
         const request =
           requestKind === null
             ? undefined
@@ -722,6 +828,7 @@ export function appAccessMethods(context: StoreContext) {
               owner !== null &&
               !ids.some((id) => consented.has(id)),
             granted: facts.granted,
+            ...(wants.length > 0 ? { wants } : {}),
             connectedAt:
               account === "shared"
                 ? (teamAccount?.connectedAt ?? null)
@@ -1045,7 +1152,7 @@ export function appAccessMethods(context: StoreContext) {
       requestedBy?: string;
       appKey?: string;
     }): Promise<AppAccessRequestRecord[]> {
-      return requestRows(
+      const requests = await requestRows(
         and(
           eq(appAccessRequests.status, "pending"),
           filter.requestedBy
@@ -1056,6 +1163,23 @@ export function appAccessMethods(context: StoreContext) {
             : undefined,
         ),
       );
+      // What each `grant` still wants, read once per Bot, so the row says which tools approving gives.
+      const wantedByBot = new Map<string, Map<string, WantedTool[]>>();
+      const listed: AppAccessRequestRecord[] = [];
+      for (const request of requests) {
+        if (request.kind !== "grant" || !request.agentId) {
+          listed.push(request);
+          continue;
+        }
+        let wanted = wantedByBot.get(request.agentId);
+        if (!wanted) {
+          wanted = await wantedFor(request.agentId);
+          wantedByBot.set(request.agentId, wanted);
+        }
+        const wants = wanted.get(request.appKey) ?? [];
+        listed.push(wants.length > 0 ? { ...request, wants } : request);
+      }
+      return listed;
     },
 
     /**

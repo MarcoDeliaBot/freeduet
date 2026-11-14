@@ -47,6 +47,19 @@ export type AppUnavailable =
 /** What a press of Request access asks an administrator for. */
 export type AppAccessRequestKind = "enable" | "grant" | "connect_shared";
 
+/**
+ * A tool this Bot's own skills need from an app it already holds some of, and it has not been given.
+ * A build can add a tool to a connector after a Bot was granted the rest; nothing grants it by
+ * arriving, so the person is asked. `label` is the skills that need it, which is what a person reads.
+ */
+export type AppWant = {
+  ref: string;
+  name: string;
+  label: string;
+  /** Read-only. Anything else changes something somewhere, and is named so. */
+  read: boolean;
+};
+
 export type AppAccess = {
   /** The server id the app has, or the one enabling it would mint. What a request names. */
   key: string;
@@ -78,6 +91,11 @@ export type AppAccess = {
   /** Whether this Bot holds any of the app's tools. */
   granted: boolean;
   /**
+   * What this Bot's skills need from the app and it has not been given. Absent for every app but
+   * the one case. The app is still `ready`, and the request is the `grant` in `requestKind`.
+   */
+  wants?: AppWant[];
+  /**
    * When the account this app runs in for this person was connected, or null. Read by the chat card
    * to tell an account lost at the vendor from one connected again since. See `AppAccessCard`.
    */
@@ -103,6 +121,11 @@ export type AppAccessRequest = {
   createdAt: string;
   resolvedAt: string | null;
   resolvedBy: string | null;
+  /**
+   * For a `grant` on a Bot that already holds some of the app: the tools it asks for, as they are
+   * now, so approving names what it gives. Absent for every other request.
+   */
+  wants?: AppWant[];
 };
 
 /** The administrator's inbox: the requests asked for, and a count per app for the Plugins list. */

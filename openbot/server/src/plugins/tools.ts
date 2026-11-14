@@ -152,6 +152,20 @@ export function grantedToolGuidance(
           "access, and the thing that is missing is yours, not theirs.",
         ]
       : []),
+    /*
+     * A TOOL ONE OF ITS OWN SKILLS NAMES AND IT WAS NEVER GIVEN (issue #102). A build can add a tool
+     * to a connector this Bot already holds, and nothing grants it by arriving, so the Bot has the
+     * skill and not the tool. Added to the paragraph above and not in place of it, so a Bot with
+     * nothing of the kind missing reads what it always did; the card names the tool and who can give
+     * it, in the words of the deployment it is on.
+     */
+    ...(reaching.length > 0 && showsCards
+      ? [
+          `If it is a tool one of your skills names that you do not hold, call ${SHOW_APP_ACCESS_TOOL} with that`,
+          "system's name rather than only saying so: it tells you which tool is missing and who can give it, and",
+          "puts a card in front of the person with the button that asks for it.",
+        ]
+      : []),
     ...researchGuidance(research),
     /*
      * The vendors this deployment connects to and this Bot does not hold.
