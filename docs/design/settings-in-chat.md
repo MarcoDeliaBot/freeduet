@@ -201,7 +201,7 @@ Run these on the eval stack with the Settings connector granted to the member. C
 
 ### 8.7 Undo in the app, the change list, and the seven-day limit
 
-Built on the branch `settings-undo-button`, from origin/main at e1c11b3. Not run in a browser and not run live. Paths below are relative to `openbot/`.
+Built on the branch `settings-undo-button`, cut from origin/main at e1c11b3 and merged with origin/main at e2b7c07. Not run in a browser and not run live. Paths below are relative to `openbot/`.
 
 - **The card in the conversation.** A successful `change_setting` shows a card, "Notifications changed", with the Bot, the value before and after, and an Undo button. Undo calls `POST /api/settings-changes/:changeId/undo`. The card then says "Undone", or shows the route's own sentence when the route refuses. The card also reads the person's list, so a reloaded conversation shows an undone change as undone, and a change that can no longer be undone with no Undo button.
 - **The change list.** Settings → Notifications has a read-only section, "Changes made in chat". It shows the person's last 20 changes, newest first: the Bot, the change from one value to the other, the time, and whether it is undone. Undo is offered where it still works.
@@ -222,9 +222,9 @@ Tests and checks:
 
 - Server, against the real database: `server/tests/settings-in-chat-list.integration.test.ts`, 12 pass. With the three changed server files set aside (main's server source): 0 pass, 12 fail.
 - App: `app/tests/setting-change-card.test.tsx`, 14 pass; `app/tests/settings-changes-list.test.tsx`, 8 pass. Shared: `shared/setting-change.test.ts`, 6 pass. On main these fail because the modules do not exist. That shows the files are new; it does not test the behaviour against main.
-- Related server suites (`assertion-shape`, `plugin-catalogue`, `unclassified-tools-ask` and the `settings-in-chat` files): 152 pass, 0 fail.
-- Related app suites: 97 pass, 0 fail.
-- `typecheck:tests` adds no error to `server/tests/typecheck-baseline.txt`. `tsc --noEmit` exits 0 in `app` and `shared`. Biome format and lint exit 0 on the changed files.
+- Related server suites after the merge (`assertion-shape`, `plugin-catalogue`, `unclassified-tools-ask`, the three slice 1 `settings-in-chat` files and the list file): 164 pass, 0 fail, in 7 files.
+- Related app and shared suites after the merge, including the two new app files and the shared file: 130 pass, 0 fail, in 11 files.
+- `typecheck:tests` finds no error beyond the 239 known in `server/tests/typecheck-baseline.txt`. `tsc --noEmit` exits 0 in `app` and `shared`. `bun run format:check` and `bun run lint` exit 0 for the repository.
 
 Not verified:
 
