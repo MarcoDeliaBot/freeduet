@@ -596,7 +596,7 @@ export const auditEventTypes = [
   "model.refused",
   /*
    * FreeDuet: the data of the person who had no sign-in handed to the account that signs in, by the
-   * command line tool only (freeduet/adopt, scripts/adopt-single-user-data.ts). Target and actor are
+   * command line tool only (freeduet/adopt). Target and actor are
    * the account that now owns it; payload `fromId`, `toEmail`, `total`, `rows` (counts by table and
    * column) and `backup` (the file's name, never its path). Every older row keeps the old id.
    */

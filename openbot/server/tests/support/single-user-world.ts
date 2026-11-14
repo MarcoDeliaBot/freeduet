@@ -432,7 +432,9 @@ export async function seedAsSingleUser(
     username: "me",
     encryptedPassword: "sealed-not-a-real-password",
   });
-  const rule = await server.approvalStore.policy.createRule(owner, {
+  const policy = server.approvalStore.policy;
+  if (!policy) throw new Error("The approval store has no policy.");
+  const rule = await policy.createRule(owner, {
     botId: PENNY,
     toolRef: "gmail",
     effect: "send",
