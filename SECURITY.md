@@ -15,6 +15,7 @@ Especially valuable reports:
 - any way FreeDuet code reads or transmits a provider's subscription credentials;
 - any way content an agent reads (an email, a web page, a document, an image) makes it act;
 - any way a CLI engine reaches the host outside the tool bridge;
+- any way a member's computer reaches a device on the home or office network, or a cloud metadata address, while "Home and office network access" is off (a name that resolves there, a redirect, a script on a page, an unusual way of writing an address);
 - any way a purchase permit is reused, extended or applied to another merchant or total.
 
 ## Threat model
@@ -26,6 +27,7 @@ Especially valuable reports:
 | Site logins and payment details | Leaked into chat, logs or the model | Masked secret box and take-over; credentials encrypted, write-only, redacted from audit; agents never type secrets |
 | Your data | Exfiltrated by prompt injection | Read content is data, never instructions; outgoing messages checked for sensitive data; every send needs approval; telemetry off by default |
 | Your machine | An agent escapes to the host | One isolated computer per agent; CLI engines with no built-in tools; computers bound to loopback with per-container tokens |
+| Your home or office network | A page, a mail or a prompt injection sends an agent's browser or command to your router, a NAS, a printer, another computer or the cloud metadata address | Refused by default in the computer's own network filter, on the address the connection really goes to: the filter resolves a name itself and checks every answer, and a redirect is a new connection. Private, loopback, link-local and shared-address ranges, in every way of writing an address. One switch, "Home and office network access", lets the private ranges through; cloud metadata stays refused either way. Not covered: a command that opens a raw socket and ignores the proxy settings, which on Docker Compose needs a network-level control ([docs/M1_PLAN.md](docs/M1_PLAN.md) D36) |
 | Your reputation | Something is sent or published in your name | Every send and publish shows the exact text and recipient before it goes, unless you turned on Full access for that member |
 | Your approvals | A member, a mail or a page switches Full access on, or it spreads beyond the member you chose | Off by default. Only your own signed-in session can write the setting (no member tool, no route a member can reach); it applies to one member, in your own live chat only (never routines or check-ins); passwords, credentials and security settings are still handed to you, and so are payments and purchases in Full access without payments, while plain Full access has no limit on the amount until spending caps exist (v0.4); each action taken without a card is on the audit trail, with the setting that allowed it |
 
@@ -34,5 +36,6 @@ Especially valuable reports:
 - Spending cap: **0** until you set one. Jules cannot buy before you do.
 - Metered APIs: off in every chain until you enable them and set caps.
 - Full access: off for every member until you turn it on, one member at a time, after a warning, in one of two settings (with or without payments).
+- Home and office network: a member's computer cannot reach it until you switch on "Home and office network access" (Admin > Enterprise controls > Capabilities).
 - Telemetry: off.
 - The app listens on localhost. Put TLS and sign-in in front of it before exposing it to a network.

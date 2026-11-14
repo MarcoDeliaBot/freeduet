@@ -118,6 +118,11 @@ function throughFilter(bot: string, payload: (auth: string) => string) {
   });
 }
 
+/*
+ * The site and the gateway are on loopback, which `allow_all` refuses unless the policy carries
+ * `allowPrivateNetwork` (D36). These tests are about the chain, not the block, so the policy that
+ * lets them reach their own fixtures says so.
+ */
 describe("a residential proxy behind the egress filter", () => {
   afterEach(async () => {
     await stopEgressFilter();
@@ -129,7 +134,11 @@ describe("a residential proxy behind the egress filter", () => {
     await startEgressFilter({
       env: { EGRESS_PROXY_DEFAULT: PROXY_URL(gateway.port) },
     });
-    setEgressPolicy("sales", { mode: "allow_all", rules: [] });
+    setEgressPolicy("sales", {
+      mode: "allow_all",
+      rules: [],
+      allowPrivateNetwork: true,
+    });
     try {
       const answer = await throughFilter(
         "sales",
@@ -158,7 +167,11 @@ describe("a residential proxy behind the egress filter", () => {
     await startEgressFilter({
       env: { EGRESS_PROXY_DEFAULT: PROXY_URL(gateway.port) },
     });
-    setEgressPolicy("sales", { mode: "allow_all", rules: [] });
+    setEgressPolicy("sales", {
+      mode: "allow_all",
+      rules: [],
+      allowPrivateNetwork: true,
+    });
     try {
       const answer = await throughFilter(
         "sales",
@@ -188,7 +201,11 @@ describe("a residential proxy behind the egress filter", () => {
         EGRESS_PROXY_DEFAULT: `http://${USER}:wrong@127.0.0.1:${gateway.port}`,
       },
     });
-    setEgressPolicy("sales", { mode: "allow_all", rules: [] });
+    setEgressPolicy("sales", {
+      mode: "allow_all",
+      rules: [],
+      allowPrivateNetwork: true,
+    });
     try {
       const answer = await throughFilter(
         "sales",
