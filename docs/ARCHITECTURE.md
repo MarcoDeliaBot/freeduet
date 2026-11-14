@@ -113,7 +113,7 @@ Adapters:
 | Adapter | Drives | Auth |
 |---|---|---|
 | `claude-code` (M1) | the person's own `claude` CLI, stream-json both ways | the person's own login, done in a terminal |
-| `codex` | `codex app-server`, JSON-RPC over stdio | Sign in with ChatGPT (when approved) or the person's own local login (experimental) |
+| `codex` | `codex app-server`, JSON-RPC over stdio | Codex's own official login, which FreeDuet never reads (planned, not built), or the person's own local login (experimental) |
 | `acp` | any agent CLI speaking the Agent Client Protocol | provider-dependent; off unless PROVIDERS.md says on |
 | `anthropic-api` | Messages API | API key, metered |
 | `openai-compatible` | `/chat/completions` (OpenRouter, GLM, Ollama, LM Studio, vLLM) | API key or none, metered or free |
