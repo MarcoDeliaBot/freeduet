@@ -1035,6 +1035,8 @@ const pluginStore = createPluginStore({
    * further down, which is fine: this is read when a call is made, never while this file loads.
    */
   handedRequest,
+  // FreeDuet (D26, D37): the language of the one refusal the person reads, a new email sent twice.
+  personLanguage: config.personLanguage,
   /*
    * Where a vendor sends people back, for a vendor whose client this deployment registers itself.
    *
