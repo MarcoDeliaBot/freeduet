@@ -14,7 +14,7 @@ Tags: **[code: path:line]** read on origin/main 5b96410 (code paths start at `op
 
 | Case | On main | Where |
 |---|---|---|
-| A tunnel (CONNECT) opened to a home-network address with the switch on | Kept carrying data after the switch went off. Only a new CONNECT got 403. A page's WebSocket to a service on the computer kept echoing in a real Chromium [measured] | The two sockets are piped and the policy is never read again [code: agent-computer/src/egress.ts:969-1005]. `setEgressPolicy` only stores the policy [code: egress.ts:611] |
+| A tunnel (CONNECT) opened to a home-network address with the switch on | Kept carrying data after the switch went off. Only a new CONNECT got 403. A page's WebSocket to a service on the computer kept echoing in a real Chromium [measured] | The two sockets are piped and the policy is never read again [code: agent-computer/src/egress.ts:969-1008, the pipes at 999-1000]. `setEgressPolicy` only stores the policy [code: egress.ts:611] |
 | A plain-HTTP response that was still streaming | Kept streaming after the switch went off [measured] | Judged once, when the request arrived [code: egress.ts:966] |
 | A later plain-HTTP request to the same name and port | Could leave on a keep-alive socket opened for an earlier request, so to an address that the policy of that moment refuses [measured: a name moved from one address to another, the policy allowed only the new one, the request still reached the old one] | `httpRequest` without its own agent pools by name and port under Bun [code: egress.ts:1063] |
 | Stopping the filter | Waited for every open tunnel to end of its own accord [measured] | [code: egress.ts:1023-1030] |
@@ -61,7 +61,7 @@ The browser case uses a `ws://` socket, not an HTTPS page. A `ws://` socket reac
 
 ### 3.5 Not verified
 
-- The time from the click in the app to the push on the computer. The filter ends connections in the same turn as the push arrives; the push itself is on a change announcement or at most every 30 seconds ([code: server/src/computer/policy-network.ts:15-17]), and it was not measured here.
+- The time from the click in the app to the push on the computer. The filter ends connections in the same turn as the push arrives; the push itself is on a change announcement or at most every 30 seconds ([code: server/src/admin/controls.ts:590], [code: server/src/computer/policy-network.ts:15-17]), and it was not measured here.
 - No real computer, no Docker stack and no HTTPS page were used. The sockets, the fake upstream and the browser ran on this machine.
 - A tunnel behind an upstream proxy (`EGRESS_PROXY_*`): the filter cannot know where the proxy took it, so it judges what it knows: an address written out, or a name by its domain rules and by the addresses it resolved when the policy of the time needed them. A policy that decides by range, arriving for a name that was never resolved, ends the tunnel. That errs on the strict side. Tested with a fake proxy only.
 - The two IPv6 plain-HTTP cases cannot run here, so IPv6 plain requests with `agent: false` have no test on this machine. The change does not touch how an address is passed to the socket.
