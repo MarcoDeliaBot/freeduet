@@ -24,12 +24,12 @@ _Last checked: 2026-11-08, from each project's public README and documentation, 
 | **Payments blocked without a single-use permit bound to shop and total** | ✅ v0.4 | — | ❌ | ❌ | ❌ | ❌ | — |
 | **Spending cap per purchase, per day and per month** | ✅ v0.4 | — | ❌ | ❌ | ❌ | ❌ | — |
 | **A lead agent that hands work to specialists and combines the results** | ✅ v0.3 | — | ⚠️ several agents in one channel | ✅ | ✅ | ✅ | ⚠️ channels with responder rules |
-| **A ready-made team of specialists** | ✅ 11 members with a reviewer, and growing | ❌ one agent | ⚠️ 2 agents and example templates | ❌ | — | ❌ | ⚠️ teams from Markdown playbooks |
+| **A ready-made team of specialists** | ✅ 12 members with a reviewer, and growing | ❌ one agent | ⚠️ 2 agents and example templates | ❌ | — | ❌ | ⚠️ teams from Markdown playbooks |
 | **An agent that designs new agents, with tests** | ✅ | — | ⚠️ creator skill, no tests | — | ⚠️ skill creator | — | ⚠️ creates bots through MCP, no tests |
 | **Guardian that pauses a looping agent to protect your limits** | ✅ v0.3 | — | — | — | — | — | — |
 | **Owner-only operations no mode can lower** | ⚠️ v0.1: one exception only you can make, Full access (off by default, per member). Permissions, passwords, keys and security settings stay with you either way | — | ⚠️ approvals, "Always allow" can lift them | — | ❌ | ⚠️ | — |
 | **Nightly export of memory, rules and tasks to plain files** | ✅ v0.3 | ❌ | ❌ | — | — | ⚠️ local files | ⚠️ local transcripts |
-| **Public test suite per agent, including attempts to break the rules** | ✅ 49 cases, 20 safety | — | ⚠️ inbox triage only | — | — | — | — |
+| **Public test suite per agent, including attempts to break the rules** | ✅ 55 cases, 23 safety | — | ⚠️ inbox triage only | — | — | — | — |
 | **Free open-source creative suite (images, PDFs, vectors, video) inside each agent's computer** | ✅ v0.2 | ❌ | ❌ | ❌ | ❌ | ❌ | — |
 | **Light helpers on free models for small jobs, saving your limits** | ✅ v0.3 | — | — | — | — | — | — |
 | **Answers from your own documents, quoting the exact source** | ✅ v0.2 | — | ⚠️ document search | — | — | — | — |

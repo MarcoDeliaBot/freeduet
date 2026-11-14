@@ -1,4 +1,5 @@
-# The Bot's computer installs only the Playwright browser it launches.
+# The Bot's computer installs the Playwright browser it launches, plus the command-line tools the video
+# maker (Cam) works with: ffmpeg, git and python3 with venv.
 #
 # The image tag and Playwright dependency must be pinned to the same exact version. Bump both or
 # neither.
@@ -17,6 +18,7 @@ COPY --from=node-toolchain /usr/local /usr/local
 COPY --from=bun-toolchain /usr/local/bin/bun /usr/local/bin/bun
 RUN apt-get update && apt-get install -y --no-install-recommends \
       ca-certificates curl unzip xz-utils \
+      ffmpeg git python3 python3-venv \
   && ln -s bun /usr/local/bin/bunx \
   && bunx --bun "playwright@${PLAYWRIGHT_VERSION}" install --with-deps chromium \
   && rm -rf /root/.cache /tmp/* /var/lib/apt/lists/*
