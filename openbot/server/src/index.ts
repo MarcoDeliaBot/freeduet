@@ -2919,6 +2919,15 @@ if (config.singleUser) {
         : `${INSTALL_SECRET_VARIABLE} is not set, so where a container's request arrives as this machine's loopback (Docker Desktop) it is taken for you. Run scripts/start.sh once: it writes one.`,
     );
   }
+} else {
+  // FreeDuet (docs/design/phone-and-remote.md 3.5): with sign-in the secret marks a browser paired with
+  // this computer, and a session in any other browser is remote and limited. Said every boot, and
+  // never with its value.
+  console.info(
+    config.installSecret
+      ? `${INSTALL_SECRET_VARIABLE} is set: a signed-in browser that is not paired with this computer is a remote session, which can read, chat and answer a plain approval once, and nothing else. To pair a browser at this computer, sign in there as the administrator and run: bash scripts/open.sh`
+      : `${INSTALL_SECRET_VARIABLE} is not set, so this server cannot tell a browser at this computer from one elsewhere, and no session is limited. scripts/start.sh writes one for a personal installation.`,
+  );
 }
 
 // Each listener holds a connection of its own for the life of the process. Released on the way out,

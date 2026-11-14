@@ -309,28 +309,14 @@ describe("the secret in the configuration", () => {
     }
   });
 
-  test("is not asked of a deployment with sign-in, which never has a use for it", () => {
-    const config = loadConfig(
-      { ...testEnvironment(), FREEDUET_INSTALL_SECRET: SECRET },
-      {},
-    );
-    expect(config.singleUser).toBe(false);
-    expect(config.installSecret).toBeUndefined();
-    // And a value that would stop a single-user boot is nothing to a deployment that has sign-in.
-    expect(
-      loadConfig({ ...testEnvironment(), FREEDUET_INSTALL_SECRET: "short" }, {})
-        .installSecret,
-    ).toBeUndefined();
-  });
+  // With sign-in the secret is read too, as the marker of a browser paired with this computer, and a
+  // value that cannot be one stops the boot there as well: install-secret-signin.test.ts.
 
   test("installSecretSetting answers what the configuration spreads", () => {
-    expect(installSecretSetting({}, true)).toEqual({});
-    expect(
-      installSecretSetting({ FREEDUET_INSTALL_SECRET: SECRET }, true),
-    ).toEqual({ installSecret: SECRET });
-    expect(
-      installSecretSetting({ FREEDUET_INSTALL_SECRET: SECRET }, false),
-    ).toEqual({});
+    expect(installSecretSetting({})).toEqual({});
+    expect(installSecretSetting({ FREEDUET_INSTALL_SECRET: SECRET })).toEqual({
+      installSecret: SECRET,
+    });
   });
 });
 
@@ -1103,7 +1089,7 @@ describe("what is not single-user stays as it was", () => {
   };
   const roles = { rolesForUser: async () => ["user" as const] };
 
-  test("a deployment with sign-in asks for a session from every peer, with or without the cookie, and has no pairing", async () => {
+  test("a deployment with sign-in asks for a session from every peer, with or without the cookie", async () => {
     const config = loadConfig(
       { ...testEnvironment(), FREEDUET_INSTALL_SECRET: SECRET },
       {},
@@ -1131,20 +1117,8 @@ describe("what is not single-user stays as it was", () => {
         expect(withSession.status).toBe(200);
       }
     }
-    // No door, rather than a door that always refuses; and the capabilities do not claim one.
-    for (const [method, path] of [
-      ["POST", "/internal/pairing"],
-      ["GET", "/api/pair?token=anything"],
-    ] as const)
-      expect(
-        (
-          await app.request(
-            `http://localhost:3001${path}`,
-            { method, headers: { authorization: `Bearer ${SECRET}` } },
-            peer("127.0.0.1"),
-          )
-        ).status,
-      ).toBe(404);
+    // The pairing doors are there with a secret (install-secret-signin.test.ts has them), and the
+    // capabilities still do not claim one: the sign-in screen is not the single-user one.
     const capabilities = await app.request(
       "http://localhost:3001/api/capabilities",
       {},

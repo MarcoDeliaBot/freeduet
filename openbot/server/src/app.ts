@@ -37,7 +37,11 @@ import {
   recordAuditEvent,
 } from "./audit";
 import { createDevRequireUser } from "./auth/dev-actor";
-import { createInstallPairingRoutes, personRule } from "./auth/install-secret";
+import {
+  createInstallPairingRoutes,
+  personRule,
+  signInGate,
+} from "./auth/install-secret";
 import {
   type AppVariables,
   type AuthService,
@@ -518,6 +522,23 @@ export function createApp(
   // `requireUser`: they are how a browser gets to be the person, and each checks its own credential.
   if (config.singleUser && person.install) {
     app.route("/", createInstallPairingRoutes(person.install));
+  } else if (!config.singleUser) {
+    // With sign-in the same two doors pair a browser (docs/design/phone-and-remote.md 3.5): the cookie
+    // marks a browser at this computer, and the door that sets it asks for a signed-in administrator
+    // on top of the link. Only where there is a secret and a session guard to ask.
+    const gate = signInGate(config);
+    if (gate && auth && roleRepository) {
+      app.route(
+        "/",
+        createInstallPairingRoutes(gate, {
+          signIn: {
+            requireUser: createRequireUser(auth, roleRepository),
+            secure: config.appUrl?.startsWith("https://") ?? false,
+            ...(config.appUrl ? { appUrl: config.appUrl } : {}),
+          },
+        }),
+      );
+    }
   }
   // Projected, never the raw runtime. config.runtime carries the Intelligence contract, including
   // INTELLIGENCE_API_KEY and the licence token, and this endpoint is reachable by anyone. Returning
