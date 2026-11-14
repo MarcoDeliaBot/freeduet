@@ -65,6 +65,78 @@ def test_an_endpoint_cannot_be_called_a_subscription():
     assert any("cannot have `billing: subscription`" in line for line in problems_of({"billing": "subscription"}))
 
 
+# ── A paid endpoint is read, and refused ─────────────────────────────────────────────────────────
+
+#: What a paid (metered) gateway the person switched on is told, whatever the `metered:` block says: FreeDuet cannot enforce
+#: the caps until the usage ledger exists (slice 12 of the plan), and caps that are not enforced must not let money be spent.
+PAID_SENTENCE = (
+    "gw is a paid gateway. FreeDuet does not run paid gateways yet, because it cannot yet enforce the limits you set. "
+    "Free gateways and your own logins work."
+)
+WHOLE_OPT_IN = {"enabled": True, "currency": "EUR", "daily_cap": 5, "monthly_cap": 50}
+
+
+def test_the_metered_block_is_still_read_and_checked_so_the_file_format_does_not_change_later():
+    config = config_with({"billing": "metered"}, metered=WHOLE_OPT_IN)
+    assert config.metered == engines.Metered(enabled=True, currency="EUR", daily_cap=5, monthly_cap=50)
+    assert config.engines["gw"].billing == "metered"
+    # The same checks as before: a wrong value is still a problem of the file, with the words it always had.
+    assert any("`daily_cap` must be a number of 0 or more" in line for line in problems_of({"billing": "metered"}, metered={**WHOLE_OPT_IN, "daily_cap": -1}))
+    assert any("unknown key `limit`" in line for line in problems_of({"billing": "metered"}, metered={**WHOLE_OPT_IN, "limit": 3}))
+    assert any("`enabled` must be true or false" in line for line in problems_of({"billing": "metered"}, metered={**WHOLE_OPT_IN, "enabled": "yes please"}))
+
+
+@pytest.mark.parametrize("top", [
+    {},
+    {"metered": {"enabled": False, "daily_cap": 5, "monthly_cap": 50}},
+    {"metered": {"enabled": True}},
+    {"metered": {"enabled": True, "daily_cap": 5, "monthly_cap": 0}},
+    {"metered": WHOLE_OPT_IN},
+])
+def test_a_paid_endpoint_that_is_switched_on_is_refused_with_one_sentence_whatever_the_metered_block_says(top):
+    config = config_with({"billing": "metered"}, **top)
+    gateway = config.engines["gw"]
+    assert engines.exclusion_reason(gateway, config) == PAID_SENTENCE
+    assert not engines.is_allowed(gateway, config)
+    assert engines.paid_gateway_refused(gateway) and [engine.id for engine in engines.refused_paid_gateways(config)] == ["gw"]
+    assert "gw" not in [engine.id for engine in engines.ordered_chain("default", config)]
+
+
+@pytest.mark.parametrize("entry, reason", [({"enabled": False}, "disabled in engines.yaml"), ({"locked_reason": "No."}, "locked: No.")])
+def test_a_paid_endpoint_that_is_off_or_locked_keeps_the_ordinary_reason_and_is_not_called_refused(entry, reason):
+    config = config_with({"billing": "metered", **entry}, metered=WHOLE_OPT_IN)
+    assert engines.exclusion_reason(config.engines["gw"], config) == reason
+    assert not engines.paid_gateway_refused(config.engines["gw"]) and engines.refused_paid_gateways(config) == []
+
+
+@pytest.mark.parametrize("top", [{}, {"metered": WHOLE_OPT_IN}])
+def test_a_free_endpoint_is_never_refused_by_the_paid_rule(top):
+    config = config_with({"billing": "free"}, **top)
+    assert engines.exclusion_reason(config.engines["gw"], config) is None
+    assert engines.refused_paid_gateways(config) == []
+    assert [engine.id for engine in engines.ordered_chain("default", config)] == ["claude-code", "gw"]
+
+
+def test_the_paid_rule_is_for_this_kind_only_so_the_other_metered_engines_keep_their_rules():
+    # Guard of unchanged behaviour: `exclusion_reason` for `anthropic-api` and `openai-compatible` is what it was.
+    data = {
+        "engines": {
+            "claude-code": dict(CLAUDE_ENTRY),
+            "api": {"kind": "anthropic-api", "credential_secret_ref": "anthropic-api-key", "billing": "metered",
+                    "model": "m", "tier": "A", "enabled": True},
+            "kimi": {"kind": "openai-compatible", "base_url": "https://api.example.invalid/v1", "billing": "metered",
+                     "model": "m", "tier": "B", "enabled": True},
+        },
+        "chains": {"default": ["claude-code", "api", "kimi"]},
+        "metered": WHOLE_OPT_IN,
+    }
+    config = parse_engines(data)
+    assert [engines.exclusion_reason(config.engines[name], config) for name in ("api", "kimi")] == [None, None]
+    assert engines.refused_paid_gateways(config) == []
+    off = parse_engines({**data, "metered": {"enabled": False}})
+    assert engines.exclusion_reason(off.engines["api"], off) == "metered engines are off (`metered.enabled: false`)"
+
+
 @pytest.mark.parametrize("missing, fragment", [
     ("base_url", "needs `base_url`"),
     ("credential_secret_ref", "needs `credential_secret_ref`"),
@@ -248,8 +320,24 @@ def test_the_local_router_example_uses_another_port_than_the_servers_and_says_wh
     assert "neither ships nor installs it" in text
 
 
-def test_the_example_says_plainly_that_the_caps_of_a_paid_endpoint_are_not_enforced_yet():
-    assert "written down but not enforced" in example_text()
+def test_the_example_says_plainly_that_a_paid_endpoint_is_not_run_yet():
+    text = example_text()
+    assert "A PAID ENDPOINT IS NOT RUN YET" in text and "is refused whatever the `metered:` block below says" in text
+    assert "still read and checked" in text
+    assert "written down but not enforced" not in text  # the old promise, of a paid endpoint that ran with caps nobody checked
+
+
+def test_the_paid_example_is_refused_once_switched_on_and_the_free_one_is_not():
+    entries = commented_entries()
+    switched_on = {name: {**copy.deepcopy(entry), "enabled": True, "model": "some-model"} for name, entry in entries.items()}
+    config = parse_engines({
+        "engines": {"claude-code": dict(CLAUDE_ENTRY), **switched_on},
+        "chains": {"default": ["claude-code", "my-gateway", "local-free-router"]},
+        "metered": WHOLE_OPT_IN,
+    })
+    assert [engine.id for engine in engines.refused_paid_gateways(config)] == ["my-gateway"]
+    assert engines.exclusion_reason(config.engines["local-free-router"], config) is None
+    assert engines.exclusion_reason(config.engines["my-gateway"], config).startswith("my-gateway is a paid gateway. ")
 
 
 def test_the_example_still_names_the_new_kind_in_its_header():

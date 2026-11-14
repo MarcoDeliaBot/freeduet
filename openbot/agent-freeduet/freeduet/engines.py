@@ -5,6 +5,11 @@ are always tried first, then free engines, then metered engines, whatever order 
 in. A metered engine joins a chain only while ``metered.enabled`` is true and both caps are above 0.
 A disabled engine, or one carrying a ``locked_reason``, is never chosen.
 
+ONE EXCEPTION, STRICTER: a metered ``anthropic-compatible`` gateway is never run, whatever the ``metered:``
+block says, until FreeDuet can enforce the caps (the usage ledger, docs/ENGINES_PLAN.md slice 12). Caps that are
+written and not enforced must not let money be spent. The block is still read and checked, so the file format does
+not change when the ledger arrives (:func:`exclusion_reason`, :func:`paid_gateway_refusal`).
+
 Everything here is a pure function of the parsed file. Nothing is started, probed or called; the only
 I/O is reading the one YAML file in :func:`load_engines`.
 """
@@ -572,12 +577,44 @@ def metered_allowed(config: EnginesConfig) -> bool:
     return metered.enabled and metered.daily_cap > 0 and metered.monthly_cap > 0
 
 
+#: Said to the person, in the log and by ``GET /engines`` when a gateway they switched on is paid and is not run. It does
+#: not tell them to set the ``metered:`` block, because nothing in it makes the gateway run yet.
+PAID_GATEWAY_NOT_RUN = (
+    "FreeDuet does not run paid gateways yet, because it cannot yet enforce the limits you set. "
+    "Free gateways and your own logins work."
+)
+
+
+def paid_gateway_refusal(label: str) -> str:
+    return f"{label} is a paid gateway. {PAID_GATEWAY_NOT_RUN}"
+
+
+def is_paid_gateway(engine: Engine) -> bool:
+    """An ``anthropic-compatible`` entry whose billing is ``metered``: a gateway that may charge the person per use."""
+    return engine.kind == COMPATIBLE_KIND and engine.billing == "metered"
+
+
+def paid_gateway_refused(engine: Engine) -> bool:
+    """A paid gateway the person switched on (on, and not locked) and that FreeDuet will not run. One that is off or
+    locked is not in this group: the person never asked for it, so nothing is said."""
+    return is_paid_gateway(engine) and engine.enabled and not engine.locked_reason
+
+
+def refused_paid_gateways(config: EnginesConfig) -> list[Engine]:
+    return [engine for engine in config.engines.values() if paid_gateway_refused(engine)]
+
+
 def exclusion_reason(engine: Engine, config: EnginesConfig) -> str | None:
-    """Why an engine is left out of every chain, or None when it may run."""
+    """Why an engine is left out of every chain, or None when it may run.
+
+    A paid gateway that is switched on gets :func:`paid_gateway_refusal` whatever ``metered:`` says: that sentence is
+    complete (it names the entry and says what works), so callers use it as it is."""
     if engine.locked_reason:
         return f"locked: {engine.locked_reason}"
     if not engine.enabled:
         return "disabled in engines.yaml"
+    if is_paid_gateway(engine):
+        return paid_gateway_refusal(engine.id)
     if engine.billing == "metered":
         if not config.metered.enabled:
             return "metered engines are off (`metered.enabled: false`)"

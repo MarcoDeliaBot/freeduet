@@ -58,6 +58,9 @@ from .engines import (
     chain_ids,
     exclusion_reason,
     ordered_chain,
+    paid_gateway_refusal,
+    paid_gateway_refused,
+    refused_paid_gateways,
     switching_for,
     tier_at_least,
 )
@@ -158,6 +161,11 @@ class Router:
         self._probed_at: dict[str, float] = {}
         for adapter in self.adapters.values():
             state.register(adapter)
+        # A paid gateway the person switched on is not run (it has no adapter), and `GET /engines` lists it as refused,
+        # with the reason, so the person can see it did not simply vanish.
+        for engine in refused_paid_gateways(config):
+            if engine.id not in self.adapters:
+                state.register_refused(engine.id, engine.id, engine.kind, paid_gateway_refusal(engine.id))
 
     # -- the plan for a member ------------------------------------------------------------------
 
@@ -165,30 +173,24 @@ class Router:
         return [e.id for e in ordered_chain(member_id, self.config) if e.id in self.adapters]
 
     def engaged(self, member_id: str) -> bool:
-        """More than one engine to walk, or a pin, or a paid gateway the person put in the chain and did not switch on
-        (the turn goes through here then, so that the person is told why that gateway did not answer, in the words
-        of ``all_limited``, and not left with the first engine's own message). Otherwise the member's turn is the
-        one it always was."""
+        """More than one engine to walk, or a pin, or a paid gateway the person put in the chain and switched on, which
+        FreeDuet does not run (the turn goes through here then, so that the person is told why that gateway did not
+        answer, in the words of ``all_limited``, and not left with the first engine's own message). Otherwise the
+        member's turn is the one it always was."""
         return (
             len(self._runnable(member_id)) > 1
             or switching_for(member_id, self.config).pin is not None
             or bool(self._paid_left_out(member_id))
         )
 
-    def _is_paid_left_out(self, engine: Engine | None) -> bool:
-        """A metered gateway that is switched on and not locked, and is left out only because paid engines are not
-        switched on (E3)."""
-        return (
-            engine is not None
-            and engine.kind == COMPATIBLE_KIND
-            and engine.billing == "metered"
-            and engine.enabled
-            and not engine.locked_reason
-            and exclusion_reason(engine, self.config) is not None
-        )
+    @staticmethod
+    def _is_paid_left_out(engine: Engine | None) -> bool:
+        """A paid gateway that is switched on and not locked: it is left out whatever the `metered:` block says,
+        because the caps cannot be enforced yet (docs/ENGINES_PLAN.md slice 12)."""
+        return engine is not None and paid_gateway_refused(engine)
 
     def _paid_left_out(self, member_id: str) -> list[str]:
-        """The metered gateways of the member's chain that are left out for that reason: the person is told so, in
+        """The paid gateways of the member's chain that are left out for that reason: the person is told so, in
         plain words, when nothing else can answer."""
         engines = (self.config.engines[engine_id] for engine_id in chain_ids(member_id, self.config))
         return [engine.id for engine in engines if self._is_paid_left_out(engine)]
@@ -233,7 +235,7 @@ class Router:
         order = self._runnable(member.id)
         if choice.pin is not None:
             pinned_engine = self.config.engines.get(choice.pin)
-            # The person's switch and the metered opt-in hold for a pin exactly as for any chain: a pin never lifts them.
+            # The person's switch and the refusal of a paid gateway hold for a pin exactly as for any chain: a pin never lifts them.
             left_out = pinned_engine is None or exclusion_reason(pinned_engine, self.config) is not None
             if choice.pin not in self.adapters or left_out:
                 label = self.adapters[choice.pin].label if choice.pin in self.adapters else choice.pin

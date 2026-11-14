@@ -13,6 +13,7 @@ from __future__ import annotations
 from collections.abc import Sequence
 from datetime import UTC, datetime
 
+from .engines import PAID_GATEWAY_NOT_RUN
 from .failure_classifier import AUTH, CREDITS, RATE_LIMIT, TRANSIENT, USAGE_LIMIT
 
 NONE, TEXT, TOOL = "none", "text", "tool"  # how far the turn got on the engine that stopped
@@ -112,39 +113,35 @@ def pinned_off(lang: str, label: str) -> str:
     return f"This assistant is pinned to {label}, but {label} is switched off, so I stopped here and did not switch to another engine."
 
 
-def paid_off(lang: str, labels: Sequence[str]) -> str:
-    """Why a metered gateway of the chain was not used: paid engines are off. Empty when there is none."""
-    if not labels:
-        return ""
+#: The Italian of `engines.PAID_GATEWAY_NOT_RUN`: what a paid gateway is told, whatever the `metered:` block says.
+_PAID_NOT_RUN_IT = (
+    "FreeDuet non esegue ancora i gateway a pagamento, perché non può ancora far rispettare i limiti che hai impostato. "
+    "I gateway gratuiti e i motori su cui hai effettuato l'accesso funzionano."
+)
+
+
+def _paid_refusal(lang: str, labels: Sequence[str]) -> str:
+    """"X is a paid gateway. FreeDuet does not run paid gateways yet ..." for one or several gateways, in the words of
+    `engines.paid_gateway_refusal` (English) or their Italian. Nothing here tells the person to set the `metered:`
+    block, because nothing in it makes a paid gateway run yet."""
     names = ", ".join(labels)
     many = len(labels) > 1
     if lang == "it":
-        what = "sono gateway a pagamento" if many else "è un gateway a pagamento"
-        use = "non li ho usati" if many else "non l'ho usato"
-        return (
-            f" {names} {what} e i motori a pagamento sono spenti in engines.yaml "
-            f"(il blocco `metered:` vuole `enabled: true` e limiti sopra 0): {use}."
-        )
-    what = "are paid (metered) gateways" if many else "is a paid (metered) gateway"
-    use = "did not use them" if many else "did not use it"
-    return (
-        f" {names} {what}, and paid engines are off in engines.yaml "
-        f"(the `metered:` block needs `enabled: true` and caps above 0), so I {use}."
-    )
+        return f"{names} {'sono gateway a pagamento' if many else 'è un gateway a pagamento'}. {_PAID_NOT_RUN_IT}"
+    return f"{names} {'are paid gateways' if many else 'is a paid gateway'}. {PAID_GATEWAY_NOT_RUN}"
+
+
+def paid_off(lang: str, labels: Sequence[str]) -> str:
+    """Why a paid gateway of the chain was not used: FreeDuet does not run paid gateways yet. Empty when there is none."""
+    if not labels:
+        return ""
+    return f" {_paid_refusal(lang, labels)}"
 
 
 def pinned_paid_off(lang: str, label: str) -> str:
     if lang == "it":
-        return (
-            f"Questo assistente è fissato su {label}, che è un gateway a pagamento, e i motori a pagamento sono spenti "
-            "in engines.yaml (il blocco `metered:` vuole `enabled: true` e limiti sopra 0): mi fermo qui e non passo "
-            "a un altro motore."
-        )
-    return (
-        f"This assistant is pinned to {label}, which is a paid (metered) gateway, and paid engines are off in "
-        "engines.yaml (the `metered:` block needs `enabled: true` and caps above 0), so I stopped here and did not "
-        "switch to another engine."
-    )
+        return f"{_paid_refusal(lang, [label])} Questo assistente è fissato su di esso: mi fermo qui e non passo a un altro motore."
+    return f"{_paid_refusal(lang, [label])} This assistant is pinned to it, so I stopped here and did not switch to another engine."
 
 
 def key_refused(lang: str, labels: Sequence[str]) -> str:

@@ -48,6 +48,7 @@ from gateway_support import (
 from helpers import MANAGED_TOKEN, TOOL_TOKEN, run_body, standing, types
 
 ASK = [standing(), {"id": "u1", "role": "user", "content": "Write the plan as a page."}]
+PAID = {"billing": "metered"}
 FIXTURES = Path(__file__).parent / "fixtures"
 SERVICE_SECRETS = ("MANAGED_AGENT_TOKEN", "AGENT_TOOL_TOKEN", "OPENBOT_TOOL_URL", "FREEDUET_LOCAL_KEY")
 #: The names the CLI may be started with: the Claude engine's allowlist, less the two that say where a sign-in lives,
@@ -697,37 +698,50 @@ def test_an_entry_that_is_locked_runs_nothing(fake_cli, tmp_path, monkeypatch):
     assert gw.starts() == []
 
 
-def test_a_refusal_is_the_persons_switch_and_is_not_recorded_against_the_engines_health(fake_cli, tmp_path, monkeypatch):
-    gw = rig(tmp_path, monkeypatch, {"enabled": False})
+@pytest.mark.parametrize("entry", [{"enabled": False}, PAID])
+def test_a_refusal_is_the_persons_switch_and_is_not_recorded_against_the_engines_health(fake_cli, tmp_path, monkeypatch, entry):
+    gw = rig(tmp_path, monkeypatch, entry)
     state = EngineState(None, now=NOW)
     play(state.recorded(gw.engine))
     row = state.row("gw")
     assert (row.state, row.last_failure_kind) == ("ready", None)
 
 
-@pytest.mark.parametrize("top, reason", [
-    ({}, "metered engines are off (`metered.enabled: false`)"),
-    ({"metered": {"enabled": False, "daily_cap": 5, "monthly_cap": 50}}, "metered engines are off (`metered.enabled: false`)"),
-    ({"metered": {"enabled": True}}, "a metered cap is 0, and 0 means never"),
-    ({"metered": {"enabled": True, "daily_cap": 5, "monthly_cap": 0}}, "a metered cap is 0, and 0 means never"),
-])
-def test_a_paid_endpoint_does_not_run_unless_the_person_switched_paid_engines_on_with_caps_and_says_why(fake_cli, tmp_path, monkeypatch, top, reason):
-    gw = rig(tmp_path, monkeypatch, {"billing": "metered"}, **top)
-    events = play(gw.engine)
-    assert events[-1] == {
-        "type": "RUN_ERROR",
-        "message": f"gw is a paid (metered) gateway, and paid engines are off in engines.yaml ({reason}), so I did not use it.",
-    }
-    assert gw.starts() == [] and gw.runs() == 0  # nothing was started, so nothing was billed
+#: What a paid (metered) endpoint is told, in the log and in chat, whatever the `metered:` block says. The ledger that
+#: can enforce the person's caps is slice 12 of the plan; until then a paid gateway is not run at all.
+PAID_SENTENCE = (
+    "gw is a paid gateway. FreeDuet does not run paid gateways yet, because it cannot yet enforce the limits you set. "
+    "Free gateways and your own logins work."
+)
+METERED_BLOCKS = [
+    {},
+    {"metered": {"enabled": False, "daily_cap": 5, "monthly_cap": 50}},
+    {"metered": {"enabled": True}},
+    {"metered": {"enabled": True, "daily_cap": 5, "monthly_cap": 0}},
+    {"metered": {"enabled": True, "currency": "EUR", "daily_cap": 5, "monthly_cap": 50}},  # the person's whole opt-in
+]
 
 
-def test_a_paid_endpoint_runs_once_the_person_has_opted_in_and_every_turn_says_in_the_log_that_it_is_billed(fake_cli, tmp_path, monkeypatch, caplog):
+@pytest.mark.parametrize("top", METERED_BLOCKS)
+def test_a_paid_endpoint_never_runs_whatever_the_metered_block_says_and_the_refusal_is_in_plain_words(fake_cli, tmp_path, monkeypatch, caplog, top):
     caplog.set_level(logging.WARNING, logger="freeduet.compatible_engine")
-    gw = rig(tmp_path, monkeypatch, {"billing": "metered"}, metered={"enabled": True, "daily_cap": 5, "monthly_cap": 50})
+    gw = rig(tmp_path, monkeypatch, PAID, **top)
+    gw.plan([{"text": "This turn would have been billed."}])
+    events = play(gw.engine)
+    assert events[-1] == {"type": "RUN_ERROR", "message": PAID_SENTENCE}
+    assert said(events) == ""
+    assert gw.starts() == [] and gw.runs() == 0  # nothing was started, so nothing was billed
+    assert caplog.text.count(PAID_SENTENCE) == 1  # and the log says the same thing, once
+
+
+@pytest.mark.parametrize("top", [{}, {"metered": {"enabled": True, "daily_cap": 5, "monthly_cap": 50}}])
+def test_a_free_endpoint_is_not_touched_by_the_metered_block(fake_cli, tmp_path, monkeypatch, caplog, top):
+    caplog.set_level(logging.WARNING, logger="freeduet.compatible_engine")
+    gw = rig(tmp_path, monkeypatch, **top)
     gw.plan([{"text": "Done."}])
     events = play(gw.engine)
     assert said(events) == "Done." and gw.runs() == 1
-    assert "engine gw is metered: this turn is billed by its provider, and the caps in engines.yaml are not enforced yet" in caplog.text
+    assert "paid gateway" not in caplog.text
 
 
 # ── What the file builds ─────────────────────────────────────────────────────────────────────────
@@ -752,19 +766,21 @@ def test_a_default_install_builds_nothing(fake_cli, tmp_path, monkeypatch):
 @pytest.mark.parametrize("entry, top", [
     ({"enabled": False}, {}),
     ({"locked_reason": "Not allowed."}, {}),
-    ({"billing": "metered"}, {}),
-    ({"billing": "metered"}, {"metered": {"enabled": True}}),
+    ({**PAID, "enabled": False}, {}),
+    ({**PAID, "locked_reason": "Not allowed."}, {}),
+    (PAID, {}),
+    (PAID, {"metered": {"enabled": True}}),
+    (PAID, {"metered": {"enabled": True, "daily_cap": 5, "monthly_cap": 50}}),  # the person's whole opt-in
 ])
-def test_an_entry_that_may_not_run_is_given_no_engine_and_an_enabled_one_is_named_once_in_the_log(fake_cli, tmp_path, monkeypatch, caplog, entry, top):
+def test_an_entry_that_may_not_run_is_given_no_engine_and_a_paid_one_that_is_on_is_named_once_in_the_log(fake_cli, tmp_path, monkeypatch, caplog, entry, top):
     caplog.set_level(logging.WARNING, logger="freeduet.compatible_engine")
     config = config_with(entry, **top)
     assert ce.adapters_from_config(config) == {}
-    refused = [record for record in caplog.records if "is in engines.yaml but is not used" in record.getMessage()]
-    assert len(refused) == (0 if entry.get("enabled") is False or "locked_reason" in entry else 1)
+    paid_and_on = entry.get("billing") == "metered" and entry.get("enabled") is not False and "locked_reason" not in entry
+    assert caplog.text.count(PAID_SENTENCE) == (1 if paid_and_on else 0)  # an entry the person switched off is not spoken of
 
 
-def test_an_opted_in_paid_endpoint_is_built_and_the_log_says_it_is_billed(fake_cli, tmp_path, monkeypatch, caplog):
-    caplog.set_level(logging.WARNING, logger="freeduet.compatible_engine")
-    config = config_with({"billing": "metered"}, metered={"enabled": True, "daily_cap": 5, "monthly_cap": 50})
-    assert list(ce.adapters_from_config(config)) == ["gw"]
-    assert "its provider bills every turn it takes, and the caps in engines.yaml are not enforced yet" in caplog.text
+def test_a_paid_endpoint_with_the_whole_opt_in_is_still_given_no_engine_so_nothing_can_start_it(fake_cli, tmp_path, monkeypatch):
+    config = config_with(PAID, metered={"enabled": True, "currency": "EUR", "daily_cap": 5, "monthly_cap": 50})
+    assert config.metered.enabled and (config.metered.daily_cap, config.metered.monthly_cap) == (5, 50)  # the block is read
+    assert ce.adapters_from_config(config) == {}

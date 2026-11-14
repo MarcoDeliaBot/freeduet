@@ -1,6 +1,7 @@
 """The gateway as a link of a member's chain (docs/ENGINES_PLAN.md slice 5): when it is built, when it is asked, what the
-person is told, and what it is never allowed to do (come first, run paid without the opt-in, take a tool the quality floor
-reserves).
+person is told, and what it is never allowed to do (come first, run when it is paid, take a tool the quality floor
+reserves). A paid (metered) gateway is not run at all until the ledger can enforce the person's caps (slice 12), whatever
+the `metered:` block says; every test of it runs with and without that block's whole opt-in and expects the same refusal.
 
 Everything runs through the real service and the real segment loop, over fake CLIs (tests/fake_claude.py). Every limit is
 the recorded `usage_limit.jsonl`, which says it resets at 2100-01-01 00:00 UTC. Nothing here is a real gateway, key or login,
@@ -13,6 +14,7 @@ import json
 import logging
 
 import pytest
+from fastapi.testclient import TestClient
 
 from freeduet import engine_notices as notices
 from freeduet import engine_router
@@ -22,8 +24,9 @@ from freeduet.claude_engine import ClaudeEngine
 from freeduet.engine_router import router_from_environment
 from freeduet.engine_state import EngineState
 from freeduet.engines import COMPATIBLE_KIND
+from fake_engines import NOW
 from gateway_support import BASE_URL, ENTRY, KEY, KEY_ENV, MODEL, chain, config_with, data_with
-from helpers import post_run, run_body, standing, tool, types
+from helpers import MANAGED_TOKEN, post_run, run_body, standing, tool, types
 
 ASK = [standing(), {"id": "u1", "role": "user", "content": "Write the plan as a page."}]
 LIMIT = {"replay": "usage_limit.jsonl"}
@@ -31,6 +34,13 @@ UNTIL = "00:00 UTC"
 TOOLS = [tool("write_page")]
 PAID = {"billing": "metered"}
 OPT_IN = {"enabled": True, "daily_cap": 5, "monthly_cap": 50}
+#: Without the person's opt-in and with all of it: the answer for a paid gateway is the same.
+BLOCKS = [{}, {"metered": OPT_IN}]
+PAID_SENTENCE = (
+    "gw is a paid gateway. FreeDuet does not run paid gateways yet, because it cannot yet enforce the limits you set. "
+    "Free gateways and your own logins work."
+)
+AUTH = {"x-openbot-agent-token": MANAGED_TOKEN}
 
 
 def said(events) -> str:
@@ -74,6 +84,19 @@ def test_a_file_with_a_gateway_switched_on_gives_the_service_a_second_engine(tmp
     assert router.engaged("freeduet") and router._runnable("freeduet") == ["claude-code", "gw"]
 
 
+@pytest.mark.parametrize("top", BLOCKS)
+def test_the_service_starts_with_a_paid_gateway_switched_on_names_it_once_in_the_log_and_lists_it_as_refused(fake_cli, tmp_path, monkeypatch, caplog, top):
+    caplog.set_level(logging.WARNING, logger="freeduet.compatible_engine")
+    monkeypatch.setenv(KEY_ENV, KEY)
+    monkeypatch.setenv("FREEDUET_ENGINES_FILE", write_file(tmp_path, PAID, **top))
+    with TestClient(app) as started:  # the real start-up: the engines file is read and the router is made
+        assert set(app.state.engine_router.adapters) == {"claude-code"}
+        body = started.get("/engines", headers=AUTH).json()
+    rows = {row["id"]: row for row in body["engines"]}
+    assert (rows["gw"]["state"], rows["gw"]["available"], rows["gw"]["refusal"]) == ("refused", False, PAID_SENTENCE)
+    assert caplog.text.count(PAID_SENTENCE) == 1
+
+
 @pytest.mark.parametrize("entry", [{"enabled": False}, {"locked_reason": "Not allowed."}])
 def test_a_gateway_that_is_off_or_locked_is_not_built_and_the_member_is_not_routed(tmp_path, monkeypatch, entry):
     monkeypatch.setenv("FREEDUET_ENGINES_FILE", write_file(tmp_path, entry))
@@ -110,9 +133,10 @@ def test_the_gateway_is_never_first_whatever_the_file_lists_first(client, fake_c
     assert team.gw.runs() == 0 and team.gw.starts() == []  # not started: Claude took the turn, and it was first
 
 
-def test_a_paid_gateway_is_after_every_free_and_login_engine(tmp_path, monkeypatch):
-    team = chain(tmp_path, monkeypatch, PAID, metered=OPT_IN, chains={"default": ["gw", "claude-code"]})
-    assert team.router._runnable("freeduet") == ["claude-code", "gw"]
+@pytest.mark.parametrize("top", BLOCKS)
+def test_a_paid_gateway_is_not_a_link_of_any_chain_whatever_the_metered_block_says(tmp_path, monkeypatch, top):
+    team = chain(tmp_path, monkeypatch, PAID, chains={"default": ["gw", "claude-code"]}, **top)
+    assert team.router._runnable("freeduet") == ["claude-code"]
 
 
 # ── The turn moves on to the gateway ─────────────────────────────────────────────────────────────
@@ -202,47 +226,47 @@ def test_a_gateway_the_person_declares_tier_a_is_offered_that_tool(client, fake_
 # ── Free and paid ────────────────────────────────────────────────────────────────────────────────
 
 
-def test_a_paid_gateway_without_the_opt_in_is_not_built_but_the_member_is_still_routed_so_that_the_person_is_told(tmp_path, monkeypatch):
-    team = chain(tmp_path, monkeypatch, PAID)
+@pytest.mark.parametrize("top", BLOCKS)
+def test_a_paid_gateway_is_not_built_but_the_member_is_still_routed_so_that_the_person_is_told(tmp_path, monkeypatch, top):
+    team = chain(tmp_path, monkeypatch, PAID, **top)
     assert set(team.router.adapters) == {"claude-code"}
     assert team.router._runnable("freeduet") == ["claude-code"]
     assert team.router.engaged("freeduet")  # the one engine would otherwise be run as it always was, with no word of why the gateway did not answer
 
 
-def test_a_paid_gateway_left_out_is_named_when_nothing_else_can_answer(client, fake_cli, tmp_path, monkeypatch):
-    team = chain(tmp_path, monkeypatch, PAID)
+@pytest.mark.parametrize("top", BLOCKS)
+def test_a_paid_gateway_left_out_is_named_when_nothing_else_can_answer(client, fake_cli, tmp_path, monkeypatch, top):
+    team = chain(tmp_path, monkeypatch, PAID, **top)
     fake_cli.plan([LIMIT])
     events = posted(client, team)
     assert types(events)[-1] == "RUN_ERROR" and events[-1]["code"] == "FREEDUET_ENGINE_LIMITED"
     assert events[-1]["message"] == (
-        f"Every engine is unavailable right now. The earliest is back at {UNTIL}. "
-        "gw is a paid (metered) gateway, and paid engines are off in engines.yaml "
-        "(the `metered:` block needs `enabled: true` and caps above 0), so I did not use it. "
+        f"Every engine is unavailable right now. The earliest is back at {UNTIL}. {PAID_SENTENCE} "
         "Your message is kept: send it again later."
     )
-    assert team.gw.starts() == []  # nothing was started, so nothing was billed
+    assert "metered:" not in events[-1]["message"]  # nothing in that block would make it run
+    assert team.gw.starts() == [] and team.gw.runs() == 0  # nothing was started, so nothing was billed
 
 
-def test_a_paid_gateway_left_out_changes_nothing_while_claude_answers(client, fake_cli, tmp_path, monkeypatch):
-    team = chain(tmp_path, monkeypatch, PAID)
+@pytest.mark.parametrize("top", BLOCKS)
+def test_a_paid_gateway_left_out_changes_nothing_while_claude_answers(client, fake_cli, tmp_path, monkeypatch, top):
+    team = chain(tmp_path, monkeypatch, PAID, **top)
     fake_cli.plan([{"text": "Claude answered."}])
     events = posted(client, team)
     assert said(events) == "Claude answered." and types(events)[-1] == "RUN_FINISHED"
     assert team.gw.starts() == []
 
 
-def test_a_member_pinned_to_a_paid_gateway_without_the_opt_in_stops_and_says_why(client, fake_cli, tmp_path, monkeypatch):
-    team = chain(tmp_path, monkeypatch, PAID, switching={"default": {"pin": "gw"}})
+@pytest.mark.parametrize("top", BLOCKS)
+def test_a_member_pinned_to_a_paid_gateway_stops_and_says_why_and_a_pin_never_lifts_the_refusal(client, fake_cli, tmp_path, monkeypatch, top):
+    team = chain(tmp_path, monkeypatch, PAID, switching={"default": {"pin": "gw"}}, **top)
     events = posted(client, team)
     assert events[-1] == {
         "type": "RUN_ERROR",
-        "message": (
-            "This assistant is pinned to gw, which is a paid (metered) gateway, and paid engines are off in engines.yaml "
-            "(the `metered:` block needs `enabled: true` and caps above 0), so I stopped here and did not switch to another engine."
-        ),
+        "message": f"{PAID_SENTENCE} This assistant is pinned to it, so I stopped here and did not switch to another engine.",
         "code": "FREEDUET_ENGINE_LIMITED",
     }
-    assert not (fake_cli.dir / "count").exists() and team.gw.starts() == []  # a pin never lifts the opt-in
+    assert not (fake_cli.dir / "count").exists() and team.gw.starts() == []
 
 
 def test_a_pin_on_a_switched_off_gateway_stops_with_the_ordinary_message(client, fake_cli, tmp_path, monkeypatch):
@@ -252,15 +276,74 @@ def test_a_pin_on_a_switched_off_gateway_stops_with_the_ordinary_message(client,
     assert not (fake_cli.dir / "count").exists()
 
 
-def test_with_the_opt_in_a_paid_gateway_takes_over_like_any_other_and_the_log_says_it_is_billed(client, fake_cli, tmp_path, monkeypatch, caplog):
-    caplog.set_level(logging.WARNING, logger="freeduet.compatible_engine")
+def test_when_claude_is_limited_a_paid_gateway_with_the_whole_opt_in_still_does_not_take_over(client, fake_cli, tmp_path, monkeypatch):
     team = chain(tmp_path, monkeypatch, PAID, metered=OPT_IN)
-    assert team.router._runnable("freeduet") == ["claude-code", "gw"]
     fake_cli.plan([LIMIT])
-    team.gw.plan([{"text": "Answered on the paid gateway."}])
+    team.gw.plan([{"text": "This would have been billed."}])
     events = posted(client, team)
-    assert said(events) == f"Claude Code reached its limit until {UNTIL}, so gw is answering instead.Answered on the paid gateway."
-    assert "is metered: this turn is billed by its provider" in caplog.text
+    assert said(events) == "" and types(events)[-1] == "RUN_ERROR"
+    assert team.gw.runs() == 0 and team.gw.starts() == []
+
+
+# ── What GET /engines says ───────────────────────────────────────────────────────────────────────
+
+
+def listed(client, team) -> dict[str, dict]:
+    app.state.engine_state = team.state
+    response = client.get("/engines", headers=AUTH)
+    assert response.status_code == 200, response.text
+    return {row["id"]: row for row in response.json()["engines"]}
+
+
+@pytest.mark.parametrize("top", BLOCKS)
+def test_a_refused_paid_gateway_is_listed_as_not_runnable_with_the_reason(client, tmp_path, monkeypatch, top):
+    team = chain(tmp_path, monkeypatch, PAID, **top)
+    rows = listed(client, team)
+    assert list(rows) == ["claude-code", "gw"]
+    gw = rows["gw"]
+    assert (gw["label"], gw["kind"], gw["state"], gw["available"], gw["refusal"]) == ("gw", COMPATIBLE_KIND, "refused", False, PAID_SENTENCE)
+    assert (gw["limited_until"], gw["last_failure_kind"], gw["consecutive_failures"]) == (None, None, 0)
+    assert (gw["installed"], gw["version"], gw["signed_in"], gw["probed_at"], gw["probe_problem"]) == (None,) * 5  # never probed: nothing runs it
+
+
+def test_the_listing_of_a_refused_gateway_holds_no_key_no_address_and_no_place_to_find_the_key(client, tmp_path, monkeypatch):
+    team = chain(tmp_path, monkeypatch, PAID, metered=OPT_IN)
+    app.state.engine_state = team.state
+    text = client.get("/engines", headers=AUTH).text
+    assert KEY not in text and BASE_URL not in text and KEY_ENV not in text and MODEL not in text
+
+
+def test_a_free_gateway_is_listed_like_any_engine_and_the_login_engine_row_has_no_new_field(client, tmp_path, monkeypatch):
+    team = chain(tmp_path, monkeypatch)
+    rows = listed(client, team)
+    assert rows["gw"]["state"] == "ready" and rows["gw"]["available"] is True and "refusal" not in rows["gw"]
+    assert "refusal" not in rows["claude-code"]  # the default install shows exactly the rows it always showed
+
+
+def test_a_paid_gateway_that_is_switched_off_or_locked_is_not_listed_because_the_person_never_asked_for_it(client, tmp_path, monkeypatch):
+    for entry in ({**PAID, "enabled": False}, {**PAID, "locked_reason": "Not allowed."}):
+        team = chain(tmp_path, monkeypatch, entry, metered=OPT_IN)
+        assert list(listed(client, team)) == ["claude-code"]
+
+
+def test_a_refused_gateway_gets_no_breaker_and_nothing_is_saved_for_it(tmp_path):
+    from freeduet.engine_breaker import FileStore
+
+    saved = tmp_path / "engine-state.json"
+    state = EngineState(FileStore(saved), now=NOW)
+    state.register_refused("gw", "gw", COMPATIBLE_KIND, PAID_SENTENCE)
+    (row,) = state.snapshot().engines
+    assert (row.id, row.state, row.available, row.refusal) == ("gw", "refused", False, PAID_SENTENCE)
+    assert state.row("gw") == row and not saved.exists()
+
+
+def test_a_refused_row_never_replaces_a_running_engine_of_the_same_name():
+    state = EngineState(None, now=NOW)
+    state.register_refused("claude-code", "claude-code", COMPATIBLE_KIND, "x")  # a name that is taken after this...
+    state.register(ClaudeEngine())  # ...by the engine the service runs
+    state.register_refused("claude-code", "claude-code", COMPATIBLE_KIND, "x")  # ...and asked for again
+    (row,) = state.snapshot().engines
+    assert (row.id, row.kind, row.state, row.refusal) == ("claude-code", "cli", "ready", None)
 
 
 # ── A refused key ────────────────────────────────────────────────────────────────────────────────
@@ -401,10 +484,27 @@ def test_the_notices_name_a_refused_key_in_both_languages():
 
 def test_the_paid_engine_sentence_is_empty_without_one_and_says_one_or_many():
     assert notices.paid_off("en", []) == "" and notices.paid_off("it", ()) == ""
-    assert notices.paid_off("en", ["a"]).startswith(" a is a paid (metered) gateway, and paid engines are off in engines.yaml")
-    assert notices.paid_off("en", ["a", "b"]).startswith(" a, b are paid (metered) gateways, and paid engines are off") and notices.paid_off("en", ["a", "b"]).endswith("did not use them.")
-    assert notices.paid_off("it", ["a"]).startswith(" a è un gateway a pagamento e i motori a pagamento sono spenti")
-    assert notices.paid_off("it", ["a", "b"]).endswith("non li ho usati.")
+    assert notices.paid_off("en", ["a"]) == (
+        " a is a paid gateway. FreeDuet does not run paid gateways yet, because it cannot yet enforce the limits you set. "
+        "Free gateways and your own logins work."
+    )
+    assert notices.paid_off("en", ["a", "b"]) == (
+        " a, b are paid gateways. FreeDuet does not run paid gateways yet, because it cannot yet enforce the limits you set. "
+        "Free gateways and your own logins work."
+    )
+    assert notices.paid_off("it", ["a"]) == (
+        " a è un gateway a pagamento. FreeDuet non esegue ancora i gateway a pagamento, perché non può ancora far rispettare "
+        "i limiti che hai impostato. I gateway gratuiti e i motori su cui hai effettuato l'accesso funzionano."
+    )
+    assert notices.paid_off("it", ["a", "b"]).startswith(" a, b sono gateway a pagamento. FreeDuet non esegue ancora")
+
+
+def test_the_chat_log_and_engines_sentences_for_a_paid_gateway_are_one_sentence():
+    from freeduet.engines import paid_gateway_refusal
+
+    assert notices.paid_off("en", ["gw"]) == f" {paid_gateway_refusal('gw')}" and paid_gateway_refusal("gw") == PAID_SENTENCE
+    for text in (notices.paid_off("en", ["gw"]), notices.paid_off("it", ["gw"]), notices.pinned_paid_off("en", "gw"), notices.pinned_paid_off("it", "gw")):
+        assert "metered" not in text  # no advice to set a block that would change nothing
 
 
 def test_every_engine_unavailable_is_unchanged_when_no_paid_gateway_was_left_out():
@@ -426,5 +526,11 @@ def test_a_refused_key_is_named_in_the_every_engine_unavailable_sentence_in_both
 
 
 def test_the_pinned_paid_sentence_is_said_in_both_languages():
-    assert notices.pinned_paid_off("en", "gw").startswith("This assistant is pinned to gw, which is a paid (metered) gateway")
-    assert notices.pinned_paid_off("it", "gw").startswith("Questo assistente è fissato su gw, che è un gateway a pagamento")
+    assert notices.pinned_paid_off("en", "gw") == (
+        f"{PAID_SENTENCE} This assistant is pinned to it, so I stopped here and did not switch to another engine."
+    )
+    assert notices.pinned_paid_off("it", "gw") == (
+        "gw è un gateway a pagamento. FreeDuet non esegue ancora i gateway a pagamento, perché non può ancora far rispettare "
+        "i limiti che hai impostato. I gateway gratuiti e i motori su cui hai effettuato l'accesso funzionano. "
+        "Questo assistente è fissato su di esso: mi fermo qui e non passo a un altro motore."
+    )

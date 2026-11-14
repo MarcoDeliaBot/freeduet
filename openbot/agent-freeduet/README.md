@@ -61,14 +61,16 @@ and [docs/ARCHITECTURE.md §3](../../docs/ARCHITECTURE.md).
 
 - It **never** reads, copies, logs or transmits a provider's credential files or tokens. The CLI keeps its own login in its own config directory (a volume); a test fails if any FreeDuet code opens it.
 - It **never** starts a CLI with its built-in host tools enabled.
-- It **never** adds a metered engine to a chain unless `metered.enabled` is true and the caps allow it.
+- It **never** adds a metered engine to a chain unless `metered.enabled` is true and the caps allow it, and it never runs a
+  paid `anthropic-compatible` gateway at all until the usage ledger can enforce the caps (see below).
 - A report, a checkpoint or a lesson never approves anything: approvals stay with OpenBot's gateway.
 
 ## A gateway or a local router (`anthropic-compatible`, off by default)
 
 A second kind of engine runs the same locked-down `claude -p` against an Anthropic-compatible address you write in
-`engines.yaml`: a gateway such as OpenRouter, or a free router on your own computer. It lets a member carry on when the
-Claude plan is at its limit. **It has never answered a real turn from a real gateway.** Every test here uses the fake
+`engines.yaml`: a gateway, or a free router on your own computer. It lets a member carry on when the Claude plan is at
+its limit. For now only an endpoint that costs you nothing runs: a paid gateway is refused until FreeDuet can enforce
+your limits (see "Free or paid" below). **It has never answered a real turn from a real gateway.** Every test here uses the fake
 CLI, so it is not certified; [docs/ENGINES_PLAN.md](../../docs/ENGINES_PLAN.md) 9.1 says what is and is not verified.
 
 - **Off, and never first.** `engines.example.yaml` holds only commented-out entries, so a default install builds none and
@@ -83,10 +85,16 @@ CLI, so it is not certified; [docs/ENGINES_PLAN.md](../../docs/ENGINES_PLAN.md) 
   or in the service's own `CLAUDE_CONFIG_DIR`, which is where a sign-in is kept. What is read must look like a bearer
   token (letters, digits and `- . _ ~ + /`, then `=`; 8 to 512 characters), so a sign-in file, which is JSON, is
   refused, and so is any value that holds a Claude plan token.
-- **Free or paid, said by you.** `billing: free` or `billing: metered` is required and never guessed. A metered gateway
-  runs only when the `metered:` block is `enabled: true` with both caps above 0. Those caps are not enforced until the
-  usage ledger exists (slice 12 of the plan), and the log says so when the service starts and on every such turn.
-  Otherwise it is left out and, when nothing else can answer, the person is told why.
+- **Free or paid, said by you, and a paid one is not run yet.** `billing: free` or `billing: metered` is required and
+  never guessed. It is your own statement: FreeDuet cannot see what an endpoint charges, so write `metered` for anything
+  that can charge you. FreeDuet cannot yet enforce the limits you set (the usage ledger is slice 12 of the plan), and
+  limits that are written and not enforced must not let money be spent, so a `metered` gateway you switched on is
+  refused, whatever the `metered:` block says. Nothing starts it. The log says so when the service starts ("my-gateway is
+  a paid gateway. FreeDuet does not run paid gateways yet, because it cannot yet enforce the limits you set. Free
+  gateways and your own logins work."), a member that would use it is told the same in chat when nothing else can answer
+  or when it is pinned to it, and `GET /engines` lists it with `"state": "refused"`, `"available": false` and the
+  sentence in `"refusal"`. The `metered:` block is still read and checked, so the file format will not change when the
+  ledger arrives. A free gateway and your own logins work as before.
 - **Addresses.** Plain `http` only for this machine: `localhost`, a loopback address or `host.docker.internal`. Every
   other address must be `https`. Inside the container `localhost` is the container itself: use `host.docker.internal`
   for a router on your computer, and let the router listen on an address the container can reach.
@@ -100,14 +108,15 @@ CLI, so it is not certified; [docs/ENGINES_PLAN.md](../../docs/ENGINES_PLAN.md) 
 - **Quality.** `tier` is C unless the entry says otherwise, so the quality floor keeps a skill that needs a better model
   (a purchase) off it. A model counts as supported only for the pair (endpoint, model) that passed the team evals.
 
-Check it once with your own key. Nothing here is automated, and steps 1 to 3 spend nothing.
+Check it once with your own key, at an endpoint that costs you nothing (a free model at a gateway, or a router on your
+computer): a paid one is refused for now. Nothing here is automated, and steps 1 to 3 spend nothing.
 
-1. In `openbot/`, copy `agent-freeduet/engines.example.yaml` to `engines.local.yaml`. Uncomment `my-gateway`, set
-   `base_url`, `billing` and `model`, and set `enabled: true`. For a `metered` gateway also set
-   `metered: {enabled: true, currency: EUR, daily_cap: 1, monthly_cap: 5}`. To make Iris use only the gateway for the
-   check, add `switching: {freeduet: {pin: my-gateway}}` (a pin needs no entry in a chain). To try it as a later link
-   instead, put `my-gateway` after `claude-code` in that member's chain (`chains: freeduet` is Iris's, `default` is
-   everyone else's).
+1. In `openbot/`, copy `agent-freeduet/engines.example.yaml` to `engines.local.yaml`. Uncomment `local-free-router`, set
+   its `base_url` and `model` (and, if your endpoint is not a router, its name and address), and set `enabled: true`.
+   Keep `billing: free`. To make Iris use only it for the check, add
+   `switching: {freeduet: {pin: local-free-router}}` (a pin needs no entry in a chain). To try it as a later link
+   instead, put `local-free-router` after `claude-code` in that member's chain (`chains: freeduet` is Iris's, `default`
+   is everyone else's).
 2. Create `docker-compose.override.yml` beside `docker-compose.yml` (the start script runs plain `docker compose`, which
    reads it). The key goes in neither file:
 
@@ -116,32 +125,37 @@ Check it once with your own key. Nothing here is automated, and steps 1 to 3 spe
      agent-freeduet:
        environment:
          FREEDUET_ENGINES_FILE: /app/engines.local.yaml
-         MY_GATEWAY_KEY: ${MY_GATEWAY_KEY}
+         LOCAL_ROUTER_KEY: ${LOCAL_ROUTER_KEY}
        volumes:
          - ./engines.local.yaml:/app/engines.local.yaml:ro
    ```
 
-3. Run `export MY_GATEWAY_KEY=...` (your own key at the gateway), then `docker compose up -d agent-freeduet`, then
+3. Run `export LOCAL_ROUTER_KEY=...` (your own key at that endpoint), then `docker compose up -d agent-freeduet`, then
    `curl -s -H "x-openbot-agent-token: <MANAGED_AGENT_TOKEN from .env>" http://127.0.0.1:4230/engines`. Expected: a row
-   with `"id": "my-gateway"`, `"kind": "anthropic-compatible"` and `"state": "ready"`, and neither the key nor the
-   address anywhere in the output (the same command piped to `grep -c "$MY_GATEWAY_KEY"` prints `0`).
+   with `"id": "local-free-router"`, `"kind": "anthropic-compatible"` and `"state": "ready"`, and neither the key nor the
+   address anywhere in the output (the same command piped to `grep -c "$LOCAL_ROUTER_KEY"` prints `0`).
 4. Send Iris one short message that needs no tool ("Reply with one word."). Expected: an answer, and the usage shows at
-   the gateway, not on your Claude plan.
+   the endpoint, not on your Claude plan.
 5. Ask her to run a shell command that writes a file. Expected: she cannot, and no file appears
    (`docker compose exec agent-freeduet ls <the path>` fails). If the model tried a built-in tool, the log has a line
    with `answered "No such tool available"`.
-6. Put a wrong key in `MY_GATEWAY_KEY`, run `docker compose up -d agent-freeduet` again and send a message. Expected
-   (Iris is pinned): "my-gateway has no key its gateway accepts, and this assistant is pinned to it, so I stopped here
-   and did not switch to another engine.", and `/engines` shows `"state": "signed_out"` for it. Without the pin she moves
-   to the next engine of her chain and says why.
+6. Put a wrong key in `LOCAL_ROUTER_KEY`, run `docker compose up -d agent-freeduet` again and send a message. Expected
+   (Iris is pinned): "local-free-router has no key its gateway accepts, and this assistant is pinned to it, so I stopped
+   here and did not switch to another engine.", and `/engines` shows `"state": "signed_out"` for it. Without the pin she
+   moves to the next engine of her chain and says why.
+7. The refusal of a paid gateway, which spends nothing: write `billing: metered` instead of `free`, run
+   `docker compose up -d agent-freeduet` and look at `/engines` and the log. Expected: the log has the sentence "local-free-router
+   is a paid gateway. FreeDuet does not run paid gateways yet, ...", the row says `"state": "refused"` with the same
+   sentence in `"refusal"`, a message to pinned Iris is answered with that sentence, and the endpoint's own log shows no
+   request.
 
 Before it is called certified, run the team evals on the eval stack (never on a real deployment) with the members on
 the gateway: every case in `evals/team/cases.yaml` with `--repeat 3`, each member at least 90% and every safety case at
 100% ([evals/team/README.md](../../evals/team/README.md)). The runner cannot attribute those runs to the gateway yet: it
-checks `--engine my-gateway` against the stack's `GET /engines` but does not route a turn, and it records `unknown` for
-every case on a stack that lists two engines, which a stack with this engine always does. Pin the gateway for every
-member in the eval stack's engines file (`switching: {default: {pin: my-gateway}}`) to run the trial; a certified label
-needs the runner's per-run engine, the part of slice 4 that is not built.
+checks `--engine local-free-router` against the stack's `GET /engines` but does not route a turn, and it records
+`unknown` for every case on a stack that lists two engines, which a stack with this engine always does. Pin the gateway
+for every member in the eval stack's engines file (`switching: {default: {pin: local-free-router}}`) to run the trial; a
+certified label needs the runner's per-run engine, the part of slice 4 that is not built.
 
 ## Signing in (done by the person, never by FreeDuet)
 

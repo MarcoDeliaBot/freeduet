@@ -8,9 +8,12 @@ and they are all in the process's environment: where it sends its requests, whic
 
 WHAT IT IS NOT. It is off unless the person wrote an ``anthropic-compatible`` entry with ``enabled: true`` in
 engines.yaml, and it is never first in a chain by default: ``engines.order_logins_first`` puts every login first,
-whatever order the file lists. A metered endpoint runs only under the person's ``metered:`` opt-in (E3), and the
-refusal is said in plain words. Nothing here ever calls the network itself: the CLI does, and a probe never starts a
-turn (see ``probe``).
+whatever order the file lists. A metered (paid) endpoint is not run at all yet, whatever the ``metered:`` block says:
+FreeDuet cannot enforce the caps until the usage ledger exists (docs/ENGINES_PLAN.md slice 12), and caps that are written
+and not enforced must not let money be spent. It gets no adapter, so nothing can start it; the refusal is said in plain
+words to the person, in the log and by ``GET /engines`` (:func:`engines.paid_gateway_refusal`). ``billing`` is the
+person's own statement: FreeDuet cannot see what a gateway charges. Nothing here ever calls the network itself: the CLI
+does, and a probe never starts a turn (see ``probe``).
 
 THE KEY. It is the person's own key at the gateway, never a subscription credential. It is read from an environment
 variable of this service or from a file the person names (``credential_secret_ref``: ``env:NAME`` or
@@ -76,6 +79,7 @@ from .engines import (
     exclusion_reason,
     in_hidden_folder,
     is_local_host,
+    paid_gateway_refused,
     parse_secret_ref,
 )
 from .failure_classifier import AUTH, LIMIT_KINDS, UNKNOWN, Failure, classify_failure
@@ -299,8 +303,8 @@ class CompatibleEngine(EngineAdapter):
 
     def __init__(self, engine: Engine, config: EnginesConfig, binary: str | None = None):
         """One configured entry. ``config`` is read only to ask, at the start of every turn, whether the entry may run
-        at all (``exclusion_reason``): the person's switch and the metered opt-in are checked here as well as by the
-        router, so no caller can run a refused engine. ``binary`` is for tests, as on ``ClaudeEngine``."""
+        at all (``exclusion_reason``): the person's switch and the refusal of a paid gateway are checked here as well as
+        by the router, so no caller can run a refused engine. ``binary`` is for tests, as on ``ClaudeEngine``."""
         self.key = engine.id
         self.label = engine.id  # the person's own name for it, as written in engines.yaml
         self._engine, self._config, self._binary = engine, config, binary
@@ -371,18 +375,18 @@ class CompatibleEngine(EngineAdapter):
         reason = exclusion_reason(self._engine, self._config)
         if reason is None:
             return None
-        if self._engine.billing == "metered" and self._engine.enabled and not self._engine.locked_reason:
-            return (
-                f"{self.label} is a paid (metered) gateway, and paid engines are off in engines.yaml "
-                f"({reason}), so I did not use it."
-            )
+        if paid_gateway_refused(self._engine):
+            return reason  # the whole sentence: it names the entry and says what works
         return f"{self.label} is not used: {reason}."
 
     async def run_turn(self, ctx: TurnContext, sink: Sink, gate: Gate) -> Outcome:
         health = ctx.diagnostics.health
         refusal = self._refusal()
         if refusal is not None:
-            # The person's switch, not the engine's health: nothing is recorded against it.
+            # The person's switch (or the refusal of a paid gateway), not the engine's health: nothing is recorded
+            # against it, and nothing was started, so nothing was billed.
+            if paid_gateway_refused(self._engine):
+                log.warning("%s", refusal)
             return Outcome(agui.run_error(refusal))
         key = read_key(self._engine.credential_secret_ref, os.environ)
         if key is None:
@@ -393,12 +397,6 @@ class CompatibleEngine(EngineAdapter):
                     f"{self.label} has no key it can use. Set the key that `credential_secret_ref` names in "
                     "engines.yaml, then send your message again."
                 )
-            )
-        if self._engine.billing == "metered":
-            log.warning(
-                "engine %s is metered: this turn is billed by its provider, and the caps in engines.yaml are "
-                "not enforced yet",
-                self.key,
             )
         scrub = Scrubber(key)
         parser = StreamParser()
@@ -495,23 +493,18 @@ class CompatibleEngine(EngineAdapter):
 
 
 def adapters_from_config(config: EnginesConfig, binary: str | None = None) -> dict[str, EngineAdapter]:
-    """One adapter for each ``anthropic-compatible`` entry that may run: on, not locked, and (for a metered one)
-    under the person's opt-in. An entry that is on but refused is named in one log line and given no adapter, so it
-    is neither listed as an engine nor a link of any chain. A default install has no such entry and gets none."""
+    """One adapter for each ``anthropic-compatible`` entry that may run: on, not locked, and not a paid gateway. A paid
+    gateway that is switched on is named in one log line, in the words the person is told, and given no adapter, so
+    nothing can start it and it is not a link of any chain; the router still lists it, as refused (``refused_paid_gateways``).
+    A default install has no such entry and gets none."""
     built: dict[str, EngineAdapter] = {}
     for engine in config.engines.values():
         if engine.kind != COMPATIBLE_KIND:
             continue
         reason = exclusion_reason(engine, config)
         if reason is not None:
-            if engine.enabled and not engine.locked_reason:
-                log.warning("engine %s is in engines.yaml but is not used: %s", engine.id, reason)
+            if paid_gateway_refused(engine):
+                log.warning("%s", reason)
             continue
-        if engine.billing == "metered":
-            log.warning(
-                "engine %s is metered and switched on: its provider bills every turn it takes, and the caps in "
-                "engines.yaml are not enforced yet",
-                engine.id,
-            )
         built[engine.id] = CompatibleEngine(engine, config, binary)
     return built
