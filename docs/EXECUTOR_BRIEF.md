@@ -49,7 +49,7 @@ Done when: a clean install with no API key answers on the maintainer's Claude lo
 ## M2: v0.2 More subscriptions (2 weeks)
 
 Tasks
-1. Codex app-server adapter, enabled only after OpenAI approves FreeDuet's "Sign in with ChatGPT" client ID; until then behind the experimental flag.
+1. Codex app-server adapter, which uses Codex's own login (FreeDuet never reads it). It is enabled only after a hands-on check of its limits, tool calls and lockdown, and after the provider's terms are checked; until then it stays behind the experimental flag.
 2. ACP adapter (for providers PROVIDERS.md marks on) and OpenAI-compatible adapter (local models first; OpenRouter and other keys optional and last).
 3. `anthropic-api` adapter, off by default, for people who choose to use their plan's API credits as a last resort.
 4. Engines page in the app and `GET /api/freeduet/engines`.
