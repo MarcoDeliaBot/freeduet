@@ -36,3 +36,8 @@ Especially valuable reports:
 - Full access: off for every member until you turn it on, one member at a time, after a warning, in one of two settings (with or without payments).
 - Telemetry: off.
 - The app listens on localhost. Put TLS and sign-in in front of it before exposing it to a network.
+
+## Independent checks
+
+- CodeQL (GitHub code scanning, JavaScript/TypeScript and Python) runs on every pull request and once a week; zizmor checks the workflow files themselves whenever one changes and once a week.
+- The OpenSSF Scorecard, which scores how the repository is run, runs on every push to `main` and once a week.
