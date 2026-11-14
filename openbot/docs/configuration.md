@@ -619,8 +619,23 @@ request whose connection comes from 127.0.0.0/8 or ::1 is the person; one that a
 other address, such as a container on the Docker bridge, is not, and a route that asks who is
 calling answers 401. The address is the one the connection came from, and no header is read for
 it. What a container may still do is what it can prove: a Bot's callback with its tool token, and
-the worker with its secret. `OPENBOT_HOST` is the exception below, and Docker Desktop, which
-delivers a container's calls from loopback, is not changed by this.
+the worker with its secret. `OPENBOT_HOST` is the exception below. Docker Desktop delivers a
+container's calls from loopback, so there the address alone is not enough, and the next paragraph
+is what tells a container from you.
+
+**On this machine's loopback, the administrator is also the one who holds this installation's
+secret.** `scripts/start.sh` writes `FREEDUET_INSTALL_SECRET` to `.env` the first time it runs (an
+install from before this gets one on its first start after the update, which restarts the server).
+Your browser holds it as a cookie that only a one-time link sets: that first start opens the link by
+itself, and `bash scripts/open.sh` opens one for another browser, or for this one after its cookies
+were cleared. Nobody types or pastes anything. The secret is in no URL, no log, no container's
+environment and no folder a Bot's computer can reach, and the calls that carry their own credentials
+(the Bot's callback, the worker) are not asked for it. A request from loopback without it, such as
+a container's on Docker Desktop, answers 401 `pairing_required`. The cookie is for `localhost`, so
+`127.0.0.1` asks to be paired again. A server started by hand with no `FREEDUET_INSTALL_SECRET`
+keeps the loopback rule alone and says so at boot; a sign-in deployment, and one opened with
+`OPENBOT_HOST`, ask nothing new. To make a new secret, delete the line and run `scripts/start.sh`:
+every browser is paired again.
 
 `OPENBOT_HOST` changes that for both. Set it to `0.0.0.0` to listen on every interface, or to a
 comma-separated list of addresses. With no sign-in, everybody who can reach those addresses is the

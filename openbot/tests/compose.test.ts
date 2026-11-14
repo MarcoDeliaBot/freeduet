@@ -3,8 +3,10 @@ import { execFileSync } from "node:child_process";
 import {
   mkdirSync,
   mkdtempSync,
+  readdirSync,
   readFileSync,
   rmSync,
+  statSync,
   writeFileSync,
 } from "node:fs";
 import { tmpdir } from "node:os";
@@ -562,4 +564,151 @@ test("gives the selected harness the same governed callback as the framework Bot
       "host.docker.internal=host-gateway",
     );
   }
+});
+
+/**
+ * The installation's secret never reaches a service (docs/M1_PLAN.md D28).
+ *
+ * `FREEDUET_INSTALL_SECRET`, which `scripts/start.sh` writes to `.env`, is what tells the person's
+ * browser from a container that calls the server's published port. A Bot's computer, and every other
+ * service Compose starts, is such a container, so none of them may be handed it. Compose reads `.env`
+ * to fill `${...}` placeholders and gives a service only what its `environment:` and `env_file:` name,
+ * so the secret reaches one only if the file names it, reads `.env` whole, or mounts the directory it
+ * is in. The first two are checked on the rendered configuration with the secret in the environment
+ * Compose reads; the third on every bind mount of every profile.
+ */
+function renderEveryProfile(env: Record<string, string>, extra: string[] = []) {
+  return JSON.parse(
+    execFileSync(
+      "docker",
+      [
+        "compose",
+        "--env-file",
+        "/dev/null",
+        "--profile",
+        "*",
+        "config",
+        ...extra,
+        "--format",
+        "json",
+      ],
+      {
+        cwd: join(import.meta.dir, ".."),
+        env: {
+          PATH: process.env.PATH ?? "",
+          PICKED_HARNESS_IMAGE: "openbot-agent-langgraph-agui:test",
+          ...env,
+        },
+        encoding: "utf8",
+      },
+    ),
+  ) as {
+    services: Record<
+      string,
+      {
+        env_file?: Array<{ path?: string } | string>;
+        volumes?: Array<{ type: string; source?: string; target: string }>;
+      }
+    >;
+  };
+}
+
+test("hands no service the installation's secret, and none can read the file it is kept in", () => {
+  const secret = "d3adb33f".repeat(8);
+  const rendered = renderEveryProfile({ FREEDUET_INSTALL_SECRET: secret });
+  expect(Object.keys(rendered.services).length).toBeGreaterThan(5);
+
+  // Not in any service's environment, and not under any other key.
+  expect(JSON.stringify(rendered)).not.toContain(secret);
+  expect(composeFile()).not.toContain("FREEDUET_INSTALL_SECRET");
+
+  // Compose reads an `env_file` itself and puts what it holds into the service's environment, so the
+  // rendering above has no `env_file` left to look at. This one keeps them as the file names them.
+  const named = renderEveryProfile({ FREEDUET_INSTALL_SECRET: secret }, [
+    "--no-env-resolution",
+  ]);
+  const readFiles = Object.values(named.services).flatMap((service) =>
+    (service.env_file ?? []).map((entry) =>
+      typeof entry === "string" ? entry : (entry.path ?? ""),
+    ),
+  );
+  // Positive control: the files that are read at all show up here, so an empty list is not a blind one.
+  expect(readFiles.some((path) => path.endsWith("egress.env"))).toBe(true);
+
+  const composeDirectory = join(import.meta.dir, "..");
+  const settingsFile = join(composeDirectory, ".env");
+  const isSettingsFile = (path: string) => /(^|\/)\.env(\.[^/]*)?$/.test(path);
+  const offenders: string[] = [];
+  for (const [name, service] of Object.entries(named.services)) {
+    // No service reads the settings file whole.
+    for (const entry of service.env_file ?? []) {
+      const path = typeof entry === "string" ? entry : (entry.path ?? "");
+      if (isSettingsFile(path)) offenders.push(`${name} reads ${path}`);
+    }
+    // And no bind mount is the file, or a directory that holds it: the checkout and its parents too.
+    for (const volume of service.volumes ?? []) {
+      if (volume.type !== "bind" || !volume.source) continue;
+      const source = volume.source.replace(/\/+$/, "");
+      if (
+        isSettingsFile(source) ||
+        settingsFile === source ||
+        settingsFile.startsWith(`${source}/`)
+      )
+        offenders.push(`${name} mounts ${source}`);
+    }
+  }
+  expect(offenders).toEqual([]);
+});
+
+test("names the secret in no file a Bot's computer, a Compose service or the browser app is built from", () => {
+  // The places a member's container, or the page the person's browser loads, is made from. The server
+  // and the host's own scripts are the only code that may name the secret; a name turning up in one
+  // of these is a path for it to travel, and is looked at before it is let through.
+  const root = join(import.meta.dir, "..");
+  const entries = readdirSync(root).filter(
+    (name) =>
+      name.startsWith("agent-") ||
+      [
+        "supervisor",
+        "worker",
+        "toolkit",
+        "shared",
+        "spire",
+        "whisper",
+        "docker",
+        "charts",
+        "mobile",
+        "docker-compose.yml",
+        "Dockerfile",
+      ].includes(name),
+  );
+  expect(entries.length).toBeGreaterThan(10);
+  // Tests may name it, to say it is not there.
+  const skipped = new Set([
+    "node_modules",
+    ".git",
+    "dist",
+    "build",
+    "__pycache__",
+    "target",
+    "tests",
+    "test",
+  ]);
+  const found: string[] = [];
+  const walk = (path: string) => {
+    const info = statSync(path);
+    if (info.isDirectory()) {
+      for (const name of readdirSync(path)) {
+        if (skipped.has(name) || name.startsWith(".venv")) continue;
+        walk(join(path, name));
+      }
+      return;
+    }
+    if (info.size > 2_000_000) return;
+    const text = readFileSync(path, "utf8");
+    if (/FREEDUET_INSTALL_SECRET|freeduet_install_/i.test(text))
+      found.push(path);
+  };
+  for (const entry of entries) walk(join(root, entry));
+  expect(found).toEqual([]);
 });

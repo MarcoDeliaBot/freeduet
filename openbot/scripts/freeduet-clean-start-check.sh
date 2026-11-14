@@ -14,6 +14,8 @@
 #   - the eleven members of examples/freeduet/agents.yaml are remote Bots at agent-freeduet, and the
 #     runtime has them
 #   - conversations are kept in FreeDuet's own database, not in CopilotKit Intelligence (#42)
+#   - a request from this machine that does not hold the installation secret is refused, and one that
+#     holds it is answered (D28: a Bot's computer on Docker Desktop arrives as this machine's loopback)
 #   - start.sh said how to sign in to Claude Code
 #   - nothing asked for a key: no API key named in start.sh's output, no key the server refused to
 #     start without
@@ -43,6 +45,24 @@ fail() {
 }
 status_of() {
   curl -s -o /dev/null -w '%{http_code}' --max-time 5 "$1" 2>/dev/null || true
+}
+
+# FreeDuet (D28): with no sign-in the person is a request from this machine that holds the installation
+# secret, which scripts/start.sh wrote to .env. Sent as the cookie the browser holds, through a curl
+# config file of its own (never on a command line) or the environment of the one Bun command that needs
+# it, and never printed.
+SECRET="$(grep -E '^FREEDUET_INSTALL_SECRET=' "$ROOT/.env" 2>/dev/null | tail -n 1 | cut -d= -f2- \
+  | sed -e 's/^"\(.*\)"$/\1/' -e "s/^'\(.*\)'$/\1/" || true)"
+COOKIE=""
+[ -z "$SECRET" ] || COOKIE="freeduet_install_${SERVER_PORT:-3001}=$SECRET"
+person_status_of() {
+  local config code
+  config="$(mktemp)"
+  chmod 600 "$config"
+  printf 'header = "Cookie: %s"\n' "$COOKIE" > "$config"
+  code="$(curl -s -K "$config" -o /dev/null -w '%{http_code}' --max-time 5 "$1" 2>/dev/null || true)"
+  rm -f "$config"
+  printf '%s' "$code"
 }
 
 if [ -n "$START_STATUS" ]; then
@@ -75,16 +95,17 @@ fi
 
 # Each member, asked of the server by id: a remote Bot whose endpoint is agent-freeduet, and one the
 # runtime registered. The ids come from the package the server loaded.
-MEMBERS="$(bun -e '
+MEMBERS="$(FREEDUET_COOKIE="$COOKIE" bun -e '
   const { parse } = await import("yaml");
   const file = await Bun.file(process.argv[1]).text();
   const ids = (parse(file).agents ?? []).map((agent) => agent.id);
   const server = process.argv[2];
   const want = new URL(process.argv[3]);
+  const headers = process.env.FREEDUET_COOKIE ? { cookie: process.env.FREEDUET_COOKIE } : {};
   const problems = [];
   let info = {};
   try {
-    const response = await fetch(`${server}/api/copilotkit/info`);
+    const response = await fetch(`${server}/api/copilotkit/info`, { headers });
     info = response.ok ? ((await response.json()).agents ?? {}) : {};
   } catch {
     console.log(`${ids.length}|the server is not answering`);
@@ -92,7 +113,7 @@ MEMBERS="$(bun -e '
   }
   for (const id of ids) {
     try {
-      const response = await fetch(`${server}/api/agents/${encodeURIComponent(id)}`);
+      const response = await fetch(`${server}/api/agents/${encodeURIComponent(id)}`, { headers });
       if (!response.ok) { problems.push(`${id}: HTTP ${response.status}`); continue; }
       const body = await response.json();
       const endpoint = (body.agent ?? body).endpoint;
@@ -122,6 +143,21 @@ if [ "$MODE" = local ]; then
   pass "conversations are kept in FreeDuet's own database (FREEDUET_INTELLIGENCE=off)"
 else
   fail "conversations are kept in FreeDuet's own database (FREEDUET_INTELLIGENCE=off)" "the server says mode ${MODE:-nothing}"
+fi
+
+# FreeDuet (D28): this runs on a server that listens on this machine alone with no sign-in, so a request
+# from here that holds no secret is what a Bot's computer on Docker Desktop looks like, and must be
+# refused; the same request with the secret is the person, and must be answered.
+if [ -z "$SECRET" ]; then
+  fail "a request without the installation secret is refused" ".env has no FREEDUET_INSTALL_SECRET, so start.sh did not make one"
+else
+  without="$(status_of "$SERVER/api/copilotkit/info")"
+  with="$(person_status_of "$SERVER/api/copilotkit/info")"
+  if [ "$without" = 401 ] && [ "$with" = 200 ]; then
+    pass "a request without the installation secret is refused (401), and with it answered (200)"
+  else
+    fail "a request without the installation secret is refused" "without it the server answered ${without:-nothing}, with it ${with:-nothing}"
+  fi
 fi
 
 if grep -qF "Claude Code is not signed in yet" "$START_LOG"; then

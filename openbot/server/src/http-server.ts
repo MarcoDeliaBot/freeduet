@@ -3,7 +3,7 @@ import { listenAddress } from "@openbot/shared/listen-host";
 import { serve } from "bun";
 import { computerAccessCheck } from "./agents/computer-access";
 import type { AgentProfileStore } from "./agents/profile-store";
-import { isLoopbackRequest, personIsLoopbackOnly } from "./auth/peer";
+import { personRule, personVerdict } from "./auth/install-secret";
 import type { OpenBotRole } from "./auth/roles";
 import { appOrigins, crossSiteRefusal } from "./auth/same-origin";
 import { websocket as channelSocket } from "./channels/socket";
@@ -108,8 +108,9 @@ export function startHttpServer(deps: {
   // The origins the app's own guard admits (app.ts), for the one upgrade that never reaches it.
   const own = appOrigins(config);
   // With no sign-in and nothing beyond this machine listening, only a loopback peer is the person
-  // (auth/peer.ts). The upgrade below resolves its actor outside the app, so it asks here as well.
-  const loopbackOnly = personIsLoopbackOnly(config);
+  // (auth/peer.ts), and where the installation has a secret, one that holds it (auth/install-secret.ts,
+  // D28). The upgrade below resolves its actor outside the app, so it asks here as well.
+  const person = personRule(config);
 
   const options: Parameters<typeof serve<SocketData>>[0] = {
     port,
@@ -142,7 +143,7 @@ export function startHttpServer(deps: {
         if (refusal) {
           return new Response(refusal.error, { status: refusal.status });
         }
-        if (loopbackOnly && !isLoopbackRequest({ server }, request)) {
+        if (personVerdict(person, { server }, request) !== "person") {
           return new Response("Sign in first.", { status: 401 });
         }
         if (!config.computer) {

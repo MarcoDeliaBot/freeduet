@@ -16,6 +16,7 @@ import { listenPort } from "@openbot/shared/listen-port";
 import { networkInterfaces } from "node:os";
 import { singleUserEnabled } from "./auth/dev-actor";
 import { normalizeDomain } from "./auth/email-domain";
+import { installSecretSetting } from "./auth/install-secret";
 import { organizationAuthority } from "./auth/organization";
 import type { ActionPolicy } from "./computer/policy";
 import { parseActionPolicy } from "./computer/policy-store";
@@ -364,6 +365,12 @@ export type DeploymentConfig = {
    * reaching somewhere other people can get to.
    */
   singleUser: boolean;
+  /**
+   * FreeDuet (D28): `FREEDUET_INSTALL_SECRET`, this installation's own secret. Read only in
+   * single-user mode, and absent when unset. Where it is set and the server listens on this machine
+   * alone, the person is a loopback peer that also holds it. See auth/install-secret.ts.
+   */
+  installSecret?: string;
   /** Names OpenDuet on the analytics the runtime already sends. Off with OPENBOT_ACCESSIBILITY_DISABLED. */
   accessibility: boolean;
   /**
@@ -1474,6 +1481,8 @@ export function loadConfig(
     ...loaded,
     listen: listenAddresses(environment, loaded.singleUser, interfaces),
     appOrigins: appOriginsFrom(environment),
+    // FreeDuet (D28): refused here, at start, when it is set and cannot be a secret.
+    ...installSecretSetting(environment, loaded.singleUser),
   };
 }
 
