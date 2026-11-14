@@ -499,26 +499,30 @@ describe("(a) a routine's or a trigger's write waits for a card", () => {
     ["a routine", ROUTINE_RUN],
     ["an event trigger", TRIGGER_RUN],
   ] as const)
-    test(`${name} that rewrites a routine, with Full access on for its member: nothing is changed`, async () => {
-      await reset();
-      const held = await inTurn(
-        { messages: [typed("every weekday")], initiator },
-        () =>
-          call(FULL, "update_routine", ARGS.update_routine ?? {}, initiator),
-      ).catch((error: unknown) => error);
-      expect(held).toBeInstanceOf(HeadlessToolSuspension);
-      expect(reached).toEqual([]);
-      expect(storeCalls).toEqual([]);
-      const [asked] = await pending();
-      expect(asked?.action.policy).toMatchObject({
-        behaviour: "ask",
-        source: "always_ask",
+    for (const [setting, botId] of [
+      ["Full access", FULL],
+      ["Full access without payments", NO_PAYMENTS],
+    ] as const)
+      test(`${name} that rewrites a routine, with ${setting} on for its member: nothing is changed`, async () => {
+        await reset();
+        const held = await inTurn(
+          { messages: [typed("every weekday")], initiator },
+          () =>
+            call(botId, "update_routine", ARGS.update_routine ?? {}, initiator),
+        ).catch((error: unknown) => error);
+        expect(held).toBeInstanceOf(HeadlessToolSuspension);
+        expect(reached).toEqual([]);
+        expect(storeCalls).toEqual([]);
+        const [asked] = await pending();
+        expect(asked?.action.policy).toMatchObject({
+          behaviour: "ask",
+          source: "always_ask",
+        });
+        expect(asked?.action.policy?.reason).toContain(
+          "routine or a trigger running on its own",
+        );
+        await clearPending();
       });
-      expect(asked?.action.policy?.reason).toContain(
-        "routine or a trigger running on its own",
-      );
-      await clearPending();
-    });
 
   test("what a routine only reads is not held", async () => {
     await reset();
@@ -708,5 +712,18 @@ describe("a new email in a routine (D27 never applies to one), asked once", () =
     expect(sent.isError).toBe(false);
     expect(gmail.sent).toHaveLength(1);
     expect(await pending()).toEqual([]);
+  });
+
+  test("in the person's own live turn the same email, with its address typed, goes out with no card, with Full access and without it (D27, as before)", async () => {
+    for (const botId of [FULL, PLAIN]) {
+      await reset();
+      const sent = await inTurn(
+        { messages: [typed("Write to ana@example.com saying good morning")] },
+        () => send(botId),
+      );
+      expect(sent.isError).toBe(false);
+      expect(gmail.sent).toHaveLength(1);
+      expect(await pending()).toEqual([]);
+    }
   });
 });
