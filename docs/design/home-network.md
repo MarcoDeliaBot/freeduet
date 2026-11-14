@@ -8,6 +8,7 @@ Tags: **[code: path:line]** read on origin/main 5b96410 (code paths start at `op
 
 - You switch "Home and office network access" off, turn "Cloud network access" off, or take a rule out of a network list. Every connection the old setting allowed and the new one would refuse is closed at once, not only refused the next time. A page, a download or a command sees the connection drop.
 - A setting that becomes wider closes nothing.
+- Decided 14 November 2026: a member's computer stays refused from its own localhost.
 - Cloud metadata and link-local addresses were never open, with the switch on or off. They are still refused before any connection exists.
 
 ## 2. What was measured before the change
@@ -68,7 +69,7 @@ The code was also broken on purpose in fifteen ways, each run against these test
 - A tunnel behind an upstream proxy (`EGRESS_PROXY_*`): the filter cannot know where the proxy took it, so it judges what it knows: an address written out, or a name by its domain rules and by the addresses it resolved when the policy of the time needed them. A policy that decides by range, arriving for a name that was never resolved, ends the tunnel. That errs on the strict side. Tested with a fake proxy only.
 - The two IPv6 plain-HTTP cases cannot run here, so IPv6 plain requests with `agent: false` have no test on this machine. The change does not touch how an address is passed to the socket.
 - `EGRESS_POLICY_REQUIRED` is read when the filter starts, not on a push. Changing it on a running filter does not re-judge what is open. Nothing in the product changes it while running.
-- A raw socket that ignores the proxy variables never reaches the filter, so nothing here stops it ([SECURITY.md](../../SECURITY.md)).
+- A raw socket that ignores the proxy variables never reaches the filter, so nothing here stops it ([SECURITY.md](../../SECURITY.md)). Decided 14 November 2026: network-level blocking for the Compose layout is v0.2 work.
 - The whole-suite and the ten-file browser runs were on Bun 1.4.4 (this machine). CI pins 1.4.3, where only the socket file and the browser file were run.
 - `bun run typecheck:tests` was killed once on this machine (SIGKILL, other work was using the memory). That run is not a result; the second run, on a quieter machine, is the one reported.
 
