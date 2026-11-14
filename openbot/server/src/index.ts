@@ -43,6 +43,10 @@ import { createHandoffDesk } from "./agents/handoff";
 import { createHandedRequestLoader } from "./agents/handoff-request";
 import { createHandoffRunner } from "./agents/handoff-runner";
 import { startHandoffDelivery } from "./agents/handoff-wiring";
+import {
+  createEngineChoices,
+  useEngineChoices,
+} from "./freeduet/engine-choices";
 import { createFullAccess, withFullAccess } from "./freeduet/full-access";
 import { memberFileTools } from "./freeduet/member-files";
 import { relayComputerTools } from "./freeduet/relay-computer";
@@ -1129,6 +1133,19 @@ const settingChanges = createSettingChanges({
   reader: createAuditReader(database),
 });
 useSettingsTools(settingChanges);
+/*
+ * The person's engine choices (docs/design/engines-dashboard.md, ENGINES_PLAN slice 7): kept on this server, read
+ * into memory here before the server accepts a request, laid on every run by `withEngineChoices` (copilot.ts), and
+ * changed from the Engines page. Installed once, here, as the tools above are, because the code that builds a run
+ * is built before there is a database.
+ */
+const engineChoices = createEngineChoices({
+  database,
+  audit: createAuditStore(database),
+  reader: createAuditReader(database),
+});
+await engineChoices.load();
+useEngineChoices(engineChoices);
 const responsibilityStore = createResponsibilityStore(database, {
   resolveTarget: async (ownerUserId, agentId, channelId) => {
     const actor = await actorFor(ownerUserId);
@@ -2855,6 +2872,7 @@ const app = createApp(
       auditStore: bootAuditStore,
     },
     settingChanges,
+    engineChoices,
   },
   createSelfHostBanner({
     enabled: config.selfHostBanner,

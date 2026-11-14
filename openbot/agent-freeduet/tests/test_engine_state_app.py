@@ -73,7 +73,7 @@ def kept(fake_cli) -> dict:
 
 def test_before_any_turn_the_one_engine_is_ready_and_the_file_is_not_there_yet(client, fake_cli):
     body = engines(client)
-    assert set(body) == {"engines", "problems"} and body["problems"] == [MISSING]
+    assert set(body) == {"engines", "problems", "members", "choices_version"} and body["problems"] == [MISSING]
     shown = claude(client)
     assert set(shown) == FIELDS
     assert (shown["id"], shown["label"], shown["kind"], shown["state"], shown["available"]) == ("claude-code", "Claude Code", "cli", "ready", True)
