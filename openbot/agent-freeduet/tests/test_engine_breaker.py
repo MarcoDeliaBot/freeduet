@@ -1,7 +1,8 @@
 """engine_breaker.py: whether an engine may take a turn now (docs/ENGINES_PLAN.md section 5, slice 2).
 
-The module is wired into no run path. Every test runs on a fake clock and a temp directory: nothing here
-starts an engine, reads a login or touches a real file of the service. Time is the fixed NOW below.
+The module is wired for recording only (engine_state.py, slice 2): no run path asks it whether to run a turn.
+Every test runs on a fake clock and a temp directory: nothing here starts an engine, reads a login or touches
+a real file of the service. Time is the fixed NOW below.
 """
 
 from __future__ import annotations
@@ -266,6 +267,66 @@ def test_signed_in_changes_nothing_unless_the_engine_is_signed_out(clock, setup)
     before = breaker.snapshot()
     assert breaker.signed_in() is False
     assert breaker.snapshot() == before
+
+
+@pytest.mark.parametrize("setup", ["ready", "degraded", "open", "half_open"])
+def test_a_probe_that_sees_no_sign_in_signs_the_engine_out_from_any_other_state(clock, setup):
+    breaker = make(clock)
+    if setup == "degraded":
+        fail(breaker, TRANSIENT)
+    elif setup == "open":
+        to_open(breaker)
+    elif setup == "half_open":
+        to_half_open(breaker, clock)
+    failures = breaker.snapshot().consecutive_failures
+    assert breaker.signed_out() is True
+    assert breaker.snapshot() == Snapshot("claude-code", SIGNED_OUT, None, AUTH, failures + 1)
+    assert breaker.acquire() is None
+
+
+def test_signed_out_changes_nothing_when_the_engine_is_already_signed_out(clock):
+    store = MemoryStore()
+    breaker = make(clock, store)
+    fail(breaker, AUTH)
+    before, saves = breaker.snapshot(), len(store.saves)
+    assert breaker.signed_out() is False
+    assert breaker.snapshot() == before and len(store.saves) == saves
+
+
+def test_signed_out_makes_the_tickets_out_now_stale(clock):
+    breaker = make(clock)
+    early = breaker.acquire()
+    assert breaker.signed_out() is True
+    assert early.success() is False
+    assert breaker.snapshot().state == SIGNED_OUT
+
+
+def test_signed_out_takes_the_half_open_probe_with_it_and_signed_in_gives_a_fresh_start(clock):
+    breaker = make(clock)
+    to_half_open(breaker, clock)
+    probe = breaker.acquire()
+    assert breaker.signed_out() is True
+    assert probe.failure(Failure(RATE_LIMIT)) is False
+    assert breaker.signed_in() is True
+    assert breaker.snapshot() == Snapshot("claude-code", READY, None, None, 0)
+    assert breaker.acquire().probe is False
+
+
+def test_signed_out_is_saved_and_survives_a_restart(clock):
+    store = MemoryStore()
+    assert make(clock, store).signed_out() is True
+    assert store.records["claude-code"] == Record(SIGNED_OUT, None, 1, 0, AUTH)
+    assert restart(clock, store).snapshot() == Snapshot("claude-code", SIGNED_OUT, None, AUTH, 1)
+
+
+def test_signed_out_with_a_store_that_raises_still_signs_the_engine_out(clock):
+    class Broken(NullStore):
+        def save(self, engine_id, record):
+            raise OSError("disk full")
+
+    breaker = make(clock, Broken())
+    assert breaker.signed_out() is True
+    assert breaker.snapshot().state == SIGNED_OUT
 
 
 def test_open_and_signed_out_ignore_a_success_from_a_turn_that_began_earlier(clock):
@@ -1252,6 +1313,14 @@ class Model:
         self.state, self.until, self.wait, self.fails, self.opens, self.last = READY, None, 0, 0, 0, None
         return True
 
+    def signed_out(self):
+        if self.state == SIGNED_OUT:
+            return False
+        self.fails, self.last = min(self.fails + 1, 10**6), AUTH
+        self.state, self.until, self.probe_open = SIGNED_OUT, None, False
+        self.valid.clear()
+        return True
+
     def view(self):
         until = BASE + timedelta(seconds=self.until) if self.state == OPEN else None
         return Snapshot("claude-code", self.state, until, self.last, self.fails)
@@ -1288,8 +1357,10 @@ def test_ten_thousand_random_steps_agree_with_the_reference_model():
             else:
                 got = ticket.failure(Failure(kind, None if retry is None else BASE + timedelta(seconds=retry)))
             assert got == model.report(model_id, seconds, kind, retry), step
-        elif action < 0.93:
+        elif action < 0.90:
             assert breaker.signed_in() == model.signed_in(), step
+        elif action < 0.93:
+            assert breaker.signed_out() == model.signed_out(), step
         else:
             model.advance(seconds)
         model.advance(seconds)
@@ -1331,11 +1402,13 @@ def test_the_module_reads_no_environment_and_starts_nothing():
         assert word not in source, word
 
 
-def test_nothing_in_the_package_imports_the_breaker_yet():
+def test_only_the_engine_state_imports_the_breaker():
+    """Slice 2 wires the breaker for recording, through engine_state.py and nothing else: no run path
+    (segment, the engines, the app) imports it, and none of them asks it for a ticket."""
     package = Path(engine_breaker.__file__).parent
-    for file in package.rglob("*.py"):
-        if file.name != "engine_breaker.py":
-            assert "engine_breaker" not in file.read_text(encoding="utf-8"), file.name
+    others = [file for file in package.rglob("*.py") if file.name != "engine_breaker.py"]
+    assert {file.name for file in others if "engine_breaker" in file.read_text(encoding="utf-8")} == {"engine_state.py"}
+    assert {file.name for file in others if ".acquire(" in file.read_text(encoding="utf-8")} <= {"engine_state.py"}
 
 
 def test_the_state_names_are_the_plans():

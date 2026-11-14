@@ -5,9 +5,12 @@ a :class:`BreakerRegistry`. What goes in is the :class:`~freeduet.failure_classi
 returned, or a success. What comes out is a yes or no for the next turn (:meth:`EngineBreaker.acquire`) and a
 read-only :class:`Snapshot` for the future dashboard.
 
-NOT WIRED INTO ANY RUN PATH. Nothing imports this module, and nothing instantiates :class:`FileStore`: the path
-of its file will come from configuration in a later slice (decision E4, ENGINES_PLAN section 9.3: limited-until
-in a file in agent-freeduet's own volume, the person's choices on the server).
+WIRED FOR RECORDING ONLY (slice 2, freeduet/engine_state.py). The service reports the real outcome of every turn
+through a ticket and keeps the file; no run path asks :meth:`EngineBreaker.acquire` whether to run a turn, so
+nothing is skipped, moved or delayed because of a verdict (that is slice 3). This module still reads no
+setting of the service and instantiates no store: the path of the file comes from configuration in
+engine_state.py (decision E4, ENGINES_PLAN section 9.3: limited-until in a file in agent-freeduet's own
+volume, the person's choices on the server).
 
 The states, named as the plan's table names them (``half_open`` and ``signed_out`` are "Half-open" and
 "Signed out"):
@@ -23,7 +26,9 @@ state          a turn may                enters when (leaves when)
 ``open``       no                        a limit, or the trip count of transient failures (the time passes)
 ``half_open``  one probe, the rest no    the open time passed (probe success: ``ready``; probe failure: ``open``
                                          again; probe failure by sign-in: ``signed_out``)
-``signed_out`` no                        an ``auth`` failure (:meth:`EngineBreaker.signed_in`; never a timer)
+``signed_out`` no                        an ``auth`` failure, or a probe that saw no sign-in
+                                         (:meth:`EngineBreaker.signed_out`); a probe that sees one leaves it
+                                         (:meth:`EngineBreaker.signed_in`); never a timer
 =============  =======================  =======================================================================
 
 What each failure kind does. Only a report that is current counts (see "Reports" below).
@@ -487,6 +492,19 @@ class EngineBreaker:
             if self._state != SIGNED_OUT:
                 return False
             self._to_ready()
+            self._commit()
+            return True
+
+    def signed_out(self) -> bool:
+        """Tell the breaker the engine is not signed in (its ``probe()`` saw it). It is an ``auth`` failure that
+        no turn reported: from any other state the breaker goes to ``signed_out`` the way :meth:`failure` with
+        an ``auth`` failure does (a failure counted, ``last_failure_kind`` ``auth``, tickets out now go stale),
+        and a ticket the engine was given before it is ignored when reported. True when it moved; False when
+        it was already ``signed_out``, where nothing changes."""
+        with self._lock:
+            if self._state == SIGNED_OUT:
+                return False
+            self._take(Failure(AUTH), self._clock())
             self._commit()
             return True
 

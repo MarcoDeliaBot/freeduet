@@ -1,0 +1,10 @@
+{
+  "loggedIn": true,
+  "authMethod": "claude.ai",
+  "apiProvider": "firstParty",
+  "email": "person@example.invalid",
+  "orgName": "Example Organisation",
+  "analyticsDisabled": false,
+  "projectsDirectory": "/scrubbed/projects",
+  "configDirectory": "/scrubbed"
+}
