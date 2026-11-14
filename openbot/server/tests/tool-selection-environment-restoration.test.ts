@@ -17,6 +17,15 @@ const modelModulePath = fileURLToPath(
   new URL("../src/routing/model.ts", import.meta.url),
 );
 
+/*
+ * Each proof starts a child `bun test` process that boots the fixture's mocks and listeners, so a
+ * case is real process work, not a unit check. Measured with the junit reporter on 14 November 2026
+ * (ten runs per case): alone about 2.5 to 3.5 s median and 6.6 s at most; under a bounded synthetic
+ * CPU load (two busy loops on two cores, ambient load 9 to 11) about 4.9 to 5.8 s median and 8.1 s at
+ * most. The bound is about three times the worst measured case, so the 5 s default cannot decide.
+ */
+const RESTORATION_PROOF_TIMEOUT_MS = 25_000;
+
 type ProofMode = "present" | "absent" | "teardown-error" | "setup-error";
 
 function childEnvironment(mode: ProofMode): Record<string, string> {
@@ -145,103 +154,119 @@ describe("tool-selection fixture model environment restoration", () => {
     );
   });
 
-  test("restores a present model environment after the actual fixture lifecycle", async () => {
-    const proof = await runRestorationProof("present");
+  test(
+    "restores a present model environment after the actual fixture lifecycle",
+    async () => {
+      const proof = await runRestorationProof("present");
 
-    expect(proof.exitCode).toBe(0);
-    expect(restorationResultFrom(proof.stdout)).toEqual({
-      mode: "present",
-      restoredBase: true,
-      restoredKey: true,
-      modelStatus: "resolved",
-      modelTextMatches: true,
-      receivedProbe: true,
-      receivedPathMatches: true,
-      receivedAuthMatches: true,
-      keyStillFixture: false,
-    });
-  });
+      expect(proof.exitCode).toBe(0);
+      expect(restorationResultFrom(proof.stdout)).toEqual({
+        mode: "present",
+        restoredBase: true,
+        restoredKey: true,
+        modelStatus: "resolved",
+        modelTextMatches: true,
+        receivedProbe: true,
+        receivedPathMatches: true,
+        receivedAuthMatches: true,
+        keyStillFixture: false,
+      });
+    },
+    RESTORATION_PROOF_TIMEOUT_MS,
+  );
 
-  test("deletes absent model environment entries after the actual fixture lifecycle", async () => {
-    const proof = await runRestorationProof("absent");
+  test(
+    "deletes absent model environment entries after the actual fixture lifecycle",
+    async () => {
+      const proof = await runRestorationProof("absent");
 
-    expect(proof.exitCode).toBe(0);
-    expect(restorationResultFrom(proof.stdout)).toEqual({
-      mode: "absent",
-      baseAbsent: true,
-      keyAbsent: true,
-      keyStillFixture: false,
-    });
-  });
+      expect(proof.exitCode).toBe(0);
+      expect(restorationResultFrom(proof.stdout)).toEqual({
+        mode: "absent",
+        baseAbsent: true,
+        keyAbsent: true,
+        keyStillFixture: false,
+      });
+    },
+    RESTORATION_PROOF_TIMEOUT_MS,
+  );
 
-  test("restores the model environment before surfacing actual fixture teardown errors", async () => {
-    const proof = await runRestorationProof("teardown-error");
+  test(
+    "restores the model environment before surfacing actual fixture teardown errors",
+    async () => {
+      const proof = await runRestorationProof("teardown-error");
 
-    expect(proof.exitCode).toBe(1);
-    expect(restorationResultFrom(proof.stdout)).toEqual({
-      mode: "teardown-error",
-      restoredBase: true,
-      restoredKey: true,
-      modelStatus: "resolved",
-      modelTextMatches: true,
-      receivedProbe: true,
-      receivedPathMatches: true,
-      receivedAuthMatches: true,
-      keyStillFixture: false,
-    });
-    expect(lifecycleEventsFrom(proof.stdout)).toEqual([
-      "tool-selection-beforeAll:start",
-      "tool-selection-beforeAll:snapshot",
-      "tool-selection-beforeAll:llm-started",
-      "tool-selection-beforeAll:env-set",
-      "tool-selection-beforeAll:remote-started",
-      "tool-selection-test:early-stop-start",
-      "tool-selection-test:early-stop-settled",
-      "tool-selection-afterAll:stop-start",
-      "tool-selection-afterAll:stop-settled",
-      "tool-selection-afterAll:stop-rejected",
-      "tool-selection-afterAll:env-restored",
-    ]);
-    expect(proof.stderr).toContain("Server not started");
-  });
+      expect(proof.exitCode).toBe(1);
+      expect(restorationResultFrom(proof.stdout)).toEqual({
+        mode: "teardown-error",
+        restoredBase: true,
+        restoredKey: true,
+        modelStatus: "resolved",
+        modelTextMatches: true,
+        receivedProbe: true,
+        receivedPathMatches: true,
+        receivedAuthMatches: true,
+        keyStillFixture: false,
+      });
+      expect(lifecycleEventsFrom(proof.stdout)).toEqual([
+        "tool-selection-beforeAll:start",
+        "tool-selection-beforeAll:snapshot",
+        "tool-selection-beforeAll:llm-started",
+        "tool-selection-beforeAll:env-set",
+        "tool-selection-beforeAll:remote-started",
+        "tool-selection-test:early-stop-start",
+        "tool-selection-test:early-stop-settled",
+        "tool-selection-afterAll:stop-start",
+        "tool-selection-afterAll:stop-settled",
+        "tool-selection-afterAll:stop-rejected",
+        "tool-selection-afterAll:env-restored",
+      ]);
+      expect(proof.stderr).toContain("Server not started");
+    },
+    RESTORATION_PROOF_TIMEOUT_MS,
+  );
 
-  test("restores the model environment and stops started mocks before surfacing setup errors", async () => {
-    const proof = await runRestorationProof("setup-error");
+  test(
+    "restores the model environment and stops started mocks before surfacing setup errors",
+    async () => {
+      const proof = await runRestorationProof("setup-error");
 
-    expect(proof.exitCode).toBe(1);
-    expect(restorationResultFrom(proof.stdout)).toEqual({
-      mode: "setup-error",
-      restoredBase: true,
-      restoredKey: true,
-      modelStatus: "resolved",
-      modelTextMatches: true,
-      receivedProbe: true,
-      receivedPathMatches: true,
-      receivedAuthMatches: true,
-      keyStillFixture: false,
-    });
-    expect(setupResultFrom(proof.stdout)).toEqual({
-      mode: "setup-error",
-      llmStopStatus: "fulfilled",
-      remoteStopStatus: "rejected",
-      fixtureListenerStopped: true,
-    });
-    expect(lifecycleEventsFrom(proof.stdout)).toEqual([
-      "tool-selection-beforeAll:start",
-      "tool-selection-beforeAll:snapshot",
-      "tool-selection-beforeAll:llm-started",
-      "tool-selection-beforeAll:env-set",
-      "tool-selection-beforeAll:setup-failure-injected",
-      "tool-selection-beforeAll:setup-catch",
-      "tool-selection-beforeAll:setup-stop-settled",
-      "tool-selection-beforeAll:setup-env-restored",
-      "tool-selection-afterAll:stop-start",
-      "tool-selection-afterAll:stop-settled",
-      "tool-selection-afterAll:stop-rejected",
-      "tool-selection-afterAll:env-restored",
-    ]);
-    expect(proof.stderr).toContain(
-      "SRA-009 synthetic setup failure after env mutation",
-    );
-  });
+      expect(proof.exitCode).toBe(1);
+      expect(restorationResultFrom(proof.stdout)).toEqual({
+        mode: "setup-error",
+        restoredBase: true,
+        restoredKey: true,
+        modelStatus: "resolved",
+        modelTextMatches: true,
+        receivedProbe: true,
+        receivedPathMatches: true,
+        receivedAuthMatches: true,
+        keyStillFixture: false,
+      });
+      expect(setupResultFrom(proof.stdout)).toEqual({
+        mode: "setup-error",
+        llmStopStatus: "fulfilled",
+        remoteStopStatus: "rejected",
+        fixtureListenerStopped: true,
+      });
+      expect(lifecycleEventsFrom(proof.stdout)).toEqual([
+        "tool-selection-beforeAll:start",
+        "tool-selection-beforeAll:snapshot",
+        "tool-selection-beforeAll:llm-started",
+        "tool-selection-beforeAll:env-set",
+        "tool-selection-beforeAll:setup-failure-injected",
+        "tool-selection-beforeAll:setup-catch",
+        "tool-selection-beforeAll:setup-stop-settled",
+        "tool-selection-beforeAll:setup-env-restored",
+        "tool-selection-afterAll:stop-start",
+        "tool-selection-afterAll:stop-settled",
+        "tool-selection-afterAll:stop-rejected",
+        "tool-selection-afterAll:env-restored",
+      ]);
+      expect(proof.stderr).toContain(
+        "SRA-009 synthetic setup failure after env mutation",
+      );
+    },
+    RESTORATION_PROOF_TIMEOUT_MS,
+  );
 });

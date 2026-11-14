@@ -178,6 +178,7 @@ Mark (id `marketer`) was the first member added after v0.1, Cam (id `video`) the
   Dockerfile, a service or a compose change, look at main's own run. A new `*/Dockerfile` under
   `openbot/` must be added to `openbot/.github/published-images.json`.
 - Biome runs from `openbot/`, not `openbot/server/`.
+- Still load-sensitive after 14 November 2026 (measured under two busy loops on the shared two-core runner): `tool-selection-environment-restoration` (25 s, each case boots a child `bun test`), `sole-definition` (45 s, walks the source trees) and the explicit timeouts on `production-loader-boundary` (kill 25 s), `plugin-store.integration`, `composio-transport`, `assertion-shape`, `start-restart-guard` (D25) and `app-access-action`; a case past its bound is real slowness, not a flake.
 
 ## Site (`site/`)
 
