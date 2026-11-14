@@ -13,12 +13,15 @@
  * person's own id, so one person can never undo another's change.
  */
 import { randomUUID } from "node:crypto";
-import { and, eq, sql } from "drizzle-orm";
+import { and, eq, isNotNull, isNull, sql } from "drizzle-orm";
 import type { SettingChangeRecord } from "@openbot/shared/setting-change";
 import type { AuditEvent, AuditReader, AuditStore } from "../audit";
 import { recordAuditEvent } from "../audit";
 import type { Database } from "../db/client";
+import { agentPreferences, agentProfiles } from "../db/schema/coworker";
+import { agents } from "../db/schema/core";
 import { botLifecycle } from "../db/schema/lifecycle";
+import { checkMemberName, foldName, isWellFormedName } from "./member-name";
 import type { ChatNotifyValue, ChatSettingName } from "./allow-list";
 
 /** The audit target of a change, and of the Undo of one. Free-form strings the reader filters on. */
@@ -65,9 +68,21 @@ export type SettingChangeOutcome =
 export type SettingUndoOutcome = {
   changeId: string;
   setting: ChatSettingName;
-  /** The value the Undo put back: exactly the one the change replaced. */
-  value: NotifyLevel;
+  /** The value the Undo put back: exactly the one the change replaced (null: the member's own name). */
+  value: NotifyLevel | string | null;
 };
+
+export type NameChangeOutcome =
+  | {
+      status: "changed";
+      changeId: string;
+      /** The member named, by its real id. */
+      agentId: string;
+      setting: "name";
+      previousValue: string | null;
+      newValue: string | null;
+    }
+  | { status: "unchanged"; value: string | null };
 
 export type SettingChanges = {
   change(input: {
@@ -76,6 +91,16 @@ export type SettingChanges = {
     setting: ChatSettingName;
     value: ChatNotifyValue;
   }): Promise<SettingChangeOutcome>;
+  /**
+   * The name this person gives a team member, shown to this person only. `member` is an id or a real name
+   * as written, or absent for `callerId`, the Bot making the call. Every rule of `member-name.ts` applies.
+   */
+  changeName(input: {
+    ownerUserId: string;
+    callerId: string;
+    member: string | undefined;
+    value: string;
+  }): Promise<NameChangeOutcome>;
   undo(input: {
     ownerUserId: string;
     changeId: string;
@@ -92,19 +117,21 @@ function isChatValue(value: unknown): value is ChatNotifyValue {
 /** The fields a recorded change holds, read back from its audit event. Anything else is unreadable. */
 function recordOf(payload: Record<string, unknown>) {
   const { setting, agentId, previousValue, newValue } = payload;
-  if (
-    setting !== "notifications" ||
-    typeof agentId !== "string" ||
-    !isChatValue(previousValue) ||
-    !isChatValue(newValue)
-  )
+  if (typeof agentId !== "string")
     throw new Error("A recorded setting change could not be read back.");
-  return {
-    setting: "notifications" as const,
-    agentId,
-    previousValue,
-    newValue,
-  };
+  if (
+    setting === "notifications" &&
+    isChatValue(previousValue) &&
+    isChatValue(newValue)
+  )
+    return { setting, agentId, previousValue, newValue } as const;
+  if (
+    setting === "name" &&
+    (previousValue === null || isWellFormedName(previousValue)) &&
+    (newValue === null || isWellFormedName(newValue))
+  )
+    return { setting, agentId, previousValue, newValue } as const;
+  throw new Error("A recorded setting change could not be read back.");
 }
 
 /** The change's own id, which is the audit event's target. A row without one cannot be looked up. */
@@ -174,6 +201,161 @@ export function createSettingChanges(deps: {
     return rows.length === 1;
   }
 
+  /** The aliases this person gave their members, by member id. */
+  async function aliasesOf(
+    executor: Pick<Database, "select">,
+    ownerUserId: string,
+  ): Promise<Map<string, string>> {
+    const rows = await executor
+      .select({
+        agentId: agentPreferences.agentId,
+        name: agentPreferences.displayName,
+      })
+      .from(agentPreferences)
+      .where(
+        and(
+          eq(agentPreferences.userId, ownerUserId),
+          isNotNull(agentPreferences.displayName),
+        ),
+      );
+    return new Map(
+      rows.flatMap((row) =>
+        isWellFormedName(row.name) ? [[row.agentId, row.name] as const] : [],
+      ),
+    );
+  }
+
+  /** The team members, which are the only ones a person names this way. */
+  async function teamMembers(executor: Pick<Database, "select">) {
+    return executor
+      .select({ id: agents.id, name: agents.name })
+      .from(agents)
+      .innerJoin(agentProfiles, eq(agentProfiles.agentId, agents.id))
+      .where(and(isNull(agentProfiles.deletedAt), isNotNull(agents.packageId)));
+  }
+
+  /** Serializes one person's name changes, so two together cannot both pass the check. */
+  async function lockPerson(
+    tx: Pick<Database, "execute">,
+    ownerUserId: string,
+  ) {
+    await tx.execute(
+      sql`select pg_advisory_xact_lock(hashtext(${`member-name:${ownerUserId}`}))`,
+    );
+  }
+
+  /** Writes `to` as the alias only while it is still `from`. Says whether it did. */
+  async function swapName(
+    executor: Pick<Database, "insert" | "update">,
+    ownerUserId: string,
+    agentId: string,
+    from: string | null,
+    to: string | null,
+  ): Promise<boolean> {
+    await executor
+      .insert(agentPreferences)
+      .values({ userId: ownerUserId, agentId })
+      .onConflictDoNothing({
+        target: [agentPreferences.userId, agentPreferences.agentId],
+      });
+    const rows = await executor
+      .update(agentPreferences)
+      .set({ displayName: to })
+      .where(
+        and(
+          eq(agentPreferences.userId, ownerUserId),
+          eq(agentPreferences.agentId, agentId),
+          from === null
+            ? isNull(agentPreferences.displayName)
+            : eq(agentPreferences.displayName, from),
+        ),
+      )
+      .returning({ agentId: agentPreferences.agentId });
+    return rows.length === 1;
+  }
+
+  const nameContextFor = (
+    members: { id: string; name: string }[],
+    aliases: Map<string, string>,
+    target: { id: string; name: string },
+  ) => ({
+    realName: target.name,
+    otherRealNames: members
+      .filter((m) => m.id !== target.id)
+      .map((m) => m.name),
+    otherAliases: [...aliases]
+      .filter(([id]) => id !== target.id)
+      .map(([, n]) => n),
+  });
+
+  async function undoName(
+    ownerUserId: string,
+    changeId: string,
+    recorded: {
+      agentId: string;
+      previousValue: string | null;
+      newValue: string | null;
+    },
+  ) {
+    await database.transaction(async (tx) => {
+      await lockPerson(tx, ownerUserId);
+      const aliases = await aliasesOf(tx, ownerUserId);
+      const now = aliases.get(recorded.agentId) ?? null;
+      if (now !== recorded.newValue)
+        throw new SettingRefusedError(
+          `That name has changed since, so nothing was undone. It is now ${now ?? "the member's own name"}.`,
+          409,
+        );
+      if (recorded.previousValue !== null) {
+        const members = await teamMembers(tx);
+        const target = members.find((m) => m.id === recorded.agentId);
+        const check = target
+          ? checkMemberName(
+              recorded.previousValue,
+              nameContextFor(members, aliases, target),
+            )
+          : null;
+        if (!check?.ok)
+          throw new SettingRefusedError(
+            "The earlier name cannot be used any more, so nothing was undone.",
+            409,
+          );
+      }
+      await swapName(
+        tx,
+        ownerUserId,
+        recorded.agentId,
+        recorded.newValue,
+        recorded.previousValue,
+      );
+    });
+    try {
+      await recordAuditEvent(audit, {
+        eventType: "configuration.changed",
+        targetType: SETTING_UNDO_TARGET,
+        targetId: changeId,
+        actorUserId: ownerUserId,
+        payload: {
+          change: "setting_change_undone",
+          changeId,
+          setting: "name",
+          agentId: recorded.agentId,
+          previousValue: recorded.newValue,
+          newValue: recorded.previousValue,
+        },
+      });
+    } catch (error) {
+      await swapName(
+        database,
+        ownerUserId,
+        recorded.agentId,
+        recorded.previousValue,
+        recorded.newValue,
+      );
+      throw error;
+    }
+  }
+
   return {
     async change(input) {
       const { ownerUserId, agentId, setting, value } = input;
@@ -221,6 +403,95 @@ export function createSettingChanges(deps: {
       };
     },
 
+    async changeName(input) {
+      const { ownerUserId, callerId, value } = input;
+      const outcome = await database.transaction(async (tx) => {
+        await lockPerson(tx, ownerUserId);
+        const members = await teamMembers(tx);
+        const aliases = await aliasesOf(tx, ownerUserId);
+        const reference = (input.member ?? callerId).trim();
+        const folded = foldName(reference);
+        const matches = members.filter(
+          (m) =>
+            m.id === reference ||
+            foldName(m.name) === folded ||
+            foldName(aliases.get(m.id) ?? "\u0000") === folded,
+        );
+        const exact = matches.filter((m) => m.id === reference);
+        const target =
+          exact.length === 1
+            ? exact[0]
+            : matches.length === 1
+              ? matches[0]
+              : undefined;
+        if (!target)
+          throw new SettingRefusedError(
+            matches.length > 1
+              ? "More than one member fits that. Say which one."
+              : "That is not a member of the team. You can rename a Bot you made yourself on its own page.",
+            404,
+          );
+        const check = checkMemberName(
+          value,
+          nameContextFor(members, aliases, target),
+        );
+        if (!check.ok) throw new SettingRefusedError(check.message, 409);
+        const previous = aliases.get(target.id) ?? null;
+        if (previous === check.value)
+          return { status: "unchanged" as const, value: previous };
+        if (
+          !(await swapName(tx, ownerUserId, target.id, previous, check.value))
+        )
+          throw new SettingRefusedError(
+            "The name changed a moment ago, so nothing was changed. Ask again.",
+            409,
+          );
+        return {
+          status: "changed" as const,
+          target,
+          previous,
+          next: check.value,
+        };
+      });
+      if (outcome.status === "unchanged") return outcome;
+      const changeId = randomUUID();
+      try {
+        await recordAuditEvent(audit, {
+          eventType: "configuration.changed",
+          targetType: SETTING_CHANGE_TARGET,
+          targetId: changeId,
+          actorUserId: ownerUserId,
+          payload: {
+            change: "setting_changed_in_chat",
+            changeId,
+            setting: "name",
+            // Identity stays real: the member's id and its own name, never the name this person gave it.
+            agentId: outcome.target.id,
+            agentName: outcome.target.name,
+            previousValue: outcome.previous,
+            newValue: outcome.next,
+          },
+        });
+      } catch (error) {
+        await swapName(
+          database,
+          ownerUserId,
+          outcome.target.id,
+          outcome.next,
+          outcome.previous,
+        );
+        throw error;
+      }
+      return {
+        status: "changed",
+        changeId,
+        agentId: outcome.target.id,
+        setting: "name",
+        previousValue: outcome.previous,
+        newValue: outcome.next,
+      };
+    },
+
     async undo(input) {
       const { ownerUserId, changeId } = input;
       const [change] = (
@@ -255,9 +526,19 @@ export function createSettingChanges(deps: {
       const recorded = recordOf(change.payload);
       if (!withinUndoWindow(change.createdAt, clock()))
         throw new SettingRefusedError(
-          "That change is more than seven days old, so it can no longer be undone. You can still set notifications on the Bot's own page.",
+          recorded.setting === "name"
+            ? "That change is more than seven days old, so it can no longer be undone. You can still ask for the name you want."
+            : "That change is more than seven days old, so it can no longer be undone. You can still set notifications on the Bot's own page.",
           409,
         );
+      if (recorded.setting === "name") {
+        await undoName(ownerUserId, changeId, recorded);
+        return {
+          changeId,
+          setting: "name" as const,
+          value: recorded.previousValue,
+        };
+      }
       if (
         !(await swap(
           ownerUserId,
@@ -337,25 +618,28 @@ export function createSettingChanges(deps: {
       const levelOfBot = new Map(
         levels.map((row) => [row.agentId, row.notify]),
       );
+      const aliases = await aliasesOf(database, ownerUserId);
       const now = clock();
 
-      return rows.map(({ event, changeId, undone }) => {
+      return rows.map(({ event, changeId, undone }): SettingChangeRecord => {
         const recorded = recordOf(event.payload);
         // The setting still holds what this change set, so Undo would put the old value back. If a
         // later change moved it, Undo would refuse, so the list shows none.
         const stillSet =
-          (levelOfBot.get(recorded.agentId) ?? "all") === recorded.newValue;
-        return {
+          recorded.setting === "name"
+            ? (aliases.get(recorded.agentId) ?? null) === recorded.newValue
+            : (levelOfBot.get(recorded.agentId) ?? "all") === recorded.newValue;
+        const common = {
           changeId,
           agentId: recorded.agentId,
-          setting: recorded.setting,
-          previousValue: recorded.previousValue,
-          newValue: recorded.newValue,
           at: event.createdAt,
           undone,
           undoable:
             !undone && withinUndoWindow(event.createdAt, now) && stillSet,
         };
+        return recorded.setting === "name"
+          ? { ...common, ...recorded }
+          : { ...common, ...recorded };
       });
     },
   };

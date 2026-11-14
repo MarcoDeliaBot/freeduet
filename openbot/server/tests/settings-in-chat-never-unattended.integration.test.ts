@@ -1064,6 +1064,23 @@ describe("every setting on the list is covered, now and later", () => {
     expect([...(CHAT_SETTING_NAMES as readonly string[])]).toEqual(listed);
   });
 
+  test("a member's name (docs/design/settings-in-chat.md, 8.10): refused in a routine, asked in the person's turn", async () => {
+    const args = { setting: "name", member: "Otto", value: "Max" };
+    const routine = await inTurn(fresh({ initiator: ROUTINE }), () =>
+      change(IRIS, ROUTINE, args),
+    ).catch((error: unknown) => error);
+    expect(routine).toBeInstanceOf(PluginRefusedError);
+    expect((routine as Error).message).toBe(NOT_IN_A_CONVERSATION);
+    expect(await pending()).toEqual([]);
+
+    const turn = fresh({ messages: [typed("call Otto Max")], args });
+    const held = await inTurn(turn, () => change(IRIS, PERSON, args)).catch(
+      (error: unknown) => error,
+    );
+    expect(held).toBeInstanceOf(HeadlessToolSuspension);
+    expect(await pending()).toHaveLength(1);
+  });
+
   test("the refusal does not read the arguments: a name nobody listed gets the same sentence in a routine", async () => {
     const args = { setting: "full_access", value: "on" };
     const routine = await inTurn(fresh({ initiator: ROUTINE }), () =>

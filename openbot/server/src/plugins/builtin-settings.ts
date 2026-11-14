@@ -37,8 +37,13 @@ const TOOLS: readonly McpTool[] = Object.freeze([
   {
     name: CHANGE_SETTING_TOOL,
     description: [
-      "Change one of this person's settings. The only setting here is `notifications`: how much this Bot",
-      "may interrupt the person. Its value is `all` (everything) or `needs_input` (questions and approvals only).",
+      "Change one of this person's settings. There are two.",
+      "`notifications`: how much this Bot may interrupt the person. Its value is `all` (everything) or",
+      "`needs_input` (questions and approvals only).",
+      "`name`: what this person calls a member of the team, shown to this person only (the member keeps its",
+      "own name everywhere else). Its value is the name, 1 to 40 letters, numbers and spaces. Give `member`",
+      "(the member's own name) when the person means another member than you; leave it out for yourself.",
+      "Giving a member its own name back clears the name the person chose.",
       "",
       "Use it only when the person has asked for that change in their own words. Every change asks the",
       "person to allow it on a card first, and nothing changes until they do. The change is recorded with the",
@@ -53,8 +58,12 @@ const TOOLS: readonly McpTool[] = Object.freeze([
       properties: {
         setting: {
           type: "string",
+          description: "The setting's name: `notifications` or `name`.",
+        },
+        member: {
+          type: "string",
           description:
-            "The setting's name. The only one here is `notifications`.",
+            "For `name` only: the team member to name, by its own name. Absent means the Bot making the call.",
         },
         value: {
           type: "string",
@@ -112,7 +121,7 @@ export async function callTool(
       `${toolName} is not a tool that settings in chat implements. The stored tool list is out of date; refresh it on the Plugins page.`,
     );
 
-  const decision = decideSettingRequest(args.setting, args.value);
+  const decision = decideSettingRequest(args.setting, args.value, args.member);
   if (!decision.ok) return failure(decision.message);
 
   const changes = installed;
@@ -122,6 +131,34 @@ export async function callTool(
     );
 
   try {
+    if (decision.setting === "name") {
+      const named = await changes.changeName({
+        ownerUserId,
+        callerId: agentId,
+        member: decision.member,
+        value: decision.value,
+      });
+      if (named.status === "unchanged")
+        return {
+          text: "That member already has that name for this person, so nothing changed.",
+          isError: false,
+          truncated: false,
+        };
+      return {
+        text: settingChangeResult(
+          {
+            changeId: named.changeId,
+            agentId: named.agentId,
+            setting: "name",
+            previousValue: named.previousValue,
+            newValue: named.newValue,
+          },
+          `Done: the person now sees this member as ${named.newValue ?? "its own name"}. Nobody else does, and you still call it by its own name. The change is recorded as ${named.changeId}, so it can be undone.`,
+        ),
+        isError: false,
+        truncated: false,
+      };
+    }
     const outcome = await changes.change({
       ownerUserId,
       agentId,

@@ -24,13 +24,25 @@ export const SETTING_CHANGES_PATH = "/api/settings-changes";
 export type ChatNotifyLevel = "all" | "needs_input";
 
 /** What a successful change tells the card: the change, the Bot, and the value before and after it. */
-export type SettingChangeResult = {
-  changeId: string;
-  agentId: string;
-  setting: "notifications";
-  previousValue: ChatNotifyLevel;
-  newValue: ChatNotifyLevel;
-};
+export type SettingChangeResult =
+  | {
+      changeId: string;
+      agentId: string;
+      setting: "notifications";
+      previousValue: ChatNotifyLevel;
+      newValue: ChatNotifyLevel;
+    }
+  | {
+      changeId: string;
+      agentId: string;
+      /** The name this person gives a team member. Null is the member's own name. */
+      setting: "name";
+      previousValue: string | null;
+      newValue: string | null;
+    };
+
+/** The longest name the contract carries (server/src/settings-in-chat/member-name.ts holds the rules). */
+export const MEMBER_NAME_MAX = 40;
 
 /** One change in the list, newest first. Undo is shown only where `undoable` says so. */
 export type SettingChangeRecord = SettingChangeResult & {
@@ -60,6 +72,15 @@ export function isChatNotifyLevel(value: unknown): value is ChatNotifyLevel {
   return value === "all" || value === "needs_input";
 }
 
+function isNameValue(value: unknown): value is string | null {
+  return (
+    value === null ||
+    (typeof value === "string" &&
+      value.length > 0 &&
+      Array.from(value).length <= MEMBER_NAME_MAX)
+  );
+}
+
 const CHANGE_ID_MAX = 200;
 const AGENT_ID_MAX = 200;
 
@@ -83,11 +104,16 @@ export function readSettingChange(result: unknown): SettingChangeResult | null {
     changeId.length > CHANGE_ID_MAX ||
     typeof agentId !== "string" ||
     agentId.length === 0 ||
-    agentId.length > AGENT_ID_MAX ||
-    setting !== "notifications" ||
-    !isChatNotifyLevel(previousValue) ||
-    !isChatNotifyLevel(newValue)
+    agentId.length > AGENT_ID_MAX
   )
     return null;
-  return { changeId, agentId, setting, previousValue, newValue };
+  if (
+    setting === "notifications" &&
+    isChatNotifyLevel(previousValue) &&
+    isChatNotifyLevel(newValue)
+  )
+    return { changeId, agentId, setting, previousValue, newValue };
+  if (setting === "name" && isNameValue(previousValue) && isNameValue(newValue))
+    return { changeId, agentId, setting, previousValue, newValue };
+  return null;
 }

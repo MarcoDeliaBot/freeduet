@@ -6,11 +6,12 @@ import {
   readSettingChange,
 } from "@openbot/shared/setting-change";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { z } from "zod";
 import { ToolLine } from "@/components/channels/tool-line";
 import { DuetCard, Tile } from "@/components/duet/kit";
-import { useBotNames } from "@/lib/agents/bot-names";
+import { agentKeys } from "@/lib/agents/queries";
+import { useBotLabels, useBotNames } from "@/lib/agents/bot-names";
 import {
   settingChangesKey,
   settingChangesQueryOptions,
@@ -58,7 +59,10 @@ type CardState =
 /** The card for one change a Bot made from chat. */
 export function SettingChangeCard({ change }: { change: SettingChangeResult }) {
   const t = useCardText();
-  const botName = useBotNames();
+  const botLabel = useBotLabels();
+  const botReal = useBotNames();
+  // A name change says which member by its own name: the label is the name it just got.
+  const botName = change.setting === "name" ? botReal : botLabel;
   const queryClient = useQueryClient();
   const list = useQuery(settingChangesQueryOptions());
   const [state, setState] = useState<CardState>({ kind: "idle" });
@@ -70,8 +74,22 @@ export function SettingChangeCard({ change }: { change: SettingChangeResult }) {
     !undone && !refused && listed !== undefined && !listed.undoable;
   const canUndo = !undone && !refused && !noLongerUndoable;
   const busy = state.kind === "busy";
-  const from = t(levelText(change.previousValue));
-  const to = t(levelText(change.newValue));
+  const isName = change.setting === "name";
+  // A name is the person's own label, drawn as text: React escapes it, so markup shows as itself.
+  const own = t("setting.name.own");
+  const from =
+    change.setting === "name"
+      ? (change.previousValue ?? own)
+      : t(levelText(change.previousValue));
+  const to =
+    change.setting === "name"
+      ? (change.newValue ?? own)
+      : t(levelText(change.newValue));
+
+  // The roster carries the name, so it is read again once a name has changed.
+  useEffect(() => {
+    if (isName) void queryClient.invalidateQueries({ queryKey: agentKeys.all });
+  }, [isName, queryClient]);
 
   async function undo() {
     setState({ kind: "busy" });
@@ -89,16 +107,18 @@ export function SettingChangeCard({ change }: { change: SettingChangeResult }) {
 
   return (
     <DuetCard
-      aria-label={t("setting.heading")}
+      aria-label={isName ? t("setting.name.heading") : t("setting.heading")}
       className="px-4 py-3"
       role="region"
     >
       <div className="flex items-center gap-3">
         <Tile icon="bell" />
         <div className="min-w-0 flex-1">
-          <p className="type-row font-semibold">{t("setting.heading")}</p>
+          <p className="type-row font-semibold">
+            {isName ? t("setting.name.heading") : t("setting.heading")}
+          </p>
           <p className="type-label text-duet-ink-3">
-            {t("setting.change", {
+            {t(isName ? "setting.name.change" : "setting.change", {
               bot: botName(change.agentId),
               from,
               to,
@@ -109,7 +129,9 @@ export function SettingChangeCard({ change }: { change: SettingChangeResult }) {
               className="type-label mt-1 font-semibold text-duet-green"
               role="status"
             >
-              {t("setting.undone", { value: from })}
+              {t(isName ? "setting.name.undone" : "setting.undone", {
+                value: from,
+              })}
             </p>
           ) : null}
           {noLongerUndoable ? (

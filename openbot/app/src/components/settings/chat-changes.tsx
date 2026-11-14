@@ -20,7 +20,7 @@ import {
   ItemTitle,
 } from "@/components/ui/item";
 import { Separator } from "@/components/ui/separator";
-import { useBotNames } from "@/lib/agents/bot-names";
+import { useBotLabels, useBotNames } from "@/lib/agents/bot-names";
 import {
   settingChangesKey,
   settingChangesQueryOptions,
@@ -86,8 +86,9 @@ function ChangeRow({
       </ItemMedia>
       <ItemContent>
         <ItemTitle>
-          {botName}: notifications went from {LEVEL[change.previousValue]} to{" "}
-          {LEVEL[change.newValue]}
+          {change.setting === "name"
+            ? `${botName}: your name for it went from ${change.previousValue ?? "its own name"} to ${change.newValue ?? "its own name"}`
+            : `${botName}: notifications went from ${LEVEL[change.previousValue]} to ${LEVEL[change.newValue]}`}
         </ItemTitle>
         <ItemDescription>
           {new Date(change.at).toLocaleString()}
@@ -122,7 +123,12 @@ function ChangeRow({
 
 export function ChatChangesSection() {
   const list = useQuery(settingChangesQueryOptions());
-  const botName = useBotNames();
+  const botLabel = useBotLabels();
+  const botReal = useBotNames();
+  const botName = (change: SettingChangeRecord) =>
+    change.setting === "name"
+      ? botReal(change.agentId)
+      : botLabel(change.agentId);
   return (
     <PageSection
       description="Settings a Bot changed from chat. Undo puts the old value back for seven days, and only while the setting still holds the value the change set."
@@ -146,7 +152,7 @@ export function ChatChangesSection() {
           {list.data.map((change, index) => (
             <Fragment key={change.changeId}>
               {index > 0 ? <Separator /> : null}
-              <ChangeRow botName={botName(change.agentId)} change={change} />
+              <ChangeRow botName={botName(change)} change={change} />
             </Fragment>
           ))}
         </PageRows>

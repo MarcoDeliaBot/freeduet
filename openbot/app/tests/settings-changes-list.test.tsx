@@ -33,7 +33,11 @@ beforeAll(() => GlobalRegistrator.register({ url: "http://localhost/" }));
 const WHEN = "2026-11-14T09:30:00.000Z";
 
 function change(
-  overrides: Partial<SettingChangeRecord> & { changeId: string },
+  overrides: Partial<
+    Extract<SettingChangeRecord, { setting: "notifications" }>
+  > & {
+    changeId: string;
+  },
 ): SettingChangeRecord {
   return {
     agentId: "iris",

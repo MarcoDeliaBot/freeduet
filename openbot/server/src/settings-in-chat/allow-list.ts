@@ -14,7 +14,7 @@
  */
 
 /** The settings a member may change from chat. Matched exactly. */
-export const CHAT_SETTING_NAMES = ["notifications"] as const;
+export const CHAT_SETTING_NAMES = ["notifications", "name"] as const;
 export type ChatSettingName = (typeof CHAT_SETTING_NAMES)[number];
 
 /** The values a member may give `notifications`: everything, or questions and approvals only. */
@@ -26,7 +26,13 @@ export const NOT_ON_THE_LIST =
   "That setting cannot be changed from chat. Only you can change it, in the app's settings.";
 
 export type SettingRequest =
-  | { ok: true; setting: ChatSettingName; value: ChatNotifyValue }
+  | { ok: true; setting: "notifications"; value: ChatNotifyValue }
+  /**
+   * A name for a team member, as this person sees it. `member` is the member's id or real name as the
+   * model wrote it, or absent for the Bot making the call; the server resolves it against the people's
+   * roster. `value` is checked by `member-name.ts`, not here.
+   */
+  | { ok: true; setting: "name"; value: string; member: string | undefined }
   | { ok: false; message: string };
 
 function isChatSettingName(value: string): value is ChatSettingName {
@@ -47,11 +53,24 @@ function isChatNotifyValue(value: unknown): value is ChatNotifyValue {
 export function decideSettingRequest(
   setting: unknown,
   value: unknown,
+  member?: unknown,
 ): SettingRequest {
   if (typeof setting !== "string" || setting.trim() === "")
     return { ok: false, message: "Say which setting to change." };
   if (!isChatSettingName(setting))
     return { ok: false, message: NOT_ON_THE_LIST };
+  if (setting === "name") {
+    if (typeof value !== "string" || value.trim() === "")
+      return { ok: false, message: "Say which name to use." };
+    if (member !== undefined && (typeof member !== "string" || !member.trim()))
+      return { ok: false, message: "Say which member to name." };
+    return {
+      ok: true,
+      setting: "name",
+      value,
+      member: typeof member === "string" ? member.trim() : undefined,
+    };
+  }
   if (value === "none")
     return {
       ok: false,

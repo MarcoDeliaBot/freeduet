@@ -7,6 +7,7 @@
 import { sql } from "drizzle-orm";
 import {
   boolean,
+  check,
   index,
   pgEnum,
   pgTable,
@@ -78,8 +79,22 @@ export const agentPreferences = pgTable(
       .references(() => agents.id, { onDelete: "cascade" }),
     hiddenAt: timestamp("hidden_at", { withTimezone: true }),
     pinnedAt: timestamp("pinned_at", { withTimezone: true }),
+    /**
+     * FreeDuet (docs/design/settings-in-chat.md, 8.10): the name THIS person gives this member, shown
+     * to this person only. Null is the member's own name. The `agents` row is never renamed.
+     */
+    displayName: text("display_name"),
   },
-  (table) => [primaryKey({ columns: [table.userId, table.agentId] })],
+  (table) => [
+    primaryKey({ columns: [table.userId, table.agentId] }),
+    check(
+      "agent_preferences_display_name_check",
+      sql`${table.displayName} is null or (char_length(${table.displayName}) between 1 and 40 and ${table.displayName} = btrim(${table.displayName}))`,
+    ),
+    uniqueIndex("agent_preferences_user_display_name_idx")
+      .on(table.userId, sql`lower(${table.displayName})`)
+      .where(sql`${table.displayName} is not null`),
+  ],
 );
 
 export const routineRunStatus = pgEnum("routine_run_status", [

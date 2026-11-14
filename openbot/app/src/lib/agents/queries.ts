@@ -11,7 +11,10 @@ export type AgentVisibility = "public" | "private";
  */
 export type AgentProfile = {
   id: string;
+  /** What this person sees: the name they gave a team member, else its own. */
   name: string;
+  /** The member's own name, sent only when `name` is one this person gave it. */
+  realName?: string;
   title: string;
   roleDescription: string;
   avatarSeed: string;
