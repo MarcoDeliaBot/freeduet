@@ -116,17 +116,18 @@ Each PR that touches policy.ts or catalogue.ts adds or updates its row in docs/U
 - No telemetry by default; one free licence with no paid-only part [code: docs/ROADMAP.md:76, 78].
 - Sign-in happens in the tool's own flow, and FreeDuet stores no tool passwords or session tokens [code: docs/CONNECTORS.md:23-24]. A broker holds the tokens, so FreeDuet does not store them, but the person's data then passes through the broker (D-a).
 - Sends, payments, signatures, bookings and deletions keep asking [code: docs/PROJECT.md:28].
+- **Decided 14 November 2026:** only you connect a new app. A member may propose one with a card.
 
 ## 6. Open decisions
 
 | # | Decision | Options | Recommendation | Reason |
 |---|---|---|---|---|
 | D-a | Golden rule scope and broker role | (1) no-console apps by default, others via an opt-in broker or the person's own app; (2) a broker for every app; (3) no broker | (1) | (2) puts custody and metered calls on the default path; (3) leaves out vendors without dynamic registration, for which a broker's managed OAuth is the console-free route [doc: https://docs.composio.dev/toolkits/managed-auth] |
-| D-b | Self-run MCP on the person's machine | (1) keep the refusal; (2) an explicit switch per server | (1) now; (2) after S1 | The refusal blocks private addresses [code: openbot/server/src/plugins/catalogue.ts:895-899]; the need is narrow |
-| D-c | Word check on free text and brokered reads | (1) as today; (2) tool name, scope and structured arguments only; (3) also check brokered reads | (2) and (3), after S1 | "pay" in a reminder hands the send to the person [code: docs/UPSTREAM_TOUCHES.md:198]; brokered reads skip the check [code: openbot/server/src/approvals/policy.ts:235]. A security change, so the maintainer decides |
-| D-d | Google route | (1) app password as default, OAuth for people with their own Cloud project; (2) one project-wide OAuth app with verification and a yearly assessment; (3) Testing mode for a few users | (1) now; (2) only if its cost is accepted | Restricted Gmail scopes need verification and a security assessment every 12 months for outside users [doc: https://developers.google.com/identity/protocols/oauth2/production-readiness/restricted-scope-verification]; Testing allows 100 users and 7-day refresh tokens [doc: https://developers.google.com/identity/protocols/oauth2/production-readiness/overview] |
+| D-b | Self-run MCP on the person's machine | (1) keep the refusal; (2) an explicit switch per server | Decided 14 November 2026: (1). Local MCP programs on the person's computer are not offered as tools for now, because they run code on the computer. | The refusal blocks private addresses [code: openbot/server/src/plugins/catalogue.ts:895-899]; the need is narrow |
+| D-c | Word check on free text and brokered reads | (1) as today; (2) tool name, scope and structured arguments only; (3) also check brokered reads | (2) and (3), after S1. Decided 14 November 2026 for names: the word check that stops writes under names such as "password" or "credential" stays, with an explicit exception list. The free-text and brokered-read options are not decided. | "pay" in a reminder hands the send to the person [code: docs/UPSTREAM_TOUCHES.md:198]; brokered reads skip the check [code: openbot/server/src/approvals/policy.ts:235]. A security change, so the maintainer decides |
+| D-d | Google route | (1) app password as default, OAuth for people with their own Cloud project; (2) one project-wide OAuth app with verification and a yearly assessment; (3) Testing mode for a few users | (1) now; (2) only if its cost is accepted. Decided 14 November 2026: (1). The app password stays the default, and OAuth stays for experts. | Restricted Gmail scopes need verification and a security assessment every 12 months for outside users [doc: https://developers.google.com/identity/protocols/oauth2/production-readiness/restricted-scope-verification]; Testing allows 100 users and 7-day refresh tokens [doc: https://developers.google.com/identity/protocols/oauth2/production-readiness/overview] |
 | D-e | First ten and messaging | Confirm the ten; messaging: Slack (needs a registered app; for teams) or Telegram (M5) | Confirm the ten; Telegram for a solo person, Slack only with a team | The persona is solo [code: docs/PROJECT.md:20]; Slack has no dynamic registration [doc: https://docs.slack.dev/ai/slack-mcp-server/] |
-| D-f | Microsoft (Outlook, OneDrive) | (1) defer; (2) the person's own Entra app; (3) a broker | (1) until D-a is settled | Microsoft's enterprise MCP lists no mail, calendar or file scope [doc: https://learn.microsoft.com/en-us/graph/mcp-server/get-started]; Graph needs an app registration [assumed] |
+| D-f | Microsoft (Outlook, OneDrive) | (1) defer; (2) the person's own Entra app; (3) a broker | (1) until D-a is settled. Decided 14 November 2026: Microsoft (Outlook, OneDrive) in v0.2. The route is not chosen here, and D-a is still open. | Microsoft's enterprise MCP lists no mail, calendar or file scope [doc: https://learn.microsoft.com/en-us/graph/mcp-server/get-started]; Graph needs an app registration [assumed] |
 
 ## 7. What was not verified
 
@@ -161,7 +162,7 @@ Recorded on 2026-11-14 on branch `connected-apps-slice-1`, from origin/main at 9
 | Slice | Blocked by |
 |---|---|
 | S3, S4 | D-c, the word check: a security change the maintainer decides |
-| S5 | No confirmed no-console candidate (Xero's registration is not confirmed) |
+| S5 | No confirmed no-console candidate (Xero's registration is not confirmed). Decided 14 November 2026: Xero later. |
 | S6 | D-d, the Google route |
 | S7 | D-a, the broker role: its cost and custody wording is public text |
 | S8 | D-b, loopback MCP: needs a security review |
