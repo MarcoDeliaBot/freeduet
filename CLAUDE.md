@@ -160,7 +160,7 @@ Mark (id `marketer`) was the first member added after v0.1, Cam (id `video`) the
   shifts them. It also rejects `?.` under `toBeUndefined` and `toBeFalsy`.
 - `bun test` alone does not show every gate a new test file must pass. Also run
   `bun run typecheck:tests` from `openbot/`; its baseline is `server/tests/typecheck-baseline.txt`,
-  and hand-edit a line there only when a baselined error's text changes.
+  and hand-edit a line there only when a baselined error's text changes. A `tsc` killed mid-run (exit 137, out of memory) now fails that gate with exit 2 and "tsc did not finish"; before, it passed as clean.
 - Adding a value to a Postgres enum breaks `tests/schema.test.ts`.
 - Some jobs run only on main (and on pull requests labelled `full-ci`): `component dockerfiles`,
   `image`, clean-start. A green pull request does not prove main is green: after a merge that adds a
