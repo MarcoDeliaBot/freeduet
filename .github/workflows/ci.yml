@@ -511,6 +511,153 @@ jobs:
       - if: always()
         run: bash scripts/stop.sh || true
 
+  # The installer (openbot/scripts/install.sh, docs/design/installer.md) on a machine with nothing installed: a
+  # fresh ubuntu:22.04 and ubuntu:24.04 container, no privilege, no systemd, no Docker daemon, as a user with sudo.
+  # It runs `--check` (it must change nothing), then `--yes` (the real apt packages and the real Bun download, the
+  # SHA-256 compared, then the stop at the Docker service, which cannot run here), then `--yes` again (nothing new
+  # is installed, the same stop). What it cannot prove: a working Docker, the first start of FreeDuet, or WSL
+  # (docs/design/installer.md, section 11).
+  #
+  # The same gate as clean-start: on main, and on pull requests labelled `full-ci`. `verify` requires it where it
+  # runs, and treats a skip as a pass on other pull requests.
+  installer-clean-machine:
+    name: installer on a clean Ubuntu ${{ matrix.ubuntu }}
+    runs-on: ubuntu-latest
+    if: >-
+      github.event_name != 'pull_request' ||
+      contains(github.event.pull_request.labels.*.name, 'full-ci')
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        ubuntu: ["22.04", "24.04"]
+    defaults:
+      run:
+        working-directory: ${{ github.workspace }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      # install.sh counts the disk the Docker data and the checkout sit on, so the runner's disk needs room, as for clean start.
+      - name: Make room, as the clean start does
+        run: |
+          set -euo pipefail
+          df -h /
+          sudo rm -rf /usr/local/lib/android /usr/share/dotnet
+          df -h /
+      # The check script lives outside the checkout, so the container sees the checkout and nothing of this job's own.
+      - name: The check script
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/clean-machine"
+          cat > "$RUNNER_TEMP/clean-machine/check.sh" <<'SCRIPT'
+          #!/usr/bin/env bash
+          # install.sh on a clean Ubuntu container (docs/design/installer.md, section 11). Started as root: it prepares
+          # what a fresh Ubuntu server image has (a user with sudo, the -updates pocket and universe), then runs the
+          # installer as that user, in one login session. Nothing here is a daemon, a privilege or a Docker socket.
+          set -euo pipefail
+
+          if [ "${1:-}" != --as-installer ]; then
+            . /etc/os-release
+            echo "image: $PRETTY_NAME"
+            apt-get update -qq
+            apt-get install -y -qq sudo ca-certificates > /dev/null
+            # docker-compose-v2 exists only in the -updates pocket on 22.04, and a fresh server has universe on.
+            if ! grep -rqs -- "$VERSION_CODENAME-updates" /etc/apt/sources.list /etc/apt/sources.list.d/ \
+               || ! grep -rqs universe /etc/apt/sources.list /etc/apt/sources.list.d/; then
+              echo "the image lacks the -updates pocket or universe: adding them, as a fresh server has them"
+              cat > /etc/apt/sources.list.d/fresh-server.sources <<EOF
+          Types: deb
+          URIs: http://archive.ubuntu.com/ubuntu/
+          Suites: $VERSION_CODENAME $VERSION_CODENAME-updates $VERSION_CODENAME-security
+          Components: main restricted universe multiverse
+          EOF
+              apt-get update -qq
+            fi
+            # The user a fresh server image has, with sudo.
+            useradd --create-home --shell /bin/bash installer
+            printf 'installer ALL=(ALL) NOPASSWD:ALL\n' > /etc/sudoers.d/installer
+            chmod 0440 /etc/sudoers.d/installer
+            visudo -cf /etc/sudoers.d/installer > /dev/null
+            touch /tmp/fresh-marker
+            # One login session for the installer: its groups are read at this login and not again.
+            exec setpriv --reuid="$(id -u installer)" --regid="$(id -g installer)" --init-groups \
+              env -i HOME=/home/installer USER=installer LOGNAME=installer LANG=C.UTF-8 TERM=dumb \
+                PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin \
+                bash "$0" --as-installer
+          fi
+
+          say() { printf '\n== %s\n' "$*"; }
+          fail() { printf '\nFAILED: %s\n' "$*"; exit 1; }
+          installer=/repo/openbot/scripts/install.sh
+          work="$(mktemp -d)"
+          package_list() { dpkg-query -W -f='${Package} ${Version}\n' | sort; }
+          expected_bun="$(sed -n 's/.*"packageManager": *"bun@\([^"]*\)".*/\1/p' /repo/openbot/package.json)"
+          [ -n "$expected_bun" ] || fail "cannot read the Bun version the repository pins"
+          . /etc/os-release
+          echo "as $(id -un) on $PRETTY_NAME; groups at this login: $(id -nG)"
+
+          say "1. install.sh --check: exits 2, lists the gaps, changes nothing"
+          packages_before="$(package_list)"
+          rc=0; bash "$installer" --check > "$work/check1.out" 2>&1 || rc=$?
+          cat "$work/check1.out"
+          [ "$rc" -eq 2 ] || fail "--check exited $rc, expected 2"
+          grep -qE '^  bun +MISSING' "$work/check1.out" || fail "--check does not list bun as missing"
+          grep -qE '^  docker +MISSING' "$work/check1.out" || fail "--check does not list docker as missing"
+          grep -qF 'Not ready yet' "$work/check1.out" || fail "--check does not say it is not ready"
+          [ "$(package_list)" = "$packages_before" ] || fail "--check changed the installed packages"
+          [ ! -e /usr/local/bin/bun ] || fail "--check put bun in /usr/local/bin"
+          written="$(find /etc /usr/local /var/lib /home/installer -xdev -newer /tmp/fresh-marker -type f 2>/dev/null || true)"
+          [ -z "$written" ] || fail "--check wrote files: $written"
+
+          say "2. install.sh --yes: the real packages and the real Bun download, then the stop at the Docker service"
+          rc=0; bash "$installer" --yes > "$work/yes1.out" 2>&1 || rc=$?
+          cat "$work/yes1.out"
+          [ "$rc" -eq 1 ] || fail "--yes exited $rc, expected 1 (stopped, and said why)"
+          grep -qF 'Step 3 of 4: Start Docker' "$work/yes1.out" || fail "--yes did not stop at the Docker start (step 3 of 4)"
+          grep -qF 'The SHA-256 matches the one written in this script.' "$work/yes1.out" || fail "the Bun checksum was not compared"
+          grep -qF 'The Docker service is not running, and I cannot start it' "$work/yes1.out" || fail "--yes does not say the Docker service is not running"
+          if grep -qF 'unrecognized service' "$work/yes1.out"; then fail "a service command was run"; fi
+          [ "$(bun --version)" = "$expected_bun" ] || fail "bun is not $expected_bun"
+          for tool in git curl openssl lsof; do command -v "$tool" > /dev/null || fail "$tool is missing after the install"; done
+          docker --version
+          compose="$(docker compose version --short)"; compose="${compose#v}"; compose="${compose%%[!0-9.]*}"
+          [ "$(printf '%s\n%s\n' 2.24.0 "$compose" | sort -V | head -n 1)" = 2.24.0 ] || fail "Compose $compose is below 2.24.0"
+          echo "bun $(bun --version); compose $compose, which meets the 2.24.0 minimum"
+          if docker info > /dev/null 2>&1; then fail "a Docker daemon answers in this container; the job assumes none"; fi
+          echo "no Docker daemon answers here, as expected"
+
+          say "2b. install.sh --check again: the stopped service is what is missing"
+          rc=0; bash "$installer" --check > "$work/check2.out" 2>&1 || rc=$?
+          cat "$work/check2.out"
+          [ "$rc" -eq 2 ] || fail "--check after the install exited $rc, expected 2"
+          grep -qE '^  docker +MISSING +installed, but the Docker service is not running' "$work/check2.out" || fail "--check does not name the stopped service"
+          grep -qE "^  bun +ok +$expected_bun\$" "$work/check2.out" || fail "--check does not see the Bun the install put in place"
+
+          say "3. install.sh --yes again: nothing new is installed, and the same stop"
+          packages_after_install="$(package_list)"
+          rc=0; bash "$installer" --yes > "$work/yes2.out" 2>&1 || rc=$?
+          cat "$work/yes2.out"
+          [ "$rc" -eq 1 ] || fail "the second --yes exited $rc, expected 1"
+          grep -qF 'Step 1 of 2: Start Docker' "$work/yes2.out" || fail "the second run does not start at the Docker service"
+          grep -qF 'The Docker service is not running, and I cannot start it' "$work/yes2.out" || fail "the second run does not say why it stopped"
+          if grep -qE 'Downloading|Step 2 of 2|Install from Ubuntu' "$work/yes2.out"; then fail "the second run went on to install or change something"; fi
+          [ "$(package_list)" = "$packages_after_install" ] || fail "the second run changed the installed packages"
+          if getent group docker | grep -qw installer; then fail "the group step ran, although the Docker service stopped first"; fi
+
+          say "all checks passed on $PRETTY_NAME"
+          SCRIPT
+      - name: A fresh Ubuntu container, nothing installed, the checkout read-only
+        env:
+          UBUNTU: ${{ matrix.ubuntu }}
+        run: |
+          set -euo pipefail
+          docker run --rm --pull always \
+            --env UBUNTU \
+            --volume "$GITHUB_WORKSPACE:/repo:ro" \
+            --volume "$RUNNER_TEMP/clean-machine:/check:ro" \
+            "ubuntu:$UBUNTU" bash /check/check.sh
+
   python-harness:
     name: python harness regressions
     runs-on: ubuntu-latest
@@ -849,7 +996,7 @@ jobs:
     name: verify
     runs-on: ubuntu-latest
     if: always()
-    needs: [static, deployables, mobile, computer-browser, chart, test, startup, freeduet-package, agent-freeduet, python-harness, build, migrations, image, component-dockerfiles, clean-start]
+    needs: [static, deployables, mobile, computer-browser, chart, test, startup, freeduet-package, agent-freeduet, python-harness, build, migrations, image, component-dockerfiles, clean-start, installer-clean-machine]
     # Nothing is checked out here, so the workflow's default `openbot` folder does not exist.
     defaults:
       run:

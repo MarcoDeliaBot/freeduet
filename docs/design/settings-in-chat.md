@@ -1,6 +1,6 @@
 # Settings changed in chat, with Undo, and a control dashboard
 
-Design, and slice 1 built on the branch `settings-in-chat-slice-1` (see "Built so far" at the end). Written 2026-11-14 for two rows of [ROADMAP.md](../ROADMAP.md): "Settings changed in chat, with Undo" (row 47) and "A control dashboard" (row 48). Base: origin/main 021cad8.
+Design, and slice 1 on main through PR #175 (see "Built so far" at the end). Written 2026-11-14 for two rows of [ROADMAP.md](../ROADMAP.md): "Settings changed in chat, with Undo" (row 47) and "A control dashboard" (row 48). Base: origin/main 021cad8.
 
 Tags: **[code: path:line]** read on origin/main. Code paths start at `openbot/`; doc paths start at the repository root. **[assumed]** my inference, not checked. **[verify]** unknown; a spike on a real install must settle it. Nothing tagged [verify] ships unchecked.
 
@@ -134,7 +134,7 @@ One PR each. Slice 2 is security work: Sonnet, as CLAUDE.md asks.
 
 ## 8. Built so far
 
-Slice 1 is built on the branch `settings-in-chat-slice-1`. It is not merged and not run live. It is the slice briefed on 14 November 2026: the allow-list, one tool a member can call for an allow-listed setting, the record that makes Undo possible, and Undo. It is not section 4's slice 1 ("Record", which covers routine times and Iris lessons). In section 4's terms it is slices 3 and 4 for notifications only, with the record that slice 3 needs. The order in section 4 needs the maintainer's confirmation (R3 below).
+Slice 1 is on main, merged through PR #175. It is not run live. It is the slice briefed on 14 November 2026: the allow-list, one tool a member can call for an allow-listed setting, the record that makes Undo possible, and Undo. It is not section 4's slice 1 ("Record", which covers routine times and Iris lessons). In section 4's terms it is slices 3 and 4 for notifications only, with the record that slice 3 needs. The order in section 4 needs the maintainer's confirmation (R3 below).
 
 ### 8.1 What is built
 
@@ -167,7 +167,7 @@ Slice 1 is built on the branch `settings-in-chat-slice-1`. It is not merged and 
 - No model has run `change_setting`. Its tool text is "not yet run live". The Settings connector has to be granted to the member in the eval stack first.
 - The app has no Undo button and no list of changes. Undo exists only as the route, so the person cannot press it yet (section 4, slice 6).
 - The card's wording and placement were not checked in the app.
-- No CI run: the pull request was opened and not waited on.
+- CI on the pull request's head (7a9767a) passed: 20 checks succeeded and 3 were skipped. The merged main commit was not checked here.
 - No browser test. The Undo route is exercised through the app in the integration test.
 - No member prompt was changed. The model learns the tool from its listing.
 

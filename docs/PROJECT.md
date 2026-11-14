@@ -8,9 +8,9 @@ FreeDuet is a self-hosted team of AI employees that runs on the AI subscriptions
 
 ## 2. Why now
 
-- Proactive "AI coworker" products launched through 2026: Claude Duet, OpenAI Dots, Meta Muse, Grok Bot and others. Claude Duet's research preview is open by waitlist only, and only in the United States.
+- Proactive "AI coworker" products launched through 2026: Claude Duet, Grok Bot and others. Claude Duet's research preview is open by waitlist only, and only in the United States.
 - People already pay for one to three AI subscriptions. Agent apps make them pay again, per token.
-- Open-source alternatives exist, but each one solves half the problem. OpenBot and OpenDuet have the best safety model (a computer per agent, approvals, audit) but run on metered API keys. Anil-matcha/open-duet and nightly-labs/openbot run on subscriptions through the official CLIs, but the first has no browser in its agent computers and the second runs agents with full access and no per-action approvals, under a non-commercial license.
+- Open-source alternatives exist, but each one solves half the problem. The ones with the best safety model (a computer per agent, approvals, audit) run on metered API keys. Those that run on subscriptions through the official CLIs give up one thing each: one has no browser in its agent computers, and another runs agents with full access and no per-action approvals, under a non-commercial license. FreeDuet runs on the subscriptions and asks before sends, payments and deletions by default.
 - **No project has both: subscriptions and safe actions in the real world.** That is FreeDuet.
 
 ## 3. Who it is for

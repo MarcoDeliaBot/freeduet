@@ -148,7 +148,7 @@ Assumed, and to verify on a real machine (the script depends on each one):
 10. Where Docker Desktop's docker command resolves inside Ubuntu: install.sh's own check treats a path under `/mnt/wsl/` as Docker Desktop's, and the script does the same.
 11. PowerShell 5.1 runs the `.ps1` files as a Windows git checkout writes them. `openbot/.gitattributes` sets `eol=lf` for every file.
 
-Left out on purpose: resuming after the restart (no startup task; the person runs the script again); writing `/etc/wsl.conf` to turn systemd on (install.sh starts Docker by hand when systemd is off, and a system setting is the maintainer's decision); creating the Ubuntu user (a login the person chooses); macOS. The installer files are FreeDuet's own, not upstream OpenBot's, so `docs/UPSTREAM_TOUCHES.md` has no row for them, as it has none for `install.sh`.
+Left out on purpose: resuming after the restart (no startup task; the person runs the script again); writing `/etc/wsl.conf` to turn systemd on (when systemd is off, install.sh stops at the Docker start and says how to turn it on, and a system setting is the maintainer's decision); creating the Ubuntu user (a login the person chooses); macOS. The installer files are FreeDuet's own, not upstream OpenBot's, so `docs/UPSTREAM_TOUCHES.md` has no row for them, as it has none for `install.sh`.
 
 Tests: 51 Pester 5 tests in `openbot/scripts/install.Tests.ps1`, in 8 blocks. None has run. They cover the exit codes, the text readers, the resource rules, each branch of the plan (including the exact WSL arguments), the formatting, the one question and `-Check` (with the WSL and elevation calls mocked, so a test fails if one is made), each exit path, and checks of the file itself (ASCII, parse, no download or script runner, no credential, no execution-policy, startup or registry change, no restart). It is not wired into CI: a Windows runner is needed, and the maintainer has not chosen one.
 
@@ -162,8 +162,59 @@ Tests: 51 Pester 5 tests in `openbot/scripts/install.Tests.ps1`, in 8 blocks. No
 6. Open Windows PowerShell as yourself, go to the folder, and run `-Check` again. Expect "One step is left, and only you can do it" and status 3.
 7. Open Ubuntu-24.04 from the Start menu, create the user name and password, and close the window. Read the registry with `Get-ChildItem HKCU:\Software\Microsoft\Windows\CurrentVersion\Lxss | ForEach-Object { Get-ItemProperty $_.PSPath | Select-Object DistributionName, Version, DefaultUid }`. Write down `DefaultUid` before this step and after it: that is the check of assumption 4.
 8. Run `-Check` again. Expect status 0. If the default version is 1, or Ubuntu is WSL 1, expect status 2: then run without `-Check` and answer `y`.
-9. Run without `-Check` and answer `y`. Expect "Handing over to install.sh inside Ubuntu-24.04", then install.sh's own plan and its question `Go ahead and install these? [y/N]`. Its question must show and take the answer (assumption 8). Answer `y`: install.sh must run to the end, as section 8 describes.
+9. Run without `-Check` and answer `y`. Expect "Handing over to install.sh inside Ubuntu-24.04", then install.sh's own plan and its question `Go ahead and install these? [y/N]`. Its question must show and take the answer (assumption 8). Answer `y`: install.sh must run to the end, as section 8 describes, when systemd is on in that Ubuntu. When it is off, install.sh stops at the Docker start with exit 1 and says how to turn systemd on (section 11).
 10. Negative checks, each with status 1 and the reason printed: run from an administrator PowerShell; run from a folder that is not a checkout; if possible, run from a `\\server\share` path; on a machine with virtualisation off in the firmware, or Windows 10 below build 19041.
 11. Send the maintainer the output of `wsl --help`, `wsl --status`, `wsl --list --verbose`, and `wsl --distribution Ubuntu-24.04 cat /etc/wsl.conf`. The first one shows on your machine whether `--exec` exists (assumption 1). Say whether `--set-default-version` or `--set-version` showed a permission prompt (assumption 5), and whether the distribution is still listed for your account after the elevated install (assumption 7).
 
 Every line of this section is unverified until that check has been done.
+
+## 11. Built so far (Ubuntu, S1)
+
+**Ubuntu 22.04 and 24.04: `install.sh` runs in CI on fresh containers.** The job `installer-clean-machine` [code: .github/workflows/ci.yml:514-659] has one leg per release. It runs on main and on pull requests labelled `full-ci`, with clean-start's gate, and `verify` requires it where it runs. Each leg starts `ubuntu:22.04` or `ubuntu:24.04` with `--pull always`, with no privilege, no Docker socket, no systemd and no Docker daemon, and the checkout mounted read-only. A green run means the four steps below behaved as written. It does not mean FreeDuet installs.
+
+The setup a real machine does not have. These are the only lines the job adds to the image:
+
+- a user `installer` with passwordless sudo (a fresh server asks for a password);
+- `sudo` and `ca-certificates`, installed as root before the run;
+- the `-updates` pocket and `universe`, added from archive.ubuntu.com only when the image lacks them;
+- a marker file in `/tmp`, which step 1 uses to find any file written after the start;
+- one login session started by `setpriv`, so the groups are read at that login, not at a terminal or SSH login.
+
+The four steps, as the job asserts them:
+
+1. `install.sh --check`: exit 2, `bun` and `docker` listed as missing, "Not ready yet", no package changed, and no file newer than the marker under `/etc`, `/usr/local`, `/var/lib` or the home folder.
+2. `install.sh --yes`: the apt packages install, the Bun download is compared with the SHA-256 in the script before anything runs, and the run stops at "Step 3 of 4: Start Docker" with exit 1. Afterwards `bun` is the pinned version, `git`, `curl`, `openssl` and `lsof` exist, Compose is 2.24.0 or newer, and `docker info` fails.
+3. `install.sh --check` again: exit 2, with `docker` listed as missing because the service is not running, and `bun` ok.
+4. `install.sh --yes` again: exit 1 at "Step 1 of 2: Start Docker". Nothing is downloaded or installed, the package list is unchanged, and the installer user is not added to the docker group.
+
+**What it proves:** the check changes nothing; the apt packages and the pinned Bun install in a fresh container of each release; the Bun checksum is compared; the installer stops at the Docker start, says why, and runs no service command; a second run installs nothing more.
+
+**What it does not prove:**
+
+- Docker itself. No daemon runs in CI, and the job asserts that none answers.
+- The docker group step and the new login (exit 3). The group step never runs in CI, because the Docker step stops first.
+- The first start of FreeDuet: `start.sh`, the images, Postgres and the members.
+- A VM, WSL or Windows (`install.ps1` is in section 10).
+- The base images: `ubuntu:22.04` and `ubuntu:24.04` are pulled by tag, so a base image update can change a result.
+- The apt sources the images ship with. The job adds the archive only when a pocket or universe is missing.
+- A VM run of section 8. Items 1 and 2 of section 8 now run in containers, and the VM run is still needed.
+
+**Finding, found while checking the Docker step against the archive.** On a system without systemd, `install.sh` ran `service docker start`. Ubuntu's `docker.io` has no service script [code: openbot/scripts/install.sh:605-613,733-743], so `service` says "unrecognized service" and nothing starts. The script now stops before any command, with the reason and the systemd steps, and the earlier steps stay done. `install.test.ts` asserts that stop, and that no `service`, `systemctl` or `usermod` call is made.
+
+**Tests.** `bun test` on `install.test.ts` (91 tests), run from a copy of `openbot/scripts` with `openbot/package.json`, with no `bun install` here:
+
+- this change: 91 pass, 0 fail;
+- the base commit's `install.sh` with the same test file: 90 pass, 1 fail (the changed test).
+
+In CI the file runs in the `tests` job through `bun run test:ci`, which discovers it under `openbot/` and checks a floor of 400 tests.
+
+**Not verified here:** the job itself (no containers and no Docker on this machine), the real Bun download, apt in the images, Docker Hub pulls on hosted runners, and the first CI run. shellcheck ran on `install.sh` and on the job's check script: only SC1091, an info note.
+
+**Decisions for the maintainer.** Section 7 was written before this job existed. This table brings forward the choices that the job changes.
+
+| Decision | Options | Recommendation | Why |
+|---|---|---|---|
+| Whether this job counts toward D5, "tested on Ubuntu" | (a) no: only the manual run of section 8 counts; (b) yes for the check, apt and Bun steps, and the manual run still covers Docker and the first start | (b), with the README saying which steps CI covers | The job runs those steps on both releases for every `full-ci` pull request and on main |
+| Docker without systemd | (a) stop with the reason, as built; (b) start `dockerd` by hand from the installer; (c) `install.ps1` writes `[boot] systemd=true` to `/etc/wsl.conf` | (a) now; (c) is the maintainer's call | (b) needs a root daemon the installer should not hold; (c) changes a system file and needs a WSL restart |
+| Exit 1 at the Docker start as the job's green result | (a) green, as built; (b) red until a daemon can run in CI | (a) | A daemon needs privilege or a socket, which this job forbids; the stop is asserted, not hidden |
+| Image pins | (a) tags with `--pull always`, as built; (b) digests in the job | (b), once someone owns the refresh | A tag moves under the job, so a base image update can change a result with no code change |
