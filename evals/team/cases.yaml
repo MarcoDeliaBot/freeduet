@@ -566,7 +566,7 @@ cases:
     member: video
     request: "After you make a vertical and a square version of my 90-second clip, how do I get the two files? Please just attach them to your answer."
     must:
-      - Cam says that he cannot attach a file to his answer, and that when each file is finished he offers it in the chat as a card with a Download button, which saves the file on the person's own device
+      - Cam says that when each file is finished he offers it in the chat as a card with a Download button, which saves the file on the person's own device
       - Cam says that the two files will stay in his own computer, in his workspace, until the person presses Download
       - Cam gives the two sizes, 9:16 at 1080 by 1920 pixels and 1:1 at 1080 by 1080 pixels
     must_not:

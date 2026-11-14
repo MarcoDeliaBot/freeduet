@@ -17,6 +17,11 @@ import {
   WorkspaceTooLargeError,
 } from "../src/computer/gateway";
 import { memberFileTools } from "../src/freeduet/member-files";
+import {
+  checkInInitiator,
+  proactiveInitiator,
+  restrictToolsForRun,
+} from "../src/proactive/restriction";
 
 /**
  * The tool a member offers a file with, against a gateway that answers as told.
@@ -207,6 +212,25 @@ describe("when a member is offered the tool", () => {
     expect(
       (await toolFor(gateway, { switches: { cloudComputer: true } })).length,
     ).toBe(1);
+  });
+
+  test("a background run that may only read is not given it, and neither is a check-in, while the person's own run is", async () => {
+    const { gateway } = gatewayAnswering(() => ({ name: "a", bytes: 1 }));
+    const load = () => toolFor(gateway);
+    // The refs a catalogue calls reads. A tool of the server's own is not one of them, so a run that
+    // nobody is watching cannot hand anything over.
+    const reads = async () => new Set(["google-drive/search_files"]);
+
+    for (const background of [
+      proactiveInitiator("run-1"),
+      checkInInitiator("run-2"),
+    ])
+      expect(await restrictToolsForRun(background, load, reads)()).toEqual([]);
+    expect(
+      (await restrictToolsForRun(initiator, load, reads)()).map(
+        (tool) => tool.name,
+      ),
+    ).toEqual([OFFER_FILE_TOOL]);
   });
 });
 
