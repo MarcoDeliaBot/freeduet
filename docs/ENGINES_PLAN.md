@@ -174,24 +174,30 @@ One PR each, in this order. "E" numbers are the open decisions in 9.3 (M1_PLAN k
 
 Slices 5 and 6 can run in parallel after slice 3; slices 8 to 10 are independent after slice 4. Rough total: 4 L, 9 M and 2 S (the two spikes). The first useful result, Claude with an automatic fallback to a gateway engine and a read-only dashboard (slices 1 to 6), is 1 L and 5 M.
 
+**Built so far (14 November 2026):** the limit and failure classifier of slice 2, `openbot/agent-freeduet/freeduet/failure_classifier.py` with `tests/test_failure_classifier.py`, wired into no run path; the breaker, `probe()` and the persisted limited-until (E4) are not built, so slice 2 stays open.
+
 ### 9.2 Decided on 14 November 2026
 
 | Decision | Consequence here |
 |---|---|
-| When an engine hits its limit FreeDuet switches to the next engine in the member's chain **automatically by default**. An Engines dashboard shows every option (chain per member, signed in, state, usage) and is where the person chooses or presets everything: chain order, automatic or ask-first, pin one engine, disable an engine. A switch never silently repeats an action already done in the turn. | Sections 1, 5; slices 3, 6, 7. The safety concern stays open as E2. |
+| When an engine hits its limit FreeDuet switches to the next engine in the member's chain **automatically by default**. An Engines dashboard shows every option (chain per member, signed in, state, usage) and is where the person chooses or presets everything: chain order, automatic or ask-first, pin one engine, disable an engine. A switch never silently repeats an action already done in the turn. | Sections 1, 5; slices 3, 6, 7. The safety concern is settled by E2 (section 9.3). |
 | Metered API keys stay off by default and last in every chain. Gateways must work in the first engines release: OpenRouter and any Anthropic-compatible endpoint the person runs or chooses. FreeDuet ships no third-party gateway code. | Section 4.1; slice 5 is one of the first useful slices. Adding a gateway is configuration, not code. |
 | Codex and Grok are offered only after their spikes. Local models stay tier C until evals say otherwise. | Slices 8 to 10. |
 
-### 9.3 Still open for the maintainer
+### 9.3 Decided on 14 November 2026 (E1 to E6)
 
-| # | Decision | Recommendation |
+The maintainer decided all six on 14 November 2026. Nothing is left open in this section.
+
+| # | Decision | Decided |
 |---|---|---|
-| E1 | Codex sign-in: Codex's own login in a volume FreeDuet never opens, or the ChatGPT token program where the app holds the token | The first; the second breaks constraint 3 unless he makes an explicit exception |
-| E2 | D27 (no card for an email to addresses the person typed) after a switch | Refuse the shortcut when an equal send already completed in the turn |
-| E3 | A metered or gateway engine in the dashboard: may the person move one above the subscription logins, or pin it? That touches "a metered API is never first in any chain" | Free gateway entries move freely; a metered one moves up or is pinned only with an explicit confirmation showing the caps, and PROVIDERS.md says so |
-| E4 | Where limited-until and the person's dashboard choices are kept | Limited-until in a file in agent-freeduet's volume; choices on the server |
-| E5 | When the ledger and savings card ship (ARCH puts them in M3) | After a real engine beyond Claude exists, so there is real data |
-| E6 | Build Iris shadow routing, or drop it | Build the shadow only; decide on its coverage |
+| E1 | Codex sign-in | Codex's own official login, in a volume FreeDuet never opens. The token program, where the app would hold the token, is not used: it breaks "never read, copy or forward subscription credentials". |
+| E2 | D27 (no card for an email to addresses the person typed) after an engine switch | The server refuses the shortcut when an equal send already completed in the turn, and tells the person it did so. |
+| E3 | A metered or gateway engine above the subscription logins, or pinned | Free gateway entries move freely. A metered one moves up or is pinned only after an explicit confirmation that shows its caps. PROVIDERS.md says so when the dashboard ships. |
+| E4 | Where limited-until and the person's dashboard choices are kept | Limited-until in a file in agent-freeduet's volume, next to the engine. The person's choices on the server. |
+| E5 | When the ledger and savings card ship | After a real engine beyond Claude exists, so the numbers are real. |
+| E6 | Iris routing | In this version the shadow only: it proposes and records, it does not decide. Its hit rate is then reviewed. The goal stays that Iris picks the engine that fits the task by herself. |
+
+Also decided the same day: once the control dashboard exists it gets a credentials panel, one place where the person adds, sees and removes the keys of gateways and metered engines (stored encrypted, shown masked, never sent to a member). Subscription logins are never in it: they stay inside each engine's official program, which FreeDuet never opens.
 
 ## 10. Sources
 

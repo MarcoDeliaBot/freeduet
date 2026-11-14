@@ -1,0 +1,23 @@
+# FreeDuet
+
+> FreeDuet is a self-hosted team of AI assistants, free and open source under the MIT licence. Iris, the Chief of Staff, hands each part of a request to the right specialist, and each member has its own computer and browser. Members run on your own Claude subscription through the official Claude Code app, with no API key. By default they ask before they send, pay, sign, book or delete anything.
+
+FreeDuet is an early release (version 0.1) built and used by one maintainer. Its README says the team has more than ten members, led by Iris, and that anything marked v0.2 or later is planned, not built.
+
+## Start here
+
+- [README](https://github.com/MarcoDeliaBot/freeduet/blob/main/README.md): what FreeDuet is, the team, what is tested and what is not.
+- [Install](https://github.com/MarcoDeliaBot/freeduet#quick-start): clone the repository, start it with Docker and Bash, and sign in once with your Claude plan.
+
+## Documentation
+
+- [Roadmap](https://github.com/MarcoDeliaBot/freeduet/blob/main/docs/ROADMAP.md): what works today, what is planned, and the limits on each item.
+- [Team](https://github.com/MarcoDeliaBot/freeduet/blob/main/docs/TEAM.md): each member, its job, and how members are defined.
+- [Comparison](https://github.com/MarcoDeliaBot/freeduet/blob/main/docs/COMPARISON.md): how FreeDuet compares with other bot-team tools, with sources.
+- [Security](https://github.com/MarcoDeliaBot/freeduet/blob/main/SECURITY.md): threat model, approvals, and how to report a vulnerability.
+- [Full access](https://github.com/MarcoDeliaBot/freeduet/blob/main/docs/FULL_ACCESS.md): the per-member option that removes approval cards; off by default.
+
+## Optional
+
+- [Architecture](https://github.com/MarcoDeliaBot/freeduet/blob/main/docs/ARCHITECTURE.md): how the server, the subscription router and the members fit together.
+- [Licence](https://github.com/MarcoDeliaBot/freeduet/blob/main/LICENSE): MIT.

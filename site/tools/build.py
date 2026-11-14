@@ -7,16 +7,49 @@ import json
 order=[("en","English"),("it","Italiano"),("es","Español"),("fr","Français"),("de","Deutsch"),("pt","Português"),("pl","Polski"),("tr","Türkçe"),("ru","Русский"),("zh","中文"),("ja","日本語"),("ko","한국어")]
 T={c:json.loads((s/"lang"/(c+".json")).read_text()) for c,_ in order}
 js="(function(){\n\"use strict\";\nvar GH=\"https://github.com/MarcoDeliaBot/freeduet\";\nvar LANGS="+json.dumps(order,ensure_ascii=False)+";\nvar T="+json.dumps(T,ensure_ascii=False,separators=(",",":")).replace("</","<\\/")+";\n"+(s/"app.js").read_text()+"\n})();"
+import html as H
+def plain(x): return re.sub(r'\s+',' ',H.unescape(re.sub(r'<[^>]+>','',x))).strip()
+def ld(o): return json.dumps(o,ensure_ascii=False,indent=1).replace("<","\\u003c").replace(">","\\u003e").replace("&","\\u0026")
+en=T["en"]
+TITLE=en["title"]; DESC=plain(en["desc"])
+ALT="FreeDuet logo with the words: Your own team of AI assistants"
+OG_DESC="A free, open-source team of AI assistants. They ask before they send, pay, sign, book or delete."
+APP_LD=ld({"@context":"https://schema.org","@type":"SoftwareApplication","name":"FreeDuet","description":DESC,"applicationCategory":"BusinessApplication","operatingSystem":"Windows, Linux","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"},"license":"https://opensource.org/license/mit","url":"https://freeduet.com/","codeRepository":"https://github.com/MarcoDeliaBot/freeduet"})
+FAQ_LD=ld({"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{"@type":"Question","name":plain(en[f"q{i}"]),"acceptedAnswer":{"@type":"Answer","text":plain(en[f"a{i}"])}} for i in range(1,9)]})
 html=f'''<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>FreeDuet</title>
-<meta name="description" content="FreeDuet is a free, open-source team of AI assistants that runs on your own computer and your own AI subscription. They ask before they send, pay, sign, book or delete.">
-<meta property="og:title" content="FreeDuet: your own team of AI assistants">
-<meta property="og:description" content="A free, open-source team of AI assistants. They ask before they send, pay, sign, book or delete.">
+<title>{H.escape(TITLE)}</title>
+<meta name="description" content="{H.escape(DESC,quote=True)}">
+<link rel="canonical" href="https://freeduet.com/">
+<meta name="theme-color" content="#0E1B33">
+<link rel="icon" href="/favicon.ico" sizes="32x32">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<meta property="og:title" content="{H.escape(TITLE,quote=True)}">
+<meta property="og:description" content="{H.escape(OG_DESC,quote=True)}">
 <meta property="og:type" content="website">
+<meta property="og:url" content="https://freeduet.com/">
+<meta property="og:site_name" content="FreeDuet">
+<meta property="og:locale" content="en_US">
+<meta property="og:image" content="https://freeduet.com/og-image.png">
+<meta property="og:image:type" content="image/png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="{H.escape(ALT,quote=True)}">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="{H.escape(TITLE,quote=True)}">
+<meta name="twitter:description" content="{H.escape(OG_DESC,quote=True)}">
+<meta name="twitter:image" content="https://freeduet.com/og-image.png">
+<meta name="twitter:image:alt" content="{H.escape(ALT,quote=True)}">
+<script type="application/ld+json">
+{APP_LD}
+</script>
+<script type="application/ld+json">
+{FAQ_LD}
+</script>
 <script>document.documentElement.className+=" js";setTimeout(function(){{if(document.documentElement.getAttribute("data-rv")!=="ready")document.documentElement.className+=" no-rv"}},3000)</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
