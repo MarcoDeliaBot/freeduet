@@ -137,9 +137,10 @@ export function createRoutineRoutes(
   });
 
   /*
-   * The run history across all the person's routines, newest first, at most 100. Each row names its
-   * routine and Bot, so the page can say which member ran and link to the conversation the routine
-   * posts into. Read-only: a run is never changed from here.
+   * The run history across all the person's routines, newest first, at most 100 and no older than
+   * ninety days (`HISTORY_WINDOW_DAYS`, a read window: nothing is deleted). The 100 protects the page
+   * and the query. Each row names its routine and Bot, so the page can say which member ran and link
+   * to the conversation the routine posts into. Read-only: a run is never changed from here.
    */
   routes.get("/runs", requireUser, async (context) => {
     const limit = runsLimit(context.req.query("limit"));

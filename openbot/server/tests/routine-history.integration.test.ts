@@ -300,6 +300,46 @@ describe("the calendar's and the history's owner guard, on real rows", () => {
   });
 });
 
+describe("the history keeps ninety days of runs, and deletes none", () => {
+  /** A day in milliseconds, written out so the cases read as days, not as numbers. */
+  const DAY = 24 * 60 * 60 * 1000;
+
+  test("a run older than ninety days is left out of both histories, and stays in the table", async () => {
+    const f = await setUp();
+    const iris = await store.create({
+      ownerUserId: f.owner.id,
+      agentId: f.irisId,
+      channelId: f.irisChannel,
+      instruction: "Summarise the inbox.",
+      cron: DAILY,
+    });
+    const recent = await store.insertRun(iris.id);
+    await store.finishRun(recent.runId, "succeeded");
+    await setStartedAt(
+      recent.runId,
+      new Date(Date.now() - 89 * DAY).toISOString(),
+    );
+    const old = await store.insertRun(iris.id);
+    await store.finishRun(old.runId, "succeeded");
+    await setStartedAt(
+      old.runId,
+      new Date(Date.now() - 91 * DAY).toISOString(),
+    );
+
+    const everyRoutine = await store.listRunsFor(f.owner.id);
+    expect(everyRoutine.map((run) => run.id)).toEqual([recent.runId]);
+    const oneRoutine = await store.listRuns(f.owner.id, iris.id);
+    expect(oneRoutine.map((run) => run.id)).toEqual([recent.runId]);
+
+    // Not pruned: the old row is still there, and only the read has a window.
+    const stillStored = await database
+      .select({ id: routineRuns.id })
+      .from(routineRuns)
+      .where(eq(routineRuns.id, old.runId));
+    expect(stillStored).toHaveLength(1);
+  });
+});
+
 describe("GET /calendar and GET /runs through the real store, for two people", () => {
   test("the owner sees their switched-on routines' runs and their own history; a stranger sees nothing", async () => {
     const f = await setUp();

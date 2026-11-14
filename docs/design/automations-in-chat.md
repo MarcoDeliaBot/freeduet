@@ -183,3 +183,21 @@ Not verified:
 - The eval stack was not run. No member's prompt changed, so no case was added or moved.
 - The whole app test suite was not run. The sandbox fails about 138 of its tests on plain main under happy-dom, so only the new and changed app files were run.
 - The zone rules are tested with fixed zones only, not with a person's own zone.
+
+### Second slice, branch `routines-missed-link-90` (14 November 2026)
+
+Three pieces, one commit each, smallest first. Each is read from the code on main at `c93c947` and each was tested against real Postgres.
+
+**1. Retention (done).** What bounds the history today, with the number and what it bounds:
+
+| Number | Where | What it bounds |
+|---|---|---|
+| 14 days | `openbot/server/src/routines/calendar.ts:13` (`CALENDAR_MAX_DAYS`) | The longest window the "Next runs" view may ask for. It bounds the calendar, not the history. |
+| 500 runs | `calendar.ts:14` (`CALENDAR_MAX_RUNS`) | The number of upcoming runs one calendar answer lists. It bounds the calendar's size. |
+| 100 rows | `openbot/server/src/routines/store.ts:775` (`listRuns`) and `:817` (`listRunsFor`), `routes.ts:149` and `:297` | The most rows one history read may return. It protects the page and the query. The app asks for 100 (`app/src/lib/routines/schedule-queries.ts:67`) and names the cap when it gets 100 (`routine-history.tsx:49`, `HISTORY_LIMIT`). |
+| 50 rows | `routes.ts:294` (default), `store.ts:759` (`listRuns`) and `:793` (`listRunsFor`) default `limit = 50` | The history read when no limit is given. |
+| 400 characters | `store.ts:70` (`MAX_RUN_ERROR`) | The error text kept on a run row. |
+| 20 runs | `store.ts:86` (`FAILURE_SCAN_LIMIT`) | How far back the fatigue rule counts failures. It is not a display limit. |
+| 10 minutes | `openbot/server/src/routines/sweep.ts:58` (`DEFAULT_GRACE_MS`) | How late a firing may be and still be offered. |
+
+Built: the history reads now answer only runs that started within ninety days of the database's clock (`HISTORY_WINDOW_DAYS`, `store.ts`, `withinHistoryWindow()`). It is a read filter. Nothing is deleted, and the 100-row cap stays. Verified: `routine-history.integration.test.ts` ("the history keeps ninety days of runs, and deletes none": a run at 91 days is left out of both reads and is still in the table; it fails on main's source, where the 91-day run is listed). Not built: pruning. Deleting runs older than ninety days is a separate decision, because it removes data (decision 3 below).

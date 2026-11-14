@@ -69,6 +69,13 @@ export const MAX_INSTRUCTION_CODE_POINTS = 2000;
 /** Capped like audit payloads, because a failure is not a promise about length. */
 export const MAX_RUN_ERROR = 400;
 /**
+ * How far back the run history reads go: ninety days, the retention decided on 14 November 2026.
+ *
+ * A READ WINDOW, NOT A DELETE. A run older than this stays in `routine_runs` and is simply not listed
+ * (`withinHistoryWindow`). Nothing here removes rows; pruning them is a separate, later decision.
+ */
+export const HISTORY_WINDOW_DAYS = 90;
+/**
  * How far back the failure count looks.
  *
  * Twice what the fatigue rule can act on, so the answer is never truncated where it matters, and
@@ -354,6 +361,14 @@ function nextRunFor(cron: string, timezone: string, after: Date): Date {
     }
     throw error;
   }
+}
+
+/**
+ * The history's read window: only runs that started within `HISTORY_WINDOW_DAYS` of the database's
+ * clock. A filter on the read, never a delete, so a run that falls out of the window is still there.
+ */
+function withinHistoryWindow() {
+  return sql`${routineRuns.startedAt} >= now() - make_interval(days => ${HISTORY_WINDOW_DAYS})`;
 }
 
 /**
@@ -753,7 +768,7 @@ export function createRoutineStore(database: Database): RoutineStore {
           source: routineRuns.source,
         })
         .from(routineRuns)
-        .where(eq(routineRuns.routineId, id))
+        .where(and(eq(routineRuns.routineId, id), withinHistoryWindow()))
         .orderBy(desc(routineRuns.startedAt), desc(routineRuns.id))
         .limit(Math.min(Math.max(limit, 1), 100));
     },
@@ -793,6 +808,7 @@ export function createRoutineStore(database: Database): RoutineStore {
           and(
             eq(routines.ownerUserId, ownerUserId),
             agentId === undefined ? undefined : eq(routines.agentId, agentId),
+            withinHistoryWindow(),
           ),
         )
         .orderBy(desc(routineRuns.startedAt), desc(routineRuns.id))
