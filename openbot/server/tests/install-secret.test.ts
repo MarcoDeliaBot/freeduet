@@ -1030,7 +1030,7 @@ describe("nothing a stranger can reach hands out the secret", () => {
     expect(checked).toBeGreaterThan(paths.length);
   }, 120_000);
 
-  test("the crawl only sees what these fakes mount, so the secret is also named in six files of the server and no others", async () => {
+  test("the crawl only sees what these fakes mount, so the secret is also named in nine files of the server and no others", async () => {
     // A route that serialised the configuration, or the secret, would have to be written in one of
     // these files or name it in a new one. A new one fails here, on purpose: look at what it returns.
     const source = join(import.meta.dir, "..", "src");
@@ -1047,7 +1047,10 @@ describe("nothing a stranger can reach hands out the secret", () => {
       "app.ts",
       "auth/dev-actor.ts",
       "auth/install-secret.ts",
+      "auth/remote-limits.ts",
       "config.ts",
+      "freeduet/at-the-computer.ts",
+      "freeduet/engines-routes.ts",
       "http-server.ts",
       "index.ts",
     ]);

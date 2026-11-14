@@ -736,6 +736,8 @@ export function createApp(
         managedAgent: config.managedAgent,
       }),
       coworker?.engineChoices,
+      // With sign-in and a secret, "at the computer" also asks for the pairing cookie (at-the-computer.ts).
+      signInGate(config),
     ),
   );
   app.on(["PUT", "PATCH", "DELETE"], "/api/auth/scim/*", (context) =>
