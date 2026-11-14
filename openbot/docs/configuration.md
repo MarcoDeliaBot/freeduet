@@ -28,6 +28,11 @@ All five above stop server startup if missing. The three `INTELLIGENCE_` values 
 checked as a set, so a partial set is refused as a misconfiguration rather than treated as
 unconfigured.
 
+With the one-command start you set neither `DATABASE_URL` nor `KEY_ENCRYPTION_KEY`:
+`scripts/start.sh` makes a password for the database Compose starts and a key for the vault, once, the
+first time it runs, and writes them to `.env` (see
+[Secrets the one-command start makes](#secrets-the-one-command-start-makes)). A value you set is kept.
+
 `COPILOTKIT_LICENSE_TOKEN` is optional: managed Intelligence issues no licence token, and a
 self-hosted Intelligence that has one sets this and has it forwarded to the runtime. That
 Intelligence needs the same licence on its own deployment as well, or it refuses memory and the
@@ -66,7 +71,7 @@ at `agent-langgraph` on a laptop.
 | `AGENT_TOOL_TOKEN`   | unset; `start.sh` generates one    | The secret a framework Bot presents when it calls a granted tool back through this server. |
 | `APP_DIST_DIR`       | unset                              | Where the built app is, when this process serves it. Set inside the container image; unset in development, where Vite serves the app. |
 | `AUDIT_RETENTION_DAYS` | unset                            | Whole number of days to keep audit rows; older ones are removed. Unset keeps the trail forever. |
-| `WORKER_SHARED_SECRET` | unset; `start.sh` uses a fixed local default | The secret the routines worker presents to fire a due routine. Without it the server refuses every handoff, whether or not a worker exists to send one. |
+| `WORKER_SHARED_SECRET` | unset; `start.sh` generates one | The secret the routines worker presents to fire a due routine. Without it the server refuses every handoff, whether or not a worker exists to send one. |
 | `OPENBOT_GENERATIVE_UI` | unset (capability on)               | Set `false` or `0` to stop Bots from answering with generated interfaces. |
 | `OPENBOT_SELF_HOST_BANNER` | unset (banner on)               | Set `false` or `0` to hide the bar offering help self-hosting OpenBot, for everybody. It never shows on a paid Intelligence plan, and each person can also close it for themselves. |
 | `OPENBOT_ACCESSIBILITY_DISABLED` | unset | `true` or `1` stops naming OpenDuet on the analytics the runtime already sends. |
@@ -130,17 +135,15 @@ API server refuses a handoff without one configured, and the worker refuses to s
 all. See [routines.md](routines.md) for what a deployment with no worker at all looks like — the
 Routines page says so when nothing has swept.
 
-Unlike `AGENT_TOOL_TOKEN`, `start.sh` does not generate and persist this one. It supplies a fixed
-local default, `openbot-dev-worker-secret`, the same value every clone of this repository gets. That
-is fine here not because of where the server listens — it binds no hostname, so the port itself is
-reachable like any other — but because this is a dev-only default on a machine's own dev stack, and
-the endpoint it guards accepts nothing but an unguessable `routine_run_<uuid>` id: the server
-re-reads the routine, the owner and the channel from its own tables rather than trusting anything
-else the caller says, so a well-known value from a public repository gates nothing sensitive here.
-`AGENT_TOOL_TOKEN` is generated fresh and written to `.env` precisely because it is not that: it is
-copied into every Bot container, and a framework Bot holding it may be running on a machine of its
-own, so a fixed default there would be no boundary at all. Production deployments must set a real
-`WORKER_SHARED_SECRET`.
+Like `AGENT_TOOL_TOKEN`, `start.sh` generates this one and writes it to `.env`, once. It used to
+supply a fixed default, `openbot-dev-worker-secret`, the same value every clone of this repository got,
+on the argument that the endpoint it guards accepts nothing but an unguessable `routine_run_<uuid>` id:
+the server re-reads the routine, the owner and the channel from its own tables rather than trusting
+anything else the caller says. That held, and it was still a credential published to everybody (the
+server binds no hostname, so the port is reachable like any other), and a secret that is the same on
+every installation is not a secret. A `.env` that still holds the old value gets a new one on its next
+start, and the worker is restarted to read it, because it keeps the one it started with. Production
+deployments must set a real `WORKER_SHARED_SECRET`.
 
 **`SERVER_INTERNAL_URL`** is read by the worker, not by the API server, so it is not in the table
 above: it says where the worker's own process can reach this deployment's API, which is a fact about
@@ -663,6 +666,38 @@ every WebSocket must come from one of this deployment's origins (`OPENBOT_PUBLIC
 is not a browser page and so sends no `Origin`. A body must be JSON or an upload. A page opened at a
 name none of those lists is refused with 403; add its origin to `TRUSTED_ORIGINS`.
 
+### Secrets the one-command start makes
+
+Until D39 `scripts/start.sh` started on values published in this repository: the same computer token,
+supervisor token, worker secret, database password and vault key on every installation. It now makes its
+own for each, once, the first time it runs, writes them to `.env` (readable by you alone) and prints none
+of them. A later start finds them and does nothing.
+
+| Setting | Made | For |
+| --- | --- | --- |
+| `SUPERVISOR_TOKEN`, `COMPUTER_TOKEN` | 32 random bytes, hex | The server's calls to the supervisor and to every Bot's computer |
+| `WORKER_SHARED_SECRET` | 32 random bytes, hex | The routines worker's call to `/internal/routines/run` |
+| `POSTGRES_PASSWORD`, `DATABASE_URL` | 24 random bytes, hex | The database Compose starts, and the address that carries its password |
+| `KEY_ENCRYPTION_KEY` | 32 random bytes, base64 | What stored credentials, saved logins and company sign-in secrets are sealed with |
+
+A value you set is yours. In the environment it is used as it is and written nowhere. In `.env` it is
+kept, unless it is exactly one of the values this repository used to publish (`openbot-dev-computer-token`,
+`openbot-dev-supervisor-token`, `openbot-dev-worker-secret`, the all-zero key and
+`postgres://openbot:openbot@localhost:5432/openbot`): an older start wrote those for you, and they are the
+same on every installation. A `DATABASE_URL` that names another password, user, host or database is never
+changed.
+
+**An installation that already has the old values** gets new ones on its next start and keeps its data.
+The three tokens are replaced, and the Docker services and Bots' computers that held them restart. The
+database keeps its data and its volume: its password is changed on the running database first, and `.env`
+says so only once that worked; if it cannot be changed, the run says so in red and goes on with the old one.
+The vault key is replaced only when the database holds nothing sealed with it; otherwise it stays, and
+`start.sh` says so on every start, because a new key would make every saved login and connection unreadable.
+The server and the routines worker restart once. `docs/M1_PLAN.md` section 22 has the steps in order.
+
+To make a new token, delete its line and run `scripts/start.sh`. Do not delete `KEY_ENCRYPTION_KEY` on an
+installation with saved logins or connections: it makes a new key and leaves what was saved unreadable.
+
 ### SCIM provisioning
 
 A directory such as Okta or Entra ID can create, update and remove people through SCIM 2.0 at
@@ -906,7 +941,7 @@ is still the record.
 | Variable                             | Meaning                                                                                   |
 | ------------------------------------ | ----------------------------------------------------------------------------------------- |
 | `AGENT_COMPUTER_URL`                 | Shared computer URL. If absent, computer routes are not mounted.                          |
-| `COMPUTER_TOKEN`                     | Secret every computer request must present. The computer refuses to start without it.     |
+| `COMPUTER_TOKEN`                     | Secret every computer request must present. The computer refuses to start without it. `scripts/start.sh` generates one for the installation. |
 | `COMPUTER_MAX_BROWSERS`              | How many Bots may hold a running browser at once. `8` by default; the least recently used is closed past it. |
 | `COMPUTER_BROWSER_IDLE_MS`           | How long an untouched browser is kept. 30 minutes by default; `0` keeps them resident.    |
 | `COMPUTER_BROWSER_BACKEND`           | `managed` by default (full bundled Chromium); `local-chrome` opts into installed Chrome with dedicated profiles and a loopback API. |
@@ -915,7 +950,7 @@ is still the record.
 | `WEB_BOT_AUTH_KEY`                   | The Web Bot Auth signing key, an Ed25519 private JWK. Unset derives one from `KEY_ENCRYPTION_KEY`. Never logged. |
 | `OPENBOT_LOCAL_COMPUTER_DIR`         | Local startup helper's absolute data root. Defaults to the platform's OpenBot user-data directory; contains `profiles/` and `workspace/`. |
 | `COMPUTER_SUPERVISOR_URL`            | Supervisor URL for per-Bot computers. If absent, Bots share `AGENT_COMPUTER_URL`.         |
-| `SUPERVISOR_TOKEN`                   | Bearer token required by the supervisor.                                                  |
+| `SUPERVISOR_TOKEN`                   | Bearer token required by the supervisor. `scripts/start.sh` generates one for the installation. |
 | `AGENT_COMPUTER_ALLOW_PRIVATE_HOSTS` | Local-only private-host browsing when `true`. A deployment running with `NODE_ENV=production` refuses to start while it is set. Cloud metadata addresses are refused either way. |
 | `AGENT_ENDPOINT_ALLOWED_HOSTS`       | Private addresses an agent may be registered at, comma separated; unset (none) by default. Host, optionally with a port. Exact match; no wildcards. Never-allowed addresses cannot be named. |
 | `AGENT_COMPUTER_POLICY`              | JSON action policy: `{"mode":"enforce","deny":[...],"allow":[...]}`.                      |

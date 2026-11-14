@@ -35,5 +35,6 @@ Especially valuable reports:
 - Metered APIs: off in every chain until you enable them and set caps.
 - Full access: off for every member until you turn it on, one member at a time, after a warning, in one of two settings (with or without payments).
 - Telemetry: off.
+- Secrets: none ships with the repository. The first `bash scripts/start.sh` makes a value of its own for each secret FreeDuet needs (the tokens of the computers and the supervisor, the routines worker's secret, the database's password, the key that seals saved logins), writes them to your `.env`, readable by you alone, and shows none of them. No two installations share one. An installation that started before this is moved off the old shared values on its next start and keeps its data; `start.sh` says what it could not change, and why. Details in `docs/M1_PLAN.md` (D39).
 - The app listens on localhost. Put TLS and sign-in in front of it before exposing it to a network.
 - With no sign-in, a request from this machine is answered only when it names one of this machine's own hosts (`localhost`, `127.0.0.1`, `[::1]`) or a host you configured in `TRUSTED_ORIGINS`; any other `Host` gets 421. This keeps a web page that re-points its own name at 127.0.0.1 from reading your local FreeDuet. Details in `openbot/docs/configuration.md`.

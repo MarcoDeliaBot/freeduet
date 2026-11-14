@@ -150,7 +150,7 @@ bash scripts/start.sh                                         # the app, the tea
 cd openbot && docker compose exec -it agent-freeduet claude   # sign in once with your own Claude plan
 ```
 
-Then open `http://localhost:3010`. No API key needed: every member runs on your own Claude Code login through the subscription router, `agent-freeduet`, and `start.sh` writes a local key for the server's own short model calls, which go to the router too. The sign-in stays in a Docker volume that only the Claude Code CLI reads. `start.sh` tells you when it is still missing. You need Docker, Bash and Bun. The maintainer uses it on Windows with WSL2; CI starts it on Linux. See [what is tested](#what-is-tested-and-what-is-not).
+Then open `http://localhost:3010`. No API key needed: every member runs on your own Claude Code login through the subscription router, `agent-freeduet`, and `start.sh` writes a local key for the server's own short model calls, which go to the router too. The first start also makes the secrets of your installation (the tokens of the computers and the supervisor, the database's password, the key that seals saved logins), keeps them in `.env` and shows none of them: no two installations share one. The sign-in stays in a Docker volume that only the Claude Code CLI reads. `start.sh` tells you when it is still missing. You need Docker, Bash and Bun. The maintainer uses it on Windows with WSL2; CI starts it on Linux. See [what is tested](#what-is-tested-and-what-is-not).
 
 To run the members as built-in Bots on a model key of your own instead, set `FREEDUET_ROUTER=off` and `FREEDUET_MEMBER_TYPE=built-in` in `.env` (the comments there list the rest).
 
