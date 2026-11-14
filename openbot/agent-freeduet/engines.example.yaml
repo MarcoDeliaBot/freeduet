@@ -52,8 +52,8 @@ engines:
     tier: C
     enabled: false
 
-  # ── An Anthropic-compatible endpoint you name: the same Claude Code CLI, on your own key at that endpoint ──
-  # Both blocks below are examples and stay off. To use one: uncomment it, set `enabled: true` and write its name in a
+  # ── An Anthropic-compatible endpoint you name: the same Claude Code CLI, on your own key at that endpoint (or none, on this machine) ──
+  # The blocks below are examples and stay off. To use one: uncomment it, set `enabled: true` and write its name in a
   # chain under `chains:` below, after `claude-code`. The member runs exactly as on `claude-code` (same lockdown, same
   # tools, same approvals); only where it sends its requests, which key it sends and which model it asks for change.
   # The key is one you hold at that endpoint, never your Claude sign-in: write where to find it (`env:NAME` for a
@@ -90,6 +90,23 @@ engines:
   #   credential_secret_ref: env:LOCAL_ROUTER_KEY
   #   billing: free
   #   model: "<model-id-the-router-lists>"
+  #   tier: C
+  #   enabled: false
+  #
+  # A model on your own computer, through Ollama's Anthropic-compatible endpoint (Ollama 0.14 and later serve /v1/messages).
+  # It takes no key, so write `no_key: true` and leave the key line out: FreeDuet then sends a placeholder that the local
+  # server ignores, and accepts that only for a plain http:// address on this machine (localhost, 127.x.x.x, ::1) or for
+  # host.docker.internal. From the container `localhost` is the container itself, so use host.docker.internal. On Linux the
+  # local server must listen on an address the container can reach: Ollama listens on 127.0.0.1 by default, so start it with
+  # OLLAMA_HOST=0.0.0.0:11434 (on systemd: Environment="OLLAMA_HOST=0.0.0.0:11434").
+  # Write the name of a model you pulled (`ollama list`). Whether it calls tools well is not checked here: it stays tier C
+  # until the team evals pass on it. Write `metered` instead of `free` for a server that forwards to paid providers.
+  # local-models:
+  #   kind: anthropic-compatible
+  #   base_url: http://host.docker.internal:11434
+  #   no_key: true
+  #   billing: free
+  #   model: "<model-name-you-pulled>"
   #   tier: C
   #   enabled: false
 
