@@ -15,16 +15,30 @@ export type EngineState =
   | "not_answering"
   | "checking"
   | "signed_out"
+  | "refused"
   | "unknown";
+
+/** The kinds the server names. `other` is any kind it does not know. */
+export type EngineKind =
+  | "cli"
+  | "app-server"
+  | "acp"
+  | "anthropic-api"
+  | "openai-compatible"
+  | "anthropic-compatible"
+  | "other";
 
 export type EngineReason = "off" | "not_set_up" | "unreachable";
 
 export type EngineSummary = {
   id: string;
   name: string;
+  kind: EngineKind;
   state: EngineState;
   /** ISO 8601 in UTC; set only for the states that wait for a time. */
   until: string | null;
+  /** Set only for a refused engine: the cleaned sentence that says why it is not run. */
+  refusal: string | null;
 };
 
 export type EnginesReading = {
@@ -75,9 +89,13 @@ export function untilText(
   return `${day}, ${clock(moment, timeZone)}`;
 }
 
-/** One engine's state, in one plain sentence. */
+/**
+ * One engine's state, in one plain sentence. The kind is read only for a signed-out engine, and the refusal only for an
+ * engine that is not run; every other state reads the same whatever they hold.
+ */
 export function engineStateText(
-  engine: Pick<EngineSummary, "state" | "until">,
+  engine: Pick<EngineSummary, "state" | "until"> &
+    Partial<Pick<EngineSummary, "kind" | "refusal">>,
   now: Date = new Date(),
   timeZone?: string,
 ): string {
@@ -98,7 +116,14 @@ export function engineStateText(
     case "checking":
       return "Checking whether it answers again";
     case "signed_out":
-      return "Signed out: sign in again with the engine's own login";
+      // A gateway has a key, not a login: its remedy is the key.
+      return engine.kind === "anthropic-compatible"
+        ? "Its gateway did not accept the key. Check the key you gave it."
+        : "Signed out: sign in again with the engine's own login";
+    case "refused":
+      return engine.refusal
+        ? `Not run: ${engine.refusal}`
+        : "Not run: the reason is not known.";
     default:
       return "State not known";
   }

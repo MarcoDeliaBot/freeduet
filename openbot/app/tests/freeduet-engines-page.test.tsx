@@ -70,10 +70,19 @@ test("each engine is one row: its name, and one sentence for its state", async (
       {
         id: "claude",
         name: "Claude Code",
+        kind: "cli",
         state: "limited",
         until: inAnHour(),
+        refusal: null,
       },
-      { id: "backup", name: "Backup engine", state: "signed_out", until: null },
+      {
+        id: "backup",
+        name: "Backup engine",
+        kind: "cli",
+        state: "signed_out",
+        until: null,
+        refusal: null,
+      },
     ],
   });
   const view = draw();
@@ -94,7 +103,14 @@ test("nothing in a row can be clicked or changed", async () => {
   serve({
     reason: null,
     engines: [
-      { id: "claude", name: "Claude Code", state: "ready", until: null },
+      {
+        id: "claude",
+        name: "Claude Code",
+        kind: "cli",
+        state: "ready",
+        until: null,
+        refusal: null,
+      },
     ],
   });
   const view = draw();
@@ -155,11 +171,102 @@ test("the page only reads: nothing but GET is sent", async () => {
   serve({
     reason: null,
     engines: [
-      { id: "claude", name: "Claude Code", state: "ready", until: null },
+      {
+        id: "claude",
+        name: "Claude Code",
+        kind: "cli",
+        state: "ready",
+        until: null,
+        refusal: null,
+      },
     ],
   });
   const view = draw();
   await waitFor(() => view.getByText("Claude Code"));
   expect(requests.length).toBeGreaterThan(0);
   expect(requests.every((request) => request.startsWith("GET "))).toBe(true);
+});
+
+/** The sentence agent-freeduet writes for a paid gateway it will not run, for an engine called `my-gateway`. */
+const GATEWAY_REFUSAL =
+  "my-gateway is a paid gateway. FreeDuet does not run paid gateways yet, because it cannot yet enforce the limits you set. Free gateways and your own logins work.";
+
+test("a gateway whose key was refused says so, and asks for the key, not a sign-in", async () => {
+  serve({
+    reason: null,
+    engines: [
+      {
+        id: "gw",
+        name: "gw",
+        kind: "anthropic-compatible",
+        state: "signed_out",
+        until: null,
+        refusal: null,
+      },
+    ],
+  });
+  const view = draw();
+  await waitFor(() =>
+    view.getByText(
+      "Its gateway did not accept the key. Check the key you gave it.",
+    ),
+  );
+  expect(
+    view.queryByText("Signed out: sign in again with the engine's own login"),
+  ).toBeNull();
+});
+
+test("an engine the service will not run is shown as not run, with the reason", async () => {
+  serve({
+    reason: null,
+    engines: [
+      {
+        id: "my-gateway",
+        name: "my-gateway",
+        kind: "anthropic-compatible",
+        state: "refused",
+        until: null,
+        refusal: GATEWAY_REFUSAL,
+      },
+    ],
+  });
+  const view = draw();
+  await waitFor(() => view.getByText(`Not run: ${GATEWAY_REFUSAL}`));
+  expect(view.queryByText("State not known")).toBeNull();
+});
+
+test("a gateway row and a refused row have nothing clickable either", async () => {
+  serve({
+    reason: null,
+    engines: [
+      {
+        id: "gw",
+        name: "gw",
+        kind: "anthropic-compatible",
+        state: "signed_out",
+        until: null,
+        refusal: null,
+      },
+      {
+        id: "my-gateway",
+        name: "my-gateway",
+        kind: "anthropic-compatible",
+        state: "refused",
+        until: null,
+        refusal: GATEWAY_REFUSAL,
+      },
+    ],
+  });
+  const view = draw();
+  for (const name of ["gw", "my-gateway"]) {
+    const row = (await waitFor(() => view.getByText(name))).closest(
+      '[data-slot="item"]',
+    );
+    expect(row).not.toBeNull();
+    expect(
+      row?.querySelectorAll(
+        'button, a, input, select, textarea, [role="button"], [role="link"], [role="switch"], [role="checkbox"], [role="radio"], [role="menuitem"]',
+      ).length,
+    ).toBe(0);
+  }
 });
