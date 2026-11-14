@@ -1,0 +1,77 @@
+# FreeDuet roadmap
+
+This page lists what is planned, in the order we currently think it matters. **Nothing here is promised with a date.** A feature is called available only after it runs and is tested ([README: what is tested](../README.md#what-is-tested-and-what-is-not)).
+
+## Where FreeDuet is today
+
+- **Version:** v0.1, 13 November 2026, an early release built and used by one maintainer.
+- **Team:** eleven members. Iris is the Chief of Staff; the others each have one job ([TEAM.md](TEAM.md)).
+- **Engine:** your own Claude subscription, through the unmodified Claude Code login. No API key.
+- **Where it runs:** Windows with WSL2, and Linux. macOS has not been tested.
+- **What you need:** Docker, Bash and Bun, set up by hand.
+- **Tests:** the team evals passed on v0.1 (each member at 100% of its scored cases, safety cases 45 of 45 runs). Mark's four cases have not been run live yet.
+
+## How to read the tables
+
+| Word | Meaning |
+|---|---|
+| **Now** | The next things to be worked on. |
+| **Next** | After that. Several of these can start once the first group is done. |
+| **Later** | Wanted, but waiting on a decision, a design or something in Now or Next. |
+| **Planned** | We want it and have not started designing it. |
+| **In design** | The shape is being worked out; options are still open. |
+| **In progress** | Work has started. |
+
+The order inside a group is not a ranking, except that the one-file installer is the top priority overall: it is today's biggest barrier.
+
+## Now
+
+| Item | What you get | Status | Constraints |
+|---|---|---|---|
+| **One-file installer** for Windows, macOS and Ubuntu | You download one file, double-click it, and FreeDuet starts. No Docker, Bash or Bun to set up by hand. | Planned | Top priority. FreeDuet must still start with no API key, and the Claude sign-in stays yours: FreeDuet never reads or stores it. A platform is called supported only after a test run on that platform. |
+| **A growing team** | New ready-made members added over time. Mark, the marketer, was the first after v0.1. Anyone can already train their own member (ask Leo, or write it yourself). | In progress (ongoing) | A member is added with its own evals. The catalogue of planned members is in [CATALOG.md](CATALOG.md). |
+| **More evals for each new member** | A new member is tested before it is called ready. | Planned | Each member must reach at least 90% of its cases and the safety cases 100% ([evals/team/README.md](../evals/team/README.md)). Mark's cases still need their first live run. Evals run by hand on a separate stack. |
+| **New connector tools reach existing connections** (issue #102) | Today a connector connected before a tool existed never gets that tool. This would fix it, so a new tool appears without reconnecting. | Planned | Approvals do not change: a tool that sends, pays, signs, books or deletes still asks. |
+
+## Next
+
+| Item | What you get | Status | Constraints |
+|---|---|---|---|
+| **Every engine, chosen per member** | You pick the engine for each team member: Claude, Codex, Grok and others. | Planned | **Logins first** ([PROVIDERS.md](PROVIDERS.md)): an engine comes in through your own subscription login first. A metered API key is never first in a chain and never on by default. A route whose provider terms are unclear ships off. Codex waits for OpenAI's approval. |
+| **Never stops: engine chains, caps and the savings meter** (milestone v0.3 in [PROJECT.md](PROJECT.md)) | When one subscription reaches its limit, the work moves to the next, and you can see what the work would have cost at pay-per-token prices. | Planned | Needs more than one engine first. Metered engines only if you switch them on, always last, always capped. |
+| **Real delegation** (v0.3) | You ask Iris once; she splits the job across members and brings back one combined answer. | Planned | Today each member answers through Iris. A hand-off never turns into an approval for an account action. |
+| **Teams and members from one file** | Export a whole team, or a single member, as one portable file. Import one someone shared with you. People can share and install members. | Planned | No credentials and no chat history inside the file. An imported member goes through the same approval gate as any other. Fits "the team grows". |
+| **Automations written in chat**, with a calendar and history | You say "every Monday at 9, do this", and see a calendar of scheduled runs and a history of what ran. | In design | Routines already exist in the OpenBot base: a member makes one from a sentence once it has been granted the routine tools, and FreeDuet makes the daily review routine for you. The calendar view, the history and setting one up out of the box are what is planned. An automation never sends, pays, signs, books or deletes without your approval. |
+| **Many more connected apps** | Hundreds of apps, not the few of today (Gmail, Calendar and a handful of others). A connector hub such as Composio is one option under evaluation. | In design | Official connector first, then the browser, then screen control ([CONNECTORS.md](CONNECTORS.md)). A tool's own terms come first. Whether a hub fits FreeDuet's rule that sign-in happens in the tool's own flow and FreeDuet stores no passwords is part of the evaluation. Account actions keep asking for approval. |
+| **Phone** | Use FreeDuet from your phone, and get approval requests there. | In design | Pairing with a link is the design under evaluation, next to sign-in with Google for remote access. Never exposed publicly without a login. Not available in v0.1. |
+| **Remote access to your own FreeDuet** | Reach your FreeDuet from outside your home network. | In design | A real sign-in, in front of TLS ([SECURITY.md](../SECURITY.md)). Today the app listens on localhost only. |
+| **macOS certification** | A tested start on a real Mac. | Planned | Today CI starts FreeDuet on Linux only, and the maintainer runs it on Windows. Goes with the installer. |
+| **The app in more languages** | Italian and other languages in menus and settings. | Planned | Today the app is in English. Members already reply in your language, and a few cards are translated into Italian ([M1_PLAN.md](M1_PLAN.md), D26). |
+
+## Later
+
+| Item | What you get | Status | Constraints |
+|---|---|---|---|
+| **Voice** | Members read answers aloud, and you can call them. | Planned | Optional local dictation exists today and is off by default. The voice engine for reading aloud and calls is not chosen yet. |
+| **Cam, the video member** | A member that makes and edits video for you. | Planned | Needs git, python and ffmpeg in the member's computer, and a way to download files from chat. Publishing a video is always an approval. |
+| **"Full access" option** | An optional switch, set per member, that lets a member act without approval cards. | In design | Off by default. **Scope to be decided:** whether payments and purchases would still always ask is a maintainer decision that is still open. Today's documents promise an approval for every real account action ([PROJECT.md](PROJECT.md), principle 2 and F11, and [SECURITY.md](../SECURITY.md)), so they would have to change together with the switch. |
+| **Safe purchases** (v0.4) | Purchase permits tied to the exact shop and total, and spending caps. | Planned | Needs the engine work above. Payments stay blocked without an approval. |
+| **Import from Grok Bot** (v1.0) | Bring the agents you built in Grok Bot into FreeDuet ([how](import/grok-export-prompt.md)). | Planned | Nothing is saved without your confirmation. Our own code, written from scratch ([NOTICE.md](../NOTICE.md)). |
+
+## Smaller items already known
+
+- Local models and the Engines page ([PROJECT.md](PROJECT.md), F2 and F3) come with the engine work above.
+- The other connectors in the catalogue ([CONNECTORS.md](CONNECTORS.md)) are built one by one, each with the milestone shown there.
+
+## What will not change
+
+These hold whatever else on this page moves.
+
+- **Logins first.** Members run on the subscriptions you signed in to. A metered API key or API credit is never first, never on by default, and always capped ([PROVIDERS.md](PROVIDERS.md)).
+- **Your approval for real account actions, by default.** Sending, paying, signing, booking, publishing and deleting wait for you. There is one narrow exception today: a new email to an address you typed yourself in your own message (D27 in [M1_PLAN.md](M1_PLAN.md)). A "Full access" option, if it is built, is something you switch on yourself, member by member.
+- **No secrets taken, no telemetry by default.** FreeDuet never reads, stores or forwards your subscription login. FreeDuet sends no usage data to its maintainers, and the runtime's own telemetry is off in `.env.example` (`COPILOTKIT_TELEMETRY_DISABLED=true`). Optional CopilotKit Intelligence is off by default too ([telemetry.md](telemetry.md), [PROVIDERS.md](PROVIDERS.md)).
+- **Self-hosted, and your data stays with you.** Your conversations and memory stay in your own database.
+- **MIT.** One free licence for everyone, with no paid-only or enterprise part. A few ported files keep their original notices ([NOTICE.md](../NOTICE.md)).
+- **We say what is tested and what is not.** Planned means planned.
+
+Want something moved up? Open an issue and say what you need it for.
