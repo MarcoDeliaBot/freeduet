@@ -622,6 +622,18 @@ it. What a container may still do is what it can prove: a Bot's callback with it
 the worker with its secret. `OPENBOT_HOST` is the exception below, and Docker Desktop, which
 delivers a container's calls from loopback, is not changed by this.
 
+**With no sign-in, a request from this machine is answered only under this machine's own names.**
+A page on the internet can point its own name at 127.0.0.1, and the browser then sends the person's
+reads to this server as if the page were theirs. So a request whose connection comes from loopback
+must name `localhost`, an address of 127.0.0.0/8, `[::1]` or `host.docker.internal` in its `Host`
+header (any port, any capitalisation, one trailing dot), or a host of `OPENBOT_PUBLIC_URL`,
+`OPENBOT_APP_URL` or `TRUSTED_ORIGINS`; anything else, or no `Host`, gets 421 with a message that
+names `TRUSTED_ORIGINS`. To open FreeDuet at another name on your own network, put that origin
+there (for example `TRUSTED_ORIGINS=http://nas.local:3010`) and restart. A public name cannot be
+set with no sign-in at all (the server refuses to start); reach it from afar with a sign-in
+provider, where this rule does not apply. A deployment with sign-in, one opened with `OPENBOT_HOST`,
+and a connection from the Docker bridge are not changed.
+
 `OPENBOT_HOST` changes that for both. Set it to `0.0.0.0` to listen on every interface, or to a
 comma-separated list of addresses. With no sign-in, everybody who can reach those addresses is the
 administrator, and the server says so at every boot. The container image sets `0.0.0.0`, because a
