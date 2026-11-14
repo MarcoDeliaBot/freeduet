@@ -23,7 +23,7 @@ engines:
     command: codex
     billing: subscription          # your own ChatGPT plan
     tier: A
-    enabled: false                 # on once FreeDuet's "Sign in with ChatGPT" client ID is approved
+    enabled: false                 # planned, not built: on once its checks pass (PROVIDERS.md)
     experimental_local_login: false
 
   gemini-cli:

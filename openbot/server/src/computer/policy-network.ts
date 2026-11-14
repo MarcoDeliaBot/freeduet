@@ -8,7 +8,9 @@
  * groups pick the policy: a group with a policy of its own replaces the organization's, unless the
  * organization policy is locked (Grok Bot: "groups can override team policy with their own, with
  * optional locks enforcing team-level restrictions"). When the owner's "Cloud network access"
- * capability is off, the computer gets `deny_all` whatever the policy says.
+ * capability is off, the computer gets `deny_all` whatever the policy says. The owner's "Home and
+ * office network access" capability, off unless somebody switched it on, decides whether `allow_all`
+ * includes the private ranges (`allowPrivateNetwork`, D36).
  *
  * APPLIED LIVE by pushing to every running computer: on the enterprise LISTEN/NOTIFY announcement
  * (see `admin/controls.ts`) and on a short interval so a computer that started since the last push
@@ -28,10 +30,35 @@ import type { ComputerProvider } from "./provider";
 export type { EgressPolicy, EgressRule };
 export { DEFAULT_EGRESS_DESTINATIONS, egressDecision, parseEgressRules };
 
-/** No organization row at all: the computer is left as it was, which is "allow all". */
+/**
+ * No organization row at all: "allow all", which is the internet. The home and office network is
+ * only reachable with `allowPrivateNetwork` (see {@link effectiveNetworkPolicy}).
+ */
 export const NO_NETWORK_POLICY: EgressPolicy = { mode: "allow_all", rules: [] };
 
+/**
+ * The policy a person's computers run under.
+ *
+ * `privateNetworkAllowed` is their "Home and office network access" capability (D36), which is off
+ * unless somebody switched it on. It rides in the policy as `allowPrivateNetwork`, and only where it
+ * means something: under `allow_all`, which is "the internet" and so needs the switch to include the
+ * home or office network. The other modes decide by the administrator's own rules, and `deny_all` by
+ * nothing. Left out when off, so a policy that does not carry it reads as "blocked" on any computer,
+ * old or new.
+ */
 export function effectiveNetworkPolicy(
+  rows: readonly NetworkPolicyRow[],
+  member: { groups: readonly string[] },
+  cloudNetworkAllowed: boolean,
+  privateNetworkAllowed = false,
+): EgressPolicy & { from: string } {
+  const chosen = chooseNetworkPolicy(rows, member, cloudNetworkAllowed);
+  return privateNetworkAllowed && chosen.mode === "allow_all"
+    ? { ...chosen, allowPrivateNetwork: true }
+    : chosen;
+}
+
+function chooseNetworkPolicy(
   rows: readonly NetworkPolicyRow[],
   member: { groups: readonly string[] },
   cloudNetworkAllowed: boolean,
@@ -129,7 +156,12 @@ export async function pushEgressPolicy(
         ...(options.token ? { "x-openbot-computer-token": options.token } : {}),
       },
       body: JSON.stringify({
-        policy: { mode: policy.mode, rules: policy.rules },
+        policy: {
+          mode: policy.mode,
+          rules: policy.rules,
+          // Only when on: a computer that never hears of the switch blocks, which is the default.
+          ...(policy.allowPrivateNetwork ? { allowPrivateNetwork: true } : {}),
+        },
         ...(options.webBotAuth
           ? {
               webBotAuth: {
