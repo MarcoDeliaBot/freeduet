@@ -23,7 +23,7 @@ FreeDuet gives you a Chief of Staff and a crew of specialists: inbox, contracts,
 
 | | What it means for you |
 |---|---|
-| **Your subscriptions first** | Agents run on the official command-line tools you already pay for and sign in to yourself (Claude Code in v0.1; Codex and more as providers allow it). FreeDuet never sees, stores or forwards your subscription credentials. |
+| **Your subscriptions first** | Agents run on the official command-line tools you already pay for and sign in to yourself (Claude Code in v0.1; Codex and more once their terms are checked). FreeDuet never sees, stores or forwards your subscription credentials. |
 | **Never stops** | Planned for v0.3: each agent gets an engine chain. When one subscription reaches its limit, the next one takes over. Metered APIs join the chain only if you allow it, with daily and monthly caps. |
 | **Savings meter** | Planned for v0.3. See what your team's work would have cost at pay-per-token prices, compared with what you actually paid. |
 | **A real team** | A Chief of Staff splits your request, hands each part to the right specialist, follows up and brings back one answer (one combined answer from several specialists is coming in v0.3; today each specialist answers through the Chief of Staff). |
@@ -132,7 +132,7 @@ Provider terms change. FreeDuet only ships routes that the provider's own terms 
 |---|---|---|
 | Claude (Pro, Max, Ultra, Team) | Official Claude Code, signed in by you | **On** |
 | Claude monthly API credits (Max, Ultra, Team) | API key from your linked Console organization | **Off**: optional, always last |
-| ChatGPT plans | Codex app-server via OpenAI's official "Sign in with ChatGPT" program | **Off** in v0.1. On once OpenAI approves it (planned for v0.2) |
+| ChatGPT plans | Codex app-server, through Codex's own official login, which FreeDuet never reads | **Off** in v0.1. Planned, not built: on only after a hands-on check of its limits, tool calls and lockdown, and a check of the provider's terms (planned for v0.2) |
 | Gemini (Google AI Pro, Ultra) | Not allowed through third-party software today | **Off**: use a Gemini API key |
 | GLM Coding Plan | Only inside the provider's listed tools | **Off** until verified: use a GLM API key |
 | OpenRouter, any OpenAI-compatible API | API key | Optional, capped |
@@ -166,7 +166,7 @@ Tested:
 Not tested, or not finished:
 
 - **Two eval cases are skipped.** otto-4 and otto-5 need a connected Gmail, and the eval stack has none (`requires: [gmail]` in [cases.yaml](evals/team/cases.yaml)). Both are safety cases, so the 100% bar covers the safety cases that did run.
-- **Only the Claude login route is on.** Codex waits for OpenAI's approval. The Gemini, GLM, Grok and Kimi routes are off until their terms are clear ([docs/PROVIDERS.md](docs/PROVIDERS.md), [engines.example.yaml](openbot/agent-freeduet/engines.example.yaml)). When your Claude plan reaches its limit, the work stops and says so. Nothing moves to another engine yet ([docs/M1_PLAN.md](docs/M1_PLAN.md), D11 and D12).
+- **Only the Claude login route is on.** Codex is planned, not built. When it comes, it uses Codex's own login, which FreeDuet never reads, and it is offered only after a hands-on check of its limits, tool calls and lockdown, and after the provider's terms are checked. The Gemini, GLM, Grok and Kimi routes are off until their terms are clear ([docs/PROVIDERS.md](docs/PROVIDERS.md), [engines.example.yaml](openbot/agent-freeduet/engines.example.yaml)). When your Claude plan reaches its limit, the work stops and says so. Nothing moves to another engine yet ([docs/M1_PLAN.md](docs/M1_PLAN.md), D11 and D12).
 - **Dictation has no automated end-to-end run with a real microphone.** The browser check plays a recorded clip through Chrome's fake microphone. It is run by hand, not in CI, and no result of it is recorded in this repository.
 - **The app is in English.** `FREEDUET_PERSON_LANGUAGE` makes the members write check-ins, routines and the morning brief in your language, and translates the morning brief card, the suggestion card and the check-in line. Only Italian is translated; with another language the members write in it and those cards stay English. Menus, settings and everything else stay English, and a model can still answer in the wrong language ([docs/M1_PLAN.md](docs/M1_PLAN.md), D26).
 - **Platforms.** The maintainer runs it on Windows with WSL2 and Docker ([docs/M0_DEMO.md](docs/M0_DEMO.md)). CI starts it on Linux only. The macOS and Windows jobs in CI run one app test (`build-cache`), not the start, so there is no macOS run of it.
