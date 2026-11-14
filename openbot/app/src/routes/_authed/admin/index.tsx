@@ -3,6 +3,7 @@ import {
   IconChecks,
   IconChevronRight,
   IconCode,
+  IconCpu,
   IconDeviceDesktop,
   IconFileText,
   IconKey,
@@ -117,6 +118,13 @@ const SECTIONS: {
         description: "Write a component and watch it render as you type.",
         icon: IconCode,
         linkOptions: { to: "/admin/playground" },
+      },
+      {
+        title: "Engines",
+        description:
+          "The AI engines members run on, and whether each one can answer now.",
+        icon: IconCpu,
+        linkOptions: { to: "/admin/engines" },
       },
     ],
   },

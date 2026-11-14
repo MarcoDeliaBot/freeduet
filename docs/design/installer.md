@@ -1,6 +1,6 @@
 # Installer plan: from "set up Docker, Bash and Bun by hand" to one file
 
-Plan plus a first small step, written 2026-11-14 for the roadmap item "One-file installer" ([ROADMAP.md](../ROADMAP.md), top priority). What ships with it is `openbot/scripts/install.sh` and its test, for Ubuntu 22.04 and 24.04 only. The maintainer has decided nothing in this plan yet; section 7 lists what must be decided.
+Plan plus a first small step, written 2026-11-14 for the roadmap item "One-file installer" ([ROADMAP.md](../ROADMAP.md), top priority). What ships with it is `openbot/scripts/install.sh` and its test, for Ubuntu 22.04 and 24.04 only. For Windows, `openbot/scripts/install.ps1` and its Pester test are written but have never run on Windows (section 10). The maintainer has decided nothing in this plan yet; section 7 lists what must be decided.
 
 Tags: **[code]** read in this repository (`path:line`). **[doc]** stated by an official page or index of the vendor or distribution (section 9, read 2026-11-14). **[assumed]** my inference, not checked. **[verify]** unknown; a run on a real clean machine must settle it. Nothing tagged [assumed] or [verify] may be built on as if it were true.
 
@@ -32,7 +32,7 @@ The compose file already names each image it builds so that a release could be p
 | Step | The person | We must build | State |
 |---|---|---|---|
 | **S1 Ubuntu 22.04, 24.04** | Gets the repository, runs `bash openbot/scripts/install.sh`, answers y once, logs out and in once if the docker group was just added, then signs in to Claude. | `install.sh` and its fake-command tests | This PR. Not run on a clean machine. |
-| **S2 Windows** | Runs one PowerShell command. Windows turns on WSL 2 and Ubuntu, restarts once, and `install.sh` runs inside Ubuntu: the maintainer's own setup [code: README.md:172]. | A PowerShell script: checks the Windows build and virtualisation, runs `wsl --install` (needs elevation [code: openbot/desktop/src-tauri/src/acquire.rs:7-11]), survives the restart and Ubuntu's first-run user name [verify: can both be scripted]. | Not started. `install.sh` already detects WSL 1 and 2 and says what differs [code: openbot/scripts/install.sh:203-212,808-814]. |
+| **S2 Windows** | Runs one PowerShell command. Windows turns on WSL 2 and Ubuntu, restarts once, and `install.sh` runs inside Ubuntu: the maintainer's own setup [code: README.md:172]. | A PowerShell script: checks the Windows build and virtualisation, runs `wsl --install` (needs elevation [code: openbot/desktop/src-tauri/src/acquire.rs:7-11]), survives the restart and Ubuntu's first-run user name [verify: can both be scripted]. | Written, never run on Windows: `openbot/scripts/install.ps1` and `openbot/scripts/install.Tests.ps1` (section 10). No restart resume: the person runs the script again after the restart. |
 | **S3 macOS** | One command in Terminal. | A separate program, since there is no apt: a container engine (Docker Desktop, Colima or Podman), Bun's macOS build, the tool checks [verify]. Needs a Mac to test; today there is no macOS run of the start [code: README.md:172]. | Not started. `install.sh` refuses macOS and points to the README [code: openbot/scripts/install.sh:173-176]. |
 
 ### 3.2 What `install.sh` decides, and the limit of each
@@ -117,3 +117,53 @@ The tests put fake commands on a private PATH [code: openbot/scripts/install.tes
 ## 9. Sources and limits
 
 Read 2026-11-14: the Ubuntu archive indexes `archive.ubuntu.com/ubuntu/dists/{jammy,noble,resolute}{,-updates,-security,-backports}/universe/binary-amd64/Packages.gz` [doc]; Bun's release files and `SHASUMS256.txt` under `github.com/oven-sh/bun/releases/download/bun-v1.4.3/` [doc], with the digests computed from the downloaded bytes; two Docker pages, [Install Docker Engine on Ubuntu](https://docs.docker.com/engine/install/ubuntu/) and [Set environment variables](https://docs.docker.com/compose/how-tos/environment-variables/set-environment-variables/) [doc]. `download.docker.com`, packages.ubuntu.com, Launchpad, the Ubuntu key server, the container registries and GitHub pages of other repositories (docker/compose) were not reachable from the sandbox and were not worked around, so Docker's apt key is unchecked and image sizes are unmeasured. `shellcheck` is not installed there and could not be, so only `bash -n` and the tests ran. A real Docker CLI (29.9.2) and Compose (5.7.0) were present, but no daemon, so no real Docker answer to a stopped or forbidden daemon was seen beyond the missing-socket one.
+
+## 10. Built so far
+
+**Windows (S2): written, never run on a Windows machine.** `openbot/scripts/install.ps1` and `openbot/scripts/install.Tests.ps1` were written on 2026-11-14 in a Linux sandbox, where PowerShell could not be installed: GitHub, the PowerShell Gallery, NuGet and Microsoft's own hosts were unreachable, and the npm and PyPI packages are a shim or need .NET. Nothing in them has executed. The only machine check is a parse with the tree-sitter PowerShell grammar (WebAssembly, not Microsoft's parser): neither file shows an error, and a deliberately broken file does show errors, so the check can fail. Both files are plain ASCII, as Windows PowerShell 5.1 needs.
+
+What the script does:
+
+- Default run: it reads this computer (Windows build, administrator or not, virtualisation, `wsl --status`, the Ubuntu entries in the registry, systemd and Docker only when Ubuntu already runs, free disk and memory, a pending restart, whether the folder is a checkout). It prints the plan, then asks once. `-Check` prints the same plan and changes nothing. `-Yes` skips the question. `-IgnoreResources` goes on below the disk and memory minimums, as install.sh does.
+- The steps, only when they are missing: `wsl --install -d Ubuntu-24.04 --no-launch` through Windows' own permission prompt, in its own window; `wsl --set-default-version 2`; `wsl --set-version <Ubuntu> 2`. Then the Ubuntu user, which the person creates by opening Ubuntu. Then `wsl --distribution <Ubuntu> bash openbot/scripts/install.sh`, which asks its own question unless `-Yes` was given.
+- Exit status: 0 done; 1 stopped, with the reason; 2 `-Check` found something missing; 3 one step is left for the person; 4 restart Windows, then run it again. install.sh's own statuses pass through.
+- It downloads nothing and runs no script from the internet. Its only script is `install.sh` from this checkout, run through the hand-over. It never reads or writes a login, password or secret, never touches the Claude sign-in, refuses to run as administrator, adds no startup task, never restarts Windows, installs no Docker and replaces no Docker it did not install.
+
+Microsoft's pages it relies on (read 2026-11-14):
+
+- [Basic commands for WSL](https://learn.microsoft.com/en-us/windows/wsl/basic-commands): `--set-version <distribution name> <versionNumber>`, `--set-default-version <Version>`, `--status`, `--list --running --quiet`, `--terminate`, `--shutdown`, `--distribution <Distribution Name>` with `--user`, `--distribution` as an install option, and `--no-launch`, which the page describes as not launching the distribution automatically. Not on the page: `--exec`, and a bare `--` separator. The page refers to `wsl --help` for the full list, which was not run here.
+- [Install WSL](https://learn.microsoft.com/en-us/windows/wsl/install): `wsl --install -d <DistroName>`; open PowerShell in administrator mode before it; restart after the first install; the user name and password come afterwards.
+
+Assumed, and to verify on a real machine (the script depends on each one):
+
+1. `wsl --distribution <name> <command>` runs the command. The page shows this form with `--user`, and `wsl hostname -I` runs a Linux command directly, but no page read here shows a command after `--distribution`. The hand-over, the systemd read and the Docker probe (`which docker`, `readlink -f`) all use it.
+2. `wsl --status` exits 0 when WSL works, and prints a line that ends with `Default Version: 2`. Only the number is read.
+3. `wsl --list --running --quiet` prints one name per line, and what it prints when nothing runs.
+4. The registry under `HKCU\Software\Microsoft\Windows\CurrentVersion\Lxss\{GUID}`: `DistributionName`, `Version` and `DefaultUid`. The script takes a missing or zero `DefaultUid` to mean that no Ubuntu user exists yet. No page read here confirms that.
+5. Whether `wsl --install -d` needs administrator rights when WSL is already installed (the script always asks), and whether `--set-default-version` and `--set-version` need none (the script assumes none).
+6. Whether `wsl --install` returns non-zero when it needs a restart. If it does, the script stops and says to run it again.
+7. Whether an elevation that asks for another administrator's password registers the distribution for that account, not for the person. On a managed machine that would leave nothing for the person after the restart.
+8. Whether `Start-Process -NoNewWindow -Wait` gives install.sh a console on which its question shows and takes the answer, in Windows PowerShell 5.1.
+9. The values of `Win32_ComputerSystem.HypervisorPresent` and `Win32_Processor.VirtualizationFirmwareEnabled` on the target machines.
+10. Where Docker Desktop's docker command resolves inside Ubuntu: install.sh's own check treats a path under `/mnt/wsl/` as Docker Desktop's, and the script does the same.
+11. PowerShell 5.1 runs the `.ps1` files as a Windows git checkout writes them. `openbot/.gitattributes` sets `eol=lf` for every file.
+
+Left out on purpose: resuming after the restart (no startup task; the person runs the script again); writing `/etc/wsl.conf` to turn systemd on (install.sh starts Docker by hand when systemd is off, and a system setting is the maintainer's decision); creating the Ubuntu user (a login the person chooses); macOS. The installer files are FreeDuet's own, not upstream OpenBot's, so `docs/UPSTREAM_TOUCHES.md` has no row for them, as it has none for `install.sh`.
+
+Tests: 51 Pester 5 tests in `openbot/scripts/install.Tests.ps1`, in 8 blocks. None has run. They cover the exit codes, the text readers, the resource rules, each branch of the plan (including the exact WSL arguments), the formatting, the one question and `-Check` (with the WSL and elevation calls mocked, so a test fails if one is made), each exit path, and checks of the file itself (ASCII, parse, no download or script runner, no credential, no execution-policy, startup or registry change, no restart). It is not wired into CI: a Windows runner is needed, and the maintainer has not chosen one.
+
+**Manual check on a clean Windows 11 machine (or a snapshot of one).** Use a normal user account, with virtualisation turned on in the firmware. Write down each exit status with `echo $LASTEXITCODE`.
+
+1. Get the repository into `C:\Users\<you>\freeduet`, with `git clone` or GitHub's ZIP. Do not use a network path or a OneDrive folder.
+2. Open Windows PowerShell as yourself, not as administrator. Go to that folder.
+3. Run `powershell -NoProfile -ExecutionPolicy Bypass -File .\openbot\scripts\install.ps1 -Check`. On a machine without WSL, expect the findings, the line "What I would do (-Check changes nothing)", and status 2. No permission prompt appears. `wsl --list --verbose` shows what it showed before.
+4. Run the same command without `-Check`. Expect the plan and `Go ahead? [y/N]`. Answer `n`: expect "Nothing was changed." and status 1. Check that `wsl --list --verbose` is unchanged.
+5. Run it again and answer `y`. Expect Windows' permission prompt; accept it. An elevated window runs `wsl --install -d Ubuntu-24.04 --no-launch`: wait until it closes. Expect "Restart Windows now" and status 4. Restart Windows.
+6. Open Windows PowerShell as yourself, go to the folder, and run `-Check` again. Expect "One step is left, and only you can do it" and status 3.
+7. Open Ubuntu-24.04 from the Start menu, create the user name and password, and close the window. Read the registry with `Get-ChildItem HKCU:\Software\Microsoft\Windows\CurrentVersion\Lxss | ForEach-Object { Get-ItemProperty $_.PSPath | Select-Object DistributionName, Version, DefaultUid }`. Write down `DefaultUid` before this step and after it: that is the check of assumption 4.
+8. Run `-Check` again. Expect status 0. If the default version is 1, or Ubuntu is WSL 1, expect status 2: then run without `-Check` and answer `y`.
+9. Run without `-Check` and answer `y`. Expect "Handing over to install.sh inside Ubuntu-24.04", then install.sh's own plan and its question `Go ahead and install these? [y/N]`. Its question must show and take the answer (assumption 8). Answer `y`: install.sh must run to the end, as section 8 describes.
+10. Negative checks, each with status 1 and the reason printed: run from an administrator PowerShell; run from a folder that is not a checkout; if possible, run from a `\\server\share` path; on a machine with virtualisation off in the firmware, or Windows 10 below build 19041.
+11. Send the maintainer the output of `wsl --help`, `wsl --status`, `wsl --list --verbose`, and `wsl --distribution Ubuntu-24.04 cat /etc/wsl.conf`. The first one shows on your machine whether `--exec` exists (assumption 1). Say whether `--set-default-version` or `--set-version` showed a permission prompt (assumption 5), and whether the distribution is still listed for your account after the elevated install (assumption 7).
+
+Every line of this section is unverified until that check has been done.

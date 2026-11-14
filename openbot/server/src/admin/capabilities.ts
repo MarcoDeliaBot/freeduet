@@ -12,13 +12,15 @@
  * - A group row can only widen (Grok Bot: "Group settings only widen: a group can grant its members
  *   more than the team allows, never less"). `true` grants; `false` is recorded and changes nothing.
  * - No row anywhere means the built-in default below, which keeps every deployment that has never
- *   opened this screen working exactly as it did.
+ *   opened this screen working as it did, except that a Bot's computer no longer reaches the home or
+ *   office network until "Home and office network access" is switched on.
  */
 
 export const CAPABILITIES = [
   "useBots",
   "cloudBrowser",
   "cloudNetwork",
+  "cloudPrivateNetwork",
   "cloudComputer",
   "localComputer",
   "customRules",
@@ -54,6 +56,11 @@ export const CAPABILITY_LABELS: Record<
     description:
       "Bot computers may reach the internet, within the network policy.",
   },
+  cloudPrivateNetwork: {
+    title: "Home and office network access",
+    description:
+      "Bot computers may reach devices on the home or office network (a router, a NAS, a printer, other computers), not only the internet. Cloud metadata addresses stay blocked either way.",
+  },
   cloudComputer: {
     title: "Cloud computer use",
     description:
@@ -85,12 +92,16 @@ export const CAPABILITY_LABELS: Record<
 /**
  * What an untouched deployment allows.
  *
- * Everything the product already did stays on.
+ * Everything the product already did stays on, with one exception: `cloudPrivateNetwork` is off.
+ * A Bot's computer sits inside somebody's home or office, and what is on that network (the router's
+ * admin page, a NAS, a printer, other computers) is not the internet it was given (D36). The person
+ * switches it on, for everybody, a role or a group, where they want a Bot there.
  */
 export const DEFAULT_CAPABILITIES: Record<Capability, boolean> = {
   useBots: true,
   cloudBrowser: true,
   cloudNetwork: true,
+  cloudPrivateNetwork: false,
   cloudComputer: true,
   localComputer: true,
   customRules: true,
