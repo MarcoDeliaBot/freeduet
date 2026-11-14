@@ -1,6 +1,6 @@
 # Automations written in chat: calendar, history and limits
 
-Design only. No product code. Written 2026-11-14 against origin/main 452e060. Roadmap row: "Automations written in chat, with a calendar and history", status In design ([code: docs/ROADMAP.md:46]). Decided 14 November 2026: D6 (section 6). Nothing else here is decided; section 6 lists what the maintainer must still choose.
+Design, plus the read-only part built (section 8, Built so far). No write is built. Written 2026-11-14 against origin/main 452e060. Roadmap row: "Automations written in chat, with a calendar and history", status In design ([code: docs/ROADMAP.md:46]). Decided 14 November 2026: D6 (section 6). Nothing else here is decided; section 6 lists what the maintainer must still choose.
 
 Paths start in `openbot/` unless they start with `docs/` or `CLAUDE.md`, which sit at the repository root.
 
@@ -130,7 +130,7 @@ S1 to S7 edit OpenBot files, so each needs a row in `docs/UPSTREAM_TOUCHES.md` (
 
 ## 7. What was not verified
 
-- No test was run. No database, no stack and no live routine were used. Line numbers are from origin/main 452e060. Most were read again for this file; the rest come from my first inventory of the same commit and were not re-read.
+- When this was written, no test was run, and no database, stack or live routine was used. Tests since then are in section 8. Line numbers are from origin/main 452e060. Most were read again for this file; the rest come from my first inventory of the same commit and were not re-read.
 - Whether FreeDuet runs a reviewer model for unattended turns. Auto-review is on by default ([code: docs/M1_PLAN.md:82]), and with no model the reviewer says ask ([code: policy.ts:376-377]) [verify].
 - Whether a personal allow rule matches a routine write. Personal rules count only when custom rules are on ([code: policy.ts:459]) [verify].
 - Whether the app offers "Always allowed" on a routine write [verify].
@@ -142,3 +142,44 @@ S1 to S7 edit OpenBot files, so each needs a row in `docs/UPSTREAM_TOUCHES.md` (
 - The Kubernetes CronJob documentation was not read, so nothing is claimed from it.
 - `openbot/mobile` was not read.
 - The 90-day retention and the 14-day and 500-item caps are proposals, not measurements.
+
+## 8. Built so far
+
+This branch (`automations-calendar-history`) builds the read-only part and nothing else. It creates, changes, pauses or deletes no routine, from the view or from chat. The approval gate (section 6, D6) is not touched.
+
+Built:
+
+- **Calendar read (S3).** `GET /api/routines/calendar?from&to`, with an optional `agentId`, lists the next run of each enabled routine inside the window, from the stored clock ([code: openbot/server/src/routines/calendar.ts]; [code: openbot/server/src/routines/routes.ts]). The window is at most 14 days and the answer at most 500 runs; `truncated` says when more fall inside the window. A stamp that is already due starts at the window's start. Paused routines are left out.
+- **History read.** `GET /api/routines/runs?limit&agentId` returns the person's runs across their routines, newest first, at most 100. Each row carries the id of its routine and of its Bot; the app turns them into names. There is no paging yet (S4). Both store reads are owner-scoped ([code: openbot/server/src/routines/store.ts]).
+- **App.** The Routines screen has three views: Routines (the list, unchanged), Next runs (the calendar, grouped by day) and History ([code: openbot/app/src/components/routines/routines-list.tsx]; [code: openbot/app/src/components/routines/routine-calendar.tsx]; [code: openbot/app/src/components/routines/routine-history.tsx]). Times are in the device's zone. A routine on another zone shows its own clock beside the time. History shows the outcome, when the run started, its source, the member, the routine's words, and a line when a run waits for an approval.
+- **Tests.** Server: `routine-calendar.test.ts` (20: window rules, a DST change in Europe/Rome, the cap, paused and unreadable routines, and the route answers through a fake store) and `routine-history.integration.test.ts` (7, against Postgres: owner, stranger, the Bot filter before the limit, the limit). App: `routine-schedule-view.test.ts` (14) and `routines-views.test.tsx` (4).
+
+Not built, and why:
+
+- **Missed runs (S1).** No "Missed" label and no row for a gap. Both need a change to the sweep and a new column.
+- **Run to messages (S2).** A history row links to its conversation, not to its run. That needs the turn to return a run id, and a migration.
+- **Paging and pruning (S4).** The history stops at 100 rows.
+- **Event triggers (V4).** Not on this view. Each Bot's Responsibilities page still lists them.
+- **Writes (S6 to S9).** No setup card, no change from chat, no daily budget, no zone per person, no routines held by Iris.
+
+For the maintainer to decide (none is taken here):
+
+1. Missed runs: S1 changes the sweep and adds one nullable column (`scheduled_for`). Build it now, or wait?
+2. Run links: S2 adds a run id and a thread id to each run, with one migration and a change to what the turn returns. Build it?
+3. History size: paging with 90-day pruning (S4), or the latest 100 rows?
+4. Caps: 14 days, 500 runs and 100 history rows are proposals. Confirm or change them.
+5. Time zone (D5): until each person has a zone, times show in the device's zone. Should the calendar wait for D5?
+6. Event triggers on this view (V4): now, or after S2?
+
+Verified:
+
+- Server: the four routine suites pass against Postgres, 55 tests in all (`routine-calendar`, `routine-history.integration`, `routine-routes`, `routine-runner`). On main the new calendar module and the two store reads do not exist, so the new suites cannot pass there.
+- The assertion-shape guard passes (10 tests). The server test typecheck shows no new error. Two baselined lines changed text, because the store interface gained two methods.
+- App: the 18 new tests pass, and the four view tests fail against main's list file. The app typecheck is clean. Biome format and lint pass on every changed file.
+
+Not verified:
+
+- No one has looked at the views in a browser or on a phone, so the layout is unchecked.
+- The eval stack was not run. No member's prompt changed, so no case was added or moved.
+- The whole app test suite was not run. The sandbox fails about 138 of its tests on plain main under happy-dom, so only the new and changed app files were run.
+- The zone rules are tested with fixed zones only, not with a person's own zone.

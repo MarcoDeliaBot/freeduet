@@ -13,6 +13,11 @@ import {
   PageRows,
   PageSection,
 } from "@/components/layout/page-shell";
+import { RoutineCalendar } from "@/components/routines/routine-calendar";
+import {
+  RoutineHistory,
+  RUN_STATUS,
+} from "@/components/routines/routine-history";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -44,7 +49,6 @@ import {
 import {
   nothingIsFiring,
   type RoutineRecord,
-  type RoutineRunRecord,
   routineRunsQueryOptions,
   routinesQueryOptions,
 } from "@/lib/routines/queries";
@@ -134,29 +138,6 @@ function Chip({
   );
 }
 
-const RUN_STATUS: Record<
-  RoutineRunRecord["status"],
-  { text: string; dot: string; className: string }
-> = {
-  running: {
-    text: "Running",
-    dot: "animate-pulse bg-muted-foreground",
-    className: "",
-  },
-  succeeded: { text: "Succeeded", dot: "bg-emerald-500", className: "" },
-  failed: {
-    text: "Failed",
-    dot: "bg-destructive",
-    className: "text-destructive",
-  },
-  skipped: {
-    text: "Skipped",
-    dot: "bg-amber-500",
-    className: "text-amber-600 dark:text-amber-500",
-  },
-  waiting: { text: "Waiting for you", dot: "bg-sky-500", className: "" },
-};
-
 /** Every firing of one routine, newest first, each linking to the thread it ran in. */
 function RoutineRuns({ routine }: { routine: RoutineRecord }) {
   const runs = useQuery(routineRunsQueryOptions(routine.id));
@@ -217,9 +198,18 @@ function RoutineRuns({ routine }: { routine: RoutineRecord }) {
   );
 }
 
+/** The three ways to read this screen: the standing instructions, the runs coming up, and the runs that ran. */
+type RoutinesView = "routines" | "next-runs" | "history";
+
+const VIEWS: { id: RoutinesView; label: string }[] = [
+  { id: "routines", label: "Routines" },
+  { id: "next-runs", label: "Next runs" },
+  { id: "history", label: "History" },
+];
+
 /**
  * The signed-in person's standing instructions: a switch to stop one taking effect, and a delete
- * that ends it for good.
+ * that ends it for good. The Next runs and History views read the same routines, read-only.
  *
  * Scoped by `agentId` on a Bot's Routines page, unscoped on the Routines page. One query either way —
  * the list is owner-scoped and small, so the scope is a filter here rather than a second endpoint.
@@ -241,6 +231,8 @@ export function RoutinesList({
   const [historyId, setHistoryId] = useState<string | null>(null);
   /** The routine a delete is being confirmed for, or null. Its own dialog rather than one per row. */
   const [confirmingId, setConfirmingId] = useState<string | null>(null);
+  /** Which view is on. The list is the default; the other two only read. */
+  const [view, setView] = useState<RoutinesView>("routines");
   const rows = (routines.data?.routines ?? []).filter(
     (row) => agentId === undefined || row.agentId === agentId,
   );
@@ -250,6 +242,21 @@ export function RoutinesList({
 
   return (
     <PageSection className={embedded ? "mt-0" : undefined}>
+      <fieldset aria-label="View" className="mt-4 flex flex-wrap gap-1">
+        {VIEWS.map((item) => (
+          <Button
+            aria-pressed={view === item.id}
+            key={item.id}
+            onClick={() => setView(item.id)}
+            size="sm"
+            type="button"
+            variant={view === item.id ? "secondary" : "ghost"}
+          >
+            {item.label}
+          </Button>
+        ))}
+      </fieldset>
+
       {setEnabled.error || runNow.error ? (
         <p className="mt-4 text-destructive text-sm" role="alert">
           {setEnabled.error?.message ?? runNow.error?.message}
@@ -268,11 +275,16 @@ export function RoutinesList({
         </p>
       ) : null}
 
-      {/* Pending renders nothing: the empty-state sentence would otherwise flash for the fetch. */}
+      {/* Pending renders nothing: the empty-state sentence would otherwise flash for the fetch. The
+          other two views wait for the same list, because their rows name each routine. */}
       {routines.isPending ? null : routines.error ? (
         <p className="mt-4 text-destructive text-sm" role="alert">
           Couldn't load your routines. Reload the page.
         </p>
+      ) : view === "next-runs" ? (
+        <RoutineCalendar agentId={agentId} routines={rows} />
+      ) : view === "history" ? (
+        <RoutineHistory agentId={agentId} routines={rows} />
       ) : rows.length === 0 ? (
         <PageEmpty>
           {agentId
