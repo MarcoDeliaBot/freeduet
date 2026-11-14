@@ -144,6 +144,7 @@ streaming = dict(title, stream=True)
 
 statuses = []
 bodies = []
+probes = []
 
 
 async def drive():
@@ -175,6 +176,31 @@ async def drive():
                 response = await client.get("/health")
                 statuses.append(response.status_code)
                 bodies.append(response.text)
+                # The engine state (ENGINES_PLAN slice 2): its endpoint, a turn recorded through it, and the
+                # probe (`claude --version`, `claude auth status`) of a stand-in CLI: none of them opens a login.
+                from freeduet import claude_cli, engine_state
+                from freeduet.claude_engine import ClaudeEngine
+                from freeduet.engine_adapter import Health
+                from freeduet.failure_classifier import USAGE_LIMIT, Failure
+
+                stand_in = os.path.join(os.environ["TMPDIR"], "stand-in-claude.sh")
+                with open(stand_in, "w", encoding="utf-8") as handle:
+                    handle.write("""#!/bin/sh
+case "$1" in
+  --version) echo "2.1.311 (Claude Code)" ;;
+  auth) echo '{"loggedIn": true}' ;;
+esac
+""")
+                os.chmod(stand_in, 0o755)
+                os.environ["CLAUDE_BIN"] = stand_in
+                found = await claude_cli.probe()
+                probes.append([found.installed, found.version, found.signed_in, found.problem])
+                state = engine_state.from_environment(ClaudeEngine())
+                await state.probe(ClaudeEngine())
+                state.finish("claude-code", state.begin("claude-code"), Health(failure=Failure(USAGE_LIMIT)))
+                response = await client.get("/engines", headers={"x-openbot-agent-token": os.environ["MANAGED_AGENT_TOKEN"]})
+                statuses.append(response.status_code)
+                bodies.append(response.text)
 
     free_mode["value"] = "ok"
     await assistants.complete(
@@ -199,6 +225,7 @@ report = {
     "violations": [touch for touch in touches if not touch["control"]],
     "control_detected": any(touch["control"] for touch in touches),
     "statuses": statuses,
+    "probes": probes,
     "canary_seen": any(watch["canary"] in body for body in bodies),
 }
 with open(report_path, "w", encoding="utf-8") as handle:
@@ -282,9 +309,12 @@ def test_no_credential_directory_is_opened(tmp_path):
     for module in ("freeduet.engines", "freeduet.server_calls", "freeduet.assistants"):
         assert module in report["imported"]
     # title (free), review (claude), unknown (claude), stream (400), wrong key (401),
-    # free engine down (claude), default wiring (claude), then /health once the runtime exists.
+    # free engine down (claude), default wiring (claude), then /health and /engines once the runtime exists.
     assert report["statuses"][:7] == [200, 200, 200, 400, 401, 200, 200]
     assert all(status == 200 for status in report["statuses"][7:])
+    # ...then the engine state: the probe ran the stand-in CLI and read its sign-in, and /engines answered.
+    assert report["probes"] == [[True, "2.1.311", True, None]]
+    assert len(report["statuses"]) == 9
 
 
 # ── Static check ─────────────────────────────────────────────────────────────────────────────────

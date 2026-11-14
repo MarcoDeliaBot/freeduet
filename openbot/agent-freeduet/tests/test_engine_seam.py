@@ -4,7 +4,7 @@ import asyncio
 
 from freeduet import agui, claude_cli, segment
 from freeduet.claude_engine import ClaudeEngine
-from freeduet.engine_adapter import EngineAdapter, Finished, Outcome
+from freeduet.engine_adapter import EngineAdapter, Finished, Outcome, ProbeResult
 from freeduet.members import resolve_member
 from freeduet.stream_json import MessageStart, TextDelta
 from helpers import run_body, standing, types
@@ -20,6 +20,9 @@ class Stub(EngineAdapter):
 
     def child_env(self, source=None):
         return {"ONLY": "this"}
+
+    async def probe(self):
+        return ProbeResult()
 
     async def run_turn(self, ctx, sink, gate):
         self.seen.append((ctx, gate))

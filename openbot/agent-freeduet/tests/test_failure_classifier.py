@@ -1,8 +1,8 @@
 """failure_classifier.py: which kind of failure an engine reported, and when it said it would be back.
 
 docs/ENGINES_PLAN.md section 2 ("Limit classifier") and section 8 ("a bare 429 is not a quota"). The
-module is a pure function and is not wired into any run path, so nothing here starts an engine, opens a
-socket or reads a login.
+module is a pure function; the run path uses it only to record how a turn ended (claude_cli.turn_failure),
+so nothing here starts an engine, opens a socket or reads a login.
 
 Where each text comes from. Every case of CASES carries `source`: a file and the lines of this repository
 where the text, and the status when the case has one, stand as written there, or `synthetic: ...` when the
