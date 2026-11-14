@@ -3,7 +3,7 @@
 What FreeDuet does that the others don't, row by row.
 
 **Legend:** ✅ yes · ⚠️ partly · ❌ no · — not documented by the project.
-**FreeDuet is at v0.1, an early release.** A ✅ with a later version (for example ✅ v0.3) means it is planned for that version and not available yet. Where FreeDuet does not have something yet, its cell says where it stands on the [roadmap](ROADMAP.md#how-to-read-the-tables) in words: Planned, In design, In progress, or Not on the roadmap yet (we have not decided). Nothing on the roadmap has a date.
+**FreeDuet is at v0.2, an early release.** A ✅ with a later version (for example ✅ v0.3) means it is planned for that version and not available yet. Where FreeDuet does not have something yet, its cell says where it stands on the [roadmap](ROADMAP.md#how-to-read-the-tables) in words: Planned, In design, In progress, or Not on the roadmap yet (we have not decided). Nothing on the roadmap has a date.
 
 _Last checked: 2026-11-08, from each project's public README and documentation, linked below. If we got something wrong about another project, open an issue and we will fix it within 48 hours._
 
@@ -14,29 +14,29 @@ _Last checked: 2026-11-08, from each project's public README and documentation, 
 | **Available outside the United States** | ✅ | ❌ US waitlist | ✅ | ✅ | ✅ | ✅ | ✅ |
 | **Runs on subscriptions you already pay for, through the official login** | ✅ v0.1 | ✅ Claude plans only | ⚠️ only by storing a plan token | ✅ | ✅ | ✅ | ✅ Claude, Codex, Grok |
 | **Works with zero API keys** | ✅ v0.1 | ✅ | ⚠️ only with a stored plan token | ✅ | ✅ | ✅ | ✅ |
-| **Several subscriptions, switching automatically when one hits its limit** | ✅ v0.3 | ❌ | ❌ | ⚠️ one backup engine | — | — | — |
-| **API keys optional, always last, with spending caps** | ✅ v0.3 | — | — | — | — | — | — |
+| **Several subscriptions, switching automatically when one hits its limit** | ⚠️ Built in v0.2, not yet run live: only test engines have switched (milestone v0.3) | ❌ | ❌ | ⚠️ one backup engine | — | — | — |
+| **API keys optional, always last, with spending caps** | ⚠️ Built, off by default: a second engine kind, and a spend ledger with paid gateways closed (milestone v0.3) | — | — | — | — | — | — |
 | **Savings meter: what the work would cost at token prices** | ✅ v0.3 | ❌ | ❌ | ⚠️ token use and cost | — | — | — |
 | **Each agent has its own computer with a real browser** | ✅ | ✅ | ✅ | ⚠️ computer without a browser, experimental | ✅ shared with your machine | ⚠️ uses your own Chrome | ⚠️ cloud desktop (paid), local VM or your computer |
-| **Asks before every send, payment, signature or deletion** | ✅ by default; an optional Full access switch, per member, off until you turn it on | ✅ | ✅ | ✅ | ❌ full access by design | ⚠️ policy followed by the agent, not enforced by the app | ⚠️ asks before commands and file edits |
+| **Asks before every send, payment, signature or deletion** | ✅ by default. Routines always ask, a tool nobody classified asks first, and a spoken yes never approves. An optional Full access, per member, off until you turn it on, in two settings: one lets it act without cards, the other still asks for payments (built; not yet run live) | ✅ | ✅ | ✅ | ❌ full access by design | ⚠️ policy followed by the agent, not enforced by the app | ⚠️ asks before commands and file edits |
 | **Passwords never reach the AI (masked box, take over the screen)** | ✅ | — | ✅ | — | — | ⚠️ asks for none | — |
 | **Shops and books for you, with your approval** | ✅ v0.4 | ❌ not suited to errands or bookings | ⚠️ browser and approvals, no purchase flow | ❌ | ⚠️ browser, no approvals | — | — |
 | **Payments blocked without a single-use permit bound to shop and total** | ✅ v0.4 | — | ❌ | ❌ | ❌ | ❌ | — |
 | **Spending cap per purchase, per day and per month** | ✅ v0.4 | — | ❌ | ❌ | ❌ | ❌ | — |
 | **A lead agent that hands work to specialists and combines the results** | ✅ v0.3 | — | ⚠️ several agents in one channel | ✅ | ✅ | ✅ | ⚠️ channels with responder rules |
-| **A ready-made team of specialists** | ✅ 12 members with a reviewer, and growing | ❌ one agent | ⚠️ 2 agents and example templates | ❌ | — | ❌ | ⚠️ teams from Markdown playbooks |
+| **A ready-made team of specialists** | ✅ 12 members with a reviewer, and growing. Mark (marketing) and Cam (video) came after v0.1; only Otto sends email, and a member can offer a finished file with a Download button (built; not yet run live; their eval cases have not run live yet) | ❌ one agent | ⚠️ 2 agents and example templates | ❌ | — | ❌ | ⚠️ teams from Markdown playbooks |
 | **An agent that designs new agents, with tests** | ✅ | — | ⚠️ creator skill, no tests | — | ⚠️ skill creator | — | ⚠️ creates bots through MCP, no tests |
 | **Guardian that pauses a looping agent to protect your limits** | ✅ v0.3 | — | — | — | — | — | — |
-| **Owner-only operations no mode can lower** | ⚠️ v0.1: one exception only you can make, Full access (off by default, per member). Permissions, passwords, keys and security settings stay with you either way | — | ⚠️ approvals, "Always allow" can lift them | — | ❌ | ⚠️ | — |
+| **Owner-only operations no mode can lower** | ⚠️ v0.2: the one exception only you can make is Full access (off by default, per member, with or without payments). Permissions, passwords, keys and security settings stay with you: each installation makes its own secrets, each computer has its own token, and home network access is off until you switch it on. Chat can change one harmless setting, with Undo (built; not yet run live) | — | ⚠️ approvals, "Always allow" can lift them | — | ❌ | ⚠️ | — |
 | **Nightly export of memory, rules and tasks to plain files** | ✅ v0.3 | ❌ | ❌ | — | — | ⚠️ local files | ⚠️ local transcripts |
-| **Public test suite per agent, including attempts to break the rules** | ✅ 65 cases, 28 safety | — | ⚠️ inbox triage only | — | — | — | — |
-| **Free open-source creative suite (images, PDFs, vectors, video) inside each agent's computer** | ✅ v0.2 | ❌ | ❌ | ❌ | ❌ | ❌ | — |
+| **Public test suite per agent, including attempts to break the rules** | ✅ 65 cases, 28 safety. Certified at v0.1 (43 of 43 scored cases passed); not re-run for v0.2 | — | ⚠️ inbox triage only | — | — | — | — |
+| **Free open-source creative suite (images, PDFs, vectors, video) inside each agent's computer** | ❌ Not built yet: planned in the connector catalogue (the ArtCraft apps, milestones M2 to M5). Cam's computer has ffmpeg, for video only | ❌ | ❌ | ❌ | ❌ | ❌ | — |
 | **Light helpers on free models for small jobs, saving your limits** | ✅ v0.3 | — | — | — | — | — | — |
-| **Answers from your own documents, quoting the exact source** | ✅ v0.2 | — | ⚠️ document search | — | — | — | — |
+| **Answers from your own documents, quoting the exact source** | ❌ Not built yet: the document member (Dewey) is only in the catalogue of planned members | — | ⚠️ document search | — | — | — | — |
 | **Morning brief** | ✅ | ✅ | ✅ | ✅ | — | — | — |
 | **Gmail and Google Calendar** | ✅ | ✅ connected apps | ✅ | ❌ not yet | — | ⚠️ through your coding agent | ✅ through Composio |
 | **Import your agents from Grok Bot** | ✅ v1.0 | ❌ | ❌ | ❌ | ✅ | ❌ | — |
-| **Phone** | In design | ✅ | ✅ | ⚠️ early, from source | ✅ | ❌ | ⚠️ in development |
+| **Phone** | In progress: a phone's browser with a real sign-in. The exact-address sign-in list is built; limited powers for a remote session are not built yet; remote access is in design | ✅ | ✅ | ⚠️ early, from source | ✅ | ❌ | ⚠️ in development |
 | **Any language** | The app's interface is English for now, with some cards also in Italian; members answer in the person's language. | — | — | ✅ 13 interface languages | ✅ 5 interface languages | — | — |
 
 ## What others have that FreeDuet does not have yet
@@ -47,13 +47,13 @@ _Last checked: 2026-11-14, from each project's own README and the documentation 
 
 | | **FreeDuet** | Claude Duet | OpenDuet / OpenBot | open-duet (Anil-matcha) | openbot (nightly-labs) | Agency (browser-use) | OpenMausBot |
 |---|---|---|---|---|---|---|---|
-| **Desktop app with installers** | Planned: a one-file installer for Windows, macOS and Ubuntu, the top priority. Whether it becomes a native app window is not decided | — | ✅ macOS and Windows | ⚠️ desktop app that runs from a source checkout; its installers are experimental and unsigned | ✅ macOS, Windows, Linux (AppImage) | ❌ runs from a checkout with Node.js | ✅ macOS, Windows, Ubuntu (Ubuntu in beta) |
-| **Automations written in chat, with a calendar of runs and a run history** | In progress: setting one up out of the box is still planned. A member can make a routine from a sentence once it has the routine tools, and the Routines page has Next runs (the next 14 days) and History (the last 100 runs), both read-only | — | ⚠️ routines from a sentence, no calendar documented | ⚠️ routines (scheduled, webhook or manual) with a run history, and a tasks calendar; making one from a chat sentence is not documented | — | — | ✅ schedules, webhooks and app events, from a sentence, with a calendar and run history |
+| **Desktop app with installers** | In progress: first-step scripts for Ubuntu 22.04 and 24.04 and for Windows through WSL2 (run from a terminal; the Windows one has never run on a real Windows machine). CI runs the check, apt and Bun steps of the Ubuntu script on fresh Ubuntu containers. No double-click installer yet: it will reuse the desktop app that already exists, Windows next, then macOS | — | ✅ macOS and Windows | ⚠️ desktop app that runs from a source checkout; its installers are experimental and unsigned | ✅ macOS, Windows, Linux (AppImage) | ❌ runs from a checkout with Node.js | ✅ macOS, Windows, Ubuntu (Ubuntu in beta) |
+| **Automations written in chat, with a calendar of runs and a run history** | In progress: the Routines page has Next runs (the next 14 days) and History (the last 100 runs), both read-only. Writing one in chat and setting one up out of the box are not built yet. Routines always ask for approval (built; not yet run live) | — | ⚠️ routines from a sentence, no calendar documented | ⚠️ routines (scheduled, webhook or manual) with a run history, and a tasks calendar; making one from a chat sentence is not documented | — | — | ✅ schedules, webhooks and app events, from a sentence, with a calendar and run history |
 | **A whole team installed or shared from one file** | In progress: the file format and its checker are built. Export and import, with no credentials and no chat history in the file, are not in the app yet | — | — | ✅ team packages, importable from GitHub | ⚠️ imports agents from a Grok Bot export file; sharing a team is not documented | — | ✅ a team from one Markdown file, or a whole department shared as one file; no chat history, keys or computers inside |
-| **Engines page showing each engine's status and limits** | A read-only Engines page in Admin shows each engine's state, and until when an engine has reached its limit, with no usage figures yet. In progress: usage and the controls (order, ask-first, pin, off) come with the engine work | — | — | ✅ the engine picker shows "Usage limit · resets in …", and a fallback engine can take over | ⚠️ a usage popover with plan limits, documented for some providers | — | — |
-| **A different engine for each agent, switchable in the middle of a chat** | In progress: every engine, chosen per member. Switching in the middle of a chat: in progress, as part of the engine work | — | — | ⚠️ engine and model chosen per agent or per new chat; switching in the middle is not documented | ⚠️ a model per agent; switching in the middle is not documented | — | ✅ a model per bot, switchable mid-conversation |
-| **An Engines or Providers settings page** | A read-only Engines page in Admin exists. In progress: its controls (order, ask-first, pin, off) come with the engine work | — | — | ✅ Settings → Engines | ✅ a Providers screen in settings | — | ✅ Settings → Engines, and keys in App Settings |
-| **Local models (Ollama, LM Studio)** | In progress: it comes with the engine work | — | — | ✅ through an OpenAI-compatible API | ✅ finds local model servers | — | ✅ any OpenAI-compatible endpoint, set in configuration; its docs name vLLM, LM Studio and Ollama |
+| **Engines page showing each engine's status and limits** | An Engines page in Admin shows each engine's state, including until when a limit lasts, and each member's chain, with automatic or ask-first for each member and an Undo (built; not yet run live). No usage figures yet. In progress: usage, and the other controls (order, pin, off) | — | — | ✅ the engine picker shows "Usage limit · resets in …", and a fallback engine can take over | ⚠️ a usage popover with plan limits, documented for some providers | — | — |
+| **A different engine for each agent, switchable in the middle of a chat** | In progress: each member's chain is set in the installation's engines file and shown on the Engines page. Choosing an engine on the page, and switching in the middle of a chat, are not built yet | — | — | ⚠️ engine and model chosen per agent or per new chat; switching in the middle is not documented | ⚠️ a model per agent; switching in the middle is not documented | — | ✅ a model per bot, switchable mid-conversation |
+| **An Engines or Providers settings page** | The Engines page in Admin shows each member's chain and offers automatic or ask-first per member, with Undo (built; not yet run live). In progress: its other controls (order, pin, off) | — | — | ✅ Settings → Engines | ✅ a Providers screen in settings | — | ✅ Settings → Engines, and keys in App Settings |
+| **Local models (Ollama, LM Studio)** | Built, off by default: a key-free entry for a model on your computer through Ollama's Anthropic-compatible endpoint, and a second engine kind for a local router you run. Neither has run with a real model yet. LM Studio is not set up as an entry | — | — | ✅ through an OpenAI-compatible API | ✅ finds local model servers | — | ✅ any OpenAI-compatible endpoint, set in configuration; its docs name vLLM, LM Studio and Ollama |
 | **Control from other tools and scripts (an MCP server, a command line)** | Not on the roadmap yet | — | — | — | — | — | ✅ an MCP server for clients such as Claude Desktop and Cursor, and an `openmausbot` command line |
 
 Importing agents from another tool is in the main table above (Grok Bot import: Planned, v1.0).
@@ -62,8 +62,8 @@ Importing agents from another tool is in the main table above (Grok Bot import: 
 
 FreeDuet is the only project that combines **all three**:
 
-1. **Your subscriptions, no API key**, with automatic switching between them.
-2. **Real-world actions made safe**: payments physically blocked without a permit bound to the shop and the total, and spending caps.
+1. **Your subscriptions, no API key**, with automatic switching between them (built, not yet run live).
+2. **Real-world actions made safe**: payments physically blocked without a permit bound to the shop and the total, and spending caps (planned for v0.4).
 3. **A ready-made, tested team**, led by a Chief of Staff who delegates.
 
 ## Sources
