@@ -25,6 +25,7 @@
   "jules": "Jest wolny stolik na piątek.",
   "wren": "Twój post jest gotowy do przeczytania.",
   "mark": "Pierwszy plan na przyszły miesiąc.",
+  "video": "Pierwsza lista cięć do sprawdzenia.",
   "gus": "Najpierw sprawdź blaszkę zamka.",
   "basil": "Trzy pomysły na dzisiejszą kolację.",
   "vera": "Sprawdzone: sumy się zgadzają.",
@@ -87,7 +88,7 @@
  "s5p": "Co zrobiono, czego nie zrobiono i dlaczego oraz jaki jest następny krok. Bez ścian tekstu.",
  "flowAlt": "Rozmawiasz z Iris, Iris przekazuje pracę specjalistom, Vera ją sprawdza, odpowiedź wraca do Ciebie",
  "you": "Ty",
- "flowMore": "…oraz Gus, Basil, Mark i Leo",
+ "flowMore": "…oraz Gus, Basil, Mark, Cam i Leo",
  "sf_h": "Pięć przycisków, które czekają na Twoje „tak”",
  "sf_p": "Dałbyś nowemu asystentowi swój portfel pierwszego dnia? My też nie. Domyślnie te pięć działań czeka na Twoje „tak”. Tylko Ty możesz to wyłączyć, osobno dla każdego członka.",
  "b1": "Wysłać",
@@ -127,7 +128,7 @@
  "r2": "Priorytet numer jeden: instalator w jednym pliku dla Windows, macOS i Ubuntu. Kolejni członkowie, każdy przetestowany.",
  "r3": "Wybór silnika dla każdego członka i prawdziwe delegowanie zadań w zespole.",
  "r4": "Automatyzacje pisane w czacie, więcej połączonych aplikacji, wersja na telefon, dostęp zdalny.",
- "r5": "Głos, Cam (wideo), bezpieczne zakupy. Funkcja Full access: zbudowana, jeszcze nie sprawdzona w praktyce.",
+ "r5": "Głos, bezpieczne zakupy. Funkcja Full access: zbudowana, jeszcze nie sprawdzona w praktyce. Cam, członek zespołu od wideo; jego testy nie zostały jeszcze uruchomione w praktyce, a z czatu nie może jeszcze przekazać pliku.",
  "r_note": "Opisujemy wszystko, czego jeszcze nie zbudowano. Żadnych bajek. <a href=\"https://github.com/MarcoDeliaBot/freeduet/blob/main/docs/ROADMAP.md\">Pełna mapa drogowa na GitHubie</a>.",
  "in_h": "Od instalacji do pierwszego pożytecznego zadania",
  "in_p": "Cztery kroki, w prawdziwej kolejności. Wszystkie polecenia są też w jednym polu niżej, gotowe do skopiowania.",
@@ -216,6 +217,11 @@
    "marketing",
    "Układa Twój plan marketingowy, plan premiery i strategię kanałów oraz sprawdza Twoją stronę, SEO i reklamy. Niczego nie publikuje i na nic nie wydaje bez Twojego „tak”.",
    "Przygotuj mi trzymiesięczny plan marketingowy dla mojego sklepu."
+  ],
+  "video": [
+   "wideo",
+   "Tnie krótkie wideo z Twojego materiału lub scenariusza, dodaje napisy, muzykę i dźwięk, w wersjach poziomej, pionowej i kwadratowej. Nigdy nie publikuje ani nie wgrywa wideo.",
+   "Zrób z tego scenariusza 30-sekundowe pionowe wideo z napisami."
   ],
   "gus": [
    "naprawy",

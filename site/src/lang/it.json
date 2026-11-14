@@ -27,6 +27,7 @@
   "jules": "Trovato un tavolo libero venerdì.",
   "wren": "Il tuo post è pronto da leggere.",
   "mark": "Un primo piano per il mese prossimo.",
+  "video": "Una prima scaletta da controllare.",
   "gus": "Controlla prima la piastra della serratura.",
   "basil": "Tre idee per la cena di stasera.",
   "vera": "Controllato: i totali tornano.",
@@ -89,7 +90,7 @@
  "s5p": "Cosa è stato fatto, cosa no e perché, e qual è il prossimo passo. Niente muri di testo.",
  "flowAlt": "Tu parli con Iris, Iris passa il lavoro agli specialisti, Vera lo controlla, la risposta torna a te",
  "you": "Tu",
- "flowMore": "…e Gus, Basil, Mark e Leo",
+ "flowMore": "…e Gus, Basil, Mark, Cam e Leo",
  "sf_h": "Cinque pulsanti che aspettano il tuo sì",
  "sf_p": "Daresti il portafoglio a un assistente nuovo il primo giorno? Nemmeno noi. Per questo queste cinque azioni aspettano il tuo sì. Solo tu puoi disattivarlo, membro per membro.",
  "b1": "Inviare",
@@ -129,7 +130,7 @@
  "r2": "Priorità assoluta: un programma d'installazione in un file per Windows, macOS e Ubuntu. Poi nuovi membri, collaudati.",
  "r3": "Scegli il motore di ogni membro e una delega vera tra i membri.",
  "r4": "Automazioni scritte in chat, più app collegate, versione per il telefono, accesso da remoto.",
- "r5": "Voce, Cam il membro video, acquisti sicuri. Full access è costruito, ma non ancora provato sul campo.",
+ "r5": "Voce, acquisti sicuri. Full access è costruito, ma non ancora provato sul campo. Cam, il membro video, è nel team; i suoi test non sono ancora stati provati sul campo, e dalla chat non può ancora consegnare un file.",
  "r_note": "Segnaliamo tutto quello che non è ancora costruito. Niente favole. <a href=\"https://github.com/MarcoDeliaBot/freeduet/blob/main/docs/ROADMAP.md\">Roadmap completa su GitHub</a>.",
  "in_h": "Dall'installazione al tuo primo compito utile",
  "in_p": "Quattro passi, nell'ordine reale. Tutti i comandi sono anche in un unico riquadro più sotto, pronti da copiare.",
@@ -216,6 +217,11 @@
    "marketing",
    "Prepara il tuo piano di marketing, il piano di lancio e la strategia dei canali, e rivede il tuo sito, la SEO e le pubblicità. Non pubblica e non spende nulla senza il tuo sì.",
    "Preparami un piano di marketing di tre mesi per il mio negozio."
+  ],
+  "video": [
+   "video",
+   "Taglia, sottotitola e aggiunge musica e suoni a brevi video dai tuoi filmati o da un copione, in formato orizzontale, verticale e quadrato. Non pubblica né carica mai un video.",
+   "Fammi un video verticale di 30 secondi da questo copione, con i sottotitoli."
   ],
   "gus": [
    "riparazioni",
