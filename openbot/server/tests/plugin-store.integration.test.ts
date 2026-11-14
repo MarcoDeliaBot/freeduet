@@ -4047,14 +4047,15 @@ describe("a custom server may only be pointed at its own kind of credential", ()
  * read-only scope would fail here rather than start filing rows about Drive.
  */
 describe("advertised tools a write list does not name", () => {
-  test("a Notion tool absent from the write list is named, sorted", () => {
+  test("a Notion tool in neither list is named, sorted", () => {
     expect(
       unlistedAdvertisedTools(catalogueEntry("notion"), [
-        "notion-search",
+        "notion-get-users",
         "notion-create-pages",
         "notion-fetch",
+        "notion-get-teams",
       ]),
-    ).toEqual(["notion-fetch", "notion-search"]);
+    ).toEqual(["notion-get-teams", "notion-get-users"]);
   });
 
   test("a write the list already names is not", () => {

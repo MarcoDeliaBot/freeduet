@@ -47,6 +47,15 @@ value_in() {
 }
 setting() { value_in "$ENV_FILE" "$1"; }
 
+# The cookie that makes a request this stack's person (docs/M1_PLAN.md D28): its installation secret,
+# which scripts/start.sh wrote to .env.eval, under the name the server gives it for its port. Handed to
+# the one Bun command that needs it through its environment, never on a command line, and never printed.
+install_cookie() {
+  local secret
+  secret="$(setting FREEDUET_INSTALL_SECRET)"
+  [ -z "$secret" ] || printf 'freeduet_install_%s=%s' "$(setting SERVER_PORT)" "$secret"
+}
+
 # Writes NAME=VALUE into .env.eval, replacing the line that was there.
 set_line() {
   local tmp
@@ -205,17 +214,18 @@ answers() {
 # Intelligence project. Never run when that project is shared with the person's FreeDuet.
 wipe_memories() {
   local server="http://localhost:$(setting SERVER_PORT)"
-  bun -e '
+  FREEDUET_COOKIE="$(install_cookie)" bun -e '
     const server = process.argv[1];
+    const headers = process.env.FREEDUET_COOKIE ? { cookie: process.env.FREEDUET_COOKIE } : {};
     let removed = 0;
     for (let pass = 0; pass < 10; pass++) {
-      const response = await fetch(`${server}/api/memory`);
+      const response = await fetch(`${server}/api/memory`, { headers });
       if (response.status === 404) break;
       if (!response.ok) throw new Error(`listing memories answered HTTP ${response.status}`);
       const { memories = [] } = await response.json();
       if (memories.length === 0) break;
       for (const memory of memories) {
-        const gone = await fetch(`${server}/api/memory/${encodeURIComponent(memory.id)}`, { method: "DELETE" });
+        const gone = await fetch(`${server}/api/memory/${encodeURIComponent(memory.id)}`, { method: "DELETE", headers });
         if (!gone.ok && gone.status !== 404) throw new Error(`removing a memory answered HTTP ${gone.status}`);
         removed++;
       }
@@ -314,11 +324,12 @@ status() {
     printf '  Claude Code     not signed in, or agent-freeduet is down\n'
   fi
   if answers "$server/health"; then
-    bun -e '
+    FREEDUET_COOKIE="$(install_cookie)" bun -e '
       const server = process.argv[1];
+      const headers = process.env.FREEDUET_COOKIE ? { cookie: process.env.FREEDUET_COOKIE } : {};
       let cursor = "", count = 0, mine = 0;
       do {
-        const response = await fetch(`${server}/api/channels?limit=200${cursor ? `&cursor=${encodeURIComponent(cursor)}` : ""}`);
+        const response = await fetch(`${server}/api/channels?limit=200${cursor ? `&cursor=${encodeURIComponent(cursor)}` : ""}`, { headers });
         if (!response.ok) process.exit(0);
         const page = await response.json();
         for (const channel of page.channels ?? []) {
