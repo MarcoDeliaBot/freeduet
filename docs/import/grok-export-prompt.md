@@ -1,6 +1,6 @@
 # Bring your agents from Grok Bot
 
-FreeDuet can import the agents you built in Grok Bot. Grok Bot has no FreeDuet export button, so you ask Grok to write the export for you.
+FreeDuet will import the agents you built in Grok Bot (planned for v1.0; there is no import screen yet). Grok Bot has no FreeDuet export button, so you ask Grok to write the export for you.
 
 ## Step 1: paste this into Grok Bot
 
@@ -27,7 +27,7 @@ If you are not sure an instruction is complete, add "(may be incomplete)" at its
 
 ## Step 2: import it
 
-Open **Settings → Import → From Grok Bot**, paste the JSON, and review each agent before saving. FreeDuet:
+When the import screen is built (planned for v1.0), open **Settings → Import → From Grok Bot**, paste the JSON, and review each agent before saving. FreeDuet:
 
 - turns each agent into a draft team member, with a channel of its own;
 - adds the shared safety rules at the end of every imported prompt;

@@ -20,7 +20,7 @@ _Last checked: 2026-11-08, from each project's public README and documentation, 
 | **Each agent has its own computer with a real browser** | ✅ | ✅ | ✅ | ⚠️ computer without a browser, experimental | ✅ shared with your machine | ⚠️ uses your own Chrome | ⚠️ cloud desktop (paid), local VM or your computer |
 | **Asks before every send, payment, signature or deletion** | ✅ by default. Routines always ask, a tool nobody classified asks first, and a spoken yes never approves. An optional Full access, per member, off until you turn it on, in two settings: one lets it act without cards, the other still asks for payments (built; not yet run live) | ✅ | ✅ | ✅ | ❌ full access by design | ⚠️ policy followed by the agent, not enforced by the app | ⚠️ asks before commands and file edits |
 | **Passwords never reach the AI (masked box, take over the screen)** | ✅ | — | ✅ | — | — | ⚠️ asks for none | — |
-| **Shops and books for you, with your approval** | 🗓️ Planned (v0.4) | ❌ not suited to errands or bookings | ⚠️ browser and approvals, no purchase flow | ❌ | ⚠️ browser, no approvals | — | — |
+| **Shops and books for you, with your approval** | ⚠️ Built: Jules prepares carts and books with your approval. Permits and spending caps are planned (v0.4) | ❌ not suited to errands or bookings | ⚠️ browser and approvals, no purchase flow | ❌ | ⚠️ browser, no approvals | — | — |
 | **Payments blocked without a single-use permit bound to shop and total** | 🗓️ Planned (v0.4) | — | ❌ | ❌ | ❌ | ❌ | — |
 | **Spending cap per purchase, per day and per month** | 🗓️ Planned (v0.4) | — | ❌ | ❌ | ❌ | ❌ | — |
 | **A lead agent that hands work to specialists and combines the results** | ⚠️ Iris hands each part to the right specialist and reports back; one combined answer from several specialists is planned (v0.3) | — | ⚠️ several agents in one channel | ✅ | ✅ | ✅ | ⚠️ channels with responder rules |
@@ -35,7 +35,7 @@ _Last checked: 2026-11-08, from each project's public README and documentation, 
 | **Answers from your own documents, quoting the exact source** | ❌ Not built yet: the document member (Dewey) is only in the catalogue of planned members | — | ⚠️ document search | — | — | — | — |
 | **Morning brief** | ✅ | ✅ | ✅ | ✅ | — | — | — |
 | **Gmail and Google Calendar** | ✅ | ✅ connected apps | ✅ | ❌ not yet | — | ⚠️ through your coding agent | ✅ through Composio |
-| **Import your agents from Grok Bot** | ✅ v1.0 | ❌ | ❌ | ❌ | ✅ | ❌ | — |
+| **Import your agents from Grok Bot** | 🗓️ Planned (v1.0) | ❌ | ❌ | ❌ | ✅ | ❌ | — |
 | **Phone** | In progress: a phone's browser with a real sign-in. The exact-address sign-in list is built. A remote session has limited powers, built after v0.2, in the next release, not yet run live. No real phone, provider or tunnel has been tried | ✅ | ✅ | ⚠️ early, from source | ✅ | ❌ | ⚠️ in development |
 | **Any language** | The app's interface is English for now, with some cards also in Italian; members answer in the person's language. | — | — | ✅ 13 interface languages | ✅ 5 interface languages | — | — |
 
@@ -63,7 +63,7 @@ Importing agents from another tool is in the main table above (Grok Bot import: 
 FreeDuet is the only project that combines **all three**:
 
 1. **Your subscriptions, no API key**, with automatic switching between them (built, not yet run live).
-2. **Real-world actions made safe**: payments physically blocked without a permit bound to the shop and the total, and spending caps (planned for v0.4).
+2. **Real-world actions made safe**: payments need your approval, unless you turn on Full access for that member, and permits bound to the shop and the total, and spending caps, are planned for v0.4.
 3. **A ready-made, tested team**, led by a Chief of Staff who delegates.
 
 ## Sources
