@@ -461,9 +461,9 @@ export async function reviewAction(input: {
   }
 }
 
-/** What the person reads on the card for a change to their mailbox (docs/design/mail-organise.md). */
-export const MAILBOX_CHANGE_REASON =
-  "Changing your mailbox always asks you first, until you press Always allow for this action.";
+/** What the card says when the person's own words did not ask for a change to their mailbox. */
+export const MAILBOX_NOT_ASKED_REASON =
+  "You did not ask for this change to your mailbox in your own message, so it asks you first.";
 
 /**
  * The whole decision, layer by layer. Safety first and unconditionally; then the strictest rule;
@@ -492,13 +492,16 @@ export async function decideAction(input: {
    */
   alwaysAsk?: string;
   /**
-   * mail-organise: why this write always shows a card in the person's own turn, whatever "ask before
-   * changes" says and whatever the reviewer would have said. Unlike `alwaysAsk` it is not a D35 case:
-   * the person's own saved "Always allow" for this tool still answers it, and Full access reads it as
-   * any other write. A routine, a check-in, a remote turn and a hand-off from one are `alwaysAsk`
-   * and keep asking with no rule able to lift it.
+   * mail-organise (docs/design/mail-organise.md): the call changes a mailbox. `request` is the person's
+   * own typed words of this live turn, as the server traced them, or null when none can be traced.
+   * The reviewer is ALWAYS asked about such a call, whatever the person's auto-review preference says,
+   * and is shown this text instead of the run's messages: never an email, a tool result or the
+   * member's own words. The call runs without a card only when the reviewer, reading those words,
+   * says the person explicitly asked for this change; no traceable request, any other verdict, no
+   * reviewer and any failure of it is a card. The person's own saved "Always allow" for the tool
+   * still answers it, and a D35 `alwaysAsk` is stricter and comes first.
    */
-  mustAsk?: string;
+  mailboxChange?: { request: string | null };
 }): Promise<ApprovalPolicyOutcome> {
   const { candidate } = input;
   const safety = safetyRequirement(candidate);
@@ -537,13 +540,29 @@ export async function decideAction(input: {
       ruleId: matched.rule.id,
       reason: "A rule hands this kind of action to the person.",
     };
+  // The person's own saved "Always allow" for this tool answers a change to a mailbox: no reviewer.
+  const savedAllow =
+    input.mailboxChange !== undefined &&
+    candidate.effect === "write" &&
+    matched?.layer === "personal_rule" &&
+    matched.rule.behaviour === "allow";
+  const mailboxChange =
+    candidate.effect === "write" && !savedAllow
+      ? input.mailboxChange
+      : undefined;
+  const autoReview = input.autoReview && !savedAllow;
+  // Nothing the person typed can be traced to this turn: there is nothing for a reviewer to judge.
+  const mailboxReview = mailboxChange?.request != null;
   const review =
-    (input.autoReview && reviewable(candidate) && !candidate.personAnswered) ||
-    matched?.rule.behaviour === "pre_approved"
+    (autoReview && reviewable(candidate) && !candidate.personAnswered) ||
+    matched?.rule.behaviour === "pre_approved" ||
+    mailboxReview
       ? await reviewAction({
           model: input.model,
           candidate,
-          request: requestOf(input.messages),
+          request: mailboxChange
+            ? (mailboxChange.request ?? "")
+            : requestOf(input.messages),
           ...(matched
             ? {
                 rule: {
@@ -571,7 +590,7 @@ export async function decideAction(input: {
       reason: SAFETY_REASONS[category],
       review,
     };
-  if (review && input.autoReview && reviewable(candidate)) {
+  if (review && (autoReview || mailboxReview) && reviewable(candidate)) {
     if (review.verdict === "hand_off")
       return {
         behaviour: "hand_off",
@@ -598,17 +617,21 @@ export async function decideAction(input: {
       reason: alwaysAsk,
       ...(review ? { review } : {}),
     };
-  if (
-    input.mustAsk &&
-    candidate.effect !== "read" &&
-    !(matched?.layer === "personal_rule" && matched.rule.behaviour === "allow")
-  )
-    return {
-      behaviour: "ask",
-      source: "default",
-      reason: input.mustAsk,
-      ...(review ? { review } : {}),
-    };
+  if (mailboxChange) {
+    const asked =
+      mailboxReview &&
+      review !== undefined &&
+      !review.failedClosed &&
+      review.verdict === "proceed" &&
+      review.preApproved;
+    if (!asked)
+      return {
+        behaviour: "ask",
+        source: "default",
+        reason: MAILBOX_NOT_ASKED_REASON,
+        ...(review ? { review } : {}),
+      };
+  }
   if (matched?.rule.behaviour === "ask")
     return {
       behaviour: "ask",

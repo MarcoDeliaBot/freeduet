@@ -1,8 +1,8 @@
 # Gmail and Google Calendar
 
 A Bot with this connector granted reads mail and the calendar **as the person asking**, can send a
-reply in one of their threads, as them, and can label, archive and mark mail as read or unread, each once
-that change has been through the approval gate. Two people
+reply in one of their threads, as them, and can label, archive and mark mail as read or unread: with no card
+when the person's own message in the chat asked for it, and with a card when it did not. Two people
 asking the same question get the answers their own accounts can see, and neither sees anything they
 could not open themselves.
 
@@ -160,9 +160,16 @@ What the connector itself enforces, whatever was approved:
 ### Organising a mailbox
 
 `gmail_create_label`, `gmail_label_messages`, `gmail_archive_messages` and `gmail_mark_messages` change
-the person's mailbox and send nothing. They are writes, not sends: each shows the person a card
-in the person's own turn, whatever "ask before changes" says and whatever the reviewer would have said.
-Only the person's own earlier "Always allow" for that tool lifts the card, for that tool alone, and
+the person's mailbox and send nothing. They are writes, not sends. When the person's own typed message of
+this live chat turn asked for that change (directly with the member, or one hop through Iris), the call runs
+with no card. The auto-review model is always asked about these four, whatever the person's auto-review
+setting, and it is shown only those typed words: never an email, a tool's answer, an earlier message, a
+pasted text, an attachment or what the member wrote. It must answer that the person explicitly asked for
+this exact action; a request that did not ask, an instruction that sits in an email while the person only
+asked to read, words from the microphone, a missing or unreachable reviewer and any other answer show a
+card. The model can be wrong in both directions: it can let through something the person did not mean and it
+can ask when they did ask. The changes are reversible in Gmail, and at most 100 messages go in a call.
+The person's own earlier "Always allow" for that tool lifts the card for that tool alone, and
 Full access treats them as it treats any other write that is not a payment. None is covered by what
 covers a new email (the person's own typed request) or granted by an approval that names nothing. A
 routine, a check-in, a remote session and a hand-off that started in one always ask, and "Always allow"

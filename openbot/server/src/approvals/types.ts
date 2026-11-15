@@ -119,9 +119,11 @@ export type ApprovalCandidate = {
   /**
    * The call changes a mailbox (create a label, label, archive, mark: the four writes of
    * docs/design/mail-organise.md), read off the transport the row resolved to and the tool's name together.
-   * It always shows a card, unless the person's own earlier "Always allow" for this tool answers it.
+   * `request` is the person's own typed words of this live turn as the server traced them
+   * (`plugins/typed-recipients.ts`), or null when none can be traced. The gate always judges whether
+   * the person asked for the change against this text and no other, and shows a card when it is null.
    */
-  organisesMailbox?: true;
+  organisesMailbox?: { request: string | null };
   /**
    * The person just allowed this exact send on its own card, the check that asks about a new email
    * every time. Asked about again, it would be a second card for one email.
