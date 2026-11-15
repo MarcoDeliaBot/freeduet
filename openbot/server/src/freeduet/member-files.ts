@@ -157,7 +157,7 @@ export function memberFileTools(deps: Dependencies) {
         ref: `freeduet/${OFFER_FILE_TOOL}`,
         description: [
           "Hand the person a file you made in your own computer: it appears in this conversation as a card with the file's name, its size and a Download button, and the person saves it on their own device.",
-          "Give the path of one finished file in your workspace, relative to it (for example out/final.mp4), after you have checked it.",
+          "Give the path of one finished file in your workspace, relative to it (for example out/final.mp4). When the person names the path, give it at once: the tool looks for the file itself and says what is wrong.",
           "It sends and publishes nothing and asks for no approval: the file stays in your computer until the person presses Download.",
           "A file that is too large, outside your workspace or not allowed to leave it is refused, and the refusal says what to fix.",
         ].join(" "),
