@@ -52,14 +52,19 @@ export function createHopRelay(deps: {
       )
       .limit(1);
     let work = row?.payload as unknown as HandoffWork | undefined;
+    // A row that is there but is not a forward hop to this member for this person is a relay or a
+    // notice back to the asking Bot, or not this run's: the sweep already wrote what the Bot said
+    // into the conversation it was in, so a second relay would make it speak twice.
     if (
-      !work ||
-      work.toBotId !== run.botId ||
-      work.actorId !== run.actorId ||
-      work.answerIn !== undefined
-    ) {
-      // The hop's row is gone (swept after a day) or is not this run's: say it from what the signed
-      // run knows. The asking Bot is the one of the conversation, found the way the gate finds it.
+      work &&
+      (work.toBotId !== run.botId ||
+        work.actorId !== run.actorId ||
+        work.answerIn !== undefined)
+    )
+      return false;
+    if (!work) {
+      // The hop's row is gone (swept after a day): say it from what the signed run knows. The
+      // asking Bot is the one of the conversation, found the way the gate finds it.
       const asker = await askerOf(run);
       if (!asker) return false;
       work = {

@@ -553,6 +553,85 @@ describe("a card raised inside a hand-off", () => {
   });
 });
 
+describe("a card raised in a relay turn back to the Bot that asked", () => {
+  test("is allowed once: the write runs once and nothing is relayed a second time", async () => {
+    await clean();
+    await database
+      .insert(users)
+      .values({ id: PERSON, email: `${PERSON}@example.test` });
+    const stack = build();
+    // The relay of an answer: a hop whose row carries `answerIn`, delivered to Iris in her own thread.
+    const key = `relay:hop:${suite}:turn`;
+    const work: HandoffWork = {
+      fromBotId: OTTO,
+      toBotId: IRIS,
+      actorId: PERSON,
+      threadId: ASK_THREAD,
+      runId: `cr-run-${suite}-relay`,
+      depth: 1,
+      task: "Give the person the outcome.",
+      answerIn: ASK_THREAD,
+    };
+    await queue.offer({
+      kind: HANDOFF_KIND,
+      key,
+      payload: work as unknown as Record<string, unknown>,
+    });
+    const signed = signHandoffDeliveryRun(work, KEY, undefined, {
+      key,
+      owner: "replica",
+    });
+    const args = { name: "GitHub" };
+    await withApprovalContext(
+      {
+        runId: work.runId,
+        threadId: ASK_THREAD,
+        toolCallId: `call-${randomUUID()}`,
+        toolName: "gmail_create_label",
+        args,
+        messages: [{ id: "m1", role: "user", content: "Make the label." }],
+        state: {},
+        context: [],
+        forwardedProps: { openbotRun: signed },
+        initiator: handoffInitiator(OTTO, { kind: "remote" }),
+      },
+      () =>
+        stack.service.gate({
+          actorId: PERSON,
+          botId: IRIS,
+          toolRef: TOOL,
+          effect: "write",
+          scope: "google-imap",
+          args,
+          target: TARGET,
+        }),
+    ).catch((error: unknown) => {
+      if (!(error instanceof HeadlessToolSuspension)) throw error;
+    });
+    const [card] = await cards();
+    expect(card?.status).toBe("pending");
+
+    await stack.service.decide(PERSON, card?.id as string, "allow_once");
+    await stack.sweep(card?.id as string);
+
+    expect(stack.labels).toEqual(["GitHub"]);
+    expect(stack.continued).toHaveLength(1);
+    // The sweep wrote the answer into Iris's conversation itself; no second message is queued.
+    expect(await relaysOf(key)).toHaveLength(0);
+    const queued = await database
+      .select()
+      .from(workItems)
+      .where(
+        and(
+          eq(workItems.kind, HANDOFF_KIND),
+          sql`${workItems.payload}->>'actorId' = ${PERSON}`,
+          like(workItems.key, "relay:%"),
+        ),
+      );
+    expect(queued.map((row) => row.key)).toEqual([key]);
+  });
+});
+
 describe("the signed run that names the conversation", () => {
   test("a forged or foreign run is not read: only the deployment's own signature counts", () => {
     const run: RunAssertion = {
