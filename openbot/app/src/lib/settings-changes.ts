@@ -32,7 +32,7 @@ export function settingChangesQueryOptions() {
  * caller shows its sentence. `refused` says it will not change, so the caller takes Undo away.
  */
 export type UndoAnswer =
-  | { undone: true; value: ChatNotifyLevel }
+  | { undone: true; value: ChatNotifyLevel | string | null }
   | {
       undone: false;
       refused: boolean;
@@ -57,7 +57,9 @@ export async function undoSettingChange(changeId: string): Promise<UndoAnswer> {
   > | null;
   if (response.ok) {
     const value = body?.value;
-    return isChatNotifyLevel(value)
+    return isChatNotifyLevel(value) ||
+      value === null ||
+      typeof value === "string"
       ? { undone: true, value }
       : { undone: false, refused: false, message: null };
   }

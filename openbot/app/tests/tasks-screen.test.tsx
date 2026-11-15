@@ -110,11 +110,13 @@ function serving() {
   }) as unknown as typeof fetch;
 }
 
-function draw() {
-  queryClient.setQueryData(agentKeys.list(false), [
+function draw(
+  agents: Record<string, unknown>[] = [
     { id: "openduet", name: "OpenDuet" },
     { id: "scout", name: "Scout" },
-  ]);
+  ],
+) {
+  queryClient.setQueryData(agentKeys.list(false), agents);
   const router = createRouter({
     routeTree: createRootRoute({ component: TasksScreen }),
     history: createMemoryHistory({ initialEntries: ["/tasks"] }),
@@ -584,6 +586,34 @@ test("a waiting email is answered in place under Needs input", async () => {
       body: { decision: "deny" },
     }),
   );
+});
+
+test("a waiting email and a question name a renamed member by the name the person gave it and its own", async () => {
+  quiet();
+  inbox = {
+    requests: [email()],
+    questions: [
+      {
+        id: "orphan-question",
+        botId: "openduet",
+        threadId: "orphan-thread",
+        question: "Which deck?",
+        createdAt: ago(5),
+      },
+    ],
+  };
+  serving();
+  const view = draw([
+    { id: "openduet", name: "Kiki", realName: "OpenDuet" },
+    { id: "scout", name: "Scout" },
+  ]);
+  const needs = await view.findByRole("region", { name: "Needs input" });
+  const card = within(needs).getByRole("region", {
+    name: "Waiting for your approval",
+  });
+  // The caption of the approval card, and the row of the question, say both names.
+  expect(card.textContent).toContain("Kiki (OpenDuet)");
+  expect(needs.textContent).toContain("Kiki (OpenDuet) asks");
 });
 
 test("a decided action is not waiting, and not a task: it is left out of Needs input and Resolved", async () => {

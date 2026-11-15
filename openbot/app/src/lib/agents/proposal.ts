@@ -219,6 +219,15 @@ export function ownershipOf(
 }
 
 /**
+ * A coworker's own name, which is what a model is told: not the name this person gave it
+ * (docs/design/settings-in-chat.md, 8.10.1), a label of theirs that nothing else in the deployment
+ * knows and that would reach the model as the person's free text.
+ */
+export function ownNameOf(agent: Pick<AgentProfile, "name" | "realName">) {
+  return agent.realName ?? agent.name;
+}
+
+/**
  * The coworkers that already exist here, as the answer to `list_bots`.
  *
  * One line each, because the reason to ask is to find out whether the coworker being described is
@@ -232,7 +241,7 @@ export function describeBots(agents: readonly AgentProfile[]): string {
   }
   const lines = agents.map((agent) => {
     const where = agent.endpoint ? "runs at its own address" : "runs here";
-    return `- ${agent.name} — ${agent.title} (${ownershipOf(agent)}, ${where})`;
+    return `- ${ownNameOf(agent)} — ${agent.title} (${ownershipOf(agent)}, ${where})`;
   });
   return [
     `${agents.length} coworker${agents.length === 1 ? "" : "s"} already exist here. If one of them already does the job being described, say so and offer that one instead of making a second.`,
@@ -249,7 +258,7 @@ export function describeBots(agents: readonly AgentProfile[]): string {
  */
 export function describeBot(agent: AgentProfile): string {
   return [
-    `${agent.name} — ${agent.title} (${ownershipOf(agent)})`,
+    `${ownNameOf(agent)} — ${agent.title} (${ownershipOf(agent)})`,
     agent.endpoint
       ? "Runs at its own address, which a coworker made here cannot be given."
       : "Runs on this deployment, on the instructions below.",

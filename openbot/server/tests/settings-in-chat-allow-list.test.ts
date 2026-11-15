@@ -12,8 +12,13 @@ import {
 } from "../src/settings-in-chat/allow-list";
 
 describe("the list holds only the settings that are harmless to change from chat", () => {
-  test("slice 1 offers one setting: how much a member may interrupt the person", () => {
-    expect([...CHAT_SETTING_NAMES]).toEqual(["notifications"]);
+  test("the list is notifications, the name, the tone and the language (docs/design/settings-in-chat.md, 8.10)", () => {
+    expect([...CHAT_SETTING_NAMES]).toEqual([
+      "notifications",
+      "name",
+      "tone",
+      "language",
+    ]);
   });
 
   test("notifications takes all and needs_input", () => {
@@ -73,9 +78,6 @@ describe("a setting that is not on the list is refused in plain words", () => {
     "permissions",
     "engines",
     "signIn",
-    "tone",
-    "language",
-    "name",
     "routineTime",
   ];
 

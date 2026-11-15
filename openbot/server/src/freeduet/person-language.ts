@@ -20,6 +20,7 @@
  * Unset means today, exactly: no key in `forwardedProps`, every sentence in English.
  */
 import { DICTATION_LANGUAGES } from "../dictation/languages";
+import { PERSON_TONE_PROP } from "./person-tone";
 
 export const PERSON_LANGUAGE_VARIABLE = "FREEDUET_PERSON_LANGUAGE";
 /** The `forwardedProps` key agent-freeduet reads (agent-freeduet/freeduet/agui.py). */
@@ -54,12 +55,31 @@ export function personLanguageFrom(
   return { code: value, name: englishName(value) };
 }
 
-function englishName(code: string): string {
+export function englishName(code: string): string {
   try {
     return new Intl.DisplayNames(["en"], { type: "language" }).of(code) ?? code;
   } catch {
     return code;
   }
+}
+
+/** The word that gives the deployment's language back. */
+export const DEFAULT_LANGUAGE_WORD = "default";
+
+/**
+ * A code from what a person or a member wrote: a two-letter code on the list (`de`), or the English name
+ * of one (`German`), in any case. `null` for the word `default` (the deployment's own language) and
+ * `undefined` for anything else, which is refused.
+ */
+export function languageCodeFrom(value: unknown): string | null | undefined {
+  if (typeof value !== "string") return undefined;
+  const word = value.trim().toLowerCase();
+  if (word === DEFAULT_LANGUAGE_WORD) return null;
+  if (DICTATION_LANGUAGES.has(word)) return word;
+  for (const code of DICTATION_LANGUAGES)
+    if (englishName(code).toLowerCase() === word && englishName(code) !== code)
+      return code;
+  return undefined;
 }
 
 /**
@@ -72,10 +92,16 @@ function englishName(code: string): string {
 export function withPersonLanguage<T extends Record<string, unknown>>(
   forwarded: T,
   environment: Environment = process.env,
-): Omit<T, typeof PERSON_LANGUAGE_PROP> & {
+): Omit<T, typeof PERSON_LANGUAGE_PROP | typeof PERSON_TONE_PROP> & {
   openbotPersonLanguage?: PersonLanguage;
 } {
-  const { [PERSON_LANGUAGE_PROP]: _fromCaller, ...own } = forwarded;
+  // The tone key is dropped here too (person-tone.ts sets it per person, later in the run): a request
+  // must not name a tone even where no per-person source is wired.
+  const {
+    [PERSON_LANGUAGE_PROP]: _fromCaller,
+    [PERSON_TONE_PROP]: _toneFromCaller,
+    ...own
+  } = forwarded;
   const language = personLanguageFrom(environment);
   return language ? { ...own, [PERSON_LANGUAGE_PROP]: language } : own;
 }

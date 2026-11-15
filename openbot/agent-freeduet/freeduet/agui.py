@@ -20,6 +20,8 @@ from .engine_choices import Choices
 from .engine_choices import from_props as engine_choices_from_props
 from .person_language import PROP as PERSON_LANGUAGE_PROP
 from .person_language import from_props as person_language_from_props
+from .person_tone import PROP as PERSON_TONE_PROP
+from .person_tone import from_props as person_tone_from_props
 
 KEEPALIVE_SECONDS = 15.0
 KEEPALIVE = b": keepalive\n\n"
@@ -42,6 +44,8 @@ class RunInput:
     assertion: str = field(default="", repr=False)
     # The person's language as (two-letter code, English name), when the deployment set one (D26).
     person_language: tuple[str, str] | None = None
+    # The tone the person chose for this member, when it is not the plain default (person_tone.py).
+    person_tone: str | None = None
     # What the person chose for this member on the Engines page, when they chose anything (engine_choices.py).
     engine_choices: Choices | None = None
 
@@ -81,6 +85,7 @@ def parse_run_input(body) -> RunInput:
         deployment_tools=frozenset(_strings(props.get("openbotDeploymentTools"))),
         assertion=assertion if isinstance(assertion, str) else "",
         person_language=person_language_from_props(props.get(PERSON_LANGUAGE_PROP)),
+        person_tone=person_tone_from_props(props.get(PERSON_TONE_PROP)),
         engine_choices=engine_choices_from_props(props.get(ENGINE_CHOICES_PROP)),
     )
 

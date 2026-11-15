@@ -16,6 +16,8 @@ export type AgentProfile = {
   systemOwned: boolean;
   hidden: boolean;
   pinned: boolean;
+  /** What this person calls this team member, or null for its own name. Never another person's. */
+  displayName?: string | null;
   /** An administrator assigned this Team Bot to this person; it stays in their sidebar. */
   assignedToMe?: boolean;
   /**

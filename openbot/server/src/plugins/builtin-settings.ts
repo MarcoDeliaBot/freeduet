@@ -37,8 +37,20 @@ const TOOLS: readonly McpTool[] = Object.freeze([
   {
     name: CHANGE_SETTING_TOOL,
     description: [
-      "Change one of this person's settings. The only setting here is `notifications`: how much this Bot",
-      "may interrupt the person. Its value is `all` (everything) or `needs_input` (questions and approvals only).",
+      "Change one of this person's settings. There are four.",
+      "`notifications`: how much this Bot may interrupt the person. Its value is `all` (everything) or",
+      "`needs_input` (questions and approvals only).",
+      "`name`: what this person calls a member of the team, shown to this person only (the member keeps its",
+      "own name everywhere else). Its value is the name, 1 to 40 letters, numbers and spaces. Give `member`",
+      "(the member's own name) when the person means another member than you; leave it out for yourself.",
+      "Giving a member its own name back clears the name the person chose.",
+      "`tone`: how a member talks to this person. Its value is `plain` (the default), `warm` or `formal`. It",
+      "changes only the member's own messages to this person, never emails or documents for others, safety",
+      "rules, or the wording of approvals. Give `member` as for `name`. `plain` clears the choice.",
+      "`language`: the language this person reads, one for the whole team (not per member). Its value is a",
+      "two-letter code such as `it` or `en`, or the language's English name, or `default` for the",
+      "deployment's own. It tells members which language to write in; the app's own cards are not",
+      "translated by it.",
       "",
       "Use it only when the person has asked for that change in their own words. Every change asks the",
       "person to allow it on a card first, and nothing changes until they do. The change is recorded with the",
@@ -54,12 +66,17 @@ const TOOLS: readonly McpTool[] = Object.freeze([
         setting: {
           type: "string",
           description:
-            "The setting's name. The only one here is `notifications`.",
+            "The setting's name: `notifications`, `name`, `tone` or `language`.",
+        },
+        member: {
+          type: "string",
+          description:
+            "For `name` and `tone` only: the team member, by its own name. Absent means the Bot making the call.",
         },
         value: {
           type: "string",
           description:
-            "The new value. For `notifications`: `all` or `needs_input`.",
+            "The new value. For `notifications`: `all` or `needs_input`. For `tone`: `plain`, `warm` or `formal`. For `language`: a two-letter code, an English name, or `default`.",
         },
       },
       required: ["setting", "value"],
@@ -112,7 +129,7 @@ export async function callTool(
       `${toolName} is not a tool that settings in chat implements. The stored tool list is out of date; refresh it on the Plugins page.`,
     );
 
-  const decision = decideSettingRequest(args.setting, args.value);
+  const decision = decideSettingRequest(args.setting, args.value, args.member);
   if (!decision.ok) return failure(decision.message);
 
   const changes = installed;
@@ -122,6 +139,89 @@ export async function callTool(
     );
 
   try {
+    if (decision.setting === "name") {
+      const named = await changes.changeName({
+        ownerUserId,
+        callerId: agentId,
+        member: decision.member,
+        value: decision.value,
+      });
+      if (named.status === "unchanged")
+        return {
+          text: "That member already has that name for this person, so nothing changed.",
+          isError: false,
+          truncated: false,
+        };
+      return {
+        text: settingChangeResult(
+          {
+            changeId: named.changeId,
+            agentId: named.agentId,
+            setting: "name",
+            previousValue: named.previousValue,
+            newValue: named.newValue,
+          },
+          `Done: the person now sees this member as ${named.newValue ?? "its own name"}. Nobody else does, and you still call it by its own name. The change is recorded as ${named.changeId}, so it can be undone.`,
+        ),
+        isError: false,
+        truncated: false,
+      };
+    }
+    if (decision.setting === "language") {
+      const spoken = await changes.changeLanguage({
+        ownerUserId,
+        callerId: agentId,
+        value: decision.value,
+      });
+      if (spoken.status === "unchanged")
+        return {
+          text: "That is already this person's language for the team, so nothing changed.",
+          isError: false,
+          truncated: false,
+        };
+      return {
+        text: settingChangeResult(
+          {
+            changeId: spoken.changeId,
+            agentId: spoken.agentId,
+            setting: "language",
+            previousValue: spoken.previousValue,
+            newValue: spoken.newValue,
+          },
+          `Done: this person's language for the team is now ${spoken.newValue ?? "the deployment's own"}. It applies from the next message. Cards drawn by the app keep the language they have. The change is recorded as ${spoken.changeId}, so it can be undone.`,
+        ),
+        isError: false,
+        truncated: false,
+      };
+    }
+    if (decision.setting === "tone") {
+      const toned = await changes.changeTone({
+        ownerUserId,
+        callerId: agentId,
+        member: decision.member,
+        value: decision.value,
+      });
+      if (toned.status === "unchanged")
+        return {
+          text: `That member already talks to this person in a ${toned.value} tone, so nothing changed.`,
+          isError: false,
+          truncated: false,
+        };
+      return {
+        text: settingChangeResult(
+          {
+            changeId: toned.changeId,
+            agentId: toned.agentId,
+            setting: "tone",
+            previousValue: toned.previousValue,
+            newValue: toned.newValue,
+          },
+          `Done: the tone is now ${toned.newValue}. It applies from the next message, to this member's own messages to this person only. The change is recorded as ${toned.changeId}, so it can be undone.`,
+        ),
+        isError: false,
+        truncated: false,
+      };
+    }
     const outcome = await changes.change({
       ownerUserId,
       agentId,

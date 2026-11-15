@@ -855,7 +855,10 @@ function boundedText(
 function agentDto(actor: AgentActor, agent: AgentProfile) {
   return {
     id: agent.id,
-    name: agent.name,
+    // The name THIS person gave a team member, when they did (docs/design/settings-in-chat.md, 8.10). The
+    // store's `name` stays the real one; `realName` is sent only when the two differ.
+    name: agent.displayName ?? agent.name,
+    ...(agent.displayName ? { realName: agent.name } : {}),
     title: agent.title,
     roleDescription: agent.roleDescription,
     // What the edit form may hold, read from the Bot so the form carries no copy of the rule.

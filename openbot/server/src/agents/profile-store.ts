@@ -23,6 +23,7 @@ import {
   teamBotAccess,
 } from "../team-bots/access";
 import { teamBotPublications } from "../db/schema/team-bots";
+import { isWellFormedName } from "../settings-in-chat/member-name";
 import { canManageAgent } from "./profile-policy";
 import type {
   AgentActor,
@@ -145,6 +146,8 @@ const joinedProjection = {
   hiddenAt: agentPreferences.hiddenAt,
   pinnedAt: agentPreferences.pinnedAt,
   importedMember: agentProfiles.importedMember,
+  /* What this person calls the member, when they chose a name (docs/design/settings-in-chat.md, 8.10). */
+  displayName: agentPreferences.displayName,
   deletedAt: agentProfiles.deletedAt,
   /* The hash, only so a surface can say whether one exists. It never leaves this module. */
   callbackTokenHash: agentProfiles.callbackTokenHash,
@@ -198,6 +201,11 @@ function mapProfile(
     hasCallbackToken: row.callbackTokenHash !== null,
     hidden: row.hiddenAt !== null,
     pinned: row.pinnedAt !== null,
+    // Only a well-formed name counts, and only for a team member: the database is not trusted blindly.
+    displayName:
+      row.packageId !== null && isWellFormedName(row.displayName)
+        ? row.displayName
+        : null,
     assignedToMe: Boolean(row.assignedToMe),
     importedMember: row.importedMember,
     deletedAt: row.deletedAt,

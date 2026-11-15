@@ -7,6 +7,7 @@ import { DuetIcon } from "@/components/duet/icons";
 import type { TileTone } from "@/components/duet/kit";
 import { SafeSvg } from "@/components/duet/page-rich-block";
 import { TryTaskAgain } from "@/components/duet/task-card";
+import { botNameForDecision } from "@/lib/agents/bot-names";
 import type { AgentProfile } from "@/lib/agents/queries";
 import { clockTime } from "@/lib/approval-view";
 import {
@@ -116,7 +117,10 @@ export function ActiveView({
   if (tasks.isPending || inbox.isPending) return null;
 
   const botName = (id: string) =>
-    agents?.find((agent) => agent.id === id)?.name ?? id;
+    botNameForDecision(
+      agents?.find((agent) => agent.id === id),
+      id,
+    );
   const facts = new Map<string, ConversationFacts>(
     (roster.data ?? []).map((channel) => [
       channel.id,

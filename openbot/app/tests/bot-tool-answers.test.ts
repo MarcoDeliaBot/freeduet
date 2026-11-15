@@ -173,3 +173,63 @@ test("a genuinely empty deployment is described as empty", async () => {
 
   globalThis.fetch = previous;
 });
+
+/**
+ * A coworker the person has renamed (docs/design/settings-in-chat.md, 8.10.1) reaches the model by its
+ * own name. The roster the app holds says `name` = the one the person gave it and `realName` = its own,
+ * and the model is writing for the whole deployment, not for this person's labels: it compares what it
+ * is asked to build with what exists, and a name it can find nowhere else is a name it cannot use. The
+ * alias is also the one piece of the person's free text that would otherwise reach it through here.
+ */
+const RENAMED = [
+  AGENTS[0],
+  { ...AGENTS[1], name: "Kiki", realName: "Renewal Desk" },
+];
+
+/** Serves `agents` as the roster for one asking, and puts the stub back after, whatever happens. */
+async function withRoster<T>(
+  agents: unknown[],
+  ask: () => Promise<T>,
+): Promise<T> {
+  const previous = globalThis.fetch;
+  globalThis.fetch = (async (input: RequestInfo | URL) => {
+    const path = typeof input === "string" ? input : input.toString();
+    calls.push(path);
+    if (path.startsWith("/api/agents")) return Response.json({ agents });
+    return Response.json({ error: "not found" }, { status: 404 });
+  }) as typeof fetch;
+  try {
+    return await ask();
+  } finally {
+    globalThis.fetch = previous;
+  }
+}
+
+test("list_bots names a renamed coworker by its own name, not by the one the person gave it", async () => {
+  const answer = await withRoster(RENAMED, () => answerListBots(coldClient()));
+
+  expect(answer).toContain("- Renewal Desk — Accounts Receivable (yours");
+  expect(answer).not.toContain("Kiki");
+});
+
+test("read_bot finds a renamed coworker by its own name or by the one the person gave it, and answers with its own", async () => {
+  for (const asked of ["Renewal Desk", "renewal desk", "Kiki", "  kiki "]) {
+    const answer = await withRoster(RENAMED, () =>
+      answerReadBot(coldClient(), asked),
+    );
+
+    expect(answer).toContain("Renewal Desk — Accounts Receivable (yours)");
+    expect(answer).toContain("Chase overdue invoices. Never invent a date.");
+    expect(answer).not.toContain("Kiki");
+  }
+});
+
+test("a renamed coworker is still one coworker, and a name nobody has is still nobody's", async () => {
+  const listed = await withRoster(RENAMED, () => answerListBots(coldClient()));
+  expect(listed).toContain("2 coworkers already exist here");
+
+  const missing = await withRoster(RENAMED, () =>
+    answerReadBot(coldClient(), "Nobody"),
+  );
+  expect(missing).toContain("There is no coworker called Nobody");
+});
