@@ -24,6 +24,7 @@ import { Streamdown } from "streamdown";
 import { PendingApprovals } from "@/components/approvals/inline-approval";
 import { DuetIcon } from "@/components/duet/icons";
 import { Seen, TypingDots } from "@/components/duet/kit";
+import { RoutineCreatedCard } from "@/components/routines/routine-chat-card";
 import { Bubble, BubbleContent } from "@/components/ui/bubble";
 import {
   Dialog,
@@ -1731,6 +1732,8 @@ const TranscriptToolCall = memo(function TranscriptToolCall({
               waiting={waitingOnPerson}
             />
             <PendingApprovals toolCallIds={[toolCallId]} />
+            {/* A routine written in chat gets its card under the line, once the call has succeeded. */}
+            <RoutineCreatedCard name={name} result={result} />
           </>
         )}
       </ToolRenderBoundary>
