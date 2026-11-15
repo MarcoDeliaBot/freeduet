@@ -2,6 +2,18 @@ import { z } from "zod";
 import type { AgentProfile } from "./queries";
 
 /**
+ * "What it does", at most `limit` characters. The create form uses the app's 1,000; the edit form
+ * uses the limit the server reports for the coworker being edited.
+ */
+export function roleDescriptionSchema(limit: number) {
+  return z
+    .string()
+    .trim()
+    .min(1, "A description of what it does is required.")
+    .max(limit, `What it does must be ${limit} characters or fewer.`);
+}
+
+/**
  * Browser-side coworker form contract. Limits match the server parser so validation errors can be
  * shown next to fields before submit.
  */
@@ -16,11 +28,7 @@ export const agentFormSchema = z.object({
     .trim()
     .min(1, "Title is required.")
     .max(120, "Title must be 120 characters or fewer."),
-  roleDescription: z
-    .string()
-    .trim()
-    .min(1, "A description of what it does is required.")
-    .max(1000, "What it does must be 1000 characters or fewer."),
+  roleDescription: roleDescriptionSchema(1000),
   visibility: z.enum(["public", "private"]),
   /**
    * The AG-UI endpoint this coworker runs on. Empty means the Bot in the box.

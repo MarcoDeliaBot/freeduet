@@ -31,6 +31,7 @@ const BOT: AgentProfile = {
   name: "Expenses",
   title: "Finance",
   roleDescription: "Receipts.",
+  roleDescriptionLimit: 1000,
   avatarSeed: "e",
   visibility: "public",
   endpoint: null,

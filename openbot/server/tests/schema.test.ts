@@ -268,6 +268,16 @@ describe("OpenBot database schema", () => {
         primary: false,
       },
       /*
+       * Set once, by the server-side import path and by nothing else. It is the only thing that lets
+       * a coworker hold more than a Bot made in the app may, so no route or request body writes it.
+       */
+      {
+        name: "imported_member",
+        notNull: true,
+        hasDefault: true,
+        primary: false,
+      },
+      /*
        * Nullable, and that is the security property.
        *
        * Null means this agent holds no credential and may not call a tool back, which is what a URL

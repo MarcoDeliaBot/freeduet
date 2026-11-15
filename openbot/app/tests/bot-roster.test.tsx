@@ -43,6 +43,7 @@ function bot(overrides: Partial<AgentProfile> & { id: string }): AgentProfile {
     name: overrides.id,
     title: "Title",
     roleDescription: "Role",
+    roleDescriptionLimit: 1000,
     avatarSeed: "seed",
     visibility: "private",
     endpoint: null,
