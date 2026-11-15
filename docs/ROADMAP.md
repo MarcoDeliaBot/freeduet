@@ -14,6 +14,8 @@ This page lists what is planned, in the order we currently think it matters. **N
 
 ## How to read the tables
 
+One rule for every page of this project (the README, the comparison, the site): a green tick ✅ means you can use it today, in a published version. Something being built is marked 🚧, something decided and not started 🗓️. Decided 15 November 2026.
+
 | Word | Meaning |
 |---|---|
 | **Now** | The next things to be worked on. |

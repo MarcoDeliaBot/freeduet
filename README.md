@@ -40,8 +40,8 @@ FreeDuet gives you a Chief of Staff and a crew of specialists: inbox, contracts,
 | Switches subscription automatically at the limit | ⚠️ built in v0.2, not yet run live | ❌ | ❌ | ⚠️ | — | — |
 | Own computer with a real browser per agent | ✅ | ✅ | ✅ | ⚠️ | ✅ | ⚠️ |
 | Asks before every send, payment, signature, deletion | ✅ by default | ✅ | ✅ | ✅ | ❌ | ⚠️ |
-| Payments blocked without a permit bound to shop and total | ✅ v0.4 | — | ❌ | ❌ | ❌ | — |
-| Spending caps per purchase, day and month | ✅ v0.4 | — | ❌ | ❌ | ❌ | — |
+| Payments blocked without a permit bound to shop and total | 🗓️ planned (v0.4) | — | ❌ | ❌ | ❌ | — |
+| Spending caps per purchase, day and month | 🗓️ planned (v0.4) | — | ❌ | ❌ | ❌ | — |
 | Ready-made, tested team with a Chief of Staff | ✅ | ❌ | ⚠️ | ❌ | — | ⚠️ |
 
 ✅ yes · ⚠️ partly · ❌ no · — not documented. A version means planned, not available yet. Full table with sources: [docs/COMPARISON.md](docs/COMPARISON.md).
