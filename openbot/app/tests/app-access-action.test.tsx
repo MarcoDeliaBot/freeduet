@@ -301,7 +301,7 @@ test("a sign-in tab that only reads closed keeps the wait until this tab has the
       expect(view.queryByText("Waiting for Gmail…")).toBeNull(),
     );
   });
-});
+}, 35_000); // Holds a real 1.5 s pause on purpose, then renders: 3.3 s median and 5.7 s at most alone, 5.5 s median and 6.3 s at most under load (14 Nov 2026).
 
 test("a Reconnect on the owner's account offers nothing: only the owner can reconnect it", async () => {
   const { view } = mounted(
