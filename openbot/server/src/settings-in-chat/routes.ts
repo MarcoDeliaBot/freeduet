@@ -21,6 +21,26 @@ export function createSettingChangeRoutes(
     return context.json({ changes: list });
   });
 
+  /** The proposal card calls this once, right after the person pressed Create, so the line can offer Undo. */
+  routes.post("/members", requireUser, async (context) => {
+    const body = (await context.req.json().catch(() => null)) as {
+      agentId?: unknown;
+    } | null;
+    if (typeof body?.agentId !== "string" || body.agentId.trim() === "")
+      return context.json({ error: "A member id is required." }, 400);
+    try {
+      const outcome = await changes.memberAdded({
+        ownerUserId: context.var.actor.id,
+        agentId: body.agentId,
+      });
+      return context.json({ change: outcome }, 201);
+    } catch (error) {
+      if (error instanceof SettingRefusedError)
+        return context.json({ error: error.message }, error.status);
+      throw error;
+    }
+  });
+
   routes.post("/:changeId/undo", requireUser, async (context) => {
     try {
       const outcome = await changes.undo({

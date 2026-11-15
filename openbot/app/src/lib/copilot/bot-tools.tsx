@@ -12,6 +12,8 @@ import {
 } from "@/lib/agents/answers";
 import type { AgentFormValues } from "@/lib/agents/form";
 import { agentInputFrom } from "@/lib/agents/form";
+import { MemberAddedLine } from "@/freeduet/member-added-line";
+import { recordMemberAdded, settingChangesKey } from "@/lib/settings-changes";
 import { createAgentMutationOptions } from "@/lib/agents/mutations";
 import {
   BOT_CREATOR_SLUG,
@@ -183,10 +185,17 @@ function ProposedBotRender(props: {
          * skills while the deployment holds rows saying it has them.
          */
         invalidatePlugins(queryClient);
+        /*
+         * The line under the card (docs/design/settings-in-chat.md, 8.11): the server records what was
+         * added so Undo can take it back. After the grants, so the record holds what the member holds.
+         */
+        await recordMemberAdded(agent.id);
+        await queryClient.invalidateQueries({ queryKey: settingChangesKey });
         return outcome;
       }}
       respond={props.respond}
       result={props.result}
+      line={(madeId, card) => <MemberAddedLine agentId={madeId} card={card} />}
     />
   );
 }

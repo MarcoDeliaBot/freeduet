@@ -46,12 +46,12 @@ Text chat is the same for both. A remote session still sends and reads messages.
   `app/src/components/channels/channel-chat.tsx` (`remoteSession`; the call is not offered to it),
   `app/src/components/channels/composer/use-dictation.ts` (`available` is false for it).
   Tests: `app/tests/remote-session-voice.test.tsx` (four cases).
-- Verified on the final code of this branch:
-  - Before the change, on main's source: `install-secret-signin.test.ts` 22 pass, 2 fail (the two new cases), and the
-    remote case of `remote-session-voice.test.tsx` failed (3 pass, 1 fail).
+- Verified on the final code of this branch, merged with `origin/main` (ddca1da):
+  - Before the change, on the base commit (4e9c681): `install-secret-signin.test.ts` 22 pass, 2 fail (the two new cases),
+    and the remote case of `remote-session-voice.test.tsx` failed (3 pass, 1 fail).
   - After: `install-secret-signin.test.ts` 24 pass, 0 fail; `guards.test.ts` 4 pass, 0 fail; `remote-session-voice.test.tsx`
-    4 pass, 0 fail; `first-day` (three files) 47 pass, 0 fail; `chat-presence` 25 pass, 0 fail; `bun test app/` 2999 pass,
-    0 fail in 315 files.
+    4 pass, 0 fail; `first-day` (three files) 47 pass, 0 fail; `chat-presence` 25 pass, 0 fail; `bun test app/` 3012 pass,
+    0 fail in 316 files.
   - Gates from `openbot/`: `bun run typecheck` exit 0; `bun run typecheck:tests` exit 0 (the 239 known errors of the
     baseline, none new); `bunx biome lint .` exit 0; `bun test assertion-shape` 10 pass; `bunx biome format .` exit 0.
   - Not run here: the server files that open a database (`remote-limits.integration`, `remote-limits-ledger`,
