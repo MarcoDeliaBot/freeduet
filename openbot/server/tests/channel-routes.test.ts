@@ -2133,21 +2133,45 @@ describe("channel store concurrency", () => {
     });
 
     await deletionApplied;
-    const creation = persistentStore.create(owner, [agentId]);
-    // Long enough for a correct implementation to reach the row lock and block on it.
-    await Bun.sleep(250);
-    releaseDeletion();
-    await deletion;
-
-    const outcome = await creation.then(
+    // The rejection handler is attached now, not after the deletion commits. The refusal can arrive
+    // before the test reaches its `await`, and a rejection nobody has handled yet fails the test on
+    // its own, whatever the assertions say (one run in twenty on a loaded runner, 14 November 2026).
+    const outcome = persistentStore.create(owner, [agentId]).then(
       (created) => {
         createdChannelIds.push(created.id);
         return created;
       },
       (error: unknown) => error,
     );
+    // Wait for the event this test is about: the creation has reached the deletion's row lock and is
+    // blocked on it, which PostgreSQL shows as a backend waiting on a lock in this database. A fixed
+    // sleep only hoped for that. On a loaded runner the creation can still be on its way when the
+    // deletion commits, and the refusal then holds without the lock being exercised at all.
+    // A connection of its own: the shared pool has two, and both are already held (the deletion and
+    // the blocked creation), so a poll that borrowed from it would wait for ever.
+    const monitor = createDatabase(databaseUrl, { max: 1 });
+    let blocked = false;
+    try {
+      for (
+        let deadline = Date.now() + 5_000;
+        !blocked && Date.now() < deadline;
+      ) {
+        const waiting = await monitor.$client`
+          select count(*)::int as waiting from pg_stat_activity
+          where datname = current_database() and wait_event_type = 'Lock'
+        `;
+        blocked = Number(waiting[0]?.waiting ?? 0) > 0;
+        if (!blocked) await Bun.sleep(10);
+      }
+    } finally {
+      await monitor.$client.close();
+    }
+    releaseDeletion();
+    await deletion;
+    // Checked after the release, so a failure here cannot leave the deletion's transaction open.
+    expect(blocked).toBe(true);
 
-    expect(outcome).toBeInstanceOf(AgentNotFoundError);
+    expect(await outcome).toBeInstanceOf(AgentNotFoundError);
     expect(
       await database
         .select({ channelId: channelAgents.channelId })
