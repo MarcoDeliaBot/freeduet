@@ -73,6 +73,8 @@ describe("server authorization", () => {
         // No store was passed, so this deployment tracks no onboarding and the app gates nobody.
         onboarding: null,
       },
+      // No installation secret here, so there is no sign-in gate and no session is remote (auth/remote-limits.ts).
+      remote: false,
     });
   });
 

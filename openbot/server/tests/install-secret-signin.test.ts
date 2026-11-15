@@ -432,3 +432,48 @@ describe("the administrator check is the app's own guard, asked once", () => {
     expect(answer.status).toBe(403);
   });
 });
+
+describe("/api/me says whether the browser is a remote session", () => {
+  test("a signed-in browser that is not paired is remote, and may read /api/me to learn it; a paired one is not", async () => {
+    const config = signInConfig();
+    const { app } = assembleSignIn(config);
+    const unpaired = await ask(app, "/api/me", { session: "user" });
+    expect(unpaired.status).toBe(200);
+    expect(await unpaired.json()).toMatchObject({ remote: true });
+
+    const paired = await ask(app, "/api/me", {
+      session: "user",
+      headers: { cookie: pairedCookie(config) },
+    });
+    expect(paired.status).toBe(200);
+    expect(await paired.json()).toMatchObject({ remote: false });
+  });
+
+  test("a deployment without an installation secret, and single-user mode, answer false", async () => {
+    const { app: withoutSecret } = assembleSignIn(signInConfig({}, false));
+    const signedIn = await ask(withoutSecret, "/api/me", { session: "user" });
+    expect(signedIn.status).toBe(200);
+    expect(await signedIn.json()).toMatchObject({ remote: false });
+
+    const single = loadConfig(
+      {
+        ...testEnvironment(),
+        GOOGLE_OAUTH_CLIENT_ID: undefined,
+        GOOGLE_OAUTH_CLIENT_SECRET: undefined,
+        BETTER_AUTH_SECRET: undefined,
+        BETTER_AUTH_URL: undefined,
+        INITIAL_ADMIN_EMAILS: undefined,
+        OPENBOT_SINGLE_USER: "true",
+        FREEDUET_INSTALL_SECRET: SECRET,
+      },
+      {},
+    );
+    // Single-user mode asks the pairing cookie of every route (D28), so the browser sends it.
+    const { app: alone } = assembleSignIn(single);
+    const answer = await ask(alone, "/api/me", {
+      headers: { cookie: pairedCookie(single) },
+    });
+    expect(answer.status).toBe(200);
+    expect(await answer.json()).toMatchObject({ remote: false });
+  });
+});
