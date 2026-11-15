@@ -5223,7 +5223,7 @@ test("an answer this deployment could not read is filed under the same name as a
   expect((event?.payload as { failure?: string } | undefined)?.failure).toMatch(
     /could not turn that answer into text/,
   );
-});
+}, 35_000); // freshStore() deletes the fixtures and creates a store before the call: about 2 s alone, 5 s median and 7 s at most under load (14 Nov 2026).
 
 test("an action's effect, destructive marker and version round-trip", async () => {
   const database = await freshDatabase();

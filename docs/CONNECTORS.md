@@ -25,6 +25,10 @@ Desktop programs such as Photoshop or Cricut Design Space run on the person's ow
 - **Owner-only operations stay owner-only** (PROJECT.md F11), whatever the tool can do.
 - **Per-program permission.** The person switches each program on, per member, and can switch it off at any time.
 - **Files stay where they are.** Members work on copies unless the person asks for the original to be changed.
+- **Only you connect a new app.** Decided 14 November 2026: a member may propose one with a card, and it is connected only when you do it.
+- **No local programs as tools for now.** Decided 14 November 2026: programs you run on your computer are not offered to members as tools, because they run code on the computer.
+- **Gmail's simple route stays the default.** Decided 14 November 2026: the app password stays the default, and OAuth stays for people with their own Google Cloud project.
+- **The word check stays.** Decided 14 November 2026: the check that stops writes under names such as "password" or "credential" stays, with an explicit exception list.
 
 ## Catalogue
 
@@ -32,7 +36,7 @@ Desktop programs such as Photoshop or Cricut Design Space run on the person's ow
 |---|---|---|---|---|---|
 | **Google suite** | Gmail, Calendar, Drive, Docs, Sheets, Slides, Forms, Meet, Tasks, Keep, Contacts, Chat | Free and Workspace | Google Workspace APIs and connectors | M2 | Gmail and Calendar already come from OpenDuet. Uses Google's own OAuth for these apps, which is separate from Gemini's sign-in. |
 | **Google for business** | Google Ads, Search Console, Analytics, Business Profile, YouTube | Free and paid | Official Google APIs | M3 | Read-only first; any change to a campaign or a budget is an owner-only operation. |
-| **Microsoft 365** | Outlook, Teams, OneDrive, Word, Excel | Paid | Microsoft Graph and connectors | M3 | Teams already comes from OpenBot. |
+| **Microsoft 365** | Outlook, Teams, OneDrive, Word, Excel | Paid | Microsoft Graph and connectors | M2 (v0.2) | Teams already comes from OpenBot. Decided 14 November 2026: Microsoft comes in v0.2. |
 | **Automation** | n8n | Free self-hosted, or paid n8n Cloud | Webhooks and n8n's API, both ways | M2 | Same connector for a private install and for n8n Cloud: only the address and key change. Members can start a workflow and workflows can hand work to a member. |
 | **Automation** | Activepieces, Node-RED, Windmill, Huginn, Kestra | Free, open source, self-hosted | Webhooks and each tool's API | M3 | For people who prefer another engine to n8n. |
 | **Automation** | Make, Pipedream | Free and paid, online | Webhooks and each tool's API | M3 | Zapier is covered through Composio. |
@@ -57,7 +61,7 @@ Desktop programs such as Photoshop or Cricut Design Space run on the person's ow
 | **Messaging** | WhatsApp Business Platform | Paid per conversation | Official API | M5 | The supported WhatsApp route. |
 | **Messaging** | OpenWA | Free | Optional plugin | M5 | Unofficial: WhatsApp may block the number. Off by default, with a clear warning; never part of the core. |
 | **Messaging** | Telegram | Free | Bot API | M5 | |
-| **Messaging** | Slack, Microsoft Teams, SMS | Free and paid | Already in OpenBot | v0.1 | |
+| **Messaging** | Slack, Microsoft Teams, SMS | Free and paid | Already in OpenBot, as chat channels | v0.1 | Slack's connector was removed from the curated catalogue, because each entry was a reviewed source contract for a vendor nobody had connected; re-adding it is a review of that vendor |
 
 ## The ArtCraft suite: a free creative studio inside every member's computer
 

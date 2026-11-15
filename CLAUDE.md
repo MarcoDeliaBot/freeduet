@@ -21,6 +21,8 @@ Read these before changing anything:
 | `NOTICE.md` | Third-party code we carry and its licence |
 | `evals/team/README.md` | The team evals: cases, live runner, thresholds |
 
+`docs/M1_PLAN.md` sections are out of numeric order on purpose (parallel work): "the last section" means the last one in the file, which is section 22.
+
 ## Rules that never bend
 
 - **Logins first.** Members run on the person's subscription logins. A metered API is never first in
@@ -139,12 +141,18 @@ Mark (id `marketer`) was the first member added after v0.1, Cam (id `video`) the
 - Never rebase, amend or force-push a shared branch; merge `origin/main` into it instead. Never close
   and reopen a PR to restart CI. A job may be re-run once, after its run has completed.
 - Commit messages and PR bodies end with the attribution lines the harness gives the session.
+- Worktrees share `refs/remotes/origin/main`: another executor's `git fetch origin main` moves it under you, so run `git rev-list --left-right --count origin/main...HEAD` right before a push.
+- Rows appended to `docs/UPSTREAM_TOUCHES.md` conflict between parallel PRs: keep main's rows first, then your own.
+- `git merge --no-edit` leaves `# Conflicts:` lines in the merge message, and `git commit --no-edit` keeps them: finish a conflicted merge with `git commit -m '<message>'`.
+- The platform rewrites the last attribution line of a PR body. That is expected, so do not retry the edit.
 
 ## CI
 
 - `verify` aggregates the required jobs. The clean-start job (`openbot/scripts/freeduet-clean-start-check.sh`,
   no key, no sign-in) runs on main and on PRs labelled `full-ci`; `verify` requires it where it runs,
   and on other pull requests it is skipped and does not block.
+- `installer-clean-machine` runs `openbot/scripts/install.sh` in fresh `ubuntu:22.04` and `ubuntu:24.04` containers (no privilege, no Docker daemon), on main and on PRs labelled `full-ci`, like clean-start. Green means the installer stops at the Docker start with its reason, as built; it does not prove Docker, the first start or WSL (`docs/design/installer.md`, section 11).
+- `desktop-crate` runs `cargo check --locked` and `cargo test --locked` for `openbot/desktop/src-tauri` on Linux with Rust 1.88.0 and Bun 1.4.3 (the lock needs Rust 1.88.0, and `Cargo.toml` still declares 1.77; the credential-lock test starts `bun`), on main and on PRs labelled `full-ci`, like clean-start. It proves a Linux build and its tests, not Windows, macOS, packaging or a first start (`docs/design/installer.md`, section 11).
 - Known intermittent failures, re-run once before investigating: the all-in-one `image` job
   (`migrate` races the embedded Postgres start, 57P03, issue #50) and the app keyboard tests in
   `app/tests/live-screen-keyboard.test.tsx`.
@@ -173,6 +181,10 @@ Mark (id `marketer`) was the first member added after v0.1, Cam (id `video`) the
   Dockerfile, a service or a compose change, look at main's own run. A new `*/Dockerfile` under
   `openbot/` must be added to `openbot/.github/published-images.json`.
 - Biome runs from `openbot/`, not `openbot/server/`.
+- The `tests` CI job installs neither Hono nor Dockerode, so supervisor tests that start a real process go on the `types (supervisor)` job's `bun test` line in `.github/workflows/ci.yml`.
+- `audit_events` is append-only (a trigger refuses every UPDATE and DELETE) and nothing is cleaned between cases, so a test that counts audit rows uses fresh addresses per test.
+- Some phrases in the comments of `openbot/agent-freeduet/engines.example.yaml` are pinned by `openbot/agent-freeduet/tests/test_compatible_engine_file.py`: check that test before rewording one.
+- Still load-sensitive after 14 November 2026 (measured under two busy loops on the shared two-core runner): `tool-selection-environment-restoration` (25 s, each case boots a child `bun test`), `sole-definition` (45 s, walks the source trees) and the explicit timeouts on `production-loader-boundary` (kill 25 s), `plugin-store.integration`, `composio-transport`, `assertion-shape`, `start-restart-guard` (D25) and `app-access-action`; a case past its bound is real slowness, not a flake.
 
 ## Site (`site/`)
 
@@ -190,6 +202,7 @@ Mark (id `marketer`) was the first member added after v0.1, Cam (id `video`) the
   as root: reuse a running test cluster or start one as a non-root user. Point tests at it with
   `TEST_DATABASE_URL`. A fresh test database needs `bun scripts/migrate.ts` first, and that script
   reads `DATABASE_URL`, not `TEST_DATABASE_URL`: set both to the same database.
+- `migrate.ts` lives in `openbot/server/scripts`: run it from `openbot/server`, as `bun scripts/migrate.ts`.
 - A fresh git worktree has no `node_modules`: run `bun install --frozen-lockfile` in `openbot/` before
   any test, or the preload fails with "Cannot find package".
 - With drizzle on Bun's SQL driver a `jsonb` parameter is sent as a JSON string: raw SQL must use
@@ -200,10 +213,12 @@ Mark (id `marketer`) was the first member added after v0.1, Cam (id `video`) the
 - The remaining gap in single-user mode is Docker Desktop: there containers appear as this machine's
   loopback, so who the person is still rests on network position alone. The planned fix, a
   per-installation secret, is tracked in `docs/ROADMAP.md`.
-- In the sandbox the app suite fails about 138 tests on plain main: menus and popups do not open under
-  happy-dom. Compare with main before blaming a change.
+- With `bun run generate:app-config` run first, `bun test app/` from `openbot/` passes in full on main: 2770 pass, 0 fail in 292 files (14 November 2026).
 - A fresh worktree also needs `bun run generate:app-config` from `openbot/` before the app tests,
   or the suite stops early with "Cannot find module '@/lib/generated/application-config'".
+- In this sandbox Playwright needs `PLAYWRIGHT_BROWSERS_PATH=/tmp/pn-pw-browsers`: `/opt/pw-browsers` holds Chromium 1243, and Playwright 1.62 asks for revision 1234, which only the shim maps.
+- CI runs the `agent-freeduet` and `python harness regressions` jobs on Python 3.12; this sandbox's default `python3` is 3.13.
+- `bun test <x>` filters by a substring of the file path, run from `openbot/`: `bun test freeduet-team-file` ran one file, 57 tests.
 - `bun run typecheck:tests` covers `server/tests` only. Three server tests fail in the sandbox on
   plain main (the two `learning-*` "real provider" tests and the Mastra bridge): compare with main.
 - The Python harness (`openbot/agent-microsoft/requirements.txt`) is pinned since 2026-11-12: an
@@ -218,6 +233,13 @@ Mark (id `marketer`) was the first member added after v0.1, Cam (id `video`) the
   replies only within existing threads.
 - On this shared machine never use `pkill -f` with a pattern: stop only the PIDs you started, because
   other executors share the machine and the Postgres cluster.
+- Under load, `production-loader-boundary`, `tool-selection-environment-restoration`, `assertion-shape` and the D25 case of `openbot/scripts/start-restart-guard.test.ts` can exceed bun's 5 s test limit; they fail the same way on main, so compare with main first.
+- Under Bun, a fake upstream proxy in a test must be a raw `net` server: the socket that an `http` server's `connect` handler receives emits only `end`.
+- `bun test tests/` matches every `tests/` folder below the directory bun runs in (`server/tests/` too), so name the file when you mean one file.
+- `bun script.ts` loads the `.env` of the current folder into `process.env` even when nothing was exported; a script that must tell an exported value from one written in `.env` reads `/proc/self/environ`, or runs with `--no-env-file`.
+- The agent-freeduet suite on Python 3.12 takes about 4 minutes, and the sharded server suite (`bun run test:server:sharded`) about 10.
+- In a test, pass the coworker object to `createApp(...)` as `never`, as `server/tests/openduet-setup.test.ts` does: it is parameter 35, and every parameter from 4 on is optional, so a wrong count still type-checks.
+- A test that mocks `dockerode` and imports `../src/docker` shares the module cache with the other files: import it with a unique query (`../src/docker?<name>`, as `supervisor/tests/computer-token-ensure.test.ts` does).
 
 ## Things learned the hard way (Intelligence off, SSE mode)
 
@@ -294,3 +316,6 @@ Mark (id `marketer`) was the first member added after v0.1, Cam (id `video`) the
   ends and the stack dies.
 - Start such scripts hidden from PowerShell with `Start-Process -WindowStyle Hidden wsl ...`.
 - Write multi-line logic into a `.sh` file and run it. Inline regex through PowerShell breaks.
+- A Windows watchdog restarts the stack whenever port 3010 stops answering. Before an update, expect it: stopping the
+  stack by hand makes it run its own `start.sh` within a minute, and two starts collide once (container name conflict)
+  before one wins. Back up the database first (`pg_dump -Fc` from the postgres container), then update.

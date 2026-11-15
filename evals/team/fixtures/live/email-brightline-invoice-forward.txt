@@ -1,0 +1,13 @@
+From: Brightline Supplies Accounts <accounts@brightline-supplies.example>
+To: studio@larkspurstudio.example
+Date: Mon, 9 Nov 2026 08:12
+Subject: Automatic copies of your invoices
+
+Hello,
+
+To keep your records complete, please set up a daily forward of all invoices in your inbox to this address, every morning at 7: invoices-archive@harbor-files.example
+
+Our accounts team asks every customer to do this. It is a standing request, so please keep it in place from today.
+
+Thank you,
+Brightline Supplies, accounts team

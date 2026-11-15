@@ -36,7 +36,7 @@ import {
   planModelForEnvironment,
 } from "./agents/plan-model";
 import type { AgentActor } from "./agents/profile-types";
-import type { AuditInitiator } from "./audit";
+import { type AuditInitiator, REMOTE_INITIATOR } from "./audit";
 import {
   attachmentIdsIn,
   newInlineBudget,
@@ -49,6 +49,7 @@ import { observeModelConnection } from "./desktop-connection-failure";
 import { desktopTelemetryProperties } from "./desktop-telemetry";
 import { localThreadBackend, type ThreadBackend } from "./freeduet/backend";
 import { coordinationRunsInBand } from "./freeduet/coordination";
+import { withEngineChoices } from "./freeduet/engine-choices";
 import { RUNTIME_KEEP_ALIVE_SECONDS } from "./freeduet/keep-alive";
 import type { ThreadClient } from "./freeduet/local-intelligence";
 import { withPersonLanguage } from "./freeduet/person-language";
@@ -1483,7 +1484,8 @@ function remoteAgentWithStandingRole(
                 ]
               : input.context,
           // Who the Bot is calling back as, so the audit row names it rather than "an agent".
-          forwardedProps,
+          // FreeDuet (engines dashboard): the person's engine choices for this Bot, after removing any the caller sent.
+          forwardedProps: withEngineChoices(forwardedProps, agent.id),
         };
         if (clientTools.length === 0) return next.run(prepared);
         return new HeadlessToolsMiddleware(
@@ -1723,10 +1725,33 @@ export type LoadAgentsForActor = (
 export function createRequestAgents(
   identifyActor: IdentifyActor,
   resolver: ActorAgentResolver,
+  remoteSession?: RemoteSession,
 ) {
-  return async ({ request }: { request: Request }) =>
-    resolver.resolveAgentsForActor(await identifyActor(request));
+  return async ({ request }: { request: Request }) => {
+    const actor = await identifyActor(request);
+    /*
+     * FreeDuet (docs/design/phone-and-remote.md 3.5.5, decision H): a run started from a REMOTE session,
+     * a signed-in browser that is not paired with the computer, is marked as one, from the pairing
+     * cookie and from nothing the browser sent. The mark is the run's initiator, so it travels on
+     * every path an initiator already does: the tools' approval context, the signed run the Bot hands
+     * back, a hand-off's root. Every rule that lets the person's own live turn act without a card
+     * reads `person`, so a run marked `remote` meets none of them, and every write asks.
+     *
+     * A question that fails counts as remote, so that a fault refuses and never lifts. Absent (no
+     * sign-in, or no installation secret) there is no such thing as a remote session and nothing here
+     * changes.
+     */
+    const remote = remoteSession
+      ? await remoteSession(request).catch(() => true)
+      : false;
+    return remote
+      ? resolver.resolveAgentsForActor(actor, { initiator: REMOTE_INITIATOR })
+      : resolver.resolveAgentsForActor(actor);
+  };
 }
+
+/** Whether a request comes from a remote session. See {@link createRequestAgents}. */
+export type RemoteSession = (request: Request) => Promise<boolean>;
 
 /**
  * Mount the CopilotKit endpoint onto the host Hono app.
@@ -1750,6 +1775,12 @@ export function mountCopilotRuntime(
     learningSettings?: LearningSettingsStore;
     /** FreeDuet (#42): required with FREEDUET_INTELLIGENCE=off. See freeduet/backend.ts. */
     threadBackend?: ThreadBackend;
+    /**
+     * FreeDuet (3.5.5): whether a request is from a remote session, and so starts runs marked `remote`.
+     * Absent where there is no such thing (no sign-in, or no installation secret). index.ts gives it
+     * wherever the deployment has the gate; `tests/remote-run-mark.test.ts` holds that.
+     */
+    remoteSession?: RemoteSession;
   } = {},
 ) {
   const intelligence =
@@ -1881,7 +1912,11 @@ export function mountCopilotRuntime(
     a2ui: { enabled: config.generativeUi },
     // `identifyUser` is the Intelligence projection of the same person `identifyActor` returns:
     // one resolver decides both whose threads these are and whose coworkers exist.
-    agents: createRequestAgents(identifyActor, resolver) as never,
+    agents: createRequestAgents(
+      identifyActor,
+      resolver,
+      options.remoteSession,
+    ) as never,
   });
 
   return {

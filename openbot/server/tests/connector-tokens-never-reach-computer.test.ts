@@ -48,7 +48,9 @@ describe("connector tokens never reach a Bot's computer", () => {
   test("a computer's environment carries none of the deployment's secrets", () => {
     const placeholder = "placeholder-connector-value-0000";
     const env = environmentFor("bot-1", {
+      // Both of the deployment's own tokens: the shared one, and the one every Bot's is made from.
       COMPUTER_TOKEN: "computer-token",
+      SUPERVISOR_TOKEN: "supervisor-token",
       KEY_ENCRYPTION_KEY: placeholder,
       COMPOSIO_API_KEY: placeholder,
       GOOGLE_OAUTH_CLIENT_SECRET: placeholder,
@@ -58,6 +60,8 @@ describe("connector tokens never reach a Bot's computer", () => {
       EGRESS_PROXY_BOT_1: "http://127.0.0.1:3128",
     });
     expect(env.join("\n")).not.toContain(placeholder);
+    expect(env.join("\n")).not.toContain("computer-token");
+    expect(env.join("\n")).not.toContain("supervisor-token");
     expect(env).toContain("COMPUTER_BOT_ID=bot-1");
   });
 });

@@ -26,6 +26,11 @@ import {
   users,
   verifications,
 } from "../db/schema";
+import {
+  ADDRESS_REFUSAL_MESSAGE,
+  ADDRESS_REFUSAL_REASON,
+  emailAddressAllowed,
+} from "../freeduet/signin-allowlist";
 import { DOMAIN_REFUSAL_MESSAGE, emailDomainAllowed } from "./email-domain";
 import { encryptSsoConfig } from "./encrypt-sso-config";
 import { applyConfiguredAdmin, isConfiguredAdmin, seedRole } from "./roles";
@@ -410,6 +415,17 @@ export function createAuth(
                 message: DOMAIN_REFUSAL_MESSAGE,
               });
             }
+            // FreeDuet: the exact addresses (freeduet/signin-allowlist.ts). Unset admits, as before.
+            if (!emailAddressAllowed(user.email, authConfig.allowedEmails)) {
+              await record(auditStore, {
+                eventType: "session.refused",
+                targetType: "person",
+                payload: { email: user.email, reason: ADDRESS_REFUSAL_REASON },
+              });
+              throw new APIError("FORBIDDEN", {
+                message: ADDRESS_REFUSAL_MESSAGE,
+              });
+            }
             if (await isRevoked?.(user.email)) {
               // The row a removed person coming back produces. Nothing else records the attempt:
               // no user row is written and no session exists to look at afterwards.
@@ -478,6 +494,22 @@ export function createAuth(
               });
               throw new APIError("FORBIDDEN", {
                 message: DOMAIN_REFUSAL_MESSAGE,
+              });
+            }
+            // FreeDuet: and again for the exact addresses, so taking one off the list stops its next sign-in.
+            if (
+              user &&
+              !emailAddressAllowed(user.email, authConfig.allowedEmails)
+            ) {
+              await record(auditStore, {
+                eventType: "session.refused",
+                targetType: "person",
+                targetId: session.userId,
+                actorUserId: session.userId,
+                payload: { email: user.email, reason: ADDRESS_REFUSAL_REASON },
+              });
+              throw new APIError("FORBIDDEN", {
+                message: ADDRESS_REFUSAL_MESSAGE,
               });
             }
             if (user && (await isRevoked?.(user.email))) {

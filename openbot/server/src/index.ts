@@ -43,6 +43,10 @@ import { createHandoffDesk } from "./agents/handoff";
 import { createHandedRequestLoader } from "./agents/handoff-request";
 import { createHandoffRunner } from "./agents/handoff-runner";
 import { startHandoffDelivery } from "./agents/handoff-wiring";
+import {
+  createEngineChoices,
+  useEngineChoices,
+} from "./freeduet/engine-choices";
 import { createFullAccess, withFullAccess } from "./freeduet/full-access";
 import { memberFileTools } from "./freeduet/member-files";
 import { relayComputerTools } from "./freeduet/relay-computer";
@@ -84,7 +88,8 @@ import {
 import { startRetentionSweeps } from "./audit-retention";
 import { createAuth } from "./auth";
 import { DEV_ACTOR, initializeDevActorUser } from "./auth/dev-actor";
-import { INSTALL_SECRET_VARIABLE } from "./auth/install-secret";
+import { INSTALL_SECRET_VARIABLE, signInGate } from "./auth/install-secret";
+import { remoteRunQuestion } from "./auth/remote-limits";
 import type { AuthService } from "./auth/guards";
 import { createRoleRepository } from "./auth/guards";
 import { createIdentityProviderStore } from "./auth/identity-provider-store";
@@ -1129,6 +1134,19 @@ const settingChanges = createSettingChanges({
   reader: createAuditReader(database),
 });
 useSettingsTools(settingChanges);
+/*
+ * The person's engine choices (docs/design/engines-dashboard.md, ENGINES_PLAN slice 7): kept on this server, read
+ * into memory here before the server accepts a request, laid on every run by `withEngineChoices` (copilot.ts), and
+ * changed from the Engines page. Installed once, here, as the tools above are, because the code that builds a run
+ * is built before there is a database.
+ */
+const engineChoices = createEngineChoices({
+  database,
+  audit: createAuditStore(database),
+  reader: createAuditReader(database),
+});
+await engineChoices.load();
+useEngineChoices(engineChoices);
 const responsibilityStore = createResponsibilityStore(database, {
   resolveTarget: async (ownerUserId, agentId, channelId) => {
     const actor = await actorFor(ownerUserId);
@@ -1571,6 +1589,7 @@ const loadToolsForActor =
       ingestion: memoryIngestion,
       ownerUserId: actorId,
       agentId: botId,
+      initiator,
     }),
     /*
      * Held by every Bot, granted or not: how a Bot puts an app it cannot reach in front of the
@@ -1919,6 +1938,7 @@ const actorAgentResolver = withRunChannels(baseAgentResolver, (owner, thread) =>
   openDuetChannels.ofThread(owner, thread),
 );
 
+const runGate = signInGate(config);
 const copilotRuntime = mountCopilotRuntime(
   config,
   actorAgentResolver,
@@ -1932,6 +1952,14 @@ const copilotRuntime = mountCopilotRuntime(
     },
     learningSettings,
     threadBackend,
+    /*
+     * FreeDuet (3.5.5, decision H): a run from a signed-in browser that is not paired with this
+     * computer is marked `remote` and every write it makes asks a card. The same cookie the
+     * middleware reads for every other route (`createRemoteLimits`), asked without a second session
+     * lookup (`remoteRunQuestion`). Only where there is a gate; without sign-in and a secret nothing
+     * is remote.
+     */
+    ...(runGate ? { remoteSession: remoteRunQuestion(runGate) } : {}),
   },
 );
 
@@ -2714,6 +2742,7 @@ const app = createApp(
       ingestion: memoryIngestion,
       ownerUserId: actorId,
       agentId: botId,
+      ...(initiator ? { initiator } : {}),
     }).find((candidate) => candidate.name === name);
     if (memory) {
       const text = await memory.execute(args);
@@ -2855,6 +2884,7 @@ const app = createApp(
       auditStore: bootAuditStore,
     },
     settingChanges,
+    engineChoices,
   },
   createSelfHostBanner({
     enabled: config.selfHostBanner,
@@ -2901,6 +2931,15 @@ if (config.singleUser) {
         : `${INSTALL_SECRET_VARIABLE} is not set, so where a container's request arrives as this machine's loopback (Docker Desktop) it is taken for you. Run scripts/start.sh once: it writes one.`,
     );
   }
+} else {
+  // FreeDuet (docs/design/phone-and-remote.md 3.5): with sign-in the secret marks a browser paired with
+  // this computer, and a session in any other browser is remote and limited. Said every boot, and
+  // never with its value.
+  console.info(
+    config.installSecret
+      ? `${INSTALL_SECRET_VARIABLE} is set: a signed-in browser that is not paired with this computer is a remote session, which can read, chat and answer a plain approval once, and nothing else. To pair a browser at this computer, sign in there as the administrator and run: bash scripts/open.sh`
+      : `${INSTALL_SECRET_VARIABLE} is not set, so this server cannot tell a browser at this computer from one elsewhere, and no session is limited. scripts/start.sh writes one for a personal installation.`,
+  );
 }
 
 // Each listener holds a connection of its own for the life of the process. Released on the way out,

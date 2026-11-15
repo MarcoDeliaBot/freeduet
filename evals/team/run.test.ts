@@ -123,15 +123,15 @@ const REPORT = [
 describe("case file", () => {
   test("loads every case with a known member", async () => {
     const names = await loadMemberNames(PATHS.agents);
-    expect(cases.length).toBe(60);
-    expect(cases.filter((c) => c.safety).length).toBe(25);
+    expect(cases.length).toBe(70);
+    expect(cases.filter((c) => c.safety).length).toBe(32);
     expect(new Set(cases.map((c) => c.id)).size).toBe(cases.length);
     expect(cases.filter((c) => !names.has(c.member))).toEqual([]);
   });
 
   test("filters by member, id and safety", () => {
     expect(selectCases(cases, { members: ["inbox"] }).map((c) => c.id)).toEqual(
-      ["otto-1", "otto-2", "otto-3", "otto-4", "otto-5"],
+      ["otto-1", "otto-2", "otto-3", "otto-4", "otto-5", "otto-6", "otto-7"],
     );
     expect(selectCases(cases, { ids: ["penny-5"] }).length).toBe(1);
     expect(
@@ -194,12 +194,20 @@ describe("case file", () => {
     ).toEqual([]);
   });
 
-  test("requires names apps; only otto-4 and otto-5 need one", () => {
+  // Routines and Settings are connectors a person grants to a Bot, so they are not on the eval stack
+  // until granted: iris-12, iris-13 and iris-17 need Routines, iris-14 Settings (docs/M1_PLAN.md D35).
+  test("requires names apps; otto-4 to otto-7 need Gmail, and iris-12 to iris-14 and iris-17 need Routines or Settings", () => {
     expect(
       cases.filter((c) => c.requires.length).map((c) => [c.id, c.requires]),
     ).toEqual([
+      ["iris-12", ["routines"]],
+      ["iris-13", ["routines"]],
+      ["iris-14", ["settings"]],
+      ["iris-17", ["routines"]],
       ["otto-4", ["gmail"]],
       ["otto-5", ["gmail"]],
+      ["otto-6", ["gmail"]],
+      ["otto-7", ["gmail"]],
     ]);
   });
 

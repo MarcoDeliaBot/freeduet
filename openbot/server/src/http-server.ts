@@ -4,7 +4,8 @@ import { serve } from "bun";
 import { computerAccessCheck } from "./agents/computer-access";
 import type { AgentProfileStore } from "./agents/profile-store";
 import { createHostGuard } from "./auth/host-guard";
-import { personRule, personVerdict } from "./auth/install-secret";
+import { personRule, personVerdict, signInGate } from "./auth/install-secret";
+import { isRemote, remoteRefusal } from "./auth/remote-limits";
 import type { OpenBotRole } from "./auth/roles";
 import { appOrigins, crossSiteRefusal } from "./auth/same-origin";
 import { websocket as channelSocket } from "./channels/socket";
@@ -85,19 +86,20 @@ export function startHttpServer(deps: {
    * The live screen, proxied.
    *
    * Proxied rather than connected directly. `agent-computer` authenticates its callers with a
-   * shared token, not with a person's session, and it must never be reachable from a browser. So the
+   * token, not with a person's session, and it must never be reachable from a browser. So the
    * socket terminates here, behind the same session guard as every other route, and this process opens
    * a second socket inward carrying the token.
    *
    * Not a Hono route because an upgrade is not a request/response: Bun hands it over before Hono sees a
    * body, so it is handled in `fetch` ahead of the app.
    */
-  const toStreamUrl = (baseUrl: string, botId: string) =>
+  const toStreamUrl = (baseUrl: string, botId: string, token: string) =>
     // The Bot travels in the query, because a websocket upgrade carries no custom header for the
     // computer to read and every call it serves is per Bot. The secret travels the same way and for the
     // same reason, this socket is the one a person can type into, so it is the last thing that should
-    // be reachable without it.
-    `${baseUrl.replace(/^http/, "ws").replace(/\/$/, "")}/stream?bot=${encodeURIComponent(botId)}&token=${encodeURIComponent(config.computer?.token ?? "")}`;
+    // be reachable without it. It is THIS Bot's computer's own token (`computerGateway.tokenFor`),
+    // never one that opens another computer.
+    `${baseUrl.replace(/^http/, "ws").replace(/\/$/, "")}/stream?bot=${encodeURIComponent(botId)}&token=${encodeURIComponent(token)}`;
 
   const isProxiedStream = (data: SocketData): data is StreamData =>
     typeof (data as StreamData).upstream === "string";
@@ -112,6 +114,9 @@ export function startHttpServer(deps: {
   // (auth/peer.ts), and where the installation has a secret, one that holds it (auth/install-secret.ts,
   // D28). The upgrade below resolves its actor outside the app, so it asks here as well.
   const person = personRule(config);
+  // With sign-in and a secret, a session in a browser that is not paired with this computer is remote
+  // (auth/remote-limits.ts), and the live screen is one of the things it may not open.
+  const pairing = signInGate(config);
   // In that same case, a loopback request under a name that is not this machine's own is a page that
   // rebound its address (auth/host-guard.ts). Asked first, of every request and every upgrade, and
   // before the URL is read: a request with no usable `Host` has no URL to read.
@@ -162,6 +167,9 @@ export function startHttpServer(deps: {
         if (!actor) {
           return new Response("Sign in first.", { status: 401 });
         }
+        if (isRemote(pairing, request)) {
+          return new Response(remoteRefusal().error, { status: 403 });
+        }
         // And which Bot, which the guard above does not answer. This socket carries that Bot's screen,
         // so signing in is not enough: without this, anybody signed in watches anybody's Bot work. And
         // seeing a Team Bot is not enough either: its screen is its owner's signed-in browser.
@@ -177,21 +185,26 @@ export function startHttpServer(deps: {
          * Through the gateway, not the provider.
          *
          * `gateway.locate` runs checkComputerAddress; `provider.locate` does not, and the URL built
-         * below carries COMPUTER_TOKEN in its query string. A provider that answered with a foreign
-         * host was handed the deployment's computer token, which is the case that check was written
-         * for. Every acting path already went through the gateway; this one did not.
+         * below carries the computer's token in its query string. A provider that answered with a
+         * foreign host was handed that token, which is the case that check was written for. Every
+         * acting path already went through the gateway; this one did not.
          */
         let upstream: string;
         try {
           const streamBase = computerGateway
             ? await computerGateway.locate(streamBotId)
             : undefined;
-          if (!streamBase) {
+          if (!computerGateway || !streamBase) {
             return new Response("No computer address is configured.", {
               status: 503,
             });
           }
-          upstream = toStreamUrl(streamBase, streamBotId);
+          // After `locate`, which is the `/ensure` that tells a supervisor's provider the token.
+          upstream = toStreamUrl(
+            streamBase,
+            streamBotId,
+            (await computerGateway.tokenFor(streamBotId)) ?? "",
+          );
         } catch (error) {
           // Said out loud rather than falling back to another Bot's computer, which is the failure this
           // whole path exists to prevent.

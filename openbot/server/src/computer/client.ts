@@ -147,7 +147,14 @@ export const DEFAULT_COMPUTER_TIMEOUT_MS = 45_000;
  * use this interface directly.
  */
 export type ComputerTransportOptions = {
+  /** The one token every computer takes. Used only when `tokenFor` is not given. */
   token?: string;
+  /**
+   * The token of this Bot's own computer, for a deployment that gives each Bot one (the provider's
+   * `tokenFor`). Given, it alone decides: `token` is not tried when it fails, because a computer that
+   * has a token of its own must never be sent the one that opens the others.
+   */
+  tokenFor?: (botId: string) => Promise<string>;
   allowPrivateHosts?: boolean;
   timeoutMs?: number;
   fetchImpl?: typeof fetch;
@@ -229,6 +236,31 @@ export function createComputerTransport(
     const timeoutMs = timeoutMsOverride ?? defaultTimeoutMs;
     const target = baseUrl.replace(/\/$/, "");
     const startedAt = Date.now();
+
+    /*
+     * Which token this computer takes. Before the request, and a failure here sends nothing: the
+     * alternative to refusing is guessing a token, and the only guess available is the one that
+     * opens every other computer.
+     */
+    let token = options.token;
+    if (options.tokenFor) {
+      try {
+        token = await options.tokenFor(botId);
+      } catch (error) {
+        log({
+          type: "computer-transport-failure",
+          reason: "token-unavailable",
+          path: routeOf(path),
+          botId,
+          ms: Date.now() - startedAt,
+          ...(error instanceof Error ? { errorName: error.name } : {}),
+        });
+        throw new ComputerUnavailableError(
+          "The Bot's computer can't be reached because its access token isn't available.",
+        );
+      }
+    }
+
     let response: Response;
     try {
       response = await doFetch(`${target}${path}`, {
@@ -236,9 +268,7 @@ export function createComputerTransport(
         headers: {
           ...(init?.headers as Record<string, string> | undefined),
           "x-openbot-bot-id": botId,
-          ...(options.token
-            ? { "x-openbot-computer-token": options.token }
-            : {}),
+          ...(token ? { "x-openbot-computer-token": token } : {}),
         },
         signal: caller
           ? AbortSignal.any([caller, AbortSignal.timeout(timeoutMs)])

@@ -30,7 +30,7 @@ FreeDuet always runs on the subscriptions the person signed in to. API keys and 
 | **Moonshot, Kimi** | Kimi's CLI with the person's own login. | Not verified yet. | **Off** until verified. The OpenAI-compatible API works with a key. |
 | **OpenRouter** and any OpenAI-compatible API | API key. | Metered by the provider. | Optional, capped |
 | **A gateway or a router that speaks Anthropic's API** (OpenRouter, or a free router you run yourself) | The unmodified Claude Code CLI, pointed at the address in `engines.yaml`, with the person's own key at that address. It runs in an empty home, so no Claude credential is near it. | Anthropic does not endorse, maintain or audit third-party gateway products and does not support routing Claude Code to non-Claude models through any gateway. OpenRouter says Claude Code with it is only guaranteed to work with the Anthropic first-party provider. Prices, limits and terms are the gateway's. Both pages read 2026-11-14. | **Off.** Commented out in `engines.example.yaml`, never first in a chain, tier C until the evals say otherwise. A free one may be a later link; a metered one is refused for now (rule 4) |
-| **Local models** (Ollama, LM Studio, vLLM) | OpenAI-compatible endpoint on your hardware. | No provider terms. | Optional |
+| **Local models** (Ollama, LM Studio, vLLM) | Ollama: the unmodified Claude Code CLI pointed at Ollama's Anthropic-compatible address on your hardware, with no key (`no_key: true`; built and off, see the row above). LM Studio and vLLM: no route checked yet. | No provider terms. | Optional |
 
 ## CopilotKit Intelligence (optional)
 

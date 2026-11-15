@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { PageShell } from "@/components/layout/page-shell";
+import { ChatChangesSection } from "@/components/settings/chat-changes";
 import { NativeDevices, RecentDeliveries } from "@/components/settings/devices";
 import { UpdateRoutingSection } from "@/components/settings/update-routing";
 
@@ -17,6 +18,8 @@ function NotificationsPage() {
       <UpdateRoutingSection />
       <NativeDevices />
       <RecentDeliveries />
+      {/* Settings in chat: what a Bot changed from chat, with Undo where it still works (docs/design/settings-in-chat.md). */}
+      <ChatChangesSection />
     </PageShell>
   );
 }

@@ -96,7 +96,7 @@
    "name": "Windows、Mac、Linuxで動きますか？",
    "acceptedAnswer": {
     "@type": "Answer",
-    "text": "開発者はWindowsでWSL2とDockerを使って動かしており、自動チェックではLinuxで起動を確認しています。Macでは試していないため、動くとは約束できません。FreeDuetは初期版（バージョン0.1）で、1人の開発者が作って使っています。"
+    "text": "開発者はWindowsでWSL2とDockerを使って動かしており、自動チェックではLinuxで起動を確認しています。Macでは試していないため、動くとは約束できません。FreeDuetは初期版（バージョン0.2）で、1人の開発者が作って使っています。"
    }
   },
   {
@@ -120,7 +120,7 @@
    "name": "スマートフォンから使えますか？",
    "acceptedAnswer": {
     "@type": "Answer",
-    "text": "まだできません。現在のFreeDuetは、パソコンのブラウザで開きます。承認が必要なときに通知が届く、スマートフォン向けの版を予定しています。"
+    "text": "まだできません。現在のFreeDuetは、パソコンのブラウザで開きます。承認の依頼も届く、スマートフォン向けの版を開発中です。"
    }
   },
   {
@@ -975,10 +975,10 @@ footer a{color:var(--ink)}
     <h3 class="road-h rv" data-i="r_h">今できること、これから予定していること</h3>
     <ol class="road rv">
       <li><b data-i="rl_today">今日</b><span class="tag" data-i="r_now">公開中</span><p data-i="r1">あなた自身のClaudeログインで動くアシスタントチーム。承認のしくみ、テスト、GmailとGoogle Calendarに対応しています。</p></li>
-      <li><b data-i="rl_now">いま</b><span class="tag" data-i="r_plan">予定</span><p data-i="r2">最優先は、Windows・macOS・Ubuntu向けのワンファイル・インストーラー。新しいメンバーは、それぞれテスト済みで順次加わります。</p></li>
-      <li><b data-i="rl_next">次</b><span class="tag" data-i="r_plan">予定</span><p data-i="r3">メンバーごとのエンジン選択と、チーム内での本当の作業分担。</p></li>
-      <li><b data-i="rl_next">次</b><span class="tag" data-i="r_design">設計中</span><p data-i="r4">チャットで書く自動化、接続アプリの増加、スマートフォン版、リモートアクセス。</p></li>
-      <li><b data-i="rl_later">あとで</b><span class="tag" data-i="r_plan">予定</span><p data-i="r5">音声、安全な買い物。Full accessは作成済みですが、実環境ではまだ確認していません。動画メンバーのCamはチームに入っていますが、テストは実環境ではまだ行っておらず、チャットから完成したファイルを、ダウンロードボタン付きで渡せるようになりました（作成済みですが、実環境ではまだ確認していません）。</p></li>
+      <li><b data-i="rl_now">いま</b><span class="tag" data-i="r_prog">進行中</span><p data-i="r2">最優先は、Windows・macOS・Ubuntu向けのワンファイル・インストーラー。Ubuntu向けとWindows（WSL2経由）向けの最初のセットアップスクリプトがあり、Ubuntuの手順はCIでテストしています。ダブルクリックのインストーラーはまだありません。作成済みですが、実環境ではまだ確認していません：メンバーごとのコンピューターに専用のトークン、そして自宅ネットワークへの接続（アクセスを切ると閉じます）。新しいメンバーは、それぞれテスト済みで順次加わります。</p></li>
+      <li><b data-i="rl_next">次</b><span class="tag" data-i="r_prog">進行中</span><p data-i="r3">メンバーごとのエンジン選択：エンジンのページには各メンバーの順番と、自動か確認かの選択が表示されます。これは作成済みですが実環境ではまだ確認しておらず、切り替えはテスト用エンジンでのみ確認しています。チャットで変更する設定（元に戻すボタン付き）は進行中です。チーム内での本当の作業分担は予定しています。</p></li>
+      <li><b data-i="rl_next">次</b><span class="tag" data-i="r_prog">進行中</span><p data-i="r4">チャットで書く自動化、そしてスマートフォン版（サインイン一覧は作成済み）は進行中です。接続アプリの増加とリモートアクセスは設計中です。</p></li>
+      <li><b data-i="rl_later">あとで</b><span class="tag" data-i="r_prog">進行中</span><p data-i="r5">音声：読み上げは作成済みで、初期設定ではオフ。通話はまだ作成していません。安全な買い物：予定。Full accessと動画メンバーのCamは作成済みですが、実環境ではまだ確認していません。Camは、チャットから完成したファイルをダウンロードボタン付きで渡せます。</p></li>
     </ol>
     <p class="soft road-note rv" data-i="r_note">まだできていないことには、はっきり印をつけています。おとぎ話はしません。<a href="https://github.com/MarcoDeliaBot/freeduet/blob/main/docs/ROADMAP.md">完全なロードマップはGitHubで</a>。</p>
   </div>
@@ -1065,10 +1065,10 @@ cd openbot &amp;&amp; docker compose exec -it agent-freeduet claude
     <div class="faq">
       <details class="rv" open><summary data-i="q1">何が無料で、何にお金がかかりますか？</summary><p data-i="a1">FreeDuetは無料で、MITライセンスのオープンソースです。仕事での利用もできます。かかるのは、一緒に使うAIの契約料金だけで、現在はClaudeのプランです。APIキーを買う必要はありません。</p></details>
       <details class="rv"><summary data-i="q2">インストールに必要なものは？</summary><p data-i="a2">Claudeの契約と、パソコンにDocker、Bash、Bunが入っていること。上の4ステップがインストールのすべてです。ターミナルを開いたことがありませんか？ 詳しい人に設定をお願いして、このページを見せてください。</p></details>
-      <details class="rv"><summary data-i="q3">Windows、Mac、Linuxで動きますか？</summary><p data-i="a3">開発者はWindowsでWSL2とDockerを使って動かしており、自動チェックではLinuxで起動を確認しています。Macでは試していないため、動くとは約束できません。FreeDuetは初期版（バージョン0.1）で、1人の開発者が作って使っています。</p></details>
+      <details class="rv"><summary data-i="q3">Windows、Mac、Linuxで動きますか？</summary><p data-i="a3">開発者はWindowsでWSL2とDockerを使って動かしており、自動チェックではLinuxで起動を確認しています。Macでは試していないため、動くとは約束できません。FreeDuetは初期版（バージョン0.2）で、1人の開発者が作って使っています。</p></details>
       <details class="rv"><summary data-i="q4">アシスタントが確認なしでできることは？</summary><p data-i="a4">調べもの、読み取り、下書きの作成はできます。初期設定では、5つのボタンは「承認」を待ちます。入力したアドレスへの新しいメールだけは例外です。Full access（メンバーごと）を有効にすると、あなたとのチャットでは待たずに動きますが、パスワードと安全設定はあなたに残ります。アシスタントも間違えることがあるので、承認前に内容を読んでください。</p></details>
       <details class="rv"><summary data-i="q5">データはどこにありますか？</summary><p data-i="a5">FreeDuetはあなたのパソコンで動き、会話の記録もそこのデータベースに保存します。ClaudeのログインはDockerボリュームに残り、読み取れるのはClaude Codeのプログラムだけです。考えるときは、サインインしたAIサービスに依頼を送ります。そのサービス自身のアプリと同じ方法です。</p></details>
-      <details class="rv"><summary data-i="q6">スマートフォンから使えますか？</summary><p data-i="a6">まだできません。現在のFreeDuetは、パソコンのブラウザで開きます。承認が必要なときに通知が届く、スマートフォン向けの版を予定しています。</p></details>
+      <details class="rv"><summary data-i="q6">スマートフォンから使えますか？</summary><p data-i="a6">まだできません。現在のFreeDuetは、パソコンのブラウザで開きます。承認の依頼も届く、スマートフォン向けの版を開発中です。</p></details>
       <details class="rv"><summary data-i="q7">自分のメンバーを追加できますか？</summary><p data-i="a7">はい。新しいアシスタントを作るLeoに、必要な仕事に合わせて設計してもらうか、ご自身で定義を書いてください。メンバーの名前や話し方を変えることもできます。<a href="https://github.com/MarcoDeliaBot/freeduet/blob/main/docs/TEAM.md">メンバーの定義の仕方</a>。</p></details>
       <details class="rv"><summary data-i="q8">困ったときはどこで相談できますか？</summary><p data-i="a8">GitHubでissueを作成してください。質問、エラー、修正案、「使っています」という報告のために、<a href="https://github.com/MarcoDeliaBot/freeduet/issues/new/choose">短いフォームがあります</a>。英語かイタリア語で書けます。</p></details>
     </div>

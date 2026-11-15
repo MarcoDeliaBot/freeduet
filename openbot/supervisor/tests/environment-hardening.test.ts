@@ -1,31 +1,44 @@
 import { describe, expect, test } from "bun:test";
+import { computerTokenFor } from "../src/computer-token";
 import { environmentFor } from "../src/environment";
+import { NAMESPACE } from "../src/names";
+
+const KEY = "k".repeat(64);
 
 /**
- * Whitespace-only `COMPUTER_TOKEN` used to be forwarded verbatim while the child trims and then
- * exits, a boot crash loop from a value the supervisor accepted. Invalid `COMPUTER_BROWSER_MODE`
- * was likewise forwarded to crash the child instead of failing fast here.
+ * A computer that is given no token refuses to start, so the environment is never built without the
+ * key its token is made from; a whitespace-only value used to be dropped here and the child then
+ * exited at boot, a crash loop from a value the supervisor had accepted. Invalid
+ * `COMPUTER_BROWSER_MODE` was likewise forwarded to crash the child instead of failing fast here.
  */
 describe("supervisor environment hardening", () => {
-  test("omits a whitespace-only computer token", () => {
-    expect(
-      environmentFor("bot-1", {
-        COMPUTER_TOKEN: "   ",
-        COMPUTER_BROWSER_MODE: "headless",
-      }),
-    ).toEqual(["COMPUTER_BOT_ID=bot-1", "COMPUTER_BROWSER_MODE=headless"]);
+  test("refuses to build an environment without the key a token is made from", () => {
+    for (const missing of [undefined, "", "   "]) {
+      expect(() =>
+        environmentFor("bot-1", {
+          SUPERVISOR_TOKEN: missing,
+          COMPUTER_BROWSER_MODE: "headless",
+        }),
+      ).toThrow(/SUPERVISOR_TOKEN is not set/);
+    }
   });
 
-  test("trims a padded token", () => {
-    expect(environmentFor("bot-1", { COMPUTER_TOKEN: "  secret  " })).toContain(
-      "COMPUTER_TOKEN=secret",
-    );
+  test("a deployment's shared COMPUTER_TOKEN is no substitute for the key", () => {
+    expect(() =>
+      environmentFor("bot-1", { COMPUTER_TOKEN: "shared-secret" }),
+    ).toThrow(/SUPERVISOR_TOKEN is not set/);
+  });
+
+  test("trims a padded key, as the supervisor's own check of its callers does", () => {
+    expect(
+      environmentFor("bot-1", { SUPERVISOR_TOKEN: `  ${KEY}  ` }),
+    ).toContain(`COMPUTER_TOKEN=${computerTokenFor(KEY, NAMESPACE, "bot-1")}`);
   });
 
   test("refuses an invalid browser mode instead of forwarding it", () => {
     expect(() =>
       environmentFor("bot-1", {
-        COMPUTER_TOKEN: "s",
+        SUPERVISOR_TOKEN: KEY,
         COMPUTER_BROWSER_MODE: "fullscreen",
       }),
     ).toThrow(/headless or headed/);
@@ -35,7 +48,7 @@ describe("supervisor environment hardening", () => {
     for (const mode of ["headless", "headed"]) {
       expect(
         environmentFor("bot-1", {
-          COMPUTER_TOKEN: "s",
+          SUPERVISOR_TOKEN: KEY,
           COMPUTER_BROWSER_MODE: mode,
         }),
       ).toContain(`COMPUTER_BROWSER_MODE=${mode}`);

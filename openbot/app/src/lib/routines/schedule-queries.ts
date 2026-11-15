@@ -35,6 +35,10 @@ export type OwnedRunRecord = {
   finishedAt: string | null;
   error: string | null;
   source: "schedule" | "run_now" | "trigger";
+  /** The conversation the run posted into, when the person may still open it; null otherwise. */
+  channelId: string | null;
+  /** A firing the server did not run and recorded as such: shown as Missed, never as a choice. */
+  missed: boolean;
 };
 
 export function routineCalendarQueryOptions(window: {

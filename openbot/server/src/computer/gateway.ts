@@ -56,7 +56,11 @@ import {
   type PolicyDecision,
   policyInitiator,
 } from "./policy";
-import type { ComputerProvider, ComputerUpdate } from "./provider";
+import {
+  type ComputerProvider,
+  type ComputerUpdate,
+  tokenForBot,
+} from "./provider";
 import type {
   ActionResult,
   ClickInput,
@@ -123,7 +127,11 @@ export type ComputerGatewayOptions = {
   policy: () => ActionPolicy | undefined;
   /** True on a laptop, where browsing private network addresses is required. */
   allowPrivateHosts?: boolean;
-  /** The secret that agent-computer requires on each request. */
+  /**
+   * The secret that agent-computer requires on each request, when every computer takes the same one.
+   * A provider that gives each Bot a token of its own (`tokenFor`) is asked instead, and this is then
+   * never presented to any of its computers.
+   */
   token?: string;
   /** An injectable fetch implementation for focused gateway tests. */
   fetchImpl?: typeof fetch;
@@ -147,6 +155,11 @@ export type ComputerGatewayOptions = {
 export interface ComputerGateway {
   readonly provider: ComputerProvider;
   locate(botId: string): Promise<string>;
+  /**
+   * The token this Bot's computer takes, for a caller that has to hand it on (the live screen's
+   * socket carries it to the computer in its address). Rejects when the provider cannot say.
+   */
+  tokenFor(botId: string): Promise<string | undefined>;
   status(botId: string): Promise<ComputerStatus>;
   screenshot(botId: string): Promise<ScreenshotResult>;
   snapshot(botId: string): Promise<SnapshotResult>;
@@ -282,8 +295,12 @@ export function createComputerGateway(
   options: ComputerGatewayOptions,
 ): ComputerGateway {
   const { provider, auditStore } = options;
+  // A provider that gives each Bot a computer of its own gives it a token of its own, and then only
+  // that one is presented to it (client.ts).
+  const tokenForProvider = provider.tokenFor?.bind(provider);
   const transport = createComputerTransport({
     ...(options.token ? { token: options.token } : {}),
+    ...(tokenForProvider ? { tokenFor: tokenForProvider } : {}),
     ...(options.allowPrivateHosts !== undefined
       ? { allowPrivateHosts: options.allowPrivateHosts }
       : {}),
@@ -742,6 +759,7 @@ export function createComputerGateway(
   return {
     provider,
     locate,
+    tokenFor: (botId: string) => tokenForBot(provider, botId, options.token),
     screenshot,
     snapshot,
     read,
