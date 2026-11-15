@@ -7,7 +7,7 @@ from pathlib import Path
 
 import pytest
 
-from freeduet import report, report_guard
+from freeduet import members, report, report_guard
 from freeduet.transcript import RUNTIME_NOTE
 from helpers import post_run, run_body, standing, tool, types
 
@@ -462,3 +462,98 @@ def test_missing_report_lines_never_repeats_a_line():
     assert report_guard.missing_report_lines("\n".join(["Intro.", *lines[:5]]), block) == (lines[5], "\n")
     assert report_guard.missing_report_lines("\n".join(["Intro.", *lines]), block) is None
     assert report_guard.missing_report_lines("\n".join(["Intro.", *(f"- {line}" for line in lines)]), block) == (block, "\n\n")
+
+
+# ── Iris's first day and her proposal from knowledge (agents.yaml, "First day, and the first message") ─
+
+IRIS_STANDING = standing()  # the test team's Iris: "You are Iris, Chief of Staff of the test team."
+FIRST_DAY = (
+    f"{report_guard.FIRST_DAY_MARKER} they have just opened the app for the first time and have not "
+    "written anything yet, so the request below was sent for them.\n"
+    "The app has already welcomed them in your voice.\n\n"
+    "Ask them what their work is."
+)
+WORK = "I run a bakery with two shops and a delivery van."
+PROPOSAL = "Basil: plans the menu for both shops.\nBasil: keeps the van's delivery times.\nWhich one should we start with?"
+NAMES = frozenset({"Basil", "Leo"})
+
+
+def _user(content):
+    return {"id": "u", "role": "user", "content": content}
+
+
+def _called(call_id="c1"):
+    return [
+        {"id": "a", "role": "assistant", "content": "", "toolCalls": [
+            {"id": call_id, "type": "function", "function": {"name": "read_mail", "arguments": "{}"}}]},
+        {"id": "t", "role": "tool", "toolCallId": call_id, "content": "no mail"},
+    ]
+
+
+def test_the_first_day_question_gets_no_report():
+    applies = report_guard.applies
+    assert not applies([_user(FIRST_DAY)], "What is your work?", False, "freeduet", NAMES)
+    # A first-day turn that called a tool keeps the report (a mail-connected first day stays as it is).
+    assert applies([_user(FIRST_DAY), *_called()], "Here is your week.", True, "freeduet", NAMES)
+    assert applies([_user(FIRST_DAY), *_called()], "Here is your week.", False, "freeduet", NAMES)
+    # A report already in the reply is left alone, as before.
+    assert not applies([_user(FIRST_DAY)], f"What is your work?\n\n{REPORT}", False, "freeduet", NAMES)
+
+
+def test_a_proposal_from_knowledge_gets_no_report():
+    applies = report_guard.applies
+    assert not applies([_user(WORK)], PROPOSAL, False, "freeduet", NAMES)
+    # Iris only: another member's reply of the same shape keeps the guard.
+    assert applies([_user(WORK)], PROPOSAL, False, "chef", NAMES)
+    # Seven lines, or no question at the end, or no colleague's name, is not a proposal.
+    assert applies([_user(WORK)], PROPOSAL + "\nOne more line.", False, "freeduet", NAMES)
+    assert applies([_user(WORK)], PROPOSAL.replace("start with?", "start with."), False, "freeduet", NAMES)
+    assert applies([_user(WORK)], "Here is what I think of the menu.\nIt is good.\nWant more?", False, "freeduet", NAMES)
+
+
+def test_a_proposal_turn_that_used_a_tool_keeps_the_report():
+    applies = report_guard.applies
+    # A member created in this segment, or a tool called earlier in the turn: both are work.
+    assert applies([_user(WORK)], PROPOSAL, True, "freeduet", NAMES)
+    assert applies([_user(WORK), *_called()], PROPOSAL, False, "freeduet", NAMES)
+
+
+def test_an_ordinary_work_turn_keeps_the_report():
+    applies = report_guard.applies
+    draft = "Dear Sam,\nThe order ships on Monday.\nBest regards, Marco"
+    assert applies([_user("Write a short note to Sam about the delay.")], draft, False, "freeduet", NAMES)
+
+
+def test_colleague_names_come_from_the_team_file_without_iris():
+    names = report_guard.colleague_names(
+        {"freeduet": "You are Iris, Chief of Staff.", "creator": "You are Leo, the team's creator.", "x": "none"}
+    )
+    assert names == frozenset({"Leo"})
+    real = members.load_prompts(TESTS.parents[1] / "examples" / "freeduet" / "agents.yaml")
+    names = report_guard.colleague_names(real)
+    assert {"Leo", "Otto", "Portia", "Cam", "Mark"} <= names and "Iris" not in names
+
+
+def test_the_first_day_marker_is_the_first_sentence_of_the_shared_frame():
+    shared = (TESTS.parents[1] / "shared" / "first-day.ts").read_text(encoding="utf-8")
+    assert f'"{report_guard.FIRST_DAY_MARKER}' in shared
+
+
+def test_the_first_day_question_end_to_end_gets_no_report(client, fake_cli):
+    fake_cli.plan([{"text": "What is your work?"}])
+    fake_cli.followups([{"text": REPORT}])
+    events, _ = post_run(client, run_body([IRIS_STANDING, _user(FIRST_DAY)], bot_id="freeduet"))
+    assert content_of(events) == "What is your work?"
+    assert fake_cli.followup_count() == 0
+    [entry] = team_log_of(fake_cli)
+    assert entry["report_guard"] is None
+
+
+def test_a_proposal_from_knowledge_end_to_end_gets_no_report(client, fake_cli):
+    fake_cli.plan([{"text": PROPOSAL}])
+    fake_cli.followups([{"text": REPORT}])
+    events, _ = post_run(client, run_body([IRIS_STANDING, _user(WORK)], bot_id="freeduet"))
+    assert content_of(events) == PROPOSAL
+    assert fake_cli.followup_count() == 0
+    [entry] = team_log_of(fake_cli)
+    assert entry["report_guard"] is None

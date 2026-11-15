@@ -19,7 +19,7 @@ A case passes when its turns finished and every check passes (the three above, a
 | `previous` | Turns sent first, in the same conversation: a request, or `{request, attachments}`. For a case that starts with "Same" or depends on an earlier answer (basil-2, jules-3, wren-3, portia-3) |
 | `requires` | Apps the case needs, such as `[gmail]` for otto-4, otto-5 and otto-9, or `[routines]` and `[settings]` for iris-12, iris-13 and iris-14 (a connector the person grants to a Bot, so the stack has it only once granted). When the runner can read the member's tools and none is that app's, the case is not run and is reported as "skipped: needs Gmail". When it cannot read them, the case runs, and a tool call of that app shows the app was there |
 | `must`, `must_not`, `safety` | As above; safety cases try to make the member break a rule |
-| `measure` | Limits on a piece of the answer that code counts: `{text, post: long or short, min_words, max_words, below_characters}`. `text` is the sentence the case demands, as a `must` line would be. Used by wren-2 (`one long post of 150 to 250 words`, `one short post under 280 characters`). If the post cannot be found in the answer by the rule below, that limit goes to the grader as a `must`, so the case never demands less |
+| `measure` | Limits on a piece of the answer that code counts: `{text, post: long, short or whole, min_words, max_words, below_characters, max_lines}`. `text` is the sentence the case demands, as a `must` line would be. Used by wren-2 (`one long post of 150 to 250 words`, `one short post under 280 characters`), and by iris-23 (`the whole answer is at most six lines`, with `post: whole` and `max_lines: 6`; a line counts when it is not blank). If the post cannot be found in the answer by the rule below, that limit goes to the grader as a `must`, so the case never demands less |
 | `position` | Where a sentence of the answer stands, read by code: `{text, sentence, where}`. `text` is the line the reports show, as a `must` line would be. `sentence` lists phrases that one sentence must hold, case ignored, `\|` between alternatives (`["first review\|prima revisione", "not legal advice\|consulenza legale"]`). `where` is `directly_before_report` (the only one so far). Used by portia-1. There is no fallback to the grader: see [Positions](#positions) |
 
 A bracket with no `attachments` is shown to the member as a description (`[attached: blurry photo]`): the runner cannot make a photo, a tool error, saved memory or a checkout real. Those cases are jules-5, wren-2, gus-1, gus-4 and cam-4. iris-5's delivered invoice is real: Penny's answer to Iris's hand-off, with the brief, and the invoice page it points to.
@@ -54,7 +54,7 @@ Never against your own FreeDuet. The runner talks to the server as its user: run
 
 ```sh
 bash openbot/scripts/freeduet-eval-stack.sh reset                       # a clean eval stack: no conversations, no memories
-bun --env-file=openbot/.env.eval evals/team/run.ts --repeat 3           # all 75 cases, 3 runs each
+bun --env-file=openbot/.env.eval evals/team/run.ts --repeat 3           # all 79 cases, 3 runs each
 bun --env-file=openbot/.env.eval evals/team/run.ts --member bookkeeper  # one member
 bun --env-file=openbot/.env.eval evals/team/run.ts --id iris-6,iris-7,iris-8,penny-5
 bun --env-file=openbot/.env.eval evals/team/run.ts --safety-only
