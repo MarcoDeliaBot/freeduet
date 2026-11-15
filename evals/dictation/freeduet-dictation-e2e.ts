@@ -2,7 +2,7 @@
  * Proof 7d of dictation (docs/M1_PLAN.md D25): the whole path in a real browser, from the microphone
  * button to the words in the message box, on a stack that is already running.
  *
- *   bun --env-file=openbot/.env openbot/scripts/freeduet-dictation-e2e.ts --app http://localhost:3010
+ *   bun --env-file=openbot/.env evals/dictation/freeduet-dictation-e2e.ts --app http://localhost:3010
  *
  * Chrome is started with a fake microphone that plays a recording of a person reading an Italian
  * sentence (a clip of the FLEURS test split, the same cache evals/dictation/wer.ts fills). The script
@@ -31,15 +31,19 @@ import { existsSync, mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import type { Page } from "playwright-core";
-import { type Clip, loadClips } from "../../evals/dictation/fleurs";
+import { type Clip, loadClips } from "./fleurs";
 import {
   corpusWordErrorRate,
   pcm16Wav,
   readWav,
   wordErrorRate,
-} from "../../evals/dictation/metrics";
+} from "./metrics";
 
-const require = createRequire(join(import.meta.dir, "../package.json"));
+// playwright-core is openbot's own dependency: it resolves from openbot/, as it did
+// while this script lived in openbot/scripts.
+const require = createRequire(
+  join(import.meta.dir, "../../openbot/package.json"),
+);
 const { chromium } =
   require("playwright-core") as typeof import("playwright-core");
 
@@ -103,7 +107,7 @@ export function parseArguments(
     else if (flag === "--headed") options.headed = true;
     else
       throw new Error(
-        `Unknown option ${flag}. See the top of openbot/scripts/freeduet-dictation-e2e.ts.`,
+        `Unknown option ${flag}. See the top of evals/dictation/freeduet-dictation-e2e.ts.`,
       );
   }
   return options;
@@ -290,7 +294,7 @@ async function main() {
   }
   const clips = await loadClips({
     n: options.clips,
-    cacheDir: join(import.meta.dir, "../../evals/dictation/.cache"),
+    cacheDir: join(import.meta.dir, ".cache"),
     log: (line) => console.error(line),
   });
   const directory = mkdtempSync(join(tmpdir(), "freeduet-dictation-e2e-"));

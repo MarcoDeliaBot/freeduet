@@ -429,9 +429,10 @@ jobs:
       # The team eval runner, its checks and graders, offline: fake mode and scripted servers only.
       - run: bun test ../evals/team/run.test.ts ../evals/team/engine.test.ts ../evals/team/live-tools.test.ts ../evals/team/dates.test.ts
       - run: bun ../evals/team/run.ts --fake
-      # The dictation proofs' own measuring tools (word error rate, the download of a test set, the
-      # report), on made-up data and a fake service. The proofs themselves run on the maintainer's computer.
-      - run: bun test ../evals/dictation/metrics.test.ts ../evals/dictation/fleurs.test.ts ../evals/dictation/wer.test.ts
+      # The dictation proofs' own tools (word error rate, the download of a test set, the report, and the
+      # browser script's argument and cookie checks), on made-up data and a fake service. The proofs
+      # themselves run on the maintainer's computer.
+      - run: bun test ../evals/dictation/metrics.test.ts ../evals/dictation/fleurs.test.ts ../evals/dictation/wer.test.ts ../evals/dictation/freeduet-dictation-e2e.test.ts
 
   # FreeDuet: agent-freeduet, the service that runs every member on the person's own Claude Code
   # login. Offline: a fake `claude` replays fixtures, so no login, no key and no network.
@@ -659,6 +660,74 @@ jobs:
             --volume "$GITHUB_WORKSPACE:/repo:ro" \
             --volume "$RUNNER_TEMP/clean-machine:/check:ro" \
             "ubuntu:$UBUNTU" bash /check/check.sh
+
+  # The desktop app's Rust crate (openbot/desktop/src-tauri), the app the future installer is to reuse. No job compiled
+  # it before this one. It installs the Linux packages Tauri 2 lists for Debian and Ubuntu
+  # (https://v2.tauri.app/guides/prerequisites/) and Rust 1.88.0: the packages in Cargo.lock declare that they need at
+  # least 1.88.0 (darling 0.23.0, icu_* 2.3.0, plist 1.10.0), and Cargo.toml's rust-version of 1.77 does not allow that.
+  # Changing the declaration is the maintainer's decision. `--locked` builds the lock as committed. The frontend is
+  # not built here: without the custom-protocol feature, as in cargo check and cargo test, generate_context! reads
+  # devUrl and does not need frontendDist.
+  # What it proves: the crate builds and its tests run on Linux. What it does not prove: a Windows or macOS build,
+  # packaging, or a first start of the app (docs/design/installer.md, section 11).
+  #
+  # The same gate as clean-start: on main, and on pull requests labelled `full-ci`. `verify` requires it where it
+  # runs, and treats a skip as a pass on other pull requests.
+  desktop-crate:
+    name: desktop crate (Rust, Linux)
+    runs-on: ubuntu-latest
+    if: >-
+      github.event_name != 'pull_request' ||
+      contains(github.event.pull_request.labels.*.name, 'full-ci')
+    timeout-minutes: 60
+    env:
+      CARGO_INCREMENTAL: "0"
+    defaults:
+      run:
+        working-directory: ${{ github.workspace }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      # Tauri's build and the test binaries take several gigabytes, as the image builds do.
+      - name: Make room, as the image builds do
+        run: |
+          set -euo pipefail
+          df -h /
+          sudo rm -rf /usr/local/lib/android /usr/share/dotnet
+          df -h /
+      - name: Tauri 2's Linux packages
+        run: |
+          set -euo pipefail
+          sudo apt-get update
+          sudo apt-get install -y libwebkit2gtk-4.1-dev build-essential curl wget file libxdo-dev libssl-dev libayatana-appindicator3-dev librsvg2-dev
+      - name: Rust 1.88.0
+        run: |
+          set -euo pipefail
+          rustup toolchain install 1.88.0 --profile minimal
+          echo "RUSTUP_TOOLCHAIN=1.88.0" >> "$GITHUB_ENV"
+      # The credential-lock test starts `bun` on this runner, as the server does, so the job gets
+      # the same pinned setup as the other jobs.
+      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
+        with:
+          bun-version: 1.4.3
+      - name: Cargo cache
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            openbot/desktop/src-tauri/target
+          key: desktop-crate-linux-rust-1.88.0-${{ hashFiles('openbot/desktop/src-tauri/Cargo.lock') }}
+      - name: cargo check --locked
+        working-directory: ${{ github.workspace }}/openbot/desktop/src-tauri
+        run: |
+          set -euo pipefail
+          rustc --version
+          cargo check --locked
+      - name: cargo test --locked
+        working-directory: ${{ github.workspace }}/openbot/desktop/src-tauri
+        run: cargo test --locked
 
   python-harness:
     name: python harness regressions
@@ -998,7 +1067,7 @@ jobs:
     name: verify
     runs-on: ubuntu-latest
     if: always()
-    needs: [static, deployables, mobile, computer-browser, chart, test, startup, freeduet-package, agent-freeduet, python-harness, build, migrations, image, component-dockerfiles, clean-start, installer-clean-machine]
+    needs: [static, deployables, mobile, computer-browser, chart, test, startup, freeduet-package, agent-freeduet, python-harness, build, migrations, image, component-dockerfiles, clean-start, installer-clean-machine, desktop-crate]
     # Nothing is checked out here, so the workflow's default `openbot` folder does not exist.
     defaults:
       run:
