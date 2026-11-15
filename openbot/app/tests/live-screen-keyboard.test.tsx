@@ -49,8 +49,19 @@ afterAll(() => {
 });
 
 async function liveSocket(): Promise<SocketDouble> {
-  render(<LiveScreen computerId="keyboard-test" driving />);
+  const { container } = render(
+    <LiveScreen computerId="keyboard-test" driving />,
+  );
   await waitFor(() => expect(SocketDouble.latest).toBeDefined());
+  // The socket exists before the screen is ready. The socket opens in a microtask, and the keyboard
+  // listeners are attached by an effect that runs only after `connected` has been committed, so a
+  // key sent on the socket's existence alone races React's scheduler (a loaded runner loses it).
+  // Wait for the commit the listeners depend on, the screen reporting itself connected.
+  await waitFor(
+    () =>
+      expect(container.querySelector('[data-connected="true"]')).not.toBeNull(),
+    { timeout: 5_000 },
+  );
   return SocketDouble.latest as SocketDouble;
 }
 
