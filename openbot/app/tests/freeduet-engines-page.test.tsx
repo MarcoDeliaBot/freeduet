@@ -63,7 +63,7 @@ function serve(reading: EnginesReading) {
   answer = { status: 200, body: reading };
 }
 
-test("each engine is one row: its name, and one sentence for its state", async () => {
+test("each engine is one card: its name, one word for its state, and one line of note", async () => {
   serve({
     reason: null,
     engines: [
@@ -97,9 +97,130 @@ test("each engine is one row: its name, and one sentence for its state", async (
   expect(
     view.getByText("Signed out: sign in again with the engine's own login"),
   ).toBeTruthy();
+  // Each card's word for its state sits above its name.
+  expect(view.getByText("Limited")).toBeTruthy();
+  expect(view.getByText("Signed out")).toBeTruthy();
 });
 
-test("nothing in a row can be clicked or changed", async () => {
+test("every state the server can name has its own word, and no word is invented", async () => {
+  const states = [
+    ["ready", "Working"],
+    ["degraded", "Working"],
+    ["checking", "Checking"],
+    ["limited", "Limited"],
+    ["out_of_credit", "Out of credit"],
+    ["not_answering", "Not answering"],
+    ["signed_out", "Signed out"],
+    ["refused", "Locked"],
+    ["unknown", "Not known"],
+  ] as const;
+  serve({
+    reason: null,
+    engines: states.map(([state], index) => ({
+      id: `engine-${index}`,
+      name: `Engine ${state}`,
+      kind: "cli" as const,
+      state,
+      until: null,
+      refusal: state === "refused" ? "Refused for a reason." : null,
+    })),
+  });
+  const view = draw();
+  await waitFor(() => view.getByText("Engine ready"));
+  const cards = Array.from(
+    view.container.querySelectorAll('[data-slot="engine"]'),
+  );
+  expect(cards).toHaveLength(states.length);
+  states.forEach(([, word], index) => {
+    const card = cards[index] as HTMLElement;
+    expect(card.textContent?.startsWith(word)).toBe(true);
+  });
+  // Off and Not built yet have no state behind them, so the page never shows them.
+  expect(view.queryByText("Off")).toBeNull();
+  expect(view.queryByText("Not built yet")).toBeNull();
+});
+
+test("the page has one plain title and one sentence under it, and each engine name is a heading", async () => {
+  serve({
+    reason: null,
+    engines: [
+      {
+        id: "claude",
+        name: "Claude Code",
+        kind: "cli",
+        state: "ready",
+        until: null,
+        refusal: null,
+      },
+    ],
+  });
+  const view = draw();
+  await waitFor(() => view.getByText("Claude Code"));
+  expect(view.getByRole("heading", { level: 1, name: "Engines" })).toBeTruthy();
+  expect(
+    view.getByText(
+      "The engine is what does the thinking for each member. Your own sign-ins always answer first; anything paid stays off until you say so.",
+    ),
+  ).toBeTruthy();
+  expect(
+    view.getByRole("heading", { level: 3, name: "Claude Code" }),
+  ).toBeTruthy();
+});
+
+test("Keys is words only, and Spending shows no amount", async () => {
+  serve({
+    reason: null,
+    engines: [
+      {
+        id: "claude",
+        name: "Claude Code",
+        kind: "cli",
+        state: "ready",
+        until: null,
+        refusal: null,
+      },
+    ],
+  });
+  const view = draw();
+  await waitFor(() => view.getByText("Claude Code"));
+  expect(view.getByRole("heading", { level: 2, name: "Keys" })).toBeTruthy();
+  expect(
+    view.getByText("Adding a key from this page is not available yet."),
+  ).toBeTruthy();
+  expect(view.container.querySelector("input")).toBeNull();
+  expect(view.container.querySelector("button")).toBeNull();
+  expect(
+    view.getByRole("heading", { level: 2, name: "Spending" }),
+  ).toBeTruthy();
+  expect(
+    view.getByText(
+      "Spending is not shown on this page yet. A paid engine runs only if this installation allows it.",
+    ),
+  ).toBeTruthy();
+  expect(view.container.textContent ?? "").not.toMatch(/\d+[.,]\d{2}|EUR|€|\$/);
+});
+
+test("the answering-now column is not drawn, because the server does not send it", async () => {
+  // Guard of the unchanged route: no field for it is read, so nothing says it.
+  serve({
+    reason: null,
+    engines: [
+      {
+        id: "claude",
+        name: "Claude Code",
+        kind: "cli",
+        state: "ready",
+        until: null,
+        refusal: null,
+      },
+    ],
+  });
+  const view = draw();
+  await waitFor(() => view.getByText("Claude Code"));
+  expect(view.queryByText(/answering now/i)).toBeNull();
+});
+
+test("nothing in a card can be clicked or changed", async () => {
   serve({
     reason: null,
     engines: [
@@ -115,7 +236,7 @@ test("nothing in a row can be clicked or changed", async () => {
   });
   const view = draw();
   const row = (await waitFor(() => view.getByText("Claude Code"))).closest(
-    '[data-slot="item"]',
+    '[data-slot="engine"]',
   );
   expect(row).not.toBeNull();
   expect(
@@ -260,7 +381,7 @@ test("a gateway row and a refused row have nothing clickable either", async () =
   const view = draw();
   for (const name of ["gw", "my-gateway"]) {
     const row = (await waitFor(() => view.getByText(name))).closest(
-      '[data-slot="item"]',
+      '[data-slot="engine"]',
     );
     expect(row).not.toBeNull();
     expect(
