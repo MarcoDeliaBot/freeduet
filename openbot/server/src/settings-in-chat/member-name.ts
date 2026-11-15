@@ -8,24 +8,32 @@
  *
  * The rules, in the order they are checked:
  * 1. Normalised (NFC) and trimmed; 1 to 40 characters after that.
- * 2. Letters, combining marks, digits, and single spaces, apostrophes, full stops and hyphens between
- *    them. Nothing else: no control or invisible characters, no markup or punctuation of any kind, no
- *    emoji. It starts with a letter.
- * 3. Not mixed between Latin, Cyrillic and Greek letters: the usual way to write a lookalike.
- * 4. Not a word the app or an approval speaks in (`RESERVED_WORDS`).
- * 5. Not the name or the alias of another member the person sees, compared without case or accents, and
- *    not "Iris" for anybody but Iris.
+ * 2. Nothing that Unicode ignores when it draws (`INVISIBLE`): the Hangul fillers, which are letters to
+ *    Unicode and blank to the eye, joiners, variation selectors, the soft hyphen, bidirectional and tag
+ *    characters. A name with one reads exactly like the name without it.
+ * 3. Letters, combining marks, digits, and single spaces, apostrophes, full stops and hyphens between
+ *    them. Nothing else: no control characters, no markup or punctuation of any kind, no emoji. It
+ *    starts with a letter.
+ * 4. Not mixed between Latin, Cyrillic and Greek letters: the usual way to write a lookalike.
+ * 5. Not a word the app or an approval speaks in (`RESERVED_WORDS`, plurals included), and not such a
+ *    word with a space, an apostrophe, a full stop or a hyphen cut into it.
+ * 6. Not the name or the alias of another member the person sees, compared without case, accents,
+ *    spaces, apostrophes, full stops or hyphens (`foldName`), and not "Iris" for anybody but Iris.
  *
- * LIMIT: a name written wholly in another script that looks like a Latin one is not caught. The person
- * is asked on a card that shows the exact value; the check stops accidents and a crude imitation, not a
- * determined one.
+ * LIMIT: a name written wholly in another script that looks like a Latin one is not caught, and neither
+ * is a digit or another lookalike in place of a letter ("Ott0"). The person is asked on a card that shows
+ * the exact value, and the places where they decide an action show the member's own name beside it; the
+ * check stops accidents and a crude imitation, not a determined one.
  */
 
 import { MEMBER_NAME_MAX } from "@openbot/shared/setting-change";
 
 export { MEMBER_NAME_MAX };
 
-/** Words a name may not contain, whole, in any case: what the app and its approvals say in their own voice. */
+/**
+ * Words a name may not contain, whole, in any case: what the app and its approvals say in their own
+ * voice, and the plurals of the nouns among them ("Approvals" passes for the app as well as "Approval").
+ */
 export const RESERVED_WORDS: ReadonlySet<string> = new Set([
   "system",
   "admin",
@@ -63,18 +71,55 @@ export const RESERVED_WORDS: ReadonlySet<string> = new Set([
   "me",
   "user",
   "person",
+  // The plurals of the nouns above.
+  "systems",
+  "admins",
+  "administrators",
+  "roots",
+  "securities",
+  "servers",
+  "openbots",
+  "freeduets",
+  "approvals",
+  "undos",
+  "errors",
+  "warnings",
+  "alerts",
+  "notices",
+  "notes",
+  "cards",
+  "routines",
+  "users",
+  "persons",
+  "people",
 ]);
 
 const ALLOWED =
   /^[\p{L}][\p{L}\p{M}\p{N}]*(?:[ '.-][\p{L}\p{M}\p{N}]+)*[.']?$/u;
 
-/** The form two names are compared in: composed, lower case, without accents. */
-export function foldName(value: string): string {
+/**
+ * A character Unicode says to ignore when it draws a string (`Default_Ignorable_Code_Point`): the Hangul
+ * fillers (letters to Unicode, blank to the eye), the combining grapheme joiner, joiners and variation
+ * selectors, the soft hyphen, the bidirectional controls and the tag characters. "Otto" and "Otto" +
+ * U+3164 are two strings and one picture, and an approval card draws only the picture.
+ */
+const INVISIBLE = /\p{Default_Ignorable_Code_Point}/u;
+
+/** Composed, lower case, without accents or characters that draw nothing. The separators stay, so words can still be told apart. */
+function plain(value: string): string {
   return value
     .normalize("NFD")
-    .replace(/\p{M}/gu, "")
+    .replace(/\p{M}|\p{Default_Ignorable_Code_Point}/gu, "")
     .normalize("NFC")
     .toLowerCase();
+}
+
+/**
+ * The form two names are compared in: `plain`, and without the spaces, apostrophes, full stops and
+ * hyphens that may sit between the letters, so "Otto.", "O t t o" and "Ot-to" all fold to "otto".
+ */
+export function foldName(value: string): string {
+  return plain(value).replace(/[ '.-]/g, "");
 }
 
 function scriptsOf(value: string): Set<string> {
@@ -110,6 +155,7 @@ export function isWellFormedName(value: unknown): value is string {
     trimmed === value &&
     Array.from(trimmed).length >= 1 &&
     Array.from(trimmed).length <= MEMBER_NAME_MAX &&
+    !INVISIBLE.test(trimmed) &&
     ALLOWED.test(trimmed)
   );
 }
@@ -123,6 +169,8 @@ export function checkMemberName(raw: unknown, context: NameContext): NameCheck {
   const length = Array.from(value).length;
   if (length < 1 || length > MEMBER_NAME_MAX)
     return refuse(`A name is 1 to ${MEMBER_NAME_MAX} characters.`);
+  if (INVISIBLE.test(value))
+    return refuse("A name cannot contain invisible characters.");
   if (!ALLOWED.test(value))
     return refuse(
       "A name is letters, numbers and single spaces, apostrophes, full stops or hyphens, and starts with a letter.",
@@ -130,7 +178,14 @@ export function checkMemberName(raw: unknown, context: NameContext): NameCheck {
   if (scriptsOf(value).size > 1)
     return refuse("A name cannot mix Latin, Cyrillic and Greek letters.");
   const folded = foldName(value);
-  if (folded.split(/[ '.-]+/).some((word) => RESERVED_WORDS.has(word)))
+  // A reserved word whole among other words, or the whole name with its separators cut out of it:
+  // "Max Approval" and "Appr.oval".
+  if (
+    plain(value)
+      .split(/[ '.-]+/)
+      .some((word) => RESERVED_WORDS.has(word)) ||
+    RESERVED_WORDS.has(folded)
+  )
     return refuse(
       "That name could pass for a message from the app, so it is not allowed.",
     );
