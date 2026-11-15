@@ -84,6 +84,71 @@ export function addressesTypedIn(text: string): Set<string> {
   return found;
 }
 
+/**
+ * The person's latest message of the conversation when it is their own typed words, or null: the one
+ * that started this turn, a plain string, not a hand-off's envelope, not from the microphone and
+ * short enough not to be a paste. The single reading of "what the person typed" that D27 and the
+ * mailbox changes (docs/design/mail-organise.md) share.
+ */
+export function latestTypedText(
+  all: readonly ConversationMessage[] | undefined,
+): string | null {
+  const messages = all ?? [];
+  let latest: ConversationMessage | undefined;
+  for (let index = messages.length - 1; index >= 0; index -= 1) {
+    if (messages[index]?.role === "user") {
+      latest = messages[index];
+      break;
+    }
+  }
+  if (!latest || typeof latest.content !== "string") return null;
+  if (latest.id?.startsWith(HANDOFF_MESSAGE_ID_PREFIX)) return null;
+  // Words that came from the microphone are not written words (D7, D8): the same card a hop gets.
+  if (isVoiceMessageId(latest.id)) return null;
+  if (latest.content.length > MAX_REQUEST_CHARS) return null;
+  return latest.content;
+}
+
+/**
+ * What the person typed, for a change to their mailbox, or null when none can be traced: the same
+ * run and message conditions as {@link recipientsTypedByPerson}, without the recipients.
+ */
+export function typedRequestByPerson(input: {
+  messages: readonly ConversationMessage[] | undefined;
+  runInitiator: AuditInitiator | undefined;
+  callInitiator: AuditInitiator | undefined;
+}): string | null {
+  if (input.runInitiator !== undefined) return null;
+  if (
+    input.callInitiator !== undefined &&
+    input.callInitiator.kind !== "person"
+  )
+    return null;
+  return latestTypedText(input.messages);
+}
+
+/** The hand-off case of {@link typedRequestByPerson}: the one hop from the person's own live turn. */
+export function typedRequestInHandedRequest(input: {
+  request: ConversationMessage | null;
+  runInitiator: AuditInitiator | undefined;
+  callInitiator: AuditInitiator | undefined;
+}): string | null {
+  const run = input.runInitiator;
+  if (run?.kind !== "handoff" || run.origin?.kind !== "person") return null;
+  const call = input.callInitiator;
+  if (
+    call !== undefined &&
+    !(
+      call.kind === "handoff" &&
+      call.id === run.id &&
+      call.origin?.kind === "person"
+    )
+  )
+    return null;
+  if (input.request === null) return null;
+  return latestTypedText([input.request]);
+}
+
 export function recipientsTypedByPerson(input: TypedRequestInput): boolean {
   // The run: the person's own live chat turn, and a call that is not a routine's or a Bot's.
   if (input.runInitiator !== undefined) return false;
@@ -104,21 +169,9 @@ export function recipientsTypedByPerson(input: TypedRequestInput): boolean {
   }
 
   // The message: the person's latest, whole and typed.
-  const messages = input.messages ?? [];
-  let latest: ConversationMessage | undefined;
-  for (let index = messages.length - 1; index >= 0; index -= 1) {
-    if (messages[index]?.role === "user") {
-      latest = messages[index];
-      break;
-    }
-  }
-  if (!latest || typeof latest.content !== "string") return false;
-  if (latest.id?.startsWith(HANDOFF_MESSAGE_ID_PREFIX)) return false;
-  // Words that came from the microphone are not written words (D7, D8): the same card a hop gets.
-  if (isVoiceMessageId(latest.id)) return false;
-  if (latest.content.length > MAX_REQUEST_CHARS) return false;
-
-  const typed = addressesTypedIn(latest.content);
+  const text = latestTypedText(input.messages);
+  if (text === null) return false;
+  const typed = addressesTypedIn(text);
   return wanted.every((address) => typed.has(address));
 }
 

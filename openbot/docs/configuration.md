@@ -903,7 +903,7 @@ through either, asking the OAuth connection first.
 
 Both entries offer the same ten tools with the same arguments and answers: `gmail_search_messages`,
 `gmail_read_message`, `calendar_list_events` and `gmail_list_labels` (reads), and six writes, so each
-waits for the person's approval, apart from the one case below: `gmail_send_reply` and
+waits for the person's approval, apart from the cases below: `gmail_send_reply` and
 `gmail_send_message` send mail, and `gmail_create_label`, `gmail_label_messages`,
 `gmail_archive_messages` and `gmail_mark_messages` organise the mailbox (see below). Nothing can delete,
 trash, report as spam, forward or move a message to another folder, and a reply goes only to people
@@ -911,9 +911,14 @@ already on the message it answers.
 
 The four that organise a mailbox create a label, add or remove labels on messages named by id (at most
 100 a call), take messages out of the Inbox (they stay in All Mail with their labels) and mark them read
-or unread. Each is a write that sends nothing: in the person's own turn it shows a card, whatever "ask before
-changes" says and whatever the reviewer would have said, unless the person pressed "Always allow" for
-that tool (Full access treats it as any other write that is not a payment). The card says in
+or unread. Each is a write that sends nothing. When the person's own typed message of this live chat turn
+asked for that change (directly with the member, or one hop through Iris), it runs with no card; the auto-review
+model is always asked for these four, whatever the person's auto-review setting, and is shown only those typed
+words, never an email, a tool's answer or the member's own text. In every other case it shows a card: the
+request did not ask for it, the idea came from an email, a page or a tool, or the turn was spoken. The model can
+be wrong in both directions, the changes are reversible in Gmail, and at most 100 messages go in a call. Where the
+person pressed "Always allow" for that tool there is no card for it (Full access treats it as any other write
+that is not a payment). The card says in
 words what will happen and to how many messages, and lists who each is from and what it is about, read
 from the mailbox by the server and not from anything the Bot said. A routine, a check-in, a remote session and a hand-off
 that started in one always ask, and "Always allow" does not lift that; an approval in the inbox that names nothing never gives a Bot one of

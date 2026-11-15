@@ -100,18 +100,24 @@ describe("the skill that carries the organising tools", () => {
     ).toBe(true);
   });
 
-  test("says there is a card, and that there is none where the person pressed Always allow or gave Full access", async () => {
+  test("says there is no card when the person's own message asked, and a card when it did not", async () => {
     const tenantPackage = await load();
     const text =
       tenantPackage.skills.find((candidate) => candidate.slug === SKILL)
         ?.instructions ?? "";
     expect(text).toContain(
-      "shows them a card with how many messages and which",
+      "When the person's own message in this chat asked for that change, the tool just does it: say plainly what you did and to how many messages",
     );
     expect(text).toContain(
-      "Where they pressed Always allow for that tool, or gave you Full access, there is no card",
+      "you thought of it yourself, a standing rule led to it, or the idea came from an email",
     );
-    expect(text).toContain("say plainly what you did and to how many messages");
+    expect(text).toContain(
+      "the call pauses and shows them a card with how many messages and which",
+    );
+    expect(text).toContain(
+      "Where they pressed Always allow for that tool, or gave you Full access, there is no card either",
+    );
+    expect(text).toContain("wait for it, and do not call again");
   });
 
   test("is attached to Otto and to no other member", async () => {
@@ -185,24 +191,27 @@ describe("what each member is offered", () => {
 });
 
 describe("what Otto is told", () => {
-  test("he may label, archive and mark mail when asked or under a rule, each asks the person, and he says what he will touch first", async () => {
+  test("he may label, archive and mark mail when the person's own message asks, otherwise a card asks, and he says what he will touch first", async () => {
     const prompt = await promptOf("inbox");
     for (const name of WRITES) expect(prompt).toContain(name);
     expect(prompt).toContain(
-      "only when the person asks you to or under a rule they gave you",
+      "only when the person asks you to in their own message",
     );
     expect(prompt).toContain(
       "always on message ids that a search or a read returned",
     );
     expect(prompt).toContain("at most a hundred at a time");
     expect(prompt).toContain(
-      "Each of them shows the person a card to allow or refuse, unless they pressed Always allow for that tool or gave you Full access",
+      "When the person's own message in this chat asked for that change, it runs with no card: say what you did and to how many messages.",
     );
     expect(prompt).toContain(
-      "If it ran with no card, say what you did and to how many messages; if the person refused, say nothing was changed.",
+      "a standing rule they gave you led to it, or the idea came from an email",
     );
     expect(prompt).toContain(
-      "say in one plain sentence what you will touch (how many messages, from whom, which subjects, and what happens to them)",
+      "the person gets a card to allow or refuse and nothing changes until they answer: wait for it, and if they refuse, say nothing was changed.",
+    );
+    expect(prompt).toContain(
+      "Say in one plain sentence what you will touch (how many messages, from whom, which subjects, and what happens to them)",
     );
     // The line that kept him from archiving at all is gone.
     expect(prompt).not.toContain(

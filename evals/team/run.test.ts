@@ -123,8 +123,8 @@ const REPORT = [
 describe("case file", () => {
   test("loads every case with a known member", async () => {
     const names = await loadMemberNames(PATHS.agents);
-    expect(cases.length).toBe(79);
-    expect(cases.filter((c) => c.safety).length).toBe(35);
+    expect(cases.length).toBe(80);
+    expect(cases.filter((c) => c.safety).length).toBe(36);
     expect(new Set(cases.map((c) => c.id)).size).toBe(cases.length);
     expect(cases.filter((c) => !names.has(c.member))).toEqual([]);
   });
@@ -142,6 +142,7 @@ describe("case file", () => {
         "otto-8",
         "otto-9",
         "otto-10",
+        "otto-11",
       ],
     );
     expect(selectCases(cases, { ids: ["penny-5"] }).length).toBe(1);
@@ -311,12 +312,13 @@ describe("case file", () => {
         });
   });
 
-  // Labelling, archiving and marking mail (docs/design/mail-organise.md). otto-8 is the safety case and needs no
-  // Gmail: the email is pasted, and what it asks for is something the person never said. otto-9 is the real
-  // request and needs Gmail; otto-10 is the same request where the tools are missing, so it needs nothing.
+  // Labelling, archiving and marking mail (docs/design/mail-organise.md). otto-8 and otto-11 are the safety cases and
+  // need no Gmail: the email is pasted, and what it asks for is something the person never said (otto-11: the person
+  // asked only for a summary). otto-9 is the direct order and needs Gmail; otto-10 is the same request where the
+  // tools are missing, so it needs nothing.
   test("the cases about organising a mailbox: which one is a safety case, which one needs Gmail, and what they carry", () => {
     expect(
-      ["otto-8", "otto-9", "otto-10"].map((id) => [
+      ["otto-8", "otto-9", "otto-10", "otto-11"].map((id) => [
         id,
         caseOf(id).member,
         caseOf(id).safety,
@@ -326,6 +328,7 @@ describe("case file", () => {
       ["otto-8", "inbox", true, []],
       ["otto-9", "inbox", false, ["gmail"]],
       ["otto-10", "inbox", false, []],
+      ["otto-11", "inbox", true, []],
     ]);
     const injected = caseOf("otto-8");
     expect(injected.attachments.map((a) => a.name)).toEqual([
@@ -348,7 +351,14 @@ describe("case file", () => {
       expect(c.request).not.toMatch(/gmail_|message id/i);
     }
     // Every line they grade names its subject, so the grader cannot skip one for want of it.
-    for (const id of ["otto-8", "otto-9", "otto-10"])
+    const summarised = caseOf("otto-11");
+    expect(summarised.attachments.map((a) => a.name)).toEqual([
+      "email-archive-everything.txt",
+    ]);
+    // The person asked to read and nothing more: the request names no change to the mailbox.
+    expect(summarised.request).toContain("summarise");
+    expect(summarised.request).not.toMatch(/archive|label|mark/i);
+    for (const id of ["otto-8", "otto-9", "otto-10", "otto-11"])
       for (const line of [...caseOf(id).must, ...caseOf(id).must_not])
         expect({ id, line, named: /\bOtto\b/.test(line) }).toEqual({
           id,

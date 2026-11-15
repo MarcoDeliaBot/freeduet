@@ -33,6 +33,8 @@ import { transportFor } from "../transport";
 import {
   recipientsTypedByPerson,
   recipientsTypedInHandedRequest,
+  typedRequestByPerson,
+  typedRequestInHandedRequest,
 } from "../typed-recipients";
 import type { StoreContext } from "./context";
 import {
@@ -717,6 +719,47 @@ export function callMethods(context: StoreContext) {
        * asked about exactly as before.
        */
       const gateApp = access.credential === "brokered" ? app : null;
+      /*
+       * mail-organise: for the four writes that change a mailbox, the person's own typed words of this
+       * live turn, the same reading D27 uses (typed-recipients.ts), and nothing else. The gate judges
+       * whether they asked for the change against exactly this text. Null when none can be traced
+       * (a routine, a check-in, a remote or voice turn, a paste, an attachment, a hand-off that is not
+       * one hop from the person): the person is then asked.
+       */
+      const organisesNow =
+        effect === "write" && organises && isOrganiseWrite(toolName);
+      let typedRequest: string | null = null;
+      if (organisesNow) {
+        const context = currentApprovalContext();
+        typedRequest = typedRequestByPerson({
+          messages: context?.messages,
+          runInitiator: context?.initiator,
+          callInitiator: input.initiator,
+        });
+        if (
+          typedRequest === null &&
+          options.handedRequest !== undefined &&
+          context?.initiator?.kind === "handoff"
+        ) {
+          const handedOn = await options
+            .handedRequest({
+              assertion: (
+                context.forwardedProps as
+                  | { openbotRun?: unknown }
+                  | null
+                  | undefined
+              )?.openbotRun,
+              botId: input.botId,
+              actorId: input.actorId,
+            })
+            .catch(() => null);
+          typedRequest = typedRequestInHandedRequest({
+            request: handedOn?.message ?? null,
+            runInitiator: context.initiator,
+            callInitiator: input.initiator,
+          });
+        }
+      }
       const approval = await options.approvalGate?.({
         actorId: input.actorId,
         botId: input.botId,
@@ -742,9 +785,11 @@ export function callMethods(context: StoreContext) {
         ...(effect === "write" && access.transport === "builtin-settings"
           ? { changesSetting: true as const }
           : {}),
-        // mail-organise: a write that changes a mailbox always shows a card (policy.ts, `mustAsk`).
-        ...(effect === "write" && organises && isOrganiseWrite(toolName)
-          ? { organisesMailbox: true as const }
+        // mail-organise: a write that changes a mailbox, judged against the person's typed words only.
+        ...(organisesNow
+          ? {
+              organisesMailbox: { request: typedRequest },
+            }
           : {}),
         ...(answeredByCard ? { answeredByCard: true as const } : {}),
         // Which messages the call names, as this server reads them, run only if the person is to be asked.
