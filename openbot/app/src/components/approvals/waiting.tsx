@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/item";
 import { Separator } from "@/components/ui/separator";
 import { Textarea } from "@/components/ui/textarea";
+import { botNameForDecision } from "@/lib/agents/bot-names";
 import { agentListQueryOptions } from "@/lib/agents/queries";
 import {
   answerPersonQuestionMutationOptions,
@@ -31,7 +32,10 @@ export function WaitingForYou({ agentId }: { agentId?: string }) {
   const inbox = useQuery(approvalInboxOptions());
   const agents = useQuery(agentListQueryOptions());
   const botName = (id: string) =>
-    agents.data?.find((agent) => agent.id === id)?.name ?? id;
+    botNameForDecision(
+      agents.data?.find((agent) => agent.id === id),
+      id,
+    );
   const decision = useMutation(decideApprovalMutationOptions(queryClient));
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const answer = useMutation(answerPersonQuestionMutationOptions(queryClient));
