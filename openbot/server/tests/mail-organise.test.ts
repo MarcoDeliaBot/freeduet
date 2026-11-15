@@ -496,6 +496,8 @@ describe("one call to a tool", () => {
       { query: "from:x" },
       { permanent: true },
       { folder: "Spam" },
+      { destination: "Spam" },
+      { to: "Spam" },
       { all: true },
       { state: "read" },
     ]) {
