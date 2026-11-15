@@ -257,7 +257,9 @@ async def run_segment(run: RunInput, member: Member, notes: SegmentNotes | None 
     async def guard(story: report_guard.Story) -> tuple[str, str] | None:
         """The report lines to add to a turn that ends without a complete one, with the separator to
         put before them, or None (report_guard.py)."""
-        if not report_guard.applies(run.messages, story.reply(), story.called):
+        if not report_guard.applies(
+            run.messages, story.reply(), story.called, member.id, report_guard.colleague_names()
+        ):
             return None
         notes.report_guard = report_guard.FAILED
         try:

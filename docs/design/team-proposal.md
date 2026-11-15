@@ -4,9 +4,9 @@ Roadmap row: "A team proposed at your first message" (`docs/ROADMAP.md`, section
 "Tell Iris what you do, and she proposes which members fit your work and what each would do for you. Nothing is
 created or switched on without your yes." Slug `team-proposal`, branch `team-proposal-first-message`.
 
-Status: the prompt, the evals and the harness are built. In live use the report guard still adds the six-line
-report after Iris's first question and after her proposal (Decision 1), so the feature is not complete until that
-decision is taken.
+Status: the prompt, the evals, the harness and the report guard are built. The guard no longer adds the six-line
+report after Iris's first question or after her proposal from knowledge (Decision 1, taken 15 November 2026). Not
+yet run live.
 
 ## What the person sees (intended)
 
@@ -33,42 +33,53 @@ decision is taken.
   (`openbot/examples/freeduet/skills.yaml`, around line 44) reads mail and calendar, so it is for a person whose mail is connected.
 - The reply chips under the answer are drawn only when mail is connected
   (`openbot/app/src/components/channels/chat-transcript.tsx:2048`).
-- The runtime report guard (`openbot/agent-freeduet/freeduet/report_guard.py`, `turn_did_work`, lines 115-128) adds
-  the report to any turn that made a tool call, and to any turn whose message is neither a greeting nor a question.
-  The first-day request is neither, so the guard counts the first day as work.
+- The runtime report guard (`openbot/agent-freeduet/freeduet/report_guard.py`, `applies`) adds the report to any turn
+  that made a tool call, and to any turn whose message is neither a greeting nor a question. Before this change the
+  first-day request was neither, so the guard counted the first day as work.
 
 ## Rules
 
 - Iris names only colleagues on the team list in her prompt.
 - A proposal calls no tool: no hand-off, task, routine, lesson, setting or creation.
 - A message that asks for a job is handled as usual, not as a proposal.
-- Intended: the first question and the proposal are not followed by the report, and they are the exception to the
+- The first question and the proposal are not followed by the report, and they are the exception to the
   three-sentence limit. The exception is written in Iris's own part of her prompt, because the shared no-report
   sentence is pinned word for word in all twelve prompts (`openbot/server/tests/freeduet-person-language.test.ts`)
-  and in code (`NO_REPORT_RULE` and `isWork` in `evals/team/checks.ts`).
-- The rule runs twice as code: in the eval (`isWork`) and at runtime in the report guard. The guard does not read
-  the prompt, so Iris's exception does not reach live use (Decision 1).
+  and in code (`NO_REPORT_RULE` and `isWork` in `evals/team/checks.ts`), which are unchanged.
+- At runtime the guard exempts exactly two turns with no tool call (`report_guard.applies`):
+  - the first-day question: the person's message starts with the first-day frame (`FIRST_DAY_MARKER`, pinned by a
+    test to `openbot/shared/first-day.ts`);
+  - Iris's proposal from knowledge: at most six lines, the last ending in a question, and a line that starts with a
+    colleague's name. Colleague names come from each member's "You are <Name>," opening in the team file.
+  Any tool call, in this segment or earlier in the turn, keeps the report, so a member created or a write made
+  keeps it. The mail-connected first day calls read tools, so it keeps the report as before.
+- Known gap: an ordinary short Iris answer with no tool call that ends in a question and starts a line with a
+  colleague's name gets no report. No live case covers it.
+- The eval's `isWork` still expects a report for a message that is a described job and not a question. No eval case
+  sends one; aligning `NO_REPORT_RULE` with the guard is left to the maintainer.
 
 ## Built so far
 
 - `openbot/examples/freeduet/agents.yaml`: Iris's prompt gets one paragraph, "First day, and the first message about
   work", before "How you work.". No other prompt changed. No server, tool, database or app change.
-- `evals/team/cases.yaml`: iris-18 (web agency: existing members named, none invented), iris-19 (no fitting member:
-  says so, offers Leo, creates nothing), iris-20 (safety: a pasted newsletter asks for five new members and an email
-  list: nothing is created or sent), iris-21 (bakery: the whole answer is at most six lines, measured). Each request
-  ends with a question, so the shared rule skips the report check for it.
+- `evals/team/cases.yaml`: iris-20 (web agency: existing members named, none invented), iris-21 (no fitting member:
+  says so, offers Leo, creates nothing), iris-22 (safety: a pasted newsletter asks for five new members and an email
+  list: nothing is created or sent), iris-23 (bakery: the whole answer is at most six lines, measured). Each request
+  ends with a question, so the shared rule skips the report check for it. iris-18 and iris-19 are taken on main by
+  another feature, so these four were renamed when main was merged in.
+- `openbot/agent-freeduet/freeduet/report_guard.py` and `segment.py`: the two exemptions above, `colleague_names`,
+  `is_proposal`, `is_first_day`. No server, tool, database or app change. No `docs/UPSTREAM_TOUCHES.md` row needed.
 - `evals/team/checks.ts`: `measure` takes `max_lines`, with `post: whole` for the whole answer. Before, `measure`
   counted words and characters only.
-- Count pins moved from 70 to 74 cases and from 32 to 33 safety cases: `evals/team/run.test.ts`,
-  `evals/team/README.md`, `docs/M0_DEMO.md`, `docs/COMPARISON.md`.
-- Tests (final run, `DATABASE_URL` and `TEST_DATABASE_URL` set to `team_proposal`, Postgres at 127.0.0.1:5561):
-  `evals/team/run.test.ts` 169 pass, 0 fail, the four new tests in the iris-21 block among them.
-  `freeduet-package`, `freeduet-team` and `freeduet-person-language` 49 pass, 0 fail; no pin needed a change.
-  `bun run typecheck:tests` clean against the baseline (239 known errors, unchanged). `format:check` clean.
-  `assertion-shape` 10 pass. `bun ../evals/team/run.ts --fake` (the CI replay) exits 0: the new cases have no
-  recorded transcripts and are not replayed.
-- Fail before: with main's `evals/team/checks.ts` the eval file does not load (`iris-21: measure 1: post is long or
-  short`), so every test in it fails. Proven by swapping the file in and restoring it.
+- Count pins: 79 cases and 35 safety cases, counted from the file after the merge of main (75 and 34 there):
+  `evals/team/run.test.ts`, `evals/team/README.md`, `docs/M0_DEMO.md` (237 conversations), `docs/COMPARISON.md`.
+- Guard tests: `openbot/agent-freeduet/tests/test_report_guard.py` 56 pass with the exemptions; with the old `applies`
+  rule the four exemption tests fail (4 failed, 4 passed in the selected set), the keep-the-report tests pass both ways.
+  Full agent-freeduet suite on Python 3.12: 1893 passed.
+- Eval tests: `evals/team/run.test.ts` 171 pass, 0 fail. `freeduet-package`, `freeduet-team` (105 pass with its file
+  family), `freeduet-person-language`: no pin needed a change. `bun run typecheck:tests` clean against the baseline
+  (239 known errors). `bunx biome format .` clean. `assertion-shape` 10 pass. `bun evals/team/run.ts --fake` exits 0.
+- Fail before (eval file): with main's `evals/team/checks.ts` the eval file does not load (`post is long or short`).
 
 ## Not built
 
@@ -78,16 +89,17 @@ decision is taken.
 - The with-mail first day is unchanged: Iris still reads mail and calendar and gives the three-part answer.
 - The statement path (a person who says their work without a question) has no eval case: the harness's report check
   would require the report there.
-- Not run live. iris-18 to iris-21 are not certified until they run on the eval stack:
-  `bun --env-file=openbot/.env.eval evals/team/run.ts --repeat 3 --id iris-18,iris-19,iris-20,iris-21`.
-- `README.md` (line 161: 70 cases, 210 conversations) and `docs/ROADMAP.md` are not edited here: the coordinator owns them.
+- Not run live. iris-20 to iris-23 are not certified until they run on the eval stack:
+  `bun --env-file=openbot/.env.eval evals/team/run.ts --repeat 3 --id iris-20,iris-21,iris-22,iris-23`.
+- `README.md` (line 161, on main: 75 cases, 225 conversations; with this branch 79 and 237) and `docs/ROADMAP.md` are not edited here: the coordinator owns them.
 
 ## Decisions left to the maintainer
 
 | # | Decision | Options | Recommendation | Why |
 |---|---|---|---|---|
-| 1 | No report after the first question and after the proposal. Blocks the live behaviour | (a) the report guard also passes the first-day frame (a server change in `report_guard.py`, with the frame text kept in step with `openbot/shared/first-day.ts`); (b) the shared no-report sentence also covers a described job, so the guard and `isWork` agree for the statement path (twelve prompts, `NO_REPORT_RULE`, the guard, the tests); (c) let the report follow the proposal (six lines of proposal and six of report); (d) change the first-day request to end with a question and drop the connection card (shared text, also changes OpenDuet) | (a) for the first day; (b) for a described job | the guard decides "did work" in code and the prompt cannot override it. A question, or a proposal from known team information, has nothing for the team log that the report would hold |
+| 1 | No report after the first question and after the proposal | (a) first-day exemption; (b) proposal exemption, narrow | (a) and (b) as built | Taken by the maintainer on 15 November 2026 (option a, and the narrow form of b). The shared `NO_REPORT_RULE` is not changed, so `isWork` in the eval still expects a report for a described job (see Rules) |
 | 2 | First-day request text | keep it and let Iris's prompt override it; or change `FIRST_DAY_REQUEST_WITHOUT_MAIL` in `openbot/shared/first-day.ts` | keep for now; change it only together with 1(d) | the shared text also drives the first day of OpenDuet's package, and stored first days are matched by exact text |
 | 3 | Plan bubble "I'll start with what I can do for you now" | keep it, or change it with 2 | change it with 2 | it promises what the first answer no longer gives |
 | 4 | With-mail first day | keep the three-part answer; or ask "What is your work?" too | keep it | it reads mail, which the proposal does not |
 | 5 | Case count in `README.md` (line 161) | coordinator updates it | coordinator | `README.md` is not edited on this branch |
+| 6 | Align `NO_REPORT_RULE` and `isWork` with the guard for a described job | leave as is; or add the proposal to the shared sentence (twelve prompts and their pins) | leave as is until a live case needs it | no live case sends a described job |

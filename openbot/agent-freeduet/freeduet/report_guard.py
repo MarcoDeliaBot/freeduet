@@ -22,6 +22,16 @@ file (a non-text part, or an eval's "[fixture: ...]" description), or when that 
 just a greeting nor ends with a question. A greeting or a question answered from what the member
 knows never gets the guard.
 
+TWO TURNS THAT USE NO TOOL AND GET NO GUARD, both declared in the team's prompts
+(examples/freeduet/agents.yaml, Iris's "First day, and the first message about work"):
+- the first day's question (the person's first message is the first-day frame, openbot/shared/
+  first-day.ts): Iris asks what the person's work is, and nothing else is written;
+- a proposal from knowledge: Iris, with no tool call this turn, answers a description of work with at
+  most six lines, the last ending in a question, and a line that starts with a colleague's name (the
+  names are the ones the team file gives: "You are Leo, ..."). Any tool call, a member created or a
+  write made, keeps the report.
+Both are exemptions from `turn_did_work` only, decided by `applies`; nothing else changes.
+
 WHAT IT DOES. One more `claude -p` on the same login, locked down like the server's own text calls
 (claude_cli.build_text_command: no built-in tools and no MCP server, so no tool exists at all), with
 the member's system text and the conversation so far, this segment's reply and calls included, and
@@ -46,8 +56,8 @@ import json
 import logging
 import re
 
-from . import claude_cli, report, team_log, transcript
-from .members import Member
+from . import claude_cli, members, report, team_log, transcript
+from .members import Member, MemberError
 from .origin import GROUP_TRANSCRIPT, latest_user_message, message_text
 from .stream_json import MCP_PREFIX
 
@@ -82,6 +92,17 @@ _SENTENCE_BREAK = re.compile(r"(?<=[.!?])\s+")
 _TRAILING_PUNCTUATION = re.compile(r"[\s!.,?]+$")
 _TRAILING_CLOSERS = re.compile(r"[\"'”’»)\]\s]+$")
 _FIXTURE = re.compile(r"\[fixture:", re.IGNORECASE)
+
+# Iris, the head of the team: the only member that proposes colleagues on the first day (agents.yaml).
+IRIS = "freeduet"
+# The first sentence of every first-day frame in openbot/shared/first-day.ts. A test in
+# tests/test_report_guard.py reads that file and fails if the two drift apart.
+FIRST_DAY_MARKER = "This is your first conversation with this person:"
+# Each member's prompt opens "You are <Name>, ..." (examples/freeduet/agents.yaml).
+_INTRODUCTION = re.compile(r"You are ([A-Z][A-Za-z]+),")
+# A line of a proposal starts with a colleague's name, after an optional list mark or bold.
+_LEADING_NAME = re.compile(r"^\s*(?:[-*•]\s+)?(?:\*\*)?([A-Z][A-Za-z]+)\b")
+PROPOSAL_MAX_LINES = 6  # Iris's proposal is at most six lines (agents.yaml)
 
 
 def is_greeting(text: str) -> bool:
@@ -128,9 +149,60 @@ def turn_did_work(messages: list[dict], called_in_segment: bool) -> bool:
     return not (is_greeting(text) or ends_with_question(text))
 
 
-def applies(messages: list[dict], reply: str, called_in_segment: bool) -> bool:
-    """Whether a turn that ends with `reply` needs the guard."""
-    return report.parse_report(reply) is None and turn_did_work(messages, called_in_segment)
+def is_first_day(text: str) -> bool:
+    """The person's message is the first-day frame (openbot/shared/first-day.ts)."""
+    return (text or "").startswith(FIRST_DAY_MARKER)
+
+
+def colleague_names(prompts: dict[str, str] | None = None) -> frozenset[str]:
+    """The names of the team's colleagues, Iris excluded, from each member's "You are <Name>," opening.
+    Empty when the team file cannot be read: then no proposal is recognised and the guard applies as
+    before."""
+    try:
+        prompts = members.load_prompts() if prompts is None else prompts
+    except MemberError:
+        return frozenset()
+    names = set()
+    for member_id, prompt in prompts.items():
+        match = _INTRODUCTION.search(prompt or "")
+        if member_id != IRIS and match:
+            names.add(match.group(1))
+    return frozenset(names)
+
+
+def _names_a_colleague(line: str, names: frozenset[str]) -> bool:
+    match = _LEADING_NAME.match(line)
+    return match is not None and match.group(1) in names
+
+
+def is_proposal(reply: str, names: frozenset[str]) -> bool:
+    """A proposal of colleagues from knowledge: at most six lines, the last ending in a question, and a
+    line that starts with a colleague's name. applies asks this of Iris's turns only."""
+    lines = [line for line in (reply or "").splitlines() if line.strip()]
+    return (
+        1 <= len(lines) <= PROPOSAL_MAX_LINES
+        and ends_with_question(reply)
+        and any(_names_a_colleague(line, names) for line in lines)
+    )
+
+
+def applies(
+    messages: list[dict],
+    reply: str,
+    called_in_segment: bool,
+    member_id: str | None = None,
+    names: frozenset[str] = frozenset(),
+) -> bool:
+    """Whether a turn that ends with `reply` needs the guard. Without any tool call, the first-day
+    question and Iris's proposal from knowledge get none (the module's rule)."""
+    if report.parse_report(reply) is not None or not turn_did_work(messages, called_in_segment):
+        return False
+    latest = latest_user_message(messages)
+    if called_in_segment or _called_since(messages, latest):
+        return True
+    if latest is not None and is_first_day(message_text(latest)):
+        return False
+    return not (member_id == IRIS and is_proposal(reply, names))
 
 
 class Story:
