@@ -1,4 +1,5 @@
 import type { ShareAudience, SharedMessage } from "../proactive/private-share";
+import { isOrganiseTool } from "./mail-organise";
 
 /**
  * Whether a connector write sends content to other people, and to whom.
@@ -112,6 +113,17 @@ export function isNewEmailSend(serverId: string, toolName: string): boolean {
   return NEW_EMAIL_SENDS[serverId] === toolName;
 }
 
+/**
+ * The two Gmail connections' tools that organise a mailbox (./mail-organise): labels, archive, read and
+ * unread. Their names say "messages" (`gmail_archive_messages`), which the pattern above reads as a
+ * message sent, so they are named here as the writes they are: nothing in them reaches anybody else, and
+ * a private-share card for one ("Send email to ...") would be wrong and would offer an "Always allow".
+ */
+const ORGANISING_SERVERS: ReadonlySet<string> = new Set([
+  "google-workspace",
+  "google-imap",
+]);
+
 export type ShareTarget = {
   audience: ShareAudience;
   /** Set for a new email: the answer is never remembered. See {@link isNewEmailSend}. */
@@ -127,6 +139,7 @@ export function shareTargetOf(
   toolName: string,
   args: Record<string, unknown>,
 ): ShareTarget | null {
+  if (ORGANISING_SERVERS.has(serverId) && isOrganiseTool(toolName)) return null;
   const name = toolName.replace(/([a-z])([A-Z])/g, "$1_$2");
   if (!SENDS.test(name) || STAGES.test(name)) return null;
   const recipients = RECIPIENT_KEYS.map((key) => flatten(args[key]))

@@ -113,11 +113,12 @@ afterAll(async () => {
 });
 
 describe("the fake's own OAuth", () => {
-  test("grants the three scopes the connector asks for, with a refresh token", async () => {
+  test("grants the four scopes the connector asks for, with a refresh token", async () => {
     const tokens = await signIn(fake.url);
     expect(tokens.refresh_token).toStartWith("fake-refresh-");
     expect(tokens.scope.split(" ").sort()).toEqual([
       "https://www.googleapis.com/auth/calendar.readonly",
+      "https://www.googleapis.com/auth/gmail.modify",
       "https://www.googleapis.com/auth/gmail.readonly",
       "https://www.googleapis.com/auth/gmail.send",
     ]);
