@@ -17,6 +17,7 @@ import {
   type ApprovalCandidate,
   type ApprovalContinuation,
   type ApprovalDecision,
+  type ApprovalDetails,
   type ApprovalPermit,
   type ApprovalPolicyOutcome,
   type ApprovalPreferences,
@@ -510,8 +511,19 @@ export function createApprovalService(
         !(await store.enabled(candidate.actorId))
       )
         return;
+      /*
+       * What the call touches, read only now that the person is to be asked, and never into the gate's
+       * way: a mailbox that cannot be read leaves the card to be drawn from the arguments and to say so.
+       */
+      let details: ApprovalDetails | undefined;
+      try {
+        details = await candidate.describe?.();
+      } catch {
+        details = undefined;
+      }
       const action: ApprovalAction = {
         ...approvalAction(candidate),
+        ...(details ? { details } : {}),
         ...(outcome ? { policy: outcome } : {}),
         ...(equivalence ? { equivalence, userTurns } : {}),
       };
@@ -891,6 +903,8 @@ function publicApproval(request: ApprovalRecord) {
       // Whole: the person decides from this, so it is never a cut copy. See `approvalPreview`.
       args: approvalPreview(action.args, 0, { whole: true }),
       target: approvalPreview(action.target, 0, { whole: true }),
+      // What the server read about the messages a mail call names (mail-organise); absent for the rest.
+      ...(action.details ? { details: action.details } : {}),
       ...(action.policy
         ? {
             policy: {

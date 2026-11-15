@@ -1292,6 +1292,26 @@ export type PluginStoreOptions = {
     args: Record<string, unknown>,
     /** `accountGone` as `McpCallResult` carries it: the vendor lost the account this call ran in. */
   ) => Promise<{ text: string; isError: boolean; accountGone?: true }>;
+  /**
+   * Reading the messages an organising call names (labels, archive, read and unread), for the card the
+   * person answers (docs/design/mail-organise.md). Defaults to the transport's own `describeCall`.
+   *
+   * Injected so a test can assert what the card is built from and that it is read by this server. With a
+   * `callVendor` injected and no `describeVendor`, nothing is read: a test that stands in for the vendor
+   * must not dial out for the card.
+   */
+  describeVendor?: (
+    connection: {
+      url: string;
+      token?: string;
+      actorId?: string;
+      botId?: string;
+    },
+    toolName: string,
+    args: Record<string, unknown>,
+  ) => Promise<
+    { messages: { from: string; subject: string }[]; missing: number } | undefined
+  >;
   /** Trading a refresh token for a short-lived access token. Defaults to a real HTTP exchange. */
   exchangeRefreshToken?: (input: {
     tokenUrl: string;

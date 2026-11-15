@@ -21,6 +21,7 @@ import { classifyTool, tokenHeaderFor } from "../catalogue";
 import { VERSION_ARG } from "../composio";
 import { inspectToolArguments } from "../content-governance";
 import { plainAddress } from "../mail-address";
+import { isOrganiseMessageTool, isOrganiseTool, organiseRefusal } from "../mail-organise";
 import { isNewEmailSend, shareTargetOf } from "../share-target";
 import type { AccountMode } from "../shared-accounts";
 import { transportFor } from "../transport";
@@ -664,6 +665,45 @@ export function callMethods(context: StoreContext) {
       }
 
       /*
+       * A MAILBOX IS ORGANISED ONLY BY A CALL THAT CAN BE CARRIED OUT (docs/design/mail-organise.md).
+       * The two Gmail connections' tools that label, archive and mark mail are read once here, before the
+       * gate, so the person is never asked about a call the tool would refuse (Trash or Spam as a label,
+       * a hundred and one messages, a field that says "everything a search matches"). Read off the
+       * transport the row resolved to and the tool's name together, and the refusal is a sentence written
+       * in `mail-organise.ts` that quotes nothing it was handed. The person's card is drawn from the
+       * messages this server reads for it, further down, and not from anything a Bot said about them.
+       */
+      const organises =
+        (access.transport === "google-imap" ||
+          access.transport === "google-workspace-rest") &&
+        isOrganiseTool(toolName);
+      const organiseRefused = organises
+        ? organiseRefusal(toolName, vendorArgs)
+        : null;
+      if (organiseRefused) {
+        await recordAuditEvent(auditStore, {
+          eventType: "mcp.call_rejected",
+          targetType: "mcp_tool",
+          targetId: input.ref,
+          ...(input.initiator ? { initiator: input.initiator } : {}),
+          payload: {
+            ...decided,
+            decision: { ...decided.decision, carriedOut: false },
+            refusal: "mail_organise_call_invalid",
+          },
+        });
+        throw new PluginRefusedError(organiseRefused, null);
+      }
+      // How the card learns which messages a call names, from the transport that will carry it out. A
+      // test that stands in for the vendor stands in for this too, or none is read at all.
+      const describeVendor = organises
+        ? (options.describeVendor ??
+          (injectedVendor
+            ? undefined
+            : transportFor(access.transport).describeCall))
+        : undefined;
+
+      /*
        * THE APPROVAL GATE IS ASKED UNDER THE APP'S ID TOO, for a brokered row whose app has an
        * answering row. Rules are written against the app — the Shared default is `${appId}/*`
        * scoped to the app's id — so a write granted through a duplicate row has to be judged as
@@ -698,6 +738,32 @@ export function callMethods(context: StoreContext) {
           ? { changesSetting: true as const }
           : {}),
         ...(answeredByCard ? { answeredByCard: true as const } : {}),
+        // Which messages the call names, as this server reads them, run only if the person is to be asked.
+        ...(describeVendor && isOrganiseMessageTool(toolName)
+          ? {
+              describe: async () => {
+                const { token, vendorUserId } = await connectionTokenFor(
+                  row,
+                  entry,
+                  input.credentialActorId ?? input.actorId,
+                  access,
+                  gatedMode,
+                );
+                return describeVendor(
+                  {
+                    url: effectiveUrl(row, entry),
+                    token,
+                    tokenHeader: tokenHeaderFor(entry),
+                    actorId:
+                      vendorUserId ?? input.credentialActorId ?? input.actorId,
+                    botId: input.botId,
+                  },
+                  advertised[0]?.vendorName ?? toolName,
+                  vendorArgs,
+                );
+              },
+            }
+          : {}),
       });
       if (approval && "replay" in approval)
         return approval.replay as { text: string; isError: boolean };

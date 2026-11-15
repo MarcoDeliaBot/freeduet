@@ -50,8 +50,26 @@ export const FAKE_ACCOUNT = "maya@marlowceramics.com";
 const DEFAULT_SCOPE = [
   "https://www.googleapis.com/auth/gmail.readonly",
   "https://www.googleapis.com/auth/gmail.send",
+  "https://www.googleapis.com/auth/gmail.modify",
   "https://www.googleapis.com/auth/calendar.readonly",
 ].join(" ");
+
+/** Gmail's own labels, as `labels.list` reports them: identifiers that are their names. */
+const SYSTEM_LABEL_IDS = [
+  "INBOX",
+  "SENT",
+  "DRAFT",
+  "SPAM",
+  "TRASH",
+  "UNREAD",
+  "STARRED",
+  "IMPORTANT",
+  "CATEGORY_PERSONAL",
+  "CATEGORY_SOCIAL",
+  "CATEGORY_PROMOTIONS",
+  "CATEGORY_UPDATES",
+  "CATEGORY_FORUMS",
+];
 
 /** An hour, which is what Google issues. */
 const TOKEN_LIFETIME_SECONDS = 3599;
@@ -686,6 +704,11 @@ export type FakeGoogle = {
   port: number;
   /** What has been sent, decoded. The same list `GET /__fake/sent` answers. */
   sent(): SentMessage[];
+  /** The person's own labels by name, and one message's label ids as the mailbox holds them now. */
+  userLabels(): string[];
+  labelsOf(id: string): string[] | null;
+  /** Every `batchModify` the fake served, as it was asked, oldest first. */
+  modified(): { ids: string[]; addLabelIds: string[]; removeLabelIds: string[] }[];
   /** The mailbox and calendar as they started, dated from now, and nothing sent. */
   reset(): void;
   stop(): Promise<void>;
@@ -711,10 +734,19 @@ export function startFakeGoogle(
   let events: FakeEvent[] = [];
   let sent: SentMessage[] = [];
   let delivered = 0;
+  /** The person's own labels: Gmail names them `Label_<n>`. */
+  let userLabels: { id: string; name: string }[] = [];
+  let modifications: {
+    ids: string[];
+    addLabelIds: string[];
+    removeLabelIds: string[];
+  }[] = [];
   const reset = () => {
     messages = seedMailbox(mailbox, now());
     events = seedCalendar(now());
     sent = [];
+    userLabels = [];
+    modifications = [];
   };
   reset();
 
@@ -1157,6 +1189,85 @@ export function startFakeGoogle(
       return send(request);
     }
 
+    /*
+     * LABELS AND `batchModify`, which need `gmail.modify` as Google's do: a grant without it is refused
+     * with the reason the adapter reads. Nothing here deletes, trashes or moves a message, because the
+     * adapter has no request that would; a request for any other path is a 404 below.
+     */
+    const granted = grantOf(request)?.scope ?? "";
+    const insufficient = () =>
+      googleError(
+        403,
+        "Request had insufficient authentication scopes.",
+        "insufficientPermissions",
+      );
+    if (method === "GET" && path === "/gmail/v1/users/me/labels") {
+      return Response.json({
+        labels: [
+          ...SYSTEM_LABEL_IDS.map((id) => ({ id, name: id, type: "system" })),
+          ...userLabels.map((label) => ({ ...label, type: "user" })),
+        ],
+      });
+    }
+    if (method === "POST" && path === "/gmail/v1/users/me/labels") {
+      if (!granted.includes("gmail.modify")) return insufficient();
+      const body = (await request.json().catch(() => null)) as {
+        name?: unknown;
+      } | null;
+      const name = typeof body?.name === "string" ? body.name : "";
+      if (name === "") {
+        return googleError(400, "Invalid label name.", "invalidArgument");
+      }
+      const clash =
+        SYSTEM_LABEL_IDS.some((id) => id.toLowerCase() === name.toLowerCase()) ||
+        userLabels.some(
+          (label) => label.name.toLowerCase() === name.toLowerCase(),
+        );
+      if (clash) {
+        return googleError(409, "Label name exists or conflicts", "conflict");
+      }
+      const label = { id: `Label_${userLabels.length + 1}`, name };
+      userLabels.push(label);
+      return Response.json({ ...label, type: "user" });
+    }
+    if (
+      method === "POST" &&
+      path === "/gmail/v1/users/me/messages/batchModify"
+    ) {
+      if (!granted.includes("gmail.modify")) return insufficient();
+      const body = (await request.json().catch(() => null)) as {
+        ids?: unknown;
+        addLabelIds?: unknown;
+        removeLabelIds?: unknown;
+      } | null;
+      const strings = (value: unknown) =>
+        Array.isArray(value)
+          ? value.filter((item): item is string => typeof item === "string")
+          : [];
+      const ids = strings(body?.ids);
+      const add = strings(body?.addLabelIds);
+      const remove = strings(body?.removeLabelIds);
+      if (ids.length === 0 || ids.length > 1000) {
+        return googleError(400, "Invalid ids.", "invalidArgument");
+      }
+      const known = new Set([
+        ...SYSTEM_LABEL_IDS,
+        ...userLabels.map((label) => label.id),
+      ]);
+      if ([...add, ...remove].some((id) => !known.has(id))) {
+        return googleError(400, "Invalid label.", "invalidArgument");
+      }
+      modifications.push({ ids, addLabelIds: add, removeLabelIds: remove });
+      for (const message of messages) {
+        if (!ids.includes(message.id)) continue;
+        message.labelIds = [
+          ...message.labelIds.filter((id) => !remove.includes(id)),
+          ...add.filter((id) => !message.labelIds.includes(id)),
+        ];
+      }
+      return new Response(null, { status: 204 });
+    }
+
     const single = /^\/gmail\/v1\/users\/me\/messages\/([^/]+)$/.exec(path);
     if (method === "GET" && single) {
       const message = messages.find(
@@ -1249,6 +1360,15 @@ export function startFakeGoogle(
     url,
     port: server.port ?? 0,
     sent: () => sent.map((message) => ({ ...message })),
+    userLabels: () => userLabels.map((label) => label.name),
+    labelsOf: (id) =>
+      messages.find((message) => message.id === id)?.labelIds.slice() ?? null,
+    modified: () =>
+      modifications.map((entry) => ({
+        ids: [...entry.ids],
+        addLabelIds: [...entry.addLabelIds],
+        removeLabelIds: [...entry.removeLabelIds],
+      })),
     reset,
     stop: async () => {
       await server.stop(true);
