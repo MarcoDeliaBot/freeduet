@@ -16,10 +16,12 @@
 import { randomBytes, timingSafeEqual } from "node:crypto";
 import { lookup } from "node:dns/promises";
 import {
+  type ClientRequest,
   createServer,
   request as httpRequest,
   type IncomingMessage,
   type Server,
+  type ServerResponse,
 } from "node:http";
 import { BlockList, connect, isIP, type Socket } from "node:net";
 import {
@@ -178,8 +180,10 @@ export function egressLabel(
  * imports to refuse a navigation before it reaches the computer, so the two ends cannot disagree.
  *
  * The filter proxy is what enforces it on the computer itself: the browser is pointed at it through
- * `egressFor`, and shell commands through HTTP(S)_PROXY. A policy pushed to a running computer is
- * consulted on the next connection, so it applies without restarting anything.
+ * `egressFor`, and shell commands through HTTP(S)_PROXY. A policy pushed to a running computer applies
+ * without restarting anything, and at once: the next connection is judged by it, and so is every
+ * connection that is already open, which is ended if a new one would now be refused (see "The
+ * connections the filter is carrying" below).
  *
  * WHAT THIS CANNOT STOP: a process that ignores proxy variables and opens a raw socket. That is the
  * Kubernetes NetworkPolicy's job, which this narrows rather than replaces.
@@ -607,10 +611,17 @@ export function setEgressResolver(next: Resolver | null) {
   resolver = next ?? systemResolver;
 }
 
-/** Install (or with null, remove) the policy one Bot's connections are judged by. */
+/**
+ * Install (or with null, remove) the policy one Bot's connections are judged by.
+ *
+ * It applies to the connections that are open as well as to the next one: each is judged again by the
+ * policies as they are now, and one that would be refused is ended before this returns (see
+ * {@link endRefusedConnections}). A policy that is wider, or the same, ends nothing.
+ */
 export function setEgressPolicy(botId: string, policy: EgressPolicy | null) {
   if (policy) policies.set(botId, policy);
   else policies.delete(botId);
+  endRefusedConnections();
 }
 
 export function egressPolicyFor(botId: string): EgressPolicy | undefined {
@@ -651,6 +662,33 @@ function policiesFor(botId: string | undefined): EgressPolicy[] | "refuse" {
   return [...policies.values()];
 }
 
+/** What a connection is told while the computer has been pushed no policy to judge it by. */
+const NOTHING_PUSHED: EgressDecision = {
+  allowed: false,
+  reason:
+    "No network policy has reached this computer yet, so nothing may leave it.",
+};
+
+/**
+ * What these policies say about a destination: the first that refuses it, or "allowed".
+ *
+ * The one decision a new connection meets, and that a connection already open meets again whenever a
+ * policy changes (`endRefusedConnections`), so the two cannot come apart.
+ */
+function judge(
+  judging: readonly EgressPolicy[],
+  host: string,
+  port: number,
+  resolved: readonly string[],
+): EgressDecision {
+  // Checked even with no policy to judge by, which EGRESS_POLICY_REQUIRED=0 allows.
+  for (const policy of judging.length > 0 ? judging : NO_SERVER_POLICY) {
+    const decision = egressDecision(policy, host, port, resolved);
+    if (!decision.allowed) return decision;
+  }
+  return { allowed: true, reason: "Allowed." };
+}
+
 async function decide(
   botId: string | undefined,
   host: string,
@@ -658,13 +696,7 @@ async function decide(
   direct: boolean,
 ): Promise<EgressDecision & { addresses?: string[] }> {
   const judging = policiesFor(botId);
-  if (judging === "refuse") {
-    return {
-      allowed: false,
-      reason:
-        "No network policy has reached this computer yet, so nothing may leave it.",
-    };
-  }
+  if (judging === "refuse") return NOTHING_PUSHED;
   let resolved: string[] = [];
   /*
    * Resolved whenever this filter makes the connection itself, so the address checked is the
@@ -683,17 +715,132 @@ async function decide(
       return { allowed: false, reason: `${host} could not be resolved.` };
     }
   }
-  // Checked even with no policy to judge by, which EGRESS_POLICY_REQUIRED=0 allows.
-  for (const policy of judging.length > 0 ? judging : NO_SERVER_POLICY) {
-    const decision = egressDecision(policy, host, port, resolved);
-    if (!decision.allowed) return decision;
-  }
+  const verdict = judge(judging, host, port, resolved);
+  if (!verdict.allowed) return verdict;
   // Connect only to the addresses that were checked, so a second lookup cannot answer differently.
   return {
-    allowed: true,
-    reason: "Allowed.",
+    ...verdict,
     ...(resolved.length > 0 ? { addresses: resolved } : {}),
   };
+}
+
+/*
+ * THE CONNECTIONS THE FILTER IS CARRYING.
+ *
+ * A destination is judged when a connection is opened, and a tunnel stays open for as long as its two
+ * ends like. Measured with plain sockets and with a real Chromium: a tunnel (CONNECT) opened to an
+ * address on the home network while "Home and office network access" was on kept carrying data after
+ * the switch was turned off, and a page's WebSocket kept echoing; only a NEW CONNECT was refused. A
+ * response that was streaming kept streaming. And a pooled keep-alive socket carried a later request
+ * to an address that the policy of the moment refused, because the address that was checked for the
+ * request is not the one a reused socket goes to.
+ *
+ * So the filter keeps what it carries, with what it takes to judge it again, and every change to a
+ * policy judges all of it again by the policies in force, with {@link judge}, the function a new
+ * connection meets, and ends (both sides, before the change returns) what would be refused now. A
+ * policy that is wider or the same ends nothing, because everything it ends is refused by it.
+ *
+ * WHAT IS JUDGED. The host and port as they were asked for, and the address the connection really
+ * goes to. Where the filter makes the connection itself that is the address it connected to, which is
+ * not looked up again: while the connection is still being set up, every address that was checked
+ * (any of them may be the one), and once it is up, the one it reached. Behind an upstream proxy the
+ * filter cannot know where the proxy took a tunnel, so it judges what it was given: a literal address
+ * in any spelling, or a name by a domain rule and by the addresses it resolved when the policy of the
+ * time needed them. A policy that decides by range, arriving for a name that was never resolved, ends
+ * the tunnel: that errs on the strict side, and the client's next connection is judged as a new one.
+ *
+ * WHOSE POLICY. A connection that carried a Bot in its proxy credentials is judged by that Bot's
+ * policy. One that carried none, which is every browser connection (Chromium sends credentials only
+ * in answer to a 407, which the filter never sends: measured) and every shell's, is judged as a new
+ * connection of its kind is: by the only policy on the computer, or by every policy at once, the
+ * strictest winning. So it is ended as soon as ANY policy refuses it, and never kept where a new
+ * connection would be refused. What that can cost is a connection ended a moment before the person
+ * would have seen it refused: the reconnect is judged the same way and succeeds if it is allowed.
+ *
+ * WHAT IT DOES NOT DO. Metadata and link-local destinations are never open in the first place: they
+ * are refused before a connection is carried. A connect that is under way cannot be recalled: its
+ * client is refused at once, and the socket being made is destroyed the moment it is made, with
+ * nothing sent through it. A raw socket that ignores the proxy variables never comes through here.
+ */
+type Carried = {
+  /** Who it was judged as: the Bot in its credentials, or nobody (a browser's, a shell's). */
+  botId: string | undefined;
+  /** The host as it was asked for, which a domain rule and the private-range check read. */
+  host: string;
+  port: number;
+  /** The addresses it goes, or may go, to as far as the filter can know them; see above. */
+  addresses: readonly string[];
+  /** End both sides now. `reason` is what a connection nobody has answered yet is told. */
+  end: (reason: string) => void;
+};
+
+const carried = new Set<Carried>();
+
+/** How many connections the filter is carrying right now. */
+export function openEgressConnectionCount(): number {
+  return carried.size;
+}
+
+function judgeCarried(connection: Carried): EgressDecision {
+  const judging = policiesFor(connection.botId);
+  if (judging === "refuse") return NOTHING_PUSHED;
+  return judge(judging, connection.host, connection.port, connection.addresses);
+}
+
+/**
+ * Start carrying a connection that has just been allowed.
+ *
+ * Judged once more by the policies in force now, because a name is looked up before a connection is
+ * allowed and a policy may have been pushed meanwhile. The caller refuses the connection if this says
+ * no, and then it was never carried.
+ */
+function carry(connection: Carried): EgressDecision {
+  const verdict = judgeCarried(connection);
+  if (verdict.allowed) carried.add(connection);
+  return verdict;
+}
+
+/** Stop carrying a connection that has ended. */
+function release(connection: Carried) {
+  carried.delete(connection);
+}
+
+/**
+ * Judge everything the filter is carrying again, and end what would be refused now.
+ *
+ * Called after every change to a policy. A connection that cannot be judged is ended as well.
+ */
+function endRefusedConnections() {
+  for (const connection of [...carried]) {
+    let verdict: EgressDecision;
+    try {
+      verdict = judgeCarried(connection);
+    } catch {
+      verdict = {
+        allowed: false,
+        reason: "This connection could not be judged again, so it was ended.",
+      };
+    }
+    if (verdict.allowed) continue;
+    release(connection);
+    try {
+      connection.end(verdict.reason);
+    } catch {
+      // Already gone: nothing is left to end.
+    }
+  }
+}
+
+/** End everything, whatever the policies say. */
+function endAllConnections(reason: string) {
+  for (const connection of [...carried]) {
+    release(connection);
+    try {
+      connection.end(reason);
+    } catch {
+      // Already gone.
+    }
+  }
 }
 
 /**
@@ -955,15 +1102,49 @@ export async function startEgressFilter(
     const upstream = upstreamFor(botId ?? "", env);
     const decision = await decide(botId, target.hostname, port, !upstream);
     if (!decision.allowed) {
-      response
-        .writeHead(403, {
-          "content-type": "text/plain",
-          "x-openbot-egress": "refused",
-        })
-        .end(decision.reason);
+      refusePlain(response, decision.reason);
       return;
     }
-    forwardPlain(request, response, target, upstream, decision.addresses);
+    // Carried until its answer has been delivered, and judged again whenever a policy changes: a
+    // response can go on streaming for as long as its origin likes (see `Carried`).
+    const clientSocket = request.socket;
+    let outbound: ClientRequest | undefined;
+    const carrying: Carried = {
+      botId,
+      host: target.hostname,
+      port,
+      // The one address the request is sent to (see `pinnedTo`). Behind an upstream proxy, whatever
+      // was resolved, since where the proxy takes it is not known here.
+      addresses: upstream
+        ? (decision.addresses ?? [])
+        : connectOrder(decision.addresses ?? []).slice(0, 1),
+      end: () => {
+        clientSocket?.destroy();
+        outbound?.destroy();
+      },
+    };
+    // A policy may have been pushed while the name was being looked up.
+    const verdict = carry(carrying);
+    if (!verdict.allowed) {
+      refusePlain(response, verdict.reason);
+      return;
+    }
+    // A client that has already gone leaves nothing to wait for: it is let go of here, and the
+    // request is forwarded as it always was.
+    if (clientSocket?.destroyed) release(carrying);
+    response.once("close", () => {
+      release(carrying);
+      // The client went before the answer was complete: nothing is left to deliver the rest to, so
+      // the origin is not kept streaming into nothing.
+      if (!response.writableFinished) outbound?.destroy();
+    });
+    outbound = forwardPlain(
+      request,
+      response,
+      target,
+      upstream,
+      decision.addresses,
+    );
   });
 
   server.on(
@@ -986,6 +1167,53 @@ export async function startEgressFilter(
         refuse(client, decision.reason);
         return;
       }
+      // A client that went while the name was being looked up has nobody left to tunnel for.
+      if (client.destroyed) return;
+
+      // Carried from here on, and judged again whenever a policy changes (see `Carried`).
+      let remote: Socket | undefined;
+      let ended = false;
+      let clientClosed = false;
+      let remoteClosed = false;
+      const carrying: Carried = {
+        botId,
+        host,
+        port,
+        addresses: decision.addresses ?? [],
+        end: (reason) => {
+          ended = true;
+          if (remote) {
+            client.destroy();
+            remote.destroy();
+          } else {
+            // Not answered yet, so it is told what a CONNECT that arrived now would be.
+            refuse(client, reason);
+          }
+        },
+      };
+      // A policy may have been pushed while the name was being looked up.
+      const verdict = carry(carrying);
+      if (!verdict.allowed) {
+        refuse(client, verdict.reason);
+        return;
+      }
+      // Carried until both ends have closed: an end that is left half open is still this tunnel's.
+      const settle = () => {
+        if (clientClosed && (remoteClosed || !remote)) release(carrying);
+      };
+      client.once("close", () => {
+        clientClosed = true;
+        // Nobody left to answer: what the far side gives back is dropped when it arrives.
+        if (!remote) ended = true;
+        settle();
+      });
+      // A client that has hung up before its tunnel is up. This socket is half open, so it emits
+      // `end` and then waits to be closed from this side (measured under Bun: it emits no `close`
+      // until it is), and a tunnel that is not up yet has no pipe that would close it.
+      client.once("end", () => {
+        if (!remote) client.destroy();
+      });
+
       tunnel(
         {
           host,
@@ -993,15 +1221,34 @@ export async function startEgressFilter(
           ...(upstream ? {} : { addresses: decision.addresses }),
         },
         upstream,
-        (remote) => {
+        (socket) => {
+          if (ended) {
+            // Refused while it was being set up, or its client left: nothing is sent through it.
+            socket.destroy();
+            return;
+          }
+          remote = socket;
+          // The one address it reached, which is what it is judged by from now on. Not behind an
+          // upstream proxy: that socket is to the proxy, and where the proxy took the tunnel is not
+          // known here.
+          if (!upstream && socket.remoteAddress) {
+            carrying.addresses = [socket.remoteAddress];
+          }
+          socket.once("close", () => {
+            remoteClosed = true;
+            settle();
+          });
           client.write("HTTP/1.1 200 Connection Established\r\n\r\n");
-          if (head.length > 0) remote.write(head);
-          remote.pipe(client);
-          client.pipe(remote);
-          remote.on("error", () => client.destroy());
+          if (head.length > 0) socket.write(head);
+          socket.pipe(client);
+          client.pipe(socket);
+          socket.on("error", () => client.destroy());
         },
         () => {
-          client.end("HTTP/1.1 502 Bad Gateway\r\n\r\n");
+          // Never set up. (An error on a tunnel that is up ends its client above, and the close
+          // events let it go.)
+          if (!remote) release(carrying);
+          if (!ended) client.end("HTTP/1.1 502 Bad Gateway\r\n\r\n");
         },
       );
     },
@@ -1025,6 +1272,9 @@ export async function stopEgressFilter(): Promise<void> {
   filter = null;
   shellProxy = null;
   policies.clear();
+  // A filter that has stopped carries nothing. Waiting for a tunnel to end of its own accord would
+  // hold the stop for as long as the tunnel lives.
+  endAllConnections("The network filter has stopped.");
   if (running) {
     await new Promise<void>((resolve) => running.server.close(() => resolve()));
   }
@@ -1046,13 +1296,23 @@ function splitHostPort(value: string): [string, string] {
     : [value.slice(0, colon), value.slice(colon + 1)];
 }
 
+/** A plain-HTTP request that is refused: the same 403 that a refused CONNECT is answered with. */
+function refusePlain(response: ServerResponse, reason: string) {
+  response
+    .writeHead(403, {
+      "content-type": "text/plain",
+      "x-openbot-egress": "refused",
+    })
+    .end(reason);
+}
+
 function forwardPlain(
   request: IncomingMessage,
   response: import("node:http").ServerResponse,
   target: URL,
   upstream: Egress | null,
   addresses?: readonly string[],
-) {
+): ClientRequest {
   const headers = { ...request.headers };
   delete headers["proxy-authorization"];
   delete headers["proxy-connection"];
@@ -1067,6 +1327,11 @@ function forwardPlain(
       host: via ? via.host : unbracketed(target.hostname),
       port: via ? via.port : Number(target.port || 80),
       ...(via ? {} : (pinnedTo(addresses) as object)),
+      // A connection of its own for every request, closed with it (measured: Bun pools a keep-alive
+      // socket by name and port otherwise). A pooled socket carries a later request to the address it
+      // was opened for, whichever address was checked for that one, and outlives a policy that has
+      // stopped allowing where it goes. A request leaves on the address that was checked for it.
+      agent: false,
       method: request.method,
       path: via ? target.toString() : `${target.pathname}${target.search}`,
       headers: { ...headers, ...(auth ? { "proxy-authorization": auth } : {}) },
@@ -1081,6 +1346,7 @@ function forwardPlain(
     response.end();
   });
   request.pipe(outbound);
+  return outbound;
 }
 
 /**

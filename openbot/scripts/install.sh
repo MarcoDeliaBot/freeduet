@@ -571,9 +571,6 @@ plan_steps() {
 }
 
 systemd_is_running() { [ -d "$ROOTFS/run/systemd/system" ]; }
-docker_start_command() {
-  if systemd_is_running; then printf 'systemctl enable --now docker'; else printf 'service docker start'; fi
-}
 
 # Why a package is wanted, in words that fit after "package: ".
 package_reason() {
@@ -606,10 +603,13 @@ describe_step() {
       say "  ($(bun_expected_sha256 "$BUN_ASSET")) before anything is unpacked or run. Only then:"
       say "  \$ sudo install -m 0755 <the unpacked bun> $ROOTFS/usr/local/bin/bun" ;;
     docker-start)
-      say "Start Docker, and make it start at every boot."
-      say "  \$ sudo $(docker_start_command)"
-      if ! systemd_is_running; then
-        say "  (This Ubuntu does not run systemd, so Docker will not start by itself next time; see the WSL note.)"
+      if systemd_is_running; then
+        say "Start Docker, and make it start at every boot."
+        say "  \$ sudo systemctl enable --now docker"
+      else
+        say "Start Docker: this Ubuntu does not run systemd, so I cannot start Docker here, and this step stops."
+        say "  Ubuntu's docker.io, as this installer installs it on 22.04 and 24.04, has no service script for \"service\" to run."
+        say "  Turn systemd on first (on WSL 2, see the WSL note above). Nothing is changed by this step."
       fi ;;
     docker-group)
       say "Add you ($USER_NAME) to the \"docker\" group."
@@ -731,8 +731,16 @@ run_step() {
       run_sudo install -m 0755 "$BUN_CANDIDATE" "$ROOTFS/usr/local/bin/bun"
       hash -r ;;
     docker-start)
-      # shellcheck disable=SC2046  # the command is two or three words on purpose
-      run_sudo $(docker_start_command) ;;
+      # Without systemd there is no way to start this package's daemon: its docker.io has no service script
+      # (checked in the 22.04 and 24.04 -updates archives), and `service docker start` says "unrecognized
+      # service". So this stops before any command, with the reason, and the steps before it stay done.
+      if ! systemd_is_running; then
+        die 1 "The Docker service is not running, and I cannot start it: this Ubuntu does not run systemd." \
+          "Ubuntu's docker.io, as this installer installs it on 22.04 and 24.04, has no service script for \"service\" to run." \
+          "Turn systemd on for this Ubuntu, then run this again. On WSL 2: put [boot] systemd=true in /etc/wsl.conf, run wsl --shutdown in Windows, and open Ubuntu again." \
+          "What the steps before this one did stays done; running this again picks up here."
+      fi
+      run_sudo systemctl enable --now docker ;;
     docker-group)
       run_sudo usermod -aG docker "$USER_NAME"
       RELOGIN=true ;;

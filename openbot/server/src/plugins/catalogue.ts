@@ -175,6 +175,28 @@ export type CatalogueEntry = {
    * documentation.
    */
   readTools: readonly string[];
+  /**
+   * The tools on this server that send something out on the person's behalf: an email, a message, a
+   * comment other people are told about, a form, a payment. Every name here is also a write.
+   *
+   * WRITTEN BY A PERSON WHO READ THE VENDOR'S TOOLS, NEVER RECOGNISED BY A WORD IN A NAME (decided
+   * 14 November 2026), in the style of {@link CatalogueEntry.readTools}. A tool called `post_update`
+   * is not a send because it says post, and a send with a dull name is not missed because of it:
+   * only this list decides. A tool on neither this list nor the read list is a write that asks, as
+   * D33 says, and that is all it is.
+   *
+   * WHAT IT IS FOR. Approving a request in the inbox never gives a Bot a tool on this list
+   * ({@link settingsOnlyBecause}): the person turns it on from the Bot's page under the app, in
+   * settings, where it is the choice they are making and not one press on a row about something
+   * else. It is NOT what makes a send ask when it is used: the write list and the approval gate do
+   * that, and nothing here loosens either.
+   *
+   * Required for every entry, so that an entry cannot be added without somebody deciding what on it
+   * sends; a test fails for one that has none. An empty list is a legitimate answer ("nothing here
+   * sends"). A tool whose nature a review could not settle goes ON the list: a name that does not
+   * belong costs one trip to settings, and a name that is missing is a send given by one press.
+   */
+  sendTools: readonly string[];
   docsUrl: string;
 };
 
@@ -233,6 +255,19 @@ const FIRECRAWL_READ_TOOLS = Object.freeze([
 ]);
 
 /**
+ * What on Firecrawl sends something to somebody. `firecrawl_interact` drives a live browser on a
+ * page and can fill in and submit a form there; the two feedback tools write to Firecrawl's own
+ * team. Crawls and agents start work and spend credits, which is a write that asks and not a send,
+ * and Firecrawl's monitor family is not named here because its tool names are not published: it asks
+ * as any write nobody listed does, and goes on this list when a person has read it.
+ */
+const FIRECRAWL_SEND_TOOLS = Object.freeze([
+  "firecrawl_interact",
+  "firecrawl_feedback",
+  "firecrawl_search_feedback",
+]);
+
+/**
  * A short list, deliberately.
  *
  * Atlassian, Box, Slack, Salesforce and ServiceNow were here and were removed: each was a reviewed
@@ -265,6 +300,8 @@ const REVIEWED: readonly CatalogueEntry[] = Object.freeze([
     auth: { kind: "none" },
     writeTools: Object.freeze([]),
     readTools: PARALLEL_READ_TOOLS,
+    // Search and page reading only: nothing here sends.
+    sendTools: Object.freeze([]),
     docsUrl: "https://docs.parallel.ai/integrations/mcp/search-mcp",
   },
   {
@@ -278,6 +315,8 @@ const REVIEWED: readonly CatalogueEntry[] = Object.freeze([
     auth: { kind: "deployment-bearer" },
     writeTools: Object.freeze([]),
     readTools: PARALLEL_READ_TOOLS,
+    // Search and page reading only: nothing here sends.
+    sendTools: Object.freeze([]),
     docsUrl: "https://docs.parallel.ai/integrations/mcp/search-mcp",
   },
   {
@@ -291,6 +330,8 @@ const REVIEWED: readonly CatalogueEntry[] = Object.freeze([
     auth: { kind: "none" },
     writeTools: Object.freeze([]),
     readTools: EXA_READ_TOOLS,
+    // Search and page reading only: nothing here sends.
+    sendTools: Object.freeze([]),
     docsUrl: "https://exa.ai/docs/reference/exa-mcp",
   },
   {
@@ -305,6 +346,8 @@ const REVIEWED: readonly CatalogueEntry[] = Object.freeze([
     auth: { kind: "deployment-bearer", header: "x-api-key" },
     writeTools: Object.freeze([]),
     readTools: EXA_READ_TOOLS,
+    // Search and page reading only: nothing here sends.
+    sendTools: Object.freeze([]),
     docsUrl: "https://exa.ai/docs/reference/exa-mcp",
   },
   {
@@ -318,6 +361,7 @@ const REVIEWED: readonly CatalogueEntry[] = Object.freeze([
     auth: { kind: "none" },
     writeTools: FIRECRAWL_WRITE_TOOLS,
     readTools: FIRECRAWL_READ_TOOLS,
+    sendTools: FIRECRAWL_SEND_TOOLS,
     docsUrl: "https://docs.firecrawl.dev/mcp-server",
   },
   {
@@ -331,6 +375,7 @@ const REVIEWED: readonly CatalogueEntry[] = Object.freeze([
     auth: { kind: "deployment-bearer" },
     writeTools: FIRECRAWL_WRITE_TOOLS,
     readTools: FIRECRAWL_READ_TOOLS,
+    sendTools: FIRECRAWL_SEND_TOOLS,
     docsUrl: "https://docs.firecrawl.dev/mcp-server",
   },
 
@@ -399,6 +444,8 @@ const REVIEWED: readonly CatalogueEntry[] = Object.freeze([
       "get_file_metadata",
       "read_file_content",
     ]),
+    // The scope and the adapter are read-only, so nothing on this entry sends.
+    sendTools: Object.freeze([]),
     docsUrl:
       "https://developers.google.com/workspace/guides/configure-mcp-servers",
   },
@@ -460,6 +507,8 @@ const REVIEWED: readonly CatalogueEntry[] = Object.freeze([
       "calendar_list_events",
     ]),
     writeTools: Object.freeze(["gmail_send_reply", "gmail_send_message"]),
+    // Both writes are mail sent as the person, so both are sends: a reply in a thread and a new message.
+    sendTools: Object.freeze(["gmail_send_reply", "gmail_send_message"]),
     docsUrl: "https://developers.google.com/workspace/gmail/api/guides",
   },
   {
@@ -495,6 +544,8 @@ const REVIEWED: readonly CatalogueEntry[] = Object.freeze([
       "calendar_list_events",
     ]),
     writeTools: Object.freeze(["gmail_send_reply", "gmail_send_message"]),
+    // Both writes are mail sent as the person, so both are sends: a reply in a thread and a new message.
+    sendTools: Object.freeze(["gmail_send_reply", "gmail_send_message"]),
     docsUrl: "https://support.google.com/accounts/answer/185833",
   },
   {
@@ -555,6 +606,12 @@ const REVIEWED: readonly CatalogueEntry[] = Object.freeze([
      * tools shows which of them the live server advertises and a person adds them here.
      */
     readTools: Object.freeze(["notion-search", "notion-fetch"]),
+    /*
+     * One send: a comment tells the people it mentions or the page's followers, so it speaks in the
+     * person's name to others. Creating or updating a page is a write that asks and reaches nobody by
+     * itself. `notion-create-comment` stays on `writeTools` as well, as every send does.
+     */
+    sendTools: Object.freeze(["notion-create-comment"]),
     docsUrl: "https://developers.notion.com/guides/mcp/build-mcp-client",
   },
   {
@@ -583,6 +640,8 @@ const REVIEWED: readonly CatalogueEntry[] = Object.freeze([
     ]),
     // The two tools that list and change nothing (`builtin-routines.ts`, `trigger-tools.ts`).
     readTools: Object.freeze(["list_routines", "list_triggers"]),
+    // Scheduling a run sends nothing by itself: what the run uses is granted and asked about as ever.
+    sendTools: Object.freeze([]),
     docsUrl: "https://github.com/CopilotKit/OpenBot/blob/main/docs/routines.md",
   },
   {
@@ -603,6 +662,8 @@ const REVIEWED: readonly CatalogueEntry[] = Object.freeze([
     writeTools: Object.freeze(["change_setting"]),
     // Nothing in this connector only reads.
     readTools: Object.freeze([]),
+    // `change_setting` changes a setting from the server's own short list, and sends nothing.
+    sendTools: Object.freeze([]),
     docsUrl:
       "https://github.com/MarcoDeliaBot/freeduet/blob/main/docs/design/settings-in-chat.md",
   },
@@ -871,6 +932,52 @@ export function classifyTool(
   if (!entry) return "write";
   // Advertised, named by the reviewed read list, and nothing recorded against it.
   return "read";
+}
+
+/**
+ * Why approving a request cannot give a Bot this tool, so it is the person's own choice in settings.
+ *
+ * `send` — the entry's own {@link CatalogueEntry.sendTools} names it.
+ * `unreviewed` — there is no entry, so no list says what the tool does, and the vendor did not
+ * label it a read either. It is treated as a send for this rule, and for this rule only.
+ */
+export type SettingsOnly = "send" | "unreviewed";
+
+/**
+ * Whether approving a request in the inbox may give a Bot this tool: null when it may, and the
+ * reason it may not when it may not.
+ *
+ * DECIDED BY THE MAINTAINER ON 14 NOVEMBER 2026: approving from the inbox NEVER grants a tool that
+ * sends. A send is given from the settings page, by the person, and nowhere else. The inbox row
+ * says so and links there, and the approve route refuses such a tool when it is called directly,
+ * because the row is only a view of what the server decides.
+ *
+ * WHAT A SEND IS, FROM WHAT THE CODE CAN KNOW AND NEVER FROM A NAME. For a catalogue entry it is a
+ * name on the entry's own `sendTools`, written by a person who read the vendor's tools. Nothing
+ * here looks for a word like send, post or mail: a tool that is neither a listed read nor a listed
+ * send stays what D33 made it, a write that asks, and the inbox still gives it when it is named.
+ *
+ * AN APP WITH NO ENTRY HAS NO LIST, AND NOBODY CAN SAY WHAT ITS WRITES DO. That is a server an
+ * administrator added by URL, and an app a broker hosts. The strict default is the answer for it:
+ * only what its vendor labelled a read is given from the inbox, and every other tool is `unreviewed`
+ * and goes to settings. The recorded label is read the way {@link classifyTool} reads it, so the
+ * exact word `read` and nothing else counts, and a name with the words of a credential, a security
+ * setting or money is not taken as a read on that word alone.
+ *
+ * PURE, AND ONLY EVER NARROWING. It reads no row and grants nothing: a tool it names is simply left
+ * out of what a press may give, and the write list, the gate and Full access are not consulted and
+ * not changed. A recorded effect cannot take a tool off an entry's send list, as it cannot take one
+ * off the write list.
+ */
+export function settingsOnlyBecause(
+  entry: CatalogueEntry | null,
+  toolName: string,
+  recorded?: string | null,
+): SettingsOnly | null {
+  if (entry) return entry.sendTools.includes(toolName) ? "send" : null;
+  return classifyTool(null, toolName, true, recorded) === "read"
+    ? null
+    : "unreviewed";
 }
 
 /**

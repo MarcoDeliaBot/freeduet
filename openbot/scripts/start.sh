@@ -701,7 +701,7 @@ if [ -z "$KEY_LEFT_PUBLIC" ]; then
 else
   red "  KEY_ENCRYPTION_KEY is still the example key this repository publishes. Your database $KEY_LEFT_PUBLIC, and"
   red "  a new key would make anything sealed with this one unreadable, so it was left as it is. Whoever gets a copy"
-  red "  of the database can read what it holds. docs/M1_PLAN.md D39 says what changing it takes."
+  red "  of the database can read what it holds. To change it, run: bun scripts/rekey-vault.ts"
 fi
 if [ "$PUBLIC_SECRETS_REPLACED" = "true" ]; then
   info "  Secrets that were the same on every installation have been replaced. The server and the worker restart once to use them, and so do the Docker services and Bot computers that held them. Nothing you saved is lost."

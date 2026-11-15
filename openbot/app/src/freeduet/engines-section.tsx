@@ -1,30 +1,37 @@
 import { queryOptions, useQuery } from "@tanstack/react-query";
-import {
-  PageEmpty,
-  PageRows,
-  PageSection,
-  PageShell,
-} from "@/components/layout/page-shell";
+import { DuetCard, OutcomePill } from "@/components/duet/kit";
+import { PageEmpty, PageShell } from "@/components/layout/page-shell";
 import { StaggerItem } from "@/components/layout/stagger";
-import {
-  Item,
-  ItemContent,
-  ItemDescription,
-  ItemTitle,
-} from "@/components/ui/item";
-import { Separator } from "@/components/ui/separator";
 import { client } from "@/lib/client";
+import { EngineMembers } from "./engines-members";
 import {
+  ASIDE_LABEL,
+  ENGINE_STATES_TITLE,
+  ENGINES_FALLBACK,
+  ENGINES_INTRO,
+  ENGINES_TITLE,
+  type EngineSummary,
   type EnginesReading,
+  enginePill,
   engineReasonText,
   engineStateText,
+  KEYS_NOT_BUILT,
+  KEYS_TEXT,
+  KEYS_TITLE,
+  LOAD_FAILED,
+  NO_ENGINES,
+  SPENDING_TEXT,
+  SPENDING_TITLE,
 } from "./engines-text";
 
 /**
- * The Engines page, administrators only (docs/ENGINES_PLAN.md section 9.1, slice 6): each engine by name, with
- * one plain sentence for its state and, where it waits, the time it waits until in the person's own time zone.
- * Read-only: no row can be clicked to change anything. Kept in app/src/freeduet/ so the upstream admin page only
- * gains one row and the route file one import (docs/UPSTREAM_TOUCHES.md).
+ * The Engines page, administrators only (docs/ENGINES_PLAN.md section 9.1, slices 6 and 7, and the dashboard of
+ * docs/design/engines-dashboard.md): each engine as a card, with one word for its state (the pill) and one sentence
+ * below it, the time it waits until in the person's own time zone where it waits. Beside the cards, on a wide screen,
+ * the Keys and Spending panels, which hold words only. Below the cards, where the server keeps the person's choices,
+ * each member's engines and one choice for what happens when an engine runs out (engines-members.tsx). No card can be
+ * clicked to change anything. Kept in app/src/freeduet/ so the upstream admin page only gains one row and the route
+ * file one import (docs/UPSTREAM_TOUCHES.md).
  */
 
 /** How often the page asks again, so a time it shows does not go stale while it stays open. */
@@ -38,11 +45,31 @@ export function enginesQueryOptions() {
     queryKey: enginesKeys.all,
     queryFn: async (): Promise<EnginesReading> => {
       const response = await client("/api/freeduet/engines", {
-        fallback: "The engines could not be listed.",
+        fallback: ENGINES_FALLBACK,
       });
       return response.json();
     },
   });
+}
+
+/** One engine: its word for the state, its name, and one line of note from the server's words. */
+function EngineCard({ engine, now }: { engine: EngineSummary; now: Date }) {
+  const pill = enginePill(engine.state);
+  return (
+    <DuetCard className="flex h-full flex-col gap-3 p-5" data-slot="engine">
+      <div>
+        <OutcomePill icon={null} tone={pill.tone}>
+          {pill.label}
+        </OutcomePill>
+      </div>
+      <h3 className="type-body font-semibold [overflow-wrap:anywhere]">
+        {engine.name}
+      </h3>
+      <p className="type-label mt-auto border-duet-hair-2 border-t pt-3 text-duet-ink-2">
+        {engineStateText(engine, now)}
+      </p>
+    </DuetCard>
+  );
 }
 
 export function FreeDuetEngines() {
@@ -55,16 +82,13 @@ export function FreeDuetEngines() {
   const now = new Date();
 
   return (
-    <PageShell
-      description="The AI engines this installation's members can run on, and whether each one can answer now. This page only shows them: nothing here enables, disables or changes an engine."
-      title="Engines"
-    >
+    <PageShell description={ENGINES_INTRO} title={ENGINES_TITLE} width="wide">
       {engines.error ? (
         <p
           className="mt-4 rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm"
           role="alert"
         >
-          Couldn't load the engines. Reload the page.
+          {LOAD_FAILED}
         </p>
       ) : null}
 
@@ -72,28 +96,51 @@ export function FreeDuetEngines() {
         <PageEmpty>{engineReasonText(reading.reason)}</PageEmpty>
       ) : null}
 
-      {reading && !reading.reason && reading.engines.length === 0 ? (
-        <PageEmpty>No engines are reported yet.</PageEmpty>
-      ) : null}
+      {reading && !reading.reason ? (
+        <div className="mt-10 grid gap-10 xl:grid-cols-[minmax(0,1fr)_18rem] xl:items-start">
+          <div className="flex min-w-0 flex-col gap-10">
+            {reading.engines.length === 0 ? (
+              <PageEmpty>{NO_ENGINES}</PageEmpty>
+            ) : (
+              <section>
+                <h2 className="sr-only">{ENGINE_STATES_TITLE}</h2>
+                <ul className="grid gap-4 sm:grid-cols-2">
+                  {reading.engines.map((engine, index) => (
+                    <li className="min-w-0" key={engine.id}>
+                      <StaggerItem className="h-full" index={index}>
+                        <EngineCard engine={engine} now={now} />
+                      </StaggerItem>
+                    </li>
+                  ))}
+                </ul>
+              </section>
+            )}
 
-      {reading && !reading.reason && reading.engines.length > 0 ? (
-        <PageSection title="Engines and their state">
-          <PageRows>
-            {reading.engines.map((engine, index) => (
-              <StaggerItem index={index} key={engine.id}>
-                <Item size="sm">
-                  <ItemContent>
-                    <ItemTitle>{engine.name}</ItemTitle>
-                    <ItemDescription>
-                      {engineStateText(engine, now)}
-                    </ItemDescription>
-                  </ItemContent>
-                </Item>
-                {index !== reading.engines.length - 1 && <Separator />}
-              </StaggerItem>
-            ))}
-          </PageRows>
-        </PageSection>
+            {(reading.members?.length ?? 0) > 0 ? (
+              <EngineMembers
+                onChanged={() => void engines.refetch()}
+                reading={reading}
+              />
+            ) : null}
+          </div>
+
+          <aside
+            aria-label={ASIDE_LABEL}
+            className="flex min-w-0 flex-col gap-4"
+          >
+            <DuetCard className="p-5">
+              <h2 className="type-body font-semibold">{KEYS_TITLE}</h2>
+              <p className="type-label mt-2 text-duet-ink-2">{KEYS_TEXT}</p>
+              <p className="type-label mt-2 text-duet-ink-2">
+                {KEYS_NOT_BUILT}
+              </p>
+            </DuetCard>
+            <DuetCard className="p-5">
+              <h2 className="type-body font-semibold">{SPENDING_TITLE}</h2>
+              <p className="type-label mt-2 text-duet-ink-2">{SPENDING_TEXT}</p>
+            </DuetCard>
+          </aside>
+        </div>
       ) : null}
     </PageShell>
   );

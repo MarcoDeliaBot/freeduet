@@ -24,6 +24,7 @@ import { mkdtemp, rm } from "node:fs/promises";
 import { BlockList, connect } from "node:net";
 import { networkInterfaces, tmpdir } from "node:os";
 import { join } from "node:path";
+import { computerTokenFor } from "../src/computer-token";
 
 const root = join(import.meta.dir, "..");
 const installed = (() => {
@@ -51,6 +52,12 @@ const LABELS = {
   "openbot.bot-id": BOT,
   "openbot.namespace": NAMESPACE,
 };
+/**
+ * The token this computer was made holding: the one the supervisor derives for the Bot, so `ensure`
+ * finds a computer that is current and hands it out as it is (a computer holding any other token is
+ * replaced, which is computer-token-http.test.ts's business and not this file's).
+ */
+const OWN_TOKEN = computerTokenFor(KNOWN_TOKEN, NAMESPACE, BOT);
 
 /**
  * This machine's own address that is not loopback: what stands in for another container. Only one the
@@ -114,7 +121,7 @@ function fakeDocker(socket: string) {
         return inspect[1] === CONTAINER && computerThere
           ? Response.json({
               State: { Status: "running", Running: true },
-              Config: { Labels: LABELS, Env: [] },
+              Config: { Labels: LABELS, Env: [`COMPUTER_TOKEN=${OWN_TOKEN}`] },
               NetworkSettings: { Ports: {} },
               Image: "sha256:fake",
             })
@@ -369,6 +376,8 @@ describe.skipIf(!installed)(
         `/computers/${BOT}/ensure`,
         `/computers/${BOT}/stop`,
         `/computers/${BOT}/reset`,
+        // The one read that names a token, behind the same name check as the verbs.
+        `/computers/${BOT}/token`,
         "/computers/not.a.bot/ensure",
         "/",
         "/containers/json",

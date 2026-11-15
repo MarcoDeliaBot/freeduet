@@ -861,6 +861,8 @@ describe("answering a request", () => {
       key: CALENDAR,
       title: "Google Calendar",
       tools: ["READ", "WRITE"],
+      // Labelled, because an app with no entry gives from the inbox only what its vendor labelled a read.
+      effects: { READ: "read", WRITE: "write" },
       grant: false,
     });
     const request = await file(CALENDAR);
@@ -1223,12 +1225,28 @@ describe("what approving grants, and when it can be answered", () => {
         .from(pluginGrants)
         .where(eq(pluginGrants.agentId, bot)),
     ).toEqual([]);
-    // Naming the actions is how an administrator grants more than the reads.
+    // Naming the action does not change that. Since 14 November 2026 an approval never gives a tool
+    // that sends, and for an app with no entry that is every tool its vendor did not label a read:
+    // it is allowed in settings, by the person, and the server says so.
     const chosen = await appAs(admin, "admin").request(
       `/api/plugins/access-requests/${request.id}/approve`,
       post({ refs: [`${GMAIL}/SEND_MAIL`] }),
     );
-    expect(chosen.status).toBe(200);
+    expect(chosen.status).toBe(403);
+    expect((await json<{ error: string }>(chosen)).error).toContain(
+      "in settings",
+    );
+    expect(eventsOf("app_access.refused").at(-1)?.payload).toMatchObject({
+      reason: "settings_only_tool",
+      request: request.id,
+    });
+    expect(await statusOf(request.id)).toBe("pending");
+    expect(
+      await database
+        .select()
+        .from(pluginGrants)
+        .where(eq(pluginGrants.agentId, bot)),
+    ).toEqual([]);
   });
 
   for (const [loser, answer] of [

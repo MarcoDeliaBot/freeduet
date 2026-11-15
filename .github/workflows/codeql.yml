@@ -1,0 +1,50 @@
+name: security / CodeQL
+
+# CodeQL is GitHub's own semantic code analysis. It reads the JavaScript/TypeScript and the Python in
+# this repository and puts what it finds in the Security tab (code scanning). It runs on every pull
+# request, and once a week over the default branch so that queries published later look at code that
+# has not changed.
+#
+# Nothing here builds the project: both languages are analysed from source (`build-mode: none`).
+
+on:
+  pull_request:
+  schedule:
+    # Mondays, 03:37 UTC.
+    - cron: "37 3 * * 1"
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  analyze:
+    name: Analyze (${{ matrix.language }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    permissions:
+      contents: read
+      security-events: write # upload the results to code scanning
+    strategy:
+      fail-fast: false
+      matrix:
+        language: [javascript-typescript, python]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@33d7b85da1a04171e211befe2c739303b9a4c066 # v4.39.3
+        with:
+          languages: ${{ matrix.language }}
+          build-mode: none
+
+      - name: Analyze
+        uses: github/codeql-action/analyze@33d7b85da1a04171e211befe2c739303b9a4c066 # v4.39.3
+        with:
+          category: "/language:${{ matrix.language }}"

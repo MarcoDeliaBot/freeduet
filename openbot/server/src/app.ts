@@ -37,7 +37,12 @@ import {
   recordAuditEvent,
 } from "./audit";
 import { createDevRequireUser } from "./auth/dev-actor";
-import { createInstallPairingRoutes, personRule } from "./auth/install-secret";
+import {
+  createInstallPairingRoutes,
+  personRule,
+  signInGate,
+} from "./auth/install-secret";
+import { createRemoteLimits } from "./auth/remote-limits";
 import {
   type AppVariables,
   type AuthService,
@@ -85,7 +90,9 @@ import { mountDesktopConnectionFailure } from "./desktop-connection-failure";
 import { createTranscriptionProvider } from "./dictation/provider";
 import { createDictationRoutes } from "./dictation/routes";
 import { threadReaderClient } from "./freeduet/backend";
+import type { EngineChoices } from "./freeduet/engine-choices";
 import { createEnginesRoutes } from "./freeduet/engines-routes";
+import { createImportPreviewRoutes } from "./freeduet/import/preview-routes";
 import type { HostAccessBroker } from "./host-access/broker";
 import { createHostAccessRoutes } from "./host-access/routes";
 import { identityRoutes } from "./identity/routes";
@@ -456,6 +463,8 @@ export function createApp(
     lifecycle?: BotLifecycleServices;
     /** Settings in chat (docs/design/settings-in-chat.md, slice 1): the person's Undo of a change from chat. */
     settingChanges?: SettingChanges;
+    /** The person's engine choices, changed from the Engines page (docs/design/engines-dashboard.md). */
+    engineChoices?: EngineChoices;
     /**
      * What OpenDuet made for the person, and the tasks it is working on: the Pages tab and the viewer,
      * and Chat's task cards, the task page and Tasks. See openduet/pages.ts and openduet/task-store.ts.
@@ -493,6 +502,16 @@ export function createApp(
    * route registered ahead of a middleware in Hono never passes through it.
    */
   app.use("*", createSameOriginGuard(config));
+  /*
+   * Right behind it, still in front of every route: with sign-in and an installation secret, a signed-in
+   * browser that is not paired with this computer is REMOTE and reaches only the routes auth/remote-limits.ts
+   * lists (docs/design/phone-and-remote.md 3.5). Without sign-in or without a secret it is not mounted, and
+   * single-user mode is as it was.
+   */
+  const pairingGate = signInGate(config);
+  if (pairingGate && auth) {
+    app.use("*", createRemoteLimits(pairingGate, auth));
+  }
   mountDesktopConnectionFailure(app, desktopHostToken);
   mountProviderOAuthProxy(app, modelProviderProxy);
 
@@ -515,6 +534,23 @@ export function createApp(
   // `requireUser`: they are how a browser gets to be the person, and each checks its own credential.
   if (config.singleUser && person.install) {
     app.route("/", createInstallPairingRoutes(person.install));
+  } else if (!config.singleUser) {
+    // With sign-in the same two doors pair a browser (docs/design/phone-and-remote.md 3.5): the cookie
+    // marks a browser at this computer, and the door that sets it asks for a signed-in administrator
+    // on top of the link. Only where there is a secret and a session guard to ask.
+    const gate = signInGate(config);
+    if (gate && auth && roleRepository) {
+      app.route(
+        "/",
+        createInstallPairingRoutes(gate, {
+          signIn: {
+            requireUser: createRequireUser(auth, roleRepository),
+            secure: config.appUrl?.startsWith("https://") ?? false,
+            ...(config.appUrl ? { appUrl: config.appUrl } : {}),
+          },
+        }),
+      );
+    }
   }
   // Projected, never the raw runtime. config.runtime carries the Intelligence contract, including
   // INTELLIGENCE_API_KEY and the licence token, and this endpoint is reachable by anyone. Returning
@@ -702,14 +738,26 @@ export function createApp(
   // govern, the admin screen's API, and the SCIM verbs the GET/POST auth handler above does not take.
   app.use("/api/*", createEnterpriseGate(requireUser));
   app.route("/api/admin/enterprise", createEnterpriseAdminRoutes(requireUser));
-  // The Engines dashboard's read (ENGINES_PLAN slice 6): administrators only, read at each request.
+  // The Engines dashboard (ENGINES_PLAN slices 6 and 7): administrators only, read at each request; the choices of slice 7 where kept.
   app.route(
     "/api/freeduet/engines",
-    createEnginesRoutes(requireUser, () => ({
-      environment: process.env,
-      managedAgent: config.managedAgent,
-    })),
+    createEnginesRoutes(
+      requireUser,
+      () => ({
+        environment: process.env,
+        managedAgent: config.managedAgent,
+      }),
+      coworker?.engineChoices,
+      // With sign-in and a secret, "at the computer" also asks for the pairing cookie (at-the-computer.ts).
+      signInGate(config),
+    ),
   );
+  // The import preview (docs/design/import-from-other-tools.md, slice 2): signed in, the person's own facts, nothing saved.
+  if (coworker?.memory)
+    app.route(
+      "/api/freeduet/import",
+      createImportPreviewRoutes(requireUser, coworker.memory.store),
+    );
   app.on(["PUT", "PATCH", "DELETE"], "/api/auth/scim/*", (context) =>
     auth
       ? auth.handler(context.req.raw)
@@ -1441,7 +1489,8 @@ export function createApp(
     // The runtime resolves its own caller from the request and sits behind no `requireUser`, so with
     // no sign-in the peer rule (auth/peer.ts), and the installation secret where there is one, have
     // to be asked in front of it. The wildcard covers the bare base path too. Only where that rule
-    // applies: a deployment with sign-in is unchanged.
+    // applies: with sign-in the runtime resolves the session itself, and a browser that is not paired
+    // with this computer reaches only the chat calls the list allows (auth/remote-limits.ts).
     if (person.loopbackOnly) app.use("/api/copilotkit/*", requireUser);
     // Mounted at the ROOT with the handler carrying its own basePath. Mounting it at
     // "/api/copilotkit" as well double-prefixes it: Hono strips the prefix before the handler sees
@@ -1672,6 +1721,7 @@ export function createApp(
       createRoutineRoutes(routineStore, requireUser, {
         runner: routineRunner,
         auditStore,
+        channelStore,
       }),
     );
   }
@@ -1725,7 +1775,7 @@ export function createApp(
   if (coworker?.approvals)
     app.route(
       "/api/approvals",
-      createApprovalRoutes(coworker.approvals, requireUser),
+      createApprovalRoutes(coworker.approvals, requireUser, pairingGate),
     );
   if (coworker?.passwords) {
     app.route(

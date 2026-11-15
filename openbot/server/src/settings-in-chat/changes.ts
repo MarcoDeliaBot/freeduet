@@ -14,7 +14,8 @@
  */
 import { randomUUID } from "node:crypto";
 import { and, eq, sql } from "drizzle-orm";
-import type { AuditReader, AuditStore } from "../audit";
+import type { SettingChangeRecord } from "@openbot/shared/setting-change";
+import type { AuditEvent, AuditReader, AuditStore } from "../audit";
 import { recordAuditEvent } from "../audit";
 import type { Database } from "../db/client";
 import { botLifecycle } from "../db/schema/lifecycle";
@@ -23,6 +24,15 @@ import type { ChatNotifyValue, ChatSettingName } from "./allow-list";
 /** The audit target of a change, and of the Undo of one. Free-form strings the reader filters on. */
 export const SETTING_CHANGE_TARGET = "bot_setting";
 export const SETTING_UNDO_TARGET = "bot_setting_undo";
+
+/**
+ * How long a change can be undone: seven days from the change (docs/design/settings-in-chat.md, section 6,
+ * Q1). After it the Undo route refuses, and the change list shows no Undo.
+ */
+export const UNDO_WINDOW_MS = 7 * 24 * 60 * 60 * 1000;
+
+/** How many of the person's changes the list holds, newest first. */
+export const CHANGE_LIST_LIMIT = 20;
 
 type NotifyLevel = "all" | "needs_input" | "none";
 
@@ -44,8 +54,10 @@ export type SettingChangeOutcome =
   | {
       status: "changed";
       changeId: string;
+      agentId: string;
       setting: ChatSettingName;
-      previousValue: NotifyLevel;
+      /** Never `none`: a change from none is refused before anything is written. */
+      previousValue: ChatNotifyValue;
       newValue: ChatNotifyValue;
     }
   | { status: "unchanged"; setting: ChatSettingName; value: ChatNotifyValue };
@@ -68,10 +80,13 @@ export type SettingChanges = {
     ownerUserId: string;
     changeId: string;
   }): Promise<SettingUndoOutcome>;
+  /** The person's own last changes, newest first, each with whether it is undone and whether Undo still works. */
+  list(input: { ownerUserId: string }): Promise<SettingChangeRecord[]>;
 };
 
-function isNotifyLevel(value: unknown): value is NotifyLevel {
-  return value === "all" || value === "needs_input" || value === "none";
+/** A chat change only ever holds these two: `none` is refused before anything is written. */
+function isChatValue(value: unknown): value is ChatNotifyValue {
+  return value === "all" || value === "needs_input";
 }
 
 /** The fields a recorded change holds, read back from its audit event. Anything else is unreadable. */
@@ -80,8 +95,8 @@ function recordOf(payload: Record<string, unknown>) {
   if (
     setting !== "notifications" ||
     typeof agentId !== "string" ||
-    !isNotifyLevel(previousValue) ||
-    !isNotifyLevel(newValue)
+    !isChatValue(previousValue) ||
+    !isChatValue(newValue)
   )
     throw new Error("A recorded setting change could not be read back.");
   return {
@@ -92,12 +107,27 @@ function recordOf(payload: Record<string, unknown>) {
   };
 }
 
+/** The change's own id, which is the audit event's target. A row without one cannot be looked up. */
+function changeIdOf(event: AuditEvent): string {
+  if (event.targetId === null)
+    throw new Error("A recorded setting change could not be read back.");
+  return event.targetId;
+}
+
+/** Whether a change made at `createdAt` can still be undone at `now`: seven days, and no more. */
+function withinUndoWindow(createdAt: string, now: Date): boolean {
+  return now.getTime() - Date.parse(createdAt) <= UNDO_WINDOW_MS;
+}
+
 export function createSettingChanges(deps: {
   database: Database;
   audit: AuditStore;
   reader: AuditReader;
+  /** The clock the Undo window is measured by. The real clock unless a test gives another. */
+  now?: () => Date;
 }): SettingChanges {
   const { database, audit, reader } = deps;
+  const clock = deps.now ?? (() => new Date());
 
   async function levelOf(
     ownerUserId: string,
@@ -184,6 +214,7 @@ export function createSettingChanges(deps: {
       return {
         status: "changed",
         changeId,
+        agentId,
         setting,
         previousValue: previous,
         newValue: value,
@@ -222,6 +253,11 @@ export function createSettingChanges(deps: {
         );
 
       const recorded = recordOf(change.payload);
+      if (!withinUndoWindow(change.createdAt, clock()))
+        throw new SettingRefusedError(
+          "That change is more than seven days old, so it can no longer be undone. You can still set notifications on the Bot's own page.",
+          409,
+        );
       if (
         !(await swap(
           ownerUserId,
@@ -265,6 +301,62 @@ export function createSettingChanges(deps: {
         setting: recorded.setting,
         value: recorded.previousValue,
       };
+    },
+
+    async list(input) {
+      const { ownerUserId } = input;
+      const { events } = await reader.list({
+        eventType: "configuration.changed",
+        targetType: SETTING_CHANGE_TARGET,
+        actorUserId: ownerUserId,
+        limit: CHANGE_LIST_LIMIT,
+      });
+      if (events.length === 0) return [];
+
+      // Undone is read per change, under the person's own id, so the answer is exact for every row
+      // on the page and not only for the undos that happen to be among the newest.
+      const rows = await Promise.all(
+        events.map(async (event) => {
+          const changeId = changeIdOf(event);
+          const { events: undos } = await reader.list({
+            eventType: "configuration.changed",
+            targetType: SETTING_UNDO_TARGET,
+            targetId: changeId,
+            actorUserId: ownerUserId,
+            limit: 1,
+          });
+          return { event, changeId, undone: undos.length > 0 };
+        }),
+      );
+
+      const levels = await database
+        .select({ agentId: botLifecycle.agentId, notify: botLifecycle.notify })
+        .from(botLifecycle)
+        .where(eq(botLifecycle.ownerUserId, ownerUserId));
+      // No row is the default, as in `levelOf`.
+      const levelOfBot = new Map(
+        levels.map((row) => [row.agentId, row.notify]),
+      );
+      const now = clock();
+
+      return rows.map(({ event, changeId, undone }) => {
+        const recorded = recordOf(event.payload);
+        // The setting still holds what this change set, so Undo would put the old value back. If a
+        // later change moved it, Undo would refuse, so the list shows none.
+        const stillSet =
+          (levelOfBot.get(recorded.agentId) ?? "all") === recorded.newValue;
+        return {
+          changeId,
+          agentId: recorded.agentId,
+          setting: recorded.setting,
+          previousValue: recorded.previousValue,
+          newValue: recorded.newValue,
+          at: event.createdAt,
+          undone,
+          undoable:
+            !undone && withinUndoWindow(event.createdAt, now) && stillSet,
+        };
+      });
     },
   };
 }

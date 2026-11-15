@@ -232,7 +232,7 @@ for (const { decision, names, home } of TRACKED) {
     }
     // No recorded debt: one home, and the diff names any file that became a second one.
     expect(found).toEqual(home ? [home] : []);
-  });
+  }, 45_000); // Walks every source tree (definitionsOf), so it can outlast bun's 5 s on a loaded runner.
 }
 
 /**
@@ -417,7 +417,7 @@ for (const { decision, patterns, home } of SPELLED) {
     const known = KNOWN_SECOND_SPELLINGS[decision];
     // Recorded debt: equality both ways, as for the name table. With none, the home and only it.
     expect(found).toEqual([...(known ? known.sites : home)].sort());
-  });
+  }, 45_000); // Walks every source tree (spellingsOf), so it can outlast bun's 5 s on a loaded runner.
 }
 
 /*

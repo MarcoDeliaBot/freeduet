@@ -1,6 +1,6 @@
 /**
  * What the server holds to an approval card every time, whatever the person switched on (D35,
- * docs/M1_PLAN.md section 18). Three cases, and nothing else:
+ * docs/M1_PLAN.md section 18). Four cases, and nothing else:
  *
  * 1. A WRITE MADE BY A RUN NOBODY WAS WATCHING. A routine, an event trigger (a responsibility's run)
  *    and a hand-off whose chain began in one. In the person's own live chat turn the person is there
@@ -15,17 +15,33 @@
  * 3. CHANGING ONE OF THE PERSON'S SETTINGS FROM CHAT. The Settings connector's change tool
  *    (`plugins/builtin-settings.ts`, settings-in-chat slice 1) is a write that asks the person before
  *    anything changes, whatever Full access says. Its list of settings is decided in its own module.
+ *    That is the person's own live turn. In a run nobody is attending (case 1) the call never gets
+ *    here: `callTool` refuses it first (`settings-in-chat/own-turn.ts`, docs/design/settings-in-chat.md
+ *    section 8.9), so no card is opened for it. The unattended-write branch below still names such a run
+ *    as defence in depth, for a caller that reached the gate some other way.
+ *
+ * 4. A WRITE MADE IN A REMOTE SESSION'S RUN (docs/design/phone-and-remote.md 3.5.5, decision H). A person
+ *    who is signed in from a browser that is not paired with the computer may chat with a member. What
+ *    the member then writes asks a card whatever Full access, a saved rule, the reviewer or the typed-
+ *    recipient shortcuts would have said, because those all read "the person's own live turn" as "the
+ *    person is at the desk and typed this", and a phone that is lost or lifted is not that. The card
+ *    can still be allowed once from there (`approvals/remote-answer.ts` says which ones, and a member's
+ *    own computer is not one of them); it is never answered by a rule, and never saved as one. The mark
+ *    is the run's initiator `remote`, set by the server from the pairing cookie (`copilot.ts`,
+ *    `createRequestAgents`); a hop made from such a run keeps it as its root, so what the receiving
+ *    member writes asks too.
  *
  * WHO DECIDES. Only facts the server holds: the run's initiator (the approval context and the signed
  * run, never a word of the model's), the transport the connector call resolved to, and the answer of
  * the check that asks about a new email. Nothing the model writes can add or lift an ask.
  *
- * WHAT IT IS NOT. Never a read. Never the Bot's own workspace or commands on the person's computer
- * (`NOT_ACCOUNT_ACTIONS`: they reach no account, and a routine that writes a file would otherwise wait
- * for a card forever). Never a hand-off (`effect: "delegate"`: D21 pre-approves it, and what the
- * receiving member then writes meets this same rule in its own run). Not a run started by the person,
- * or a hop traced to one. A hand-off, a safety requirement or a rule that hands the action to the
- * person is stricter than a card, so it still comes first (`approvals/policy.ts`).
+ * WHAT IT IS NOT. Never a read. Never, in cases 1 to 3, the Bot's own workspace or commands on the
+ * person's computer (`NOT_ACCOUNT_ACTIONS`: they reach no account, and a routine that writes a file would
+ * otherwise wait for a card forever); case 4 does ask for them. Never a hand-off (`effect: "delegate"`:
+ * D21 pre-approves it, and what the receiving member then writes meets this same rule in its own run).
+ * Not a run started by the person at the computer, or a hop traced to one. A hand-off, a safety
+ * requirement or a rule that hands the action to the person is stricter than a card, so it still comes
+ * first (`approvals/policy.ts`).
  *
  * WHAT THE ANSWER LOOKS LIKE. `source: "always_ask"`, the same outcome a new email already has: the
  * store refuses "Always allow" for it, a saved rule never answers it, and both cards hide the button.
@@ -45,6 +61,13 @@ export const AUTOMATION_CHANGE_REASON =
  */
 export const SETTING_CHANGE_REASON =
   "A Bot changing one of your settings from chat always asks you first, with Full access on or off.";
+
+/**
+ * What the person reads on the card when the run was started from a browser that is not paired with the
+ * computer. It says what the card is for and how it goes away: a paired browser works as it always did.
+ */
+export const REMOTE_WRITE_REASON =
+  "You sent this from a browser that is not paired with the computer FreeDuet runs on, so it always asks you first, whatever Full access or your saved rules say. A browser paired at the computer works as before.";
 
 /** A chain of hand-offs is at most this long here; the desk caps it far lower, this only ends a loop. */
 const MAX_HOPS = 16;
@@ -73,6 +96,15 @@ export function startedUnattended(
 ): boolean {
   const kind = rootOf(initiator)?.kind;
   return kind === "routine" || kind === "responsibility";
+}
+
+/**
+ * Whether the run began in a remote session: a signed-in browser that is not paired with the computer. A
+ * hand-off made from such a run began there too, so it is read through its root like the unattended ones.
+ * The person's own turn at the computer (no initiator, or `person`) is not.
+ */
+export function startedRemote(initiator: AuditInitiator | undefined): boolean {
+  return rootOf(initiator)?.kind === "remote";
 }
 
 export type AlwaysAskFacts = {
@@ -107,7 +139,18 @@ export type AlwaysAskFacts = {
  */
 export function alwaysAskReason(facts: AlwaysAskFacts): string | undefined {
   if (facts.effect !== "write") return undefined;
-  if (NOT_ACCOUNT_ACTIONS.test(facts.toolRef)) return undefined;
+  const remote =
+    !facts.answeredByCard &&
+    (startedRemote(facts.runInitiator) || startedRemote(facts.callInitiator));
+  /*
+   * A member's own workspace and its commands reach no account, so a routine is not held to a card for
+   * them (it would wait for one nobody sees). A run that began in a remote session is: the person is
+   * there to be asked, and the card cannot be answered from that browser (a computer tool is the
+   * computer's, approvals/remote-answer.ts), so no road leads from a remote chat to a member's computer
+   * without somebody at it (docs/design/phone-and-remote.md, decision J).
+   */
+  if (NOT_ACCOUNT_ACTIONS.test(facts.toolRef))
+    return remote ? REMOTE_WRITE_REASON : undefined;
   if (
     !facts.answeredByCard &&
     (startedUnattended(facts.runInitiator) ||
@@ -116,5 +159,5 @@ export function alwaysAskReason(facts: AlwaysAskFacts): string | undefined {
     return UNATTENDED_WRITE_REASON;
   if (facts.configuresAutomation) return AUTOMATION_CHANGE_REASON;
   if (facts.changesSetting) return SETTING_CHANGE_REASON;
-  return undefined;
+  return remote ? REMOTE_WRITE_REASON : undefined;
 }

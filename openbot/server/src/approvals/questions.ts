@@ -1,5 +1,6 @@
 import { and, desc, eq, isNull, sql } from "drizzle-orm";
 import { z } from "zod";
+import { REMOTE_INITIATOR } from "../audit";
 import type { Database } from "../db/client";
 import { workItems } from "../db/schema/work";
 import { ApprovalNotFoundError, ApprovalRefusedError } from "./types";
@@ -21,6 +22,7 @@ const questionSchema = z.object({
   initiator: z
     .discriminatedUnion("kind", [
       z.object({ kind: z.literal("person") }),
+      z.object({ kind: z.literal("remote") }),
       z.object({ kind: z.literal("deployment") }),
       z.object({ kind: z.literal("routine"), id: z.string().min(1) }),
       z.object({ kind: z.literal("responsibility"), id: z.string().min(1) }),
@@ -104,7 +106,20 @@ export function createApprovalQuestions(
         .limit(100);
       return rows.map(listedQuestion).filter((row) => row !== null);
     },
-    async respond(owner: string, id: string, response: string) {
+    async respond(
+      owner: string,
+      id: string,
+      response: string,
+      /**
+       * `remote`: the answer was typed in a browser that is not paired with the computer. The run that
+       * the answer resumes is then marked as one (`REMOTE_INITIATOR`) when it was asked in the person's
+       * own turn at the computer (or by a hop, whose root this record does not keep): that run would
+       * otherwise count as the person's own with the phone's words in it. A routine's or a trigger's
+       * question keeps its initiator, which asks a card for every write already and must come back as
+       * itself, and so do the kinds that are not a person's turn at all.
+       */
+      options: { remote?: boolean } = {},
+    ) {
       const answer = z.string().trim().min(1).max(6000).parse(response);
       const [current] = await database
         .select()
@@ -142,7 +157,13 @@ export function createApprovalQuestions(
             key: id,
             payload: {
               ownerUserId: owner,
-              question: parsed.data,
+              question:
+                options.remote &&
+                (parsed.data.initiator === undefined ||
+                  parsed.data.initiator.kind === "person" ||
+                  parsed.data.initiator.kind === "handoff")
+                  ? { ...parsed.data, initiator: REMOTE_INITIATOR }
+                  : parsed.data,
               response: answer,
             },
           })

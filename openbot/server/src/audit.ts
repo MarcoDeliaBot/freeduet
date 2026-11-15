@@ -602,6 +602,14 @@ export type { AuditInitiator };
 
 export const PERSON_INITIATOR: AuditInitiator = { kind: "person" };
 
+/**
+ * A run started by the person's own message from a browser that is not paired with the computer
+ * (docs/design/phone-and-remote.md 3.5.5). Not `PERSON_INITIATOR` on purpose: every rule that lets a
+ * person's own live turn act without a card (Full access, the typed-recipient shortcuts, a setting
+ * changed from chat) reads that kind and would read a stolen phone's words as the person at the desk.
+ */
+export const REMOTE_INITIATOR: AuditInitiator = { kind: "remote" };
+
 /** The deployment acting as itself: at start-up, or refusing a caller it could not identify. */
 export const DEPLOYMENT_INITIATOR: AuditInitiator = { kind: "deployment" };
 
@@ -634,6 +642,7 @@ export function handoffInitiator(
  */
 export const auditInitiatorKinds = [
   "person",
+  "remote",
   "deployment",
   "routine",
   "responsibility",
@@ -757,7 +766,11 @@ export function auditSink(store: AuditStore): AuditSink {
 function initiatorColumns(initiator: AuditInitiator | undefined) {
   if (!initiator)
     return { initiatorKind: "person" as const, initiatorId: null };
-  if (initiator.kind === "person" || initiator.kind === "deployment") {
+  if (
+    initiator.kind === "person" ||
+    initiator.kind === "remote" ||
+    initiator.kind === "deployment"
+  ) {
     return { initiatorKind: initiator.kind, initiatorId: null };
   }
   return { initiatorKind: initiator.kind, initiatorId: initiator.id };
