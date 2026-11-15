@@ -160,6 +160,7 @@ function agent(
     mine: true,
     name: "Agent",
     roleDescription: "Role",
+    roleDescriptionLimit: 1000,
     systemOwned: false,
     title: "Title",
     visibility: "public",
