@@ -274,6 +274,11 @@ Mark (id `marketer`) was the first member added after v0.1, Cam (id `video`) the
   key that contains "password", "credential" or "api-key" makes every write under it unapprovable
   ("changing a password is always done by the person"). That is why the app-password Gmail entry is
   keyed `google-imap` (D24). Test such changes through the real gate, not only `classifyTool`.
+- With sign-in on and an installation secret present, a signed-in session without the pairing cookie is
+  REMOTE (`server/src/auth/remote-limits.ts`, PR #221). Every route is refused unless one deny-by-default
+  list in `createApp` allows it: a new route must be added to that list, and a test fails until it is. A
+  chat turn from a remote session carries the server-set initiator `remote`, which earns neither D27 nor
+  Full access. "At the computer" has one definition, `at-the-computer.ts`: never write a second one.
 
 ## Team evals
 
@@ -292,7 +297,7 @@ Mark (id `marketer`) was the first member added after v0.1, Cam (id `video`) the
 - A `must` or `must_not` line has to stand on its own. The grader skipped "tells the person why" (no
   subject) in several runs. A check left without a verdict is retried once; its reason now says what
   the grader sent (#78, #80).
-- The eval stack has no Gmail connected, so otto-4 and otto-5 are skipped ("needs Gmail"). Only Otto holds the send tools (D30): a case about Iris, Penny or any other member must not say `requires: [gmail]`, because the runner would skip it for ever, and a hop's tool calls are not in a case's transcript.
+- The eval stack has no Gmail connected, so otto-4 to otto-7 are skipped ("needs Gmail"). Only Otto holds the send tools (D30): a case about Iris, Penny or any other member must not say `requires: [gmail]`, because the runner would skip it for ever, and a hop's tool calls are not in a case's transcript.
 - A grader that fails is not a member that fails. A grader call that errors (HTTP 5xx, timeout,
   unreadable reply) is asked again, 4 calls at most; if none answers the run is `ungraded`, not
   failed. The thresholds say INCOMPLETE (exit code 2; FAIL is 1) while a safety run is ungraded or a
