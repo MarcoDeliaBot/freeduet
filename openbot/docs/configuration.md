@@ -1528,6 +1528,52 @@ conversations stay tellable from the other's.
 
 Set `OPENBOT_ONE_COMPUTER_EACH=false` when using `start.sh` to run all Bots against one shared computer.
 
+## Updating
+
+One command updates this installation to a newer version and can go back if the update does not work. Type it in the folder you cloned FreeDuet into, while FreeDuet is running:
+
+```
+bash openbot/scripts/update.sh --check
+bash openbot/scripts/update.sh
+```
+
+`--check` only looks. It says which version you are on, which one it would go to, and the steps in order, and it changes nothing. Without it, the command does this, and says each step in plain words as it goes:
+
+1. **Looks first.** It refuses, and changes nothing, when the folder has changes of your own that an update would not keep (put them away with `git stash`, or throw them away if they are not yours), when the database does not answer, when the database container Docker finds is not the one of this folder (see "Which database", below), when the new version cannot be reached by moving forward only, when there is no room for the copy, when the folder for the copies is inside the repository, or when another update is running. Then it shows the plan, with the Docker project it works on, and asks nothing.
+2. **Stops FreeDuet** with `scripts/stop.sh`, and waits up to 75 seconds (`--watch`) to see that nothing starts it again.
+3. **Copies your data**, with nothing else running so that nothing you did can be missing: the database, your settings file (`.env`) and the database user's password, into a private folder on this computer, `~/.freeduet/updates/update-<date and time>`. It reads the copy back and records its checksum (sha256) before it goes on, and checks both again right before it would ever restore from it.
+4. **Moves the code forward** (fast-forward only) to the newest release, runs `bun install --frozen-lockfile`, and starts FreeDuet with `scripts/start.sh`, which brings the database up to date.
+5. **Checks that the app and the API answer**, for about two minutes (`--wait`).
+
+If anything goes wrong from the stop on, it goes back by itself: the code to the commit you were on, `.env` and the database from the copy, then it starts that version and checks that it answers. It says plainly that the update did not go through and where the copy is.
+
+| Option | What it does |
+| ------ | ------------ |
+| `--check` | Shows what it would do and changes nothing. |
+| `--to <ref>` | Updates to this tag, branch or commit instead of the newest release. It must be ahead of where you are: this command only moves forward. When a local branch and `origin/<ref>` both exist and the local one is behind, it takes `origin/<ref>`, and it says which one it took. |
+| `--main` | Updates to `origin/main`, the development version, instead of the newest release. |
+| `--keep <n>` | Keeps the newest `n` copies of this installation (default 5). The copy made in this run is never deleted, and neither is a copy of a run that did not finish. |
+| `--watch <seconds>` | How long to wait after the stop to see whether something starts FreeDuet again (default 75). `0` does not wait. |
+| `--wait <seconds>` | About how long to wait for the app and the API to answer at the end (default 120). |
+| `--copies <folder>` | Where the copies go (default `~/.freeduet/updates`). The disk must keep file permissions, and the folder must be outside the repository: a copy holds every secret, and a git command run there could publish or delete it. |
+
+What it ends with:
+
+| Exit code | What it means | What you do |
+| --------- | ------------- | ----------- |
+| `0` | Updated, or there was nothing newer. Also when you press Ctrl-C after the update worked, while the older copies are being tidied: it says the update is done, and the result stays "updated". | Nothing. |
+| `10` | The update did not go through, and you are back where you were: the code, the database and `.env` are as they were before, and that version is running again. The copy is kept. | Nothing urgent. Read what it said was wrong before you try again. Whatever you did in the new version before it went back is not in the database you are back to. |
+| `20` | You have to finish by hand: going back did not work either, or something started FreeDuet again while the command was working, or you pressed Ctrl-C after FreeDuet was stopped. Your data is in the copy, which is never deleted. If it was stopped while the database was being put back, it says the database may be half restored. | Run the commands it printed, in the order it printed them (from the first one again, if it said the database may be half restored). They go back to the commit you were on, check the copy, put `.env` and the database back from the copy, and start FreeDuet. If the copy no longer matches the checksum it had when it was made, the command does not use it, leaves the database alone, and prints how to check the copy instead of a command that restores from it. |
+| `1` | It refused to start and changed nothing. | Read the reason it gave, fix it and run it again. |
+
+If something on the computer starts FreeDuet again when it stops (a watchdog, a scheduled task, a service), pause it before you run the command: the plan it shows says so, and so do the commands it prints, which stop and start FreeDuet by hand. The command looks for exactly that after the stop, and again before it touches the database; if FreeDuet comes back, it stops with code `20` and your database, your settings and your code are as they were.
+
+Which database. Docker finds a stack by its project name (`COMPOSE_PROJECT_NAME`; with none, the name of the folder, so two folders both called `openbot` share their containers). Before it stops anything the command checks that the database container Docker finds is in this folder and in the project this settings file names. It prints that project in its plan and writes it in `record.txt`. It refuses, and changes nothing, when the container is another folder's (give each folder its own `COMPOSE_PROJECT_NAME`, as in "To run two deployments on one Docker host" above), when `COMPOSE_PROJECT_NAME` in the shell is different from the one in the settings file, or when Docker will not say. The second stack of a machine (`OPENBOT_ENV_FILE=.env.eval`, project `freeduet-eval`, from the same folder) is updated by running the command for it, and a run for one stack does not touch the other.
+
+The copy holds every secret that `.env` and the database hold, so the folder is readable only by you (the folder `700`, each file `600`) and the command never prints one of those values. Delete a copy when you do not need it; the command deletes only older copies that it made itself for this installation, and only after an update that worked. A copy has the database (`database.dump`, which `pg_restore` reads), `env.copy`, `role-password.sql` (the stored form of the database user's password, so that going back leaves the user as it was) and `record.txt` (what you were on, where it went, how it ended; no secrets).
+
+Limits. It updates a folder made with `git` (the installer makes one); an unpacked zip is refused. It copies the database that Docker starts here, and refuses one named in `DATABASE_URL` that is somewhere else. Each Bot's own computer keeps its files and logins in Docker volumes, which an update leaves alone and the copy does not include. `OPENBOT_ENV_FILE` is honoured, as in `start.sh` and `stop.sh`: the settings file it names is the one copied and put back. A checkout older than this command does not have it: move that one forward once by hand (`git pull --ff-only`, then `bash scripts/start.sh`), after a copy of the database of your own (`pg_dump -Fc` from the postgres container). The command is new: what it does, what it checks and what it has not been run on are in `docs/design/update-and-go-back.md`.
+
 ## Moving from no sign-in to sign-in
 
 With no sign-in, everything you did belongs to one fixed person. When you turn a sign-in provider on, your first sign-in makes a new person, who owns nothing. This tool moves what the fixed person owns to the address you sign in with. You run it yourself, once, before your first sign-in. Nothing runs it for you.
