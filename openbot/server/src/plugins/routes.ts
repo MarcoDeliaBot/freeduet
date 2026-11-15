@@ -12,6 +12,7 @@ import type {
   PluginRouteContext,
 } from "./route-groups/context";
 import { mountGrantRoutes } from "./route-groups/grants";
+import { mountMailRuleRoutes } from "./route-groups/mail-rules";
 import { mountOAuthCallbackRoute } from "./route-groups/oauth-callback";
 import { mountServerRoutes } from "./route-groups/servers";
 import { mountSkillRoutes } from "./route-groups/skills";
@@ -213,6 +214,7 @@ export function createPluginRoutes(
   mountConnectionRoutes(context);
   mountOAuthCallbackRoute(context);
   mountSkillRoutes(context);
+  mountMailRuleRoutes(context);
   mountGrantRoutes(context);
   mountAppAccessRoutes(context);
 

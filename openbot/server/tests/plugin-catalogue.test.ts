@@ -258,12 +258,13 @@ describe("Gmail and Google Calendar", () => {
     ]);
   });
 
-  test("names its reads and its eight writes explicitly", () => {
+  test("names its reads and its ten writes explicitly", () => {
     expect(entry?.readTools).toEqual([
       "gmail_search_messages",
       "gmail_read_message",
       "calendar_list_events",
       "gmail_list_labels",
+      "gmail_list_rules",
     ]);
     expect(entry?.writeTools).toEqual([
       "gmail_send_reply",
@@ -274,6 +275,8 @@ describe("Gmail and Google Calendar", () => {
       "gmail_mark_messages",
       "gmail_bin_messages",
       "gmail_spam_messages",
+      "gmail_create_rule",
+      "gmail_disable_rule",
     ]);
   });
 

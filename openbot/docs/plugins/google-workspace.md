@@ -119,6 +119,9 @@ models do.
 | `gmail_bin_messages`    | write  | Moves up to 100 messages named by id to the Bin (Gmail's Trash), which keeps them about 30 days; the person can restore them. Not a permanent deletion, no tool empties the Bin. |
 | `gmail_spam_messages`   | write  | Moves up to 100 messages named by id to Spam; Gmail deletes mail in Spam after about 30 days, until then the person can move it back. No tool empties Spam.                                      |
 | `gmail_mark_messages`   | write  | Marks up to 100 messages named by id as read or unread.                                                                                                                                              |
+| `gmail_create_rule`     | write  | Creates a mail rule that FreeDuet keeps and applies to new mail (not a Gmail filter): conditions on the sender, the recipient, the subject, the `List-Id` or words in the subject or sender, and actions that only label, archive, mark read, move to Spam or move to the Bin. Never forwards, replies or sends. See design/mail-rules.md. |
+| `gmail_list_rules`      | read   | Lists the person's mail rules for this connection in plain words, with when each last ran and how many messages it touched. |
+| `gmail_disable_rule`    | write  | Disables, enables or deletes one mail rule, by its id from the list. |
 
 The catalogue names the four reads and the eight writes explicitly, so any other tool name counts as a
 write.
@@ -160,6 +163,15 @@ What the connector itself enforces, whatever was approved:
   a filter, or moves a message to another folder; the only removals from the Inbox are a move to the Bin and a move to Spam, below. The
   `gmail.send` scope could not do any of those anyway. It does allow sending
   a new message, which is why `gmail_send_message` needs no new scope.
+
+### Mail rules
+
+`gmail_create_rule`, `gmail_list_rules` and `gmail_disable_rule` are on both connections. A rule is kept by
+FreeDuet, not by Gmail: a timer on the server (every five minutes, no model) searches each connection's inbox
+for mail that arrived after the rule was made and applies the rule's actions with the same organise calls and
+limits as above. Creating a rule goes through the same gate as the other mailbox changes (no card only when the
+person's own typed words order a standing rule), and a rule never forwards, replies or sends. Design, threats and
+the bounded exception to D35: `docs/design/mail-rules.md`. It needs no new scope.
 
 ### Organising a mailbox
 

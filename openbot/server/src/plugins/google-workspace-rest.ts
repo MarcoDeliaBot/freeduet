@@ -26,6 +26,7 @@ import {
   parseOrganiseCall,
   shownMessage,
 } from "./mail-organise";
+import { MAIL_RULE_TOOL_DEFINITIONS } from "./mail-rules";
 import type { McpCallResult, McpTool } from "./mcp";
 
 /**
@@ -251,6 +252,7 @@ const TOOLS: readonly McpTool[] = Object.freeze([
   },
   // Organising a mailbox. Defined once in ./mail-organise, for both ways of connecting.
   ...ORGANISE_TOOL_DEFINITIONS,
+  ...MAIL_RULE_TOOL_DEFINITIONS,
 ]);
 
 type Connection = { url: string; token?: string };

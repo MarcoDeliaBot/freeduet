@@ -45,6 +45,12 @@ const WRITES = [
   SPAM_MESSAGES,
 ];
 const NAMES = [LIST_LABELS, ...WRITES];
+// The standing-rule tools (D46) ride on the same skill.
+const RULE_NAMES = [
+  "gmail_create_rule",
+  "gmail_list_rules",
+  "gmail_disable_rule",
+];
 const SERVERS = [GOOGLE_WORKSPACE, GOOGLE_APP_PASSWORD];
 const REFS = SERVERS.flatMap((server) =>
   NAMES.map((name) => `${server}/${name}`),
@@ -96,14 +102,16 @@ describe("the skill that carries the organising tools", () => {
     );
     if (!skill) throw new Error("the skill is not in the package");
     const names = [...new Set(skill.tools.map((ref) => ref.split("/")[1]))];
-    expect(names.sort()).toEqual([...NAMES, "gmail_search_messages"].sort());
+    expect(names.sort()).toEqual(
+      [...NAMES, ...RULE_NAMES, "gmail_search_messages"].sort(),
+    );
     for (const server of SERVERS)
       expect(
         skill.tools
           .filter((ref) => ref.startsWith(`${server}/`))
           .map((ref) => ref.slice(server.length + 1))
           .sort(),
-      ).toEqual([...NAMES, "gmail_search_messages"].sort());
+      ).toEqual([...NAMES, ...RULE_NAMES, "gmail_search_messages"].sort());
     expect(
       skill.tools.every((ref) => SERVERS.some((s) => ref.startsWith(`${s}/`))),
     ).toBe(true);

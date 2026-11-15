@@ -1,3 +1,4 @@
+import { isMailRuleTool } from "../src/plugins/mail-rules";
 import {
   afterEach,
   beforeEach,
@@ -187,7 +188,7 @@ describe("what the adapter offers", () => {
     );
   });
 
-  test("exactly the twelve tools of the contract, in their contract names", async () => {
+  test("exactly the fifteen tools of the contract, in their contract names", async () => {
     const tools = await listTools(connection);
     expect(tools.map((tool) => tool.name)).toEqual([
       "gmail_search_messages",
@@ -202,17 +203,35 @@ describe("what the adapter offers", () => {
       "gmail_mark_messages",
       "gmail_bin_messages",
       "gmail_spam_messages",
+      // D46: kept by the plugin store, not by this adapter; it offers them and never carries them out.
+      "gmail_list_rules",
+      "gmail_create_rule",
+      "gmail_disable_rule",
     ]);
   });
 
   test("every advertised tool is one the dispatcher handles", async () => {
     for (const tool of await listTools(connection)) {
+      if (isMailRuleTool(tool.name)) continue;
       const calls = stubGoogle(() => anyToolBody);
       const result = await callTool(connection, tool.name, argsFor(tool));
       expect(calls.length).toBeGreaterThan(0);
       expect(result.isError).toBe(false);
       // JSON, every one: other code parses these.
       expect(() => JSON.parse(result.text)).not.toThrow();
+    }
+  });
+
+  test("the standing-rule tools are kept by the store: this adapter refuses them without a request", async () => {
+    for (const name of [
+      "gmail_create_rule",
+      "gmail_list_rules",
+      "gmail_disable_rule",
+    ]) {
+      const calls = stubGoogle(() => anyToolBody);
+      const result = await callTool(connection, name, { words: "x" });
+      expect(result.isError).toBe(true);
+      expect(calls).toHaveLength(0);
     }
   });
 

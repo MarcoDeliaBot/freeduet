@@ -6,6 +6,7 @@ import { grantMethods } from "./plugin-store/grants";
 import type { PluginStoreOptions } from "./plugin-store/model";
 import { serverMethods } from "./plugin-store/servers";
 import { skillMethods } from "./plugin-store/skills";
+import { mailRuleMethods } from "./plugin-store/mail-rules";
 import { userSecretMethods } from "./plugin-store/user-secret";
 
 export type { CatalogueEntry } from "./catalogue";
@@ -59,6 +60,7 @@ export function createPluginStore(options: PluginStoreOptions) {
     ...callMethods(context),
     ...appAccessMethods(context),
     ...userSecretMethods(context),
+    ...mailRuleMethods(context),
   };
 }
 
