@@ -14,6 +14,7 @@ function agent(overrides: Partial<AgentProfile>): AgentProfile {
     name: "Renewal Desk",
     title: "Accounts Receivable",
     roleDescription: "Chase overdue invoices.",
+    roleDescriptionLimit: 1000,
     avatarSeed: "renewal-desk",
     visibility: "public",
     endpoint: null,

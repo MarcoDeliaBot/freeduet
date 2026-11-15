@@ -87,6 +87,7 @@ function agent(
     name: "Agent",
     title: "Title",
     roleDescription: "Role",
+    roleDescriptionLimit: 1000,
     avatarSeed: "seed",
     visibility: "private",
     endpoint: null,

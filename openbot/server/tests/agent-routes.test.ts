@@ -331,6 +331,12 @@ describe("agent lifecycle routes", () => {
         actor,
         { ...validInput, systemPrompt: validInput.roleDescription },
       ],
+      /*
+       * The edit route reads the Bot before it parses the body: how long its "What it does" text may
+       * be depends on the stored Bot (8,000 for an imported one, 1,000 for any other), and nothing a
+       * request sends can change that.
+       */
+      ["get", actor, "agent-1"],
       ["update", actor, "agent-1", validInput],
       ["duplicate", actor, "agent-1"],
       ["setHidden", actor, "agent-1", true],
@@ -366,6 +372,7 @@ describe("agent lifecycle routes", () => {
           name: validInput.name,
           title: validInput.title,
           roleDescription: validInput.roleDescription,
+          roleDescriptionLimit: 1000,
           avatarSeed: "expense-manager",
           assignedToMe: false,
           visibility: "private",
@@ -381,6 +388,7 @@ describe("agent lifecycle routes", () => {
           name: validInput.name,
           title: validInput.title,
           roleDescription: validInput.roleDescription,
+          roleDescriptionLimit: 1000,
           avatarSeed: "expense-manager",
           assignedToMe: false,
           visibility: "private",
@@ -396,6 +404,7 @@ describe("agent lifecycle routes", () => {
           name: validInput.name,
           title: validInput.title,
           roleDescription: validInput.roleDescription,
+          roleDescriptionLimit: 1000,
           avatarSeed: "expense-manager",
           assignedToMe: false,
           visibility: "public",
@@ -479,6 +488,7 @@ describe("agent lifecycle routes", () => {
     };
     expect(store.calls).toEqual([
       ["create", actor, expected],
+      ["get", actor, "agent-1"],
       ["update", actor, "agent-1", expected],
     ]);
   });
@@ -508,7 +518,16 @@ describe("agent lifecycle routes", () => {
     expect(await json(partial)).toEqual({
       error: "Title must be text between 1 and 120 characters.",
     });
-    expect(store.calls).toEqual([]);
+    // Nothing is written for a body that is refused. The edit route reads the Bot first, once per
+    // request, to learn the limit of its text (see the lifecycle test); the create route reads nothing.
+    expect(store.calls).toEqual(
+      method === "PATCH"
+        ? [
+            ["get", actor, "agent-1"],
+            ["get", actor, "agent-1"],
+          ]
+        : [],
+    );
   });
 
   test("returns 404 when get returns null", async () => {
