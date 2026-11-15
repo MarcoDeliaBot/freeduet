@@ -53,6 +53,7 @@ export function mountConnectionRoutes({
   activeProvider,
   appOfUrl,
   actorEmail,
+  skillActor,
 }: PluginRouteContext) {
   /**
    * Where a person's own connections are, and how to start a new one.
@@ -1203,11 +1204,24 @@ export function mountConnectionRoutes({
   routes.get("/servers/:id/secret-connection", requireUser, async (context) => {
     context.header("Cache-Control", "no-store");
     try {
+      const status = await store.userSecretStatus({
+        serverId: context.req.param("id"),
+        userId: context.var.actor.id,
+      });
+      /*
+       * `?bot=` is a question, not an instruction: whether the form may say that member will use this
+       * app. True only for a member of FreeDuet's package and an app on the automatic allow-list.
+       */
+      const bot = context.req.query("bot")?.trim();
       return context.json(
-        await store.userSecretStatus({
-          serverId: context.req.param("id"),
-          userId: context.var.actor.id,
-        }),
+        bot
+          ? {
+              ...status,
+              botEligible:
+                skillActor(context).isAdmin &&
+                (await store.automaticEligible(context.req.param("id"), bot)),
+            }
+          : status,
       );
     } catch (error) {
       if (error instanceof CatalogueEntryUnknownError) {
@@ -1244,7 +1258,35 @@ export function mountConnectionRoutes({
           userId: context.var.actor.id,
           body,
         });
-        return context.json({ connected: true, ...done });
+        /*
+         * THE MEMBER THAT WILL USE THIS MAILBOX, named by the form the chat's button opened
+         * (`?bot=`). Given the app's declared tools under the automatic mark, and only when the person
+         * connecting is an administrator, who may give tools to a Bot anyway (`POST /grants`). Nothing
+         * the person typed is read here: only the Bot's id. A tool that sends is never given by this,
+         * and the approval gate is unchanged.
+         */
+        const bot =
+          body && typeof body === "object"
+            ? (body as { botId?: unknown }).botId
+            : undefined;
+        let granted: string[] = [];
+        if (
+          typeof bot === "string" &&
+          bot.trim() &&
+          skillActor(context).isAdmin &&
+          (await store.automaticEligible(context.req.param("id"), bot.trim()))
+        ) {
+          granted = await store.grantAutomatically(
+            context.req.param("id"),
+            bot.trim(),
+            "connected_from_chat",
+          );
+        }
+        return context.json({
+          connected: true,
+          ...done,
+          ...(typeof bot === "string" ? { botGranted: granted.length } : {}),
+        });
       } catch (error) {
         if (error instanceof SecretRefusedError) {
           return context.json({ error: error.message }, error.status);

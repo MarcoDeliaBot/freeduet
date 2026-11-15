@@ -1,6 +1,12 @@
 import { and, asc, eq, inArray } from "drizzle-orm";
 import { recordAuditEvent } from "../../audit";
 import { mcpTools, pluginGrants, skills } from "../../db/schema";
+import {
+  automaticServerAllowed,
+  grantDeclaredAutomatically,
+  isFreeDuetMember,
+  keepTrimmedSetByHand,
+} from "./automatic";
 import type { StoreContext } from "./context";
 import {
   type GrantedPlugins,
@@ -41,6 +47,41 @@ export function grantMethods(context: StoreContext) {
       });
     },
 
+    /**
+     * Gives a Bot the tools the catalogue declares for one server, under the automatic mark (see
+     * `./automatic`). Never a tool that sends, and never over a row that already exists.
+     */
+    async grantAutomatically(
+      serverId: string,
+      agentId: string,
+      reason: string,
+    ): Promise<string[]> {
+      return grantDeclaredAutomatically(database, auditStore, {
+        agentId,
+        serverId,
+        reason,
+      });
+    },
+
+    /**
+     * Whether a Bot is one a button may name for this app: a member of FreeDuet's package, and an
+     * app on the allow-list (`./automatic`). Anything else never gets an automatic grant.
+     */
+    async automaticEligible(
+      serverId: string,
+      agentId: string,
+    ): Promise<boolean> {
+      return (
+        automaticServerAllowed(serverId) &&
+        (await isFreeDuetMember(database, agentId))
+      );
+    },
+
+    /** Whether a Bot is a member of FreeDuet's own package. */
+    async isPackageMember(agentId: string): Promise<boolean> {
+      return isFreeDuetMember(database, agentId);
+    },
+
     async revoke(
       kind: PluginKind,
       ref: string,
@@ -56,6 +97,9 @@ export function grantMethods(context: StoreContext) {
             eq(pluginGrants.agentId, agentId),
           ),
         );
+      // A tool taken away by hand makes what is left of an automatic set a hand-made one.
+      if (kind === "mcp")
+        await keepTrimmedSetByHand(database, { agentId, ref, by });
 
       await recordAuditEvent(auditStore, {
         eventType: "configuration.changed",

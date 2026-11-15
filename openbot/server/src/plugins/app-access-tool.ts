@@ -37,7 +37,8 @@ import type { PluginStore } from "./store";
  * with it is show somebody an accurate card about an app they did not ask about.
  */
 export function appAccessTools(options: {
-  store: Pick<PluginStore, "inspectApp">;
+  store: Pick<PluginStore, "inspectApp"> &
+    Partial<Pick<PluginStore, "isPackageMember">>;
   botId: string;
   actorId: string;
   composioConfigured: boolean;
@@ -63,6 +64,15 @@ export function appAccessTools(options: {
         .describe(
           "The app's name (Gmail, Slack, Google Drive) or its id as your instructions list it.",
         ),
+      member: z
+        .string()
+        .trim()
+        .min(1)
+        .max(200)
+        .optional()
+        .describe(
+          "The id of the team member who will use the app, when it is not you (Otto's id is inbox, for a mailbox). The button then opens the form with that member already named, and connecting gives that member the app's tools.",
+        ),
     })
     .strict();
   return [
@@ -75,10 +85,18 @@ export function appAccessTools(options: {
       async execute(args) {
         const parsed = parameters.safeParse(args);
         if (!parsed.success) return "Name the app to show.";
-        const { app } = parsed.data;
+        const { app, member } = parsed.data;
+        /*
+         * WHOSE CARD. A member named here is the one the app is for, so the card, its state and the
+         * button's link are about that member. One that is not a Bot of this deployment is refused
+         * in words, so the model does not draw a card about nobody.
+         */
+        if (member && !(await options.store.isPackageMember?.(member)))
+          return `There is no team member called ${member}. Name the app again, and the member by the id your instructions list.`;
+        const subject = member ?? options.botId;
         const inspected = await options.store.inspectApp({
           app,
-          agentId: options.botId,
+          agentId: subject,
           userId: options.actorId || null,
           composioConfigured: options.composioConfigured,
           ...(options.directory ? { directory: options.directory } : {}),
@@ -96,7 +114,7 @@ export function appAccessTools(options: {
         return connectAppRefusal({
           serverId: access.key,
           title: access.displayName,
-          agentId: options.botId,
+          agentId: subject,
           reason: "access",
           message: toldTheModel(access, options.singleUser === true),
         });

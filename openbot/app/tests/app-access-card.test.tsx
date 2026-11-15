@@ -178,7 +178,7 @@ test("an account the vendor lost: Reconnect, though the server still reads ready
   );
   expect(
     (await view.findByText("Reconnect")).closest("a")?.getAttribute("href"),
-  ).toBe("/connections/composio-gmail");
+  ).toBe("/connections/composio-gmail?bot=expenses");
 });
 
 test("an account lost and then connected again: the newer connection wins", async () => {

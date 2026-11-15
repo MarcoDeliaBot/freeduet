@@ -948,6 +948,36 @@ a calendar is attached. A password that Gmail does not accept is not saved. Disc
 deployment forget it at once; the person deletes the app password at Google to end it there. Removing
 the connector, or the person, revokes it too.
 
+### Tools an update adds reach the member that holds the mailbox (FreeDuet)
+
+A mailbox connected with the chat's Connect button gives the named member (Otto) the tools the catalogue
+declares for the app, marked `granted_by = freeduet-automatic`. At every start, for FreeDuet's package
+only, a package member whose EVERY grant on `google-imap` or `google-workspace` carries that mark is
+given the declared tools it lacks: the reads and the organising writes, never a tool that sends. It
+adds a tool once and writes an audit row for it. The grants for the tools that send, which Otto holds by hand, are not looked at by that rule and are never given, relabelled or changed. A non-send grant a person made by hand (one row is enough), a
+tool they took away by hand, any other app, and any Bot that is not a member of FreeDuet's package are
+never touched. Approving an access request in the inbox is unchanged: it gives reads only, and never
+marks.
+
+A grant gives a tool, not an approval: every write still meets the approval gate when it is used, and
+a send is still turned on only in settings.
+
+An installation from before the mark has rows without it, and nothing can know whether somebody trimmed
+them, so nothing guesses. To opt a member in, run once, from the `openbot` folder, only when that
+member's set on that app was never trimmed by hand (`DATABASE_URL` must be set, the same value the
+server uses):
+
+```
+bun scripts/mark-automatic-grants.ts --bot inbox --server google-imap           # dry run, writes nothing
+bun scripts/mark-automatic-grants.ts --bot inbox --server google-imap --apply   # marks them
+```
+
+The command refuses (exit 2, nothing changed) a Bot that does not exist or is not a member of FreeDuet's
+team, and any app but `google-imap` and `google-workspace`. It marks that member's existing grants on the
+app, except a row for a tool that sends, which it names and leaves exactly as it is. With `--apply` it then adds
+the declared tools the member lacks, by the same rules as at start (sends play no part in them). It writes one
+audit row per change, and says plainly when there was nothing to do. Design: `docs/design/connect-from-chat.md`.
+
 ## Text messages and push notifications
 
 A provider is switched on by setting its variables and is off while none of them are set. Setting
