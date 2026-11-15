@@ -429,6 +429,58 @@ test("the Bin's count is the server's, and a message the mailbox does not hold i
   ).toBe(true);
 });
 
+test("Spam says how many and which, and that Gmail deletes mail in Spam after about 30 days", () => {
+  const view = describeApproval(
+    request(
+      "gmail_spam_messages",
+      { messageIds: IDS },
+      { details: { messages: [ANA, NEWS], missing: 0 } },
+    ),
+  );
+  expect(view.title).toBe("Move 2 messages to Spam");
+  expect(view.app).toBe("Gmail");
+  expect(view.kind).toBe("mail");
+  expect(view.fields).toEqual([
+    {
+      label: "What happens",
+      value:
+        "They go to your Spam folder. Gmail deletes mail in Spam after about 30 days; until then you can move it back.",
+    },
+  ]);
+  expect(view.body).toBe(
+    "Ana <ana@example.com>: Invoice 42\nNews <news@example.org>: Weekly digest",
+  );
+  const one = describeApproval(
+    request(
+      "gmail_spam_messages",
+      { messageIds: [IDS[0]] },
+      { details: { messages: [ANA], missing: 0 }, server: "google-workspace" },
+    ),
+  );
+  expect(one.title).toBe("Move 1 message to Spam");
+});
+
+test("Spam's count is the server's, and a message the mailbox does not hold is said", () => {
+  const view = describeApproval(
+    request(
+      "gmail_spam_messages",
+      { messageIds: [...IDS, "1a2b3c4d5e6f7a03", "1a2b3c4d5e6f7a04"] },
+      { details: { messages: [ANA], missing: 1 } },
+    ),
+  );
+  expect(view.title).toBe("Move 2 messages to Spam");
+  expect(view.fields.some((field) => field.label === "Not found")).toBe(true);
+  const unread = describeApproval(
+    request("gmail_spam_messages", { messageIds: IDS }),
+  );
+  expect(unread.title).toBe("Move 2 messages to Spam");
+  expect(
+    unread.fields.some((field) =>
+      /could not be read just now/.test(field.value),
+    ),
+  ).toBe(true);
+});
+
 test("another server's tool of the same name keeps the generic card, and the Bin can be always allowed except in a routine", () => {
   const view = describeApproval(
     request(

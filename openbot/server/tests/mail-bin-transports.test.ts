@@ -6,6 +6,7 @@ import {
 } from "../src/plugins/google-imap";
 import {
   BIN_MESSAGES,
+  binNotConfirmed,
   MAX_ORGANISE_MESSAGES,
   missingMessages,
   noBinFolder,
@@ -388,6 +389,17 @@ describe("binning over IMAP", () => {
     expect(again.isError).toBe(true);
     expect(again.text).toBe(missingMessages(1, 1));
     expect(box.copies).toEqual([]);
+  });
+
+  test("a server that keeps a message in All Mail after the copy is not confirmed: how many, and never that they were moved", async () => {
+    const { box, transport } = imapSetup();
+    box.staysAfterCopy.add("1111111111111111113");
+    const result = await transport.callTool(imapConnection, BIN_MESSAGES, {
+      messageIds: [HEX.a, HEX.c],
+    });
+    expect(result.isError).toBe(true);
+    expect(result.text).toBe(binNotConfirmed(1, 1));
+    expect(result.text).not.toContain("Moved to the Bin");
   });
 
   test("a timeout or a dropped connection after the copy was handed over says that it may have been made", async () => {

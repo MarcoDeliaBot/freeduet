@@ -101,7 +101,7 @@ describe("(b) the approval gate treats sending an email, a reply or a new one, a
     "calendar_list_events",
     "gmail_list_labels",
   ];
-  // The two that send mail, and the five that only organise a mailbox (docs/design/mail-organise.md).
+  // The two that send mail, and the six that only organise a mailbox (docs/design/mail-organise.md).
   const SENDS = ["gmail_send_reply", "gmail_send_message"];
   const ORGANISING = [
     "gmail_create_label",
@@ -109,6 +109,7 @@ describe("(b) the approval gate treats sending an email, a reply or a new one, a
     "gmail_archive_messages",
     "gmail_mark_messages",
     "gmail_bin_messages",
+    "gmail_spam_messages",
   ];
 
   test("its lists are the OAuth entry's, name for name", () => {
@@ -165,7 +166,7 @@ describe("(b) the approval gate treats sending an email, a reply or a new one, a
     expect(classifyTool(entry, "gmail_search_messages", false)).toBe("write");
   });
 
-  test("the transport offers the same eleven tools the OAuth adapter does, and no twelfth", async () => {
+  test("the transport offers the same twelve tools the OAuth adapter does, and no thirteenth", async () => {
     const imap = await imapListTools();
     const rest = await restListTools({ url: "" });
     expect(imap.map((tool) => tool.name)).toEqual(

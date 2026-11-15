@@ -14,6 +14,11 @@ import {
   markedAnswer,
   missingMessages,
   noBinFolder,
+  binNotConfirmed,
+  noSpamFolder,
+  SPAM_MESSAGES,
+  spamNotConfirmed,
+  spammedAnswer,
   noSuchLabel,
   type OrganiseWriteCall,
   ownLabelNames,
@@ -45,6 +50,25 @@ import type { McpCallResult } from "./mcp";
  * mailbox is opened for writing once the labels are known and the call is not already refused, and
  * only for the length of the one call: the connection is closed when it is done, however it ended.
  */
+
+/**
+ * Spam: the folder the SERVER flagged `\Junk`, and no other, by the same rule as {@link binPath}.
+ * Null when the account reports none.
+ */
+export function spamPath(
+  folders: readonly {
+    path: string;
+    specialUse?: string | undefined;
+    specialUseSource?: string | undefined;
+  }[],
+): string | null {
+  return (
+    folders.find(
+      (folder) =>
+        folder.specialUse === "\\Junk" && folder.specialUseSource !== "name",
+    )?.path ?? null
+  );
+}
 
 /**
  * The Bin: the folder the SERVER flagged `\Trash`, and no other. Never found by a guessed name: a
@@ -228,9 +252,14 @@ export async function organiseOverImap(
 
   // The Bin is found by the server's own flag before anything is opened, and never guessed.
   let bin: string | null = null;
+  let spam: string | null = null;
   if (call.tool === BIN_MESSAGES) {
     bin = binPath(folders);
     if (bin === null) return failure(noBinFolder);
+  }
+  if (call.tool === SPAM_MESSAGES) {
+    spam = spamPath(folders);
+    if (spam === null) return failure(noSpamFolder);
   }
 
   // What changes is settled first, so a label that is not there is refused before a mailbox is opened.
@@ -248,8 +277,8 @@ export async function organiseOverImap(
     removedNames = removing.names;
   } else if (call.tool === ARCHIVE_MESSAGES) {
     remove = [INBOX];
-  } else if (call.tool === BIN_MESSAGES) {
-    // Neither a label nor a flag changes: the message is copied into the Bin, below.
+  } else if (call.tool === BIN_MESSAGES || call.tool === SPAM_MESSAGES) {
+    // Neither a label nor a flag changes: the message is copied into the Bin or Spam, below.
   } else if (call.state === "read") {
     add = [SEEN];
   } else {
@@ -272,12 +301,32 @@ export async function organiseOverImap(
   const range = found.uids.join(",");
 
   if (call.tool === BIN_MESSAGES) {
-    // One COPY into the Bin, and nothing after it: no flag, no expunge, no other folder.
+    // One COPY into the Bin, and nothing that changes after it: no flag, no expunge, no other folder.
     if (bin === null) return failure(noBinFolder);
     if (!(await client.messageCopy(range, bin, { uid: true }))) {
       return failure(NOT_MADE);
     }
+    // Checked afterwards, not assumed: Gmail does not show a message that is in the Bin in All Mail, so
+    // an id the same lookup still finds has not been confirmed as moved.
+    const still = (await uidsOf(client, call.ids)).uids.length;
+    if (still > 0) {
+      return failure(binNotConfirmed(call.ids.length - still, still));
+    }
     return asJson(binnedAnswer(call.ids.length));
+  }
+
+  if (call.tool === SPAM_MESSAGES) {
+    // One COPY into Spam, and nothing that changes after it: no flag, no expunge, no other folder.
+    if (spam === null) return failure(noSpamFolder);
+    if (!(await client.messageCopy(range, spam, { uid: true }))) {
+      return failure(NOT_MADE);
+    }
+    // Checked afterwards, as for the Bin: an id All Mail still holds has not been confirmed as moved.
+    const still = (await uidsOf(client, call.ids)).uids.length;
+    if (still > 0) {
+      return failure(spamNotConfirmed(call.ids.length - still, still));
+    }
+    return asJson(spammedAnswer(call.ids.length));
   }
 
   let inInbox = 0;

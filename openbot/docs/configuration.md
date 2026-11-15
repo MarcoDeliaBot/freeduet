@@ -898,16 +898,16 @@ through either, asking the OAuth connection first.
 | An administrator | Registers a Google OAuth client and sets a public address | Turns the entry on at `/admin/plugins/google-imap`. Nothing else: no Google Cloud project, no client |
 | Each person | Consents at Google | Pastes their Gmail address, an [app password](https://myaccount.google.com/apppasswords) and, optionally, the calendar's secret address in iCal format, at `/connections/google-imap` |
 | Reaches Google over | The Gmail and Calendar REST APIs | IMAP and SMTP (`imap.gmail.com:993`, `smtp.gmail.com:465`, both TLS) and the iCal address |
-| Limits | The Bots' tools, not the scopes: `gmail.modify` also covers reading and sending, and a client holding it could delete mail for good, which no tool does (the only removal is a move to the Bin) A consent for sensitive scopes expires after seven days while the OAuth app is in testing | The Bots' tools. The app password itself reaches the whole mailbox |
+| Limits | The Bots' tools, not the scopes: `gmail.modify` also covers reading and sending, and a client holding it could delete mail for good, which no tool does (the only removals are a move to the Bin and a move to Spam). A consent for sensitive scopes expires after seven days while the OAuth app is in testing | The Bots' tools. The app password itself reaches the whole mailbox |
 | Needs | An OAuth client | 2-Step Verification on the person's Google account |
 
-Both entries offer the same eleven tools with the same arguments and answers: `gmail_search_messages`,
-`gmail_read_message`, `calendar_list_events` and `gmail_list_labels` (reads), and seven writes, so each
+Both entries offer the same twelve tools with the same arguments and answers: `gmail_search_messages`,
+`gmail_read_message`, `calendar_list_events` and `gmail_list_labels` (reads), and eight writes, so each
 waits for the person's approval, apart from the cases below: `gmail_send_reply` and
 `gmail_send_message` send mail, and `gmail_create_label`, `gmail_label_messages`,
-`gmail_archive_messages`, `gmail_mark_messages` and `gmail_bin_messages` organise the mailbox (see below).
-Nothing can delete for good, empty the Bin, report as spam, forward or move a message to another folder
-(`gmail_bin_messages` moves it to the Bin, from which the person can restore it for about 30 days), and a
+`gmail_archive_messages`, `gmail_mark_messages`, `gmail_bin_messages` and `gmail_spam_messages` organise the mailbox (see below).
+Nothing can delete for good, empty the Bin or Spam, block a sender, forward or move a message to another folder
+(`gmail_bin_messages` moves it to the Bin, from which the person can restore it for about 30 days, and `gmail_spam_messages` moves it to Spam, which Gmail empties after about 30 days), and a
 reply goes only to people already on the message it answers.
 
 The five that organise a mailbox create a label, add or remove labels on messages named by id (at most

@@ -74,6 +74,7 @@ const TOOLS = [
   "gmail_archive_messages",
   "gmail_mark_messages",
   "gmail_bin_messages",
+  "gmail_spam_messages",
 ];
 
 /** What the person pastes. Values are invented for this file. */
@@ -277,7 +278,7 @@ const connect = (userId: string, body: unknown) =>
   store.connectUserSecret({ serverId, userId, body });
 
 describe("the entry is added like any other, and reads and writes are recorded as such", () => {
-  test("the tools it lists are the eleven, and each is classified as the entry says: the two sends and the five that organise a mailbox writes, the rest reads", async () => {
+  test("the tools it lists are the twelve, and each is classified as the entry says: the two sends and the six that organise a mailbox writes, the rest reads", async () => {
     const listed = await database
       .select({ name: mcpTools.name, effect: mcpTools.effect })
       .from(mcpTools)
@@ -299,6 +300,7 @@ describe("the entry is added like any other, and reads and writes are recorded a
       "gmail_archive_messages",
       "gmail_mark_messages",
       "gmail_bin_messages",
+      "gmail_spam_messages",
     ]) {
       expect(classified.get(name)).toBe("write");
     }

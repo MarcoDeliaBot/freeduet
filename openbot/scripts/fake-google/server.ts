@@ -715,6 +715,8 @@ export type FakeGoogle = {
   }[];
   /** The ids `messages.trash` was called for, oldest first. Nothing in this fake deletes for good. */
   trashed(): string[];
+  /** The ids `messages.modify` moved to Spam, oldest first. */
+  spammed(): string[];
   /** The mailbox and calendar as they started, dated from now, and nothing sent. */
   reset(): void;
   stop(): Promise<void>;
@@ -748,8 +750,10 @@ export function startFakeGoogle(
     removeLabelIds: string[];
   }[] = [];
   let trashedIds: string[] = [];
+  let spammedIds: string[] = [];
   const reset = () => {
     trashedIds = [];
+    spammedIds = [];
     messages = seedMailbox(mailbox, now());
     events = seedCalendar(now());
     sent = [];
@@ -1302,6 +1306,38 @@ export function startFakeGoogle(
       return Response.json(resource(message, url));
     }
 
+    /*
+     * `messages.modify`, only as the move to Spam makes it: add SPAM, take INBOX off. Any other body is
+     * a 400, so a request that would do something else shows up as a failure and not as a silent change.
+     */
+    const modifying =
+      /^\/gmail\/v1\/users\/me\/messages\/([^/]+)\/modify$/.exec(path);
+    if (method === "POST" && modifying) {
+      if (!granted.includes("gmail.modify")) return insufficient();
+      const message = messages.find(
+        (candidate) => candidate.id === decodeURIComponent(modifying[1] ?? ""),
+      );
+      if (!message) {
+        return googleError(404, "Requested entity was not found.", "notFound");
+      }
+      const body = (await request.json().catch(() => ({}))) as {
+        addLabelIds?: string[];
+        removeLabelIds?: string[];
+      };
+      if (
+        JSON.stringify(body.addLabelIds) !== '["SPAM"]' ||
+        JSON.stringify(body.removeLabelIds) !== '["INBOX"]'
+      ) {
+        return googleError(400, "Unsupported label change.", "invalidArgument");
+      }
+      spammedIds.push(message.id);
+      message.labelIds = [
+        ...message.labelIds.filter((id) => id !== "INBOX"),
+        ...(message.labelIds.includes("SPAM") ? [] : ["SPAM"]),
+      ];
+      return Response.json(resource(message, url));
+    }
+
     const single = /^\/gmail\/v1\/users\/me\/messages\/([^/]+)$/.exec(path);
     if (method === "GET" && single) {
       const message = messages.find(
@@ -1404,6 +1440,7 @@ export function startFakeGoogle(
         removeLabelIds: [...entry.removeLabelIds],
       })),
     trashed: () => [...trashedIds],
+    spammed: () => [...spammedIds],
     reset,
     stop: async () => {
       await server.stop(true);

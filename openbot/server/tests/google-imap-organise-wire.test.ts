@@ -13,7 +13,11 @@ import {
   type ImapClientLike,
   type ImapOrganiserFactory,
 } from "../src/plugins/google-imap";
-import { missingMessages } from "../src/plugins/mail-organise";
+import {
+  binNotConfirmed,
+  missingMessages,
+  spamNotConfirmed,
+} from "../src/plugins/mail-organise";
 import { tokenFor } from "./support/fake-imap";
 
 /**
@@ -59,6 +63,8 @@ let messages: Msg[] = [];
 let folders: Folder[] = [];
 let refuseStore = false;
 let refuseCopy = false;
+/** Message ids a copy into the Bin or Spam leaves in All Mail, as a server that did not move them. */
+let staysAfterCopy: string[] = [];
 let alreadyExists: string[] = [];
 let server: TCPSocketListener<undefined>;
 
@@ -66,6 +72,7 @@ function reset() {
   lines.length = 0;
   refuseStore = false;
   refuseCopy = false;
+  staysAfterCopy = [];
   alreadyExists = [];
   messages = [
     {
@@ -208,7 +215,10 @@ function answer(socket: Socket<undefined>, raw: string) {
     const wanted = /X-GM-MSGID (\d+)/.exec(tail)?.[1];
     // Gmail's All Mail does not hold what is in the Bin.
     const found = messages.filter(
-      (m) => m.id === wanted && !m.labels.includes("\\Trash"),
+      (m) =>
+        m.id === wanted &&
+        !m.labels.includes("\\Trash") &&
+        !m.labels.includes("\\Spam"),
     );
     socket.write(
       `* SEARCH${found.map((m) => ` ${m.uid}`).join("")}\r\n${tag} OK done\r\n`,
@@ -226,8 +236,9 @@ function answer(socket: Socket<undefined>, raw: string) {
     const range = match?.[1] ?? "";
     const destination = (match?.[2] ?? "").replace(/\\(.)/g, "$1");
     const bin = folders.find(
-      (f) => f.name === destination && /\\Trash\b/.test(f.flags),
+      (f) => f.name === destination && /\\(Trash|Junk)\b/.test(f.flags),
     );
+    const label = bin && /\\Junk\b/.test(bin.flags) ? "\\Spam" : "\\Trash";
     if (!match || !bin || refuseCopy) {
       socket.write(`${tag} NO [CANNOT] Could not copy\r\n`);
       return;
@@ -235,7 +246,8 @@ function answer(socket: Socket<undefined>, raw: string) {
     // Gmail: a copy into the Bin puts the message in the Bin.
     for (const message of messages) {
       if (uidsOf(range).includes(message.uid)) {
-        if (!message.labels.includes("\\Trash")) message.labels.push("\\Trash");
+        if (staysAfterCopy.includes(message.id)) continue;
+        if (!message.labels.includes(label)) message.labels.push(label);
       }
     }
     ok();
@@ -414,14 +426,18 @@ function expectOnlyAllowed(from: readonly string[]) {
     const isBinCopy =
       command === "UID COPY" &&
       /^UID COPY [0-9,]+ "\[Gmail\]\/Trash"$/.test(bodyOf(line));
-    if (command === "UID COPY") expect(isBinCopy).toBe(true);
+    const isSpamCopy =
+      command === "UID COPY" &&
+      /^UID COPY [0-9,]+ "\[Gmail\]\/Spam"$/.test(bodyOf(line));
+    if (command === "UID COPY") expect(isBinCopy || isSpamCopy).toBe(true);
     // Not one of the client's lines names a label or flag that deletes or hides mail.
     expect(line).not.toMatch(/\\(Deleted|Spam|Junk|Draft)\b/i);
-    expect(line).not.toMatch(/\[Gmail\]\/(Spam|Bin|Drafts)/i);
+    expect(line).not.toMatch(/\[Gmail\]\/(Bin|Drafts)/i);
     if (!isBinCopy) {
       expect(line).not.toMatch(/\\Trash\b/i);
       expect(line).not.toMatch(/\[Gmail\]\/Trash/i);
     }
+    if (!isSpamCopy) expect(line).not.toMatch(/\[Gmail\]\/Spam/i);
   }
 }
 
@@ -582,6 +598,8 @@ describe("binning", () => {
       `UID SEARCH X-GM-MSGID ${ID_A}`,
       `UID SEARCH X-GM-MSGID ${ID_C}`,
       'UID COPY 11,13 "[Gmail]/Trash"',
+      `UID SEARCH X-GM-MSGID ${ID_A}`,
+      `UID SEARCH X-GM-MSGID ${ID_C}`,
     ]);
     // What the server understood: those two are in the Bin and the third was not touched.
     expect(messages[0]?.labels).toContain("\\Trash");
@@ -637,7 +655,7 @@ describe("binning", () => {
     expect(result.isError).toBe(false);
     expect(JSON.parse(result.text)).toMatchObject({ binned: 100 });
     const commands = lines.map(commandOf);
-    expect(commands.filter((c) => c === "UID SEARCH")).toHaveLength(100);
+    expect(commands.filter((c) => c === "UID SEARCH")).toHaveLength(200);
     expect(commands.filter((c) => c === "UID COPY")).toHaveLength(1);
     expect(messages.every((m) => m.labels.includes("\\Trash"))).toBe(true);
     expectOnlyAllowed(lines);
@@ -680,6 +698,105 @@ describe("binning", () => {
     expect(result.text).toBe(missingMessages(1, 2));
     expect(lines.map(commandOf)).not.toContain("UID COPY");
     expect(messages.every((m) => !m.labels.includes("\\Trash"))).toBe(true);
+  });
+});
+
+describe("binning, checked afterwards", () => {
+  test("a server that keeps a message in All Mail after the copy is not confirmed: the answer says how many, and never that they were moved", async () => {
+    staysAfterCopy = [ID_C];
+    const result = await transport.callTool(connection, "gmail_bin_messages", {
+      messageIds: [HEX.a, HEX.c],
+    });
+    expect(result.isError).toBe(true);
+    expect(result.text).toBe(binNotConfirmed(1, 1));
+    expect(result.text).not.toContain("Moved to the Bin");
+    expect(lines.map(commandOf).filter((c) => c === "UID COPY")).toHaveLength(
+      1,
+    );
+    expectOnlyAllowed(lines);
+  });
+});
+
+describe("moving to Spam", () => {
+  test("one UID COPY into the folder the server flagged \\Junk, looked up before and checked after: that is all", async () => {
+    const result = await transport.callTool(connection, "gmail_spam_messages", {
+      messageIds: [HEX.a, HEX.c],
+    });
+    expect(result.isError).toBe(false);
+    expect(JSON.parse(result.text)).toMatchObject({ spammed: 2 });
+    expect(sent()).toEqual([
+      'LIST "" ""',
+      'LIST "" "*"',
+      'SELECT "[Gmail]/All Mail"',
+      `UID SEARCH X-GM-MSGID ${ID_A}`,
+      `UID SEARCH X-GM-MSGID ${ID_C}`,
+      'UID COPY 11,13 "[Gmail]/Spam"',
+      `UID SEARCH X-GM-MSGID ${ID_A}`,
+      `UID SEARCH X-GM-MSGID ${ID_C}`,
+    ]);
+    expect(messages[0]?.labels).toContain("\\Spam");
+    expect(messages[2]?.labels).toContain("\\Spam");
+    expect(messages[1]?.labels).toEqual(["\\Inbox", "\\Important"]);
+    const commands = lines.map(commandOf);
+    for (const never of [
+      "UID STORE",
+      "STORE",
+      "EXPUNGE",
+      "UID EXPUNGE",
+      "UID MOVE",
+      "MOVE",
+    ]) {
+      expect(commands).not.toContain(never);
+    }
+    expect(lines.some((line) => /\\Deleted/i.test(line))).toBe(false);
+    expect(lines.map(commandOf).at(-1)).toBe("LOGOUT");
+    expectOnlyAllowed(lines);
+  });
+
+  test("Spam is the folder the server flagged, never one found by a name: a label of the person's called Spam is not it", async () => {
+    folders = folders.map((f) =>
+      f.name === "[Gmail]/Spam"
+        ? { flags: "\\HasNoChildren", name: "[Gmail]/Junk-without-a-flag" }
+        : f,
+    );
+    folders.push({ flags: "\\HasNoChildren", name: "Spam" });
+    const result = await transport.callTool(connection, "gmail_spam_messages", {
+      messageIds: [HEX.a],
+    });
+    expect(result.isError).toBe(true);
+    expect(result.text).toContain("did not report a Spam");
+    expect(sent()).toEqual(['LIST "" ""', 'LIST "" "*"']);
+    expect(lines.map(commandOf)).not.toContain("UID COPY");
+  });
+
+  test("a server that keeps the message in All Mail is not confirmed, and one that refuses the copy claims nothing", async () => {
+    staysAfterCopy = [ID_A, ID_C];
+    const kept = await transport.callTool(connection, "gmail_spam_messages", {
+      messageIds: [HEX.a, HEX.c],
+    });
+    expect(kept.isError).toBe(true);
+    expect(kept.text).toBe(spamNotConfirmed(0, 2));
+    expect(kept.text).not.toContain("Moved to Spam");
+
+    staysAfterCopy = [];
+    refuseCopy = true;
+    const refused = await transport.callTool(
+      connection,
+      "gmail_spam_messages",
+      { messageIds: [HEX.b] },
+    );
+    expect(refused.isError).toBe(true);
+    expect(refused.text).toContain("did not make this change");
+    expect(messages[1]?.labels).toEqual(["\\Inbox", "\\Important"]);
+  });
+
+  test("a message that is gone refuses the whole call, and nothing is copied", async () => {
+    const result = await transport.callTool(connection, "gmail_spam_messages", {
+      messageIds: [HEX.a, "ffffffffffff"],
+    });
+    expect(result.isError).toBe(true);
+    expect(result.text).toBe(missingMessages(1, 2));
+    expect(lines.map(commandOf)).not.toContain("UID COPY");
   });
 });
 

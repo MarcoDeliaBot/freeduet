@@ -4,6 +4,8 @@ import {
   ARCHIVE_MESSAGES,
   archivedAnswer,
   BIN_MESSAGES,
+  SPAM_MESSAGES,
+  spammedAnswer,
   binnedAnswer,
   CREATE_LABEL,
   createdAnswer,
@@ -1154,6 +1156,35 @@ async function binMessages(
   return asJson(binnedAnswer(moved));
 }
 
+/**
+ * Move the named messages to Spam: Gmail's own `users.messages.modify`, once for each id, adding the
+ * SPAM label and taking INBOX off. It is the same move Gmail's "Report spam" makes, and it deletes
+ * nothing: `users.messages.delete` is never called. One at a time, so a failure part way says how many.
+ */
+async function spamMessages(
+  connection: Connection,
+  ids: readonly string[],
+): Promise<McpCallResult> {
+  let moved = 0;
+  for (const id of ids) {
+    const done = await request<Record<string, unknown>>(
+      connection,
+      "Gmail",
+      `${GMAIL}/messages/${encodeURIComponent(id)}/modify`,
+      { json: { addLabelIds: ["SPAM"], removeLabelIds: ["INBOX"] } },
+    );
+    if (!done.ok) {
+      return failure(
+        moved === 0
+          ? done.message
+          : `${done.message} Only ${moved} of the ${ids.length} messages were moved to Spam before it stopped; look in Gmail before asking again.`,
+      );
+    }
+    moved++;
+  }
+  return asJson(spammedAnswer(moved));
+}
+
 async function organise(
   connection: Connection,
   call: OrganiseCall,
@@ -1214,8 +1245,8 @@ async function organise(
     removedNames = removing.names;
   } else if (call.tool === ARCHIVE_MESSAGES) {
     remove = ["INBOX"];
-  } else if (call.tool === BIN_MESSAGES) {
-    // Nothing is added or removed by label here: Gmail's own `trash` call does the move, below.
+  } else if (call.tool === BIN_MESSAGES || call.tool === SPAM_MESSAGES) {
+    // Nothing is added or removed by label here: Gmail's own `trash` or `modify` call does the move, below.
   } else {
     if (call.state === "read") remove = ["UNREAD"];
     else add = ["UNREAD"];
@@ -1229,6 +1260,7 @@ async function organise(
   }
 
   if (call.tool === BIN_MESSAGES) return binMessages(connection, call.ids);
+  if (call.tool === SPAM_MESSAGES) return spamMessages(connection, call.ids);
 
   const changed = await request<Record<string, never>>(
     connection,

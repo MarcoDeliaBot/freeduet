@@ -1125,7 +1125,9 @@ export function reportOf(input: {
     repeat: input.repeat,
     computer: input.computer,
     ...(input.conversations ? { conversations: input.conversations } : {}),
-    ...(input.engineCheck === undefined ? {} : { engineCheck: input.engineCheck }),
+    ...(input.engineCheck === undefined
+      ? {}
+      : { engineCheck: input.engineCheck }),
     thresholds: THRESHOLDS,
     summary: input.summary,
     ...(input.selfTest
@@ -1456,7 +1458,8 @@ async function main() {
         );
         return result;
       },
-    );  }
+    );
+  }
 
   const summary = summarise(results, names);
   const date = today;

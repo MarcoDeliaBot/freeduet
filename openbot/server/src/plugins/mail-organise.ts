@@ -13,10 +13,11 @@ import type { McpTool } from "./mcp";
  *
  * WHAT A BOT MAY DO, AND WHAT IT MAY NOT. It may list the labels, create one, add or remove labels on
  * messages it names, archive messages (take them out of the Inbox, where they stay in All Mail with
- * their labels), mark them read or unread, and move them to the Bin (Gmail's Trash), from which the
- * person can restore them for about 30 days (maintainer's decision of 15 November 2026, D-number in
- * docs/M1_PLAN.md). That is the strongest change here, and it is still not a deletion. There is no
- * tool here that deletes permanently, expunges, empties the Bin, reports as spam, forwards, makes a
+ * their labels), mark them read or unread, move them to the Bin (Gmail's Trash), from which the
+ * person can restore them for about 30 days (D41), and move them to Spam, which Gmail empties after
+ * about 30 days (D42; maintainer's decisions of 15 November 2026, docs/M1_PLAN.md). The Bin is the
+ * strongest change here, and neither is a deletion. There is no
+ * tool here that deletes permanently, expunges, empties the Bin, blocks a sender, forwards, makes a
  * filter, moves a message into some other folder or acts on "everything a search matches": messages
  * are named by id, so the card the person answers can say how many and which. The labels that would
  * delete or hide mail (Trash and Spam) are still refused in both directions, whoever asks, and so is
@@ -35,6 +36,7 @@ export const LABEL_MESSAGES = "gmail_label_messages";
 export const ARCHIVE_MESSAGES = "gmail_archive_messages";
 export const MARK_MESSAGES = "gmail_mark_messages";
 export const BIN_MESSAGES = "gmail_bin_messages";
+export const SPAM_MESSAGES = "gmail_spam_messages";
 
 /** The one tool that only reads. It is granted like any other read. */
 export const ORGANISE_READ_TOOLS: readonly string[] = Object.freeze([
@@ -53,6 +55,7 @@ export const ORGANISE_WRITE_TOOLS: readonly string[] = Object.freeze([
   ARCHIVE_MESSAGES,
   MARK_MESSAGES,
   BIN_MESSAGES,
+  SPAM_MESSAGES,
 ]);
 
 /** The four that act on messages the Bot names, and so have a list the card can show. */
@@ -61,6 +64,7 @@ export const ORGANISE_MESSAGE_TOOLS: readonly string[] = Object.freeze([
   ARCHIVE_MESSAGES,
   MARK_MESSAGES,
   BIN_MESSAGES,
+  SPAM_MESSAGES,
 ]);
 
 /** Whether a message's labels put it where Gmail keeps mail out of sight: the Trash or Spam. */
@@ -171,7 +175,8 @@ export type OrganiseCall =
     }
   | { tool: typeof ARCHIVE_MESSAGES; ids: string[] }
   | { tool: typeof MARK_MESSAGES; ids: string[]; state: "read" | "unread" }
-  | { tool: typeof BIN_MESSAGES; ids: string[] };
+  | { tool: typeof BIN_MESSAGES; ids: string[] }
+  | { tool: typeof SPAM_MESSAGES; ids: string[] };
 
 /** A call that changes a mailbox: every call but the listing of labels. */
 export type OrganiseWriteCall = Exclude<
@@ -295,6 +300,7 @@ const FIELDS: Record<string, ReadonlySet<string>> = {
   [ARCHIVE_MESSAGES]: new Set(["messageIds"]),
   [MARK_MESSAGES]: new Set(["messageIds", "state"]),
   [BIN_MESSAGES]: new Set(["messageIds"]),
+  [SPAM_MESSAGES]: new Set(["messageIds"]),
 };
 
 const sameLabel = (a: LabelRef, b: LabelRef) =>
@@ -338,6 +344,10 @@ export function parseOrganiseCall(
 
   if (tool === BIN_MESSAGES) {
     return { ok: true, value: { tool: BIN_MESSAGES, ids: ids.value } };
+  }
+
+  if (tool === SPAM_MESSAGES) {
+    return { ok: true, value: { tool: SPAM_MESSAGES, ids: ids.value } };
   }
 
   if (tool === MARK_MESSAGES) {
@@ -534,6 +544,29 @@ export const binnedAnswer = (binned: number) => ({
   note: `Moved to the Bin. The person can restore them from the Bin for ${BIN_KEEPS}; after that Gmail deletes them for good. Nothing was deleted now.`,
 });
 
+/**
+ * What a Bin call says when, after the copy was accepted, a lookup in All Mail still finds some of the
+ * messages: the move is not confirmed for those, and the answer never says they were moved.
+ */
+export const binNotConfirmed = (confirmed: number, still: number) =>
+  `Gmail accepted the copy to the Bin, but ${still} ${still === 1 ? "message is" : "messages are"} still in the mailbox, so the move is not confirmed for ${still === 1 ? "it" : "them"}. ${confirmed} ${confirmed === 1 ? "was" : "were"} confirmed moved. Look in Gmail before asking again.`;
+
+/** How long Gmail keeps a message in Spam before it deletes it. The answer says so, in words. */
+export const SPAM_KEEPS = "about 30 days";
+
+export const spammedAnswer = (spammed: number) => ({
+  spammed,
+  note: `Moved to Spam. Gmail deletes mail in Spam after ${SPAM_KEEPS}; until then the person can move it back. Nothing was deleted now.`,
+});
+
+/** What a Spam call says when a lookup still finds messages after the copy: not confirmed, never "moved". */
+export const spamNotConfirmed = (confirmed: number, still: number) =>
+  `Gmail accepted the copy to Spam, but ${still} ${still === 1 ? "message is" : "messages are"} still in the mailbox, so the move is not confirmed for ${still === 1 ? "it" : "them"}. ${confirmed} ${confirmed === 1 ? "was" : "were"} confirmed moved. Look in Gmail before asking again.`;
+
+/** What a call says when the account reports no Spam folder: nothing is guessed from a name. */
+export const noSpamFolder =
+  "Gmail did not report a Spam (Junk) folder for this account, so nothing was changed.";
+
 /** What a call says when the account reports no Bin folder: nothing is guessed from a name. */
 export const noBinFolder =
   "Gmail did not report a Bin (Trash) folder for this account, so nothing was changed.";
@@ -638,6 +671,23 @@ export const ORGANISE_TOOL_DEFINITIONS: readonly McpTool[] = Object.freeze([
   {
     name: BIN_MESSAGES,
     description: `Move messages to the Bin (Gmail's Trash), from which the person can restore them for ${BIN_KEEPS}; after that Gmail deletes them. This is not a permanent deletion and there is no tool that empties the Bin. It is the strongest change you can make to a mailbox: use it only when the person ordered it, and say first how many messages and which. Name them by id, at most ${MAX_ORGANISE_MESSAGES} per call; there is no way to act on everything a search matches. ${ASKS}`,
+    inputSchema: {
+      type: "object",
+      properties: {
+        messageIds: {
+          type: "array",
+          items: { type: "string" },
+          minItems: 1,
+          maxItems: MAX_ORGANISE_MESSAGES,
+          description: "The messages' Gmail ids, as a search returned them.",
+        },
+      },
+      required: ["messageIds"],
+    },
+  },
+  {
+    name: SPAM_MESSAGES,
+    description: `Move messages to Spam, the mailbox's Spam folder; Gmail deletes mail in Spam after ${SPAM_KEEPS}, and until then the person can move it back. It deletes nothing now and does not block the sender or make a filter. Use it only when the person ordered it, and say first how many messages and which. Name them by id, at most ${MAX_ORGANISE_MESSAGES} per call; there is no way to act on everything a search matches. ${ASKS}`,
     inputSchema: {
       type: "object",
       properties: {
