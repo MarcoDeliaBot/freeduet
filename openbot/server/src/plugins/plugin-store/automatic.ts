@@ -80,8 +80,12 @@ export function automaticToolRefs(serverId: string): string[] {
 }
 
 /**
- * Whether EVERY `mcp` row this Bot holds on this server carries the automatic mark (an empty set
- * counts: nothing was chosen yet). One row with any other mark skips the whole Bot and server.
+ * Whether EVERY non-send `mcp` row this Bot holds on this server carries the automatic mark (none at
+ * all counts: nothing was chosen yet). One such row with any other mark skips the whole Bot and server.
+ *
+ * ROWS FOR A TOOL THAT SENDS ARE NOT LOOKED AT. The mailbox member always holds the two sends,
+ * granted by hand in settings, and they are never given, relabelled or topped up by anything here, so
+ * they say nothing about whether the rest of the set was chosen by hand.
  */
 async function setIsAllAutomatic(
   database: Database,
@@ -89,7 +93,7 @@ async function setIsAllAutomatic(
   serverId: string,
 ): Promise<boolean> {
   const rows = await database
-    .select({ by: pluginGrants.grantedBy })
+    .select({ ref: pluginGrants.ref, by: pluginGrants.grantedBy })
     .from(pluginGrants)
     .where(
       and(
@@ -98,7 +102,14 @@ async function setIsAllAutomatic(
         sql`split_part(${pluginGrants.ref}, '/', 1) = ${serverId}`,
       ),
     );
-  return rows.every((row) => row.by === AUTOMATIC_GRANT);
+  const sends = new Set(
+    (catalogueEntry(serverId)?.sendTools ?? []).map(
+      (name) => `${serverId}/${name}`,
+    ),
+  );
+  return rows
+    .filter((row) => !sends.has(row.ref))
+    .every((row) => row.by === AUTOMATIC_GRANT);
 }
 
 /**
@@ -114,7 +125,7 @@ export async function grantDeclaredAutomatically(
 ): Promise<string[]> {
   if (!automaticServerAllowed(input.serverId)) return [];
   if (!(await isFreeDuetMember(database, input.agentId))) return [];
-  // A set is automatic only when every row of it carries the mark: a hand-made row among them, or
+  // A set is automatic only when every non-send row of it carries the mark: a hand-made row among them, or
   // any other mark, means somebody chose, and nothing is added.
   if (!(await setIsAllAutomatic(database, input.agentId, input.serverId)))
     return [];
@@ -196,8 +207,7 @@ export class MarkRefused extends Error {}
  * Refuses (throws {@link MarkRefused}) for an app outside the allow-list, a Bot that does not exist
  * and a Bot that is not a member of FreeDuet's package. It marks `mcp` rows of that server only,
  * skips rows already marked, and NEVER relabels a row for a tool that sends: those are returned in
- * `leftSend` and stay as they are (so the set is then not all-automatic and is not topped up, which
- * the person is told). It is run by a person who knows the set was never trimmed by hand.
+ * `leftSend` and stay exactly as they are (they play no part in whether the set is automatic). It is run by a person who knows the set was never trimmed by hand.
  */
 export async function markGrantsAutomatic(
   database: Database,

@@ -44,6 +44,8 @@ const MEMBERS = [
   "other",
   "one",
   "send",
+  "sends",
+  "blocked",
   "chat",
 ].map(bot);
 const USER_MADE = bot("usermade");
@@ -186,6 +188,28 @@ describe("top-up at start", () => {
     expect((await held(bot("old"))).size).toBe(OLD_SET.length);
   });
 
+  test("hand-granted sends do not stop the top-up, and are left untouched", async () => {
+    await put(bot("sends"), "gmail_search_messages", AUTOMATIC_GRANT);
+    await put(bot("sends"), "gmail_send_message", ADMIN);
+    await put(bot("sends"), "gmail_send_reply", ADMIN);
+    const done = await topUpAutomaticGrants(database, auditStore);
+    const mine = done.find((entry) => entry.bot === bot("sends"));
+    expect(mine?.added).toContain(ref("gmail_spam_messages"));
+    expect(mine?.added).not.toContain(ref("gmail_send_message"));
+    const after = await held(bot("sends"));
+    expect(after.size).toBe(automaticToolRefs(SERVER).length + 2);
+    expect(after.get(ref("gmail_send_message"))).toBe(ADMIN);
+    expect(after.get(ref("gmail_send_reply"))).toBe(ADMIN);
+  });
+
+  test("a hand-granted NON-send row still blocks, sends or not", async () => {
+    await put(bot("blocked"), "gmail_search_messages", AUTOMATIC_GRANT);
+    await put(bot("blocked"), "gmail_bin_messages", ADMIN);
+    await put(bot("blocked"), "gmail_send_message", ADMIN);
+    await topUpAutomaticGrants(database, auditStore);
+    expect((await held(bot("blocked"))).size).toBe(3);
+  });
+
   test("one hand row among marked rows skips the whole Bot and server", async () => {
     await put(bot("mixed"), "gmail_search_messages", AUTOMATIC_GRANT);
     await put(bot("mixed"), "gmail_read_message", ADMIN);
@@ -288,19 +312,24 @@ describe("the one-off command", () => {
     expect(again).toEqual({ marked: [], leftSend: [], added: [] });
   });
 
-  test("never relabels a row for a send; the set is then not topped up", async () => {
+  test("never relabels a send; marks the non-send rows, completes the set, leaves the sends", async () => {
     await put(bot("send"), "gmail_search_messages", ADMIN);
     await put(bot("send"), "gmail_send_message", ADMIN);
+    await put(bot("send"), "gmail_send_reply", ADMIN);
     const done = await markGrantsAutomatic(database, auditStore, {
       agentId: bot("send"),
       serverId: SERVER,
       apply: true,
     });
-    expect(done.leftSend).toEqual([ref("gmail_send_message")]);
+    expect(done.leftSend).toEqual([
+      ref("gmail_send_message"),
+      ref("gmail_send_reply"),
+    ]);
+    expect(done.added.length).toBe(automaticToolRefs(SERVER).length - 1);
     const after = await held(bot("send"));
     expect(after.get(ref("gmail_send_message"))).toBe(ADMIN);
+    expect(after.get(ref("gmail_send_reply"))).toBe(ADMIN);
     expect(after.get(ref("gmail_search_messages"))).toBe(AUTOMATIC_GRANT);
-    expect(done.added).toEqual([]);
-    expect(after.size).toBe(2);
+    expect(after.size).toBe(automaticToolRefs(SERVER).length + 2);
   });
 });

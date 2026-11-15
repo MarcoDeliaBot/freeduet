@@ -20,10 +20,10 @@ Written 2026-11-15 on origin/main 2d49770. Decisions D44 and D45 in `docs/M1_PLA
 - The mark is `plugin_grants.granted_by = "freeduet-automatic"` (`server/src/plugins/plugin-store/automatic.ts`), the column the hub grants already use for their own mark. No schema change.
 - Written ONLY by the Connect button with a `botId` (above). A grant by hand, and the approval of an access request, carry the person's address.
 - THE APPROVAL PATH IS UNCHANGED (`route-groups/app-access.ts` is as on main): approving a request gives reads only and never marks, because anything that marks is later topped up, and approving a read must never later add writes.
-- Top-up, at start (`server/src/freeduet/automatic-grants.ts`, FreeDuet's package only): only for `google-imap` and `google-workspace`, only for a member of FreeDuet's package (an agent row of the `freeduet` package; a Bot a person made or imported is never one), and only when EVERY `mcp` row of that Bot and app carries the mark. One row with any other mark skips the whole Bot and app. Idempotent, one audit row per tool, `onConflictDoNothing`.
+- Top-up, at start (`server/src/freeduet/automatic-grants.ts`, FreeDuet's package only): only for `google-imap` and `google-workspace`, only for a member of FreeDuet's package (an agent row of the `freeduet` package; a Bot a person made or imported is never one), and only when EVERY NON-SEND `mcp` row of that Bot and app carries the mark (the rows for the sends, which the mailbox member holds by hand, are ignored by the rule and never given, relabelled or changed). One non-send row with any other mark skips the whole Bot and app. Idempotent, one audit row per tool, `onConflictDoNothing`.
 - The Bot and the app named by the button are checked the same way (`automaticEligible`). The form asks `GET .../secret-connection?bot=` (`botEligible`) and names the member only when true; a crafted `?bot=` claims nothing and sends nothing.
 - What may be given: the entry's `readTools` and `writeTools` minus `sendTools`. A tool that sends is never given by this.
-- A person revoking a tool by hand turns what is left of that member's marked set on that app into a hand-made set (`keepTrimmedSetByHand`). A tool a person later grants by hand in settings (a send) also makes the set not all-automatic, so updates stop adding tools to it; that is the conservative reading.
+- A person revoking a tool by hand turns what is left of that member's marked set on that app into a hand-made set (`keepTrimmedSetByHand`). A non-send tool a person later grants by hand also makes the set not all-automatic, so updates stop adding tools to it; a send granted by hand does not.
 - A GRANT GIVES A TOOL, NOT AN APPROVAL. Every write still meets the approval gate when it is used (`approvals/policy.ts` is untouched).
 
 ## 4. Existing installations
@@ -35,7 +35,7 @@ bun scripts/mark-automatic-grants.ts --bot inbox --server google-imap           
 bun scripts/mark-automatic-grants.ts --bot inbox --server google-imap --apply   # marks them
 ```
 
-It works only on a member of FreeDuet's package and on `google-imap` or `google-workspace`; it refuses an unknown Bot, a non-member and any other app (exit 2, nothing changed). It marks the member's existing rows on the app, never relabels a row for a tool that sends (it names them and leaves them), skips rows already marked, writes one audit row per change, and with `--apply` then adds the declared tools the member lacks, by the same rules as at start. With nothing to mark it says so. See `docs/configuration.md`.
+It works only on a member of FreeDuet's package and on `google-imap` or `google-workspace`; it refuses an unknown Bot, a non-member and any other app (exit 2, nothing changed). It marks the member's existing rows on the app, never relabels a row for a tool that sends (it names them and leaves them as they are), skips rows already marked, writes one audit row per change, and with `--apply` then adds the declared tools the member lacks, by the same rules as at start. With nothing to mark it says so. See `docs/configuration.md`.
 
 ## 5. Not built
 

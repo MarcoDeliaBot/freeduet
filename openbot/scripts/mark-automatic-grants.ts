@@ -8,7 +8,7 @@
  * Run from the `openbot` folder, once per member and app, by the person, on purpose. Run it only when
  * that member's set on that app was never trimmed by hand: the command does not guess. It changes only
  * the mark of existing rows (never a row for a tool that sends), skips rows already marked, writes one
- * audit row per change, and with --apply then adds the declared tools the member lacks (when every row of
+ * audit row per change, and with --apply then adds the declared tools the member lacks (when every non-send row of
  * the set is marked). It refuses a Bot that does not exist or is not a member of FreeDuet's team.
  */
 import { createAuditStore } from "../server/src/audit";
@@ -56,14 +56,10 @@ try {
         `Added ${done.added.length} tool(s) the app declares and ${bot} lacked.`,
       );
   }
-  if (done.leftSend.length > 0) {
+  if (done.leftSend.length > 0)
     console.log(
-      `Left as they are (a tool that sends is never relabelled): ${done.leftSend.join(", ")}.`,
+      `Left exactly as they are (a tool that sends is never relabelled or added): ${done.leftSend.join(", ")}.`,
     );
-    console.log(
-      "While any grant of this member on this app is not marked, updates do not add tools to it.",
-    );
-  }
 } catch (error) {
   if (error instanceof MarkRefused) {
     console.error(`Refused: ${error.message} Nothing was changed.`);

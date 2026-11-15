@@ -954,7 +954,7 @@ A mailbox connected with the chat's Connect button gives the named member (Otto)
 declares for the app, marked `granted_by = freeduet-automatic`. At every start, for FreeDuet's package
 only, a package member whose EVERY grant on `google-imap` or `google-workspace` carries that mark is
 given the declared tools it lacks: the reads and the organising writes, never a tool that sends. It
-adds a tool once and writes an audit row for it. A grant a person made by hand (one row is enough), a
+adds a tool once and writes an audit row for it. The grants for the tools that send, which Otto holds by hand, are not looked at by that rule and are never given, relabelled or changed. A non-send grant a person made by hand (one row is enough), a
 tool they took away by hand, any other app, and any Bot that is not a member of FreeDuet's package are
 never touched. Approving an access request in the inbox is unchanged: it gives reads only, and never
 marks.
@@ -974,10 +974,9 @@ bun scripts/mark-automatic-grants.ts --bot inbox --server google-imap --apply   
 
 The command refuses (exit 2, nothing changed) a Bot that does not exist or is not a member of FreeDuet's
 team, and any app but `google-imap` and `google-workspace`. It marks that member's existing grants on the
-app, except a row for a tool that sends, which it names and leaves as it is. With `--apply` it then adds
-the declared tools the member lacks, by the same rules as at start; if a row stays unmarked (a send), the
-set is not topped up, and the command says so. It writes one audit row per change, and says plainly when
-there was nothing to do. Design: `docs/design/connect-from-chat.md`.
+app, except a row for a tool that sends, which it names and leaves exactly as it is. With `--apply` it then adds
+the declared tools the member lacks, by the same rules as at start (sends play no part in them). It writes one
+audit row per change, and says plainly when there was nothing to do. Design: `docs/design/connect-from-chat.md`.
 
 ## Text messages and push notifications
 
