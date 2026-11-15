@@ -9,12 +9,12 @@
     },
     {
      "type": "RUN_ERROR",
-     "message": "Claude is not connected yet. You sign in on Claude's own page; FreeDuet never sees your password.",
+     "message": "Claude is not connected yet. You sign in on Claude's own page; FreeDuet never sees your password. For now, run this once in a terminal, then send your message again: `docker compose exec -it agent-freeduet claude`",
      "code": "OPENBOT_MODEL_AUTH_REQUIRED"
     }
    ],
    "keepalives": 0,
-   "sha256": "99a6189759401ce0a5e8dfca64e09ee21ce9d84b3d70859f91bb01bfe9467a0d"
+   "sha256": "895a35878a232ec954c070ca6892198a8f30e292427ff9ef75926c15e0feb662"
   }
  ],
  "launches": [
@@ -179,7 +179,7 @@
    "thread": "thread-1",
    "run": "run-1",
    "outcome": "error",
-   "summary": "Claude is not connected yet. You sign in on Claude's own page; FreeDuet never sees your password.",
+   "summary": "Claude is not connected yet. You sign in on Claude's own page; FreeDuet never sees your password. For now, run this once in a terminal, then send your message again: `docker compose exec -it agent-fr…",
    "from_iris": false,
    "approvals": null,
    "report_guard": null
@@ -202,7 +202,7 @@
     "changed_files": [],
     "verification": [],
     "blockers": [
-     "Error: Claude is not connected yet. You sign in on Claude's own page; FreeDuet never sees your password."
+     "Error: Claude is not connected yet. You sign in on Claude's own page; FreeDuet never sees your password. For now, run this once in a terminal, then send your message again: `docker compose exec -it agent-freeduet claude`"
     ],
     "next_steps": [
      "Run the turn again once the error is resolved"

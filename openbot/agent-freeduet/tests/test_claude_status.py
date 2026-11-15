@@ -2,8 +2,8 @@
 
 What a person reads when Claude Code is not installed, or holds no sign-in, is one module's and is written in English. The
 sentences below are the design's words, typed here on purpose: a test that imported them could not notice a change. Each
-situation is reached through the real code path (a fake CLI, or a binary that does not exist), and no sentence carries a
-command to type, a path, an account, or what the CLI printed.
+situation is reached through the real code path (a fake CLI, or a binary that does not exist), and no sentence carries a path,
+an account, or what the CLI printed. The signed-out sentence carries its one command until the card (S5) exists.
 """
 
 import asyncio
@@ -17,10 +17,16 @@ from freeduet.engine_adapter import COULD_NOT_RUN, NOT_INSTALLED, TIMED_OUT, UNR
 from helpers import MANAGED_TOKEN, post_run, run_body, standing
 
 MISSING_SENTENCE = (
-    "Claude is not installed on this computer yet. It comes from Anthropic's own package, "
-    "which is added when FreeDuet's service is built."
+    "Claude is not installed on this computer yet. Rebuild the service with `bash scripts/start.sh`, "
+    "then send your message again."
 )
-NOT_SIGNED_IN_SENTENCE = "Claude is not connected yet. You sign in on Claude's own page; FreeDuet never sees your password."
+NOT_SIGNED_IN_SENTENCE = (
+    "Claude is not connected yet. You sign in on Claude's own page; FreeDuet never sees your password. "
+    "For now, run this once in a terminal, then send your message again: "
+    "`docker compose exec -it agent-freeduet claude`"
+)
+REBUILD_COMMAND = "bash scripts/start.sh"
+SIGN_IN_COMMAND = "docker compose exec -it agent-freeduet claude"
 AUTH = {"x-openbot-agent-token": MANAGED_TOKEN}
 ASK = [standing(), {"id": "u1", "role": "user", "content": "Hello"}]
 PLAN_SIGNED_OUT = {"auth": {"fixture": "auth_status_signed_out.json", "exit": 1}}
@@ -54,11 +60,16 @@ def test_the_probe_becomes_one_status_and_no_answer_is_never_not_signed_in(resul
     assert status_of(result) == status
 
 
-@pytest.mark.parametrize("sentence", [MISSING_SENTENCE, NOT_SIGNED_IN_SENTENCE])
-def test_each_sentence_is_plain_english_with_no_command_path_account_or_line_break(sentence):
-    assert sentence.endswith(".") and "\n" not in sentence and len(sentence) <= 200
-    for typed in ("`", "docker", "compose", "exec", "/", "@", "$"):
-        assert typed not in sentence
+@pytest.mark.parametrize(
+    ("sentence", "command"),
+    [(MISSING_SENTENCE, REBUILD_COMMAND), (NOT_SIGNED_IN_SENTENCE, SIGN_IN_COMMAND)],
+)
+def test_each_sentence_is_plain_english_and_carries_only_its_one_command(sentence, command):
+    assert "\n" not in sentence and len(sentence) <= 260
+    assert sentence.count("`") == 2 and f"`{command}`" in sentence
+    plain = sentence.replace(f"`{command}`", "")
+    for typed in ("docker", "compose", "exec", "/", "@", "$"):
+        assert typed not in plain
 
 
 def test_a_missing_program_is_said_in_the_chat_in_plain_words(client, monkeypatch, tmp_path):

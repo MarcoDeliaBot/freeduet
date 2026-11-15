@@ -134,8 +134,11 @@ def test_not_signed_in_is_a_sign_in_error(client, fake_cli):
     events, _ = post_run(client, run_body(ASK))
     assert types(events) == ["RUN_STARTED", "RUN_ERROR"]
     assert events[-1]["code"] == "OPENBOT_MODEL_AUTH_REQUIRED"
-    assert events[-1]["message"] == "Claude is not connected yet. You sign in on Claude's own page; FreeDuet never sees your password."
-    assert "docker" not in events[-1]["message"]
+    assert events[-1]["message"] == (
+        "Claude is not connected yet. You sign in on Claude's own page; FreeDuet never sees your password. "
+        "For now, run this once in a terminal, then send your message again: "
+        "`docker compose exec -it agent-freeduet claude`"
+    )
 
 
 def test_not_signed_in_on_stderr_is_a_sign_in_error_too(client, fake_cli):
@@ -164,7 +167,10 @@ def test_a_missing_cli_is_a_plain_error(client, fake_cli, monkeypatch, tmp_path)
     monkeypatch.setenv("CLAUDE_BIN", str(tmp_path / "no-such-claude"))
     events, _ = post_run(client, run_body(ASK))
     assert events[-1]["type"] == "RUN_ERROR"
-    assert events[-1]["message"] == "Claude is not installed on this computer yet. It comes from Anthropic's own package, which is added when FreeDuet's service is built."
+    assert events[-1]["message"] == (
+        "Claude is not installed on this computer yet. Rebuild the service with `bash scripts/start.sh`, "
+        "then send your message again."
+    )
 
 
 def test_a_timer_that_fires_late_does_not_overtake_a_bridge_call_already_on_the_socket():

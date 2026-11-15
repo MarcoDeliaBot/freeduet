@@ -37,7 +37,7 @@ SERVER_NAME = "freeduet"
 AUTH_REQUIRED = "OPENBOT_MODEL_AUTH_REQUIRED"
 ENGINE_LIMITED = "FREEDUET_ENGINE_LIMITED"
 LABEL = "Claude Code"
-# What a person reads when Claude Code holds no sign-in: plain words, no command to type (claude_status.py).
+# What a person reads when Claude Code holds no sign-in: plain words, and until S5 the one command (claude_status.py).
 SIGN_IN_MESSAGE = NOT_SIGNED_IN_SENTENCE
 
 # D7. The prompt is never on the command line: it goes in on stdin.

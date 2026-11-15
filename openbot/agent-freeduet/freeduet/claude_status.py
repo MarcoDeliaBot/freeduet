@@ -1,8 +1,9 @@
 """What a person is told about Claude Code when it cannot answer, and the one status the probe gives (docs/design/
 first-start.md sections 4 and 5, slice S2).
 
-The words live here once, in English (the app's interface is English): a plain sentence the person can act on, with no
-command to type, no path, no account, and nothing the CLI printed. A chat shows these sentences as the run error of a
+The words live here once, in English (the app's interface is English): a plain sentence the person can act on. The signed-out sentence keeps one command, the one the old
+sentence had, until the card exists (S5). No sentence carries a path, an account, or what the CLI printed. A chat
+shows these sentences as the run error of a
 failed turn (claude_cli.py, claude_engine.py). The probe's answer becomes one status (`status_of`), which
 `POST /engines/claude/check` returns. The buttons that go beside a sentence belong to the app's card (slice S5).
 """
@@ -19,14 +20,18 @@ SIGNED_IN = "signed_in"
 UNKNOWN = "unknown"
 
 #: Only what is true today. FreeDuet does not add the program itself yet (slice S8, decisions D2 and D3), so the
-#: sentence says where the program comes from and does not promise that FreeDuet will add it.
+#: sentence says what works today (rebuild the service, with the command the README and start.sh give) and promises
+#: no install.
 MISSING_SENTENCE = (
-    "Claude is not installed on this computer yet. It comes from Anthropic's own package, "
-    "which is added when FreeDuet's service is built."
+    "Claude is not installed on this computer yet. Rebuild the service with `bash scripts/start.sh`, "
+    "then send your message again."
 )
-#: The person signs in on Claude's own page. FreeDuet never sees the password.
+#: The person signs in on Claude's own page; FreeDuet never sees the password. Until the card (S5) exists, the one
+#: command the old sentence had goes in too, so a person who reads only the chat can still sign in.
 NOT_SIGNED_IN_SENTENCE = (
-    "Claude is not connected yet. You sign in on Claude's own page; FreeDuet never sees your password."
+    "Claude is not connected yet. You sign in on Claude's own page; FreeDuet never sees your password. "
+    "For now, run this once in a terminal, then send your message again: "
+    "`docker compose exec -it agent-freeduet claude`"
 )
 
 

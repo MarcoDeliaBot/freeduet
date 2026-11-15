@@ -200,10 +200,10 @@ Branch `first-start-s1-s2` builds slices S1 and S2 of section 7 and nothing else
 
 | Situation | Before | After |
 |---|---|---|
-| Signed out | "Claude Code is not signed in. Sign in once with `docker compose exec -it agent-freeduet claude`, then send your message again." | "Claude is not connected yet. You sign in on Claude's own page; FreeDuet never sees your password." |
-| Program missing | "Claude Code is not installed in this service." | "Claude is not installed on this computer yet. It comes from Anthropic's own package, which is added when FreeDuet's service is built." |
+| Signed out | "Claude Code is not signed in. Sign in once with `docker compose exec -it agent-freeduet claude`, then send your message again." | "Claude is not connected yet. You sign in on Claude's own page; FreeDuet never sees your password. For now, run this once in a terminal, then send your message again: `docker compose exec -it agent-freeduet claude`" |
+| Program missing | "Claude Code is not installed in this service." | "Claude is not installed on this computer yet. Rebuild the service with `bash scripts/start.sh`, then send your message again." |
 
-- The missing sentence does not say "FreeDuet can add it for you", as section 5 row 1 does. That promise waits for D2 and D3 (S8).
+- The missing sentence says what works today: rebuild the service with `bash scripts/start.sh`, the command that README.md:149 gives. It does not say "FreeDuet can add it for you", as section 5 row 1 does; that promise waits for D2 and D3 (S8).
 - New tests: `openbot/agent-freeduet/tests/test_claude_status.py` (16). Pins moved to the new sentences: `test_segment_loop.py` (2), `test_app_hooks.py` (1) and six goldens, edited by hand and not regenerated. Each stream hash changed with its sentence.
 
 **Decisions D1 to D6: all still open.** This work decides none of them.
@@ -217,7 +217,7 @@ Branch `first-start-s1-s2` builds slices S1 and S2 of section 7 and nothing else
 | D5, the desktop app's plan sign-in | Open. S9 is not started. |
 | D6, the hosted switch | Open. S4 is not built, and the switch D6 proposes does not exist yet. |
 
-**Interim gap, for the maintainer.** After S2 the chat shows the signed-out sentence with no button and no command. The command stays in `README.md:150` and in the last lines of `start.sh` until S7, and the button arrives with S5. Options: keep the command inside the sign-in sentence until S5, or ship S2 together with S5. Until one is chosen, a person who reads only the chat has no way to sign in.
+**Interim gap, decided by the maintainer (relayed by the coordinator): option (a).** Until the card (S5) exists, the signed-out sentence keeps the one command the old sentence had, so a person who reads only the chat can still sign in. When S5 lands, the command leaves the sentence. The command has no `cd openbot &&` in front, as the old sentence had; `README.md:150` and `start.sh` say to run it from `openbot/`, so the sentence and the README differ until the words are changed (S7).
 
 **Not built.**
 
