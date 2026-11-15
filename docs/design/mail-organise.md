@@ -139,13 +139,13 @@ Measured on 15 November 2026, on the branch merged with origin/main 38c4b48 (the
 
 | Test file | Tests | On main's source | On the branch |
 |---|---|---|---|
-| `server/tests/mail-organise.test.ts` (new) | 50 | does not load: `mail-organise` is not there | 50 pass |
-| `server/tests/mail-organise-rest.test.ts` (new) | 33 | does not load | 33 pass |
-| `server/tests/mail-organise-imap.test.ts` (new) | 33 | does not load | 33 pass |
+| `server/tests/mail-organise.test.ts` (new) | 52 | does not load: `mail-organise` is not there | 52 pass |
+| `server/tests/mail-organise-rest.test.ts` (new) | 35 | does not load | 35 pass |
+| `server/tests/mail-organise-imap.test.ts` (new) | 36 | does not load | 36 pass |
 | `server/tests/google-imap-organise-wire.test.ts` (new) | 18 | does not load | 18 pass |
-| `server/tests/mail-organise-approval.integration.test.ts` (new, real Postgres) | 75 | does not load | 75 pass |
+| `server/tests/mail-organise-approval.integration.test.ts` (new, real Postgres) | 87 | does not load | 87 pass |
 | `server/tests/mail-organise-grants.integration.test.ts` (new, real Postgres) | 18 | does not load | 18 pass |
-| `server/tests/mail-organise-team.test.ts` (new) | 11 | does not load | 11 pass |
+| `server/tests/mail-organise-team.test.ts` (new) | 12 | does not load | 12 pass |
 | `app/tests/approval-organise.test.tsx` (new) | 14 | 3 pass, 11 fail | 14 pass |
 | `server/tests/catalogue-send-tools.test.ts` (updated) | 11 | 1 fail | 11 pass |
 | `server/tests/google-app-password-catalogue.test.ts` (updated) | 12 | 3 fail | 12 pass |
@@ -155,9 +155,21 @@ Measured on 15 November 2026, on the branch merged with origin/main 38c4b48 (the
 | `server/tests/google-app-password-store.integration.test.ts` (updated) | 27 | 1 fail | 27 pass |
 | `evals/team/run.test.ts` (updated pins) | 167 | 4 fail | 167 pass |
 
-In all: 238 new server tests and 14 new app tests. The seven new server files do not load on main's source, so none of their 238 tests can pass there; 11 of the 14 app tests fail there; 9 of the 183 tests of the six updated server files fail there, and 4 of the 167 in the evals file (the case count, the safety count, the lists of cases that need Gmail, and the pin for `otto-8` to `otto-10`). `server/tests/assertion-shape.test.ts` (10 tests) passes on the branch, with one allow-list line moved (`plugin-catalogue.test.ts`, 478 to 483).
+In all: 258 new server tests and 14 new app tests. The seven new server files do not load on main's source, so none of their 258 tests can pass there; 11 of the 14 app tests fail there; 9 of the 183 tests of the six updated server files fail there, and 4 of the 167 in the evals file (the case count, the safety count, the lists of cases that need Gmail, and the pin for `otto-8` to `otto-10`). `server/tests/assertion-shape.test.ts` (10 tests) passes on the branch, with one allow-list line moved (`plugin-catalogue.test.ts`, 478 to 483).
 
-**Planted defects.** Each is one hand-written edit of one source file. A small script applied it, ran the tests and put the file back (`git checkout`, and the tree checked clean after each). 37 defects, planted one at a time and all 37 caught on the final tree. The run covered the 13 server test files that touch this code (442 tests, none failing before a defect was planted) and the app's card test file (14 tests). 36 were caught the first time. M19 was missed: no test made the second IMAP command of a label call fail after the first had made its change, so a half-made change was reported as no change. `server/tests/mail-organise-imap.test.ts` has that case now (`removeAnswers` in `server/tests/support/fake-mail-organiser.ts`) and M19 fails it. M17 changes no behaviour, because `classifyTool` looks at the write list first; the list-equality tests still catch it, and M17b, which moves the tool from the write list to the read list, is the behavioural one. The script that applied the edits stayed outside the repository (Q11).
+**Review fixes (15 November 2026).** Each has a test that fails without the fix; the "without" is the planted defect of the same row, which puts the old behaviour back.
+
+| Fix | Test (file) | Fails without it |
+|---|---|---|
+| R1 always a card in the person's own turn | `with the person's defaults and a reviewer that would let it through, each of the four shows a card` (6 tests, both connections: defaults; ask before changes on; a read still runs; Always allow lifts archive only; a routine and a remote session still ask) in `mail-organise-approval.integration.test.ts` | M35, M36, M37 |
+| R2 prompt and skill | `what Otto is told`, `says there is a card, and that there is none where ...` in `mail-organise-team.test.ts` | wording pins |
+| R4 curly quotes in a label name | `a curly quotation mark is refused ...` in `mail-organise.test.ts` | M39 |
+| R5 timeout after a change was sent; logout cut off | three tests in `mail-organise-imap.test.ts` | M40, M41 |
+| R6 one rule for All Mail | `the folder that holds every mail is the server's own \\All ...` in `mail-organise.test.ts`; the source pin in `google-imap.test.ts` | M42 |
+| R7 Trash and Spam over REST | two tests in `mail-organise-rest.test.ts` | M43 |
+| R8 the second guard on what may be stored | `mail-organise-imap.test.ts` (one test catches its removal, two its widening) | M29, M38 |
+
+**Planted defects.** Each is one hand-written edit of one source file. A small script applied it, ran the tests and put the file back (`git checkout`, and the tree checked clean after each). 46 defects, planted one at a time and all 46 caught on the final tree (the first 37 on the first version, M35 to M43 with the review fixes). The run covered the 13 server test files that touch this code (462 tests, none failing before a defect was planted) and the app's card test file (14 tests). 36 of the first 37 were caught the first time. M19 was missed: no test made the second IMAP command of a label call fail after the first had made its change, so a half-made change was reported as no change. `server/tests/mail-organise-imap.test.ts` has that case now (`removeAnswers` in `server/tests/support/fake-mail-organiser.ts`) and M19 fails it. M17 changes no behaviour, because `classifyTool` looks at the write list first; the list-equality tests still catch it, and M17b, which moves the tool from the write list to the read list, is the behavioural one. The script that applied the edits stayed outside the repository (Q11).
 
 | # | Defect planted | Failing tests | Caught in (file, tests) |
 |---|---|---|---|
@@ -198,6 +210,15 @@ In all: 238 new server tests and 14 new app tests. The seven new server files do
 | M32 | Every write of an entry is held back for settings, so a press can give none of the four | 9 | catalogue-send-tools 1; mail-organise-approval.integration 2; mail-organise-grants.integration 6 |
 | M33 | A routine, a check-in or a remote turn no longer always asks for the four writes | 12 | mail-organise-approval.integration 12 |
 | M34 | Full access is special-cased for the four writes: they ask even where every other write passes | 2 | mail-organise-approval.integration 2 |
+| M35 | R1: the approval service does not pass the always-a-card reason to the gate | 4 | mail-organise-approval.integration 4 |
+| M36 | R1: the person's own Always allow no longer lifts the card for that tool | 4 | mail-organise-approval.integration 4 |
+| M37 | R1: the card is skipped when the reviewer says proceed | 4 | mail-organise-approval.integration 4 |
+| M38 | R8: the second guard on what may be stored lets the Trash and `\Deleted` flags through | 2 | mail-organise-imap 2 |
+| M39 | R4: a curly quotation mark is allowed in a label name | 1 | mail-organise 1 |
+| M40 | R5: a timeout after a change was sent is told as if nothing was changed | 1 | mail-organise-imap 1 |
+| M41 | R5: a logout Gmail does not answer is waited for, not cut off | 1 | mail-organise-imap 1 |
+| M42 | R6: the read finds All Mail by a special use the library only guessed from a name | 1 | mail-organise 1 |
+| M43 | R7: over REST a message in the Trash or in Spam is found and acted on | 2 | mail-organise-rest 2 |
 
 **Checks run on the merged branch.**
 
@@ -206,10 +227,10 @@ Run on 15 November 2026 from `openbot/`, one command at a time.
 - `bun run typecheck` (shared, toolkit, worker, server, app): clean.
 - `bun run typecheck:tests`: clean against the baseline, 239 known errors, none added.
 - Biome: `format` over 2196 files and `lint --error-on-warnings` over 2215 files, no findings. The format check found one line of a test file after the last typing fix; it was formatted and committed.
-- `bun run test:server:sharded` (11 shards, real Postgres): 9190 pass, 3 fail, 21 skip. The three failures are the ones `CLAUDE.md` lists as failing on plain main in this sandbox: the "real provider sees the learned catalog and both server-read results" tests of `learning-langgraph.test.ts` and `learning-mastra.test.ts`, and the Mastra bridge test. This branch does not touch those files, and main's own full suite was not run for the comparison. An earlier full run, before four pins of this branch's own were moved (an allow-list line, two tests that held the old tool counts, an unread array in the grants test), showed 4 more failures, all fixed.
+- `bun run test:server:sharded` (11 shards, real Postgres), run again after the review fixes: 9210 pass, 3 fail, 21 skip. The three failures are the ones `CLAUDE.md` lists as failing on plain main in this sandbox: the "real provider sees the learned catalog and both server-read results" tests of `learning-langgraph.test.ts` and `learning-mastra.test.ts`, and the Mastra bridge test. This branch does not touch those files, and main's own full suite was not run for the comparison. An earlier full run, before four pins of this branch's own were moved (an allow-list line, two tests that held the old tool counts, an unread array in the grants test), showed 4 more failures, all fixed.
 - `bun test app/` after `bun run generate:app-config`: 2990 pass, 0 fail, in 314 files.
-- The 14 server files that carry this change (`assertion-shape` among them), the app card test and `evals/team/run.test.ts`, run again after the last merge of origin/main (only `site/` changed) and the last formatting commit: 431 server tests pass, 14 app tests pass, 167 evals tests pass, 0 fail.
-- The planted defects, run again on the same tree: 37 of 37 caught.
+- The 14 server files that carry this change (`assertion-shape` among them), the app card test and `evals/team/run.test.ts`, run again after the last merge of origin/main (only `site/` changed) and the last formatting commit: 451 server tests pass (the 13 files above and `assertion-shape`), 14 app tests pass, 167 evals tests pass, 0 fail.
+- The planted defects: 46 of 46 caught (the first 37 re-run on the tree before the review fixes; M35 to M43 and M29, M33, M34 after them).
 - Nothing ran live: see section 7.
 
 ## 9. Decisions left to the maintainer
