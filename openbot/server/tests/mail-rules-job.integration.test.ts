@@ -446,9 +446,7 @@ describe("what the job leaves in the trail", () => {
     expect(text).toContain("archive");
     for (const secret of ["secret.person", "private subject", "Private label"])
       expect(text).not.toContain(secret);
-    expect(JSON.stringify(rows[0]?.initiator ?? rows[0])).toContain(
-      "deployment",
-    );
+    expect(rows[0]?.initiatorKind).toBe("deployment");
   });
 
   test("creating, switching and deleting a rule each leave a row", async () => {

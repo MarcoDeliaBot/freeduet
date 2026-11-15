@@ -47,7 +47,11 @@ import {
   DISABLE_RULE,
   LIST_RULES,
 } from "../src/plugins/mail-rules";
-import { createPluginStore, PluginRefusedError } from "../src/plugins/store";
+import {
+  createPluginStore,
+  PluginRefusedError,
+  type PluginStoreOptions,
+} from "../src/plugins/store";
 import { createPrivateShareCheck } from "../src/proactive/private-share";
 import { TEST_POOL, testDatabaseUrl } from "./support/database";
 import { FakeRuleMailbox } from "./support/fake-rule-mailbox";
@@ -136,12 +140,8 @@ const options = {
     service.gate(candidate),
   privateShareCheck: createPrivateShareCheck({ approvals }),
   verifyUserSecret: async () => ({ ok: true, calendar: false }),
-  callVendor: (
-    connection: { actorId?: string; botId?: string },
-    name: string,
-    args: Record<string, unknown>,
-  ) => box.call(connection, name, args),
-};
+  callVendor: (connection, name, args) => box.call(connection, name, args),
+} satisfies PluginStoreOptions;
 const store = createPluginStore(options);
 
 const typed = (content: string, id = `msg-${randomUUID()}`): Message => ({
@@ -259,14 +259,12 @@ beforeAll(async () => {
       })
       .onConflictDoNothing();
   }
-  await database
-    .insert(users)
-    .values({
-      id: owner,
-      email: `${owner}@rules.test`,
-      name: "Maya",
-      emailVerified: false,
-    });
+  await database.insert(users).values({
+    id: owner,
+    email: `${owner}@rules.test`,
+    name: "Maya",
+    emailVerified: false,
+  });
   const [existing] = await database
     .select({ id: mcpServers.id })
     .from(mcpServers)

@@ -1,4 +1,5 @@
 import { describe, expect, test } from "bun:test";
+import { JOB_TOOLS } from "../src/plugins/plugin-store/mail-rules";
 import { automaticToolRefs } from "../src/plugins/plugin-store/automatic";
 import {
   CREATE_RULE,
@@ -362,5 +363,22 @@ describe("the automatic top-up reaches the rule tools, and never a send", () => 
       expect(refs).not.toContain(`${server}/gmail_send_message`);
       expect(refs).not.toContain(`${server}/gmail_send_reply`);
     }
+  });
+});
+
+describe("the job reaches a mailbox through eight tools and no other", () => {
+  test("the allowlist is exactly the search, the labels and the five organising writes: nothing that sends, forwards or deletes", () => {
+    expect([...JOB_TOOLS].sort()).toEqual([
+      "gmail_archive_messages",
+      "gmail_bin_messages",
+      "gmail_create_label",
+      "gmail_label_messages",
+      "gmail_list_labels",
+      "gmail_mark_messages",
+      "gmail_search_messages",
+      "gmail_spam_messages",
+    ]);
+    for (const name of JOB_TOOLS)
+      expect(name).not.toMatch(/send|forward|reply|delete|empty|rule/);
   });
 });
