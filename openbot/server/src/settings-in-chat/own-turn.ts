@@ -88,6 +88,7 @@ function reading(initiator: AuditInitiator | undefined): Reading {
     AuditInitiatorKind,
     {
       person: "the person's own turn";
+      remote: "refused: the person's words from a browser not paired with the computer; a setting is changed at the computer";
       handoff: "the person's only through the relay of a hop whose root is the person; judged by the signed run";
       routine: "refused: a routine, a check-in or research ran on its own";
       responsibility: "refused: a trigger ran on its own";
@@ -101,7 +102,8 @@ function reading(initiator: AuditInitiator | undefined): Reading {
     case "handoff":
       return initiator.origin?.kind === "person" ? "hop_of_person" : "other";
     default:
-      // A routine, a trigger, a memory run, the deployment, and a kind only another version knows.
+      // A remote session's run, a routine, a trigger, a memory run, the deployment, and a kind only
+      // another version knows.
       return "other";
   }
 }

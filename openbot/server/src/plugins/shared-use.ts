@@ -45,6 +45,7 @@ export async function steeringOf(
     AuditInitiatorKind,
     {
       person: "the actor, who signed in and asked";
+      remote: "the actor, who signed in and asked from a browser not paired with the computer; its writes ask a card (freeduet/always-ask.ts)";
       routine: "the owner, who wrote the routine's prompt";
       memory: "the owner, who chose the sync's fixed arguments";
       responsibility: "the owner, and outside input when any source is not manual or schedule";
@@ -54,6 +55,7 @@ export async function steeringOf(
   >;
   switch (initiator.kind) {
     case "person":
+    case "remote":
     case "routine":
     case "memory":
       return { kind: "actor", outside: false };

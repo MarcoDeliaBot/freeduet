@@ -25,8 +25,9 @@
  * WHEN IT APPLIES. `effective` is asked by the approval gate (`approvals/service.ts`), and `applies`,
  * which is only "is it on at all", by the connector's send check (`withFullAccess` below). Both answer
  * yes only for the member the person switched on, in the person's own live turn: no run initiator, or
- * `person` (the app's own computer calls). A routine, a check-in, a memory run, a task and the
- * deployment always ask. A hop made by another member applies it to the receiver only when the server
+ * `person` (the app's own computer calls). A routine, a check-in, a memory run, a task, the
+ * deployment and a run started from a remote session (a browser not paired with the computer, `remote`)
+ * always ask. A hop made by another member applies it to the receiver only when the server
  * itself traces the hop to the person's own typed message (the D27a mark, loaded by
  * `createHandedRequestLoader`). Then the stricter of the two members' settings holds for payments: a
  * receiver in plain Full access still asks about a payment when the member that handed the work on is
@@ -53,6 +54,7 @@ import { type AuditStore, recordAuditEvent } from "../audit";
 import type { Database } from "../db/client";
 import { auditEvents, users } from "../db/schema";
 import type { CheckPrivateShare } from "../proactive/private-share";
+import { startedRemote } from "./always-ask";
 
 export type { FullAccessMode };
 
@@ -154,6 +156,11 @@ export function createFullAccess(deps: {
     const { continuation } = input;
     if (!continuation) return undefined;
     const initiator = continuation.initiator;
+    // A run that began in a remote session (a browser not paired with the computer) never has Full
+    // access, in itself or through a hop made from it: the person's setting is for the person at the
+    // desk. Said here, and not left to the hand-off loader, so that the connector's send check
+    // (`withFullAccess`) and the gate read the same answer.
+    if (startedRemote(initiator)) return undefined;
     const ownTurn = initiator === undefined || initiator.kind === "person";
     const handedOn = initiator?.kind === "handoff";
     if (!ownTurn && !(handedOn && deps.handedRequest)) return undefined;
