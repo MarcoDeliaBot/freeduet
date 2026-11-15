@@ -93,17 +93,17 @@ From a release published after this workflow existed, the release has two extra 
 ```bash
 # download both files from the release page, then:
 sha256sum --check SHA256SUMS
-gh attestation verify freeduet-v0.2.1-source.tar.gz --repo MarcoDeliaBot/freeduet
+gh attestation verify freeduet-<tag>-source.tar.gz --repo MarcoDeliaBot/freeduet
 gh attestation verify SHA256SUMS --repo MarcoDeliaBot/freeduet
 ```
 
 `sha256sum --check` proves the archive is the file the checksum file names. `gh attestation verify` proves, against GitHub's and Sigstore's records, that a workflow of this repository produced those exact bytes, and prints the workflow and the commit. Compare that commit with the tag:
 
 ```bash
-git ls-remote https://github.com/MarcoDeliaBot/freeduet refs/tags/v0.2.1
+git ls-remote https://github.com/MarcoDeliaBot/freeduet refs/tags/<tag>
 ```
 
-What this does not prove: that the code is free of bugs or malice (only that it is the tagged code, built in the open), or anything about a container image or an installed application. It does not cover releases made before the workflow existed (v0.1, v0.2), which only have the archive GitHub itself makes. GitHub's own "Source code" archives on the release page are not the attested files and may differ byte for byte.
+What this does not prove: that the code is free of bugs or malice (only that it is the tagged code, built in the open), or anything about a container image or an installed application. It does not cover releases made before the workflow existed (v0.1, v0.2 and v0.2.1), which only have the archive GitHub itself makes. GitHub's own "Source code" archives on the release page are not the attested files and may differ byte for byte.
 
 ## 5. Check how the repository is run
 
