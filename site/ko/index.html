@@ -96,7 +96,7 @@
    "name": "Windows, Mac, Linux에서 되나요?",
    "acceptedAnswer": {
     "@type": "Answer",
-    "text": "개발자는 Windows에서 WSL2와 Docker로 쓰고 있고, 자동 검사는 Linux에서 실행을 확인합니다. Mac에서는 테스트하지 않았으므로 동작을 약속드릴 수 없습니다. FreeDuet은 초기 버전(0.1)이며, 개발자 한 명이 만들어 직접 쓰고 있습니다."
+    "text": "개발자는 Windows에서 WSL2와 Docker로 쓰고 있고, 자동 검사는 Linux에서 실행을 확인합니다. Mac에서는 테스트하지 않았으므로 동작을 약속드릴 수 없습니다. FreeDuet은 초기 버전(0.2)이며, 개발자 한 명이 만들어 직접 쓰고 있습니다."
    }
   },
   {
@@ -975,8 +975,8 @@ footer a{color:var(--ink)}
     <h3 class="road-h rv" data-i="r_h">지금 되는 것, 그리고 앞으로 올 것</h3>
     <ol class="road rv">
       <li><b data-i="rl_today">오늘</b><span class="tag" data-i="r_now">지금 이용 가능</span><p data-i="r1">내 Claude 로그인으로 쓰는 팀, 그리고 승인 절차, 테스트, Gmail, Google Calendar.</p></li>
-      <li><b data-i="rl_now">지금</b><span class="tag" data-i="r_prog">진행 중</span><p data-i="r2">최우선 과제는 Windows, macOS, Ubuntu용 단일 파일 설치 프로그램입니다. Ubuntu용 첫 단계는 CI에서 테스트되었습니다. 만들어졌지만 실제 환경에서는 아직 확인하지 않았습니다: 멤버 컴퓨터마다 별도의 토큰, 그리고 접근을 끄면 닫히는 홈 네트워크 연결. 새 멤버는 각각 테스트를 거쳐 추가됩니다.</p></li>
-      <li><b data-i="rl_next">다음</b><span class="tag" data-i="r_prog">진행 중</span><p data-i="r3">멤버마다 AI 서비스 선택: 자동 전환은 만들어졌고 테스트 엔진으로만 확인했습니다. 채팅에서 바꾸는 설정(실행 취소 포함)은 진행 중입니다. 팀 안에서의 실제 작업 분담은 계획 중입니다.</p></li>
+      <li><b data-i="rl_now">지금</b><span class="tag" data-i="r_prog">진행 중</span><p data-i="r2">최우선 과제는 Windows, macOS, Ubuntu용 단일 파일 설치 프로그램입니다. Ubuntu와 WSL2를 통한 Windows용 첫 설치 스크립트가 있고, Ubuntu 단계는 CI에서 테스트됩니다. 더블클릭 설치 프로그램은 아직 없습니다. 만들어졌지만 실제 환경에서는 아직 확인하지 않았습니다: 멤버 컴퓨터마다 별도의 토큰, 그리고 접근을 끄면 닫히는 홈 네트워크 연결. 새 멤버는 각각 테스트를 거쳐 추가됩니다.</p></li>
+      <li><b data-i="rl_next">다음</b><span class="tag" data-i="r_prog">진행 중</span><p data-i="r3">멤버마다 AI 서비스 선택: 엔진 페이지에서 각 멤버의 체인과 자동 또는 먼저 묻기 선택을 볼 수 있습니다. 이는 만들어졌지만 실제 환경에서는 아직 확인하지 않았고, 전환은 테스트 엔진으로만 확인했습니다. 채팅에서 바꾸는 설정(실행 취소 포함)은 진행 중입니다. 팀 안에서의 실제 작업 분담은 계획 중입니다.</p></li>
       <li><b data-i="rl_next">다음</b><span class="tag" data-i="r_prog">진행 중</span><p data-i="r4">채팅으로 만드는 자동화와 휴대폰 버전(로그인 목록은 만들어짐)은 진행 중입니다. 더 많은 연결 앱과 원격 접속은 설계 중입니다.</p></li>
       <li><b data-i="rl_later">나중</b><span class="tag" data-i="r_prog">진행 중</span><p data-i="r5">음성: 읽어주기는 만들어졌고 기본값은 꺼짐이며, 통화는 아직 만들지 않았습니다. 안전한 쇼핑: 계획 중. Full access와 동영상 멤버 Cam은 만들어졌지만 실제 환경에서는 아직 확인하지 않았습니다. Cam은 채팅으로 완성된 파일을 다운로드 버튼과 함께 전달할 수 있습니다.</p></li>
     </ol>
@@ -1065,7 +1065,7 @@ cd openbot &amp;&amp; docker compose exec -it agent-freeduet claude
     <div class="faq">
       <details class="rv" open><summary data-i="q1">무엇이 무료이고, 무엇에 비용을 내나요?</summary><p data-i="a1">FreeDuet은 무료이고 MIT 라이선스의 오픈 소스이며, 업무용으로도 쓸 수 있습니다. 내시는 비용은 함께 쓰는 AI 구독료뿐이며, 현재는 Claude 요금제입니다. 사야 하는 API 키는 없습니다.</p></details>
       <details class="rv"><summary data-i="q2">설치하려면 무엇이 필요한가요?</summary><p data-i="a2">Claude 구독, 그리고 내 컴퓨터에 설치된 Docker, Bash, Bun이 필요합니다. 위의 네 단계가 설치의 전부입니다. 터미널을 열어 본 적이 없으신가요? 잘 아는 분에게 설치를 부탁하고, 이 페이지를 보여 주세요.</p></details>
-      <details class="rv"><summary data-i="q3">Windows, Mac, Linux에서 되나요?</summary><p data-i="a3">개발자는 Windows에서 WSL2와 Docker로 쓰고 있고, 자동 검사는 Linux에서 실행을 확인합니다. Mac에서는 테스트하지 않았으므로 동작을 약속드릴 수 없습니다. FreeDuet은 초기 버전(0.1)이며, 개발자 한 명이 만들어 직접 쓰고 있습니다.</p></details>
+      <details class="rv"><summary data-i="q3">Windows, Mac, Linux에서 되나요?</summary><p data-i="a3">개발자는 Windows에서 WSL2와 Docker로 쓰고 있고, 자동 검사는 Linux에서 실행을 확인합니다. Mac에서는 테스트하지 않았으므로 동작을 약속드릴 수 없습니다. FreeDuet은 초기 버전(0.2)이며, 개발자 한 명이 만들어 직접 쓰고 있습니다.</p></details>
       <details class="rv"><summary data-i="q4">비서가 묻지 않고 할 수 있는 일은 무엇인가요?</summary><p data-i="a4">자료를 찾아보고, 읽고, 초안과 보고서를 준비할 수 있습니다. 기본적으로 다섯 가지 버튼은 승인을 기다립니다. 직접 입력한 주소로 가는 새 이메일만 예외예요. 멤버 한 명에게 Full access를 켜면 내 대화에서는 묻지 않지만, 비밀번호와 보안 설정은 나에게 넘어옵니다. 비서도 실수할 수 있으니, 승인 전에 준비된 내용을 읽어 보세요.</p></details>
       <details class="rv"><summary data-i="q5">내 데이터는 어디에 있나요?</summary><p data-i="a5">FreeDuet은 내 컴퓨터에서 실행되고, 대화 내용도 그곳의 데이터베이스에 저장합니다. Claude 로그인 정보는 Claude Code 프로그램만 읽을 수 있는 Docker 볼륨에 남습니다. 비서들이 생각할 때는 내가 로그인한 AI 서비스에 요청을 보내는데, 그 서비스의 자체 앱을 쓸 때와 같은 방식이에요.</p></details>
       <details class="rv"><summary data-i="q6">휴대폰에서도 쓸 수 있나요?</summary><p data-i="a6">아직은 안 됩니다. 지금은 내 컴퓨터의 브라우저에서 FreeDuet을 엽니다. 승인 요청도 받을 수 있는 휴대폰 버전을 개발하고 있습니다.</p></details>
