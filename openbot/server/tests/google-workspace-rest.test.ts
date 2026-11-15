@@ -121,6 +121,7 @@ const ORGANISE_ARGS: Record<string, Record<string, unknown>> = {
   gmail_label_messages: { messageIds: ["1a2b3c"], addLabels: ["STARRED"] },
   gmail_archive_messages: { messageIds: ["1a2b3c"] },
   gmail_mark_messages: { messageIds: ["1a2b3c"], state: "read" },
+  gmail_bin_messages: { messageIds: ["1a2b3c"] },
 };
 
 /** Arguments a tool will accept, read off its own schema. Arrays get one address. */
@@ -185,7 +186,7 @@ describe("what the adapter offers", () => {
     );
   });
 
-  test("exactly the ten tools of the contract, in their contract names", async () => {
+  test("exactly the eleven tools of the contract, in their contract names", async () => {
     const tools = await listTools(connection);
     expect(tools.map((tool) => tool.name)).toEqual([
       "gmail_search_messages",
@@ -198,6 +199,7 @@ describe("what the adapter offers", () => {
       "gmail_label_messages",
       "gmail_archive_messages",
       "gmail_mark_messages",
+      "gmail_bin_messages",
     ]);
   });
 

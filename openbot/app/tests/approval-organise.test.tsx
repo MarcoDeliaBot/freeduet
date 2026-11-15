@@ -376,3 +376,94 @@ test("a routine's archive is asked about every time: no Always allow", () => {
   expect(view.queryByRole("button", { name: /Always allow/ })).toBeNull();
   expect(view.getByRole("button", { name: /Allow once/ })).toBeTruthy();
 });
+
+test("the Bin says how many and which, that they can be restored for about 30 days, and that Gmail deletes them after", () => {
+  const view = describeApproval(
+    request(
+      "gmail_bin_messages",
+      { messageIds: IDS },
+      { details: { messages: [ANA, NEWS], missing: 0 } },
+    ),
+  );
+  expect(view.title).toBe("Move 2 messages to the Bin");
+  expect(view.app).toBe("Gmail");
+  expect(view.kind).toBe("mail");
+  expect(view.fields).toEqual([
+    {
+      label: "What happens",
+      value:
+        "They go to your Bin and stay there for about 30 days. You can restore them from it. After that Gmail deletes them for good.",
+    },
+  ]);
+  expect(view.body).toBe(
+    "Ana <ana@example.com>: Invoice 42\nNews <news@example.org>: Weekly digest",
+  );
+  const one = describeApproval(
+    request(
+      "gmail_bin_messages",
+      { messageIds: [IDS[0]] },
+      { details: { messages: [ANA], missing: 0 }, server: "google-workspace" },
+    ),
+  );
+  expect(one.title).toBe("Move 1 message to the Bin");
+});
+
+test("the Bin's count is the server's, and a message the mailbox does not hold is said", () => {
+  const view = describeApproval(
+    request(
+      "gmail_bin_messages",
+      { messageIds: [...IDS, "1a2b3c4d5e6f7a03", "1a2b3c4d5e6f7a04"] },
+      { details: { messages: [ANA], missing: 1 } },
+    ),
+  );
+  expect(view.title).toBe("Move 2 messages to the Bin");
+  expect(view.fields.some((field) => field.label === "Not found")).toBe(true);
+  const unread = describeApproval(
+    request("gmail_bin_messages", { messageIds: IDS }),
+  );
+  expect(unread.title).toBe("Move 2 messages to the Bin");
+  expect(
+    unread.fields.some((field) =>
+      /could not be read just now/.test(field.value),
+    ),
+  ).toBe(true);
+});
+
+test("another server's tool of the same name keeps the generic card, and the Bin can be always allowed except in a routine", () => {
+  const view = describeApproval(
+    request(
+      "gmail_bin_messages",
+      { messageIds: IDS },
+      {
+        server: "some-server" as "google-imap",
+      },
+    ),
+  );
+  expect(view.title).not.toMatch(/Bin/);
+  const ask = render(
+    <ApprovalCard
+      onDecide={() => {}}
+      request={request(
+        "gmail_bin_messages",
+        { messageIds: IDS },
+        { details: { messages: [ANA, NEWS], missing: 0 }, source: "default" },
+      )}
+    />,
+  );
+  expect(ask.getByRole("button", { name: /Always allow/ })).toBeTruthy();
+  cleanup();
+  const routine = render(
+    <ApprovalCard
+      onDecide={() => {}}
+      request={request(
+        "gmail_bin_messages",
+        { messageIds: IDS },
+        {
+          details: { messages: [ANA, NEWS], missing: 0 },
+          source: "always_ask",
+        },
+      )}
+    />,
+  );
+  expect(routine.queryByRole("button", { name: /Always allow/ })).toBeNull();
+});

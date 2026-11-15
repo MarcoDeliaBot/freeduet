@@ -3,6 +3,8 @@ import {
   allMailPath,
   ARCHIVE_MESSAGES,
   archivedAnswer,
+  BIN_MESSAGES,
+  binnedAnswer,
   CREATE_LABEL,
   createdAnswer,
   LABEL_MESSAGES,
@@ -11,6 +13,7 @@ import {
   MARK_MESSAGES,
   markedAnswer,
   missingMessages,
+  noBinFolder,
   noSuchLabel,
   type OrganiseWriteCall,
   ownLabelNames,
@@ -23,14 +26,16 @@ import type { McpCallResult } from "./mcp";
  * {@link ./google-imap} reads a mailbox and sends mail, and nothing in it can change a mailbox: its
  * client type has no method that could, and a test reads its source to keep it so. Labels, archive and
  * read-or-unread need a mailbox opened for writing, and that lives here and nowhere else, behind
- * `ImapOrganiserLike`, which is exactly the seven methods these four operations use and no more.
+ * `ImapOrganiserLike`, which is exactly the eight methods these five operations use and no more.
  *
  * WHAT IS SENT, ALL OF IT. A label is created with `CREATE`. A label is added or removed with `UID
  * STORE` on `X-GM-LABELS`, which is how Gmail's own IMAP adds and removes a label without moving a
  * message. Archive removes the Inbox label the same way: the message stays in All Mail, with its
- * other labels. Read and unread add and remove the `\Seen` flag. That is the whole list. No message
- * is ever removed, moved or copied, nothing is expunged, no message is flagged for removal, and the
- * Trash and Spam labels are never an operand: the arguments are refused for naming them before a
+ * other labels. Read and unread add and remove the `\Seen` flag. The Bin is one `UID COPY` into the
+ * folder the server flagged `\Trash` (never one found by a name), from which the person can restore
+ * the message for about 30 days. That is the whole list. No message is ever expunged or moved with
+ * `MOVE`, nothing is copied anywhere but the Bin, no message is flagged for removal, Spam is never
+ * touched, and the Trash and Spam labels are never an operand of a label call: the arguments are refused for naming them before a
  * connection is made ({@link ./mail-organise}), and `operand` below refuses any other system label
  * that might get through, a second time and in the place the command is built. `google-imap-organise-wire.test`
  * runs these operations through the real client against a server that records every command line.
@@ -40,6 +45,26 @@ import type { McpCallResult } from "./mcp";
  * mailbox is opened for writing once the labels are known and the call is not already refused, and
  * only for the length of the one call: the connection is closed when it is done, however it ended.
  */
+
+/**
+ * The Bin: the folder the SERVER flagged `\Trash`, and no other. Never found by a guessed name: a
+ * `specialUse` the library only guessed from a folder's name (`specialUseSource` "name") does not
+ * count, so a label of the person's own called "Trash" is not the Bin. Null when the account reports none.
+ */
+export function binPath(
+  folders: readonly {
+    path: string;
+    specialUse?: string | undefined;
+    specialUseSource?: string | undefined;
+  }[],
+): string | null {
+  return (
+    folders.find(
+      (folder) =>
+        folder.specialUse === "\\Trash" && folder.specialUseSource !== "name",
+    )?.path ?? null
+  );
+}
 
 /**
  * The same client, and a flag that is set the moment a command that changes a thing is handed to it.
@@ -54,6 +79,7 @@ export function watchForChanges<C extends ImapOrganiserLike>(
     "mailboxCreate",
     "messageFlagsAdd",
     "messageFlagsRemove",
+    "messageCopy",
   ]);
   const watched = new Proxy(client, {
     get(target, property) {
@@ -101,6 +127,16 @@ export interface ImapOrganiserLike {
     flags: string[],
     options: { uid: true; useLabels?: true },
   ): Promise<boolean>;
+  /**
+   * `COPY`, and only ever to the Bin folder the server flagged `\Trash`. In Gmail a copy into the Trash
+   * puts the message in the Bin; there is no `MOVE` here (a client without that extension falls back to
+   * copy-then-expunge, which is exactly what must never be sent) and no `EXPUNGE` anywhere.
+   */
+  messageCopy(
+    range: string,
+    destination: string,
+    options: { uid: true },
+  ): Promise<unknown>;
 }
 
 /** Gmail's spelling, over IMAP, of the labels a call may name. */
@@ -190,6 +226,13 @@ export async function organiseOverImap(
     return asJson(createdAnswer(call.name, made?.created !== false));
   }
 
+  // The Bin is found by the server's own flag before anything is opened, and never guessed.
+  let bin: string | null = null;
+  if (call.tool === BIN_MESSAGES) {
+    bin = binPath(folders);
+    if (bin === null) return failure(noBinFolder);
+  }
+
   // What changes is settled first, so a label that is not there is refused before a mailbox is opened.
   let add: string[] = [];
   let remove: string[] = [];
@@ -205,6 +248,8 @@ export async function organiseOverImap(
     removedNames = removing.names;
   } else if (call.tool === ARCHIVE_MESSAGES) {
     remove = [INBOX];
+  } else if (call.tool === BIN_MESSAGES) {
+    // Neither a label nor a flag changes: the message is copied into the Bin, below.
   } else if (call.state === "read") {
     add = [SEEN];
   } else {
@@ -225,6 +270,15 @@ export async function organiseOverImap(
     return failure(missingMessages(found.missing, call.ids.length));
   }
   const range = found.uids.join(",");
+
+  if (call.tool === BIN_MESSAGES) {
+    // One COPY into the Bin, and nothing after it: no flag, no expunge, no other folder.
+    if (bin === null) return failure(noBinFolder);
+    if (!(await client.messageCopy(range, bin, { uid: true }))) {
+      return failure(NOT_MADE);
+    }
+    return asJson(binnedAnswer(call.ids.length));
+  }
 
   let inInbox = 0;
   if (call.tool === ARCHIVE_MESSAGES) {

@@ -898,22 +898,24 @@ through either, asking the OAuth connection first.
 | An administrator | Registers a Google OAuth client and sets a public address | Turns the entry on at `/admin/plugins/google-imap`. Nothing else: no Google Cloud project, no client |
 | Each person | Consents at Google | Pastes their Gmail address, an [app password](https://myaccount.google.com/apppasswords) and, optionally, the calendar's secret address in iCal format, at `/connections/google-imap` |
 | Reaches Google over | The Gmail and Calendar REST APIs | IMAP and SMTP (`imap.gmail.com:993`, `smtp.gmail.com:465`, both TLS) and the iCal address |
-| Limits | The Bots' tools, not the scopes: `gmail.modify` also covers reading and sending, and a client holding it could trash mail, which no tool does. A consent for sensitive scopes expires after seven days while the OAuth app is in testing | The Bots' tools. The app password itself reaches the whole mailbox |
+| Limits | The Bots' tools, not the scopes: `gmail.modify` also covers reading and sending, and a client holding it could delete mail for good, which no tool does (the only removal is a move to the Bin) A consent for sensitive scopes expires after seven days while the OAuth app is in testing | The Bots' tools. The app password itself reaches the whole mailbox |
 | Needs | An OAuth client | 2-Step Verification on the person's Google account |
 
-Both entries offer the same ten tools with the same arguments and answers: `gmail_search_messages`,
-`gmail_read_message`, `calendar_list_events` and `gmail_list_labels` (reads), and six writes, so each
+Both entries offer the same eleven tools with the same arguments and answers: `gmail_search_messages`,
+`gmail_read_message`, `calendar_list_events` and `gmail_list_labels` (reads), and seven writes, so each
 waits for the person's approval, apart from the cases below: `gmail_send_reply` and
 `gmail_send_message` send mail, and `gmail_create_label`, `gmail_label_messages`,
-`gmail_archive_messages` and `gmail_mark_messages` organise the mailbox (see below). Nothing can delete,
-trash, report as spam, forward or move a message to another folder, and a reply goes only to people
-already on the message it answers.
+`gmail_archive_messages`, `gmail_mark_messages` and `gmail_bin_messages` organise the mailbox (see below).
+Nothing can delete for good, empty the Bin, report as spam, forward or move a message to another folder
+(`gmail_bin_messages` moves it to the Bin, from which the person can restore it for about 30 days), and a
+reply goes only to people already on the message it answers.
 
-The four that organise a mailbox create a label, add or remove labels on messages named by id (at most
-100 a call), take messages out of the Inbox (they stay in All Mail with their labels) and mark them read
-or unread. Each is a write that sends nothing. When the person's own typed message of this live chat turn
+The five that organise a mailbox create a label, add or remove labels on messages named by id (at most
+100 a call), take messages out of the Inbox (they stay in All Mail with their labels), mark them read
+or unread and move them to the Bin (the strongest, with one stricter reviewer rule: the request itself must
+say to delete, bin or trash and name which messages). Each is a write that sends nothing. When the person's own typed message of this live chat turn
 asked for that change (directly with the member, or one hop through Iris), it runs with no card; the auto-review
-model is always asked for these four, whatever the person's auto-review setting, and is shown only those typed
+model is always asked for these five, whatever the person's auto-review setting, and is shown only those typed
 words, never an email, a tool's answer or the member's own text. In every other case it shows a card: the
 request did not ask for it, the idea came from an email, a page or a tool, or the turn was spoken. The model can
 be wrong in both directions, the changes are reversible in Gmail, and at most 100 messages go in a call. Where the
@@ -924,7 +926,7 @@ from the mailbox by the server and not from anything the Bot said. A routine, a 
 that started in one always ask, and "Always allow" does not lift that; an approval in the inbox that names nothing never gives a Bot one of
 them. With the OAuth entry they need the `gmail.modify` scope, so a person who connected before it was
 added reconnects once; with the app password the mailbox is opened for writing only for the length of
-one of these four calls. The reasoning and the limits are in `docs/design/mail-organise.md`.
+one of these calls. The reasoning and the limits are in `docs/design/mail-organise.md`.
 
 `gmail_send_message` writes a new email to one to five plain addresses, with a subject and a plain-text
 body; it takes no Cc, Bcc, attachment or other field. It is asked about every time: the card shows

@@ -44,10 +44,11 @@ Add exactly these four scopes:
 - `https://www.googleapis.com/auth/gmail.readonly`: read mail;
 - `https://www.googleapis.com/auth/gmail.send`: send mail, and nothing else (it cannot read, label or
   delete);
-- `https://www.googleapis.com/auth/gmail.modify`: label, archive and mark mail as read or unread. Gmail's
+- `https://www.googleapis.com/auth/gmail.modify`: label, archive, mark mail as read or unread and move it to the Bin. Gmail's
   `messages.batchModify` takes no narrower scope, and this one is wider than the tools that use it: it
-  also covers reading and sending mail, and a client holding it could trash mail, which no tool here
-  does and the connector cannot be made to. The tools, not the scope, are the boundary (see
+  also covers reading and sending mail, and a client holding it could delete mail for good, which no tool
+  here does and the connector cannot be made to (the Bin tool calls `messages.trash`, which Gmail undoes
+  for about 30 days). The tools, not the scope, are the boundary (see
   [Organising a mailbox](#organising-a-mailbox));
 - `https://www.googleapis.com/auth/calendar.readonly`: read the calendar.
 
@@ -87,7 +88,7 @@ At `/admin/plugins/google-workspace`:
 1. Turn on **Enable for this deployment**.
 2. Open **OAuth client** and paste the client ID and secret. The secret is encrypted with
    `KEY_ENCRYPTION_KEY` and never read back out to the browser.
-3. Press **Refresh tools**, which records the ten tools below.
+3. Press **Refresh tools**, which records the eleven tools below.
 
 No personal account is needed to get this far: the tool list is OpenBot's own code rather than an
 answer from a remote server. To check it actually works, use **Your account** on the same page, which
@@ -115,9 +116,10 @@ models do.
 | `gmail_create_label`    | write  | Creates a label; a name with a slash, such as `Clients/Acme`, is a label inside another. A label that already exists is a success and the answer says so.                                           |
 | `gmail_label_messages`  | write  | Adds labels to, or removes labels from, up to 100 messages named by id.                                                                                                                              |
 | `gmail_archive_messages` | write | Takes up to 100 messages named by id out of the Inbox. They stay in All Mail with their labels.                                                                                                      |
+| `gmail_bin_messages`    | write  | Moves up to 100 messages named by id to the Bin (Gmail's Trash), which keeps them about 30 days; the person can restore them. Not a permanent deletion, no tool empties the Bin. |
 | `gmail_mark_messages`   | write  | Marks up to 100 messages named by id as read or unread.                                                                                                                                              |
 
-The catalogue names the four reads and the six writes explicitly, so any other tool name counts as a
+The catalogue names the four reads and the seven writes explicitly, so any other tool name counts as a
 write.
 
 ### Sending mail is a write
@@ -153,14 +155,15 @@ What the connector itself enforces, whatever was approved:
   does not send (a Cc, a Bcc, an attachment, a header, a "from"), an empty subject or body, and a subject
   or body over its limit (200 and 20,000 characters) are refused before anything is sent, with a fixed
   sentence that repeats nothing that was typed.
-- There is no tool that deletes, trashes or reports mail as spam, forwards it, makes a filter, or moves
-  a message to another folder. The `gmail.send` scope could not do those anyway. It does allow sending
+- There is no tool that deletes mail for good or empties the Bin, reports mail as spam, forwards it, makes
+  a filter, or moves a message to another folder; the one removal is a move to the Bin, below. The
+  `gmail.send` scope could not do any of those anyway. It does allow sending
   a new message, which is why `gmail_send_message` needs no new scope.
 
 ### Organising a mailbox
 
-`gmail_create_label`, `gmail_label_messages`, `gmail_archive_messages` and `gmail_mark_messages` change
-the person's mailbox and send nothing. They are writes, not sends. When the person's own typed message of
+`gmail_create_label`, `gmail_label_messages`, `gmail_archive_messages` and `gmail_mark_messages` (and, with a
+stricter rule, `gmail_bin_messages`) change the person's mailbox and send nothing. They are writes, not sends. When the person's own typed message of
 this live chat turn asked for that change (directly with the member, or one hop through Iris), the call runs
 with no card. The auto-review model is always asked about these four, whatever the person's auto-review
 setting, and it is shown only those typed words: never an email, a tool's answer, an earlier message, a
@@ -192,9 +195,22 @@ limits is in [docs/design/mail-organise.md](../../../docs/design/mail-organise.m
   the gate, with a fixed sentence that repeats nothing that was passed in.
 - **Over REST**, a change is one `messages/batchModify` call after each named message has been looked
   up, and a label is created with one `POST` to `labels`. Over [IMAP](../configuration.md#two-ways-to-connect-gmail),
-  the mailbox is opened for writing only for the length of one of these four calls, and only a label's
-  creation, a store of `X-GM-LABELS` and a store of the `\Seen` flag are sent; nothing is moved,
-  copied, expunged or flagged for deletion.
+  the mailbox is opened for writing only for the length of one of these calls, and only a label's
+  creation, a store of `X-GM-LABELS`, a store of the `\Seen` flag and, for the Bin, one copy into the
+  folder the server flagged `\Trash` are sent; nothing is moved, expunged or flagged for deletion.
+
+### Moving mail to the Bin
+
+`gmail_bin_messages` moves messages named by id (at most 100 a call) to the Bin, Gmail's Trash. Gmail keeps
+them there about 30 days and the person can restore them from it; it is not a permanent deletion, no tool
+empties the Bin, and nothing moves mail to Spam. It is the strongest change to a mailbox the tools make,
+so it has the same gate as the four above with one stricter rule: the auto-review model is told that the
+request must itself say to delete, bin or trash AND name which messages (a sender, a category, a label or an
+unmistakable set). "Clean up", "tidy" or "remove the spam" without naming them shows a card, as does an
+instruction from an email, a routine, a check-in, a remote or spoken turn. Over REST it is Gmail's
+`messages.trash`, once for each message after it has been looked up; over IMAP it is one `UID COPY` into the
+folder the server flagged `\Trash`, never one found by a name. A message already in the Bin or in Spam is
+"not found". The card says how many and which, and that Gmail deletes them for good after about 30 days.
 
 ## What each person does
 
@@ -205,7 +221,7 @@ then reads **Connected** with the scopes Google actually granted.
 Google's consent screen lets a person untick individual permissions. Each one left unticked breaks the
 tools that need it, with a message saying the access granted does not cover the request; reconnecting
 and allowing every permission fixes it. A person who connected before the organising tools existed has
-not granted `gmail.modify`: reading, searching and sending go on working, and the four tools that change
+not granted `gmail.modify`: reading, searching and sending go on working, and the five tools that change
 a mailbox answer with that message until they reconnect.
 
 Nothing is cached. OpenBot stores the refresh token and mints a short-lived access token for each call,

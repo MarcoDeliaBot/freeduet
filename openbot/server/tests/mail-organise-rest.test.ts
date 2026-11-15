@@ -766,7 +766,7 @@ describe("whatever a tool is asked, these are the only requests it can make", ()
     }
   });
 
-  test("the REST module names no endpoint that deletes, trashes, forwards, filters or sends under an organising tool", () => {
+  test("the REST module names no endpoint that deletes, forwards, filters or sends under an organising tool", () => {
     const source = readFileSync(
       new URL("../src/plugins/google-workspace-rest.ts", import.meta.url),
       "utf8",
@@ -778,7 +778,6 @@ describe("whatever a tool is asked, these are the only requests it can make", ()
     expect(organising.length).toBeGreaterThan(3000);
     for (const forbidden of [
       "batchDelete",
-      "/trash",
       "/untrash",
       "/delete",
       '"DELETE"',
@@ -796,6 +795,11 @@ describe("whatever a tool is asked, these are the only requests it can make", ()
       expect(organising).not.toContain(forbidden);
     }
     expect(organising).toContain("/messages/batchModify");
+    // The one trash call there is moves a message to the Bin, and it is made in the Bin's own function.
+    expect(organising.match(/\/trash/g)).toHaveLength(1);
+    expect(organising).toContain(
+      `/messages/$${"{"}encodeURIComponent(id)}/trash`,
+    );
   });
 });
 

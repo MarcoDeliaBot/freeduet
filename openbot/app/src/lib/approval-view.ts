@@ -106,7 +106,7 @@ function describeShare(args: Record<string, unknown>): ApprovalView {
 
 /** The two Gmail connections' tools that organise a mailbox (server/src/plugins/mail-organise.ts). */
 const ORGANISE_TOOL =
-  /^(?:google-imap|google-workspace)\/(gmail_create_label|gmail_label_messages|gmail_archive_messages|gmail_mark_messages)$/;
+  /^(?:google-imap|google-workspace)\/(gmail_create_label|gmail_label_messages|gmail_archive_messages|gmail_mark_messages|gmail_bin_messages)$/;
 
 const count = (n: number, one: string, many = `${one}s`) =>
   `${n} ${n === 1 ? one : many}`;
@@ -119,7 +119,7 @@ const names = (value: unknown): string[] =>
       : [];
 
 /**
- * A call that labels, archives or marks mail, or creates a label, in plain words and with the
+ * A call that labels, archives, bins or marks mail, or creates a label, in plain words and with the
  * messages it touches.
  *
  * The count and the list come from what the SERVER read in the mailbox when it opened the request
@@ -172,6 +172,13 @@ function describeOrganise(
       label: "What happens",
       value:
         "They leave the Inbox and stay in All Mail, with their labels. Nothing is deleted.",
+    });
+  } else if (tool === "gmail_bin_messages") {
+    title = `Move ${messages} to the Bin`;
+    fields.push({
+      label: "What happens",
+      value:
+        "They go to your Bin and stay there for about 30 days. You can restore them from it. After that Gmail deletes them for good.",
     });
   } else if (tool === "gmail_mark_messages") {
     title = `Mark ${messages} as ${args.state === "unread" ? "unread" : "read"}`;

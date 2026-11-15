@@ -3,6 +3,8 @@ import {
   ALL_MAIL_FALLBACK,
   allMailPath,
   ARCHIVE_MESSAGES,
+  BIN_MESSAGES,
+  binnedAnswer,
   CREATE_LABEL,
   createdAnswer,
   isOrganiseMessageTool,
@@ -46,13 +48,14 @@ const refused = (result: { ok: boolean; message?: string }) =>
   result.ok ? null : (result.message ?? null);
 
 describe("the tools and how they are told apart", () => {
-  test("one tool only reads, and four change a mailbox", () => {
+  test("one tool only reads, and five change a mailbox", () => {
     expect([...ORGANISE_READ_TOOLS]).toEqual(["gmail_list_labels"]);
     expect([...ORGANISE_WRITE_TOOLS]).toEqual([
       "gmail_create_label",
       "gmail_label_messages",
       "gmail_archive_messages",
       "gmail_mark_messages",
+      "gmail_bin_messages",
     ]);
     for (const name of ORGANISE_READ_TOOLS) {
       expect(isOrganiseTool(name)).toBe(true);
@@ -64,7 +67,8 @@ describe("the tools and how they are told apart", () => {
     }
   });
 
-  test("three of the four name messages, and so can show the person which", () => {
+  test("four of the five name messages, and so can show the person which", () => {
+    expect(isOrganiseMessageTool(BIN_MESSAGES)).toBe(true);
     expect(isOrganiseMessageTool(LABEL_MESSAGES)).toBe(true);
     expect(isOrganiseMessageTool(ARCHIVE_MESSAGES)).toBe(true);
     expect(isOrganiseMessageTool(MARK_MESSAGES)).toBe(true);
@@ -81,18 +85,21 @@ describe("the tools and how they are told apart", () => {
       "calendar_list_events",
       "gmail_delete_message",
       "gmail_trash_message",
+      "gmail_empty_bin",
+      "gmail_delete_permanently",
     ]) {
       expect(isOrganiseTool(name)).toBe(false);
     }
   });
 
-  test("the definitions are exactly the five tools, each with an object schema", () => {
+  test("the definitions are exactly the six tools, each with an object schema", () => {
     expect(ORGANISE_TOOL_DEFINITIONS.map((tool) => tool.name)).toEqual([
       LIST_LABELS,
       CREATE_LABEL,
       LABEL_MESSAGES,
       ARCHIVE_MESSAGES,
       MARK_MESSAGES,
+      BIN_MESSAGES,
     ]);
     for (const tool of ORGANISE_TOOL_DEFINITIONS) {
       expect(tool.inputSchema.type).toBe("object");
@@ -143,6 +150,23 @@ describe("the tools and how they are told apart", () => {
     ]);
     expect(named(ARCHIVE_MESSAGES)).toEqual(["messageIds"]);
     expect(named(MARK_MESSAGES)).toEqual(["messageIds", "state"]);
+    expect(named(BIN_MESSAGES)).toEqual(["messageIds"]);
+  });
+
+  test("a Bot is told the Bin is not a deletion, that the person can restore for about 30 days, and that it is the strongest change", () => {
+    const bin = ORGANISE_TOOL_DEFINITIONS.find(
+      (tool) => tool.name === BIN_MESSAGES,
+    );
+    expect(bin?.description).toContain("the person is asked first");
+    expect(bin?.description).toContain("restore them for about 30 days");
+    expect(bin?.description).toContain("not a permanent deletion");
+    expect(bin?.description).toContain("no tool that empties the Bin");
+    expect(bin?.description).toContain("strongest change");
+    expect(bin?.description).toContain(
+      "no way to act on everything a search matches",
+    );
+    expect(binnedAnswer(3)).toMatchObject({ binned: 3 });
+    expect(binnedAnswer(3).note).toContain("about 30 days");
   });
 });
 
@@ -447,6 +471,46 @@ describe("one call to a tool", () => {
     );
   });
 
+  test("binning takes message ids and nothing else, at most one hundred, and is a write that names messages", () => {
+    expect(
+      parseOrganiseCall(BIN_MESSAGES, { messageIds: [ID, OTHER, ID] }),
+    ).toEqual({ ok: true, value: { tool: BIN_MESSAGES, ids: [ID, OTHER] } });
+    expect(refused(parseOrganiseCall(BIN_MESSAGES, {}))).toBe(
+      ORGANISE_REFUSALS.noIds,
+    );
+    const hundred = Array.from({ length: 100 }, (_, n) =>
+      n.toString(16).padStart(4, "0"),
+    );
+    expect(parseOrganiseCall(BIN_MESSAGES, { messageIds: hundred }).ok).toBe(
+      true,
+    );
+    expect(
+      refused(
+        parseOrganiseCall(BIN_MESSAGES, {
+          messageIds: [...hundred, "ffff"],
+        }),
+      ),
+    ).toBe(ORGANISE_REFUSALS.tooManyIds);
+    // Nothing that would act on a search, a folder or permanence is a field here.
+    for (const extra of [
+      { query: "from:x" },
+      { permanent: true },
+      { folder: "Spam" },
+      { destination: "Spam" },
+      { to: "Spam" },
+      { all: true },
+      { state: "read" },
+    ]) {
+      expect(
+        refused(
+          parseOrganiseCall(BIN_MESSAGES, { messageIds: [ID], ...extra }),
+        ),
+      ).toBe(ORGANISE_REFUSALS.extra);
+    }
+    expect(isOrganiseWrite(BIN_MESSAGES)).toBe(true);
+    expect(isOrganiseMessageTool(BIN_MESSAGES)).toBe(true);
+  });
+
   test("marking takes ids and a state of read or unread, and no other", () => {
     expect(
       parseOrganiseCall(MARK_MESSAGES, { messageIds: [ID], state: "read" }),
@@ -663,10 +727,11 @@ describe("one call to a tool", () => {
     ).toBe(true);
   });
 
-  test("a tool that is not one of the five is refused, an inherited property name included", () => {
+  test("a tool that is not one of the six is refused, an inherited property name included", () => {
     for (const name of [
       "gmail_delete_message",
       "gmail_trash_message",
+      "gmail_empty_bin",
       "toString",
       "constructor",
       "__proto__",
@@ -699,6 +764,8 @@ describe("one call to a tool", () => {
       parseOrganiseCall(CREATE_LABEL, { name: `${hostile}*` }),
       parseOrganiseCall(MARK_MESSAGES, { messageIds: [ID], state: hostile }),
       parseOrganiseCall(ARCHIVE_MESSAGES, { messageIds: [ID], [hostile]: 1 }),
+      parseOrganiseCall(BIN_MESSAGES, { messageIds: [hostile] }),
+      parseOrganiseCall(BIN_MESSAGES, { messageIds: [ID], [hostile]: 1 }),
     ];
     for (const result of seen) {
       expect(result.ok).toBe(false);

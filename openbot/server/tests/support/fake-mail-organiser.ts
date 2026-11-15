@@ -71,6 +71,7 @@ const WRITE_METHODS = new Set([
   "fetch",
   "messageFlagsAdd",
   "messageFlagsRemove",
+  "messageCopy",
 ]);
 
 /** Methods that change a mailbox, asserted never to be called on the read client. */
@@ -78,6 +79,7 @@ export const CHANGING_METHODS = [
   "mailboxCreate",
   "messageFlagsAdd",
   "messageFlagsRemove",
+  "messageCopy",
 ] as const;
 
 export const decimalOf = (hex: string) => BigInt(`0x${hex}`).toString(10);
@@ -157,6 +159,8 @@ export class FakeMailbox {
   failures = new Map<string, unknown>();
   /** What the changing methods answer: `false` is a server that did not make the change. */
   storeAnswers = true;
+  /** What `messageCopy` answers: `false` is a server that did not make the copy. */
+  copyAnswers = true;
   /** What a removal answers, when the add before it was made: `false` is a server that refused only that. */
   removeAnswers = true;
   /** A server that never answers the logout: the transport must cut the connection off itself. */
@@ -201,9 +205,24 @@ export class FakeMailbox {
     return this.messages.find((message) => message.emailId === emailId);
   }
 
+  /**
+   * What All Mail holds. Gmail's IMAP does not show a message that is in the Bin (or in Spam) in All
+   * Mail, so a message the Bin holds is "not found" to a lookup, as it is over REST.
+   */
+  private visible(): MailboxMessage[] {
+    return this.messages.filter(
+      (message) =>
+        !message.labels.includes("\\Trash") &&
+        !message.labels.includes("\\Spam"),
+    );
+  }
+
+  /** The path of every folder a message was copied into, with the uids, in order. */
+  copies: { range: string; destination: string }[] = [];
+
   private pick(range: string): MailboxMessage[] {
     const wanted = new Set(range.split(",").map(Number));
-    return this.messages.filter((message) => wanted.has(message.uid));
+    return this.visible().filter((message) => wanted.has(message.uid));
   }
 
   private client(via: "read" | "write", allowed: Set<string>) {
@@ -245,7 +264,7 @@ export class FakeMailbox {
       mailboxCreate: async (path: string) =>
         this.createdAnswer ?? { path, created: true },
       search: async (query: { emailId?: string }) =>
-        this.messages
+        this.visible()
           .filter((message) => message.emailId === query.emailId)
           .map((message) => message.uid),
       fetch: (
@@ -286,6 +305,23 @@ export class FakeMailbox {
           for (const flag of flags) if (!into.includes(flag)) into.push(flag);
         }
         return true;
+      },
+      messageCopy: async (range: string, destination: string) => {
+        this.copies.push({ range, destination });
+        if (!this.copyAnswers) return false;
+        // Gmail: a copy into the Bin puts the message in the Bin, which keeps it for about 30 days.
+        const bin = this.folders.find(
+          (folder) =>
+            folder.path === destination && folder.specialUse === "\\Trash",
+        );
+        if (bin) {
+          for (const message of this.pick(range)) {
+            if (!message.labels.includes("\\Trash")) {
+              message.labels.push("\\Trash");
+            }
+          }
+        }
+        return { path: destination };
       },
       messageFlagsRemove: async (
         range: string,
