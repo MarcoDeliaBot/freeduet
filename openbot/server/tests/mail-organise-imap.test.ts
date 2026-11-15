@@ -558,6 +558,27 @@ describe("a connection is closed however the call ended, and says nothing in the
     expect(box.logouts).toBe(1);
   });
 
+  test("a removal the server does not make after the labels were added says that only part was made", async () => {
+    const { box, transport } = setup();
+    box.removeAnswers = false;
+    const result = await transport.callTool(
+      connection,
+      "gmail_label_messages",
+      {
+        messageIds: [HEX.c],
+        addLabels: ["Clients/Acme"],
+        removeLabels: ["FreeDuet"],
+      },
+    );
+    expect(result.isError).toBe(true);
+    expect(result.text).toContain("only part of this change");
+    expect(result.text).not.toContain("did not make this change");
+    // What was added stays added, and what was to be removed is still there: the sentence says as much.
+    const labels = box.message(decimalOf(HEX.c))?.labels ?? [];
+    expect(labels).toContain("Clients/Acme");
+    expect(labels).toContain("FreeDuet");
+  });
+
   test("every connection that was made is logged out, over a run of mixed calls", async () => {
     const { box, transport } = setup();
     await transport.callTool(connection, "gmail_list_labels", {});

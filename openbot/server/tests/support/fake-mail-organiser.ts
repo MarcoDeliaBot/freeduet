@@ -157,6 +157,8 @@ export class FakeMailbox {
   failures = new Map<string, unknown>();
   /** What the changing methods answer: `false` is a server that did not make the change. */
   storeAnswers = true;
+  /** What a removal answers, when the add before it was made: `false` is a server that refused only that. */
+  removeAnswers = true;
   /** What `mailboxCreate` answers: `created: false` is a label that was already there. */
   createdAnswer: { path?: string; created?: boolean } | undefined = undefined;
 
@@ -287,7 +289,7 @@ export class FakeMailbox {
         flags: string[],
         options: { useLabels?: true },
       ) => {
-        if (!this.storeAnswers) return false;
+        if (!this.storeAnswers || !this.removeAnswers) return false;
         for (const message of this.pick(range)) {
           const key = options.useLabels ? "labels" : "flags";
           message[key] = message[key].filter((each) => !flags.includes(each));
