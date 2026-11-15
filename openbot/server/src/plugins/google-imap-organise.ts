@@ -32,7 +32,7 @@ import type { McpCallResult } from "./mcp";
  * is ever removed, moved or copied, nothing is expunged, no message is flagged for removal, and the
  * Trash and Spam labels are never an operand: the arguments are refused for naming them before a
  * connection is made ({@link ./mail-organise}), and `operand` below refuses any other system label
- * that might get through, a second time and in the place the command is built. `google-imap-wire.test`
+ * that might get through, a second time and in the place the command is built. `google-imap-organise-wire.test`
  * runs these operations through the real client against a server that records every command line.
  *
  * ALL OF THE NAMED MESSAGES OR NONE. Each id is looked up first, and one that is not in the mailbox
