@@ -20,10 +20,23 @@ import {
   type SettingChangeRecord,
 } from "@openbot/shared/setting-change";
 import type { AuditEvent, AuditReader, AuditStore } from "../audit";
-import { recordAuditEvent } from "../audit";
+import { createAuditStore, recordAuditEvent } from "../audit";
 import type { Database } from "../db/client";
-import { agentPreferences, agentProfiles } from "../db/schema/coworker";
-import { agents } from "../db/schema/core";
+import {
+  agentPreferences,
+  agentProfiles,
+  routines,
+} from "../db/schema/coworker";
+import { agents, channelAgents, channels } from "../db/schema/core";
+import { auditEvents } from "../db/schema";
+import { approvalRules } from "../db/schema/approvals";
+import { responsibilities } from "../db/schema/responsibilities";
+import {
+  teamBotAssignments,
+  teamBotAudience,
+  teamBotPublications,
+} from "../db/schema/team-bots";
+import { pluginGrants } from "../db/schema/plugins";
 import { botLifecycle } from "../db/schema/lifecycle";
 import {
   parseChoice,
@@ -76,7 +89,7 @@ export type SettingChangeOutcome =
 
 export type SettingUndoOutcome = {
   changeId: string;
-  setting: ChatSettingName;
+  setting: ChatSettingName | "member";
   /** The value the Undo put back: exactly the one the change replaced (null: the member's own name). */
   value: NotifyLevel | string | null;
 };
@@ -116,7 +129,32 @@ export type LanguageChangeOutcome =
     }
   | { status: "unchanged"; value: string | null };
 
+export type MemberAddedOutcome = {
+  changeId: string;
+  agentId: string;
+  setting: "member";
+  previousValue: null;
+  /** The member's own name when it was added. */
+  newValue: string;
+  /** The skills it was given, by slug. */
+  skills: string[];
+  /** Its job title, as recorded. */
+  job: string;
+};
+
+/** A member added from chat is recorded only within this long after it was made: the card records it at once. */
+export const MEMBER_RECORD_WINDOW_MS = 10 * 60 * 1000;
+
 export type SettingChanges = {
+  /**
+   * Records that the person added a member from chat (the Create button of the proposal card), so that the
+   * line under it can offer Undo (docs/design/settings-in-chat.md, 8.11). Refused unless the member is the
+   * person's own, private, keyless, just made, and not recorded before.
+   */
+  memberAdded(input: {
+    ownerUserId: string;
+    agentId: string;
+  }): Promise<MemberAddedOutcome>;
   change(input: {
     ownerUserId: string;
     agentId: string;
@@ -170,6 +208,29 @@ function recordOf(payload: Record<string, unknown>) {
   const { setting, agentId, previousValue, newValue } = payload;
   if (typeof agentId !== "string")
     throw new Error("A recorded setting change could not be read back.");
+  if (setting === "member") {
+    const { grants, profileUpdatedAt, agentUpdatedAt, title } = payload;
+    if (
+      previousValue === null &&
+      typeof title === "string" &&
+      typeof newValue === "string" &&
+      Array.isArray(grants) &&
+      grants.every((g) => typeof g === "string") &&
+      typeof profileUpdatedAt === "string" &&
+      typeof agentUpdatedAt === "string"
+    )
+      return {
+        setting,
+        agentId,
+        previousValue: null,
+        newValue,
+        title,
+        grants: grants as string[],
+        profileUpdatedAt,
+        agentUpdatedAt,
+      } as const;
+    throw new Error("A recorded setting change could not be read back.");
+  }
   if (
     setting === "notifications" &&
     isChatValue(previousValue) &&
@@ -216,8 +277,17 @@ export function createSettingChanges(deps: {
   reader: AuditReader;
   /** The clock the Undo window is measured by. The real clock unless a test gives another. */
   now?: () => Date;
+  /**
+   * The audit store that writes through a transaction, so a member's record and its Undo commit or roll back
+   * together with the change they describe. The real one unless a test gives another.
+   */
+  auditWithin?: (executor: Pick<Database, "insert">) => AuditStore;
 }): SettingChanges {
   const { database, audit, reader } = deps;
+  const auditWithin =
+    deps.auditWithin ??
+    ((executor: Pick<Database, "insert">) =>
+      createAuditStore(executor as unknown as Database));
   const clock = deps.now ?? (() => new Date());
 
   async function levelOf(
@@ -263,6 +333,197 @@ export function createSettingChanges(deps: {
       )
       .returning({ agentId: botLifecycle.agentId });
     return rows.length === 1;
+  }
+
+  /** The grants a member holds, as sorted `kind:ref` strings: what Undo takes back, and what "changed since" compares. */
+  async function grantsOf(
+    executor: Pick<Database, "select">,
+    agentId: string,
+  ): Promise<string[]> {
+    const rows = await executor
+      .select({ kind: pluginGrants.kind, ref: pluginGrants.ref })
+      .from(pluginGrants)
+      .where(eq(pluginGrants.agentId, agentId));
+    return rows.map((row) => `${row.kind}:${row.ref}`).sort();
+  }
+
+  /** What a member added from chat is now: still not deleted, with the times and grants it was recorded with. */
+  async function memberState(
+    executor: Pick<Database, "select">,
+    agentId: string,
+  ) {
+    const [row] = await executor
+      .select({
+        name: agents.name,
+        title: agentProfiles.title,
+        agentUpdatedAt: agents.updatedAt,
+        profileUpdatedAt: agentProfiles.updatedAt,
+        deletedAt: agentProfiles.deletedAt,
+        ownerUserId: agentProfiles.ownerUserId,
+        packageId: agents.packageId,
+        importedMember: agentProfiles.importedMember,
+        visibility: agentProfiles.visibility,
+        configuration: agents.configuration,
+        createdAt: agents.createdAt,
+      })
+      .from(agents)
+      .innerJoin(agentProfiles, eq(agentProfiles.agentId, agents.id))
+      .where(eq(agents.id, agentId))
+      .limit(1);
+    return row ?? null;
+  }
+
+  /**
+   * How many rows tie the member to use or sharing: published or assigned to people, a routine, a responsibility,
+   * an approval rule, a conversation. Undo is only for a member that has not been used or shared, so it must be 0.
+   */
+  async function memberUse(
+    executor: Pick<Database, "select">,
+    agentId: string,
+  ): Promise<number> {
+    const counts = await Promise.all(
+      [
+        executor
+          .select({ n: sql<number>`count(*)::int` })
+          .from(teamBotPublications)
+          .where(eq(teamBotPublications.agentId, agentId)),
+        executor
+          .select({ n: sql<number>`count(*)::int` })
+          .from(teamBotAudience)
+          .where(eq(teamBotAudience.agentId, agentId)),
+        executor
+          .select({ n: sql<number>`count(*)::int` })
+          .from(teamBotAssignments)
+          .where(eq(teamBotAssignments.agentId, agentId)),
+        executor
+          .select({ n: sql<number>`count(*)::int` })
+          .from(routines)
+          .where(eq(routines.agentId, agentId)),
+        executor
+          .select({ n: sql<number>`count(*)::int` })
+          .from(responsibilities)
+          .where(eq(responsibilities.agentId, agentId)),
+        executor
+          .select({ n: sql<number>`count(*)::int` })
+          .from(approvalRules)
+          .where(eq(approvalRules.botId, agentId)),
+        executor
+          .select({ n: sql<number>`count(*)::int` })
+          .from(channelAgents)
+          .where(eq(channelAgents.agentId, agentId)),
+        executor
+          .select({ n: sql<number>`count(*)::int` })
+          .from(channels)
+          .where(eq(channels.lastMessageAgentId, agentId)),
+      ].map(async (query) => (await query)[0]?.n ?? 0),
+    );
+    return counts.reduce((sum, n) => sum + n, 0);
+  }
+
+  type RecordedMember = {
+    agentId: string;
+    grants: string[];
+    profileUpdatedAt: string;
+    agentUpdatedAt: string;
+  };
+
+  /**
+   * Where the member stands against its record: `unchanged` (Undo may remove it), `used` (a conversation, a
+   * routine, a rule, a publication or an assignment exists), or `changed` (edited, given another grant, or gone).
+   */
+  async function memberStanding(
+    executor: Pick<Database, "select">,
+    recorded: RecordedMember,
+  ): Promise<"unchanged" | "used" | "changed"> {
+    const now = await memberState(executor, recorded.agentId);
+    if (!now || now.deletedAt !== null) return "changed";
+    if (
+      now.profileUpdatedAt.getTime() !==
+        Date.parse(recorded.profileUpdatedAt) ||
+      now.agentUpdatedAt.getTime() !== Date.parse(recorded.agentUpdatedAt)
+    )
+      return "changed";
+    const grants = await grantsOf(executor, recorded.agentId);
+    if (
+      grants.length !== recorded.grants.length ||
+      !grants.every((grant, index) => grant === recorded.grants[index])
+    )
+      return "changed";
+    return (await memberUse(executor, recorded.agentId)) > 0
+      ? "used"
+      : "unchanged";
+  }
+
+  /**
+   * Takes the member back: deleted, its grants removed, and the Undo's own audit row written, all in ONE
+   * transaction under a lock on the member, so two Undos together cannot both win and an audit row that
+   * cannot be written leaves the member untouched. Refuses with the sentence the person reads.
+   */
+  async function removeMember(
+    ownerUserId: string,
+    changeId: string,
+    recorded: RecordedMember & { newValue: string },
+  ): Promise<void> {
+    await database.transaction(async (tx) => {
+      await tx.execute(
+        sql`select pg_advisory_xact_lock(hashtext(${`member-added:${recorded.agentId}`}))`,
+      );
+      // Read again inside the lock: an Undo that finished while this one waited is "already undone".
+      const [done] = await tx
+        .select({ id: auditEvents.id })
+        .from(auditEvents)
+        .where(
+          and(
+            eq(auditEvents.eventType, "configuration.changed"),
+            eq(auditEvents.targetType, SETTING_UNDO_TARGET),
+            eq(auditEvents.targetId, changeId),
+          ),
+        )
+        .limit(1);
+      if (done)
+        throw new SettingRefusedError(
+          "That change has already been undone.",
+          409,
+        );
+      await tx
+        .select({ id: agentProfiles.agentId })
+        .from(agentProfiles)
+        .where(eq(agentProfiles.agentId, recorded.agentId))
+        .for("update");
+      const standing = await memberStanding(tx, recorded);
+      if (standing === "used")
+        throw new SettingRefusedError(
+          `${recorded.newValue} has been used since it was added. Remove it from its page instead.`,
+          409,
+        );
+      if (standing === "changed")
+        throw new SettingRefusedError(
+          `${recorded.newValue} has been changed since it was added, or is already gone, so nothing was undone.`,
+          409,
+        );
+      const at = new Date();
+      await tx
+        .update(agentProfiles)
+        .set({ deletedAt: at, updatedAt: at })
+        .where(eq(agentProfiles.agentId, recorded.agentId));
+      await tx
+        .delete(pluginGrants)
+        .where(eq(pluginGrants.agentId, recorded.agentId));
+      await recordAuditEvent(auditWithin(tx), {
+        eventType: "configuration.changed",
+        targetType: SETTING_UNDO_TARGET,
+        targetId: changeId,
+        actorUserId: ownerUserId,
+        payload: {
+          change: "setting_change_undone",
+          changeId,
+          setting: "member",
+          agentId: recorded.agentId,
+          previousValue: recorded.newValue,
+          newValue: null,
+        },
+      });
+    });
   }
 
   /** The aliases this person gave their members, by member id. */
@@ -835,6 +1096,82 @@ export function createSettingChanges(deps: {
       };
     },
 
+    async memberAdded(input) {
+      const { ownerUserId, agentId } = input;
+      // One line per member: the change id is the member's, so a second record is refused by lookup.
+      const changeId = `member-${agentId}`;
+      // Lookup and insert under one lock, so two requests together write one row.
+      return database.transaction(async (tx) => {
+        await tx.execute(
+          sql`select pg_advisory_xact_lock(hashtext(${`member-added:${agentId}`}))`,
+        );
+        const [existing] = await tx
+          .select({ id: auditEvents.id })
+          .from(auditEvents)
+          .where(
+            and(
+              eq(auditEvents.eventType, "configuration.changed"),
+              eq(auditEvents.targetType, SETTING_CHANGE_TARGET),
+              eq(auditEvents.targetId, changeId),
+            ),
+          )
+          .limit(1);
+        if (existing)
+          throw new SettingRefusedError(
+            "That member has already been recorded.",
+            409,
+          );
+        const state = await memberState(tx, agentId);
+        const config = (state?.configuration ?? {}) as Record<string, unknown>;
+        if (
+          !state ||
+          state.deletedAt !== null ||
+          state.ownerUserId !== ownerUserId ||
+          state.packageId !== null ||
+          state.importedMember ||
+          state.visibility !== "private" ||
+          "auth" in config ||
+          clock().getTime() - state.createdAt.getTime() >
+            MEMBER_RECORD_WINDOW_MS
+        )
+          throw new SettingRefusedError(
+            "There is no new member of yours with that id.",
+            404,
+          );
+        const grants = await grantsOf(tx, agentId);
+        const skills = grants
+          .filter((grant) => grant.startsWith("skill:"))
+          .map((grant) => grant.slice("skill:".length));
+        await recordAuditEvent(auditWithin(tx), {
+          eventType: "configuration.changed",
+          targetType: SETTING_CHANGE_TARGET,
+          targetId: changeId,
+          actorUserId: ownerUserId,
+          payload: {
+            change: "member_added",
+            changeId,
+            setting: "member",
+            agentId,
+            previousValue: null,
+            newValue: state.name,
+            title: state.title,
+            grants,
+            profileUpdatedAt: state.profileUpdatedAt.toISOString(),
+            agentUpdatedAt: state.agentUpdatedAt.toISOString(),
+          },
+        });
+        return {
+          changeId,
+          agentId,
+          setting: "member" as const,
+          previousValue: null,
+          newValue: state.name,
+          skills,
+          job: state.title,
+        };
+      });
+    },
+
     async undo(input) {
       const { ownerUserId, changeId } = input;
       const [change] = (
@@ -869,15 +1206,21 @@ export function createSettingChanges(deps: {
       const recorded = recordOf(change.payload);
       if (!withinUndoWindow(change.createdAt, clock()))
         throw new SettingRefusedError(
-          recorded.setting === "name"
-            ? "That change is more than seven days old, so it can no longer be undone. You can still ask for the name you want."
-            : recorded.setting === "tone"
-              ? "That change is more than seven days old, so it can no longer be undone. You can still ask for the tone you want."
-              : recorded.setting === "language"
-                ? "That change is more than seven days old, so it can no longer be undone. You can still ask for the language you want."
-                : "That change is more than seven days old, so it can no longer be undone. You can still set notifications on the Bot's own page.",
+          recorded.setting === "member"
+            ? "That member was added more than seven days ago, so it can no longer be undone. You can still remove it on its own page."
+            : recorded.setting === "name"
+              ? "That change is more than seven days old, so it can no longer be undone. You can still ask for the name you want."
+              : recorded.setting === "tone"
+                ? "That change is more than seven days old, so it can no longer be undone. You can still ask for the tone you want."
+                : recorded.setting === "language"
+                  ? "That change is more than seven days old, so it can no longer be undone. You can still ask for the language you want."
+                  : "That change is more than seven days old, so it can no longer be undone. You can still set notifications on the Bot's own page.",
           409,
         );
+      if (recorded.setting === "member") {
+        await removeMember(ownerUserId, changeId, recorded);
+        return { changeId, setting: "member" as const, value: null };
+      }
       if (recorded.setting === "language") {
         await undoLanguage(ownerUserId, changeId, recorded);
         return {
@@ -985,9 +1328,37 @@ export function createSettingChanges(deps: {
       const tones = await tonesOf(database, ownerUserId);
       const language = await readLanguageChoice(database, ownerUserId);
       const now = clock();
+      // A member added from chat is still undoable only while it is as it was recorded.
+      const memberOk = new Map<string, boolean>();
+      for (const { event, changeId } of rows) {
+        const r = recordOf(event.payload);
+        if (r.setting === "member")
+          memberOk.set(
+            changeId,
+            (await memberStanding(database, r)) === "unchanged",
+          );
+      }
 
       return rows.map(({ event, changeId, undone }): SettingChangeRecord => {
         const recorded = recordOf(event.payload);
+        if (recorded.setting === "member")
+          return {
+            changeId,
+            agentId: recorded.agentId,
+            setting: "member",
+            previousValue: null,
+            newValue: recorded.newValue,
+            job: recorded.title,
+            skills: recorded.grants
+              .filter((g) => g.startsWith("skill:"))
+              .map((g) => g.slice("skill:".length)),
+            at: event.createdAt,
+            undone,
+            undoable:
+              !undone &&
+              withinUndoWindow(event.createdAt, now) &&
+              memberOk.get(changeId) === true,
+          };
         // The setting still holds what this change set, so Undo would put the old value back. If a
         // later change moved it, Undo would refuse, so the list shows none.
         const stillSet =

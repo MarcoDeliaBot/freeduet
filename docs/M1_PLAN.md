@@ -826,6 +826,14 @@ Decided by the maintainer on 15 November 2026, after D41: Spam is no longer out 
 
 **Not built, and why.** No emptying of Spam, no permanent deletion, no blocking a sender, no filter. No operation on "everything a search matches". The IMAP copy into Spam and the after-check have run against recording servers, not a real Gmail ([verify]): that Gmail removes a message from All Mail when it is copied into Spam, as it does into the Trash, is the premise of the check.
 
+## 26. One line with Undo after a member is added from chat (D43)
+
+Decided by the maintainer on 15 November 2026 (roadmap row "One line with Undo after every team change"). Built; not yet run live. Design: [design/settings-in-chat.md](design/settings-in-chat.md), section 8.11.
+
+| # | Decision | Why |
+|---|---|---|
+| D43 | **(1) After the person presses Create on a proposed member, ONE line stands in place of the completed card: what was added, with Undo and Details.** The proposal card still asks first, as before. **(2) The record and the Undo reuse the settings-in-chat mechanism:** one audit event per change, the person's own Undo route, the same list, the seven-day limit. The record is made by `POST /api/settings-changes/members`, which the server accepts only for the person's own, private, keyless, just-made member, once (also for two requests at once). The line is drawn from that record and appears only when it was made. **(3) Undo takes the member back (deleted, its grants removed) only while it is exactly as recorded AND has not been used or shared** (no publication, audience, assignment, routine, responsibility, approval rule or conversation). A member edited, given another grant, used or already deleted since is left alone and the person is told. A second Undo is refused ("already undone"), also when two arrive together. The record and the Undo, each with its audit row, are one transaction under a lock on the member, so an audit row that cannot be written leaves nothing changed. **(4) Never a routine, a member tool or a remote session:** the routes are refused to a remote session by the existing rule, and nothing a member calls reaches them. **(5) English only. The setting cards (name, tone, language, notifications) are already a line with Undo and stay as they are.** | The person asked for a team that changes by talking, and an undo that is always there. A team change that cannot be taken back in one press is one the person hesitates to say yes to. Refusing Undo once the member has moved on is what keeps "restores exactly what was there before" true. |
+
 
 ## 27. Connecting from the chat in three steps, and tools an update adds (D44, D45)
 

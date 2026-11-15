@@ -264,6 +264,9 @@ const POWERS: [string, string, unknown?][] = [
   ["POST", "/api/approvals/shared-use/s1/approve"],
   ["PATCH", "/api/settings/preferences"],
   ["PUT", "/api/settings/instructions"],
+  // The line after a team change: recording a member added from chat, and Undo of it (D43).
+  ["POST", "/api/settings-changes/members", { agentId: "bot-1" }],
+  ["POST", "/api/settings-changes/member-bot-1/undo"],
   ["POST", "/api/routines/r1/run"],
   ["PUT", "/api/routines/r1/enabled"],
   ["DELETE", "/api/routines/r1"],

@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import { useEffect, useRef, useState } from "react";
+import { type ReactNode, useEffect, useRef, useState } from "react";
 import { Badge, GalleryFrame } from "@/components/gallery/frame";
 import { Button } from "@/components/ui/button";
 import type { AgentFormValues } from "@/lib/agents/form";
@@ -55,6 +55,13 @@ export type ProposedBotCardProps = {
   /** The recorded answer, once there is one. Completed cards show it instead of controls. */
   result?: string;
   create: (values: AgentFormValues, skills: string[]) => Promise<CreatedBot>;
+  /**
+   * The one line that stands in place of the completed card when a member was made AND the server recorded it:
+   * what was added, with Undo and Details (docs/design/settings-in-chat.md, 8.11). Given the new member's id and
+   * the completed card, which it keeps showing when the server has no record of the member. Absent, the
+   * completed card is shown, as before.
+   */
+  line?: (agentId: string, card: ReactNode) => ReactNode;
 };
 
 export function ProposedBotCard({
@@ -63,6 +70,7 @@ export function ProposedBotCard({
   respond,
   result,
   create,
+  line,
 }: ProposedBotCardProps) {
   const [sending, setSending] = useState<"create" | "decline" | null>(null);
   /**
@@ -82,7 +90,7 @@ export function ProposedBotCard({
      * `createdBotIdIn`.
      */
     const madeId = wasCreated(result) ? createdBotIdIn(result) : null;
-    return (
+    const completed = (
       <GalleryFrame
         action={<Badge tone="neutral">Done</Badge>}
         title={titleFor(args.name, clashes)}
@@ -91,6 +99,7 @@ export function ProposedBotCard({
         {madeId ? <TalkToIt agentId={madeId} name={args.name} /> : null}
       </GalleryFrame>
     );
+    return madeId && line ? line(madeId, completed) : completed;
   }
 
   if (!respond) {

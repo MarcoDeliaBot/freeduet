@@ -65,8 +65,27 @@ export type SettingChangeResult =
 /** The longest name the contract carries (server/src/settings-in-chat/member-name.ts holds the rules). */
 export const MEMBER_NAME_MAX = 40;
 
+/**
+ * A member the person added from chat (the Create button of the proposal card). Undo takes it back, while it is
+ * still exactly as it was added (docs/design/settings-in-chat.md, 8.11). It is a record of the list, never the
+ * result of `change_setting`, so it is not part of `SettingChangeResult`.
+ */
+export type MemberAddedChange = {
+  /** `member-<agent id>`: one line per member. */
+  changeId: string;
+  agentId: string;
+  setting: "member";
+  previousValue: null;
+  /** The member's own name when it was added. */
+  newValue: string;
+  /** The skills it was given, by slug. */
+  skills: string[];
+  /** Its job title, as the server recorded it. */
+  job: string;
+};
+
 /** One change in the list, newest first. Undo is shown only where `undoable` says so. */
-export type SettingChangeRecord = SettingChangeResult & {
+export type SettingChangeRecord = (SettingChangeResult | MemberAddedChange) & {
   /** When the change was made, as the server's ISO time. */
   at: string;
   /** Whether the person has already undone it. */

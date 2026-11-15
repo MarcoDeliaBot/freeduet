@@ -69,3 +69,20 @@ export async function undoSettingChange(changeId: string): Promise<UndoAnswer> {
     message: typeof body?.error === "string" ? body.error : null,
   };
 }
+
+/**
+ * Tells the server that the person just added a member from chat, so the line under the proposal card can
+ * offer Undo (docs/design/settings-in-chat.md, 8.11). Best effort: when it fails the member still exists and
+ * the line shows no Undo. Says whether the change was recorded.
+ */
+export async function recordMemberAdded(agentId: string): Promise<boolean> {
+  try {
+    const response = await tryClient(`${SETTING_CHANGES_PATH}/members`, {
+      method: "POST",
+      body: { agentId },
+    });
+    return response.ok;
+  } catch {
+    return false;
+  }
+}
