@@ -9,11 +9,11 @@
     },
     {
      "type": "RUN_ERROR",
-     "message": "Claude Code is not installed in this service."
+     "message": "Claude is not installed on this computer yet. Rebuild the service with `bash scripts/start.sh`, then send your message again."
     }
    ],
    "keepalives": 0,
-   "sha256": "b58bc549234231d85a9b9ec2603ac9429cba7013795782aa8a06da78be01f3ab"
+   "sha256": "3670b3bec1233bd377d18a4d08dc53ca697af1aaa2ffe8eecbdf00c4ed8bb6dd"
   }
  ],
  "launches": [
@@ -109,7 +109,7 @@
    "thread": "thread-1",
    "run": "run-1",
    "outcome": "error",
-   "summary": "Claude Code is not installed in this service.",
+   "summary": "Claude is not installed on this computer yet. Rebuild the service with `bash scripts/start.sh`, then send your message again.",
    "from_iris": false,
    "approvals": null,
    "report_guard": null
@@ -132,7 +132,7 @@
     "changed_files": [],
     "verification": [],
     "blockers": [
-     "Error: Claude Code is not installed in this service."
+     "Error: Claude is not installed on this computer yet. Rebuild the service with `bash scripts/start.sh`, then send your message again."
     ],
     "next_steps": [
      "Run the turn again once the error is resolved"

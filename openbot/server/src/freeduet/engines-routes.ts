@@ -7,6 +7,8 @@
  *                                                        cannotChange }
  *   PUT  /api/freeduet/engines/members/:memberId/mode    the administrator at the computer: automatic or ask first
  *   POST /api/freeduet/engines/changes/:changeId/undo    the administrator at the computer: put the old choice back
+ *   POST /api/freeduet/engines/claude/check              the administrator at the computer: check Claude Code now
+ *                                                        (docs/design/first-start.md, "Check again"); three facts back
  *
  * The server asks agent-freeduet for its engine list (`GET /engines`, agent-freeduet's engine_state.py) with
  * the deployment token, which goes to that one address and nowhere else, and answers the administrator with
@@ -60,6 +62,13 @@ export const AGENT_ENGINES_PATH = "/engines";
 export const AGENT_TOKEN_HEADER = "x-openbot-agent-token";
 /** Long enough for an agent on the same machine, short enough that the page is not left waiting. */
 export const READ_TIMEOUT_MS = 3_000;
+/**
+ * The check waits for agent-freeduet's probe, which gives up after 8 s, so it may wait longer than a read. It stays
+ * under the 10 s a Bun connection may sit silent, because the browser's request is open while it waits.
+ */
+export const CHECK_TIMEOUT_MS = 9_500;
+/** agent-freeduet's check of Claude Code (agent-freeduet app.py, `check_claude`). */
+export const AGENT_CLAUDE_CHECK_PATH = "/engines/claude/check";
 /** An engine list is a few hundred bytes per engine. Anything much larger is not what the agent sends. */
 const MAX_REPLY_CHARACTERS = 262_144;
 const MAX_ENGINES = 64;
@@ -422,6 +431,59 @@ function viewOf(member: AgentMember, choices: ChoicesSnapshot): MemberSummary {
   };
 }
 
+/**
+ * What "Check again" answers to the browser: whether Claude Code is installed and signed in (null: not known), and the
+ * reason when there is no answer at all. Never a version, an account or a path: agent-freeduet's answer is reduced here.
+ */
+export type ClaudeCheck = {
+  reason: EnginesReason | null;
+  installed: boolean | null;
+  signedIn: boolean | null;
+};
+
+/**
+ * Ask agent-freeduet to check Claude Code now: one request, with the same token and the same single address as
+ * `GET /engines`. Never throws. A failure is one of the three reasons, and nothing is said about Claude.
+ */
+export async function checkClaude(reach: EnginesReach): Promise<ClaudeCheck> {
+  const none = (reason: EnginesReason): ClaudeCheck => ({
+    reason,
+    installed: null,
+    signedIn: null,
+  });
+  try {
+    if (!routerOn(reach.environment)) return none("off");
+    const agent = reach.managedAgent;
+    if (!agent?.endpoint || !agent.token) return none("not_set_up");
+
+    const response = await (reach.fetch ?? fetch)(
+      new URL(AGENT_CLAUDE_CHECK_PATH, agent.endpoint),
+      {
+        method: "POST",
+        headers: { [AGENT_TOKEN_HEADER]: agent.token },
+        // The token goes to this address and nowhere else: a redirect is not followed.
+        redirect: "error",
+        signal: AbortSignal.timeout(CHECK_TIMEOUT_MS),
+      },
+    );
+    if (!response.ok) return none("unreachable");
+    const text = await response.text();
+    if (text.length > MAX_REPLY_CHARACTERS) return none("unreachable");
+    const body = JSON.parse(text) as {
+      installed?: unknown;
+      signed_in?: unknown;
+    };
+    return {
+      reason: null,
+      installed: typeof body.installed === "boolean" ? body.installed : null,
+      signedIn: typeof body.signed_in === "boolean" ? body.signed_in : null,
+    };
+  } catch {
+    // Unreachable, refused, timed out, or not JSON. Said as one fact; the detail is not the person's to see.
+    return none("unreachable");
+  }
+}
+
 /** What a person is told when a change is asked of a session that is not at the computer. */
 const NOT_AT_THE_COMPUTER =
   "Change this on the computer FreeDuet runs on. Nothing was changed.";
@@ -529,6 +591,15 @@ export function createEnginesRoutes(
         return context.json({ error: error.message }, error.status);
       throw error;
     }
+  });
+  // "Check again" (first-start design, section 4): the two guards of a change, an administrator at the computer. It asks
+  // agent-freeduet to look at Claude Code now and keeps nothing here: no change is stored and no audit row is written.
+  routes.post("/claude/check", async (context) => {
+    const refused = mayChange(context);
+    if (refused) return refused;
+    return context.json(await checkClaude(reach()), 200, {
+      "Cache-Control": "no-store",
+    });
   });
   return routes;
 }
