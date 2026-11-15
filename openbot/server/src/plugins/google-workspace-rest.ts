@@ -3,6 +3,8 @@ import { plainAddress } from "./mail-address";
 import {
   ARCHIVE_MESSAGES,
   archivedAnswer,
+  BIN_MESSAGES,
+  binnedAnswer,
   CREATE_LABEL,
   createdAnswer,
   isOrganiseMessageTool,
@@ -1122,6 +1124,36 @@ export async function describeCall(
   };
 }
 
+/**
+ * Move the named messages to the Bin: Gmail's own `users.messages.trash`, once for each id, and no
+ * other call. It is the one that moves a message to the Trash, from which Gmail keeps it for about 30
+ * days and the person can restore it; `users.messages.delete` (permanent) is never called and no path
+ * in this module reaches it. One at a time, so that a failure part way says how many were moved.
+ */
+async function binMessages(
+  connection: Connection,
+  ids: readonly string[],
+): Promise<McpCallResult> {
+  let moved = 0;
+  for (const id of ids) {
+    const done = await request<Record<string, unknown>>(
+      connection,
+      "Gmail",
+      `${GMAIL}/messages/${encodeURIComponent(id)}/trash`,
+      { json: {} },
+    );
+    if (!done.ok) {
+      return failure(
+        moved === 0
+          ? done.message
+          : `${done.message} Only ${moved} of the ${ids.length} messages were moved to the Bin before it stopped; look in Gmail before asking again.`,
+      );
+    }
+    moved++;
+  }
+  return asJson(binnedAnswer(moved));
+}
+
 async function organise(
   connection: Connection,
   call: OrganiseCall,
@@ -1182,6 +1214,8 @@ async function organise(
     removedNames = removing.names;
   } else if (call.tool === ARCHIVE_MESSAGES) {
     remove = ["INBOX"];
+  } else if (call.tool === BIN_MESSAGES) {
+    // Nothing is added or removed by label here: Gmail's own `trash` call does the move, below.
   } else {
     if (call.state === "read") remove = ["UNREAD"];
     else add = ["UNREAD"];
@@ -1193,6 +1227,8 @@ async function organise(
   if (looked.value.missing > 0) {
     return failure(missingMessages(looked.value.missing, call.ids.length));
   }
+
+  if (call.tool === BIN_MESSAGES) return binMessages(connection, call.ids);
 
   const changed = await request<Record<string, never>>(
     connection,

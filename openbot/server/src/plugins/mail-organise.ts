@@ -13,11 +13,15 @@ import type { McpTool } from "./mcp";
  *
  * WHAT A BOT MAY DO, AND WHAT IT MAY NOT. It may list the labels, create one, add or remove labels on
  * messages it names, archive messages (take them out of the Inbox, where they stay in All Mail with
- * their labels) and mark them read or unread. There is no tool here that deletes, trashes, reports as
- * spam, forwards, makes a filter, moves a message into some other folder or acts on "everything a
- * search matches": messages are named by id, so the card the person answers can say how many and
- * which. The labels that would delete or hide mail (Trash and Spam) are refused in both directions,
- * and so is every other system label, because each of those has a tool of its own or none.
+ * their labels), mark them read or unread, and move them to the Bin (Gmail's Trash), from which the
+ * person can restore them for about 30 days (maintainer's decision of 15 November 2026, D-number in
+ * docs/M1_PLAN.md). That is the strongest change here, and it is still not a deletion. There is no
+ * tool here that deletes permanently, expunges, empties the Bin, reports as spam, forwards, makes a
+ * filter, moves a message into some other folder or acts on "everything a search matches": messages
+ * are named by id, so the card the person answers can say how many and which. The labels that would
+ * delete or hide mail (Trash and Spam) are still refused in both directions, whoever asks, and so is
+ * every other system label, because each of those has a tool of its own or none: the Bin has
+ * `gmail_bin_messages` and nothing else reaches it.
  *
  * EVERY REFUSAL IS A SENTENCE WRITTEN HERE. None quotes what was handed in: a label name, an id or
  * an extra field may have come from a mail the Bot read, and an error is read back into its model.
@@ -30,6 +34,7 @@ export const CREATE_LABEL = "gmail_create_label";
 export const LABEL_MESSAGES = "gmail_label_messages";
 export const ARCHIVE_MESSAGES = "gmail_archive_messages";
 export const MARK_MESSAGES = "gmail_mark_messages";
+export const BIN_MESSAGES = "gmail_bin_messages";
 
 /** The one tool that only reads. It is granted like any other read. */
 export const ORGANISE_READ_TOOLS: readonly string[] = Object.freeze([
@@ -37,7 +42,7 @@ export const ORGANISE_READ_TOOLS: readonly string[] = Object.freeze([
 ]);
 
 /**
- * The four that change a mailbox. Each asks the person, as every write does, and none is a send:
+ * The five that change a mailbox. Each asks the person, as every write does, and none is a send:
  * they are not in the catalogue's `sendTools`, so the approval gate treats them as writes and nothing
  * more (and nothing less: not pre-approved, not covered by the person's typed-address rule for a new
  * email, not granted by the inbox's no-name approve).
@@ -47,13 +52,15 @@ export const ORGANISE_WRITE_TOOLS: readonly string[] = Object.freeze([
   LABEL_MESSAGES,
   ARCHIVE_MESSAGES,
   MARK_MESSAGES,
+  BIN_MESSAGES,
 ]);
 
-/** The three that act on messages the Bot names, and so have a list the card can show. */
+/** The four that act on messages the Bot names, and so have a list the card can show. */
 export const ORGANISE_MESSAGE_TOOLS: readonly string[] = Object.freeze([
   LABEL_MESSAGES,
   ARCHIVE_MESSAGES,
   MARK_MESSAGES,
+  BIN_MESSAGES,
 ]);
 
 /** Whether a message's labels put it where Gmail keeps mail out of sight: the Trash or Spam. */
@@ -163,7 +170,8 @@ export type OrganiseCall =
       remove: LabelRef[];
     }
   | { tool: typeof ARCHIVE_MESSAGES; ids: string[] }
-  | { tool: typeof MARK_MESSAGES; ids: string[]; state: "read" | "unread" };
+  | { tool: typeof MARK_MESSAGES; ids: string[]; state: "read" | "unread" }
+  | { tool: typeof BIN_MESSAGES; ids: string[] };
 
 /** A call that changes a mailbox: every call but the listing of labels. */
 export type OrganiseWriteCall = Exclude<
@@ -286,6 +294,7 @@ const FIELDS: Record<string, ReadonlySet<string>> = {
   [LABEL_MESSAGES]: new Set(["messageIds", "addLabels", "removeLabels"]),
   [ARCHIVE_MESSAGES]: new Set(["messageIds"]),
   [MARK_MESSAGES]: new Set(["messageIds", "state"]),
+  [BIN_MESSAGES]: new Set(["messageIds"]),
 };
 
 const sameLabel = (a: LabelRef, b: LabelRef) =>
@@ -325,6 +334,10 @@ export function parseOrganiseCall(
 
   if (tool === ARCHIVE_MESSAGES) {
     return { ok: true, value: { tool: ARCHIVE_MESSAGES, ids: ids.value } };
+  }
+
+  if (tool === BIN_MESSAGES) {
+    return { ok: true, value: { tool: BIN_MESSAGES, ids: ids.value } };
   }
 
   if (tool === MARK_MESSAGES) {
@@ -513,6 +526,18 @@ export const markedAnswer = (messages: number, state: "read" | "unread") => ({
   as: state,
 });
 
+/** How long Gmail keeps a message in the Bin before it deletes it. The answer says so, in words. */
+export const BIN_KEEPS = "about 30 days";
+
+export const binnedAnswer = (binned: number) => ({
+  binned,
+  note: `Moved to the Bin. The person can restore them from the Bin for ${BIN_KEEPS}; after that Gmail deletes them for good. Nothing was deleted now.`,
+});
+
+/** What a call says when the account reports no Bin folder: nothing is guessed from a name. */
+export const noBinFolder =
+  "Gmail did not report a Bin (Trash) folder for this account, so nothing was changed.";
+
 /* ------------------------------------------------------------------------------------------------
  * The tools, as a Bot is told about them.
  * ---------------------------------------------------------------------------------------------- */
@@ -608,6 +633,23 @@ export const ORGANISE_TOOL_DEFINITIONS: readonly McpTool[] = Object.freeze([
         },
       },
       required: ["messageIds", "state"],
+    },
+  },
+  {
+    name: BIN_MESSAGES,
+    description: `Move messages to the Bin (Gmail's Trash), from which the person can restore them for ${BIN_KEEPS}; after that Gmail deletes them. This is not a permanent deletion and there is no tool that empties the Bin. It is the strongest change you can make to a mailbox: use it only when the person ordered it, and say first how many messages and which. Name them by id, at most ${MAX_ORGANISE_MESSAGES} per call; there is no way to act on everything a search matches. ${ASKS}`,
+    inputSchema: {
+      type: "object",
+      properties: {
+        messageIds: {
+          type: "array",
+          items: { type: "string" },
+          minItems: 1,
+          maxItems: MAX_ORGANISE_MESSAGES,
+          description: "The messages' Gmail ids, as a search returned them.",
+        },
+      },
+      required: ["messageIds"],
     },
   },
 ]);

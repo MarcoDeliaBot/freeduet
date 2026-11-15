@@ -713,6 +713,8 @@ export type FakeGoogle = {
     addLabelIds: string[];
     removeLabelIds: string[];
   }[];
+  /** The ids `messages.trash` was called for, oldest first. Nothing in this fake deletes for good. */
+  trashed(): string[];
   /** The mailbox and calendar as they started, dated from now, and nothing sent. */
   reset(): void;
   stop(): Promise<void>;
@@ -745,7 +747,9 @@ export function startFakeGoogle(
     addLabelIds: string[];
     removeLabelIds: string[];
   }[] = [];
+  let trashedIds: string[] = [];
   const reset = () => {
+    trashedIds = [];
     messages = seedMailbox(mailbox, now());
     events = seedCalendar(now());
     sent = [];
@@ -1195,8 +1199,8 @@ export function startFakeGoogle(
 
     /*
      * LABELS AND `batchModify`, which need `gmail.modify` as Google's do: a grant without it is refused
-     * with the reason the adapter reads. Nothing here deletes, trashes or moves a message, because the
-     * adapter has no request that would; a request for any other path is a 404 below.
+     * with the reason the adapter reads. Nothing here deletes a message for good, because the
+     * adapter has no request that would (only `messages.trash`, below, hides one); a request for any other path is a 404 below.
      */
     const granted = grantOf(request)?.scope ?? "";
     const insufficient = () =>
@@ -1272,6 +1276,30 @@ export function startFakeGoogle(
         ];
       }
       return new Response(null, { status: 204 });
+    }
+
+    /*
+     * `messages.trash`: moves one message to the Bin (it leaves the Inbox and gains TRASH, which Gmail
+     * keeps for about 30 days). The one request in this fake that hides a message, and it is not a
+     * permanent deletion: there is no delete here.
+     */
+    const trashing = /^\/gmail\/v1\/users\/me\/messages\/([^/]+)\/trash$/.exec(
+      path,
+    );
+    if (method === "POST" && trashing) {
+      if (!granted.includes("gmail.modify")) return insufficient();
+      const message = messages.find(
+        (candidate) => candidate.id === decodeURIComponent(trashing[1] ?? ""),
+      );
+      if (!message) {
+        return googleError(404, "Requested entity was not found.", "notFound");
+      }
+      trashedIds.push(message.id);
+      message.labelIds = [
+        ...message.labelIds.filter((id) => id !== "INBOX"),
+        ...(message.labelIds.includes("TRASH") ? [] : ["TRASH"]),
+      ];
+      return Response.json(resource(message, url));
     }
 
     const single = /^\/gmail\/v1\/users\/me\/messages\/([^/]+)$/.exec(path);
@@ -1375,6 +1403,7 @@ export function startFakeGoogle(
         addLabelIds: [...entry.addLabelIds],
         removeLabelIds: [...entry.removeLabelIds],
       })),
+    trashed: () => [...trashedIds],
     reset,
     stop: async () => {
       await server.stop(true);

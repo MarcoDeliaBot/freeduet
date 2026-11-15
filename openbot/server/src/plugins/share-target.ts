@@ -115,7 +115,7 @@ export function isNewEmailSend(serverId: string, toolName: string): boolean {
 
 /**
  * The two Gmail connections' tools that organise a mailbox (./mail-organise): labels, archive, read and
- * unread. Their names say "messages" (`gmail_archive_messages`), which the pattern above reads as a
+ * unread, and the Bin. Their names say "messages" (`gmail_archive_messages`), which the pattern above reads as a
  * message sent, so they are named here as the writes they are: nothing in them reaches anybody else, and
  * a private-share card for one ("Send email to ...") would be wrong and would offer an "Always allow".
  */

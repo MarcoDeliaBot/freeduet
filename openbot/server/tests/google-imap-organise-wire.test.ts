@@ -58,12 +58,14 @@ const everyLine: string[] = [];
 let messages: Msg[] = [];
 let folders: Folder[] = [];
 let refuseStore = false;
+let refuseCopy = false;
 let alreadyExists: string[] = [];
 let server: TCPSocketListener<undefined>;
 
 function reset() {
   lines.length = 0;
   refuseStore = false;
+  refuseCopy = false;
   alreadyExists = [];
   messages = [
     {
@@ -204,7 +206,10 @@ function answer(socket: Socket<undefined>, raw: string) {
     ok();
   } else if (v === "UID" && (rest[0] ?? "").toUpperCase() === "SEARCH") {
     const wanted = /X-GM-MSGID (\d+)/.exec(tail)?.[1];
-    const found = messages.filter((m) => m.id === wanted);
+    // Gmail's All Mail does not hold what is in the Bin.
+    const found = messages.filter(
+      (m) => m.id === wanted && !m.labels.includes("\\Trash"),
+    );
     socket.write(
       `* SEARCH${found.map((m) => ` ${m.uid}`).join("")}\r\n${tag} OK done\r\n`,
     );
@@ -216,6 +221,24 @@ function answer(socket: Socket<undefined>, raw: string) {
       .map((m, index) => fetchLine(m, index + 1, items.join(" ")))
       .join("");
     socket.write(`${body}${tag} OK done\r\n`);
+  } else if (v === "UID" && (rest[0] ?? "").toUpperCase() === "COPY") {
+    const match = /^COPY (\S+) "((?:[^"\\]|\\.)*)"$/i.exec(tail);
+    const range = match?.[1] ?? "";
+    const destination = (match?.[2] ?? "").replace(/\\(.)/g, "$1");
+    const bin = folders.find(
+      (f) => f.name === destination && /\\Trash\b/.test(f.flags),
+    );
+    if (!match || !bin || refuseCopy) {
+      socket.write(`${tag} NO [CANNOT] Could not copy\r\n`);
+      return;
+    }
+    // Gmail: a copy into the Bin puts the message in the Bin.
+    for (const message of messages) {
+      if (uidsOf(range).includes(message.uid)) {
+        if (!message.labels.includes("\\Trash")) message.labels.push("\\Trash");
+      }
+    }
+    ok();
   } else if (v === "UID" && (rest[0] ?? "").toUpperCase() === "STORE") {
     const match =
       /^UID STORE (\S+) ([+-]?)(FLAGS(?:\.SILENT)?|X-GM-LABELS) \((.*)\)$/i.exec(
@@ -362,6 +385,7 @@ const ALLOWED_COMMANDS = new Set([
   "UID SEARCH",
   "UID FETCH",
   "UID STORE",
+  "UID COPY",
   "CREATE",
   "SUBSCRIBE",
   "LOGOUT",
@@ -369,7 +393,7 @@ const ALLOWED_COMMANDS = new Set([
 
 /** Commands that delete, move, copy, expunge, rename, append or reach outside the mailbox. */
 const FORBIDDEN =
-  /^(STORE|COPY|MOVE|EXPUNGE|APPEND|DELETE|RENAME|UNSUBSCRIBE|IDLE|ENABLE|CLOSE|UNSELECT|UID COPY|UID MOVE|UID EXPUNGE|NOOP|STARTTLS|COMPRESS|SETQUOTA|SETACL|DELETEACL|SETMETADATA)$/;
+  /^(STORE|COPY|MOVE|EXPUNGE|APPEND|DELETE|RENAME|UNSUBSCRIBE|IDLE|ENABLE|CLOSE|UNSELECT|UID MOVE|UID EXPUNGE|NOOP|STARTTLS|COMPRESS|SETQUOTA|SETACL|DELETEACL|SETMETADATA)$/;
 
 /**
  * The only stores allowed: Gmail's labels, and the Seen flag. Nothing that marks a message for
@@ -386,9 +410,18 @@ function expectOnlyAllowed(from: readonly string[]) {
         /^UID STORE [0-9,]+ [+-](X-GM-LABELS \(.+\)|FLAGS \(\\Seen\))$/,
       );
     }
+    // The one copy there is goes into the Bin the server flagged, and is the only line that names it.
+    const isBinCopy =
+      command === "UID COPY" &&
+      /^UID COPY [0-9,]+ "\[Gmail\]\/Trash"$/.test(bodyOf(line));
+    if (command === "UID COPY") expect(isBinCopy).toBe(true);
     // Not one of the client's lines names a label or flag that deletes or hides mail.
-    expect(line).not.toMatch(/\\(Deleted|Trash|Spam|Junk|Draft)\b/i);
-    expect(line).not.toMatch(/\[Gmail\]\/(Trash|Spam|Bin|Drafts)/i);
+    expect(line).not.toMatch(/\\(Deleted|Spam|Junk|Draft)\b/i);
+    expect(line).not.toMatch(/\[Gmail\]\/(Spam|Bin|Drafts)/i);
+    if (!isBinCopy) {
+      expect(line).not.toMatch(/\\Trash\b/i);
+      expect(line).not.toMatch(/\[Gmail\]\/Trash/i);
+    }
   }
 }
 
@@ -532,6 +565,121 @@ describe("archiving", () => {
     expect(commands.filter((c) => c === "UID STORE")).toHaveLength(1);
     expect(messages.every((m) => m.labels.length === 0)).toBe(true);
     expectOnlyAllowed(lines);
+  });
+});
+
+describe("binning", () => {
+  test("it opens All Mail for writing, looks each message up, and copies them into the folder the server flagged as the Bin with one UID COPY: that is all", async () => {
+    const result = await transport.callTool(connection, "gmail_bin_messages", {
+      messageIds: [HEX.a, HEX.c],
+    });
+    expect(result.isError).toBe(false);
+    expect(JSON.parse(result.text)).toMatchObject({ binned: 2 });
+    expect(sent()).toEqual([
+      'LIST "" ""',
+      'LIST "" "*"',
+      'SELECT "[Gmail]/All Mail"',
+      `UID SEARCH X-GM-MSGID ${ID_A}`,
+      `UID SEARCH X-GM-MSGID ${ID_C}`,
+      'UID COPY 11,13 "[Gmail]/Trash"',
+    ]);
+    // What the server understood: those two are in the Bin and the third was not touched.
+    expect(messages[0]?.labels).toContain("\\Trash");
+    expect(messages[2]?.labels).toContain("\\Trash");
+    expect(messages[1]?.labels).toEqual(["\\Inbox", "\\Important"]);
+    // Nothing was flagged, stored, expunged, moved or sent to Spam.
+    const commands = lines.map(commandOf);
+    for (const never of [
+      "UID STORE",
+      "STORE",
+      "EXPUNGE",
+      "UID EXPUNGE",
+      "UID MOVE",
+      "MOVE",
+    ]) {
+      expect(commands).not.toContain(never);
+    }
+    expect(lines.map(commandOf).at(-1)).toBe("LOGOUT");
+    expectOnlyAllowed(lines);
+  });
+
+  test("the Bin is the folder the server flagged, never one found by a name: a label of the person's called Trash is not it", async () => {
+    folders = folders.map((f) =>
+      f.name === "[Gmail]/Trash"
+        ? { flags: "\\HasNoChildren", name: "[Gmail]/Bin-without-a-flag" }
+        : f,
+    );
+    folders.push({ flags: "\\HasNoChildren", name: "Trash" });
+    const result = await transport.callTool(connection, "gmail_bin_messages", {
+      messageIds: [HEX.a],
+    });
+    expect(result.isError).toBe(true);
+    expect(result.text).toContain("did not report a Bin");
+    // Refused before a mailbox was opened and before anything was sent to it.
+    expect(sent()).toEqual(['LIST "" ""', 'LIST "" "*"']);
+    expect(lines.map(commandOf)).not.toContain("UID COPY");
+    expect(messages.every((m) => !m.labels.includes("\\Trash"))).toBe(true);
+  });
+
+  test("a hundred messages are a hundred looks and one copy, and a message the Bin already holds is not found", async () => {
+    messages = Array.from({ length: 100 }, (_, i) => ({
+      uid: 100 + i,
+      id: String(2000000000000000000n + BigInt(i)),
+      labels: ["\\Inbox"],
+      flags: [],
+      from: "Many <many@example.com>",
+      subject: `Message ${i}`,
+    }));
+    const ids = messages.map((m) => hex(m.id));
+    const result = await transport.callTool(connection, "gmail_bin_messages", {
+      messageIds: ids,
+    });
+    expect(result.isError).toBe(false);
+    expect(JSON.parse(result.text)).toMatchObject({ binned: 100 });
+    const commands = lines.map(commandOf);
+    expect(commands.filter((c) => c === "UID SEARCH")).toHaveLength(100);
+    expect(commands.filter((c) => c === "UID COPY")).toHaveLength(1);
+    expect(messages.every((m) => m.labels.includes("\\Trash"))).toBe(true);
+    expectOnlyAllowed(lines);
+
+    // A second call finds them gone from All Mail and changes nothing.
+    lines.length = 0;
+    const again = await transport.callTool(connection, "gmail_bin_messages", {
+      messageIds: ids.slice(0, 2),
+    });
+    expect(again.isError).toBe(true);
+    expect(again.text).toBe(missingMessages(2, 2));
+    expect(lines.map(commandOf)).not.toContain("UID COPY");
+  });
+
+  test("a hundred and one are refused before any connection, and a server that refuses the copy makes a failure that claims nothing", async () => {
+    const tooMany = Array.from({ length: 101 }, (_, i) =>
+      i.toString(16).padStart(4, "0"),
+    );
+    const refused = await transport.callTool(connection, "gmail_bin_messages", {
+      messageIds: tooMany,
+    });
+    expect(refused.isError).toBe(true);
+    expect(lines).toEqual([]);
+
+    refuseCopy = true;
+    const result = await transport.callTool(connection, "gmail_bin_messages", {
+      messageIds: [HEX.a],
+    });
+    expect(result.isError).toBe(true);
+    expect(result.text).toContain("did not make this change");
+    expect(messages[0]?.labels).toEqual(["\\Inbox"]);
+    expect(lines.map(commandOf).at(-1)).toBe("LOGOUT");
+  });
+
+  test("a message that is gone refuses the whole call, and nothing is copied", async () => {
+    const result = await transport.callTool(connection, "gmail_bin_messages", {
+      messageIds: [HEX.a, "ffffffffffff"],
+    });
+    expect(result.isError).toBe(true);
+    expect(result.text).toBe(missingMessages(1, 2));
+    expect(lines.map(commandOf)).not.toContain("UID COPY");
+    expect(messages.every((m) => !m.labels.includes("\\Trash"))).toBe(true);
   });
 });
 
@@ -784,7 +932,6 @@ describe("everything this file made the library send", () => {
       "APPEND",
       "DELETE",
       "RENAME",
-      "UID COPY",
       "UID MOVE",
       "UID EXPUNGE",
       "CLOSE",
@@ -796,6 +943,7 @@ describe("everything this file made the library send", () => {
       "SELECT",
       "EXAMINE",
       "UID STORE",
+      "UID COPY",
       "CREATE",
       "UID SEARCH",
     ]) {

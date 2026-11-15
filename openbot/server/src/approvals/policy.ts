@@ -400,6 +400,19 @@ export const MAILBOX_REVIEW_LINES = [
 ];
 
 /**
+ * Added after {@link MAILBOX_REVIEW_LINES}, and only for `gmail_bin_messages` (maintainer's decision of
+ * 15 November 2026): moving mail to the Bin is the strongest change to a mailbox the tools can make. It is
+ * not a permanent deletion (Gmail keeps the message about 30 days and the person can restore it), but it
+ * hides mail from every view, so the bar to skip the card is higher than for the other four.
+ */
+export const MAILBOX_BIN_REVIEW_LINE =
+  '- This action moves messages to the Bin, the strongest change to a mailbox. preApproved is true only when the request itself says to delete, bin or trash the messages AND names which ones (a sender, a category, a label or an unmistakable set of messages). "Clean up", "tidy up" or "remove the spam" without the person having named which messages is not explicit: preApproved is false and the person is asked.';
+
+/** Whether a tool reference is the Bin tool of either Gmail connection. */
+export const isBinTool = (toolRef: string): boolean =>
+  /(?:^|\/)gmail_bin_messages$/.test(toolRef);
+
+/**
  * Asks the reviewer model. Fails closed: an error, a timeout, or an answer that is not the declared
  * object becomes `needs_approval`, never `proceed`.
  */
@@ -433,7 +446,15 @@ export async function reviewAction(input: {
     "- preApproved: true only if the request explicitly asks for this exact action on this exact target. Implied or merely helpful is false.",
     "- safety: which built-in safety requirement this action touches, if any: changing a password or other credential, changing security/sharing/access settings, or paying/purchasing/moving money. Otherwise none.",
     "",
-    ...(input.mailbox ? [...MAILBOX_REVIEW_LINES, ""] : []),
+    ...(input.mailbox
+      ? [
+          ...MAILBOX_REVIEW_LINES,
+          ...(isBinTool(input.candidate.toolRef)
+            ? [MAILBOX_BIN_REVIEW_LINE]
+            : []),
+          "",
+        ]
+      : []),
     `Custom rule that matched: ${input.rule ? `${input.rule.behaviour} (${input.rule.layer})` : "none"}.`,
     "Built-in safety requirements: credentials, security settings and payments always go to the person.",
     "",

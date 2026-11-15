@@ -797,7 +797,7 @@ describe("the source of the module that changes a mailbox", () => {
     .replace(/\/\*[\s\S]*?\*\//g, "")
     .replace(/^\s*\/\/.*$/gm, "");
 
-  test("it calls exactly the seven client methods its four operations need, three of which change a mailbox", () => {
+  test("it calls exactly the eight client methods its five operations need, four of which change a mailbox", () => {
     const called = new Set(
       [...code.matchAll(/client\.(\w+)\(/g)].map((match) => match[1]),
     );
@@ -807,6 +807,7 @@ describe("the source of the module that changes a mailbox", () => {
         "list",
         "mailboxCreate",
         "mailboxOpen",
+        "messageCopy",
         "messageFlagsAdd",
         "messageFlagsRemove",
         "search",
@@ -814,11 +815,21 @@ describe("the source of the module that changes a mailbox", () => {
     );
   });
 
-  test("it never names a method that removes, moves, copies, expunges, renames or appends, or a flag that marks mail for removal", () => {
+  test("the one copy there is goes to the Bin the server flagged, after the messages were found, and nothing else is copied or moved", () => {
+    expect([...code.matchAll(/client\.messageCopy\(/g)]).toHaveLength(1);
+    expect(code).toContain("client.messageCopy(range, bin, { uid: true })");
+    // The Bin is the folder carrying the server's own flag, never one found by a name.
+    expect([...code.matchAll(/\\\\Trash/g)]).toHaveLength(1);
+    expect(code).toContain(
+      'folder.specialUse === "\\\\Trash" && folder.specialUseSource !== "name"',
+    );
+    expect(code.match(/\bTrash\b/g)).toHaveLength(1);
+  });
+
+  test("it never names a method that removes, moves, expunges, renames or appends, or a flag that marks mail for removal, and never touches Spam", () => {
     for (const forbidden of [
       "messageDelete",
       "messageMove",
-      "messageCopy",
       "messageFlagsSet",
       "mailboxDelete",
       "mailboxRename",
@@ -829,10 +840,8 @@ describe("the source of the module that changes a mailbox", () => {
       ".move(",
       ".copy(",
       "\\\\Deleted",
-      "\\\\Trash",
       "\\\\Spam",
       "\\\\Junk",
-      "Trash",
       "Spam",
     ]) {
       expect(code).not.toContain(forbidden);
