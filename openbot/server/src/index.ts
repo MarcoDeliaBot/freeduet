@@ -47,6 +47,7 @@ import {
   createEngineChoices,
   useEngineChoices,
 } from "./freeduet/engine-choices";
+import { useTeamFile } from "./freeduet/team-file-routes";
 import { createFullAccess, withFullAccess } from "./freeduet/full-access";
 import { memberFileTools } from "./freeduet/member-files";
 import { relayComputerTools } from "./freeduet/relay-computer";
@@ -527,6 +528,8 @@ const loadAgentsForActor = createRuntimeAgentLoader(
 );
 await synchronizeTenantPackage(database, tenantPackage);
 await applyFreeDuetPackage(database, tenantPackage);
+// The team file export reads the same database and package the server runs on (team-file-routes.ts).
+useTeamFile({ database, tenantPackage });
 /*
  * Built before `auth`, because the deny list is consulted during sign-in and the store is what
  * holds it. It needs the administrator list too, so it can tell the screen which people the

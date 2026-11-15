@@ -93,6 +93,7 @@ import { threadReaderClient } from "./freeduet/backend";
 import type { EngineChoices } from "./freeduet/engine-choices";
 import { createEnginesRoutes } from "./freeduet/engines-routes";
 import { createImportPreviewRoutes } from "./freeduet/import/preview-routes";
+import { createTeamFileRoutes } from "./freeduet/team-file-routes";
 import type { HostAccessBroker } from "./host-access/broker";
 import { createHostAccessRoutes } from "./host-access/routes";
 import { identityRoutes } from "./identity/routes";
@@ -758,6 +759,8 @@ export function createApp(
       "/api/freeduet/import",
       createImportPreviewRoutes(requireUser, coworker.memory.store),
     );
+  // The team file export (docs/design/team-file.md, slice S2): administrators only, read-only.
+  app.route("/api/freeduet/team-file", createTeamFileRoutes(requireUser));
   app.on(["PUT", "PATCH", "DELETE"], "/api/auth/scim/*", (context) =>
     auth
       ? auth.handler(context.req.raw)

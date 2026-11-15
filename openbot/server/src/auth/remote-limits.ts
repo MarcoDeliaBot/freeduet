@@ -267,6 +267,8 @@ export const LEDGER: readonly LedgerEntry[] = [
   ),
   ...refused("memory", "ALL /api/memory/*"),
   ...refused("import", "ALL /api/freeduet/import/*"),
+  // A team file leaves the installation, so a remote session never asks for one (docs/design/team-file.md, S2).
+  ...refused("team-file", "ALL /api/freeduet/team-file/*"),
   ...refused("team", "ALL /api/team-bots/*"),
   ...refused("voice", "ALL /api/audio/*", "ALL /api/voice/*"),
   ...refused("sandboxed", "ALL /api/sandboxed/*"),

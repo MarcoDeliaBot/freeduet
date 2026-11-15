@@ -3,10 +3,10 @@
 //! `scripts/start.sh` writes the same file for a developer. This writes it for somebody who will
 //! never open a terminal, which changes three things:
 //!
-//! - **No dev fallbacks.** `start.sh` falls back to fixed strings for `COMPUTER_TOKEN`,
-//!   `SUPERVISOR_TOKEN` and `WORKER_SHARED_SECRET`, which are published in this repository. They are
-//!   fine on a laptop somebody is debugging and they are not fine as the default a product ships.
-//!   Every one of them is generated here.
+//! - **No dev fallbacks.** The fixed strings `start.sh` used to fall back to for `COMPUTER_TOKEN`,
+//!   `SUPERVISOR_TOKEN` and `WORKER_SHARED_SECRET` are published in this repository. They are fine on
+//!   a laptop somebody is debugging and not fine as the default a product ships. Every one of them is
+//!   generated here, and so is the database's password (docs/M1_PLAN.md D39).
 //! - **A real `KEY_ENCRYPTION_KEY`.** `.env.example` carries a valid public key, and
 //!   `server/src/config.ts` only throws on it under `NODE_ENV=production`. A desktop install is not
 //!   production, so it would land in the warn branch and encrypt the credential vault with a key
@@ -335,6 +335,54 @@ fn secret() -> String {
     BASE64.encode(bytes)
 }
 
+/// The password a database made from nothing is given: 24 random bytes, hex. Hex, not base64, because
+/// it goes into a URL and into a settings line, and `/`, `+` and `=` would break both.
+fn database_password() -> String {
+    let mut bytes = [0u8; 24];
+    rand::rng().fill_bytes(&mut bytes);
+    bytes.iter().map(|byte| format!("{byte:02x}")).collect()
+}
+
+/// The password the example address named, `openbot`. A database made before this app recorded its own
+/// password holds it, so it is kept for that database and never offered to a new one.
+pub const LEGACY_DATABASE_PASSWORD: &str = "openbot";
+
+/// The password an existing `.env` already records in its `DATABASE_URL`, when the address is one this
+/// app writes: the `openbot` user and database on this machine, in either spelling of the host.
+/// Anything else (another user, host or database, a password with characters a URL would need quoting
+/// for) records none, so it is never carried into a database it was not written for.
+pub fn password_in_database_url(url: &str) -> Option<String> {
+    let rest = url
+        .strip_prefix("postgres://")
+        .or_else(|| url.strip_prefix("postgresql://"))?;
+    let (password, address) = rest.strip_prefix("openbot:")?.split_once('@')?;
+    let (host_port, database) = address.split_once('/')?;
+    let (host, port) = host_port.rsplit_once(':')?;
+    let well_formed = !password.is_empty()
+        && password
+            .chars()
+            .all(|c| c.is_ascii_alphanumeric() || c == '-' || c == '_');
+    (well_formed
+        && database == "openbot"
+        && matches!(host, "127.0.0.1" | "localhost")
+        && port.parse::<u16>().is_ok())
+    .then(|| password.to_string())
+}
+
+/// The password a settings file records for this installation's database, if it records one.
+pub fn recorded_database_password(env_file: &Path) -> Option<String> {
+    already_set(env_file, &["DATABASE_URL"])
+        .remove("DATABASE_URL")
+        .and_then(|url| password_in_database_url(&url))
+}
+
+/// The password to keep for an existing installation, for `compose`'s `kept`. What the file records
+/// wins. With nothing recorded, a database that already exists was made before the file recorded
+/// one, so it holds `LEGACY_DATABASE_PASSWORD`. Neither means a new database, which gets a new password.
+pub fn kept_database_password(recorded: Option<String>, database_exists: bool) -> Option<String> {
+    recorded.or_else(|| database_exists.then(|| LEGACY_DATABASE_PASSWORD.to_string()))
+}
+
 /// The settings the shell owns, in the order a person reading the file would want them.
 ///
 /// Addresses use `127.0.0.1` rather than `localhost` deliberately. Compose publishes on both
@@ -570,10 +618,24 @@ pub fn compose(
         env.insert(key.into(), value);
     }
 
+    /*
+     * THE DATABASE'S PASSWORD, GENERATED AND KEPT (D39).
+     *
+     * A database keeps the password it was created with, so an installation that has one keeps the
+     * password `kept` carries (the caller takes it from its settings file, see `kept_database_password`).
+     * Only a database that does not exist yet gets a new one here. The address follows the port, which is
+     * chosen again on each start; the password does not change with it.
+     */
+    let database_password = kept
+        .get("POSTGRES_PASSWORD")
+        .map(|value| value.trim().to_string())
+        .filter(|value| !value.is_empty())
+        .unwrap_or_else(database_password);
+    env.insert("POSTGRES_PASSWORD".into(), database_password.clone());
     env.insert(
         "DATABASE_URL".into(),
         format!(
-            "postgres://openbot:openbot@127.0.0.1:{}/openbot",
+            "postgres://openbot:{database_password}@127.0.0.1:{}/openbot",
             ports.postgres
         ),
     );
@@ -1440,6 +1502,145 @@ HTTPS_PROXY=http://proxy:8080
             &kept,
         );
         assert!(env["KEY_ENCRYPTION_KEY"].trim().len() > 20);
+    }
+
+    /// A database made from nothing gets its own password, never the example one the repository publishes.
+    #[test]
+    fn a_new_database_gets_a_generated_password_not_the_example_one() {
+        let env = compose(
+            &intelligence(),
+            &Model::default(),
+            &engine_status(None),
+            &Ports::default(),
+            &pinned(),
+            None,
+            &BTreeMap::new(),
+        );
+        let password = &env["POSTGRES_PASSWORD"];
+        assert_eq!(password.len(), 48, "24 random bytes as hex");
+        assert!(password.chars().all(|c| c.is_ascii_hexdigit()));
+        assert_ne!(password, LEGACY_DATABASE_PASSWORD);
+        assert!(!env["DATABASE_URL"].contains("openbot:openbot@"));
+        assert!(
+            env["DATABASE_URL"].starts_with(&format!("postgres://openbot:{password}@127.0.0.1:"))
+        );
+    }
+
+    #[test]
+    fn two_installs_do_not_share_a_database_password() {
+        let a = compose(
+            &intelligence(),
+            &Model::default(),
+            &engine_status(None),
+            &Ports::default(),
+            &pinned(),
+            None,
+            &BTreeMap::new(),
+        );
+        let b = compose(
+            &intelligence(),
+            &Model::default(),
+            &engine_status(None),
+            &Ports::default(),
+            &pinned(),
+            None,
+            &BTreeMap::new(),
+        );
+        assert_ne!(a["POSTGRES_PASSWORD"], b["POSTGRES_PASSWORD"]);
+    }
+
+    /// The database keeps the password it was made with, so a kept one is written back unchanged, and
+    /// the address follows the port chosen on this start.
+    #[test]
+    fn a_kept_database_password_is_written_back_unchanged() {
+        let kept = BTreeMap::from([(
+            "POSTGRES_PASSWORD".to_string(),
+            "kept-password-1".to_string(),
+        )]);
+        let env = compose(
+            &intelligence(),
+            &Model::default(),
+            &engine_status(None),
+            &Ports::default(),
+            &pinned(),
+            None,
+            &kept,
+        );
+        assert_eq!(env["POSTGRES_PASSWORD"], "kept-password-1");
+        assert!(env["DATABASE_URL"].starts_with("postgres://openbot:kept-password-1@127.0.0.1:"));
+    }
+
+    #[test]
+    fn a_blank_kept_database_password_is_replaced_rather_than_carried() {
+        let kept = BTreeMap::from([("POSTGRES_PASSWORD".to_string(), "  ".to_string())]);
+        let env = compose(
+            &intelligence(),
+            &Model::default(),
+            &engine_status(None),
+            &Ports::default(),
+            &pinned(),
+            None,
+            &kept,
+        );
+        assert_eq!(env["POSTGRES_PASSWORD"].len(), 48);
+        assert_ne!(env["POSTGRES_PASSWORD"], LEGACY_DATABASE_PASSWORD);
+    }
+
+    /// Only the address this app writes is read for a password: anything else records none.
+    #[test]
+    fn a_database_url_yields_a_password_only_for_the_address_this_app_writes() {
+        assert_eq!(
+            password_in_database_url("postgres://openbot:openbot@127.0.0.1:5432/openbot"),
+            Some("openbot".to_string())
+        );
+        assert_eq!(
+            password_in_database_url("postgres://openbot:9f8a7b@localhost:55432/openbot"),
+            Some("9f8a7b".to_string())
+        );
+        for other in [
+            "postgres://other:openbot@127.0.0.1:5432/openbot",
+            "postgres://openbot:openbot@db.example.com:5432/openbot",
+            "postgres://openbot:openbot@127.0.0.1:5432/somethingelse",
+            "postgres://openbot:@127.0.0.1:5432/openbot",
+            "postgres://openbot:pa%40ss@127.0.0.1:5432/openbot",
+            "postgres://openbot:openbot@127.0.0.1:notaport/openbot",
+            "",
+        ] {
+            assert_eq!(password_in_database_url(other), None, "{other}");
+        }
+    }
+
+    /// The decision for `compose`'s `kept`: what the file records wins; a database with nothing recorded
+    /// is the legacy one; nothing recorded and no database means a new password.
+    #[test]
+    fn the_database_password_kept_follows_the_record_then_the_volume() {
+        assert_eq!(
+            kept_database_password(Some("recorded".into()), true),
+            Some("recorded".to_string())
+        );
+        assert_eq!(
+            kept_database_password(None, true),
+            Some(LEGACY_DATABASE_PASSWORD.to_string())
+        );
+        assert_eq!(kept_database_password(None, false), None);
+    }
+
+    #[test]
+    fn the_recorded_database_password_is_read_from_the_settings_file() {
+        let dir = crate::test_support::temp_root("env-recorded-database-password");
+        std::fs::create_dir_all(&dir).unwrap();
+        let file = dir.join(".env");
+        std::fs::write(
+            &file,
+            "DATABASE_URL=postgres://openbot:recorded-7f@127.0.0.1:5432/openbot\n",
+        )
+        .unwrap();
+        assert_eq!(
+            recorded_database_password(&file),
+            Some("recorded-7f".to_string())
+        );
+        assert_eq!(recorded_database_password(&dir.join("missing.env")), None);
+        let _ = std::fs::remove_dir_all(&dir);
     }
 
     #[test]

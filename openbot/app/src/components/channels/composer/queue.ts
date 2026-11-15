@@ -70,6 +70,12 @@ export type QueuedMessage = {
    * Bot was ready still applies when the message eventually runs.
    */
   attachments: Attachment[];
+  /**
+   * It came from the one-press dictation (`ComposerDraft.voice`), so it is still marked when it runs.
+   * Parking a message must not clean its words: a drained turn made of parked messages is marked if
+   * any one of them is.
+   */
+  voice?: true;
 };
 
 export type QueueAction =
@@ -219,6 +225,7 @@ export function reduceQueue(
               text: action.draft.text,
               commandIds: [...action.draft.commandIds],
               attachments: [...action.draft.attachments],
+              ...(action.draft.voice ? { voice: true as const } : {}),
             },
           ],
           action.draft.agentId,
@@ -282,6 +289,7 @@ export function reduceQueue(
             text: action.draft.text,
             commandIds: [...action.draft.commandIds],
             attachments: [...action.draft.attachments],
+            ...(action.draft.voice ? { voice: true as const } : {}),
           },
         ],
         run: null,
@@ -476,6 +484,11 @@ function joinQueued(
       commandIds: [...new Set(queue.flatMap((message) => message.commandIds))],
       isEmpty: text.length === 0,
       attachments,
+      // One message from the microphone marks the whole turn: its words are in this text, and the
+      // turn cannot be told apart from them (docs/design/voice.md, D7 and D8).
+      ...(queue.some((message) => message.voice)
+        ? { voice: true as const }
+        : {}),
     },
     dropped,
   };
