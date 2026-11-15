@@ -141,6 +141,8 @@ One planted defect is not caught here: removing the `handoff-` id check in `plug
 - `bun run format:check` and `bun run lint` from `openbot/`: clean. `server/tests/assertion-shape.test.ts`: 10 pass.
 - Every server test file that touches the hand-off path (33 files, routines, check-ins, group conversations, the remote and voice gates, the relay's computer, the hub's pre-approval): 848 pass, 0 fail. The three package pin files (`freeduet-person-language`, `freeduet-package`, `freeduet-team`): 49 pass; no pin had to move for Iris's sentence.
 - `bun test evals/`: 331 pass.
+- The whole app suite (`bun test app/` from `openbot/`): 2976 pass, 0 fail in 313 files.
+- The whole server suite (`bun run test:server:sharded`, eleven shards, 5 minutes): 8952 pass, 3 fail. The three are the ones that fail on plain main in this sandbox (the `langgraph` and `bot` "real provider sees the learned catalog" tests and the Mastra bridge test), and none touches the hand-off path.
 
 ## 8. Decisions left to the maintainer
 
