@@ -42,7 +42,7 @@ import {
   personRule,
   signInGate,
 } from "./auth/install-secret";
-import { createRemoteLimits } from "./auth/remote-limits";
+import { createRemoteLimits, isRemote } from "./auth/remote-limits";
 import {
   type AppVariables,
   type AuthService,
@@ -804,6 +804,13 @@ export function createApp(
           ? await onboardingStore.status(context.var.actor.id)
           : null,
       },
+      /*
+       * Whether this signed-in browser is a REMOTE session (auth/remote-limits.ts): with sign-in and a secret, one that
+       * is not paired with the computer. The same question the middleware asks, so the app can leave out what a remote
+       * session is refused (the voice chats, the microphone, the call) instead of asking and showing the refusal. With
+       * no gate nothing is remote, so the answer is false.
+       */
+      remote: isRemote(pairingGate, context.req.raw),
     }),
   );
   app.post("/api/me/onboarding", requireUser, async (context) => {

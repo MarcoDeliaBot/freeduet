@@ -128,8 +128,15 @@ export function saveVoiceSession(
   })();
 }
 
-export function useVoiceArchive(channelId: string) {
-  const saved = useQuery(voiceSessionQueryOptions(channelId), queryClient);
+/**
+ * `remote` is the server's answer for this browser (`remote` on /api/me). A remote session is refused the voice chats
+ * (server/src/auth/remote-limits.ts), so it asks for none and shows no error about them.
+ */
+export function useVoiceArchive(channelId: string, remote = false) {
+  const saved = useQuery(
+    { ...voiceSessionQueryOptions(channelId), enabled: !remote },
+    queryClient,
+  );
   const { data: pending = [] } = useQuery(
     {
       queryKey: keys.pending(channelId),
@@ -170,7 +177,10 @@ export function useVoiceArchive(channelId: string) {
 
 export async function loadVoiceArchive(
   channelId: string,
+  remote = false,
 ): Promise<VoiceChatEntry[]> {
+  // A remote session has no voice chats to bring in: the server refuses them, so it does not ask.
+  if (remote) return cachedVoiceArchive(channelId);
   await queryClient.ensureQueryData(voiceSessionQueryOptions(channelId));
   return cachedVoiceArchive(channelId);
 }

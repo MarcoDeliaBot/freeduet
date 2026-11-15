@@ -32,6 +32,7 @@ import { HandoffResumeNotice } from "@/components/computer/handoff-resume-notice
 import { Topic } from "@/components/duet/kit";
 import { agentListQueryOptions } from "@/lib/agents/queries";
 import { type ApprovalInboxData, approvalInboxOptions } from "@/lib/approvals";
+import { useCurrentUser } from "@/lib/auth/use-current-user";
 import { attachmentUrl } from "@/lib/channels/attachments";
 import { readFirstDay } from "@/lib/channels/first-day";
 import {
@@ -524,7 +525,9 @@ export function ChannelChat({
    */
   const agentRef = useRef(agent);
   agentRef.current = agent;
-  const voiceArchive = useVoiceArchive(channel.id);
+  // A remote session is refused the voice chats and the call (server/src/auth/remote-limits.ts): it asks for neither.
+  const remoteSession = useCurrentUser().data?.remote === true;
+  const voiceArchive = useVoiceArchive(channel.id, remoteSession);
   const [voiceContextNotice, setVoiceContextNotice] = useState<string | null>(
     null,
   );
@@ -1055,7 +1058,7 @@ export function ChannelChat({
     setVoiceContextNotice(null);
     let voiceHistoryTimer: ReturnType<typeof setTimeout> | undefined;
     const priorCalls = await Promise.race([
-      loadVoiceArchive(channel.id),
+      loadVoiceArchive(channel.id, remoteSession),
       new Promise<never>((_resolve, reject) => {
         voiceHistoryTimer = setTimeout(
           () => reject(new Error("Voice history timed out")),
@@ -1438,7 +1441,9 @@ export function ChannelChat({
     disabled: !channel.active,
     context: async () =>
       [
-        voiceArchiveContext(await loadVoiceArchive(channel.id)).slice(-6000),
+        voiceArchiveContext(
+          await loadVoiceArchive(channel.id, remoteSession),
+        ).slice(-6000),
         voiceContext(agentRef.current.messages).slice(-6000),
       ]
         .filter(Boolean)
@@ -1709,7 +1714,7 @@ export function ChannelChat({
                 : undefined
             }
             voiceCall={
-              call.available
+              call.available && !remoteSession
                 ? {
                     active: call.active,
                     supported: call.supported,

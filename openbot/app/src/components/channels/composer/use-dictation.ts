@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
+import { useCurrentUser } from "@/lib/auth/use-current-user";
 import { deploymentCapabilitiesQueryOptions } from "@/lib/deployment/queries";
 import {
   recordingSupported,
@@ -20,6 +21,8 @@ export function useDictation(
     { ...deploymentCapabilitiesQueryOptions(), enabled: !disabled },
     queryClient,
   );
+  // A remote session is refused the transcription (server/src/auth/remote-limits.ts), so it is not offered the microphone.
+  const { data: user } = useCurrentUser();
   const onTranscriptRef = useRef(onTranscript);
   onTranscriptRef.current = onTranscript;
   const [session] = useState(
@@ -35,7 +38,7 @@ export function useDictation(
     session.getSnapshot,
     session.getSnapshot,
   );
-  const available = data?.transcription === true;
+  const available = data?.transcription === true && user?.remote !== true;
   useEffect(() => {
     if (disabled || !available) session.cancel();
     return () => session.cancel();

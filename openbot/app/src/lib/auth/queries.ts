@@ -20,6 +20,11 @@ export type AuthenticatedUser = {
   role: "admin" | "user";
   /** Null means this deployment does not track onboarding, which reads as nothing to finish. */
   onboarding: OnboardingStatus | null;
+  /**
+   * The server's answer on `/api/me`: this signed-in browser is a REMOTE session, not paired with the computer
+   * (server/src/auth/remote-limits.ts). The app reads it and never decides it. Absent is false.
+   */
+  remote?: boolean;
 };
 
 /** Whether the gate holds: there is an onboarding to do and this person has not finished it. */
@@ -104,8 +109,11 @@ async function currentUser(): Promise<AuthenticatedUser | null> {
     throw new Error(`Could not load the current user (${response.status})`);
   }
 
-  const body = (await response.json()) as { user: AuthenticatedUser };
-  return body.user;
+  const body = (await response.json()) as {
+    user: AuthenticatedUser;
+    remote?: boolean;
+  };
+  return { ...body.user, remote: body.remote === true };
 }
 
 export function currentUserQueryOptions() {
