@@ -4,7 +4,7 @@ FreeDuet agents read your mail, browse the web and can, with your approval, spen
 
 ## Reporting a vulnerability
 
-Please **do not** open a public issue. Use GitHub's private vulnerability reporting on this repository ("Security" tab → "Report a vulnerability"). We acknowledge within 72 hours and aim to fix critical issues within 14 days. Do not include real credentials, personal data or conversation contents in a report.
+Please **do not** open a public issue. Use GitHub's private vulnerability reporting on this repository ("Security" tab → "Report a vulnerability", or directly [github.com/MarcoDeliaBot/freeduet/security/advisories/new](https://github.com/MarcoDeliaBot/freeduet/security/advisories/new)). We acknowledge within 72 hours and aim to fix critical issues within 14 days. Do not include real credentials, personal data or conversation contents in a report.
 
 Especially valuable reports:
 
@@ -46,3 +46,4 @@ Especially valuable reports:
 
 - CodeQL (GitHub code scanning, JavaScript/TypeScript and Python) runs on every pull request and once a week; zizmor checks the workflow files themselves whenever one changes and once a week.
 - The OpenSSF Scorecard, which scores how the repository is run, runs on every push to `main` and once a week.
+- Releases from now on carry a signed build-provenance attestation for their source archive ([.github/workflows/release-provenance.yml](.github/workflows/release-provenance.yml)); how to check it, and every other claim here, is in [docs/VERIFY.md](docs/VERIFY.md). What was considered and what was not is in [docs/THREAT_MODEL.md](docs/THREAT_MODEL.md).
