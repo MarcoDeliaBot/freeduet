@@ -667,3 +667,21 @@ describe("switching a rule on again", () => {
     expect(box.changes()).toEqual([]);
   });
 });
+
+describe("enabling a rule that is already on", () => {
+  test("changes nothing: the watermark, the wait and the backfill are left as they were", async () => {
+    await reset();
+    const id = await rule({
+      fromDomain: "github.com",
+      archive: true,
+      applyToExisting: true,
+    });
+    const before = await row(id);
+    expect(before.backfillPending).toBe(true);
+    await store.changeMailRule(owner, id, "enable");
+    const after = await row(id);
+    expect(after.backfillPending).toBe(true);
+    expect(after.watermarkAt.getTime()).toBe(before.watermarkAt.getTime());
+    expect(after.enabled).toBe(true);
+  });
+});

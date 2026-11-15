@@ -420,27 +420,36 @@ describe("an anchor must be a real one", () => {
     expect(refused({ fromDomain: "com", bin: true })).toContain("domain");
   });
 
-  test("the sender is the LAST address in angle brackets, so a display name that looks like an address does not decide", () => {
-    expect(addressOf('"<a@github.com>" <x@evil.com>')).toBe("x@evil.com");
-    expect(addressOf("<a@github.com> <b@evil.com>")).toBe("b@evil.com");
+  test("a From header with more than one address, or any parenthesis, names no sender and matches nothing", () => {
+    for (const from of [
+      '"<a@github.com>" <x@evil.com>',
+      "<a@github.com> <b@evil.com>",
+      "Evil <x@evil.com> (<a@github.com>)",
+      "x@evil.com (see <a@github.com>)",
+      "A <a@github.com>, B <x@evil.com>",
+    ]) {
+      expect(addressOf(from)).toBeNull();
+      expect(when({ fromDomain: "github.com" }, { from })).toBe(false);
+      expect(when({ fromDomain: "evil.com" }, { from })).toBe(false);
+      expect(when({ fromAddress: "a@github.com" }, { from })).toBe(false);
+    }
     expect(addressOf("GitHub <notifications@github.com>")).toBe(
       "notifications@github.com",
     );
-    expect(addressOf("plain@github.com")).toBe("plain@github.com");
+    expect(addressOf("Name <a@b.com>")).toBe("a@b.com");
+    expect(addressOf("x@evil.com")).toBe("x@evil.com");
     expect(
-      when(
-        { fromDomain: "github.com" },
-        { from: '"<a@github.com>" <x@evil.com>' },
-      ),
-    ).toBe(false);
-    expect(
-      when(
-        { fromAddress: "a@github.com" },
-        { from: "<a@github.com> <b@evil.com>" },
-      ),
-    ).toBe(false);
-    expect(
-      when({ fromDomain: "evil.com" }, { from: "<a@github.com> <b@evil.com>" }),
+      when({ fromDomain: "github.com" }, { from: "GitHub <n@github.com>" }),
     ).toBe(true);
+  });
+
+  test("a List-Id is label.label(.label), so '.com', '....' and 'a..b' are refused, and <list.example.com> is not", () => {
+    for (const listId of [".com", "....", "a..b", "a.", "-.-.", "a b.c"]) {
+      expect(refused({ listId, bin: true })).toContain("List-Id");
+    }
+    expect(parseRuleSpec({ listId: "<list.example.com>", bin: true }).ok).toBe(
+      true,
+    );
+    expect(parseRuleSpec({ listId: "a.bc", archive: true }).ok).toBe(true);
   });
 });

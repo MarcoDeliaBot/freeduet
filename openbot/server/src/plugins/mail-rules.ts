@@ -183,6 +183,7 @@ export const PUBLIC_SUFFIXES: ReadonlySet<string> = new Set([
   "com.ng",
   "co.ke",
 ]);
+const LIST_ID = /^[a-z0-9-]+(?:\.[a-z0-9-]+)+$/;
 const RULE_ID =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
 
@@ -249,7 +250,8 @@ export function parseRuleSpec(
       if (PUBLIC_SUFFIXES.has(domain)) return refuse(RULE_REFUSALS.suffix);
       conditions.fromDomain = domain;
     } else if (key === "listId") {
-      if (lower.length < 4 || !lower.includes("."))
+      const bare = lower.replace(/^<(.*)>$/, "$1");
+      if (bare.length < 4 || !LIST_ID.test(bare))
         return refuse(RULE_REFUSALS.listId);
       conditions.listId = lower;
     } else {
@@ -377,8 +379,12 @@ export type RuleMessage = {
 export function addressOf(value: string): string | null {
   // The LAST angle-bracket address is the one a mail client shows as the sender: a display name that
   // itself looks like an address ("<a@github.com>" <x@evil.com>) must not decide.
-  const angled = [...value.matchAll(/<([^<>\s]+@[^<>\s]+)>/g)].at(-1);
-  const text = (angled ? angled[1] : value.trim()) ?? "";
+  // More than one address, or any parenthesis (a comment that can hold another address), is not a
+  // sender this rule can name: it does not match.
+  if (/[()]/.test(value)) return null;
+  const angled = [...value.matchAll(/<([^<>\s]+@[^<>\s]+)>/g)];
+  if (angled.length > 1) return null;
+  const text = (angled[0] ? angled[0][1] : value.trim()) ?? "";
   return /^[^\s@<>]+@[^\s@<>]+$/.test(text) ? text.toLowerCase() : null;
 }
 

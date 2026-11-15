@@ -295,7 +295,8 @@ export function mailRuleMethods(context: StoreContext) {
             enabled: change === "enable",
             // Switched back on, a rule looks at mail from now: what arrived while it was off is not new.
             // It never starts a backfill nobody ordered, and a failure it had is forgotten.
-            ...(change === "enable"
+            // An enable of a rule that is already on changes nothing.
+            ...(change === "enable" && !row.enabled
               ? {
                   watermarkAt: new Date(),
                   backfillPending: false,
