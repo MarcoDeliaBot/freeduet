@@ -1,6 +1,6 @@
 # M0 demo: FreeDuet on a free model
 
-The M0 check (issue M0.9): `bash scripts/start.sh` opens FreeDuet, Iris answers in the main channel and every member answers in its own channel. Until the subscription router arrives in M1, the members need a model the server can call. This page runs them on a **free** one: a local model with Ollama, or a free model on OpenRouter. No paid API key is needed.
+The M0 check (issue M0.9): `bash scripts/start.sh` opens FreeDuet, Iris answers in the main channel and every member answers in its own channel. Without a Claude plan signed in through Claude Code, the members need a model the server can call. This page runs them on a **free** one: a local model with Ollama, or a free model on OpenRouter. No paid API key is needed.
 
 Written for Windows 11 with WSL2 (Ubuntu), Ollama on Windows and a GPU. Linux and macOS skip step 1.
 
@@ -33,20 +33,20 @@ curl -fsSL https://bun.sh/install | bash # Bun, the JavaScript runtime FreeDuet 
 
 Docker Engine from Ubuntu's own packages is free and open source; Docker Desktop is not needed. All five packages are in Ubuntu 26.04 (checked 2026-11-08).
 
-## 3. Get FreeDuet (private repository)
+## 3. Get FreeDuet
 
-Use the GitHub sign-in already on Windows, then clone:
+The repository is public, so no sign-in is needed. The first line below is optional. Then clone:
 
 ```bash
 git config --global credential.helper "/mnt/c/Program\ Files/Git/mingw64/bin/git-credential-manager.exe"
 git clone https://github.com/MarcoDeliaBot/freeduet.git ~/freeduet
-cd ~/freeduet && git checkout m0-fork   # until the M0 pull request is merged
+cd ~/freeduet
 cp .env.example .env
 ```
 
-## 4. CopilotKit Intelligence (free plan, required)
+## 4. CopilotKit Intelligence (optional, off by default)
 
-OpenDuet keeps conversations and memory in CopilotKit Intelligence; the server does not start without its key. From `~/freeduet`:
+By default FreeDuet keeps conversations and memory in its own Postgres database, with no CopilotKit key (`FREEDUET_INTELLIGENCE=off` in `openbot/.env.example`). The commands below are for `FREEDUET_INTELLIGENCE=on` only, which keeps them in CopilotKit Intelligence. From `~/freeduet`:
 
 ```bash
 npx --yes copilotkit@latest login            # opens the browser: sign in or create the account
@@ -92,14 +92,14 @@ Open `http://localhost:3010`, go through the short onboarding, then check and no
 |---|---|
 | Settings, at the bottom | An About section naming FreeDuet and the not-affiliated line |
 | The FreeDuet channel | Iris answers |
-| Each of the other 9 members, from its page | It answers |
+| Each of the other 11 members, from its page | It answers |
 | A conversation's name in the sidebar | Appears after a short while |
 
 Notes:
 
-- `start.sh` also starts OpenDuet's two sample Bots (`agent-bot`, `agent-langgraph`). FreeDuet's members do not use them; with profile A they cannot reach Ollama from their containers, and that does not affect the check.
+- `start.sh` also starts OpenDuet's sample Bot `agent-langgraph`, and `agent-bot` unless `BOT_PROVIDER=anthropic` (`openbot/scripts/start.sh` lines 555-560). FreeDuet's members do not use them, and they do not affect the check.
 - A small local model may not use every tool well. For M0 the members only need to answer.
-- `CLAUDE_CODE_OAUTH_TOKEN` is ignored on purpose (docs/PROVIDERS.md). Your Claude plan joins in M1, through Claude Code signed in by you.
+- `CLAUDE_CODE_OAUTH_TOKEN` is ignored on purpose (docs/PROVIDERS.md). Your Claude plan is used through Claude Code signed in by you, from v0.1.
 
 ## If something does not work
 
@@ -117,12 +117,12 @@ Found while running this demo on the maintainer's computer on 2026-11-08.
 
 The team evals ([evals/team/README.md](../evals/team/README.md)) talk to FreeDuet as its user, so they never run on the FreeDuet you use: run there on 2026-11-08 they left 282 conversations in the sidebar and 11 invented memories about the maintainer. They run on the eval stack, a second FreeDuet on the same machine, started from the same checkout through the same `scripts/start.sh` with its own settings file, `openbot/.env.eval` (git-ignored, written by the script with fresh secrets).
 
-**Once:** the eval stack needs a CopilotKit Intelligence project of its own. Intelligence keeps each person's memories by user, and with no sign-in both FreeDuets are the same user, so on your project the evals would read and change your real memories whatever database they have. Create a second project at [intelligence.copilotkit.ai](https://intelligence.copilotkit.ai) and copy its runtime key (API Keys); do not run `copilotkit project select` in the repository, which would write it into your own `.env`. Your FreeDuet must have run once with Claude Code signed in.
+**Once, only if your FreeDuet runs with `FREEDUET_INTELLIGENCE=on`** (the default, `off`, needs no key): the eval stack needs a CopilotKit Intelligence project of its own. Intelligence keeps each person's memories by user, and with no sign-in both FreeDuets are the same user, so on your project the evals would read and change your real memories whatever database they have. Create a second project at [intelligence.copilotkit.ai](https://intelligence.copilotkit.ai) and copy its runtime key (API Keys); do not run `copilotkit project select` in the repository, which would write it into your own `.env`. Your FreeDuet must have run once with Claude Code signed in.
 
 From the repository root (`~/freeduet`), with your FreeDuet running or not:
 
 ```bash
-FREEDUET_EVAL_INTELLIGENCE_API_KEY=<the second project's key> bash openbot/scripts/freeduet-eval-stack.sh up   # the first time
+FREEDUET_EVAL_INTELLIGENCE_API_KEY=<the second project's key> bash openbot/scripts/freeduet-eval-stack.sh up   # the first time; the key only with FREEDUET_INTELLIGENCE=on
 bash openbot/scripts/freeduet-eval-stack.sh reset    # before every eval run: no conversations, no memories
 bun --env-file=openbot/.env.eval evals/team/run.ts --repeat 3
 bash openbot/scripts/freeduet-eval-stack.sh status   # what answers, sign-in, conversations

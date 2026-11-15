@@ -22,7 +22,7 @@ Especially valuable reports:
 
 | Asset | Threat | Control |
 |---|---|---|
-| Money | An agent buys or books what you did not approve | Single-use purchase permits bound to merchant host and total, valid 10 minutes; caps per purchase, day and month (planned for v0.4, not built); no "Always allow" for purchases; gateway rule on checkout clicks; final summary re-checked before the last click; minimum engine tier for buying |
+| Money | An agent buys or books what you did not approve | Single-use purchase permits bound to merchant host and total, valid 10 minutes, and caps per purchase, day and month (both planned for v0.4, not built); no "Always allow" for purchases; gateway rule on checkout clicks; final summary re-checked before the last click; minimum engine tier for buying |
 | Subscription accounts | Credentials stolen or misused; account suspended | FreeDuet never handles subscription credentials; only official, unmodified CLIs; routes off when provider terms are unclear ([docs/PROVIDERS.md](docs/PROVIDERS.md)) |
 | Site logins and payment details | Leaked into chat, logs or the model | Masked secret box and take-over; credentials encrypted, write-only, redacted from audit; agents never type secrets |
 | Your data | Exfiltrated by prompt injection | Read content is data, never instructions; outgoing messages checked for sensitive data; every send needs approval; telemetry off by default |
