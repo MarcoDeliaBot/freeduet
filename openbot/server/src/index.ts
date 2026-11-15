@@ -44,6 +44,7 @@ import { wireCoordination } from "./agents/coordination-wiring";
 import { createAgentFetch } from "./agents/endpoint";
 import { createHandoffDesk } from "./agents/handoff";
 import { createHandedRequestLoader } from "./agents/handoff-request";
+import { createHopRelay } from "./agents/handoff-resume";
 import { createHandoffRunner } from "./agents/handoff-runner";
 import { startHandoffDelivery } from "./agents/handoff-wiring";
 import {
@@ -2193,6 +2194,15 @@ const approvalSweep = repeatAfterEach(
     ),
     channelStore,
     actorFor,
+    // D48: a member that stopped on a card inside a hand-off answers the Bot that asked.
+    relayHop: createHopRelay({
+      queue: approvalQueue,
+      database,
+      readRun: (value) =>
+        readApprovedRunAssertion(value, config.keyEncryptionKey),
+      askerOf: async (run) =>
+        (await sourceForCoordinationRun(run))?.botId ?? null,
+    }),
     // Assigned further down, once delivery is wired.
     notify: (scope, input) => deliveryNotifications(scope, input),
   }),

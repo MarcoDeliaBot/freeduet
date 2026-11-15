@@ -236,6 +236,11 @@ export function createHandoffDelivery(options: {
        * will ever be shown.
        */
       const said: string[] = [];
+      /*
+       * Cards the addressed Bot's run stopped on (D48): the run ends with a pause for the person's
+       * decision, which is not an answer and not a failure, and the hop used to end there in silence.
+       */
+      let waiting = 0;
       let saying = "";
       const runAgent =
         typeof agent.runAgent === "function"
@@ -251,7 +256,12 @@ export function createHandoffDelivery(options: {
             {
               ...(config ?? {}),
               onEvent: (emitted: {
-                event?: { type?: unknown; delta?: unknown };
+                event?: {
+                  type?: unknown;
+                  delta?: unknown;
+                  name?: unknown;
+                  value?: { kind?: unknown };
+                };
               }) => {
                 seen.count += 1;
                 const type = String(emitted?.event?.type ?? "");
@@ -261,6 +271,12 @@ export function createHandoffDelivery(options: {
                   saying += String(emitted?.event?.delta ?? "");
                 if (type === "TEXT_MESSAGE_END" && saying.trim().length > 0)
                   said.push(saying.trim());
+                if (
+                  type === "CUSTOM" &&
+                  emitted?.event?.name === "openbot.headless.waiting" &&
+                  emitted.event.value?.kind === "approval"
+                )
+                  waiting += 1;
                 config?.onEvent?.(emitted);
               },
             } as never,
@@ -513,6 +529,15 @@ export function createHandoffDelivery(options: {
        * What came back, for the runner to relay. Null when the turn produced no words at all —
        * a run that only called tools — which the runner treats as nothing worth carrying back.
        */
+      if (waiting > 0 && !work.answerIn) {
+        const name = work.toName ?? work.toBotId;
+        return {
+          answer: [
+            ...said,
+            `${name} has not finished: it stopped on ${waiting === 1 ? "a card" : `${waiting} cards`} that only the person can decide (Tasks, Needs input). Nothing it was waiting on has been done. If the person allows it, ${name} carries on from there and its result comes back to you; if they refuse, you are told that too. Tell the person to open that card, and do not hand the same job over again while it is open.`,
+          ].join("\n\n"),
+        };
+      }
       return { answer: said.length > 0 ? said.join("\n\n") : null };
     },
   };

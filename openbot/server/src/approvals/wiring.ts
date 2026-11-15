@@ -1,4 +1,5 @@
 import { isDeepStrictEqual } from "node:util";
+import { and, eq, sql } from "drizzle-orm";
 import type { HeadlessTool } from "@openbot/toolkit/headless-tools";
 import type { IntelligenceLike } from "@openbot/toolkit/run-turn";
 import { type RunAssertion, readRunAssertion } from "../agents/callback-token";
@@ -7,11 +8,12 @@ import type { AgentActor } from "../agents/profile-types";
 import { type AuditInitiator, PERSON_INITIATOR } from "../audit";
 import type { DeploymentConfig } from "../config";
 import type { Database } from "../db/client";
+import { approvalRequests } from "../db/schema";
 import type { DeliveryScope } from "../delivery/types";
 import type { FullAccess } from "../freeduet/full-access";
 import type { ReviewModel } from "./policy";
 import { createApprovalQuestions, type PersonQuestion } from "./questions";
-import { createApprovalService } from "./service";
+import { ALREADY_WAITING, createApprovalService } from "./service";
 import { ApprovalRefusedError, type ApprovalStore } from "./types";
 
 /**
@@ -61,15 +63,48 @@ export function createServerApprovalService(deps: {
     {
       ...storedApprovals,
       open: async (action) => {
-        const request = await storedApprovals.open(action);
+        const forwarded = action.continuation?.forwardedProps;
+        const signed =
+          forwarded &&
+          typeof forwarded === "object" &&
+          "openbotRun" in forwarded
+            ? readRunAssertion(forwarded.openbotRun, config.keyEncryptionKey)
+            : null;
+        /*
+         * D48: a call raised inside a hand-off's run is asked about in the conversation that asked
+         * (the signed run names it), and the same member asking the same thing again from a later
+         * hand-off of that conversation is not asked about twice. Each hop runs in a scratch thread
+         * of its own, so the gate's own check by thread never saw the earlier card. The member is
+         * told one is already waiting, exactly as for a retry inside one run. Only an OPEN card
+         * counts: once it is decided, asking again is a new request.
+         */
+        const hop =
+          signed?.handoff &&
+          signed.threadId &&
+          signed.actorId === action.actorId &&
+          signed.botId === action.botId
+            ? signed
+            : null;
+        if (hop && action.equivalence) {
+          const [earlier] = await database
+            .select({ id: approvalRequests.id })
+            .from(approvalRequests)
+            .where(
+              and(
+                eq(approvalRequests.ownerUserId, action.actorId),
+                eq(approvalRequests.status, "pending"),
+                sql`${approvalRequests.action}->>'askedIn' = ${hop.threadId}`,
+                sql`${approvalRequests.action}->>'equivalence' = ${action.equivalence}`,
+                sql`not (${approvalRequests.runId} = ${action.runId} and ${approvalRequests.toolCallId} = ${action.toolCallId})`,
+              ),
+            )
+            .limit(1);
+          if (earlier) throw new ApprovalRefusedError(ALREADY_WAITING);
+        }
+        const request = await storedApprovals.open(
+          hop ? { ...action, askedIn: hop.threadId } : action,
+        );
         if (request.status === "pending") {
-          const forwarded = action.continuation?.forwardedProps;
-          const signed =
-            forwarded &&
-            typeof forwarded === "object" &&
-            "openbotRun" in forwarded
-              ? readRunAssertion(forwarded.openbotRun, config.keyEncryptionKey)
-              : null;
           const run =
             signed &&
             signed.actorId === action.actorId &&

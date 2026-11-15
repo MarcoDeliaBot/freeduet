@@ -184,17 +184,7 @@ export function createHandoffRunner(options: {
       // notice below: a relay is not a Bot this run asked for, and one run may legally ask the
       // same Bot two different things.
       key: `relay:${key}`,
-      payload: {
-        fromBotId: work.toBotId,
-        toBotId: work.fromBotId,
-        actorId: work.actorId,
-        threadId: work.threadId,
-        runId: work.runId,
-        depth: work.depth,
-        ...(work.initiator ? { initiator: work.initiator } : {}),
-        answerIn: work.threadId,
-        task: `You asked ${work.toName ?? work.toBotId} to help with this: ${work.task}\n\n${lineWritten(work)}It answered:\n\n${clip(answer)}\n\nGive the person the outcome. Keep what matters, drop the pleasantries, and say it came from ${work.toName ?? work.toBotId}.${verdictAsked(work)}`,
-      } as unknown as Record<string, unknown>,
+      payload: relayPayload(work, answer) as unknown as Record<string, unknown>,
     });
 
   const tell = (work: HandoffWork, key: string, reason: string) =>
@@ -558,6 +548,25 @@ function clip(answer: string): string {
 function doneWhenOf(work: HandoffWork): string | undefined {
   const finish = readDoneWhen(work.doneWhen);
   return finish.ok ? finish.line : undefined;
+}
+
+/**
+ * The work item that carries a hop's answer back to the Bot that asked, in the conversation it was
+ * asked in. Pure, so the relay of an answer that arrives after a person's decision on a card
+ * (`agents/handoff-resume.ts`, D48) is built exactly as the relay of one that came straight back.
+ */
+export function relayPayload(work: HandoffWork, answer: string): HandoffWork {
+  return {
+    fromBotId: work.toBotId,
+    toBotId: work.fromBotId,
+    actorId: work.actorId,
+    threadId: work.threadId,
+    runId: work.runId,
+    depth: work.depth,
+    ...(work.initiator ? { initiator: work.initiator } : {}),
+    answerIn: work.threadId,
+    task: `You asked ${work.toName ?? work.toBotId} to help with this: ${work.task}\n\n${lineWritten(work)}It answered:\n\n${clip(answer)}\n\nGive the person the outcome. Keep what matters, drop the pleasantries, and say it came from ${work.toName ?? work.toBotId}.${verdictAsked(work)}`,
+  };
 }
 
 /**

@@ -1,3 +1,4 @@
+import type { ApprovalContinuation } from "@openbot/toolkit/continuation";
 import { HeadlessToolSuspension } from "@openbot/toolkit/headless-tools";
 import type { TurnRunner } from "@openbot/toolkit/run-turn";
 import { and, eq, inArray, sql } from "drizzle-orm";
@@ -38,6 +39,15 @@ export function createApprovalResumeTick(deps: {
   approvalContinuationRunner: TurnRunner;
   channelStore: ChannelStore;
   actorFor: (ownerUserId: string) => Promise<AgentActor>;
+  /**
+   * D48: sends the answer of a member run that stopped on a card inside a hand-off back to the Bot
+   * that asked (`agents/handoff-resume.ts`). Absent where there are no hand-offs; true when it was one.
+   */
+  relayHop?: (input: {
+    snapshot: ApprovalContinuation;
+    approvalId: string;
+    answer: string;
+  }) => Promise<boolean>;
   notify: (
     scope: DeliveryScope,
     input: { id: string; text: string; kind: "reply" },
@@ -167,6 +177,28 @@ export function createApprovalResumeTick(deps: {
                   ),
                 );
             };
+            /*
+             * D48: a member that stopped on a card inside a hand-off runs on in the hop's scratch
+             * thread, which nobody sees, so what it says now goes to the Bot that asked. Never thrown:
+             * the decision is carried out and the member has run on, and a retry here would do both
+             * again.
+             */
+            const relayHop = async (answer: string) => {
+              await deps
+                .relayHop?.({ snapshot, approvalId, answer })
+                .catch((failure: unknown) =>
+                  console.error(
+                    JSON.stringify({
+                      type: "hop-relay-error",
+                      error:
+                        failure instanceof Error
+                          ? failure.name
+                          : "UnknownError",
+                      timestamp: new Date().toISOString(),
+                    }),
+                  ),
+                );
+            };
             // A group turn's approval also writes the resumed reply into the shared transcript.
             let outcome: { replyText: string };
             try {
@@ -192,6 +224,9 @@ export function createApprovalResumeTick(deps: {
                * twelve times. (Found and fixed the same way by builder C on #37.)
                */
               if (!(error instanceof HeadlessToolSuspension)) throw error;
+              await relayHop(
+                `It stopped again on another card that only the person can decide (${error.message}). Tell the person to open Tasks, Needs input.`,
+              );
               // A routine run waiting on this decision now waits on the next one.
               await database
                 .update(routineRuns)
@@ -211,6 +246,12 @@ export function createApprovalResumeTick(deps: {
               return;
             }
             await recordTask(outcome.replyText);
+            await relayHop(
+              outcome.replyText ||
+                (result.error
+                  ? `The action was not carried out: ${result.error}`
+                  : "The action the person allowed was carried out."),
+            );
             if (source && outcome.replyText)
               await channelStore.recordActivity(
                 await actorFor(input.ownerUserId),
