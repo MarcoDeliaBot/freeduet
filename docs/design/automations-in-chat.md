@@ -236,3 +236,84 @@ Decisions left to the maintainer (none is taken here):
 | M4 | The settle margin | (a) 60 seconds (built); (b) a longer margin; (c) write misses from the reaper, after open attempts are closed | (a) | A minute covers an ordinary database round trip. (b) only delays rows. (c) moves the write to another pass, a larger change than the risk it removes. Revisit only if the database can stall for longer than a minute. |
 | M5 | The words a person reads | (a) "Missed", with the reason above (built); (b) other words; (c) no label, only the reason | (a), unless the maintainer prefers other words | The person needs to read a miss as a miss, and the reason must not blame them. The text is English, as the interface is. |
 | M6 | Missed in other places | (a) History and each routine's list only (built); (b) also the calendar, notifications or the Bot's page | (a) for now | Those surfaces answer other questions (the calendar shows future runs). Who is told, and how, is a product decision. |
+
+## 9. The routine's card in the chat (branch `routine-card-in-chat`)
+
+Roadmap row "The routine's card in the chat" (section Now, decided 15 November 2026): when a routine is written in chat, a card under the message shows what it will do and when it runs next, with Pause, Edit and Cancel, without leaving the conversation. Routines always ask when they act, as today. This section is the first slice: the card, in the app only, with no server change. It changes nothing in how a routine runs and in no approval.
+
+Markers are as in section 2.
+
+### 9.1 What the person sees
+
+After `create_routine` succeeds, a card appears under its tool line. A call that is one step of a folded run gets its card under the fold ([code: openbot/app/src/components/channels/tool-activity.tsx:562-568]). A call alone in its turn gets it under the line ([code: openbot/app/src/components/channels/chat-transcript.tsx:1735-1736]). The card reads the routine's current state each time the conversation is drawn.
+
+| State | What the card says | Buttons |
+|---|---|---|
+| Active | The routine's instruction, as plain text, cut at 160 characters. "Next run: Monday, 16 November 2026 at 09:00 (Europe/Rome)." When the browser's zone differs, the same instant follows in that zone, named. | Pause, Edit, Cancel |
+| Paused | The instruction, then "Paused". No next run is shown, because a paused routine has none. | Resume, Edit, Cancel |
+| Cancelled in the card | "Routine cancelled", and nothing else. | none |
+| Gone | "This routine no longer exists", and nothing else. | none |
+
+- **Cancel** asks "Cancel this routine?" inside the card, with "Yes, cancel it" and "No, keep it" (the second has focus). Nothing is deleted before the first is pressed.
+- **Edit** opens a box, "What should change?", and "Send change". Pressing it sends the person's own message, "Change my routine with id <id>: <their words>", through the conversation ([code: openbot/app/src/components/channels/conversation-send.tsx]). The member then changes the routine with `update_routine`, and that call shows its approval card as it does today. No edit screen or dialog exists for a routine, so this is the only edit path.
+- **A failed read** shows the message the server gives, or "This routine could not be read." when it gives none. It never says "no longer exists", because a remote session is refused every routine route ([code: openbot/server/src/auth/remote-limits.ts:263]).
+
+### 9.2 Rules
+
+- The card's buttons are the person's own presses in the app. Pause, Resume and Cancel call the routes the Routines page already calls, so no approval card is added or removed. The Routines page switches a routine with no card and deletes it after a confirm today ([code: openbot/app/src/components/routines/routines-list.tsx:330-338, 441-451]). Nothing a member or a routine writes can press them.
+- Edit sends a message the person typed. A change to the routine still asks with its card (D6), because the member's `update_routine` goes through the gate.
+- No new server route, and no change to the remote list.
+- The routine's id comes from the words of a successful `create_routine` result. That result ends with `· id: <id>` when the routine is switched on, and reads "That routine is set. Its id is <id>." on the fallback ([code: openbot/server/src/plugins/builtin-routines.ts:300-316, 333-353, 429-435]). A failed, refused or declined call gives no card ([code: openbot/app/src/lib/plugins/tool-result.ts:127, 144]).
+- The routine's words are plain text and bounded. The zone is always named. A different browser zone shows both times.
+- The dates are written in English (en-GB), because the interface is English.
+
+### 9.3 Routes used
+
+| Action | Route | Code |
+|---|---|---|
+| Read the state | `GET /api/routines` (the list; there is no get-by-id, on purpose) | [code: openbot/server/src/routines/routes.ts:193-202, 29-31] |
+| Pause, Resume | `PUT /api/routines/:id/enabled` with `{ "enabled": false }` or `true` | [code: openbot/server/src/routines/routes.ts:204-223] |
+| Cancel | `DELETE /api/routines/:id` | [code: openbot/server/src/routines/routes.ts:225-236] |
+| Edit | none: a message through the conversation | [code: routes.ts:20-24] (no create or edit endpoint, on purpose) |
+
+### 9.4 Not built, and why
+
+- **An edit form.** A dialog that saved a routine directly would be a second write path with no approval card, which D6 forbids. A structured form that sends the same kind of message is a later decision (section 9.6, R1).
+- **Cards for `update_routine`, `delete_routine` and triggers.** The first slice is the creation the roadmap row names.
+- **Remembering a cancellation after the conversation is reopened.** The server keeps no record, so the card then reads "This routine no longer exists".
+- **The schedule in words on the card.** The time is shown; the Routines page keeps the schedule.
+- **Live updates.** The state is read when the card is drawn and after each press, not on a timer.
+
+### 9.5 Built so far
+
+Built on branch `routine-card-in-chat`, from origin/main cec4464.
+
+- **The card (app).** `openbot/app/src/components/routines/routine-chat-card.tsx`: `RoutineChatCard` (the four states, the zone line, Cancel's confirm, Pause and Resume, Edit) and `RoutineCreatedCard` (draws the card only for a successful create).
+- **The words it reads (app).** `openbot/app/src/lib/routines/chat-card.ts`: the id from the create result, the instruction cut to 160 characters, and the next-run line in one zone or two.
+- **Where it is drawn.** `chat-transcript.tsx` (a single tool call) and `tool-activity.tsx` (a folded run), each one line after the approval card.
+
+Verified:
+- App: `routine-chat-card.test.tsx` 18 pass (the four states and a failed read, the zone line in one zone and in two, Cancel's question and its focus, the requests of Pause, Resume and Cancel, Edit, and the gate that draws the card for a created routine only); `routine-chat-card-words.test.ts` 18 pass (the id, the 160-character cut, the zone words); `routine-card-folded-run.test.tsx` 2 pass; `routine-card-lone-call.test.tsx` 2 pass.
+- Fail before: the first two files cannot load on main, because the card's modules are not there (36 tests). In the folded run and in the lone call, the case where a routine is created fails on main (1 fail each, in `tool-activity.tsx` and `chat-transcript.tsx`). The other case in each of those files is a guard: a call that wrote no routine draws no card and reads no routine, and it passes on main too.
+- Server: `server/tests/routine-card-words.test.ts` 3 pass. A guard, since no server file changed: it pins the sentence the app reads the id from.
+- Whole app suite, `bun test app/`: 2967 pass, 0 fail, 312 files.
+- Gates: `bun run typecheck:tests` clean against the baseline (239 known errors); app `tsc --noEmit` clean; Biome format and lint clean on the nine changed and new files; `assertion-shape.test.ts` 10 pass.
+
+Not verified:
+- Nobody has looked at the card in a browser or on a phone: layout, focus and the keyboard path are checked in code and in tests only.
+- The remote-session case is not run: the routine routes are refused there (`remote-limits.ts:263`), and the card shows the message it gets.
+- No routine was created, paused or cancelled on a running server. The requests are checked against stubbed routes.
+- The zone tests pass fixed zones, not the browser's own zone.
+- Edit's approval card for `update_routine` was not run live.
+- The eval stack was not run. No member prompt changed.
+
+### 9.6 Decisions left to the maintainer
+
+| # | Decision | Options | Recommendation | Reason |
+|---|---|---|---|---|
+| R1 | Edit | (a) a sentence the person sends through the conversation (built); (b) a structured form that sends the same kind of message; (c) a dialog that saves through a route | (a) now; (b) later; never (c) | There is no edit screen to reuse. (c) skips the approval card that D6 requires, and `routes.ts:20-24` rules out an edit endpoint. |
+| R2 | Pause, Resume and Cancel without an approval card | (a) as the Routines page does today (built); (b) with a card each time | (a) | They are the person's own presses, as the switch and Delete are. A card on each would ask the person to confirm their own press. |
+| R3 | Date form | (a) English, en-GB (built); (b) en-US | (a) unless the maintainer prefers US dates | The interface is English. The card does not follow the browser's locale, so every card reads the same way. |
+| R4 | A cancelled routine after the conversation is reopened | (a) "This routine no longer exists" (built); (b) keep a record in the conversation | (a) for now | (b) needs a stored fact, which is a change to messages or to a table. |
+| R5 | How the card learns the routine's id | (a) read it from the words of the create result (built, pinned by a server test); (b) a structured field on the tool result | (b) before the Edit form (R1) | (b) changes how tool results reach the app, which is outside an app-only first slice. |
+| R6 | A remote session | (a) the card shows the message the server gives, and never says "no longer exists" (built); (b) a message of its own | (a) | `remote-limits.ts:263` refuses the routine routes to a remote session. |

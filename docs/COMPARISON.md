@@ -2,8 +2,8 @@
 
 What FreeDuet does that the others don't, row by row.
 
-**Legend:** ✅ yes · ⚠️ partly · ❌ no · — not documented by the project.
-**FreeDuet is at v0.2, an early release.** A ✅ with a later version (for example ✅ v0.3) means it is planned for that version and not available yet. Where FreeDuet does not have something yet, its cell says where it stands on the [roadmap](ROADMAP.md#how-to-read-the-tables) in words: Planned, In design, In progress, or Not on the roadmap yet (we have not decided). Nothing on the roadmap has a date.
+**Legend:** ✅ available today · ⚠️ partly · 🚧 in progress · 🗓️ planned · ❌ no · — not documented by the project.
+**FreeDuet is at v0.2, an early release.** A ✅ means you can use it today, in a published version: never something still to come. Where FreeDuet does not have something yet, its cell says so with 🚧 (being built, not released) or 🗓️ (decided, not started) and the version it is meant for, as on the [roadmap](ROADMAP.md#how-to-read-the-tables). Nothing on the roadmap has a date.
 
 _Last checked: 2026-11-08, from each project's public README and documentation, linked below. If we got something wrong about another project, open an issue and we will fix it within 48 hours._
 
@@ -12,26 +12,26 @@ _Last checked: 2026-11-08, from each project's public README and documentation, 
 | **Open source, free for business use** | ✅ MIT | ❌ closed product | ✅ MIT | ✅ Apache-2.0 | ❌ non-commercial license | ⚠️ code public, no license | ✅ Apache-2.0, with an `enterprise/` folder under its own licence |
 | **Self-hosted, your data stays with you** | ✅ | ❌ | ✅ | ✅ | ✅ | ✅ local only | ✅ local-first |
 | **Available outside the United States** | ✅ | ❌ US waitlist | ✅ | ✅ | ✅ | ✅ | ✅ |
-| **Runs on subscriptions you already pay for, through the official login** | ✅ v0.1 | ✅ Claude plans only | ⚠️ only by storing a plan token | ✅ | ✅ | ✅ | ✅ Claude, Codex, Grok |
-| **Works with zero API keys** | ✅ v0.1 | ✅ | ⚠️ only with a stored plan token | ✅ | ✅ | ✅ | ✅ |
+| **Runs on subscriptions you already pay for, through the official login** | ✅ | ✅ Claude plans only | ⚠️ only by storing a plan token | ✅ | ✅ | ✅ | ✅ Claude, Codex, Grok |
+| **Works with zero API keys** | ✅ | ✅ | ⚠️ only with a stored plan token | ✅ | ✅ | ✅ | ✅ |
 | **Several subscriptions, switching automatically when one hits its limit** | ⚠️ Built in v0.2, not yet run live: only test engines have switched (milestone v0.3) | ❌ | ❌ | ⚠️ one backup engine | — | — | — |
 | **API keys optional, always last, with spending caps** | ⚠️ Built, off by default: a second engine kind, and a spend ledger with paid gateways closed (milestone v0.3) | — | — | — | — | — | — |
-| **Savings meter: what the work would cost at token prices** | ✅ v0.3 | ❌ | ❌ | ⚠️ token use and cost | — | — | — |
+| **Savings meter: what the work would cost at token prices** | 🗓️ Planned (v0.3) | ❌ | ❌ | ⚠️ token use and cost | — | — | — |
 | **Each agent has its own computer with a real browser** | ✅ | ✅ | ✅ | ⚠️ computer without a browser, experimental | ✅ shared with your machine | ⚠️ uses your own Chrome | ⚠️ cloud desktop (paid), local VM or your computer |
 | **Asks before every send, payment, signature or deletion** | ✅ by default. Routines always ask, a tool nobody classified asks first, and a spoken yes never approves. An optional Full access, per member, off until you turn it on, in two settings: one lets it act without cards, the other still asks for payments (built; not yet run live) | ✅ | ✅ | ✅ | ❌ full access by design | ⚠️ policy followed by the agent, not enforced by the app | ⚠️ asks before commands and file edits |
 | **Passwords never reach the AI (masked box, take over the screen)** | ✅ | — | ✅ | — | — | ⚠️ asks for none | — |
-| **Shops and books for you, with your approval** | ✅ v0.4 | ❌ not suited to errands or bookings | ⚠️ browser and approvals, no purchase flow | ❌ | ⚠️ browser, no approvals | — | — |
-| **Payments blocked without a single-use permit bound to shop and total** | ✅ v0.4 | — | ❌ | ❌ | ❌ | ❌ | — |
-| **Spending cap per purchase, per day and per month** | ✅ v0.4 | — | ❌ | ❌ | ❌ | ❌ | — |
-| **A lead agent that hands work to specialists and combines the results** | ✅ v0.3 | — | ⚠️ several agents in one channel | ✅ | ✅ | ✅ | ⚠️ channels with responder rules |
+| **Shops and books for you, with your approval** | 🗓️ Planned (v0.4) | ❌ not suited to errands or bookings | ⚠️ browser and approvals, no purchase flow | ❌ | ⚠️ browser, no approvals | — | — |
+| **Payments blocked without a single-use permit bound to shop and total** | 🗓️ Planned (v0.4) | — | ❌ | ❌ | ❌ | ❌ | — |
+| **Spending cap per purchase, per day and per month** | 🗓️ Planned (v0.4) | — | ❌ | ❌ | ❌ | ❌ | — |
+| **A lead agent that hands work to specialists and combines the results** | ⚠️ Iris hands each part to the right specialist and reports back; one combined answer from several specialists is planned (v0.3) | — | ⚠️ several agents in one channel | ✅ | ✅ | ✅ | ⚠️ channels with responder rules |
 | **A ready-made team of specialists** | ✅ 12 members with a reviewer, and growing. Mark (marketing) and Cam (video) came after v0.1; only Otto sends email, and a member can offer a finished file with a Download button (built; not yet run live; their eval cases have not run live yet) | ❌ one agent | ⚠️ 2 agents and example templates | ❌ | — | ❌ | ⚠️ teams from Markdown playbooks |
 | **An agent that designs new agents, with tests** | ✅ | — | ⚠️ creator skill, no tests | — | ⚠️ skill creator | — | ⚠️ creates bots through MCP, no tests |
-| **Guardian that pauses a looping agent to protect your limits** | ✅ v0.3 | — | — | — | — | — | — |
+| **Guardian that pauses a looping agent to protect your limits** | 🗓️ Planned (v0.3) | — | — | — | — | — | — |
 | **Owner-only operations no mode can lower** | ⚠️ v0.2: the one exception only you can make is Full access (off by default, per member, with or without payments). Permissions, passwords, keys and security settings stay with you: each installation makes its own secrets, each computer has its own token, and home network access is off until you switch it on. Chat can change only harmless, reversible settings, always with a card: how much a member may interrupt you (built; Undo not yet run in a browser), and, built after v0.2, in the next release, not yet run live, a member's name, tone and language, with Undo | — | ⚠️ approvals, "Always allow" can lift them | — | ❌ | ⚠️ | — |
-| **Nightly export of memory, rules and tasks to plain files** | ✅ v0.3 | ❌ | ❌ | — | — | ⚠️ local files | ⚠️ local transcripts |
+| **Nightly export of memory, rules and tasks to plain files** | 🗓️ Planned (v0.3) | ❌ | ❌ | — | — | ⚠️ local files | ⚠️ local transcripts |
 | **Public test suite per agent, including attempts to break the rules** | ✅ 72 cases, 33 safety. Certified at v0.1 (43 of 43 scored cases passed); not re-run for v0.2 | — | ⚠️ inbox triage only | — | — | — | — |
 | **Free open-source creative suite (images, PDFs, vectors, video) inside each agent's computer** | ❌ Not built yet: planned in the connector catalogue (the ArtCraft apps, milestones M2 to M5). Cam's computer has ffmpeg, for video only | ❌ | ❌ | ❌ | ❌ | ❌ | — |
-| **Light helpers on free models for small jobs, saving your limits** | ✅ v0.3 | — | — | — | — | — | — |
+| **Light helpers on free models for small jobs, saving your limits** | 🗓️ Planned (v0.3) | — | — | — | — | — | — |
 | **Answers from your own documents, quoting the exact source** | ❌ Not built yet: the document member (Dewey) is only in the catalogue of planned members | — | ⚠️ document search | — | — | — | — |
 | **Morning brief** | ✅ | ✅ | ✅ | ✅ | — | — | — |
 | **Gmail and Google Calendar** | ✅ | ✅ connected apps | ✅ | ❌ not yet | — | ⚠️ through your coding agent | ✅ through Composio |
