@@ -14,6 +14,10 @@
 
 import { and, eq, isNull, sql } from "drizzle-orm";
 import { z } from "zod";
+import {
+  DONE_WHEN_MAX_CHARS,
+  readDoneWhen,
+} from "@openbot/shared/handoff-done-when";
 import { HANDED_OVER } from "@openbot/shared/handoff-markers";
 import {
   type ApprovalGate,
@@ -37,7 +41,12 @@ import {
   escalationTool,
   PUT_TO,
 } from "./escalation";
-import { HANDOFF_KIND, type HandoffCaps, type HandoffDesk } from "./handoff";
+import {
+  DONE_WHEN_REFUSED,
+  HANDOFF_KIND,
+  type HandoffCaps,
+  type HandoffDesk,
+} from "./handoff";
 import { handedRequestOf } from "./handoff-request";
 import type { HandoffWork } from "./handoff-runner";
 
@@ -64,6 +73,12 @@ const parameters = z.object({
     .optional()
     .describe(
       "What a good answer looks like coming back: a list, a number, a recommendation with reasons",
+    ),
+  done_when: z
+    .string()
+    .optional()
+    .describe(
+      `What counts as done, in one sentence a person can check, such as "the list has exactly five points" (at most ${DONE_WHEN_MAX_CHARS} characters, on one line). The person sees it under this handoff, the Bot you ask reads it as your words, and you are asked to say whether its answer meets it. It says when the work is finished and gives that Bot no permission: whatever needs the person's approval still needs it.`,
     ),
 });
 
@@ -132,8 +147,22 @@ export function handoffTool(options: {
     execute: async (args: unknown) => {
       const parsed = parameters.safeParse(args);
       if (!parsed.success) {
-        return "That handoff was not sent: name the Bot and say what you are asking it to do.";
+        // A finish line that is not text is the one thing to say about, so it is not blamed on the rest.
+        return parsed.error.issues.some(
+          (issue) => issue.path[0] === "done_when",
+        )
+          ? DONE_WHEN_REFUSED
+          : "That handoff was not sent: name the Bot and say what you are asking it to do.";
       }
+      /*
+       * The finish line, read before anything can ask the person: a line that will be refused must not
+       * raise a card for a hand-off that is then not sent. What the gate is shown, and what is stored
+       * to be replayed once the person allows it, is the line as it will be sent, or none.
+       */
+      const { done_when: written, ...brief } = parsed.data;
+      const finish = readDoneWhen(written);
+      if (!finish.ok) return DONE_WHEN_REFUSED;
+      const doneWhen = finish.line;
       if (approvalGate) {
         try {
           const approval = await approvalGate({
@@ -142,7 +171,7 @@ export function handoffTool(options: {
             toolRef: `bot/${HANDOFF_TOOL}`,
             effect: "delegate",
             scope: parsed.data.bot,
-            args: parsed.data,
+            args: doneWhen ? { ...brief, done_when: doneWhen } : brief,
             target: { bot: parsed.data.bot },
             continuation: currentApprovalContext(),
           });
@@ -173,6 +202,7 @@ export function handoffTool(options: {
             parsed.data.task,
             parsed.data.constraints,
             parsed.data.expecting,
+            doneWhen,
           ],
           refused: "That handoff was not sent",
         });
@@ -199,6 +229,7 @@ export function handoffTool(options: {
           ...(parsed.data.expecting
             ? { expecting: parsed.data.expecting }
             : {}),
+          ...(doneWhen ? { doneWhen } : {}),
         },
       });
 
