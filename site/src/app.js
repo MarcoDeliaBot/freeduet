@@ -193,3 +193,96 @@ cp.addEventListener("click",function(){
   }).catch(function(){});
  }catch(x){}
 })();
+
+/* =====================================================================================================================
+   PREVIEW BLOCKS. Each IIFE below belongs to one block of body.html and can be deleted with it.
+   ===================================================================================================================== */
+
+/* ---------- BLOCK hero: the demo plays by itself (ask, hand-off, card, Approve) until the person touches it ---------- */
+(function(){
+ var btn=document.getElementById("loop"),fig=document.querySelector(".appfig"),win=fig&&fig.querySelector(".appwin");
+ if(!btn||!win||reduced())return;          /* reduced motion: the demo stays still, as before, and the control stays hidden */
+ btn.hidden=false;
+ var playing=true,vis=false,auto=false,timer=null,gen=0;
+ function paint(){
+  btn.setAttribute("aria-pressed",playing?"false":"true");
+  win.classList.toggle("live",playing&&vis);
+  chat.setAttribute("aria-live",playing?"off":"polite");   /* a screen reader is not read a chat that changes by itself */
+ }
+ function wait(ms,fn){var g=gen;clearTimeout(timer);timer=setTimeout(function(){if(g===gen&&playing&&vis&&!document.hidden)fn();},ms);}
+ function approve(){
+  var b=document.querySelector('#ask .yes');
+  if(!b){wait(3400,nextDemo);return;}
+  b.classList.add("pressed");
+  wait(450,function(){auto=true;b.click();auto=false;wait(3400,nextDemo);});
+ }
+ function nextDemo(){auto=true;show((cur+1)%D.demo.length,true);auto=false;paint();wait(4200,approve);}
+ function start(){gen++;paint();wait(2600,approve);}
+ function stop(){if(!playing)return;playing=false;gen++;clearTimeout(timer);paint();}
+ btn.addEventListener("click",function(){if(playing){stop();}else{playing=true;start();}});
+ /* any real action in the window ends the autoplay for good (until Play is pressed) */
+ win.addEventListener("pointerdown",function(e){if(!auto&&!btn.contains(e.target))stop();},true);
+ win.addEventListener("keydown",function(e){if(!auto&&!btn.contains(e.target))stop();},true);
+ if("IntersectionObserver" in window){
+  new IntersectionObserver(function(es){var v=es[0].isIntersecting;if(v===vis)return;vis=v;paint();if(vis&&playing)start();else{gen++;clearTimeout(timer);}},{threshold:.4}).observe(win);
+ }else{vis=true;start();}
+ document.addEventListener("visibilitychange",function(){if(!document.hidden&&playing&&vis)start();});
+ paint();
+})();
+
+/* ---------- BLOCK team: each card plays its small scene once when it is half visible, and again on hover or focus ---------- */
+(function(){
+ var cards=qsa(".mem");if(!cards.length)return;
+ function play(c){if(reduced())return;c.classList.remove("go");void c.offsetWidth;c.classList.add("go");}
+ if("IntersectionObserver" in window){
+  var o=new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting){o.unobserve(e.target);play(e.target);}});},{threshold:.55});
+  cards.forEach(function(c){o.observe(c);});
+ }
+ cards.forEach(function(c){
+  var at=0;
+  function again(){var n=Date.now();if(n-at<2600)return;at=n;play(c);}
+  c.addEventListener("pointerenter",again);c.addEventListener("focusin",again);
+ });
+})();
+
+/* ---------- BLOCK jobs: a real tab list (arrow keys, Home, End); the panels are already in the page ---------- */
+(function(){
+ var box=document.getElementById("jobsBox");if(!box)return;
+ var tabs=qsa("#jobsBox [role=tab]"),panels=qsa("#jobsBox [role=tabpanel]");
+ function pick(i,focus){
+  tabs.forEach(function(t,k){var on=k===i;t.setAttribute("aria-selected",on?"true":"false");t.tabIndex=on?0:-1;});
+  panels.forEach(function(p,k){p.classList.remove("on");if(k===i){void p.offsetWidth;if(!reduced()&&focus!==null)p.classList.add("on");else p.classList.add("on","still");}});
+  if(focus)tabs[i].focus();
+ }
+ panels.forEach(function(p,k){p.classList.toggle("on",k===0);});
+ box.addEventListener("click",function(e){var t=e.target.closest("[role=tab]");if(t)pick(tabs.indexOf(t),false);});
+ box.addEventListener("keydown",function(e){
+  var t=e.target.closest("[role=tab]");if(!t)return;
+  var i=tabs.indexOf(t),n=tabs.length,j=-1;
+  if(e.key==="ArrowRight"||e.key==="ArrowDown")j=(i+1)%n;
+  else if(e.key==="ArrowLeft"||e.key==="ArrowUp")j=(i+n-1)%n;
+  else if(e.key==="Home")j=0;else if(e.key==="End")j=n-1;
+  if(j<0)return;e.preventDefault();pick(j,true);
+ });
+})();
+
+/* ---------- BLOCK languages: the big greeting changes language while the section is in view ---------- */
+(function(){
+ var el=document.getElementById("hello"),box=document.getElementById("lgPills");
+ if(!el||!box||!D.hello)return;
+ var list=D.hello,pills=qsa("#lgPills a"),i=0,timer=null,vis=false;
+ for(var k=0;k<list.length;k++)if(list[k][0]===lang)i=k;
+ function set(k){
+  el.textContent=list[k][1];el.setAttribute("lang",list[k][0]);
+  pills.forEach(function(a){a.classList.toggle("hot",a.getAttribute("hreflang")===list[k][0]);});
+ }
+ el.setAttribute("lang",lang);
+ if(reduced()||!("IntersectionObserver" in window))return;   /* still: this page's own greeting and the twelve links */
+ function step(){
+  el.classList.add("swap");
+  setTimeout(function(){i=(i+1)%list.length;set(i);el.classList.remove("swap");},350);
+ }
+ function run(){clearInterval(timer);timer=null;if(vis&&!document.hidden)timer=setInterval(step,1900);}
+ new IntersectionObserver(function(es){vis=es[0].isIntersecting;run();},{threshold:.3}).observe(el);
+ document.addEventListener("visibilitychange",run);
+})();

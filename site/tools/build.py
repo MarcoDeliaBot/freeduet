@@ -169,8 +169,9 @@ def team_cards(S, t):
     out = []
     for i, m in enumerate(S.members):
         d = t["team"][m[0]]
-        out.append('<article class="mem%s rv" style="--mc:%s">%s<h3>%s<span>%s</span></h3><p>%s</p><q>%s</q></article>'
-                   % (" boss" if i == 0 else "", m[2], av(m), m[1], esc(d[0]), esc(d[1]), esc(d[2])))
+        # the small scene (`.mm`) is decoration only: four empty shapes that style.css animates per member
+        out.append('<article class="mem%s rv" style="--mc:%s">%s<h3>%s<span>%s</span></h3><p>%s</p><div class="mm mm-%s" aria-hidden="true"><i></i><i></i><i></i><i></i></div><q>%s</q></article>'
+                   % (" boss" if i == 0 else "", m[2], av(m), m[1], esc(d[0]), esc(d[1]), m[0], esc(d[2])))
     return "".join(out)
 
 
@@ -219,6 +220,30 @@ def fill(body, open_tag, close_tag, inner):
     return body.replace(marker, open_tag + inner + close_tag)
 
 
+JOB_MEMBERS = ["portia", "penny", "wren", "gus"]   # the members shown in the "jobs" block; their texts are t["jobs"][id]
+
+
+def jobs_block(S, t):
+    """The job picker: a tab per member and one finished chat per tab. All panels are in the HTML, so the page reads
+    in full without JavaScript; app.js only shows one panel at a time."""
+    tabs, panels = [], []
+    for k, mid in enumerate(JOB_MEMBERS):
+        m = S.member[mid]
+        me, l1, l2 = t["jobs"][mid]
+        sel = "true" if k == 0 else "false"
+        tabs.append('<button type="button" role="tab" id="jt-%s" aria-selected="%s" aria-controls="jp-%s" tabindex="%d">%s<span><b>%s</b><small>%s</small></span></button>'
+                    % (mid, sel, mid, 0 if k == 0 else -1, av(m), m[1], esc(t["team"][mid][0])))
+        panels.append('<div class="jb-panel" role="tabpanel" id="jp-%s" aria-labelledby="jt-%s" tabindex="0"><div class="jb-chat"><div class="msg me"><div class="bub">%s</div></div>%s%s</div></div>'
+                      % (mid, mid, esc(me), bubble(S, mid, m[1], l1), bubble(S, mid, m[1], l2)))
+    return '<div class="jb-tabs" role="tablist">%s</div><div class="jb-stage">%s</div>' % ("".join(tabs), "".join(panels))
+
+
+def language_pills(S, code):
+    return "".join('<a href="%s" hreflang="%s" lang="%s"%s>%s</a>'
+                   % (S.path(l["code"]), l["code"], l["code"], ' aria-current="page"' if l["code"] == code else "", H.escape(l["name"]))
+                   for l in S.langs)
+
+
 def language_nav(S, code):
     items = "".join('<li><a href="%s" hreflang="%s" lang="%s"%s>%s</a></li>'
                     % (S.path(l["code"]), l["code"], l["code"], ' aria-current="page"' if l["code"] == code else "", H.escape(l["name"]))
@@ -238,6 +263,9 @@ def render_body(S, code):
     body = fill(body, '<div class="chat" id="chat" aria-live="polite">', "</div>", demo_state(S, t, 0))
     body = fill(body, '<div id="tries">', "</div>", chips(t))
     body = fill(body, '<nav class="langs" id="langs" aria-label="Language">', "</nav>", language_nav(S, code))
+    body = fill(body, '<div class="jobs" id="jobsBox">', "</div>", jobs_block(S, t))
+    body = fill(body, '<div class="lg-pills rv" id="lgPills">', "</div>", language_pills(S, code))
+    body = fill(body, '<p class="hello" id="hello" aria-hidden="true">', "</p>", H.escape(S.by_code[code]["hello"]))
     body, n = re.subn(r'<span data-av="(\w+)"></span>', lambda m: '<span data-av="%s">%s</span>' % (m.group(1), av(S.member[m.group(1)])), body)
     if n < 1:
         raise ValueError("body.html lost its data-av placeholders")
@@ -252,7 +280,8 @@ def render_body(S, code):
 
 def render_script(S, code):
     t = S.T[code]
-    data = {"demo": t["demo"], "ask": t["ask"], "yes": t["yes"], "no": t["no"], "nothing": t["nothing"], "copy": t["copy"], "copied": t["copied"]}
+    data = {"demo": t["demo"], "ask": t["ask"], "yes": t["yes"], "no": t["no"], "nothing": t["nothing"], "copy": t["copy"], "copied": t["copied"],
+            "hello": [[l["code"], l["hello"]] for l in S.langs]}
     return ('(function(){\n"use strict";\nvar GH="%s";\nvar M=%s;\nvar D=%s;\n' % (GITHUB, js_json(S.members), js_json(data))
             + S.app + "\n})();")
 

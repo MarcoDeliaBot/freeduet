@@ -301,5 +301,44 @@
    "line": "Üç fikir: ıspanaklı omlet (10 dakika), ıspanak yatağında fırın yumurta (20 dakika) ya da yeşil krep (15 dakika). Birinin adımlarını ister misin?",
    "card": null
   }
- ]
+ ],
+ "loopPause": "Gösteriyi duraklat",
+ "loopPlay": "Gösteriyi oynat",
+ "j_h": "Her üyeye gerçek bir iş ver",
+ "j_p": "Tipik bir isteği ve yanıtı görmek için bir üye seç. Örnekler uydurmadır.",
+ "jobs": {
+  "portia": [
+   "Bu kira sözleşmesini imzalayabilir miyim? 12 sayfa.",
+   "12 sayfanın hepsini okudum. Çoğu olağan.",
+   "7. madde, ev sahibinin bir ay önceden haber vererek kirayı artırmasına izin veriyor. İmzalamadan önce bunu sor."
+  ],
+  "penny": [
+   "Acme'ye geçen haftaki iş için fatura kes.",
+   "Taslak hazır: 18 saat, tek fatura, 30 gün vadeli. Sen söylemeden göndermem.",
+   "İki eski fatura hâlâ ödenmedi. Her biri için kibar bir hatırlatma ister misin?"
+  ],
+  "wren": [
+   "Bu ses notunu benim tarzımda kısa bir yazıya çevir.",
+   "İlk sürüm hazır: üç kısa paragraf, samimi, jargonsuz.",
+   "Pazartesi kuyruğuyla ilgili esprini bıraktım. Daha kısa olsun mu?"
+  ],
+  "gus": [
+   "Kapı kapanmıyor. İşte fotoğrafı.",
+   "Kilit dilinin plakası birkaç milimetre fazla aşağıda görünüyor.",
+   "Önce şunu dene: iki vidayı gevşet, plakayı yukarı kaydır, vidaları sık. Hâlâ sürtüyorsa bir marangoz çağır."
+  ]
+ },
+ "lg_h": "Kendi dilinde merhaba de",
+ "lg_p": "Bu site 12 dilde var. Kendi dilini seç.",
+ "tr1t": "MIT lisansı",
+ "tr1s": "Kullanması, değiştirmesi ve paylaşması serbest; iş için de.",
+ "tr2t": "43 test durumundan 43'ü",
+ "tr2s": "Ve 45 güvenlik denemesinden 45'i, v0.1'in herkese açık raporunda.",
+ "tr3t": "Senin bilgisayarın, senin girişin",
+ "tr3s": "Zaten ödediğin Claude planıyla çalışır. API anahtarı yok.",
+ "tr4t": "Gerçek işler için senin onayın",
+ "tr4s": "Varsayılan olarak gönderme, ödeme, imza, rezervasyon ve silme seni bekler.",
+ "c_h": "Iris'e ilk küçük görevi vermeye hazır mısın?",
+ "c_p": "FreeDuet ücretsiz, açık kaynaklı ve kendi bilgisayarında çalışır. GitHub'dan al ve küçük bir işle başla.",
+ "ft_tag": "Kendi bilgisayarında çalışan, ücretsiz ve açık kaynaklı bir yapay zekâ asistanı ekibi."
 }

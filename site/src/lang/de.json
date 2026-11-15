@@ -301,5 +301,44 @@
    "line": "Drei Ideen: ein Spinatomelett (10 Minuten), Spinat mit Ei aus dem Ofen (20 Minuten) oder grüne Pfannkuchen (15 Minuten). Soll ich dir die Schritte für eines zeigen?",
    "card": null
   }
- ]
+ ],
+ "loopPause": "Demo anhalten",
+ "loopPlay": "Demo abspielen",
+ "j_h": "Gib jedem Mitglied eine echte Aufgabe",
+ "j_p": "Wähle ein Mitglied und sieh eine typische Anfrage und die Antwort. Die Beispiele sind ausgedacht.",
+ "jobs": {
+  "portia": [
+   "Kann ich diesen Mietvertrag unterschreiben? Er hat 12 Seiten.",
+   "Ich habe alle 12 Seiten gelesen. Das meiste ist üblich.",
+   "Klausel 7 erlaubt dem Vermieter, die Miete mit einem Monat Vorlauf zu erhöhen. Frag danach, bevor du unterschreibst."
+  ],
+  "penny": [
+   "Schreib Acme eine Rechnung für die Arbeit der letzten Woche.",
+   "Entwurf fertig: 18 Stunden, eine Rechnung, zahlbar in 30 Tagen. Ich sende sie nicht, bevor du es sagst.",
+   "Zwei ältere Rechnungen sind noch offen. Soll ich für jede eine freundliche Erinnerung schreiben?"
+  ],
+  "wren": [
+   "Mach aus dieser Sprachnotiz einen kurzen Beitrag in meinem Stil.",
+   "Hier die erste Fassung: drei kurze Absätze, freundlich, ohne Fachchinesisch.",
+   "Deinen Witz über die Montagsschlange habe ich behalten. Soll es kürzer sein?"
+  ],
+  "gus": [
+   "Die Tür schließt nicht. Hier ist ein Foto.",
+   "Das Schließblech sitzt anscheinend ein paar Millimeter zu tief.",
+   "Probier zuerst das: die zwei Schrauben lösen, das Blech nach oben schieben, wieder festziehen. Schleift es noch, ruf einen Tischler."
+  ]
+ },
+ "lg_h": "Sag Hallo in deiner Sprache",
+ "lg_p": "Diese Website gibt es in 12 Sprachen. Such dir deine aus.",
+ "tr1t": "MIT-Lizenz",
+ "tr1s": "Frei nutzen, ändern und teilen, auch geschäftlich.",
+ "tr2t": "43 von 43 Testfällen",
+ "tr2s": "Und 45 von 45 Sicherheitsläufen, im öffentlichen Bericht zu v0.1.",
+ "tr3t": "Dein Computer, dein Login",
+ "tr3s": "Läuft mit dem Claude-Tarif, den du schon bezahlst. Kein API-Schlüssel.",
+ "tr4t": "Dein Ja für echte Aktionen",
+ "tr4s": "Senden, Zahlen, Unterschreiben, Buchen und Löschen warten standardmäßig auf dich.",
+ "c_h": "Bereit, Iris eine erste kleine Aufgabe zu geben?",
+ "c_p": "FreeDuet ist kostenlos, Open Source und läuft auf deinem eigenen Computer. Hol es dir auf GitHub und fang mit etwas Kleinem an.",
+ "ft_tag": "Ein kostenloses Open-Source-Team von KI-Assistenten, auf deinem eigenen Computer."
 }

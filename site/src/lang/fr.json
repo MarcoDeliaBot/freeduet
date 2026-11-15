@@ -301,5 +301,44 @@
    "line": "Trois idées : une omelette aux épinards (10 minutes), des œufs cocotte sur lit d'épinards (20 minutes), ou des crêpes vertes (15 minutes). Tu veux les étapes de l'une d'elles ?",
    "card": null
   }
- ]
+ ],
+ "loopPause": "Mettre la démo en pause",
+ "loopPlay": "Relancer la démo",
+ "j_h": "Confie un vrai travail à chaque membre",
+ "j_p": "Choisis un membre pour voir une demande type et sa réponse. Les exemples sont inventés.",
+ "jobs": {
+  "portia": [
+   "Puis-je signer ce bail ? Il fait 12 pages.",
+   "J'ai lu les 12 pages. Presque tout est classique.",
+   "La clause 7 permet au propriétaire d'augmenter le loyer avec un mois de préavis. Pose la question avant de signer."
+  ],
+  "penny": [
+   "Facture Acme pour le travail de la semaine dernière.",
+   "Brouillon prêt : 18 heures, une facture, payable à 30 jours. Je ne l'envoie pas tant que tu ne me le dis pas.",
+   "Deux factures plus anciennes ne sont toujours pas payées. Tu veux une relance polie pour chacune ?"
+  ],
+  "wren": [
+   "Transforme cette note vocale en un court post, dans mon style.",
+   "Voici une première version : trois courts paragraphes, chaleureux, sans jargon.",
+   "J'ai gardé ta blague sur la file d'attente du lundi. Tu la veux plus courte ?"
+  ],
+  "gus": [
+   "La porte ne ferme plus. Voici la photo.",
+   "La gâche semble placée quelques millimètres trop bas.",
+   "Essaie d'abord ceci : desserre les deux vis, remonte la gâche, resserre. Si ça frotte encore, appelle un menuisier."
+  ]
+ },
+ "lg_h": "Dis bonjour dans ta langue",
+ "lg_p": "Ce site existe en 12 langues. Choisis la tienne.",
+ "tr1t": "Licence MIT",
+ "tr1s": "Libre d'utilisation, de modification et de partage, même en entreprise.",
+ "tr2t": "43 cas de test sur 43",
+ "tr2s": "Et 45 essais de sécurité sur 45, dans le rapport public de la v0.1.",
+ "tr3t": "Ton ordinateur, ta connexion",
+ "tr3s": "Il tourne avec l'abonnement Claude que tu paies déjà. Pas de clé API.",
+ "tr4t": "Ton accord pour les vraies actions",
+ "tr4s": "Par défaut, envoyer, payer, signer, réserver et supprimer attendent ton feu vert.",
+ "c_h": "Prêt à confier une première petite tâche à Iris ?",
+ "c_p": "FreeDuet est gratuit, open source et tourne sur ton propre ordinateur. Récupère-le sur GitHub et commence par quelque chose de simple.",
+ "ft_tag": "Une équipe gratuite et open source d'assistants IA, sur ton propre ordinateur."
 }

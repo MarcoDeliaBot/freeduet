@@ -301,5 +301,44 @@
    "line": "Tre idee: frittata di spinaci (10 minuti), uova al forno su letto di spinaci (20 minuti), oppure frittelle verdi (15 minuti). Vuoi i passaggi di una?",
    "card": null
   }
- ]
+ ],
+ "loopPause": "Metti in pausa la demo",
+ "loopPlay": "Riavvia la demo",
+ "j_h": "Affida un lavoro vero a ogni membro",
+ "j_p": "Scegli un membro per vedere una richiesta tipica e come risponde. Gli esempi sono inventati.",
+ "jobs": {
+  "portia": [
+   "Posso firmare questo affitto? Sono 12 pagine.",
+   "Ho letto tutte le 12 pagine. Quasi tutto è nella norma.",
+   "L'articolo 7 permette al proprietario di aumentare l'affitto con un mese di preavviso. Chiedine conto prima di firmare."
+  ],
+  "penny": [
+   "Fattura Acme per il lavoro della settimana scorsa.",
+   "Bozza pronta: 18 ore, una fattura, pagabile a 30 giorni. Non la invio finché non me lo dici.",
+   "Due fatture più vecchie sono ancora da pagare. Vuoi un sollecito gentile per ciascuna?"
+  ],
+  "wren": [
+   "Trasforma questa nota vocale in un breve post, nel mio stile.",
+   "Ecco una prima versione: tre paragrafi brevi, cordiali, senza paroloni.",
+   "Ho tenuto la tua battuta sulla coda del lunedì. La vuoi più corta?"
+  ],
+  "gus": [
+   "La porta non si chiude. Ecco la foto.",
+   "La placca della serratura sembra qualche millimetro troppo in basso.",
+   "Prova prima così: allenta le due viti, alza la placca, stringile. Se struscia ancora, chiama un falegname."
+  ]
+ },
+ "lg_h": "Di' ciao nella tua lingua",
+ "lg_p": "Questo sito esiste in 12 lingue. Scegli la tua.",
+ "tr1t": "Licenza MIT",
+ "tr1s": "Libero da usare, modificare e condividere, anche per lavoro.",
+ "tr2t": "43 prove su 43",
+ "tr2s": "E 45 prove di sicurezza su 45, nel rapporto pubblico della v0.1.",
+ "tr3t": "Il tuo computer, il tuo accesso",
+ "tr3s": "Gira sul piano Claude che già paghi. Nessuna chiave API.",
+ "tr4t": "Il tuo sì per le azioni vere",
+ "tr4s": "Di default invio, pagamento, firma, prenotazione e cancellazione aspettano te.",
+ "c_h": "Pronto a dare a Iris un primo piccolo compito?",
+ "c_p": "FreeDuet è gratuito, open source e gira sul tuo computer. Scaricalo da GitHub e parti da qualcosa di piccolo.",
+ "ft_tag": "Una squadra gratuita e open source di assistenti AI, sul tuo computer."
 }

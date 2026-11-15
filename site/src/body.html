@@ -69,7 +69,8 @@
             <div class="aw-head" id="awHead" aria-hidden="true"></div>
             <div class="chat" id="chat" aria-live="polite"></div>
             <div class="tries">
-              <p data-i="tryP">Try another request:</p>
+              <div class="tries-h"><p data-i="tryP">Try another request:</p>
+                <button type="button" class="loopbtn" id="loop" aria-pressed="false" hidden><svg class="ic-pause" aria-hidden="true" viewBox="0 0 24 24"><path d="M8 5v14M16 5v14" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></svg><svg class="ic-play" aria-hidden="true" viewBox="0 0 24 24"><path d="M7 4.5v15l12-7.500z" fill="currentColor"/></svg><span class="lp" data-i="loopPause">Pause the demo</span><span class="lq" data-i="loopPlay">Play the demo</span></button></div>
               <div id="tries"></div>
             </div>
             <div class="aw-field" aria-hidden="true"><span data-i="appPh">Write what you need…</span><i><svg><use href="#b-send"/></svg></i></div>
@@ -78,6 +79,52 @@
       </div>
       <figcaption class="aw-cap" data-i="appCap">An illustrated example, not a recording of a real session. Every name and message in it is made up.</figcaption>
     </figure>
+  </div>
+</section>
+
+<!-- BLOCK trust: a strip of checkable facts, each linking to its proof in the repository. Drop the whole <section>, nothing else depends on it. -->
+<section class="trust" aria-label="FreeDuet">
+  <div class="wrap">
+    <ul class="trust-l">
+      <li class="rv"><a href="https://github.com/MarcoDeliaBot/freeduet/blob/main/LICENSE"><svg aria-hidden="true"><use href="#i-gh"/></svg><b data-i="tr1t">MIT licence</b><span data-i="tr1s">Free to use, change and share, also for business.</span></a></li>
+      <li class="rv"><a href="https://github.com/MarcoDeliaBot/freeduet/blob/main/evals/team/reports/2026-11-13-claude-code-regraded-2026-11-13-public.md"><svg aria-hidden="true"><use href="#i-check"/></svg><b data-i="tr2t">43 of 43 test cases</b><span data-i="tr2s">And 45 of 45 safety runs, in the public v0.1 report.</span></a></li>
+      <li class="rv"><a href="https://github.com/MarcoDeliaBot/freeduet/blob/main/docs/PROVIDERS.md"><svg aria-hidden="true"><use href="#i-lock"/></svg><b data-i="tr3t">Your computer, your login</b><span data-i="tr3s">Runs on the Claude plan you already pay for. No API key.</span></a></li>
+      <li class="rv"><a href="https://github.com/MarcoDeliaBot/freeduet/blob/main/SECURITY.md"><svg aria-hidden="true"><use href="#i-hand"/></svg><b data-i="tr4t">Your yes for real actions</b><span data-i="tr4s">By default, send, pay, sign, book and delete wait for you.</span></a></li>
+    </ul>
+  </div>
+</section>
+
+<!-- BLOCK install (moved up from further down; the content is unchanged, only the motion in style.css/app.js is new) -->
+<section class="sec" id="install">
+  <div class="wrap">
+    <div class="head">
+      <h2 class="wd" data-i="in_h">From install to your first useful task</h2>
+      <p class="lead rv" data-i="in_p">Four steps, in the real order. All the commands are also in one box further down, ready to copy.</p>
+    </div>
+    <ol class="inst">
+      <li class="rv">
+        <div class="pnl term" aria-hidden="true"><div class="tbar"><i></i><i></i><i></i></div><pre><span class="l" style="--k:0"><span class="pr">$</span> git clone https://github.com/<wbr>MarcoDeliaBot/freeduet.git</span><span class="l" style="--k:1"><span class="pr">$</span> cd freeduet</span><span class="l" style="--k:2"><span class="pr">$</span> cp .env.example .env</span></pre></div>
+        <h3 data-i="in1h">Get the code</h3>
+        <p data-i="in1p">One command downloads FreeDuet from GitHub, and one copies the example settings file.</p>
+      </li>
+      <li class="rv">
+        <div class="pnl term" aria-hidden="true"><div class="tbar"><i></i><i></i><i></i></div><pre><span class="l" style="--k:0"><span class="pr">$</span> bash scripts/start.sh</span></pre><ul class="pills"><li>Docker</li><li>Bash</li><li>Bun</li><li>Windows + WSL2</li></ul></div>
+        <h3 data-i="in2h">Run the start script</h3>
+        <p data-i="in2p">One script starts the app, the team and a separate computer for each member. It needs Docker, Bash and Bun. On Windows, run it inside WSL2.</p>
+      </li>
+      <li class="rv">
+        <div class="pnl term" aria-hidden="true"><div class="tbar"><i></i><i></i><i></i></div><pre><span class="l" style="--k:0"><span class="pr">$</span> cd openbot &amp;&amp; docker compose exec -it agent-freeduet claude</span></pre>
+          <div class="sp"><svg><use href="#i-lock"/></svg><b>Claude Code</b><span class="ok"><svg><use href="#i-check"/></svg><span data-i="signedIn">Signed in</span></span></div></div>
+        <h3 data-i="in3h">Sign in once with your Claude plan</h3>
+        <p data-i="in3p">Open the official Claude Code sign-in and log in yourself. FreeDuet never sees, stores or forwards your login.</p>
+      </li>
+      <li class="rv">
+        <div class="pnl brw" aria-hidden="true"><div class="tbar"><i></i><i></i><i></i><span class="url">http://localhost:3010</span></div>
+          <div class="bd"><div class="msg me" style="--k:0"><div class="bub" data-i="in4ex">What can I cook tonight with spinach and eggs?</div></div><div class="msg" style="--k:1"><span data-av="iris"></span><div class="bub"><span class="typing"><i></i><i></i><i></i></span></div></div></div></div>
+        <h3 data-i="in4h">Open the page and give Iris a small task</h3>
+        <p data-i="in4p">Go to localhost:3010 in your browser and write one small request. Iris picks the right assistant and brings you the answer.</p>
+      </li>
+    </ol>
   </div>
 </section>
 
@@ -135,6 +182,20 @@
     </div>
     <div class="team" id="teamGrid"></div>
     <p class="soft team-note rv" data-i="t_note">This is the starting team, not a limit. You can train your own for exactly the job you need, and we add new ready-made members over time. Renaming members and changing how they talk is built, not yet run live.</p>
+  </div>
+</section>
+
+<!-- BLOCK jobs: pick a member, read a finished chat for that job. The texts are lang/*.json "jobs"; the panels are built in build.py (jobs_block). -->
+<section class="sec" id="jobs">
+  <div class="wrap">
+    <div class="head">
+      <h2 class="wd" data-i="j_h">Hand each member a real job</h2>
+      <p class="lead rv" data-i="j_p">Pick a member to see a typical request and how they answer. The examples are made up.</p>
+    </div>
+    <figure class="jb rv rv-panel">
+      <div class="jobs" id="jobsBox"></div>
+      <figcaption class="aw-cap" data-i="appCap">An illustrated example, not a recording of a real session. Every name and message in it is made up.</figcaption>
+    </figure>
   </div>
 </section>
 
@@ -297,41 +358,6 @@
   </div>
 </section>
 
-<section class="sec" id="install">
-  <div class="wrap">
-    <div class="head">
-      <h2 class="wd" data-i="in_h">From install to your first useful task</h2>
-      <p class="lead rv" data-i="in_p">Four steps, in the real order. All the commands are also in one box further down, ready to copy.</p>
-    </div>
-    <ol class="inst">
-      <li class="rv">
-        <div class="pnl term" aria-hidden="true"><div class="tbar"><i></i><i></i><i></i></div><pre><span class="pr">$</span> git clone https://github.com/<wbr>MarcoDeliaBot/freeduet.git
-<span class="pr">$</span> cd freeduet
-<span class="pr">$</span> cp .env.example .env</pre></div>
-        <h3 data-i="in1h">Get the code</h3>
-        <p data-i="in1p">One command downloads FreeDuet from GitHub, and one copies the example settings file.</p>
-      </li>
-      <li class="rv">
-        <div class="pnl term" aria-hidden="true"><div class="tbar"><i></i><i></i><i></i></div><pre><span class="pr">$</span> bash scripts/start.sh</pre><ul class="pills"><li>Docker</li><li>Bash</li><li>Bun</li><li>Windows + WSL2</li></ul></div>
-        <h3 data-i="in2h">Run the start script</h3>
-        <p data-i="in2p">One script starts the app, the team and a separate computer for each member. It needs Docker, Bash and Bun. On Windows, run it inside WSL2.</p>
-      </li>
-      <li class="rv">
-        <div class="pnl term" aria-hidden="true"><div class="tbar"><i></i><i></i><i></i></div><pre><span class="pr">$</span> cd openbot &amp;&amp; docker compose exec -it agent-freeduet claude</pre>
-          <div class="sp"><svg><use href="#i-lock"/></svg><b>Claude Code</b><span class="ok"><svg><use href="#i-check"/></svg><span data-i="signedIn">Signed in</span></span></div></div>
-        <h3 data-i="in3h">Sign in once with your Claude plan</h3>
-        <p data-i="in3p">Open the official Claude Code sign-in and log in yourself. FreeDuet never sees, stores or forwards your login.</p>
-      </li>
-      <li class="rv">
-        <div class="pnl brw" aria-hidden="true"><div class="tbar"><i></i><i></i><i></i><span class="url">http://localhost:3010</span></div>
-          <div class="bd"><div class="msg me"><div class="bub" data-i="in4ex">What can I cook tonight with spinach and eggs?</div></div><div class="msg"><span data-av="iris"></span><div class="bub"><span class="typing"><i></i><i></i><i></i></span></div></div></div></div>
-        <h3 data-i="in4h">Open the page and give Iris a small task</h3>
-        <p data-i="in4p">Go to localhost:3010 in your browser and write one small request. Iris picks the right assistant and brings you the answer.</p>
-      </li>
-    </ol>
-  </div>
-</section>
-
 <section class="sec alt" id="start">
   <div class="wrap">
     <div class="split">
@@ -362,6 +388,16 @@ cd openbot &amp;&amp; docker compose exec -it agent-freeduet claude
   </div>
 </section>
 
+<!-- BLOCK languages: a large greeting that cycles through the twelve languages, and the twelve real links. -->
+<section class="sec lgs" id="speak">
+  <div class="wrap">
+    <p class="hello" id="hello" aria-hidden="true"></p>
+    <h2 class="wd" data-i="lg_h">Say hello in your language</h2>
+    <p class="lead rv" data-i="lg_p">This website exists in 12 languages. Choose yours.</p>
+    <div class="lg-pills rv" id="lgPills"></div>
+  </div>
+</section>
+
 <section class="band" id="coffee">
   <div class="wrap">
     <div>
@@ -388,10 +424,23 @@ cd openbot &amp;&amp; docker compose exec -it agent-freeduet claude
   </div>
 </section>
 
+<!-- BLOCK closing call to action -->
+<section class="sec dark cta-end" id="go">
+  <div class="wrap">
+    <h2 class="wd" data-i="c_h">Ready to give Iris a first small task?</h2>
+    <p class="lead rv" data-i="c_p">FreeDuet is free, open source and runs on your own computer. Get it from GitHub and start with something small.</p>
+    <div class="cta rv">
+      <a class="btn btn-main" href="https://github.com/MarcoDeliaBot/freeduet"><svg aria-hidden="true"><use href="#i-gh"/></svg><span data-i="cta1">Get FreeDuet on GitHub</span></a>
+      <a class="btn btn-quiet" href="#install" data-i="n5">Start</a>
+    </div>
+  </div>
+</section>
+
 </main>
 
 <footer>
   <div class="wrap">
+    <div class="foot-brand"><svg aria-hidden="true"><use href="#logo"/></svg><div><strong>FreeDuet</strong><p data-i="ft_tag">A free, open-source team of AI assistants, on your own computer.</p></div></div>
     <nav aria-label="Links">
       <a href="https://github.com/MarcoDeliaBot/freeduet">GitHub</a>
       <a href="https://github.com/MarcoDeliaBot/freeduet/blob/main/docs/TEAM.md" data-i="fl1">The team in detail</a>

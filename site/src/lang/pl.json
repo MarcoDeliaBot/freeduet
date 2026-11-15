@@ -301,5 +301,44 @@
    "line": "Trzy pomysły: omlet ze szpinakiem (10 minut), jajka zapiekane na szpinaku (20 minut) albo zielone naleśniki (15 minut). Chcesz kroki dla któregoś z nich?",
    "card": null
   }
- ]
+ ],
+ "loopPause": "Zatrzymaj demo",
+ "loopPlay": "Włącz demo",
+ "j_h": "Daj każdemu członkowi prawdziwe zadanie",
+ "j_p": "Wybierz członka zespołu, aby zobaczyć typową prośbę i odpowiedź. Przykłady są zmyślone.",
+ "jobs": {
+  "portia": [
+   "Czy mogę podpisać tę umowę najmu? Ma 12 stron.",
+   "Wszystkie 12 stron jest przeczytane. Większość jest standardowa.",
+   "Punkt 7 pozwala wynajmującemu podnieść czynsz z miesięcznym wyprzedzeniem. Zapytaj o niego przed podpisaniem."
+  ],
+  "penny": [
+   "Wystaw Acme fakturę za pracę z zeszłego tygodnia.",
+   "Wersja robocza gotowa: 18 godzin, jedna faktura, płatna w 30 dni. Nie wyślę jej, dopóki nie powiesz.",
+   "Dwie starsze faktury nadal są niezapłacone. Przygotować uprzejme przypomnienie do każdej?"
+  ],
+  "wren": [
+   "Zamień tę notatkę głosową w krótki post w moim stylu.",
+   "Oto pierwsza wersja: trzy krótkie akapity, przyjazne, bez żargonu.",
+   "Twój żart o poniedziałkowej kolejce zostaje. Skrócić?"
+  ],
+  "gus": [
+   "Drzwi się nie zamykają. Oto zdjęcie.",
+   "Blaszka zamka wygląda na kilka milimetrów za nisko.",
+   "Spróbuj najpierw tak: poluzuj dwie śruby, przesuń blaszkę w górę i dokręć. Jeśli nadal ociera, zadzwoń do stolarza."
+  ]
+ },
+ "lg_h": "Powiedz cześć w swoim języku",
+ "lg_p": "Ta strona istnieje w 12 językach. Wybierz swój.",
+ "tr1t": "Licencja MIT",
+ "tr1s": "Wolno używać, zmieniać i udostępniać, także w firmie.",
+ "tr2t": "43 z 43 przypadków testowych",
+ "tr2s": "I 45 z 45 prób bezpieczeństwa, w publicznym raporcie wersji 0.1.",
+ "tr3t": "Twój komputer, Twoje logowanie",
+ "tr3s": "Działa na planie Claude, który już opłacasz. Bez klucza API.",
+ "tr4t": "Twoje tak dla prawdziwych działań",
+ "tr4s": "Domyślnie wysyłanie, płacenie, podpisywanie, rezerwowanie i usuwanie czekają na Ciebie.",
+ "c_h": "Gotowy, by dać Iris pierwsze małe zadanie?",
+ "c_p": "FreeDuet jest darmowy, open source i działa na Twoim komputerze. Pobierz go z GitHuba i zacznij od czegoś małego.",
+ "ft_tag": "Darmowy zespół asystentów AI o otwartym kodzie, na Twoim komputerze."
 }
