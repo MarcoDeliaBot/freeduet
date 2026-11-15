@@ -1,6 +1,11 @@
 import type { QueryClient } from "@tanstack/react-query";
 import { pluginsPageQueryOptions } from "@/lib/plugins/queries";
-import { describeBot, describeBots, describeGrantableSkills } from "./proposal";
+import {
+  describeBot,
+  describeBots,
+  describeGrantableSkills,
+  ownNameOf,
+} from "./proposal";
 import { agentListQueryOptions } from "./queries";
 
 /**
@@ -32,9 +37,11 @@ export async function answerReadBot(
 ): Promise<string> {
   const wanted = name.trim().toLowerCase();
   const known = await client.ensureQueryData(agentListQueryOptions());
-  const agent = known.find(
-    (candidate) => candidate.name.toLowerCase() === wanted,
-  );
+  // The name the model was given by `list_bots` is the coworker's own; the name the person gave it is
+  // accepted too, because it is the one they will say when they ask for "one like Kiki".
+  const agent =
+    known.find((candidate) => ownNameOf(candidate).toLowerCase() === wanted) ??
+    known.find((candidate) => candidate.name.toLowerCase() === wanted);
   if (!agent) {
     return `There is no coworker called ${name} that this person can see. Call list_bots for the ones there are.`;
   }
