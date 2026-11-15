@@ -243,6 +243,15 @@ function StartedBy({
   if (event.initiatorKind === "deployment") {
     return <span className="text-muted-foreground">This deployment</span>;
   }
+  // FreeDuet (docs/design/phone-and-remote.md 3.5.5): a chat from a signed-in browser that is not paired with
+  // the computer. It is not "a person" at the desk, and the trail must not say so.
+  if (event.initiatorKind === "remote") {
+    return (
+      <span className="font-medium text-amber-600 dark:text-amber-500">
+        A browser not paired with the computer
+      </span>
+    );
+  }
   return <span className="text-muted-foreground">A person</span>;
 }
 

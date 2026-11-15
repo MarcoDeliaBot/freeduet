@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { pcm16Wav, wavDurationSeconds } from "../../evals/dictation/metrics";
+import { pcm16Wav, wavDurationSeconds } from "./metrics";
 import {
   installCookie,
   paddedWav,

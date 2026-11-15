@@ -4,7 +4,8 @@ import { serve } from "bun";
 import { computerAccessCheck } from "./agents/computer-access";
 import type { AgentProfileStore } from "./agents/profile-store";
 import { createHostGuard } from "./auth/host-guard";
-import { personRule, personVerdict } from "./auth/install-secret";
+import { personRule, personVerdict, signInGate } from "./auth/install-secret";
+import { isRemote, remoteRefusal } from "./auth/remote-limits";
 import type { OpenBotRole } from "./auth/roles";
 import { appOrigins, crossSiteRefusal } from "./auth/same-origin";
 import { websocket as channelSocket } from "./channels/socket";
@@ -113,6 +114,9 @@ export function startHttpServer(deps: {
   // (auth/peer.ts), and where the installation has a secret, one that holds it (auth/install-secret.ts,
   // D28). The upgrade below resolves its actor outside the app, so it asks here as well.
   const person = personRule(config);
+  // With sign-in and a secret, a session in a browser that is not paired with this computer is remote
+  // (auth/remote-limits.ts), and the live screen is one of the things it may not open.
+  const pairing = signInGate(config);
   // In that same case, a loopback request under a name that is not this machine's own is a page that
   // rebound its address (auth/host-guard.ts). Asked first, of every request and every upgrade, and
   // before the URL is read: a request with no usable `Host` has no URL to read.
@@ -162,6 +166,9 @@ export function startHttpServer(deps: {
         const actor = await resolveRequestActor(request).catch(() => null);
         if (!actor) {
           return new Response("Sign in first.", { status: 401 });
+        }
+        if (isRemote(pairing, request)) {
+          return new Response(remoteRefusal().error, { status: 403 });
         }
         // And which Bot, which the guard above does not answer. This socket carries that Bot's screen,
         // so signing in is not enough: without this, anybody signed in watches anybody's Bot work. And

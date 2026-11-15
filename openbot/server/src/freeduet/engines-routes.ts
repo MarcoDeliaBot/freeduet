@@ -21,8 +21,10 @@
  * The person's own choice of mode (engine-choices.ts) is laid over the file's, and the answer says which it is.
  *
  * WHO MAY CHANGE. An administrator who is also at the computer FreeDuet runs on (at-the-computer.ts): a remote
- * session, a tunnel and a non-administrator are refused and nothing is written. The page is told whether it may
- * (`canChange`) and, if not, which of the three words says why, so it shows the information and disables the controls.
+ * session, a tunnel and a non-administrator are refused and nothing is written. With sign-in and an installation
+ * secret, "at the computer" also means a browser paired with it (`pairing`, the gate of auth/remote-limits.ts). The
+ * page is told whether it may (`canChange`) and, if not, which of the three words says why, so it shows the
+ * information and disables the controls.
  * The change is stored on this server, written to the audit trail, and undone with its change id (engine-choices.ts).
  * Nothing here enables, disables or edits an engine, and no key is stored or shown.
  *
@@ -37,6 +39,7 @@
  */
 import { Hono, type MiddlewareHandler } from "hono";
 import { type AppVariables, requireAdmin } from "../auth/guards";
+import type { InstallGate } from "../auth/install-secret";
 import type { ManagedAgentConfig } from "../config";
 import { atTheComputer } from "./at-the-computer";
 import {
@@ -430,11 +433,14 @@ const NO_SUCH_CHANGE = "There is no engine change with that id.";
  * The routes of the sub-app, which is mounted at `/api/freeduet/engines`. Behind the same sign-in as every other
  * administrator route: a person who is not an administrator is refused with 403. `choices` is where the person's
  * choices are kept (engine-choices.ts); without it the page is the read-only one of slice 6, and nothing can be changed.
+ * `pairing` is the installation's gate where there is sign-in and a secret, which makes a browser that is not paired
+ * with this computer not "at the computer" (at-the-computer.ts); absent, the question is what it was.
  */
 export function createEnginesRoutes(
   requireUser: MiddlewareHandler<{ Variables: AppVariables }>,
   reach: () => EnginesReach,
   choices?: EngineChoices,
+  pairing?: InstallGate,
 ) {
   const routes = new Hono<{ Variables: AppVariables }>();
   routes.use("*", requireUser);
@@ -452,7 +458,7 @@ export function createEnginesRoutes(
     const listed = agent.reading.reason === null;
     const cannotChange: ChangeBlock | null = !listed
       ? null
-      : !atTheComputer(context.env, context.req.raw)
+      : !atTheComputer(context.env, context.req.raw, pairing)
         ? "not_at_the_computer"
         : (agent.choicesVersion ?? 0) < CHOICES_VERSION
           ? "agent_too_old"
@@ -473,7 +479,7 @@ export function createEnginesRoutes(
   /** The two guards every change passes before anything is read: an administrator, at the computer. */
   const mayChange = (context: Parameters<typeof requireAdmin>[0]) =>
     requireAdmin(context) ??
-    (atTheComputer(context.env, context.req.raw)
+    (atTheComputer(context.env, context.req.raw, pairing)
       ? undefined
       : context.json({ error: NOT_AT_THE_COMPUTER }, 403));
 

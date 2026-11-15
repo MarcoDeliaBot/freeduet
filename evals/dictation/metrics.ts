@@ -1,5 +1,5 @@
 /**
- * The measuring tools of the dictation proofs (wer.ts and openbot/scripts/freeduet-dictation-e2e.ts),
+ * The measuring tools of the dictation proofs (wer.ts and freeduet-dictation-e2e.ts in this folder),
  * kept free of any network, file or model so metrics.test.ts can check them against numbers counted
  * by hand. Nothing here is a copy of a library: the word error rate is the textbook
  * Levenshtein distance over words, written out.

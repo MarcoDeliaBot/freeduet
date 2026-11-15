@@ -221,7 +221,8 @@ export function readRunAssertion(
 export function readOrigin(value: unknown): AuditInitiator | undefined {
   if (!value || typeof value !== "object") return undefined;
   const kind = (value as { kind?: unknown }).kind;
-  if (kind === "person" || kind === "deployment") return { kind };
+  if (kind === "person" || kind === "remote" || kind === "deployment")
+    return { kind };
   if (kind !== "routine" && kind !== "responsibility" && kind !== "memory")
     return undefined;
   const id = (value as { id?: unknown }).id;
@@ -237,7 +238,11 @@ export function readOrigin(value: unknown): AuditInitiator | undefined {
 function readInitiator(value: unknown): AuditInitiator {
   if (!value || typeof value !== "object") return PERSON_INITIATOR;
   const kind = (value as { kind?: unknown }).kind;
-  if (kind === "person" || kind === "deployment") return { kind };
+  // `remote` MUST be read as itself: any kind this function does not know is read as a person, which
+  // is the one reading a remote session's run must never get (it would lift every rule that asks a
+  // card of it, in the callback door, where this assertion is all the server has to go on).
+  if (kind === "person" || kind === "remote" || kind === "deployment")
+    return { kind };
   if (
     kind !== "routine" &&
     kind !== "handoff" &&
