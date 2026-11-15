@@ -30,7 +30,21 @@
 #
 # Ctrl-C. Before anything was changed it just stops (exit 1). After the stop it does not start going
 # back by itself while the person is at the keyboard: it exits 20 and prints what to run, which is the
-# same list it prints when going back fails.
+# same list it prints when going back fails. Once the update has worked, and only the tidying of the
+# older copies is left, a Ctrl-C ends with exit 0: the update is done and nothing is printed to go back
+# with. If it is stopped while the database is being put back, it says that the database may be half
+# restored and that the printed commands are to be run again from the first one.
+#
+# THE COPY IS CHECKED AGAIN BEFORE IT IS USED. Putting the database back starts by dropping it, so a
+# copy that has changed since it was made must never be restored from: its sha256 is recorded when it is
+# made, and checked, with `pg_restore --list`, right before the restore. A copy that fails is not used,
+# and the database is not touched.
+#
+# WHOSE POSTGRES. `docker compose` finds a stack by its project name, and with no COMPOSE_PROJECT_NAME the
+# project is named after the folder, so two checkouts that both sit in a folder called "openbot" share
+# containers. Before anything is stopped, the postgres container that Compose resolves has to be this
+# checkout's (its labels name the folder) and this settings file's project (the second stack on a
+# machine, .env.eval, has a project of its own); if it is not, or cannot be told, this refuses.
 #
 # NO `set -e`. A script that goes back from a failure has to look at every failure itself: under
 # `-e` a command that fails inside a function called from an `if` does not stop anything, and one
@@ -106,6 +120,15 @@ CODE_MOVED=false
 DB_TOUCHED=false
 HAVE_ROLE_FILE=false
 FINGERPRINT=""
+# The sha256 of database.dump as it was when it was checked and kept; the tool this computer has for it;
+# and whether the copy failed its check just before it was to be used.
+DUMP_SHA256=""
+SHA_TOOL=""
+DUMP_BAD=false
+# True while the database is being put back from the copy: a stop in that time can leave it half done.
+RESTORING=false
+# The Docker Compose project of the postgres container this run is about, as that container says.
+COMPOSE_PROJECT=""
 FETCH_FAILED=false
 RELATION=""
 OLD_SHA=""
@@ -116,15 +139,21 @@ TARGET_SHA=""
 TARGET_SHORT=""
 TARGET_NAME=""
 TARGET_LABEL=""
-APP_PORT=3010
-SERVER_PORT=3001
-POSTGRES_PORT=5432
+# APP_PORT, SERVER_PORT and POSTGRES_PORT are not given a value here on purpose: setting() asks the
+# environment first by the variable's own name, so a default assigned at this level would hide both the
+# person's environment and the settings file. main() resolves them: environment, .env, then the default.
+
+# A value from the settings file alone: the last line wins, quotes are dropped.
+file_setting() {
+  [ -f "$ENV_FILE" ] || return 0
+  grep -E "^$1=" "$ENV_FILE" | tail -1 | cut -d= -f2- | sed -e 's/^"\(.*\)"$/\1/' -e "s/^'\(.*\)'$/\1/" || true
+}
 
 # The environment first, then .env, then the default: the resolution order start.sh and stop.sh use.
 setting() {
   local name="$1" fallback="$2" value="${!1:-}"
-  if [ -z "$value" ] && [ -f "$ENV_FILE" ]; then
-    value="$(grep -E "^$name=" "$ENV_FILE" | tail -1 | cut -d= -f2- | sed -e 's/^"\(.*\)"$/\1/' -e "s/^'\(.*\)'$/\1/" || true)"
+  if [ -z "$value" ]; then
+    value="$(file_setting "$name")"
   fi
   printf '%s' "${value:-$fallback}"
 }
@@ -139,6 +168,26 @@ human_size() {
     if (b >= 1073741824) printf "%.1f GB", b / 1073741824
     else if (b >= 1048576) printf "%.1f MB", b / 1048576
     else printf "%.0f KB", b / 1024 }'
+}
+
+# The tool this computer has for a sha256, as the person would type it. Looked for before anything is
+# changed: the copy of the database is checked with it twice, and a computer with neither cannot do that.
+find_sha_tool() {
+  if type -P sha256sum >/dev/null 2>&1; then
+    SHA_TOOL="sha256sum"
+  elif type -P shasum >/dev/null 2>&1; then
+    SHA_TOOL="shasum -a 256"
+  else
+    return 1
+  fi
+}
+
+# The sha256 of a file, and nothing else; empty when it cannot be read.
+sha256_of() {
+  case "$SHA_TOOL" in
+    sha256sum) sha256sum "$1" 2>/dev/null | cut -d' ' -f1 ;;
+    *) shasum -a 256 "$1" 2>/dev/null | cut -d' ' -f1 ;;
+  esac
 }
 
 # Does whatever holds this port answer as OpenBot, rather than merely answer? The same two questions
@@ -187,8 +236,43 @@ forget_stub_folder() {
   RUN_DIR=""
 }
 
+# The copy failed its check just before the restore, so the restore was not made. A restore from a
+# damaged copy drops the database first and then stops, so no command that restores from it is printed:
+# the person gets how to check the copy, and how to run the new version again on the database as it is.
+print_bad_copy_commands() {
+  local compose_cmd="$1" with_env="$2" dump="$RUN_DIR/database.dump"
+  say "The copy of your database, $dump,"
+  say "did not pass the check made just before it was to be used, so it was not used, and your database"
+  say "was not touched. Do NOT restore from it: a restore from a damaged copy deletes the database first"
+  say "and then stops."
+  say ""
+  say "Your database is as the new version left it. FreeDuet is stopped; the code is back on $OLD_LABEL and"
+  say "your settings are as they were."
+  say ""
+  say "To check the copy yourself, run these. The first must say OK; the second must list what is in the"
+  say "copy and not stop on an error:"
+  say ""
+  if [ -n "$DUMP_SHA256" ]; then
+    say "  echo $(shq "$DUMP_SHA256  $dump") | $SHA_TOOL -c -"
+  fi
+  say "  $compose_cmd up -d postgres"
+  say "  $compose_cmd exec -T postgres pg_restore --list < $(shq "$dump") > /dev/null"
+  say ""
+  say "If you have another copy of that file that passes both, restore your database from that one."
+  say ""
+  say "To run $TARGET_LABEL again on your database as it is now, run these in this order:"
+  say ""
+  say "  cd $(shq "$ROOT")"
+  say "  git -C $(shq "$REPO_ROOT") merge --ff-only $TARGET_SHA"
+  say "  bun install --frozen-lockfile"
+  say "  ${with_env}bash $(shq "$REPO_ROOT/scripts/start.sh")"
+  say ""
+  say "If something on this computer starts FreeDuet by itself (a watchdog or a service), pause it before you run these."
+  say "The copy is in $RUN_DIR. It holds all your secrets. Keep it private."
+}
+
 # The commands to go back by hand, for the person to read and run. Only paths and flags: no value out
-# of `.env` or the database is in them.
+# of `.env` or the database is in them (the checksum is neither).
 print_hand_commands() {
   local compose_cmd="docker compose" with_env=""
   if [ "$ENV_NAME" != .env ]; then
@@ -198,7 +282,9 @@ print_hand_commands() {
     with_env="OPENBOT_ENV_FILE=$(shq "$ENV_NAME") "
   fi
   say ""
-  if [ -n "$RUN_DIR" ] && [ -f "$RUN_DIR/database.dump" ] && [ -f "$RUN_DIR/env.copy" ] && [ -n "$OLD_SHA" ]; then
+  if [ "$DUMP_BAD" = true ]; then
+    print_bad_copy_commands "$compose_cmd" "$with_env"
+  elif [ -n "$RUN_DIR" ] && [ -f "$RUN_DIR/database.dump" ] && [ -f "$RUN_DIR/env.copy" ] && [ -n "$OLD_SHA" ]; then
     say "To go back by hand, run these in this order, in a terminal. Nothing here deletes your copy."
     say ""
     say "  cd $(shq "$ROOT")"
@@ -207,6 +293,11 @@ print_hand_commands() {
     say "  cp $(shq "$RUN_DIR/env.copy") $(shq "$ENV_FILE")"
     say "  bun install --frozen-lockfile"
     say "  $compose_cmd up -d postgres"
+    if [ -n "$DUMP_SHA256" ]; then
+      # The restore below starts by dropping the database. This stops a copy that is not the one that
+      # was checked from reaching it: the line must say OK before the next one is run.
+      say "  echo $(shq "$DUMP_SHA256  $RUN_DIR/database.dump") | $SHA_TOOL -c -"
+    fi
     say "  $compose_cmd exec -T postgres pg_restore --exit-on-error --clean --create --if-exists --no-owner -U $PG_USER -d postgres < $(shq "$RUN_DIR/database.dump")"
     if [ "$HAVE_ROLE_FILE" = true ]; then
       say "  $compose_cmd exec -T postgres psql -U $PG_USER -d postgres -v ON_ERROR_STOP=1 -q < $(shq "$RUN_DIR/role-password.sql")"
@@ -215,6 +306,7 @@ print_hand_commands() {
     say ""
     say "Your database and your settings are in the copy at $RUN_DIR"
     say "That folder holds all your secrets. Keep it private."
+    say "If something on this computer starts FreeDuet by itself (a watchdog or a service), pause it before you run these."
   else
     say "FreeDuet may be stopped. Your database, your settings and your code were not changed."
     say "To start it again, run: ${with_env}bash $(shq "$REPO_ROOT/scripts/start.sh")"
@@ -248,6 +340,17 @@ finish_needs_person() {
   exit 20
 }
 
+# The update worked and was checked; only the tidying of the older copies was cut short. That is not a
+# failed update, so there is nothing to go back to and nothing is printed to go back with. The result
+# stays "updated", and the copies that were not tidied are left for the next update.
+# shellcheck disable=SC2329  # run by the traps in main
+updated_but_not_tidied() {
+  green "The update is done: FreeDuet is on $TARGET_LABEL and answers at http://localhost:$APP_PORT"
+  say "$1 Some of the older copies may be left over; the next update tidies them."
+  say "A copy of what you had before is in $RUN_DIR"
+  finish_updated
+}
+
 # Going back did not work. Print how to finish it by hand and stop.
 give_up() {
   red ""
@@ -267,10 +370,19 @@ on_exit() {
     rm -rf "$LOCK" 2>/dev/null
     LOCK_HELD=false
   fi
+  if [ "$FINAL" = false ] && [ "$PHASE" = finished ]; then
+    red ""
+    red "The script stopped after the update was done."
+    updated_but_not_tidied "Tidying the older copies did not finish."
+  fi
   if [ "$FINAL" = false ] && [ "$PHASE" != prepare ]; then
     FINAL=true
     red ""
     red "The update stopped before it finished (exit $status), and FreeDuet may be stopped."
+    if [ "$RESTORING" = true ]; then
+      red "The database was being put back from the copy when it stopped, so it may be only half restored."
+      red "Do not start FreeDuet on it. Run the commands below again, from the first one: they put the database back whole."
+    fi
     print_hand_commands
     record result needs-person
     forget_stub_folder
@@ -282,10 +394,15 @@ on_exit() {
 on_signal() {
   red ""
   red "Interrupted."
-  if [ "$PHASE" = prepare ]; then
-    FINAL=true
-    exit 1
-  fi
+  case "$PHASE" in
+    prepare)
+      FINAL=true
+      exit 1
+      ;;
+    finished)
+      updated_but_not_tidied "Tidying the older copies did not finish."
+      ;;
+  esac
   exit 20
 }
 
@@ -385,6 +502,7 @@ check_tools() {
     type -P "$tool" >/dev/null 2>&1 || refuse "$tool is not installed, or is not on the PATH of this shell. This command needs git, docker, bun and curl."
   done
   docker compose version >/dev/null 2>&1 || refuse "docker compose does not answer. Is Docker running?"
+  find_sha_tool || refuse "Neither sha256sum nor shasum is installed. This command checks its copy of your database with one of them, before it is used."
 }
 
 check_checkout() {
@@ -433,6 +551,96 @@ check_database() {
   fi
 }
 
+# One label that Docker Compose put on a container; empty when there is none.
+container_label() {
+  local value
+  value="$(docker inspect --format "{{ index .Config.Labels \"$2\" }}" "$1" 2>/dev/null | tr -d '\r' | sed -n '1p')"
+  [ "$value" = "<no value>" ] && value=""
+  printf '%s' "$value"
+}
+
+# Is this folder the folder of this installation, by its name and then by where it really is?
+is_this_folder() {
+  [ -n "$1" ] || return 1
+  [ "$1" = "$ROOT" ] && return 0
+  [ -d "$1" ] && [ "$(cd "$1" 2>/dev/null && pwd -P)" = "$ROOT" ]
+}
+
+lower() { printf '%s' "$1" | tr '[:upper:]' '[:lower:]'; }
+
+# The postgres container that `docker compose` finds here has to be this installation's: in this
+# checkout, and in the Docker project this settings file names. Compose finds a stack by its project
+# name, and with no COMPOSE_PROJECT_NAME that is the name of the folder, so two checkouts that both sit
+# in a folder called "openbot" share their containers, and a command run in one would copy, stop and
+# restore the other's database. The second stack of a machine (.env.eval) is the same checkout with a
+# project of its own: the folder cannot tell the two apart, the project can.
+check_compose_project() {
+  local ids count id project working_dir config_files first belongs from_shell from_file named
+  ids="$(compose ps --quiet postgres 2>/dev/null | tr -d '\r' | sed '/^$/d' || true)"
+  count="$(printf '%s' "$ids" | sed -n '$=')"
+  if [ "${count:-0}" != 1 ]; then
+    refuse "Docker does not show exactly one database container for this folder (it shows ${count:-0}), so this cannot tell which one is this installation's."
+  fi
+  id="$ids"
+  project="$(container_label "$id" com.docker.compose.project)"
+  working_dir="$(container_label "$id" com.docker.compose.project.working_dir)"
+  config_files="$(container_label "$id" com.docker.compose.project.config_files)"
+  if [ -z "$project" ] || { [ -z "$working_dir" ] && [ -z "$config_files" ]; }; then
+    refuse "Docker would not say which folder and which Docker project the database container belongs to, so this cannot be sure it is this installation's." \
+      "Update by hand."
+  fi
+
+  belongs=false
+  first="${config_files%%,*}"
+  is_this_folder "$working_dir" && belongs=true
+  if [ "$belongs" = false ] && [ -n "$first" ] && is_this_folder "$(dirname "$first")"; then
+    belongs=true
+  fi
+  if [ "$belongs" = false ]; then
+    refuse "The database container that Docker finds for this folder belongs to another folder: ${working_dir:-$config_files} (Docker project $project)." \
+      "Two FreeDuet folders that share a Docker project name share their containers, so stopping or copying from here could act on the other one's database." \
+      "Give each folder its own COMPOSE_PROJECT_NAME (docs/configuration.md, the part about two deployments on one Docker host), or update by hand."
+  fi
+
+  from_shell="${COMPOSE_PROJECT_NAME:-}"
+  from_file="$(file_setting COMPOSE_PROJECT_NAME)"
+  if [ -n "$from_shell" ] && [ -n "$from_file" ] && [ "$(lower "$from_shell")" != "$(lower "$from_file")" ]; then
+    refuse "COMPOSE_PROJECT_NAME is set in this shell ($from_shell) and is different in $ENV_NAME ($from_file). Docker uses the shell's, which can be another stack's."
+  fi
+  named="${from_shell:-$from_file}"
+  if [ -n "$named" ] && [ "$(lower "$named")" != "$(lower "$project")" ]; then
+    refuse "$ENV_NAME names the Docker project $named, but the database container that Docker found is in the project $project." \
+      "Copying it would copy another stack's database."
+  fi
+  COMPOSE_PROJECT="$project"
+}
+
+# The folder for the copies must be outside the repository. The copy holds every secret, and a git
+# command run in the repository (add, clean, stash) could publish or delete it. Where it really is
+# counts, links resolved, even when the folder is not made yet: the nearest folder that exists is
+# resolved and the rest is put after it.
+check_copies_folder() {
+  local path="$COPIES" tail="" head base where
+  while [ ! -d "$path" ] && [ "$path" != / ] && [ -n "$path" ]; do
+    base="${path##*/}"
+    if [ "$base" = .. ]; then
+      refuse "--copies: $COPIES goes through '..' where the folder does not exist yet. Write the folder out in full."
+    fi
+    tail="/$base$tail"
+    head="${path%/*}"
+    [ "$head" = "$path" ] && break
+    path="${head:-/}"
+  done
+  where="$(cd "$path" 2>/dev/null && pwd -P)" || return 0
+  case "$where$tail/" in
+    "$REPO_ROOT"/*)
+      refuse "The folder for the copies is inside the repository: $COPIES" \
+        "The copy holds all your secrets, and a git command run there (add, clean, stash) could publish or delete it." \
+        "Use --copies <folder> with a folder outside $REPO_ROOT."
+      ;;
+  esac
+}
+
 # The newest release tag: v1.2 or v1.2.3, not a pre-release.
 newest_release_tag() {
   local tags tag release='^v[0-9]+\.[0-9]+(\.[0-9]+)?$'
@@ -448,10 +656,46 @@ EOF
   return 1
 }
 
+# What --to <name> means here, and it says which one it took. A name can be a tag, a local branch, a
+# branch on origin (origin/<name>) or a commit. A local branch is whatever it was when it was last
+# updated, which may be long ago, while origin/<name> was just fetched: so when both exist and the local
+# one is behind, origin/<name> is the one meant. A local branch that has commits origin does not have is
+# the person's own, and is used as it is.
+resolve_named_ref() {
+  local name="$TARGET_REF" here there kind
+  here="$(git_ rev-parse --verify --quiet "$name^{commit}" 2>/dev/null || true)"
+  there="$(git_ rev-parse --verify --quiet "origin/$name^{commit}" 2>/dev/null || true)"
+  if git_ show-ref --verify --quiet "refs/tags/$name" 2>/dev/null; then
+    kind="the tag $name"
+  elif git_ show-ref --verify --quiet "refs/heads/$name" 2>/dev/null; then
+    kind="the local branch $name"
+  else
+    kind="$name"
+  fi
+  TARGET_SHA=""
+  TARGET_NAME="$name"
+  if [ -n "$here" ] && [ -n "$there" ] && [ "$here" != "$there" ]; then
+    if git_ merge-base --is-ancestor "$here" "$there" 2>/dev/null; then
+      TARGET_SHA="$there"
+      TARGET_NAME="origin/$name"
+      info "  --to $name: using origin/$name, because $kind is behind it"
+    else
+      TARGET_SHA="$here"
+      info "  --to $name: using $kind, which has commits that origin/$name does not have"
+    fi
+  elif [ -n "$here" ]; then
+    TARGET_SHA="$here"
+    info "  --to $name: using $kind"
+  elif [ -n "$there" ]; then
+    TARGET_SHA="$there"
+    TARGET_NAME="origin/$name"
+    info "  --to $name: using origin/$name"
+  fi
+}
+
 # Where this is going, and how it relates to where we are. Sets TARGET_SHA, TARGET_NAME and RELATION:
 # "same", "ahead" (the target is newer), "behind" (the target is older) or "diverged".
 resolve_target() {
-  local candidate
   if ! git_ fetch --quiet --tags origin >/dev/null 2>&1; then
     FETCH_FAILED=true
   fi
@@ -459,12 +703,7 @@ resolve_target() {
     TARGET_NAME="origin/main"
     TARGET_SHA="$(git_ rev-parse --verify --quiet "origin/main^{commit}" 2>/dev/null || true)"
   elif [ -n "$TARGET_REF" ]; then
-    TARGET_NAME="$TARGET_REF"
-    TARGET_SHA=""
-    for candidate in "$TARGET_REF" "origin/$TARGET_REF"; do
-      TARGET_SHA="$(git_ rev-parse --verify --quiet "$candidate^{commit}" 2>/dev/null || true)"
-      [ -n "$TARGET_SHA" ] && break
-    done
+    resolve_named_ref
   else
     TARGET_NAME="$(newest_release_tag || true)"
     if [ -z "$TARGET_NAME" ]; then
@@ -535,6 +774,7 @@ print_plan() {
   ahead="$(git_ rev-list --count "$OLD_SHA..$TARGET_SHA" 2>/dev/null || true)"
   say "Where you are:   $OLD_LABEL${BRANCH:+, on branch $BRANCH}"
   say "Going to:        $TARGET_LABEL${ahead:+, $ahead changes newer}"
+  say "Docker project:  $COMPOSE_PROJECT (the database it copies is the one of this folder)"
   say "The copy goes:   $COPIES/update-<date and time>"
   say ""
   say "Checked: no changes of your own in this folder, the database answers, and $TARGET_NAME is ahead of"
@@ -550,6 +790,8 @@ print_plan() {
   say "If any of that fails, it goes back: the code, the database and the settings from the copy, and"
   say "it starts the version you had. Then it tells you plainly that the update did not go through."
   say ""
+  say "Before you go on: pause anything that restarts FreeDuet by itself (a watchdog or a service). It would start FreeDuet again in the middle of the update."
+  say ""
 }
 
 # ---------------------------------------------------------------------------------------------------
@@ -557,11 +799,19 @@ print_plan() {
 # ---------------------------------------------------------------------------------------------------
 
 take_lock() {
-  local other
+  local other i
   LOCK="$ROOT/.logs/update.lock"
   ( umask 077; mkdir -p "$ROOT/.logs" ) 2>/dev/null
   if ! mkdir "$LOCK" 2>/dev/null; then
     other="$(cat "$LOCK/pid" 2>/dev/null || true)"
+    # A run that has just made the folder has not written its process number into it yet. That is a
+    # lock whose owner is about to say who it is, not one that is stale: give it a few seconds.
+    i=0
+    while [ -z "$other" ] && [ "$i" -lt 5 ]; do
+      sleep 1
+      other="$(cat "$LOCK/pid" 2>/dev/null || true)"
+      i=$((i + 1))
+    done
     if [ -n "$other" ] && kill -0 "$other" 2>/dev/null; then
       LOCK=""
       refuse "Another update is running (process $other). Two at once would undo each other." \
@@ -595,6 +845,7 @@ make_private_folder() {
       printf 'started=%s\n' "$(date +%Y-%m-%dT%H:%M:%S)"
       printf 'repository=%s\n' "$REPO_ROOT"
       printf 'env_file=%s\n' "$ENV_NAME"
+      printf 'compose_project=%s\n' "$COMPOSE_PROJECT"
       printf 'commit=%s\n' "$OLD_SHA"
       printf 'branch=%s\n' "${BRANCH:-none (detached)}"
       printf 'target=%s\n' "$TARGET_SHA"
@@ -757,6 +1008,14 @@ make_the_copy() {
     rm -f "$part"
     return 1
   fi
+  # What the copy is, as of now: checked again before it is ever restored from.
+  DUMP_SHA256="$(sha256_of "$RUN_DIR/database.dump")"
+  if ! [[ "$DUMP_SHA256" =~ ^[0-9a-f]{64}$ ]]; then
+    red "  could not take a checksum of the copy of the database"
+    DUMP_SHA256=""
+    rm -f "$RUN_DIR/database.dump"
+    return 1
+  fi
   if ! ( umask 077; cp "$ENV_FILE" "$RUN_DIR/env.copy" ) || ! cmp -s "$ENV_FILE" "$RUN_DIR/env.copy"; then
     red "  could not copy $ENV_NAME"
     rm -f "$RUN_DIR/database.dump" "$RUN_DIR/env.copy"
@@ -770,6 +1029,7 @@ make_the_copy() {
   fi
   COPY_MADE=true
   record database_bytes "$size"
+  record database_sha256 "$DUMP_SHA256"
   record fingerprint "$FINGERPRINT"
   record role_password "$([ "$HAVE_ROLE_FILE" = true ] && printf copied || printf not-copied)"
   say "  database: $(human_size "$size"), $FINGERPRINT"
@@ -801,6 +1061,26 @@ restore_env() {
   say "  $ENV_NAME: put back from the copy"
 }
 
+# The copy is the only way back, and a restore starts by dropping the database. So the copy is checked
+# again here, right before, against what was recorded when it was made: a file that is not that file is
+# not restored from, and the database is not touched.
+verify_the_copy() {
+  local now
+  if [ ! -f "$RUN_DIR/database.dump" ]; then
+    DUMP_BAD=true
+    give_up "the copy of your database is no longer where it was put, so it was not used"
+  fi
+  now="$(sha256_of "$RUN_DIR/database.dump")"
+  if [ -z "$DUMP_SHA256" ] || [ "$now" != "$DUMP_SHA256" ]; then
+    DUMP_BAD=true
+    give_up "the copy of your database is not the file that was checked when it was made (its checksum changed), so it was not used"
+  fi
+  if ! compose exec -T postgres pg_restore --list < "$RUN_DIR/database.dump" >/dev/null 2>&1; then
+    DUMP_BAD=true
+    give_up "the copy of your database can no longer be read back, so it was not used"
+  fi
+}
+
 restore_database() {
   local now quiet=0
   if ! start_postgres_alone; then
@@ -816,6 +1096,8 @@ restore_database() {
       ;;
     *) give_up "could not tell whether the database is in use, so it was not restored" ;;
   esac
+  verify_the_copy
+  RESTORING=true
   if ! compose exec -T postgres pg_restore --exit-on-error --clean --create --if-exists --no-owner -U "$PG_USER" -d postgres < "$RUN_DIR/database.dump"; then
     give_up "restoring the database from the copy failed"
   fi
@@ -833,6 +1115,7 @@ restore_database() {
       give_up "the database user's password could not be put back"
     fi
   fi
+  RESTORING=false
 }
 
 wait_until_answers() {
@@ -981,6 +1264,7 @@ main() {
     fi
     COPIES="$HOME/.freeduet/updates"
   fi
+  check_copies_folder
 
   echo
   echo "FreeDuet update"
@@ -989,6 +1273,7 @@ main() {
   check_tools
   check_checkout
   check_database
+  check_compose_project
   resolve_target
   case "$RELATION" in
     same)
@@ -1083,13 +1368,14 @@ main() {
   fi
   green "  the app and the API answer"
 
+  # It worked. Said now, before the tidying, so that a stop in the tidying cannot take it back.
   PHASE=finished
-  info "Old copies"
-  prune_old_copies
   green ""
   green "Updated. FreeDuet is now on $TARGET_LABEL and answers at http://localhost:$APP_PORT"
   say "A copy of what you had before is in $RUN_DIR"
   say "It holds all your secrets. Keep it private, and delete it when you do not need it."
+  info "Old copies"
+  prune_old_copies
   finish_updated
 }
 

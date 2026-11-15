@@ -24,11 +24,14 @@ import { dirname, join } from "node:path";
  * repository made here, with two release tags and a commit after them), so every git decision in it
  * is the real git's: what is newest, what moves forward, what is refused. Everything else it runs is
  * a fake on a PATH that holds nothing but those fakes and symlinks to the real coreutils: `docker`
- * (compose, and psql, pg_dump and pg_restore inside the postgres container), `bun`, `curl`, `sleep`,
- * `df`, `stat`, and the checkout's own `scripts/start.sh` and `scripts/stop.sh`. `git` is a spy that
- * records and then runs the real one, and can be told to fail one subcommand. The fakes keep a small
- * model in a state directory: a stack that is up or down, a database that is a few lines of text, a
- * role password, a mark in the checkout that says which version is there.
+ * (compose, `inspect` and the labels Compose puts on a container, and psql, pg_dump and pg_restore
+ * inside the postgres container), `bun`, `curl`, `sleep`, `df`, `stat`, `rm` (the real one, which can
+ * end the run on cue), and the checkout's own `scripts/start.sh` and `scripts/stop.sh`. `git` is a spy
+ * that records and then runs the real one, and can be told to fail one subcommand. The fakes keep a
+ * small model in a state directory: a stack that is up or down, a database that is a few lines of text,
+ * a role password, a mark in the checkout that says which version is there. A machine built with
+ * `twoStacks` has a second stack from the same checkout (project freeduet-eval, `.env.eval`), with a
+ * model of its own, which is how a run for one is shown not to touch the other.
  *
  * So these tests prove the command's DECISIONS and its ORDER: what it refuses, what it changes only
  * after the copy exists, what it undoes and in which order, which exit code each ending has, that
@@ -72,10 +75,10 @@ const REAL_TOOLS = [
   "ln",
   "mkdir",
   "mv",
-  "rm",
   "rmdir",
   "sed",
   "seq",
+  "sha256sum",
   "tail",
   "touch",
   "tr",
@@ -94,7 +97,14 @@ const OLD_VERIFIER =
   "SCRAM-SHA-256$4096:b2xkc2FsdG9sZHNhbHQ=$b2xkc3RvcmVka2V5:b2xkc2VydmVya2V5";
 const NEW_VERIFIER =
   "SCRAM-SHA-256$4096:bmV3c2FsdG5ld3NhbHQ=$bmV3c3RvcmVka2V5:bmV3c2VydmVya2V5";
-const SECRETS = [...Object.values(CANARIES), OLD_VERIFIER, NEW_VERIFIER];
+const EVAL_VERIFIER =
+  "SCRAM-SHA-256$4096:ZXZhbHNhbHRldmFsc2E=$ZXZhbHN0b3JlZGtleQ==:ZXZhbHNlcnZlcmtleQ==";
+const SECRETS = [
+  ...Object.values(CANARIES),
+  OLD_VERIFIER,
+  NEW_VERIFIER,
+  EVAL_VERIFIER,
+];
 
 const ENV_FILE = [
   `POSTGRES_PASSWORD=${CANARIES.postgresPassword}`,
@@ -106,36 +116,68 @@ const ENV_FILE = [
   "",
 ].join("\n");
 
+// The second stack of a machine, from the same checkout: its own Compose project, ports and database.
+const EVAL_ENV_FILE = [
+  `POSTGRES_PASSWORD=${CANARIES.postgresPassword}`,
+  `KEY_ENCRYPTION_KEY=${CANARIES.keyEncryptionKey}`,
+  `COMPUTER_TOKEN=${CANARIES.computerToken}`,
+  `DATABASE_URL=postgres://openbot:${CANARIES.databasePassword}@localhost:5442/openbot`,
+  "COMPOSE_PROJECT_NAME=freeduet-eval",
+  "SERVER_PORT=3101",
+  "APP_PORT=3110",
+  "POSTGRES_PORT=5442",
+  "",
+].join("\n");
+
 const START_DB = "tables=3\njournal=7\nrows=42\n";
+const EVAL_DB = "tables=3\njournal=7\nrows=7\nstack=eval\n";
 
 // ---------------------------------------------------------------------------------------------------
 // The fakes
 // ---------------------------------------------------------------------------------------------------
 
 // The checkout's own scripts. They read the mark of the version that is checked out, and keep the
-// model: what is up, what the database holds, who is connected to it.
+// model: what is up, what the database holds, who is connected to it. A machine with a second stack
+// (project freeduet-eval, from the same checkout) keeps that stack's model in `$STATE/eval`; which one a
+// script is about is decided as Compose decides it, by the project name the environment or the settings
+// file gives.
+const WHICH_STACK = `project="\${COMPOSE_PROJECT_NAME:-}"
+if [ -z "$project" ]; then
+  project="$(grep -E '^COMPOSE_PROJECT_NAME=' "$root/openbot/\${OPENBOT_ENV_FILE:-.env}" 2>/dev/null | tail -1 | cut -d= -f2-)"
+fi
+S="$STATE"
+if [ "$project" = freeduet-eval ] && [ -d "$STATE/eval" ]; then S="$STATE/eval"; fi
+`;
+
 const FAKE_START = `#!/bin/sh
 root="$(cd "$(dirname "$0")/.." && pwd)"
 mark="$(cat "$root/mark")"
-echo "start.sh [mark=$mark]" >> "$STATE/calls.log"
+${WHICH_STACK}echo "start.sh [mark=$mark]" >> "$STATE/calls.log"
 echo "start.sh OPENBOT_ENV_FILE=\${OPENBOT_ENV_FILE:-}" >> "$STATE/env-seen.log"
 echo "  (fake start.sh on $mark)"
 if [ "$mark" != old ]; then
-  printf 'tables=4\\njournal=8\\nrows=42\\nmigrated=1\\n' > "$STATE/db"
+  sed -e 's/^tables=.*/tables=4/' -e 's/^journal=.*/journal=8/' "$S/db" > "$S/db.new"
+  echo migrated=1 >> "$S/db.new"
+  mv "$S/db.new" "$S/db"
 fi
 if [ -f "$STATE/start-rotates-password-$mark" ]; then
-  cp "$STATE/new-verifier" "$STATE/role-password"
+  cp "$STATE/new-verifier" "$S/role-password"
 fi
 if [ -f "$STATE/start-writes-env-$mark" ]; then
   echo "WRITTEN_BY_START=value-from-$mark" >> "$root/openbot/.env"
 fi
+if [ -f "$STATE/start-corrupts-dump-$mark" ]; then
+  for f in "$HOME"/.freeduet/updates/update-*/database.dump; do echo CORRUPT >> "$f"; done
+fi
+if [ -f "$STATE/start-breaks-list-$mark" ]; then touch "$STATE/list-fails"; fi
+if [ -f "$STATE/start-deletes-dump-$mark" ]; then rm -f "$HOME"/.freeduet/updates/update-*/database.dump; fi
 if [ -f "$STATE/start-fails-$mark" ]; then
   echo "fake start.sh: refusing to finish $mark" >&2
   exit 1
 fi
-echo up > "$STATE/stack"
-echo up > "$STATE/postgres"
-echo 3 > "$STATE/connections"
+echo up > "$S/stack"
+echo up > "$S/postgres"
+echo 3 > "$S/connections"
 if [ -f "$STATE/interrupt-in-start-$mark" ]; then kill -TERM "$(cat "$root/openbot/.logs/update.lock/pid")"; fi
 exit 0
 `;
@@ -143,7 +185,7 @@ exit 0
 const FAKE_STOP = `#!/bin/sh
 root="$(cd "$(dirname "$0")/.." && pwd)"
 mark="$(cat "$root/mark")"
-echo "stop.sh [mark=$mark]" >> "$STATE/calls.log"
+${WHICH_STACK}echo "stop.sh [mark=$mark]" >> "$STATE/calls.log"
 echo "stop.sh OPENBOT_ENV_FILE=\${OPENBOT_ENV_FILE:-}" >> "$STATE/env-seen.log"
 echo "  (fake stop.sh on $mark)"
 n=$(( $(cat "$STATE/stop-count" 2>/dev/null || echo 0) + 1 ))
@@ -152,9 +194,9 @@ if [ -f "$STATE/stop-fails" ] || [ "$(cat "$STATE/stop-fails-on" 2>/dev/null)" =
   echo "fake stop.sh: failing" >&2
   exit 1
 fi
-echo down > "$STATE/stack"
-echo 0 > "$STATE/connections"
-if [ -f "$STATE/stop-leaves-postgres" ]; then echo up > "$STATE/postgres"; else echo down > "$STATE/postgres"; fi
+echo down > "$S/stack"
+echo 0 > "$S/connections"
+if [ -f "$STATE/stop-leaves-postgres" ]; then echo up > "$S/postgres"; else echo down > "$S/postgres"; fi
 rm -f "$STATE/sleeps-down" "$STATE/watchdog-fired"
 if [ "$(cat "$STATE/watchdog-on-stop" 2>/dev/null)" = "$n" ]; then touch "$STATE/watchdog-armed"; else rm -f "$STATE/watchdog-armed"; fi
 if [ -f "$STATE/interrupt-in-stop" ]; then kill -TERM "$(cat "$root/openbot/.logs/update.lock/pid")"; fi
@@ -195,21 +237,30 @@ if [ -f "$STATE/bun-overwrites-update" ]; then
 fi
 exit 0
 `,
+  // The two ports of each stack: 3001 and 3010 for the person's, 3101 and 3110 for the second one.
   curl: `#!/bin/sh
 for a in "$@"; do url="$a"; done
+echo "$url" >> "$STATE/curl.log"
 mark="$(cat "$FAKE_REPO/mark" 2>/dev/null || echo none)"
-stack="$(cat "$STATE/stack")"
+S="$STATE"
 case "$url" in
-  http://localhost:3001/api/capabilities)
+  http://localhost:3101/*|http://localhost:3110/*)
+    if [ ! -d "$STATE/eval" ]; then echo "curl: (7) Failed to connect" >&2; exit 7; fi
+    S="$STATE/eval" ;;
+esac
+stack="$(cat "$S/stack")"
+case "$url" in
+  http://localhost:3001/api/capabilities|http://localhost:3101/api/capabilities)
     if [ "$stack" = up ] && [ ! -f "$STATE/api-down-$mark" ]; then echo '{"durableHistory":true}'; exit 0; fi ;;
-  http://localhost:3010/)
+  http://localhost:3010/|http://localhost:3110/)
     if [ "$stack" = up ] && [ ! -f "$STATE/app-down-$mark" ]; then echo '<html><head><meta name="openbot" content="app"></head></html>'; exit 0; fi ;;
 esac
 echo "curl: (7) Failed to connect" >&2
 exit 7
 `,
   // Nothing waits. A watchdog is modelled here: armed by the Nth stop, it starts the stack once
-  // that many sleeps after it.
+  // that many sleeps after it. And a lock whose owner is about to write its process number: the Nth
+  // sleep writes it.
   sleep: `#!/bin/sh
 printf 'sleep %s\\n' "$*" >> "$STATE/sleep.log"
 if [ -f "$STATE/watchdog-armed" ] && [ ! -f "$STATE/watchdog-fired" ] && [ "$(cat "$STATE/stack")" = down ]; then
@@ -221,7 +272,29 @@ if [ -f "$STATE/watchdog-armed" ] && [ ! -f "$STATE/watchdog-fired" ] && [ "$(ca
     echo "(a watchdog started the stack)" >> "$STATE/calls.log"
   fi
 fi
+if [ -f "$STATE/lock-pid-after" ]; then
+  n=$(( $(cat "$STATE/lock-sleeps" 2>/dev/null || echo 0) + 1 ))
+  echo "$n" > "$STATE/lock-sleeps"
+  if [ "$n" -ge "$(cat "$STATE/lock-pid-after")" ] && [ -d "$FAKE_REPO/openbot/.logs/update.lock" ]; then
+    cat "$STATE/lock-pid-value" > "$FAKE_REPO/openbot/.logs/update.lock/pid"
+  fi
+fi
 exit 0
+`,
+  // The real rm. Where the state file says so, it first ends the run the way a Ctrl-C (TERM) or a
+  // crash (USR1) would, while an older copy is being removed: the only place this script removes a
+  // folder that an older run made.
+  rm: `#!/bin/sh
+if [ -f "$STATE/signal-in-prune" ]; then
+  case "$*" in
+    *update-2020*)
+      sig="$(cat "$STATE/signal-in-prune")"
+      "$REAL_RM" -f "$STATE/signal-in-prune"
+      kill -"$sig" "$(cat "$FAKE_REPO/openbot/.logs/update.lock/pid")"
+      ;;
+  esac
+fi
+exec "$REAL_RM" "$@"
 `,
   df: `#!/bin/sh
 echo "Filesystem 1024-blocks Used Available Capacity Mounted on"
@@ -232,7 +305,36 @@ echo "fake 100000000 1000 $(cat "$STATE/df-available") 1% /"
 if [ -f "$STATE/stat-lies" ]; then echo 755; exit 0; fi
 exec "$REAL_STAT" "$@"
 `,
+  // `docker inspect` answers the labels Compose puts on a container, from the container's own name
+  // (fakepg-<project>); state files in the stack's folder say what a label holds when a test needs it
+  // to be something else, or says it cannot be read.
   docker: `#!/bin/sh
+if [ "$1" = inspect ]; then
+  shift
+  fmt=""; id=""
+  while [ $# -gt 0 ]; do
+    case "$1" in
+      --format) fmt="$2"; shift 2 ;;
+      *) id="$1"; shift ;;
+    esac
+  done
+  printf 'docker inspect %s\\n' "$id" >> "$STATE/calls.log"
+  project="\${id#fakepg-}"
+  S="$STATE"
+  if [ "$project" = freeduet-eval ] && [ -d "$STATE/eval" ]; then S="$STATE/eval"; fi
+  if [ -f "$STATE/inspect-fails" ]; then echo "Error: No such object: $id" >&2; exit 1; fi
+  key="$(printf '%s' "$fmt" | sed -n 's/.*index \\.Config\\.Labels "\\([^"]*\\)".*/\\1/p')"
+  case "$key" in
+    com.docker.compose.project)
+      if [ -f "$S/label-project" ]; then cat "$S/label-project"; else echo "$project"; fi ;;
+    com.docker.compose.project.working_dir)
+      if [ -f "$S/label-working-dir" ]; then cat "$S/label-working-dir"; else echo "$FAKE_REPO/openbot"; fi ;;
+    com.docker.compose.project.config_files)
+      if [ -f "$S/label-config-files" ]; then cat "$S/label-config-files"; else echo "$FAKE_REPO/openbot/docker-compose.yml"; fi ;;
+    *) echo "fake docker: label not expected: $key" >&2; exit 1 ;;
+  esac
+  exit 0
+fi
 if [ "$1" != compose ]; then echo "fake docker: not expected: $*" >&2; exit 1; fi
 shift
 envfile=""
@@ -242,13 +344,31 @@ if [ -n "$envfile" ]; then
 else
   printf 'docker compose %s\\n' "$*" >> "$STATE/calls.log"
 fi
-up() { [ "$(cat "$STATE/stack")" = up ] || [ "$(cat "$STATE/postgres")" = up ]; }
+# Which Compose project this call is for, as Compose decides it: the environment first, then the
+# settings file (--env-file, or .env in the folder it runs in), then the name of the folder.
+project="\${COMPOSE_PROJECT_NAME:-}"
+if [ -z "$project" ]; then
+  project="$(grep -E '^COMPOSE_PROJECT_NAME=' "\${envfile:-.env}" 2>/dev/null | tail -1 | cut -d= -f2-)"
+fi
+[ -n "$project" ] || project=openbot
+S="$STATE"
+if [ "$project" = freeduet-eval ] && [ -d "$STATE/eval" ]; then S="$STATE/eval"; fi
+up() { [ "$(cat "$S/stack")" = up ] || [ "$(cat "$S/postgres")" = up ]; }
 case "$1" in
   version) echo "Docker Compose version v2.99.0"; exit 0 ;;
-  ps) if up; then echo fakecontainer; fi; exit 0 ;;
+  ps)
+    case " $* " in
+      *" postgres "*)
+        if up; then
+          echo "fakepg-$project"
+          if [ -f "$STATE/ps-two-postgres" ]; then echo "fakepg-$project-2"; fi
+        fi ;;
+      *) if up; then echo fakecontainer; fi ;;
+    esac
+    exit 0 ;;
   up)
     if [ -f "$STATE/postgres-up-fails" ]; then echo "fake compose: postgres would not start" >&2; exit 1; fi
-    echo up > "$STATE/postgres"
+    echo up > "$S/postgres"
     exit 0 ;;
   exec) ;;
   *) echo "fake docker: not expected: compose $*" >&2; exit 1 ;;
@@ -277,22 +397,22 @@ case "$prog" in
       printf 'psql: %s bytes on standard input, not logged\\n' "$(wc -c < "$STATE/psql-stdin-$n" | tr -d ' ')" >> "$STATE/calls.log"
       if [ -f "$STATE/psql-stdin-fails" ]; then echo "fake psql: failing" >&2; exit 1; fi
       case "$input" in
-        "ALTER ROLE"*"PASSWORD NULL"*) : > "$STATE/role-password" ;;
-        "ALTER ROLE"*) printf '%s\\n' "$input" | sed "s/^[^']*'//; s/'[^']*$//" > "$STATE/role-password" ;;
+        "ALTER ROLE"*"PASSWORD NULL"*) : > "$S/role-password" ;;
+        "ALTER ROLE"*) printf '%s\\n' "$input" | sed "s/^[^']*'//; s/'[^']*$//" > "$S/role-password" ;;
       esac
       exit 0
     fi
     case "$sql" in
       "select 1") echo 1 ;;
-      *pg_stat_activity*) cat "$STATE/connections" ;;
-      *pg_database_size*) cat "$STATE/db-size" ;;
-      *information_schema.tables*) grep '^tables=' "$STATE/db" | cut -d= -f2 ;;
+      *pg_stat_activity*) cat "$S/connections" ;;
+      *pg_database_size*) cat "$S/db-size" ;;
+      *information_schema.tables*) grep '^tables=' "$S/db" | cut -d= -f2 ;;
       *__drizzle_migrations*)
         if [ -f "$STATE/no-journal" ]; then echo 'ERROR:  relation "drizzle.__drizzle_migrations" does not exist' >&2; exit 1; fi
-        grep '^journal=' "$STATE/db" | cut -d= -f2 ;;
+        grep '^journal=' "$S/db" | cut -d= -f2 ;;
       *rolpassword*)
         if [ -f "$STATE/role-unreadable" ]; then echo "ERROR:  permission denied" >&2; exit 1; fi
-        cat "$STATE/role-password" ;;
+        cat "$S/role-password" ;;
       *) echo "fake psql: not expected: $sql" >&2; exit 1 ;;
     esac
     exit 0 ;;
@@ -302,7 +422,7 @@ case "$prog" in
     if [ -f "$STATE/pg_dump-fails" ]; then echo "pg_dump: error: connection failed" >&2; exit 1; fi
     if [ -f "$STATE/pg_dump-short" ]; then printf 'PGDMP'; exit 0; fi
     echo PGDMP
-    cat "$STATE/db"
+    cat "$S/db"
     echo '--pad--'
     head -c 600 /dev/zero | tr '\\000' '.'
     echo
@@ -314,8 +434,8 @@ case "$prog" in
         if [ -f "$STATE/list-fails" ]; then echo "pg_restore: error: could not read the copy" >&2; exit 1; fi
         exit 0 ;;
     esac
-    cat > "$STATE/restore-input"
-    if [ "$(cat "$STATE/connections")" != 0 ]; then
+    cat > "$S/restore-input"
+    if [ "$(cat "$S/connections")" != 0 ]; then
       echo 'ERROR:  database "openbot" is being accessed by other users' >&2
       exit 1
     fi
@@ -323,12 +443,25 @@ case "$prog" in
     case " $* " in
       *" --exit-on-error --clean --create --if-exists --no-owner -U openbot -d postgres "*) ;;
       *)
-        printf 'tables=9\\njournal=9\\nmixed=1\\n' > "$STATE/db"
+        printf 'tables=9\\njournal=9\\nmixed=1\\n' > "$S/db"
         echo "pg_restore: warning: errors ignored on restore: 5" >&2
         exit 1 ;;
     esac
-    awk 'NR == 1 { next } /^--pad--$/ { exit } { print }' "$STATE/restore-input" > "$STATE/db"
-    if [ -f "$STATE/restore-corrupts" ]; then printf 'tables=99\\njournal=1\\n' > "$STATE/db"; fi
+    # A copy that is not the one that was made: --clean --create has dropped the database by the time
+    # the restore finds out, as the real one does, and it stops with the database gone.
+    if grep -q '^CORRUPT$' "$S/restore-input"; then
+      printf 'tables=0\\njournal=none\\ndropped=1\\n' > "$S/db"
+      echo "pg_restore: error: unexpected end of file" >&2
+      exit 1
+    fi
+    # Stopped in the middle: some of the database is back, and the run is ended as a Ctrl-C would.
+    if [ -f "$STATE/interrupt-in-restore" ]; then
+      printf 'tables=1\\njournal=none\\nhalf=1\\n' > "$S/db"
+      kill -TERM "$(cat "$FAKE_REPO/openbot/.logs/update.lock/pid")"
+      exit 130
+    fi
+    awk 'NR == 1 { next } /^--pad--$/ { exit } { print }' "$S/restore-input" > "$S/db"
+    if [ -f "$STATE/restore-corrupts" ]; then printf 'tables=99\\njournal=1\\n' > "$S/db"; fi
     exit 0 ;;
   *) echo "fake docker: not expected: exec $prog" >&2; exit 1 ;;
 esac
@@ -416,6 +549,11 @@ type Options = {
   evalEnv?: boolean;
   /** Replace the lines of `.env`. */
   envLines?: string[];
+  /**
+   * The second stack of a machine: project freeduet-eval, settings file `.env.eval`, its own ports and its
+   * own database, from the same checkout as the person's (project freeduet). Each has its own model.
+   */
+  twoStacks?: boolean;
 };
 
 async function build(options: Options = {}) {
@@ -441,6 +579,7 @@ async function build(options: Options = {}) {
   }
   const root = join(repo, "openbot");
   const realStat = Bun.which("stat") as string;
+  const realRm = Bun.which("rm") as string;
 
   for (const tool of REAL_TOOLS) {
     const path = Bun.which(tool);
@@ -513,9 +652,17 @@ async function build(options: Options = {}) {
 
   await writeFile(
     join(root, ".env"),
-    options.envLines ? `${options.envLines.join("\n")}\n` : ENV_FILE,
+    options.envLines
+      ? `${options.envLines.join("\n")}\n`
+      : options.twoStacks
+        ? `${ENV_FILE}COMPOSE_PROJECT_NAME=freeduet\n`
+        : ENV_FILE,
   );
-  if (options.evalEnv) await writeFile(join(root, ".env.eval"), ENV_FILE);
+  if (options.twoStacks) {
+    await writeFile(join(root, ".env.eval"), EVAL_ENV_FILE);
+  } else if (options.evalEnv) {
+    await writeFile(join(root, ".env.eval"), ENV_FILE);
+  }
   if (options.atMain) {
     await git(repo, "fetch", "-q", "--tags", "origin");
     await git(repo, "merge", "-q", "--ff-only", "origin/main");
@@ -532,6 +679,18 @@ async function build(options: Options = {}) {
   await put2("df-available", "90000000");
   await put2("role-password", OLD_VERIFIER);
   await put2("new-verifier", NEW_VERIFIER);
+  const evalState = join(state, "eval");
+  if (options.twoStacks) {
+    await mkdir(evalState, { recursive: true });
+    const evalPut = (name: string, value: string) =>
+      writeFile(join(evalState, name), `${value}\n`);
+    await evalPut("stack", "up");
+    await evalPut("postgres", "up");
+    await evalPut("connections", "2");
+    await writeFile(join(evalState, "db"), EVAL_DB);
+    await evalPut("db-size", "5000000");
+    await evalPut("role-password", EVAL_VERIFIER);
+  }
 
   const environment: Record<string, string> = {
     PATH: bin,
@@ -539,6 +698,7 @@ async function build(options: Options = {}) {
     FAKE_REPO: repo,
     REAL_GIT: realGit,
     REAL_STAT: realStat,
+    REAL_RM: realRm,
     HOME: home,
     GIT_CONFIG_GLOBAL: "/dev/null",
     GIT_CONFIG_NOSYSTEM: "1",
@@ -598,9 +758,17 @@ async function build(options: Options = {}) {
     set: (name: string, value = "1") => put2(name, value),
     unset: (name: string) => rm(join(state, name), { force: true }),
     value: async (name: string) => (await read(join(state, name))).trim(),
+    /** The same, for the second stack of a machine built with `twoStacks`. */
+    evalSet: (name: string, value = "1") =>
+      writeFile(join(evalState, name), `${value}\n`),
+    evalValue: async (name: string) =>
+      (await read(join(evalState, name))).trim(),
+    evalDb: () => read(join(evalState, "db")),
     calls: () => lines("calls.log"),
     sleeps: () => lines("sleep.log"),
     envSeen: () => lines("env-seen.log"),
+    /** What the fake curl was asked, apart from the calls: which ports a run looked at. */
+    asked: () => lines("curl.log"),
     db: () => read(join(state, "db")),
     env: () => read(join(root, ".env")),
     copies,
@@ -1134,6 +1302,46 @@ describe("it refuses to start, and changes nothing", () => {
     await refused(machine, [], "bun is not installed");
   });
 
+  test("when this computer has neither sha256sum nor shasum to check the copy with", async () => {
+    const machine = await build();
+    await rm(join(machine.bin, "sha256sum"));
+    await refused(machine, [], "Neither sha256sum nor shasum is installed");
+  });
+
+  test("when another update has just made the lock and not yet written who it is: waits for it, and refuses once it turns out to be alive", async () => {
+    const machine = await build();
+    await mkdir(join(machine.root, ".logs/update.lock"), { recursive: true });
+    // The owner writes its process number the second time this run sleeps.
+    await machine.set("lock-pid-after", "2");
+    await machine.set("lock-pid-value", String(process.pid));
+    const result = await machine.run(["--watch", "0"]);
+    expect(outcome(result).exitCode).toBe(1);
+    expect(plain(result.stdout)).toContain(
+      `Another update is running (process ${process.pid})`,
+    );
+    expect(changes(await machine.calls())).toEqual([]);
+    expect(await machine.copies()).toEqual([]);
+    // Its lock was not taken over or removed.
+    expect(
+      await readFile(join(machine.root, ".logs/update.lock/pid"), "utf8"),
+    ).toBe(`${process.pid}\n`);
+  });
+
+  test("a lock folder that never says who owns it is taken over, after a few seconds and not before", async () => {
+    const free = await build();
+    expect(outcome(await free.run(["--watch", "0"]))).toMatchObject({
+      exitCode: 0,
+    });
+    const ownerless = await build();
+    await mkdir(join(ownerless.root, ".logs/update.lock"), { recursive: true });
+    expect(outcome(await ownerless.run(["--watch", "0"]))).toMatchObject({
+      exitCode: 0,
+    });
+    expect(
+      (await ownerless.sleeps()).length - (await free.sleeps()).length,
+    ).toBe(5);
+  });
+
   test("when the repository cannot be reached and the version asked for is not downloaded", async () => {
     const machine = await build();
     await machine.set("git-fails", "fetch");
@@ -1164,6 +1372,10 @@ describe("--check shows the plan and changes nothing", () => {
     expect(text).toContain(`${machine.copiesDirectory}/update-<date and time>`);
     expect(text).toContain("Stop FreeDuet");
     expect(text).toContain("goes back");
+    expect(text).toContain("Docker project:  openbot");
+    expect(text).toContain(
+      "Before you go on: pause anything that restarts FreeDuet by itself",
+    );
     expect(text).toContain("This was only a look. Nothing was changed.");
     // The one thing it asks the network for, and nothing that changes anything here.
     expect(changes(await machine.calls())).toEqual([]);
@@ -1173,6 +1385,22 @@ describe("--check shows the plan and changes nothing", () => {
       await lstat(join(machine.root, ".logs")).catch(() => null),
     ).toBeNull();
     expect(await machine.head()).toBe(await machine.rev("v0.1"));
+  });
+
+  test("says to pause whatever restarts FreeDuet by itself, in the plan and before it stops anything, and does not ask for an answer", async () => {
+    const machine = await build();
+    // No input at all: a question would hang or fail here, so the run ending 0 is the proof.
+    const result = await machine.run(["--watch", "0"]);
+    expect(outcome(result)).toMatchObject({ exitCode: 0 });
+    const text = plain(result.stdout);
+    const advice = text.indexOf(
+      "Before you go on: pause anything that restarts FreeDuet by itself (a watchdog or a service).",
+    );
+    expect(advice).toBeGreaterThan(-1);
+    expect(advice).toBeLessThan(text.indexOf("1  Stopping FreeDuet"));
+    expect(
+      text.indexOf("5. Check that the app and the API answer"),
+    ).toBeLessThan(advice);
   });
 
   test("refuses what the real run would refuse", async () => {
@@ -1297,6 +1525,20 @@ describe("the copy", () => {
       expect(await machine.value("stack")).toBe("up");
       expect(await machine.copies()).toEqual([]);
     }
+  });
+
+  test("records the checksum of the copy when it is made, and it is the checksum of that file", async () => {
+    const machine = await build();
+    expect(outcome(await machine.run(["--watch", "0"]))).toMatchObject({
+      exitCode: 0,
+    });
+    const folder = await copyOf(machine);
+    const digest = createHash("sha256")
+      .update(await readFile(join(folder, "database.dump")))
+      .digest("hex");
+    expect(await readFile(join(folder, "record.txt"), "utf8")).toContain(
+      `database_sha256=${digest}\n`,
+    );
   });
 
   test("does not copy the database user's password when it cannot be read, and says so", async () => {
@@ -1493,11 +1735,12 @@ describe("when anything from the stop on fails, it goes back", () => {
 
 describe("when going back fails, it stops and prints the exact commands", () => {
   /** The commands the output tells the person to run, as a script. */
-  function handCommands(output: string): string[] {
+  function handCommands(
+    output: string,
+    header = "To go back by hand",
+  ): string[] {
     const text = plain(output).split("\n");
-    const start = text.findIndex((line) =>
-      line.startsWith("To go back by hand"),
-    );
+    const start = text.findIndex((line) => line.startsWith(header));
     expect(start).toBeGreaterThan(-1);
     const commands: string[] = [];
     for (const line of text.slice(start + 2)) {
@@ -1542,6 +1785,9 @@ describe("when going back fails, it stops and prints the exact commands", () => 
     );
     expect(text).not.toContain("You are back where you were");
     expect(text).toContain("To go back by hand, run these in this order");
+    expect(text).toContain(
+      "If something on this computer starts FreeDuet by itself (a watchdog or a service), pause it before you run these.",
+    );
     // The record says it needs the person, so it is never deleted by --keep.
     expect(
       await readFile(join(await copyOf(machine), "record.txt"), "utf8"),
@@ -1550,6 +1796,9 @@ describe("when going back fails, it stops and prints the exact commands", () => 
     const commands = handCommands(result.stdout);
     const folder = await copyOf(machine);
     const oldSha = await machine.rev("v0.1");
+    const digest = createHash("sha256")
+      .update(await readFile(join(folder, "database.dump")))
+      .digest("hex");
     expect(
       commands.map((command) =>
         command.replace(machine.repo, "<repo>").replace(folder, "<copy>"),
@@ -1561,6 +1810,7 @@ describe("when going back fails, it stops and prints the exact commands", () => 
       "cp '<copy>/env.copy' '<repo>/openbot/.env'",
       "bun install --frozen-lockfile",
       "docker compose up -d postgres",
+      `echo '${digest}  <copy>/database.dump' | sha256sum -c -`,
       "docker compose exec -T postgres pg_restore --exit-on-error --clean --create --if-exists --no-owner -U openbot -d postgres < '<copy>/database.dump'",
       "docker compose exec -T postgres psql -U openbot -d postgres -v ON_ERROR_STOP=1 -q < '<copy>/role-password.sql'",
       "bash '<repo>/scripts/start.sh'",
@@ -1677,6 +1927,8 @@ describe("when going back fails, it stops and prints the exact commands", () => 
     const text = plain(result.stdout);
     expect(text).toContain("Interrupted.");
     expect(text).toContain("To go back by hand, run these in this order");
+    // The database was not being put back, so nothing says that it may be half done.
+    expect(text).not.toContain("half restored");
     expect(
       await readFile(join(await copyOf(machine), "record.txt"), "utf8"),
     ).toContain("result=needs-person");
@@ -1694,6 +1946,160 @@ describe("when going back fails, it stops and prints the exact commands", () => 
     expect({ ...byHand }).toMatchObject({ exitCode: 0 });
     expect(await machine.db()).toBe(START_DB);
     expect(await machine.head()).toBe(await machine.rev("v0.1"));
+    expect(await machine.value("stack")).toBe("up");
+  });
+
+  const restores = (calls: string[]) =>
+    calls.filter((call) => /pg_restore --exit-on-error/.test(call));
+
+  test("a copy that has changed since it was made is not restored from: exit 20, the database is not touched, and nothing printed restores from it", async () => {
+    const machine = await build();
+    await machine.set("app-down-new");
+    await machine.set("start-corrupts-dump-new");
+    const result = await machine.run(["--watch", "0", "--wait", "6"]);
+    expect(outcome(result)).toMatchObject({ exitCode: 20 });
+    const text = plain(result.stdout);
+    expect(text).toContain(
+      "Going back did not work: the copy of your database is not the file that was checked when it was made",
+    );
+    expect(text).toContain(
+      "did not pass the check made just before it was to be used",
+    );
+    expect(text).toContain("Do NOT restore from it");
+    // A restore from it would have dropped the database and stopped: the database is as the new
+    // version left it, and the restore was never asked for.
+    expect(await machine.db()).toContain("migrated=1");
+    expect(await machine.db()).not.toContain("dropped=1");
+    const calls = await machine.calls();
+    expect(restores(calls)).toEqual([]);
+    expect(text).not.toContain("pg_restore --exit-on-error");
+    expect(text).not.toContain("--clean --create");
+    // What had been done before the check was done: the new version stopped, the code and the
+    // settings put back. The stack is down, and the record says the person has to finish.
+    expectInOrder(calls, [
+      /^stop\.sh \[mark=new\]/,
+      /^git reset --hard/,
+      /^bun install --frozen-lockfile \[mark=old\]/,
+      /^docker compose up -d postgres/,
+    ]);
+    expect(await machine.value("stack")).toBe("down");
+    const folder = await copyOf(machine);
+    const record = await readFile(join(folder, "record.txt"), "utf8");
+    expect(record).toContain("result=needs-person");
+
+    // The check it prints, run as printed, says the copy is not the one that was made.
+    const digest = /^database_sha256=(\w+)$/m.exec(record)?.[1];
+    const printed = text
+      .split("\n")
+      .map((line) => line.trim())
+      .filter((line) => line.endsWith("sha256sum -c -"));
+    expect(printed).toEqual([
+      `echo '${digest}  ${folder}/database.dump' | sha256sum -c -`,
+    ]);
+    const check = await ranByHand(machine, printed);
+    expect(check.exitCode).not.toBe(0);
+    expect(check.stdout).toContain("FAILED");
+
+    // And the way forward it prints works: the new version, on the database as it is.
+    const forward = handCommands(result.stdout, "To run v0.2 (");
+    expect(
+      forward.map((command) => command.replace(machine.repo, "<repo>")),
+    ).toEqual([
+      "cd '<repo>/openbot'",
+      `git -C '<repo>' merge --ff-only ${await machine.rev("v0.2")}`,
+      "bun install --frozen-lockfile",
+      "bash '<repo>/scripts/start.sh'",
+    ]);
+    await machine.unset("start-corrupts-dump-new");
+    await machine.unset("app-down-new");
+    const byHand = await ranByHand(machine, forward);
+    expect({ ...byHand }).toMatchObject({ exitCode: 0 });
+    expect(await machine.head()).toBe(await machine.rev("v0.2"));
+    expect(await machine.value("stack")).toBe("up");
+    expect(await machine.db()).toContain("migrated=1");
+    expect(await machine.db()).not.toContain("dropped=1");
+    expectNoSecret(`${text}\n${(await machine.calls()).join("\n")}`);
+  });
+
+  test("a copy that can no longer be read back is not restored from either", async () => {
+    const machine = await build();
+    await machine.set("app-down-new");
+    await machine.set("start-breaks-list-new");
+    const result = await machine.run(["--watch", "0", "--wait", "6"]);
+    expect(outcome(result)).toMatchObject({ exitCode: 20 });
+    expect(plain(result.stdout)).toContain(
+      "Going back did not work: the copy of your database can no longer be read back",
+    );
+    expect(plain(result.stdout)).toContain("Do NOT restore from it");
+    expect(await machine.db()).toContain("migrated=1");
+    expect(restores(await machine.calls())).toEqual([]);
+  });
+
+  test("a copy that is no longer there is not restored from either, and the printed commands do not pretend it is", async () => {
+    const machine = await build();
+    await machine.set("app-down-new");
+    await machine.set("start-deletes-dump-new");
+    const result = await machine.run(["--watch", "0", "--wait", "6"]);
+    expect(outcome(result)).toMatchObject({ exitCode: 20 });
+    const text = plain(result.stdout);
+    expect(text).toContain(
+      "Going back did not work: the copy of your database is no longer where it was put",
+    );
+    expect(text).toContain("Do NOT restore from it");
+    expect(text).not.toContain("were not changed");
+    expect(await machine.db()).toContain("migrated=1");
+    expect(restores(await machine.calls())).toEqual([]);
+  });
+
+  test("the commands printed check the copy first: when it has changed since, they stop before the restore", async () => {
+    const machine = await build();
+    await machine.set("app-down-new");
+    await machine.set("restore-fails");
+    const result = await machine.run(["--watch", "0", "--wait", "6"]);
+    expect(outcome(result)).toMatchObject({ exitCode: 20 });
+    const commands = handCommands(result.stdout);
+    // The copy is damaged after the script has gone and before the person gets to the commands.
+    const dump = join(await copyOf(machine), "database.dump");
+    await writeFile(dump, `${await readFile(dump, "utf8")}CORRUPT\n`);
+    await machine.unset("restore-fails");
+    await machine.unset("app-down-new");
+    const before = restores(await machine.calls()).length;
+    const byHand = await ranByHand(machine, commands);
+    expect(byHand.exitCode).not.toBe(0);
+    expect(byHand.stdout).toContain("FAILED");
+    // It stopped at the check: the restore, which would have dropped the database, was not run.
+    expect(restores(await machine.calls())).toHaveLength(before);
+    expect(await machine.db()).toContain("migrated=1");
+    expect(await machine.db()).not.toContain("dropped=1");
+  });
+
+  test("stopped while the database is being put back: says that it may be half restored, exits 20, and the commands printed finish the job", async () => {
+    const machine = await build();
+    await machine.set("app-down-new");
+    await machine.set("interrupt-in-restore");
+    const result = await machine.run(["--watch", "0", "--wait", "6"]);
+    expect(outcome(result)).toMatchObject({ exitCode: 20 });
+    const text = plain(result.stdout);
+    expect(text).toContain("Interrupted.");
+    expect(text).toContain(
+      "The database was being put back from the copy when it stopped, so it may be only half restored.",
+    );
+    expect(text).toContain("Do not start FreeDuet on it.");
+    expect(text).toContain("Run the commands below again, from the first one");
+    expect(await machine.db()).toContain("half=1");
+    expect(text.indexOf("only half restored")).toBeLessThan(
+      text.indexOf("To go back by hand"),
+    );
+    expect(
+      await readFile(join(await copyOf(machine), "record.txt"), "utf8"),
+    ).toContain("result=needs-person");
+
+    // The commands it prints put the whole database back.
+    await machine.unset("interrupt-in-restore");
+    await machine.unset("app-down-new");
+    const byHand = await ranByHand(machine, handCommands(result.stdout));
+    expect({ ...byHand }).toMatchObject({ exitCode: 0 });
+    expect(await machine.db()).toBe(START_DB);
     expect(await machine.value("stack")).toBe("up");
   });
 
@@ -1971,9 +2377,409 @@ describe("--keep", () => {
     for (const name of before) expect(after).toContain(name);
     expect(after).toHaveLength(before.length + 1);
   });
+
+  /** What the run that tidied was made to say, and what it left behind. */
+  async function tidyingStoppedBy(signal: "TERM" | "USR1") {
+    const machine = await build();
+    await crowd(machine);
+    await machine.set("signal-in-prune", signal);
+    const result = await machine.run(["--watch", "0", "--keep", "1"]);
+    const text = plain(result.stdout);
+    const [mine] = ofThisRun(await machine.copies());
+    const record = await readFile(
+      join(machine.copiesDirectory, mine as string, "record.txt"),
+      "utf8",
+    );
+    return { machine, result, text, record };
+  }
+
+  function expectUpdateStandsAfterTidyingStopped(
+    state: Awaited<ReturnType<typeof tidyingStoppedBy>>,
+  ) {
+    const { text, record } = state;
+    expect(text).toContain("The update is done: FreeDuet is on v0.2");
+    expect(text).toContain("Tidying the older copies did not finish");
+    // Not a failed update: nothing is said about stopping, and nothing is printed to go back with.
+    for (const wrong of [
+      "To go back by hand",
+      "may be stopped",
+      "stopped before it finished",
+      "not changed",
+    ]) {
+      expect(text).not.toContain(wrong);
+    }
+    expect(
+      record.split("\n").filter((line) => line.startsWith("result=")),
+    ).toEqual(["result=updated"]);
+  }
+
+  test("a Ctrl-C while the older copies are being tidied is not a failed update: it says it is done, exits 0, prints nothing to go back with, and the result stays updated", async () => {
+    const state = await tidyingStoppedBy("TERM");
+    const { machine, result, text } = state;
+    expect(outcome(result)).toMatchObject({ exitCode: 0 });
+    expect(text).toContain("Interrupted.");
+    expectUpdateStandsAfterTidyingStopped(state);
+    // The new version is in place and running, and nothing was undone.
+    expect(await machine.head()).toBe(await machine.rev("v0.2"));
+    expect(await machine.value("stack")).toBe("up");
+    expect(
+      (await machine.calls()).filter((call) =>
+        /pg_restore --exit-on-error|^git reset|^stop\.sh \[mark=new\]/.test(
+          call,
+        ),
+      ),
+    ).toEqual([]);
+    expect(
+      await lstat(join(machine.root, ".logs/update.lock")).catch(() => null),
+    ).toBeNull();
+  });
+
+  test("so is a stop with no handler of its own after the update worked, which only the safety net sees", async () => {
+    // USR1 is not one of the signals the script handles, so it is the EXIT trap that runs. (A script
+    // that dies of a signal reports that signal as its status whatever the trap says, so the status
+    // is not what is checked here: what it says, and what the copy's record says, are.)
+    const state = await tidyingStoppedBy("USR1");
+    expectUpdateStandsAfterTidyingStopped(state);
+    expect(state.text).toContain(
+      "The script stopped after the update was done.",
+    );
+    expect(await state.machine.head()).toBe(await state.machine.rev("v0.2"));
+    expect(
+      (await state.machine.calls()).filter((call) =>
+        /pg_restore --exit-on-error|^git reset/.test(call),
+      ),
+    ).toEqual([]);
+  });
 });
 
 // ---------------------------------------------------------------------------------------------------
+
+describe("it works on this installation's database, and on no other", () => {
+  /** Refused at the look: nothing stopped, copied or started, whichever stack the shell and the files point at. */
+  async function refusedAt(
+    machine: Machine,
+    message: string | RegExp,
+    extra: Record<string, string> = {},
+  ) {
+    const before = await machine.snapshots();
+    const result = await machine.run(["--watch", "0"], extra);
+    expect(outcome(result).exitCode).toBe(1);
+    expect(plain(result.stdout)).toMatch(message);
+    expect(plain(result.stdout)).toContain("Nothing was changed.");
+    expect(changes(await machine.calls())).toEqual([]);
+    expect(await machine.snapshots()).toEqual(before);
+    expect(await machine.copies()).toEqual([]);
+    return result;
+  }
+
+  test("refuses a postgres container that is another folder's, as when two checkouts share the project name, and names that folder", async () => {
+    const machine = await build();
+    await machine.set("label-working-dir", "/home/someone/else/openbot");
+    await machine.set(
+      "label-config-files",
+      "/home/someone/else/openbot/docker-compose.yml",
+    );
+    const result = await refusedAt(
+      machine,
+      "belongs to another folder: /home/someone/else/openbot (Docker project openbot)",
+    );
+    expect(plain(result.stdout)).toContain("COMPOSE_PROJECT_NAME");
+    // Looked at the container, and nothing else.
+    expect(
+      (await machine.calls()).filter((call) => /^docker inspect/.test(call)),
+    ).not.toEqual([]);
+  });
+
+  test("refuses when Docker will not say whose container it is", async () => {
+    const unreadable = await build();
+    await unreadable.set("inspect-fails");
+    await refusedAt(unreadable, "would not say which folder");
+
+    const unlabelled = await build();
+    await unlabelled.set("label-working-dir", "");
+    await unlabelled.set("label-config-files", "");
+    await refusedAt(unlabelled, "would not say which folder");
+  });
+
+  test("refuses when Docker shows more than one database container for this folder", async () => {
+    const machine = await build();
+    await machine.set("ps-two-postgres");
+    await refusedAt(machine, "does not show exactly one database container");
+  });
+
+  test("takes the folder when the label names it through a link, or when only the label of the compose files names it", async () => {
+    const linked = await build();
+    await symlink(linked.root, join(linked.dir, "root-link"));
+    await linked.set("label-working-dir", join(linked.dir, "root-link"));
+    expect(outcome(await linked.run(["--check"]))).toMatchObject({
+      exitCode: 0,
+    });
+
+    const byFiles = await build();
+    await byFiles.set("label-working-dir", "");
+    await byFiles.set(
+      "label-config-files",
+      `${byFiles.root}/docker-compose.yml,${byFiles.root}/scripts/other.yml`,
+    );
+    expect(outcome(await byFiles.run(["--check"]))).toMatchObject({
+      exitCode: 0,
+    });
+  });
+
+  test("says which Docker project it works on in the plan, and writes it in the record of the copy", async () => {
+    const machine = await build();
+    const check = await machine.run(["--check"]);
+    expect(plain(check.stdout)).toContain(
+      "Docker project:  openbot (the database it copies is the one of this folder)",
+    );
+    expect(outcome(await machine.run(["--watch", "0"]))).toMatchObject({
+      exitCode: 0,
+    });
+    expect(
+      await readFile(join(await copyOf(machine), "record.txt"), "utf8"),
+    ).toContain("compose_project=openbot\n");
+  });
+
+  describe("the second stack of a machine, from the same checkout", () => {
+    /** Everything that is the person's stack, as `build({ twoStacks: true })` made it, and was not touched. */
+    async function personsStackIsAsItWas(machine: Machine) {
+      expect(await machine.value("stack")).toBe("up");
+      expect(await machine.value("connections")).toBe("3");
+      expect(await machine.db()).toBe(START_DB);
+      expect(await machine.value("role-password")).toBe(OLD_VERIFIER);
+    }
+    async function secondStackIsAsItWas(machine: Machine) {
+      expect(await machine.evalValue("stack")).toBe("up");
+      expect(await machine.evalValue("connections")).toBe("2");
+      expect(await machine.evalDb()).toBe(EVAL_DB);
+      expect(await machine.evalValue("role-password")).toBe(EVAL_VERIFIER);
+    }
+
+    test("a run for it copies, stops, updates and starts that stack, and leaves the person's alone", async () => {
+      const machine = await build({ twoStacks: true });
+      const result = await machine.run(["--watch", "0"], {
+        OPENBOT_ENV_FILE: ".env.eval",
+      });
+      expect(outcome(result)).toMatchObject({ exitCode: 0 });
+      expect(plain(result.stdout)).toContain("Docker project:  freeduet-eval");
+      // Its database was migrated, and the copy is of its database and nobody else's.
+      const migrated = await machine.evalDb();
+      expect(migrated).toContain("migrated=1");
+      expect(migrated).toContain("stack=eval");
+      const folder = await copyOf(machine);
+      const dump = await readFile(join(folder, "database.dump"), "utf8");
+      expect(dump).toContain(EVAL_DB);
+      expect(dump).not.toContain("rows=42");
+      expect(await readFile(join(folder, "record.txt"), "utf8")).toContain(
+        "compose_project=freeduet-eval\n",
+      );
+      expect(await readFile(join(folder, "env.copy"), "utf8")).toBe(
+        EVAL_ENV_FILE,
+      );
+      // It looked at the second stack's ports (3101 and 3110) and never at the person's.
+      const asked = await machine.asked();
+      expect(asked.length).toBeGreaterThan(0);
+      for (const url of asked)
+        expect(url).toMatch(/^http:\/\/localhost:31(01|10)\//);
+      // Everything it ran was about that stack: the scripts were told which, and so was Compose.
+      expect(await machine.envSeen()).toEqual([
+        "stop.sh OPENBOT_ENV_FILE=.env.eval",
+        "start.sh OPENBOT_ENV_FILE=.env.eval",
+      ]);
+      expect(
+        (await machine.calls()).filter(
+          (call) =>
+            call.startsWith("docker compose ") &&
+            !call.includes("--env-file") &&
+            call !== "docker compose version",
+        ),
+      ).toEqual([]);
+      await personsStackIsAsItWas(machine);
+    });
+
+    test("a run for the person's stack does the same the other way round, and leaves the second one alone", async () => {
+      const machine = await build({ twoStacks: true });
+      const result = await machine.run(["--watch", "0"]);
+      expect(outcome(result)).toMatchObject({ exitCode: 0 });
+      expect(plain(result.stdout)).toContain("Docker project:  freeduet ");
+      expect(await machine.db()).toContain("migrated=1");
+      const folder = await copyOf(machine);
+      const dump = await readFile(join(folder, "database.dump"), "utf8");
+      expect(dump).toContain(START_DB);
+      expect(dump).not.toContain("stack=eval");
+      expect(await readFile(join(folder, "record.txt"), "utf8")).toContain(
+        "compose_project=freeduet\n",
+      );
+      expect(await machine.envSeen()).toEqual([
+        "stop.sh OPENBOT_ENV_FILE=",
+        "start.sh OPENBOT_ENV_FILE=",
+      ]);
+      const asked = await machine.asked();
+      expect(asked.length).toBeGreaterThan(0);
+      for (const url of asked)
+        expect(url).toMatch(/^http:\/\/localhost:30(01|10)\//);
+      await secondStackIsAsItWas(machine);
+    });
+
+    test("when going back, a run for one puts back only that one", async () => {
+      const machine = await build({ twoStacks: true });
+      await machine.set("app-down-new");
+      const result = await machine.run(["--watch", "0", "--wait", "6"], {
+        OPENBOT_ENV_FILE: ".env.eval",
+      });
+      expect(outcome(result)).toMatchObject({ exitCode: 10 });
+      expect(await machine.evalDb()).toBe(EVAL_DB);
+      expect(await machine.evalValue("role-password")).toBe(EVAL_VERIFIER);
+      expect(await machine.evalValue("stack")).toBe("up");
+      await personsStackIsAsItWas(machine);
+    });
+
+    test("refuses when the shell names another project than the settings file does, which is how a run for one would reach the other", async () => {
+      const machine = await build({ twoStacks: true });
+      const result = await refusedAt(
+        machine,
+        "COMPOSE_PROJECT_NAME is set in this shell (freeduet) and is different in .env.eval (freeduet-eval)",
+        { OPENBOT_ENV_FILE: ".env.eval", COMPOSE_PROJECT_NAME: "freeduet" },
+      );
+      expect(plain(result.stdout)).not.toContain("Updated.");
+      await personsStackIsAsItWas(machine);
+      await secondStackIsAsItWas(machine);
+    });
+
+    test("refuses when the settings file names one project and the container Docker finds is in another", async () => {
+      const machine = await build({ twoStacks: true });
+      // The same checkout, so the folder matches: only the project tells them apart.
+      await machine.set("label-project", "freeduet-eval");
+      await refusedAt(
+        machine,
+        ".env names the Docker project freeduet, but the database container that Docker found is in the project freeduet-eval",
+      );
+      await secondStackIsAsItWas(machine);
+    });
+  });
+});
+
+describe("the folder for the copies", () => {
+  test("is refused inside the repository, however it is written, and nothing is changed", async () => {
+    const machine = await build();
+    await symlink(machine.repo, join(machine.dir, "link-to-repo"));
+    for (const folder of [
+      join(machine.repo, "copies"),
+      join(machine.root, "not/made/yet/copies"),
+      // The checkout is a sibling of the home folder this runs in.
+      "../work/copies",
+      join(machine.dir, "link-to-repo", "through-a-link"),
+      machine.repo,
+    ]) {
+      const before = await machine.snapshots();
+      const result = await machine.run(["--watch", "0", "--copies", folder]);
+      expect({ folder, ...outcome(result) }).toMatchObject({
+        folder,
+        exitCode: 1,
+      });
+      const text = plain(result.stdout);
+      expect(text).toContain(
+        "The folder for the copies is inside the repository",
+      );
+      expect(text).toContain("Nothing was changed.");
+      expect(changes(await machine.calls())).toEqual([]);
+      expect(await machine.snapshots()).toEqual(before);
+    }
+    // --check refuses it too: it is the same look.
+    const check = await machine.run([
+      "--check",
+      "--copies",
+      join(machine.repo, "copies"),
+    ]);
+    expect(outcome(check).exitCode).toBe(1);
+  });
+
+  test("outside the repository is accepted, also when it is not made yet and when it is written with ..", async () => {
+    const machine = await build();
+    for (const folder of [
+      join(machine.dir, "elsewhere", "copies"),
+      "../elsewhere-too/copies",
+    ]) {
+      const result = await machine.run(["--check", "--copies", folder]);
+      expect({ folder, ...outcome(result) }).toMatchObject({
+        folder,
+        exitCode: 0,
+      });
+    }
+    const real = await machine.run([
+      "--watch",
+      "0",
+      "--copies",
+      join(machine.dir, "elsewhere", "copies"),
+    ]);
+    expect(outcome(real)).toMatchObject({ exitCode: 0 });
+    expect(
+      (await readdir(join(machine.dir, "elsewhere", "copies"))).length,
+    ).toBe(1);
+  });
+});
+
+describe("--to <name>", () => {
+  /** The branch `release` on origin at v0.2, and the person's own branch of that name at `local`. */
+  async function withBranches(local: "v0.1" | "v0.2", remote: "v0.1" | "v0.2") {
+    const machine = await build();
+    await machine.git("fetch", "-q", "--tags", "origin");
+    await machine.git("branch", "release", local);
+    await machine.git(
+      "--git-dir",
+      machine.origin,
+      "update-ref",
+      "refs/heads/release",
+      remote,
+    );
+    return machine;
+  }
+
+  test("takes origin/<name> when the local branch of that name is behind it, and says so", async () => {
+    const machine = await withBranches("v0.1", "v0.2");
+    const result = await machine.run(["--watch", "0", "--to", "release"]);
+    expect(outcome(result)).toMatchObject({ exitCode: 0 });
+    const text = plain(result.stdout);
+    expect(text).toContain(
+      "--to release: using origin/release, because the local branch release is behind it",
+    );
+    expect(text).toContain("Going to:        origin/release");
+    expect(await machine.head()).toBe(await machine.rev("v0.2"));
+  });
+
+  test("keeps a local branch that has commits origin does not have, and says so", async () => {
+    const machine = await withBranches("v0.2", "v0.1");
+    const result = await machine.run(["--watch", "0", "--to", "release"]);
+    expect(outcome(result)).toMatchObject({ exitCode: 0 });
+    expect(plain(result.stdout)).toContain(
+      "--to release: using the local branch release, which has commits that origin/release does not have",
+    );
+    expect(plain(result.stdout)).toContain("Going to:        release");
+    expect(await machine.head()).toBe(await machine.rev("v0.2"));
+  });
+
+  test("says which it took when there is only one: a tag, or a branch that only origin has", async () => {
+    const tag = await build();
+    const tagged = await tag.run(["--watch", "0", "--to", "v0.2"]);
+    expect(outcome(tagged)).toMatchObject({ exitCode: 0 });
+    expect(plain(tagged.stdout)).toContain("--to v0.2: using the tag v0.2");
+
+    const remote = await build();
+    await remote.git(
+      "--git-dir",
+      remote.origin,
+      "update-ref",
+      "refs/heads/release",
+      "v0.2",
+    );
+    const branch = await remote.run(["--watch", "0", "--to", "release"]);
+    expect(outcome(branch)).toMatchObject({ exitCode: 0 });
+    expect(plain(branch.stdout)).toContain(
+      "--to release: using origin/release",
+    );
+    expect(await remote.head()).toBe(await remote.rev("v0.2"));
+  });
+});
 
 describe("secrets", () => {
   test("none out of .env or the database is printed, logged or put on a command line, in the run that works", async () => {
