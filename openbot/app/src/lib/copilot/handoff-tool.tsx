@@ -1,4 +1,5 @@
 import { useRenderTool } from "@copilotkit/react-core/v2";
+import { readDoneWhen } from "@openbot/shared/handoff-done-when";
 import { z } from "zod";
 import { ToolLine } from "@/components/channels/tool-line";
 import { HANDED_OVER } from "@/lib/copilot/markers";
@@ -21,6 +22,7 @@ const parameters = z.object({
   task: z.string().optional(),
   constraints: z.string().optional(),
   expecting: z.string().optional(),
+  done_when: z.string().optional(),
 });
 
 /**
@@ -42,12 +44,13 @@ export function HandoffTool() {
     render: ({ parameters: given, result, status }) => {
       const asked = given?.bot?.trim();
       const running = status !== "complete" && result === undefined;
-      return (
+      const turnedAway = !running && refused(result);
+      const row = (
         <ToolLine
           label={asked ? `Asked ${asked}` : "Asked another Bot"}
           detail={given?.task}
           running={running}
-          refused={!running && refused(result)}
+          refused={turnedAway}
         >
           {/*
            * The parts, kept as parts. The asking model was made to name them so the receiving one
@@ -71,6 +74,26 @@ export function HandoffTool() {
             ) : null}
           </div>
         </ToolLine>
+      );
+      /*
+       * What counts as done, in the words of the Bot that asked, under the row where a person sees it
+       * without opening anything. Read by the function the server reads it with, so a line the server
+       * would refuse is not drawn; and drawn as a text node, so a line with markup or a link in it is
+       * shown as the characters it is. A hand-off that was turned away shows none: nothing was asked.
+       * Without a line the row is returned as it always was.
+       */
+      const finish = readDoneWhen(given?.done_when);
+      if (!finish.ok || !finish.line || turnedAway) return row;
+      return (
+        <div className="min-w-0">
+          {row}
+          <p
+            className="-mt-2 type-caption break-words pb-1 pl-[49px] text-duet-ink-3"
+            data-done-when
+          >
+            Done when: {finish.line}
+          </p>
+        </div>
       );
     },
   });

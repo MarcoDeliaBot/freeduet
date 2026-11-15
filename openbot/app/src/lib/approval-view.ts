@@ -104,6 +104,126 @@ function describeShare(args: Record<string, unknown>): ApprovalView {
   };
 }
 
+/** The two Gmail connections' tools that organise a mailbox (server/src/plugins/mail-organise.ts). */
+const ORGANISE_TOOL =
+  /^(?:google-imap|google-workspace)\/(gmail_create_label|gmail_label_messages|gmail_archive_messages|gmail_mark_messages)$/;
+
+const count = (n: number, one: string, many = `${one}s`) =>
+  `${n} ${n === 1 ? one : many}`;
+
+const names = (value: unknown): string[] =>
+  Array.isArray(value)
+    ? value.filter((v): v is string => typeof v === "string" && v.trim() !== "")
+    : typeof value === "string" && value.trim()
+      ? [value.trim()]
+      : [];
+
+/**
+ * A call that labels, archives or marks mail, or creates a label, in plain words and with the
+ * messages it touches.
+ *
+ * The count and the list come from what the SERVER read in the mailbox when it opened the request
+ * (`action.details`), never from the ids the Bot sent: a Bot asked to describe ten messages could
+ * describe others. When the server could not read them, the card says so and shows only how many the
+ * Bot named. What the call does is said once, in words, because a person who answers "Archive 12
+ * messages" should not have to know what archiving does to a message.
+ */
+function describeOrganise(
+  request: Pick<ApprovalRequest, "action">,
+): ApprovalView | null {
+  const tool = ORGANISE_TOOL.exec(request.action.toolRef)?.[1];
+  if (!tool) return null;
+  const args =
+    request.action.args &&
+    typeof request.action.args === "object" &&
+    !Array.isArray(request.action.args)
+      ? (request.action.args as Record<string, unknown>)
+      : {};
+  const base = { app: "Gmail", kind: "mail" as const };
+
+  if (tool === "gmail_create_label") {
+    const [name] = names(args.name);
+    return {
+      ...base,
+      title: name ? `Create the label \u201c${name}\u201d` : "Create a label",
+      fields: [
+        {
+          label: "What happens",
+          value:
+            "A new, empty label is added to your Gmail. No message is changed.",
+        },
+      ],
+      body: null,
+    };
+  }
+
+  const details = request.action.details;
+  const named = names(args.messageIds);
+  const total = details
+    ? details.messages.length + details.missing
+    : new Set(named.map((id) => id.toLowerCase())).size;
+  const messages = count(total, "message");
+
+  const fields: ApprovalView["fields"] = [];
+  let title: string;
+  if (tool === "gmail_archive_messages") {
+    title = `Archive ${messages}`;
+    fields.push({
+      label: "What happens",
+      value:
+        "They leave the Inbox and stay in All Mail, with their labels. Nothing is deleted.",
+    });
+  } else if (tool === "gmail_mark_messages") {
+    title = `Mark ${messages} as ${args.state === "unread" ? "unread" : "read"}`;
+    fields.push({
+      label: "What happens",
+      value: "Only whether they show as read changes. Nothing is deleted.",
+    });
+  } else {
+    const add = names(args.addLabels);
+    const remove = names(args.removeLabels);
+    const one = (list: string[]) =>
+      list.length === 1
+        ? `the label \u201c${list[0]}\u201d`
+        : `${list.length} labels`;
+    title =
+      add.length > 0 && remove.length === 0
+        ? `Add ${one(add)} to ${messages}`
+        : remove.length > 0 && add.length === 0
+          ? `Remove ${one(remove)} from ${messages}`
+          : `Change the labels on ${messages}`;
+    if (add.length > 0) fields.push({ label: "Add", value: add.join(", ") });
+    if (remove.length > 0)
+      fields.push({ label: "Remove", value: remove.join(", ") });
+    fields.push({
+      label: "What happens",
+      value: "Labels are added or taken off. No message is moved or deleted.",
+    });
+  }
+
+  if (!details) {
+    fields.push({
+      label: "Messages",
+      value: `Your mailbox could not be read just now, so who they are from and what they are about is not shown. ${count(total, "message")} named.`,
+    });
+  } else if (details.missing > 0) {
+    fields.push({
+      label: "Not found",
+      value: `${count(details.missing, "message")} of the ${total} named ${details.missing === 1 ? "is" : "are"} not in your mailbox, so this will be refused as it stands.`,
+    });
+  }
+
+  const body = details?.messages.length
+    ? details.messages
+        .map(
+          (m) =>
+            `${m.from || "Unknown sender"}: ${m.subject || "(no subject)"}`,
+        )
+        .join("\n")
+    : null;
+  return { ...base, title, fields, body };
+}
+
 /**
  * Where an action happens, as a person reads it. The scope is the server's matching key, and for a
  * send to other people it carries the share check's `external:` marker, which is plumbing.
@@ -134,6 +254,8 @@ export function describeApproval(
     !Array.isArray(args)
   )
     return describeShare(args as Record<string, unknown>);
+  const organise = describeOrganise(request);
+  if (organise) return organise;
   const segments = toolRef.split("/").filter(Boolean);
   const name = segments.at(-1) ?? toolRef;
   const prefix = segments.length > 1 ? segments[0] : null;

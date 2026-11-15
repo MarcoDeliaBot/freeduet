@@ -30,6 +30,22 @@ import {
   shownHeader,
   summary,
 } from "./google-workspace-rest";
+import {
+  type ImapOrganiserLike,
+  organiseOverImap,
+  watchForChanges,
+} from "./google-imap-organise";
+import {
+  allMailPath,
+  isOrganiseMessageTool,
+  isOrganiseTool,
+  LIST_LABELS,
+  labelsAnswer,
+  type OrganiseDetails,
+  ownLabelNames,
+  parseOrganiseCall,
+  shownMessage,
+} from "./mail-organise";
 import { type MailPreset, mailPreset } from "./mail-presets";
 import type { McpCallResult, McpTool } from "./mcp";
 import {
@@ -54,8 +70,15 @@ import {
  *
  * - The mailbox is opened read-only (IMAP `EXAMINE`), and messages are fetched without marking them
  *   read (`BODY.PEEK`, which imapflow always uses). The only calls this module makes on a mailbox
- *   are LIST, EXAMINE, SEARCH, FETCH and logout. There is no tool that moves, deletes, labels,
- *   flags or appends, and the client type below has no method that could.
+ *   are LIST, EXAMINE, SEARCH, FETCH and logout. There is no call here that moves, deletes, labels,
+ *   flags or appends, and the client type below has no method that could. A test reads this file's
+ *   source to keep it so.
+ * - Organising a mailbox (labels, archive, read and unread: the tools of {@link ./mail-organise}) is
+ *   the one thing that needs a mailbox opened for writing, and it is done by
+ *   {@link ./google-imap-organise}, a module of its own with a client type of its own, so that
+ *   nothing in THIS file can change a mailbox. This file only hands a call to it, on a second
+ *   connection that exists for that one call. Listing the labels and describing the messages a call
+ *   names, for the person's card, stay here and stay read-only.
  * - Mail leaves in two ways, `gmail_send_reply` and `gmail_send_message`, both of which the catalogue
  *   names writes, so the approval gate looks at each first. A reply goes inside an existing thread,
  *   to people already on the message being answered, and adds nobody. A new message goes to at most
@@ -79,8 +102,6 @@ const SNIPPET_BYTES = 2_048;
 const SNIPPET_CHARS = 200;
 /** Four bytes a character is the most UTF-8 spends, so this always covers the body cap. */
 const BODY_DOWNLOAD_BYTES = 90_000;
-/** What Gmail calls the folder holding everything, when the server does not say which one it is. */
-const ALL_MAIL_FALLBACK = "[Gmail]/All Mail";
 /** A Gmail message or thread id, as the REST API and this module spell it: hex. */
 const GMAIL_ID = /^[0-9a-f]{1,16}$/i;
 /** Parallel to the REST adapter's own cap on how many results a calendar listing returns. */
@@ -143,7 +164,13 @@ export interface ImapClientLike {
   logout(): Promise<void>;
   close(): void;
   on(event: "error", listener: (error: Error) => void): unknown;
-  list(): Promise<{ path: string; specialUse?: string | undefined }[]>;
+  list(): Promise<
+    {
+      path: string;
+      specialUse?: string | undefined;
+      specialUseSource?: string | undefined;
+    }[]
+  >;
   mailboxOpen(path: string, options: { readOnly: true }): Promise<unknown>;
   search(
     query: { gmailraw?: string; emailId?: string },
@@ -202,8 +229,21 @@ export type SmtpFactory = (options: {
   pass: string;
 }) => SmtpClientLike;
 
+/** What every connection has: opening it, closing it and hearing about an error. */
+type Lifecycle = Pick<ImapClientLike, "connect" | "logout" | "close" | "on">;
+
+/** The connection an organising call is made on. It is the same real client, typed by what that call may do. */
+export type ImapOrganiserFactory = (options: {
+  host: string;
+  port: number;
+  secure: true;
+  user: string;
+  pass: string;
+}) => Lifecycle & ImapOrganiserLike;
+
 export type TransportDeps = {
   imap: ImapFactory;
+  organiser: ImapOrganiserFactory;
   smtp: SmtpFactory;
   fetch: IcsFetcher;
   now: () => Date;
@@ -223,6 +263,9 @@ const realImap: ImapFactory = (options) =>
     greetingTimeout: 10_000,
     socketTimeout: 30_000,
   }) as unknown as ImapClientLike;
+
+const realOrganiser: ImapOrganiserFactory = (options) =>
+  realImap(options) as unknown as Lifecycle & ImapOrganiserLike;
 
 const realSmtp: SmtpFactory = (options) => {
   const transporter = nodemailer.createTransport({
@@ -244,6 +287,7 @@ const realSmtp: SmtpFactory = (options) => {
 
 const realDeps: TransportDeps = {
   imap: realImap,
+  organiser: realOrganiser,
   smtp: realSmtp,
   fetch: (input, init) => fetch(input, init),
   now: () => new Date(),
@@ -310,45 +354,41 @@ function sentenceFor(error: unknown, what: string): string {
 }
 
 /* ------------------------------------------------------------------------------------------------
- * One mailbox, opened read-only, for the length of one call.
+ * One connection, for the length of one call, and the mailbox on it opened read-only.
  * ---------------------------------------------------------------------------------------------- */
 
+/** The same for every connection this module makes: where it goes and who it logs in as. */
+const connectionOptions = (preset: MailPreset, secret: UserSecret) => ({
+  host: preset.imap.host,
+  port: preset.imap.port,
+  secure: preset.imap.secure,
+  user: secret.address,
+  pass: secret.password,
+});
+
 /**
- * Runs `run` against the person's all-mail folder, opened read-only, and closes the connection.
+ * Runs `run` on a connection and closes it, however the call ended: the one place a connection's
+ * life, its deadline and its failures are handled, so none can be left open and none can carry a
+ * library's own words into an answer. `onError` turns what went wrong into the answer for that call.
  *
  * A connection per call rather than a held one: a Bot's calls are minutes apart, a held session is a
- * password in memory for as long as it lives, and Gmail drops an idle one anyway. All Mail is where
- * every message lives whatever it is labelled, so a search there answers what Gmail's own search
- * does; its name depends on the account's language, which is why it is found by its `\All` flag.
+ * password in memory for as long as it lives, and Gmail drops an idle one anyway.
  */
-async function withMailbox(
-  deps: TransportDeps,
-  preset: MailPreset,
-  secret: UserSecret,
-  run: (client: ImapClientLike) => Promise<McpCallResult>,
-  what: string,
-): Promise<McpCallResult> {
-  const client = deps.imap({
-    host: preset.imap.host,
-    port: preset.imap.port,
-    secure: preset.imap.secure,
-    user: secret.address,
-    pass: secret.password,
-  });
+async function withConnection<C extends Lifecycle, T>(
+  client: C,
+  run: (client: C) => Promise<T>,
+  onError: (error: unknown) => T,
+  deadlineMs = CALL_TIMEOUT_MS,
+): Promise<T> {
   // An `error` event with no listener is thrown at the process. The failure that caused it surfaces
   // through the call that was running, which is where it is read.
   client.on("error", () => {});
   let timer: ReturnType<typeof setTimeout> | undefined;
   const deadline = new Promise<never>((_, reject) => {
-    timer = setTimeout(() => reject(new DeadlineError()), CALL_TIMEOUT_MS);
+    timer = setTimeout(() => reject(new DeadlineError()), deadlineMs);
   });
   const work = (async () => {
     await client.connect();
-    const folders = await client.list();
-    const all =
-      folders.find((folder) => folder.specialUse === "\\All")?.path ??
-      ALL_MAIL_FALLBACK;
-    await client.mailboxOpen(all, { readOnly: true });
     return run(client);
   })();
   // A call that outlives its deadline settles later, with nobody to read it.
@@ -356,18 +396,53 @@ async function withMailbox(
   try {
     return await Promise.race([work, deadline]);
   } catch (error) {
-    return failure(sentenceFor(error, what));
+    return onError(error);
   } finally {
     clearTimeout(timer);
+    // A logout the server does not answer in two seconds is cut off, not waited for.
+    let waiting: ReturnType<typeof setTimeout> | undefined;
     try {
-      await Promise.race([
-        client.logout(),
-        new Promise<void>((resolve) => setTimeout(resolve, 2_000)),
+      const answered = await Promise.race([
+        client.logout().then(() => true),
+        new Promise<boolean>((resolve) => {
+          waiting = setTimeout(() => resolve(false), 2_000);
+        }),
       ]);
+      if (!answered) client.close();
     } catch {
       client.close();
+    } finally {
+      clearTimeout(waiting);
     }
   }
+}
+
+/**
+ * The person's all-mail folder, opened read-only. All Mail is where every message lives whatever it is
+ * labelled, so a search there answers what Gmail's own search does; its name depends on the account's
+ * language, which is why it is found by its `\All` flag.
+ */
+async function openAllMail(client: ImapClientLike): Promise<void> {
+  const folders = await client.list();
+  await client.mailboxOpen(allMailPath(folders), { readOnly: true });
+}
+
+/** Runs `run` against the all-mail folder, opened read-only, and closes the connection. */
+async function withMailbox(
+  deps: TransportDeps,
+  preset: MailPreset,
+  secret: UserSecret,
+  run: (client: ImapClientLike) => Promise<McpCallResult>,
+  what: string,
+): Promise<McpCallResult> {
+  return withConnection(
+    deps.imap(connectionOptions(preset, secret)),
+    async (client) => {
+      await openAllMail(client);
+      return run(client);
+    },
+    (error) => failure(sentenceFor(error, what)),
+  );
 }
 
 /* ------------------------------------------------------------------------------------------------
@@ -685,6 +760,98 @@ async function readMessage(
       body: text,
     },
     cut,
+  );
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * Organising a mailbox (docs/design/mail-organise.md): what stays read-only here, and the hand-off.
+ * ---------------------------------------------------------------------------------------------- */
+
+/**
+ * Longer than a read, because naming a message to the server is one command for each. A call that
+ * outlives it before the first command that changes a thing was sent changed nothing; after that it
+ * may have changed it, and the answer says so (`MAY_HAVE_CHANGED`).
+ */
+const ORGANISE_TIMEOUT_MS = 60_000;
+
+/** A change was sent and the connection then failed or timed out: nobody can say whether it was made. */
+export const MAY_HAVE_CHANGED =
+  "Gmail did not confirm the change after it was sent, so it may have been made. Look in Gmail before asking again.";
+
+/** The person's own labels, by name. A LIST and nothing else: no mailbox is opened. */
+async function listLabels(
+  deps: TransportDeps,
+  preset: MailPreset,
+  secret: UserSecret,
+): Promise<McpCallResult> {
+  return withConnection(
+    deps.imap(connectionOptions(preset, secret)),
+    async (client) => asJson(labelsAnswer(ownLabelNames(await client.list()))),
+    (error) => failure(sentenceFor(error, "this request")),
+  );
+}
+
+/**
+ * The messages a call names, as the mailbox holds them, for the approval card: who each is from and
+ * what it is about, read here from the mailbox and never taken from a Bot's words. Read-only like
+ * every read in this module.
+ */
+async function describeMessages(
+  client: ImapClientLike,
+  ids: readonly string[],
+): Promise<OrganiseDetails> {
+  const uids: number[] = [];
+  for (const id of ids) {
+    const uid = await uidOfId(client, id);
+    if (uid !== null) uids.push(uid);
+  }
+  // A server answers in the mailbox's order whatever order a range names, so each is set against its
+  // uid and listed in the order the call named them, as the REST connection does.
+  const shown = new Map<number, OrganiseDetails["messages"][number]>();
+  if (uids.length > 0) {
+    for await (const message of client.fetch(
+      uids.join(","),
+      { uid: true, headers: ["From", "Subject"] },
+      { uid: true },
+    )) {
+      const headers = parseHeaders(message.headers);
+      shown.set(
+        message.uid,
+        shownMessage(
+          shownHeader(headers, "From"),
+          shownHeader(headers, "Subject"),
+        ),
+      );
+    }
+  }
+  const messages = uids.flatMap((uid) => {
+    const one = shown.get(uid);
+    return one ? [one] : [];
+  });
+  return { messages, missing: ids.length - uids.length };
+}
+
+/** A call that changes a mailbox, on the connection made for it, which is closed when it is done. */
+async function organise(
+  deps: TransportDeps,
+  preset: MailPreset,
+  secret: UserSecret,
+  call: Parameters<typeof organiseOverImap>[1],
+): Promise<McpCallResult> {
+  const client = deps.organiser(connectionOptions(preset, secret));
+  // Set the moment a command that changes a thing is handed to the connection: from then on a failure
+  // that is not Gmail's own refusal cannot say the change did not happen.
+  const watch = watchForChanges(client);
+  return withConnection(
+    watch.client,
+    (opened) => organiseOverImap(opened, call),
+    (error) => {
+      const kind = failureKind(error);
+      return watch.sent() && (kind === "timeout" || kind === "unreachable")
+        ? failure(MAY_HAVE_CHANGED)
+        : failure(sentenceFor(error, "this change"));
+    },
+    ORGANISE_TIMEOUT_MS,
   );
 }
 
@@ -1053,6 +1220,18 @@ async function listCalendarEvents(
 export type GoogleImapTransport = {
   listNeedsCredential: false;
   listTools: () => Promise<McpTool[]>;
+  /** What the approval card shows about a call that names messages; see {@link describeMessages}. */
+  describeCall: (
+    connection: {
+      url: string;
+      token?: string;
+      tokenHeader?: string;
+      actorId?: string;
+      botId?: string;
+    },
+    toolName: string,
+    args: Record<string, unknown>,
+  ) => Promise<OrganiseDetails | undefined>;
   callTool: (
     connection: {
       url: string;
@@ -1077,6 +1256,23 @@ export function createGoogleImapTransport(
   return {
     listNeedsCredential,
     listTools,
+    async describeCall(connection, toolName, args) {
+      if (!connection.actorId || !isOrganiseMessageTool(toolName)) return;
+      const parsed = parseOrganiseCall(toolName, args);
+      if (!parsed.ok || !("ids" in parsed.value)) return;
+      const secret = parseSecret(connection.token);
+      if (!secret) return;
+      const ids = parsed.value.ids;
+      return withConnection(
+        deps.imap(connectionOptions(preset, secret)),
+        async (client) => {
+          await openAllMail(client);
+          return describeMessages(client, ids);
+        },
+        // Not being able to read them is not a failure of the call: the card says so instead.
+        () => undefined,
+      );
+    },
     async callTool(connection, toolName, args) {
       /*
        * The token is the person's own secret, decrypted by the store for this call and for nothing
@@ -1096,6 +1292,15 @@ export function createGoogleImapTransport(
         );
       }
 
+      if (isOrganiseTool(toolName)) {
+        // Read once, before any connection is made: a call that cannot be carried out costs none.
+        const parsed = parseOrganiseCall(toolName, args);
+        if (!parsed.ok) return failure(parsed.message);
+        if (parsed.value.tool === LIST_LABELS) {
+          return listLabels(deps, preset, secret);
+        }
+        return organise(deps, preset, secret, parsed.value);
+      }
       if (toolName === "gmail_search_messages") {
         const search = searchArgsOf(args);
         if (!search.ok) return search.result;
@@ -1144,6 +1349,7 @@ const shared = createGoogleImapTransport();
 
 /** The module is the transport, as the registry reads it. */
 export const callTool = shared.callTool;
+export const describeCall = shared.describeCall;
 
 /**
  * Whether a pasted secret works, before anything is stored.

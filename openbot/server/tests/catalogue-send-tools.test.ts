@@ -102,17 +102,29 @@ describe("every catalogue entry carries a send list", () => {
     const imap = catalogueEntry("google-imap");
     expect(oauth?.sendTools).toEqual(GMAIL_SENDS);
     expect(imap?.sendTools).toEqual(oauth?.sendTools ?? []);
-    // The other three tools of either entry are the reads.
+    // The other seven tools of either entry are the reads and the four that organise a mailbox: a
+    // label created, labels added or removed, messages archived, messages marked read or unread. None of
+    // those reaches anybody, so none is a send (docs/design/mail-organise.md).
+    const others = [
+      "calendar_list_events",
+      "gmail_archive_messages",
+      "gmail_create_label",
+      "gmail_label_messages",
+      "gmail_list_labels",
+      "gmail_mark_messages",
+      "gmail_read_message",
+      "gmail_search_messages",
+    ];
     expect(
       [...(oauth?.readTools ?? []), ...(oauth?.writeTools ?? [])].sort(),
-    ).toEqual(
-      [
-        "calendar_list_events",
-        "gmail_read_message",
-        "gmail_search_messages",
-        ...GMAIL_SENDS,
-      ].sort(),
-    );
+    ).toEqual([...others, ...GMAIL_SENDS].sort());
+    expect(
+      [...(imap?.readTools ?? []), ...(imap?.writeTools ?? [])].sort(),
+    ).toEqual([...others, ...GMAIL_SENDS].sort());
+    for (const name of others) {
+      expect(oauth?.sendTools).not.toContain(name);
+      expect(imap?.sendTools).not.toContain(name);
+    }
   });
 });
 

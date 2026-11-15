@@ -99,16 +99,22 @@ describe("(b) the approval gate treats sending an email, a reply or a new one, a
     "gmail_search_messages",
     "gmail_read_message",
     "calendar_list_events",
+    "gmail_list_labels",
+  ];
+  // The two that send mail, and the four that only organise a mailbox (docs/design/mail-organise.md).
+  const SENDS = ["gmail_send_reply", "gmail_send_message"];
+  const ORGANISING = [
+    "gmail_create_label",
+    "gmail_label_messages",
+    "gmail_archive_messages",
+    "gmail_mark_messages",
   ];
 
   test("its lists are the OAuth entry's, name for name", () => {
     expect(entry?.readTools).toEqual(oauth?.readTools);
     expect(entry?.writeTools).toEqual(oauth?.writeTools);
     expect(entry?.readTools).toEqual(READS);
-    expect(entry?.writeTools).toEqual([
-      "gmail_send_reply",
-      "gmail_send_message",
-    ]);
+    expect(entry?.writeTools).toEqual([...SENDS, ...ORGANISING]);
   });
 
   test("gmail_send_reply is a write, and a recorded read cannot narrow it", () => {
@@ -158,7 +164,7 @@ describe("(b) the approval gate treats sending an email, a reply or a new one, a
     expect(classifyTool(entry, "gmail_search_messages", false)).toBe("write");
   });
 
-  test("the transport offers the same five tools the OAuth adapter does, and no sixth", async () => {
+  test("the transport offers the same ten tools the OAuth adapter does, and no eleventh", async () => {
     const imap = await imapListTools();
     const rest = await restListTools({ url: "" });
     expect(imap.map((tool) => tool.name)).toEqual(
@@ -166,7 +172,7 @@ describe("(b) the approval gate treats sending an email, a reply or a new one, a
     );
     expect(imap).toEqual(rest);
     expect(imap.map((tool) => tool.name).sort()).toEqual(
-      [...READS, "gmail_send_reply", "gmail_send_message"].sort(),
+      [...READS, ...SENDS, ...ORGANISING].sort(),
     );
     // Every tool it offers is on one of the entry's two lists, so none can classify by default.
     const named = new Set([
@@ -177,7 +183,7 @@ describe("(b) the approval gate treats sending an email, a reply or a new one, a
     const writes = imap
       .filter((tool) => classifyTool(entry, tool.name, true) === "write")
       .map((tool) => tool.name);
-    expect(writes.sort()).toEqual(["gmail_send_message", "gmail_send_reply"]);
+    expect(writes.sort()).toEqual([...SENDS, ...ORGANISING].sort());
   });
 
   test("the gate's built-in safety words do not read the entry's own key as a credential change, so a reply can be approved", () => {

@@ -479,13 +479,19 @@ const REVIEWED: readonly CatalogueEntry[] = Object.freeze([
       tokenUrl: "https://oauth2.googleapis.com/token",
       revokeUrl: "https://oauth2.googleapis.com/revoke",
       /*
-       * Read mail, send mail, read the calendar, and nothing wider. `gmail.send` can send but not
-       * read, trash or label; `gmail.modify` would be one string instead of two and would also let
-       * a Bot archive, label and trash mail. Calendar is read-only because nothing here writes to it.
+       * Read mail, send mail, organise mail, read the calendar. `gmail.send` can send but not read,
+       * trash or label. `gmail.modify` is what labelling, archiving and marking read need (Gmail's
+       * `messages.batchModify` takes no narrower one), and it is WIDER than the tools: it would also
+       * let a client trash mail, which no tool here does and the adapter cannot be made to. The tools,
+       * not the scope, are the boundary, as they are for the app-password entry below
+       * (docs/design/mail-organise.md). A person who connected before it was added has not granted it,
+       * and the organising tools say so until they connect again. Calendar is read-only because
+       * nothing here writes to it.
        */
       scopes: Object.freeze([
         "https://www.googleapis.com/auth/gmail.readonly",
         "https://www.googleapis.com/auth/gmail.send",
+        "https://www.googleapis.com/auth/gmail.modify",
         "https://www.googleapis.com/auth/calendar.readonly",
       ]),
       // Load bearing for Google, for the reasons given on the Drive entry.
@@ -496,18 +502,29 @@ const REVIEWED: readonly CatalogueEntry[] = Object.freeze([
     },
     /*
      * BOTH LISTS, so a tool that is on neither is a write. The transport advertises exactly these
-     * five today; a sixth added to the adapter and forgotten here classifies as a write rather than
-     * slipping through as a read, which is the direction a missed entry should fail in. Both writes
+     * ten today; an eleventh added to the adapter and forgotten here classifies as a write rather than
+     * slipping through as a read, which is the direction a missed entry should fail in. Two writes
      * send mail as the person: `gmail_send_reply` inside a thread, `gmail_send_message` to somebody
-     * new. The `gmail.send` scope above covers both, so the second added no scope.
+     * new. The other four writes organise the mailbox (a label created, labels added or removed,
+     * messages archived, messages marked read or unread) and send nothing, so they are writes and not
+     * sends: each asks the person, and none is covered by what covers a send. `gmail_list_labels` only
+     * reads. `./mail-organise` names them; a test holds this list to it.
      */
     readTools: Object.freeze([
       "gmail_search_messages",
       "gmail_read_message",
       "calendar_list_events",
+      "gmail_list_labels",
     ]),
-    writeTools: Object.freeze(["gmail_send_reply", "gmail_send_message"]),
-    // Both writes are mail sent as the person, so both are sends: a reply in a thread and a new message.
+    writeTools: Object.freeze([
+      "gmail_send_reply",
+      "gmail_send_message",
+      "gmail_create_label",
+      "gmail_label_messages",
+      "gmail_archive_messages",
+      "gmail_mark_messages",
+    ]),
+    // Two writes are mail sent as the person: a reply in a thread and a new message. Organising is not.
     sendTools: Object.freeze(["gmail_send_reply", "gmail_send_message"]),
     docsUrl: "https://developers.google.com/workspace/gmail/api/guides",
   },
@@ -529,8 +546,9 @@ const REVIEWED: readonly CatalogueEntry[] = Object.freeze([
     transport: "google-imap",
     auth: Object.freeze({ kind: "user-secret", preset: "gmail" }),
     /*
-     * THE SAME FIVE TOOLS AS THE ENTRY ABOVE, with the same split, so the approval gate treats
-     * `gmail_send_reply` and `gmail_send_message` as writes exactly as it does there. Spelled again rather than shared so
+     * THE SAME TEN TOOLS AS THE ENTRY ABOVE, with the same split, so the approval gate treats
+     * `gmail_send_reply` and `gmail_send_message` as writes exactly as it does there, and the four
+     * that organise the mailbox as writes that are not sends. Spelled again rather than shared so
      * that nothing about the OAuth entry changes; a test holds the two lists equal.
      *
      * An app password is wider than any OAuth scope: it would let a client read, move, delete and
@@ -542,9 +560,17 @@ const REVIEWED: readonly CatalogueEntry[] = Object.freeze([
       "gmail_search_messages",
       "gmail_read_message",
       "calendar_list_events",
+      "gmail_list_labels",
     ]),
-    writeTools: Object.freeze(["gmail_send_reply", "gmail_send_message"]),
-    // Both writes are mail sent as the person, so both are sends: a reply in a thread and a new message.
+    writeTools: Object.freeze([
+      "gmail_send_reply",
+      "gmail_send_message",
+      "gmail_create_label",
+      "gmail_label_messages",
+      "gmail_archive_messages",
+      "gmail_mark_messages",
+    ]),
+    // Two writes are mail sent as the person: a reply in a thread and a new message. Organising is not.
     sendTools: Object.freeze(["gmail_send_reply", "gmail_send_message"]),
     docsUrl: "https://support.google.com/accounts/answer/185833",
   },

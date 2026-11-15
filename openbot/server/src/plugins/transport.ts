@@ -5,6 +5,7 @@ import * as composio from "./composio";
 import * as driveRest from "./google-drive-rest";
 import * as googleImap from "./google-imap";
 import * as workspaceRest from "./google-workspace-rest";
+import type { OrganiseDetails } from "./mail-organise";
 import type { ListedTool, McpCallResult } from "./mcp";
 import * as mcp from "./mcp";
 
@@ -113,6 +114,26 @@ export type VendorTransport = {
     toolName: string,
     args: Record<string, unknown>,
   ): Promise<McpCallResult>;
+  /**
+   * What the approval card shows about a call that names messages: the messages themselves, as THIS
+   * transport read them from the mailbox (./mail-organise). OPTIONAL, like every addition to this seam:
+   * a transport with nothing to show answers none, and the card is then drawn from the arguments alone.
+   *
+   * Never a way to do anything. It reads, it is asked only when somebody is about to be asked about the
+   * call, and it answers `undefined` rather than fail: a card that cannot be filled in is a card that says
+   * so, not a call that is refused. The connection is the one `callTool` is given.
+   */
+  describeCall?(
+    connection: {
+      url: string;
+      token?: string;
+      tokenHeader?: string;
+      actorId?: string;
+      botId?: string;
+    },
+    toolName: string,
+    args: Record<string, unknown>,
+  ): Promise<OrganiseDetails | undefined>;
 };
 
 /**

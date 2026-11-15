@@ -69,6 +69,21 @@ export {
   withApprovalContext,
 };
 
+/**
+ * FreeDuet, mail organising (docs/design/mail-organise.md): the messages a call names, as the SERVER
+ * read them from the mailbox, for the card the person answers. Never what a Bot said about them: a
+ * model asked to describe ten messages could describe others, so the card is drawn from this and from
+ * the arguments, and says when this could not be read.
+ *
+ * Not part of the digest. It is read once, when the person is about to be asked, and stored with the
+ * request; what is approved is still the call's own arguments and target.
+ */
+export type ApprovalDetails = {
+  messages: { from: string; subject: string }[];
+  /** How many of the named ids the mailbox does not hold. The call is refused whole while any is missing. */
+  missing: number;
+};
+
 export type ApprovalCandidate = {
   actorId: string;
   botId: string;
@@ -102,16 +117,30 @@ export type ApprovalCandidate = {
    */
   changesSetting?: true;
   /**
+   * The call changes a mailbox (create a label, label, archive, mark: the four writes of
+   * docs/design/mail-organise.md), read off the transport the row resolved to and the tool's name together.
+   * It always shows a card, unless the person's own earlier "Always allow" for this tool answers it.
+   */
+  organisesMailbox?: true;
+  /**
    * The person just allowed this exact send on its own card, the check that asks about a new email
    * every time. Asked about again, it would be a second card for one email.
    */
   answeredByCard?: true;
+  /**
+   * How to read what the call touches, for its card (see {@link ApprovalDetails}). A closure, so that
+   * it runs only when the person is about to be asked and costs nothing when the gate lets the call
+   * through; it never throws into the gate, and it is never stored. Not part of the digest.
+   */
+  describe?: () => Promise<ApprovalDetails | undefined>;
 };
 export type ApprovalAction = ApprovalCandidate & {
   runId: string;
   threadId: string;
   toolCallId: string;
   actionDigest: string;
+  /** What `describe` read when the request was opened. Stored with it; see {@link ApprovalDetails}. */
+  details?: ApprovalDetails;
   /** Set by the gate. Absent on a request opened by older code, which may still auto-approve. */
   policy?: ApprovalPolicyOutcome;
   /**
@@ -373,8 +402,11 @@ export function approvalAction(candidate: ApprovalCandidate): ApprovalAction {
       }),
     )
     .digest("hex");
+  // The closure that reads what a call touches is the call site's, and is run by the gate; the action
+  // that is stored and signed has no function in it.
+  const { describe: _describe, ...stored } = candidate;
   return {
-    ...candidate,
+    ...stored,
     continuation,
     runId: continuation.runId,
     threadId: continuation.threadId,

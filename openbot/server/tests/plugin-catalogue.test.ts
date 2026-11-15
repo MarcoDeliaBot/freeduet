@@ -247,23 +247,31 @@ describe("Gmail and Google Calendar", () => {
     });
   });
 
-  test("asks to read mail, send mail and read the calendar, and nothing wider", () => {
+  test("asks to read, send and organise mail and to read the calendar, and nothing wider", () => {
+    // gmail.modify is what labelling, archiving and marking read need; the tools, not the scope, are
+    // the boundary (docs/design/mail-organise.md). The full-mailbox scope is never asked for.
     expect(entry?.auth.kind === "user-oauth" ? entry.auth.scopes : []).toEqual([
       "https://www.googleapis.com/auth/gmail.readonly",
       "https://www.googleapis.com/auth/gmail.send",
+      "https://www.googleapis.com/auth/gmail.modify",
       "https://www.googleapis.com/auth/calendar.readonly",
     ]);
   });
 
-  test("names its reads and its two writes explicitly", () => {
+  test("names its reads and its six writes explicitly", () => {
     expect(entry?.readTools).toEqual([
       "gmail_search_messages",
       "gmail_read_message",
       "calendar_list_events",
+      "gmail_list_labels",
     ]);
     expect(entry?.writeTools).toEqual([
       "gmail_send_reply",
       "gmail_send_message",
+      "gmail_create_label",
+      "gmail_label_messages",
+      "gmail_archive_messages",
+      "gmail_mark_messages",
     ]);
   });
 
@@ -344,10 +352,7 @@ describe("pointing Gmail and Calendar at a fake Google", () => {
       reviewed.auth.authorizationParams,
     );
     expect(workspace.readTools).toEqual(reviewed.readTools);
-    expect(workspace.writeTools).toEqual([
-      "gmail_send_reply",
-      "gmail_send_message",
-    ]);
+    expect(workspace.writeTools).toEqual(reviewed.writeTools);
   });
 
   test("an unset NODE_ENV is development, which is what a laptop has", () => {

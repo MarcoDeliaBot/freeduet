@@ -1,5 +1,27 @@
 import { cutAtCodeUnits } from "../channels/text";
 import { plainAddress } from "./mail-address";
+import {
+  ARCHIVE_MESSAGES,
+  archivedAnswer,
+  CREATE_LABEL,
+  createdAnswer,
+  isOrganiseMessageTool,
+  inHiddenFolder,
+  isOrganiseTool,
+  LABEL_MESSAGES,
+  type LabelRef,
+  labeledAnswer,
+  labelsAnswer,
+  LIST_LABELS,
+  markedAnswer,
+  missingMessages,
+  noSuchLabel,
+  type OrganiseCall,
+  type OrganiseDetails,
+  ORGANISE_TOOL_DEFINITIONS,
+  parseOrganiseCall,
+  shownMessage,
+} from "./mail-organise";
 import type { McpCallResult, McpTool } from "./mcp";
 
 /**
@@ -223,6 +245,8 @@ const TOOLS: readonly McpTool[] = Object.freeze([
       },
     },
   },
+  // Organising a mailbox. Defined once in ./mail-organise, for both ways of connecting.
+  ...ORGANISE_TOOL_DEFINITIONS,
 ]);
 
 type Connection = { url: string; token?: string };
@@ -269,6 +293,8 @@ async function request<T>(
   init: {
     query?: Record<string, string | readonly string[]>;
     json?: unknown;
+    /** A success that answers with no body (Gmail's `batchModify` answers 204) is an empty object. */
+    allowEmpty?: true;
   } = {},
 ): Promise<Outcome<T>> {
   if (!connection.token) {
@@ -313,6 +339,10 @@ async function request<T>(
       message: refusal(product, response.status, body),
       status: response.status,
     };
+  }
+
+  if (init.allowEmpty && response.status === 204) {
+    return { ok: true, value: {} as T };
   }
 
   /*
@@ -978,6 +1008,219 @@ export const asJson = (value: unknown, truncated = false): McpCallResult => ({
   truncated,
 });
 
+/* ------------------------------------------------------------------------------------------------
+ * Organising a mailbox: labels, archive, read and unread (docs/design/mail-organise.md).
+ * ---------------------------------------------------------------------------------------------- */
+
+type GmailLabel = { id?: string; name?: string; type?: string };
+type OwnLabel = { id: string; name: string };
+
+/**
+ * The person's own labels. Gmail's system labels are left out: a Bot names none of them but STARRED
+ * and IMPORTANT, which need no lookup because their identifiers are their names.
+ */
+async function ownLabels(connection: Connection): Promise<Outcome<OwnLabel[]>> {
+  const listed = await request<{ labels?: GmailLabel[] }>(
+    connection,
+    "Gmail",
+    `${GMAIL}/labels`,
+  );
+  if (!listed.ok) return listed;
+  const own: OwnLabel[] = [];
+  for (const label of listed.value.labels ?? []) {
+    if (
+      label.type === "user" &&
+      typeof label.id === "string" &&
+      typeof label.name === "string"
+    ) {
+      own.push({ id: label.id, name: label.name });
+    }
+  }
+  return { ok: true, value: own };
+}
+
+/** Gmail's ids for the labels a call names, with their names; null when one of them is not there. */
+function labelIdsOf(
+  refs: readonly LabelRef[],
+  own: readonly OwnLabel[],
+): { ids: string[]; names: string[] } | null {
+  const ids: string[] = [];
+  const names: string[] = [];
+  for (const ref of refs) {
+    if (ref.kind === "system") {
+      ids.push(ref.id);
+      names.push(ref.id);
+      continue;
+    }
+    const found = own.find(
+      (label) => label.name.toLowerCase() === ref.name.toLowerCase(),
+    );
+    if (!found) return null;
+    ids.push(found.id);
+    names.push(found.name);
+  }
+  return { ids, names };
+}
+
+/**
+ * The named messages as Gmail holds them, and how many it does not. Read by this server, from the
+ * mailbox, so what the person is shown and what a call checks is not something a Bot said.
+ */
+async function lookUpMessages(
+  connection: Connection,
+  ids: readonly string[],
+): Promise<Outcome<{ found: GmailMessage[]; missing: number }>> {
+  const looked = await lookUpAll<string, GmailMessage | null>(
+    ids,
+    LOOKUP_CONCURRENCY,
+    async (id) => {
+      const message = await request<GmailMessage>(
+        connection,
+        "Gmail",
+        `${GMAIL}/messages/${encodeURIComponent(id)}`,
+        { query: { format: "metadata", metadataHeaders: ["From", "Subject"] } },
+      );
+      if (!message.ok && message.status === 404) {
+        return { ok: true as const, value: null };
+      }
+      return message;
+    },
+  );
+  if (!looked.ok) return looked;
+  // A message that Gmail keeps out of sight is not in this mailbox, as it is not over IMAP, where All Mail
+  // does not hold one: the two connections answer "not found" for it, in the same words.
+  const found = looked.value.filter(
+    (message): message is GmailMessage =>
+      message !== null && !inHiddenFolder(message.labelIds),
+  );
+  return { ok: true, value: { found, missing: ids.length - found.length } };
+}
+
+/**
+ * What the approval card shows about a call: the messages it names, as this server read them.
+ *
+ * Asked by the call path only when somebody is about to be asked, and answers nothing for a call that
+ * names no messages or cannot be carried out. A failure to read is not a failure of the call: the
+ * card is then drawn from what was asked, and says it could not be read.
+ */
+export async function describeCall(
+  connection: Connection,
+  toolName: string,
+  args: Record<string, unknown>,
+): Promise<OrganiseDetails | undefined> {
+  if (!isOrganiseMessageTool(toolName)) return undefined;
+  const parsed = parseOrganiseCall(toolName, args);
+  if (!parsed.ok || !("ids" in parsed.value)) return undefined;
+  const looked = await lookUpMessages(connection, parsed.value.ids);
+  if (!looked.ok) return undefined;
+  return {
+    messages: looked.value.found.map((message) => {
+      const { from, subject } = summary(message);
+      return shownMessage(from, subject);
+    }),
+    missing: looked.value.missing,
+  };
+}
+
+async function organise(
+  connection: Connection,
+  call: OrganiseCall,
+): Promise<McpCallResult> {
+  if (call.tool === LIST_LABELS) {
+    const own = await ownLabels(connection);
+    if (!own.ok) return failure(own.message);
+    return asJson(labelsAnswer(own.value.map((label) => label.name)));
+  }
+
+  if (call.tool === CREATE_LABEL) {
+    const own = await ownLabels(connection);
+    if (!own.ok) return failure(own.message);
+    const there = own.value.find(
+      (label) => label.name.toLowerCase() === call.name.toLowerCase(),
+    );
+    if (there) return asJson(createdAnswer(there.name, false));
+    const made = await request<{ name?: string }>(
+      connection,
+      "Gmail",
+      `${GMAIL}/labels`,
+      {
+        json: {
+          name: call.name,
+          labelListVisibility: "labelShow",
+          messageListVisibility: "show",
+        },
+      },
+    );
+    // Gmail answers 409 for a name that is taken: the label is there, which is what was asked for.
+    if (!made.ok && made.status === 409) {
+      return asJson(createdAnswer(call.name, false));
+    }
+    if (!made.ok) return failure(made.message);
+    return asJson(
+      createdAnswer(
+        typeof made.value.name === "string" ? made.value.name : call.name,
+        true,
+      ),
+    );
+  }
+
+  // The three that name messages. What changes is settled first, so a label that is not there is
+  // refused before a single message is read.
+  let add: string[] = [];
+  let remove: string[] = [];
+  let addedNames: string[] = [];
+  let removedNames: string[] = [];
+  if (call.tool === LABEL_MESSAGES) {
+    const own = await ownLabels(connection);
+    if (!own.ok) return failure(own.message);
+    const adding = labelIdsOf(call.add, own.value);
+    const removing = labelIdsOf(call.remove, own.value);
+    if (!adding || !removing) return failure(noSuchLabel);
+    add = adding.ids;
+    addedNames = adding.names;
+    remove = removing.ids;
+    removedNames = removing.names;
+  } else if (call.tool === ARCHIVE_MESSAGES) {
+    remove = ["INBOX"];
+  } else {
+    if (call.state === "read") remove = ["UNREAD"];
+    else add = ["UNREAD"];
+  }
+
+  // All of the named messages or none: a message gone since the person was asked is not skipped.
+  const looked = await lookUpMessages(connection, call.ids);
+  if (!looked.ok) return failure(looked.message);
+  if (looked.value.missing > 0) {
+    return failure(missingMessages(looked.value.missing, call.ids.length));
+  }
+
+  const changed = await request<Record<string, never>>(
+    connection,
+    "Gmail",
+    `${GMAIL}/messages/batchModify`,
+    {
+      json: {
+        ids: call.ids,
+        ...(add.length > 0 ? { addLabelIds: add } : {}),
+        ...(remove.length > 0 ? { removeLabelIds: remove } : {}),
+      },
+      allowEmpty: true,
+    },
+  );
+  if (!changed.ok) return failure(changed.message);
+
+  if (call.tool === LABEL_MESSAGES) {
+    return asJson(labeledAnswer(call.ids.length, addedNames, removedNames));
+  }
+  if (call.tool === ARCHIVE_MESSAGES) {
+    const inInbox = looked.value.found.filter((message) =>
+      message.labelIds?.includes("INBOX"),
+    ).length;
+    return asJson(archivedAnswer(inInbox, call.ids.length - inInbox));
+  }
+  return asJson(markedAnswer(call.ids.length, call.state));
+}
+
 /**
  * Call one tool.
  *
@@ -991,6 +1234,13 @@ export async function callTool(
   toolName: string,
   args: Record<string, unknown>,
 ): Promise<McpCallResult> {
+  if (isOrganiseTool(toolName)) {
+    // Read once, before anything is asked of Google: a call that cannot be carried out costs no request.
+    const parsed = parseOrganiseCall(toolName, args);
+    if (!parsed.ok) return failure(parsed.message);
+    return organise(connection, parsed.value);
+  }
+
   const stringArg = (key: string): string | null => {
     const value = args[key];
     return typeof value === "string" && value.trim() !== "" ? value : null;

@@ -40,6 +40,15 @@ export type ApprovalRequest = {
     toolCallId?: string;
     args: unknown;
     target: unknown;
+    /**
+     * The messages a mail call names (labels, archive, read and unread), as the SERVER read them from
+     * the mailbox when it opened this request (server/src/plugins/mail-organise.ts). Absent for every
+     * other action, and for one whose mailbox could not be read just then: the card says so.
+     */
+    details?: {
+      messages: { from: string; subject: string }[];
+      missing: number;
+    };
     policy?: {
       behaviour: "allow" | "ask" | "hand_off" | "deny";
       source: string;

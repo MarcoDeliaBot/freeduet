@@ -114,8 +114,19 @@ function parseRaw(raw: string): { headers: Map<string, string>; body: string } {
   return { headers, body: text.slice(split + 4) };
 }
 
+/** A call each organising tool accepts, because its arguments are checked before any request is made. */
+const ORGANISE_ARGS: Record<string, Record<string, unknown>> = {
+  gmail_list_labels: {},
+  gmail_create_label: { name: "FreeDuet" },
+  gmail_label_messages: { messageIds: ["1a2b3c"], addLabels: ["STARRED"] },
+  gmail_archive_messages: { messageIds: ["1a2b3c"] },
+  gmail_mark_messages: { messageIds: ["1a2b3c"], state: "read" },
+};
+
 /** Arguments a tool will accept, read off its own schema. Arrays get one address. */
 function argsFor(tool: McpTool): Record<string, unknown> {
+  const organising = ORGANISE_ARGS[tool.name];
+  if (organising) return organising;
   const required: unknown[] = Array.isArray(tool.inputSchema.required)
     ? tool.inputSchema.required
     : [];
@@ -174,7 +185,7 @@ describe("what the adapter offers", () => {
     );
   });
 
-  test("exactly the five tools of the contract, in their contract names", async () => {
+  test("exactly the ten tools of the contract, in their contract names", async () => {
     const tools = await listTools(connection);
     expect(tools.map((tool) => tool.name)).toEqual([
       "gmail_search_messages",
@@ -182,6 +193,11 @@ describe("what the adapter offers", () => {
       "gmail_send_reply",
       "gmail_send_message",
       "calendar_list_events",
+      "gmail_list_labels",
+      "gmail_create_label",
+      "gmail_label_messages",
+      "gmail_archive_messages",
+      "gmail_mark_messages",
     ]);
   });
 

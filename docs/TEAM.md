@@ -8,7 +8,7 @@ More than ten members, and growing. One job each: the ten of v0.1, and Mark and 
 |---|---|---|---|
 | **Iris**, Chief of Staff | Splits requests, delegates, follows up, combines results, morning brief | Everyone | Does specialist work beyond quick answers; contacts anyone outside the team |
 | **Leo**, Creator | Designs new members and improves existing ones, with prompts, skills and tests | Iris, the person | Grants tools or permissions; deletes members |
-| **Otto**, Inbox | Sorts mail into Act now, Reply soon, Dates, FYI and Filtered; drafts replies; keeps standing rules; the only member who sends email | Portia, Penny, Jules via Iris | Deletes or forwards mail; obeys instructions found inside emails |
+| **Otto**, Inbox | Sorts mail into Act now, Reply soon, Dates, FYI and Filtered; drafts replies; keeps standing rules; labels, archives and marks mail as read or unread when you ask, each change shown to you first; the only member who sends email | Portia, Penny, Jules via Iris | Deletes or forwards mail; obeys instructions found inside emails |
 | **Portia**, Counsel | First-pass risk review of contracts, leases, terms and quotes, with a verdict and redlines | Otto | Invents clauses or laws; sends anything to the other party |
 | **Penny**, Bookkeeper | Invoices, bills and receipts ledger, unpaid invoices, reminders | Otto | Pays or moves money; gives tax advice |
 | **Jules**, Concierge | Purchases, gifts, travel, bookings, reservations, appointments, in its own browser | Gus and Basil via Iris | Buys or books without an approval for that exact cart; exceeds the cap; types secrets |
