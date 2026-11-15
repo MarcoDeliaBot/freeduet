@@ -202,7 +202,7 @@ def computer_notes_for(run: RunInput, member: Member) -> list[str]:
 # lifts and refuses nothing, and the server's own gate decides every action.
 REMOTE_NOTE = (
     "The person is writing from a browser that is not paired with the computer FreeDuet runs on. Nothing "
-    "is broken and no tool is missing: each action that changes something (a send, a label, a filter, a "
+    "is broken and no tool is missing: each action that changes something (a send, a label, a mail rule, a "
     "booking, a payment) is held once for the person's yes on a card, and the card says why. If an action "
     "has not run yet, say that it is waiting for the person's yes, or has not been answered yet; never say "
     "that a tool is missing or that nobody was given a tool, and never say work is not done because of a "
