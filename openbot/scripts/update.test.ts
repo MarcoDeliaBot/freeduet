@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, test } from "bun:test";
+import { afterEach, describe, expect, test as bunTest } from "bun:test";
 import { createHash } from "node:crypto";
 import {
   chmod,
@@ -45,6 +45,14 @@ const realScript = join(scriptsDirectory, "update.sh");
 const bash = Bun.which("bash") as string;
 const realGit = Bun.which("git") as string;
 const slow = 60_000;
+
+/**
+ * Every test starts bash, which starts dozens of processes. The longest takes under two seconds on a
+ * quiet machine; the limit bun gives by default is five, and a loaded two-core runner is slower than a
+ * quiet one, so each test gets the long limit unless it names its own.
+ */
+const test = (name: string, run: () => Promise<void>, timeout = slow) =>
+  bunTest(name, run, timeout);
 
 // The real programs the script and its fakes use, linked in beside the fakes. Nothing else is on the PATH.
 const REAL_TOOLS = [
@@ -110,6 +118,7 @@ const FAKE_START = `#!/bin/sh
 root="$(cd "$(dirname "$0")/.." && pwd)"
 mark="$(cat "$root/mark")"
 echo "start.sh [mark=$mark]" >> "$STATE/calls.log"
+echo "start.sh OPENBOT_ENV_FILE=\${OPENBOT_ENV_FILE:-}" >> "$STATE/env-seen.log"
 echo "  (fake start.sh on $mark)"
 if [ "$mark" != old ]; then
   printf 'tables=4\\njournal=8\\nrows=42\\nmigrated=1\\n' > "$STATE/db"
@@ -135,6 +144,7 @@ const FAKE_STOP = `#!/bin/sh
 root="$(cd "$(dirname "$0")/.." && pwd)"
 mark="$(cat "$root/mark")"
 echo "stop.sh [mark=$mark]" >> "$STATE/calls.log"
+echo "stop.sh OPENBOT_ENV_FILE=\${OPENBOT_ENV_FILE:-}" >> "$STATE/env-seen.log"
 echo "  (fake stop.sh on $mark)"
 n=$(( $(cat "$STATE/stop-count" 2>/dev/null || echo 0) + 1 ))
 echo "$n" > "$STATE/stop-count"
@@ -590,6 +600,7 @@ async function build(options: Options = {}) {
     value: async (name: string) => (await read(join(state, name))).trim(),
     calls: () => lines("calls.log"),
     sleeps: () => lines("sleep.log"),
+    envSeen: () => lines("env-seen.log"),
     db: () => read(join(state, "db")),
     env: () => read(join(root, ".env")),
     copies,
@@ -920,6 +931,11 @@ describe("the update that works", () => {
       OPENBOT_ENV_FILE: ".env.eval",
     });
     expect(outcome(result)).toMatchObject({ exitCode: 0 });
+    // The scripts it runs were told which settings file is meant.
+    expect(await machine.envSeen()).toEqual([
+      "stop.sh OPENBOT_ENV_FILE=.env.eval",
+      "start.sh OPENBOT_ENV_FILE=.env.eval",
+    ]);
     const calls = await machine.calls();
     expect(
       calls.some((call) => call.startsWith("docker compose --env-file ")),
@@ -1562,6 +1578,44 @@ describe("when going back fails, it stops and prints the exact commands", () => 
     expect(await machine.env()).toBe(ENV_FILE);
     expect(await machine.value("role-password")).toBe(OLD_VERIFIER);
     expect(await machine.value("stack")).toBe("up");
+  });
+
+  test("for a stack made with OPENBOT_ENV_FILE the printed commands name the settings file, so a new terminal does the same", async () => {
+    const machine = await build({ evalEnv: true });
+    await machine.set("app-down-new");
+    await machine.set("restore-fails");
+    const result = await machine.run(["--watch", "0", "--wait", "6"], {
+      OPENBOT_ENV_FILE: ".env.eval",
+    });
+    expect(outcome(result)).toMatchObject({ exitCode: 20 });
+    const commands = handCommands(result.stdout);
+    expect(
+      commands
+        .filter((command) => /scripts\/st(op|art)\.sh/.test(command))
+        .map((command) => command.split(" bash ")[0]),
+    ).toEqual(["OPENBOT_ENV_FILE='.env.eval'", "OPENBOT_ENV_FILE='.env.eval'"]);
+    const compose = commands.filter((command) =>
+      command.startsWith("docker compose"),
+    );
+    expect(compose).toHaveLength(3);
+    for (const command of compose) {
+      expect(command).toStartWith("docker compose --env-file '.env.eval' ");
+    }
+
+    // Run by hand, in a shell that does not have the variable: both scripts still get it.
+    await machine.unset("restore-fails");
+    await machine.unset("app-down-new");
+    const seenBefore = (await machine.envSeen()).length;
+    const byHand = await ranByHand(machine, commands);
+    expect({ ...byHand }).toMatchObject({ exitCode: 0 });
+    expect((await machine.envSeen()).slice(seenBefore)).toEqual([
+      "stop.sh OPENBOT_ENV_FILE=.env.eval",
+      "start.sh OPENBOT_ENV_FILE=.env.eval",
+    ]);
+    expect(await machine.db()).toBe(START_DB);
+    expect(await readFile(join(machine.root, ".env.eval"), "utf8")).toBe(
+      ENV_FILE,
+    );
   });
 
   test("the restored database is not the one that was copied: exit 20 and says so", async () => {

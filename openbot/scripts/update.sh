@@ -190,14 +190,19 @@ forget_stub_folder() {
 # The commands to go back by hand, for the person to read and run. Only paths and flags: no value out
 # of `.env` or the database is in them.
 print_hand_commands() {
-  local compose_cmd="docker compose"
-  [ "$ENV_NAME" = .env ] || compose_cmd="docker compose --env-file $(shq "$ENV_NAME")"
+  local compose_cmd="docker compose" with_env=""
+  if [ "$ENV_NAME" != .env ]; then
+    compose_cmd="docker compose --env-file $(shq "$ENV_NAME")"
+    # start.sh and stop.sh read which settings file is meant from this variable, so it goes in front
+    # of them: a terminal opened later does not have it.
+    with_env="OPENBOT_ENV_FILE=$(shq "$ENV_NAME") "
+  fi
   say ""
   if [ -n "$RUN_DIR" ] && [ -f "$RUN_DIR/database.dump" ] && [ -f "$RUN_DIR/env.copy" ] && [ -n "$OLD_SHA" ]; then
     say "To go back by hand, run these in this order, in a terminal. Nothing here deletes your copy."
     say ""
     say "  cd $(shq "$ROOT")"
-    say "  bash $(shq "$REPO_ROOT/scripts/stop.sh")"
+    say "  ${with_env}bash $(shq "$REPO_ROOT/scripts/stop.sh")"
     say "  git -C $(shq "$REPO_ROOT") reset --hard $OLD_SHA"
     say "  cp $(shq "$RUN_DIR/env.copy") $(shq "$ENV_FILE")"
     say "  bun install --frozen-lockfile"
@@ -206,13 +211,13 @@ print_hand_commands() {
     if [ "$HAVE_ROLE_FILE" = true ]; then
       say "  $compose_cmd exec -T postgres psql -U $PG_USER -d postgres -v ON_ERROR_STOP=1 -q < $(shq "$RUN_DIR/role-password.sql")"
     fi
-    say "  bash $(shq "$REPO_ROOT/scripts/start.sh")"
+    say "  ${with_env}bash $(shq "$REPO_ROOT/scripts/start.sh")"
     say ""
     say "Your database and your settings are in the copy at $RUN_DIR"
     say "That folder holds all your secrets. Keep it private."
   else
     say "FreeDuet may be stopped. Your database, your settings and your code were not changed."
-    say "To start it again, run: bash $(shq "$REPO_ROOT/scripts/start.sh")"
+    say "To start it again, run: ${with_env}bash $(shq "$REPO_ROOT/scripts/start.sh")"
   fi
 }
 
@@ -541,7 +546,7 @@ print_plan() {
   say "     running, so nothing you did can be missing from the copy."
   say "  3. Move the code to $TARGET_LABEL and install what it needs."
   say "  4. Start FreeDuet again, which brings the database up to date."
-  say "  5. Check that the app and the API answer, for up to $WAIT seconds."
+  say "  5. Check that the app and the API answer, for about $WAIT seconds."
   say "If any of that fails, it goes back: the code, the database and the settings from the copy, and"
   say "it starts the version you had. Then it tells you plainly that the update did not go through."
   say ""
