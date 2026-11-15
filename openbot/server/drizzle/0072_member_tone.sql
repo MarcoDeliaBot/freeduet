@@ -1,2 +1,0 @@
-ALTER TABLE "agent_preferences" ADD COLUMN "tone" text;--> statement-breakpoint
-ALTER TABLE "agent_preferences" ADD CONSTRAINT "agent_preferences_tone_check" CHECK ("agent_preferences"."tone" is null or "agent_preferences"."tone" in ('warm', 'formal'));
