@@ -117,7 +117,9 @@ function tokens(list: string): string[] {
   let match: RegExpExecArray | null = pattern.exec(list);
   while (match) {
     out.push(
-      match[1] !== undefined ? match[1].replace(/\\(.)/g, "$1") : (match[2] ?? ""),
+      match[1] !== undefined
+        ? match[1].replace(/\\(.)/g, "$1")
+        : (match[2] ?? ""),
     );
     match = pattern.exec(list);
   }
@@ -137,12 +139,15 @@ function labelsData(message: Msg) {
 function fetchLine(message: Msg, seq: number, items: string): string {
   const out: string[] = [`UID ${message.uid}`];
   if (/X-GM-MSGID/.test(items)) out.push(`X-GM-MSGID ${message.id}`);
-  if (/X-GM-LABELS/.test(items)) out.push(`X-GM-LABELS (${labelsData(message)})`);
+  if (/X-GM-LABELS/.test(items))
+    out.push(`X-GM-LABELS (${labelsData(message)})`);
   if (/FLAGS/.test(items)) out.push(`FLAGS (${message.flags.join(" ")})`);
   const fields = /BODY\.PEEK\[HEADER\.FIELDS \(([^)]*)\)\]/.exec(items);
   if (fields) {
     const block = `From: ${message.from}\r\nSubject: ${message.subject}\r\n\r\n`;
-    out.push(`BODY[HEADER.FIELDS (${fields[1]})] {${block.length}}\r\n${block}`);
+    out.push(
+      `BODY[HEADER.FIELDS (${fields[1]})] {${block.length}}\r\n${block}`,
+    );
   }
   return `* ${seq} FETCH (${out.join(" ")})\r\n`;
 }
@@ -188,7 +193,9 @@ function answer(socket: Socket<undefined>, raw: string) {
   } else if (v === "CREATE") {
     const name = tokens(tail)[0] ?? "";
     if (alreadyExists.includes(name)) {
-      socket.write(`${tag} NO [ALREADYEXISTS] Duplicate folder name ${name}\r\n`);
+      socket.write(
+        `${tag} NO [ALREADYEXISTS] Duplicate folder name ${name}\r\n`,
+      );
     } else {
       folders.push({ flags: "\\HasNoChildren", name });
       ok();
@@ -210,9 +217,10 @@ function answer(socket: Socket<undefined>, raw: string) {
       .join("");
     socket.write(`${body}${tag} OK done\r\n`);
   } else if (v === "UID" && (rest[0] ?? "").toUpperCase() === "STORE") {
-    const match = /^UID STORE (\S+) ([+-]?)(FLAGS(?:\.SILENT)?|X-GM-LABELS) \((.*)\)$/i.exec(
-      tail.startsWith("UID") ? tail : `UID ${tail}`,
-    );
+    const match =
+      /^UID STORE (\S+) ([+-]?)(FLAGS(?:\.SILENT)?|X-GM-LABELS) \((.*)\)$/i.exec(
+        tail.startsWith("UID") ? tail : `UID ${tail}`,
+      );
     if (!match || refuseStore) {
       socket.write(`${tag} NO [CANNOT] Could not store\r\n`);
       return;
@@ -256,7 +264,8 @@ beforeAll(() => {
         );
       },
       data(socket, data) {
-        const text = (buffers.get(socket) ?? "") + Buffer.from(data).toString("utf8");
+        const text =
+          (buffers.get(socket) ?? "") + Buffer.from(data).toString("utf8");
         const parts = text.split("\r\n");
         buffers.set(socket, parts.pop() ?? "");
         for (const raw of parts) if (raw) answer(socket, raw);
@@ -271,7 +280,8 @@ afterAll(() => {
 
 beforeEach(reset);
 
-const asked: { kind: string; host: string; port: number; secure: boolean }[] = [];
+const asked: { kind: string; host: string; port: number; secure: boolean }[] =
+  [];
 
 function realLibrary(kind: string) {
   return (options: {
@@ -358,7 +368,8 @@ const ALLOWED_COMMANDS = new Set([
 ]);
 
 /** Commands that delete, move, copy, expunge, rename, append or reach outside the mailbox. */
-const FORBIDDEN = /^(STORE|COPY|MOVE|EXPUNGE|APPEND|DELETE|RENAME|UNSUBSCRIBE|IDLE|ENABLE|CLOSE|UNSELECT|UID COPY|UID MOVE|UID EXPUNGE|NOOP|STARTTLS|COMPRESS|SETQUOTA|SETACL|DELETEACL|SETMETADATA)$/;
+const FORBIDDEN =
+  /^(STORE|COPY|MOVE|EXPUNGE|APPEND|DELETE|RENAME|UNSUBSCRIBE|IDLE|ENABLE|CLOSE|UNSELECT|UID COPY|UID MOVE|UID EXPUNGE|NOOP|STARTTLS|COMPRESS|SETQUOTA|SETACL|DELETEACL|SETMETADATA)$/;
 
 /**
  * The only stores allowed: Gmail's labels, and the Seen flag. Nothing that marks a message for
@@ -383,10 +394,21 @@ function expectOnlyAllowed(from: readonly string[]) {
 
 describe("listing and creating labels", () => {
   test("listing is a LIST and nothing else: no mailbox is opened, and the library's guess at a special folder hides no label", async () => {
-    const result = await transport.callTool(connection, "gmail_list_labels", {});
+    const result = await transport.callTool(
+      connection,
+      "gmail_list_labels",
+      {},
+    );
     expect(result.isError).toBe(false);
     expect(JSON.parse(result.text)).toEqual({
-      labels: ["Archive", "Citt\u00E0", "Clients", "Clients/Acme", "Fatture 2026", "FreeDuet"],
+      labels: [
+        "Archive",
+        "Citt\u00E0",
+        "Clients",
+        "Clients/Acme",
+        "Fatture 2026",
+        "FreeDuet",
+      ],
       alsoAllowed: ["STARRED", "IMPORTANT"],
     });
     expect(sent()).toEqual(['LIST "" ""', 'LIST "" "*"']);
@@ -401,7 +423,10 @@ describe("listing and creating labels", () => {
       name: "Receipts 2026",
     });
     expect(result.isError).toBe(false);
-    expect(JSON.parse(result.text)).toEqual({ label: "Receipts 2026", created: true });
+    expect(JSON.parse(result.text)).toEqual({
+      label: "Receipts 2026",
+      created: true,
+    });
     expect(sent()).toEqual([
       'LIST "" ""',
       'LIST "" "*"',
@@ -450,11 +475,18 @@ describe("listing and creating labels", () => {
 
 describe("archiving", () => {
   test("it opens All Mail for writing, looks each message up, and removes the Inbox label from the labels: that is all", async () => {
-    const result = await transport.callTool(connection, "gmail_archive_messages", {
-      messageIds: [HEX.a, HEX.c],
-    });
+    const result = await transport.callTool(
+      connection,
+      "gmail_archive_messages",
+      {
+        messageIds: [HEX.a, HEX.c],
+      },
+    );
     expect(result.isError).toBe(false);
-    expect(JSON.parse(result.text)).toEqual({ archived: 1, alreadyOutOfInbox: 1 });
+    expect(JSON.parse(result.text)).toEqual({
+      archived: 1,
+      alreadyOutOfInbox: 1,
+    });
     expect(sent()).toEqual([
       'LIST "" ""',
       'LIST "" "*"',
@@ -482,11 +514,18 @@ describe("archiving", () => {
       subject: `Message ${i}`,
     }));
     const ids = messages.map((m) => hex(m.id));
-    const result = await transport.callTool(connection, "gmail_archive_messages", {
-      messageIds: ids,
-    });
+    const result = await transport.callTool(
+      connection,
+      "gmail_archive_messages",
+      {
+        messageIds: ids,
+      },
+    );
     expect(result.isError).toBe(false);
-    expect(JSON.parse(result.text)).toEqual({ archived: 100, alreadyOutOfInbox: 0 });
+    expect(JSON.parse(result.text)).toEqual({
+      archived: 100,
+      alreadyOutOfInbox: 0,
+    });
     const commands = lines.map(commandOf);
     expect(commands.filter((c) => c === "UID SEARCH")).toHaveLength(100);
     expect(commands.filter((c) => c === "UID FETCH")).toHaveLength(1);
@@ -525,11 +564,15 @@ describe("marking", () => {
 
 describe("labelling", () => {
   test("labels go as Gmail's own, quoted where they need it and encoded where they are not ASCII, and the server reads each as one label", async () => {
-    const result = await transport.callTool(connection, "gmail_label_messages", {
-      messageIds: [HEX.a],
-      addLabels: ["Fatture 2026", "starred", "Citt\u00E0"],
-      removeLabels: ["FreeDuet", "important"],
-    });
+    const result = await transport.callTool(
+      connection,
+      "gmail_label_messages",
+      {
+        messageIds: [HEX.a],
+        addLabels: ["Fatture 2026", "starred", "Citt\u00E0"],
+        removeLabels: ["FreeDuet", "important"],
+      },
+    );
     expect(result.isError).toBe(false);
     expect(JSON.parse(result.text)).toEqual({
       labeled: 1,
@@ -569,10 +612,14 @@ describe("labelling", () => {
       if (!first) throw new Error("the mailbox has no message");
       first.labels = ["\\Inbox"];
       lines.length = 0;
-      const result = await transport.callTool(connection, "gmail_label_messages", {
-        messageIds: [HEX.a],
-        addLabels: [name],
-      });
+      const result = await transport.callTool(
+        connection,
+        "gmail_label_messages",
+        {
+          messageIds: [HEX.a],
+          addLabels: [name],
+        },
+      );
       expect(result.isError).toBe(false);
       expect(first.labels).toEqual(["\\Inbox", wire]);
       expectOnlyAllowed(lines);
@@ -586,11 +633,23 @@ describe("what is refused is refused before anything is sent", () => {
       ["gmail_label_messages", { messageIds: [HEX.a], addLabels: ["TRASH"] }],
       ["gmail_label_messages", { messageIds: [HEX.a], addLabels: ["\\Trash"] }],
       ["gmail_label_messages", { messageIds: [HEX.a], removeLabels: ["Spam"] }],
-      ["gmail_label_messages", { messageIds: [HEX.a], addLabels: ["\\Deleted"] }],
-      ["gmail_label_messages", { messageIds: [HEX.a], removeLabels: ["INBOX"] }],
-      ["gmail_label_messages", { messageIds: [HEX.a], addLabels: ["FreeDuet"], all: true }],
+      [
+        "gmail_label_messages",
+        { messageIds: [HEX.a], addLabels: ["\\Deleted"] },
+      ],
+      [
+        "gmail_label_messages",
+        { messageIds: [HEX.a], removeLabels: ["INBOX"] },
+      ],
+      [
+        "gmail_label_messages",
+        { messageIds: [HEX.a], addLabels: ["FreeDuet"], all: true },
+      ],
       ["gmail_label_messages", { query: "in:inbox", addLabels: ["FreeDuet"] }],
-      ["gmail_label_messages", { messageIds: [HEX.a], addLabels: ["a\r\nA1 DELETE INBOX"] }],
+      [
+        "gmail_label_messages",
+        { messageIds: [HEX.a], addLabels: ["a\r\nA1 DELETE INBOX"] },
+      ],
       ["gmail_label_messages", { messageIds: [HEX.a], addLabels: ['a" b'] }],
       ["gmail_create_label", { name: "a\r\nA1 DELETE INBOX" }],
       ["gmail_create_label", { name: 'x" {1}\r\n' }],
@@ -600,9 +659,19 @@ describe("what is refused is refused before anything is sent", () => {
       ["gmail_create_label", { name: "Trash" }],
       ["gmail_archive_messages", { messageIds: ["1 2"] }],
       ["gmail_archive_messages", { messageIds: ["1\r\nA1 EXPUNGE"] }],
-      ["gmail_archive_messages", { messageIds: Array.from({ length: 101 }, (_, i) => (i + 1).toString(16)) }],
+      [
+        "gmail_archive_messages",
+        {
+          messageIds: Array.from({ length: 101 }, (_, i) =>
+            (i + 1).toString(16),
+          ),
+        },
+      ],
       ["gmail_mark_messages", { messageIds: [HEX.a], state: "deleted" }],
-      ["gmail_mark_messages", { messageIds: [HEX.a], state: "read", folder: "Trash" }],
+      [
+        "gmail_mark_messages",
+        { messageIds: [HEX.a], state: "read", folder: "Trash" },
+      ],
     ];
     for (const [tool, args] of calls) {
       const result = await transport.callTool(connection, tool, args);
@@ -612,9 +681,13 @@ describe("what is refused is refused before anything is sent", () => {
   });
 
   test("a message that is gone refuses the whole call, and nothing is stored", async () => {
-    const result = await transport.callTool(connection, "gmail_archive_messages", {
-      messageIds: [HEX.a, "1a2b3c4d5e6f7aff"],
-    });
+    const result = await transport.callTool(
+      connection,
+      "gmail_archive_messages",
+      {
+        messageIds: [HEX.a, "1a2b3c4d5e6f7aff"],
+      },
+    );
     expect(result.isError).toBe(true);
     expect(result.text).toBe(missingMessages(1, 2));
     expect(lines.map(commandOf)).not.toContain("UID STORE");
@@ -624,10 +697,14 @@ describe("what is refused is refused before anything is sent", () => {
   });
 
   test("a label that is not there is refused before the mailbox is opened", async () => {
-    const result = await transport.callTool(connection, "gmail_label_messages", {
-      messageIds: [HEX.a],
-      addLabels: ["Nonexistent"],
-    });
+    const result = await transport.callTool(
+      connection,
+      "gmail_label_messages",
+      {
+        messageIds: [HEX.a],
+        addLabels: ["Nonexistent"],
+      },
+    );
     expect(result.isError).toBe(true);
     expect(sent()).toEqual(['LIST "" ""', 'LIST "" "*"']);
     expect(lines.map(commandOf)).not.toContain("SELECT");
@@ -648,9 +725,13 @@ describe("what is refused is refused before anything is sent", () => {
 
 describe("what the approval card reads, over the wire", () => {
   test("it opens the mailbox with EXAMINE, fetches only the sender and the subject with PEEK, and stores nothing", async () => {
-    const details = await transport.describeCall(connection, "gmail_archive_messages", {
-      messageIds: [HEX.b, HEX.a],
-    });
+    const details = await transport.describeCall(
+      connection,
+      "gmail_archive_messages",
+      {
+        messageIds: [HEX.b, HEX.a],
+      },
+    );
     expect(details).toEqual({
       messages: [
         { from: "News <news@example.org>", subject: "Weekly digest" },
@@ -711,7 +792,13 @@ describe("everything this file made the library send", () => {
       expect(commands.has(forbidden)).toBe(false);
     }
     // And what it did send was every kind of thing it is meant to.
-    for (const used of ["SELECT", "EXAMINE", "UID STORE", "CREATE", "UID SEARCH"]) {
+    for (const used of [
+      "SELECT",
+      "EXAMINE",
+      "UID STORE",
+      "CREATE",
+      "UID SEARCH",
+    ]) {
       expect(commands.has(used)).toBe(true);
     }
   });

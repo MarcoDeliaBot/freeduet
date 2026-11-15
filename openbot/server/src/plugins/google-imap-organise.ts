@@ -114,7 +114,10 @@ async function uidsOf(
 ): Promise<{ uids: number[]; missing: number }> {
   const uids: number[] = [];
   for (const id of ids) {
-    const found = await client.search({ emailId: decimalOf(id) }, { uid: true });
+    const found = await client.search(
+      { emailId: decimalOf(id) },
+      { uid: true },
+    );
     const uid = found && found.length > 0 ? found[0] : undefined;
     if (uid !== undefined) uids.push(uid);
   }
@@ -134,7 +137,9 @@ function spelled(
       names.push(ref.id);
       continue;
     }
-    const path = own.find((name) => name.toLowerCase() === ref.name.toLowerCase());
+    const path = own.find(
+      (name) => name.toLowerCase() === ref.name.toLowerCase(),
+    );
     if (path === undefined) return null;
     labels.push(path);
     names.push(path);

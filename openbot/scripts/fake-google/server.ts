@@ -708,7 +708,11 @@ export type FakeGoogle = {
   userLabels(): string[];
   labelsOf(id: string): string[] | null;
   /** Every `batchModify` the fake served, as it was asked, oldest first. */
-  modified(): { ids: string[]; addLabelIds: string[]; removeLabelIds: string[] }[];
+  modified(): {
+    ids: string[];
+    addLabelIds: string[];
+    removeLabelIds: string[];
+  }[];
   /** The mailbox and calendar as they started, dated from now, and nothing sent. */
   reset(): void;
   stop(): Promise<void>;
@@ -1219,7 +1223,9 @@ export function startFakeGoogle(
         return googleError(400, "Invalid label name.", "invalidArgument");
       }
       const clash =
-        SYSTEM_LABEL_IDS.some((id) => id.toLowerCase() === name.toLowerCase()) ||
+        SYSTEM_LABEL_IDS.some(
+          (id) => id.toLowerCase() === name.toLowerCase(),
+        ) ||
         userLabels.some(
           (label) => label.name.toLowerCase() === name.toLowerCase(),
         );

@@ -114,7 +114,8 @@ const OTHER_SYSTEM = new Set([
 export const ORGANISE_REFUSALS = {
   extra:
     "This tool takes only the fields it names: messages are listed by id, and nothing can be done to everything a search matches. Nothing was changed.",
-  noIds: "Name the messages by their Gmail ids, as a search returned them. Nothing was changed.",
+  noIds:
+    "Name the messages by their Gmail ids, as a search returned them. Nothing was changed.",
   badIds:
     "Every message id must be a Gmail id as a search returned it (letters a to f and digits). Nothing was changed.",
   tooManyIds: `At most ${MAX_ORGANISE_MESSAGES} messages can be named in one call. Split them into smaller calls. Nothing was changed.`,
@@ -125,8 +126,7 @@ export const ORGANISE_REFUSALS = {
     "Labels that delete or hide mail, Trash and Spam, cannot be added or removed with this tool. Nothing was changed.",
   systemLabel:
     "That is one of Gmail's own labels, which this tool does not change. To take messages out of the Inbox use gmail_archive_messages, and for read and unread use gmail_mark_messages. Nothing was changed.",
-  noLabels:
-    "Say which labels to add or remove, by name. Nothing was changed.",
+  noLabels: "Say which labels to add or remove, by name. Nothing was changed.",
   tooManyLabels: `At most ${MAX_LABELS_PER_CALL} labels can be added, and as many removed, in one call. Nothing was changed.`,
   sameLabel:
     "A label cannot be added and removed in the same call. Nothing was changed.",
@@ -167,9 +167,7 @@ export type LabelRef =
   | { kind: "system"; id: "STARRED" | "IMPORTANT" }
   | { kind: "user"; name: string };
 
-export type Parsed<T> =
-  | { ok: true; value: T }
-  | { ok: false; message: string };
+export type Parsed<T> = { ok: true; value: T } | { ok: false; message: string };
 
 const refuse = (message: string): { ok: false; message: string } => ({
   ok: false,
@@ -473,7 +471,10 @@ export const labeledAnswer = (
   removed: readonly string[],
 ) => ({ labeled: messages, added: [...added], removed: [...removed] });
 
-export const archivedAnswer = (archived: number, alreadyOutOfInbox: number) => ({
+export const archivedAnswer = (
+  archived: number,
+  alreadyOutOfInbox: number,
+) => ({
   archived,
   alreadyOutOfInbox,
 });

@@ -123,13 +123,16 @@ describe("the tools and how they are told apart", () => {
   });
 
   test("the only fields the schemas take are the ones the parser reads", () => {
-    const named = (tool: string) =>
-      Object.keys(
-        (
-          ORGANISE_TOOL_DEFINITIONS.find((entry) => entry.name === tool)
-            ?.inputSchema as { properties: Record<string, unknown> }
-        ).properties,
-      ).sort();
+    const named = (tool: string) => {
+      const definition = ORGANISE_TOOL_DEFINITIONS.find(
+        (entry) => entry.name === tool,
+      );
+      if (!definition) throw new Error(`no definition for ${tool}`);
+      const schema = definition.inputSchema as {
+        properties: Record<string, unknown>;
+      };
+      return Object.keys(schema.properties).sort();
+    };
     expect(named(LIST_LABELS)).toEqual([]);
     expect(named(CREATE_LABEL)).toEqual(["name"]);
     expect(named(LABEL_MESSAGES)).toEqual([
@@ -357,7 +360,9 @@ describe("message ids", () => {
       null,
       {},
     ]) {
-      expect(refused(parseMessageIds([ID, bad]))).toBe(ORGANISE_REFUSALS.badIds);
+      expect(refused(parseMessageIds([ID, bad]))).toBe(
+        ORGANISE_REFUSALS.badIds,
+      );
     }
   });
 
@@ -402,7 +407,9 @@ describe("one call to a tool", () => {
       value: { tool: CREATE_LABEL, name: "FreeDuet" },
     });
     expect(
-      refused(parseOrganiseCall(CREATE_LABEL, { name: "FreeDuet", color: "red" })),
+      refused(
+        parseOrganiseCall(CREATE_LABEL, { name: "FreeDuet", color: "red" }),
+      ),
     ).toBe(ORGANISE_REFUSALS.extra);
     expect(refused(parseOrganiseCall(CREATE_LABEL, {}))).toBe(
       ORGANISE_REFUSALS.noName,
@@ -412,7 +419,10 @@ describe("one call to a tool", () => {
   test("archiving takes message ids and nothing else", () => {
     expect(
       parseOrganiseCall(ARCHIVE_MESSAGES, { messageIds: [ID, OTHER] }),
-    ).toEqual({ ok: true, value: { tool: ARCHIVE_MESSAGES, ids: [ID, OTHER] } });
+    ).toEqual({
+      ok: true,
+      value: { tool: ARCHIVE_MESSAGES, ids: [ID, OTHER] },
+    });
     expect(refused(parseOrganiseCall(ARCHIVE_MESSAGES, {}))).toBe(
       ORGANISE_REFUSALS.noIds,
     );
@@ -459,7 +469,10 @@ describe("one call to a tool", () => {
     });
     // One bare name is a list of one.
     expect(
-      parseOrganiseCall(LABEL_MESSAGES, { messageIds: ID, addLabels: "FreeDuet" }),
+      parseOrganiseCall(LABEL_MESSAGES, {
+        messageIds: ID,
+        addLabels: "FreeDuet",
+      }),
     ).toEqual({
       ok: true,
       value: {
@@ -472,9 +485,9 @@ describe("one call to a tool", () => {
   });
 
   test("labelling with no label to add or remove is refused", () => {
-    expect(refused(parseOrganiseCall(LABEL_MESSAGES, { messageIds: [ID] }))).toBe(
-      ORGANISE_REFUSALS.noLabels,
-    );
+    expect(
+      refused(parseOrganiseCall(LABEL_MESSAGES, { messageIds: [ID] })),
+    ).toBe(ORGANISE_REFUSALS.noLabels);
     expect(
       refused(
         parseOrganiseCall(LABEL_MESSAGES, {
@@ -640,7 +653,9 @@ describe("one call to a tool", () => {
       "__proto__",
       "hasOwnProperty",
     ]) {
-      expect(refused(parseOrganiseCall(name, {}))).toBe(ORGANISE_REFUSALS.extra);
+      expect(refused(parseOrganiseCall(name, {}))).toBe(
+        ORGANISE_REFUSALS.extra,
+      );
       expect(refused(parseOrganiseCall(name, { messageIds: [ID] }))).toBe(
         ORGANISE_REFUSALS.extra,
       );

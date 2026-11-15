@@ -1310,7 +1310,8 @@ export type PluginStoreOptions = {
     toolName: string,
     args: Record<string, unknown>,
   ) => Promise<
-    { messages: { from: string; subject: string }[]; missing: number } | undefined
+    | { messages: { from: string; subject: string }[]; missing: number }
+    | undefined
   >;
   /** Trading a refresh token for a short-lived access token. Defaults to a real HTTP exchange. */
   exchangeRefreshToken?: (input: {

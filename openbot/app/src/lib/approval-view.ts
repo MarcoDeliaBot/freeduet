@@ -183,7 +183,9 @@ function describeOrganise(
     const add = names(args.addLabels);
     const remove = names(args.removeLabels);
     const one = (list: string[]) =>
-      list.length === 1 ? `the label \u201c${list[0]}\u201d` : `${list.length} labels`;
+      list.length === 1
+        ? `the label \u201c${list[0]}\u201d`
+        : `${list.length} labels`;
     title =
       add.length > 0 && remove.length === 0
         ? `Add ${one(add)} to ${messages}`
@@ -195,8 +197,7 @@ function describeOrganise(
       fields.push({ label: "Remove", value: remove.join(", ") });
     fields.push({
       label: "What happens",
-      value:
-        "Labels are added or taken off. No message is moved or deleted.",
+      value: "Labels are added or taken off. No message is moved or deleted.",
     });
   }
 
@@ -214,7 +215,10 @@ function describeOrganise(
 
   const body = details?.messages.length
     ? details.messages
-        .map((m) => `${m.from || "Unknown sender"}: ${m.subject || "(no subject)"}`)
+        .map(
+          (m) =>
+            `${m.from || "Unknown sender"}: ${m.subject || "(no subject)"}`,
+        )
         .join("\n")
     : null;
   return { ...base, title, fields, body };

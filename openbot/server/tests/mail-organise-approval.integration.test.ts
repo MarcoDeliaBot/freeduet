@@ -1,10 +1,4 @@
-import {
-  afterAll,
-  beforeAll,
-  describe,
-  expect,
-  test,
-} from "bun:test";
+import { afterAll, beforeAll, describe, expect, test } from "bun:test";
 import { createHash, randomBytes, randomUUID } from "node:crypto";
 import { fileURLToPath } from "node:url";
 import type { Message } from "@ag-ui/client";
@@ -260,8 +254,8 @@ const OAUTH: Backend = {
       );
       if (!message.labelIds?.includes("INBOX")) continue;
       const header = (name: string) =>
-        message.payload?.headers?.find((entry) => entry.name === name)
-          ?.value ?? "";
+        message.payload?.headers?.find((entry) => entry.name === name)?.value ??
+        "";
       const shown = { from: header("From"), subject: header("Subject") };
       // The fixture is plain text, which a card shows unchanged: an expectation below can be literal.
       expect(shownMessage(shown.from, shown.subject)).toEqual(shown);
@@ -272,9 +266,7 @@ const OAUTH: Backend = {
     return found;
   },
   snapshot: () => ({
-    labels: Object.fromEntries(
-      oauthIds.map((id) => [id, fake.labelsOf(id)]),
-    ),
+    labels: Object.fromEntries(oauthIds.map((id) => [id, fake.labelsOf(id)])),
     own: fake.userLabels(),
     modified: fake.modified(),
   }),
@@ -528,7 +520,10 @@ beforeAll(async () => {
           ? input.href
           : input.url,
     );
-    if (url.origin === new URL(fake.url).origin && url.pathname.startsWith("/gmail/")) {
+    if (
+      url.origin === new URL(fake.url).origin &&
+      url.pathname.startsWith("/gmail/")
+    ) {
       const method =
         init?.method ?? (input instanceof Request ? input.method : "GET");
       gmailRequests.push(`${method} ${url.pathname}`);
@@ -737,9 +732,7 @@ afterAll(async () => {
   }
   await database
     .delete(agentProfiles)
-    .where(
-      inArray(agentProfiles.agentId, [irisId, botId, readerId, peerId]),
-    );
+    .where(inArray(agentProfiles.agentId, [irisId, botId, readerId, peerId]));
   await database.delete(users).where(eq(users.id, owner));
   await database
     .delete(agents)
@@ -872,8 +865,9 @@ for (const backend of BACKENDS) {
       await approvals.decide(owner, card.id, "allow_once");
       const before = backend.snapshot();
       const changes = backend.changes();
-      const result = await inTurn({ ...ownTurn(ARCHIVE_MESSAGES, args), ...run }, () =>
-        call(backend, ARCHIVE_MESSAGES, args),
+      const result = await inTurn(
+        { ...ownTurn(ARCHIVE_MESSAGES, args), ...run },
+        () => call(backend, ARCHIVE_MESSAGES, args),
       );
       // The person allowed it and the vendor refused it whole: not one of the messages was archived.
       expect(result.isError).toBe(true);
@@ -906,10 +900,7 @@ for (const backend of BACKENDS) {
     test("a vendor stood in for with no way to read the card is asked about all the same", async () => {
       const [first] = await backend.seen();
       if (!first) throw new Error("no message");
-      const {
-        describeVendor: _unused,
-        ...withoutDescribe
-      } = backend.options;
+      const { describeVendor: _unused, ...withoutDescribe } = backend.options;
       const silent = createPluginStore(withoutDescribe);
       const touched = backend.touched();
       const card = await expectAsks(
@@ -1283,7 +1274,7 @@ for (const backend of BACKENDS) {
     test("a label name with a control character is refused before the person is asked", async () => {
       await refused(
         CREATE_LABEL,
-        { name: "Receipts‮gnp.exe" },
+        { name: "Receipts\u202egnp.exe" },
         ORGANISE_REFUSALS.labelName,
       );
     });
@@ -1433,7 +1424,9 @@ for (const backend of BACKENDS) {
         .map((tool) => tool.name);
       for (const name of WRITES) expect(given).not.toContain(name);
       // The new read is treated as the older reads are: given when they are.
-      const search = tools.find((tool) => tool.name === "gmail_search_messages");
+      const search = tools.find(
+        (tool) => tool.name === "gmail_search_messages",
+      );
       const labels = tools.find((tool) => tool.name === LIST_LABELS);
       expect(search).toBeDefined();
       expect(labels).toBeDefined();

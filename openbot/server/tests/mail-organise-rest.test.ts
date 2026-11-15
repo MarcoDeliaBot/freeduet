@@ -1,9 +1,6 @@
 import { afterEach, beforeEach, describe, expect, test } from "bun:test";
 import { readFileSync } from "node:fs";
-import {
-  callTool,
-  describeCall,
-} from "../src/plugins/google-workspace-rest";
+import { callTool, describeCall } from "../src/plugins/google-workspace-rest";
 import {
   missingMessages,
   noSuchLabel,
@@ -83,7 +80,9 @@ function assertOnlyWhatOrganisingMayAsk(calls: readonly Seen[]) {
           "name",
         ]);
       }
-    } else if (/^\/gmail\/v1\/users\/me\/messages\/[0-9a-f]{1,16}$/.test(path)) {
+    } else if (
+      /^\/gmail\/v1\/users\/me\/messages\/[0-9a-f]{1,16}$/.test(path)
+    ) {
       expect(call.method).toBe("GET");
       expect(call.body).toBeNull();
     } else if (path === `${BASE}/messages/batchModify`) {
@@ -248,7 +247,10 @@ describe("listing and creating labels", () => {
       messageListVisibility: "show",
     });
     expect(result.isError).toBe(false);
-    expect(json(result.text)).toEqual({ label: "Receipts 2026", created: true });
+    expect(json(result.text)).toEqual({
+      label: "Receipts 2026",
+      created: true,
+    });
     expect(box.labels.map((label) => label.name)).toContain("Receipts 2026");
   });
 
@@ -282,7 +284,10 @@ describe("listing and creating labels", () => {
     });
     expect(shape(calls)).toEqual(["GET /labels", "POST /labels"]);
     expect(result.isError).toBe(false);
-    expect(json(result.text)).toMatchObject({ label: "Receipts", created: false });
+    expect(json(result.text)).toMatchObject({
+      label: "Receipts",
+      created: false,
+    });
   });
 
   test("a name that is refused costs no request at all, and the refusal quotes nothing", async () => {
@@ -312,7 +317,9 @@ describe("listing and creating labels", () => {
   test("a label made with a hundred characters is accepted, and one with a hundred and one is not", async () => {
     const { calls } = serve(mailbox());
     const hundred = "n".repeat(100);
-    const ok = await callTool(connection, "gmail_create_label", { name: hundred });
+    const ok = await callTool(connection, "gmail_create_label", {
+      name: hundred,
+    });
     expect(ok.isError).toBe(false);
     expect(calls[1]?.body).toMatchObject({ name: hundred });
   });
@@ -502,7 +509,14 @@ describe("labelling messages", () => {
   test("Trash and Spam, in either spelling and either direction, cost no request", async () => {
     const { calls } = serve(mailbox());
     for (const field of ["addLabels", "removeLabels"]) {
-      for (const label of ["TRASH", "Trash", "\\Trash", "SPAM", "\\Spam", "Junk"]) {
+      for (const label of [
+        "TRASH",
+        "Trash",
+        "\\Trash",
+        "SPAM",
+        "\\Spam",
+        "Junk",
+      ]) {
         const result = await callTool(connection, "gmail_label_messages", {
           messageIds: [A],
           [field]: ["FreeDuet", label],
@@ -552,7 +566,9 @@ describe("labelling messages", () => {
     expect(modified).toHaveLength(1);
     expect(modified[0]?.ids).toEqual(ids);
     expect(json(done.text)).toEqual({ archived: 100, alreadyOutOfInbox: 0 });
-    expect(shape(calls).filter((line) => line.startsWith("GET /messages/"))).toHaveLength(100);
+    expect(
+      shape(calls).filter((line) => line.startsWith("GET /messages/")),
+    ).toHaveLength(100);
 
     const before = calls.length;
     const refused = await callTool(connection, "gmail_archive_messages", {
@@ -799,7 +815,9 @@ describe("what the approval card is told", () => {
 
   test("a call that names no messages, or cannot be carried out, reads nothing", async () => {
     const { calls } = serve(mailbox());
-    expect(await describeCall(connection, "gmail_list_labels", {})).toBeUndefined();
+    expect(
+      await describeCall(connection, "gmail_list_labels", {}),
+    ).toBeUndefined();
     expect(
       await describeCall(connection, "gmail_create_label", { name: "X" }),
     ).toBeUndefined();
@@ -835,6 +853,8 @@ describe("what the approval card is told", () => {
   });
 
   test("the transport table hands the card the same reader", () => {
-    expect(transportFor("google-workspace-rest").describeCall).toBe(describeCall);
+    expect(transportFor("google-workspace-rest").describeCall).toBe(
+      describeCall,
+    );
   });
 });

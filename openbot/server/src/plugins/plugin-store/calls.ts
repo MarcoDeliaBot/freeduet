@@ -21,7 +21,11 @@ import { classifyTool, tokenHeaderFor } from "../catalogue";
 import { VERSION_ARG } from "../composio";
 import { inspectToolArguments } from "../content-governance";
 import { plainAddress } from "../mail-address";
-import { isOrganiseMessageTool, isOrganiseTool, organiseRefusal } from "../mail-organise";
+import {
+  isOrganiseMessageTool,
+  isOrganiseTool,
+  organiseRefusal,
+} from "../mail-organise";
 import { isNewEmailSend, shareTargetOf } from "../share-target";
 import type { AccountMode } from "../shared-accounts";
 import { transportFor } from "../transport";

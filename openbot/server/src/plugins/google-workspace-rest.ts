@@ -12,7 +12,6 @@ import {
   labeledAnswer,
   labelsAnswer,
   LIST_LABELS,
-  MARK_MESSAGES,
   markedAnswer,
   missingMessages,
   noSuchLabel,
@@ -1019,9 +1018,7 @@ type OwnLabel = { id: string; name: string };
  * The person's own labels. Gmail's system labels are left out: a Bot names none of them but STARRED
  * and IMPORTANT, which need no lookup because their identifiers are their names.
  */
-async function ownLabels(
-  connection: Connection,
-): Promise<Outcome<OwnLabel[]>> {
+async function ownLabels(connection: Connection): Promise<Outcome<OwnLabel[]>> {
   const listed = await request<{ labels?: GmailLabel[] }>(
     connection,
     "Gmail",

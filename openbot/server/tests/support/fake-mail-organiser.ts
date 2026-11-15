@@ -97,9 +97,21 @@ export const HEX = {
 export class FakeMailbox {
   folders: Folder[] = [
     { path: "INBOX" },
-    { path: "[Gmail]/All Mail", specialUse: "\\All", specialUseSource: "extension" },
-    { path: "[Gmail]/Trash", specialUse: "\\Trash", specialUseSource: "extension" },
-    { path: "[Gmail]/Spam", specialUse: "\\Junk", specialUseSource: "extension" },
+    {
+      path: "[Gmail]/All Mail",
+      specialUse: "\\All",
+      specialUseSource: "extension",
+    },
+    {
+      path: "[Gmail]/Trash",
+      specialUse: "\\Trash",
+      specialUseSource: "extension",
+    },
+    {
+      path: "[Gmail]/Spam",
+      specialUse: "\\Junk",
+      specialUseSource: "extension",
+    },
     { path: "FreeDuet" },
     { path: "Clients/Acme" },
   ];
@@ -150,12 +162,18 @@ export class FakeMailbox {
 
   imap: ImapFactory = (options) => {
     this.readConnections.push({ ...options });
-    return this.client("read", READ_METHODS) as unknown as ReturnType<ImapFactory>;
+    return this.client(
+      "read",
+      READ_METHODS,
+    ) as unknown as ReturnType<ImapFactory>;
   };
 
   organiser: ImapOrganiserFactory = (options) => {
     this.writeConnections.push({ ...options });
-    return this.client("write", WRITE_METHODS) as unknown as ReturnType<ImapOrganiserFactory>;
+    return this.client(
+      "write",
+      WRITE_METHODS,
+    ) as unknown as ReturnType<ImapOrganiserFactory>;
   };
 
   /** The calls made on one method, from either connection. */

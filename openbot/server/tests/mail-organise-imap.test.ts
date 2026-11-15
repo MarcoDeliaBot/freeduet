@@ -45,7 +45,9 @@ function setup() {
 /** What a call did to the mailbox, without the connection's own lifecycle. */
 const work = (box: FakeMailbox) =>
   box.calls
-    .filter((call) => !["connect", "logout", "close", "on"].includes(call.method))
+    .filter(
+      (call) => !["connect", "logout", "close", "on"].includes(call.method),
+    )
     .map((call) => `${call.via}:${call.method}`);
 
 const json = (text: string) => JSON.parse(text) as unknown;
@@ -53,7 +55,11 @@ const json = (text: string) => JSON.parse(text) as unknown;
 describe("which connection does what", () => {
   test("listing labels is a read: the reading connection, one LIST, and no mailbox opened", async () => {
     const { box, transport } = setup();
-    const result = await transport.callTool(connection, "gmail_list_labels", {});
+    const result = await transport.callTool(
+      connection,
+      "gmail_list_labels",
+      {},
+    );
     expect(result.isError).toBe(false);
     expect(json(result.text)).toEqual({
       labels: ["Clients/Acme", "FreeDuet"],
@@ -71,7 +77,10 @@ describe("which connection does what", () => {
       name: "Receipts 2026",
     });
     expect(result.isError).toBe(false);
-    expect(json(result.text)).toEqual({ label: "Receipts 2026", created: true });
+    expect(json(result.text)).toEqual({
+      label: "Receipts 2026",
+      created: true,
+    });
     expect(work(box)).toEqual(["write:list", "write:mailboxCreate"]);
     expect(box.called("mailboxCreate")[0]?.args).toEqual(["Receipts 2026"]);
     expect(box.called("mailboxOpen")).toEqual([]);
@@ -81,16 +90,19 @@ describe("which connection does what", () => {
 
   test("labelling, archiving and marking open All Mail for writing, once, on the changing connection only", async () => {
     for (const [tool, args] of [
-      ["gmail_label_messages", { messageIds: [HEX.a], addLabels: ["FreeDuet"] }],
+      [
+        "gmail_label_messages",
+        { messageIds: [HEX.a], addLabels: ["FreeDuet"] },
+      ],
       ["gmail_archive_messages", { messageIds: [HEX.a] }],
       ["gmail_mark_messages", { messageIds: [HEX.a], state: "read" }],
     ] as const) {
       const { box, transport } = setup();
       const result = await transport.callTool(connection, tool, args);
       expect(result.isError).toBe(false);
-      expect(box.called("mailboxOpen").map((call) => [call.via, call.args])).toEqual([
-        ["write", ["[Gmail]/All Mail", { readOnly: false }]],
-      ]);
+      expect(
+        box.called("mailboxOpen").map((call) => [call.via, call.args]),
+      ).toEqual([["write", ["[Gmail]/All Mail", { readOnly: false }]]]);
       expect(box.readConnections).toHaveLength(0);
       expect(box.writeConnections).toHaveLength(1);
       expect(box.violations).toEqual([]);
@@ -125,9 +137,9 @@ describe("which connection does what", () => {
     });
     for (const call of box.calls) {
       if (call.via === "read") {
-        expect((CHANGING_METHODS as readonly string[]).includes(call.method)).toBe(
-          false,
-        );
+        expect(
+          (CHANGING_METHODS as readonly string[]).includes(call.method),
+        ).toBe(false);
       }
     }
     expect(box.violations).toEqual([]);
@@ -156,13 +168,24 @@ describe("creating a label", () => {
       name: "Receipts",
     });
     expect(result.isError).toBe(false);
-    expect(json(result.text)).toMatchObject({ label: "Receipts", created: false });
+    expect(json(result.text)).toMatchObject({
+      label: "Receipts",
+      created: false,
+    });
   });
 
   test("a label named for a special folder by the library alone is still the person's, and found by its name", async () => {
     const { box, transport } = setup();
-    box.folders.push({ path: "Archive", specialUse: "\\Archive", specialUseSource: "name" });
-    const listed = await transport.callTool(connection, "gmail_list_labels", {});
+    box.folders.push({
+      path: "Archive",
+      specialUse: "\\Archive",
+      specialUseSource: "name",
+    });
+    const listed = await transport.callTool(
+      connection,
+      "gmail_list_labels",
+      {},
+    );
     expect(json(listed.text)).toMatchObject({
       labels: ["Archive", "Clients/Acme", "FreeDuet"],
     });
@@ -176,7 +199,11 @@ describe("creating a label", () => {
 
   test("the folders the server flagged are never listed as labels", async () => {
     const { transport } = setup();
-    const listed = await transport.callTool(connection, "gmail_list_labels", {});
+    const listed = await transport.callTool(
+      connection,
+      "gmail_list_labels",
+      {},
+    );
     expect(listed.text).not.toContain("Trash");
     expect(listed.text).not.toContain("Spam");
     expect(listed.text).not.toContain("All Mail");
@@ -187,10 +214,14 @@ describe("creating a label", () => {
 describe("labelling", () => {
   test("adding the person's own label: the lookups, then one store on the labels, with the label as the account spells it", async () => {
     const { box, transport } = setup();
-    const result = await transport.callTool(connection, "gmail_label_messages", {
-      messageIds: [HEX.a, HEX.b],
-      addLabels: ["fReEdUeT"],
-    });
+    const result = await transport.callTool(
+      connection,
+      "gmail_label_messages",
+      {
+        messageIds: [HEX.a, HEX.b],
+        addLabels: ["fReEdUeT"],
+      },
+    );
     expect(result.isError).toBe(false);
     expect(json(result.text)).toEqual({
       labeled: 2,
@@ -213,17 +244,24 @@ describe("labelling", () => {
       ["FreeDuet"],
       { uid: true, useLabels: true },
     ]);
-    expect(box.message(decimalOf(HEX.a))?.labels).toEqual(["\\Inbox", "FreeDuet"]);
+    expect(box.message(decimalOf(HEX.a))?.labels).toEqual([
+      "\\Inbox",
+      "FreeDuet",
+    ]);
     expect(box.message(decimalOf(HEX.b))?.labels).toContain("FreeDuet");
   });
 
   test("adding and removing in one call, with Starred as Gmail spells it", async () => {
     const { box, transport } = setup();
-    const result = await transport.callTool(connection, "gmail_label_messages", {
-      messageIds: [HEX.c],
-      addLabels: ["Clients/Acme", "starred"],
-      removeLabels: ["FreeDuet", "IMPORTANT"],
-    });
+    const result = await transport.callTool(
+      connection,
+      "gmail_label_messages",
+      {
+        messageIds: [HEX.c],
+        addLabels: ["Clients/Acme", "starred"],
+        removeLabels: ["FreeDuet", "IMPORTANT"],
+      },
+    );
     expect(result.isError).toBe(false);
     expect(box.called("messageFlagsAdd")[0]?.args).toEqual([
       "13",
@@ -244,10 +282,14 @@ describe("labelling", () => {
 
   test("a label that is not there is refused before the mailbox is opened or one message looked up", async () => {
     const { box, transport } = setup();
-    const result = await transport.callTool(connection, "gmail_label_messages", {
-      messageIds: [HEX.a],
-      addLabels: ["Nonexistent"],
-    });
+    const result = await transport.callTool(
+      connection,
+      "gmail_label_messages",
+      {
+        messageIds: [HEX.a],
+        addLabels: ["Nonexistent"],
+      },
+    );
     expect(result.isError).toBe(true);
     expect(result.text).toBe(noSuchLabel);
     expect(work(box)).toEqual(["write:list"]);
@@ -257,10 +299,14 @@ describe("labelling", () => {
 
   test("all of the named messages or none: one that is gone refuses the call and changes nothing", async () => {
     const { box, transport } = setup();
-    const result = await transport.callTool(connection, "gmail_label_messages", {
-      messageIds: [HEX.a, "1a2b3c4d5e6f7aff", HEX.b],
-      addLabels: ["FreeDuet"],
-    });
+    const result = await transport.callTool(
+      connection,
+      "gmail_label_messages",
+      {
+        messageIds: [HEX.a, "1a2b3c4d5e6f7aff", HEX.b],
+        addLabels: ["FreeDuet"],
+      },
+    );
     expect(result.isError).toBe(true);
     expect(result.text).toBe(missingMessages(1, 3));
     expect(box.changedAnything()).toBe(false);
@@ -271,9 +317,13 @@ describe("labelling", () => {
 describe("archiving", () => {
   test("it removes the Inbox label by its store on the labels and nothing else, and says how many were in the Inbox", async () => {
     const { box, transport } = setup();
-    const result = await transport.callTool(connection, "gmail_archive_messages", {
-      messageIds: [HEX.b, HEX.c],
-    });
+    const result = await transport.callTool(
+      connection,
+      "gmail_archive_messages",
+      {
+        messageIds: [HEX.b, HEX.c],
+      },
+    );
     expect(result.isError).toBe(false);
     expect(json(result.text)).toEqual({ archived: 1, alreadyOutOfInbox: 1 });
     expect(work(box)).toEqual([
@@ -359,10 +409,18 @@ describe("a call that cannot be carried out costs no connection at all", () => {
         ORGANISE_REFUSALS.extra,
       ],
       ["gmail_archive_messages", { messageIds: [] }, ORGANISE_REFUSALS.noIds],
-      ["gmail_archive_messages", { messageIds: ["zz"] }, ORGANISE_REFUSALS.badIds],
       [
         "gmail_archive_messages",
-        { messageIds: Array.from({ length: 101 }, (_, i) => (i + 1).toString(16)) },
+        { messageIds: ["zz"] },
+        ORGANISE_REFUSALS.badIds,
+      ],
+      [
+        "gmail_archive_messages",
+        {
+          messageIds: Array.from({ length: 101 }, (_, i) =>
+            (i + 1).toString(16),
+          ),
+        },
         ORGANISE_REFUSALS.tooManyIds,
       ],
       [
@@ -407,9 +465,13 @@ describe("a connection is closed however the call ended, and says nothing in the
     for (const step of ["connect", "list", "mailboxOpen", "search", "fetch"]) {
       const { box, transport } = setup();
       box.failures.set(step, new Error(library));
-      const result = await transport.callTool(connection, "gmail_archive_messages", {
-        messageIds: [HEX.a],
-      });
+      const result = await transport.callTool(
+        connection,
+        "gmail_archive_messages",
+        {
+          messageIds: [HEX.a],
+        },
+      );
       expect(result.isError).toBe(true);
       expect(result.text).toBe("Gmail refused this change.");
       expect(result.text).not.toContain("LIBRARY");
@@ -421,9 +483,13 @@ describe("a connection is closed however the call ended, and says nothing in the
   test("a store that throws is the same sentence, and the connection is still closed", async () => {
     const { box, transport } = setup();
     box.failures.set("messageFlagsRemove", new Error(library));
-    const result = await transport.callTool(connection, "gmail_archive_messages", {
-      messageIds: [HEX.a],
-    });
+    const result = await transport.callTool(
+      connection,
+      "gmail_archive_messages",
+      {
+        messageIds: [HEX.a],
+      },
+    );
     expect(result.isError).toBe(true);
     expect(result.text).toBe("Gmail refused this change.");
     expect(box.logouts).toBe(1);
@@ -431,17 +497,30 @@ describe("a connection is closed however the call ended, and says nothing in the
 
   test("a refused login, an unreachable host and a timeout are told apart, by code and not by words", async () => {
     const kinds: [unknown, RegExp][] = [
-      [Object.assign(new Error(library), { authenticationFailed: true }), /app password/],
-      [Object.assign(new Error(library), { code: "ECONNRESET" }), /could not be reached/],
-      [Object.assign(new Error(library), { code: "ETIMEDOUT" }), /did not answer in time/],
+      [
+        Object.assign(new Error(library), { authenticationFailed: true }),
+        /app password/,
+      ],
+      [
+        Object.assign(new Error(library), { code: "ECONNRESET" }),
+        /could not be reached/,
+      ],
+      [
+        Object.assign(new Error(library), { code: "ETIMEDOUT" }),
+        /did not answer in time/,
+      ],
     ];
     for (const [error, sentence] of kinds) {
       const { box, transport } = setup();
       box.failures.set("connect", error);
-      const result = await transport.callTool(connection, "gmail_mark_messages", {
-        messageIds: [HEX.a],
-        state: "read",
-      });
+      const result = await transport.callTool(
+        connection,
+        "gmail_mark_messages",
+        {
+          messageIds: [HEX.a],
+          state: "read",
+        },
+      );
       expect(result.isError).toBe(true);
       expect(result.text).toMatch(sentence);
       expect(result.text).not.toContain("LIBRARY");
@@ -463,11 +542,15 @@ describe("a connection is closed however the call ended, and says nothing in the
   test("a removal that fails after the labels were added says that only part was made", async () => {
     const { box, transport } = setup();
     box.failures.set("messageFlagsRemove", new Error(library));
-    const result = await transport.callTool(connection, "gmail_label_messages", {
-      messageIds: [HEX.c],
-      addLabels: ["Clients/Acme"],
-      removeLabels: ["FreeDuet"],
-    });
+    const result = await transport.callTool(
+      connection,
+      "gmail_label_messages",
+      {
+        messageIds: [HEX.c],
+        addLabels: ["Clients/Acme"],
+        removeLabels: ["FreeDuet"],
+      },
+    );
     expect(result.isError).toBe(true);
     expect(result.text).toContain("only part of this change");
     expect(result.text).not.toContain("LIBRARY");
@@ -478,7 +561,9 @@ describe("a connection is closed however the call ended, and says nothing in the
   test("every connection that was made is logged out, over a run of mixed calls", async () => {
     const { box, transport } = setup();
     await transport.callTool(connection, "gmail_list_labels", {});
-    await transport.callTool(connection, "gmail_create_label", { name: "Receipts" });
+    await transport.callTool(connection, "gmail_create_label", {
+      name: "Receipts",
+    });
     await transport.callTool(connection, "gmail_archive_messages", {
       messageIds: [HEX.a, HEX.b],
     });
@@ -540,7 +625,10 @@ describe("what the approval card is told, over an app password", () => {
   test("the sender and subject of each named message, as read from the mailbox, in the order named", async () => {
     const { box, transport } = setup();
     for (const [tool, args] of [
-      ["gmail_label_messages", { messageIds: [HEX.b, HEX.a], addLabels: ["FreeDuet"] }],
+      [
+        "gmail_label_messages",
+        { messageIds: [HEX.b, HEX.a], addLabels: ["FreeDuet"] },
+      ],
       ["gmail_archive_messages", { messageIds: [HEX.b, HEX.a] }],
       ["gmail_mark_messages", { messageIds: [HEX.b, HEX.a], state: "read" }],
     ] as const) {
@@ -563,9 +651,13 @@ describe("what the approval card is told, over an app password", () => {
 
   test("ids the mailbox does not hold are counted, not listed", async () => {
     const { transport } = setup();
-    const details = await transport.describeCall(connection, "gmail_archive_messages", {
-      messageIds: [HEX.a, "1a2b3c4d5e6f7aff"],
-    });
+    const details = await transport.describeCall(
+      connection,
+      "gmail_archive_messages",
+      {
+        messageIds: [HEX.a, "1a2b3c4d5e6f7aff"],
+      },
+    );
     expect(details?.missing).toBe(1);
     expect(details?.messages).toEqual([
       { from: "Ana <ana@example.com>", subject: "Invoice 42" },
@@ -578,7 +670,9 @@ describe("what the approval card is told, over an app password", () => {
       await transport.describeCall(connection, "gmail_list_labels", {}),
     ).toBeUndefined();
     expect(
-      await transport.describeCall(connection, "gmail_create_label", { name: "X" }),
+      await transport.describeCall(connection, "gmail_create_label", {
+        name: "X",
+      }),
     ).toBeUndefined();
     expect(
       await transport.describeCall(connection, "gmail_label_messages", {
@@ -610,9 +704,13 @@ describe("what the approval card is told, over an app password", () => {
   test("a mailbox that cannot be read leaves the card to say so, and the connection is closed", async () => {
     const { box, transport } = setup();
     box.failures.set("search", new Error("anything"));
-    const details = await transport.describeCall(connection, "gmail_archive_messages", {
-      messageIds: [HEX.a],
-    });
+    const details = await transport.describeCall(
+      connection,
+      "gmail_archive_messages",
+      {
+        messageIds: [HEX.a],
+      },
+    );
     expect(details).toBeUndefined();
     expect(box.logouts).toBe(1);
   });
