@@ -526,3 +526,42 @@ Decisions left (see the table in the report): whether the app's own cards and th
 - **The screen of a channel with several members shows real names.** `app/src/components/channels/group-chat.tsx` takes its names from the group's roster on the server (`groupConversations` in `server/src/index.ts`), which carries the real name, and its `@` picker inserts them, which is what `mentionedPeers` matches. A person who renamed a member sees the real name there and their own name on most other screens.
 - **A voice message can raise a settings card.** The rule of 8.9 does not read the `voice-` mark, so a dictated message is the person's own live turn: it can make a member call `change_setting`, and the card appears. The press still decides: Full access and a saved "Always allow" do not skip the card, and a remote session cannot answer it (`approvals/remote-answer.ts`).
 - **The refusal sentence for a remote session is the generic one.** A settings call made in a remote session's run is refused before any card with the sentence of 8.9, "Settings can only be changed in a conversation with you. Ask me again there.", which does not say that this conversation is a remote one.
+
+### 8.11 One line with Undo after a member is added from chat (built, not run live)
+
+Roadmap row "One line with Undo after every team change", decided 15 November 2026. Decision D43 ([M1_PLAN.md](../M1_PLAN.md)). Paths are relative to `openbot/`.
+
+**What the person sees.** A member is proposed in chat and the person presses Create, as today: the proposal card still asks first. After the yes, the completed card is replaced by ONE line: "Renewal Desk was added to your team." with **Undo** and **Details**. Details opens the name, the job, the skills, "Private, with no apps", and a link to the member's page. Undo removes the member and its skills and the line says "Renewal Desk was added and then removed. Undone." Nothing else is asked: the line is the whole interface.
+
+**What was reused** (nothing second was built).
+- The record and the Undo are the settings-in-chat mechanism: one `configuration.changed` audit event per change (`server/src/settings-in-chat/changes.ts`, `SETTING_CHANGE_TARGET`), a compare-and-set Undo that writes its own `bot_setting_undo` event (`undo`, member branch), the seven-day limit (`UNDO_WINDOW_MS`), the person's own route `POST /api/settings-changes/:id/undo` (`settings-in-chat/routes.ts`) and the same list `GET /api/settings-changes` (`list`, member rows). The app calls the same `undoSettingChange` (`app/src/lib/settings-changes.ts`) and reads the same list query as the setting cards (`app/src/freeduet/setting-change-card.tsx`).
+- The proposal card and its `create` are unchanged (`app/src/components/agents/proposed-bot.tsx`, `app/src/lib/copilot/bot-tools.tsx`); the card gets an optional `line` prop that stands in place of the completed card.
+- The remote-session rule is the existing one: `ALL /api/settings-changes/*` is refused to a remote session (`server/src/auth/remote-limits.ts`), which covers the new route, and a test now pins both new paths.
+
+**What is new.**
+- `POST /api/settings-changes/members` `{agentId}`: the card calls it once, after the grants, so the server records the member as it was added. The record holds the name, the skills, the member's two `updatedAt` times and its sorted grants. It is refused (404) unless the member is the person's own, private, keyless, not from a team file or a package, not deleted and made in the last ten minutes (`MEMBER_RECORD_WINDOW_MS`); a second record of the same member is refused (409). The change id is `member-<agent id>`.
+- Undo of it (`undo`, `removeMember`): inside one transaction with a row lock, only while the member is still exactly as recorded (same two `updatedAt` times, same grants, not deleted), it sets the profile's `deletedAt` and deletes the member's grants. A member edited or given another grant since, or already deleted by hand, is left alone with "That member has been changed since it was added, or is already gone, so nothing was undone." (409). A second Undo is refused by the existing check ("That change has already been undone."), and an Undo whose audit row cannot be written puts the member and its grants back.
+- The list shows member rows (`setting: "member"`, `newValue` the name, `skills`), `undoable` only while the member is as recorded. The Settings list shows them as "<name> was added to your team".
+
+**Rules that hold.** Undo is the person's own action: a signed-in session at this computer, never a member tool, a routine or a remote session. It is audited (the change and its Undo are each one `configuration.changed` row, written for the person's id). It touches only the person's own member. The card's Create still asks first; no approval changed (`approvals/policy.ts` is untouched).
+
+**What a member's change means today.** "Changed from chat" is, today, a name, a tone, a language or a notification level. Each already leaves a card with Undo and the before and after values (8.7, 8.10), so that card is the line for a change; it has no Details button (decision D43-2). A member's instructions or skills are not edited from chat anywhere yet, so there is nothing else to undo.
+
+**Not built.**
+- Undo does not restore a member deleted by hand, and does not undo an edit: only "added" has a line of this kind.
+- A member added from the team-file import page, from the Bot form or by Leo's card without the `line` prop has no line.
+- The line is English only: it is not in the Italian card tables.
+- The record call is made by the browser after Create. A browser closed between the two calls leaves a member with no line (it can still be removed on its page).
+- Grants are put back as `skill` grants with `grantedBy` "undo-restore" only when an Undo's audit row failed; otherwise nothing is restored because Undo is not itself undone.
+
+**Tests.** `server/tests/settings-in-chat-member-added.integration.test.ts` (14 cases, real Postgres): record, refusals, Undo, second Undo, changed since (profile, agent row, grant), another person, the seven days, audit failure. `server/tests/remote-limits.integration.test.ts` pins both routes as refused to a remote session. `app/tests/member-added-line.test.tsx` (11): the line, Details, Undo, refusal, failure, reload, the proposal card, the record call. Eight or more mutants planted; see the pull request.
+
+**Not verified.** Not looked at in a browser; not run live with a member made by Leo; no eval case (the line is not model text).
+
+| # | Decision | Options | Recommendation | Why |
+|---|---|---|---|---|
+| D43-1 | Where the line stands | (a) in place of the completed card; (b) under it | (a) | "One line" is the whole interface; the card's own text is repeated in the line's Details |
+| D43-2 | Settings cards (name, tone, language, notifications) | (a) unchanged: they are already a line with Undo; (b) add Details to them too | (a) now, (b) with the Italian review | They already show the before and after |
+| D43-3 | Changed-since | (a) any edit, grant or deletion since refuses Undo; (b) refuse only an edit | (a) | "Restores exactly what was there before" cannot be true once the member has moved on |
+| D43-4 | Undo of a member that already holds work | (a) allowed while unchanged; (b) refused once it has a conversation | (a) | A member's conversations are not part of its record; deleting it hides them with it. Raise if you want (b) |
+
