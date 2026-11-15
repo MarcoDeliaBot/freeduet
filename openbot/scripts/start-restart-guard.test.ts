@@ -1384,7 +1384,7 @@ describe("start.sh local dictation (D25)", () => {
     expect(result.repeated?.stdout).toContain("Dictation is local");
     // Nothing about the key a cloud service would need.
     expect(result.stdout).not.toMatch(/api[_ ]?key/i);
-  });
+  }, 20_000); // Runs start.sh twice with fake tools: 4.5 s median and 5.7 s at most alone, 5.1 s median and 6.3 s at most under load (14 Nov 2026).
 
   test.each([
     ["TRANSCRIPTION_PROVIDER", "openai-compatible"],
