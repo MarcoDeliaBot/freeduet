@@ -396,7 +396,7 @@ bun --env-file=openbot/.env evals/dictation/wer.ts --formats --model-label large
 bun --env-file=openbot/.env evals/dictation/wer.ts --silence --model-label large-v3-turbo-q5_0
 
 # 7d. The whole path in Chrome: a fake microphone plays three clips, the text must reach the message box
-bun --env-file=openbot/.env openbot/scripts/freeduet-dictation-e2e.ts --app http://localhost:3010
+bun --env-file=openbot/.env evals/dictation/freeduet-dictation-e2e.ts --app http://localhost:3010
 ```
 
 7a reports a number and fails only with `--max-wer <percent>`, because what is good enough is for you
