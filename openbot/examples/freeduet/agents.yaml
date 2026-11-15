@@ -56,7 +56,9 @@ agents:
       open in the brief. A booking, reservation or purchase goes to Jules as it is, even with the
       place, time or budget still open. A request to send an email to an address goes to Otto as it
       is, with the address exactly as the person wrote it. If the delegate tool is available, call it once with all the
-      pieces; if not, hand each piece over with message_bot. Then write one line per colleague saying
+      pieces; if not, hand each piece over with message_bot, and fill in its done_when with one
+      sentence the person can check, such as "the list has exactly five points": it says when the job
+      counts as done and gives the colleague no permission. Then write one line per colleague saying
       what they have; until their results come back, your outcome is in progress. With neither, write
       one line per colleague: who to open and the brief ready to paste. Before anything that matters
       reaches the person (a contract review, an invoice or reminder, a post, a cart or booking, a new

@@ -16,6 +16,10 @@
  * reads to the person as the Bot ignoring them.
  */
 import { createHash } from "node:crypto";
+import {
+  DONE_WHEN_MAX_CHARS,
+  readDoneWhen,
+} from "@openbot/shared/handoff-done-when";
 import { type AuditStore, recordAuditEvent } from "../audit";
 import type { WorkQueue } from "../work/queue";
 import type { RunAssertion } from "./callback-token";
@@ -47,7 +51,23 @@ export type HandoffEnvelope = {
   constraints?: string;
   /** What good looks like coming back: a list, a number, a recommendation with reasons. */
   expecting?: string;
+  /**
+   * What counts as done, in one line, as the asking Bot wrote it (docs/design/handoff-done-when.md).
+   *
+   * DATA, NEVER A GRANT. The receiving Bot reads it as the asker's own words, the person sees it under
+   * the hand-off, and the asker is told it again when the answer is back. No approval reads it: not the
+   * D27 mark, not Full access, not the reviewer, not the tools a hop runs with. Only `handoffTool` sets
+   * it, from the call's own argument, and the desk reads it back through the same function.
+   */
+  doneWhen?: string;
 };
+
+/**
+ * What the asking Bot is told when its line is not one: refused whole, so nothing is sent, queued or
+ * asked of the person. Said in the tool before an approval is raised, and by the desk for a caller
+ * that skipped the tool.
+ */
+export const DONE_WHEN_REFUSED = `That handoff was not sent: done_when has to be one sentence of at most ${DONE_WHEN_MAX_CHARS} characters. Write it again shorter, or leave it out.`;
 
 /** How far this may go, in numbers a deployment chooses rather than constants. */
 export type HandoffCaps = {
@@ -157,6 +177,17 @@ export function createHandoffDesk(options: {
           "Nothing was sent: a handoff has to say what the other Bot is being asked to do.",
         );
       }
+
+      /*
+       * The finish line, read the way the tool reads it, so the row never holds one the tool would have
+       * refused: a caller that skipped the tool gets the same answer, and the receiving Bot is never
+       * handed a line that runs over two lines or past the bound.
+       */
+      const finish = readDoneWhen(envelope.doneWhen);
+      if (!finish.ok) {
+        return refuse(from, target, "done_when", DONE_WHEN_REFUSED);
+      }
+      const doneWhen = finish.line;
 
       if (!from.threadId) {
         return refuse(
@@ -329,6 +360,8 @@ export function createHandoffDesk(options: {
             task,
             envelope.constraints ?? "",
             envelope.expecting ?? "",
+            // Only when there is one, so a hop without a line keeps the key it always had.
+            ...(doneWhen ? [doneWhen] : []),
           ]),
         )
         .digest("hex")
@@ -375,6 +408,7 @@ export function createHandoffDesk(options: {
             ? { constraints: envelope.constraints }
             : {}),
           ...(envelope.expecting ? { expecting: envelope.expecting } : {}),
+          ...(doneWhen ? { doneWhen } : {}),
           // The person's own request this hop was made from, when there is one: the server's record,
           // read back by the gate that decides a new email. Not part of the key: the same ask is one hop.
           ...(request ? { request } : {}),
@@ -435,6 +469,8 @@ export function createHandoffDesk(options: {
           // What was asked, so the trail says what one Bot sent another rather than merely that it
           // did. The task is the Bot's own words about the work, not a person's private content.
           task: task.slice(0, 500),
+          // What the asking Bot said counts as done, so the trail keeps it after the hop's row is reaped.
+          ...(doneWhen ? { doneWhen } : {}),
         },
       });
 
