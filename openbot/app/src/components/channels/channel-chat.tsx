@@ -7,6 +7,10 @@ import {
   useCopilotKit,
 } from "@copilotkit/react-core/v2";
 import type { TaskReplyContext } from "@openbot/shared/task-reply";
+import {
+  isVoiceMessageId,
+  markVoiceMessageId,
+} from "@openbot/shared/voice-message";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import {
   type ReactNode,
@@ -20,7 +24,7 @@ import { toAgentOptions } from "@/components/channels/composer";
 import { ConversationView } from "@/components/channels/conversation-view";
 import {
   seedMessage,
-  takeFirstMessage,
+  takeFirstDraft,
   transcriptMessages,
 } from "@/components/channels/transcript-messages";
 import { VoiceCallWidget } from "@/components/channels/voice-call-widget";
@@ -476,8 +480,14 @@ export function ChannelChat({
    * agent has its own messages because joining a fresh thread can temporarily empty the agent.
    */
   const [seed] = useState<Message | null>(() => {
-    const pending = takeFirstMessage(channel.id);
-    return pending ? seedMessage(pending, newId()) : null;
+    const pending = takeFirstDraft(channel.id);
+    if (!pending) return null;
+    // The mark rides on the seed's own id, so it survives the wait for the thread and reaches `say`
+    // below without a second piece of state (docs/design/voice.md, D7 and D8).
+    return seedMessage(
+      pending.text,
+      pending.voice ? markVoiceMessageId(newId()) : newId(),
+    );
   });
 
   /** Cleared by the send-on-mount effect without restarting it. */
@@ -1016,6 +1026,7 @@ export function ChannelChat({
     skillInstructions: string[],
     attachments: Attachment[],
     skipIf?: () => boolean,
+    voice = false,
   ) => {
     // Wait briefly for the runtime agent instance before adding the message.
     if (!isReadyRef.current) {
@@ -1110,7 +1121,16 @@ export function ChannelChat({
         ),
       );
 
-    const userMessageId = newId();
+    /*
+     * WORDS FROM THE MICROPHONE CARRY THEIR ORIGIN IN THE ID (docs/design/voice.md, D7 and D8). A turn
+     * `say` was told came from the microphone, the voice call's model writing a request or dictation
+     * sent with one press, gets the `voice-` id the server reads as "not the person's own written
+     * request": such a message never earns a new email with no card or the Full access of a typed
+     * turn. Everything else, including dictation placed in the box and sent with the Send button, keeps
+     * the plain id it always had. The id is stored with the message, so a continuation, a reload and a
+     * hop's record all see it, and nothing a Bot writes can set it.
+     */
+    const userMessageId = voice ? markVoiceMessageId(newId()) : newId();
     added.add(userMessageId);
     target.addMessage({
       content: toMessageContent(trimmed, attachments),
@@ -1312,7 +1332,7 @@ export function ChannelChat({
     text: string,
     skillInstructions: string[] = [],
     attachments: Attachment[] = [],
-    { skipIf }: { skipIf?: () => boolean } = {},
+    { skipIf, voice }: { skipIf?: () => boolean; voice?: boolean } = {},
   ) => {
     const trimmed = text.trim();
     // A pasted screenshot with no caption is still a message to send: `canSendDraft` already
@@ -1340,7 +1360,13 @@ export function ChannelChat({
       runId: busyOwner,
     });
     try {
-      return await deliver(trimmed, skillInstructions, attachments, skipIf);
+      return await deliver(
+        trimmed,
+        skillInstructions,
+        attachments,
+        skipIf,
+        voice === true,
+      );
     } finally {
       turnsRef.current -= 1;
       setTurnsInFlight(turnsRef.current);
@@ -1425,7 +1451,8 @@ export function ChannelChat({
           turnsRef.current > 0 ||
           followingRef.current ||
           agentRef.current.isRunning,
-        send: (text) => sayRef.current(text),
+        // The voice call's model wrote this request, so it is not the person's own written one.
+        send: (text) => sayRef.current(text, [], [], { voice: true }),
       });
       if (started !== stopEpoch.current)
         throw new Error("The user stopped this task before it completed.");
@@ -1603,11 +1630,15 @@ export function ChannelChat({
     // Decided against the thread as `say` finds it once joined, which is where another device's
     // greeting shows up.
     const skipIf = () => !seedStillNeeded(text, agentRef.current.messages);
+    // A first message sent with the one-press "Transcribe and send" on the compose screen is still
+    // words from the microphone here (docs/design/voice.md, D7 and D8): the mark came across in the
+    // seed's id, and goes on to the message this turn is made of.
+    const voice = isVoiceMessageId(pending.id);
     void (async () => {
       // A busy thread is waited out, a few times at most: each wait is a whole turn.
       for (let attempt = 0; attempt < 3; attempt++) {
         try {
-          await sayRef.current(text, [], [], { skipIf });
+          await sayRef.current(text, [], [], { skipIf, voice });
           return;
         } catch (error) {
           if (!isThreadBusyError(error)) return;
@@ -1769,7 +1800,10 @@ export function ChannelChat({
             onSubmit={async (draft) => {
               onSubmitted?.();
               if (task?.send) {
-                const messageId = newId();
+                // The id carries where the words came from, as in `deliver` (docs/design/voice.md).
+                const messageId = draft.voice
+                  ? markVoiceMessageId(newId())
+                  : newId();
                 if (!task.durable)
                   setTaskPreviews((messages) => [
                     ...messages,
@@ -1817,7 +1851,12 @@ export function ChannelChat({
                   Boolean(instruction),
                 );
 
-              await say(draft.text, skillInstructions, draft.attachments);
+              await say(
+                draft.text,
+                skillInstructions,
+                draft.attachments,
+                draft.voice ? { voice: true } : {},
+              );
             }}
             /**
              * Stop through the core so the abort signal reaches frontend tools; `say` repairs any

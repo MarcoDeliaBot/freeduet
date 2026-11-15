@@ -1,4 +1,5 @@
 import { createHash } from "node:crypto";
+import { isVoiceMessageId } from "@openbot/shared/voice-message";
 import type { ApprovalContinuation } from "@openbot/toolkit/continuation";
 import { and, eq, isNull, sql } from "drizzle-orm";
 import type { Database } from "../db/client";
@@ -85,6 +86,10 @@ export const hashText = (text: string): string =>
  * - THE RUN IS THE ONE ASSERTED: the assertion and the continuation name the same conversation and run.
  * - THE MESSAGE: the person's latest message in the run's input, a plain string with an id of its
  *   own. A message with attachments is parts, not a string, and is not marked.
+ * - NOT WORDS FROM THE MICROPHONE (docs/design/voice.md, D7 and D8): a message whose id carries the
+ *   `voice-` mark was dictated and sent with one press, or written by the voice call's model, and is
+ *   not the person's written request. The hop is made all the same, but without a mark, so the
+ *   member that receives it is asked about a new email and gets no Full access from the hop.
  */
 export function handedRequestOf(
   from: RunAssertion,
@@ -110,6 +115,7 @@ export function handedRequestOf(
     if (typeof content !== "string" || typeof id !== "string" || !id)
       return null;
     if (id.startsWith(HANDOFF_MESSAGE_ID_PREFIX)) return null;
+    if (isVoiceMessageId(id)) return null;
     return {
       by: from.actorId,
       threadId: from.threadId,
