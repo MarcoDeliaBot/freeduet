@@ -1,6 +1,9 @@
 import { afterEach, beforeEach, describe, expect, test } from "bun:test";
 import { callTool, describeCall } from "../src/plugins/google-workspace-rest";
-import { createGoogleImapTransport } from "../src/plugins/google-imap";
+import {
+  createGoogleImapTransport,
+  MAY_HAVE_CHANGED,
+} from "../src/plugins/google-imap";
 import {
   BIN_MESSAGES,
   MAX_ORGANISE_MESSAGES,
@@ -385,6 +388,21 @@ describe("binning over IMAP", () => {
     expect(again.isError).toBe(true);
     expect(again.text).toBe(missingMessages(1, 1));
     expect(box.copies).toEqual([]);
+  });
+
+  test("a timeout or a dropped connection after the copy was handed over says that it may have been made", async () => {
+    for (const code of ["ETIMEDOUT", "ECONNRESET"]) {
+      const { box, transport } = imapSetup();
+      box.failures.set(
+        "messageCopy",
+        Object.assign(new Error("LIBRARY"), { code }),
+      );
+      const result = await transport.callTool(imapConnection, BIN_MESSAGES, {
+        messageIds: [HEX.a],
+      });
+      expect(result.isError).toBe(true);
+      expect(result.text).toBe(MAY_HAVE_CHANGED);
+    }
   });
 
   test("the reading connection is never asked to copy, and the card reads read-only", async () => {
