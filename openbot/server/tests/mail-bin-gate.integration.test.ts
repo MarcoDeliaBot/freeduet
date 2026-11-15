@@ -6,7 +6,7 @@ import {
   withApprovalContext,
 } from "@openbot/toolkit/continuation";
 import { HeadlessToolSuspension } from "@openbot/toolkit/headless-tools";
-import { and, eq, inArray, isNull, } from "drizzle-orm";
+import { and, eq, inArray, isNull } from "drizzle-orm";
 import {
   type FakeGoogle,
   startFakeGoogle,
