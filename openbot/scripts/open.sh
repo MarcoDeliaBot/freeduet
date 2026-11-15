@@ -8,6 +8,11 @@
 # once: this script asks the server for a link, and the browser opens it. The link is good once and for
 # two minutes. The secret is not in it, is never printed, and never leaves this machine.
 #
+# With sign-in, the same cookie marks a browser that is at this computer: a signed-in browser without it
+# is a remote session, which can read, chat and answer a plain approval once, and nothing else
+# (docs/design/phone-and-remote.md 3.5). Sign in as the administrator in the browser first; the link
+# opens at the app's own address, where that session is.
+#
 # scripts/start.sh runs this by itself the first time it makes the secret. Run it again for another
 # browser, or for this one after its cookies were cleared.
 #
@@ -34,7 +39,7 @@ PRINT_ONLY=false
 case "${1:-}" in
   "") ;;
   --print) PRINT_ONLY=true ;;
-  -h|--help) sed -n '2,16p' "$SELF" | sed 's/^# \{0,1\}//'; exit 0 ;;
+  -h|--help) sed -n '2,21p' "$SELF" | sed 's/^# \{0,1\}//'; exit 0 ;;
   *) red "Unknown argument: $1. Try: bash scripts/open.sh --help"; exit 1 ;;
 esac
 
@@ -90,9 +95,9 @@ body="${reply%$'\n'*}"
 case "$code" in
   200) ;;
   404)
-    # A server with sign-in, or one opened beyond this machine, has nothing to pair: the browser is
-    # the person's by other means, and the plain address is all there is.
-    info "This FreeDuet has nothing to pair with (it has sign-in, or it was opened beyond this machine)."
+    # A server with sign-in and no secret, or one opened beyond this machine, has nothing to pair: the
+    # browser is the person's by other means, and the plain address is all there is.
+    info "This FreeDuet has nothing to pair with (it has sign-in and no installation secret, or it was opened beyond this machine)."
     link="http://localhost:$APP_PORT/"
     ;;
   401)
@@ -113,6 +118,17 @@ if [ "$code" = 200 ]; then
     exit 1
   fi
   link="http://localhost:$APP_PORT$path"
+  # With sign-in the server also says the app's own address: the link has to open where the session is.
+  url="$(printf '%s' "$body" | sed -n 's/.*"url":"\([^"]*\)".*/\1/p')"
+  if [ -n "$url" ]; then
+    if ! [[ "$url" =~ ^https?://[]A-Za-z0-9._:@[-]+/api/pair\?token=[A-Za-z0-9_-]+$ ]] || [ "${url##*/api/pair}" != "${path#/api/pair}" ]; then
+      red "The server's answer was not a link."
+      exit 1
+    fi
+    link="$url"
+    info "This FreeDuet has sign-in, so the link works in a browser where you are signed in as the administrator."
+    info "If the page asks you to sign in, do that, then run this again."
+  fi
 fi
 
 # Which program opens an address on this machine. Each one is only asked when it is there.

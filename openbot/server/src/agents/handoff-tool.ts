@@ -289,6 +289,7 @@ export type CoordinationRunAuthority = {
  * layered on top of this union below, carrying one of these roots as its optional origin. */
 const rootInitiator = z.discriminatedUnion("kind", [
   z.object({ kind: z.literal("person") }),
+  z.object({ kind: z.literal("remote") }),
   z.object({ kind: z.literal("deployment") }),
   z.object({ kind: z.literal("routine"), id: z.string().min(1) }),
   z.object({ kind: z.literal("responsibility"), id: z.string().min(1) }),
