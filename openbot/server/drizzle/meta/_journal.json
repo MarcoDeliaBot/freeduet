@@ -512,6 +512,13 @@
       "when": 1794718654768,
       "tag": "0072_member_name_and_tone",
       "breakpoints": true
+    },
+    {
+      "idx": 73,
+      "version": "7",
+      "when": 1794773317791,
+      "tag": "0073_mail_rules",
+      "breakpoints": true
     }
   ]
 }

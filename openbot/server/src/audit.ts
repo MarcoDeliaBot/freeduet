@@ -601,6 +601,17 @@ export const auditEventTypes = [
    * column) and `backup` (the file's name, never its path). Every older row keeps the old id.
    */
   "person.single_user_data_adopted",
+  /*
+   * Mail rules (docs/design/mail-rules.md). Created, switched or deleted by a person's order through the
+   * mailbox gate; `applied` is the server's own timer carrying one rule out (no model, no card: the
+   * bounded exception to D35, D46). Payload: rule id, server, counts, action names; never an address,
+   * a subject or a label name.
+   */
+  "mail_rule.created",
+  "mail_rule.changed",
+  "mail_rule.deleted",
+  "mail_rule.applied",
+  "mail_rule.failed",
 ] as const;
 
 export type AuditEventType = (typeof auditEventTypes)[number];

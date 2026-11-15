@@ -75,6 +75,9 @@ const TOOLS = [
   "gmail_mark_messages",
   "gmail_bin_messages",
   "gmail_spam_messages",
+  "gmail_create_rule",
+  "gmail_list_rules",
+  "gmail_disable_rule",
 ];
 
 /** What the person pastes. Values are invented for this file. */
@@ -301,6 +304,8 @@ describe("the entry is added like any other, and reads and writes are recorded a
       "gmail_mark_messages",
       "gmail_bin_messages",
       "gmail_spam_messages",
+      "gmail_create_rule",
+      "gmail_disable_rule",
     ]) {
       expect(classified.get(name)).toBe("write");
     }
@@ -308,6 +313,7 @@ describe("the entry is added like any other, and reads and writes are recorded a
       "gmail_search_messages",
       "gmail_read_message",
       "calendar_list_events",
+      "gmail_list_rules",
       "gmail_list_labels",
     ]) {
       expect(classified.get(name)).toBe("read");

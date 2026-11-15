@@ -516,6 +516,7 @@ const REVIEWED: readonly CatalogueEntry[] = Object.freeze([
       "gmail_read_message",
       "calendar_list_events",
       "gmail_list_labels",
+      "gmail_list_rules",
     ]),
     writeTools: Object.freeze([
       "gmail_send_reply",
@@ -526,6 +527,8 @@ const REVIEWED: readonly CatalogueEntry[] = Object.freeze([
       "gmail_mark_messages",
       "gmail_bin_messages",
       "gmail_spam_messages",
+      "gmail_create_rule",
+      "gmail_disable_rule",
     ]),
     // Two writes are mail sent as the person: a reply in a thread and a new message. Organising is not.
     sendTools: Object.freeze(["gmail_send_reply", "gmail_send_message"]),
@@ -565,6 +568,7 @@ const REVIEWED: readonly CatalogueEntry[] = Object.freeze([
       "gmail_read_message",
       "calendar_list_events",
       "gmail_list_labels",
+      "gmail_list_rules",
     ]),
     writeTools: Object.freeze([
       "gmail_send_reply",
@@ -575,6 +579,8 @@ const REVIEWED: readonly CatalogueEntry[] = Object.freeze([
       "gmail_mark_messages",
       "gmail_bin_messages",
       "gmail_spam_messages",
+      "gmail_create_rule",
+      "gmail_disable_rule",
     ]),
     // Two writes are mail sent as the person: a reply in a thread and a new message. Organising is not.
     sendTools: Object.freeze(["gmail_send_reply", "gmail_send_message"]),

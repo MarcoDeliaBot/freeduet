@@ -14,6 +14,7 @@ import {
   PageSection,
   PageShell,
 } from "@/components/layout/page-shell";
+import { MailRulesSection } from "@/components/connections/mail-rules-section";
 import { RowMark } from "@/components/layout/row-mark";
 import { PluginLogo } from "@/components/plugins/plugin-logo";
 import { providerIcon } from "@/components/settings/linked-accounts";
@@ -456,6 +457,7 @@ function RouteComponent() {
           </p>
         ) : null}
       </PageSection>
+      <MailRulesSection />
     </PageShell>
   );
 }
