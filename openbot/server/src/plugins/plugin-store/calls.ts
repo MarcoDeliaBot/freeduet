@@ -19,6 +19,7 @@ import { personText } from "../../freeduet/person-language";
 import { settingChangeRefusal } from "../../settings-in-chat/own-turn";
 import { classifyTool, tokenHeaderFor } from "../catalogue";
 import { VERSION_ARG } from "../composio";
+import type { McpCallResult } from "../mcp";
 import { inspectToolArguments } from "../content-governance";
 import { plainAddress } from "../mail-address";
 import {
@@ -27,6 +28,11 @@ import {
   isOrganiseWrite,
   organiseRefusal,
 } from "../mail-organise";
+import {
+  isMailRuleTool,
+  isMailRuleWrite,
+  mailRuleRefusal,
+} from "../mail-rules";
 import { isNewEmailSend, shareTargetOf } from "../share-target";
 import type { AccountMode } from "../shared-accounts";
 import { transportFor } from "../transport";
@@ -37,6 +43,7 @@ import {
   typedRequestInHandedRequest,
 } from "../typed-recipients";
 import type { StoreContext } from "./context";
+import { mailRuleMethods } from "./mail-rules";
 import {
   effectiveUrl,
   type PluginDecision,
@@ -105,6 +112,7 @@ export function callMethods(context: StoreContext) {
    * run resumed after a card carries an initiator, which D27 never lets skip the card. A new run is a
    * new request.
    */
+  const rules = mailRuleMethods(context);
   const spentRequests = new Map<string, SpentRequest>();
   const spendRequest = (key: string): boolean => {
     if (spentRequests.has(key)) return false;
@@ -684,9 +692,20 @@ export function callMethods(context: StoreContext) {
         (access.transport === "google-imap" ||
           access.transport === "google-workspace-rest") &&
         isOrganiseTool(toolName);
+      /*
+       * Mail rules (docs/design/mail-rules.md): the three tools that keep a standing rule are written by
+       * the same reading before the gate, on the same two transports, and are asked about as changes to
+       * the mailbox. They are carried out by this store, not by the vendor: see `ruleCall` below.
+       */
+      const mailRule =
+        (access.transport === "google-imap" ||
+          access.transport === "google-workspace-rest") &&
+        isMailRuleTool(toolName);
       const organiseRefused = organises
         ? organiseRefusal(toolName, vendorArgs)
-        : null;
+        : mailRule
+          ? mailRuleRefusal(toolName, vendorArgs)
+          : null;
       if (organiseRefused) {
         await recordAuditEvent(auditStore, {
           eventType: "mcp.call_rejected",
@@ -727,7 +746,9 @@ export function callMethods(context: StoreContext) {
        * one hop from the person): the person is then asked.
        */
       const organisesNow =
-        effect === "write" && organises && isOrganiseWrite(toolName);
+        effect === "write" &&
+        ((organises && isOrganiseWrite(toolName)) ||
+          (mailRule && isMailRuleWrite(toolName)));
       let typedRequest: string | null = null;
       if (organisesNow) {
         const context = currentApprovalContext();
@@ -852,8 +873,25 @@ export function callMethods(context: StoreContext) {
           access,
           gatedMode,
         );
+        // A mail rule is kept by this store: the vendor is never asked, whatever stands in for it.
+        const ruleCall = mailRule
+          ? async (
+              _connection: unknown,
+              _name: string,
+              ruleArgs: Record<string, unknown>,
+            ): Promise<McpCallResult> => ({
+              ...(await rules.handleRuleTool({
+                serverId,
+                toolName,
+                args: ruleArgs,
+                userId: input.credentialActorId ?? input.actorId,
+                ...(input.initiator ? { initiator: input.initiator } : {}),
+              })),
+              truncated: false,
+            })
+          : null;
         const vendor =
-          injectedVendor ?? transportFor(access.transport).callTool;
+          ruleCall ?? injectedVendor ?? transportFor(access.transport).callTool;
         // From the next line the vendor may hold the email, whatever it answers or fails to.
         reachedVendor = true;
         const result = await vendor(

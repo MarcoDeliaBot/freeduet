@@ -118,6 +118,10 @@ describe("every catalogue entry carries a send list", () => {
       "gmail_mark_messages",
       "gmail_read_message",
       "gmail_search_messages",
+      // D46: standing mail rules FreeDuet keeps itself; they send nothing.
+      "gmail_create_rule",
+      "gmail_disable_rule",
+      "gmail_list_rules",
     ];
     expect(
       [...(oauth?.readTools ?? []), ...(oauth?.writeTools ?? [])].sort(),

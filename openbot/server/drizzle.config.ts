@@ -37,6 +37,7 @@ export default defineConfig({
     "./src/db/schema/admin.ts",
     "./src/db/schema/scim.ts",
     "./src/db/schema/lifecycle.ts",
+    "./src/db/schema/mail-rules.ts",
     "./src/db/schema/passwords.ts",
     "./src/db/schema/team-bots.ts",
     "./src/db/schema/shared-use.ts",

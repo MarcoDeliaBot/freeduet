@@ -39,7 +39,7 @@ All of it is still in the database, attached to `dev-local-user`, a person nobod
 ### 2.1 How a person is named
 
 - By `users.id`, a text column. For this person it is the literal `dev-local-user`. [code: server/src/auth/dev-actor.ts:30]
-- By a foreign key to `users.id` in 52 columns [proved: `server/tests/single-user-adoption-registry.test.ts` reads them from the live schema].
+- By a foreign key to `users.id` in 53 columns [proved: `server/tests/single-user-adoption-registry.test.ts` reads them from the live schema].
 - By a plain text column with no foreign key, such as `composio_connections.user_id` or `learning_thread_bindings.user_id`.
 - Inside `jsonb`: the payload of a work item (`actorId`, `ownerUserId`, a nested `question.actorId`) and the member list of a shared-use request.
 - In a derived key. Two exist:
@@ -68,7 +68,7 @@ Every column below, written as its table and its column joined by a dot, is a li
 | Conversations | `channel_memberships.user_id`, `attachments.uploaded_by`, `group_bot_threads.owner_user_id`, `group_messages.owner_user_id`, `learning_thread_bindings.user_id`, `intelligence_channel_mappings.user_id` | The history of a conversation is in the next row. |
 | Conversation history, Intelligence off | `freeduet_threads.user_id`, `freeduet_thread_locks.user_id` | Tables made by the FreeDuet thread store, present only on that mode. [code: server/src/freeduet/threads/migrations/0000_freeduet_threads.sql] A thread owned by another user is refused on open, so without this the conversations move and cannot be opened. [code: server/src/freeduet/threads/store.ts] |
 | Memories | `personal_memories.owner_user_id`, `memory_sources.owner_user_id` | |
-| Routines and standing work | `routines.owner_user_id`, `responsibilities.owner_user_id`, `responsibility_events.owner_user_id`, `responsibility_source_bindings.owner_user_id`, `responsibility_triggers.owner_user_id`, `proactive_suggestions.owner_user_id` | |
+| Routines and standing work | `routines.owner_user_id`, `responsibilities.owner_user_id`, `responsibility_events.owner_user_id`, `mail_rules.user_id`, `responsibility_source_bindings.owner_user_id`, `responsibility_triggers.owner_user_id`, `proactive_suggestions.owner_user_id` | |
 | Approvals | `approval_preferences.owner_user_id`, `approval_rules.owner_user_id`, `approval_requests.owner_user_id` | Only finished requests move. A request still waiting stops the tool (section 6.1). Full access lives in `users.preferences`. |
 | Saved logins | `saved_logins.owner_user_id`, `sign_in_requests.owner_user_id` | Only finished requests move. |
 | Connected apps | `composio_connections.user_id`, `brokered_connections.user_id`, `mcp_user_credentials.user_id`, `pending_authorizations.actor_id`, `pending_authorizations.user_id`, `identity_links.user_id`, `identity_link_challenges.user_id`, `delivery_bindings.owner_user_id`, `delivery_challenges.owner_user_id`, `delivery_inbox.owner_user_id`, `delivery_outbox.owner_user_id` | `brokered_connections.user_id` moves for `holder = 'person'` rows only. A connection still being made stops the tool. Section 2.4 says what the vendor sees. |

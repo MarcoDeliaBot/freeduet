@@ -106,7 +106,7 @@ function describeShare(args: Record<string, unknown>): ApprovalView {
 
 /** The two Gmail connections' tools that organise a mailbox (server/src/plugins/mail-organise.ts). */
 const ORGANISE_TOOL =
-  /^(?:google-imap|google-workspace)\/(gmail_create_label|gmail_label_messages|gmail_archive_messages|gmail_mark_messages|gmail_bin_messages|gmail_spam_messages)$/;
+  /^(?:google-imap|google-workspace)\/(gmail_create_label|gmail_label_messages|gmail_archive_messages|gmail_mark_messages|gmail_bin_messages|gmail_spam_messages|gmail_create_rule|gmail_disable_rule)$/;
 
 const count = (n: number, one: string, many = `${one}s`) =>
   `${n} ${n === 1 ? one : many}`;
@@ -117,6 +117,64 @@ const names = (value: unknown): string[] =>
     : typeof value === "string" && value.trim()
       ? [value.trim()]
       : [];
+
+const flag = (value: unknown) => value === true;
+const quote = (value: unknown) =>
+  typeof value === "string" ? `\u201c${value}\u201d` : "";
+
+/**
+ * A standing rule, in the words the person reads: "From now on, mail from X: label Y and archive." Drawn
+ * from the arguments, which the server checked against the rule's own reading before it asked.
+ */
+function describeRule(
+  args: Record<string, unknown>,
+  base: { app: string; kind: "mail" },
+): ApprovalView {
+  const when: string[] = [];
+  if (typeof args.fromAddress === "string")
+    when.push(`from ${args.fromAddress}`);
+  if (typeof args.fromDomain === "string")
+    when.push(`from the domain ${args.fromDomain}`);
+  if (typeof args.toAddress === "string")
+    when.push(`sent to ${args.toAddress}`);
+  if (typeof args.listId === "string")
+    when.push(`from the list ${quote(args.listId)}`);
+  if (typeof args.subjectContains === "string")
+    when.push(`with ${quote(args.subjectContains)} in the subject`);
+  if (typeof args.words === "string")
+    when.push(`with the words ${quote(args.words)} in the subject or sender`);
+  const labels = names(args.addLabels);
+  const does = [
+    ...(labels.length > 0
+      ? [`label ${labels.map((n) => quote(n)).join(", ")}`]
+      : []),
+    ...(flag(args.markRead) ? ["mark read"] : []),
+    ...(flag(args.archive) ? ["archive"] : []),
+    ...(flag(args.spam) ? ["move to Spam"] : []),
+    ...(flag(args.bin) ? ["move to the Bin"] : []),
+  ];
+  const done =
+    does.length <= 1
+      ? (does[0] ?? "do nothing")
+      : `${does.slice(0, -1).join(", ")} and ${does.at(-1)}`;
+  const sentence = `From now on, mail ${when.join(" and ")}: ${done}.`;
+  return {
+    ...base,
+    title: "Create a mail rule",
+    fields: [
+      { label: "The rule", value: sentence },
+      {
+        label: "What happens",
+        value:
+          "FreeDuet applies it to new mail every few minutes, without asking again, until you switch it off. It is not a Gmail filter. It never forwards, replies or deletes for good." +
+          (flag(args.applyToExisting)
+            ? " It is also applied once to the matching mail already in your Inbox."
+            : ""),
+      },
+    ],
+    body: null,
+  };
+}
 
 /**
  * A call that labels, archives, bins or marks mail, or creates a label, in plain words and with the
@@ -141,6 +199,31 @@ function describeOrganise(
       : {};
   const base = { app: "Gmail", kind: "mail" as const };
 
+  if (tool === "gmail_create_rule") return describeRule(args, base);
+  if (tool === "gmail_disable_rule") {
+    const change =
+      args.change === "delete"
+        ? "Delete"
+        : args.change === "enable"
+          ? "Switch on"
+          : "Switch off";
+    return {
+      ...base,
+      title: `${change} a mail rule`,
+      fields: [
+        {
+          label: "What happens",
+          value:
+            change === "Delete"
+              ? "The rule is removed and stops applying to new mail. Mail it already moved stays where it is."
+              : change === "Switch on"
+                ? "The rule applies again, to mail that arrives from now on."
+                : "The rule stops applying to new mail. Mail it already moved stays where it is.",
+        },
+      ],
+      body: null,
+    };
+  }
   if (tool === "gmail_create_label") {
     const [name] = names(args.name);
     return {

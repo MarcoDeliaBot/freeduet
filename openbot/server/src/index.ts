@@ -2459,6 +2459,28 @@ const deliverySweeps = DELIVERY_WORK_KINDS.map((kind) =>
   }, 2_000),
 );
 
+/*
+ * Mail rules (docs/design/mail-rules.md, D46): the standing rules a person ordered, carried out on a timer
+ * by the server itself. The same in-process timer as the sweeps around it; the routines worker is not
+ * used because a routine firing starts a model turn and this job has no model. A lease on each rule
+ * keeps two replicas from running one rule twice.
+ */
+const mailRuleSweep = repeatAfterEach(async () => {
+  try {
+    const report = await pluginStore.runMailRules();
+    if (report.applied > 0)
+      console.info(JSON.stringify({ type: "mail-rules", ...report }));
+  } catch (error) {
+    console.error(
+      JSON.stringify({
+        type: "mail-rules-error",
+        error: error instanceof Error ? error.name : "UnknownError",
+        timestamp: new Date().toISOString(),
+      }),
+    );
+  }
+}, 5 * 60_000);
+
 const personResponseOwner = workOwner("person-response");
 const groupSweep = repeatAfterEach(async () => {
   try {
@@ -2969,6 +2991,7 @@ for (const signal of ["SIGINT", "SIGTERM"] as const) {
     approvalSweep.stop();
     personResponseSweep.stop();
     groupSweep.stop();
+    mailRuleSweep.stop();
     for (const sweep of deliverySweeps) sweep.stop();
     void Promise.allSettled([
       channelActivityListener.stop(),
