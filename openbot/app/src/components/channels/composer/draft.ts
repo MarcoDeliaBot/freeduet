@@ -29,6 +29,18 @@ export type ComposerDraft = {
   commandIds: string[];
   isEmpty: boolean;
   attachments: Attachment[];
+  /**
+   * THE WORDS CAME FROM THE MICROPHONE AND NOBODY READ THEM FIRST (docs/design/voice.md, D7 and D8):
+   * dictation sent with one press, "Transcribe and send". Whoever sends the draft gives its message the
+   * id the server reads as "not the person's own written request" (`@openbot/shared/voice-message`),
+   * so it never earns a new email with no card or the Full access of a typed turn.
+   *
+   * Absent for everything else, and absent is what a draft is: typed words, and dictation the person
+   * placed in the box and sent with the Send button, which they could read and edit. Never `false`: the
+   * field is either here and true or not here at all, so a draft built without it cannot be marked by
+   * accident.
+   */
+  voice?: true;
 };
 
 export function toDraft(
