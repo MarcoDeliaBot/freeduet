@@ -2656,7 +2656,7 @@ describe("calling one action", () => {
     // its part here.
     expect(result.text).toMatch(/could not turn that answer into text/i);
     expect(result.text).toContain("GMAIL_FETCH_EMAILS");
-  });
+  }, 35_000); // One in-memory call that takes 2 to 4 s alone and 5 to 8 s under load, with no timer in the code path (14 Nov 2026); the cause is not isolated.
 
   test("the serialization refusal quotes a reason through the same door as the rest", async () => {
     /*

@@ -231,7 +231,11 @@ function FirstMessage({
    * is. The server writes the greeting's message from that alone (`firstDayGreeting`); `text` is
    * the same message, drawn here until the conversation takes over. Throws when it fails.
    */
-  const start = async (text: string, greeting?: FirstDayGreeting) => {
+  const start = async (
+    text: string,
+    greeting?: FirstDayGreeting,
+    voice = false,
+  ) => {
     if (startingRef.current)
       throw new Error(
         "The conversation is still starting. Try again in a moment.",
@@ -262,7 +266,7 @@ function FirstMessage({
             return;
           }
           queryClient.setQueryData(channelKeys.detail(channel.id), channel);
-          stashFirstMessage(channel.id, first);
+          stashFirstMessage(channel.id, first, voice);
           onStarted(channel);
         },
       });
@@ -315,7 +319,9 @@ function FirstMessage({
           ) : null
         }
         // The composer keeps the draft for another try when this throws.
-        onSubmit={(draft) => start(draft.text)}
+        // `voice` is true only for the one-press "Transcribe and send": that first message is still
+        // words from the microphone when the channel sends it (docs/design/voice.md, D7 and D8).
+        onSubmit={(draft) => start(draft.text, undefined, draft.voice === true)}
         pending={starting}
         placeholder={`Message ${bot.name}`}
       />

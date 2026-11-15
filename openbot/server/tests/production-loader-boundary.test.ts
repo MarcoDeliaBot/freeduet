@@ -6,6 +6,17 @@ import { fileURLToPath } from "node:url";
 
 const serverRoot = fileURLToPath(new URL("..", import.meta.url));
 
+/*
+ * Starting the production entry loads the whole server graph before it reaches the database. Measured
+ * on 14 November 2026 with the junit reporter: alone 3.3 s median, 4.9 s at most (ten runs); under a
+ * bounded synthetic CPU load 5.1 s median or more, so the old 5 s kill cut the process short in six of
+ * ten runs before it printed the query failure. The kill bound is the only thing that ends a child that
+ * does not exit by itself, and it is sized about five times the slowest measured start; the test
+ * timeout sits above it so the kill always fires first.
+ */
+const ENTRY_KILL_MS = 25_000;
+const TEST_TIMEOUT_MS = 35_000;
+
 function envFileArgument(envPath: string): string {
   const relativePath = relative(serverRoot, envPath).split(sep).join("/");
   return `--env-file=${relativePath}`;
@@ -58,7 +69,8 @@ async function runProductionEntry() {
     stderr: "pipe",
   });
 
-  const timeout = setTimeout(() => proc.kill(), 5_000);
+  // The bound on a child that does not exit by itself. It is a bound on the process, not the claim.
+  const timeout = setTimeout(() => proc.kill(), ENTRY_KILL_MS);
   try {
     const [stdout, stderr, exitCode] = await Promise.all([
       new Response(proc.stdout).text(),
@@ -73,16 +85,20 @@ async function runProductionEntry() {
 }
 
 describe("production server loader boundary", () => {
-  test("the production-used server entry reaches the configured database boundary after preloading EventSource", async () => {
-    const result = await runProductionEntry();
-    const output = `${result.stdout}\n${result.stderr}`;
+  test(
+    "the production-used server entry reaches the configured database boundary after preloading EventSource",
+    async () => {
+      const result = await runProductionEntry();
+      const output = `${result.stdout}\n${result.stderr}`;
 
-    expect(result.exitCode).not.toBe(0);
-    expect(output).not.toContain("require() async module");
-    expect(output).not.toContain("OPENBOT_SERVER_LOADER_SMOKE");
-    expect(output).toContain("Failed query: insert into");
-    expect(output).toMatch(
-      /Connection closed|Failed to connect|ERR_POSTGRES_CONNECTION_REFUSED/,
-    );
-  });
+      expect(result.exitCode).not.toBe(0);
+      expect(output).not.toContain("require() async module");
+      expect(output).not.toContain("OPENBOT_SERVER_LOADER_SMOKE");
+      expect(output).toContain("Failed query: insert into");
+      expect(output).toMatch(
+        /Connection closed|Failed to connect|ERR_POSTGRES_CONNECTION_REFUSED/,
+      );
+    },
+    TEST_TIMEOUT_MS,
+  );
 });

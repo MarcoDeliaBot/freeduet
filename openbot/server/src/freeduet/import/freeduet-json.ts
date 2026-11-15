@@ -5,11 +5,14 @@ import {
   isRestricted,
   mergeVerdicts,
   readText,
+  secretKind,
   type TextVerdict,
 } from "./checks";
 import {
   byteLength,
   digestOf,
+  type FactDrop,
+  type FactDropCode,
   fitsMemoryLimit,
   IMPORT_BATCH_MAX_ITEMS,
   IMPORT_FILE_MAX_BYTES,
@@ -41,6 +44,15 @@ function unwrap(pasted: string): string {
 }
 
 /**
+ * The code a refused fact is labelled with. A secret comes first, because it is never proposed; then a
+ * check on its text; only then the memory's length limit, which is the one reason left.
+ */
+function refusedFactCode(text: string, failedCheck: boolean): FactDropCode {
+  if (secretKind(text) !== null) return "secret";
+  return failedCheck ? "check" : "too-long";
+}
+
+/**
  * Reads a `freeduet-import/1` export pasted as text. Each agent becomes a Bot item and each
  * non-empty fact a fact item. Nothing is stored here: the review shows what was read and what was
  * refused, and a person confirms before any of it is kept.
@@ -67,6 +79,7 @@ export function parseFreeduetImport(pasted: string): ImportOutcome {
   const items: ImportItem[] = [];
   const refused: RefusedItem[] = [];
   const notImported: NotImported[] = [];
+  const factDrops: FactDrop[] = [];
   let candidates = 0;
 
   for (const key of Object.keys(parsed)) {
@@ -151,6 +164,7 @@ export function parseFreeduetImport(pasted: string): ImportOutcome {
       };
       items.push({
         kind: "bot",
+        where,
         name,
         title,
         instructions,
@@ -173,14 +187,15 @@ export function parseFreeduetImport(pasted: string): ImportOutcome {
     if (!Array.isArray(facts)) continue;
     for (const [factIndex, fact] of facts.entries()) {
       const factWhere = `${where}.facts[${factIndex}]`;
-      if (typeof fact === "string" && fact.trim() === "") continue;
+      if (typeof fact === "string" && fact.trim() === "") {
+        factDrops.push({ where: factWhere, code: "blank", reasons: [] });
+        continue;
+      }
       candidates += 1;
       if (typeof fact !== "string") {
-        refused.push({
-          kind: "fact",
-          where: factWhere,
-          reasons: [`${factWhere} is not text`],
-        });
+        const reasons = [`${factWhere} is not text`];
+        refused.push({ kind: "fact", where: factWhere, reasons });
+        factDrops.push({ where: factWhere, code: "not-text", reasons });
         continue;
       }
       const text = fact.trim();
@@ -192,6 +207,11 @@ export function parseFreeduetImport(pasted: string): ImportOutcome {
         );
       if (factReasons.length > 0) {
         refused.push({ kind: "fact", where: factWhere, reasons: factReasons });
+        factDrops.push({
+          where: factWhere,
+          code: refusedFactCode(text, verdict.reasons.length > 0),
+          reasons: factReasons,
+        });
         continue;
       }
       const license: ImportLicense = {
@@ -201,6 +221,7 @@ export function parseFreeduetImport(pasted: string): ImportOutcome {
       const fromAgent = nameClean ? name : null;
       items.push({
         kind: "fact",
+        where: factWhere,
         text,
         fromAgent,
         source: { format: IMPORT_FORMAT, fileName: null },
@@ -217,6 +238,12 @@ export function parseFreeduetImport(pasted: string): ImportOutcome {
     );
   return {
     ok: true,
-    result: { format: IMPORT_FORMAT, items, refused, notImported },
+    result: {
+      format: IMPORT_FORMAT,
+      items,
+      refused,
+      notImported,
+      factDrops,
+    },
   };
 }

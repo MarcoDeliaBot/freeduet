@@ -35,16 +35,32 @@ export function seedMessage(text: string, id: string): Message {
  *
  * Deliberately not persisted. A reload finds nothing here, which is correct, by then the message
  * is in the thread and arrives through the normal replay.
+ *
+ * It also holds whether the words came from the microphone (docs/design/voice.md, D7 and D8): a first
+ * message sent with the one-press "Transcribe and send" on the compose screen is sent by the channel
+ * that opens, so the mark has to cross the navigation with the text or the channel would send it as
+ * typed. `voice` is true only for that press; everything else is false.
  */
-const firstMessages = new Map<string, string>();
+const firstMessages = new Map<string, { text: string; voice: boolean }>();
 
-export function stashFirstMessage(channelId: string, text: string): void {
-  firstMessages.set(channelId, text);
+export function stashFirstMessage(
+  channelId: string,
+  text: string,
+  voice = false,
+): void {
+  firstMessages.set(channelId, { text, voice });
+}
+
+/** The pending first message with its mark, forgotten as it is read. Null for a channel opened any other way. */
+export function takeFirstDraft(
+  channelId: string,
+): { text: string; voice: boolean } | null {
+  const first = firstMessages.get(channelId) ?? null;
+  firstMessages.delete(channelId);
+  return first;
 }
 
 /** Read the pending first message and forget it. Null for a channel opened any other way. */
 export function takeFirstMessage(channelId: string): string | null {
-  const text = firstMessages.get(channelId) ?? null;
-  firstMessages.delete(channelId);
-  return text;
+  return takeFirstDraft(channelId)?.text ?? null;
 }

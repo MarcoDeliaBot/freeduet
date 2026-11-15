@@ -1124,20 +1124,30 @@ export function Composer({
   );
 
   /**
-   * The single submit path for Enter, the send button, and the form.
+   * The single submit path for Enter, the send button, the form and the one-press dictation.
    *
    * `submitInFlight` is a ref rather than `isSubmitting` because a second Enter can land before
    * React has re-rendered with the new state, which would send the message twice.
+   *
+   * `voice` is true only for dictation sent with one press (`sendDictatedDraft`), whose words the
+   * person never read: the draft carries the mark, so the message it becomes is not taken for the
+   * person's own written request (docs/design/voice.md, D7 and D8). It is a parameter of this inner
+   * function and not of `submitDraft` below, which is what Enter, the button and the form call and
+   * hands prompt-area as `onSubmit`: only the dictation effect passes `true`, so nothing a caller of
+   * `submitDraft` passes as a second argument can mark a message that was typed.
    */
-  const submitDraft = useCallback(
-    async (segments: Segment[]) => {
+  const send = useCallback(
+    async (segments: Segment[], voice: boolean) => {
       // `canSendDraft` rather than `isEmpty`: a screenshot with no words is a message, and an
       // upload still in flight is not one yet, whatever is typed alongside it.
       //
       // `overCap` is asked here as well as at the button, and not only there: Enter reaches this
       // function through prompt-area's own `onSubmit`, which has never looked at `canSend`. A gate
       // drawn on the button alone would refuse the press and accept the keystroke.
-      const submitted = toDraft(segments, staged);
+      const typedDraft = toDraft(segments, staged);
+      const submitted = voice
+        ? { ...typedDraft, voice: true as const }
+        : typedDraft;
       if (
         !canSendDraft(submitted) ||
         overCap(submitted) ||
@@ -1282,13 +1292,26 @@ export function Composer({
     ],
   );
 
+  /**
+   * Enter, the send button and the form: words the person could read and edit, so never marked.
+   * This includes dictation placed in the box with "Stop and transcribe" or "Type instead" and then
+   * sent with the Send button.
+   */
+  const submitDraft = useCallback(
+    (segments: Segment[]) => send(segments, false),
+    [send],
+  );
+
   // Submit after the transcript has been committed to the latest draft. The ref is consumed
   // before invoking the normal send path, so rerenders and StrictMode cannot submit twice.
+  //
+  // This is the one press, "Transcribe and send": the words were never on screen first, so the draft
+  // is marked as coming from the microphone (docs/design/voice.md, D7 and D8).
   useEffect(() => {
     if (!sendDictatedDraft.current) return;
     sendDictatedDraft.current = false;
-    void submitDraft(value);
-  }, [value, submitDraft]);
+    void send(value, true);
+  }, [value, send]);
 
   /**
    * Straight after the sheet closes, rather than through `wantsFocus` below, which waits out a turn
