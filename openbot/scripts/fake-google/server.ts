@@ -1310,9 +1310,8 @@ export function startFakeGoogle(
      * `messages.modify`, only as the move to Spam makes it: add SPAM, take INBOX off. Any other body is
      * a 400, so a request that would do something else shows up as a failure and not as a silent change.
      */
-    const modifying = /^\/gmail\/v1\/users\/me\/messages\/([^/]+)\/modify$/.exec(
-      path,
-    );
+    const modifying =
+      /^\/gmail\/v1\/users\/me\/messages\/([^/]+)\/modify$/.exec(path);
     if (method === "POST" && modifying) {
       if (!granted.includes("gmail.modify")) return insufficient();
       const message = messages.find(
