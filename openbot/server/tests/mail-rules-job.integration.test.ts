@@ -407,7 +407,7 @@ describe("a failure is reported, never hidden, and disables nothing", () => {
     expect(msg.where).toBe("inbox");
     // Fixed: the next pass applies it, once.
     box.failing.clear();
-    const again = await store.runMailRules({ now: later(10) });
+    const again = await store.runMailRules({ now: later(30) });
     expect(again.applied).toBe(1);
     expect(msg.where).toBe("spam");
     expect((await row(id)).lastError).toBeNull();
@@ -573,5 +573,97 @@ describe("the limits of the list", () => {
     });
     expect(refused.isError).toBe(true);
     expect(await store.listMailRules(owner)).toEqual([]);
+  });
+});
+
+describe("a mailbox that keeps failing is not hammered, and is not an audit row every pass", () => {
+  const searches = () =>
+    box.calls.filter((c) => c.name === "gmail_search_messages").length;
+
+  test("one failed search skips the rest of that connection's rules, waits twice as long each time, writes one row per outage, and says so when it recovers", async () => {
+    await reset();
+    const a = await rule({ fromDomain: "github.com", archive: true });
+    const b = await rule({ fromDomain: "gitlab.com", archive: true });
+    box.add({ from: "x@github.com", subject: "new" });
+    box.failing.set(
+      "gmail_search_messages",
+      "Gmail could not be reached. Try again later.",
+    );
+    // First pass: one search only, both rules show the error.
+    await store.runMailRules({ now: later(5) });
+    expect(searches()).toBe(1);
+    for (const id of [a, b]) {
+      const r = await row(id);
+      expect(r.lastError).toContain("could not be reached");
+      expect(r.failures).toBe(1);
+      expect(r.enabled).toBe(true);
+      expect(await audits("mail_rule.failed", id)).toHaveLength(1);
+    }
+    // Inside the wait: nothing is asked of the mailbox.
+    await store.runMailRules({ now: later(8) });
+    expect(searches()).toBe(1);
+    // After it: one more search, a second failure, and still one audit row each.
+    await store.runMailRules({ now: later(30) });
+    expect(searches()).toBe(2);
+    expect((await row(a)).failures).toBe(2);
+    expect(await audits("mail_rule.failed", a)).toHaveLength(1);
+    // The wait doubles and stops growing at four hours.
+    const wait = async (id: string, from: number) =>
+      ((await row(id)).leasedUntil?.getTime() ?? 0) -
+      (Date.now() + from * 60_000);
+    expect(await wait(a, 30)).toBeGreaterThan(19 * 60_000);
+    expect(await wait(a, 30)).toBeLessThanOrEqual(20 * 60_000);
+    let at = 100;
+    for (let i = 0; i < 12; i++) {
+      await store.runMailRules({ now: later(at) });
+      at += 600;
+    }
+    expect(await wait(a, at - 600)).toBeLessThanOrEqual(4 * 3_600_000);
+    expect(await audits("mail_rule.failed", a)).toHaveLength(1);
+    // Fixed: it recovers, applies, and the recovery is one row.
+    box.failing.clear();
+    await store.runMailRules({ now: later(at + 600) });
+    const after = await row(a);
+    expect(after.lastError).toBeNull();
+    expect(after.failures).toBe(0);
+    expect(await audits("mail_rule.applied", a)).toHaveLength(1);
+    expect(await audits("mail_rule.applied", b)).toHaveLength(1);
+  });
+
+  test("a rule's own failed move does not stop the other rules of the connection", async () => {
+    await reset();
+    const a = await rule({ fromDomain: "spam.example.com", spam: true });
+    const b = await rule({ fromDomain: "github.com", archive: true });
+    box.add({ from: "x@spam.example.com", subject: "buy" });
+    const hub = box.add({ from: "x@github.com", subject: "new" });
+    box.failing.set("gmail_spam_messages", "not confirmed");
+    await store.runMailRules({ now: later(5) });
+    expect((await row(a)).lastError).toContain("not confirmed");
+    expect(hub.where).not.toBe("inbox");
+    expect((await row(b)).lastError).toBeNull();
+  });
+});
+
+describe("switching a rule on again", () => {
+  test("never starts a backfill nobody ordered, and forgets an old failure", async () => {
+    await reset();
+    const id = await rule({
+      fromDomain: "github.com",
+      archive: true,
+      applyToExisting: true,
+    });
+    expect((await row(id)).backfillPending).toBe(true);
+    await store.changeMailRule(owner, id, "disable");
+    await store.changeMailRule(owner, id, "enable");
+    const r = await row(id);
+    expect(r.backfillPending).toBe(false);
+    expect(r.failures).toBe(0);
+    box.add({
+      from: "old@github.com",
+      subject: "old",
+      arrivedAt: Date.now() - 3 * 86_400_000,
+    });
+    await store.runMailRules({ now: later(5) });
+    expect(box.changes()).toEqual([]);
   });
 });

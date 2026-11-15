@@ -1,3 +1,4 @@
+import { withoutStatement } from "../../db/query-failure";
 import { randomUUID } from "node:crypto";
 import { and, asc, eq, inArray, isNull, lt, or, sql } from "drizzle-orm";
 import {
@@ -68,6 +69,11 @@ export const SCAN_PAGES = 5;
 /** Mail that arrived in the last minutes before a pass is looked at again; `mail_rule_applied` stops repeats. */
 const OVERLAP_MS = 5 * 60_000;
 const LEASE_MS = 10 * 60_000;
+/** After a failed pass a rule waits twice as long each time it fails again: 10 minutes, 20, 40 ... up to 4 hours. */
+const BACKOFF_BASE_MS = 5 * 60_000;
+const BACKOFF_MAX_MS = 4 * 3_600_000;
+/** The mailbox could not be reached or refused the job: the rest of that connection's rules wait too. */
+class ConnectionFailure extends Error {}
 /** A message dated earlier than this before its rule was made is not new mail, whatever the search said. */
 const STALE_MS = 24 * 3_600_000;
 
@@ -288,7 +294,15 @@ export function mailRuleMethods(context: StoreContext) {
           .set({
             enabled: change === "enable",
             // Switched back on, a rule looks at mail from now: what arrived while it was off is not new.
-            ...(change === "enable" ? { watermarkAt: new Date() } : {}),
+            // It never starts a backfill nobody ordered, and a failure it had is forgotten.
+            ...(change === "enable"
+              ? {
+                  watermarkAt: new Date(),
+                  backfillPending: false,
+                  failures: 0,
+                  leasedUntil: null,
+                }
+              : {}),
           })
           .where(where);
       }
@@ -388,16 +402,30 @@ export function mailRuleMethods(context: StoreContext) {
     let total = 0;
     // Messages a rule of this pass moved out of the Inbox for good, so a later rule leaves them alone.
     const removed = new Set<string>();
-    for (const rule of rules) {
+    for (const [at, rule] of rules.entries()) {
       try {
         total += await runRule(rule, call, now, removed);
       } catch (error) {
-        await finish(rule, now, {
-          matched: 0,
-          applied: 0,
-          error: reasonOf(error),
-          advance: false,
-        });
+        // The failing rule says why (a search the mailbox refused has already been recorded). A connection
+        // that fails once is not tried again by every other rule of the pass: they wait with it.
+        if (!(error instanceof ConnectionFailure)) {
+          await finish(rule, now, {
+            matched: 0,
+            applied: 0,
+            error: reasonOf(error),
+            advance: false,
+          });
+        }
+        const why = reasonOf(error);
+        for (const rest of rules.slice(at + 1)) {
+          await finish(rest, now, {
+            matched: 0,
+            applied: 0,
+            error: why,
+            advance: false,
+          });
+        }
+        break;
       }
     }
     return total;
@@ -431,7 +459,7 @@ export function mailRuleMethods(context: StoreContext) {
           error: result.text,
           advance: false,
         });
-        return 0;
+        throw new ConnectionFailure(result.text);
       }
       const messages = foundMessages(result.text);
       let fresh = 0;
@@ -498,6 +526,7 @@ export function mailRuleMethods(context: StoreContext) {
           : null),
       advance: error === null,
       backfillDone: backfill && error === null,
+      note: error === null,
     });
     return applied;
   }
@@ -563,12 +592,22 @@ export function mailRuleMethods(context: StoreContext) {
       error: string | null;
       advance: boolean;
       backfillDone?: boolean;
+      /** A note on a pass that worked (more mail than it could look at), not a failure: no backoff. */
+      note?: boolean;
     },
   ) {
+    const failed = result.error !== null && result.note !== true;
+    const failures = failed ? rule.failures + 1 : 0;
     await database
       .update(mailRules)
       .set({
-        leasedUntil: null,
+        failures,
+        leasedUntil: failed
+          ? new Date(
+              now.getTime() +
+                Math.min(BACKOFF_BASE_MS * 2 ** failures, BACKOFF_MAX_MS),
+            )
+          : null,
         lastRunAt: now,
         lastMatched: result.matched,
         lastApplied: result.applied,
@@ -587,9 +626,13 @@ export function mailRuleMethods(context: StoreContext) {
         ...(result.backfillDone ? { backfillPending: false } : {}),
       })
       .where(eq(mailRules.id, rule.id));
-    if (result.applied > 0 || result.error) {
+    // An audit row when something happened or the state changed: the first failure of a run of failures, a
+    // recovery, an application. A rule that keeps failing is not a row on every pass; `lastError` shows it.
+    const firstFailure = failed && rule.failures === 0;
+    const recovered = !failed && rule.failures > 0;
+    if (firstFailure || (!failed && (result.applied > 0 || recovered))) {
       await recordAuditEvent(auditStore, {
-        eventType: result.error ? "mail_rule.failed" : "mail_rule.applied",
+        eventType: failed ? "mail_rule.failed" : "mail_rule.applied",
         targetType: "mail_rule",
         targetId: rule.id,
         actorUserId: rule.userId,
@@ -600,6 +643,7 @@ export function mailRuleMethods(context: StoreContext) {
           applied: result.applied,
           actions: actionNames(rule.spec),
           backfill: rule.backfillPending,
+          ...(recovered ? { recovered: true } : {}),
           ...(result.error
             ? { failure: cutAtCodeUnits(result.error, 200) }
             : {}),
@@ -619,7 +663,7 @@ const safeJson = (text: string): unknown => {
 
 const reasonOf = (error: unknown): string =>
   error instanceof PluginRefusedError
-    ? error.message
+    ? withoutStatement(error)
     : "The mailbox could not be reached for this rule.";
 
 /** The names of a rule's actions, for the trail: never a label's name or an address. */

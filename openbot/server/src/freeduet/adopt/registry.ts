@@ -133,6 +133,7 @@ export const MOVE: readonly MoveEntry[] = [
     "responsibility_events",
     "owner_user_id",
   ),
+  move("Routines and standing work", "mail rules", "mail_rules", "user_id"),
   move(
     "Routines and standing work",
     "responsibility sources",

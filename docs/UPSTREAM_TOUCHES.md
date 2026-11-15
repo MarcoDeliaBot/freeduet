@@ -452,10 +452,10 @@ FreeDuet is a thin fork of [OpenDuet](https://github.com/CopilotKit/OpenDuet). I
 | `openbot/server/src/plugins/routes.ts` | Mounts `mountMailRuleRoutes` (list, enable or disable, delete; no create route) | D46 | M1 | No |
 | `openbot/server/src/plugins/catalogue.ts` | Both Gmail entries list `gmail_list_rules` in `readTools` and `gmail_create_rule`, `gmail_disable_rule` in `writeTools` | D46 | M1 | No |
 | `openbot/server/src/plugins/google-workspace-rest.ts` | Advertises `MAIL_RULE_TOOL_DEFINITIONS`; the REST dispatcher refuses them (the rule store answers them) | D46 | M1 | No |
-| `openbot/server/src/approvals/policy.ts` | `MAILBOX_RULE_REVIEW_LINE` and `isCreateRuleTool`: the reviewer line for `gmail_create_rule` only | D46 | M1 | No |
+| `openbot/server/src/approvals/policy.ts` | `MAILBOX_RULE_REVIEW_LINE` and `isCreateRuleTool`: the reviewer line for `gmail_create_rule` only; `startsStandingRule`: creating or re-enabling a rule is not lifted by Full access or a saved Always allow | D46 | M1 | No |
 | `openbot/server/src/audit.ts` | Five event types, `mail_rule.created`, `.changed`, `.deleted`, `.applied`, `.failed` | D46 | M1 | No |
 | `openbot/server/src/index.ts` | A five-minute `repeatAfterEach` for `runMailRules`, stopped with the other sweeps | D46: a timer, not a routine, because a routine firing starts a model turn | M1 | No |
-| `openbot/server/src/db/schema/index.ts`, `openbot/server/drizzle.config.ts`, `openbot/server/drizzle/0073_mail_rules.sql`, `drizzle/meta/` | The `mail_rules` and `mail_rule_applied` tables and their migration | D46 | M1 | No |
+| `openbot/server/src/db/schema/index.ts`, `openbot/server/drizzle.config.ts`, `openbot/server/drizzle/0073_mail_rules.sql`, `0074_mail_rules_failures.sql`, `drizzle/meta/` | The `mail_rules` and `mail_rule_applied` tables and their migration | D46 | M1 | No |
 | `openbot/app/src/lib/approval-view.ts` | The card for creating, disabling, enabling and deleting a rule, in plain words | D46 | M1 | No |
 | `openbot/app/src/routes/_authed/_app/connections.index.tsx` | Renders `MailRulesSection` after the connections | D46 | M1 | No |
 | `openbot/examples/freeduet/agents.yaml`, `openbot/examples/freeduet/skills.yaml` | Otto's "Standing mail rules" paragraph; `organise-the-mailbox` gains the three tools | D46 | M1 | No |

@@ -42,6 +42,8 @@ export const mailRules = pgTable(
     lastApplied: integer("last_applied").notNull().default(0),
     totalApplied: integer("total_applied").notNull().default(0),
     lastError: text("last_error"),
+    /** Passes in a row that failed; the wait before the next try doubles with it (`finish`). */
+    failures: integer("failures").notNull().default(0),
   },
   (table) => [index("mail_rules_user_idx").on(table.userId, table.serverId)],
 );

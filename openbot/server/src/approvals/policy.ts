@@ -428,6 +428,22 @@ export const MAILBOX_RULE_REVIEW_LINE =
 export const isCreateRuleTool = (toolRef: string): boolean =>
   /(?:^|\/)gmail_create_rule$/.test(toolRef);
 
+/**
+ * A call that starts a standing rule: creating one, or switching one on again (`gmail_disable_rule` with
+ * `change: "enable"`). Such a call acts later with nobody watching, so neither Full access nor a saved
+ * "Always allow" lets it through: only the person's own typed order, judged by the reviewer, does, and
+ * otherwise it is a card that can only be allowed once.
+ */
+export const startsStandingRule = (candidate: {
+  toolRef: string;
+  args?: unknown;
+}): boolean => {
+  if (isCreateRuleTool(candidate.toolRef)) return true;
+  if (!/(?:^|\/)gmail_disable_rule$/.test(candidate.toolRef)) return false;
+  const args = candidate.args as { change?: unknown } | null | undefined;
+  return typeof args?.change === "string" && args.change.trim() === "enable";
+};
+
 /** Whether a tool reference is the Spam tool of either Gmail connection. */
 export const isSpamTool = (toolRef: string): boolean =>
   /(?:^|\/)gmail_spam_messages$/.test(toolRef);
@@ -568,7 +584,13 @@ export async function decideAction(input: {
   const safety = safetyRequirement(candidate);
   // D35: never for a read, whatever the caller passes.
   const alwaysAsk = candidate.effect === "read" ? undefined : input.alwaysAsk;
-  if (input.fullAccess && !alwaysAsk) {
+  // D46: a call that starts a standing rule is never lifted by Full access or by a saved "Always allow".
+  const standingRule =
+    candidate.effect === "write" && startsStandingRule(candidate);
+  const mailboxIn = standingRule
+    ? (input.mailboxChange ?? { request: null })
+    : input.mailboxChange;
+  if (input.fullAccess && !alwaysAsk && !standingRule) {
     const granted = fullAccessOutcome(
       candidate,
       safety,
@@ -603,14 +625,13 @@ export async function decideAction(input: {
     };
   // The person's own saved "Always allow" for this tool answers a change to a mailbox: no reviewer.
   const savedAllow =
-    input.mailboxChange !== undefined &&
+    !standingRule &&
+    mailboxIn !== undefined &&
     candidate.effect === "write" &&
     matched?.layer === "personal_rule" &&
     matched.rule.behaviour === "allow";
   const mailboxChange =
-    candidate.effect === "write" && !savedAllow
-      ? input.mailboxChange
-      : undefined;
+    candidate.effect === "write" && !savedAllow ? mailboxIn : undefined;
   const autoReview = input.autoReview && !savedAllow;
   // Nothing the person typed can be traced to this turn: there is nothing for a reviewer to judge.
   const mailboxReview = mailboxChange?.request != null;
@@ -664,7 +685,8 @@ export async function decideAction(input: {
     if (review.verdict === "needs_approval" && !alwaysAsk)
       return {
         behaviour: "ask",
-        source: "auto_review",
+        // A standing rule's card is asked every time: "Always allow" is neither offered nor honoured.
+        source: standingRule ? "always_ask" : "auto_review",
         reason: review.reason,
         review,
         ...(rule ? { ruleId: rule.ruleId } : {}),
@@ -689,7 +711,7 @@ export async function decideAction(input: {
     if (!asked)
       return {
         behaviour: "ask",
-        source: "default",
+        source: standingRule ? "always_ask" : "default",
         reason: MAILBOX_NOT_ASKED_REASON,
         ...(review ? { review } : {}),
       };

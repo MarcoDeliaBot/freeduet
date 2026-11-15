@@ -13,7 +13,7 @@ Decided by the maintainer on 15 November 2026: "Give Otto a tool to create filte
 
 A rule belongs to one person and one mailbox connection (`google-imap` or `google-workspace`) and has conditions and actions.
 
-- **Conditions** (at least one; all that are given must match): sender address or domain, recipient, subject contains, `List-Id` contains, words (in the subject or the sender). Each value is at most 120 characters, plain text: no wildcards, no patterns, no control characters. Matching reads headers only, never the body or the snippet.
+- **Conditions** (at least one; all that are given must match): sender address or domain, recipient, subject contains, `List-Id` contains, words (in the subject or the sender). A List-Id needs at least 4 characters and a dot, and a sender domain may not be a public suffix: a short explicit list of common two-level suffixes (`co.uk`, `com.au`, `co.jp`, `com.br`, `co.in`, `org.uk`, `co.nz`, `com.mx`, `co.za`, `com.ar` and the like) is refused. The list is not the full Public Suffix List. Each value is at most 120 characters, plain text: no wildcards, no patterns, no control characters. Matching reads headers only, never the body or the snippet.
 - **Actions** (at least one): add a label (created if missing, at most three), archive, mark read, move to Spam, move to the Bin. Nothing else can be expressed: no field forwards, replies, sends or deletes for good, and an unknown field is refused.
 - **Bounds.** A Spam or Bin rule needs a sender, domain or `List-Id` condition, so a rule on a word cannot bin a person's mail. Spam and Bin are exclusive, and archive is skipped when either is set. At most 20 rules per connection.
 
@@ -30,9 +30,9 @@ The rule store answers these tools itself (`handleRuleTool`); the REST dispatche
 A timer in the server process (`runMailRules`, every five minutes, `index.ts`). It is not a routine, because a routine firing starts a model turn; this job calls no model.
 
 - It claims due rules with an update that sets a ten-minute lease, so two replicas do not run the same rule, groups them by person and connection, and searches the inbox with `in:inbox after:<watermark>`, 50 per page, at most five pages.
-- It matches headers only, skips a message dated more than a day before the rule was made, and records each application in `mail_rule_applied` (rule, message), so a message is never done twice; the watermark overlaps by five minutes for the same reason. A message binned or spammed by one rule in a pass is skipped by later rules.
+- It matches headers only. The sender is the last address in angle brackets of the From header, so a display name that looks like an address does not decide. The From header is not authenticated (SPF and DKIM are not read), so a rule on a known sender also catches mail that forges that sender. It skips a message dated more than a day before the rule was made, and records each application in `mail_rule_applied` (rule, message), so a message is never done twice; the watermark overlaps by five minutes for the same reason. A message binned or spammed by one rule in a pass is skipped by later rules.
 - It calls only an allowlist of eight tools (search, list labels, create label, label, archive, mark, spam, bin), through the existing organise limits (at most 100 ids a call) and the existing after-check for the Bin and Spam, with a fixed bot id and the deployment as initiator.
-- A failure is the rule's last error. It disables nothing and the next pass tries again. Each application writes an audit row (`mail_rule.applied` or `mail_rule.failed`, with counts and action names, never subjects or addresses), and the rule keeps its last run, matched and applied counts and a total.
+- A failure is the rule's last error. It disables nothing. A search the mailbox refuses, or a connection that cannot be reached, skips the rest of that connection's rules in the pass; the rules then wait before the next try, twice as long each time it fails again (10 minutes, 20, 40, up to 4 hours), and an audit row is written only when the state changes (the first failure, the recovery), not on every pass. `lastError` stays visible. Switching a rule on again clears the wait, starts no backfill and looks only at mail from then on. Each application writes an audit row (`mail_rule.applied` or `mail_rule.failed`, with counts and action names, never subjects or addresses), and the rule keeps its last run, matched and applied counts and a total.
 
 ## 4a. The exception to D35
 
@@ -43,6 +43,10 @@ D35 says a routine always asks. A rule that the person ordered runs with no card
 3. It reads headers and never obeys text from a message.
 4. The person sees every rule, with its last run and error, and can disable or delete it; a failure disables nothing and a disable takes effect at the next pass.
 5. Each application is an audit row.
+
+Also true, and said plainly: once a rule exists the job does not pass through the gate again; it does not check that Otto still holds the grant (the rule is the person's and runs until it is disabled or deleted); and when more than 250 new messages arrive in one window, the older ones are not applied, which is recorded in the rule's `lastError`.
+
+Creating a rule, and switching one on again, are never lifted by Full access or by a saved "Always allow" (personal or team): they need the person's own typed order and a reviewer who vouches for it, and otherwise show a card that cannot be allowed always. Listing and disabling may still honour a saved allow.
 
 Nothing else in D35 changes: a routine and a check-in still ask for every change.
 
@@ -56,7 +60,9 @@ Nothing else in D35 changes: a routine and a check-in still ask for every change
 | A flood of mail makes one pass huge | Five pages of 50, chunks of 100 ids; the rest waits for the next pass |
 | Two replicas, or a retry, apply a rule twice | Lease, applied table, watermark overlap |
 | A message's text steers the job | Headers only, no model |
+| Full access or a saved "Always allow" lets a planted order through | `startsStandingRule` in `approvals/policy.ts`: neither applies to creating or re-enabling a rule |
 | One person reaches another's rules | Every query is scoped to the person |
+| A forged or look-alike From header | Last angle-bracket address; the header is not authenticated, so a forged sender is not caught |
 | An old rule acts on old mail | The stale-date filter; backfill only on the order, capped at 250 |
 
 ## 6. Not built
@@ -71,7 +77,7 @@ Nothing else in D35 changes: a routine and a check-in still ask for every change
 | File | What |
 |---|---|
 | `openbot/server/src/plugins/mail-rules.ts` | Pure: tool names, `parseRuleSpec` and its refusals, `ruleMatches`, the words for a rule, tool definitions |
-| `openbot/server/src/db/schema/mail-rules.ts`, `drizzle/0073_mail_rules.sql` | `mail_rules`, `mail_rule_applied` |
+| `openbot/server/src/db/schema/mail-rules.ts`, `drizzle/0073_mail_rules.sql` | `mail_rules`, `mail_rule_applied` (0073), `failures` column (0074) |
 | `openbot/server/src/plugins/plugin-store/mail-rules.ts` | `listMailRules`, `handleRuleTool`, `changeMailRule`, `runMailRules` |
 | `openbot/server/src/plugins/route-groups/mail-rules.ts` | `GET /mail-rules`, `POST /mail-rules/:id/enabled`, `DELETE /mail-rules/:id` (no create route) |
 | `openbot/server/src/plugins/plugin-store/calls.ts`, `catalogue.ts`, `google-workspace-rest.ts`, `approvals/policy.ts`, `audit.ts`, `index.ts` | Parsing, the gate, the catalogue, the reviewer line, audit types, the timer |

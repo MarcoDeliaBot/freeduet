@@ -101,6 +101,10 @@ export const RULE_REFUSALS = {
     "A sender or recipient address must be one plain address such as name@example.com. Nothing was created.",
   domain:
     "A sender domain must be a plain domain such as example.com, with no address and no wildcard. Nothing was created.",
+  suffix:
+    "A sender domain must be a registered domain such as example.com, not a public suffix such as co.uk. Nothing was created.",
+  listId:
+    "A List-Id must be at least 4 characters and contain a dot, such as news.example.com. Nothing was created.",
   flag: "archive, markRead, spam, bin and applyToExisting are true or false. Nothing was created.",
   labels: `Labels are the person's own label names, at most ${MAX_RULE_LABELS}. Trash, Spam and Gmail's own labels are refused. Nothing was created.`,
   spamAndBin:
@@ -119,6 +123,66 @@ export const RULE_REFUSALS = {
 const UNSAFE = /[\u0000-\u001f\u007f\p{Cf}\u2028\u2029*?\\]/u;
 const ADDRESS = /^[a-z0-9._%+'-]{1,64}@[a-z0-9.-]{1,190}\.[a-z]{2,24}$/;
 const DOMAIN = /^(?:[a-z0-9-]{1,63}\.)+[a-z]{2,24}$/;
+/**
+ * Common two-level public suffixes, refused as a sender domain: a rule on "co.uk" would match every British
+ * sender. This is a short explicit list, NOT the full Public Suffix List.
+ */
+export const PUBLIC_SUFFIXES: ReadonlySet<string> = new Set([
+  "co.uk",
+  "org.uk",
+  "me.uk",
+  "ltd.uk",
+  "plc.uk",
+  "gov.uk",
+  "ac.uk",
+  "net.uk",
+  "com.au",
+  "net.au",
+  "org.au",
+  "edu.au",
+  "gov.au",
+  "co.nz",
+  "org.nz",
+  "net.nz",
+  "co.jp",
+  "ne.jp",
+  "or.jp",
+  "co.kr",
+  "or.kr",
+  "co.in",
+  "net.in",
+  "org.in",
+  "com.br",
+  "net.br",
+  "org.br",
+  "com.mx",
+  "org.mx",
+  "com.ar",
+  "com.co",
+  "co.za",
+  "org.za",
+  "com.cn",
+  "net.cn",
+  "org.cn",
+  "com.hk",
+  "com.sg",
+  "com.tw",
+  "com.tr",
+  "com.ua",
+  "com.pl",
+  "com.es",
+  "co.il",
+  "co.id",
+  "co.th",
+  "com.my",
+  "com.ph",
+  "com.vn",
+  "com.eg",
+  "com.sa",
+  "com.pk",
+  "com.ng",
+  "co.ke",
+]);
 const RULE_ID =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
 
@@ -182,8 +246,11 @@ export function parseRuleSpec(
     } else if (key === "fromDomain") {
       const domain = lower.replace(/^@/, "");
       if (!DOMAIN.test(domain)) return refuse(RULE_REFUSALS.domain);
+      if (PUBLIC_SUFFIXES.has(domain)) return refuse(RULE_REFUSALS.suffix);
       conditions.fromDomain = domain;
     } else if (key === "listId") {
+      if (lower.length < 4 || !lower.includes("."))
+        return refuse(RULE_REFUSALS.listId);
       conditions.listId = lower;
     } else {
       conditions[key] = text;
@@ -308,7 +375,9 @@ export type RuleMessage = {
 
 /** The address inside `Name <address>`, or a bare address, lower-cased. */
 export function addressOf(value: string): string | null {
-  const angled = /<([^<>\s]+@[^<>\s]+)>/.exec(value);
+  // The LAST angle-bracket address is the one a mail client shows as the sender: a display name that
+  // itself looks like an address ("<a@github.com>" <x@evil.com>) must not decide.
+  const angled = [...value.matchAll(/<([^<>\s]+@[^<>\s]+)>/g)].at(-1);
   const text = (angled ? angled[1] : value.trim()) ?? "";
   return /^[^\s@<>]+@[^\s@<>]+$/.test(text) ? text.toLowerCase() : null;
 }

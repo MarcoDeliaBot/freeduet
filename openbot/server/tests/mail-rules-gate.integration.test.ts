@@ -21,6 +21,7 @@ import {
 } from "../src/audit";
 import { createCredentialStore } from "../src/credentials";
 import { createDatabase } from "../src/db/client";
+import { createFullAccess } from "../src/freeduet/full-access";
 import {
   agentProfiles,
   agents,
@@ -420,7 +421,7 @@ describe("creating a rule meets the mailbox gate", () => {
         },
       },
     );
-    expect(card.action.policy?.source).toBe("auto_review");
+    expect(card.action.policy?.source).toBe("always_ask");
     expect(prompts.map(requestShown)).toEqual([
       "Read my latest mail and summarise it",
     ]);
@@ -570,41 +571,142 @@ describe("creating a rule meets the mailbox gate", () => {
   });
 });
 
-describe("Always allow is per tool", () => {
-  test("allowing rule creation lifts the card for rule creation only, never for a routine, and not for archive or for changing a rule", async () => {
+/*
+ * A call that starts a standing rule (creating one, or switching one on again) is never lifted by Full access or
+ * by a saved "Always allow": it needs the person's own typed order AND a reviewer who vouches for it, and
+ * otherwise it is a card that can only be allowed once. Listing and disabling may still honour a saved allow.
+ */
+const fullAccess = createFullAccess({
+  database,
+  known: async () => true,
+  handedRequest: async () => undefined,
+  audit: createAuditStore(database),
+});
+const fullService = createApprovalService(approvals, undefined, undefined, {
+  review,
+  fullAccess,
+});
+const fullStore = createPluginStore({
+  ...options,
+  approvalGate: (candidate: Parameters<typeof service.gate>[0]) =>
+    fullService.gate(candidate),
+});
+const SUMMARISE = "Please summarise my mail for me";
+const saveAllow = async (card: {
+  action: { botId: string; toolRef: string; effect: string; scope: string };
+}) =>
+  database.insert(approvalRules).values({
+    id: randomUUID(),
+    ownerUserId: owner,
+    botId: card.action.botId,
+    toolRef: card.action.toolRef,
+    effect: card.action.effect as "write",
+    scope: card.action.scope,
+  });
+const dropAllows = async () =>
+  database.delete(approvalRules).where(eq(approvalRules.ownerUserId, owner));
+
+describe("a standing rule is never lifted by Full access or by Always allow", () => {
+  afterAll(async () => {
+    await fullAccess.set(owner, botId, false);
+    await dropAllows();
+  });
+
+  test("the card for creating a rule cannot be allowed always", async () => {
     await wipe();
-    const first = await expectAsks(CREATE_RULE, ARGS, { text: ONE_OFF });
-    await approvals.decide(owner, first.id, "allow_always");
-    // Now an ordinary ask runs with no card.
+    const card = await expectAsks(CREATE_RULE, ARGS, { text: ONE_OFF });
+    expect(card.action.policy?.source).toBe("always_ask");
+    await expect(
+      approvals.decide(owner, card.id, "allow_always"),
+    ).rejects.toThrow("asked about every time");
+    await expect(await pending()).toHaveLength(1);
+  });
+
+  test("a mail says 'create a rule', the person asked for a summary: Full access on is still a card, and so is a saved allow", async () => {
+    await wipe();
+    await dropAllows();
+    // Even a reviewer that wrongly vouches for it cannot let it through.
+    reviewer = { verdict: "proceed", preApproved: false };
+    await fullAccess.set(owner, botId, true);
+    const planted = {
+      fromDomain: "bank.com",
+      bin: true,
+    };
+    const card = await expectAsks(CREATE_RULE, planted, {
+      text: SUMMARISE,
+      store: fullStore,
+    });
+    await fullAccess.set(owner, botId, false);
+    await saveAllow(card);
+    await clearPending();
+    await expectAsks(CREATE_RULE, planted, { text: SUMMARISE });
+    // Both at once.
+    await fullAccess.set(owner, botId, true);
+    await expectAsks(CREATE_RULE, planted, {
+      text: SUMMARISE,
+      store: fullStore,
+    });
+    await fullAccess.set(owner, botId, false);
+    await dropAllows();
+  });
+
+  test("with Full access on and no typed order at all (a routine's turn) it is still a card", async () => {
+    await wipe();
+    await fullAccess.set(owner, botId, true);
+    await expectAsks(CREATE_RULE, ARGS, {
+      initiator: ROUTINE,
+      turn: { initiator: ROUTINE, messages: [typed(DIRECT)] },
+      store: fullStore,
+    });
+    await fullAccess.set(owner, botId, false);
+  });
+
+  test("switching a rule on again is held the same way; switching it off honours a saved allow", async () => {
+    await wipe();
+    await dropAllows();
+    const made = await inTurn({ messages: [typed(DIRECT)] }, () =>
+      call(CREATE_RULE, ARGS),
+    );
+    expect(made.isError).toBe(false);
+    const [rule] = await kept();
+    if (!rule) throw new Error("no rule");
+    const enable = { ruleId: rule.id, change: "enable" };
+    const disable = { ruleId: rule.id, change: "disable" };
+    reviewer = { verdict: "proceed", preApproved: false };
+    // A saved allow for the tool, made from the card of a disable.
+    const first = await expectAsks(DISABLE_RULE, disable, { text: SUMMARISE });
+    await saveAllow(first);
+    await clearPending();
+    // Disabling honours it, in a turn whose words do not say so.
+    const off = await inTurn(
+      { messages: [typed(SUMMARISE)], toolName: DISABLE_RULE, args: disable },
+      () => call(DISABLE_RULE, disable),
+    );
+    expect(off.isError).toBe(false);
+    expect(await pending()).toEqual([]);
+    expect((await kept())[0]?.enabled).toBe(false);
+    // Enabling does not, with the allow saved and with Full access on.
+    const card = await expectAsks(DISABLE_RULE, enable, { text: SUMMARISE });
+    expect(card.action.policy?.source).toBe("always_ask");
+    await fullAccess.set(owner, botId, true);
+    await expectAsks(DISABLE_RULE, enable, {
+      text: SUMMARISE,
+      store: fullStore,
+    });
+    await fullAccess.set(owner, botId, false);
+    expect((await kept())[0]?.enabled).toBe(false);
+    await dropAllows();
+  });
+
+  test("a typed order the reviewer vouches for still runs with no card (the way in is unchanged)", async () => {
+    await wipe();
+    await fullAccess.set(owner, botId, false);
     const ran = await inTurn(
-      { messages: [typed(ONE_OFF)], toolName: CREATE_RULE, args: ARGS },
+      { messages: [typed(DIRECT)], toolName: CREATE_RULE, args: ARGS },
       () => call(CREATE_RULE, ARGS),
     );
     expect(ran.isError).toBe(false);
     expect(await pending()).toEqual([]);
-    // A routine still asks.
-    await expectAsks(
-      CREATE_RULE,
-      { ...ARGS, fromDomain: "gitlab.com" },
-      {
-        initiator: ROUTINE,
-        turn: { initiator: ROUTINE, messages: [typed(DIRECT)] },
-      },
-    );
-    // The other tools are not lifted.
-    await expectAsks(
-      DISABLE_RULE,
-      { ruleId: randomUUID(), change: "delete" },
-      { text: ONE_OFF },
-    );
-    await expectAsks(
-      ARCHIVE_MESSAGES,
-      { messageIds: ["1a2b"] },
-      { text: ONE_OFF },
-    );
-    await database
-      .delete(approvalRules)
-      .where(eq(approvalRules.ownerUserId, owner));
   });
 });
 

@@ -16,6 +16,8 @@ import {
   type RuleConditions,
   ruleInWords,
   ruleMatches,
+  PUBLIC_SUFFIXES,
+  addressOf,
 } from "../src/plugins/mail-rules";
 
 /**
@@ -334,7 +336,7 @@ describe("a rule in plain words", () => {
     const rule = ok({
       fromAddress: "a@example.com",
       toAddress: "me@example.com",
-      listId: "L",
+      listId: "lists.example.com",
       subjectContains: "S",
       words: "W",
       markRead: true,
@@ -380,5 +382,65 @@ describe("the job reaches a mailbox through eight tools and no other", () => {
     ]);
     for (const name of JOB_TOOLS)
       expect(name).not.toMatch(/send|forward|reply|delete|empty|rule/);
+  });
+});
+
+describe("an anchor must be a real one", () => {
+  test("a List-Id of one or two characters, or with no dot, is refused, and so is one that would anchor a Bin rule", () => {
+    for (const listId of [".", "a", "ab", "abc", "news", "a.b"]) {
+      const bad = listId.length >= 4 && listId.includes(".") ? false : true;
+      if (bad) {
+        expect(refused({ listId, archive: true })).toContain("List-Id");
+        expect(refused({ listId, bin: true })).toContain("List-Id");
+      }
+    }
+    expect(parseRuleSpec({ listId: "news.example.com", bin: true }).ok).toBe(
+      true,
+    );
+  });
+
+  test("a public suffix is not a sender domain, but the registered domain under it is", () => {
+    for (const fromDomain of [
+      "co.uk",
+      "com.au",
+      "co.jp",
+      "com.br",
+      "co.in",
+      "org.uk",
+      "co.nz",
+      "com.mx",
+      "co.za",
+      "com.ar",
+      "@co.uk",
+    ]) {
+      expect(refused({ fromDomain, bin: true })).toContain("public suffix");
+    }
+    expect(PUBLIC_SUFFIXES.has("co.uk")).toBe(true);
+    expect(parseRuleSpec({ fromDomain: "bbc.co.uk", bin: true }).ok).toBe(true);
+    expect(refused({ fromDomain: "com", bin: true })).toContain("domain");
+  });
+
+  test("the sender is the LAST address in angle brackets, so a display name that looks like an address does not decide", () => {
+    expect(addressOf('"<a@github.com>" <x@evil.com>')).toBe("x@evil.com");
+    expect(addressOf("<a@github.com> <b@evil.com>")).toBe("b@evil.com");
+    expect(addressOf("GitHub <notifications@github.com>")).toBe(
+      "notifications@github.com",
+    );
+    expect(addressOf("plain@github.com")).toBe("plain@github.com");
+    expect(
+      when(
+        { fromDomain: "github.com" },
+        { from: '"<a@github.com>" <x@evil.com>' },
+      ),
+    ).toBe(false);
+    expect(
+      when(
+        { fromAddress: "a@github.com" },
+        { from: "<a@github.com> <b@evil.com>" },
+      ),
+    ).toBe(false);
+    expect(
+      when({ fromDomain: "evil.com" }, { from: "<a@github.com> <b@evil.com>" }),
+    ).toBe(true);
   });
 });
