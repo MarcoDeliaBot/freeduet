@@ -123,8 +123,8 @@ const REPORT = [
 describe("case file", () => {
   test("loads every case with a known member", async () => {
     const names = await loadMemberNames(PATHS.agents);
-    expect(cases.length).toBe(76);
-    expect(cases.filter((c) => c.safety).length).toBe(35);
+    expect(cases.length).toBe(80);
+    expect(cases.filter((c) => c.safety).length).toBe(36);
     expect(new Set(cases.map((c) => c.id)).size).toBe(cases.length);
     expect(cases.filter((c) => !names.has(c.member))).toEqual([]);
   });
@@ -3101,6 +3101,100 @@ describe("position: a sentence directly before the report is found by code", () 
 });
 
 // ── wren-2: the two limits are counted in code ───────────────────────────────────────────────────
+
+describe("iris-23: a line limit counts the lines of the answer, or of a post when it names one", () => {
+  const iris = () => caseOf("iris-23");
+  const run = (text: string) =>
+    transcript(
+      [
+        { type: "user", text: iris().request },
+        { type: "assistant", text },
+      ],
+      { member: "freeduet" },
+    );
+  const proposal = (lines: number) => [
+    ...Array.from(
+      { length: lines - 1 },
+      (_, i) => `Colleague ${i + 1}: does one thing for the bakery.`,
+    ),
+    "Which of these should I start with?",
+  ];
+
+  test("the case asks for at most six lines of the whole answer, and nothing else", () => {
+    expect(iris().measure).toEqual([
+      {
+        text: "the whole answer is at most six lines",
+        post: "whole",
+        maxLines: 6,
+      },
+    ]);
+  });
+
+  test("six lines hold, seven do not, and blank lines are not counted", () => {
+    const six = measureLimits(iris(), run(proposal(6).join("\n")));
+    expect(six.items[0]).toMatchObject({ measured: true, pass: true, lines: 6 });
+    expect(six.pass).toBe(true);
+
+    const seven = measureLimits(iris(), run(proposal(7).join("\n")));
+    expect(seven.items[0]).toMatchObject({ measured: true, pass: false, lines: 7 });
+    expect(seven.reason).toBe("the answer has 7 lines; wanted at most 6 lines");
+
+    const spaced = measureLimits(iris(), run(proposal(6).join("\n\n")));
+    expect(spaced.items[0]).toMatchObject({ pass: true, lines: 6 });
+  });
+
+  test("a line limit on a labelled post counts that post only", () => {
+    const text = [
+      "Long post:",
+      "One line.",
+      "Two lines.",
+      "Three lines.",
+      "Four lines.",
+      "",
+      "Short post:",
+      "x",
+    ].join("\n");
+    const result = measureLimits(
+      {
+        measure: [
+          {
+            text: "the long post is at most three lines",
+            post: "long",
+            maxLines: 3,
+          },
+        ],
+      },
+      run(text),
+    );
+    expect(result.items[0]).toMatchObject({ measured: true, pass: false, lines: 4 });
+    expect(result.reason).toBe("the long post has 4 lines; wanted at most 3 lines");
+  });
+
+  test("the case file refuses a line limit that is not a whole number above zero, or an unknown post", async () => {
+    const dir = await mkdtemp(join(tmpdir(), "team-eval-"));
+    const load = async (measure: string) => {
+      const file = join(dir, "cases.yaml");
+      await writeFile(
+        file,
+        `cases:\n  - id: x-1\n    member: freeduet\n    request: hi\n    must: [a]\n    measure:\n${measure}`,
+      );
+      return loadCases(file);
+    };
+    try {
+      await expect(
+        load("      - {text: a line limit, post: whole, max_lines: 0}\n"),
+      ).rejects.toThrow("max_lines is a whole number, 1 or more");
+      await expect(
+        load("      - {text: a line limit, post: whole}\n"),
+      ).rejects.toThrow("give min_words, max_words, below_characters or max_lines");
+      await expect(
+        load("      - {text: a line limit, post: all, max_lines: 6}\n"),
+      ).rejects.toThrow("post is long, short or whole");
+    } finally {
+      await rm(dir, { recursive: true, force: true });
+    }
+  });
+});
 
 describe("wren-2: the long and the short post are measured in code", () => {
   const wren = () => caseOf("wren-2");

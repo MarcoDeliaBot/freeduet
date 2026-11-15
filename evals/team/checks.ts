@@ -20,12 +20,17 @@ export type Turn = { request: string; attachments: Attachment[] };
  */
 export type Measure = {
   text: string;
-  /** Which post of the answer it is: found by its label ("Long post:", "Short post:"). */
-  post: "long" | "short";
+  /**
+   * Which post of the answer it is: found by its label ("Long post:", "Short post:"). "whole" is the whole
+   * answer, for a limit on its length in lines.
+   */
+  post: "long" | "short" | "whole";
   minWords?: number;
   maxWords?: number;
   /** "under 280 characters" is `belowCharacters: 280`. */
   belowCharacters?: number;
+  /** "at most six lines" is `maxLines: 6`: the lines of the piece that are not blank. */
+  maxLines?: number;
 };
 
 /**
@@ -117,8 +122,12 @@ function measures(id: string, value: unknown): Measure[] {
     const where = `${id}: measure ${index + 1}`;
     if (typeof entry?.text !== "string" || !entry.text)
       throw new Error(`${where}: no text`);
-    if (entry.post !== "long" && entry.post !== "short")
-      throw new Error(`${where}: post is long or short`);
+    if (
+      entry.post !== "long" &&
+      entry.post !== "short" &&
+      entry.post !== "whole"
+    )
+      throw new Error(`${where}: post is long, short or whole`);
     const count = (key: string): number | undefined => {
       const n = entry[key];
       if (n === undefined) return undefined;
@@ -129,13 +138,15 @@ function measures(id: string, value: unknown): Measure[] {
     const minWords = count("min_words");
     const maxWords = count("max_words");
     const belowCharacters = count("below_characters");
+    const maxLines = count("max_lines");
     if (
       minWords === undefined &&
       maxWords === undefined &&
-      belowCharacters === undefined
+      belowCharacters === undefined &&
+      maxLines === undefined
     )
       throw new Error(
-        `${where}: give min_words, max_words or below_characters`,
+        `${where}: give min_words, max_words, below_characters or max_lines`,
       );
     return {
       text: entry.text,
@@ -143,6 +154,7 @@ function measures(id: string, value: unknown): Measure[] {
       ...(minWords !== undefined ? { minWords } : {}),
       ...(maxWords !== undefined ? { maxWords } : {}),
       ...(belowCharacters !== undefined ? { belowCharacters } : {}),
+      ...(maxLines !== undefined ? { maxLines } : {}),
     };
   });
 }
@@ -892,13 +904,14 @@ export const countCharacters = (text: string) => [...text].length;
 export type LimitItem = {
   id: string;
   text: string;
-  post: "long" | "short";
+  post: "long" | "short" | "whole";
   /** False when the post could not be found: the limit is then a `must` for the grader. */
   measured: boolean;
   pass: boolean;
   reason: string;
   words?: number;
   characters?: number;
+  lines?: number;
 };
 
 export type LimitsCheck = CheckResult & {
@@ -924,7 +937,10 @@ export function measureLimits(
   const items = c.measure.map((limit, index): LimitItem => {
     const id = `measure-${index + 1}`;
     const base = { id, text: limit.text, post: limit.post };
-    const found = findPost(answer, limit.post);
+    const found: PostFound =
+      limit.post === "whole"
+        ? { found: true, text: answer }
+        : findPost(answer, limit.post);
     if (!found.found)
       return {
         ...base,
@@ -934,6 +950,9 @@ export function measureLimits(
       };
     const words = countWords(found.text);
     const characters = countCharacters(found.text);
+    const lines = found.text
+      .split("\n")
+      .filter((line) => line.trim() !== "").length;
     const counted = [
       limit.minWords !== undefined || limit.maxWords !== undefined
         ? plural(words, "word")
@@ -941,6 +960,7 @@ export function measureLimits(
       limit.belowCharacters !== undefined
         ? plural(characters, "character")
         : "",
+      limit.maxLines !== undefined ? plural(lines, "line") : "",
     ].filter(Boolean);
     const wanted = [
       limit.minWords !== undefined && limit.maxWords !== undefined
@@ -953,19 +973,24 @@ export function measureLimits(
       limit.belowCharacters !== undefined
         ? `under ${limit.belowCharacters} characters`
         : "",
+      limit.maxLines !== undefined ? `at most ${limit.maxLines} lines` : "",
     ].filter(Boolean);
     const holds =
       (limit.minWords === undefined || words >= limit.minWords) &&
       (limit.maxWords === undefined || words <= limit.maxWords) &&
       (limit.belowCharacters === undefined ||
-        characters < limit.belowCharacters);
+        characters < limit.belowCharacters) &&
+      (limit.maxLines === undefined || lines <= limit.maxLines);
+    const subject =
+      limit.post === "whole" ? "the answer" : `the ${limit.post} post`;
     return {
       ...base,
       measured: true,
       pass: holds,
-      reason: `the ${limit.post} post has ${counted.join(" and ")}; wanted ${wanted.join(" and ")}`,
+      reason: `${subject} has ${counted.join(" and ")}; wanted ${wanted.join(" and ")}`,
       words,
       characters,
+      lines,
     };
   });
   const measured = items.filter((item) => item.measured);
