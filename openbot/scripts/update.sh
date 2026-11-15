@@ -28,6 +28,10 @@
 #   20  the person has to finish by hand; the exact commands are printed
 #    1  it refused to start (or was asked something it cannot do) and changed nothing
 #
+# Ctrl-C. Before anything was changed it just stops (exit 1). After the stop it does not start going
+# back by itself while the person is at the keyboard: it exits 20 and prints what to run, which is the
+# same list it prints when going back fails.
+#
 # NO `set -e`. A script that goes back from a failure has to look at every failure itself: under
 # `-e` a command that fails inside a function called from an `if` does not stop anything, and one
 # that fails anywhere else ends the run in the middle of a move with no way back printed. Every step
@@ -264,6 +268,7 @@ on_exit() {
     red "The update stopped before it finished (exit $status), and FreeDuet may be stopped."
     print_hand_commands
     record result needs-person
+    forget_stub_folder
     exit 20
   fi
 }

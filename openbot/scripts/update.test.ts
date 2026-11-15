@@ -127,6 +127,7 @@ fi
 echo up > "$STATE/stack"
 echo up > "$STATE/postgres"
 echo 3 > "$STATE/connections"
+if [ -f "$STATE/interrupt-in-start-$mark" ]; then kill -TERM "$(cat "$root/openbot/.logs/update.lock/pid")"; fi
 exit 0
 `;
 
@@ -146,6 +147,7 @@ echo 0 > "$STATE/connections"
 if [ -f "$STATE/stop-leaves-postgres" ]; then echo up > "$STATE/postgres"; else echo down > "$STATE/postgres"; fi
 rm -f "$STATE/sleeps-down" "$STATE/watchdog-fired"
 if [ "$(cat "$STATE/watchdog-on-stop" 2>/dev/null)" = "$n" ]; then touch "$STATE/watchdog-armed"; else rm -f "$STATE/watchdog-armed"; fi
+if [ -f "$STATE/interrupt-in-stop" ]; then kill -TERM "$(cat "$root/openbot/.logs/update.lock/pid")"; fi
 exit 0
 `;
 
@@ -1589,6 +1591,58 @@ describe("when going back fails, it stops and prints the exact commands", () => 
     ]);
   });
 
+  test("interrupted after the stop, before the copy: exit 20, says how to start again, leaves no folder behind", async () => {
+    const machine = await build();
+    await machine.set("interrupt-in-stop");
+    const result = await machine.run(["--watch", "0"]);
+    expect(outcome(result)).toMatchObject({ exitCode: 20 });
+    const text = plain(result.stdout);
+    expect(text).toContain("Interrupted.");
+    expect(text).toContain("The update stopped before it finished");
+    expect(text).toContain(
+      "Your database, your settings and your code were not changed.",
+    );
+    expect(text).toContain("To start it again, run: bash ");
+    expect(await machine.copies()).toEqual([]);
+    expect(await machine.head()).toBe(await machine.rev("v0.1"));
+    expect(
+      (await machine.calls()).filter((call) =>
+        /pg_dump|pg_restore|^git (merge|reset)( |$)|^bun install/.test(call),
+      ),
+    ).toEqual([]);
+    expect(
+      await lstat(join(machine.root, ".logs/update.lock")).catch(() => null),
+    ).toBeNull();
+  });
+
+  test("interrupted while the new version starts: exit 20, does not go back on its own, and the commands printed bring everything back", async () => {
+    const machine = await build();
+    await machine.set("interrupt-in-start-new");
+    const result = await machine.run(["--watch", "0"]);
+    expect(outcome(result)).toMatchObject({ exitCode: 20 });
+    const text = plain(result.stdout);
+    expect(text).toContain("Interrupted.");
+    expect(text).toContain("To go back by hand, run these in this order");
+    expect(
+      await readFile(join(await copyOf(machine), "record.txt"), "utf8"),
+    ).toContain("result=needs-person");
+    expect(
+      (await machine.calls()).filter((call) =>
+        /pg_restore --exit-on-error|^git reset/.test(call),
+      ),
+    ).toEqual([]);
+    expect(await machine.db()).toContain("migrated=1");
+    expect(
+      await lstat(join(machine.root, ".logs/update.lock")).catch(() => null),
+    ).toBeNull();
+
+    const byHand = await ranByHand(machine, handCommands(result.stdout));
+    expect({ ...byHand }).toMatchObject({ exitCode: 0 });
+    expect(await machine.db()).toBe(START_DB);
+    expect(await machine.head()).toBe(await machine.rev("v0.1"));
+    expect(await machine.value("stack")).toBe("up");
+  });
+
   test("the old version does not answer after going back: exit 20, with the commands", async () => {
     const machine = await build();
     await machine.set("app-down-new");
@@ -1671,6 +1725,11 @@ describe("a watchdog that starts the stack again", () => {
     expect(await machine.db()).toBe(START_DB);
     expect(await machine.copies()).toEqual([]);
     expect(await machine.value("stack")).toBe("up");
+    // It stopped looking the moment it saw the stack back, and did not wait out the 20 seconds.
+    const waited = (await machine.sleeps()).filter(
+      (line) => line === "sleep 1",
+    );
+    expect(waited).toHaveLength(5);
   });
 
   test("after the copy, before the move: exit 20, and does not start FreeDuet itself on top of it", async () => {
