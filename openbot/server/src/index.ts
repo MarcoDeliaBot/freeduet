@@ -5,6 +5,7 @@ import "./freeduet/telemetry-off";
 // FreeDuet: before anything reads the model environment (docs/UPSTREAM_TOUCHES.md).
 import "./freeduet/plan-token";
 // FreeDuet: the team's hub grants and each person's conversations (docs/UPSTREAM_TOUCHES.md).
+import { applyAutomaticGrants } from "./freeduet/automatic-grants";
 import { applyFreeDuetPackage, isFreeDuetPackage } from "./freeduet/hub-grants";
 import { pinModelBaseToRouter } from "./freeduet/model-base";
 import { withFreeDuetTeam } from "./freeduet/person-team";
@@ -628,6 +629,8 @@ const policyListener = await startPolicyListener(
  * unavailable, and the row is a note for a reader rather than something the server depends on.
  */
 const bootAuditStore = createAuditStore(database);
+// Tools an update added, for a member whose grants carry the automatic mark (D45).
+await applyAutomaticGrants(database, bootAuditStore, tenantPackage);
 // The gallery every headless turn offers its Bot, refusals written to the same trail.
 const componentCatalog = headlessComponentCatalog({
   store: componentStore,

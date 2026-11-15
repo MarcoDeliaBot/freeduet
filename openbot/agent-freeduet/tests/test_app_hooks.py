@@ -9,6 +9,7 @@ from fastapi.testclient import TestClient
 
 from freeduet import app as app_module
 from freeduet import claude_cli
+from freeduet import claude_status
 from helpers import post_run, run_body, standing
 
 SERVER_CALLS = '''
@@ -76,8 +77,9 @@ def test_run_claude_text_answers_from_a_locked_down_cli(fake_cli, server_calls_m
     assert "--mcp-config" not in seen["argv"] and seen["argv"][seen["argv"].index("--tools") + 1] == ""
     assert "tools" not in seen  # no MCP server was started at all
     assert seen["prompt"] == "Plan the kitchen."
-    with pytest.raises(module.EngineUnavailable, match="not signed in"):
+    with pytest.raises(module.EngineUnavailable) as caught:
         asyncio.run(runner("", "Plan the kitchen.", None))
+    assert str(caught.value) == claude_status.NOT_SIGNED_IN_SENTENCE
 
 
 def test_run_claude_text_gives_up_before_the_server_does(fake_cli):

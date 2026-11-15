@@ -121,9 +121,11 @@ export const Route = createFileRoute("/_authed/_app/connections/$key")({
    */
   validateSearch: (
     search: Record<string, unknown>,
-  ): { linked?: string; action?: string } => ({
+  ): { linked?: string; action?: string; bot?: string } => ({
     ...searchTextEntry("linked", search.linked),
     ...searchTextEntry("action", search.action),
+    // The member the chat's button named, so the form says who will use the app and gives it the tools.
+    ...searchTextEntry("bot", search.bot),
   }),
 });
 
@@ -144,7 +146,7 @@ function AppConnectionPage() {
   const { key } = useParams({
     from: "/_authed/_app/connections/$key",
   });
-  const { action } = Route.useSearch();
+  const { action, bot } = Route.useSearch();
   /*
    * `?action=` IS READ ONCE HERE AND DROPPED FROM THE URL BELOW, BUT IT FEEDS TWO THINGS.
    *
@@ -520,7 +522,14 @@ function AppConnectionPage() {
    * none of what the `user-oauth` page below draws is true of it.
    */
   if (entry?.auth === "user-secret") {
-    return <SecretConnectionPage back={back} enabled={enabled} entry={entry} />;
+    return (
+      <SecretConnectionPage
+        back={back}
+        bot={bot}
+        enabled={enabled}
+        entry={entry}
+      />
+    );
   }
 
   /*

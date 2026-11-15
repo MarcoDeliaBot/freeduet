@@ -18,7 +18,7 @@ import { pluginKeys } from "./queries";
  * calendar link, so there is no read here that could put either into the query cache.
  */
 
-export type SecretConnection =
+export type SecretConnection = (
   | { connected: false }
   | {
       connected: true;
@@ -27,18 +27,27 @@ export type SecretConnection =
       /** Whether a calendar's secret address is attached. A yes or a no, never the address. */
       calendar: boolean;
       connectedAt: string;
-    };
+    }
+) & {
+  /** Only when `?bot=` was asked about: whether the form may say that member will use the app. */
+  botEligible?: boolean;
+};
 
 /**
  * Whether this person has pasted a working secret for this app. Under the plugins key, so every
  * write there refreshes it.
  */
-export function secretConnectionQueryOptions(serverId: string) {
+export function secretConnectionQueryOptions(serverId: string, bot?: string) {
   return queryOptions({
-    queryKey: [...pluginKeys.all, "secret-connection", serverId] as const,
+    queryKey: [
+      ...pluginKeys.all,
+      "secret-connection",
+      serverId,
+      bot ?? null,
+    ] as const,
     queryFn: async (): Promise<SecretConnection> => {
       const response = await client(
-        `/api/plugins/servers/${encodeURIComponent(serverId)}/secret-connection`,
+        `/api/plugins/servers/${encodeURIComponent(serverId)}/secret-connection${bot ? `?bot=${encodeURIComponent(bot)}` : ""}`,
         { fallback: "Couldn't load whether you've connected this." },
       );
       return response.json();
@@ -53,6 +62,11 @@ export type SecretInput = {
   appPassword: string;
   /** Empty when no calendar was given. */
   calendarUrl: string;
+  /**
+   * The member that will use this mailbox, when the chat's button named one. Only its id is sent, and
+   * the server gives it the app's tools only when the person is an administrator.
+   */
+  botId?: string;
 };
 
 /**
@@ -83,6 +97,7 @@ export function connectSecretMutationOptions(queryClient: QueryClient) {
               address: variables.address,
               appPassword: variables.appPassword,
               calendarUrl: variables.calendarUrl,
+              ...(variables.botId ? { botId: variables.botId } : {}),
             },
             fallback: "Couldn't connect that account. Nothing was saved.",
           },
