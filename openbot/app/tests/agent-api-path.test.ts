@@ -266,7 +266,9 @@ for (const id of [
           body: operation.body,
         });
       }
-      expect(calls.map((call) => call.id)).toEqual(Array(11).fill(id));
+      // Twelve store calls: the two reads, the nine operations, and the edit route's own read of the
+      // Bot before its update (the limit of the Bot's "What it does" text depends on the stored Bot).
+      expect(calls.map((call) => call.id)).toEqual(Array(12).fill(id));
       expect(calls.find((call) => call.operation === "update")?.value).toEqual(
         input,
       );

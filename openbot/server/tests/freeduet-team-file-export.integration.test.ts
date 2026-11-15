@@ -381,9 +381,7 @@ describe("one member", () => {
     expect(reading.file.members[0]?.instructionsCharacters).toBeGreaterThan(
       1000,
     );
-    expect(reading.file.notices.join(" ")).toContain(
-      "cannot be created or edited yet",
-    );
+    expect(reading.file.notices.join(" ")).toContain("cannot be created yet");
   });
 
   test("instructions the reader would refuse are refused here, with the reader's sentence", async () => {

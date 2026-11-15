@@ -1,0 +1,1 @@
+ALTER TABLE "agent_profiles" ADD COLUMN "imported_member" boolean DEFAULT false NOT NULL;
