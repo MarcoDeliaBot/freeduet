@@ -4,6 +4,7 @@ import {
   allMailPath,
   ARCHIVE_MESSAGES,
   BIN_MESSAGES,
+  SPAM_MESSAGES,
   binnedAnswer,
   CREATE_LABEL,
   createdAnswer,
@@ -48,7 +49,7 @@ const refused = (result: { ok: boolean; message?: string }) =>
   result.ok ? null : (result.message ?? null);
 
 describe("the tools and how they are told apart", () => {
-  test("one tool only reads, and five change a mailbox", () => {
+  test("one tool only reads, and six change a mailbox", () => {
     expect([...ORGANISE_READ_TOOLS]).toEqual(["gmail_list_labels"]);
     expect([...ORGANISE_WRITE_TOOLS]).toEqual([
       "gmail_create_label",
@@ -56,6 +57,7 @@ describe("the tools and how they are told apart", () => {
       "gmail_archive_messages",
       "gmail_mark_messages",
       "gmail_bin_messages",
+      "gmail_spam_messages",
     ]);
     for (const name of ORGANISE_READ_TOOLS) {
       expect(isOrganiseTool(name)).toBe(true);
@@ -67,8 +69,9 @@ describe("the tools and how they are told apart", () => {
     }
   });
 
-  test("four of the five name messages, and so can show the person which", () => {
+  test("five of the six name messages, and so can show the person which", () => {
     expect(isOrganiseMessageTool(BIN_MESSAGES)).toBe(true);
+    expect(isOrganiseMessageTool(SPAM_MESSAGES)).toBe(true);
     expect(isOrganiseMessageTool(LABEL_MESSAGES)).toBe(true);
     expect(isOrganiseMessageTool(ARCHIVE_MESSAGES)).toBe(true);
     expect(isOrganiseMessageTool(MARK_MESSAGES)).toBe(true);
@@ -92,7 +95,7 @@ describe("the tools and how they are told apart", () => {
     }
   });
 
-  test("the definitions are exactly the six tools, each with an object schema", () => {
+  test("the definitions are exactly the seven tools, each with an object schema", () => {
     expect(ORGANISE_TOOL_DEFINITIONS.map((tool) => tool.name)).toEqual([
       LIST_LABELS,
       CREATE_LABEL,
@@ -100,6 +103,7 @@ describe("the tools and how they are told apart", () => {
       ARCHIVE_MESSAGES,
       MARK_MESSAGES,
       BIN_MESSAGES,
+      SPAM_MESSAGES,
     ]);
     for (const tool of ORGANISE_TOOL_DEFINITIONS) {
       expect(tool.inputSchema.type).toBe("object");

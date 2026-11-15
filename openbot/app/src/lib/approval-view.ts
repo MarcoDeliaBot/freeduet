@@ -106,7 +106,7 @@ function describeShare(args: Record<string, unknown>): ApprovalView {
 
 /** The two Gmail connections' tools that organise a mailbox (server/src/plugins/mail-organise.ts). */
 const ORGANISE_TOOL =
-  /^(?:google-imap|google-workspace)\/(gmail_create_label|gmail_label_messages|gmail_archive_messages|gmail_mark_messages|gmail_bin_messages)$/;
+  /^(?:google-imap|google-workspace)\/(gmail_create_label|gmail_label_messages|gmail_archive_messages|gmail_mark_messages|gmail_bin_messages|gmail_spam_messages)$/;
 
 const count = (n: number, one: string, many = `${one}s`) =>
   `${n} ${n === 1 ? one : many}`;
@@ -172,6 +172,13 @@ function describeOrganise(
       label: "What happens",
       value:
         "They leave the Inbox and stay in All Mail, with their labels. Nothing is deleted.",
+    });
+  } else if (tool === "gmail_spam_messages") {
+    title = `Move ${messages} to Spam`;
+    fields.push({
+      label: "What happens",
+      value:
+        "They go to your Spam folder. Gmail deletes mail in Spam after about 30 days; until then you can move it back.",
     });
   } else if (tool === "gmail_bin_messages") {
     title = `Move ${messages} to the Bin`;

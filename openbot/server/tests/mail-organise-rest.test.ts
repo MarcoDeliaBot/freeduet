@@ -787,11 +787,9 @@ describe("whatever a tool is asked, these are the only requests it can make", ()
       "/settings",
       "/send",
       "/drafts",
-      "/modify",
       "TRASH",
-      "SPAM",
     ]) {
-      // `TRASH` and `SPAM` appear nowhere in the organising code: refusing them is the parser's job.
+      // `TRASH` appears nowhere in the organising code: refusing it as a label is the parser's job.
       expect(organising).not.toContain(forbidden);
     }
     expect(organising).toContain("/messages/batchModify");
@@ -799,6 +797,13 @@ describe("whatever a tool is asked, these are the only requests it can make", ()
     expect(organising.match(/\/trash/g)).toHaveLength(1);
     expect(organising).toContain(
       `/messages/$${"{"}encodeURIComponent(id)}/trash`,
+    );
+    // The one single-message modify there is moves a message to Spam, in Spam's own function: it adds
+    // SPAM, takes INBOX off, and the label `SPAM` is named nowhere else.
+    expect(organising.match(/\/modify/g)).toHaveLength(1);
+    expect(organising.match(/"SPAM"/g)).toHaveLength(1);
+    expect(organising).toContain(
+      'json: { addLabelIds: ["SPAM"], removeLabelIds: ["INBOX"] }',
     );
   });
 });

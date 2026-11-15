@@ -815,18 +815,24 @@ describe("the source of the module that changes a mailbox", () => {
     );
   });
 
-  test("the one copy there is goes to the Bin the server flagged, after the messages were found, and nothing else is copied or moved", () => {
-    expect([...code.matchAll(/client\.messageCopy\(/g)]).toHaveLength(1);
+  test("the two copies there are, to the Bin and to Spam, go to the folder the server flagged, after the messages were found, and nothing else is copied or moved", () => {
+    expect([...code.matchAll(/client\.messageCopy\(/g)]).toHaveLength(2);
     expect(code).toContain("client.messageCopy(range, bin, { uid: true })");
-    // The Bin is the folder carrying the server's own flag, never one found by a name.
+    expect(code).toContain("client.messageCopy(range, spam, { uid: true })");
+    // Each is the folder carrying the server's own flag, never one found by a name.
     expect([...code.matchAll(/\\\\Trash/g)]).toHaveLength(1);
+    expect([...code.matchAll(/\\\\Junk/g)]).toHaveLength(1);
     expect(code).toContain(
       'folder.specialUse === "\\\\Trash" && folder.specialUseSource !== "name"',
     );
+    expect(code).toContain(
+      'folder.specialUse === "\\\\Junk" && folder.specialUseSource !== "name"',
+    );
     expect(code.match(/\bTrash\b/g)).toHaveLength(1);
+    expect(code.match(/\bJunk\b/g)).toHaveLength(1);
   });
 
-  test("it never names a method that removes, moves, expunges, renames or appends, or a flag that marks mail for removal, and never touches Spam", () => {
+  test("it never names a method that removes, moves, expunges, renames or appends, or a flag that marks mail for removal, and never names the Spam label", () => {
     for (const forbidden of [
       "messageDelete",
       "messageMove",
@@ -841,8 +847,6 @@ describe("the source of the module that changes a mailbox", () => {
       ".copy(",
       "\\\\Deleted",
       "\\\\Spam",
-      "\\\\Junk",
-      "Spam",
     ]) {
       expect(code).not.toContain(forbidden);
     }

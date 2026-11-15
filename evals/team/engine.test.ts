@@ -349,10 +349,15 @@ describe("the verdict on the chosen engine", () => {
 
 describe("checking the engine before a run", () => {
   test("the default engine is asked about too: a stack that lists Claude Code alone gives its check, which main's output does not show", async () => {
-    const { fetchImpl, seen } = stubFetch(() => Response.json({ engines: [ready] }));
+    const { fetchImpl, seen } = stubFetch(() =>
+      Response.json({ engines: [ready] }),
+    );
     const check = await checkEngine(
       { name: DEFAULT_ENGINE, from: "default" },
-      { MANAGED_AGENT_AG_UI_URL: "http://agent.test/", MANAGED_AGENT_TOKEN: "t" },
+      {
+        MANAGED_AGENT_AG_UI_URL: "http://agent.test/",
+        MANAGED_AGENT_TOKEN: "t",
+      },
       fetchImpl,
     );
     expect(check).toEqual({
@@ -387,7 +392,10 @@ describe("checking the engine before a run", () => {
     );
     const check = await checkEngine(
       { name: "claude-code", from: "flag" },
-      { MANAGED_AGENT_AG_UI_URL: "http://agent.test:4231/", MANAGED_AGENT_TOKEN: "tok-9" },
+      {
+        MANAGED_AGENT_AG_UI_URL: "http://agent.test:4231/",
+        MANAGED_AGENT_TOKEN: "tok-9",
+      },
       fetchImpl,
     );
     expect(check).toEqual({
@@ -412,7 +420,9 @@ describe("checking the engine before a run", () => {
     };
     await expect(
       checkEngine({ name: "codex", from: "flag" }, env, fetchImpl),
-    ).rejects.toThrow('The eval stack has no engine "codex", named by --engine');
+    ).rejects.toThrow(
+      'The eval stack has no engine "codex", named by --engine',
+    );
     await expect(
       checkEngine({ name: "codex", from: "env" }, env, fetchImpl),
     ).rejects.toThrow("named by FREEDUET_EVAL_ENGINE");
@@ -425,7 +435,10 @@ describe("checking the engine before a run", () => {
     await expect(
       checkEngine(
         { name: DEFAULT_ENGINE, from: "default" },
-        { MANAGED_AGENT_AG_UI_URL: "http://agent.test/", MANAGED_AGENT_TOKEN: "t" },
+        {
+          MANAGED_AGENT_AG_UI_URL: "http://agent.test/",
+          MANAGED_AGENT_TOKEN: "t",
+        },
         fetchImpl,
       ),
     ).rejects.toThrow(
@@ -440,10 +453,15 @@ describe("checking the engine before a run", () => {
       available: false,
       limited_until: "2026-11-15T09:00:00+00:00",
     };
-    const { fetchImpl } = stubFetch(() => Response.json({ engines: [limited] }));
+    const { fetchImpl } = stubFetch(() =>
+      Response.json({ engines: [limited] }),
+    );
     const check = await checkEngine(
       { name: DEFAULT_ENGINE, from: "default" },
-      { MANAGED_AGENT_AG_UI_URL: "http://agent.test/", MANAGED_AGENT_TOKEN: "t" },
+      {
+        MANAGED_AGENT_AG_UI_URL: "http://agent.test/",
+        MANAGED_AGENT_TOKEN: "t",
+      },
       fetchImpl,
     );
     expect(check.answeredBy).toBe("claude-code");
@@ -454,16 +472,30 @@ describe("checking the engine before a run", () => {
   });
 
   test("two engines listed: each case records unknown, for the default and for a chosen engine, and the check says which engines the stack lists", async () => {
-    const codex: StackEngine = { id: "codex", state: "ready", available: true, installed: true };
-    const { fetchImpl } = stubFetch(() => Response.json({ engines: [ready, codex] }));
-    const env = { MANAGED_AGENT_AG_UI_URL: "http://agent.test/", MANAGED_AGENT_TOKEN: "t" };
+    const codex: StackEngine = {
+      id: "codex",
+      state: "ready",
+      available: true,
+      installed: true,
+    };
+    const { fetchImpl } = stubFetch(() =>
+      Response.json({ engines: [ready, codex] }),
+    );
+    const env = {
+      MANAGED_AGENT_AG_UI_URL: "http://agent.test/",
+      MANAGED_AGENT_TOKEN: "t",
+    };
     const expected = {
       text: "claude-code is available on the eval stack (state ready). The stack lists 2 engines (claude-code, codex). A member's chain and pin decide which one runs a turn, and the list shows neither, so each case records its answering engine as unknown.",
       answeredBy: UNKNOWN_ENGINE,
       unchangedFromMain: false,
     };
     expect(
-      await checkEngine({ name: DEFAULT_ENGINE, from: "default" }, env, fetchImpl),
+      await checkEngine(
+        { name: DEFAULT_ENGINE, from: "default" },
+        env,
+        fetchImpl,
+      ),
     ).toEqual(expected);
     expect(
       await checkEngine({ name: "claude-code", from: "flag" }, env, fetchImpl),
@@ -620,14 +652,11 @@ function scriptedStack(stack: { engines: StackEngine[] } | "missing") {
         const run = (await request.json()) as {
           messages: Record<string, unknown>[];
         };
-        stored.push(
-          ...run.messages,
-          {
-            id: "a1",
-            role: "assistant",
-            content: "Ideas: a record, a ticket, a club night.",
-          },
-        );
+        stored.push(...run.messages, {
+          id: "a1",
+          role: "assistant",
+          content: "Ideas: a record, a ticket, a club night.",
+        });
         busy = 1;
         return Response.json({ joinToken: "j" });
       }
@@ -641,8 +670,7 @@ function scriptedStack(stack: { engines: StackEngine[] } | "missing") {
       }
       if (path === "/api/copilotkit/threads/th1/messages")
         return Response.json({ messages: stored });
-      if (path === "/api/approvals")
-        return Response.json({ requests: [] });
+      if (path === "/api/approvals") return Response.json({ requests: [] });
       if (path === "/api/memory" && request.method === "GET")
         return Response.json({ memories: [] });
       return Response.json({ error: "not found" }, { status: 404 });
@@ -1073,14 +1101,10 @@ describe("the runner against the eval stack", () => {
           engines: [{ ...ready, id: "cli-test" }],
         });
         try {
-          const out = await runIn(
-            dir,
-            liveArgs(dir, stack.url, []),
-            {
-              ...agentEnv(stack.url, "tok-engine"),
-              FREEDUET_EVAL_ENGINE: "cli-test",
-            },
-          );
+          const out = await runIn(dir, liveArgs(dir, stack.url, []), {
+            ...agentEnv(stack.url, "tok-engine"),
+            FREEDUET_EVAL_ENGINE: "cli-test",
+          });
           expect(out.code).toBe(0);
           expect(stack.seen[0]).toEqual({
             method: "GET",
@@ -1100,22 +1124,24 @@ describe("the runner against the eval stack", () => {
     LIVE,
   );
 
-  test("--engine is refused with --fake and with --public, in plain words, and nothing is read", () =>
-    withCases(async (dir) => {
-      const fake = await runIn(dir, ["--fake", "--engine", "claude-code"]);
-      expect(fake.code).not.toBe(0);
-      expect(fake.stderr).toContain(
-        "--engine chooses the engine of a live run. --fake replays recorded transcripts",
-      );
-      const pub = await runIn(dir, [
-        "--public",
-        join(dir, "missing.json"),
-        "--engine",
-        "claude-code",
-      ]);
-      expect(pub.code).not.toBe(0);
-      expect(pub.stderr).toContain("--engine does not apply to --public");
-    }),
+  test(
+    "--engine is refused with --fake and with --public, in plain words, and nothing is read",
+    () =>
+      withCases(async (dir) => {
+        const fake = await runIn(dir, ["--fake", "--engine", "claude-code"]);
+        expect(fake.code).not.toBe(0);
+        expect(fake.stderr).toContain(
+          "--engine chooses the engine of a live run. --fake replays recorded transcripts",
+        );
+        const pub = await runIn(dir, [
+          "--public",
+          join(dir, "missing.json"),
+          "--engine",
+          "claude-code",
+        ]);
+        expect(pub.code).not.toBe(0);
+        expect(pub.stderr).toContain("--engine does not apply to --public");
+      }),
     { timeout: 60_000 },
   );
 });

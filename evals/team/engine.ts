@@ -49,7 +49,10 @@ export type EngineChoice = { name: string; from: EngineSource };
  */
 export function engineNamed(raw: string, source: string): string {
   const name = raw.trim();
-  if (name === "") throw new Error(`${source} needs an engine name, such as ${DEFAULT_ENGINE}.`);
+  if (name === "")
+    throw new Error(
+      `${source} needs an engine name, such as ${DEFAULT_ENGINE}.`,
+    );
   if (!ENGINE_NAME.test(name) || RESERVED.has(name))
     throw new Error(
       `${source} "${name}" is not an engine the runner can certify: use letters, digits, dots, dashes and underscores, starting with a letter or a digit, and not ${[...RESERVED].join(" or ")}, which the runner keeps for itself.`,
@@ -61,11 +64,17 @@ export function engineNamed(raw: string, source: string): string {
  * The engine a live run certifies: --engine, else FREEDUET_EVAL_ENGINE, else Claude Code. An empty
  * --engine is refused: it used to fall through to the environment without a word.
  */
-export function chooseEngine(input: { flag?: string; env?: string }): EngineChoice {
+export function chooseEngine(input: {
+  flag?: string;
+  env?: string;
+}): EngineChoice {
   if (input.flag !== undefined)
     return { name: engineNamed(input.flag, "--engine"), from: "flag" };
   if (input.env !== undefined && input.env.trim() !== "")
-    return { name: engineNamed(input.env, "FREEDUET_EVAL_ENGINE"), from: "env" };
+    return {
+      name: engineNamed(input.env, "FREEDUET_EVAL_ENGINE"),
+      from: "env",
+    };
   return { name: DEFAULT_ENGINE, from: "default" };
 }
 
@@ -153,8 +162,10 @@ export type EngineVerdict =
 /** Why an engine the stack runs cannot take a turn now, in words for the person. */
 function whyUnavailable(engine: StackEngine): string {
   const probe = engine.probe_problem ? ` (${engine.probe_problem})` : "";
-  if (engine.installed === false) return `it is not installed on the stack${probe}`;
-  if (engine.state === "signed_out") return `it is signed out on the eval stack${probe}`;
+  if (engine.installed === false)
+    return `it is not installed on the stack${probe}`;
+  if (engine.state === "signed_out")
+    return `it is signed out on the eval stack${probe}`;
   if (engine.state === "open")
     return engine.limited_until
       ? `it has hit its limit until ${engine.limited_until}`
@@ -163,11 +174,17 @@ function whyUnavailable(engine: StackEngine): string {
 }
 
 /** The verdict on one engine name, from the stack's answer. */
-export function engineVerdict(name: string, answer: StackAnswer): EngineVerdict {
+export function engineVerdict(
+  name: string,
+  answer: StackAnswer,
+): EngineVerdict {
   if ("problem" in answer) return { verdict: "unchecked", why: answer.problem };
   const engine = answer.engines.find((candidate) => candidate.id === name);
   if (engine === undefined)
-    return { verdict: "absent", engines: answer.engines.map((candidate) => candidate.id) };
+    return {
+      verdict: "absent",
+      engines: answer.engines.map((candidate) => candidate.id),
+    };
   if (engine.available) return { verdict: "available", engine };
   return { verdict: "unavailable", engine, why: whyUnavailable(engine) };
 }
@@ -259,8 +276,10 @@ export function regradeClash(input: {
   ran: string;
   chosen: EngineChoice | undefined;
 }): string | undefined {
-  if (input.chosen === undefined || input.chosen.name === input.ran) return undefined;
-  const source = input.chosen.from === "env" ? "FREEDUET_EVAL_ENGINE" : "--engine";
+  if (input.chosen === undefined || input.chosen.name === input.ran)
+    return undefined;
+  const source =
+    input.chosen.from === "env" ? "FREEDUET_EVAL_ENGINE" : "--engine";
   return `${input.report} was run on ${input.ran}. A regrade keeps that engine, so ${source} ${input.chosen.name} cannot apply: leave it out, or name ${input.ran}.`;
 }
 
@@ -292,7 +311,9 @@ export async function checkEngine(
   const agentUrl = env.MANAGED_AGENT_AG_UI_URL?.trim();
   const token = env.MANAGED_AGENT_TOKEN?.trim();
   const answer: StackAnswer = !agentUrl
-    ? { problem: "the settings name no agent address (MANAGED_AGENT_AG_UI_URL)" }
+    ? {
+        problem: "the settings name no agent address (MANAGED_AGENT_AG_UI_URL)",
+      }
     : !token
       ? { problem: "the settings hold no agent token (MANAGED_AGENT_TOKEN)" }
       : await askTheStack({ agentUrl, token, fetchImpl });

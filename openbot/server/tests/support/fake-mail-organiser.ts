@@ -161,6 +161,8 @@ export class FakeMailbox {
   storeAnswers = true;
   /** What `messageCopy` answers: `false` is a server that did not make the copy. */
   copyAnswers = true;
+  /** Email ids a copy leaves in All Mail, whatever the server answered. */
+  staysAfterCopy = new Set<string>();
   /** What a removal answers, when the add before it was made: `false` is a server that refused only that. */
   removeAnswers = true;
   /** A server that never answers the logout: the transport must cut the connection off itself. */
@@ -310,15 +312,17 @@ export class FakeMailbox {
         this.copies.push({ range, destination });
         if (!this.copyAnswers) return false;
         // Gmail: a copy into the Bin puts the message in the Bin, which keeps it for about 30 days.
-        const bin = this.folders.find(
+        const target = this.folders.find(
           (folder) =>
-            folder.path === destination && folder.specialUse === "\\Trash",
+            folder.path === destination &&
+            (folder.specialUse === "\\Trash" || folder.specialUse === "\\Junk"),
         );
-        if (bin) {
+        const label = target?.specialUse === "\\Junk" ? "\\Spam" : "\\Trash";
+        if (target) {
           for (const message of this.pick(range)) {
-            if (!message.labels.includes("\\Trash")) {
-              message.labels.push("\\Trash");
-            }
+            // A server that answers the copy and still shows the message in All Mail.
+            if (this.staysAfterCopy.has(message.emailId)) continue;
+            if (!message.labels.includes(label)) message.labels.push(label);
           }
         }
         return { path: destination };

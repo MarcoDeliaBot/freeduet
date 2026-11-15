@@ -117,9 +117,10 @@ models do.
 | `gmail_label_messages`  | write  | Adds labels to, or removes labels from, up to 100 messages named by id.                                                                                                                              |
 | `gmail_archive_messages` | write | Takes up to 100 messages named by id out of the Inbox. They stay in All Mail with their labels.                                                                                                      |
 | `gmail_bin_messages`    | write  | Moves up to 100 messages named by id to the Bin (Gmail's Trash), which keeps them about 30 days; the person can restore them. Not a permanent deletion, no tool empties the Bin. |
+| `gmail_spam_messages`   | write  | Moves up to 100 messages named by id to Spam; Gmail deletes mail in Spam after about 30 days, until then the person can move it back. No tool empties Spam.                                      |
 | `gmail_mark_messages`   | write  | Marks up to 100 messages named by id as read or unread.                                                                                                                                              |
 
-The catalogue names the four reads and the seven writes explicitly, so any other tool name counts as a
+The catalogue names the four reads and the eight writes explicitly, so any other tool name counts as a
 write.
 
 ### Sending mail is a write
@@ -155,17 +156,17 @@ What the connector itself enforces, whatever was approved:
   does not send (a Cc, a Bcc, an attachment, a header, a "from"), an empty subject or body, and a subject
   or body over its limit (200 and 20,000 characters) are refused before anything is sent, with a fixed
   sentence that repeats nothing that was typed.
-- There is no tool that deletes mail for good or empties the Bin, reports mail as spam, forwards it, makes
-  a filter, or moves a message to another folder; the one removal is a move to the Bin, below. The
+- There is no tool that deletes mail for good or empties the Bin or Spam, blocks a sender, forwards mail, makes
+  a filter, or moves a message to another folder; the only removals from the Inbox are a move to the Bin and a move to Spam, below. The
   `gmail.send` scope could not do any of those anyway. It does allow sending
   a new message, which is why `gmail_send_message` needs no new scope.
 
 ### Organising a mailbox
 
 `gmail_create_label`, `gmail_label_messages`, `gmail_archive_messages` and `gmail_mark_messages` (and, with a
-stricter rule, `gmail_bin_messages`) change the person's mailbox and send nothing. They are writes, not sends. When the person's own typed message of
+stricter rule each, `gmail_bin_messages` and `gmail_spam_messages`) change the person's mailbox and send nothing. They are writes, not sends. When the person's own typed message of
 this live chat turn asked for that change (directly with the member, or one hop through Iris), the call runs
-with no card. The auto-review model is always asked about these four, whatever the person's auto-review
+with no card. The auto-review model is always asked about these six, whatever the person's auto-review
 setting, and it is shown only those typed words: never an email, a tool's answer, an earlier message, a
 pasted text, an attachment or what the member wrote. It must answer that the person explicitly asked for
 this exact action; a request that did not ask, an instruction that sits in an email while the person only
@@ -196,21 +197,37 @@ limits is in [docs/design/mail-organise.md](../../../docs/design/mail-organise.m
 - **Over REST**, a change is one `messages/batchModify` call after each named message has been looked
   up, and a label is created with one `POST` to `labels`. Over [IMAP](../configuration.md#two-ways-to-connect-gmail),
   the mailbox is opened for writing only for the length of one of these calls, and only a label's
-  creation, a store of `X-GM-LABELS`, a store of the `\Seen` flag and, for the Bin, one copy into the
-  folder the server flagged `\Trash` are sent; nothing is moved, expunged or flagged for deletion.
+  creation, a store of `X-GM-LABELS`, a store of the `\Seen` flag and, for the Bin and Spam, one copy into the
+  folder the server flagged `\Trash` or `\Junk` are sent; nothing is moved, expunged or flagged for deletion.
 
 ### Moving mail to the Bin
 
 `gmail_bin_messages` moves messages named by id (at most 100 a call) to the Bin, Gmail's Trash. Gmail keeps
 them there about 30 days and the person can restore them from it; it is not a permanent deletion, no tool
-empties the Bin, and nothing moves mail to Spam. It is the strongest change to a mailbox the tools make,
-so it has the same gate as the four above with one stricter rule: the auto-review model is told that the
+empties the Bin, and the Bin tool moves nothing to Spam. It is the strongest change to a mailbox the tools make,
+so it has the same gate as the others above with one stricter rule: the auto-review model is told that the
 request must itself say to delete, bin or trash AND name which messages (a sender, a category, a label or an
 unmistakable set). "Clean up", "tidy" or "remove the spam" without naming them shows a card, as does an
 instruction from an email, a routine, a check-in, a remote or spoken turn. Over REST it is Gmail's
 `messages.trash`, once for each message after it has been looked up; over IMAP it is one `UID COPY` into the
 folder the server flagged `\Trash`, never one found by a name. A message already in the Bin or in Spam is
 "not found". The card says how many and which, and that Gmail deletes them for good after about 30 days.
+Over IMAP the answer is checked afterwards: after the copy the same lookup runs again, and an id All Mail
+still holds is reported as not confirmed (how many were confirmed moved, how many are still in the mailbox),
+never as moved.
+
+### Moving mail to Spam
+
+`gmail_spam_messages` moves messages named by id (at most 100 a call) to Spam. Gmail deletes mail in Spam after
+about 30 days, and until then the person can move it back; nothing is deleted now, no tool empties Spam,
+and it blocks no sender and makes no filter. It has the same gate as the other organising writes with its own
+fixed reviewer rule: no card when the person's own typed request says to move mail to Spam or mark it as spam
+AND says which messages or which kind ("the spam in my inbox", a sender, a category); "check my inbox for spam
+and put it in Spam" is such an order for the messages the member judged to be spam. An instruction inside an email,
+a routine, a check-in, a remote or spoken turn is a card. Over REST it is `messages.modify` once for each
+message after it has been looked up, adding `SPAM` and removing `INBOX`; over IMAP it is one `UID COPY` into the
+folder the server flagged `\Junk`, never one found by a name, checked afterwards as for the Bin. A message
+already in Spam or the Bin is "not found".
 
 ## What each person does
 
@@ -336,7 +353,7 @@ an API takes a few minutes to apply.
 ### "… The access this person granted does not cover this. …"
 
 The person unticked a permission on Google's consent screen, or connected before `gmail.modify` was
-added and has not granted it (it shows up only on the four tools that organise a mailbox). Reconnecting
+added and has not granted it (it shows up only on the six tools that organise a mailbox). Reconnecting
 and allowing every permission fixes it.
 
 ### "… Google is limiting how fast this account can be read. …"
