@@ -15,14 +15,16 @@ Written 2026-11-15 on origin/main 2d49770. Decisions D44 and D45 in `docs/M1_PLA
 - `app/src/routes/_authed/_app/connections.$key.tsx` accepts `bot`; `SecretConnectionPage` says who will use the mailbox and sends `botId` beside the typed values (`app/src/lib/plugins/secret-connection.ts`).
 - `POST /api/plugins/servers/:id/secret-connection` (`server/src/plugins/route-groups/connections.ts`) reads only the member's id from `botId`. For an administrator, and a member that exists, it gives that member the catalogue-declared tools of the app under the automatic mark. For anyone else the connection is made and nothing is given. No new route: `ALL /api/plugins/*` stays on the remote deny list (`server/src/auth/remote-limits.ts`).
 
-## 3. Automatic grants (D45)
+## 3. Automatic grants (D45), the narrow reading
 
-- The mark is `plugin_grants.granted_by = "freeduet-automatic"` (`server/src/plugins/plugin-store/automatic.ts`), the column the hub grants already use for their own mark (`server/src/freeduet/hub-grants.ts`). No schema change.
-- Written by: the connect button above, and approving an access request WITHOUT choosing tools (`route-groups/app-access.ts`). A set chosen tool by tool, and a grant made by hand on the Bot's page, carry the person's address and are never marked.
-- At start (`server/src/freeduet/automatic-grants.ts`, called from `server/src/index.ts`; FreeDuet's package only): every member that holds a marked tool of an app is given the tools the catalogue declares for that app that it lacks. Idempotent, one audit row per tool added, `onConflictDoNothing` so no existing row is relabelled.
-- What may be given: the entry's `readTools` and `writeTools` minus `sendTools` (`automaticToolRefs`). A tool that sends is never given by this; the person turns it on in settings, as before (`docs/design/inbox-never-grants-send.md`).
-- A person revoking a tool by hand turns what is left of that member's marked set on that app into a hand-made set (`keepTrimmedSetByHand`), so the next start does not hand the tool back.
-- A GRANT GIVES A TOOL, NOT AN APPROVAL. Every write still meets the approval gate when it is used, exactly as before (`approvals/policy.ts` is untouched).
+- The mark is `plugin_grants.granted_by = "freeduet-automatic"` (`server/src/plugins/plugin-store/automatic.ts`), the column the hub grants already use for their own mark. No schema change.
+- Written ONLY by the Connect button with a `botId` (above). A grant by hand, and the approval of an access request, carry the person's address.
+- THE APPROVAL PATH IS UNCHANGED (`route-groups/app-access.ts` is as on main): approving a request gives reads only and never marks, because anything that marks is later topped up, and approving a read must never later add writes.
+- Top-up, at start (`server/src/freeduet/automatic-grants.ts`, FreeDuet's package only): only for `google-imap` and `google-workspace`, only for a member of FreeDuet's package (an agent row of the `freeduet` package; a Bot a person made or imported is never one), and only when EVERY `mcp` row of that Bot and app carries the mark. One row with any other mark skips the whole Bot and app. Idempotent, one audit row per tool, `onConflictDoNothing`.
+- The Bot and the app named by the button are checked the same way (`automaticEligible`). The form asks `GET .../secret-connection?bot=` (`botEligible`) and names the member only when true; a crafted `?bot=` claims nothing and sends nothing.
+- What may be given: the entry's `readTools` and `writeTools` minus `sendTools`. A tool that sends is never given by this.
+- A person revoking a tool by hand turns what is left of that member's marked set on that app into a hand-made set (`keepTrimmedSetByHand`). A tool a person later grants by hand in settings (a send) also makes the set not all-automatic, so updates stop adding tools to it; that is the conservative reading.
+- A GRANT GIVES A TOOL, NOT AN APPROVAL. Every write still meets the approval gate when it is used (`approvals/policy.ts` is untouched).
 
 ## 4. Existing installations
 
@@ -33,7 +35,7 @@ bun scripts/mark-automatic-grants.ts --bot inbox --server google-imap           
 bun scripts/mark-automatic-grants.ts --bot inbox --server google-imap --apply   # marks them
 ```
 
-It changes the mark of existing rows, skips rows already marked and the hub mark, writes one audit row per change, and with `--apply` then adds the declared tools the member lacks at once; every later start does the same. See `docs/configuration.md`.
+It works only on a member of FreeDuet's package and on `google-imap` or `google-workspace`; it refuses an unknown Bot, a non-member and any other app (exit 2, nothing changed). It marks the member's existing rows on the app, never relabels a row for a tool that sends (it names them and leaves them), skips rows already marked, writes one audit row per change, and with `--apply` then adds the declared tools the member lacks, by the same rules as at start. With nothing to mark it says so. See `docs/configuration.md`.
 
 ## 5. Not built
 
@@ -49,5 +51,5 @@ Built and tested (see the PR): the marks, the top-up, the one-off, the tool's `m
 
 | Decision | Options | Recommendation | Why |
 |---|---|---|---|
-| Top-up also gives the organising writes (label, archive, Bin, Spam), not only reads | (a) every declared non-send tool; (b) reads only | (a) | It is what the maintainer asked for after Otto lacked them; each still asks at the gate, and a send is never given |
-| An access request approved with the default set becomes automatic | (a) yes; (b) only the connect button writes the mark | (a) | Otherwise the inbox path never receives new tools; a set chosen tool by tool stays hand-made |
+| Top-up gives the organising writes (label, archive, Bin, Spam) to a mailbox connected with the button | (a) every declared non-send tool; (b) reads only | (a) | It is what the maintainer asked for after Otto lacked them; each still asks at the gate, and a send is never given |
+| A mailbox approved through the inbox (reads only) never receives an update's new tools by itself | (a) as now, the person approves again; (b) mark it too | (a) | Decided in review: approving a read must never later add writes |

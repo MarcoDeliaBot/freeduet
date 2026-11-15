@@ -1204,11 +1204,24 @@ export function mountConnectionRoutes({
   routes.get("/servers/:id/secret-connection", requireUser, async (context) => {
     context.header("Cache-Control", "no-store");
     try {
+      const status = await store.userSecretStatus({
+        serverId: context.req.param("id"),
+        userId: context.var.actor.id,
+      });
+      /*
+       * `?bot=` is a question, not an instruction: whether the form may say that member will use this
+       * app. True only for a member of FreeDuet's package and an app on the automatic allow-list.
+       */
+      const bot = context.req.query("bot")?.trim();
       return context.json(
-        await store.userSecretStatus({
-          serverId: context.req.param("id"),
-          userId: context.var.actor.id,
-        }),
+        bot
+          ? {
+              ...status,
+              botEligible:
+                skillActor(context).isAdmin &&
+                (await store.automaticEligible(context.req.param("id"), bot)),
+            }
+          : status,
       );
     } catch (error) {
       if (error instanceof CatalogueEntryUnknownError) {
@@ -1261,7 +1274,7 @@ export function mountConnectionRoutes({
           typeof bot === "string" &&
           bot.trim() &&
           skillActor(context).isAdmin &&
-          (await store.agentIsRegistered(bot.trim()))
+          (await store.automaticEligible(context.req.param("id"), bot.trim()))
         ) {
           granted = await store.grantAutomatically(
             context.req.param("id"),

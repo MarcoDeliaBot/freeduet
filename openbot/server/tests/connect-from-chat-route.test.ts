@@ -25,7 +25,7 @@ function app(role: "admin" | "user", registered = true) {
       calendar: false,
       reconnected: false,
     }),
-    agentIsRegistered: async () => registered,
+    automaticEligible: async () => registered,
     grantAutomatically: async (
       serverId: string,
       agentId: string,
@@ -92,7 +92,7 @@ describe("POST secret-connection with a member", () => {
     expect(granted).toEqual([]);
   });
 
-  test("a member that does not exist is given nothing", async () => {
+  test("a member the catalogue entry is not meant for (not a package member) is given nothing", async () => {
     const { hono, granted } = app("admin", false);
     const response = await post(hono, { ...BODY, botId: "nobody" });
     expect(response.status).toBe(200);

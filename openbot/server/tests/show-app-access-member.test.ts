@@ -33,7 +33,7 @@ function toolOver(registered: string[]) {
         asked.push({ agentId: input.agentId });
         return { access } as unknown as AppInspection;
       },
-      agentIsRegistered: async (id: string) => registered.includes(id),
+      isPackageMember: async (id: string) => registered.includes(id),
     },
     botId: "freeduet",
     actorId: "usr_1",
@@ -58,11 +58,11 @@ describe("show_app_access with a member", () => {
     expect(readConnectPrompt(answer)?.agentId).toBe("freeduet");
   });
 
-  test("a member that does not exist draws no card", async () => {
+  test("a Bot that is not a member of the package draws no card", async () => {
     const { tool, asked } = toolOver(["inbox"]);
     const answer = await tool.execute({ app: "Gmail", member: "nobody" });
     expect(asked).toEqual([]);
     expect(readConnectPrompt(answer)).toBeNull();
-    expect(answer).toContain("There is no member called nobody");
+    expect(answer).toContain("There is no team member called nobody");
   });
 });

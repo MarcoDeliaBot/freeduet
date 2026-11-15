@@ -20,6 +20,7 @@ import {
   appAccessRequests,
   brokeredConnections,
   credentials,
+  deploymentPackages,
   mcpServers,
   mcpTools,
   mcpUserCredentials,
@@ -164,11 +165,6 @@ function storeFor(db = database): PluginStore {
     async grant(...args) {
       await beforeGrant?.();
       return real.grant(...args);
-    },
-    // The default set is granted through this one (D45); the seam holds for it too.
-    async grantByDefault(...args) {
-      await beforeGrant?.();
-      return real.grantByDefault(...args);
     },
     async addBrokeredApp(input) {
       enabled.push(input.slug);
@@ -1570,5 +1566,78 @@ describe("a teammate on somebody else's Team Bot", () => {
       accountHolder: "you",
       asksFirst: false,
     });
+  });
+});
+
+describe("approving a read request never makes a grant the product tops up (D45)", () => {
+  test("a FreeDuet member approved for reads is still reads only after a restart", async () => {
+    const GMAIL_IMAP = "google-imap";
+    await seedApp({
+      key: GMAIL_IMAP,
+      title: "Gmail and Google Calendar (app password)",
+      tools: ["gmail_search_messages", "gmail_bin_messages"],
+      effects: { gmail_search_messages: "read", gmail_bin_messages: "write" },
+      grant: false,
+    });
+    // FreeDuet's own package row, made here when the database has none.
+    const [existing] = await database
+      .select({ id: deploymentPackages.id })
+      .from(deploymentPackages)
+      .where(eq(deploymentPackages.tenantId, "freeduet"));
+    const [made] = existing
+      ? []
+      : await database
+          .insert(deploymentPackages)
+          .values({ tenantId: "freeduet", sourcePath: "x", checksum: "x" })
+          .returning({ id: deploymentPackages.id });
+    const pack = existing ?? made;
+    try {
+      // Even for a member of FreeDuet's package, the default approval must not mark its grants.
+      await database
+        .update(agents)
+        .set({ packageId: pack?.id ?? null })
+        .where(eq(agents.id, bot));
+      const filed = await appAs(person).request(
+        "/api/plugins/access-requests",
+        post({ agentId: bot, app: GMAIL_IMAP }),
+      );
+      const request = (await json<{ request: AppAccessRequestRecord }>(filed))
+        .request;
+      const approved = await appAs(admin, "admin").request(
+        `/api/plugins/access-requests/${request.id}/approve`,
+        { method: "POST" },
+      );
+      expect(approved.status).toBe(200);
+      const rows = await database
+        .select({ ref: pluginGrants.ref, by: pluginGrants.grantedBy })
+        .from(pluginGrants)
+        .where(eq(pluginGrants.agentId, bot));
+      expect(rows.map((row) => row.ref)).toEqual([
+        `${GMAIL_IMAP}/gmail_search_messages`,
+      ]);
+      expect(rows[0]?.by).not.toBe("freeduet-automatic");
+      // A restart.
+      const { topUpAutomaticGrants } = await import(
+        "../src/plugins/plugin-store/automatic"
+      );
+      await topUpAutomaticGrants(database, audit);
+      const after = await database
+        .select({ ref: pluginGrants.ref })
+        .from(pluginGrants)
+        .where(eq(pluginGrants.agentId, bot));
+      expect(after.length).toBe(1);
+    } finally {
+      await database
+        .update(agents)
+        .set({ packageId: null })
+        .where(eq(agents.id, bot));
+      if (made)
+        await database
+          .delete(deploymentPackages)
+          .where(eq(deploymentPackages.id, made.id));
+      await database.delete(pluginGrants).where(eq(pluginGrants.agentId, bot));
+      await database.delete(mcpTools).where(eq(mcpTools.serverId, GMAIL_IMAP));
+      await database.delete(mcpServers).where(eq(mcpServers.id, GMAIL_IMAP));
+    }
   });
 });

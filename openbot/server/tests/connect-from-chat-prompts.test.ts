@@ -34,7 +34,7 @@ describe("connecting an app from the chat", () => {
 
   test("Otto answers with one line and the card, not the old list of places", async () => {
     const otto = await prompt("inbox");
-    expect(otto).toContain("call show_app_access for it");
+    expect(otto).toContain("call show_app_access for it with yourself");
     expect(otto).toContain("never ask for a password in the chat");
     expect(otto).not.toContain(
       "on the Gmail page, or connect Gmail on the Connections page",

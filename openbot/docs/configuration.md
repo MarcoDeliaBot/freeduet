@@ -950,29 +950,34 @@ the connector, or the person, revokes it too.
 
 ### Tools an update adds reach the member that holds the mailbox (FreeDuet)
 
-A grant is a `plugin_grants` row. A grant the product itself makes (connecting a mailbox from the chat's
-button, approving an access request without choosing tools) carries `granted_by = freeduet-automatic`.
-At every start, for FreeDuet's package only, a member that holds a tool of an app under that mark is
-given the tools the catalogue declares for that app that it lacks: the reads and the organising writes,
-never a tool that sends. It adds a tool once, writes an audit row for it and never changes a grant a
-person made by hand. A person taking one tool away by hand makes the rest of that member's set on that
-app a hand-made set, which is no longer topped up.
+A mailbox connected with the chat's Connect button gives the named member (Otto) the tools the catalogue
+declares for the app, marked `granted_by = freeduet-automatic`. At every start, for FreeDuet's package
+only, a package member whose EVERY grant on `google-imap` or `google-workspace` carries that mark is
+given the declared tools it lacks: the reads and the organising writes, never a tool that sends. It
+adds a tool once and writes an audit row for it. A grant a person made by hand (one row is enough), a
+tool they took away by hand, any other app, and any Bot that is not a member of FreeDuet's package are
+never touched. Approving an access request in the inbox is unchanged: it gives reads only, and never
+marks.
 
 A grant gives a tool, not an approval: every write still meets the approval gate when it is used, and
 a send is still turned on only in settings.
 
-An installation from before the mark has rows without it, and the command cannot know whether somebody
-trimmed them, so it does not guess. Run once, from the `openbot` folder, per member and app, only when
-that set was never trimmed by hand:
+An installation from before the mark has rows without it, and nothing can know whether somebody trimmed
+them, so nothing guesses. To opt a member in, run once, from the `openbot` folder, only when that
+member's set on that app was never trimmed by hand (`DATABASE_URL` must be set, the same value the
+server uses):
 
 ```
 bun scripts/mark-automatic-grants.ts --bot inbox --server google-imap           # dry run, writes nothing
 bun scripts/mark-automatic-grants.ts --bot inbox --server google-imap --apply   # marks them
 ```
 
-`DATABASE_URL` must be set (the same value the server uses). The command changes only the mark of that
-member's existing rows on that app, skips rows already marked, and writes one audit row each; with
-`--apply` it then adds, at once, the declared tools the member lacks, and every later start does the same. Design: `docs/design/connect-from-chat.md`.
+The command refuses (exit 2, nothing changed) a Bot that does not exist or is not a member of FreeDuet's
+team, and any app but `google-imap` and `google-workspace`. It marks that member's existing grants on the
+app, except a row for a tool that sends, which it names and leaves as it is. With `--apply` it then adds
+the declared tools the member lacks, by the same rules as at start; if a row stays unmarked (a send), the
+set is not topped up, and the command says so. It writes one audit row per change, and says plainly when
+there was nothing to do. Design: `docs/design/connect-from-chat.md`.
 
 ## Text messages and push notifications
 

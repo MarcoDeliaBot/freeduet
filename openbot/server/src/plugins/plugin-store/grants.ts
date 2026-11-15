@@ -2,8 +2,9 @@ import { and, asc, eq, inArray } from "drizzle-orm";
 import { recordAuditEvent } from "../../audit";
 import { mcpTools, pluginGrants, skills } from "../../db/schema";
 import {
-  AUTOMATIC_GRANT,
+  automaticServerAllowed,
   grantDeclaredAutomatically,
+  isFreeDuetMember,
   keepTrimmedSetByHand,
 } from "./automatic";
 import type { StoreContext } from "./context";
@@ -63,33 +64,22 @@ export function grantMethods(context: StoreContext) {
     },
 
     /**
-     * One tool given by the product's own default (approving an access request without choosing
-     * tools), recorded under the automatic mark. A row that already exists is left exactly as it is.
+     * Whether a Bot is one a button may name for this app: a member of FreeDuet's package, and an
+     * app on the allow-list (`./automatic`). Anything else never gets an automatic grant.
      */
-    async grantByDefault(
-      ref: string,
+    async automaticEligible(
+      serverId: string,
       agentId: string,
-      by: string,
-    ): Promise<void> {
-      const added = await database
-        .insert(pluginGrants)
-        .values({ kind: "mcp", ref, agentId, grantedBy: AUTOMATIC_GRANT })
-        .onConflictDoNothing()
-        .returning({ ref: pluginGrants.ref });
-      if (added.length === 0) return;
-      await recordAuditEvent(auditStore, {
-        eventType: "configuration.changed",
-        targetType: grantTargetType("mcp"),
-        targetId: ref,
-        payload: {
-          actor: by,
-          change: "plugin_granted",
-          kind: "mcp",
-          ref,
-          bot: agentId,
-          automatic: true,
-        },
-      });
+    ): Promise<boolean> {
+      return (
+        automaticServerAllowed(serverId) &&
+        (await isFreeDuetMember(database, agentId))
+      );
+    },
+
+    /** Whether a Bot is a member of FreeDuet's own package. */
+    async isPackageMember(agentId: string): Promise<boolean> {
+      return isFreeDuetMember(database, agentId);
     },
 
     async revoke(

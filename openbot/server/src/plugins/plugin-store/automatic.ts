@@ -1,7 +1,7 @@
-import { and, eq, like, ne, or, isNull, sql } from "drizzle-orm";
+import { and, eq, like, sql } from "drizzle-orm";
 import { type AuditStore, recordAuditEvent } from "../../audit";
 import type { Database } from "../../db/client";
-import { pluginGrants } from "../../db/schema";
+import { agents, deploymentPackages, pluginGrants } from "../../db/schema";
 import { catalogueEntry } from "../catalogue";
 
 /**
@@ -16,6 +16,46 @@ import { catalogueEntry } from "../catalogue";
  * (`freeduet/hub-grants.ts`) marks hand-offs between members, a different kind of row.
  */
 export const AUTOMATIC_GRANT = "freeduet-automatic";
+
+/**
+ * The ONLY apps an automatic grant is ever made or topped up for: the two ways of connecting Gmail and
+ * Google Calendar, which the mailbox member (Otto) holds. No other catalogue entry is ever touched.
+ */
+export const AUTOMATIC_SERVERS: readonly string[] = [
+  "google-imap",
+  "google-workspace",
+];
+
+/** The tenant id of FreeDuet's own package; a test holds it equal to `FREEDUET_TENANT_ID`. */
+export const FREEDUET_PACKAGE_TENANT = "freeduet";
+
+/**
+ * Whether this Bot is a member of FreeDuet's own package: an agent row the package sync owns
+ * (`agents.package_id` points at the `freeduet` package). A Bot a person made, or one imported, has
+ * no package and is never a member.
+ */
+export async function isFreeDuetMember(
+  database: Database,
+  agentId: string,
+): Promise<boolean> {
+  const [row] = await database
+    .select({ id: agents.id })
+    .from(agents)
+    .innerJoin(deploymentPackages, eq(agents.packageId, deploymentPackages.id))
+    .where(
+      and(
+        eq(agents.id, agentId),
+        eq(deploymentPackages.tenantId, FREEDUET_PACKAGE_TENANT),
+      ),
+    )
+    .limit(1);
+  return row !== undefined;
+}
+
+/** Whether an automatic grant may ever name this app. */
+export function automaticServerAllowed(serverId: string): boolean {
+  return AUTOMATIC_SERVERS.includes(serverId);
+}
 
 /** The server a `serverId/toolName` ref belongs to. */
 export function serverOfRef(ref: string): string {
@@ -40,6 +80,28 @@ export function automaticToolRefs(serverId: string): string[] {
 }
 
 /**
+ * Whether EVERY `mcp` row this Bot holds on this server carries the automatic mark (an empty set
+ * counts: nothing was chosen yet). One row with any other mark skips the whole Bot and server.
+ */
+async function setIsAllAutomatic(
+  database: Database,
+  agentId: string,
+  serverId: string,
+): Promise<boolean> {
+  const rows = await database
+    .select({ by: pluginGrants.grantedBy })
+    .from(pluginGrants)
+    .where(
+      and(
+        eq(pluginGrants.kind, "mcp"),
+        eq(pluginGrants.agentId, agentId),
+        sql`split_part(${pluginGrants.ref}, '/', 1) = ${serverId}`,
+      ),
+    );
+  return rows.every((row) => row.by === AUTOMATIC_GRANT);
+}
+
+/**
  * Gives one Bot the declared tools of one server that it does not hold yet, under the automatic mark.
  *
  * `onConflictDoNothing`: a tool the Bot already holds keeps whatever mark it has, so a hand-made grant
@@ -50,6 +112,12 @@ export async function grantDeclaredAutomatically(
   auditStore: AuditStore,
   input: { agentId: string; serverId: string; reason: string },
 ): Promise<string[]> {
+  if (!automaticServerAllowed(input.serverId)) return [];
+  if (!(await isFreeDuetMember(database, input.agentId))) return [];
+  // A set is automatic only when every row of it carries the mark: a hand-made row among them, or
+  // any other mark, means somebody chose, and nothing is added.
+  if (!(await setIsAllAutomatic(database, input.agentId, input.serverId)))
+    return [];
   const refs = automaticToolRefs(input.serverId);
   if (refs.length === 0) return [];
   const added = await database
@@ -104,6 +172,7 @@ export async function topUpAutomaticGrants(
   const pairs = new Map<string, { bot: string; server: string }>();
   for (const row of marked) {
     const server = serverOfRef(row.ref);
+    if (!automaticServerAllowed(server)) continue;
     pairs.set(`${row.agentId}\u0000${server}`, { bot: row.agentId, server });
   }
   const done: { bot: string; server: string; added: string[] }[] = [];
@@ -118,42 +187,76 @@ export async function topUpAutomaticGrants(
   return done;
 }
 
+export class MarkRefused extends Error {}
+
 /**
- * The ONE-OFF for an installation that already has grants: marks a Bot's existing grants on a server
- * as automatic, so later updates top them up. Dry run unless `apply`.
+ * The ONE-OFF for an installation that already has grants: marks a FreeDuet member's existing grants
+ * on a Gmail app as automatic, so later updates top them up. Dry run unless `apply`.
  *
- * It touches only `mcp` rows of that server for that Bot whose mark is not already the automatic one,
- * and never the hub mark. It is run by a person who knows the set was never trimmed by hand; nothing
- * here guesses.
+ * Refuses (throws {@link MarkRefused}) for an app outside the allow-list, a Bot that does not exist
+ * and a Bot that is not a member of FreeDuet's package. It marks `mcp` rows of that server only,
+ * skips rows already marked, and NEVER relabels a row for a tool that sends: those are returned in
+ * `leftSend` and stay as they are (so the set is then not all-automatic and is not topped up, which
+ * the person is told). It is run by a person who knows the set was never trimmed by hand.
  */
 export async function markGrantsAutomatic(
   database: Database,
   auditStore: AuditStore,
   input: { agentId: string; serverId: string; apply: boolean },
-): Promise<string[]> {
-  const where = and(
-    eq(pluginGrants.kind, "mcp"),
-    eq(pluginGrants.agentId, input.agentId),
-    like(pluginGrants.ref, `${input.serverId.replace(/[\\%_]/g, "\\$&")}/%`),
-    or(
-      isNull(pluginGrants.grantedBy),
-      and(
-        ne(pluginGrants.grantedBy, AUTOMATIC_GRANT),
-        ne(pluginGrants.grantedBy, "freeduet-package"),
-      ),
+): Promise<{ marked: string[]; leftSend: string[]; added: string[] }> {
+  if (!automaticServerAllowed(input.serverId))
+    throw new MarkRefused(
+      `${input.serverId} is not an app this command works on (${AUTOMATIC_SERVERS.join(", ")}).`,
+    );
+  const [bot] = await database
+    .select({ id: agents.id })
+    .from(agents)
+    .where(eq(agents.id, input.agentId))
+    .limit(1);
+  if (!bot) throw new MarkRefused(`There is no Bot called ${input.agentId}.`);
+  if (!(await isFreeDuetMember(database, input.agentId)))
+    throw new MarkRefused(
+      `${input.agentId} is not a member of FreeDuet's team, so nothing is marked.`,
+    );
+  const sends = new Set(
+    (catalogueEntry(input.serverId)?.sendTools ?? []).map(
+      (name) => `${input.serverId}/${name}`,
     ),
   );
   const rows = await database
-    .select({ ref: pluginGrants.ref })
+    .select({ ref: pluginGrants.ref, by: pluginGrants.grantedBy })
     .from(pluginGrants)
-    .where(where);
-  const refs = rows.map((row) => row.ref).sort();
-  if (!input.apply || refs.length === 0) return refs;
-  await database
-    .update(pluginGrants)
-    .set({ grantedBy: AUTOMATIC_GRANT, updatedAt: new Date() })
-    .where(where);
-  for (const ref of refs) {
+    .where(
+      and(
+        eq(pluginGrants.kind, "mcp"),
+        eq(pluginGrants.agentId, input.agentId),
+        like(
+          pluginGrants.ref,
+          `${input.serverId.replace(/[\\%_]/g, "\\$&")}/%`,
+        ),
+      ),
+    );
+  const todo = rows.filter((row) => row.by !== AUTOMATIC_GRANT);
+  const marked = todo
+    .filter((row) => !sends.has(row.ref))
+    .map((row) => row.ref)
+    .sort();
+  const leftSend = todo
+    .filter((row) => sends.has(row.ref))
+    .map((row) => row.ref)
+    .sort();
+  if (!input.apply) return { marked, leftSend, added: [] };
+  for (const ref of marked) {
+    await database
+      .update(pluginGrants)
+      .set({ grantedBy: AUTOMATIC_GRANT, updatedAt: new Date() })
+      .where(
+        and(
+          eq(pluginGrants.kind, "mcp"),
+          eq(pluginGrants.agentId, input.agentId),
+          eq(pluginGrants.ref, ref),
+        ),
+      );
     await recordAuditEvent(auditStore, {
       eventType: "configuration.changed",
       targetType: "plugin",
@@ -167,7 +270,13 @@ export async function markGrantsAutomatic(
       },
     });
   }
-  return refs;
+  // The same rules as at start: a set with a row left unmarked is not topped up.
+  const added = await grantDeclaredAutomatically(database, auditStore, {
+    agentId: input.agentId,
+    serverId: input.serverId,
+    reason: "mark_automatic_grants",
+  });
+  return { marked, leftSend, added };
 }
 
 /**

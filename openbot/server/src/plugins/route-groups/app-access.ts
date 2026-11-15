@@ -594,14 +594,8 @@ export function mountAppAccessRoutes({
               : `None of ${name}'s actions are marked read-only, so approving here gives this Bot nothing. Choose its actions on ${name}'s page under Plugins, then approve this request again.`,
             409,
           );
-        /*
-         * THE DEFAULT SET IS AN AUTOMATIC GRANT, a set the person chose tool by tool is not: only the
-         * first carries the mark an update's new tools are topped up under (`plugin-store/automatic.ts`).
-         */
         for (const ref of refs) {
-          if (chosen === undefined)
-            await store.grantByDefault(ref, agentId, actorEmail(context));
-          else await store.grant("mcp", ref, agentId, actorEmail(context));
+          await store.grant("mcp", ref, agentId, actorEmail(context));
         }
         const sharedDecision = await sharedGrantApproval(
           { store, shared },

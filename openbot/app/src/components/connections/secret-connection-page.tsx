@@ -67,7 +67,7 @@ export function SecretConnectionPage({
 }) {
   const queryClient = useQueryClient();
   const status = useQuery({
-    ...secretConnectionQueryOptions(entry.key),
+    ...secretConnectionQueryOptions(entry.key, bot),
     enabled,
   });
   const [address, setAddress] = useState("");
@@ -78,7 +78,11 @@ export function SecretConnectionPage({
   const [replacing, setReplacing] = useState(false);
   const ids = useId();
   const botNames = useBotNames();
-  const memberName = bot ? (botNames.get(bot) ?? "A member") : null;
+  // Said only when the server agrees this member may use the app: a crafted `?bot=` claims nothing.
+  const eligibleBot = bot && status.data?.botEligible === true ? bot : null;
+  const memberName = eligibleBot
+    ? (botNames.get(eligibleBot) ?? "A member")
+    : null;
 
   const connect = useMutation({
     ...connectSecretMutationOptions(queryClient),
@@ -223,7 +227,10 @@ export function SecretConnectionPage({
           title={connected ? "Use a different app password" : "Connect"}
         >
           {memberName ? (
-            <p className="mb-4 text-sm" data-connect-member={bot}>
+            <p
+              className="mb-4 text-sm"
+              data-connect-member={eligibleBot ?? undefined}
+            >
               {memberName} will use this mailbox.
             </p>
           ) : null}
@@ -266,7 +273,7 @@ export function SecretConnectionPage({
                 address,
                 appPassword,
                 calendarUrl,
-                ...(bot ? { botId: bot } : {}),
+                ...(eligibleBot ? { botId: eligibleBot } : {}),
               });
             }}
           >

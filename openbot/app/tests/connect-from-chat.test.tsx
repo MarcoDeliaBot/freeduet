@@ -36,7 +36,7 @@ afterEach(() => {
   global.fetch = originalFetch;
 });
 
-function renderPage(bot?: string) {
+function renderPage(bot?: string, eligible = true) {
   posts = [];
   global.fetch = Object.assign(
     async (input: RequestInfo | URL, init?: RequestInit) => {
@@ -45,7 +45,11 @@ function renderPage(bot?: string) {
         posts.push(JSON.parse(String(init.body)) as Record<string, unknown>);
         return Response.json({ connected: true });
       }
-      if (path === PATH) return Response.json({ connected: false });
+      if (path.startsWith(PATH))
+        return Response.json({
+          connected: false,
+          ...(path.includes("?bot=") ? { botEligible: eligible } : {}),
+        });
       if (path.startsWith("/api/agents"))
         return Response.json({ agents: [{ id: "inbox", name: "Otto" }] });
       return new Response(null, { status: 404 });
@@ -122,6 +126,20 @@ test("without a member the request carries no member", async () => {
     await view.findByLabelText("Your Gmail address"),
     "maya@example.com",
   );
+  await user.type(view.getByLabelText("App password"), "qwertyuiopasdfgh");
+  await user.click(view.getByRole("button", { name: "Connect" }));
+  await view.findByText(/Connected\. Bots you allow/);
+  expect(posts[0]).not.toHaveProperty("botId");
+});
+
+test("a member the server does not accept is not named and not sent", async () => {
+  const view = renderPage("someone-elses-bot", false);
+  const user = userEvent.setup({ document });
+  await user.type(
+    await view.findByLabelText("Your Gmail address"),
+    "maya@example.com",
+  );
+  expect(document.querySelector("[data-connect-member]")).toBeNull();
   await user.type(view.getByLabelText("App password"), "qwertyuiopasdfgh");
   await user.click(view.getByRole("button", { name: "Connect" }));
   await view.findByText(/Connected\. Bots you allow/);

@@ -38,7 +38,7 @@ import type { PluginStore } from "./store";
  */
 export function appAccessTools(options: {
   store: Pick<PluginStore, "inspectApp"> &
-    Partial<Pick<PluginStore, "agentIsRegistered">>;
+    Partial<Pick<PluginStore, "isPackageMember">>;
   botId: string;
   actorId: string;
   composioConfigured: boolean;
@@ -91,8 +91,8 @@ export function appAccessTools(options: {
          * button's link are about that member. One that is not a Bot of this deployment is refused
          * in words, so the model does not draw a card about nobody.
          */
-        if (member && !(await options.store.agentIsRegistered?.(member)))
-          return `There is no member called ${member}. Name the app again, and the member by the id your instructions list.`;
+        if (member && !(await options.store.isPackageMember?.(member)))
+          return `There is no team member called ${member}. Name the app again, and the member by the id your instructions list.`;
         const subject = member ?? options.botId;
         const inspected = await options.store.inspectApp({
           app,
