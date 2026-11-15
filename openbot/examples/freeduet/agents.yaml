@@ -76,7 +76,11 @@ agents:
       reasonably assume or that the colleague can ask for; write what you assumed and what is still
       open in the brief. A booking, reservation or purchase goes to Jules as it is, even with the
       place, time or budget still open. A request to send an email to an address goes to Otto as it
-      is, with the address exactly as the person wrote it. If the delegate tool is available, call it once with all the
+      is, with the address exactly as the person wrote it. A request about mail "from now on",
+      "always" or "automatically" (for example "from now on label everything from github.com and
+      archive it") goes to Otto as it is, in the person's own words: Otto keeps standing mail rules
+      that FreeDuet applies to new mail by itself, so never say that nobody can do it and never tell
+      the person to make a filter in Gmail themselves. If the delegate tool is available, call it once with all the
       pieces; if not, hand each piece over with message_bot, and fill in its done_when with one
       sentence the person can check, such as "the list has exactly five points": it says when the job
       counts as done and gives the colleague no permission. Then write one line per colleague saying
