@@ -1,3 +1,4 @@
+import { isVoiceMessageId } from "@openbot/shared/voice-message";
 import type { AuditInitiator } from "../audit";
 import { plainAddress } from "./mail-address";
 
@@ -27,6 +28,13 @@ import { plainAddress } from "./mail-address";
  * - ONLY WHAT WAS TYPED. A message with attachments is a list of parts, not a string, and is refused;
  *   so is a long one, because a pasted mail or document is the commonest way for somebody else's
  *   words to reach a message the person sent, and "write to x@y.com" is short.
+ * - NOT WORDS FROM THE MICROPHONE (docs/design/voice.md, D7 and D8). A message whose id carries the
+ *   `voice-` mark is refused: dictation sent with one press was never read by the person, and a voice
+ *   call's model writes its own request. The app puts the mark on those two and on nothing the person
+ *   placed in the box and sent with the Send button (`@openbot/shared/voice-message`). The server
+ *   cannot tell the origin of a message by itself, so a message without the mark is only "the app did
+ *   not say so", and a client that leaves it off is the person's own browser, which this rule already
+ *   trusts for the text. What it does hold is that nothing a Bot or a page writes can set the mark.
  * - THE ADDRESS. Each recipient must be one whole word of that message, equal ignoring case. A
  *   recipient that merely appears inside a longer address, a different domain, an added dot or a
  *   look-alike character is not that word and does not match. Display names are not accepted.
@@ -106,6 +114,8 @@ export function recipientsTypedByPerson(input: TypedRequestInput): boolean {
   }
   if (!latest || typeof latest.content !== "string") return false;
   if (latest.id?.startsWith(HANDOFF_MESSAGE_ID_PREFIX)) return false;
+  // Words that came from the microphone are not written words (D7, D8): the same card a hop gets.
+  if (isVoiceMessageId(latest.id)) return false;
   if (latest.content.length > MAX_REQUEST_CHARS) return false;
 
   const typed = addressesTypedIn(latest.content);

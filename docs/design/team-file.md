@@ -278,3 +278,46 @@ Layers that do not refuse, so the text survives them: the database column `agent
 | B | Whether the checker refuses 1,001 to 8,000 until A is done | 1. Accept, with the notice (built). 2. Refuse, with the same sentence | 1. The decision sets 8,000 as the limit, and the notice is shown in the preview before anyone presses Create. S4 must not create a member while the notice applies. |
 | C | What 8,000 counts | 1. The whole stored text: the author's text, the Email paragraph and the shared rules (built). 2. The author's text alone | 1. The cap has always limited the stored text (`form.ts:23`, `routes.ts:72`). Under option 1 the author's own text may have 4,482 characters; under option 2 the stored text may reach 11,518. Confirm which the maintainer meant. |
 | D | Which field holds an imported member's instructions | 1. `roleDescription`, as the app stores it, which the standing role message reads for a managed or remote Bot (`copilot.ts:185`). 2. The file's one-sentence `role_description` there, with the instructions only in `systemPrompt` | 1. Option 2 would leave a managed or remote member without its instructions at run time, unless the runtime changes too. The cost of option 1 is the whole text on the routing roster and the voice agent. Decide in S4. |
+
+### Slice S2 (export): built so far
+
+Slice S2 of section 4, the export, is built on branch `team-file-export`. Not verified in a browser; no import (S3 to S6) exists.
+
+**Built**
+- `openbot/server/src/freeduet/team-file-export.ts` (pure): writes the two formats from an allow-list, field by field. Instructions are the author's text: the package's "Email." paragraph and shared rules are taken off the end, so the reader adds them once. A paragraph left in the middle of a text is refused. It also scans text for an e-mail address, the administrator's own address and name (whole word), and refuses a sending tool by name.
+- `openbot/server/src/freeduet/team-file-routes.ts`: `GET /api/freeduet/team-file/export`, behind `requireUser` and `requireAdmin`. No query returns the administrator's whole team, `?member=<id>` one member. It reads the members the administrator OWNS, their stored instructions, the skills granted to them (`plugin_grants`, kind `skill`) and the tool names those skills declare (`skill_tools`). Grants, connections, memories, lessons, addresses, identifiers and settings are never read. Every file is read back by the S1 reader against the same package before it is sent; a file the reader would refuse is a 409 with the reader's own sentence. It is sent with `downloadHeaders` (`private, no-store`, a sanitised name, `nosniff`).
+- `openbot/server/src/index.ts` and `app.ts`: one boot call (`useTeamFile`, as `useEngineChoices` is set) and one mount.
+- `openbot/app/src/freeduet/team-file-button.tsx`: "Download team file" on the Bots roster, shown to administrators only. Busy, saved and refused states; a refusal shows the server's sentence.
+
+**Verified** (14 November 2026, on branch `team-file-export`, Postgres 16 on a private cluster)
+- `freeduet-team-file-export.integration.test.ts`: 14 pass, 0 fail (real Postgres, real guards and routes). Covers: a non-administrator refused (403), no session (401), no member of one's own (409); the whole team read back by the reader (round trip, hash written, the download headers); one member, its author's text and its tool names; long instructions (4,164 characters) accepted with the create-limit notice; instructions over the limit refused with the reader's sentence; an e-mail address in a text refused without echoing it; a remote Bot's address never written; another person's Bot not found; a team over the reader's 1 MB bound refused with the reader's sentence; and a canary check: a planted grant, its granter, a memory, the administrator's name and address, the endpoint of a remote Bot, a callback token hash, an avatar seed and another person's job text never appear, nor do the Bot ids or the people's ids.
+- `freeduet-team-file-export.test.ts`: 8 pass, 0 fail (no database). The ten shipped members that carry both paragraphs compose back to the package's text, the same words in the same order; Otto's four sending tools are refused by name; the scanner; a synthetic member round-trips through the reader.
+- `app/tests/team-file-button.test.tsx`: 5 pass, 0 fail (who sees it; a saved file; busy; a refusal).
+- Related suites: `assertion-shape`, `freeduet-team-file`, `freeduet-package`, `freeduet-team` and the new file: 125 pass, 0 fail.
+- Fail before: on main the three new test files cannot load, because their modules do not exist there (0 of 3 files run).
+- `bun run format:check` and `bun run lint` (with `--error-on-warnings`): clean.
+- `bun run typecheck:tests`: not a result. The gate was killed by the machine's memory limit three times (exit 2, "tsc did not finish"). It must be run again on a free machine. Instead, `tsc --noEmit -p` over a temporary config extending `server/tsconfig.tests.json` with only the four new server files (and their imports) finished with exit 0 and no diagnostics. That is a partial check, not the baseline gate.
+
+**Not built or not verified**
+- No preview (the design's "full preview"). The button saves the file directly. Nobody has yet read a whole file on a screen.
+- Canaries not planted, because the export does not read them: approval rules, Full access choices, per-person settings, conversation content, and the lessons files. Their absence follows from the allow-list, which is written field by field, not from a test that plants them.
+- Test requests are always `[]`: custom Bots store none. The shipped members' test cases live in `evals/team/cases.yaml`, which the server does not read.
+- The e-mail scanner covers e-mail addresses, the administrator's address and name. Telephone numbers, card and bank numbers are not scanned.
+- Not run against a live eval stack. A file never certifies itself (section 3.5).
+
+**Findings about the S1 reader** (read, not changed here)
+- The reader reserves the names of all twelve shipped coworkers (Iris and eleven members). No file can carry one of them, so the shipped members cannot be exported under their names and imported back. The route therefore exports only members the administrator owns, and refuses a shipped name by 404.
+- The shipped team's skill text is 901,342 bytes in compact JSON, and Mark's skills alone are 837,567. A whole shipped team file would sit at or past the reader's 1 MB bound (`TEAM_FILE_LIMITS.fileBytes`).
+- The package joins its paragraphs with one line break; the reader joins the composed instructions with a blank line (`team-file.ts`, the `join("\n\n")` in `readMember`). The words are the same; the whitespace is not.
+- Iris carries neither paragraph, and Otto carries the shared rules and his own Email paragraph, so neither composes to its package text.
+- Section 5 says send tools are "never recognised by name; an explicit list names them" (decided 14 November 2026). The reader still recognises them by name (`isSendingTool`, the words send, reply and forward). That disagrees with the decision and is for the coordinator to settle.
+
+**Decisions left to the maintainer**
+
+| Decision | Options | Recommendation and reason |
+|---|---|---|
+| Shipped members in an export | A. Never (built). B. Exported as copies under new names. C. Exported under their names, and the reader refuses them | A. A shipped name is reserved in every file, and the package already gives every installation those members. B changes a name the person did not choose. C gives a file that cannot be imported. |
+| Whose members the whole-team file holds | A. The administrator's own (built). B. Every member the deployment holds | A. Another person's Bot leaves only with that person's consent. |
+| The author and licence of a member the administrator made | A. "Not stated" for both (built). B. A licence the person chooses | A. The file makes no claim for the person. Choose B once the person can set one. |
+| Whether a team file that holds a sending tool is refused or cleaned | A. Refused (built). B. The tool dropped | A. The reader refuses it, and dropping silently would change what the member can do. |
+| Whether to build the preview (S2, "full preview") before the download is offered | A. Build it first. B. Download now, preview later (built) | A for a file that leaves the deployment; the maintainer decides which slice comes first. |

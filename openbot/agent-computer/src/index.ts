@@ -55,6 +55,7 @@ import {
   PageNotSettledError,
   pageLoadTimeoutMessage,
   pageMovedOn,
+  SETTLE_BUDGET_MS,
   SETTLE_QUIET_MS,
   watchNavigations,
 } from "./settle";
@@ -475,7 +476,12 @@ async function snapshotPage(
 }> {
   const snapshotId = ++session.snapshotId;
   const before = session.control.get();
-  const yaml = await target.ariaSnapshot({ mode: "ai" });
+  // Bounded by the settle budget. Playwright's default is 30 s, and on a page that keeps navigating this call
+  // is retried across every navigation until that timeout, so the refusal came 30 s late (settle.ts).
+  const yaml = await target.ariaSnapshot({
+    mode: "ai",
+    timeout: SETTLE_BUDGET_MS,
+  });
   const title = await target.title();
   if (
     session.snapshotId === snapshotId &&
