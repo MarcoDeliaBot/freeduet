@@ -134,7 +134,7 @@ async function drain(conversations: { sweep(): Promise<boolean> }) {
 /** What the gate holds for this turn: the run's messages and initiator, as a Bot's tool call sees them. */
 function continuationOf(input: Input): ApprovalContinuation {
   return {
-    runId: input.runId,
+    runId: input.runId ?? randomUUID(),
     threadId: input.threadId,
     toolCallId: randomUUID(),
     toolName: "gmail_send_message",
