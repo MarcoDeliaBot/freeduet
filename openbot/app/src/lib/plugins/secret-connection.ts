@@ -53,6 +53,11 @@ export type SecretInput = {
   appPassword: string;
   /** Empty when no calendar was given. */
   calendarUrl: string;
+  /**
+   * The member that will use this mailbox, when the chat's button named one. Only its id is sent, and
+   * the server gives it the app's tools only when the person is an administrator.
+   */
+  botId?: string;
 };
 
 /**
@@ -83,6 +88,7 @@ export function connectSecretMutationOptions(queryClient: QueryClient) {
               address: variables.address,
               appPassword: variables.appPassword,
               calendarUrl: variables.calendarUrl,
+              ...(variables.botId ? { botId: variables.botId } : {}),
             },
             fallback: "Couldn't connect that account. Nothing was saved.",
           },

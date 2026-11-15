@@ -22,6 +22,7 @@ import {
   ItemDescription,
   ItemTitle,
 } from "@/components/ui/item";
+import { useBotNames } from "@/components/routines/bot-names";
 import { appConfig } from "@/lib/generated/application-config";
 import { disconnectHeldMutationOptions } from "@/lib/plugins/mutations";
 import {
@@ -55,8 +56,11 @@ export function SecretConnectionPage({
   entry,
   enabled,
   back,
+  bot,
 }: {
   entry: { key: string; title: string; summary: string };
+  /** The member the chat's button named (`?bot=`): who will use this mailbox. Absent from the Connections list. */
+  bot?: string;
   /** Whether an administrator has turned the app on. A form with nowhere to go is not drawn. */
   enabled: boolean;
   back: { label: string; linkProps: { to: "/connections" } };
@@ -73,6 +77,8 @@ export function SecretConnectionPage({
   const [done, setDone] = useState<string | null>(null);
   const [replacing, setReplacing] = useState(false);
   const ids = useId();
+  const botNames = useBotNames();
+  const memberName = bot ? (botNames.get(bot) ?? "A member") : null;
 
   const connect = useMutation({
     ...connectSecretMutationOptions(queryClient),
@@ -87,9 +93,13 @@ export function SecretConnectionPage({
       setNotice(null);
       setReplacing(false);
       setDone(
-        `Connected. Bots you allow can now read your mail${
-          calendarUrl.trim() ? " and calendar" : ""
-        } as you.`,
+        memberName
+          ? `Connected. ${memberName} can now read your mail${
+              calendarUrl.trim() ? " and calendar" : ""
+            } as you.`
+          : `Connected. Bots you allow can now read your mail${
+              calendarUrl.trim() ? " and calendar" : ""
+            } as you.`,
       );
     },
   });
@@ -212,6 +222,11 @@ export function SecretConnectionPage({
           description="Two steps at Google, then paste what they give you. Nothing is saved unless Gmail accepts it."
           title={connected ? "Use a different app password" : "Connect"}
         >
+          {memberName ? (
+            <p className="mb-4 text-sm" data-connect-member={bot}>
+              {memberName} will use this mailbox.
+            </p>
+          ) : null}
           <ol className="mb-4 list-decimal space-y-2 pl-5 text-muted-foreground text-sm">
             <li>
               Turn on 2-Step Verification for your Google account, then make an
@@ -251,6 +266,7 @@ export function SecretConnectionPage({
                 address,
                 appPassword,
                 calendarUrl,
+                ...(bot ? { botId: bot } : {}),
               });
             }}
           >

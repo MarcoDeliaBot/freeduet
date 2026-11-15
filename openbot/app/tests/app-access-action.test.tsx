@@ -228,13 +228,17 @@ test("an app connected with a typed key goes to its page in Settings, where the 
   );
   // Drawn as a button (`Button` over a `Link`), and an anchor underneath with the address.
   const link = (await view.findByText("Connect")).closest("a");
-  expect(link?.getAttribute("href")).toBe("/connections/composio-gmail");
+  expect(link?.getAttribute("href")).toBe(
+    "/connections/composio-gmail?bot=expenses",
+  );
 });
 
 test("a Composio app to reconnect goes to Settings, because the connect route refuses a row that stands", async () => {
   const { view } = mounted(appAccess({ state: "reconnect" }));
   const link = (await view.findByText("Reconnect")).closest("a");
-  expect(link?.getAttribute("href")).toBe("/connections/composio-gmail");
+  expect(link?.getAttribute("href")).toBe(
+    "/connections/composio-gmail?bot=expenses",
+  );
 });
 
 test("this deployment's own OAuth app reconnects in place, with a fresh consent", async () => {

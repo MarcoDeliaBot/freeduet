@@ -53,6 +53,7 @@ export function mountConnectionRoutes({
   activeProvider,
   appOfUrl,
   actorEmail,
+  skillActor,
 }: PluginRouteContext) {
   /**
    * Where a person's own connections are, and how to start a new one.
@@ -1244,7 +1245,35 @@ export function mountConnectionRoutes({
           userId: context.var.actor.id,
           body,
         });
-        return context.json({ connected: true, ...done });
+        /*
+         * THE MEMBER THAT WILL USE THIS MAILBOX, named by the form the chat's button opened
+         * (`?bot=`). Given the app's declared tools under the automatic mark, and only when the person
+         * connecting is an administrator, who may give tools to a Bot anyway (`POST /grants`). Nothing
+         * the person typed is read here: only the Bot's id. A tool that sends is never given by this,
+         * and the approval gate is unchanged.
+         */
+        const bot =
+          body && typeof body === "object"
+            ? (body as { botId?: unknown }).botId
+            : undefined;
+        let granted: string[] = [];
+        if (
+          typeof bot === "string" &&
+          bot.trim() &&
+          skillActor(context).isAdmin &&
+          (await store.agentIsRegistered(bot.trim()))
+        ) {
+          granted = await store.grantAutomatically(
+            context.req.param("id"),
+            bot.trim(),
+            "connected_from_chat",
+          );
+        }
+        return context.json({
+          connected: true,
+          ...done,
+          ...(typeof bot === "string" ? { botGranted: granted.length } : {}),
+        });
       } catch (error) {
         if (error instanceof SecretRefusedError) {
           return context.json({ error: error.message }, error.status);

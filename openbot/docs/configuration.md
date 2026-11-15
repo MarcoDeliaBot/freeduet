@@ -948,6 +948,32 @@ a calendar is attached. A password that Gmail does not accept is not saved. Disc
 deployment forget it at once; the person deletes the app password at Google to end it there. Removing
 the connector, or the person, revokes it too.
 
+### Tools an update adds reach the member that holds the mailbox (FreeDuet)
+
+A grant is a `plugin_grants` row. A grant the product itself makes (connecting a mailbox from the chat's
+button, approving an access request without choosing tools) carries `granted_by = freeduet-automatic`.
+At every start, for FreeDuet's package only, a member that holds a tool of an app under that mark is
+given the tools the catalogue declares for that app that it lacks: the reads and the organising writes,
+never a tool that sends. It adds a tool once, writes an audit row for it and never changes a grant a
+person made by hand. A person taking one tool away by hand makes the rest of that member's set on that
+app a hand-made set, which is no longer topped up.
+
+A grant gives a tool, not an approval: every write still meets the approval gate when it is used, and
+a send is still turned on only in settings.
+
+An installation from before the mark has rows without it, and the command cannot know whether somebody
+trimmed them, so it does not guess. Run once, from the `openbot` folder, per member and app, only when
+that set was never trimmed by hand:
+
+```
+bun scripts/mark-automatic-grants.ts --bot inbox --server google-imap           # dry run, writes nothing
+bun scripts/mark-automatic-grants.ts --bot inbox --server google-imap --apply   # marks them
+```
+
+`DATABASE_URL` must be set (the same value the server uses). The command changes only the mark of that
+member's existing rows on that app, skips rows already marked, and writes one audit row each; with
+`--apply` it then adds, at once, the declared tools the member lacks, and every later start does the same. Design: `docs/design/connect-from-chat.md`.
+
 ## Text messages and push notifications
 
 A provider is switched on by setting its variables and is off while none of them are set. Setting

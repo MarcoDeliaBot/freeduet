@@ -114,12 +114,18 @@ export function AppAccessAction({
   if (access.state === "reconnect" && access.accountHolder === "owner")
     return null;
   if (access.state === "not_connected" || access.state === "reconnect")
-    return <ConnectAction access={access} />;
+    return <ConnectAction access={access} agentId={agentId} />;
   return <RequestAction agentId={agentId} access={access} />;
 }
 
 /** The person's own account: connect it, or reconnect it. */
-function ConnectAction({ access }: { access: AppAccess }) {
+function ConnectAction({
+  access,
+  agentId,
+}: {
+  access: AppAccess;
+  agentId: string;
+}) {
   const label = access.state === "reconnect" ? "Reconnect" : "Connect";
   const tab = useConnectInNewTab();
   const { waiting, stopWaiting } = tab;
@@ -160,7 +166,14 @@ function ConnectAction({ access }: { access: AppAccess }) {
   if (viaSettings)
     return (
       <Button
-        render={<Link params={{ key: access.key }} to="/connections/$key" />}
+        render={
+          <Link
+            params={{ key: access.key }}
+            /* The member that asked, so the form says who will use the app and gives it the tools. */
+            search={{ bot: agentId }}
+            to="/connections/$key"
+          />
+        }
         aria-label={`${label} ${access.displayName}`}
         size="sm"
         variant="outline"

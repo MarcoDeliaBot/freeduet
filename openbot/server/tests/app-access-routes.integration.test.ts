@@ -165,6 +165,11 @@ function storeFor(db = database): PluginStore {
       await beforeGrant?.();
       return real.grant(...args);
     },
+    // The default set is granted through this one (D45); the seam holds for it too.
+    async grantByDefault(...args) {
+      await beforeGrant?.();
+      return real.grantByDefault(...args);
+    },
     async addBrokeredApp(input) {
       enabled.push(input.slug);
       await database.insert(mcpServers).values({
