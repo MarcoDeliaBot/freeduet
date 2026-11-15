@@ -68,6 +68,11 @@ const TOOLS = [
   "gmail_send_reply",
   "gmail_send_message",
   "calendar_list_events",
+  "gmail_list_labels",
+  "gmail_create_label",
+  "gmail_label_messages",
+  "gmail_archive_messages",
+  "gmail_mark_messages",
 ];
 
 /** What the person pastes. Values are invented for this file. */
@@ -271,7 +276,7 @@ const connect = (userId: string, body: unknown) =>
   store.connectUserSecret({ serverId, userId, body });
 
 describe("the entry is added like any other, and reads and writes are recorded as such", () => {
-  test("the tools it lists are the five, and each is classified as the entry says: the two sends writes, the rest reads", async () => {
+  test("the tools it lists are the ten, and each is classified as the entry says: the two sends and the four that organise a mailbox writes, the rest reads", async () => {
     const listed = await database
       .select({ name: mcpTools.name, effect: mcpTools.effect })
       .from(mcpTools)
@@ -285,12 +290,21 @@ describe("the entry is added like any other, and reads and writes are recorded a
         classifyTool(entry, tool.name, true, tool.effect),
       ]),
     );
-    expect(classified.get("gmail_send_reply")).toBe("write");
-    expect(classified.get("gmail_send_message")).toBe("write");
+    for (const name of [
+      "gmail_send_reply",
+      "gmail_send_message",
+      "gmail_create_label",
+      "gmail_label_messages",
+      "gmail_archive_messages",
+      "gmail_mark_messages",
+    ]) {
+      expect(classified.get(name)).toBe("write");
+    }
     for (const name of [
       "gmail_search_messages",
       "gmail_read_message",
       "calendar_list_events",
+      "gmail_list_labels",
     ]) {
       expect(classified.get(name)).toBe("read");
     }

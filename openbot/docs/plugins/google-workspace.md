@@ -1,7 +1,8 @@
 # Gmail and Google Calendar
 
-A Bot with this connector granted reads mail and the calendar **as the person asking**, and can send a
-reply in one of their threads, as them, once that send has been through the approval gate. Two people
+A Bot with this connector granted reads mail and the calendar **as the person asking**, can send a
+reply in one of their threads, as them, and can label, archive and mark mail as read or unread, each once
+that change has been through the approval gate. Two people
 asking the same question get the answers their own accounts can see, and neither sees anything they
 could not open themselves.
 
@@ -38,11 +39,15 @@ being enabled, and the message names which; see [Troubleshooting](#troubleshooti
 
 ### 2. Configure the OAuth consent screen
 
-Add exactly these three scopes:
+Add exactly these four scopes:
 
 - `https://www.googleapis.com/auth/gmail.readonly`: read mail;
 - `https://www.googleapis.com/auth/gmail.send`: send mail, and nothing else (it cannot read, label or
   delete);
+- `https://www.googleapis.com/auth/gmail.modify`: label, archive and mark mail as read or unread. Gmail's
+  `messages.batchModify` takes no narrower scope, and this one is wider than the tools that use it: a
+  client holding it could also trash mail, which no tool here does and the connector cannot be made to.
+  The tools, not the scope, are the boundary (see [Organising a mailbox](#organising-a-mailbox));
 - `https://www.googleapis.com/auth/calendar.readonly`: read the calendar.
 
 Two things about Google's rules decide who can connect:
@@ -51,8 +56,8 @@ Two things about Google's rules decide who can connect:
   to be on the test-user list, or their consent fails with an access-denied error that says nothing
   about test users. Testing mode also expires refresh tokens after seven days, so people have to
   reconnect weekly.
-- **Beyond Testing, Google has to verify the app.** `gmail.readonly` is a _restricted_ scope, and
-  `gmail.send` and `calendar.readonly` are _sensitive_ ones. Publishing an app with an External user
+- **Beyond Testing, Google has to verify the app.** `gmail.readonly` and `gmail.modify` are _restricted_
+  scopes, and `gmail.send` and `calendar.readonly` are _sensitive_ ones. Publishing an app with an External user
   type means Google's verification for the sensitive scopes, and for the restricted one also an annual
   third-party security assessment. A Google Workspace organization whose people are the only ones who
   connect can set the user type to **Internal** instead, which needs no verification.
@@ -81,7 +86,7 @@ At `/admin/plugins/google-workspace`:
 1. Turn on **Enable for this deployment**.
 2. Open **OAuth client** and paste the client ID and secret. The secret is encrypted with
    `KEY_ENCRYPTION_KEY` and never read back out to the browser.
-3. Press **Refresh tools**, which records the five tools below.
+3. Press **Refresh tools**, which records the ten tools below.
 
 No personal account is needed to get this far: the tool list is OpenBot's own code rather than an
 answer from a remote server. To check it actually works, use **Your account** on the same page, which
@@ -105,15 +110,20 @@ models do.
 | `gmail_send_reply`      | write  | Sends a plain-text reply in an existing thread, as the person.                                                                                                                                       |
 | `gmail_send_message`    | write  | Sends a new plain-text email, as the person, to one to five plain addresses, with a subject and a body. No Cc, Bcc, attachment or other field.                                                       |
 | `calendar_list_events`  | read   | Lists events on the primary calendar in start order, recurring events expanded. By default from now to midnight in the calendar's own time zone, at most 50.                                                        |
+| `gmail_list_labels`     | read   | Lists the person's own labels by name, and says which two of Gmail's own (`STARRED`, `IMPORTANT`) may be added.                                                                                      |
+| `gmail_create_label`    | write  | Creates a label; a name with a slash, such as `Clients/Acme`, is a label inside another. A label that already exists is a success and the answer says so.                                           |
+| `gmail_label_messages`  | write  | Adds labels to, or removes labels from, up to 100 messages named by id.                                                                                                                              |
+| `gmail_archive_messages` | write | Takes up to 100 messages named by id out of the Inbox. They stay in All Mail with their labels.                                                                                                      |
+| `gmail_mark_messages`   | write  | Marks up to 100 messages named by id as read or unread.                                                                                                                                              |
 
-The catalogue names the three reads and the two writes explicitly, so any other tool name counts as a
+The catalogue names the four reads and the six writes explicitly, so any other tool name counts as a
 write.
 
 ### Sending mail is a write
 
-`gmail_send_reply` and `gmail_send_message` are the only tools that change anything, and both are
-classified as writes. So every call goes through the approval gate before it reaches Google: the action
-policy decides, and auto-review looks at it like any other write that reaches outside the deployment.
+`gmail_send_reply` and `gmail_send_message` are the two tools that send, and both are classified as
+writes. So every call goes through the approval gate before it reaches Google: the action policy
+decides, and auto-review looks at it like any other write that reaches outside the deployment.
 Because they send something to other people, the private-share check also asks the owner before a Bot
 sends anything from a private conversation or memory.
 
@@ -142,8 +152,38 @@ What the connector itself enforces, whatever was approved:
   does not send (a Cc, a Bcc, an attachment, a header, a "from"), an empty subject or body, and a subject
   or body over its limit (200 and 20,000 characters) are refused before anything is sent, with a fixed
   sentence that repeats nothing that was typed.
-- There is no tool that deletes, labels or archives mail. The `gmail.send` scope could not do those
-  anyway. It does allow sending a new message, which is why `gmail_send_message` needs no new scope.
+- There is no tool that deletes, trashes or reports mail as spam, forwards it, makes a filter, or moves
+  a message to another folder. The `gmail.send` scope could not do those anyway. It does allow sending
+  a new message, which is why `gmail_send_message` needs no new scope.
+
+### Organising a mailbox
+
+`gmail_create_label`, `gmail_label_messages`, `gmail_archive_messages` and `gmail_mark_messages` change
+the person's mailbox and send nothing. They are writes, not sends: each asks the person with a card
+every time it is called, as any other write does, and none is covered by what covers a new email (the
+person's own typed request) or granted by an approval that names nothing. A routine, a check-in and a
+hand-off that started in one always ask. The full account of what is built, what is not, and the
+limits is in [docs/design/mail-organise.md](../../../docs/design/mail-organise.md).
+
+- **Messages are named by id.** A call lists the Gmail ids a search or a read returned, at most 100,
+  so that the card can say how many and which. There is no way to act on "everything a search matches".
+- **The card is read by the server.** The messages on the card, who each is from and what it is about,
+  are read from the mailbox by this server when the person is about to be asked, never taken from
+  anything the Bot said about the ids. When they cannot be read, the card says so and shows how many
+  the Bot named.
+- **All of the named messages or none.** If any named id is no longer in the mailbox the call is refused
+  as a whole, so what is changed is never fewer messages than the card said.
+- **Trash and Spam are refused**, as a label to add or remove, in either spelling. So is every other
+  Gmail system label except `STARRED` and `IMPORTANT`. A new label cannot take the name of a Gmail
+  label or folder either.
+- **A call that cannot be carried out asks nobody.** A fifth field, a label name with a control or
+  direction-changing character, a name over 100 characters, 101 ids and the rest are refused before
+  the gate, with a fixed sentence that repeats nothing that was passed in.
+- **Over REST**, a change is one `messages/batchModify` call after each named message has been looked
+  up, and a label is created with one `POST` to `labels`. Over [IMAP](../configuration.md#two-ways-to-connect-gmail),
+  the mailbox is opened for writing only for the length of one of these four calls, and only a label's
+  creation, a store of `X-GM-LABELS` and a store of the `\Seen` flag are sent; nothing is moved,
+  copied, expunged or flagged for deletion.
 
 ## What each person does
 
@@ -153,7 +193,9 @@ then reads **Connected** with the scopes Google actually granted.
 
 Google's consent screen lets a person untick individual permissions. Each one left unticked breaks the
 tools that need it, with a message saying the access granted does not cover the request; reconnecting
-and allowing all three fixes it.
+and allowing every permission fixes it. A person who connected before the organising tools existed has
+not granted `gmail.modify`: reading, searching and sending go on working, and the four tools that change
+a mailbox answer with that message until they reconnect.
 
 Nothing is cached. OpenBot stores the refresh token and mints a short-lived access token for each call,
 so revoking access at Google takes effect on the next call.
@@ -219,6 +261,9 @@ What the variable does and does not do:
 - It is ignored under `bun test`, so a laptop set up for a demo still tests the reviewed catalogue.
 - Switching back to Google means reconnecting: the stored refresh token belongs to the fake.
 
+The fake also keeps labels: it lists and creates them and answers `messages/batchModify`, so the tools
+that organise a mailbox can be tried end to end.
+
 The fake is not a faithful Gmail. Search understands the operators people commonly write (`in:`,
 `label:`, `category:`, `is:`, `from:`, `to:`, `subject:`, `newer_than:`, `older_than:` and plain words)
 and ignores the rest. It does check what matters for the connector: PKCE on the token exchange, a bearer
@@ -263,7 +308,9 @@ an API takes a few minutes to apply.
 
 ### "… The access this person granted does not cover this. …"
 
-The person unticked a permission on Google's consent screen. Reconnecting and allowing all three fixes it.
+The person unticked a permission on Google's consent screen, or connected before `gmail.modify` was
+added and has not granted it (it shows up only on the four tools that organise a mailbox). Reconnecting
+and allowing every permission fixes it.
 
 ### "… Google is limiting how fast this account can be read. …"
 

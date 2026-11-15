@@ -10,7 +10,7 @@ import { randomUUID } from "node:crypto";
 import { fileURLToPath } from "node:url";
 import { and, eq, inArray } from "drizzle-orm";
 import { Hono, type MiddlewareHandler } from "hono";
-import type { AuditEventInput, AuditStore } from "../src/audit";
+import type { AuditStore } from "../src/audit";
 import type { AppVariables } from "../src/auth/guards";
 import type { ActionPolicy } from "../src/computer/policy";
 import { createCredentialStore } from "../src/credentials";
@@ -81,12 +81,7 @@ const WRITES = [CREATE_LABEL, LABEL_MESSAGES, ARCHIVE_MESSAGES, MARK_MESSAGES];
 const SENDS = ["gmail_send_reply", "gmail_send_message"];
 const CONNECTIONS = [GOOGLE_WORKSPACE, GOOGLE_APP_PASSWORD];
 
-const events: AuditEventInput[] = [];
-const audit: AuditStore = {
-  insert: async (event) => {
-    events.push(event);
-  },
-};
+const audit: AuditStore = { insert: async () => {} };
 const policy: ActionPolicy = { mode: "enforce", deny: [], allow: ["true"] };
 const store = createPluginStore({
   brokerProvider: "composio",
@@ -321,7 +316,6 @@ async function clear() {
       .delete(credentials)
       .where(inArray(credentials.id, credentialIds));
   credentialIds.length = 0;
-  events.length = 0;
 }
 
 beforeAll(async () => {
