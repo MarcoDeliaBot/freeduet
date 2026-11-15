@@ -820,8 +820,7 @@ for (const backend of BACKENDS) {
         expect(shown.action.toolRef).toBe(`${backend.key}/${name}`);
         if (wanted.lists.length === 0)
           expect(shown.action.details).toBeUndefined();
-        else
-          expect(shown.action.details).toEqual(card.action.details);
+        else expect(shown.action.details).toEqual(card.action.details);
         await clearPending();
       });
     }
