@@ -326,6 +326,10 @@ fi
 if [[ "$args" == *"/internal/pairing"* ]]; then
   case "\${PAIRING:-200}" in
     200) printf '{"path":"/api/pair?token=pairing-token-fixture_123"}\\n200' ;;
+    signin) printf '{"path":"/api/pair?token=pairing-token-fixture_123","expiresInSeconds":120,"url":"https://duet.example.test/api/pair?token=pairing-token-fixture_123"}\\n200' ;;
+    signin-other-token) printf '{"path":"/api/pair?token=pairing-token-fixture_123","expiresInSeconds":120,"url":"https://duet.example.test/api/pair?token=another-token"}\\n200' ;;
+    signin-other-path) printf '{"path":"/api/pair?token=pairing-token-fixture_123","expiresInSeconds":120,"url":"https://duet.example.test/steal?token=pairing-token-fixture_123"}\\n200' ;;
+    signin-other-scheme) printf '{"path":"/api/pair?token=pairing-token-fixture_123","expiresInSeconds":120,"url":"file:///etc/passwd?x=/api/pair?token=pairing-token-fixture_123"}\\n200' ;;
     bad-link) printf '{"path":"https://elsewhere.example/steal"}\\n200' ;;
     down) exit 7 ;;
     *) printf '{"error":"fixture"}\\n%s' "$PAIRING" ;;
@@ -1384,7 +1388,7 @@ describe("start.sh local dictation (D25)", () => {
     expect(result.repeated?.stdout).toContain("Dictation is local");
     // Nothing about the key a cloud service would need.
     expect(result.stdout).not.toMatch(/api[_ ]?key/i);
-  });
+  }, 20_000); // Runs start.sh twice with fake tools: 4.5 s median and 5.7 s at most alone, 5.1 s median and 6.3 s at most under load (14 Nov 2026).
 
   test.each([
     ["TRANSCRIPTION_PROVIDER", "openai-compatible"],
@@ -1787,6 +1791,42 @@ describe("scripts/open.sh (D28)", () => {
     expect(result.stdout).toContain("has nothing to pair with");
     expect(result.browserLog).toBe("fake-browser http://localhost:3010/\n");
   });
+
+  /**
+   * With sign-in the server also says the app's own address, because the session and the cookie are
+   * both host-only: the link opens there, in a browser that is signed in as the administrator.
+   */
+  test("with sign-in, opens the link at the app's own address and says who has to be signed in", async () => {
+    const result = await open({ processEnvironment: { PAIRING: "signin" } });
+
+    expect({ exitCode: result.exitCode, stderr: result.stderr }).toEqual({
+      exitCode: 0,
+      stderr: "",
+    });
+    expect(result.browserLog).toBe(
+      "fake-browser https://duet.example.test/api/pair?token=pairing-token-fixture_123\n",
+    );
+    expect(result.stdout).toContain("signed in as the administrator");
+    expect(result.stdout).toContain("run this again");
+    // The link is good once, so it is shown nowhere but the browser's own address.
+    expect(result.stdout).not.toContain("pairing-token-fixture_123");
+  });
+
+  /** The same rule as for the path: what the server answers is data, and only this app's own link is opened. */
+  test.each([
+    ["a token that is not the path's", "signin-other-token"],
+    ["a path that is not the pairing door", "signin-other-path"],
+    ["a scheme that is not http or https", "signin-other-scheme"],
+  ])(
+    "with sign-in, opens nothing for an address with %s",
+    async (_name, mode) => {
+      const result = await open({ processEnvironment: { PAIRING: mode } });
+
+      expect(result.exitCode).toBe(1);
+      expect(result.stdout).toContain("was not a link");
+      expect(result.browserLog).toBe("");
+    },
+  );
 
   test("a server that does not accept the secret is a start that did not finish, and says so", async () => {
     const result = await open({ processEnvironment: { PAIRING: "401" } });

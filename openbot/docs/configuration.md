@@ -396,7 +396,7 @@ bun --env-file=openbot/.env evals/dictation/wer.ts --formats --model-label large
 bun --env-file=openbot/.env evals/dictation/wer.ts --silence --model-label large-v3-turbo-q5_0
 
 # 7d. The whole path in Chrome: a fake microphone plays three clips, the text must reach the message box
-bun --env-file=openbot/.env openbot/scripts/freeduet-dictation-e2e.ts --app http://localhost:3010
+bun --env-file=openbot/.env evals/dictation/freeduet-dictation-e2e.ts --app http://localhost:3010
 ```
 
 7a reports a number and fails only with `--max-wer <percent>`, because what is good enough is for you
@@ -656,9 +656,47 @@ environment and no folder a Bot's computer can reach, and the calls that carry t
 (the Bot's callback, the worker) are not asked for it. A request from loopback without it, such as
 a container's on Docker Desktop, answers 401 `pairing_required`. The cookie is for `localhost`, so
 `127.0.0.1` asks to be paired again. A server started by hand with no `FREEDUET_INSTALL_SECRET`
-keeps the loopback rule alone and says so at boot; a sign-in deployment, and one opened with
-`OPENBOT_HOST`, ask nothing new. To make a new secret, delete the line and run `scripts/start.sh`:
-every browser is paired again.
+keeps the loopback rule alone and says so at boot; one opened with `OPENBOT_HOST` asks nothing new. A
+deployment with sign-in uses the same secret for a different question, in the next paragraph. To make a new
+secret, delete the line and run `scripts/start.sh`: every browser is paired again.
+
+**With sign-in and an installation secret, a signed-in browser that is not paired with this computer is a
+remote session, and it is limited.** Sign-in says who you are; the secret says where you are. A browser that
+holds the cookie above was paired on the computer FreeDuet runs on, and a session in it is at the computer: it
+can do everything it could before. A session in any other browser, such as a phone reaching the app through a
+tunnel or a reverse proxy, is remote. A remote session can read your conversations, chat with the members, see
+a whole approval request and allow it once or deny it. It cannot change Full access (either setting), approval
+rules, settings or standing instructions, connected accounts and apps, sharing, secrets or saved sign-ins; it
+cannot pair a browser, use the admin screens, drive a member's computer, set up routines or triggers, or reach
+anything added to FreeDuet later until that is listed. Each refused call answers 403 with one sentence that says
+to do it at the computer. Of the approval requests, a remote session answers only an ordinary one, with allow
+once or deny: not allow always, not one that is yours to do (a password, a security setting, a payment), not a
+routine, not Full access, not connecting an app. The refused request stays waiting at the computer. The list is
+in `openbot/server/src/auth/remote-limits.ts` and its reasons are in `docs/design/phone-and-remote.md`, section 3.5.
+Nothing in a header, the browser's name, the address it connects from or a tunnel in front of the server can
+make a request paired; only the cookie can, and the cookie signs nobody in.
+
+*To pair a browser with sign-in on*, sign in to FreeDuet in that browser as an administrator, then on the
+computer FreeDuet runs on run `bash scripts/open.sh`. It asks the server for a link that is good once and for
+two minutes and opens it at the app's own address (`OPENBOT_APP_URL`, else the first of `TRUSTED_ORIGINS`, else
+`OPENBOT_PUBLIC_URL`, else `BETTER_AUTH_URL`), so the link is opened where the session is.
+Open the app at that address and not at another name for this machine: the session and the cookie belong to one
+host. The same command pairs another browser at the computer. A phone is not paired, by design. *An installation
+that already had sign-in:* its secret was written by `scripts/start.sh` on the first start after D28, and no
+browser holds the cookie, so after the update every browser, the administrator's at the computer included, is
+remote. They see the app load, conversations and chat work and ordinary requests can be answered once; any
+other screen answers with the sentence. Run `bash scripts/open.sh` once in the administrator's browser. *In a
+deployment several people use,* every person is remote unless their browser is paired, and only an administrator
+at this machine can pair one. A deployment with sign-in and **no** `FREEDUET_INSTALL_SECRET` is not limited at
+all: nothing could tell one browser from another, and the boot log says so. *A chat a remote session starts*
+never has Full access (either setting) or the typed-recipient shortcut, and none of your saved rules or the
+reviewer's "proceed" lets a write through in it: every write the member makes there asks a card, with the reason
+on it, and the card is answered by the rule above (allow once or deny; allow always is done at the computer). A
+member's colleague asked from that chat is held to the same, and so are a member's own workspace and
+commands: their card is answered at the computer, never from the phone. A member in that chat reads what it
+remembers and changes none of it: it cannot add, edit or forget a memory. Posting to a group conversation is
+refused from a remote session for now, because a group's message is queued and carries no mark of where it
+came from.
 
 **With no sign-in, a request from this machine is answered only under this machine's own names.**
 A page on the internet can point its own name at 127.0.0.1, and the browser then sends the person's
@@ -1489,6 +1527,25 @@ conversation came from, so the name goes into every thread id a deployment mints
 conversations stay tellable from the other's.
 
 Set `OPENBOT_ONE_COMPUTER_EACH=false` when using `start.sh` to run all Bots against one shared computer.
+
+## Moving from no sign-in to sign-in
+
+With no sign-in, everything you did belongs to one fixed person. When you turn a sign-in provider on, your first sign-in makes a new person, who owns nothing. This tool moves what the fixed person owns to the address you sign in with. You run it yourself, once, before your first sign-in. Nothing runs it for you.
+
+1. Do not sign in yet. If you already did, but only signed in and never opened the app, it still works. If you opened the app, the dry run says so and stops.
+2. Make a copy of the database yourself as well (`pg_dump -Fc` from the postgres container). The tool takes its own backup, but two are better than one.
+3. If something restarts the stack when the server stops (a watchdog on the computer), pause it first. It would start the server in the middle of the move, and the tool stops if it sees that.
+4. In `.env`, set the sign-in provider and your address in `INITIAL_ADMIN_EMAILS` (and in `SIGNIN_ALLOWED_EMAILS` if you use it). The address you give the tool must be one of these.
+5. Stop the server and the worker. Leave postgres running.
+6. From the `openbot` folder, look first. This writes nothing:
+   `bun scripts/adopt-single-user-data.ts --to you@example.com`
+   Read what moves, the standing permissions that become yours (Full access, always-allow rules), and the connected apps that may ask you to connect again.
+7. Move it:
+   `bun scripts/adopt-single-user-data.ts --to you@example.com --apply --yes`
+   It first writes a backup of the whole database to `.logs/` (readable only by you, and it holds every secret: keep it private), then moves everything in one step or nothing. It prints the backup path and how to go back. Use `--backup-dir <folder>` for another folder, and `PG_DUMP=/path/to/pg_dump` if the `pg_dump` on the computer is older than the database.
+8. Start the server and sign in with that address. You find everything as you left it.
+
+The fixed person is left with nothing. The way back is the backup: stop the server and run the `pg_restore` line the tool printed. Running the tool again is safe: it finds nothing to move and says when it was moved. The tool refuses, and changes nothing, when the provider is not configured, the address is not an administrator address, the server or anything else is using the database, an approval request is still waiting (answer it first), or the address already owns data.
 
 ## Tenant package
 

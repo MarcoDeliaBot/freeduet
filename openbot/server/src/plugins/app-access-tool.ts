@@ -4,7 +4,11 @@ import {
 } from "@openbot/shared/connect-prompt";
 import type { GrantedTool } from "@openbot/toolkit/granted-tool";
 import { z } from "zod";
-import type { AppAccess, AppAccessState } from "./app-access";
+import {
+  type AppAccess,
+  type AppAccessState,
+  settingsOnlySentence,
+} from "./app-access";
 import type {
   AppDirectory,
   SharedAudienceCheck,
@@ -122,10 +126,28 @@ function toldTheModel(access: AppAccess, singleUser = false): string {
   if (wants.length > 0) {
     const list = wants.map((tool) => `${tool.name} (${tool.label})`).join(", ");
     const these = wants.length === 1 ? "it" : "them";
+    /*
+     * A TOOL THAT SENDS IS NEVER GIVEN BY APPROVING A REQUEST (decided 14 November 2026), so the card
+     * cannot be what gets it: the person allows it in settings, and the model must not send them to
+     * Request access for it. Told apart here, and only when there is one: with none, every word
+     * below is what it was.
+     */
+    const byHand = wants.flatMap((tool) =>
+      tool.settingsOnly
+        ? [{ name: tool.name, because: tool.settingsOnly }]
+        : [],
+    );
+    const askable = wants.filter((tool) => !tool.settingsOnly);
+    const which =
+      byHand.length === 0 ? these : askable.map((tool) => tool.name).join(", ");
     const whoCanGive = singleUser
-      ? `This person is the only one here, so they can allow ${these} themselves: the card in front of them has Request access, and they approve it under Requests on the Plugins page of Admin, in settings. Tell them plainly that you have not been granted ${these} and that they can do it themselves.`
-      : `The card in front of the person lets them ask an administrator to grant ${these} to you. Say plainly that you cannot do that part yet because you have not been granted ${these}.`;
-    return `${name} is ready for this person to use through you, except for ${list}: your skills need ${wants.length === 1 ? "this tool" : "these tools"} and you have not been granted ${these}. ${whoCanGive} Do not try another tool to get around it, and do not browse to its website or ask them to sign in there.`;
+      ? `This person is the only one here, so they can allow ${which} themselves: the card in front of them has Request access, and they approve it under Requests on the Plugins page of Admin, in settings. Tell them plainly that you have not been granted ${which} and that they can do it themselves.`
+      : `The card in front of the person lets them ask an administrator to grant ${which} to you. Say plainly that you cannot do that part yet because you have not been granted ${which}.`;
+    const heldBack =
+      byHand.length === 0
+        ? ""
+        : `${settingsOnlySentence({ app: name, tools: byHand })} ${singleUser ? "This person is the only one here, so they can allow that themselves" : "Only an administrator can allow that"}; say plainly that you have not been granted ${byHand.length === 1 ? "it" : "them"}. `;
+    return `${name} is ready for this person to use through you, except for ${list}: your skills need ${wants.length === 1 ? "this tool" : "these tools"} and you have not been granted ${these}. ${askable.length > 0 ? `${whoCanGive} ` : ""}${heldBack}Do not try another tool to get around it, and do not browse to its website or ask them to sign in there.`;
   }
   /*
    * ON A ONE-PERSON DEPLOYMENT THE PERSON IS THE ADMINISTRATOR. The four states below that end on

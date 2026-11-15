@@ -89,7 +89,8 @@ const CHANGES_CAP = 50;
 function initiatorFromPayload(value: unknown): AuditInitiator | undefined {
   if (!value || typeof value !== "object") return undefined;
   const kind = (value as { kind?: unknown }).kind;
-  if (kind === "person" || kind === "deployment") return { kind };
+  if (kind === "person" || kind === "remote" || kind === "deployment")
+    return { kind };
   if (kind !== "routine" && kind !== "handoff") return undefined;
   const id = (value as { id?: unknown }).id;
   return typeof id === "string" && id ? { kind, id } : undefined;
