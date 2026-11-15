@@ -194,12 +194,45 @@ def computer_notes_for(run: RunInput, member: Member) -> list[str]:
     return [computer_note("not_offered", missing)]
 
 
+# D47. A turn that starts in a signed-in browser that is not paired with the computer is marked `remote` by
+# the server (auth/remote-limits.ts, `createRequestAgents`), and every write in it, and in the hand-offs it
+# starts, asks the person on a card. Nothing in the tool list says so, and a member that met a card it did not
+# expect told the person that a tool was missing (a real installation, 15 Nov 2026). The mark is read from the
+# readable part of the signed run statement, as the hand-off facts above are: it only adds this sentence, it
+# lifts and refuses nothing, and the server's own gate decides every action.
+REMOTE_NOTE = (
+    "The person is writing from a browser that is not paired with the computer FreeDuet runs on. Nothing "
+    "is broken and no tool is missing: each action that changes something (a send, a label, a filter, a "
+    "booking, a payment) is held once for the person's yes on a card, and the card says why. If an action "
+    "has not run yet, say that it is waiting for the person's yes, or has not been answered yet; never say "
+    "that a tool is missing or that nobody was given a tool, and never say work is not done because of a "
+    "tool. When a card is waiting, you may tell the person that pairing the browser is done at the "
+    "computer (bash scripts/open.sh)."
+)
+
+
+def claims_remote(claims: dict) -> bool:
+    """Whether the signed run statement says this turn, or the person's turn a hand-off came from, was
+    started from a browser that is not paired. `origin` is always the root of a hand-off chain."""
+    initiator = claims.get("initiator")
+    if not isinstance(initiator, dict):
+        return False
+    if initiator.get("kind") == "remote":
+        return True
+    origin = initiator.get("origin")
+    return initiator.get("kind") == "handoff" and isinstance(origin, dict) and origin.get("kind") == "remote"
+
+
+def remote_notes_for(run: RunInput) -> list[str]:
+    return [REMOTE_NOTE] if claims_remote(run_claims(run.assertion)) else []
+
+
 def notes_for(run: RunInput, member: Member) -> list[str]:
     """The notes for this run's system text: why message_bot is missing, when the member's prompt
     relies on it and OpenBot did not offer it, and why its computer tools are missing, when it relies
-    on those; each saying exactly why as far as this run shows. None when nothing it relies on is
-    missing."""
-    return [*_message_bot_notes(run, member), *computer_notes_for(run, member)]
+    on those; each saying exactly why as far as this run shows; and, for a turn that began in an
+    unpaired browser, why a card may appear (D47). None when nothing applies."""
+    return [*_message_bot_notes(run, member), *computer_notes_for(run, member), *remote_notes_for(run)]
 
 
 def _message_bot_notes(run: RunInput, member: Member) -> list[str]:

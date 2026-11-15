@@ -117,3 +117,46 @@ def test_a_member_whose_prompt_never_mentions_message_bot_gets_no_note(client, f
     fake_cli.plan([{"text": "Pasta."}])
     post_run(client, run_body([standing("chef", "You are Basil."), {"id": "u1", "role": "user", "content": "Dinner?"}], bot_id="chef"))
     assert "message_bot" not in system_of(fake_cli.run(0))
+
+
+def signed(initiator) -> str:
+    """A run statement as OpenBot signs it: base64url(JSON payload) then a signature this service never checks."""
+    import base64
+
+    payload = base64.urlsafe_b64encode(json.dumps({"initiator": initiator}).encode()).decode().rstrip("=")
+    return f"{payload}.signature"
+
+
+def remote_run(initiator, *, bot_id="chef"):
+    body = run_body([standing(bot_id, "You are Basil."), {"id": "u1", "role": "user", "content": "Make me a label."}], bot_id=bot_id)
+    body["forwardedProps"]["openbotRun"] = signed(initiator)
+    return body
+
+
+def test_a_turn_from_an_unpaired_browser_tells_the_member_why_a_card_appears(client, fake_cli):
+    with_team(fake_cli)
+    fake_cli.plan([{"text": "Done."}])
+    post_run(client, remote_run({"kind": "remote"}))
+    system = system_of(fake_cli.run(0))
+    assert tool_notes.REMOTE_NOTE in system
+    assert "no tool is missing" in system
+
+
+def test_a_hand_off_that_started_in_an_unpaired_browser_carries_the_same_note(client, fake_cli):
+    with_team(fake_cli)
+    fake_cli.plan([{"text": "Done."}])
+    post_run(client, remote_run({"kind": "handoff", "id": "freeduet", "origin": {"kind": "remote"}}))
+    assert tool_notes.REMOTE_NOTE in system_of(fake_cli.run(0))
+
+
+def test_a_paired_or_unsigned_turn_gets_no_unpaired_note(client, fake_cli):
+    with_team(fake_cli)
+    for index, initiator in enumerate(
+        [{"kind": "person"}, {"kind": "handoff", "id": "freeduet", "origin": {"kind": "person"}}, {"kind": "handoff", "id": "freeduet"}, "remote", None]
+    ):
+        fake_cli.plan([{"text": "Done."}])
+        post_run(client, remote_run(initiator))
+        assert tool_notes.REMOTE_NOTE not in system_of(fake_cli.run(index)), initiator
+    fake_cli.plan([{"text": "Done."}])
+    post_run(client, run_body([standing("chef", "You are Basil."), {"id": "u1", "role": "user", "content": "Hi"}], bot_id="chef"))
+    assert tool_notes.REMOTE_NOTE not in system_of(fake_cli.run(5))

@@ -22,6 +22,7 @@ import {
 import { attachmentModality } from "@/components/channels/chat-messages";
 import { toAgentOptions } from "@/components/channels/composer";
 import { ConversationView } from "@/components/channels/conversation-view";
+import { RemoteSessionNotice } from "@/components/channels/remote-session-notice";
 import {
   seedMessage,
   takeFirstDraft,
@@ -1757,6 +1758,7 @@ export function ChannelChat({
                * it — and they are independent, so neither is an `else` for the other.
                */
               <>
+                <RemoteSessionNotice remote={remoteSession} />
                 <HandoffResumeNotice
                   botId={runtimeAgentId}
                   agent={agent}
