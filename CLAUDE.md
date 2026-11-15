@@ -64,6 +64,12 @@ the hands"): plan, brief executors, verify with numbers, merge, report.
   executor as soon as it has delivered.
 - **Parallel executors.** When several executors run at once, give each its own files: two executors
   must never own the same file.
+- **Haiku swarm (rule of 2026-11-15).** For humble work, send four to six Haiku executors at a time
+  with maximum effort, never twenty: the sandbox has 2 CPUs and 7 GB, every executor runs tests, and
+  each delivery must still be read and checked with numbers. Humble work is work whose files do not
+  overlap: one site language per executor, new eval cases, extra tests on existing code, sweeps
+  (broken links, counts in the docs). Approvals, mail, payments and data stay with Sonnet and a
+  review. More code is not the bottleneck when what was merged has not been run live.
 - **Decision numbers.** When several executors work in parallel, the brief assigns each one its D-numbers,
   so no two executors pick the same number.
 - **Worktree branches.** Create each executor's worktree on its own branch:
