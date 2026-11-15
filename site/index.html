@@ -682,6 +682,207 @@ footer a{color:var(--ink)}
   /* the orb that sat behind the headline moves to the lower right, behind the window */
   .o1{top:auto;bottom:-4rem;left:auto;right:-2rem}
 }
+
+/* =====================================================================================================================
+   PREVIEW BLOCKS (landing page preview). Each block below is separate: delete its CSS, its <section> in body.html and its
+   function in app.js and nothing else changes. Only transform, translate, scale, opacity and filter are animated; with
+   prefers-reduced-motion the rule above (animation:none!important) leaves every scene in its finished state.
+   ===================================================================================================================== */
+
+/* ---------- BLOCK hero: the headline in very large type, the product window staged right under it, alive ---------- */
+.tries-h{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:8px}
+.tries-h p{margin:0}
+.loopbtn{display:inline-flex;align-items:center;gap:7px;font:inherit;font-size:.82rem;color:var(--ink-soft);background:var(--card);border:1px solid var(--line);border-radius:999px;padding:5px 12px 5px 10px;min-height:32px;cursor:pointer;transition:border-color .3s var(--ease),color .3s var(--ease)}
+.loopbtn:hover{border-color:var(--ink);color:var(--ink)}
+.loopbtn svg{width:14px;height:14px;flex:none}
+.loopbtn .ic-play,.loopbtn .lq{display:none}
+.loopbtn[aria-pressed="true"] .ic-play,.loopbtn[aria-pressed="true"] .lq{display:inline-block}
+.loopbtn[aria-pressed="true"] .ic-pause,.loopbtn[aria-pressed="true"] .lp{display:none}
+.card-ask .yes.pressed{transform:scale(.94);box-shadow:0 0 0 4px rgba(15,123,88,.25)}
+.card-ask .yes{transition:transform .25s var(--ease),box-shadow .25s var(--ease)}
+.appwin.live .aw-bar::after{content:"";width:8px;height:8px;border-radius:50%;background:var(--mint);margin-left:4px;animation:livedot 1.6s ease-in-out infinite}
+@keyframes livedot{50%{opacity:.25}}
+@media (min-width:1100px){
+  .hero{padding-top:7.5rem;padding-bottom:calc(var(--mf)*.4 + 1.5rem)}
+  .hero .wrap{max-width:80rem;grid-template-columns:minmax(0,1fr);gap:clamp(3rem,4vw,4rem)}
+  .hero-copy{max-width:none;text-align:center}
+  .hero h1{font-size:clamp(4.5rem,2.2rem + 5.6vw,8.25rem);line-height:.96;letter-spacing:-.045em;max-width:14ch;margin-inline:auto}
+  html[lang="ru"] .hero h1{font-size:clamp(4rem,2rem + 4.4vw,6.5rem)}
+  html[lang="de"] .hero h1,html[lang="fr"] .hero h1,html[lang="pt"] .hero h1,html[lang="pl"] .hero h1,html[lang="tr"] .hero h1{font-size:clamp(4rem,2rem + 4.8vw,7rem)}
+  html[lang="ja"] .hero h1,html[lang="zh"] .hero h1,html[lang="ko"] .hero h1{font-size:clamp(3.5rem,2rem + 3.6vw,5.75rem);max-width:16ch}
+  .hero .lead{margin-inline:auto;max-width:46rem}
+  .hero .cta,.hero .facts{justify-content:center}
+  .hero .appfig{width:100%;max-width:62rem;margin:0 auto}
+  .hero .aw-side{display:block}
+  .hero .aw-body{grid-template-columns:250px minmax(0,1fr)}
+  .hero .aw-cap{text-align:center}
+  .o1{top:6rem;left:3%;right:auto;bottom:auto}
+}
+
+/* ---------- BLOCK trust: only facts that can be checked, each one links to its proof ---------- */
+.trust{background:var(--card);border-bottom:1px solid var(--line);padding:clamp(1.5rem,3vw,2.25rem) 0}
+.trust-l{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:clamp(1rem,2vw,2rem)}
+.trust-l a{display:grid;grid-template-columns:22px minmax(0,1fr);gap:2px 10px;align-content:start;color:var(--ink);text-decoration:none;padding:10px 0;border-radius:10px}
+.trust-l svg{grid-row:1/3;width:20px;height:20px;color:var(--mint);margin-top:3px}
+.trust-l b{font-family:var(--display);font-weight:700;font-size:1.02rem;line-height:1.3;letter-spacing:-.01em}
+.trust-l span{font-size:.88rem;line-height:1.45;color:var(--ink-soft)}
+.trust-l a:hover b{text-decoration:underline;text-underline-offset:3px}
+@media (max-width:980px){.trust-l{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:560px){.trust-l{grid-template-columns:minmax(0,1fr);gap:0}.trust-l li+li{border-top:1px solid var(--line)}}
+
+/* ---------- BLOCK install: the four steps get a rail that fills as they appear, and the panels play their step once ---------- */
+.inst>li{position:relative}
+.inst>li::before{content:"";position:absolute;left:0;right:calc(clamp(1.25rem,2.2vw,2rem)*-1);top:-1.4rem;height:2px;background:var(--line)}
+.inst>li:last-child::before{right:0}
+.inst>li::after{content:"";position:absolute;left:0;right:calc(clamp(1.25rem,2.2vw,2rem)*-1);top:-1.4rem;height:2px;background:var(--blue);transform-origin:left;transform:scaleX(0);transition:transform 1s var(--ease) .15s}
+.inst>li:last-child::after{right:0}
+.inst>li.in::after{transform:scaleX(1)}
+.inst .term pre .l{display:block}
+.js:not(.no-rv) .inst>li:not(.in) .term pre .l{opacity:0}
+.js:not(.no-rv) .inst>li.in .term pre .l{animation:lnin .5s var(--ease) calc(.5s + var(--k,0)*.45s) backwards}
+@keyframes lnin{from{opacity:0;transform:translateX(-10px)}}
+.js:not(.no-rv) .inst>li:not(.in) .term .sp,.js:not(.no-rv) .inst>li:not(.in) .brw .bd>*{opacity:0}
+.js:not(.no-rv) .inst>li.in .term .sp{animation:mm-pop .5s var(--ease) 1.4s backwards}
+.js:not(.no-rv) .inst>li.in .brw .bd>*{animation:lnin .6s var(--ease) calc(.5s + var(--k,0)*.7s) backwards}
+@media (max-width:980px){.inst>li::before,.inst>li::after{display:none}}
+
+/* ---------- BLOCK team: a small scene on every card that shows what the member does. Plays once on scroll, again on hover ---------- */
+.mm{--ln:#C9D2E0;--mm:var(--mc);grid-column:1/-1;position:relative;height:54px;border-radius:12px;overflow:hidden;background:#F3F5F9}
+.mem.boss{--mc:#1B4FD8}
+.mem.boss .mm{--ln:rgba(255,255,255,.32);--mm:#8FB0FF;background:rgba(255,255,255,.08)}
+.mm i{position:absolute;display:block;border-radius:4px;transform-origin:left center}
+.mem.go .mm i{animation-duration:.8s;animation-timing-function:var(--ease);animation-fill-mode:backwards}
+@keyframes mm-grow{from{transform:scaleX(0)}}
+@keyframes mm-rise{from{transform:scaleY(0)}}
+@keyframes mm-pop{from{opacity:0;transform:scale(.3)}}
+@keyframes mm-in{from{opacity:0;transform:translateX(-16px)}}
+@keyframes mm-fade{from{opacity:0}}
+@keyframes mm-out{from{opacity:1}to{opacity:0}}
+/* Iris hands the work out to three members */
+.mm-iris i:nth-child(1){left:6%;top:15px;width:24px;height:24px;border-radius:8px;background:var(--mm)}
+.mm-iris i:nth-child(n+2){top:19px;width:16%;height:16px;border-radius:8px;border:2px solid var(--mm);background:transparent}
+.mm-iris i:nth-child(2){left:30%}.mm-iris i:nth-child(3){left:51%}.mm-iris i:nth-child(4){left:72%}
+.mem.go .mm-iris i:nth-child(n+2){animation-name:mm-in}
+.mem.go .mm-iris i:nth-child(2){animation-delay:.3s}.mem.go .mm-iris i:nth-child(3){animation-delay:.6s}.mem.go .mm-iris i:nth-child(4){animation-delay:.9s}
+/* Otto: a reply grows line by line, then waits for your yes */
+.mm-otto i:nth-child(1){left:6%;top:14px;width:30px;height:24px;border:2px solid var(--mm);border-radius:5px}
+.mm-otto i:nth-child(2){left:26%;top:16px;width:52%;height:7px;background:var(--ln)}
+.mm-otto i:nth-child(3){left:26%;top:30px;width:38%;height:7px;background:var(--ln)}
+.mm-otto i:nth-child(4){right:6%;top:15px;width:24px;height:24px;border-radius:50%;background:var(--coral)}
+.mem.go .mm-otto i:nth-child(2){animation-name:mm-grow;animation-delay:.2s}.mem.go .mm-otto i:nth-child(3){animation-name:mm-grow;animation-delay:.6s}.mem.go .mm-otto i:nth-child(4){animation-name:mm-pop;animation-delay:1.3s}
+/* Portia: small print, then the one clause that matters is marked */
+.mm-portia i:nth-child(-n+3){left:6%;height:7px;background:var(--ln)}
+.mm-portia i:nth-child(1){top:11px;width:70%}.mm-portia i:nth-child(2){top:23px;width:58%}.mm-portia i:nth-child(3){top:35px;width:66%}
+.mm-portia i:nth-child(4){left:4%;top:19.500px;width:64%;height:15px;border-radius:5px;background:rgba(242,183,53,.55);mix-blend-mode:multiply}
+.mem.go .mm-portia i:nth-child(-n+3){animation-name:mm-grow}.mem.go .mm-portia i:nth-child(2){animation-delay:.15s}.mem.go .mm-portia i:nth-child(3){animation-delay:.3s}
+.mem.go .mm-portia i:nth-child(4){animation-name:mm-grow;animation-delay:.9s}
+/* Penny: one invoice turns from unpaid to paid, one stays unpaid */
+.mm-penny i:nth-child(1){left:6%;top:12px;width:44%;height:8px;background:var(--ln)}
+.mm-penny i:nth-child(2),.mm-penny i:nth-child(3){right:6%;top:9px;width:26%;height:14px;border-radius:999px}
+.mm-penny i:nth-child(2){background:#F2B735}.mm-penny i:nth-child(3){background:var(--mint)}
+.mm-penny i:nth-child(4){left:6%;top:33px;width:44%;height:8px;background:var(--ln)}
+.mm-penny::after{content:"";position:absolute;right:6%;top:31px;width:26%;height:14px;border-radius:999px;background:#F2B735}
+.mem.go .mm-penny i:nth-child(2){animation-name:mm-out;animation-delay:.9s;animation-fill-mode:both;animation-duration:.5s}.mem.go .mm-penny i:nth-child(3){animation-name:mm-fade;animation-delay:.9s;animation-duration:.5s}
+.mem.go .mm-penny i:nth-child(1),.mem.go .mm-penny i:nth-child(4){animation-name:mm-grow}
+/* Jules: looks in its own browser, finds a free table */
+.mm-jules i:nth-child(1){left:6%;top:9px;width:88%;height:8px;background:var(--ln)}
+.mm-jules i:nth-child(2),.mm-jules i:nth-child(3){top:24px;width:26%;height:20px;border-radius:6px;border:2px solid var(--ln)}
+.mm-jules i:nth-child(2){left:6%}.mm-jules i:nth-child(3){left:36%;border-color:var(--mm)}
+.mm-jules i:nth-child(4){left:66%;top:24px;width:20px;height:20px;border-radius:50%;background:var(--mm)}
+.mem.go .mm-jules i:nth-child(1){animation-name:mm-grow}.mem.go .mm-jules i:nth-child(2){animation-name:mm-fade;animation-delay:.4s}.mem.go .mm-jules i:nth-child(3){animation-name:mm-fade;animation-delay:.7s}.mem.go .mm-jules i:nth-child(4){animation-name:mm-pop;animation-delay:1.1s}
+/* Wren: rough notes become lines of finished text */
+.mm-wren i:nth-child(-n+3){left:6%;height:7px;background:var(--ln)}
+.mm-wren i:nth-child(1){top:12px;width:84%}.mm-wren i:nth-child(2){top:24px;width:70%}.mm-wren i:nth-child(3){top:36px;width:46%;background:var(--mm)}
+.mem.go .mm-wren i:nth-child(-n+3){animation-name:mm-grow;animation-duration:.9s}.mem.go .mm-wren i:nth-child(2){animation-delay:.5s}.mem.go .mm-wren i:nth-child(3){animation-delay:1s}
+.mm-wren i:nth-child(4){display:none}
+/* Mark: a plan, as bars that rise */
+.mm-mark i{bottom:0;width:11%;transform-origin:center bottom;border-radius:4px 4px 0 0;background:var(--ln)}
+.mm-mark i:nth-child(1){left:8%;height:36%}.mm-mark i:nth-child(2){left:26%;height:58%}.mm-mark i:nth-child(3){left:44%;height:80%;background:var(--mm)}
+.mm-mark i:nth-child(4){display:none}
+.mem.go .mm-mark i{animation-name:mm-rise}.mem.go .mm-mark i:nth-child(2){animation-delay:.2s}.mem.go .mm-mark i:nth-child(3){animation-delay:.4s}
+.mm-mark::after{content:"";position:absolute;right:8%;top:14px;width:30%;height:7px;border-radius:4px;background:var(--ln);box-shadow:0 14px 0 var(--ln),0 28px 0 -0px transparent}
+/* Cam: a clip is cut, the timeline plays */
+.mm-video i:nth-child(1){left:6%;top:30px;width:88%;height:12px;background:var(--ln)}
+.mm-video i:nth-child(2){left:6%;top:30px;width:56%;height:12px;background:var(--mm)}
+.mm-video i:nth-child(3){left:6%;top:10px;width:30%;height:12px;background:var(--ln);border:2px solid var(--mm)}
+.mm-video i:nth-child(4){left:40%;top:10px;width:22%;height:12px;background:var(--ln)}
+.mem.go .mm-video i:nth-child(2){animation-name:mm-grow;animation-duration:1.8s;animation-delay:.3s}.mem.go .mm-video i:nth-child(3){animation-name:mm-pop;animation-delay:.2s}.mem.go .mm-video i:nth-child(4){animation-name:mm-pop;animation-delay:.5s}
+/* Gus: a photo of the problem, then a short safe checklist */
+.mm-gus i:nth-child(1){left:6%;top:9px;width:36px;height:36px;border-radius:8px;border:2px solid var(--mm);background:var(--ln)}
+.mm-gus i:nth-child(n+2){left:28%;height:7px;background:var(--ln)}
+.mm-gus i:nth-child(2){top:12px;width:56%}.mm-gus i:nth-child(3){top:24px;width:46%}.mm-gus i:nth-child(4){top:36px;width:36%;background:var(--mm)}
+.mem.go .mm-gus i:nth-child(1){animation-name:mm-pop}.mem.go .mm-gus i:nth-child(n+2){animation-name:mm-in}.mem.go .mm-gus i:nth-child(2){animation-delay:.4s}.mem.go .mm-gus i:nth-child(3){animation-delay:.7s}.mem.go .mm-gus i:nth-child(4){animation-delay:1s}
+/* Basil: three dishes appear */
+.mm-basil i:nth-child(-n+3){top:11px;width:32px;height:32px;border-radius:50%;border:3px solid var(--ln);background:#fff}
+.mm-basil i:nth-child(1){left:8%}.mm-basil i:nth-child(2){left:26%;border-color:var(--mm)}.mm-basil i:nth-child(3){left:44%}
+.mm-basil i{transform-origin:center}
+.mm-basil i:nth-child(4){display:none}
+.mem.go .mm-basil i:nth-child(-n+3){animation-name:mm-pop}.mem.go .mm-basil i:nth-child(2){animation-delay:.25s}.mem.go .mm-basil i:nth-child(3){animation-delay:.5s}
+/* Vera: every line gets checked, one after another */
+.mm-vera i:nth-child(-n+3){left:6%;width:60%;height:7px;background:var(--ln)}
+.mm-vera i:nth-child(1){top:9px}.mm-vera i:nth-child(2){top:23px}.mm-vera i:nth-child(3){top:37px}
+.mm-vera i:nth-child(4){display:none}
+.mm-vera::before,.mm-vera::after{content:"";position:absolute}
+.mm-vera i:nth-child(-n+3)::after{content:"";position:absolute;left:calc(100% + 18px);top:-2px;width:11px;height:11px;border-radius:50%;background:var(--mint)}
+.mem.go .mm-vera i:nth-child(-n+3)::after{animation:mm-pop .5s var(--ease) calc(.4s + var(--k,0)*.4s) backwards}
+.mem.go .mm-vera i:nth-child(2)::after{--k:1}.mem.go .mm-vera i:nth-child(3)::after{--k:2}
+/* Leo: an empty slot is filled with a new member */
+.mm-leo i:nth-child(1),.mm-leo i:nth-child(2){top:11px;width:32px;height:32px;border-radius:10px}
+.mm-leo i:nth-child(1){left:8%;background:var(--ln)}
+.mm-leo i:nth-child(2){left:26%;border:2px dashed var(--ln)}
+.mm-leo i:nth-child(3){left:26%;top:11px;width:32px;height:32px;border-radius:10px;background:var(--mm)}
+.mm-leo i:nth-child(4){display:none}
+.mm-leo i:nth-child(3),.mm-leo i:nth-child(1){transform-origin:center}
+.mem.go .mm-leo i:nth-child(3){animation-name:mm-pop;animation-delay:.9s}
+
+/* ---------- BLOCK jobs: pick a member, read the chat ---------- */
+.jb{margin:0}
+.jb-tabs{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px}
+.jb-tabs button{display:flex;align-items:center;gap:10px;font:inherit;text-align:left;color:var(--ink);background:var(--card);border:1px solid var(--line);border-radius:999px;padding:7px 18px 7px 8px;min-height:52px;cursor:pointer;transition:border-color .3s var(--ease),background-color .3s var(--ease),color .3s var(--ease)}
+.jb-tabs button:hover{border-color:var(--ink)}
+.jb-tabs button[aria-selected="true"]{background:var(--ink);color:#fff;border-color:var(--ink)}
+.jb-tabs .av{width:36px;height:36px;flex:none}
+.jb-tabs button span{display:grid;line-height:1.2}
+.jb-tabs b{font-family:var(--display);font-size:.98rem}
+.jb-tabs small{font-size:.78rem;color:var(--ink-soft)}
+.jb-tabs button[aria-selected="true"] small{color:#C9D3E5}
+.jb-stage{background:var(--paper);border:1px solid var(--line);border-radius:var(--r-lg);padding:clamp(1.1rem,2.6vw,2rem);box-shadow:var(--shadow);display:grid}
+.jb-panel{grid-area:1/1;min-width:0}
+.jb-panel:focus-visible{outline:3px solid var(--blue);outline-offset:6px;border-radius:12px}
+.js .jb-panel:not(.on){visibility:hidden;pointer-events:none}
+.jb-chat{display:grid;gap:12px;align-content:start}
+.jb-chat .msg{max-width:min(46rem,100%)}
+.jb-chat .msg.me{justify-self:end}
+.jb-chat .bub{font-size:1.02rem;max-width:none}
+.jb-panel.on .msg{animation:lnin .6s var(--ease) backwards}
+.jb-panel.on .msg:nth-child(2){animation-delay:.5s}.jb-panel.on .msg:nth-child(3){animation-delay:1.1s}
+.figure-cap,.jb .aw-cap{margin-top:14px}
+
+/* ---------- BLOCK languages: the greeting changes language, the twelve links stay put ---------- */
+.lgs{text-align:center;background:var(--paper);border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+.lgs .wrap{display:grid;justify-items:center;gap:clamp(1.25rem,2vw,1.75rem)}
+.hello{font-family:var(--display);font-weight:500;font-size:clamp(3.75rem,2rem + 11vw,12rem);line-height:1.08;letter-spacing:-.05em;margin:0 0 clamp(.5rem,2vw,1.5rem);max-width:none;min-height:1.1em;color:var(--ink);transition:opacity .35s var(--ease),transform .35s var(--ease),filter .35s var(--ease);overflow-wrap:anywhere}
+.hello.swap{opacity:0;transform:translateY(.12em);filter:blur(6px)}
+.lgs h2{max-width:none}
+.lgs .lead{color:var(--ink-soft)}
+.lg-pills{display:flex;flex-wrap:wrap;justify-content:center;gap:8px;max-width:52rem}
+.lg-pills a{display:inline-flex;align-items:center;min-height:44px;padding:8px 18px;border-radius:999px;border:1px solid var(--line);background:var(--card);color:var(--ink);text-decoration:none;font-size:.98rem;transition:border-color .3s var(--ease),background-color .3s var(--ease),color .3s var(--ease),transform .3s var(--ease)}
+.lg-pills a:hover{border-color:var(--ink);transform:translateY(-2px)}
+.lg-pills a[aria-current="page"]{background:var(--ink);border-color:var(--ink);color:#fff}
+.lg-pills a.hot:not([aria-current]){background:var(--blue-tint);border-color:var(--blue);color:var(--blue)}
+
+/* ---------- BLOCK closing call to action and footer presence ---------- */
+.cta-end{text-align:center}
+.cta-end .wrap{display:grid;justify-items:center;gap:clamp(1.5rem,2.4vw,2.25rem)}
+.cta-end h2{font-size:clamp(2.4rem,1.2rem + 5vw,5.5rem);max-width:16ch;line-height:1}
+.cta-end .lead{color:#C9D3E5}
+.cta-end .cta{justify-content:center;margin:0}
+.sec.dark.cta-end .btn-quiet{color:var(--ink)}
+.foot-brand{display:flex;align-items:center;gap:14px;margin-bottom:6px}
+.foot-brand svg{width:44px;height:44px;flex:none}
+.foot-brand strong{font-family:var(--display);font-size:1.3rem;color:var(--ink);letter-spacing:-.02em}
+.foot-brand p{margin:0;max-width:46ch}
+@media (max-width:440px){.cta-end .cta .btn{width:100%;justify-content:center}}
 </style>
 </head>
 <body>
@@ -756,7 +957,8 @@ footer a{color:var(--ink)}
             <div class="aw-head" id="awHead" aria-hidden="true"><svg class="av" viewBox="0 0 44 44" aria-hidden="true"><rect width="44" height="44" rx="11" fill="#1B4FD8"/><svg x="10" y="10" width="24" height="24" viewBox="0 0 24 24"><path d="M12 3l2.5 6.5L21 12l-6.5 2.5L12 21l-2.5-6.5L3 12l6.5-2.5z" stroke="#fff" stroke-width="1.9" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></svg><div><b>Iris</b><small>runs the team</small></div></div>
             <div class="chat" id="chat" aria-live="polite"><div class="msg me"><div class="bub">Reply to the plumber's email: Tuesday at 9 is fine.</div></div><div class="msg"><svg class="av" viewBox="0 0 44 44" aria-hidden="true"><rect width="44" height="44" rx="11" fill="#1B4FD8"/><svg x="10" y="10" width="24" height="24" viewBox="0 0 24 24"><path d="M12 3l2.5 6.5L21 12l-6.5 2.5L12 21l-2.5-6.5L3 12l6.5-2.5z" stroke="#fff" stroke-width="1.9" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></svg><div class="bub"><span class="who">Iris</span>On it. This is a job for Otto.</div></div><div class="msg"><svg class="av" viewBox="0 0 44 44" aria-hidden="true"><rect width="44" height="44" rx="11" fill="#E8590C" fill-opacity=".13"/><svg x="10" y="10" width="24" height="24" viewBox="0 0 24 24"><path d="M3 6h18v12H3zM3 7l9 7 9-7" stroke="#E8590C" stroke-width="1.9" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></svg><div class="bub"><span class="who">Otto</span>I found his email and wrote the reply. I won't send it until you say so.</div></div><div class="card-ask" id="ask"><p class="ask-title"><svg aria-hidden="true"><use href="#i-hand"/></svg>Waiting for your yes</p><dl><dt>Action</dt><dd>Send a reply</dd><dt>To</dt><dd>the plumber (same conversation)</dd><dt>Text</dt><dd>Good morning, Tuesday at 9 works for me. Thank you!</dd></dl><div class="row"><button type="button" class="yes" data-a="ok">Approve</button><button type="button" class="no" data-a="stop">Don't do it</button></div></div></div>
             <div class="tries">
-              <p data-i="tryP">Try another request:</p>
+              <div class="tries-h"><p data-i="tryP">Try another request:</p>
+                <button type="button" class="loopbtn" id="loop" aria-pressed="false" hidden><svg class="ic-pause" aria-hidden="true" viewBox="0 0 24 24"><path d="M8 5v14M16 5v14" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></svg><svg class="ic-play" aria-hidden="true" viewBox="0 0 24 24"><path d="M7 4.5v15l12-7.500z" fill="currentColor"/></svg><span class="lp" data-i="loopPause">Pause the demo</span><span class="lq" data-i="loopPlay">Play the demo</span></button></div>
               <div id="tries"><button type="button" data-s="0" aria-pressed="true">Reply to the plumber: Tuesday is fine</button><button type="button" data-s="1" aria-pressed="false">Book a table for four on Friday</button><button type="button" data-s="2" aria-pressed="false">What can I cook with spinach and eggs?</button></div>
             </div>
             <div class="aw-field" aria-hidden="true"><span data-i="appPh">Write what you need…</span><i><svg><use href="#b-send"/></svg></i></div>
@@ -765,6 +967,52 @@ footer a{color:var(--ink)}
       </div>
       <figcaption class="aw-cap" data-i="appCap">An illustrated example, not a recording of a real session. Every name and message in it is made up.</figcaption>
     </figure>
+  </div>
+</section>
+
+<!-- BLOCK trust: a strip of checkable facts, each linking to its proof in the repository. Drop the whole <section>, nothing else depends on it. -->
+<section class="trust" aria-label="FreeDuet">
+  <div class="wrap">
+    <ul class="trust-l">
+      <li class="rv"><a href="https://github.com/MarcoDeliaBot/freeduet/blob/main/LICENSE"><svg aria-hidden="true"><use href="#i-gh"/></svg><b data-i="tr1t">MIT licence</b><span data-i="tr1s">Free to use, change and share, also for business.</span></a></li>
+      <li class="rv"><a href="https://github.com/MarcoDeliaBot/freeduet/blob/main/evals/team/reports/2026-11-13-claude-code-regraded-2026-11-13-public.md"><svg aria-hidden="true"><use href="#i-check"/></svg><b data-i="tr2t">43 of 43 test cases</b><span data-i="tr2s">And 45 of 45 safety runs, in the public v0.1 report.</span></a></li>
+      <li class="rv"><a href="https://github.com/MarcoDeliaBot/freeduet/blob/main/docs/PROVIDERS.md"><svg aria-hidden="true"><use href="#i-lock"/></svg><b data-i="tr3t">Your computer, your login</b><span data-i="tr3s">Runs on the Claude plan you already pay for. No API key.</span></a></li>
+      <li class="rv"><a href="https://github.com/MarcoDeliaBot/freeduet/blob/main/SECURITY.md"><svg aria-hidden="true"><use href="#i-hand"/></svg><b data-i="tr4t">Your yes for real actions</b><span data-i="tr4s">By default, send, pay, sign, book and delete wait for you.</span></a></li>
+    </ul>
+  </div>
+</section>
+
+<!-- BLOCK install (moved up from further down; the content is unchanged, only the motion in style.css/app.js is new) -->
+<section class="sec" id="install">
+  <div class="wrap">
+    <div class="head">
+      <h2 class="wd" data-i="in_h">From install to your first useful task</h2>
+      <p class="lead rv" data-i="in_p">Four steps, in the real order. All the commands are also in one box further down, ready to copy.</p>
+    </div>
+    <ol class="inst">
+      <li class="rv">
+        <div class="pnl term" aria-hidden="true"><div class="tbar"><i></i><i></i><i></i></div><pre><span class="l" style="--k:0"><span class="pr">$</span> git clone https://github.com/<wbr>MarcoDeliaBot/freeduet.git</span><span class="l" style="--k:1"><span class="pr">$</span> cd freeduet</span><span class="l" style="--k:2"><span class="pr">$</span> cp .env.example .env</span></pre></div>
+        <h3 data-i="in1h">Get the code</h3>
+        <p data-i="in1p">One command downloads FreeDuet from GitHub, and one copies the example settings file.</p>
+      </li>
+      <li class="rv">
+        <div class="pnl term" aria-hidden="true"><div class="tbar"><i></i><i></i><i></i></div><pre><span class="l" style="--k:0"><span class="pr">$</span> bash scripts/start.sh</span></pre><ul class="pills"><li>Docker</li><li>Bash</li><li>Bun</li><li>Windows + WSL2</li></ul></div>
+        <h3 data-i="in2h">Run the start script</h3>
+        <p data-i="in2p">One script starts the app, the team and a separate computer for each member. It needs Docker, Bash and Bun. On Windows, run it inside WSL2.</p>
+      </li>
+      <li class="rv">
+        <div class="pnl term" aria-hidden="true"><div class="tbar"><i></i><i></i><i></i></div><pre><span class="l" style="--k:0"><span class="pr">$</span> cd openbot &amp;&amp; docker compose exec -it agent-freeduet claude</span></pre>
+          <div class="sp"><svg><use href="#i-lock"/></svg><b>Claude Code</b><span class="ok"><svg><use href="#i-check"/></svg><span data-i="signedIn">Signed in</span></span></div></div>
+        <h3 data-i="in3h">Sign in once with your Claude plan</h3>
+        <p data-i="in3p">Open the official Claude Code sign-in and log in yourself. FreeDuet never sees, stores or forwards your login.</p>
+      </li>
+      <li class="rv">
+        <div class="pnl brw" aria-hidden="true"><div class="tbar"><i></i><i></i><i></i><span class="url">http://localhost:3010</span></div>
+          <div class="bd"><div class="msg me" style="--k:0"><div class="bub" data-i="in4ex">What can I cook tonight with spinach and eggs?</div></div><div class="msg" style="--k:1"><span data-av="iris"><svg class="av" viewBox="0 0 44 44" aria-hidden="true"><rect width="44" height="44" rx="11" fill="#1B4FD8"/><svg x="10" y="10" width="24" height="24" viewBox="0 0 24 24"><path d="M12 3l2.5 6.5L21 12l-6.5 2.5L12 21l-2.5-6.5L3 12l6.5-2.5z" stroke="#fff" stroke-width="1.9" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></svg></span><div class="bub"><span class="typing"><i></i><i></i><i></i></span></div></div></div></div>
+        <h3 data-i="in4h">Open the page and give Iris a small task</h3>
+        <p data-i="in4p">Go to localhost:3010 in your browser and write one small request. Iris picks the right assistant and brings you the answer.</p>
+      </li>
+    </ol>
   </div>
 </section>
 
@@ -820,8 +1068,22 @@ footer a{color:var(--ink)}
       <h2 class="wd" data-i="t_h">Meet the team. Each one has exactly one job.</h2>
       <p class="lead rv" data-i="t_p">Why not one assistant that does everything? For the same reason a football team has a goalkeeper: someone who does one job all day gets very good at it.</p>
     </div>
-    <div class="team" id="teamGrid"><article class="mem boss rv" style="--mc:#1B4FD8"><svg class="av" viewBox="0 0 44 44" aria-hidden="true"><rect width="44" height="44" rx="11" fill="#1B4FD8"/><svg x="10" y="10" width="24" height="24" viewBox="0 0 24 24"><path d="M12 3l2.5 6.5L21 12l-6.5 2.5L12 21l-2.5-6.5L3 12l6.5-2.5z" stroke="#fff" stroke-width="1.9" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></svg><h3>Iris<span>runs the team</span></h3><p>You tell Iris what you need. She hands it to the right assistant, and the answer comes back through her.</p><q>Handle everything that came in this morning.</q></article><article class="mem rv" style="--mc:#E8590C"><svg class="av" viewBox="0 0 44 44" aria-hidden="true"><rect width="44" height="44" rx="11" fill="#E8590C" fill-opacity=".13"/><svg x="10" y="10" width="24" height="24" viewBox="0 0 24 24"><path d="M3 6h18v12H3zM3 7l9 7 9-7" stroke="#E8590C" stroke-width="1.9" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></svg><h3>Otto<span>mail</span></h3><p>Reads your inbox, points out what matters now and what can wait, and writes the replies for you to check.</p><q>Sort my mail and draft the replies that matter.</q></article><article class="mem rv" style="--mc:#0E7C86"><svg class="av" viewBox="0 0 44 44" aria-hidden="true"><rect width="44" height="44" rx="11" fill="#0E7C86" fill-opacity=".13"/><svg x="10" y="10" width="24" height="24" viewBox="0 0 24 24"><path d="M12 4v16M7 20h10M5 8h14M5 8l-2.5 6h5zM19 8l-2.5 6h5z" stroke="#0E7C86" stroke-width="1.9" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></svg><h3>Portia<span>contracts</span></h3><p>Reads the boring small print and shows you where the traps are before you sign.</p><q>Can I sign this lease?</q></article><article class="mem rv" style="--mc:#A87900"><svg class="av" viewBox="0 0 44 44" aria-hidden="true"><rect width="44" height="44" rx="11" fill="#A87900" fill-opacity=".13"/><svg x="10" y="10" width="24" height="24" viewBox="0 0 24 24"><path d="M7 4h10v16l-2.5-2-2.5 2-2.5-2L7 20zM10 9h4M10 13h4" stroke="#A87900" stroke-width="1.9" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></svg><h3>Penny<span>invoices</span></h3><p>Prepares invoices and keeps the list of who still owes you money.</p><q>Invoice Acme for last week and tell me who hasn't paid.</q></article><article class="mem rv" style="--mc:#C2255C"><svg class="av" viewBox="0 0 44 44" aria-hidden="true"><rect width="44" height="44" rx="11" fill="#C2255C" fill-opacity=".13"/><svg x="10" y="10" width="24" height="24" viewBox="0 0 24 24"><path d="M6 16v-5a6 6 0 0112 0v5l2 2H4zM10 21h4" stroke="#C2255C" stroke-width="1.9" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></svg><h3>Jules<span>errands</span></h3><p>Finds flights, presents and free tables in its own browser, and books them when you say yes.</p><q>Book a table for four on Friday.</q></article><article class="mem rv" style="--mc:#2B8A3E"><svg class="av" viewBox="0 0 44 44" aria-hidden="true"><rect width="44" height="44" rx="11" fill="#2B8A3E" fill-opacity=".13"/><svg x="10" y="10" width="24" height="24" viewBox="0 0 24 24"><path d="M4 20h16M6 16L16 5l3 3L9 19l-4 1z" stroke="#2B8A3E" stroke-width="1.9" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></svg><h3>Wren<span>writing</span></h3><p>Turns your rough notes into posts and emails that sound like you, not like a robot.</p><q>Turn this voice note into a post in my style.</q></article><article class="mem rv" style="--mc:#C92A2A"><svg class="av" viewBox="0 0 44 44" aria-hidden="true"><rect width="44" height="44" rx="11" fill="#C92A2A" fill-opacity=".13"/><svg x="10" y="10" width="24" height="24" viewBox="0 0 24 24"><path d="M4 10v4h3l7 4V6l-7 4H4zM17.5 9.5a4 4 0 010 5" stroke="#C92A2A" stroke-width="1.9" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></svg><h3>Mark<span>marketing</span></h3><p>Builds your marketing plan, launch plan and channel strategy, and reviews your site, SEO and ads. By default, he publishes and spends nothing without your yes. Not yet run live.</p><q>Give me a three-month marketing plan for my shop.</q></article><article class="mem rv" style="--mc:#7950F2"><svg class="av" viewBox="0 0 44 44" aria-hidden="true"><rect width="44" height="44" rx="11" fill="#7950F2" fill-opacity=".13"/><svg x="10" y="10" width="24" height="24" viewBox="0 0 24 24"><path d="M2.5 7h12v10h-12zM14.5 10.5l7-3.5v10l-7-3.5" stroke="#7950F2" stroke-width="1.9" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></svg><h3>Cam<span>video</span></h3><p>Cuts, subtitles, music and sound for short videos from your footage or a script, in landscape, vertical and square sizes. He never publishes or uploads one. Not yet run live.</p><q>Make a 30-second vertical video from this script, with subtitles.</q></article><article class="mem rv" style="--mc:#B5540B"><svg class="av" viewBox="0 0 44 44" aria-hidden="true"><rect width="44" height="44" rx="11" fill="#B5540B" fill-opacity=".13"/><svg x="10" y="10" width="24" height="24" viewBox="0 0 24 24"><path d="M14.5 5.5a4 4 0 004 4l-9 9-3-3 9-9z" stroke="#B5540B" stroke-width="1.9" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></svg><h3>Gus<span>repairs</span></h3><p>Send a photo of what broke. Gus tells you how to fix it safely, or who to call.</p><q>The door won't close. Here's a photo.</q></article><article class="mem rv" style="--mc:#5C940D"><svg class="av" viewBox="0 0 44 44" aria-hidden="true"><rect width="44" height="44" rx="11" fill="#5C940D" fill-opacity=".13"/><svg x="10" y="10" width="24" height="24" viewBox="0 0 24 24"><path d="M5 19C5 9 11 5 19 5c0 8-4 14-14 14zM5 19l8-8" stroke="#5C940D" stroke-width="1.9" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></svg><h3>Basil<span>cooking</span></h3><p>Tell Basil what is in the fridge and he gives you three dishes you can make tonight.</p><q>What can I cook with spinach and eggs?</q></article><article class="mem rv" style="--mc:#5C6B80"><svg class="av" viewBox="0 0 44 44" aria-hidden="true"><rect width="44" height="44" rx="11" fill="#5C6B80" fill-opacity=".13"/><svg x="10" y="10" width="24" height="24" viewBox="0 0 24 24"><path d="M10.5 4a6.5 6.5 0 100 13 6.5 6.5 0 000-13zM15.5 15.5L20 20" stroke="#5C6B80" stroke-width="1.9" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></svg><h3>Vera<span>checking</span></h3><p>Works behind the scenes. She redoes the sums and re-opens the prices before the work reaches you.</p><q>(Iris sends her the important work.)</q></article><article class="mem rv" style="--mc:#C46A00"><svg class="av" viewBox="0 0 44 44" aria-hidden="true"><rect width="44" height="44" rx="11" fill="#C46A00" fill-opacity=".13"/><svg x="10" y="10" width="24" height="24" viewBox="0 0 24 24"><path d="M12 4v16M4 12h16" stroke="#C46A00" stroke-width="1.9" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></svg><h3>Leo<span>builds new assistants</span></h3><p>Need an assistant that doesn't exist yet? Leo designs it. Testing each new member before it is called ready is planned.</p><q>I need someone who tracks my domain renewals.</q></article></div>
+    <div class="team" id="teamGrid"><article class="mem boss rv" style="--mc:#1B4FD8"><svg class="av" viewBox="0 0 44 44" aria-hidden="true"><rect width="44" height="44" rx="11" fill="#1B4FD8"/><svg x="10" y="10" width="24" height="24" viewBox="0 0 24 24"><path d="M12 3l2.5 6.5L21 12l-6.5 2.5L12 21l-2.5-6.5L3 12l6.5-2.5z" stroke="#fff" stroke-width="1.9" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></svg><h3>Iris<span>runs the team</span></h3><p>You tell Iris what you need. She hands it to the right assistant, and the answer comes back through her.</p><div class="mm mm-iris" aria-hidden="true"><i></i><i></i><i></i><i></i></div><q>Handle everything that came in this morning.</q></article><article class="mem rv" style="--mc:#E8590C"><svg class="av" viewBox="0 0 44 44" aria-hidden="true"><rect width="44" height="44" rx="11" fill="#E8590C" fill-opacity=".13"/><svg x="10" y="10" width="24" height="24" viewBox="0 0 24 24"><path d="M3 6h18v12H3zM3 7l9 7 9-7" stroke="#E8590C" stroke-width="1.9" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></svg><h3>Otto<span>mail</span></h3><p>Reads your inbox, points out what matters now and what can wait, and writes the replies for you to check.</p><div class="mm mm-otto" aria-hidden="true"><i></i><i></i><i></i><i></i></div><q>Sort my mail and draft the replies that matter.</q></article><article class="mem rv" style="--mc:#0E7C86"><svg class="av" viewBox="0 0 44 44" aria-hidden="true"><rect width="44" height="44" rx="11" fill="#0E7C86" fill-opacity=".13"/><svg x="10" y="10" width="24" height="24" viewBox="0 0 24 24"><path d="M12 4v16M7 20h10M5 8h14M5 8l-2.5 6h5zM19 8l-2.5 6h5z" stroke="#0E7C86" stroke-width="1.9" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></svg><h3>Portia<span>contracts</span></h3><p>Reads the boring small print and shows you where the traps are before you sign.</p><div class="mm mm-portia" aria-hidden="true"><i></i><i></i><i></i><i></i></div><q>Can I sign this lease?</q></article><article class="mem rv" style="--mc:#A87900"><svg class="av" viewBox="0 0 44 44" aria-hidden="true"><rect width="44" height="44" rx="11" fill="#A87900" fill-opacity=".13"/><svg x="10" y="10" width="24" height="24" viewBox="0 0 24 24"><path d="M7 4h10v16l-2.5-2-2.5 2-2.5-2L7 20zM10 9h4M10 13h4" stroke="#A87900" stroke-width="1.9" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></svg><h3>Penny<span>invoices</span></h3><p>Prepares invoices and keeps the list of who still owes you money.</p><div class="mm mm-penny" aria-hidden="true"><i></i><i></i><i></i><i></i></div><q>Invoice Acme for last week and tell me who hasn't paid.</q></article><article class="mem rv" style="--mc:#C2255C"><svg class="av" viewBox="0 0 44 44" aria-hidden="true"><rect width="44" height="44" rx="11" fill="#C2255C" fill-opacity=".13"/><svg x="10" y="10" width="24" height="24" viewBox="0 0 24 24"><path d="M6 16v-5a6 6 0 0112 0v5l2 2H4zM10 21h4" stroke="#C2255C" stroke-width="1.9" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></svg><h3>Jules<span>errands</span></h3><p>Finds flights, presents and free tables in its own browser, and books them when you say yes.</p><div class="mm mm-jules" aria-hidden="true"><i></i><i></i><i></i><i></i></div><q>Book a table for four on Friday.</q></article><article class="mem rv" style="--mc:#2B8A3E"><svg class="av" viewBox="0 0 44 44" aria-hidden="true"><rect width="44" height="44" rx="11" fill="#2B8A3E" fill-opacity=".13"/><svg x="10" y="10" width="24" height="24" viewBox="0 0 24 24"><path d="M4 20h16M6 16L16 5l3 3L9 19l-4 1z" stroke="#2B8A3E" stroke-width="1.9" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></svg><h3>Wren<span>writing</span></h3><p>Turns your rough notes into posts and emails that sound like you, not like a robot.</p><div class="mm mm-wren" aria-hidden="true"><i></i><i></i><i></i><i></i></div><q>Turn this voice note into a post in my style.</q></article><article class="mem rv" style="--mc:#C92A2A"><svg class="av" viewBox="0 0 44 44" aria-hidden="true"><rect width="44" height="44" rx="11" fill="#C92A2A" fill-opacity=".13"/><svg x="10" y="10" width="24" height="24" viewBox="0 0 24 24"><path d="M4 10v4h3l7 4V6l-7 4H4zM17.5 9.5a4 4 0 010 5" stroke="#C92A2A" stroke-width="1.9" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></svg><h3>Mark<span>marketing</span></h3><p>Builds your marketing plan, launch plan and channel strategy, and reviews your site, SEO and ads. By default, he publishes and spends nothing without your yes. Not yet run live.</p><div class="mm mm-mark" aria-hidden="true"><i></i><i></i><i></i><i></i></div><q>Give me a three-month marketing plan for my shop.</q></article><article class="mem rv" style="--mc:#7950F2"><svg class="av" viewBox="0 0 44 44" aria-hidden="true"><rect width="44" height="44" rx="11" fill="#7950F2" fill-opacity=".13"/><svg x="10" y="10" width="24" height="24" viewBox="0 0 24 24"><path d="M2.5 7h12v10h-12zM14.5 10.5l7-3.5v10l-7-3.5" stroke="#7950F2" stroke-width="1.9" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></svg><h3>Cam<span>video</span></h3><p>Cuts, subtitles, music and sound for short videos from your footage or a script, in landscape, vertical and square sizes. He never publishes or uploads one. Not yet run live.</p><div class="mm mm-video" aria-hidden="true"><i></i><i></i><i></i><i></i></div><q>Make a 30-second vertical video from this script, with subtitles.</q></article><article class="mem rv" style="--mc:#B5540B"><svg class="av" viewBox="0 0 44 44" aria-hidden="true"><rect width="44" height="44" rx="11" fill="#B5540B" fill-opacity=".13"/><svg x="10" y="10" width="24" height="24" viewBox="0 0 24 24"><path d="M14.5 5.5a4 4 0 004 4l-9 9-3-3 9-9z" stroke="#B5540B" stroke-width="1.9" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></svg><h3>Gus<span>repairs</span></h3><p>Send a photo of what broke. Gus tells you how to fix it safely, or who to call.</p><div class="mm mm-gus" aria-hidden="true"><i></i><i></i><i></i><i></i></div><q>The door won't close. Here's a photo.</q></article><article class="mem rv" style="--mc:#5C940D"><svg class="av" viewBox="0 0 44 44" aria-hidden="true"><rect width="44" height="44" rx="11" fill="#5C940D" fill-opacity=".13"/><svg x="10" y="10" width="24" height="24" viewBox="0 0 24 24"><path d="M5 19C5 9 11 5 19 5c0 8-4 14-14 14zM5 19l8-8" stroke="#5C940D" stroke-width="1.9" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></svg><h3>Basil<span>cooking</span></h3><p>Tell Basil what is in the fridge and he gives you three dishes you can make tonight.</p><div class="mm mm-basil" aria-hidden="true"><i></i><i></i><i></i><i></i></div><q>What can I cook with spinach and eggs?</q></article><article class="mem rv" style="--mc:#5C6B80"><svg class="av" viewBox="0 0 44 44" aria-hidden="true"><rect width="44" height="44" rx="11" fill="#5C6B80" fill-opacity=".13"/><svg x="10" y="10" width="24" height="24" viewBox="0 0 24 24"><path d="M10.5 4a6.5 6.5 0 100 13 6.5 6.5 0 000-13zM15.5 15.5L20 20" stroke="#5C6B80" stroke-width="1.9" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></svg><h3>Vera<span>checking</span></h3><p>Works behind the scenes. She redoes the sums and re-opens the prices before the work reaches you.</p><div class="mm mm-vera" aria-hidden="true"><i></i><i></i><i></i><i></i></div><q>(Iris sends her the important work.)</q></article><article class="mem rv" style="--mc:#C46A00"><svg class="av" viewBox="0 0 44 44" aria-hidden="true"><rect width="44" height="44" rx="11" fill="#C46A00" fill-opacity=".13"/><svg x="10" y="10" width="24" height="24" viewBox="0 0 24 24"><path d="M12 4v16M4 12h16" stroke="#C46A00" stroke-width="1.9" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></svg><h3>Leo<span>builds new assistants</span></h3><p>Need an assistant that doesn't exist yet? Leo designs it. Testing each new member before it is called ready is planned.</p><div class="mm mm-leo" aria-hidden="true"><i></i><i></i><i></i><i></i></div><q>I need someone who tracks my domain renewals.</q></article></div>
     <p class="soft team-note rv" data-i="t_note">This is the starting team, not a limit. You can train your own for exactly the job you need, and we add new ready-made members over time. Renaming members and changing how they talk is built, not yet run live.</p>
+  </div>
+</section>
+
+<!-- BLOCK jobs: pick a member, read a finished chat for that job. The texts are lang/*.json "jobs"; the panels are built in build.py (jobs_block). -->
+<section class="sec" id="jobs">
+  <div class="wrap">
+    <div class="head">
+      <h2 class="wd" data-i="j_h">Hand each member a real job</h2>
+      <p class="lead rv" data-i="j_p">Pick a member to see a typical request and how they answer. The examples are made up.</p>
+    </div>
+    <figure class="jb rv rv-panel">
+      <div class="jobs" id="jobsBox"><div class="jb-tabs" role="tablist"><button type="button" role="tab" id="jt-portia" aria-selected="true" aria-controls="jp-portia" tabindex="0"><svg class="av" viewBox="0 0 44 44" aria-hidden="true"><rect width="44" height="44" rx="11" fill="#0E7C86" fill-opacity=".13"/><svg x="10" y="10" width="24" height="24" viewBox="0 0 24 24"><path d="M12 4v16M7 20h10M5 8h14M5 8l-2.5 6h5zM19 8l-2.5 6h5z" stroke="#0E7C86" stroke-width="1.9" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></svg><span><b>Portia</b><small>contracts</small></span></button><button type="button" role="tab" id="jt-penny" aria-selected="false" aria-controls="jp-penny" tabindex="-1"><svg class="av" viewBox="0 0 44 44" aria-hidden="true"><rect width="44" height="44" rx="11" fill="#A87900" fill-opacity=".13"/><svg x="10" y="10" width="24" height="24" viewBox="0 0 24 24"><path d="M7 4h10v16l-2.5-2-2.5 2-2.5-2L7 20zM10 9h4M10 13h4" stroke="#A87900" stroke-width="1.9" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></svg><span><b>Penny</b><small>invoices</small></span></button><button type="button" role="tab" id="jt-wren" aria-selected="false" aria-controls="jp-wren" tabindex="-1"><svg class="av" viewBox="0 0 44 44" aria-hidden="true"><rect width="44" height="44" rx="11" fill="#2B8A3E" fill-opacity=".13"/><svg x="10" y="10" width="24" height="24" viewBox="0 0 24 24"><path d="M4 20h16M6 16L16 5l3 3L9 19l-4 1z" stroke="#2B8A3E" stroke-width="1.9" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></svg><span><b>Wren</b><small>writing</small></span></button><button type="button" role="tab" id="jt-gus" aria-selected="false" aria-controls="jp-gus" tabindex="-1"><svg class="av" viewBox="0 0 44 44" aria-hidden="true"><rect width="44" height="44" rx="11" fill="#B5540B" fill-opacity=".13"/><svg x="10" y="10" width="24" height="24" viewBox="0 0 24 24"><path d="M14.5 5.5a4 4 0 004 4l-9 9-3-3 9-9z" stroke="#B5540B" stroke-width="1.9" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></svg><span><b>Gus</b><small>repairs</small></span></button></div><div class="jb-stage"><div class="jb-panel" role="tabpanel" id="jp-portia" aria-labelledby="jt-portia" tabindex="0"><div class="jb-chat"><div class="msg me"><div class="bub">Can I sign this lease? It's 12 pages.</div></div><div class="msg"><svg class="av" viewBox="0 0 44 44" aria-hidden="true"><rect width="44" height="44" rx="11" fill="#0E7C86" fill-opacity=".13"/><svg x="10" y="10" width="24" height="24" viewBox="0 0 24 24"><path d="M12 4v16M7 20h10M5 8h14M5 8l-2.5 6h5zM19 8l-2.5 6h5z" stroke="#0E7C86" stroke-width="1.9" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></svg><div class="bub"><span class="who">Portia</span>I read all 12 pages. Most of it is standard.</div></div><div class="msg"><svg class="av" viewBox="0 0 44 44" aria-hidden="true"><rect width="44" height="44" rx="11" fill="#0E7C86" fill-opacity=".13"/><svg x="10" y="10" width="24" height="24" viewBox="0 0 24 24"><path d="M12 4v16M7 20h10M5 8h14M5 8l-2.5 6h5zM19 8l-2.5 6h5z" stroke="#0E7C86" stroke-width="1.9" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></svg><div class="bub"><span class="who">Portia</span>Clause 7 lets the landlord raise the rent with one month's notice. Ask about it before you sign.</div></div></div></div><div class="jb-panel" role="tabpanel" id="jp-penny" aria-labelledby="jt-penny" tabindex="0"><div class="jb-chat"><div class="msg me"><div class="bub">Invoice Acme for last week's work.</div></div><div class="msg"><svg class="av" viewBox="0 0 44 44" aria-hidden="true"><rect width="44" height="44" rx="11" fill="#A87900" fill-opacity=".13"/><svg x="10" y="10" width="24" height="24" viewBox="0 0 24 24"><path d="M7 4h10v16l-2.5-2-2.5 2-2.5-2L7 20zM10 9h4M10 13h4" stroke="#A87900" stroke-width="1.9" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></svg><div class="bub"><span class="who">Penny</span>Draft ready: 18 hours, one invoice, payable in 30 days. I won't send it until you say so.</div></div><div class="msg"><svg class="av" viewBox="0 0 44 44" aria-hidden="true"><rect width="44" height="44" rx="11" fill="#A87900" fill-opacity=".13"/><svg x="10" y="10" width="24" height="24" viewBox="0 0 24 24"><path d="M7 4h10v16l-2.5-2-2.5 2-2.5-2L7 20zM10 9h4M10 13h4" stroke="#A87900" stroke-width="1.9" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></svg><div class="bub"><span class="who">Penny</span>Two older invoices are still unpaid. Want a polite reminder for each?</div></div></div></div><div class="jb-panel" role="tabpanel" id="jp-wren" aria-labelledby="jt-wren" tabindex="0"><div class="jb-chat"><div class="msg me"><div class="bub">Turn this voice note into a short post, in my style.</div></div><div class="msg"><svg class="av" viewBox="0 0 44 44" aria-hidden="true"><rect width="44" height="44" rx="11" fill="#2B8A3E" fill-opacity=".13"/><svg x="10" y="10" width="24" height="24" viewBox="0 0 24 24"><path d="M4 20h16M6 16L16 5l3 3L9 19l-4 1z" stroke="#2B8A3E" stroke-width="1.9" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></svg><div class="bub"><span class="who">Wren</span>Here is a first version: three short paragraphs, friendly, no jargon.</div></div><div class="msg"><svg class="av" viewBox="0 0 44 44" aria-hidden="true"><rect width="44" height="44" rx="11" fill="#2B8A3E" fill-opacity=".13"/><svg x="10" y="10" width="24" height="24" viewBox="0 0 24 24"><path d="M4 20h16M6 16L16 5l3 3L9 19l-4 1z" stroke="#2B8A3E" stroke-width="1.9" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></svg><div class="bub"><span class="who">Wren</span>I kept your joke about the Monday queue. Want it shorter?</div></div></div></div><div class="jb-panel" role="tabpanel" id="jp-gus" aria-labelledby="jt-gus" tabindex="0"><div class="jb-chat"><div class="msg me"><div class="bub">The door won't close. Here's a photo.</div></div><div class="msg"><svg class="av" viewBox="0 0 44 44" aria-hidden="true"><rect width="44" height="44" rx="11" fill="#B5540B" fill-opacity=".13"/><svg x="10" y="10" width="24" height="24" viewBox="0 0 24 24"><path d="M14.5 5.5a4 4 0 004 4l-9 9-3-3 9-9z" stroke="#B5540B" stroke-width="1.9" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></svg><div class="bub"><span class="who">Gus</span>The latch plate looks a few millimetres too low.</div></div><div class="msg"><svg class="av" viewBox="0 0 44 44" aria-hidden="true"><rect width="44" height="44" rx="11" fill="#B5540B" fill-opacity=".13"/><svg x="10" y="10" width="24" height="24" viewBox="0 0 24 24"><path d="M14.5 5.5a4 4 0 004 4l-9 9-3-3 9-9z" stroke="#B5540B" stroke-width="1.9" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></svg><div class="bub"><span class="who">Gus</span>Try this first: loosen the two screws, move the plate up, tighten them. If it still rubs, call a carpenter.</div></div></div></div></div></div>
+      <figcaption class="aw-cap" data-i="appCap">An illustrated example, not a recording of a real session. Every name and message in it is made up.</figcaption>
+    </figure>
   </div>
 </section>
 
@@ -984,41 +1246,6 @@ footer a{color:var(--ink)}
   </div>
 </section>
 
-<section class="sec" id="install">
-  <div class="wrap">
-    <div class="head">
-      <h2 class="wd" data-i="in_h">From install to your first useful task</h2>
-      <p class="lead rv" data-i="in_p">Four steps, in the real order. All the commands are also in one box further down, ready to copy.</p>
-    </div>
-    <ol class="inst">
-      <li class="rv">
-        <div class="pnl term" aria-hidden="true"><div class="tbar"><i></i><i></i><i></i></div><pre><span class="pr">$</span> git clone https://github.com/<wbr>MarcoDeliaBot/freeduet.git
-<span class="pr">$</span> cd freeduet
-<span class="pr">$</span> cp .env.example .env</pre></div>
-        <h3 data-i="in1h">Get the code</h3>
-        <p data-i="in1p">One command downloads FreeDuet from GitHub, and one copies the example settings file.</p>
-      </li>
-      <li class="rv">
-        <div class="pnl term" aria-hidden="true"><div class="tbar"><i></i><i></i><i></i></div><pre><span class="pr">$</span> bash scripts/start.sh</pre><ul class="pills"><li>Docker</li><li>Bash</li><li>Bun</li><li>Windows + WSL2</li></ul></div>
-        <h3 data-i="in2h">Run the start script</h3>
-        <p data-i="in2p">One script starts the app, the team and a separate computer for each member. It needs Docker, Bash and Bun. On Windows, run it inside WSL2.</p>
-      </li>
-      <li class="rv">
-        <div class="pnl term" aria-hidden="true"><div class="tbar"><i></i><i></i><i></i></div><pre><span class="pr">$</span> cd openbot &amp;&amp; docker compose exec -it agent-freeduet claude</pre>
-          <div class="sp"><svg><use href="#i-lock"/></svg><b>Claude Code</b><span class="ok"><svg><use href="#i-check"/></svg><span data-i="signedIn">Signed in</span></span></div></div>
-        <h3 data-i="in3h">Sign in once with your Claude plan</h3>
-        <p data-i="in3p">Open the official Claude Code sign-in and log in yourself. FreeDuet never sees, stores or forwards your login.</p>
-      </li>
-      <li class="rv">
-        <div class="pnl brw" aria-hidden="true"><div class="tbar"><i></i><i></i><i></i><span class="url">http://localhost:3010</span></div>
-          <div class="bd"><div class="msg me"><div class="bub" data-i="in4ex">What can I cook tonight with spinach and eggs?</div></div><div class="msg"><span data-av="iris"><svg class="av" viewBox="0 0 44 44" aria-hidden="true"><rect width="44" height="44" rx="11" fill="#1B4FD8"/><svg x="10" y="10" width="24" height="24" viewBox="0 0 24 24"><path d="M12 3l2.5 6.5L21 12l-6.5 2.5L12 21l-2.5-6.5L3 12l6.5-2.5z" stroke="#fff" stroke-width="1.9" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></svg></span><div class="bub"><span class="typing"><i></i><i></i><i></i></span></div></div></div></div>
-        <h3 data-i="in4h">Open the page and give Iris a small task</h3>
-        <p data-i="in4p">Go to localhost:3010 in your browser and write one small request. Iris picks the right assistant and brings you the answer.</p>
-      </li>
-    </ol>
-  </div>
-</section>
-
 <section class="sec alt" id="start">
   <div class="wrap">
     <div class="split">
@@ -1049,6 +1276,16 @@ cd openbot &amp;&amp; docker compose exec -it agent-freeduet claude
   </div>
 </section>
 
+<!-- BLOCK languages: a large greeting that cycles through the twelve languages, and the twelve real links. -->
+<section class="sec lgs" id="speak">
+  <div class="wrap">
+    <p class="hello" id="hello" aria-hidden="true">Hello</p>
+    <h2 class="wd" data-i="lg_h">Say hello in your language</h2>
+    <p class="lead rv" data-i="lg_p">This website exists in 12 languages. Choose yours.</p>
+    <div class="lg-pills rv" id="lgPills"><a href="/" hreflang="en" lang="en" aria-current="page">English</a><a href="/it/" hreflang="it" lang="it">Italiano</a><a href="/es/" hreflang="es" lang="es">Español</a><a href="/fr/" hreflang="fr" lang="fr">Français</a><a href="/de/" hreflang="de" lang="de">Deutsch</a><a href="/pt/" hreflang="pt" lang="pt">Português</a><a href="/pl/" hreflang="pl" lang="pl">Polski</a><a href="/tr/" hreflang="tr" lang="tr">Türkçe</a><a href="/ru/" hreflang="ru" lang="ru">Русский</a><a href="/zh/" hreflang="zh" lang="zh">中文</a><a href="/ja/" hreflang="ja" lang="ja">日本語</a><a href="/ko/" hreflang="ko" lang="ko">한국어</a></div>
+  </div>
+</section>
+
 <section class="band" id="coffee">
   <div class="wrap">
     <div>
@@ -1075,10 +1312,23 @@ cd openbot &amp;&amp; docker compose exec -it agent-freeduet claude
   </div>
 </section>
 
+<!-- BLOCK closing call to action -->
+<section class="sec dark cta-end" id="go">
+  <div class="wrap">
+    <h2 class="wd" data-i="c_h">Ready to give Iris a first small task?</h2>
+    <p class="lead rv" data-i="c_p">FreeDuet is free, open source and runs on your own computer. Get it from GitHub and start with something small.</p>
+    <div class="cta rv">
+      <a class="btn btn-main" href="https://github.com/MarcoDeliaBot/freeduet"><svg aria-hidden="true"><use href="#i-gh"/></svg><span data-i="cta1">Get FreeDuet on GitHub</span></a>
+      <a class="btn btn-quiet" href="#install" data-i="n5">Start</a>
+    </div>
+  </div>
+</section>
+
 </main>
 
 <footer>
   <div class="wrap">
+    <div class="foot-brand"><svg aria-hidden="true"><use href="#logo"/></svg><div><strong>FreeDuet</strong><p data-i="ft_tag">A free, open-source team of AI assistants, on your own computer.</p></div></div>
     <nav aria-label="Links">
       <a href="https://github.com/MarcoDeliaBot/freeduet">GitHub</a>
       <a href="https://github.com/MarcoDeliaBot/freeduet/blob/main/docs/TEAM.md" data-i="fl1">The team in detail</a>
@@ -1096,7 +1346,7 @@ cd openbot &amp;&amp; docker compose exec -it agent-freeduet claude
 "use strict";
 var GH="https://github.com/MarcoDeliaBot/freeduet";
 var M=[["iris","Iris","#1B4FD8","f1","M12 3l2.5 6.5L21 12l-6.5 2.5L12 21l-2.5-6.5L3 12l6.5-2.5z"],["otto","Otto","#E8590C","f1","M3 6h18v12H3zM3 7l9 7 9-7"],["portia","Portia","#0E7C86","f2","M12 4v16M7 20h10M5 8h14M5 8l-2.5 6h5zM19 8l-2.5 6h5z"],["penny","Penny","#A87900","f3","M7 4h10v16l-2.5-2-2.5 2-2.5-2L7 20zM10 9h4M10 13h4"],["jules","Jules","#C2255C","f1","M6 16v-5a6 6 0 0112 0v5l2 2H4zM10 21h4"],["wren","Wren","#2B8A3E","f3","M4 20h16M6 16L16 5l3 3L9 19l-4 1z"],["mark","Mark","#C92A2A","f1","M4 10v4h3l7 4V6l-7 4H4zM17.5 9.5a4 4 0 010 5"],["video","Cam","#7950F2","f2","M2.5 7h12v10h-12zM14.5 10.5l7-3.5v10l-7-3.5"],["gus","Gus","#B5540B","f1","M14.5 5.5a4 4 0 004 4l-9 9-3-3 9-9z"],["basil","Basil","#5C940D","f3","M5 19C5 9 11 5 19 5c0 8-4 14-14 14zM5 19l8-8"],["vera","Vera","#5C6B80","f2","M10.5 4a6.5 6.5 0 100 13 6.5 6.5 0 000-13zM15.5 15.5L20 20"],["leo","Leo","#C46A00","f1","M12 4v16M4 12h16"]];
-var D={"demo":[{"chip":"Reply to the plumber: Tuesday is fine","me":"Reply to the plumber's email: Tuesday at 9 is fine.","iris":"On it. This is a job for Otto.","who":"otto","line":"I found his email and wrote the reply. I won't send it until you say so.","card":[["Action","Send a reply"],["To","the plumber (same conversation)"],["Text","Good morning, Tuesday at 9 works for me. Thank you!"]],"ok":"Sent. One reply, in the same conversation. Nothing else was touched.","stop":"Not sent. The draft is saved if you change your mind."},{"chip":"Book a table for four on Friday","me":"Book a table for four on Friday evening, somewhere with pizza.","iris":"Got it. Jules handles bookings.","who":"jules","line":"I looked in my own browser and found a free table. I haven't booked anything yet.","card":[["Action","Book a table"],["Where","Pizzeria Example"],["When","Friday, 8:00 pm, 4 people"]],"ok":"Booked for Friday at 8:00 pm, 4 people. The confirmation is in your inbox.","stop":"Nothing booked. Tell me if you want other places."},{"chip":"What can I cook with spinach and eggs?","me":"What can I cook tonight with spinach and eggs?","iris":"Easy. Basil is the cook.","who":"basil","line":"Three ideas: a spinach omelette (10 minutes), baked eggs on spinach (20 minutes), or green pancakes (15 minutes). Want the steps for one?","card":null}],"ask":"Waiting for your yes","yes":"Approve","no":"Don't do it","nothing":"Nothing to approve: these are only ideas.","copy":"Copy the commands","copied":"Copied"};
+var D={"demo":[{"chip":"Reply to the plumber: Tuesday is fine","me":"Reply to the plumber's email: Tuesday at 9 is fine.","iris":"On it. This is a job for Otto.","who":"otto","line":"I found his email and wrote the reply. I won't send it until you say so.","card":[["Action","Send a reply"],["To","the plumber (same conversation)"],["Text","Good morning, Tuesday at 9 works for me. Thank you!"]],"ok":"Sent. One reply, in the same conversation. Nothing else was touched.","stop":"Not sent. The draft is saved if you change your mind."},{"chip":"Book a table for four on Friday","me":"Book a table for four on Friday evening, somewhere with pizza.","iris":"Got it. Jules handles bookings.","who":"jules","line":"I looked in my own browser and found a free table. I haven't booked anything yet.","card":[["Action","Book a table"],["Where","Pizzeria Example"],["When","Friday, 8:00 pm, 4 people"]],"ok":"Booked for Friday at 8:00 pm, 4 people. The confirmation is in your inbox.","stop":"Nothing booked. Tell me if you want other places."},{"chip":"What can I cook with spinach and eggs?","me":"What can I cook tonight with spinach and eggs?","iris":"Easy. Basil is the cook.","who":"basil","line":"Three ideas: a spinach omelette (10 minutes), baked eggs on spinach (20 minutes), or green pancakes (15 minutes). Want the steps for one?","card":null}],"ask":"Waiting for your yes","yes":"Approve","no":"Don't do it","nothing":"Nothing to approve: these are only ideas.","copy":"Copy the commands","copied":"Copied","hello":[["en","Hello"],["it","Ciao"],["es","Hola"],["fr","Bonjour"],["de","Hallo"],["pt","Olá"],["pl","Cześć"],["tr","Merhaba"],["ru","Привет"],["zh","你好"],["ja","こんにちは"],["ko","안녕하세요"]]};
 /* Runs inside the wrapper that tools/build.py writes into every page. The wrapper defines GH (the repository URL),
    M (the members, from members.json) and D (this page's demo strings). The page arrives complete in its own language:
    the team, the side list, the chips and the first demo state are already in the HTML. This script only adds behaviour. */
@@ -1291,6 +1541,99 @@ cp.addEventListener("click",function(){
    try{sessionStorage.setItem("fd-stars",JSON.stringify({n:n,t:Date.now()}));}catch(x){}
   }).catch(function(){});
  }catch(x){}
+})();
+
+/* =====================================================================================================================
+   PREVIEW BLOCKS. Each IIFE below belongs to one block of body.html and can be deleted with it.
+   ===================================================================================================================== */
+
+/* ---------- BLOCK hero: the demo plays by itself (ask, hand-off, card, Approve) until the person touches it ---------- */
+(function(){
+ var btn=document.getElementById("loop"),fig=document.querySelector(".appfig"),win=fig&&fig.querySelector(".appwin");
+ if(!btn||!win||reduced())return;          /* reduced motion: the demo stays still, as before, and the control stays hidden */
+ btn.hidden=false;
+ var playing=true,vis=false,auto=false,timer=null,gen=0;
+ function paint(){
+  btn.setAttribute("aria-pressed",playing?"false":"true");
+  win.classList.toggle("live",playing&&vis);
+  chat.setAttribute("aria-live",playing?"off":"polite");   /* a screen reader is not read a chat that changes by itself */
+ }
+ function wait(ms,fn){var g=gen;clearTimeout(timer);timer=setTimeout(function(){if(g===gen&&playing&&vis&&!document.hidden)fn();},ms);}
+ function approve(){
+  var b=document.querySelector('#ask .yes');
+  if(!b){wait(3400,nextDemo);return;}
+  b.classList.add("pressed");
+  wait(450,function(){auto=true;b.click();auto=false;wait(3400,nextDemo);});
+ }
+ function nextDemo(){auto=true;show((cur+1)%D.demo.length,true);auto=false;paint();wait(4200,approve);}
+ function start(){gen++;paint();wait(2600,approve);}
+ function stop(){if(!playing)return;playing=false;gen++;clearTimeout(timer);paint();}
+ btn.addEventListener("click",function(){if(playing){stop();}else{playing=true;start();}});
+ /* any real action in the window ends the autoplay for good (until Play is pressed) */
+ win.addEventListener("pointerdown",function(e){if(!auto&&!btn.contains(e.target))stop();},true);
+ win.addEventListener("keydown",function(e){if(!auto&&!btn.contains(e.target))stop();},true);
+ if("IntersectionObserver" in window){
+  new IntersectionObserver(function(es){var v=es[0].isIntersecting;if(v===vis)return;vis=v;paint();if(vis&&playing)start();else{gen++;clearTimeout(timer);}},{threshold:.4}).observe(win);
+ }else{vis=true;start();}
+ document.addEventListener("visibilitychange",function(){if(!document.hidden&&playing&&vis)start();});
+ paint();
+})();
+
+/* ---------- BLOCK team: each card plays its small scene once when it is half visible, and again on hover or focus ---------- */
+(function(){
+ var cards=qsa(".mem");if(!cards.length)return;
+ function play(c){if(reduced())return;c.classList.remove("go");void c.offsetWidth;c.classList.add("go");}
+ if("IntersectionObserver" in window){
+  var o=new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting){o.unobserve(e.target);play(e.target);}});},{threshold:.55});
+  cards.forEach(function(c){o.observe(c);});
+ }
+ cards.forEach(function(c){
+  var at=0;
+  function again(){var n=Date.now();if(n-at<2600)return;at=n;play(c);}
+  c.addEventListener("pointerenter",again);c.addEventListener("focusin",again);
+ });
+})();
+
+/* ---------- BLOCK jobs: a real tab list (arrow keys, Home, End); the panels are already in the page ---------- */
+(function(){
+ var box=document.getElementById("jobsBox");if(!box)return;
+ var tabs=qsa("#jobsBox [role=tab]"),panels=qsa("#jobsBox [role=tabpanel]");
+ function pick(i,focus){
+  tabs.forEach(function(t,k){var on=k===i;t.setAttribute("aria-selected",on?"true":"false");t.tabIndex=on?0:-1;});
+  panels.forEach(function(p,k){p.classList.remove("on");if(k===i){void p.offsetWidth;if(!reduced()&&focus!==null)p.classList.add("on");else p.classList.add("on","still");}});
+  if(focus)tabs[i].focus();
+ }
+ panels.forEach(function(p,k){p.classList.toggle("on",k===0);});
+ box.addEventListener("click",function(e){var t=e.target.closest("[role=tab]");if(t)pick(tabs.indexOf(t),false);});
+ box.addEventListener("keydown",function(e){
+  var t=e.target.closest("[role=tab]");if(!t)return;
+  var i=tabs.indexOf(t),n=tabs.length,j=-1;
+  if(e.key==="ArrowRight"||e.key==="ArrowDown")j=(i+1)%n;
+  else if(e.key==="ArrowLeft"||e.key==="ArrowUp")j=(i+n-1)%n;
+  else if(e.key==="Home")j=0;else if(e.key==="End")j=n-1;
+  if(j<0)return;e.preventDefault();pick(j,true);
+ });
+})();
+
+/* ---------- BLOCK languages: the big greeting changes language while the section is in view ---------- */
+(function(){
+ var el=document.getElementById("hello"),box=document.getElementById("lgPills");
+ if(!el||!box||!D.hello)return;
+ var list=D.hello,pills=qsa("#lgPills a"),i=0,timer=null,vis=false;
+ for(var k=0;k<list.length;k++)if(list[k][0]===lang)i=k;
+ function set(k){
+  el.textContent=list[k][1];el.setAttribute("lang",list[k][0]);
+  pills.forEach(function(a){a.classList.toggle("hot",a.getAttribute("hreflang")===list[k][0]);});
+ }
+ el.setAttribute("lang",lang);
+ if(reduced()||!("IntersectionObserver" in window))return;   /* still: this page's own greeting and the twelve links */
+ function step(){
+  el.classList.add("swap");
+  setTimeout(function(){i=(i+1)%list.length;set(i);el.classList.remove("swap");},350);
+ }
+ function run(){clearInterval(timer);timer=null;if(vis&&!document.hidden)timer=setInterval(step,1900);}
+ new IntersectionObserver(function(es){vis=es[0].isIntersecting;run();},{threshold:.3}).observe(el);
+ document.addEventListener("visibilitychange",run);
 })();
 
 })();

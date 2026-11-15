@@ -301,5 +301,44 @@
    "line": "Tres ideas: tortilla de espinacas (10 minutos), huevos al horno sobre espinacas (20 minutos) o tortitas verdes (15 minutos). ¿Quieres los pasos de alguna?",
    "card": null
   }
- ]
+ ],
+ "loopPause": "Pausar la demostración",
+ "loopPlay": "Reanudar la demostración",
+ "j_h": "Dale a cada miembro un trabajo de verdad",
+ "j_p": "Elige un miembro para ver una petición típica y cómo responde. Los ejemplos son inventados.",
+ "jobs": {
+  "portia": [
+   "¿Puedo firmar este alquiler? Son 12 páginas.",
+   "Leí las 12 páginas. Casi todo es normal.",
+   "La cláusula 7 deja que el propietario suba la renta avisando con un mes. Pregunta por ella antes de firmar."
+  ],
+  "penny": [
+   "Factura a Acme por el trabajo de la semana pasada.",
+   "Borrador listo: 18 horas, una factura, a pagar en 30 días. No la envío hasta que me lo digas.",
+   "Dos facturas más antiguas siguen sin pagar. ¿Quieres un recordatorio amable para cada una?"
+  ],
+  "wren": [
+   "Convierte esta nota de voz en una publicación corta, con mi estilo.",
+   "Aquí tienes una primera versión: tres párrafos cortos, cercanos y sin jerga.",
+   "Dejé tu chiste sobre la cola del lunes. ¿La quieres más corta?"
+  ],
+  "gus": [
+   "La puerta no cierra. Aquí va la foto.",
+   "La placa del pestillo parece unos milímetros demasiado baja.",
+   "Prueba primero esto: afloja los dos tornillos, sube la placa y apriétalos. Si sigue rozando, llama a un carpintero."
+  ]
+ },
+ "lg_h": "Di hola en tu idioma",
+ "lg_p": "Esta web existe en 12 idiomas. Elige el tuyo.",
+ "tr1t": "Licencia MIT",
+ "tr1s": "Libre para usar, cambiar y compartir, también en la empresa.",
+ "tr2t": "43 de 43 casos de prueba",
+ "tr2s": "Y 45 de 45 pruebas de seguridad, en el informe público de la v0.1.",
+ "tr3t": "Tu ordenador, tu inicio de sesión",
+ "tr3s": "Funciona con el plan de Claude que ya pagas. Sin clave de API.",
+ "tr4t": "Tu sí para las acciones reales",
+ "tr4s": "Por defecto, enviar, pagar, firmar, reservar y borrar esperan por ti.",
+ "c_h": "¿Listo para darle a Iris una primera tarea pequeña?",
+ "c_p": "FreeDuet es gratis, de código abierto y funciona en tu propio ordenador. Consíguelo en GitHub y empieza con algo pequeño.",
+ "ft_tag": "Un equipo gratuito y de código abierto de asistentes de IA, en tu propio ordenador."
 }

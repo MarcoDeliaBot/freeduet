@@ -301,5 +301,44 @@
    "line": "Three ideas: a spinach omelette (10 minutes), baked eggs on spinach (20 minutes), or green pancakes (15 minutes). Want the steps for one?",
    "card": null
   }
- ]
+ ],
+ "loopPause": "Pause the demo",
+ "loopPlay": "Play the demo",
+ "j_h": "Hand each member a real job",
+ "j_p": "Pick a member to see a typical request and how they answer. The examples are made up.",
+ "jobs": {
+  "portia": [
+   "Can I sign this lease? It's 12 pages.",
+   "I read all 12 pages. Most of it is standard.",
+   "Clause 7 lets the landlord raise the rent with one month's notice. Ask about it before you sign."
+  ],
+  "penny": [
+   "Invoice Acme for last week's work.",
+   "Draft ready: 18 hours, one invoice, payable in 30 days. I won't send it until you say so.",
+   "Two older invoices are still unpaid. Want a polite reminder for each?"
+  ],
+  "wren": [
+   "Turn this voice note into a short post, in my style.",
+   "Here is a first version: three short paragraphs, friendly, no jargon.",
+   "I kept your joke about the Monday queue. Want it shorter?"
+  ],
+  "gus": [
+   "The door won't close. Here's a photo.",
+   "The latch plate looks a few millimetres too low.",
+   "Try this first: loosen the two screws, move the plate up, tighten them. If it still rubs, call a carpenter."
+  ]
+ },
+ "lg_h": "Say hello in your language",
+ "lg_p": "This website exists in 12 languages. Choose yours.",
+ "tr1t": "MIT licence",
+ "tr1s": "Free to use, change and share, also for business.",
+ "tr2t": "43 of 43 test cases",
+ "tr2s": "And 45 of 45 safety runs, in the public v0.1 report.",
+ "tr3t": "Your computer, your login",
+ "tr3s": "Runs on the Claude plan you already pay for. No API key.",
+ "tr4t": "Your yes for real actions",
+ "tr4s": "By default, send, pay, sign, book and delete wait for you.",
+ "c_h": "Ready to give Iris a first small task?",
+ "c_p": "FreeDuet is free, open source and runs on your own computer. Get it from GitHub and start with something small.",
+ "ft_tag": "A free, open-source team of AI assistants, on your own computer."
 }

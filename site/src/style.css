@@ -533,3 +533,204 @@ footer a{color:var(--ink)}
   /* the orb that sat behind the headline moves to the lower right, behind the window */
   .o1{top:auto;bottom:-4rem;left:auto;right:-2rem}
 }
+
+/* =====================================================================================================================
+   PREVIEW BLOCKS (landing page preview). Each block below is separate: delete its CSS, its <section> in body.html and its
+   function in app.js and nothing else changes. Only transform, translate, scale, opacity and filter are animated; with
+   prefers-reduced-motion the rule above (animation:none!important) leaves every scene in its finished state.
+   ===================================================================================================================== */
+
+/* ---------- BLOCK hero: the headline in very large type, the product window staged right under it, alive ---------- */
+.tries-h{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:8px}
+.tries-h p{margin:0}
+.loopbtn{display:inline-flex;align-items:center;gap:7px;font:inherit;font-size:.82rem;color:var(--ink-soft);background:var(--card);border:1px solid var(--line);border-radius:999px;padding:5px 12px 5px 10px;min-height:32px;cursor:pointer;transition:border-color .3s var(--ease),color .3s var(--ease)}
+.loopbtn:hover{border-color:var(--ink);color:var(--ink)}
+.loopbtn svg{width:14px;height:14px;flex:none}
+.loopbtn .ic-play,.loopbtn .lq{display:none}
+.loopbtn[aria-pressed="true"] .ic-play,.loopbtn[aria-pressed="true"] .lq{display:inline-block}
+.loopbtn[aria-pressed="true"] .ic-pause,.loopbtn[aria-pressed="true"] .lp{display:none}
+.card-ask .yes.pressed{transform:scale(.94);box-shadow:0 0 0 4px rgba(15,123,88,.25)}
+.card-ask .yes{transition:transform .25s var(--ease),box-shadow .25s var(--ease)}
+.appwin.live .aw-bar::after{content:"";width:8px;height:8px;border-radius:50%;background:var(--mint);margin-left:4px;animation:livedot 1.6s ease-in-out infinite}
+@keyframes livedot{50%{opacity:.25}}
+@media (min-width:1100px){
+  .hero{padding-top:7.5rem;padding-bottom:calc(var(--mf)*.4 + 1.5rem)}
+  .hero .wrap{max-width:80rem;grid-template-columns:minmax(0,1fr);gap:clamp(3rem,4vw,4rem)}
+  .hero-copy{max-width:none;text-align:center}
+  .hero h1{font-size:clamp(4.5rem,2.2rem + 5.6vw,8.25rem);line-height:.96;letter-spacing:-.045em;max-width:14ch;margin-inline:auto}
+  html[lang="ru"] .hero h1{font-size:clamp(4rem,2rem + 4.4vw,6.5rem)}
+  html[lang="de"] .hero h1,html[lang="fr"] .hero h1,html[lang="pt"] .hero h1,html[lang="pl"] .hero h1,html[lang="tr"] .hero h1{font-size:clamp(4rem,2rem + 4.8vw,7rem)}
+  html[lang="ja"] .hero h1,html[lang="zh"] .hero h1,html[lang="ko"] .hero h1{font-size:clamp(3.5rem,2rem + 3.6vw,5.75rem);max-width:16ch}
+  .hero .lead{margin-inline:auto;max-width:46rem}
+  .hero .cta,.hero .facts{justify-content:center}
+  .hero .appfig{width:100%;max-width:62rem;margin:0 auto}
+  .hero .aw-side{display:block}
+  .hero .aw-body{grid-template-columns:250px minmax(0,1fr)}
+  .hero .aw-cap{text-align:center}
+  .o1{top:6rem;left:3%;right:auto;bottom:auto}
+}
+
+/* ---------- BLOCK trust: only facts that can be checked, each one links to its proof ---------- */
+.trust{background:var(--card);border-bottom:1px solid var(--line);padding:clamp(1.5rem,3vw,2.25rem) 0}
+.trust-l{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:clamp(1rem,2vw,2rem)}
+.trust-l a{display:grid;grid-template-columns:22px minmax(0,1fr);gap:2px 10px;align-content:start;color:var(--ink);text-decoration:none;padding:10px 0;border-radius:10px}
+.trust-l svg{grid-row:1/3;width:20px;height:20px;color:var(--mint);margin-top:3px}
+.trust-l b{font-family:var(--display);font-weight:700;font-size:1.02rem;line-height:1.3;letter-spacing:-.01em}
+.trust-l span{font-size:.88rem;line-height:1.45;color:var(--ink-soft)}
+.trust-l a:hover b{text-decoration:underline;text-underline-offset:3px}
+@media (max-width:980px){.trust-l{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:560px){.trust-l{grid-template-columns:minmax(0,1fr);gap:0}.trust-l li+li{border-top:1px solid var(--line)}}
+
+/* ---------- BLOCK install: the four steps get a rail that fills as they appear, and the panels play their step once ---------- */
+.inst>li{position:relative}
+.inst>li::before{content:"";position:absolute;left:0;right:calc(clamp(1.25rem,2.2vw,2rem)*-1);top:-1.4rem;height:2px;background:var(--line)}
+.inst>li:last-child::before{right:0}
+.inst>li::after{content:"";position:absolute;left:0;right:calc(clamp(1.25rem,2.2vw,2rem)*-1);top:-1.4rem;height:2px;background:var(--blue);transform-origin:left;transform:scaleX(0);transition:transform 1s var(--ease) .15s}
+.inst>li:last-child::after{right:0}
+.inst>li.in::after{transform:scaleX(1)}
+.inst .term pre .l{display:block}
+.js:not(.no-rv) .inst>li:not(.in) .term pre .l{opacity:0}
+.js:not(.no-rv) .inst>li.in .term pre .l{animation:lnin .5s var(--ease) calc(.5s + var(--k,0)*.45s) backwards}
+@keyframes lnin{from{opacity:0;transform:translateX(-10px)}}
+.js:not(.no-rv) .inst>li:not(.in) .term .sp,.js:not(.no-rv) .inst>li:not(.in) .brw .bd>*{opacity:0}
+.js:not(.no-rv) .inst>li.in .term .sp{animation:mm-pop .5s var(--ease) 1.4s backwards}
+.js:not(.no-rv) .inst>li.in .brw .bd>*{animation:lnin .6s var(--ease) calc(.5s + var(--k,0)*.7s) backwards}
+@media (max-width:980px){.inst>li::before,.inst>li::after{display:none}}
+
+/* ---------- BLOCK team: a small scene on every card that shows what the member does. Plays once on scroll, again on hover ---------- */
+.mm{--ln:#C9D2E0;--mm:var(--mc);grid-column:1/-1;position:relative;height:54px;border-radius:12px;overflow:hidden;background:#F3F5F9}
+.mem.boss{--mc:#1B4FD8}
+.mem.boss .mm{--ln:rgba(255,255,255,.32);--mm:#8FB0FF;background:rgba(255,255,255,.08)}
+.mm i{position:absolute;display:block;border-radius:4px;transform-origin:left center}
+.mem.go .mm i{animation-duration:.8s;animation-timing-function:var(--ease);animation-fill-mode:backwards}
+@keyframes mm-grow{from{transform:scaleX(0)}}
+@keyframes mm-rise{from{transform:scaleY(0)}}
+@keyframes mm-pop{from{opacity:0;transform:scale(.3)}}
+@keyframes mm-in{from{opacity:0;transform:translateX(-16px)}}
+@keyframes mm-fade{from{opacity:0}}
+@keyframes mm-out{from{opacity:1}to{opacity:0}}
+/* Iris hands the work out to three members */
+.mm-iris i:nth-child(1){left:6%;top:15px;width:24px;height:24px;border-radius:8px;background:var(--mm)}
+.mm-iris i:nth-child(n+2){top:19px;width:16%;height:16px;border-radius:8px;border:2px solid var(--mm);background:transparent}
+.mm-iris i:nth-child(2){left:30%}.mm-iris i:nth-child(3){left:51%}.mm-iris i:nth-child(4){left:72%}
+.mem.go .mm-iris i:nth-child(n+2){animation-name:mm-in}
+.mem.go .mm-iris i:nth-child(2){animation-delay:.3s}.mem.go .mm-iris i:nth-child(3){animation-delay:.6s}.mem.go .mm-iris i:nth-child(4){animation-delay:.9s}
+/* Otto: a reply grows line by line, then waits for your yes */
+.mm-otto i:nth-child(1){left:6%;top:14px;width:30px;height:24px;border:2px solid var(--mm);border-radius:5px}
+.mm-otto i:nth-child(2){left:26%;top:16px;width:52%;height:7px;background:var(--ln)}
+.mm-otto i:nth-child(3){left:26%;top:30px;width:38%;height:7px;background:var(--ln)}
+.mm-otto i:nth-child(4){right:6%;top:15px;width:24px;height:24px;border-radius:50%;background:var(--coral)}
+.mem.go .mm-otto i:nth-child(2){animation-name:mm-grow;animation-delay:.2s}.mem.go .mm-otto i:nth-child(3){animation-name:mm-grow;animation-delay:.6s}.mem.go .mm-otto i:nth-child(4){animation-name:mm-pop;animation-delay:1.3s}
+/* Portia: small print, then the one clause that matters is marked */
+.mm-portia i:nth-child(-n+3){left:6%;height:7px;background:var(--ln)}
+.mm-portia i:nth-child(1){top:11px;width:70%}.mm-portia i:nth-child(2){top:23px;width:58%}.mm-portia i:nth-child(3){top:35px;width:66%}
+.mm-portia i:nth-child(4){left:4%;top:19.500px;width:64%;height:15px;border-radius:5px;background:rgba(242,183,53,.55);mix-blend-mode:multiply}
+.mem.go .mm-portia i:nth-child(-n+3){animation-name:mm-grow}.mem.go .mm-portia i:nth-child(2){animation-delay:.15s}.mem.go .mm-portia i:nth-child(3){animation-delay:.3s}
+.mem.go .mm-portia i:nth-child(4){animation-name:mm-grow;animation-delay:.9s}
+/* Penny: one invoice turns from unpaid to paid, one stays unpaid */
+.mm-penny i:nth-child(1){left:6%;top:12px;width:44%;height:8px;background:var(--ln)}
+.mm-penny i:nth-child(2),.mm-penny i:nth-child(3){right:6%;top:9px;width:26%;height:14px;border-radius:999px}
+.mm-penny i:nth-child(2){background:#F2B735}.mm-penny i:nth-child(3){background:var(--mint)}
+.mm-penny i:nth-child(4){left:6%;top:33px;width:44%;height:8px;background:var(--ln)}
+.mm-penny::after{content:"";position:absolute;right:6%;top:31px;width:26%;height:14px;border-radius:999px;background:#F2B735}
+.mem.go .mm-penny i:nth-child(2){animation-name:mm-out;animation-delay:.9s;animation-fill-mode:both;animation-duration:.5s}.mem.go .mm-penny i:nth-child(3){animation-name:mm-fade;animation-delay:.9s;animation-duration:.5s}
+.mem.go .mm-penny i:nth-child(1),.mem.go .mm-penny i:nth-child(4){animation-name:mm-grow}
+/* Jules: looks in its own browser, finds a free table */
+.mm-jules i:nth-child(1){left:6%;top:9px;width:88%;height:8px;background:var(--ln)}
+.mm-jules i:nth-child(2),.mm-jules i:nth-child(3){top:24px;width:26%;height:20px;border-radius:6px;border:2px solid var(--ln)}
+.mm-jules i:nth-child(2){left:6%}.mm-jules i:nth-child(3){left:36%;border-color:var(--mm)}
+.mm-jules i:nth-child(4){left:66%;top:24px;width:20px;height:20px;border-radius:50%;background:var(--mm)}
+.mem.go .mm-jules i:nth-child(1){animation-name:mm-grow}.mem.go .mm-jules i:nth-child(2){animation-name:mm-fade;animation-delay:.4s}.mem.go .mm-jules i:nth-child(3){animation-name:mm-fade;animation-delay:.7s}.mem.go .mm-jules i:nth-child(4){animation-name:mm-pop;animation-delay:1.1s}
+/* Wren: rough notes become lines of finished text */
+.mm-wren i:nth-child(-n+3){left:6%;height:7px;background:var(--ln)}
+.mm-wren i:nth-child(1){top:12px;width:84%}.mm-wren i:nth-child(2){top:24px;width:70%}.mm-wren i:nth-child(3){top:36px;width:46%;background:var(--mm)}
+.mem.go .mm-wren i:nth-child(-n+3){animation-name:mm-grow;animation-duration:.9s}.mem.go .mm-wren i:nth-child(2){animation-delay:.5s}.mem.go .mm-wren i:nth-child(3){animation-delay:1s}
+.mm-wren i:nth-child(4){display:none}
+/* Mark: a plan, as bars that rise */
+.mm-mark i{bottom:0;width:11%;transform-origin:center bottom;border-radius:4px 4px 0 0;background:var(--ln)}
+.mm-mark i:nth-child(1){left:8%;height:36%}.mm-mark i:nth-child(2){left:26%;height:58%}.mm-mark i:nth-child(3){left:44%;height:80%;background:var(--mm)}
+.mm-mark i:nth-child(4){display:none}
+.mem.go .mm-mark i{animation-name:mm-rise}.mem.go .mm-mark i:nth-child(2){animation-delay:.2s}.mem.go .mm-mark i:nth-child(3){animation-delay:.4s}
+.mm-mark::after{content:"";position:absolute;right:8%;top:14px;width:30%;height:7px;border-radius:4px;background:var(--ln);box-shadow:0 14px 0 var(--ln),0 28px 0 -0px transparent}
+/* Cam: a clip is cut, the timeline plays */
+.mm-video i:nth-child(1){left:6%;top:30px;width:88%;height:12px;background:var(--ln)}
+.mm-video i:nth-child(2){left:6%;top:30px;width:56%;height:12px;background:var(--mm)}
+.mm-video i:nth-child(3){left:6%;top:10px;width:30%;height:12px;background:var(--ln);border:2px solid var(--mm)}
+.mm-video i:nth-child(4){left:40%;top:10px;width:22%;height:12px;background:var(--ln)}
+.mem.go .mm-video i:nth-child(2){animation-name:mm-grow;animation-duration:1.8s;animation-delay:.3s}.mem.go .mm-video i:nth-child(3){animation-name:mm-pop;animation-delay:.2s}.mem.go .mm-video i:nth-child(4){animation-name:mm-pop;animation-delay:.5s}
+/* Gus: a photo of the problem, then a short safe checklist */
+.mm-gus i:nth-child(1){left:6%;top:9px;width:36px;height:36px;border-radius:8px;border:2px solid var(--mm);background:var(--ln)}
+.mm-gus i:nth-child(n+2){left:28%;height:7px;background:var(--ln)}
+.mm-gus i:nth-child(2){top:12px;width:56%}.mm-gus i:nth-child(3){top:24px;width:46%}.mm-gus i:nth-child(4){top:36px;width:36%;background:var(--mm)}
+.mem.go .mm-gus i:nth-child(1){animation-name:mm-pop}.mem.go .mm-gus i:nth-child(n+2){animation-name:mm-in}.mem.go .mm-gus i:nth-child(2){animation-delay:.4s}.mem.go .mm-gus i:nth-child(3){animation-delay:.7s}.mem.go .mm-gus i:nth-child(4){animation-delay:1s}
+/* Basil: three dishes appear */
+.mm-basil i:nth-child(-n+3){top:11px;width:32px;height:32px;border-radius:50%;border:3px solid var(--ln);background:#fff}
+.mm-basil i:nth-child(1){left:8%}.mm-basil i:nth-child(2){left:26%;border-color:var(--mm)}.mm-basil i:nth-child(3){left:44%}
+.mm-basil i{transform-origin:center}
+.mm-basil i:nth-child(4){display:none}
+.mem.go .mm-basil i:nth-child(-n+3){animation-name:mm-pop}.mem.go .mm-basil i:nth-child(2){animation-delay:.25s}.mem.go .mm-basil i:nth-child(3){animation-delay:.5s}
+/* Vera: every line gets checked, one after another */
+.mm-vera i:nth-child(-n+3){left:6%;width:60%;height:7px;background:var(--ln)}
+.mm-vera i:nth-child(1){top:9px}.mm-vera i:nth-child(2){top:23px}.mm-vera i:nth-child(3){top:37px}
+.mm-vera i:nth-child(4){display:none}
+.mm-vera::before,.mm-vera::after{content:"";position:absolute}
+.mm-vera i:nth-child(-n+3)::after{content:"";position:absolute;left:calc(100% + 18px);top:-2px;width:11px;height:11px;border-radius:50%;background:var(--mint)}
+.mem.go .mm-vera i:nth-child(-n+3)::after{animation:mm-pop .5s var(--ease) calc(.4s + var(--k,0)*.4s) backwards}
+.mem.go .mm-vera i:nth-child(2)::after{--k:1}.mem.go .mm-vera i:nth-child(3)::after{--k:2}
+/* Leo: an empty slot is filled with a new member */
+.mm-leo i:nth-child(1),.mm-leo i:nth-child(2){top:11px;width:32px;height:32px;border-radius:10px}
+.mm-leo i:nth-child(1){left:8%;background:var(--ln)}
+.mm-leo i:nth-child(2){left:26%;border:2px dashed var(--ln)}
+.mm-leo i:nth-child(3){left:26%;top:11px;width:32px;height:32px;border-radius:10px;background:var(--mm)}
+.mm-leo i:nth-child(4){display:none}
+.mm-leo i:nth-child(3),.mm-leo i:nth-child(1){transform-origin:center}
+.mem.go .mm-leo i:nth-child(3){animation-name:mm-pop;animation-delay:.9s}
+
+/* ---------- BLOCK jobs: pick a member, read the chat ---------- */
+.jb{margin:0}
+.jb-tabs{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px}
+.jb-tabs button{display:flex;align-items:center;gap:10px;font:inherit;text-align:left;color:var(--ink);background:var(--card);border:1px solid var(--line);border-radius:999px;padding:7px 18px 7px 8px;min-height:52px;cursor:pointer;transition:border-color .3s var(--ease),background-color .3s var(--ease),color .3s var(--ease)}
+.jb-tabs button:hover{border-color:var(--ink)}
+.jb-tabs button[aria-selected="true"]{background:var(--ink);color:#fff;border-color:var(--ink)}
+.jb-tabs .av{width:36px;height:36px;flex:none}
+.jb-tabs button span{display:grid;line-height:1.2}
+.jb-tabs b{font-family:var(--display);font-size:.98rem}
+.jb-tabs small{font-size:.78rem;color:var(--ink-soft)}
+.jb-tabs button[aria-selected="true"] small{color:#C9D3E5}
+.jb-stage{background:var(--paper);border:1px solid var(--line);border-radius:var(--r-lg);padding:clamp(1.1rem,2.6vw,2rem);box-shadow:var(--shadow);display:grid}
+.jb-panel{grid-area:1/1;min-width:0}
+.jb-panel:focus-visible{outline:3px solid var(--blue);outline-offset:6px;border-radius:12px}
+.js .jb-panel:not(.on){visibility:hidden;pointer-events:none}
+.jb-chat{display:grid;gap:12px;align-content:start}
+.jb-chat .msg{max-width:min(46rem,100%)}
+.jb-chat .msg.me{justify-self:end}
+.jb-chat .bub{font-size:1.02rem;max-width:none}
+.jb-panel.on .msg{animation:lnin .6s var(--ease) backwards}
+.jb-panel.on .msg:nth-child(2){animation-delay:.5s}.jb-panel.on .msg:nth-child(3){animation-delay:1.1s}
+.figure-cap,.jb .aw-cap{margin-top:14px}
+
+/* ---------- BLOCK languages: the greeting changes language, the twelve links stay put ---------- */
+.lgs{text-align:center;background:var(--paper);border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+.lgs .wrap{display:grid;justify-items:center;gap:clamp(1.25rem,2vw,1.75rem)}
+.hello{font-family:var(--display);font-weight:500;font-size:clamp(3.75rem,2rem + 11vw,12rem);line-height:1.08;letter-spacing:-.05em;margin:0 0 clamp(.5rem,2vw,1.5rem);max-width:none;min-height:1.1em;color:var(--ink);transition:opacity .35s var(--ease),transform .35s var(--ease),filter .35s var(--ease);overflow-wrap:anywhere}
+.hello.swap{opacity:0;transform:translateY(.12em);filter:blur(6px)}
+.lgs h2{max-width:none}
+.lgs .lead{color:var(--ink-soft)}
+.lg-pills{display:flex;flex-wrap:wrap;justify-content:center;gap:8px;max-width:52rem}
+.lg-pills a{display:inline-flex;align-items:center;min-height:44px;padding:8px 18px;border-radius:999px;border:1px solid var(--line);background:var(--card);color:var(--ink);text-decoration:none;font-size:.98rem;transition:border-color .3s var(--ease),background-color .3s var(--ease),color .3s var(--ease),transform .3s var(--ease)}
+.lg-pills a:hover{border-color:var(--ink);transform:translateY(-2px)}
+.lg-pills a[aria-current="page"]{background:var(--ink);border-color:var(--ink);color:#fff}
+.lg-pills a.hot:not([aria-current]){background:var(--blue-tint);border-color:var(--blue);color:var(--blue)}
+
+/* ---------- BLOCK closing call to action and footer presence ---------- */
+.cta-end{text-align:center}
+.cta-end .wrap{display:grid;justify-items:center;gap:clamp(1.5rem,2.4vw,2.25rem)}
+.cta-end h2{font-size:clamp(2.4rem,1.2rem + 5vw,5.5rem);max-width:16ch;line-height:1}
+.cta-end .lead{color:#C9D3E5}
+.cta-end .cta{justify-content:center;margin:0}
+.sec.dark.cta-end .btn-quiet{color:var(--ink)}
+.foot-brand{display:flex;align-items:center;gap:14px;margin-bottom:6px}
+.foot-brand svg{width:44px;height:44px;flex:none}
+.foot-brand strong{font-family:var(--display);font-size:1.3rem;color:var(--ink);letter-spacing:-.02em}
+.foot-brand p{margin:0;max-width:46ch}
+@media (max-width:440px){.cta-end .cta .btn{width:100%;justify-content:center}}
