@@ -24,6 +24,17 @@ import { mock } from "bun:test";
 import { GlobalRegistrator } from "@happy-dom/global-registrator";
 
 GlobalRegistrator.register();
+/*
+ * happy-dom 21 adds Element.animate and Element.getAnimations (the Web Animations methods). Two code
+ * paths test for them and take another route when they exist: motion-dom animates opacity and
+ * transform through the element's own animate() once Element.prototype has one, and Base UI waits
+ * on getAnimations() before it unmounts a popup. The tests step motion's frames by hand
+ * (run-motion-frames.ts), and neither path ran under happy-dom 20, so both are removed here and the
+ * suite runs the path it always ran. Without this, four tests time out or fail, and each failing
+ * waitFor check formats a DOM element of several megabytes.
+ */
+for (const name of ["animate", "getAnimations"] as const)
+  Reflect.deleteProperty(globalThis.Element.prototype, name);
 /* `@base-ui/utils` is not a dependency of this package; the react package that owns it is. */
 await import("@base-ui/react/dialog");
 GlobalRegistrator.unregister();
