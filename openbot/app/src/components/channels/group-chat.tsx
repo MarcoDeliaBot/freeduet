@@ -1,3 +1,4 @@
+import { markVoiceMessageId } from "@openbot/shared/voice-message";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import { useEffect, useRef } from "react";
@@ -107,7 +108,10 @@ export function GroupChat({ channelId }: { channelId: string }) {
           onSubmit={async (draft) => {
             if (!draft.text) return;
             await send.mutateAsync({
-              id: newId(),
+              // The id carries whether the words came from the microphone, as it does in a channel
+              // with one Bot: the one-press "Transcribe and send" is not the person's written
+              // request, and the server reads the mark from here (docs/design/voice.md, D7 and D8).
+              id: draft.voice ? markVoiceMessageId(newId()) : newId(),
               text: draft.text,
               agentId: draft.agentId,
             });

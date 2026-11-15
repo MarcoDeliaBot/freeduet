@@ -5,6 +5,7 @@ import { NewBotSheet } from "@/components/agents/new-bot-sheet";
 import { BotRoster } from "@/components/bots/bot-roster";
 import { PageShell } from "@/components/layout/page-shell";
 import { Button } from "@/components/ui/button";
+import { TeamFileButton } from "@/freeduet/team-file-button";
 
 /** Just longer than the sheet's 200ms exit, so it has finished sliding away before the page changes. */
 const SHEET_CLOSE_MS = 240;
@@ -21,16 +22,19 @@ function BotsPage() {
   return (
     <PageShell
       action={
-        <Button
-          render={(props) => (
-            <Link {...props} search={{ new: true }} to="/bots" />
-          )}
-          className="min-h-11"
-          variant="ghost"
-        >
-          <IconPlus />
-          New Bot
-        </Button>
+        <>
+          <TeamFileButton />
+          <Button
+            render={(props) => (
+              <Link {...props} search={{ new: true }} to="/bots" />
+            )}
+            className="min-h-11"
+            variant="ghost"
+          >
+            <IconPlus />
+            New Bot
+          </Button>
+        </>
       }
       description="Your Bots and the ones shared with you. See what each is doing and what it needs from you."
       title="Bots"

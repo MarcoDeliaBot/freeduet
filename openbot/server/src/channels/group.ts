@@ -20,6 +20,7 @@
  */
 import { createHash } from "node:crypto";
 import type { Message } from "@ag-ui/client";
+import { keepVoiceMark } from "@openbot/shared/voice-message";
 import { and, asc, desc, eq, isNull, min, sql } from "drizzle-orm";
 import { Hono, type MiddlewareHandler } from "hono";
 import { z } from "zod";
@@ -833,7 +834,11 @@ export function createGroupConversations(deps: {
         threadId,
         instruction,
         userMessage: groupTurnMessage(
-          `group-user:${id}`,
+          // The id is the person's message as the run reads it. The app marks a message that came from
+          // the microphone in the id it chose (`turn.messageId`), and the id made here keeps that mark,
+          // so a group turn is not the person's own written one when it was dictated with one press
+          // (docs/design/voice.md, D7 and D8).
+          keepVoiceMark(turn.messageId, `group-user:${id}`),
           instruction,
           // Another person's reply in progress has not been through its owner's share check, so this
           // Bot is not handed it, as that person's teammates do not see it either.

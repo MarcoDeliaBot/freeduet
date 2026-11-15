@@ -22,6 +22,7 @@ import { createHash } from "node:crypto";
  */
 import { frameCheckIn } from "@openbot/shared/check-in";
 import { frameTaskBrief, frameTaskReply } from "@openbot/shared/task-brief";
+import { keepVoiceMark } from "@openbot/shared/voice-message";
 import type {
   DurableTaskReply,
   TaskReplyContext,
@@ -71,11 +72,15 @@ export function taskExecutionId(input: {
   again?: boolean;
 }): string {
   const { taskId, workKey, attempt, messageId, again } = input;
-  return messageId && attempt === 1
-    ? messageId
-    : again || attempt > 1
+  if (messageId && attempt === 1) return messageId;
+  const derived =
+    again || attempt > 1
       ? `task-${taskId}-${createHash("sha256").update(`${workKey}:${attempt}`).digest("hex").slice(0, 16)}`
       : `task-${taskId}`;
+  // This id is the user message of the run (`openduet/task-threads.ts`), and the server reads from it
+  // whether the words came from the microphone. A reply sent with one press of dictation keeps that
+  // mark when its run is tried again under an id of the server's own (docs/design/voice.md, D7, D8).
+  return keepVoiceMark(messageId, derived);
 }
 
 /**

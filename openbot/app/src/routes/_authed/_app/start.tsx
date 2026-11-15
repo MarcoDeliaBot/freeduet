@@ -63,11 +63,14 @@ function RouteComponent() {
             // With no `@`, the message is routed to the coworker it is for; if that routing cannot
             // run, it falls back to the same default the composer used to always use.
             setError(null);
+            // True only for the one-press "Transcribe and send": that first message is still words
+            // from the microphone when the channel sends it (docs/design/voice.md, D7 and D8).
+            const voice = draft.voice === true;
             try {
               if (draft.agentId) {
                 // Recorded and started as one sequence, shared with `/channel/new`: the person
                 // already decided, and the trail has to say so wherever they decided it.
-                await startChosen(draft.agentId, draft.text);
+                await startChosen(draft.agentId, draft.text, voice);
                 return;
               }
               let agentId: string | undefined;
@@ -78,7 +81,7 @@ function RouteComponent() {
                 agentId = fallback?.id;
               }
               if (!agentId) return;
-              await start(agentId, draft.text);
+              await start(agentId, draft.text, voice);
             } catch (caught) {
               setError(
                 caught instanceof Error
