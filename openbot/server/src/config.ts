@@ -383,9 +383,11 @@ export type DeploymentConfig = {
    */
   singleUser: boolean;
   /**
-   * FreeDuet (D28): `FREEDUET_INSTALL_SECRET`, this installation's own secret. Read only in
-   * single-user mode, and absent when unset. Where it is set and the server listens on this machine
-   * alone, the person is a loopback peer that also holds it. See auth/install-secret.ts.
+   * FreeDuet (D28): `FREEDUET_INSTALL_SECRET`, this installation's own secret, absent when unset.
+   * With no sign-in, where the server listens on this machine alone, the person is a loopback peer
+   * that also holds it. With sign-in, a browser that holds it is paired with this computer, and a
+   * session in any other browser is remote and limited (auth/remote-limits.ts). See
+   * auth/install-secret.ts.
    */
   installSecret?: string;
   /** Names OpenDuet on the analytics the runtime already sends. Off with OPENBOT_ACCESSIBILITY_DISABLED. */
@@ -1520,7 +1522,7 @@ export function loadConfig(
     listen: listenAddresses(environment, loaded.singleUser, interfaces),
     appOrigins: appOriginsFrom(environment),
     // FreeDuet (D28): refused here, at start, when it is set and cannot be a secret.
-    ...installSecretSetting(environment, loaded.singleUser),
+    ...installSecretSetting(environment),
   };
 }
 

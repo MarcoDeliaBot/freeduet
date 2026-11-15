@@ -22,6 +22,11 @@ import type {
   AgentProfile,
   CreateAgentInput,
 } from "./profile-types";
+import {
+  ROLE_DESCRIPTION_LIMIT,
+  IMPORTED_ROLE_DESCRIPTION_LIMIT,
+  roleDescriptionLimitOf,
+} from "./role-description-limit";
 
 type AgentInputParseResult =
   | { ok: true; value: CreateAgentInput }
@@ -48,6 +53,8 @@ export function parseAgentInput(
   allowPrivateHosts = false,
   /** Private addresses this deployment named as acceptable. Empty is the default posture. */
   allowedHosts: ReadonlySet<string> = new Set(),
+  /** The most characters the "What it does" text may hold. The app's limit unless the caller says otherwise. */
+  roleDescriptionLimit: number = ROLE_DESCRIPTION_LIMIT,
 ): AgentInputParseResult {
   if (!isAgentInputObject(input)) {
     return { ok: false, error: "Agent input must be a JSON object." };
@@ -69,8 +76,8 @@ export function parseAgentInput(
 
   const roleDescription = boundedText(
     input.roleDescription,
-    1000,
-    "What it does must be text between 1 and 1000 characters.",
+    roleDescriptionLimit,
+    `What it does must be text between 1 and ${roleDescriptionLimit} characters.`,
   );
   if (typeof roleDescription !== "string") return roleDescription;
 
@@ -560,10 +567,26 @@ export function createAgentRoutes(
 
   routes.patch("/:agentId", requireUser, async (context) => {
     // Malformed JSON is a recoverable client-input error and is validated by the same parser.
+    const body = await context.req.json().catch(() => null);
+    /*
+     * The limit depends on the stored Bot, so the Bot is read first. Nothing a request can send changes
+     * the imported fact, so the limit read here is the one the update is held to. A Bot this read does
+     * not find gets the app's limit, and the update below answers it as it always has.
+     */
+    let current: AgentProfile | null;
+    try {
+      current = await store.get(
+        context.var.actor,
+        context.req.param("agentId"),
+      );
+    } catch (error) {
+      return mapStoreError(context, error);
+    }
     const parsed = parseAgentInput(
-      await context.req.json().catch(() => null),
+      body,
       allowPrivateHosts,
       allowedHosts,
+      roleDescriptionLimitForEdit(current, body),
     );
     if (!parsed.ok) return context.json({ error: parsed.error }, 400);
 
@@ -792,6 +815,31 @@ export function createAgentRoutes(
   return routes;
 }
 
+/**
+ * The longest "What it does" text this edit may save for the Bot it edits.
+ *
+ * An imported Bot takes the imported limit. Any other takes the app's limit, with one exception: a
+ * text it already holds that is longer (a copy of an imported Bot keeps its text, and such a copy
+ * does not hold the fact) may be saved again unchanged. Otherwise renaming that copy, or changing its
+ * visibility, would be refused for a text the person did not touch. Any change to the text is held to
+ * the app's limit, so an edit cannot grow a Bot made in the app past it.
+ */
+function roleDescriptionLimitForEdit(
+  current: AgentProfile | null,
+  body: unknown,
+): number {
+  if (!current) return ROLE_DESCRIPTION_LIMIT;
+  if (current.importedMember === true) return IMPORTED_ROLE_DESCRIPTION_LIMIT;
+  const sent =
+    isAgentInputObject(body) && typeof body.roleDescription === "string"
+      ? body.roleDescription.trim()
+      : undefined;
+  if (sent !== undefined && sent === current.roleDescription) {
+    return Math.max(ROLE_DESCRIPTION_LIMIT, current.roleDescription.length);
+  }
+  return ROLE_DESCRIPTION_LIMIT;
+}
+
 function boundedText(
   value: unknown,
   maximumLength: number,
@@ -813,6 +861,8 @@ function agentDto(actor: AgentActor, agent: AgentProfile) {
     ...(agent.displayName ? { realName: agent.name } : {}),
     title: agent.title,
     roleDescription: agent.roleDescription,
+    // What the edit form may hold, read from the Bot so the form carries no copy of the rule.
+    roleDescriptionLimit: roleDescriptionLimitOf(agent),
     avatarSeed: agent.avatarSeed,
     visibility: agent.visibility,
     hidden: agent.hidden,

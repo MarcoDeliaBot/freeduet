@@ -20,6 +20,11 @@ export type AgentProfile = {
   displayName?: string | null;
   /** An administrator assigned this Team Bot to this person; it stays in their sidebar. */
   assignedToMe?: boolean;
+  /**
+   * Whether its instructions came from a team file through `createImportedMember`. Read, never set by
+   * a request. Optional so that a fixture of a Bot made in the app need not say it.
+   */
+  importedMember?: boolean;
   deletedAt: Date | null;
   /** Where this coworker runs. Null for the Bot in the box. */
   endpoint: string | null;

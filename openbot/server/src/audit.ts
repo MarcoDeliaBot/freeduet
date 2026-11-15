@@ -1,3 +1,4 @@
+import type { AuditInitiator } from "@openbot/toolkit/initiator";
 import {
   and,
   desc,
@@ -13,7 +14,6 @@ import type { PgColumn } from "drizzle-orm/pg-core";
 import type { Database } from "./db/client";
 import { auditEvents } from "./db/schema";
 import { parsePageLimit } from "./paging";
-import type { AuditInitiator } from "@openbot/toolkit/initiator";
 
 const sensitiveKeys = new Set([
   "access_token",
@@ -594,6 +594,13 @@ export const auditEventTypes = [
   "routine.enabled_changed",
   /* A run refused because its model is not on the team model allowlist. */
   "model.refused",
+  /*
+   * FreeDuet: the data of the person who had no sign-in handed to the account that signs in, by the
+   * command line tool only (freeduet/adopt). Target and actor are
+   * the account that now owns it; payload `fromId`, `toEmail`, `total`, `rows` (counts by table and
+   * column) and `backup` (the file's name, never its path). Every older row keeps the old id.
+   */
+  "person.single_user_data_adopted",
 ] as const;
 
 export type AuditEventType = (typeof auditEventTypes)[number];
@@ -601,6 +608,14 @@ export type AuditEventType = (typeof auditEventTypes)[number];
 export type { AuditInitiator };
 
 export const PERSON_INITIATOR: AuditInitiator = { kind: "person" };
+
+/**
+ * A run started by the person's own message from a browser that is not paired with the computer
+ * (docs/design/phone-and-remote.md 3.5.5). Not `PERSON_INITIATOR` on purpose: every rule that lets a
+ * person's own live turn act without a card (Full access, the typed-recipient shortcuts, a setting
+ * changed from chat) reads that kind and would read a stolen phone's words as the person at the desk.
+ */
+export const REMOTE_INITIATOR: AuditInitiator = { kind: "remote" };
 
 /** The deployment acting as itself: at start-up, or refusing a caller it could not identify. */
 export const DEPLOYMENT_INITIATOR: AuditInitiator = { kind: "deployment" };
@@ -634,6 +649,7 @@ export function handoffInitiator(
  */
 export const auditInitiatorKinds = [
   "person",
+  "remote",
   "deployment",
   "routine",
   "responsibility",
@@ -757,7 +773,11 @@ export function auditSink(store: AuditStore): AuditSink {
 function initiatorColumns(initiator: AuditInitiator | undefined) {
   if (!initiator)
     return { initiatorKind: "person" as const, initiatorId: null };
-  if (initiator.kind === "person" || initiator.kind === "deployment") {
+  if (
+    initiator.kind === "person" ||
+    initiator.kind === "remote" ||
+    initiator.kind === "deployment"
+  ) {
     return { initiatorKind: initiator.kind, initiatorId: null };
   }
   return { initiatorKind: initiator.kind, initiatorId: initiator.id };

@@ -151,8 +151,8 @@ export function withRunChannels(
     return agent;
   };
   return {
-    async resolveAgentsForActor(actor) {
-      const agents = await resolver.resolveAgentsForActor(actor);
+    async resolveAgentsForActor(actor, context) {
+      const agents = await resolver.resolveAgentsForActor(actor, context);
       for (const agent of Object.values(agents)) attach(actor.id, agent);
       return agents;
     },

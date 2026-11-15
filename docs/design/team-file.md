@@ -278,3 +278,88 @@ Layers that do not refuse, so the text survives them: the database column `agent
 | B | Whether the checker refuses 1,001 to 8,000 until A is done | 1. Accept, with the notice (built). 2. Refuse, with the same sentence | 1. The decision sets 8,000 as the limit, and the notice is shown in the preview before anyone presses Create. S4 must not create a member while the notice applies. |
 | C | What 8,000 counts | 1. The whole stored text: the author's text, the Email paragraph and the shared rules (built). 2. The author's text alone | 1. The cap has always limited the stored text (`form.ts:23`, `routes.ts:72`). Under option 1 the author's own text may have 4,482 characters; under option 2 the stored text may reach 11,518. Confirm which the maintainer meant. |
 | D | Which field holds an imported member's instructions | 1. `roleDescription`, as the app stores it, which the standing role message reads for a managed or remote Bot (`copilot.ts:185`). 2. The file's one-sentence `role_description` there, with the instructions only in `systemPrompt` | 1. Option 2 would leave a managed or remote member without its instructions at run time, unless the runtime changes too. The cost of option 1 is the whole text on the routing roster and the voice agent. Decide in S4. |
+
+### Slice S2 (export): built so far
+
+Slice S2 of section 4, the export, is built on branch `team-file-export`. Not verified in a browser; no import (S3 to S6) exists.
+
+**Built**
+- `openbot/server/src/freeduet/team-file-export.ts` (pure): writes the two formats from an allow-list, field by field. Instructions are the author's text: the package's "Email." paragraph and shared rules are taken off the end, so the reader adds them once. A paragraph left in the middle of a text is refused. It also scans text for an e-mail address, the administrator's own address and name (whole word), and refuses a sending tool by name.
+- `openbot/server/src/freeduet/team-file-routes.ts`: `GET /api/freeduet/team-file/export`, behind `requireUser` and `requireAdmin`. No query returns the administrator's whole team, `?member=<id>` one member. It reads the members the administrator OWNS, their stored instructions, the skills granted to them (`plugin_grants`, kind `skill`) and the tool names those skills declare (`skill_tools`). Grants, connections, memories, lessons, addresses, identifiers and settings are never read. Every file is read back by the S1 reader against the same package before it is sent; a file the reader would refuse is a 409 with the reader's own sentence. It is sent with `downloadHeaders` (`private, no-store`, a sanitised name, `nosniff`).
+- `openbot/server/src/index.ts` and `app.ts`: one boot call (`useTeamFile`, as `useEngineChoices` is set) and one mount.
+- `openbot/app/src/freeduet/team-file-button.tsx`: "Download team file" on the Bots roster, shown to administrators only. Busy, saved and refused states; a refusal shows the server's sentence.
+
+**Verified** (14 November 2026, on branch `team-file-export`, Postgres 16 on a private cluster)
+- `freeduet-team-file-export.integration.test.ts`: 14 pass, 0 fail (real Postgres, real guards and routes). Covers: a non-administrator refused (403), no session (401), no member of one's own (409); the whole team read back by the reader (round trip, hash written, the download headers); one member, its author's text and its tool names; long instructions (4,164 characters) accepted with the create-limit notice; instructions over the limit refused with the reader's sentence; an e-mail address in a text refused without echoing it; a remote Bot's address never written; another person's Bot not found; a team over the reader's 1 MB bound refused with the reader's sentence; and a canary check: a planted grant, its granter, a memory, the administrator's name and address, the endpoint of a remote Bot, a callback token hash, an avatar seed and another person's job text never appear, nor do the Bot ids or the people's ids.
+- `freeduet-team-file-export.test.ts`: 8 pass, 0 fail (no database). The ten shipped members that carry both paragraphs compose back to the package's text, the same words in the same order; Otto's four sending tools are refused by name; the scanner; a synthetic member round-trips through the reader.
+- `app/tests/team-file-button.test.tsx`: 5 pass, 0 fail (who sees it; a saved file; busy; a refusal).
+- Related suites: `assertion-shape`, `freeduet-team-file`, `freeduet-package`, `freeduet-team` and the new file: 125 pass, 0 fail.
+- Fail before: on main the three new test files cannot load, because their modules do not exist there (0 of 3 files run).
+- `bun run format:check` and `bun run lint` (with `--error-on-warnings`): clean.
+- `bun run typecheck:tests`: not a result. The gate was killed by the machine's memory limit three times (exit 2, "tsc did not finish"). It must be run again on a free machine. Instead, `tsc --noEmit -p` over a temporary config extending `server/tsconfig.tests.json` with only the four new server files (and their imports) finished with exit 0 and no diagnostics. That is a partial check, not the baseline gate.
+
+**Not built or not verified**
+- No preview (the design's "full preview"). The button saves the file directly. Nobody has yet read a whole file on a screen.
+- Canaries not planted, because the export does not read them: approval rules, Full access choices, per-person settings, conversation content, and the lessons files. Their absence follows from the allow-list, which is written field by field, not from a test that plants them.
+- Test requests are always `[]`: custom Bots store none. The shipped members' test cases live in `evals/team/cases.yaml`, which the server does not read.
+- The e-mail scanner covers e-mail addresses, the administrator's address and name. Telephone numbers, card and bank numbers are not scanned.
+- Not run against a live eval stack. A file never certifies itself (section 3.5).
+
+**Findings about the S1 reader** (read, not changed here)
+- The reader reserves the names of all twelve shipped coworkers (Iris and eleven members). No file can carry one of them, so the shipped members cannot be exported under their names and imported back. The route therefore exports only members the administrator owns, and refuses a shipped name by 404.
+- The shipped team's skill text is 901,342 bytes in compact JSON, and Mark's skills alone are 837,567. A whole shipped team file would sit at or past the reader's 1 MB bound (`TEAM_FILE_LIMITS.fileBytes`).
+- The package joins its paragraphs with one line break; the reader joins the composed instructions with a blank line (`team-file.ts`, the `join("\n\n")` in `readMember`). The words are the same; the whitespace is not.
+- Iris carries neither paragraph, and Otto carries the shared rules and his own Email paragraph, so neither composes to its package text.
+- Section 5 says send tools are "never recognised by name; an explicit list names them" (decided 14 November 2026). The reader still recognises them by name (`isSendingTool`, the words send, reply and forward). That disagrees with the decision and is for the coordinator to settle.
+
+**Decisions left to the maintainer**
+
+| Decision | Options | Recommendation and reason |
+|---|---|---|
+| Shipped members in an export | A. Never (built). B. Exported as copies under new names. C. Exported under their names, and the reader refuses them | A. A shipped name is reserved in every file, and the package already gives every installation those members. B changes a name the person did not choose. C gives a file that cannot be imported. |
+| Whose members the whole-team file holds | A. The administrator's own (built). B. Every member the deployment holds | A. Another person's Bot leaves only with that person's consent. |
+| The author and licence of a member the administrator made | A. "Not stated" for both (built). B. A licence the person chooses | A. The file makes no claim for the person. Choose B once the person can set one. |
+| Whether a team file that holds a sending tool is refused or cleaned | A. Refused (built). B. The tool dropped | A. The reader refuses it, and dropping silently would change what the member can do. |
+| Whether to build the preview (S2, "full preview") before the download is offered | A. Build it first. B. Download now, preview later (built) | A for a file that leaves the deployment; the maintainer decides which slice comes first. |
+
+### Imported member layers (14 November 2026)
+
+What this slice builds, on top of the reader above: the stored fact that lets an imported member take 8,000 characters, and the create, edit and dialog layers that read it. The importer that calls the fact (S3) is not built, so no member can be imported yet.
+
+**Built**
+- Decision A, option 1: `agent_profiles.imported_member` (boolean, not null, default false; migration `0071_imported_member`). Only the internal `createImportedMember(store, actor, input)` (`openbot/server/src/agents/imported-member.ts`) writes it, through `store.create(..., importedMember: true)`. No public route, and no request body (POST or PATCH) can set or clear it.
+- `createImportedMember` checks the text with `parseAgentInput` at 8,000, forces visibility private, and stores the text as both `roleDescription` and, for the built-in prompt, `systemPrompt`.
+- Limits (`openbot/server/src/agents/role-description-limit.ts`): 1,000 for every Bot, 8,000 for an imported one, counted in UTF-16 code units (decision E, option 1).
+- `POST /api/agents` keeps 1,000 for a hand-made Bot, so a body that claims the fact does not lift it.
+- `PATCH /api/agents/:agentId` reads the stored Bot before it parses the body and picks the limit from that Bot: 8,000 if it is imported. A copy of an imported Bot that is not imported keeps its text while unchanged, and a changed text is held to 1,000. A body's `importedMember` is ignored.
+- `GET` reports `roleDescriptionLimit` for each Bot (8,000 or 1,000). The app's "What it does" edit dialog reads that limit: it shows "n of limit characters" and refuses over it. The create sheet stays at 1,000, and Leo's save-bot card is unchanged.
+- Decision C, option 1: 8,000 counts the whole stored text.
+- Decision D, as the app stores it: the instructions are `roleDescription` (and `systemPrompt` for built-in). Option 2 is not built.
+
+**Tests**
+- `server/tests/imported-member.integration.test.ts` (13 tests, real database, real routes): the import path, the 8,000 and 8,001 edges (ASCII, four-thousand emoji against 4,001, and 8,000 accented letters), the PATCH edges, the unchanged-copy rule, the body that claims the fact, and the reader constants pinned to `TEAM_FILE_LIMITS`.
+- `server/tests/agent-instructions-limit.integration.test.ts`: a guard. A hand-made Bot takes 1,000 and refuses 1,001 on create and edit, and a body that claims the fact does not lift it. It uses only existing modules and is meant to pass on main.
+- `server/tests/schema.test.ts`: the new column.
+- `app/tests/bot-setup.test.tsx`: 8,000 taken, 8,001 refused, a hand-made Bot still refused at 1,001 (a guard), and the counter.
+- `server/tests/freeduet-team-file.test.ts`: the notice's wording follows the new layers.
+- `server/tests/agent-routes.test.ts` and `app/tests/agent-api-path.test.ts` (changed after CI on `d2ee384` failed): they pin the exact store calls and the exact DTO, so they now expect the edit route's read of the Bot before its update (three call lists, and twelve calls instead of eleven) and `roleDescriptionLimit` in each DTO. The invalid-body case still expects that nothing is written; it names the one read per request instead of expecting no call at all. Sixteen app test fixtures of `AgentProfile` carry `roleDescriptionLimit: 1000`, because the app type requires it.
+
+**Verified** (14 November 2026, on this worktree, Postgres 16 at a non-default port, migrated with `bun scripts/migrate.ts`)
+- `biome format` and `biome lint --error-on-warnings` on the 17 changed TypeScript files: clean.
+- Server: `imported-member`, `agent-instructions-limit`, `schema`, `freeduet-team-file` and `assertion-shape`, 96 tests. 94 pass at the default 5 s limit; two `assertion-shape` tests time out under load. With `--timeout 120000`, `assertion-shape` passes 10 of 10. The run of the four other files is in the same count.
+- App: `bot-setup` and `composing-enter` from `openbot/` (`bun test app/tests/bot-setup.test.tsx app/tests/composing-enter.test.tsx`): 10 pass, 0 fail. Run from `openbot/app` alone, `composing-enter` fails on `import.meta.glob`, a runner difference and not a result.
+- `bun run typecheck:tests` was killed by memory pressure three times while the slice was written. Not a result. It was run to completion on 15 November 2026: clean against the baseline (239 known errors, none new). Two baselined lines in `server/tests/typecheck-baseline.txt` had their text changed by hand, as `CLAUDE.md` allows: `... 7 more ...` is now `... 8 more ...`. They are the same two errors in the `profile()` helpers of `agent-profile-policy.test.ts` and `agent-routes.test.ts`, whose printed type gained one property with `importedMember`.
+- Full suites on 15 November 2026, on this worktree and before the last merge of main (which moved zod from 4.5.4 to 4.6.7): the sharded server suite, 8,481 pass, 3 fail, 21 skip (the three that fail on main in this sandbox: two `learning-*` "real provider" cases and the Mastra bridge); the app suite, 2,867 pass, 0 fail in 298 files. After that merge: `bun run typecheck` (six workspaces), `bun run typecheck:tests`, biome format and lint, and the ten test files of this slice and its CI fixes (174 tests) pass.
+
+**Not verified**
+- Fail before on a clean origin/main was not run. The new `imported-member` file cannot load on main (the module does not exist), and the new `bot-setup` cases for 8,000 and the counter would fail on main's dialog. The guards are meant to pass on main.
+- No real import (S3 is not built), no browser run of the dialog, no live member run.
+- The cost of 8,000 characters on each turn is not measured. The routing roster (`openbot/server/src/routing/classify.ts`, a line per candidate per routed turn), the voice agent (`openbot/server/src/voice/routes.ts`) and the standing role message (`openbot/server/src/copilot.ts`) each receive the whole text. An imported Bot of 8,000 code units adds up to 8,000 characters to each of those, per use. Listed as a cost, not changed.
+- A duplicate of an imported Bot does not inherit the fact (only the importer writes it). Its text may be longer than 1,000 and can be saved only while unchanged. Option: copy the flag, or refuse to copy above 1,000. Maintainer's call.
+- `createImportedMember` forces visibility private; the import path must decide whether that is the final rule.
+
+**Decisions taken for this slice** (section 6)
+- A, how an imported member passes the create and edit layers: option 1, the stored fact.
+- C, what 8,000 counts: option 1, the whole stored text.
+- E, unit: option 1, UTF-16 code units.
+- D: as the app stores it (`roleDescription`).

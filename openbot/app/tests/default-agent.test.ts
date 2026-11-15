@@ -20,6 +20,7 @@ function agent(id: string, name = id): AgentProfile {
     mine: true,
     name,
     roleDescription: "Role",
+    roleDescriptionLimit: 1000,
     systemOwned: false,
     title: name,
     visibility: "private",

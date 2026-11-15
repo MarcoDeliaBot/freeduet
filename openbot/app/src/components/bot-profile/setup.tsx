@@ -43,6 +43,7 @@ import {
   type AgentFormValues,
   agentFormSchema,
   profileUpdateInput,
+  roleDescriptionSchema,
 } from "@/lib/agents/form";
 import { updateAgentMutationOptions } from "@/lib/agents/mutations";
 import type { AgentProfile } from "@/lib/agents/queries";
@@ -139,10 +140,19 @@ export function SetupSections({ agent }: { agent: AgentProfile }) {
       {open ? (
         <EditTextDialog
           label={open.label}
+          limit={
+            open.field === "roleDescription"
+              ? agent.roleDescriptionLimit
+              : undefined
+          }
           multiline={open.multiline ?? false}
           onClose={() => setEditing(null)}
           onSave={(value) => save({ [open.field]: value })}
-          schema={agentFormSchema.shape[open.field]}
+          schema={
+            open.field === "roleDescription"
+              ? roleDescriptionSchema(agent.roleDescriptionLimit)
+              : agentFormSchema.shape[open.field]
+          }
           value={agent[open.field]}
         />
       ) : null}
@@ -225,6 +235,7 @@ function EditTextDialog({
   label,
   value,
   multiline,
+  limit,
   schema,
   onSave,
   onClose,
@@ -232,6 +243,8 @@ function EditTextDialog({
   label: string;
   value: string;
   multiline: boolean;
+  /** Shown as a counter when the field has a limit, read from the coworker. */
+  limit?: number;
   schema: ZodType<string>;
   onSave: (value: string) => Promise<unknown>;
   onClose: () => void;
@@ -290,6 +303,14 @@ function EditTextDialog({
               value={draft}
             />
           )}
+          {limit !== undefined ? (
+            <p
+              className={`text-xs ${draft.length > limit ? "text-destructive" : "text-muted-foreground"}`}
+            >
+              {draft.length.toLocaleString("en-US")} of{" "}
+              {limit.toLocaleString("en-US")} characters
+            </p>
+          ) : null}
           {error ? (
             <p className="text-destructive text-sm" role="alert">
               {error}

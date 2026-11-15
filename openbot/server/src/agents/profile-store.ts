@@ -69,6 +69,13 @@ export type AgentProfileStore = {
        * different act with different consequences, and this is the creation path.
        */
       systemPrompt?: string;
+      /**
+       * Set only by `createImportedMember`, which is the one server-side path that imports a team file.
+       *
+       * Not on `CreateAgentInput`, and no route passes it, so no request body can set it. Once written
+       * it stays: `update` never touches the column.
+       */
+      importedMember?: true;
     },
   ): Promise<AgentProfile>;
   update(
@@ -138,6 +145,7 @@ const joinedProjection = {
   packageId: deploymentPackages.id,
   hiddenAt: agentPreferences.hiddenAt,
   pinnedAt: agentPreferences.pinnedAt,
+  importedMember: agentProfiles.importedMember,
   /* What this person calls the member, when they chose a name (docs/design/settings-in-chat.md, 8.10). */
   displayName: agentPreferences.displayName,
   deletedAt: agentProfiles.deletedAt,
@@ -199,6 +207,7 @@ function mapProfile(
         ? row.displayName
         : null,
     assignedToMe: Boolean(row.assignedToMe),
+    importedMember: row.importedMember,
     deletedAt: row.deletedAt,
     endpoint: endpointOf(row.configuration),
     // Whether a key is set, never which. The form needs to show "a key is set" so a person does not
@@ -508,6 +517,7 @@ export function createAgentProfileStore(
           roleDescription: input.roleDescription,
           avatarSeed: id,
           visibility: input.visibility,
+          importedMember: input.importedMember ?? false,
         });
 
         const profile = await findAccessibleProfile(transaction, actor, id);

@@ -583,7 +583,7 @@ const ALLOW: Allowed[] = [
   },
   {
     file: "app/tests/bot-setup.test.tsx",
-    line: 178,
+    line: 183,
     shape: "b",
     finding: "NEW (round 2 did not find this)",
     why: "expect(updates[0]?.endpoint).toBeUndefined();",
@@ -936,7 +936,7 @@ for (const root of ROOTS) {
     expect(sourceFiles(join(REPO, root), EXTENSIONS).length).toBeGreaterThan(
       20,
     );
-  });
+  }, 25_000); // Scans every test file in the root: 3.5 s at most alone, 4.7 s at most under load (14 Nov 2026).
 }
 
 test("the allow-list holds no offence the fix cycle has already cleared", () => {
@@ -946,7 +946,7 @@ test("the allow-list holds no offence the fix cycle has already cleared", () => 
   const stale = ALLOW.filter((entry) => !found.has(key(entry)));
   // A fixed offence must leave the list with its fix, or the list stops meaning anything.
   expect(stale.map((entry) => `${key(entry)}  ${entry.finding}`)).toEqual([]);
-});
+}, 25_000); // Scans both roots: 4 s at most alone, 6 s at most under load (14 Nov 2026).
 
 /* POSITIVE CONTROLS.
  *

@@ -54,6 +54,7 @@ const PROFILE: AgentProfile = {
   name: "Expenses",
   title: "Finance Operations",
   roleDescription: "Review receipts.",
+  roleDescriptionLimit: 1000,
   avatarSeed: "expenses",
   visibility: "private",
   endpoint: null,
