@@ -23,6 +23,8 @@ export type ApprovedActionDependencies = {
     runId: string;
     depth: number;
     initiator: AuditInitiator;
+    /** The hop's own claim, when the action was raised inside a hand-off's run (see `handedRun`). */
+    handoff?: RunAssertion["handoff"];
   }): Promise<unknown>;
   gate(candidate: ApprovalCandidate): Promise<unknown>;
   computerTools(
@@ -68,6 +70,33 @@ export type ApprovedActionDependencies = {
 };
 
 /**
+ * The signed run of a hand-off's delivery, when this action was raised inside one: signed by this
+ * deployment, for this person and this Bot, naming the asking conversation and carrying the hop's
+ * claim. Nothing a model wrote can make one.
+ */
+function handedRun(
+  deps: Pick<ApprovedActionDependencies, "readRun">,
+  snapshot: ApprovalContinuation,
+  action: ApprovalAction,
+): (RunAssertion & { handoff: NonNullable<RunAssertion["handoff"]> }) | null {
+  const forwarded = snapshot.forwardedProps;
+  const signed =
+    forwarded && typeof forwarded === "object" && "openbotRun" in forwarded
+      ? (deps.readRun?.(forwarded.openbotRun) ?? null)
+      : null;
+  if (
+    !signed?.handoff ||
+    !signed.threadId ||
+    signed.actorId !== action.actorId ||
+    signed.botId !== action.botId
+  )
+    return null;
+  return signed as RunAssertion & {
+    handoff: NonNullable<RunAssertion["handoff"]>;
+  };
+}
+
+/**
  * Carry out one approved action as its own tool would have, so the action's own gate sees the
  * approval and lets it through. Also run under `validateReentry`, where that gate reports the action
  * it would have asked about instead of acting.
@@ -78,14 +107,34 @@ export function createApprovedActionExecutor(deps: ApprovedActionDependencies) {
       action.continuation,
     );
     const initiator = snapshot.initiator ?? deps.personInitiator;
-    const source = await deps.sourceFor({
-      actorId: action.actorId,
-      botId: action.botId,
-      threadId: action.threadId,
-      runId: action.runId,
-      depth: 0,
-      initiator,
-    });
+    /*
+     * A call made inside a hand-off's run (the forward hop) was made in a scratch thread that is
+     * mapped to no channel, so asked about THAT thread this found no conversation and every approved
+     * action was refused as "no longer available": the person pressed Allow once and nothing ran
+     * (D48). The signed run the deployment minted for the hop names the conversation that asked, and
+     * carries the hop's claim, which is what lets the lookup answer for the asking Bot's channel.
+     */
+    const hop = handedRun(deps, snapshot, action);
+    const source = await deps.sourceFor(
+      hop
+        ? {
+            actorId: action.actorId,
+            botId: action.botId,
+            threadId: hop.threadId as string,
+            runId: hop.runId,
+            depth: 0,
+            initiator,
+            handoff: hop.handoff,
+          }
+        : {
+            actorId: action.actorId,
+            botId: action.botId,
+            threadId: action.threadId,
+            runId: action.runId,
+            depth: 0,
+            initiator,
+          },
+    );
     if (!source)
       throw new ApprovalRefusedError(
         "That conversation is no longer available to this Bot and person.",

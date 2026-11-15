@@ -152,6 +152,11 @@ export type ApprovalAction = ApprovalCandidate & {
   equivalence?: string;
   /** How many times the person had spoken in the conversation when this was asked. */
   userTurns?: number;
+  /**
+   * D48: the conversation that asked, for a call raised inside a hand-off's run (whose own thread is
+   * a scratch one). Set by the deployment from the signed run, never from anything a model wrote.
+   */
+  askedIn?: string;
 };
 export type ApprovalRecord = {
   id: string;
