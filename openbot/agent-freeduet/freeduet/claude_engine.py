@@ -7,6 +7,7 @@ import logging
 from contextlib import suppress
 
 from . import agui, claude_cli
+from .claude_status import MISSING_SENTENCE
 from .engine_adapter import EngineAdapter, Finished, Gate, Health, Outcome, ProbeResult, Sink, TurnContext
 from .stream_json import MCP_PREFIX, Final, StreamParser
 
@@ -105,7 +106,7 @@ class ClaudeEngine(EngineAdapter):
             try:
                 process = await claude_cli.start(command, ctx.work, self.child_env())
             except OSError:
-                return Outcome(agui.run_error(f"{claude_cli.LABEL} is not installed in this service."))
+                return Outcome(agui.run_error(MISSING_SENTENCE))
             sink.started()
 
             async def feed_stdin():

@@ -9,11 +9,11 @@
     },
     {
      "type": "RUN_ERROR",
-     "message": "Claude Code is not installed in this service."
+     "message": "Claude is not installed on this computer yet. It comes from Anthropic's own package, which is added when FreeDuet's service is built."
     }
    ],
    "keepalives": 0,
-   "sha256": "b58bc549234231d85a9b9ec2603ac9429cba7013795782aa8a06da78be01f3ab"
+   "sha256": "9a3817314a8f984397fc5f133400d457985a715b890d759fa7bf75355bfd9688"
   }
  ],
  "launches": [
@@ -109,7 +109,7 @@
    "thread": "thread-1",
    "run": "run-1",
    "outcome": "error",
-   "summary": "Claude Code is not installed in this service.",
+   "summary": "Claude is not installed on this computer yet. It comes from Anthropic's own package, which is added when FreeDuet's service is built.",
    "from_iris": false,
    "approvals": null,
    "report_guard": null
@@ -132,7 +132,7 @@
     "changed_files": [],
     "verification": [],
     "blockers": [
-     "Error: Claude Code is not installed in this service."
+     "Error: Claude is not installed on this computer yet. It comes from Anthropic's own package, which is added when FreeDuet's service is built."
     ],
     "next_steps": [
      "Run the turn again once the error is resolved"

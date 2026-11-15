@@ -19,7 +19,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse, StreamingResponse
 
-from . import agui, checkpoints, claude_cli, engine_choices, engine_router, engine_state, origin, report, team_log
+from . import agui, checkpoints, claude_cli, claude_status, engine_choices, engine_router, engine_state, origin, report, team_log
 from .claude_engine import ClaudeEngine
 from .engine_adapter import EngineAdapter
 from .members import MemberError, load_prompts, resolve_member
@@ -119,6 +119,23 @@ async def engines():
     # The version of the person's choices this service honours (engine_choices.py): the server's page turns a
     # control on only where it is here.
     body["choices_version"] = engine_choices.VERSION
+    return JSONResponse(body, headers={"Cache-Control": "no-store"})
+
+
+@app.post("/engines/claude/check")
+async def check_claude():
+    """Check again (docs/design/first-start.md section 4): ask Claude Code now whether it is installed and signed in,
+    with no restart. The probe runs the two commands of `claude_cli.probe` (no prompt, no model answer). What it finds
+    is kept for `GET /engines`, and the breaker is told the sign-in it saw, so a sign-in made after the start clears
+    `signed_out` at once. The answer holds three facts and the one status they make (claude_status.py), and never an
+    account: the probe reads none."""
+    result = await _engine_state().probe(ClaudeEngine())
+    body = {
+        "installed": result.installed,
+        "signed_in": result.signed_in,
+        "version": result.version,
+        "status": claude_status.status_of(result),
+    }
     return JSONResponse(body, headers={"Cache-Control": "no-store"})
 # ─────────────────────────────────────────────────────────────────────────────────────────────────
 

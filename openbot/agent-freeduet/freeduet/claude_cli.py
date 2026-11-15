@@ -27,6 +27,7 @@ from pathlib import Path
 
 from . import agui
 from .bridge import ipc
+from .claude_status import MISSING_SENTENCE, NOT_SIGNED_IN_SENTENCE
 from .engine_adapter import COULD_NOT_RUN, NOT_INSTALLED, TIMED_OUT, UNREADABLE, ProbeResult
 from .engine_errors import classify, describe, is_sign_in_failure
 from .failure_classifier import AUTH, LIMIT_KINDS, Failure, classify_failure
@@ -36,10 +37,8 @@ SERVER_NAME = "freeduet"
 AUTH_REQUIRED = "OPENBOT_MODEL_AUTH_REQUIRED"
 ENGINE_LIMITED = "FREEDUET_ENGINE_LIMITED"
 LABEL = "Claude Code"
-SIGN_IN_MESSAGE = (
-    "Claude Code is not signed in. Sign in once with "
-    "`docker compose exec -it agent-freeduet claude`, then send your message again."
-)
+# What a person reads when Claude Code holds no sign-in: plain words, no command to type (claude_status.py).
+SIGN_IN_MESSAGE = NOT_SIGNED_IN_SENTENCE
 
 # D7. The prompt is never on the command line: it goes in on stdin.
 LOCKDOWN_ARGS = [
@@ -259,7 +258,7 @@ async def run_text(system: str, prompt: str, model: str | None = None, timeout: 
         try:
             process = await start(build_text_command(claude_bin(), system, model, directory), work)
         except OSError:
-            raise TextCallFailed(f"{LABEL} is not installed in this service.") from None
+            raise TextCallFailed(MISSING_SENTENCE) from None
         try:
             stdout, stderr = await asyncio.wait_for(process.communicate(prompt.encode("utf-8")), timeout)
         except TimeoutError:

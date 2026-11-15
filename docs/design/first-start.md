@@ -181,3 +181,51 @@ Recommendation: (a), in S4. Why: the gate is a safety line, so it is cheap to bu
 - Whether `docker compose exec` into a non-default compose project name fails the way section 1 step 6 says.
 - Step counts are of the written path, not of a stopwatch run on a clean machine; the installer's own manual runs are still open [docs: docs/design/installer.md:106-117].
 - The Anthropic pages were read through a page reader on 2026-11-15; their wording may change, as the rules in PROVIDERS.md say it must be re-read before each release.
+
+## 10. Built so far
+
+Branch `first-start-s1-s2` builds slices S1 and S2 of section 7 and nothing else. S3 to S9 are not started.
+
+**S1, Check again (backend): built.**
+
+- Service: `POST /engines/claude/check` in `openbot/agent-freeduet/freeduet/app.py` runs `EngineState.probe(ClaudeEngine())`. Its answer holds `installed`, `signed_in`, `version` and `status`, and is sent with `Cache-Control: no-store`.
+- Server: `POST /api/freeduet/engines/claude/check` in `openbot/server/src/freeduet/engines-routes.ts` (`checkClaude`) is guarded like the Engines page's changes: an administrator at the computer. It passes on only `installed`, `signedIn` and a `reason`, which is `null` when the check ran and otherwise `off`, `not_set_up` or `unreachable`. The version and the account stay in the service.
+- The route falls under the existing refusal `ALL /api/freeduet/engines/*` (`openbot/server/src/auth/remote-limits.ts:250`), so no line was added to the remote list. The test "a remote session is refused by the list" pins that.
+- New tests: `openbot/agent-freeduet/tests/test_engine_check.py` (5) and `openbot/server/tests/freeduet-engines-check.test.ts` (9).
+
+**S2, plain words: built.**
+
+- `openbot/agent-freeduet/freeduet/claude_status.py` (new) gives the probe one status, `missing`, `not_signed_in`, `signed_in` or `unknown`, and holds the two sentences below. `claude_cli.py` and `claude_engine.py` now use them in place of their three old sentences (`claude_cli.py:39-42`, `claude_engine.py:108`, `claude_cli.py:262`).
+- The sentences a person reads, before and after:
+
+| Situation | Before | After |
+|---|---|---|
+| Signed out | "Claude Code is not signed in. Sign in once with `docker compose exec -it agent-freeduet claude`, then send your message again." | "Claude is not connected yet. You sign in on Claude's own page; FreeDuet never sees your password." |
+| Program missing | "Claude Code is not installed in this service." | "Claude is not installed on this computer yet. It comes from Anthropic's own package, which is added when FreeDuet's service is built." |
+
+- The missing sentence does not say "FreeDuet can add it for you", as section 5 row 1 does. That promise waits for D2 and D3 (S8).
+- New tests: `openbot/agent-freeduet/tests/test_claude_status.py` (16). Pins moved to the new sentences: `test_segment_loop.py` (2), `test_app_hooks.py` (1) and six goldens, edited by hand and not regenerated. Each stream hash changed with its sentence.
+
+**Decisions D1 to D6: all still open.** This work decides none of them.
+
+| Decision | State after S1 and S2 |
+|---|---|
+| D1, the one-time code | Open. S3 and S5 are not built, so no code is carried yet. |
+| D2, where the program lives | Open. The missing sentence promises no install. |
+| D3, how the click installs | Open. S8 is not built. |
+| D4, what "three clicks" counts | Open. The card (S5) is not built. |
+| D5, the desktop app's plan sign-in | Open. S9 is not started. |
+| D6, the hosted switch | Open. S4 is not built, and the switch D6 proposes does not exist yet. |
+
+**Interim gap, for the maintainer.** After S2 the chat shows the signed-out sentence with no button and no command. The command stays in `README.md:150` and in the last lines of `start.sh` until S7, and the button arrives with S5. Options: keep the command inside the sign-in sentence until S5, or ship S2 together with S5. Until one is chosen, a person who reads only the chat has no way to sign in.
+
+**Not built.**
+
+- S3 to S9, the card and its buttons, and the install messages of section 5 (S8).
+- "Signed in elsewhere but not seen" (a card state, S5), "the account has no Claude plan" (the CLI's wording is not known), and the remote, hosted and "agent does not answer" rows (S4 and S5).
+- Old sentences still in code: `engine_notices.py` ("Claude Code is not signed in", pinned by `test_engine_router.py:283`), `compatible_engine.py` ("the Claude Code CLI is not installed in this service") and the generic "could not finish this turn" path.
+
+**Not verified.**
+
+- No live run: no container, no real `claude` binary, no browser. The probe was tested with a fake CLI whose answer changes between two calls.
+- The server was tested in its targeted sets only, not in the full sharded suite.
