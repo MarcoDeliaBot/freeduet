@@ -7,6 +7,7 @@ import {
   pageLoadTimeoutMessage,
   pageMovedOn,
   SETTLE_ATTEMPTS,
+  SETTLE_BUDGET_MS,
   type SettlePage,
   watchNavigations,
 } from "../src/settle";
@@ -409,5 +410,72 @@ describe("what a page that was too slow is told", () => {
     expect(message).not.toContain("element");
     expect(message).not.toContain("Timeout");
     expect(pageLoadTimeoutMessage(400)).toContain("within 1 second.");
+  });
+});
+
+describe("a navigation that cuts a read is charged once", () => {
+  test("a read interrupted before the watch counts its navigation does not use an attempt", async () => {
+    const { page, navigate } = movingPage();
+    let reads = 0;
+    const result = await collectWhenSettled(
+      page,
+      async () => {
+        reads += 1;
+        // Cut before the navigation is counted: this read must not use one of the four attempts.
+        if (reads === 1) throw CONTEXT_GONE;
+        if (reads <= 4) {
+          navigate();
+          throw CONTEXT_GONE;
+        }
+        return "steady";
+      },
+      { sleep: instantly },
+    );
+    expect(result.value).toBe("steady");
+    expect(reads).toBe(5);
+  });
+
+  test("three redirects in a row, each cutting a read before it is counted, settle on the page that stays", async () => {
+    const { page, navigate } = movingPage();
+    let reads = 0;
+    const result = await collectWhenSettled(
+      page,
+      async () => {
+        reads += 1;
+        // Each redirect cuts one read before the watch counts it, then the next read sees it counted.
+        if (reads <= 6 && reads % 2 === 1) throw CONTEXT_GONE;
+        if (reads <= 6) {
+          navigate();
+          throw CONTEXT_GONE;
+        }
+        return "landing";
+      },
+      { sleep: instantly },
+    );
+    expect(result.value).toBe("landing");
+    expect(reads).toBe(7);
+  });
+
+  test("a snapshot of a page that never settles is refused within the worst case: the budget plus one more attempt", async () => {
+    // Simulated with a clock, not measured in a browser. The last attempt starts 10 ms before the budget
+    // ends, and a snapshot may itself take SETTLE_BUDGET_MS (its ariaSnapshot timeout), so the answer
+    // comes at about twice the budget, never later.
+    const { page, navigate } = movingPage();
+    let clock = 0;
+    let calls = 0;
+    const attempt = collectWhenSettled(
+      page,
+      async () => {
+        calls += 1;
+        clock += calls === 1 ? SETTLE_BUDGET_MS - 10 : SETTLE_BUDGET_MS;
+        navigate();
+        throw new Error(`Timeout ${SETTLE_BUDGET_MS}ms exceeded.`);
+      },
+      { budgetMs: SETTLE_BUDGET_MS, now: () => clock, sleep: instantly },
+    );
+    await expect(attempt).rejects.toBeInstanceOf(PageNotSettledError);
+    expect(calls).toBe(2);
+    expect(clock).toBe(2 * SETTLE_BUDGET_MS - 10);
+    expect(clock).toBeLessThanOrEqual(2 * SETTLE_BUDGET_MS);
   });
 });

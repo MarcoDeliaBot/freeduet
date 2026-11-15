@@ -209,8 +209,14 @@ export async function collectWhenSettled<T>(
   const watch = options.watch ?? watchNavigations(page);
   // The newest read of a page that was navigating no more but kept swapping its document.
   let newest: { value: T; attempts: number } | undefined;
+  // The attempts a page that moved, or swapped its body, has used up. Only these are bounded by `attempts`.
+  let used = 0;
+  // Reads cut short by a navigation the watch had not counted yet. They are read again at once, and use
+  // no attempt: the navigation is counted once, by the attempt it lands in. Counting the cut read as
+  // well used two attempts on one navigation, so three redirects in a row could run out the bound.
+  let cut = 0;
   try {
-    for (let attempt = 1; attempt <= attempts; attempt += 1) {
+    for (let attempt = 1; used < attempts; attempt += 1) {
       if (options.signal?.aborted) throw new Error("Stopped.");
       // The first attempt always runs. A later one needs time left, or the bound is only on paper.
       const left = deadline - now();
@@ -230,8 +236,10 @@ export async function collectWhenSettled<T>(
         if (quietMs > 0) await sleep(quietMs);
         if (watch.count() !== before) {
           newest = undefined;
+          used += 1;
         } else if (hold && !(await hold.intact().catch(() => false))) {
           newest = { value, attempts: attempt };
+          used += 1;
         } else {
           return { value, attempts: attempt };
         }
@@ -239,6 +247,14 @@ export async function collectWhenSettled<T>(
         const moved = watch.count() !== before;
         if (!moved && !isNavigationRace(error)) throw error;
         newest = undefined;
+        if (moved) {
+          used += 1;
+        } else {
+          // A cut read that the page did not count is read again; a few of those are allowed, then the
+          // loop ends with the refusal below rather than spinning.
+          cut += 1;
+          if (cut > attempts) break;
+        }
       } finally {
         await hold?.release().catch(() => undefined);
       }
