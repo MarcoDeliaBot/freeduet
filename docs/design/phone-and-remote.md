@@ -205,6 +205,7 @@ The table gives every route family the app registers, in `createApp` and `http-s
 | `automation` | `/api/routines/*`, `/api/responsibilities/*`, `/api/proactive/*`, `/api/demonstrations/*` | refused | Routines, triggers, suggestions and recorded demonstrations are standing instructions that act later. |
 | `memory` | `/api/memory/*` | refused | What the assistants remember. |
 | `import` | `/api/freeduet/import/*` | refused | The preview of an import compares what is pasted with what the assistants remember about the person and says which lines they already hold, so it reads the memory like `/api/memory/*` does. Bringing the person's facts in from another tool is done at the computer. |
+| `team-file` | `/api/freeduet/team-file/*` | refused | A team file is the administrator's team written out as a download, so it leaves the installation. A remote session, which is a browser not paired with the computer, never asks for one. |
 | `team` | `/api/team-bots/*` | refused | Publishing a Bot to a team is sharing. |
 | `voice` | `POST /api/audio/transcriptions`, `/api/voice/*` | refused | Not one of the three powers. Decision G. |
 | `sandboxed` | `/api/sandboxed/*` | refused | Pages that run what the assistants wrote. |
