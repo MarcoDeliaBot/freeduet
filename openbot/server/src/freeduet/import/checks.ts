@@ -27,6 +27,20 @@ const CARD_SHAPED = /(?<!\d)\d(?:[ -]?\d){12,18}(?!\d)/g;
 /** A run of base64 characters too long to be a word or a path. */
 const LONG_BASE64 = /[A-Za-z0-9+/]{120,}/;
 
+/**
+ * A credential written with its label and a value that looks like one: `password: hunter22`, or
+ * `PIN is 1234` (after `is`, the value needs a digit or a symbol). Used by `secretKind` only.
+ */
+const LABELLED_CREDENTIAL =
+  /\b(?:password|passwd|passphrase|passcode|pwd|pin|secret|token|api[ _-]?key|verification code|recovery code|one-time code)\b(?:\s*[:=]\s*\S{4,}|\s+is\s+(?=\S*[\d!@#$%^&*_+=-])\S{4,})/i;
+
+/** A JSON Web Token: three dot-separated parts, the first one a base64url header starting `eyJ`. */
+const WEB_TOKEN =
+  /\beyJ[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{8,}/;
+
+/** A run of hexadecimal digits as long as a hash or a random key. */
+const LONG_HEX = /\b[0-9a-f]{32,}\b/i;
+
 const DOLLAR_BRACE = /\$\{/;
 
 const APPROVAL_WORDS: readonly RegExp[] = [
@@ -191,4 +205,28 @@ function luhnValid(digits: string): boolean {
     double = !double;
   }
   return sum % 10 === 0;
+}
+
+/**
+ * What kind of secret a text looks like, or null. The preview never proposes a fact for which this
+ * answers, and never shows its text; the label names the kind and nothing of the value. A heuristic:
+ * it can miss a secret, and it can flag a plain sentence that happens to be shaped like one.
+ */
+export function secretKind(text: string): string | null {
+  for (const line of text.split("\n")) {
+    if (KEY_SHAPED.some((pattern) => pattern.test(line)))
+      return "a key or token";
+    if (
+      [...line.matchAll(CARD_SHAPED)].some((match) =>
+        luhnValid(match[0].replace(/[ -]/g, "")),
+      )
+    )
+      return "a card number";
+    if (LABELLED_CREDENTIAL.test(line))
+      return "a password, PIN or token written with its value";
+    if (WEB_TOKEN.test(line) || LONG_HEX.test(line))
+      return "a token-shaped string";
+    if (LONG_BASE64.test(line)) return "a long run of base64 characters";
+  }
+  return null;
 }

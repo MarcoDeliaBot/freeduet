@@ -1,6 +1,6 @@
 # Import from other agent tools: design
 
-Design, and slice 1 (the parsers) is on main through PR #168; nothing is stored, routed or shown yet. Written 2026-11-14 for two ROADMAP rows: "Bring your data from other agents" [code: docs/ROADMAP.md:45] and "Import from Grok Bot" [code: docs/ROADMAP.md:63]. Base: commit 452e060, where the branch started.
+Design. Slice 1 (the parsers) is on main through PR #168. Slice 2 (the preview, branch `import-slice-2`) adds one owner-only route that returns a preview and stores nothing; no screen shows it yet. Written 2026-11-14 for two ROADMAP rows: "Bring your data from other agents" [code: docs/ROADMAP.md:45] and "Import from Grok Bot" [code: docs/ROADMAP.md:63]. Base: commit 452e060, where the branch started.
 
 Tags: [code: path:line] = read in this repository at commit 452e060. [doc: URL] = stated by a public page, read 2026-11-14 through a summarising fetch; no text is copied. [assumed] = not checked. Design choices carry no tag: they are proposals.
 
@@ -113,13 +113,21 @@ Two more public routes:
 | # | Slice | Builds | Tests that prove it | Needs first | Size |
 |---|---|---|---|---|---|
 | S1 | Parsers | `freeduet-import/1` and SKILL.md parsers; the checks in 3.2; the caps | The Grok example in grok-export-prompt.md:11-22 parses; `${NAME}` stays literal; `allowed-tools` is dropped; a zero-width character is refused; a file of 1 MiB + 1 byte is refused | nothing | M |
-| S2 | Draft store (dropped: decided 14 November 2026, decision 7, nothing is saved before confirmation) | A FreeDuet migration (own journal) for a batch table and an item table; create, list, discard, seven-day expiry | Row counts of skills, personal memories, routines, agents and approval rules are unchanged by a draft; another person cannot read a batch; the migration is recorded by name | S1, decision 7 | M |
-| S3 | Review screen | `settings/import.tsx`, one line in `settings/index.tsx`, the folder picker | Full text shown; nothing ticked by default; confirm sends only ticked ids; the upstream row is added | S2 | M |
-| S4 | Confirm: Bots and facts | Instructions become Bots with shared rules; facts become confirmed memories; an audit row per write | A changed text after review is refused; a fact is not recalled before confirm; the Bot prompt ends with the shared rules; a static test: the import code names no approval or Full-access table | S2, decision 1 | M |
-| S5 | Confirm: skills | `skills` row (origin `imported`); optional skill grant | No `skillTools` row; the grant offers no tool (run through the real gate); a slug clash is refused; `${` is literal in the database; another person's `/` menu does not list it | S4 | S |
-| S6 | Schedules | Routine created switched off on confirm; the person switches it on with its card (decided 14 November 2026) | An invalid cron is refused; no routine before confirm; a routine's send still asks | S4, decision 5 | M |
-| S7 | Leo's proposal | Mapping proposal; the server accepts only ids of Bots the person owns | An unknown or another person's id is refused; proposal text is shown as data | S5 | S |
-| S8 | Docs and rows | `docs/import/` update, README line, upstream rows, NOTICE rows for any third-party text | A check that every upstream row names a real file | S3 | S |
+Re-planned on 14 November 2026. Decision 7 removed the draft store, so the old S2 is gone and nothing is
+saved before confirmation. The preview (S2) stores nothing, and the confirm (S4) receives the file again
+and checks the digests the preview showed. The "Stores?" column says which slices write a row.
+
+| # | Slice | Stores? | Builds | Tests that prove it | Needs first | Size |
+|---|---|---|---|---|---|---|
+| S1 | Parsers (on main, PR #168) | no | `freeduet-import/1` and SKILL.md parsers; the checks in 3.2; the caps | The Grok example in grok-export-prompt.md:11-22 parses; `${NAME}` stays literal; `allowed-tools` is dropped; a zero-width character is refused; a file of 1 MiB + 1 byte is refused | nothing | M |
+| S2 | Preview, saves nothing (this branch) | no | A pure preview of a parse against the facts the person holds: the facts kept under the cap of 50, counting those held; each drop with its reason; the schedules, each arriving switched off; the agents and skills found and not imported. One owner-only `POST /api/freeduet/import/preview`, a JSON body, no copy kept | The cap at 48, 49, 50 and 51 held; a secret is never proposed and its text is never shown; the row counts of eight tables are unchanged by valid, refused and oversized requests; a canary is in no log; another person's facts are not read | S1 | M |
+| S3 | Review screen | no | `settings/import.tsx`, one line in `settings/index.tsx`, the paste box and the folder picker; shows S2's preview | Full text shown; nothing ticked by default; no confirm request is sent; the upstream row is added | S2 | M |
+| S4 | Confirm: facts | yes (facts only) | A confirm route that takes the file again with the digests of the ticked facts (decision 7); re-runs the preview; writes only ticked facts as confirmed memories (`formedBy` import); the cap is checked again in the same transaction; an audit row per write | A digest that changed after review is refused; a fact is not recalled before confirm; the cap is checked at confirm; another person's facts are not written | S3 | M |
+| S5 | Confirm: Bots | yes | Instructions become private Bots through the profile store, with the shared rules appended | The Bot prompt ends with the shared rules; a changed digest is refused | S4 | M |
+| S6 | Schedules | yes | Each schedule becomes a routine switched off; the person switches it on with its card (decided 14 November 2026) | An invalid cron is refused; no routine before confirm; a routine's send still asks | S5 | M |
+| S7 | Skills | yes | A `skills` row (origin `imported`) owned by the person; an optional skill grant to a Bot the person owns | No `skillTools` row; the grant offers no tool, checked through the real gate; `${` is literal in the database; another person's `/` menu does not list it | S5 | S |
+| S8 | Leo's proposal | no | A mapping proposal of skills to Bots; the server accepts only ids of Bots the person owns | An unknown or another person's id is refused; proposal text is shown as data | S7 | S |
+| S9 | Docs and rows | no | `docs/import/`, a README line, upstream rows, NOTICE rows for third-party text | Every upstream row names a real file | S3 | S |
 
 ## 5. Rules that must hold
 
@@ -142,6 +150,9 @@ Two more public routes:
 | 5 | Schedules | (a) Leo proposes a cron, the person confirms with the next three runs shown; (b) the person writes it; (c) keep as text | Decided 14 November 2026: (a), and imported schedules arrive switched off; the person switches each one on with its card. | The export gives schedules in plain words [code: docs/import/grok-export-prompt.md:18] |
 | 6 | Other tools in v1 | (a) paste route and SKILL.md only; (b) Gemini Gems, after the maintainer checks a sample export; (c) ChatGPT or Claude archives | (a) now, (b) later | The ChatGPT and Claude pages name no agent or memory list [doc: https://help.openai.com/articles/7260999]; the Gems format is not named [doc: https://support.google.com/gemini/answer/16920332] |
 | 7 | Staged copy before confirmation | (a) a staging table, visible only to the person, expires after seven days; (b) no server copy: the browser keeps the file and sends it again at confirm | Decided 14 November 2026: (b). A draft is shown before confirmation, and nothing is saved before it. | The ROADMAP row sets the confirmation rule [code: docs/ROADMAP.md:45]. A staged copy is written before confirmation, so the maintainer must say whether the rule covers it. (b) keeps the literal reading, at the cost of a second upload |
+| 8 | Enforce the cap of 50 | (a) every live fact a person holds, typed or imported, counts, and a store refuses a 51st at confirm; (b) only imported facts count; (c) no cap in code | (a), at confirm; the maintainer decides whether typed facts are refused too | Decided 14 November 2026 that imported facts count inside 50, but no store counts a person's facts today (`openbot/server/src/memory/store.ts`). The preview counts every live fact it holds, so its room can differ from what a later store enforces |
+| 9 | Control characters in an imported fact | (a) strip them in the preview only; (b) refuse them at parse; (c) strip them at confirm, before the digest is taken | (b) | The parser keeps C0 control characters, so the text a person sees and the text a digest covers differ until one of these is chosen. `checkText` refuses zero-width and direction marks only (`openbot/server/src/freeduet/import/checks.ts:11`) |
+| 10 | The secret heuristics | (a) keep the list as built; (b) widen it to every long token; (c) narrow the labelled rule further | (a), with a test for each pattern added later | A plain sentence can be flagged, and the fact is then dropped with its reason shown. A miss keeps a secret in a fact that the review (S3) must still show the person |
 
 ## 7. What was not verified
 
@@ -206,3 +217,52 @@ The 500-character provenance limit applies when a fact is stored, so it is slice
 - Nothing was run on a real export or on a real `SKILL.md` from outside the repository. The licence check is a heuristic and is untested on real skills (section 7).
 - Whether the folder picker sends file text to the server is [assumed] and belongs to slice 3.
 - No upstream file changed, so `docs/UPSTREAM_TOUCHES.md` has no new row.
+
+## Built so far, slice 2 (the preview)
+
+Stores nothing: no row, no file, no log line with the content. No screen shows it yet.
+
+**Built**
+
+- `openbot/server/src/freeduet/import/preview.ts`: `previewImport(parsed, held)`, a pure function. It gives the facts kept under the cap of 50, counting those the person already holds, and each drop with a code: `cap`, `duplicate`, `repeated`, `blank`, `not-text`, `too-long`, `secret` or `check`. It gives the schedules, each `arrivesSwitchedOff: true`; the agents and skills found, each `imported: false`; and the refusals and keys not imported, as the parser gave them. Every text it returns goes through `displayText`: bounded, with control characters and direction marks removed.
+- `openbot/server/src/freeduet/import/preview-routes.ts`: `POST /api/freeduet/import/preview`, with the body `{"export": "..."}` as `application/json`. The body limit is 6 MiB + 1 KiB, the worst-case JSON escaping of a 1 MiB export; the parser then refuses an export over 1 MiB. The route needs a session (`requireUser`) and reads only `context.var.actor.id`'s facts, through the memory store's `list`. It answers `{ saved: false, preview }` with `Cache-Control: no-store`.
+- `openbot/server/src/freeduet/import/checks.ts`: `secretKind(text)`, which gives the kind of secret and never its value. It covers the key, card and base64 checks of 3.2, a credential written with its label (`password: ...`, `PIN is 1234`), a JSON Web Token, and a run of 32 hexadecimal digits.
+- `openbot/server/src/freeduet/import/model.ts`, `freeduet-json.ts`, `skill-folder.ts`: each fact and each agent records its place (`where`). The parser lists every fact it does not keep in `factDrops`, with a code. Blank facts are listed there too; before, they were skipped without a trace. The `refused` list and the item shapes are as before.
+- `openbot/server/src/app.ts`: one import and one mount, after the engines route. The mount exists only when the coworker's memory store does. The row is in `docs/UPSTREAM_TOUCHES.md`.
+- Tests: `openbot/server/tests/freeduet-import-preview.test.ts` (31 tests) and `openbot/server/tests/freeduet-import-preview-route.test.ts` (10 tests, through `createApp` on a throwaway migrated database).
+
+**Limits and checks as built**
+
+| Limit or check | Value | Where |
+|---|---|---|
+| Facts Iris may hold, imported ones included | 50 | `IMPORT_FACT_CAP`, `preview.ts`. No store enforces it today (decision 8) |
+| Room for imported facts | 50 less the facts held, never below 0 | `previewImport` |
+| Order of checks for each kept fact | secret; then held already; then repeated in this import; then the cap | `previewImport` |
+| Fact text returned | 6,000 characters | `FACT_MAX_CHARS` |
+| Instructions or skill body returned | 64 KiB, counted in characters | `LONG_MAX_CHARS` |
+| Names, titles, slugs returned | 200 characters | `SHORT_MAX_CHARS` |
+| Request body | 6 MiB + 1 KiB | `IMPORT_PREVIEW_BODY_MAX_BYTES` |
+| Export | 1 MiB | parser, `IMPORT_FILE_MAX_BYTES` |
+
+**The cap today.** No store counts a person's facts. The memory store has no count limit, and its `list` returns at most 500 rows (`openbot/server/src/memory/store.ts`). The figure 50 in the code is the import batch (`IMPORT_BATCH_MAX_ITEMS`, `openbot/server/src/freeduet/import/model.ts:20`), the first 50 values of a connector response (`openbot/server/src/memory/ingestion.ts:49`) and a mirror limit (`openbot/server/src/memory/store.ts:209`). The lessons have their own limits: 20 pending and 20 in the prompt (`openbot/agent-freeduet/freeduet/lessons.py:50-51`).
+
+**Naming.** The brief says "members". The parser's Bot items are the agents of an export, so the preview calls them `bots`: a FreeDuet member is a team member, not an imported agent. Skills are listed too, so a SKILL.md folder does not show as empty. No route takes a folder in this slice.
+
+**Verified** (in `openbot/server`, on this branch, 14 November 2026)
+
+- `bun test freeduet-import-preview freeduet-import-parse`: 79 pass, 0 fail (31 + 10 new, 38 from slice 1).
+- Before: on the source of the branch's base, the two new test files do not load (`Cannot find module` for `preview` and `preview-routes`), so their 41 tests do not run there. The 38 slice 1 tests pass on the base, as a guard of unchanged behaviour.
+- `biome format` and `biome lint --error-on-warnings` on the changed files: clean.
+- `assertion-shape.test.ts`: 10 pass. One run failed a 5-second test under load and passed on the rerun.
+- `tsc -p server/tsconfig.tests.json`, narrowed to the new test files and the source they import, with the project's own options: exit 0.
+- Row counts of eight tables (`personal_memories`, `skills`, `skill_tools`, `plugin_grants`, `routines`, `agents`, `approval_rules`, `audit_events`) are the same before and after a valid, a non-JSON, an oversized and an invalid request.
+- A canary in a fact and in a secret appears in no console or stdout or stderr line during the requests.
+
+**Not verified or not built**
+
+- The full `bun run typecheck:tests` gate was killed twice on this shared sandbox (SIGKILL), so it is not a result. The full server suite was not run either.
+- No screen, no confirm, no save: slices S3 to S9.
+- The secret checks are heuristics, tested only on the synthetic cases in the test file.
+- With Intelligence on, `store.list` also returns the rows held there. That path is not exercised here.
+
+**Decisions left to the maintainer:** rows 8 to 10 of section 6.
