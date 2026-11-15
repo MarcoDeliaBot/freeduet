@@ -69,6 +69,8 @@ export const stubRoles: RoleRepository = { rolesForUser: async () => [] };
 export type Calls = {
   rules: unknown[];
   decisions: { id: string; decision: string }[];
+  /** A question answered: which one, with what, and the options the route passed (remote or not). */
+  answers: { id: string; response: string; options: unknown }[];
   fullAccess: unknown[];
   tools: number;
   copilot: string[];
@@ -88,6 +90,7 @@ export function assembleSignIn(
   const calls: Calls = {
     rules: [],
     decisions: [],
+    answers: [],
     fullAccess: [],
     tools: 0,
     copilot: [],
@@ -103,6 +106,15 @@ export function assembleSignIn(
     decide: async (_owner: string, id: string, decision: string) => {
       calls.decisions.push({ id, decision });
       return { id, status: decision === "deny" ? "denied" : "approved" };
+    },
+    answerQuestion: async (
+      _owner: string,
+      id: string,
+      response: string,
+      options?: unknown,
+    ) => {
+      calls.answers.push({ id, response, options });
+      return { id, status: "answered" };
     },
     store: {
       get: async (_owner: string, id: string) => ({

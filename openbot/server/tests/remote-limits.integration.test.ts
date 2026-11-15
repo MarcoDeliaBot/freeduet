@@ -293,6 +293,8 @@ const POWERS: [string, string, unknown?][] = [
   ["DELETE", "/api/channels/c1"],
   ["PUT", "/api/channels/c1/pin"],
   ["POST", "/api/groups"],
+  // A post to a group is queued and answered by turns that carry no mark of the session (decision H).
+  ["POST", "/api/groups/g1"],
   ["POST", "/api/groups/g1/members"],
   ["DELETE", "/api/groups/g1/members/u1"],
   ["POST", "/api/team-bots/b1/consents"],
@@ -386,7 +388,6 @@ describe("a remote session: signed in, and not paired with this computer", () =>
       ["PUT", "/api/channels/c1/read"],
       ["GET", "/api/attachments/a1"],
       ["GET", "/api/groups/g1"],
-      ["POST", "/api/groups/g1"],
       ["GET", "/api/agents"],
       ["GET", "/api/agents/iris"],
       ["GET", "/api/bots/attention"],

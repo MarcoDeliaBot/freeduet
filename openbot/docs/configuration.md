@@ -688,8 +688,15 @@ remote. They see the app load, conversations and chat work and ordinary requests
 other screen answers with the sentence. Run `bash scripts/open.sh` once in the administrator's browser. *In a
 deployment several people use,* every person is remote unless their browser is paired, and only an administrator
 at this machine can pair one. A deployment with sign-in and **no** `FREEDUET_INSTALL_SECRET` is not limited at
-all: nothing could tell one browser from another, and the boot log says so. Not covered by this limit: a chat a
-remote session starts still runs with Full access, and with the typed-recipient shortcut, if the member has them.
+all: nothing could tell one browser from another, and the boot log says so. *A chat a remote session starts*
+never has Full access (either setting) or the typed-recipient shortcut, and none of your saved rules or the
+reviewer's "proceed" lets a write through in it: every write the member makes there asks a card, with the reason
+on it, and the card is answered by the rule above (allow once or deny; allow always is done at the computer). A
+member's colleague asked from that chat is held to the same, and so are a member's own workspace and
+commands: their card is answered at the computer, never from the phone. A member in that chat reads what it
+remembers and changes none of it: it cannot add, edit or forget a memory. Posting to a group conversation is
+refused from a remote session for now, because a group's message is queued and carries no mark of where it
+came from.
 
 **With no sign-in, a request from this machine is answered only under this machine's own names.**
 A page on the internet can point its own name at 127.0.0.1, and the browser then sends the person's

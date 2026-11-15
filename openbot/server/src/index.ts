@@ -88,7 +88,8 @@ import {
 import { startRetentionSweeps } from "./audit-retention";
 import { createAuth } from "./auth";
 import { DEV_ACTOR, initializeDevActorUser } from "./auth/dev-actor";
-import { INSTALL_SECRET_VARIABLE } from "./auth/install-secret";
+import { INSTALL_SECRET_VARIABLE, signInGate } from "./auth/install-secret";
+import { remoteRunQuestion } from "./auth/remote-limits";
 import type { AuthService } from "./auth/guards";
 import { createRoleRepository } from "./auth/guards";
 import { createIdentityProviderStore } from "./auth/identity-provider-store";
@@ -1588,6 +1589,7 @@ const loadToolsForActor =
       ingestion: memoryIngestion,
       ownerUserId: actorId,
       agentId: botId,
+      initiator,
     }),
     /*
      * Held by every Bot, granted or not: how a Bot puts an app it cannot reach in front of the
@@ -1936,6 +1938,7 @@ const actorAgentResolver = withRunChannels(baseAgentResolver, (owner, thread) =>
   openDuetChannels.ofThread(owner, thread),
 );
 
+const runGate = signInGate(config);
 const copilotRuntime = mountCopilotRuntime(
   config,
   actorAgentResolver,
@@ -1949,6 +1952,14 @@ const copilotRuntime = mountCopilotRuntime(
     },
     learningSettings,
     threadBackend,
+    /*
+     * FreeDuet (3.5.5, decision H): a run from a signed-in browser that is not paired with this
+     * computer is marked `remote` and every write it makes asks a card. The same cookie the
+     * middleware reads for every other route (`createRemoteLimits`), asked without a second session
+     * lookup (`remoteRunQuestion`). Only where there is a gate; without sign-in and a secret nothing
+     * is remote.
+     */
+    ...(runGate ? { remoteSession: remoteRunQuestion(runGate) } : {}),
   },
 );
 
@@ -2731,6 +2742,7 @@ const app = createApp(
       ingestion: memoryIngestion,
       ownerUserId: actorId,
       agentId: botId,
+      ...(initiator ? { initiator } : {}),
     }).find((candidate) => candidate.name === name);
     if (memory) {
       const text = await memory.execute(args);

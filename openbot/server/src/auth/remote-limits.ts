@@ -69,6 +69,20 @@ export async function isRemoteSession(
   }
 }
 
+/**
+ * The question a run's mark asks (`createRequestAgents`, decision H): is the browser that started this run
+ * paired with the computer? From the cookie alone, and never through the session store. By the time a run
+ * is built the request has been identified, so there is no "nobody" to leave to a guard; asking the store
+ * again (`isRemoteSession`) would read a session that ended between the two lookups as "no session, not
+ * remote", and turn that one request into the person's own live turn. The cookie is on the request or it is
+ * not, and no state in between can change the answer.
+ */
+export function remoteRunQuestion(
+  gate: InstallGate,
+): (request: Request) => Promise<boolean> {
+  return async (request) => isRemote(gate, request);
+}
+
 /** The code a refusal carries, for the app and for a test to read. */
 export const REMOTE_SESSION_LIMITED = "remote_session_limited";
 
@@ -169,13 +183,14 @@ export const LEDGER: readonly LedgerEntry[] = [
     "DELETE /api/attachments/:id",
     "ALL /api/attachments/*",
   ),
-  ...allowed(
-    "groups",
-    "GET /api/groups/:channelId",
-    "POST /api/groups/:channelId",
-  ),
+  // A group is READ from a remote session and not written to: a post is queued and answered by the
+  // members in turns the worker runs, which carry no mark of the session that sent it (channels/group.ts),
+  // so a Bot with Full access would act on a stolen phone's words with no card. Reopened when the turn
+  // carries the mark (docs/design/phone-and-remote.md 3.5.5).
+  ...allowed("groups", "GET /api/groups/:channelId"),
   ...refused(
     "groups",
+    "POST /api/groups/:channelId",
     "POST /api/groups",
     "POST /api/groups/:channelId/members",
     "DELETE /api/groups/:channelId/members/:userId",
@@ -251,6 +266,7 @@ export const LEDGER: readonly LedgerEntry[] = [
     "ALL /api/demonstrations/*",
   ),
   ...refused("memory", "ALL /api/memory/*"),
+  ...refused("import", "ALL /api/freeduet/import/*"),
   ...refused("team", "ALL /api/team-bots/*"),
   ...refused("voice", "ALL /api/audio/*", "ALL /api/voice/*"),
   ...refused("sandboxed", "ALL /api/sandboxed/*"),

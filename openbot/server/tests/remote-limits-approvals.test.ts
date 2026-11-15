@@ -279,3 +279,64 @@ describe("a remote session answers through the route", () => {
     expect(rejected.status).toBe(400);
   });
 });
+
+// ---------------------------------------------------------------------------------------------------
+// A question answered from a remote session resumes a run that is marked as remote (questions.ts).
+// ---------------------------------------------------------------------------------------------------
+
+function asking(withSecret = true) {
+  const config = signInConfig({}, withSecret);
+  const { app, calls } = assembleSignIn(config, {}, { action: ORDINARY });
+  const respond = (options: { paired?: boolean; body?: unknown } = {}) =>
+    app.request(
+      `${ORIGIN}/api/approvals/questions/q-1/respond`,
+      {
+        method: "POST",
+        headers: {
+          origin: ORIGIN,
+          "content-type": "application/json",
+          "x-test-session": "admin",
+          ...(options.paired ? { cookie: pairedCookie(config) } : {}),
+        },
+        body: JSON.stringify(options.body ?? { response: "Yes, send it." }),
+      },
+      LOOPBACK_PEER,
+    );
+  return { respond, calls };
+}
+
+describe("a question answered through the route", () => {
+  test("from a remote session the route says so, so the run that resumes is marked as remote", async () => {
+    const { respond, calls } = asking();
+    expect((await respond()).status).toBe(200);
+    expect(calls.answers).toEqual([
+      { id: "q-1", response: "Yes, send it.", options: { remote: true } },
+    ]);
+  });
+
+  test("from the browser paired with the computer it does not", async () => {
+    const { respond, calls } = asking();
+    expect((await respond({ paired: true })).status).toBe(200);
+    expect(calls.answers).toEqual([
+      { id: "q-1", response: "Yes, send it.", options: { remote: false } },
+    ]);
+  });
+
+  test("a deployment with sign-in and no secret has nothing remote, so nothing is marked", async () => {
+    const { respond, calls } = asking(false);
+    expect((await respond()).status).toBe(200);
+    expect(calls.answers).toEqual([
+      { id: "q-1", response: "Yes, send it.", options: { remote: false } },
+    ]);
+  });
+
+  test("the mark is not the caller's to set: a body that carries one is refused and nothing is answered", async () => {
+    const { respond, calls } = asking();
+    for (const body of [
+      { response: "ok", remote: false },
+      { response: "ok", initiator: { kind: "person" } },
+    ])
+      expect((await respond({ body })).status).toBe(400);
+    expect(calls.answers).toEqual([]);
+  });
+});

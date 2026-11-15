@@ -188,6 +188,8 @@ export function createApprovalRoutes(
         context.var.actor.id,
         context.req.param("id"),
         input.response,
+        // A remote session's answer resumes a run that is marked as remote (questions.ts).
+        { remote: isRemote(pairing, context.req.raw) },
       ),
     );
   });

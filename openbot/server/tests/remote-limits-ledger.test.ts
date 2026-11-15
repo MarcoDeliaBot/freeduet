@@ -227,7 +227,6 @@ describe("what a remote session may reach", () => {
         "POST /api/channels/:channelId/attachments",
         "GET /api/attachments/:id",
         "GET /api/groups/:channelId",
-        "POST /api/groups/:channelId",
         "GET /api/copilotkit/info",
         "POST /api/copilotkit/agent/:agentId/run",
         "POST /api/copilotkit/agent/:agentId/connect",
