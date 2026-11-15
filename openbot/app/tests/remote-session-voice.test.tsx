@@ -291,3 +291,45 @@ test("a paired session is offered the microphone and the call, as before", async
   expect(view.getByRole("button", { name: MICROPHONE })).toBeDefined();
   expect(view.getByRole("button", { name: CALL })).toBeDefined();
 });
+
+/* FreeDuet (D47): the line a remote session reads above the message box. */
+const UNPAIRED =
+  /This browser is not paired with the computer FreeDuet runs on/;
+
+test("a remote session reads one line saying the browser is not paired, with the command to pair it", async () => {
+  signedIn(true);
+  const view = await mounted();
+
+  expect(view.getAllByText(UNPAIRED)).toHaveLength(1);
+  expect(view.getByText("bash scripts/open.sh")).toBeDefined();
+});
+
+test("the unpaired line can be dismissed for the visit and is back on a new visit", async () => {
+  signedIn(true);
+  const view = await mounted();
+  const user = userEvent.setup({ document: view.container.ownerDocument });
+  await user.click(view.getByRole("button", { name: "Dismiss" }));
+  expect(view.queryByText(UNPAIRED)).toBeNull();
+
+  view.unmount();
+  const again = await mounted();
+  expect(again.getAllByText(UNPAIRED)).toHaveLength(1);
+});
+
+test("a paired browser, and one where /api/me says nothing about it, read no unpaired line", async () => {
+  signedIn(false);
+  const paired = await mounted();
+  expect(paired.queryByText(UNPAIRED)).toBeNull();
+  paired.unmount();
+  cleanup();
+
+  // Single-user mode: `remote` is absent from the answer, which the app reads as false.
+  queryClient.setQueryData(authKeys.currentUser(), {
+    id: "person-1",
+    email: "person@example.test",
+    role: "user",
+    onboarding: null,
+  } satisfies AuthenticatedUser);
+  const single = await mounted();
+  expect(single.queryByText(UNPAIRED)).toBeNull();
+});
