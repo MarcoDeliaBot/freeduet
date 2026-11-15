@@ -429,9 +429,10 @@ jobs:
       # The team eval runner, its checks and graders, offline: fake mode and scripted servers only.
       - run: bun test ../evals/team/run.test.ts ../evals/team/engine.test.ts ../evals/team/live-tools.test.ts ../evals/team/dates.test.ts
       - run: bun ../evals/team/run.ts --fake
-      # The dictation proofs' own measuring tools (word error rate, the download of a test set, the
-      # report), on made-up data and a fake service. The proofs themselves run on the maintainer's computer.
-      - run: bun test ../evals/dictation/metrics.test.ts ../evals/dictation/fleurs.test.ts ../evals/dictation/wer.test.ts
+      # The dictation proofs' own tools (word error rate, the download of a test set, the report, and the
+      # browser script's argument and cookie checks), on made-up data and a fake service. The proofs
+      # themselves run on the maintainer's computer.
+      - run: bun test ../evals/dictation/metrics.test.ts ../evals/dictation/fleurs.test.ts ../evals/dictation/wer.test.ts ../evals/dictation/freeduet-dictation-e2e.test.ts
 
   # FreeDuet: agent-freeduet, the service that runs every member on the person's own Claude Code
   # login. Offline: a fake `claude` replays fixtures, so no login, no key and no network.
@@ -705,6 +706,11 @@ jobs:
           set -euo pipefail
           rustup toolchain install 1.88.0 --profile minimal
           echo "RUSTUP_TOOLCHAIN=1.88.0" >> "$GITHUB_ENV"
+      # The credential-lock test starts `bun` on this runner, as the server does, so the job gets
+      # the same pinned setup as the other jobs.
+      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
+        with:
+          bun-version: 1.4.3
       - name: Cargo cache
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
