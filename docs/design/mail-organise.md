@@ -1,6 +1,6 @@
 # Organise a mailbox: labels, archive, read and unread
 
-Built on the branch `mail-organise` and not yet merged (see "Built so far", section 8). Written 2026-11-15 on origin/main 225caee; origin/main 38c4b48 (a change under `site/` only) was merged before the pull request.
+Built on the branch `mail-organise` and not yet merged (see "Built so far", section 8). Written 2026-11-15 on origin/main 225caee; origin/main 38c4b48 (a change under `site/` only) and then bfdc4ad (a change to `docs/ROADMAP.md` only) were merged before the pull request.
 
 Decided by the maintainer on 15 November 2026: "a mail assistant cannot have this limit". He asked Otto to create a Gmail label called FreeDuet and to file the repository's automatic notifications under it, out of the Inbox. With the app-password connection (`google-imap`) Otto could not: a member held three reads (`gmail_search_messages`, `gmail_read_message`, `calendar_list_events`) and two sends, and nothing that changes a mailbox. Both Gmail connections now give a member the tools to organise one. This file covers the first slice only.
 
@@ -130,7 +130,7 @@ Not changed, by the brief: `docs/ROADMAP.md`, `docs/M1_PLAN.md`, `README.md`, `s
 
 **Tests, on main's source and on the branch.**
 
-Measured on 15 November 2026, on the branch merged with origin/main 38c4b48. "On main's source" means: this branch's test files run with every changed source file put back to main's version (`git checkout origin/main -- <file>`) and the two new source files removed; the branch's files were then restored and the tree checked.
+Measured on 15 November 2026, on the branch merged with origin/main 38c4b48 (the merge of bfdc4ad, which changed only `docs/ROADMAP.md`, came after). "On main's source" means: this branch's test files run with every changed source file put back to main's version (`git checkout origin/main -- <file>`) and the two new source files removed; the branch's files were then restored and the tree checked.
 
 | Test file | Tests | On main's source | On the branch |
 |---|---|---|---|
