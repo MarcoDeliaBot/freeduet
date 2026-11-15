@@ -1,0 +1,116 @@
+# Changelog
+
+All notable changes to FreeDuet. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). The project has not promised semantic versioning yet; it is pre-1.0 and one person maintains it.
+
+Each version says what was and was not run live. "Run live" means run on a real installation by the maintainer; "built and tested in CI" means the automated tests passed and nobody has used it. The statements come from the release notes and from [docs/ROADMAP.md](docs/ROADMAP.md); where a PR number is given it is a merged pull request of [MarcoDeliaBot/freeduet](https://github.com/MarcoDeliaBot/freeduet/pulls). The pull requests of each version are those merged between its tag and the one before (`git log --first-parent --merges <previous tag>..<tag>`).
+
+## [Unreleased]
+
+### Added
+
+- Release provenance: a workflow that builds a source archive of a tagged release, a SHA-256 file and a signed build-provenance attestation, and uploads them to the release ([docs/VERIFY.md](docs/VERIFY.md)). Not yet run on a release.
+- [docs/VERIFY.md](docs/VERIFY.md) (how to check the project yourself), [docs/THREAT_MODEL.md](docs/THREAT_MODEL.md) and this changelog.
+
+## [0.2.1] - 2026-11-15
+
+Commit `ddb0cde`. Release notes: "Unlike v0.2, parts of it have now been run live on one real installation (the maintainer's)."
+
+### Added
+
+- Otto organises a mailbox: create labels, label, archive, mark read or unread (#254), move to the Bin (#260) and to Spam (#261). Nothing is deleted for good.
+- A direct order in the person's own written message runs a mailbox change with no card (#258).
+- After a move to the Bin or to Spam over IMAP, the tool checks that the messages left the mailbox (#261).
+- Connect a mailbox from the chat in three steps; tools an update adds reach the member who holds the mailbox (#264).
+- `scripts/update.sh`: one command that updates FreeDuet and can go back (#245).
+- A tool that moves everything made with no sign-in to the address the person signs in with, with a backup first (#220).
+- Remote sessions with limited powers, for deployments with sign-in (#221).
+- Iris proposes the team in her first message (#239). "Done when" on every hand-off (#243). A routine card in the chat (#241). One line with Undo after a member is added from chat (#265). A person's own name, tone and language for the team, from chat (#222).
+- Routines: 90-day history, a conversation link per run, a Missed label (#207).
+- Engines page redesigned as cards, "Who uses what" and "Keys and Spending" (#215). Team file export for an administrator (#216). An import preview that saves nothing (#214). An imported member may hold 8,000 characters of instructions (#218).
+- First start: "Check again" re-detects the engine with no restart, and plain-words messages for a missing or signed-out Claude (#266).
+- The site in 12 languages (#249 to #253, with the front page and site brought level in #206, #212, #235).
+- Desktop crate built in CI on Linux (#219). Five team-eval cases for the 14 November rules (#209). The four cases that fail every run were fixed (#269).
+
+### Changed
+
+- The desktop app generates the database password instead of a default (#213).
+- Comparison, README and plan documents brought to the state of each version (#206, #211, #212, #233, #234, #235, #242, #263, and the roadmap pull requests #236 to #238, #244, #246, #247, #255 to #257, #259, #262, #267). A green tick in the comparison means available today (#242). The price of cloud FreeDuet is not set (#256).
+- Tests: explicit timeouts for load-sensitive tests and two races fixed (#224); a test of reads of a page that keeps navigating made stable (#225).
+- CLAUDE.md: the Haiku swarm rule (#248).
+- Dependency updates: zod 4.6.7 (#223), `rustls` (#232), mobile app packages (#185, #186, #227, #230, #231).
+
+### Fixed
+
+- A remote session is no longer shown a false "Couldn't load voice chats" error (#268).
+- Reads of a page that keeps navigating count each navigation once and bound the snapshot (#225).
+
+### Security
+
+- Approving a request in the inbox never gives a member a tool that sends (#208).
+- Settings are never changed in a run nobody is attending (#210).
+- Words from the microphone never earn the typed-recipient shortcut or Full access (#217).
+- A remote session earns neither the typed-recipient shortcut nor Full access, and what it writes asks a card (#221).
+- A mailbox change is judged by a model that reads only the person's own typed words; the release notes name this as a known limit: it can be wrong in both directions ([docs/design/mail-organise.md](docs/design/mail-organise.md)).
+- Dependency updates listed under Changed; #223 is the branch `zod-security-bump`. The pull request titles do not say which of the others fix an advisory.
+
+### What was run live
+
+Run live on one real installation (Windows with WSL2, Gmail through an app password):
+
+- the update, four times, each with a database backup first;
+- the move from no sign-in to Google sign-in (1,699 rows moved, backup taken);
+- Otto moving spam to the Spam folder on a real mailbox, ordered through Iris, with no card.
+
+Team evals, live, 15 November 2026 (84 cases, 38 safety cases): one full run, 66 of 73 scored cases passed, 11 skipped. That run did not meet the thresholds (each member at least 90%, safety cases 100%). The seven failures were re-run three times each: penny-5 passed 3 of 3, iris-1 and cam-6 passed 2 of 3, and four failed every time; those four were cases added after v0.1 that had never passed (three a missing sentence in a member's prompt, one a line that demanded one exact wording), were fixed with no safety requirement lowered, and then passed 12 of 12 runs. A full three-run certification has not been repeated on this version, and the public report for this run was not published at release.
+
+### Not run live
+
+Moving mail to the Bin on a real mailbox, the routine card, "done when", the Undo line, the mailbox button, "Check again", the installers on a clean machine, macOS.
+
+## [0.2] - 2026-11-14
+
+Release notes: "everything below is built and tested in CI (26 checks green on this commit). None of it has been run live on a real installation yet, and the team evals have not been re-run since v0.1." The release notes do not list pull request numbers; see `git log --first-parent --merges v0.1..v0.2`.
+
+### Added
+
+- Two new members: Mark (marketing) and Cam (video).
+- "Full access without payments" as a second setting.
+- A Download button for files a member makes.
+- An Engines page: each engine's state, each member's chain, automatic or ask-first switching.
+- A second engine kind (an Anthropic-compatible endpoint you name), off by default; a key-free local endpoint entry, never yet run with a real model.
+- A spend ledger with caps. Paid gateways stay closed.
+- Settings changed in chat with an Undo button; routines with Next runs and History.
+- A first-step install script for Ubuntu and one for Windows through WSL2. No double-click installer.
+- Sign-in can be limited to exact email addresses.
+- A read-aloud button with a local voice, off by default.
+
+### Changed
+
+- Only one member sends email; the others go through Iris.
+
+### Security
+
+- Each installation makes its own secrets (tokens, worker secret, database password) instead of the example values.
+- A separate token for each member's computer.
+- With no sign-in, only this machine's own names are answered (server, member computers, supervisor).
+- Member computers cannot reach the home or office network unless switched on; open connections close when it is switched off.
+- A tool nobody classified asks first. Routines always ask with a card, even with Full access.
+- A tool to replace the vault key on an installation that already holds saved logins.
+- GitHub secret scanning, push protection, Dependabot, CodeQL and OpenSSF Scorecard are on.
+
+### What was run live
+
+Nothing. Built and tested in CI only. The team evals were not re-run since v0.1.
+
+## [0.1] - 2026-11-13
+
+The first public version. The release was published on 14 November 2026 (the notes say "the first public version of FreeDuet, 13 November 2026"). "An early release, built and used by one maintainer: not everything has been tested." The release notes do not list the features beyond a self-hosted team of AI assistants on the person's own Claude subscription login, so this entry does not either: see [README.md](README.md) at tag `v0.1`.
+
+### What was run live
+
+The team evals, on 13 November 2026: 43 of 43 scored cases passed (2 skipped), every member at 100% of its cases, the safety cases 45 runs out of 45, after a first full run of that night had failed on one member (a browser fault, then a turn that ended in silence; fixed in #92 and #93). The public report is [evals/team/reports/2026-11-13-claude-code-regraded-2026-11-13-public.md](evals/team/reports/2026-11-13-claude-code-regraded-2026-11-13-public.md). Two cases were graded again from saved answers, in code instead of by the grader model, and the report says so. The clean start was run by CI on Linux; whether the maintainer ran the rest of the stack on a real installation is not stated in the v0.1 release notes.
+
+[Unreleased]: https://github.com/MarcoDeliaBot/freeduet/compare/v0.2.1...HEAD
+[0.2.1]: https://github.com/MarcoDeliaBot/freeduet/compare/v0.2...v0.2.1
+[0.2]: https://github.com/MarcoDeliaBot/freeduet/compare/v0.1...v0.2
+[0.1]: https://github.com/MarcoDeliaBot/freeduet/releases/tag/v0.1
