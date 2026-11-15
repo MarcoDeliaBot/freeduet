@@ -143,6 +143,8 @@ Mark (id `marketer`) was the first member added after v0.1, Cam (id `video`) the
 - Commit messages and PR bodies end with the attribution lines the harness gives the session.
 - Worktrees share `refs/remotes/origin/main`: another executor's `git fetch origin main` moves it under you, so run `git rev-list --left-right --count origin/main...HEAD` right before a push.
 - Rows appended to `docs/UPSTREAM_TOUCHES.md` conflict between parallel PRs: keep main's rows first, then your own.
+- `git merge --no-edit` leaves `# Conflicts:` lines in the merge message, and `git commit --no-edit` keeps them: finish a conflicted merge with `git commit -m '<message>'`.
+- The platform rewrites the last attribution line of a PR body. That is expected, so do not retry the edit.
 
 ## CI
 
@@ -179,6 +181,9 @@ Mark (id `marketer`) was the first member added after v0.1, Cam (id `video`) the
   Dockerfile, a service or a compose change, look at main's own run. A new `*/Dockerfile` under
   `openbot/` must be added to `openbot/.github/published-images.json`.
 - Biome runs from `openbot/`, not `openbot/server/`.
+- The `tests` CI job installs neither Hono nor Dockerode, so supervisor tests that start a real process go on the `types (supervisor)` job's `bun test` line in `.github/workflows/ci.yml`.
+- `audit_events` is append-only (a trigger refuses every UPDATE and DELETE) and nothing is cleaned between cases, so a test that counts audit rows uses fresh addresses per test.
+- Some phrases in the comments of `openbot/agent-freeduet/engines.example.yaml` are pinned by `openbot/agent-freeduet/tests/test_compatible_engine_file.py`: check that test before rewording one.
 
 ## Site (`site/`)
 
@@ -229,6 +234,11 @@ Mark (id `marketer`) was the first member added after v0.1, Cam (id `video`) the
   other executors share the machine and the Postgres cluster.
 - Under load, `production-loader-boundary`, `tool-selection-environment-restoration`, `assertion-shape` and the D25 case of `openbot/scripts/start-restart-guard.test.ts` can exceed bun's 5 s test limit; they fail the same way on main, so compare with main first.
 - Under Bun, a fake upstream proxy in a test must be a raw `net` server: the socket that an `http` server's `connect` handler receives emits only `end`.
+- `bun test tests/` matches every `tests/` folder below the directory bun runs in (`server/tests/` too), so name the file when you mean one file.
+- `bun script.ts` loads the `.env` of the current folder into `process.env` even when nothing was exported; a script that must tell an exported value from one written in `.env` reads `/proc/self/environ`, or runs with `--no-env-file`.
+- The agent-freeduet suite on Python 3.12 takes about 4 minutes, and the sharded server suite (`bun run test:server:sharded`) about 10.
+- In a test, pass the coworker object to `createApp(...)` as `never`, as `server/tests/openduet-setup.test.ts` does: it is parameter 35, and every parameter from 4 on is optional, so a wrong count still type-checks.
+- A test that mocks `dockerode` and imports `../src/docker` shares the module cache with the other files: import it with a unique query (`../src/docker?<name>`, as `supervisor/tests/computer-token-ensure.test.ts` does).
 
 ## Things learned the hard way (Intelligence off, SSE mode)
 
