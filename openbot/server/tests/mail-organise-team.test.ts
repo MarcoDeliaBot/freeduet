@@ -100,6 +100,20 @@ describe("the skill that carries the organising tools", () => {
     ).toBe(true);
   });
 
+  test("says there is a card, and that there is none where the person pressed Always allow or gave Full access", async () => {
+    const tenantPackage = await load();
+    const text =
+      tenantPackage.skills.find((candidate) => candidate.slug === SKILL)
+        ?.instructions ?? "";
+    expect(text).toContain(
+      "shows them a card with how many messages and which",
+    );
+    expect(text).toContain(
+      "Where they pressed Always allow for that tool, or gave you Full access, there is no card",
+    );
+    expect(text).toContain("say plainly what you did and to how many messages");
+  });
+
   test("is attached to Otto and to no other member", async () => {
     const tenantPackage = await load();
     expect(
@@ -181,7 +195,12 @@ describe("what Otto is told", () => {
       "always on message ids that a search or a read returned",
     );
     expect(prompt).toContain("at most a hundred at a time");
-    expect(prompt).toContain("Each of them asks the person");
+    expect(prompt).toContain(
+      "Each of them shows the person a card to allow or refuse, unless they pressed Always allow for that tool or gave you Full access",
+    );
+    expect(prompt).toContain(
+      "If it ran with no card, say what you did and to how many messages; if the person refused, say nothing was changed.",
+    );
     expect(prompt).toContain(
       "say in one plain sentence what you will touch (how many messages, from whom, which subjects, and what happens to them)",
     );

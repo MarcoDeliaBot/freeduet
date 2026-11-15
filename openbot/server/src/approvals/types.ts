@@ -117,6 +117,12 @@ export type ApprovalCandidate = {
    */
   changesSetting?: true;
   /**
+   * The call changes a mailbox (create a label, label, archive, mark: the four writes of
+   * docs/design/mail-organise.md), read off the transport the row resolved to and the tool's name together.
+   * It always shows a card, unless the person's own earlier "Always allow" for this tool answers it.
+   */
+  organisesMailbox?: true;
+  /**
    * The person just allowed this exact send on its own card, the check that asks about a new email
    * every time. Asked about again, it would be a second card for one email.
    */

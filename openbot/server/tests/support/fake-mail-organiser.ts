@@ -159,6 +159,8 @@ export class FakeMailbox {
   storeAnswers = true;
   /** What a removal answers, when the add before it was made: `false` is a server that refused only that. */
   removeAnswers = true;
+  /** A server that never answers the logout: the transport must cut the connection off itself. */
+  logoutHangs = false;
   /** What `mailboxCreate` answers: `created: false` is a label that was already there. */
   createdAnswer: { path?: string; created?: boolean } | undefined = undefined;
 
@@ -232,6 +234,7 @@ export class FakeMailbox {
       connect: async () => undefined,
       logout: async () => {
         this.logouts += 1;
+        if (this.logoutHangs) await new Promise<void>(() => {});
       },
       close: () => {
         this.closes += 1;

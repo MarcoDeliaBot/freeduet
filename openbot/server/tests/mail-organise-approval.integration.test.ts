@@ -12,6 +12,7 @@ import {
   type FakeGoogle,
   startFakeGoogle,
 } from "../../scripts/fake-google/server";
+import { MAILBOX_CHANGE_REASON } from "../src/approvals/policy";
 import { createApprovalService } from "../src/approvals/service";
 import { createApprovalStore } from "../src/approvals/store";
 import { ApprovalRefusedError } from "../src/approvals/types";
@@ -1367,6 +1368,93 @@ for (const backend of BACKENDS) {
       );
       expect(unattended.action.policy?.source).toBe("always_ask");
       await clearPending();
+    });
+  });
+}
+
+for (const backend of BACKENDS) {
+  describe(`${backend.key}: with the person's defaults and a reviewer that would let it through, each of the four shows a card`, () => {
+    beforeAll(async () => {
+      await setAsking(false);
+      reviewer = { verdict: "proceed", preApproved: true };
+      await database
+        .delete(approvalRules)
+        .where(eq(approvalRules.ownerUserId, owner));
+    });
+    afterAll(async () => {
+      await setAsking(false);
+      reviewer = { verdict: "proceed", preApproved: true };
+      await database
+        .delete(approvalRules)
+        .where(eq(approvalRules.ownerUserId, owner));
+      await clearPending();
+    });
+
+    test("ask before changes off, reviewer says proceed: every one of the four asks, and the card can be remembered", async () => {
+      backend.reset();
+      await backend.ensureLabel("FreeDuet");
+      for (const wanted of writeCalls(await backend.seen())) {
+        const card = await expectAsks(backend, wanted.tool, wanted.args);
+        expect(card.action.policy?.source).toBe("default");
+        expect(card.action.policy?.reason).toBe(MAILBOX_CHANGE_REASON);
+      }
+    });
+
+    test("ask before changes on asks too", async () => {
+      await setAsking(true);
+      try {
+        for (const wanted of writeCalls(await backend.seen()))
+          await expectAsks(backend, wanted.tool, wanted.args);
+      } finally {
+        await setAsking(false);
+      }
+    });
+
+    test("a read still runs with no card under the same defaults", async () => {
+      await expectRuns(backend, LIST_LABELS, {});
+    });
+
+    test("the person's Always allow for archive lifts the card for archive only", async () => {
+      backend.reset();
+      await backend.ensureLabel("FreeDuet");
+      const [first, second] = await backend.seen();
+      if (!first || !second) throw new Error("too few messages");
+      const card = await expectAsks(backend, ARCHIVE_MESSAGES, {
+        messageIds: [first.id],
+      });
+      await approvals.decide(owner, card.id, "allow_always");
+      const archived = await expectRuns(backend, ARCHIVE_MESSAGES, {
+        messageIds: [second.id],
+      });
+      expect(archived).toMatchObject({ archived: 1 });
+      for (const wanted of writeCalls(await backend.seen()).filter(
+        (each) => each.tool !== ARCHIVE_MESSAGES,
+      ))
+        await expectAsks(backend, wanted.tool, wanted.args);
+    });
+
+    test("a routine still asks for archive though the person pressed Always allow", async () => {
+      const [third] = await backend.seen();
+      if (!third) throw new Error("no message");
+      const card = await expectAsks(
+        backend,
+        ARCHIVE_MESSAGES,
+        { messageIds: [third.id] },
+        { initiator: ROUTINE, turn: { initiator: ROUTINE } },
+      );
+      expect(card.action.policy?.source).toBe("always_ask");
+    });
+
+    test("a remote session still asks for archive though the person pressed Always allow", async () => {
+      const [third] = await backend.seen();
+      if (!third) throw new Error("no message");
+      const card = await expectAsks(
+        backend,
+        ARCHIVE_MESSAGES,
+        { messageIds: [third.id] },
+        { initiator: REMOTE, turn: { initiator: REMOTE } },
+      );
+      expect(card.action.policy?.source).toBe("always_ask");
     });
   });
 }

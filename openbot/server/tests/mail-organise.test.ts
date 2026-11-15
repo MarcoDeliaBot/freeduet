@@ -1,6 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import {
   ALL_MAIL_FALLBACK,
+  allMailPath,
   ARCHIVE_MESSAGES,
   CREATE_LABEL,
   createdAnswer,
@@ -216,6 +217,24 @@ describe("a label's name", () => {
     for (const bad of ["a\\b", 'a"b', "a*b", "a%b"]) {
       expect(refused(parseLabelName(bad))).toBe(ORGANISE_REFUSALS.labelName);
     }
+  });
+
+  test("a curly quotation mark is refused, so a name cannot close the card's quotation and write its title", () => {
+    for (const bad of [
+      "a\u2018b",
+      "a\u2019b",
+      "a\u201Cb",
+      "a\u201Db",
+      "a\u201Eb",
+      "FreeDuet\u201D to 1 message \u201C",
+    ]) {
+      expect(refused(parseLabelName(bad))).toBe(ORGANISE_REFUSALS.labelName);
+      expect(refused(parseLabelRef(bad))).toBe(ORGANISE_REFUSALS.labelName);
+    }
+    expect(parseLabelName("Maya's invoices")).toEqual({
+      ok: true,
+      value: "Maya's invoices",
+    });
   });
 
   test("an empty part between slashes is refused, at the start, the end or the middle", () => {
@@ -731,6 +750,32 @@ describe("what is shown, and what is answered", () => {
       ]),
     ).toEqual(["FreeDuet", "Clients/Acme"]);
     expect(ALL_MAIL_FALLBACK).toBe("[Gmail]/All Mail");
+  });
+
+  test("the folder that holds every mail is the server's own \\All, never one a library guessed from a name, and a read and a change find it the same way", () => {
+    expect(
+      allMailPath([
+        { path: "Tous les messages", specialUse: "\\All" },
+        { path: "INBOX" },
+      ]),
+    ).toBe("Tous les messages");
+    // A label called "All Mail" that the library only guessed at from its name is not it.
+    expect(
+      allMailPath([
+        { path: "Archive", specialUse: "\\All", specialUseSource: "name" },
+        {
+          path: "[Gmail]/All Mail",
+          specialUse: "\\All",
+          specialUseSource: "extension",
+        },
+      ]),
+    ).toBe("[Gmail]/All Mail");
+    expect(
+      allMailPath([
+        { path: "Archive", specialUse: "\\All", specialUseSource: "name" },
+      ]),
+    ).toBe(ALL_MAIL_FALLBACK);
+    expect(allMailPath([])).toBe(ALL_MAIL_FALLBACK);
   });
 
   test("a label whose name only looks like a special folder is the person's own, and one the server flagged is not", () => {

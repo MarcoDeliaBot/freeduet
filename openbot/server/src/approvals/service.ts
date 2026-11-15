@@ -8,6 +8,7 @@ import { HeadlessToolSuspension } from "@openbot/toolkit/headless-tools";
 import {
   decideAction,
   effectiveHostCommandPolicy,
+  MAILBOX_CHANGE_REASON,
   type ReviewModel,
   ruleMatches,
 } from "./policy";
@@ -359,6 +360,10 @@ export function createApprovalService(
       candidate,
       fullAccess,
       ...(alwaysAsk ? { alwaysAsk } : {}),
+      // mail-organise: a card for a change to a mailbox, unless the person's own Always allow answers it.
+      ...(candidate.organisesMailbox === true && candidate.effect === "write"
+        ? { mustAsk: MAILBOX_CHANGE_REASON }
+        : {}),
       messages: continuation?.messages,
       team: teamRules,
       personal,

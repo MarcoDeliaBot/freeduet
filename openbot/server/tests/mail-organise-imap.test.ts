@@ -1,6 +1,9 @@
 import { describe, expect, test } from "bun:test";
 import { readFileSync } from "node:fs";
-import { createGoogleImapTransport } from "../src/plugins/google-imap";
+import {
+  createGoogleImapTransport,
+  MAY_HAVE_CHANGED,
+} from "../src/plugins/google-imap";
 import { organiseOverImap } from "../src/plugins/google-imap-organise";
 import {
   LABEL_MESSAGES,
@@ -525,6 +528,53 @@ describe("a connection is closed however the call ended, and says nothing in the
       expect(result.text).toMatch(sentence);
       expect(result.text).not.toContain("LIBRARY");
     }
+  });
+
+  test("a timeout or a dropped connection after a change was sent says that it may have been made", async () => {
+    for (const code of ["ETIMEDOUT", "ECONNRESET"]) {
+      const { box, transport } = setup();
+      box.failures.set(
+        "messageFlagsAdd",
+        Object.assign(new Error(library), { code }),
+      );
+      const result = await transport.callTool(
+        connection,
+        "gmail_mark_messages",
+        { messageIds: [HEX.a], state: "read" },
+      );
+      expect(result.isError).toBe(true);
+      expect(result.text).toBe(MAY_HAVE_CHANGED);
+      expect(result.text).toContain("may have been made");
+      expect(result.text).not.toContain("LIBRARY");
+    }
+  });
+
+  test("a timeout before any command that changes a thing was sent says only that Gmail did not answer", async () => {
+    const { box, transport } = setup();
+    box.failures.set(
+      "search",
+      Object.assign(new Error(library), { code: "ETIMEDOUT" }),
+    );
+    const result = await transport.callTool(connection, "gmail_mark_messages", {
+      messageIds: [HEX.a],
+      state: "read",
+    });
+    expect(result.isError).toBe(true);
+    expect(result.text).toMatch(/did not answer in time/);
+    expect(result.text).not.toContain("may have been made");
+    expect(box.changedAnything()).toBe(false);
+  });
+
+  test("a logout the server does not answer is cut off after two seconds, and the call still answers", async () => {
+    const { box, transport } = setup();
+    box.logoutHangs = true;
+    const result = await transport.callTool(connection, "gmail_mark_messages", {
+      messageIds: [HEX.a],
+      state: "read",
+    });
+    expect(result.isError).toBe(false);
+    expect(box.logouts).toBe(1);
+    expect(box.closes).toBeGreaterThanOrEqual(1);
   });
 
   test("a server that does not make the change is a failure, and the answer never claims it was made", async () => {

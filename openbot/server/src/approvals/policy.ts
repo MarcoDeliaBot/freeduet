@@ -461,6 +461,10 @@ export async function reviewAction(input: {
   }
 }
 
+/** What the person reads on the card for a change to their mailbox (docs/design/mail-organise.md). */
+export const MAILBOX_CHANGE_REASON =
+  "Changing your mailbox always asks you first, until you press Always allow for this action.";
+
 /**
  * The whole decision, layer by layer. Safety first and unconditionally; then the strictest rule;
  * then the reviewer where it applies; then the person's own "ask before making changes" default.
@@ -487,6 +491,14 @@ export async function decideAction(input: {
    * every action as before.
    */
   alwaysAsk?: string;
+  /**
+   * mail-organise: why this write always shows a card in the person's own turn, whatever "ask before
+   * changes" says and whatever the reviewer would have said. Unlike `alwaysAsk` it is not a D35 case:
+   * the person's own saved "Always allow" for this tool still answers it, and Full access reads it as
+   * any other write. A routine, a check-in, a remote turn and a hand-off from one are `alwaysAsk`
+   * and keep asking with no rule able to lift it.
+   */
+  mustAsk?: string;
 }): Promise<ApprovalPolicyOutcome> {
   const { candidate } = input;
   const safety = safetyRequirement(candidate);
@@ -584,6 +596,17 @@ export async function decideAction(input: {
       behaviour: "ask",
       source: "always_ask",
       reason: alwaysAsk,
+      ...(review ? { review } : {}),
+    };
+  if (
+    input.mustAsk &&
+    candidate.effect !== "read" &&
+    !(matched?.layer === "personal_rule" && matched.rule.behaviour === "allow")
+  )
+    return {
+      behaviour: "ask",
+      source: "default",
+      reason: input.mustAsk,
       ...(review ? { review } : {}),
     };
   if (matched?.rule.behaviour === "ask")

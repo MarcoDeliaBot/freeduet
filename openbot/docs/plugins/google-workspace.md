@@ -45,9 +45,10 @@ Add exactly these four scopes:
 - `https://www.googleapis.com/auth/gmail.send`: send mail, and nothing else (it cannot read, label or
   delete);
 - `https://www.googleapis.com/auth/gmail.modify`: label, archive and mark mail as read or unread. Gmail's
-  `messages.batchModify` takes no narrower scope, and this one is wider than the tools that use it: a
-  client holding it could also trash mail, which no tool here does and the connector cannot be made to.
-  The tools, not the scope, are the boundary (see [Organising a mailbox](#organising-a-mailbox));
+  `messages.batchModify` takes no narrower scope, and this one is wider than the tools that use it: it
+  also covers reading and sending mail, and a client holding it could trash mail, which no tool here
+  does and the connector cannot be made to. The tools, not the scope, are the boundary (see
+  [Organising a mailbox](#organising-a-mailbox));
 - `https://www.googleapis.com/auth/calendar.readonly`: read the calendar.
 
 Two things about Google's rules decide who can connect:
@@ -159,10 +160,13 @@ What the connector itself enforces, whatever was approved:
 ### Organising a mailbox
 
 `gmail_create_label`, `gmail_label_messages`, `gmail_archive_messages` and `gmail_mark_messages` change
-the person's mailbox and send nothing. They are writes, not sends: each asks the person with a card
-every time it is called, as any other write does, and none is covered by what covers a new email (the
-person's own typed request) or granted by an approval that names nothing. A routine, a check-in and a
-hand-off that started in one always ask. The full account of what is built, what is not, and the
+the person's mailbox and send nothing. They are writes, not sends: each shows the person a card
+in the person's own turn, whatever "ask before changes" says and whatever the reviewer would have said.
+Only the person's own earlier "Always allow" for that tool lifts the card, for that tool alone, and
+Full access treats them as it treats any other write that is not a payment. None is covered by what
+covers a new email (the person's own typed request) or granted by an approval that names nothing. A
+routine, a check-in, a remote session and a hand-off that started in one always ask, and "Always allow"
+does not lift that. The full account of what is built, what is not, and the
 limits is in [docs/design/mail-organise.md](../../../docs/design/mail-organise.md).
 
 - **Messages are named by id.** A call lists the Gmail ids a search or a read returned, at most 100,

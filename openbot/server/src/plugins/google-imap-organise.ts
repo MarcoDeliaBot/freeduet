@@ -1,6 +1,6 @@
 import { asJson, failure } from "./google-workspace-rest";
 import {
-  ALL_MAIL_FALLBACK,
+  allMailPath,
   ARCHIVE_MESSAGES,
   archivedAnswer,
   CREATE_LABEL,
@@ -40,6 +40,33 @@ import type { McpCallResult } from "./mcp";
  * mailbox is opened for writing once the labels are known and the call is not already refused, and
  * only for the length of the one call: the connection is closed when it is done, however it ended.
  */
+
+/**
+ * The same client, and a flag that is set the moment a command that changes a thing is handed to it.
+ * From then on a timeout or a dropped connection cannot say the change did not happen, and the answer
+ * says so. It lives here because this module is the only one that names those methods.
+ */
+export function watchForChanges<C extends ImapOrganiserLike>(
+  client: C,
+): { client: C; sent: () => boolean } {
+  let sent = false;
+  const changing: ReadonlySet<string | symbol> = new Set([
+    "mailboxCreate",
+    "messageFlagsAdd",
+    "messageFlagsRemove",
+  ]);
+  const watched = new Proxy(client, {
+    get(target, property) {
+      const member = Reflect.get(target, property) as unknown;
+      if (typeof member !== "function") return member;
+      return (...args: unknown[]) => {
+        if (changing.has(property)) sent = true;
+        return (member as (...rest: unknown[]) => unknown).apply(target, args);
+      };
+    },
+  });
+  return { client: watched, sent: () => sent };
+}
 
 /** The narrow client: what the four operations ask of a connection, and nothing else. */
 export interface ImapOrganiserLike {
@@ -191,12 +218,7 @@ export async function organiseOverImap(
 
   // Found by the server's own flag, as for a read: a label whose NAME looks like All Mail is not it,
   // and the one folder a change is made in must be the one that holds every message.
-  const allMail =
-    folders.find(
-      (folder) =>
-        folder.specialUse === "\\All" && folder.specialUseSource !== "name",
-    )?.path ?? ALL_MAIL_FALLBACK;
-  await client.mailboxOpen(allMail, { readOnly: false });
+  await client.mailboxOpen(allMailPath(folders), { readOnly: false });
 
   const found = await uidsOf(client, call.ids);
   if (found.missing > 0) {

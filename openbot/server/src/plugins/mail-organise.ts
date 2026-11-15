@@ -56,6 +56,11 @@ export const ORGANISE_MESSAGE_TOOLS: readonly string[] = Object.freeze([
   MARK_MESSAGES,
 ]);
 
+/** Whether a message's labels put it where Gmail keeps mail out of sight: the Trash or Spam. */
+export const inHiddenFolder = (
+  labelIds: readonly string[] | undefined,
+): boolean => (labelIds ?? []).some((label) => HIDES.has(label.toUpperCase()));
+
 export const isOrganiseTool = (name: string): boolean =>
   ORGANISE_READ_TOOLS.includes(name) || ORGANISE_WRITE_TOOLS.includes(name);
 
@@ -83,8 +88,12 @@ const MESSAGE_ID = /^[0-9a-f]{1,16}$/i;
  * byte order mark). Such a name looks like another one, or reads backwards.
  */
 const INVISIBLE = /[\p{Cc}\p{Cf}\u2028\u2029]/u;
-/** Characters a mailbox path cannot carry safely: a backslash, a quote and the two wildcards. */
-const PATH_UNSAFE = /[\\"*%]/;
+/**
+ * Characters a mailbox path cannot carry safely: a backslash, a quote and the two wildcards. The
+ * curly quotes are refused too: the card puts a label's name between \u201c and \u201d, and a name
+ * that holds one could close the quotation and write the rest of the title itself.
+ */
+const PATH_UNSAFE = /[\\"*%\u2018\u2019\u201A\u201B\u201C\u201D\u201E\u201F]/;
 
 /**
  * Gmail's own labels, by the names a Bot might write for them. The REST API calls them by these
@@ -119,7 +128,7 @@ export const ORGANISE_REFUSALS = {
   badIds:
     "Every message id must be a Gmail id as a search returned it (letters a to f and digits). Nothing was changed.",
   tooManyIds: `At most ${MAX_ORGANISE_MESSAGES} messages can be named in one call. Split them into smaller calls. Nothing was changed.`,
-  labelName: `A label name is one line of 1 to ${LABEL_NAME_MAX_CHARS} characters, with no control, invisible or direction-changing character, none of the characters \\ " * %, and no empty part between slashes. Nothing was changed.`,
+  labelName: `A label name is one line of 1 to ${LABEL_NAME_MAX_CHARS} characters, with no control, invisible or direction-changing character, none of the characters \\ " * %, no curly quotation mark, and no empty part between slashes. Nothing was changed.`,
   reservedName:
     "That name is one of Gmail's own labels or a folder of its own, so it cannot be created. Nothing was changed.",
   hidesMail:
@@ -410,6 +419,26 @@ export const shownMessage = (
 
 /** Where every message lives, when the account's own name for it cannot be read. */
 export const ALL_MAIL_FALLBACK = "[Gmail]/All Mail";
+
+/**
+ * The folder that holds every message, found by the server's own `\All` flag and not by a name or by a
+ * special use the library only guessed from one (`specialUseSource` "name"): a label of the person's
+ * called "All Mail" is not it. A read and a change look for it with this one rule.
+ */
+export function allMailPath(
+  folders: readonly {
+    path: string;
+    specialUse?: string | undefined;
+    specialUseSource?: string | undefined;
+  }[],
+): string {
+  return (
+    folders.find(
+      (folder) =>
+        folder.specialUse === "\\All" && folder.specialUseSource !== "name",
+    )?.path ?? ALL_MAIL_FALLBACK
+  );
+}
 
 /** A folder as an IMAP listing returns it. */
 export type ListedFolder = {

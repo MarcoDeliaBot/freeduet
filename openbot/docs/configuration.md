@@ -898,7 +898,7 @@ through either, asking the OAuth connection first.
 | An administrator | Registers a Google OAuth client and sets a public address | Turns the entry on at `/admin/plugins/google-imap`. Nothing else: no Google Cloud project, no client |
 | Each person | Consents at Google | Pastes their Gmail address, an [app password](https://myaccount.google.com/apppasswords) and, optionally, the calendar's secret address in iCal format, at `/connections/google-imap` |
 | Reaches Google over | The Gmail and Calendar REST APIs | IMAP and SMTP (`imap.gmail.com:993`, `smtp.gmail.com:465`, both TLS) and the iCal address |
-| Limits | Google's OAuth scopes. A consent for sensitive scopes expires after seven days while the OAuth app is in testing | The Bots' tools. The app password itself reaches the whole mailbox |
+| Limits | The Bots' tools, not the scopes: `gmail.modify` also covers reading and sending, and a client holding it could trash mail, which no tool does. A consent for sensitive scopes expires after seven days while the OAuth app is in testing | The Bots' tools. The app password itself reaches the whole mailbox |
 | Needs | An OAuth client | 2-Step Verification on the person's Google account |
 
 Both entries offer the same ten tools with the same arguments and answers: `gmail_search_messages`,
@@ -911,10 +911,12 @@ already on the message it answers.
 
 The four that organise a mailbox create a label, add or remove labels on messages named by id (at most
 100 a call), take messages out of the Inbox (they stay in All Mail with their labels) and mark them read
-or unread. Each is a write that sends nothing: it asks the person every time, with a card that says in
+or unread. Each is a write that sends nothing: in the person's own turn it shows a card, whatever "ask before
+changes" says and whatever the reviewer would have said, unless the person pressed "Always allow" for
+that tool (Full access treats it as any other write that is not a payment). The card says in
 words what will happen and to how many messages, and lists who each is from and what it is about, read
-from the mailbox by the server and not from anything the Bot said. A routine, a check-in and a hand-off
-that started in one always ask; an approval in the inbox that names nothing never gives a Bot one of
+from the mailbox by the server and not from anything the Bot said. A routine, a check-in, a remote session and a hand-off
+that started in one always ask, and "Always allow" does not lift that; an approval in the inbox that names nothing never gives a Bot one of
 them. With the OAuth entry they need the `gmail.modify` scope, so a person who connected before it was
 added reconnects once; with the app password the mailbox is opened for writing only for the length of
 one of these four calls. The reasoning and the limits are in `docs/design/mail-organise.md`.

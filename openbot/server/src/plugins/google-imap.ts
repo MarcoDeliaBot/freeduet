@@ -33,9 +33,10 @@ import {
 import {
   type ImapOrganiserLike,
   organiseOverImap,
+  watchForChanges,
 } from "./google-imap-organise";
 import {
-  ALL_MAIL_FALLBACK,
+  allMailPath,
   isOrganiseMessageTool,
   isOrganiseTool,
   LIST_LABELS,
@@ -398,13 +399,20 @@ async function withConnection<C extends Lifecycle, T>(
     return onError(error);
   } finally {
     clearTimeout(timer);
+    // A logout the server does not answer in two seconds is cut off, not waited for.
+    let waiting: ReturnType<typeof setTimeout> | undefined;
     try {
-      await Promise.race([
-        client.logout(),
-        new Promise<void>((resolve) => setTimeout(resolve, 2_000)),
+      const answered = await Promise.race([
+        client.logout().then(() => true),
+        new Promise<boolean>((resolve) => {
+          waiting = setTimeout(() => resolve(false), 2_000);
+        }),
       ]);
+      if (!answered) client.close();
     } catch {
       client.close();
+    } finally {
+      clearTimeout(waiting);
     }
   }
 }
@@ -416,10 +424,7 @@ async function withConnection<C extends Lifecycle, T>(
  */
 async function openAllMail(client: ImapClientLike): Promise<void> {
   const folders = await client.list();
-  const all =
-    folders.find((folder) => folder.specialUse === "\\All")?.path ??
-    ALL_MAIL_FALLBACK;
-  await client.mailboxOpen(all, { readOnly: true });
+  await client.mailboxOpen(allMailPath(folders), { readOnly: true });
 }
 
 /** Runs `run` against the all-mail folder, opened read-only, and closes the connection. */
@@ -764,9 +769,14 @@ async function readMessage(
 
 /**
  * Longer than a read, because naming a message to the server is one command for each. A call that
- * outlives it changed nothing, since every lookup comes before the one command that changes a thing.
+ * outlives it before the first command that changes a thing was sent changed nothing; after that it
+ * may have changed it, and the answer says so (`MAY_HAVE_CHANGED`).
  */
 const ORGANISE_TIMEOUT_MS = 60_000;
+
+/** A change was sent and the connection then failed or timed out: nobody can say whether it was made. */
+export const MAY_HAVE_CHANGED =
+  "Gmail did not confirm the change after it was sent, so it may have been made. Look in Gmail before asking again.";
 
 /** The person's own labels, by name. A LIST and nothing else: no mailbox is opened. */
 async function listLabels(
@@ -828,10 +838,19 @@ async function organise(
   secret: UserSecret,
   call: Parameters<typeof organiseOverImap>[1],
 ): Promise<McpCallResult> {
+  const client = deps.organiser(connectionOptions(preset, secret));
+  // Set the moment a command that changes a thing is handed to the connection: from then on a failure
+  // that is not Gmail's own refusal cannot say the change did not happen.
+  const watch = watchForChanges(client);
   return withConnection(
-    deps.organiser(connectionOptions(preset, secret)),
-    (client) => organiseOverImap(client, call),
-    (error) => failure(sentenceFor(error, "this change")),
+    watch.client,
+    (opened) => organiseOverImap(opened, call),
+    (error) => {
+      const kind = failureKind(error);
+      return watch.sent() && (kind === "timeout" || kind === "unreachable")
+        ? failure(MAY_HAVE_CHANGED)
+        : failure(sentenceFor(error, "this change"));
+    },
     ORGANISE_TIMEOUT_MS,
   );
 }

@@ -24,6 +24,7 @@ import { plainAddress } from "../mail-address";
 import {
   isOrganiseMessageTool,
   isOrganiseTool,
+  isOrganiseWrite,
   organiseRefusal,
 } from "../mail-organise";
 import { isNewEmailSend, shareTargetOf } from "../share-target";
@@ -740,6 +741,10 @@ export function callMethods(context: StoreContext) {
         // settings-in-chat (slice 1): a write on the Settings connector changes a setting from chat.
         ...(effect === "write" && access.transport === "builtin-settings"
           ? { changesSetting: true as const }
+          : {}),
+        // mail-organise: a write that changes a mailbox always shows a card (policy.ts, `mustAsk`).
+        ...(effect === "write" && organises && isOrganiseWrite(toolName)
+          ? { organisesMailbox: true as const }
           : {}),
         ...(answeredByCard ? { answeredByCard: true as const } : {}),
         // Which messages the call names, as this server reads them, run only if the person is to be asked.

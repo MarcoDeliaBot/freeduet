@@ -658,7 +658,9 @@ describe("(e) the mailbox is only ever read", () => {
       expect(source).not.toMatch(forbidden);
     }
     // The one open there is passes the literal.
-    expect(source).toMatch(/mailboxOpen\(all, \{ readOnly: true \}\)/);
+    expect(source).toMatch(
+      /mailboxOpen\(allMailPath\(folders\), \{ readOnly: true \}\)/,
+    );
     expect(source.match(/mailboxOpen\(/g)?.length).toBe(2);
   });
 });

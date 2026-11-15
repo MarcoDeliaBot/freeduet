@@ -6,6 +6,7 @@ import {
   CREATE_LABEL,
   createdAnswer,
   isOrganiseMessageTool,
+  inHiddenFolder,
   isOrganiseTool,
   LABEL_MESSAGES,
   type LabelRef,
@@ -1086,8 +1087,11 @@ async function lookUpMessages(
     },
   );
   if (!looked.ok) return looked;
+  // A message that Gmail keeps out of sight is not in this mailbox, as it is not over IMAP, where All Mail
+  // does not hold one: the two connections answer "not found" for it, in the same words.
   const found = looked.value.filter(
-    (message): message is GmailMessage => message !== null,
+    (message): message is GmailMessage =>
+      message !== null && !inHiddenFolder(message.labelIds),
   );
   return { ok: true, value: { found, missing: ids.length - found.length } };
 }

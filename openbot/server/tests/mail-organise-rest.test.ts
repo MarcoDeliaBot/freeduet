@@ -451,6 +451,46 @@ describe("labelling messages", () => {
     expect(shape(calls)).not.toContain("POST /messages/batchModify");
   });
 
+  test("a message in the Trash or in Spam is not in this mailbox, as it is not over IMAP: refused whole, in the same words", async () => {
+    for (const where of ["TRASH", "SPAM"]) {
+      for (const tool of [
+        ["gmail_archive_messages", {}],
+        ["gmail_mark_messages", { state: "read" }],
+        ["gmail_label_messages", { addLabels: ["FreeDuet"] }],
+      ] as const) {
+        const box = mailbox();
+        box.messages[C] = {
+          labels: [where, "INBOX"],
+          from: "Bob <bob@example.net>",
+          subject: "Thrown away",
+        };
+        const { modified } = serve(box);
+        const result = await callTool(connection, tool[0], {
+          messageIds: [A, C],
+          ...tool[1],
+        });
+        expect(result.isError).toBe(true);
+        expect(result.text).toBe(missingMessages(1, 2));
+        expect(modified).toEqual([]);
+      }
+    }
+  });
+
+  test("the card counts a message in the Trash or in Spam as not found, and shows only the others", async () => {
+    const box = mailbox();
+    box.messages[C] = {
+      labels: ["TRASH"],
+      from: "Bob <bob@example.net>",
+      subject: "Thrown away",
+    };
+    serve(box);
+    const details = await describeCall(connection, "gmail_archive_messages", {
+      messageIds: [A, C],
+    });
+    expect(details?.missing).toBe(1);
+    expect(details?.messages).toHaveLength(1);
+  });
+
   test("every message gone is the same refusal, counted", async () => {
     const { modified } = serve(mailbox());
     const result = await callTool(connection, "gmail_archive_messages", {
