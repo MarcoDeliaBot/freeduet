@@ -276,7 +276,7 @@ Run on 15 November 2026 from `openbot/`, one command at a time.
 
 ## 10. Move to the Bin (D41)
 
-Decided by the maintainer on 15 November 2026: "a mail assistant must be able to remove mail". Built on the branch `mail-bin`, on origin/main a9adbc6, beside the four writes above and in the same way. The decision is D41 in [M1_PLAN.md](M1_PLAN.md), section 24.
+Decided by the maintainer on 15 November 2026: "a mail assistant must be able to remove mail". Built on the branch `mail-bin`, on origin/main a9adbc6, beside the four writes above and in the same way. The decision is D41 in [M1_PLAN.md](../M1_PLAN.md), section 24.
 
 **What the person sees.** One more tool, `gmail_bin_messages`, on both connections. Otto may move listed messages to the Bin (Gmail's Trash) when the person orders it. He says first how many messages and which, and that the Bin keeps them about 30 days, so the person can restore them from it. With no card only when the person's own typed message of the live turn (directly, or one hop through Iris) says to delete, bin or trash mail AND names which (a sender, a category, a label or an unmistakable set); "clean up", "tidy" or "remove the spam" without naming which messages is a card; a routine, a check-in, a remote session, a spoken message and an instruction that came from an email are a card. The card says `Move 12 messages to the Bin`, lists how many and which as the server read them, and says: "They go to your Bin and stay there for about 30 days. You can restore them from it. After that Gmail deletes them for good."
 
@@ -317,7 +317,7 @@ Decided by the maintainer on 15 November 2026: "a mail assistant must be able to
 
 ## 11. Move to Spam (D42)
 
-Decided by the maintainer on 15 November 2026, after the Bin: "Spam is no longer out of scope". Built in the same branch as the Bin's after-check (`mail-bin-verify`, on origin/main e1dbacf), by the Bin's structure line by line. The decision is D42 in [M1_PLAN.md](M1_PLAN.md), section 25.
+Decided by the maintainer on 15 November 2026, after the Bin: "Spam is no longer out of scope". Built in the same branch as the Bin's after-check (`mail-bin-verify`, on origin/main e1dbacf), by the Bin's structure line by line. The decision is D42 in [M1_PLAN.md](../M1_PLAN.md), section 25.
 
 **What the person sees.** One more tool, `gmail_spam_messages`, on both connections. Otto may move listed messages to Spam when the person orders it. He says first how many messages and which, and that Gmail deletes mail in Spam after about 30 days, so until then the person can move it back. With no card when the person's own typed message of the live turn (directly, or one hop through Iris) says to move mail to Spam or mark it as spam AND says which messages or which kind ("the spam in my inbox", a sender, a category); "check my inbox for spam and put it in Spam" is such an order for the messages Otto judged to be spam. A vague order, a routine, a check-in, a remote session, a spoken message and an instruction that came from an email are a card. The card says `Move 12 messages to Spam`, lists how many and which as the server read them, and says: "They go to your Spam folder. Gmail deletes mail in Spam after about 30 days; until then you can move it back."
 
