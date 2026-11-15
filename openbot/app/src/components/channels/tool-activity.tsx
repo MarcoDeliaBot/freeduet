@@ -3,6 +3,7 @@ import { useCallback, useContext, useMemo, useSyncExternalStore } from "react";
 import { Streamdown } from "streamdown";
 import { PendingApprovals } from "@/components/approvals/inline-approval";
 import { DuetIcon, type DuetIconName } from "@/components/duet/icons";
+import { RoutineCreatedCard } from "@/components/routines/routine-chat-card";
 import { markdownComponents } from "@/lib/markdown";
 import {
   humanise,
@@ -558,6 +559,13 @@ export function ToolActivity({
       <PendingApprovals
         toolCallIds={group.steps.map((step) => step.toolCall.id)}
       />
+      {group.steps.map((step) => (
+        <RoutineCreatedCard
+          key={step.id}
+          name={step.toolCall.function.name}
+          result={step.result}
+        />
+      ))}
     </>
   );
 }
