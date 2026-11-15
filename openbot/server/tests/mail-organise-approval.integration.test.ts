@@ -821,7 +821,7 @@ for (const backend of BACKENDS) {
         if (wanted.lists.length === 0)
           expect(shown.action.details).toBeUndefined();
         else
-          expect(shown.action.details).toEqual(card.action.details as object);
+          expect(shown.action.details).toEqual(card.action.details);
         await clearPending();
       });
     }
