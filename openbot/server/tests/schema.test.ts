@@ -352,6 +352,21 @@ describe("OpenBot database schema", () => {
         hasDefault: false,
         primary: false,
       },
+      /* What this person calls the member, and the tone they chose for it (settings-in-chat.md, 8.8). */
+      {
+        name: "display_name",
+        sqlType: "text",
+        notNull: false,
+        hasDefault: false,
+        primary: false,
+      },
+      {
+        name: "tone",
+        sqlType: "text",
+        notNull: false,
+        hasDefault: false,
+        primary: false,
+      },
     ]);
 
     expect(
