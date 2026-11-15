@@ -219,12 +219,16 @@ function RouteComponent() {
       onSubmit={async (draft) => {
         const recipient = recipients[0];
         if (!recipient || !canSend(recipients, draft.text)) return;
+        // True only for the one-press "Transcribe and send": that first message is still words from
+        // the microphone when it is sent (docs/design/voice.md, D7 and D8).
+        const voice = draft.voice === true;
         if (group) {
           setError(null);
           try {
             await startGroup(
               recipients.map((entry) => entry.id),
               draft.text,
+              voice,
             );
           } catch (caught) {
             setError(
@@ -243,7 +247,7 @@ function RouteComponent() {
         try {
           // Recorded, then started: a coworker picked here is as much a choice as an `@` on the
           // home screen, and the trail has to say so for both.
-          await startChosen(recipient.id, draft.text);
+          await startChosen(recipient.id, draft.text, voice);
         } catch (caught) {
           // Preserve the unsent draft when channel creation fails.
           setSent(null);

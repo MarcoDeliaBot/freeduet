@@ -1,3 +1,4 @@
+import { markVoiceMessageId } from "@openbot/shared/voice-message";
 import {
   MutationObserver,
   useMutation,
@@ -74,6 +75,13 @@ export async function startGroupWith(input: {
  *
  * Ordering matters: create, seed the channel cache, stash the first message, then navigate. That
  * keeps the first message visible while the channel thread joins.
+ *
+ * `voice` is true for a first message sent with the one-press "Transcribe and send" and false for
+ * everything else (docs/design/voice.md, D7 and D8). A channel's first message is sent by the channel
+ * that opens, which has no other way to know where the words came from, so the mark is stashed with
+ * the text. A group's first message is sent from here, and carries the mark in its id, which is what
+ * the server reads. It has no default on purpose: a caller that forgot it would send dictated words
+ * as typed, so the compiler asks every caller to say.
  */
 export function useStartChannel() {
   const queryClient = useQueryClient();
@@ -82,10 +90,10 @@ export function useStartChannel() {
   const createGroup = useMutation(createGroupMutationOptions(queryClient));
   const deleteChannel = useMutation(deleteChannelMutationOptions(queryClient));
 
-  const start = async (agentId: string, text: string) => {
+  const start = async (agentId: string, text: string, voice: boolean) => {
     const channel = await createChannel.mutateAsync([agentId]);
     queryClient.setQueryData(channelKeys.detail(channel.id), channel);
-    stashFirstMessage(channel.id, text);
+    stashFirstMessage(channel.id, text, voice);
     await navigate({
       params: { channelId: channel.id },
       replace: true,
@@ -93,7 +101,7 @@ export function useStartChannel() {
     });
   };
 
-  const startGroup = (agentIds: string[], text: string) =>
+  const startGroup = (agentIds: string[], text: string, voice: boolean) =>
     startGroupWith({
       agentIds,
       text,
@@ -108,7 +116,11 @@ export function useStartChannel() {
         new MutationObserver(
           queryClient,
           sendGroupMessageMutationOptions(queryClient, channelId),
-        ).mutate({ id: newId(), text: message, agentId: null }),
+        ).mutate({
+          id: voice ? markVoiceMessageId(newId()) : newId(),
+          text: message,
+          agentId: null,
+        }),
       discard: async (channelId) => {
         await deleteChannel.mutateAsync(channelId);
       },
@@ -126,7 +138,12 @@ export function useStartChannel() {
     startGroup,
     start,
     /** `start`, for a coworker the person chose: the choice is recorded first. */
-    startChosen: (agentId: string, text: string) =>
-      startWithChosen({ agentId, text, record: routeMessage, start }),
+    startChosen: (agentId: string, text: string, voice: boolean) =>
+      startWithChosen({
+        agentId,
+        text,
+        record: routeMessage,
+        start: (chosen, first) => start(chosen, first, voice),
+      }),
   };
 }

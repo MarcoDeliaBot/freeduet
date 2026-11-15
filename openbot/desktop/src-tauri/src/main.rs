@@ -1459,6 +1459,20 @@ async fn start_stack_inner<R: tauri::Runtime>(
                 )
             })?;
 
+        // The database's password (D39). What `.env` records is kept; only a database with no recorded
+        // password is looked at for one. A database that exists without a record was made with the
+        // example password, so that stays, and a new database gets a new one (`compose`).
+        let recorded_database_password =
+            openbot_env::recorded_database_password(&root.join(".env"));
+        let database_exists = recorded_database_password.is_none()
+            && stack::postgres_volume_exists(&found, &root, &existing_secrets)?;
+        let mut kept_secrets = existing_secrets.clone();
+        if let Some(password) =
+            openbot_env::kept_database_password(recorded_database_password, database_exists)
+        {
+            kept_secrets.insert("POSTGRES_PASSWORD".into(), password);
+        }
+
         let mut settings = openbot_env::compose(
             &openbot_env::Intelligence {
                 api_url,
@@ -1474,7 +1488,8 @@ async fn start_stack_inner<R: tauri::Runtime>(
             picked.as_ref(),
             // What a previous start of this deployment already minted. Without it every Start writes a
             // new KEY_ENCRYPTION_KEY and orphans everything the server had encrypted under the old one.
-            &existing_secrets,
+            // The database password travels in the same map (`POSTGRES_PASSWORD`).
+            &kept_secrets,
         );
         if let Some(authority) = organization_auth_url {
             settings.insert("OPENBOT_ORGANIZATION_AUTH_URL".into(), authority);
