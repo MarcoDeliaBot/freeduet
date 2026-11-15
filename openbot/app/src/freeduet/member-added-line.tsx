@@ -1,6 +1,6 @@
 import { Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
+import { type ReactNode, useState } from "react";
 import {
   settingChangesKey,
   settingChangesQueryOptions,
@@ -32,23 +32,21 @@ const COULD_NOT_UNDO = "Could not undo that just now. Try again in a moment.";
 
 export function MemberAddedLine({
   agentId,
-  name,
-  job,
-  skills,
+  card,
 }: {
   agentId: string;
-  name: string;
-  job: string | undefined;
-  skills: string[];
+  /** The completed proposal card, shown instead while the server has no record of this member. */
+  card: ReactNode;
 }) {
   const queryClient = useQueryClient();
   const list = useQuery(settingChangesQueryOptions());
   const [state, setState] = useState<LineState>({ kind: "idle" });
   const [open, setOpen] = useState(false);
 
-  const listed = list.data?.find(
+  const found = list.data?.find(
     (row) => row.setting === "member" && row.agentId === agentId,
   );
+  const listed = found?.setting === "member" ? found : undefined;
   const undone = state.kind === "undone" || listed?.undone === true;
   const refused = state.kind === "refused";
   const canUndo = listed?.undoable === true && !undone && !refused;
@@ -67,6 +65,12 @@ export function MemberAddedLine({
     else setState({ kind: "failed" });
     void queryClient.invalidateQueries({ queryKey: settingChangesKey });
   }
+
+  // The line is only for a member the server recorded: what it says is read from that record.
+  if (!listed) return <>{card}</>;
+  const name = listed.newValue;
+  const job = listed.job;
+  const skills = listed.skills;
 
   return (
     <section
@@ -107,13 +111,17 @@ export function MemberAddedLine({
           <dt>Name</dt>
           <dd className="break-words">{name}</dd>
           <dt>Job</dt>
-          <dd className="break-words">{job ?? "Not given"}</dd>
+          <dd className="break-words">{job}</dd>
           <dt>Skills</dt>
           <dd className="break-words">
             {skills.length > 0 ? skills.map((s) => `/${s}`).join(", ") : "None"}
           </dd>
-          <dt>Access</dt>
-          <dd>Private, with no apps. Undo removes it and its skills.</dd>
+          <dt>Undo</dt>
+          <dd>
+            Removes {name}
+            {skills.length > 0 ? " and the skills it was given" : ""}. It works
+            only while {name} has not been used, shared or changed.
+          </dd>
           {!undone ? (
             <dd className="col-span-2">
               <Link

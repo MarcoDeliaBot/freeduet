@@ -43,6 +43,7 @@ const RECORD: SettingChangeRecord = {
   previousValue: null,
   newValue: "Renewal Desk",
   skills: ["find-a-document"],
+  job: "Accounts Receivable",
   at: "2026-11-15T09:30:00.000Z",
   undone: false,
   undoable: true,
@@ -116,14 +117,8 @@ function routed(node: ReactNode) {
   );
 }
 
-const line = () => (
-  <MemberAddedLine
-    agentId="agent_1"
-    job="Accounts Receivable"
-    name="Renewal Desk"
-    skills={["find-a-document"]}
-  />
-);
+const card = <p>Completed card</p>;
+const line = () => <MemberAddedLine agentId="agent_1" card={card} />;
 
 const posts = () => asked.filter((request) => request.method === "POST");
 
@@ -149,6 +144,11 @@ describe("the line", () => {
     expect(await view.findByText("Accounts Receivable")).toBeTruthy();
     expect(view.getByText("/find-a-document")).toBeTruthy();
     expect(view.getByText("Open Renewal Desk")).toBeTruthy();
+    // Said exactly: what Undo removes, and when it works.
+    expect(
+      view.getByText(/Removes Renewal Desk and the skills it was given/)
+        .textContent,
+    ).toContain("only while Renewal Desk has not been used, shared or changed");
     fireEvent.click(details);
     expect(view.queryByText("Accounts Receivable")).toBeNull();
   });
@@ -219,13 +219,25 @@ describe("the line", () => {
     expect(changed.queryByRole("button", { name: "Undo" })).toBeNull();
   });
 
-  test("a member with no record keeps Details and shows no Undo", async () => {
+  test("a member the server has no record of shows the completed card, not the line", async () => {
     list = () => [];
     const view = routed(line());
 
-    await view.findByRole("button", { name: "Details" });
-    await waitFor(() => expect(asked.length).toBeGreaterThan(0));
+    expect(await view.findByText("Completed card")).toBeTruthy();
     expect(view.queryByRole("button", { name: "Undo" })).toBeNull();
+    expect(view.queryByRole("button", { name: "Details" })).toBeNull();
+  });
+
+  test("the line is drawn from the server's record, not from anything the model wrote", async () => {
+    list = () => [{ ...RECORD, newValue: "Server Name", job: "Server Job" }];
+    const view = routed(line());
+
+    expect(
+      (await view.findByRole("region", { name: "Server Name added" }))
+        .textContent,
+    ).toContain("Server Name was added to your team.");
+    fireEvent.click(view.getByRole("button", { name: "Details" }));
+    expect(await view.findByText("Server Job")).toBeTruthy();
   });
 });
 
@@ -244,7 +256,9 @@ describe("the proposal card", () => {
         create={async () => {
           throw new Error("not used");
         }}
-        line={() => line()}
+        line={(_id, completed) => (
+          <MemberAddedLine agentId="agent_1" card={completed} />
+        )}
         result={answer}
       />,
     );
@@ -256,6 +270,27 @@ describe("the proposal card", () => {
     expect(view.queryByText("Done")).toBeNull();
   });
 
+  test("a created member the server did not record keeps the completed card", async () => {
+    list = () => [];
+    const view = routed(
+      <ProposedBotCard
+        args={{ name: "Renewal Desk" }}
+        create={async () => {
+          throw new Error("not used");
+        }}
+        line={(_id, completed) => (
+          <MemberAddedLine agentId="agent_1" card={completed} />
+        )}
+        result={answer}
+      />,
+    );
+
+    expect(await view.findByText("Done")).toBeTruthy();
+    expect(
+      view.queryByRole("region", { name: "Renewal Desk added" }),
+    ).toBeNull();
+  });
+
   test("a declined proposal still shows the completed card, not the line", async () => {
     const view = routed(
       <ProposedBotCard
@@ -263,7 +298,9 @@ describe("the proposal card", () => {
         create={async () => {
           throw new Error("not used");
         }}
-        line={() => line()}
+        line={(_id, completed) => (
+          <MemberAddedLine agentId="agent_1" card={completed} />
+        )}
         result={botCardAnswer.declined()}
       />,
     );

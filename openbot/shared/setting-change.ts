@@ -80,6 +80,8 @@ export type MemberAddedChange = {
   newValue: string;
   /** The skills it was given, by slug. */
   skills: string[];
+  /** Its job title, as the server recorded it. */
+  job: string;
 };
 
 /** One change in the list, newest first. Undo is shown only where `undoable` says so. */

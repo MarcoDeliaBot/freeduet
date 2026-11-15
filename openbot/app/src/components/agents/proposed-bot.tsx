@@ -56,11 +56,12 @@ export type ProposedBotCardProps = {
   result?: string;
   create: (values: AgentFormValues, skills: string[]) => Promise<CreatedBot>;
   /**
-   * The one line that stands in place of the completed card when a member was made: what was added, with
-   * Undo and Details (docs/design/settings-in-chat.md, 8.11). Given the new member's id. Absent, the
-   * completed card is the frame below, as before.
+   * The one line that stands in place of the completed card when a member was made AND the server recorded it:
+   * what was added, with Undo and Details (docs/design/settings-in-chat.md, 8.11). Given the new member's id and
+   * the completed card, which it keeps showing when the server has no record of the member. Absent, the
+   * completed card is shown, as before.
    */
-  line?: (agentId: string) => ReactNode;
+  line?: (agentId: string, card: ReactNode) => ReactNode;
 };
 
 export function ProposedBotCard({
@@ -89,8 +90,7 @@ export function ProposedBotCard({
      * `createdBotIdIn`.
      */
     const madeId = wasCreated(result) ? createdBotIdIn(result) : null;
-    if (madeId && line) return <>{line(madeId)}</>;
-    return (
+    const completed = (
       <GalleryFrame
         action={<Badge tone="neutral">Done</Badge>}
         title={titleFor(args.name, clashes)}
@@ -99,6 +99,7 @@ export function ProposedBotCard({
         {madeId ? <TalkToIt agentId={madeId} name={args.name} /> : null}
       </GalleryFrame>
     );
+    return madeId && line ? line(madeId, completed) : completed;
   }
 
   if (!respond) {

@@ -20,7 +20,6 @@ import {
   ownershipOf,
   type ProposedBot,
   proposedBotSchema,
-  skillSlugsIn,
 } from "@/lib/agents/proposal";
 import { agentListQueryOptions } from "@/lib/agents/queries";
 import { useDeclaredBotId } from "@/lib/copilot/active-bot";
@@ -196,14 +195,7 @@ function ProposedBotRender(props: {
       }}
       respond={props.respond}
       result={props.result}
-      line={(madeId) => (
-        <MemberAddedLine
-          agentId={madeId}
-          job={props.args.title?.trim()}
-          name={props.args.name?.trim() || "The member"}
-          skills={skillSlugsIn(props.args.skills)}
-        />
-      )}
+      line={(madeId, card) => <MemberAddedLine agentId={madeId} card={card} />}
     />
   );
 }

@@ -12,7 +12,7 @@
  */
 import { afterAll, describe, expect, test } from "bun:test";
 import { randomUUID } from "node:crypto";
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { Hono } from "hono";
 import {
   type AuditStore,
@@ -20,7 +20,15 @@ import {
   createAuditStore,
 } from "../src/audit";
 import { createDatabase } from "../src/db/client";
-import { agents, users } from "../src/db/schema";
+import { agents, auditEvents, channels, users } from "../src/db/schema";
+import { approvalRules } from "../src/db/schema/approvals";
+import { channelAgents } from "../src/db/schema/core";
+import { routines } from "../src/db/schema/coworker";
+import {
+  teamBotAssignments,
+  teamBotAudience,
+  teamBotPublications,
+} from "../src/db/schema/team-bots";
 import { agentProfiles } from "../src/db/schema/coworker";
 import { pluginGrants } from "../src/db/schema/plugins";
 import {
@@ -397,7 +405,7 @@ describe("Undo of a member added from chat", () => {
     expect(fine.status).toBe(200);
   });
 
-  test("an audit row that cannot be written puts the member back", async () => {
+  test("an audit row that cannot be written leaves the member untouched: delete and audit are one transaction", async () => {
     const person = await newPerson();
     const member = await newMember(person, { skills: ["a-skill", "b-skill"] });
     const { body } = await record(person, member);
@@ -406,7 +414,12 @@ describe("Undo of a member added from chat", () => {
         throw new Error("trail down");
       },
     };
-    const broken = createSettingChanges({ database, audit: failing, reader });
+    const broken = createSettingChanges({
+      database,
+      audit,
+      reader,
+      auditWithin: () => failing,
+    });
 
     await expect(
       broken.undo({ ownerUserId: person, changeId: body.change.changeId }),
@@ -414,7 +427,165 @@ describe("Undo of a member added from chat", () => {
 
     expect(await deletedAt(member)).toBeNull();
     expect(await grantCount(member)).toBe(2);
+    expect(await undoEvents(body.change.changeId)).toBe(0);
     const [listed] = await listFor(person);
     expect(listed).toMatchObject({ undone: false, undoable: true });
   });
+
+  test("a record whose audit row cannot be written leaves nothing recorded", async () => {
+    const person = await newPerson();
+    const member = await newMember(person);
+    const broken = createSettingChanges({
+      database,
+      audit,
+      reader,
+      auditWithin: () => ({
+        insert: async () => {
+          throw new Error("trail down");
+        },
+      }),
+    });
+
+    await expect(
+      broken.memberAdded({ ownerUserId: person, agentId: member }),
+    ).rejects.toThrow("trail down");
+    expect((await record(person, member)).status).toBe(201);
+  });
+});
+
+async function changeRows(changeId: string): Promise<number> {
+  return (
+    await database
+      .select({ id: auditEvents.id })
+      .from(auditEvents)
+      .where(
+        and(
+          eq(auditEvents.targetType, "bot_setting"),
+          eq(auditEvents.targetId, changeId),
+        ),
+      )
+  ).length;
+}
+
+describe("two requests at once", () => {
+  test("two records of the same member write one row, and one of them is refused", async () => {
+    const person = await newPerson();
+    const member = await newMember(person);
+
+    const answers = await Promise.all([
+      record(person, member),
+      record(person, member),
+      record(person, member),
+    ]);
+
+    expect(answers.map((a) => a.status).sort()).toEqual([201, 409, 409]);
+    expect(await changeRows(`member-${member}`)).toBe(1);
+  });
+
+  test("two Undos at once: one succeeds, the other is told it was already undone", async () => {
+    const person = await newPerson();
+    const member = await newMember(person);
+    const { body } = await record(person, member);
+
+    const answers = await Promise.all([
+      undo(person, body.change.changeId),
+      undo(person, body.change.changeId),
+    ]);
+
+    expect(answers.map((a) => a.status).sort()).toEqual([200, 409]);
+    const refused = answers.find((a) => a.status === 409);
+    expect(refused?.body.error).toBe("That change has already been undone.");
+    expect(await undoEvents(body.change.changeId)).toBe(1);
+  });
+});
+
+describe("a member that has been used or shared is not undone", () => {
+  const uses: [string, (member: string, person: string) => Promise<void>][] = [
+    [
+      "a conversation",
+      async (member) => {
+        const id = `${prefix}-chan-${randomUUID()}`;
+        await database
+          .insert(channels)
+          .values({ id, name: "Chat", description: "d" });
+        await database.insert(channelAgents).values({
+          channelId: id,
+          agentId: member,
+        });
+      },
+    ],
+    [
+      "a routine",
+      async (member, person) => {
+        await database.insert(routines).values({
+          id: `${prefix}-r-${randomUUID()}`,
+          ownerUserId: person,
+          agentId: member,
+          channelId: "c",
+          instruction: "do it",
+          cron: "0 8 * * *",
+          nextRunAt: new Date(Date.now() + 3600_000),
+        });
+      },
+    ],
+    [
+      "a publication",
+      async (member, person) => {
+        await database.insert(teamBotPublications).values({
+          agentId: member,
+          publishedBy: person,
+          audience: "team",
+        });
+      },
+    ],
+    [
+      "an audience",
+      async (member) => {
+        await database
+          .insert(teamBotAudience)
+          .values({ agentId: member, kind: "group", value: "all" });
+      },
+    ],
+    [
+      "an assignment",
+      async (member, person) => {
+        await database
+          .insert(teamBotAssignments)
+          .values({ agentId: member, groupName: "g", assignedBy: person });
+      },
+    ],
+    [
+      "an approval rule",
+      async (member, person) => {
+        await database.insert(approvalRules).values({
+          id: `${prefix}-ar-${randomUUID()}`,
+          ownerUserId: person,
+          botId: member,
+          toolRef: "x/y",
+          effect: "write",
+          scope: "bot",
+        });
+      },
+    ],
+  ];
+
+  for (const [label, use] of uses)
+    test(`${label}: Undo is refused with the plain sentence, the list says not undoable, nothing is written`, async () => {
+      const person = await newPerson();
+      const member = await newMember(person);
+      const { body } = await record(person, member);
+      await use(member, person);
+
+      const answer = await undo(person, body.change.changeId);
+
+      expect(answer.status).toBe(409);
+      expect(answer.body.error).toBe(
+        "Renewal Desk has been used since it was added. Remove it from its page instead.",
+      );
+      expect(await deletedAt(member)).toBeNull();
+      expect(await grantCount(member)).toBe(1);
+      expect(await undoEvents(body.change.changeId)).toBe(0);
+      const [listed] = await listFor(person);
+      expect(listed).toMatchObject({ undone: false, undoable: false });
+    });
 });
