@@ -98,7 +98,7 @@ Sources, read on 14 November 2026: Grok Bot's [approvals](https://docs.x.ai/grok
 
 ## Works with your tools
 
-Mostly planned, tool by tool: Google suite, Microsoft 365, n8n, Photoshop, Affinity, Canva, the free ArtCraft suite (PhotoCraft, PdfCraft, VectorCraft, FilmCraft and 12 more, built into every member's computer), Cricut, 3D-printing slicers, Claude Code, Codex, Kimi, Cline, Antigravity, Trae, WhatsApp, Telegram, Slack and Teams, free and paid. In v0.2 you get Gmail and Google Calendar (OAuth, or an app password), Claude Code as the engine, and OpenBot's Slack, Teams and SMS channels. Official connectors first, then the browser, then screen control on your own computer, only for the programs you switch on. The catalogue, with the milestone of each tool: [docs/CONNECTORS.md](docs/CONNECTORS.md).
+Mostly planned, tool by tool: Google suite, Microsoft 365, n8n, Photoshop, Affinity, Canva, the free ArtCraft suite (PhotoCraft, PdfCraft, VectorCraft, FilmCraft and 12 more, to be built into every member's computer), Cricut, 3D-printing slicers, Claude Code, Codex, Kimi, Cline, Antigravity, Trae, WhatsApp, Telegram, Slack and Teams, free and paid. In v0.2 you get Gmail and Google Calendar (OAuth, or an app password), Claude Code as the engine, and OpenBot's Slack, Teams and SMS channels. Official connectors first, then the browser, then screen control on your own computer, only for the programs you switch on. The catalogue, with the milestone of each tool: [docs/CONNECTORS.md](docs/CONNECTORS.md).
 
 ## How it works
 

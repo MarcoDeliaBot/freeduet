@@ -72,7 +72,7 @@ These are transitive dependencies locked in `openbot/desktop/src-tauri/Cargo.loc
 
 | Project | License | Use |
 |---|---|---|
-| [ArtCraft apps](https://github.com/storytold) (PhotoCraft, PdfCraft and others) | Apache-2.0; PhotoCraft MIT or Apache-2.0 | Installed unmodified in member computer images and driven through their own CLI or MCP server. Their license and NOTICE files ship with them. |
+| [ArtCraft apps](https://github.com/storytold) (PhotoCraft, PdfCraft and others) | Apache-2.0; PhotoCraft MIT or Apache-2.0 | Planned, not shipped: no image carries them today. When they are added they will be installed unmodified in member computer images and driven through their own CLI or MCP server, with their license and NOTICE files. |
 
 ## Planned reuse (not yet in the code)
 
