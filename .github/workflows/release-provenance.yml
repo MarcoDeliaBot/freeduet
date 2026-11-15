@@ -1,0 +1,89 @@
+name: release / provenance
+
+# When a release is published, this builds a source archive of the tagged tree and a SHA-256 file,
+# writes a signed build-provenance attestation for both (GitHub artifact attestations, SLSA provenance,
+# signed through Sigstore with this workflow's own identity) and uploads the archive and the checksum
+# file to the release. Anyone can then check, without trusting this repository's word, that the file
+# they hold was built by this workflow from this commit: docs/VERIFY.md, "Check a release archive".
+#
+# By hand: Actions > "release / provenance" > Run workflow, with the tag of a release that already
+# exists (for example v0.2.1). It rebuilds and replaces the two files on that release.
+#
+# What it does not do: it does not build or sign the application, container images or any other
+# binary. The subject is the source archive of the tagged tree, and the checksum file that names it.
+#
+# Least privilege: the workflow's token is read-only; the one job below holds the three scopes it needs
+# (`id-token` for the signing certificate, `attestations` to store the attestation, `contents` to upload
+# to the release). No secret other than the automatic GITHUB_TOKEN, no `pull_request_target`, and the
+# tag name reaches the shell only through an environment variable, after it is checked.
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Tag of an existing release, for example v0.2.1"
+        required: true
+        type: string
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.release.tag_name || inputs.tag }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  provenance:
+    name: Source archive, checksum and attestation
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: write # upload the two files to the release
+      id-token: write # the short-lived certificate the attestation is signed with
+      attestations: write # store the attestation for `gh attestation verify`
+    env:
+      TAG: ${{ github.event.release.tag_name || inputs.tag }}
+    steps:
+      - name: Check the tag name
+        run: |
+          set -euo pipefail
+          if ! printf '%s' "$TAG" | grep -Eq '^v[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.]+)?$'; then
+            echo "::error title=Tag::'$TAG' is not a version tag such as v0.2.1"
+            exit 1
+          fi
+
+      - name: Checkout the tag
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: refs/tags/${{ env.TAG }}
+          persist-credentials: false
+
+      - name: Build the source archive and the checksum file
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/dist"
+          archive="freeduet-${TAG}-source.tar.gz"
+          # `git archive` writes the tracked files of the tagged commit only, with the commit's own
+          # time on every entry, and `gzip -n` leaves out the name and the time: the same commit gives
+          # the same bytes.
+          git archive --format=tar --prefix="freeduet-${TAG}/" "refs/tags/${TAG}" \
+            | gzip -n -9 > "$RUNNER_TEMP/dist/$archive"
+          (cd "$RUNNER_TEMP/dist" && sha256sum "$archive" > SHA256SUMS && cat SHA256SUMS)
+          echo "Commit: $(git rev-parse "refs/tags/${TAG}^{commit}")"
+
+      - name: Attest the build provenance
+        uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4.2.2
+        with:
+          subject-path: |
+            ${{ runner.temp }}/dist/freeduet-*-source.tar.gz
+            ${{ runner.temp }}/dist/SHA256SUMS
+
+      - name: Upload both files to the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          gh release upload "$TAG" "$RUNNER_TEMP"/dist/freeduet-*-source.tar.gz "$RUNNER_TEMP/dist/SHA256SUMS" --clobber
