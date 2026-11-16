@@ -1,4 +1,22 @@
+import {
+  type ApprovalTextId,
+  type ApprovalTextValues,
+  approvalText,
+} from "@openbot/shared/approval-text";
 import type { ApprovalRequest } from "./approvals";
+
+/**
+ * D50: the MESSAGES on an approval card (its title, what happens, the rule in words) are drawn in the
+ * language the person reads, from the shared catalogue (shared/approval-text.ts). Labels and buttons are
+ * the app's own words and stay English. `language` is a two-letter code; null, undefined and a language
+ * with no table read English, which is what these functions drew before.
+ */
+export type ApprovalLanguage = string | null | undefined;
+const say = (
+  language: ApprovalLanguage,
+  id: ApprovalTextId,
+  values?: ApprovalTextValues,
+) => approvalText(id, language, values);
 
 /**
  * How an approval request reads on a card: a title in plain words, the app it is for, the fields a
@@ -74,7 +92,10 @@ const SENDING_APPS: Record<
  * body's first 280 characters with the subject glued on; it is read the old way rather than not at
  * all, since it is already decided.
  */
-function describeShare(args: Record<string, unknown>): ApprovalView {
+function describeShare(
+  args: Record<string, unknown>,
+  language: ApprovalLanguage,
+): ApprovalView {
   const audience = display(args.audience) ?? "";
   const split = audience.indexOf(": ");
   const server = split > 0 ? audience.slice(0, split) : "";
@@ -92,7 +113,10 @@ function describeShare(args: Record<string, unknown>): ApprovalView {
     if (value) fields.push({ label, value });
   }
   return {
-    title: known?.kind === "mail" ? "Send email" : "Send a message",
+    title: say(
+      language,
+      known?.kind === "mail" ? "view.sendEmail" : "view.sendMessage",
+    ),
     app: known?.app ?? (server ? sentence(words(server)) : null),
     kind: known?.kind ?? "other",
     fields,
@@ -107,9 +131,6 @@ function describeShare(args: Record<string, unknown>): ApprovalView {
 /** The two Gmail connections' tools that organise a mailbox (server/src/plugins/mail-organise.ts). */
 const ORGANISE_TOOL =
   /^(?:google-imap|google-workspace)\/(gmail_create_label|gmail_label_messages|gmail_archive_messages|gmail_mark_messages|gmail_bin_messages|gmail_spam_messages|gmail_create_rule|gmail_disable_rule)$/;
-
-const count = (n: number, one: string, many = `${one}s`) =>
-  `${n} ${n === 1 ? one : many}`;
 
 const names = (value: unknown): string[] =>
   Array.isArray(value)
@@ -129,46 +150,63 @@ const quote = (value: unknown) =>
 function describeRule(
   args: Record<string, unknown>,
   base: { app: string; kind: "mail" },
+  language: ApprovalLanguage,
 ): ApprovalView {
+  const and = say(language, "join.and");
   const when: string[] = [];
   if (typeof args.fromAddress === "string")
-    when.push(`from ${args.fromAddress}`);
+    when.push(
+      say(language, "rule.when.fromAddress", { value: args.fromAddress }),
+    );
   if (typeof args.fromDomain === "string")
-    when.push(`from the domain ${args.fromDomain}`);
+    when.push(
+      say(language, "rule.when.fromDomain", { value: args.fromDomain }),
+    );
   if (typeof args.toAddress === "string")
-    when.push(`sent to ${args.toAddress}`);
+    when.push(say(language, "rule.when.toAddress", { value: args.toAddress }));
   if (typeof args.listId === "string")
-    when.push(`from the list ${quote(args.listId)}`);
+    when.push(say(language, "rule.when.listId", { value: quote(args.listId) }));
   if (typeof args.subjectContains === "string")
-    when.push(`with ${quote(args.subjectContains)} in the subject`);
+    when.push(
+      say(language, "rule.when.subjectContains", {
+        value: quote(args.subjectContains),
+      }),
+    );
   if (typeof args.words === "string")
-    when.push(`with the words ${quote(args.words)} in the subject or sender`);
+    when.push(say(language, "rule.when.words", { value: quote(args.words) }));
   const labels = names(args.addLabels);
   const does = [
     ...(labels.length > 0
-      ? [`label ${labels.map((n) => quote(n)).join(", ")}`]
+      ? [
+          say(language, "rule.does.label", {
+            names: labels.map((n) => quote(n)).join(", "),
+          }),
+        ]
       : []),
-    ...(flag(args.markRead) ? ["mark read"] : []),
-    ...(flag(args.archive) ? ["archive"] : []),
-    ...(flag(args.spam) ? ["move to Spam"] : []),
-    ...(flag(args.bin) ? ["move to the Bin"] : []),
+    ...(flag(args.markRead) ? [say(language, "rule.does.markRead")] : []),
+    ...(flag(args.archive) ? [say(language, "rule.does.archive")] : []),
+    ...(flag(args.spam) ? [say(language, "rule.does.spam")] : []),
+    ...(flag(args.bin) ? [say(language, "rule.does.bin")] : []),
   ];
   const done =
     does.length <= 1
-      ? (does[0] ?? "do nothing")
-      : `${does.slice(0, -1).join(", ")} and ${does.at(-1)}`;
-  const sentence = `From now on, mail ${when.join(" and ")}: ${done}.`;
+      ? (does[0] ?? say(language, "rule.does.nothing"))
+      : `${does.slice(0, -1).join(", ")}${and}${does.at(-1)}`;
+  const sentence = say(language, "rule.sentence", {
+    when: when.join(and),
+    done,
+  });
   return {
     ...base,
-    title: "Create a mail rule",
+    title: say(language, "rule.title"),
     fields: [
       { label: "The rule", value: sentence },
       {
         label: "What happens",
         value:
-          "FreeDuet applies it to new mail every few minutes, without asking again, until you switch it off. It is not a Gmail filter. It never forwards, replies or deletes for good." +
+          say(language, "rule.happens") +
           (flag(args.applyToExisting)
-            ? " It is also applied once to the matching mail already in your Inbox."
+            ? say(language, "rule.happens.existing")
             : ""),
       },
     ],
@@ -188,6 +226,7 @@ function describeRule(
  */
 function describeOrganise(
   request: Pick<ApprovalRequest, "action">,
+  language: ApprovalLanguage,
 ): ApprovalView | null {
   const tool = ORGANISE_TOOL.exec(request.action.toolRef)?.[1];
   if (!tool) return null;
@@ -199,26 +238,21 @@ function describeOrganise(
       : {};
   const base = { app: "Gmail", kind: "mail" as const };
 
-  if (tool === "gmail_create_rule") return describeRule(args, base);
+  if (tool === "gmail_create_rule") return describeRule(args, base, language);
   if (tool === "gmail_disable_rule") {
     const change =
       args.change === "delete"
-        ? "Delete"
+        ? "delete"
         : args.change === "enable"
-          ? "Switch on"
-          : "Switch off";
+          ? "enable"
+          : "disable";
     return {
       ...base,
-      title: `${change} a mail rule`,
+      title: say(language, `rule.${change}.title`),
       fields: [
         {
           label: "What happens",
-          value:
-            change === "Delete"
-              ? "The rule is removed and stops applying to new mail. Mail it already moved stays where it is."
-              : change === "Switch on"
-                ? "The rule applies again, to mail that arrives from now on."
-                : "The rule stops applying to new mail. Mail it already moved stays where it is.",
+          value: say(language, `rule.${change}.happens`),
         },
       ],
       body: null,
@@ -228,12 +262,13 @@ function describeOrganise(
     const [name] = names(args.name);
     return {
       ...base,
-      title: name ? `Create the label \u201c${name}\u201d` : "Create a label",
+      title: name
+        ? say(language, "label.title.named", { name: `\u201c${name}\u201d` })
+        : say(language, "label.title"),
       fields: [
         {
           label: "What happens",
-          value:
-            "A new, empty label is added to your Gmail. No message is changed.",
+          value: say(language, "label.happens"),
         },
       ],
       body: null,
@@ -245,68 +280,79 @@ function describeOrganise(
   const total = details
     ? details.messages.length + details.missing
     : new Set(named.map((id) => id.toLowerCase())).size;
-  const messages = count(total, "message");
 
   const fields: ApprovalView["fields"] = [];
   let title: string;
+  const happens = (id: ApprovalTextId) =>
+    fields.push({
+      label: "What happens",
+      value: say(language, id),
+    });
   if (tool === "gmail_archive_messages") {
-    title = `Archive ${messages}`;
-    fields.push({
-      label: "What happens",
-      value:
-        "They leave the Inbox and stay in All Mail, with their labels. Nothing is deleted.",
-    });
+    title = say(language, "archive.title", { count: total });
+    happens("archive.happens");
   } else if (tool === "gmail_spam_messages") {
-    title = `Move ${messages} to Spam`;
-    fields.push({
-      label: "What happens",
-      value:
-        "They go to your Spam folder. Gmail deletes mail in Spam after about 30 days; until then you can move it back.",
-    });
+    title = say(language, "spam.title", { count: total });
+    happens("spam.happens");
   } else if (tool === "gmail_bin_messages") {
-    title = `Move ${messages} to the Bin`;
-    fields.push({
-      label: "What happens",
-      value:
-        "They go to your Bin and stay there for about 30 days. You can restore them from it. After that Gmail deletes them for good.",
-    });
+    title = say(language, "bin.title", { count: total });
+    happens("bin.happens");
   } else if (tool === "gmail_mark_messages") {
-    title = `Mark ${messages} as ${args.state === "unread" ? "unread" : "read"}`;
-    fields.push({
-      label: "What happens",
-      value: "Only whether they show as read changes. Nothing is deleted.",
-    });
+    title = say(
+      language,
+      args.state === "unread" ? "mark.unread.title" : "mark.read.title",
+      { count: total },
+    );
+    happens("mark.happens");
   } else {
     const add = names(args.addLabels);
     const remove = names(args.removeLabels);
-    const one = (list: string[]) =>
-      list.length === 1
-        ? `the label \u201c${list[0]}\u201d`
-        : `${list.length} labels`;
+    const values = (list: string[]) => ({
+      count: total,
+      name: `\u201c${list[0]}\u201d`,
+      labels: list.length,
+    });
     title =
       add.length > 0 && remove.length === 0
-        ? `Add ${one(add)} to ${messages}`
+        ? say(
+            language,
+            add.length === 1 ? "labels.add.one.title" : "labels.add.many.title",
+            values(add),
+          )
         : remove.length > 0 && add.length === 0
-          ? `Remove ${one(remove)} from ${messages}`
-          : `Change the labels on ${messages}`;
-    if (add.length > 0) fields.push({ label: "Add", value: add.join(", ") });
+          ? say(
+              language,
+              remove.length === 1
+                ? "labels.remove.one.title"
+                : "labels.remove.many.title",
+              values(remove),
+            )
+          : say(language, "labels.change.title", { count: total });
+    if (add.length > 0)
+      fields.push({
+        label: "Add",
+        value: add.join(", "),
+      });
     if (remove.length > 0)
-      fields.push({ label: "Remove", value: remove.join(", ") });
-    fields.push({
-      label: "What happens",
-      value: "Labels are added or taken off. No message is moved or deleted.",
-    });
+      fields.push({
+        label: "Remove",
+        value: remove.join(", "),
+      });
+    happens("labels.happens");
   }
 
   if (!details) {
     fields.push({
       label: "Messages",
-      value: `Your mailbox could not be read just now, so who they are from and what they are about is not shown. ${count(total, "message")} named.`,
+      value: say(language, "messages.unreadable", { count: total }),
     });
   } else if (details.missing > 0) {
     fields.push({
       label: "Not found",
-      value: `${count(details.missing, "message")} of the ${total} named ${details.missing === 1 ? "is" : "are"} not in your mailbox, so this will be refused as it stands.`,
+      value: say(language, "notFound.text", {
+        count: details.missing,
+        total,
+      }),
     });
   }
 
@@ -342,6 +388,7 @@ export function personWasAsked(
 
 export function describeApproval(
   request: Pick<ApprovalRequest, "action">,
+  language?: ApprovalLanguage,
 ): ApprovalView {
   const { toolRef, args } = request.action;
   if (
@@ -350,8 +397,8 @@ export function describeApproval(
     typeof args === "object" &&
     !Array.isArray(args)
   )
-    return describeShare(args as Record<string, unknown>);
-  const organise = describeOrganise(request);
+    return describeShare(args as Record<string, unknown>, language);
+  const organise = describeOrganise(request, language);
   if (organise) return organise;
   const segments = toolRef.split("/").filter(Boolean);
   const name = segments.at(-1) ?? toolRef;

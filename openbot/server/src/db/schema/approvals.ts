@@ -24,7 +24,7 @@ export const approvalPreferences = pgTable(
       .references(() => users.id, { onDelete: "cascade" }),
     enabled: boolean("enabled").notNull().default(false),
     /** A model checks each account-affecting or sharing action against this person's request. */
-    autoReview: boolean("auto_review").notNull().default(false),
+    autoReview: boolean("auto_review").notNull().default(true),
     /** Commands on this person's own computer: ask every time, always allow, or never. */
     hostCommands: text("host_commands")
       .$type<HostCommandPolicy>()

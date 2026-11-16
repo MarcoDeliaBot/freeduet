@@ -6,6 +6,8 @@ import {
   useId,
   useState,
 } from "react";
+import { localizedReason } from "@openbot/shared/approval-text";
+import { useApprovalLanguage } from "@/freeduet/person-language/approval-language";
 import { DuetIcon, type DuetIconName } from "@/components/duet/icons";
 import { DuetCard, OutcomePill, Rule, Tile } from "@/components/duet/kit";
 import {
@@ -90,7 +92,8 @@ export function ApprovalCard({
   decidedNow?: boolean;
   className?: string;
 }) {
-  const view = describeApproval(request);
+  const language = useApprovalLanguage();
+  const view = describeApproval(request, language);
   const waiting = request.status === "pending";
   // Drawn waiting at some point, so a decision that comes in is one the person saw being made.
   const [sawWaiting, setSawWaiting] = useState(waiting);
@@ -153,7 +156,12 @@ export function ApprovalCard({
         </AnimatePresence>
       </div>
       {compact ? null : (
-        <ApprovalContent handOff={handOff} request={request} view={view} />
+        <ApprovalContent
+          handOff={handOff}
+          language={language}
+          request={request}
+          view={view}
+        />
       )}
       {error ? (
         <p className="type-label px-4 pb-2 text-duet-red" role="alert">
@@ -235,7 +243,9 @@ function ApprovalContent({
   request,
   view,
   handOff,
+  language,
 }: {
+  language: string | null;
   request: ApprovalRequest;
   view: ReturnType<typeof describeApproval>;
   handOff: boolean;
@@ -260,7 +270,7 @@ function ApprovalContent({
       {request.action.policy?.reason ? (
         <p className="type-label px-4 pt-1 pb-1 text-duet-ink-2">
           {handOff ? "Handed to you: " : ""}
-          {request.action.policy.reason}
+          {localizedReason(request.action.policy.reason, language)}
         </p>
       ) : null}
       <details className="group px-4 pb-1">
