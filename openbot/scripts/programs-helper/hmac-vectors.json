@@ -1,0 +1,135 @@
+{
+  "secretHex": "00112233445566778899aabbccddeeff102132435465768798a9bacbdcedfe0f",
+  "poll": [
+    {
+      "actorId": "user-1",
+      "ts": 1790000000123,
+      "nonce": "n0nce0000000000000000000000000001",
+      "text": "poll1\nuser-1\n1790000000123\nn0nce0000000000000000000000000001",
+      "mac": "fd84714e8acb480b8c2015bd961f134809302b466fef7733effbcb906ee21265"
+    },
+    {
+      "actorId": "ué-2",
+      "ts": 5,
+      "nonce": "x",
+      "text": "poll1\nué-2\n5\nx",
+      "mac": "eb14e1b58061815a85403b435b44c461b66bd2abe5c8dbe90e2d4de9f0f1a105"
+    }
+  ],
+  "operations": [
+    {
+      "operation": {
+        "v": 1,
+        "operationId": "00000000-0000-4000-8000-000000000000",
+        "actorId": "user-1",
+        "botId": "fixer",
+        "action": {
+          "kind": "list_installed"
+        },
+        "issuedAt": 1790000000000,
+        "expiresAt": 1790000120000,
+        "mac": "2d957d09cca8e68431aa3bbfb8399634aa032b1b70b85a76a254bee8b3de43cc"
+      },
+      "text": "op1\n00000000-0000-4000-8000-000000000000\nuser-1\nfixer\nlist_installed\n\n\n\n\n\n1790000000000\n1790000120000"
+    },
+    {
+      "operation": {
+        "v": 1,
+        "operationId": "00000000-0000-4000-8000-000000000001",
+        "actorId": "user-1",
+        "botId": "fixer",
+        "action": {
+          "kind": "list_updates"
+        },
+        "issuedAt": 1790000000001,
+        "expiresAt": 1790000120001,
+        "mac": "862772816a3a6c1d63fa9f8321d86ea76963c57402ff3c725dc1edecb85ad33e"
+      },
+      "text": "op1\n00000000-0000-4000-8000-000000000001\nuser-1\nfixer\nlist_updates\n\n\n\n\n\n1790000000001\n1790000120001"
+    },
+    {
+      "operation": {
+        "v": 1,
+        "operationId": "00000000-0000-4000-8000-000000000002",
+        "actorId": "user-1",
+        "botId": "fixer",
+        "action": {
+          "kind": "update_one",
+          "id": "Example.Edité",
+          "source": "winget",
+          "versionNow": "4.2.1",
+          "versionAvailable": "4.3.0"
+        },
+        "issuedAt": 1790000000002,
+        "expiresAt": 1790000120002,
+        "mac": "2b1a5eb2e5c39a97af5528fcee318971f9efb6dd8a83b75223e38a286898b7ea"
+      },
+      "text": "op1\n00000000-0000-4000-8000-000000000002\nuser-1\nfixer\nupdate_one\nExample.Edité\nwinget\n4.2.1\n4.3.0\n\n1790000000002\n1790000120002"
+    },
+    {
+      "operation": {
+        "v": 1,
+        "operationId": "00000000-0000-4000-8000-000000000003",
+        "actorId": "user-1",
+        "botId": "fixer",
+        "action": {
+          "kind": "install_one",
+          "id": "Example.Edit",
+          "source": "msstore",
+          "version": "1.0"
+        },
+        "issuedAt": 1790000000003,
+        "expiresAt": 1790000120003,
+        "mac": "5ba0b633e787f8dc32ad64b92b91a06aa2ccbbe5e213e499c9dee93fa8d5a7cc"
+      },
+      "text": "op1\n00000000-0000-4000-8000-000000000003\nuser-1\nfixer\ninstall_one\nExample.Edit\nmsstore\n\n\n1.0\n1790000000003\n1790000120003"
+    },
+    {
+      "operation": {
+        "v": 1,
+        "operationId": "00000000-0000-4000-8000-000000000004",
+        "actorId": "user-1",
+        "botId": "*",
+        "action": {
+          "kind": "stop"
+        },
+        "issuedAt": 1790000000004,
+        "expiresAt": 1790000120004,
+        "mac": "5b2377534d554e7a9cc78dacaed3edfff2cd747641d09d15eebc5f1b9b6522d2"
+      },
+      "text": "op1\n00000000-0000-4000-8000-000000000004\nuser-1\n*\nstop\n\n\n\n\n\n1790000000004\n1790000120004"
+    }
+  ],
+  "results": [
+    {
+      "operationId": "00000000-0000-4000-8000-000000000000",
+      "actorId": "user-1",
+      "ts": 1790000001000,
+      "nonce": "r1",
+      "ok": true,
+      "payload": "{\"items\":[{\"name\":\"Caf\\u00e9 \\\"Edit\\\"\",\"id\":\"Example.Edit\",\"version\":\"4.2.1\",\"source\":\"winget\"}]}",
+      "text": "res1\n00000000-0000-4000-8000-000000000000\nuser-1\n1790000001000\nr1\ntrue\n7e7b1a0c2f015b71cce12b75e73513d6d09b6d93bde38d39dd76f223f9ac1a88",
+      "mac": "abb5b3b4104e985a5ac6234af2e765d2f999ee7343e313a8f1b194bd03897bff"
+    },
+    {
+      "operationId": "00000000-0000-4000-8000-000000000001",
+      "actorId": "user-1",
+      "ts": 1790000002000,
+      "nonce": "r2",
+      "ok": false,
+      "payload": "{\"error\":\"winget could not be started.\"}",
+      "text": "res1\n00000000-0000-4000-8000-000000000001\nuser-1\n1790000002000\nr2\nfalse\ne6a002091ff5d5019aec4a000a7ddcfa8f7f4b75ef04d0eba27e33e6c0f94514",
+      "mac": "eca4c6c0ce5ffb853a0a05348a73ba8010b9946a566705921909deef232fe548"
+    },
+    {
+      "operationId": "00000000-0000-4000-8000-000000000002",
+      "actorId": "user-1",
+      "ts": 1790000003000,
+      "nonce": "r3",
+      "ok": true,
+      "payload": "{\"items\":[]}",
+      "text": "res1\n00000000-0000-4000-8000-000000000002\nuser-1\n1790000003000\nr3\ntrue\neef46741adfc3a9f76294d3b78f37a45f113092ac9d44ee77c7a038a88ff09a1",
+      "mac": "d05bc04d56dbd83e5dab6d9924f0882e5389b22cc05916329452d9de7b49cb16"
+    }
+  ]
+}

@@ -387,7 +387,9 @@ describe("an allowed card is carried out once, by the real re-entry and executor
     expect(broker.statusFor(actor).pending).toBe(0);
     await service.decide(actor, card?.id as string, "allow_once");
     const { done, continued } = resume(actor, card?.id as string);
-    await new Promise((resolve) => setTimeout(resolve, 50));
+    // Wait for the EVENT (the resumed call queued its operation), never for a fixed time: under load 50 ms was not enough.
+    while (broker.statusFor(actor).pending === 0)
+      await new Promise((resolve) => setImmediate(resolve));
     const first = await operationsFor(actor);
     expect(first.operations.length).toBe(1);
     const [op] = first.operations as [WireOperation];
@@ -624,8 +626,10 @@ describe("the routes", () => {
       botId: PROGRAMS_MEMBER,
       action: { kind: "list_installed" },
     });
-    // The call asks the switch before it queues: let it reach the queue before the helper polls.
-    await new Promise((resolve) => setImmediate(resolve));
+    // The call asks the switch (database round trips) before it queues. Wait for the EVENT, the operation being
+    // queued, never for a fixed time or a fixed number of ticks.
+    while (broker.statusFor(actor).pending === 0)
+      await new Promise((resolve) => setImmediate(resolve));
     const polled = await broker.poll(pollBody(secret, actor, clock.at));
     const [op] = (polled.ok
       ? polled.operations

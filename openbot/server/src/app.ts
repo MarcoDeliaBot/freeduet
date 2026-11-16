@@ -1,8 +1,8 @@
+import { MAX_IMAGE_BYTES } from "@openbot/shared/attachments";
 import type { Hono as HonoApp, MiddlewareHandler } from "hono";
 import { Hono } from "hono";
 import { bodyLimit } from "hono/body-limit";
 import { serveStatic } from "hono/bun";
-import { MAX_IMAGE_BYTES } from "@openbot/shared/attachments";
 import { enterpriseControls } from "./admin/controls";
 import { createEnterpriseGate } from "./admin/gate";
 import { createEnterpriseAdminRoutes } from "./admin/routes";
@@ -20,35 +20,23 @@ import {
 import type { BotAccessCheck } from "./agents/profile-policy";
 import type { AgentProfileStore } from "./agents/profile-store";
 import { createAgentRoutes } from "./agents/routes";
-import type { SettingChanges } from "./settings-in-chat/changes";
-import { createSettingChangeRoutes } from "./settings-in-chat/routes";
 import { createApprovalRoutes } from "./approvals/routes";
 import type { ApprovalService } from "./approvals/service";
 import {
   type AuditEventType,
   type AuditInitiator,
-  auditEventsToCsv,
   AuditQueryError,
   type AuditReader,
   type AuditStore,
+  auditEventsToCsv,
   auditQueryFromUrl,
   DEPLOYMENT_INITIATOR,
   readAuditExportRows,
   recordAuditEvent,
 } from "./audit";
-import { createDevRequireUser } from "./auth/dev-actor";
-import {
-  createInstallPairingRoutes,
-  personRule,
-  signInGate,
-} from "./auth/install-secret";
 import { createBrowserPairingRoutes } from "./auth/browser-pairing-routes";
 import type { BrowserPairings } from "./auth/browser-pairings";
-import {
-  createLegacyCookieUpgrade,
-  createRemoteLimits,
-  isRemote,
-} from "./auth/remote-limits";
+import { createDevRequireUser } from "./auth/dev-actor";
 import {
   type AppVariables,
   type AuthService,
@@ -57,7 +45,17 @@ import {
   requireAdmin,
 } from "./auth/guards";
 import type { IdentityProviderStore } from "./auth/identity-provider-store";
+import {
+  createInstallPairingRoutes,
+  personRule,
+  signInGate,
+} from "./auth/install-secret";
 import { desktopAuthPage } from "./auth/native-browser";
+import {
+  createLegacyCookieUpgrade,
+  createRemoteLimits,
+  isRemote,
+} from "./auth/remote-limits";
 import { createSameOriginGuard } from "./auth/same-origin";
 import {
   createAttachmentRoutes,
@@ -96,16 +94,13 @@ import { mountDesktopConnectionFailure } from "./desktop-connection-failure";
 import { createTranscriptionProvider } from "./dictation/provider";
 import { createDictationRoutes } from "./dictation/routes";
 import { threadReaderClient } from "./freeduet/backend";
-import type { EngineChoices } from "./freeduet/engine-choices";
 import { isHosted } from "./freeduet/deployment";
+import type { EngineChoices } from "./freeduet/engine-choices";
 import { createEnginesRoutes } from "./freeduet/engines-routes";
 import { createImportPreviewRoutes } from "./freeduet/import/preview-routes";
 import { createTeamFileRoutes } from "./freeduet/team-file-routes";
 import type { HostAccessBroker } from "./host-access/broker";
 import { createHostAccessRoutes } from "./host-access/routes";
-import type { ProgramsBroker } from "./programs/broker";
-import { createProgramsRoutes } from "./programs/routes";
-import type { ProgramsSwitch } from "./programs/switch";
 import { identityRoutes } from "./identity/routes";
 import type { IdentityStore } from "./identity/store";
 import {
@@ -115,23 +110,6 @@ import {
 import type { MemoryIngestion } from "./memory/ingestion";
 import { createMemoryRoutes } from "./memory/routes";
 import type { MemoryStore } from "./memory/store";
-import { parsePageLimit } from "./paging";
-import { createPasswordRoutes, createSignInRoutes } from "./passwords/routes";
-import type { SignInService } from "./passwords/service";
-import type { OnboardingStore } from "./people/onboarding";
-import { MAX_PAGE, type PeopleStore } from "./people/store";
-import type { AccountModeSwitch } from "./plugins/account-mode";
-import type { ComposioBroker } from "./plugins/broker";
-import type { BrokerProvider } from "./plugins/access";
-import { createPluginRoutes } from "./plugins/routes";
-import { createSharedUseRoutes } from "./plugins/shared-use-routes";
-import type { SharedUseStore } from "./plugins/shared-use-store";
-import {
-  isDeploymentFault,
-  PluginRefusedError,
-  type PluginStore,
-} from "./plugins/store";
-import { REFUSAL_MARKER, vendorAnswer } from "./plugins/tools";
 import {
   createDuetChannelRoutes,
   type DuetChannelStore,
@@ -144,9 +122,29 @@ import {
   type TaskIntake,
   type TaskStore,
 } from "./openduet/task-store";
+import { parsePageLimit } from "./paging";
+import { createPasswordRoutes, createSignInRoutes } from "./passwords/routes";
+import type { SignInService } from "./passwords/service";
+import type { OnboardingStore } from "./people/onboarding";
+import { MAX_PAGE, type PeopleStore } from "./people/store";
+import type { BrokerProvider } from "./plugins/access";
+import type { AccountModeSwitch } from "./plugins/account-mode";
+import type { ComposioBroker } from "./plugins/broker";
+import { createPluginRoutes } from "./plugins/routes";
+import { createSharedUseRoutes } from "./plugins/shared-use-routes";
+import type { SharedUseStore } from "./plugins/shared-use-store";
+import {
+  isDeploymentFault,
+  PluginRefusedError,
+  type PluginStore,
+} from "./plugins/store";
+import { REFUSAL_MARKER, vendorAnswer } from "./plugins/tools";
 import type { ProactiveEngine } from "./proactive/engine";
 import { createProactiveRoutes } from "./proactive/routes";
 import type { ProactiveStore } from "./proactive/store";
+import type { ProgramsBroker } from "./programs/broker";
+import { createProgramsRoutes } from "./programs/routes";
+import type { ProgramsSwitch } from "./programs/switch";
 import {
   type ModelProviderProxy,
   mountProviderOAuthProxy,
@@ -163,6 +161,8 @@ import type { IntentRouter } from "./routing/classify";
 import { createRoutingRoutes } from "./routing/routes";
 import { createCoworkerRoutingService } from "./routing/service";
 import type { SelfHostBanner } from "./self-host-banner";
+import type { SettingChanges } from "./settings-in-chat/changes";
+import { createSettingChangeRoutes } from "./settings-in-chat/routes";
 import { createTeamBotRoutes } from "./team-bots/routes";
 import type { TeamBots } from "./team-bots/team-bots";
 import type { PackageStatusReader } from "./tenant-package";
@@ -802,6 +802,8 @@ export function createApp(
         requireUser,
         pairing: pairingGate,
         auditStore,
+        // Single-user mode with no installation secret cannot tell the person from a member's computer (D62).
+        singleUserWithoutSecret: config.singleUser && !person.install,
       }),
     );
   // The import preview (docs/design/import-from-other-tools.md, slice 2): signed in, the person's own facts, nothing saved.
