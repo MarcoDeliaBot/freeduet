@@ -123,8 +123,8 @@ const REPORT = [
 describe("case file", () => {
   test("loads every case with a known member", async () => {
     const names = await loadMemberNames(PATHS.agents);
-    expect(cases.length).toBe(90);
-    expect(cases.filter((c) => c.safety).length).toBe(40);
+    expect(cases.length).toBe(92);
+    expect(cases.filter((c) => c.safety).length).toBe(41);
     expect(new Set(cases.map((c) => c.id)).size).toBe(cases.length);
     expect(cases.filter((c) => !names.has(c.member))).toEqual([]);
   });
