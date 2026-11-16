@@ -9,6 +9,8 @@ import {
 } from "react";
 import { AttentionNotifier } from "@/components/bot-profile/attention";
 import { SelfHostBanner } from "@/components/layout/self-host-banner";
+import { useWideBand, useWideBandOfWindow } from "@/freeduet/wide/band";
+import { WideFrame, WideTopBar } from "@/freeduet/wide/frame";
 import { useChannelEvents } from "@/lib/channels/use-channel-events";
 import { useDuetChannels } from "@/lib/duet-channels/use-channel";
 import { ChannelSheet } from "./channel-sheet";
@@ -51,6 +53,8 @@ export function AppShell({ children }: { children: ReactNode }) {
   useChannelEvents();
   // Work the server runs in Chat that this screen did not start, for the pill and the orb.
   const chat = useChatServerBusy(tab === "chat");
+  // D55: 1024 px and wider draws the team column beside the screen; below it nothing changes.
+  const band = useWideBandOfWindow();
   const chatServerWork = useServerWork(chat.busy, chat.threadId);
 
   return (
@@ -60,20 +64,39 @@ export function AppShell({ children }: { children: ReactNode }) {
         <AttentionNotifier />
         <FinishedForYou />
         <SelfHostBanner />
-        {tab ? (
-          <TabColumn tab={tab}>
-            <ShellHeader
-              floating
-              menuOpen={menuOpen}
-              onMenu={() => setMenuOpen(true)}
-            />
-            <main className="flex min-h-0 flex-1 flex-col">{children}</main>
-          </TabColumn>
-        ) : (
-          <PageChromeProvider>
-            <PageColumn>{children}</PageColumn>
-          </PageChromeProvider>
-        )}
+        <WideFrame
+          band={band}
+          onMenu={() => setMenuOpen(true)}
+          onNewChannel={() => setNewChannel(true)}
+          tab={tab}
+        >
+          {tab ? (
+            <TabColumn tab={tab}>
+              {band === "off" ? (
+                <ShellHeader
+                  floating
+                  menuOpen={menuOpen}
+                  onMenu={() => setMenuOpen(true)}
+                />
+              ) : (
+                <WideTopBar />
+              )}
+              <main
+                className={
+                  band !== "off" && tab !== "chat"
+                    ? "mx-auto flex min-h-0 w-full max-w-[920px] flex-1 flex-col"
+                    : "flex min-h-0 flex-1 flex-col"
+                }
+              >
+                {children}
+              </main>
+            </TabColumn>
+          ) : (
+            <PageChromeProvider>
+              <PageColumn>{children}</PageColumn>
+            </PageChromeProvider>
+          )}
+        </WideFrame>
         <MenuSheet
           onNewChannel={() => {
             setMenuOpen(false);
@@ -117,13 +140,19 @@ function TabColumn({
 }) {
   const column = useRef<HTMLDivElement>(null);
   useTabSpace(column);
+  // D55: on a wide screen the column beside it carries Chat, Tasks and Make, so there is no tab bar.
+  const wide = useWideBand() !== "off";
   return (
     <div
-      className="duet-face relative mx-auto flex min-h-0 w-full max-w-[430px] flex-1 flex-col text-duet-ink [--duet-tab-space:86px]"
+      className={
+        wide
+          ? "duet-face relative flex min-h-0 w-full min-w-0 flex-1 flex-col text-duet-ink [--duet-tab-space:12px]"
+          : "duet-face relative mx-auto flex min-h-0 w-full max-w-[430px] flex-1 flex-col text-duet-ink [--duet-tab-space:86px]"
+      }
       ref={column}
     >
       {children}
-      <TabBar current={tab} />
+      {wide ? null : <TabBar current={tab} />}
     </div>
   );
 }
@@ -162,12 +191,13 @@ export function useTabSpace(column: RefObject<HTMLElement | null>) {
 function PageColumn({ children }: { children: ReactNode }) {
   const chrome = usePageChromeState();
   const swipe = useEdgeSwipeBack();
+  const wide = useWideBand() !== "off";
   return (
     <div
       onTouchEnd={swipe.onTouchEnd}
       onTouchStart={swipe.onTouchStart}
       className={
-        chrome?.column === "phone"
+        chrome?.column === "phone" && !wide
           ? "duet-face relative mx-auto flex min-h-0 w-full max-w-[430px] flex-1 flex-col text-duet-ink [--duet-tab-space:max(env(safe-area-inset-bottom),12px)]"
           : "duet-face relative flex min-h-0 w-full flex-1 flex-col text-duet-ink"
       }

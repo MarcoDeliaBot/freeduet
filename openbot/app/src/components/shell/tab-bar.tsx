@@ -11,7 +11,7 @@ import { cn } from "@/lib/utils";
 
 export type ShellTab = "chat" | "tasks" | "make";
 
-const TABS: {
+export const TABS: {
   id: ShellTab;
   to: "/" | "/tasks" | "/make";
   icon: DuetIconName;
