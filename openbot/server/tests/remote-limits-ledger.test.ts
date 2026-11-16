@@ -90,6 +90,7 @@ function registeredRoutes(): Route[] {
     "lifecycle",
     "settingChanges",
     "engineChoices",
+    "programs",
     "pairings",
   ])
     coworker[key] = stub();

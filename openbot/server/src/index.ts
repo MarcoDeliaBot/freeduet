@@ -191,6 +191,13 @@ import {
   HostAccessRefusedError,
 } from "./host-access/broker";
 import { hostAccessTools } from "./host-access/tools";
+import { createProgramsBroker } from "./programs/broker";
+import { createProgramsSwitch } from "./programs/switch";
+import {
+  offeredProgramsTools,
+  programsTools,
+  type ProgramsToolsInput,
+} from "./programs/tools";
 import { startHttpServer } from "./http-server";
 import { githubCallbackRoutes } from "./identity/github-callback";
 import { retireIdentityLinks, retireOwnedAccounts } from "./identity/retire";
@@ -1426,6 +1433,34 @@ const hostAccessBroker = createHostAccessBroker(Date.now, {
   commandPolicy: (actorId) => approvalService.hostCommandPolicy(actorId),
 });
 
+// D60 (docs/design/programs-on-your-computer.md): programs on the person's own computer. The switch is
+// per person and off by default; the broker holds the queue for the helper and signs with a secret derived
+// from this deployment's own key, which no member's computer is given.
+const programsSwitch = createProgramsSwitch({
+  database,
+  audit: bootAuditStore,
+  deploymentKey: config.keyEncryptionKey,
+});
+const programsBroker = createProgramsBroker({
+  deploymentKey: config.keyEncryptionKey,
+  salt: (actorId) => programsSwitch.saltOf(actorId),
+  enabled: (actorId) => programsSwitch.isOn(actorId),
+});
+const programsInput = (
+  botId: string,
+  actorId: string,
+  initiator?: AuditInitiator,
+): ProgramsToolsInput => ({
+  broker: programsBroker,
+  switch: programsSwitch,
+  botId,
+  actorId,
+  auditStore: bootAuditStore,
+  ...(initiator ? { initiator } : {}),
+  encryptionKey: config.keyEncryptionKey,
+  gate: approvalService.gate,
+});
+
 // Tools run here, not in the browser. Each connector still executes through the plugin store, so the
 // grant, the policy and the audit row are exactly where they were. Host-folder tools are also
 // server-dispatched: the selected Bot and the signed-in owner are bound here, then the desktop worker
@@ -1640,6 +1675,8 @@ const loadToolsForActor =
       auditStore: bootAuditStore,
       initiator,
     }),
+    // D60: nothing unless the person switched it on, and then only the member that holds it.
+    ...(await offeredProgramsTools(programsInput(botId, actorId, initiator))),
   ];
 
 /** One person's standing instructions, for both the /api/settings routes and every run they start. */
@@ -2122,6 +2159,8 @@ const executeApprovedAction = createApprovedActionExecutor({
       initiator,
       auditStore: bootAuditStore,
     }),
+  programsTools: ({ actorId, botId, initiator }) =>
+    programsTools(programsInput(botId, actorId, initiator)),
   callTool: (input) => pluginStore.callTool(input),
   credentialActorFor: (actorId, botId, ref) =>
     teamBots.credentialActorFor(actorId, botId)(ref),
@@ -2969,6 +3008,7 @@ const app = createApp(
     },
     settingChanges,
     engineChoices,
+    programs: { broker: programsBroker, switch: programsSwitch },
   },
   createSelfHostBanner({
     // FreeDuet (D51): off for FreeDuet's package unless the operator wrote it on. Upstream's otherwise.
