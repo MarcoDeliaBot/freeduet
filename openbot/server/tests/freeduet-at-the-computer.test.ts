@@ -9,6 +9,10 @@
 import { describe, expect, test } from "bun:test";
 import { isLoopbackPeer } from "../src/auth/peer";
 import { atTheComputer } from "../src/freeduet/at-the-computer";
+
+/** Without a pairing gate (single-user mode, or sign-in with no secret): what it always was. */
+const at = (env: unknown, request: Request) =>
+  atTheComputer(env, request, undefined, "u-test");
 import { LOOPBACK_PEER } from "./support/loopback-peer";
 
 function peerAt(address: string | null) {
@@ -22,13 +26,13 @@ function request(headers: Record<string, string> = {}) {
 }
 
 describe("the connection's own peer", () => {
-  test("this machine's loopback is the computer", () => {
+  test("this machine's loopback is the computer", async () => {
     for (const address of ["127.0.0.1", "127.8.9.10", "::1"])
-      expect(atTheComputer(peerAt(address), request())).toBe(true);
-    expect(atTheComputer(LOOPBACK_PEER, request())).toBe(true);
+      expect(await at(peerAt(address), request())).toBe(true);
+    expect(await at(LOOPBACK_PEER, request())).toBe(true);
   });
 
-  test("any other address is not: the network, the Docker bridge, a public address, nothing at all", () => {
+  test("any other address is not: the network, the Docker bridge, a public address, nothing at all", async () => {
     for (const address of [
       "192.168.1.20",
       "10.0.0.5",
@@ -43,10 +47,10 @@ describe("the connection's own peer", () => {
       "not an address",
       null,
     ])
-      expect(atTheComputer(peerAt(address), request())).toBe(false);
+      expect(await at(peerAt(address), request())).toBe(false);
   });
 
-  test("it agrees with the rule the sign-in already applies to the peer, for every address", () => {
+  test("it agrees with the rule the sign-in already applies to the peer, for every address", async () => {
     for (const address of [
       "127.0.0.1",
       "::1",
@@ -56,18 +60,18 @@ describe("the connection's own peer", () => {
       "0.0.0.0",
       "255.255.255.255",
     ])
-      expect(atTheComputer(peerAt(address), request())).toBe(
+      expect(await at(peerAt(address), request())).toBe(
         isLoopbackPeer(address),
       );
   });
 
-  test("a request made in-process has no peer and is nobody's, and a server that cannot say is not the computer", () => {
-    expect(atTheComputer(undefined, request())).toBe(false);
-    expect(atTheComputer(null, request())).toBe(false);
-    expect(atTheComputer({}, request())).toBe(false);
-    expect(atTheComputer({ server: {} }, request())).toBe(false);
+  test("a request made in-process has no peer and is nobody's, and a server that cannot say is not the computer", async () => {
+    expect(await at(undefined, request())).toBe(false);
+    expect(await at(null, request())).toBe(false);
+    expect(await at({}, request())).toBe(false);
+    expect(await at({ server: {} }, request())).toBe(false);
     expect(
-      atTheComputer(
+      await at(
         {
           server: {
             requestIP: () => {
@@ -80,9 +84,9 @@ describe("the connection's own peer", () => {
     ).toBe(false);
   });
 
-  test("the peer is not read from a header: a request that says it is loopback is no more than that", () => {
+  test("the peer is not read from a header: a request that says it is loopback is no more than that", async () => {
     expect(
-      atTheComputer(
+      await at(
         peerAt("203.0.113.9"),
         request({ host: "127.0.0.1:3001", origin: "http://127.0.0.1:3001" }),
       ),
@@ -109,21 +113,21 @@ describe("what a proxy, a tunnel or a load balancer adds", () => {
     "Tailscale-Headers-Info",
   ];
 
-  test("each one makes a loopback connection not the computer, whatever its value and however its name is spelled", () => {
+  test("each one makes a loopback connection not the computer, whatever its value and however its name is spelled", async () => {
     for (const name of INTERMEDIARY) {
       for (const spelled of [name, name.toLowerCase(), name.toUpperCase()])
         expect(
-          atTheComputer(LOOPBACK_PEER, request({ [spelled]: "127.0.0.1" })),
+          await at(LOOPBACK_PEER, request({ [spelled]: "127.0.0.1" })),
         ).toBe(false);
     }
-    expect(
-      atTheComputer(LOOPBACK_PEER, request({ "X-Forwarded-For": "" })),
-    ).toBe(false);
+    expect(await at(LOOPBACK_PEER, request({ "X-Forwarded-For": "" }))).toBe(
+      false,
+    );
   });
 
-  test("the headers a browser sends to this machine directly do not count against it", () => {
+  test("the headers a browser sends to this machine directly do not count against it", async () => {
     expect(
-      atTheComputer(
+      await at(
         LOOPBACK_PEER,
         request({
           Host: "localhost:3001",

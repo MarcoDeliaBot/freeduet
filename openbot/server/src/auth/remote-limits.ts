@@ -1,24 +1,29 @@
 import type { MiddlewareHandler } from "hono";
 import type { AuthService } from "./guards";
-import { holdsInstallSecret, type InstallGate } from "./install-secret";
+import { browserLabel } from "./browser-pairings";
+import type { PairingGate } from "./install-secret";
 
 /**
  * FreeDuet (docs/design/phone-and-remote.md 3.5, decided 14 November 2026): who is REMOTE.
  *
  * A deployment with sign-in AND an installation secret asks one more thing of a signed-in browser: is it
- * paired with the computer this runs on? The pairing marker is the cookie of D28, which only a pairing
- * link opened on this machine by an administrator ever sets (auth/install-secret.ts). A session in a
- * browser that holds it is AT THE COMPUTER and nothing is limited; a session in any other browser is
- * REMOTE, and may do only what auth/remote-limits.ts lists. The gate is `signInGate(config)`: absent in
+ * paired with the computer this runs on? Since D49 the pairing marker is a token of that one browser, in a
+ * cookie, matched against a live pairing of the SAME signed-in person (auth/browser-pairings.ts); the cookie
+ * is first set by a pairing link opened on this machine by an administrator (auth/install-secret.ts), or by
+ * a one-time code from such a browser. A session in a browser with a live pairing of its own person is AT
+ * THE COMPUTER and nothing is limited; a session in any other browser is REMOTE, and may do only what
+ * auth/remote-limits.ts lists. The gate is `signInGate(config)`: absent in
  * single-user mode, which keeps D28 as it is, and absent where a sign-in deployment has no secret, which
  * has nothing to tell one browser from another (the boot log says so).
  *
  * WHAT THE ANSWER IS BUILT FROM. Two facts the sender cannot make up:
  *
  *  1. The session, which the server holds and looks up with the very call every guarded route makes
- *     (`createRequireUser`), so "signed in" means the same thing here and there.
- *  2. The cookie, whose value is a secret that no route, no environment a member's computer gets and no
- *     link hands out.
+ *     (`createRequireUser`), so "signed in" means the same thing here and there. It says WHO.
+ *  2. The cookie, whose value is a random token that no route, no environment a member's computer gets and
+ *     no link hands out, and that the database knows only as a hash, with the person it was made for. A
+ *     token of person A is no use to a session of person B, and a pairing that was revoked, is past its
+ *     end, or was made under another installation secret is no pairing.
  *
  * WHAT IT NEVER READS. A header (`X-Forwarded-For`, `Forwarded`, `User-Agent`, `Origin`, `Host`), the
  * query, or the connection's peer address. A tunnel or a reverse proxy that runs on this machine makes a
@@ -32,38 +37,45 @@ import { holdsInstallSecret, type InstallGate } from "./install-secret";
  */
 
 /**
- * Whether a SIGNED-IN request is remote: this deployment asks (there is a gate) and the browser is not
- * paired (it does not hold the cookie). Pure, and the only place the cookie is turned into the verdict.
- * With no gate nothing is remote.
+ * Whether a SIGNED-IN request is remote: this deployment asks (there is a gate) and the browser has no live
+ * pairing of THIS person. The only place the cookie is turned into the verdict. With no gate nothing is
+ * remote. A lookup that fails is remote: a fault refuses and never lifts.
  */
-export function isRemote(
-  gate: InstallGate | undefined,
+export async function isRemote(
+  gate: PairingGate | undefined,
   request: Request,
-): boolean {
-  return gate !== undefined && !holdsInstallSecret(request, gate);
+  userId: string,
+): Promise<boolean> {
+  if (!gate) return false;
+  try {
+    return (await gate.pairings.standing(request, userId)) === null;
+  } catch {
+    return true;
+  }
 }
 
 /**
  * Whether the request is a remote SESSION: a signed-in browser that is not paired. A request with no
  * session is nobody's and is not this (it goes on to its own guard), and the cookie does not change that.
  *
- * The cookie is asked first, so a paired browser costs no session lookup. The lookup is the one the
- * guards make. One that cannot be answered counts as a session, so that a failing lookup refuses a
- * request and never lets one through.
+ * The session is looked up with the call the guards make, because the pairing is the person's: it is asked of
+ * the person the session names. One that cannot be answered counts as a session, so that a failing lookup
+ * refuses a request and never lets one through.
  */
 export async function isRemoteSession(
-  gate: InstallGate | undefined,
+  gate: PairingGate | undefined,
   auth: Pick<AuthService, "api"> | undefined,
   request: Request,
 ): Promise<boolean> {
-  if (!gate || !auth || !isRemote(gate, request)) return false;
+  if (!gate || !auth) return false;
   try {
     const session = await auth.api.getSession({
       headers: request.headers,
       query: { disableCookieCache: true },
     });
     // The guard's own test of "signed in": `if (!session)`.
-    return Boolean(session);
+    if (!session) return false;
+    return await isRemote(gate, request, session.user.id);
   } catch {
     return true;
   }
@@ -71,16 +83,57 @@ export async function isRemoteSession(
 
 /**
  * The question a run's mark asks (`createRequestAgents`, decision H): is the browser that started this run
- * paired with the computer? From the cookie alone, and never through the session store. By the time a run
- * is built the request has been identified, so there is no "nobody" to leave to a guard; asking the store
- * again (`isRemoteSession`) would read a session that ended between the two lookups as "no session, not
- * remote", and turn that one request into the person's own live turn. The cookie is on the request or it is
- * not, and no state in between can change the answer.
+ * paired with the computer? By the time a run is built the request has been identified, so the person is
+ * known and there is no "nobody" to leave to a guard; the question is asked of that person.
  */
 export function remoteRunQuestion(
-  gate: InstallGate,
-): (request: Request) => Promise<boolean> {
-  return async (request) => isRemote(gate, request);
+  gate: PairingGate,
+): (request: Request, userId: string) => Promise<boolean> {
+  return (request, userId) => isRemote(gate, request, userId);
+}
+
+/**
+ * D49: a browser that still holds the OLD pairing cookie (the installation secret itself) and is signed in
+ * is given its own `computer` pairing, once, in silence, and the new cookie in the answer. Mounted in front of
+ * the remote limits, so the very request that carries the old cookie is already paired. REMOVE after
+ * 16 February 2027 (docs/M1_PLAN.md D49): by then every browser in use has been through it.
+ *
+ * It asks nothing a stranger could answer: the old cookie is the secret, which only a browser paired before
+ * D49 ever held, and the session says who gets the pairing. A request with the old cookie and no session
+ * gets nothing, and neither does one whose lookup fails.
+ */
+export function createLegacyCookieUpgrade(
+  gate: PairingGate,
+  auth: Pick<AuthService, "api">,
+): MiddlewareHandler {
+  return async (context, next) => {
+    const request = context.req.raw;
+    if (!gate.pairings.holdsLegacy(request)) return next();
+    let userId: string | undefined;
+    try {
+      const session = await auth.api.getSession({
+        headers: request.headers,
+        query: { disableCookieCache: true },
+      });
+      userId = session?.user.id;
+    } catch {
+      userId = undefined;
+    }
+    if (!userId) return next();
+    let headers: string[];
+    try {
+      ({ headers } = await gate.pairings.adoptLegacy(
+        request,
+        userId,
+        browserLabel(request.headers.get("user-agent"), "on this computer"),
+      ));
+    } catch {
+      return next();
+    }
+    await next();
+    for (const header of headers)
+      context.res.headers.append("Set-Cookie", header);
+  };
 }
 
 /** The code a refusal carries, for the app and for a test to read. */
@@ -156,6 +209,10 @@ export const LEDGER: readonly LedgerEntry[] = [
   ),
   ...allowed("pairing", "GET /api/pair"),
   ...refused("pairing", "POST /internal/pairing"),
+  // D49. A remote session can see nothing of the pairings and mint nothing. The one thing it may do is
+  // redeem a code for ITS OWN person (the route takes the person from the session, never from the body).
+  ...allowed("pairings", "POST /api/pairings/redeem"),
+  ...refused("pairings", "ALL /api/pairings/*"),
   ...allowed("me", "GET /api/me", "POST /api/me/onboarding"),
   // Reading and chatting.
   ...allowed(
@@ -426,12 +483,12 @@ export function remoteRefusal() {
  * The middleware, mounted right behind the same-origin guard in `createApp`, in front of every route.
  *
  * Cheapest question first: a request that is on the list goes straight on (the common one, a chat). Then
- * the cookie, so a paired browser costs no lookup. Only then the session. A request with no session is not
- * this middleware's: the route's own guard answers it, or its own credential does. Mounted only where
+ * the session, which says who, and that person's pairing. A request with no session is not this
+ * middleware's: the route's own guard answers it, or its own credential does. Mounted only where
  * there is a gate, so without sign-in and a secret this is not in the app at all.
  */
 export function createRemoteLimits(
-  gate: InstallGate,
+  gate: PairingGate,
   auth: Pick<AuthService, "api"> | undefined,
 ): MiddlewareHandler {
   return async (context, next) => {

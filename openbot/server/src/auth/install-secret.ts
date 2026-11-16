@@ -1,6 +1,12 @@
 import { createHash, randomBytes, timingSafeEqual } from "node:crypto";
 import { type Context, Hono, type MiddlewareHandler } from "hono";
 import type { DeploymentConfig } from "../config";
+import {
+  type BrowserPairings,
+  browserLabel,
+  createBrowserPairings,
+  createMemoryPairingStore,
+} from "./browser-pairings";
 import type { AppVariables } from "./guards";
 import { isLoopbackRequest, personIsLoopbackOnly } from "./peer";
 
@@ -27,11 +33,14 @@ import { isLoopbackRequest, personIsLoopbackOnly } from "./peer";
  * that setting has always said and the boot log repeats). A server started by hand with no secret
  * keeps the peer rule alone, and says so at boot.
  *
- * WITH SIGN-IN (docs/design/phone-and-remote.md 3.5, decision E). The person is who the session says,
- * and the secret says nothing about who: the cookie alone signs nobody in. What it tells is WHERE: a
- * browser that holds it was paired on the computer this runs on, so a session in it is at the
- * computer, and a session in any other browser is remote and limited (auth/remote-limits.ts). The
- * same two doors pair a browser; the one that sets the cookie also wants a signed-in administrator.
+ * WITH SIGN-IN (docs/design/phone-and-remote.md 3.5, decision E, and D49). The person is who the session
+ * says, and nothing here signs anybody in. What a pairing tells is WHERE: a browser that holds a live
+ * pairing of the signed-in person was paired on the computer this runs on, so a session in it is at the
+ * computer, and a session in any other browser is remote and limited (auth/remote-limits.ts). Since D49
+ * the cookie of a pairing is NOT the secret: it is a random token of that one browser, kept as a hash in
+ * `browser_pairings` with the person it belongs to (auth/browser-pairings.ts). The secret stays the
+ * launcher's credential at the first door, and the tag of every pairing, so changing it ends them all.
+ * The same two doors pair a browser; the one that makes the pairing also wants a signed-in administrator.
  *
  * The secret is never logged and never in a URL: the only thing a URL carries is a pairing token
  * that is good once, for two minutes.
@@ -120,17 +129,32 @@ export function personRule(
   };
 }
 
+/** The gate of a deployment with sign-in: the secret, the old cookie's name, and where pairings are kept. */
+export type PairingGate = InstallGate & { readonly pairings: BrowserPairings };
+
 /**
- * The gate of a deployment WITH sign-in that has a secret, and none where either is missing. It is the
- * marker of a paired browser (auth/remote-limits.ts); the person is still who the session says.
+ * The gate of a deployment WITH sign-in that has a secret, and none where either is missing. It is how a paired
+ * browser is told from the rest (auth/remote-limits.ts); the person is still who the session says.
+ *
+ * `pairings` is the service the server built over its database. Without one (a test, never the server) the gate
+ * holds an empty store, so no browser is paired and every session is remote: a missing store refuses, and never
+ * lifts.
  */
 export function signInGate(
   config: Pick<DeploymentConfig, "singleUser" | "port" | "installSecret">,
-): InstallGate | undefined {
+  pairings?: BrowserPairings,
+): PairingGate | undefined {
   return !config.singleUser && config.installSecret
     ? {
         secret: config.installSecret,
         cookie: installCookieName(config.port),
+        pairings:
+          pairings ??
+          createBrowserPairings({
+            store: createMemoryPairingStore(),
+            secret: config.installSecret,
+            port: config.port,
+          }),
       }
     : undefined;
 }
@@ -180,16 +204,15 @@ export function holdsInstallSecret(
 }
 
 /**
- * The cookie that pairing sets.
+ * The cookie that pairing sets WITHOUT sign-in (D28): the secret itself, as it always was. With sign-in the cookie
+ * is a pairing's own token (auth/browser-pairings.ts), and the secret is never sent to a browser.
  *
  * HttpOnly, so no page script reads it. SameSite=Strict, so a page on another site never has it sent.
- * Host-only, with no Domain. Not Secure, because the app is `http://localhost`; with sign-in the app
- * may be served over https, and then it is Secure (`secure`, from the app's own configured address,
- * never from a header). `Path=/api` is where every guarded route and both websockets are, and keeps
- * it off the app's own assets.
+ * Host-only, with no Domain. Not Secure, because the app is `http://localhost`. `Path=/api` is where every
+ * guarded route and both websockets are, and keeps it off the app's own assets.
  */
-function installCookie(gate: InstallGate, secure = false): string {
-  return `${gate.cookie}=${gate.secret}; Path=/api; Max-Age=${COOKIE_MAX_AGE_SECONDS}; HttpOnly; SameSite=Strict${secure ? "; Secure" : ""}`;
+function installCookie(gate: InstallGate): string {
+  return `${gate.cookie}=${gate.secret}; Path=/api; Max-Age=${COOKIE_MAX_AGE_SECONDS}; HttpOnly; SameSite=Strict`;
 }
 
 /**
@@ -245,14 +268,17 @@ function logPairing(outcome: "minted" | "paired" | "refused") {
  *
  * `requireUser`: the app's own session guard. The door that sets the cookie asks it for a signed-in
  * administrator, and asks BEFORE a link is used up, so a link survives the minute it takes to sign in.
- * `secure`: whether the app's configured address is https, which makes the cookie Secure.
  * `appUrl`: that address, with no trailing slash. The cookie is host-only, and so is the session, so the
  * link has to be opened where the session is; the launcher is told that address with the link.
  */
 export type SignInPairing = {
   requireUser: MiddlewareHandler<{ Variables: AppVariables }>;
-  secure: boolean;
   appUrl?: string;
+  /**
+   * Where the browser's own pairing is made (D49). The cookie that is set is its token, never the secret, and
+   * is Secure when the app's configured address is https (the service is built with that, `index.ts`).
+   */
+  pairings: BrowserPairings;
 };
 
 const PLAIN = {
@@ -355,15 +381,29 @@ export function createInstallPairingRoutes(
       return new Response(LINK_REFUSED, { status: 401, headers: PLAIN });
     }
     logPairing("paired");
-    return new Response(null, {
-      status: 303,
-      headers: {
-        Location: "/",
-        "Set-Cookie": installCookie(gate, signIn?.secure),
-        "Cache-Control": "no-store",
-        "Referrer-Policy": "no-referrer",
-      },
+    const headers = new Headers({
+      Location: "/",
+      "Cache-Control": "no-store",
+      "Referrer-Policy": "no-referrer",
     });
+    if (signIn) {
+      // D49: this browser gets its own pairing, for the administrator signed in in it. Not the secret.
+      const made = await signIn.pairings.issue(
+        context.var.actor.id,
+        "computer",
+        browserLabel(
+          context.req.header("user-agent") ?? null,
+          "on this computer",
+        ),
+        "link",
+      );
+      headers.append("Set-Cookie", made.setCookie);
+      // The old cookie, if this browser has one, goes: it is the secret itself.
+      headers.append("Set-Cookie", signIn.pairings.clearHeaders()[1] as string);
+    } else {
+      headers.append("Set-Cookie", installCookie(gate));
+    }
+    return new Response(null, { status: 303, headers });
   });
 
   return routes;

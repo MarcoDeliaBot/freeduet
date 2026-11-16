@@ -2,6 +2,7 @@
 
 export * from "./admin";
 export * from "./approvals";
+export * from "./browser-pairings";
 export * from "./components";
 export * from "./computer";
 export * from "./core";

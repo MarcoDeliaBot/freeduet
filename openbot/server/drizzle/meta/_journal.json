@@ -526,6 +526,13 @@
       "when": 1794775446297,
       "tag": "0074_mail_rules_failures",
       "breakpoints": true
+    },
+    {
+      "idx": 75,
+      "version": "7",
+      "when": 1794809655239,
+      "tag": "0075_browser_pairings",
+      "breakpoints": true
     }
   ]
 }

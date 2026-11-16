@@ -164,7 +164,9 @@ function deployment(action: unknown, withSecret = true) {
           origin: ORIGIN,
           "content-type": "application/json",
           "x-test-session": options.who ?? "admin",
-          ...(options.paired ? { cookie: pairedCookie(config) } : {}),
+          ...(options.paired
+            ? { cookie: pairedCookie(config, options.who ?? "admin") }
+            : {}),
         },
         body: JSON.stringify({ decision }),
       },
@@ -287,7 +289,9 @@ describe("a remote session answers through the route", () => {
 function asking(withSecret = true) {
   const config = signInConfig({}, withSecret);
   const { app, calls } = assembleSignIn(config, {}, { action: ORDINARY });
-  const respond = (options: { paired?: boolean; body?: unknown } = {}) =>
+  const respond = (
+    options: { paired?: boolean; who?: "admin" | "user"; body?: unknown } = {},
+  ) =>
     app.request(
       `${ORIGIN}/api/approvals/questions/q-1/respond`,
       {
@@ -296,7 +300,9 @@ function asking(withSecret = true) {
           origin: ORIGIN,
           "content-type": "application/json",
           "x-test-session": "admin",
-          ...(options.paired ? { cookie: pairedCookie(config) } : {}),
+          ...(options.paired
+            ? { cookie: pairedCookie(config, options.who ?? "admin") }
+            : {}),
         },
         body: JSON.stringify(options.body ?? { response: "Yes, send it." }),
       },

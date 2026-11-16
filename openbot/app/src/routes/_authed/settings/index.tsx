@@ -12,6 +12,7 @@ import {
   PageSection,
   PageShell,
 } from "@/components/layout/page-shell";
+import { PairDevicesSection } from "@/components/settings/pair-devices";
 import { ReadAloudSetting } from "@/components/settings/read-aloud-setting";
 import { StandingInstructions } from "@/components/settings/standing-instructions";
 import { useTheme } from "@/components/theme-provider";
@@ -106,6 +107,8 @@ function RouteComponent() {
         ))}
       </nav>
       <StandingInstructions />
+      {/* D49: pair a phone or another browser with the computer. Draws nothing where there is no pairing. */}
+      <PairDevicesSection />
       {/*
        * Only where there is a keyboard. Drawn from the same registry the listeners match against, so
        * this list is what the keys actually do. Read-only: they are not rebindable.

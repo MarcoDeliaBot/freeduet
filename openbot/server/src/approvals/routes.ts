@@ -1,7 +1,7 @@
 import { Hono, type MiddlewareHandler } from "hono";
 import { z } from "zod";
 import { type AppVariables, requireAdmin } from "../auth/guards";
-import type { InstallGate } from "../auth/install-secret";
+import type { PairingGate } from "../auth/install-secret";
 import { isRemote } from "../auth/remote-limits";
 import { createFullAccessRoutes } from "../freeduet/full-access-routes";
 import { remoteAnswerRefusal, remoteMayAnswer } from "./remote-answer";
@@ -46,7 +46,7 @@ export function createApprovalRoutes(
    * FreeDuet: the installation's pairing gate, where there is sign-in and a secret. A browser that does not
    * hold its cookie is a remote session and may answer only an ordinary request, once (remote-answer.ts).
    */
-  pairing?: InstallGate,
+  pairing?: PairingGate,
 ) {
   const routes = new Hono<{ Variables: AppVariables }>();
   routes.use("*", requireUser);
@@ -189,7 +189,13 @@ export function createApprovalRoutes(
         context.req.param("id"),
         input.response,
         // A remote session's answer resumes a run that is marked as remote (questions.ts).
-        { remote: isRemote(pairing, context.req.raw) },
+        {
+          remote: await isRemote(
+            pairing,
+            context.req.raw,
+            context.var.actor.id,
+          ),
+        },
       ),
     );
   });
@@ -199,7 +205,7 @@ export function createApprovalRoutes(
         decision: z.enum(["allow_once", "allow_always", "deny", "handled"]),
       })
       .parse(await context.req.json());
-    if (isRemote(pairing, context.req.raw)) {
+    if (await isRemote(pairing, context.req.raw, context.var.actor.id)) {
       // The request is read as it was recorded, not as this call describes it. One that is not there is
       // left to `decide`, which says so.
       const held = await service.store.get(

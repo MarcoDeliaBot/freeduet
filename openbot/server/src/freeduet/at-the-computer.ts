@@ -12,17 +12,19 @@
  *     machine (Tailscale serve, a Cloudflare tunnel, nginx) hands the server a loopback connection for a person who
  *     is far away, and the connection alone cannot tell them apart; the headers they add can. A browser talking to
  *     this machine directly sends none of them.
- *  3. With sign-in and an installation secret, the browser is also paired with this computer: it holds the cookie of
- *     D28 (auth/remote-limits.ts, docs/design/phone-and-remote.md 3.5). A tunnel that strips the headers of (2)
- *     cannot make that up. It is one notion, asked in one place: whoever has the gate (`signInGate`) passes it as
- *     `pairing`. Without one (single-user mode, where every route already asks for the cookie, and a sign-in
- *     deployment that has no secret) the answer is what it always was.
+ *  3. With sign-in and an installation secret, the browser is also paired with this computer: its cookie holds the
+ *     token of a live pairing of the SAME signed-in person (D49, auth/browser-pairings.ts, docs/design/phone-and-remote.md
+ *     3.5). A tunnel that strips the headers of (2) cannot make that up, and a token of another person is no use. It
+ *     is one notion, asked in one place: whoever has the gate (`signInGate`) passes it as `pairing`, with the person.
+ *     Without one (single-user mode, where every route already asks for the cookie, and a sign-in deployment that has
+ *     no secret) the answer is what it always was.
  *
  * WHAT THIS IS NOT. It is a second lock and not the first. On Docker Desktop a Bot's computer reaches the server as
  * loopback too (docs/M1_PLAN.md D39), so what keeps that out is the pairing cookie of single-user mode (D28) or the
  * session of a deployment with sign-in, which every `/api` route already needs.
  */
-import { holdsInstallSecret, type InstallGate } from "../auth/install-secret";
+import { isRemote } from "../auth/remote-limits";
+import type { PairingGate } from "../auth/install-secret";
 import { isLoopbackRequest } from "../auth/peer";
 
 /** Headers that only an intermediary adds. Lower case, as `Headers` gives them. */
@@ -40,13 +42,15 @@ const INTERMEDIARY_PREFIXES = ["x-forwarded-", "cf-", "tailscale-"];
 /**
  * Whether this request came straight from this machine. `env` is what `app.fetch(request, env)` was given, which is
  * `{ server }` from `startHttpServer`; a request made in-process has no peer and is nobody's. `pairing` is the gate
- * of a deployment with sign-in and an installation secret (`signInGate`), which adds the cookie to the conditions.
+ * of a deployment with sign-in and an installation secret (`signInGate`), which adds the pairing to the conditions;
+ * `userId` is the person the session names, whose pairing it has to be.
  */
-export function atTheComputer(
+export async function atTheComputer(
   env: unknown,
   request: Request,
-  pairing?: InstallGate,
-): boolean {
+  pairing: PairingGate | undefined,
+  userId: string,
+): Promise<boolean> {
   if (!isLoopbackRequest(env, request)) return false;
   for (const name of request.headers.keys()) {
     const lower = name.toLowerCase();
@@ -56,5 +60,5 @@ export function atTheComputer(
     )
       return false;
   }
-  return pairing === undefined || holdsInstallSecret(request, pairing);
+  return pairing === undefined || !(await isRemote(pairing, request, userId));
 }

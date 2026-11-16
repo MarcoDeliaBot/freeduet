@@ -10,7 +10,8 @@ import { useState } from "react";
  *
  * Dismissed for the visit only (state in the component, nothing stored): a reload brings it back. The
  * command is the one the server's own sentence names; this line mints no pairing link and holds no button
- * that could, because pairing is done at the computer.
+ * that could, because pairing is done at the computer. D49: it also says that a phone is paired from Settings
+ * on the computer.
  */
 export function RemoteSessionNotice({ remote }: { remote: boolean }) {
   const [dismissed, setDismissed] = useState(false);
@@ -24,7 +25,9 @@ export function RemoteSessionNotice({ remote }: { remote: boolean }) {
         This browser is not paired with the computer FreeDuet runs on, so every
         action asks you first. To pair it, sign in as the administrator and run{" "}
         <code className="font-mono">bash scripts/open.sh</code> on that
-        computer.
+        computer. To pair a phone or another browser from here, open Settings in
+        a browser that is already paired on that computer, press Make a code,
+        then open the link it shows or type the code in Settings here.
       </p>
       <button
         aria-label="Dismiss"
