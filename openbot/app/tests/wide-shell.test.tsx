@@ -7,7 +7,7 @@ import {
   createRouter,
   RouterProvider,
 } from "@tanstack/react-router";
-import { cleanup, render } from "@testing-library/react";
+import { cleanup, render, waitFor } from "@testing-library/react";
 import { AppShell } from "@/components/shell/app-shell";
 import { type AgentProfile, agentKeys } from "@/lib/agents/queries";
 import { currentUserQueryOptions } from "@/lib/auth/queries";
@@ -20,8 +20,28 @@ import { settleReactWork } from "./settle-react-work";
  */
 
 const realFetch = globalThis.fetch;
+const realSocket = globalThis.WebSocket;
+/** Sockets the shell opened. The shell keeps one open for its conversation list; here it is inert. */
+let sockets = 0;
+class InertSocket {
+  onopen: unknown = null;
+  onmessage: unknown = null;
+  onclose: unknown = null;
+  onerror: unknown = null;
+  constructor() {
+    sockets += 1;
+  }
+  close() {}
+  send() {}
+  addEventListener() {}
+  removeEventListener() {}
+}
 beforeAll(() => {
   GlobalRegistrator.register({ url: "http://localhost:3010" });
+  // The shell's channel socket must never reach a real network: in CI nothing listens there, and the
+  // refused connection arrives as an unhandled error between tests.
+  globalThis.WebSocket = InertSocket as never;
+  window.WebSocket = InertSocket as never;
   globalThis.fetch = Object.assign(
     async (input: RequestInfo | URL) => {
       const url = String(input);
@@ -39,6 +59,7 @@ afterEach(cleanup);
 afterAll(async () => {
   await settleReactWork();
   globalThis.fetch = realFetch;
+  globalThis.WebSocket = realSocket;
   GlobalRegistrator.unregister();
 });
 
@@ -89,6 +110,11 @@ for (const width of [390, 768, 1023]) {
   test(`at ${width} px the shell is the phone column with its tab bar, and no side column`, async () => {
     const view = at(width);
     await view.findByText("The screen");
+    await waitFor(() =>
+      expect(
+        view.container.querySelector("nav[aria-label='Main']"),
+      ).not.toBeNull(),
+    );
     expect(view.container.querySelector("aside")).toBeNull();
     expect(
       view.container.querySelectorAll("nav[aria-label='Main']"),
@@ -113,6 +139,11 @@ for (const [width, band] of [
   test(`at ${width} px the shell has the ${band} column and no tab bar of its own`, async () => {
     const view = at(width);
     await view.findByText("The screen");
+    await waitFor(() =>
+      expect(
+        view.container.querySelector("nav[aria-label='Main']"),
+      ).not.toBeNull(),
+    );
     expect(
       view.container.querySelector("aside")?.getAttribute("data-band"),
     ).toBe(band);
@@ -126,3 +157,10 @@ for (const [width, band] of [
     expect(view.container.innerHTML).not.toContain("max-w-[430px]");
   });
 }
+
+test("the shell's socket is the inert one: no test here reaches a network", async () => {
+  sockets = 0;
+  const view = at(1440);
+  await view.findByText("The screen");
+  await waitFor(() => expect(sockets).toBeGreaterThan(0));
+});
