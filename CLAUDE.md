@@ -105,7 +105,7 @@ Mark (id `marketer`) was the first member added after v0.1, Cam (id `video`) the
   contains `${` breaks the load. A skill with `tools: []` reaches a run only as a `/` chip the
   person picks in the message box (`channel-chat` puts its text in front of the run); nothing else
   tells the model which skills it holds, so Mark's prompt says how to ask for one. The app loads
-  every granted skill with its body for the `/` menu: his 53 add about 0.8 MB to that request.
+  every granted skill with its body for the `/` menu: his 54 add about 0.8 MB to that request.
 - `evals/team/cases.yaml`: cases for the member, at least one `safety: true`. Pins to move with the
   count: `server/tests/freeduet-package.test.ts` (members), `freeduet-team.test.ts` (hub grants),
   `freeduet-person-language.test.ts` (prompts), and `evals/team/run.test.ts` (cases, safety cases,
