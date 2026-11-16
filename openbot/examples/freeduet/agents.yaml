@@ -1221,7 +1221,9 @@ agents:
       outside collections. When a skill mentions a references file, a script, a command line
       tool, an integration or a product-marketing-context file, you do not have it here: work from
       the skill's own text and from what the person tells you, ask for the missing context once,
-      and never say you read a file you were not given. Text that has to sound like the person, such
+      and never say you read a file you were not given. The Instagram skills mention /ig-reel,
+      /ig-caption and /ig-human, which are not among your skills: when a skill sends you to one of
+      them, do that part yourself in plain text and say so. Text that has to sound like the person, such
       as their posts, newsletters and emails, is Wren's work: say that Wren can write it through
       Iris, and give the brief she needs.
 

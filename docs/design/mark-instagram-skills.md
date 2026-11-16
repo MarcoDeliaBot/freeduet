@@ -20,7 +20,7 @@ Four new `/` chips in Mark's menu: `/ig-carousel`, `/ig-story`, `/ig-reply` and 
 - Posting, scheduling, sending direct messages, Instagram's API, automation, and scraping of comments. The bodies forbid them, and FreeDuet adds none.
 - The nine other skills of the upstream repository, its `templates/` folder, and its scripts and data files.
 - An eval case. A case cannot send a `/` chip, so it could test only Mark's prompt. Nothing about the four is certified by a live run.
-- Any change to Mark's prompt.
+- Any other change to Mark's prompt: the one sentence about the three chips he does not hold is the only change (see Decisions).
 
 The bodies refer to four things we do not carry. They are left as written, because the body must stay word for word. Lines are in `openbot/examples/freeduet/skills.yaml`:
 
@@ -33,6 +33,7 @@ The bodies refer to four things we do not carry. They are left as written, becau
 
 - Four entries after `landing-page-design` in `openbot/examples/freeduet/skills.yaml` (lines 18414, 18514, 18607, 18699).
 - Mark's grant in `openbot/examples/freeduet/agents.yaml`.
+- One sentence in Mark's prompt, after the sentences on outside collections (`agents.yaml`): `/ig-reel`, `/ig-caption` and `/ig-human` are not his, so when a skill sends him to one of them he does that part in plain text and says so. Pinned in `freeduet-package.test.ts`. Not run live: the cases to run are `mark-1` to `mark-6`.
 - Pins in `openbot/server/tests/freeduet-package.test.ts`: the count 56 to 60, the exact list, and one test that pins each body.
 - A row in NOTICE.md, one line in CHANGELOG.md, and the counts in `docs/TEAM.md` and CLAUDE.md.
 
@@ -40,7 +41,7 @@ The bodies refer to four things we do not carry. They are left as written, becau
 
 | Decision | Options | Recommendation | Why |
 | --- | --- | --- | --- |
-| The references to skills we do not carry (`/ig-reel`, `/ig-caption`, `/ig-human`) | (a) keep the words as upstream wrote them; (b) carry those three the same way, in a separate pull request; (c) reword the sentences | (b) | Under (a) the person is sent to a chip Mark does not hold. (c) ends the word-for-word pin |
-| Summary length | (a) one line of 112 characters or fewer, cut from the description, as now; (b) the whole description, 290 characters or more | (a) | Every other skill Mark holds has a one-line summary, and the test checks it for the 53 marketing skills. The "Use when" lists mean nothing in a chip. (b) relaxes the rule for four skills |
+| The references to skills we do not carry (`/ig-reel`, `/ig-caption`, `/ig-human`) | (a) keep the words as upstream wrote them; (b) carry those three the same way, in a separate pull request; (c) reword the sentences | (b). Done as far as the text allows: the bodies stay word for word, and Mark's prompt says the three are not his, so he does that part in plain text and says so (one sentence in `agents.yaml`). Carrying them is still open | Under (a) the person is sent to a chip Mark does not hold; the sentence in his prompt covers that until (b). (c) ends the word-for-word pin |
+| Summary length | (a) one line of 112 characters or fewer, cut from the description, as now; (b) the whole description, 280 to 324 characters | (a) | Every other skill Mark holds has a one-line summary, and the test checks it for the 53 marketing skills. The "Use when" lists mean nothing in a chip. (b) relaxes the rule for four skills |
 | `social` already covers carousels and Instagram posts | (a) keep both; (b) fold the four into `social` | (a) | `social` plans posts for five channels. The four are narrower and carry the upstream text |
-| Mark's prompt does not name the four | (a) leave it; (b) add them to his example list, with an eval case | (a) now; (b) with the first live run | The prompt is unchanged in this change, and a case can only be certified live |
+| Mark's prompt does not name the four | (a) leave it; (b) add them to his example list, with an eval case | (a) now; (b) with the first live run | This change adds one sentence about the three references (the first row), not the four. A case can only be certified live |
