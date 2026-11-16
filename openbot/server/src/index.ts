@@ -244,6 +244,7 @@ import {
 } from "./plugins/provider-wiring";
 import { createPluginStore } from "./plugins/store";
 import {
+  calendarConnectedFor,
   grantedSkills,
   grantedTools,
   REFUSAL_MARKER,
@@ -1626,6 +1627,11 @@ const loadToolsForActor =
       initiator,
       // A Team Bot reaches its owner's accounts, and a teammate's own only with their consent.
       credentialActorFor: teamBots.credentialActorFor(actorId, botId),
+      // The calendar tool is offered only to a person who has one connected (D53).
+      calendarConnected: calendarConnectedFor(
+        pluginStore,
+        teamBots.credentialActorFor(actorId, botId),
+      ),
     })),
     ...hostAccessTools({
       broker: hostAccessBroker,

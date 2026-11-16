@@ -11,6 +11,11 @@ Each version says what was and was not run live. "Run live" means run on a real 
 - Onboarding's "Where your data lives" step now says conversations and memory stay in this install's own database, with nothing sent to a hosted memory service, when `FREEDUET_INTELLIGENCE=off` (the default); it said CopilotKit's cloud, which was false. Tested; not yet run live.
 - FreeDuet advertises nobody (D51): the bar that offered help self-hosting is off by default for FreeDuet's package, and onboarding no longer shows the slide that sent the person to another company's products and sales contact. The credit to the upstream authors is unchanged, and `OPENBOT_SELF_HOST_BANNER=true` brings the upstream behaviour back. Tested; not yet run live.
 
+### Fixed
+
+- A member can read what is in Spam and in the Bin: a Gmail search that says `in:spam` or `in:trash` reads that folder, read-only, on both ways of connecting Gmail, and an account with no Spam or Bin folder gets a plain sentence instead of an empty list. Before, the search never reached them, so after Otto moved mail to Spam, Iris searched, found nothing and the person read it as lost mail. Default searches are unchanged. Built and tested against fake servers; not run on a real mailbox (D53).
+- With no calendar connected, members no longer get a calendar tool to call (four calls failed in one morning): the tool is left out of the run, and the member is told once that no calendar is connected and that one is added on the Connections page. With a calendar connected nothing changes. Built and tested; not yet run live (D53).
+
 ### Added
 
 - The card of a member that Iris handed a job to appears in the conversation you are writing in, under the hand-off line, and not only on the Tasks page (D52). It is the same card with the same buttons: deciding it in the chat is deciding it in Tasks, it runs once, and the member's answer comes back to the Bot that asked. Built and tested; not yet run live. No approval rule changed.
