@@ -54,6 +54,7 @@ $script:LogMaxBytes = 1048576
 $script:RefusalsBeforeAction = 5   # consecutive 401s after which the secret is re-read once, then the helper stops
 $script:MaxSeenIds = 500
 $script:SeenKeepMilliseconds = 600000   # an id is remembered until its expiry plus ten minutes
+$script:MaxSeenFileBytes = 1048576      # seen.txt is never read past 1 MiB (500 real lines are about 110 KB); larger fails closed
 $script:ExitNoApplications = -1978335212   # 0x8A150014: winget found nothing to list
 
 function Get-HelperDirectory {
@@ -230,10 +231,33 @@ function Test-ExactNames {
 # check and the start. The alias is not covered at all.
 function Get-MicrosoftSignerOrganizations {
     param([string]$Subject)
+    # The subject is cut into its components the way X.500 names are written: at a comma that is not inside double quotes
+    # and not escaped with a backslash. An "O=" that sits inside a quoted value (a CN of "x, O=Microsoft Corporation, y")
+    # is part of that value and is never an organisation of its own.
+    $parts = New-Object System.Collections.ArrayList
+    $current = New-Object System.Text.StringBuilder
+    $inQuotes = $false
+    $chars = $Subject.ToCharArray()
+    for ($i = 0; $i -lt $chars.Length; $i++) {
+        $c = $chars[$i]
+        if ($c -eq [char]'"') {
+            [void]$current.Append($c)
+            if ($inQuotes -and ($i + 1) -lt $chars.Length -and $chars[$i + 1] -eq [char]'"') { [void]$current.Append($chars[$i + 1]); $i++ }
+            else { $inQuotes = -not $inQuotes }
+        }
+        elseif ($c -eq [char]'\' -and ($i + 1) -lt $chars.Length) { [void]$current.Append($c); [void]$current.Append($chars[$i + 1]); $i++ }
+        elseif ($c -eq [char]',' -and -not $inQuotes) { [void]$parts.Add($current.ToString()); [void]$current.Clear() }
+        else { [void]$current.Append($c) }
+    }
+    [void]$parts.Add($current.ToString())
     $found = New-Object System.Collections.ArrayList
-    foreach ($match in [regex]::Matches($Subject, '(?:^|,\s*)O=(?:"((?:[^"]|"")*)"|([^,]*))')) {
-        if ($match.Groups[1].Success) { [void]$found.Add($match.Groups[1].Value.Replace('""', '"').Trim()) }
-        else { [void]$found.Add($match.Groups[2].Value.Trim()) }
+    foreach ($part in $parts) {
+        $text = $part.TrimStart()
+        if ($text.StartsWith('O=', [System.StringComparison]::Ordinal)) {
+            $value = $text.Substring(2).Trim()
+            if ($value.Length -ge 2 -and $value.StartsWith('"') -and $value.EndsWith('"')) { $value = $value.Substring(1, $value.Length - 2).Replace('""', '"').Trim() }
+            [void]$found.Add($value)
+        }
     }
     return , $found.ToArray()
 }
@@ -715,13 +739,28 @@ function Get-SeenFile {
     return (Join-Path $Directory 'seen.txt')
 }
 
+# Reads at most $script:MaxSeenFileBytes. A file larger than that, or one that cannot be read, THROWS: the helper then does
+# not start (fail closed), because without the list of what was already done it could carry an old operation out twice.
 function Read-SeenIds {
     param([string]$Directory, [long]$Now)
     $set = New-Object 'System.Collections.Generic.HashSet[string]'
     $file = Get-SeenFile -Directory $Directory
     if (-not (Test-Path -LiteralPath $file)) { return , $set }
+    $stream = [System.IO.File]::Open($file, [System.IO.FileMode]::Open, [System.IO.FileAccess]::Read, [System.IO.FileShare]::ReadWrite)
+    try {
+        $buffer = New-Object byte[] ($script:MaxSeenFileBytes + 1)
+        $total = 0
+        while ($total -lt $buffer.Length) {
+            $n = $stream.Read($buffer, $total, $buffer.Length - $total)
+            if ($n -le 0) { break }
+            $total += $n
+        }
+    }
+    finally { $stream.Dispose() }
+    if ($total -gt $script:MaxSeenFileBytes) { throw ('seen.txt is larger than {0} bytes' -f $script:MaxSeenFileBytes) }
+    $text = [System.Text.Encoding]::UTF8.GetString($buffer, 0, $total).TrimStart([char]0xFEFF)
     $keep = New-Object System.Collections.ArrayList
-    foreach ($line in @(Get-Content -LiteralPath $file -Encoding UTF8)) {
+    foreach ($line in @($text -split "`r?`n")) {
         if ($line -cmatch '^([A-Za-z0-9_.:-]{1,200}) (\d{1,16})$') {
             if ([long]$Matches[2] + $script:SeenKeepMilliseconds -gt $Now) { [void]$keep.Add($line); [void]$set.Add($Matches[1]) }
         }
@@ -736,10 +775,18 @@ function Read-SeenIds {
     return , $set
 }
 
+# Returns $true when the id is on disk. $false means it is NOT (disk full, file locked): the caller must then not carry the
+# operation out, because a restart would no longer know it had been done.
 function Add-SeenId {
     param([string]$Directory, [string]$Id, [long]$ExpiresAt)
-    try { Add-Content -LiteralPath (Get-SeenFile -Directory $Directory) -Value ('{0} {1}' -f $Id, $ExpiresAt) -Encoding UTF8 }
-    catch { Write-HelperLog 'seen' ('could not be saved: ' + $_.Exception.Message) }
+    try {
+        Add-Content -LiteralPath (Get-SeenFile -Directory $Directory) -Value ('{0} {1}' -f $Id, $ExpiresAt) -Encoding UTF8 -ErrorAction Stop
+        return $true
+    }
+    catch {
+        Write-HelperLog 'seen' ('could not be saved: ' + $_.Exception.Message)
+        return $false
+    }
 }
 
 # One poll and what follows from it. Returns the number of operations handled.
@@ -758,11 +805,18 @@ function Invoke-HelperCycle {
             Write-HelperLog 'dropped' ("an operation was not carried out: " + $checked.Why)
             continue
         }
-        # Written down BEFORE it is carried out, so that a crash in the middle cannot let it run twice.
-        Add-SeenId -Directory (Get-HelperDirectory) -Id ([string]$operation.operationId) -ExpiresAt ([long]$operation.expiresAt)
-        Write-HelperLog 'asked' ("{0} (operation {1})" -f $checked.Kind, $operation.operationId)
-        $answer = Invoke-Operation -Kind $checked.Kind -WingetPath $WingetPath -Verify $VerifyWinget
-        $handled++
+        # Written down BEFORE it is carried out, so that a crash in the middle cannot let it run twice. When it cannot be
+        # written down, it is NOT carried out: a restart would not know it had been done. The server is told so.
+        $saved = Add-SeenId -Directory (Get-HelperDirectory) -Id ([string]$operation.operationId) -ExpiresAt ([long]$operation.expiresAt)
+        if (-not $saved) {
+            Write-HelperLog 'refused' ("operation {0} was not carried out: its id could not be written down" -f $operation.operationId)
+            $answer = @{ Ok = $false; Payload = (ConvertTo-ErrorPayload 'The helper could not write this request down on your computer (disk full or file locked), so it did not run it.') }
+        }
+        else {
+            Write-HelperLog 'asked' ("{0} (operation {1})" -f $checked.Kind, $operation.operationId)
+            $answer = Invoke-Operation -Kind $checked.Kind -WingetPath $WingetPath -Verify $VerifyWinget
+            $handled++
+        }
         if ($null -eq $answer) { continue }
         $rts = Get-NowMilliseconds
         $rnonce = [guid]::NewGuid().ToString('N')
@@ -861,7 +915,11 @@ function Invoke-HelperMain {
         if ([bool]$config.allowRemoteServer) { Write-HelperLog 'start' ('WARNING: the server is a remote host, as set up with -AllowRemoteServer: ' + ([Uri]$config.serverUrl).Host) }
         Write-HelperLog 'start' ("helper started; server {0}; winget: {1}" -f $config.serverUrl, $(if ($found.Path -ne '') { $found.Path } else { 'NOT FOUND - ' + $found.Why }))
         try { Write-PidFile -Directory $directory } catch { Write-HelperLog 'start' ('could not write the process record: ' + $_.Exception.Message) }
-        $seen = Read-SeenIds -Directory $directory -Now (Get-NowMilliseconds)
+        try { $seen = Read-SeenIds -Directory $directory -Now (Get-NowMilliseconds) }
+        catch {
+            Write-HelperLog 'start' ('cannot start: the list of operations already done could not be read safely (' + $_.Exception.Message + '). Move or delete seen.txt yourself, then start again.')
+            return 3
+        }
         $cycles = 0
         $quiet = 0
         $refusals = 0

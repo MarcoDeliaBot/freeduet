@@ -559,6 +559,43 @@ Describe 'Refusing to run elevated' {
     }
 }
 
+Describe 'Who signed winget: the subject must name Microsoft Corporation and nobody else (B1)' {
+    It 'accepts the real subject of the App Installer, and a quoted form of the same organisation' {
+        Test-MicrosoftSignerSubject -Subject 'CN=Microsoft Corporation, O=Microsoft Corporation, L=Redmond, S=Washington, C=US' | Should -BeTrue
+        Test-MicrosoftSignerSubject -Subject 'CN=Microsoft Corporation, O="Microsoft Corporation", L=Redmond, S=Washington, C=US' | Should -BeTrue
+        Test-MicrosoftSignerSubject -Subject 'O=Microsoft Corporation' | Should -BeTrue
+    }
+    It 'refuses a name that only begins with Microsoft Corporation' {
+        Test-MicrosoftSignerSubject -Subject 'CN=Microsoft Corporation, O=Microsoft Corporation Evil, C=US' | Should -BeFalse
+        Test-MicrosoftSignerSubject -Subject 'O=Microsoft Corporation Ltd' | Should -BeFalse
+        Test-MicrosoftSignerSubject -Subject 'O=Evil Microsoft Corporation' | Should -BeFalse
+        Test-MicrosoftSignerSubject -Subject 'O=Microsoft Corporation+OU=x' | Should -BeFalse
+    }
+    It 'refuses a subject with two organisations, whatever their order' {
+        Test-MicrosoftSignerSubject -Subject 'CN=x, O=Microsoft Corporation, O=Evil Ltd, C=US' | Should -BeFalse
+        Test-MicrosoftSignerSubject -Subject 'CN=x, O=Evil Ltd, O=Microsoft Corporation, C=US' | Should -BeFalse
+        Test-MicrosoftSignerSubject -Subject 'O=Microsoft Corporation, O=Microsoft Corporation' | Should -BeFalse
+    }
+    It 'does not read an O= that sits inside a quoted value as an organisation' {
+        # The only O= component here is "Evil Inc"; the Microsoft text is part of the quoted CN.
+        Test-MicrosoftSignerSubject -Subject 'CN="Evil, O=Microsoft Corporation", O=Evil Inc, C=US' | Should -BeFalse
+        # No organisation component at all, only the quoted text: this was accepted by the first version of the check.
+        Test-MicrosoftSignerSubject -Subject 'CN="x, O=Microsoft Corporation, y", C=US' | Should -BeFalse
+        Test-MicrosoftSignerSubject -Subject 'CN="O=Microsoft Corporation", C=US' | Should -BeFalse
+        (Get-MicrosoftSignerOrganizations -Subject 'CN="x, O=Microsoft Corporation, y", O=Real Org').Count | Should -Be 1
+        (Get-MicrosoftSignerOrganizations -Subject 'CN="x, O=Microsoft Corporation, y", O=Real Org')[0] | Should -BeExactly 'Real Org'
+    }
+    It 'is case sensitive, and refuses an empty, blank or organisation-less subject' {
+        Test-MicrosoftSignerSubject -Subject 'O=microsoft corporation' | Should -BeFalse
+        Test-MicrosoftSignerSubject -Subject 'O=MICROSOFT CORPORATION' | Should -BeFalse
+        Test-MicrosoftSignerSubject -Subject 'o=Microsoft Corporation' | Should -BeFalse
+        Test-MicrosoftSignerSubject -Subject '' | Should -BeFalse
+        Test-MicrosoftSignerSubject -Subject '   ' | Should -BeFalse
+        Test-MicrosoftSignerSubject -Subject $null | Should -BeFalse
+        Test-MicrosoftSignerSubject -Subject 'CN=Microsoft Corporation, L=Redmond, C=US' | Should -BeFalse
+    }
+}
+
 Describe 'Where winget comes from' {
     BeforeEach {
         $script:Fake = Join-Path $script:Root ('appinstaller-' + [guid]::NewGuid().ToString('N'))
@@ -737,6 +774,55 @@ Describe 'Setup' {
     }
 }
 
+Describe 'The alias is said on the screen and needs a typed word (B4)' {
+    BeforeEach {
+        $script:Dir = Join-Path $script:Root ('alias-' + [guid]::NewGuid().ToString('N'))
+        $script:Posted.Clear()
+        Mock Get-HelperDirectory { return $script:Dir }
+        Mock Test-Elevated { return $false }
+        Mock Resolve-WingetPath { return @{ Path = ''; Why = 'not here' } }
+        Mock Write-Host { }
+        Mock Read-Host { return 'no' }
+        Mock Send-SignedPost {
+            [void]$script:Posted.Add(@{ Path = $Path; Body = $Body })
+            return [pscustomobject]@{ actorId = 'user-1'; secret = ('ab' * 32); serverTime = (Get-NowMilliseconds) }
+        }
+    }
+    It 'prints the warning to the screen when the alias is chosen, and stops on any other word, before a code is sent' {
+        (Invoke-Setup -Server 'http://localhost:3010' -Code 'ABCDE-FGHJK' -WingetPath '' -UseAlias $true -NoTask $true -Yes $true -Directory $script:Dir) | Should -Be 1
+        Should -Invoke Write-Host -ParameterFilter { $Object -match 'NOT signature-checked' } -Times 1
+        Should -Invoke Read-Host -Times 1
+        $script:Posted.Count | Should -Be 0
+        Test-Path -LiteralPath $script:Dir | Should -BeFalse
+    }
+    It 'goes on when the word is typed exactly' {
+        Mock Read-Host { return 'UNCHECKED' }
+        (Invoke-Setup -Server 'http://localhost:3010' -Code 'ABCDE-FGHJK' -WingetPath '' -UseAlias $true -NoTask $true -Yes $true -Directory $script:Dir) | Should -Be 0
+        $script:Posted.Count | Should -Be 1
+    }
+    It 'does not take the word in another case, or with extra text' {
+        Mock Read-Host { return 'unchecked' }
+        (Invoke-Setup -Server 'http://localhost:3010' -Code 'ABCDE-FGHJK' -WingetPath '' -UseAlias $true -NoTask $true -Yes $true -Directory $script:Dir) | Should -Be 1
+        Mock Read-Host { return 'UNCHECKED please' }
+        (Invoke-Setup -Server 'http://localhost:3010' -Code 'ABCDE-FGHJK' -WingetPath '' -UseAlias $true -NoTask $true -Yes $true -Directory $script:Dir) | Should -Be 1
+        $script:Posted.Count | Should -Be 0
+    }
+    It 'with -Yes alone the word is still asked: -Yes is not the alias switch' {
+        (Invoke-Setup -Server 'http://localhost:3010' -Code 'ABCDE-FGHJK' -WingetPath '' -UseAlias $true -NoTask $true -Yes $true -Directory $script:Dir) | Should -Be 1
+        Should -Invoke Read-Host -Times 1
+    }
+    It 'with -AcceptAliasRisk the word is not asked, but the warning is still printed' {
+        (Invoke-Setup -Server 'http://localhost:3010' -Code 'ABCDE-FGHJK' -WingetPath '' -UseAlias $true -NoTask $true -Yes $true -AcceptAliasRisk $true -Directory $script:Dir) | Should -Be 0
+        Should -Invoke Read-Host -Times 0
+        Should -Invoke Write-Host -ParameterFilter { $Object -match 'NOT signature-checked' } -Times 1
+    }
+    It 'says nothing about the alias and asks nothing when it was not chosen' {
+        (Invoke-Setup -Server 'http://localhost:3010' -Code 'ABCDE-FGHJK' -WingetPath '' -UseAlias $false -NoTask $true -Yes $true -Directory $script:Dir) | Should -Be 0
+        Should -Invoke Read-Host -Times 0
+        Should -Invoke Write-Host -ParameterFilter { $Object -match 'NOT signature-checked' } -Times 0
+    }
+}
+
 Describe 'Uninstall' {
     It 'removes the task and the folder, and does nothing else' {
         $dir = Join-Path $script:Root ('un-' + [guid]::NewGuid().ToString('N'))
@@ -826,6 +912,82 @@ Describe 'Operation ids kept on disk (P7)' {
         $restarted = Read-SeenIds -Directory $script:SeenDir -Now 1790000001000
         (Invoke-HelperCycle -Config $config -Secret $script:SecretBytes -Seen $restarted -WingetPath $script:StubExe -VerifyWinget $false) | Should -Be 0
         (Get-StubArgs).Count | Should -Be 1
+    }
+}
+
+Describe 'When the seen id cannot be written, or the file is too big (B2)' {
+    BeforeEach {
+        $script:SeenDir = Join-Path $script:Root ('seen-' + [guid]::NewGuid().ToString('N'))
+        New-Item -ItemType Directory -Force -Path $script:SeenDir | Out-Null
+    }
+    It 'says $true when the id was written and $false when it could not be' {
+        (Add-SeenId -Directory $script:SeenDir -Id 'op-ok' -ExpiresAt 2000000) | Should -BeTrue
+        # A folder where the file should be: appending to it fails, as a full disk or a locked file would.
+        $blocked = Join-Path $script:Root ('blocked-' + [guid]::NewGuid().ToString('N'))
+        New-Item -ItemType Directory -Force -Path $blocked | Out-Null
+        New-Item -ItemType Directory -Force -Path (Get-SeenFile -Directory $blocked) | Out-Null
+        (Add-SeenId -Directory $blocked -Id 'op-no' -ExpiresAt 2000000) | Should -BeFalse
+    }
+    It 'does not carry the operation out when its id cannot be written down, and tells the server so' {
+        $blocked = Join-Path $script:Root ('blocked-' + [guid]::NewGuid().ToString('N'))
+        New-Item -ItemType Directory -Force -Path $blocked | Out-Null
+        New-Item -ItemType Directory -Force -Path (Get-SeenFile -Directory $blocked) | Out-Null
+        Mock Get-HelperDirectory { return $blocked }
+        Mock Get-NowMilliseconds { return ([long]1790000001000) }
+        Reset-Stub
+        Set-StubOutput 'No installed package found.' 0
+        $op = New-VectorOperation 0
+        $script:Results = New-Object System.Collections.ArrayList
+        Mock Send-SignedPost {
+            if ($Path -eq '/api/programs/helper/poll') { return [pscustomobject]@{ operations = @($op) } }
+            [void]$script:Results.Add($Body)
+            return [pscustomobject]@{ ok = $true }
+        }
+        $config = [pscustomobject]@{ actorId = 'user-1'; serverUrl = 'http://localhost:3010' }
+        $seen = New-Object 'System.Collections.Generic.HashSet[string]'
+        (Invoke-HelperCycle -Config $config -Secret $script:SecretBytes -Seen $seen -WingetPath $script:StubExe -VerifyWinget $false) | Should -Be 0
+        (Get-StubArgs).Count | Should -Be 0
+        $script:Results.Count | Should -Be 1
+        $script:Results[0].ok | Should -BeFalse
+        $script:Results[0].payload | Should -Match 'did not run it'
+        $script:Results[0].operationId | Should -Be ([string]$op.operationId)
+    }
+    It 'reads a seen.txt of the largest allowed size, and refuses one byte more' {
+        $file = Get-SeenFile -Directory $script:SeenDir
+        $line = 'id-1 9000000' + [Environment]::NewLine
+        $bytes = New-Object byte[] $script:MaxSeenFileBytes
+        for ($i = 0; $i -lt $bytes.Length; $i++) { $bytes[$i] = [byte][char]'x' }
+        $head = [System.Text.Encoding]::ASCII.GetBytes($line)
+        [Array]::Copy($head, $bytes, $head.Length)
+        [System.IO.File]::WriteAllBytes($file, $bytes)
+        { Read-SeenIds -Directory $script:SeenDir -Now 1000000 } | Should -Not -Throw
+        $bigger = New-Object byte[] ($script:MaxSeenFileBytes + 1)
+        for ($i = 0; $i -lt $bigger.Length; $i++) { $bigger[$i] = [byte][char]'x' }
+        [System.IO.File]::WriteAllBytes($file, $bigger)
+        { Read-SeenIds -Directory $script:SeenDir -Now 1000000 } | Should -Throw '*larger than*'
+    }
+    It 'does not start when seen.txt is too big (fail closed), and says what to do' {
+        $directory = Join-Path $script:Root ('main-' + [guid]::NewGuid().ToString('N'))
+        New-Item -ItemType Directory -Force -Path $directory | Out-Null
+        $bigger = New-Object byte[] ($script:MaxSeenFileBytes + 1)
+        for ($i = 0; $i -lt $bigger.Length; $i++) { $bigger[$i] = [byte][char]'x' }
+        [System.IO.File]::WriteAllBytes((Get-SeenFile -Directory $directory), $bigger)
+        Mock Get-HelperDirectory { return $directory }
+        Mock Test-Elevated { return $false }
+        Mock Read-HelperConfig { return [pscustomobject]@{ actorId = 'user-1'; serverUrl = 'http://localhost:3010'; wingetPath = ''; useAlias = $false } }
+        Mock Get-HelperSecretBytes { return , $script:SecretBytes }
+        Mock Resolve-WingetPath { return @{ Path = ''; Why = 'not here'; Verify = $true } }
+        Mock Send-SignedPost { throw 'must not be called' }
+        (Invoke-HelperMain -MaxCycles 1) | Should -Be 3
+        Should -Invoke Send-SignedPost -Times 0
+        (Get-Content -LiteralPath (Join-Path $directory 'helper.log') -Raw) | Should -Match 'seen.txt'
+    }
+    It 'still reads a file written by Add-SeenId, whose first line carries a byte-order mark' {
+        Add-SeenId -Directory $script:SeenDir -Id 'first' -ExpiresAt 5000000 | Out-Null
+        Add-SeenId -Directory $script:SeenDir -Id 'second' -ExpiresAt 5000000 | Out-Null
+        $set = Read-SeenIds -Directory $script:SeenDir -Now 1000000
+        $set.Contains('first') | Should -BeTrue
+        $set.Contains('second') | Should -BeTrue
     }
 }
 

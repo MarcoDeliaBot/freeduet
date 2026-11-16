@@ -46,6 +46,10 @@ export const WRONG_WINDOW_MS = 60_000;
 const MAX_ADDRESSES = 5_000;
 /** The size of the code space, for the comment above and the test that pins it: 31 characters, ten places. */
 export const CODE_SPACE = ALPHABET.length ** CODE_LENGTH;
+/** The most address entries one request cleans (see `sweepAddresses`); a test pins that no request goes past it. */
+export const PAIRING_CLEAN_BUDGET = 8;
+/** The most addresses remembered at once (a test pins it). */
+export const PAIRING_MAX_ADDRESSES = MAX_ADDRESSES;
 /** Codes one person may ask for in a minute. */
 export const CODES_PER_MINUTE = 6;
 
@@ -93,21 +97,49 @@ export function createProgramsPairing(options: {
     }).catch(() => undefined);
   };
 
-  function sweep(at: number) {
-    for (const [hash, entry] of codes)
-      if (at >= entry.expires) codes.delete(hash);
+  /**
+   * Entries looked at so far by the cleaning below, for the test that measures WORK and not wall time: a flood
+   * from many addresses must cost a constant amount of cleaning per request, not a pass over every address.
+   */
+  let visited = 0;
+  /**
+   * The most entries one request cleans out of the table of addresses. `wrongBy` is kept in the order of each
+   * address's LAST wrong try (an address is deleted and put back at the end when it gets another), so the oldest
+   * live information is always at the front: the cleaning takes expired entries from the front, stops at the
+   * first live one, and never goes past this many. An entry expires once, so the cost is amortised O(1) per
+   * wrong try, and the table cannot outgrow `MAX_ADDRESSES` whatever the cleaning has not reached yet.
+   */
+  const CLEAN_BUDGET = PAIRING_CLEAN_BUDGET;
+
+  function sweepAddresses(at: number) {
+    let budget = CLEAN_BUDGET;
     for (const [address, times] of wrongBy) {
-      const live = times.filter((t) => at - t < WRONG_WINDOW_MS);
-      if (live.length === 0) wrongBy.delete(address);
-      else wrongBy.set(address, live);
+      if (budget-- <= 0) break;
+      visited++;
+      const newest = times[times.length - 1];
+      if (newest !== undefined && at - newest < WRONG_WINDOW_MS) break;
+      wrongBy.delete(address);
+    }
+  }
+
+  /** The live codes are at most one per person who asked in the last two minutes; only `makeCode` walks them. */
+  function sweepCodes(at: number) {
+    for (const [hash, entry] of codes) {
+      visited++;
+      if (at >= entry.expires) codes.delete(hash);
     }
   }
 
   return {
+    /** Entries the cleaning has looked at since this was made (a test reads it; nothing else does). */
+    cleaningWork: () => visited,
+    /** How many addresses are remembered now (a test reads it). */
+    trackedAddresses: () => wrongBy.size,
     /** A new code for this person, who is at the computer (the route checks that). Replaces the last one. */
     async makeCode(actorId: string): Promise<MakeCodeOutcome> {
       const at = now();
-      sweep(at);
+      sweepCodes(at);
+      sweepAddresses(at);
       if (!(await options.isOn(actorId))) return { ok: false, reason: "off" };
       const recent = (asked.get(actorId) ?? []).filter((t) => at - t < 60_000);
       if (recent.length >= CODES_PER_MINUTE) {
@@ -132,15 +164,23 @@ export function createProgramsPairing(options: {
      */
     async redeem(typed: unknown, source = "unknown"): Promise<RedeemOutcome> {
       const at = now();
-      sweep(at);
+      sweepAddresses(at);
       const wrong = (): RedeemOutcome => {
-        const times = wrongBy.get(source) ?? [];
-        if (times.length >= WRONG_PER_MINUTE)
+        // Only this address's own list is cut to the window here: the same limit and decay as before.
+        const times = (wrongBy.get(source) ?? []).filter(
+          (t) => at - t < WRONG_WINDOW_MS,
+        );
+        if (times.length >= WRONG_PER_MINUTE) {
+          // Put back with its live tries only (it may have been cut), and keep the order by last wrong try.
+          wrongBy.delete(source);
+          wrongBy.set(source, times);
           return { ok: false, reason: "rate_limited" };
+        }
         if (!wrongBy.has(source) && wrongBy.size >= MAX_ADDRESSES) {
           const oldest = wrongBy.keys().next().value;
           if (oldest !== undefined) wrongBy.delete(oldest);
         }
+        wrongBy.delete(source);
         wrongBy.set(source, [...times, at]);
         return { ok: false, reason: "wrong_or_expired" };
       };
@@ -149,6 +189,7 @@ export function createProgramsPairing(options: {
       if (normal.length !== CODE_LENGTH) return wrong();
       const hash = sha256(normal);
       const entry = codes.get(hash);
+      if (entry && at >= entry.expires) codes.delete(hash);
       if (!entry || at >= entry.expires) return wrong();
       // Spent first: whatever happens next, this code is not good again.
       codes.delete(hash);

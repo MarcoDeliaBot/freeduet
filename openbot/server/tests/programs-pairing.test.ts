@@ -17,7 +17,9 @@ import {
   CODE_SPACE,
   CODES_PER_MINUTE,
   createProgramsPairing,
+  PAIRING_CLEAN_BUDGET,
   PAIRING_CODE_LIFETIME_MS,
+  PAIRING_MAX_ADDRESSES,
   WRONG_PER_MINUTE,
   WRONG_WINDOW_MS,
 } from "../src/programs/pairing";
@@ -291,6 +293,54 @@ describe("redeeming a code", () => {
     expect((await redeem("ZZZZZ-ZZZZZ", "192.0.2.2")).status).toBe(401);
     clock.at += WRONG_WINDOW_MS + 1;
     expect((await redeem("ZZZZZ-ZZZZZ", "192.0.2.1")).status).toBe(401);
+  });
+
+  test("a flood from many addresses costs a bounded amount of cleaning per request, whatever the table holds (work, not wall time)", async () => {
+    let at = 1_000_000;
+    const pairing = createProgramsPairing({
+      isOn: async () => true,
+      rotateSalt: async () => undefined,
+      secretFor: async () => null,
+      now: () => at,
+    });
+    let mostInOneRequest = 0;
+    const flood = async (from: number, to: number, step: number) => {
+      for (let i = from; i < to; i++) {
+        at += step;
+        const before = pairing.cleaningWork();
+        const outcome = await pairing.redeem(
+          "ZZZZZ-ZZZZZ",
+          `198.18.${i >> 8}.${i & 255}`,
+        );
+        expect(outcome).toEqual({ ok: false, reason: "wrong_or_expired" });
+        mostInOneRequest = Math.max(
+          mostInOneRequest,
+          pairing.cleaningWork() - before,
+        );
+      }
+    };
+    // 20,000 distinct addresses, 1 ms apart: the table fills to its cap and never past it.
+    await flood(0, 20_000, 1);
+    expect(pairing.trackedAddresses()).toBeLessThanOrEqual(
+      PAIRING_MAX_ADDRESSES,
+    );
+    expect(mostInOneRequest).toBeLessThanOrEqual(PAIRING_CLEAN_BUDGET);
+    // A request that finds nothing to clean looks at one entry, not at the table.
+    expect(pairing.cleaningWork()).toBeLessThanOrEqual(
+      20_000 * PAIRING_CLEAN_BUDGET,
+    );
+    // The decay is kept: after the window the old entries leave, a few at a request, none left behind.
+    at += WRONG_WINDOW_MS + 1;
+    await flood(30_000, 30_000 + PAIRING_MAX_ADDRESSES, 0);
+    expect(pairing.trackedAddresses()).toBeLessThanOrEqual(
+      PAIRING_MAX_ADDRESSES,
+    );
+    at += WRONG_WINDOW_MS + 1;
+    await flood(50_000, 50_000 + PAIRING_MAX_ADDRESSES / 2, 0);
+    expect(pairing.trackedAddresses()).toBeLessThanOrEqual(
+      PAIRING_MAX_ADDRESSES / 2 + 1,
+    );
+    expect(mostInOneRequest).toBeLessThanOrEqual(PAIRING_CLEAN_BUDGET);
   });
 
   test("the odds written in the source are the odds of the alphabet and the length", async () => {

@@ -480,3 +480,26 @@ Look at: the task `FreeDuet Programs Helper` in Task Scheduler (it must say it r
 | Execution alias fallback (`-UseWindowsAppsAlias`) | keep as an opt-in at setup; remove | keep, opt-in | if the install folder cannot be started by a normal user, the trial would otherwise stop; the weaker choice is logged and chosen by the person |
 | Signing the helper (S7) | stay unsigned; sign with a certificate | decide when S7 starts | costs money, so it waits for the maintainer's yes |
 | Keeping seen ids on disk | before S3; never | before S3 | S3 changes the PC |
+
+## Built so far: slice S5a, Gus's words and four fixes, on the branch `programs-s5a-gus-and-fixes`
+
+Decision D63 in `docs/M1_PLAN.md` (section 43). **Nothing ran on a real PC; the prompts and the new eval cases are not yet run live; PowerShell is not in the sandbox where this was written, so every PowerShell change below is proved first by Pester in the `installer-windows` job of CI. An independent security review of the PowerShell and pairing changes is required before merge.**
+
+Part A, the members' words (no app screen: that needs a preview and the maintainer's yes):
+
+- Gus has his own paragraph and Iris one sentence; the shared rules and Iris's team list are unchanged (D63, section 7 of this note). The tool names and behaviours were taken from `server/src/programs/tools.ts`: the tools are offered whenever the switch is on, so "the helper is not running" reaches Gus as a tool answer.
+- Five eval cases (iris-24 reworded, iris-25, gus-5, gus-6, gus-7), 96 cases and 43 safety cases in all. All five are not yet run live.
+- The Settings text of section 7 (lines 2 and 3, "Settings, Programs on this computer, Set up") does not exist yet: Gus names the plain page `/api/programs/pairing` and `setup.ps1` until the screen is built, and his paragraph changes with it.
+
+Part B, the four points the independent reviewer left on PR #322:
+
+| # | Point | What changed | Test |
+|---|---|---|---|
+| B1 | `Test-MicrosoftSignerSubject` was not pinned against false subjects | Pester cases: `O=Microsoft Corporation Evil`, two `O=` components in both orders, an `O=` inside a quoted value, other case, empty, blank and null all refused; the real subject, and its quoted form, accepted. Writing the cases found a hole: `CN="x, O=Microsoft Corporation, y"` has no organisation of its own, but the regular expression read the quoted text as one and accepted it. The reader of the subject is now a small splitter at commas outside quotes (and not escaped), so a quoted `O=` is part of its value | `FreeDuetProgramsHelper.Tests.ps1`, Describe "Who signed winget" |
+| B2 | A failed write of `seen.txt` only logged, and the operation ran anyway; a huge `seen.txt` was read whole | `Add-SeenId` says whether the id is on disk; when it is not, the operation is not carried out and the server gets an error result ("did not run it"). `Read-SeenIds` reads at most 1 MiB (about nine times what 500 real lines take) and throws above it, and the helper then does not start (exit 3) and says to move or delete `seen.txt` itself | Describe "When the seen id cannot be written" |
+| B3 | `sweep()` in `pairing.ts` walked every address on each redeem (100,000 requests from different addresses took 56 s) | The table of addresses is kept in the order of each address's last wrong try; each request takes expired entries from the front, stops at the first live one and never cleans more than 8 (`PAIRING_CLEAN_BUDGET`); an address's own list is cut to the window when it is touched. Same limits (60 a minute, 5,000 addresses) and same decay | `programs-pairing.test.ts`: counts entries visited per request, not time |
+| B4 | The alias warning (winget is then not signature-checked) went only to the log | `setup.ps1` prints it on the screen the moment `-UseWindowsAppsAlias` is used, before a pairing code is sent, and asks for the word `UNCHECKED` unless `-AcceptAliasRisk` is given. `-Yes` does not stand in for it | Describe "The alias is said on the screen" |
+
+Not verified: all of the PowerShell (first run in CI), anything on a real PC, that the exclusive-hold and writable-folder checks of S2 behave on a real App Installer folder, and the prompts.
+
+**Decisions left to the maintainer:** none new. Source and package agreements (S3, S4) stay with the maintainer, as the table of slice S2 says.

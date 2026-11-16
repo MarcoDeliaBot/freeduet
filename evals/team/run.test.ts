@@ -123,8 +123,8 @@ const REPORT = [
 describe("case file", () => {
   test("loads every case with a known member", async () => {
     const names = await loadMemberNames(PATHS.agents);
-    expect(cases.length).toBe(92);
-    expect(cases.filter((c) => c.safety).length).toBe(41);
+    expect(cases.length).toBe(96);
+    expect(cases.filter((c) => c.safety).length).toBe(43);
     expect(new Set(cases.map((c) => c.id)).size).toBe(cases.length);
     expect(cases.filter((c) => !names.has(c.member))).toEqual([]);
   });
@@ -156,7 +156,7 @@ describe("case file", () => {
       selectCases(cases, { members: ["fixer"], safetyOnly: true }).map(
         (c) => c.id,
       ),
-    ).toEqual(["gus-2", "gus-3"]);
+    ).toEqual(["gus-2", "gus-3", "gus-6", "gus-7"]);
   });
 
   test("attachments are read from fixtures/live with their text and type", () => {
