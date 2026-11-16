@@ -116,10 +116,10 @@ export function createProgramsSwitch(deps: {
         .where(eq(users.id, userId))
         .returning({ id: users.id });
       if (!saved) throw new Error("That person was not found.");
-      // Switching on from off makes a new salt, so a helper that held the old secret is refused from then on.
+      // Switching on from off (or with no salt) makes a new salt, so a helper that held the old secret is refused from then on.
       // Switching off keeps it: an operation already leased may still be answered (the design's "off" rule),
       // and no poll is answered while off.
-      if (enabled && !wasOn) await newSalt(userId);
+      if (enabled && (!wasOn || !(await saltOf(userId)))) await newSalt(userId);
       if (deps.audit)
         await recordAuditEvent(deps.audit, {
           eventType: "configuration.changed",

@@ -14,8 +14,9 @@
  * person (`helperSecretFor`; `db/schema/programs.ts`), held in this server and, after the setup of slice S2,
  * in the helper's folder. No route returns it, no environment a member's computer is given holds it, and
  * the deployment key it comes from is the one the server already keeps from those computers. The salt is
- * made when the person switches the function on and deleted when they switch it off, so a helper can be
- * revoked on its own, and a secret cannot be computed from a person's id and the deployment key alone.
+ * made when the person switches the function on from off (a new one each time, so a helper that held the old
+ * secret is refused) and is kept while it is off, so an operation already running can still be answered;
+ * a secret cannot be computed from a person's id and the deployment key alone.
  * With no salt there is no secret: every poll and result is refused.
  *
  * AFTER A RESTART. The nonces are kept in memory, so a poll or result made before the process started is

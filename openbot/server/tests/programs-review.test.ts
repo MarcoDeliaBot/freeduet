@@ -9,6 +9,8 @@ import { readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { eq, inArray } from "drizzle-orm";
 import { Hono } from "hono";
+import { decideAction } from "../src/approvals/policy";
+import type { ApprovalCandidate } from "../src/approvals/types";
 import type { AppVariables } from "../src/auth/guards";
 import { createDatabase } from "../src/db/client";
 import { programsHelperSalts, users } from "../src/db/schema";
@@ -197,6 +199,19 @@ describe("the switch, the salt and the routes", () => {
     expect(second).not.toBe(first);
   });
 
+  test("an account moved to a signed-in person keeps the switch but not the salt: turning it on again makes one", async () => {
+    const sw = createProgramsSwitch({ database, deploymentKey: KEY });
+    const id = await person();
+    await sw.set(id, true);
+    await database
+      .delete(programsHelperSalts)
+      .where(eq(programsHelperSalts.userId, id));
+    expect(await sw.isOn(id)).toBe(true);
+    expect(await saltRow(id)).toBeNull();
+    await sw.set(id, true);
+    expect(await saltRow(id)).toBeTruthy();
+  });
+
   test("on the public example key the switch refuses to turn on, and the route says 409", async () => {
     const sw = createProgramsSwitch({ database, deploymentKey: EXAMPLE_KEY });
     const id = await person();
@@ -292,5 +307,38 @@ describe("findings in the source", () => {
     const tools = readFileSync(join(SRC, "programs", "tools.ts"), "utf8");
     expect(tools).toMatch(/\n\s+gate: ApprovalGate;/);
     expect(tools).not.toMatch(/input\.gate\s*\?/);
+  });
+});
+
+describe("the read branch of decideAction", () => {
+  const decide = (toolRef: string, alwaysAsk?: string) =>
+    decideAction({
+      candidate: {
+        actorId: "owner",
+        botId: "fixer",
+        toolRef,
+        effect: "read",
+        scope: "programs",
+        args: {},
+      } as ApprovalCandidate,
+      team: [],
+      personal: [],
+      customRulesEnabled: true,
+      autoReview: false,
+      askBeforeChanges: false,
+      ...(alwaysAsk ? { alwaysAsk } : {}),
+    });
+
+  test("a programs read with an always-ask reason asks and cannot be remembered", async () => {
+    expect(
+      await decide("programs/list_installed", "Programs ask every time."),
+    ).toMatchObject({ behaviour: "ask", source: "always_ask" });
+  });
+
+  test("any other read is not held by an always-ask reason: it is allowed by default", async () => {
+    expect(await decide("mcp/gmail/search", "Some reason.")).toMatchObject({
+      behaviour: "allow",
+      source: "default",
+    });
   });
 });

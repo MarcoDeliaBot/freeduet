@@ -17,6 +17,7 @@ import { randomUUID } from "node:crypto";
 import { HeadlessToolSuspension } from "@openbot/toolkit/headless-tools";
 import { and, eq, inArray } from "drizzle-orm";
 import { Hono } from "hono";
+import { createApprovedActionExecutor } from "../src/approvals/execute";
 import { createApprovalService } from "../src/approvals/service";
 import { createApprovalStore } from "../src/approvals/store";
 import {
@@ -218,12 +219,8 @@ describe("a programs call always asks", () => {
         });
         // "Always allow" is refused for this kind of card, and nothing reached the helper.
         await expect(
-          service.decide(
-            actor,
-            card?.id as string,
-            { decision: "allow_always" } as never,
-          ),
-        ).rejects.toThrow();
+          service.decide(actor, card?.id as string, "allow_always"),
+        ).rejects.toThrow("asked about every time");
         expect(broker.statusFor(actor).pending).toBe(0);
       });
 
@@ -329,6 +326,108 @@ describe("a call outside the person's own live typed turn is refused before any 
     );
     expect(text.startsWith(REFUSAL_MARKER)).toBe(true);
     expect(await cardsOf(actor)).toEqual([]);
+  });
+});
+
+describe("an allowed card is carried out once, by the real re-entry and executor", () => {
+  const executor = createApprovedActionExecutor({
+    sourceFor: async () => ({ channelId: "channel" }),
+    gate: service.gate,
+    computerTools: async () => [],
+    hostTools: () => [],
+    callTool: async () => {
+      throw new Error("a programs call must not go through the connector path");
+    },
+    answer: (result: { text: string }) => result.text,
+    privateShareToolRef: "openbot/private_share",
+    refusalMarker: REFUSAL_MARKER,
+    personInitiator: PERSON,
+    coordinationCall: async () => ({ text: "", isError: false }),
+    credentialActorFor: async (actorId: string) => actorId,
+    programsTools: ({
+      actorId,
+      botId,
+      initiator,
+    }: {
+      actorId: string;
+      botId: string;
+      initiator: AuditInitiator;
+    }) => toolsFor(actorId, botId, initiator),
+  } as never);
+  const resume = (actor: string, id: string) => {
+    const continued: { content: string; error?: string }[] = [];
+    const done = service.resume(actor, id, {
+      validate: (action) =>
+        service.validateReentry(action, () => executor(action)),
+      execute: executor,
+      continue: async ({ result }) => {
+        continued.push(result);
+      },
+    });
+    return { done, continued };
+  };
+  const operationsFor = async (actor: string) => {
+    const secret = (await broker.helperSecretFor(actor)) as Buffer;
+    const polled = await broker.poll(pollBody(secret, actor, clock.at));
+    return {
+      secret,
+      operations: (polled.ok
+        ? polled.operations
+        : []) as unknown as WireOperation[],
+    };
+  };
+
+  test("allow once: one operation leased, the answer reaches the model, and the next call asks again", async () => {
+    const actor = await person();
+    await service.setPreferences(actor, { enabled: false, autoReview: false });
+    await programsSwitch.set(actor, true);
+    await helperIsUp(actor);
+    expect(await callTool(actor, "programs_list_installed")).toBe("paused");
+    const [card] = await cardsOf(actor);
+    expect(broker.statusFor(actor).pending).toBe(0);
+    await service.decide(actor, card?.id as string, "allow_once");
+    const { done, continued } = resume(actor, card?.id as string);
+    await new Promise((resolve) => setTimeout(resolve, 50));
+    const first = await operationsFor(actor);
+    expect(first.operations.length).toBe(1);
+    const [op] = first.operations as [WireOperation];
+    expect(op.action.kind).toBe("list_installed");
+    await broker.result(
+      resultBody(first.secret, {
+        actorId: actor,
+        operationId: op.operationId,
+        at: clock.at,
+        ok: true,
+        payload: INSTALLED,
+      }),
+    );
+    await done;
+    expect(continued.length).toBe(1);
+    expect(continued[0]).not.toHaveProperty("error");
+    expect(continued[0]?.content).toContain("ExampleEdit");
+    // Nothing else was queued for the helper, and a second call is a new card, not the old one's consent.
+    expect((await operationsFor(actor)).operations.length).toBe(0);
+    expect(await callTool(actor, "programs_list_installed")).toBe("paused");
+    const cards = await cardsOf(actor);
+    expect(cards.filter((c) => c.status === "pending").length).toBe(1);
+    expect(broker.statusFor(actor).pending).toBe(0);
+  });
+
+  test("switched off with a card pending: Allow executes nothing and nothing is queued", async () => {
+    const actor = await person();
+    await service.setPreferences(actor, { enabled: false, autoReview: false });
+    await programsSwitch.set(actor, true);
+    await helperIsUp(actor);
+    expect(await callTool(actor, "programs_list_installed")).toBe("paused");
+    const [card] = await cardsOf(actor);
+    await programsSwitch.set(actor, false);
+    await service.decide(actor, card?.id as string, "allow_once");
+    const { done, continued } = resume(actor, card?.id as string);
+    await done;
+    expect(continued.length).toBe(1);
+    expect(continued[0]?.error).toBeTruthy();
+    expect(broker.statusFor(actor).pending).toBe(0);
+    expect((await operationsFor(actor)).operations.length).toBe(0);
   });
 });
 
