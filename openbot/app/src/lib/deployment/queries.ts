@@ -98,7 +98,9 @@ export function deploymentCapabilitiesQueryOptions() {
         localEvaluation: body.localEvaluation === true,
         transcription: body.transcription === true,
         voice: body.voice === true,
-        ...(body.deployment === "hosted" ? { deployment: "hosted" as const } : {}),
+        ...(body.deployment === "hosted"
+          ? { deployment: "hosted" as const }
+          : {}),
         // Only a two-letter lowercase code is kept, so nothing else can reach a card's locale.
         ...(typeof body.personLanguage === "string" &&
         /^[a-z]{2}$/.test(body.personLanguage)

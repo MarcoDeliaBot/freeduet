@@ -46,7 +46,14 @@ export type CheckAnswer = {
   signedIn: boolean | null;
 };
 
-export type CheckOutcome = "connected" | "not_connected" | "not_installed" | "waiting" | "elsewhere" | "hosted" | "no_engine";
+export type CheckOutcome =
+  | "connected"
+  | "not_connected"
+  | "not_installed"
+  | "waiting"
+  | "elsewhere"
+  | "hosted"
+  | "no_engine";
 
 /** The answer of the check, or the status of a refused press, as one outcome. */
 export function checkOutcome(

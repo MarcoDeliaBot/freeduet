@@ -93,7 +93,10 @@ function engines(reach: EnginesReach) {
     },
   };
   const roles: RoleRepository = { rolesForUser: async () => [] };
-  const routes = createEnginesRoutes(createRequireUser(auth, roles), () => reach);
+  const routes = createEnginesRoutes(
+    createRequireUser(auth, roles),
+    () => reach,
+  );
   const app = new Hono();
   app.route("/api/freeduet/engines", routes);
   return { app, routes };
@@ -194,7 +197,8 @@ describe("no one-time code passes through FreeDuet (D1, option b)", () => {
     const { routes } = engines(reachTo("http://127.0.0.1:1/"));
     const paths = routes.routes.map((route) => route.path);
     expect(paths.length).toBeGreaterThan(0);
-    for (const path of paths) expect(path).not.toMatch(/login|code|token|secret|credential/i);
+    for (const path of paths)
+      expect(path).not.toMatch(/login|code|token|secret|credential/i);
     expect(paths).toContain("/claude/check");
   });
 

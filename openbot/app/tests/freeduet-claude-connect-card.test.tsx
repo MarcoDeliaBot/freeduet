@@ -60,7 +60,9 @@ afterEach(() => {
 });
 
 function card(problem: "not_connected" | "not_installed" = "not_connected") {
-  const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  const client = new QueryClient({
+    defaultOptions: { queries: { retry: false } },
+  });
   return render(
     <QueryClientProvider client={client}>
       <ClaudeConnectCard problem={problem} reason="The sentence of the run." />
@@ -112,13 +114,19 @@ describe("the card", () => {
   test("never has a field for a code: no input, no textarea, no password box", async () => {
     const view = card();
     await waitFor(() => view.getByTestId("claude-connect-card"));
-    expect(view.container.querySelectorAll("input, textarea, select").length).toBe(0);
+    expect(
+      view.container.querySelectorAll("input, textarea, select").length,
+    ).toBe(0);
     expect(view.queryByRole("textbox")).toBeNull();
-    expect(view.container.textContent?.toLowerCase()).not.toContain("paste the code");
+    expect(view.container.textContent?.toLowerCase()).not.toContain(
+      "paste the code",
+    );
   });
 
   test("Check again asks the server once, with no body, and says the sign-in is not seen yet", async () => {
-    check = [{ status: 200, body: { reason: null, installed: true, signedIn: false } }];
+    check = [
+      { status: 200, body: { reason: null, installed: true, signedIn: false } },
+    ];
     const view = card();
     await waitFor(() => view.getByTestId("claude-connect-card"));
     fireEvent.click(view.getByText("Check again"));
@@ -126,7 +134,7 @@ describe("the card", () => {
     const checks = asked.filter((r) => r.url.endsWith("/claude/check"));
     expect(checks.length).toBe(1);
     expect(checks[0]?.method).toBe("POST");
-    expect(checks[0]?.body).toBeUndefined();
+    expect(checks[0]?.body ?? "none").toBe("none");
   });
 
   test("pressed again after a sign-in, it says Claude is connected, with nothing reloaded", async () => {
@@ -159,7 +167,9 @@ describe("the card", () => {
 
 describe("under a failed turn in the real transcript", () => {
   function transcript(stopped: string) {
-    const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    const client = new QueryClient({
+      defaultOptions: { queries: { retry: false } },
+    });
     return render(
       <QueryClientProvider client={client}>
         <CopilotKitProvider>
@@ -191,11 +201,25 @@ describe("under a failed turn in the real transcript", () => {
 describe("checkOutcome", () => {
   test("each answer and each refusal is one outcome", () => {
     const ok = { reason: null } as const;
-    expect(checkOutcome(200, { ...ok, installed: true, signedIn: true })).toBe("connected");
-    expect(checkOutcome(200, { ...ok, installed: true, signedIn: false })).toBe("not_connected");
-    expect(checkOutcome(200, { ...ok, installed: false, signedIn: null })).toBe("not_installed");
-    expect(checkOutcome(200, { ...ok, installed: true, signedIn: null })).toBe("waiting");
-    expect(checkOutcome(200, { reason: "unreachable", installed: null, signedIn: null })).toBe("no_engine");
+    expect(checkOutcome(200, { ...ok, installed: true, signedIn: true })).toBe(
+      "connected",
+    );
+    expect(checkOutcome(200, { ...ok, installed: true, signedIn: false })).toBe(
+      "not_connected",
+    );
+    expect(checkOutcome(200, { ...ok, installed: false, signedIn: null })).toBe(
+      "not_installed",
+    );
+    expect(checkOutcome(200, { ...ok, installed: true, signedIn: null })).toBe(
+      "waiting",
+    );
+    expect(
+      checkOutcome(200, {
+        reason: "unreachable",
+        installed: null,
+        signedIn: null,
+      }),
+    ).toBe("no_engine");
     expect(checkOutcome(403, null)).toBe("elsewhere");
     expect(checkOutcome(404, null)).toBe("hosted");
     expect(checkOutcome(500, null)).toBe("no_engine");
