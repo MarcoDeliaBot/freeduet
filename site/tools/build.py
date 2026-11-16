@@ -202,7 +202,7 @@ def team_cards(S, t):
     out = []
     for i, m in enumerate(S.members):
         d = t["team"][m[0]]
-        out.append('<article class="mem%s rv" style="--mc:%s"><svg class="mas" viewBox="0 0 220 220" aria-hidden="true" focusable="false">'
+        out.append('<article class="mem%s" style="--mc:%s"><svg class="mas" viewBox="0 0 220 220" aria-hidden="true" focusable="false">'
                    '<use href="#m-%s"/></svg><h3>%s<span>%s</span></h3><p>%s</p><q>%s</q></article>'
                    % (" boss" if i == 0 else "", m[2], m[0], m[1], esc(d[0]), esc(d[1]), esc(d[2])))
     return "".join(out)

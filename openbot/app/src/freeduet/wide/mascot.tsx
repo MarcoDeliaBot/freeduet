@@ -32,18 +32,27 @@ export function mascotKeyOf(agentId: string): string | null {
 }
 
 /**
- * The viewBox that crops the 220 art tight on the bubble (it is 144 wide, 38 to 182 across and 48 to 192
- * down), so the face is as large as it can be at 40 px. The accessory is drawn past the edge of the box
- * (`overflow: visible`), so the twelve stay tellable apart.
+ * The face is drawn on the whole 220 by 220 canvas of the art plus 10 around it, not cropped to the bubble: the bubble
+ * (144 wide, 38 to 182 across and 48 to 192 down) sits in a 148 box at 36, 46, and the accessory (cap,
+ * coin, hat, headset, envelope) is drawn past that box, so it has to be INSIDE the picture. Before, the
+ * crop was tight and the accessory stuck out through `overflow: visible`, on the symbol and on the
+ * svg; a real Chrome clipped it at the edge of the box all the same (the maintainer's screenshot,
+ * 16 November 2026). Nothing here relies on an overflow any more: every accessory lies inside the
+ * viewBox, and the svg's own margins give back the 40 px the row has always had.
  */
-const FACE_BOX = "36 46 148 148";
+export const ART_BOX = "-10 -10 240 240";
+const ART = 240;
+/** Where the art's own 0, 0 lies in ART_BOX. */
+const ART_ORIGIN = 10;
+/** Where the bubble's 148 box starts and how much canvas lies past it, in art units. */
+const BUBBLE_BOX = { size: 148, left: 36, top: 46 };
 
 const SYMBOLS = [
   ...Object.entries(mascot.team).map(
     ([key, art]) =>
-      `<symbol id="duet-m-${key}" overflow="visible" viewBox="${FACE_BOX}">${art}</symbol>`,
+      `<symbol id="duet-m-${key}" viewBox="${ART_BOX}">${art}</symbol>`,
   ),
-  `<symbol id="duet-m-neutral" overflow="visible" viewBox="${FACE_BOX}"><use href="#bubble"/>${mascot.faces.idle}</symbol>`,
+  `<symbol id="duet-m-neutral" viewBox="${ART_BOX}"><use href="#bubble"/>${mascot.faces.idle}</symbol>`,
 ].join("");
 
 /**
@@ -76,15 +85,24 @@ export function MemberFace({
   className?: string;
 }) {
   const key = mascotKeyOf(agentId);
+  // The bubble is `size` px; the canvas around it is drawn at the same scale and handed back as
+  // negative margin, so the row sees a square of `size` and the accessory has the room it needs.
+  const scale = size / BUBBLE_BOX.size;
+  const canvas = ART * scale;
+  const left = (BUBBLE_BOX.left + ART_ORIGIN) * scale;
+  const top = (BUBBLE_BOX.top + ART_ORIGIN) * scale;
   return (
     <svg
       aria-hidden="true"
-      className={cn("shrink-0 overflow-visible", className)}
+      className={cn("pointer-events-none block max-w-none shrink-0", className)}
       data-face={key ?? "neutral"}
       focusable="false"
-      height={size}
-      viewBox="0 0 148 148"
-      width={size}
+      height={canvas}
+      style={{
+        margin: `${-top}px ${-(canvas - size - left)}px ${-(canvas - size - top)}px ${-left}px`,
+      }}
+      viewBox={ART_BOX}
+      width={canvas}
     >
       <use href={`#duet-m-${key ?? "neutral"}`} />
     </svg>
