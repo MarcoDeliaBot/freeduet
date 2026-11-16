@@ -37,6 +37,15 @@ export type ApprovedActionDependencies = {
     botId: string;
     initiator: AuditInitiator;
   }): GrantedTool[];
+  /**
+   * D60: the two programs tools (`programs_*`), built when an approved call of one is carried out. Optional:
+   * a deployment that did not build the programs broker has none, and such a call is refused as unavailable.
+   */
+  programsTools?(input: {
+    actorId: string;
+    botId: string;
+    initiator: AuditInitiator;
+  }): GrantedTool[];
   callTool(input: {
     ref: string;
     args: Record<string, unknown>;
@@ -186,6 +195,23 @@ export function createApprovedActionExecutor(deps: ApprovedActionDependencies) {
       if (!tool)
         throw new ApprovalRefusedError(
           "That host tool is no longer available.",
+        );
+      const result = await tool.execute(snapshot.args);
+      if (result.startsWith(deps.refusalMarker))
+        throw new ApprovalRefusedError(result);
+      return result;
+    }
+    if (snapshot.toolName.startsWith("programs_")) {
+      const tool = deps
+        .programsTools?.({
+          actorId: action.actorId,
+          botId: action.botId,
+          initiator,
+        })
+        .find((tool) => tool.name === snapshot.toolName);
+      if (!tool)
+        throw new ApprovalRefusedError(
+          "That programs tool is no longer available.",
         );
       const result = await tool.execute(snapshot.args);
       if (result.startsWith(deps.refusalMarker))
