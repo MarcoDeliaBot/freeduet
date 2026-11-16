@@ -72,17 +72,19 @@ export function checkOutcome(
 
 /**
  * The colour of the sentence after Check again (the maintainer, 16 November 2026): green when Claude is connected,
- * red (the status "problem" colour the app already has, `--duet-status-problem`, which is the app's coral-red) when it
- * is not, grey while FreeDuet could not tell. The sentence stays: colour is never the only signal. Both colours are the
- * existing status tokens, 5.4:1 and 6.5:1 on a light card and 9.8:1 and 6.2:1 on a dark one.
+ * coral when it is not, grey while FreeDuet could not tell. The sentence stays: colour is never the only signal.
+ * The coral is the one the wide approval card uses while it waits (D55): #c8402a on a light card (4.97:1) and
+ * #f2907c on a dark one (7.33:1). The green is the existing status token, 5.4:1 and 9.8:1.
  */
+export const OUTCOME_CORAL = "text-[#c8402a] dark:text-[#f2907c]";
+
 export const OUTCOME_TONE: Record<CheckOutcome, string> = {
   connected: "text-duet-green",
-  not_connected: "text-duet-red",
-  not_installed: "text-duet-red",
-  no_engine: "text-duet-red",
-  elsewhere: "text-duet-red",
-  hosted: "text-duet-red",
+  not_connected: OUTCOME_CORAL,
+  not_installed: OUTCOME_CORAL,
+  no_engine: OUTCOME_CORAL,
+  elsewhere: OUTCOME_CORAL,
+  hosted: OUTCOME_CORAL,
   waiting: "text-duet-ink-3",
 };
 

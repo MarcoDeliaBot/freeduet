@@ -25,7 +25,9 @@
 import { BOT_PAUSED_REASON, isBotPaused } from "../agents/lifecycle";
 import type { AgentActor } from "../agents/profile-types";
 import type { ChannelStore } from "../channels/routes";
+import { ThreadLockDeniedError } from "../freeduet/threads";
 import { HeadlessToolSuspension } from "@openbot/toolkit/headless-tools";
+import { ThreadLockBusyError } from "@openbot/toolkit/lease";
 import type { TurnRunner } from "@openbot/toolkit/run-turn";
 import type { RoutineStore } from "./store";
 
@@ -46,6 +48,26 @@ const FATIGUE_LIMIT = 10;
 
 const SWITCHED_OFF =
   "This routine has failed ten times in a row, so I have switched it off. Ask me to turn it back on when whatever it needs is working.";
+
+/**
+ * What History says when the conversation's lock was held at the moment the run was due: the person
+ * was writing in that chat, or another turn was running there. No turn started, so this is a skip, not
+ * a failure, and the ten-failures rule never sees it (D57).
+ */
+export const CONVERSATION_BUSY_REASON =
+  "The conversation was busy when this run was due, so it did not run.";
+
+/**
+ * Whether the turn was refused because another run holds the conversation: the lease's typed
+ * `ThreadLockBusyError` (the lock could not be taken), or the store's `ThreadLockDeniedError` (the
+ * runner found it held). Matched by class, never by message.
+ */
+function isConversationBusy(error: unknown): boolean {
+  return (
+    error instanceof ThreadLockBusyError ||
+    error instanceof ThreadLockDeniedError
+  );
+}
 
 /** Measured in code points, like every other cap in this area, so nothing is cut mid-pair. */
 function shorten(reason: string): string {
@@ -177,6 +199,16 @@ export function createRoutineRunner(options: {
           error.waiting,
         );
         await say(error.message);
+        return;
+      }
+      // A conversation that was busy is skipped, not failed: nothing ran, and nothing is said in the
+      // channel, so the fatigue rule below is never reached.
+      if (isConversationBusy(error)) {
+        await routineStore.finishRun(
+          routineRunId,
+          "skipped",
+          CONVERSATION_BUSY_REASON,
+        );
         return;
       }
       const reason = reasonOf(error);
