@@ -7,9 +7,33 @@ beforeEach(() => {
 });
 afterEach(() => spy.mockRestore());
 
+/**
+ * The line this test's own call logged. Other tests can log late into this spy, and a console.error
+ * spy that another file never restored is reused by spyOn here with its earlier calls, so calls[0]
+ * is not necessarily ours. The record is the most recent JSON line whose type is
+ * identity-link-audit-failed; a line that is not JSON, or another type, is skipped.
+ */
+function auditRecord(): { line: string; record: Record<string, unknown> } {
+  const calls = spy.mock.calls;
+  for (let index = calls.length - 1; index >= 0; index -= 1) {
+    const line = calls[index]?.[0];
+    if (typeof line !== "string") continue;
+    let parsed: unknown;
+    try {
+      parsed = JSON.parse(line);
+    } catch {
+      continue;
+    }
+    const record = parsed as Record<string, unknown> | null;
+    if (record !== null && record.type === "identity-link-audit-failed")
+      return { line, record };
+  }
+  throw new Error("no identity-link-audit-failed line was logged");
+}
+
 function logged(error: unknown): Record<string, unknown> {
   logLinkAuditFailure("github", error);
-  return JSON.parse(spy.mock.calls[0][0] as string);
+  return auditRecord().record;
 }
 
 function pgError(errno: string, message = "boom user-123"): Error {
@@ -62,5 +86,24 @@ test("handles non-Error thrown values", () => {
 
 test("never logs the message or ids", () => {
   logLinkAuditFailure("slack", pgError("23505", "secret user-123"));
-  expect(spy.mock.calls[0][0] as string).not.toContain("user-123");
+  expect(auditRecord().line).not.toContain("user-123");
+});
+
+test("reads its own record when other console.error lines come first", () => {
+  // Another test's late log and a line that is not JSON at all reach the same spy first.
+  console.error(
+    JSON.stringify({
+      type: "routine-run-channel-unrecorded",
+      routineId: "r",
+      routineRunId: "run-1",
+      reason: "routineStore.recordRunChannel is not a function",
+    }),
+  );
+  console.error("a plain line, not JSON");
+  expect(logged(pgError("57014"))).toEqual({
+    type: "identity-link-audit-failed",
+    provider: "github",
+    errorName: "PostgresError",
+    errorCode: "57014",
+  });
 });

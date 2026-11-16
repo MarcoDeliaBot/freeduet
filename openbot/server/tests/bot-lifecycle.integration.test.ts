@@ -272,6 +272,7 @@ describe("pause", () => {
           instruction: "x",
           enabled: true,
         }),
+        recordRunChannel: async () => {},
         finishRun: async (id: string, status: string, reason?: string) =>
           void finished.push([id, status, reason]),
       } as never,
