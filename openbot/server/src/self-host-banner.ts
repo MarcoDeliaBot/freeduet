@@ -41,6 +41,11 @@ export function paysForIntelligence(
 export type SelfHostBanner = {
   /** Whether to offer help self-hosting. Never throws and never waits longer than `waitMs`. */
   shown: () => Promise<boolean>;
+  /**
+   * FreeDuet (D51): false when this deployment shows no promotion at all, which the browser reads to
+   * leave onboarding's promotional slide out. Absent is upstream's answer, which is to show it.
+   */
+  promotions?: boolean;
 };
 
 /**
@@ -67,6 +72,8 @@ const COLD_WAIT_MS = 1_000;
  */
 export function createSelfHostBanner(options: {
   enabled: boolean;
+  /** FreeDuet (D51): `false` says the deployment shows no promotion. Left out, upstream's behaviour. */
+  promotions?: boolean;
   entitlements: () => Promise<RuntimeEntitlementResponse>;
   now?: () => number;
   ttlMs?: number;
@@ -117,6 +124,7 @@ export function createSelfHostBanner(options: {
   }
 
   return {
+    ...(options.promotions === false ? { promotions: false } : {}),
     async shown() {
       if (!options.enabled) return false;
       if (answer) {

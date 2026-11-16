@@ -25,6 +25,11 @@ export type DeploymentCapabilities = {
    */
   selfHostBanner: boolean;
   /**
+   * FreeDuet (D51): false when the deployment shows no promotion for any company or product, so
+   * onboarding leaves out its slide of another company's products. Anything but false is upstream's.
+   */
+  promotions: boolean;
+  /**
    * Whether this is somebody trying OpenBot on their own machine rather than an organization's
    * deployment: single-user mode on the server, which only a local, unreachable install can be in.
    */
@@ -73,6 +78,7 @@ export function deploymentCapabilitiesQueryOptions() {
       ).json()) as {
         generativeUi?: boolean;
         selfHostBanner?: boolean;
+        promotions?: boolean;
         localEvaluation?: boolean;
         transcription?: boolean;
         voice?: boolean;
@@ -82,6 +88,7 @@ export function deploymentCapabilitiesQueryOptions() {
       return {
         generativeUi: body.generativeUi === true,
         selfHostBanner: body.selfHostBanner === true,
+        promotions: body.promotions !== false,
         localEvaluation: body.localEvaluation === true,
         transcription: body.transcription === true,
         voice: body.voice === true,

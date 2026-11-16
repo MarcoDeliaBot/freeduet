@@ -7,6 +7,7 @@ import "./freeduet/plan-token";
 // FreeDuet: the team's hub grants and each person's conversations (docs/UPSTREAM_TOUCHES.md).
 import { applyAutomaticGrants } from "./freeduet/automatic-grants";
 import { applyFreeDuetPackage, isFreeDuetPackage } from "./freeduet/hub-grants";
+import { selfHostBannerOptions } from "./freeduet/no-promotions";
 import { pinModelBaseToRouter } from "./freeduet/model-base";
 import { withFreeDuetTeam } from "./freeduet/person-team";
 import { personLanguageReaderFor } from "./freeduet/person-language-choice";
@@ -2964,7 +2965,8 @@ const app = createApp(
     engineChoices,
   },
   createSelfHostBanner({
-    enabled: config.selfHostBanner,
+    // FreeDuet (D51): off for FreeDuet's package unless the operator wrote it on. Upstream's otherwise.
+    ...selfHostBannerOptions(config.selfHostBanner, tenantPackage, process.env),
     entitlements: () => selfHostBannerIntelligence.getRuntimeEntitlements(),
   }),
 

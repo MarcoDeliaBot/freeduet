@@ -131,6 +131,7 @@ These hold whatever else on this page moves.
 - **Routines always ask.** A routine or trigger that writes, and any change to its setup, always shows you the approval card. Full access does not unlock this. The one exception is a standing mail rule you set in your own words (D46).
 - **No secrets taken, no telemetry by default.** FreeDuet never reads, stores or forwards your subscription login. FreeDuet sends no usage data to its maintainers, and the runtime's own telemetry is off in `.env.example` (`COPILOTKIT_TELEMETRY_DISABLED=true`). Optional CopilotKit Intelligence is off by default too ([telemetry.md](telemetry.md), [PROVIDERS.md](PROVIDERS.md)).
 - **Self-hosted, and your data stays with you.** Your conversations and memory stay in your own database.
+- **No advertising.** FreeDuet shows no promotion for any company or product: no sales bar, no "other products" slide (D51 in [M1_PLAN.md](M1_PLAN.md)). The credit to the upstream authors stays in About, in [NOTICE.md](../NOTICE.md) and in the licences.
 - **MIT.** One free licence for everyone, with no paid-only or enterprise part. A few ported files keep their original notices ([NOTICE.md](../NOTICE.md)).
 - **We say what is tested and what is not.** Planned means planned.
 

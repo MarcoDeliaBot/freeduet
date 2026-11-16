@@ -60,6 +60,8 @@ let saves: number[];
 let completed: boolean;
 /** Whether the server says this is somebody trying OpenDuet alone, which adds three steps. */
 let localEvaluation: boolean;
+/** D51: whether the server says the deployment shows no promotion. Absent from the answer unless set. */
+let noPromotions: boolean;
 
 beforeEach(() => {
   // Another file's screens may have cached the signed-in person in the app's one query client.
@@ -68,6 +70,7 @@ beforeEach(() => {
   saves = [];
   completed = false;
   localEvaluation = false;
+  noPromotions = false;
   (globalThis as { Notification?: unknown }).Notification = {
     permission: "default",
     requestPermission: async () => "default",
@@ -109,7 +112,10 @@ beforeEach(() => {
         });
       }
       if (path === "/api/capabilities")
-        return Response.json({ localEvaluation });
+        return Response.json({
+          localEvaluation,
+          ...(noPromotions ? { promotions: false } : {}),
+        });
       if (path.startsWith("/api/agents"))
         return Response.json({ agents: [BOT] });
       if (path === "/api/plugins/for/openduet/apps/google-workspace")
@@ -229,6 +235,39 @@ test("the organization step offers enterprise early access and CopilotKit's othe
     );
     expect(link?.getAttribute("target")).toBe("_blank");
   }
+});
+
+test("with no promotions the evaluator's slides carry no link to another company, and the steps still run", async () => {
+  localEvaluation = true;
+  noPromotions = true;
+  const view = open("/onboarding?step=agents");
+
+  await heading(view, "Bring the agents you already have");
+  fireEvent.click(view.getByRole("button", { name: "Next" }));
+
+  // The organization slide is not there: Next goes straight on to the apps step.
+  await heading(view, "Connect your apps");
+  expect(searchOf(view).step).toBe("apps");
+  await waitFor(() => expect(saves).toContain(7));
+  expect(saves).not.toContain(6);
+  const page = document.body.innerHTML;
+  expect(page).not.toContain("copilotkit.ai");
+  expect(page).not.toContain("Deploy it for your organization");
+  expect(page).not.toContain("More from CopilotKit");
+});
+
+test("with no promotions the organization address is not a slide, and no sales link shows", async () => {
+  localEvaluation = true;
+  noPromotions = true;
+  const view = open("/onboarding?step=organization");
+
+  // Not in the list, so it draws the way a step the list does not hold always did: the first one.
+  await heading(view, "Welcome to OpenDuet");
+  const links = view.queryAllByRole("link").map((a) => a.getAttribute("href"));
+  expect(links.filter((href) => href?.includes("copilotkit.ai"))).toEqual([]);
+  expect(document.body.textContent).not.toContain(
+    "Deploy it for your organization",
+  );
 });
 
 test("Next adds a step to the address and to history, and saves it", async () => {

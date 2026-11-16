@@ -640,7 +640,10 @@ function RouteComponent() {
       ? [
           { id: "local", render: () => <LocalStep /> },
           { id: "agents", render: () => <AgentsStep /> },
-          { id: "organization", render: () => <OrganizationStep /> },
+          // FreeDuet (D51): this slide sends the person to another company's products and sales.
+          ...(capabilities.promotions
+            ? [{ id: "organization", render: () => <OrganizationStep /> }]
+            : []),
         ]
       : []),
     /*
