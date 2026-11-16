@@ -534,7 +534,7 @@ export function createHandoffDelivery(options: {
         return {
           answer: [
             ...said,
-            `${name} has not finished: it stopped on ${waiting === 1 ? "a card" : `${waiting} cards`} that only the person can decide (Tasks, Needs input). Nothing it was waiting on has been done. If the person allows it, ${name} carries on from there and its result comes back to you; if they refuse, you are told that too. Tell the person to open that card, and do not hand the same job over again while it is open.`,
+            `${name} has not finished: it stopped on ${waiting === 1 ? "a card" : `${waiting} cards`} that only the person can decide. The card is in this conversation, under your hand-off line, and also in Tasks (Needs input). Nothing it was waiting on has been done. If the person allows it, ${name} carries on from there and its result comes back to you; if they refuse, you are told that too. Tell the person the card is waiting for their yes right here under your hand-off, and do not hand the same job over again while it is open.`,
           ].join("\n\n"),
         };
       }

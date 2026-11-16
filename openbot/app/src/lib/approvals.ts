@@ -38,6 +38,12 @@ export type ApprovalRequest = {
     scope: string;
     threadId: string;
     toolCallId?: string;
+    /**
+     * D52: for an action raised inside a hand-off, the conversation that asked (the one with the Bot
+     * the person is writing to). The server sets it from the run it signed; a conversation draws the
+     * waiting card of a hand-off from it.
+     */
+    askedIn?: string;
     args: unknown;
     target: unknown;
     /**
@@ -311,4 +317,43 @@ export function ruleCoversBot(pattern: string, agentId: string): boolean {
     .map((part) => part.replace(/[.+?^${}()|[\]\\]/g, "\\$&"))
     .join(".*");
   return new RegExp(`^${source}$`, "s").test(agentId);
+}
+
+/**
+ * D52: the requests of a hand-off that wait on the person, asked in this conversation of a member this
+ * hand-off line names. Pure: the same inbox the Tasks page reads, filtered, never a second source.
+ */
+export function handoffRequestsWaiting(
+  requests: readonly ApprovalRequest[] | undefined,
+  threadId: string | undefined,
+  memberIds: ReadonlySet<string>,
+): ApprovalRequest[] {
+  if (!threadId || memberIds.size === 0) return [];
+  return (requests ?? []).filter(
+    (request) =>
+      request.status === "pending" &&
+      request.action.askedIn === threadId &&
+      request.action.toolCallId !== undefined &&
+      memberIds.has(request.action.botId),
+  );
+}
+
+/** The Bots a hand-off line's `bot` argument names, the way the server finds the target: id, else name. */
+export function membersNamed(
+  asked: string | undefined,
+  roster:
+    | readonly { id: string; name: string; realName?: string }[]
+    | undefined,
+): Set<string> {
+  const wanted = asked?.trim().toLowerCase();
+  const found = new Set<string>();
+  if (!wanted) return found;
+  for (const member of roster ?? [])
+    if (
+      member.id.toLowerCase() === wanted ||
+      member.name.toLowerCase() === wanted ||
+      member.realName?.toLowerCase() === wanted
+    )
+      found.add(member.id);
+  return found;
 }
