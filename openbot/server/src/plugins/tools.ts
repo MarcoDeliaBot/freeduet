@@ -283,6 +283,32 @@ function researchGuidance(providers: ResearchProvider[]): string[] {
   ];
 }
 
+/** The one calendar tool the pasted app-password connection offers. */
+const CALENDAR_LIST_EVENTS = "calendar_list_events";
+
+/**
+ * The answer `grantedTools` asks for `calendarConnected`: whether the person whose account a call
+ * reaches has pasted a calendar's address. Only "connected, with no calendar" says no: a person who is
+ * not connected at all is for the connection's own refusal to explain, and a connection that keeps no
+ * pasted secret (OAuth) has its own calendar, so a lookup that cannot be made offers the tool as before.
+ */
+export function calendarConnectedFor(
+  store: Pick<PluginStore, "userSecretStatus">,
+  credentialActorFor: (ref: string) => Promise<string>,
+): (ref: string) => Promise<boolean> {
+  return async (ref) => {
+    try {
+      const status = await store.userSecretStatus({
+        serverId: ref.slice(0, ref.indexOf("/")),
+        userId: await credentialActorFor(ref),
+      });
+      return !status.connected || status.calendar;
+    } catch {
+      return true;
+    }
+  };
+}
+
 /**
  * Every MCP tool granted to one Bot, ready to hand to the runtime.
  *
@@ -297,11 +323,29 @@ export async function grantedTools(options: {
   initiator?: AuditInitiator;
   /** Whose account a call reaches, when not the asker's; see `callTool`'s `credentialActorId`. */
   credentialActorFor?: (ref: string) => Promise<string>;
+  /**
+   * Whether the person behind a calendar tool has a calendar connected. Asked only for
+   * `calendar_list_events`, and a tool it answers `false` for is not offered to the run at all: a
+   * Bot that cannot see it cannot call it and fail (four failed calls on a real installation,
+   * 16 November 2026). Left out, the tool is offered as before.
+   */
+  calendarConnected?: (ref: string) => Promise<boolean>;
 }): Promise<GrantedTool[]> {
   const { store, botId, actorId, initiator, credentialActorFor } = options;
   const granted = await store.listForAgent(botId);
+  const offered: typeof granted.tools = [];
+  for (const tool of granted.tools) {
+    if (
+      options.calendarConnected &&
+      tool.ref.endsWith(`/${CALENDAR_LIST_EVENTS}`) &&
+      !(await options.calendarConnected(tool.ref))
+    ) {
+      continue;
+    }
+    offered.push(tool);
+  }
 
-  return granted.tools.map((tool) => ({
+  return offered.map((tool) => ({
     name: tool.toolName,
     ref: tool.ref,
     initiator,

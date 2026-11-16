@@ -15,6 +15,7 @@ import {
   countArg,
   DEFAULT_MAX_RESULTS,
   DEFAULT_QUERY,
+  hiddenFoldersNamed,
   endOfDayIn,
   failure,
   type GmailMessage,
@@ -31,8 +32,10 @@ import {
   summary,
 } from "./google-workspace-rest";
 import {
+  binPath,
   type ImapOrganiserLike,
   organiseOverImap,
+  spamPath,
   watchForChanges,
 } from "./google-imap-organise";
 import {
@@ -173,7 +176,7 @@ export interface ImapClientLike {
   >;
   mailboxOpen(path: string, options: { readOnly: true }): Promise<unknown>;
   search(
-    query: { gmailraw?: string; emailId?: string },
+    query: { gmailraw?: string; emailId?: string; all?: true },
     options: { uid: true },
   ): Promise<number[] | false>;
   fetch(
@@ -634,14 +637,65 @@ function searchArgsOf(
   return { ok: true, query, limit };
 }
 
+const NO_SPAM_TO_SEARCH =
+  "Gmail did not report a Spam (Junk) folder for this account, so there is nothing to search there. This does not mean any mail was lost.";
+const NO_BIN_TO_SEARCH =
+  "Gmail did not report a Bin (Trash) folder for this account, so there is nothing to search there. This does not mean any mail was lost.";
+const BOTH_HIDDEN =
+  "Search Spam and the Bin one at a time: name only one of in:spam and in:trash in a search.";
+
+/**
+ * A search that names Spam or the Bin (`in:spam`, `in:trash`) reads that folder, opened read-only, the
+ * folder the server flagged `\Junk` or `\Trash` and none found by its name. Any other search reads All
+ * Mail, which holds neither. Null: the search is not about one of them.
+ */
+function hiddenFolderOf(query: string): "spam" | "bin" | "both" | null {
+  const named = hiddenFoldersNamed(query);
+  if (named.spam && named.bin) return "both";
+  if (named.spam) return "spam";
+  if (named.bin) return "bin";
+  return null;
+}
+
+/** Opens the folder a search reads: All Mail, or Spam or the Bin when the query names one. */
+async function openForSearch(
+  client: ImapClientLike,
+  query: string,
+): Promise<McpCallResult | null> {
+  const hidden = hiddenFolderOf(query);
+  if (hidden === "both") return failure(BOTH_HIDDEN);
+  const folders = await client.list();
+  const path =
+    hidden === null
+      ? allMailPath(folders)
+      : hidden === "spam"
+        ? spamPath(folders)
+        : binPath(folders);
+  if (path === null) {
+    return failure(hidden === "spam" ? NO_SPAM_TO_SEARCH : NO_BIN_TO_SEARCH);
+  }
+  await client.mailboxOpen(path, { readOnly: true });
+  return null;
+}
+
 async function searchMessages(
   client: ImapClientLike,
   search: { query: string; limit: number | null },
   now: () => number,
 ): Promise<McpCallResult> {
-  const { query, limit } = search;
+  const { limit } = search;
+  const hidden = hiddenFolderOf(search.query) !== null;
+  // In Spam or the Bin the folder itself is the scope: the words that named it are not searched for.
+  const rest = hiddenFoldersNamed(search.query).rest;
+  const query = hidden ? rest : search.query;
 
-  const hits = (await client.search({ gmailraw: query }, { uid: true })) || [];
+  const hits =
+    (await client.search(
+      rest === "" && hidden ? { all: true } : { gmailraw: query },
+      {
+        uid: true,
+      },
+    )) || [];
   // The newest are the highest uids in All Mail, where uids follow arrival.
   const selected = [...hits]
     .sort((a, b) => b - a)
@@ -657,7 +711,7 @@ async function searchMessages(
   }
 
   const categories = new Map<number, string[]>();
-  if (selected.length > 0) {
+  if (selected.length > 0 && !hidden) {
     for (const [name, label] of CATEGORY_LABELS) {
       const inCategory =
         (await client.search(
@@ -1304,13 +1358,14 @@ export function createGoogleImapTransport(
       if (toolName === "gmail_search_messages") {
         const search = searchArgsOf(args);
         if (!search.ok) return search.result;
-        return withMailbox(
-          deps,
-          preset,
-          secret,
-          (client) =>
-            searchMessages(client, search, () => deps.now().getTime()),
-          "this search",
+        return withConnection(
+          deps.imap(connectionOptions(preset, secret)),
+          async (client) => {
+            const refused = await openForSearch(client, search.query);
+            if (refused) return refused;
+            return searchMessages(client, search, () => deps.now().getTime());
+          },
+          (error) => failure(sentenceFor(error, "this search")),
         );
       }
       if (toolName === "gmail_read_message") {

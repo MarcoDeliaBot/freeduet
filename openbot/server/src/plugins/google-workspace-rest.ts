@@ -68,6 +68,29 @@ const CALENDAR = "/calendar/v3/calendars/primary";
 
 /** What "my mail" means when nobody said: what arrived in the inbox in the last day. */
 export const DEFAULT_QUERY = "in:inbox newer_than:1d";
+
+/**
+ * Which of Gmail's two hidden folders a search asks for BY NAME (`in:spam`, `label:trash`). A search
+ * that does not name one never reaches it: Gmail's All Mail holds neither, and the REST list leaves
+ * them out unless `includeSpamTrash` is set. `rest` is the query without those words; `spam` and
+ * `bin` say which were named. A word with a minus in front (`-in:spam`) names nothing.
+ */
+export function hiddenFoldersNamed(query: string): {
+  spam: boolean;
+  bin: boolean;
+  rest: string;
+} {
+  let spam = false;
+  let bin = false;
+  const kept: string[] = [];
+  for (const token of query.trim().split(/\s+/)) {
+    const bare = token.replace(/^\(+|\)+$/g, "").toLowerCase();
+    if (/^(in|label):spam$/.test(bare)) spam = true;
+    else if (/^(in|label):trash$/.test(bare)) bin = true;
+    else kept.push(token);
+  }
+  return { spam, bin, rest: kept.join(" ").trim() };
+}
 export const DEFAULT_MAX_RESULTS = 25;
 /** Beyond this a listing is a mailbox dump rather than an answer, and each message is one request. */
 export const MAX_RESULTS = 50;
@@ -129,13 +152,13 @@ const TOOLS: readonly McpTool[] = Object.freeze([
   {
     name: "gmail_search_messages",
     description:
-      "Search your Gmail with Gmail's own search syntax and get each matching message's sender, recipients, subject, date, snippet, labels and the headers that mark bulk, group or automatic mail. Defaults to the last day of the inbox. Returns JSON.",
+      "Search your Gmail with Gmail's own search syntax and get each matching message's sender, recipients, subject, date, snippet, labels and the headers that mark bulk, group or automatic mail. Defaults to the last day of the inbox. Spam and the Bin are left out unless the query names one of them (in:spam or in:trash). Returns JSON.",
     inputSchema: {
       type: "object",
       properties: {
         query: {
           type: "string",
-          description: `Gmail search syntax, for example "from:ana@hearthandco.com is:unread". Defaults to "${DEFAULT_QUERY}".`,
+          description: `Gmail search syntax, for example "from:ana@hearthandco.com is:unread". Defaults to "${DEFAULT_QUERY}". Add in:spam or in:trash to read what is in Spam or in the Bin.`,
         },
         maxResults: {
           type: "integer",
@@ -1332,6 +1355,7 @@ export async function callTool(
       return failure(`maxResults must be a number from 1 to ${MAX_RESULTS}.`);
     }
 
+    const named = hiddenFoldersNamed(query);
     const listed = await request<{
       messages?: { id?: string }[];
       resultSizeEstimate?: number;
@@ -1339,6 +1363,8 @@ export async function callTool(
       query: {
         q: query,
         maxResults: String(maxResults ?? DEFAULT_MAX_RESULTS),
+        // Only when the query names Spam or the Bin: a default search never reaches them.
+        ...(named.spam || named.bin ? { includeSpamTrash: "true" } : {}),
       },
     });
     if (!listed.ok) return failure(listed.message);

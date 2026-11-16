@@ -227,12 +227,42 @@ def remote_notes_for(run: RunInput) -> list[str]:
     return [REMOTE_NOTE] if claims_remote(run_claims(run.assertion)) else []
 
 
+# D53. The server offers `calendar_list_events` of a Gmail app-password connection only to a person who
+# pasted a calendar's secret iCal address (server/src/plugins/tools.ts, `calendarConnected`); with none, four
+# calls in one morning failed. A run that holds the mailbox tools of that connection and not the calendar
+# one is that case, so the member is told once, and how the person connects one.
+CALENDAR_NOT_CONNECTED_NOTE = (
+    "No calendar is connected, so you have no calendar tool on this turn. Nothing is broken: do not look "
+    "for one. If the person asks about their calendar, say plainly that no calendar is connected and that "
+    "they can add one on the Connections page, by pasting the calendar's secret address in iCal format "
+    "next to their Gmail connection."
+)
+_MAILBOX_TOOL = "gmail_search_messages"
+_CALENDAR_TOOL = "calendar_list_events"
+
+
+def calendar_notes_for(run: RunInput) -> list[str]:
+    names = [tool.get("name") for tool in run.tools if isinstance(tool.get("name"), str)]
+    if any(name.endswith(_CALENDAR_TOOL) for name in names):
+        return []
+    # Only the app-password connection (server `google-imap`) shows up this way: its tools carry the
+    # server's name, as OpenBot spells every connector tool (mcp__<server>__<tool>).
+    if any(name.endswith("__" + _MAILBOX_TOOL) and "google-imap" in name for name in names):
+        return [CALENDAR_NOT_CONNECTED_NOTE]
+    return []
+
+
 def notes_for(run: RunInput, member: Member) -> list[str]:
     """The notes for this run's system text: why message_bot is missing, when the member's prompt
     relies on it and OpenBot did not offer it, and why its computer tools are missing, when it relies
     on those; each saying exactly why as far as this run shows; and, for a turn that began in an
     unpaired browser, why a card may appear (D47). None when nothing applies."""
-    return [*_message_bot_notes(run, member), *computer_notes_for(run, member), *remote_notes_for(run)]
+    return [
+        *_message_bot_notes(run, member),
+        *computer_notes_for(run, member),
+        *remote_notes_for(run),
+        *calendar_notes_for(run),
+    ]
 
 
 def _message_bot_notes(run: RunInput, member: Member) -> list[str]:
