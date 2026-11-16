@@ -987,7 +987,7 @@ describe("Office files: Penny's spreadsheets and Wren's Word documents", () => {
         "write it as text, never as a formula",
         'set its data_type to "s"',
         "Never write a formula that reaches outside the file",
-        "If the file is in the person's shared documents folder, that folder is read-only for you and nothing can be written next to the file: copy the file into your workspace first, make the PDF or the kept copy there, and hand it over with the download card.",
+        "If the file is in the person's shared documents folder, that folder may be read-only: when office-convert says so, copy the file into your own workspace folder, make the PDF or the kept copy there, and hand the result to the person with offer_file.",
       ],
       "word-documents": [
         "use python-docx for .docx",
@@ -998,7 +998,7 @@ describe("Office files: Penny's spreadsheets and Wren's Word documents", () => {
         "add --replace: it overwrites only a PDF that office-convert itself wrote earlier and refuses any file without its mark, such as one the person already had",
         "run it again with --new-name, which writes the next free numbered name",
         "a refused file (a macro file, an old format, a protected file) is not converted",
-        "If the file is in the person's shared documents folder, that folder is read-only for you and nothing can be written next to the file: copy the file into your workspace first, make the PDF there, and hand it over with the download card.",
+        "If the file is in the person's shared documents folder, that folder may be read-only: when office-convert says so, copy the file into your own workspace folder, make the PDF there, and hand the result to the person with offer_file.",
       ],
     };
     for (const slug of Object.values(OFFICE_SKILLS))
