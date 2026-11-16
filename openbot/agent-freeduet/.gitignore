@@ -1,0 +1,4 @@
+# The person's own copy of engines.example.yaml (docs/PROVIDERS.md). It can hold a gateway address and
+# settings of the person's own, so git never tracks it. Anchored: only this file, in this folder.
+# engines.example.yaml is not listed here and stays tracked.
+/engines.yaml
