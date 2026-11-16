@@ -96,7 +96,7 @@
    "name": "¿Funciona en Windows, Mac y Linux?",
    "acceptedAnswer": {
     "@type": "Answer",
-    "text": "El desarrollador lo usa en Windows con WSL2 y Docker, y nuestras comprobaciones automáticas lo arrancan en Linux. No se ha probado en Mac, así que no podemos prometer que funcione allí. FreeDuet es una primera entrega (versión 0.2), construida y usada por un solo desarrollador."
+    "text": "El desarrollador lo usa en Windows con WSL2 y Docker, y nuestras comprobaciones automáticas lo arrancan en Linux. No se ha probado en Mac, así que no podemos prometer que funcione allí. FreeDuet es una primera entrega: la última versión publicada es la 0.2.1 (15 de noviembre de 2026), construida y usada por un solo desarrollador."
    }
   },
   {
@@ -272,71 +272,12 @@ p{margin:0;max-width:64ch}
 .hero .mega{position:absolute;left:0;right:0;bottom:calc(var(--mf)*-.2)}
 .mega-wrap{overflow:hidden;height:calc(var(--mf)*.6);margin-top:clamp(2rem,4vw,3.5rem)}
 
-.appfig{margin:0}
-.appwin{background:var(--card);border:1px solid var(--line);border-radius:var(--r-lg);box-shadow:var(--shadow-xl);overflow:hidden}
-.aw-bar{display:flex;align-items:center;gap:7px;padding:12px 16px;border-bottom:1px solid var(--line);background:var(--card);font-family:var(--display);font-weight:700;font-size:.95rem}
-.aw-bar i{width:10px;height:10px;border-radius:50%;background:var(--line);flex:none}
-.aw-bar span{margin-left:8px}
-.aw-bar em{margin-left:auto;font-style:normal;font-family:var(--body);font-weight:400;font-size:.8rem;color:var(--ink-soft);text-align:right}
-.aw-body{display:grid;grid-template-columns:300px minmax(0,1fr)}
-.aw-side{background:#F1F4F9;border-right:1px solid var(--line);padding:14px 10px}
-.aw-sh{font-family:var(--display);font-weight:700;font-size:.82rem;color:var(--ink-soft);margin:0 8px 8px}
-#side{list-style:none;margin:0;padding:0;display:grid;gap:2px}
-.sm{display:grid;grid-template-columns:34px minmax(0,1fr);gap:10px;align-items:center;padding:6px 8px;border-radius:10px}
-.sm.on{background:#E1E9FA}
-.avw{position:relative;display:block;width:34px;height:34px}
-.avw .av{width:34px;height:34px;display:block}
-.sdot{position:absolute;right:-2px;bottom:-2px;width:11px;height:11px;border-radius:50%;border:2px solid #F1F4F9;background:transparent;display:none}
-.sm.on .sdot{border-color:#E1E9FA}
-.sm.wait .sdot{display:block;background:var(--coral)}
-.sm.ok .sdot{display:block;background:var(--mint)}
-.sm b{display:flex;gap:6px;align-items:baseline;font-family:var(--display);font-size:.92rem;line-height:1.25;white-space:nowrap;min-width:0}
-.sm b span{font-family:var(--body);font-weight:400;font-size:.78rem;color:var(--ink-soft);overflow:hidden;text-overflow:ellipsis}
-.sm small{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;line-clamp:2;overflow:hidden;font-size:.8rem;line-height:1.3;color:var(--ink-soft)}
-.aw-main{display:flex;flex-direction:column;min-width:0}
-.aw-head{display:flex;align-items:center;gap:12px;padding:10px 20px;border-bottom:1px solid var(--line);background:var(--card)}
-.aw-head .av{width:34px;height:34px;flex:none}
-.aw-head b{display:block;font-family:var(--display);line-height:1.2}
-.aw-head small{display:block;color:var(--ink-soft);font-size:.82rem;line-height:1.3}
-.aw-field{margin:0 20px 20px;border:1px solid var(--line);border-radius:14px;padding:8px 8px 8px 16px;display:flex;align-items:center;justify-content:space-between;gap:12px;color:var(--ink-soft);font-size:.95rem;background:var(--card)}
-.aw-field span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.aw-field i{width:34px;height:34px;border-radius:9px;background:var(--blue);color:#fff;display:grid;place-items:center;flex:none}
-.aw-field svg{width:17px;height:17px}
-.aw-cap{margin-top:20px;font-size:.88rem;color:var(--ink-soft);max-width:none}
-.chat{flex:1;padding:22px 26px;display:flex;flex-direction:column;gap:14px;min-height:400px;background:var(--paper)}
 .msg{display:flex;gap:10px;align-items:flex-start;max-width:92%}
 .msg .av{width:34px;height:34px;flex:none}
 .msg .bub{max-width:560px;background:var(--card);border:1px solid var(--line);border-radius:4px 14px 14px 14px;padding:10px 14px;font-size:.95rem;line-height:1.45}
 .msg .who{display:block;font-family:var(--display);font-weight:700;font-size:.85rem;margin-bottom:2px}
 .msg.me{align-self:flex-end}
 .msg.me .bub{background:var(--ink);color:#fff;border-color:var(--ink);border-radius:14px 4px 14px 14px}
-.card-ask{align-self:stretch;max-width:520px;margin-left:44px;border:1px solid #EBC3BA;border-left:3px solid var(--coral);border-radius:10px;background:var(--card);padding:14px 16px}
-.card-ask .ask-title{font-family:var(--display);font-weight:700;font-size:.95rem;margin:0 0 8px;max-width:none;display:flex;align-items:center;gap:8px;color:var(--coral)}
-.card-ask .ask-title svg{width:18px;height:18px}
-.card-ask dl{margin:0 0 14px;font-size:.92rem;display:grid;grid-template-columns:auto 1fr;gap:3px 14px}
-.card-ask dt{color:var(--ink-soft)}
-.card-ask dd{margin:0}
-.card-ask .row{display:flex;gap:10px;flex-wrap:wrap}
-.card-ask button{font:inherit;font-family:var(--display);font-weight:700;font-size:.95rem;border-radius:8px;padding:10px 16px;min-height:44px;border:1px solid var(--line);cursor:pointer;transition:transform .3s var(--ease),background-color .3s var(--ease),border-color .3s var(--ease)}
-.card-ask button:active{transform:scale(.95)}
-.card-ask .yes{background:var(--mint);color:#fff;border-color:var(--mint)}
-.card-ask .yes:hover{background:#0B6347}
-.card-ask .no{background:var(--card);color:var(--ink)}
-.card-ask .no:hover{border-color:var(--ink)}
-.done{align-self:stretch;margin-left:44px;border-radius:10px;padding:10px 14px;font-size:.92rem;display:flex;gap:8px;align-items:center}
-.done svg{width:18px;height:18px;flex:none}
-.done.ok{background:#E4F4EE;color:#0A5A40}
-.done.stop{background:#ECEFF4;color:var(--ink)}
-.typing{display:inline-flex;gap:4px;padding:4px 0}
-.typing i{width:6px;height:6px;border-radius:50%;background:var(--ink-soft);animation:blink 1s infinite}
-.typing i:nth-child(2){animation-delay:.15s}.typing i:nth-child(3){animation-delay:.3s}
-@keyframes blink{0%,60%,100%{opacity:.25}30%{opacity:1}}
-.tries{border-top:1px solid var(--line);padding:14px 20px;background:var(--card)}
-.tries p{font-size:.85rem;color:var(--ink-soft);margin-bottom:8px}
-.tries div{display:flex;flex-wrap:wrap;gap:8px}
-.tries button{max-width:100%;font:inherit;font-size:.9rem;text-align:left;background:var(--card);border:1px solid var(--line);border-radius:999px;padding:9px 14px;min-height:44px;cursor:pointer;color:var(--ink);transition:border-color .3s var(--ease),background-color .3s var(--ease),color .3s var(--ease)}
-.tries button:hover{border-color:var(--blue);background:var(--blue-tint)}
-.tries button[aria-pressed="true"]{background:var(--ink);color:#fff;border-color:var(--ink)}
 
 
 /* ---------- sections ---------- */
@@ -390,10 +331,6 @@ p{margin:0;max-width:64ch}
 .steps li::before{content:counter(s);font-family:var(--display);font-weight:700;font-size:.95rem;width:40px;height:40px;border-radius:50%;display:grid;place-items:center;background:var(--card);border:1px solid var(--ink);font-variant-numeric:tabular-nums}
 .steps h3{margin-bottom:6px}
 .steps p{color:var(--ink-soft)}
-.flow{border:1px solid var(--line);border-radius:var(--r-lg);background:var(--card);box-shadow:var(--shadow)}
-.flow text{font-family:var(--display);font-weight:700;fill:var(--ink)}
-.flow .wire{stroke:#9AA8BF;stroke-width:1.5;fill:none;stroke-dasharray:4 6;animation:run 1.6s linear infinite}
-@keyframes run{to{stroke-dashoffset:-20}}
 
 /* the five buttons: a full-bleed dark band, one hairline row each */
 .buttons5{counter-reset:b;list-style:none;margin:0 0 clamp(4rem,7vw,6.5rem);padding:0;border-top:1px solid rgba(255,255,255,.16)}
@@ -473,45 +410,8 @@ footer nav a{color:var(--ink);padding:2px 0;text-decoration:underline;text-decor
 footer nav a:hover{color:var(--blue);text-decoration-color:currentColor}
 footer a{color:var(--ink)}
 
-[data-av]{display:flex;flex:none}
-.fgrid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:clamp(3rem,5vw,4.5rem) clamp(1.75rem,3vw,2.75rem)}
-.fc{display:grid;gap:12px;align-content:start}
-.fc p{color:var(--ink-soft);font-size:.96rem}
-.mini{height:212px;background:var(--paper);border:1px solid var(--line);border-radius:var(--r-md);padding:20px;overflow:hidden;display:flex;margin-bottom:10px;transition:border-color .5s var(--ease),box-shadow .5s var(--ease)}
-.fc:hover .mini{border-color:#C5CEDC;box-shadow:var(--shadow)}
-.ln{display:block;height:7px;border-radius:4px;background:#DDE3EC}
-.ln.sh{width:60%}
-.ln.go{height:20px;width:55%;background:var(--blue);border-radius:5px;margin-top:4px}
-.m-br{gap:12px;align-items:center}
-.bw{flex:1;min-width:0;background:var(--card);border:1px solid var(--line);border-radius:10px;overflow:hidden}
-.bw.on{border-color:var(--blue);box-shadow:0 0 0 3px rgba(27,79,216,.12)}
-.bwb{display:flex;align-items:center;gap:4px;padding:6px 8px;border-bottom:1px solid var(--line)}
-.bwb i{width:6px;height:6px;border-radius:50%;background:var(--line);flex:none}
-.bt{margin-left:4px;font-family:var(--display);font-weight:700;font-size:.72rem;color:var(--ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.bwc{padding:10px;display:grid;gap:7px;align-content:start;min-height:104px;position:relative}
-.cur{position:absolute;right:10px;bottom:6px;width:20px;height:20px}
-.m-ap{flex-direction:column;gap:14px;justify-content:center}
-.five{display:flex;gap:8px}
-.five svg{width:28px;height:28px;padding:5px;border:1px solid var(--line);border-radius:8px;background:var(--card);color:var(--ink-soft);flex:none}
-.five svg.hot{color:var(--coral);border-color:#EBC3BA}
-.apc{background:var(--card);border:1px solid #EBC3BA;border-left:3px solid var(--coral);border-radius:10px;padding:10px 12px;display:grid;gap:7px}
-.apc b{font-family:var(--display);font-size:.85rem;color:var(--coral)}
-.apc .row{display:flex;flex-wrap:wrap;gap:8px;margin-top:3px}
-.apc .y,.apc .n{font-family:var(--display);font-weight:700;font-size:.74rem;padding:5px 10px;border-radius:7px;border:1px solid var(--line)}
-.apc .y{background:var(--mint);color:#fff;border-color:var(--mint)}
-.m-rt{flex-direction:column;justify-content:center;gap:14px}
 .wk{display:grid;grid-template-columns:38px repeat(7,minmax(0,1fr));gap:7px;align-items:center}
 .wk .d{text-align:center;font-size:.74rem;font-weight:600;color:var(--ink-soft)}
-.wk .tm{font-size:.72rem;color:var(--ink-soft);font-variant-numeric:tabular-nums}
-.wk i{display:block;height:20px;border-radius:6px;border:1px dashed #C9D2E0}
-.wk i.a{background:var(--blue);border:0}
-.wk i.b{background:var(--mint);border:0}
-.lg{list-style:none;margin:0;padding:0;display:flex;flex-wrap:wrap;gap:6px 16px;font-size:.78rem;color:var(--ink-soft)}
-.lg li{display:flex;align-items:center;gap:6px}
-.lg i{width:10px;height:10px;border-radius:3px;flex:none}
-.lg i.a{background:var(--blue)}
-.lg i.b{background:var(--mint)}
-.m-si{flex-direction:column;justify-content:center;gap:12px}
 .sp{display:flex;align-items:center;gap:10px;background:var(--card);border:1px solid var(--line);border-radius:10px;padding:10px 12px;font-size:.85rem;min-width:0}
 .sp>svg{width:18px;height:18px;color:var(--ink-soft);flex:none}
 .sp b{font-family:var(--display)}
@@ -519,22 +419,6 @@ footer a{color:var(--ink)}
 .sp .ok svg{width:14px;height:14px;flex:none}
 .sp.off{border-style:dashed;background:transparent;color:var(--ink-soft);justify-content:space-between}
 .sp.off b{text-decoration:line-through;font-weight:600}
-.m-pc{flex-direction:column;justify-content:center}
-.pcbox{border:1.5px solid var(--ink);border-radius:12px;background:var(--card);padding:12px;display:grid;gap:10px}
-.pctag{display:inline-flex;align-items:center;gap:6px;font-family:var(--display);font-weight:700;font-size:.8rem}
-.pctag svg{width:15px;height:15px;color:var(--mint);flex:none}
-.chips{display:flex;flex-wrap:wrap;gap:8px}
-.chips>span{display:inline-flex;align-items:center;gap:6px;font-size:.78rem;background:var(--paper);border:1px solid var(--line);border-radius:8px;padding:5px 9px}
-.chips svg{width:15px;height:15px;color:var(--blue);flex:none}
-.out{display:flex;align-items:center;gap:10px;margin-left:26px;font-size:.78rem;color:var(--ink-soft)}
-.out i{display:block;width:0;height:30px;border-left:2px dashed #9AA8BF;flex:none}
-.m-tm{align-items:center}
-.m-tm ul{list-style:none;margin:0;padding:0;display:grid;gap:7px;width:100%}
-.m-tm li{display:flex;align-items:center;gap:10px;background:var(--card);border:1px solid var(--line);border-radius:10px;padding:5px 10px;font-family:var(--display);font-size:.86rem}
-.m-tm .av{width:28px;height:28px;display:block}
-.m-tm li.new{border-style:dashed;background:transparent;color:var(--blue);border-color:#9BB3EE;font-weight:600;font-family:var(--body)}
-.m-tm .new i{width:28px;height:28px;display:grid;place-items:center;border-radius:8px;background:var(--blue-tint);flex:none}
-.m-tm .new svg{width:15px;height:15px}
 
 .inst{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:clamp(3rem,5vw,4rem) clamp(1.25rem,2.2vw,2rem);counter-reset:n}
 .inst>li{counter-increment:n;display:grid;gap:12px;align-content:start;min-width:0}
@@ -571,7 +455,7 @@ footer a{color:var(--ink)}
   .coffee{padding:8px 12px}
 }
 @media (max-width:980px){
-  .hero .wrap,.split{grid-template-columns:minmax(0,1fr)}
+  .split{grid-template-columns:minmax(0,1fr)}
   .split{gap:clamp(2.5rem,6vw,4rem)}
   .three,.proof,.join{grid-template-columns:minmax(0,1fr)}
   .proof>div{padding-top:1.5rem}
@@ -582,17 +466,7 @@ footer a{color:var(--ink)}
   .road{grid-template-columns:minmax(0,1fr)}
   .road li{border-left:0;border-top:1px solid var(--line)}
   .road li:first-child{border-top:0}
-  .fgrid,.inst{grid-template-columns:repeat(2,minmax(0,1fr))}
-}
-@media (max-width:820px){
-  .aw-body{grid-template-columns:minmax(0,1fr)}
-  .aw-side{border-right:0;border-bottom:1px solid var(--line);padding:10px 12px}
-  .aw-sh{display:none}
-  #side{display:flex;flex-wrap:wrap;gap:6px}
-  .sm{display:block;padding:2px}
-  .sm>div{display:none}
-  .sm.on{background:none;outline:2px solid var(--blue);outline-offset:0;border-radius:12px}
-  .sm.on .sdot{border-color:#F1F4F9}
+  .inst{grid-template-columns:repeat(2,minmax(0,1fr))}
 }
 @media (max-width:620px){
   body{font-size:16px}
@@ -603,19 +477,12 @@ footer a{color:var(--ink)}
   .versus div+div{border-left:0;border-top:1px solid var(--line)}
   .score{grid-template-columns:minmax(0,1fr);gap:1rem}
   .cta .btn{width:100%;justify-content:center}
-  .card-ask,.done{margin-left:0}
   .ghlink .ght{position:absolute;width:1px;height:1px;margin:-1px;padding:0;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
   .top .wrap{gap:3px;padding-left:12px}
   .coffee,.ghlink{padding:8px 11px}
   .langs summary{padding-left:12px;min-width:110px}
   .btn-coffee{width:100%;justify-content:center}
-  .aw-bar{flex-wrap:wrap}
-  .aw-bar em{flex-basis:100%;text-align:left;margin:2px 0 0}
-  .chat{padding:16px 14px;min-height:340px}
-  .tries{padding:12px 14px}
-  .aw-field{margin:0 14px 14px}
-  .aw-head{padding:10px 14px}
-  .fgrid,.inst{grid-template-columns:minmax(0,1fr)}
+  .inst{grid-template-columns:minmax(0,1fr)}
   .pnl{height:auto}
   .term .sp{margin-top:10px}
   .orb{opacity:.7}
@@ -638,10 +505,8 @@ footer a{color:var(--ink)}
 .js:not(.no-rv) .wd .w{display:inline-block;opacity:0;translate:0 .3em;filter:blur(8px)}
 .js:not(.no-rv) .wd.in .w{opacity:1;translate:none;filter:none;transition:opacity .8s var(--ease) calc(var(--bd,0ms) + var(--w,0)*45ms),translate .8s var(--ease) calc(var(--bd,0ms) + var(--w,0)*45ms),filter .8s var(--ease) calc(var(--bd,0ms) + var(--w,0)*45ms)}
 /* mocks settle from slightly large to rest */
-.js:not(.no-rv) .mini>*{scale:1.06}
-.js:not(.no-rv) .fc.in .mini>*{scale:1;transition:scale 1.3s var(--ease) calc(var(--d,0ms) + .1s)}
 @media print{
-  .js .rv,.js .wd,.js .wd .w,.js .mini>*{opacity:1!important;translate:none!important;scale:none!important;filter:none!important}
+  .js .rv,.js .wd,.js .wd .w{opacity:1!important;translate:none!important;scale:none!important;filter:none!important}
   .top{display:none}
 }
 @media (prefers-reduced-motion:reduce){
@@ -651,36 +516,315 @@ footer a{color:var(--ink)}
   /* no drift, no parallax, no blur or travel: a plain fade of 0.4 s is all that is left */
   .js:not(.no-rv) .rv,.js:not(.no-rv) .rv.rv-panel{translate:none;scale:none;filter:none}
   .js:not(.no-rv) .rv.in{transition:opacity .4s ease!important}
-  .js:not(.no-rv) .mini>*{scale:none}
   .btn:hover,.coffee:hover,.ghlink:hover,.mem:hover,.join a:hover,.copy:hover,.btn:active,.coffee:active,.ghlink:active,.btn-main:hover::after,.btn-quiet:hover::after,.join a:hover::after,.buttons5 li:hover span,.buttons5 li:hover svg{transform:none}
 }
 
-/* ---------- from 1100 px: the app window sits beside the headline ----------
-   Below 1100 px none of these rules apply, so the page is the one on main. The team roster is hidden only inside
-   the hero window (it is still in the team section further down). */
+/* ---------- hero: the Iris bubble beside the window (from the approved hero prototype) ---------- */
+[hidden]{display:none!important}
+.sr{position:absolute;width:1px;height:1px;margin:-1px;padding:0;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
+.stage{position:relative;margin:clamp(4.5rem,9vw,5.5rem) 0 0;width:100%}
+.stage-plate{position:relative;z-index:1;padding:clamp(8px,1.2vw,14px);border-radius:28px;background:linear-gradient(180deg,#EDF2F9,#F4F7FB 55%,#F6F8FB);border:1px solid var(--line,#DDE3EC);box-shadow:inset 0 1px 0 rgba(255,255,255,.9),0 40px 80px -56px rgba(14,27,51,.5)}
+.bigiris{--bw:124px;position:absolute;z-index:0;top:-88px;right:-12px;width:var(--bw);aspect-ratio:1;pointer-events:none}
+.bigiris svg{width:100%;height:100%;overflow:visible}
+.bigiris .wob{transform-box:view-box;transform-origin:110px 120px;animation:mm-bob 3.4s ease-in-out infinite}
+.bigiris .bf{opacity:0;transition:opacity .25s ease}
+.bigiris[data-s="idle"] .bf-idle,.bigiris[data-s="listen"] .bf-listen,.bigiris[data-s="think"] .bf-think,.bigiris[data-s="work"] .bf-work,.bigiris[data-s="ask"] .bf-ask,.bigiris[data-s="done"] .bf-done{opacity:1}
+.bigiris .prog{stroke-dasharray:590.5;stroke-dashoffset:590.5;opacity:0;transition:opacity .25s ease}
+.bigiris[data-s="work"] .prog{opacity:1;animation:mm-prog 3.2s ease-in-out infinite}
+.bigiris .pu{transform:translate(var(--px,0px),var(--py,0px));transition:transform .18s ease-out}
+.appwin{position:relative;overflow:hidden;border-radius:18px;background:var(--card,#fff);border:1px solid rgba(14,27,51,.1);box-shadow:0 1px 1px rgba(14,27,51,.06),0 8px 16px -10px rgba(14,27,51,.22),0 36px 72px -36px rgba(14,27,51,.42)}
+.aw-bar{display:flex;align-items:center;gap:8px;min-height:46px;padding:6px 12px 6px 16px;border-bottom:1px solid var(--line,#DDE3EC);background:var(--card,#fff)}
+.aw-bar i{width:11px;height:11px;border-radius:50%;background:#D5DDE8;flex:none}
+.aw-title{margin-left:8px;font-family:var(--display);font-weight:600;font-size:.95rem}
+.aw-tag{margin-left:auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:.82rem;color:var(--ink-soft,#52607A)}
+.appwin .pause{flex:none;display:grid;place-items:center;width:34px;height:34px;padding:0;margin-left:6px;border-radius:50%;border:1px solid var(--line-strong,#C5CEDC);background:var(--card,#fff);color:var(--ink,#0E1B33);cursor:pointer}
+.appwin .pause svg{width:14px;height:14px}
+.appwin .pause .ic-play{display:none}
+.appwin.is-paused .pause .ic-pause{display:none}
+.appwin.is-paused .pause .ic-play{display:block}
+.aw-body{display:grid;grid-template-columns:236px minmax(0,1fr)}
+.aw-side{min-width:0;padding:12px 10px 10px;background:#F1F4F9;border-right:1px solid var(--line,#DDE3EC)}
+.aw-sh{margin:0 8px 8px;font-family:var(--display);font-weight:600;font-size:.85rem;color:var(--ink-soft,#52607A)}
+.roster{display:grid;gap:2px;list-style:none;margin:0;padding:0}
+.roster li{position:relative;display:grid;grid-template-columns:34px minmax(0,1fr);align-items:center;gap:10px;min-width:0;padding:4px 8px;border-radius:12px}
+.roster li.is-on{background:#E1E9FA}
+.roster .ava{position:relative;display:block;width:34px;height:34px}
+.roster .mas{width:34px;height:34px}
+.roster .dot{position:absolute;right:-3px;bottom:-3px;width:11px;height:11px;border-radius:50%;background:var(--coral,#C8402A);border:2px solid #F1F4F9;display:none}
+.roster li.is-on .dot{border-color:#E1E9FA}
+.roster li.is-wait .dot{display:block}
+.rn{min-width:0}
+.rn b{display:block;font-family:var(--display);font-weight:600;font-size:.93rem;line-height:1.25;color:var(--ink,#0E1B33)}
+.rn small{display:block;font-size:.8rem;line-height:1.3;color:var(--ink-soft,#52607A);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.rn .st{display:none;white-space:normal}
+.roster li.is-wait .rn .st{display:block;color:var(--ink,#0E1B33)}
+.roster li.is-wait .rn small:not(.st){display:none}
+.roster-more{text-wrap:balance;margin:8px 8px 0;font-size:.8rem;line-height:1.4;color:var(--ink-soft,#52607A)}
+.aw-main{display:flex;flex-direction:column;min-width:0}
+.chat{position:relative;flex:1 1 auto;min-height:340px;padding:18px 22px 14px;display:flex;flex-direction:column;justify-content:flex-end;gap:12px;background:var(--paper,#F6F8FB);overflow:hidden;transition:opacity .6s ease}
+.chat.is-fading{opacity:0}
+.chat .msg .bub .dots{display:none;align-items:center;gap:5px;height:22px}
+.chat .msg .bub .dots i{width:6px;height:6px;border-radius:50%;background:var(--ink-soft,#52607A);animation:mm-dots 1.1s ease-in-out infinite}
+.chat .msg .bub .dots i:nth-child(2){animation-delay:.15s}
+.chat .msg .bub .dots i:nth-child(3){animation-delay:.3s}
+.chat .msg .bub.is-typing .dots{display:inline-flex}
+.chat .msg .bub.is-typing .txt{display:none}
+.msg .txt{display:block}
+.msg > svg.mas{width:34px;height:34px}
+.chat .msg .bub .who{margin-bottom:2px}
+.ask{align-self:stretch;margin-left:44px;display:grid;gap:12px;background:var(--card,#fff);border:1px solid var(--coral-line,#EBC3BA);border-left:3px solid var(--coral,#C8402A);border-radius:12px;padding:14px 16px;box-shadow:0 1px 2px rgba(14,27,51,.05);transition:border-color .4s ease,box-shadow .4s ease}
+.ask.is-ok{border-color:#BFE3D5;border-left-color:var(--mint,#0F7B58);box-shadow:0 1px 2px rgba(14,27,51,.05),0 14px 28px -20px rgba(15,123,88,.5)}
+.ask-main{min-width:0}
+.ask-t{display:flex;align-items:center;gap:8px;margin:0 0 8px;font-family:var(--display);font-weight:600;font-size:.98rem;line-height:1.3;color:#A8321F}
+.ask.is-ok .ask-t{color:#0A5A40}
+.ask-t svg{width:18px;height:18px;flex:none}
+.ask dl{display:grid;grid-template-columns:auto minmax(0,1fr);gap:4px 16px;margin:0;font-size:.92rem;line-height:1.45}
+.ask dt{color:var(--ink-soft,#52607A)}
+.ask dd{margin:0;min-width:0;color:var(--ink,#0E1B33);overflow-wrap:anywhere}
+.ask-btns{display:flex;flex-wrap:wrap;gap:8px}
+.ask .sim{flex:1 1 150px;display:flex;align-items:center;justify-content:center;gap:6px;min-height:40px;padding:0 12px;border:1px solid var(--line,#DDE3EC);border-radius:10px;background:var(--card,#fff);color:var(--ink,#0E1B33);font-family:var(--display);font-weight:600;font-size:.9rem;text-align:center}
+.ask .sim.yes{background:var(--mint,#0F7B58);border-color:var(--mint,#0F7B58);color:#fff}
+.ask .sim .ck{display:none;width:14px;height:14px;flex:none}
+.ask.is-ok .sim.yes .ck{display:block}
+.field{margin:0 20px 20px;border:1px solid var(--line,#DDE3EC);border-radius:14px;padding:8px 8px 8px 14px;display:flex;align-items:center;gap:10px;min-height:52px;background:var(--card,#fff)}
+.field .typed{flex:1;min-width:0;font-size:.95rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--ink,#0E1B33)}
+.field .ph{flex:1;min-width:0;font-size:.95rem;color:var(--ink-soft,#52607A);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.field .send{flex:none;display:grid;place-items:center;width:36px;height:36px;border-radius:10px;background:var(--blue,#1B4FD8);color:#fff}
+.field .send svg{width:17px;height:17px}
+.ptr{position:absolute;left:0;top:0;z-index:4;width:26px;height:26px;pointer-events:none;transition:transform .9s cubic-bezier(.22,1,.36,1)}
+.ptr svg{width:26px;height:26px;filter:drop-shadow(0 2px 2px rgba(14,27,51,.3))}
+.ptr.press svg{transform:scale(.82);transition:transform .15s ease}
+.cap{margin-top:14px;font-size:.88rem;color:var(--ink-soft,#52607A)}
+
+/* the typing dots of the install mock and of the hero chat */
+.typing{display:inline-flex;gap:4px;padding:4px 0}
+.typing i{width:6px;height:6px;border-radius:50%;background:var(--ink-soft);animation:mm-dots 1.1s ease-in-out infinite}
+.typing i:nth-child(2){animation-delay:.15s}
+.typing i:nth-child(3){animation-delay:.3s}
+
+/* the mascot: the same subtle motion as the mascot sheet; animation stops under prefers-reduced-motion */
+svg.mas{display:block;flex:none;overflow:visible}
+.mas .bob,.bob{animation:mm-bob var(--d,3.4s) ease-in-out infinite}
+.mas .jelly,.jelly{transform-box:view-box;transform-origin:110px 192px;animation:mm-jelly 6.5s ease-in-out infinite}
+.mas .shadow,.shadow{transform-box:fill-box;transform-origin:50% 50%;animation:mm-shadow var(--d,3.4s) ease-in-out infinite}
+.mas .caustic,.caustic{transform-box:fill-box;transform-origin:50% 50%;opacity:.7;animation:mm-caustic 6s ease-in-out infinite}
+.mas .blink,.blink{transform-box:fill-box;transform-origin:50% 50%;animation:mm-blink 4.6s ease-in-out infinite}
+.mas .coin,.coin{animation:mm-coin 1.8s ease-in infinite}
+.mas .swing,.swing{transform-box:view-box;transform-origin:182px 136px;animation:mm-swing 2.6s ease-in-out infinite}
+.mas .clap,.clap{transform-box:view-box;transform-origin:136px 150px;animation:mm-clap 2.4s ease-in-out infinite}
+.mas .mwave path,.mwave path{animation:mm-wave 1.2s ease-in-out infinite}
+.mas .mwave path:nth-child(2),.mwave path:nth-child(2){animation-delay:.2s}
+.mas .mwave path:nth-child(3),.mwave path:nth-child(3){animation-delay:.4s}
+@keyframes mm-bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-4px)}}
+@keyframes mm-jelly{0%,100%{transform:scale(1,1) rotate(0)}35%{transform:scale(1.02,.98) rotate(-.6deg)}70%{transform:scale(.985,1.015) rotate(.5deg)}}
+@keyframes mm-shadow{0%,100%{transform:scaleX(1)}50%{transform:scaleX(.84)}}
+@keyframes mm-caustic{0%,100%{opacity:.45;transform:translateX(-2px) scaleX(.92)}50%{opacity:.85;transform:translateX(2px) scaleX(1.05)}}
+@keyframes mm-blink{0%,92%,100%{transform:scaleY(1)}95.5%{transform:scaleY(.08)}}
+@keyframes mm-coin{0%{transform:translateY(-6px);opacity:1}70%{transform:translateY(16px);opacity:1}85%{transform:translateY(16px);opacity:0}86%{transform:translateY(-6px);opacity:0}100%{transform:translateY(-6px);opacity:1}}
+@keyframes mm-swing{0%,100%{transform:rotate(-6deg)}50%{transform:rotate(6deg)}}
+@keyframes mm-clap{0%,55%,100%{transform:rotate(0)}66%{transform:rotate(-22deg)}74%{transform:rotate(0)}}
+@keyframes mm-wave{0%,100%{opacity:.15}50%{opacity:1}}
+@keyframes mm-prog{0%{stroke-dashoffset:590.5}78%,100%{stroke-dashoffset:0}}
+@keyframes mm-dots{0%,60%,100%{opacity:.25}30%{opacity:1}}
+
+/* ---------- the story: one diagram that moves with the scroll, and static frames when it cannot ---------- */
+.how .frame{display:block;width:100%;height:auto;margin:0 0 14px;border-radius:18px;border:1px solid var(--line,#DDE3EC);background:#fff}
+.how .stage-wrap,.how .rail,.how .jump{display:none}
+.how.is-live .frame{display:none}
+.how.is-live .track{position:relative;height:600vh}
+.how.is-live .jump{display:block;position:absolute;left:0;top:calc(var(--n) * 125vh);width:1px;height:1px}
+.how.is-live .pin{position:sticky;top:0;box-sizing:border-box;height:100vh;height:100svh;padding:5.5rem 0 1.5rem;overflow:hidden;display:flex;align-items:center}
+.how.is-live .pin-grid{position:relative;width:100%;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.05fr);gap:clamp(2rem,4vw,4rem);align-items:center}
+.how.is-live .stage-wrap{display:block;min-width:0}
+.how.is-live .stage-svg{width:100%;height:auto;border-radius:18px;border:1px solid var(--line,#DDE3EC);background:#fff;box-shadow:0 24px 48px -32px rgba(14,27,51,.35)}
+.how.is-live .rail{display:grid;gap:18px;position:absolute;left:clamp(.25rem,1.2vw,.9rem);top:50%;transform:translateY(-50%);z-index:2}
+.how.is-live .rail a{display:block;width:14px;height:14px;border-radius:50%;background:var(--line-strong,#C5CEDC);box-shadow:0 0 0 4px rgba(255,255,255,.9)}
+.how.is-live .rail a[aria-current="step"]{background:var(--blue,#1B4FD8)}
+.how.is-live .rail-line{position:absolute;left:6px;top:8px;bottom:8px;width:2px;background:var(--line,#DDE3EC);z-index:-1}
+.how.is-live .pin{padding-top:clamp(4.5rem,9vh,5.5rem);padding-bottom:clamp(.75rem,2vh,1.5rem)}
+.how.is-live .how-copy h2{font-size:clamp(2.1rem,1.2rem + 4vh,3.6rem)}
+.how.is-live .how-copy .lead{font-size:clamp(1rem,.6rem + 1.2vh,1.3rem);margin-bottom:clamp(1.25rem,2.6vh,2.5rem)}
+.how.is-live .steps{gap:clamp(.7rem,1.5vh,1.5rem)}
+.how.is-live .steps h3{font-size:clamp(1.05rem,.9rem + .4vh,1.2rem);margin-bottom:2px}
+.how.is-live .steps p{font-size:clamp(.95rem,.8rem + .5vh,1.05rem);line-height:1.55}
+@media (min-width:821px){.how:not(.is-live) .frame{width:min(100%,440px)}}
+.how.is-live .steps li{color:var(--ink-soft,#52607A);transition:color .5s ease}
+.how.is-live .steps li.on{color:var(--ink,#0E1B33)}
+.how.is-live .steps li h3{color:inherit}
+.how.is-live .how-copy{padding-left:clamp(1.5rem,3vw,2.5rem)}
+.how .sbody{display:grid;gap:4px;min-width:0}
+.how .sbody p{margin:0}
+.how .sbody h3{margin:0 0 6px}
+.how-art-note{display:none}
+#how-art text,.how text.sa-t,.how text.sa-tg,.how text.sa-btn-w,.how text.sa-btn-k,.how text.sa-sent{font-family:var(--display);font-size:18px;font-weight:600}
+text.sa-t,text.sa-btn-w{fill:#FFFFFF}
+text.sa-tg,text.sa-btn-k{fill:#0E1B33}
+text.sa-sent{fill:#0F7B58;font-weight:700}
+.sa-dark{opacity:clamp(0,(.6 - var(--s,0)) * 8,1)}
+.sa-ghost{opacity:clamp(0,(var(--s,0) - .5) * 8,1)}
+.sa-path{opacity:calc(clamp(0,(var(--s,0) - .3) * 4,1) * clamp(0,(1.6 - var(--s,0)) * 4,1))}
+.sa-comet{opacity:calc(clamp(0,(var(--s,0) - .3) * 4,1) * clamp(0,(1.6 - var(--s,0)) * 4,1));transform:translate(calc(42px * clamp(0,(var(--s,0) - .3) / 1.3,1)),calc(6px * clamp(0,(var(--s,0) - .3) / 1.3,1)))}
+.sa-pick{opacity:calc(clamp(0,(var(--s,0) - .8) * 5,1) * clamp(0,(1.6 - var(--s,0)) * 5,1))}
+.sa-otto{transform:translate(calc(-100px * clamp(0,2 * var(--s,0) - 3,1)),calc(104px * clamp(0,2 * var(--s,0) - 3,1)))}
+.sa-arc-bg{opacity:1}
+.sa-arc-fg{stroke-dasharray:100;stroke-dashoffset:calc(100 - 100 * (.8 * clamp(0,2 * var(--s,0) - 3,1) + .2 * clamp(0,2 * var(--s,0) - 7,1)))}
+.sa-card{opacity:calc(clamp(0,(var(--s,0) - 2.6) * 4,1) * clamp(0,(3.65 - var(--s,0)) * 4,1))}
+.sa-sent{opacity:clamp(0,(var(--s,0) - 3.4) * 4,1)}
+
+/* ---------- the feature panes ---------- */
+.bento{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:clamp(1rem,1.6vw,1.4rem)}
+.pane{position:relative;display:grid;gap:14px;align-content:start;min-width:0;padding:clamp(1.25rem,2vw,1.6rem);border:1px solid var(--line,#DDE3EC);border-radius:20px;background:var(--card,#fff);box-shadow:0 1px 2px rgba(14,27,51,.04),0 18px 36px -28px rgba(14,27,51,.35)}
+.p-approval{grid-column:1 / span 8;grid-row:1 / span 2}
+.p-roster{grid-column:9 / span 4;grid-row:1 / span 2}
+.p-handoff{grid-column:1 / span 6;grid-row:3}
+.p-routine{grid-column:7 / span 6;grid-row:3}
+.p-computer{grid-column:1 / span 4;grid-row:4}
+.p-update{grid-column:5 / span 8;grid-row:4}
+.pane h3{font-family:var(--display);font-size:1.22rem;line-height:1.25;margin:0}
+.pane p{margin:0;color:var(--ink-soft,#52607A)}
+.pane .caption{font-size:.86rem;line-height:1.5}
+.phead{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px}
+.tag{display:inline-flex;align-items:center;font-size:.78rem;font-weight:600;line-height:1.2;padding:5px 10px;border-radius:999px}
+.tag-ok{background:#E4F4EE;color:#0A5A40}
+.tag-wait{background:#FFF4D1;color:#6B4E00}
+.mail{display:grid;gap:10px;padding:14px;border:1px solid var(--line,#DDE3EC);border-radius:14px;background:var(--paper,#F6F8FB)}
+.mail>b{font-family:var(--display);font-size:1rem;color:var(--ink,#0E1B33)}
+.mail dl{display:grid;grid-template-columns:auto minmax(0,1fr);gap:4px 14px;margin:0;font-size:.92rem;line-height:1.45}
+.mail dt{color:var(--ink-soft,#52607A)}
+.mail dd{margin:0;min-width:0;color:var(--ink,#0E1B33);overflow-wrap:anywhere}
+.mail-actions{display:flex;flex-wrap:wrap;gap:10px}
+.mail .btn{min-height:44px;padding:0 18px;font-size:.95rem}
+.mail .btn-yes{background:var(--mint,#0F7B58);color:#fff;border-color:var(--mint,#0F7B58)}
+.mail .state{font-family:var(--display);font-weight:600;margin:0;color:var(--ink,#0E1B33)}
+.mail.is-ok .state{color:#0A5A40}
+.mail.is-no .state{color:var(--ink-soft,#52607A)}
+.mail .reset{justify-self:start}
+.acts{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px;list-style:none;margin:0;padding:0}
+.acts li{display:flex;flex-direction:column;align-items:center;gap:6px;padding:10px 4px;border:1px dashed var(--line-strong,#C5CEDC);border-radius:12px;font-size:.85rem;color:var(--ink-soft,#52607A)}
+.acts li svg{width:20px;height:20px}
+.acts li.current{border-style:solid;border-color:var(--blue,#1B4FD8);color:var(--blue,#1B4FD8)}
+.acts li.done{background:#E4F4EE;border-color:#BFE3D5;border-style:solid;color:#0A5A40}
+.roster-b{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px 10px;list-style:none;margin:0;padding:0}
+.roster-b li{display:grid;justify-items:center;gap:2px;text-align:center;min-width:0}
+.roster-b .mas{width:52px;height:52px;margin-bottom:4px}
+.roster-b b{font-family:var(--display);font-size:.95rem;color:var(--ink,#0E1B33)}
+.roster-b small{font-size:.8rem;line-height:1.25;color:var(--ink-soft,#52607A)}
+.hl{display:flex;gap:12px;align-items:flex-start}
+.hl .mas{width:44px;height:44px;margin-top:2px}
+.hl .bub{min-width:0;display:grid;gap:4px;padding:10px 14px;border:1px solid var(--line,#DDE3EC);border-radius:4px 16px 16px 16px;background:var(--card,#fff);color:var(--ink,#0E1B33)}
+.hl .bub b{font-family:var(--display);font-size:.85rem;color:var(--ink-soft,#52607A)}
+.done{display:grid;gap:4px;padding:10px 14px;border-radius:12px;background:#E4F4EE;color:#0A5A40}
+.done b{font-family:var(--display);font-size:.9rem}
+.done span{color:#0A5A40}
+.rt{display:grid;gap:12px;padding:14px;border:1px solid var(--line,#DDE3EC);border-radius:14px;background:var(--paper,#F6F8FB)}
+.rt-top{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.rt-name{font-family:var(--display);font-weight:600;color:var(--ink,#0E1B33)}
+.rt .pause{font:inherit;font-family:var(--display);font-weight:600;font-size:.92rem;min-height:40px;padding:0 16px;border-radius:999px;border:1px solid var(--line-strong,#C5CEDC);background:var(--card,#fff);color:var(--ink,#0E1B33);cursor:pointer}
+.rt .wk{margin:0;transition:opacity .3s ease}
+.rt.is-paused .wk{opacity:.4}
+.rt-state{font-size:.9rem;color:var(--ink-soft,#52607A)}
+.machine{margin:0;display:grid;justify-items:center;gap:6px}
+.machine svg{width:100%;max-width:300px;height:auto}
+.machine figcaption{font-size:.85rem;color:var(--ink-soft,#52607A)}
+.outside{display:flex;align-items:center}
+.outside span{display:inline-flex;align-items:center;gap:8px;font-family:var(--display);font-weight:600;font-size:.9rem;color:var(--blue,#1B4FD8)}
+.outside svg{width:16px;height:16px;flex:none}
+.steps-u{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;list-style:none;margin:0;padding:0}
+.steps-u li{display:grid;gap:4px;align-content:start;padding:12px;border:1px solid var(--line,#DDE3EC);border-radius:12px}
+.steps-u li.back{border-color:#EBC3BA;background:#FDF6F4}
+.steps-u b{font-family:var(--display);font-size:.95rem;color:var(--ink,#0E1B33)}
+.steps-u span{font-size:.88rem;line-height:1.45;color:var(--ink-soft,#52607A)}
+.keep{display:grid;gap:6px;list-style:none;margin:0;padding:0;font-size:.92rem;color:var(--ink,#0E1B33)}
+.keep li{position:relative;padding-left:18px}
+.keep li::before{content:"";position:absolute;left:0;top:.7em;width:9px;height:2px;background:var(--mint,#0F7B58)}
+
+/* ---------- proof: the evidence grid and three claims ---------- */
+.pf-grid{display:grid;grid-template-columns:minmax(0,.9fr) minmax(0,1.1fr);gap:clamp(2.5rem,5vw,4rem);align-items:start}
+.evidence{margin:0;display:grid;gap:16px}
+.ev-grid{display:grid;grid-template-columns:repeat(9,minmax(0,1fr));gap:6px}
+.ev-grid i{display:block;aspect-ratio:1;border-radius:4px;background:var(--mint,#0F7B58)}
+.evidence figcaption{display:grid;gap:6px}
+.ev-count{font-family:var(--display);font-weight:600;font-size:1.15rem;margin:0;color:var(--ink,#0E1B33)}
+.ev-note{margin:0;color:var(--ink-soft,#52607A);font-size:.92rem}
+.check{margin:0;font-size:.9rem}
+.check a,.pane .check a{color:var(--blue,#1B4FD8)}
+.claims{display:grid;gap:clamp(1.25rem,2.4vw,1.75rem)}
+.claim{display:grid;gap:8px;padding-top:1.25rem;border-top:1px solid var(--line,#DDE3EC)}
+.claim h3{font-family:var(--display);font-size:1.2rem;line-height:1.3;margin:0;color:var(--ink,#0E1B33)}
+.claim p{margin:0;color:var(--ink-soft,#52607A)}
+@media (prefers-reduced-motion:no-preference){
+  .js .ev-grid i{opacity:0;animation:ev-in .5s cubic-bezier(.22,1,.36,1) forwards;animation-delay:calc(var(--i) * 40ms)}
+}
+@keyframes ev-in{from{opacity:0;transform:scale(.4)}to{opacity:1;transform:none}}
+
+/* ---------- the team: the mascot in every card ---------- */
+.mem .mas{width:56px;height:56px;margin-bottom:6px}
+.mem.boss .mas{width:72px;height:72px;margin-bottom:0}
+
+/* ---------- widths: the window and the panes ---------- */
+@media (max-width:980px){
+  .split{gap:clamp(2.5rem,6vw,4rem)}
+  .bento{grid-template-columns:minmax(0,1fr)}
+  .p-approval,.p-roster,.p-handoff,.p-routine,.p-computer,.p-update{grid-column:1;grid-row:auto}
+  .roster-b{grid-template-columns:repeat(3,minmax(0,1fr))}
+  .steps-u{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .pf-grid{grid-template-columns:minmax(0,1fr)}
+}
+@media (max-width:820px){
+  .aw-body{grid-template-columns:minmax(0,1fr)}
+  .aw-side{border-right:0;border-bottom:1px solid var(--line,#DDE3EC);padding:10px 12px}
+  .aw-sh{display:none}
+  .roster{display:flex;flex-wrap:wrap;gap:4px}
+  .roster li{grid-template-columns:34px minmax(0,auto);padding:2px 8px 2px 2px}
+  .roster li .rn small:not(.st){display:none}
+  .roster-more{display:none}
+  .roster li.is-wait .rn small:not(.st){display:none}
+  .roster li.is-wait .rn .st{display:none}
+}
+@media (max-width:620px){
+  .card-stub{display:none}
+  .chat{padding:16px 14px;min-height:300px}
+  .field{margin:0 14px 14px}
+  .ask{margin-left:0;grid-template-columns:minmax(0,1fr)}
+  .ask-btns{width:auto;grid-template-columns:1fr 1fr}
+  .aw-bar .aw-tag{display:none}
+  .bigiris{--bw:104px;top:-64px;right:-8px}
+  .acts{grid-template-columns:repeat(5,minmax(0,1fr));gap:6px}
+  .acts li{font-size:.78rem;padding:8px 2px}
+  .roster-b{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .steps-u{grid-template-columns:minmax(0,1fr)}
+  .mail dl{grid-template-columns:minmax(0,1fr)}
+  .mail dt{margin-top:4px}
+  .stage{margin-top:4.5rem}
+  .ev-grid{grid-template-columns:repeat(9,minmax(0,1fr));gap:4px}
+  .how .stage-svg{min-width:0}
+}
+
+/* ---------- from 1100 px: the approved hero (hero-c): headline and lead side by side, the app window below them ----------
+   The mascot's bubble sits behind the window's top-right corner and stays inside the page at every width. */
 @media (min-width:1100px){
   .hero{padding-top:6rem}
-  .hero .wrap{max-width:88rem;grid-template-columns:minmax(0,1fr) minmax(0,1fr);align-items:center;gap:clamp(2.5rem,4vw,3.5rem)}
-  .hero h1{font-size:clamp(3rem,2.2rem + 3.2vw,5rem)}
+  .hero .wrap{max-width:80rem;grid-template-columns:minmax(0,1fr)}
+  .hero-copy{max-width:none;display:grid;grid-template-columns:minmax(0,1.35fr) minmax(0,1fr);column-gap:clamp(2.5rem,6vw,5.5rem);align-items:start}
+  .hero h1{grid-column:1;grid-row:1;font-size:clamp(3rem,2.2rem + 3.2vw,5rem)}
   html[lang="ru"] .hero h1{font-size:4.5rem}
-  .hero .appfig{min-width:0}
-  .aw-side{display:none}
-  .aw-body{grid-template-columns:minmax(0,1fr)}
-  .aw-head{padding:6px 16px;min-height:50px}
-  .chat{padding:12px 20px;gap:8px;min-height:437px}
-  .msg .bub{padding:8px 12px}
-  .tries{padding:8px 16px;min-height:139px}
-  .tries p{margin-bottom:4px}
-  .aw-field{margin:0 16px 12px}
-  .aw-cap{margin-top:12px}
-  /* the window keeps the height of its tallest demo in each language, so filling a demo moves nothing */
-  html[lang="fr"] .chat,html[lang="ru"] .chat{min-height:459px}
-  html[lang="ja"] .chat{min-height:461px}
-  html[lang="zh"] .chat{min-height:415px}
-  html[lang="pl"] .tries,html[lang="ru"] .tries{min-height:191px}
-  html[lang="zh"] .tries{min-height:87px}
-  /* the orb that sat behind the headline moves to the lower right, behind the window */
+  .hero .lead{grid-column:2;grid-row:1;margin-bottom:clamp(1.5rem,2.4vw,2.25rem)}
+  .hero .cta{grid-column:1;grid-row:2}
+  .hero .facts{grid-column:2;grid-row:2}
+  .stage{margin-top:clamp(3.5rem,6vw,4.75rem)}
+  .stage-plate{width:calc(100% - 110px)}
+  .bigiris{--bw:clamp(168px,15vw,200px);top:-36px;right:-30px}
   .o1{top:auto;bottom:-4rem;left:auto;right:-2rem}
+}
+@media (min-width:1280px){
+  .ask{grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:14px 22px}
+  .ask-btns{display:grid;width:170px}
+}
+
+/* ---------- phones: each step is one column, so its diagram takes the page width and its labels stay readable ---------- */
+@media (max-width:820px){
+  .how .steps li{grid-template-columns:minmax(0,1fr)}
+  .how .steps li::before{display:none}
 }
 </style>
 </head>
@@ -705,6 +849,425 @@ footer a{color:var(--ink)}
     <symbol id="i-db" viewBox="0 0 24 24"><ellipse cx="12" cy="6" rx="7.500" ry="3" stroke="currentColor" stroke-width="2" fill="none"/><path d="M4.500 6v6c0 1.700 3.400 3 7.500 3s7.500-1.300 7.500-3V6M4.500 12v6c0 1.700 3.400 3 7.500 3s7.500-1.300 7.500-3v-6" stroke="currentColor" stroke-width="2" fill="none"/></symbol>
     <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2.200" fill="none" stroke-linecap="round"/></symbol>
     <symbol id="logo" viewBox="0 0 40 40"><rect width="40" height="40" rx="10" fill="#0E1B33"/><circle cx="16" cy="20" r="7.5" fill="none" stroke="#fff" stroke-width="3"/><circle cx="24" cy="20" r="7.5" fill="none" stroke="#6C97FF" stroke-width="3"/></symbol>
+    <symbol id="i-arrow" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6" stroke="currentColor" stroke-width="2.2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-cursor" viewBox="0 0 24 24"><path d="M3 2l15 9-6.5 1.8 4 6.7-3 1.7-4-6.8L3 19z" fill="#0E1B33" stroke="#fff" stroke-width="1.5" stroke-linejoin="round"/></symbol>
+    <symbol id="i-pause" viewBox="0 0 24 24"><rect x="6" y="5" width="4" height="14" rx="1" fill="currentColor"/><rect x="14" y="5" width="4" height="14" rx="1" fill="currentColor"/></symbol>
+    <symbol id="i-play" viewBox="0 0 24 24"><path d="M7 5v14l12-7z" fill="currentColor"/></symbol>
+    <g id="how-art">
+      <rect x="1" y="1" width="458" height="338" rx="18" fill="#FFFFFF" stroke="#DDE3EC" stroke-width="1.5"/>
+      <g class="sa-dark"><rect x="14" y="22" width="262" height="58" rx="14" fill="#0E1B33"/><text class="sa-t" x="28" y="46" data-i="dg_req1">Responder al fontanero:</text><text class="sa-t" x="28" y="69" data-i="dg_req2">El martes está bien</text></g>
+      <g class="sa-ghost"><rect x="14" y="22" width="262" height="58" rx="14" fill="#E8EDF5"/><text class="sa-tg" x="28" y="46" data-i="dg_req1">Responder al fontanero:</text><text class="sa-tg" x="28" y="69" data-i="dg_req2">El martes está bien</text></g>
+      <path class="sa-path" d="M280 52 C 300 52, 304 56, 322 60" fill="none" stroke="#1B4FD8" stroke-width="2" stroke-dasharray="4 5"/>
+      <circle class="sa-comet" cx="280" cy="52" r="5" fill="#1B4FD8"/>
+      <use href="#m-iris" x="318" y="10" width="92" height="92"/>
+      <use href="#m-portia" x="18" y="150" width="62" height="62"/>
+      <use href="#m-vera" x="98" y="150" width="62" height="62"/>
+      <circle class="sa-pick" cx="231" cy="181" r="38" fill="none" stroke="#1B4FD8" stroke-width="2.4"/>
+      <use href="#m-penny" x="280" y="150" width="62" height="62"/>
+      <use href="#m-jules" x="360" y="150" width="62" height="62"/>
+      <rect x="14" y="238" width="432" height="88" rx="16" fill="#F6F8FB" stroke="#DDE3EC" stroke-width="1.5"/>
+      <g class="sa-otto"><use href="#m-otto" x="200" y="150" width="62" height="62"/></g>
+      <circle class="sa-arc-bg" cx="131" cy="285" r="30" fill="none" stroke="#E1EAFB" stroke-width="5"/>
+      <circle class="sa-arc-fg" cx="131" cy="285" r="30" fill="none" stroke="#1B4FD8" stroke-width="5" stroke-linecap="round" pathLength="100" stroke-dasharray="100" transform="rotate(-90 131 285)"/>
+      <g class="sa-card">
+        <rect x="200" y="252" width="246" height="66" rx="12" fill="#FFFFFF" stroke="#0E1B33" stroke-width="1.6"/>
+        <rect x="212" y="276" width="94" height="30" rx="9" fill="#0F7B58"/><text class="sa-btn-w" x="259" y="296" text-anchor="middle" data-i="yes">Aprobar</text>
+        <rect x="314" y="276" width="122" height="30" rx="9" fill="#FFFFFF" stroke="#C5CEDC" stroke-width="1.4"/><text class="sa-btn-k" x="375" y="296" text-anchor="middle" data-i="no">No lo hagas</text>
+      </g>
+      <text class="sa-sent" x="200" y="236" data-i="dg_sent">Enviado.</text>
+    </g>
+    <defs>
+  <radialGradient id="gWater" cx="0.46" cy="0.42" r="0.62">
+    <stop offset="0" stop-color="#FFFFFF" stop-opacity="0.1"/>
+    <stop offset="0.45" stop-color="#A9CBFA" stop-opacity="0.34"/>
+    <stop offset="0.8" stop-color="#3A71E6" stop-opacity="0.84"/>
+    <stop offset="1" stop-color="#1B4FD8" stop-opacity="0.97"/>
+  </radialGradient>
+  <linearGradient id="gRefr" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0" stop-color="#FFFFFF" stop-opacity="0.15"/>
+    <stop offset="1" stop-color="#FFFFFF" stop-opacity="0.9"/>
+  </linearGradient>
+  <radialGradient id="gHi" cx="0.5" cy="0.5" r="0.5">
+    <stop offset="0" stop-color="#FFFFFF" stop-opacity="0.95"/>
+    <stop offset="0.55" stop-color="#FFFFFF" stop-opacity="0.4"/>
+    <stop offset="1" stop-color="#FFFFFF" stop-opacity="0"/>
+  </radialGradient>
+  <radialGradient id="gCaustic" cx="0.5" cy="0.5" r="0.5">
+    <stop offset="0" stop-color="#FFFFFF" stop-opacity="1"/>
+    <stop offset="0.5" stop-color="#E4EEFF" stop-opacity="0.6"/>
+    <stop offset="1" stop-color="#E4EEFF" stop-opacity="0"/>
+  </radialGradient>
+  <radialGradient id="gShadow" cx="0.5" cy="0.5" r="0.5">
+    <stop offset="0" stop-color="#0E1B33" stop-opacity="0.26"/>
+    <stop offset="1" stop-color="#0E1B33" stop-opacity="0"/>
+  </radialGradient>
+  <clipPath id="cOut"><path clip-rule="evenodd" d="M0 0H220V220H0Z M110 48A72 72 0 1 0 110 192A72 72 0 1 0 110 48Z"/></clipPath>
+  <clipPath id="cDef"><path d="M110 48C144.2 48 172 80.2 172 120C172 159.8 144.2 192 110 192C70.2 192 38 159.8 38 120C38 80.2 70.2 48 110 48Z"/></clipPath>
+
+  <!-- full-size water drop -->
+  <g id="bubble">
+    <circle cx="110" cy="120" r="72" fill="url(#gWater)"/>
+    <circle cx="110" cy="120" r="66" fill="none" stroke="#1B4FD8" stroke-opacity="0.08" stroke-width="6"/>
+    <path d="M171.2 95.3A66 66 0 1 1 48.8 95.3A64 64 0 1 0 171.2 95.3Z" fill="url(#gRefr)"/>
+    <circle cx="110" cy="120" r="72" fill="none" stroke="#1B4FD8" stroke-opacity="0.6" stroke-width="1.8"/>
+    <ellipse cx="86" cy="84" rx="24" ry="14" transform="rotate(-36 86 84)" fill="url(#gHi)"/>
+    <circle cx="74" cy="72" r="3.6" fill="#FFFFFF"/>
+  </g>
+
+  <!-- the same drop, slightly deflated on its right side (Qualcosa non va) -->
+  <g id="bubbleDef">
+    <path d="M110 48C144.2 48 172 80.2 172 120C172 159.8 144.2 192 110 192C70.2 192 38 159.8 38 120C38 80.2 70.2 48 110 48Z" fill="url(#gWater)"/>
+    <path d="M171.2 95.3A66 66 0 1 1 48.8 95.3A64 64 0 1 0 171.2 95.3Z" fill="url(#gRefr)" clip-path="url(#cDef)"/>
+    <path d="M110 48C144.2 48 172 80.2 172 120C172 159.8 144.2 192 110 192C70.2 192 38 159.8 38 120C38 80.2 70.2 48 110 48Z" fill="none" stroke="#1B4FD8" stroke-opacity="0.6" stroke-width="1.8"/>
+    <ellipse cx="86" cy="84" rx="24" ry="14" transform="rotate(-36 86 84)" fill="url(#gHi)"/>
+    <circle cx="74" cy="72" r="3.6" fill="#FFFFFF"/>
+  </g>
+
+  <!-- 32 px body: heavier rim, one highlight, no refraction detail -->
+  <g id="bubbleS">
+    <circle cx="110" cy="120" r="74" fill="url(#gWater)"/>
+    <circle cx="110" cy="120" r="74" fill="none" stroke="#1B4FD8" stroke-width="7" stroke-opacity="0.85"/>
+    <circle cx="82" cy="82" r="9" fill="#FFFFFF" fill-opacity="0.85"/>
+  </g>
+
+  <!-- 32 px simplified faces: thick eyes and mouth, no accessories -->
+  <g id="s-felice">
+    <use href="#bubbleS"/>
+    <path d="M74 122Q88 100 102 122M118 122Q132 100 146 122" fill="none" stroke="#0E1B33" stroke-width="15" stroke-linecap="round"/>
+    <path d="M84 140Q110 176 136 140Z" fill="#0E1B33" stroke="#0E1B33" stroke-width="6" stroke-linejoin="round"/>
+  </g>
+  <g id="s-concentrato">
+    <use href="#bubbleS"/>
+    <path d="M71 101H101M119 101H149" stroke="#0E1B33" stroke-width="11" stroke-linecap="round"/>
+    <ellipse cx="88" cy="120" rx="11" ry="9" fill="#0E1B33"/>
+    <ellipse cx="132" cy="120" rx="11" ry="9" fill="#0E1B33"/>
+    <circle cx="92" cy="116" r="3" fill="#F6F8FB"/>
+    <circle cx="136" cy="116" r="3" fill="#F6F8FB"/>
+    <path d="M101 148Q110 151 119 147" fill="none" stroke="#0E1B33" stroke-width="9" stroke-linecap="round"/>
+  </g>
+  <g id="s-fatto">
+    <use href="#bubbleS"/>
+    <path d="M72 124Q88 98 104 124" fill="none" stroke="#0E1B33" stroke-width="15" stroke-linecap="round"/>
+    <circle cx="134" cy="116" r="13" fill="#0E1B33"/>
+    <path d="M90 138Q110 160 130 138" fill="none" stroke="#0E1B33" stroke-width="13" stroke-linecap="round"/>
+  </g>
+  <g id="s-errore">
+    <use href="#bubbleS"/>
+    <circle cx="86" cy="116" r="16" fill="#0E1B33"/>
+    <circle cx="134" cy="118" r="10.5" fill="#0E1B33"/>
+    <ellipse cx="112" cy="150" rx="9" ry="10.5" fill="#0E1B33"/>
+  </g>
+</defs><g id="m-headset"><path d="M30 120A80 80 0 0 1 190 120" fill="none" stroke="#0E1B33" stroke-width="6" stroke-linecap="round"/><rect x="20" y="106" width="16" height="30" rx="7" fill="#1B4FD8" stroke="#0E1B33" stroke-width="2.5"/><rect x="184" y="106" width="16" height="30" rx="7" fill="#1B4FD8" stroke="#0E1B33" stroke-width="2.5"/><path d="M28 136Q28 166 52 166" fill="none" stroke="#0E1B33" stroke-width="3.2" stroke-linecap="round"/><circle cx="56" cy="166" r="5" fill="#F2B735" stroke="#0E1B33" stroke-width="2"/></g><symbol id="m-iris" viewBox="0 0 220 220"><g style="--d:3.3s">
+<ellipse class="shadow" cx="110" cy="203" rx="46" ry="7" fill="url(#gShadow)"/>
+<ellipse class="caustic" cx="120" cy="202.6" rx="11" ry="2.8" fill="url(#gCaustic)"/>
+<g class="bob">
+<g class="jelly">
+<use href="#bubble"/>
+<g class="blink" style="animation-delay:-1.4s">
+<ellipse cx="88" cy="116" rx="8" ry="8.5" fill="#F6F8FB" stroke="#0E1B33" stroke-width="2.6"/>
+<ellipse cx="132" cy="116" rx="8" ry="8.5" fill="#F6F8FB" stroke="#0E1B33" stroke-width="2.6"/>
+<circle cx="89.2" cy="117.2" r="4.2" fill="#0E1B33"/>
+<circle cx="133.2" cy="117.2" r="4.2" fill="#0E1B33"/>
+<circle cx="90.6" cy="115.6" r="1.3" fill="#F6F8FB"/>
+<circle cx="134.6" cy="115.6" r="1.3" fill="#F6F8FB"/>
+</g>
+<path d="M100 138Q110 146 120 138" fill="none" stroke="#0E1B33" stroke-width="5" stroke-linecap="round"/>
+<ellipse cx="74" cy="134" rx="6.5" ry="4" fill="#C8402A" fill-opacity=".28"/>
+<ellipse cx="146" cy="134" rx="6.5" ry="4" fill="#C8402A" fill-opacity=".28"/>
+<path d="M30 120A80 80 0 0 1 190 120" fill="none" stroke="#0E1B33" stroke-width="6" stroke-linecap="round"/>
+<rect x="20" y="106" width="16" height="30" rx="7" fill="#1B4FD8" stroke="#0E1B33" stroke-width="2.5"/>
+<rect x="184" y="106" width="16" height="30" rx="7" fill="#1B4FD8" stroke="#0E1B33" stroke-width="2.5"/>
+<path d="M28 136Q28 166 52 166" fill="none" stroke="#0E1B33" stroke-width="3.2" stroke-linecap="round"/>
+<circle cx="56" cy="166" r="5" fill="#F2B735" stroke="#0E1B33" stroke-width="2"/>
+</g>
+</g>
+</g></symbol><symbol id="m-leo" viewBox="0 0 220 220"><g style="--d:3.5s">
+<ellipse class="shadow" cx="110" cy="203" rx="46" ry="7" fill="url(#gShadow)"/>
+<ellipse class="caustic" cx="120" cy="202.6" rx="11" ry="2.8" fill="url(#gCaustic)"/>
+<g class="bob">
+<g class="jelly">
+<use href="#bubble"/>
+<g class="blink" style="animation-delay:-2.3s">
+<ellipse cx="88" cy="116" rx="8" ry="8.5" fill="#F6F8FB" stroke="#0E1B33" stroke-width="2.6"/>
+<ellipse cx="132" cy="116" rx="8" ry="8.5" fill="#F6F8FB" stroke="#0E1B33" stroke-width="2.6"/>
+<circle cx="89.2" cy="117.2" r="4.2" fill="#0E1B33"/>
+<circle cx="133.2" cy="117.2" r="4.2" fill="#0E1B33"/>
+<circle cx="90.6" cy="115.6" r="1.3" fill="#F6F8FB"/>
+<circle cx="134.6" cy="115.6" r="1.3" fill="#F6F8FB"/>
+</g>
+<path d="M100 138Q110 146 120 138" fill="none" stroke="#0E1B33" stroke-width="5" stroke-linecap="round"/>
+<ellipse cx="74" cy="134" rx="6.5" ry="4" fill="#C8402A" fill-opacity=".28"/>
+<ellipse cx="146" cy="134" rx="6.5" ry="4" fill="#C8402A" fill-opacity=".28"/>
+<g transform="rotate(10 168 176)">
+<rect x="144" y="150" width="46" height="54" rx="5" fill="#0F7B58" stroke="#0E1B33" stroke-width="2.4"/>
+<rect x="150" y="155" width="34" height="44" rx="2" fill="#F6F8FB"/>
+<path d="M156 166H178M156 175H178M156 184H172" stroke="#0E1B33" stroke-opacity=".4" stroke-width="2"/>
+<path d="M141 158H146M141 170H146M141 182H146M141 194H146" stroke="#0E1B33" stroke-width="3" stroke-linecap="round"/>
+</g>
+</g>
+</g></g></symbol><symbol id="m-otto" viewBox="0 0 220 220"><g style="--d:3.1s">
+<ellipse class="shadow" cx="110" cy="203" rx="46" ry="7" fill="url(#gShadow)"/>
+<ellipse class="caustic" cx="120" cy="202.6" rx="11" ry="2.8" fill="url(#gCaustic)"/>
+<g class="bob">
+<g class="jelly">
+<use href="#bubble"/>
+<g class="blink" style="animation-delay:-.8s">
+<ellipse cx="88" cy="116" rx="8" ry="8.5" fill="#F6F8FB" stroke="#0E1B33" stroke-width="2.6"/>
+<ellipse cx="132" cy="116" rx="8" ry="8.5" fill="#F6F8FB" stroke="#0E1B33" stroke-width="2.6"/>
+<circle cx="89.2" cy="117.2" r="4.2" fill="#0E1B33"/>
+<circle cx="133.2" cy="117.2" r="4.2" fill="#0E1B33"/>
+<circle cx="90.6" cy="115.6" r="1.3" fill="#F6F8FB"/>
+<circle cx="134.6" cy="115.6" r="1.3" fill="#F6F8FB"/>
+</g>
+<path d="M100 138Q110 146 120 138" fill="none" stroke="#0E1B33" stroke-width="5" stroke-linecap="round"/>
+<ellipse cx="74" cy="134" rx="6.5" ry="4" fill="#C8402A" fill-opacity=".28"/>
+<ellipse cx="146" cy="134" rx="6.5" ry="4" fill="#C8402A" fill-opacity=".28"/>
+<path d="M70 58Q70 28 110 28Q150 28 150 58Z" fill="#0E1B33"/>
+<rect x="60" y="54" width="100" height="11" rx="5.5" fill="#0E1B33"/>
+<circle cx="110" cy="42" r="6" fill="#F2B735" stroke="#F6F8FB" stroke-width="1.5"/>
+<g transform="rotate(-12 50 178)">
+<rect x="24" y="162" width="52" height="34" rx="3" fill="#F6F8FB" stroke="#0E1B33" stroke-width="2.6"/>
+<path d="M25 164L50 184L75 164" fill="none" stroke="#C8402A" stroke-width="3" stroke-linejoin="round"/>
+</g>
+</g>
+</g></g></symbol><symbol id="m-portia" viewBox="0 0 220 220"><g style="--d:3.6s">
+<ellipse class="shadow" cx="110" cy="203" rx="46" ry="7" fill="url(#gShadow)"/>
+<ellipse class="caustic" cx="120" cy="202.6" rx="11" ry="2.8" fill="url(#gCaustic)"/>
+<g class="bob">
+<g class="jelly">
+<use href="#bubble"/>
+<g class="blink" style="animation-delay:-2.9s">
+<ellipse cx="88" cy="117" rx="7" ry="7.6" fill="#F6F8FB" stroke="#0E1B33" stroke-width="2.4"/>
+<ellipse cx="132" cy="117" rx="7" ry="7.6" fill="#F6F8FB" stroke="#0E1B33" stroke-width="2.4"/>
+<circle cx="88.8" cy="118" r="3.8" fill="#0E1B33"/>
+<circle cx="132.8" cy="118" r="3.8" fill="#0E1B33"/>
+</g>
+<path d="M100 141Q110 148 120 141" fill="none" stroke="#0E1B33" stroke-width="4.8" stroke-linecap="round"/>
+<ellipse cx="74" cy="134" rx="6.5" ry="4" fill="#C8402A" fill-opacity=".28"/>
+<ellipse cx="146" cy="134" rx="6.5" ry="4" fill="#C8402A" fill-opacity=".28"/>
+<g fill="none" stroke="#0E1B33" stroke-width="3.4">
+<circle cx="88" cy="117" r="13.5"/>
+<circle cx="132" cy="117" r="13.5"/>
+<path d="M101.5 117Q110 111 118.5 117"/>
+<path d="M74.5 114L66 110M145.5 114L154 110" stroke-width="3" stroke-linecap="round"/>
+</g>
+</g>
+<g transform="rotate(-8 167 186)">
+<rect x="140" y="173" width="54" height="26" rx="2" fill="#F6F8FB" stroke="#0E1B33" stroke-width="2"/>
+<path d="M147 180H182" stroke="#0E1B33" stroke-opacity=".45" stroke-width="1.6"/>
+<path d="M146 191C150 185 153 196 157 189S163 184 166 191S171 193 175 187" fill="none" stroke="#1B4FD8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+<circle cx="184" cy="184" r="4.6" fill="#C8402A" stroke="#0E1B33" stroke-width="1.4"/>
+<circle cx="184" cy="184" r="1.8" fill="none" stroke="#F6F8FB" stroke-width="1"/>
+<rect x="134" y="169" width="8" height="34" rx="4" fill="#F2B735" stroke="#0E1B33" stroke-width="2"/>
+<rect x="192" y="169" width="8" height="34" rx="4" fill="#F2B735" stroke="#0E1B33" stroke-width="2"/>
+</g>
+</g>
+</g></symbol><symbol id="m-penny" viewBox="0 0 220 220"><g style="--d:3.4s">
+<ellipse class="shadow" cx="110" cy="203" rx="46" ry="7" fill="url(#gShadow)"/>
+<ellipse class="caustic" cx="120" cy="202.6" rx="11" ry="2.8" fill="url(#gCaustic)"/>
+<g class="bob">
+<g class="coin">
+<circle cx="110" cy="22" r="10.5" fill="#F2B735" stroke="#0E1B33" stroke-width="2.4"/>
+<circle cx="110" cy="22" r="6.2" fill="none" stroke="#0E1B33" stroke-width="1.4" stroke-opacity=".6"/>
+<text x="110" y="26.5" text-anchor="middle" font-size="12" font-weight="700" fill="#0E1B33" font-family="system-ui,sans-serif">€</text>
+</g>
+<g class="jelly">
+<use href="#bubble"/>
+<g class="blink" style="animation-delay:-.5s">
+<ellipse cx="88" cy="116" rx="8" ry="8.5" fill="#F6F8FB" stroke="#0E1B33" stroke-width="2.6"/>
+<ellipse cx="132" cy="116" rx="8" ry="8.5" fill="#F6F8FB" stroke="#0E1B33" stroke-width="2.6"/>
+<circle cx="89.2" cy="117.2" r="4.2" fill="#0E1B33"/>
+<circle cx="133.2" cy="117.2" r="4.2" fill="#0E1B33"/>
+<circle cx="90.6" cy="115.6" r="1.3" fill="#F6F8FB"/>
+<circle cx="134.6" cy="115.6" r="1.3" fill="#F6F8FB"/>
+</g>
+<path d="M100 138Q110 146 120 138" fill="none" stroke="#0E1B33" stroke-width="5" stroke-linecap="round"/>
+<ellipse cx="74" cy="134" rx="6.5" ry="4" fill="#C8402A" fill-opacity=".28"/>
+<ellipse cx="146" cy="134" rx="6.5" ry="4" fill="#C8402A" fill-opacity=".28"/>
+<rect x="96" y="43" width="28" height="7" rx="3.5" fill="#0E1B33"/>
+</g>
+</g>
+</g></symbol><symbol id="m-jules" viewBox="0 0 220 220"><g style="--d:3.2s">
+<ellipse class="shadow" cx="110" cy="203" rx="46" ry="7" fill="url(#gShadow)"/>
+<ellipse class="caustic" cx="120" cy="202.6" rx="11" ry="2.8" fill="url(#gCaustic)"/>
+<g class="bob">
+<g class="jelly">
+<use href="#bubble"/>
+<g class="blink" style="animation-delay:-1.2s">
+<ellipse cx="88" cy="116" rx="8" ry="8.5" fill="#F6F8FB" stroke="#0E1B33" stroke-width="2.6"/>
+<ellipse cx="132" cy="116" rx="8" ry="8.5" fill="#F6F8FB" stroke="#0E1B33" stroke-width="2.6"/>
+<circle cx="89.2" cy="117.2" r="4.2" fill="#0E1B33"/>
+<circle cx="133.2" cy="117.2" r="4.2" fill="#0E1B33"/>
+<circle cx="90.6" cy="115.6" r="1.3" fill="#F6F8FB"/>
+<circle cx="134.6" cy="115.6" r="1.3" fill="#F6F8FB"/>
+</g>
+<path d="M100 138Q110 146 120 138" fill="none" stroke="#0E1B33" stroke-width="5" stroke-linecap="round"/>
+<ellipse cx="74" cy="134" rx="6.5" ry="4" fill="#C8402A" fill-opacity=".28"/>
+<ellipse cx="146" cy="134" rx="6.5" ry="4" fill="#C8402A" fill-opacity=".28"/>
+<g transform="rotate(-9 110 52)">
+<path d="M72 52Q72 20 110 20Q148 20 148 52Z" fill="#0F7B58" stroke="#0E1B33" stroke-width="2.4" stroke-linejoin="round"/>
+<ellipse cx="110" cy="52" rx="42" ry="7" fill="#0F7B58" stroke="#0E1B33" stroke-width="2.4"/>
+<path d="M74 40H146" stroke="#F6F8FB" stroke-width="2.6" stroke-opacity=".6"/>
+<circle cx="110" cy="21" r="3" fill="#F2B735" stroke="#0E1B33" stroke-width="1.6"/>
+</g>
+</g>
+<g class="swing">
+<path d="M182 136Q198 140 196 160" fill="none" stroke="#0E1B33" stroke-width="2.4" stroke-linecap="round"/>
+<rect x="185" y="158" width="22" height="30" rx="4" fill="#F2B735" stroke="#0E1B33" stroke-width="2.4"/>
+<circle cx="196" cy="166" r="2.4" fill="#F6F8FB" stroke="#0E1B33" stroke-width="1.4"/>
+<path d="M190 178H202M190 184H199" stroke="#0E1B33" stroke-width="2"/>
+</g>
+</g>
+</g></symbol><symbol id="m-wren" viewBox="0 0 220 220"><g style="--d:3.3s">
+<ellipse class="shadow" cx="110" cy="203" rx="46" ry="7" fill="url(#gShadow)"/>
+<ellipse class="caustic" cx="120" cy="202.6" rx="11" ry="2.8" fill="url(#gCaustic)"/>
+<g class="bob">
+<g clip-path="url(#cOut)">
+<g transform="translate(138.3 77.4) rotate(-35)">
+<path d="M0 0L13 -5.4L13 5.4Z" fill="#F6F8FB" stroke="#0E1B33" stroke-width="2" stroke-linejoin="round"/>
+<rect x="13" y="-5.4" width="43" height="10.8" rx="2.6" fill="#F2B735" stroke="#0E1B33" stroke-width="2.2"/>
+<path d="M30 -5.4V5.4" stroke="#0E1B33" stroke-width="1.4" stroke-opacity=".5"/>
+<rect x="56" y="-5.6" width="10" height="11.2" rx="3" fill="#0E1B33"/>
+</g>
+</g>
+<g class="jelly">
+<use href="#bubble"/>
+<g class="blink" style="animation-delay:-.3s">
+<ellipse cx="88" cy="116" rx="8" ry="8.5" fill="#F6F8FB" stroke="#0E1B33" stroke-width="2.6"/>
+<ellipse cx="132" cy="116" rx="8" ry="8.5" fill="#F6F8FB" stroke="#0E1B33" stroke-width="2.6"/>
+<circle cx="89.2" cy="117.2" r="4.2" fill="#0E1B33"/>
+<circle cx="133.2" cy="117.2" r="4.2" fill="#0E1B33"/>
+<circle cx="90.6" cy="115.6" r="1.3" fill="#F6F8FB"/>
+<circle cx="134.6" cy="115.6" r="1.3" fill="#F6F8FB"/>
+</g>
+<path d="M100 138Q110 146 120 138" fill="none" stroke="#0E1B33" stroke-width="5" stroke-linecap="round"/>
+<ellipse cx="74" cy="134" rx="6.5" ry="4" fill="#C8402A" fill-opacity=".28"/>
+<ellipse cx="146" cy="134" rx="6.5" ry="4" fill="#C8402A" fill-opacity=".28"/>
+</g>
+</g>
+</g></symbol><symbol id="m-gus" viewBox="0 0 220 220"><g style="--d:3.6s">
+<ellipse class="shadow" cx="110" cy="203" rx="46" ry="7" fill="url(#gShadow)"/>
+<ellipse class="caustic" cx="120" cy="202.6" rx="11" ry="2.8" fill="url(#gCaustic)"/>
+<g class="bob">
+<g class="jelly">
+<use href="#bubble"/>
+<g class="blink" style="animation-delay:-1.9s">
+<ellipse cx="88" cy="116" rx="8" ry="8.5" fill="#F6F8FB" stroke="#0E1B33" stroke-width="2.6"/>
+<ellipse cx="132" cy="116" rx="8" ry="8.5" fill="#F6F8FB" stroke="#0E1B33" stroke-width="2.6"/>
+<circle cx="89.2" cy="117.2" r="4.2" fill="#0E1B33"/>
+<circle cx="133.2" cy="117.2" r="4.2" fill="#0E1B33"/>
+<circle cx="90.6" cy="115.6" r="1.3" fill="#F6F8FB"/>
+<circle cx="134.6" cy="115.6" r="1.3" fill="#F6F8FB"/>
+</g>
+<path d="M100 138Q110 146 120 138" fill="none" stroke="#0E1B33" stroke-width="5" stroke-linecap="round"/>
+<ellipse cx="74" cy="134" rx="6.5" ry="4" fill="#C8402A" fill-opacity=".28"/>
+<ellipse cx="146" cy="134" rx="6.5" ry="4" fill="#C8402A" fill-opacity=".28"/>
+<path d="M60 68Q60 30 110 28Q160 30 160 68Z" fill="#F2B735" stroke="#0E1B33" stroke-width="2.6" stroke-linejoin="round"/>
+<path d="M110 30V66M86 37Q84 52 86 66M134 37Q136 52 134 66" fill="none" stroke="#0E1B33" stroke-width="1.8" stroke-opacity=".45"/>
+<rect x="50" y="64" width="120" height="11" rx="5.5" fill="#F2B735" stroke="#0E1B33" stroke-width="2.6"/>
+</g>
+</g>
+</g></symbol><symbol id="m-basil" viewBox="0 0 220 220"><g style="--d:3.1s">
+<ellipse class="shadow" cx="110" cy="203" rx="46" ry="7" fill="url(#gShadow)"/>
+<ellipse class="caustic" cx="120" cy="202.6" rx="11" ry="2.8" fill="url(#gCaustic)"/>
+<g class="bob">
+<g class="jelly">
+<use href="#bubble"/>
+<g class="blink" style="animation-delay:-2.1s">
+<ellipse cx="88" cy="116" rx="8" ry="8.5" fill="#F6F8FB" stroke="#0E1B33" stroke-width="2.6"/>
+<ellipse cx="132" cy="116" rx="8" ry="8.5" fill="#F6F8FB" stroke="#0E1B33" stroke-width="2.6"/>
+<circle cx="89.2" cy="117.2" r="4.2" fill="#0E1B33"/>
+<circle cx="133.2" cy="117.2" r="4.2" fill="#0E1B33"/>
+<circle cx="90.6" cy="115.6" r="1.3" fill="#F6F8FB"/>
+<circle cx="134.6" cy="115.6" r="1.3" fill="#F6F8FB"/>
+</g>
+<path d="M100 138Q110 146 120 138" fill="none" stroke="#0E1B33" stroke-width="5" stroke-linecap="round"/>
+<ellipse cx="74" cy="134" rx="6.5" ry="4" fill="#C8402A" fill-opacity=".28"/>
+<ellipse cx="146" cy="134" rx="6.5" ry="4" fill="#C8402A" fill-opacity=".28"/>
+<g fill="#F6F8FB" stroke="#0E1B33" stroke-width="2.6">
+<circle cx="80" cy="44" r="16"/>
+<circle cx="98" cy="30" r="19"/>
+<circle cx="124" cy="30" r="19"/>
+<circle cx="142" cy="44" r="16"/>
+</g>
+<rect x="72" y="50" width="76" height="18" rx="4" fill="#F6F8FB" stroke="#0E1B33" stroke-width="2.6"/>
+<path d="M86 56V62M100 56V62M120 56V62M134 56V62" stroke="#0E1B33" stroke-width="1.6" stroke-opacity=".4"/>
+</g>
+</g>
+</g></symbol><symbol id="m-vera" viewBox="0 0 220 220"><g style="--d:3.4s">
+<ellipse class="shadow" cx="110" cy="203" rx="46" ry="7" fill="url(#gShadow)"/>
+<ellipse class="caustic" cx="120" cy="202.6" rx="11" ry="2.8" fill="url(#gCaustic)"/>
+<g class="bob">
+<g class="jelly">
+<use href="#bubble"/>
+<ellipse cx="88" cy="116" rx="8" ry="8.5" fill="#F6F8FB" stroke="#0E1B33" stroke-width="2.6"/>
+<circle cx="89.2" cy="117.2" r="4.2" fill="#0E1B33"/>
+<circle cx="90.6" cy="115.6" r="1.3" fill="#F6F8FB"/>
+<ellipse cx="132" cy="116" rx="11.5" ry="11.5" fill="#F6F8FB" stroke="#0E1B33" stroke-width="2.4"/>
+<circle cx="134" cy="118" r="6.2" fill="#0E1B33"/>
+<circle cx="136" cy="115.5" r="1.8" fill="#F6F8FB"/>
+<path d="M145 130L163 148" stroke="#0E1B33" stroke-width="7.5" stroke-linecap="round"/>
+<circle cx="132" cy="116" r="18" fill="#CFE0FF" fill-opacity=".35"/>
+<circle cx="132" cy="116" r="18" fill="none" stroke="#0E1B33" stroke-width="4.2"/>
+<path d="M121 107Q124 103 130 102" fill="none" stroke="#FFFFFF" stroke-width="2.6" stroke-linecap="round"/>
+<path d="M100 138Q110 146 120 138" fill="none" stroke="#0E1B33" stroke-width="5" stroke-linecap="round"/>
+<ellipse cx="74" cy="134" rx="6.5" ry="4" fill="#C8402A" fill-opacity=".28"/>
+<ellipse cx="146" cy="134" rx="6.5" ry="4" fill="#C8402A" fill-opacity=".28"/>
+</g>
+</g>
+</g></symbol><symbol id="m-mark" viewBox="0 0 220 220"><g style="--d:2.9s">
+<ellipse class="shadow" cx="110" cy="203" rx="46" ry="7" fill="url(#gShadow)"/>
+<ellipse class="caustic" cx="120" cy="202.6" rx="11" ry="2.8" fill="url(#gCaustic)"/>
+<g class="bob">
+<g class="jelly">
+<use href="#bubble"/>
+<g class="blink" style="animation-delay:-1s">
+<ellipse cx="88" cy="116" rx="8" ry="8.5" fill="#F6F8FB" stroke="#0E1B33" stroke-width="2.6"/>
+<ellipse cx="132" cy="116" rx="8" ry="8.5" fill="#F6F8FB" stroke="#0E1B33" stroke-width="2.6"/>
+<circle cx="89.2" cy="117.2" r="4.2" fill="#0E1B33"/>
+<circle cx="133.2" cy="117.2" r="4.2" fill="#0E1B33"/>
+<circle cx="90.6" cy="115.6" r="1.3" fill="#F6F8FB"/>
+<circle cx="134.6" cy="115.6" r="1.3" fill="#F6F8FB"/>
+</g>
+<path d="M99 136Q110 152 121 136Z" fill="#0E1B33"/>
+<ellipse cx="74" cy="134" rx="6.5" ry="4" fill="#C8402A" fill-opacity=".28"/>
+<ellipse cx="146" cy="134" rx="6.5" ry="4" fill="#C8402A" fill-opacity=".28"/>
+</g>
+<path d="M166 113H178L200 96V148L178 131H166Z" fill="#C8402A" stroke="#0E1B33" stroke-width="2.6" stroke-linejoin="round"/>
+<rect x="158" y="114" width="12" height="16" rx="3" fill="#0E1B33"/>
+<path d="M186 108V136" stroke="#F6F8FB" stroke-width="2.4" stroke-opacity=".55"/>
+<g class="mwave" fill="none" stroke="#1B4FD8" stroke-width="2.8" stroke-linecap="round">
+<path d="M211.1 115.9A8 8 0 0 1 211.1 128.1"/>
+<path d="M215 111.3A14 14 0 0 1 215 132.7"/>
+</g>
+</g>
+</g></symbol><symbol id="m-video" viewBox="0 0 220 220"><g style="--d:3.3s">
+<ellipse class="shadow" cx="110" cy="203" rx="46" ry="7" fill="url(#gShadow)"/>
+<ellipse class="caustic" cx="120" cy="202.6" rx="11" ry="2.8" fill="url(#gCaustic)"/>
+<g class="bob">
+<g class="jelly">
+<use href="#bubble"/>
+<g class="blink" style="animation-delay:-2.6s">
+<ellipse cx="88" cy="116" rx="8" ry="8.5" fill="#F6F8FB" stroke="#0E1B33" stroke-width="2.6"/>
+<ellipse cx="132" cy="116" rx="8" ry="8.5" fill="#F6F8FB" stroke="#0E1B33" stroke-width="2.6"/>
+<circle cx="89.2" cy="117.2" r="4.2" fill="#0E1B33"/>
+<circle cx="133.2" cy="117.2" r="4.2" fill="#0E1B33"/>
+<circle cx="90.6" cy="115.6" r="1.3" fill="#F6F8FB"/>
+<circle cx="134.6" cy="115.6" r="1.3" fill="#F6F8FB"/>
+</g>
+<path d="M100 138Q110 146 120 138" fill="none" stroke="#0E1B33" stroke-width="5" stroke-linecap="round"/>
+<ellipse cx="74" cy="134" rx="6.5" ry="4" fill="#C8402A" fill-opacity=".28"/>
+<ellipse cx="146" cy="134" rx="6.5" ry="4" fill="#C8402A" fill-opacity=".28"/>
+</g>
+<rect x="136" y="162" width="62" height="40" rx="3" fill="#F6F8FB" stroke="#0E1B33" stroke-width="2.6"/>
+<path d="M146 176H186M146 186H172" stroke="#0E1B33" stroke-opacity=".4" stroke-width="2"/>
+<g class="clap">
+<rect x="136" y="150" width="62" height="13" rx="2" fill="#0E1B33"/>
+<path d="M146 163L152 150M160 163L166 150M174 163L180 150M188 163L194 150" stroke="#F6F8FB" stroke-width="3.6"/>
+</g>
+<circle cx="138" cy="156" r="2.4" fill="#F2B735" stroke="#0E1B33" stroke-width="1.4"/>
+</g>
+</g></symbol>
   </defs>
 </svg>
 
@@ -725,14 +1288,14 @@ footer a{color:var(--ink)}
 
 <main id="main">
 
-<section class="hero">
+<section class="hero" aria-labelledby="hero-h1">
   <div class="hero-fx" aria-hidden="true">
     <div class="orbs" data-par="lag:.1"><i class="orb o1"></i><i class="orb o2"></i><i class="orb o3"></i><i class="orb o4"></i><i class="orb o5"></i></div>
     <div class="mega" data-par="rise:.12">FreeDuet</div>
   </div>
-  <div class="wrap">
+  <div class="wrap hero-grid">
     <div class="hero-copy">
-      <h1 class="wd" data-d="100" data-i="h1">Tu propio equipo de asistentes de IA.</h1>
+      <h1 class="wd" id="hero-h1" data-d="100" data-i="h1">Tu propio equipo de asistentes de IA.</h1>
       <p class="lead rv" data-d="420" data-i="lead">FreeDuet funciona en tu ordenador. Un asistente gestiona tu correo, otro lee contratos, otro reserva el restaurante. Tú dices lo que necesitas, ellos hacen el trabajo, y <span class="mark">por defecto no envían, no pagan ni borran nada sin tu sí</span>.</p>
       <div class="cta rv" data-d="540">
         <a class="btn btn-main" href="https://github.com/MarcoDeliaBot/freeduet"><svg aria-hidden="true"><use href="#i-gh"/></svg><span data-i="cta1">Consigue FreeDuet en GitHub</span></a>
@@ -744,26 +1307,137 @@ footer a{color:var(--ink)}
         <li><svg aria-hidden="true"><use href="#i-check"/></svg><span data-i="f3">Funciona en tu ordenador</span></li>
       </ul>
     </div>
-    <figure class="appfig rv rv-panel" data-d="420">
-      <div class="appwin" role="group" aria-label="FreeDuet">
-        <div class="aw-bar"><i></i><i></i><i></i><span>FreeDuet</span><em data-i="demoTag">Demostración con ejemplos inventados</em></div>
-        <div class="aw-body">
-          <aside class="aw-side" aria-hidden="true">
-            <p class="aw-sh" data-i="appSide">Tu equipo</p>
-            <ul id="side"><li class="sm on" data-m="iris"><span class="avw"><svg class="av" viewBox="0 0 44 44" aria-hidden="true"><rect width="44" height="44" rx="11" fill="#1B4FD8"/><svg x="10" y="10" width="24" height="24" viewBox="0 0 24 24"><path d="M12 3l2.5 6.5L21 12l-6.5 2.5L12 21l-2.5-6.5L3 12l6.5-2.5z" stroke="#fff" stroke-width="1.9" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></svg><i class="sdot"></i></span><div><b>Iris<span>dirige el equipo</span></b><small>Tu informe de la mañana está listo.</small></div></li><li class="sm wait" data-m="otto"><span class="avw"><svg class="av" viewBox="0 0 44 44" aria-hidden="true"><rect width="44" height="44" rx="11" fill="#E8590C" fill-opacity=".13"/><svg x="10" y="10" width="24" height="24" viewBox="0 0 24 24"><path d="M3 6h18v12H3zM3 7l9 7 9-7" stroke="#E8590C" stroke-width="1.9" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></svg><i class="sdot"></i></span><div><b>Otto<span>correo</span></b><small>Respuesta redactada. Aún sin enviar.</small></div></li><li class="sm" data-m="portia"><span class="avw"><svg class="av" viewBox="0 0 44 44" aria-hidden="true"><rect width="44" height="44" rx="11" fill="#0E7C86" fill-opacity=".13"/><svg x="10" y="10" width="24" height="24" viewBox="0 0 24 24"><path d="M12 4v16M7 20h10M5 8h14M5 8l-2.5 6h5zM19 8l-2.5 6h5z" stroke="#0E7C86" stroke-width="1.9" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></svg><i class="sdot"></i></span><div><b>Portia<span>contratos</span></b><small>La cláusula 7 merece otra mirada.</small></div></li><li class="sm" data-m="penny"><span class="avw"><svg class="av" viewBox="0 0 44 44" aria-hidden="true"><rect width="44" height="44" rx="11" fill="#A87900" fill-opacity=".13"/><svg x="10" y="10" width="24" height="24" viewBox="0 0 24 24"><path d="M7 4h10v16l-2.5-2-2.5 2-2.5-2L7 20zM10 9h4M10 13h4" stroke="#A87900" stroke-width="1.9" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></svg><i class="sdot"></i></span><div><b>Penny<span>facturas</span></b><small>Dos facturas siguen sin pagar.</small></div></li><li class="sm" data-m="jules"><span class="avw"><svg class="av" viewBox="0 0 44 44" aria-hidden="true"><rect width="44" height="44" rx="11" fill="#C2255C" fill-opacity=".13"/><svg x="10" y="10" width="24" height="24" viewBox="0 0 24 24"><path d="M6 16v-5a6 6 0 0112 0v5l2 2H4zM10 21h4" stroke="#C2255C" stroke-width="1.9" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></svg><i class="sdot"></i></span><div><b>Jules<span>recados</span></b><small>Encontré una mesa libre el viernes.</small></div></li><li class="sm" data-m="wren"><span class="avw"><svg class="av" viewBox="0 0 44 44" aria-hidden="true"><rect width="44" height="44" rx="11" fill="#2B8A3E" fill-opacity=".13"/><svg x="10" y="10" width="24" height="24" viewBox="0 0 24 24"><path d="M4 20h16M6 16L16 5l3 3L9 19l-4 1z" stroke="#2B8A3E" stroke-width="1.9" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></svg><i class="sdot"></i></span><div><b>Wren<span>escritura</span></b><small>Tu publicación está lista para leer.</small></div></li><li class="sm" data-m="mark"><span class="avw"><svg class="av" viewBox="0 0 44 44" aria-hidden="true"><rect width="44" height="44" rx="11" fill="#C92A2A" fill-opacity=".13"/><svg x="10" y="10" width="24" height="24" viewBox="0 0 24 24"><path d="M4 10v4h3l7 4V6l-7 4H4zM17.5 9.5a4 4 0 010 5" stroke="#C92A2A" stroke-width="1.9" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></svg><i class="sdot"></i></span><div><b>Mark<span>marketing</span></b><small>Un primer plan para el mes que viene.</small></div></li><li class="sm" data-m="video"><span class="avw"><svg class="av" viewBox="0 0 44 44" aria-hidden="true"><rect width="44" height="44" rx="11" fill="#7950F2" fill-opacity=".13"/><svg x="10" y="10" width="24" height="24" viewBox="0 0 24 24"><path d="M2.5 7h12v10h-12zM14.5 10.5l7-3.5v10l-7-3.5" stroke="#7950F2" stroke-width="1.9" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></svg><i class="sdot"></i></span><div><b>Cam<span>vídeo</span></b><small>Una primera lista de cortes para revisar.</small></div></li><li class="sm" data-m="gus"><span class="avw"><svg class="av" viewBox="0 0 44 44" aria-hidden="true"><rect width="44" height="44" rx="11" fill="#B5540B" fill-opacity=".13"/><svg x="10" y="10" width="24" height="24" viewBox="0 0 24 24"><path d="M14.5 5.5a4 4 0 004 4l-9 9-3-3 9-9z" stroke="#B5540B" stroke-width="1.9" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></svg><i class="sdot"></i></span><div><b>Gus<span>reparaciones</span></b><small>Revisa primero la placa del pestillo.</small></div></li><li class="sm" data-m="basil"><span class="avw"><svg class="av" viewBox="0 0 44 44" aria-hidden="true"><rect width="44" height="44" rx="11" fill="#5C940D" fill-opacity=".13"/><svg x="10" y="10" width="24" height="24" viewBox="0 0 24 24"><path d="M5 19C5 9 11 5 19 5c0 8-4 14-14 14zM5 19l8-8" stroke="#5C940D" stroke-width="1.9" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></svg><i class="sdot"></i></span><div><b>Basil<span>cocina</span></b><small>Tres ideas para cenar esta noche.</small></div></li><li class="sm" data-m="vera"><span class="avw"><svg class="av" viewBox="0 0 44 44" aria-hidden="true"><rect width="44" height="44" rx="11" fill="#5C6B80" fill-opacity=".13"/><svg x="10" y="10" width="24" height="24" viewBox="0 0 24 24"><path d="M10.5 4a6.5 6.5 0 100 13 6.5 6.5 0 000-13zM15.5 15.5L20 20" stroke="#5C6B80" stroke-width="1.9" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></svg><i class="sdot"></i></span><div><b>Vera<span>revisión</span></b><small>Revisado: los totales cuadran.</small></div></li><li class="sm" data-m="leo"><span class="avw"><svg class="av" viewBox="0 0 44 44" aria-hidden="true"><rect width="44" height="44" rx="11" fill="#C46A00" fill-opacity=".13"/><svg x="10" y="10" width="24" height="24" viewBox="0 0 24 24"><path d="M12 4v16M4 12h16" stroke="#C46A00" stroke-width="1.9" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></svg><i class="sdot"></i></span><div><b>Leo<span>construye nuevos asistentes</span></b><small>Nuevo asistente esbozado.</small></div></li></ul>
-          </aside>
-          <div class="aw-main">
-            <div class="aw-head" id="awHead" aria-hidden="true"><svg class="av" viewBox="0 0 44 44" aria-hidden="true"><rect width="44" height="44" rx="11" fill="#1B4FD8"/><svg x="10" y="10" width="24" height="24" viewBox="0 0 24 24"><path d="M12 3l2.5 6.5L21 12l-6.5 2.5L12 21l-2.5-6.5L3 12l6.5-2.5z" stroke="#fff" stroke-width="1.9" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></svg><div><b>Iris</b><small>dirige el equipo</small></div></div>
-            <div class="chat" id="chat" aria-live="polite"><div class="msg me"><div class="bub">Responde al correo del fontanero: el martes a las 9 va bien.</div></div><div class="msg"><svg class="av" viewBox="0 0 44 44" aria-hidden="true"><rect width="44" height="44" rx="11" fill="#1B4FD8"/><svg x="10" y="10" width="24" height="24" viewBox="0 0 24 24"><path d="M12 3l2.5 6.5L21 12l-6.5 2.5L12 21l-2.5-6.5L3 12l6.5-2.5z" stroke="#fff" stroke-width="1.9" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></svg><div class="bub"><span class="who">Iris</span>Me encargo. Esto es trabajo para Otto.</div></div><div class="msg"><svg class="av" viewBox="0 0 44 44" aria-hidden="true"><rect width="44" height="44" rx="11" fill="#E8590C" fill-opacity=".13"/><svg x="10" y="10" width="24" height="24" viewBox="0 0 24 24"><path d="M3 6h18v12H3zM3 7l9 7 9-7" stroke="#E8590C" stroke-width="1.9" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></svg><div class="bub"><span class="who">Otto</span>Encontré su correo y escribí la respuesta. No la envío hasta que me lo digas.</div></div><div class="card-ask" id="ask"><p class="ask-title"><svg aria-hidden="true"><use href="#i-hand"/></svg>Esperando tu sí</p><dl><dt>Acción</dt><dd>Enviar una respuesta</dd><dt>Para</dt><dd>el fontanero (misma conversación)</dd><dt>Texto</dt><dd>Buenos días, el martes a las 9 me va bien. ¡Gracias!</dd></dl><div class="row"><button type="button" class="yes" data-a="ok">Aprobar</button><button type="button" class="no" data-a="stop">No lo hagas</button></div></div></div>
-            <div class="tries">
-              <p data-i="tryP">Prueba otra petición:</p>
-              <div id="tries"><button type="button" data-s="0" aria-pressed="true">Responde al fontanero: el martes va bien</button><button type="button" data-s="1" aria-pressed="false">Reserva una mesa para cuatro el viernes</button><button type="button" data-s="2" aria-pressed="false">¿Qué cocino con espinacas y huevos?</button></div>
-            </div>
-            <div class="aw-field" aria-hidden="true"><span data-i="appPh">Escribe lo que necesitas…</span><i><svg><use href="#b-send"/></svg></i></div>
+    <figure class="stage rv rv-panel" data-d="420">
+      <div class="bigiris" id="bigiris" data-s="idle" aria-hidden="true">
+        <svg viewBox="14 22 192 192" focusable="false">
+          <g class="wob">
+            <use href="#bubble"/>
+            <g class="bf-slot" data-faces><g class="bf bf-idle">
+
+<g class="blink" style="animation-delay:-1.4s">
+<ellipse cx="88" cy="116" rx="8" ry="8.5" fill="#F6F8FB" stroke="#0E1B33" stroke-width="2.6"/>
+<ellipse cx="132" cy="116" rx="8" ry="8.5" fill="#F6F8FB" stroke="#0E1B33" stroke-width="2.6"/>
+<g class="pu"><circle cx="89.2" cy="117.2" r="4.2" fill="#0E1B33"/></g>
+<g class="pu"><circle cx="133.2" cy="117.2" r="4.2" fill="#0E1B33"/></g>
+<g class="pu"><circle cx="90.6" cy="115.6" r="1.3" fill="#F6F8FB"/></g>
+<g class="pu"><circle cx="134.6" cy="115.6" r="1.3" fill="#F6F8FB"/></g>
+</g>
+<path d="M100 138Q110 146 120 138" fill="none" stroke="#0E1B33" stroke-width="5" stroke-linecap="round"/>
+<ellipse cx="74" cy="134" rx="6.5" ry="4" fill="#C8402A" fill-opacity=".28"/>
+<ellipse cx="146" cy="134" rx="6.5" ry="4" fill="#C8402A" fill-opacity=".28"/>
+
+
+
+
+
+</g><g class="bf bf-listen">
+
+<g class="blink" style="animation-delay:-1.6s">
+<ellipse cx="88" cy="116" rx="9.2" ry="9.6" fill="#F6F8FB" stroke="#0E1B33" stroke-width="2.6"/>
+<ellipse cx="132" cy="116" rx="9.2" ry="9.6" fill="#F6F8FB" stroke="#0E1B33" stroke-width="2.6"/>
+<g class="pu"><circle cx="88" cy="116" r="4.6" fill="#0E1B33"/></g>
+<g class="pu"><circle cx="132" cy="116" r="4.6" fill="#0E1B33"/></g>
+<g class="pu"><circle cx="89.6" cy="114.2" r="1.4" fill="#F6F8FB"/></g>
+<g class="pu"><circle cx="133.6" cy="114.2" r="1.4" fill="#F6F8FB"/></g>
+</g>
+<g class="pu"><ellipse cx="110" cy="144" rx="3.6" ry="4.4" fill="#0E1B33"/></g>
+<path d="M30 120A80 80 0 0 1 190 120" fill="none" stroke="#0E1B33" stroke-width="6" stroke-linecap="round"/>
+<rect x="20" y="106" width="16" height="30" rx="7" fill="#1B4FD8" stroke="#0E1B33" stroke-width="2.5"/>
+<rect x="184" y="106" width="16" height="30" rx="7" fill="#1B4FD8" stroke="#0E1B33" stroke-width="2.5"/>
+<circle cx="28" cy="121" r="2.6" fill="#F2B735"/>
+<circle cx="192" cy="121" r="2.6" fill="#F2B735"/>
+</g><g class="bf bf-think">
+
+<path d="M77 102.5H99M121 102.5H143" fill="none" stroke="#0E1B33" stroke-width="4.2" stroke-linecap="round"/>
+<path d="M79.5 117Q88 101 96.5 117Q88 123 79.5 117Z" fill="#F6F8FB" stroke="#0E1B33" stroke-width="2.4" stroke-linejoin="round"/>
+<path d="M123.5 117Q132 101 140.5 117Q132 123 123.5 117Z" fill="#F6F8FB" stroke="#0E1B33" stroke-width="2.4" stroke-linejoin="round"/>
+<g class="pu"><circle cx="90.6" cy="113.6" r="2.9" fill="#0E1B33"/></g>
+<g class="pu"><circle cx="134.6" cy="113.6" r="2.9" fill="#0E1B33"/></g>
+<path d="M104.5 143.8Q110 146.4 115.5 143.8" fill="none" stroke="#0E1B33" stroke-width="4.2" stroke-linecap="round"/>
+</g><g class="bf bf-work">
+
+<ellipse cx="88" cy="117.5" rx="8.2" ry="7.6" fill="#F6F8FB" stroke="#0E1B33" stroke-width="2.6"/>
+<ellipse cx="132" cy="117.5" rx="8.2" ry="7.6" fill="#F6F8FB" stroke="#0E1B33" stroke-width="2.6"/>
+<g class="pu"><circle cx="88" cy="121.4" r="3.8" fill="#0E1B33"/></g>
+<g class="pu"><circle cx="132" cy="121.4" r="3.8" fill="#0E1B33"/></g>
+<path d="M105 142Q110 143.5 115 142" fill="none" stroke="#0E1B33" stroke-width="4" stroke-linecap="round"/>
+</g><g class="bf bf-ask">
+
+<path d="M78 97Q88 90 98 97M122 97Q132 90 142 97" fill="none" stroke="#0E1B33" stroke-width="3.6" stroke-linecap="round"/>
+<ellipse cx="88" cy="117" rx="8.2" ry="8.8" fill="#F6F8FB" stroke="#0E1B33" stroke-width="2.6"/>
+<ellipse cx="132" cy="117" rx="8.2" ry="8.8" fill="#F6F8FB" stroke="#0E1B33" stroke-width="2.6"/>
+<g class="pu"><circle cx="88" cy="115" r="4.4" fill="#0E1B33"/></g>
+<g class="pu"><circle cx="132" cy="115" r="4.4" fill="#0E1B33"/></g>
+<path d="M102 140Q110 147 118 140" fill="none" stroke="#0E1B33" stroke-width="4.8" stroke-linecap="round"/>
+<path d="M170 118Q180 112 183 102" fill="none" stroke="#0E1B33" stroke-width="3.6" stroke-linecap="round"/>
+<circle cx="184" cy="100" r="4.6" fill="#F6F8FB" stroke="#0E1B33" stroke-width="2.2"/>
+</g><g class="bf bf-done">
+
+<path d="M78 122Q88 102 98 122" fill="none" stroke="#0E1B33" stroke-width="6.4" stroke-linecap="round"/>
+<ellipse cx="132" cy="116" rx="7.6" ry="8" fill="#F6F8FB" stroke="#0E1B33" stroke-width="2.6"/>
+<g class="pu"><circle cx="134.2" cy="115.4" r="4" fill="#0E1B33"/></g>
+<g class="pu"><circle cx="135.6" cy="113.8" r="1.3" fill="#F6F8FB"/></g>
+<ellipse cx="72" cy="128" rx="8" ry="4.8" fill="#C8402A" fill-opacity=".3"/>
+<ellipse cx="148" cy="128" rx="8" ry="4.8" fill="#C8402A" fill-opacity=".3"/>
+<path d="M98 137Q110 152 122 137" fill="none" stroke="#0E1B33" stroke-width="5.4" stroke-linecap="round"/>
+</g></g>
+            <circle class="prog" cx="110" cy="120" r="94" fill="none" stroke="#1B4FD8" stroke-width="4" stroke-linecap="round" transform="rotate(-90 110 120)"/>
+          </g>
+          <use href="#m-headset"/>
+        </svg>
+      </div>
+      <div class="stage-plate">
+        <div class="appwin" id="appwin">
+          <div class="aw-bar">
+            <i></i><i></i><i></i>
+            <span class="aw-title">FreeDuet</span>
+            <span class="aw-tag" data-i="demoTag">Demostración con ejemplos inventados</span>
+            <button type="button" class="pause" id="pause" hidden><svg class="ic-pause" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-pause"/></svg><svg class="ic-play" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-play"/></svg><span class="sr" id="lbl-pause" data-i="pauseDemo">Pausar la demo</span><span class="sr" id="lbl-play" hidden data-i="playDemo">Reproducir la demo</span></button>
           </div>
+          <div class="aw-body">
+            <aside class="aw-side" aria-hidden="true">
+              <p class="aw-sh" data-i="appSide">Tu equipo</p>
+              <ul class="roster" id="roster">
+                <li id="r-iris" class="is-on"><span class="ava"><svg class="mas" data-mascot="iris" viewBox="0 0 220 220" aria-hidden="true" focusable="false"><use href="#m-iris"/></svg></span><span class="rn"><b>Iris</b><small data-f="team.iris.0">dirige el equipo</small></span></li>
+                <li id="r-otto"><span class="ava"><svg class="mas" data-mascot="otto" viewBox="0 0 220 220" aria-hidden="true" focusable="false"><use href="#m-otto"/></svg><i class="dot"></i></span><span class="rn"><b>Otto</b><small data-f="team.otto.0">correo</small><small class="st" data-f="lm.otto">Respuesta redactada. Aún sin enviar.</small></span></li>
+                <li id="r-portia"><span class="ava"><svg class="mas" data-mascot="portia" viewBox="0 0 220 220" aria-hidden="true" focusable="false"><use href="#m-portia"/></svg></span><span class="rn"><b>Portia</b><small data-f="team.portia.0">contratos</small></span></li>
+                <li id="r-penny"><span class="ava"><svg class="mas" data-mascot="penny" viewBox="0 0 220 220" aria-hidden="true" focusable="false"><use href="#m-penny"/></svg></span><span class="rn"><b>Penny</b><small data-f="team.penny.0">facturas</small></span></li>
+                <li id="r-jules"><span class="ava"><svg class="mas" data-mascot="jules" viewBox="0 0 220 220" aria-hidden="true" focusable="false"><use href="#m-jules"/></svg></span><span class="rn"><b>Jules</b><small data-f="team.jules.0">recados</small></span></li>
+                <li id="r-wren"><span class="ava"><svg class="mas" data-mascot="wren" viewBox="0 0 220 220" aria-hidden="true" focusable="false"><use href="#m-wren"/></svg></span><span class="rn"><b>Wren</b><small data-f="team.wren.0">escritura</small></span></li>
+                <li id="r-vera"><span class="ava"><svg class="mas" data-mascot="vera" viewBox="0 0 220 220" aria-hidden="true" focusable="false"><use href="#m-vera"/></svg></span><span class="rn"><b>Vera</b><small data-f="team.vera.0">revisión</small></span></li>
+              </ul>
+              <p class="roster-more" data-i="flowMore">…y Gus, Basil, Mark, Cam y Leo</p>
+            </aside>
+            <div class="aw-main">
+              <div class="chat" id="chat" aria-live="polite">
+                <div class="msg me" id="u-a"><div class="bub" data-f="demo.0.me">Responde al correo del fontanero: el martes a las 9 va bien.</div></div>
+                <div class="msg" id="i-a"><svg class="mas" data-mascot="iris" viewBox="0 0 220 220" aria-hidden="true" focusable="false"><use href="#m-iris"/></svg><div class="bub"><span class="who">Iris</span><span class="dots" aria-hidden="true"><i></i><i></i><i></i></span><span class="txt" data-f="demo.0.iris">Me encargo. Esto es trabajo para Otto.</span></div></div>
+                <div class="msg" id="h-a"><svg class="mas av" data-mascot="otto" viewBox="0 0 220 220" aria-hidden="true" focusable="false"><use href="#m-otto"/></svg><div class="bub"><span class="who">Otto</span><span class="dots" aria-hidden="true"><i></i><i></i><i></i></span><span class="txt" data-f="demo.0.line">Encontré su correo y escribí la respuesta. No la envío hasta que me lo digas.</span></div></div>
+                <div class="ask" id="c-a">
+                  <div class="ask-main">
+                    <p class="ask-t"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="#i-hand"/></svg><span class="t-w" data-i="ask">Esperando tu sí</span><span class="t-ok" hidden data-f="demo.0.ok">Enviada. Una respuesta, en la misma conversación. No toqué nada más.</span><span class="t-no" hidden data-f="demo.0.stop">No enviada. El borrador queda guardado por si cambias de idea.</span></p>
+                    <dl><dt data-f="demo.0.card.0.0">Acción</dt><dd data-f="demo.0.card.0.1">Enviar una respuesta</dd><dt data-f="demo.0.card.1.0">Para</dt><dd data-f="demo.0.card.1.1">el fontanero (misma conversación)</dd><dt data-f="demo.0.card.2.0">Texto</dt><dd data-f="demo.0.card.2.1">Buenos días, el martes a las 9 me va bien. ¡Gracias!</dd></dl>
+                  </div>
+                  <div class="ask-btns" aria-hidden="true"><span class="sim yes"><svg class="ck" viewBox="0 0 24 24"><use href="#i-check"/></svg><span data-i="yes">Aprobar</span></span><span class="sim" data-i="no">No lo hagas</span></div>
+                </div>
+                <div class="msg me" id="u-b" hidden><div class="bub" data-f="demo.1.me">Reserva una mesa para cuatro el viernes por la noche, en un sitio con pizza.</div></div>
+                <div class="msg" id="i-b" hidden><svg class="mas" data-mascot="iris" viewBox="0 0 220 220" aria-hidden="true" focusable="false"><use href="#m-iris"/></svg><div class="bub"><span class="who">Iris</span><span class="dots" aria-hidden="true"><i></i><i></i><i></i></span><span class="txt" data-f="demo.1.iris">Entendido. De las reservas se ocupa Jules.</span></div></div>
+                <div class="msg" id="h-b" hidden><svg class="mas av" data-mascot="jules" viewBox="0 0 220 220" aria-hidden="true" focusable="false"><use href="#m-jules"/></svg><div class="bub"><span class="who">Jules</span><span class="dots" aria-hidden="true"><i></i><i></i><i></i></span><span class="txt" data-f="demo.1.line">Miré en mi propio navegador y encontré una mesa libre. Todavía no he reservado nada.</span></div></div>
+                <div class="ask" id="c-b" hidden>
+                  <div class="ask-main">
+                    <p class="ask-t"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="#i-hand"/></svg><span class="t-w" data-i="ask">Esperando tu sí</span><span class="t-ok" hidden data-f="demo.1.ok">Reservado para el viernes a las 20:00, 4 personas. La confirmación está en tu correo.</span><span class="t-no" hidden data-f="demo.1.stop">Nada reservado. Dime si quieres otros sitios.</span></p>
+                    <dl><dt data-f="demo.1.card.0.0">Acción</dt><dd data-f="demo.1.card.0.1">Reservar una mesa</dd><dt data-f="demo.1.card.1.0">Dónde</dt><dd data-f="demo.1.card.1.1">Pizzería Ejemplo</dd><dt data-f="demo.1.card.2.0">Cuándo</dt><dd data-f="demo.1.card.2.1">viernes, 20:00, 4 personas</dd></dl>
+                  </div>
+                  <div class="ask-btns" aria-hidden="true"><span class="sim yes"><svg class="ck" viewBox="0 0 24 24"><use href="#i-check"/></svg><span data-i="yes">Aprobar</span></span><span class="sim" data-i="no">No lo hagas</span></div>
+                </div>
+              </div>
+              <div class="field" id="field" aria-hidden="true"><span class="typed" id="typed"></span><span class="ph" id="ph" data-i="appPh">Escribe lo que necesitas…</span><span class="send"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="#b-send"/></svg></span></div>
+            </div>
+          </div>
+          <div class="ptr" id="ptr" aria-hidden="true"><svg viewBox="0 0 24 24" focusable="false"><use href="#i-cursor"/></svg></div>
         </div>
       </div>
-      <figcaption class="aw-cap" data-i="appCap">Un ejemplo ilustrado, no la grabación de una sesión real. Todos los nombres y mensajes son inventados.</figcaption>
+      <figcaption class="cap" data-i="appCap">Un ejemplo ilustrado, no la grabación de una sesión real. Todos los nombres y mensajes son inventados.</figcaption>
     </figure>
   </div>
 </section>
@@ -820,95 +1494,189 @@ footer a{color:var(--ink)}
       <h2 class="wd" data-i="t_h">Te presentamos al equipo. Cada uno tiene un solo trabajo.</h2>
       <p class="lead rv" data-i="t_p">¿Por qué no un único asistente que lo haga todo? Por la misma razón por la que un equipo de fútbol tiene portero: quien hace una sola cosa todo el día acaba haciéndola muy bien.</p>
     </div>
-    <div class="team" id="teamGrid"><article class="mem boss rv" style="--mc:#1B4FD8"><svg class="av" viewBox="0 0 44 44" aria-hidden="true"><rect width="44" height="44" rx="11" fill="#1B4FD8"/><svg x="10" y="10" width="24" height="24" viewBox="0 0 24 24"><path d="M12 3l2.5 6.5L21 12l-6.5 2.5L12 21l-2.5-6.5L3 12l6.5-2.5z" stroke="#fff" stroke-width="1.9" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></svg><h3>Iris<span>dirige el equipo</span></h3><p>Le dices a Iris lo que necesitas. Ella se lo pasa al asistente adecuado, y la respuesta vuelve a través de ella.</p><q>Ocúpate de todo lo que ha llegado esta mañana.</q></article><article class="mem rv" style="--mc:#E8590C"><svg class="av" viewBox="0 0 44 44" aria-hidden="true"><rect width="44" height="44" rx="11" fill="#E8590C" fill-opacity=".13"/><svg x="10" y="10" width="24" height="24" viewBox="0 0 24 24"><path d="M3 6h18v12H3zM3 7l9 7 9-7" stroke="#E8590C" stroke-width="1.9" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></svg><h3>Otto<span>correo</span></h3><p>Lee tu correo, señala lo que importa ahora y lo que puede esperar, y escribe las respuestas para que las revises.</p><q>Ordena mi correo y prepara las respuestas importantes.</q></article><article class="mem rv" style="--mc:#0E7C86"><svg class="av" viewBox="0 0 44 44" aria-hidden="true"><rect width="44" height="44" rx="11" fill="#0E7C86" fill-opacity=".13"/><svg x="10" y="10" width="24" height="24" viewBox="0 0 24 24"><path d="M12 4v16M7 20h10M5 8h14M5 8l-2.5 6h5zM19 8l-2.5 6h5z" stroke="#0E7C86" stroke-width="1.9" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></svg><h3>Portia<span>contratos</span></h3><p>Lee la letra pequeña y te enseña dónde están las trampas antes de que firmes.</p><q>¿Puedo firmar este contrato de alquiler?</q></article><article class="mem rv" style="--mc:#A87900"><svg class="av" viewBox="0 0 44 44" aria-hidden="true"><rect width="44" height="44" rx="11" fill="#A87900" fill-opacity=".13"/><svg x="10" y="10" width="24" height="24" viewBox="0 0 24 24"><path d="M7 4h10v16l-2.5-2-2.5 2-2.5-2L7 20zM10 9h4M10 13h4" stroke="#A87900" stroke-width="1.9" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></svg><h3>Penny<span>facturas</span></h3><p>Prepara las facturas y lleva la lista de quién te debe dinero todavía.</p><q>Factura a Acme la semana pasada y dime quién no ha pagado.</q></article><article class="mem rv" style="--mc:#C2255C"><svg class="av" viewBox="0 0 44 44" aria-hidden="true"><rect width="44" height="44" rx="11" fill="#C2255C" fill-opacity=".13"/><svg x="10" y="10" width="24" height="24" viewBox="0 0 24 24"><path d="M6 16v-5a6 6 0 0112 0v5l2 2H4zM10 21h4" stroke="#C2255C" stroke-width="1.9" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></svg><h3>Jules<span>recados</span></h3><p>Encuentra vuelos, regalos y mesas libres en su propio navegador, y reserva cuando dices que sí.</p><q>Reserva una mesa para cuatro el viernes.</q></article><article class="mem rv" style="--mc:#2B8A3E"><svg class="av" viewBox="0 0 44 44" aria-hidden="true"><rect width="44" height="44" rx="11" fill="#2B8A3E" fill-opacity=".13"/><svg x="10" y="10" width="24" height="24" viewBox="0 0 24 24"><path d="M4 20h16M6 16L16 5l3 3L9 19l-4 1z" stroke="#2B8A3E" stroke-width="1.9" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></svg><h3>Wren<span>escritura</span></h3><p>Convierte tus notas en publicaciones y correos que suenan a ti, no a un robot.</p><q>Convierte esta nota de voz en una publicación con mi estilo.</q></article><article class="mem rv" style="--mc:#C92A2A"><svg class="av" viewBox="0 0 44 44" aria-hidden="true"><rect width="44" height="44" rx="11" fill="#C92A2A" fill-opacity=".13"/><svg x="10" y="10" width="24" height="24" viewBox="0 0 24 24"><path d="M4 10v4h3l7 4V6l-7 4H4zM17.5 9.5a4 4 0 010 5" stroke="#C92A2A" stroke-width="1.9" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></svg><h3>Mark<span>marketing</span></h3><p>Prepara tu plan de marketing, tu plan de lanzamiento y la estrategia de canales, y revisa tu web, el SEO y los anuncios. Por defecto, no publica ni gasta nada sin tu sí. Todavía sin probar en uso real.</p><q>Hazme un plan de marketing a tres meses para mi tienda.</q></article><article class="mem rv" style="--mc:#7950F2"><svg class="av" viewBox="0 0 44 44" aria-hidden="true"><rect width="44" height="44" rx="11" fill="#7950F2" fill-opacity=".13"/><svg x="10" y="10" width="24" height="24" viewBox="0 0 24 24"><path d="M2.5 7h12v10h-12zM14.5 10.5l7-3.5v10l-7-3.5" stroke="#7950F2" stroke-width="1.9" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></svg><h3>Cam<span>vídeo</span></h3><p>Corta, subtitula y pone música y sonido a vídeos cortos con tus grabaciones o un guion, en formato horizontal, vertical y cuadrado. Nunca publica ni sube un vídeo. Todavía sin probar en uso real.</p><q>Hazme un vídeo vertical de 30 segundos con subtítulos a partir de este guion.</q></article><article class="mem rv" style="--mc:#B5540B"><svg class="av" viewBox="0 0 44 44" aria-hidden="true"><rect width="44" height="44" rx="11" fill="#B5540B" fill-opacity=".13"/><svg x="10" y="10" width="24" height="24" viewBox="0 0 24 24"><path d="M14.5 5.5a4 4 0 004 4l-9 9-3-3 9-9z" stroke="#B5540B" stroke-width="1.9" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></svg><h3>Gus<span>reparaciones</span></h3><p>Envía una foto de lo que se rompió. Gus te dice cómo arreglarlo con seguridad, o a quién llamar.</p><q>La puerta no cierra. Aquí va la foto.</q></article><article class="mem rv" style="--mc:#5C940D"><svg class="av" viewBox="0 0 44 44" aria-hidden="true"><rect width="44" height="44" rx="11" fill="#5C940D" fill-opacity=".13"/><svg x="10" y="10" width="24" height="24" viewBox="0 0 24 24"><path d="M5 19C5 9 11 5 19 5c0 8-4 14-14 14zM5 19l8-8" stroke="#5C940D" stroke-width="1.9" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></svg><h3>Basil<span>cocina</span></h3><p>Dile a Basil qué hay en la nevera y te da tres platos para esta noche.</p><q>¿Qué puedo cocinar con espinacas y huevos?</q></article><article class="mem rv" style="--mc:#5C6B80"><svg class="av" viewBox="0 0 44 44" aria-hidden="true"><rect width="44" height="44" rx="11" fill="#5C6B80" fill-opacity=".13"/><svg x="10" y="10" width="24" height="24" viewBox="0 0 24 24"><path d="M10.5 4a6.5 6.5 0 100 13 6.5 6.5 0 000-13zM15.5 15.5L20 20" stroke="#5C6B80" stroke-width="1.9" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></svg><h3>Vera<span>revisión</span></h3><p>Trabaja entre bastidores. Repite las sumas y vuelve a abrir los precios antes de que el trabajo te llegue.</p><q>(Iris le envía el trabajo importante.)</q></article><article class="mem rv" style="--mc:#C46A00"><svg class="av" viewBox="0 0 44 44" aria-hidden="true"><rect width="44" height="44" rx="11" fill="#C46A00" fill-opacity=".13"/><svg x="10" y="10" width="24" height="24" viewBox="0 0 24 24"><path d="M12 4v16M4 12h16" stroke="#C46A00" stroke-width="1.9" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></svg><h3>Leo<span>construye nuevos asistentes</span></h3><p>¿Necesitas un asistente que aún no existe? Leo lo diseña. Probar cada miembro nuevo antes de darlo por listo está previsto.</p><q>Necesito a alguien que vigile la renovación de mis dominios.</q></article></div>
+    <div class="team" id="teamGrid"><article class="mem boss rv" style="--mc:#1B4FD8"><svg class="mas" viewBox="0 0 220 220" aria-hidden="true" focusable="false"><use href="#m-iris"/></svg><h3>Iris<span>dirige el equipo</span></h3><p>Le dices a Iris lo que necesitas. Ella se lo pasa al asistente adecuado, y la respuesta vuelve a través de ella.</p><q>Ocúpate de todo lo que ha llegado esta mañana.</q></article><article class="mem rv" style="--mc:#E8590C"><svg class="mas" viewBox="0 0 220 220" aria-hidden="true" focusable="false"><use href="#m-otto"/></svg><h3>Otto<span>correo</span></h3><p>Lee tu correo, señala lo que importa ahora y lo que puede esperar, y escribe las respuestas para que las revises.</p><q>Ordena mi correo y prepara las respuestas importantes.</q></article><article class="mem rv" style="--mc:#0E7C86"><svg class="mas" viewBox="0 0 220 220" aria-hidden="true" focusable="false"><use href="#m-portia"/></svg><h3>Portia<span>contratos</span></h3><p>Lee la letra pequeña y te enseña dónde están las trampas antes de que firmes.</p><q>¿Puedo firmar este contrato de alquiler?</q></article><article class="mem rv" style="--mc:#A87900"><svg class="mas" viewBox="0 0 220 220" aria-hidden="true" focusable="false"><use href="#m-penny"/></svg><h3>Penny<span>facturas</span></h3><p>Prepara las facturas y lleva la lista de quién te debe dinero todavía.</p><q>Factura a Acme la semana pasada y dime quién no ha pagado.</q></article><article class="mem rv" style="--mc:#C2255C"><svg class="mas" viewBox="0 0 220 220" aria-hidden="true" focusable="false"><use href="#m-jules"/></svg><h3>Jules<span>recados</span></h3><p>Encuentra vuelos, regalos y mesas libres en su propio navegador, y reserva cuando dices que sí.</p><q>Reserva una mesa para cuatro el viernes.</q></article><article class="mem rv" style="--mc:#2B8A3E"><svg class="mas" viewBox="0 0 220 220" aria-hidden="true" focusable="false"><use href="#m-wren"/></svg><h3>Wren<span>escritura</span></h3><p>Convierte tus notas en publicaciones y correos que suenan a ti, no a un robot.</p><q>Convierte esta nota de voz en una publicación con mi estilo.</q></article><article class="mem rv" style="--mc:#C92A2A"><svg class="mas" viewBox="0 0 220 220" aria-hidden="true" focusable="false"><use href="#m-mark"/></svg><h3>Mark<span>marketing</span></h3><p>Prepara tu plan de marketing, tu plan de lanzamiento y la estrategia de canales, y revisa tu web, el SEO y los anuncios. Por defecto, no publica ni gasta nada sin tu sí. Todavía sin probar en uso real.</p><q>Hazme un plan de marketing a tres meses para mi tienda.</q></article><article class="mem rv" style="--mc:#7950F2"><svg class="mas" viewBox="0 0 220 220" aria-hidden="true" focusable="false"><use href="#m-video"/></svg><h3>Cam<span>vídeo</span></h3><p>Corta, subtitula y pone música y sonido a vídeos cortos con tus grabaciones o un guion, en formato horizontal, vertical y cuadrado. Nunca publica ni sube un vídeo. Todavía sin probar en uso real.</p><q>Hazme un vídeo vertical de 30 segundos con subtítulos a partir de este guion.</q></article><article class="mem rv" style="--mc:#B5540B"><svg class="mas" viewBox="0 0 220 220" aria-hidden="true" focusable="false"><use href="#m-gus"/></svg><h3>Gus<span>reparaciones</span></h3><p>Envía una foto de lo que se rompió. Gus te dice cómo arreglarlo con seguridad, o a quién llamar.</p><q>La puerta no cierra. Aquí va la foto.</q></article><article class="mem rv" style="--mc:#5C940D"><svg class="mas" viewBox="0 0 220 220" aria-hidden="true" focusable="false"><use href="#m-basil"/></svg><h3>Basil<span>cocina</span></h3><p>Dile a Basil qué hay en la nevera y te da tres platos para esta noche.</p><q>¿Qué puedo cocinar con espinacas y huevos?</q></article><article class="mem rv" style="--mc:#5C6B80"><svg class="mas" viewBox="0 0 220 220" aria-hidden="true" focusable="false"><use href="#m-vera"/></svg><h3>Vera<span>revisión</span></h3><p>Trabaja entre bastidores. Repite las sumas y vuelve a abrir los precios antes de que el trabajo te llegue.</p><q>(Iris le envía el trabajo importante.)</q></article><article class="mem rv" style="--mc:#C46A00"><svg class="mas" viewBox="0 0 220 220" aria-hidden="true" focusable="false"><use href="#m-leo"/></svg><h3>Leo<span>construye nuevos asistentes</span></h3><p>¿Necesitas un asistente que aún no existe? Leo lo diseña. Probar cada miembro nuevo antes de darlo por listo está previsto.</p><q>Necesito a alguien que vigile la renovación de mis dominios.</q></article></div>
     <p class="soft team-note rv" data-i="t_note">Este es el equipo inicial, no un límite. Puedes entrenar a los tuyos para el trabajo exacto que necesitas, y con el tiempo añadimos nuevos miembros ya listos. Cambiar el nombre de los miembros y su forma de hablar está construido, pero sin probar en uso real.</p>
   </div>
 </section>
 
-<section class="sec alt" id="how">
-  <div class="wrap">
-    <div class="head">
-      <h2 class="wd" data-i="h_h">Qué pasa después de pulsar Intro</h2>
-      <p class="lead rv" data-i="h_p">Ni magia ni secretos. Cinco pasos, siempre los mismos, para que siempre sepas quién hace qué.</p>
-    </div>
-    <div class="split">
-      <ol class="steps">
-        <li class="rv"><div><h3 data-i="s1h">Escribes lo que necesitas</h3><p data-i="s1p">Con tus palabras y en tu idioma, como un mensaje a un amigo.</p></div></li>
-        <li class="rv"><div><h3 data-i="s2h">Iris elige al asistente adecuado</h3><p data-i="s2p">Lee tu petición y la pasa al especialista de ese trabajo.</p></div></li>
-        <li class="rv"><div><h3 data-i="s3h">El asistente trabaja en su escritorio</h3><p data-i="s3p">Usa su propio navegador para buscar, leer y preparar. Lo que lee lo trata como información, nunca como una orden.</p></div></li>
-        <li class="rv"><div><h3 data-i="s4h">Una tarjeta pide tu sí</h3><p data-i="s4p">Por defecto, si hace falta un botón grande (enviar, pagar, firmar, reservar, borrar), todo se detiene y te espera.</p></div></li>
-        <li class="rv"><div><h3 data-i="s5h">Recibes un informe corto</h3><p data-i="s5p">Qué se hizo, qué no y por qué, y cuál es el siguiente paso. Sin muros de texto.</p></div></li>
-      </ol>
-      <svg class="flow rv rv-panel" viewBox="0 0 520 330" role="img" aria-labelledby="flowT"><title id="flowT" data-i="flowAlt">Tú hablas con Iris, Iris pasa el trabajo a los especialistas, Vera lo revisa, la respuesta vuelve a ti</title>
-        <path class="wire" d="M260 58v40"/><path class="wire" d="M260 146v40M70 186h380M70 186v34M165 186v34M260 186v34M355 186v34M450 186v34"/><path class="wire" d="M330 122h60"/>
-        <rect x="205" y="18" width="110" height="40" rx="20" fill="#0E1B33"/><text x="260" y="44" text-anchor="middle" font-size="16" style="fill:#fff" data-i="you">Tú</text>
-        <rect x="190" y="98" width="140" height="48" rx="10" fill="#1B4FD8"/><text x="260" y="128" text-anchor="middle" font-size="17" style="fill:#fff">Iris</text>
-        <rect x="390" y="100" width="100" height="44" rx="10" fill="#fff" stroke="#DDE3EC"/><circle cx="408" cy="122" r="5" fill="#5C6B80"/><text x="420" y="127" font-size="15">Vera</text>
-        <rect x="26" y="220" width="88" height="44" rx="10" fill="#fff" stroke="#DDE3EC"/><circle cx="42" cy="242" r="5" fill="#E8590C"/><text x="54" y="247" font-size="15">Otto</text><rect x="121" y="220" width="88" height="44" rx="10" fill="#fff" stroke="#DDE3EC"/><circle cx="137" cy="242" r="5" fill="#0E7C86"/><text x="149" y="247" font-size="15">Portia</text><rect x="216" y="220" width="88" height="44" rx="10" fill="#fff" stroke="#DDE3EC"/><circle cx="232" cy="242" r="5" fill="#C99100"/><text x="244" y="247" font-size="15">Penny</text><rect x="311" y="220" width="88" height="44" rx="10" fill="#fff" stroke="#DDE3EC"/><circle cx="327" cy="242" r="5" fill="#C2255C"/><text x="339" y="247" font-size="15">Jules</text><rect x="406" y="220" width="88" height="44" rx="10" fill="#fff" stroke="#DDE3EC"/><circle cx="422" cy="242" r="5" fill="#2B8A3E"/><text x="434" y="247" font-size="15">Wren</text>
-        <text x="260" y="302" text-anchor="middle" font-size="14" style="fill:#52607A;font-weight:400" data-i="flowMore">…y Gus, Basil, Mark, Cam y Leo</text>
-      </svg>
+<section class="sec alt how" id="how" aria-labelledby="how-h">
+  <div class="track">
+    <span class="jump" id="how-step-1" style="--n:0" aria-hidden="true"></span>
+    <span class="jump" id="how-step-2" style="--n:1" aria-hidden="true"></span>
+    <span class="jump" id="how-step-3" style="--n:2" aria-hidden="true"></span>
+    <span class="jump" id="how-step-4" style="--n:3" aria-hidden="true"></span>
+    <span class="jump" id="how-step-5" style="--n:4" aria-hidden="true"></span>
+    <div class="pin">
+      <div class="wrap pin-grid">
+        <nav class="rail">
+          <span class="rail-line" aria-hidden="true"></span>
+          <a href="#how-step-1" style="--k:0"><span class="sr" data-i="s1h">Escribes lo que necesitas</span></a>
+          <a href="#how-step-2" style="--k:1"><span class="sr" data-i="s2h">Iris elige al asistente adecuado</span></a>
+          <a href="#how-step-3" style="--k:2"><span class="sr" data-i="s3h">El asistente trabaja en su escritorio</span></a>
+          <a href="#how-step-4" style="--k:3"><span class="sr" data-i="s4h">Una tarjeta pide tu sí</span></a>
+          <a href="#how-step-5" style="--k:4"><span class="sr" data-i="s5h">Recibes un informe corto</span></a>
+        </nav>
+        <div class="how-copy">
+          <h2 class="wd" id="how-h" data-i="h_h">Qué pasa después de pulsar Intro</h2>
+          <p class="lead" data-i="h_p">Ni magia ni secretos. Cinco pasos, siempre los mismos, para que siempre sepas quién hace qué.</p>
+          <ol class="steps">
+            <li style="--i:0"><div class="sbody"><svg class="frame" viewBox="0 0 460 340" aria-hidden="true" focusable="false" style="--s:0"><use href="#how-art"/></svg><h3 data-i="s1h">Escribes lo que necesitas</h3><p data-i="s1p">Con tus palabras y en tu idioma, como un mensaje a un amigo.</p></div></li>
+            <li style="--i:1"><div class="sbody"><svg class="frame" viewBox="0 0 460 340" aria-hidden="true" focusable="false" style="--s:1"><use href="#how-art"/></svg><h3 data-i="s2h">Iris elige al asistente adecuado</h3><p data-i="s2p">Lee tu petición y la pasa al especialista de ese trabajo.</p></div></li>
+            <li style="--i:2"><div class="sbody"><svg class="frame" viewBox="0 0 460 340" aria-hidden="true" focusable="false" style="--s:2"><use href="#how-art"/></svg><h3 data-i="s3h">El asistente trabaja en su escritorio</h3><p data-i="s3p">Usa su propio navegador para buscar, leer y preparar. Lo que lee lo trata como información, nunca como una orden.</p></div></li>
+            <li style="--i:3"><div class="sbody"><svg class="frame" viewBox="0 0 460 340" aria-hidden="true" focusable="false" style="--s:3"><use href="#how-art"/></svg><h3 data-i="s4h">Una tarjeta pide tu sí</h3><p data-i="s4p">Por defecto, si hace falta un botón grande (enviar, pagar, firmar, reservar, borrar), todo se detiene y te espera.</p></div></li>
+            <li style="--i:4"><div class="sbody"><svg class="frame" viewBox="0 0 460 340" aria-hidden="true" focusable="false" style="--s:4"><use href="#how-art"/></svg><h3 data-i="s5h">Recibes un informe corto</h3><p data-i="s5p">Qué se hizo, qué no y por qué, y cuál es el siguiente paso. Sin muros de texto.</p></div></li>
+          </ol>
+        </div>
+        <div class="stage-wrap"><svg class="stage-svg" viewBox="0 0 460 340" aria-hidden="true" focusable="false"><use href="#how-art"/></svg></div>
+      </div>
     </div>
   </div>
 </section>
 
-<section class="sec" id="features">
+<section class="sec" id="features" aria-labelledby="ft-h">
   <div class="wrap">
     <div class="head">
-      <h2 class="wd" data-i="ft_h">Seis cosas que conviene saber</h2>
+      <h2 class="wd" id="ft-h" data-i="ft_h">Seis cosas que conviene saber</h2>
       <p class="lead rv" data-i="ft_p">Cada dibujo muestra una parte real de FreeDuet. Los nombres y mensajes que aparecen son inventados.</p>
     </div>
-    <div class="fgrid">
-      <article class="fc rv">
-        <div class="mini m-br" aria-hidden="true">
-          <div class="bw"><div class="bwb"><i></i><i></i><i></i><span class="bt" data-i="you">Tú</span></div><div class="bwc"><span class="ln"></span><span class="ln"></span><span class="ln sh"></span></div></div>
-          <div class="bw on"><div class="bwb"><i></i><i></i><i></i><span class="bt">Jules</span></div><div class="bwc"><span class="ln"></span><span class="ln sh"></span><span class="ln go"></span>
-            <svg class="cur" viewBox="0 0 24 24"><path d="M3 2l15 9-6.500 1.800 4 6.700-3 1.700-4-6.800L3 19z" fill="#0E1B33" stroke="#fff" stroke-width="1.500" stroke-linejoin="round"/></svg></div></div>
+    <div class="bento">
+      <article class="pane p-approval rv" aria-labelledby="h-approval">
+        <div class="phead"><span class="tag tag-ok" data-i="tagRel">Publicado en v0.2.1</span><h3 id="h-approval" data-i="fe2h">Cinco botones esperan tu sí</h3></div>
+        <p data-i="bA_p">Por defecto preguntan antes de enviar, pagar, firmar, reservar o borrar cualquier cosa.</p>
+        <div class="mail" id="mail">
+          <b data-i="apTitle">¿Enviar este correo?</b>
+          <dl><dt data-f="demo.0.card.1.0">Para</dt><dd data-f="demo.0.card.1.1">el fontanero (misma conversación)</dd><dt data-f="demo.0.card.2.0">Texto</dt><dd data-f="demo.0.card.2.1">Buenos días, el martes a las 9 me va bien. ¡Gracias!</dd></dl>
+          <div class="mail-actions" id="mail-actions">
+            <button class="btn btn-yes" type="button" data-a="ok"><span data-i="yes">Aprobar</span></button>
+            <button class="btn" type="button" data-a="stop"><span data-i="no">No lo hagas</span></button>
+          </div>
+          <p class="state" role="status"><span class="st-w" data-i="ask">Esperando tu sí</span><span class="st-ok" hidden data-f="demo.0.ok">Enviada. Una respuesta, en la misma conversación. No toqué nada más.</span><span class="st-no" hidden data-f="demo.0.stop">No enviada. El borrador queda guardado por si cambias de idea.</span></p>
+          <button class="btn reset" type="button" id="mail-reset" hidden data-i="again">Empezar de nuevo</button>
         </div>
-        <h3 data-i="fe1h">Su propio escritorio y su propio navegador</h3>
-        <p data-i="fe1p">Cada asistente trabaja en un navegador aparte, lejos del tuyo. Puede buscar información, rellenar formularios y preparar borradores mientras tú sigues con tu día.</p>
+        <ul class="acts">
+          <li class="current" id="act-send"><svg aria-hidden="true"><use href="#b-send"/></svg><span data-i="b1">Enviar</span></li>
+          <li><svg aria-hidden="true"><use href="#b-pay"/></svg><span data-i="b2">Pagar</span></li>
+          <li><svg aria-hidden="true"><use href="#b-sign"/></svg><span data-i="b3">Firmar</span></li>
+          <li><svg aria-hidden="true"><use href="#b-book"/></svg><span data-i="b4">Reservar</span></li>
+          <li><svg aria-hidden="true"><use href="#b-del"/></svg><span data-i="b5">Borrar</span></li>
+        </ul>
+        <p class="caption" data-i="bA_cap">Demo con ejemplos inventados. La ejecución en vivo del 15 de noviembre de 2026 incluyó 38 casos de seguridad, que intentan hacer que un miembro rompa una regla.</p>
       </article>
-      <article class="fc rv">
-        <div class="mini m-ap" aria-hidden="true">
-          <div class="five"><svg class="hot"><use href="#b-send"/></svg><svg><use href="#b-pay"/></svg><svg><use href="#b-sign"/></svg><svg><use href="#b-book"/></svg><svg><use href="#b-del"/></svg></div>
-          <div class="apc"><b data-i="apTitle">¿Enviar este correo?</b><span class="ln"></span><span class="ln sh"></span><div class="row"><span class="y" data-i="yes">Aprobar</span><span class="n" data-i="no">No lo hagas</span></div></div>
-        </div>
-        <h3 data-i="fe2h">Cinco botones esperan tu sí</h3>
-        <p data-i="fe2p">Por defecto, enviar, pagar, firmar, reservar y borrar esperan tu Aprobar. Los bloquea el propio programa. Un interruptor que quita esa espera para un solo miembro, y que solo tú puedes activar, está construido, pero sin probar en uso real.</p>
+
+      <article class="pane p-roster rv" aria-labelledby="h-roster">
+        <div class="phead"><span class="tag tag-ok" data-i="tagRel">Publicado en v0.2.1</span><h3 id="h-roster" data-i="bR_h">Doce miembros, una tarea cada uno</h3></div>
+        <ul class="roster-b">
+          <li><svg class="mas av" data-mascot="iris" viewBox="0 0 220 220" aria-hidden="true" focusable="false"><use href="#m-iris"/></svg><b>Iris</b><small data-f="team.iris.0">dirige el equipo</small></li>
+          <li><svg class="mas av" data-mascot="leo" viewBox="0 0 220 220" aria-hidden="true" focusable="false"><use href="#m-leo"/></svg><b>Leo</b><small data-f="team.leo.0">construye nuevos asistentes</small></li>
+          <li><svg class="mas av" data-mascot="otto" viewBox="0 0 220 220" aria-hidden="true" focusable="false"><use href="#m-otto"/></svg><b>Otto</b><small data-f="team.otto.0">correo</small></li>
+          <li><svg class="mas av" data-mascot="portia" viewBox="0 0 220 220" aria-hidden="true" focusable="false"><use href="#m-portia"/></svg><b>Portia</b><small data-f="team.portia.0">contratos</small></li>
+          <li><svg class="mas av" data-mascot="penny" viewBox="0 0 220 220" aria-hidden="true" focusable="false"><use href="#m-penny"/></svg><b>Penny</b><small data-f="team.penny.0">facturas</small></li>
+          <li><svg class="mas av" data-mascot="jules" viewBox="0 0 220 220" aria-hidden="true" focusable="false"><use href="#m-jules"/></svg><b>Jules</b><small data-f="team.jules.0">recados</small></li>
+          <li><svg class="mas av" data-mascot="wren" viewBox="0 0 220 220" aria-hidden="true" focusable="false"><use href="#m-wren"/></svg><b>Wren</b><small data-f="team.wren.0">escritura</small></li>
+          <li><svg class="mas av" data-mascot="gus" viewBox="0 0 220 220" aria-hidden="true" focusable="false"><use href="#m-gus"/></svg><b>Gus</b><small data-f="team.gus.0">reparaciones</small></li>
+          <li><svg class="mas av" data-mascot="basil" viewBox="0 0 220 220" aria-hidden="true" focusable="false"><use href="#m-basil"/></svg><b>Basil</b><small data-f="team.basil.0">cocina</small></li>
+          <li><svg class="mas av" data-mascot="vera" viewBox="0 0 220 220" aria-hidden="true" focusable="false"><use href="#m-vera"/></svg><b>Vera</b><small data-f="team.vera.0">revisión</small></li>
+          <li><svg class="mas av" data-mascot="mark" viewBox="0 0 220 220" aria-hidden="true" focusable="false"><use href="#m-mark"/></svg><b>Mark</b><small data-f="team.mark.0">marketing</small></li>
+          <li><svg class="mas av" data-mascot="video" viewBox="0 0 220 220" aria-hidden="true" focusable="false"><use href="#m-video"/></svg><b>Cam</b><small data-f="team.video.0">vídeo</small></li>
+        </ul>
+        <p class="caption" data-i="bR_cap">Mark y Cam se añadieron después de v0.1. Sus casos se ejecutaron en las evaluaciones en vivo del 15 de noviembre de 2026. Una ejecución completa de certificación no se ha repetido en esta versión.</p>
       </article>
-      <article class="fc rv">
-        <div class="mini m-rt" aria-hidden="true">
-          <div class="wk" id="wk"><span></span><span class="d">L</span><span class="d">M</span><span class="d">X</span><span class="d">J</span><span class="d">V</span><span class="d">S</span><span class="d">D</span>
-            <span class="tm">08:30</span><i class="a"></i><i class="a"></i><i class="a"></i><i class="a"></i><i class="a"></i><i class="a"></i><i class="a"></i>
-            <span class="tm">17:00</span><i></i><i></i><i></i><i></i><i class="b"></i><i></i><i></i></div>
-          <ul class="lg"><li><i class="a"></i><span data-i="rt1">Resumen de la mañana</span></li><li><i class="b"></i><span data-i="rt2">Revisión semanal</span></li></ul>
-        </div>
-        <h3 data-i="fe3h">Rutinas con horario</h3>
+
+      <article class="pane p-handoff rv" aria-labelledby="h-handoff">
+        <div class="phead"><span class="tag tag-wait" data-i="tagWait">Construido, aún sin prueba en vivo</span><h3 id="h-handoff" data-i="bH_h">Un traspaso con una línea de «hecho cuando»</h3></div>
+        <div class="hl"><svg class="mas av" data-mascot="iris" viewBox="0 0 220 220" aria-hidden="true" focusable="false"><use href="#m-iris"/></svg><div class="bub"><b data-i="bH_from">Iris a Otto</b><span data-i="bH_msg">Otto, ordena el correo y redacta las respuestas que importan.</span></div></div>
+        <div class="done"><b data-i="bH_dw">Hecho cuando</b><span data-i="bH_dwv">cada mensaje que necesita respuesta tiene un borrador que puedes leer, y nada se envía.</span></div>
+        <p class="caption" data-i="bH_cap">Iris escribe la línea de «hecho cuando», y la respuesta que vuelve se comprueba contra ella. Una tarea que necesita tu sí sigue preguntando.</p>
+      </article>
+
+      <article class="pane p-routine rv" aria-labelledby="h-routine">
+        <div class="phead"><span class="tag tag-wait" data-i="tagWait">Construido, aún sin prueba en vivo</span><h3 id="h-routine" data-i="fe3h">Rutinas con horario</h3></div>
         <p data-i="fe3p">Una rutina se repite según un horario, como un resumen cada mañana. Iris ya trae una. Una rutina que necesita uno de los cinco botones te pregunta antes; esa regla está construida, pero sin probar en uso real.</p>
-      </article>
-      <article class="fc rv">
-        <div class="mini m-si" aria-hidden="true">
-          <div class="sp"><svg><use href="#i-lock"/></svg><b>Claude Code</b><span class="ok"><svg><use href="#i-check"/></svg><span data-i="signedIn">Sesión iniciada</span></span></div>
-          <div class="sp off"><b>API key</b><span data-i="notNeeded">No hace falta</span></div>
+        <div class="rt" id="routine">
+          <div class="rt-top">
+            <span class="rt-name" data-i="rt1">Resumen de la mañana</span>
+            <button class="pause" type="button" id="rt-btn"><span id="rt-pause-l" data-i="pauseBtn">Pausar</span><span id="rt-resume-l" hidden data-i="resumeBtn">Reanudar</span></button>
+          </div>
+          <div class="wk" id="wk"><span class="d">L</span><span class="d">M</span><span class="d">X</span><span class="d">J</span><span class="d">V</span><span class="d">S</span><span class="d">D</span></div>
+          <p class="rt-state" role="status"><span id="rt-run" data-i="rt_state">Se ejecuta cada mañana. Próxima ejecución: mañana por la mañana.</span><span id="rt-off" hidden data-i="rt_paused">En pausa. No se ejecutará hasta que la reanudes.</span></p>
         </div>
-        <h3 data-i="fe4h">Tu suscripción, sin clave de API</h3>
-        <p data-i="fe4p">FreeDuet funciona con la suscripción de Claude que ya pagas. Tú inicias sesión con la app oficial Claude Code, y no hay ninguna clave que comprar ni pegar.</p>
+        <p class="caption" data-i="bT_cap">La tarjeta muestra qué hará la rutina y cuándo se ejecuta la próxima vez.</p>
       </article>
-      <article class="fc rv">
-        <div class="mini m-pc" aria-hidden="true">
-          <div class="pcbox"><span class="pctag"><svg><use href="#i-lock"/></svg><span data-i="yourPc">Tu ordenador</span></span>
-            <div class="chips"><span><svg><use href="#i-folder"/></svg>FreeDuet</span><span><svg><use href="#i-db"/></svg><span data-i="convs">Conversaciones</span></span></div></div>
-          <div class="out"><i></i><span data-i="aiSvc">Servicio de IA en el que iniciaste sesión</span></div>
-        </div>
-        <h3 data-i="fe5h">Tus conversaciones se quedan en tu ordenador</h3>
+
+      <article class="pane p-computer rv" aria-labelledby="h-computer">
+        <div class="phead"><span class="tag tag-ok" data-i="rl_today">Hoy</span><h3 id="h-computer" data-i="fe5h">Tus conversaciones se quedan en tu ordenador</h3></div>
+        <figure class="machine">
+          <svg viewBox="0 0 300 180" aria-hidden="true" focusable="false">
+            <rect x="30" y="8" width="240" height="140" rx="14" fill="#FFFFFF" stroke="#0E1B33" stroke-width="2.4"/>
+            <rect x="42" y="20" width="216" height="116" rx="8" fill="#F6F8FB" stroke="#DDE3EC" stroke-width="1.5"/>
+            <use href="#m-iris" x="50" y="26" width="34" height="34"/><use href="#m-leo" x="90" y="26" width="34" height="34"/><use href="#m-otto" x="130" y="26" width="34" height="34"/><use href="#m-portia" x="170" y="26" width="34" height="34"/><use href="#m-penny" x="210" y="26" width="34" height="34"/><use href="#m-jules" x="50" y="78" width="34" height="34"/>
+            <use href="#m-wren" x="90" y="78" width="34" height="34"/><use href="#m-gus" x="130" y="78" width="34" height="34"/><use href="#m-basil" x="170" y="78" width="34" height="34"/><use href="#m-vera" x="210" y="78" width="34" height="34"/><use href="#m-mark" x="90" y="128" width="34" height="34"/><use href="#m-video" x="170" y="128" width="34" height="34"/>
+            <path d="M134 148H166L172 166H128Z" fill="#DDE3EC" stroke="#0E1B33" stroke-width="2"/>
+            <rect x="104" y="166" width="92" height="8" rx="4" fill="#0E1B33"/>
+          </svg>
+          <figcaption data-i="yourPc">Tu ordenador</figcaption>
+        </figure>
+        <p class="outside"><span><svg aria-hidden="true"><use href="#i-arrow"/></svg><span data-i="aiSvc">Servicio de IA en el que iniciaste sesión</span></span></p>
         <p data-i="fe5p">La app, su base de datos y los navegadores de los asistentes funcionan en tu ordenador, y las conversaciones se guardan allí. Para pensar, los asistentes usan el servicio de IA en el que iniciaste sesión.</p>
       </article>
-      <article class="fc rv">
-        <div class="mini m-tm" aria-hidden="true">
-          <ul><li><span data-av="iris"><svg class="av" viewBox="0 0 44 44" aria-hidden="true"><rect width="44" height="44" rx="11" fill="#1B4FD8"/><svg x="10" y="10" width="24" height="24" viewBox="0 0 24 24"><path d="M12 3l2.5 6.5L21 12l-6.5 2.5L12 21l-2.5-6.5L3 12l6.5-2.5z" stroke="#fff" stroke-width="1.9" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></svg></span><b>Iris</b></li><li><span data-av="mark"><svg class="av" viewBox="0 0 44 44" aria-hidden="true"><rect width="44" height="44" rx="11" fill="#C92A2A" fill-opacity=".13"/><svg x="10" y="10" width="24" height="24" viewBox="0 0 24 24"><path d="M4 10v4h3l7 4V6l-7 4H4zM17.5 9.5a4 4 0 010 5" stroke="#C92A2A" stroke-width="1.9" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></svg></span><b>Mark</b></li><li><span data-av="leo"><svg class="av" viewBox="0 0 44 44" aria-hidden="true"><rect width="44" height="44" rx="11" fill="#C46A00" fill-opacity=".13"/><svg x="10" y="10" width="24" height="24" viewBox="0 0 24 24"><path d="M12 4v16M4 12h16" stroke="#C46A00" stroke-width="1.9" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></svg></span><b>Leo</b></li><li class="new"><i><svg><use href="#i-plus"/></svg></i><span data-i="newMem">Nuevo miembro</span></li></ul>
-        </div>
-        <h3 data-i="fe6h">Un equipo que crece</h3>
-        <p data-i="fe6p">Empieza con el equipo ya preparado. Pídele a Leo que cree uno nuevo para el trabajo que necesitas. Cambiar el nombre de los miembros y su forma de hablar está construido, pero sin probar en uso real. Con el tiempo llegan nuevos miembros ya listos.</p>
+
+      <article class="pane p-update rv" aria-labelledby="h-update">
+        <div class="phead"><span class="tag tag-ok" data-i="tagRel">Publicado en v0.2.1</span><h3 id="h-update" data-i="bU_h">Actualizaciones que se pueden deshacer</h3></div>
+        <ol class="steps-u">
+          <li><b data-i="bU1h">Copia tus datos</b><span data-i="bU1p">primero, en una carpeta fuera del proyecto</span></li>
+          <li><b data-i="bU2h">Actualiza FreeDuet</b><span data-i="bU2p">con un solo comando, y nada se actualiza sin él</span></li>
+          <li><b data-i="bU3h">Comprueba la app</b><span data-i="bU3p">que responde después de la actualización</span></li>
+          <li class="back"><b data-i="bU4h">Vuelve atrás por sí sola</b><span data-i="bU4p">si la app no responde, vuelven la versión y los datos que tenías antes. Aún no se ha ejecutado en vivo en una instalación real.</span></li>
+        </ol>
+        <ul class="keep">
+          <li data-i="bU_k1">La copia se queda en tu ordenador.</li>
+          <li data-i="bU_k2">Nada se actualiza sin tu orden.</li>
+          <li data-i="bU_k3">La actualización se ejecutó cuatro veces en una instalación real el 15 de noviembre de 2026, cada vez con una copia de seguridad de la base de datos antes.</li>
+        </ul>
+        <p class="caption" data-i="bU_cap">Ejecutado en vivo en una instalación el 15 de noviembre de 2026: la actualización, todavía no la vuelta atrás.</p>
       </article>
+    </div>
+  </div>
+</section>
+
+<section class="sec pf" id="proof" aria-labelledby="pf-h">
+  <div class="wrap">
+    <div class="head">
+      <h2 class="wd" id="pf-h" data-i="pf_h">Pruebas que puedes comprobar</h2>
+      <p class="lead rv" data-i="pf_p">Intentamos engañar a nuestros propios asistentes a propósito. Los asistentes pueden seguir cometiendo errores, así que lee lo que preparan antes de aprobarlo.</p>
+    </div>
+    <div class="pf-grid">
+      <figure class="evidence rv">
+        <div class="ev-grid" aria-hidden="true">
+          <i style="--i:0"></i><i style="--i:1"></i><i style="--i:2"></i><i style="--i:3"></i><i style="--i:4"></i><i style="--i:5"></i><i style="--i:6"></i><i style="--i:7"></i><i style="--i:8"></i>
+          <i style="--i:9"></i><i style="--i:10"></i><i style="--i:11"></i><i style="--i:12"></i><i style="--i:13"></i><i style="--i:14"></i><i style="--i:15"></i><i style="--i:16"></i><i style="--i:17"></i>
+          <i style="--i:18"></i><i style="--i:19"></i><i style="--i:20"></i><i style="--i:21"></i><i style="--i:22"></i><i style="--i:23"></i><i style="--i:24"></i><i style="--i:25"></i><i style="--i:26"></i>
+          <i style="--i:27"></i><i style="--i:28"></i><i style="--i:29"></i><i style="--i:30"></i><i style="--i:31"></i><i style="--i:32"></i><i style="--i:33"></i><i style="--i:34"></i><i style="--i:35"></i>
+          <i style="--i:36"></i><i style="--i:37"></i><i style="--i:38"></i><i style="--i:39"></i><i style="--i:40"></i><i style="--i:41"></i><i style="--i:42"></i><i style="--i:43"></i><i style="--i:44"></i>
+        </div>
+        <figcaption>
+          <p class="ev-count" data-i="ev_count">45 de 45 ejecuciones de seguridad superadas en v0.1</p>
+          <p class="ev-note" data-i="ev_note">Una celda por cada ejecución de seguridad.</p>
+          <p class="check"><a href="https://github.com/MarcoDeliaBot/freeduet/blob/main/evals/team/reports/2026-11-13-claude-code-regraded-2026-11-13-public.md" data-i="ev_check">Compruébalo: evals/team/reports/2026-11-13-claude-code-regraded-2026-11-13-public.md</a></p>
+        </figcaption>
+      </figure>
+      <div class="claims">
+        <article class="claim rv" aria-labelledby="c1h">
+          <h3 id="c1h" data-i="c1h">Certificado en v0.1</h3>
+          <p data-i="c1p">Cada miembro al 100 % de sus casos puntuados, y los casos de seguridad 45 de 45 ejecuciones. El mínimo es 90 % o más para cada miembro y 100 % para los casos de seguridad.</p>
+          <p class="check"><a href="https://github.com/MarcoDeliaBot/freeduet/blob/main/docs/ROADMAP.md" data-i="c_chk1">Compruébalo: docs/ROADMAP.md y evals/team/README.md</a></p>
+        </article>
+        <article class="claim rv" aria-labelledby="c2h">
+          <h3 id="c2h" data-i="c2h">Una primera ejecución fallida y luego correcciones</h3>
+          <p data-i="c2p">La primera ejecución completa de esa noche falló en un miembro, con un fallo del navegador y después un turno que terminó en silencio. Ambos se corrigieron, y la ejecución certificada llegó después de las correcciones.</p>
+          <p class="check"><a href="https://github.com/MarcoDeliaBot/freeduet/blob/main/README.md#what-is-tested-and-what-is-not" data-i="c_chk2">Compruébalo: README.md, «What is tested and what is not»</a></p>
+        </article>
+        <article class="claim rv" aria-labelledby="c3h">
+          <h3 id="c3h" data-i="c3h">Una ejecución en vivo desde v0.1</h3>
+          <p data-i="c3p">El 15 de noviembre de 2026 las evaluaciones del equipo se ejecutaron en vivo sobre v0.2.1: 84 casos, 38 de ellos de seguridad. Pasaron 66 de 73 casos puntuados y 11 se omitieron. Esa ejecución no alcanzó los mínimos. Mark y Cam también participaron.</p>
+          <p class="check"><a href="https://github.com/MarcoDeliaBot/freeduet/blob/main/docs/ROADMAP.md" data-i="c_chk3">Compruébalo: docs/ROADMAP.md</a></p>
+        </article>
+      </div>
     </div>
   </div>
 </section>
@@ -975,8 +1743,9 @@ footer a{color:var(--ink)}
     <h3 class="road-h rv" data-i="r_h">Qué funciona hoy y qué llegará</h3>
     <ol class="road rv">
       <li><b data-i="rl_today">Hoy</b><span class="tag" data-i="r_now">Disponible</span><p data-i="r1">El equipo con tu sesión de Claude, con aprobaciones, pruebas, Gmail y Google Calendar.</p></li>
-      <li><b data-i="rl_now">Ahora</b><span class="tag" data-i="r_prog">En curso</span><p data-i="r2">Máxima prioridad: un instalador de un solo archivo para Windows, macOS y Ubuntu. Hoy ya hay primeros scripts de instalación para Ubuntu y para Windows con WSL2, y todavía no hay instalador con doble clic. Un asistente de correo que pone en orden tu buzón también está en curso. Construidos, pero sin probar en uso real: «Done when» (hecho cuando) en cada traspaso, la tarjeta de la rutina en el chat, un token propio para el ordenador de cada miembro, y conexiones a la red de casa que se cierran al desactivar el acceso.</p></li>
-      <li><b data-i="rl_now">Ahora</b><span class="tag" data-i="r_plan">Previsto</span><p data-i="r_now2">Primer arranque en tres clics: un botón conecta tu plan de Claude, e inicias sesión en la propia página de Claude. Tres pasos como máximo para todo lo que hagas tú mismo. Actualizaciones que se pueden revertir: un comando copia primero tus datos, y devuelve la versión anterior con sus datos si la app no responde. Una línea con Deshacer después de cada cambio en el equipo. Un equipo propuesto ya en tu primer mensaje, y nada se crea sin tu sí.</p></li>
+      <li><b data-i="rl_now">Ahora</b><span class="tag" data-i="r_prog">En curso</span><p data-i="r2">Máxima prioridad: un instalador de un solo archivo para Windows, macOS y Ubuntu. Hoy ya hay primeros scripts de instalación para Ubuntu y para Windows con WSL2, y todavía no hay instalador con doble clic. Un asistente de correo que pone en orden tu buzón está construido: el 15 de noviembre de 2026 Otto movió spam a la carpeta de spam de un buzón real, y los demás cambios todavía no se han probado en uso real. Construidos, pero sin probar en uso real: «Done when» (hecho cuando) en cada traspaso, la tarjeta de la rutina en el chat, un token propio para el ordenador de cada miembro, y conexiones a la red de casa que se cierran al desactivar el acceso.</p></li>
+      <li><b data-i="rl_now">Ahora</b><span class="tag" data-i="r_plan">Previsto</span><p data-i="r_now2">Primer arranque en tres clics: un botón conectará tu plan de Claude, y entrarás en la propia página de Claude.</p></li>
+      <li><b data-i="rl_now">Ahora</b><span class="tag tag-wait" data-i="tagWait">Construido, aún sin prueba en vivo</span><p data-i="r_now3">Tres pasos como máximo para conectar un buzón de Gmail desde el chat. Una línea con Deshacer después de añadir un miembro en el chat. Un equipo propuesto ya en tu primer mensaje, y nada se crea sin tu sí. Actualizaciones que se pueden revertir: un comando copia primero tus datos, y la actualización se ejecutó cuatro veces en una instalación el 15 de noviembre de 2026. El paso que devuelve la versión anterior y los datos todavía no se ha probado en uso real.</p></li>
       <li><b data-i="rl_next">Después</b><span class="tag" data-i="r_prog">En curso</span><p data-i="r3">La elección del motor de cada miembro está en curso: la página de Motores está construida, pero sin probar en uso real, y el cambio automático solo se ha ejecutado con motores de prueba. Los ajustes cambiados en el chat, con Deshacer, están en curso. El nombre, el tono y el idioma de un miembro están construidos después de la v0.2, pero sin probar en uso real, y todavía no se ha ejecutado ninguna prueba sobre el tono ni el idioma. La delegación real está prevista.</p><p data-i="r4">Automatizaciones escritas en el chat, una versión para el teléfono y el acceso remoto están en curso. Más apps conectadas están en diseño.</p></li>
       <li><b data-i="rl_later">Más adelante</b><span class="tag" data-i="r_plan">Previsto</span><p data-i="r_cloud">Un FreeDuet alojado en la web, para quien prefiere no instalar, está previsto, con una pequeña suscripción mensual. El precio todavía no está fijado. Allí, Claude trabajaría con tu propia clave API, y no con un inicio de sesión con un plan de Claude. No antes de que estén terminados el instalador y el primer arranque. En tu ordenador, FreeDuet sigue siendo gratis.</p><p data-i="r5">Voz: la lectura en voz alta está construida, pero sin probar en uso real, y desactivada por defecto; las llamadas aún no están construidas. Full access y Cam están construidos, pero sin probar en uso real. Compras seguras: previstas.</p></li>
     </ol>
@@ -1011,7 +1780,7 @@ footer a{color:var(--ink)}
       </li>
       <li class="rv">
         <div class="pnl brw" aria-hidden="true"><div class="tbar"><i></i><i></i><i></i><span class="url">http://localhost:3010</span></div>
-          <div class="bd"><div class="msg me"><div class="bub" data-i="in4ex">¿Qué puedo cocinar esta noche con espinacas y huevos?</div></div><div class="msg"><span data-av="iris"><svg class="av" viewBox="0 0 44 44" aria-hidden="true"><rect width="44" height="44" rx="11" fill="#1B4FD8"/><svg x="10" y="10" width="24" height="24" viewBox="0 0 24 24"><path d="M12 3l2.5 6.5L21 12l-6.5 2.5L12 21l-2.5-6.5L3 12l6.5-2.5z" stroke="#fff" stroke-width="1.9" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></svg></span><div class="bub"><span class="typing"><i></i><i></i><i></i></span></div></div></div></div>
+          <div class="bd"><div class="msg me"><div class="bub" data-i="in4ex">¿Qué puedo cocinar esta noche con espinacas y huevos?</div></div><div class="msg"><svg class="mas av" data-mascot="iris" viewBox="0 0 220 220" aria-hidden="true" focusable="false"><use href="#m-iris"/></svg><div class="bub"><span class="typing"><i></i><i></i><i></i></span></div></div></div></div>
         <h3 data-i="in4h">Abre la página y dale a Iris una tarea pequeña</h3>
         <p data-i="in4p">Entra en localhost:3010 desde tu navegador y escribe una petición pequeña. Iris elige al asistente adecuado y te trae la respuesta.</p>
       </li>
@@ -1065,7 +1834,7 @@ cd openbot &amp;&amp; docker compose exec -it agent-freeduet claude
     <div class="faq">
       <details class="rv" open><summary data-i="q1">¿Qué es gratis y qué pago?</summary><p data-i="a1">FreeDuet es gratuito y de código abierto con licencia MIT, también para uso profesional. Lo único que pagas es la suscripción de IA que uses con él, que hoy es un plan de Claude. No hay ninguna clave de API que comprar.</p></details>
       <details class="rv"><summary data-i="q2">¿Qué necesito para instalarlo?</summary><p data-i="a2">Una suscripción de Claude, más Docker, Bash y Bun en tu ordenador. Los cuatro pasos de arriba son toda la instalación. ¿Nunca has abierto una terminal? Pide a alguien técnico que lo instale y enséñale esta página.</p></details>
-      <details class="rv"><summary data-i="q3">¿Funciona en Windows, Mac y Linux?</summary><p data-i="a3">El desarrollador lo usa en Windows con WSL2 y Docker, y nuestras comprobaciones automáticas lo arrancan en Linux. No se ha probado en Mac, así que no podemos prometer que funcione allí. FreeDuet es una primera entrega (versión 0.2), construida y usada por un solo desarrollador.</p></details>
+      <details class="rv"><summary data-i="q3">¿Funciona en Windows, Mac y Linux?</summary><p data-i="a3">El desarrollador lo usa en Windows con WSL2 y Docker, y nuestras comprobaciones automáticas lo arrancan en Linux. No se ha probado en Mac, así que no podemos prometer que funcione allí. FreeDuet es una primera entrega: la última versión publicada es la 0.2.1 (15 de noviembre de 2026), construida y usada por un solo desarrollador.</p></details>
       <details class="rv"><summary data-i="q4">¿Qué puede hacer un asistente sin preguntarme?</summary><p data-i="a4">Puede buscar información, leer y preparar borradores. Por defecto, los cinco botones esperan tu Aprobar, salvo un correo nuevo a una dirección que escribiste tú. Full access, por miembro, quita esa espera en tus chats, y está construido, pero sin probar en uso real. Contraseñas y ajustes de seguridad siguen siendo tuyos. Los asistentes aún pueden equivocarse, así que lee lo que preparan antes de aprobarlo.</p></details>
       <details class="rv"><summary data-i="q5">¿Dónde están mis datos?</summary><p data-i="a5">FreeDuet funciona en tu ordenador y guarda allí sus conversaciones en una base de datos. Tu inicio de sesión de Claude queda en un volumen de Docker que solo lee el programa Claude Code. Para pensar, los asistentes envían tu petición al servicio de IA en el que iniciaste sesión, igual que lo haría su propia app.</p></details>
       <details class="rv"><summary data-i="q6">¿Puedo usarlo desde el móvil?</summary><p data-i="a6">Todavía no. Hoy FreeDuet se abre en el navegador de tu ordenador. Está en curso una versión para el móvil, en la que también recibes solicitudes de aprobación.</p></details>
@@ -1095,49 +1864,11 @@ cd openbot &amp;&amp; docker compose exec -it agent-freeduet claude
 (function(){
 "use strict";
 var GH="https://github.com/MarcoDeliaBot/freeduet";
-var M=[["iris","Iris","#1B4FD8","f1","M12 3l2.5 6.5L21 12l-6.5 2.5L12 21l-2.5-6.5L3 12l6.5-2.5z"],["otto","Otto","#E8590C","f1","M3 6h18v12H3zM3 7l9 7 9-7"],["portia","Portia","#0E7C86","f2","M12 4v16M7 20h10M5 8h14M5 8l-2.5 6h5zM19 8l-2.5 6h5z"],["penny","Penny","#A87900","f3","M7 4h10v16l-2.5-2-2.5 2-2.5-2L7 20zM10 9h4M10 13h4"],["jules","Jules","#C2255C","f1","M6 16v-5a6 6 0 0112 0v5l2 2H4zM10 21h4"],["wren","Wren","#2B8A3E","f3","M4 20h16M6 16L16 5l3 3L9 19l-4 1z"],["mark","Mark","#C92A2A","f1","M4 10v4h3l7 4V6l-7 4H4zM17.5 9.5a4 4 0 010 5"],["video","Cam","#7950F2","f2","M2.5 7h12v10h-12zM14.5 10.5l7-3.5v10l-7-3.5"],["gus","Gus","#B5540B","f1","M14.5 5.5a4 4 0 004 4l-9 9-3-3 9-9z"],["basil","Basil","#5C940D","f3","M5 19C5 9 11 5 19 5c0 8-4 14-14 14zM5 19l8-8"],["vera","Vera","#5C6B80","f2","M10.5 4a6.5 6.5 0 100 13 6.5 6.5 0 000-13zM15.5 15.5L20 20"],["leo","Leo","#C46A00","f1","M12 4v16M4 12h16"]];
-var D={"demo":[{"chip":"Responde al fontanero: el martes va bien","me":"Responde al correo del fontanero: el martes a las 9 va bien.","iris":"Me encargo. Esto es trabajo para Otto.","who":"otto","line":"Encontré su correo y escribí la respuesta. No la envío hasta que me lo digas.","card":[["Acción","Enviar una respuesta"],["Para","el fontanero (misma conversación)"],["Texto","Buenos días, el martes a las 9 me va bien. ¡Gracias!"]],"ok":"Enviada. Una respuesta, en la misma conversación. No toqué nada más.","stop":"No enviada. El borrador queda guardado por si cambias de idea."},{"chip":"Reserva una mesa para cuatro el viernes","me":"Reserva una mesa para cuatro el viernes por la noche, en un sitio con pizza.","iris":"Entendido. De las reservas se ocupa Jules.","who":"jules","line":"Miré en mi propio navegador y encontré una mesa libre. Todavía no he reservado nada.","card":[["Acción","Reservar una mesa"],["Dónde","Pizzería Ejemplo"],["Cuándo","viernes, 20:00, 4 personas"]],"ok":"Reservado para el viernes a las 20:00, 4 personas. La confirmación está en tu correo.","stop":"Nada reservado. Dime si quieres otros sitios."},{"chip":"¿Qué cocino con espinacas y huevos?","me":"¿Qué puedo cocinar esta noche con espinacas y huevos?","iris":"Fácil. El cocinero es Basil.","who":"basil","line":"Tres ideas: tortilla de espinacas (10 minutos), huevos al horno sobre espinacas (20 minutos) o tortitas verdes (15 minutos). ¿Quieres los pasos de alguna?","card":null}],"ask":"Esperando tu sí","yes":"Aprobar","no":"No lo hagas","nothing":"Nada que aprobar: solo son ideas.","copy":"Copiar los comandos","copied":"Copiados"};
-/* Runs inside the wrapper that tools/build.py writes into every page. The wrapper defines GH (the repository URL),
-   M (the members, from members.json) and D (this page's demo strings). The page arrives complete in its own language:
-   the team, the side list, the chips and the first demo state are already in the HTML. This script only adds behaviour. */
-var byId={};M.forEach(function(m){byId[m[0]]=m;});
-function av(id){var m=byId[id],solid=id==="iris";
- return '<svg class="av" viewBox="0 0 44 44" aria-hidden="true"><rect width="44" height="44" rx="11" fill="'+m[2]+'"'+(solid?'':' fill-opacity=".13"')+'/><svg x="10" y="10" width="24" height="24" viewBox="0 0 24 24"><path d="'+m[4]+'" stroke="'+(solid?"#fff":m[2])+'" stroke-width="1.9" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></svg>';}
-
-var lang=document.documentElement.lang||"en",cur=0,timers=[];
-var reduce=window.matchMedia&&window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-function esc(s){return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;");}
-
-function side(id,state){
- Array.prototype.forEach.call(document.querySelectorAll("#side .sm"),function(li){li.classList.remove("wait","ok");});
- var li=id&&state?document.querySelector('#side .sm[data-m="'+id+'"]'):null;if(li)li.classList.add(state);
-}
-
-var chat=document.getElementById("chat"),tries=document.getElementById("tries");
-function bubble(id,name,text){return '<div class="msg">'+av(id)+'<div class="bub"><span class="who">'+name+'</span>'+esc(text)+'</div></div>';}
-function mine(text){return '<div class="msg me"><div class="bub">'+esc(text)+'</div></div>';}
-function askCard(s){var rows="";s.card.forEach(function(r){rows+="<dt>"+esc(r[0])+"</dt><dd>"+esc(r[1])+"</dd>";});
- return '<div class="card-ask" id="ask"><p class="ask-title"><svg aria-hidden="true"><use href="#i-hand"/></svg>'+esc(D.ask)+'</p><dl>'+rows+'</dl><div class="row"><button type="button" class="yes" data-a="ok">'+esc(D.yes)+'</button><button type="button" class="no" data-a="stop">'+esc(D.no)+'</button></div></div>';}
-function doneRow(kind,text){return '<div class="done '+kind+'"><svg aria-hidden="true"><use href="#'+(kind==="ok"?"i-check":"i-hand")+'"/></svg><span>'+esc(text)+'</span></div>';}
-function parts(s){var m=byId[s.who],p=[mine(s.me),bubble("iris","Iris",s.iris),bubble(s.who,m[1],s.line)];
- p.push(s.card?askCard(s):doneRow("stop",D.nothing));return p;}
-function clearT(){timers.forEach(clearTimeout);timers=[];}
-function show(i,animate){
- clearT();cur=i;var s=D.demo[i],p=parts(s);
- side(s.who,s.card?"wait":"");
- Array.prototype.forEach.call(tries.children,function(b,k){b.setAttribute("aria-pressed",k===i?"true":"false");});
- if(!animate||reduce){chat.innerHTML=p.join("");return;}
- chat.innerHTML=p[0];var step=1;
- (function next(){
-  if(step>=p.length)return;
-  var isBub=step<3;
-  if(isBub){var who=step===1?"iris":s.who;chat.insertAdjacentHTML("beforeend",'<div class="msg" id="typ">'+av(who)+'<div class="bub"><span class="typing"><i></i><i></i><i></i></span></div></div>');}
-  timers.push(setTimeout(function(){var t=document.getElementById("typ");if(t)t.remove();chat.insertAdjacentHTML("beforeend",p[step]);step++;timers.push(setTimeout(next,350));},isBub?900:300));
- })();
-}
-tries.addEventListener("click",function(e){var b=e.target.closest("button");if(b)show(+b.getAttribute("data-s"),true);});
-chat.addEventListener("click",function(e){var b=e.target.closest("button[data-a]");if(!b)return;var a=b.getAttribute("data-a"),s=D.demo[cur],c=document.getElementById("ask");
- if(c){c.outerHTML=doneRow(a==="ok"?"ok":"stop",s[a]);side(s.who,a==="ok"?"ok":"");}});
+var D={"copy":"Copiar los comandos","copied":"Copiados"};
+/* Runs inside the wrapper that tools/build.py writes into every page. The wrapper defines GH (the repository URL) and
+   D (the strings of the copy button). Every text and picture is already in the HTML in its own language: this script
+   only adds behaviour (the hero replay, the scroll story, the buttons of the feature panes, reveal, links). */
+var lang=document.documentElement.lang||"en";
 
 /* ---------- motion: reveal on scroll, word-by-word headings, light parallax, capsule shadow ---------- */
 var root=document.documentElement;
@@ -1291,6 +2022,192 @@ cp.addEventListener("click",function(){
    try{sessionStorage.setItem("fd-stars",JSON.stringify({n:n,t:Date.now()}));}catch(x){}
   }).catch(function(){});
  }catch(x){}
+})();
+
+/* ---------- the hero: a replay of two requests. It changes classes and reads text that the page already holds ---------- */
+(function(){
+ var win=document.getElementById("appwin"),big=document.getElementById("bigiris"),ptr=document.getElementById("ptr");
+ var chat=document.getElementById("chat"),typed=document.getElementById("typed"),ph=document.getElementById("ph");
+ var pause=document.getElementById("pause"),lblP=document.getElementById("lbl-pause"),lblPl=document.getElementById("lbl-play");
+ if(!win||!big||!ptr||!chat)return;
+ var rd=reduced(),timers=[],aimT=null,running=false,userStopped=false;
+ function $(id){return document.getElementById(id);}
+ function later(ms,fn){timers.push(setTimeout(fn,ms));}
+ function setState(s){big.setAttribute("data-s",s);}
+ function roster(id,cls){var li=$("r-"+id);if(!li)return;li.classList.remove("is-on","is-wait");if(cls)li.classList.add(cls);}
+ function rosterReset(){["otto","portia","penny","jules","wren","vera"].forEach(function(id){roster(id,"");});roster("iris","is-on");}
+ function aim(){
+  var b=big.getBoundingClientRect(),p=ptr.getBoundingClientRect(),svg=big.querySelector("svg");
+  if(!b.width||!p.width||!svg)return;
+  var dx=(p.left+p.width/2-(b.left+b.width/2))/b.width,dy=(p.top+p.height/2-(b.top+b.height/2))/b.height;
+  svg.style.setProperty("--px",Math.max(-3.4,Math.min(3.4,dx*12)).toFixed(2)+"px");
+  svg.style.setProperty("--py",Math.max(-3.4,Math.min(3.4,dy*12)).toFixed(2)+"px");
+ }
+ function moveTo(el){
+  var w=win.getBoundingClientRect(),e=el.getBoundingClientRect();
+  ptr.style.transform="translate("+(e.left-w.left+e.width*0.4).toFixed(1)+"px,"+(e.top-w.top+e.height*0.5).toFixed(1)+"px)";
+ }
+ function ids(n){return n?{u:"u-b",i:"i-b",h:"h-b",c:"c-b"}:{u:"u-a",i:"i-a",h:"h-a",c:"c-a"};}
+ function bubbleText(msg){var b=msg&&msg.querySelector(".bub");return b?b.textContent:"";}
+ function txtOf(msg){var t=msg&&msg.querySelector(".txt");return t?t.textContent:"";}
+ function setShown(el,on){if(el)el.hidden=!on;}
+ function resetStory(n){
+  var o=ids(n),c=$(o.c),tw=c&&c.querySelector(".t-w"),tok=c&&c.querySelector(".t-ok"),tno=c&&c.querySelector(".t-no");
+  setShown($(o.u),false);setShown($(o.i),false);setShown($(o.h),false);setShown(c,false);
+  if(c)c.classList.remove("is-ok");
+  if(tw)tw.hidden=false;if(tok)tok.hidden=true;if(tno)tno.hidden=true;
+  Array.prototype.forEach.call(document.querySelectorAll("#i-"+(n?"a":"b")+",#h-"+(n?"a":"b")+",#u-"+(n?"a":"b")),function(el){el.hidden=true;});
+  rosterReset();setState("idle");
+  if(typed)typed.textContent="";
+  if(ph)ph.hidden=false;
+ }
+ function playStory(n){
+  var o=ids(n),u=$(o.u),i=$(o.i),h=$(o.h),c=$(o.c),yes=c&&c.querySelector(".sim.yes"),tw=c&&c.querySelector(".t-w"),tok=c&&c.querySelector(".t-ok");
+  var req=bubbleText(u),t=0,s=0;
+  if(!req)return;
+  resetStory(n);
+  if(ph)ph.hidden=true;
+  setState("listen");
+  (function type(){
+   s++;
+   if(typed)typed.textContent=req.slice(0,s);
+   if(s<req.length){later(38,type);return;}
+   later(380,function(){
+    if(typed)typed.textContent="";if(ph)ph.hidden=false;
+    setShown(u,true);setState("think");
+    later(420,function(){
+     setShown(i,true);i.querySelector(".bub").classList.add("is-typing");
+     later(900,function(){i.querySelector(".bub").classList.remove("is-typing");});
+     later(1500,function(){
+      roster("otto","is-on");setState("work");
+      setShown(h,true);h.querySelector(".bub").classList.add("is-typing");
+      later(900,function(){h.querySelector(".bub").classList.remove("is-typing");});
+      later(1400,function(){
+       setShown(c,true);roster("otto","is-wait");setState("ask");
+       later(900,function(){if(yes)moveTo(yes);});
+       later(1900,function(){ptr.classList.add("press");later(180,function(){ptr.classList.remove("press");});});
+       later(2100,function(){
+        if(c)c.classList.add("is-ok");if(tw)tw.hidden=true;if(tok)tok.hidden=false;
+        roster("otto","is-on");setState("done");
+       });
+       later(4600,function(){
+        if(chat)chat.classList.add("is-fading");
+        later(700,function(){
+         if(chat)chat.classList.remove("is-fading");
+         if(n===0)playStory(1);else playStory(0);
+        });
+       });
+      });
+     });
+    });
+   });
+  })();
+ }
+ function start(){
+  if(rd||running)return;
+  running=true;userStopped=false;
+  win.classList.remove("is-paused");
+  if(lblP)lblP.hidden=false;if(lblPl)lblPl.hidden=true;
+  if(!aimT)aimT=setInterval(aim,90);
+  playStory(0);
+ }
+ function halt(){
+  timers.forEach(clearTimeout);timers=[];
+  if(aimT){clearInterval(aimT);aimT=null;}
+  running=false;win.classList.add("is-paused");
+  if(lblP)lblP.hidden=true;if(lblPl)lblPl.hidden=false;
+ }
+ if(rd){
+  /* reduced motion: the page shows the finished first request and no replay */
+  var a=$("c-a");
+  if(a){setShown($("u-a"),true);setShown($("i-a"),true);setShown($("h-a"),true);setShown(a,true);a.classList.add("is-ok");
+   var tw=a.querySelector(".t-w"),tok=a.querySelector(".t-ok");if(tw)tw.hidden=true;if(tok)tok.hidden=false;}
+  setShown($("u-b"),false);setShown($("i-b"),false);setShown($("h-b"),false);setShown($("c-b"),false);
+  setState("done");
+  return;
+ }
+ if(pause){
+  pause.hidden=false;
+  pause.addEventListener("click",function(){userStopped=running;if(running)halt();else start();});
+ }
+ if("IntersectionObserver" in window){
+  new IntersectionObserver(function(es){
+   es.forEach(function(e){
+    if(e.isIntersecting){if(!running&&!userStopped)start();}
+    else if(running)halt();
+   });
+  },{threshold:.2}).observe(win);
+ }
+})();
+
+/* ---------- the scroll story: one diagram that moves with the scroll; the steps follow it ----------
+   It runs from 821 px up and without reduced motion; below that the page shows the static frames of the steps. */
+(function(){
+ var how=document.getElementById("how");
+ if(!how||reduced())return;
+ var track=how.querySelector(".track"),pin=how.querySelector(".pin");
+ var steps=how.querySelectorAll(".steps li"),links=how.querySelectorAll(".rail a");
+ if(!track||!pin)return;
+ var wide=window.matchMedia?window.matchMedia("(min-width:821px) and (min-height:740px)"):null;
+ var cur=-1,ticking=false;
+ function set(){
+  ticking=false;
+  if(!how.classList.contains("is-live"))return;
+  var r=track.getBoundingClientRect(),span=track.offsetHeight-window.innerHeight;
+  var p=span>0?Math.min(1,Math.max(0,-r.top/span)):0,s=p*4;
+  pin.style.setProperty("--s",s.toFixed(3));
+  var idx=Math.round(s);
+  if(idx!==cur){
+   cur=idx;
+   Array.prototype.forEach.call(steps,function(li,k){li.classList.toggle("on",k===idx);});
+   Array.prototype.forEach.call(links,function(a,k){if(k===idx)a.setAttribute("aria-current","step");else a.removeAttribute("aria-current");});
+  }
+ }
+ function tick(){if(!ticking){ticking=true;requestAnimationFrame(set);}}
+ function sync(){
+  how.classList.toggle("is-live",!wide||wide.matches);
+  cur=-1;
+  set();
+ }
+ window.addEventListener("scroll",tick,{passive:true});
+ window.addEventListener("resize",tick);
+ if(wide&&wide.addEventListener)wide.addEventListener("change",sync);
+ sync();
+})();
+
+/* ---------- the feature panes: the approval card, the routine's pause ---------- */
+(function(){
+ var mail=document.getElementById("mail");
+ if(mail){
+  var yes=mail.querySelector('button[data-a="ok"]'),no=mail.querySelector('button[data-a="stop"]'),reset=document.getElementById("mail-reset");
+  var wait=mail.querySelector(".st-w"),okS=mail.querySelector(".st-ok"),noS=mail.querySelector(".st-no"),send=document.getElementById("act-send");
+  function decide(ok){
+   mail.classList.toggle("is-ok",ok);mail.classList.toggle("is-no",!ok);
+   wait.hidden=true;okS.hidden=!ok;noS.hidden=ok;
+   yes.hidden=true;no.hidden=true;reset.hidden=false;
+   if(send)send.classList.toggle("done",ok);
+   reset.focus();
+  }
+  function restart(){
+   mail.classList.remove("is-ok","is-no");
+   wait.hidden=false;okS.hidden=true;noS.hidden=true;
+   yes.hidden=false;no.hidden=false;reset.hidden=true;
+   if(send)send.classList.remove("done");
+  }
+  mail.addEventListener("click",function(e){
+   var b=e.target.closest?e.target.closest("button"):null;if(!b)return;
+   if(b===yes)decide(true);else if(b===no)decide(false);else if(b===reset){restart();yes.focus();}
+  });
+ }
+ var rt=document.getElementById("routine"),rtb=document.getElementById("rt-btn");
+ if(rt&&rtb){
+  var pl=document.getElementById("rt-pause-l"),rl=document.getElementById("rt-resume-l"),run=document.getElementById("rt-run"),off=document.getElementById("rt-off");
+  rtb.addEventListener("click",function(){
+   var paused=!rt.classList.contains("is-paused");
+   rt.classList.toggle("is-paused",paused);
+   pl.hidden=paused;rl.hidden=!paused;run.hidden=paused;off.hidden=!paused;
+  });
+ }
 })();
 
 })();

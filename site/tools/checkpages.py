@@ -13,10 +13,10 @@ What it checks
     page, plus x-default), exactly one H1, no skipped heading level, title = brand + the H1 words, meta description,
     Open Graph / Twitter text and og:locale, the language links, JSON-LD that parses and whose FAQ equals the
     visible FAQ
-  - no string is left untranslated: every data-i element holds its language's string, and no English sentence of
+  - no string is left untranslated: every data-i and data-f element holds its language's string, and no English sentence of
     lang/en.json shows on a page of another language where that language has its own text
-  - the team, the side list, the chips and the first demo state are in the HTML in the page's language
-  - body.html holds no visible text outside a data-i element except the names and code listed below
+  - the team cards, the roster and the first demo state are in the HTML in the page's language
+  - body.html holds no visible text outside a data-i or data-f element except the names and code listed below
   - sitemap.xml lists exactly the pages, with the same alternates as the pages and the lastmod of site.json
   - root-absolute links and assets resolve to files; no relative link would break in a sub-folder
   - app.js never redirects by navigator.language or by the stored language
@@ -37,12 +37,14 @@ sys.path.insert(0, str(HERE))
 import build  # noqa: E402  (the same loader, parser and renderers as the build)
 
 VOID = build._Spans.VOID
+DATA_I = "data-i"   # the attribute that carries a language string
+DATA_F = "data-f"   # the attribute whose text is a path into the same JSON (roles, status lines, demo cards)
 
 # Text that body.html may hold outside a data-i element: names, product names and code read the same in every
 # language. ENGLISH_ONLY is the short list of real English text that stays English on every page (reported in
 # site/README.md); a new entry in either list must be a decision, so the check fails on anything else.
 NEUTRAL_TEXT = {
-    "FreeDuet", "GitHub", "Claude Code", "Iris", "Otto", "Portia", "Penny", "Jules", "Wren", "Vera", "Leo", "Mark",
+    "FreeDuet", "GitHub", "Claude Code", "Iris", "Otto", "Portia", "Penny", "Jules", "Wren", "Vera", "Leo", "Mark", "Gus", "Basil", "Cam",
     "Bash", "Bun", "Docker", "Windows + WSL2", "MarcoDeliaBot/freeduet.git", "git clone https://github.com/",
     "http://localhost:3010", "bash scripts/start.sh", "cd freeduet", "cp .env.example .env",
     "cd openbot && docker compose exec -it agent-freeduet claude",
@@ -55,6 +57,8 @@ ENGLISH_ONLY_TEXT = {
 }
 ENGLISH_ONLY_ATTRS = {"Language", "Sections", "Links"}   # aria-label of the three nav landmarks
 NEUTRAL_ATTRS = {"FreeDuet"}
+# the members the hero window lists, in its order; the others are named in its "and ..." line
+HERO_ROSTER = ["iris", "otto", "portia", "penny", "jules", "wren", "vera"]
 
 
 # ---------------------------------------------------------------------------------------------------------------
@@ -181,7 +185,7 @@ def get_path(o, path):
 def check_source_text(S, R):
     """body.html: no visible text outside data-i except the listed names and code."""
     body = S.body
-    for a, b, _k in sorted(build._Spans(body).spans, reverse=True):
+    for a, b, _k in sorted(build._Spans(body, DATA_I).spans + build._Spans(body, DATA_F).spans, reverse=True):
         body = body[:a] + body[b:]
     texts, attrs = [], []
 
@@ -307,10 +311,18 @@ def check_page(S, R, site_dir, code, html_text):
 
     # --- untranslated strings: every data-i element holds exactly its language's string
     src = html_text
-    spans = build._Spans(src).spans   # the built page keeps its data-i attributes
+    spans = build._Spans(src, DATA_I).spans   # the built page keeps its data-i attributes
     for a, b, key in spans:
         R.check(src[a:b] == t.get(key), where, "data-i=%r holds %r, expected %r" % (key, src[a:b][:50], str(t.get(key))[:50]))
-    R.check(len(spans) == len(build._Spans(S.body).spans), where, "%d data-i elements, body.html has %d" % (len(spans), len(build._Spans(S.body).spans)))
+    R.check(len(spans) == len(build._Spans(S.body, DATA_I).spans), where, "%d data-i elements, body.html has %d" % (len(spans), len(build._Spans(S.body, DATA_I).spans)))
+    fspans = build._Spans(src, DATA_F).spans
+    for a, b, key in fspans:
+        try:
+            want = get_path(t, key)
+        except (KeyError, IndexError, TypeError, ValueError):
+            want = None
+        R.check(isinstance(want, str) and src[a:b] == want, where, "data-f=%r holds %r, expected %r" % (key, src[a:b][:50], str(want)[:50]))
+    R.check(len(fspans) == len(build._Spans(S.body, DATA_F).spans), where, "%d data-f elements, body.html has %d" % (len(fspans), len(build._Spans(S.body, DATA_F).spans)))
 
     # --- English text must not show where this language has its own
     text = words(body.text())
@@ -337,16 +349,18 @@ def check_page(S, R, site_dir, code, html_text):
         R.check(h3 is not None and words(h3.text()) == words(m[1] + d[0]) and ps is not None and words(ps.text()) == words(d[1]) and q is not None and words(q.text()) == words(d[2]),
                 where, "team card %s is not in this language" % m[0])
     R.check(len(body.find_all("article", cls="mem")) == len(S.members), where, "duplicated team cards")
-    side = body.find(id="side")
-    lis = side.find_all("li") if side else []
-    R.check(len(lis) == len(S.members) and all(words(li.find("small").text()) == words(t["lm"][m[0]]) for li, m in zip(lis, S.members)), where, "side list is not in this language")
-    chips = body.find(id="tries").find_all("button") if body.find(id="tries") else []
-    R.check([words(c.text()) for c in chips] == [words(s["chip"]) for s in t["demo"]] and [c.attrs.get("aria-pressed") for c in chips] == ["true"] + ["false"] * (len(chips) - 1), where, "demo chips are not in this language")
+    roster = body.find(id="roster")
+    rows = roster.find_all("li") if roster else []
+    R.check([n.attrs.get("id") for n in rows] == ["r-" + i for i in HERO_ROSTER], where, "hero roster rows are not %r, in order" % (HERO_ROSTER,))
+    R.check(all(words(li.find("small").text()) == words(t["team"][i][0]) for li, i in zip(rows, HERO_ROSTER)), where, "roster roles are not in this language")
+    status = roster.find(cls="st") if roster else None
+    R.check(status is not None and words(status.text()) == words(t["lm"]["otto"]), where, "the roster status line is not in this language")
     chat = body.find(id="chat")
     first = t["demo"][0]
     chat_text = words(chat.text()) if chat else ""
-    R.check(all(words(x) in chat_text for x in [first["me"], first["iris"], first["line"], t["ask"], t["yes"], t["no"]] + [c for row in first["card"] for c in row]), where, "the first demo state is not in this language")
-    R.check(len(chat.find_all("div", cls="msg")) == 3 and len(chat.find_all("div", cls="card-ask")) == 1, where, "the first demo state has the wrong number of messages")
+    R.check(all(words(x) in chat_text for x in [first["me"], first["iris"], first["line"], first["ok"], first["stop"], t["ask"], t["yes"], t["no"]] + [c for row in first["card"] for c in row]), where, "the first demo state is not in this language")
+    shown = [n for n in chat.walk() if n.attrs.get("id", "").endswith("-a")] if chat else []
+    R.check(sorted(n.attrs["id"] for n in shown if "msg" in n.cls()) == ["h-a", "i-a", "u-a"] and [n.attrs["id"] for n in shown if "ask" in n.cls()] == ["c-a"], where, "the first demo state does not show its three messages and one card")
     wk = body.find(id="wk")
     week = [words(n.text()) for n in wk.find_all("span", cls="d")] if wk else []
     R.check(week == S.by_code[code]["week"], where, "week letters %r differ from site.json" % week)

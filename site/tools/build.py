@@ -8,8 +8,8 @@ INDEX  where the English page goes (default: site/index.html). The other pages g
        <folder of INDEX>/<code>/index.html and the sitemap to <folder of INDEX>/sitemap.xml.
 
 Every page is complete in its own language before any script runs: the text of `body.html` is filled in from
-`lang/<code>.json`, and what `app.js` used to draw at run time (the team, the side list, the chips, the first
-state of the demo, the weekday letters) is written into the HTML here. `app.js` only adds behaviour.
+`lang/<code>.json`, and what `app.js` used to draw at run time (the team, the mascots, the big Iris faces and the weekday
+letters) is written into the HTML here. `app.js` only adds behaviour.
 The languages, their codes, `og:locale` values and weekday letters live in `site.json`; the build, `checklang.js`
 and `checkpages.py` all read that one list.
 """
@@ -53,17 +53,20 @@ def js_json(o):
     return json.dumps(o, ensure_ascii=False, separators=(",", ":")).replace("</", "<\\/")
 
 
+# -------------------------------------------------------------------------------------------------------------
 # ---------------------------------------------------------------------------------------------------------------
-# the data-i parser: replaces the inside of every element that carries data-i="key" with that language's string
+# the parser: replaces the inside of every element that carries data-i (a string of lang/<code>.json) or data-f (a
+# path into the same file, such as demo.0.card.1.0) with that language's text
 
 class _Spans(HTMLParser):
-    """Finds the inner span (start, end, key) of every element with a data-i attribute. A real HTML tokenizer
+    """Finds the inner span (start, end, key) of every element with the attribute `attr`. A real HTML tokenizer
     (quoted attributes may contain '>'), and the end of an element is found by counting same-name tags."""
 
     VOID = {"area", "base", "br", "col", "embed", "hr", "img", "input", "link", "meta", "source", "track", "wbr"}
 
-    def __init__(self, text):
+    def __init__(self, text, attr):
         super().__init__(convert_charrefs=False)
+        self.attr = attr
         self.starts = [0]
         for i, ch in enumerate(text):
             if ch == "\n":
@@ -73,7 +76,7 @@ class _Spans(HTMLParser):
         self.feed(text)
         self.close()
         if self.cur:
-            raise ValueError("data-i element never closed: <%s data-i=%r>" % (self.cur[0], self.cur[3]))
+            raise ValueError("%s element never closed: <%s %s=%r>" % (attr, self.cur[0], attr, self.cur[3]))
 
     def _here(self):
         line, col = self.getpos()
@@ -82,21 +85,21 @@ class _Spans(HTMLParser):
     def handle_starttag(self, tag, attrs):
         a = dict(attrs)
         if tag in self.VOID:
-            if "data-i" in a:
-                raise ValueError("data-i on a void element: <%s>" % tag)
+            if self.attr in a:
+                raise ValueError("%s on a void element: <%s>" % (self.attr, tag))
             return
         if self.cur:
-            if "data-i" in a:
-                raise ValueError("data-i inside data-i: %r in %r" % (a["data-i"], self.cur[3]))
+            if self.attr in a:
+                raise ValueError("%s inside %s: %r in %r" % (self.attr, self.attr, a[self.attr], self.cur[3]))
             if tag == self.cur[0]:
                 self.cur[1] += 1
             return
-        if "data-i" in a:
-            self.cur = [tag, 1, self._here() + len(self.get_starttag_text()), a["data-i"]]
+        if self.attr in a:
+            self.cur = [tag, 1, self._here() + len(self.get_starttag_text()), a[self.attr]]
 
     def handle_startendtag(self, tag, attrs):
-        if any(k == "data-i" for k, _ in attrs):
-            raise ValueError("data-i on a self-closing element: <%s/>" % tag)
+        if any(k == self.attr for k, _ in attrs):
+            raise ValueError("%s on a self-closing element: <%s/>" % (self.attr, tag))
 
     def handle_endtag(self, tag):
         if self.cur and tag == self.cur[0]:
@@ -106,16 +109,48 @@ class _Spans(HTMLParser):
                 self.cur = None
 
 
-def localize(body, strings):
-    """body.html with the inside of every data-i element replaced by strings[key]. A missing key is an error:
-    a page must never ship with a string left in the wrong language."""
-    spans = _Spans(body).spans
+def localize(body, lookup, attr):
+    """body.html with the inside of every element that carries `attr` replaced by lookup(key). A missing key is an
+    error: a page must never ship with a string left in the wrong language."""
     out = body
-    for start, end, key in sorted(spans, reverse=True):
-        if key not in strings or not isinstance(strings[key], str):
-            raise KeyError("no string %r for data-i" % key)
-        out = out[:start] + strings[key] + out[end:]
+    for start, end, key in sorted(_Spans(body, attr).spans, reverse=True):
+        try:
+            value = lookup(key)
+        except (KeyError, IndexError, TypeError, ValueError):
+            value = None
+        if not isinstance(value, str):
+            raise KeyError("no string %r for %s" % (key, attr))
+        out = out[:start] + value + out[end:]
     return out
+
+
+def get_path(root, path):
+    """The value at a dotted path such as demo.1.card.0.1 (a number selects a list item)."""
+    node = root
+    for part in path.split("."):
+        node = node[int(part)] if isinstance(node, list) else node[part]
+    return node
+
+
+# ---------------------------------------------------------------------------------------------------------------
+# the mascot: one symbol per member (its art from mascot.json), the paints of the bubble, the headset and the faces
+
+MEMBER_IDS = ["iris", "leo", "otto", "portia", "penny", "jules", "wren", "gus", "basil", "vera", "mark", "video"]
+FACE_IDS = ["idle", "listen", "think", "work", "ask", "done"]
+MASCOT = re.compile(r'(<svg\b[^>]*\sdata-mascot="(\w+)"[^>]*>)</svg>')
+
+
+def mascot_defs(M):
+    """The sprite part of the mascot: the paints and the bubble, the headset, and one symbol per member (220 x 220)."""
+    if sorted(M["team"]) != sorted(MEMBER_IDS):
+        raise ValueError("mascot.json must hold exactly the twelve members")
+    symbols = "".join('<symbol id="m-%s" viewBox="0 0 220 220">%s</symbol>' % (k, M["team"][k]) for k in MEMBER_IDS)
+    return M["defs"] + '<g id="m-headset">' + M["headset"] + "</g>" + symbols
+
+
+def big_faces(M):
+    """The six faces of the big Iris, one group per state (app.js shows the one named by data-s)."""
+    return "".join('<g class="bf bf-%s">%s</g>' % (k, M["faces"][k]) for k in FACE_IDS)
 
 
 # ---------------------------------------------------------------------------------------------------------------
@@ -135,11 +170,14 @@ class Site:
             raise ValueError("default language %r is not in the list" % self.default)
         self.T = {c: json.loads((src / "lang" / (c + ".json")).read_text(encoding="utf-8")) for c in self.codes}
         self.members = json.loads((src / "members.json").read_text(encoding="utf-8"))
-        self.member = {m[0]: m for m in self.members}
+        self.mascot = json.loads((src / "mascot.json").read_text(encoding="utf-8"))
         body = (src / "body.html").read_text(encoding="utf-8")
         self.body, n = re.subn(r'<symbol id="i-gh".*?</symbol>', lambda _m: GH_SYMBOL, body, flags=re.S)
         if n != 1:
             raise ValueError("body.html must hold exactly one symbol#i-gh")
+        if self.body.count("<!--mascot-defs-->") != 1:
+            raise ValueError("body.html must hold exactly one <!--mascot-defs--> marker")
+        self.body = self.body.replace("<!--mascot-defs-->", mascot_defs(self.mascot))
         self.css = (src / "style.css").read_text(encoding="utf-8")
         self.app = (src / "app.js").read_text(encoding="utf-8")
 
@@ -156,58 +194,16 @@ class Site:
 
 
 # ---------------------------------------------------------------------------------------------------------------
-# what app.js used to draw at run time, now written into the page (same markup, same order as the script's builders)
-
-def av(m):
-    solid = m[0] == "iris"
-    return ('<svg class="av" viewBox="0 0 44 44" aria-hidden="true"><rect width="44" height="44" rx="11" fill="%s"%s/>'
-            '<svg x="10" y="10" width="24" height="24" viewBox="0 0 24 24"><path d="%s" stroke="%s" stroke-width="1.9" fill="none" '
-            'stroke-linecap="round" stroke-linejoin="round"/></svg></svg>') % (m[2], "" if solid else ' fill-opacity=".13"', m[4], "#fff" if solid else m[2])
-
+# what the page needs written in its own language and that a script would otherwise draw
 
 def team_cards(S, t):
     out = []
     for i, m in enumerate(S.members):
         d = t["team"][m[0]]
-        out.append('<article class="mem%s rv" style="--mc:%s">%s<h3>%s<span>%s</span></h3><p>%s</p><q>%s</q></article>'
-                   % (" boss" if i == 0 else "", m[2], av(m), m[1], esc(d[0]), esc(d[1]), esc(d[2])))
+        out.append('<article class="mem%s rv" style="--mc:%s"><svg class="mas" viewBox="0 0 220 220" aria-hidden="true" focusable="false">'
+                   '<use href="#m-%s"/></svg><h3>%s<span>%s</span></h3><p>%s</p><q>%s</q></article>'
+                   % (" boss" if i == 0 else "", m[2], m[0], m[1], esc(d[0]), esc(d[1]), esc(d[2])))
     return "".join(out)
-
-
-def side_list(S, t, wait):
-    out = []
-    for m in S.members:
-        d = t["team"][m[0]]
-        lm = (t.get("lm") or {}).get(m[0], "")
-        cls = "sm" + (" on" if m[0] == "iris" else "") + (" wait" if m[0] == wait else "")
-        out.append('<li class="%s" data-m="%s"><span class="avw">%s<i class="sdot"></i></span><div><b>%s<span>%s</span></b><small>%s</small></div></li>'
-                   % (cls, m[0], av(m), m[1], esc(d[0]), esc(lm)))
-    return "".join(out)
-
-
-def bubble(S, mid, name, text):
-    return '<div class="msg">%s<div class="bub"><span class="who">%s</span>%s</div></div>' % (av(S.member[mid]), name, esc(text))
-
-
-def demo_state(S, t, i):
-    """The chat in state i of the demo: what show(i, false) in app.js draws."""
-    s = t["demo"][i]
-    p = ['<div class="msg me"><div class="bub">%s</div></div>' % esc(s["me"]),
-         bubble(S, "iris", "Iris", s["iris"]),
-         bubble(S, s["who"], S.member[s["who"]][1], s["line"])]
-    if s.get("card"):
-        rows = "".join("<dt>%s</dt><dd>%s</dd>" % (esc(r[0]), esc(r[1])) for r in s["card"])
-        p.append('<div class="card-ask" id="ask"><p class="ask-title"><svg aria-hidden="true"><use href="#i-hand"/></svg>%s</p><dl>%s</dl>'
-                 '<div class="row"><button type="button" class="yes" data-a="ok">%s</button><button type="button" class="no" data-a="stop">%s</button></div></div>'
-                 % (esc(t["ask"]), rows, esc(t["yes"]), esc(t["no"])))
-    else:
-        p.append('<div class="done stop"><svg aria-hidden="true"><use href="#i-hand"/></svg><span>%s</span></div>' % esc(t["nothing"]))
-    return "".join(p)
-
-
-def chips(t):
-    return "".join('<button type="button" data-s="%d" aria-pressed="%s">%s</button>' % (i, "true" if i == 0 else "false", esc(s["chip"]))
-                   for i, s in enumerate(t["demo"]))
 
 
 def fill(body, open_tag, close_tag, inner):
@@ -228,19 +224,14 @@ def language_nav(S, code):
 
 def render_body(S, code):
     t = S.T[code]
-    body = localize(S.body, t)
-    first = t["demo"][0]
-    wait = first["who"] if first.get("card") else ""
+    body = localize(S.body, lambda k: t[k], "data-i")
+    body = localize(body, lambda k: get_path(t, k), "data-f")
     body = fill(body, '<div class="team" id="teamGrid">', "</div>", team_cards(S, t))
-    body = fill(body, '<ul id="side">', "</ul>", side_list(S, t, wait))
-    body = fill(body, '<div class="aw-head" id="awHead" aria-hidden="true">', "</div>",
-                av(S.member["iris"]) + "<div><b>Iris</b><small>%s</small></div>" % esc(t["team"]["iris"][0]))
-    body = fill(body, '<div class="chat" id="chat" aria-live="polite">', "</div>", demo_state(S, t, 0))
-    body = fill(body, '<div id="tries">', "</div>", chips(t))
-    body = fill(body, '<nav class="langs" id="langs" aria-label="Language">', "</nav>", language_nav(S, code))
-    body, n = re.subn(r'<span data-av="(\w+)"></span>', lambda m: '<span data-av="%s">%s</span>' % (m.group(1), av(S.member[m.group(1)])), body)
+    body = fill(body, '<g class="bf-slot" data-faces>', "</g>", big_faces(S.mascot))
+    body, n = MASCOT.subn(lambda m: m.group(1) + '<use href="#m-%s"/></svg>' % m.group(2), body)
     if n < 1:
-        raise ValueError("body.html lost its data-av placeholders")
+        raise ValueError("body.html lost its data-mascot placeholders")
+    body = fill(body, '<nav class="langs" id="langs" aria-label="Language">', "</nav>", language_nav(S, code))
     week = iter(S.by_code[code]["week"])
     wk_a = body.index('<div class="wk" id="wk">')
     wk_b = body.index("</div>", wk_a)
@@ -252,9 +243,10 @@ def render_body(S, code):
 
 def render_script(S, code):
     t = S.T[code]
-    data = {"demo": t["demo"], "ask": t["ask"], "yes": t["yes"], "no": t["no"], "nothing": t["nothing"], "copy": t["copy"], "copied": t["copied"]}
-    return ('(function(){\n"use strict";\nvar GH="%s";\nvar M=%s;\nvar D=%s;\n' % (GITHUB, js_json(S.members), js_json(data))
+    data = {"copy": t["copy"], "copied": t["copied"]}
+    return ('(function(){\n"use strict";\nvar GH="%s";\nvar D=%s;\n' % (GITHUB, js_json(data))
             + S.app + "\n})();")
+
 
 
 def render_head(S, code):
