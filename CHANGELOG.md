@@ -6,9 +6,13 @@ Each version says what was and was not run live. "Run live" means run on a real 
 
 ## [Unreleased]
 
+### Added
+
+- Installer: an opt-in systemd service for FreeDuet inside WSL, with `install.sh --service` and `install.ps1 -Service` (`install-service.sh`, #285). Tested with fake commands only; never run under real systemd or on a real Windows machine.
+
 ## [0.2.2] - 2026-11-16
 
-Not yet published: the tag `v0.2.2` does not exist yet. The maintainer publishes it, and the release commit is set when the tag is made.
+Commit `bdd8937`, tag `v0.2.2`, published as a GitHub release on 16 November 2026.
 
 ### Added
 
@@ -17,7 +21,7 @@ Not yet published: the tag `v0.2.2` does not exist yet. The maintainer publishes
 - A token for each paired browser: each browser gets its own token, which the person can rename or revoke under Settings, instead of the one secret of the installation. A phone or another browser is paired from the computer with a one-time code, as a link or a QR code, valid for two minutes. The cookie of an older installation is accepted only from the computer itself, and no longer after 16 February 2027. One new database migration (0076). After the update, a browser that reached FreeDuet through a tunnel is paired again once with `bash scripts/open.sh` (#283, D49).
 - The messages of an approval card (title, what happens, reason) are shown in the person's language, in eleven languages; buttons and labels stay in English, and the server keeps and audits the English text (#281, D50).
 - A notice above the message box when the browser is not paired with the computer. Members and Iris are told in that turn why a card appears (#278, D47).
-- Release provenance: a workflow that builds a source archive of a tagged release, a SHA-256 file and a signed build-provenance attestation, and uploads them to the release ([docs/VERIFY.md](docs/VERIFY.md)). Not yet run on a release (#270).
+- Release provenance: a workflow that builds a source archive of a tagged release, a SHA-256 file and a signed build-provenance attestation, and uploads them to the release ([docs/VERIFY.md](docs/VERIFY.md)). It first ran on this release, on 16 November 2026 (#270).
 - [docs/VERIFY.md](docs/VERIFY.md) (how to check the project yourself), [docs/THREAT_MODEL.md](docs/THREAT_MODEL.md) and this changelog (#270).
 
 ### Changed
@@ -52,7 +56,7 @@ Run live on one real installation (the maintainer's), 16 November 2026:
 - The sentences that tell the members why a card appears (#278), not yet observed with a model.
 - Rules other than the one above, and the eval cases otto-16 and otto-17 for mail rules (#274).
 - Carried over from v0.2.1, still not run live: moving mail to the Bin on a real mailbox, the routine card, "done when", the Undo line, the mailbox button, "Check again", the installers on a clean machine, macOS.
-- Release provenance (#270): not yet run on a release.
+- Release provenance (#270): the release workflow ran on this release for the first time, on 16 November 2026.
 - No team-eval run is recorded for this version.
 
 ## [0.2.1] - 2026-11-15

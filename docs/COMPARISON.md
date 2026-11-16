@@ -3,7 +3,7 @@
 What FreeDuet does that the others don't, row by row.
 
 **Legend:** ✅ available today · ⚠️ partly · 🚧 in progress · 🗓️ planned · ❌ no · — not documented by the project.
-**FreeDuet is at v0.2.1, an early release (15 November 2026).** A ✅ means you can use it today, in a published version: never something still to come. Where FreeDuet does not have something yet, its cell says so with 🚧 (being built, not released) or 🗓️ (decided, not started) and the version it is meant for, as on the [roadmap](ROADMAP.md#how-to-read-the-tables). Nothing on the roadmap has a date.
+**FreeDuet is at v0.2.2, an early release (16 November 2026).** A ✅ means you can use it today, in a published version: never something still to come. Where FreeDuet does not have something yet, its cell says so with 🚧 (being built, not released) or 🗓️ (decided, not started) and the version it is meant for, as on the [roadmap](ROADMAP.md#how-to-read-the-tables). Nothing on the roadmap has a date.
 
 _Last checked: 2026-11-08, from each project's public README and documentation, linked below. If we got something wrong about another project, open an issue and we will fix it within 48 hours._
 
