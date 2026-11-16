@@ -91,6 +91,7 @@ yet run live.
   would require the report there.
 - Not run live. iris-20 to iris-23 are not certified until they run on the eval stack:
   `bun --env-file=openbot/.env.eval evals/team/run.ts --repeat 3 --id iris-20,iris-21,iris-22,iris-23`.
+  Update, 16 November 2026: iris-20 to iris-23 ran in the live team evals of 15 November 2026 (`docs/ROADMAP.md`, the row for this feature); iris-22 failed that run and passed after the fix in PR #269. They are not certified yet: a full three-run certification has not been run on v0.2.1.
 - `README.md` (line 161, on main: 75 cases, 225 conversations; with this branch 79 and 237) and `docs/ROADMAP.md` are not edited here: the coordinator owns them.
 
 ## Decisions left to the maintainer

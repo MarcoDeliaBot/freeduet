@@ -32,7 +32,7 @@ What the check script then tests ([openbot/scripts/freeduet-clean-start-check.sh
 | server `/health` answers 200 | The server is up on port 3001 |
 | app answers | Port 3010 serves FreeDuet's app |
 | agent-freeduet `/health` answers 200 | The Python service that runs the members is up on port 4230 |
-| the twelve members are remote Bots at agent-freeduet | `examples/freeduet/agents.yaml` has 12 members; each is registered in the runtime and points to agent-freeduet on this machine |
+| a team of twelve: Iris and eleven members are remote Bots at agent-freeduet | `examples/freeduet/agents.yaml` has 12 members; each is registered in the runtime and points to agent-freeduet on this machine |
 | conversations are kept in FreeDuet's own database | `/api/capabilities` says `mode: local` (no CopilotKit Intelligence) |
 | a request without the installation secret is refused (401), and with it answered (200) | A request from this machine that holds no secret is not taken for the person ([docs/M1_PLAN.md](M1_PLAN.md) D28) |
 | `start.sh said how to sign in to Claude Code` | The output contains the sign-in line |

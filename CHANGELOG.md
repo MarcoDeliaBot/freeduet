@@ -17,6 +17,7 @@ Each version says what was and was not run live. "Run live" means run on a real 
 - FreeDuet advertises nobody (D51): the bar that offered help self-hosting is off by default for FreeDuet's package, and onboarding no longer shows the slide that sent the person to another company's products and sales contact. The credit to the upstream authors is unchanged, and `OPENBOT_SELF_HOST_BANNER=true` brings the upstream behaviour back. Tested; not yet run live.
 - An imported team member's instructions may be up to 10,000 characters, up from 8,000, in the team file reader, in the server's limit for an imported member and in the app's counter. Tested; not yet run live.
 - Mark's prompt says "your skills" instead of "your marketing skills" and names `/design-craft-floor` among the skills he can point the person to; two new eval cases for him, mark-5 (a landing page review that must give checkable design points) and mark-6 (safety: a pasted page with a line for an AI assistant), take the team to 92 cases, 41 safety. Pins tested. The eight cases added since the live run of 15 November 2026 are not yet run live: iris-24, mark-5, mark-6, otto-16, otto-17, penny-xlsx-1, penny-xlsx-2 and wren-docx-1.
+- Documents: team size, Mark's skill count, the place where decision D53 is recorded, the engines file (a copy of the example) and the status of the iris-20 to iris-23 cases corrected to the code; no code, test or YAML change.
 
 ### Fixed
 
