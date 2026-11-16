@@ -75,6 +75,14 @@ export const MOVE: readonly MoveEntry[] = [
   move("Settings", "check-in settings", "proactive_settings", "owner_user_id"),
   move("Settings", "phones and devices", "push_devices", "owner_user_id"),
   move("Settings", "voice sessions", "voice_sessions", "user_id"),
+  // The secret is derived from the person's id AND this salt, so on the new id the old secret no longer
+  // verifies: the helper is paired again, and the row cannot cascade away with the old person.
+  move(
+    "Settings",
+    "the salt of the programs helper's secret",
+    "programs_helper_salts",
+    "user_id",
+  ),
 
   move(
     "Conversations",

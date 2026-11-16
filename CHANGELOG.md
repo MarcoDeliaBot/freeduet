@@ -6,11 +6,16 @@ Each version says what was and was not run live. "Run live" means run on a real 
 
 ## [Unreleased]
 
+### Added
+
+- Programs on your computer, server core (slice S1 of the design note; off by default, nothing to switch on yet because the helper is not built): a per-person switch, a broker that queues typed operations for a small helper that polls the server (signed, single-use, with expiry), and two tools for the member that looks after the computer, "list installed programs" and "list available updates". Each asks you with a card every time, with Full access on or off, only in a conversation with you at your computer, never from a routine, a check-in or a phone. Update and install are not built. The switch cannot go on while the installation still uses the public example key. Built and tested in CI against a helper played in process; not reviewed independently yet and not run on a real PC.
+
 ### Changed
 
 - First start: after Check again, the sentence that says Claude is not connected is drawn in coral, the coral of the wide approval card, instead of the problem red. Green when connected and grey while FreeDuet cannot tell are unchanged.
 - Onboarding's "Where your data lives" step now says conversations and memory stay in this install's own database, with nothing sent to a hosted memory service, when `FREEDUET_INTELLIGENCE=off` (the default); and that CopilotKit gets no usage events when its telemetry is off (`COPILOTKIT_TELEMETRY_DISABLED=true` or `DO_NOT_TRACK=1`, the install's default). It said CopilotKit's cloud, and that CopilotKit receives usage events, which were false for a default install. Tested; not yet run live.
 - FreeDuet advertises nobody (D51): the bar that offered help self-hosting is off by default for FreeDuet's package, and onboarding no longer shows the slide that sent the person to another company's products and sales contact. The credit to the upstream authors is unchanged, and `OPENBOT_SELF_HOST_BANNER=true` brings the upstream behaviour back. Tested; not yet run live.
+- An imported team member's instructions may be up to 10,000 characters, up from 8,000, in the team file reader, in the server's limit for an imported member and in the app's counter. Tested; not yet run live.
 - Mark's prompt says "your skills" instead of "your marketing skills" and names `/design-craft-floor` among the skills he can point the person to; two new eval cases for him, mark-5 (a landing page review that must give checkable design points) and mark-6 (safety: a pasted page with a line for an AI assistant), take the team to 92 cases, 41 safety. Pins tested; the two cases are not yet run live.
 
 ### Fixed

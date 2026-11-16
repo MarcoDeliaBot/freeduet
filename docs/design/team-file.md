@@ -99,7 +99,7 @@ Validation writes nothing to the database. It refuses:
 - an id that a deployment route uses [code: tenant-package.ts:391-395], and an id or name that a starter member uses. Today's check covers routes only, so the starter check is new;
 - a skill slug outside the package pattern [code: tenant-package.ts:658], or one another owner holds [code: openbot/server/src/db/schema/plugins.ts:738];
 - sizes above 64 KB per prompt or 1 MB per file [assumed: proposed limits];
-- an imported member's instructions above 8,000 characters, counted in UTF-16 code units, the instructions being the author's text with the Email paragraph and the shared rules added (decision 2, decided 14 November 2026; built, see "Built so far").
+- an imported member's instructions above 10,000 characters, counted in UTF-16 code units, the instructions being the author's text with the Email paragraph and the shared rules added (decision 2, decided 14 November 2026 at 8,000 and raised to 10,000 on 16 November 2026; built, see "Built so far").
 
 The importer never writes into `TENANT_PACKAGE_DIR`. So the loader and its `${NAME}` expansion never read a shared file [code: openbot/server/src/index.ts:455].
 
@@ -189,13 +189,13 @@ One PR each. Sizes follow [ENGINES_PLAN.md](../ENGINES_PLAN.md) section 2 [code:
 | # | Decision | Options | Recommendation and reason |
 |---|---|---|---|
 | 1 | Where an imported member lives | A. A private Bot of the person, through the existing create route. B. A member of the deployment's package. C. A file in `agents/` | A. The package loads once at boot [code: openbot/server/src/index.ts:455]. It expands `${NAME}` from the environment [code: tenant-package.ts:333]. The router reads `agents.yaml` only [code: members.py:50-51]. |
-| 2 | How much instruction a Bot can carry | A. Keep 1000 characters: an imported member keeps 8% to 21% of a starter prompt's length. B. Raise the cap for imported Bots only [code: form.ts:23; routes.ts:72]. C. A separate router channel for imported prompts | Decided 14 November 2026: B, raised to 8,000 characters for imported Bots only; other Bots keep their limit. B. The router already receives `roleDescription` on every remote run [code: copilot.ts:177-190, 317]. Only the cap changes. C adds a channel that must be trusted. |
+| 2 | How much instruction a Bot can carry | A. Keep 1000 characters: an imported member keeps 8% to 21% of a starter prompt's length. B. Raise the cap for imported Bots only [code: form.ts:23; routes.ts:72]. C. A separate router channel for imported prompts | Decided 14 November 2026: B, at 8,000 characters for imported Bots only, raised to 10,000 on 16 November 2026; other Bots keep their limit. B. The router already receives `roleDescription` on every remote run [code: copilot.ts:177-190, 317]. Only the cap changes. C adds a channel that must be trusted. |
 | 3 | Remote endpoints in a file | A. Refused. B. Allowed to an address the person types on the card, checked by `checkAgentEndpoint` | A for v1. Conversation content goes to that address [code: openbot/server/src/agents/routes.ts:541-543]. |
 | 4 | How a shared member is tested | A. A test run without tools, in the person's conversation, labelled "not certified". B. Certification by the maintainer only, on the eval stack. C. Test runs with tools on | A now, and B for certification. C could act on the person's accounts. The grader is a model that reads statements [code: evals/team/grader.ts:47-49], so a file cannot certify itself. |
 | 5 | Hand-offs for an imported team | A. No grants: each hand-off asks the person. B. A new mark that pre-approves hand-offs for imported teams | A. Pre-approval is tied to the package mark [code: openbot/server/src/freeduet/hub-handoffs.ts:19-31]. A second mark is a security decision for the maintainer. |
 | 6 | Memories and lessons in an export | A. Never in v1. B. Each one ticked by the person, shown in the preview, and imported as unreviewed | A. Both are personal, and the file is meant to be sent. Revisit with the preview of slice S2. |
 
-**Decision 2 is decided (14 November 2026): option B, for imported members only, at 8,000 characters.** Every other limit and every other path keeps its size. The checker is built; the layers that still refuse are listed under "Built so far".
+**Decision 2 is decided (14 November 2026): option B, for imported members only, at 8,000 characters, raised to 10,000 on 16 November 2026.** Every other limit and every other path keeps its size. The checker is built; the layers that still refuse are listed under "Built so far".
 
 ## 7. What was not verified
 
@@ -219,10 +219,10 @@ Slice S1 (section 4) is on main, merged through PR #174: the two formats and the
 - `openbot/server/src/tenant-package.ts`: one addition to the loader. `validateTenantPackage` also returns `declaredAgents`, every coworker the package declares, including one this deployment does not run (a remote coworker with no endpoint), with its name, skill slugs and instructions. Nothing else in the loader changes (+48 −1; the row is in `docs/UPSTREAM_TOUCHES.md`). The reader needs it because `agents` leaves out a remote coworker with no endpoint, so the shared rules and the names of those coworkers would be invisible.
 - The refusals of section 3.2, each with its own test and a path that names the field: `${` in any text; hidden and control characters (every Cc and Cf character except tab and line feed, checked before the trim, so a byte-order mark at either end is refused too); any key a file may not set, and any unknown key; a repeated key, with both lines; a format line that is missing, unknown or another version; a content hash, which is optional and, when present, must be SHA-256 of the content; a starter member's name (compared with NFKC, lowercase, letters and digits only), the product's name, and a deployment route's word; a skill slug outside the package pattern or already shipped by the package; a repeated slug in one member, or one slug with different text in two members of a team; a tool ref not written `serverId/toolName`, or listed twice; a sending tool; a test request with no `must` or `must_not` line, a `safety` flag that is not true or false, or an unknown key; a file over 1 MB; one text over 64 KB; a file that starts with a byte-order mark; a team with no members, or two members with one name.
 - Composition: an imported member's instructions are its author's text, then the package's "Email." paragraph, then the shared rules, word for word from the package. An author's text that already carries either paragraph is refused.
-- The instruction limit (decision 2, decided 14 November 2026): `TEAM_FILE_LIMITS.instructionsCharacters` is 8,000 for an imported member's instructions, which are the composed text above, counted in UTF-16 code units (`String.length`, as every other limit here). Above 8,000 the file is refused at `system_prompt` (or `members[n].system_prompt`), and the sentence names the limit and how many characters to cut. From 1,001 to 8,000 the file is read, with a notice that FreeDuet's create and edit screens and its server still take 1,000 for a Bot's text, so the member cannot be created or edited yet. `TEAM_FILE_LIMITS.createTextCharacters` (1,000) names that layer's limit and is not changed here. No upstream file changed, so no row is added to `docs/UPSTREAM_TOUCHES.md`.
+- The instruction limit (decision 2, decided 14 November 2026): `TEAM_FILE_LIMITS.instructionsCharacters` is 10,000 for an imported member's instructions (8,000 until 16 November 2026), which are the composed text above, counted in UTF-16 code units (`String.length`, as every other limit here). Above 10,000 the file is refused at `system_prompt` (or `members[n].system_prompt`), and the sentence names the limit and how many characters to cut. From 1,001 to 10,000 the file is read, with a notice that FreeDuet's create and edit screens and its server still take 1,000 for a Bot's text, so the member cannot be created or edited yet. `TEAM_FILE_LIMITS.createTextCharacters` (1,000) names that layer's limit and is not changed here. No upstream file changed, so no row is added to `docs/UPSTREAM_TOUCHES.md`.
 - Tool allowance: a tool ref is kept only when a skill attached to a declared coworker of the package holds it. The others are removed and listed in the notices (section 3.3).
 - Sending tools are refused by name: a tool whose name holds the word send, reply or forward. In the current package this matches exactly the four Gmail send refs, which a guard test pins.
-- `openbot/server/tests/freeduet-team-file.test.ts`: 63 tests (57 from slice S1, one of them rewritten for decision 2, and six for the limit). Fixtures are invented, and every test reads the real package through the real loader.
+- `openbot/server/tests/freeduet-team-file.test.ts`: 64 tests (57 from slice S1, one of them rewritten for decision 2, and seven for the limit: six from 14 November 2026 and the margin test of 16 November 2026). Fixtures are invented, and every test reads the real package through the real loader.
 
 **Verified** (14 November 2026)
 - The new test file: 57 pass, 0 fail.
@@ -245,7 +245,7 @@ Slice S1 (section 4) is on main, merged through PR #174: the two formats and the
 - The reader counts UTF-16 code units, so an emoji counts as two. An editor shows one. The refusal and the notice say "characters" and do not explain the difference.
 - No preview (slice S3) exists, so nobody has yet seen the notice.
 - No live run or team eval with an imported prompt of this length. A model reads these instructions, so they are not yet run live.
-- The cost of up to 8,000 characters on each turn (the routing roster, the voice agent and the standing role) is [assumed], not measured.
+- The cost of up to 10,000 characters on each turn (the routing roster, the voice agent and the standing role) is [assumed], not measured.
 - The 64 KB and 1 MB limits are the design's proposals [assumed].
 - The reader takes text. The importer (S3) must decode the bytes strictly (`fatal: true`) and keep the byte-order mark (`ignoreBOM: true`), or the refusal of a leading byte-order mark never fires.
 - A skill slug already held by another owner needs the database, so that check waits for S4.
@@ -254,7 +254,7 @@ Slice S1 (section 4) is on main, merged through PR #174: the two formats and the
 - Every Cc and Cf character except tab and line feed is refused, so a zero-width joiner inside an emoji sequence is refused too.
 
 **Decisions** (section 6)
-- Decision 2, instruction limit: decided on 14 November 2026 as option B, for imported members only, at 8,000 characters of stored text. The checker enforces it (above). The create and edit layers below do not change in this slice, so an imported member cannot be created or edited yet. The appended text alone is 3,518 characters (the shared rules 3,062, the Email paragraph 452, and two separators of 2 characters each), so under the measure built here an author's own text may have at most 4,482 characters. The open questions are in "Decisions left to the maintainer" below.
+- Decision 2, instruction limit: decided on 14 November 2026 as option B, for imported members only, at 8,000 characters of stored text. The checker enforces it (above). The create and edit layers below do not change in this slice, so an imported member cannot be created or edited yet. The appended text alone is 3,518 characters (the shared rules 3,062, the Email paragraph 452, and two separators of 2 characters each), so under the measure built here an author's own text may have at most 4,482 characters. The open questions are in "Decisions left to the maintainer" below. The figures in this paragraph are of 14 November 2026: the limit and the appended text have changed since, see "Limit raised to 10,000 (16 November 2026)" at the end of this file.
 - Decision 3, endpoints in a file: built as recommended. A file that names an endpoint is refused as a key a file may never set.
 - Decisions 1, 4, 5 and 6 belong to S4, S5, S6 and S2 respectively.
 
@@ -324,23 +324,23 @@ Slice S2 of section 4, the export, is built on branch `team-file-export`. Not ve
 
 ### Imported member layers (14 November 2026)
 
-What this slice builds, on top of the reader above: the stored fact that lets an imported member take 8,000 characters, and the create, edit and dialog layers that read it. The importer that calls the fact (S3) is not built, so no member can be imported yet.
+What this slice builds, on top of the reader above: the stored fact that lets an imported member take 10,000 characters (8,000 when it was built, on 14 November 2026), and the create, edit and dialog layers that read it. The importer that calls the fact (S3) is not built, so no member can be imported yet.
 
 **Built**
 - Decision A, option 1: `agent_profiles.imported_member` (boolean, not null, default false; migration `0071_imported_member`). Only the internal `createImportedMember(store, actor, input)` (`openbot/server/src/agents/imported-member.ts`) writes it, through `store.create(..., importedMember: true)`. No public route, and no request body (POST or PATCH) can set or clear it.
-- `createImportedMember` checks the text with `parseAgentInput` at 8,000, forces visibility private, and stores the text as both `roleDescription` and, for the built-in prompt, `systemPrompt`.
-- Limits (`openbot/server/src/agents/role-description-limit.ts`): 1,000 for every Bot, 8,000 for an imported one, counted in UTF-16 code units (decision E, option 1).
+- `createImportedMember` checks the text with `parseAgentInput` at 10,000, forces visibility private, and stores the text as both `roleDescription` and, for the built-in prompt, `systemPrompt`.
+- Limits (`openbot/server/src/agents/role-description-limit.ts`): 1,000 for every Bot, 10,000 for an imported one, counted in UTF-16 code units (decision E, option 1).
 - `POST /api/agents` keeps 1,000 for a hand-made Bot, so a body that claims the fact does not lift it.
-- `PATCH /api/agents/:agentId` reads the stored Bot before it parses the body and picks the limit from that Bot: 8,000 if it is imported. A copy of an imported Bot that is not imported keeps its text while unchanged, and a changed text is held to 1,000. A body's `importedMember` is ignored.
-- `GET` reports `roleDescriptionLimit` for each Bot (8,000 or 1,000). The app's "What it does" edit dialog reads that limit: it shows "n of limit characters" and refuses over it. The create sheet stays at 1,000, and Leo's save-bot card is unchanged.
-- Decision C, option 1: 8,000 counts the whole stored text.
+- `PATCH /api/agents/:agentId` reads the stored Bot before it parses the body and picks the limit from that Bot: 10,000 if it is imported. A copy of an imported Bot that is not imported keeps its text while unchanged, and a changed text is held to 1,000. A body's `importedMember` is ignored.
+- `GET` reports `roleDescriptionLimit` for each Bot (10,000 or 1,000). The app's "What it does" edit dialog reads that limit: it shows "n of limit characters" and refuses over it. The create sheet stays at 1,000, and Leo's save-bot card is unchanged.
+- Decision C, option 1: the limit counts the whole stored text.
 - Decision D, as the app stores it: the instructions are `roleDescription` (and `systemPrompt` for built-in). Option 2 is not built.
 
 **Tests**
-- `server/tests/imported-member.integration.test.ts` (13 tests, real database, real routes): the import path, the 8,000 and 8,001 edges (ASCII, four-thousand emoji against 4,001, and 8,000 accented letters), the PATCH edges, the unchanged-copy rule, the body that claims the fact, and the reader constants pinned to `TEAM_FILE_LIMITS`.
+- `server/tests/imported-member.integration.test.ts` (13 tests, real database, real routes): the import path, the 10,000 and 10,001 edges (ASCII, five-thousand emoji against 5,001, and 10,000 accented letters), the PATCH edges, the unchanged-copy rule, the body that claims the fact, and the reader constants pinned to `TEAM_FILE_LIMITS`.
 - `server/tests/agent-instructions-limit.integration.test.ts`: a guard. A hand-made Bot takes 1,000 and refuses 1,001 on create and edit, and a body that claims the fact does not lift it. It uses only existing modules and is meant to pass on main.
 - `server/tests/schema.test.ts`: the new column.
-- `app/tests/bot-setup.test.tsx`: 8,000 taken, 8,001 refused, a hand-made Bot still refused at 1,001 (a guard), and the counter.
+- `app/tests/bot-setup.test.tsx`: 10,000 taken, 10,001 refused, a hand-made Bot still refused at 1,001 (a guard), and the counter.
 - `server/tests/freeduet-team-file.test.ts`: the notice's wording follows the new layers.
 - `server/tests/agent-routes.test.ts` and `app/tests/agent-api-path.test.ts` (changed after CI on `d2ee384` failed): they pin the exact store calls and the exact DTO, so they now expect the edit route's read of the Bot before its update (three call lists, and twelve calls instead of eleven) and `roleDescriptionLimit` in each DTO. The invalid-body case still expects that nothing is written; it names the one read per request instead of expecting no call at all. Sixteen app test fixtures of `AgentProfile` carry `roleDescriptionLimit: 1000`, because the app type requires it.
 
@@ -352,14 +352,54 @@ What this slice builds, on top of the reader above: the stored fact that lets an
 - Full suites on 15 November 2026, on this worktree and before the last merge of main (which moved zod from 4.5.4 to 4.6.7): the sharded server suite, 8,481 pass, 3 fail, 21 skip (the three that fail on main in this sandbox: two `learning-*` "real provider" cases and the Mastra bridge); the app suite, 2,867 pass, 0 fail in 298 files. After that merge: `bun run typecheck` (six workspaces), `bun run typecheck:tests`, biome format and lint, and the ten test files of this slice and its CI fixes (174 tests) pass.
 
 **Not verified**
-- Fail before on a clean origin/main was not run. The new `imported-member` file cannot load on main (the module does not exist), and the new `bot-setup` cases for 8,000 and the counter would fail on main's dialog. The guards are meant to pass on main.
+- Fail before on a clean origin/main was not run. The new `imported-member` file cannot load on main (the module does not exist), and the new `bot-setup` cases for 10,000 and 10,001 and the counter would fail on main's dialog. The guards are meant to pass on main.
 - No real import (S3 is not built), no browser run of the dialog, no live member run.
-- The cost of 8,000 characters on each turn is not measured. The routing roster (`openbot/server/src/routing/classify.ts`, a line per candidate per routed turn), the voice agent (`openbot/server/src/voice/routes.ts`) and the standing role message (`openbot/server/src/copilot.ts`) each receive the whole text. An imported Bot of 8,000 code units adds up to 8,000 characters to each of those, per use. Listed as a cost, not changed.
+- The cost of 10,000 characters on each turn is not measured. The routing roster (`openbot/server/src/routing/classify.ts`, a line per candidate per routed turn), the voice agent (`openbot/server/src/voice/routes.ts`) and the standing role message (`openbot/server/src/copilot.ts`) each receive the whole text. An imported Bot of 10,000 code units adds up to 10,000 characters to each of those, per use. Listed as a cost, not changed.
 - A duplicate of an imported Bot does not inherit the fact (only the importer writes it). Its text may be longer than 1,000 and can be saved only while unchanged. Option: copy the flag, or refuse to copy above 1,000. Maintainer's call.
 - `createImportedMember` forces visibility private; the import path must decide whether that is the final rule.
 
 **Decisions taken for this slice** (section 6)
 - A, how an imported member passes the create and edit layers: option 1, the stored fact.
-- C, what 8,000 counts: option 1, the whole stored text.
+- C, what the limit counts: option 1, the whole stored text.
 - E, unit: option 1, UTF-16 code units.
 - D: as the app stores it (`roleDescription`).
+
+### Limit raised to 10,000 (16 November 2026)
+
+The limit for an imported member's instructions is now 10,000 characters, counted in UTF-16 code units as before. Only the number changed: no layer, route, approval or refusal changed. Hand-made Bots still take 1,000 characters.
+
+**Changed**
+- `openbot/server/src/freeduet/team-file.ts`: `TEAM_FILE_LIMITS.instructionsCharacters` is 10,000. The refusal and the notices name the new number.
+- `openbot/server/src/agents/role-description-limit.ts`: `IMPORTED_ROLE_DESCRIPTION_LIMIT` is 10,000, so the server and the reader stay equal (the invariant test pins them).
+- Comments only: `openbot/server/src/agents/imported-member.ts`, `openbot/app/src/lib/agents/queries.ts`, `openbot/server/tests/agent-routes.test.ts`.
+- Tests: the edges in `freeduet-team-file.test.ts`, `imported-member.integration.test.ts` and `bot-setup.test.tsx` now sit at 10,000 and 10,001. One test is new, and replaces the margin test of the first version: the shipped members that do not fit the imported limit are pinned to `concierge` (Jules), `freeduet` (Iris) and `inbox` (Otto), and `creator` (Leo) is asserted as fitting.
+- Docs: `CHANGELOG.md` (one line), the three rows of `docs/UPSTREAM_TOUCHES.md` that state the number, and the three pages the coordinator named: `docs/ROADMAP.md` (lines 11 and 91), `docs/M1_PLAN.md` (line 977) and `README.md` (line 193). Each gives 10,000 as the current limit and keeps 8,000 where it records history: the v0.2.1 release, PRs #203 and #218, and the decision of 14 November 2026.
+
+**The pinned list measures what the reader composes.** It takes each member's author's text, the Email paragraph and the shared rules, joined by a blank line, and compares the result with 10,000. On 16 November 2026 the appended text is 3,836 characters: the standard Email paragraph (452), the shared rules (3,380) and two separators of 2 characters each. An author's own text may therefore have at most 6,164 characters. These figures were read from `agents.yaml` for the ten members that carry the standard paragraph. An author's text with a shared paragraph inside it cannot be written as a team file at all (`authorTextOf` returns null), and the test counts that member as not fitting.
+
+**Verified** (16 November 2026, branch `team-file-limit-10000`, merged with `origin/main` at `abe3948`, PR #317, in the merge commit `fd8b25a`)
+- The three server files of the run, `freeduet-team-file.test.ts`, `imported-member.integration.test.ts` and `freeduet-team-file-export.integration.test.ts`, before the source change (the same tests against the 8,000 code): 73 pass, 15 fail, of 88.
+- The same three files at 10,000: 88 pass, 0 fail, of 88. At 8,000 the pinned list fails on Leo first (`Expected: <= 8000`, `Received: 8875`).
+- `app/tests/bot-setup.test.tsx`: 4 pass, 3 fail at 8,000; 7 pass, 0 fail at 10,000. Its counter reads the limit that the server reports, so this file moves with the server constant.
+- `server/tests/assertion-shape.test.ts`: 10 pass, 0 fail. The files that the name filters `agent-routes.test.ts` and `agent-instructions-limit` matched (`agent-routes.test.ts`, `agent-instructions-limit.integration.test.ts` and `app/tests/legacy-agent-routes.test.ts`): 58 pass, 0 fail.
+- `bun run typecheck`: exit 0 for shared, toolkit, worker, server and app. `bun run typecheck:tests`: clean against the baseline (239 known errors, none new).
+- `biome format` and `biome lint --error-on-warnings` on the eight changed TypeScript files: clean. `biome check` reports four organize-imports errors, in `freeduet-team-file.test.ts`, `imported-member.integration.test.ts`, `bot-setup.test.tsx` and `imported-member.ts`. Main's own versions have the same four errors (checked from temporary copies of each file), so none is new.
+
+**The members that do not fit** (composed text, limit 10,000; pinned by the test)
+- `inbox` (Otto): 11,138 characters, 1,138 over the limit. His own Email paragraph is 766 characters, not the standard 452.
+- `concierge` (Jules): 13,534 characters, 3,534 over the limit.
+- `freeduet` (Iris): cannot be written as a team file, because `authorTextOf` returns null: a shared paragraph sits inside her text.
+- Leo (`creator`) fits: stored 8,873 characters, 8,875 composed, 1,125 under the limit. Before this change no test or code tied his text to 8,000. The limit is read only by the team-file reader (`team-file.ts` on main: the refusal at lines 419 to 423 and a notice at line 801). The two tests that name him check that the prompts of Iris and Leo name the marketer and the video maker (`freeduet-package.test.ts`, lines 558 and 760), and the export test lists him among the carriers of the standard paragraphs (`freeduet-team-file-export.test.ts`, line 55); none reads his length. The sentence in `docs/M1_PLAN.md` (line 977) said that the export test of the whole team fails above 8,000 and gave 7,999 for Leo. The first claim was wrong: that test exports its own fixture members, not the shipped `creator`. The figure matched no measurement. Both are corrected.
+
+**Decisions left to the maintainer** (decisions A to D above were written on 14 November 2026, when the limit was 8,000)
+
+| # | Decision | Options | Recommendation and reason |
+|---|---|---|---|
+| F | Whether a shipped member must fit an imported member's limit (the first version of the margin test asked for 500 characters of margin for every member) | 1. Shorten `concierge` by at least 3,534 characters and `inbox` by at least 1,138 in `agents.yaml`; the limit stays at 10,000. 2. Raise the limit to at least 13,534, the length of Jules. Every imported member's text goes to the routing roster, the voice agent and the standing role on every turn, so this raises that cost for every imported member. 3. Require nothing of the shipped members: they are not meant to fit a team file, and the three that do not are pinned by a test | **Option 3, decided on 16 November 2026 by the coordinator, not by the maintainer.** A test that demands margin for every shipped member asserts something the product does not promise. The maintainer may overrule this. Options 1 and 2 would change prompts or the cost of every imported member, so the team evals would have to run again. |
+
+**Not verified**
+- No live run and no browser run. The limit is measured by the reader's composition in a test, not by a real import (slice S3 is not built). The team evals were not run; no prompt changed in this change.
+- The `+` and `−` counts in the three `docs/UPSTREAM_TOUCHES.md` rows were not recounted; only the limit text changed.
+- The wording of the ROADMAP, M1_PLAN and README lines named under Docs above has not been reviewed by the maintainer. Each gives 10,000 as the current limit and 8,000 as history.
+- The cost of 10,000 characters on each turn is not measured.
+

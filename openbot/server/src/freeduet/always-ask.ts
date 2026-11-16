@@ -46,7 +46,7 @@
  * WHAT THE ANSWER LOOKS LIKE. `source: "always_ask"`, the same outcome a new email already has: the
  * store refuses "Always allow" for it, a saved rule never answers it, and both cards hide the button.
  */
-import { NOT_ACCOUNT_ACTIONS } from "../approvals/policy";
+import { NOT_ACCOUNT_ACTIONS, PROGRAMS_TOOLS } from "../approvals/policy";
 import { approvalText } from "@openbot/shared/approval-text";
 import type { AuditInitiator } from "../audit";
 
@@ -65,6 +65,13 @@ export const SETTING_CHANGE_REASON = approvalText("reason.setting", "en");
  * computer. It says what the card is for and how it goes away: a paired browser works as it always did.
  */
 export const REMOTE_WRITE_REASON = approvalText("reason.remoteWrite", "en");
+
+/**
+ * What the person reads on the card for a program on their own computer (D60). Plain English, kept as it
+ * stands; it is not yet in the per-language catalogue (slice S5 adds it there).
+ */
+export const PROGRAMS_REASON =
+  "Anything done to the programs on your computer always asks you first, with Full access on or off, and the list of what is installed counts too.";
 
 /** A chain of hand-offs is at most this long here; the desk caps it far lower, this only ends a loop. */
 const MAX_HOPS = 16;
@@ -135,6 +142,14 @@ export type AlwaysAskFacts = {
  * say about it (and the gate goes on exactly as it did before).
  */
 export function alwaysAskReason(facts: AlwaysAskFacts): string | undefined {
+  /*
+   * PROGRAMS ON THE PERSON'S COMPUTER (D60, docs/design/programs-on-your-computer.md 4.4). First, before the
+   * effect check and before the `NOT_ACCOUNT_ACTIONS` line below: the same reason in every kind of turn,
+   * for a read of the list as well as for a write. Because `approvals/service.ts` asks for Full access only
+   * when this returns nothing, Full access cannot lift it, in either of its settings; "Always allow" is
+   * refused for the `always_ask` source it produces, and a saved rule never answers it.
+   */
+  if (PROGRAMS_TOOLS.test(facts.toolRef)) return PROGRAMS_REASON;
   if (facts.effect !== "write") return undefined;
   const remote =
     !facts.answeredByCard &&

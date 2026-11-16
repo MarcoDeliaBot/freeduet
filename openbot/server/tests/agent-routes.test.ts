@@ -333,7 +333,7 @@ describe("agent lifecycle routes", () => {
       ],
       /*
        * The edit route reads the Bot before it parses the body: how long its "What it does" text may
-       * be depends on the stored Bot (8,000 for an imported one, 1,000 for any other), and nothing a
+       * be depends on the stored Bot (10,000 for an imported one, 1,000 for any other), and nothing a
        * request sends can change that.
        */
       ["get", actor, "agent-1"],

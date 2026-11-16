@@ -29,7 +29,7 @@ export const REMOTE_ANSWER_SENTENCE = approvalText(
  * Deliberately broad: a refusal here costs one answer at the computer.
  */
 const NOT_FROM_HERE =
-  /full[-_ ]?access|connect|authori[sz]e|oauth|install|grant|invite|share|permission|sign[-_ ]?in|always[-_ ]?(?:allow|ask)|approval[-_ ]?(?:rule|setting)|^host\/|^computer_/i;
+  /full[-_ ]?access|connect|authori[sz]e|oauth|install|grant|invite|share|permission|sign[-_ ]?in|always[-_ ]?(?:allow|ask)|approval[-_ ]?(?:rule|setting)|^host\/|^computer_|^programs\//i;
 
 export type RemoteAnswer =
   | { allowed: true }

@@ -216,30 +216,30 @@ async function addToInstructions(view: ReturnType<typeof draw>) {
   await user.click(view.getByRole("button", { name: "Save" }));
 }
 
-test("an imported coworker's What it does takes 8,000 characters", async () => {
+test("an imported coworker's What it does takes 10,000 characters", async () => {
   serve(MANAGED, actor.id, {
     importedMember: true,
-    roleDescription: "a".repeat(7999),
+    roleDescription: "a".repeat(9999),
   });
   const view = draw();
 
   await addToInstructions(view);
 
   await waitFor(() => expect(updates).toHaveLength(1));
-  expect(updates[0]).toMatchObject({ roleDescription: "a".repeat(8000) });
+  expect(updates[0]).toMatchObject({ roleDescription: "a".repeat(10000) });
 });
 
-test("an imported coworker's What it does refuses 8,001 characters before anything is sent", async () => {
+test("an imported coworker's What it does refuses 10,001 characters before anything is sent", async () => {
   serve(MANAGED, actor.id, {
     importedMember: true,
-    roleDescription: "a".repeat(8000),
+    roleDescription: "a".repeat(10000),
   });
   const view = draw();
 
   await addToInstructions(view);
 
   expect((await view.findByRole("alert")).textContent).toBe(
-    "What it does must be 8000 characters or fewer.",
+    "What it does must be 10000 characters or fewer.",
   );
   expect(updates).toEqual([]);
 });
@@ -266,5 +266,5 @@ test("What it does counts its characters against the limit the coworker reports"
 
   await user.click(await view.findByRole("button", { name: /^What it does/ }));
 
-  expect(await view.findByText("7,999 of 8,000 characters")).toBeTruthy();
+  expect(await view.findByText("7,999 of 10,000 characters")).toBeTruthy();
 });

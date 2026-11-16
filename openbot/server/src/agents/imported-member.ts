@@ -23,7 +23,7 @@ export class ImportedMemberRefusedError extends Error {
  * Create a coworker from a team file's member, the only way the imported fact is ever written.
  *
  * Not a route: nothing in the HTTP surface calls it, and the fact it writes is the one thing that
- * lets a coworker hold 8,000 characters rather than 1,000. The coworker is private, has no address of
+ * lets a coworker hold 10,000 characters rather than 1,000. The coworker is private, has no address of
  * its own (it runs on the deployment's Bot, as a coworker made by hand without an address does), and
  * this function writes no grant: grants are separate writes.
  */

@@ -103,6 +103,9 @@ import { createImportPreviewRoutes } from "./freeduet/import/preview-routes";
 import { createTeamFileRoutes } from "./freeduet/team-file-routes";
 import type { HostAccessBroker } from "./host-access/broker";
 import { createHostAccessRoutes } from "./host-access/routes";
+import type { ProgramsBroker } from "./programs/broker";
+import { createProgramsRoutes } from "./programs/routes";
+import type { ProgramsSwitch } from "./programs/switch";
 import { identityRoutes } from "./identity/routes";
 import type { IdentityStore } from "./identity/store";
 import {
@@ -475,6 +478,8 @@ export function createApp(
     settingChanges?: SettingChanges;
     /** The person's engine choices, changed from the Engines page (docs/design/engines-dashboard.md). */
     engineChoices?: EngineChoices;
+    /** D60: programs on the person's own computer (docs/design/programs-on-your-computer.md). Absent: no routes. */
+    programs?: { broker: ProgramsBroker; switch: ProgramsSwitch };
     /**
      * What OpenDuet made for the person, and the tasks it is working on: the Pages tab and the viewer,
      * and Chat's task cards, the task page and Tasks. See openduet/pages.ts and openduet/task-store.ts.
@@ -786,6 +791,19 @@ export function createApp(
       pairingGate,
     ),
   );
+  // D60: programs on the person's own computer. The helper's two doors carry a signed body and no session; the person's two
+  // routes need the session, and the switch needs the person at the computer. All four are refused to a remote session.
+  if (coworker?.programs)
+    app.route(
+      "/api/programs",
+      createProgramsRoutes({
+        broker: coworker.programs.broker,
+        switch: coworker.programs.switch,
+        requireUser,
+        pairing: pairingGate,
+        auditStore,
+      }),
+    );
   // The import preview (docs/design/import-from-other-tools.md, slice 2): signed in, the person's own facts, nothing saved.
   if (coworker?.memory)
     app.route(

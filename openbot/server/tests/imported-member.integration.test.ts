@@ -22,7 +22,7 @@ import { TEST_POOL, testDatabaseUrl } from "./support/database";
 /**
  * The instructions of a Bot imported from a team file, through the real store and the real routes.
  *
- * What is pinned here: the importer's creation path takes up to 8,000 UTF-16 code units; the edit
+ * What is pinned here: the importer's creation path takes up to 10,000 UTF-16 code units; the edit
  * route takes the same for a Bot holding the imported fact and nothing longer for any other; the
  * fact is written by `createImportedMember` only, so no request body can set it or clear it; and a
  * copy of an imported Bot does not inherit the fact. The guards for a Bot made in the app, which
@@ -148,42 +148,42 @@ async function importedMemberOf(owner: AgentActor, roleDescription: string) {
 describe("createImportedMember", () => {
   test("makes a private coworker that holds the fact, its instructions, and the same text as its built-in prompt", async () => {
     const owner = await createOwner();
-    const made = await importedMemberOf(owner, ascii(8000));
+    const made = await importedMemberOf(owner, ascii(10000));
 
     expect(made.visibility).toBe("private");
-    expect(made.roleDescription).toBe(ascii(8000));
+    expect(made.roleDescription).toBe(ascii(10000));
     expect(made.importedMember).toBe(true);
     expect(await storedFact(made.id)).toBe(true);
-    expect(await storedSystemPrompt(made.id)).toBe(ascii(8000));
+    expect(await storedSystemPrompt(made.id)).toBe(ascii(10000));
   });
 
-  test("takes 8,000 characters and refuses 8,001, and says the limit", async () => {
+  test("takes 10,000 characters and refuses 10,001, and says the limit", async () => {
     const owner = await createOwner();
 
-    await expect(importedMemberOf(owner, ascii(8000))).resolves.toMatchObject({
+    await expect(importedMemberOf(owner, ascii(10000))).resolves.toMatchObject({
       importedMember: true,
     });
-    await expect(importedMemberOf(owner, ascii(8001))).rejects.toThrow(
-      "What it does must be text between 1 and 8000 characters.",
+    await expect(importedMemberOf(owner, ascii(10001))).rejects.toThrow(
+      "What it does must be text between 1 and 10000 characters.",
     );
   });
 
-  test("counts UTF-16 code units, not bytes: 4,000 emoji fit and 4,001 do not, and 8,000 accented letters fit", async () => {
+  test("counts UTF-16 code units, not bytes: 5,000 emoji fit and 5,001 do not, and 10,000 accented letters fit", async () => {
     const owner = await createOwner();
     const emoji = "\u{1F600}";
     const accented = "é";
 
-    expect(emoji.repeat(4000).length).toBe(8000);
+    expect(emoji.repeat(5000).length).toBe(10000);
     await expect(
-      importedMemberOf(owner, emoji.repeat(4000)),
+      importedMemberOf(owner, emoji.repeat(5000)),
     ).resolves.toMatchObject({ importedMember: true });
     await expect(
-      importedMemberOf(owner, `${emoji.repeat(4000)}a`),
-    ).rejects.toThrow("between 1 and 8000 characters.");
-    // Two bytes each in UTF-8, one code unit each: 16,000 bytes, and still within the limit.
-    expect(new TextEncoder().encode(accented.repeat(8000)).length).toBe(16000);
+      importedMemberOf(owner, `${emoji.repeat(5000)}a`),
+    ).rejects.toThrow("between 1 and 10000 characters.");
+    // Two bytes each in UTF-8, one code unit each: 20,000 bytes, and still within the limit.
+    expect(new TextEncoder().encode(accented.repeat(10000)).length).toBe(20000);
     await expect(
-      importedMemberOf(owner, accented.repeat(8000)),
+      importedMemberOf(owner, accented.repeat(10000)),
     ).resolves.toMatchObject({ importedMember: true });
   });
 
@@ -191,7 +191,7 @@ describe("createImportedMember", () => {
     const owner = await createOwner();
 
     await expect(importedMemberOf(owner, "   ")).rejects.toThrow(
-      "What it does must be text between 1 and 8000 characters.",
+      "What it does must be text between 1 and 10000 characters.",
     );
     await expect(
       createImportedMember(store, owner, {
@@ -204,7 +204,7 @@ describe("createImportedMember", () => {
 });
 
 describe("editing an imported coworker", () => {
-  test("takes 8,000 characters on the edit route and refuses 8,001, with the same count on code units", async () => {
+  test("takes 10,000 characters on the edit route and refuses 10,001, with the same count on code units", async () => {
     const owner = await createOwner();
     const made = await importedMemberOf(owner, ascii(1000));
     const app = appFor(owner);
@@ -213,22 +213,22 @@ describe("editing an imported coworker", () => {
       app,
       "PATCH",
       `/api/agents/${made.id}`,
-      editBody(ascii(8000)),
+      editBody(ascii(10000)),
     );
     expect(accepted.status).toBe(200);
     expect((await store.get(owner, made.id))?.roleDescription).toBe(
-      ascii(8000),
+      ascii(10000),
     );
 
     const refused = await send(
       app,
       "PATCH",
       `/api/agents/${made.id}`,
-      editBody(ascii(8001)),
+      editBody(ascii(10001)),
     );
     expect(refused.status).toBe(400);
     expect(await refused.json()).toEqual({
-      error: "What it does must be text between 1 and 8000 characters.",
+      error: "What it does must be text between 1 and 10000 characters.",
     });
 
     const emoji = "\u{1F600}";
@@ -236,14 +236,14 @@ describe("editing an imported coworker", () => {
       app,
       "PATCH",
       `/api/agents/${made.id}`,
-      editBody(emoji.repeat(4000)),
+      editBody(emoji.repeat(5000)),
     );
     expect(emojiAccepted.status).toBe(200);
     const emojiRefused = await send(
       app,
       "PATCH",
       `/api/agents/${made.id}`,
-      editBody(`${emoji.repeat(4000)}a`),
+      editBody(`${emoji.repeat(5000)}a`),
     );
     expect(emojiRefused.status).toBe(400);
   });
@@ -257,7 +257,7 @@ describe("editing an imported coworker", () => {
       app,
       "PATCH",
       `/api/agents/${made.id}`,
-      editBody(ascii(8000), { importedMember: false, imported: false }),
+      editBody(ascii(10000), { importedMember: false, imported: false }),
     );
 
     expect(response.status).toBe(200);
@@ -267,14 +267,14 @@ describe("editing an imported coworker", () => {
       app,
       "PATCH",
       `/api/agents/${made.id}`,
-      editBody(ascii(8000)),
+      editBody(ascii(10000)),
     );
     expect(next.status).toBe(200);
   });
 
   test("a copy of an imported coworker keeps its text while unchanged, and a changed text is held to 1,000", async () => {
     const owner = await createOwner();
-    const original = await importedMemberOf(owner, ascii(8000));
+    const original = await importedMemberOf(owner, ascii(10000));
     const app = appFor(owner);
 
     const duplicated = await send(
@@ -288,7 +288,7 @@ describe("editing an imported coworker", () => {
     expect(await storedFact(copy.agent.id)).toBe(false);
 
     const renamed = await send(app, "PATCH", `/api/agents/${copy.agent.id}`, {
-      ...editBody(ascii(8000)),
+      ...editBody(ascii(10000)),
       name: "Renewal Copy",
     });
     expect(renamed.status).toBe(200);
@@ -315,7 +315,7 @@ describe("editing an imported coworker", () => {
 });
 
 describe("the limit a coworker reports", () => {
-  test("names 8,000 for an imported coworker and 1,000 for one made in the app", async () => {
+  test("names 10,000 for an imported coworker and 1,000 for one made in the app", async () => {
     const owner = await createOwner();
     const app = appFor(owner);
     const made = await importedMemberOf(owner, ascii(1000));
@@ -336,7 +336,7 @@ describe("the limit a coworker reports", () => {
       await send(app, "GET", `/api/agents/${handMadeId}`)
     ).json()) as { agent: { roleDescriptionLimit: number } };
 
-    expect(importedRead.agent.roleDescriptionLimit).toBe(8000);
+    expect(importedRead.agent.roleDescriptionLimit).toBe(10000);
     expect(handMadeRead.agent.roleDescriptionLimit).toBe(1000);
   });
 

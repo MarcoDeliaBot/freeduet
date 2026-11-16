@@ -229,6 +229,13 @@ function flatten(value: unknown, depth = 0): string {
 export const NOT_ACCOUNT_ACTIONS =
   /^(computer_(write_file|read_file|list_files|run_command)|host\/)/;
 
+/**
+ * FreeDuet, D60 (docs/design/programs-on-your-computer.md 4.4): a tool that acts on a program on the person's
+ * own computer. It is deliberately NOT in `NOT_ACCOUNT_ACTIONS` above, and every one asks every time
+ * (`freeduet/always-ask.ts`), reads included: a list of what is installed is private.
+ */
+export const PROGRAMS_TOOLS = /^programs\//;
+
 export function safetyRequirement(
   candidate: ApprovalCandidate,
 ): { id: string; reason: string } | undefined {
@@ -606,7 +613,11 @@ export async function decideAction(input: {
   const { candidate } = input;
   const safety = safetyRequirement(candidate);
   // D35: never for a read, whatever the caller passes.
-  const alwaysAsk = candidate.effect === "read" ? undefined : input.alwaysAsk;
+  // D60: a programs tool is held whatever its effect says, so a future read of the person's computer asks too.
+  const alwaysAsk =
+    candidate.effect === "read" && !PROGRAMS_TOOLS.test(candidate.toolRef)
+      ? undefined
+      : input.alwaysAsk;
   // D46: a call that starts a standing rule is never lifted by Full access or by a saved "Always allow".
   const standingRule =
     candidate.effect === "write" && startsStandingRule(candidate);
