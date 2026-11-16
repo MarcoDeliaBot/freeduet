@@ -416,3 +416,58 @@ Departures from this note, and why:
 - **No hourly cap** (threat row 9) and no deny-list of program classes (Q5): S3 and S4.
 
 Not verified: the helper side of the protocol (S2) beyond a stand-in written from the same format; any behaviour on a real PC; the prompts (none changed); the approved-action resume of a programs card in a running server (the dependency is wired and typed, and the card is proved to open, but no test presses Allow end to end); the callback door for `programs_*` (wired, no test).
+
+## Built so far: slice S2, the Windows helper (read-only), on the branch `programs-s2-windows-helper`
+
+Decisions Q1 (the helper polls), Q6 (a readable script, unsigned for now) and Q8 (a toast per action) are recorded as D62 in `docs/M1_PLAN.md` (section 42). **Nothing ran on a real PC. PowerShell could not be run in the sandbox where this was written, so the helper and its Pester tests have not run anywhere yet: the first run is the `installer-windows` job in CI. An independent security review is required before merge** (section 9 marks S2 "Yes").
+
+| Piece | File | What it does |
+|---|---|---|
+| The helper | `openbot/scripts/programs-helper/FreeDuetProgramsHelper.ps1` | A poll loop to `/api/programs/helper/poll` and `/result`; HMAC exactly as `protocol.ts`; one fixed table of actions (`list` and `upgrade`); winget parsing with hard limits; a log; a toast; refuses to run elevated |
+| Setup | `programs-helper/setup.ps1` | Not elevated. Trades the pairing code for the secret, makes the private folder, stores the secret with DPAPI, copies the helper, makes the per-user task "FreeDuet Programs Helper" |
+| Uninstall | `programs-helper/uninstall.ps1` | Removes the task and the folder. A script the person runs |
+| Pairing, server side | `server/src/programs/pairing.ts`, three routes in `routes.ts` | A one-time code (ten characters, two minutes, once, bound to the person who made it); `POST /api/programs/helper/pair` (no session, the code is the proof); `POST /api/programs/pairing/code` and `GET /api/programs/pairing` (the person's session AND at the computer). Redeeming spends the code, calls `rotateSalt`, and returns the new secret once. All under `/api/programs/*`, so the remote deny list already refuses them to a remote session |
+| Tests | `programs-helper/FreeDuetProgramsHelper.Tests.ps1` (Pester 5), `server/tests/programs-pairing.test.ts`, `server/tests/programs-helper-vectors.test.ts`, `programs-helper/hmac-vectors.json` | See the report of the pull request for the numbers |
+
+**How winget is found, and why a program a normal user can write cannot stand in for it.** The helper asks Windows for the install folder of the "App Installer" package (`Get-AppxPackage Microsoft.DesktopAppInstaller`) and uses `winget.exe` inside it. That folder is under `Program Files\WindowsApps`, which only an administrator or the system can change. The file must also carry a valid Authenticode signature from Microsoft Corporation, checked before every start. The current folder and `PATH` are never searched. If this fails the helper does not run anything and says why in the log. Two explicit ways round it, both chosen by the person at setup: `-WingetPath` (an absolute path to a file called `winget.exe`, same signature check) and `-UseWindowsAppsAlias` (the per-user alias in `%LOCALAPPDATA%\WindowsApps`, which a program running as the person could replace and which cannot be signature-checked; written in the log at every start). **Limit, said plainly:** a program that already runs as the same person can change the helper's own files, since they are the person's; this protects the choice of winget against planted copies, not against that.
+
+**What may be run.** Only an argument list equal, word for word, to one of the table's: `list --disable-interactivity` and `upgrade --disable-interactivity`. `Invoke-WingetProcess` compares the list it is given with the table before a process exists; there is no code path that builds a command line from text received from the server or from winget. An operation with any field the schema does not have, an unknown or other-case action, or a field with a control or invisible character is dropped before anything is touched.
+
+**Source and package terms.** Neither `--accept-source-agreements` nor `--accept-package-agreements` is ever passed: accepting a tool's terms is the person's own act. If winget asks (the helper closes its input, so it cannot be answered), the helper reports "winget wants you to accept its source terms first" and the setup offers to run `winget list` in front of the person, who reads the terms and answers. This departs from the table of 3.2, which passes the flag for `export`, update and install: S3 and S4 must come back to the maintainer for it (see the decisions below).
+
+**Where the secret lives.** In the server and in the helper's folder only. On the PC: `%LOCALAPPDATA%\FreeDuet\programs-helper\secret.bin`, protected with DPAPI for the current Windows user (with a fixed entropy string of the helper), in a folder whose access list holds one rule: the current user, with inheritance switched off. `config.json` holds the server address, the person's FreeDuet id and the winget choice, never the secret. The log never holds it. An administrator can always take ownership of the folder, and a program running as the person can call DPAPI as the person: DPAPI keeps the secret from other Windows users and from a copy of the file, not from the person's own programs.
+
+**Departures from this note, and why.**
+
+- **`--disable-interactivity` is in both argument vectors,** which the note does not name for the lists. It is meant to keep winget from waiting for a key; the helper also closes winget's input. [verify] that `list` and `upgrade` accept it.
+- **No `winget export`.** The note proposed export for ids and a second `list --id --exact` for names. For two read actions the helper parses the table of `list` and `upgrade` directly, by the column places of the header line (never by the header's words, which are in the person's language), and drops, with a count in the log, any row whose cells do not sit on those places. Names with wide characters may be dropped for that reason. [verify] on a real PC.
+- **The pairing code is shown by a plain page,** `/api/programs/pairing`, not by a command: the route needs the person's session, and a command would need the cookie. The page also holds the two buttons that move the switch, so the trial needs no screen of the app. It is temporary; S5 replaces it.
+- **The helper keeps the operation ids it has seen in memory only.** A restarted helper forgets them. The server leases an operation once and it expires in 120 s; before S3 (which changes the PC) the ids should be kept on disk.
+- **Stop:** a `stop` arrives only between two operations, because the helper does one at a time and does not poll while one runs, so it is logged and nothing is stopped. The 90 s timeout ends a stuck read (`Process.Kill`, not the tree: a read starts no child).
+- **A list of 501 rows is sent, not 500,** so the server can say that the list was cut.
+
+**How the maintainer tries S2 live** (three steps, and what to look at):
+
+1. In the browser you use for FreeDuet, open `http://localhost:3010/api/programs/pairing` and press **Switch on**, then **Show a code**.
+2. On Windows, in a normal (not administrator) PowerShell window, from the repository's `openbot\scripts\programs-helper` folder: `powershell -NoProfile -ExecutionPolicy Bypass -File .\setup.ps1` and type the code. If FreeDuet is not reachable at `http://localhost:3010` from Windows, pass `-Server` with the address that is (see below).
+3. Ask Gus, in your conversation: "what on my PC needs an update?", and press Allow on the card.
+
+Look at: the task `FreeDuet Programs Helper` in Task Scheduler (it must say it runs as you, not with highest privileges); the folder `%LOCALAPPDATA%\FreeDuet\programs-helper` (`helper.log` says what was asked, what was run, the exit code); the toast that appears; and, in Task Manager, a `powershell.exe` started at your log on. To undo: `.\uninstall.ps1`, and switch off on the same page.
+
+**What the first live trial must verify** (all [verify] until then):
+
+- That Windows reaches the server in WSL at `http://localhost:3010` (WSL's networking mode decides), and that WSL's own clock and Windows' agree within 30 s (a poll further off is refused with 401; the log says so).
+- That a per-user scheduled task registers without administrator rights, starts at log on, and that a hidden `powershell.exe` can show a toast.
+- That `winget.exe` inside the App Installer folder can be started by a normal user, and that its signature reads as Microsoft Corporation. If not, the log says "NOT FOUND" or the signature reason; try `-UseWindowsAppsAlias`.
+- That `list --disable-interactivity` and `upgrade --disable-interactivity` are accepted, what the tables look like on the real PC (and in Italian), and whether any row is dropped (the log says how many).
+- Whether winget asks for its source terms on this PC, and that the setup's `winget list` step lets the person answer.
+- That re-pairing refuses the old helper (run setup twice with two codes).
+
+**Decisions left to the maintainer.**
+
+| Decision | Options | Recommendation | Why |
+|---|---|---|---|
+| Source and package terms for update and install (S3, S4) | the helper passes the accept flags; the person accepts once in a terminal and the helper never passes them; a card line that says what terms apply | the person accepts once in a terminal (as S2 does); a card for a package that asks for package terms says so and the person finishes by hand | accepting terms is the person's own act, and this feature must not do it for them |
+| Execution alias fallback (`-UseWindowsAppsAlias`) | keep as an opt-in at setup; remove | keep, opt-in | if the install folder cannot be started by a normal user, the trial would otherwise stop; the weaker choice is logged and chosen by the person |
+| Signing the helper (S7) | stay unsigned; sign with a certificate | decide when S7 starts | costs money, so it waits for the maintainer's yes |
+| Keeping seen ids on disk | before S3; never | before S3 | S3 changes the PC |

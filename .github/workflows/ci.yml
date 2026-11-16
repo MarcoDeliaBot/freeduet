@@ -1219,6 +1219,59 @@ jobs:
             Write-Host "::error::The Pester tests of install.ps1 did not pass: $line"
             exit 1
           }
+      # Programs on your computer, slice S2 (docs/design/programs-on-your-computer.md): does this runner have winget? Reported
+      # only. The real `winget list` and `winget upgrade` are never run here: the tests of the helper use a stub program.
+      - name: winget on this runner (reported, never run for real)
+        if: ${{ !cancelled() }}
+        run: |
+          $ErrorActionPreference = 'Continue'
+          function Add-Summary([string]$Text) { Add-Content -Path $env:GITHUB_STEP_SUMMARY -Value $Text -Encoding utf8 }
+          $command = Get-Command winget.exe -ErrorAction SilentlyContinue
+          $package = $null
+          try { $package = Get-AppxPackage -Name 'Microsoft.DesktopAppInstaller' -ErrorAction Stop | Select-Object -First 1 } catch { }
+          $version = 'not run'
+          if ($null -ne $command) { try { $version = (& $command.Source --version 2>&1 | Out-String).Trim() } catch { $version = "could not run: $($_.Exception.Message)" } }
+          Add-Summary ''
+          Add-Summary '### winget on this runner (programs helper, slice S2)'
+          Add-Summary ''
+          Add-Summary "- winget.exe on PATH: $(if ($null -ne $command) { $command.Source } else { 'not found' })"
+          Add-Summary "- App Installer package: $(if ($null -ne $package) { "$($package.Version) at $($package.InstallLocation)" } else { 'not found for this user' })"
+          Add-Summary "- winget --version: $version"
+          Add-Summary '- The tests below use a stub winget; the real one is never asked to list or upgrade anything.'
+      # The programs helper (openbot/scripts/programs-helper): Pester 5 in Windows PowerShell 5.1, with a stub winget and
+      # the signing vectors made by the server's own protocol code.
+      - name: Pester tests of the programs helper
+        if: ${{ !cancelled() }}
+        run: |
+          $ErrorActionPreference = 'Continue'
+          function Add-Summary([string]$Text) { Add-Content -Path $env:GITHUB_STEP_SUMMARY -Value $Text -Encoding utf8 }
+          Import-Module Pester -MinimumVersion 5.0.0 -Force -ErrorAction SilentlyContinue
+          if ($null -eq (Get-Module Pester) -or (Get-Module Pester).Version -lt [version]'5.0.0') {
+            Install-PackageProvider -Name NuGet -MinimumVersion 2.8.5.201 -Force -Scope CurrentUser | Out-Null
+            Install-Module -Name Pester -RequiredVersion 5.7.1 -Force -Scope CurrentUser -SkipPublisherCheck
+            Import-Module Pester -MinimumVersion 5.0.0 -Force
+          }
+          $version = (Get-Module Pester).Version
+          Start-Transcript -Path (Join-Path $env:OUT 'pester-programs-helper.txt') | Out-Null
+          $config = New-PesterConfiguration
+          $config.Run.Path = (Join-Path $PWD 'openbot\scripts\programs-helper\FreeDuetProgramsHelper.Tests.ps1')
+          $config.Run.PassThru = $true
+          $config.Output.Verbosity = 'Detailed'
+          $config.TestResult.Enabled = $true
+          $config.TestResult.OutputPath = (Join-Path $env:OUT 'pester-programs-helper-results.xml')
+          $result = Invoke-Pester -Configuration $config
+          Stop-Transcript | Out-Null
+          $line = "Pester $version in Windows PowerShell $($PSVersionTable.PSVersion): total $($result.TotalCount), passed $($result.PassedCount), failed $($result.FailedCount), skipped $($result.SkippedCount), not run $($result.NotRunCount)"
+          Write-Host $line
+          Add-Summary ''
+          Add-Summary '### Pester tests (openbot/scripts/programs-helper/FreeDuetProgramsHelper.Tests.ps1)'
+          Add-Summary ''
+          Add-Summary $line
+          foreach ($test in @($result.Failed)) { Add-Summary "- FAILED: $($test.ExpandedPath): $($test.ErrorRecord.Exception.Message)" }
+          if ($result.FailedCount -gt 0 -or $result.TotalCount -eq 0 -or $result.Result -ne 'Passed') {
+            Write-Host "::error::The Pester tests of the programs helper did not pass: $line"
+            exit 1
+          }
       # install.ps1 itself. Four runs: -Check and -Yes, as the runner's elevated user and as a standard local user.
       - name: install.ps1, check and real run
         if: ${{ !cancelled() }}
