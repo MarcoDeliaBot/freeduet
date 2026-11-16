@@ -1,0 +1,1 @@
+ALTER TABLE "approval_preferences" ALTER COLUMN "auto_review" SET DEFAULT true;

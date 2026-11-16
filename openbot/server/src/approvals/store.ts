@@ -73,7 +73,10 @@ export function createApprovalStore(database: Database): ApprovalStore {
     async setEnabled(owner, enabled) {
       await database
         .insert(approvalPreferences)
-        .values({ ownerUserId: owner, enabled })
+        // A first save writes the product's defaults for what it did not set: the column defaults
+        // differ (`auto_review` is false in the database) and a row made with them switched the
+        // reviewer off for somebody who never touched it. An update changes only `enabled`.
+        .values({ ownerUserId: owner, ...DEFAULT_PREFERENCES, enabled })
         .onConflictDoUpdate({
           target: approvalPreferences.ownerUserId,
           set: { enabled },

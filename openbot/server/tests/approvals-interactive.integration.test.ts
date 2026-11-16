@@ -173,6 +173,10 @@ beforeAll(async () => {
     { id: stranger, email: `${stranger}@example.test` },
   ]);
   await store.setEnabled(owner, true);
+  // These tests are about the person's own switch and rules. A fresh person now has the reviewer on
+  // (it was off here only because a first save wrote the database default), and with no reviewer
+  // model every review fails closed and asks, which would stand in front of every rule.
+  await service.setPreferences(owner, { autoReview: false });
 });
 afterAll(async () => {
   const ids = (await store.list(owner)).map((request) => request.id);
