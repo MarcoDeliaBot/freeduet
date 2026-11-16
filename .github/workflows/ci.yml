@@ -1225,7 +1225,7 @@ jobs:
         if: ${{ !cancelled() }}
         run: |
           $ErrorActionPreference = 'Continue'
-          function Add-Summary([string]$Text) { Add-Content -Path $env:GITHUB_STEP_SUMMARY -Value $Text -Encoding utf8 }
+          function Add-Summary([string]$Text) { Add-Content -Path $env:GITHUB_STEP_SUMMARY -Value $Text -Encoding utf8; Write-Host $Text }
           $command = Get-Command winget.exe -ErrorAction SilentlyContinue
           $package = $null
           try { $package = Get-AppxPackage -Name 'Microsoft.DesktopAppInstaller' -ErrorAction Stop | Select-Object -First 1 } catch { }
