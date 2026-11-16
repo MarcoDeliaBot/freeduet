@@ -11,6 +11,8 @@ import type { Database } from "../db/client";
 import { approvalRequests } from "../db/schema";
 import type { DeliveryScope } from "../delivery/types";
 import type { FullAccess } from "../freeduet/full-access";
+import { englishName } from "../freeduet/person-language";
+import { readLanguageChoice } from "../freeduet/person-language-choice";
 import type { ReviewModel } from "./policy";
 import { createApprovalQuestions, type PersonQuestion } from "./questions";
 import { ALREADY_WAITING, createApprovalService } from "./service";
@@ -26,7 +28,7 @@ import { ApprovalRefusedError, type ApprovalStore } from "./types";
  */
 export function createServerApprovalService(deps: {
   storedApprovals: ApprovalStore;
-  config: Pick<DeploymentConfig, "keyEncryptionKey">;
+  config: Pick<DeploymentConfig, "keyEncryptionKey" | "personLanguage">;
   sourceForCoordinationRun: (
     run: RunAssertion,
   ) => Promise<{ channelId: string; botId: string } | null>;
@@ -208,6 +210,12 @@ export function createServerApprovalService(deps: {
     {
       review: deps.review,
       ...(deps.fullAccess ? { fullAccess: deps.fullAccess } : {}),
+      personLanguage: async (ownerUserId) => {
+        const choice = await readLanguageChoice(database, ownerUserId);
+        return choice
+          ? { code: choice, name: englishName(choice) }
+          : (config.personLanguage ?? null);
+      },
     },
   );
 }

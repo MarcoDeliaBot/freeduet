@@ -65,6 +65,8 @@ export type ApprovalRequest = {
   result?: { error?: string } | null;
 };
 export type ApprovalInboxData = {
+  /** D50: the two-letter code of the language this person's approval cards are drawn in; absent for English. */
+  language?: string;
   enabled: boolean;
   requests: ApprovalRequest[];
   rules: ApprovalRuleRow[];
