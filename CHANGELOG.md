@@ -12,6 +12,7 @@ Each version says what was and was not run live. "Run live" means run on a real 
 
 ### Added
 
+- The card of a member that Iris handed a job to appears in the conversation you are writing in, under the hand-off line, and not only on the Tasks page (D52). It is the same card with the same buttons: deciding it in the chat is deciding it in Tasks, it runs once, and the member's answer comes back to the Bot that asked. Built and tested; not yet run live. No approval rule changed.
 - Installer: `install.ps1` and its Pester tests now run in CI on a GitHub-hosted Windows runner (job `installer-windows`), up to the Ubuntu install, with a job summary of where each run stopped. The first run found a bug in the script (two lists of WSL names were nested when read), now fixed. Never run on a person's PC; the restart, the Ubuntu user step, Docker and the first start are not covered (#293).
 - Installer: an opt-in systemd service for FreeDuet inside WSL, with `install.sh --service` and `install.ps1 -Service` (`install-service.sh`, #285). Tested with fake commands only; never run under real systemd or on a real Windows machine.
 

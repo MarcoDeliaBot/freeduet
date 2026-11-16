@@ -925,6 +925,9 @@ function publicApproval(request: ApprovalRecord) {
       threadId: action.threadId,
       // The owner's own call id, so the conversation can draw this request where the action was.
       toolCallId: action.toolCallId,
+      // D52: for a call raised inside a hand-off, the conversation that asked (set by the deployment from
+      // the signed run, never by a model), so that conversation can draw this same card under the hand-off.
+      ...(action.askedIn ? { askedIn: action.askedIn } : {}),
       // Whole: the person decides from this, so it is never a cut copy. See `approvalPreview`.
       args: approvalPreview(action.args, 0, { whole: true }),
       target: approvalPreview(action.target, 0, { whole: true }),

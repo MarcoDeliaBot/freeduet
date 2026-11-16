@@ -21,6 +21,11 @@ import {
   useState,
 } from "react";
 import { Streamdown } from "streamdown";
+import {
+  HandoffApprovals,
+  handoffTarget,
+  lastHandoffLines,
+} from "@/components/approvals/handoff-approvals";
 import { PendingApprovals } from "@/components/approvals/inline-approval";
 import { DuetIcon } from "@/components/duet/icons";
 import { Seen, TypingDots } from "@/components/duet/kit";
@@ -1670,12 +1675,15 @@ const TranscriptToolCall = memo(function TranscriptToolCall({
   name,
   args,
   result,
+  handoffCards = false,
 }: {
   delay: number;
   toolCallId: string;
   name: string;
   args: string;
   result?: string;
+  /** D52: the hand-off line under which the waiting cards of the member it asked are drawn. */
+  handoffCards?: boolean;
 }) {
   const renderToolCall = useRenderToolCall();
   // Held on its approval card: the same inbox the card under it reads.
@@ -1736,6 +1744,12 @@ const TranscriptToolCall = memo(function TranscriptToolCall({
             <RoutineCreatedCard name={name} result={result} />
           </>
         )}
+        {/*
+         * D52: a member this line asked may be held on a card of his own, and the person is here, not in
+         * Tasks. The card is the stored request, drawn by the same component and decided through the same
+         * route as everywhere else.
+         */}
+        {handoffCards ? <HandoffApprovals bot={handoffTarget(args)} /> : null}
       </ToolRenderBoundary>
     </Arriving>
   );
@@ -2048,6 +2062,8 @@ export function ChatTranscript({
         readMorningBrief(item.text) !== null
       ),
   );
+  // D52: where the cards of a member a hand-off asked are drawn.
+  const handoffLines = lastHandoffLines(items);
   const firstDayReplies =
     firstDay?.mail === true &&
     firstDay.answer.size > 0 &&
@@ -2262,6 +2278,7 @@ export function ChatTranscript({
                       args={item.toolCall.function.arguments}
                       delay={delays.delayFor(item.id, index, items.length)}
                       name={item.toolCall.function.name}
+                      handoffCards={handoffLines.has(item.id)}
                       result={item.result}
                       toolCallId={item.toolCall.id}
                     />
