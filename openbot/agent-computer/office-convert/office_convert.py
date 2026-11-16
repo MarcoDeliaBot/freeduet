@@ -1,30 +1,36 @@
 """office-convert: two fixed jobs for LibreOffice in the member's computer, and nothing else.
 
-    office-convert recalc <file.xlsx>   writes <name>.recalculated.xlsx next to the file, with every formula
-                                        calculated and its value stored; the source is never touched
-    office-convert pdf <file>           writes <name>.pdf next to a .docx, .xlsx or .pptx
+    office-convert recalc [--keep [--replace]] <file.xlsx>
+        calculates the formulas in a temporary folder and PRINTS each formula cell (sheet, cell, formula, value); no
+        file is kept. With --keep the recalculated copy is written next to the file as <name>.recalculated.xlsx.
+    office-convert pdf [--replace] <file.docx|.xlsx|.pptx>
+        writes <name>.pdf next to the file.
+
+An existing output is never replaced, whatever it is. --replace replaces it only when it is a regular file (never a
+link, a folder or a special file), atomically, and the skills say to use it only for a file the member made itself.
 
 How a hostile file is kept from doing anything (docs/design/office-files.md, section 12):
-  * `office-inspect` runs first, and whatever it refuses (macros, old binary formats, passwords, polyglots,
+  * `office-inspect` runs first, on the copy, and whatever it refuses (macros, old binary formats, passwords, polyglots,
     zip bombs, bad paths) is refused here with its sentence; LibreOffice never sees that file.
-  * a link, a symbolic link anywhere in the path, a file over 25 MiB, or a type other than the three is refused.
-  * LibreOffice starts on a profile directory made for this one call and deleted after it. The profile is
-    written here: macro security at its highest level (3), macro execution disabled, active content (OLE, DDE)
-    disabled, links never updated in Calc and Writer, a forced recalculation after load of an .xlsx, and a
-    proxy that points at a closed local port, so a request for an address that gets past the other settings
-    fails at once. This is configuration, not a sandbox: no network namespace is made.
-  * LibreOffice works on a COPY in the throwaway directory, with a stripped environment.
-  * a hard timeout of 100 seconds (the member's command stops at about 120), then the whole process group is killed.
+  * a symbolic link anywhere in the path, a file over 25 MiB, or a type other than the three is refused.
+  * the parent folder is opened once (O_DIRECTORY|O_NOFOLLOW) and the source open and the result creation are made
+    relative to that descriptor, so the result lands in the original folder even if the folder is renamed and a link
+    put in its place while LibreOffice runs.
+  * the file is copied ONCE, through one open that never follows a link, into a throwaway folder; that copy is the one
+    inspected and the one LibreOffice gets, so a file swapped after the copy is never read.
+  * LibreOffice starts on a profile directory made for this one call and deleted after it. The profile is written here:
+    macro security at its highest level (3), macro execution disabled, active content (OLE, DDE) disabled, links never
+    updated in Calc and Writer, a forced recalculation after load of an .xlsx, and a proxy that points at a closed local
+    port. This is configuration, not a sandbox: no network namespace is made. Stripped environment.
+  * one overall deadline of 105 seconds for the inspector, LibreOffice and the reaping together (the member's command
+    stops at about 120); then the whole process group is killed and what it left behind is waited for.
+  * a new file is created with O_CREAT|O_EXCL, never through a link; --replace goes through a temporary name and rename.
+  * recalc refuses a workbook that uses a function LibreOffice 24.2 cannot calculate, in a cell, a defined name, a
+    conditional format or a data validation, and reports any error value the recalculation produced that the source did
+    not already hold.
 
-  * the file is copied ONCE, through one open that never follows a link, into the throwaway folder; that copy is the
-    one inspected and the one LibreOffice gets, so a file swapped after the copy is never read.
-  * the result is created with O_CREAT|O_EXCL|O_NOFOLLOW next to the source: an existing file or link of any kind
-    there is never replaced or followed, and nothing is renamed over anything.
-  * recalc refuses a workbook that uses a function LibreOffice 24.2 cannot calculate (it would rewrite it in the saved
-    copy), and reports any error value the recalculation produced that the source did not already hold.
-
-The recalculated copy is for READING the values. It was saved again by LibreOffice, so formatting and features may differ;
-the file to hand over is the original.
+The recalculated values are for READING. A kept copy was saved again by LibreOffice, so formatting and features may
+differ; the file to hand over is the original.
 
 Exit status: 0 done, 2 bad use or an error, 3 refused (the sentence says why), 4 timed out, 5 recalculated, but with
 error values in the result (the JSON lists them).
@@ -35,6 +41,7 @@ import errno
 import json
 import os
 import re
+import secrets
 import shutil
 import signal
 import stat
@@ -44,12 +51,20 @@ import tempfile
 import time
 import zipfile
 import xml.etree.ElementTree as ET
+from xml.sax.saxutils import unescape
 
-TIMEOUT_SECONDS = 100
+TOTAL_SECONDS = 105  # the whole call; computer_run_command stops a command at about 120
+INSPECT_SECONDS = 25  # the inspector's share, never more than what is left
+RESERVE_SECONDS = 8  # kept back for killing, waiting for and removing what was started, and placing the result
 MAX_INPUT_BYTES = 25 * 1024 * 1024
 MAX_OUTPUT_BYTES = 200 * 1024 * 1024
+MAX_FORMULA_CELLS_LISTED = 500
+MAX_LISTED_BYTES = 64 * 1024
 INSPECTOR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "office-inspect", "office_inspect.py")
-USAGE = "usage: office-convert recalc <file.xlsx> | office-convert pdf <file.docx|.xlsx|.pptx>\n"
+USAGE = (
+    "usage: office-convert recalc [--keep [--replace]] <file.xlsx>\n"
+    "       office-convert pdf [--replace] <file.docx|.xlsx|.pptx>\n"
+)
 KINDS = ("docx", "xlsx", "pptx")
 
 # Functions LibreOffice 24.2 does not calculate (they arrived in later releases or never): a workbook that uses one is
@@ -60,9 +75,11 @@ UNSUPPORTED_FUNCTIONS = frozenset(
     "ISOMITTED GROUPBY PIVOTBY ARRAYTOTEXT VALUETOTEXT IMAGE REGEXTEST REGEXEXTRACT REGEXREPLACE TRIMRANGE "
     "STOCKHISTORY COPILOT".split()
 )
-FUNCTION_CALL = re.compile(r"(?<![A-Za-z0-9_.])(?:_x[a-z]+\.)*([A-Za-z][A-Za-z0-9.]*)\(")
-FORMULA = re.compile(rb"<f\b[^>]*?(?:/>|>(.*?)</f>)", re.S)
+FUNCTION_CALL = re.compile(r"(?<![A-Za-z0-9_.])(?:_x[a-z]+\.)*([A-Za-z][A-Za-z0-9.]*)\s*\(")
+# Every place a formula can be: a cell, a conditional format, a data validation, and their extended (x14) forms.
+FORMULA = re.compile(rb"<(?:f|xm:f|formula|formula1|formula2)\b[^>]*?(?:/>|>(.*?)</(?:f|xm:f|formula|formula1|formula2)>)", re.S)
 CELL = re.compile(rb"<c\s([^>]*?)(?:/>|>(.*?)</c>)", re.S)
+CELL_FORMULA = re.compile(rb"<f\b[^>]*?(?:/>|>(.*?)</f>)", re.S)
 CHUNK = 4 * 1024 * 1024
 MAX_LISTED = 10
 
@@ -108,18 +125,16 @@ def become_reaper():
         pass
 
 
-def reap_children(seconds=5):
+def reap_children(seconds=3):
     """Wait for every child and grandchild that was killed, until none is left or the time is up."""
-    deadline = time.time() + seconds
+    deadline = time.monotonic() + seconds
     while True:
         try:
             pid, _ = os.waitpid(-1, os.WNOHANG)
-        except ChildProcessError:
-            return
         except OSError:
             return
         if pid == 0:
-            if time.time() > deadline:
+            if time.monotonic() > deadline:
                 return
             time.sleep(0.02)
 
@@ -130,14 +145,18 @@ def kill_group(process):
     except OSError:
         pass
     try:
-        process.wait(timeout=5)
+        process.wait(timeout=2)
     except Exception:
         pass
     reap_children()
 
 
-def check_path(path):
-    """Lexical checks that need no open: a link in the path, a name that is not a plain file."""
+# ---- the source and its folder -----------------------------------------------------------------------------------
+
+
+def open_parent(path):
+    """Check the path has no link in it and open its folder ONCE. Returns (folder descriptor, folder path, file name).
+    Everything after this is relative to the descriptor."""
     absolute = os.path.abspath(path)
     try:
         os.lstat(absolute)
@@ -145,14 +164,21 @@ def check_path(path):
         raise Stop(f"Cannot read the file: {clean(error)}", 2)
     if os.path.realpath(absolute) != absolute or os.path.islink(absolute):
         raise Stop("A symbolic link is in this path. It was not opened; give the real file.", 3)
-    return absolute
-
-
-def copy_once(absolute, destination):
-    """Copy the source into the throwaway folder through ONE open that never follows a link, checking the size on
-    that same descriptor. Everything after this reads the copy, never the original."""
+    folder, name = os.path.split(absolute)
     try:
-        fd = os.open(absolute, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK | getattr(os, "O_CLOEXEC", 0))
+        dirfd = os.open(folder, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW | getattr(os, "O_CLOEXEC", 0))
+    except OSError as error:
+        if error.errno == errno.ELOOP:
+            raise Stop("A symbolic link is in this path. It was not opened; give the real file.", 3)
+        raise Stop(f"Cannot open the folder: {clean(error)}", 2)
+    return dirfd, folder, name
+
+
+def copy_once(dirfd, name, destination):
+    """Copy the source into the throwaway folder through ONE open, relative to the folder descriptor, that never follows
+    a link, checking the size on that same descriptor. Everything after this reads the copy, never the original."""
+    try:
+        fd = os.open(name, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK | getattr(os, "O_CLOEXEC", 0), dir_fd=dirfd)
     except OSError as error:
         if error.errno == errno.ELOOP:
             raise Stop("A symbolic link is in this path. It was not opened; give the real file.", 3)
@@ -180,13 +206,15 @@ def copy_once(absolute, destination):
         os.close(fd)
 
 
-def inspect_first(path):
+def inspect_first(path, timeout=INSPECT_SECONDS):
     """Run office-inspect on the copy; return its JSON, or stop with its sentence when it refuses."""
     try:
         done = subprocess.run(
-            [sys.executable, "-I", INSPECTOR, path], capture_output=True, text=True, timeout=60, stdin=subprocess.DEVNULL
+            [sys.executable, "-I", INSPECTOR, path], capture_output=True, text=True, timeout=timeout, stdin=subprocess.DEVNULL
         )
-    except (OSError, subprocess.TimeoutExpired) as error:
+    except subprocess.TimeoutExpired:
+        raise Stop(f"The inspector did not finish in {int(timeout)} seconds. Nothing was converted; the file is too large or too complex.", 4)
+    except OSError as error:
         raise Stop(f"The inspector could not run ({clean(error)}). Nothing was converted.", 2)
     try:
         report = json.loads(done.stdout)
@@ -222,7 +250,7 @@ def sheet_parts(zf):
 
 
 def stream(zf, part, pattern, keep):
-    """Yield the matches of `pattern` in a part read in chunks. `keep` is the marker the unfinished tail starts at."""
+    """Yield the matches of `pattern` in a part read in chunks. `keep` are the markers an unfinished tail starts at."""
     buffer = b""
     with zf.open(part) as handle:
         while True:
@@ -235,7 +263,7 @@ def stream(zf, part, pattern, keep):
             if not chunk:
                 return
             tail = buffer[end:]
-            cut = tail.rfind(keep)
+            cut = max(tail.rfind(marker) for marker in keep)
             buffer = tail[cut:] if cut >= 0 else b""
 
 
@@ -244,23 +272,38 @@ def attribute(attrs, name):
     return found.group(1).decode("utf-8", "replace") if found else ""
 
 
+def unsupported_names(formula_text):
+    """The unsupported function names called in a formula. Strings and quoted sheet names are blanked first, so a name
+    inside text, or a sheet called FILTER (2), is not a call."""
+    text = unescape(formula_text, {"&quot;": '"', "&apos;": "'"})
+    text = re.sub(r'"(?:[^"]|"")*"', '""', text)
+    text = re.sub(r"'(?:[^']|'')*'", "''", text)
+    return {call.group(1).upper() for call in FUNCTION_CALL.finditer(text) if call.group(1).upper() in UNSUPPORTED_FUNCTIONS}
+
+
 def unsupported_in(path):
-    """Names of the functions LibreOffice 24.2 cannot calculate that a workbook uses, and whether it has dynamic arrays."""
+    """Names of the functions LibreOffice 24.2 cannot calculate that a workbook uses (in cells, defined names,
+    conditional formats and data validations), and whether it has dynamic arrays."""
     names = set()
     dynamic = False
     with zipfile.ZipFile(path) as zf:
-        if "xl/metadata.xml" in zf.namelist() and b"XLDAPR" in zf.read("xl/metadata.xml")[:2_000_000]:
+        listed = zf.namelist()
+        if "xl/metadata.xml" in listed and b"XLDAPR" in zf.read("xl/metadata.xml")[:2_000_000]:
             dynamic = True
+        try:
+            book = ET.fromstring(zf.read("xl/workbook.xml"))
+        except (KeyError, ET.ParseError):
+            book = None
+        if book is not None:
+            for element in book.iter():
+                if element.tag.rsplit("}", 1)[-1] == "definedName" and element.text:
+                    names |= unsupported_names(element.text)
         for _, part in sheet_parts(zf):
-            if part not in zf.namelist():
+            if part not in listed:
                 continue
-            for match in stream(zf, part, FORMULA, b"<f"):
-                text = (match.group(1) or b"").decode("utf-8", "replace")
-                text = re.sub(r'"[^"]*"', '""', text.replace("&quot;", '"'))
-                for call in FUNCTION_CALL.finditer(text):
-                    if call.group(1).upper() in UNSUPPORTED_FUNCTIONS:
-                        names.add(call.group(1).upper())
-            for _ in stream(zf, part, re.compile(rb'<c\s[^>]*\bcm="'), b"<c"):
+            for match in stream(zf, part, FORMULA, (b"<f", b"<xm:f")):
+                names |= unsupported_names((match.group(1) or b"").decode("utf-8", "replace"))
+            for _ in stream(zf, part, re.compile(rb'<c\s[^>]*\bcm="'), (b"<c",)):
                 dynamic = True
                 break
     return sorted(names), dynamic
@@ -273,7 +316,7 @@ def error_cells(path):
         for name, part in sheet_parts(zf):
             if part not in zf.namelist():
                 continue
-            for match in stream(zf, part, CELL, b"<c"):
+            for match in stream(zf, part, CELL, (b"<c",)):
                 attrs, body = match.group(1), match.group(2) or b""
                 value = re.search(rb"<v>(.*?)</v>", body, re.S)
                 text = value.group(1).decode("utf-8", "replace") if value else ""
@@ -286,14 +329,54 @@ def error_cells(path):
 def new_errors(source_copy, result):
     """The error values in the recalculated file that the source did not already hold as errors."""
     before = error_cells(source_copy)
-    fresh = [(key, value) for key, value in error_cells(result).items() if key not in before]
-    return fresh
+    return [(key, value) for key, value in error_cells(result).items() if key not in before]
+
+
+def formula_values(path):
+    """What the recalculation computed: every formula cell, capped. Returns (listed, total, truncated)."""
+    listed, total, size, truncated = [], 0, 0, False
+    with zipfile.ZipFile(path) as zf:
+        for name, part in sheet_parts(zf):
+            if part not in zf.namelist():
+                continue
+            for match in stream(zf, part, CELL, (b"<c",)):
+                attrs, body = match.group(1), match.group(2) or b""
+                found = CELL_FORMULA.search(body)
+                if not found:
+                    continue
+                total += 1
+                if len(listed) >= MAX_FORMULA_CELLS_LISTED or size >= MAX_LISTED_BYTES:
+                    truncated = True
+                    continue
+                formula = unescape((found.group(1) or b"").decode("utf-8", "replace"), {"&quot;": '"', "&apos;": "'"})
+                value = re.search(rb"<v>(.*?)</v>", body, re.S)
+                text = unescape(value.group(1).decode("utf-8", "replace")) if value else None
+                kind = attribute(attrs, b"t")
+                entry = {"sheet": clean(name, 60), "cell": attribute(attrs, b"r"), "formula": clean(formula or "(shared formula)", 200)}
+                if text is None:
+                    entry["value"] = None
+                elif kind in ("", "n"):
+                    try:
+                        number = float(text)
+                        entry["value"] = int(number) if number.is_integer() and abs(number) < 1e15 else number
+                    except ValueError:
+                        entry["value"] = clean(text, 100)
+                elif kind == "b":
+                    entry["value"] = text == "1"
+                elif kind == "e":
+                    entry["value"] = clean(text, 20)
+                    entry["error"] = True
+                else:
+                    entry["value"] = clean(text, 100)
+                size += len(json.dumps(entry, ensure_ascii=False))
+                listed.append(entry)
+    return listed, total, truncated
 
 
 # ---- running LibreOffice -----------------------------------------------------------------------------------
 
 
-def run_soffice(soffice, work, source, target_format, outdir):
+def run_soffice(soffice, work, source, target_format, outdir, timeout):
     profile = os.path.join(work, "profile")
     os.makedirs(os.path.join(profile, "user"))
     with open(os.path.join(profile, "user", "registrymodifications.xcu"), "w", encoding="utf-8") as handle:
@@ -326,11 +409,11 @@ def run_soffice(soffice, work, source, target_format, outdir):
         start_new_session=True, text=True,
     )
     try:
-        out, err = process.communicate(timeout=TIMEOUT_SECONDS)
+        out, err = process.communicate(timeout=timeout)
     except subprocess.TimeoutExpired:
         kill_group(process)
         raise Stop(
-            f"LibreOffice did not finish in {TIMEOUT_SECONDS} seconds and was stopped. "
+            f"LibreOffice did not finish in {int(timeout)} seconds and was stopped. "
             "The file is too large or too complex for one command; split it, or ask the person for a smaller one.",
             4,
         )
@@ -340,52 +423,93 @@ def run_soffice(soffice, work, source, target_format, outdir):
         raise Stop("LibreOffice failed: " + clean((err or out).strip()[-300:] or f"exit {process.returncode}"), 2)
 
 
-def write_new(produced, destination):
-    """Create the destination for the first time, or refuse. O_EXCL means an existing file, folder or link (even a
-    dangling one) is never replaced and never followed; there is no staging name and no rename."""
-    flags = os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW | getattr(os, "O_CLOEXEC", 0)
+# ---- the result: created, or replaced only when asked and only a regular file -----------------------------------
+
+
+def destination_state(dirfd, destination):
+    """lstat of the destination relative to the folder descriptor, or None when nothing is there."""
     try:
-        fd = os.open(destination, flags, 0o644)
-    except FileExistsError:
-        raise Stop(f"{os.path.basename(destination)} already exists next to the file. Nothing was replaced; move or rename it.", 3)
+        return os.stat(destination, dir_fd=dirfd, follow_symlinks=False)
+    except FileNotFoundError:
+        return None
     except OSError as error:
-        raise Stop(f"Cannot create {clean(os.path.basename(destination), 80)}: {clean(error)}", 2)
+        raise Stop(f"Cannot use the output name {clean(destination, 80)}: {clean(error)}", 2)
+
+
+def refuse_existing(destination, state, replace):
+    taken = f"{destination} already exists next to the file. Nothing was replaced"
+    if state is None:
+        return
+    if not replace:
+        raise Stop(taken + "; move or rename it, or add --replace only if you made that file yourself.", 3)
+    if not stat.S_ISREG(state.st_mode):
+        raise Stop(taken + ": it is a link, a folder or a special file, and --replace only replaces a regular file.", 3)
+
+
+def place(dirfd, produced, destination, replace):
+    """Create the destination for the first time (O_EXCL: an existing file, folder or link, even a dangling one, is
+    never replaced or followed), or with `replace` swap in a regular file atomically through a temporary name made in
+    the same folder. Every call is relative to the folder descriptor."""
+    state = destination_state(dirfd, destination)
+    refuse_existing(destination, state, replace)
+    base = os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW | getattr(os, "O_CLOEXEC", 0)
+    target = destination if state is None else ".office-convert-" + secrets.token_hex(8) + ".tmp"
     try:
-        with open(produced, "rb") as source, os.fdopen(fd, "wb") as target:
-            shutil.copyfileobj(source, target, 1024 * 1024)
+        fd = os.open(target, base, 0o644, dir_fd=dirfd)
+    except FileExistsError:
+        raise Stop(f"{destination} already exists next to the file. Nothing was replaced; move or rename it.", 3)
+    except OSError as error:
+        raise Stop(f"Cannot create {clean(destination, 80)}: {clean(error)}", 2)
+    try:
+        with open(produced, "rb") as source, os.fdopen(fd, "wb") as out:
+            shutil.copyfileobj(source, out, 1024 * 1024)
+        if state is not None:
+            os.rename(target, destination, src_dir_fd=dirfd, dst_dir_fd=dirfd)
     except BaseException:
         try:
-            os.unlink(destination)  # ours: it was created by the O_EXCL open above
+            os.unlink(target, dir_fd=dirfd)  # ours: it was created by the O_EXCL open above
         except OSError:
             pass
         raise
 
 
-def convert(mode, path):
-    absolute = check_path(path)
-    folder, name = os.path.split(absolute)
+def convert(mode, path, keep=False, replace=False):
+    started = time.monotonic()
+    dirfd, folder, name = open_parent(path)
+    try:
+        return convert_in(mode, dirfd, folder, name, keep, replace, started)
+    finally:
+        os.close(dirfd)
+
+
+def left(started, reserve=0):
+    return TOTAL_SECONDS - (time.monotonic() - started) - reserve
+
+
+def convert_in(mode, dirfd, folder, name, keep, replace, started):
     stem, ext = os.path.splitext(name)
     if mode == "recalc":
-        destination = os.path.join(folder, stem + ".recalculated.xlsx")
+        destination = stem + ".recalculated.xlsx"
         target_format, produced_name, magic = "xlsx:Calc MS Excel 2007 XML", "work.xlsx", b"PK"
     else:
-        destination = os.path.join(folder, stem + ".pdf")
+        destination = stem + ".pdf"
         target_format, produced_name, magic = "pdf", "work.pdf", b"%PDF-"
+    writes = mode == "pdf" or keep
     work = tempfile.mkdtemp(prefix="office-convert-")
     try:
         os.chmod(work, 0o700)
         outdir = os.path.join(work, "out")
         os.makedirs(outdir)
         source = os.path.join(work, "work" + ext.lower())
-        copy_once(absolute, source)
-        report = inspect_first(source)
+        copy_once(dirfd, name, source)
+        report = inspect_first(source, timeout=max(1, min(INSPECT_SECONDS, left(started, RESERVE_SECONDS + 1))))
         kind = report.get("detected_type")
         if mode == "recalc" and kind != "xlsx":
             raise Stop(f"recalc takes an .xlsx; this is a {kind} file.", 3)
         if mode == "pdf" and kind not in KINDS:
             raise Stop(f"pdf takes a .docx, .xlsx or .pptx; this is a {kind} file.", 3)
-        if os.path.lexists(destination):
-            raise Stop(f"{os.path.basename(destination)} already exists next to the file. Nothing was replaced; move or rename it.", 3)
+        if writes:
+            refuse_existing(destination, destination_state(dirfd, destination), replace)
         extra = {}
         if mode == "recalc":
             names, dynamic = unsupported_in(source)
@@ -405,7 +529,7 @@ def convert(mode, path):
         soffice = shutil.which("soffice")
         if not soffice:
             raise Stop("LibreOffice (soffice) is not installed in this computer.", 2)
-        run_soffice(soffice, work, source, target_format, outdir)
+        run_soffice(soffice, work, source, target_format, outdir, timeout=max(1, left(started, RESERVE_SECONDS)))
         produced = os.path.join(outdir, produced_name)
         if not os.path.isfile(produced) or os.path.getsize(produced) == 0:
             raise Stop("LibreOffice finished but wrote no file. The file may be damaged.", 2)
@@ -417,39 +541,72 @@ def convert(mode, path):
         if mode == "recalc":
             try:
                 fresh = new_errors(source, produced)
+                listed, total, truncated = formula_values(produced)
             except (zipfile.BadZipFile, OSError, ET.ParseError) as error:
                 raise Stop("The recalculated file could not be read back: " + clean(error), 2)
+            extra["formula_cells"] = listed
+            extra["formula_cells_total"] = total
+            extra["truncated"] = truncated
+            extra["error_cells_total"] = len(fresh)
             if fresh:
                 extra["errors"] = {
                     "count": len(fresh),
                     "first": [f"{sheet}!{cell} {value}" for (sheet, cell), value in fresh[:MAX_LISTED]],
                     "note": "These cells hold an error value after the recalculation and did not before. Fix the formulas in the original.",
                 }
+            extra["kept"] = bool(keep)
             extra["note"] = (
-                "Read the values from this copy; do not hand it over. LibreOffice saved it again, so formatting and features "
-                "may differ. The file to hand over is the original."
+                "Read the values here; the file to hand over is the original. "
+                + ("A copy was kept: LibreOffice saved it again, so formatting and features may differ." if keep else "No file was kept.")
             )
-        write_new(produced, destination)
+        if writes:
+            place(dirfd, produced, destination, replace)
     finally:
         shutil.rmtree(work, ignore_errors=True)
-    result = {"ok": True, "mode": mode, "source": name, "output": os.path.basename(destination), "output_path": destination,
-              "size_bytes": os.path.getsize(destination)}
+    result = {"ok": True, "mode": mode, "source": name}
+    if writes:
+        output_path = os.path.join(folder, destination)
+        result.update({"output": destination, "output_path": output_path, "size_bytes": os.stat(destination, dir_fd=dirfd).st_size})
     result.update(extra)
     if "errors" in extra:
         result["recalculated_with_errors"] = True
     return result
 
 
+def parse(argv):
+    """(mode, keep, replace, file) or None for a bad use."""
+    args = argv[1:]
+    if not args or args[0] not in ("recalc", "pdf"):
+        return None
+    mode, flags, files = args[0], set(), []
+    for arg in args[1:]:
+        if arg in ("--keep", "--replace"):
+            flags.add(arg)
+        elif arg.startswith("--"):
+            return None
+        else:
+            files.append(arg)
+    if len(files) != 1:
+        return None
+    if "--keep" in flags and mode != "recalc":
+        return None
+    if "--replace" in flags and mode == "recalc" and "--keep" not in flags:
+        return None
+    return mode, "--keep" in flags, "--replace" in flags, files[0]
+
+
 def main(argv):
     if len(argv) == 2 and argv[1] in ("-h", "--help"):
         sys.stdout.write(USAGE)
         return 0
-    if len(argv) != 3 or argv[1] not in ("recalc", "pdf"):
+    parsed = parse(argv)
+    if parsed is None:
         sys.stderr.write(USAGE)
         return 2
     become_reaper()
+    mode, keep, replace, path = parsed
     try:
-        result = convert(argv[1], argv[2])
+        result = convert(mode, path, keep, replace)
         say(result)
         return 5 if result.get("recalculated_with_errors") else 0
     except Stop as stop:

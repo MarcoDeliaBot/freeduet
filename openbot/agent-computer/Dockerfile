@@ -54,7 +54,7 @@ RUN python3 -m venv /opt/office \
 COPY agent-computer/office-inspect/office_inspect.py /usr/local/lib/office-inspect/office_inspect.py
 COPY agent-computer/office-inspect/office-inspect agent-computer/office-inspect/office-python /usr/local/bin/
 # `office-convert` (ours) is the only way a member runs LibreOffice: two fixed jobs, `recalc` and `pdf`, after
-# `office-inspect` has passed the file, with a throwaway profile, macros off and a hard timeout of 100 seconds.
+# `office-inspect` has passed the file, with a throwaway profile, macros off and one overall limit of 105 seconds.
 COPY agent-computer/office-convert/office_convert.py /usr/local/lib/office-convert/office_convert.py
 COPY agent-computer/office-convert/office-convert /usr/local/bin/
 RUN chmod 0755 /usr/local/bin/office-inspect /usr/local/bin/office-python /usr/local/bin/office-convert \
@@ -62,12 +62,13 @@ RUN chmod 0755 /usr/local/bin/office-inspect /usr/local/bin/office-python /usr/l
   && office-python -c "import docx, openpyxl, pptx, pypdf, reportlab, pdfplumber, defusedxml, lxml.etree; docx.Document().save('/tmp/office-smoke.docx')" \
   && office-inspect /tmp/office-smoke.docx > /dev/null \
   && rm -f /tmp/office-smoke.docx
-# Build check for LibreOffice: its version, then a real recalculation (a formula with no stored value must read
-# back as 42.5) and a real PDF through `office-convert`, so an image whose LibreOffice does not work fails to build.
+# Build check for LibreOffice: its version, then a real recalculation (a formula with no stored value must come out
+# as 42.5, printed and in a kept copy) and a real PDF through `office-convert`, so an image whose LibreOffice does not work fails to build.
 RUN soffice --headless --version \
   && mkdir /tmp/lo-smoke && cd /tmp/lo-smoke \
   && office-python -c "import openpyxl, docx; w = openpyxl.Workbook(); s = w.active; s['A1'] = 10; s['A2'] = 32.5; s['A3'] = '=SUM(A1:A2)'; w.save('t.xlsx'); d = docx.Document(); d.add_heading('Smoke', 1); d.save('t.docx')" \
-  && office-convert recalc t.xlsx > /dev/null \
+  && office-convert recalc t.xlsx | grep -q '"value": 42.5' \
+  && office-convert recalc --keep t.xlsx > /dev/null \
   && office-convert pdf t.docx > /dev/null \
   && office-python -c "import openpyxl; v = openpyxl.load_workbook('t.recalculated.xlsx', data_only=True).active['A3'].value; assert v == 42.5, v; assert open('t.pdf', 'rb').read(5) == b'%PDF-'" \
   && cd / && rm -rf /tmp/lo-smoke /root/.cache

@@ -925,14 +925,19 @@ describe("Office files: Penny's spreadsheets and Wren's Word documents", () => {
       spreadsheets: [
         "use openpyxl for .xlsx",
         "run office-convert recalc followed by the file's name",
-        "it never changes the original and never replaces a file that is already there",
-        "do not hand over the recalculated copy unless the person asks for it",
+        "keeps no file, and prints for each formula cell its sheet, cell, formula and calculated value",
         "The file the person receives is the original you wrote with openpyxl, with its formulas intact",
         "it exits with status 5",
+        "run it again, as often as you need, because it keeps nothing",
         "values from links to other workbooks are not refreshed",
         "a function LibreOffice 24.2 cannot calculate",
-        "The recalculation is done by LibreOffice, not by Excel",
+        "some phone and mail previews show those cells empty",
+        "office-convert recalc --keep followed by the file's name",
+        "saved it again, so its formatting and features may differ",
+        "add --replace only to overwrite a copy you yourself made earlier in this conversation, never a file the person already had",
+        "The calculation is LibreOffice's, not Excel's",
         "run office-convert pdf followed by the file's name",
+        "add --replace, but only to overwrite a PDF you yourself made earlier in this conversation, never a file the person already had",
         "a refused file is not converted",
         "write it as text, never as a formula",
         'set its data_type to "s"',
@@ -944,6 +949,7 @@ describe("Office files: Penny's spreadsheets and Wren's Word documents", () => {
         "Nothing here is real Word: a page count or a page break you report is LibreOffice's drawing",
         "run office-convert pdf followed by the file's name",
         "never changes the .docx, and refuses when a file of that name is already there",
+        "add --replace, but only to overwrite a PDF you yourself made earlier in this conversation, never a file the person already had",
         "a refused file (a macro file, an old format, a protected file) is not converted",
       ],
     };
@@ -1070,8 +1076,11 @@ describe("Office files: Penny's spreadsheets and Wren's Word documents", () => {
       /tesseract|poppler-utils|pypdfium2|default-jre|openjdk|libreoffice-java|libreoffice-gnome|libreoffice-gtk|libreoffice-base\b/i,
     );
     expect(dockerfile).toContain("soffice --headless --version");
-    expect(dockerfile).toContain("office-convert recalc t.xlsx");
+    expect(dockerfile).toContain("office-convert recalc --keep t.xlsx");
     expect(dockerfile).toContain("office-convert pdf t.docx");
+    expect(dockerfile).toContain(
+      "office-convert recalc t.xlsx | grep -q '\"value\": 42.5'",
+    );
     expect(dockerfile).toContain("assert v == 42.5, v");
     expect(dockerfile).toContain(
       "/usr/local/lib/office-convert/office_convert.py",

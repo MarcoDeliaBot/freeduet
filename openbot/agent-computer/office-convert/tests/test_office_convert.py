@@ -106,8 +106,15 @@ elif mode == "errors":
         z.writestr("xl/_rels/workbook.xml.rels", '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="x/worksheet" Target="worksheets/sheet1.xml"/></Relationships>')
         z.writestr("xl/worksheets/sheet1.xml", f'<worksheet xmlns="{{S}}"><sheetData><row r="1">{{cells}}</row></sheetData></worksheet>')
 else:
+    S = "http://schemas.openxmlformats.org/spreadsheetml/2006/main"
+    R = "http://schemas.openxmlformats.org/officeDocument/2006/relationships"
+    count = 700 if mode == "many" else 2
+    cells = "".join(f'<c r="A{{i}}"><f>SUM(1,{{i}})</f><v>{{i + 1}}</v></c>' for i in range(1, count + 1))
+    cells += '<c r="B1" t="str"><f>"a"&amp;"b"</f><v>ab</v></c><c r="C1"><v>5</v></c>'
     with zipfile.ZipFile(os.path.join(outdir, stem + ".xlsx"), "w") as z:
-        z.writestr("x", "recalculated")
+        z.writestr("xl/workbook.xml", f'<workbook xmlns="{{S}}" xmlns:r="{{R}}"><sheets><sheet name="Totals" sheetId="1" r:id="rId1"/></sheets></workbook>')
+        z.writestr("xl/_rels/workbook.xml.rels", '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="x/worksheet" Target="worksheets/sheet1.xml"/></Relationships>')
+        z.writestr("xl/worksheets/sheet1.xml", f'<worksheet xmlns="{{S}}"><sheetData><row r="1">{{cells}}</row></sheetData></worksheet>')
 """
 
 
@@ -264,7 +271,7 @@ def test_an_empty_file_and_a_missing_file_stop_cleanly(work, stub):
 def test_recalc_writes_a_new_file_next_to_the_source_and_never_touches_the_source(work, stub):
     f = zipped(work / "totals.xlsx", xlsx_parts())
     before = sha(f)
-    code, out, _ = run("recalc", f)
+    code, out, _ = run("recalc", "--keep", f)
     assert code == 0 and out["ok"] is True
     assert out["output"] == "totals.recalculated.xlsx"
     assert (work / "totals.recalculated.xlsx").read_bytes()[:2] == b"PK"
@@ -367,7 +374,7 @@ def test_a_planted_part_link_does_not_overwrite_anything(work, stub, mode, sourc
     stem = source.rsplit(".", 1)[0]
     (work / (stem + suffix)).symlink_to("victim.txt")
     zipped(work / source, docx_parts() if mode == "pdf" else xlsx_parts())
-    code, out, _ = run(mode, work / source)
+    code, out, _ = run(*([mode, "--keep"] if mode == "recalc" else [mode]), work / source)
     assert code == 0, out
     assert victim.read_text() == "PRECIOUS\n"
     output = work / out["output"]
@@ -376,8 +383,8 @@ def test_a_planted_part_link_does_not_overwrite_anything(work, stub, mode, sourc
 
 def test_a_name_too_long_for_the_result_is_a_clean_refusal(work, stub):
     f = zipped(work / (("a" * 240) + ".xlsx"), xlsx_parts())
-    code, out, err = run("recalc", f)
-    assert code == 2 and out["ok"] is False and "Cannot create" in out["reason"]
+    code, out, err = run("recalc", "--keep", f)
+    assert code == 2 and out["ok"] is False and "Cannot" in out["reason"]
     assert "Traceback" not in err
     assert [p.name for p in work.iterdir()] == [f.name]
 
@@ -387,8 +394,8 @@ def test_the_source_is_copied_once_and_a_swap_afterwards_never_reaches_libreoffi
     original = sha(f)
     real = oc.inspect_first
 
-    def swapping(path):
-        report = real(path)
+    def swapping(path, **kw):
+        report = real(path, **kw)
         zipped(f, docx_parts({"word/media/swapped.bin": b"EVIL"}))  # the original changes after the copy
         return report
 
@@ -403,7 +410,7 @@ def test_the_inspector_sees_the_copy_and_not_the_original(work, stub, monkeypatc
     f = zipped(work / "a.docx", docx_parts())
     seen = []
     real = oc.inspect_first
-    monkeypatch.setattr(oc, "inspect_first", lambda path: (seen.append(path), real(path))[1])
+    monkeypatch.setattr(oc, "inspect_first", lambda path, **kw: (seen.append(path), real(path, **kw))[1])
     assert oc.main(["office-convert", "pdf", str(f)]) == 0
     assert seen and seen[0] != str(f) and "office-convert-" in seen[0]
 
@@ -460,7 +467,7 @@ def test_recalc_reports_new_error_values_and_exits_with_its_own_status(work, stu
     assert code == 5 and out["ok"] is True and out["recalculated_with_errors"] is True
     assert out["errors"]["count"] == 13  # twelve #NAME? and one Err:508
     assert len(out["errors"]["first"]) == 10 and out["errors"]["first"][0] == "Totals!B1 #NAME?"
-    assert (work / "w.recalculated.xlsx").is_file()
+    assert not (work / "w.recalculated.xlsx").exists()  # no file is kept by default
 
 
 def test_an_error_the_source_already_cached_is_not_reported_as_new(work, stub):
@@ -478,7 +485,11 @@ def test_a_clean_recalc_has_no_errors_key_and_says_the_copy_is_for_reading(work,
     f = zipped(work / "w.xlsx", xlsx_parts())
     code, out, _ = run("recalc", f)
     assert code == 0 and "errors" not in out
-    assert "do not hand it over" in out["note"] and "original" in out["note"]
+    assert "original" in out["note"] and "No file was kept" in out["note"] and out["kept"] is False
+    assert out["formula_cells_total"] == 3 and out["truncated"] is False and out["error_cells_total"] == 0
+    assert out["formula_cells"][0] == {"sheet": "Totals", "cell": "A1", "formula": "SUM(1,1)", "value": 2}
+    assert out["formula_cells"][1] == {"sheet": "Totals", "cell": "A2", "formula": "SUM(1,2)", "value": 3}
+    assert "output" not in out and sorted(p.name for p in work.iterdir()) == ["w.xlsx"]
 
 
 def test_recalc_says_values_from_external_links_are_not_refreshed(work, stub):
@@ -507,13 +518,14 @@ def test_a_failing_libreoffice_is_reported_and_leaves_nothing_behind(work, stub,
     assert sorted(p.name for p in work.iterdir()) == ["a.docx"]
 
 
-def test_the_timeout_is_under_the_commands_own_two_minutes():
-    assert oc.TIMEOUT_SECONDS < 120
+def test_the_whole_call_is_under_the_commands_own_two_minutes():
+    assert oc.TOTAL_SECONDS < 110 and oc.INSPECT_SECONDS + oc.RESERVE_SECONDS < oc.TOTAL_SECONDS
 
 
 def test_a_stuck_libreoffice_is_killed_and_the_message_says_what_to_do(work, stub, monkeypatch, capsys):
     stub.behave("sleep")
-    monkeypatch.setattr(oc, "TIMEOUT_SECONDS", 2)
+    monkeypatch.setattr(oc, "TOTAL_SECONDS", 3)
+    monkeypatch.setattr(oc, "RESERVE_SECONDS", 1)
     f = zipped(work / "a.docx", docx_parts())
     started = time.time()
     assert oc.main(["office-convert", "pdf", str(f)]) == 4
@@ -525,6 +537,224 @@ def test_a_stuck_libreoffice_is_killed_and_the_message_says_what_to_do(work, stu
     with pytest.raises(ProcessLookupError):
         os.kill(pid, 0)
     assert sorted(p.name for p in work.iterdir()) == ["a.docx"]
+
+
+# ---- recalc keeps no file by default; --keep and --replace ---------------------------------------------------------
+
+def test_recalc_lists_formula_cells_capped_with_totals_and_a_truncated_flag(work, stub, monkeypatch, capsys):
+    stub.behave("many")
+    f = zipped(work / "w.xlsx", xlsx_parts())
+    code, out, _ = run("recalc", f)
+    assert code == 0
+    assert len(out["formula_cells"]) == oc.MAX_FORMULA_CELLS_LISTED == 500
+    assert out["formula_cells_total"] == 701 and out["truncated"] is True
+    assert sorted(p.name for p in work.iterdir()) == ["w.xlsx"]
+    monkeypatch.setattr(oc, "MAX_LISTED_BYTES", 1500)
+    assert oc.main(["office-convert", "recalc", str(f)]) == 0
+    small = json.loads(capsys.readouterr().out)
+    assert 0 < len(small["formula_cells"]) < 30 and small["truncated"] is True and small["formula_cells_total"] == 701
+
+
+def test_keep_writes_the_copy_and_a_second_keep_is_refused_without_replace(work, stub):
+    f = zipped(work / "w.xlsx", xlsx_parts())
+    assert run("recalc", "--keep", f)[0] == 0
+    first = (work / "w.recalculated.xlsx").read_bytes()
+    code, out, _ = run("recalc", "--keep", f)
+    assert code == 3 and "w.recalculated.xlsx already exists" in out["reason"] and "--replace" in out["reason"]
+    assert (work / "w.recalculated.xlsx").read_bytes() == first
+
+
+def test_replace_swaps_in_a_regular_file_atomically_and_leaves_no_temporary_name(work, stub):
+    f = zipped(work / "w.xlsx", xlsx_parts())
+    (work / "w.recalculated.xlsx").write_bytes(b"old copy")
+    before = os.stat(work / "w.recalculated.xlsx").st_ino
+    code, out, _ = run("recalc", "--keep", "--replace", f)
+    assert code == 0, out
+    assert (work / "w.recalculated.xlsx").read_bytes()[:2] == b"PK"
+    assert os.stat(work / "w.recalculated.xlsx").st_ino != before  # a new file renamed over, not written in place
+    assert sorted(p.name for p in work.iterdir()) == ["w.recalculated.xlsx", "w.xlsx"]
+
+
+def test_pdf_again_after_an_edit_needs_replace_and_replace_works(work, stub):
+    f = zipped(work / "a.docx", docx_parts())
+    assert run("pdf", f)[0] == 0
+    assert run("pdf", f)[0] == 3
+    zipped(f, docx_parts({"word/media/more.bin": b"edit"}))
+    code, out, _ = run("pdf", "--replace", f)
+    assert code == 0 and (work / "a.pdf").read_bytes().startswith(b"%PDF-")
+    assert sorted(p.name for p in work.iterdir()) == ["a.docx", "a.pdf"]
+
+
+def test_replace_never_replaces_a_link_a_folder_or_a_special_file(work, stub, tmp_path):
+    f = zipped(work / "a.docx", docx_parts())
+    victim = tmp_path / "victim.txt"
+    victim.write_text("keep")
+    (work / "a.pdf").symlink_to(victim)
+    code, out, _ = run("pdf", "--replace", f)
+    assert code == 3 and "regular file" in out["reason"] and victim.read_text() == "keep" and (work / "a.pdf").is_symlink()
+    (work / "a.pdf").unlink()
+    (work / "a.pdf").mkdir()
+    assert run("pdf", "--replace", f)[0] == 3 and (work / "a.pdf").is_dir()
+    (work / "a.pdf").rmdir()
+    os.mkfifo(work / "a.pdf")
+    assert run("pdf", "--replace", f)[0] == 3 and stat.S_ISFIFO(os.lstat(work / "a.pdf").st_mode)
+
+
+@pytest.mark.parametrize(
+    "args",
+    [["recalc", "--replace", "x.xlsx"], ["pdf", "--keep", "x.docx"], ["recalc", "--keep", "--bogus", "x.xlsx"], ["pdf", "--replace"]],
+)
+def test_the_flags_are_checked(args, stub):
+    code, _, err = run(*args)
+    assert code == 2 and "usage: office-convert" in err and stub.calls() == []
+
+
+# ---- the folder is opened once: a rename-and-link swap while LibreOffice runs changes nothing ------------------
+
+@pytest.mark.parametrize("mode", ["pdf", "recalc"])
+def test_the_result_lands_in_the_original_folder_even_if_it_is_swapped_for_a_link(work, stub, monkeypatch, mode):
+    shared = work / "shared"
+    shared.mkdir()
+    elsewhere = work / "elsewhere"
+    elsewhere.mkdir()
+    name = "a.docx" if mode == "pdf" else "a.xlsx"
+    zipped(shared / name, docx_parts() if mode == "pdf" else xlsx_parts())
+    real = oc.run_soffice
+
+    def swapping(*args, **kwargs):
+        real(*args, **kwargs)
+        os.rename(shared, work / "real")  # after LibreOffice ran, before the result is placed
+        os.symlink(elsewhere, shared)
+
+    monkeypatch.setattr(oc, "run_soffice", swapping)
+    argv = ["office-convert", mode] + (["--keep"] if mode == "recalc" else []) + [str(shared / name)]
+    assert oc.main(argv) == 0
+    assert list(elsewhere.iterdir()) == []
+    assert (work / "real" / ("a.pdf" if mode == "pdf" else "a.recalculated.xlsx")).is_file()
+
+
+# ---- each guard alone ---------------------------------------------------------------------------------------------
+
+def test_exclusive_creation_alone_stops_a_file_planted_between_the_last_check_and_the_create(work, stub, monkeypatch):
+    f = zipped(work / "a.docx", docx_parts())
+    real = oc.destination_state
+    calls = []
+
+    def planting(dirfd, destination):
+        state = real(dirfd, destination)
+        calls.append(state)
+        if len(calls) == 2:  # the check inside place(), the last one before the create
+            (work / "a.pdf").write_bytes(b"PRECIOUS")
+        return state
+
+    monkeypatch.setattr(oc, "destination_state", planting)
+    assert oc.main(["office-convert", "pdf", str(f)]) == 3
+    assert (work / "a.pdf").read_bytes() == b"PRECIOUS"
+
+
+def test_the_single_copy_open_alone_refuses_a_link_swapped_in_after_the_path_check(work, stub, monkeypatch, capsys):
+    f = zipped(work / "a.docx", docx_parts())
+    secret = zipped(work / "secret.docx", docx_parts({"word/media/secret.bin": b"SECRET"}))
+    real = oc.open_parent
+
+    def swapping(path):
+        result = real(path)
+        os.unlink(f)
+        os.symlink(secret, f)  # after the lexical check, before the one open
+        return result
+
+    monkeypatch.setattr(oc, "open_parent", swapping)
+    assert oc.main(["office-convert", "pdf", str(f)]) == 3
+    out = json.loads(capsys.readouterr().out)
+    assert "symbolic link" in out["reason"]
+    assert stub.calls() == []
+
+
+# ---- one deadline for everything ------------------------------------------------------------------------------
+
+def slow_inspector(tmp_path, seconds):
+    script = tmp_path / "slow_inspector.py"
+    script.write_text(
+        "import os, sys, time\n"
+        f"time.sleep({seconds})\n"
+        f"os.execv(sys.executable, [sys.executable, '-I', {str(TOOL.parent.parent / 'office-inspect' / 'office_inspect.py')!r}, sys.argv[1]])\n"
+    )
+    return str(script)
+
+
+def test_inspector_and_libreoffice_share_one_deadline(work, stub, monkeypatch, capsys, tmp_path):
+    stub.behave("sleep")
+    monkeypatch.setattr(oc, "TOTAL_SECONDS", 6)
+    monkeypatch.setattr(oc, "RESERVE_SECONDS", 1)
+    monkeypatch.setattr(oc, "INSPECT_SECONDS", 3)
+    monkeypatch.setattr(oc, "INSPECTOR", slow_inspector(tmp_path, 2))  # takes most of its share, then passes
+    f = zipped(work / "a.docx", docx_parts())
+    started = time.time()
+    assert oc.main(["office-convert", "pdf", str(f)]) == 4
+    elapsed = time.time() - started
+    assert elapsed < 6, elapsed  # the soffice budget was what the inspector left, not a fresh one
+
+
+def test_a_hanging_inspector_is_stopped_within_its_share(work, stub, monkeypatch, capsys, tmp_path):
+    monkeypatch.setattr(oc, "INSPECT_SECONDS", 1)
+    monkeypatch.setattr(oc, "INSPECTOR", slow_inspector(tmp_path, 30))
+    f = zipped(work / "a.docx", docx_parts())
+    started = time.time()
+    assert oc.main(["office-convert", "pdf", str(f)]) == 4
+    assert time.time() - started < 5
+    assert "inspector did not finish" in json.loads(capsys.readouterr().out)["reason"]
+    assert stub.calls() == []
+
+
+# ---- the detector: where formulas hide, and no false refusals ---------------------------------------------------
+
+def book_with(names_xml="", sheet_name="A"):
+    return (
+        f'<?xml version="1.0"?><workbook xmlns="{S}" xmlns:r="{R}"><sheets><sheet name="{sheet_name}" sheetId="1" r:id="rId1"/></sheets>'
+        f"{names_xml}</workbook>"
+    )
+
+
+def sheet_xml(cell_formula="1+1", after_data=""):
+    return (
+        f'<?xml version="1.0"?><worksheet xmlns="{S}"><sheetData><row r="1"><c r="A1"><f>{cell_formula}</f></c></row></sheetData>'
+        f"{after_data}</worksheet>"
+    )
+
+
+@pytest.mark.parametrize(
+    "parts,named",
+    [
+        ({"xl/worksheets/sheet1.xml": sheet_xml("XLOOKUP (1,B1:B3,C1:C3)")}, "XLOOKUP"),
+        ({"xl/worksheets/sheet1.xml": sheet_xml("XLOOKUP\t(1,B1:B3,C1:C3)")}, "XLOOKUP"),
+        ({"xl/worksheets/sheet1.xml": sheet_xml("1"), "xl/workbook.xml": book_with('<definedNames><definedName name="Pick">FILTER (A1:A9,A1:A9&gt;1)</definedName></definedNames>')}, "FILTER"),
+        ({"xl/worksheets/sheet1.xml": sheet_xml(after_data='<conditionalFormatting sqref="A1"><cfRule type="expression" priority="1"><formula>_xlfn.XLOOKUP(A1,B1:B2,C1:C2)&gt;1</formula></cfRule></conditionalFormatting>')}, "XLOOKUP"),
+        ({"xl/worksheets/sheet1.xml": sheet_xml(after_data='<dataValidations count="1"><dataValidation type="list" sqref="A1"><formula1>_xlfn.UNIQUE(B1:B9)</formula1></dataValidation></dataValidations>')}, "UNIQUE"),
+        ({"xl/worksheets/sheet1.xml": sheet_xml(after_data='<dataValidations count="1"><dataValidation type="custom" sqref="A1"><formula1>1</formula1><formula2>SORT(B1:B9)</formula2></dataValidation></dataValidations>')}, "SORT"),
+        ({"xl/worksheets/sheet1.xml": sheet_xml(after_data='<extLst><ext><x14:conditionalFormattings xmlns:x14="x" xmlns:xm="y"><x14:cfRule><xm:f>LET(a,1,a)</xm:f></x14:cfRule></x14:conditionalFormattings></ext></extLst>')}, "LET"),
+    ],
+)
+def test_recalc_finds_unsupported_functions_wherever_a_formula_can_be(work, stub, parts, named):
+    f = zipped(work / "w.xlsx", xlsx_parts(parts))
+    code, out, _ = run("recalc", f)
+    assert code == 3 and named in out["reason"], out
+    assert stub.calls() == []
+
+
+@pytest.mark.parametrize(
+    "parts",
+    [
+        {"xl/workbook.xml": book_with(sheet_name="FILTER"), "xl/worksheets/sheet1.xml": sheet_xml("FILTER!A2+SUM(FILTER!B1:B2)")},
+        {"xl/workbook.xml": book_with(sheet_name="FILTER (2)"), "xl/worksheets/sheet1.xml": sheet_xml("'FILTER (2)'!A1+1")},
+        {"xl/workbook.xml": book_with('<definedNames><definedName name="FILTER">A!$A$1</definedName></definedNames>'), "xl/worksheets/sheet1.xml": sheet_xml("FILTER+1")},
+        {"xl/worksheets/sheet1.xml": sheet_xml('IF(B1=&quot;XLOOKUP (&quot;,1,2)')},
+        {"xl/worksheets/sheet1.xml": sheet_xml(after_data='<dataValidations count="1"><dataValidation type="list" sqref="A1"><formula1>"SORT (a),UNIQUE"</formula1></dataValidation></dataValidations>')},
+    ],
+)
+def test_the_detector_has_no_false_refusals(work, stub, parts):
+    f = zipped(work / "w.xlsx", xlsx_parts(parts))
+    code, out, _ = run("recalc", f)
+    assert code == 0, out
 
 
 def zombies():
@@ -548,7 +778,8 @@ def test_a_helper_that_outlives_a_killed_libreoffice_is_reaped(work, stub, monke
 
     libc = ctypes.CDLL(None, use_errno=True)
     stub.behave("orphan")
-    monkeypatch.setattr(oc, "TIMEOUT_SECONDS", 2)
+    monkeypatch.setattr(oc, "TOTAL_SECONDS", 3)
+    monkeypatch.setattr(oc, "RESERVE_SECONDS", 1)
     f = zipped(work / "a.docx", docx_parts())
     try:
         assert oc.main(["office-convert", "pdf", str(f)]) == 4
@@ -583,11 +814,20 @@ def test_real_libreoffice_recalculates_a_formula_and_makes_a_pdf(work):
     assert openpyxl.load_workbook(work / "t.xlsx", data_only=True).active["B3"].value is None
     code, out, _ = run("recalc", work / "t.xlsx")
     assert code == 0, out
+    assert out["formula_cells"] == [{"sheet": "Sheet", "cell": "B3", "formula": "SUM(B1:B2)", "value": 42.5}]
+    assert [p.name for p in work.iterdir()] == ["t.xlsx"]  # nothing kept
+    code, out, _ = run("recalc", "--keep", work / "t.xlsx")
+    assert code == 0, out
     done = openpyxl.load_workbook(work / "t.recalculated.xlsx", data_only=True).active
     assert done["B3"].value == 42.5
     assert openpyxl.load_workbook(work / "t.recalculated.xlsx").active["B3"].value == "=SUM(B1:B2)"
+    # fix-and-run-again: without --replace the kept copy is refused, with it a regular file is replaced
+    assert run("recalc", "--keep", work / "t.xlsx")[0] == 3
+    assert run("recalc", "--keep", "--replace", work / "t.xlsx")[0] == 0
     document = docx.Document()
     document.add_heading("Title", 1)
     document.save(work / "t.docx")
     code, out, _ = run("pdf", work / "t.docx")
     assert code == 0 and (work / "t.pdf").read_bytes().startswith(b"%PDF-")
+    assert run("pdf", work / "t.docx")[0] == 3
+    assert run("pdf", "--replace", work / "t.docx")[0] == 0

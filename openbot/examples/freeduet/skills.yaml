@@ -17803,25 +17803,32 @@ skills:
       totals, subtotals, tax, differences. Write the value when it is a fixed fact. A formula that
       openpyxl writes has no stored result: a phone, a mail preview and any program that does not
       calculate will show an empty cell until something calculates the file. So after you save a sheet
-      with formulas, recalculate it before you tell the person anything about its numbers: run
-      office-convert recalc followed by the file's name. It writes a new file next to the original, named
-      like totals.recalculated.xlsx, with every formula calculated and its result stored, and it never
-      changes the original and never replaces a file that is already there. That copy is only for
-      reading: LibreOffice saved it again, so its formatting and features may differ from what you wrote.
-      Open it with openpyxl and data_only set, read back each total and each cell that depends on a
-      formula, and compare them with what you compute in Python from the same inputs. The file the person
-      receives is the original you wrote with openpyxl, with its formulas intact; do not hand over the
-      recalculated copy unless the person asks for it, and then say that it was saved again by
-      LibreOffice. If office-convert lists cells with an error value (#DIV/0!, #REF!, #NAME?, #VALUE!,
-      #N/A or Err:), it exits with status 5: that is a mistake to fix in the original before you hand it
-      over; save, recalculate again. If it says that values from links to other workbooks are not
-      refreshed, say that those values are the old stored ones. If it refuses the workbook because it uses
-      a function LibreOffice 24.2 cannot calculate (XLOOKUP, FILTER, LET and the like), use a plainer
-      function, or say that nothing calculated that formula and give your own Python totals. The
-      recalculation is done by LibreOffice, not by Excel: say so, because a few functions and some text or
-      date functions can differ in Excel, so keep to plain ones. If office-convert refuses a file or
+      with formulas, check its numbers before you tell the person anything about them: run office-convert
+      recalc followed by the file's name. It calculates a copy in a temporary folder with LibreOffice,
+      keeps no file, and prints for each formula cell its sheet, cell, formula and calculated value (the
+      first 500 cells; it says when it cut the list and gives the totals of formula cells and of errors).
+      Compare the totals with what you compute in Python from the same inputs. The file the person
+      receives is the original you wrote with openpyxl, with its formulas intact. If office-convert
+      lists cells with an error value (#DIV/0!, #REF!, #NAME?, #VALUE!, #N/A or Err:), it exits with
+      status 5: that is a mistake to fix in the original before you hand it over; save, and run it again,
+      as often as you need, because it keeps nothing. If it says that values from links to other
+      workbooks are not refreshed, say that those values are the old stored ones. If it refuses the
+      workbook because it uses a function LibreOffice 24.2 cannot calculate (XLOOKUP, FILTER, LET and the
+      like), use a plainer function, or say that nothing calculated that formula and give your own Python
+      totals. The calculation is LibreOffice's, not Excel's: say so, because a few functions and some text
+      or date functions can differ in Excel, so keep to plain ones. If office-convert refuses a file or
       reports that it timed out, say what it said; do not look for another way to run the program, and
-      fall back to your own Python totals and say that no program calculated the formulas. Never call a formula checked because the script ran without an error. Use plain, common functions
+      fall back to your own Python totals and say that no program calculated the formulas.
+
+
+      Previews. When you hand over a spreadsheet with formulas, tell the person that the totals appear
+      when the file is opened in a spreadsheet program, and that some phone and mail previews show those
+      cells empty, because the file holds the formulas and not their results. If the person needs to see
+      the values in a preview, offer a copy with the values stored: office-convert recalc --keep followed
+      by the file's name writes it next to the original as name.recalculated.xlsx. Say that LibreOffice
+      saved it again, so its formatting and features may differ, and hand it over only when the person
+      asks for it. An existing file is never replaced by default; add --replace only to overwrite a copy
+      you yourself made earlier in this conversation, never a file the person already had. Never call a formula checked because the script ran without an error. Use plain, common functions
       (SUM, AVERAGE, COUNT, IF, ROUND, simple arithmetic). Never write a formula that reaches outside the
       file (WEBSERVICE, HYPERLINK to a built address, anything that loads data from elsewhere), and never
       link to another workbook.
@@ -17847,7 +17854,7 @@ skills:
 
 
       A PDF of a sheet. When the person wants the sheet as a PDF, run office-convert pdf followed by the
-      file's name; it writes the PDF next to the sheet and refuses when a file of that name is already there, which you tell the person instead of replacing it. Only .docx, .xlsx and .pptx files can be turned
+      file's name; it writes the PDF next to the sheet and refuses when a file of that name is already there. After you changed the sheet and need a new PDF, add --replace, but only to overwrite a PDF you yourself made earlier in this conversation, never a file the person already had. Only .docx, .xlsx and .pptx files can be turned
       into a PDF this way; the file is inspected first and a refused file is not converted. A command
       that runs longer than about two minutes is stopped, and office-convert stops itself earlier and
       says so: for a big sheet, say that it was too large to convert in one go.
@@ -17919,7 +17926,7 @@ skills:
 
 
       A PDF. When the person wants the document as a PDF, run office-convert pdf followed by the file's
-      name. It writes the PDF next to the .docx, never changes the .docx, and refuses when a file of that name is already there, which you tell the person instead of replacing it. The file is inspected first,
+      name. It writes the PDF next to the .docx, never changes the .docx, and refuses when a file of that name is already there. After you changed the document and need a new PDF, add --replace, but only to overwrite a PDF you yourself made earlier in this conversation, never a file the person already had. The file is inspected first,
       and a refused file (a macro file, an old format, a protected file) is not converted: say its
       sentence. A command that runs longer than about two minutes is stopped, and office-convert stops
       itself earlier and says so; if that happens, say the document was too large to convert in one go.
