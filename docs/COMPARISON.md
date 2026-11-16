@@ -36,7 +36,7 @@ _Last checked: 2026-11-08, from each project's public README and documentation, 
 | **Morning brief** | ✅ | ✅ | ✅ | ✅ | — | — | — |
 | **Gmail and Google Calendar** | ✅ | ✅ connected apps | ✅ | ❌ not yet | — | ⚠️ through your coding agent | ✅ through Composio |
 | **Import your agents from Grok Bot** | 🗓️ Planned (v1.0) | ❌ | ❌ | ❌ | ✅ | ❌ | — |
-| **Phone** | In progress: a phone's browser with a real sign-in. The exact-address sign-in list is built. A remote session has limited powers, built in v0.2.1, not yet run live. No real phone, provider or tunnel has been tried | ✅ | ✅ | ⚠️ early, from source | ✅ | ❌ | ⚠️ in development |
+| **Phone** | In progress: a phone's browser with a real sign-in. The exact-address sign-in list is built. A remote session has limited powers, built in v0.2.1, not yet run live. A phone was paired with a one-time code on one installation on 16 November 2026; no real provider or tunnel has been tried | ✅ | ✅ | ⚠️ early, from source | ✅ | ❌ | ⚠️ in development |
 | **Any language** | The app's interface is English for now, with some cards also in Italian; members answer in the person's language. | — | — | ✅ 13 interface languages | ✅ 5 interface languages | — | — |
 
 ## What others have that FreeDuet does not have yet

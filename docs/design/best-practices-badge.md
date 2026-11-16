@@ -26,7 +26,7 @@ Legend: **Met** (with evidence), **Not met**, **N/A** (with the reason), **Maint
 | Criterion | Status | Evidence or what to do |
 |---|---|---|
 | repo_public, repo_track, repo_interim, repo_distributed | Met | Public Git repository on GitHub, with every merge visible |
-| version_unique | Met | Tags v0.1, v0.2, v0.2.1 |
+| version_unique | Met | Tags v0.1, v0.2, v0.2.1, v0.2.2 |
 | version_semver | Not met | The project has not promised semantic versioning ([CHANGELOG.md](../../CHANGELOG.md) says so). Answer "not met" or adopt it, which is the maintainer's decision |
 | version_tags | Met | `git tag` |
 | release_notes | Met | GitHub release notes and [CHANGELOG.md](../../CHANGELOG.md) |
