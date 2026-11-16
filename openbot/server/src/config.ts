@@ -20,6 +20,7 @@ import { installSecretSetting } from "./auth/install-secret";
 import { organizationAuthority } from "./auth/organization";
 import type { ActionPolicy } from "./computer/policy";
 import { parseActionPolicy } from "./computer/policy-store";
+import { copilotkitTelemetryDisabled } from "./freeduet/copilotkit-telemetry";
 import { localRuntimeFrom } from "./freeduet/intelligence-switch";
 import {
   type PersonLanguage,
@@ -245,6 +246,11 @@ export type DeploymentConfig = {
    * not write. Absent when unset. See `freeduet/person-language.ts`.
    */
   personLanguage?: PersonLanguage;
+  /**
+   * FreeDuet: `true` only when CopilotKit's usage events are off for this process, by the SDK's rule
+   * (`freeduet/copilotkit-telemetry.ts`). Absent otherwise, so `/api/capabilities` answers as before.
+   */
+  copilotkitTelemetryDisabled?: true;
   voice?: VoiceConfig;
   /** The port the API listens on. Named `PORT` or `SERVER_PORT`; see `serverPort`. */
   port: number;
@@ -1515,6 +1521,8 @@ export function loadConfig(
     ...(workerSharedSecret ? { workerSharedSecret } : {}),
     // FreeDuet (D26): refused here, at start, when the code is not one.
     ...personLanguageSetting(environment),
+    // FreeDuet: CopilotKit's usage events, by the SDK's own rule (freeduet/copilotkit-telemetry.ts).
+    ...copilotkitTelemetrySetting(environment),
   };
   // After everything above, so its refusals keep the order they were always raised in.
   return {
@@ -1633,4 +1641,16 @@ function personLanguageSetting(environment: Environment): {
 } {
   const personLanguage = personLanguageFrom(environment);
   return personLanguage ? { personLanguage } : {};
+}
+
+/**
+ * `{ copilotkitTelemetryDisabled: true }` when CopilotKit's usage events are off in this environment,
+ * nothing when they are on. The rule is the SDK's; see `freeduet/copilotkit-telemetry.ts`.
+ */
+function copilotkitTelemetrySetting(environment: Environment): {
+  copilotkitTelemetryDisabled?: true;
+} {
+  return copilotkitTelemetryDisabled(environment)
+    ? { copilotkitTelemetryDisabled: true }
+    : {};
 }

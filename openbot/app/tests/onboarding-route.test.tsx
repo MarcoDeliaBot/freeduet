@@ -64,6 +64,8 @@ let localEvaluation: boolean;
 let runtimeMode: "intelligence" | "local";
 /** D51: whether the server says the deployment shows no promotion. Absent from the answer unless set. */
 let noPromotions: boolean;
+/** Whether the server says CopilotKit's usage events are off. Absent from the answer unless it does. */
+let copilotkitTelemetryOff: boolean;
 
 beforeEach(() => {
   // Another file's screens may have cached the signed-in person in the app's one query client.
@@ -74,6 +76,7 @@ beforeEach(() => {
   localEvaluation = false;
   runtimeMode = "intelligence";
   noPromotions = false;
+  copilotkitTelemetryOff = false;
   (globalThis as { Notification?: unknown }).Notification = {
     permission: "default",
     requestPermission: async () => "default",
@@ -119,6 +122,9 @@ beforeEach(() => {
           localEvaluation,
           mode: runtimeMode,
           ...(noPromotions ? { promotions: false } : {}),
+          ...(copilotkitTelemetryOff
+            ? { copilotkitTelemetryDisabled: true }
+            : {}),
         });
       if (path.startsWith("/api/agents"))
         return Response.json({ agents: [BOT] });
@@ -236,6 +242,36 @@ test("with Intelligence off the local install's step says its data stays in this
   expect(page).toContain("What you ask goes to your AI model.");
   expect(page).not.toContain("CopilotKit Intelligence");
   expect(page).not.toContain("CopilotKit's cloud");
+});
+
+test("with CopilotKit's usage events off, the local install's step says none are sent", async () => {
+  localEvaluation = true;
+  runtimeMode = "local";
+  copilotkitTelemetryOff = true;
+  const view = open("/onboarding?step=local");
+
+  await heading(view, "Where your data lives");
+  const page = document.body.textContent ?? "";
+  // copilotkitTelemetryDisabled is sent only when the server's rule says telemetry is off
+  // (server/src/freeduet/copilotkit-telemetry.ts); then the upstream line would be false.
+  expect(page).toContain(
+    "CopilotKit gets no usage events from this install, because telemetry is switched off here.",
+  );
+  expect(page).not.toContain("CopilotKit also receives usage events");
+  expect(page).not.toContain("Set DO_NOT_TRACK=1");
+});
+
+test("with CopilotKit's usage events on, the local install's step keeps upstream's caption", async () => {
+  localEvaluation = true;
+  runtimeMode = "local";
+  const view = open("/onboarding?step=local");
+
+  await heading(view, "Where your data lives");
+  const page = document.body.textContent ?? "";
+  expect(page).toContain(
+    "CopilotKit also receives usage events. Set DO_NOT_TRACK=1 to turn them off.",
+  );
+  expect(page).not.toContain("gets no usage events");
 });
 
 test("the organization step offers enterprise early access and CopilotKit's other products", async () => {

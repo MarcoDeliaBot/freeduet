@@ -40,6 +40,12 @@ export type DeploymentCapabilities = {
    * they are kept in the install's own database. Anything but `local` is upstream's answer.
    */
   intelligence: boolean;
+  /**
+   * FreeDuet: true when CopilotKit's usage events are off for this install, by the SDK's rule:
+   * COPILOTKIT_TELEMETRY_DISABLED or DO_NOT_TRACK is `true` or `1`. Onboarding then says no usage
+   * events are sent, and keeps upstream's caption otherwise. The server sends the key only when true.
+   */
+  copilotkitTelemetryDisabled: boolean;
   transcription?: boolean;
   voice?: boolean;
   /**
@@ -87,6 +93,7 @@ export function deploymentCapabilitiesQueryOptions() {
         promotions?: boolean;
         localEvaluation?: boolean;
         mode?: string;
+        copilotkitTelemetryDisabled?: boolean;
         transcription?: boolean;
         voice?: boolean;
         personLanguage?: unknown;
@@ -98,6 +105,7 @@ export function deploymentCapabilitiesQueryOptions() {
         promotions: body.promotions !== false,
         localEvaluation: body.localEvaluation === true,
         intelligence: body.mode !== "local",
+        copilotkitTelemetryDisabled: body.copilotkitTelemetryDisabled === true,
         transcription: body.transcription === true,
         voice: body.voice === true,
         // Only a two-letter lowercase code is kept, so nothing else can reach a card's locale.

@@ -318,13 +318,22 @@ function RosterStep() {
  *   server's `mode` is `local`: then they are in this install's own database.
  * - Every message goes to the model provider this install was set up with.
  * - The CopilotKit runtime sends usage events to CopilotKit unless `DO_NOT_TRACK=1` or
- *   `COPILOTKIT_TELEMETRY_DISABLED=true` is set (`server/src/telemetry.ts`). Naming the variable is
- *   fine here: this step is shown only to a single-user install, whose one reader runs the server.
+ *   `COPILOTKIT_TELEMETRY_DISABLED=true` is set (`server/src/telemetry.ts`). When the server answers
+ *   `copilotkitTelemetryDisabled`, which it does only when they are off, the step says none are
+ *   sent; otherwise it names the variable. The rule is in `server/src/freeduet/copilotkit-telemetry.ts`.
+ *   Naming the variable is fine here: this step is shown only to a single-user install, whose one
+ *   reader runs the server.
  *
  * Nothing about sign-in: activating a local install signs you in to CopilotKit, which is its own
  * question and not this step's.
  */
-function LocalStep({ intelligence }: { intelligence: boolean }) {
+function LocalStep({
+  intelligence,
+  telemetryOff,
+}: {
+  intelligence: boolean;
+  telemetryOff: boolean;
+}) {
   // The sentence about conversations and memory follows the server's answer (see the comment above).
   const kept = intelligence
     ? "Conversations and memory are kept in CopilotKit Intelligence, in CopilotKit's cloud unless you host it yourself."
@@ -339,8 +348,9 @@ function LocalStep({ intelligence }: { intelligence: boolean }) {
         ask goes to your AI model.
       </p>
       <p className="type-caption mt-3 max-w-md text-center text-duet-ink-3">
-        CopilotKit also receives usage events. Set DO_NOT_TRACK=1 to turn them
-        off.
+        {telemetryOff
+          ? "CopilotKit gets no usage events from this install, because telemetry is switched off here."
+          : "CopilotKit also receives usage events. Set DO_NOT_TRACK=1 to turn them off."}
       </p>
       <div className="h-8" />
       <CapabilityDemo kind="approval" />
@@ -648,7 +658,10 @@ function RouteComponent() {
           {
             id: "local",
             render: () => (
-              <LocalStep intelligence={capabilities.intelligence} />
+              <LocalStep
+                intelligence={capabilities.intelligence}
+                telemetryOff={capabilities.copilotkitTelemetryDisabled}
+              />
             ),
           },
           { id: "agents", render: () => <AgentsStep /> },
