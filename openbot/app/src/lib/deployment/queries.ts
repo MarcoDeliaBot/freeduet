@@ -42,6 +42,11 @@ export type DeploymentCapabilities = {
    * `app/src/freeduet/person-language/cards.ts`'s to say; a code it has no table for reads English.
    */
   personLanguage?: string;
+  /**
+   * FreeDuet (first-start D6): `"hosted"` when the server runs as a hosted deployment, which offers no Claude plan sign-in.
+   * Absent on a person's own installation. The server refuses regardless; this only lets the app leave the card out.
+   */
+  deployment?: "hosted";
 };
 
 export const deploymentKeys = {
@@ -83,6 +88,7 @@ export function deploymentCapabilitiesQueryOptions() {
         transcription?: boolean;
         voice?: boolean;
         personLanguage?: unknown;
+        deployment?: unknown;
       };
 
       return {
@@ -92,6 +98,7 @@ export function deploymentCapabilitiesQueryOptions() {
         localEvaluation: body.localEvaluation === true,
         transcription: body.transcription === true,
         voice: body.voice === true,
+        ...(body.deployment === "hosted" ? { deployment: "hosted" as const } : {}),
         // Only a two-letter lowercase code is kept, so nothing else can reach a card's locale.
         ...(typeof body.personLanguage === "string" &&
         /^[a-z]{2}$/.test(body.personLanguage)

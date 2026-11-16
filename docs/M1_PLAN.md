@@ -915,3 +915,13 @@ Decided by the maintainer on 16 November 2026, after a real installation (12:07 
 
 Limits. **No approval rule changed:** who must approve what, the reviewer, Full access, standing rules, the remote-session limit (a remote session may allow or deny once and nothing more; the server answers 403 to any other choice, here as in Tasks) and "a spoken yes never approves" are untouched. Only a second PLACE draws the existing card. **No new route**, so nothing is added to the deny-by-default remote list. **Matching by member, not by call:** if a member is asked twice and a card is open, it is under the later line; two spellings of the same member on two lines (an id and a name) could draw the card twice, harmlessly, since both are the one request. **The roster must be loaded:** until it is, no card is drawn (the Tasks page still has it). **Not run live; the prompt sentence of (5) is a wording change.** Cases that exercise it once run live: the hand-off cases of Iris and Otto (the Gmail ones are skipped on the eval stack).
 
+
+## 35. First start in three clicks: the six decisions (D54)
+
+Decided by the maintainer on 16 November 2026, each time taking the recommendation of [design/first-start.md](design/first-start.md) section 8. The note's own D1 to D6 are not this file's D-numbers; this section is the one place M1_PLAN holds them.
+
+| # | Decision | Why |
+|---|---|---|
+| D54 | The note's **D1:** FreeDuet does not carry the one-time code from Claude's page to the CLI; the card shows the command to copy (option b). A box on the card only behind a setting off by default, switched on after Anthropic answers in writing (question in PROVIDERS.md). **D2:** Claude's program stays installed at build time for source builds; install on click only for published images. **D3:** the click installs it with npm at a pinned version. **D4:** the three clicks count from the open FreeDuet page; the card lives in the chat; no wizard step. **D5:** the upstream desktop app's Claude plan sign-in is removed in the desktop reuse spike, before any FreeDuet desktop build ships. **D6:** hosted FreeDuet is told apart by `FREEDUET_DEPLOYMENT=hosted`, default self-hosted, enforced by the server (unknown values count as hosted) | The code is the one place the design touches Anthropic's rule on intermediating credentials; waiting costs one terminal step. A published image carries no Anthropic code, so it needs no licence. The hosted gate is a safety line: cheap now, dear to add later |
+
+Limits. Built so far: S1, S2, S4 (the switch) and S5 in its option-(b) form; the rest is listed in the note's section 10. Nothing ran live.

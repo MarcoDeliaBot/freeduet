@@ -1,6 +1,6 @@
 # First start in three clicks
 
-Design for the roadmap row "First start in three clicks" ([ROADMAP.md](../ROADMAP.md), Now, status Planned). Written 2026-11-15. No code and no test was changed or run for this note. The maintainer has decided nothing in it yet; section 8 lists what he must decide.
+Design for the roadmap row "First start in three clicks" ([ROADMAP.md](../ROADMAP.md), Now, status Planned). Written 2026-11-15. The maintainer decided its six open decisions on 16 November 2026, taking the note's own recommendation each time (section 8). S1, S2, S4 and S5 in its option-(b) form are built (section 10).
 
 Markers. **[code: path:line]** read on origin/main (2d49770). **[docs: file]** stated in this repository's docs. **[doc: URL]** stated by an outside official page, read 2026-11-15. **[assumed]** my inference; nothing marked so may be built on as if true. Line numbers are of that commit.
 
@@ -139,36 +139,42 @@ One PR each. S = under 300 changed lines, M 300 to 1000. "Sonnet" marks the deli
 
 Order reason: S1 and S2 fix today's worst moment (a red sentence with a command) with no new risk. S3 to S5 are the click flow. S8 waits for published images; until then the source install already installs the program.
 
-## 8. Open decisions for the maintainer
+## 8. Decided
 
-Each stands alone.
+Decided by the maintainer on 16 November 2026: each took the recommendation written under it. The numbers D1 to D6 are this note's own, not those of `docs/M1_PLAN.md`; M1_PLAN records all six in one section, D54. Each decision stands alone.
 
 **D1. May FreeDuet carry the one-time code from Claude's page to the CLI?**
+**Decided (16 November 2026):** option (b). For now FreeDuet does not carry the one-time code. The card shows the command to copy and the person pastes the code in a terminal. Option (a), a box on the card, may be built only behind a setting that is off by default, and is switched on only after Anthropic answers in writing; the question is in the "Actions to take before launch" list of PROVIDERS.md.
 Context: in a container the browser on the host cannot reach the CLI, so Claude's page shows a code that must reach the CLI. Anthropic's page forbids third parties from offering Claude.ai login in their apps and from intermediating Claude.ai credentials or session tokens, and allows the end user to sign in to the unmodified binary with their own plan [doc: https://code.claude.com/docs/en/legal-and-compliance].
 Options: (a) a box on the card; the code goes server, agent, CLI input, nowhere stored; (b) the card shows the command to copy and the person pastes in a terminal (not three clicks, no code through FreeDuet); (c) (a) behind a setting off by default.
 Recommendation: build (b) first in S5 and (a) behind a setting, then turn (a) on only after Anthropic answers in writing; add the question to the "Actions to take before launch" list in PROVIDERS.md. Why: it is the one place the design touches a rule that can get the person's account restricted; the cost of waiting is one extra terminal step for a few weeks.
 
 **D2. Where Claude's program lives.**
+**Decided (16 November 2026):** option (a). The program stays installed at build time for source builds; install on click only for published images (S8).
 Context: today the image build installs it on the person's machine [code: openbot/agent-freeduet/Dockerfile:21-26]. Anthropic says preinstalling it in a product needs its Commercial Terms [doc: https://code.claude.com/docs/en/legal-and-compliance].
 Options: (a) keep build-time install for source builds, install on click for published images; (b) install on click everywhere; (c) bake it into published images and sign the Commercial Terms.
 Recommendation: (a). Why: no change for today's users; published images carry no Anthropic code, so no licence is needed to publish them; (b) adds a download for people who do not need one; (c) is a contract the project does not have.
 
 **D3. How the click installs it.**
+**Decided (16 November 2026):** option (a). The click installs it with npm at a pinned version.
 Context: Anthropic documents an install script (self-updating) and an npm package (the same binary) [doc: https://code.claude.com/docs/en/setup]. The service pins the CLI version and turns its updater off [code: openbot/agent-freeduet/freeduet/claude_cli.py:96-100].
 Options: (a) npm at a pinned version; (b) the official script; (c) ask the person to install it.
 Recommendation: (a). Why: it keeps the pin and checks the package through npm; (b) is a piped download the installer plan rules out [docs: docs/design/installer.md:17]; (c) is not one button.
 
 **D4. What "three clicks" counts, and the wizard.**
+**Decided (16 November 2026):** option (a). The three clicks count from the open FreeDuet page, the card lives in the chat, and no wizard step is added. The roadmap row says so.
 Context: the stack's install and start are terminal steps today. The onboarding wizard has six screens and none is about Claude [code: openbot/app/src/routes/_authed/onboarding.tsx:508-512,652-675].
 Options: (a) count from the open page, put the card in the chat, add no wizard step; (b) count from the open page and add a "Connect Claude" wizard step first; (c) count from the installer.
 Recommendation: (a), and say in the roadmap row that the count starts with the page open. Why: (b) adds a screen to the six and an upstream file change; (c) cannot be met on Windows (restart, Ubuntu user).
 
 **D5. The upstream desktop app's Claude plan sign-in.**
+**Decided (16 November 2026):** option (a). The upstream desktop app's Claude plan sign-in is removed in the desktop reuse spike, before any FreeDuet desktop build is published (S9).
 Context: it mints a plan token and stores it as `CLAUDE_CODE_OAUTH_TOKEN` [code: openbot/desktop/src-tauri/src/env.rs:493-496]. PROVIDERS.md removes that option for FreeDuet [docs: docs/PROVIDERS.md:25].
 Options: (a) remove it in the desktop reuse spike; (b) keep it for non-FreeDuet use.
 Recommendation: (a), before any FreeDuet desktop build is published. Why: a FreeDuet build that keeps it breaks rule 1 in the one place the person clicks.
 
 **D6. How hosted FreeDuet is told apart.**
+**Decided (16 November 2026):** option (a). `FREEDUET_DEPLOYMENT=hosted`, default self-hosted, enforced by the server; built in S4.
 Context: the hosted version must not offer sign-in with a Claude plan [docs: docs/ROADMAP.md:86]; no such switch exists.
 Options: (a) a server setting `FREEDUET_DEPLOYMENT=hosted`, default self-hosted, enforced by the server; (b) a build flag; (c) decide it when the cloud is built.
 Recommendation: (a), in S4. Why: the gate is a safety line, so it is cheap to build now and costs more to retrofit; the default keeps every current install unchanged.
@@ -184,7 +190,7 @@ Recommendation: (a), in S4. Why: the gate is a safety line, so it is cheap to bu
 
 ## 10. Built so far
 
-Branch `first-start-s1-s2` builds slices S1 and S2 of section 7 and nothing else. S3 to S9 are not started.
+Slices S1 and S2 (branch `first-start-s1-s2`, merged) and, on branch `first-start-decisions-and-slices`, S4 and S5 in its option-(b) form. S3, S6, S7, S8 and S9 are not built.
 
 **S1, Check again (backend): built.**
 
@@ -206,22 +212,36 @@ Branch `first-start-s1-s2` builds slices S1 and S2 of section 7 and nothing else
 - The missing sentence says what works today: rebuild the service with `bash scripts/start.sh`, the command that README.md:149 gives. It does not say "FreeDuet can add it for you", as section 5 row 1 does; that promise waits for D2 and D3 (S8).
 - New tests: `openbot/agent-freeduet/tests/test_claude_status.py` (16). Pins moved to the new sentences: `test_segment_loop.py` (2), `test_app_hooks.py` (1) and six goldens, edited by hand and not regenerated. Each stream hash changed with its sentence.
 
-**Decisions D1 to D6: all still open.** This work decides none of them.
+**Decisions D1 to D6: all decided on 16 November 2026** (section 8).
 
-| Decision | State after S1 and S2 |
+| Decision | State |
 |---|---|
-| D1, the one-time code | Open. S3 and S5 are not built, so no code is carried yet. |
-| D2, where the program lives | Open. The missing sentence promises no install. |
-| D3, how the click installs | Open. S8 is not built. |
-| D4, what "three clicks" counts | Open. The card (S5) is not built. |
-| D5, the desktop app's plan sign-in | Open. S9 is not started. |
-| D6, the hosted switch | Open. S4 is not built, and the switch D6 proposes does not exist yet. |
+| D1, the one-time code | Decided, option (b). No code passes through FreeDuet: the card shows the command, the person signs in in a terminal. Option (a) is not built; S3 would build it behind a setting that is off by default. |
+| D2, where the program lives | Decided, option (a). S8 is not built; the missing sentence still promises no install. |
+| D3, how the click installs | Decided, option (a). S8 is not built. |
+| D4, what "three clicks" counts | Decided, option (a). The card is in the chat (S5); no wizard step was added; `onboarding.tsx` is untouched. |
+| D5, the desktop app's plan sign-in | Decided, option (a). S9 is not started. |
+| D6, the hosted switch | Decided, option (a), and built (S4 below). |
 
-**Interim gap, decided by the maintainer (relayed by the coordinator): option (a).** Until the card (S5) exists, the signed-out sentence keeps the one command the old sentence had, so a person who reads only the chat can still sign in. When S5 lands, the command leaves the sentence. The command has no `cd openbot &&` in front, as the old sentence had; `README.md:150` and `start.sh` say to run it from `openbot/`, so the sentence and the README differ until the words are changed (S7).
+**Interim gap, decided by the maintainer (relayed by the coordinator): option (a).** Until the card (S5) exists, the signed-out sentence keeps the one command the old sentence had, so a person who reads only the chat can still sign in. S5 has landed and the app draws the card in place of the sentence, so the command is on screen once; the sentence in the service keeps the command for any other reader, and changing it means six hand-edited goldens, so it is left for S7. The command has no `cd openbot &&` in front, as the old sentence had; `README.md:150` and `start.sh` say to run it from `openbot/`, so the sentence and the README differ until the words are changed (S7).
+
+**S4, the hosted switch (D6): built.**
+
+- `openbot/server/src/freeduet/deployment.ts` (new): `deploymentOf(environment)` reads `FREEDUET_DEPLOYMENT`. Unset, empty or `self-hosted` is a person's own installation, which is every installation today. `hosted` is hosted. A value nobody knows counts as hosted, so a typo closes the safety line instead of opening it.
+- With `hosted`, `POST /api/freeduet/engines/claude/check` answers 404 before any other question, and the agent is not asked. `GET /api/capabilities` carries `deployment: "hosted"` only then (the key is absent by default, so its pinned key list is unchanged); the app reads it to leave the card out.
+- Slice S4's other parts (start, code and cancel routes, the audit event) are not built: they belong to S3, which D1(b) leaves unbuilt. The route list of `createApp` needed no line: the new switch adds no route, and the check route falls under the refusal `ALL /api/freeduet/engines/*`.
+- `.env.example` has the commented setting.
+
+**S5, the card, in its option-(b) form: built.**
+
+- `openbot/app/src/freeduet/claude-connect.ts` (new, pure) holds the words, the two commands and the reading of the check's answer. `claude-connect-card.tsx` (new) is the card: it says in plain words that Claude is not connected (or not installed), shows the exact command to copy (`cd openbot && docker compose exec -it agent-freeduet claude`, or `bash scripts/start.sh` for a missing program), has Copy and **Check again**, and says the result in words (connected, sign-in not seen yet, still not installed, not at the computer, engine not running).
+- It replaces the red sentence under a failed turn (`Stopped` in `chat-transcript.tsx`) when the sentence is one of the two the service gives for Claude (matched by its first words), and only once `/api/capabilities` has said this is not a hosted deployment; until then, and on a hosted deployment, the sentence stands alone. Any other stop reason is untouched.
+- **Check again works with nothing restarted**: it calls `POST /api/freeduet/engines/claude/check` (S1), which probes now. The card has no input of any kind. It does not yet offer "Send my message again" (S6) and it is not on the Engines page.
+- New tests: `server/tests/freeduet-claude-connect.test.ts` (10), `app/tests/freeduet-claude-connect-card.test.tsx` (11), `agent-freeduet/tests/test_no_code_route.py` (2, a guard of unchanged behaviour: the service has no login or code route and the check route ignores a body).
 
 **Not built.**
 
-- S3 to S9, the card and its buttons, and the install messages of section 5 (S8).
+- S3 (the login child and the code), S6, S7, S8 and S9; the install messages of section 5 (S8); the card's sentences for "the code was wrong", "the page did not open" and "no plan" (they belong to S3's flow). The card is not on the Engines page.
 - "Signed in elsewhere but not seen" (a card state, S5), "the account has no Claude plan" (the CLI's wording is not known), and the remote, hosted and "agent does not answer" rows (S4 and S5).
 - Old sentences still in code: `engine_notices.py` ("Claude Code is not signed in", pinned by `test_engine_router.py:283`), `compatible_engine.py` ("the Claude Code CLI is not installed in this service") and the generic "could not finish this turn" path.
 

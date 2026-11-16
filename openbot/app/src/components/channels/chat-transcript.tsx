@@ -53,6 +53,8 @@ import {
   useMessageScroller,
 } from "@/components/ui/message-scroller";
 import { Skeleton } from "@/components/ui/skeleton";
+import { ClaudeConnectCard } from "@/freeduet/claude-connect-card";
+import { claudeProblemOf } from "@/freeduet/claude-connect";
 import { type CardLanguage, cardTime } from "@/freeduet/person-language/cards";
 import {
   useCardLanguage,
@@ -294,6 +296,10 @@ function Thinking() {
  * own obituary as something it had written.
  */
 function Stopped({ reason }: { reason: string }) {
+  // FreeDuet (first-start S5): Claude not connected or not installed gets its card, with the command and Check again.
+  const claudeProblem = claudeProblemOf(reason);
+  if (claudeProblem)
+    return <ClaudeConnectCard problem={claudeProblem} reason={reason} />;
   return (
     <p
       className="text-destructive text-sm"

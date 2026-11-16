@@ -44,6 +44,7 @@ import { type AppVariables, requireAdmin } from "../auth/guards";
 import type { PairingGate } from "../auth/install-secret";
 import type { ManagedAgentConfig } from "../config";
 import { atTheComputer } from "./at-the-computer";
+import { isHosted } from "./deployment";
 import {
   CHANGE_ID,
   type ChoicesSnapshot,
@@ -604,7 +605,11 @@ export function createEnginesRoutes(
   });
   // "Check again" (first-start design, section 4): the two guards of a change, an administrator at the computer. It asks
   // agent-freeduet to look at Claude Code now and keeps nothing here: no change is stored and no audit row is written.
+  // Hosted FreeDuet (FREEDUET_DEPLOYMENT=hosted, first-start decision D6) does not offer a Claude plan's sign-in, so the
+  // route does not exist there: 404, for everybody, before any other question is asked.
   routes.post("/claude/check", async (context) => {
+    if (isHosted(reach().environment))
+      return context.json({ error: "Not found" }, 404);
     const refused = await mayChange(context);
     if (refused) return refused;
     return context.json(await checkClaude(reach()), 200, {
