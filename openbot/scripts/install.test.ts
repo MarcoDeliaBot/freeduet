@@ -51,6 +51,7 @@ const REAL_TOOLS = [
   "bash",
   "cat",
   "chmod",
+  "cmp",
   "cp",
   "cut",
   "dirname",
@@ -511,6 +512,7 @@ async function build(overrides: Scenario = {}) {
     await writeFile(join(root, path), contents);
   }
   await mkdir(join(root, "usr/local/bin"), { recursive: true });
+  await mkdir(join(root, "etc/systemd/system"), { recursive: true });
   if (o.systemd)
     await mkdir(join(root, "run/systemd/system"), { recursive: true });
 
@@ -542,7 +544,11 @@ async function build(overrides: Scenario = {}) {
     );
   }
   await writeExecutable(join(scripts, "install.sh"), installer);
-  for (const name of ["require-bash.sh", "processes.sh"]) {
+  for (const name of [
+    "require-bash.sh",
+    "processes.sh",
+    "install-service.sh",
+  ]) {
     await writeFile(
       join(scripts, name),
       await readFile(join(scriptsDirectory, name)),
@@ -2071,6 +2077,100 @@ describe("what it never touches", () => {
         "canary-secret-value",
       );
       expect(result.stdout + result.stderr).not.toContain("canary-db-password");
+    },
+    slow,
+  );
+});
+
+describe("--service: FreeDuet also starts by itself at every boot (install-service.sh)", () => {
+  const SERVICE_FILE = (machine: { root: string }) =>
+    `${machine.root}/etc/systemd/system/freeduet.service`;
+
+  test(
+    "without the flag the plan has no service step and no unit is written",
+    async () => {
+      const machine = await build({ missing: ["bun"] });
+
+      const result = await machine.run(["--yes"]);
+
+      expect(outcome(result)).toMatchObject({ exitCode: 0 });
+      expect(result.stdout).not.toContain("freeduet.service");
+      expect(await Bun.file(SERVICE_FILE(machine)).exists()).toBe(false);
+    },
+    slow,
+  );
+
+  test(
+    "with the flag: the plan lists it, then after the yes the unit is written and enabled, and start.sh still runs",
+    async () => {
+      const machine = await build();
+
+      const result = await machine.run(["--service"], "y\n");
+
+      expect(outcome(result)).toMatchObject({ exitCode: 0 });
+      expect(result.stdout).toContain(
+        "Make FreeDuet start by itself, after Docker, at every boot",
+      );
+      const calls = await machine.sudo();
+      expect(calls).toHaveLength(3);
+      expect(calls[0]).toContain(`install -m 0644`);
+      expect(calls[0]).toContain(SERVICE_FILE(machine));
+      expect(calls[1]).toBe("systemctl daemon-reload");
+      expect(calls[2]).toBe("systemctl enable freeduet.service");
+      expect(await Bun.file(SERVICE_FILE(machine)).text()).toContain(
+        `ExecStart=/bin/bash ${machine.repo}/scripts/start.sh`,
+      );
+      expect(result.stdout).toContain("FAKE-START: ran");
+      // The question came before the first sudo.
+      expect(result.stdout.indexOf("Go ahead")).toBeLessThan(
+        result.stdout.indexOf("FAKE-SUDO"),
+      );
+    },
+    slow,
+  );
+
+  test(
+    "an answer other than yes: nothing is written and no sudo runs",
+    async () => {
+      const machine = await build();
+
+      const result = await machine.run(["--service"], "n\n");
+
+      expect(result.exitCode).toBe(1);
+      expect(await machine.sudo()).toEqual([]);
+      expect(await Bun.file(SERVICE_FILE(machine)).exists()).toBe(false);
+    },
+    slow,
+  );
+
+  test(
+    "without systemd it stops before changing anything and says how to turn it on",
+    async () => {
+      const machine = await build({ systemd: false, missing: ["bun"] });
+
+      const result = await machine.run(["--service", "--yes"]);
+
+      expect(result.exitCode).toBe(1);
+      expect(result.stdout + result.stderr).toContain(
+        "--service needs systemd",
+      );
+      expect(await machine.sudo()).toEqual([]);
+      expect(await machine.log("apt.log")).toEqual([]);
+    },
+    slow,
+  );
+
+  test(
+    "--check with --service changes nothing and runs no sudo",
+    async () => {
+      const machine = await build();
+      const before = await machine.snapshots();
+
+      const result = await machine.run(["--check", "--service"]);
+
+      expect(result.exitCode).toBe(0);
+      expect(await machine.sudo()).toEqual([]);
+      expect(await machine.snapshots()).toEqual(before);
     },
     slow,
   );
