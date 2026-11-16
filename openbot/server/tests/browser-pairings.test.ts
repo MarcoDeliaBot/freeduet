@@ -6,7 +6,16 @@
  * pull request). They run on the assembled app with sign-in, with a session as a header and the pairings in memory; the
  * table itself is `browser-pairings.integration.test.ts`.
  */
-import { afterEach, beforeEach, describe, expect, spyOn, test } from "bun:test";
+import {
+  afterAll,
+  afterEach,
+  beforeAll,
+  beforeEach,
+  describe,
+  expect,
+  spyOn,
+  test,
+} from "bun:test";
 import { createHash } from "node:crypto";
 import { Hono } from "hono";
 import type { AuditEventInput, AuditStore } from "../src/audit";
@@ -91,12 +100,20 @@ function world(clock: { now: number } = { now: Date.now() }) {
   return { ...built, events, ask, json, mint, clock };
 }
 
-const quiet = {
-  info: spyOn(console, "info").mockImplementation(() => {}),
-  log: spyOn(console, "log").mockImplementation(() => {}),
-  warn: spyOn(console, "warn").mockImplementation(() => {}),
-  error: spyOn(console, "error").mockImplementation(() => {}),
-};
+// The console is quiet while this file's tests run and is given back when they end. The spies are made in
+// beforeAll, not when the file loads: a spy made at load outlives this file (console-spy-scope.test.ts).
+let quiet: Record<"info" | "log" | "warn" | "error", ReturnType<typeof spyOn>>;
+beforeAll(() => {
+  quiet = {
+    info: spyOn(console, "info").mockImplementation(() => {}),
+    log: spyOn(console, "log").mockImplementation(() => {}),
+    warn: spyOn(console, "warn").mockImplementation(() => {}),
+    error: spyOn(console, "error").mockImplementation(() => {}),
+  };
+});
+afterAll(() => {
+  for (const spy of Object.values(quiet)) spy.mockRestore();
+});
 beforeEach(() => {
   for (const spy of Object.values(quiet)) spy.mockClear();
 });

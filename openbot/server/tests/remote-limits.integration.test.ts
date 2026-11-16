@@ -47,12 +47,14 @@ let idp: ReturnType<typeof Bun.serve>;
 let issuer = "";
 
 // A fake behind a route that is let through throws for what it does not hold, and the route logs it.
-const quiet = [
-  spyOn(console, "error").mockImplementation(() => {}),
-  spyOn(console, "info").mockImplementation(() => {}),
-];
+// The spies are made in beforeAll and given back in afterAll, not when the file loads (console-spy-scope.test.ts).
+let quiet: ReturnType<typeof spyOn>[] = [];
 
 beforeAll(() => {
+  quiet = [
+    spyOn(console, "error").mockImplementation(() => {}),
+    spyOn(console, "info").mockImplementation(() => {}),
+  ];
   idp = Bun.serve({
     port: 0,
     hostname: "127.0.0.1",
