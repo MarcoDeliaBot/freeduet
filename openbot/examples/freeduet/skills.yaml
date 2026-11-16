@@ -18407,3 +18407,405 @@ skills:
       table of what is in it (headings, tables, pictures), what you assumed, what you checked with its
       numbers, and what you could not check: pages as Word draws them, no real Word.
     tools: []
+
+  # Four Instagram skills, one upstream SKILL.md body each, copied unchanged from its first heading to its
+  # last line (commit d03c56b, MIT, Copyright (c) 2026 Jake Schincariol). Their source, licence and what is
+  # not carried are in NOTICE.md. Granted to Mark only. Slug, title and summary are ours.
+  - slug: ig-carousel
+    title: Instagram carousel
+    summary: "Build an Instagram carousel - the cover that earns the swipe, slide-by-slide copy, and the 1080x1350 files."
+    instructions: |-
+      # ig-carousel
+
+      Carousels are the highest-dwell format on the grid, because a swipe is an
+      interaction and a scroll is not. They also get a second chance: Instagram can
+      show a carousel again starting from a later slide to someone who did not engage
+      the first time, so slide two has to stand on its own as well.
+
+      The format rewards one idea broken into steps. It punishes a caption cut into
+      pieces.
+
+      ## When to use it instead of a Reel
+
+      Use a carousel when the idea has **sequence and needs to be re-read**: steps, a
+      framework with parts, a before and after, a list worth screenshotting. Use a
+      Reel when the idea has motion, a face, or a payoff that has to be seen
+      happening.
+
+      If the idea is one claim, it is neither. Hand it to `/ig-reel` and say so.
+
+      ## Structure
+
+      6 to 10 slides. The cap is 20 and 20 is almost always a book nobody finishes.
+      Under 5 and the swipe never starts.
+
+      ```
+      1         COVER     the hook. 6 words or fewer, at a size that is legible in
+                          the grid at thumbnail. One line of promise under it.
+      2         THE STAKE why this matters, in one sentence. This slide is also a
+                          second cover, so it cannot be setup.
+      3 to N    ONE IDEA PER SLIDE. A headline of 3 to 7 words, at most 25 words
+                          under it. If a slide needs a paragraph, it is two slides.
+      N+1       RECAP     the whole thing as a list. This is the screenshot slide.
+      LAST      CTA       one action. Save, comment a keyword, or follow. One.
+      ```
+
+      ## Slide copy rules
+
+      - **The cover is 80% of the result.** Six words. Big. Nothing on the deck saves
+        a cover nobody swipes.
+      - **Design for the grid crop.** The profile grid crops to a portrait rectangle
+        that is taller than it is wide, and the exact ratio has moved more than once.
+        Build at 1080x1350 and keep the cover text well inside the middle, clear of
+        the outer 120 pixels on every side, and the crop stops mattering.
+      - **Number the slides** (3/8). Completion goes up when people can see the end.
+      - **No slide is a paragraph.** If it cannot be said in 25 words, split it.
+      - **The recap slide is the one people screenshot and send.** Sends are the
+        strongest signal you can earn. Make it standalone and readable with no
+        context.
+      - **The handle on every slide**, small, bottom corner. Screenshots travel
+        without you.
+      - **Alt text on the cover at minimum.** It is read by screen readers and by
+        Instagram.
+
+      ## Building the files
+
+      Instagram wants 1080x1350 (4:5), JPEG or PNG, up to 20 items. Build it as HTML
+      and print each slide:
+
+      ```bash
+      # one <section> per slide, 1080x1350, page-break-after: always
+      # then Chrome headless --print-to-pdf, or any HTML-to-image you already use
+      ```
+
+      Write the HTML with `width:1080px; height:1350px`, a single accent colour, and
+      type no smaller than 32px, because this is read on a phone at a third of its
+      real size. If the project has a brand skill or a design system, use it and do
+      not invent a palette.
+
+      ## Output
+
+      The slide-by-slide copy first, as a numbered list the user can read in ten
+      seconds and edit before anything is rendered. Then the **caption**, which for a
+      carousel is Job B in `/ig-caption`: the caption is doing work here, because the
+      cover has already used its six words.
+
+      Run both through `/ig-human`. Build the files only after the user approves the
+      copy.
+
+      ```
+      CAROUSEL  ·  8 slides
+
+      1  COVER   THE $18,000 CLAUSE
+                 One line I now put in every contract.
+      2  STAKE   I approved the work. They asked for the money back nine days later.
+      3          WHAT IT SAYS
+                 Payment on delivery, not on approval.
+      ...
+      7  RECAP   All four lines, in order.
+      8  CTA     Comment CONTRACT and I will send the full clause.
+
+      Caption: Job B, hook in line 1, one ask, 3 tags.
+      ```
+
+      Nothing is uploaded. The user posts it.
+    tools: []
+
+  - slug: ig-story
+    title: Instagram story
+    summary: "Write the day's Instagram Stories - the frame-by-frame sequence and which stickers to use where."
+    instructions: |-
+      # ig-story
+
+      Stories are not a smaller feed. The feed is how strangers find you. Stories are
+      how the people who already follow you decide whether you are a person worth
+      buying from, and they are the only surface on Instagram where a tap turns into
+      a conversation in one move.
+
+      Nobody outside your followers sees these, so the job is completely different:
+      depth, not reach.
+
+      ## The daily shape
+
+      Three to seven frames a day. Beyond about seven, the tap-forward rate climbs
+      and the last frames play to nobody, which is exactly where people put the ask.
+
+      ```
+      1       THE OPEN     something happening today, with a face or a hand in it.
+      2-3     THE MIDDLE   the actual content: the process, the result, the mistake.
+      4       THE ASK      one sticker. Poll, question box, quiz or link.
+      5       THE CLOSE    the answer, the outcome, or tomorrow's setup.
+      ```
+
+      Put the ask at frame 4, not frame 7. Completion drops with every tap and the
+      ask should be seen by the people who are still there.
+
+      ## The stickers, and what each is actually for
+
+      | sticker | job | use when |
+      | --- | --- | --- |
+      | **Poll** | the cheapest tap there is | you want volume of response, not information |
+      | **Question box** | harvesting the exact words people use | you need content ideas or objections, verbatim |
+      | **Quiz** | teaching by letting them be wrong | there is a common misconception in the niche |
+      | **Slider** | vibe check | nothing important. Fun, low value |
+      | **Link** | the only clickable surface besides the bio | there is somewhere real to go |
+      | **Countdown** | a deadline people can subscribe to | a launch, a live, a close date |
+      | **Add yours** | reach beyond your followers, occasionally | the prompt is one anyone in the niche can answer |
+
+      The question box is the most undervalued one in the list. Every answer is a
+      caption, a Reel hook or a DM opener written in the audience's own words. Feed
+      them to `/ig-reel` as formula #16.
+
+      ## Rules
+
+      - **A face or a hand in the first frame.** Text on a coloured background gets
+        tapped through, and the first frame decides whether the rest get watched.
+      - **One idea per frame.** Reading a paragraph on a story is not a thing anyone
+        does.
+      - **Keep text inside the middle.** On 1080x1920, nothing above y=250 or below
+        y=1600. The profile row sits on top and the reply bar sits underneath.
+      - **Talk to one person.** "You" singular. Stories are the closest thing to a
+        DM that is not one.
+      - **Do not repost your own feed post to stories with no comment.** It is the
+        single most ignored frame on the platform. If you are pointing at a post, say
+        what happened in the comments and why it is worth going back for.
+      - **Sell on stories, not in posts.** Three frames of context, one frame of
+        offer, one frame of proof. That sequence sells more than a feed post about
+        the same thing and costs you no reach.
+
+      ## The DM funnel, done honestly
+
+      The sequence that works: a story that names a problem, a question box or a poll
+      that lets people say "that's me", and then a reply to each person who answered.
+      The conversation starts because they spoke first.
+
+      Automated keyword DM replies are a real, supported feature for professional
+      accounts, through Instagram's own tools and approved partners. Bulk DMing
+      people who did not interact is not, and it is what gets accounts restricted.
+      The rule is simple: **they act first, then you reply.**
+
+      ## Output
+
+      The frames in order, each with what is on screen, what is said, and which
+      sticker, plus what to do with the answers:
+
+      ```
+      STORIES  ·  Tuesday  ·  5 frames
+
+      1  [selfie, walking]      "Third refund request this year. Same reason."
+      2  [screen recording]     the clause, highlighted
+      3  [talking]              "Approval is a feeling. Delivery is a date."
+      4  [poll]                 "Have you been burned by a late approval?"  Yes / Not yet
+      5  [text on photo]        "Reply and I will send you the clause."
+
+      After: everyone who votes Yes gets a reply. That is the whole funnel.
+      ```
+
+      Nothing is posted. The user posts it.
+    tools: []
+
+  - slug: ig-reply
+    title: Instagram comment replies
+    summary: "Handle the comments under your own reels and posts - draft replies to the ones worth answering."
+    instructions: |-
+      # ig-reply
+
+      The comment thread under your own post is where reach is decided. Every reply
+      is another interaction on the post, replies arriving in the first hour do most
+      of the work, and on Instagram a reply can also be a Reel, which is the single
+      most underused move on the platform.
+
+      But the value is not equal across comments, so this skill sorts before it
+      writes.
+
+      ## Input
+
+      The user pastes the comments, ideally with handles. Screenshots are fine. Do
+      not scrape the thread with a browser tool.
+
+      ## Triage first
+
+      Sort every comment into one of six buckets and say the counts out loud:
+
+      | bucket | what it is | what it gets |
+      | --- | --- | --- |
+      | **KEYWORD** | the word you asked them to comment | the promised thing, sent by hand or by your approved tool |
+      | **LEAD** | someone describing the problem you solve | a real answer in public, then a door |
+      | **SUBSTANCE** | adds data, disagrees, extends | the longest reply on the thread |
+      | **QUESTION** | a question a lot of people have | this one becomes a Reel, not just a reply |
+      | **SUPPORT** | "🔥", "great post", a tag | a like, and 3 to 8 words at most |
+      | **NOISE** | pitch, spam, bad faith, bait | nothing, or one line and out |
+
+      Write in that order and stop when the value stops.
+
+      ## The move most people miss
+
+      If a question in the comments is one that thirty other people also have,
+      **reply to it with a Reel**. Instagram will attach the comment to the new video
+      as a sticker, the person who asked gets notified, and a question with real
+      demand behind it becomes a post with the hook already written for you. Flag
+      every QUESTION that qualifies and hand it to `/ig-reel` as formula #16.
+
+      ## How to reply
+
+      - **Answer the actual question.** If someone asks how, tell them how, in the
+        reply. Do not send them to the DMs to hear an answer they could have had.
+      - **Use their name once**, at the start, without an exclamation mark.
+      - **Match their length.** A four-word comment does not get a four-line reply.
+      - **To a critic:** concede the true part first, in their words, then hold the
+        line. Never delete, never get defensive, never reply twice on the same
+        thread.
+      - **To a hater:** nothing. A reply is reach, and reach is what they came for.
+        Hide the comment if it is abusive. Instagram's comment controls exist and
+        using them is not losing.
+      - **To a lead:** answer fully in public. The door is one sentence at the end
+        and it is an offer of help, not a pitch. The public answer is what makes the
+        next person DM you.
+
+      ## Keyword comments
+
+      If the post used a keyword ask, those comments are the whole point of the post.
+      Every one of them is a person who raised their hand. Reply to each, then send
+      what was promised. If the user has automation set up through Instagram's own
+      tools or an approved partner, say so and let it run; if not, the replies are
+      manual and that is fine at this volume. Never bulk-DM people who did not
+      comment.
+
+      ## Output
+
+      One block, grouped by bucket, each reply copy-ready and already humanized:
+
+      ```
+      REPLIES  ·  84 comments  ·  41 KEYWORD, 2 LEAD, 3 SUBSTANCE, 2 QUESTION, 34 SUPPORT, 2 NOISE
+
+      KEYWORD  (41)  send the clause. One line each, same warmth, not copy-paste.
+
+      LEAD
+      @handle - "we had this exact thing happen in June"
+      > The bit that fixed it for us was moving the payment trigger off approval
+      > entirely. Happy to send the wording if it is useful.
+
+      QUESTION -> REEL
+      @handle - "what do you do if they refuse to sign it?"
+        34 likes on this comment. That is a Reel, not a reply. Formula #16.
+
+      NOISE  (2)  skipped. Replying gives them reach.
+      ```
+
+      Then the gate: nothing is posted until the user says yes. They paste the
+      replies.
+    tools: []
+
+  - slug: ig-dm
+    title: Instagram direct messages
+    summary: "Write Instagram DMs that get replies - the keyword delivery, the first message and the collab pitch."
+    instructions: |-
+      # ig-dm
+
+      Instagram DMs are the only place on the platform where money actually changes
+      hands, and they are also where most accounts burn the goodwill their content
+      earned. The difference is entirely about who moved first.
+
+      ## The three kinds of DM, and only three are worth writing
+
+      **1. The reply to a hand raised.** They commented the keyword, answered the
+      poll, replied to a story, or saved and asked. They moved first. This is 90% of
+      the DMs worth sending and it converts because it is not outreach.
+
+      **2. The warm approach.** Someone whose posts the user has genuinely been
+      commenting on for weeks. There is a shared thread of conversation already.
+
+      **3. The collab or brand pitch.** A specific proposal to a specific account,
+      with a reason it is them.
+
+      Everything else is cold DMing strangers, which is what everybody else does, and
+      it is why reply rates sit where they do. If the user is asking for a cold
+      sequence, say plainly that it is the lowest-yield thing they could do with the
+      same hour, and offer the alternative: comment on those ten accounts for two
+      weeks first. Then write it if they still want it.
+
+      ## Before writing, get the specifics
+
+      Ask in one batched question:
+
+      1. **Who** - handle, what they do, and what they posted or did that started
+         this.
+      2. **The trigger** - the actual reason to message today. A keyword they
+         commented, a story they replied to, a post they published. Not "they fit the
+         ICP".
+      3. **What the user wants** - a conversation, a sale, a collab, a referral. Be
+         honest internally, even if the message does not lead with it.
+
+      If there is no trigger, there is no message. Say so.
+
+      ## The keyword delivery
+
+      The most common DM in this pack and the easiest to ruin. They commented one
+      word. They are expecting the thing. So:
+
+      ```
+      {their name}, here it is: {the thing, or the link}.
+
+      {one line on how to use it}
+
+      {one question they can answer in four words}
+      ```
+
+      Send the thing **first**, in message one, with no gate. A keyword post that
+      delivers a "before I send it, can I ask what you do?" is a bait and switch and
+      it is remembered. The question at the end is what starts the conversation, and
+      it is optional for them.
+
+      Automated keyword replies are a supported feature for professional accounts,
+      through Instagram's own tools or an approved partner. Using that is fine.
+      Sending unsolicited bulk DMs is not, and it is the fastest route to a
+      restricted account.
+
+      ## The first message to someone warm
+
+      - **Two to four sentences.** A screen of text is a delete.
+      - **Reference the specific thing.** The comment, the post, the reply. In their
+        words.
+      - **Give before asking.** A number, a template, a name, an answer.
+      - **One ask, small.** "Worth a quick call?" beats "let me walk you through the
+        platform".
+      - **No link and no calendar in message one.** It reads as a funnel because it
+        is one.
+      - **No voice note to a stranger.** It is a great tool and it is for people who
+        already know the user's voice.
+
+      ## The collab pitch
+
+      Four lines, in this order: what you have watched them do, the specific idea,
+      what they get, what you need from them. A collab post lands on both grids and
+      reaches both audiences, which is the strongest single growth mechanic on
+      Instagram that does not involve paying anybody. Pitch it as that and be
+      concrete about who does what.
+
+      ## Follow-ups
+
+      Two. That is the number.
+
+      - **+4 days** - add something new. Never "just bumping this". If there is
+        nothing new, there is no follow-up.
+      - **+10 days** - the close-the-loop message. Say you will stop, and mean it.
+        This one gets a surprising share of the total replies, because it removes the
+        pressure.
+
+      Then stop. A third converts nobody and costs the relationship.
+
+      ## Never
+
+      - Never automate outreach DMs, and never use a tool that sends on a schedule to
+        people who did not interact. It violates Instagram's Terms of Use and
+        restricts the account.
+      - Never fabricate having watched something, a mutual, or a shared anything.
+      - Never open with "Hey! Quick question" and then not ask a question.
+      - Never send the pitch in the same message as the compliment.
+
+      ## Output
+
+      The message, the character count, and the two follow-ups with the day each
+      goes out, all run through `/ig-human`. The user sends every one of them by
+      hand, or through their own approved automation for keyword replies only.
+    tools: []

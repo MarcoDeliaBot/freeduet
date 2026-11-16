@@ -1314,6 +1314,10 @@ agents:
       - video
       - design-craft-floor
       - landing-page-design
+      - ig-carousel
+      - ig-story
+      - ig-reply
+      - ig-dm
 
   - id: video
     name: Cam

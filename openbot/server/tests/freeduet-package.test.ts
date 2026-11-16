@@ -500,6 +500,35 @@ const LANDING_PAGE_BYTES = 19735;
 const LANDING_PAGE_SHA256 =
   "d74536e41783d8eda0ed5ff67d6870e0329ce4c28edef688931c96b91c00b279";
 
+/**
+ * Mark's four Instagram skills: one upstream SKILL.md body each, copied unchanged from its first heading to its
+ * last line (NOTICE.md has the source, commit d03c56bb598be770c60b201f94237e5d1a4268a6). The instruction is that
+ * body without its final newline, so each length and SHA-256 pin the exact text; a change to the text has to
+ * change these numbers here.
+ */
+const INSTAGRAM_SKILLS = [
+  {
+    slug: "ig-carousel",
+    bytes: 3757,
+    sha256: "45916f0d78621a90aaf4040d41bde556e66ba2199589826fabb90d9eb43f99ba",
+  },
+  {
+    slug: "ig-story",
+    bytes: 3993,
+    sha256: "adb73a794844638d71950d898d685b4e2ffe2a7ca02c08e3d2c044f022bee484",
+  },
+  {
+    slug: "ig-reply",
+    bytes: 3635,
+    sha256: "d8b90414266503049fa7a2455af943485ca1523e55662526cf15af65cd4f95f4",
+  },
+  {
+    slug: "ig-dm",
+    bytes: 4323,
+    sha256: "63c46028b16072a67def66e687f7d2a9b36eaef92620d9cb925eda7b983a5545",
+  },
+] as const;
+
 describe("Mark, the marketer", () => {
   async function mark() {
     const rows = await memberRows();
@@ -605,15 +634,19 @@ describe("Mark, the marketer", () => {
     const marketer = tenantPackage.agents.find(
       (agent) => agent.id === "marketer",
     );
-    // His skills in all: one shared skill, 53 marketing skills and two of design, 56.
-    expect(marketer?.skills.length).toBe(56);
+    // His skills in all: one shared skill, 53 marketing skills, two of design and four for Instagram, 60.
+    expect(marketer?.skills.length).toBe(60);
     // research-public-web is the one skill of the starter team he shares, for rivals' pages and sites to review.
-    // design-craft-floor and landing-page-design are his two skills that are not marketing skills: their own files, see NOTICE.md.
+    // design-craft-floor, landing-page-design and the four Instagram skills are his skills that are not marketing skills: their own files, see NOTICE.md.
     expect(marketer?.skills).toEqual([
       "research-public-web",
       ...MARKETING_SKILLS,
       "design-craft-floor",
       "landing-page-design",
+      "ig-carousel",
+      "ig-story",
+      "ig-reply",
+      "ig-dm",
     ]);
     const taken = new Set<string>(MARKETING_SKILLS);
     for (const agent of tenantPackage.agents.filter(
@@ -692,6 +725,42 @@ describe("Mark, the marketer", () => {
       .filter((agent) => agent.skills.includes("landing-page-design"))
       .map((agent) => agent.id);
     expect(holders).toEqual(["marketer"]);
+  });
+
+  test("the four Instagram skills are one upstream SKILL.md body each, with no tools, and only Mark holds them", async () => {
+    const tenantPackage = await loadWith(MODES.remote);
+    for (const expected of INSTAGRAM_SKILLS) {
+      const skill = tenantPackage.skills.find(
+        (candidate) => candidate.slug === expected.slug,
+      );
+      const instructions = skill?.instructions ?? "";
+      const summary = skill?.summary ?? "";
+      expect({
+        slug: expected.slug,
+        shipped: skill !== undefined,
+        bytes: Buffer.byteLength(instructions, "utf8"),
+        sha256: createHash("sha256").update(instructions).digest("hex"),
+        tools: skill?.tools,
+        oneLine:
+          summary.length > 0 &&
+          summary.length <= 112 &&
+          !summary.includes("\n"),
+      }).toEqual({
+        slug: expected.slug,
+        shipped: true,
+        bytes: expected.bytes,
+        sha256: expected.sha256,
+        tools: [],
+        oneLine: true,
+      });
+      const holders = tenantPackage.agents
+        .filter((agent) => agent.skills.includes(expected.slug))
+        .map((agent) => agent.id);
+      expect({ slug: expected.slug, holders }).toEqual({
+        slug: expected.slug,
+        holders: ["marketer"],
+      });
+    }
   });
 });
 
