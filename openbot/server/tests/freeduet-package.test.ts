@@ -924,8 +924,21 @@ describe("Office files: Penny's spreadsheets and Wren's Word documents", () => {
     const own: Record<string, string[]> = {
       spreadsheets: [
         "use openpyxl for .xlsx",
-        "Nothing in your computer calculates a spreadsheet",
-        "no spreadsheet program calculated the formulas here",
+        "run office-convert recalc followed by the file's name",
+        "keeps no file, and prints for each formula cell its sheet, cell, formula and calculated value",
+        "The file the person receives is the original you wrote with openpyxl, with its formulas intact",
+        "it exits with status 5",
+        "run it again, as often as you need, because it keeps nothing",
+        "values from links to other workbooks are not refreshed",
+        "a function LibreOffice 24.2 cannot calculate",
+        "some phone and mail previews show those cells empty",
+        "office-convert recalc --keep followed by the file's name",
+        "saved it again, so its formatting and features may differ",
+        "add --replace only to overwrite a copy you yourself made earlier in this conversation, never a file the person already had",
+        "The calculation is LibreOffice's, not Excel's",
+        "run office-convert pdf followed by the file's name",
+        "add --replace, but only to overwrite a PDF you yourself made earlier in this conversation, never a file the person already had",
+        "a refused file is not converted",
         "write it as text, never as a formula",
         'set its data_type to "s"',
         "Never write a formula that reaches outside the file",
@@ -933,7 +946,11 @@ describe("Office files: Penny's spreadsheets and Wren's Word documents", () => {
       "word-documents": [
         "use python-docx for .docx",
         "never a jump",
-        "Nothing here is real Word and nothing draws the pages",
+        "Nothing here is real Word: a page count or a page break you report is LibreOffice's drawing",
+        "run office-convert pdf followed by the file's name",
+        "never changes the .docx, and refuses when a file of that name is already there",
+        "add --replace, but only to overwrite a PDF you yourself made earlier in this conversation, never a file the person already had",
+        "a refused file (a macro file, an old format, a protected file) is not converted",
       ],
     };
     for (const slug of Object.values(OFFICE_SKILLS))
@@ -1046,10 +1063,34 @@ describe("Office files: Penny's spreadsheets and Wren's Word documents", () => {
     );
     expect(wrapper).toContain('exec /opt/office/bin/python "$@"');
     expect(dockerfile).toContain("reportlab/fonts/DarkGarden*' -delete");
-    // The rule: no new apt packages for this, and the first apt-get line is the one it was.
+    // The first apt-get line is the one it was. LibreOffice (D61) has an apt line of its own: the three
+    // cores and two fonts, no recommended packages, no Java; nothing else of the office stack (no Tesseract,
+    // no poppler, no pypdfium2).
     expect(dockerfile).toContain(
       "ca-certificates curl unzip xz-utils \\\n      ffmpeg git python3 python3-venv \\",
     );
-    expect(dockerfile).not.toMatch(/libreoffice|tesseract|poppler|pypdfium2/i);
+    expect(dockerfile).toContain(
+      "apt-get install -y --no-install-recommends \\\n      libreoffice-writer libreoffice-calc libreoffice-impress fonts-liberation fonts-dejavu-core \\",
+    );
+    expect(dockerfile).not.toMatch(
+      /tesseract|poppler-utils|pypdfium2|default-jre|openjdk|libreoffice-java|libreoffice-gnome|libreoffice-gtk|libreoffice-base\b/i,
+    );
+    expect(dockerfile).toContain("soffice --headless --version");
+    expect(dockerfile).toContain("office-convert recalc --keep t.xlsx");
+    expect(dockerfile).toContain("office-convert pdf t.docx");
+    expect(dockerfile).toContain(
+      "office-convert recalc t.xlsx | grep -q '\"value\": 42.5'",
+    );
+    expect(dockerfile).toContain("assert v == 42.5, v");
+    expect(dockerfile).toContain(
+      "/usr/local/lib/office-convert/office_convert.py",
+    );
+    const convert = await readFile(
+      `${agentComputerDirectory}/office-convert/office-convert`,
+      "utf8",
+    );
+    expect(convert).toContain(
+      "exec /opt/office/bin/python -I /usr/local/lib/office-convert/office_convert.py",
+    );
   });
 });
