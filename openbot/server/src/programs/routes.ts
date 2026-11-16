@@ -48,6 +48,9 @@ const tooBig = bodyLimit({
   onError: (context) => context.json({ error: "That was too large." }, 413),
 });
 
+export const CANNOT_TELL_THE_PERSON =
+  "Programs on this computer cannot be switched on here: without an installation secret, FreeDuet cannot tell you from a program that runs in an assistant's computer. Run scripts/start.sh, which writes the secret, and open FreeDuet with the link it prints.";
+
 export const NOT_AT_THE_COMPUTER =
   "Programs on this computer can only be switched on or off from this computer.";
 
@@ -84,7 +87,7 @@ const PAIRING_PAGE = `<!doctype html><meta charset="utf-8"><title>Programs on th
 <p><button id="on">Switch on</button> <button id="off">Switch off</button> <button id="go">Show a code</button></p>
 <p id="out" style="font:600 1.6rem ui-monospace,monospace"></p>
 <script>${PAIRING_SCRIPT}</script>`;
-const PAIRING_CSP = `default-src 'none'; script-src 'sha256-${createHash("sha256").update(PAIRING_SCRIPT).digest("base64")}'; connect-src 'self'; style-src 'unsafe-inline'; base-uri 'none'; form-action 'none'`;
+const PAIRING_CSP = `default-src 'none'; script-src 'sha256-${createHash("sha256").update(PAIRING_SCRIPT).digest("base64")}'; connect-src 'self'; style-src 'unsafe-inline'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'`;
 
 export function createProgramsRoutes(options: {
   broker: ProgramsBroker;
@@ -93,6 +96,12 @@ export function createProgramsRoutes(options: {
   /** With sign-in and an installation secret, "at the computer" also asks for a live pairing of this person. */
   pairing?: PairingGate;
   auditStore?: AuditStore;
+  /**
+   * True when this deployment cannot tell the person from a member's computer: single-user mode with no installation
+   * secret (a loopback caller is "the person", and on Docker Desktop a member's computer arrives as loopback). Then the
+   * function cannot be switched ON and no pairing code is made. Set by `app.ts`, which already knows the secret.
+   */
+  singleUserWithoutSecret?: boolean;
   /** Tests inject one with their own clock; the server makes its own. */
   programsPairing?: ProgramsPairing;
 }) {
@@ -106,6 +115,7 @@ export function createProgramsRoutes(options: {
       ...(options.auditStore ? { audit: options.auditStore } : {}),
     });
   const gate = options.pairing;
+  const refused = () => options.singleUserWithoutSecret === true;
   const routes = new Hono<{ Variables: AppVariables }>();
 
   routes.post("/helper/poll", tooBig, async (context) => {
@@ -133,7 +143,21 @@ export function createProgramsRoutes(options: {
       await context.req.json().catch(() => null),
     );
     // A body of the wrong shape counts as a wrong try, like a wrong code.
-    const outcome = await pairing.redeem(body.success ? body.data.code : null);
+    const server = (
+      context.env as {
+        server?: { requestIP?: (r: Request) => { address: string } | null };
+      } | null
+    )?.server;
+    let source = "unknown";
+    try {
+      source = server?.requestIP?.(context.req.raw)?.address ?? "unknown";
+    } catch {
+      source = "unknown";
+    }
+    const outcome = await pairing.redeem(
+      body.success ? body.data.code : null,
+      source,
+    );
     if (outcome.ok)
       return context.json(
         {
@@ -152,6 +176,7 @@ export function createProgramsRoutes(options: {
 
   routes.post("/pairing/code", requireUser, async (context) => {
     const actor = context.var.actor;
+    if (refused()) return context.json({ error: CANNOT_TELL_THE_PERSON }, 403);
     if (!(await atTheComputer(context.env, context.req.raw, gate, actor.id)))
       return context.json({ error: NOT_AT_THE_COMPUTER }, 403);
     const made = await pairing.makeCode(actor.id);
@@ -176,6 +201,7 @@ export function createProgramsRoutes(options: {
   });
 
   routes.get("/pairing", requireUser, async (context) => {
+    if (refused()) return context.json({ error: CANNOT_TELL_THE_PERSON }, 403);
     if (
       !(await atTheComputer(
         context.env,
@@ -188,6 +214,7 @@ export function createProgramsRoutes(options: {
     return context.html(PAIRING_PAGE, 200, {
       "Cache-Control": "no-store",
       "Content-Security-Policy": PAIRING_CSP,
+      "X-Frame-Options": "DENY",
     });
   });
 
@@ -208,6 +235,8 @@ export function createProgramsRoutes(options: {
     if (!(await atTheComputer(context.env, context.req.raw, gate, actor.id)))
       return context.json({ error: NOT_AT_THE_COMPUTER }, 403);
     const parsed = change.safeParse(await context.req.json().catch(() => null));
+    if (parsed.success && parsed.data.enabled && refused())
+      return context.json({ error: CANNOT_TELL_THE_PERSON }, 403);
     if (!parsed.success)
       return context.json(
         { error: "Send { enabled: true } or { enabled: false }." },

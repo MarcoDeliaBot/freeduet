@@ -1,7 +1,7 @@
 # Removes the FreeDuet programs helper from this Windows computer (docs/design/programs-on-your-computer.md, S2, D62).
 # It is a script YOU run: deleting things on your computer is your own command, not something FreeDuet does.
 #
-#   powershell -NoProfile -ExecutionPolicy Bypass -File .\uninstall.ps1          asks once
+#   powershell -NoProfile -ExecutionPolicy RemoteSigned -File .\uninstall.ps1          asks once
 #   ... -Yes                                                                      does not ask
 #
 # It stops and removes the scheduled task "FreeDuet Programs Helper", then deletes the helper's folder
@@ -27,7 +27,19 @@ function Invoke-Uninstall {
     }
     else { Write-Host "There was no task '$TaskName'." }
     if (Test-Path -LiteralPath $Directory) {
-        Remove-Item -LiteralPath $Directory -Recurse -Force
+        [void](Stop-HelperProcess -Directory $Directory)
+        # The folder is deleted only if it is a real folder. A link (junction or symlink) put in its place is removed as
+        # a link, by name, and what it points to is never touched. Inside, links are removed the same way.
+        if (Test-ReparsePoint -Path $Directory) {
+            (Get-Item -LiteralPath $Directory -Force).Delete()
+            Write-Host "$Directory was a link: the link was removed, what it pointed to was left alone."
+            return 0
+        }
+        foreach ($item in @(Get-ChildItem -LiteralPath $Directory -Force)) {
+            if (Test-ReparsePoint -Path $item.FullName) { $item.Delete(); Write-Host ("A link inside was removed as a link: " + $item.Name); continue }
+            Remove-Item -LiteralPath $item.FullName -Recurse -Force
+        }
+        Remove-Item -LiteralPath $Directory -Force
         Write-Host "Deleted $Directory"
     }
     else { Write-Host 'There was no helper folder.' }

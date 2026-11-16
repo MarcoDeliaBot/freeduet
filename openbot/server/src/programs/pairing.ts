@@ -12,10 +12,19 @@
  * of any helper that paired before is refused from its next poll); the NEW secret is derived and returned, this once.
  * The secret is never stored here, never logged and never in an audit row; a lost secret is a new pairing.
  *
- * GUESSING. The code is about 49 bits. The route has no session, so the limits are global to the server and not
- * per person: ten tries a minute, and five wrong ones in a row burn every code outstanding (the person simply asks
- * for another). That makes a guess hopeless inside two minutes, at the price that someone who can reach the port can
- * make the person ask again; they learn nothing from it.
+ * GUESSING, AND WHY NO STRANGER CAN STOP PAIRING. The code is ten characters from an alphabet of 31, so one guess
+ * hits a live code with probability 1 / 31^10 = 1 / 819,628,286,980,801 (about 49.5 bits). The route has no session,
+ * so it is open to anyone who can reach the port; the design therefore does not let guessing damage anybody:
+ *   - A wrong code never invalidates anybody's code, and there is no global counter: a flood of wrong codes cannot burn
+ *     the real code or lock the real helper out.
+ *   - Every attempt is checked against the live codes first (one hash and a map lookup, no database), so a CORRECT code
+ *     is accepted whatever is being thrown at the route, from any address, including the helper's own.
+ *   - Wrong attempts are counted per SOURCE ADDRESS in a sliding window that decays (one minute). An address over
+ *     `WRONG_PER_MINUTE` wrong tries a minute gets 429 for its further wrong tries and nothing is written for them; this only
+ *     bounds the work a flood can cause, it is not what protects the code. At that rate an address makes about 200
+ *     guesses in a code's two minutes: odds of 200 / 31^10, about 2.4e-13 for that address.
+ * Behind Docker Desktop a member's computer and the helper can share the address 127.0.0.1; that is why the limit
+ * never refuses a correct code.
  *
  * NOT IN A DATABASE. The codes live in this process: a restart in the two minutes is a new code, as with the browser
  * pairing codes (`auth/browser-pairings.ts`). Only a hash of a code is held.
@@ -29,10 +38,14 @@ export const PAIRING_CODE_LIFETIME_MS = 120_000;
 /** Letters and digits that cannot be mistaken for each other (the same alphabet as the browser pairing codes). */
 const ALPHABET = "ABCDEFGHJKMNPQRSTUVWXYZ23456789";
 const CODE_LENGTH = 10;
-/** Tries a minute, whatever the outcome, for the whole server. */
-export const REDEEMS_PER_MINUTE = 10;
-/** Wrong codes in a row after which every outstanding code is burned. */
-export const FAILURES_BEFORE_BURN = 5;
+/** Wrong tries a minute, per source address, after which that address's further wrong tries get 429. */
+export const WRONG_PER_MINUTE = 60;
+/** How long a wrong try counts against its address. */
+export const WRONG_WINDOW_MS = 60_000;
+/** The most addresses remembered at once, so a spread-out flood cannot grow the table. */
+const MAX_ADDRESSES = 5_000;
+/** The size of the code space, for the comment above and the test that pins it: 31 characters, ten places. */
+export const CODE_SPACE = ALPHABET.length ** CODE_LENGTH;
 /** Codes one person may ask for in a minute. */
 export const CODES_PER_MINUTE = 6;
 
@@ -67,10 +80,9 @@ export function createProgramsPairing(options: {
   const now = options.now ?? Date.now;
   /** One live code per person: a new one replaces the last. The key is the hash of the code. */
   const codes = new Map<string, { actorId: string; expires: number }>();
-  const attempts: number[] = [];
   const asked = new Map<string, number[]>();
-  let failures = 0;
-
+  /** Wrong tries per source address, newest last. */
+  const wrongBy = new Map<string, number[]>();
   const note = async (actorId: string | undefined, change: string) => {
     if (!options.audit) return;
     await recordAuditEvent(options.audit, {
@@ -84,12 +96,11 @@ export function createProgramsPairing(options: {
   function sweep(at: number) {
     for (const [hash, entry] of codes)
       if (at >= entry.expires) codes.delete(hash);
-    while (
-      attempts.length > 0 &&
-      attempts[0] !== undefined &&
-      at - attempts[0] >= 60_000
-    )
-      attempts.shift();
+    for (const [address, times] of wrongBy) {
+      const live = times.filter((t) => at - t < WRONG_WINDOW_MS);
+      if (live.length === 0) wrongBy.delete(address);
+      else wrongBy.set(address, live);
+    }
   }
 
   return {
@@ -115,20 +126,22 @@ export function createProgramsPairing(options: {
       return { ok: true, code: showCode(code), expiresAt };
     },
 
-    /** The helper's setup, with the code the person typed. No session: the code is the proof. */
-    async redeem(typed: unknown): Promise<RedeemOutcome> {
+    /**
+     * The helper's setup, with the code the person typed and the address the request came from. No session: the
+     * code is the proof. A correct code is always accepted; see the comment at the top for the guessing.
+     */
+    async redeem(typed: unknown, source = "unknown"): Promise<RedeemOutcome> {
       const at = now();
       sweep(at);
-      if (attempts.length >= REDEEMS_PER_MINUTE)
-        return { ok: false, reason: "rate_limited" };
-      attempts.push(at);
-      const wrong = async (): Promise<RedeemOutcome> => {
-        failures += 1;
-        if (failures >= FAILURES_BEFORE_BURN) {
-          codes.clear();
-          failures = 0;
-          await note(undefined, "programs_pairing_codes_burned");
+      const wrong = (): RedeemOutcome => {
+        const times = wrongBy.get(source) ?? [];
+        if (times.length >= WRONG_PER_MINUTE)
+          return { ok: false, reason: "rate_limited" };
+        if (!wrongBy.has(source) && wrongBy.size >= MAX_ADDRESSES) {
+          const oldest = wrongBy.keys().next().value;
+          if (oldest !== undefined) wrongBy.delete(oldest);
         }
+        wrongBy.set(source, [...times, at]);
         return { ok: false, reason: "wrong_or_expired" };
       };
       if (typeof typed !== "string" || typed.length > 64) return wrong();
@@ -142,9 +155,11 @@ export function createProgramsPairing(options: {
       const { actorId } = entry;
       if (!(await options.isOn(actorId))) return wrong();
       await options.rotateSalt(actorId);
+      // Checked again after the rotation: a switch turned off in between is not paired (the rotation is harmless:
+      // it only retires the old secret).
+      if (!(await options.isOn(actorId))) return wrong();
       const secret = await options.secretFor(actorId);
       if (!secret) return wrong();
-      failures = 0;
       await note(actorId, "programs_helper_paired");
       return {
         ok: true,

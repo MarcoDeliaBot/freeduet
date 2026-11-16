@@ -14,11 +14,12 @@ import { createDatabase } from "../src/db/client";
 import { users } from "../src/db/schema";
 import { createProgramsBroker } from "../src/programs/broker";
 import {
+  CODE_SPACE,
   CODES_PER_MINUTE,
   createProgramsPairing,
-  FAILURES_BEFORE_BURN,
   PAIRING_CODE_LIFETIME_MS,
-  REDEEMS_PER_MINUTE,
+  WRONG_PER_MINUTE,
+  WRONG_WINDOW_MS,
 } from "../src/programs/pairing";
 import { createProgramsRoutes } from "../src/programs/routes";
 import { createProgramsSwitch } from "../src/programs/switch";
@@ -97,7 +98,12 @@ function build(actorId: string, gate?: PairingGate) {
         code: string;
       }
     ).code;
-  const redeem = (typed: unknown) => json("/helper/pair", { code: typed });
+  const redeem = (typed: unknown, address?: string) =>
+    json(
+      "/helper/pair",
+      { code: typed },
+      address ? { server: { requestIP: () => ({ address }) } } : undefined,
+    );
   return { broker, routes, json, code, redeem };
 }
 
@@ -146,6 +152,10 @@ describe("making a code", () => {
     expect(page.headers.get("content-security-policy")).toContain(
       "default-src 'none'",
     );
+    expect(page.headers.get("content-security-policy")).toContain(
+      "frame-ancestors 'none'",
+    );
+    expect(page.headers.get("x-frame-options")).toBe("DENY");
   });
 
   test("more than six codes a minute are refused", async () => {
@@ -253,19 +263,76 @@ describe("redeeming a code", () => {
     );
   });
 
-  test("five wrong tries in a row burn the outstanding code; ten tries a minute are the most", async () => {
+  test("a flood of wrong codes from one address stops neither a correct code from another address nor from the same one", async () => {
     clock.at += 120_000;
     const id = await person();
     const { code, redeem } = build(id);
     const typed = await code();
-    for (let i = 0; i < FAILURES_BEFORE_BURN; i++)
-      expect((await redeem("ZZZZZ-ZZZZZ")).status).toBe(401);
-    expect((await redeem(typed)).status).toBe(401);
-    // Attempts so far in this minute: 6. Four more fill it; the next is refused with 429.
-    for (let i = 0; i < REDEEMS_PER_MINUTE - 6; i++)
-      await redeem("ZZZZZ-ZZZZZ");
-    expect((await redeem("ZZZZZ-ZZZZZ")).status).toBe(429);
-    clock.at += 61_000;
+    for (let i = 0; i < WRONG_PER_MINUTE + 40; i++)
+      await redeem(`ZZZZ${i % 10}-ZZZZZ`, "203.0.113.9");
+    // The flooding address is limited for its wrong tries...
+    expect((await redeem("ZZZZZ-ZZZZZ", "203.0.113.9")).status).toBe(429);
+    // ...a wrong code never burned the real one: another address pairs...
+    const other = await redeem(typed, "198.51.100.7");
+    expect(other.status).toBe(200);
+    // ...and the same address pairs as well, because a correct code is never refused.
+    const again = await code();
+    expect((await redeem(again, "203.0.113.9")).status).toBe(200);
+  });
+
+  test("wrong tries are counted per address and the counters decay", async () => {
+    clock.at += 120_000;
+    const id = await person();
+    const { redeem } = build(id);
+    for (let i = 0; i < WRONG_PER_MINUTE; i++)
+      expect((await redeem("ZZZZZ-ZZZZZ", "192.0.2.1")).status).toBe(401);
+    expect((await redeem("ZZZZZ-ZZZZZ", "192.0.2.1")).status).toBe(429);
+    // Another address has its own count.
+    expect((await redeem("ZZZZZ-ZZZZZ", "192.0.2.2")).status).toBe(401);
+    clock.at += WRONG_WINDOW_MS + 1;
+    expect((await redeem("ZZZZZ-ZZZZZ", "192.0.2.1")).status).toBe(401);
+  });
+
+  test("the odds written in the source are the odds of the alphabet and the length", async () => {
+    expect(CODE_SPACE).toBe(31 ** 10);
+    expect(Math.log2(CODE_SPACE)).toBeGreaterThan(49.5);
+    expect(Math.log2(CODE_SPACE)).toBeLessThan(49.6);
+    const text = await Bun.file(
+      new URL("../src/programs/pairing.ts", import.meta.url),
+    ).text();
+    expect(text).toContain("1 / 31^10 = 1 / 819,628,286,980,801");
+    expect(text).toContain("about 49.5 bits");
+    expect(String(31 ** 10)).toBe("819628286980801");
+  });
+
+  test("a switch turned off between the first check and the rotation is not paired", async () => {
+    const id = await person();
+    let calls = 0;
+    const broker = createProgramsBroker({
+      deploymentKey: KEY,
+      salt: (a) => programsSwitch.saltOf(a),
+      now: () => clock.at,
+      enabled: (a) => programsSwitch.isOn(a),
+      sweepEveryMs: 0,
+    });
+    const pairing = createProgramsPairing({
+      isOn: async (a) => {
+        calls += 1;
+        return calls === 1 ? true : programsSwitch.isOn(a);
+      },
+      rotateSalt: async (a) => {
+        await programsSwitch.set(a, false);
+        await programsSwitch.rotateSalt(a);
+      },
+      secretFor: (a) => broker.helperSecretFor(a),
+      now: () => clock.at,
+    });
+    const made = await pairing.makeCode(id);
+    // makeCode asked isOn once (calls = 1); the next isOn is the redeem's first, answered true by the stub below.
+    calls = 0;
+    expect(made.ok).toBe(true);
+    if (made.ok) expect((await pairing.redeem(made.code)).ok).toBe(false);
+    await programsSwitch.set(id, true);
   });
 
   test("the answer carries no cache and nothing else of the secret machinery", async () => {

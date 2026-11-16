@@ -619,10 +619,15 @@ Describe 'Setup' {
             return [pscustomobject]@{ actorId = 'user-1'; secret = $script:SecretHex; serverTime = (Get-NowMilliseconds) }
         }
     }
-    It 'accepts https and plain http only for this computer' {
+    It 'accepts only this computer by default, and another host only with the switch and https (P4)' {
         Test-ServerUrl 'http://localhost:3010' | Should -BeTrue
         Test-ServerUrl 'http://127.0.0.1:3010' | Should -BeTrue
-        Test-ServerUrl 'https://freeduet.example.test' | Should -BeTrue
+        Test-ServerUrl 'https://localhost:3010' | Should -BeTrue
+        Test-ServerUrl 'http://[::1]:3010' | Should -BeTrue
+        Test-ServerUrl 'https://freeduet.example.test' | Should -BeFalse
+        Test-ServerUrl -Url 'https://freeduet.example.test' -AllowRemote $true | Should -BeTrue
+        Test-ServerUrl -Url 'http://freeduet.example.test' -AllowRemote $true | Should -BeFalse
+        Test-ServerUrl -Url 'https://user:pw@freeduet.example.test' -AllowRemote $true | Should -BeFalse
         Test-ServerUrl 'http://192.168.1.5:3010' | Should -BeFalse
         Test-ServerUrl 'http://evil.example.test' | Should -BeFalse
         Test-ServerUrl 'ftp://localhost' | Should -BeFalse
@@ -676,6 +681,41 @@ Describe 'Setup' {
         $fileAcl = Get-Acl -LiteralPath (Join-Path $script:Dir 'secret.bin')
         @($fileAcl.Access).Count | Should -Be 1
     }
+    It 'warns by name about a remote host, and keeps a remote host out of the config unless it was asked for (P4)' {
+        $code = Invoke-Setup -Server 'https://freeduet.example.test' -Code 'ABCDE-FGHJK' -WingetPath '' -UseAlias $false -NoTask $true -Yes $true -AllowRemote $true -Directory $script:Dir
+        $code | Should -Be 0
+        (Read-HelperConfig -Directory $script:Dir).allowRemoteServer | Should -BeTrue
+        $local = Join-Path $script:Root ('setup-' + [guid]::NewGuid().ToString('N'))
+        [void](Invoke-Setup -Server 'https://freeduet.example.test' -Code 'ABCDE-FGHJK' -WingetPath '' -UseAlias $false -NoTask $true -Yes $true -Directory $local)
+        Test-Path -LiteralPath $local | Should -BeFalse
+    }
+    It 'a config naming a remote host is refused by the helper unless the switch was recorded (P4)' {
+        New-Item -ItemType Directory -Force -Path $script:Dir | Out-Null
+        $json = '{"serverUrl":"https://freeduet.example.test","actorId":"user-1","allowRemoteServer":false}'
+        [System.IO.File]::WriteAllText((Join-Path $script:Dir 'config.json'), $json)
+        { Read-HelperConfig -Directory $script:Dir } | Should -Throw
+    }
+    It 'stops the helper that is still running BEFORE it writes the new secret (B1)' {
+        $script:Order = New-Object System.Collections.ArrayList
+        Mock Stop-HelperProcess { [void]$script:Order.Add('stop'); return 'stopped' }
+        Mock Stop-ScheduledTask { [void]$script:Order.Add('stoptask') }
+        Mock Save-ProtectedSecret { [void]$script:Order.Add('save') }
+        [void](Invoke-Setup -Server 'http://localhost:3010' -Code 'ABCDE-FGHJK' -WingetPath '' -UseAlias $false -NoTask $true -Yes $true -Directory $script:Dir)
+        ($script:Order -join ',') | Should -Be 'stoptask,stop,save'
+    }
+    It 'says plainly what the protection is and is not (P2)' {
+        $text = Get-Content -LiteralPath (Join-Path $script:Here 'setup.ps1') -Raw
+        $text | Should -Match 'A program running as YOU still can'
+    }
+    It 'runs the task with RemoteSigned, never Bypass, and unblocks its own copy (P5)' {
+        $d = Get-HelperTaskDefinition -Directory 'C:\Users\Test\AppData\Local\FreeDuet\programs-helper'
+        $d.Arguments | Should -Match '-ExecutionPolicy RemoteSigned'
+        $d.Arguments | Should -Not -Match 'Bypass'
+        $setupText = Get-Content -LiteralPath (Join-Path $script:Here 'setup.ps1') -Raw
+        $setupText | Should -Match 'Unblock-File'
+        (Get-Content -LiteralPath (Join-Path $script:Here 'uninstall.ps1') -Raw) | Should -Not -Match 'ExecutionPolicy Bypass'
+        (Test-Path -LiteralPath (Join-Path $script:Here 'README.md')) | Should -BeTrue
+    }
     It 'defines a per-user task at log on, not elevated, with a hidden window' {
         $d = Get-HelperTaskDefinition -Directory 'C:\Users\Test\AppData\Local\FreeDuet\programs-helper'
         $d.Name | Should -Be 'FreeDuet Programs Helper'
@@ -698,6 +738,30 @@ Describe 'Uninstall' {
         Should -Invoke Unregister-ScheduledTask -Times 1 -ParameterFilter { $TaskName -eq 'FreeDuet Programs Helper' }
         Test-Path -LiteralPath $dir | Should -BeFalse
     }
+    It 'removes a link put in place of the folder as a link, and never what it points to (P6)' {
+        $target = Join-Path $script:Root ('precious-' + [guid]::NewGuid().ToString('N'))
+        New-Item -ItemType Directory -Force -Path $target | Out-Null
+        Set-Content -LiteralPath (Join-Path $target 'keep.txt') -Value 'keep'
+        $link = Join-Path $script:Root ('link-' + [guid]::NewGuid().ToString('N'))
+        cmd.exe /c mklink /J "$link" "$target" | Out-Null
+        Test-Path -LiteralPath $link | Should -BeTrue
+        Mock Get-ScheduledTask { return $null }
+        (Invoke-Uninstall -Yes $true -Directory $link) | Should -Be 0
+        Test-Path -LiteralPath $link | Should -BeFalse
+        Test-Path -LiteralPath (Join-Path $target 'keep.txt') | Should -BeTrue
+    }
+    It 'removes a link inside the folder as a link, and keeps what it points to (P6)' {
+        $target = Join-Path $script:Root ('precious-' + [guid]::NewGuid().ToString('N'))
+        New-Item -ItemType Directory -Force -Path $target | Out-Null
+        Set-Content -LiteralPath (Join-Path $target 'keep.txt') -Value 'keep'
+        $dir = Join-Path $script:Root ('un-' + [guid]::NewGuid().ToString('N'))
+        New-Item -ItemType Directory -Force -Path $dir | Out-Null
+        cmd.exe /c mklink /J "$(Join-Path $dir 'inner')" "$target" | Out-Null
+        Mock Get-ScheduledTask { return $null }
+        (Invoke-Uninstall -Yes $true -Directory $dir) | Should -Be 0
+        Test-Path -LiteralPath $dir | Should -BeFalse
+        Test-Path -LiteralPath (Join-Path $target 'keep.txt') | Should -BeTrue
+    }
     It 'asks first, and changes nothing on a no' {
         $dir = Join-Path $script:Root ('un-' + [guid]::NewGuid().ToString('N'))
         New-Item -ItemType Directory -Force -Path $dir | Out-Null
@@ -706,5 +770,137 @@ Describe 'Uninstall' {
         (Invoke-Uninstall -Yes $false -Directory $dir) | Should -Be 1
         Test-Path -LiteralPath $dir | Should -BeTrue
         Should -Invoke Unregister-ScheduledTask -Times 0
+    }
+}
+
+Describe 'Operation ids kept on disk (P7)' {
+    BeforeEach {
+        $script:SeenDir = Join-Path $script:Root ('seen-' + [guid]::NewGuid().ToString('N'))
+        New-Item -ItemType Directory -Force -Path $script:SeenDir | Out-Null
+    }
+    It 'remembers an id across a restart, so the same operation is not carried out twice' {
+        Add-SeenId -Directory $script:SeenDir -Id 'op-1' -ExpiresAt 2000000
+        $set = Read-SeenIds -Directory $script:SeenDir -Now 1000000
+        $set.Contains('op-1') | Should -BeTrue
+    }
+    It 'forgets an id ten minutes after it expired, and drops garbage lines' {
+        Add-SeenId -Directory $script:SeenDir -Id 'old' -ExpiresAt 1000
+        Add-SeenId -Directory $script:SeenDir -Id 'new' -ExpiresAt 5000000
+        Add-Content -LiteralPath (Get-SeenFile -Directory $script:SeenDir) -Value 'not an entry; rm -rf'
+        $set = Read-SeenIds -Directory $script:SeenDir -Now 2000000
+        $set.Contains('old') | Should -BeFalse
+        $set.Contains('new') | Should -BeTrue
+        (Get-Content -LiteralPath (Get-SeenFile -Directory $script:SeenDir)).Count | Should -Be 1
+    }
+    It 'keeps at most 500 ids, the newest' {
+        1..520 | ForEach-Object { Add-SeenId -Directory $script:SeenDir -Id ('id-' + $_) -ExpiresAt 9000000 }
+        $set = Read-SeenIds -Directory $script:SeenDir -Now 1000000
+        $set.Count | Should -Be 500
+        $set.Contains('id-520') | Should -BeTrue
+        $set.Contains('id-1') | Should -BeFalse
+    }
+    It 'writes the id down before the operation is carried out, and a second helper start refuses it' {
+        Mock Get-HelperDirectory { return $script:SeenDir }
+        Mock Get-NowMilliseconds { return ([long]1790000001000) }
+        Reset-Stub
+        Set-StubOutput 'No installed package found.' 0
+        $op = New-VectorOperation 0
+        Mock Send-SignedPost {
+            if ($Path -eq '/api/programs/helper/poll') { return [pscustomobject]@{ operations = @($op) } }
+            return [pscustomobject]@{ ok = $true }
+        }
+        $config = [pscustomobject]@{ actorId = 'user-1'; serverUrl = 'http://localhost:3010' }
+        $first = Read-SeenIds -Directory $script:SeenDir -Now 1790000001000
+        (Invoke-HelperCycle -Config $config -Secret $script:SecretBytes -Seen $first -WingetPath $script:StubExe) | Should -Be 1
+        $restarted = Read-SeenIds -Directory $script:SeenDir -Now 1790000001000
+        (Invoke-HelperCycle -Config $config -Secret $script:SecretBytes -Seen $restarted -WingetPath $script:StubExe) | Should -Be 0
+        (Get-StubArgs).Count | Should -Be 1
+    }
+}
+
+Describe 'A secret the server refuses (B1)' {
+    It 'passes a refusal up as UnauthorizedAccessException, and any other failure as it is' {
+        Mock Get-NowMilliseconds { return ([long]1790000001000) }
+        Mock Send-SignedPost { throw (New-Object System.UnauthorizedAccessException('refused')) }
+        $config = [pscustomobject]@{ actorId = 'user-1'; serverUrl = 'http://localhost:3010' }
+        $seen = New-Object 'System.Collections.Generic.HashSet[string]'
+        $caught = $null
+        try { [void](Invoke-HelperCycle -Config $config -Secret $script:SecretBytes -Seen $seen -WingetPath $script:StubExe) } catch { $caught = $_.Exception }
+        $caught | Should -BeOfType [System.UnauthorizedAccessException]
+    }
+    It 'decides: continue below five, re-read once at five, stop at five after that' {
+        Get-RefusalAction -Refusals 1 -RereadDone $false | Should -Be 'continue'
+        Get-RefusalAction -Refusals 4 -RereadDone $false | Should -Be 'continue'
+        Get-RefusalAction -Refusals 5 -RereadDone $false | Should -Be 'reread'
+        Get-RefusalAction -Refusals 4 -RereadDone $true | Should -Be 'continue'
+        Get-RefusalAction -Refusals 5 -RereadDone $true | Should -Be 'stop'
+    }
+    It 'stops polling for good after the refusals, with one clear log line and one toast, and exits with 4' {
+        Mock Test-Elevated { return $false }
+        Mock Start-Sleep { }
+        Mock Show-HelperToast { }
+        Mock Read-HelperConfig { return [pscustomobject]@{ actorId = 'user-1'; serverUrl = 'http://localhost:3010'; wingetPath = ''; useAlias = $false } }
+        Mock Get-HelperSecretBytes { return , $script:SecretBytes }
+        Mock Resolve-WingetPath { return @{ Path = $script:StubExe; Why = ''; Verify = $false } }
+        Mock Send-SignedPost { throw (New-Object System.UnauthorizedAccessException('refused')) }
+        Mock Get-NowMilliseconds { return ([long]1790000001000) }
+        (Invoke-HelperMain) | Should -Be 4
+        Should -Invoke Send-SignedPost -Times 10 -Exactly
+        Should -Invoke Get-HelperSecretBytes -Times 2 -Exactly
+        Should -Invoke Show-HelperToast -Times 1 -Exactly -ParameterFilter { $Text -match 'pair again' }
+        (Get-Content -LiteralPath (Join-Path (Get-HelperDirectory) 'helper.log') -Raw) | Should -Match 'Polling has stopped'
+    }
+    It 'a refusal followed by an accepted poll starts the count again' {
+        $script:Calls = 0
+        Mock Test-Elevated { return $false }
+        Mock Start-Sleep { }
+        Mock Show-HelperToast { }
+        Mock Read-HelperConfig { return [pscustomobject]@{ actorId = 'user-1'; serverUrl = 'http://localhost:3010'; wingetPath = ''; useAlias = $false } }
+        Mock Get-HelperSecretBytes { return , $script:SecretBytes }
+        Mock Resolve-WingetPath { return @{ Path = $script:StubExe; Why = ''; Verify = $false } }
+        Mock Get-NowMilliseconds { return ([long]1790000001000) }
+        Mock Send-SignedPost {
+            $script:Calls++
+            if ($script:Calls % 5 -eq 0) { return [pscustomobject]@{ operations = @() } }
+            throw (New-Object System.UnauthorizedAccessException('refused'))
+        }
+        (Invoke-HelperMain -MaxCycles 30) | Should -Be 0
+        Should -Invoke Show-HelperToast -Times 0 -Exactly
+    }
+}
+
+Describe 'Stopping the old helper by its own record (B1)' {
+    BeforeEach {
+        $script:PidDir = Join-Path $script:Root ('pid-' + [guid]::NewGuid().ToString('N'))
+        New-Item -ItemType Directory -Force -Path $script:PidDir | Out-Null
+    }
+    It 'says none when there is no record' {
+        (Stop-HelperProcess -Directory $script:PidDir) | Should -Be 'none'
+    }
+    It 'ends the process the record names, when its start time matches' {
+        $p = Start-Process -FilePath 'powershell.exe' -ArgumentList '-NoProfile', '-Command', 'Start-Sleep -Seconds 120' -PassThru -WindowStyle Hidden
+        try {
+            Start-Sleep -Milliseconds 500
+            Set-Content -LiteralPath (Get-PidFile -Directory $script:PidDir) -Value ('{0} {1}' -f $p.Id, $p.StartTime.ToUniversalTime().Ticks) -Encoding ASCII
+            (Stop-HelperProcess -Directory $script:PidDir) | Should -Be 'stopped'
+            $p.Refresh()
+            $p.HasExited | Should -BeTrue
+        }
+        finally { if (-not $p.HasExited) { $p.Kill() } }
+    }
+    It 'leaves a process alone when the id was reused (start time differs)' {
+        $p = Start-Process -FilePath 'powershell.exe' -ArgumentList '-NoProfile', '-Command', 'Start-Sleep -Seconds 120' -PassThru -WindowStyle Hidden
+        try {
+            Start-Sleep -Milliseconds 500
+            Set-Content -LiteralPath (Get-PidFile -Directory $script:PidDir) -Value ('{0} {1}' -f $p.Id, 1) -Encoding ASCII
+            (Stop-HelperProcess -Directory $script:PidDir) | Should -Be 'other'
+            $p.Refresh()
+            $p.HasExited | Should -BeFalse
+        }
+        finally { if (-not $p.HasExited) { $p.Kill() } }
+    }
+    It 'ignores a record that is not two numbers' {
+        Set-Content -LiteralPath (Get-PidFile -Directory $script:PidDir) -Value 'notepad.exe' -Encoding ASCII
+        (Stop-HelperProcess -Directory $script:PidDir) | Should -Be 'none'
     }
 }
