@@ -20,6 +20,8 @@ Each version says what was and was not run live. "Run live" means run on a real 
 
 - The Windows helper and pairing, fixes from the independent reviews: the check of who signed winget now reads the certificate's own name (DER), not text, requires exactly one organisation equal to `Microsoft Corporation` with no trimming and the code-signing purpose, and is tested with real certificate objects; when the helper cannot write an operation's id to disk it refuses the operation and tells the server, and it does not start (log line and a toast) if its list of done operations is larger than 1 MiB or unreadable; the pairing code check no longer walks every remembered address on each try (a flood from 100,000 addresses took 56 seconds before; now each try cleans at most 8 entries); and setup prints the unsigned-alias warning on the screen and asks you to type a word before it goes on. Pester and server tests added; the Pester tests first run in CI.
 
+- Standing instructions for executors and reviewers are in the repository (`.claude/agents/executor-haiku.md`, `executor-sonnet.md`, `reviewer.md`), so every coordinating session finds the same ones; a brief adds only the task. A note, `docs/design/member-cli-isolation.md`, records that a team member's own Claude Code process starts in a private empty folder outside the checkout, with a test that guards it. Documents and a guard test only; no runtime change.
+
 ### Changed
 
 - First start: after Check again, the sentence that says Claude is not connected is drawn in coral, the coral of the wide approval card, instead of the problem red. Green when connected and grey while FreeDuet cannot tell are unchanged.

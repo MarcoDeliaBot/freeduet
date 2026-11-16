@@ -62,6 +62,8 @@ the hands"): plan, brief executors, verify with numbers, merge, report.
   file:line), the files the executor owns and must not touch, the tests that must fail before and pass
   after, and the report format. Executors open the PR and stop: they do not wait on CI. Stop an
   executor as soon as it has delivered.
+  The standing part of an executor's or a reviewer's instructions is in `.claude/agents/` (`executor-haiku`,
+  `executor-sonnet`, `reviewer`); a brief adds only the task-specific part.
 - **Parallel executors.** When several executors run at once, give each its own files: two executors
   must never own the same file.
 - **Haiku swarm (rule of 2026-11-15).** For humble work, send four to six Haiku executors at a time
