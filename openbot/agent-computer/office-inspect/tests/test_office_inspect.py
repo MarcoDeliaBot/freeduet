@@ -76,6 +76,23 @@ def sheet(cells, dim="A1:B3"):
     return f'<?xml version="1.0"?><worksheet xmlns="{S}"><dimension ref="{dim}"/><sheetData>{cells}</sheetData></worksheet>'
 
 
+def peak_rss_kb(path):
+    """Run the real program in a child process and return that child's own peak resident memory (KB),
+    read from /proc/self/status (VmHWM), which starts from zero at exec, unlike getrusage in a forked child."""
+    if not os.path.exists("/proc/self/status"):
+        pytest.skip("needs /proc")
+    code = (
+        "import importlib.util, sys\n"
+        f"s = importlib.util.spec_from_file_location('oi', {str(TOOL)!r})\n"
+        "m = importlib.util.module_from_spec(s); s.loader.exec_module(m)\n"
+        f"m.main(['x', {str(path)!r}])\n"
+        "hwm = [l for l in open('/proc/self/status') if l.startswith('VmHWM')][0].split()[1]\n"
+        "sys.stderr.write('PEAK=' + hwm)\n"
+    )
+    proc = subprocess.run([sys.executable, "-I", "-c", code], capture_output=True, text=True, timeout=120)
+    return int(re.search(r"PEAK=(\d+)", proc.stderr).group(1))
+
+
 def run(path):
     """Run the real command line, as the member's computer does, and return (exit code, JSON)."""
     proc = subprocess.run([sys.executable, "-I", str(TOOL), str(path)], capture_output=True, text=True, timeout=60)
@@ -254,14 +271,11 @@ def laughs():
 def test_an_xml_entity_bomb_is_refused_and_not_expanded(tmp_path):
     body = f'<?xml version="1.0"?>{laughs()}<worksheet xmlns="{S}"><sheetData><row r="1"><c r="A1" t="inlineStr"><is><t>&a9;</t></is></c></row></sheetData></worksheet>'
     f = make_zip(tmp_path / "lol.xlsx", xlsx_parts(body))
-    import resource
-
-    before = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
     with pytest.raises(oi.Refused) as caught:
         oi.inspect(str(f))
-    after = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
     assert caught.value.extra["reason_code"] == "xml_dtd"
-    assert after - before < 50_000  # kilobytes: a ten-level bomb would be gigabytes
+    # A ten-level bomb would be gigabytes if expanded; the child's own peak is what proves it was not.
+    assert peak_rss_kb(f) < 60_000
     code, out, _ = run(f)
     assert code == 3 and out["reason_code"] == "xml_dtd"
 
@@ -349,7 +363,7 @@ def test_an_encrypted_pdf_is_reported_and_not_opened(tmp_path):
 # ---- what the program itself may do -------------------------------------------------------------
 
 
-def test_the_program_imports_nothing_that_could_fetch_or_run_content():
+def test_our_code_calls_no_process_and_opens_no_socket():
     source = TOOL.read_text()
     imported = set(re.findall(r"^\s*(?:import|from)\s+([A-Za-z_][A-Za-z0-9_]*)", source, re.M))
     forbidden = {
@@ -415,3 +429,203 @@ def test_the_installed_toolkit_makes_files_that_the_inspector_reads(tmp_path):
     assert oi.inspect(str(tmp_path / "r.pdf"))["pdf"]["pages"] == 2
     with pdfplumber.open(tmp_path / "r.pdf") as pdf:
         assert "Total 42" in pdf.pages[0].extract_text()
+
+
+# ---- review of PR #311: found by an independent reviewer; each of these failed on the first version ----
+
+
+def zip_bytes(parts, stored=False):
+    buf = io.BytesIO()
+    with zipfile.ZipFile(buf, "w", zipfile.ZIP_STORED if stored else zipfile.ZIP_DEFLATED) as zf:
+        for name, data in parts.items():
+            zf.writestr(name, data)
+    return buf.getvalue()
+
+
+def test_a_macro_file_with_a_pdf_marker_in_its_first_bytes_is_not_a_pdf(tmp_path):
+    # The first stored entry holds %PDF-1.4: the old tool saw the marker in the first 1024 bytes, called
+    # the file a PDF and never looked at the macro project.
+    parts = {"a.txt": b"%PDF-1.4 not a pdf", **docx_parts({"word/vbaProject.bin": b"\x00"})}
+    f = tmp_path / "poly.docx"
+    f.write_bytes(zip_bytes(parts, stored=True))
+    assert f.read_bytes().find(b"%PDF-") < 1024
+    code, out, _ = run(f)
+    assert code == 3 and out["reason_code"] == "macros" and out["refused"] is True
+
+
+def test_a_file_that_is_a_pdf_and_a_zip_at_once_is_refused(tmp_path):
+    f = tmp_path / "both.pdf"
+    f.write_bytes(minimal_pdf(1) + zip_bytes(docx_parts({"word/vbaProject.bin": b"\x00"})))
+    code, out, _ = run(f)
+    assert code == 3 and out["reason_code"] == "polyglot"
+
+
+def test_a_pdf_marker_not_at_byte_zero_is_not_a_pdf(tmp_path):
+    f = tmp_path / "late.pdf"
+    f.write_bytes(b"junk\n" + minimal_pdf(1))
+    code, out, _ = run(f)
+    assert code == 3 and out["reason_code"] == "unknown_type"
+
+
+def test_a_very_long_formula_is_capped_not_scanned(tmp_path):
+    import time
+
+    import random
+
+    rng = random.Random(7)  # half pipes, half letters: dense in pipes (the old pattern's worst case), yet it does not compress like zeros
+    text = "".join(rng.choice("|a") for _ in range(60_000))
+    cells = '<row r="1"><c r="A1"><f>' + text + "</f></c></row>"
+    f = make_zip(tmp_path / "redos.xlsx", xlsx_parts(sheet(cells, "A1:A1")))
+    start = time.monotonic()
+    code, out, _ = run(f)
+    elapsed = time.monotonic() - start
+    s = out["xlsx"]["sheets"][0]
+    # Measured on the content: the formula is counted as over-long and never handed to a pattern. The
+    # old quadratic pattern took about 4 s on this input and 39 s on 300,000 characters.
+    assert code == 0 and s["overlong_formulas"] == 1 and s["formulas"] == 1
+    assert out["xlsx"]["formula_patterns_reported"] == {}
+    assert elapsed < 3
+
+
+def test_the_formula_patterns_are_linear_on_the_longest_formula_excel_allows():
+    import time
+
+    text = "|" * oi.MAX_FORMULA_CHARS
+    start = time.monotonic()
+    for _kind, pattern in oi.SUSPICIOUS_FORMULA:
+        pattern.search(text)
+    assert time.monotonic() - start < 0.5
+
+
+def corrupt_cases(tmp_path):
+    cases = {}
+    good = zip_bytes(docx_parts(), stored=True)
+    marker = good.find(b"<w:p>")
+    cases["badcrc"] = good[:marker] + b"<w:q>" + good[marker + 5 :]
+    body = "".join(f"<w:p><w:r><w:t>line {i}</w:t></w:r></w:p>" for i in range(400))
+    flate = bytearray(zip_bytes(docx_parts(body=body)))
+    at = flate.find(b"word/document.xml") + len("word/document.xml") + 30
+    for i in range(at, at + 40):
+        flate[i] ^= 0xFF
+    cases["badflate"] = bytes(flate)
+    m99 = bytearray(zip_bytes(docx_parts()))
+    for sig, off in ((b"PK\x03\x04", 8), (b"PK\x01\x02", 10)):
+        pos = 0
+        while (pos := m99.find(sig, pos)) != -1:
+            m99[pos + off : pos + off + 2] = b"\x63\x00"
+            pos += 4
+    cases["method99"] = bytes(m99)
+    cases["truncated_xml"] = zip_bytes(
+        {"[Content_Types].xml": DOCX_CT, "word/document.xml": f'<w:document xmlns:w="{W}"><w:body><w:p>'}
+    )
+    return cases
+
+
+@pytest.mark.parametrize("name", ["badcrc", "badflate", "method99", "truncated_xml"])
+def test_a_corrupt_archive_is_refused_as_json_with_no_traceback(tmp_path, name):
+    f = tmp_path / "c.docx"
+    f.write_bytes(corrupt_cases(tmp_path)[name])
+    code, out, err = run(f)
+    assert code == 3 and out["refused"] is True and out["reason_code"] == "corrupt"
+    assert "Traceback" not in err and "Traceback" not in json.dumps(out)
+
+
+def test_a_part_parsed_whole_is_capped_at_a_few_megabytes(tmp_path):
+    big = content_types("application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml")
+    big = big.replace("</Types>", '<Override PartName="/p" ContentType="x"/>' * 300_000 + "</Types>")
+    assert len(big) > 12_000_000
+    f = tmp_path / "ct.docx"
+    f.write_bytes(zip_bytes({"[Content_Types].xml": big, "word/document.xml": "<a/>"}, stored=True))
+    code, out, _ = run(f)
+    assert code == 3 and out["reason_code"] == "part_too_large"
+    assert peak_rss_kb(f) < 60_000
+
+
+def test_a_deeply_nested_part_is_refused_while_streaming(tmp_path):
+    depth = 300_000
+    body = f'<w:document xmlns:w="{W}"><w:body>' + "<w:p>" * depth + "</w:p>" * depth + "</w:body></w:document>"
+    f = tmp_path / "deep.docx"
+    f.write_bytes(zip_bytes({"[Content_Types].xml": DOCX_CT, "word/document.xml": body}, stored=True))
+    code, out, _ = run(f)
+    assert code == 3 and out["reason_code"] == "xml_too_deep"
+    assert peak_rss_kb(f) < 60_000
+
+
+def test_a_workbook_with_tens_of_thousands_of_sheets_lists_fifty_and_counts_the_rest(tmp_path):
+    sheets = "".join(f'<sheet name="s{i}" sheetId="{i}" r:id="rId{i}"/>' for i in range(60_000))
+    parts = xlsx_parts(sheet(""))
+    parts["xl/workbook.xml"] = f'<?xml version="1.0"?><workbook xmlns="{S}" xmlns:r="{R}"><sheets>{sheets}</sheets></workbook>'
+    f = make_zip(tmp_path / "many.xlsx", parts)
+    code, out, _ = run(f)
+    assert code == 0 and out["xlsx"]["sheet_count"] == 60_000
+    assert len(out["xlsx"]["sheets"]) == oi.MAX_SHEETS
+    assert out["xlsx"]["sheets_not_listed"] == 60_000 - oi.MAX_SHEETS
+    assert len(json.dumps(out)) < 100_000
+
+
+def test_many_one_megabyte_entries_of_zeros_are_refused_as_a_whole_and_one_by_one(tmp_path):
+    parts = docx_parts({f"word/media/{i}.bin": b"\x00" * (1024 * 1024) for i in range(190)})
+    f = make_zip(tmp_path / "floor.docx", parts)
+    assert f.stat().st_size < 400_000
+    code, out, _ = run(f)
+    assert code == 3 and out["reason_code"] == "zip_bomb_ratio"
+    single = make_zip(tmp_path / "one.docx", docx_parts({"word/media/z.bin": b"\x00" * (1024 * 1024)}))
+    code, out, _ = run(single)
+    assert code == 3 and out["reason_code"] == "zip_bomb_ratio"
+
+
+def test_a_big_repetitive_but_honest_sheet_is_still_read(tmp_path):
+    rows = "".join(f'<row r="{i}"><c r="A{i}"><v>{i % 7}</v></c><c r="B{i}"><f>A{i}*2</f></c></row>' for i in range(1, 20_001))
+    f = make_zip(tmp_path / "big.xlsx", xlsx_parts(sheet(rows, "A1:B20000")))
+    code, out, _ = run(f)
+    assert code == 0 and out["xlsx"]["formulas_total"] == 20_000
+
+
+def test_the_file_is_opened_once_and_never_looked_at_again_by_name(tmp_path, monkeypatch):
+    f = make_zip(tmp_path / "t.docx", docx_parts())
+    calls = {"open": 0, "lstat": 0, "zip_args": []}
+    real_open, real_lstat, real_zip = os.open, os.lstat, zipfile.ZipFile
+
+    def counting_open(*a, **k):
+        calls["open"] += 1
+        return real_open(*a, **k)
+
+    def counting_lstat(*a, **k):
+        calls["lstat"] += 1
+        return real_lstat(*a, **k)
+
+    def counting_zip(arg, *a, **k):
+        calls["zip_args"].append(type(arg).__name__)
+        return real_zip(arg, *a, **k)
+
+    monkeypatch.setattr(oi.os, "open", counting_open)
+    monkeypatch.setattr(oi.os, "lstat", counting_lstat)
+    monkeypatch.setattr(oi.zipfile, "ZipFile", counting_zip)
+    oi.inspect(str(f))
+    assert calls["open"] == 1 and calls["lstat"] == 0
+    assert "str" not in calls["zip_args"]
+
+
+def test_help_prints_the_usage_and_exits_zero():
+    proc = subprocess.run([sys.executable, "-I", str(TOOL), "--help"], capture_output=True, text=True)
+    assert proc.returncode == 0 and "usage: office-inspect" in proc.stdout
+
+
+def test_many_entries_each_under_the_per_entry_floor_are_refused_as_a_whole(tmp_path):
+    parts = docx_parts({f"word/media/{i}.bin": b"\x00" * 60_000 for i in range(120)})
+    f = make_zip(tmp_path / "small_many.docx", parts)
+    code, out, _ = run(f)
+    assert code == 3 and out["reason_code"] == "zip_bomb_ratio"
+
+
+def test_a_folder_named_like_a_file_is_refused_not_crashed(tmp_path):
+    d = tmp_path / "folder.docx"
+    d.mkdir()
+    code, out, err = run(d)
+    assert code == 3 and out["reason_code"] == "not_regular" and "Traceback" not in err
+
+
+def test_a_macros_folder_inside_the_archive_is_refused(tmp_path):
+    f = make_zip(tmp_path / "m.docx", docx_parts({"word/Macros/x.BIN": b"\x00"}))
+    code, out, _ = run(f)
+    assert code == 3 and out["reason_code"] == "macros"

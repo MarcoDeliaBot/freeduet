@@ -1,0 +1,4 @@
+#!/bin/sh
+# Runs a script with the office toolkit's Python. A wrapper and not a symbolic link: a link started from
+# another directory does not find the virtual environment's pyvenv.cfg and sees none of its packages.
+exec /opt/office/bin/python "$@"

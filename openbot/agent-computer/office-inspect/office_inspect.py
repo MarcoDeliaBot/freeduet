@@ -7,7 +7,9 @@ are present. It reports; it never runs, calculates or fetches anything.
 
 Hard rules this program keeps:
   * It never executes content: no macro, no formula, no script, no embedded object.
-  * It never fetches a URL and imports no network module (a test checks that).
+  * It never fetches a URL: our code calls no process and opens no socket, and imports no network module
+    (a test checks that). pypdf, which is only used to count a PDF's pages, loads more of the standard
+    library than we do; none of its network or process paths is reached by counting pages.
   * OOXML files are ZIP archives and are untrusted: the central directory is read first and the
     file is refused above the limits below, before any part is read. Nothing is extracted to disk.
   * XML is parsed only after a scan has shown that no part of the archive holds a DOCTYPE or an
@@ -15,10 +17,13 @@ Hard rules this program keeps:
   * Macro-enabled files (.docm, .xlsm, .pptm, or any archive holding a VBA project or an Excel 4
     macro sheet), .xlsb, and the old binary formats (.doc, .xls, .ppt) are refused with a sentence.
 
-Exit status: 0 inspected, 3 refused (the JSON says why), 2 usage or unreadable file.
+Exit status: 0 inspected, 3 refused (the JSON says why; a corrupt or hostile file is a refusal, never a
+traceback), 2 usage or unreadable file.
 Standard library only; pypdf is used for a PDF's page count when it is installed (the image has it).
 """
 
+import errno
+import io
 import json
 import os
 import re
@@ -32,10 +37,22 @@ MAX_FILE_BYTES = 100 * 1024 * 1024  # the computer's own download limit
 MAX_ENTRIES = 5000
 MAX_TOTAL_UNCOMPRESSED = 200 * 1024 * 1024
 MAX_ENTRY_UNCOMPRESSED = 100 * 1024 * 1024
-MAX_RATIO = 100  # uncompressed : compressed, per entry
-RATIO_FLOOR = 1024 * 1024  # the ratio rule applies to entries above 1 MiB; a small file may compress well
+# Compression ratios. Real Office files compress 3 to 20 times; a sheet of repeated cells can reach a few
+# dozen. 100 to 1 is already unusual, and a bomb is 1000 to 1 or more, so one threshold serves both rules.
+MAX_RATIO = 100  # uncompressed : compressed, per entry and for the archive as a whole
+RATIO_FLOOR = 64 * 1024  # below this an entry is too small to matter (a few KB of XML compresses well)
+ARCHIVE_RATIO_FLOOR = 4 * 1024 * 1024  # the whole-archive rule applies once the archive expands past this
+# A part that is parsed whole (content types, relationships, workbook, app properties, presentation) is
+# tiny in a real file (a few KB; a very large workbook's relationships are well under 1 MB). 5 MiB is
+# generous and keeps the tree this tool builds at tens of MB, where 78 MB of XML built 880 MB.
+MAX_WHOLE_PART = 5 * 1024 * 1024
+# Big parts (the document body, a sheet) are streamed and never kept; depth and element count are bounded.
+MAX_XML_DEPTH = 100
+MAX_XML_ELEMENTS = 4_000_000  # a sheet at the 1,000,000-cell limit has about 3 million; 4 million took 6 s to count
+MAX_FORMULA_CHARS = 8192  # Excel's own limit for a formula
 MAX_SHEETS = 50
 MAX_CELLS = 1_000_000
+MAX_OUTPUT_BYTES = 1024 * 1024
 MAX_SAMPLES = 10
 MAX_TEXT = 200
 
@@ -45,7 +62,10 @@ LIMITS = {
     "max_total_uncompressed_bytes": MAX_TOTAL_UNCOMPRESSED,
     "max_entry_uncompressed_bytes": MAX_ENTRY_UNCOMPRESSED,
     "max_entry_ratio": MAX_RATIO,
-    "max_sheets": MAX_SHEETS,
+    "max_whole_part_bytes": MAX_WHOLE_PART,
+    "max_xml_depth": MAX_XML_DEPTH,
+    "max_formula_chars_examined": MAX_FORMULA_CHARS,
+    "max_sheets_listed": MAX_SHEETS,
     "max_cells": MAX_CELLS,
 }
 
@@ -59,11 +79,23 @@ CONTENT_TYPES = {
     "presentationml.presentation.main+xml": "pptx",
 }
 
+class _Dde:
+    """A DDE call looks like cmd|'/c calc'!A1: a pipe, and a bang somewhere after it. Two plain string
+    searches, linear in the text, instead of a pattern that backtracks."""
+
+    @staticmethod
+    def search(text):
+        bar = text.find("|")
+        return bar >= 0 and text.find("!", bar + 1) >= 0
+
+
+# Every pattern is anchored on a function name and has no nested or unbounded repetition, so it runs in
+# linear time; the text it sees is also cut at MAX_FORMULA_CHARS by the caller.
 SUSPICIOUS_FORMULA = (
     ("webservice", re.compile(r"\bWEBSERVICE\s*\(", re.I)),
     ("hyperlink", re.compile(r"\bHYPERLINK\s*\(", re.I)),
     ("external_data", re.compile(r"\b(IMPORTXML|IMPORTDATA|IMPORTHTML|IMPORTRANGE|FILTERXML|RTD|CALL|REGISTER)\s*\(", re.I)),
-    ("dde", re.compile(r"\|[^!]*!")),
+    ("dde", _Dde),
 )
 
 
@@ -89,7 +121,7 @@ def local(tag):
 # ---- the archive -------------------------------------------------------------------------------
 
 
-def check_archive(zf):
+def check_archive(zf, file_size):
     """Refuse a hostile archive from its central directory alone, before any part is read."""
     infos = zf.infolist()
     if len(infos) > MAX_ENTRIES:
@@ -116,7 +148,7 @@ def check_archive(zf):
                 f"One part declares {size} bytes when opened; the limit is {MAX_ENTRY_UNCOMPRESSED}. It was not opened.",
                 reason_code="entry_too_large",
             )
-        if size > RATIO_FLOOR and size > MAX_RATIO * max(info.compress_size, 1):
+        if size >= RATIO_FLOOR and size > MAX_RATIO * max(info.compress_size, 1):
             raise Refused(
                 "One part expands more than 100 times its stored size, which is how a zip bomb is built. It was not opened.",
                 reason_code="zip_bomb_ratio",
@@ -127,6 +159,12 @@ def check_archive(zf):
                 f"This archive would expand to more than {MAX_TOTAL_UNCOMPRESSED} bytes. It was not opened.",
                 reason_code="archive_too_large",
             )
+    # The archive as a whole: many entries that each stay under the per-entry floor still add up.
+    if total > ARCHIVE_RATIO_FLOOR and total > MAX_RATIO * max(file_size, 1):
+        raise Refused(
+            "This archive expands more than 100 times the size of the file, which is how a zip bomb is built. It was not opened.",
+            reason_code="zip_bomb_ratio",
+        )
     return total
 
 
@@ -168,6 +206,13 @@ def read_part(zf, name):
         info = zf.getinfo(name)
     except KeyError:
         return None
+    if info.file_size > MAX_WHOLE_PART:
+        raise Refused(
+            f"The part {clean(name, 80)} is {info.file_size} bytes; a part of that kind is a few KB in a real file and "
+            f"the limit is {MAX_WHOLE_PART}. It was not opened.",
+            reason_code="part_too_large",
+            part=clean(name, 80),
+        )
     with zf.open(info) as handle:
         return handle.read(info.file_size + 1)
 
@@ -182,17 +227,39 @@ def parse_part(zf, name):
         return None
 
 
-def iter_part(zf, name, events=("end",)):
+def iter_part(zf, name, keep=()):
+    """Stream the 'end' events of a big part. Depth and element count are bounded, and each element is
+    removed from its parent once the caller has seen it (except children of a tag in `keep`, which the
+    caller still needs), so the tree this builds stays small however large the part is."""
+    stack = []
+    count = 0
     with zf.open(name) as handle:
-        for event, element in ET.iterparse(handle, events=events):
-            yield event, element
+        for event, element in ET.iterparse(handle, events=("start", "end")):
+            if event == "start":
+                stack.append(element)
+                count += 1
+                if len(stack) > MAX_XML_DEPTH:
+                    raise Refused(
+                        f"The part {clean(name, 80)} nests its elements more than {MAX_XML_DEPTH} levels deep. It was not read.",
+                        reason_code="xml_too_deep",
+                    )
+                if count > MAX_XML_ELEMENTS:
+                    raise Refused(
+                        f"The part {clean(name, 80)} has more than {MAX_XML_ELEMENTS} elements. It was not read.",
+                        reason_code="xml_too_many_elements",
+                    )
+            else:
+                stack.pop()
+                yield "end", element
+                if stack and local(stack[-1].tag) not in keep:
+                    stack[-1].remove(element)
 
 
 def macro_evidence(zf):
     found = []
     for info in zf.infolist():
         lowered = info.filename.lower()
-        if lowered.endswith("vbaproject.bin") or lowered.endswith("vbadata.xml") or "/macrosheets/" in lowered:
+        if lowered.endswith("vbaproject.bin") or lowered.endswith("vbadata.xml") or "/macrosheets/" in lowered or "/macros/" in lowered:
             found.append(clean(info.filename))
         elif lowered.startswith("xl/dialogsheets/"):
             found.append(clean(info.filename))
@@ -240,28 +307,31 @@ def external_links(zf):
 # ---- types -------------------------------------------------------------------------------------
 
 
-def detect(head, zf):
-    if b"%PDF-" in head[:1024]:
+def sniff(head):
+    """The family of a file from its first bytes. A file that starts like a ZIP is a ZIP, whatever else
+    its first kilobyte says; a PDF is recognised only at byte 0."""
+    if head[:4] in (b"PK\x03\x04", b"PK\x05\x06"):
+        return "zip"
+    if head.startswith(b"%PDF-"):
         return "pdf"
     if head.startswith(OLE_MAGIC):
         return "ole"
-    if head[:4] in (b"PK\x03\x04", b"PK\x05\x06"):
-        if zf is None:
-            return "zip"
-        ct = parse_part(zf, "[Content_Types].xml")
-        if ct is not None:
-            for element in ct:
-                value = (element.get("ContentType") or "").lower()
-                if "macroenabled" in value:
-                    return "macro"
-                for needle, kind in CONTENT_TYPES.items():
-                    if needle in value:
-                        return kind
-        names = {i.filename for i in zf.infolist()}
-        if "xl/workbook.bin" in names:
-            return "xlsb"
-        return "zip"
     return "unknown"
+
+
+def detect(zf):
+    ct = parse_part(zf, "[Content_Types].xml")
+    if ct is not None:
+        for element in ct:
+            value = (element.get("ContentType") or "").lower()
+            if "macroenabled" in value:
+                return "macro"
+            for needle, kind in CONTENT_TYPES.items():
+                if needle in value:
+                    return kind
+    if "xl/workbook.bin" in {i.filename for i in zf.infolist()}:
+        return "xlsb"
+    return "zip"
 
 
 def column_number(letters):
@@ -354,19 +424,23 @@ def inspect_xlsx(zf):
     if rels_root is not None:
         for rel in rels_root:
             rels[rel.get("Id")] = rel.get("Target") or ""
-    declared = []
+    declared = []  # the first MAX_SHEETS only; the rest are counted, never listed
+    declared_total = 0
     for element in workbook.iter():
         if local(element.tag) == "sheet":
-            rid = element.get("{http://schemas.openxmlformats.org/officeDocument/2006/relationships}id")
-            declared.append((clean(element.get("name") or "", 100), element.get("state") or "visible", rels.get(rid, "")))
+            declared_total += 1
+            if len(declared) < MAX_SHEETS:
+                rid = element.get("{http://schemas.openxmlformats.org/officeDocument/2006/relationships}id")
+                declared.append((clean(element.get("name") or "", 100), element.get("state") or "visible", rels.get(rid, "")))
     sheets = []
     cells_left = MAX_CELLS
     formulas_total = 0
+    overlong_total = 0
     suspicious = {name: 0 for name, _ in SUSPICIOUS_FORMULA}
     truncated = False
     for index, (name, state, target) in enumerate(declared):
         entry = {"name": name, "state": state}
-        if index >= MAX_SHEETS or cells_left <= 0:
+        if cells_left <= 0:
             entry["skipped"] = "sheet and cell limits reached"
             truncated = True
             sheets.append(entry)
@@ -376,12 +450,12 @@ def inspect_xlsx(zf):
             entry["skipped"] = "sheet part not found"
             sheets.append(entry)
             continue
-        formulas = no_value = nonempty = 0
+        formulas = no_value = nonempty = overlong = 0
         min_r = min_c = 10**9
         max_r = max_c = 0
         declared_dim = None
         cut = False
-        for event, element in iter_part(zf, part):
+        for event, element in iter_part(zf, part, keep=("c",)):
             tag = local(element.tag)
             if tag == "dimension":
                 declared_dim = clean(element.get("ref") or "", 40)
@@ -393,9 +467,12 @@ def inspect_xlsx(zf):
                         has_f = True
                         formulas += 1
                         text = child.text or ""
-                        for kind, pattern in SUSPICIOUS_FORMULA:
-                            if pattern.search(text):
-                                suspicious[kind] += 1
+                        if len(text) > MAX_FORMULA_CHARS:
+                            overlong += 1  # longer than Excel allows: counted, never handed to a pattern
+                        else:
+                            for kind, pattern in SUSPICIOUS_FORMULA:
+                                if pattern.search(text):
+                                    suspicious[kind] += 1
                     elif ctag in ("v", "is") and ((child.text or "").strip() or len(child)):
                         has_v = True
                 if has_f and not has_v:
@@ -413,6 +490,7 @@ def inspect_xlsx(zf):
                     cut = True
                     break
         formulas_total += formulas
+        overlong_total += overlong
         entry.update(
             {
                 "declared_dimension": declared_dim,
@@ -422,6 +500,7 @@ def inspect_xlsx(zf):
                 "non_empty_cells": nonempty,
                 "formulas": formulas,
                 "formulas_without_stored_value": no_value,
+                "overlong_formulas": overlong,
             }
         )
         if cut:
@@ -429,24 +508,26 @@ def inspect_xlsx(zf):
             truncated = True
         sheets.append(entry)
     return {
-        "sheet_count": len(declared),
+        "sheet_count": declared_total,
         "sheets": sheets,
+        "sheets_not_listed": max(0, declared_total - len(declared)),
         "formulas_total": formulas_total,
         "formulas_note": "Formulas are counted as text. Nothing here calculates them; a formula without a stored value shows as empty until a spreadsheet program calculates it.",
         "formula_patterns_reported": {k: v for k, v in suspicious.items() if v},
-        "truncated": truncated,
+        "overlong_formulas_total": overlong_total,
+        "truncated": truncated or declared_total > len(declared),
     }
 
 
-def inspect_ooxml(path, size, head, ext):
+def inspect_ooxml(handle, size):
     try:
-        zf = zipfile.ZipFile(path)
+        zf = zipfile.ZipFile(handle)
     except zipfile.BadZipFile:
         raise Refused("This file starts like a ZIP archive but is not a readable one.", reason_code="bad_zip")
     with zf:
-        total = check_archive(zf)
+        total = check_archive(zf, size)
         scan_for_dtd(zf)
-        kind = detect(head, zf)
+        kind = detect(zf)
         evidence = macro_evidence(zf)
         base = {"detected_type": kind, "size_bytes": size}
         if kind == "macro" or evidence:
@@ -492,9 +573,32 @@ PDF_TOKENS = (
 )
 
 
-def inspect_pdf(path, size):
-    with open(path, "rb") as handle:
-        data = handle.read(MAX_FILE_BYTES + 1)
+def zip_trailer_in(handle, size):
+    """True when the end of the file holds a ZIP end-of-central-directory record that fits the file
+    exactly: a file that is a PDF and a ZIP at once."""
+    span = min(size, 65535 + 22)
+    handle.seek(size - span)
+    tail = handle.read(span)
+    pos = tail.find(b"PK\x05\x06")
+    while pos != -1:
+        if pos + 22 <= len(tail):
+            comment = int.from_bytes(tail[pos + 20 : pos + 22], "little")
+            if pos + 22 + comment == len(tail):
+                return True
+        pos = tail.find(b"PK\x05\x06", pos + 1)
+    return False
+
+
+def inspect_pdf(handle, size):
+    if zip_trailer_in(handle, size):
+        raise Refused(
+            "This file is a PDF and a ZIP archive at once. That is how a file is made to look harmless to one reader "
+            "and different to another. It was not opened.",
+            reason_code="polyglot",
+            detected_type="pdf",
+        )
+    handle.seek(0)
+    data = handle.read(MAX_FILE_BYTES + 1)
     raw = {}
     for name, pattern in PDF_TOKENS:
         count = len(re.findall(pattern, data))
@@ -507,7 +611,7 @@ def inspect_pdf(path, size):
         try:
             import pypdf  # present in the member's computer image
 
-            reader = pypdf.PdfReader(path, strict=False)
+            reader = pypdf.PdfReader(io.BytesIO(data), strict=False)
             pages = len(reader.pages)
             method = "pypdf"
         except Exception:
@@ -529,19 +633,41 @@ def inspect_pdf(path, size):
 
 
 def inspect(path):
-    st = os.lstat(path)
-    if not stat.S_ISREG(st.st_mode):
-        raise Refused("This is not a regular file (a link, folder or device is not opened).", reason_code="not_regular")
-    size = st.st_size
-    ext = os.path.splitext(path)[1].lower()
+    """Open the file once, without following a link, and do everything through that one handle: the
+    name is never looked at again, so it cannot be swapped between the check and the read."""
+    flags = os.O_RDONLY | getattr(os, "O_NOFOLLOW", 0) | getattr(os, "O_NONBLOCK", 0)
+    try:
+        fd = os.open(path, flags)
+    except OSError as error:
+        if error.errno == errno.ELOOP:
+            raise Refused("This is not a regular file (a link, folder or device is not opened).", reason_code="not_regular")
+        raise
+    try:
+        st = os.fstat(fd)
+        if not stat.S_ISREG(st.st_mode):
+            os.close(fd)
+            raise Refused("This is not a regular file (a link, folder or device is not opened).", reason_code="not_regular")
+    except OSError:
+        os.close(fd)
+        raise
+    with os.fdopen(fd, "rb") as handle:
+        try:
+            return inspect_open(handle, st.st_size, os.path.splitext(path)[1].lower(), os.path.basename(path))
+        except Refused:
+            raise
+        except Exception as error:  # a hostile or damaged file must end as a refusal, never a traceback
+            raise Refused(
+                "This file is damaged or built to confuse a reader (" + clean(type(error).__name__, 40) + "). It was not opened.",
+                reason_code="corrupt",
+            )
+
+
+def inspect_open(handle, size, ext, base_name):
     if size > MAX_FILE_BYTES:
         raise Refused(f"This file is larger than {MAX_FILE_BYTES} bytes. It was not opened.", reason_code="file_too_large")
     if size == 0:
         raise Refused("This file is empty.", reason_code="empty")
-    flags = os.O_RDONLY | getattr(os, "O_NOFOLLOW", 0) | getattr(os, "O_NONBLOCK", 0)
-    fd = os.open(path, flags)
-    with os.fdopen(fd, "rb") as handle:
-        head = handle.read(4096)
+    head = handle.read(4096)
     if ext in MACRO_EXTENSIONS:
         raise Refused(
             f"The name ends in {ext}, a type that can carry macros. It is not opened or run. "
@@ -549,8 +675,8 @@ def inspect(path):
             reason_code="macro_extension",
             size_bytes=size,
         )
-    kind = detect(head, None)
-    if kind == "ole":
+    family = sniff(head)
+    if family == "ole":
         raise Refused(
             "This is an old binary Office file (.doc, .xls or .ppt). It can carry macros and is not read by the member's tools. "
             "Ask the person to open it and save a copy as .docx, .xlsx or .pptx.",
@@ -558,29 +684,33 @@ def inspect(path):
             detected_type="ole",
             size_bytes=size,
         )
-    if kind == "unknown":
+    if family == "unknown":
         raise Refused(
             "This is not a Word, Excel, PowerPoint or PDF file (the first bytes match none of them).",
             reason_code="unknown_type",
             size_bytes=size,
         )
-    if kind == "pdf":
-        result = {"detected_type": "pdf", "size_bytes": size, "pdf": inspect_pdf(path, size)}
+    if family == "pdf":
+        result = {"detected_type": "pdf", "size_bytes": size, "pdf": inspect_pdf(handle, size)}
     else:
-        result = inspect_ooxml(path, size, head, ext)
+        handle.seek(0)
+        result = inspect_ooxml(handle, size)
     detected = result["detected_type"]
     result["extension"] = ext
     result["extension_matches_content"] = ext == "." + detected
     if ext in LEGACY_EXTENSIONS:
         result["note"] = "The name says an old format but the content is " + detected + "."
-    result["file"] = clean(os.path.basename(path), 120)
+    result["file"] = clean(base_name, 120)
     result["limits"] = LIMITS
     result["refused"] = False
     return result
 
 
 def main(argv):
-    if len(argv) != 2 or argv[1] in ("-h", "--help"):
+    if len(argv) == 2 and argv[1] in ("-h", "--help"):
+        sys.stdout.write("usage: office-inspect <file.docx|.xlsx|.pptx|.pdf>\n")
+        return 0
+    if len(argv) != 2:
         sys.stderr.write("usage: office-inspect <file.docx|.xlsx|.pptx|.pdf>\n")
         return 2
     path = argv[1]
@@ -594,7 +724,13 @@ def main(argv):
     except (OSError, ValueError) as error:
         sys.stderr.write(f"office-inspect: cannot read the file: {clean(error)}\n")
         return 2
-    sys.stdout.write(json.dumps(result, indent=2, ensure_ascii=False) + "\n")
+    text = json.dumps(result, indent=2, ensure_ascii=False) + "\n"
+    if len(text) > MAX_OUTPUT_BYTES:
+        text = json.dumps(
+            {"refused": True, "reason": "The report would be larger than a member can use. The file was not reported.", "reason_code": "output_too_large"}
+        ) + "\n"
+        code = 3
+    sys.stdout.write(text)
     return code
 
 

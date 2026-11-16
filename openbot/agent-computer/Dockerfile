@@ -29,20 +29,27 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 # install anything when it runs (root with every capability dropped, no sudo). Every package is pinned to
 # an exact version and to its release files' hashes; `--no-deps` and `--only-binary` mean pip installs
 # exactly that list and builds nothing. The system `python3` is left alone: a member runs
-# `office-python script.py` for the toolkit. `office-inspect` is a stdlib-only program of ours that
-# reads a file and reports it; it runs with the same Python, in isolated mode. The reportlab wheel carries
-# one sample font (DarkGarden) under the GPL with a font exception; nothing uses it, and the rule is no
-# GPL in the image, so it is deleted after the install (reportlab still draws PDFs without it).
+# `office-python script.py` for the toolkit. `office-python` is a small wrapper script, not a symbolic
+# link (a link does not find the environment from another directory). `office-inspect` is a stdlib-only
+# program of ours that reads a file and reports it; it runs with the same Python, in isolated mode.
+# Files deleted after the install, because they are under a licence we do not carry: the reportlab wheel's
+# sample font DarkGarden (GPL with a font exception; nothing uses it) and two LGPL C header files in the
+# lxml wheel (build headers, not linked; nothing needs them at run time). The last step runs the tools
+# for real, so an image whose toolkit does not work fails to build.
 COPY agent-computer/office-requirements.txt /opt/office-requirements.txt
 RUN python3 -m venv /opt/office \
   && /opt/office/bin/pip install --no-cache-dir --require-hashes --no-deps --only-binary=:all: \
        --requirement /opt/office-requirements.txt \
   && find /opt/office -path '*/reportlab/fonts/DarkGarden*' -delete \
-  && ln -s /opt/office/bin/python /usr/local/bin/office-python \
+  && find /opt/office -path '*/lxml/includes/extlibs/*charset.h' -delete \
   && rm -rf /root/.cache
 COPY agent-computer/office-inspect/office_inspect.py /usr/local/lib/office-inspect/office_inspect.py
-COPY agent-computer/office-inspect/office-inspect /usr/local/bin/office-inspect
-RUN chmod 0755 /usr/local/bin/office-inspect
+COPY agent-computer/office-inspect/office-inspect agent-computer/office-inspect/office-python /usr/local/bin/
+RUN chmod 0755 /usr/local/bin/office-inspect /usr/local/bin/office-python \
+  && cd / \
+  && office-python -c "import docx, openpyxl, pptx, pypdf, reportlab, pdfplumber, defusedxml, lxml.etree; docx.Document().save('/tmp/office-smoke.docx')" \
+  && office-inspect /tmp/office-smoke.docx > /dev/null \
+  && rm -f /tmp/office-smoke.docx
 
 WORKDIR /app
 # The lockfile as well as the manifest: `--frozen-lockfile` with no lockfile present resolves afresh
