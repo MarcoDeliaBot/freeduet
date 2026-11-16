@@ -18,6 +18,34 @@
     <symbol id="i-db" viewBox="0 0 24 24"><ellipse cx="12" cy="6" rx="7.500" ry="3" stroke="currentColor" stroke-width="2" fill="none"/><path d="M4.500 6v6c0 1.700 3.400 3 7.500 3s7.500-1.300 7.500-3V6M4.500 12v6c0 1.700 3.400 3 7.500 3s7.500-1.300 7.500-3v-6" stroke="currentColor" stroke-width="2" fill="none"/></symbol>
     <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2.200" fill="none" stroke-linecap="round"/></symbol>
     <symbol id="logo" viewBox="0 0 40 40"><rect width="40" height="40" rx="10" fill="#0E1B33"/><circle cx="16" cy="20" r="7.5" fill="none" stroke="#fff" stroke-width="3"/><circle cx="24" cy="20" r="7.5" fill="none" stroke="#6C97FF" stroke-width="3"/></symbol>
+    <symbol id="i-arrow" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6" stroke="currentColor" stroke-width="2.2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-cursor" viewBox="0 0 24 24"><path d="M3 2l15 9-6.5 1.8 4 6.7-3 1.7-4-6.8L3 19z" fill="#0E1B33" stroke="#fff" stroke-width="1.5" stroke-linejoin="round"/></symbol>
+    <symbol id="i-pause" viewBox="0 0 24 24"><rect x="6" y="5" width="4" height="14" rx="1" fill="currentColor"/><rect x="14" y="5" width="4" height="14" rx="1" fill="currentColor"/></symbol>
+    <symbol id="i-play" viewBox="0 0 24 24"><path d="M7 5v14l12-7z" fill="currentColor"/></symbol>
+    <g id="how-art">
+      <rect x="1" y="1" width="458" height="338" rx="18" fill="#FFFFFF" stroke="#DDE3EC" stroke-width="1.5"/>
+      <g class="sa-dark"><rect x="14" y="22" width="262" height="58" rx="14" fill="#0E1B33"/><text class="sa-t" x="28" y="46" data-i="dg_req1">Reply to the plumber:</text><text class="sa-t" x="28" y="69" data-i="dg_req2">Tuesday is fine</text></g>
+      <g class="sa-ghost"><rect x="14" y="22" width="262" height="58" rx="14" fill="#E8EDF5"/><text class="sa-tg" x="28" y="46" data-i="dg_req1">Reply to the plumber:</text><text class="sa-tg" x="28" y="69" data-i="dg_req2">Tuesday is fine</text></g>
+      <path class="sa-path" d="M280 52 C 300 52, 304 56, 322 60" fill="none" stroke="#1B4FD8" stroke-width="2" stroke-dasharray="4 5"/>
+      <circle class="sa-comet" cx="280" cy="52" r="5" fill="#1B4FD8"/>
+      <use href="#m-iris" x="318" y="10" width="92" height="92"/>
+      <use href="#m-portia" x="18" y="150" width="62" height="62"/>
+      <use href="#m-vera" x="98" y="150" width="62" height="62"/>
+      <circle class="sa-pick" cx="231" cy="181" r="38" fill="none" stroke="#1B4FD8" stroke-width="2.4"/>
+      <use href="#m-penny" x="280" y="150" width="62" height="62"/>
+      <use href="#m-jules" x="360" y="150" width="62" height="62"/>
+      <rect x="14" y="238" width="432" height="88" rx="16" fill="#F6F8FB" stroke="#DDE3EC" stroke-width="1.5"/>
+      <g class="sa-otto"><use href="#m-otto" x="200" y="150" width="62" height="62"/></g>
+      <circle class="sa-arc-bg" cx="131" cy="285" r="30" fill="none" stroke="#E1EAFB" stroke-width="5"/>
+      <circle class="sa-arc-fg" cx="131" cy="285" r="30" fill="none" stroke="#1B4FD8" stroke-width="5" stroke-linecap="round" pathLength="100" stroke-dasharray="100" transform="rotate(-90 131 285)"/>
+      <g class="sa-card">
+        <rect x="200" y="252" width="246" height="66" rx="12" fill="#FFFFFF" stroke="#0E1B33" stroke-width="1.6"/>
+        <rect x="212" y="276" width="94" height="30" rx="9" fill="#0F7B58"/><text class="sa-btn-w" x="259" y="296" text-anchor="middle" data-i="yes">Approve</text>
+        <rect x="314" y="276" width="122" height="30" rx="9" fill="#FFFFFF" stroke="#C5CEDC" stroke-width="1.4"/><text class="sa-btn-k" x="375" y="296" text-anchor="middle" data-i="no">Don't do it</text>
+      </g>
+      <text class="sa-sent" x="200" y="236" data-i="dg_sent">Sent.</text>
+    </g>
+    <!--mascot-defs-->
   </defs>
 </svg>
 
@@ -38,14 +66,14 @@
 
 <main id="main">
 
-<section class="hero">
+<section class="hero" aria-labelledby="hero-h1">
   <div class="hero-fx" aria-hidden="true">
     <div class="orbs" data-par="lag:.1"><i class="orb o1"></i><i class="orb o2"></i><i class="orb o3"></i><i class="orb o4"></i><i class="orb o5"></i></div>
     <div class="mega" data-par="rise:.12">FreeDuet</div>
   </div>
-  <div class="wrap">
+  <div class="wrap hero-grid">
     <div class="hero-copy">
-      <h1 class="wd" data-d="100" data-i="h1">Your own team of AI assistants.</h1>
+      <h1 class="wd" id="hero-h1" data-d="100" data-i="h1">Your own team of AI assistants.</h1>
       <p class="lead rv" data-d="420" data-i="lead">FreeDuet runs on your own computer. One assistant handles your mail, one reads contracts, one books the restaurant. You say what you need, they do the work, and by default they <span class="mark">send, pay or delete nothing without your yes</span>.</p>
       <div class="cta rv" data-d="540">
         <a class="btn btn-main" href="https://github.com/MarcoDeliaBot/freeduet"><svg aria-hidden="true"><use href="#i-gh"/></svg><span data-i="cta1">Get FreeDuet on GitHub</span></a>
@@ -57,26 +85,69 @@
         <li><svg aria-hidden="true"><use href="#i-check"/></svg><span data-i="f3">Runs on your own computer</span></li>
       </ul>
     </div>
-    <figure class="appfig rv rv-panel" data-d="420">
-      <div class="appwin" role="group" aria-label="FreeDuet">
-        <div class="aw-bar"><i></i><i></i><i></i><span>FreeDuet</span><em data-i="demoTag">Demo with made-up examples</em></div>
-        <div class="aw-body">
-          <aside class="aw-side" aria-hidden="true">
-            <p class="aw-sh" data-i="appSide">Your team</p>
-            <ul id="side"></ul>
-          </aside>
-          <div class="aw-main">
-            <div class="aw-head" id="awHead" aria-hidden="true"></div>
-            <div class="chat" id="chat" aria-live="polite"></div>
-            <div class="tries">
-              <p data-i="tryP">Try another request:</p>
-              <div id="tries"></div>
-            </div>
-            <div class="aw-field" aria-hidden="true"><span data-i="appPh">Write what you need…</span><i><svg><use href="#b-send"/></svg></i></div>
+    <figure class="stage rv rv-panel" data-d="420">
+      <div class="bigiris" id="bigiris" data-s="idle" aria-hidden="true">
+        <svg viewBox="14 22 192 192" focusable="false">
+          <g class="wob">
+            <use href="#bubble"/>
+            <g class="bf-slot" data-faces></g>
+            <circle class="prog" cx="110" cy="120" r="94" fill="none" stroke="#1B4FD8" stroke-width="4" stroke-linecap="round" transform="rotate(-90 110 120)"/>
+          </g>
+          <use href="#m-headset"/>
+        </svg>
+      </div>
+      <div class="stage-plate">
+        <div class="appwin" id="appwin">
+          <div class="aw-bar">
+            <i></i><i></i><i></i>
+            <span class="aw-title">FreeDuet</span>
+            <span class="aw-tag" data-i="demoTag">Demo with made-up examples</span>
+            <button type="button" class="pause" id="pause" hidden><svg class="ic-pause" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-pause"/></svg><svg class="ic-play" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-play"/></svg><span class="sr" id="lbl-pause" data-i="pauseDemo">Pause the demo</span><span class="sr" id="lbl-play" hidden data-i="playDemo">Play the demo</span></button>
           </div>
+          <div class="aw-body">
+            <aside class="aw-side" aria-hidden="true">
+              <p class="aw-sh" data-i="appSide">Your team</p>
+              <ul class="roster" id="roster">
+                <li id="r-iris" class="is-on"><span class="ava"><svg class="mas" data-mascot="iris" viewBox="0 0 220 220" aria-hidden="true" focusable="false"></svg></span><span class="rn"><b>Iris</b><small data-f="team.iris.0">runs the team</small></span></li>
+                <li id="r-otto"><span class="ava"><svg class="mas" data-mascot="otto" viewBox="0 0 220 220" aria-hidden="true" focusable="false"></svg><i class="dot"></i></span><span class="rn"><b>Otto</b><small data-f="team.otto.0">mail</small><small class="st" data-f="lm.otto">Reply drafted. Not sent yet.</small></span></li>
+                <li id="r-portia"><span class="ava"><svg class="mas" data-mascot="portia" viewBox="0 0 220 220" aria-hidden="true" focusable="false"></svg></span><span class="rn"><b>Portia</b><small data-f="team.portia.0">contracts</small></span></li>
+                <li id="r-penny"><span class="ava"><svg class="mas" data-mascot="penny" viewBox="0 0 220 220" aria-hidden="true" focusable="false"></svg></span><span class="rn"><b>Penny</b><small data-f="team.penny.0">invoices</small></span></li>
+                <li id="r-jules"><span class="ava"><svg class="mas" data-mascot="jules" viewBox="0 0 220 220" aria-hidden="true" focusable="false"></svg></span><span class="rn"><b>Jules</b><small data-f="team.jules.0">errands</small></span></li>
+                <li id="r-wren"><span class="ava"><svg class="mas" data-mascot="wren" viewBox="0 0 220 220" aria-hidden="true" focusable="false"></svg></span><span class="rn"><b>Wren</b><small data-f="team.wren.0">writing</small></span></li>
+                <li id="r-vera"><span class="ava"><svg class="mas" data-mascot="vera" viewBox="0 0 220 220" aria-hidden="true" focusable="false"></svg></span><span class="rn"><b>Vera</b><small data-f="team.vera.0">checking</small></span></li>
+              </ul>
+              <p class="roster-more" data-i="flowMore">…and Gus, Basil, Mark, Cam and Leo</p>
+            </aside>
+            <div class="aw-main">
+              <div class="chat" id="chat" aria-live="polite">
+                <div class="msg me" id="u-a"><div class="bub" data-f="demo.0.me">Reply to the plumber's email: Tuesday at 9 is fine.</div></div>
+                <div class="msg" id="i-a"><svg class="mas" data-mascot="iris" viewBox="0 0 220 220" aria-hidden="true" focusable="false"></svg><div class="bub"><span class="who">Iris</span><span class="dots" aria-hidden="true"><i></i><i></i><i></i></span><span class="txt" data-f="demo.0.iris">On it. This is a job for Otto.</span></div></div>
+                <div class="msg" id="h-a"><svg class="mas av" data-mascot="otto" viewBox="0 0 220 220" aria-hidden="true" focusable="false"></svg><div class="bub"><span class="who">Otto</span><span class="dots" aria-hidden="true"><i></i><i></i><i></i></span><span class="txt" data-f="demo.0.line">I found his email and wrote the reply. I won't send it until you say so.</span></div></div>
+                <div class="ask" id="c-a">
+                  <div class="ask-main">
+                    <p class="ask-t"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="#i-hand"/></svg><span class="t-w" data-i="ask">Waiting for your yes</span><span class="t-ok" hidden data-f="demo.0.ok">Sent. One reply, in the same conversation. Nothing else was touched.</span><span class="t-no" hidden data-f="demo.0.stop">Not sent. The draft is saved if you change your mind.</span></p>
+                    <dl><dt data-f="demo.0.card.0.0">Action</dt><dd data-f="demo.0.card.0.1">Send a reply</dd><dt data-f="demo.0.card.1.0">To</dt><dd data-f="demo.0.card.1.1">the plumber (same conversation)</dd><dt data-f="demo.0.card.2.0">Text</dt><dd data-f="demo.0.card.2.1">Good morning, Tuesday at 9 works for me. Thank you!</dd></dl>
+                  </div>
+                  <div class="ask-btns" aria-hidden="true"><span class="sim yes"><svg class="ck" viewBox="0 0 24 24"><use href="#i-check"/></svg><span data-i="yes">Approve</span></span><span class="sim" data-i="no">Don't do it</span></div>
+                </div>
+                <div class="msg me" id="u-b" hidden><div class="bub" data-f="demo.1.me">Book a table for four on Friday evening, somewhere with pizza.</div></div>
+                <div class="msg" id="i-b" hidden><svg class="mas" data-mascot="iris" viewBox="0 0 220 220" aria-hidden="true" focusable="false"></svg><div class="bub"><span class="who">Iris</span><span class="dots" aria-hidden="true"><i></i><i></i><i></i></span><span class="txt" data-f="demo.1.iris">Got it. Jules handles bookings.</span></div></div>
+                <div class="msg" id="h-b" hidden><svg class="mas av" data-mascot="jules" viewBox="0 0 220 220" aria-hidden="true" focusable="false"></svg><div class="bub"><span class="who">Jules</span><span class="dots" aria-hidden="true"><i></i><i></i><i></i></span><span class="txt" data-f="demo.1.line">I looked in my own browser and found a free table. I haven't booked anything yet.</span></div></div>
+                <div class="ask" id="c-b" hidden>
+                  <div class="ask-main">
+                    <p class="ask-t"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="#i-hand"/></svg><span class="t-w" data-i="ask">Waiting for your yes</span><span class="t-ok" hidden data-f="demo.1.ok">Booked for Friday at 8:00 pm, 4 people. The confirmation is in your inbox.</span><span class="t-no" hidden data-f="demo.1.stop">Nothing booked. Tell me if you want other places.</span></p>
+                    <dl><dt data-f="demo.1.card.0.0">Action</dt><dd data-f="demo.1.card.0.1">Book a table</dd><dt data-f="demo.1.card.1.0">Where</dt><dd data-f="demo.1.card.1.1">Pizzeria Example</dd><dt data-f="demo.1.card.2.0">When</dt><dd data-f="demo.1.card.2.1">Friday, 8:00 pm, 4 people</dd></dl>
+                  </div>
+                  <div class="ask-btns" aria-hidden="true"><span class="sim yes"><svg class="ck" viewBox="0 0 24 24"><use href="#i-check"/></svg><span data-i="yes">Approve</span></span><span class="sim" data-i="no">Don't do it</span></div>
+                </div>
+              </div>
+              <div class="field" id="field" aria-hidden="true"><span class="typed" id="typed"></span><span class="ph" id="ph" data-i="appPh">Write what you need…</span><span class="send"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="#b-send"/></svg></span></div>
+            </div>
+          </div>
+          <div class="ptr" id="ptr" aria-hidden="true"><svg viewBox="0 0 24 24" focusable="false"><use href="#i-cursor"/></svg></div>
         </div>
       </div>
-      <figcaption class="aw-cap" data-i="appCap">An illustrated example, not a recording of a real session. Every name and message in it is made up.</figcaption>
+      <figcaption class="cap" data-i="appCap">An illustrated example, not a recording of a real session. Every name and message in it is made up.</figcaption>
     </figure>
   </div>
 </section>
@@ -138,90 +209,184 @@
   </div>
 </section>
 
-<section class="sec alt" id="how">
-  <div class="wrap">
-    <div class="head">
-      <h2 class="wd" data-i="h_h">What happens after you press Enter</h2>
-      <p class="lead rv" data-i="h_p">No magic and no secrets. Five steps, always the same, so you always know who is doing what.</p>
-    </div>
-    <div class="split">
-      <ol class="steps">
-        <li class="rv"><div><h3 data-i="s1h">You write what you need</h3><p data-i="s1p">In your own words and your own language, like a message to a friend.</p></div></li>
-        <li class="rv"><div><h3 data-i="s2h">Iris picks the right assistant</h3><p data-i="s2p">She reads your request and hands it to the specialist for that job.</p></div></li>
-        <li class="rv"><div><h3 data-i="s3h">The assistant works at its own desk</h3><p data-i="s3p">It uses its own browser to search, read and prepare. It treats what it reads as information, never as orders.</p></div></li>
-        <li class="rv"><div><h3 data-i="s4h">A card asks for your yes</h3><p data-i="s4p">By default, if the job needs a big button (send, pay, sign, book, delete), everything stops and waits for you.</p></div></li>
-        <li class="rv"><div><h3 data-i="s5h">You get a short report</h3><p data-i="s5p">What was done, what was not done and why, and what the next step is. No walls of text.</p></div></li>
-      </ol>
-      <svg class="flow rv rv-panel" viewBox="0 0 520 330" role="img" aria-labelledby="flowT"><title id="flowT" data-i="flowAlt">You talk to Iris, Iris hands work to the specialists, Vera checks it, the answer comes back to you</title>
-        <path class="wire" d="M260 58v40"/><path class="wire" d="M260 146v40M70 186h380M70 186v34M165 186v34M260 186v34M355 186v34M450 186v34"/><path class="wire" d="M330 122h60"/>
-        <rect x="205" y="18" width="110" height="40" rx="20" fill="#0E1B33"/><text x="260" y="44" text-anchor="middle" font-size="16" style="fill:#fff" data-i="you">You</text>
-        <rect x="190" y="98" width="140" height="48" rx="10" fill="#1B4FD8"/><text x="260" y="128" text-anchor="middle" font-size="17" style="fill:#fff">Iris</text>
-        <rect x="390" y="100" width="100" height="44" rx="10" fill="#fff" stroke="#DDE3EC"/><circle cx="408" cy="122" r="5" fill="#5C6B80"/><text x="420" y="127" font-size="15">Vera</text>
-        <rect x="26" y="220" width="88" height="44" rx="10" fill="#fff" stroke="#DDE3EC"/><circle cx="42" cy="242" r="5" fill="#E8590C"/><text x="54" y="247" font-size="15">Otto</text><rect x="121" y="220" width="88" height="44" rx="10" fill="#fff" stroke="#DDE3EC"/><circle cx="137" cy="242" r="5" fill="#0E7C86"/><text x="149" y="247" font-size="15">Portia</text><rect x="216" y="220" width="88" height="44" rx="10" fill="#fff" stroke="#DDE3EC"/><circle cx="232" cy="242" r="5" fill="#C99100"/><text x="244" y="247" font-size="15">Penny</text><rect x="311" y="220" width="88" height="44" rx="10" fill="#fff" stroke="#DDE3EC"/><circle cx="327" cy="242" r="5" fill="#C2255C"/><text x="339" y="247" font-size="15">Jules</text><rect x="406" y="220" width="88" height="44" rx="10" fill="#fff" stroke="#DDE3EC"/><circle cx="422" cy="242" r="5" fill="#2B8A3E"/><text x="434" y="247" font-size="15">Wren</text>
-        <text x="260" y="302" text-anchor="middle" font-size="14" style="fill:#52607A;font-weight:400" data-i="flowMore">…and Gus, Basil, Mark, Cam and Leo</text>
-      </svg>
+<section class="sec alt how" id="how" aria-labelledby="how-h">
+  <div class="track">
+    <span class="jump" id="how-step-1" style="--n:0" aria-hidden="true"></span>
+    <span class="jump" id="how-step-2" style="--n:1" aria-hidden="true"></span>
+    <span class="jump" id="how-step-3" style="--n:2" aria-hidden="true"></span>
+    <span class="jump" id="how-step-4" style="--n:3" aria-hidden="true"></span>
+    <span class="jump" id="how-step-5" style="--n:4" aria-hidden="true"></span>
+    <div class="pin">
+      <div class="wrap pin-grid">
+        <nav class="rail">
+          <span class="rail-line" aria-hidden="true"></span>
+          <a href="#how-step-1" style="--k:0"><span class="sr" data-i="s1h">You write what you need</span></a>
+          <a href="#how-step-2" style="--k:1"><span class="sr" data-i="s2h">Iris picks the right assistant</span></a>
+          <a href="#how-step-3" style="--k:2"><span class="sr" data-i="s3h">The assistant works at its own desk</span></a>
+          <a href="#how-step-4" style="--k:3"><span class="sr" data-i="s4h">A card asks for your yes</span></a>
+          <a href="#how-step-5" style="--k:4"><span class="sr" data-i="s5h">You get a short report</span></a>
+        </nav>
+        <div class="how-copy">
+          <h2 class="wd" id="how-h" data-i="h_h">What happens after you press Enter</h2>
+          <p class="lead" data-i="h_p">No magic and no secrets. Five steps, always the same, so you always know who is doing what.</p>
+          <ol class="steps">
+            <li style="--i:0"><div class="sbody"><svg class="frame" viewBox="0 0 460 340" aria-hidden="true" focusable="false" style="--s:0"><use href="#how-art"/></svg><h3 data-i="s1h">You write what you need</h3><p data-i="s1p">In your own words and your own language, like a message to a friend.</p></div></li>
+            <li style="--i:1"><div class="sbody"><svg class="frame" viewBox="0 0 460 340" aria-hidden="true" focusable="false" style="--s:1"><use href="#how-art"/></svg><h3 data-i="s2h">Iris picks the right assistant</h3><p data-i="s2p">She reads your request and hands it to the specialist for that job.</p></div></li>
+            <li style="--i:2"><div class="sbody"><svg class="frame" viewBox="0 0 460 340" aria-hidden="true" focusable="false" style="--s:2"><use href="#how-art"/></svg><h3 data-i="s3h">The assistant works at its own desk</h3><p data-i="s3p">It uses its own browser to search, read and prepare. It treats what it reads as information, never as orders.</p></div></li>
+            <li style="--i:3"><div class="sbody"><svg class="frame" viewBox="0 0 460 340" aria-hidden="true" focusable="false" style="--s:3"><use href="#how-art"/></svg><h3 data-i="s4h">A card asks for your yes</h3><p data-i="s4p">By default, if the job needs a big button (send, pay, sign, book, delete), everything stops and waits for you.</p></div></li>
+            <li style="--i:4"><div class="sbody"><svg class="frame" viewBox="0 0 460 340" aria-hidden="true" focusable="false" style="--s:4"><use href="#how-art"/></svg><h3 data-i="s5h">You get a short report</h3><p data-i="s5p">What was done, what was not done and why, and what the next step is. No walls of text.</p></div></li>
+          </ol>
+        </div>
+        <div class="stage-wrap"><svg class="stage-svg" viewBox="0 0 460 340" aria-hidden="true" focusable="false"><use href="#how-art"/></svg></div>
+      </div>
     </div>
   </div>
 </section>
 
-<section class="sec" id="features">
+<section class="sec" id="features" aria-labelledby="ft-h">
   <div class="wrap">
     <div class="head">
-      <h2 class="wd" data-i="ft_h">Six things worth knowing</h2>
+      <h2 class="wd" id="ft-h" data-i="ft_h">Six things worth knowing</h2>
       <p class="lead rv" data-i="ft_p">Each small picture shows a real part of FreeDuet. The names and messages in them are made up.</p>
     </div>
-    <div class="fgrid">
-      <article class="fc rv">
-        <div class="mini m-br" aria-hidden="true">
-          <div class="bw"><div class="bwb"><i></i><i></i><i></i><span class="bt" data-i="you">You</span></div><div class="bwc"><span class="ln"></span><span class="ln"></span><span class="ln sh"></span></div></div>
-          <div class="bw on"><div class="bwb"><i></i><i></i><i></i><span class="bt">Jules</span></div><div class="bwc"><span class="ln"></span><span class="ln sh"></span><span class="ln go"></span>
-            <svg class="cur" viewBox="0 0 24 24"><path d="M3 2l15 9-6.500 1.800 4 6.700-3 1.700-4-6.800L3 19z" fill="#0E1B33" stroke="#fff" stroke-width="1.500" stroke-linejoin="round"/></svg></div></div>
+    <div class="bento">
+      <article class="pane p-approval rv" aria-labelledby="h-approval">
+        <div class="phead"><span class="tag tag-ok" data-i="tagRel">Released in v0.2.1</span><h3 id="h-approval" data-i="fe2h">Five buttons wait for your yes</h3></div>
+        <p data-i="bA_p">By default they ask before they send, pay, sign, book or delete anything.</p>
+        <div class="mail" id="mail">
+          <b data-i="apTitle">Send this email?</b>
+          <dl><dt data-f="demo.0.card.1.0">To</dt><dd data-f="demo.0.card.1.1">the plumber (same conversation)</dd><dt data-f="demo.0.card.2.0">Text</dt><dd data-f="demo.0.card.2.1">Good morning, Tuesday at 9 works for me. Thank you!</dd></dl>
+          <div class="mail-actions" id="mail-actions">
+            <button class="btn btn-yes" type="button" data-a="ok"><span data-i="yes">Approve</span></button>
+            <button class="btn" type="button" data-a="stop"><span data-i="no">Don't do it</span></button>
+          </div>
+          <p class="state" role="status"><span class="st-w" data-i="ask">Waiting for your yes</span><span class="st-ok" hidden data-f="demo.0.ok">Sent.</span><span class="st-no" hidden data-f="demo.0.stop">Not sent.</span></p>
+          <button class="btn reset" type="button" id="mail-reset" hidden data-i="again">Start again</button>
         </div>
-        <h3 data-i="fe1h">Its own desk and its own browser</h3>
-        <p data-i="fe1p">Each assistant works in a separate browser, away from yours. It can look things up, fill in forms and prepare drafts while you get on with your day.</p>
+        <ul class="acts">
+          <li class="current" id="act-send"><svg aria-hidden="true"><use href="#b-send"/></svg><span data-i="b1">Send</span></li>
+          <li><svg aria-hidden="true"><use href="#b-pay"/></svg><span data-i="b2">Pay</span></li>
+          <li><svg aria-hidden="true"><use href="#b-sign"/></svg><span data-i="b3">Sign</span></li>
+          <li><svg aria-hidden="true"><use href="#b-book"/></svg><span data-i="b4">Book</span></li>
+          <li><svg aria-hidden="true"><use href="#b-del"/></svg><span data-i="b5">Delete</span></li>
+        </ul>
+        <p class="caption" data-i="bA_cap">Demo with made-up examples. The live run of 15 November 2026 included 38 safety cases, which try to make a member break a rule.</p>
       </article>
-      <article class="fc rv">
-        <div class="mini m-ap" aria-hidden="true">
-          <div class="five"><svg class="hot"><use href="#b-send"/></svg><svg><use href="#b-pay"/></svg><svg><use href="#b-sign"/></svg><svg><use href="#b-book"/></svg><svg><use href="#b-del"/></svg></div>
-          <div class="apc"><b data-i="apTitle">Send this email?</b><span class="ln"></span><span class="ln sh"></span><div class="row"><span class="y" data-i="yes">Approve</span><span class="n" data-i="no">Don't do it</span></div></div>
-        </div>
-        <h3 data-i="fe2h">Five buttons wait for your yes</h3>
-        <p data-i="fe2p">By default, send, pay, sign, book and delete wait for your Approve. The program itself blocks them. A switch that lifts this for one member, which only you can turn on, is built, not yet run live.</p>
+
+      <article class="pane p-roster rv" aria-labelledby="h-roster">
+        <div class="phead"><span class="tag tag-ok" data-i="tagRel">Released in v0.2.1</span><h3 id="h-roster" data-i="bR_h">Twelve members, one job each</h3></div>
+        <ul class="roster-b">
+          <li><svg class="mas av" data-mascot="iris" viewBox="0 0 220 220" aria-hidden="true" focusable="false"></svg><b>Iris</b><small data-f="team.iris.0">runs the team</small></li>
+          <li><svg class="mas av" data-mascot="leo" viewBox="0 0 220 220" aria-hidden="true" focusable="false"></svg><b>Leo</b><small data-f="team.leo.0">builds new assistants</small></li>
+          <li><svg class="mas av" data-mascot="otto" viewBox="0 0 220 220" aria-hidden="true" focusable="false"></svg><b>Otto</b><small data-f="team.otto.0">mail</small></li>
+          <li><svg class="mas av" data-mascot="portia" viewBox="0 0 220 220" aria-hidden="true" focusable="false"></svg><b>Portia</b><small data-f="team.portia.0">contracts</small></li>
+          <li><svg class="mas av" data-mascot="penny" viewBox="0 0 220 220" aria-hidden="true" focusable="false"></svg><b>Penny</b><small data-f="team.penny.0">invoices</small></li>
+          <li><svg class="mas av" data-mascot="jules" viewBox="0 0 220 220" aria-hidden="true" focusable="false"></svg><b>Jules</b><small data-f="team.jules.0">errands</small></li>
+          <li><svg class="mas av" data-mascot="wren" viewBox="0 0 220 220" aria-hidden="true" focusable="false"></svg><b>Wren</b><small data-f="team.wren.0">writing</small></li>
+          <li><svg class="mas av" data-mascot="gus" viewBox="0 0 220 220" aria-hidden="true" focusable="false"></svg><b>Gus</b><small data-f="team.gus.0">repairs</small></li>
+          <li><svg class="mas av" data-mascot="basil" viewBox="0 0 220 220" aria-hidden="true" focusable="false"></svg><b>Basil</b><small data-f="team.basil.0">cooking</small></li>
+          <li><svg class="mas av" data-mascot="vera" viewBox="0 0 220 220" aria-hidden="true" focusable="false"></svg><b>Vera</b><small data-f="team.vera.0">checking</small></li>
+          <li><svg class="mas av" data-mascot="mark" viewBox="0 0 220 220" aria-hidden="true" focusable="false"></svg><b>Mark</b><small data-f="team.mark.0">marketing</small></li>
+          <li><svg class="mas av" data-mascot="video" viewBox="0 0 220 220" aria-hidden="true" focusable="false"></svg><b>Cam</b><small data-f="team.video.0">video</small></li>
+        </ul>
+        <p class="caption" data-i="bR_cap">Mark and Cam were added after v0.1. Their cases ran in the live evals of 15 November 2026. A full certification run has not been repeated on this version.</p>
       </article>
-      <article class="fc rv">
-        <div class="mini m-rt" aria-hidden="true">
-          <div class="wk" id="wk"><span></span><span class="d">M</span><span class="d">T</span><span class="d">W</span><span class="d">T</span><span class="d">F</span><span class="d">S</span><span class="d">S</span>
-            <span class="tm">08:30</span><i class="a"></i><i class="a"></i><i class="a"></i><i class="a"></i><i class="a"></i><i class="a"></i><i class="a"></i>
-            <span class="tm">17:00</span><i></i><i></i><i></i><i></i><i class="b"></i><i></i><i></i></div>
-          <ul class="lg"><li><i class="a"></i><span data-i="rt1">Morning summary</span></li><li><i class="b"></i><span data-i="rt2">Weekly check</span></li></ul>
-        </div>
-        <h3 data-i="fe3h">Routines on a schedule</h3>
-        <p data-i="fe3p">A routine repeats on a schedule, like a summary every morning. Iris starts with one already. A routine that needs one of the five buttons asks you first; that rule is built, not yet run live.</p>
+
+      <article class="pane p-handoff rv" aria-labelledby="h-handoff">
+        <div class="phead"><span class="tag tag-wait" data-i="tagWait">Built, not yet run live</span><h3 id="h-handoff" data-i="bH_h">A hand-off with a done-when line</h3></div>
+        <div class="hl"><svg class="mas av" data-mascot="iris" viewBox="0 0 220 220" aria-hidden="true" focusable="false"></svg><div class="bub"><b data-i="bH_from">Iris to Otto</b><span data-i="bH_msg">Otto, sort the mail and draft the replies that matter.</span></div></div>
+        <div class="done"><b data-i="bH_dw">Done when</b><span data-i="bH_dwv">every message that needs a reply has a draft you can read, and nothing is sent.</span></div>
+        <p class="caption" data-i="bH_cap">Iris writes the done-when line, and the answer that comes back is checked against it. A job that needs your yes still asks.</p>
       </article>
-      <article class="fc rv">
-        <div class="mini m-si" aria-hidden="true">
-          <div class="sp"><svg><use href="#i-lock"/></svg><b>Claude Code</b><span class="ok"><svg><use href="#i-check"/></svg><span data-i="signedIn">Signed in</span></span></div>
-          <div class="sp off"><b>API key</b><span data-i="notNeeded">Not needed</span></div>
+
+      <article class="pane p-routine rv" aria-labelledby="h-routine">
+        <div class="phead"><span class="tag tag-wait" data-i="tagWait">Built, not yet run live</span><h3 id="h-routine" data-i="fe3h">Routines on a schedule</h3></div>
+        <p data-i="fe3p">A routine repeats on a schedule, like a summary every morning. Iris starts with one already. A routine that needs one of the five buttons asks you first.</p>
+        <div class="rt" id="routine">
+          <div class="rt-top">
+            <span class="rt-name" data-i="rt1">Morning summary</span>
+            <button class="pause" type="button" id="rt-btn"><span id="rt-pause-l" data-i="pauseBtn">Pause</span><span id="rt-resume-l" hidden data-i="resumeBtn">Resume</span></button>
+          </div>
+          <div class="wk" id="wk"><span class="d">M</span><span class="d">T</span><span class="d">W</span><span class="d">T</span><span class="d">F</span><span class="d">S</span><span class="d">S</span></div>
+          <p class="rt-state" role="status"><span id="rt-run" data-i="rt_state">Runs every morning. Next run: tomorrow morning.</span><span id="rt-off" hidden data-i="rt_paused">Paused. It will not run until you resume it.</span></p>
         </div>
-        <h3 data-i="fe4h">Your plan, no API key</h3>
-        <p data-i="fe4p">FreeDuet runs on the Claude subscription you already pay for. You sign in yourself through the official Claude Code app, and there is no key to buy or paste.</p>
+        <p class="caption" data-i="bT_cap">The card shows what the routine will do and when it runs next.</p>
       </article>
-      <article class="fc rv">
-        <div class="mini m-pc" aria-hidden="true">
-          <div class="pcbox"><span class="pctag"><svg><use href="#i-lock"/></svg><span data-i="yourPc">Your computer</span></span>
-            <div class="chips"><span><svg><use href="#i-folder"/></svg>FreeDuet</span><span><svg><use href="#i-db"/></svg><span data-i="convs">Conversations</span></span></div></div>
-          <div class="out"><i></i><span data-i="aiSvc">AI service you signed in to</span></div>
-        </div>
-        <h3 data-i="fe5h">Your conversations stay on your computer</h3>
+
+      <article class="pane p-computer rv" aria-labelledby="h-computer">
+        <div class="phead"><span class="tag tag-ok" data-i="rl_today">Today</span><h3 id="h-computer" data-i="fe5h">Your conversations stay on your computer</h3></div>
+        <figure class="machine">
+          <svg viewBox="0 0 300 180" aria-hidden="true" focusable="false">
+            <rect x="30" y="8" width="240" height="140" rx="14" fill="#FFFFFF" stroke="#0E1B33" stroke-width="2.4"/>
+            <rect x="42" y="20" width="216" height="116" rx="8" fill="#F6F8FB" stroke="#DDE3EC" stroke-width="1.5"/>
+            <use href="#m-iris" x="50" y="26" width="34" height="34"/><use href="#m-leo" x="90" y="26" width="34" height="34"/><use href="#m-otto" x="130" y="26" width="34" height="34"/><use href="#m-portia" x="170" y="26" width="34" height="34"/><use href="#m-penny" x="210" y="26" width="34" height="34"/><use href="#m-jules" x="50" y="78" width="34" height="34"/>
+            <use href="#m-wren" x="90" y="78" width="34" height="34"/><use href="#m-gus" x="130" y="78" width="34" height="34"/><use href="#m-basil" x="170" y="78" width="34" height="34"/><use href="#m-vera" x="210" y="78" width="34" height="34"/><use href="#m-mark" x="90" y="128" width="34" height="34"/><use href="#m-video" x="170" y="128" width="34" height="34"/>
+            <path d="M134 148H166L172 166H128Z" fill="#DDE3EC" stroke="#0E1B33" stroke-width="2"/>
+            <rect x="104" y="166" width="92" height="8" rx="4" fill="#0E1B33"/>
+          </svg>
+          <figcaption data-i="yourPc">Your computer</figcaption>
+        </figure>
+        <p class="outside"><span><svg aria-hidden="true"><use href="#i-arrow"/></svg><span data-i="aiSvc">AI service you signed in to</span></span></p>
         <p data-i="fe5p">The app, its database and the assistants' browsers run on your computer, and the conversations are stored there. To think, the assistants use the AI service you signed in to.</p>
       </article>
-      <article class="fc rv">
-        <div class="mini m-tm" aria-hidden="true">
-          <ul><li><span data-av="iris"></span><b>Iris</b></li><li><span data-av="mark"></span><b>Mark</b></li><li><span data-av="leo"></span><b>Leo</b></li><li class="new"><i><svg><use href="#i-plus"/></svg></i><span data-i="newMem">New member</span></li></ul>
-        </div>
-        <h3 data-i="fe6h">A team that grows</h3>
-        <p data-i="fe6p">Start with the ready-made team. Ask Leo to build a new one for the job you need. Renaming members and changing how they talk is built, not yet run live. New ready-made members arrive over time.</p>
+
+      <article class="pane p-update rv" aria-labelledby="h-update">
+        <div class="phead"><span class="tag tag-ok" data-i="tagRel">Released in v0.2.1</span><h3 id="h-update" data-i="bU_h">Updates that can go back</h3></div>
+        <ol class="steps-u">
+          <li><b data-i="bU1h">Copies your data</b><span data-i="bU1p">first, into a folder outside the project</span></li>
+          <li><b data-i="bU2h">Updates FreeDuet</b><span data-i="bU2p">with one command, and nothing updates without it</span></li>
+          <li><b data-i="bU3h">Checks the app</b><span data-i="bU3p">that it answers after the update</span></li>
+          <li class="back"><b data-i="bU4h">Goes back by itself</b><span data-i="bU4p">if the app does not answer, the version and the data you had before come back. Not yet run live on a real installation.</span></li>
+        </ol>
+        <ul class="keep">
+          <li data-i="bU_k1">The copy stays on your computer.</li>
+          <li data-i="bU_k2">Nothing is updated without your command.</li>
+          <li data-i="bU_k3">The update ran four times on a real installation on 15 November 2026, each time with a database backup taken first.</li>
+        </ul>
+        <p class="caption" data-i="bU_cap">Run live on one installation on 15 November 2026: the update, not yet the go-back.</p>
       </article>
+    </div>
+  </div>
+</section>
+
+<section class="sec pf" id="proof" aria-labelledby="pf-h">
+  <div class="wrap">
+    <div class="head">
+      <h2 class="wd" id="pf-h" data-i="pf_h">Proof you can check</h2>
+      <p class="lead rv" data-i="pf_p">We try to fool our own assistants on purpose. The assistants can still make mistakes, so read what they prepare before you approve it.</p>
+    </div>
+    <div class="pf-grid">
+      <figure class="evidence rv">
+        <div class="ev-grid" aria-hidden="true">
+          <i style="--i:0"></i><i style="--i:1"></i><i style="--i:2"></i><i style="--i:3"></i><i style="--i:4"></i><i style="--i:5"></i><i style="--i:6"></i><i style="--i:7"></i><i style="--i:8"></i>
+          <i style="--i:9"></i><i style="--i:10"></i><i style="--i:11"></i><i style="--i:12"></i><i style="--i:13"></i><i style="--i:14"></i><i style="--i:15"></i><i style="--i:16"></i><i style="--i:17"></i>
+          <i style="--i:18"></i><i style="--i:19"></i><i style="--i:20"></i><i style="--i:21"></i><i style="--i:22"></i><i style="--i:23"></i><i style="--i:24"></i><i style="--i:25"></i><i style="--i:26"></i>
+          <i style="--i:27"></i><i style="--i:28"></i><i style="--i:29"></i><i style="--i:30"></i><i style="--i:31"></i><i style="--i:32"></i><i style="--i:33"></i><i style="--i:34"></i><i style="--i:35"></i>
+          <i style="--i:36"></i><i style="--i:37"></i><i style="--i:38"></i><i style="--i:39"></i><i style="--i:40"></i><i style="--i:41"></i><i style="--i:42"></i><i style="--i:43"></i><i style="--i:44"></i>
+        </div>
+        <figcaption>
+          <p class="ev-count" data-i="ev_count">45 of 45 safety runs passed at v0.1</p>
+          <p class="ev-note" data-i="ev_note">One cell per safety run.</p>
+          <p class="check"><a href="https://github.com/MarcoDeliaBot/freeduet/blob/main/evals/team/reports/2026-11-13-claude-code-regraded-2026-11-13-public.md" data-i="ev_check">Check it: evals/team/reports/2026-11-13-claude-code-regraded-2026-11-13-public.md</a></p>
+        </figcaption>
+      </figure>
+      <div class="claims">
+        <article class="claim rv" aria-labelledby="c1h">
+          <h3 id="c1h" data-i="c1h">Certified at v0.1</h3>
+          <p data-i="c1p">Each member at 100% of its scored cases, and the safety cases 45 of 45 runs. The bar is 90% or better for each member and 100% for safety cases.</p>
+          <p class="check"><a href="https://github.com/MarcoDeliaBot/freeduet/blob/main/docs/ROADMAP.md" data-i="c_chk1">Check it: docs/ROADMAP.md and evals/team/README.md</a></p>
+        </article>
+        <article class="claim rv" aria-labelledby="c2h">
+          <h3 id="c2h" data-i="c2h">A first run that failed, then fixes</h3>
+          <p data-i="c2p">The first full run of that night failed on one member, with a browser fault and then a turn that ended in silence. Both were fixed, and the certified run came after the fixes.</p>
+          <p class="check"><a href="https://github.com/MarcoDeliaBot/freeduet/blob/main/README.md#what-is-tested-and-what-is-not" data-i="c_chk2">Check it: README.md, "What is tested and what is not"</a></p>
+        </article>
+        <article class="claim rv" aria-labelledby="c3h">
+          <h3 id="c3h" data-i="c3h">One live run since v0.1</h3>
+          <p data-i="c3p">On 15 November 2026 the team evals ran live on v0.2.1: 84 cases, 38 of them safety cases. 66 of 73 scored cases passed and 11 were skipped. That run did not meet the thresholds. Mark and Cam ran in it too.</p>
+          <p class="check"><a href="https://github.com/MarcoDeliaBot/freeduet/blob/main/docs/ROADMAP.md" data-i="c_chk3">Check it: docs/ROADMAP.md</a></p>
+        </article>
+      </div>
     </div>
   </div>
 </section>
@@ -288,8 +453,9 @@
     <h3 class="road-h rv" data-i="r_h">What works today, and what is coming</h3>
     <ol class="road rv">
       <li><b data-i="rl_today">Today</b><span class="tag" data-i="r_now">Out now</span><p data-i="r1">The team on your own Claude login, with approvals, tests, Gmail and Google Calendar.</p></li>
-      <li><b data-i="rl_now">Now</b><span class="tag" data-i="r_prog">In progress</span><p data-i="r2">Top priority: a one-file installer for Windows, macOS and Ubuntu. Today there are first-step scripts for Ubuntu and for Windows through WSL2, and no double-click installer yet. A mail assistant that tidies your mailbox is in progress too. Built, not yet run live: "Done when" on every hand-off, the routine's card in the chat, a token for each member's computer, and home network connections that close when you switch it off.</p></li>
-      <li><b data-i="rl_now">Now</b><span class="tag" data-i="r_plan">Planned</span><p data-i="r_now2">First start in three clicks: one button connects your Claude plan, and you sign in on Claude's own page. Three steps at most for anything you do yourself. Updates that can go back: one command copies your data first, and puts the old version and data back if the app does not answer. One line with Undo after every team change. A team proposed at your first message, and nothing is created without your yes.</p></li>
+      <li><b data-i="rl_now">Now</b><span class="tag" data-i="r_prog">In progress</span><p data-i="r2">Top priority: a one-file installer for Windows, macOS and Ubuntu. Today there are first-step scripts for Ubuntu and for Windows through WSL2, and no double-click installer yet. A mail assistant that tidies your mailbox is built: on 15 November 2026 Otto moved spam to the Spam folder of a real mailbox, and the other changes are not yet run live. Built, not yet run live: "Done when" on every hand-off, the routine's card in the chat, a token for each member's computer, and home network connections that close when you switch it off.</p></li>
+      <li><b data-i="rl_now">Now</b><span class="tag" data-i="r_plan">Planned</span><p data-i="r_now2">First start in three clicks: one button will connect your Claude plan, and you will sign in on Claude's own page.</p></li>
+      <li><b data-i="rl_now">Now</b><span class="tag tag-wait" data-i="tagWait">Built, not yet run live</span><p data-i="r_now3">Three steps at most for connecting a Gmail mailbox from the chat. One line with Undo after a member is added in the chat. A team proposed at your first message, with nothing created without your yes. Updates that can go back: one command copies your data first, and the update ran four times on one installation on 15 November 2026. The step that puts the old version and data back has not run live yet.</p></li>
       <li><b data-i="rl_next">Next</b><span class="tag" data-i="r_prog">In progress</span><p data-i="r3">Engines chosen per member are in progress: the Engines page is built, not yet run live, and the automatic switch has only run with test engines. Settings changed in chat, with Undo, are in progress. A member's name, tone and language are built after v0.2, not yet run live, and no test has run on tone or language yet. Real delegation is planned.</p><p data-i="r4">Automations written in chat, a phone version and remote access are in progress. More connected apps are in design.</p></li>
       <li><b data-i="rl_later">Later</b><span class="tag" data-i="r_plan">Planned</span><p data-i="r_cloud">A hosted FreeDuet for people who prefer not to install is planned, for a small monthly subscription. The price is not set yet. There, Claude would work with your own API key, not a Claude plan sign-in. Not before the installer and the first start are done. On your own computer, FreeDuet stays free.</p><p data-i="r5">Voice: read aloud is built, not yet run live, and off by default; calls are not built yet. Full access and Cam are built, not yet run live. Safe purchases are planned.</p></li>
     </ol>
@@ -324,7 +490,7 @@
       </li>
       <li class="rv">
         <div class="pnl brw" aria-hidden="true"><div class="tbar"><i></i><i></i><i></i><span class="url">http://localhost:3010</span></div>
-          <div class="bd"><div class="msg me"><div class="bub" data-i="in4ex">What can I cook tonight with spinach and eggs?</div></div><div class="msg"><span data-av="iris"></span><div class="bub"><span class="typing"><i></i><i></i><i></i></span></div></div></div></div>
+          <div class="bd"><div class="msg me"><div class="bub" data-i="in4ex">What can I cook tonight with spinach and eggs?</div></div><div class="msg"><svg class="mas av" data-mascot="iris" viewBox="0 0 220 220" aria-hidden="true" focusable="false"></svg><div class="bub"><span class="typing"><i></i><i></i><i></i></span></div></div></div></div>
         <h3 data-i="in4h">Open the page and give Iris a small task</h3>
         <p data-i="in4p">Go to localhost:3010 in your browser and write one small request. Iris picks the right assistant and brings you the answer.</p>
       </li>

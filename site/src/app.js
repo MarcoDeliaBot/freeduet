@@ -1,44 +1,7 @@
-/* Runs inside the wrapper that tools/build.py writes into every page. The wrapper defines GH (the repository URL),
-   M (the members, from members.json) and D (this page's demo strings). The page arrives complete in its own language:
-   the team, the side list, the chips and the first demo state are already in the HTML. This script only adds behaviour. */
-var byId={};M.forEach(function(m){byId[m[0]]=m;});
-function av(id){var m=byId[id],solid=id==="iris";
- return '<svg class="av" viewBox="0 0 44 44" aria-hidden="true"><rect width="44" height="44" rx="11" fill="'+m[2]+'"'+(solid?'':' fill-opacity=".13"')+'/><svg x="10" y="10" width="24" height="24" viewBox="0 0 24 24"><path d="'+m[4]+'" stroke="'+(solid?"#fff":m[2])+'" stroke-width="1.9" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></svg>';}
-
-var lang=document.documentElement.lang||"en",cur=0,timers=[];
-var reduce=window.matchMedia&&window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-function esc(s){return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;");}
-
-function side(id,state){
- Array.prototype.forEach.call(document.querySelectorAll("#side .sm"),function(li){li.classList.remove("wait","ok");});
- var li=id&&state?document.querySelector('#side .sm[data-m="'+id+'"]'):null;if(li)li.classList.add(state);
-}
-
-var chat=document.getElementById("chat"),tries=document.getElementById("tries");
-function bubble(id,name,text){return '<div class="msg">'+av(id)+'<div class="bub"><span class="who">'+name+'</span>'+esc(text)+'</div></div>';}
-function mine(text){return '<div class="msg me"><div class="bub">'+esc(text)+'</div></div>';}
-function askCard(s){var rows="";s.card.forEach(function(r){rows+="<dt>"+esc(r[0])+"</dt><dd>"+esc(r[1])+"</dd>";});
- return '<div class="card-ask" id="ask"><p class="ask-title"><svg aria-hidden="true"><use href="#i-hand"/></svg>'+esc(D.ask)+'</p><dl>'+rows+'</dl><div class="row"><button type="button" class="yes" data-a="ok">'+esc(D.yes)+'</button><button type="button" class="no" data-a="stop">'+esc(D.no)+'</button></div></div>';}
-function doneRow(kind,text){return '<div class="done '+kind+'"><svg aria-hidden="true"><use href="#'+(kind==="ok"?"i-check":"i-hand")+'"/></svg><span>'+esc(text)+'</span></div>';}
-function parts(s){var m=byId[s.who],p=[mine(s.me),bubble("iris","Iris",s.iris),bubble(s.who,m[1],s.line)];
- p.push(s.card?askCard(s):doneRow("stop",D.nothing));return p;}
-function clearT(){timers.forEach(clearTimeout);timers=[];}
-function show(i,animate){
- clearT();cur=i;var s=D.demo[i],p=parts(s);
- side(s.who,s.card?"wait":"");
- Array.prototype.forEach.call(tries.children,function(b,k){b.setAttribute("aria-pressed",k===i?"true":"false");});
- if(!animate||reduce){chat.innerHTML=p.join("");return;}
- chat.innerHTML=p[0];var step=1;
- (function next(){
-  if(step>=p.length)return;
-  var isBub=step<3;
-  if(isBub){var who=step===1?"iris":s.who;chat.insertAdjacentHTML("beforeend",'<div class="msg" id="typ">'+av(who)+'<div class="bub"><span class="typing"><i></i><i></i><i></i></span></div></div>');}
-  timers.push(setTimeout(function(){var t=document.getElementById("typ");if(t)t.remove();chat.insertAdjacentHTML("beforeend",p[step]);step++;timers.push(setTimeout(next,350));},isBub?900:300));
- })();
-}
-tries.addEventListener("click",function(e){var b=e.target.closest("button");if(b)show(+b.getAttribute("data-s"),true);});
-chat.addEventListener("click",function(e){var b=e.target.closest("button[data-a]");if(!b)return;var a=b.getAttribute("data-a"),s=D.demo[cur],c=document.getElementById("ask");
- if(c){c.outerHTML=doneRow(a==="ok"?"ok":"stop",s[a]);side(s.who,a==="ok"?"ok":"");}});
+/* Runs inside the wrapper that tools/build.py writes into every page. The wrapper defines GH (the repository URL) and
+   D (the strings of the copy button). Every text and picture is already in the HTML in its own language: this script
+   only adds behaviour (the hero replay, the scroll story, the buttons of the feature panes, reveal, links). */
+var lang=document.documentElement.lang||"en";
 
 /* ---------- motion: reveal on scroll, word-by-word headings, light parallax, capsule shadow ---------- */
 var root=document.documentElement;
@@ -192,4 +155,190 @@ cp.addEventListener("click",function(){
    try{sessionStorage.setItem("fd-stars",JSON.stringify({n:n,t:Date.now()}));}catch(x){}
   }).catch(function(){});
  }catch(x){}
+})();
+
+/* ---------- the hero: a replay of two requests. It changes classes and reads text that the page already holds ---------- */
+(function(){
+ var win=document.getElementById("appwin"),big=document.getElementById("bigiris"),ptr=document.getElementById("ptr");
+ var chat=document.getElementById("chat"),typed=document.getElementById("typed"),ph=document.getElementById("ph");
+ var pause=document.getElementById("pause"),lblP=document.getElementById("lbl-pause"),lblPl=document.getElementById("lbl-play");
+ if(!win||!big||!ptr||!chat)return;
+ var rd=reduced(),timers=[],aimT=null,running=false,userStopped=false;
+ function $(id){return document.getElementById(id);}
+ function later(ms,fn){timers.push(setTimeout(fn,ms));}
+ function setState(s){big.setAttribute("data-s",s);}
+ function roster(id,cls){var li=$("r-"+id);if(!li)return;li.classList.remove("is-on","is-wait");if(cls)li.classList.add(cls);}
+ function rosterReset(){["otto","portia","penny","jules","wren","vera"].forEach(function(id){roster(id,"");});roster("iris","is-on");}
+ function aim(){
+  var b=big.getBoundingClientRect(),p=ptr.getBoundingClientRect(),svg=big.querySelector("svg");
+  if(!b.width||!p.width||!svg)return;
+  var dx=(p.left+p.width/2-(b.left+b.width/2))/b.width,dy=(p.top+p.height/2-(b.top+b.height/2))/b.height;
+  svg.style.setProperty("--px",Math.max(-3.4,Math.min(3.4,dx*12)).toFixed(2)+"px");
+  svg.style.setProperty("--py",Math.max(-3.4,Math.min(3.4,dy*12)).toFixed(2)+"px");
+ }
+ function moveTo(el){
+  var w=win.getBoundingClientRect(),e=el.getBoundingClientRect();
+  ptr.style.transform="translate("+(e.left-w.left+e.width*0.4).toFixed(1)+"px,"+(e.top-w.top+e.height*0.5).toFixed(1)+"px)";
+ }
+ function ids(n){return n?{u:"u-b",i:"i-b",h:"h-b",c:"c-b"}:{u:"u-a",i:"i-a",h:"h-a",c:"c-a"};}
+ function bubbleText(msg){var b=msg&&msg.querySelector(".bub");return b?b.textContent:"";}
+ function txtOf(msg){var t=msg&&msg.querySelector(".txt");return t?t.textContent:"";}
+ function setShown(el,on){if(el)el.hidden=!on;}
+ function resetStory(n){
+  var o=ids(n),c=$(o.c),tw=c&&c.querySelector(".t-w"),tok=c&&c.querySelector(".t-ok"),tno=c&&c.querySelector(".t-no");
+  setShown($(o.u),false);setShown($(o.i),false);setShown($(o.h),false);setShown(c,false);
+  if(c)c.classList.remove("is-ok");
+  if(tw)tw.hidden=false;if(tok)tok.hidden=true;if(tno)tno.hidden=true;
+  Array.prototype.forEach.call(document.querySelectorAll("#i-"+(n?"a":"b")+",#h-"+(n?"a":"b")+",#u-"+(n?"a":"b")),function(el){el.hidden=true;});
+  rosterReset();setState("idle");
+  if(typed)typed.textContent="";
+  if(ph)ph.hidden=false;
+ }
+ function playStory(n){
+  var o=ids(n),u=$(o.u),i=$(o.i),h=$(o.h),c=$(o.c),yes=c&&c.querySelector(".sim.yes"),tw=c&&c.querySelector(".t-w"),tok=c&&c.querySelector(".t-ok");
+  var req=bubbleText(u),t=0,s=0;
+  if(!req)return;
+  resetStory(n);
+  if(ph)ph.hidden=true;
+  setState("listen");
+  (function type(){
+   s++;
+   if(typed)typed.textContent=req.slice(0,s);
+   if(s<req.length){later(38,type);return;}
+   later(380,function(){
+    if(typed)typed.textContent="";if(ph)ph.hidden=false;
+    setShown(u,true);setState("think");
+    later(420,function(){
+     setShown(i,true);i.querySelector(".bub").classList.add("is-typing");
+     later(900,function(){i.querySelector(".bub").classList.remove("is-typing");});
+     later(1500,function(){
+      roster("otto","is-on");setState("work");
+      setShown(h,true);h.querySelector(".bub").classList.add("is-typing");
+      later(900,function(){h.querySelector(".bub").classList.remove("is-typing");});
+      later(1400,function(){
+       setShown(c,true);roster("otto","is-wait");setState("ask");
+       later(900,function(){if(yes)moveTo(yes);});
+       later(1900,function(){ptr.classList.add("press");later(180,function(){ptr.classList.remove("press");});});
+       later(2100,function(){
+        if(c)c.classList.add("is-ok");if(tw)tw.hidden=true;if(tok)tok.hidden=false;
+        roster("otto","is-on");setState("done");
+       });
+       later(4600,function(){
+        if(chat)chat.classList.add("is-fading");
+        later(700,function(){
+         if(chat)chat.classList.remove("is-fading");
+         if(n===0)playStory(1);else playStory(0);
+        });
+       });
+      });
+     });
+    });
+   });
+  })();
+ }
+ function start(){
+  if(rd||running)return;
+  running=true;userStopped=false;
+  win.classList.remove("is-paused");
+  if(lblP)lblP.hidden=false;if(lblPl)lblPl.hidden=true;
+  if(!aimT)aimT=setInterval(aim,90);
+  playStory(0);
+ }
+ function halt(){
+  timers.forEach(clearTimeout);timers=[];
+  if(aimT){clearInterval(aimT);aimT=null;}
+  running=false;win.classList.add("is-paused");
+  if(lblP)lblP.hidden=true;if(lblPl)lblPl.hidden=false;
+ }
+ if(rd){
+  /* reduced motion: the page shows the finished first request and no replay */
+  var a=$("c-a");
+  if(a){setShown($("u-a"),true);setShown($("i-a"),true);setShown($("h-a"),true);setShown(a,true);a.classList.add("is-ok");
+   var tw=a.querySelector(".t-w"),tok=a.querySelector(".t-ok");if(tw)tw.hidden=true;if(tok)tok.hidden=false;}
+  setShown($("u-b"),false);setShown($("i-b"),false);setShown($("h-b"),false);setShown($("c-b"),false);
+  setState("done");
+  return;
+ }
+ if(pause){
+  pause.hidden=false;
+  pause.addEventListener("click",function(){userStopped=running;if(running)halt();else start();});
+ }
+ if("IntersectionObserver" in window){
+  new IntersectionObserver(function(es){
+   es.forEach(function(e){
+    if(e.isIntersecting){if(!running&&!userStopped)start();}
+    else if(running)halt();
+   });
+  },{threshold:.2}).observe(win);
+ }
+})();
+
+/* ---------- the scroll story: one diagram that moves with the scroll; the steps follow it ----------
+   It runs from 821 px up and without reduced motion; below that the page shows the static frames of the steps. */
+(function(){
+ var how=document.getElementById("how");
+ if(!how||reduced())return;
+ var track=how.querySelector(".track"),pin=how.querySelector(".pin");
+ var steps=how.querySelectorAll(".steps li"),links=how.querySelectorAll(".rail a");
+ if(!track||!pin)return;
+ var wide=window.matchMedia?window.matchMedia("(min-width:821px) and (min-height:740px)"):null;
+ var cur=-1,ticking=false;
+ function set(){
+  ticking=false;
+  if(!how.classList.contains("is-live"))return;
+  var r=track.getBoundingClientRect(),span=track.offsetHeight-window.innerHeight;
+  var p=span>0?Math.min(1,Math.max(0,-r.top/span)):0,s=p*4;
+  pin.style.setProperty("--s",s.toFixed(3));
+  var idx=Math.round(s);
+  if(idx!==cur){
+   cur=idx;
+   Array.prototype.forEach.call(steps,function(li,k){li.classList.toggle("on",k===idx);});
+   Array.prototype.forEach.call(links,function(a,k){if(k===idx)a.setAttribute("aria-current","step");else a.removeAttribute("aria-current");});
+  }
+ }
+ function tick(){if(!ticking){ticking=true;requestAnimationFrame(set);}}
+ function sync(){
+  how.classList.toggle("is-live",!wide||wide.matches);
+  cur=-1;
+  set();
+ }
+ window.addEventListener("scroll",tick,{passive:true});
+ window.addEventListener("resize",tick);
+ if(wide&&wide.addEventListener)wide.addEventListener("change",sync);
+ sync();
+})();
+
+/* ---------- the feature panes: the approval card, the routine's pause ---------- */
+(function(){
+ var mail=document.getElementById("mail");
+ if(mail){
+  var yes=mail.querySelector('button[data-a="ok"]'),no=mail.querySelector('button[data-a="stop"]'),reset=document.getElementById("mail-reset");
+  var wait=mail.querySelector(".st-w"),okS=mail.querySelector(".st-ok"),noS=mail.querySelector(".st-no"),send=document.getElementById("act-send");
+  function decide(ok){
+   mail.classList.toggle("is-ok",ok);mail.classList.toggle("is-no",!ok);
+   wait.hidden=true;okS.hidden=!ok;noS.hidden=ok;
+   yes.hidden=true;no.hidden=true;reset.hidden=false;
+   if(send)send.classList.toggle("done",ok);
+   reset.focus();
+  }
+  function restart(){
+   mail.classList.remove("is-ok","is-no");
+   wait.hidden=false;okS.hidden=true;noS.hidden=true;
+   yes.hidden=false;no.hidden=false;reset.hidden=true;
+   if(send)send.classList.remove("done");
+  }
+  mail.addEventListener("click",function(e){
+   var b=e.target.closest?e.target.closest("button"):null;if(!b)return;
+   if(b===yes)decide(true);else if(b===no)decide(false);else if(b===reset){restart();yes.focus();}
+  });
+ }
+ var rt=document.getElementById("routine"),rtb=document.getElementById("rt-btn");
+ if(rt&&rtb){
+  var pl=document.getElementById("rt-pause-l"),rl=document.getElementById("rt-resume-l"),run=document.getElementById("rt-run"),off=document.getElementById("rt-off");
+  rtb.addEventListener("click",function(){
+   var paused=!rt.classList.contains("is-paused");
+   rt.classList.toggle("is-paused",paused);
+   pl.hidden=paused;rl.hidden=!paused;run.hidden=paused;off.hidden=!paused;
+  });
+ }
 })();
