@@ -1,6 +1,6 @@
 /* Runs inside the wrapper that tools/build.py writes into every page. The wrapper defines GH (the repository URL) and
    D (the strings of the copy button). Every text and picture is already in the HTML in its own language: this script
-   only adds behaviour (the hero replay, the scroll story, the buttons of the feature panes, reveal, links). */
+   only adds behaviour (the hero replay, the step story, the buttons of the feature panes, reveal, links). */
 var lang=document.documentElement.lang||"en";
 
 /* ---------- motion: reveal on scroll, word-by-word headings, light parallax, capsule shadow ---------- */
@@ -273,39 +273,77 @@ cp.addEventListener("click",function(){
  }
 })();
 
-/* ---------- the scroll story: one diagram that moves with the scroll; the steps follow it ----------
-   It runs from 821 px up and without reduced motion; below that the page shows the static frames of the steps. */
+/* ---------- the story: five steps that play by themselves, like a GIF ----------
+   One scene moves from step to step on a timer and loops. It runs only while the scene is on screen, the tab is visible
+   and the reader has not paused it. With reduced motion there is no timer: the five steps stay on the page as a static
+   stack, which the HTML already holds. */
 (function(){
  var how=document.getElementById("how");
- if(!how||reduced())return;
- var track=how.querySelector(".track"),pin=how.querySelector(".pin");
- var steps=how.querySelectorAll(".steps li"),links=how.querySelectorAll(".rail a");
- if(!track||!pin)return;
- var wide=window.matchMedia?window.matchMedia("(min-width:821px) and (min-height:740px)"):null;
- var cur=-1,ticking=false;
- function set(){
-  ticking=false;
-  if(!how.classList.contains("is-live"))return;
-  var r=track.getBoundingClientRect(),span=track.offsetHeight-window.innerHeight;
-  var p=span>0?Math.min(1,Math.max(0,-r.top/span)):0,s=p*4;
-  pin.style.setProperty("--s",s.toFixed(3));
-  var idx=Math.round(s);
-  if(idx!==cur){
-   cur=idx;
-   Array.prototype.forEach.call(steps,function(li,k){li.classList.toggle("on",k===idx);});
-   Array.prototype.forEach.call(links,function(a,k){if(k===idx)a.setAttribute("aria-current","step");else a.removeAttribute("aria-current");});
+ if(!how)return;
+ var scene=how.querySelector(".stage-wrap"),stage=how.querySelector(".stage-svg"),btn=document.getElementById("story-pause");
+ var steps=how.querySelectorAll(".steps li"),dots=how.querySelectorAll(".story-dots span");
+ if(!scene||!stage||!btn||!steps.length)return;
+ /* The timeline, in ms. Caption k is up from SWITCH[k] on. The scene moves from step k-1 to step k over HALF ms either
+    side of SWITCH[k], so the caption changes when the scene is halfway between the two. The last caption stays up longer. */
+ var SWITCH=[0,3000,6000,9000,12000],END=16000,HALF=450;
+ var t=0,cur=-1,lastS="",run=false,raf=0,last=0,onScreen=false,hidden=document.visibilityState==="hidden",paused=false;
+ function ease(u){return u<.5?4*u*u*u:1-Math.pow(-2*u+2,3)/2;}
+ function pose(x){
+  var c=0,s=0,i;
+  for(i=1;i<SWITCH.length;i++){if(x>=SWITCH[i])c=i;}
+  s=c;
+  for(i=1;i<SWITCH.length;i++){
+   var a=SWITCH[i]-HALF;
+   if(x>=a&&x<SWITCH[i]+HALF){s=(i-1)+ease((x-a)/(2*HALF));break;}
+  }
+  return {c:c,s:s};
+ }
+ function render(p){
+  var sv=p.s.toFixed(3);
+  if(sv!==lastS){stage.style.setProperty("--s",sv);lastS=sv;}
+  if(p.c!==cur){
+   cur=p.c;
+   Array.prototype.forEach.call(steps,function(li,k){li.classList.toggle("on",k===cur);});
+   Array.prototype.forEach.call(dots,function(d,k){d.classList.toggle("on",k===cur);});
   }
  }
- function tick(){if(!ticking){ticking=true;requestAnimationFrame(set);}}
- function sync(){
-  how.classList.toggle("is-live",!wide||wide.matches);
-  cur=-1;
-  set();
+ function frame(now){
+  raf=0;
+  var dt=Math.min(now-last,100);   /* a slow frame or a tab that was away moves the story by 100 ms at most */
+  last=now;
+  t=(t+dt)%END;
+  render(pose(t));
+  raf=requestAnimationFrame(frame);
  }
- window.addEventListener("scroll",tick,{passive:true});
- window.addEventListener("resize",tick);
- if(wide&&wide.addEventListener)wide.addEventListener("change",sync);
- sync();
+ function sync(){
+  var go=!reduced()&&!paused&&onScreen&&!hidden;
+  if(go===run)return;
+  run=go;
+  if(go){last=performance.now();raf=requestAnimationFrame(frame);}
+  else if(raf){cancelAnimationFrame(raf);raf=0;}
+ }
+ function mode(){
+  var on=!reduced();
+  how.classList.toggle("is-live",on);
+  btn.hidden=!on;
+  if(on)render(pose(t));
+  sync();
+ }
+ btn.addEventListener("click",function(){
+  paused=!paused;
+  btn.setAttribute("aria-pressed",paused?"true":"false");
+  sync();
+ });
+ if("IntersectionObserver" in window){
+  new IntersectionObserver(function(es){
+   es.forEach(function(e){onScreen=e.isIntersecting;});
+   sync();
+  },{threshold:.2}).observe(scene);
+ }else onScreen=true;
+ document.addEventListener("visibilitychange",function(){hidden=document.visibilityState==="hidden";sync();});
+ if(mqReduce&&mqReduce.addEventListener)mqReduce.addEventListener("change",mode);
+ else if(mqReduce&&mqReduce.addListener)mqReduce.addListener(mode);
+ mode();
 })();
 
 /* ---------- the feature panes: the approval card, the routine's pause ---------- */

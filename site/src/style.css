@@ -478,35 +478,45 @@ svg.mas{display:block;flex:none;overflow:visible}
 @keyframes mm-prog{0%{stroke-dashoffset:590.5}78%,100%{stroke-dashoffset:0}}
 @keyframes mm-dots{0%,60%,100%{opacity:.25}30%{opacity:1}}
 
-/* ---------- the story: one diagram that moves with the scroll, and static frames when it cannot ---------- */
+/* ---------- the story: five steps that play by themselves, like a GIF ----------
+   Without JavaScript, or with reduced motion, the page shows the five steps as a static stack, each with its own frame.
+   With JavaScript and normal motion (.is-live) one scene plays on a timer and loops; the caption of its current step sits
+   beside it and dots mark which step is up. The drawing itself is the rules below, driven by --s (0 to 4). */
 .how .frame{display:block;width:100%;height:auto;margin:0 0 14px;border-radius:18px;border:1px solid var(--line,#DDE3EC);background:#fff}
-.how .stage-wrap,.how .rail,.how .jump{display:none}
+.how .stage-wrap,.how .story-ctl{display:none}
+@media (min-width:821px){.how:not(.is-live) .frame{width:min(100%,440px)}}
 .how.is-live .frame{display:none}
-.how.is-live .track{position:relative;height:600vh}
-.how.is-live .jump{display:block;position:absolute;left:0;top:calc(var(--n) * 125vh);width:1px;height:1px}
-.how.is-live .pin{position:sticky;top:0;box-sizing:border-box;height:100vh;height:100svh;padding:5.5rem 0 1.5rem;overflow:hidden;display:flex;align-items:center}
-.how.is-live .pin-grid{position:relative;width:100%;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.05fr);gap:clamp(2rem,4vw,4rem);align-items:center}
 .how.is-live .stage-wrap{display:block;min-width:0}
 .how.is-live .stage-svg{width:100%;height:auto;border-radius:18px;border:1px solid var(--line,#DDE3EC);background:#fff;box-shadow:0 24px 48px -32px rgba(14,27,51,.35)}
-.how.is-live .rail{display:grid;gap:18px;position:absolute;left:clamp(.25rem,1.2vw,.9rem);top:50%;transform:translateY(-50%);z-index:2}
-.how.is-live .rail a{display:block;width:14px;height:14px;border-radius:50%;background:var(--line-strong,#C5CEDC);box-shadow:0 0 0 4px rgba(255,255,255,.9)}
-.how.is-live .rail a[aria-current="step"]{background:var(--blue,#1B4FD8)}
-.how.is-live .rail-line{position:absolute;left:6px;top:8px;bottom:8px;width:2px;background:var(--line,#DDE3EC);z-index:-1}
-.how.is-live .pin{padding-top:clamp(4.5rem,9vh,5.5rem);padding-bottom:clamp(.75rem,2vh,1.5rem)}
-.how.is-live .how-copy h2{font-size:clamp(2.1rem,1.2rem + 4vh,3.6rem)}
-.how.is-live .how-copy .lead{font-size:clamp(1rem,.6rem + 1.2vh,1.3rem);margin-bottom:clamp(1.25rem,2.6vh,2.5rem)}
-.how.is-live .steps{gap:clamp(.7rem,1.5vh,1.5rem)}
-.how.is-live .steps h3{font-size:clamp(1.05rem,.9rem + .4vh,1.2rem);margin-bottom:2px}
-.how.is-live .steps p{font-size:clamp(.95rem,.8rem + .5vh,1.05rem);line-height:1.55}
-@media (min-width:821px){.how:not(.is-live) .frame{width:min(100%,440px)}}
-.how.is-live .steps li{color:var(--ink-soft,#52607A);transition:color .5s ease}
-.how.is-live .steps li.on{color:var(--ink,#0E1B33)}
-.how.is-live .steps li h3{color:inherit}
-.how.is-live .how-copy{padding-left:clamp(1.5rem,3vw,2.5rem)}
+.how.is-live .lead{margin-top:clamp(1rem,2vw,1.5rem)}
+.how.is-live .how-copy{margin-top:clamp(1.75rem,3vw,2.5rem)}
+.how.is-live .steps{display:grid;gap:0}
+.how.is-live .steps li{grid-area:1/1;visibility:hidden;opacity:0;translate:0 8px;transition:opacity .6s var(--ease),translate .6s var(--ease),visibility .6s}
+.how.is-live .steps li.on{visibility:visible;opacity:1;translate:none}
 .how .sbody{display:grid;gap:4px;min-width:0}
 .how .sbody p{margin:0}
 .how .sbody h3{margin:0 0 6px}
-.how-art-note{display:none}
+.how.is-live .story-ctl{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:16px;margin-top:clamp(1.5rem,2.5vw,2rem)}
+.story-dots{display:flex;gap:8px;padding-left:58px;margin:0}
+.story-dots span{width:8px;height:8px;border-radius:50%;background:var(--line-strong,#C5CEDC);transition:background-color .4s var(--ease),scale .4s var(--ease)}
+.story-dots span.on{background:var(--blue,#1B4FD8);scale:1.5}
+.story-pause{display:inline-flex;align-items:center;gap:8px;min-height:44px;padding:0 18px;border-radius:999px;border:1px solid var(--line-strong,#C5CEDC);background:var(--card,#fff);color:var(--ink,#0E1B33);font-family:var(--display);font-weight:600;font-size:.92rem;cursor:pointer;transition:border-color .3s var(--ease)}
+.story-pause:hover{border-color:var(--blue,#1B4FD8)}
+.story-pause svg{width:14px;height:14px;flex:none}
+.story-pause .ic-play,.story-pause .lbl-play{display:none}
+.story-pause[aria-pressed="true"] .ic-pause,.story-pause[aria-pressed="true"] .lbl-pause{display:none}
+.story-pause[aria-pressed="true"] .ic-play,.story-pause[aria-pressed="true"] .lbl-play{display:block}
+@media (min-width:821px){
+  .how.is-live .how-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.05fr);column-gap:clamp(2rem,4vw,4rem);align-items:center}
+  .how.is-live .how-grid>h2{grid-column:1;grid-row:1}
+  .how.is-live .how-grid>.lead{grid-column:1;grid-row:2}
+  .how.is-live .how-grid>.how-copy{grid-column:1;grid-row:3}
+  .how.is-live .how-grid>.stage-wrap{grid-column:2;grid-row:1/span 3}
+}
+@media (max-width:820px){
+  .how.is-live .stage-wrap{margin-top:clamp(1.75rem,5vw,2.5rem)}
+  .story-dots{padding-left:0}
+}
 #how-art text,.how text.sa-t,.how text.sa-tg,.how text.sa-btn-w,.how text.sa-btn-k,.how text.sa-sent{font-family:var(--display);font-size:18px;font-weight:600}
 text.sa-t,text.sa-btn-w{fill:#FFFFFF}
 text.sa-tg,text.sa-btn-k{fill:#0E1B33}
