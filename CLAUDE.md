@@ -86,6 +86,7 @@ the hands"): plan, brief executors, verify with numbers, merge, report.
   instead of letting one conversation grow past a few hundred thousand tokens.
 - **Decisions belong to the maintainer** when they change product behaviour, security, cost, or
   anything public. Bring a recommendation and the trade-off, then wait.
+- **Go with the recommendation (rule of 2026-11-16).** When you bring the maintainer a choice with a recommendation, start on the recommendation at once and tell him afterwards; do not stop the work to wait. Two exceptions still wait for his explicit yes: a change to the look of the public site or of the app (preview first), and anything that costs money. An ambiguous "ok" never covers those two: ask which item it means.
 - **Roadmap follows decisions at once.** When the maintainer takes a decision (a feature, a priority, a rule), update `docs/ROADMAP.md` in the same session, before reporting the decision as recorded, and the README roadmap table if a row there changes. A decision that is not in the roadmap is not recorded. (Asked on 2026-11-14.)
 - **Site and app previews.** A design change to the site or the app is shown to the maintainer first, as a preview: Cloudflare Pages builds `https://<branch>.freeduet.pages.dev` for every branch, and the change goes online only after the maintainer's yes. Executors' site PRs conflict on the built pages, so the second one merges `origin/main` and rebuilds before it opens.
 
