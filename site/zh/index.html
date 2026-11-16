@@ -96,7 +96,7 @@
    "name": "能在 Windows、Mac 和 Linux 上用吗？",
    "acceptedAnswer": {
     "@type": "Answer",
-    "text": "维护者在 Windows（配合 WSL2 和 Docker）上使用它，我们的自动检查会在 Linux 上启动它。它没有在 Mac 上测试过，所以我们不能保证能在那里运行。FreeDuet 是早期版本，由一位维护者开发并使用；最新的已发布版本是 0.2.1（2026年11月15日）。"
+    "text": "维护者在 Windows（配合 WSL2 和 Docker）上使用它，我们的自动检查会在 Linux 上启动它。它没有在 Mac 上测试过，所以我们不能保证能在那里运行。FreeDuet 是早期版本，由一位维护者开发并使用；最新的已发布版本是 0.2.2（2026年11月16日）。"
    }
   },
   {
@@ -104,7 +104,7 @@
    "name": "助理不用问我就能做什么？",
    "acceptedAnswer": {
     "@type": "Answer",
-    "text": "它可以查资料、阅读，并准备草稿和报告。默认情况下，五个按钮都要等你按下“批准”，只有发给你亲自输入地址的新邮件例外。Full access 按成员单独开启，在你自己的对话中取消等待；它已经做好，但还没在真实环境中运行。密码和安全设置仍归你。助理仍可能出错，请先看过它准备的内容再批准。"
+    "text": "它可以查资料、阅读，并准备草稿和报告。默认情况下，五个按钮都要等你按下“批准”，只有发给你亲自输入地址的新邮件例外。你用自己的话设定的持久邮件规则会自动作用于新邮件：可以打标签、归档、标记为已读，或移到垃圾邮件或回收站。它从不转发、回复、发送，也从不永久删除。Full access 按成员单独开启，在你自己的对话中取消等待；它已经做好，但还没在真实环境中运行。密码和安全设置仍归你。助理仍可能出错，请先看过它准备的内容再批准。"
    }
   },
   {
@@ -120,7 +120,7 @@
    "name": "能在手机上用吗？",
    "acceptedAnswer": {
     "@type": "Answer",
-    "text": "还不行。目前 FreeDuet 在你电脑的浏览器里打开。我们正在做手机版，也能在手机上收到需要你批准的请求。"
+    "text": "还不是手机版。目前 FreeDuet 在你电脑的浏览器里打开。从 v0.2.2 起，可以在电脑上用链接或二维码显示的一次性代码，把手机浏览器与它配对，但手机配对尚未在真实环境中运行。手机版（也能在手机上收到需要你批准的请求）和远程访问仍在进行中。"
    }
   },
   {
@@ -1743,7 +1743,7 @@ text.sa-sent{fill:#0F7B58;font-weight:700}
     <h3 class="road-h rv" data-i="r_h">现在能用什么，接下来有什么</h3>
     <ol class="road rv">
       <li><b data-i="rl_today">今天</b><span class="tag" data-i="r_now">已经推出</span><p data-i="r1">整个团队，使用你自己的 Claude 登录，带有审批、测试，支持 Gmail 和 Google Calendar。</p></li>
-      <li><b data-i="rl_now">现在</b><span class="tag" data-i="r_prog">进行中</span><p data-i="r2">首要任务：适用于 Windows、macOS 和 Ubuntu 的单文件安装程序。目前 Ubuntu 以及通过 WSL2 的 Windows 已有首批安装脚本，但还没有双击安装程序。一个整理邮箱的邮件助理已经构建完成：2026年11月15日，Otto 在一个真实邮箱中把垃圾邮件移到了 Spam 文件夹，其余变更尚未在真实环境中运行。已经做好，但还没在真实环境中运行：每次交接都有“Done when”（完成标准），聊天中的例行任务卡片，每位成员电脑各自的专用令牌，以及你关闭访问时会断开的家庭网络连接。</p></li>
+      <li><b data-i="rl_now">现在</b><span class="tag" data-i="r_prog">进行中</span><p data-i="r2">首要任务：适用于 Windows、macOS 和 Ubuntu 的单文件安装程序。目前 Ubuntu 以及通过 WSL2 的 Windows 已有首批安装脚本，但还没有双击安装程序。一个整理邮箱的邮件助理已经构建完成：2026年11月15日，Otto 在一个真实邮箱中把垃圾邮件移到了 Spam 文件夹。持久邮件规则已在 v0.2.2 发布：2026年11月16日，针对一个发件人域名的一条规则自动作用于新邮件。其余变更和规则尚未在真实环境中运行。已经做好，但还没在真实环境中运行：每次交接都有“Done when”（完成标准），聊天中的例行任务卡片，每位成员电脑各自的专用令牌，以及你关闭访问时会断开的家庭网络连接。</p></li>
       <li><b data-i="rl_now">现在</b><span class="tag" data-i="r_plan">计划中</span><p data-i="r_now2">首次启动将只需三次点击：点一个按钮即可连接你的 Claude 套餐，登录则在 Claude 自己的页面上完成。</p></li>
       <li><b data-i="rl_now">现在</b><span class="tag tag-wait" data-i="tagWait">已构建，尚未在真实环境中运行</span><p data-i="r_now3">在聊天中连接 Gmail 邮箱最多只需三步。在聊天中添加成员后，会出现一行带撤销按钮的提示。你的第一条消息就会提议组建团队，没有你的批准，什么都不会创建。可以回退的更新：一条命令先备份你的数据；更新在一个安装实例上于2026年11月15日运行了四次。把旧版本和数据恢复回来的那一步，尚未在真实环境中运行。</p></li>
       <li><b data-i="rl_next">接下来</b><span class="tag" data-i="r_prog">进行中</span><p data-i="r3">为每位成员选择引擎还在进行中：引擎页面已经做好，但还没在真实环境中运行，自动切换只用测试引擎跑过。在聊天中更改的设置（包括撤销按钮）仍在进行中。成员的名称、语气和语言是在 v0.2 之后做好的，但还没在真实环境中运行，语气和语言也还没有进行过任何测试。真正的任务委派还在计划中。</p><p data-i="r4">聊天中编写的自动化、手机版和远程访问都在进行中。更多已连接的应用还在设计中。</p></li>
@@ -1834,10 +1834,10 @@ cd openbot &amp;&amp; docker compose exec -it agent-freeduet claude
     <div class="faq">
       <details class="rv" open><summary data-i="q1">什么是免费的，我要为什么付费？</summary><p data-i="a1">FreeDuet 免费，以 MIT 许可证开源，商业用途也可以。你唯一要付的，是搭配使用的 AI 订阅，目前是 Claude 套餐。不需要购买 API 密钥。</p></details>
       <details class="rv"><summary data-i="q2">安装需要准备什么？</summary><p data-i="a2">一个 Claude 订阅，以及电脑上的 Docker、Bash 和 Bun。上面的四个步骤就是全部安装过程。从没打开过终端？请懂技术的朋友帮你装好，把这个页面给他看就行。</p></details>
-      <details class="rv"><summary data-i="q3">能在 Windows、Mac 和 Linux 上用吗？</summary><p data-i="a3">维护者在 Windows（配合 WSL2 和 Docker）上使用它，我们的自动检查会在 Linux 上启动它。它没有在 Mac 上测试过，所以我们不能保证能在那里运行。FreeDuet 是早期版本，由一位维护者开发并使用；最新的已发布版本是 0.2.1（2026年11月15日）。</p></details>
-      <details class="rv"><summary data-i="q4">助理不用问我就能做什么？</summary><p data-i="a4">它可以查资料、阅读，并准备草稿和报告。默认情况下，五个按钮都要等你按下“批准”，只有发给你亲自输入地址的新邮件例外。Full access 按成员单独开启，在你自己的对话中取消等待；它已经做好，但还没在真实环境中运行。密码和安全设置仍归你。助理仍可能出错，请先看过它准备的内容再批准。</p></details>
+      <details class="rv"><summary data-i="q3">能在 Windows、Mac 和 Linux 上用吗？</summary><p data-i="a3">维护者在 Windows（配合 WSL2 和 Docker）上使用它，我们的自动检查会在 Linux 上启动它。它没有在 Mac 上测试过，所以我们不能保证能在那里运行。FreeDuet 是早期版本，由一位维护者开发并使用；最新的已发布版本是 0.2.2（2026年11月16日）。</p></details>
+      <details class="rv"><summary data-i="q4">助理不用问我就能做什么？</summary><p data-i="a4">它可以查资料、阅读，并准备草稿和报告。默认情况下，五个按钮都要等你按下“批准”，只有发给你亲自输入地址的新邮件例外。你用自己的话设定的持久邮件规则会自动作用于新邮件：可以打标签、归档、标记为已读，或移到垃圾邮件或回收站。它从不转发、回复、发送，也从不永久删除。Full access 按成员单独开启，在你自己的对话中取消等待；它已经做好，但还没在真实环境中运行。密码和安全设置仍归你。助理仍可能出错，请先看过它准备的内容再批准。</p></details>
       <details class="rv"><summary data-i="q5">我的数据在哪里？</summary><p data-i="a5">FreeDuet 运行在你的电脑上，对话记录保存在那里的数据库中。你的 Claude 登录信息留在一个只有 Claude Code 程序会读取的 Docker 卷里。思考时，助理会把你的请求发给你已登录的 AI 服务，就和该服务自己的应用一样。</p></details>
-      <details class="rv"><summary data-i="q6">能在手机上用吗？</summary><p data-i="a6">还不行。目前 FreeDuet 在你电脑的浏览器里打开。我们正在做手机版，也能在手机上收到需要你批准的请求。</p></details>
+      <details class="rv"><summary data-i="q6">能在手机上用吗？</summary><p data-i="a6">还不是手机版。目前 FreeDuet 在你电脑的浏览器里打开。从 v0.2.2 起，可以在电脑上用链接或二维码显示的一次性代码，把手机浏览器与它配对，但手机配对尚未在真实环境中运行。手机版（也能在手机上收到需要你批准的请求）和远程访问仍在进行中。</p></details>
       <details class="rv"><summary data-i="q7">我能添加自己的团队成员吗？</summary><p data-i="a7">可以。你可以请专门打造新助理的 Leo 为你需要的工作设计一位，也可以自己编写它的定义。给成员改名、换说话方式，已经做好，但还没在真实环境中运行。<a href="https://github.com/MarcoDeliaBot/freeduet/blob/main/docs/TEAM.md">成员是如何定义的</a>。</p></details>
       <details class="rv"><summary data-i="q8">去哪里获得帮助？</summary><p data-i="a8">在 GitHub 上提一个 issue。<a href="https://github.com/MarcoDeliaBot/freeduet/issues/new/choose">这里有一份简短的表格</a>，可以用来提问、报告错误、提交修复，或者告诉我们你在使用。用英语或意大利语写都可以。</p></details>
     </div>
