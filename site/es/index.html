@@ -627,35 +627,45 @@ svg.mas{display:block;flex:none;overflow:visible}
 @keyframes mm-prog{0%{stroke-dashoffset:590.5}78%,100%{stroke-dashoffset:0}}
 @keyframes mm-dots{0%,60%,100%{opacity:.25}30%{opacity:1}}
 
-/* ---------- the story: one diagram that moves with the scroll, and static frames when it cannot ---------- */
+/* ---------- the story: five steps that play by themselves, like a GIF ----------
+   Without JavaScript, or with reduced motion, the page shows the five steps as a static stack, each with its own frame.
+   With JavaScript and normal motion (.is-live) one scene plays on a timer and loops; the caption of its current step sits
+   beside it and dots mark which step is up. The drawing itself is the rules below, driven by --s (0 to 4). */
 .how .frame{display:block;width:100%;height:auto;margin:0 0 14px;border-radius:18px;border:1px solid var(--line,#DDE3EC);background:#fff}
-.how .stage-wrap,.how .rail,.how .jump{display:none}
+.how .stage-wrap,.how .story-ctl{display:none}
+@media (min-width:821px){.how:not(.is-live) .frame{width:min(100%,440px)}}
 .how.is-live .frame{display:none}
-.how.is-live .track{position:relative;height:600vh}
-.how.is-live .jump{display:block;position:absolute;left:0;top:calc(var(--n) * 125vh);width:1px;height:1px}
-.how.is-live .pin{position:sticky;top:0;box-sizing:border-box;height:100vh;height:100svh;padding:5.5rem 0 1.5rem;overflow:hidden;display:flex;align-items:center}
-.how.is-live .pin-grid{position:relative;width:100%;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.05fr);gap:clamp(2rem,4vw,4rem);align-items:center}
 .how.is-live .stage-wrap{display:block;min-width:0}
 .how.is-live .stage-svg{width:100%;height:auto;border-radius:18px;border:1px solid var(--line,#DDE3EC);background:#fff;box-shadow:0 24px 48px -32px rgba(14,27,51,.35)}
-.how.is-live .rail{display:grid;gap:18px;position:absolute;left:clamp(.25rem,1.2vw,.9rem);top:50%;transform:translateY(-50%);z-index:2}
-.how.is-live .rail a{display:block;width:14px;height:14px;border-radius:50%;background:var(--line-strong,#C5CEDC);box-shadow:0 0 0 4px rgba(255,255,255,.9)}
-.how.is-live .rail a[aria-current="step"]{background:var(--blue,#1B4FD8)}
-.how.is-live .rail-line{position:absolute;left:6px;top:8px;bottom:8px;width:2px;background:var(--line,#DDE3EC);z-index:-1}
-.how.is-live .pin{padding-top:clamp(4.5rem,9vh,5.5rem);padding-bottom:clamp(.75rem,2vh,1.5rem)}
-.how.is-live .how-copy h2{font-size:clamp(2.1rem,1.2rem + 4vh,3.6rem)}
-.how.is-live .how-copy .lead{font-size:clamp(1rem,.6rem + 1.2vh,1.3rem);margin-bottom:clamp(1.25rem,2.6vh,2.5rem)}
-.how.is-live .steps{gap:clamp(.7rem,1.5vh,1.5rem)}
-.how.is-live .steps h3{font-size:clamp(1.05rem,.9rem + .4vh,1.2rem);margin-bottom:2px}
-.how.is-live .steps p{font-size:clamp(.95rem,.8rem + .5vh,1.05rem);line-height:1.55}
-@media (min-width:821px){.how:not(.is-live) .frame{width:min(100%,440px)}}
-.how.is-live .steps li{color:var(--ink-soft,#52607A);transition:color .5s ease}
-.how.is-live .steps li.on{color:var(--ink,#0E1B33)}
-.how.is-live .steps li h3{color:inherit}
-.how.is-live .how-copy{padding-left:clamp(1.5rem,3vw,2.5rem)}
+.how.is-live .lead{margin-top:clamp(1rem,2vw,1.5rem)}
+.how.is-live .how-copy{margin-top:clamp(1.75rem,3vw,2.5rem)}
+.how.is-live .steps{display:grid;gap:0}
+.how.is-live .steps li{grid-area:1/1;visibility:hidden;opacity:0;translate:0 8px;transition:opacity .6s var(--ease),translate .6s var(--ease),visibility .6s}
+.how.is-live .steps li.on{visibility:visible;opacity:1;translate:none}
 .how .sbody{display:grid;gap:4px;min-width:0}
 .how .sbody p{margin:0}
 .how .sbody h3{margin:0 0 6px}
-.how-art-note{display:none}
+.how.is-live .story-ctl{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:16px;margin-top:clamp(1.5rem,2.5vw,2rem)}
+.story-dots{display:flex;gap:8px;padding-left:58px;margin:0}
+.story-dots span{width:8px;height:8px;border-radius:50%;background:var(--line-strong,#C5CEDC);transition:background-color .4s var(--ease),scale .4s var(--ease)}
+.story-dots span.on{background:var(--blue,#1B4FD8);scale:1.5}
+.story-pause{display:inline-flex;align-items:center;gap:8px;min-height:44px;padding:0 18px;border-radius:999px;border:1px solid var(--line-strong,#C5CEDC);background:var(--card,#fff);color:var(--ink,#0E1B33);font-family:var(--display);font-weight:600;font-size:.92rem;cursor:pointer;transition:border-color .3s var(--ease)}
+.story-pause:hover{border-color:var(--blue,#1B4FD8)}
+.story-pause svg{width:14px;height:14px;flex:none}
+.story-pause .ic-play,.story-pause .lbl-play{display:none}
+.story-pause[aria-pressed="true"] .ic-pause,.story-pause[aria-pressed="true"] .lbl-pause{display:none}
+.story-pause[aria-pressed="true"] .ic-play,.story-pause[aria-pressed="true"] .lbl-play{display:block}
+@media (min-width:821px){
+  .how.is-live .how-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.05fr);column-gap:clamp(2rem,4vw,4rem);align-items:center}
+  .how.is-live .how-grid>h2{grid-column:1;grid-row:1}
+  .how.is-live .how-grid>.lead{grid-column:1;grid-row:2}
+  .how.is-live .how-grid>.how-copy{grid-column:1;grid-row:3}
+  .how.is-live .how-grid>.stage-wrap{grid-column:2;grid-row:1/span 3}
+}
+@media (max-width:820px){
+  .how.is-live .stage-wrap{margin-top:clamp(1.75rem,5vw,2.5rem)}
+  .story-dots{padding-left:0}
+}
 #how-art text,.how text.sa-t,.how text.sa-tg,.how text.sa-btn-w,.how text.sa-btn-k,.how text.sa-sent{font-family:var(--display);font-size:18px;font-weight:600}
 text.sa-t,text.sa-btn-w{fill:#FFFFFF}
 text.sa-tg,text.sa-btn-k{fill:#0E1B33}
@@ -1500,34 +1510,21 @@ text.sa-sent{fill:#0F7B58;font-weight:700}
 </section>
 
 <section class="sec alt how" id="how" aria-labelledby="how-h">
-  <div class="track">
-    <span class="jump" id="how-step-1" style="--n:0" aria-hidden="true"></span>
-    <span class="jump" id="how-step-2" style="--n:1" aria-hidden="true"></span>
-    <span class="jump" id="how-step-3" style="--n:2" aria-hidden="true"></span>
-    <span class="jump" id="how-step-4" style="--n:3" aria-hidden="true"></span>
-    <span class="jump" id="how-step-5" style="--n:4" aria-hidden="true"></span>
-    <div class="pin">
-      <div class="wrap pin-grid">
-        <nav class="rail">
-          <span class="rail-line" aria-hidden="true"></span>
-          <a href="#how-step-1" style="--k:0"><span class="sr" data-i="s1h">Escribes lo que necesitas</span></a>
-          <a href="#how-step-2" style="--k:1"><span class="sr" data-i="s2h">Iris elige al asistente adecuado</span></a>
-          <a href="#how-step-3" style="--k:2"><span class="sr" data-i="s3h">El asistente trabaja en su escritorio</span></a>
-          <a href="#how-step-4" style="--k:3"><span class="sr" data-i="s4h">Una tarjeta pide tu sí</span></a>
-          <a href="#how-step-5" style="--k:4"><span class="sr" data-i="s5h">Recibes un informe corto</span></a>
-        </nav>
-        <div class="how-copy">
-          <h2 class="wd" id="how-h" data-i="h_h">Qué pasa después de pulsar Intro</h2>
-          <p class="lead" data-i="h_p">Ni magia ni secretos. Cinco pasos, siempre los mismos, para que siempre sepas quién hace qué.</p>
-          <ol class="steps">
-            <li style="--i:0"><div class="sbody"><svg class="frame" viewBox="0 0 460 340" aria-hidden="true" focusable="false" style="--s:0"><use href="#how-art"/></svg><h3 data-i="s1h">Escribes lo que necesitas</h3><p data-i="s1p">Con tus palabras y en tu idioma, como un mensaje a un amigo.</p></div></li>
-            <li style="--i:1"><div class="sbody"><svg class="frame" viewBox="0 0 460 340" aria-hidden="true" focusable="false" style="--s:1"><use href="#how-art"/></svg><h3 data-i="s2h">Iris elige al asistente adecuado</h3><p data-i="s2p">Lee tu petición y la pasa al especialista de ese trabajo.</p></div></li>
-            <li style="--i:2"><div class="sbody"><svg class="frame" viewBox="0 0 460 340" aria-hidden="true" focusable="false" style="--s:2"><use href="#how-art"/></svg><h3 data-i="s3h">El asistente trabaja en su escritorio</h3><p data-i="s3p">Usa su propio navegador para buscar, leer y preparar. Lo que lee lo trata como información, nunca como una orden.</p></div></li>
-            <li style="--i:3"><div class="sbody"><svg class="frame" viewBox="0 0 460 340" aria-hidden="true" focusable="false" style="--s:3"><use href="#how-art"/></svg><h3 data-i="s4h">Una tarjeta pide tu sí</h3><p data-i="s4p">Por defecto, si hace falta un botón grande (enviar, pagar, firmar, reservar, borrar), todo se detiene y te espera.</p></div></li>
-            <li style="--i:4"><div class="sbody"><svg class="frame" viewBox="0 0 460 340" aria-hidden="true" focusable="false" style="--s:4"><use href="#how-art"/></svg><h3 data-i="s5h">Recibes un informe corto</h3><p data-i="s5p">Qué se hizo, qué no y por qué, y cuál es el siguiente paso. Sin muros de texto.</p></div></li>
-          </ol>
-        </div>
-        <div class="stage-wrap"><svg class="stage-svg" viewBox="0 0 460 340" aria-hidden="true" focusable="false"><use href="#how-art"/></svg></div>
+  <div class="wrap how-grid">
+    <h2 class="wd" id="how-h" data-i="h_h">Qué pasa después de pulsar Intro</h2>
+    <p class="lead" data-i="h_p">Ni magia ni secretos. Cinco pasos, siempre los mismos, para que siempre sepas quién hace qué.</p>
+    <div class="stage-wrap"><svg class="stage-svg" viewBox="0 0 460 340" aria-hidden="true" focusable="false"><use href="#how-art"/></svg></div>
+    <div class="how-copy">
+      <ol class="steps">
+        <li style="--i:0"><div class="sbody"><svg class="frame" viewBox="0 0 460 340" aria-hidden="true" focusable="false" style="--s:0"><use href="#how-art"/></svg><h3 data-i="s1h">Escribes lo que necesitas</h3><p data-i="s1p">Con tus palabras y en tu idioma, como un mensaje a un amigo.</p></div></li>
+        <li style="--i:1"><div class="sbody"><svg class="frame" viewBox="0 0 460 340" aria-hidden="true" focusable="false" style="--s:1"><use href="#how-art"/></svg><h3 data-i="s2h">Iris elige al asistente adecuado</h3><p data-i="s2p">Lee tu petición y la pasa al especialista de ese trabajo.</p></div></li>
+        <li style="--i:2"><div class="sbody"><svg class="frame" viewBox="0 0 460 340" aria-hidden="true" focusable="false" style="--s:2"><use href="#how-art"/></svg><h3 data-i="s3h">El asistente trabaja en su escritorio</h3><p data-i="s3p">Usa su propio navegador para buscar, leer y preparar. Lo que lee lo trata como información, nunca como una orden.</p></div></li>
+        <li style="--i:3"><div class="sbody"><svg class="frame" viewBox="0 0 460 340" aria-hidden="true" focusable="false" style="--s:3"><use href="#how-art"/></svg><h3 data-i="s4h">Una tarjeta pide tu sí</h3><p data-i="s4p">Por defecto, si hace falta un botón grande (enviar, pagar, firmar, reservar, borrar), todo se detiene y te espera.</p></div></li>
+        <li style="--i:4"><div class="sbody"><svg class="frame" viewBox="0 0 460 340" aria-hidden="true" focusable="false" style="--s:4"><use href="#how-art"/></svg><h3 data-i="s5h">Recibes un informe corto</h3><p data-i="s5p">Qué se hizo, qué no y por qué, y cuál es el siguiente paso. Sin muros de texto.</p></div></li>
+      </ol>
+      <div class="story-ctl">
+        <span class="story-dots" aria-hidden="true"><span class="on"></span><span></span><span></span><span></span><span></span></span>
+        <button type="button" class="story-pause" id="story-pause" aria-pressed="false" hidden><svg class="ic-pause" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#i-pause"/></svg><svg class="ic-play" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#i-play"/></svg><span class="lbl-pause" data-i="storyPause">Pausar</span><span class="lbl-play" data-i="storyPlay">Reproducir</span></button>
       </div>
     </div>
   </div>
@@ -1867,7 +1864,7 @@ var GH="https://github.com/MarcoDeliaBot/freeduet";
 var D={"copy":"Copiar los comandos","copied":"Copiados"};
 /* Runs inside the wrapper that tools/build.py writes into every page. The wrapper defines GH (the repository URL) and
    D (the strings of the copy button). Every text and picture is already in the HTML in its own language: this script
-   only adds behaviour (the hero replay, the scroll story, the buttons of the feature panes, reveal, links). */
+   only adds behaviour (the hero replay, the step story, the buttons of the feature panes, reveal, links). */
 var lang=document.documentElement.lang||"en";
 
 /* ---------- motion: reveal on scroll, word-by-word headings, light parallax, capsule shadow ---------- */
@@ -2140,39 +2137,77 @@ cp.addEventListener("click",function(){
  }
 })();
 
-/* ---------- the scroll story: one diagram that moves with the scroll; the steps follow it ----------
-   It runs from 821 px up and without reduced motion; below that the page shows the static frames of the steps. */
+/* ---------- the story: five steps that play by themselves, like a GIF ----------
+   One scene moves from step to step on a timer and loops. It runs only while the scene is on screen, the tab is visible
+   and the reader has not paused it. With reduced motion there is no timer: the five steps stay on the page as a static
+   stack, which the HTML already holds. */
 (function(){
  var how=document.getElementById("how");
- if(!how||reduced())return;
- var track=how.querySelector(".track"),pin=how.querySelector(".pin");
- var steps=how.querySelectorAll(".steps li"),links=how.querySelectorAll(".rail a");
- if(!track||!pin)return;
- var wide=window.matchMedia?window.matchMedia("(min-width:821px) and (min-height:740px)"):null;
- var cur=-1,ticking=false;
- function set(){
-  ticking=false;
-  if(!how.classList.contains("is-live"))return;
-  var r=track.getBoundingClientRect(),span=track.offsetHeight-window.innerHeight;
-  var p=span>0?Math.min(1,Math.max(0,-r.top/span)):0,s=p*4;
-  pin.style.setProperty("--s",s.toFixed(3));
-  var idx=Math.round(s);
-  if(idx!==cur){
-   cur=idx;
-   Array.prototype.forEach.call(steps,function(li,k){li.classList.toggle("on",k===idx);});
-   Array.prototype.forEach.call(links,function(a,k){if(k===idx)a.setAttribute("aria-current","step");else a.removeAttribute("aria-current");});
+ if(!how)return;
+ var scene=how.querySelector(".stage-wrap"),stage=how.querySelector(".stage-svg"),btn=document.getElementById("story-pause");
+ var steps=how.querySelectorAll(".steps li"),dots=how.querySelectorAll(".story-dots span");
+ if(!scene||!stage||!btn||!steps.length)return;
+ /* The timeline, in ms. Caption k is up from SWITCH[k] on. The scene moves from step k-1 to step k over HALF ms either
+    side of SWITCH[k], so the caption changes when the scene is halfway between the two. The last caption stays up longer. */
+ var SWITCH=[0,3000,6000,9000,12000],END=16000,HALF=450;
+ var t=0,cur=-1,lastS="",run=false,raf=0,last=0,onScreen=false,hidden=document.visibilityState==="hidden",paused=false;
+ function ease(u){return u<.5?4*u*u*u:1-Math.pow(-2*u+2,3)/2;}
+ function pose(x){
+  var c=0,s=0,i;
+  for(i=1;i<SWITCH.length;i++){if(x>=SWITCH[i])c=i;}
+  s=c;
+  for(i=1;i<SWITCH.length;i++){
+   var a=SWITCH[i]-HALF;
+   if(x>=a&&x<SWITCH[i]+HALF){s=(i-1)+ease((x-a)/(2*HALF));break;}
+  }
+  return {c:c,s:s};
+ }
+ function render(p){
+  var sv=p.s.toFixed(3);
+  if(sv!==lastS){stage.style.setProperty("--s",sv);lastS=sv;}
+  if(p.c!==cur){
+   cur=p.c;
+   Array.prototype.forEach.call(steps,function(li,k){li.classList.toggle("on",k===cur);});
+   Array.prototype.forEach.call(dots,function(d,k){d.classList.toggle("on",k===cur);});
   }
  }
- function tick(){if(!ticking){ticking=true;requestAnimationFrame(set);}}
- function sync(){
-  how.classList.toggle("is-live",!wide||wide.matches);
-  cur=-1;
-  set();
+ function frame(now){
+  raf=0;
+  var dt=Math.min(now-last,100);   /* a slow frame or a tab that was away moves the story by 100 ms at most */
+  last=now;
+  t=(t+dt)%END;
+  render(pose(t));
+  raf=requestAnimationFrame(frame);
  }
- window.addEventListener("scroll",tick,{passive:true});
- window.addEventListener("resize",tick);
- if(wide&&wide.addEventListener)wide.addEventListener("change",sync);
- sync();
+ function sync(){
+  var go=!reduced()&&!paused&&onScreen&&!hidden;
+  if(go===run)return;
+  run=go;
+  if(go){last=performance.now();raf=requestAnimationFrame(frame);}
+  else if(raf){cancelAnimationFrame(raf);raf=0;}
+ }
+ function mode(){
+  var on=!reduced();
+  how.classList.toggle("is-live",on);
+  btn.hidden=!on;
+  if(on)render(pose(t));
+  sync();
+ }
+ btn.addEventListener("click",function(){
+  paused=!paused;
+  btn.setAttribute("aria-pressed",paused?"true":"false");
+  sync();
+ });
+ if("IntersectionObserver" in window){
+  new IntersectionObserver(function(es){
+   es.forEach(function(e){onScreen=e.isIntersecting;});
+   sync();
+  },{threshold:.2}).observe(scene);
+ }else onScreen=true;
+ document.addEventListener("visibilitychange",function(){hidden=document.visibilityState==="hidden";sync();});
+ if(mqReduce&&mqReduce.addEventListener)mqReduce.addEventListener("change",mode);
+ else if(mqReduce&&mqReduce.addListener)mqReduce.addListener(mode);
+ mode();
 })();
 
 /* ---------- the feature panes: the approval card, the routine's pause ---------- */
