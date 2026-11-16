@@ -601,6 +601,8 @@ export function createApp(
       selfHostBanner: selfHostBanner
         ? await selfHostBanner.shown()
         : config.selfHostBanner,
+      // FreeDuet (D51): present, and false, only when the deployment shows no promotion at all.
+      ...(selfHostBanner?.promotions === false ? { promotions: false } : {}),
       /*
        * Whether this is somebody trying OpenBot on their own machine, not an organization's
        * deployment. Onboarding reads it to explain where OpenBot can run, which only the person

@@ -6,6 +6,10 @@ Each version says what was and was not run live. "Run live" means run on a real 
 
 ## [Unreleased]
 
+### Changed
+
+- FreeDuet advertises nobody (D51): the bar that offered help self-hosting is off by default for FreeDuet's package, and onboarding no longer shows the slide that sent the person to another company's products and sales contact. The credit to the upstream authors is unchanged, and `OPENBOT_SELF_HOST_BANNER=true` brings the upstream behaviour back. Tested; not yet run live.
+
 ### Added
 
 - Installer: an opt-in systemd service for FreeDuet inside WSL, with `install.sh --service` and `install.ps1 -Service` (`install-service.sh`, #285). Tested with fake commands only; never run under real systemd or on a real Windows machine.
