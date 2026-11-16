@@ -12,6 +12,8 @@
  * cookie of a pairing that succeeded, and a refusal for any reason but the link leaves the link alive.
  */
 import { afterEach, describe, expect, spyOn, test } from "bun:test";
+import { createHash } from "node:crypto";
+import { pairCookieName } from "../src/auth/browser-pairings";
 import { createRequireUser } from "../src/auth/guards";
 import {
   createInstallPairingRoutes,
@@ -27,6 +29,7 @@ import { testEnvironment } from "./support/environment";
 import { LOOPBACK_PEER } from "./support/loopback-peer";
 import {
   assembleSignIn,
+  legacyCookie,
   pairedCookie,
   peerAt,
   SECRET,
@@ -109,9 +112,10 @@ describe("the secret in the configuration, with sign-in", () => {
 
   test("signInGate is the marker's gate with sign-in and a secret, and nothing in any other deployment", () => {
     const config = signInConfig();
-    expect(signInGate(config)).toEqual({
+    expect(signInGate(config)).toMatchObject({
       secret: SECRET,
       cookie: installCookieName(config.port),
+      pairings: expect.anything(),
     });
     expect(signInGate(signInConfig({}, false))).toBeUndefined();
     const single = loadConfig(
@@ -214,14 +218,31 @@ describe("the doors, with sign-in", () => {
 
   test("a signed-in administrator on this machine pairs a browser: the cookie, once, and the app", async () => {
     const config = signInConfig();
-    const { app } = assembleSignIn(config);
+    const { app, store } = assembleSignIn(config);
     const { path } = await mint(app);
 
     const paired = await ask(app, path, { session: "admin" });
     expect(paired.status).toBe(303);
     expect(paired.headers.get("location")).toBe("/");
-    expect(paired.headers.get("set-cookie")).toBe(
-      `${installCookieName(config.port)}=${SECRET}; Path=/api; Max-Age=34560000; HttpOnly; SameSite=Strict`,
+    // D49: the cookie is the browser's own token, and never the secret.
+    const [cookie, cleared] = paired.headers.getSetCookie();
+    expect(cookie).toMatch(
+      new RegExp(
+        `^${pairCookieName(config.port)}=[A-Za-z0-9_-]{43}; Path=/api; Max-Age=34560000; HttpOnly; SameSite=Strict$`,
+      ),
+    );
+    expect(cleared).toStartWith(`${installCookieName(config.port)}=; `);
+    expect(paired.headers.getSetCookie().join("\n")).not.toContain(SECRET);
+    // One pairing, of the administrator who was signed in, of kind computer, kept as a hash.
+    const rows = [...store.rows.values()].filter(
+      (row) => !row.id.startsWith("seed-"),
+    );
+    expect(rows).toHaveLength(1);
+    expect(rows[0]).toMatchObject({ userId: "u-admin", kind: "computer" });
+    const token = (cookie as string).split("=")[1]?.split(";")[0] as string;
+    expect(rows[0]?.tokenHash).not.toContain(token);
+    expect(rows[0]?.tokenHash).toBe(
+      createHash("sha256").update(token).digest("hex"),
     );
     expect(paired.headers.get("cache-control")).toBe("no-store");
     expect(paired.headers.get("referrer-policy")).toBe("no-referrer");
@@ -241,7 +262,7 @@ describe("the doors, with sign-in", () => {
       const { path } = await mint(app);
       const paired = await ask(app, path, { session: "admin" });
       expect(paired.status).toBe(303);
-      expect(/;\s*Secure/i.test(paired.headers.get("set-cookie") ?? "")).toBe(
+      expect(/;\s*Secure/i.test(paired.headers.getSetCookie()[0] ?? "")).toBe(
         secure,
       );
     }
@@ -255,7 +276,7 @@ describe("the doors, with sign-in", () => {
       headers: { "x-forwarded-proto": "https" },
     });
     expect(paired.status).toBe(303);
-    expect(/;\s*Secure/i.test(paired.headers.get("set-cookie") ?? "")).toBe(
+    expect(/;\s*Secure/i.test(paired.headers.getSetCookie()[0] ?? "")).toBe(
       false,
     );
   });
@@ -333,7 +354,7 @@ describe("the doors, with sign-in", () => {
     }
   });
 
-  test("the secret is in no answer but the cookie of a pairing that succeeded", async () => {
+  test("the secret is in no answer at all, the answer of a pairing that succeeded included", async () => {
     const { app } = assembleSignIn(signInConfig());
     const { path, url } = await mint(app);
     const seen: Response[] = [
@@ -344,6 +365,8 @@ describe("the doors, with sign-in", () => {
       await ask(app, `${PAIRING_REDEEM_PATH}?token=nope`, { session: "admin" }),
       await ask(app, "/api/capabilities"),
     ];
+    // D49: not even the cookie of a pairing that succeeded carries it. That cookie is the browser's own token.
+    seen.push(await ask(app, (await mint(app)).path, { session: "admin" }));
     for (const answer of seen) {
       expect([...answer.headers.entries()].join("\n")).not.toContain(SECRET);
       expect(await answer.text()).not.toContain(SECRET);
@@ -422,7 +445,12 @@ describe("the administrator check is the app's own guard, asked once", () => {
     const guard = createRequireUser(stubAuth, stubRoles);
     const routes = createInstallPairingRoutes(
       { secret: SECRET, cookie: installCookieName(3001) },
-      { signIn: { requireUser: guard, secure: false } },
+      {
+        signIn: {
+          requireUser: guard,
+          pairings: signInGate(signInConfig())?.pairings as never,
+        },
+      },
     );
     const answer = await routes.request(
       `${ORIGIN}${PAIRING_REDEEM_PATH}?token=anything`,
@@ -443,7 +471,7 @@ describe("/api/me says whether the browser is a remote session", () => {
 
     const paired = await ask(app, "/api/me", {
       session: "user",
-      headers: { cookie: pairedCookie(config) },
+      headers: { cookie: pairedCookie(config, "user") },
     });
     expect(paired.status).toBe(200);
     expect(await paired.json()).toMatchObject({ remote: false });
@@ -471,7 +499,7 @@ describe("/api/me says whether the browser is a remote session", () => {
     // Single-user mode asks the pairing cookie of every route (D28), so the browser sends it.
     const { app: alone } = assembleSignIn(single);
     const answer = await ask(alone, "/api/me", {
-      headers: { cookie: pairedCookie(single) },
+      headers: { cookie: legacyCookie(single) },
     });
     expect(answer.status).toBe(200);
     expect(await answer.json()).toMatchObject({ remote: false });

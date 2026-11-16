@@ -8,10 +8,11 @@
 # once: this script asks the server for a link, and the browser opens it. The link is good once and for
 # two minutes. The secret is not in it, is never printed, and never leaves this machine.
 #
-# With sign-in, the same cookie marks a browser that is at this computer: a signed-in browser without it
-# is a remote session, which can read, chat and answer a plain approval once, and nothing else
-# (docs/design/phone-and-remote.md 3.5). Sign in as the administrator in the browser first; the link
-# opens at the app's own address, where that session is.
+# With sign-in, the link gives THIS browser its own pairing (a random token of its own, revocable in
+# Settings; the secret itself is never sent to a browser, D49). A signed-in browser without a live pairing
+# of the person signed in is a remote session, which can read, chat and answer a plain approval once, and
+# nothing else (docs/design/phone-and-remote.md 3.5). Sign in as the administrator in the browser first; the
+# link opens at the app's own address, where that session is. A phone is paired from Settings, with a code.
 #
 # scripts/start.sh runs this by itself the first time it makes the secret. Run it again for another
 # browser, or for this one after its cookies were cleared.

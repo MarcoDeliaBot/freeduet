@@ -93,6 +93,11 @@ import {
 import { startRetentionSweeps } from "./audit-retention";
 import { createAuth } from "./auth";
 import { DEV_ACTOR, initializeDevActorUser } from "./auth/dev-actor";
+import {
+  createBrowserPairings,
+  createPgPairingStore,
+  pairingSecureNotice,
+} from "./auth/browser-pairings";
 import { INSTALL_SECRET_VARIABLE, signInGate } from "./auth/install-secret";
 import { remoteRunQuestion } from "./auth/remote-limits";
 import type { AuthService } from "./auth/guards";
@@ -1953,7 +1958,32 @@ const actorAgentResolver = withRunChannels(baseAgentResolver, (owner, thread) =>
   openDuetChannels.ofThread(owner, thread),
 );
 
-const runGate = signInGate(config);
+/*
+ * FreeDuet (D49): where browsers' pairings with this computer are kept, with sign-in and a secret only. One
+ * service for the app, the live-screen upgrade and the runs, so the three ask the same thing. At boot every
+ * pairing made under a secret that is not the one in force is ended: changing the secret ends them all.
+ */
+const browserPairings =
+  !config.singleUser && config.installSecret
+    ? createBrowserPairings({
+        store: createPgPairingStore(database),
+        secret: config.installSecret,
+        port: config.port,
+        secure: config.appUrl?.startsWith("https://") ?? false,
+        audit: createAuditStore(database),
+      })
+    : undefined;
+if (browserPairings) {
+  const notice = pairingSecureNotice(config);
+  if (notice) console.warn(notice);
+}
+browserPairings?.sweepStale().catch((error) => {
+  console.error(
+    "Could not end the pairings of an earlier secret.",
+    error?.name,
+  );
+});
+const runGate = signInGate(config, browserPairings);
 const copilotRuntime = mountCopilotRuntime(
   config,
   actorAgentResolver,
@@ -2835,6 +2865,7 @@ const app = createApp(
   },
   {
     approvals: approvalService,
+    ...(browserPairings ? { pairings: browserPairings } : {}),
     shared: { modes: accountModes, use: sharedUseStore },
     ...(signInService ? { passwords: signInService } : {}),
     demonstrations: {
@@ -2950,6 +2981,7 @@ const { addresses: listening } = startHttpServer({
   demonstrationStore,
   demonstrationRecorder,
   app,
+  ...(browserPairings ? { pairings: browserPairings } : {}),
 });
 
 /** Whether only this machine, and the containers it runs, can reach the server. */

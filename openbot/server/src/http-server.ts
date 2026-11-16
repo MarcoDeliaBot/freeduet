@@ -4,6 +4,7 @@ import { serve } from "bun";
 import { computerAccessCheck } from "./agents/computer-access";
 import type { AgentProfileStore } from "./agents/profile-store";
 import { createHostGuard } from "./auth/host-guard";
+import type { BrowserPairings } from "./auth/browser-pairings";
 import { personRule, personVerdict, signInGate } from "./auth/install-secret";
 import { isRemote, remoteRefusal } from "./auth/remote-limits";
 import type { OpenBotRole } from "./auth/roles";
@@ -70,6 +71,8 @@ export function startHttpServer(deps: {
       env: { server: unknown },
     ) => Response | Promise<Response>;
   };
+  /** Where browsers' pairings are kept (D49), the same service the app asks. Absent: no browser is paired. */
+  pairings?: BrowserPairings;
 }): { addresses: string[]; stop: () => void } {
   const {
     port,
@@ -80,6 +83,7 @@ export function startHttpServer(deps: {
     demonstrationStore,
     demonstrationRecorder,
     app,
+    pairings,
   } = deps;
 
   /**
@@ -116,7 +120,7 @@ export function startHttpServer(deps: {
   const person = personRule(config);
   // With sign-in and a secret, a session in a browser that is not paired with this computer is remote
   // (auth/remote-limits.ts), and the live screen is one of the things it may not open.
-  const pairing = signInGate(config);
+  const pairing = signInGate(config, pairings);
   // In that same case, a loopback request under a name that is not this machine's own is a page that
   // rebound its address (auth/host-guard.ts). Asked first, of every request and every upgrade, and
   // before the URL is read: a request with no usable `Host` has no URL to read.
@@ -167,7 +171,7 @@ export function startHttpServer(deps: {
         if (!actor) {
           return new Response("Sign in first.", { status: 401 });
         }
-        if (isRemote(pairing, request)) {
+        if (await isRemote(pairing, request, actor.id)) {
           return new Response(remoteRefusal().error, { status: 403 });
         }
         // And which Bot, which the guard above does not answer. This socket carries that Bot's screen,

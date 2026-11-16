@@ -39,7 +39,7 @@ All of it is still in the database, attached to `dev-local-user`, a person nobod
 ### 2.1 How a person is named
 
 - By `users.id`, a text column. For this person it is the literal `dev-local-user`. [code: server/src/auth/dev-actor.ts:30]
-- By a foreign key to `users.id` in 53 columns [proved: `server/tests/single-user-adoption-registry.test.ts` reads them from the live schema].
+- By a foreign key to `users.id` in 54 columns [proved: `server/tests/single-user-adoption-registry.test.ts` reads them from the live schema].
 - By a plain text column with no foreign key, such as `composio_connections.user_id` or `learning_thread_bindings.user_id`.
 - Inside `jsonb`: the payload of a work item (`actorId`, `ownerUserId`, a nested `question.actorId`) and the member list of a shared-use request.
 - In a derived key. Two exist:
@@ -94,7 +94,7 @@ Every column below, written as its table and its column joined by a dot, is a li
 
 **Identity: the single-user person has none, and the tool stops if it does**
 
-`accounts.user_id`, `sessions.user_id`, `user_roles.user_id`, `scim_users.user_id`, `scim_subjects.user_id`, `scim_projection_grants.user_id`, `scim_identity_tombstones.user_id`.
+`accounts.user_id`, `sessions.user_id`, `user_roles.user_id`, `scim_users.user_id`, `scim_subjects.user_id`, `scim_projection_grants.user_id`, `scim_identity_tombstones.user_id`, `browser_pairings.user_id` (a browser paired with the computer, D49: only a deployment with sign-in has any).
 
 **Reviewed: looks like a person, is not**
 

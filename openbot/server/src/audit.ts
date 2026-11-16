@@ -612,6 +612,17 @@ export const auditEventTypes = [
   "mail_rule.deleted",
   "mail_rule.applied",
   "mail_rule.failed",
+  /*
+   * Pairing a browser with the computer (docs/M1_PLAN.md D49). `minted`: a one-time code was made for a phone
+   * or another browser. `redeemed`: a browser got its own pairing, by the link on the computer (`via: "link"`),
+   * by a code (`"code"`), or by upgrading the old cookie (`"legacy_cookie"`). `redeem_failed`: a code was
+   * refused (`reason`). `revoked`: a pairing was ended by the person (`by`), or all at once because the
+   * installation secret changed. Payload: pairing id, kind, how; never the token, the code or the secret.
+   */
+  "pairing.minted",
+  "pairing.redeemed",
+  "pairing.redeem_failed",
+  "pairing.revoked",
 ] as const;
 
 export type AuditEventType = (typeof auditEventTypes)[number];

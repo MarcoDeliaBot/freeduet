@@ -1763,7 +1763,7 @@ export function createRequestAgents(
      * changes.
      */
     const remote = remoteSession
-      ? await remoteSession(request).catch(() => true)
+      ? await remoteSession(request, actor.id).catch(() => true)
       : false;
     return remote
       ? resolver.resolveAgentsForActor(actor, { initiator: REMOTE_INITIATOR })
@@ -1772,7 +1772,10 @@ export function createRequestAgents(
 }
 
 /** Whether a request comes from a remote session. See {@link createRequestAgents}. */
-export type RemoteSession = (request: Request) => Promise<boolean>;
+export type RemoteSession = (
+  request: Request,
+  userId: string,
+) => Promise<boolean>;
 
 /**
  * Mount the CopilotKit endpoint onto the host Hono app.

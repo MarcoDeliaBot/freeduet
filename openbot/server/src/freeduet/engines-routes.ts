@@ -41,7 +41,7 @@
  */
 import { Hono, type MiddlewareHandler } from "hono";
 import { type AppVariables, requireAdmin } from "../auth/guards";
-import type { InstallGate } from "../auth/install-secret";
+import type { PairingGate } from "../auth/install-secret";
 import type { ManagedAgentConfig } from "../config";
 import { atTheComputer } from "./at-the-computer";
 import {
@@ -502,7 +502,7 @@ export function createEnginesRoutes(
   requireUser: MiddlewareHandler<{ Variables: AppVariables }>,
   reach: () => EnginesReach,
   choices?: EngineChoices,
-  pairing?: InstallGate,
+  pairing?: PairingGate,
 ) {
   const routes = new Hono<{ Variables: AppVariables }>();
   routes.use("*", requireUser);
@@ -520,7 +520,12 @@ export function createEnginesRoutes(
     const listed = agent.reading.reason === null;
     const cannotChange: ChangeBlock | null = !listed
       ? null
-      : !atTheComputer(context.env, context.req.raw, pairing)
+      : !(await atTheComputer(
+            context.env,
+            context.req.raw,
+            pairing,
+            context.var.actor.id,
+          ))
         ? "not_at_the_computer"
         : (agent.choicesVersion ?? 0) < CHOICES_VERSION
           ? "agent_too_old"
@@ -539,14 +544,19 @@ export function createEnginesRoutes(
   });
 
   /** The two guards every change passes before anything is read: an administrator, at the computer. */
-  const mayChange = (context: Parameters<typeof requireAdmin>[0]) =>
+  const mayChange = async (context: Parameters<typeof requireAdmin>[0]) =>
     requireAdmin(context) ??
-    (atTheComputer(context.env, context.req.raw, pairing)
+    ((await atTheComputer(
+      context.env,
+      context.req.raw,
+      pairing,
+      context.var.actor.id,
+    ))
       ? undefined
       : context.json({ error: NOT_AT_THE_COMPUTER }, 403));
 
   routes.put("/members/:memberId/mode", async (context) => {
-    const refused = mayChange(context);
+    const refused = await mayChange(context);
     if (refused) return refused;
     if (!choices) return context.json({ error: NO_CHOICES_HERE }, 503);
     let body: unknown = null;
@@ -574,7 +584,7 @@ export function createEnginesRoutes(
   });
 
   routes.post("/changes/:changeId/undo", async (context) => {
-    const refused = mayChange(context);
+    const refused = await mayChange(context);
     if (refused) return refused;
     if (!choices) return context.json({ error: NO_CHOICES_HERE }, 503);
     const changeId = context.req.param("changeId");
@@ -595,7 +605,7 @@ export function createEnginesRoutes(
   // "Check again" (first-start design, section 4): the two guards of a change, an administrator at the computer. It asks
   // agent-freeduet to look at Claude Code now and keeps nothing here: no change is stored and no audit row is written.
   routes.post("/claude/check", async (context) => {
-    const refused = mayChange(context);
+    const refused = await mayChange(context);
     if (refused) return refused;
     return context.json(await checkClaude(reach()), 200, {
       "Cache-Control": "no-store",

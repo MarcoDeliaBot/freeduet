@@ -6,10 +6,20 @@
  * (`x-test-session`), standing in for Better Auth's cookie, so these tests need no database; the one
  * that does (`remote-limits.integration.test.ts`) goes through the real `createAuth`.
  */
+import { createHash } from "node:crypto";
 import { Hono } from "hono";
 import { createApp } from "../../src/app";
+import type { AuditStore } from "../../src/audit";
 import type { ApprovalService } from "../../src/approvals/service";
 import type { AuthService, RoleRepository } from "../../src/auth/guards";
+import {
+  type BrowserPairings,
+  createBrowserPairings,
+  createMemoryPairingStore,
+  type PairingKind,
+  pairCookieName,
+  secretTagOf,
+} from "../../src/auth/browser-pairings";
 import { installCookieName } from "../../src/auth/install-secret";
 import { createChannelEventHub } from "../../src/channels/events";
 import type { ChannelStore } from "../../src/channels/routes";
@@ -35,9 +45,56 @@ export function signInConfig(
   );
 }
 
-/** The header that carries the installation cookie, as a browser paired with this computer sends it. */
-export const pairedCookie = (config: Pick<DeploymentConfig, "port">) =>
+/** The OLD cookie, as a browser paired before D49 sends it: the secret itself. Upgraded once, on a signed-in request. */
+export const legacyCookie = (config: Pick<DeploymentConfig, "port">) =>
   `${installCookieName(config.port)}=${SECRET}`;
+
+/**
+ * A token a test browser holds. Fixed and recognisable, 43 characters like a real one, so a leak is found by
+ * searching; `seedPairings` makes the matching pairing for each person.
+ */
+export const tokenFor = (who: keyof typeof PEOPLE, kind: PairingKind) =>
+  createHash("sha256").update(`test-token:${who}:${kind}`).digest("base64url");
+
+/** The header of a browser paired with this computer as `who`, the way a pairing's cookie is sent (D49). */
+export const pairedCookie = (
+  config: Pick<DeploymentConfig, "port">,
+  who: keyof typeof PEOPLE = "admin",
+  kind: PairingKind = "computer",
+) => `${pairCookieName(config.port)}=${tokenFor(who, kind)}`;
+
+/** A store with one live pairing of each kind for each person, and the service over it, made under SECRET. */
+export function seedPairings(
+  config: Pick<DeploymentConfig, "port" | "appUrl">,
+  options: { now?: () => number; audit?: AuditStore } = {},
+) {
+  const store = createMemoryPairingStore();
+  const service: BrowserPairings = createBrowserPairings({
+    store,
+    secret: SECRET,
+    port: config.port,
+    secure: config.appUrl?.startsWith("https://") ?? false,
+    ...(options.audit ? { audit: options.audit } : {}),
+    ...(options.now ? { now: options.now } : {}),
+  });
+  const at = new Date((options.now ?? Date.now)());
+  for (const [who, person] of Object.entries(PEOPLE))
+    for (const kind of ["computer", "device"] as const)
+      void store.insert({
+        id: `seed-${who}-${kind}`,
+        userId: person.id,
+        label: `${kind} of ${who}`,
+        kind,
+        tokenHash: createHash("sha256")
+          .update(tokenFor(who as keyof typeof PEOPLE, kind))
+          .digest("hex"),
+        secretTag: secretTagOf(SECRET),
+        createdAt: at,
+        lastSeenAt: at,
+        expiresAt: new Date(at.getTime() + 400 * 86_400_000),
+      });
+  return { store, service };
+}
 
 /** A peer, as `server.requestIP` reports it, for a request handed straight to the app. */
 export const peerAt = (address: string) => ({
@@ -86,6 +143,7 @@ export function assembleSignIn(
   config: DeploymentConfig,
   extra: Record<number, unknown> = {},
   approval: { action?: unknown } = {},
+  pairingOptions: { now?: () => number; audit?: AuditStore } = {},
 ) {
   const calls: Calls = {
     rules: [],
@@ -136,6 +194,7 @@ export function assembleSignIn(
     },
   } as unknown as ChannelStore;
 
+  const { store, service: pairings } = seedPairings(config, pairingOptions);
   const args: unknown[] = new Array(38).fill(undefined);
   args[0] = config;
   args[1] = stubAuth;
@@ -152,11 +211,11 @@ export function assembleSignIn(
     calls.tools += 1;
     return { text: "tool ran", isError: false };
   };
-  args[34] = { approvals };
+  args[34] = { approvals, pairings };
   for (const [index, value] of Object.entries(extra))
     args[Number(index)] = value;
   const app = (
     createApp as (...values: unknown[]) => ReturnType<typeof createApp>
   )(...args);
-  return { app, calls };
+  return { app, calls, pairings, store };
 }

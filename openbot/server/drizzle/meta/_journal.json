@@ -533,6 +533,13 @@
       "when": 1794810877092,
       "tag": "0075_approval_auto_review_default",
       "breakpoints": true
+    },
+    {
+      "idx": 76,
+      "version": "7",
+      "when": 1794813495894,
+      "tag": "0076_browser_pairings",
+      "breakpoints": true
     }
   ]
 }
