@@ -37,9 +37,19 @@ MAX_FILE_BYTES = 100 * 1024 * 1024  # the computer's own download limit
 MAX_ENTRIES = 5000
 MAX_TOTAL_UNCOMPRESSED = 200 * 1024 * 1024
 MAX_ENTRY_UNCOMPRESSED = 100 * 1024 * 1024
-# Compression ratios. Real Office files compress 3 to 20 times; a sheet of repeated cells can reach a few
-# dozen. 100 to 1 is already unusual, and a bomb is 1000 to 1 or more, so one threshold serves both rules.
-MAX_RATIO = 100  # uncompressed : compressed, per entry and for the archive as a whole
+# Compression ratio, per entry and for the archive as a whole, uncompressed : compressed. Measured, not
+# guessed (zlib, the same family of coder every Office file uses):
+#   honest files: a sheet or table 9 to 13; 5,000 x 10 table 196; 3,000 identical paragraphs 163; 50,000
+#     identical paragraphs 281 per entry and 94 for the archive; Word's own 500 identical pages 151 (a
+#     reviewer's file); the ceiling for a repeated paragraph is 294, however long the document is.
+#   bombs: a run of zeros reaches 1009 (1 MiB) to 1029 (100 MiB), the most deflate can do; the reviewer's
+#     bombs measured 902 to 1029 per entry and 662 to 1023 for the archive.
+# 600 leaves a margin of 2 over the honest files and 1.5 under the bombs. The ratio is only a first
+# stop: the absolute limits below (100 MiB an entry, 200 MiB in all, depth, element count) are what bound
+# the work, so a bomb that compresses less well is still bounded. Entries under RATIO_FLOOR cannot reach
+# the limit at all (a 64 KiB entry of zeros plus its headers is about 380 to 1); a swarm of them is stopped
+# by the 200 MiB total and the 5,000 entries, which is what the tests check.
+MAX_RATIO = 600
 RATIO_FLOOR = 64 * 1024  # below this an entry is too small to matter (a few KB of XML compresses well)
 ARCHIVE_RATIO_FLOOR = 4 * 1024 * 1024  # the whole-archive rule applies once the archive expands past this
 # A part that is parsed whole (content types, relationships, workbook, app properties, presentation) is
@@ -99,6 +109,13 @@ SUSPICIOUS_FORMULA = (
 )
 
 
+RATIO_SENTENCE = (
+    "The file expands unusually much when it is opened (more than 600 times its stored size), which is how a zip bomb "
+    "is built. It was not opened. If you made the file yourself, say so to the person instead of retrying, and do not "
+    "open it another way."
+)
+
+
 class Refused(Exception):
     """The file is refused; the message is the sentence the person is told."""
 
@@ -150,7 +167,7 @@ def check_archive(zf, file_size):
             )
         if size >= RATIO_FLOOR and size > MAX_RATIO * max(info.compress_size, 1):
             raise Refused(
-                "One part expands more than 100 times its stored size, which is how a zip bomb is built. It was not opened.",
+                RATIO_SENTENCE,
                 reason_code="zip_bomb_ratio",
             )
         total += size
@@ -162,7 +179,7 @@ def check_archive(zf, file_size):
     # The archive as a whole: many entries that each stay under the per-entry floor still add up.
     if total > ARCHIVE_RATIO_FLOOR and total > MAX_RATIO * max(file_size, 1):
         raise Refused(
-            "This archive expands more than 100 times the size of the file, which is how a zip bomb is built. It was not opened.",
+            RATIO_SENTENCE,
             reason_code="zip_bomb_ratio",
         )
     return total
@@ -455,7 +472,7 @@ def inspect_xlsx(zf):
         max_r = max_c = 0
         declared_dim = None
         cut = False
-        for event, element in iter_part(zf, part, keep=("c",)):
+        for event, element in iter_part(zf, part, keep=("c", "is")):
             tag = local(element.tag)
             if tag == "dimension":
                 declared_dim = clean(element.get("ref") or "", 40)
@@ -573,32 +590,40 @@ PDF_TOKENS = (
 )
 
 
-def zip_trailer_in(handle, size):
-    """True when the end of the file holds a ZIP end-of-central-directory record that fits the file
-    exactly: a file that is a PDF and a ZIP at once."""
-    span = min(size, 65535 + 22)
-    handle.seek(size - span)
-    tail = handle.read(span)
-    pos = tail.find(b"PK\x05\x06")
-    while pos != -1:
-        if pos + 22 <= len(tail):
-            comment = int.from_bytes(tail[pos + 20 : pos + 22], "little")
-            if pos + 22 + comment == len(tail):
+def zip_trailer_in(handle, data):
+    """True when the file also holds a ZIP archive. Readers differ on where they look for the end-of-central-
+    directory record: Python's zipfile in the last 64 KiB plus 22 bytes, other programs anywhere. So both are
+    asked: zipfile first, on the same handle, and then every such record anywhere in the file whose central
+    directory could fit before it (a record need not end the file, and need not be near the end)."""
+    handle.seek(0)
+    try:
+        with zipfile.ZipFile(handle) as zf:
+            if zf.infolist():
                 return True
-        pos = tail.find(b"PK\x05\x06", pos + 1)
+    except Exception:
+        pass
+    pos = data.find(b"PK\x05\x06")
+    while pos != -1:
+        if pos + 22 <= len(data):
+            cd_entries = int.from_bytes(data[pos + 10 : pos + 12], "little")
+            cd_size = int.from_bytes(data[pos + 12 : pos + 16], "little")
+            comment = int.from_bytes(data[pos + 20 : pos + 22], "little")
+            if cd_entries and 0 < cd_size <= pos and pos + 22 + comment <= len(data):
+                return True
+        pos = data.find(b"PK\x05\x06", pos + 1)
     return False
 
 
 def inspect_pdf(handle, size):
-    if zip_trailer_in(handle, size):
+    handle.seek(0)
+    data = handle.read(MAX_FILE_BYTES + 1)
+    if zip_trailer_in(handle, data):
         raise Refused(
             "This file is a PDF and a ZIP archive at once. That is how a file is made to look harmless to one reader "
             "and different to another. It was not opened.",
             reason_code="polyglot",
             detected_type="pdf",
         )
-    handle.seek(0)
-    data = handle.read(MAX_FILE_BYTES + 1)
     raw = {}
     for name, pattern in PDF_TOKENS:
         count = len(re.findall(pattern, data))
@@ -682,6 +707,13 @@ def inspect_open(handle, size, ext, base_name):
             "Ask the person to open it and save a copy as .docx, .xlsx or .pptx.",
             reason_code="legacy_binary",
             detected_type="ole",
+            size_bytes=size,
+        )
+    if family == "unknown" and b"%PDF-" in head[:1024]:
+        raise Refused(
+            "This looks like a PDF that does not start at the first byte. Readers differ on such a file, which is how one "
+            "is made to look harmless to one and different to another. It was not opened; ask the person for the original.",
+            reason_code="pdf_not_at_start",
             size_bytes=size,
         )
     if family == "unknown":

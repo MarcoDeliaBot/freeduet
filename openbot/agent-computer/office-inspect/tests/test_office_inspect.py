@@ -227,7 +227,7 @@ def test_unknown_bytes_and_empty_files_are_refused(tmp_path):
 
 
 def test_a_zip_bomb_is_refused_from_its_directory_before_anything_is_read(tmp_path):
-    # 5 MiB of zeros stores in about 5 KiB: a ratio far over 100 to 1.
+    # 5 MiB of zeros stores in about 5 KiB: a ratio far over the limit.
     f = make_zip(tmp_path / "bomb.xlsx", xlsx_parts(sheet(""), {"xl/media/zeros.bin": b"\x00" * (5 * 1024 * 1024)}))
     code, out, _ = run(f)
     assert code == 3 and out["reason_code"] == "zip_bomb_ratio"
@@ -464,7 +464,8 @@ def test_a_pdf_marker_not_at_byte_zero_is_not_a_pdf(tmp_path):
     f = tmp_path / "late.pdf"
     f.write_bytes(b"junk\n" + minimal_pdf(1))
     code, out, _ = run(f)
-    assert code == 3 and out["reason_code"] == "unknown_type"
+    assert code == 3 and out["reason_code"] == "pdf_not_at_start"
+    assert "does not start at the first byte" in out["reason"]
 
 
 def test_a_very_long_formula_is_capped_not_scanned(tmp_path):
@@ -611,11 +612,13 @@ def test_help_prints_the_usage_and_exits_zero():
     assert proc.returncode == 0 and "usage: office-inspect" in proc.stdout
 
 
-def test_many_entries_each_under_the_per_entry_floor_are_refused_as_a_whole(tmp_path):
-    parts = docx_parts({f"word/media/{i}.bin": b"\x00" * 60_000 for i in range(120)})
+def test_many_entries_each_under_the_per_entry_floor_are_stopped_by_the_total_limit(tmp_path):
+    # Entries this small cannot reach the ratio limit (their own headers cost too much), so what stops a
+    # swarm of them is the 200 MiB total.
+    parts = docx_parts({f"word/media/{i}.bin": b"\x00" * 60_000 for i in range(3_600)})
     f = make_zip(tmp_path / "small_many.docx", parts)
     code, out, _ = run(f)
-    assert code == 3 and out["reason_code"] == "zip_bomb_ratio"
+    assert code == 3 and out["reason_code"] == "archive_too_large"
 
 
 def test_a_folder_named_like_a_file_is_refused_not_crashed(tmp_path):
@@ -629,3 +632,77 @@ def test_a_macros_folder_inside_the_archive_is_refused(tmp_path):
     f = make_zip(tmp_path / "m.docx", docx_parts({"word/Macros/x.BIN": b"\x00"}))
     code, out, _ = run(f)
     assert code == 3 and out["reason_code"] == "macros"
+
+
+# ---- second review of PR #311 -------------------------------------------------------------------------
+
+
+@pytest.mark.parametrize("junk", [0, 100, 60_000, 70_000])
+def test_a_pdf_with_a_zip_behind_it_is_refused_however_much_junk_follows(tmp_path, junk):
+    f = tmp_path / "both.docx"
+    f.write_bytes(minimal_pdf(1) + zip_bytes(docx_parts({"word/vbaProject.bin": b"\x00"})) + b"J" * junk)
+    if junk < 65_000:  # Python's own reader still lists the macro project; beyond its window only other programs do
+        with zipfile.ZipFile(f) as zf:
+            assert "word/vbaProject.bin" in zf.namelist()
+    code, out, _ = run(f)
+    assert code == 3 and out["reason_code"] == "polyglot"
+
+
+def worst_ratio(path):
+    with zipfile.ZipFile(path) as zf:
+        return max(i.file_size / max(i.compress_size, 1) for i in zf.infolist() if i.file_size >= oi.RATIO_FLOOR)
+
+
+def paragraphs(n):
+    return "<w:p><w:r><w:t>The quick brown fox jumps over the lazy dog.</w:t></w:r></w:p>" * n
+
+
+def table(rows, cols):
+    cell = "<w:tc><w:p><w:r><w:t>-</w:t></w:r></w:p></w:tc>" * cols
+    return "<w:tbl>" + ("<w:tr>" + cell + "</w:tr>") * rows + "</w:tbl>"
+
+
+@pytest.mark.parametrize(
+    "body, name",
+    [
+        (paragraphs(3_000), "3000 identical paragraphs"),
+        (paragraphs(50_000), "50000 identical paragraphs"),
+        (table(500, 6), "500 x 6 table of dashes"),
+        (table(5_000, 10), "5000 x 10 table of dashes"),
+    ],
+)
+def test_honest_repetitive_documents_are_read_not_refused_as_bombs(tmp_path, body, name):
+    f = make_zip(tmp_path / "rep.docx", docx_parts(body=body))
+    code, out, _ = run(f)
+    assert code == 0 and out["refused"] is False, name
+    # They really are repetitive: the old limit of 100 to 1 refused all of them but the smallest.
+    assert worst_ratio(f) > 100 or name.startswith("500")
+    assert worst_ratio(f) < oi.MAX_RATIO / 1.5  # with margin under the limit
+
+
+def test_an_honest_sheet_of_300000_identical_rows_is_read(tmp_path):
+    rows = "".join(f'<row r="{i}"><c r="A{i}"><v>1</v></c><c r="B{i}" t="inlineStr"><is><t>x</t></is></c></row>' for i in range(1, 300_001))
+    f = make_zip(tmp_path / "rows.xlsx", xlsx_parts(sheet(rows, "A1:B300000")))
+    code, out, _ = run(f)
+    assert code == 0 and out["xlsx"]["sheets"][0]["non_empty_cells"] == 600_000
+
+
+def test_the_limit_sits_between_honest_repetition_and_what_deflate_can_do_at_most():
+    # Measured (comment at MAX_RATIO): honest files 9 to 281, bombs 902 to 1029. The ceiling of deflate is 1032.
+    assert 281 * 2 <= oi.MAX_RATIO <= 1029 / 1.5
+
+
+@pytest.mark.parametrize("part", ["word/document.xml", "word/media/a.bin"])
+def test_bombs_of_zeros_are_still_refused_in_an_xml_part_and_in_a_media_part(tmp_path, part):
+    f = make_zip(tmp_path / "bomb.docx", docx_parts({part: b"\x00" * (20 * 1024 * 1024)}) if part != "word/document.xml" else {"[Content_Types].xml": DOCX_CT, part: b"\x00" * (20 * 1024 * 1024)})
+    assert worst_ratio(f) > 900
+    code, out, _ = run(f)
+    assert code == 3 and out["reason_code"] == "zip_bomb_ratio"
+    assert "say so to the person instead of retrying" in out["reason"]
+
+
+def test_inline_string_cells_count_as_cells_while_streaming(tmp_path):
+    cells = '<row r="1"><c r="A1" t="inlineStr"><is><r><t>rich</t></r></is></c><c r="B1" t="inlineStr"><is><t>x</t></is></c></row>'
+    f = make_zip(tmp_path / "inline.xlsx", xlsx_parts(sheet(cells, "A1:B1")))
+    out = oi.inspect(str(f))
+    assert out["xlsx"]["sheets"][0]["non_empty_cells"] == 2 and out["xlsx"]["sheets"][0]["used_range"] == "A1:B1"
