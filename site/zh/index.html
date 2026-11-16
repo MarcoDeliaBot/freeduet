@@ -120,7 +120,7 @@
    "name": "能在手机上用吗？",
    "acceptedAnswer": {
     "@type": "Answer",
-    "text": "还不是手机版。目前 FreeDuet 在你电脑的浏览器里打开。从 v0.2.2 起，可以在电脑上用链接或二维码显示的一次性代码，把手机浏览器与它配对，但手机配对尚未在真实环境中运行。手机版（也能在手机上收到需要你批准的请求）和远程访问仍在进行中。"
+    "text": "还不是手机版。目前 FreeDuet 在你电脑的浏览器里打开。从 v0.2.2 起，可以在电脑上用链接或二维码显示的一次性代码，把手机浏览器与它配对；手机配对已于2026年11月16日在一次安装上真实运行。手机版（也能在手机上收到需要你批准的请求）和远程访问仍在进行中。"
    }
   },
   {
@@ -1834,7 +1834,7 @@ cd openbot &amp;&amp; docker compose exec -it agent-freeduet claude
       <details class="rv"><summary data-i="q3">能在 Windows、Mac 和 Linux 上用吗？</summary><p data-i="a3">维护者在 Windows（配合 WSL2 和 Docker）上使用它，我们的自动检查会在 Linux 上启动它。它没有在 Mac 上测试过，所以我们不能保证能在那里运行。FreeDuet 是早期版本，由一位维护者开发并使用；最新的已发布版本是 0.2.2（2026年11月16日）。</p></details>
       <details class="rv"><summary data-i="q4">助理不用问我就能做什么？</summary><p data-i="a4">它可以查资料、阅读，并准备草稿和报告。默认情况下，五个按钮都要等你按下“批准”，只有发给你亲自输入地址的新邮件例外。你用自己的话设定的持久邮件规则会自动作用于新邮件：可以打标签、归档、标记为已读，或移到垃圾邮件或回收站。它从不转发、回复、发送，也从不永久删除。Full access 按成员单独开启，在你自己的对话中取消等待；它已经做好，但还没在真实环境中运行。密码和安全设置仍归你。助理仍可能出错，请先看过它准备的内容再批准。</p></details>
       <details class="rv"><summary data-i="q5">我的数据在哪里？</summary><p data-i="a5">FreeDuet 运行在你的电脑上，对话记录保存在那里的数据库中。你的 Claude 登录信息留在一个只有 Claude Code 程序会读取的 Docker 卷里。思考时，助理会把你的请求发给你已登录的 AI 服务，就和该服务自己的应用一样。</p></details>
-      <details class="rv"><summary data-i="q6">能在手机上用吗？</summary><p data-i="a6">还不是手机版。目前 FreeDuet 在你电脑的浏览器里打开。从 v0.2.2 起，可以在电脑上用链接或二维码显示的一次性代码，把手机浏览器与它配对，但手机配对尚未在真实环境中运行。手机版（也能在手机上收到需要你批准的请求）和远程访问仍在进行中。</p></details>
+      <details class="rv"><summary data-i="q6">能在手机上用吗？</summary><p data-i="a6">还不是手机版。目前 FreeDuet 在你电脑的浏览器里打开。从 v0.2.2 起，可以在电脑上用链接或二维码显示的一次性代码，把手机浏览器与它配对；手机配对已于2026年11月16日在一次安装上真实运行。手机版（也能在手机上收到需要你批准的请求）和远程访问仍在进行中。</p></details>
       <details class="rv"><summary data-i="q7">我能添加自己的团队成员吗？</summary><p data-i="a7">可以。你可以请专门打造新助理的 Leo 为你需要的工作设计一位，也可以自己编写它的定义。给成员改名、换说话方式，已经做好，但还没在真实环境中运行。<a href="https://github.com/MarcoDeliaBot/freeduet/blob/main/docs/TEAM.md">成员是如何定义的</a>。</p></details>
       <details class="rv"><summary data-i="q8">去哪里获得帮助？</summary><p data-i="a8">在 GitHub 上提一个 issue。<a href="https://github.com/MarcoDeliaBot/freeduet/issues/new/choose">这里有一份简短的表格</a>，可以用来提问、报告错误、提交修复，或者告诉我们你在使用。用英语或意大利语写都可以。</p></details>
     </div>

@@ -143,7 +143,7 @@
  "q5": "Where is my data?",
  "a5": "FreeDuet runs on your computer and keeps its conversations in a database there. Your Claude login stays in a Docker volume that only the Claude Code program reads. To think, the assistants send your request to the AI service you signed in to, as its own app would.",
  "q6": "Can I use it from my phone?",
- "a6": "Not a phone version yet. Today FreeDuet opens in the browser on your computer. Since v0.2.2 a phone's browser can be paired from the computer with a one-time code, shown as a link or a QR code, but pairing a phone is not yet run live. The phone version, where you also get approval requests, and remote access are in progress.",
+ "a6": "Not a phone version yet. Today FreeDuet opens in the browser on your computer. Since v0.2.2 a phone's browser can be paired from the computer with a one-time code, shown as a link or a QR code, and pairing a phone was run live on one installation on 16 November 2026. The phone version, where you also get approval requests, and remote access are in progress.",
  "q7": "Can I add my own team member?",
  "a7": "Yes. Ask Leo, who builds new assistants, to design one for the job you need, or write its definition yourself. Renaming members and changing how they talk is built, not yet run live. <a href=\"https://github.com/MarcoDeliaBot/freeduet/blob/main/docs/TEAM.md\">How the members are defined</a>.",
  "q8": "Where do I get help?",

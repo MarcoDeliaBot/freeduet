@@ -143,7 +143,7 @@
  "q5": "Onde ficam os meus dados?",
  "a5": "O FreeDuet roda no seu computador e guarda as conversas em um banco de dados ali. O seu login do Claude fica em um volume do Docker que só o programa Claude Code lê. Para pensar, os assistentes enviam o seu pedido ao serviço de IA em que você fez login, do mesmo jeito que o aplicativo dele faria.",
  "q6": "Posso usar pelo celular?",
- "a6": "Ainda não há versão para celular. Hoje o FreeDuet abre no navegador do seu computador. A partir da v0.2.2, o navegador de um celular pode ser pareado a partir do computador com um código de uso único, mostrado como link ou código QR, mas o pareamento de um celular ainda não foi testado em uso real. A versão para celular, em que você também recebe pedidos de aprovação, e o acesso remoto estão em andamento.",
+ "a6": "Ainda não há versão para celular. Hoje o FreeDuet abre no navegador do seu computador. A partir da v0.2.2, o navegador de um celular pode ser pareado a partir do computador com um código de uso único, mostrado como link ou código QR, e o pareamento de um celular foi rodado de verdade em uma instalação em 16 de novembro de 2026. A versão para celular, em que você também recebe pedidos de aprovação, e o acesso remoto estão em andamento.",
  "q7": "Posso adicionar um membro meu?",
  "a7": "Sim. Peça ao Leo, que cria novos assistentes, para projetar um para o trabalho de que você precisa, ou escreva você mesmo a definição. Mudar o nome dos membros e o jeito como falam está construído, mas ainda sem teste em uso real. <a href=\"https://github.com/MarcoDeliaBot/freeduet/blob/main/docs/TEAM.md\">Como os membros são definidos</a>.",
  "q8": "Onde consigo ajuda?",

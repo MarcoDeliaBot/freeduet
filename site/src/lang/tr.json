@@ -143,7 +143,7 @@
  "q5": "Verilerim nerede?",
  "a5": "FreeDuet bilgisayarında çalışır ve konuşmalarını orada bir veritabanında tutar. Claude girişin, yalnızca Claude Code programının okuduğu bir Docker biriminde kalır. Asistanlar düşünmek için isteğini, giriş yaptığın yapay zekâ hizmetine, o hizmetin kendi uygulamasının yapacağı gibi gönderir.",
  "q6": "Telefonumdan kullanabilir miyim?",
- "a6": "Henüz telefon sürümü yok. Bugün FreeDuet, bilgisayarındaki tarayıcıda açılıyor. v0.2.2'den beri bir telefonun tarayıcısı, bilgisayardan bağlantı ya da QR kod olarak gösterilen tek kullanımlık kodla eşleştirilebiliyor; ancak telefon eşleştirmesi henüz gerçek kullanımda sınanmadı. Onay isteklerinin de geldiği telefon sürümü ve uzaktan erişim üzerinde çalışılıyor.",
+ "a6": "Henüz telefon sürümü yok. Bugün FreeDuet, bilgisayarındaki tarayıcıda açılıyor. v0.2.2'den beri bir telefonun tarayıcısı, bilgisayardan bağlantı ya da QR kod olarak gösterilen tek kullanımlık kodla eşleştirilebiliyor; telefon eşleştirmesi 16 Kasım 2026'da bir kurulumda canlı çalıştırıldı. Onay isteklerinin de geldiği telefon sürümü ve uzaktan erişim üzerinde çalışılıyor.",
  "q7": "Kendi ekip üyemi ekleyebilir miyim?",
  "a7": "Evet. Yeni asistanlar kuran Leo'dan ihtiyacın olan iş için bir tane tasarlamasını iste ya da tanımını kendin yaz. Üyelerin adını ve konuşma tarzını değiştirmek hazır, ama gerçek kullanımda henüz sınanmadı. <a href=\"https://github.com/MarcoDeliaBot/freeduet/blob/main/docs/TEAM.md\">Üyeler nasıl tanımlanıyor</a>.",
  "q8": "Yardımı nereden alırım?",

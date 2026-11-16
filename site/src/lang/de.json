@@ -143,7 +143,7 @@
  "q5": "Wo sind meine Daten?",
  "a5": "FreeDuet läuft auf deinem Computer und speichert seine Unterhaltungen dort in einer Datenbank. Deine Claude-Anmeldung bleibt in einem Docker-Volume, das nur das Programm Claude Code liest. Zum Denken schicken die Assistenten deine Anfrage an den KI-Dienst, bei dem du angemeldet bist, so wie es dessen eigene App auch tun würde.",
  "q6": "Kann ich es auf dem Handy nutzen?",
- "a6": "Noch keine Handy-Version. Heute öffnet sich FreeDuet im Browser auf deinem Computer. Seit v0.2.2 lässt sich der Browser eines Handys vom Computer aus mit einem Einmalcode koppeln, der als Link oder QR-Code angezeigt wird; das Koppeln eines Handys ist aber noch nicht im Echtbetrieb getestet. Die Handy-Version, auf der du auch Genehmigungsanfragen bekommst, und der Fernzugriff sind in Arbeit.",
+ "a6": "Noch keine Handy-Version. Heute öffnet sich FreeDuet im Browser auf deinem Computer. Seit v0.2.2 lässt sich der Browser eines Handys vom Computer aus mit einem Einmalcode koppeln, der als Link oder QR-Code angezeigt wird; das Koppeln eines Handys wurde am 16. November 2026 auf einer Installation live getestet. Die Handy-Version, auf der du auch Genehmigungsanfragen bekommst, und der Fernzugriff sind in Arbeit.",
  "q7": "Kann ich ein eigenes Teammitglied hinzufügen?",
  "a7": "Ja. Bitte Leo, der neue Assistenten baut, eines für die Aufgabe zu entwerfen, die du brauchst, oder schreib die Definition selbst. Mitglieder umzubenennen und ihre Art zu sprechen zu ändern, ist gebaut, aber noch nicht im Echtbetrieb getestet. <a href=\"https://github.com/MarcoDeliaBot/freeduet/blob/main/docs/TEAM.md\">So sind die Mitglieder definiert</a>.",
  "q8": "Wo bekomme ich Hilfe?",
