@@ -24,14 +24,14 @@ Four new `/` chips in Mark's menu: `/ig-carousel`, `/ig-story`, `/ig-reply` and 
 
 The bodies refer to four things we do not carry. They are left as written, because the body must stay word for word. Lines are in `openbot/examples/freeduet/skills.yaml`:
 
-- `/ig-reel`: lines 18435, 18557, 18647.
-- `/ig-caption` and its "Job B": lines 18490, 18508.
-- `/ig-human`: lines 18493, 18809.
-- "a brand skill": line 18483.
+- `/ig-reel`: lines 18439, 18561, 18651.
+- `/ig-caption` and its "Job B": lines 18494, 18512.
+- `/ig-human`: lines 18497, 18813.
+- "a brand skill": line 18487.
 
 ## Built so far
 
-- Four entries after `landing-page-design` in `openbot/examples/freeduet/skills.yaml` (lines 18414, 18514, 18607, 18699).
+- Four entries after `landing-page-design` in `openbot/examples/freeduet/skills.yaml` (lines 18418, 18518, 18611, 18703).
 - Mark's grant in `openbot/examples/freeduet/agents.yaml`.
 - One sentence in Mark's prompt, after the sentences on outside collections (`agents.yaml`): `/ig-reel`, `/ig-caption` and `/ig-human` are not his, so when a skill sends him to one of them he does that part in plain text and says so. Pinned in `freeduet-package.test.ts`. Not run live: the cases to run are `mark-1` to `mark-6`.
 - Pins in `openbot/server/tests/freeduet-package.test.ts`: the count 56 to 60, the exact list, and one test that pins each body.
