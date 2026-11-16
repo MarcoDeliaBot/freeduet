@@ -170,6 +170,12 @@ Mark (id `marketer`) was the first member added after v0.1, Cam (id `video`) the
   by itself sets `SETTLE_NEVER` (`tests/helpers.py`), so the CLI's result line ends the segment and no timer
   decides. Two such flakes cost CI re-runs on 14 November 2026 (`cli_runs differs from its golden`, and
   `assert ['computer_navigate'] == [...]` in `test_refused_offered_tool.py`).
+- Heartbeat tests (`openbot/server/tests/routine-run-turn.test.ts`): a renewal count taken after a fixed
+  `setTimeout` is a wall-clock race, because the heartbeat ticks on a `setInterval` (`keepLease`,
+  `openbot/toolkit/src/lease.ts`) and a slow runner fits fewer ticks into that window. One such assertion
+  ("a heartbeat that merely failed does not stop the turn") failed on PR #297 on 16 November 2026 with one
+  renewal, and passed on the re-run. A test never counts timer ticks against the wall clock: it waits for
+  the Nth event (a promise the fake resolves on the Nth renewal) and asserts after that.
 - Real-browser tests (`computer (real browser)`): a browser asks for each page's `/favicon.ico` by itself,
   tens of milliseconds after the page and with as much jitter, so it lands on either side of a test's next
   step and is judged by the policy of the moment it arrives, like any request. A case that reads the
