@@ -8,13 +8,15 @@
  */
 import { afterEach, beforeEach, describe, expect, spyOn, test } from "bun:test";
 import { createHash } from "node:crypto";
+import { Hono } from "hono";
 import type { AuditEventInput, AuditStore } from "../src/audit";
 import {
   CODE_LIFETIME_MS,
   normalizeCode,
   pairCookieName,
 } from "../src/auth/browser-pairings";
-import { installCookieName } from "../src/auth/install-secret";
+import { createBrowserPairingRoutes } from "../src/auth/browser-pairing-routes";
+import { installCookieName, signInGate } from "../src/auth/install-secret";
 import { LOOPBACK_PEER } from "./support/loopback-peer";
 import {
   assembleSignIn,
@@ -116,6 +118,47 @@ describe("who sees the pairings", () => {
     }
     // And nothing was made or ended.
     expect(w.events).toEqual([]);
+  });
+
+  test("the routes refuse an unpaired browser by themselves, with the remote limits out of the way", async () => {
+    // The ledger in front of them is the first layer; this is the second, so that neither alone holds the line.
+    const { pairings } = assembleSignIn(config, {}, {});
+    const gate = signInGate(config, pairings);
+    if (!gate) throw new Error("no gate");
+    const bare = new Hono();
+    bare.route(
+      "/api/pairings",
+      createBrowserPairingRoutes(gate, async (context, next) => {
+        context.set("actor", { id: "u-admin" } as never);
+        await next();
+      }),
+    );
+    for (const [method, path] of [
+      ["GET", "/api/pairings"],
+      ["POST", "/api/pairings/code"],
+      ["DELETE", "/api/pairings/seed-admin-computer"],
+      ["PATCH", "/api/pairings/seed-admin-computer"],
+    ] as const) {
+      const answer = await bare.request(
+        `${ORIGIN}${path}`,
+        {
+          method,
+          headers: { "content-type": "application/json" },
+          ...(method === "PATCH"
+            ? { body: JSON.stringify({ label: "x" }) }
+            : {}),
+        },
+        LOOPBACK_PEER,
+      );
+      expect([method, path, answer.status]).toEqual([method, path, 403]);
+    }
+    // And a paired browser of the same person is let in, so the 403 is the pairing and not the mount.
+    const paired = await bare.request(
+      `${ORIGIN}/api/pairings`,
+      { headers: { cookie: pairedCookie(config, "admin") } },
+      LOOPBACK_PEER,
+    );
+    expect(paired.status).toBe(200);
   });
 
   test("the browser at the computer sees the person's own pairings, with no token and no hash, and may pair another", async () => {
@@ -380,6 +423,20 @@ describe("a code", () => {
     );
     // The first tries are answered as wrong codes, not as limits.
     expect(statuses[0]).toBe(400);
+
+    // The address alone, with a different person each time so that no person's own limit is reached.
+    const address = "198.51.100.9";
+    const outcomes: string[] = [];
+    for (let attempt = 0; attempt < 31; attempt += 1) {
+      const outcome = await v.pairings.checkCode(
+        `someone-${attempt}`,
+        address,
+        "DDDDD-DDDDD",
+      );
+      outcomes.push(outcome.ok ? "ok" : outcome.reason);
+    }
+    expect(outcomes.slice(0, 30)).not.toContain("rate_limited");
+    expect(outcomes[30]).toBe("rate_limited");
   });
 });
 
