@@ -10,6 +10,7 @@
 #   bash openbot/scripts/install.sh --check              only report what is missing; change nothing
 #   bash openbot/scripts/install.sh --yes                the same, without the question (the plan is still printed)
 #   bash openbot/scripts/install.sh --ignore-resources   go on although disk or memory is under the minimum
+#   bash openbot/scripts/install.sh --service            also make FreeDuet start by itself at every boot (install-service.sh)
 #
 # WHAT IT LOOKS FOR, AND WHERE A MISSING ONE COMES FROM
 #   git curl openssl lsof unzip   Ubuntu's own archive, with apt. apt checks every package's signature.
@@ -84,10 +85,11 @@ MEM_REC_MIB=7000
 CHECK=false
 ASSUME_YES=false
 IGNORE_RESOURCES=false
+SERVICE=false
 
 usage() {
   cat <<'EOF'
-Usage: bash openbot/scripts/install.sh [--check] [--yes] [--ignore-resources]
+Usage: bash openbot/scripts/install.sh [--check] [--yes] [--ignore-resources] [--service]
 
 Installs what FreeDuet needs on Ubuntu 22.04 or 24.04, then starts it (scripts/start.sh).
 
@@ -95,6 +97,8 @@ Installs what FreeDuet needs on Ubuntu 22.04 or 24.04, then starts it (scripts/s
                       Exit status 0 when FreeDuet can start now, 2 when something is missing.
   --yes, -y           Do not ask before installing. The plan is still printed first.
   --ignore-resources  Go on although free disk space or memory is under the minimum.
+  --service           Also install a systemd service that starts FreeDuet after Docker at every boot, running as
+                      you (scripts/install-service.sh; off unless you ask). Needs systemd.
   -h, --help          This text.
 
 It never touches your Claude sign-in: that stays your own step, after the start.
@@ -108,6 +112,7 @@ for arg in "$@"; do
     --check) CHECK=true ;;
     --yes|-y) ASSUME_YES=true ;;
     --ignore-resources) IGNORE_RESOURCES=true ;;
+    --service) SERVICE=true ;;
     -h|--help) usage; exit 0 ;;
     *) printf 'Unknown option: %s\n\n' "$arg" >&2; usage >&2; exit 1 ;;
   esac
@@ -568,6 +573,7 @@ plan_steps() {
   if $NEED_BUN; then STEPS+=(bun); fi
   if $DOCKER_START; then STEPS+=(docker-start); fi
   if $DOCKER_GROUP; then STEPS+=(docker-group); fi
+  if $SERVICE; then STEPS+=(service); fi
 }
 
 systemd_is_running() { [ -d "$ROOTFS/run/systemd/system" ]; }
@@ -611,6 +617,12 @@ describe_step() {
         say "  Ubuntu's docker.io, as this installer installs it on 22.04 and 24.04, has no service script for \"service\" to run."
         say "  Turn systemd on first (on WSL 2, see the WSL note above). Nothing is changed by this step."
       fi ;;
+    service)
+      say "Make FreeDuet start by itself, after Docker, at every boot of this Ubuntu."
+      say "  Why: without it FreeDuet stops when the terminal closes or WSL stops this Ubuntu. It runs as you, not as root."
+      say "  \$ sudo install -m 0644 <service file> /etc/systemd/system/freeduet.service   (the text: install-service.sh --print)"
+      say "  \$ sudo systemctl daemon-reload"
+      say "  \$ sudo systemctl enable freeduet.service" ;;
     docker-group)
       say "Add you ($USER_NAME) to the \"docker\" group."
       say "  Why: it lets you use Docker without sudo. Anybody in that group can control this whole computer"
@@ -741,6 +753,11 @@ run_step() {
           "What the steps before this one did stays done; running this again picks up here."
       fi
       run_sudo systemctl enable --now docker ;;
+    service)
+      if [ ! -f "$SCRIPT_DIR/install-service.sh" ]; then
+        die 1 "install-service.sh is missing from this checkout, so I cannot install the service." "Get the repository again (git pull), then run this again."
+      fi
+      bash "$SCRIPT_DIR/install-service.sh" --yes ;;
     docker-group)
       run_sudo usermod -aG docker "$USER_NAME"
       RELOGIN=true ;;
@@ -803,6 +820,9 @@ if [ -z "$BUN_FOUND" ]; then NEED_BUN=true; fi
 if $NEED_BUN && ! have unzip; then APT_PACKAGES+=(unzip); fi
 detect_docker
 plan_docker
+if $SERVICE && ! systemd_is_running; then
+  add_block "--service needs systemd, and this Ubuntu does not run it. On WSL 2: put [boot] systemd=true in /etc/wsl.conf, run wsl --shutdown in Windows, open Ubuntu again, then run this again. Or leave --service out."
+fi
 
 if $NEED_BUN; then
   BUN_ASSET="$(bun_asset)"

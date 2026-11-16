@@ -222,3 +222,38 @@ In CI the file runs in the `tests` job through `bun run test:ci`, which discover
 | Image pins | (a) tags with `--pull always`, as built; (b) digests in the job | (b), once someone owns the refresh | A tag moves under the job, so a base image update can change a result with no code change |
 
 **The desktop crate builds in CI, on Linux (`desktop-crate`).** The job [code: .github/workflows/ci.yml, job `desktop-crate`] installs the packages that Tauri 2 lists for Debian and Ubuntu [doc: https://v2.tauri.app/guides/prerequisites/], installs Rust 1.88.0 and Bun 1.4.3, and runs `cargo check --locked` and `cargo test --locked` in `openbot/desktop/src-tauri`, the app the future installer is to reuse. No other job compiled that crate. What it proves: the crate builds and its tests run on Linux, with the committed lock. What it does not prove: a Windows or macOS build, packaging or signing, or a first start of the app. The toolchain is 1.88.0 because the lock's packages declare that they need it; `Cargo.toml` still says `rust-version = "1.77"`, which those packages do not allow, and changing that is the maintainer's decision. The first run of the job (PR #219, head 51cf9c9) failed two tests, and both are fixed here. `everything_the_unpacked_code_imports_is_unpacked_too` (`deployment.rs`) failed because the browser script `openbot/scripts/freeduet-dictation-e2e.ts` imported two files from the FreeDuet root `evals/` folder, outside `openbot/`; the script and its test now live in `evals/dictation/`, which the unpacking guard does not read. `credential_lock_excludes_bun_in_both_directions_and_recovers_after_kill` (`provider_oauth.rs`) starts `bun` on the runner, which had none; the job now installs it with the same pinned action and version as the other jobs.
+
+## 12. Built so far (Windows next step: FreeDuet as a service inside WSL)
+
+Written 2026-11-16. What changed since sections 10 and 11: the stack can now be installed as a systemd service. It has **never run on a real Windows machine or under real systemd**; only the decisions of the scripts are tested, with fake commands.
+
+**Gaps between today and "download one file, double-click, FreeDuet starts" on Windows**
+
+1. No single file and no double-click: the person still needs a checkout first, then one PowerShell command [code: openbot/scripts/install.ps1:334, "get the repository first"].
+2. The double-click path (D1, the Tauri app) has not started: no FreeDuet service in it, release URL still CopilotKit's, plan sign-in still offered [code: openbot/desktop/src-tauri/src/deployment_release.rs:9; docs/UPSTREAM_TOUCHES.md:194]. The spike of section 7 is not done.
+3. `install.ps1` has never run on Windows (section 10), and its Pester tests are not in CI.
+4. No resume after the Windows restart: the person runs the script again [code: openbot/scripts/install.ps1:105, status 4].
+5. The Ubuntu user is created by the person by opening Ubuntu [code: openbot/scripts/install.ps1:398,467].
+6. systemd is not turned on by the installer. When it is off, `install.sh` stops at the Docker start [code: openbot/scripts/install.sh:737-742]; writing `/etc/wsl.conf` and `wsl --shutdown` is left to the person (section 11, decision (c)).
+7. The stack died with its terminal or with WSL's idle stop: nothing started it again [code: openbot/scripts/start.sh:907, host processes are background children of the script]. **This step addresses this one.**
+8. No published images, so the first start builds on the person's machine (section 4).
+9. `install.ps1` text says that with systemd off "install.sh starts it by hand" [code: openbot/scripts/install.ps1:413]; install.sh stopped doing that (section 11). Stale wording, not changed here.
+
+**What is built**
+
+- `openbot/scripts/install-service.sh`: writes `/etc/systemd/system/freeduet.service`, runs `daemon-reload`, `enable`. The unit is `Type=oneshot` with `RemainAfterExit=yes`, runs as the person (`User=`, never root), requires and starts after `docker.service`, waits up to 5 minutes for `docker info`, runs `scripts/stop.sh --keep-computers`, then `scripts/start.sh`; `ExecStop` runs `scripts/stop.sh`. `--print` shows the unit and runs nothing (no sudo). `--remove` undoes it. It asks once before any sudo (or `--yes`), refuses root, refuses when systemd is not running (and says how to turn it on), refuses a path the unit cannot carry safely (space, `%`, `$`), and does nothing on a second run when the file is current and enabled. `enable` does not start it: a FreeDuet already running is not restarted.
+- `install.sh --service` adds the step to its plan (after Docker; never on by default). Without systemd it stops before changing anything. `--check` is unchanged.
+- `install.ps1 -Service` passes `--service` to `install.sh` in the hand-over.
+- No approvals, auth, mail, payments or data code was touched. No upstream OpenBot file was touched (no row in `UPSTREAM_TOUCHES.md`).
+
+**Tests** (`bun test`, from `openbot/`): `scripts/install-service.test.ts` 13 new tests (on main's tree, where the script does not exist, 13 fail); `scripts/install.test.ts` 96 (91 before; 5 added, 3 of them fail on main's `install.sh`, 2 guard unchanged behaviour: no step without the flag, "n" changes nothing). One Pester test added for `-Service` and **not run** (no PowerShell here).
+
+**Not proven:** that real systemd accepts the unit; that `scripts/start.sh` leaves its Bun processes alive inside a oneshot unit's control group and `stop.sh` stops them at shutdown (the maintainer's own service, built by hand on 2026-11-16, is the evidence for the approach, not for this file); that a boot of WSL starts it; the `timeout`/`docker info` wait line under systemd's quoting; anything on Windows. `systemd-analyze verify` was not available here.
+
+**Decisions left to the maintainer**
+
+| Decision | Options | Advice |
+|---|---|---|
+| Should the service be on by default for Windows (so that `install.ps1` always passes `--service`)? It changes what runs on the person's computer at every boot, and a boot start uses CPU, memory and ports with no one at the keyboard. | (a) opt-in flag, as built; (b) on by default in `install.ps1`, off in `install.sh` for Ubuntu; (c) ask in the plan | (b) once a real Windows run shows it works: the roadmap promise is "FreeDuet starts" and a double-click user will not know the flag. Until then (a). |
+| Should the installer write `[boot] systemd=true` to `/etc/wsl.conf` and run `wsl --shutdown`? Today the service needs it and the person does it by hand. | (a) no, as built; (b) yes, after a question | (b) in the plan, with its own yes: it is a system file and shuts down all of the person's WSL sessions. |
+| Should the service wait for a signed-in Claude before starting members? | (a) no, as built; the sign-in is the person's step and is kept | (a): nothing here reads or checks it. |

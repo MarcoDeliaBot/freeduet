@@ -11,6 +11,7 @@
 #       only reports: changes nothing and asks nothing
 #   ... -Yes                 the same, without the question (the plan is still printed)
 #   ... -IgnoreResources     go on although free disk or memory is under the minimum
+#   ... -Service             also make FreeDuet start by itself at every boot of Ubuntu (install.sh --service)
 #   ... -Help                what is above, in short
 #
 # -ExecutionPolicy Bypass applies to this one PowerShell process only. Nothing on the computer is changed for it.
@@ -34,7 +35,7 @@
 #   2. wsl --set-default-version 2             when the default version is 1. Assumed to need no administrator rights.
 #   3. wsl --set-version <Ubuntu> 2            when that Ubuntu is WSL 1, because install.sh refuses WSL 1. Assumed to need no administrator rights.
 #   4. The Ubuntu user: you open Ubuntu once from the Start menu and create it. This script never does that.
-#   5. wsl --distribution <Ubuntu> bash <checkout>/openbot/scripts/install.sh [--yes] [--ignore-resources]
+#   5. wsl --distribution <Ubuntu> bash <checkout>/openbot/scripts/install.sh [--yes] [--ignore-resources] [--service]
 #      inside Ubuntu. install.sh prints its own plan and asks once more, unless you gave -Yes.
 #
 # THE WSL FORMS: Microsoft's pages (docs/design/installer.md, section 10) show wsl --install -d, --set-version,
@@ -71,6 +72,7 @@ param(
     [Alias('y')]
     [switch]$Yes,
     [switch]$IgnoreResources,
+    [switch]$Service,
     [switch]$Help
 )
 
@@ -261,7 +263,8 @@ function Get-InstallerPlan {
     param(
         [Parameter(Mandatory = $true)][hashtable]$Facts,
         [switch]$IgnoreResources,
-        [switch]$Yes
+        [switch]$Yes,
+        [switch]$Service
     )
     $settings = Get-InstallerSettings
     $ignore = [bool]$IgnoreResources
@@ -472,6 +475,7 @@ function Get-InstallerPlan {
     $installerOptions = @()
     if ($Yes) { $installerOptions += '--yes' }
     if ($ignore) { $installerOptions += '--ignore-resources' }
+    if ($Service) { $installerOptions += '--service' }
     $linuxScript = ''
     if ($null -ne $wslCheckout) { $linuxScript = "$wslCheckout/openbot/scripts/install.sh" }
     $handoverArguments = @('--distribution', $target, 'bash', $linuxScript) + $installerOptions
@@ -818,12 +822,13 @@ function Write-PersonStepMessage {
 }
 
 function Write-Usage {
-    Write-Host 'Usage: powershell -NoProfile -ExecutionPolicy Bypass -File .\openbot\scripts\install.ps1 [-Check] [-Yes] [-IgnoreResources]'
+    Write-Host 'Usage: powershell -NoProfile -ExecutionPolicy Bypass -File .\openbot\scripts\install.ps1 [-Check] [-Yes] [-IgnoreResources] [-Service]'
     Write-Host ''
     Write-Host 'Sets up WSL 2 and Ubuntu on Windows 10 or 11, then hands over to openbot/scripts/install.sh inside Ubuntu.'
     Write-Host '  -Check             Only report what is missing. Changes nothing and asks nothing.'
     Write-Host '  -Yes               Do not ask before the steps. The plan is still printed first.'
     Write-Host '  -IgnoreResources   Go on although free disk space or memory is under the minimum.'
+    Write-Host '  -Service           Also make FreeDuet start by itself at every boot of Ubuntu (a systemd service that runs as you; needs systemd on).'
     Write-Host '  -Help              This text.'
     Write-Host 'Run it as yourself, not as administrator. It asks Windows for administrator rights only for the steps that need them.'
 }
@@ -834,11 +839,12 @@ function Invoke-Installer {
         [switch]$Check,
         [switch]$Yes,
         [switch]$IgnoreResources,
+        [switch]$Service,
         [string]$CheckoutRoot = '',
         [hashtable]$Facts = $null
     )
     if ($null -eq $Facts) { $Facts = Get-InstallerFacts -CheckoutRoot $CheckoutRoot }
-    $plan = Get-InstallerPlan -Facts $Facts -IgnoreResources:$IgnoreResources -Yes:$Yes
+    $plan = Get-InstallerPlan -Facts $Facts -IgnoreResources:$IgnoreResources -Yes:$Yes -Service:$Service
     foreach ($line in (Format-InstallerPlan -Plan $plan -Check:$Check)) { Write-Host $line }
 
     if ($plan.Status -eq 'Blocked') { return (Get-InstallerExitCode -Name 'Stopped') }
@@ -915,7 +921,7 @@ if ($MyInvocation.InvocationName -ne '.') {
     $exitCode = Get-InstallerExitCode -Name 'Stopped'
     try {
         # The last value is the exit status: a stray value from a command earlier in the run must not become the status.
-        $outcome = @(Invoke-Installer -Check:$Check -Yes:$Yes -IgnoreResources:$IgnoreResources -CheckoutRoot $repoRoot)
+        $outcome = @(Invoke-Installer -Check:$Check -Yes:$Yes -IgnoreResources:$IgnoreResources -Service:$Service -CheckoutRoot $repoRoot)
         if ($outcome.Count -gt 0) { $exitCode = [int]$outcome[-1] }
     }
     catch {
