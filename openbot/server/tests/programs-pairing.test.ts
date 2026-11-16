@@ -3,6 +3,16 @@
  * person at the computer, redeemed by the helper with no session, which hands the secret once and rotates the salt.
  * The routes run over a real database (the salt table); the code store's clock is injected.
  */
+import {
+  copyFile,
+  mkdir,
+  mkdtemp,
+  rm,
+  symlink,
+  writeFile,
+} from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { afterAll, describe, expect, test } from "bun:test";
 import { randomUUID } from "node:crypto";
 import { crc32 } from "node:zlib";
@@ -24,7 +34,11 @@ import {
   WRONG_PER_MINUTE,
   WRONG_WINDOW_MS,
 } from "../src/programs/pairing";
-import { HELPER_FILES, HELPER_ZIP_NAME } from "../src/programs/helper-bundle";
+import {
+  HELPER_FILE_MAX_BYTES,
+  HELPER_FILES,
+  HELPER_ZIP_NAME,
+} from "../src/programs/helper-bundle";
 import { createProgramsRoutes, PAIRING_SCRIPT } from "../src/programs/routes";
 import { createProgramsSwitch } from "../src/programs/switch";
 import { TEST_POOL, testDatabaseUrl } from "./support/database";
@@ -591,6 +605,122 @@ describe("handing the helper to the person at the computer", () => {
     expect(csp).toContain(`script-src 'sha256-${hash}'`);
     expect(page.headers.get("x-frame-options")).toBe("DENY");
     expect(page.headers.get("cache-control")).toBe("no-store");
+  });
+});
+
+describe("the helper bundle does not follow links or carry oversized files", () => {
+  const url = "/api/programs/pairing/helper.zip";
+  const roots: string[] = [];
+  afterAll(async () => {
+    for (const root of roots) await rm(root, { recursive: true, force: true });
+  });
+  async function copyOfHelper(): Promise<{ root: string; dir: string }> {
+    const root = await mkdtemp(join(tmpdir(), "helper-bundle-"));
+    roots.push(root);
+    const dir = join(root, "programs-helper");
+    await mkdir(dir);
+    for (const name of HELPER_FILES)
+      await copyFile(`${HELPER_SOURCE}${name}`, join(dir, name));
+    return { root, dir };
+  }
+  async function refusedWith(dir: string, secret?: string) {
+    const id = await person();
+    const rows: Array<{ payload: Record<string, unknown> }> = [];
+    const auditStore = {
+      insert: async (event: unknown) => {
+        rows.push(event as { payload: Record<string, unknown> });
+      },
+    };
+    const { routes } = build(id, undefined, { helperDir: dir, auditStore });
+    const response = await routes.request(url, {}, LOOPBACK_PEER as never);
+    const text = await response.text();
+    expect(response.status).toBe(404);
+    expect(text).toContain("does not carry the helper's files");
+    if (secret) expect(JSON.stringify(rows) + text).not.toContain(secret);
+    expect(rows.length).toBe(1);
+    expect(rows[0]?.payload.change).toBe("programs_helper_refused");
+    return rows[0]?.payload;
+  }
+
+  test("a file replaced by a link to another file is refused and its content is never served", async () => {
+    const { dir } = await copyOfHelper();
+    const target = join(dir, "..", "outside.txt");
+    await writeFile(target, "SECRET-OUTSIDE-CONTENT");
+    await rm(join(dir, "FreeDuetProgramsHelper.ps1"));
+    await symlink(target, join(dir, "FreeDuetProgramsHelper.ps1"));
+    const payload = await refusedWith(dir, "SECRET-OUTSIDE-CONTENT");
+    expect(payload).toEqual({
+      change: "programs_helper_refused",
+      file: "FreeDuetProgramsHelper.ps1",
+      reason: "not_a_regular_file",
+    });
+  });
+
+  test("a folder in place of a file is refused", async () => {
+    const { dir } = await copyOfHelper();
+    await rm(join(dir, "setup.ps1"));
+    await mkdir(join(dir, "setup.ps1"));
+    expect((await refusedWith(dir))?.reason).toBe("not_a_regular_file");
+  });
+
+  test("a file over the cap is refused, and so is a total over the cap", async () => {
+    const { dir } = await copyOfHelper();
+    await writeFile(
+      join(dir, "README.md"),
+      Buffer.alloc(HELPER_FILE_MAX_BYTES + 1, 97),
+    );
+    expect((await refusedWith(dir))?.reason).toBe("too_big");
+    const second = await copyOfHelper();
+    for (const name of HELPER_FILES)
+      await writeFile(
+        join(second.dir, name),
+        Buffer.alloc(HELPER_FILE_MAX_BYTES - 1, 97),
+      );
+    expect((await refusedWith(second.dir))?.reason).toBe("total_too_big");
+  });
+
+  test("a folder that is itself a link is refused, even when the real folder is fine", async () => {
+    const { root, dir } = await copyOfHelper();
+    const link = join(root, "linked-helper");
+    await symlink(dir, link);
+    expect((await refusedWith(link))?.reason).toBe("folder_is_a_link");
+  });
+
+  test("the happy path stays byte-identical to the repository files, with their CRC-32", async () => {
+    const { dir } = await copyOfHelper();
+    const id = await person();
+    const { routes } = build(id, undefined, { helperDir: dir });
+    const response = await routes.request(url, {}, LOOPBACK_PEER as never);
+    expect(response.status).toBe(200);
+    const entries = readStoredZip(Buffer.from(await response.arrayBuffer()));
+    expect(entries.map((e) => e.name)).toEqual([...HELPER_FILES]);
+    for (const entry of entries) {
+      const real = Buffer.from(
+        await Bun.file(`${HELPER_SOURCE}${entry.name}`).arrayBuffer(),
+      );
+      expect(Buffer.compare(entry.data, real)).toBe(0);
+      expect(entry.crc).toBe(crc32(real));
+    }
+  });
+});
+
+describe("the pairing page says where the scripts come from and what Unblock-File does", () => {
+  test("two plain sentences next to the two lines", async () => {
+    const id = await person();
+    const { routes } = build(id);
+    const page = await routes.request(
+      "/api/programs/pairing",
+      {},
+      LOOPBACK_PEER as never,
+    );
+    const html = await page.text();
+    expect(html).toContain(
+      "These scripts come from this FreeDuet installation",
+    );
+    expect(html).toContain("read it before you run it");
+    expect(html).toContain(
+      'removes the "downloaded from the Internet" mark that Windows puts on these files',
+    );
   });
 });
 
