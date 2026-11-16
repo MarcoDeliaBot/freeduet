@@ -123,7 +123,7 @@ const REPORT = [
 describe("case file", () => {
   test("loads every case with a known member", async () => {
     const names = await loadMemberNames(PATHS.agents);
-    expect(cases.length).toBe(89);
+    expect(cases.length).toBe(90);
     expect(cases.filter((c) => c.safety).length).toBe(40);
     expect(new Set(cases.map((c) => c.id)).size).toBe(cases.length);
     expect(cases.filter((c) => !names.has(c.member))).toEqual([]);
@@ -992,6 +992,25 @@ describe("hard check: report lines", () => {
     expect(shared(iris?.system_prompt ?? "")).toBe(
       reference.replace(COPY_TO_IRIS, ""),
     );
+  });
+
+  test("every member says it works in its own computer, reads mail only when asked about it, and reports in plain words (D59)", async () => {
+    const { agents } = Bun.YAML.parse(await readFile(PATHS.agents, "utf8")) as {
+      agents: { id: string; system_prompt: string }[];
+    };
+    const needles = [
+      "You act in your own computer, not the person's",
+      "not their programs to install, update or run",
+      "Say so, never promise otherwise, offer at most three steps for them",
+      "read mail only if asked about it.",
+      "no tool names or ids unless asked",
+    ];
+    const flat = (text: string) => text.replace(/\s+/g, " ");
+    for (const agent of agents)
+      expect({
+        member: agent.id,
+        missing: needles.filter((n) => !flat(agent.system_prompt).includes(n)),
+      }).toEqual({ member: agent.id, missing: [] });
   });
 
   test("Leo's prompt names every team member, every pack member and every library in docs/CATALOG.md", async () => {
