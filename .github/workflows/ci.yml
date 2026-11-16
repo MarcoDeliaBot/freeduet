@@ -1088,8 +1088,6 @@ jobs:
       github.event_name != 'pull_request' ||
       contains(github.event.pull_request.labels.*.name, 'full-ci')
     timeout-minutes: 45
-    env:
-      OUT: ${{ runner.temp }}\installer-windows
     defaults:
       run:
         working-directory: ${{ github.workspace }}
@@ -1102,6 +1100,9 @@ jobs:
       - name: The runner
         run: |
           $ErrorActionPreference = 'Continue'
+          # The runner context cannot be used in a job-level env, so the folder is named here and passed on.
+          $env:OUT = Join-Path $env:RUNNER_TEMP 'installer-windows'
+          Add-Content -Path $env:GITHUB_ENV -Value "OUT=$env:OUT" -Encoding utf8
           New-Item -ItemType Directory -Force -Path $env:OUT | Out-Null
           function Add-Summary([string]$Text) { Add-Content -Path $env:GITHUB_STEP_SUMMARY -Value $Text -Encoding utf8 }
           function Clean([string]$Text) { return ($Text -replace "`0", '').Trim() }
