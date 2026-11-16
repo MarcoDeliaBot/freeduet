@@ -30,9 +30,10 @@ export const TEAM_FORMAT = "freeduet-team/1";
  *
  * `instructionsCharacters` is the limit for an IMPORTED member's instructions: its author's text,
  * then the Email paragraph, then the shared rules, counted in UTF-16 code units (`String.length`),
- * as every other limit here is counted. The maintainer decided 8,000 on 14 November 2026
- * (docs/design/team-file.md, decision 2). It applies to imported members only. A Bot made in the
- * app, by Leo or through the API is still held to `createTextCharacters`.
+ * as every other limit here is counted. It was 8,000 from 14 November 2026 (docs/design/team-file.md,
+ * decision 2) and is 10,000 from 16 November 2026 (the same document, "Built so far"). It applies to
+ * imported members only. A Bot made in the app, by Leo or through the API is still held to
+ * `createTextCharacters`.
  */
 export const TEAM_FILE_LIMITS = {
   fileBytes: 1_048_576,
@@ -40,7 +41,7 @@ export const TEAM_FILE_LIMITS = {
   nameCharacters: 60,
   titleCharacters: 120,
   roleDescriptionCharacters: 1000,
-  instructionsCharacters: 8000,
+  instructionsCharacters: 10000,
   /**
    * What the create form and the create and edit routes take for a Bot made in the app: the app's
    * create form (app/src/lib/agents/form.ts) and the server's ROLE_DESCRIPTION_LIMIT
@@ -793,7 +794,7 @@ function unknownKeyReason(key: string): string {
 
 function noticesFor(member: ReadMember): string[] {
   const notes: string[] = [];
-  // Not a refusal: an imported member may be up to 8,000, and the server takes that for an imported
+  // Not a refusal: an imported member may be up to 10,000, and the server takes that for an imported
   // Bot. The create screen still takes 1,000 and nothing imports a file yet, so this notice is the
   // only warning until the import is built.
   if (!member.instructionsWithinCreateLimit) {

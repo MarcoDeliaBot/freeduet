@@ -22,6 +22,7 @@ import {
   type TeamFileRefusal,
 } from "../src/freeduet/team-file";
 import { parseAgentInput } from "../src/agents/routes";
+import { authorTextOf } from "../src/freeduet/team-file-export";
 import {
   expandEnvironment,
   loadTenantPackage,
@@ -39,10 +40,10 @@ const EMAIL_START = "Email. You do not send email.";
 
 /**
  * The two numbers of decision 2 (docs/design/team-file.md), written out here so that changing a
- * constant in the reader fails a test, not just a comment. 8,000 is an imported member's instructions;
+ * constant in the reader fails a test, not just a comment. 10,000 is an imported member's instructions;
  * 1,000 is what the create form and the create and edit routes take for a Bot made in the app.
  */
-const IMPORTED_INSTRUCTIONS_LIMIT = 8000;
+const IMPORTED_INSTRUCTIONS_LIMIT = 10000;
 const CREATE_TEXT_LIMIT = 1000;
 
 let tenantPackage: TenantPackage;
@@ -251,7 +252,7 @@ describe("a valid member file", () => {
     expect(
       file.notices.some(
         (notice) =>
-          notice.includes("may have up to 8,000") &&
+          notice.includes("may have up to 10,000") &&
           notice.includes("1,000 for a Bot's text") &&
           notice.includes("cannot be created yet"),
       ),
@@ -359,14 +360,14 @@ describe("the instruction limit for an imported member", () => {
     return appended.length;
   }
 
-  test("the decided limit is 8,000 for an imported member, and the create route's own is 1,000", () => {
+  test("the decided limit is 10,000 for an imported member, and the create route's own is 1,000", () => {
     expect(TEAM_FILE_LIMITS.instructionsCharacters).toBe(
       IMPORTED_INSTRUCTIONS_LIMIT,
     );
     expect(TEAM_FILE_LIMITS.createTextCharacters).toBe(CREATE_TEXT_LIMIT);
   });
 
-  test("accepts instructions of exactly 8,000 characters, whose last character is an emoji", () => {
+  test("accepts instructions of exactly 10,000 characters, whose last character is an emoji", () => {
     const authorUnits = IMPORTED_INSTRUCTIONS_LIMIT - appendedLength();
     const file = fileRead(
       read(
@@ -383,13 +384,13 @@ describe("the instruction limit for an imported member", () => {
       IMPORTED_INSTRUCTIONS_LIMIT - 1,
     );
     expect(
-      file.notices.some((notice) => notice.includes("may have up to 8,000")),
+      file.notices.some((notice) => notice.includes("may have up to 10,000")),
     ).toBe(true);
   });
 
-  test("refuses one code unit more than 8,000, though the text has 8,000 code points, and names the limit", () => {
+  test("refuses one code unit more than 10,000, though the text has 10,000 code points, and names the limit", () => {
     const authorUnits = IMPORTED_INSTRUCTIONS_LIMIT - appendedLength();
-    // Eight thousand and one code units: the last emoji is two of them, so the text has 8,000 code points.
+    // Ten thousand and one code units: the last emoji is two of them, so the text has 10,000 code points.
     const refusal = refusalOf(
       read(
         fileOf(
@@ -399,12 +400,12 @@ describe("the instruction limit for an imported member", () => {
     );
 
     expect(refusal.path).toBe("system_prompt");
-    expect(refusal.reason).toContain("is 8,001 characters");
-    expect(refusal.reason).toContain("at most 8,000 characters");
+    expect(refusal.reason).toContain("is 10,001 characters");
+    expect(refusal.reason).toContain("at most 10,000 characters");
     expect(refusal.reason).toContain("by 1 character.");
   });
 
-  test("refuses one plain character more than 8,000 allows, at the system prompt, and names the limit", () => {
+  test("refuses one plain character more than 10,000 allows, at the system prompt, and names the limit", () => {
     const authorUnits = IMPORTED_INSTRUCTIONS_LIMIT - appendedLength();
     const refusal = refusalOf(
       read(
@@ -413,7 +414,7 @@ describe("the instruction limit for an imported member", () => {
     );
 
     expect(refusal.path).toBe("system_prompt");
-    expect(refusal.reason).toContain("at most 8,000 characters");
+    expect(refusal.reason).toContain("at most 10,000 characters");
   });
 
   test("refuses one member's instructions inside a team, and names that member's system prompt", () => {
@@ -433,7 +434,7 @@ describe("the instruction limit for an imported member", () => {
     );
 
     expect(refusal.path).toBe("members[1].system_prompt");
-    expect(refusal.reason).toContain("at most 8,000 characters");
+    expect(refusal.reason).toContain("at most 10,000 characters");
   });
 
   test("guard of unchanged behaviour: a Bot made in the app is still refused at 1,001 characters", () => {
@@ -458,6 +459,35 @@ describe("the instruction limit for an imported member", () => {
       ok: false,
       error: "What it does must be text between 1 and 1000 characters.",
     });
+  });
+  test("the shipped members that do not fit the imported limit are pinned: Jules, Iris and Otto, and Leo fits", () => {
+    // A shipped member is not required to fit a team file. The list is pinned, so a change to a shipped
+    // member's text, or to the limit, that moves a name into or out of it fails here and is decided on
+    // purpose. Iris (freeduet) has a shared paragraph inside her text, so her author's text cannot be
+    // written out and she counts as not fitting. Leo (creator) must fit.
+    const limit = TEAM_FILE_LIMITS.instructionsCharacters;
+    const declared = tenantPackage.declaredAgents ?? [];
+    const { email, shared } = paragraphsOf(tenantPackage);
+    const paragraphs = { email: email.trim(), shared: shared.trim() };
+    const lengths = new Map<string, number>();
+    const notFitting: string[] = [];
+    for (const agent of declared) {
+      const author = authorTextOf(agent.systemPrompt ?? "", paragraphs);
+      if (author === null) {
+        notFitting.push(agent.id);
+        continue;
+      }
+      // The reader's own measure: the author's text, the Email paragraph and the shared rules, joined by a blank line.
+      const length = [author, paragraphs.email, paragraphs.shared].join(
+        "\n\n",
+      ).length;
+      lengths.set(agent.id, length);
+      if (length > limit) notFitting.push(agent.id);
+    }
+
+    expect(declared.length).toBeGreaterThan(0);
+    expect(lengths.get("creator")).toBeLessThanOrEqual(limit);
+    expect(notFitting.sort()).toEqual(["concierge", "freeduet", "inbox"]);
   });
 });
 
