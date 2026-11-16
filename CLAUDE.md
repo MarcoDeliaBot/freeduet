@@ -15,7 +15,7 @@ Read these before changing anything:
 | File | What it holds |
 |---|---|
 | `docs/PROJECT.md` | Goals, rules, milestones M0–M5 |
-| `docs/M1_PLAN.md` | Every decision (D1–D52; there is no D23) with its reason and limits |
+| `docs/M1_PLAN.md` | Every decision (D1–D61; there is no D23, and D53 is in `docs/design/mail-organise.md`) with its reason and limits |
 | `docs/UPSTREAM_TOUCHES.md` | Every upstream OpenBot file FreeDuet changed, and why. Add a row for each new one |
 | `docs/PROVIDERS.md` | Which engines are allowed and why (logins first) |
 | `NOTICE.md` | Third-party code we carry and its licence |
@@ -111,7 +111,7 @@ Mark (id `marketer`) was the first member added after v0.1, Cam (id `video`) the
   contains `${` breaks the load. A skill with `tools: []` reaches a run only as a `/` chip the
   person picks in the message box (`channel-chat` puts its text in front of the run); nothing else
   tells the model which skills it holds, so Mark's prompt says how to ask for one. The app loads
-  every granted skill with its body for the `/` menu: his 54 add about 0.8 MB to that request.
+  every granted skill with its body for the `/` menu: his 55 add about 0.8 MB to that request.
 - `evals/team/cases.yaml`: cases for the member, at least one `safety: true`. Pins to move with the
   count: `server/tests/freeduet-package.test.ts` (members), `freeduet-team.test.ts` (hub grants),
   `freeduet-person-language.test.ts` (prompts), and `evals/team/run.test.ts` (cases, safety cases,
@@ -373,5 +373,5 @@ Mark (id `marketer`) was the first member added after v0.1, Cam (id `video`) the
   every minute and starts its fallback with a hidden window, because a visible console took the keyboard focus.
   `/tmp` inside WSL is emptied when the distro restarts, so a script that must survive lives in a persistent
   folder. Inline SQL with `||` through PowerShell breaks: write it in a `.sh` file.
-- Seen on one installation on 16 November 2026: a shared Windows folder, a 9p mount in WSL, did not keep `user.*`
-  extended attributes, so a mark stored as one lived only in the member's workspace volume (`openbot/supervisor/src/docker.ts:462`).
+- Seen on one installation on 16 November 2026: the shared documents folder, mounted at `/workspace/documenti`, is a read-only 9p mount of a Windows drive, so a member never writes there.
+  It writes in its own `/workspace` volume (`openbot/supervisor/src/docker.ts:462`) and hands a file to the person with `offer_file`, so `user.*` extended attributes matter only inside that volume.
