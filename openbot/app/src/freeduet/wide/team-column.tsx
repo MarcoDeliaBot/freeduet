@@ -175,8 +175,8 @@ function Team({ full }: { full: boolean }) {
     <ul
       aria-label="Team"
       className={cn(
-        "flex min-h-0 flex-1 flex-col gap-0.5 overflow-y-auto overscroll-contain border-duet-hair border-t",
-        full ? "px-3 py-2" : "items-center px-2 py-2",
+        "flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto overscroll-contain border-duet-hair border-t",
+        full ? "px-3 py-3" : "items-center px-2 py-3",
       )}
       data-testid="team-list"
     >
@@ -187,7 +187,7 @@ function Team({ full }: { full: boolean }) {
         const body = (
           <>
             <span className="relative">
-              <MemberFace agentId={agent.id} size={full ? 40 : 40} />
+              <MemberFace agentId={agent.id} size={40} />
               {state === "waiting" ? (
                 <span
                   aria-hidden

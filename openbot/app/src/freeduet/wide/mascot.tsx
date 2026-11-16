@@ -31,15 +31,19 @@ export function mascotKeyOf(agentId: string): string | null {
   return MEMBER_MASCOT[agentId] ?? null;
 }
 
-/** The viewBox that crops the 220 art to the bubble and its accessory, without the ground shadow. */
-const FACE_BOX = "12 22 196 186";
+/**
+ * The viewBox that crops the 220 art tight on the bubble (it is 144 wide, 38 to 182 across and 48 to 192
+ * down), so the face is as large as it can be at 40 px. The accessory is drawn past the edge of the box
+ * (`overflow: visible`), so the twelve stay tellable apart.
+ */
+const FACE_BOX = "36 46 148 148";
 
 const SYMBOLS = [
   ...Object.entries(mascot.team).map(
     ([key, art]) =>
-      `<symbol id="duet-m-${key}" viewBox="${FACE_BOX}">${art}</symbol>`,
+      `<symbol id="duet-m-${key}" overflow="visible" viewBox="${FACE_BOX}">${art}</symbol>`,
   ),
-  `<symbol id="duet-m-neutral" viewBox="${FACE_BOX}"><use href="#bubble"/>${mascot.faces.idle}</symbol>`,
+  `<symbol id="duet-m-neutral" overflow="visible" viewBox="${FACE_BOX}"><use href="#bubble"/>${mascot.faces.idle}</symbol>`,
 ].join("");
 
 /**
@@ -64,7 +68,7 @@ export function MascotSprite() {
 /** A member's face. Decorative: the name beside it is what a screen reader hears. */
 export function MemberFace({
   agentId,
-  size = 36,
+  size = 40,
   className,
 }: {
   agentId: string;
@@ -75,11 +79,11 @@ export function MemberFace({
   return (
     <svg
       aria-hidden="true"
-      className={cn("shrink-0", className)}
+      className={cn("shrink-0 overflow-visible", className)}
       data-face={key ?? "neutral"}
       focusable="false"
       height={size}
-      viewBox="0 0 196 186"
+      viewBox="0 0 148 148"
       width={size}
     >
       <use href={`#duet-m-${key ?? "neutral"}`} />
