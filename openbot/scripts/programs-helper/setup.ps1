@@ -30,6 +30,9 @@
 # the secret exactly as the helper does. The approval card in FreeDuet is what stands between a read-only question and a
 # program being touched, and the helper only ever runs two fixed read-only winget commands.
 #
+# -UseWindowsAppsAlias (winget is then NOT signature-checked) prints a warning at once and asks you to type UNCHECKED;
+# -AcceptAliasRisk gives that answer on the command line for a person who has already decided.
+#
 # Remove everything again with uninstall.ps1.
 [CmdletBinding()]
 param(
@@ -37,6 +40,7 @@ param(
     [string]$Code = '',
     [string]$WingetPath = '',
     [switch]$UseWindowsAppsAlias,
+    [switch]$AcceptAliasRisk,
     [switch]$AllowRemoteServer,
     [switch]$AllowWritableWingetFolder,
     [switch]$NoTask,
@@ -103,7 +107,7 @@ function Get-PairingFailureText {
 function Invoke-Setup {
     param(
         [string]$Server, [string]$Code, [string]$WingetPath, [bool]$UseAlias, [bool]$NoTask, [bool]$Yes,
-        [bool]$AllowRemote = $false, [bool]$AllowWritable = $false,
+        [bool]$AllowRemote = $false, [bool]$AllowWritable = $false, [bool]$AcceptAliasRisk = $false,
         [string]$Directory = (Get-HelperDirectory)
     )
     if (Test-Elevated) {
@@ -113,6 +117,19 @@ function Invoke-Setup {
     if (-not (Test-ServerUrl -Url $Server -AllowRemote $AllowRemote)) {
         Write-Host "The server address '$Server' is not allowed: only this computer (localhost) is accepted. Another host needs -AllowRemoteServer and an https address."
         return 1
+    }
+    if ($UseAlias) {
+        # Said here, at the moment it is chosen, and before the pairing code is spent: not only in the helper's log.
+        Write-Host 'WARNING: -UseWindowsAppsAlias makes the helper run the winget alias in your WindowsApps folder under your profile.'
+        Write-Host 'That file is NOT signature-checked, and any program that runs as you can replace it; the helper would then start that program.'
+        Write-Host 'Use it only if the safe way (the App Installer package folder) does not work on this PC and you accept this.'
+        if (-not $AcceptAliasRisk) {
+            $word = Read-Host 'To go on, type UNCHECKED (anything else stops here and nothing is written)'
+            if ($word -cne 'UNCHECKED') {
+                Write-Host 'Not confirmed. Nothing was written and no code was used.'
+                return 1
+            }
+        }
     }
     if ($AllowRemote -and -not (Test-ServerUrl -Url $Server -AllowRemote $false)) {
         Write-Host ("WARNING: the pairing code and every later message go to the remote host {0}. Only continue if that is your own FreeDuet." -f ([Uri]$Server).Host)
@@ -162,7 +179,7 @@ function Invoke-Setup {
 
 if ($MyInvocation.InvocationName -ne '.') {
     $exitCode = 1
-    try { $exitCode = [int](@(Invoke-Setup -Server $Server -Code $Code -WingetPath $WingetPath -UseAlias ([bool]$UseWindowsAppsAlias) -NoTask ([bool]$NoTask) -Yes ([bool]$Yes) -AllowRemote ([bool]$AllowRemoteServer) -AllowWritable ([bool]$AllowWritableWingetFolder))[-1]) }
+    try { $exitCode = [int](@(Invoke-Setup -Server $Server -Code $Code -WingetPath $WingetPath -UseAlias ([bool]$UseWindowsAppsAlias) -NoTask ([bool]$NoTask) -Yes ([bool]$Yes) -AllowRemote ([bool]$AllowRemoteServer) -AllowWritable ([bool]$AllowWritableWingetFolder) -AcceptAliasRisk ([bool]$AcceptAliasRisk))[-1]) }
     catch { Write-Host "Stopped by an unexpected error: $($_.Exception.Message)" }
     exit $exitCode
 }

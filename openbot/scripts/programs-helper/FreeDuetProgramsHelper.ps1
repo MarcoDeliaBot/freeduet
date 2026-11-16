@@ -54,6 +54,7 @@ $script:LogMaxBytes = 1048576
 $script:RefusalsBeforeAction = 5   # consecutive 401s after which the secret is re-read once, then the helper stops
 $script:MaxSeenIds = 500
 $script:SeenKeepMilliseconds = 600000   # an id is remembered until its expiry plus ten minutes
+$script:MaxSeenFileBytes = 1048576      # seen.txt is never read past 1 MiB (500 real lines are about 110 KB); larger fails closed
 $script:ExitNoApplications = -1978335212   # 0x8A150014: winget found nothing to list
 
 function Get-HelperDirectory {
@@ -210,8 +211,8 @@ function Test-ExactNames {
 # its containment in that folder is checked; a link is refused). That folder (under Program Files\WindowsApps) can be
 # changed only by an administrator or the system, so a program running as a normal user cannot put another winget.exe
 # there. It is NOT looked up in the current folder and NOT searched in PATH. On top of that the file must carry a VALID
-# Authenticode signature whose signer's organisation (the O= part of the subject, parsed, not searched for as text) is
-# exactly "Microsoft Corporation". If it cannot be found like this the helper does not run, and says why in the log.
+# Authenticode signature whose signer's organisation (read from the certificate's own name, see Read-DerElement) is exactly
+# "Microsoft Corporation", with the code-signing purpose. If it cannot be found like this the helper does not run, and says why in the log.
 #
 # AN EXPLICIT PATH (setup -WingetPath): an absolute path to a file called winget.exe, with the same signature check. If
 # it is NOT inside the App Installer folder, neither it nor any folder above it may be writable by the current user
@@ -228,20 +229,94 @@ function Test-ExactNames {
 # same full path. What remains: PowerShell cannot hand an open file to Process.Start, so a program that can change the
 # folder above (an administrator, or you with -AllowWritableWingetFolder) could still swap the directory between the
 # check and the start. The alias is not covered at all.
-function Get-MicrosoftSignerOrganizations {
-    param([string]$Subject)
-    $found = New-Object System.Collections.ArrayList
-    foreach ($match in [regex]::Matches($Subject, '(?:^|,\s*)O=(?:"((?:[^"]|"")*)"|([^,]*))')) {
-        if ($match.Groups[1].Success) { [void]$found.Add($match.Groups[1].Value.Replace('""', '"').Trim()) }
-        else { [void]$found.Add($match.Groups[2].Value.Trim()) }
+# THE SIGNER'S NAME IS READ FROM THE CERTIFICATE'S OWN BYTES, never from the text Windows prints for it. A subject string
+# is a display form (commas, quotes, escapes, "+", ";", hex, OID spellings) and every hand-made reader of it can be fooled.
+# So: the subject's DER (SubjectName.RawData) is walked as the standard defines it, name -> relative names -> attribute
+# type and value, and the helper requires exactly ONE attribute of type 2.5.4.10 (organisation) in the whole name, in a
+# relative name of its own (no multi-valued "+" name anywhere), whose value is, character for character and with no
+# trimming, "Microsoft Corporation"; and the certificate must carry the code-signing purpose (1.3.6.1.5.5.7.3.3).
+function Read-DerElement {
+    param([byte[]]$Bytes, [int]$Offset, [int]$End)
+    if ($Offset + 2 -gt $End) { return $null }
+    $tag = [int]$Bytes[$Offset]
+    $first = [int]$Bytes[$Offset + 1]
+    $position = $Offset + 2
+    $length = 0
+    if ($first -lt 128) { $length = $first }
+    else {
+        $count = $first -band 127
+        if ($count -lt 1 -or $count -gt 3 -or ($position + $count) -gt $End) { return $null }
+        for ($i = 0; $i -lt $count; $i++) { $length = ($length * 256) + [int]$Bytes[$position + $i] }
+        $position += $count
     }
-    return , $found.ToArray()
+    if (($position + $length) -gt $End) { return $null }
+    return @{ Tag = $tag; Start = $position; Len = $length; Next = ($position + $length) }
 }
 
-function Test-MicrosoftSignerSubject {
-    param([string]$Subject)
-    $orgs = Get-MicrosoftSignerOrganizations -Subject $Subject
-    return ($orgs.Count -eq 1 -and $orgs[0] -ceq 'Microsoft Corporation')
+function Get-DerSlice {
+    param([byte[]]$Bytes, $Element)
+    $slice = New-Object byte[] $Element.Len
+    if ($Element.Len -gt 0) { [Array]::Copy($Bytes, $Element.Start, $slice, 0, $Element.Len) }
+    return , $slice
+}
+
+# Returns @{ Ok; Organizations; MultiValued }. Ok is $false for anything that is not a well-formed name.
+function Get-DistinguishedNameParts {
+    param([byte[]]$Raw)
+    $bad = @{ Ok = $false; Organizations = @(); MultiValued = $false }
+    if ($null -eq $Raw -or $Raw.Length -lt 2) { return $bad }
+    $top = Read-DerElement -Bytes $Raw -Offset 0 -End $Raw.Length
+    if ($null -eq $top -or $top.Tag -ne 48 -or $top.Next -ne $Raw.Length) { return $bad }
+    $orgs = New-Object System.Collections.ArrayList
+    $multi = $false
+    $at = $top.Start
+    while ($at -lt $top.Next) {
+        $set = Read-DerElement -Bytes $Raw -Offset $at -End $top.Next
+        if ($null -eq $set -or $set.Tag -ne 49) { return $bad }
+        $at = $set.Next
+        $inner = $set.Start
+        $count = 0
+        while ($inner -lt $set.Next) {
+            $seq = Read-DerElement -Bytes $Raw -Offset $inner -End $set.Next
+            if ($null -eq $seq -or $seq.Tag -ne 48) { return $bad }
+            $inner = $seq.Next
+            $count++
+            $oid = Read-DerElement -Bytes $Raw -Offset $seq.Start -End $seq.Next
+            if ($null -eq $oid -or $oid.Tag -ne 6 -or $oid.Len -lt 1) { return $bad }
+            $value = Read-DerElement -Bytes $Raw -Offset $oid.Next -End $seq.Next
+            if ($null -eq $value -or $value.Next -ne $seq.Next) { return $bad }
+            $oidHex = [BitConverter]::ToString((Get-DerSlice -Bytes $Raw -Element $oid)).Replace('-', '').ToLowerInvariant()
+            if ($oidHex -ceq '55040a') {
+                $valueBytes = Get-DerSlice -Bytes $Raw -Element $value
+                $text = $null
+                if (@(12, 19, 20, 22) -contains $value.Tag) { $text = [System.Text.Encoding]::UTF8.GetString($valueBytes) }
+                elseif ($value.Tag -eq 30) { $text = [System.Text.Encoding]::BigEndianUnicode.GetString($valueBytes) }
+                [void]$orgs.Add($text)
+            }
+        }
+        if ($count -ne 1) { $multi = $true }
+    }
+    return @{ Ok = $true; Organizations = $orgs.ToArray(); MultiValued = $multi }
+}
+
+function Test-MicrosoftSignerCertificate {
+    param($Certificate)
+    try {
+        if ($null -eq $Certificate) { return $false }
+        $parts = Get-DistinguishedNameParts -Raw ([byte[]]$Certificate.SubjectName.RawData)
+        if (-not $parts.Ok -or $parts.MultiValued) { return $false }
+        $orgs = @($parts.Organizations)
+        if ($orgs.Count -ne 1) { return $false }
+        if (-not ($orgs[0] -ceq 'Microsoft Corporation')) { return $false }
+        foreach ($extension in $Certificate.Extensions) {
+            if ($extension.Oid.Value -ceq '2.5.29.37') {
+                $usage = New-Object System.Security.Cryptography.X509Certificates.X509EnhancedKeyUsageExtension($extension, $extension.Critical)
+                foreach ($purpose in $usage.EnhancedKeyUsages) { if ($purpose.Value -ceq '1.3.6.1.5.5.7.3.3') { return $true } }
+            }
+        }
+        return $false
+    }
+    catch { return $false }
 }
 
 function Test-MicrosoftSignature {
@@ -249,7 +324,7 @@ function Test-MicrosoftSignature {
     try {
         $signature = Get-AuthenticodeSignature -LiteralPath $Path
         if ($signature.Status -ne 'Valid') { return $false }
-        return (Test-MicrosoftSignerSubject -Subject ([string]$signature.SignerCertificate.Subject))
+        return (Test-MicrosoftSignerCertificate -Certificate $signature.SignerCertificate)
     }
     catch { return $false }
 }
@@ -715,13 +790,28 @@ function Get-SeenFile {
     return (Join-Path $Directory 'seen.txt')
 }
 
+# Reads at most $script:MaxSeenFileBytes. A file larger than that, or one that cannot be read, THROWS: the helper then does
+# not start (fail closed), because without the list of what was already done it could carry an old operation out twice.
 function Read-SeenIds {
     param([string]$Directory, [long]$Now)
     $set = New-Object 'System.Collections.Generic.HashSet[string]'
     $file = Get-SeenFile -Directory $Directory
     if (-not (Test-Path -LiteralPath $file)) { return , $set }
+    $stream = [System.IO.File]::Open($file, [System.IO.FileMode]::Open, [System.IO.FileAccess]::Read, [System.IO.FileShare]::ReadWrite)
+    try {
+        $buffer = New-Object byte[] ($script:MaxSeenFileBytes + 1)
+        $total = 0
+        while ($total -lt $buffer.Length) {
+            $n = $stream.Read($buffer, $total, $buffer.Length - $total)
+            if ($n -le 0) { break }
+            $total += $n
+        }
+    }
+    finally { $stream.Dispose() }
+    if ($total -gt $script:MaxSeenFileBytes) { throw ('seen.txt is larger than {0} bytes' -f $script:MaxSeenFileBytes) }
+    $text = [System.Text.Encoding]::UTF8.GetString($buffer, 0, $total).TrimStart([char]0xFEFF)
     $keep = New-Object System.Collections.ArrayList
-    foreach ($line in @(Get-Content -LiteralPath $file -Encoding UTF8)) {
+    foreach ($line in @($text -split "`r?`n")) {
         if ($line -cmatch '^([A-Za-z0-9_.:-]{1,200}) (\d{1,16})$') {
             if ([long]$Matches[2] + $script:SeenKeepMilliseconds -gt $Now) { [void]$keep.Add($line); [void]$set.Add($Matches[1]) }
         }
@@ -736,10 +826,18 @@ function Read-SeenIds {
     return , $set
 }
 
+# Returns $true when the id is on disk. $false means it is NOT (disk full, file locked): the caller must then not carry the
+# operation out, because a restart would no longer know it had been done.
 function Add-SeenId {
     param([string]$Directory, [string]$Id, [long]$ExpiresAt)
-    try { Add-Content -LiteralPath (Get-SeenFile -Directory $Directory) -Value ('{0} {1}' -f $Id, $ExpiresAt) -Encoding UTF8 }
-    catch { Write-HelperLog 'seen' ('could not be saved: ' + $_.Exception.Message) }
+    try {
+        Add-Content -LiteralPath (Get-SeenFile -Directory $Directory) -Value ('{0} {1}' -f $Id, $ExpiresAt) -Encoding UTF8 -ErrorAction Stop
+        return $true
+    }
+    catch {
+        Write-HelperLog 'seen' ('could not be saved: ' + $_.Exception.Message)
+        return $false
+    }
 }
 
 # One poll and what follows from it. Returns the number of operations handled.
@@ -758,11 +856,18 @@ function Invoke-HelperCycle {
             Write-HelperLog 'dropped' ("an operation was not carried out: " + $checked.Why)
             continue
         }
-        # Written down BEFORE it is carried out, so that a crash in the middle cannot let it run twice.
-        Add-SeenId -Directory (Get-HelperDirectory) -Id ([string]$operation.operationId) -ExpiresAt ([long]$operation.expiresAt)
-        Write-HelperLog 'asked' ("{0} (operation {1})" -f $checked.Kind, $operation.operationId)
-        $answer = Invoke-Operation -Kind $checked.Kind -WingetPath $WingetPath -Verify $VerifyWinget
-        $handled++
+        # Written down BEFORE it is carried out, so that a crash in the middle cannot let it run twice. When it cannot be
+        # written down, it is NOT carried out: a restart would not know it had been done. The server is told so.
+        $saved = Add-SeenId -Directory (Get-HelperDirectory) -Id ([string]$operation.operationId) -ExpiresAt ([long]$operation.expiresAt)
+        if (-not $saved) {
+            Write-HelperLog 'refused' ("operation {0} was not carried out: its id could not be written down" -f $operation.operationId)
+            $answer = @{ Ok = $false; Payload = (ConvertTo-ErrorPayload 'The helper could not write this request down on your computer (disk full or file locked), so it did not run it.') }
+        }
+        else {
+            Write-HelperLog 'asked' ("{0} (operation {1})" -f $checked.Kind, $operation.operationId)
+            $answer = Invoke-Operation -Kind $checked.Kind -WingetPath $WingetPath -Verify $VerifyWinget
+            $handled++
+        }
         if ($null -eq $answer) { continue }
         $rts = Get-NowMilliseconds
         $rnonce = [guid]::NewGuid().ToString('N')
@@ -861,7 +966,12 @@ function Invoke-HelperMain {
         if ([bool]$config.allowRemoteServer) { Write-HelperLog 'start' ('WARNING: the server is a remote host, as set up with -AllowRemoteServer: ' + ([Uri]$config.serverUrl).Host) }
         Write-HelperLog 'start' ("helper started; server {0}; winget: {1}" -f $config.serverUrl, $(if ($found.Path -ne '') { $found.Path } else { 'NOT FOUND - ' + $found.Why }))
         try { Write-PidFile -Directory $directory } catch { Write-HelperLog 'start' ('could not write the process record: ' + $_.Exception.Message) }
-        $seen = Read-SeenIds -Directory $directory -Now (Get-NowMilliseconds)
+        try { $seen = Read-SeenIds -Directory $directory -Now (Get-NowMilliseconds) }
+        catch {
+            Write-HelperLog 'start' ('cannot start: the list of operations already done could not be read safely (' + $_.Exception.Message + '). Move or delete seen.txt yourself, then start again.')
+            Show-HelperToast -Text 'FreeDuet programs helper cannot start: its file seen.txt is too large or unreadable. Move or delete that file, then start the task again.'
+            return 3
+        }
         $cycles = 0
         $quiet = 0
         $refusals = 0

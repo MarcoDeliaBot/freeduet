@@ -450,6 +450,10 @@ describe("the switch", () => {
     expect(offered).toEqual([]);
     const text = await callTool(actor, "programs_list_installed");
     expect(text.startsWith(REFUSAL_MARKER)).toBe(true);
+    // The sentence points to the page that exists, not to a Settings screen that does not.
+    expect(text).toContain("/api/programs/pairing");
+    expect(text).toContain("at this computer");
+    expect(text).not.toContain("switch them on in Settings");
     expect(await cardsOf(actor)).toEqual([]);
   });
 

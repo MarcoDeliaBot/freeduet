@@ -40,5 +40,5 @@ The approval card in FreeDuet is what stands in front of any action, and the hel
 - `-Server <address>`: default `http://localhost:3010`. Only this computer is accepted.
 - `-AllowRemoteServer`: another host, https only, with a warning naming the host. Certificate checks are never switched off.
 - `-AllowWritableWingetFolder`: accept a winget.exe in a folder your user can write (not recommended).
-- `-UseWindowsAppsAlias`: use the WindowsApps alias of winget (a link in a writable folder, not signature-checked; warned in the log).
+- `-UseWindowsAppsAlias`: use the WindowsApps alias of winget (a link in a writable folder, not signature-checked). Setup prints that warning on the screen when you choose it and asks you to type `UNCHECKED` before anything is written; `-AcceptAliasRisk` gives that answer on the command line. The helper's log repeats it at every start.
 - `-NoTask`, `-Yes`, `-Code`, `-WingetPath`.
