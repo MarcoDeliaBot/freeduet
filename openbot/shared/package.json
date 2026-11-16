@@ -5,6 +5,7 @@
   "type": "module",
   "exports": {
     "./harnesses.json": "./harnesses.json",
+    "./mascot.json": "./mascot.json",
     "./model-providers.json": "./model-providers.json",
     "./*": "./*.ts"
   },
