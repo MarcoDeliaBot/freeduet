@@ -21,7 +21,7 @@ Read these before changing anything:
 | `NOTICE.md` | Third-party code we carry and its licence |
 | `evals/team/README.md` | The team evals: cases, live runner, thresholds |
 
-`docs/M1_PLAN.md` sections are out of numeric order on purpose (parallel work): "the last section" means the last one in the file, which is section 34.
+`docs/M1_PLAN.md` sections are out of numeric order on purpose (parallel work): "the last section" means the last one in the file, which is section 41.
 
 ## Rules that never bend
 
@@ -79,6 +79,13 @@ the hands"): plan, brief executors, verify with numbers, merge, report.
 - **Verify before merging.** Re-run the executor's key tests yourself against a real Postgres and read
   the diff of anything security-related. Haiku sometimes misreports time ("waited three hours") or
   takes shortcuts (closing and reopening a PR to restart CI): check its claims.
+- **Whole server suite first.** A pull request that adds a file, a table or a route under `openbot/server` runs
+  `bun run test:server:sharded` (from `openbot/`, about 10 minutes) before it is opened, or says plainly that it did not.
+  On PR #318 the secret crawl and the adoption registry were found by CI.
+- **Review fingerprint (rule of 2026-11-16).** An independent review is valid only for the exact head sha it read. The
+  reviewer writes that sha at the top of the report; a later push needs a review of the delta before the merge.
+- **Re-check a figure before it goes on.** On 16 November 2026 `docs/M1_PLAN.md` said Leo was at 7,999 of 8,000
+  characters; the measured value was 8,873 (`system_prompt` of `creator` in `openbot/examples/freeduet/agents.yaml`).
 - **Merge without asking.** When a pull request is ready (CI green and your own checks done), merge
   it and tell the maintainer afterwards. He asked for this on 2026-11-11, for the future too.
 - **Token economy.** The maintainer pays for tokens. Do not react to every GitHub notification: check
@@ -166,6 +173,11 @@ Mark (id `marketer`) was the first member added after v0.1, Cam (id `video`) the
 - Known intermittent failures, re-run once before investigating: the all-in-one `image` job
   (`migrate` races the embedded Postgres start, 57P03, issue #50) and the app keyboard tests in
   `app/tests/live-screen-keyboard.test.tsx`.
+- A `startup (macos-latest)` job that ends "cancelled" with no steps or runner after about 15 minutes is GitHub not
+  assigning a macOS arm64 runner ("The job was not acquired by Runner of type hosted", 16 November 2026). No workflow
+  change fixes it: re-run the failed jobs once.
+- A cancel after a few minutes with "higher priority waiting request" is the concurrency group `ci-${{ github.ref }}`
+  (`.github/workflows/ci.yml:23`) cancelling an older commit of the same pull request, as intended (PR #318).
 - agent-freeduet tests: the settle timer (`segment.SETTLE_SECONDS`, 0.1 s in `fake_cli`) is a wall-clock
   race against the fake CLI's subprocess. A test or golden scenario whose CLI plays several steps and ends
   by itself sets `SETTLE_NEVER` (`tests/helpers.py`), so the CLI's result line ends the segment and no timer
@@ -195,6 +207,12 @@ Mark (id `marketer`) was the first member added after v0.1, Cam (id `video`) the
   `bun run typecheck:tests` from `openbot/`; its baseline is `server/tests/typecheck-baseline.txt`,
   and hand-edit a line there only when a baselined error's text changes. A `tsc` killed mid-run (exit 137, out of memory) now fails that gate with exit 2 and "tsc did not finish"; before, it passed as clean.
 - Adding a value to a Postgres enum breaks `tests/schema.test.ts`.
+- A new file under `openbot/server/src/` that names the installation secret (`installSecret`, `INSTALL_SECRET`,
+  `install-secret`) breaks the crawl in `openbot/server/tests/install-secret.test.ts`, which pins the 12 files allowed
+  to name it. Derive the type from `atTheComputer`, as `programs/routes.ts` does, not from `auth/install-secret`.
+- A foreign key to `users.id`, or a text-like column named like a person, must be in `openbot/server/src/freeduet/adopt/registry.ts`,
+  in section 2.2 of `docs/design/single-user-to-sign-in.md`, and that document's foreign-key count must match, or
+  `single-user-adoption-registry.test.ts` fails. A foreign key to `users.id` is never in `LEAVE`, whatever its delete rule.
 - Some jobs run only on main (and on pull requests labelled `full-ci`): `component dockerfiles`,
   `image`, clean-start. A green pull request does not prove main is green: after a merge that adds a
   Dockerfile, a service or a compose change, look at main's own run. A new `*/Dockerfile` under
@@ -358,3 +376,6 @@ Mark (id `marketer`) was the first member added after v0.1, Cam (id `video`) the
   every minute and starts its fallback with a hidden window, because a visible console took the keyboard focus.
   `/tmp` inside WSL is emptied when the distro restarts, so a script that must survive lives in a persistent
   folder. Inline SQL with `||` through PowerShell breaks: write it in a `.sh` file.
+- Seen on one installation on 16 November 2026: a shared Windows folder, which WSL reaches as a 9p mount, did not keep
+  `user.*` extended attributes, so a mark stored as one existed only in the member's own workspace volume (a named
+  volume at `/workspace`, `openbot/supervisor/src/docker.ts:462`).
