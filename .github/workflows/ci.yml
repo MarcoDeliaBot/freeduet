@@ -480,6 +480,9 @@ jobs:
           sudo mkdir -p /usr/local/lib/office-inspect
           sudo install -m 0755 agent-computer/office-inspect/office_inspect.py /usr/local/lib/office-inspect/office_inspect.py
           sudo install -m 0755 agent-computer/office-inspect/office-inspect agent-computer/office-inspect/office-python /usr/local/bin/
+          sudo mkdir -p /usr/local/lib/office-convert
+          sudo install -m 0755 agent-computer/office-convert/office_convert.py /usr/local/lib/office-convert/office_convert.py
+          sudo install -m 0755 agent-computer/office-convert/office-convert /usr/local/bin/
           sudo find /opt/office -path '*/reportlab/fonts/DarkGarden*' -delete
           sudo find /opt/office -path '*/lxml/includes/extlibs/*charset.h' -delete
       - name: Smoke check, from another directory, as the Dockerfile does
@@ -488,8 +491,10 @@ jobs:
           cd /
           office-python -c "import docx, openpyxl, pptx, pypdf, reportlab, pdfplumber, defusedxml, lxml.etree; docx.Document().save('/tmp/office-smoke.docx')"
           office-inspect /tmp/office-smoke.docx > /dev/null
-      - name: Tests of office-inspect
-        run: office-python -m pytest -q agent-computer/office-inspect/tests
+      - name: Tests of office-inspect and office-convert
+        # LibreOffice is not installed in this job: office-convert is tested with a stub `soffice`, and its
+        # one test of the real program is skipped. The real conversion runs in the image's build check.
+        run: office-python -m pytest -q agent-computer/office-inspect/tests agent-computer/office-convert/tests
 
   # FreeDuet (#21): the one-command start on a clean machine, as the README's Quick start gives it,
   # with no API key and no Claude Code sign-in. Then what a person would get: the server, the app
