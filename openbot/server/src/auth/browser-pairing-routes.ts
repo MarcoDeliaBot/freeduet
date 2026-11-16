@@ -101,6 +101,20 @@ export function createBrowserPairingRoutes(
     );
     if (!parsed.success)
       return context.json({ error: "Send the code." }, 400, NO_STORE);
+    // A browser that is already paired is not paired again: its cookie would be overwritten, a `computer` by a
+    // `device`, and its row left with nobody holding it. The code is not used up by the refusal.
+    const already = await pairings
+      .standing(context.req.raw, me)
+      .catch(() => null);
+    if (already)
+      return context.json(
+        {
+          error:
+            "This browser is already paired. Revoke it first to pair it again.",
+        },
+        409,
+        NO_STORE,
+      );
     const address = peerAddress(context.env, context.req.raw);
     const outcome = await pairings.checkCode(me, address, parsed.data.code);
     if (!outcome.ok) {

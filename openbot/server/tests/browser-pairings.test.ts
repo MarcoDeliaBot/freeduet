@@ -12,7 +12,9 @@ import { Hono } from "hono";
 import type { AuditEventInput, AuditStore } from "../src/audit";
 import {
   CODE_LIFETIME_MS,
+  LEGACY_UPGRADE_ENDS,
   normalizeCode,
+  pairingSecureNotice,
   pairCookieName,
 } from "../src/auth/browser-pairings";
 import { createBrowserPairingRoutes } from "../src/auth/browser-pairing-routes";
@@ -377,6 +379,59 @@ describe("a code", () => {
     expect(viaQuery.headers.get("set-cookie")).toBeNull();
   });
 
+  test("refusals are written to the trail once a minute for each person, not once an attempt", async () => {
+    const clock = { now: Date.now() };
+    const w = world(clock);
+    for (let attempt = 0; attempt < 25; attempt += 1)
+      await w.ask("/api/pairings/redeem", {
+        method: "POST",
+        who: "admin",
+        body: { code: "GGGGG-GGGGG" },
+      });
+    const failed = () =>
+      w.events.filter((event) => event.eventType === "pairing.redeem_failed");
+    expect(failed()).toHaveLength(1);
+    // Another person has a window of their own.
+    await w.ask("/api/pairings/redeem", {
+      method: "POST",
+      who: "user",
+      body: { code: "GGGGG-GGGGG" },
+    });
+    expect(failed()).toHaveLength(2);
+    // And the next minute, the first refusal is written again.
+    clock.now += 61_000;
+    await w.ask("/api/pairings/redeem", {
+      method: "POST",
+      who: "admin",
+      body: { code: "GGGGG-GGGGG" },
+    });
+    expect(failed()).toHaveLength(3);
+  });
+
+  test("a browser that already holds a live pairing is not paired again, and the code is not used up", async () => {
+    const w = world();
+    const { code } = await w.mint("admin");
+    const rows = () => w.store.rows.size;
+    const before = rows();
+    const refused = await w.ask("/api/pairings/redeem", {
+      method: "POST",
+      who: "admin",
+      cookie: pairedCookie(config, "admin"),
+      body: { code },
+    });
+    expect(refused.status).toBe(409);
+    expect(refused.headers.get("set-cookie")).toBeNull();
+    expect(rows()).toBe(before);
+    // The same code is still good for a browser that is not paired.
+    const ok = await w.ask("/api/pairings/redeem", {
+      method: "POST",
+      who: "admin",
+      body: { code },
+    });
+    expect(ok.status).toBe(200);
+    expect(rows()).toBe(before + 1);
+  });
+
   test("redeemed with nobody signed in is nobody's: 401, and nothing is made", async () => {
     const w = world();
     const { code } = await w.mint("admin");
@@ -437,6 +492,30 @@ describe("a code", () => {
     }
     expect(outcomes.slice(0, 30)).not.toContain("rate_limited");
     expect(outcomes[30]).toBe("rate_limited");
+
+    // Loopback is every peer behind a tunnel or Docker: no address limit there, so nobody can spend it for the rest.
+    const behind: string[] = [];
+    for (let attempt = 0; attempt < 45; attempt += 1) {
+      const outcome = await v.pairings.checkCode(
+        `behind-${attempt}`,
+        "127.0.0.1",
+        "EEEEE-EEEEE",
+      );
+      behind.push(outcome.ok ? "ok" : outcome.reason);
+    }
+    expect(behind).not.toContain("rate_limited");
+    // The person's own limit stays there.
+    const own: string[] = [];
+    for (let attempt = 0; attempt < 12; attempt += 1) {
+      const outcome = await v.pairings.checkCode(
+        "one-person",
+        "127.0.0.1",
+        "FFFFF-FFFFF",
+      );
+      own.push(outcome.ok ? "ok" : outcome.reason);
+    }
+    expect(own.slice(0, 10)).not.toContain("rate_limited");
+    expect(own[10]).toBe("rate_limited");
   });
 });
 
@@ -720,6 +799,151 @@ describe("the old cookie", () => {
     const w = world();
     await w.ask("/api/me", { who: "user", cookie: legacyCookie(config) });
     expect(upgraded(w).map((row) => row.userId)).toEqual(["u-user"]);
+  });
+});
+
+describe("the old cookie, from anywhere but this machine", () => {
+  const upgraded = (w: ReturnType<typeof world>) =>
+    [...w.store.rows.values()].filter((row) => !row.id.startsWith("seed-"));
+
+  test("a copy of it from another address pairs nothing: the session stays remote, and nothing is made", async () => {
+    const w = world();
+    const answer = await w.ask("/api/me", {
+      who: "admin",
+      cookie: legacyCookie(config),
+      peer: peerAt("203.0.113.7"),
+    });
+    expect((await w.json(answer)).remote).toBe(true);
+    expect(answer.headers.getSetCookie()).toEqual([]);
+    expect(upgraded(w)).toHaveLength(0);
+    expect(w.events).toEqual([]);
+  });
+
+  test("nor through a tunnel on this machine: loopback with the headers an intermediary adds", async () => {
+    const w = world();
+    for (const headers of [
+      { "x-forwarded-for": "203.0.113.7" },
+      { forwarded: "for=203.0.113.7" },
+      { "cf-connecting-ip": "203.0.113.7" },
+      { "tailscale-user-login": "someone@example.com" },
+    ] as Record<string, string>[]) {
+      const answer = await w.ask("/api/me", {
+        who: "admin",
+        cookie: legacyCookie(config),
+        headers,
+      });
+      expect([headers, (await w.json(answer)).remote]).toEqual([headers, true]);
+    }
+    expect(upgraded(w)).toHaveLength(0);
+  });
+
+  test("and a revoked pairing is not made again by it: the old cookie converts nothing away from this machine", async () => {
+    const w = world();
+    const first = await w.ask("/api/me", {
+      who: "admin",
+      cookie: legacyCookie(config),
+    });
+    const cookie = (first.headers.getSetCookie()[0] as string).split(
+      ";",
+    )[0] as string;
+    const [row] = upgraded(w);
+    expect(
+      (
+        await w.ask(`/api/pairings/${row?.id}`, {
+          method: "DELETE",
+          who: "admin",
+          cookie: pairedCookie(config, "admin"),
+        })
+      ).status,
+    ).toBe(200);
+    // The thief holds a copy of the old cookie and comes from the network.
+    const again = await w.ask("/api/me", {
+      who: "admin",
+      cookie: `${legacyCookie(config)}; ${cookie}`,
+      peer: peerAt("203.0.113.7"),
+    });
+    expect((await w.json(again)).remote).toBe(true);
+    expect(upgraded(w).filter((each) => !each.revokedAt)).toHaveLength(0);
+  });
+
+  test("after 16 February 2027 it pairs nothing even at this machine: the end is in the code", async () => {
+    const clock = { now: LEGACY_UPGRADE_ENDS - 1_000 };
+    const w = world(clock);
+    const before = await w.ask("/api/me", {
+      who: "admin",
+      cookie: legacyCookie(config),
+    });
+    expect((await w.json(before)).remote).toBe(false);
+    clock.now = LEGACY_UPGRADE_ENDS;
+    const after = await w.ask("/api/me", {
+      who: "user",
+      cookie: legacyCookie(config),
+    });
+    expect((await w.json(after)).remote).toBe(true);
+    expect(after.headers.getSetCookie()).toEqual([]);
+    expect(upgraded(w).map((row) => row.userId)).toEqual(["u-admin"]);
+  });
+
+  test("a person who reaches FreeDuet through a tunnel on this machine, and held the old cookie, becomes the computer with one open.sh", async () => {
+    const w = world();
+    const publicHeaders = {
+      "x-forwarded-for": "203.0.113.7",
+      "x-forwarded-proto": "https",
+    };
+    // After the update: signed in, the old cookie in the browser, through the public address. Remote, and told so.
+    const asked = (path: string, extra: Record<string, unknown> = {}) =>
+      w.ask(path, {
+        who: "admin",
+        // A tunnel or reverse proxy on this machine: the socket is loopback, the headers say where it came from.
+        headers: publicHeaders,
+        ...extra,
+      });
+    expect(
+      (await w.json(await asked("/api/me", { cookie: legacyCookie(config) })))
+        .remote,
+    ).toBe(true);
+    // On the machine, open.sh asks the launcher's door for a one-time link with the secret as the bearer.
+    const mintLink = await w.ask("/internal/pairing", {
+      method: "POST",
+      headers: { authorization: `Bearer ${SECRET}` },
+    });
+    expect(mintLink.status).toBe(200);
+    const { path } = await w.json(mintLink);
+    // The browser opens it through the public address, signed in as the administrator.
+    const paired = await asked(path, { cookie: legacyCookie(config) });
+    expect(paired.status).toBe(303);
+    const setCookies = paired.headers.getSetCookie();
+    expect(setCookies[0]).toMatch(
+      new RegExp(`^${pairCookieName(config.port)}=[A-Za-z0-9_-]{43}; `),
+    );
+    expect(setCookies.join("\n")).not.toContain(SECRET);
+    const cookie = (setCookies[0] as string).split(";")[0] as string;
+    // With the NEW token it is the computer, still through the public address, and can pair a phone.
+    expect((await w.json(await asked("/api/me", { cookie }))).remote).toBe(
+      false,
+    );
+    expect(
+      (await asked("/api/pairings/code", { method: "POST", cookie })).status,
+    ).toBe(200);
+    expect(upgraded(w).map((row) => [row.userId, row.kind])).toEqual([
+      ["u-admin", "computer"],
+    ]);
+  });
+});
+
+describe("the Secure flag follows the app address", () => {
+  test("a boot notice when the public address is https and the app address is not, and none otherwise", () => {
+    const https = "https://freeduet.example";
+    const http = "http://localhost:3000";
+    expect(pairingSecureNotice({ publicUrl: https, appUrl: http })).toContain(
+      "OPENBOT_APP_URL",
+    );
+    expect(
+      pairingSecureNotice({ publicUrl: https, appUrl: undefined }),
+    ).not.toBeNull();
+    expect(pairingSecureNotice({ publicUrl: https, appUrl: https })).toBeNull();
+    expect(pairingSecureNotice({ publicUrl: http, appUrl: http })).toBeNull();
+    expect(pairingSecureNotice({})).toBeNull();
   });
 });
 

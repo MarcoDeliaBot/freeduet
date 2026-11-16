@@ -8,6 +8,7 @@ import { and, asc, eq, gt, isNull, ne } from "drizzle-orm";
 import { type AuditStore, recordAuditEvent } from "../audit";
 import type { Database } from "../db/client";
 import { browserPairings } from "../db/schema";
+import { isLoopbackPeer } from "./peer";
 
 /**
  * FreeDuet (docs/M1_PLAN.md D49, docs/design/phone-and-remote.md 3.5): what marks a browser as paired with the
@@ -249,6 +250,12 @@ export const CODE_LIFETIME_MS = 120_000;
 /** Letters and digits that cannot be mistaken for each other when read off a screen and typed on a phone. */
 const CODE_ALPHABET = "ABCDEFGHJKMNPQRSTUVWXYZ23456789";
 const CODE_LENGTH = 10;
+/**
+ * The day the old cookie stops being upgraded to a pairing (docs/M1_PLAN.md D49): 16 February 2027, UTC. After it the
+ * old cookie pairs nothing, and the code that reads it can be deleted.
+ */
+export const LEGACY_UPGRADE_ENDS = Date.UTC(2027, 1, 16);
+
 /** Wrong codes in a row, for one person, after which the outstanding code is burned. */
 const FAILURES_BEFORE_BURN = 5;
 /** Redeem attempts in a minute, per person and per address, whatever the outcome. */
@@ -362,6 +369,9 @@ export function createBrowserPairings(options: PairingOptions) {
   const codes = new Map<string, { hash: string; expires: number }>();
   const failures = new Map<string, number>();
   const attempts = new Map<string, number[]>();
+  // When each person's last refusal was written to the trail: one row per person per minute, so that
+  // a guesser cannot fill the audit table, one row an attempt.
+  const refusalAudited = new Map<string, number>();
   // The upgrade in flight or just done, per person, as a promise: set before anything is awaited, so
   // requests that arrive together find it and share it.
   const upgrades = new Map<
@@ -395,6 +405,8 @@ export function createBrowserPairings(options: PairingOptions) {
       if (value.expires <= current) codes.delete(key);
     for (const [key, value] of upgrades)
       if (value.expires <= current) upgrades.delete(key);
+    for (const [key, at] of refusalAudited)
+      if (current - at >= 60_000) refusalAudited.delete(key);
     for (const [key, hits] of attempts) {
       const recent = hits.filter((at) => current - at < 60_000);
       if (recent.length === 0) attempts.delete(key);
@@ -489,6 +501,7 @@ export function createBrowserPairings(options: PairingOptions) {
 
     /** Whether the request holds the OLD cookie: the secret itself. Only to be upgraded (see the top). */
     holdsLegacy(request: Request): boolean {
+      if (now() >= LEGACY_UPGRADE_ENDS) return false;
       const offered = cookieValues(request, legacy);
       return offered.some((value) =>
         timingSafeEqual(sha256Bytes(value), sha256Bytes(secret)),
@@ -552,16 +565,22 @@ export function createBrowserPairings(options: PairingOptions) {
     ): Promise<RedeemOutcome> {
       sweep();
       const refuse = async (reason: "rate_limited" | "wrong_or_expired") => {
-        await record("pairing.redeem_failed", userId, undefined, {
-          reason,
-        }).catch(() => {});
+        // The first refusal of each minute for this person is written down; the rest of the window is not.
+        if (!refusalAudited.has(userId)) {
+          refusalAudited.set(userId, now());
+          await record("pairing.redeem_failed", userId, undefined, {
+            reason,
+          }).catch(() => {});
+        }
         return { ok: false, reason } as const;
       };
-      if (
-        !mayAttempt(`user:${userId}`, PER_USER_PER_MINUTE) ||
-        !mayAttempt(`address:${address ?? "unknown"}`, PER_ADDRESS_PER_MINUTE)
-      )
-        return refuse("rate_limited");
+      // Behind a tunnel on this machine, or Docker, every peer is loopback: an address limit would be one cap for
+      // everybody, which any signed-in person could spend to block the rest. Loopback has the person's limit only.
+      const userOk = mayAttempt(`user:${userId}`, PER_USER_PER_MINUTE);
+      const addressOk =
+        isLoopbackPeer(address) ||
+        mayAttempt(`address:${address ?? "unknown"}`, PER_ADDRESS_PER_MINUTE);
+      if (!userOk || !addressOk) return refuse("rate_limited");
       const held = codes.get(userId);
       const offered = sha256Bytes(normalizeCode(typed));
       if (
@@ -604,3 +623,18 @@ export function createBrowserPairings(options: PairingOptions) {
 }
 
 export type BrowserPairings = ReturnType<typeof createBrowserPairings>;
+
+/**
+ * A line for the boot log when the pairing cookie would not be `Secure` although the deployment is served over
+ * https: its `Secure` flag follows the configured app address (`OPENBOT_APP_URL`, the first `TRUSTED_ORIGINS`
+ * entry, or the public one), so an https public address with an app address that is not https sends the cookie over
+ * plain http too. Null when there is nothing to say.
+ */
+export function pairingSecureNotice(config: {
+  publicUrl?: string | undefined;
+  appUrl?: string | undefined;
+}): string | null {
+  if (!config.publicUrl?.startsWith("https://")) return null;
+  if (config.appUrl?.startsWith("https://")) return null;
+  return "The public address is https but the app address is not: the pairing cookie of a browser will not be marked Secure. Set OPENBOT_APP_URL to the https address of the app.";
+}

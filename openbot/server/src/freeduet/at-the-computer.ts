@@ -25,19 +25,7 @@
  */
 import { isRemote } from "../auth/remote-limits";
 import type { PairingGate } from "../auth/install-secret";
-import { isLoopbackRequest } from "../auth/peer";
-
-/** Headers that only an intermediary adds. Lower case, as `Headers` gives them. */
-const INTERMEDIARY_HEADERS = new Set([
-  "forwarded",
-  "via",
-  "x-real-ip",
-  "x-client-ip",
-  "true-client-ip",
-]);
-
-/** Families of them: `X-Forwarded-For`, `Cf-Connecting-Ip`, `Tailscale-User-Login`, and the like. */
-const INTERMEDIARY_PREFIXES = ["x-forwarded-", "cf-", "tailscale-"];
+import { isDirectRequest } from "../auth/direct-request";
 
 /**
  * Whether this request came straight from this machine. `env` is what `app.fetch(request, env)` was given, which is
@@ -51,14 +39,6 @@ export async function atTheComputer(
   pairing: PairingGate | undefined,
   userId: string,
 ): Promise<boolean> {
-  if (!isLoopbackRequest(env, request)) return false;
-  for (const name of request.headers.keys()) {
-    const lower = name.toLowerCase();
-    if (
-      INTERMEDIARY_HEADERS.has(lower) ||
-      INTERMEDIARY_PREFIXES.some((prefix) => lower.startsWith(prefix))
-    )
-      return false;
-  }
+  if (!isDirectRequest(env, request)) return false;
   return pairing === undefined || !(await isRemote(pairing, request, userId));
 }

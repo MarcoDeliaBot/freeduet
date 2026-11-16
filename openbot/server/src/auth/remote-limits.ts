@@ -1,3 +1,4 @@
+import { isDirectRequest } from "./direct-request";
 import type { MiddlewareHandler } from "hono";
 import type { AuthService } from "./guards";
 import { browserLabel } from "./browser-pairings";
@@ -100,7 +101,10 @@ export function remoteRunQuestion(
  *
  * It asks nothing a stranger could answer: the old cookie is the secret, which only a browser paired before
  * D49 ever held, and the session says who gets the pairing. A request with the old cookie and no session
- * gets nothing, and neither does one whose lookup fails.
+ * gets nothing, and neither does one whose lookup fails. It is done only for a request that comes straight from
+ * this machine (`isDirectRequest`, the first two conditions of "at the computer"): a copy of the old cookie taken
+ * away is no way to a pairing from the network, a tunnel included, and revoking a pairing is not undone by it.
+ * After `LEGACY_UPGRADE_ENDS` the old cookie is refused here in code, not only in this comment.
  */
 export function createLegacyCookieUpgrade(
   gate: PairingGate,
@@ -109,6 +113,9 @@ export function createLegacyCookieUpgrade(
   return async (context, next) => {
     const request = context.req.raw;
     if (!gate.pairings.holdsLegacy(request)) return next();
+    // Only at this machine itself. A copy of the old cookie is the secret: from anywhere else, or through a tunnel,
+    // it pairs nothing and the session stays remote (the person pairs with `scripts/open.sh`, as the notice says).
+    if (!isDirectRequest(context.env, request)) return next();
     let userId: string | undefined;
     try {
       const session = await auth.api.getSession({

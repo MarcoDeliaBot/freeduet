@@ -96,6 +96,7 @@ import { DEV_ACTOR, initializeDevActorUser } from "./auth/dev-actor";
 import {
   createBrowserPairings,
   createPgPairingStore,
+  pairingSecureNotice,
 } from "./auth/browser-pairings";
 import { INSTALL_SECRET_VARIABLE, signInGate } from "./auth/install-secret";
 import { remoteRunQuestion } from "./auth/remote-limits";
@@ -1972,6 +1973,10 @@ const browserPairings =
         audit: createAuditStore(database),
       })
     : undefined;
+if (browserPairings) {
+  const notice = pairingSecureNotice(config);
+  if (notice) console.warn(notice);
+}
 browserPairings?.sweepStale().catch((error) => {
   console.error(
     "Could not end the pairings of an earlier secret.",
