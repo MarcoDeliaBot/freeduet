@@ -1,7 +1,7 @@
 # Pester 5 tests for install.ps1 (the Windows step of the installer; docs/design/installer.md, section 10).
 #
-# STATUS: NOT RUN. Written on a Linux machine where PowerShell could not be installed, so nothing in this file has
-# executed. The first run on a Windows machine is part of the manual check in docs/design/installer.md, section 10.
+# STATUS: written on a Linux machine where PowerShell could not be installed. It first ran on a GitHub-hosted Windows
+# runner (job installer-windows in .github/workflows/ci.yml; docs/design/installer.md, section 11).
 #
 # The tests never change the computer. install.ps1 is dot-sourced (which runs nothing), the facts are fake, and every
 # command that would change something (wsl, Start-Process, Read-Host, Get-CimInstance) is replaced by a Pester mock.
@@ -10,7 +10,7 @@
 #   Install-Module Pester -MinimumVersion 5.0 -Scope CurrentUser     (once; the Pester 3 that Windows ships cannot run this file)
 #   Invoke-Pester -Path .\openbot\scripts\install.Tests.ps1 -Output Detailed
 #
-# Not wired into CI: that needs a Windows runner, which the maintainer has not chosen.
+# CI runs it in Windows PowerShell 5.1 with Pester 5 on a hosted Windows runner (job installer-windows).
 
 BeforeAll {
     $script:InstallerPath = Join-Path $PSScriptRoot 'install.ps1'
@@ -81,6 +81,15 @@ Describe 'Text readers and path helpers' {
         $names = @(ConvertFrom-WslNameList -Text "Ubuntu-24.04`r`n`r`nUbuntu-22.04`r`n")
         $names.Count | Should -Be 2
         $names[0] | Should -Be 'Ubuntu-24.04'
+    }
+    It 'gives one name as a one-element list, and the name can be found with -contains (as the facts reader does)' {
+        $names = @(ConvertFrom-WslNameList -Text "Ubuntu-24.04`r`n")
+        $names.Count | Should -Be 1
+        $names[0] | Should -BeOfType [string]
+        ($names -contains 'Ubuntu-24.04') | Should -BeTrue
+    }
+    It 'gives an empty list for no names' {
+        @(ConvertFrom-WslNameList -Text '').Count | Should -Be 0
     }
     It 'reads systemd only from the [boot] section of wsl.conf' {
         Get-WslConfSystemd -Text "[boot]`nsystemd=true`n" | Should -Be 'true'
