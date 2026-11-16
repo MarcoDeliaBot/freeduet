@@ -38,7 +38,7 @@ type Page = {
  * The pages OpenBot's sidebar used to list, other than Settings. A person sets their Bots up here
  * and comes back rarely, so these wait under Manage, closed until somebody opens it.
  */
-const MANAGE_PAGES: Page[] = [
+export const MANAGE_PAGES: Page[] = [
   { label: "Bots", to: "/bots", icon: "bolt", badge: <BotsNavBadge /> },
   { label: "Connections", to: "/connections", icon: "plug" },
   { label: "Capabilities", to: "/capabilities", icon: "box" },
@@ -75,7 +75,7 @@ function rememberOpen(key: string, open: boolean): void {
 }
 
 /** A group in the menu that opens and closes, and remembers which it was in this browser. */
-function useRememberedGroup(key: string) {
+export function useRememberedGroup(key: string) {
   const [open, setOpen] = useState(() => rememberedOpen(key));
   const id = useId();
   return {
@@ -92,16 +92,16 @@ function useRememberedGroup(key: string) {
  * A row in the menu: a line glyph and the place's name at the drawer's size (parity-spec 1.1, 2.3),
  * at least 48px tall, on the filled capsule when it is where you are.
  */
-const ROW =
+export const ROW =
   "type-nav flex min-h-12 w-full items-center gap-3 rounded-[22px] px-3 font-medium text-duet-ink transition-colors duration-[var(--duet-dur-tap)] hover:bg-duet-tile active:bg-duet-tile focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-duet-accent/40 [&_svg]:shrink-0 [&_svg]:text-duet-ink-2";
 
 /** The glyph at the head of a menu row. */
-function RowIcon({ name }: { name: DuetIconName }) {
+export function RowIcon({ name }: { name: DuetIconName }) {
   return <DuetIcon name={name} size={22} />;
 }
 
 /** A row with a disc, a name and a line under it: Everything and each channel. */
-const TALL_ROW =
+export const TALL_ROW =
   "flex min-h-[50px] w-full items-center gap-3 rounded-[24px] px-2.5 py-1.5 text-left transition-colors hover:bg-duet-tile focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-duet-violet/40";
 
 /**
@@ -405,7 +405,7 @@ export function MenuSheet({
 }
 
 /** A name in the row's ink, and one line under it, cut short unless it is Everything's own. */
-function RowText({
+export function RowText({
   name,
   line,
   wrap = false,
@@ -434,7 +434,7 @@ function RowText({
 }
 
 /** One channel: its disc, its name and its purpose. A conversation with several Bots opens its group. */
-function ChannelLink({
+export function ChannelLink({
   channel,
   onOpen,
   className,
@@ -477,7 +477,7 @@ function ChannelLink({
  * first asked in it, else what was last said (`conversationTitle`), and opened as the conversation
  * it is, at `/channel/<id>`, so opening it does not make it a channel.
  */
-function EarlierLink({
+export function EarlierLink({
   conversation,
   onOpen,
 }: {

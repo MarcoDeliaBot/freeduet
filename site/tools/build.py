@@ -135,6 +135,8 @@ def get_path(root, path):
 # ---------------------------------------------------------------------------------------------------------------
 # the mascot: one symbol per member (its art from mascot.json), the paints of the bubble, the headset and the faces
 
+# The art is shared with the app, which draws the same faces (D55): one file, `openbot/shared/mascot.json`.
+MASCOT_FILE = Path(__file__).resolve().parents[2] / "openbot" / "shared" / "mascot.json"
 MEMBER_IDS = ["iris", "leo", "otto", "portia", "penny", "jules", "wren", "gus", "basil", "vera", "mark", "video"]
 FACE_IDS = ["idle", "listen", "think", "work", "ask", "done"]
 MASCOT = re.compile(r'(<svg\b[^>]*\sdata-mascot="(\w+)"[^>]*>)</svg>')
@@ -170,7 +172,7 @@ class Site:
             raise ValueError("default language %r is not in the list" % self.default)
         self.T = {c: json.loads((src / "lang" / (c + ".json")).read_text(encoding="utf-8")) for c in self.codes}
         self.members = json.loads((src / "members.json").read_text(encoding="utf-8"))
-        self.mascot = json.loads((src / "mascot.json").read_text(encoding="utf-8"))
+        self.mascot = json.loads(MASCOT_FILE.read_text(encoding="utf-8"))
         body = (src / "body.html").read_text(encoding="utf-8")
         self.body, n = re.subn(r'<symbol id="i-gh".*?</symbol>', lambda _m: GH_SYMBOL, body, flags=re.S)
         if n != 1:

@@ -35,6 +35,8 @@ import {
 import { ChatSuggestionCard } from "@/components/shell/chat-suggestion";
 import { useCardLanguage } from "@/freeduet/person-language/use-card-text";
 import type { ApprovalRequest } from "@/lib/approvals";
+import { useWideBand } from "@/freeduet/wide/band";
+import { PinnedApprovalsSlot } from "@/freeduet/wide/pinned";
 import { attachmentUrl } from "@/lib/channels/attachments";
 import { isThreadBusyError } from "@/lib/channels/run-lifecycle";
 import { useFocusMessage } from "@/lib/tasks/focus-message";
@@ -141,6 +143,8 @@ export function ConversationView({
   /** Draw the lead alone, the conversation folded under it; see `ChatTranscript`. */
   folded?: boolean;
 }) {
+  // D55: the width of the conversation on a wide screen; `off` below 1024 px and outside the frame.
+  const wide = useWideBand() !== "off";
   /*
    * THE QUEUE LIVES HERE BECAUSE BOTH HALVES OF IT DO.
    *
@@ -575,6 +579,8 @@ export function ConversationView({
       }
       ref={root}
     >
+      {/* D55: where a waiting approval card is pinned on a wide screen; empty and absent otherwise. */}
+      <PinnedApprovalsSlot />
       <div className="flex flex-1 min-h-0">
         {/* What the transcript draws can send as the person. See `conversation-send.tsx`. */}
         <ConversationSendContext.Provider value={conversationSend}>
@@ -590,10 +596,13 @@ export function ConversationView({
             busy={busy}
             {...(inShell
               ? {
-                  contentClassName:
-                    "max-w-none gap-[14px] px-4 pt-[100px] pb-[calc(var(--duet-dock,0px)+24px)]",
+                  contentClassName: wide
+                    ? "max-w-[920px] gap-[14px] px-6 pt-6 pb-[calc(var(--duet-dock,0px)+24px)]"
+                    : "max-w-none gap-[14px] px-4 pt-[100px] pb-[calc(var(--duet-dock,0px)+24px)]",
                 }
-              : {})}
+              : wide
+                ? { contentClassName: "max-w-[920px] px-6" }
+                : {})}
             folded={folded}
             lead={lead}
             commandNames={(commands ?? [])
@@ -631,8 +640,12 @@ export function ConversationView({
       <div
         className={
           inShell
-            ? "absolute inset-x-0 bottom-0 z-10 px-4 pb-[calc(var(--duet-tab-space,0px)+10px)]"
-            : "max-w-2xl mx-auto w-full px-0 pb-4 shrink-0"
+            ? wide
+              ? "absolute inset-x-0 bottom-0 z-10 mx-auto w-full max-w-[968px] px-6 pb-[calc(var(--duet-tab-space,0px)+10px)]"
+              : "absolute inset-x-0 bottom-0 z-10 px-4 pb-[calc(var(--duet-tab-space,0px)+10px)]"
+            : wide
+              ? "mx-auto w-full max-w-[968px] shrink-0 px-6 pb-4"
+              : "max-w-2xl mx-auto w-full px-0 pb-4 shrink-0"
         }
         ref={dock}
       >

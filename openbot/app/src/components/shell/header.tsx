@@ -97,7 +97,7 @@ export function ShellHeader({
 }
 
 /** Its own component, so a keystroke in Chat re-renders the orb and not the whole header. */
-function ChatOrb({ size }: { size: number }) {
+export function ChatOrb({ size }: { size: number }) {
   const { state, keystrokes } = useChatOrb();
   return <MicOrb keystrokes={keystrokes} size={size} state={state} />;
 }
@@ -113,7 +113,7 @@ function ChatOrb({ size }: { size: number }) {
  * slides only for somebody who has not asked for less motion; for them it fades, and its words
  * stop shimmering, as a running tool line's do.
  */
-function ChatStep() {
+export function ChatStep() {
   const step = useChatStep();
   const [held, setHeld] = useState(step);
   if (step !== null && step !== held) setHeld(step);
