@@ -66,7 +66,7 @@ const change = z.strictObject({ enabled: z.boolean() });
 const redeemBody = z.strictObject({ code: z.string().min(1).max(64) });
 
 /** The plain page of the first live trial. One inline script, allowed by its hash and nothing else. */
-const PAIRING_SCRIPT = `
+export const PAIRING_SCRIPT = `
 const out = document.getElementById("out");
 async function call(method, path, body) {
   out.textContent = "...";

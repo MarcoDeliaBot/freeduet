@@ -25,7 +25,7 @@ import {
   WRONG_WINDOW_MS,
 } from "../src/programs/pairing";
 import { HELPER_FILES, HELPER_ZIP_NAME } from "../src/programs/helper-bundle";
-import { createProgramsRoutes } from "../src/programs/routes";
+import { createProgramsRoutes, PAIRING_SCRIPT } from "../src/programs/routes";
 import { createProgramsSwitch } from "../src/programs/switch";
 import { TEST_POOL, testDatabaseUrl } from "./support/database";
 import { LOOPBACK_PEER } from "./support/loopback-peer";
@@ -582,8 +582,12 @@ describe("handing the helper to the person at the computer", () => {
     expect(csp).toContain("frame-ancestors 'none'");
     expect(csp).toContain("default-src 'none'");
     // The hash in the policy is the hash of the one inline script the page carries.
-    const script = /<script>([\s\S]*)<\/script>/.exec(html)?.[1] ?? "";
-    const hash = new Bun.CryptoHasher("sha256").update(script).digest("base64");
+    // No HTML is pulled apart with a pattern: the page carries exactly one script, and it is the exported one.
+    expect(html.toLowerCase().split("<script").length - 1).toBe(1);
+    expect(html).toContain(`<script>${PAIRING_SCRIPT}</script>`);
+    const hash = new Bun.CryptoHasher("sha256")
+      .update(PAIRING_SCRIPT)
+      .digest("base64");
     expect(csp).toContain(`script-src 'sha256-${hash}'`);
     expect(page.headers.get("x-frame-options")).toBe("DENY");
     expect(page.headers.get("cache-control")).toBe("no-store");
