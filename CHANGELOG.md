@@ -10,6 +10,11 @@ Each version says what was and was not run live. "Run live" means run on a real 
 
 - FreeDuet advertises nobody (D51): the bar that offered help self-hosting is off by default for FreeDuet's package, and onboarding no longer shows the slide that sent the person to another company's products and sales contact. The credit to the upstream authors is unchanged, and `OPENBOT_SELF_HOST_BANNER=true` brings the upstream behaviour back. Tested; not yet run live.
 
+### Fixed
+
+- A member can read what is in Spam and in the Bin: a Gmail search that says `in:spam` or `in:trash` reads that folder, read-only, on both ways of connecting Gmail, and an account with no Spam or Bin folder gets a plain sentence instead of an empty list. Before, the search never reached them, so after Otto moved mail to Spam, Iris searched, found nothing and the person read it as lost mail. Default searches are unchanged. Built and tested against fake servers; not run on a real mailbox (D53).
+- With no calendar connected, members no longer get a calendar tool to call (four calls failed in one morning): the tool is left out of the run, and the member is told once that no calendar is connected and that one is added on the Connections page. With a calendar connected nothing changes. Built and tested; not yet run live (D53).
+
 ### Added
 
 - On a computer the app uses the whole screen (D55, preview, not merged): from 1280 px your team is a column on the left with a mascot face and a short state for each of the twelve members, from 1024 px it folds to faces, and below 1024 px nothing changes. A card that waits on you is pinned at the top of its conversation (the same card as in Tasks), with a coral edge while it waits, large, with the answers side by side. The mascot faces of the home page are now in the app, from the same file. Built and tested in CI; run in a real browser against a local stack in the sandbox; not run live on the maintainer's installation.

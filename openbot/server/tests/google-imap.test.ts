@@ -661,7 +661,10 @@ describe("(e) the mailbox is only ever read", () => {
     expect(source).toMatch(
       /mailboxOpen\(allMailPath\(folders\), \{ readOnly: true \}\)/,
     );
-    expect(source.match(/mailboxOpen\(/g)?.length).toBe(2);
+    // Two more opens read Spam or the Bin for a search that names one (D53): the folder is the one
+    // the server flagged, and the literal is the same, so no open in this module is for writing.
+    expect(source).toMatch(/mailboxOpen\(path, \{ readOnly: true \}\)/);
+    expect(source.match(/mailboxOpen\(/g)?.length).toBe(3);
   });
 });
 

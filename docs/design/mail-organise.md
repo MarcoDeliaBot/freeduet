@@ -344,3 +344,22 @@ Decided by the maintainer on 15 November 2026, after the Bin: "Spam is no longer
 | `evals/team/cases.yaml`, `fixtures/live/email-spam-everything.txt`, `run.test.ts`, `README.md`; `docs/M0_DEMO.md`, `docs/COMPARISON.md`, `README.md` | `otto-14`, `otto-15` (safety); 82 to 84 cases and 37 to 38 safety |
 
 **Not verified.** Nothing ran on a real mailbox. [verify] That Gmail's IMAP removes a message from All Mail when it is copied into `[Gmail]/Spam`, as it does for the Trash: the after-check turns a wrong premise into a "not confirmed" answer and not a false "moved". [verify] That the reviewer model reads the fixed line the way the tests' stand-in does. Otto's new sentences and the cases `otto-14` and `otto-15` were not run live.
+
+## 12. Reading Spam and the Bin (D53)
+
+Found on a real installation on 16 November 2026. Otto moved four messages to Spam, then Iris searched the mailbox to confirm and said "when I search in Spam I find nothing", which read like lost mail. The search had never been able to see Spam: over an app password it opens All Mail, which holds neither Spam nor the Bin, and over OAuth the Gmail list leaves them out unless `includeSpamTrash` is set. A fix, not a new tool.
+
+**What the person gets.** `gmail_search_messages` reads Spam or the Bin when the query says so: `in:spam`, `in:trash` (or `label:spam`, `label:trash`), alone or with other terms (`in:spam from:ana@example.com`). It returns what a search returns today (sender, subject, date, snippet, labels, same counts and sizes) and nothing more; it is a read on both connections' read lists (D33). A search that does not say so is exactly as before: Spam and the Bin are left out.
+
+**How each connection does it.** [code: `google-workspace-rest.ts`, `hiddenFoldersNamed`; `google-imap.ts`, `openForSearch`]
+- REST: `includeSpamTrash=true` on the list call, only when the query names Spam or the Bin.
+- IMAP: the folder the server flagged `\Junk` (Spam) or `\Trash` (Bin), never found by a name, opened read-only; the words that named it are taken out of the query and the rest narrows the search inside it (no rest: every message in the folder, newest first, up to the same limit). An account that reports no such folder gets "Gmail did not report a Spam (Junk) folder for this account, so there is nothing to search there. This does not mean any mail was lost." (the Bin likewise), and no mailbox is opened. Naming both in one search asks for one at a time. The category lookup of a normal search is skipped inside these folders.
+
+**Limits.** `gmail_read_message` over an app password still reads from All Mail, so a message found in Spam or the Bin is shown by its search result (snippet) and cannot be opened whole there. Moving, labelling and rules are unchanged, and no approval rule changed.
+
+**Built so far.** Tests: `server/tests/mail-search-hidden-folders.test.ts` (13: a message moved to Spam is found by the explicit search and not by the default one; the same for the Bin; no Spam folder gives the plain sentence; both-named; read-only opens only; REST sends `includeSpamTrash` only when asked; the tool is still `read`). Not verified: a real Gmail. [verify] That Gmail's IMAP answers `X-GM-RAW` inside the `\Junk` folder as it does in All Mail, and that the `\Junk` folder is where the Spam move's `COPY` lands.
+
+### The calendar, when none is connected (D53)
+
+With no calendar address pasted, `calendar_list_events` of the app-password connection could only fail ("No calendar was connected..."); members called it four times in one morning. It is now not offered: `grantedTools` leaves it out for a person whose connection holds no calendar address (`calendarConnectedFor`, `plugins/tools.ts`), so a member cannot call it. A person not connected at all, or a connection that keeps no pasted secret (OAuth), is offered the tool as before. agent-freeduet adds one note to a run that holds the app-password mailbox tools and no calendar tool (`tool_notes.py`, `calendar_notes_for`): no calendar is connected, and it is added on the Connections page. The tool's own failure answer stays as the second line of defence. Tests: `mail-search-hidden-folders.test.ts` (4) and `agent-freeduet/tests/test_calendar_note.py` (3). Not run live.
+

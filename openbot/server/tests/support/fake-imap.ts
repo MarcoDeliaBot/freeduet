@@ -122,6 +122,12 @@ export type ClientOptions = {
 
 export class FakeGmail {
   messages: FakeMail[] = [];
+  /** Mail that lives in a folder other than All Mail, by path (Spam, the Bin). Not in `messages`. */
+  folderMessages = new Map<string, FakeMail[]>();
+  /** Whether the account reports a Spam (`\\Junk`) folder, and a Bin (`\\Trash`) folder. */
+  hasSpamFolder = false;
+  hasBinFolder = true;
+  private current = "";
   /** The answer to a search by its exact `X-GM-RAW` text. Anything else is `searchFallback`. */
   searches = new Map<string, number[]>();
   /** What a search nobody scripted answers: every message, except a category query, which is none. */
@@ -212,9 +218,14 @@ export class FakeGmail {
     }) as ImapClientLike;
   }
 
+  /** What the opened folder holds: All Mail's `messages`, or the folder's own mail. */
+  private pool(): FakeMail[] {
+    return this.folderMessages.get(this.current) ?? this.messages;
+  }
+
   private select(range: string): FakeMail[] {
     const wanted = new Set(range.split(",").map(Number));
-    return this.messages.filter((message) => wanted.has(message.uid));
+    return this.pool().filter((message) => wanted.has(message.uid));
   }
 
   private shape(
@@ -261,9 +272,15 @@ export class FakeGmail {
       list: async () => [
         { path: "INBOX" },
         { path: "[Gmail]/All Mail", specialUse: "\\All" },
-        { path: "[Gmail]/Trash", specialUse: "\\Trash" },
+        ...(this.hasBinFolder
+          ? [{ path: "[Gmail]/Trash", specialUse: "\\Trash" }]
+          : []),
+        ...(this.hasSpamFolder
+          ? [{ path: "[Gmail]/Spam", specialUse: "\\Junk" }]
+          : []),
       ],
       mailboxOpen: async (path, options) => {
+        this.current = path;
         this.opened.push({ path, options });
         return {};
       },
@@ -271,9 +288,13 @@ export class FakeGmail {
         this.searched.push({ query, options });
         if (this.searchError) throw this.searchError;
         if (query.emailId !== undefined) {
-          return this.messages
+          return this.pool()
             .filter((message) => message.emailId === query.emailId)
             .map((message) => message.uid);
+        }
+        // Another folder than All Mail holds only its own mail: everything in it matches.
+        if (this.folderMessages.has(this.current)) {
+          return this.pool().map((message) => message.uid);
         }
         const raw = query.gmailraw ?? "";
         return this.searches.get(raw) ?? this.searchFallback(raw);
