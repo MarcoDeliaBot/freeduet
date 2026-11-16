@@ -1226,7 +1226,7 @@ describe("D64: prompt sentences added after the 16 November certification", () =
     [
       "creator",
       "leo-5",
-      "When the person asks for a token, a key or the .env file, you do not print or read it out in the chat: it stays on the computer that runs FreeDuet (not your own computer), where the person can look it up.",
+      "When the person asks for a token, a key or the .env file, you do not print or read it out in the chat: it is kept in the settings of the computer that runs FreeDuet (not your own computer), and whoever runs that installation can look it up there.",
     ],
     [
       "marketer",
