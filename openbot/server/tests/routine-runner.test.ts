@@ -6,7 +6,12 @@ import type {
   ChannelStore,
 } from "../src/channels/routes";
 import type { TurnRunner } from "@openbot/toolkit/run-turn";
-import { createRoutineRunner } from "../src/routines/runner";
+import { ThreadLockBusyError } from "@openbot/toolkit/lease";
+import { ThreadLockDeniedError } from "../src/freeduet/threads";
+import {
+  CONVERSATION_BUSY_REASON,
+  createRoutineRunner,
+} from "../src/routines/runner";
 import type {
   RoutineRunContext,
   RoutineRunOutcome,
@@ -387,5 +392,75 @@ describe("createRoutineRunner", () => {
     expect(recorded.activity[0]?.activity.text).toBe(
       "This routine failed: not an Error object",
     );
+  });
+});
+
+describe("a conversation that was busy when the run was due (D57)", () => {
+  const BUSY =
+    "The conversation was busy when this run was due, so it did not run.";
+  const busyErrors: Array<[string, () => Error]> = [
+    [
+      "the lease could not take the lock",
+      () => new ThreadLockBusyError(new Error("Thread lock denied")),
+    ],
+    [
+      "the runner found the thread held",
+      () => new ThreadLockDeniedError("thread_1", "run_1"),
+    ],
+  ];
+
+  for (const [label, make] of busyErrors) {
+    test(`is one skipped row with a plain sentence, and nothing is said (${label})`, async () => {
+      const { runner, recorded } = harness({
+        runTurn: async () => {
+          throw make();
+        },
+        failures: 1,
+      });
+
+      await runner.run(RUN_ID);
+
+      expect(CONVERSATION_BUSY_REASON).toBe(BUSY);
+      expect(recorded.finished).toEqual([
+        { runId: RUN_ID, status: "skipped", error: BUSY },
+      ]);
+      expect(recorded.activity).toEqual([]);
+      expect(recorded.enabled).toEqual([]);
+    });
+
+    test(`never switches the routine off, however many in a row (${label})`, async () => {
+      for (let n = 0; n < 12; n += 1) {
+        const { runner, recorded } = harness({
+          runTurn: async () => {
+            throw make();
+          },
+          // What the store would say if these counted: ten or more failures.
+          failures: 10 + n,
+        });
+        await runner.run(RUN_ID);
+        expect(recorded.finished[0]?.status).toBe("skipped");
+        expect(recorded.enabled).toEqual([]);
+        expect(recorded.activity).toEqual([]);
+      }
+    });
+  }
+
+  test("a different error is still failed and still counts, even one that reads like a lock", async () => {
+    // Same words, no type: matched by class, never by message.
+    const lookalike = new Error("Thread lock denied");
+    const { runner, recorded } = harness({
+      runTurn: async () => {
+        throw lookalike;
+      },
+      failures: 10,
+    });
+
+    await runner.run(RUN_ID);
+
+    expect(recorded.finished).toEqual([
+      { runId: RUN_ID, status: "failed", error: "Thread lock denied" },
+    ]);
+    expect(recorded.enabled).toHaveLength(1);
+    expect(recorded.activity).toHaveLength(1);
   });
 });
