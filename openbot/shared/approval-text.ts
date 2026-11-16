@@ -261,7 +261,8 @@ export function approvalText(
   return fill(pick(EN[id], "en", values), values);
 }
 
-const escapeRegExp = (text: string) => text.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+const escapeRegExp = (text: string) =>
+  text.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
 const REASON_PATTERNS = (Object.keys(EN) as ApprovalTextId[])
   .filter((id) => id.startsWith("reason.") && typeof EN[id] === "string")
