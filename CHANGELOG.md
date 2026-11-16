@@ -6,10 +6,49 @@ Each version says what was and was not run live. "Run live" means run on a real 
 
 ## [Unreleased]
 
+## [0.2.2] - 2026-11-16
+
+Not yet published: the tag `v0.2.2` does not exist yet. The maintainer publishes it, and the release commit is set when the tag is made.
+
 ### Added
 
-- Release provenance: a workflow that builds a source archive of a tagged release, a SHA-256 file and a signed build-provenance attestation, and uploads them to the release ([docs/VERIFY.md](docs/VERIFY.md)). Not yet run on a release.
-- [docs/VERIFY.md](docs/VERIFY.md) (how to check the project yourself), [docs/THREAT_MODEL.md](docs/THREAT_MODEL.md) and this changelog.
+- Standing mail rules: Otto makes a rule from the person's own typed order, and FreeDuet applies it to new mail every few minutes. A rule can label, archive, mark read, move to Spam or move to the Bin; it never forwards, replies, sends or deletes for good. The person sees the rules under Connections and can disable or delete one. The rules come with two new database migrations (0073 and 0074), and the update script copies the database before it changes anything (#274, D46).
+- Iris passes a "from now on" mail request to Otto, who keeps it as a standing rule (#279).
+- A notice above the message box when the browser is not paired with the computer. Members and Iris are told in that turn why a card appears (#278, D47).
+- Release provenance: a workflow that builds a source archive of a tagged release, a SHA-256 file and a signed build-provenance attestation, and uploads them to the release ([docs/VERIFY.md](docs/VERIFY.md)). Not yet run on a release (#270).
+- [docs/VERIFY.md](docs/VERIFY.md) (how to check the project yourself), [docs/THREAT_MODEL.md](docs/THREAT_MODEL.md) and this changelog (#270).
+
+### Changed
+
+- Documents: the README, the roadmap and the comparison brought to the status after v0.2.1 (#273); stale facts after v0.2.1 corrected and broken links fixed in five documents (#275); broken relative links fixed in the mail-organisation design note (#276).
+- Dependency updates: `pytest` in the twelve agent test requirement files, and `zip` in the desktop app (#272); `happy-dom` in the app tests moved to 21.0.4, with its Web Animations methods hidden there (#277).
+
+### Fixed
+
+- A card allowed inside a hand-off runs, and the member's answer comes back to the Bot that asked. A repeated hand-off for the same action gets no second card (#279, D48).
+- A card opened in a relay turn is not relayed a second time (#279).
+
+### Security
+
+- Standing mail rules are never lifted by Full access or by a saved "Always allow", and creating one is judged by the reviewer on the person's own typed words (#274).
+- Dependency alerts: #272 closed 15 and #277 closed 1. Seven alerts remain open on 16 November 2026: six in the phone app's lockfile and one in the desktop app's `Cargo.lock` (see the Trust table in [docs/ROADMAP.md](docs/ROADMAP.md)).
+
+### What was run live
+
+Run live on one real installation (the maintainer's), 16 November 2026:
+
+- a standing mail rule for one sender domain, created from the person's typed order with no card, applied to the mail already there, then applied by itself to new mail at the next pass (#274);
+- Iris handing a "from now on" mail request to Otto (#279);
+- the notice for a browser that is not paired, seen on a phone (#278).
+
+### Not run live
+
+- The card allowed inside a hand-off (#279).
+- The sentences that tell the members why a card appears (#278), not yet observed with a model.
+- Rules other than the one above, and the eval cases otto-16 and otto-17 for mail rules (#274).
+- Carried over from v0.2.1, still not run live: moving mail to the Bin on a real mailbox, the routine card, "done when", the Undo line, the mailbox button, "Check again", the installers on a clean machine, macOS.
+- Release provenance (#270): not yet run on a release.
+- No team-eval run is recorded for this version.
 
 ## [0.2.1] - 2026-11-15
 
@@ -110,7 +149,8 @@ The first public version. The release was published on 14 November 2026 (the not
 
 The team evals, on 13 November 2026: 43 of 43 scored cases passed (2 skipped), every member at 100% of its cases, the safety cases 45 runs out of 45, after a first full run of that night had failed on one member (a browser fault, then a turn that ended in silence; fixed in #92 and #93). The public report is [evals/team/reports/2026-11-13-claude-code-regraded-2026-11-13-public.md](evals/team/reports/2026-11-13-claude-code-regraded-2026-11-13-public.md). Two cases were graded again from saved answers, in code instead of by the grader model, and the report says so. The clean start was run by CI on Linux; whether the maintainer ran the rest of the stack on a real installation is not stated in the v0.1 release notes.
 
-[Unreleased]: https://github.com/MarcoDeliaBot/freeduet/compare/v0.2.1...HEAD
+[Unreleased]: https://github.com/MarcoDeliaBot/freeduet/compare/v0.2.2...HEAD
+[0.2.2]: https://github.com/MarcoDeliaBot/freeduet/compare/v0.2.1...v0.2.2
 [0.2.1]: https://github.com/MarcoDeliaBot/freeduet/compare/v0.2...v0.2.1
 [0.2]: https://github.com/MarcoDeliaBot/freeduet/compare/v0.1...v0.2
 [0.1]: https://github.com/MarcoDeliaBot/freeduet/releases/tag/v0.1
