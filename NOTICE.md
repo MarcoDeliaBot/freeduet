@@ -11,6 +11,7 @@
 | [AI Continuity](https://github.com/MarcoDeliaBot/ai-continuity) | MIT, © 2026 Marco D'Elia | The checkpoint writer behind members' work reports and the handoff between engines (F14, F24), ported into `openbot/agent-freeduet/freeduet/checkpoints.py` with its MIT notice, the original files named and the changes listed. |
 | [Humanizer](https://github.com/blader/humanizer) 4.0.0 | MIT, © 2025 Siqi Chen | Wren's `humanizer` skill: the body of the upstream `SKILL.md` (commit b48c832), copied unchanged into `openbot/examples/freeduet/skills.yaml`. |
 | [Marketing Skills](https://github.com/coreyhaines31/marketingskills) | MIT, © 2025 Corey Haines | Mark's 53 marketing skills, granted to him only: the body of each upstream `skills/<name>/SKILL.md` (commit 1f83744, 2026-11-11), copied unchanged into `openbot/examples/freeduet/skills.yaml`, with `tools: []`. The upstream `references/`, `evals/`, `assets/`, `tools/` and `scripts/` folders are not carried; Mark's prompt says so. |
+| [Impeccable](https://github.com/pbakaus/impeccable) | Apache-2.0, © 2025 Paul Bakaus | Mark's `design-craft-floor` skill: the body of one upstream reference file, `skill/reference/craft-floor.md` (commit d41d986), copied unchanged into `openbot/examples/freeduet/skills.yaml`, with `tools: []`, granted to him only. Its scripts, hooks, engine and other files are not carried. The Apache-2.0 licence text is in `openbot/agent-freeduet/LICENSE-APACHE-2.0`, the copy this repository keeps. |
 
 ## Libraries added to the server for Gmail and Calendar with an app password (D24)
 

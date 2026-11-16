@@ -12,6 +12,7 @@
  * FREEDUET_MEMBER_TYPE=built-in makes the same members built-in Bots. Both are checked.
  */
 import { describe, expect, test } from "bun:test";
+import { createHash } from "node:crypto";
 import { readFile } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
 import { parse } from "yaml";
@@ -480,6 +481,15 @@ describe("Iris's text from a newsletter and Jules's home network", () => {
   });
 });
 
+/**
+ * Mark's second skill, the design craft check: one upstream reference file, copied unchanged (NOTICE.md
+ * has the source). The instruction is that file without its final newline, so its length and SHA-256
+ * pin the exact text; a change to the text has to change both numbers here.
+ */
+const CRAFT_CHECK_BYTES = 7165;
+const CRAFT_CHECK_SHA256 =
+  "d2a640455da70b2b5479d3e82e0fca3a3eaf3b855265b321a60131df4012f04f";
+
 describe("Mark, the marketer", () => {
   async function mark() {
     const rows = await memberRows();
@@ -586,9 +596,11 @@ describe("Mark, the marketer", () => {
       (agent) => agent.id === "marketer",
     );
     // research-public-web is the one skill of the starter team he shares, for rivals' pages and sites to review.
+    // design-craft-floor is his one skill that is not a marketing skill: its own file, see NOTICE.md.
     expect(marketer?.skills).toEqual([
       "research-public-web",
       ...MARKETING_SKILLS,
+      "design-craft-floor",
     ]);
     const taken = new Set<string>(MARKETING_SKILLS);
     for (const agent of tenantPackage.agents.filter(
@@ -613,6 +625,33 @@ describe("Mark, the marketer", () => {
     expect(row).toContain("MIT");
     expect(row).toContain("Corey Haines");
     expect(row).toContain("1f83744");
+  });
+
+  test("the design craft check is one upstream file, unchanged, with no tools, and only Mark holds it", async () => {
+    const tenantPackage = await loadWith(MODES.remote);
+    const skill = tenantPackage.skills.find(
+      (candidate) => candidate.slug === "design-craft-floor",
+    );
+    const instructions = skill?.instructions ?? "";
+    const summary = skill?.summary ?? "";
+    expect({
+      shipped: skill !== undefined,
+      bytes: Buffer.byteLength(instructions, "utf8"),
+      sha256: createHash("sha256").update(instructions).digest("hex"),
+      tools: skill?.tools,
+      oneLine:
+        summary.length > 0 && summary.length <= 112 && !summary.includes("\n"),
+    }).toEqual({
+      shipped: true,
+      bytes: CRAFT_CHECK_BYTES,
+      sha256: CRAFT_CHECK_SHA256,
+      tools: [],
+      oneLine: true,
+    });
+    const holders = tenantPackage.agents
+      .filter((agent) => agent.skills.includes("design-craft-floor"))
+      .map((agent) => agent.id);
+    expect(holders).toEqual(["marketer"]);
   });
 });
 

@@ -1267,6 +1267,7 @@ agents:
       - sms
       - social
       - video
+      - design-craft-floor
 
   - id: video
     name: Cam
