@@ -90,6 +90,7 @@ function registeredRoutes(): Route[] {
     "lifecycle",
     "settingChanges",
     "engineChoices",
+    "pairings",
   ])
     coworker[key] = stub();
   coworker.responsibilities = {
@@ -213,6 +214,7 @@ describe("what a remote session may reach", () => {
         "GET /api/auth/error",
         "GET /api/auth/ok",
         "GET /api/pair",
+        "POST /api/pairings/redeem",
         "GET /api/me",
         "POST /api/me/onboarding",
         "GET /api/channels",

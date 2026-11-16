@@ -461,6 +461,8 @@ export const IDENTITY: readonly NoteEntry[] = [
   note("scim_subjects", "user_id", "a provisioned subject"),
   note("scim_projection_grants", "user_id", "a provisioned grant"),
   note("scim_identity_tombstones", "user_id", "a provisioned tombstone"),
+  // D49: a browser paired with the computer, with sign-in only. The single-user person has none.
+  note("browser_pairings", "user_id", "a browser paired with the computer"),
 ];
 
 /** Names that look like a person and are not one. */

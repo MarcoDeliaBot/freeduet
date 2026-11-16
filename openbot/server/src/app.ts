@@ -42,7 +42,13 @@ import {
   personRule,
   signInGate,
 } from "./auth/install-secret";
-import { createRemoteLimits, isRemote } from "./auth/remote-limits";
+import { createBrowserPairingRoutes } from "./auth/browser-pairing-routes";
+import type { BrowserPairings } from "./auth/browser-pairings";
+import {
+  createLegacyCookieUpgrade,
+  createRemoteLimits,
+  isRemote,
+} from "./auth/remote-limits";
 import {
   type AppVariables,
   type AuthService,
@@ -444,6 +450,8 @@ export function createApp(
       >;
       webhooks: Parameters<typeof createDeliveryWebhookRoutes>[0];
     };
+    /** Where browsers' pairings with this computer are kept (D49). With sign-in and a secret only. */
+    pairings?: BrowserPairings;
     memory?: { store: MemoryStore; ingestion: MemoryIngestion };
     proactive?: { store: ProactiveStore; engine: ProactiveEngine };
     responsibilities?: {
@@ -509,8 +517,11 @@ export function createApp(
    * lists (docs/design/phone-and-remote.md 3.5). Without sign-in or without a secret it is not mounted, and
    * single-user mode is as it was.
    */
-  const pairingGate = signInGate(config);
+  const pairingGate = signInGate(config, coworker?.pairings);
   if (pairingGate && auth) {
+    // D49: a browser that still holds the old cookie (the secret) is paired once, in its own right, before
+    // the limits look at it. Removed with the old cookie (docs/M1_PLAN.md D49).
+    app.use("*", createLegacyCookieUpgrade(pairingGate, auth));
     app.use("*", createRemoteLimits(pairingGate, auth));
   }
   mountDesktopConnectionFailure(app, desktopHostToken);
@@ -539,17 +550,28 @@ export function createApp(
     // With sign-in the same two doors pair a browser (docs/design/phone-and-remote.md 3.5): the cookie
     // marks a browser at this computer, and the door that sets it asks for a signed-in administrator
     // on top of the link. Only where there is a secret and a session guard to ask.
-    const gate = signInGate(config);
+    const gate = pairingGate;
     if (gate && auth && roleRepository) {
       app.route(
         "/",
         createInstallPairingRoutes(gate, {
           signIn: {
             requireUser: createRequireUser(auth, roleRepository),
-            secure: config.appUrl?.startsWith("https://") ?? false,
             ...(config.appUrl ? { appUrl: config.appUrl } : {}),
+            pairings: gate.pairings,
           },
         }),
+      );
+      // D49: pairing a phone or another browser from the browser at the computer.
+      app.route(
+        "/api/pairings",
+        createBrowserPairingRoutes(
+          gate,
+          createRequireUser(auth, roleRepository),
+          {
+            ...(config.appUrl ? { appUrl: config.appUrl } : {}),
+          },
+        ),
       );
     }
   }
@@ -749,8 +771,8 @@ export function createApp(
         managedAgent: config.managedAgent,
       }),
       coworker?.engineChoices,
-      // With sign-in and a secret, "at the computer" also asks for the pairing cookie (at-the-computer.ts).
-      signInGate(config),
+      // With sign-in and a secret, "at the computer" also asks for a live pairing of this person (at-the-computer.ts).
+      pairingGate,
     ),
   );
   // The import preview (docs/design/import-from-other-tools.md, slice 2): signed in, the person's own facts, nothing saved.
@@ -810,7 +832,11 @@ export function createApp(
        * session is refused (the voice chats, the microphone, the call) instead of asking and showing the refusal. With
        * no gate nothing is remote, so the answer is false.
        */
-      remote: isRemote(pairingGate, context.req.raw),
+      remote: await isRemote(
+        pairingGate,
+        context.req.raw,
+        context.var.actor.id,
+      ),
     }),
   );
   app.post("/api/me/onboarding", requireUser, async (context) => {

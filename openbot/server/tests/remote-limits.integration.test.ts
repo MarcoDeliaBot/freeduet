@@ -33,12 +33,7 @@ import { users } from "../src/db/schema/core";
 import { startHttpServer } from "../src/http-server";
 import { TEST_POOL, testDatabaseUrl } from "./support/database";
 import { LOOPBACK_PEER } from "./support/loopback-peer";
-import {
-  assembleSignIn,
-  pairedCookie,
-  peerAt,
-  signInConfig,
-} from "./support/signin-app";
+import { assembleSignIn, peerAt, signInConfig } from "./support/signin-app";
 
 const database = createDatabase(testDatabaseUrl(), TEST_POOL);
 const run = randomUUID().slice(0, 8);
@@ -171,6 +166,9 @@ type Setup = {
   calls: ReturnType<typeof assembleSignIn>["calls"];
   auth: ReturnType<typeof createAuth>;
   sessions: { admin: string; alice: string };
+  /** The cookie of a browser paired as each person (D49): a token of that person's own, made by the service. */
+  pairs: { admin: string; alice: string };
+  pairings: ReturnType<typeof assembleSignIn>["pairings"];
 };
 
 /** A deployment: the real sign-in over the real database, and fakes behind the routes. */
@@ -182,7 +180,7 @@ async function deployment(withSecret = true): Promise<Setup> {
     async () => false,
     createAuditStore(database),
   );
-  const { app, calls } = assembleSignIn(
+  const { app, calls, pairings } = assembleSignIn(
     config,
     { 1: auth, 2: createRoleRepository(database) },
     { action: ORDINARY_REQUEST },
@@ -190,7 +188,29 @@ async function deployment(withSecret = true): Promise<Setup> {
   // The first sign-in of an address in INITIAL_ADMIN_EMAILS makes the administrator.
   const admin = await signIn(auth, ADMIN);
   const alice = await signIn(auth, ALICE);
-  return { config, app, calls, auth, sessions: { admin, alice } };
+  // A pairing of each person's own, as a link at the computer would make it (D49).
+  const pair = async (cookie: string) => {
+    const session = await auth.api.getSession({
+      headers: new Headers({ cookie }),
+    });
+    if (!session) throw new Error("not signed in");
+    const made = await pairings.issue(
+      session.user.id,
+      "computer",
+      "Test",
+      "link",
+    );
+    return made.setCookie.split(";")[0] as string;
+  };
+  return {
+    config,
+    app,
+    calls,
+    auth,
+    sessions: { admin, alice },
+    pairings,
+    pairs: { admin: await pair(admin), alice: await pair(alice) },
+  };
 }
 
 type Ask = {
@@ -209,7 +229,7 @@ function asker(setup: Setup) {
     const who = options.who ?? "admin";
     const cookie = [
       who === "nobody" ? "" : setup.sessions[who],
-      options.paired ? pairedCookie(setup.config) : "",
+      options.paired ? setup.pairs[who === "nobody" ? "admin" : who] : "",
       options.cookie ?? "",
     ]
       .filter(Boolean)
@@ -707,6 +727,7 @@ describe("the live screen, which the server upgrades itself", () => {
       demonstrationStore: {} as never,
       demonstrationRecorder: {} as never,
       app: { fetch: (request, env) => setup.app.fetch(request, env) },
+      pairings: setup.pairings,
     });
     stop = server.stop;
   }, 60_000);
@@ -722,7 +743,7 @@ describe("the live screen, which the server upgrades itself", () => {
     expect(nobody.status).toBe(401);
     expect(nobody.body).toBe("Sign in first.");
     const cookieOnly = await send(port, path, {
-      cookie: pairedCookie(setup.config),
+      cookie: setup.pairs.admin,
     });
     expect(cookieOnly.status).toBe(401);
   });
@@ -748,9 +769,17 @@ describe("the live screen, which the server upgrades itself", () => {
 
   test("paired, it goes on to the next check, which is whose Bot it is", async () => {
     const paired = await send(port, path, {
-      cookie: `${setup.sessions.admin}; ${pairedCookie(setup.config)}`,
+      cookie: `${setup.sessions.admin}; ${setup.pairs.admin}`,
     });
     expect(paired.status).toBe(404);
     expect(paired.body).toBe("There is no such Bot.");
+  });
+
+  test("another person's pairing does not open it: the token is asked of the person the session names", async () => {
+    const other = await send(port, path, {
+      cookie: `${setup.sessions.admin}; ${setup.pairs.alice}`,
+    });
+    expect(other.status).toBe(403);
+    expect(other.body).toBe(REMOTE_SESSION_SENTENCE);
   });
 });

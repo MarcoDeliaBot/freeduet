@@ -44,6 +44,8 @@ import {
   PERSON_INITIATOR,
   REMOTE_INITIATOR,
 } from "../src/audit";
+import { pairCookieName } from "../src/auth/browser-pairings";
+import { signInGate } from "../src/auth/install-secret";
 import { isRemoteSession, remoteRunQuestion } from "../src/auth/remote-limits";
 import { createRequestAgents } from "../src/copilot";
 import {
@@ -55,6 +57,14 @@ import {
   recipientsTypedByPerson,
   recipientsTypedInHandedRequest,
 } from "../src/plugins/typed-recipients";
+
+import {
+  legacyCookie,
+  pairedCookie,
+  SECRET,
+  seedPairings,
+  signInConfig,
+} from "./support/signin-app";
 
 const ACTOR = { id: "user-7", role: "user" as const };
 const REMOTE: AuditInitiator = { kind: "remote" };
@@ -513,35 +523,47 @@ describe("the rule that asks a card of a remote session's write", () => {
   });
 });
 
-describe("the question the mark asks: the pairing cookie, and nothing else", () => {
-  const gate = { secret: "s".repeat(40), cookie: "freeduet_install_3001" };
+describe("the question the mark asks: the pairing of THIS person, and nothing else", () => {
+  const config = signInConfig();
+  const gate = signInGate(config, seedPairings(config).service) as NonNullable<
+    ReturnType<typeof signInGate>
+  >;
   const request = (cookie?: string) =>
     new Request("http://localhost:3001/api/copilotkit/agent/iris/run", {
       method: "POST",
       headers: cookie ? { cookie } : {},
     });
 
-  test("a browser without the cookie is remote, and one with it is not", async () => {
+  test("a browser without a live pairing is remote, and one with it is not", async () => {
     const ask = remoteRunQuestion(gate);
-    expect(await ask(request())).toBe(true);
-    expect(await ask(request("better-auth.session_token=abc"))).toBe(true);
-    expect(await ask(request(`${gate.cookie}=${gate.secret}`))).toBe(false);
+    expect(await ask(request(), "u-admin")).toBe(true);
+    expect(await ask(request("better-auth.session_token=abc"), "u-admin")).toBe(
+      true,
+    );
+    expect(await ask(request(pairedCookie(config)), "u-admin")).toBe(false);
     expect(
       await ask(
-        request(`other=1; ${gate.cookie}=${gate.secret}; better-auth=abc`),
+        request(`other=1; ${pairedCookie(config)}; better-auth=abc`),
+        "u-admin",
       ),
     ).toBe(false);
   });
 
-  test("a wrong cookie, or another installation's, is not the pairing", async () => {
+  test("a token of another person, a wrong one, or another installation's is not the pairing", async () => {
     const ask = remoteRunQuestion(gate);
     for (const cookie of [
-      `${gate.cookie}=${"t".repeat(40)}`,
-      `${gate.cookie}=`,
-      `freeduet_install_3002=${gate.secret}`,
-      `${gate.secret}`,
+      pairedCookie(config, "user"),
+      `${pairCookieName(config.port)}=${"t".repeat(43)}`,
+      `${pairCookieName(config.port)}=`,
+      pairedCookie(config).replace(`_${config.port}`, "_3002"),
+      // The old cookie, the secret itself, is not a pairing.
+      legacyCookie(config),
+      `${SECRET}`,
     ])
-      expect([cookie, await ask(request(cookie))]).toEqual([cookie, true]);
+      expect([cookie, await ask(request(cookie), "u-admin")]).toEqual([
+        cookie,
+        true,
+      ]);
   });
 
   test("a session that ended between the identification and the question does not make the run the person's own", async () => {
@@ -550,7 +572,8 @@ describe("the question the mark asks: the pairing cookie, and nothing else", () 
     // What the middleware's question says of it: nobody's, left to the route's own guard. Right for a
     // request that has not been identified; wrong for the one that was identified a moment ago.
     expect(await isRemoteSession(gate, ended as never, unpaired)).toBe(false);
-    // What the run's mark says: the browser is not paired, so the run is remote, whatever the store says.
-    expect(await remoteRunQuestion(gate)(unpaired)).toBe(true);
+    // What the run's mark says: the person was identified, the browser has no pairing of theirs, so the
+    // run is remote, whatever the session store says now.
+    expect(await remoteRunQuestion(gate)(unpaired, "u-admin")).toBe(true);
   });
 });
