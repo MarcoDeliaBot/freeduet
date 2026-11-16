@@ -14,6 +14,8 @@ Not yet published: the tag `v0.2.2` does not exist yet. The maintainer publishes
 
 - Standing mail rules: Otto makes a rule from the person's own typed order, and FreeDuet applies it to new mail every few minutes. A rule can label, archive, mark read, move to Spam or move to the Bin; it never forwards, replies, sends or deletes for good. The person sees the rules under Connections and can disable or delete one. The rules come with two new database migrations (0073 and 0074), and the update script copies the database before it changes anything (#274, D46).
 - Iris passes a "from now on" mail request to Otto, who keeps it as a standing rule (#279).
+- A token for each paired browser: each browser gets its own token, which the person can rename or revoke under Settings, instead of the one secret of the installation. A phone or another browser is paired from the computer with a one-time code, as a link or a QR code, valid for two minutes. The cookie of an older installation is accepted only from the computer itself, and no longer after 16 February 2027. One new database migration (0076). After the update, a browser that reached FreeDuet through a tunnel is paired again once with `bash scripts/open.sh` (#283, D49).
+- The messages of an approval card (title, what happens, reason) are shown in the person's language, in eleven languages; buttons and labels stay in English, and the server keeps and audits the English text (#281, D50).
 - A notice above the message box when the browser is not paired with the computer. Members and Iris are told in that turn why a card appears (#278, D47).
 - Release provenance: a workflow that builds a source archive of a tagged release, a SHA-256 file and a signed build-provenance attestation, and uploads them to the release ([docs/VERIFY.md](docs/VERIFY.md)). Not yet run on a release (#270).
 - [docs/VERIFY.md](docs/VERIFY.md) (how to check the project yourself), [docs/THREAT_MODEL.md](docs/THREAT_MODEL.md) and this changelog (#270).
@@ -27,6 +29,7 @@ Not yet published: the tag `v0.2.2` does not exist yet. The maintainer publishes
 
 - A card allowed inside a hand-off runs, and the member's answer comes back to the Bot that asked. A repeated hand-off for the same action gets no second card (#279, D48).
 - A card opened in a relay turn is not relayed a second time (#279).
+- The automatic reviewer stays on when the person first switches an approval preference: the first saved row left it off. One new database migration (0075) sets the default. An installation that already has such a row can check and repair it with `bun scripts/repair-auto-review.ts`, which changes nothing unless run with `--apply` (#282).
 
 ### Security
 
@@ -39,6 +42,8 @@ Run live on one real installation (the maintainer's), 16 November 2026:
 
 - a standing mail rule for one sender domain, created from the person's typed order with no card, applied to the mail already there, then applied by itself to new mail at the next pass (#274);
 - Iris handing a "from now on" mail request to Otto (#279);
+- the card messages shown in Italian on the Tasks page (#281);
+- the update to the per-browser token: the computer's browser paired again with the one-time link, and the list under Settings showing it (#283). Pairing a phone with the code has not been tried yet;
 - the notice for a browser that is not paired, seen on a phone (#278).
 
 ### Not run live
