@@ -49,7 +49,7 @@ Prices are as of November 2026, from CopilotKit's pricing page. Check the page b
 - **API credits are a safety net, not the engine.** The API credits included in Max, Ultra and Team can be switched on as the last step of a chain, for when every login is at its limit.
 - **Free routers on your own computer.** A router you run yourself that puts one address and one key in front of several free providers may be a later link in a chain (decision E3 in [ENGINES_PLAN.md](ENGINES_PLAN.md)), never the first and never on by default. Its models and their tool calling are not Claude's, so it is tier C and the quality floor applies. Free quotas change without notice, and the terms of the providers behind it are yours to respect. FreeDuet neither ships nor installs one.
 - **Quality floor for money.** Jules (purchases and bookings) refuses to reach a checkout on an engine below the quality tier set in `engines.yaml`, so a small local model can research but cannot buy.
-- **Hosted FreeDuet is a different product.** Running FreeDuet for other people, or paying for their usage, falls under each provider's commercial terms. Anthropic, for example, requires its Commercial Terms for products that run Claude Code, and forbids paying for, reselling or intermediating end users' usage.
+- **Hosted FreeDuet is a different product.** Running FreeDuet for other people, or paying for their usage, falls under each provider's commercial terms. Anthropic, for example, requires its Commercial Terms for products that run Claude Code, and forbids paying for, reselling or intermediating end users' usage. FreeDuet tells the two apart by the server setting `FREEDUET_DEPLOYMENT`: with `hosted`, the server never offers or accepts a Claude plan's sign-in path; unset means a person's own installation.
 
 ## Actions to take before launch
 
@@ -59,6 +59,7 @@ Prices are as of November 2026, from CopilotKit's pricing page. Check the page b
 | Ask Z.ai whether FreeDuet can be added to the supported-tools list | Maintainer | To do |
 | Ask Google, on the Gemini developer forum, whether driving the official CLI headless from a self-hosted orchestrator is allowed | Maintainer | To do |
 | Check xAI's terms for Grok CLI | Maintainer | To do |
+| Ask Anthropic, in writing, whether a third-party app may carry the one-time code from Claude's sign-in page to its own unmodified Claude Code binary running on the same person's computer (first-start design, decision D1). Until the answer, FreeDuet carries no code: the card shows the command and the person pastes the code in a terminal. A box on the card is built only behind a setting that is off by default | Maintainer | To do |
 | Re-read every source on this page and update the date | Release checklist | Every release |
 
 ## Sources
