@@ -5,7 +5,7 @@ Member: Mark, the marketer (`marketer`). Source: `Jakeschincariol/instagram-agen
 
 ## What the person sees
 
-Four new `/` chips in Mark's menu: `/ig-carousel`, `/ig-story`, `/ig-reply` and `/ig-dm`. Picking one puts its text in front of the run, as for `/landing-page-design`. Mark answers in text: the cover and slide copy of a carousel, a story sequence with the sticker of each frame, a reply for each kind of comment, or a direct message with its follow-ups. Nothing is posted, sent or uploaded: the skills hold no tool, and Mark holds none that posts or sends.
+Four new `/` chips in Mark's menu: `/ig-carousel`, `/ig-story`, `/ig-reply` and `/ig-dm`. Picking one puts its text in front of the run, as for `/landing-page-design`. Mark answers in text: the cover and slide copy of a carousel, a story sequence with the sticker of each frame, a reply for each kind of comment, or a direct message with its follow-ups. Nothing is posted, sent or uploaded by these skills, which each hold no tool (`tools: []`). Mark's entry in `openbot/examples/freeduet/agents.yaml` lists no tool. His prompt says he never posts or sends himself: that goes through a connected tool that the approval gate shows the person, and when none is connected he says so.
 
 ## Rules
 
