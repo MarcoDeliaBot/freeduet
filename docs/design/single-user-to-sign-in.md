@@ -39,7 +39,7 @@ All of it is still in the database, attached to `dev-local-user`, a person nobod
 ### 2.1 How a person is named
 
 - By `users.id`, a text column. For this person it is the literal `dev-local-user`. [code: server/src/auth/dev-actor.ts:30]
-- By a foreign key to `users.id` in 54 columns [proved: `server/tests/single-user-adoption-registry.test.ts` reads them from the live schema].
+- By a foreign key to `users.id` in 55 columns [proved: `server/tests/single-user-adoption-registry.test.ts` reads them from the live schema].
 - By a plain text column with no foreign key, such as `composio_connections.user_id` or `learning_thread_bindings.user_id`.
 - Inside `jsonb`: the payload of a work item (`actorId`, `ownerUserId`, a nested `question.actorId`) and the member list of a shared-use request.
 - In a derived key. Two exist:
@@ -64,7 +64,7 @@ Every column below, written as its table and its column joined by a dot, is a li
 | Family | Columns | Notes |
 |---|---|---|
 | The person's row | `users.preferences`, `users.groups`, `users.onboarding_step`, `users.onboarding_completed_at` | `preferences` holds the team mark, the Full access choices and the person's own settings. Special handler, section 6.3. |
-| Settings | `user_instructions.user_id`, `update_routing_preferences.owner_user_id`, `default_opt_outs.owner_user_id`, `proactive_settings.owner_user_id`, `push_devices.owner_user_id`, `voice_sessions.user_id` | |
+| Settings | `user_instructions.user_id`, `update_routing_preferences.owner_user_id`, `default_opt_outs.owner_user_id`, `proactive_settings.owner_user_id`, `push_devices.owner_user_id`, `voice_sessions.user_id`, `programs_helper_salts.user_id` | The programs helper's secret is made from the person's id and this salt, so on the new id the old secret stops verifying and the helper is paired again; the row moves because a cascading key is never left on the old person. |
 | Conversations | `channel_memberships.user_id`, `attachments.uploaded_by`, `group_bot_threads.owner_user_id`, `group_messages.owner_user_id`, `learning_thread_bindings.user_id`, `intelligence_channel_mappings.user_id` | The history of a conversation is in the next row. |
 | Conversation history, Intelligence off | `freeduet_threads.user_id`, `freeduet_thread_locks.user_id` | Tables made by the FreeDuet thread store, present only on that mode. [code: server/src/freeduet/threads/migrations/0000_freeduet_threads.sql] A thread owned by another user is refused on open, so without this the conversations move and cannot be opened. [code: server/src/freeduet/threads/store.ts] |
 | Memories | `personal_memories.owner_user_id`, `memory_sources.owner_user_id` | |

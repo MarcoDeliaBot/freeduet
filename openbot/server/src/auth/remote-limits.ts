@@ -321,7 +321,12 @@ export const LEDGER: readonly LedgerEntry[] = [
     "ALL /api/delivery/*",
   ),
   ...refused("secrets", "ALL /api/sign-in-requests/*", "ALL /api/passwords/*"),
-  ...refused("computers", "ALL /api/computers/*", "ALL /api/host-access/*"),
+  ...refused(
+    "computers",
+    "ALL /api/computers/*",
+    "ALL /api/host-access/*",
+    "ALL /api/programs/*",
+  ),
   ...refused(
     "automation",
     "ALL /api/routines/*",

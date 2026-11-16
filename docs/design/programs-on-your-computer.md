@@ -388,4 +388,31 @@ Each one stands on its own.
 
 ## Built so far
 
-Nothing. This is a design note only; no product code was written and no other file was changed. No decision number was taken in `docs/M1_PLAN.md`; the decisions above are open until the maintainer answers (section 10).
+Slice S1, the server core, on the branch `programs-s1-server-core`. Decisions Q1, Q2, Q3 and Q7 are recorded as D60 in `docs/M1_PLAN.md` (section 40). **Nothing ran on a real PC, and an independent security review is required before merge** (section 9 marks S1 "Yes").
+
+What exists (all under `openbot/server/`):
+
+| Piece | File | What it does |
+|---|---|---|
+| The wire | `src/programs/protocol.ts` | Four fixed actions as strict types with no command field; the signed text of a poll, an operation and a result (one field per line, so a helper in any language can build it); the strict reading of a helper's answer, cut at 500 rows and 120 characters a field |
+| The broker | `src/programs/broker.ts` | Queue, a 15 s "connected" lease, a 120 s expiry on every operation, leased once and never offered again, stop, "switched off" (the running one finishes, the queued one fails), one operation in flight per person; a poll or a result with a wrong mac, an old or future timestamp or a used nonce is refused; the secret is derived per person from the deployment key and returned by no route |
+| The tools | `src/programs/tools.ts` | `programs_list_installed` and `programs_list_updates`, offered only when the switch is on and only to `fixer`; order of checks: the person's own turn, the member, the switch, the card, the broker; one audit row per outcome |
+| The own-turn rule | `src/programs/own-turn.ts` | Reuses `settings-in-chat/own-turn.ts` and adds the voice mark; refuses before any card |
+| The switch | `src/programs/switch.ts` | `users.preferences.freeduetPrograms`, read strictly, off by default |
+| The routes | `src/programs/routes.ts` | `POST /api/programs/helper/poll` and `/helper/result` (signed, no session), `GET /api/programs`, `PUT /api/programs/switch` (the person's session, at the computer) |
+| The always-ask branch | `src/freeduet/always-ask.ts` (first lines of `alwaysAskReason`), `src/approvals/policy.ts` | Before the effect check and the `NOT_ACCOUNT_ACTIONS` line, so Full access (never asked when an always-ask reason exists, `approvals/service.ts`) cannot lift it |
+| The remote lines | `src/approvals/remote-answer.ts`, `src/auth/remote-limits.ts` | `^programs\/` in `NOT_FROM_HERE`; `/api/programs/*` in the `computers` family |
+
+Tests: `tests/programs-broker.test.ts` (schema, HMAC, lease, expiry, stop, switch off mid-operation, the secret), `tests/programs-gate.integration.test.ts` (the real gate and a database: Full access in both settings, a saved rule, every refusal before a card, the switch, the routes and "at the computer"), `tests/programs-remote.test.ts` (a remote session and the list), the support file `tests/support/programs-helper.ts` (a helper written from the wire format alone, importing nothing of the server's protocol), and `tests/remote-limits-ledger.test.ts` now mounts the programs routes.
+
+Departures from this note, and why:
+
+- **The two lists are given effect `write` at the gate** (the note says "reads that ask"). The gate's reads are never held to a card by design; `decideAction` also now keeps `alwaysAsk` for a programs tool whatever its effect, so a future read could not skip the card.
+- **The secret is derived from the deployment's own key and a per-person random salt,** not stored and not typed. The salt (table `programs_helper_salts`) is made when the switch goes from off to on and kept while it is off, so a result for an operation already running can still be answered. **S2 duty:** the pairing step must hand the helper the secret once, and must call `rotateSalt` when it pairs again. **`rotateSalt` must be wired to a route that only the person at the computer can call** (the same `atTheComputer` check as the switch, never a remote session, a member tool or a hand-off). **Restart window:** a restarted server refuses any poll or result stamped before its own start, so the helper's clock must be right and its first poll after a restart is made with a fresh timestamp.
+- **No `programs_` branch in the callback door** (`src/index.ts`): a call there has no approval context, so it could only refuse. It was removed rather than left as dead code.
+- **The reason on the card is English only** for now (a plain constant, not in the per-language catalogue): adding it there needs eleven translations and belongs with the Settings text of S5.
+- **A pending programs card is not denied when the switch goes off** (the note, 6.1): it fails closed, because the call, once allowed, finds the switch off and is refused. Denying the card in the inbox is left for S5, with the screen.
+- **No "find" operation yet:** the note lists five wire operations; this schema has the four actions of the table, and `find` comes with install (S4).
+- **No hourly cap** (threat row 9) and no deny-list of program classes (Q5): S3 and S4.
+
+Not verified: the helper side of the protocol (S2) beyond a stand-in written from the same format; any behaviour on a real PC; the prompts (none changed); the approved-action resume of a programs card in a running server (the dependency is wired and typed, and the card is proved to open, but no test presses Allow end to end); the callback door for `programs_*` (wired, no test).
