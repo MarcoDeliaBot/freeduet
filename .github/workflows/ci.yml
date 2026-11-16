@@ -7,6 +7,8 @@ on:
   # Callable, so publishing a release runs these same checks against the release commit rather than
   # trusting that they ran somewhere earlier.
   workflow_call:
+  # Run by hand from the Actions tab (the Windows installer job runs on it too).
+  workflow_dispatch:
 
 # Least privilege by default. Jobs that need more must declare it locally.
 permissions:
@@ -1061,13 +1063,272 @@ jobs:
           docker logs computer-ci || true
           exit 1
 
+  # install.ps1 (openbot/scripts/install.ps1, docs/design/installer.md, section 11) on a hosted Windows runner, as far as
+  # one lets it go. A hosted runner is a clean, disposable machine, but it is not a person's PC: its user is an
+  # administrator whose processes are already elevated (install.ps1 refuses that, by design), and it is itself a virtual
+  # machine, so WSL 2 may not be able to start. The job:
+  #   1. runs the Pester tests of install.ps1 (openbot/scripts/install.Tests.ps1), which had never run;
+  #   2. runs install.ps1 -Check and then -Yes as the runner's own (elevated) user, and again as a freshly created
+  #      standard local user, which is how a person runs it;
+  #   3. writes, for each run, how far it got and the exact line where it stopped, in the job summary, and uploads the
+  #      transcripts.
+  # A stop that install.ps1 itself explains (a block, a restart, the Ubuntu user step, a failed wsl command with its
+  # exit code) is a pass: it is the script doing what it says. An error it does not explain, a timeout, or a failed
+  # Pester test is a failure. The script is never weakened to get further, and the job uses no secret.
+  # The runner image is printed in the summary: `windows-latest` moves, so a result belongs to the image it names.
+  # What it cannot prove: a person's PC, the Windows restart, the Ubuntu user step, Docker, or the first start of
+  # FreeDuet (docs/design/installer.md, section 11).
+  #
+  # The same gate as installer-clean-machine: on main, on `workflow_dispatch`, and on pull requests labelled `full-ci`.
+  # `verify` requires it where it runs, and treats a skip as a pass on other pull requests.
+  installer-windows:
+    name: installer on a hosted Windows runner
+    runs-on: windows-latest
+    if: >-
+      github.event_name != 'pull_request' ||
+      contains(github.event.pull_request.labels.*.name, 'full-ci')
+    timeout-minutes: 45
+    defaults:
+      run:
+        working-directory: ${{ github.workspace }}
+        shell: powershell
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      # What this machine is, so every later line can be read against it.
+      - name: The runner
+        run: |
+          $ErrorActionPreference = 'Continue'
+          # The runner context cannot be used in a job-level env, so the folder is named here and passed on.
+          $env:OUT = Join-Path $env:RUNNER_TEMP 'installer-windows'
+          Add-Content -Path $env:GITHUB_ENV -Value "OUT=$env:OUT" -Encoding utf8
+          New-Item -ItemType Directory -Force -Path $env:OUT | Out-Null
+          function Add-Summary([string]$Text) { Add-Content -Path $env:GITHUB_STEP_SUMMARY -Value $Text -Encoding utf8 }
+          function Clean([string]$Text) { return ($Text -replace "`0", '').Trim() }
+          $os = Get-CimInstance Win32_OperatingSystem
+          $cs = Get-CimInstance Win32_ComputerSystem
+          $cpu = Get-CimInstance Win32_Processor | Select-Object -First 1
+          $identity = [System.Security.Principal.WindowsIdentity]::GetCurrent()
+          $elevated = ([System.Security.Principal.WindowsPrincipal]$identity).IsInRole([System.Security.Principal.WindowsBuiltInRole]::Administrator)
+          $wsl = Get-Command wsl.exe -ErrorAction SilentlyContinue
+          $wslStatus = 'wsl.exe not found'
+          $wslCode = ''
+          if ($null -ne $wsl) {
+            $wslStatus = Clean ((& wsl.exe --status 2>&1 | Out-String))
+            $wslCode = $LASTEXITCODE
+          }
+          $features = @()
+          foreach ($name in 'Microsoft-Windows-Subsystem-Linux', 'VirtualMachinePlatform') {
+            try { $features += "$name = $((Get-WindowsOptionalFeature -Online -FeatureName $name -ErrorAction Stop).State)" }
+            catch { $features += "$name = could not read ($($_.Exception.Message))" }
+          }
+          $facts = @(
+            "runner image (ImageOS / ImageVersion): $env:ImageOS / $env:ImageVersion",
+            "Windows: $($os.Caption), version $($os.Version), build $($os.BuildNumber)",
+            "user: $($identity.Name), elevated: $elevated",
+            "computer: $($cs.Manufacturer) $($cs.Model); HypervisorPresent: $($cs.HypervisorPresent); logical processors: $($cs.NumberOfLogicalProcessors); memory: $([math]::Round($cs.TotalPhysicalMemory / 1GB, 1)) GB",
+            "processor: $($cpu.Name); VirtualizationFirmwareEnabled: $($cpu.VirtualizationFirmwareEnabled)",
+            "wsl.exe: $(if ($null -ne $wsl) { $wsl.Source } else { 'not found' }); wsl --status exit code: $wslCode",
+            "optional features: $($features -join '; ')",
+            "PowerShell: $($PSVersionTable.PSVersion)"
+          )
+          $facts | Tee-Object -FilePath (Join-Path $env:OUT 'runner.txt')
+          Add-Content -Path (Join-Path $env:OUT 'runner.txt') -Value "`r`nwsl --status:`r`n$wslStatus"
+          Add-Summary '## install.ps1 on a hosted Windows runner'
+          Add-Summary ''
+          Add-Summary '### The runner'
+          Add-Summary ''
+          foreach ($line in $facts) { Add-Summary "- $line" }
+          Add-Summary ''
+          Add-Summary '```'
+          Add-Summary "wsl --status:"
+          Add-Summary $wslStatus
+          Add-Summary '```'
+      # Pester 5, in Windows PowerShell 5.1: the one install.ps1 is written for.
+      - name: Pester tests of install.ps1
+        run: |
+          $ErrorActionPreference = 'Continue'
+          function Add-Summary([string]$Text) { Add-Content -Path $env:GITHUB_STEP_SUMMARY -Value $Text -Encoding utf8 }
+          $have = Get-Module -ListAvailable -Name Pester | Sort-Object Version -Descending | Select-Object -First 1
+          if ($null -eq $have -or $have.Version -lt [version]'5.0.0') {
+            Install-PackageProvider -Name NuGet -MinimumVersion 2.8.5.201 -Force -Scope CurrentUser | Out-Null
+            Install-Module -Name Pester -RequiredVersion 5.7.1 -Force -Scope CurrentUser -SkipPublisherCheck
+          }
+          Import-Module Pester -MinimumVersion 5.0.0 -Force
+          $version = (Get-Module Pester).Version
+          Start-Transcript -Path (Join-Path $env:OUT 'pester.txt') | Out-Null
+          $config = New-PesterConfiguration
+          $config.Run.Path = (Join-Path $PWD 'openbot\scripts\install.Tests.ps1')
+          $config.Run.PassThru = $true
+          $config.Output.Verbosity = 'Detailed'
+          $config.TestResult.Enabled = $true
+          $config.TestResult.OutputPath = (Join-Path $env:OUT 'pester-results.xml')
+          $result = Invoke-Pester -Configuration $config
+          Stop-Transcript | Out-Null
+          $line = "Pester $version in Windows PowerShell $($PSVersionTable.PSVersion): total $($result.TotalCount), passed $($result.PassedCount), failed $($result.FailedCount), skipped $($result.SkippedCount), not run $($result.NotRunCount)"
+          Write-Host $line
+          Add-Summary ''
+          Add-Summary '### Pester tests (openbot/scripts/install.Tests.ps1)'
+          Add-Summary ''
+          Add-Summary $line
+          foreach ($test in @($result.Failed)) { Add-Summary "- FAILED: $($test.ExpandedPath): $($test.ErrorRecord.Exception.Message)" }
+          if ($result.FailedCount -gt 0 -or $result.TotalCount -eq 0 -or $result.Result -ne 'Passed') {
+            Write-Host "::error::The Pester tests of install.ps1 did not pass: $line"
+            exit 1
+          }
+      # install.ps1 itself. Four runs: -Check and -Yes, as the runner's elevated user and as a standard local user.
+      - name: install.ps1, check and real run
+        if: ${{ !cancelled() }}
+        run: |
+          $ErrorActionPreference = 'Continue'
+          function Add-Summary([string]$Text) { Add-Content -Path $env:GITHUB_STEP_SUMMARY -Value $Text -Encoding utf8 }
+          function Clean([string]$Text) { return ($Text -replace "`0", '') }
+          $script = Join-Path $PWD 'openbot\scripts\install.ps1'
+
+          # What install.ps1 said, in the script's own meanings of its exit status.
+          $meaning = @{
+            0 = 'done: nothing is missing on Windows (-Check), or install.sh inside Ubuntu finished'
+            1 = 'stopped, and said why'
+            2 = '-Check found something missing; nothing was changed'
+            3 = 'one step is left for the person (the Ubuntu user), or install.sh asked for a new login'
+            4 = 'Windows must be restarted first'
+          }
+          function Get-StopReason([string]$Text, [int]$Code) {
+            $lines = @(($Text -split "`r?`n") | ForEach-Object { $_.TrimEnd() })
+            $blocks = @($lines | Where-Object { $_ -match '^\s+- ' })
+            if ($blocks.Count -gt 0) { return ($blocks -join ' | ').Trim() }
+            $named = @($lines | Where-Object { $_ -match 'stopped with exit code|Could not run wsl|Stopped by an unexpected error|Windows is waiting for a restart|Restart Windows now|only you can do it|Not ready yet' })
+            if ($named.Count -gt 0) { return ($named -join ' | ').Trim() }
+            $last = @($lines | Where-Object { $_.Trim() -ne '' }) | Select-Object -Last 1
+            return "$last"
+          }
+          # A documented stop is the script doing what it says. Anything else is not explained, so it is a failure.
+          function Get-Verdict([string]$Text, $Code, [bool]$TimedOut) {
+            if ($TimedOut) { return 'FAIL: timed out' }
+            if ($null -eq $Code) { return 'FAIL: no exit code' }
+            if ($Text -match 'Stopped by an unexpected error') { return 'FAIL: unexpected error inside install.ps1' }
+            if ($Code -in 0, 2, 3, 4) { return 'PASS: documented outcome' }
+            if ($Code -eq 1 -and $Text -match 'Stopped before changing anything|stopped with exit code|Could not run wsl|Nothing was changed') { return 'PASS: documented stop' }
+            return 'FAIL: not an outcome install.ps1 documents'
+          }
+          function Save-Leg([string]$Name, [string]$Text) {
+            Set-Content -Path (Join-Path $env:OUT "$Name.txt") -Value $Text -Encoding utf8
+          }
+
+          $rows = New-Object System.Collections.ArrayList
+          function Add-Row([string]$Leg, $Code, [string]$Verdict, [string]$Reason, [string]$Text) {
+            $codeText = if ($null -eq $Code) { 'n/a' } else { "$Code" }
+            [void]$rows.Add([pscustomobject]@{ Leg = $Leg; Code = $codeText; Verdict = $Verdict; Reason = $Reason; Text = $Text })
+          }
+
+          # 1 and 2: the runner's own user (an administrator, already elevated).
+          foreach ($mode in @(@{ Name = '1-elevated-check'; Flags = @('-Check') }, @{ Name = '2-elevated-yes'; Flags = @('-Yes') })) {
+            Write-Host "::group::$($mode.Name)"
+            $text = Clean ((& powershell.exe -NoProfile -ExecutionPolicy Bypass -File $script @($mode.Flags) 2>&1 | Out-String))
+            $code = $LASTEXITCODE
+            Write-Host $text
+            Write-Host "exit code: $code"
+            Write-Host '::endgroup::'
+            Save-Leg $mode.Name ($text + "`r`nexit code: $code")
+            Add-Row "elevated: $($mode.Flags -join ' ')" $code (Get-Verdict $text $code $false) (Get-StopReason $text $code) $text
+          }
+
+          # 3 and 4: a standard local user, which is how a person runs it. Created here, removed with the machine.
+          $userName = 'fdinstall'
+          $notReached = $null
+          $cred = $null
+          try {
+            $alphabet = [char[]]'abcdefghijkmnpqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ23456789'
+            $password = (-join ($alphabet | Get-Random -Count 24)) + 'aA1!'
+            Write-Host "::add-mask::$password"
+            $secure = ConvertTo-SecureString $password -AsPlainText -Force
+            New-LocalUser -Name $userName -Password $secure -AccountNeverExpires -PasswordNeverExpires | Out-Null
+            Add-LocalGroupMember -Group 'Users' -Member $userName
+            $cred = New-Object System.Management.Automation.PSCredential -ArgumentList $userName, $secure
+            robocopy $env:GITHUB_WORKSPACE 'C:\fd-checkout' /E /XD .git node_modules /NFL /NDL /NJH /NJS /NP | Out-Null
+            if ($LASTEXITCODE -ge 8) { throw "robocopy of the checkout failed with $LASTEXITCODE" }
+            New-Item -ItemType Directory -Force -Path 'C:\fd-out' | Out-Null
+            icacls 'C:\fd-out' /grant "${userName}:(OI)(CI)M" | Out-Null
+            icacls 'C:\fd-checkout' /grant "${userName}:(OI)(CI)RX" | Out-Null
+          }
+          catch {
+            $notReached = "the standard user could not be set up on this runner: $($_.Exception.Message)"
+          }
+          foreach ($mode in @(@{ Name = '3-standard-user-check'; Flags = @('-Check') }, @{ Name = '4-standard-user-yes'; Flags = @('-Yes') })) {
+            $label = "standard user: $($mode.Flags -join ' ')"
+            if ($null -ne $notReached) { Add-Row $label $null 'NOT REACHED' $notReached ''; continue }
+            Write-Host "::group::$($mode.Name)"
+            $stdout = "C:\fd-out\$($mode.Name).out"
+            $stderr = "C:\fd-out\$($mode.Name).err"
+            $arguments = @('-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', 'C:\fd-checkout\openbot\scripts\install.ps1') + $mode.Flags
+            $timedOut = $false
+            $code = $null
+            try {
+              $process = Start-Process -FilePath 'powershell.exe' -ArgumentList $arguments -Credential $cred -LoadUserProfile -WorkingDirectory 'C:\fd-checkout' -WindowStyle Hidden -PassThru -RedirectStandardOutput $stdout -RedirectStandardError $stderr
+              $null = $process.Handle
+              if (-not $process.WaitForExit(480000)) {
+                $timedOut = $true
+                & taskkill.exe /T /F /PID $process.Id | Out-Null
+              }
+              else { $code = $process.ExitCode }
+            }
+            catch {
+              $notReached = "powershell.exe could not be started as the standard user: $($_.Exception.Message)"
+            }
+            if ($null -ne $notReached) { Write-Host $notReached; Write-Host '::endgroup::'; Add-Row $label $null 'NOT REACHED' $notReached ''; continue }
+            $text = ''
+            foreach ($file in $stdout, $stderr) { if (Test-Path $file) { $text += (Clean ((Get-Content -Raw -Path $file))) } }
+            Write-Host $text
+            Write-Host "exit code: $code"
+            Write-Host '::endgroup::'
+            Save-Leg $mode.Name ($text + "`r`nexit code: $code")
+            Add-Row $label $code (Get-Verdict $text $code $timedOut) (Get-StopReason $text $code) $text
+          }
+
+          # The summary: step by step, how far each run got and the line where it stopped.
+          Add-Summary ''
+          Add-Summary '### install.ps1, run by run'
+          Add-Summary ''
+          Add-Summary '| Run | Exit | Verdict | Where it stopped, in the script''s own words |'
+          Add-Summary '|---|---|---|---|'
+          foreach ($row in $rows) {
+            $reason = ($row.Reason -replace '\|', '/') -replace "`r?`n", ' '
+            if ($reason.Length -gt 600) { $reason = $reason.Substring(0, 600) + '...' }
+            $meant = ''
+            if ($row.Code -match '^\d+$' -and $meaning.ContainsKey([int]$row.Code)) { $meant = " ($($meaning[[int]$row.Code]))" }
+            Add-Summary "| $($row.Leg) | $($row.Code)$meant | $($row.Verdict) | $reason |"
+          }
+          foreach ($row in $rows) {
+            if ($row.Text -ne '') {
+              Add-Summary ''
+              Add-Summary "<details><summary>$($row.Leg): output</summary>"
+              Add-Summary ''
+              Add-Summary '```'
+              Add-Summary $row.Text
+              Add-Summary '```'
+              Add-Summary '</details>'
+            }
+          }
+          $failed = @($rows | Where-Object { $_.Verdict -like 'FAIL*' })
+          foreach ($row in $failed) { Write-Host "::error::$($row.Leg): $($row.Verdict)" }
+          if ($failed.Count -gt 0) { exit 1 }
+      - name: The transcripts
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: installer-windows-transcripts
+          path: ${{ runner.temp }}\installer-windows
+          retention-days: 14
+          if-no-files-found: warn
+
   # One check for branch protection to require. A new job above is covered by this without anybody
   # remembering to add it to a list, and a job that was skipped for the wrong reason is not a pass.
   verify:
     name: verify
     runs-on: ubuntu-latest
     if: always()
-    needs: [static, deployables, mobile, computer-browser, chart, test, startup, freeduet-package, agent-freeduet, python-harness, build, migrations, image, component-dockerfiles, clean-start, installer-clean-machine, desktop-crate]
+    needs: [static, deployables, mobile, computer-browser, chart, test, startup, freeduet-package, agent-freeduet, python-harness, build, migrations, image, component-dockerfiles, clean-start, installer-clean-machine, installer-windows, desktop-crate]
     # Nothing is checked out here, so the workflow's default `openbot` folder does not exist.
     defaults:
       run:

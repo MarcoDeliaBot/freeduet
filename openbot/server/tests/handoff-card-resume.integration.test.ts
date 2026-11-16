@@ -23,11 +23,12 @@ import type { AbstractAgent, BaseEvent } from "@ag-ui/client";
 import { HeadlessToolSuspension } from "@openbot/toolkit/headless-tools";
 import type { TurnRunner } from "@openbot/toolkit/run-turn";
 import { and, eq, like, sql } from "drizzle-orm";
+import { Hono } from "hono";
 import { Observable } from "rxjs";
 import {
   mintRunAssertion,
-  readApprovedRunAssertion,
   type RunAssertion,
+  readApprovedRunAssertion,
 } from "../src/agents/callback-token";
 import { HANDOFF_KIND } from "../src/agents/handoff";
 import { createHandoffDelivery } from "../src/agents/handoff-delivery";
@@ -40,6 +41,7 @@ import { signHandoffDeliveryRun } from "../src/agents/handoff-signing";
 import { serverTurnAdmission } from "../src/agents/turn-admission";
 import { createApprovedActionExecutor } from "../src/approvals/execute";
 import { createApprovalResumeTick } from "../src/approvals/resume-sweep";
+import { createApprovalRoutes } from "../src/approvals/routes";
 import { ALREADY_WAITING, isApprovalRecheck } from "../src/approvals/service";
 import { createApprovalStore } from "../src/approvals/store";
 import {
@@ -648,5 +650,154 @@ describe("the signed run that names the conversation", () => {
     expect(readApprovedRunAssertion("not-signed", KEY)).toBeNull();
     // `isApprovalRecheck` is imported for the executor's own probe; here it is simply not active.
     expect(isApprovalRecheck()).toBe(false);
+  });
+});
+
+/*
+ * D52: the card that waits inside a hand-off is shown in the conversation the person is writing in.
+ * The chat reads the SAME inbox the Tasks page reads (`GET /api/approvals`) and the app draws the pending
+ * requests whose `askedIn` is its own thread; it decides through the same route. These tests are the
+ * server half: what the inbox says, and that one decision, from either place, is the one decision.
+ */
+const OTHER = `cr-other-${suite}`;
+type InboxRow = {
+  id: string;
+  status: string;
+  action: { askedIn?: string; botId: string; toolCallId?: string };
+};
+
+/** The routes as the app calls them; `remote` is a signed-in browser that is not paired with the computer. */
+function routesFor(stack: ReturnType<typeof build>, remote: boolean) {
+  const app = new Hono();
+  app.route(
+    "/api/approvals",
+    createApprovalRoutes(
+      stack.service,
+      async (context, next) => {
+        context.set(
+          "actor" as never,
+          {
+            id: context.req.header("x-test-user") ?? "",
+            email: "x@example.test",
+            role: "user",
+          } as never,
+        );
+        await next();
+      },
+      {
+        pairings: { standing: async () => (remote ? null : { id: "p" }) },
+      } as never,
+    ),
+  );
+  const call = (user: string, path: string, body?: unknown) =>
+    app.request(`/api/approvals${path}`, {
+      method: body === undefined ? "GET" : "POST",
+      headers: { "x-test-user": user, "content-type": "application/json" },
+      ...(body === undefined ? {} : { body: JSON.stringify(body) }),
+    });
+  const inbox = async (user: string) =>
+    ((await (await call(user, "")).json()) as { requests: InboxRow[] })
+      .requests;
+  return { call, inbox };
+}
+
+async function freshHop() {
+  await clean();
+  await database
+    .insert(users)
+    .values({ id: PERSON, email: `${PERSON}@example.test` });
+  await database
+    .insert(users)
+    .values({ id: OTHER, email: `${OTHER}@example.test` })
+    .onConflictDoNothing();
+  const stack = build();
+  const key = await handOver();
+  await stack.hops.sweep();
+  const [card] = await cards();
+  return { stack, key, card: card as NonNullable<typeof card> };
+}
+
+describe("the card of a hand-off, shown in the conversation that asked (D52)", () => {
+  test("the person's inbox names the asking conversation, so the chat can draw the card under the hand-off", async () => {
+    const { stack, card } = await freshHop();
+    const rows = await routesFor(stack, false).inbox(PERSON);
+    const mine = rows.find((row) => row.id === card.id);
+    expect(mine?.status).toBe("pending");
+    expect(mine?.action.askedIn).toBe(ASK_THREAD);
+    expect(mine?.action.botId).toBe(OTTO);
+    // The call's own thread is the hop's scratch one; the chat's thread is the asking one.
+    expect(card.action.threadId).not.toBe(ASK_THREAD);
+  });
+
+  test("allowed once in the chat is allowed once in Tasks: it runs once, the answer comes home, and no card is left waiting", async () => {
+    const { stack, key, card } = await freshHop();
+    const api = routesFor(stack, false);
+    const answer = await api.call(PERSON, `/${card.id}/decision`, {
+      decision: "allow_once",
+    });
+    expect(answer.status).toBe(200);
+    await stack.sweep(card.id);
+
+    expect(stack.labels).toEqual(["GitHub"]);
+    const [home] = await relaysOf(`${key}:card:${card.id}`);
+    expect(JSON.stringify(home?.payload)).toContain(OTTO_DONE);
+    // Neither place has it waiting any more, and it is still the one card.
+    const rows = await api.inbox(PERSON);
+    expect(rows.filter((row) => row.status === "pending")).toHaveLength(0);
+    expect(rows).toHaveLength(1);
+    // The same decision again, from the other place, does nothing more.
+    await api.call(PERSON, `/${card.id}/decision`, { decision: "allow_once" });
+    await stack.sweep(card.id);
+    expect(stack.labels).toEqual(["GitHub"]);
+  });
+
+  test("decided in Tasks, the chat's list loses it: the same pending filter both read", async () => {
+    const { stack, card } = await freshHop();
+    const api = routesFor(stack, false);
+    const waitingIn = async () =>
+      (await api.inbox(PERSON)).filter(
+        (row) => row.status === "pending" && row.action.askedIn === ASK_THREAD,
+      );
+    expect((await waitingIn()).map((row) => row.id)).toEqual([card.id]);
+    await stack.service.decide(PERSON, card.id, "allow_once");
+    expect(await waitingIn()).toHaveLength(0);
+  });
+
+  test("another person does not see it, and cannot decide it", async () => {
+    const { stack, card } = await freshHop();
+    const api = routesFor(stack, false);
+    expect(await api.inbox(OTHER)).toEqual([]);
+    const refused = await api.call(OTHER, `/${card.id}/decision`, {
+      decision: "allow_once",
+    });
+    expect(refused.status).toBe(404);
+    expect((await cards())[0]?.status).toBe("pending");
+    expect(stack.labels).toEqual([]);
+  });
+
+  test("a remote session may allow once from the chat and may not allow always", async () => {
+    const { stack, card } = await freshHop();
+    const api = routesFor(stack, true);
+    const always = await api.call(PERSON, `/${card.id}/decision`, {
+      decision: "allow_always",
+    });
+    expect(always.status).toBe(403);
+    expect((await cards())[0]?.status).toBe("pending");
+    const once = await api.call(PERSON, `/${card.id}/decision`, {
+      decision: "allow_once",
+    });
+    expect(once.status).toBe(200);
+    await stack.sweep(card.id);
+    expect(stack.labels).toEqual(["GitHub"]);
+  });
+
+  test("a card denied in the chat runs nothing, and Otto is told", async () => {
+    const { stack, key, card } = await freshHop();
+    const api = routesFor(stack, false);
+    await api.call(PERSON, `/${card.id}/decision`, { decision: "deny" });
+    await stack.sweep(card.id);
+    expect(stack.labels).toEqual([]);
+    const [home] = await relaysOf(`${key}:card:${card.id}`);
+    expect(JSON.stringify(home?.payload)).toContain("declined");
   });
 });

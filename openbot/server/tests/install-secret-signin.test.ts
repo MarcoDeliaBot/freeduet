@@ -11,7 +11,15 @@
  * answers of its doors are compared with the ones it gave before), the secret is in no answer but the
  * cookie of a pairing that succeeded, and a refusal for any reason but the link leaves the link alive.
  */
-import { afterEach, describe, expect, spyOn, test } from "bun:test";
+import {
+  afterAll,
+  afterEach,
+  beforeAll,
+  describe,
+  expect,
+  spyOn,
+  test,
+} from "bun:test";
 import { createHash } from "node:crypto";
 import { pairCookieName } from "../src/auth/browser-pairings";
 import { createRequireUser } from "../src/auth/guards";
@@ -39,7 +47,13 @@ import {
 } from "./support/signin-app";
 
 const ORIGIN = "http://localhost:3001";
-const quiet = spyOn(console, "info").mockImplementation(() => {});
+// Quiet while this file's tests run and given back afterwards: a spy made at load outlives this file
+// (console-spy-scope.test.ts).
+let quiet: ReturnType<typeof spyOn>;
+beforeAll(() => {
+  quiet = spyOn(console, "info").mockImplementation(() => {});
+});
+afterAll(() => quiet.mockRestore());
 afterEach(() => quiet.mockClear());
 
 /** A person's question to the app: a session header, if any, and a peer. */
