@@ -1,5 +1,6 @@
 import { IconHandStop, IconMessageQuestion } from "@tabler/icons-react";
 import { useMutation, useQuery } from "@tanstack/react-query";
+import { localizedReason } from "@openbot/shared/approval-text";
 import { Fragment, useState } from "react";
 import { PageRows, PageSection } from "@/components/layout/page-shell";
 import { Button } from "@/components/ui/button";
@@ -123,7 +124,10 @@ export function WaitingForYou({ agentId }: { agentId?: string }) {
                       {request.action.policy.behaviour === "hand_off"
                         ? "Handed to you: "
                         : ""}
-                      {request.action.policy.reason}
+                      {localizedReason(
+                        request.action.policy.reason,
+                        inbox.data?.language,
+                      )}
                     </p>
                   ) : null}
                   <pre className="mt-1 max-h-52 overflow-auto whitespace-pre-wrap rounded bg-muted p-3 text-xs">

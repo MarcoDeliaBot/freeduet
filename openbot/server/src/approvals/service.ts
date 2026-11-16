@@ -4,6 +4,7 @@ import { isDeepStrictEqual } from "node:util";
 import { PERSON_INITIATOR } from "../audit";
 import { alwaysAskReason } from "../freeduet/always-ask";
 import type { FullAccess } from "../freeduet/full-access";
+import type { PersonLanguage } from "../freeduet/person-language";
 import { HeadlessToolSuspension } from "@openbot/toolkit/headless-tools";
 import {
   decideAction,
@@ -229,8 +230,20 @@ export function createApprovalService(
     review?: ReviewModel;
     /** FreeDuet: members the person switched to Full access (docs/FULL_ACCESS.md). Absent, none is. */
     fullAccess?: FullAccess;
+    /**
+     * D50: the language this person reads (their own choice, else the deployment's), or null for
+     * English. Asked once when a card is opened, so the reviewer writes its reason in it, and by the
+     * route the app reads it from. A failure is no language.
+     */
+    personLanguage?: (ownerUserId: string) => Promise<PersonLanguage | null>;
   } = {},
 ) {
+  const languageOf = async (
+    ownerUserId: string,
+  ): Promise<PersonLanguage | null> =>
+    options.personLanguage
+      ? await options.personLanguage(ownerUserId).catch(() => null)
+      : null;
   /**
    * A personal "allow" rule closes the requests it now covers that were only waiting on the person's
    * default or their own rules. Safety hand-offs, team rules and auto-review stops are left alone.
@@ -355,9 +368,12 @@ export function createApprovalService(
         : undefined;
     // A call made with no approval context (the callback door) names its run's initiator itself.
     const initiator = continuation?.initiator ?? candidate.initiator;
+    const language =
+      candidate.effect === "read" ? null : await languageOf(candidate.actorId);
     const outcome = await decideAction({
       candidate,
       fullAccess,
+      ...(language ? { language } : {}),
       ...(alwaysAsk ? { alwaysAsk } : {}),
       // mail-organise: a change to a mailbox is judged against the person's typed words only.
       ...(candidate.organisesMailbox
@@ -588,6 +604,8 @@ export function createApprovalService(
         );
       return store.decide(ownerUserId, id, decision);
     },
+    /** D50: the language this person's cards are drawn in, or null for English. */
+    language: languageOf,
     revoke: (ownerUserId: string, id: string) => store.revoke(ownerUserId, id),
     async answerQuestion(
       ownerUserId: string,
@@ -614,6 +632,10 @@ export function createApprovalService(
       return {
         enabled: await store.enabled(ownerUserId),
         requests: requests.map(publicApproval),
+        // D50: the code of the language this person's cards are drawn in; absent for English.
+        ...((await languageOf(ownerUserId))
+          ? { language: (await languageOf(ownerUserId))?.code }
+          : {}),
         rules: await store.rules(ownerUserId),
         teamRules,
         ...(preferences && team

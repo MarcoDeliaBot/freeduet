@@ -47,27 +47,24 @@
  * store refuses "Always allow" for it, a saved rule never answers it, and both cards hide the button.
  */
 import { NOT_ACCOUNT_ACTIONS } from "../approvals/policy";
+import { approvalText } from "@openbot/shared/approval-text";
 import type { AuditInitiator } from "../audit";
 
 /** What the person reads on the card when the run was a routine's or a trigger's. */
-export const UNATTENDED_WRITE_REASON =
-  "This came from a routine or a trigger running on its own, not from a message you sent, so it always asks you first.";
+export const UNATTENDED_WRITE_REASON = approvalText("reason.unattended", "en");
 /** What the person reads on the card when a Bot is setting up, changing or removing one. */
-export const AUTOMATION_CHANGE_REASON =
-  "Routines and triggers act later without you, so setting one up, changing it or deleting it always asks you first.";
+export const AUTOMATION_CHANGE_REASON = approvalText("reason.automation", "en");
 /**
  * What the person reads on the card when a Bot changes one of their settings from chat
  * (docs/design/settings-in-chat.md, slice 1).
  */
-export const SETTING_CHANGE_REASON =
-  "A Bot changing one of your settings from chat always asks you first, with Full access on or off.";
+export const SETTING_CHANGE_REASON = approvalText("reason.setting", "en");
 
 /**
  * What the person reads on the card when the run was started from a browser that is not paired with the
  * computer. It says what the card is for and how it goes away: a paired browser works as it always did.
  */
-export const REMOTE_WRITE_REASON =
-  "You sent this from a browser that is not paired with the computer FreeDuet runs on, so it always asks you first, whatever Full access or your saved rules say. A browser paired at the computer works as before.";
+export const REMOTE_WRITE_REASON = approvalText("reason.remoteWrite", "en");
 
 /** A chain of hand-offs is at most this long here; the desk caps it far lower, this only ends a loop. */
 const MAX_HOPS = 16;
