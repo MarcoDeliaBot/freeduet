@@ -18,6 +18,7 @@ import {
   CARD_WORDS,
   checkOutcome,
   claudeProblemOf,
+  OUTCOME_TONE,
   OUTCOME_WORDS,
   REBUILD_COMMAND,
   SIGN_IN_COMMAND,
@@ -196,6 +197,66 @@ describe("under a failed turn in the real transcript", () => {
     expect(view.queryByTestId("claude-connect-card")).toBeNull();
     expect(asked.filter((r) => r.url.includes("claude"))).toEqual([]);
   });
+});
+
+describe("the colour of the sentence after Check again", () => {
+  const cases: [string, number, unknown, string, string][] = [
+    [
+      "connected",
+      200,
+      { reason: null, installed: true, signedIn: true },
+      OUTCOME_WORDS.connected,
+      "text-duet-green",
+    ],
+    [
+      "not_connected",
+      200,
+      { reason: null, installed: true, signedIn: false },
+      OUTCOME_WORDS.not_connected,
+      "text-duet-red",
+    ],
+    [
+      "not_installed",
+      200,
+      { reason: null, installed: false, signedIn: null },
+      OUTCOME_WORDS.not_installed,
+      "text-duet-red",
+    ],
+    [
+      "no_engine",
+      200,
+      { reason: "unreachable", installed: null, signedIn: null },
+      OUTCOME_WORDS.no_engine,
+      "text-duet-red",
+    ],
+    ["elsewhere", 403, {}, OUTCOME_WORDS.elsewhere, "text-duet-red"],
+    ["hosted", 404, {}, OUTCOME_WORDS.hosted, "text-duet-red"],
+    [
+      "waiting",
+      200,
+      { reason: null, installed: true, signedIn: null },
+      OUTCOME_WORDS.waiting,
+      "text-duet-ink-3",
+    ],
+  ];
+  for (const [name, status, body, words, tone] of cases) {
+    test(`${name} is drawn ${tone}, and the sentence stays`, async () => {
+      check = [{ status, body }];
+      const view = card();
+      await waitFor(() => view.getByTestId("claude-connect-card"));
+      fireEvent.click(view.getByText("Check again"));
+      const line = await waitFor(() => view.getByText(words));
+      expect(line.className).toContain(tone);
+      expect(OUTCOME_TONE[name as keyof typeof OUTCOME_TONE]).toBe(tone);
+      // The other tones are not on it.
+      for (const other of [
+        "text-duet-green",
+        "text-duet-red",
+        "text-duet-ink-3",
+      ])
+        if (other !== tone) expect(line.className).not.toContain(other);
+    });
+  }
 });
 
 describe("checkOutcome", () => {

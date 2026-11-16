@@ -9,6 +9,7 @@ import {
   type CheckOutcome,
   checkOutcome,
   type ClaudeProblem,
+  OUTCOME_TONE,
   OUTCOME_WORDS,
 } from "./claude-connect";
 
@@ -118,7 +119,7 @@ export function ClaudeConnectCard({
       </div>
       {outcome ? (
         <p
-          className={`type-label mt-2 font-semibold ${outcome === "connected" ? "text-duet-green" : "text-duet-ink-3"}`}
+          className={`type-label mt-2 font-semibold ${OUTCOME_TONE[outcome]}`}
           role="status"
         >
           {OUTCOME_WORDS[outcome]}

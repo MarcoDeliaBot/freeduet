@@ -607,6 +607,11 @@ export function createApp(
         : config.selfHostBanner,
       // FreeDuet (D51): present, and false, only when the deployment shows no promotion at all.
       ...(selfHostBanner?.promotions === false ? { promotions: false } : {}),
+      // FreeDuet: present, and true, only when CopilotKit's usage events are off (config.ts). Onboarding
+      // says so; otherwise the answer is as it was and onboarding keeps upstream's caption.
+      ...(config.copilotkitTelemetryDisabled
+        ? { copilotkitTelemetryDisabled: true }
+        : {}),
       /*
        * Whether this is somebody trying OpenBot on their own machine, not an organization's
        * deployment. Onboarding reads it to explain where OpenBot can run, which only the person

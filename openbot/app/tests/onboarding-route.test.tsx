@@ -60,8 +60,12 @@ let saves: number[];
 let completed: boolean;
 /** Whether the server says this is somebody trying OpenDuet alone, which adds three steps. */
 let localEvaluation: boolean;
+/** The server's `mode`: "local" when FREEDUET_INTELLIGENCE=off keeps conversations in the install's own database. */
+let runtimeMode: "intelligence" | "local";
 /** D51: whether the server says the deployment shows no promotion. Absent from the answer unless set. */
 let noPromotions: boolean;
+/** Whether the server says CopilotKit's usage events are off. Absent from the answer unless it does. */
+let copilotkitTelemetryOff: boolean;
 
 beforeEach(() => {
   // Another file's screens may have cached the signed-in person in the app's one query client.
@@ -70,7 +74,9 @@ beforeEach(() => {
   saves = [];
   completed = false;
   localEvaluation = false;
+  runtimeMode = "intelligence";
   noPromotions = false;
+  copilotkitTelemetryOff = false;
   (globalThis as { Notification?: unknown }).Notification = {
     permission: "default",
     requestPermission: async () => "default",
@@ -114,7 +120,11 @@ beforeEach(() => {
       if (path === "/api/capabilities")
         return Response.json({
           localEvaluation,
+          mode: runtimeMode,
           ...(noPromotions ? { promotions: false } : {}),
+          ...(copilotkitTelemetryOff
+            ? { copilotkitTelemetryDisabled: true }
+            : {}),
         });
       if (path.startsWith("/api/agents"))
         return Response.json({ agents: [BOT] });
@@ -211,6 +221,57 @@ test("the local install's step says where its data really lives", async () => {
   expect(page).toContain("Set DO_NOT_TRACK=1 to turn them off.");
   expect(page).not.toContain("stored on this computer");
   expect(page).not.toContain("Only what you send to your model leaves it");
+});
+
+test("with Intelligence off the local install's step says its data stays in this install's database", async () => {
+  localEvaluation = true;
+  runtimeMode = "local";
+  const view = open("/onboarding?step=local");
+
+  await heading(view, "Where your data lives");
+  const page = document.body.textContent ?? "";
+  // FREEDUET_INTELLIGENCE=off: threads and memory are in the install's own Postgres, and nothing is
+  // sent to a hosted memory service (server/src/freeduet/backend.ts, server/src/memory/store.ts).
+  expect(page).toContain(
+    "Your Bots and settings stay in this install's database.",
+  );
+  expect(page).toContain(
+    "Conversations and memory stay in that same database.",
+  );
+  expect(page).toContain("Nothing is sent to a hosted memory service.");
+  expect(page).toContain("What you ask goes to your AI model.");
+  expect(page).not.toContain("CopilotKit Intelligence");
+  expect(page).not.toContain("CopilotKit's cloud");
+});
+
+test("with CopilotKit's usage events off, the local install's step says none are sent", async () => {
+  localEvaluation = true;
+  runtimeMode = "local";
+  copilotkitTelemetryOff = true;
+  const view = open("/onboarding?step=local");
+
+  await heading(view, "Where your data lives");
+  const page = document.body.textContent ?? "";
+  // copilotkitTelemetryDisabled is sent only when the server's rule says telemetry is off
+  // (server/src/freeduet/copilotkit-telemetry.ts); then the upstream line would be false.
+  expect(page).toContain(
+    "CopilotKit gets no usage events from this install, because telemetry is switched off here.",
+  );
+  expect(page).not.toContain("CopilotKit also receives usage events");
+  expect(page).not.toContain("Set DO_NOT_TRACK=1");
+});
+
+test("with CopilotKit's usage events on, the local install's step keeps upstream's caption", async () => {
+  localEvaluation = true;
+  runtimeMode = "local";
+  const view = open("/onboarding?step=local");
+
+  await heading(view, "Where your data lives");
+  const page = document.body.textContent ?? "";
+  expect(page).toContain(
+    "CopilotKit also receives usage events. Set DO_NOT_TRACK=1 to turn them off.",
+  );
+  expect(page).not.toContain("gets no usage events");
 });
 
 test("the organization step offers enterprise early access and CopilotKit's other products", async () => {

@@ -1,6 +1,6 @@
 {
   "origin": "https://freeduet.com",
-  "lastmod": "2026-11-15",
+  "lastmod": "2026-11-16",
   "default": "en",
   "languages": [
     {"code": "en", "name": "English",   "locale": "en_US", "week": ["M","T","W","T","F","S","S"]},

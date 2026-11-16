@@ -70,6 +70,22 @@ export function checkOutcome(
   return "waiting";
 }
 
+/**
+ * The colour of the sentence after Check again (the maintainer, 16 November 2026): green when Claude is connected,
+ * red (the status "problem" colour the app already has, `--duet-status-problem`, which is the app's coral-red) when it
+ * is not, grey while FreeDuet could not tell. The sentence stays: colour is never the only signal. Both colours are the
+ * existing status tokens, 5.4:1 and 6.5:1 on a light card and 9.8:1 and 6.2:1 on a dark one.
+ */
+export const OUTCOME_TONE: Record<CheckOutcome, string> = {
+  connected: "text-duet-green",
+  not_connected: "text-duet-red",
+  not_installed: "text-duet-red",
+  no_engine: "text-duet-red",
+  elsewhere: "text-duet-red",
+  hosted: "text-duet-red",
+  waiting: "text-duet-ink-3",
+};
+
 export const OUTCOME_WORDS: Record<CheckOutcome, string> = {
   connected: "Claude is connected. Send your message again.",
   not_connected: "FreeDuet cannot see the sign-in yet.",
