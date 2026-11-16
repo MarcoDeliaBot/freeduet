@@ -8,7 +8,7 @@ Each version says what was and was not run live. "Run live" means run on a real 
 
 ### Changed
 
-- Onboarding's "Where your data lives" step now says conversations and memory stay in this install's own database, with nothing sent to a hosted memory service, when `FREEDUET_INTELLIGENCE=off` (the default); it said CopilotKit's cloud, which was false. Tested; not yet run live.
+- Onboarding's "Where your data lives" step now says conversations and memory stay in this install's own database, with nothing sent to a hosted memory service, when `FREEDUET_INTELLIGENCE=off` (the default); and that CopilotKit gets no usage events when its telemetry is off (`COPILOTKIT_TELEMETRY_DISABLED=true` or `DO_NOT_TRACK=1`, the install's default). It said CopilotKit's cloud, and that CopilotKit receives usage events, which were false for a default install. Tested; not yet run live.
 - FreeDuet advertises nobody (D51): the bar that offered help self-hosting is off by default for FreeDuet's package, and onboarding no longer shows the slide that sent the person to another company's products and sales contact. The credit to the upstream authors is unchanged, and `OPENBOT_SELF_HOST_BANNER=true` brings the upstream behaviour back. Tested; not yet run live.
 
 ### Fixed
