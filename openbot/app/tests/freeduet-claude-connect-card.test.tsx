@@ -18,6 +18,7 @@ import {
   CARD_WORDS,
   checkOutcome,
   claudeProblemOf,
+  OUTCOME_CORAL,
   OUTCOME_TONE,
   OUTCOME_WORDS,
   REBUILD_COMMAND,
@@ -213,24 +214,24 @@ describe("the colour of the sentence after Check again", () => {
       200,
       { reason: null, installed: true, signedIn: false },
       OUTCOME_WORDS.not_connected,
-      "text-duet-red",
+      OUTCOME_CORAL,
     ],
     [
       "not_installed",
       200,
       { reason: null, installed: false, signedIn: null },
       OUTCOME_WORDS.not_installed,
-      "text-duet-red",
+      OUTCOME_CORAL,
     ],
     [
       "no_engine",
       200,
       { reason: "unreachable", installed: null, signedIn: null },
       OUTCOME_WORDS.no_engine,
-      "text-duet-red",
+      OUTCOME_CORAL,
     ],
-    ["elsewhere", 403, {}, OUTCOME_WORDS.elsewhere, "text-duet-red"],
-    ["hosted", 404, {}, OUTCOME_WORDS.hosted, "text-duet-red"],
+    ["elsewhere", 403, {}, OUTCOME_WORDS.elsewhere, OUTCOME_CORAL],
+    ["hosted", 404, {}, OUTCOME_WORDS.hosted, OUTCOME_CORAL],
     [
       "waiting",
       200,
@@ -249,11 +250,7 @@ describe("the colour of the sentence after Check again", () => {
       expect(line.className).toContain(tone);
       expect(OUTCOME_TONE[name as keyof typeof OUTCOME_TONE]).toBe(tone);
       // The other tones are not on it.
-      for (const other of [
-        "text-duet-green",
-        "text-duet-red",
-        "text-duet-ink-3",
-      ])
+      for (const other of ["text-duet-green", OUTCOME_CORAL, "text-duet-ink-3"])
         if (other !== tone) expect(line.className).not.toContain(other);
     });
   }
