@@ -622,7 +622,7 @@ def test_replace_never_replaces_a_link_a_folder_or_a_special_file(work, stub, tm
 
 @pytest.mark.parametrize(
     "args",
-    [["recalc", "--replace", "x.xlsx"], ["pdf", "--keep", "x.docx"], ["recalc", "--keep", "--bogus", "x.xlsx"], ["pdf", "--replace"]],
+    [["recalc", "--replace", "x.xlsx"], ["recalc", "--new-name", "x.xlsx"], ["pdf", "--replace", "--new-name", "x.docx"], ["recalc", "--keep", "--replace", "--new-name", "x.xlsx"], ["pdf", "--keep", "x.docx"], ["recalc", "--keep", "--bogus", "x.xlsx"], ["pdf", "--replace"]],
 )
 def test_the_flags_are_checked(args, stub):
     code, _, err = run(*args)
@@ -851,6 +851,8 @@ def test_real_libreoffice_recalculates_a_formula_and_makes_a_pdf(work):
     assert code == 0 and (work / "t.pdf").read_bytes().startswith(b"%PDF-")
     assert run("pdf", work / "t.docx")[0] == 3
     assert run("pdf", "--replace", work / "t.docx")[0] == 0
+    code, out, _ = run("pdf", "--new-name", work / "t.docx")
+    assert code == 0 and out["output"] == "t-2.pdf" and (work / "t-2.pdf").read_bytes().startswith(b"%PDF-")
 
 
 # ---- review follow-up: the tool decides what --replace may replace; values are data; two guards ------------------
@@ -966,7 +968,101 @@ def test_a_filesystem_without_attributes_still_gets_the_file_but_refuses_a_later
     monkeypatch.setattr(oc.os, "getxattr", unsupported)
     assert oc.main(["office-convert", "pdf", "--replace", str(f)]) == 3
     out = json.loads(capsys.readouterr().out)
-    assert "carries no mark" in out["reason"] and "does not keep marks" in out["reason"]
+    assert "does not keep the marks" in out["reason"] and "--new-name" in out["reason"] and "Use --replace" not in out["reason"]
     assert (work / "a.pdf").read_bytes().startswith(b"%PDF-") and sorted(p.name for p in work.iterdir()) == ["a.docx", "a.pdf"]
     monkeypatch.undo()
     assert oc.main(["office-convert", "pdf", "--replace", str(f)]) == 3  # still unmarked once the filesystem works again
+
+
+# ---- --new-name: the way to make a file again where marks are not kept ---------------------------------------------
+
+def no_marks(monkeypatch):
+    def unsupported(*args, **kwargs):
+        raise OSError(errno.ENOTSUP, "Operation not supported")
+
+    monkeypatch.setattr(oc.os, "setxattr", unsupported)
+    monkeypatch.setattr(oc.os, "getxattr", unsupported)
+
+
+def main_json(capsys, *args):
+    code = oc.main(["office-convert", *map(str, args)])
+    return code, json.loads(capsys.readouterr().out)
+
+
+def test_the_no_attribute_loop_end_to_end_with_new_name(work, stub, monkeypatch, capsys):
+    f = zipped(work / "report.docx", docx_parts())
+    no_marks(monkeypatch)
+    code, out = main_json(capsys, "pdf", f)
+    assert code == 0 and out["output"] == "report.pdf" and out["marked"] is False
+    assert "--new-name" in out["replace_note"]
+    code, out = main_json(capsys, "pdf", f)
+    assert code == 3 and "--new-name" in out["reason"] and "--replace" not in out["reason"]
+    code, out = main_json(capsys, "pdf", "--replace", f)
+    assert code == 3 and "--new-name" in out["reason"] and "does not keep the marks" in out["reason"]
+    code, out = main_json(capsys, "pdf", "--new-name", f)
+    assert code == 0 and out["output"] == "report-2.pdf" and out["output_path"] == str(work / "report-2.pdf")
+    code, out = main_json(capsys, "pdf", "--new-name", f)
+    assert code == 0 and out["output"] == "report-3.pdf"
+    assert sorted(p.name for p in work.iterdir()) == ["report-2.pdf", "report-3.pdf", "report.docx", "report.pdf"]
+
+
+def test_new_name_uses_the_plain_name_when_it_is_free_and_works_for_recalc_keep(work, stub, capsys):
+    f = zipped(work / "w.xlsx", xlsx_parts())
+    code, out = main_json(capsys, "recalc", "--keep", "--new-name", f)
+    assert code == 0 and out["output"] == "w.recalculated.xlsx"
+    code, out = main_json(capsys, "recalc", "--keep", "--new-name", f)
+    assert code == 0 and out["output"] == "w.recalculated-2.xlsx" and (work / "w.recalculated-2.xlsx").read_bytes()[:2] == b"PK"
+
+
+def test_new_name_never_replaces_or_follows_what_sits_at_a_candidate_name(work, stub, tmp_path, capsys):
+    f = zipped(work / "a.docx", docx_parts())
+    victim = tmp_path / "victim.txt"
+    victim.write_text("keep")
+    (work / "a.pdf").write_bytes(b"theirs")
+    (work / "a-2.pdf").symlink_to(victim)  # a link
+    (work / "a-3.pdf").symlink_to(tmp_path / "dangling")  # a dangling link
+    (work / "a-4.pdf").mkdir()  # a folder
+    os.mkfifo(work / "a-5.pdf")  # a FIFO
+    code, out = main_json(capsys, "pdf", "--new-name", f)
+    assert code == 0 and out["output"] == "a-6.pdf" and (work / "a-6.pdf").read_bytes().startswith(b"%PDF-")
+    assert victim.read_text() == "keep" and not (tmp_path / "dangling").exists()
+    assert (work / "a.pdf").read_bytes() == b"theirs" and (work / "a-2.pdf").is_symlink() and (work / "a-4.pdf").is_dir()
+    assert stat.S_ISFIFO(os.lstat(work / "a-5.pdf").st_mode)
+
+
+def test_when_ninety_nine_names_are_taken_the_refusal_is_clean_and_nothing_is_written(work, stub, capsys):
+    f = zipped(work / "a.docx", docx_parts())
+    (work / "a.pdf").write_bytes(b"theirs")
+    for number in range(2, oc.MAX_NEW_NAMES + 1):
+        (work / f"a-{number}.pdf").write_bytes(b"theirs")
+    before = sorted(p.name for p in work.iterdir())
+    code, out = main_json(capsys, "pdf", "--new-name", f)
+    assert code == 3 and out["refused"] is True and "-99" in out["reason"]
+    assert sorted(p.name for p in work.iterdir()) == before and (work / "a-99.pdf").read_bytes() == b"theirs"
+
+
+def test_a_failure_while_writing_a_numbered_name_leaves_nothing_behind(work, stub, monkeypatch, capsys):
+    f = zipped(work / "a.docx", docx_parts())
+    (work / "a.pdf").write_bytes(b"theirs")
+
+    def boom(*args, **kwargs):
+        raise OSError(errno.EIO, "disk went away")
+
+    monkeypatch.setattr(oc.shutil, "copyfileobj", boom)
+    assert oc.main(["office-convert", "pdf", "--new-name", str(f)]) == 2
+    monkeypatch.undo()
+    assert sorted(p.name for p in work.iterdir()) == ["a.docx", "a.pdf"]
+
+
+def test_the_refusal_suggests_replace_only_where_it_can_work(work, stub, needs_xattr, capsys):
+    f = zipped(work / "a.docx", docx_parts())
+    assert run("pdf", f)[0] == 0
+    code, out, _ = run("pdf", f)  # marked, marks work: both ways are offered
+    assert code == 3 and "--replace" in out["reason"] and "--new-name" in out["reason"]
+    (work / "a.pdf").unlink()
+    (work / "a.pdf").write_bytes(b"theirs")  # the person's own file, marks work in the folder
+    code, out, _ = run("pdf", f)
+    assert code == 3 and "--new-name" in out["reason"] and "--replace" not in out["reason"]
+    code, out, _ = run("pdf", "--replace", f)
+    assert code == 3 and "the person already had it" in out["reason"] and "Use --new-name" in out["reason"]
+    assert not any(".office-convert-probe" in p.name for p in work.iterdir())

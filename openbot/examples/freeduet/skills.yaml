@@ -17830,8 +17830,10 @@ skills:
       saved it again, so its formatting and features may differ, and hand it over only when the person
       asks for it. An existing file is never replaced by default; add --replace to overwrite a copy that
       office-convert itself wrote earlier: the tool marks what it writes and refuses to replace anything
-      without its mark, so a file the person already had is never replaced, whatever you pass. If it
-      refuses, say what it said and do not look for another way. Never call a formula checked because the script ran without an error. Use plain, common functions
+      without its mark, so a file the person already had is never replaced, whatever you pass. If the
+      file already exists and cannot be replaced, make it again with --new-name: it writes the next free
+      numbered name (name.recalculated-2.xlsx) and replaces nothing; tell the person the new file's
+      name, and never delete or move a file the person had. Never call a formula checked because the script ran without an error. Use plain, common functions
       (SUM, AVERAGE, COUNT, IF, ROUND, simple arithmetic). Never write a formula that reaches outside the
       file (WEBSERVICE, HYPERLINK to a built address, anything that loads data from elsewhere), and never
       link to another workbook.
@@ -17857,7 +17859,7 @@ skills:
 
 
       A PDF of a sheet. When the person wants the sheet as a PDF, run office-convert pdf followed by the
-      file's name; it writes the PDF next to the sheet and refuses when a file of that name is already there. After you changed the sheet and need a new PDF, add --replace: it overwrites only a PDF that office-convert itself wrote earlier and refuses any file without its mark, such as one the person already had. Only .docx, .xlsx and .pptx files can be turned
+      file's name; it writes the PDF next to the sheet and refuses when a file of that name is already there. After you changed the sheet and need a new PDF, add --replace: it overwrites only a PDF that office-convert itself wrote earlier and refuses any file without its mark, such as one the person already had. If it cannot replace the file, run it again with --new-name, which writes the next free numbered name (name-2.pdf); tell the person the new file's name, and never delete or move a file the person had. Only .docx, .xlsx and .pptx files can be turned
       into a PDF this way; the file is inspected first and a refused file is not converted. A command
       that runs longer than about two minutes is stopped, and office-convert stops itself earlier and
       says so: for a big sheet, say that it was too large to convert in one go.
@@ -17929,7 +17931,7 @@ skills:
 
 
       A PDF. When the person wants the document as a PDF, run office-convert pdf followed by the file's
-      name. It writes the PDF next to the .docx, never changes the .docx, and refuses when a file of that name is already there. After you changed the document and need a new PDF, add --replace: it overwrites only a PDF that office-convert itself wrote earlier and refuses any file without its mark, such as one the person already had. The file is inspected first,
+      name. It writes the PDF next to the .docx, never changes the .docx, and refuses when a file of that name is already there. After you changed the document and need a new PDF, add --replace: it overwrites only a PDF that office-convert itself wrote earlier and refuses any file without its mark, such as one the person already had. If it cannot replace the file, run it again with --new-name, which writes the next free numbered name (name-2.pdf); tell the person the new file's name, and never delete or move a file the person had. The file is inspected first,
       and a refused file (a macro file, an old format, a protected file) is not converted: say its
       sentence. A command that runs longer than about two minutes is stopped, and office-convert stops
       itself earlier and says so; if that happens, say the document was too large to convert in one go.
