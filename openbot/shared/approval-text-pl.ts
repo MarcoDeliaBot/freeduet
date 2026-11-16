@@ -158,7 +158,7 @@ export const APPROVAL_TEXT_PL: CompleteApprovalTextTable = {
   "reason.setting":
     "Gdy Bot zmienia jedno z Twoich ustawień z czatu, zawsze najpierw pyta Ciebie, niezależnie od tego, czy Full access jest włączony.",
   "reason.remoteWrite":
-    "Wysłałeś to z przeglądarki, która nie jest sparowana z komputerem, na którym działa FreeDuet, więc zawsze najpierw pyta Ciebie, cokolwiek mówi Full access lub Twoje zapisane reguły. Przeglądarka sparowana na komputerze działa jak dawniej.",
+    "Ta wiadomość została wysłana z przeglądarki, która nie jest sparowana z komputerem, na którym działa FreeDuet, więc zawsze najpierw pyta Ciebie, cokolwiek mówi Full access lub Twoje zapisane reguły. Przeglądarka sparowana na komputerze działa jak dawniej.",
   "reason.newEmail":
     "O nowy e-mail pytamy za każdym razem. Sprawdź, do kogo idzie i co zawiera, potem zezwól na ten albo odrzuć.",
   "reason.reviewerNone":

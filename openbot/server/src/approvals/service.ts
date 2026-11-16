@@ -621,6 +621,7 @@ export function createApprovalService(
     },
     async inbox(ownerUserId: string) {
       const requests = await store.list(ownerUserId);
+      const lang = await languageOf(ownerUserId);
       const policy = store.policy;
       const [preferences, team, teamRules] = policy
         ? await Promise.all([
@@ -633,9 +634,7 @@ export function createApprovalService(
         enabled: await store.enabled(ownerUserId),
         requests: requests.map(publicApproval),
         // D50: the code of the language this person's cards are drawn in; absent for English.
-        ...((await languageOf(ownerUserId))
-          ? { language: (await languageOf(ownerUserId))?.code }
-          : {}),
+        ...(lang ? { language: lang.code } : {}),
         rules: await store.rules(ownerUserId),
         teamRules,
         ...(preferences && team

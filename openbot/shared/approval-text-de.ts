@@ -119,23 +119,23 @@ export const APPROVAL_TEXT_DE: CompleteApprovalTextTable = {
   "reason.ruleAsks": "Eine Regel fragt vor dieser Art von Aktion nach.",
   "reason.ruleAllows": "Eine Regel erlaubt diese Art von Aktion.",
   "reason.preApprovedMet":
-    "Du hast genau diese Aktion in dieser Anfrage verlangt.",
+    "Du hast genau diese Aktion in dieser Anfrage angefordert.",
   "reason.preApprovedNotMet":
     "Eine Regel erlaubt das nur, wenn du es verlangt hast, und deine Anfrage diesmal enthielt das nicht.",
   "reason.askBeforeChanges":
-    "Du wolltest Änderungen prüfen, bevor sie passieren.",
+    "Du hast darum gebeten, Änderungen vor der Ausführung zu prüfen.",
   "reason.noRule":
     "Keine Regel und keine Einstellung verlangt hier eine Rückfrage.",
   "reason.mailboxNotAsked":
     "Du hast diese Änderung an deinem Postfach nicht in deiner eigenen Nachricht verlangt, deshalb fragt es dich zuerst.",
   "reason.unattended":
-    "Das kommt von einer Routine oder einem Trigger, die von allein laufen, nicht von einer Nachricht von dir. Deshalb fragt es immer zuerst.",
+    "Das kommt von einer Routine oder einem Trigger, die von allein laufen, nicht von einer Nachricht von dir. Deshalb fragt FreeDuet dich immer zuerst.",
   "reason.automation":
-    "Routinen und Trigger handeln später ohne dich. Deshalb fragt es immer zuerst, wenn eine eingerichtet, geändert oder gelöscht wird.",
+    "Routinen und Trigger handeln später ohne dich. Deshalb fragt FreeDuet dich immer zuerst, wenn eine eingerichtet, geändert oder gelöscht wird.",
   "reason.setting":
     "Wenn ein Bot eine deiner Einstellungen im Chat ändert, fragt es immer zuerst, egal ob Full access an ist oder nicht.",
   "reason.remoteWrite":
-    "Das hast du von einem Browser gesendet, der nicht mit dem Computer gekoppelt ist, auf dem FreeDuet läuft. Deshalb fragt es immer zuerst, egal was Full access oder deine gespeicherten Regeln sagen. Ein am Computer gekoppelter Browser funktioniert wie bisher.",
+    "Das hast du von einem Browser gesendet, der nicht mit dem Computer gekoppelt ist, auf dem FreeDuet läuft. Deshalb fragt FreeDuet dich immer zuerst, egal was Full access oder deine gespeicherten Regeln sagen. Ein am Computer gekoppelter Browser funktioniert wie bisher.",
   "reason.newEmail":
     "Bei einer neuen E-Mail wird jedes Mal gefragt. Prüfe, an wen sie geht und was drinsteht, dann erlaube sie oder lehne sie ab.",
   "reason.reviewerNone":

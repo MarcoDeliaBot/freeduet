@@ -27,7 +27,7 @@ export const APPROVAL_TEXT_IT: CompleteApprovalTextTable = {
   "rule.happens":
     "FreeDuet la applica alla posta nuova ogni pochi minuti, senza chiedere di nuovo, finché non la spegni. Non è un filtro di Gmail. Non inoltra, non risponde e non cancella mai in modo definitivo.",
   "rule.happens.existing":
-    " La applica anche una volta alla posta già nella Posta in arrivo che corrisponde.",
+    " La applica anche una volta alla posta che corrisponde ed è già nella Posta in arrivo.",
   "rule.delete.title": "Elimina una regola per la posta",
   "rule.enable.title": "Attiva una regola per la posta",
   "rule.disable.title": "Disattiva una regola per la posta",
@@ -92,7 +92,7 @@ export const APPROVAL_TEXT_IT: CompleteApprovalTextTable = {
   "labels.happens":
     "Le etichette vengono aggiunte o tolte. Nessun messaggio viene spostato o cancellato.",
   "messages.unreadable": {
-    one: "Non è stato possibile leggere la tua casella in questo momento, quindi non si vede da chi sono né di cosa parlano. {count} messaggio indicato.",
+    one: "Non è stato possibile leggere la tua casella in questo momento, quindi non si vede da chi è né di cosa parla. {count} messaggio indicato.",
     other:
       "Non è stato possibile leggere la tua casella in questo momento, quindi non si vede da chi sono né di cosa parlano. {count} messaggi indicati.",
   },
@@ -127,7 +127,7 @@ export const APPROVAL_TEXT_IT: CompleteApprovalTextTable = {
   "reason.noRule":
     "Nessuna regola o preferenza chiede di controllare questa azione.",
   "reason.mailboxNotAsked":
-    "Non hai chiesto tu questa modifica alla tua casella nel tuo messaggio, quindi te lo chiede prima.",
+    "Nel tuo messaggio non hai chiesto questa modifica alla tua casella, quindi te lo chiede prima.",
   "reason.unattended":
     "Questa richiesta arriva da una routine o da un trigger che gira da solo, non da un tuo messaggio, quindi te lo chiede sempre prima.",
   "reason.automation":
@@ -139,7 +139,7 @@ export const APPROVAL_TEXT_IT: CompleteApprovalTextTable = {
   "reason.newEmail":
     "Una nuova email te la chiede ogni volta. Controlla a chi arriva e cosa dice, poi consenti questa o rifiutala.",
   "reason.reviewerNone":
-    "Non c'è nessun modello di controllo configurato, quindi serve la tua approvazione.",
+    "Non è configurato nessun controllo automatico, quindi serve la tua approvazione.",
   "reason.reviewerInvalid": "La risposta del controllo non era valida.",
   "reason.reviewerUnreachable":
     "Il controllo non è raggiungibile ({error}), quindi serve la tua approvazione.",

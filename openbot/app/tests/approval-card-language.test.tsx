@@ -114,7 +114,7 @@ const CASES: {
     ],
     it: ["Sposta 1 messaggio in Spam", "Gmail cancella la posta in Spam"],
     de: ["1 Nachricht in den Spam verschieben", "Gmail löscht Spam"],
-    fr: ["Déplacer 1 message dans les Spams", "Gmail supprime"],
+    fr: ["Déplacer 1 message dans Spam", "Gmail supprime"],
   },
   {
     name: "bin 3",

@@ -20,7 +20,7 @@ export const APPROVAL_TEXT_FR: CompleteApprovalTextTable = {
   "rule.does.label": "mettre le libellé {names}",
   "rule.does.markRead": "marquer comme lu",
   "rule.does.archive": "archiver",
-  "rule.does.spam": "déplacer dans les Spams",
+  "rule.does.spam": "déplacer dans Spam",
   "rule.does.bin": "déplacer dans la Corbeille",
   "rule.does.nothing": "ne rien faire",
   "join.and": " et ",
@@ -48,8 +48,8 @@ export const APPROVAL_TEXT_FR: CompleteApprovalTextTable = {
   "archive.happens":
     "Ils quittent la boîte de réception et restent dans Tous les messages, avec leurs libellés. Rien n'est supprimé.",
   "spam.title": {
-    one: "Déplacer {count} message dans les Spams",
-    other: "Déplacer {count} messages dans les Spams",
+    one: "Déplacer {count} message dans Spam",
+    other: "Déplacer {count} messages dans Spam",
   },
   "spam.happens":
     "Ils vont dans ton dossier Spam. Gmail supprime les messages du Spam après environ 30 jours ; d'ici là, tu peux les remettre.",
@@ -60,12 +60,12 @@ export const APPROVAL_TEXT_FR: CompleteApprovalTextTable = {
   "bin.happens":
     "Ils vont dans ta Corbeille et y restent environ 30 jours. Tu peux les y restaurer. Ensuite, Gmail les supprime définitivement.",
   "mark.read.title": {
-    one: "Marquer comme lu : {count} message",
-    other: "Marquer comme lu : {count} messages",
+    one: "Marquer {count} message comme lu",
+    other: "Marquer {count} messages comme lus",
   },
   "mark.unread.title": {
-    one: "Marquer comme non lu : {count} message",
-    other: "Marquer comme non lu : {count} messages",
+    one: "Marquer {count} message comme non lu",
+    other: "Marquer {count} messages comme non lus",
   },
   "mark.happens":
     "Seul change le fait qu'ils apparaissent comme lus ou non. Rien n'est supprimé.",
@@ -127,7 +127,7 @@ export const APPROVAL_TEXT_FR: CompleteApprovalTextTable = {
     "Tu as demandé à vérifier les changements avant qu'ils aient lieu.",
   "reason.noRule": "Aucune règle ni préférence ne demande de vérification ici.",
   "reason.mailboxNotAsked":
-    "Tu n'as pas demandé ce changement de ta boîte mail dans ton propre message, donc on te demande d'abord.",
+    "Tu n'as pas demandé ce changement dans ta boîte mail dans ton propre message, donc on te demande d'abord.",
   "reason.unattended":
     "Cela vient d'une routine ou d'un déclencheur qui tourne tout seul, pas d'un message de toi, donc on te demande toujours d'abord.",
   "reason.automation":

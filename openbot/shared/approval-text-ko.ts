@@ -15,7 +15,7 @@ export const APPROVAL_TEXT_KO: CompleteApprovalTextTable = {
   "rule.when.fromDomain": "{value} 도메인에서 온",
   "rule.when.toAddress": "{value}로 보낸",
   "rule.when.listId": "{value} 목록에서 온",
-  "rule.when.subjectContains": "제목에 {value}이(가) 들어 있는",
+  "rule.when.subjectContains": "제목에 {value} 포함",
   "rule.when.words": "제목이나 보낸 사람에 {value} 단어가 들어 있는",
   "rule.does.label": "{names} 라벨을 붙입니다",
   "rule.does.markRead": "읽음으로 표시합니다",
@@ -25,7 +25,7 @@ export const APPROVAL_TEXT_KO: CompleteApprovalTextTable = {
   "rule.does.nothing": "아무것도 하지 않습니다",
   "join.and": ", ",
   "rule.happens":
-    "FreeDuet이 끄기 전까지 몇 분마다 새 메일에 다시 묻지 않고 적용합니다. Gmail 필터가 아닙니다. 전달, 답장, 영구 삭제는 절대 하지 않습니다.",
+    "당신이 끄기 전까지 FreeDuet이 몇 분마다 새 메일에 다시 묻지 않고 적용합니다. Gmail 필터가 아닙니다. 전달, 답장, 영구 삭제는 절대 하지 않습니다.",
   "rule.happens.existing":
     " 받은편지함에 이미 있는 일치하는 메일에도 한 번 적용합니다.",
   "rule.delete.title": "메일 규칙 삭제",
