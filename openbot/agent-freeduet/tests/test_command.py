@@ -104,3 +104,20 @@ def test_the_started_cli_gets_exactly_that(client, fake_cli, monkeypatch):
     # The bridge got its own line and nothing of this service's credentials.
     assert set(seen["mcp_config"]["mcpServers"]["freeduet"]["env"]) == {"FREEDUET_BRIDGE_PORT", "FREEDUET_BRIDGE_SECRET", "PYTHONPATH"}
     assert os.environ["MANAGED_AGENT_TOKEN"] not in json.dumps(seen)
+
+
+def test_the_cli_never_starts_where_project_files_could_be_found(client, fake_cli):
+    """A headless `claude -p` loads CLAUDE.md and .claude/ from its working directory and every parent. A member's
+    CLI starts in a new empty folder made for the run, outside this repository's checkout (the folders are removed
+    when the run ends, so the test reads what the fake CLI saw). Guard of unchanged behaviour
+    (docs/design/member-cli-isolation.md)."""
+    from pathlib import Path
+    fake_cli.plan([{"text": "Hi."}])
+    post_run(client, run_body([standing(), {"id": "u1", "role": "user", "content": "Hello"}], tools=[tool("make_page")]))
+    seen = fake_cli.run(0)
+    folder = Path(seen["cwd"])
+    checkout = Path(__file__).resolve().parents[3]  # the repository root: its CLAUDE.md is there
+    assert (checkout / "CLAUDE.md").exists()
+    assert checkout not in (folder, *folder.parents)
+    assert folder.name == "work" and folder.parent.name.startswith("freeduet-segment-")
+    assert seen["cwd_entries"] == []
