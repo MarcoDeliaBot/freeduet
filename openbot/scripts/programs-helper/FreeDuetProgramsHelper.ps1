@@ -468,7 +468,7 @@ function ConvertFrom-WingetTable {
         if ($cellArray.Length -gt 2) { $version = $cellArray[2] }
         if ($id -eq '' -or $id.Length -gt $script:MaxIdLength -or $id -match '\s') { $result.Skipped++; continue }
         if ($version -ne '' -and $version -notmatch '^([<>] )?\S{1,100}$') { $result.Skipped++; continue }
-        [void]$rows.Add(, $cellArray)
+        [void]$rows.Add($cellArray)
     }
     $result.Rows = $rows.ToArray()
     return $result
