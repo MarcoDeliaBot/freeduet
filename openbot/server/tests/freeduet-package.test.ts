@@ -581,6 +581,8 @@ describe("Mark, the marketer", () => {
       // The limit of the outside collection (mark-1's missing basics, and never claiming a file he lacks).
       "When a skill mentions a references file, a script, a command line tool, an integration or a product-marketing-context file, you do not have it here:",
       "ask for the missing context once, and never say you read a file you were not given.",
+      // The Instagram bodies send work to three chips Mark does not hold: he does that part in plain text and says so.
+      "The Instagram skills mention /ig-reel, /ig-caption and /ig-human, which are not among your skills: when a skill sends you to one of them, do that part yourself in plain text and say so.",
       // Copy in the person's voice is Wren's, reached through Iris: no member-to-member grant exists.
       "is Wren's work: say that Wren can write it through Iris, and give the brief she needs.",
     ])
