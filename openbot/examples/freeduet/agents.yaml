@@ -1312,6 +1312,7 @@ agents:
       - social
       - video
       - design-craft-floor
+      - landing-page-design
 
   - id: video
     name: Cam
