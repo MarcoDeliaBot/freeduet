@@ -60,6 +60,8 @@ let saves: number[];
 let completed: boolean;
 /** Whether the server says this is somebody trying OpenDuet alone, which adds three steps. */
 let localEvaluation: boolean;
+/** The server's `mode`: "local" when FREEDUET_INTELLIGENCE=off keeps conversations in the install's own database. */
+let runtimeMode: "intelligence" | "local";
 /** D51: whether the server says the deployment shows no promotion. Absent from the answer unless set. */
 let noPromotions: boolean;
 
@@ -70,6 +72,7 @@ beforeEach(() => {
   saves = [];
   completed = false;
   localEvaluation = false;
+  runtimeMode = "intelligence";
   noPromotions = false;
   (globalThis as { Notification?: unknown }).Notification = {
     permission: "default",
@@ -114,6 +117,7 @@ beforeEach(() => {
       if (path === "/api/capabilities")
         return Response.json({
           localEvaluation,
+          mode: runtimeMode,
           ...(noPromotions ? { promotions: false } : {}),
         });
       if (path.startsWith("/api/agents"))
@@ -211,6 +215,27 @@ test("the local install's step says where its data really lives", async () => {
   expect(page).toContain("Set DO_NOT_TRACK=1 to turn them off.");
   expect(page).not.toContain("stored on this computer");
   expect(page).not.toContain("Only what you send to your model leaves it");
+});
+
+test("with Intelligence off the local install's step says its data stays in this install's database", async () => {
+  localEvaluation = true;
+  runtimeMode = "local";
+  const view = open("/onboarding?step=local");
+
+  await heading(view, "Where your data lives");
+  const page = document.body.textContent ?? "";
+  // FREEDUET_INTELLIGENCE=off: threads and memory are in the install's own Postgres, and nothing is
+  // sent to a hosted memory service (server/src/freeduet/backend.ts, server/src/memory/store.ts).
+  expect(page).toContain(
+    "Your Bots and settings stay in this install's database.",
+  );
+  expect(page).toContain(
+    "Conversations and memory stay in that same database.",
+  );
+  expect(page).toContain("Nothing is sent to a hosted memory service.");
+  expect(page).toContain("What you ask goes to your AI model.");
+  expect(page).not.toContain("CopilotKit Intelligence");
+  expect(page).not.toContain("CopilotKit's cloud");
 });
 
 test("the organization step offers enterprise early access and CopilotKit's other products", async () => {
