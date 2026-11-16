@@ -365,4 +365,10 @@ Each stands on its own.
 
 ## 11. Built so far
 
-Nothing. This note is the first step; the slices in section 8 are not started.
+Slices S1 and S2, on the branch `office-files-s1-s2`, on 16 November 2026. Recorded as D58, section 38 of `docs/M1_PLAN.md`.
+
+- **S1.** `openbot/agent-computer/office-requirements.txt` (17 packages, exact versions and hashes; pypdfium2 left out; pdfplumber installed with `--no-deps`); a step in `openbot/agent-computer/Dockerfile` that builds `/opt/office`, links `office-python`, deletes the GPL sample font that reportlab carries, and installs `office-inspect`; `openbot/agent-computer/office-inspect/` (the program, its launcher and 34 pytest tests, which generate every file themselves); CI job `office-toolkit`; the NOTICE.md table; the two rows in `docs/UPSTREAM_TOUCHES.md`.
+- **S2.** Skills `spreadsheets` (Penny) and `word-documents` (Wren) in `skills.yaml`; one paragraph each in their prompts; four tests in `freeduet-package.test.ts`; eval cases penny-xlsx-1, penny-xlsx-2 (safety) and wren-docx-1; the counts that moved (89 cases, 40 safety).
+- **Verified here:** the 34 inspector tests on Python 3.12 (all 34 pass with the toolkit installed; 32 pass and 2 skip without it); the hashed install of the 17 packages on Python 3.12; the freeduet-package, freeduet-team, person-language, assertion-shape and evals/team tests; typecheck and Biome.
+- **Not verified:** no image was built (no Docker where this was written), so the Dockerfile step, the launcher's paths and the size cost are proved only by CI on main or on the `full-ci` label; the venv alone measured 86 MB on disk. No model wrote a file with the skills; the three cases are not run live. Excel and Word have not opened a file made this way.
+- **Decisions left to the maintainer:** see the report of the pull request: Pillow's bundled libraries (audit), the reportlab font (deleted), and whether the venv's `python` should replace `python3` on the PATH.

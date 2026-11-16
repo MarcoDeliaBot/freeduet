@@ -27,6 +27,31 @@ Installed from npm and used as they are, not copied into this repository. The fi
 | `temporal-spec` | 1.0.1 | Apache-2.0 | Pulled in by `rrule-temporal` and `temporal-polyfill`: types |
 | `@types/nodemailer` | 8.0.2 | MIT | Development only: type declarations |
 
+## Python libraries in the member's computer image, for office files (D58)
+
+Installed from PyPI when the `agent-computer` image is built and used as they are, not copied into this repository. `openbot/agent-computer/office-requirements.txt` pins every one to an exact version and to the hashes of its release files. The first seven are the libraries the members use; the rest come with them. Versions and licences are read from each installed package's own metadata (the licence of reportlab from its `license.txt`). None is GPL or copyleft. Where a licence is permissive but is not literally MIT, Apache-2.0 or BSD, the maintainer accepted it by name on 16 November 2026: Pillow, typing_extensions, defusedxml and cffi.
+
+| Library | Version | License | What it does here |
+|---|---|---|---|
+| [python-docx](https://github.com/python-openxml/python-docx) | 1.2.0 | MIT | Makes, reads and changes Word (.docx) files (Wren) |
+| [openpyxl](https://foss.heptapod.net/openpyxl/openpyxl) | 3.1.5 | MIT | Makes, reads and changes Excel (.xlsx) files; writes formulas but never calculates them (Penny) |
+| [python-pptx](https://github.com/scanny/python-pptx) | 1.0.2 | MIT | Makes, reads and changes PowerPoint (.pptx) files (no member holds a skill for it yet) |
+| [pypdf](https://github.com/py-pdf/pypdf) | 7.1.0 | BSD-3-Clause | Reads, merges, splits PDF files; used by `office-inspect` for a PDF's page count |
+| [reportlab](https://www.reportlab.com/opensource/) | 5.1.0 | BSD (three-clause; text in its `license.txt`, © ReportLab Inc.) | Makes PDF files |
+| [pdfplumber](https://github.com/jsvine/pdfplumber) | 0.11.10 | MIT | Reads the text and tables of a PDF. Installed without its `pypdfium2` requirement, so it cannot draw a page as a picture |
+| [defusedxml](https://github.com/tiran/defusedxml) | 0.7.1 | PSF-2.0 (the package says "PSFL") | Installed so that openpyxl guards its XML parsing against entity attacks, which it does only when this is present |
+| pdfminer.six | 20260107 | MIT | Pulled in by pdfplumber: reads PDF text |
+| lxml | 6.1.3 | BSD-3-Clause | Pulled in by python-docx and python-pptx: XML. The wheel carries libxml2 and libxslt compiled in (MIT licences in its `LICENSES.txt`) |
+| Pillow | 13.0.0 | MIT-CMU | Pulled in by python-pptx, reportlab and pdfplumber: images. The wheel carries compiled libraries, among them FreeType (used under the FreeType License; the GPL alternative is not used), libjpeg-turbo, libpng, libtiff, libwebp, libavif, lcms2, HarfBuzz, zstd and liblzma, with their licence texts in the wheel's `LICENSE`. Those texts were listed, not audited line by line |
+| XlsxWriter | 3.3.1 | BSD-2-Clause | Pulled in by python-pptx: charts inside a presentation |
+| et_xmlfile | 2.0.0 | MIT | Pulled in by openpyxl |
+| typing_extensions | 4.16.0 | PSF-2.0 | Pulled in by python-docx and python-pptx |
+| charset-normalizer | 3.5.2 | MIT | Pulled in by pdfminer.six |
+| cryptography | 50.0.2 | Apache-2.0 OR BSD-3-Clause | Pulled in by pdfminer.six and pypdf: encrypted PDFs. The wheel carries OpenSSL compiled in |
+| cffi, pycparser | 2.1.1, 3.12 | MIT-0, BSD-3-Clause | Pulled in by cryptography |
+
+Two things are left out on purpose. **pypdfium2** is not installed: its wheel bundles libraries nobody has audited. **One font** is deleted when the image is built: the reportlab wheel carries a sample font, DarkGarden, under the GPL with a font-embedding exception; nothing uses it, and the rule is no GPL in the image. reportlab also carries the Bitstream Vera fonts under their own free licence (`bitstream-vera-license.txt`, in the wheel). `office-inspect` itself, in `openbot/agent-computer/office-inspect/`, is FreeDuet's own code, written from scratch.
+
 ## Local Whisper for dictation (D25)
 
 Fetched or built on the person's own computer when they switch `FREEDUET_DICTATION=local` on, and used as they are. None of it is copied into this repository or shipped in an image FreeDuet publishes: `openbot/whisper/Dockerfile` downloads the source at a pinned tag and builds it there, and the model is downloaded on first start.

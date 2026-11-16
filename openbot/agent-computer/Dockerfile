@@ -30,11 +30,14 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 # an exact version and to its release files' hashes; `--no-deps` and `--only-binary` mean pip installs
 # exactly that list and builds nothing. The system `python3` is left alone: a member runs
 # `office-python script.py` for the toolkit. `office-inspect` is a stdlib-only program of ours that
-# reads a file and reports it; it runs with the same Python, in isolated mode.
+# reads a file and reports it; it runs with the same Python, in isolated mode. The reportlab wheel carries
+# one sample font (DarkGarden) under the GPL with a font exception; nothing uses it, and the rule is no
+# GPL in the image, so it is deleted after the install (reportlab still draws PDFs without it).
 COPY agent-computer/office-requirements.txt /opt/office-requirements.txt
 RUN python3 -m venv /opt/office \
   && /opt/office/bin/pip install --no-cache-dir --require-hashes --no-deps --only-binary=:all: \
        --requirement /opt/office-requirements.txt \
+  && find /opt/office -path '*/reportlab/fonts/DarkGarden*' -delete \
   && ln -s /opt/office/bin/python /usr/local/bin/office-python \
   && rm -rf /root/.cache
 COPY agent-computer/office-inspect/office_inspect.py /usr/local/lib/office-inspect/office_inspect.py

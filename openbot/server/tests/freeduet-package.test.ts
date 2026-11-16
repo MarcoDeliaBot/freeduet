@@ -839,7 +839,7 @@ describe("Office files: Penny's spreadsheets and Wren's Word documents", () => {
         }
       ).skills.map((skill) => [skill.slug, skill.instructions]),
     );
-    for (const slug of Object.values(OFFICE_SKILLS)) {
+    for (const [owner, slug] of Object.entries(OFFICE_SKILLS)) {
       const skill = tenantPackage.skills.find((s) => s.slug === slug);
       const body = written.get(slug) ?? "";
       expect({
@@ -861,9 +861,7 @@ describe("Office files: Penny's spreadsheets and Wren's Word documents", () => {
         oneLine: true,
         noPlaceholder: true,
         noEmDash: true,
-        holders: [
-          Object.entries(OFFICE_SKILLS).find(([, s]) => s === slug)?.[0],
-        ],
+        holders: [owner],
       });
     }
   });
@@ -895,17 +893,18 @@ describe("Office files: Penny's spreadsheets and Wren's Word documents", () => {
       "word-documents": [
         "use python-docx for .docx",
         "never a jump",
-        "nothing draws the pages",
+        "Nothing here is real Word and nothing draws the pages",
       ],
     };
     for (const slug of Object.values(OFFICE_SKILLS))
-      for (const sentence of [...common, ...own[slug]].filter(
-        (s) => !(slug === "word-documents" && s.startsWith("nothing draws")),
-      ))
+      for (const sentence of [...common, ...own[slug]])
         expect({ slug, sentence, said: text(slug).includes(sentence) }).toEqual(
-          { slug, sentence, said: true },
+          {
+            slug,
+            sentence,
+            said: true,
+          },
         );
-    expect(text("word-documents")).toContain("nothing draws the pages");
   });
 
   test("Penny's and Wren's prompts each gain one paragraph naming the skill and offer_file, and keep the Email and shared-rules paragraphs", async () => {
@@ -992,6 +991,7 @@ describe("Office files: Penny's spreadsheets and Wren's Word documents", () => {
       "--require-hashes --no-deps --only-binary=:all:",
     );
     expect(dockerfile).toContain("/usr/local/bin/office-inspect");
+    expect(dockerfile).toContain("reportlab/fonts/DarkGarden*' -delete");
     // The rule: no new apt packages for this, and the first apt-get line is the one it was.
     expect(dockerfile).toContain(
       "ca-certificates curl unzip xz-utils \\\n      ffmpeg git python3 python3-venv \\",
