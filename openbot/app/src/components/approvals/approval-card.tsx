@@ -1,3 +1,4 @@
+import { localizedReason } from "@openbot/shared/approval-text";
 import { AnimatePresence, motion } from "motion/react";
 import {
   type ComponentProps,
@@ -6,10 +7,10 @@ import {
   useId,
   useState,
 } from "react";
-import { localizedReason } from "@openbot/shared/approval-text";
-import { useApprovalLanguage } from "@/freeduet/person-language/approval-language";
 import { DuetIcon, type DuetIconName } from "@/components/duet/icons";
 import { DuetCard, OutcomePill, Rule, Tile } from "@/components/duet/kit";
+import { useApprovalLanguage } from "@/freeduet/person-language/approval-language";
+import { useWideBand } from "@/freeduet/wide/band";
 import {
   approvalOutcome,
   approvalPlace,
@@ -31,6 +32,27 @@ const KIND_ICON: Record<
   command: "wrench",
   other: "shield",
 };
+
+/**
+ * The left edge of a card on a wide screen (D55): coral while it waits on the person, and the colour of
+ * the outcome once it has one, green when it is done.
+ */
+function wideEdge(tone: "green" | "red" | "amber" | "blue" | null): string {
+  const colour =
+    tone === "green"
+      ? "border-l-duet-green"
+      : tone === "red"
+        ? "border-l-duet-red"
+        : tone === "amber"
+          ? "border-l-duet-amber"
+          : tone === "blue"
+            ? "border-l-duet-blue"
+            : "border-l-[var(--wide-coral)]";
+  return cn(
+    "border-l-4 [--wide-coral:#c8402a] dark:[--wide-coral:#f2907c]",
+    colour,
+  );
+}
 
 /** A pill button half the card wide, as the film draws Refuse and Allow once. */
 export function PillButton({
@@ -104,6 +126,8 @@ export function ApprovalCard({
   // A new email is asked about every time: there is nothing to "always allow" (server/src/proactive).
   const askEveryTime = request.action.policy?.source === "always_ask";
   const outcome = approvalOutcome(request);
+  // D55: from 1024 px the card is large, text on the left and the answers on the right.
+  const wide = useWideBand() !== "off";
   const receipt = waiting ? null : decisionReceipt(request);
   const caption = [botName, view.app, approvalPlace(request)]
     .filter(Boolean)
@@ -112,105 +136,129 @@ export function ApprovalCard({
   return (
     <DuetCard
       aria-label={waiting ? "Waiting for your approval" : undefined}
-      className={className}
+      className={cn(wide && wideEdge(outcome?.tone ?? null), className)}
       raised
       role={waiting ? "region" : undefined}
     >
-      <div className="relative flex min-h-[54px] items-center gap-2.5 px-4 py-2.5">
-        <Tile icon={KIND_ICON[view.kind]} size={32} />
-        <div className="min-w-0 flex-1">
-          <p className="type-row font-semibold">
-            {handOff && waiting ? `This needs you: ${view.title}` : view.title}
-          </p>
-          {caption ? (
-            <p className="type-label truncate text-duet-ink-3">{caption}</p>
+      <div
+        className={
+          wide ? "grid grid-cols-[minmax(0,1fr)_auto] items-center" : "contents"
+        }
+      >
+        <div className={wide ? "min-w-0 py-1" : "contents"}>
+          <div className="relative flex min-h-[54px] items-center gap-2.5 px-4 py-2.5">
+            <Tile icon={KIND_ICON[view.kind]} size={32} />
+            <div className="min-w-0 flex-1">
+              {wide && waiting ? (
+                <p className="type-label font-semibold text-[var(--wide-coral)]">
+                  Waiting for your OK
+                </p>
+              ) : null}
+              <p className="type-row font-semibold">
+                {handOff && waiting
+                  ? `This needs you: ${view.title}`
+                  : view.title}
+              </p>
+              {caption ? (
+                <p className="type-label truncate text-duet-ink-3">{caption}</p>
+              ) : null}
+            </div>
+            <AnimatePresence initial={arrives} mode="popLayout">
+              {outcome ? (
+                <motion.span
+                  animate={{ opacity: 1, scale: 1, filter: "blur(0px)" }}
+                  className="shrink-0"
+                  data-outcome={outcome.label}
+                  exit={
+                    reduced
+                      ? { opacity: 0 }
+                      : { opacity: 0, scale: 0.9, filter: "blur(2px)" }
+                  }
+                  initial={
+                    reduced
+                      ? { opacity: 0 }
+                      : { opacity: 0, scale: 0.85, filter: "blur(2px)" }
+                  }
+                  key={outcome.label}
+                  transition={{ duration: DURATION.swap, ease: EASE_OUT }}
+                >
+                  <OutcomePill
+                    icon={outcome.tone === "green" ? "check" : null}
+                    tone={outcome.tone}
+                  >
+                    {outcome.label}
+                  </OutcomePill>
+                </motion.span>
+              ) : null}
+            </AnimatePresence>
+          </div>
+          {compact ? null : (
+            <ApprovalContent
+              handOff={handOff}
+              language={language}
+              request={request}
+              view={view}
+            />
+          )}
+          {error ? (
+            <p className="type-label px-4 pb-2 text-duet-red" role="alert">
+              {error}
+            </p>
           ) : null}
         </div>
-        <AnimatePresence initial={arrives} mode="popLayout">
-          {outcome ? (
-            <motion.span
-              animate={{ opacity: 1, scale: 1, filter: "blur(0px)" }}
-              className="shrink-0"
-              data-outcome={outcome.label}
-              exit={
-                reduced
-                  ? { opacity: 0 }
-                  : { opacity: 0, scale: 0.9, filter: "blur(2px)" }
-              }
-              initial={
-                reduced
-                  ? { opacity: 0 }
-                  : { opacity: 0, scale: 0.85, filter: "blur(2px)" }
-              }
-              key={outcome.label}
-              transition={{ duration: DURATION.swap, ease: EASE_OUT }}
+        {waiting && onDecide ? (
+          <div
+            className={cn("px-4 pt-1 pb-3", wide && "pr-5 pl-2 pt-3")}
+            data-approval-actions=""
+          >
+            <div
+              className={cn(
+                "flex flex-wrap gap-2",
+                wide &&
+                  "flex-nowrap [&>button]:flex-none [&>button]:whitespace-nowrap [&>button]:px-6",
+              )}
             >
-              <OutcomePill
-                icon={outcome.tone === "green" ? "check" : null}
-                tone={outcome.tone}
+              {handOff ? (
+                <>
+                  <PillButton disabled={busy} onClick={() => onDecide("deny")}>
+                    Don't do it
+                  </PillButton>
+                  <PillButton
+                    disabled={busy}
+                    onClick={() => onDecide("handled")}
+                    primary
+                  >
+                    I did it myself
+                  </PillButton>
+                </>
+              ) : (
+                <>
+                  <PillButton disabled={busy} onClick={() => onDecide("deny")}>
+                    Refuse
+                  </PillButton>
+                  <PillButton
+                    disabled={busy}
+                    onClick={() => onDecide("allow_once")}
+                    primary
+                  >
+                    Allow once
+                  </PillButton>
+                </>
+              )}
+            </div>
+            {handOff || askEveryTime ? null : (
+              <button
+                className="type-sub mx-auto mt-1 flex h-11 items-center rounded-full px-3 font-medium text-duet-ink-2 transition-colors hover:text-duet-ink focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-duet-accent/40 disabled:opacity-50"
+                disabled={busy}
+                onClick={() => onDecide("allow_always")}
+                type="button"
               >
-                {outcome.label}
-              </OutcomePill>
-            </motion.span>
-          ) : null}
-        </AnimatePresence>
-      </div>
-      {compact ? null : (
-        <ApprovalContent
-          handOff={handOff}
-          language={language}
-          request={request}
-          view={view}
-        />
-      )}
-      {error ? (
-        <p className="type-label px-4 pb-2 text-duet-red" role="alert">
-          {error}
-        </p>
-      ) : null}
-      {waiting && onDecide ? (
-        <div className="px-4 pt-1 pb-3">
-          <div className="flex flex-wrap gap-2">
-            {handOff ? (
-              <>
-                <PillButton disabled={busy} onClick={() => onDecide("deny")}>
-                  Don't do it
-                </PillButton>
-                <PillButton
-                  disabled={busy}
-                  onClick={() => onDecide("handled")}
-                  primary
-                >
-                  I did it myself
-                </PillButton>
-              </>
-            ) : (
-              <>
-                <PillButton disabled={busy} onClick={() => onDecide("deny")}>
-                  Refuse
-                </PillButton>
-                <PillButton
-                  disabled={busy}
-                  onClick={() => onDecide("allow_once")}
-                  primary
-                >
-                  Allow once
-                </PillButton>
-              </>
+                Always allow
+              </button>
             )}
           </div>
-          {handOff || askEveryTime ? null : (
-            <button
-              className="type-sub mx-auto mt-1 flex h-11 items-center rounded-full px-3 font-medium text-duet-ink-2 transition-colors hover:text-duet-ink focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-duet-accent/40 disabled:opacity-50"
-              disabled={busy}
-              onClick={() => onDecide("allow_always")}
-              type="button"
-            >
-              Always allow
-            </button>
-          )}
-        </div>
-      ) : null}
+        ) : null}
+      </div>
       <AnimatePresence initial={arrives}>
         {receipt ? (
           <motion.div

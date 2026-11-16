@@ -1,5 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { type ReactNode, useState } from "react";
+import { createPortal } from "react-dom";
+import { usePinnedSlot } from "@/freeduet/wide/pinned";
 import { personWasAsked } from "@/lib/approval-view";
 import {
   approvalInboxOptions,
@@ -35,6 +37,8 @@ export function InlineApproval({
       )
     : undefined;
   const [sawWaiting, setSawWaiting] = useState(false);
+  // D55: on a wide screen the waiting card is drawn in the strip at the top of the conversation.
+  const pinned = usePinnedSlot();
   if (request?.status === "pending" && !sawWaiting) setSawWaiting(true);
   if (!request) return <>{fallback}</>;
   if (request.status !== "pending") {
@@ -46,7 +50,7 @@ export function InlineApproval({
       </div>
     );
   }
-  return (
+  const card = (
     <ApprovalCard
       busy={decision.isPending}
       error={decision.error?.message ?? null}
@@ -54,6 +58,7 @@ export function InlineApproval({
       request={request}
     />
   );
+  return pinned ? createPortal(card, pinned) : card;
 }
 
 /**
