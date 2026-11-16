@@ -261,7 +261,7 @@ export function approvalText(
   return fill(pick(EN[id], "en", values), values);
 }
 
-const escape = (text: string) => text.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+const escapeRegExp = (text: string) => text.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
 const REASON_PATTERNS = (Object.keys(EN) as ApprovalTextId[])
   .filter((id) => id.startsWith("reason.") && typeof EN[id] === "string")
@@ -270,7 +270,7 @@ const REASON_PATTERNS = (Object.keys(EN) as ApprovalTextId[])
     pattern: new RegExp(
       `^${(EN[id] as string)
         .split(/\{\w+\}/)
-        .map(escape)
+        .map(escapeRegExp)
         .join("([\\s\\S]+)")}$`,
     ),
     names: [...(EN[id] as string).matchAll(/\{(\w+)\}/g)].map((m) => m[1]),
