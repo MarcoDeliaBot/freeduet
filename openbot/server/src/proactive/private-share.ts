@@ -23,6 +23,7 @@
  * and either throws the returned suspension (headless turns wait and resume on the decision) or
  * answers the model with the message.
  */
+import { approvalText } from "@openbot/shared/approval-text";
 import { createHash } from "node:crypto";
 import {
   type ApprovalContinuation,
@@ -95,8 +96,7 @@ export type PrivateShareInput = {
 export const ASK_EVERY_TIME: ApprovalPolicyOutcome = {
   behaviour: "ask",
   source: "always_ask",
-  reason:
-    "A new email is asked about every time. Check who it goes to and what it says, then allow this one or refuse it.",
+  reason: approvalText("reason.newEmail", "en"),
 };
 
 export type PrivateShareVerdict =

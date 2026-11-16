@@ -1,3 +1,4 @@
+import { approvalText } from "@openbot/shared/approval-text";
 import { REMOTE_SESSION_LIMITED } from "../auth/remote-limits";
 import { safetyRequirement } from "./policy";
 import type { ApprovalAction } from "./types";
@@ -17,8 +18,10 @@ import type { ApprovalAction } from "./types";
  */
 
 /** What a person is told. It says why and where to answer. The request is left as it was. */
-export const REMOTE_ANSWER_SENTENCE =
-  "A browser that is not paired with the computer FreeDuet runs on can allow an ordinary request once or deny it. This one is answered at the computer, where you can read it in full. It is still waiting there.";
+export const REMOTE_ANSWER_SENTENCE = approvalText(
+  "remote.answerSentence",
+  "en",
+);
 
 /**
  * The words of a call that connect, authorise, install, share or open something up, or that drive a computer:
