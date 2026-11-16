@@ -5,6 +5,7 @@
  */
 import { afterAll, describe, expect, test } from "bun:test";
 import { randomUUID } from "node:crypto";
+import { crc32 } from "node:zlib";
 import { inArray } from "drizzle-orm";
 import { Hono } from "hono";
 import type { AppVariables } from "../src/auth/guards";
@@ -23,6 +24,7 @@ import {
   WRONG_PER_MINUTE,
   WRONG_WINDOW_MS,
 } from "../src/programs/pairing";
+import { HELPER_FILES, HELPER_ZIP_NAME } from "../src/programs/helper-bundle";
 import { createProgramsRoutes } from "../src/programs/routes";
 import { createProgramsSwitch } from "../src/programs/switch";
 import { TEST_POOL, testDatabaseUrl } from "./support/database";
@@ -49,7 +51,15 @@ afterAll(async () => {
   await database.$client.close();
 });
 
-function build(actorId: string, gate?: PairingGate) {
+function build(
+  actorId: string,
+  gate?: PairingGate,
+  extra: {
+    helperDir?: string;
+    auditStore?: { insert: (event: unknown) => Promise<void> };
+    singleUserWithoutSecret?: boolean;
+  } = {},
+) {
   const broker = createProgramsBroker({
     deploymentKey: KEY,
     salt: (a) => programsSwitch.saltOf(a),
@@ -81,6 +91,11 @@ function build(actorId: string, gate?: PairingGate) {
         await next();
       }) as never,
       ...(gate ? { pairing: gate } : {}),
+      ...(extra.helperDir ? { helperDir: extra.helperDir } : {}),
+      ...(extra.auditStore ? { auditStore: extra.auditStore as never } : {}),
+      ...(extra.singleUserWithoutSecret
+        ? { singleUserWithoutSecret: true }
+        : {}),
       programsPairing,
     }),
   );
@@ -395,6 +410,183 @@ describe("redeeming a code", () => {
       "secret",
       "serverTime",
     ]);
+  });
+});
+
+/** Reads a "stored" zip written by `zipStored`: entry name, bytes and the CRC-32 the header declares. */
+function readStoredZip(zip: Buffer) {
+  const entries: Array<{ name: string; data: Buffer; crc: number }> = [];
+  let at = 0;
+  while (zip.readUInt32LE(at) === 0x04034b50) {
+    expect(zip.readUInt16LE(at + 8)).toBe(0); // stored
+    const crc = zip.readUInt32LE(at + 14);
+    const size = zip.readUInt32LE(at + 18);
+    const nameLength = zip.readUInt16LE(at + 26);
+    const extraLength = zip.readUInt16LE(at + 28);
+    const name = zip.subarray(at + 30, at + 30 + nameLength).toString("utf8");
+    const start = at + 30 + nameLength + extraLength;
+    entries.push({ name, data: zip.subarray(start, start + size), crc });
+    at = start + size;
+  }
+  return entries;
+}
+const HELPER_SOURCE = new URL("../../scripts/programs-helper/", import.meta.url)
+  .pathname;
+
+describe("handing the helper to the person at the computer", () => {
+  const url = "/api/programs/pairing/helper.zip";
+
+  test("the person at the computer gets a zip with attachment headers and a fixed name", async () => {
+    const id = await person();
+    const { routes } = build(id);
+    const response = await routes.request(url, {}, LOOPBACK_PEER as never);
+    expect(response.status).toBe(200);
+    expect(response.headers.get("content-type")).toBe("application/zip");
+    expect(response.headers.get("content-disposition")).toBe(
+      `attachment; filename="${HELPER_ZIP_NAME}"`,
+    );
+    expect(response.headers.get("cache-control")).toBe("no-store");
+    expect(response.headers.get("x-content-type-options")).toBe("nosniff");
+  });
+
+  test("the bytes served are the files of the repository, four fixed names, each with its own CRC-32", async () => {
+    const id = await person();
+    const { routes } = build(id);
+    const zip = Buffer.from(
+      await (
+        await routes.request(url, {}, LOOPBACK_PEER as never)
+      ).arrayBuffer(),
+    );
+    const entries = readStoredZip(zip);
+    expect(entries.map((e) => e.name)).toEqual([...HELPER_FILES]);
+    expect(HELPER_FILES.length).toBe(4);
+    for (const entry of entries) {
+      const real = Buffer.from(
+        await Bun.file(`${HELPER_SOURCE}${entry.name}`).arrayBuffer(),
+      );
+      expect(Buffer.compare(entry.data, real)).toBe(0);
+      expect(entry.crc).toBe(crc32(real));
+    }
+  });
+
+  test("a name or path in the request changes nothing: no traversal is possible", async () => {
+    const id = await person();
+    const { routes } = build(id);
+    const plain = Buffer.from(
+      await (
+        await routes.request(url, {}, LOOPBACK_PEER as never)
+      ).arrayBuffer(),
+    );
+    for (const odd of [
+      `${url}?file=../../../../etc/passwd`,
+      `${url}?name=setup.ps1&path=..%2F..`,
+    ]) {
+      const response = await routes.request(odd, {}, LOOPBACK_PEER as never);
+      expect(response.status).toBe(200);
+      expect(
+        Buffer.compare(Buffer.from(await response.arrayBuffer()), plain),
+      ).toBe(0);
+    }
+    for (const other of [
+      "/api/programs/pairing/..%2F..%2Fsetup.ps1",
+      "/api/programs/pairing/setup.ps1",
+      "/api/programs/pairing/helper.zip/extra",
+    ])
+      expect(
+        (await routes.request(other, {}, LOOPBACK_PEER as never)).status,
+      ).toBe(404);
+  });
+
+  test("refused to a request not at the computer, to a remote session, and without the installation secret", async () => {
+    const id = await person();
+    expect((await build(id).routes.request(url)).status).toBe(403);
+    const remote = {
+      pairings: { standing: async () => null },
+    } as unknown as PairingGate;
+    expect(
+      (await build(id, remote).routes.request(url, {}, LOOPBACK_PEER as never))
+        .status,
+    ).toBe(403);
+    const without = await build(id, undefined, {
+      singleUserWithoutSecret: true,
+    }).routes.request(url, {}, LOOPBACK_PEER as never);
+    expect(without.status).toBe(403);
+    expect(without.headers.get("content-type")).not.toBe("application/zip");
+  });
+
+  test("is on the remote deny list, like the other pairing routes", () => {
+    const entry = decidingEntry("GET", [
+      "api",
+      "programs",
+      "pairing",
+      "helper.zip",
+    ]);
+    expect(entry?.family).toBe("computers");
+    expect(entry?.verdict).toBe("refuse");
+    expect(remoteMayReach("GET", "/api/programs/pairing/helper.zip")).toBe(
+      false,
+    );
+  });
+
+  test("one audit row per download, with no file content, and none for a refusal", async () => {
+    const id = await person();
+    const rows: unknown[] = [];
+    const auditStore = {
+      insert: async (event: unknown) => {
+        rows.push(event);
+      },
+    };
+    const { routes } = build(id, undefined, { auditStore });
+    await routes.request(url);
+    expect(rows.length).toBe(0);
+    await routes.request(url, {}, LOOPBACK_PEER as never);
+    expect(rows.length).toBe(1);
+    const row = rows[0] as {
+      actorUserId: string;
+      payload: { change: string; bytes: number };
+    };
+    expect(row.actorUserId).toBe(id);
+    expect(row.payload.change).toBe("programs_helper_downloaded");
+    expect(typeof row.payload.bytes).toBe("number");
+  });
+
+  test("a deployment without the folder answers 404 with a plain sentence", async () => {
+    const id = await person();
+    const { routes } = build(id, undefined, {
+      helperDir: `${HELPER_SOURCE}missing-folder`,
+    });
+    const response = await routes.request(url, {}, LOOPBACK_PEER as never);
+    expect(response.status).toBe(404);
+    expect(((await response.json()) as { error: string }).error).toContain(
+      "does not carry the helper's files",
+    );
+  });
+
+  test("the page links to the download and shows the two lines to run, with the CSP and frame limits kept", async () => {
+    const id = await person();
+    const { routes } = build(id);
+    const page = await routes.request(
+      "/api/programs/pairing",
+      {},
+      LOOPBACK_PEER as never,
+    );
+    const html = await page.text();
+    expect(html).toContain('href="/api/programs/pairing/helper.zip"');
+    expect(html).toContain("Unblock-File .\\*.ps1");
+    expect(html).toContain(
+      "powershell -NoProfile -ExecutionPolicy RemoteSigned -File .\\setup.ps1",
+    );
+    expect(html).toContain("into that window only");
+    expect(html).toContain('(not "as administrator")');
+    const csp = page.headers.get("content-security-policy") ?? "";
+    expect(csp).toContain("frame-ancestors 'none'");
+    expect(csp).toContain("default-src 'none'");
+    // The hash in the policy is the hash of the one inline script the page carries.
+    const script = /<script>([\s\S]*)<\/script>/.exec(html)?.[1] ?? "";
+    const hash = new Bun.CryptoHasher("sha256").update(script).digest("base64");
+    expect(csp).toContain(`script-src 'sha256-${hash}'`);
+    expect(page.headers.get("x-frame-options")).toBe("DENY");
+    expect(page.headers.get("cache-control")).toBe("no-store");
   });
 });
 

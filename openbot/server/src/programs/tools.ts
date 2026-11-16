@@ -49,7 +49,7 @@ export const PROGRAMS_MEMBER = "fixer";
 const empty = z.strictObject({});
 
 const SWITCHED_OFF =
-  "Programs on this computer are switched off. The person can switch them on in Settings.";
+  "Programs on this computer are switched off. The person can switch them on, at this computer, on the page /api/programs/pairing of FreeDuet (there is no Settings screen for it yet).";
 
 type Outcome = "requested" | "succeeded" | "refused" | "failed";
 

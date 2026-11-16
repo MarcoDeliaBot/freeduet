@@ -211,8 +211,8 @@ function Test-ExactNames {
 # its containment in that folder is checked; a link is refused). That folder (under Program Files\WindowsApps) can be
 # changed only by an administrator or the system, so a program running as a normal user cannot put another winget.exe
 # there. It is NOT looked up in the current folder and NOT searched in PATH. On top of that the file must carry a VALID
-# Authenticode signature whose signer's organisation (the O= part of the subject, parsed, not searched for as text) is
-# exactly "Microsoft Corporation". If it cannot be found like this the helper does not run, and says why in the log.
+# Authenticode signature whose signer's organisation (read from the certificate's own name, see Read-DerElement) is exactly
+# "Microsoft Corporation", with the code-signing purpose. If it cannot be found like this the helper does not run, and says why in the log.
 #
 # AN EXPLICIT PATH (setup -WingetPath): an absolute path to a file called winget.exe, with the same signature check. If
 # it is NOT inside the App Installer folder, neither it nor any folder above it may be writable by the current user
@@ -229,43 +229,94 @@ function Test-ExactNames {
 # same full path. What remains: PowerShell cannot hand an open file to Process.Start, so a program that can change the
 # folder above (an administrator, or you with -AllowWritableWingetFolder) could still swap the directory between the
 # check and the start. The alias is not covered at all.
-function Get-MicrosoftSignerOrganizations {
-    param([string]$Subject)
-    # The subject is cut into its components the way X.500 names are written: at a comma that is not inside double quotes
-    # and not escaped with a backslash. An "O=" that sits inside a quoted value (a CN of "x, O=Microsoft Corporation, y")
-    # is part of that value and is never an organisation of its own.
-    $parts = New-Object System.Collections.ArrayList
-    $current = New-Object System.Text.StringBuilder
-    $inQuotes = $false
-    $chars = $Subject.ToCharArray()
-    for ($i = 0; $i -lt $chars.Length; $i++) {
-        $c = $chars[$i]
-        if ($c -eq [char]'"') {
-            [void]$current.Append($c)
-            if ($inQuotes -and ($i + 1) -lt $chars.Length -and $chars[$i + 1] -eq [char]'"') { [void]$current.Append($chars[$i + 1]); $i++ }
-            else { $inQuotes = -not $inQuotes }
-        }
-        elseif ($c -eq [char]'\' -and ($i + 1) -lt $chars.Length) { [void]$current.Append($c); [void]$current.Append($chars[$i + 1]); $i++ }
-        elseif ($c -eq [char]',' -and -not $inQuotes) { [void]$parts.Add($current.ToString()); [void]$current.Clear() }
-        else { [void]$current.Append($c) }
+# THE SIGNER'S NAME IS READ FROM THE CERTIFICATE'S OWN BYTES, never from the text Windows prints for it. A subject string
+# is a display form (commas, quotes, escapes, "+", ";", hex, OID spellings) and every hand-made reader of it can be fooled.
+# So: the subject's DER (SubjectName.RawData) is walked as the standard defines it, name -> relative names -> attribute
+# type and value, and the helper requires exactly ONE attribute of type 2.5.4.10 (organisation) in the whole name, in a
+# relative name of its own (no multi-valued "+" name anywhere), whose value is, character for character and with no
+# trimming, "Microsoft Corporation"; and the certificate must carry the code-signing purpose (1.3.6.1.5.5.7.3.3).
+function Read-DerElement {
+    param([byte[]]$Bytes, [int]$Offset, [int]$End)
+    if ($Offset + 2 -gt $End) { return $null }
+    $tag = [int]$Bytes[$Offset]
+    $first = [int]$Bytes[$Offset + 1]
+    $position = $Offset + 2
+    $length = 0
+    if ($first -lt 128) { $length = $first }
+    else {
+        $count = $first -band 127
+        if ($count -lt 1 -or $count -gt 3 -or ($position + $count) -gt $End) { return $null }
+        for ($i = 0; $i -lt $count; $i++) { $length = ($length * 256) + [int]$Bytes[$position + $i] }
+        $position += $count
     }
-    [void]$parts.Add($current.ToString())
-    $found = New-Object System.Collections.ArrayList
-    foreach ($part in $parts) {
-        $text = $part.TrimStart()
-        if ($text.StartsWith('O=', [System.StringComparison]::Ordinal)) {
-            $value = $text.Substring(2).Trim()
-            if ($value.Length -ge 2 -and $value.StartsWith('"') -and $value.EndsWith('"')) { $value = $value.Substring(1, $value.Length - 2).Replace('""', '"').Trim() }
-            [void]$found.Add($value)
-        }
-    }
-    return , $found.ToArray()
+    if (($position + $length) -gt $End) { return $null }
+    return @{ Tag = $tag; Start = $position; Len = $length; Next = ($position + $length) }
 }
 
-function Test-MicrosoftSignerSubject {
-    param([string]$Subject)
-    $orgs = Get-MicrosoftSignerOrganizations -Subject $Subject
-    return ($orgs.Count -eq 1 -and $orgs[0] -ceq 'Microsoft Corporation')
+function Get-DerSlice {
+    param([byte[]]$Bytes, $Element)
+    $slice = New-Object byte[] $Element.Len
+    if ($Element.Len -gt 0) { [Array]::Copy($Bytes, $Element.Start, $slice, 0, $Element.Len) }
+    return , $slice
+}
+
+# Returns @{ Ok; Organizations; MultiValued }. Ok is $false for anything that is not a well-formed name.
+function Get-DistinguishedNameParts {
+    param([byte[]]$Raw)
+    $bad = @{ Ok = $false; Organizations = @(); MultiValued = $false }
+    if ($null -eq $Raw -or $Raw.Length -lt 2) { return $bad }
+    $top = Read-DerElement -Bytes $Raw -Offset 0 -End $Raw.Length
+    if ($null -eq $top -or $top.Tag -ne 48 -or $top.Next -ne $Raw.Length) { return $bad }
+    $orgs = New-Object System.Collections.ArrayList
+    $multi = $false
+    $at = $top.Start
+    while ($at -lt $top.Next) {
+        $set = Read-DerElement -Bytes $Raw -Offset $at -End $top.Next
+        if ($null -eq $set -or $set.Tag -ne 49) { return $bad }
+        $at = $set.Next
+        $inner = $set.Start
+        $count = 0
+        while ($inner -lt $set.Next) {
+            $seq = Read-DerElement -Bytes $Raw -Offset $inner -End $set.Next
+            if ($null -eq $seq -or $seq.Tag -ne 48) { return $bad }
+            $inner = $seq.Next
+            $count++
+            $oid = Read-DerElement -Bytes $Raw -Offset $seq.Start -End $seq.Next
+            if ($null -eq $oid -or $oid.Tag -ne 6 -or $oid.Len -lt 1) { return $bad }
+            $value = Read-DerElement -Bytes $Raw -Offset $oid.Next -End $seq.Next
+            if ($null -eq $value -or $value.Next -ne $seq.Next) { return $bad }
+            $oidHex = [BitConverter]::ToString((Get-DerSlice -Bytes $Raw -Element $oid)).Replace('-', '').ToLowerInvariant()
+            if ($oidHex -ceq '55040a') {
+                $valueBytes = Get-DerSlice -Bytes $Raw -Element $value
+                $text = $null
+                if (@(12, 19, 20, 22) -contains $value.Tag) { $text = [System.Text.Encoding]::UTF8.GetString($valueBytes) }
+                elseif ($value.Tag -eq 30) { $text = [System.Text.Encoding]::BigEndianUnicode.GetString($valueBytes) }
+                [void]$orgs.Add($text)
+            }
+        }
+        if ($count -ne 1) { $multi = $true }
+    }
+    return @{ Ok = $true; Organizations = $orgs.ToArray(); MultiValued = $multi }
+}
+
+function Test-MicrosoftSignerCertificate {
+    param($Certificate)
+    try {
+        if ($null -eq $Certificate) { return $false }
+        $parts = Get-DistinguishedNameParts -Raw ([byte[]]$Certificate.SubjectName.RawData)
+        if (-not $parts.Ok -or $parts.MultiValued) { return $false }
+        $orgs = @($parts.Organizations)
+        if ($orgs.Count -ne 1) { return $false }
+        if (-not ($orgs[0] -ceq 'Microsoft Corporation')) { return $false }
+        foreach ($extension in $Certificate.Extensions) {
+            if ($extension.Oid.Value -ceq '2.5.29.37') {
+                $usage = New-Object System.Security.Cryptography.X509Certificates.X509EnhancedKeyUsageExtension($extension, $extension.Critical)
+                foreach ($purpose in $usage.EnhancedKeyUsages) { if ($purpose.Value -ceq '1.3.6.1.5.5.7.3.3') { return $true } }
+            }
+        }
+        return $false
+    }
+    catch { return $false }
 }
 
 function Test-MicrosoftSignature {
@@ -273,7 +324,7 @@ function Test-MicrosoftSignature {
     try {
         $signature = Get-AuthenticodeSignature -LiteralPath $Path
         if ($signature.Status -ne 'Valid') { return $false }
-        return (Test-MicrosoftSignerSubject -Subject ([string]$signature.SignerCertificate.Subject))
+        return (Test-MicrosoftSignerCertificate -Certificate $signature.SignerCertificate)
     }
     catch { return $false }
 }
@@ -918,6 +969,7 @@ function Invoke-HelperMain {
         try { $seen = Read-SeenIds -Directory $directory -Now (Get-NowMilliseconds) }
         catch {
             Write-HelperLog 'start' ('cannot start: the list of operations already done could not be read safely (' + $_.Exception.Message + '). Move or delete seen.txt yourself, then start again.')
+            Show-HelperToast -Text 'FreeDuet programs helper cannot start: its file seen.txt is too large or unreadable. Move or delete that file, then start the task again.'
             return 3
         }
         $cycles = 0

@@ -559,40 +559,98 @@ Describe 'Refusing to run elevated' {
     }
 }
 
-Describe 'Who signed winget: the subject must name Microsoft Corporation and nobody else (B1)' {
-    It 'accepts the real subject of the App Installer, and a quoted form of the same organisation' {
-        Test-MicrosoftSignerSubject -Subject 'CN=Microsoft Corporation, O=Microsoft Corporation, L=Redmond, S=Washington, C=US' | Should -BeTrue
-        Test-MicrosoftSignerSubject -Subject 'CN=Microsoft Corporation, O="Microsoft Corporation", L=Redmond, S=Washington, C=US' | Should -BeTrue
-        Test-MicrosoftSignerSubject -Subject 'O=Microsoft Corporation' | Should -BeTrue
+Describe 'Who signed winget: the certificate itself must name Microsoft Corporation and nobody else (B1)' {
+    BeforeAll {
+        $script:CodeSigning = '1.3.6.1.5.5.7.3.3'
+        # A real certificate object, made here: a self-signed one with the subject (a string, or a hand-made DER name) and the purpose.
+        function New-TestCertificate {
+            param($Subject, [string]$Purpose = '1.3.6.1.5.5.7.3.3')
+            $rsa = [System.Security.Cryptography.RSA]::Create(2048)
+            $hash = [System.Security.Cryptography.HashAlgorithmName]::SHA256
+            $padding = [System.Security.Cryptography.RSASignaturePadding]::Pkcs1
+            $name = $Subject
+            if ($Subject -is [byte[]]) { $name = New-Object System.Security.Cryptography.X509Certificates.X500DistinguishedName(, $Subject) }
+            $request = New-Object System.Security.Cryptography.X509Certificates.CertificateRequest($name, $rsa, $hash, $padding)
+            if ($Purpose -ne '') {
+                $oids = New-Object System.Security.Cryptography.OidCollection
+                [void]$oids.Add((New-Object System.Security.Cryptography.Oid($Purpose)))
+                $request.CertificateExtensions.Add((New-Object System.Security.Cryptography.X509Certificates.X509EnhancedKeyUsageExtension($oids, $false)))
+            }
+            return $request.CreateSelfSigned([DateTimeOffset]::UtcNow.AddDays(-1), [DateTimeOffset]::UtcNow.AddDays(1))
+        }
+        # A name made by hand, DER, with one attribute per relative name: @(@(oidBytes, tag, valueBytes), ...).
+        function New-DerElement([int]$Tag, [byte[]]$Content) {
+            [byte[]]$out = @([byte]$Tag, [byte]$Content.Length) + $Content
+            return , $out
+        }
+        function New-DerName($Attributes, [bool]$OneSet = $false) {
+            $sets = @()
+            $all = @()
+            foreach ($attribute in $Attributes) {
+                $pair = (New-DerElement 6 ([byte[]]$attribute[0])) + (New-DerElement ([int]$attribute[1]) ([byte[]]$attribute[2]))
+                $sequence = New-DerElement 48 ([byte[]]$pair)
+                if ($OneSet) { $all += $sequence } else { $sets += , (New-DerElement 49 ([byte[]]$sequence)) }
+            }
+            if ($OneSet) { $sets = @(, (New-DerElement 49 ([byte[]]$all))) }
+            $body = @()
+            foreach ($set in $sets) { $body += $set }
+            return , ([byte[]](New-DerElement 48 ([byte[]]$body)))
+        }
+        $script:OrgOid = [byte[]](0x55, 0x04, 0x0A)
+        $script:CnOid = [byte[]](0x55, 0x04, 0x03)
     }
-    It 'refuses a name that only begins with Microsoft Corporation' {
-        Test-MicrosoftSignerSubject -Subject 'CN=Microsoft Corporation, O=Microsoft Corporation Evil, C=US' | Should -BeFalse
-        Test-MicrosoftSignerSubject -Subject 'O=Microsoft Corporation Ltd' | Should -BeFalse
-        Test-MicrosoftSignerSubject -Subject 'O=Evil Microsoft Corporation' | Should -BeFalse
-        Test-MicrosoftSignerSubject -Subject 'O=Microsoft Corporation+OU=x' | Should -BeFalse
+    It 'accepts the real shape of the App Installer subject, with the code-signing purpose' {
+        $cert = New-TestCertificate -Subject 'CN=Microsoft Corporation, O=Microsoft Corporation, L=Redmond, S=Washington, C=US'
+        Test-MicrosoftSignerCertificate -Certificate $cert | Should -BeTrue
     }
-    It 'refuses a subject with two organisations, whatever their order' {
-        Test-MicrosoftSignerSubject -Subject 'CN=x, O=Microsoft Corporation, O=Evil Ltd, C=US' | Should -BeFalse
-        Test-MicrosoftSignerSubject -Subject 'CN=x, O=Evil Ltd, O=Microsoft Corporation, C=US' | Should -BeFalse
-        Test-MicrosoftSignerSubject -Subject 'O=Microsoft Corporation, O=Microsoft Corporation' | Should -BeFalse
+    It 'accepts the same organisation spelled with semicolons, and as a quoted value (the same attribute)' {
+        Test-MicrosoftSignerCertificate -Certificate (New-TestCertificate -Subject 'CN=x; O=Microsoft Corporation; C=US') | Should -BeTrue
+        Test-MicrosoftSignerCertificate -Certificate (New-TestCertificate -Subject 'CN=x, O="Microsoft Corporation", C=US') | Should -BeTrue
     }
-    It 'does not read an O= that sits inside a quoted value as an organisation' {
-        # The only O= component here is "Evil Inc"; the Microsoft text is part of the quoted CN.
-        Test-MicrosoftSignerSubject -Subject 'CN="Evil, O=Microsoft Corporation", O=Evil Inc, C=US' | Should -BeFalse
-        # No organisation component at all, only the quoted text: this was accepted by the first version of the check.
-        Test-MicrosoftSignerSubject -Subject 'CN="x, O=Microsoft Corporation, y", C=US' | Should -BeFalse
-        Test-MicrosoftSignerSubject -Subject 'CN="O=Microsoft Corporation", C=US' | Should -BeFalse
-        (Get-MicrosoftSignerOrganizations -Subject 'CN="x, O=Microsoft Corporation, y", O=Real Org').Count | Should -Be 1
-        (Get-MicrosoftSignerOrganizations -Subject 'CN="x, O=Microsoft Corporation, y", O=Real Org')[0] | Should -BeExactly 'Real Org'
+    It 'accepts the organisation as a BMPString or a PrintableString (the text is read as its type says)' {
+        $bmp = [System.Text.Encoding]::BigEndianUnicode.GetBytes('Microsoft Corporation')
+        $ascii = [System.Text.Encoding]::ASCII.GetBytes('Microsoft Corporation')
+        Test-MicrosoftSignerCertificate -Certificate (New-TestCertificate -Subject (New-DerName @(, @($script:OrgOid, 30, $bmp)))) | Should -BeTrue
+        Test-MicrosoftSignerCertificate -Certificate (New-TestCertificate -Subject (New-DerName @(, @($script:OrgOid, 19, $ascii)))) | Should -BeTrue
     }
-    It 'is case sensitive, and refuses an empty, blank or organisation-less subject' {
-        Test-MicrosoftSignerSubject -Subject 'O=microsoft corporation' | Should -BeFalse
-        Test-MicrosoftSignerSubject -Subject 'O=MICROSOFT CORPORATION' | Should -BeFalse
-        Test-MicrosoftSignerSubject -Subject 'o=Microsoft Corporation' | Should -BeFalse
-        Test-MicrosoftSignerSubject -Subject '' | Should -BeFalse
-        Test-MicrosoftSignerSubject -Subject '   ' | Should -BeFalse
-        Test-MicrosoftSignerSubject -Subject $null | Should -BeFalse
-        Test-MicrosoftSignerSubject -Subject 'CN=Microsoft Corporation, L=Redmond, C=US' | Should -BeFalse
+    It 'refuses a name that only begins or ends with Microsoft Corporation, in another case, or with spaces round it' {
+        foreach ($subject in 'CN=x, O=Microsoft Corporation Evil, C=US', 'O=Evil Microsoft Corporation', 'O=microsoft corporation', 'O=MICROSOFT CORPORATION', 'O=" Microsoft Corporation "', 'O="Microsoft Corporation "') {
+            Test-MicrosoftSignerCertificate -Certificate (New-TestCertificate -Subject $subject) | Should -BeFalse -Because $subject
+        }
+    }
+    It 'refuses two organisations, in either order (a real certificate with two O components)' {
+        foreach ($subject in 'CN=x, O=Microsoft Corporation, O=Evil Ltd, C=US', 'CN=x, O=Evil Ltd, O=Microsoft Corporation, C=US', 'O=Microsoft Corporation, O=Microsoft Corporation') {
+            Test-MicrosoftSignerCertificate -Certificate (New-TestCertificate -Subject $subject) | Should -BeFalse -Because $subject
+        }
+    }
+    It 'refuses a multi-valued relative name, even when its organisation is right' {
+        Test-MicrosoftSignerCertificate -Certificate (New-TestCertificate -Subject 'O=Microsoft Corporation+OU=x') | Should -BeFalse
+        $cn = [System.Text.Encoding]::ASCII.GetBytes('x')
+        $org = [System.Text.Encoding]::ASCII.GetBytes('Microsoft Corporation')
+        $name = New-DerName @(@($script:CnOid, 19, $cn), @($script:OrgOid, 19, $org)) $true
+        Test-MicrosoftSignerCertificate -Certificate (New-TestCertificate -Subject $name) | Should -BeFalse
+    }
+    It 'does not read an O= inside another attribute value as an organisation' {
+        foreach ($subject in 'CN="x, O=Microsoft Corporation, y", C=US', 'CN="O=Microsoft Corporation", C=US', 'CN=Microsoft Corporation, L=Redmond, C=US') {
+            Test-MicrosoftSignerCertificate -Certificate (New-TestCertificate -Subject $subject) | Should -BeFalse -Because $subject
+        }
+        $cn = [System.Text.Encoding]::ASCII.GetBytes('O=Microsoft Corporation')
+        Test-MicrosoftSignerCertificate -Certificate (New-TestCertificate -Subject (New-DerName @(, @($script:CnOid, 12, $cn)))) | Should -BeFalse
+    }
+    It 'requires the code-signing purpose' {
+        $good = 'CN=Microsoft Corporation, O=Microsoft Corporation, C=US'
+        Test-MicrosoftSignerCertificate -Certificate (New-TestCertificate -Subject $good -Purpose '') | Should -BeFalse
+        Test-MicrosoftSignerCertificate -Certificate (New-TestCertificate -Subject $good -Purpose '1.3.6.1.5.5.7.3.1') | Should -BeFalse
+    }
+    It 'refuses a null certificate, an empty subject and bytes that are not a name' {
+        Test-MicrosoftSignerCertificate -Certificate $null | Should -BeFalse
+        (Get-DistinguishedNameParts -Raw ([byte[]]@())).Ok | Should -BeFalse
+        (Get-DistinguishedNameParts -Raw ([byte[]](0x30, 0x05, 0x31))).Ok | Should -BeFalse
+        (Get-DistinguishedNameParts -Raw ([byte[]](0x30, 0x00))).Organizations.Count | Should -Be 0
+        $good = (New-TestCertificate -Subject 'O=Microsoft Corporation').SubjectName.RawData
+        $cut = New-Object byte[] ($good.Length - 1)
+        [Array]::Copy($good, $cut, $cut.Length)
+        (Get-DistinguishedNameParts -Raw $cut).Ok | Should -BeFalse
     }
 }
 
@@ -978,9 +1036,27 @@ Describe 'When the seen id cannot be written, or the file is too big (B2)' {
         Mock Get-HelperSecretBytes { return , $script:SecretBytes }
         Mock Resolve-WingetPath { return @{ Path = ''; Why = 'not here'; Verify = $true } }
         Mock Send-SignedPost { throw 'must not be called' }
+        Mock Show-HelperToast { }
         (Invoke-HelperMain -MaxCycles 1) | Should -Be 3
         Should -Invoke Send-SignedPost -Times 0
+        Should -Invoke Show-HelperToast -Times 1 -ParameterFilter { $Text -match 'seen.txt' }
         (Get-Content -LiteralPath (Join-Path $directory 'helper.log') -Raw) | Should -Match 'seen.txt'
+    }
+    It 'does not start either when seen.txt cannot be read at all, and shows one toast and one log line' {
+        $directory = Join-Path $script:Root ('main-' + [guid]::NewGuid().ToString('N'))
+        New-Item -ItemType Directory -Force -Path $directory | Out-Null
+        New-Item -ItemType Directory -Force -Path (Get-SeenFile -Directory $directory) | Out-Null
+        Mock Get-HelperDirectory { return $directory }
+        Mock Test-Elevated { return $false }
+        Mock Read-HelperConfig { return [pscustomobject]@{ actorId = 'user-1'; serverUrl = 'http://localhost:3010'; wingetPath = ''; useAlias = $false } }
+        Mock Get-HelperSecretBytes { return , $script:SecretBytes }
+        Mock Resolve-WingetPath { return @{ Path = ''; Why = 'not here'; Verify = $true } }
+        Mock Send-SignedPost { throw 'must not be called' }
+        Mock Show-HelperToast { }
+        (Invoke-HelperMain -MaxCycles 1) | Should -Be 3
+        Should -Invoke Send-SignedPost -Times 0
+        Should -Invoke Show-HelperToast -Times 1
+        @((Get-Content -LiteralPath (Join-Path $directory 'helper.log')) | Where-Object { $_ -match 'cannot start' }).Count | Should -Be 1
     }
     It 'still reads a file written by Add-SeenId, whose first line carries a byte-order mark' {
         Add-SeenId -Directory $script:SeenDir -Id 'first' -ExpiresAt 5000000 | Out-Null

@@ -13,6 +13,8 @@
  *   POST /helper/pair     the helper's setup, with the one-time code the person typed. No session: the code is the
  *                         proof (`pairing.ts`). Answers the helper's secret ONCE and rotates the salt.
  *   POST /pairing/code    a new one-time code for the person. Session AND at the computer, like the switch.
+ *   GET  /pairing/helper.zip  the helper's four files as one zip, from the folder the server itself carries. Session
+ *                         AND at the computer; a fixed name, never a path from the request; an audit row.
  *   GET  /pairing         a plain page with three buttons (switch on, switch off, show a code): the first live trial's
  *                         way, until the app has its own screen. Session AND at the computer; carries no secret.
  *
@@ -25,7 +27,13 @@ import { bodyLimit } from "hono/body-limit";
 import { z } from "zod";
 import type { AuditStore } from "../audit";
 import type { AppVariables } from "../auth/guards";
+import { recordAuditEvent } from "../audit";
 import { atTheComputer } from "../freeduet/at-the-computer";
+import {
+  buildHelperZip,
+  HELPER_ZIP_NAME,
+  HelperFilesMissingError,
+} from "./helper-bundle";
 import type { ProgramsBroker } from "./broker";
 import {
   createProgramsPairing,
@@ -81,10 +89,15 @@ document.getElementById("go").addEventListener("click", async () => {
 });
 `;
 const PAIRING_PAGE = `<!doctype html><meta charset="utf-8"><title>Programs on this computer</title>
-<body style="font-family:system-ui;max-width:32rem;margin:3rem auto;line-height:1.5">
+<body style="font-family:system-ui;max-width:36rem;margin:3rem auto;line-height:1.5">
 <h1>Programs on this computer</h1>
-<p>A temporary page for the first trial, until Settings has its own screen. 1. Switch on. 2. Show a code and type it into the helper's setup window on this PC; it works once and for two minutes.</p>
-<p><button id="on">Switch on</button> <button id="off">Switch off</button> <button id="go">Show a code</button></p>
+<p>A temporary page, until Settings has its own screen. Do the three steps on this computer, in this order.</p>
+<p><b>1.</b> <button id="on">Switch on</button> <button id="off">Switch off</button></p>
+<p><b>2.</b> <a id="dl" href="/api/programs/pairing/helper.zip" download>Download the helper</a> (a zip of four files). Save it and extract it into a folder of your own, for example <code>Downloads\\freeduet-programs-helper</code>.</p>
+<p><b>3.</b> Open a normal PowerShell window (not "as administrator") in that folder and run these two lines, one after the other:</p>
+<pre style="background:#f3f3f3;padding:.6rem;overflow:auto;user-select:all">Unblock-File .\\*.ps1
+powershell -NoProfile -ExecutionPolicy RemoteSigned -File .\\setup.ps1</pre>
+<p>When the window asks for the code, press <button id="go">Show a code</button> here and type the code <b>into that window only</b>. It works once and for two minutes. Never type it into a chat and never give it to anyone.</p>
 <p id="out" style="font:600 1.6rem ui-monospace,monospace"></p>
 <script>${PAIRING_SCRIPT}</script>`;
 const PAIRING_CSP = `default-src 'none'; script-src 'sha256-${createHash("sha256").update(PAIRING_SCRIPT).digest("base64")}'; connect-src 'self'; style-src 'unsafe-inline'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'`;
@@ -102,6 +115,8 @@ export function createProgramsRoutes(options: {
    * function cannot be switched ON and no pairing code is made. Set by `app.ts`, which already knows the secret.
    */
   singleUserWithoutSecret?: boolean;
+  /** Where the helper's files are; tests name a folder, the server uses the one it carries. */
+  helperDir?: string;
   /** Tests inject one with their own clock; the server makes its own. */
   programsPairing?: ProgramsPairing;
 }) {
@@ -198,6 +213,44 @@ export function createProgramsRoutes(options: {
       200,
       { "Cache-Control": "no-store" },
     );
+  });
+
+  routes.get("/pairing/helper.zip", requireUser, async (context) => {
+    const actor = context.var.actor;
+    if (refused()) return context.json({ error: CANNOT_TELL_THE_PERSON }, 403);
+    if (!(await atTheComputer(context.env, context.req.raw, gate, actor.id)))
+      return context.json({ error: NOT_AT_THE_COMPUTER }, 403);
+    let zip: Buffer;
+    try {
+      zip = await buildHelperZip(options.helperDir);
+    } catch (error) {
+      if (error instanceof HelperFilesMissingError)
+        return context.json(
+          {
+            error:
+              "This FreeDuet does not carry the helper's files. Update FreeDuet, or take the folder openbot/scripts/programs-helper from the repository.",
+          },
+          404,
+        );
+      throw error;
+    }
+    if (options.auditStore)
+      await recordAuditEvent(options.auditStore, {
+        eventType: "configuration.changed",
+        targetType: "programs",
+        actorUserId: actor.id,
+        payload: { change: "programs_helper_downloaded", bytes: zip.length },
+      }).catch(() => undefined);
+    return new Response(new Uint8Array(zip), {
+      status: 200,
+      headers: {
+        "Content-Type": "application/zip",
+        "Content-Disposition": `attachment; filename="${HELPER_ZIP_NAME}"`,
+        "Content-Length": String(zip.length),
+        "Cache-Control": "no-store",
+        "X-Content-Type-Options": "nosniff",
+      },
+    });
   });
 
   routes.get("/pairing", requireUser, async (context) => {

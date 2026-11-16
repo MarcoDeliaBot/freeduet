@@ -58,6 +58,9 @@ COPY server server
 COPY shared shared
 COPY toolkit toolkit
 COPY examples examples
+# The programs helper's four files, which the server hands to the person at the computer (src/programs/helper-bundle.ts).
+# One folder, beside server/ as in a source checkout: not the rest of scripts/.
+COPY scripts/programs-helper scripts/programs-helper
 
 # The built app, served by the process below. `APP_DIST_DIR` is what turns that on, so an image
 # without this layer is still a working API.

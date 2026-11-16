@@ -154,6 +154,10 @@ COPY agent-computer/package.json agent-computer/package.json
 # has something to do.
 COPY scripts/composio-smoke.ts scripts/composio-smoke.ts
 
+# The programs helper's four files, which the server hands to the person at the computer
+# (server/src/programs/helper-bundle.ts reads /app/scripts/programs-helper). One folder, not the rest of scripts/.
+COPY scripts/programs-helper scripts/programs-helper
+
 # The built app, served by the API on the same origin. There is no CORS in this server, so this is
 # not a convenience: two origins would simply fail.
 COPY --from=app-build /src/app/dist app/dist
