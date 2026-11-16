@@ -637,6 +637,32 @@ Describe 'Who signed winget: the certificate itself must name Microsoft Corporat
         $cn = [System.Text.Encoding]::ASCII.GetBytes('O=Microsoft Corporation')
         Test-MicrosoftSignerCertificate -Certificate (New-TestCertificate -Subject (New-DerName @(, @($script:CnOid, 12, $cn)))) | Should -BeFalse
     }
+    It 'refuses a length that is not in its shortest DER form, and accepts a real long-form length (strict DER)' {
+        # CN=x, written with the length of the value as 0x81 0x01 (long form for a length under 128).
+        $longForShort = [byte[]](0x30, 0x0D, 0x31, 0x0B, 0x30, 0x09, 0x06, 0x03, 0x55, 0x04, 0x03, 0x13, 0x81, 0x01, 0x78)
+        # The outer length 0x82 0x00 0x0D: a leading zero length byte.
+        $leadingZero = [byte[]](0x30, 0x82, 0x00, 0x0D, 0x31, 0x0B, 0x30, 0x09, 0x06, 0x03, 0x55, 0x04, 0x03, 0x13, 0x02, 0x78, 0x79)
+        # The outer length 0x81 0x0D (13 < 128): long form for a short length.
+        $outerLong = [byte[]](0x30, 0x81, 0x0D, 0x31, 0x0B, 0x30, 0x09, 0x06, 0x03, 0x55, 0x04, 0x03, 0x13, 0x02, 0x78, 0x79)
+        $minimal = [byte[]](0x30, 0x0D, 0x31, 0x0B, 0x30, 0x09, 0x06, 0x03, 0x55, 0x04, 0x03, 0x13, 0x02, 0x78, 0x79)
+        (Get-DistinguishedNameParts -Raw $minimal).Ok | Should -BeTrue
+        (Get-DistinguishedNameParts -Raw $longForShort).Ok | Should -BeFalse
+        (Get-DistinguishedNameParts -Raw $leadingZero).Ok | Should -BeFalse
+        (Get-DistinguishedNameParts -Raw $outerLong).Ok | Should -BeFalse
+        Read-DerElement -Bytes ([byte[]](0x04, 0x81, 0x7F) + (New-Object byte[] 127)) -Offset 0 -End 130 | Should -BeNullOrEmpty
+        Read-DerElement -Bytes ([byte[]](0x04, 0x82, 0x00, 0x80) + (New-Object byte[] 128)) -Offset 0 -End 132 | Should -BeNullOrEmpty
+        # A real value of 128 bytes: the minimal long form 0x81 0x80 is accepted, whole name and element.
+        $element = Read-DerElement -Bytes ([byte[]](0x04, 0x81, 0x80) + (New-Object byte[] 128)) -Offset 0 -End 131
+        $element.Len | Should -Be 128
+        $element.Next | Should -Be 131
+        $value = [byte[]](,0x78 * 128)
+        $pair = [byte[]](0x06, 0x03, 0x55, 0x04, 0x03, 0x13, 0x81, 0x80) + $value
+        $seq = [byte[]](0x30, 0x81, 0x88) + $pair
+        $set = [byte[]](0x31, 0x81, 0x8B) + $seq
+        $name = [byte[]](0x30, 0x81, 0x8E) + $set
+        $name.Length | Should -Be 145
+        (Get-DistinguishedNameParts -Raw $name).Ok | Should -BeTrue
+    }
     It 'requires the code-signing purpose' {
         $good = 'CN=Microsoft Corporation, O=Microsoft Corporation, C=US'
         Test-MicrosoftSignerCertificate -Certificate (New-TestCertificate -Subject $good -Purpose '') | Should -BeFalse

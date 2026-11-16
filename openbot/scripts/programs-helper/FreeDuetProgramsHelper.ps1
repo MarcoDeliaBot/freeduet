@@ -246,6 +246,9 @@ function Read-DerElement {
     else {
         $count = $first -band 127
         if ($count -lt 1 -or $count -gt 3 -or ($position + $count) -gt $End) { return $null }
+        # DER wants the shortest form: no leading zero length byte, and no long form for a length under 128.
+        if ([int]$Bytes[$position] -eq 0) { return $null }
+        if ($count -eq 1 -and [int]$Bytes[$position] -lt 128) { return $null }
         for ($i = 0; $i -lt $count; $i++) { $length = ($length * 256) + [int]$Bytes[$position + $i] }
         $position += $count
     }

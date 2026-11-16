@@ -14,7 +14,8 @@
  * give the same bytes.
  */
 import { crc32 } from "node:zlib";
-import { readFile } from "node:fs/promises";
+import { constants } from "node:fs";
+import { lstat, open } from "node:fs/promises";
 import { join } from "node:path";
 
 /** The four files, in the order they are put in the zip. */
@@ -37,8 +38,30 @@ export const DEFAULT_HELPER_DIR = join(
   "programs-helper",
 );
 
+/** The most one file, and all four together, may weigh. The real files are about 57 KB and 77 KB in all. */
+export const HELPER_FILE_MAX_BYTES = 512 * 1024;
+export const HELPER_TOTAL_MAX_BYTES = 1024 * 1024;
+
 /** A file that is not there, or not readable. */
 export class HelperFilesMissingError extends Error {}
+
+/**
+ * Something is there but is not what the bundle may carry: the folder or a file is a link, a file is not a regular
+ * file, or a size cap is passed. The content is never read past that point and never served. `reason` is a fixed word.
+ */
+export class HelperFilesRefusedError extends Error {
+  constructor(
+    readonly file: string,
+    readonly reason:
+      | "folder_is_a_link"
+      | "folder_is_not_a_folder"
+      | "not_a_regular_file"
+      | "too_big"
+      | "total_too_big",
+  ) {
+    super(`${file}: ${reason}`);
+  }
+}
 
 function u16(value: number): Buffer {
   const b = Buffer.alloc(2);
@@ -118,16 +141,70 @@ export function zipStored(
   ]);
 }
 
-/** Reads the four files from `directory` and returns the zip. Throws `HelperFilesMissingError` when one is absent. */
+/**
+ * Reads the four files from `directory` and returns the zip. Throws `HelperFilesMissingError` when one is absent and
+ * `HelperFilesRefusedError` when one is not a plain regular file inside a plain folder. Each file is opened without
+ * following a link (O_NOFOLLOW) and judged by the handle it was opened with, so a swap between the look and the read
+ * changes nothing. A folder that is itself a link is refused (the images and a checkout carry a real folder).
+ */
 export async function buildHelperZip(
   directory: string = DEFAULT_HELPER_DIR,
 ): Promise<Buffer> {
+  let folder: Awaited<ReturnType<typeof lstat>>;
+  try {
+    folder = await lstat(directory);
+  } catch {
+    throw new HelperFilesMissingError(directory);
+  }
+  if (folder.isSymbolicLink())
+    throw new HelperFilesRefusedError(".", "folder_is_a_link");
+  if (!folder.isDirectory())
+    throw new HelperFilesRefusedError(".", "folder_is_not_a_folder");
   const files: Array<{ name: string; data: Buffer }> = [];
+  let total = 0;
   for (const name of HELPER_FILES) {
+    const path = join(directory, name);
+    let entry: Awaited<ReturnType<typeof lstat>>;
     try {
-      files.push({ name, data: await readFile(join(directory, name)) });
+      entry = await lstat(path);
     } catch {
       throw new HelperFilesMissingError(name);
+    }
+    if (!entry.isFile())
+      throw new HelperFilesRefusedError(name, "not_a_regular_file");
+    let handle: Awaited<ReturnType<typeof open>>;
+    try {
+      handle = await open(path, constants.O_RDONLY | constants.O_NOFOLLOW);
+    } catch (error) {
+      // ELOOP: swapped for a link after the look.
+      if ((error as NodeJS.ErrnoException).code === "ELOOP")
+        throw new HelperFilesRefusedError(name, "not_a_regular_file");
+      throw new HelperFilesMissingError(name);
+    }
+    try {
+      const opened = await handle.stat();
+      if (!opened.isFile())
+        throw new HelperFilesRefusedError(name, "not_a_regular_file");
+      if (opened.size > HELPER_FILE_MAX_BYTES)
+        throw new HelperFilesRefusedError(name, "too_big");
+      total += opened.size;
+      if (total > HELPER_TOTAL_MAX_BYTES)
+        throw new HelperFilesRefusedError(name, "total_too_big");
+      const data = Buffer.alloc(opened.size);
+      let read = 0;
+      while (read < data.length) {
+        const { bytesRead } = await handle.read(
+          data,
+          read,
+          data.length - read,
+          read,
+        );
+        if (bytesRead === 0) break;
+        read += bytesRead;
+      }
+      files.push({ name, data: data.subarray(0, read) });
+    } finally {
+      await handle.close();
     }
   }
   return zipStored(files);

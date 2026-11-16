@@ -33,6 +33,7 @@ import {
   buildHelperZip,
   HELPER_ZIP_NAME,
   HelperFilesMissingError,
+  HelperFilesRefusedError,
 } from "./helper-bundle";
 import type { ProgramsBroker } from "./broker";
 import {
@@ -97,6 +98,7 @@ const PAIRING_PAGE = `<!doctype html><meta charset="utf-8"><title>Programs on th
 <p><b>3.</b> Open a normal PowerShell window (not "as administrator") in that folder and run these two lines, one after the other:</p>
 <pre style="background:#f3f3f3;padding:.6rem;overflow:auto;user-select:all">Unblock-File .\\*.ps1
 powershell -NoProfile -ExecutionPolicy RemoteSigned -File .\\setup.ps1</pre>
+<p>These scripts come from this FreeDuet installation, and they are plain text: open each one in Notepad and read it before you run it. <code>Unblock-File</code> removes the "downloaded from the Internet" mark that Windows puts on these files; that mark is what stops Windows running them under <code>RemoteSigned</code>.</p>
 <p>When the window asks for the code, press <button id="go">Show a code</button> here and type the code <b>into that window only</b>. It works once and for two minutes. Never type it into a chat and never give it to anyone.</p>
 <p id="out" style="font:600 1.6rem ui-monospace,monospace"></p>
 <script>${PAIRING_SCRIPT}</script>`;
@@ -224,7 +226,21 @@ export function createProgramsRoutes(options: {
     try {
       zip = await buildHelperZip(options.helperDir);
     } catch (error) {
-      if (error instanceof HelperFilesMissingError)
+      if (error instanceof HelperFilesRefusedError && options.auditStore)
+        await recordAuditEvent(options.auditStore, {
+          eventType: "configuration.changed",
+          targetType: "programs",
+          actorUserId: actor.id,
+          payload: {
+            change: "programs_helper_refused",
+            file: error.file,
+            reason: error.reason,
+          },
+        }).catch(() => undefined);
+      if (
+        error instanceof HelperFilesMissingError ||
+        error instanceof HelperFilesRefusedError
+      )
         return context.json(
           {
             error:
