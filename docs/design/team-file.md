@@ -372,34 +372,34 @@ The limit for an imported member's instructions is now 10,000 characters, counte
 - `openbot/server/src/freeduet/team-file.ts`: `TEAM_FILE_LIMITS.instructionsCharacters` is 10,000. The refusal and the notices name the new number.
 - `openbot/server/src/agents/role-description-limit.ts`: `IMPORTED_ROLE_DESCRIPTION_LIMIT` is 10,000, so the server and the reader stay equal (the invariant test pins them).
 - Comments only: `openbot/server/src/agents/imported-member.ts`, `openbot/app/src/lib/agents/queries.ts`, `openbot/server/tests/agent-routes.test.ts`.
-- Tests: the edges in `freeduet-team-file.test.ts`, `imported-member.integration.test.ts` and `bot-setup.test.tsx` now sit at 10,000 and 10,001. One test is new: every member in `openbot/examples/freeduet/agents.yaml` fits the limit with at least 500 characters to spare.
-- Docs: `CHANGELOG.md` (one line) and the three rows of `docs/UPSTREAM_TOUCHES.md` that state the number.
+- Tests: the edges in `freeduet-team-file.test.ts`, `imported-member.integration.test.ts` and `bot-setup.test.tsx` now sit at 10,000 and 10,001. One test is new, and replaces the margin test of the first version: the shipped members that do not fit the imported limit are pinned to `concierge` (Jules), `freeduet` (Iris) and `inbox` (Otto), and `creator` (Leo) is asserted as fitting.
+- Docs: `CHANGELOG.md` (one line), the three rows of `docs/UPSTREAM_TOUCHES.md` that state the number, and the three pages the coordinator named: `docs/ROADMAP.md` (lines 11 and 91), `docs/M1_PLAN.md` (line 977) and `README.md` (line 193). Each gives 10,000 as the current limit and keeps 8,000 where it records history: the v0.2.1 release, PRs #203 and #218, and the decision of 14 November 2026.
 
-**The margin test measures what the reader composes.** It takes each member's author's text, the Email paragraph and the shared rules, joined by a blank line, and compares the result with 9,500 (10,000 less 500). On 16 November 2026 the appended text is 3,836 characters: the standard Email paragraph (452), the shared rules (3,380) and two separators of 2 characters each. An author's own text may therefore have at most 6,164 characters. These figures were read from `agents.yaml` for the ten members that carry the standard paragraph.
+**The pinned list measures what the reader composes.** It takes each member's author's text, the Email paragraph and the shared rules, joined by a blank line, and compares the result with 10,000. On 16 November 2026 the appended text is 3,836 characters: the standard Email paragraph (452), the shared rules (3,380) and two separators of 2 characters each. An author's own text may therefore have at most 6,164 characters. These figures were read from `agents.yaml` for the ten members that carry the standard paragraph. An author's text with a shared paragraph inside it cannot be written as a team file at all (`authorTextOf` returns null), and the test counts that member as not fitting.
 
-**Verified** (16 November 2026, branch `team-file-limit-10000`)
+**Verified** (16 November 2026, branch `team-file-limit-10000`, merged with `origin/main` at `abe3948`, PR #317, in the merge commit `fd8b25a`)
 - The three server files of the run, `freeduet-team-file.test.ts`, `imported-member.integration.test.ts` and `freeduet-team-file-export.integration.test.ts`, before the source change (the same tests against the 8,000 code): 73 pass, 15 fail, of 88.
-- The same three files after the change: 87 pass, 1 fail, of 88. The one failure is the margin test, on purpose (below).
-- `app/tests/bot-setup.test.tsx`: 4 pass, 3 fail before; 7 pass, 0 fail after.
-- `server/tests/assertion-shape.test.ts`: 10 pass, 0 fail. `agent-routes.test.ts` and `agent-instructions-limit.integration.test.ts` raise no failure.
+- The same three files at 10,000: 88 pass, 0 fail, of 88. At 8,000 the pinned list fails on Leo first (`Expected: <= 8000`, `Received: 8875`).
+- `app/tests/bot-setup.test.tsx`: 4 pass, 3 fail at 8,000; 7 pass, 0 fail at 10,000. Its counter reads the limit that the server reports, so this file moves with the server constant.
+- `server/tests/assertion-shape.test.ts`: 10 pass, 0 fail. The files that the name filters `agent-routes.test.ts` and `agent-instructions-limit` matched (`agent-routes.test.ts`, `agent-instructions-limit.integration.test.ts` and `app/tests/legacy-agent-routes.test.ts`): 58 pass, 0 fail.
 - `bun run typecheck`: exit 0 for shared, toolkit, worker, server and app. `bun run typecheck:tests`: clean against the baseline (239 known errors, none new).
-- `biome format` and `biome lint --error-on-warnings` on the eight changed TypeScript files: clean. `biome check` reports four organize-imports errors, in `freeduet-team-file.test.ts` (its import block was already out of order on main), `imported-member.ts`, `imported-member.integration.test.ts` and `bot-setup.test.tsx`. None of the edits to the last three touches an import line.
+- `biome format` and `biome lint --error-on-warnings` on the eight changed TypeScript files: clean. `biome check` reports four organize-imports errors, in `freeduet-team-file.test.ts`, `imported-member.integration.test.ts`, `bot-setup.test.tsx` and `imported-member.ts`. Main's own versions have the same four errors (checked from temporary copies of each file), so none is new.
 
-**The margin test fails on purpose** (composed text, ceiling 9,500)
-- `inbox` (Otto): 11,138 characters, 1,638 over 9,500 and 1,138 over the limit itself. His own Email paragraph is 766 characters, not the standard 452.
-- `concierge` (Jules): 13,534 characters, 4,034 over 9,500 and 3,534 over the limit itself.
+**The members that do not fit** (composed text, limit 10,000; pinned by the test)
+- `inbox` (Otto): 11,138 characters, 1,138 over the limit. His own Email paragraph is 766 characters, not the standard 452.
+- `concierge` (Jules): 13,534 characters, 3,534 over the limit.
 - `freeduet` (Iris): cannot be written as a team file, because `authorTextOf` returns null: a shared paragraph sits inside her text.
-- The closest of the others is `creator` (Leo): stored 8,873 characters, 8,875 composed, 625 under 9,500. The brief gave 7,999 for Leo, and the figure in `docs/M1_PLAN.md` (line 977) is out of date.
+- Leo (`creator`) fits: stored 8,873 characters, 8,875 composed, 1,125 under the limit. Before this change no test or code tied his text to 8,000. The limit is read only by the team-file reader (`team-file.ts` on main: the refusal at lines 419 to 423 and a notice at line 801). The two tests that name him check that the prompts of Iris and Leo name the marketer and the video maker (`freeduet-package.test.ts`, lines 558 and 760), and the export test lists him among the carriers of the standard paragraphs (`freeduet-team-file-export.test.ts`, line 55); none reads his length. The sentence in `docs/M1_PLAN.md` (line 977) said that the export test of the whole team fails above 8,000 and gave 7,999 for Leo. The first claim was wrong: that test exports its own fixture members, not the shipped `creator`. The figure matched no measurement. Both are corrected.
 
 **Decisions left to the maintainer** (decisions A to D above were written on 14 November 2026, when the limit was 8,000)
 
 | # | Decision | Options | Recommendation and reason |
 |---|---|---|---|
-| F | How the members above the margin fit | 1. Shorten `concierge` by at least 4,034 characters and `inbox` by at least 1,638 in `agents.yaml`; the limit stays at 10,000. 2. Raise the limit to at least 14,034, the margin for Jules. 3. Exempt `freeduet` by name from the margin test: she cannot be written as a file, and her name is reserved | 1 and 3. Every imported member's text goes to the routing roster, the voice agent and the standing role on every turn, so a higher limit raises that cost for every imported member. Option 1 changes two prompts, so the team evals must run again before the change is merged. |
+| F | Whether a shipped member must fit an imported member's limit (the first version of the margin test asked for 500 characters of margin for every member) | 1. Shorten `concierge` by at least 3,534 characters and `inbox` by at least 1,138 in `agents.yaml`; the limit stays at 10,000. 2. Raise the limit to at least 13,534, the length of Jules. Every imported member's text goes to the routing roster, the voice agent and the standing role on every turn, so this raises that cost for every imported member. 3. Require nothing of the shipped members: they are not meant to fit a team file, and the three that do not are pinned by a test | **Option 3, decided on 16 November 2026 by the coordinator, not by the maintainer.** A test that demands margin for every shipped member asserts something the product does not promise. The maintainer may overrule this. Options 1 and 2 would change prompts or the cost of every imported member, so the team evals would have to run again. |
 
 **Not verified**
-- No live run and no browser run. The margin is measured by the reader's composition in a test, not by a real import (slice S3 is not built).
+- No live run and no browser run. The limit is measured by the reader's composition in a test, not by a real import (slice S3 is not built). The team evals were not run; no prompt changed in this change.
 - The `+` and `−` counts in the three `docs/UPSTREAM_TOUCHES.md` rows were not recounted; only the limit text changed.
-- `docs/ROADMAP.md` (lines 11 and 91), `docs/M1_PLAN.md` (line 977) and `README.md` (line 193) still say 8,000. This change did not edit them; the coordinator updates them.
+- The wording of the ROADMAP, M1_PLAN and README lines named under Docs above has not been reviewed by the maintainer. Each gives 10,000 as the current limit and 8,000 as history.
 - The cost of 10,000 characters on each turn is not measured.
 
