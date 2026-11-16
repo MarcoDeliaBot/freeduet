@@ -15,20 +15,35 @@ import { TEST_POOL, testDatabaseUrl } from "./support/database";
  */
 const database = createDatabase(testDatabaseUrl(), TEST_POOL);
 const prefix = `repair-${randomUUID()}`;
-const [bugged, chosen, chosenThenBusy, healthy, lateChoice] = [
+const names = [
   "bugged",
   "chosen",
   "busy",
   "healthy",
   "late",
-].map((name) => `${prefix}-${name}`) as [
-  string,
-  string,
-  string,
-  string,
-  string,
-];
-const all = [bugged, chosen, chosenThenBusy, healthy, lateChoice];
+  "adc",
+  "adb",
+  "ret",
+].map((name) => `${prefix}-${name}`);
+const all = names;
+const [
+  bugged,
+  chosen,
+  chosenThenBusy,
+  healthy,
+  lateChoice,
+  adoptedChose,
+  adoptedBugged,
+  retained,
+] = names as [string, string, string, string, string, string, string, string];
+const oldChose = `${prefix}-old-chose`;
+const oldBugged = `${prefix}-old-bugged`;
+/** What a repair run needs: the dry run's own count, as the script asks for. */
+const apply = async () =>
+  repairAutoReview(database, {
+    apply: true,
+    expect: (await repairAutoReview(database)).candidates,
+  });
 const service = createApprovalService(createApprovalStore(database));
 
 const flag = async (owner: string) =>
@@ -57,7 +72,34 @@ beforeAll(async () => {
   await database.insert(approvalPreferences).values([
     { ownerUserId: bugged, enabled: true, autoReview: false },
     { ownerUserId: healthy, enabled: true, autoReview: true },
+    { ownerUserId: adoptedChose, enabled: true, autoReview: false },
+    { ownerUserId: adoptedBugged, enabled: true, autoReview: false },
+    { ownerUserId: retained, enabled: true, autoReview: false },
   ]);
+  // Adoption moved the rows to a new owner; the events kept the old id (registry.ts). One person had
+  // switched it off before, the other had not.
+  const settings = (targetId: string, changed: Record<string, unknown>) => ({
+    eventType: "approval.settings_changed",
+    targetType: "approval_settings",
+    targetId,
+    actorUserId: targetId,
+    payload: { changed, layer: "personal" },
+  });
+  const adopted = (toId: string, fromId: string) => ({
+    eventType: "person.single_user_data_adopted",
+    targetType: "person",
+    targetId: toId,
+    actorUserId: toId,
+    payload: { fromId, toId },
+  });
+  await database
+    .insert(auditEvents)
+    .values([
+      settings(oldChose, { autoReview: false }),
+      settings(oldBugged, { enabled: true }),
+      adopted(adoptedChose, oldChose),
+      adopted(adoptedBugged, oldBugged),
+    ]);
   // A person who really switched it off (the settings page sends { autoReview } alone), then used
   // other switches, which never name autoReview.
   await service.setPreferences(chosen, { autoReview: false });
@@ -82,9 +124,35 @@ test("a dry run counts the rows it would change and writes nothing", async () =>
   expect(await trail(bugged)).toHaveLength(0);
 });
 
+test("with audit retention on, apply is refused and changes nothing, and the dry run still counts", async () => {
+  const dry = await repairAutoReview(database, { retentionDays: 30 });
+  expect(dry.candidates).toBeGreaterThanOrEqual(0);
+  expect(dry.refused).toBeUndefined();
+  const refused = await repairAutoReview(database, {
+    apply: true,
+    retentionDays: "30",
+    expect: dry.candidates,
+  });
+  expect(refused).toMatchObject({ repaired: 0, refused: "retention" });
+  expect(await flag(retained)).toBeFalse();
+  expect(await trail(retained)).toHaveLength(0);
+});
+
+test("apply changes nothing when the count is not the one the dry run gave", async () => {
+  const dry = await repairAutoReview(database);
+  for (const wrong of [dry.candidates + 1, undefined]) {
+    const result = await repairAutoReview(database, {
+      apply: true,
+      expect: wrong,
+    });
+    expect(result).toMatchObject({ repaired: 0, refused: "expected-count" });
+  }
+  expect(await flag(retained)).toBeFalse();
+});
+
 test("the repair turns the reviewer on only for a row nobody ever switched off, and says so on the trail", async () => {
   expect(await flag(bugged)).toBeFalse();
-  const result = await repairAutoReview(database, { apply: true });
+  const result = await apply();
   expect(result.repaired).toBeGreaterThanOrEqual(1);
   expect(await flag(bugged)).toBeTrue();
   // Chosen off, or off after later saves: untouched.
@@ -102,8 +170,14 @@ test("the repair turns the reviewer on only for a row nobody ever switched off, 
 });
 
 test("running it again changes nothing", async () => {
-  await repairAutoReview(database, { apply: true });
+  await apply();
   expect(await trail(bugged)).toHaveLength(1);
   expect(await flag(bugged)).toBeTrue();
   expect(await flag(chosen)).toBeFalse();
+});
+
+test("a person who switched it off before the single-user adoption is not repaired after it; one who never did is", async () => {
+  await apply();
+  expect(await flag(adoptedChose)).toBeFalse();
+  expect(await flag(adoptedBugged)).toBeTrue();
 });

@@ -37,15 +37,28 @@ Migration 0049 added `auto_review` to rows that already existed with `DEFAULT fa
 
 Nothing on the row tells a mistake from a choice (`approval_preferences` has no timestamps). The trail does: the
 settings page sends `{ autoReview }` alone, and `setPreferences` writes an `approval.settings_changed` event whose
-`payload.changed` names `autoReview`. The audit table is append-only. A row with `auto_review = false` and no such
+`payload.changed` names `autoReview`. The audit table is append-only, but it is not kept for ever: with `AUDIT_RETENTION_DAYS` set the hourly sweep deletes old events. A row with `auto_review = false` and no such
 event for that person was never switched off by them.
 
 `repairAutoReview` (`approvals/repair-auto-review.ts`, run by `scripts/repair-auto-review.ts`) turns the reviewer on
-for exactly those rows, writes one `approval.settings_changed` event each (initiator `deployment`, `payload.repaired`),
-is idempotent, and is a dry run unless `--apply` is given. It prints counts only.
+for exactly those rows and writes one `approval.settings_changed` event each (initiator `deployment`,
+`payload.repaired`). Idempotent. It prints counts only, and first the database host and name (never the password).
+
+- Dry run by default. `--apply` needs `--expect N`, the count the dry run printed; any other count changes nothing.
+- With `AUDIT_RETENTION_DAYS` set, `--apply` is refused with no override: a choice made before the window would have
+  no event left and the person would be flipped. The dry run still counts and says why apply is refused.
+- Single-user adoption moves the preference rows to the new owner while events keep the old id
+  (`freeduet/adopt/registry.ts`). The adoption writes `person.single_user_data_adopted` (target = new id,
+  `payload.fromId`); an event naming `autoReview` on that `fromId` counts as the new owner's choice.
+
 It is not run automatically: it makes the product stricter for existing people, so the maintainer chooses when.
 
-Read-only count of affected rows (no personal data):
+**What a person sees after the repair.** In their own live turn, a write that no rule covers is now checked by the
+reviewer: one more model call per such write, and more cards when the reviewer cannot tell or finds the write
+consequential. Routines and check-ins are unchanged (they always ask, D35), and mail rules applied by the server timer
+are unaffected. They can switch Auto-review off again in Settings.
+
+Read-only count of affected rows (no personal data; ignores the adoption case, the script counts it):
 
 ```sql
 SELECT count(*) FROM approval_preferences p
@@ -58,8 +71,7 @@ WHERE p.auto_review = false
       AND jsonb_exists(e.payload->'changed', 'autoReview'));
 ```
 
-Limits of the signal: a row whose trail was lost some other way (a database restored without the audit table, rows
-moved between accounts by the import in `freeduet/adopt/registry.ts`, which does not carry the trail) is read as
+Limits of the signal: a row whose trail was lost some other way (a database restored without the audit table) is read as
 "never chosen" and would be turned on. A person who switched it off by a direct SQL edit is read the same way.
 
 ## Built so far
@@ -74,5 +86,5 @@ moved between accounts by the import in `freeduet/adopt/registry.ts`, which does
 
 | Decision | Options | Recommendation | Why |
 |---|---|---|---|
-| When to run the repair | Run `--apply` by hand once per installation; run it from the release step; never | By hand, after a dry run that prints the count | It switches on a check people may have grown used to being without; one command, counts only, reversible by the person in Settings |
+| When to run the repair | Run `--apply --expect N` by hand once per installation after the dry run; from the release step; never | By hand, after a dry run that prints the count | It switches on a check people may have grown used to being without; counts only; the person can switch it off in Settings. Refused when audit retention is on |
 | Treat a row with no trail as "never chosen" | Yes (as built); no, leave every existing row | Yes | The trail records every click of the real switch; the only misreads need a lost trail or a raw SQL edit |
