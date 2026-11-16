@@ -490,6 +490,16 @@ const CRAFT_CHECK_BYTES = 7165;
 const CRAFT_CHECK_SHA256 =
   "d2a640455da70b2b5479d3e82e0fca3a3eaf3b855265b321a60131df4012f04f";
 
+/**
+ * Mark's landing page skill: one upstream SKILL.md body (NOTICE.md has the source), copied unchanged from
+ * its first heading to its last checklist item, without its frontmatter and its Credits section. The
+ * instruction is that body without its final newline, so its length and SHA-256 pin the exact text; a
+ * change to the text has to change both numbers here.
+ */
+const LANDING_PAGE_BYTES = 19735;
+const LANDING_PAGE_SHA256 =
+  "d74536e41783d8eda0ed5ff67d6870e0329ce4c28edef688931c96b91c00b279";
+
 describe("Mark, the marketer", () => {
   async function mark() {
     const rows = await memberRows();
@@ -538,7 +548,7 @@ describe("Mark, the marketer", () => {
       "Label every estimate as one and say what it rests on.",
       // The skills are `/` chips: a skill with no tools reaches a run only when the person picks it.
       "When the person's message carries one of your skills (a skill picked with / in the message box), follow its text and name it.",
-      "say which one the person can start with / (for example /marketing-plan, /launch, /pricing, /seo-audit, /ads or /design-craft-floor) and still give a first answer.",
+      "say which one the person can start with / (for example /marketing-plan, /launch, /pricing, /seo-audit, /ads, /design-craft-floor or /landing-page-design) and still give a first answer.",
       // The limit of the outside collection (mark-1's missing basics, and never claiming a file he lacks).
       "When a skill mentions a references file, a script, a command line tool, an integration or a product-marketing-context file, you do not have it here:",
       "ask for the missing context once, and never say you read a file you were not given.",
@@ -595,12 +605,15 @@ describe("Mark, the marketer", () => {
     const marketer = tenantPackage.agents.find(
       (agent) => agent.id === "marketer",
     );
+    // His skills in all: one shared skill, 53 marketing skills and two of design, 56.
+    expect(marketer?.skills.length).toBe(56);
     // research-public-web is the one skill of the starter team he shares, for rivals' pages and sites to review.
-    // design-craft-floor is his one skill that is not a marketing skill: its own file, see NOTICE.md.
+    // design-craft-floor and landing-page-design are his two skills that are not marketing skills: their own files, see NOTICE.md.
     expect(marketer?.skills).toEqual([
       "research-public-web",
       ...MARKETING_SKILLS,
       "design-craft-floor",
+      "landing-page-design",
     ]);
     const taken = new Set<string>(MARKETING_SKILLS);
     for (const agent of tenantPackage.agents.filter(
@@ -650,6 +663,33 @@ describe("Mark, the marketer", () => {
     });
     const holders = tenantPackage.agents
       .filter((agent) => agent.skills.includes("design-craft-floor"))
+      .map((agent) => agent.id);
+    expect(holders).toEqual(["marketer"]);
+  });
+
+  test("the landing page design is one upstream SKILL.md body, with no tools, and only Mark holds it", async () => {
+    const tenantPackage = await loadWith(MODES.remote);
+    const skill = tenantPackage.skills.find(
+      (candidate) => candidate.slug === "landing-page-design",
+    );
+    const instructions = skill?.instructions ?? "";
+    const summary = skill?.summary ?? "";
+    expect({
+      shipped: skill !== undefined,
+      bytes: Buffer.byteLength(instructions, "utf8"),
+      sha256: createHash("sha256").update(instructions).digest("hex"),
+      tools: skill?.tools,
+      oneLine:
+        summary.length > 0 && summary.length <= 112 && !summary.includes("\n"),
+    }).toEqual({
+      shipped: true,
+      bytes: LANDING_PAGE_BYTES,
+      sha256: LANDING_PAGE_SHA256,
+      tools: [],
+      oneLine: true,
+    });
+    const holders = tenantPackage.agents
+      .filter((agent) => agent.skills.includes("landing-page-design"))
       .map((agent) => agent.id);
     expect(holders).toEqual(["marketer"]);
   });
