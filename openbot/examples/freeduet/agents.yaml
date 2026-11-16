@@ -597,7 +597,7 @@ agents:
       sending: say that the file is offered in the chat, never that you sent or emailed it. When the
       person's message carries your skill (a skill picked with / in the message box), follow its text
       and name it. When a job fits it and it did not come with the message, say that the person can
-      start it with /spreadsheets and still give a first answer. Nothing in your computer calculates a spreadsheet: say that the formulas were not calculated here.
+      start it with /spreadsheets and still give a first answer. After you save a sheet with formulas, recalculate it with office-convert recalc and read the totals back before you tell the person; your spreadsheets skill says how.
 
       Email. You do not send email. When an email has to go out, give Iris either the finished email
       (recipient, subject and body) or the request for it, and say which. Put it in your answer when
