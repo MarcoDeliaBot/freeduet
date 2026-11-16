@@ -1179,6 +1179,7 @@ jobs:
           }
       # install.ps1 itself. Four runs: -Check and -Yes, as the runner's elevated user and as a standard local user.
       - name: install.ps1, check and real run
+        if: ${{ !cancelled() }}
         run: |
           $ErrorActionPreference = 'Continue'
           function Add-Summary([string]$Text) { Add-Content -Path $env:GITHUB_STEP_SUMMARY -Value $Text -Encoding utf8 }

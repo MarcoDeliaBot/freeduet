@@ -145,7 +145,8 @@ function ConvertFrom-WslNameList {
         $name = $line.Trim()
         if ($name -ne '') { [void]$names.Add($name) }
     }
-    return ,$names.ToArray()
+    # No leading comma: the callers wrap this in @(), and @(,$array) would hold the array as one element.
+    return $names.ToArray()
 }
 
 function Get-WslConfSystemd {
@@ -612,7 +613,7 @@ function Get-InstalledWslDistributions {
     # This user's WSL distributions, from the registry. The names there are not translated, unlike wsl's own text.
     $list = New-Object System.Collections.ArrayList
     $root = 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Lxss'
-    if (-not (Test-Path -LiteralPath $root)) { return ,$list.ToArray() }
+    if (-not (Test-Path -LiteralPath $root)) { return $list.ToArray() }
     foreach ($key in (Get-ChildItem -LiteralPath $root -ErrorAction SilentlyContinue)) {
         $properties = Get-ItemProperty -LiteralPath $key.PSPath -ErrorAction SilentlyContinue
         if ($null -eq $properties -or -not $properties.DistributionName) { continue }
@@ -622,7 +623,7 @@ function Get-InstalledWslDistributions {
         if ($null -ne $properties.Version) { $version = [int]$properties.Version }
         [void]$list.Add(@{ Name = [string]$properties.DistributionName; Version = $version; DefaultUid = $defaultUid })
     }
-    return ,$list.ToArray()
+    return $list.ToArray()
 }
 
 function Invoke-WslCommand {
