@@ -1145,6 +1145,17 @@ def test_a_read_only_folder_is_refused_at_once_before_anything_is_copied_or_run(
     assert stub.calls() == [] and sorted(p.name for p in work.iterdir()) == before
 
 
+def test_another_failure_to_make_a_file_here_is_an_error_not_a_refusal(work, stub, monkeypatch, capsys):
+    """A folder that is full or fails in another way is not called read-only: exit 2, and nothing is written."""
+    f = zipped(work / "a.docx", docx_parts())
+    refuse_creation_in(monkeypatch, work, errno.ENOSPC)
+    code, out = main_json(capsys, "pdf", f)
+    assert code == 2 and out["refused"] is False
+    assert "Cannot write in this folder" in out["reason"] and "Nothing was written" in out["reason"]
+    assert "read-only" not in out["reason"]
+    assert stub.calls() == [] and sorted(p.name for p in work.iterdir()) == ["a.docx"]
+
+
 def test_a_read_only_folder_still_lets_recalc_read_the_values_without_keep(work, stub, monkeypatch, capsys):
     """A guard of unchanged behaviour: without --keep nothing is written next to the source, so it works there."""
     f = zipped(work / "w.xlsx", xlsx_parts())
