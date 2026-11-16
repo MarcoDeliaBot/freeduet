@@ -149,7 +149,7 @@
 <style>
 /* Layout idea: a calm, left-aligned product page on a generous spacing scale. White and cool grey surfaces, navy text, one blue accent.
    The product's own interface (the chat with its approval card) is the single loud element; diagrams stay thin-lined and quiet.
-   Motion: sections reveal once on scroll (opacity, translate, blur), headings reveal word by word, a floating capsule carries the navigation.
+   Motion: one orchestrated moment on load (the hero), the step story, and motion that answers a person's action; sections are simply there. A floating capsule carries the navigation.
    Only transform, translate, scale, opacity and filter are ever animated. Without JavaScript, or with reduced motion, nothing is hidden. */
 :root{
   --ink:#0E1B33;        /* navy: text */
@@ -259,11 +259,11 @@ p{margin:0;max-width:64ch}
 .hero-fx{position:absolute;inset:0;z-index:0;pointer-events:none}
 .orbs{position:absolute;inset:0}  /* orbs sit at fixed rem offsets, so late content above them never makes them jump */
 .orb{position:absolute;aspect-ratio:1;border-radius:50%;background:radial-gradient(circle at 30% 26%,rgba(255,255,255,.95),rgba(27,79,216,.15) 46%,rgba(27,79,216,.04) 78%);border:1px solid rgba(255,255,255,.85);box-shadow:inset 0 0 46px rgba(255,255,255,.75),0 34px 70px -34px rgba(27,79,216,.32)}
-.o1{top:6rem;left:3%;width:clamp(7rem,17vw,16rem);animation:drift1 16s ease-in-out infinite}
-.o2{top:13rem;right:5%;width:clamp(5rem,12vw,12rem);border-radius:42%;background:radial-gradient(circle at 30% 26%,rgba(255,255,255,.95),rgba(15,123,88,.16) 46%,rgba(15,123,88,.04) 78%);box-shadow:inset 0 0 40px rgba(255,255,255,.75),0 34px 70px -34px rgba(15,123,88,.32);animation:drift2 21s ease-in-out infinite}
-.o3{top:23rem;left:58%;width:clamp(3.5rem,7vw,7rem);animation:drift3 26s ease-in-out infinite}
-.o4{top:5rem;left:56%;width:clamp(2.5rem,4.5vw,4.5rem);border-radius:45%;background:radial-gradient(circle at 30% 26%,rgba(255,255,255,.95),rgba(15,123,88,.14) 55%,rgba(15,123,88,.03));animation:drift2 18s ease-in-out infinite}
-.o5{top:38rem;right:1.5%;width:clamp(3rem,5.5vw,5.5rem);animation:drift1 23s ease-in-out infinite reverse}
+.o1{top:6rem;left:3%;width:clamp(7rem,17vw,16rem)}
+.o2{top:13rem;right:5%;width:clamp(5rem,12vw,12rem);border-radius:42%;background:radial-gradient(circle at 30% 26%,rgba(255,255,255,.95),rgba(15,123,88,.16) 46%,rgba(15,123,88,.04) 78%);box-shadow:inset 0 0 40px rgba(255,255,255,.75),0 34px 70px -34px rgba(15,123,88,.32)}
+.o3{top:23rem;left:58%;width:clamp(3.5rem,7vw,7rem)}
+.o4{top:5rem;left:56%;width:clamp(2.5rem,4.5vw,4.5rem);border-radius:45%;background:radial-gradient(circle at 30% 26%,rgba(255,255,255,.95),rgba(15,123,88,.14) 55%,rgba(15,123,88,.03))}
+.o5{top:38rem;right:1.5%;width:clamp(3rem,5.5vw,5.5rem)}
 @keyframes drift1{0%,100%{transform:translate(0,0) rotate(0)}50%{transform:translate(30px,-40px) rotate(8deg)}}
 @keyframes drift2{0%,100%{transform:translate(0,0) rotate(0)}50%{transform:translate(-40px,30px) rotate(-6deg)}}
 @keyframes drift3{0%,100%{transform:translate(0,0) scale(1)}50%{transform:translate(20px,50px) scale(1.06)}}
@@ -298,7 +298,7 @@ p{margin:0;max-width:64ch}
 .three svg{width:100%;height:auto;border:1px solid var(--line);border-radius:var(--r-md);background:var(--paper);margin-bottom:10px;transition:border-color .5s var(--ease),box-shadow .5s var(--ease)}
 .three article:hover svg{border-color:#C5CEDC;box-shadow:var(--shadow)}
 .three p{color:var(--ink-soft)}
-.versus{margin-top:clamp(4rem,7vw,6rem);display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);border:1px solid var(--line);border-radius:var(--r-lg);overflow:hidden;box-shadow:var(--shadow)}
+.versus{margin-top:clamp(4rem,7vw,6rem);display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);border:1px solid var(--line);border-radius:var(--r-lg);overflow:hidden}
 .versus div{padding:clamp(1.75rem,3vw,2.5rem);display:grid;gap:10px;align-content:start;color:var(--ink-soft)}
 .versus div+div{background:var(--blue-tint);border-left:1px solid var(--line);color:var(--ink)}
 .versus strong{font-family:var(--display);font-size:1.2rem;color:var(--ink)}
@@ -350,7 +350,7 @@ p{margin:0;max-width:64ch}
 .score b{font-family:var(--display);font-weight:500;font-size:clamp(3.4rem,8vw,7rem);line-height:1;font-variant-numeric:tabular-nums;letter-spacing:-.05em}
 .score p{color:#C9D3E5;max-width:56ch}
 
-.pass svg{border:1px solid var(--line);border-radius:var(--r-lg);background:var(--card);box-shadow:var(--shadow)}
+.pass svg{border:1px solid var(--line);border-radius:var(--r-lg);background:var(--card)}
 .pass text{font-family:var(--display);font-weight:700}
 .todo{list-style:none;padding:0;margin:0;display:grid;gap:12px}
 .todo li{display:grid;grid-template-columns:22px 1fr;gap:10px;align-items:start}
@@ -359,7 +359,7 @@ p{margin:0;max-width:64ch}
 
 .road-h{margin-bottom:clamp(1.25rem,2vw,1.75rem)}
 .road-note{margin-top:clamp(1.25rem,2vw,1.75rem)}
-.road{list-style:none;padding:0;margin:0;display:grid;grid-template-columns:repeat(5,minmax(0,1fr));border:1px solid var(--line);border-radius:var(--r-lg);overflow:hidden;background:var(--card);box-shadow:var(--shadow)}
+.road{list-style:none;padding:0;margin:0;display:grid;grid-template-columns:repeat(5,minmax(0,1fr));border:1px solid var(--line);border-radius:var(--r-lg);overflow:hidden;background:var(--card)}
 .road li{padding:clamp(1.4rem,2vw,1.75rem);display:grid;gap:10px;align-content:start;border-left:1px solid var(--line);transition:background-color .5s var(--ease)}
 .road li:hover{background:var(--paper)}
 .road li:first-child{border-left:0;background:#EEF8F4}
@@ -523,16 +523,16 @@ footer a{color:var(--ink)}
 [hidden]{display:none!important}
 .sr{position:absolute;width:1px;height:1px;margin:-1px;padding:0;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
 .stage{position:relative;margin:clamp(4.5rem,9vw,5.5rem) 0 0;width:100%}
-.stage-plate{position:relative;z-index:1;padding:clamp(8px,1.2vw,14px);border-radius:28px;background:linear-gradient(180deg,#EDF2F9,#F4F7FB 55%,#F6F8FB);border:1px solid var(--line,#DDE3EC);box-shadow:inset 0 1px 0 rgba(255,255,255,.9),0 40px 80px -56px rgba(14,27,51,.5)}
+.stage-plate{position:relative;z-index:1;padding:clamp(8px,1.2vw,14px);border-radius:28px;background:linear-gradient(180deg,#EDF2F9,#F4F7FB 55%,#F6F8FB);border:1px solid var(--line,#DDE3EC);box-shadow:inset 0 1px 0 rgba(255,255,255,.9)}
 .bigiris{--bw:124px;position:absolute;z-index:0;top:-88px;right:-12px;width:var(--bw);aspect-ratio:1;pointer-events:none}
 .bigiris svg{width:100%;height:100%;overflow:visible}
-.bigiris .wob{transform-box:view-box;transform-origin:110px 120px;animation:mm-bob 3.4s ease-in-out infinite}
+.bigiris .wob{transform-box:view-box;transform-origin:110px 120px}
 .bigiris .bf{opacity:0;transition:opacity .25s ease}
 .bigiris[data-s="idle"] .bf-idle,.bigiris[data-s="listen"] .bf-listen,.bigiris[data-s="think"] .bf-think,.bigiris[data-s="work"] .bf-work,.bigiris[data-s="ask"] .bf-ask,.bigiris[data-s="done"] .bf-done{opacity:1}
 .bigiris .prog{stroke-dasharray:590.5;stroke-dashoffset:590.5;opacity:0;transition:opacity .25s ease}
 .bigiris[data-s="work"] .prog{opacity:1;animation:mm-prog 3.2s ease-in-out infinite}
 .bigiris .pu{transform:translate(var(--px,0px),var(--py,0px));transition:transform .18s ease-out}
-.appwin{position:relative;overflow:hidden;border-radius:18px;background:var(--card,#fff);border:1px solid rgba(14,27,51,.1);box-shadow:0 1px 1px rgba(14,27,51,.06),0 8px 16px -10px rgba(14,27,51,.22),0 36px 72px -36px rgba(14,27,51,.42)}
+.appwin{position:relative;overflow:hidden;border-radius:18px;background:var(--card,#fff);border:1px solid transparent;box-shadow:0 1px 1px rgba(14,27,51,.06),0 8px 16px -10px rgba(14,27,51,.22),0 36px 72px -36px rgba(14,27,51,.42)}
 .aw-bar{display:flex;align-items:center;gap:8px;min-height:46px;padding:6px 12px 6px 16px;border-bottom:1px solid var(--line,#DDE3EC);background:var(--card,#fff)}
 .aw-bar i{width:11px;height:11px;border-radius:50%;background:#D5DDE8;flex:none}
 .aw-title{margin-left:8px;font-family:var(--display);font-weight:600;font-size:.95rem}
@@ -602,17 +602,14 @@ footer a{color:var(--ink)}
 .typing i:nth-child(2){animation-delay:.15s}
 .typing i:nth-child(3){animation-delay:.3s}
 
-/* the mascot: the same subtle motion as the mascot sheet; animation stops under prefers-reduced-motion */
+/* the mascot: still by default; the sheet's idle loops are not played on the page */
 svg.mas{display:block;flex:none;overflow:visible}
-.mas .bob,.bob{animation:mm-bob var(--d,3.4s) ease-in-out infinite}
-.mas .jelly,.jelly{transform-box:view-box;transform-origin:110px 192px;animation:mm-jelly 6.5s ease-in-out infinite}
-.mas .shadow,.shadow{transform-box:fill-box;transform-origin:50% 50%;animation:mm-shadow var(--d,3.4s) ease-in-out infinite}
-.mas .caustic,.caustic{transform-box:fill-box;transform-origin:50% 50%;opacity:.7;animation:mm-caustic 6s ease-in-out infinite}
-.mas .blink,.blink{transform-box:fill-box;transform-origin:50% 50%;animation:mm-blink 4.6s ease-in-out infinite}
-.mas .coin,.coin{animation:mm-coin 1.8s ease-in infinite}
-.mas .swing,.swing{transform-box:view-box;transform-origin:182px 136px;animation:mm-swing 2.6s ease-in-out infinite}
-.mas .clap,.clap{transform-box:view-box;transform-origin:136px 150px;animation:mm-clap 2.4s ease-in-out infinite}
-.mas .mwave path,.mwave path{animation:mm-wave 1.2s ease-in-out infinite}
+.mas .jelly,.jelly{transform-box:view-box;transform-origin:110px 192px}
+.mas .shadow,.shadow{transform-box:fill-box;transform-origin:50% 50%}
+.mas .caustic,.caustic{transform-box:fill-box;transform-origin:50% 50%;opacity:.7}
+.mas .blink,.blink{transform-box:fill-box;transform-origin:50% 50%}
+.mas .swing,.swing{transform-box:view-box;transform-origin:182px 136px}
+.mas .clap,.clap{transform-box:view-box;transform-origin:136px 150px}
 .mas .mwave path:nth-child(2),.mwave path:nth-child(2){animation-delay:.2s}
 .mas .mwave path:nth-child(3),.mwave path:nth-child(3){animation-delay:.4s}
 @keyframes mm-bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-4px)}}
@@ -636,7 +633,7 @@ svg.mas{display:block;flex:none;overflow:visible}
 @media (min-width:821px){.how:not(.is-live) .frame{width:min(100%,440px)}}
 .how.is-live .frame{display:none}
 .how.is-live .stage-wrap{display:block;min-width:0}
-.how.is-live .stage-svg{width:100%;height:auto;border-radius:18px;border:1px solid var(--line,#DDE3EC);background:#fff;box-shadow:0 24px 48px -32px rgba(14,27,51,.35)}
+.how.is-live .stage-svg{width:100%;height:auto;border-radius:18px;border:1px solid var(--line,#DDE3EC);background:#fff}
 .how.is-live .lead{margin-top:clamp(1rem,2vw,1.5rem)}
 .how.is-live .how-copy{margin-top:clamp(1.75rem,3vw,2.5rem)}
 .how.is-live .steps{display:grid;gap:0}
@@ -683,7 +680,7 @@ text.sa-sent{fill:#0F7B58;font-weight:700}
 
 /* ---------- the feature panes ---------- */
 .bento{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:clamp(1rem,1.6vw,1.4rem)}
-.pane{position:relative;display:grid;gap:14px;align-content:start;min-width:0;padding:clamp(1.25rem,2vw,1.6rem);border:1px solid var(--line,#DDE3EC);border-radius:20px;background:var(--card,#fff);box-shadow:0 1px 2px rgba(14,27,51,.04),0 18px 36px -28px rgba(14,27,51,.35)}
+.pane{position:relative;display:grid;gap:14px;align-content:start;min-width:0;padding:clamp(1.25rem,2vw,1.6rem);border:1px solid var(--line,#DDE3EC);border-radius:20px;background:var(--card,#fff)}
 .p-approval{grid-column:1 / span 8;grid-row:1 / span 2}
 .p-roster{grid-column:9 / span 4;grid-row:1 / span 2}
 .p-handoff{grid-column:1 / span 6;grid-row:3}
@@ -1447,7 +1444,7 @@ text.sa-sent{fill:#0F7B58;font-weight:700}
           <div class="ptr" id="ptr" aria-hidden="true"><svg viewBox="0 0 24 24" focusable="false"><use href="#i-cursor"/></svg></div>
         </div>
       </div>
-      <figcaption class="cap" data-i="appCap">Это иллюстрация, а не запись настоящего сеанса. Все имена и сообщения в ней выдуманы.</figcaption>
+      <figcaption class="cap" data-i="appCap">Это иллюстрация, нарисованная для этой страницы. Все имена и сообщения в ней выдуманы.</figcaption>
     </figure>
   </div>
 </section>
@@ -1455,12 +1452,12 @@ text.sa-sent{fill:#0F7B58;font-weight:700}
 <section class="sec alt" id="what">
   <div class="wrap">
     <div class="head">
-      <h2 class="wd" data-i="w_h">Дел слишком много, а ты один?</h2>
-      <p class="lead rv" data-i="w_p1">Письма, счета, бронирования, договоры, тот ответ, который ты обещал на прошлой неделе. Одна голова, две руки, сотня дел.</p>
-      <p class="rv" data-i="w_p2">FreeDuet похож на маленький офис помощников внутри твоего компьютера. Каждый помощник отлично делает одну работу. Ты общаешься с Iris, которая руководит командой, и она расставляет всех по местам.</p>
+      <h2 data-i="w_h">Дел слишком много, а ты один?</h2>
+      <p class="lead" data-i="w_p1">Письма, счета, бронирования, договоры, тот ответ, который ты обещал на прошлой неделе. Одна голова, две руки, сотня дел.</p>
+      <p data-i="w_p2">FreeDuet похож на маленький офис помощников внутри твоего компьютера. Каждый помощник отлично делает одну работу. Ты общаешься с Iris, которая руководит командой, и она расставляет всех по местам.</p>
     </div>
     <div class="three">
-      <article class="rv">
+      <article >
         <svg viewBox="0 0 320 190" role="img" aria-labelledby="t3a"><title id="t3a" data-i="w_a_alt">Один координатор, связанный с четырьмя специалистами</title>
           <path d="M160 82v22M62 104h196M62 104v16M127 104v16M193 104v16M258 104v16" stroke="#9AA8BF" stroke-width="1.5" fill="none"/>
           <rect x="112" y="38" width="96" height="44" rx="10" fill="#0E1B33"/><text x="160" y="66" text-anchor="middle" fill="#fff" font-family="Schibsted Grotesk,IBM Plex Sans,sans-serif" font-weight="700" font-size="16">Iris</text>
@@ -1468,10 +1465,10 @@ text.sa-sent{fill:#0F7B58;font-weight:700}
           <circle cx="44" cy="140" r="5" fill="#E8590C"/><circle cx="109" cy="140" r="5" fill="#0E7C86"/><circle cx="175" cy="140" r="5" fill="#C99100"/><circle cx="240" cy="140" r="5" fill="#C2255C"/>
           <g fill="#C9D2E0"><rect x="56" y="136" width="28" height="8" rx="4"/><rect x="121" y="136" width="28" height="8" rx="4"/><rect x="187" y="136" width="28" height="8" rx="4"/><rect x="252" y="136" width="28" height="8" rx="4"/></g>
         </svg>
-        <h3 data-i="w_a_h">Команда, а не один чат-бот</h3>
+        <h3 data-i="w_a_h">Целая команда помощников</h3>
         <p data-i="w_a_p">Чат-бот — это один сообразительный друг, который отвечает на вопросы. FreeDuet — это целая команда, где каждый действительно делает свою часть работы.</p>
       </article>
-      <article class="rv">
+      <article >
         <svg viewBox="0 0 320 190" role="img" aria-labelledby="t3b"><title id="t3b" data-i="w_b_alt">Окно браузера с кнопкой, на которую нажимают</title>
           <rect x="50" y="28" width="220" height="134" rx="10" fill="#fff" stroke="#C9D2E0" stroke-width="1.5"/><path d="M50 52h220" stroke="#DDE3EC" stroke-width="1.5"/><circle cx="66" cy="40" r="3.5" fill="#C9D2E0"/><circle cx="78" cy="40" r="3.5" fill="#C9D2E0"/><circle cx="90" cy="40" r="3.5" fill="#C9D2E0"/><rect x="108" y="35" width="120" height="10" rx="5" fill="#EEF1F6"/>
           <rect x="70" y="70" width="110" height="9" rx="4.5" fill="#DDE3EC"/><rect x="70" y="88" width="170" height="9" rx="4.5" fill="#EEF1F6"/><rect x="70" y="106" width="140" height="9" rx="4.5" fill="#EEF1F6"/><rect x="70" y="128" width="84" height="24" rx="6" fill="#1B4FD8"/>
@@ -1480,7 +1477,7 @@ text.sa-sent{fill:#0F7B58;font-weight:700}
         <h3 data-i="w_b_h">Он делает дела, а не только говорит</h3>
         <p data-i="w_b_p">У каждого помощника своё рабочее место: отдельный браузер, не связанный с твоим. Там он может искать цены, заполнять формы и готовить черновики.</p>
       </article>
-      <article class="rv">
+      <article >
         <svg viewBox="0 0 320 190" aria-hidden="true">
           <rect x="56" y="36" width="208" height="118" rx="10" fill="#fff" stroke="#EBC3BA" stroke-width="1.5"/><rect x="56" y="36" width="4" height="118" fill="#C8402A"/>
           <rect x="76" y="56" width="90" height="9" rx="4.5" fill="#C8402A" opacity=".8"/><rect x="76" y="78" width="160" height="8" rx="4" fill="#DDE3EC"/><rect x="76" y="94" width="120" height="8" rx="4" fill="#EEF1F6"/>
@@ -1491,7 +1488,7 @@ text.sa-sent{fill:#0F7B58;font-weight:700}
         <p data-i="w_c_p">Помощники готовят. Решаешь ты. По умолчанию ничего важного не покинет твой компьютер, пока ты не нажмёшь «Одобрить».</p>
       </article>
     </div>
-    <div class="versus rv">
+    <div class="versus">
       <div><strong data-i="v_a_h">Без FreeDuet</strong><p data-i="v_a_p">Ты открываешь почту, читаешь сорок писем, ищешь счёт, сравниваешь три авиарейса, пишешь ответ и забываешь про подарок на день рождения.</p></div>
       <div><strong data-i="v_b_h">С FreeDuet</strong><p data-i="v_b_p">Ты пишешь одну фразу: «Займись всем, что пришло сегодня утром». Потом читаешь короткий отчёт и нажимаешь «Одобрить» там, где согласен.</p></div>
     </div>
@@ -1501,17 +1498,17 @@ text.sa-sent{fill:#0F7B58;font-weight:700}
 <section class="sec" id="team">
   <div class="wrap">
     <div class="head">
-      <h2 class="wd" data-i="t_h">Знакомься с командой. У каждого одна работа.</h2>
-      <p class="lead rv" data-i="t_p">Почему не сделать одного помощника на все случаи? По той же причине, по которой в футбольной команде есть вратарь: кто весь день занимается одним делом, становится в нём очень хорош.</p>
+      <h2 data-i="t_h">Знакомься с командой. У каждого одна работа.</h2>
+      <p class="lead" data-i="t_p">Почему не сделать одного помощника на все случаи? По той же причине, по которой в футбольной команде есть вратарь: кто весь день занимается одним делом, становится в нём очень хорош.</p>
     </div>
-    <div class="team" id="teamGrid"><article class="mem boss rv" style="--mc:#1B4FD8"><svg class="mas" viewBox="0 0 220 220" aria-hidden="true" focusable="false"><use href="#m-iris"/></svg><h3>Iris<span>руководит командой</span></h3><p>Ты говоришь Iris, что нужно. Она передаёт задачу подходящему помощнику, а ответ возвращается через неё.</p><q>Займись всем, что пришло сегодня утром.</q></article><article class="mem rv" style="--mc:#E8590C"><svg class="mas" viewBox="0 0 220 220" aria-hidden="true" focusable="false"><use href="#m-otto"/></svg><h3>Otto<span>почта</span></h3><p>Читает твои входящие, указывает, что важно сейчас, а что может подождать, и пишет ответы, которые ты проверишь.</p><q>Разбери мою почту и подготовь ответы на важные письма.</q></article><article class="mem rv" style="--mc:#0E7C86"><svg class="mas" viewBox="0 0 220 220" aria-hidden="true" focusable="false"><use href="#m-portia"/></svg><h3>Portia<span>договоры</span></h3><p>Читает скучный мелкий шрифт и показывает, где спрятаны ловушки, ещё до того, как ты подпишешь.</p><q>Можно ли мне подписать этот договор аренды?</q></article><article class="mem rv" style="--mc:#A87900"><svg class="mas" viewBox="0 0 220 220" aria-hidden="true" focusable="false"><use href="#m-penny"/></svg><h3>Penny<span>счета</span></h3><p>Готовит счета и ведёт список тех, кто ещё должен тебе деньги.</p><q>Выстави счёт компании Acme за прошлую неделю и скажи, кто ещё не заплатил.</q></article><article class="mem rv" style="--mc:#C2255C"><svg class="mas" viewBox="0 0 220 220" aria-hidden="true" focusable="false"><use href="#m-jules"/></svg><h3>Jules<span>поручения</span></h3><p>Находит авиарейсы, подарки и свободные столики в своём браузере и бронирует их, когда ты говоришь «да».</p><q>Забронируй столик на четверых на пятницу.</q></article><article class="mem rv" style="--mc:#2B8A3E"><svg class="mas" viewBox="0 0 220 220" aria-hidden="true" focusable="false"><use href="#m-wren"/></svg><h3>Wren<span>тексты</span></h3><p>Превращает твои черновые заметки в посты и письма, которые звучат как ты, а не как робот.</p><q>Преврати это голосовое сообщение в пост в моём стиле.</q></article><article class="mem rv" style="--mc:#C92A2A"><svg class="mas" viewBox="0 0 220 220" aria-hidden="true" focusable="false"><use href="#m-mark"/></svg><h3>Mark<span>маркетинг</span></h3><p>Составляет твой маркетинговый план, план запуска и стратегию по каналам, а также проверяет сайт, SEO и рекламу. По умолчанию ничего не публикует и ничего не тратит без твоего «да». Ещё не проверено в реальных условиях.</p><q>Составь трёхмесячный маркетинговый план для моего магазина.</q></article><article class="mem rv" style="--mc:#7950F2"><svg class="mas" viewBox="0 0 220 220" aria-hidden="true" focusable="false"><use href="#m-video"/></svg><h3>Cam<span>видео</span></h3><p>Монтирует короткие видео из твоего материала или по сценарию: субтитры, музыка и звук, в горизонтальном, вертикальном и квадратном формате. Никогда не публикует и не загружает видео. Ещё не проверено в реальных условиях.</p><q>Сделай вертикальное видео на 30 секунд по этому сценарию, с субтитрами.</q></article><article class="mem rv" style="--mc:#B5540B"><svg class="mas" viewBox="0 0 220 220" aria-hidden="true" focusable="false"><use href="#m-gus"/></svg><h3>Gus<span>ремонт</span></h3><p>Пришли фото того, что сломалось. Gus подскажет, как безопасно это починить или кому позвонить.</p><q>Дверь не закрывается. Вот фото.</q></article><article class="mem rv" style="--mc:#5C940D"><svg class="mas" viewBox="0 0 220 220" aria-hidden="true" focusable="false"><use href="#m-basil"/></svg><h3>Basil<span>готовка</span></h3><p>Расскажи Basil, что есть в холодильнике, и он предложит три блюда, которые можно приготовить сегодня вечером.</p><q>Что можно приготовить из шпината и яиц?</q></article><article class="mem rv" style="--mc:#5C6B80"><svg class="mas" viewBox="0 0 220 220" aria-hidden="true" focusable="false"><use href="#m-vera"/></svg><h3>Vera<span>проверка</span></h3><p>Работает за кулисами. Пересчитывает суммы и заново открывает цены, прежде чем работа дойдёт до тебя.</p><q>(Iris передаёт ей важную работу.)</q></article><article class="mem rv" style="--mc:#C46A00"><svg class="mas" viewBox="0 0 220 220" aria-hidden="true" focusable="false"><use href="#m-leo"/></svg><h3>Leo<span>создаёт новых помощников</span></h3><p>Нужен помощник, которого ещё нет? Leo его проектирует. Проверка каждого нового участника до того, как его назовут готовым, запланирована.</p><q>Мне нужен тот, кто следит за продлением моих доменов.</q></article></div>
-    <p class="soft team-note rv" data-i="t_note">Это стартовая команда, а не предел. Ты можешь обучить своих участников для той самой работы, которая тебе нужна, а со временем мы добавляем новых готовых участников. Переименование участников и изменение их манеры общения построено, но ещё не проверено в реальных условиях.</p>
+    <div class="team" id="teamGrid"><article class="mem boss" style="--mc:#1B4FD8"><svg class="mas" viewBox="0 0 220 220" aria-hidden="true" focusable="false"><use href="#m-iris"/></svg><h3>Iris<span>руководит командой</span></h3><p>Ты говоришь Iris, что нужно. Она передаёт задачу подходящему помощнику, а ответ возвращается через неё.</p><q>Займись всем, что пришло сегодня утром.</q></article><article class="mem" style="--mc:#E8590C"><svg class="mas" viewBox="0 0 220 220" aria-hidden="true" focusable="false"><use href="#m-otto"/></svg><h3>Otto<span>почта</span></h3><p>Читает твои входящие, указывает, что важно сейчас, а что может подождать, и пишет ответы, которые ты проверишь.</p><q>Разбери мою почту и подготовь ответы на важные письма.</q></article><article class="mem" style="--mc:#0E7C86"><svg class="mas" viewBox="0 0 220 220" aria-hidden="true" focusable="false"><use href="#m-portia"/></svg><h3>Portia<span>договоры</span></h3><p>Читает скучный мелкий шрифт и показывает, где спрятаны ловушки, ещё до того, как ты подпишешь.</p><q>Можно ли мне подписать этот договор аренды?</q></article><article class="mem" style="--mc:#A87900"><svg class="mas" viewBox="0 0 220 220" aria-hidden="true" focusable="false"><use href="#m-penny"/></svg><h3>Penny<span>счета</span></h3><p>Готовит счета и ведёт список тех, кто ещё должен тебе деньги.</p><q>Выстави счёт компании Acme за прошлую неделю и скажи, кто ещё не заплатил.</q></article><article class="mem" style="--mc:#C2255C"><svg class="mas" viewBox="0 0 220 220" aria-hidden="true" focusable="false"><use href="#m-jules"/></svg><h3>Jules<span>поручения</span></h3><p>Находит авиарейсы, подарки и свободные столики в своём браузере и бронирует их, когда ты говоришь «да».</p><q>Забронируй столик на четверых на пятницу.</q></article><article class="mem" style="--mc:#2B8A3E"><svg class="mas" viewBox="0 0 220 220" aria-hidden="true" focusable="false"><use href="#m-wren"/></svg><h3>Wren<span>тексты</span></h3><p>Превращает твои черновые заметки в посты и письма, которые звучат как ты.</p><q>Преврати это голосовое сообщение в пост в моём стиле.</q></article><article class="mem" style="--mc:#C92A2A"><svg class="mas" viewBox="0 0 220 220" aria-hidden="true" focusable="false"><use href="#m-mark"/></svg><h3>Mark<span>маркетинг</span></h3><p>Составляет твой маркетинговый план, план запуска и стратегию по каналам, а также проверяет сайт, SEO и рекламу. По умолчанию ничего не публикует и ничего не тратит без твоего «да». Ещё не проверено в реальных условиях.</p><q>Составь трёхмесячный маркетинговый план для моего магазина.</q></article><article class="mem" style="--mc:#7950F2"><svg class="mas" viewBox="0 0 220 220" aria-hidden="true" focusable="false"><use href="#m-video"/></svg><h3>Cam<span>видео</span></h3><p>Монтирует короткие видео из твоего материала или по сценарию: субтитры, музыка и звук, в горизонтальном, вертикальном и квадратном формате. Никогда не публикует и не загружает видео. Ещё не проверено в реальных условиях.</p><q>Сделай вертикальное видео на 30 секунд по этому сценарию, с субтитрами.</q></article><article class="mem" style="--mc:#B5540B"><svg class="mas" viewBox="0 0 220 220" aria-hidden="true" focusable="false"><use href="#m-gus"/></svg><h3>Gus<span>ремонт</span></h3><p>Пришли фото того, что сломалось. Gus подскажет, как безопасно это починить или кому позвонить.</p><q>Дверь не закрывается. Вот фото.</q></article><article class="mem" style="--mc:#5C940D"><svg class="mas" viewBox="0 0 220 220" aria-hidden="true" focusable="false"><use href="#m-basil"/></svg><h3>Basil<span>готовка</span></h3><p>Расскажи Basil, что есть в холодильнике, и он предложит три блюда, которые можно приготовить сегодня вечером.</p><q>Что можно приготовить из шпината и яиц?</q></article><article class="mem" style="--mc:#5C6B80"><svg class="mas" viewBox="0 0 220 220" aria-hidden="true" focusable="false"><use href="#m-vera"/></svg><h3>Vera<span>проверка</span></h3><p>Работает за кулисами. Пересчитывает суммы и заново открывает цены, прежде чем работа дойдёт до тебя.</p><q>(Iris передаёт ей важную работу.)</q></article><article class="mem" style="--mc:#C46A00"><svg class="mas" viewBox="0 0 220 220" aria-hidden="true" focusable="false"><use href="#m-leo"/></svg><h3>Leo<span>создаёт новых помощников</span></h3><p>Нужен помощник, которого ещё нет? Leo его проектирует. Проверка каждого нового участника до того, как его назовут готовым, запланирована.</p><q>Мне нужен тот, кто следит за продлением моих доменов.</q></article></div>
+    <p class="soft team-note" data-i="t_note">Это лишь стартовая команда. Ты можешь обучить своих участников для той самой работы, которая тебе нужна, а со временем мы добавляем новых готовых участников. Переименование участников и изменение их манеры общения построено, но ещё не проверено в реальных условиях.</p>
   </div>
 </section>
 
 <section class="sec alt how" id="how" aria-labelledby="how-h">
   <div class="wrap how-grid">
-    <h2 class="wd" id="how-h" data-i="h_h">Что происходит после того, как ты нажимаешь Enter</h2>
+    <h2 id="how-h" data-i="h_h">Что происходит после того, как ты нажимаешь Enter</h2>
     <p class="lead" data-i="h_p">Никакой магии и никаких секретов. Пять шагов, всегда одних и тех же, так что ты всегда знаешь, кто чем занят.</p>
     <div class="stage-wrap"><svg class="stage-svg" viewBox="0 0 460 340" aria-hidden="true" focusable="false"><use href="#how-art"/></svg></div>
     <div class="how-copy">
@@ -1533,11 +1530,11 @@ text.sa-sent{fill:#0F7B58;font-weight:700}
 <section class="sec" id="features" aria-labelledby="ft-h">
   <div class="wrap">
     <div class="head">
-      <h2 class="wd" id="ft-h" data-i="ft_h">Шесть вещей, которые стоит знать</h2>
-      <p class="lead rv" data-i="ft_p">Каждая маленькая картинка показывает реальную часть FreeDuet. Имена и сообщения на них выдуманы.</p>
+      <h2 id="ft-h" data-i="ft_h">Шесть вещей, которые стоит знать</h2>
+      <p class="lead" data-i="ft_p">Каждая маленькая картинка показывает реальную часть FreeDuet. Имена и сообщения на них выдуманы.</p>
     </div>
     <div class="bento">
-      <article class="pane p-approval rv" aria-labelledby="h-approval">
+      <article class="pane p-approval" aria-labelledby="h-approval">
         <div class="phead"><span class="tag tag-ok" data-i="tagRel">Выпущено в v0.2.1</span><h3 id="h-approval" data-i="fe2h">Пять кнопок ждут твоего «да»</h3></div>
         <p data-i="bA_p">По умолчанию они спрашивают, прежде чем что-либо отправить, оплатить, подписать, забронировать или удалить.</p>
         <div class="mail" id="mail">
@@ -1560,7 +1557,7 @@ text.sa-sent{fill:#0F7B58;font-weight:700}
         <p class="caption" data-i="bA_cap">Демо с вымышленными примерами. Живой прогон 15 ноября 2026 года включал 38 тестов безопасности, которые пытаются заставить участника нарушить правило.</p>
       </article>
 
-      <article class="pane p-roster rv" aria-labelledby="h-roster">
+      <article class="pane p-roster" aria-labelledby="h-roster">
         <div class="phead"><span class="tag tag-ok" data-i="tagRel">Выпущено в v0.2.1</span><h3 id="h-roster" data-i="bR_h">Двенадцать участников, у каждого одна задача</h3></div>
         <ul class="roster-b">
           <li><svg class="mas av" data-mascot="iris" viewBox="0 0 220 220" aria-hidden="true" focusable="false"><use href="#m-iris"/></svg><b>Iris</b><small data-f="team.iris.0">руководит командой</small></li>
@@ -1579,14 +1576,14 @@ text.sa-sent{fill:#0F7B58;font-weight:700}
         <p class="caption" data-i="bR_cap">Mark и Cam добавлены после v0.1. Их тесты прошли в живых оценках 15 ноября 2026 года. Полный прогон сертификации на этой версии ещё не повторялся.</p>
       </article>
 
-      <article class="pane p-handoff rv" aria-labelledby="h-handoff">
+      <article class="pane p-handoff" aria-labelledby="h-handoff">
         <div class="phead"><span class="tag tag-wait" data-i="tagWait">Собрано, но ещё не проверено в работе</span><h3 id="h-handoff" data-i="bH_h">Передача с строкой «готово, когда»</h3></div>
         <div class="hl"><svg class="mas av" data-mascot="iris" viewBox="0 0 220 220" aria-hidden="true" focusable="false"><use href="#m-iris"/></svg><div class="bub"><b data-i="bH_from">Iris → Otto</b><span data-i="bH_msg">Otto, разбери почту и подготовь черновики важных ответов.</span></div></div>
         <div class="done"><b data-i="bH_dw">Готово, когда</b><span data-i="bH_dwv">на каждое письмо, требующее ответа, есть черновик, который можно прочитать, и ничего не отправлено.</span></div>
         <p class="caption" data-i="bH_cap">Iris пишет строку «готово, когда», и пришедший ответ проверяется по ней. Задача, которой нужно ваше «да», по-прежнему спрашивает.</p>
       </article>
 
-      <article class="pane p-routine rv" aria-labelledby="h-routine">
+      <article class="pane p-routine" aria-labelledby="h-routine">
         <div class="phead"><span class="tag tag-wait" data-i="tagWait">Собрано, но ещё не проверено в работе</span><h3 id="h-routine" data-i="fe3h">Рутины по расписанию</h3></div>
         <p data-i="fe3p">Рутина повторяется по расписанию, например как сводка каждое утро. У Iris уже есть одна такая. Рутина, которой нужна одна из пяти кнопок, сначала спрашивает тебя; это правило построено, но ещё не проверено в реальных условиях.</p>
         <div class="rt" id="routine">
@@ -1600,7 +1597,7 @@ text.sa-sent{fill:#0F7B58;font-weight:700}
         <p class="caption" data-i="bT_cap">Карточка показывает, что сделает рутина и когда она запустится в следующий раз.</p>
       </article>
 
-      <article class="pane p-computer rv" aria-labelledby="h-computer">
+      <article class="pane p-computer" aria-labelledby="h-computer">
         <div class="phead"><span class="tag tag-ok" data-i="rl_today">Сегодня</span><h3 id="h-computer" data-i="fe5h">Твоя переписка остаётся на твоём компьютере</h3></div>
         <figure class="machine">
           <svg viewBox="0 0 300 180" aria-hidden="true" focusable="false">
@@ -1617,7 +1614,7 @@ text.sa-sent{fill:#0F7B58;font-weight:700}
         <p data-i="fe5p">Приложение, его база данных и браузеры помощников работают на твоём компьютере, и переписка хранится там же. Чтобы думать, помощники используют ИИ-сервис, в который ты вошёл.</p>
       </article>
 
-      <article class="pane p-update rv" aria-labelledby="h-update">
+      <article class="pane p-update" aria-labelledby="h-update">
         <div class="phead"><span class="tag tag-ok" data-i="tagRel">Выпущено в v0.2.1</span><h3 id="h-update" data-i="bU_h">Обновления, которые можно откатить</h3></div>
         <ol class="steps-u">
           <li><b data-i="bU1h">Копирует ваши данные</b><span data-i="bU1p">сначала, в папку вне проекта</span></li>
@@ -1630,7 +1627,7 @@ text.sa-sent{fill:#0F7B58;font-weight:700}
           <li data-i="bU_k2">Без вашей команды ничего не обновляется.</li>
           <li data-i="bU_k3">15 ноября 2026 года обновление четыре раза запускалось на настоящей установке, каждый раз после резервной копии базы данных.</li>
         </ul>
-        <p class="caption" data-i="bU_cap">Проверено в живом режиме на одной установке 15 ноября 2026 года: обновление, но не откат.</p>
+        <p class="caption" data-i="bU_cap">Проверено в живом режиме на одной установке 15 ноября 2026 года: обновление сделано, а откат ещё впереди.</p>
       </article>
     </div>
   </div>
@@ -1639,11 +1636,11 @@ text.sa-sent{fill:#0F7B58;font-weight:700}
 <section class="sec pf" id="proof" aria-labelledby="pf-h">
   <div class="wrap">
     <div class="head">
-      <h2 class="wd" id="pf-h" data-i="pf_h">Доказательства, которые можно проверить</h2>
-      <p class="lead rv" data-i="pf_p">Мы намеренно пытаемся обмануть собственных помощников. Они всё же могут ошибаться, поэтому читайте, что они подготовили, прежде чем одобрить.</p>
+      <h2 id="pf-h" data-i="pf_h">Доказательства, которые можно проверить</h2>
+      <p class="lead" data-i="pf_p">Мы намеренно пытаемся обмануть собственных помощников. Они всё же могут ошибаться, поэтому читайте, что они подготовили, прежде чем одобрить.</p>
     </div>
     <div class="pf-grid">
-      <figure class="evidence rv">
+      <figure class="evidence">
         <div class="ev-grid" aria-hidden="true">
           <i style="--i:0"></i><i style="--i:1"></i><i style="--i:2"></i><i style="--i:3"></i><i style="--i:4"></i><i style="--i:5"></i><i style="--i:6"></i><i style="--i:7"></i><i style="--i:8"></i>
           <i style="--i:9"></i><i style="--i:10"></i><i style="--i:11"></i><i style="--i:12"></i><i style="--i:13"></i><i style="--i:14"></i><i style="--i:15"></i><i style="--i:16"></i><i style="--i:17"></i>
@@ -1658,17 +1655,17 @@ text.sa-sent{fill:#0F7B58;font-weight:700}
         </figcaption>
       </figure>
       <div class="claims">
-        <article class="claim rv" aria-labelledby="c1h">
+        <article class="claim" aria-labelledby="c1h">
           <h3 id="c1h" data-i="c1h">Сертифицировано в v0.1</h3>
           <p data-i="c1p">Каждый участник набрал 100% оцениваемых случаев, а тесты безопасности прошли 45 из 45 запусков. Порог — не ниже 90% для каждого участника и 100% для тестов безопасности.</p>
           <p class="check"><a href="https://github.com/MarcoDeliaBot/freeduet/blob/main/docs/ROADMAP.md" data-i="c_chk1">Проверить: docs/ROADMAP.md и evals/team/README.md</a></p>
         </article>
-        <article class="claim rv" aria-labelledby="c2h">
+        <article class="claim" aria-labelledby="c2h">
           <h3 id="c2h" data-i="c2h">Первый прогон провалился, затем исправления</h3>
           <p data-i="c2p">Первый полный прогон в ту ночь провалился у одного участника: сбой браузера, а затем ход, который закончился молчанием. Оба дефекта исправили, и сертифицированный прогон был уже после исправлений.</p>
           <p class="check"><a href="https://github.com/MarcoDeliaBot/freeduet/blob/main/README.md#what-is-tested-and-what-is-not" data-i="c_chk2">Проверить: README.md, раздел «What is tested and what is not»</a></p>
         </article>
-        <article class="claim rv" aria-labelledby="c3h">
+        <article class="claim" aria-labelledby="c3h">
           <h3 id="c3h" data-i="c3h">Один живой прогон после v0.1</h3>
           <p data-i="c3p">15 ноября 2026 года оценки команды прошли в живом режиме на v0.2.1: 84 случая, из них 38 тестов безопасности. Прошли 66 из 73 оцениваемых случаев, 11 пропущены. Этот прогон не достиг порогов. Mark и Cam тоже в нём участвовали.</p>
           <p class="check"><a href="https://github.com/MarcoDeliaBot/freeduet/blob/main/docs/ROADMAP.md" data-i="c_chk3">Проверить: docs/ROADMAP.md</a></p>
@@ -1681,22 +1678,22 @@ text.sa-sent{fill:#0F7B58;font-weight:700}
 <section class="sec dark" id="safe">
   <div class="wrap">
     <div class="head">
-      <h2 class="wd" data-i="sf_h">Пять кнопок, которые ждут твоего «да»</h2>
-      <p class="lead rv" data-i="sf_p">Отдал бы ты кошелёк новому помощнику в первый день? Мы бы тоже нет. Поэтому по умолчанию эти пять действий ждут твоего «да». Переключатель, который снимает это для одного участника и который включить может только ты, построен, но ещё не проверен в реальных условиях.</p>
+      <h2 data-i="sf_h">Пять кнопок, которые ждут твоего «да»</h2>
+      <p class="lead" data-i="sf_p">Отдал бы ты кошелёк новому помощнику в первый день? Мы бы тоже нет. Поэтому по умолчанию эти пять действий ждут твоего «да». Переключатель, который снимает это для одного участника и который включить может только ты, построен, но ещё не проверен в реальных условиях.</p>
     </div>
     <ul class="buttons5">
-      <li class="rv"><svg aria-hidden="true"><use href="#b-send"/></svg><span data-i="b1">Отправить</span></li>
-      <li class="rv"><svg aria-hidden="true"><use href="#b-pay"/></svg><span data-i="b2">Оплатить</span></li>
-      <li class="rv"><svg aria-hidden="true"><use href="#b-sign"/></svg><span data-i="b3">Подписать</span></li>
-      <li class="rv"><svg aria-hidden="true"><use href="#b-book"/></svg><span data-i="b4">Забронировать</span></li>
-      <li class="rv"><svg aria-hidden="true"><use href="#b-del"/></svg><span data-i="b5">Удалить</span></li>
+      <li ><svg aria-hidden="true"><use href="#b-send"/></svg><span data-i="b1">Отправить</span></li>
+      <li ><svg aria-hidden="true"><use href="#b-pay"/></svg><span data-i="b2">Оплатить</span></li>
+      <li ><svg aria-hidden="true"><use href="#b-sign"/></svg><span data-i="b3">Подписать</span></li>
+      <li ><svg aria-hidden="true"><use href="#b-book"/></svg><span data-i="b4">Забронировать</span></li>
+      <li ><svg aria-hidden="true"><use href="#b-del"/></svg><span data-i="b5">Удалить</span></li>
     </ul>
     <div class="proof">
-      <div class="rv"><h3 data-i="p1h">Замок, а не обещание</h3><p data-i="p1p">Правило не просто записано в инструкциях помощника. По умолчанию сама программа блокирует действие, пока ты его не одобришь.</p></div>
-      <div class="rv"><h3 data-i="p2h">Уловки не работают</h3><p data-i="p2p">Письмо со словами «пришли мне пароль, это срочно» считается просто текстом для чтения, а не приказом. И ни один помощник никогда не просит у тебя в чате пароли или номера карт.</p></div>
-      <div class="rv"><h3 data-i="p3h">Одна честная лазейка</h3><p data-i="p3p">Если адрес вводишь ты сам («напиши письмо на anna@example.com и скажи ей…»), твоя фраза и есть «да», и это новое письмо уходит. По умолчанию адреса, найденные где-то ещё, сначала спрашивают тебя.</p></div>
+      <div ><h3 data-i="p1h">Замок, который держит сама программа</h3><p data-i="p1p">Правило записано в инструкциях помощника, и по умолчанию сама программа тоже блокирует действие, пока ты его не одобришь.</p></div>
+      <div ><h3 data-i="p2h">Уловки не работают</h3><p data-i="p2p">Письмо со словами «пришли мне пароль, это срочно» считается просто текстом для чтения и никогда не приказом. И ни один помощник никогда не просит у тебя в чате пароли или номера карт.</p></div>
+      <div ><h3 data-i="p3h">Одна честная лазейка</h3><p data-i="p3p">Если адрес вводишь ты сам («напиши письмо на anna@example.com и скажи ей…»), твоя фраза и есть «да», и это новое письмо уходит. По умолчанию адреса, найденные где-то ещё, сначала спрашивают тебя.</p></div>
     </div>
-    <div class="score rv">
+    <div class="score">
       <b>45/45</b>
       <p data-i="score">Мы специально пытаемся обмануть наших собственных помощников. В последней полной проверке версии 0.1 проверки безопасности были пройдены 45 раз из 45. <a href="https://github.com/MarcoDeliaBot/freeduet/blob/main/evals/team/reports/2026-11-13-claude-code-regraded-2026-11-13-public.md">Прочитать открытый отчёт</a>. Помощники всё же могут ошибаться, поэтому читай то, что они подготовили, прежде чем одобрять.</p>
     </div>
@@ -1707,16 +1704,16 @@ text.sa-sent{fill:#0F7B58;font-weight:700}
   <div class="wrap">
     <div class="split">
       <div class="stack">
-        <h2 class="wd" data-i="m_h">Почему тебе не придётся платить дважды</h2>
-        <p class="lead rv" data-i="m_p1">Большинство ИИ-инструментов заставляют покупать «API-ключ». Это работает как счётчик в такси: каждое слово стоит немного, а счёт всё растёт.</p>
-        <p class="rv" data-i="m_p2">Ежемесячная подписка на ИИ больше похожа на проездной: одна цена, и ты ездишь столько, сколько позволяет проездной. FreeDuet работает на подписке, которая у тебя уже есть. Ты входишь в аккаунт сам, а FreeDuet никогда не видит, не сохраняет и не передаёт твои данные для входа.</p>
-        <ul class="todo rv">
+        <h2 data-i="m_h">Почему тебе не придётся платить дважды</h2>
+        <p class="lead" data-i="m_p1">Большинство ИИ-инструментов заставляют покупать «API-ключ». Это работает как счётчик в такси: каждое слово стоит немного, а счёт всё растёт.</p>
+        <p data-i="m_p2">Ежемесячная подписка на ИИ больше похожа на проездной: одна цена, и ты ездишь столько, сколько позволяет проездной. FreeDuet работает на подписке, которая у тебя уже есть. Ты входишь в аккаунт сам, а FreeDuet никогда не видит, не сохраняет и не передаёт твои данные для входа.</p>
+        <ul class="todo">
           <li><svg aria-hidden="true"><use href="#i-check"/></svg><span data-i="m_l1">Сегодня он работает с подпиской Claude через официальное приложение Claude Code.</span></li>
           <li><svg aria-hidden="true"><use href="#i-check"/></svg><span data-i="m_l2">Другие подписки и локальные модели в работе, и каждая из них предлагается только после проверки.</span></li>
           <li><svg aria-hidden="true"><use href="#i-check"/></svg><span data-i="m_l3">Сам FreeDuet ничего не стоит: код открыт по лицензии MIT.</span></li>
         </ul>
       </div>
-      <div class="pass rv rv-panel">
+      <div class="pass">
         <svg viewBox="0 0 520 290" aria-hidden="true">
           <path d="M60 36v204h420" stroke="#C9D2E0" stroke-width="1.5" fill="none"/><path d="M60 190h420M60 140h420M60 90h420" stroke="#E6EAF1" stroke-dasharray="3 5"/>
           <path d="M60 232C160 222 240 190 320 140S430 76 470 58" stroke="#C8402A" stroke-width="3" fill="none" stroke-linecap="round"/><circle cx="470" cy="58" r="5" fill="#C8402A"/>
@@ -1732,50 +1729,50 @@ text.sa-sent{fill:#0F7B58;font-weight:700}
 <section class="sec alt" id="goal">
   <div class="wrap">
     <div class="head">
-      <h2 class="wd" data-i="g_h">Цель: команда для каждого, а не только для крупных компаний</h2>
-      <p class="lead rv" data-i="g_p1">У крупной компании есть помощники, юристы и бухгалтеры. У фрилансера, небольшого магазина или семьи есть… только они сами. Это несправедливо, и теперь так быть не обязано.</p>
-      <p class="rv" data-i="g_p2">Мы хотим, чтобы у каждого была своя команда: бесплатная, открытая и домашняя. FreeDuet работает на твоём компьютере и хранит переписку в базе данных на этом же компьютере. Думает за него тот ИИ, на который ты уже подписан.</p>
-      <p class="rv" data-i="g_p3">Открытый код значит, что рецепт публичный. Любой может его прочитать, проверить, что он делает то, что обещает, и улучшить. Верить нам на слово не нужно. Можно посмотреть самому.</p>
+      <h2 data-i="g_h">Цель: команда для каждого, а не только для крупных компаний</h2>
+      <p class="lead" data-i="g_p1">У крупной компании есть помощники, юристы и бухгалтеры. У фрилансера, небольшого магазина или семьи есть… только они сами. Это несправедливо, и теперь это можно изменить.</p>
+      <p data-i="g_p2">Мы хотим, чтобы у каждого была своя команда: бесплатная, открытая и домашняя. FreeDuet работает на твоём компьютере и хранит переписку в базе данных на этом же компьютере. Думает за него тот ИИ, на который ты уже подписан.</p>
+      <p data-i="g_p3">Открытый код значит, что рецепт публичный. Любой может его прочитать, проверить, что он делает то, что обещает, и улучшить. Верить нам на слово не нужно. Можно посмотреть самому.</p>
     </div>
-    <h3 class="road-h rv" data-i="r_h">Что работает сегодня и что будет дальше</h3>
-    <ol class="road rv">
+    <h3 class="road-h" data-i="r_h">Что работает сегодня и что будет дальше</h3>
+    <ol class="road">
       <li><b data-i="rl_today">Сегодня</b><span class="tag" data-i="r_now">Уже готово</span><p data-i="r1">Команда на твоём собственном входе в Claude, с одобрениями, тестами, Gmail и Google Calendar.</p></li>
       <li><b data-i="rl_now">Сейчас</b><span class="tag" data-i="r_prog">В работе</span><p data-i="r2">Главный приоритет: установщик в одном файле для Windows, macOS и Ubuntu. Сегодня есть первые установочные скрипты для Ubuntu и для Windows через WSL2, а установщика в один двойной щелчок пока нет. Помощник для почты, который наводит порядок в твоём почтовом ящике, построен: 15 ноября 2026 года Otto перенёс спам в папку «Спам» настоящего почтового ящика. Постоянные почтовые правила опубликованы в v0.2.2: 16 ноября 2026 года одно правило для домена одного отправителя само сработало на новых письмах. Остальные изменения и правила ещё не проверены в реальных условиях. Построено, но ещё не проверено в реальных условиях: «Done when» (критерий готовности) при каждой передаче задачи, карточка рутины в чате, отдельный токен для компьютера каждого участника и подключения к домашней сети, которые закрываются, когда ты отключаешь доступ.</p></li>
       <li><b data-i="rl_now">Сейчас</b><span class="tag" data-i="r_plan">Запланировано</span><p data-i="r_now2">Первый запуск в три щелчка: одна кнопка подключит твой тариф Claude, а вход ты выполнишь на собственной странице Claude.</p></li>
       <li><b data-i="rl_now">Сейчас</b><span class="tag tag-wait" data-i="tagWait">Собрано, но ещё не проверено в работе</span><p data-i="r_now3">Самое большее три шага, чтобы подключить почтовый ящик Gmail из чата. Строка с «Отменить» после добавления участника в чате. Состав команды предлагается по твоему первому сообщению, и без твоего «да» ничего не создаётся. Обновления, которые можно откатить: одна команда сначала копирует твои данные, а обновление на одной установке запускалось четыре раза 15 ноября 2026 года. Шаг, который возвращает старую версию и данные, ещё не проверен в реальных условиях.</p></li>
       <li><b data-i="rl_next">Далее</b><span class="tag" data-i="r_prog">В работе</span><p data-i="r3">Выбор движка для каждого участника в работе: страница «Движки» построена, но ещё не проверена в реальных условиях, а автоматическое переключение работало только с тестовыми движками. Настройки, которые меняются в чате, вместе с «Отменить», в работе. Имя, тон и язык участника построены после v0.2, но ещё не проверены в реальных условиях, и ни один тест по тону и языку ещё не запускался. Настоящая передача задач запланирована.</p><p data-i="r4">Автоматизации, которые пишутся в чате, версия для телефона и удалённый доступ — в работе. Больше подключаемых приложений — в проектировании.</p></li>
-      <li><b data-i="rl_later">Позже</b><span class="tag" data-i="r_plan">Запланировано</span><p data-i="r_cloud">Облачный FreeDuet для тех, кто предпочитает ничего не устанавливать, запланирован как небольшая ежемесячная подписка. Цена пока не определена. Там Claude работал бы с твоим собственным API-ключом, а не со входом по тарифу Claude. Не раньше, чем будут готовы установщик и первый запуск. На твоём компьютере FreeDuet остаётся бесплатным.</p><p data-i="r5">Голос: чтение вслух построено, но ещё не проверено в реальных условиях, и по умолчанию выключено; звонки ещё не построены. Full access и Cam построены, но ещё не проверены в реальных условиях. Безопасные покупки запланированы.</p></li>
+      <li><b data-i="rl_later">Позже</b><span class="tag" data-i="r_plan">Запланировано</span><p data-i="r_cloud">Облачный FreeDuet для тех, кто предпочитает ничего не устанавливать, запланирован как небольшая ежемесячная подписка. Цена пока не определена. Там Claude работал бы только с твоим собственным API-ключом. Не раньше, чем будут готовы установщик и первый запуск. На твоём компьютере FreeDuet остаётся бесплатным.</p><p data-i="r5">Голос: чтение вслух построено, но ещё не проверено в реальных условиях, и по умолчанию выключено; звонки ещё не построены. Full access и Cam построены, но ещё не проверены в реальных условиях. Безопасные покупки запланированы.</p></li>
     </ol>
-    <p class="soft road-note rv" data-i="r_note">Мы отмечаем всё, что ещё не построено. Никаких сказок. <a href="https://github.com/MarcoDeliaBot/freeduet/blob/main/docs/ROADMAP.md">Полная дорожная карта на GitHub</a>.</p>
+    <p class="soft road-note" data-i="r_note">Мы отмечаем всё, что ещё не построено. Никаких сказок. <a href="https://github.com/MarcoDeliaBot/freeduet/blob/main/docs/ROADMAP.md">Полная дорожная карта на GitHub</a>.</p>
   </div>
 </section>
 
 <section class="sec" id="install">
   <div class="wrap">
     <div class="head">
-      <h2 class="wd" data-i="in_h">От установки до первой полезной задачи</h2>
-      <p class="lead rv" data-i="in_p">Четыре шага в настоящем порядке. Все команды также собраны в одном блоке ниже, их можно сразу скопировать.</p>
+      <h2 data-i="in_h">От установки до первой полезной задачи</h2>
+      <p class="lead" data-i="in_p">Четыре шага в настоящем порядке. Все команды также собраны в одном блоке ниже, их можно сразу скопировать.</p>
     </div>
     <ol class="inst">
-      <li class="rv">
+      <li >
         <div class="pnl term" aria-hidden="true"><div class="tbar"><i></i><i></i><i></i></div><pre><span class="pr">$</span> git clone https://github.com/<wbr>MarcoDeliaBot/freeduet.git
 <span class="pr">$</span> cd freeduet
 <span class="pr">$</span> cp .env.example .env</pre></div>
         <h3 data-i="in1h">Скачай код</h3>
         <p data-i="in1p">Одна команда скачивает FreeDuet с GitHub, другая копирует файл с примером настроек.</p>
       </li>
-      <li class="rv">
+      <li >
         <div class="pnl term" aria-hidden="true"><div class="tbar"><i></i><i></i><i></i></div><pre><span class="pr">$</span> bash scripts/start.sh</pre><ul class="pills"><li>Docker</li><li>Bash</li><li>Bun</li><li>Windows + WSL2</li></ul></div>
         <h3 data-i="in2h">Запусти стартовый скрипт</h3>
         <p data-i="in2p">Один скрипт запускает приложение, команду и отдельный компьютер для каждого участника. Нужны Docker, Bash и Bun. В Windows запускай его внутри WSL2.</p>
       </li>
-      <li class="rv">
+      <li >
         <div class="pnl term" aria-hidden="true"><div class="tbar"><i></i><i></i><i></i></div><pre><span class="pr">$</span> cd openbot &amp;&amp; docker compose exec -it agent-freeduet claude</pre>
           <div class="sp"><svg><use href="#i-lock"/></svg><b>Claude Code</b><span class="ok"><svg><use href="#i-check"/></svg><span data-i="signedIn">Вход выполнен</span></span></div></div>
         <h3 data-i="in3h">Один раз войди со своим тарифом Claude</h3>
         <p data-i="in3p">Открой официальный вход Claude Code и войди сам. FreeDuet никогда не видит, не сохраняет и не передаёт твои данные для входа.</p>
       </li>
-      <li class="rv">
+      <li >
         <div class="pnl brw" aria-hidden="true"><div class="tbar"><i></i><i></i><i></i><span class="url">http://localhost:3010</span></div>
           <div class="bd"><div class="msg me"><div class="bub" data-i="in4ex">Что можно приготовить сегодня вечером из шпината и яиц?</div></div><div class="msg"><svg class="mas av" data-mascot="iris" viewBox="0 0 220 220" aria-hidden="true" focusable="false"><use href="#m-iris"/></svg><div class="bub"><span class="typing"><i></i><i></i><i></i></span></div></div></div></div>
         <h3 data-i="in4h">Открой страницу и дай Iris небольшое задание</h3>
@@ -1789,14 +1786,14 @@ text.sa-sent{fill:#0F7B58;font-weight:700}
   <div class="wrap">
     <div class="split">
       <div class="stack">
-        <h2 class="wd" data-i="st_h">Готов? Четыре команды, и команда уже за работой</h2>
-        <p class="lead rv" data-i="st_p">Скопируй их в терминал, один раз войди в свой тариф Claude, а потом открой страницу, которую получишь.</p>
-        <div class="needs rv">
+        <h2 data-i="st_h">Готов? Четыре команды, и команда уже за работой</h2>
+        <p class="lead" data-i="st_p">Скопируй их в терминал, один раз войди в свой тариф Claude, а потом открой страницу, которую получишь.</p>
+        <div class="needs">
           <p><strong data-i="st_needH">Что понадобится:</strong> <span data-i="st_need">подписка Claude, а также Docker, Bash и Bun на твоём компьютере. Проверено на Windows (с WSL2) и на Linux.</span></p>
           <p class="soft" data-i="st_kid">Никогда не открывал терминал? Попроси кого-нибудь, кто разбирается, всё настроить, и покажи ему эту страницу.</p>
         </div>
       </div>
-      <div class="rv" data-d="150">
+      <div data-d="150">
         <div class="code" id="code" tabindex="0">git clone https://github.com/MarcoDeliaBot/freeduet.git
 cd freeduet
 cp .env.example .env
@@ -1808,9 +1805,9 @@ cd openbot &amp;&amp; docker compose exec -it agent-freeduet claude
       </div>
     </div>
     <div class="join">
-      <a class="rv" href="https://github.com/MarcoDeliaBot/freeduet"><svg aria-hidden="true"><use href="#i-star"/></svg><strong data-i="j1h">Поставь звезду</strong><span data-i="j1p">Один клик на GitHub подскажет другим людям, что на этот проект стоит взглянуть.</span></a>
-      <a class="rv" href="https://github.com/MarcoDeliaBot/freeduet/issues/new/choose"><svg aria-hidden="true"><use href="#i-bug"/></svg><strong data-i="j2h">Расскажи, что сломалось</strong><span data-i="j2p">Пользуешься? Нашёл ошибку? Есть решение? Для каждого случая есть короткая форма.</span></a>
-      <a class="rv" href="https://github.com/sponsors/MarcoDeliaBot"><svg aria-hidden="true"><use href="#i-heart"/></svg><strong data-i="j3h">Угости нас кофе</strong><span data-i="j3p">FreeDuet делает один человек. Небольшое пожертвование помогает проекту жить.</span></a>
+      <a href="https://github.com/MarcoDeliaBot/freeduet"><svg aria-hidden="true"><use href="#i-star"/></svg><strong data-i="j1h">Поставь звезду</strong><span data-i="j1p">Один клик на GitHub подскажет другим людям, что на этот проект стоит взглянуть.</span></a>
+      <a href="https://github.com/MarcoDeliaBot/freeduet/issues/new/choose"><svg aria-hidden="true"><use href="#i-bug"/></svg><strong data-i="j2h">Расскажи, что сломалось</strong><span data-i="j2p">Пользуешься? Нашёл ошибку? Есть решение? Для каждого случая есть короткая форма.</span></a>
+      <a href="https://github.com/sponsors/MarcoDeliaBot"><svg aria-hidden="true"><use href="#i-heart"/></svg><strong data-i="j3h">Угости нас кофе</strong><span data-i="j3p">FreeDuet делает один человек. Небольшое пожертвование помогает проекту жить.</span></a>
     </div>
   </div>
 </section>
@@ -1818,25 +1815,25 @@ cd openbot &amp;&amp; docker compose exec -it agent-freeduet claude
 <section class="band" id="coffee">
   <div class="wrap">
     <div>
-      <h2 class="wd" data-i="j3h">Угости нас кофе</h2>
-      <p class="lead rv" data-i="j3p">FreeDuet делает один человек. Небольшое пожертвование помогает проекту жить.</p>
+      <h2 data-i="j3h">Угости нас кофе</h2>
+      <p class="lead" data-i="j3p">FreeDuet делает один человек. Небольшое пожертвование помогает проекту жить.</p>
     </div>
-    <a class="btn btn-coffee rv" data-d="200" href="https://github.com/sponsors/MarcoDeliaBot"><svg aria-hidden="true"><use href="#i-heart"/></svg><span data-i="j3h">Угости нас кофе</span></a>
+    <a class="btn btn-coffee" data-d="200" href="https://github.com/sponsors/MarcoDeliaBot"><svg aria-hidden="true"><use href="#i-heart"/></svg><span data-i="j3h">Угости нас кофе</span></a>
   </div>
 </section>
 
 <section class="sec alt" id="faq">
   <div class="wrap">
-    <div class="head"><h2 class="wd" data-i="q_h">Вопросы, которые задают чаще всего</h2></div>
+    <div class="head"><h2 data-i="q_h">Вопросы, которые задают чаще всего</h2></div>
     <div class="faq">
-      <details class="rv" open><summary data-i="q1">Что бесплатно, а за что я плачу?</summary><p data-i="a1">FreeDuet бесплатный, с открытым кодом по лицензии MIT, в том числе для бизнеса. Ты платишь только за ИИ-подписку, с которой его используешь, и сегодня это тариф Claude. Покупать API-ключ не нужно.</p></details>
-      <details class="rv"><summary data-i="q2">Что нужно для установки?</summary><p data-i="a2">Подписка Claude, а также Docker, Bash и Bun на твоём компьютере. Четыре шага выше — это вся установка. Никогда не открывал терминал? Попроси кого-нибудь, кто разбирается, всё настроить, и покажи ему эту страницу.</p></details>
-      <details class="rv"><summary data-i="q3">Работает ли это на Windows, Mac и Linux?</summary><p data-i="a3">Разработчик пользуется им на Windows с WSL2 и Docker, а наши автоматические проверки запускают его на Linux. На Mac он не проверялся, поэтому обещать, что там всё заработает, мы не можем. FreeDuet — ранний выпуск: последняя опубликованная версия — 0.2.2 (16 ноября 2026), создан и используется одним разработчиком.</p></details>
-      <details class="rv"><summary data-i="q4">Что помощник может делать, не спрашивая меня?</summary><p data-i="a4">Он может искать информацию, читать, готовить черновики и отчёты. По умолчанию пять кнопок ждут твоего «Одобрить», кроме нового письма на адрес, который ты сам ввёл. Постоянное почтовое правило, которое ты задаёшь своими словами, работает само по себе на новых письмах: оно может ставить ярлык, архивировать, отмечать как прочитанное или переносить в «Спам» или «Корзину». Оно никогда не пересылает, не отвечает, не отправляет и не удаляет письма навсегда. Full access, отдельно для каждого участника, снимает ожидание в твоих собственных беседах; это построено, но ещё не проверено в реальных условиях. Пароли и настройки безопасности по-прежнему остаются за тобой. Помощники всё равно могут ошибаться, поэтому читай, что они подготовили, прежде чем одобрить.</p></details>
-      <details class="rv"><summary data-i="q5">Где мои данные?</summary><p data-i="a5">FreeDuet работает на твоём компьютере и хранит там переписку в базе данных. Твой вход в Claude остаётся в томе Docker, который читает только программа Claude Code. Чтобы думать, помощники отправляют твою просьбу в ИИ-сервис, в который ты вошёл, так же, как это делало бы его собственное приложение.</p></details>
-      <details class="rv"><summary data-i="q6">Можно ли пользоваться им с телефона?</summary><p data-i="a6">Версии для телефона пока нет. Сегодня FreeDuet открывается в браузере на твоём компьютере. Начиная с v0.2.2 браузер телефона можно сопрячь с компьютера одноразовым кодом, который показывается ссылкой или QR-кодом, а сопряжение телефона проверено в живом режиме на одной установке 16 ноября 2026 года. Версия для телефона, где ты тоже получаешь запросы на одобрение, и удалённый доступ в работе.</p></details>
-      <details class="rv"><summary data-i="q7">Можно ли добавить своего участника?</summary><p data-i="a7">Да. Попроси Leo, который создаёт новых помощников, спроектировать одного под нужную тебе работу или напиши его описание сам. Переименование участников и изменение их манеры общения построено, но ещё не проверено в реальных условиях. <a href="https://github.com/MarcoDeliaBot/freeduet/blob/main/docs/TEAM.md">Как описываются участники</a>.</p></details>
-      <details class="rv"><summary data-i="q8">Где получить помощь?</summary><p data-i="a8">Создай обращение (issue) на GitHub. <a href="https://github.com/MarcoDeliaBot/freeduet/issues/new/choose">Для этого есть короткая форма</a>: вопрос, ошибка, исправление или сообщение о том, что ты им пользуешься. Писать можно по-английски или по-итальянски.</p></details>
+      <details open><summary data-i="q1">Что бесплатно, а за что я плачу?</summary><p data-i="a1">FreeDuet бесплатный, с открытым кодом по лицензии MIT, в том числе для бизнеса. Ты платишь только за ИИ-подписку, с которой его используешь, и сегодня это тариф Claude. Покупать API-ключ не нужно.</p></details>
+      <details ><summary data-i="q2">Что нужно для установки?</summary><p data-i="a2">Подписка Claude, а также Docker, Bash и Bun на твоём компьютере. Четыре шага выше — это вся установка. Никогда не открывал терминал? Попроси кого-нибудь, кто разбирается, всё настроить, и покажи ему эту страницу.</p></details>
+      <details ><summary data-i="q3">Работает ли это на Windows, Mac и Linux?</summary><p data-i="a3">Разработчик пользуется им на Windows с WSL2 и Docker, а наши автоматические проверки запускают его на Linux. На Mac он не проверялся, поэтому обещать, что там всё заработает, мы не можем. FreeDuet — ранний выпуск: последняя опубликованная версия — 0.2.2 (16 ноября 2026), создан и используется одним разработчиком.</p></details>
+      <details ><summary data-i="q4">Что помощник может делать, не спрашивая меня?</summary><p data-i="a4">Он может искать информацию, читать, готовить черновики и отчёты. По умолчанию пять кнопок ждут твоего «Одобрить», кроме нового письма на адрес, который ты сам ввёл. Постоянное почтовое правило, которое ты задаёшь своими словами, работает само по себе на новых письмах: оно может ставить ярлык, архивировать, отмечать как прочитанное или переносить в «Спам» или «Корзину». Оно никогда не пересылает, не отвечает, не отправляет и не удаляет письма навсегда. Full access, отдельно для каждого участника, снимает ожидание в твоих собственных беседах; это построено, но ещё не проверено в реальных условиях. Пароли и настройки безопасности по-прежнему остаются за тобой. Помощники всё равно могут ошибаться, поэтому читай, что они подготовили, прежде чем одобрить.</p></details>
+      <details ><summary data-i="q5">Где мои данные?</summary><p data-i="a5">FreeDuet работает на твоём компьютере и хранит там переписку в базе данных. Твой вход в Claude остаётся в томе Docker, который читает только программа Claude Code. Чтобы думать, помощники отправляют твою просьбу в ИИ-сервис, в который ты вошёл, так же, как это делало бы его собственное приложение.</p></details>
+      <details ><summary data-i="q6">Можно ли пользоваться им с телефона?</summary><p data-i="a6">Версии для телефона пока нет. Сегодня FreeDuet открывается в браузере на твоём компьютере. Начиная с v0.2.2 браузер телефона можно сопрячь с компьютера одноразовым кодом, который показывается ссылкой или QR-кодом, а сопряжение телефона проверено в живом режиме на одной установке 16 ноября 2026 года. Версия для телефона, где ты тоже получаешь запросы на одобрение, и удалённый доступ в работе.</p></details>
+      <details ><summary data-i="q7">Можно ли добавить своего участника?</summary><p data-i="a7">Да. Попроси Leo, который создаёт новых помощников, спроектировать одного под нужную тебе работу или напиши его описание сам. Переименование участников и изменение их манеры общения построено, но ещё не проверено в реальных условиях. <a href="https://github.com/MarcoDeliaBot/freeduet/blob/main/docs/TEAM.md">Как описываются участники</a>.</p></details>
+      <details ><summary data-i="q8">Где получить помощь?</summary><p data-i="a8">Создай обращение (issue) на GitHub. <a href="https://github.com/MarcoDeliaBot/freeduet/issues/new/choose">Для этого есть короткая форма</a>: вопрос, ошибка, исправление или сообщение о том, что ты им пользуешься. Писать можно по-английски или по-итальянски.</p></details>
     </div>
   </div>
 </section>
