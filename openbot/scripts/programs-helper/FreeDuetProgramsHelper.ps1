@@ -700,7 +700,10 @@ function Test-ServerUrl {
     if (-not [Uri]::TryCreate($Url, [UriKind]::Absolute, [ref]$uri)) { return $false }
     if ($uri.Scheme -ne 'http' -and $uri.Scheme -ne 'https') { return $false }
     if ($uri.UserInfo -ne '') { return $false }
-    if ($uri.Host -in @('localhost', '127.0.0.1', '[::1]', '::1')) { return $true }
+    $name = $uri.Host.Trim('[', ']')
+    if ($name -ieq 'localhost') { return $true }
+    $ip = $null
+    if ([System.Net.IPAddress]::TryParse($name, [ref]$ip) -and [System.Net.IPAddress]::IsLoopback($ip)) { return $true }
     return ($AllowRemote -and $uri.Scheme -eq 'https')
 }
 

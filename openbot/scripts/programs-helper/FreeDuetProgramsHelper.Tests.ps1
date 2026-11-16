@@ -288,14 +288,14 @@ Describe 'Limits on what winget does' {
     It 'turns a failed winget into a plain error with its exit code, not a list' {
         Reset-Stub
         Set-StubOutput 'something went wrong' 1
-        $answer = Invoke-Operation -Kind 'list_installed' -WingetPath $script:StubExe
+        $answer = Invoke-Operation -Kind 'list_installed' -WingetPath $script:StubExe -Verify $false
         $answer.Ok | Should -BeFalse
         $answer.Payload | Should -Match 'exit code 0x00000001'
     }
     It 'says winget needs the person to accept its terms, and does not accept them' {
         Reset-Stub
         Set-StubOutput 'The source requires that you view the following agreements before using. Do you agree to all the source agreements terms?' 1
-        $answer = Invoke-Operation -Kind 'list_installed' -WingetPath $script:StubExe
+        $answer = Invoke-Operation -Kind 'list_installed' -WingetPath $script:StubExe -Verify $false
         $answer.Ok | Should -BeFalse
         $answer.Payload | Should -Match 'accept its source terms'
         (Get-StubArgs) | Should -Be @('list|--disable-interactivity')
@@ -303,7 +303,7 @@ Describe 'Limits on what winget does' {
     It 'treats "nothing found" as an empty list' {
         Reset-Stub
         Set-StubOutput 'No installed package found matching input criteria.' -1978335212
-        $answer = Invoke-Operation -Kind 'list_updates' -WingetPath $script:StubExe
+        $answer = Invoke-Operation -Kind 'list_updates' -WingetPath $script:StubExe -Verify $false
         $answer.Ok | Should -BeTrue
         $answer.Payload | Should -BeExactly '{"items":[]}'
     }
@@ -316,14 +316,14 @@ Describe 'Limits on what winget does' {
     }
     It 'refuses an action that is on the wire but not built in this version, and runs nothing' {
         Reset-Stub
-        $answer = Invoke-Operation -Kind 'update_one' -WingetPath $script:StubExe
+        $answer = Invoke-Operation -Kind 'update_one' -WingetPath $script:StubExe -Verify $false
         $answer.Ok | Should -BeFalse
         $answer.Payload | Should -Match 'only reads'
         (Get-StubArgs).Count | Should -Be 0
     }
     It 'does nothing for a stop that arrives when nothing runs' {
         Reset-Stub
-        Invoke-Operation -Kind 'stop' -WingetPath $script:StubExe | Should -BeNullOrEmpty
+        Invoke-Operation -Kind 'stop' -WingetPath $script:StubExe -Verify $false | Should -BeNullOrEmpty
         (Get-StubArgs).Count | Should -Be 0
     }
 }
@@ -365,7 +365,7 @@ Describe 'Reading winget output' {
         (ConvertTo-ProgramRows -Kind 'list_installed' -Table (ConvertFrom-WingetTable -Text $withAvailable)).Rows[0].source | Should -BeExactly ''
     }
     It 'drops a row whose cells do not sit on the columns, and counts it, instead of guessing' {
-        $text = New-WingetTable -Header @('Name', 'Id', 'Version', 'Source') -Rows @(@('Good', 'Good.App', '1.0', 'winget'))
+        $text = New-WingetTable -Header @('Name', 'Id', 'Version', 'Source') -Rows @(, @('Good', 'Good.App', '1.0', 'winget'))
         $text += "Misaligned name that runs over into the id column Example.X 9.9 winget`r`n"
         $table = ConvertFrom-WingetTable -Text $text
         $table.Rows.Count | Should -Be 1
@@ -433,7 +433,7 @@ Describe 'Reading winget output' {
         Reset-Stub
         $text = New-WingetTable -Header @('Name', 'Id', 'Version', 'Available', 'Source') -Rows @(, @('ExampleEdit', 'Example.ExampleEdit', '4.2.1', '4.3.0', 'winget'))
         Set-StubOutput $text
-        $answer = Invoke-Operation -Kind 'list_updates' -WingetPath $script:StubExe
+        $answer = Invoke-Operation -Kind 'list_updates' -WingetPath $script:StubExe -Verify $false
         $answer.Ok | Should -BeTrue
         $answer.Payload | Should -BeExactly '{"items":[{"name":"ExampleEdit","id":"Example.ExampleEdit","versionNow":"4.2.1","versionAvailable":"4.3.0","source":"winget"}]}'
         (Get-StubArgs) | Should -Be @('upgrade|--disable-interactivity')
@@ -460,7 +460,7 @@ Describe 'One poll, from the server to the answer' {
         $table = New-WingetTable -Header @('Name', 'Id', 'Version', 'Source') -Rows @(, @('ExampleEdit', 'Example.ExampleEdit', '4.2.1', 'winget'))
         Set-StubOutput $table
         $script:AnOperation = New-VectorOperation 0
-        $n = Invoke-HelperCycle -Config $script:Config -Secret $script:SecretBytes -Seen $script:Seen -WingetPath $script:StubExe
+        $n = Invoke-HelperCycle -Config $script:Config -Secret $script:SecretBytes -Seen $script:Seen -WingetPath $script:StubExe -VerifyWinget $false
         $n | Should -Be 1
         $script:Posted.Count | Should -Be 2
         $poll = $script:Posted[0].Body
@@ -476,15 +476,15 @@ Describe 'One poll, from the server to the answer' {
     It 'does a replayed operation only once' {
         Set-StubOutput 'No installed package found.' 0
         $script:AnOperation = New-VectorOperation 0
-        [void](Invoke-HelperCycle -Config $script:Config -Secret $script:SecretBytes -Seen $script:Seen -WingetPath $script:StubExe)
-        [void](Invoke-HelperCycle -Config $script:Config -Secret $script:SecretBytes -Seen $script:Seen -WingetPath $script:StubExe)
+        [void](Invoke-HelperCycle -Config $script:Config -Secret $script:SecretBytes -Seen $script:Seen -WingetPath $script:StubExe -VerifyWinget $false)
+        [void](Invoke-HelperCycle -Config $script:Config -Secret $script:SecretBytes -Seen $script:Seen -WingetPath $script:StubExe -VerifyWinget $false)
         @($script:Posted | Where-Object { $_.Path -like '*result' }).Count | Should -Be 1
         (Get-StubArgs).Count | Should -Be 1
     }
     It 'drops an operation with a forged signature without running winget or answering' {
         $script:AnOperation = New-VectorOperation 0
         $script:AnOperation.mac = ('0' * 64)
-        $n = Invoke-HelperCycle -Config $script:Config -Secret $script:SecretBytes -Seen $script:Seen -WingetPath $script:StubExe
+        $n = Invoke-HelperCycle -Config $script:Config -Secret $script:SecretBytes -Seen $script:Seen -WingetPath $script:StubExe -VerifyWinget $false
         $n | Should -Be 0
         @($script:Posted | Where-Object { $_.Path -like '*result' }).Count | Should -Be 0
         (Get-StubArgs).Count | Should -Be 0
@@ -494,12 +494,12 @@ Describe 'One poll, from the server to the answer' {
         $op = New-VectorOperation 1
         $op.mac = Get-HmacHex -Key $guess -Text (Get-OperationText $op)
         $script:AnOperation = $op
-        (Invoke-HelperCycle -Config $script:Config -Secret $script:SecretBytes -Seen $script:Seen -WingetPath $script:StubExe) | Should -Be 0
+        (Invoke-HelperCycle -Config $script:Config -Secret $script:SecretBytes -Seen $script:Seen -WingetPath $script:StubExe -VerifyWinget $false) | Should -Be 0
         (Get-StubArgs).Count | Should -Be 0
     }
     It 'tells the server a write action is not supported here, and runs nothing' {
         $script:AnOperation = New-VectorOperation 2
-        $n = Invoke-HelperCycle -Config $script:Config -Secret $script:SecretBytes -Seen $script:Seen -WingetPath $script:StubExe
+        $n = Invoke-HelperCycle -Config $script:Config -Secret $script:SecretBytes -Seen $script:Seen -WingetPath $script:StubExe -VerifyWinget $false
         $n | Should -Be 1
         $result = @($script:Posted | Where-Object { $_.Path -like '*result' })[0]
         $result.Body.ok | Should -BeFalse
@@ -509,7 +509,7 @@ Describe 'One poll, from the server to the answer' {
     It 'does nothing when the server has no question' {
         $script:AnOperation = $null
         Mock Send-SignedPost { [void]$script:Posted.Add(@{ Path = $Path; Body = $Body }); return [pscustomobject]@{ operations = @(); leaseMs = 15000 } }
-        (Invoke-HelperCycle -Config $script:Config -Secret $script:SecretBytes -Seen $script:Seen -WingetPath $script:StubExe) | Should -Be 0
+        (Invoke-HelperCycle -Config $script:Config -Secret $script:SecretBytes -Seen $script:Seen -WingetPath $script:StubExe -VerifyWinget $false) | Should -Be 0
         $script:Posted.Count | Should -Be 1
     }
     It 'does not let a failed delivery of the answer stop the helper, and writes it in the log' {
@@ -519,7 +519,7 @@ Describe 'One poll, from the server to the answer' {
             if ($Path -eq '/api/programs/helper/poll') { return [pscustomobject]@{ operations = @($script:AnOperation) } }
             throw 'connection closed'
         }
-        { Invoke-HelperCycle -Config $script:Config -Secret $script:SecretBytes -Seen $script:Seen -WingetPath $script:StubExe } | Should -Not -Throw
+        { Invoke-HelperCycle -Config $script:Config -Secret $script:SecretBytes -Seen $script:Seen -WingetPath $script:StubExe -VerifyWinget $false } | Should -Not -Throw
         (Get-Content -LiteralPath (Join-Path (Get-HelperDirectory) 'helper.log') -Raw) | Should -Match 'could not be delivered'
     }
 }
@@ -528,7 +528,7 @@ Describe 'The log' {
     It 'says what was asked and what was run, with the exit code, and never the secret' {
         Reset-Stub
         Set-StubOutput 'No installed package found.' 0
-        [void](Invoke-Operation -Kind 'list_installed' -WingetPath $script:StubExe)
+        [void](Invoke-Operation -Kind 'list_installed' -WingetPath $script:StubExe -Verify $false)
         $log = Get-Content -LiteralPath (Join-Path (Get-HelperDirectory) 'helper.log') -Raw
         $log | Should -Match 'run \| .*winget.exe list --disable-interactivity'
         $log | Should -Match 'exit code 0x00000000'
@@ -602,7 +602,18 @@ Describe 'Where winget comes from' {
     }
     It 'accepts an absolute path the person gave to setup, when it is signed' {
         Mock Test-MicrosoftSignature { return $true }
-        (Resolve-WingetPath -ConfiguredPath (Join-Path $script:Fake 'winget.exe')).Path | Should -Be (Join-Path $script:Fake 'winget.exe')
+        # The test folder is under the user's temp folder, which the user can write: that is refused unless setup was told to accept it.
+        (Resolve-WingetPath -ConfiguredPath (Join-Path $script:Fake 'winget.exe')).Path | Should -Be ''
+        (Resolve-WingetPath -ConfiguredPath (Join-Path $script:Fake 'winget.exe')).Why | Should -Match 'AllowWritableWingetFolder'
+        (Resolve-WingetPath -ConfiguredPath (Join-Path $script:Fake 'winget.exe') -AllowWritableFolder $true).Path | Should -Be (Join-Path $script:Fake 'winget.exe')
+    }
+    It 'refuses to start winget when the signature no longer checks, and runs nothing (the real check, no mock)' {
+        Reset-Stub
+        Set-StubOutput 'hello'
+        $answer = Invoke-Operation -Kind 'list_installed' -WingetPath $script:StubExe
+        $answer.Ok | Should -BeFalse
+        $answer.Payload | Should -Match 'signature'
+        (Get-StubArgs).Count | Should -Be 0
     }
 }
 
@@ -811,9 +822,9 @@ Describe 'Operation ids kept on disk (P7)' {
         }
         $config = [pscustomobject]@{ actorId = 'user-1'; serverUrl = 'http://localhost:3010' }
         $first = Read-SeenIds -Directory $script:SeenDir -Now 1790000001000
-        (Invoke-HelperCycle -Config $config -Secret $script:SecretBytes -Seen $first -WingetPath $script:StubExe) | Should -Be 1
+        (Invoke-HelperCycle -Config $config -Secret $script:SecretBytes -Seen $first -WingetPath $script:StubExe -VerifyWinget $false) | Should -Be 1
         $restarted = Read-SeenIds -Directory $script:SeenDir -Now 1790000001000
-        (Invoke-HelperCycle -Config $config -Secret $script:SecretBytes -Seen $restarted -WingetPath $script:StubExe) | Should -Be 0
+        (Invoke-HelperCycle -Config $config -Secret $script:SecretBytes -Seen $restarted -WingetPath $script:StubExe -VerifyWinget $false) | Should -Be 0
         (Get-StubArgs).Count | Should -Be 1
     }
 }
@@ -825,7 +836,7 @@ Describe 'A secret the server refuses (B1)' {
         $config = [pscustomobject]@{ actorId = 'user-1'; serverUrl = 'http://localhost:3010' }
         $seen = New-Object 'System.Collections.Generic.HashSet[string]'
         $caught = $null
-        try { [void](Invoke-HelperCycle -Config $config -Secret $script:SecretBytes -Seen $seen -WingetPath $script:StubExe) } catch { $caught = $_.Exception }
+        try { [void](Invoke-HelperCycle -Config $config -Secret $script:SecretBytes -Seen $seen -WingetPath $script:StubExe -VerifyWinget $false) } catch { $caught = $_.Exception }
         $caught | Should -BeOfType [System.UnauthorizedAccessException]
     }
     It 'decides: continue below five, re-read once at five, stop at five after that' {
