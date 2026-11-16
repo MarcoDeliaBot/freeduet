@@ -300,40 +300,57 @@ function RosterStep() {
 /**
  * Where an evaluator's data is kept, said as the server actually keeps it.
  *
- * IT USED TO SAY CONVERSATIONS STAYED ON THIS COMPUTER, AND THEY DO NOT. The server refuses to start
- * without CopilotKit Intelligence (`INTELLIGENCE_API_URL` and `INTELLIGENCE_API_KEY`, see
+ * CONVERSATIONS AND MEMORY DEPEND ON THE SERVER'S ANSWER: `mode` on `/api/capabilities`. With
+ * CopilotKit Intelligence on (FREEDUET_INTELLIGENCE unset or `on`, upstream OpenBot) the server refuses
+ * to start without its three settings (`INTELLIGENCE_API_URL` and `INTELLIGENCE_API_KEY`, see
  * `.env.example` and `docs/telemetry.md`), because Intelligence owns durable threads and memory. Its
  * address defaults to CopilotKit's managed service, and only somebody who runs Intelligence
- * themselves points it elsewhere. So each sentence below is one thing this install verifiably does:
+ * themselves points it elsewhere. With FREEDUET_INTELLIGENCE=off, which is what a FreeDuet install
+ * writes, they stay in this install's own Postgres and nothing goes to a hosted memory service
+ * (server/src/freeduet/backend.ts). So each sentence below is one thing this install verifiably does:
  *
  * - Bots and settings are rows in this install's own Postgres (`agents`, preferences, rules).
  *   "This install's database", not "this computer": `DATABASE_URL` decides where that is, and
  *   nothing here reads it. Files and connected accounts are left out on purpose. A file's bytes are
  *   in that database, but what a message carries about it also reaches the thread and the model;
  *   and an app connected through Composio or Arcade is held by that service, not here.
- * - Conversations and memory are in Intelligence, named, with where it runs by default.
+ * - Conversations and memory are in Intelligence, named, with where it runs by default, unless the
+ *   server's `mode` is `local`: then they are in this install's own database.
  * - Every message goes to the model provider this install was set up with.
  * - The CopilotKit runtime sends usage events to CopilotKit unless `DO_NOT_TRACK=1` or
- *   `COPILOTKIT_TELEMETRY_DISABLED=true` is set (`server/src/telemetry.ts`). Naming the variable is
- *   fine here: this step is shown only to a single-user install, whose one reader runs the server.
+ *   `COPILOTKIT_TELEMETRY_DISABLED=true` is set (`server/src/telemetry.ts`). When the server answers
+ *   `copilotkitTelemetryDisabled`, which it does only when they are off, the step says none are
+ *   sent; otherwise it names the variable. The rule is in `server/src/freeduet/copilotkit-telemetry.ts`.
+ *   Naming the variable is fine here: this step is shown only to a single-user install, whose one
+ *   reader runs the server.
  *
  * Nothing about sign-in: activating a local install signs you in to CopilotKit, which is its own
  * question and not this step's.
  */
-function LocalStep() {
+function LocalStep({
+  intelligence,
+  telemetryOff,
+}: {
+  intelligence: boolean;
+  telemetryOff: boolean;
+}) {
+  // The sentence about conversations and memory follows the server's answer (see the comment above).
+  const kept = intelligence
+    ? "Conversations and memory are kept in CopilotKit Intelligence, in CopilotKit's cloud unless you host it yourself."
+    : "Conversations and memory stay in that same database. Nothing is sent to a hosted memory service.";
   return (
     <div className="w-full flex flex-col items-center justify-center">
       <h1 className="text-3xl font-semibold tracking-tight max-w-md text-center [overflow-wrap:anywhere]">
         Where your data lives
       </h1>
       <p className="mt-3 max-w-md text-center text-muted-foreground">
-        Your Bots and settings stay in this install's database. Conversations
-        and memory are kept in CopilotKit Intelligence, in CopilotKit's cloud
-        unless you host it yourself. What you ask goes to your AI model.
+        Your Bots and settings stay in this install's database. {kept} What you
+        ask goes to your AI model.
       </p>
       <p className="type-caption mt-3 max-w-md text-center text-duet-ink-3">
-        CopilotKit also receives usage events. Set DO_NOT_TRACK=1 to turn them
-        off.
+        {telemetryOff
+          ? "CopilotKit gets no usage events from this install, because telemetry is switched off here."
+          : "CopilotKit also receives usage events. Set DO_NOT_TRACK=1 to turn them off."}
       </p>
       <div className="h-8" />
       <CapabilityDemo kind="approval" />
@@ -638,7 +655,15 @@ function RouteComponent() {
     ...STEPS,
     ...(capabilities?.localEvaluation
       ? [
-          { id: "local", render: () => <LocalStep /> },
+          {
+            id: "local",
+            render: () => (
+              <LocalStep
+                intelligence={capabilities.intelligence}
+                telemetryOff={capabilities.copilotkitTelemetryDisabled}
+              />
+            ),
+          },
           { id: "agents", render: () => <AgentsStep /> },
           // FreeDuet (D51): this slide sends the person to another company's products and sales.
           ...(capabilities.promotions

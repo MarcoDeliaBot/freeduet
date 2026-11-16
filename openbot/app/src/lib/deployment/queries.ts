@@ -34,6 +34,18 @@ export type DeploymentCapabilities = {
    * deployment: single-user mode on the server, which only a local, unreachable install can be in.
    */
   localEvaluation: boolean;
+  /**
+   * Whether CopilotKit Intelligence keeps this deployment's conversations and memory. False only when
+   * the server answers `mode: "local"`, which is FREEDUET_INTELLIGENCE=off (server/src/app.ts): then
+   * they are kept in the install's own database. Anything but `local` is upstream's answer.
+   */
+  intelligence: boolean;
+  /**
+   * FreeDuet: true when CopilotKit's usage events are off for this install, by the SDK's rule:
+   * COPILOTKIT_TELEMETRY_DISABLED or DO_NOT_TRACK is `true` or `1`. Onboarding then says no usage
+   * events are sent, and keeps upstream's caption otherwise. The server sends the key only when true.
+   */
+  copilotkitTelemetryDisabled: boolean;
   transcription?: boolean;
   voice?: boolean;
   /**
@@ -80,6 +92,8 @@ export function deploymentCapabilitiesQueryOptions() {
         selfHostBanner?: boolean;
         promotions?: boolean;
         localEvaluation?: boolean;
+        mode?: string;
+        copilotkitTelemetryDisabled?: boolean;
         transcription?: boolean;
         voice?: boolean;
         personLanguage?: unknown;
@@ -90,6 +104,8 @@ export function deploymentCapabilitiesQueryOptions() {
         selfHostBanner: body.selfHostBanner === true,
         promotions: body.promotions !== false,
         localEvaluation: body.localEvaluation === true,
+        intelligence: body.mode !== "local",
+        copilotkitTelemetryDisabled: body.copilotkitTelemetryDisabled === true,
         transcription: body.transcription === true,
         voice: body.voice === true,
         // Only a two-letter lowercase code is kept, so nothing else can reach a card's locale.
