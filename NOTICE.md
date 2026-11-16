@@ -12,8 +12,31 @@
 | [Humanizer](https://github.com/blader/humanizer) 4.0.0 | MIT, © 2025 Siqi Chen | Wren's `humanizer` skill: the body of the upstream `SKILL.md` (commit b48c832), copied unchanged into `openbot/examples/freeduet/skills.yaml`. |
 | [Marketing Skills](https://github.com/coreyhaines31/marketingskills) | MIT, © 2025 Corey Haines | Mark's 53 marketing skills, granted to him only: the body of each upstream `skills/<name>/SKILL.md` (commit 1f83744, 2026-11-11), copied unchanged into `openbot/examples/freeduet/skills.yaml`, with `tools: []`. The upstream `references/`, `evals/`, `assets/`, `tools/` and `scripts/` folders are not carried; Mark's prompt says so. |
 | [Impeccable](https://github.com/pbakaus/impeccable) | Apache-2.0, © 2025 Paul Bakaus | Mark's `design-craft-floor` skill: the body of one upstream reference file, `skill/reference/craft-floor.md` (commit d41d986), copied unchanged into `openbot/examples/freeduet/skills.yaml`, with `tools: []`, granted to him only. Its scripts, hooks, engine and other files are not carried. The Apache-2.0 licence text is in `openbot/agent-freeduet/LICENSE-APACHE-2.0`, the copy this repository keeps. |
-| [ai-design-skills](https://github.com/elayadesign/ai-design-skills) | MIT, Copyright (c) 2026 Elaya | Mark's `landing-page-design` skill: the body of one upstream `skills/landing-page-design/SKILL.md` (commit 456d9e0), from its first heading to its last checklist item, copied unchanged into `openbot/examples/freeduet/skills.yaml`, with `tools: []`, granted to him only. Not carried: the frontmatter, the Credits section (its taste-skill credit is in the next row), the other skill in that repository (`figma-designer`), its scripts, tests, plugin files and images, and the companion skill `redesign-existing-projects` that the body links to. |
-| [taste-skill](https://github.com/Leonxlnx/taste-skill) by Leon Lin | MIT, Copyright (c) 2026 Leonxlnx (as the upstream file quotes it) | Named by the upstream `landing-page-design` file as the source of parts it was adapted from. Those parts are in Mark's `landing-page-design` skill, granted to him only. |
+| [ai-design-skills](https://github.com/elayadesign/ai-design-skills) | MIT, Copyright (c) 2026 Elaya ([permission notice](#mit-permission-notice)) | Mark's `landing-page-design` skill: the body of one upstream `skills/landing-page-design/SKILL.md` (commit 456d9e0), from its first heading to its last checklist item, copied unchanged into `openbot/examples/freeduet/skills.yaml`, with `tools: []`, granted to him only. Not carried: the frontmatter, the Credits section (its two credits are in the next two rows), the other skill in that repository (`figma-designer`), its scripts, tests, plugin files and images, and the companion skill `redesign-existing-projects` that the body links to. |
+| [taste-skill](https://github.com/Leonxlnx/taste-skill) by Leon Lin | MIT, Copyright (c) 2026 Leonxlnx, as quoted in the upstream Credits section ([permission notice](#mit-permission-notice)) | Named by the upstream `landing-page-design` file as the source of parts it was adapted from. Those parts are in Mark's `landing-page-design` skill, granted to him only. |
+| [allen-baler](https://github.com/allen-baler) | None stated (credit only) | The upstream `landing-page-design` Credits section names them for suggesting the no-invented-facts rule and the reduced-motion support for the tagline reveal, in [PR #1](https://github.com/elayadesign/ai-design-skills/pull/1). Both are in the body of Mark's `landing-page-design` skill, as the upstream file has them. |
+
+## MIT permission notice
+
+The licence text below is the MIT permission notice, copied unchanged from the MIT licence of the ai-design-skills repository. Where a row of this file whose licence is MIT gives a copyright line, that line is the copyright notice that goes with this permission notice.
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
 
 ## Libraries added to the server for Gmail and Calendar with an app password (D24)
 
