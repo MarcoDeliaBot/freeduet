@@ -925,7 +925,12 @@ describe("Office files: Penny's spreadsheets and Wren's Word documents", () => {
       spreadsheets: [
         "use openpyxl for .xlsx",
         "run office-convert recalc followed by the file's name",
-        "it never changes the original",
+        "it never changes the original and never replaces a file that is already there",
+        "do not hand over the recalculated copy unless the person asks for it",
+        "The file the person receives is the original you wrote with openpyxl, with its formulas intact",
+        "it exits with status 5",
+        "values from links to other workbooks are not refreshed",
+        "a function LibreOffice 24.2 cannot calculate",
         "The recalculation is done by LibreOffice, not by Excel",
         "run office-convert pdf followed by the file's name",
         "a refused file is not converted",
@@ -938,7 +943,7 @@ describe("Office files: Penny's spreadsheets and Wren's Word documents", () => {
         "never a jump",
         "Nothing here is real Word: a page count or a page break you report is LibreOffice's drawing",
         "run office-convert pdf followed by the file's name",
-        "never changes the .docx",
+        "never changes the .docx, and refuses when a file of that name is already there",
         "a refused file (a macro file, an old format, a protected file) is not converted",
       ],
     };

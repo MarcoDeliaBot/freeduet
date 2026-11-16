@@ -55,15 +55,16 @@ What was checked, and what was not. After the install, the image deletes three k
 
 ## LibreOffice in the member's computer image, for office files (D61)
 
-Installed by `apt` when the `agent-computer` image is built, as a separate program that a member runs through a command (`office-convert`, FreeDuet's own script). None of its code is copied into this repository, linked, or modified, and its source is not redistributed by FreeDuet; it is the distribution's package, from Ubuntu 24.04's own archive.
+Installed by `apt` when the `agent-computer` image is built, as a separate program that a member runs through a command (`office-convert`, FreeDuet's own script). None of its code is copied into this repository, linked with FreeDuet code, or modified, and its source is not redistributed by FreeDuet; it is the distribution's package from Ubuntu 24.04's own archive. **Rule, decided by the maintainer on 16 November 2026:** no GPL code is copied into or linked with FreeDuet; packages the distribution installs as separate programs, including LibreOffice's dependencies, are accepted and listed here.
 
 | Project | License | What it does here |
 |---|---|---|
 | [LibreOffice](https://www.libreoffice.org/) 24.2.7, the Ubuntu packages `libreoffice-writer`, `libreoffice-calc`, `libreoffice-impress` and the `libreoffice-core`, `-common`, `-draw` and related packages they depend on | MPL-2.0 for LibreOffice's own code; the packages' copyright files also list the licences of the libraries bundled in them (Apache-2.0, BSD, MIT, LGPL-3+, MPL-1.1 and others, and GPL-2 and GPL-3+ for some of them) | Recalculates the formulas of a spreadsheet and converts a Word, Excel or PowerPoint file to PDF, headless, on a profile made for each call |
-| `libpoppler134`, the distribution's package, a hard dependency of `libreoffice-core` | GPL-2, GPL-3 and Apache-2.0 parts, as its copyright file lists | Loaded by LibreOffice for PDF import; FreeDuet does not use it, copy it or link to it, and cannot leave it out of the install |
-| `fonts-liberation`, `fonts-dejavu-core` | SIL OFL-1.1 (Liberation, with GPL-2+ with a font exception for some files), the DejaVu fonts' free licence | The fonts a PDF is drawn with |
+| `libpoppler134`, the distribution's package, a dependency of `libreoffice-core` | GPL-2, GPL-3, with Apache-2.0 parts, as its copyright file lists | Linked only by LibreOffice's separate helper program `xpdfimport` (PDF import); `soffice.bin` itself does not load it (checked with `ldd`). FreeDuet does not use, copy or link it |
+| `fonts-liberation` | SIL OFL-1.1 for the fonts; the GPL-2+ in its copyright file covers the Debian packaging files only | A font a PDF is drawn with |
+| `fonts-dejavu-core` | Bitstream Vera licence (with the DejaVu changes in the public domain) | A font a PDF is drawn with |
 
-The distribution's packages bring a number of further dependencies (the maintainers' licence list for each is in its own copyright file under `/usr/share/doc/<package>/copyright` in the image), among them GPL programs that the distribution lists as dependencies of libgpgme and PAM. They are installed, not modified and not linked by FreeDuet.
+**GPL-only programs that arrive as dependencies of the distribution's LibreOffice packages** (through libgpgme and the poppler library), all installed by the distribution as separate programs, not linked with FreeDuet code and not copied into this repository: `gnupg`, `gpg`, `gpg-agent`, `gpgsm`, `gpgconf`, `gnupg-utils`, `gpgv`, `dirmngr`, `keyboxd` and the poppler library named above. Further dependencies (PAM, adduser, ucf, libraries under LGPL and permissive licences) are listed in their own copyright files under `/usr/share/doc/<package>/copyright` in the image. The 116 packages were downloaded and their copyright files read on 16 November 2026.
 
 ## Local Whisper for dictation (D25)
 

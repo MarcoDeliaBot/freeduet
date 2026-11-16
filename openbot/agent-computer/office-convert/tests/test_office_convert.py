@@ -69,7 +69,7 @@ def xlsx_parts(extra=None):
 
 
 STUB = """#!{python}
-import json, os, sys, time, zipfile
+import hashlib, json, os, subprocess, sys, time, zipfile
 here = os.path.dirname(os.path.abspath(__file__))
 args = sys.argv[1:]
 profile = [a for a in args if a.startswith("-env:UserInstallation=file://")][0].split("file://", 1)[1]
@@ -79,11 +79,16 @@ source = args[-1]
 fmt = args[args.index("--convert-to") + 1]
 with open(os.path.join(here, "calls.jsonl"), "a", encoding="utf-8") as log:
     log.write(json.dumps({{"args": args, "xcu": xcu, "env": dict(os.environ), "cwd": os.getcwd(), "pid": os.getpid(),
-                          "source_exists": os.path.exists(source), "profile": profile}}) + "\\n")
+                          "source_exists": os.path.exists(source), "profile": profile,
+                          "source_sha": hashlib.sha256(open(source, "rb").read()).hexdigest()}}) + "\\n")
 mode = open(os.path.join(here, "behavior")).read().strip() if os.path.exists(os.path.join(here, "behavior")) else "ok"
 stem = os.path.splitext(os.path.basename(source))[0]
 if mode == "sleep":
     open(os.path.join(here, "pid"), "w").write(str(os.getpid()))
+    time.sleep(60)
+if mode == "orphan":
+    child = subprocess.Popen(["sleep", "60"])
+    open(os.path.join(here, "grandchild"), "w").write(str(child.pid))
     time.sleep(60)
 if mode == "fail":
     sys.stderr.write("boom: cannot load\\n"); sys.exit(1)
@@ -91,6 +96,15 @@ if mode == "nooutput":
     sys.exit(0)
 if fmt.startswith("pdf"):
     open(os.path.join(outdir, stem + ".pdf"), "wb").write(b"%PDF-1.4\\n" if mode != "garbage" else b"not a pdf")
+elif mode == "errors":
+    S = "http://schemas.openxmlformats.org/spreadsheetml/2006/main"
+    R = "http://schemas.openxmlformats.org/officeDocument/2006/relationships"
+    cells = "".join(f'<c r="B{{i}}" t="e"><f>BAD({{i}})</f><v>#NAME?</v></c>' for i in range(1, 13))
+    cells += '<c r="C1" t="str"><f>X()</f><v>Err:508</v></c><c r="D1"><v>5</v></c>'
+    with zipfile.ZipFile(os.path.join(outdir, stem + ".xlsx"), "w") as z:
+        z.writestr("xl/workbook.xml", f'<workbook xmlns="{{S}}" xmlns:r="{{R}}"><sheets><sheet name="Totals" sheetId="1" r:id="rId1"/></sheets></workbook>')
+        z.writestr("xl/_rels/workbook.xml.rels", '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="x/worksheet" Target="worksheets/sheet1.xml"/></Relationships>')
+        z.writestr("xl/worksheets/sheet1.xml", f'<worksheet xmlns="{{S}}"><sheetData><row r="1">{{cells}}</row></sheetData></worksheet>')
 else:
     with zipfile.ZipFile(os.path.join(outdir, stem + ".xlsx"), "w") as z:
         z.writestr("x", "recalculated")
@@ -303,24 +317,176 @@ def test_the_profile_sets_the_safe_settings(work, stub):
 
 
 def test_two_calls_use_two_different_profiles(work, stub):
-    f = zipped(work / "a.docx", docx_parts())
-    run("pdf", f)
-    run("pdf", f)
-    first, second = stub.calls()
-    assert first["profile"] != second["profile"]
+    first = zipped(work / "a.docx", docx_parts())
+    second = zipped(work / "b.docx", docx_parts())
+    run("pdf", first)
+    run("pdf", second)
+    one, two = stub.calls()
+    assert one["profile"] != two["profile"]
 
 
-def test_an_existing_output_is_replaced_but_a_link_or_folder_in_its_place_is_refused(work, stub, tmp_path):
+# ---- the result is only ever created, never replaced and never reached through a link ----------------------------
+
+def test_an_existing_output_of_any_kind_is_never_replaced(work, stub, tmp_path):
     f = zipped(work / "a.docx", docx_parts())
     (work / "a.pdf").write_bytes(b"old")
-    assert run("pdf", f)[0] == 0
-    assert (work / "a.pdf").read_bytes().startswith(b"%PDF-")
+    code, out, _ = run("pdf", f)
+    assert code == 3 and "a.pdf already exists" in out["reason"]
+    assert (work / "a.pdf").read_bytes() == b"old"
+    (work / "a.pdf").unlink()
     target = tmp_path / "victim.txt"
     target.write_text("keep")
-    (work / "a.pdf").unlink()
     (work / "a.pdf").symlink_to(target)
-    code, out, _ = run("pdf", f)
-    assert code == 3 and target.read_text() == "keep"
+    assert run("pdf", f)[0] == 3 and target.read_text() == "keep"
+    (work / "a.pdf").unlink()
+    (work / "a.pdf").symlink_to(tmp_path / "does-not-exist")  # a dangling link is also refused
+    assert run("pdf", f)[0] == 3 and not (tmp_path / "does-not-exist").exists()
+    (work / "a.pdf").unlink()
+    (work / "a.pdf").mkdir()
+    assert run("pdf", f)[0] == 3
+    (work / "a.pdf").rmdir()
+    assert run("pdf", f)[0] == 0 and (work / "a.pdf").read_bytes().startswith(b"%PDF-")
+
+
+def test_a_second_pdf_of_the_same_stem_is_refused_not_numbered(work, stub):
+    zipped(work / "report.docx", docx_parts())
+    zipped(work / "report.xlsx", xlsx_parts())
+    assert run("pdf", work / "report.docx")[0] == 0
+    first = (work / "report.pdf").read_bytes()
+    code, out, _ = run("pdf", work / "report.xlsx")
+    assert code == 3 and "report.pdf already exists" in out["reason"]
+    assert (work / "report.pdf").read_bytes() == first
+    assert sorted(p.name for p in work.iterdir()) == ["report.docx", "report.pdf", "report.xlsx"]
+
+
+@pytest.mark.parametrize("mode,source,suffix", [("pdf", "report.docx", ".pdf.part"), ("recalc", "report.xlsx", ".recalculated.xlsx.part")])
+def test_a_planted_part_link_does_not_overwrite_anything(work, stub, mode, source, suffix):
+    """The reviewer's repro: a link named <output>.part pointing at a file the member must not lose."""
+    victim = work / "victim.txt"
+    victim.write_text("PRECIOUS\n")
+    stem = source.rsplit(".", 1)[0]
+    (work / (stem + suffix)).symlink_to("victim.txt")
+    zipped(work / source, docx_parts() if mode == "pdf" else xlsx_parts())
+    code, out, _ = run(mode, work / source)
+    assert code == 0, out
+    assert victim.read_text() == "PRECIOUS\n"
+    output = work / out["output"]
+    assert output.is_file() and not output.is_symlink()
+
+
+def test_a_name_too_long_for_the_result_is_a_clean_refusal(work, stub):
+    f = zipped(work / (("a" * 240) + ".xlsx"), xlsx_parts())
+    code, out, err = run("recalc", f)
+    assert code == 2 and out["ok"] is False and "Cannot create" in out["reason"]
+    assert "Traceback" not in err
+    assert [p.name for p in work.iterdir()] == [f.name]
+
+
+def test_the_source_is_copied_once_and_a_swap_afterwards_never_reaches_libreoffice(work, stub, monkeypatch, capsys):
+    f = zipped(work / "a.docx", docx_parts())
+    original = sha(f)
+    real = oc.inspect_first
+
+    def swapping(path):
+        report = real(path)
+        zipped(f, docx_parts({"word/media/swapped.bin": b"EVIL"}))  # the original changes after the copy
+        return report
+
+    monkeypatch.setattr(oc, "inspect_first", swapping)
+    assert oc.main(["office-convert", "pdf", str(f)]) == 0
+    assert sha(f) != original  # the swap happened
+    (call,) = stub.calls()
+    assert call["source_sha"] == original
+
+
+def test_the_inspector_sees_the_copy_and_not_the_original(work, stub, monkeypatch, capsys):
+    f = zipped(work / "a.docx", docx_parts())
+    seen = []
+    real = oc.inspect_first
+    monkeypatch.setattr(oc, "inspect_first", lambda path: (seen.append(path), real(path))[1])
+    assert oc.main(["office-convert", "pdf", str(f)]) == 0
+    assert seen and seen[0] != str(f) and "office-convert-" in seen[0]
+
+
+# ---- recalc says what it found ----------------------------------------------------------------------------------
+
+def sheet_with(formulas, extra_attrs=""):
+    cells = "".join(f'<c r="A{i}"><f>{f}</f></c>' for i, f in enumerate(formulas, 1))
+    return f'<?xml version="1.0"?><worksheet xmlns="{S}"><dimension ref="A1:A9"/><sheetData><row r="1">{cells}</row></sheetData></worksheet>'
+
+
+@pytest.mark.parametrize(
+    "formula,named",
+    [
+        ("XLOOKUP(1,B1:B3,C1:C3)", "XLOOKUP"),
+        ("_xlfn.XLOOKUP(1,B1:B3,C1:C3)", "XLOOKUP"),
+        ("_xlfn._xlws.FILTER(A1:A9,A1:A9&gt;1)", "FILTER"),
+        ("SUM(_xlfn.UNIQUE(A1:A9))", "UNIQUE"),
+        ("_xlfn.LET(x,1,x+1)", "LET"),
+        ("SEQUENCE(5)+TEXTSPLIT(&quot;a,b&quot;,&quot;,&quot;)", "SEQUENCE"),
+    ],
+)
+def test_recalc_refuses_functions_libreoffice_24_2_cannot_calculate(work, stub, formula, named):
+    f = zipped(work / "w.xlsx", xlsx_parts({"xl/worksheets/sheet1.xml": sheet_with([formula])}))
+    code, out, _ = run("recalc", f)
+    assert code == 3 and named in out["reason"] and "rewrite" in out["reason"]
+    assert stub.calls() == []
+    assert sorted(p.name for p in work.iterdir()) == ["w.xlsx"]
+
+
+def test_recalc_refuses_dynamic_arrays(work, stub):
+    cell = f'<?xml version="1.0"?><worksheet xmlns="{S}"><sheetData><row r="1"><c r="A1" cm="1"><f t="array" ref="A1:A3">SUM(B1:B3)</f></c></row></sheetData></worksheet>'
+    f = zipped(work / "d.xlsx", xlsx_parts({"xl/worksheets/sheet1.xml": cell}))
+    code, out, _ = run("recalc", f)
+    assert code == 3 and "dynamic arrays" in out["reason"]
+    assert stub.calls() == []
+
+
+def test_a_function_name_inside_text_or_a_string_is_not_a_function(work, stub):
+    sheet = (
+        f'<?xml version="1.0"?><worksheet xmlns="{S}"><sheetData><row r="1">'
+        '<c r="A1" t="inlineStr"><is><t>use XLOOKUP( here</t></is></c>'
+        '<c r="A2"><f>IF(B1=&quot;XLOOKUP(&quot;,1,2)</f></c></row></sheetData></worksheet>'
+    )
+    f = zipped(work / "ok.xlsx", xlsx_parts({"xl/worksheets/sheet1.xml": sheet}))
+    code, out, _ = run("recalc", f)
+    assert code == 0, out
+
+
+def test_recalc_reports_new_error_values_and_exits_with_its_own_status(work, stub):
+    stub.behave("errors")
+    f = zipped(work / "w.xlsx", xlsx_parts())
+    code, out, _ = run("recalc", f)
+    assert code == 5 and out["ok"] is True and out["recalculated_with_errors"] is True
+    assert out["errors"]["count"] == 13  # twelve #NAME? and one Err:508
+    assert len(out["errors"]["first"]) == 10 and out["errors"]["first"][0] == "Totals!B1 #NAME?"
+    assert (work / "w.recalculated.xlsx").is_file()
+
+
+def test_an_error_the_source_already_cached_is_not_reported_as_new(work, stub):
+    stub.behave("errors")
+    cached = "".join(f'<c r="B{i}" t="e"><f>BAD({i})</f><v>#NAME?</v></c>' for i in range(1, 13))
+    cached += '<c r="C1" t="str"><f>X()</f><v>Err:508</v></c>'
+    sheet = f'<?xml version="1.0"?><worksheet xmlns="{S}"><sheetData><row r="1">{cached}</row></sheetData></worksheet>'
+    book = f'<?xml version="1.0"?><workbook xmlns="{S}" xmlns:r="{R}"><sheets><sheet name="Totals" sheetId="1" r:id="rId1"/></sheets></workbook>'
+    f = zipped(work / "w.xlsx", xlsx_parts({"xl/worksheets/sheet1.xml": sheet, "xl/workbook.xml": book}))
+    code, out, _ = run("recalc", f)
+    assert code == 0 and "errors" not in out
+
+
+def test_a_clean_recalc_has_no_errors_key_and_says_the_copy_is_for_reading(work, stub):
+    f = zipped(work / "w.xlsx", xlsx_parts())
+    code, out, _ = run("recalc", f)
+    assert code == 0 and "errors" not in out
+    assert "do not hand it over" in out["note"] and "original" in out["note"]
+
+
+def test_recalc_says_values_from_external_links_are_not_refreshed(work, stub):
+    f = zipped(work / "l.xlsx", xlsx_parts({"xl/externalLinks/externalLink1.xml": f'<externalLink xmlns="{S}"/>'}))
+    code, out, _ = run("recalc", f)
+    assert code == 0 and "NOT refreshed" in out["external_links_not_refreshed"]
+    g = zipped(work / "n.xlsx", xlsx_parts())
+    assert "external_links_not_refreshed" not in run("recalc", g)[1]
 
 
 # ---- when LibreOffice misbehaves ------------------------------------------------------------------------------
@@ -359,6 +525,44 @@ def test_a_stuck_libreoffice_is_killed_and_the_message_says_what_to_do(work, stu
     with pytest.raises(ProcessLookupError):
         os.kill(pid, 0)
     assert sorted(p.name for p in work.iterdir()) == ["a.docx"]
+
+
+def zombies():
+    """Defunct children of this process."""
+    found = []
+    for entry in os.listdir("/proc"):
+        if not entry.isdigit():
+            continue
+        try:
+            fields = Path(f"/proc/{entry}/stat").read_text().rsplit(")", 1)[1].split()
+        except OSError:
+            continue
+        if fields[0] == "Z" and int(fields[1]) == os.getpid():
+            found.append(int(entry))
+    return found
+
+
+@pytest.mark.skipif(not sys.platform.startswith("linux"), reason="needs /proc and prctl")
+def test_a_helper_that_outlives_a_killed_libreoffice_is_reaped(work, stub, monkeypatch, capsys):
+    import ctypes
+
+    libc = ctypes.CDLL(None, use_errno=True)
+    stub.behave("orphan")
+    monkeypatch.setattr(oc, "TIMEOUT_SECONDS", 2)
+    f = zipped(work / "a.docx", docx_parts())
+    try:
+        assert oc.main(["office-convert", "pdf", str(f)]) == 4
+        flag = ctypes.c_int(0)
+        libc.prctl(37, ctypes.byref(flag), 0, 0, 0)  # PR_GET_CHILD_SUBREAPER
+        assert flag.value == 1
+        grandchild = int((stub.dir / "grandchild").read_text())
+        deadline = time.time() + 5
+        while time.time() < deadline and os.path.exists(f"/proc/{grandchild}"):
+            time.sleep(0.05)
+        assert not os.path.exists(f"/proc/{grandchild}")  # gone, not even a defunct entry
+        assert zombies() == []
+    finally:
+        libc.prctl(36, 0, 0, 0, 0)
 
 
 # ---- the real program, where it is installed ------------------------------------------------------------------

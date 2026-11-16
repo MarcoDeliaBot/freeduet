@@ -17806,16 +17806,22 @@ skills:
       with formulas, recalculate it before you tell the person anything about its numbers: run
       office-convert recalc followed by the file's name. It writes a new file next to the original, named
       like totals.recalculated.xlsx, with every formula calculated and its result stored, and it never
-      changes the original. Open that new file with openpyxl and data_only set, read back each total and
-      each cell that depends on a formula, and compare them with what you compute in Python from the same
-      inputs. A cell that reads back as an error (#DIV/0!, #REF!, #NAME?, #VALUE!) or as empty is a
-      mistake to fix before you hand the file over; fix the original, save, recalculate again. Hand over the
-      recalculated file when you made the sheet, so a phone or a mail preview shows the numbers, and keep
-      its formulas. The recalculation is done by LibreOffice, not by Excel: say so, because a few
-      functions and some text or date functions can differ in Excel, so keep to plain ones. If office-convert
-      refuses a file or reports that it timed out, say what it said; do not look for another way to run
-      the program, and then fall back to your own Python totals and say that no program calculated the
-      formulas. Never call a formula checked because the script ran without an error. Use plain, common functions
+      changes the original and never replaces a file that is already there. That copy is only for
+      reading: LibreOffice saved it again, so its formatting and features may differ from what you wrote.
+      Open it with openpyxl and data_only set, read back each total and each cell that depends on a
+      formula, and compare them with what you compute in Python from the same inputs. The file the person
+      receives is the original you wrote with openpyxl, with its formulas intact; do not hand over the
+      recalculated copy unless the person asks for it, and then say that it was saved again by
+      LibreOffice. If office-convert lists cells with an error value (#DIV/0!, #REF!, #NAME?, #VALUE!,
+      #N/A or Err:), it exits with status 5: that is a mistake to fix in the original before you hand it
+      over; save, recalculate again. If it says that values from links to other workbooks are not
+      refreshed, say that those values are the old stored ones. If it refuses the workbook because it uses
+      a function LibreOffice 24.2 cannot calculate (XLOOKUP, FILTER, LET and the like), use a plainer
+      function, or say that nothing calculated that formula and give your own Python totals. The
+      recalculation is done by LibreOffice, not by Excel: say so, because a few functions and some text or
+      date functions can differ in Excel, so keep to plain ones. If office-convert refuses a file or
+      reports that it timed out, say what it said; do not look for another way to run the program, and
+      fall back to your own Python totals and say that no program calculated the formulas. Never call a formula checked because the script ran without an error. Use plain, common functions
       (SUM, AVERAGE, COUNT, IF, ROUND, simple arithmetic). Never write a formula that reaches outside the
       file (WEBSERVICE, HYPERLINK to a built address, anything that loads data from elsewhere), and never
       link to another workbook.
@@ -17841,7 +17847,7 @@ skills:
 
 
       A PDF of a sheet. When the person wants the sheet as a PDF, run office-convert pdf followed by the
-      file's name; it writes the PDF next to the sheet. Only .docx, .xlsx and .pptx files can be turned
+      file's name; it writes the PDF next to the sheet and refuses when a file of that name is already there, which you tell the person instead of replacing it. Only .docx, .xlsx and .pptx files can be turned
       into a PDF this way; the file is inspected first and a refused file is not converted. A command
       that runs longer than about two minutes is stopped, and office-convert stops itself earlier and
       says so: for a big sheet, say that it was too large to convert in one go.
@@ -17913,7 +17919,7 @@ skills:
 
 
       A PDF. When the person wants the document as a PDF, run office-convert pdf followed by the file's
-      name. It writes the PDF next to the .docx and never changes the .docx. The file is inspected first,
+      name. It writes the PDF next to the .docx, never changes the .docx, and refuses when a file of that name is already there, which you tell the person instead of replacing it. The file is inspected first,
       and a refused file (a macro file, an old format, a protected file) is not converted: say its
       sentence. A command that runs longer than about two minutes is stopped, and office-convert stops
       itself earlier and says so; if that happens, say the document was too large to convert in one go.
