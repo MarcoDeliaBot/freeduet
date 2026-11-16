@@ -454,6 +454,24 @@ jobs:
       - run: python -m pip install --requirement requirements.txt
       - run: python -m pytest -q
 
+  # FreeDuet: the office toolkit of the member's computer image (docs/design/office-files.md, S1). Installs
+  # the pinned, hashed set the Dockerfile installs, exactly as it does (`--require-hashes --no-deps
+  # --only-binary`), then runs the tests of office-inspect, one of which writes a .docx, .pptx, .pdf and
+  # .xlsx with the installed libraries and reads them back. Offline apart from the package download.
+  office-toolkit:
+    name: office-toolkit
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.12"
+      - run: python -m pip install --require-hashes --no-deps --only-binary=:all: --requirement openbot/agent-computer/office-requirements.txt
+      - run: python -m pip install pytest
+      - run: python -m pytest -q openbot/agent-computer/office-inspect/tests
+
   # FreeDuet (#21): the one-command start on a clean machine, as the README's Quick start gives it,
   # with no API key and no Claude Code sign-in. Then what a person would get: the server, the app
   # and agent-freeduet answer, the twelve members are remote Bots at agent-freeduet, start.sh says how
@@ -1328,7 +1346,7 @@ jobs:
     name: verify
     runs-on: ubuntu-latest
     if: always()
-    needs: [static, deployables, mobile, computer-browser, chart, test, startup, freeduet-package, agent-freeduet, python-harness, build, migrations, image, component-dockerfiles, clean-start, installer-clean-machine, installer-windows, desktop-crate]
+    needs: [static, deployables, mobile, computer-browser, chart, test, startup, freeduet-package, agent-freeduet, office-toolkit, python-harness, build, migrations, image, component-dockerfiles, clean-start, installer-clean-machine, installer-windows, desktop-crate]
     # Nothing is checked out here, so the workflow's default `openbot` folder does not exist.
     defaults:
       run:

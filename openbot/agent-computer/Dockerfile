@@ -1,5 +1,7 @@
 # The Bot's computer installs the Playwright browser it launches, plus the command-line tools the video
-# maker (Cam) works with: ffmpeg, git and python3 with venv.
+# maker (Cam) works with: ffmpeg, git and python3 with venv, plus the office toolkit (python-docx,
+# openpyxl, python-pptx, pypdf, reportlab, pdfplumber, defusedxml) in its own virtual environment and
+# `office-inspect`, our own read-only inspector (docs/design/office-files.md, slices S1 and S2).
 #
 # The image tag and Playwright dependency must be pinned to the same exact version. Bump both or
 # neither.
@@ -22,6 +24,22 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
   && ln -s bun /usr/local/bin/bunx \
   && bunx --bun "playwright@${PLAYWRIGHT_VERSION}" install --with-deps chromium \
   && rm -rf /root/.cache /tmp/* /var/lib/apt/lists/*
+
+# The office toolkit: one virtual environment at /opt/office, built here because a Bot's computer cannot
+# install anything when it runs (root with every capability dropped, no sudo). Every package is pinned to
+# an exact version and to its release files' hashes; `--no-deps` and `--only-binary` mean pip installs
+# exactly that list and builds nothing. The system `python3` is left alone: a member runs
+# `office-python script.py` for the toolkit. `office-inspect` is a stdlib-only program of ours that
+# reads a file and reports it; it runs with the same Python, in isolated mode.
+COPY agent-computer/office-requirements.txt /opt/office-requirements.txt
+RUN python3 -m venv /opt/office \
+  && /opt/office/bin/pip install --no-cache-dir --require-hashes --no-deps --only-binary=:all: \
+       --requirement /opt/office-requirements.txt \
+  && ln -s /opt/office/bin/python /usr/local/bin/office-python \
+  && rm -rf /root/.cache
+COPY agent-computer/office-inspect/office_inspect.py /usr/local/lib/office-inspect/office_inspect.py
+COPY agent-computer/office-inspect/office-inspect /usr/local/bin/office-inspect
+RUN chmod 0755 /usr/local/bin/office-inspect
 
 WORKDIR /app
 # The lockfile as well as the manifest: `--frozen-lockfile` with no lockfile present resolves afresh

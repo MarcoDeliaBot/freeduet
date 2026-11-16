@@ -1,0 +1,4 @@
+#!/bin/sh
+# Runs the inspector with the office virtual environment's Python, in isolated mode (no PYTHON*
+# variables, no user site, no current directory on the import path).
+exec /opt/office/bin/python -I /usr/local/lib/office-inspect/office_inspect.py "$@"
