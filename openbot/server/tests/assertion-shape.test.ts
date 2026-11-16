@@ -625,7 +625,7 @@ const ALLOW: Allowed[] = [
   },
   {
     file: "server/tests/approvals-interactive.integration.test.ts",
-    line: 229,
+    line: 233,
     shape: "b",
     finding: "NEW (round 2 did not find this)",
     why: "expect(continued[0]?.error).toBeUndefined();",
