@@ -34,6 +34,7 @@ import {
   MISSED_SETTLE_MS,
   offerDueRoutines,
   ROUTINE_FIRE_KIND,
+  SWITCHED_OFF_REASON,
 } from "../src/routines/sweep";
 import { createWorkQueue, DEFAULT_MAX_ATTEMPTS } from "../src/work/queue";
 import { TEST_POOL, testDatabaseUrl } from "./support/database";
@@ -704,7 +705,12 @@ describe("consuming a claimed firing", () => {
     expect(report.fired).toEqual([]);
     expect(report.skipped[0]?.routineId).toBe(routine.id);
     expect(dispatched).toEqual([]);
-    expect(await runsFor(routine.id)).toHaveLength(0);
+    // One history row, finished as skipped, with the reason in plain words: nothing ran, and the
+    // person looking at History can see why.
+    const runs = await runsFor(routine.id);
+    expect(runs).toHaveLength(1);
+    expect(runs[0]?.status).toBe("skipped");
+    expect(runs[0]?.error).toBe(SWITCHED_OFF_REASON);
     // Finished rather than released: re-running cannot make a switched-off routine want to fire.
     const [row] = await firingsFor(routine.id);
     expect(row?.finishedAt).not.toBeNull();

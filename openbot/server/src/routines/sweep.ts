@@ -71,6 +71,10 @@ export const MISSED_SETTLE_MS = 60_000;
 export const MISSED_REASON =
   "The server reached this occurrence too late to run it, so no run was started.";
 
+/** What the history says for a firing that was offered and then found switched off when it came to run. */
+export const SWITCHED_OFF_REASON =
+  "This routine was switched off before this run could start, so it did not run.";
+
 /**
  * How long a run row may sit open with no outcome before a pass declares it abandoned.
  *
@@ -399,6 +403,13 @@ export async function dispatchClaimedRoutines(
         const reason = routine
           ? "switched off between the offer and the firing"
           : "deleted between the offer and the firing";
+        /*
+         * A switched-off routine still has its history, so the person who looks there sees that this
+         * occurrence came up and why nothing ran. A deleted one has none: its runs went with it.
+         * Written before the finish, like the miss below, so a lost lease cannot leave the firing
+         * finished and unexplained.
+         */
+        if (routine) await recordSkippedRun(options, routineId);
         await finishOrSay(options, item.key, routineId, reason);
         report.skipped.push({ routineId, reason });
         continue;
@@ -600,6 +611,30 @@ async function recordMissedFiring(
         type: "routine-missed-unrecorded",
         routineId,
         scheduledFor: scheduledFor.toISOString(),
+        reason: error instanceof Error ? error.message : String(error),
+      }),
+    );
+  }
+}
+
+/**
+ * Write one finished `skipped` row saying the routine was switched off, and say so if the write failed.
+ *
+ * Best-effort, like `recordMissedFiring`: the history row is the courtesy, the firing is dropped either
+ * way. `skipped` is not counted by the fatigue rule, and nothing ran, so nothing is dispatched.
+ */
+async function recordSkippedRun(
+  options: RoutineSweepOptions,
+  routineId: string,
+): Promise<void> {
+  try {
+    const { runId } = await options.routineStore.insertRun(routineId);
+    await options.routineStore.finishRun(runId, "skipped", SWITCHED_OFF_REASON);
+  } catch (error) {
+    console.warn(
+      JSON.stringify({
+        type: "routine-skipped-unrecorded",
+        routineId,
         reason: error instanceof Error ? error.message : String(error),
       }),
     );
