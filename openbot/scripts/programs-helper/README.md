@@ -18,13 +18,13 @@ Status: it has never run on a person's computer. The only Windows run so far is 
 
 ## Running the scripts
 
-Run them in a normal window as yourself, never as administrator (they refuse). The scripts are plain text: read them first.
+Run them in a normal window as yourself, never as administrator (they refuse). The scripts are plain text: read them first. They come from the FreeDuet you downloaded them from (nothing is signed yet), so what you run is whatever that installation serves.
 
 ```
 powershell -NoProfile -ExecutionPolicy RemoteSigned -File .\setup.ps1
 ```
 
-If Windows says the script is blocked because it came from the internet, run `Unblock-File .\*.ps1` once. The scripts are
+If Windows says the script is blocked because it came from the internet, run `Unblock-File .\*.ps1` once. It removes the "downloaded from the Internet" mark from those files, which is what lets Windows run them under `RemoteSigned`. The scripts are
 not signed yet, which is why the policy is `RemoteSigned` plus `Unblock-File` and not `Bypass`: the helper's own task
 runs with `RemoteSigned` too, and setup unblocks its copy. Nothing here changes the machine's execution policy.
 
