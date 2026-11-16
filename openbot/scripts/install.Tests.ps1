@@ -197,6 +197,13 @@ Describe 'Get-InstallerPlan decides from the facts' {
         $facts = New-TestFacts @{ CheckoutPath = '\\server\share\freeduet'; CheckoutDiskRoot = '\\server\share\'; CheckoutDiskFreeGB = $null }
         (Get-InstallerPlan -Facts $facts).Status | Should -Be 'Blocked'
     }
+    It 'passes -Service on to install.sh, and not otherwise' {
+        $with = Get-InstallerPlan -Facts (New-TestFacts) -Yes -Service
+        ($with.Handover.Arguments -join ' ') | Should -Match '--yes --service$'
+        $without = Get-InstallerPlan -Facts (New-TestFacts) -Yes
+        ($without.Handover.Arguments -join ' ') | Should -Not -Match '--service'
+    }
+
     It 'passes -Yes and -IgnoreResources on to install.sh' {
         $plan = Get-InstallerPlan -Facts (New-TestFacts) -Yes -IgnoreResources
         ($plan.Handover.Arguments -join ' ') | Should -Match '--yes --ignore-resources$'
