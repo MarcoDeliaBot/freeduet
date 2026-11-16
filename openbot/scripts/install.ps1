@@ -1,7 +1,8 @@
 # FreeDuet installer for Windows 10 and Windows 11: the first Windows step (docs/design/installer.md, stage S2).
 #
-# STATUS: NEVER RUN ON A WINDOWS MACHINE. It was written and read, not executed, and install.Tests.ps1 has not
-# been run either. See "Built so far" in docs/design/installer.md for the manual check that has to be done.
+# STATUS: NEVER RUN ON A PERSON'S COMPUTER. CI runs it, and install.Tests.ps1, on a GitHub-hosted Windows runner, up to
+# the Ubuntu install (job installer-windows; docs/design/installer.md, section 11). The restart, the Ubuntu user step
+# and the hand-over to install.sh have not run on any Windows machine.
 #
 # Run it from a FreeDuet checkout, in Windows PowerShell, as yourself and NOT "as administrator":
 #

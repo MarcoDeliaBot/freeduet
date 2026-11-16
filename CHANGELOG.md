@@ -12,6 +12,7 @@ Each version says what was and was not run live. "Run live" means run on a real 
 
 ### Added
 
+- Installer: `install.ps1` and its Pester tests now run in CI on a GitHub-hosted Windows runner (job `installer-windows`), up to the Ubuntu install, with a job summary of where each run stopped. The first run found a bug in the script (two lists of WSL names were nested when read), now fixed. Never run on a person's PC; the restart, the Ubuntu user step, Docker and the first start are not covered (#293).
 - Installer: an opt-in systemd service for FreeDuet inside WSL, with `install.sh --service` and `install.ps1 -Service` (`install-service.sh`, #285). Tested with fake commands only; never run under real systemd or on a real Windows machine.
 
 ## [0.2.2] - 2026-11-16
