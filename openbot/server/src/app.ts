@@ -97,6 +97,7 @@ import { createTranscriptionProvider } from "./dictation/provider";
 import { createDictationRoutes } from "./dictation/routes";
 import { threadReaderClient } from "./freeduet/backend";
 import type { EngineChoices } from "./freeduet/engine-choices";
+import { isHosted } from "./freeduet/deployment";
 import { createEnginesRoutes } from "./freeduet/engines-routes";
 import { createImportPreviewRoutes } from "./freeduet/import/preview-routes";
 import { createTeamFileRoutes } from "./freeduet/team-file-routes";
@@ -585,6 +586,9 @@ export function createApp(
       // present only when it is true like the person's language below: the sign-in screen reads it to
       // say what to do instead of "an admin has to set it up", and the answer is otherwise as it was.
       ...(person.install ? { installPairing: true } : {}),
+      // FreeDuet (first-start D6): present only on a hosted deployment, which offers no Claude plan sign-in. The app reads it
+      // to leave the connect card out; the server's own routes refuse regardless (freeduet/deployment.ts).
+      ...(isHosted(process.env) ? { deployment: "hosted" } : {}),
       durableHistory: config.runtime.durableHistory,
       /*
        * Whether a Bot may answer with an interface it wrote itself.
