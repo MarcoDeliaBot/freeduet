@@ -1,9 +1,10 @@
 """A person's own engines file is never committed by mistake; the shipped example is.
 
-docs/PROVIDERS.md tells the person to copy ``engines.example.yaml`` to ``engines.yaml`` and edit it. That copy
-can hold a gateway address and settings of the person's own, so ``agent-freeduet/.gitignore`` makes git ignore
-it, and the example stays tracked. The test asks git what it does. It needs git and a checkout; anywhere else
-it is skipped (the Docker image ships no ``.git``).
+docs/PROVIDERS.md tells the person to copy ``engines.example.yaml`` to ``engines.yaml`` and edit it, and
+agent-freeduet/README.md (the local router) copies it to ``openbot/engines.local.yaml``. Those copies can hold a
+gateway address and settings of the person's own, so git ignores them (``agent-freeduet/.gitignore`` and
+``openbot/.gitignore``), and the example stays tracked. The test asks git what it does. It needs git and a
+checkout; anywhere else it is skipped (the Docker image ships no ``.git``).
 """
 
 from __future__ import annotations
@@ -32,10 +33,12 @@ def needs_a_checkout():
         pytest.skip("needs git and a checkout of the repository")
 
 
-def test_the_persons_engines_file_is_ignored():
-    # --no-index judges the rule on its own, whether or not git already tracks the file.
-    result = git("check-ignore", "-q", "--no-index", "engines.yaml")
-    assert result.returncode == 0, "agent-freeduet/engines.yaml is not ignored by git"
+def test_the_persons_own_engines_copies_are_ignored():
+    # --no-index judges the rules on their own, whether or not git already tracks the file.
+    # Paths are relative to agent-freeduet/: its own copy, and the local router copy one folder up.
+    for path in ("engines.yaml", "../engines.local.yaml"):
+        result = git("check-ignore", "-q", "--no-index", path)
+        assert result.returncode == 0, f"{path} is not ignored by git"
 
 
 def test_the_example_is_not_ignored_and_stays_tracked():
