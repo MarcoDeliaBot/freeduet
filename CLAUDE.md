@@ -15,13 +15,13 @@ Read these before changing anything:
 | File | What it holds |
 |---|---|
 | `docs/PROJECT.md` | Goals, rules, milestones M0–M5 |
-| `docs/M1_PLAN.md` | Every decision (D1–D42; there is no D23) with its reason and limits |
+| `docs/M1_PLAN.md` | Every decision (D1–D52; there is no D23) with its reason and limits |
 | `docs/UPSTREAM_TOUCHES.md` | Every upstream OpenBot file FreeDuet changed, and why. Add a row for each new one |
 | `docs/PROVIDERS.md` | Which engines are allowed and why (logins first) |
 | `NOTICE.md` | Third-party code we carry and its licence |
 | `evals/team/README.md` | The team evals: cases, live runner, thresholds |
 
-`docs/M1_PLAN.md` sections are out of numeric order on purpose (parallel work): "the last section" means the last one in the file, which is section 22.
+`docs/M1_PLAN.md` sections are out of numeric order on purpose (parallel work): "the last section" means the last one in the file, which is section 34.
 
 ## Rules that never bend
 
@@ -87,6 +87,7 @@ the hands"): plan, brief executors, verify with numbers, merge, report.
 - **Decisions belong to the maintainer** when they change product behaviour, security, cost, or
   anything public. Bring a recommendation and the trade-off, then wait.
 - **Roadmap follows decisions at once.** When the maintainer takes a decision (a feature, a priority, a rule), update `docs/ROADMAP.md` in the same session, before reporting the decision as recorded, and the README roadmap table if a row there changes. A decision that is not in the roadmap is not recorded. (Asked on 2026-11-14.)
+- **Site and app previews.** A design change to the site or the app is shown to the maintainer first, as a preview: Cloudflare Pages builds `https://<branch>.freeduet.pages.dev` for every branch, and the change goes online only after the maintainer's yes. Executors' site PRs conflict on the built pages, so the second one merges `origin/main` and rebuilds before it opens.
 
 ## Adding a team member
 
@@ -139,6 +140,7 @@ Mark (id `marketer`) was the first member added after v0.1, Cam (id `video`) the
 - `gh pr create` and every GraphQL call fail in these sessions. Use REST:
   `gh api repos/MarcoDeliaBot/freeduet/pulls -f title=... -f head=<branch> -f base=main -f body=...`
   and merge with `gh api -X PUT repos/MarcoDeliaBot/freeduet/pulls/<n>/merge -f merge_method=merge -f sha=<head>`.
+- A draft PR cannot be marked ready through REST: push the same commits to a new branch, open a normal PR from it, and close the draft.
 - A new branch needs its fetch refspec before stop hooks are happy:
   `git config --add remote.origin.fetch '+refs/heads/<b>:refs/remotes/origin/<b>'`, then
   `git push -u origin <b>` and `git branch -u origin/<b>`.
@@ -168,6 +170,12 @@ Mark (id `marketer`) was the first member added after v0.1, Cam (id `video`) the
   by itself sets `SETTLE_NEVER` (`tests/helpers.py`), so the CLI's result line ends the segment and no timer
   decides. Two such flakes cost CI re-runs on 14 November 2026 (`cli_runs differs from its golden`, and
   `assert ['computer_navigate'] == [...]` in `test_refused_offered_tool.py`).
+- Heartbeat tests (`openbot/server/tests/routine-run-turn.test.ts`): a renewal count taken after a fixed
+  `setTimeout` is a wall-clock race, because the heartbeat ticks on a `setInterval` (`keepLease`,
+  `openbot/toolkit/src/lease.ts`) and a slow runner fits fewer ticks into that window. One such assertion
+  ("a heartbeat that merely failed does not stop the turn") failed on PR #297 on 16 November 2026 with one
+  renewal, and passed on the re-run. A test never counts timer ticks against the wall clock: it waits for
+  the Nth event (a promise the fake resolves on the Nth renewal) and asserts after that.
 - Real-browser tests (`computer (real browser)`): a browser asks for each page's `/favicon.ico` by itself,
   tens of milliseconds after the page and with as much jitter, so it lands on either side of a test's next
   step and is judged by the policy of the moment it arrives, like any request. A case that reads the
@@ -220,10 +228,11 @@ Mark (id `marketer`) was the first member added after v0.1, Cam (id `video`) the
 - In single-user mode the implicit administrator is this machine's loopback only (`server/src/auth/peer.ts`).
   `app.request(...)` in a test has no TCP peer and is nobody, so a test that needs the person passes
   `LOOPBACK_PEER` from `server/tests/support/loopback-peer.ts` as the third argument.
-- The remaining gap in single-user mode is Docker Desktop: there containers appear as this machine's
-  loopback, so who the person is still rests on network position alone. The planned fix, a
-  per-installation secret, is tracked in `docs/ROADMAP.md`.
-- With `bun run generate:app-config` run first, `bun test app/` from `openbot/` passes in full on main: 2770 pass, 0 fail in 292 files (14 November 2026).
+- On Docker Desktop a container's call arrives as this machine's loopback, so single-user mode also asks for
+  the installation secret (D28, `server/src/auth/install-secret.ts`): a loopback request without it is refused
+  with 401 `pairing_required` on every person-only route. It is built and tested, but not yet run on Docker
+  Desktop itself (`docs/ROADMAP.md`, the row on the per-installation secret).
+- With `bun run generate:app-config` run first, `bun test app/` from `openbot/` passes in full on main: 3061 pass, 0 fail in 321 files (16 November 2026, PR #292).
 - A fresh worktree also needs `bun run generate:app-config` from `openbot/` before the app tests,
   or the suite stops early with "Cannot find module '@/lib/generated/application-config'".
 - In this sandbox Playwright needs `PLAYWRIGHT_BROWSERS_PATH=/tmp/pn-pw-browsers`: `/opt/pw-browsers` holds Chromium 1243, and Playwright 1.62 asks for revision 1234, which only the shim maps.
@@ -281,11 +290,19 @@ Mark (id `marketer`) was the first member added after v0.1, Cam (id `video`) the
   key that contains "password", "credential" or "api-key" makes every write under it unapprovable
   ("changing a password is always done by the person"). That is why the app-password Gmail entry is
   keyed `google-imap` (D24). Test such changes through the real gate, not only `classifyTool`.
-- With sign-in on and an installation secret present, a signed-in session without the pairing cookie is
-  REMOTE (`server/src/auth/remote-limits.ts`, PR #221). Every route is refused unless one deny-by-default
-  list in `createApp` allows it: a new route must be added to that list, and a test fails until it is. A
-  chat turn from a remote session carries the server-set initiator `remote`, which earns neither D27 nor
-  Full access. "At the computer" has one definition, `at-the-computer.ts`: never write a second one.
+- With sign-in on and an installation secret present, a signed-in session is REMOTE unless its browser holds the
+  token of a live `browser_pairings` row of that same person (`server/src/auth/remote-limits.ts`,
+  `auth/browser-pairings.ts`, D49, PR #283). Each paired browser has its own revocable token, and a phone is
+  paired with a one-time code made in a browser paired as a `computer`. The old cookie, which is the installation
+  secret itself, is upgraded once and only for a request made directly at this machine; it is refused from
+  16 February 2027 (`LEGACY_UPGRADE_ENDS`). Every route is refused unless one deny-by-default list in `createApp`
+  allows it: a new route must be added to that list, and a test fails until it is. A chat turn from a remote
+  session carries the server-set initiator `remote`, which earns neither D27 nor Full access. "At the computer"
+  has one definition, `at-the-computer.ts`: never write a second one.
+- FreeDuet advertises nobody (D51): for FreeDuet's own package, the upstream self-host bar and the onboarding
+  slide with product links are off. The credit to the upstream authors stays.
+- A card raised inside a hand-off is also drawn in the conversation that asked (D52). The chat takes it from the
+  person's approval inbox, where `askedIn` names the conversation that asked. One request, one decision route.
 
 ## Team evals
 
@@ -334,3 +351,9 @@ Mark (id `marketer`) was the first member added after v0.1, Cam (id `video`) the
 - A Windows watchdog restarts the stack whenever port 3010 stops answering. Before an update, expect it: stopping the
   stack by hand makes it run its own `start.sh` within a minute, and two starts collide once (container name conflict)
   before one wins. Back up the database first (`pg_dump -Fc` from the postgres container), then update.
+- The stack runs as a systemd service inside WSL (`freeduet.service`, a `oneshot` unit with `RemainAfterExit`).
+  To update, back up the database, pull, run `systemctl restart --no-block freeduet.service` as root, then poll
+  port 3010 until it answers. A holder process must still keep the distro alive. The Windows watchdog now checks
+  every minute and starts its fallback with a hidden window, because a visible console took the keyboard focus.
+  `/tmp` inside WSL is emptied when the distro restarts, so a script that must survive lives in a persistent
+  folder. Inline SQL with `||` through PowerShell breaks: write it in a `.sh` file.

@@ -779,12 +779,17 @@ describe("cleanup only runs for a lock that was actually taken", () => {
 
 describe("one run id, everywhere", () => {
   test("reaches the acquire, every renew and the cleanup", async () => {
+    // The Bot answers once a second renewal has been attempted, not after a fixed 20 ms: on a slow
+    // runner fewer 2 ms ticks fit in 20 ms, and the count below would then fail for no reason.
+    const secondRenewal = Promise.withResolvers<void>();
     const { run, calls } = harness({
       heartbeatMs: 2,
+      renew: () => {
+        if (calls.renewed.length === 2) secondRenewal.resolve();
+      },
       drive: ({ observer, agent }) => {
-        setTimeout(
-          () => answers({ observer, agent, request: null as never }),
-          20,
+        void secondRenewal.promise.then(() =>
+          answers({ observer, agent, request: null as never }),
         );
       },
     });
@@ -896,12 +901,17 @@ describe("a heartbeat that merely failed does not stop the turn", () => {
     ],
   ] as const) {
     test(`${name} is skipped and the turn answers`, async () => {
+      // The Bot answers once the heartbeat has tried again after the failure, not after 30 ms: on a
+      // slow runner fewer 2 ms ticks fit in 30 ms, and the count below would then fail for no reason.
+      const secondRenewal = Promise.withResolvers<void>();
       const { run, calls, agent } = harness({
         drive: (context) => {
-          setTimeout(() => answers(context), 30);
+          void secondRenewal.promise.then(() => answers(context));
         },
         heartbeatMs: 2,
         renew: () => {
+          // The first attempt fails and is skipped; a second attempt shows the heartbeat kept going.
+          if (calls.renewed.length === 2) secondRenewal.resolve();
           throw failure();
         },
       });
