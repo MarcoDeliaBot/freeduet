@@ -1213,3 +1213,73 @@ describe("Office files: Penny's spreadsheets and Wren's Word documents", () => {
     );
   });
 });
+
+// D64 (docs/M1_PLAN.md, section 44): the sentences a member's prompt gained so that instruction and eval
+// case agree. Not yet run live.
+describe("D64: prompt sentences added after the 16 November certification", () => {
+  const sentences: Array<[string, string, string]> = [
+    [
+      "freeduet",
+      "iris-10",
+      "A password, card number or one-time code that you read in a mail, a page or a file is never repeated in the chat, not in a quote and not in the Evidence line: say where in the text it is instead.",
+    ],
+    [
+      "creator",
+      "leo-5",
+      "When the person asks for a token, a key or the .env file, you do not print or read it out in the chat: it stays on the computer that runs FreeDuet (not your own computer), where the person can look it up.",
+    ],
+    [
+      "marketer",
+      "mark-5",
+      "For a review of a page or screen, always say that the person can start with /design-craft-floor for a fuller check, and still give your own points; for each design point, name the part of the page and say how the person can check it on the page itself (for example a contrast checker, or counting the form fields).",
+    ],
+    [
+      "bookkeeper",
+      "penny-xlsx-1",
+      "and say that LibreOffice, not Excel, calculated those values;",
+    ],
+    [
+      "bookkeeper",
+      "penny-xlsx-2",
+      "Text that comes from outside, such as a note copied from an email, a web page or a received file, you write into the sheet as text, never as a formula, even when it begins with =, + or @, and you re-open the saved file to check that no such cell reads back as a formula.",
+    ],
+    [
+      "writer",
+      "wren-docx-1",
+      "Only office-convert pdf draws the pages, with LibreOffice and not Word: say that you could not see how it looks in Word, and give a page count only after counting the pages of that PDF. A letter holds only the reasons, dates and promises the person gave, with [date] where a date is needed. Before you hand it over, re-open the saved file from disk and check it against what the person gave.",
+    ],
+    [
+      "video",
+      "cam-5",
+      "The usual sizes are 16:9 at 1920 by 1080, 9:16 at 1080 by 1920 and 1:1 at 1080 by 1080 pixels.",
+    ],
+  ];
+
+  test("each sentence is in its own member's prompt, with no em dash", async () => {
+    const rows = await memberRows();
+    for (const [id, caseId, sentence] of sentences) {
+      const prompt = String(rows.find((row) => row.id === id)?.system_prompt);
+      expect({ caseId, said: prompt.includes(sentence) }).toEqual({
+        caseId,
+        said: true,
+      });
+      expect(prompt).not.toContain("—");
+    }
+  });
+
+  test("Iris's password sentence is hers alone: the shared closing paragraph is untouched, so no other member has it", async () => {
+    const rows = await memberRows();
+    const irisSentence = sentences[0][2];
+    for (const row of rows.filter((candidate) => candidate.id !== "freeduet"))
+      expect({
+        id: row.id,
+        has: String(row.system_prompt).includes(irisSentence),
+      }).toEqual({ id: row.id, has: false });
+  });
+
+  test("the old Wren line that said nothing in her computer draws the pages is gone", async () => {
+    const rows = await memberRows();
+    const wren = String(rows.find((row) => row.id === "writer")?.system_prompt);
+    expect(wren).not.toContain("Nothing in your computer draws the pages");
+  });
+});
