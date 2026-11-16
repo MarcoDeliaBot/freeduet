@@ -408,7 +408,8 @@ Tests: `tests/programs-broker.test.ts` (schema, HMAC, lease, expiry, stop, switc
 Departures from this note, and why:
 
 - **The two lists are given effect `write` at the gate** (the note says "reads that ask"). The gate's reads are never held to a card by design; `decideAction` also now keeps `alwaysAsk` for a programs tool whatever its effect, so a future read could not skip the card.
-- **The secret is derived from the deployment's own key** per person, not stored and not typed: nothing to leak from a table, and the pairing code of S2 will hand it to the helper once.
+- **The secret is derived from the deployment's own key and a per-person random salt,** not stored and not typed. The salt (table `programs_helper_salts`) is made when the switch goes from off to on and kept while it is off, so a result for an operation already running can still be answered. **S2 duty:** the pairing step must hand the helper the secret once, and must call `rotateSalt` when it pairs again. **Restart window:** a restarted server refuses any poll or result stamped before its own start, so the helper's clock must be right and its first poll after a restart is made with a fresh timestamp.
+- **No `programs_` branch in the callback door** (`src/index.ts`): a call there has no approval context, so it could only refuse. It was removed rather than left as dead code.
 - **The reason on the card is English only** for now (a plain constant, not in the per-language catalogue): adding it there needs eleven translations and belongs with the Settings text of S5.
 - **A pending programs card is not denied when the switch goes off** (the note, 6.1): it fails closed, because the call, once allowed, finds the switch off and is refused. Denying the card in the inbox is left for S5, with the screen.
 - **No "find" operation yet:** the note lists five wire operations; this schema has the four actions of the table, and `find` comes with install (S4).

@@ -8,7 +8,7 @@ Each version says what was and was not run live. "Run live" means run on a real 
 
 ### Added
 
-- Programs on your computer, server core (slice S1 of the design note; off by default, nothing to switch on yet because the helper is not built): a per-person switch, a broker that queues typed operations for a small helper that polls the server (signed, single-use, with expiry), and two tools for the member that looks after the computer, "list installed programs" and "list available updates". Each asks you with a card every time, with Full access on or off, only in a conversation with you at your computer, never from a routine, a check-in or a phone. Update and install are not built. Built and tested in CI against a helper played in process; not reviewed independently yet and not run on a real PC.
+- Programs on your computer, server core (slice S1 of the design note; off by default, nothing to switch on yet because the helper is not built): a per-person switch, a broker that queues typed operations for a small helper that polls the server (signed, single-use, with expiry), and two tools for the member that looks after the computer, "list installed programs" and "list available updates". Each asks you with a card every time, with Full access on or off, only in a conversation with you at your computer, never from a routine, a check-in or a phone. Update and install are not built. The switch cannot go on while the installation still uses the public example key. Built and tested in CI against a helper played in process; not reviewed independently yet and not run on a real PC.
 
 ### Changed
 

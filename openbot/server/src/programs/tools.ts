@@ -62,7 +62,8 @@ export type ProgramsToolsInput = {
   initiator?: AuditInitiator;
   /** The deployment key the signed run was made with (the own-turn rule reads it). */
   encryptionKey: string;
-  gate?: ApprovalGate;
+  /** Required: a call cannot start without a card, so no caller can leave the gate out. */
+  gate: ApprovalGate;
 };
 
 async function audited(
@@ -146,18 +147,16 @@ function oneTool(
       if (!(await input.switch.isOn(input.actorId)))
         return refuse(SWITCHED_OFF, "switched_off");
       try {
-        const approval = input.gate
-          ? await input.gate({
-              actorId: input.actorId,
-              botId: input.botId,
-              toolRef: `programs/${kind}`,
-              effect: "write",
-              scope: "programs",
-              args: { kind },
-              target: { operation: kind },
-              continuation: context,
-            })
-          : undefined;
+        const approval = await input.gate({
+          actorId: input.actorId,
+          botId: input.botId,
+          toolRef: `programs/${kind}`,
+          effect: "write",
+          scope: "programs",
+          args: { kind },
+          target: { operation: kind },
+          continuation: context,
+        });
         if (approval && "replay" in approval && approval.replay !== undefined)
           return String(approval.replay);
         const result = await input.broker.call({

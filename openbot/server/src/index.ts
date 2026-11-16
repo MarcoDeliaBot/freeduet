@@ -1439,9 +1439,11 @@ const hostAccessBroker = createHostAccessBroker(Date.now, {
 const programsSwitch = createProgramsSwitch({
   database,
   audit: bootAuditStore,
+  deploymentKey: config.keyEncryptionKey,
 });
 const programsBroker = createProgramsBroker({
   deploymentKey: config.keyEncryptionKey,
+  salt: (actorId) => programsSwitch.saltOf(actorId),
   enabled: (actorId) => programsSwitch.isOn(actorId),
 });
 const programsInput = (
@@ -2866,19 +2868,6 @@ const app = createApp(
     }).find((candidate) => candidate.name === name);
     if (memory) {
       const text = await memory.execute(args);
-      return { text, isError: text.startsWith(REFUSAL_MARKER) };
-    }
-    if (name.startsWith("programs_")) {
-      // D60: found among the tools built for this Bot whatever the switch says; each asks the switch itself.
-      const programs = programsTools(
-        programsInput(botId, actorId, initiator),
-      ).find((candidate) => candidate.name === name);
-      if (!programs)
-        return {
-          text: `${REFUSAL_MARKER} That tool is not available for this Bot right now.`,
-          isError: true,
-        };
-      const text = await programs.execute(args);
       return { text, isError: text.startsWith(REFUSAL_MARKER) };
     }
     if (!name.startsWith("host_")) return null;

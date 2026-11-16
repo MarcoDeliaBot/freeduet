@@ -19,19 +19,24 @@ import {
   type WireOperation,
 } from "./support/programs-helper";
 
-const KEY = "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=";
+const KEY = "b3JkaW5hcnktdGVzdC1rZXktbm90LXRoZS1leGFtcGxl";
+/** One salt per person, as the switch keeps it: the same text for the same person, another for another. */
+const saltOf = async (actorId: string) => `salt-of-${actorId}`;
 
 async function setup(options: { on?: boolean; up?: boolean } = {}) {
   const clock = { at: 1_000_000 };
   const state = { on: options.on ?? true };
   const broker = createProgramsBroker({
     deploymentKey: KEY,
+    salt: saltOf,
     now: () => clock.at,
     enabled: async () => state.on,
     sweepEveryMs: 0,
   });
+  // The broker's own start is the floor of what it accepts (a restart window), so time moves on first.
+  clock.at += 60_000;
   const actor = `person-${crypto.randomUUID()}`;
-  const secret = broker.helperSecretFor(actor);
+  const secret = (await broker.helperSecretFor(actor)) as Buffer;
   const poll = (overrides?: Parameters<typeof pollBody>[3]) =>
     broker.poll(pollBody(secret, actor, clock.at, overrides));
   /** One poll that must bring one operation, which must be genuine. */
@@ -140,6 +145,7 @@ describe("a poll is checked every time", () => {
       botId: "fixer",
       action: { kind: "list_installed" },
     });
+    await t.flush();
     const op = await t.fetchOne();
     expect(op.action).toEqual({ kind: "list_installed" });
     expect(op.actorId).toBe(t.actor);
@@ -150,11 +156,12 @@ describe("a poll is checked every time", () => {
 
   test("a wrong mac, a mac made with another person's secret and a body with a missing field are refused", async () => {
     const t = await setup();
-    const other = createProgramsBroker({
+    const other = (await createProgramsBroker({
       deploymentKey: KEY,
+      salt: saltOf,
       enabled: async () => true,
       sweepEveryMs: 0,
-    }).helperSecretFor("someone-else");
+    }).helperSecretFor("someone-else"))!;
     for (const got of [
       await t.poll({ secret: "not-the-secret" }),
       await t.poll({ secret: other }),
@@ -222,12 +229,13 @@ describe("a result is checked every time", () => {
       ok: true,
       payload: INSTALLED,
     });
-    expect(t.broker.result({ ...genuine, mac: "00".repeat(32) }).ok).toBe(
-      false,
-    );
+    expect(
+      (await t.broker.result({ ...genuine, mac: "00".repeat(32) })).ok,
+    ).toBe(false);
     // The payload is what the mac covers: another one under the same mac is refused.
     expect(
-      t.broker.result({ ...genuine, payload: JSON.stringify(UPDATES) }).ok,
+      (await t.broker.result({ ...genuine, payload: JSON.stringify(UPDATES) }))
+        .ok,
     ).toBe(false);
     const stale = resultBody(t.secret, {
       actorId: t.actor,
@@ -236,7 +244,7 @@ describe("a result is checked every time", () => {
       ok: true,
       payload: INSTALLED,
     });
-    expect(t.broker.result(stale).ok).toBe(false);
+    expect((await t.broker.result(stale)).ok).toBe(false);
     const forged = resultBody("not-the-secret", {
       actorId: t.actor,
       operationId: op.operationId,
@@ -244,12 +252,12 @@ describe("a result is checked every time", () => {
       ok: true,
       payload: INSTALLED,
     });
-    expect(t.broker.result(forged).ok).toBe(false);
+    expect((await t.broker.result(forged)).ok).toBe(false);
     // None of those settled it: the genuine one still does.
-    expect(t.broker.result(genuine).ok).toBe(true);
+    expect((await t.broker.result(genuine)).ok).toBe(true);
     await expect(call).resolves.toBeDefined();
     // The same body again: the nonce and the operation are spent.
-    expect(t.broker.result(genuine).ok).toBe(false);
+    expect((await t.broker.result(genuine)).ok).toBe(false);
   });
 
   test("a result for an operation id already answered is refused, with a fresh nonce and mac", async () => {
@@ -279,27 +287,33 @@ describe("a result is checked every time", () => {
     expect(queued.pending).toBe(1);
     // Not leased yet: an id nobody was handed cannot be answered.
     expect(
-      t.broker.result(
-        resultBody(t.secret, {
-          actorId: t.actor,
-          operationId: "guess",
-          at: t.clock.at,
-          ok: true,
-          payload: INSTALLED,
-        }),
+      (
+        await t.broker.result(
+          resultBody(t.secret, {
+            actorId: t.actor,
+            operationId: "guess",
+            at: t.clock.at,
+            ok: true,
+            payload: INSTALLED,
+          }),
+        )
       ).ok,
     ).toBe(false);
     const op = await t.fetchOne();
-    const otherSecret = t.broker.helperSecretFor("another-person");
+    const otherSecret = (await t.broker.helperSecretFor(
+      "another-person",
+    )) as Buffer;
     expect(
-      t.broker.result(
-        resultBody(otherSecret, {
-          actorId: "another-person",
-          operationId: op.operationId,
-          at: t.clock.at,
-          ok: true,
-          payload: INSTALLED,
-        }),
+      (
+        await t.broker.result(
+          resultBody(otherSecret, {
+            actorId: "another-person",
+            operationId: op.operationId,
+            at: t.clock.at,
+            ok: true,
+            payload: INSTALLED,
+          }),
+        )
       ).ok,
     ).toBe(false);
   });
@@ -576,17 +590,18 @@ describe("the switch turned off while an operation runs", () => {
 });
 
 describe("the secret", () => {
-  test("it is derived per person from the deployment key, differs between people, and is not the key", () => {
+  test("it is derived per person from the deployment key, differs between people, and is not the key", async () => {
     const broker = createProgramsBroker({
       deploymentKey: KEY,
+      salt: saltOf,
       enabled: async () => true,
       sweepEveryMs: 0,
     });
-    const a = broker.helperSecretFor("a").toString("hex");
-    const b = broker.helperSecretFor("b").toString("hex");
+    const a = (await broker.helperSecretFor("a"))!.toString("hex");
+    const b = (await broker.helperSecretFor("b"))!.toString("hex");
     expect(a).not.toBe(b);
     expect(a).not.toContain(KEY);
-    expect(a).toBe(broker.helperSecretFor("a").toString("hex"));
+    expect(a).toBe((await broker.helperSecretFor("a"))!.toString("hex"));
   });
 
   test("nothing the broker returns about a person carries it", async () => {

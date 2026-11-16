@@ -53,7 +53,7 @@ import {
   type WireOperation,
 } from "./support/programs-helper";
 
-const KEY = "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=";
+const KEY = "b3JkaW5hcnktdGVzdC1rZXktbm90LXRoZS1leGFtcGxl";
 const database = createDatabase(testDatabaseUrl(), TEST_POOL);
 const audit = createAuditStore(database);
 const store = createApprovalStore(database);
@@ -66,13 +66,19 @@ const fullAccess = createFullAccess({
 const service = createApprovalService(store, undefined, undefined, {
   fullAccess,
 });
-const programsSwitch = createProgramsSwitch({ database, audit });
+const programsSwitch = createProgramsSwitch({
+  database,
+  audit,
+  deploymentKey: KEY,
+});
 const prefix = `prg-${randomUUID()}`;
 const created: string[] = [];
 
-const clock = { at: Date.now() };
+// Later than the broker's own start, which is the floor of what it accepts.
+const clock = { at: Date.now() + 60_000 };
 const broker = createProgramsBroker({
   deploymentKey: KEY,
+  salt: (actorId) => programsSwitch.saltOf(actorId),
   now: () => clock.at,
   enabled: (actorId) => programsSwitch.isOn(actorId),
   sweepEveryMs: 0,
@@ -162,7 +168,11 @@ async function callTool(
 
 /** The helper keeps polling, so a call can be queued. */
 const helperIsUp = (actorId: string) =>
-  broker.poll(pollBody(broker.helperSecretFor(actorId), actorId, clock.at));
+  broker
+    .helperSecretFor(actorId)
+    .then((secret) =>
+      broker.poll(pollBody(secret ?? "no-salt-yet", actorId, clock.at)),
+    );
 
 const cardsOf = (actorId: string) => store.list(actorId);
 
@@ -509,7 +519,7 @@ describe("the routes", () => {
     const actor = await person();
     await programsSwitch.set(actor, true);
     await helperIsUp(actor);
-    const secret = broker.helperSecretFor(actor);
+    const secret = (await broker.helperSecretFor(actor)) as Buffer;
     const running = broker.call({
       actorId: actor,
       botId: PROGRAMS_MEMBER,
@@ -523,14 +533,16 @@ describe("the routes", () => {
       : []) as unknown as WireOperation[];
     expect((await put(app(actor), false, {}, LOOPBACK_PEER)).status).toBe(200);
     expect(
-      broker.result(
-        resultBody(secret, {
-          actorId: actor,
-          operationId: (op as WireOperation).operationId,
-          at: clock.at,
-          ok: true,
-          payload: INSTALLED,
-        }),
+      (
+        await broker.result(
+          resultBody(secret, {
+            actorId: actor,
+            operationId: (op as WireOperation).operationId,
+            at: clock.at,
+            ok: true,
+            payload: INSTALLED,
+          }),
+        )
       ).ok,
     ).toBe(true);
     await expect(running).resolves.toMatchObject({ kind: "list_installed" });
@@ -545,6 +557,7 @@ describe("the routes", () => {
 
   test("the helper doors take no session: a poll and a result carry their own mac", async () => {
     const actor = await person();
+    await programsSwitch.set(actor, true);
     const routes = new Hono<{ Variables: AppVariables }>();
     routes.route(
       "/api/programs",
@@ -558,7 +571,7 @@ describe("the routes", () => {
         auditStore: audit,
       }),
     );
-    const secret = broker.helperSecretFor(actor);
+    const secret = (await broker.helperSecretFor(actor)) as Buffer;
     const good = await routes.request("/api/programs/helper/poll", {
       method: "POST",
       headers: { "content-type": "application/json" },

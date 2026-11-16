@@ -35,13 +35,17 @@ export const MAX_FIELD = 120;
 /** The most text a result's payload may hold. */
 export const MAX_PAYLOAD = 400_000;
 
-// biome-ignore lint/suspicious/noControlCharactersInRegex: control characters are what this refuses
-const CONTROL = /[\u0000-\u001f\u007f-\u009f\u2028\u2029]/;
+/**
+ * What no text from outside may carry: control characters, every format character (zero-width, bidirectional
+ * overrides and isolates, and the tag characters U+E0000 to U+E007F that can hide an instruction in plain
+ * sight), private use, surrogates on their own, and the two line separators.
+ */
+const UNSAFE = /[\p{Cc}\p{Cf}\p{Co}\p{Cs}\u2028\u2029\u{E0000}-\u{E007F}]/u;
 const text = z
   .string()
   .min(1)
   .max(200)
-  .refine((value) => !CONTROL.test(value), "no control characters");
+  .refine((value) => !UNSAFE.test(value), "no control or invisible characters");
 const source = z.enum(["winget", "msstore"]);
 
 /**
@@ -90,11 +94,16 @@ export type SignedOperation = {
 const hmac = (secret: Buffer, body: string) =>
   createHmac("sha256", secret).update(body).digest("hex");
 
-/** Equal for strings of any length, in time that does not say where they differ. */
+/**
+ * Whether `given` is the expected mac. Both sides are hashed first, so the comparison is of two equal-length
+ * digests whatever `given` holds: a mac of the wrong length, or of multibyte characters whose byte length is
+ * not their string length, is a plain "no" and never an exception.
+ */
 export function sameMac(given: unknown, expected: string): boolean {
-  if (typeof given !== "string" || given.length !== expected.length)
-    return false;
-  return timingSafeEqual(Buffer.from(given), Buffer.from(expected));
+  if (typeof given !== "string") return false;
+  const digest = (value: string) =>
+    createHash("sha256").update(value, "utf8").digest();
+  return timingSafeEqual(digest(given), digest(expected));
 }
 
 const line = (value: string | number | boolean | undefined) =>
@@ -214,14 +223,16 @@ export type ProgramsResult =
   | { kind: "list_installed"; items: InstalledProgram[]; truncated: boolean }
   | { kind: "list_updates"; items: UpdatableProgram[]; truncated: boolean };
 
-/** One text field, with control characters gone and cut to the limit. */
-export const clean = (value: string): string =>
-  value
-    // biome-ignore lint/suspicious/noControlCharactersInRegex: control characters are what this removes
-    .replace(/[\u0000-\u001f\u007f-\u009f\u2028\u2029]/g, " ")
-    .replace(/\s+/g, " ")
-    .trim()
-    .slice(0, MAX_FIELD);
+/** One text from the helper: unsafe and invisible characters gone, whitespace collapsed, cut to `max`. */
+export const clean = (value: string, max: number = MAX_FIELD): string =>
+  [
+    ...value
+      .replace(new RegExp(UNSAFE.source, "gu"), " ")
+      .replace(/\s+/g, " ")
+      .trim(),
+  ]
+    .slice(0, max)
+    .join("");
 
 function cleanRows<T extends Record<string, string>>(
   rows: T[],

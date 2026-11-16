@@ -15,13 +15,27 @@
  * `computers`), and the helper's two have no session at all: their credential is the mac.
  */
 import { Hono, type MiddlewareHandler } from "hono";
+import { bodyLimit } from "hono/body-limit";
 import { z } from "zod";
 import type { AuditStore } from "../audit";
 import type { AppVariables } from "../auth/guards";
-import type { PairingGate } from "../auth/install-secret";
 import { atTheComputer } from "../freeduet/at-the-computer";
 import type { ProgramsBroker } from "./broker";
-import type { ProgramsSwitch } from "./switch";
+import { type ProgramsSwitch, ProgramsUnavailableError } from "./switch";
+
+/** The pairing gate `atTheComputer` takes, named from it so this file does not import the secret's module. */
+type PairingGate = Parameters<typeof atTheComputer>[2];
+
+/**
+ * The most a helper's body may be, read before anything is parsed: above `MAX_PAYLOAD` of the result's
+ * payload and a little more for the rest. The two helper routes need no session, so nobody has to prove
+ * anything before the server reads what they send.
+ */
+export const HELPER_BODY_LIMIT = 512 * 1024;
+const tooBig = bodyLimit({
+  maxSize: HELPER_BODY_LIMIT,
+  onError: (context) => context.json({ error: "That was too large." }, 413),
+});
 
 export const NOT_AT_THE_COMPUTER =
   "Programs on this computer can only be switched on or off from this computer.";
@@ -39,7 +53,7 @@ export function createProgramsRoutes(options: {
   const { broker, requireUser } = options;
   const routes = new Hono<{ Variables: AppVariables }>();
 
-  routes.post("/helper/poll", async (context) => {
+  routes.post("/helper/poll", tooBig, async (context) => {
     const body = await context.req.json().catch(() => null);
     const outcome = await broker.poll(body);
     return outcome.ok
@@ -51,9 +65,9 @@ export function createProgramsRoutes(options: {
       : context.json({ error: outcome.reason }, 401);
   });
 
-  routes.post("/helper/result", async (context) => {
+  routes.post("/helper/result", tooBig, async (context) => {
     const body = await context.req.json().catch(() => null);
-    const outcome = broker.result(body);
+    const outcome = await broker.result(body);
     return outcome.ok
       ? context.json({ ok: true })
       : context.json({ error: outcome.reason }, 401);
@@ -88,7 +102,14 @@ export function createProgramsRoutes(options: {
         { error: "Send { enabled: true } or { enabled: false }." },
         400,
       );
-    const on = await options.switch.set(actor.id, parsed.data.enabled);
+    let on: boolean;
+    try {
+      on = await options.switch.set(actor.id, parsed.data.enabled);
+    } catch (error) {
+      if (error instanceof ProgramsUnavailableError)
+        return context.json({ error: error.message }, 409);
+      throw error;
+    }
     // Off: what is queued and not yet with the helper fails; what the helper has is let finish (Q7).
     if (!on) broker.switchedOff(actor.id);
     return context.json({ enabled: on });

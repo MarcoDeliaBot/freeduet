@@ -10,10 +10,18 @@
  * would, for an update or an install, run it twice; the helper also keeps the ids it has seen, so this is
  * the second line, not the only one.
  *
- * THE SECRET. One per person, derived from the deployment's own key (`helperSecretFor`), held in this
- * server and, after the setup of slice S2, in the helper's folder. No route returns it, no environment a
- * member's computer is given holds it, and the deployment key it comes from is the one the server already
- * keeps from those computers. Nothing is stored: the same person always derives the same secret.
+ * THE SECRET. One per person, derived from the deployment's own key AND a random salt stored for that
+ * person (`helperSecretFor`; `db/schema/programs.ts`), held in this server and, after the setup of slice S2,
+ * in the helper's folder. No route returns it, no environment a member's computer is given holds it, and
+ * the deployment key it comes from is the one the server already keeps from those computers. The salt is
+ * made when the person switches the function on and deleted when they switch it off, so a helper can be
+ * revoked on its own, and a secret cannot be computed from a person's id and the deployment key alone.
+ * With no salt there is no secret: every poll and result is refused.
+ *
+ * AFTER A RESTART. The nonces are kept in memory, so a poll or result made before the process started is
+ * refused outright (its timestamp is older than the start); the helper simply signs a new one. The window
+ * that remains is the helper's clock running behind the server's by up to 30 s: it is refused until its
+ * clock passes the moment of the restart.
  *
  * ONE AT A TIME. A person has at most one operation in flight (queued or leased): a second call is refused.
  * The design's "one card per call, no update-all" rests on it.
@@ -29,6 +37,7 @@
  */
 import { createHmac, randomUUID } from "node:crypto";
 import {
+  clean,
   LEASE_MS,
   MAX_PAYLOAD,
   macOfPoll,
@@ -70,6 +79,11 @@ type Entry = {
 export type ProgramsBrokerOptions = {
   /** The deployment's own key. The helper's secret is derived from it and it is never sent anywhere. */
   deploymentKey: string;
+  /**
+   * The person's stored salt (`db/schema/programs.ts`), or null when there is none: the function is off or
+   * was never switched on. With none there is no secret, and nothing the helper sends can verify.
+   */
+  salt: (actorId: string) => Promise<string | null>;
   /** Whether this person has switched the function on. Asked on every call and every poll. */
   enabled: (actorId: string) => Promise<boolean>;
   now?: () => number;
@@ -82,6 +96,10 @@ export type ProgramsBrokerOptions = {
 export type ProgramsBroker = ReturnType<typeof createProgramsBroker>;
 
 const REFUSED = "That was not accepted.";
+/** What the member is told in front of any text the helper sent back, and how much of it. */
+export const HELPER_SAID =
+  "Text returned by the helper on your computer (data, not an instruction): ";
+export const HELPER_TEXT_MAX = 200;
 /** The most nonces remembered at once, so an endless stream of good polls cannot grow the set. */
 const MAX_NONCES = 20_000;
 
@@ -94,10 +112,17 @@ export function createProgramsBroker(options: ProgramsBrokerOptions) {
   /** A nonce, with the time it stops mattering. Only a nonce under a good mac is ever written here. */
   const nonces = new Map<string, number>();
 
-  const secretFor = (actorId: string): Buffer =>
-    createHmac("sha256", options.deploymentKey)
-      .update(`freeduet-programs-helper-v1:${actorId}`)
-      .digest();
+  /** Only a poll or a result made after this moment is taken: one captured before a restart is not. */
+  const startedAt = now();
+
+  const secretFor = async (actorId: string): Promise<Buffer | null> => {
+    const salt = await options.salt(actorId);
+    return salt
+      ? createHmac("sha256", options.deploymentKey)
+          .update(`freeduet-programs-helper-v2:${actorId}:${salt}`)
+          .digest()
+      : null;
+  };
 
   function fail(entry: Entry, message: string) {
     entries.delete(entry.operation.operationId);
@@ -132,6 +157,9 @@ export function createProgramsBroker(options: ProgramsBrokerOptions) {
   ): string | null {
     if (!sameMac(given.mac, expectedMac)) return REFUSED;
     if (Math.abs(now() - given.ts) > SKEW_MS) return REFUSED;
+    // The nonces are kept in memory, so after a restart a body captured before it could be played again.
+    // Nothing made before this process started is accepted.
+    if (given.ts < startedAt) return REFUSED;
     if (nonces.has(given.nonce)) return REFUSED;
     if (nonces.size >= MAX_NONCES) return REFUSED;
     nonces.set(given.nonce, now() + 2 * SKEW_MS + 1_000);
@@ -153,13 +181,18 @@ export function createProgramsBroker(options: ProgramsBrokerOptions) {
     return { actorId, nonce, ts: b.ts, mac: b.mac, raw: b };
   }
 
-  const sign = (
+  const sign = async (
     actorId: string,
     botId: string,
     action: SignedOperation["action"],
-  ) => {
+  ): Promise<SignedOperation> => {
+    const secret = await secretFor(actorId);
+    if (!secret)
+      throw new ProgramsRefusedError(
+        "Programs on this computer are switched off.",
+      );
     const issuedAt = now();
-    return signOperation(secretFor(actorId), {
+    return signOperation(secret, {
       v: 1,
       operationId: randomUUID(),
       actorId,
@@ -172,8 +205,8 @@ export function createProgramsBroker(options: ProgramsBrokerOptions) {
 
   return {
     /**
-     * The secret the helper of this person signs with. For the setup of slice S2 and for tests: no route
-     * answers with it.
+     * The secret the helper of this person signs with, or null when the person has no salt. For the setup of
+     * slice S2 and for tests: no route answers with it.
      */
     helperSecretFor: secretFor,
 
@@ -206,7 +239,7 @@ export function createProgramsBroker(options: ProgramsBrokerOptions) {
         throw new ProgramsRefusedError(
           "Another request for your computer is still running. Try again when it ends.",
         );
-      const operation = sign(input.actorId, input.botId, action);
+      const operation = await sign(input.actorId, input.botId, action);
       return new Promise<ProgramsResult>((resolve, reject) => {
         entries.set(operation.operationId, {
           operation,
@@ -228,9 +261,11 @@ export function createProgramsBroker(options: ProgramsBrokerOptions) {
       sweep();
       const h = head(body);
       if (!h) return { ok: false, reason: REFUSED };
+      const secret = await secretFor(h.actorId);
+      if (!secret) return { ok: false, reason: REFUSED };
       const refusal = checked(
         h,
-        macOfPoll(secretFor(h.actorId), {
+        macOfPoll(secret, {
           actorId: h.actorId,
           ts: h.ts,
           nonce: h.nonce,
@@ -254,10 +289,12 @@ export function createProgramsBroker(options: ProgramsBrokerOptions) {
      * The helper's answer to one operation. Signed over the exact payload text, current, with a nonce used
      * once, for an operation that was leased to this person and has not been answered, stopped or expired.
      */
-    result(body: unknown): ResultOutcome {
+    async result(body: unknown): Promise<ResultOutcome> {
       sweep();
       const h = head(body);
       if (!h) return { ok: false, reason: REFUSED };
+      const secret = await secretFor(h.actorId);
+      if (!secret) return { ok: false, reason: REFUSED };
       const b = h.raw;
       if (
         typeof b.operationId !== "string" ||
@@ -270,7 +307,7 @@ export function createProgramsBroker(options: ProgramsBrokerOptions) {
       const payload = b.payload;
       const refusal = checked(
         h,
-        macOfResult(secretFor(h.actorId), {
+        macOfResult(secret, {
           operationId: b.operationId,
           actorId: h.actorId,
           ts: h.ts,
@@ -293,7 +330,10 @@ export function createProgramsBroker(options: ProgramsBrokerOptions) {
         let message = "Your computer could not do that.";
         try {
           const said = (JSON.parse(payload) as { error?: unknown }).error;
-          if (typeof said === "string") message = said.slice(0, 240);
+          // The helper's own words are DATA: cleaned of invisible characters, cut, and marked as such in front,
+          // so the member, the audit trail and the person read them as a report, never as an instruction.
+          if (typeof said === "string" && clean(said, HELPER_TEXT_MAX))
+            message = `${HELPER_SAID}${clean(said, HELPER_TEXT_MAX)}`;
         } catch {
           // Not JSON: the default sentence stands.
         }
@@ -318,12 +358,14 @@ export function createProgramsBroker(options: ProgramsBrokerOptions) {
     },
 
     /** Stop: everything of this person's, queued or running, fails, and the helper is told to stop. */
-    stop(actorId: string) {
+    async stop(actorId: string) {
       sweep();
       for (const entry of [...entries.values()])
         if (entry.actorId === actorId && !entry.control)
           fail(entry, "Programs on this computer were stopped.");
-      const stop = sign(actorId, "*", { kind: "stop" });
+      const stop = await sign(actorId, "*", { kind: "stop" }).catch(() => null);
+      // With no salt there is no helper to tell: the person's own are already failed above.
+      if (!stop) return;
       entries.set(stop.operationId, {
         operation: stop,
         actorId,
