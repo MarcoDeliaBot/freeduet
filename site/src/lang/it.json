@@ -143,7 +143,7 @@
  "q5": "Dove sono i miei dati?",
  "a5": "FreeDuet gira sul tuo computer e vi tiene le conversazioni in un archivio. Il tuo accesso a Claude resta in un volume Docker che legge solo il programma Claude Code. Per pensare, gli assistenti inviano la tua richiesta al servizio AI a cui hai fatto l'accesso, come farebbe la sua app.",
  "q6": "Posso usarlo dal telefono?",
- "a6": "Non ancora una versione per telefono. Oggi FreeDuet si apre nel browser del tuo computer. Dalla v0.2.2 il browser di un telefono si può abbinare dal computer con un codice monouso, mostrato come link o come codice QR, ma l'abbinamento di un telefono non è ancora stato provato sul campo. La versione per telefono, dove ricevi anche le richieste di approvazione, e l'accesso da remoto sono in corso.",
+ "a6": "Non ancora una versione per telefono. Oggi FreeDuet si apre nel browser del tuo computer. Dalla v0.2.2 il browser di un telefono si può abbinare dal computer con un codice monouso, mostrato come link o come codice QR, e l'abbinamento di un telefono è stato provato dal vivo su un'installazione il 16 novembre 2026. La versione per telefono, dove ricevi anche le richieste di approvazione, e l'accesso da remoto sono in corso.",
  "q7": "Posso aggiungere un membro tutto mio?",
  "a7": "Sì. Chiedi a Leo, che costruisce nuovi assistenti, di progettarne uno per il lavoro che ti serve, oppure scrivine tu la definizione. Cambiare il nome dei membri e il loro modo di parlare è costruito, ma non ancora provato sul campo. <a href=\"https://github.com/MarcoDeliaBot/freeduet/blob/main/docs/TEAM.md\">Come sono definiti i membri</a>.",
  "q8": "Dove trovo aiuto?",

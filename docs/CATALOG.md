@@ -10,7 +10,7 @@ FreeDuet has three layers of help.
 
 **Rule: reuse before building.** A new member is written only when no starter member, pack member or ready-made profile already does the job. Leo checks this catalogue, the person's own skills and ready-made libraries such as [The Agency](https://github.com/msitarzewski/agency-agents) (MIT) first, adapts what exists, adds FreeDuet's shared rules and tests, and credits the source.
 
-Every pack member is written by Leo, with its tests, and checked by Vera before it joins. Packs are planned for M2 onwards ([PROJECT.md](PROJECT.md), F20); none is in v0.2 or v0.2.1.
+Every pack member is written by Leo, with its tests, and checked by Vera before it joins. Packs are planned for M2 onwards ([PROJECT.md](PROJECT.md), F20); none is in v0.2, v0.2.1 or v0.2.2.
 
 ## Packs
 

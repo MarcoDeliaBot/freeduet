@@ -141,7 +141,7 @@
  "q5": "Gdzie są moje dane?",
  "a5": "FreeDuet działa na Twoim komputerze i trzyma tam swoje rozmowy w bazie danych. Twoje logowanie do Claude zostaje w wolumenie Dockera, który czyta tylko program Claude Code. Żeby myśleć, asystenci wysyłają Twoją prośbę do usługi AI, do której się zalogowałeś, tak jak zrobiłaby to jej własna aplikacja.",
  "q6": "Czy mogę używać go na telefonie?",
- "a6": "Jeszcze nie ma wersji na telefon. Dziś FreeDuet otwiera się w przeglądarce na Twoim komputerze. Od wersji v0.2.2 przeglądarkę w telefonie można sparować z komputera jednorazowym kodem, pokazanym jako link lub kod QR, ale parowanie telefonu nie zostało jeszcze sprawdzone w praktyce. Wersja na telefon, na której dostajesz też prośby o zatwierdzenie, oraz zdalny dostęp są w toku.",
+ "a6": "Jeszcze nie ma wersji na telefon. Dziś FreeDuet otwiera się w przeglądarce na Twoim komputerze. Od wersji v0.2.2 przeglądarkę w telefonie można sparować z komputera jednorazowym kodem, pokazanym jako link lub kod QR, a parowanie telefonu zostało uruchomione na żywo na jednej instalacji 16 listopada 2026. Wersja na telefon, na której dostajesz też prośby o zatwierdzenie, oraz zdalny dostęp są w toku.",
  "q7": "Czy mogę dodać własnego członka zespołu?",
  "a7": "Tak. Poproś Leo, który buduje nowych asystentów, żeby zaprojektował jednego do zadania, którego potrzebujesz, albo napisz jego definicję sam. Zmiana imion członków i sposobu, w jaki mówią, jest zbudowana, ale jeszcze nie sprawdzona w praktyce. <a href=\"https://github.com/MarcoDeliaBot/freeduet/blob/main/docs/TEAM.md\">Jak definiuje się członków zespołu</a>.",
  "q8": "Gdzie znajdę pomoc?",

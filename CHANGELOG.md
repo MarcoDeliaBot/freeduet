@@ -14,6 +14,14 @@ Each version says what was and was not run live. "Run live" means run on a real 
 
 - Installer: an opt-in systemd service for FreeDuet inside WSL, with `install.sh --service` and `install.ps1 -Service` (`install-service.sh`, #285). Tested with fake commands only; never run under real systemd or on a real Windows machine.
 
+### What was run live
+
+Run live on one real installation (the maintainer's), 16 November 2026. This supersedes the note under [0.2.2] that pairing a phone with the code had not been tried yet:
+
+- pairing a phone with the one-time code, shown as a QR code under Settings ("Pair a phone or another browser"): the installation's list holds one `computer` pairing and one `device` pairing, neither revoked. This is the first live run of pairing a phone (#283, D49).
+
+Not checked yet: revoking a pairing, the two-minute expiry of the code, a second phone, and an approval allowed from the paired phone.
+
 ## [0.2.2] - 2026-11-16
 
 Commit `bdd8937`, tag `v0.2.2`, published as a GitHub release on 16 November 2026.

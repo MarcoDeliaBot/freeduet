@@ -120,7 +120,7 @@
    "name": "휴대폰에서도 쓸 수 있나요?",
    "acceptedAnswer": {
     "@type": "Answer",
-    "text": "아직 휴대폰 버전은 없습니다. 지금은 내 컴퓨터의 브라우저에서 FreeDuet을 엽니다. v0.2.2부터는 컴퓨터에서 링크나 QR 코드로 보여 주는 일회용 코드로 휴대폰 브라우저를 페어링할 수 있지만, 휴대폰 페어링은 아직 실제 환경에서 실행해 보지 않았습니다. 승인 요청도 받을 수 있는 휴대폰 버전과 원격 접속은 개발 중입니다."
+    "text": "아직 휴대폰 버전은 없습니다. 지금은 내 컴퓨터의 브라우저에서 FreeDuet을 엽니다. v0.2.2부터는 컴퓨터에서 링크나 QR 코드로 보여 주는 일회용 코드로 휴대폰 브라우저를 페어링할 수 있고, 휴대폰 페어링은 2026년 11월 16일 한 설치에서 실제 실행되었습니다. 승인 요청도 받을 수 있는 휴대폰 버전과 원격 접속은 개발 중입니다."
    }
   },
   {
@@ -1837,7 +1837,7 @@ cd openbot &amp;&amp; docker compose exec -it agent-freeduet claude
       <details class="rv"><summary data-i="q3">Windows, Mac, Linux에서 되나요?</summary><p data-i="a3">개발자는 Windows에서 WSL2와 Docker로 쓰고 있고, 자동 검사는 Linux에서 실행을 확인합니다. Mac에서는 테스트하지 않았으므로 동작을 약속드릴 수 없습니다. FreeDuet은 초기 버전이며, 최신 공개 버전은 0.2.2(2026년 11월 16일)입니다. 개발자 한 명이 만들어 직접 쓰고 있습니다.</p></details>
       <details class="rv"><summary data-i="q4">비서가 묻지 않고 할 수 있는 일은 무엇인가요?</summary><p data-i="a4">자료를 찾아보고, 읽고, 초안과 보고서를 준비할 수 있습니다. 기본적으로 다섯 가지 버튼은 승인을 기다립니다. 직접 입력한 주소로 가는 새 이메일만 예외입니다. 직접 입력한 말로 설정한 상시 메일 규칙은 새 메일에 스스로 적용됩니다. 라벨 붙이기, 보관, 읽음 표시, 스팸 폴더나 휴지통으로 옮기기를 할 수 있으며, 전달, 답장, 발송, 영구 삭제는 하지 않습니다. 멤버별 Full access는 내 대화에서 승인 대기를 풀어 줍니다. 이는 만들어졌지만 실제 환경에서는 아직 확인하지 않았습니다. 비밀번호와 보안 설정은 여전히 나에게 넘어옵니다. 비서도 실수할 수 있으니, 승인하기 전에 준비된 내용을 읽어 보세요.</p></details>
       <details class="rv"><summary data-i="q5">내 데이터는 어디에 있나요?</summary><p data-i="a5">FreeDuet은 내 컴퓨터에서 실행되고, 대화 내용도 그곳의 데이터베이스에 저장합니다. Claude 로그인 정보는 Claude Code 프로그램만 읽을 수 있는 Docker 볼륨에 남습니다. 비서들이 생각할 때는 내가 로그인한 AI 서비스에 요청을 보내는데, 그 서비스의 자체 앱을 쓸 때와 같은 방식이에요.</p></details>
-      <details class="rv"><summary data-i="q6">휴대폰에서도 쓸 수 있나요?</summary><p data-i="a6">아직 휴대폰 버전은 없습니다. 지금은 내 컴퓨터의 브라우저에서 FreeDuet을 엽니다. v0.2.2부터는 컴퓨터에서 링크나 QR 코드로 보여 주는 일회용 코드로 휴대폰 브라우저를 페어링할 수 있지만, 휴대폰 페어링은 아직 실제 환경에서 실행해 보지 않았습니다. 승인 요청도 받을 수 있는 휴대폰 버전과 원격 접속은 개발 중입니다.</p></details>
+      <details class="rv"><summary data-i="q6">휴대폰에서도 쓸 수 있나요?</summary><p data-i="a6">아직 휴대폰 버전은 없습니다. 지금은 내 컴퓨터의 브라우저에서 FreeDuet을 엽니다. v0.2.2부터는 컴퓨터에서 링크나 QR 코드로 보여 주는 일회용 코드로 휴대폰 브라우저를 페어링할 수 있고, 휴대폰 페어링은 2026년 11월 16일 한 설치에서 실제 실행되었습니다. 승인 요청도 받을 수 있는 휴대폰 버전과 원격 접속은 개발 중입니다.</p></details>
       <details class="rv"><summary data-i="q7">나만의 팀 멤버를 추가할 수 있나요?</summary><p data-i="a7">네. 새 비서를 만드는 Leo에게 필요한 일에 맞는 멤버를 설계해 달라고 하거나, 정의를 직접 작성할 수 있습니다. 멤버의 이름을 바꾸는 일과 말투를 바꾸는 일은 만들어졌지만 실제 환경에서는 아직 확인하지 않았습니다. <a href="https://github.com/MarcoDeliaBot/freeduet/blob/main/docs/TEAM.md">멤버는 어떻게 정의되나요</a>.</p></details>
       <details class="rv"><summary data-i="q8">도움은 어디서 받나요?</summary><p data-i="a8">GitHub에 이슈를 열어 주세요. 질문, 오류, 수정 제안, 또는 사용 중이라는 소식을 알릴 수 있는 <a href="https://github.com/MarcoDeliaBot/freeduet/issues/new/choose">짧은 양식</a>이 있습니다. 영어나 이탈리아어로 쓰시면 됩니다.</p></details>
     </div>
