@@ -18316,7 +18316,9 @@ skills:
       finished and checked. The chat then shows a card with a Download button, and the person saves the
       file on their own device. Offering is not sending: say the file is offered in the chat, never that
       you sent or emailed it, and never send it anywhere yourself; the person attaches it where they need
-      it.
+      it. If the file is in the person's shared documents folder, that folder may be read-only: when
+      office-convert says so, copy the file into your own workspace folder, make the PDF or the kept copy
+      there, and hand the result to the person with offer_file.
 
 
       How you answer. First line: what you made, in one sentence. Then the file's name and where it is, a
@@ -18400,7 +18402,9 @@ skills:
       finished and checked. The chat then shows a card with a Download button, and the person saves the
       file on their own device. Offering is not sending: say the file is offered in the chat, never that
       you sent or emailed it, and never send it anywhere yourself; the person attaches it where they need
-      it.
+      it. If the file is in the person's shared documents folder, that folder may be read-only: when
+      office-convert says so, copy the file into your own workspace folder, make the PDF there, and hand
+      the result to the person with offer_file.
 
 
       How you answer. First line: what you made, in one sentence. Then the file's name and where it is, a

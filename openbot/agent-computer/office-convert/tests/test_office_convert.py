@@ -1066,3 +1066,198 @@ def test_the_refusal_suggests_replace_only_where_it_can_work(work, stub, needs_x
     code, out, _ = run("pdf", "--replace", f)
     assert code == 3 and "the person already had it" in out["reason"] and "Use --new-name" in out["reason"]
     assert not any(".office-convert-probe" in p.name for p in work.iterdir())
+
+
+# ---- a read-only folder is said plainly, before any work (review of PR #320) ------------------------------------
+
+READ_ONLY_ERRNOS = (errno.EROFS, errno.EACCES, errno.EPERM)
+RO_MOUNT = 'mount --make-rprivate / && mount --bind "$1" "$1" && mount -o remount,bind,ro "$1" && shift && exec "$@"'
+PROBE_IN_FOLDER = (
+    "import errno, os, sys\n"
+    "path = os.path.join(sys.argv[1], 'probe')\n"
+    "try:\n"
+    "    os.close(os.open(path, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600))\n"
+    "except OSError as error:\n"
+    "    sys.exit(0 if error.errno == errno.EROFS else 1)\n"
+    "os.unlink(path)\n"
+    "sys.exit(1)\n"
+)
+
+
+def refuse_creation_in(monkeypatch, folder, err):
+    """Every creation of a file in `folder` fails with `err`, as on a read-only or unwritable folder. Root ignores the
+    permission bits, so the error is raised by the open call that would create the file, made relative to the folder."""
+    real_open = os.open
+    target = os.stat(folder)
+
+    def refusing(path, flags, mode=0o777, *, dir_fd=None):
+        if dir_fd is not None and flags & os.O_CREAT:
+            here = os.fstat(dir_fd)
+            if (here.st_dev, here.st_ino) == (target.st_dev, target.st_ino):
+                raise OSError(err, os.strerror(err))
+        if dir_fd is None:
+            return real_open(path, flags, mode)
+        return real_open(path, flags, mode, dir_fd=dir_fd)
+
+    monkeypatch.setattr(os, "open", refusing)
+
+
+def read_only_mount_here(guard):
+    """True when a read-only bind mount of `guard` can be made in a new user and mount namespace without privilege, and a
+    write in it fails with EROFS. Some systems refuse unprivileged namespaces: the real test is then skipped."""
+    if shutil.which("unshare") is None:
+        return False
+    done = subprocess.run(
+        ["unshare", "-Urm", "sh", "-c", RO_MOUNT, "sh", str(guard), sys.executable, "-c", PROBE_IN_FOLDER, str(guard)],
+        capture_output=True, timeout=60,
+    )
+    return done.returncode == 0
+
+
+def run_read_only(folder, *args):
+    """The tool, run in the namespace where `folder` is a read-only bind mount (see read_only_mount_here)."""
+    done = subprocess.run(
+        ["unshare", "-Urm", "sh", "-c", RO_MOUNT, "sh", str(folder), sys.executable, "-I", str(TOOL), *map(str, args)],
+        capture_output=True, text=True, timeout=120,
+    )
+    try:
+        out = json.loads(done.stdout) if done.stdout.strip().startswith("{") else done.stdout
+    except ValueError:
+        out = done.stdout
+    return done.returncode, out, done.stderr
+
+
+@pytest.mark.parametrize("err", READ_ONLY_ERRNOS)
+@pytest.mark.parametrize("mode", ["pdf", "recalc-keep"])
+def test_a_read_only_folder_is_refused_at_once_before_anything_is_copied_or_run(work, stub, monkeypatch, capsys, err, mode):
+    if mode == "pdf":
+        source, argv = zipped(work / "a.docx", docx_parts()), ["pdf"]
+    else:
+        source, argv = zipped(work / "w.xlsx", xlsx_parts()), ["recalc", "--keep"]
+    before = sorted(p.name for p in work.iterdir())
+    refuse_creation_in(monkeypatch, work, err)
+    monkeypatch.setattr(oc, "copy_once", lambda *a, **k: pytest.fail("the source was copied"))
+    monkeypatch.setattr(oc, "inspect_first", lambda *a, **k: pytest.fail("the inspector ran"))
+    code, out = main_json(capsys, *argv, source)
+    assert code == 3 and out["refused"] is True
+    assert "read-only for this computer" in out["reason"] and "nothing was written" in out["reason"]
+    assert "offer_file" in out["reason"] and "workspace" in out["reason"]
+    assert stub.calls() == [] and sorted(p.name for p in work.iterdir()) == before
+
+
+def test_another_failure_to_make_a_file_here_is_an_error_not_a_refusal(work, stub, monkeypatch, capsys):
+    """A folder that is full or fails in another way is not called read-only: exit 2, and nothing is written."""
+    f = zipped(work / "a.docx", docx_parts())
+    refuse_creation_in(monkeypatch, work, errno.ENOSPC)
+    code, out = main_json(capsys, "pdf", f)
+    assert code == 2 and out["refused"] is False
+    assert "Cannot write in this folder" in out["reason"] and "Nothing was written" in out["reason"]
+    assert "read-only" not in out["reason"]
+    assert stub.calls() == [] and sorted(p.name for p in work.iterdir()) == ["a.docx"]
+
+
+def test_a_read_only_folder_still_lets_recalc_read_the_values_without_keep(work, stub, monkeypatch, capsys):
+    """A guard of unchanged behaviour: without --keep nothing is written next to the source, so it works there."""
+    f = zipped(work / "w.xlsx", xlsx_parts())
+    refuse_creation_in(monkeypatch, work, errno.EROFS)
+    code, out = main_json(capsys, "recalc", f)
+    assert code == 0 and out["ok"] is True and out["formula_cells"][0]["value"] == 2
+    assert "output" not in out and sorted(p.name for p in work.iterdir()) == ["w.xlsx"]
+    assert len(stub.calls()) == 1
+
+
+@pytest.mark.parametrize("err", READ_ONLY_ERRNOS)
+def test_replace_in_a_read_only_folder_says_read_only_and_never_that_the_marks_are_not_kept(work, stub, monkeypatch, capsys, err):
+    f = zipped(work / "a.docx", docx_parts())
+    (work / "a.pdf").write_bytes(b"%PDF-1.4 theirs")
+    refuse_creation_in(monkeypatch, work, err)
+    code, out = main_json(capsys, "pdf", "--replace", f)
+    assert code == 3 and "read-only for this computer" in out["reason"]
+    assert "does not keep" not in out["reason"] and "marks" not in out["reason"]
+    assert (work / "a.pdf").read_bytes() == b"%PDF-1.4 theirs" and stub.calls() == []
+
+
+@pytest.mark.parametrize("err", READ_ONLY_ERRNOS)
+def test_refuse_existing_for_a_replace_names_the_read_only_folder_when_no_probe_can_be_made(work, monkeypatch, err):
+    (work / "a.pdf").write_bytes(b"theirs")
+    state = os.stat(work / "a.pdf", follow_symlinks=False)
+    refuse_creation_in(monkeypatch, work, err)
+    dirfd = os.open(work, os.O_RDONLY | os.O_DIRECTORY)
+    try:
+        with pytest.raises(oc.Stop) as raised:
+            oc.refuse_existing(dirfd, "a.pdf", state, True)
+    finally:
+        os.close(dirfd)
+    assert raised.value.code == 3
+    assert "read-only for this computer" in str(raised.value) and "marks" not in str(raised.value)
+
+
+@pytest.mark.parametrize("err", READ_ONLY_ERRNOS)
+def test_no_probe_in_a_folder_is_not_a_folder_that_keeps_no_marks(work, monkeypatch, err):
+    """Only a probe that was made and refused its mark says the folder keeps no marks. Where no probe can be made the
+    call raises, so nothing reads the refusal as a missing mark."""
+    refuse_creation_in(monkeypatch, work, err)
+    dirfd = os.open(work, os.O_RDONLY | os.O_DIRECTORY)
+    try:
+        with pytest.raises(OSError) as raised:
+            oc.folder_keeps_marks(dirfd)
+    finally:
+        os.close(dirfd)
+    assert raised.value.errno == err
+
+
+def test_a_probe_the_filesystem_will_not_mark_is_the_one_case_that_says_no_marks(work, monkeypatch):
+    """A guard of unchanged behaviour: the probe is made and removed, the mark is refused, and the answer is False."""
+
+    def unsupported(*args, **kwargs):
+        raise OSError(errno.ENOTSUP, "Operation not supported")
+
+    monkeypatch.setattr(oc.os, "setxattr", unsupported)
+    dirfd = os.open(work, os.O_RDONLY | os.O_DIRECTORY)
+    try:
+        assert oc.folder_keeps_marks(dirfd) is False
+    finally:
+        os.close(dirfd)
+    assert list(work.iterdir()) == []
+
+
+def test_a_writable_folder_keeps_nothing_from_the_probe(work, stub):
+    """A guard of unchanged behaviour: the probe is removed at once, so only the source and the result are there."""
+    f = zipped(work / "a.docx", docx_parts())
+    assert run("pdf", f)[0] == 0
+    assert sorted(p.name for p in work.iterdir()) == ["a.docx", "a.pdf"]
+
+
+@pytest.mark.parametrize("err", READ_ONLY_ERRNOS)
+def test_a_folder_that_turns_read_only_after_the_check_is_still_said_plainly(work, stub, monkeypatch, capsys, err):
+    f = zipped(work / "a.docx", docx_parts())
+    real = oc.run_soffice
+
+    def turning(*args, **kwargs):
+        real(*args, **kwargs)
+        refuse_creation_in(monkeypatch, work, err)  # after LibreOffice ran, before the result is created
+
+    monkeypatch.setattr(oc, "run_soffice", turning)
+    code, out = main_json(capsys, "pdf", f)
+    assert code == 3 and "read-only for this computer" in out["reason"] and "nothing was written" in out["reason"]
+    assert sorted(p.name for p in work.iterdir()) == ["a.docx"]
+
+
+def test_a_real_read_only_mount_is_refused_at_once_and_a_plain_recalculation_still_reads(work, stub):
+    guard = work / "guard"
+    guard.mkdir()
+    if not read_only_mount_here(guard):
+        pytest.skip("no read-only bind mount without privilege here (unshare -Urm)")
+    shared = work / "shared"
+    shared.mkdir()
+    zipped(shared / "a.docx", docx_parts())
+    zipped(shared / "w.xlsx", xlsx_parts())
+    code, out, _ = run_read_only(shared, "pdf", shared / "a.docx")
+    assert code == 3 and out["refused"] is True and "read-only for this computer" in out["reason"]
+    code, out, _ = run_read_only(shared, "recalc", "--keep", shared / "w.xlsx")
+    assert code == 3 and "read-only for this computer" in out["reason"]
+    assert stub.calls() == []
+    code, out, _ = run_read_only(shared, "recalc", shared / "w.xlsx")
+    assert code == 0 and out["formula_cells"][0]["value"] == 2 and "output" not in out
+    assert sorted(p.name for p in shared.iterdir()) == ["a.docx", "w.xlsx"]
+    assert len(stub.calls()) == 1
