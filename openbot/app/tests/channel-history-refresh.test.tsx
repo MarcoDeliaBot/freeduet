@@ -551,7 +551,7 @@ test("a same-tab activity echo does not append a lagging durable partial beside 
   if (!selfActivity) throw new Error("Missing self-reported Bot activity");
   history = async () => stored([initial, partialEcho]);
   await announce(1, channel, selfActivity);
-  expect(historyReads).toHaveLength(1);
+  expect(historyReads).toHaveLength(2); // the mount's read and the read a send makes first (D69)
 
   expect(view.getByText(fullReply.content)).toBeTruthy();
   expect(view.queryByText(partialEcho.content)).toBeNull();
@@ -615,7 +615,7 @@ test("a same-timestamp different activity after a self echo still refreshes dura
   if (!selfActivity) throw new Error("Missing self-reported Bot activity");
 
   await announce(1, channel, selfActivity);
-  expect(historyReads).toHaveLength(1);
+  expect(historyReads).toHaveLength(2); // the mount's read and the read a send makes first (D69)
   history = async () => stored([initial, relayed]);
   await announce(1, channel, {
     ...selfActivity,
@@ -624,7 +624,7 @@ test("a same-timestamp different activity after a self echo still refreshes dura
   });
 
   await view.findByText(relayed.content);
-  expect(historyReads).toHaveLength(2);
+  expect(historyReads).toHaveLength(3);
   expect(currentAgent().messages.map((message) => message.id)).toContain(
     relayed.id,
   );
@@ -694,7 +694,7 @@ test.each([
     history = async () => stored([initial, relayed]);
     await announce(1, channel, { ...selfActivity, ...override });
     await view.findByText(relayed.content);
-    expect(historyReads).toHaveLength(2);
+    expect(historyReads).toHaveLength(3);
     expect(currentAgent().messages.map((message) => message.id)).toContain(
       relayed.id,
     );
@@ -1282,3 +1282,31 @@ test.each(["mount", "refresh"])(
     expect(currentAgent().messages).toEqual([initial, local, fresh]);
   },
 );
+
+test("a send puts a stored message the screen lacks before the typed message, which stays the last user message (D69)", async () => {
+  const relayed = {
+    id: "relay-answer",
+    role: "assistant",
+    content: "Otto moved 5 messages to Spam.",
+  } satisfies Message;
+  const view = mounting(async () => stored([initial]), [initial]);
+  await view.findByText(initial.content);
+  // The server stored a turn nobody here streamed (the relay of a hand-off's answer).
+  history = async () => stored([initial, relayed]);
+
+  const user = userEvent.setup({ document: view.container.ownerDocument });
+  await user.type(
+    view.getByRole("textbox", { name: "Message" }),
+    "and the rest?",
+  );
+  await user.click(view.getByRole("button", { name: "Send message" }));
+  await waitFor(() => expect(runRequests).toHaveLength(1));
+
+  const sent = runRequests[0]?.input.messages ?? [];
+  const ids = sent.map((message) => message.id);
+  const typed = sent.filter((message) => message.role === "user").at(-1);
+  expect(typed?.content).toBe("and the rest?");
+  expect(ids).toContain(relayed.id);
+  expect(ids.indexOf(relayed.id)).toBeLessThan(ids.indexOf(typed?.id ?? ""));
+  expect(sent.at(-1)?.id).toBe(typed?.id);
+});

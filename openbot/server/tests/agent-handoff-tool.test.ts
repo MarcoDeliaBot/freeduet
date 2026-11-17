@@ -103,7 +103,7 @@ describe("the handoff tool", () => {
   });
 
   /* D47: a hand-off waiting on a card returns nothing, and Iris told the person a tool was missing. */
-  test("tells the Bot that a colleague who has not answered may be waiting on a card, and that no tool is missing", async () => {
+  test("tells the Bot that no card may be named as waiting until one is shown, and that no tool is missing", async () => {
     const tool = handoffTool({
       desk: deskReturning(ALLOWED),
       from: FROM,
@@ -114,7 +114,8 @@ describe("the handoff tool", () => {
 
     const said = await tool?.execute({ bot: "Researcher", task: "find it" });
 
-    expect(said).toContain("waiting for the person's yes on a card");
+    expect(said).toContain("never say that a card is waiting before then");
+    expect(said).not.toContain("may be waiting for the person's yes");
     expect(said).toContain("never that a tool is missing");
   });
 
