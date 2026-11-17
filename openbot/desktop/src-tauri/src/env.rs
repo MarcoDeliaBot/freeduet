@@ -576,7 +576,8 @@ pub fn compose(
     // FreeDuet (D65): the server refuses to start when FREEDUET_INTELLIGENCE is missing, and the
     // desktop app has never written it. It passes the three settings below on every start (the app
     // refuses to start without an Intelligence key and its screen says conversations are kept by the
-    // outside service), so `on` keeps exactly today's behaviour. That this SHOULD be the desktop's
+    // outside service), so `on` keeps exactly today's behaviour. `write` puts it in the file only when
+    // the file has no value for it (DEFAULT_ONLY), so a hand-written `off` is never overwritten. That this SHOULD be the desktop's
     // default is the maintainer's open decision (docs/design/intelligence-switch-missing.md).
     env.insert("FREEDUET_INTELLIGENCE".into(), "on".into());
 
@@ -979,6 +980,11 @@ fn usable(key: &str, value: &str) -> bool {
     !value.is_empty() && !PUBLISHED.contains(&value)
 }
 
+/// Written only when the file holds no value for the key (see `write`). The Intelligence switch
+/// (D65): the desktop passes the three Intelligence settings, so it says `on`, but it never
+/// overwrites a choice somebody already made in the file.
+const DEFAULT_ONLY: [&str; 1] = ["FREEDUET_INTELLIGENCE"];
+
 fn carried(existing: &str) -> BTreeMap<String, String> {
     let mut found = BTreeMap::new();
     for line in existing.lines() {
@@ -1151,6 +1157,21 @@ pub fn write(
         }
     };
     let carried = carried(&existing);
+    // D65: the keys this writes only when the file has no value for them. A value the person (or a
+    // typo) put there is kept as it is, so `off` stays `off` and a misspelling reaches the server,
+    // which refuses it. Empty or whitespace counts as no value.
+    let held: Vec<&str> = DEFAULT_ONLY
+        .iter()
+        .copied()
+        .filter(|name| {
+            existing.lines().any(|line| {
+                !line.trim_start().starts_with('#')
+                    && line
+                        .split_once('=')
+                        .is_some_and(|(key, value)| key.trim() == *name && !value.trim().is_empty())
+            })
+        })
+        .collect();
     let mut out = String::new();
 
     for line in existing.lines() {
@@ -1161,7 +1182,11 @@ pub fn write(
             continue;
         }
         let key = line.split('=').next().unwrap_or("").trim();
-        let ours = owned.contains_key(key) || purge.contains_key(key);
+        let held_line = held.contains(&key)
+            && line
+                .split_once('=')
+                .is_some_and(|(_, value)| !value.trim().is_empty());
+        let ours = !held_line && (owned.contains_key(key) || purge.contains_key(key));
         if key.is_empty() || line.trim_start().starts_with('#') || !ours {
             out.push_str(line);
             out.push('\n');
@@ -1178,6 +1203,9 @@ pub fn write(
     };
     out.push_str(&format!("\n{BANNER}\n"));
     for (key, value) in owned {
+        if held.contains(&key.as_str()) {
+            continue;
+        }
         let value = carried.get(key).unwrap_or(value);
         out.push_str(&format!("{key}={value}\n"));
     }
@@ -1822,6 +1850,67 @@ HTTPS_PROXY=http://proxy:8080
         );
         assert_eq!(env["FREEDUET_INTELLIGENCE"], "on");
         assert!(env.contains_key("INTELLIGENCE_API_KEY"));
+    }
+
+    /// Compose and write over a `.env` that holds `existing`, and return the file afterwards.
+    fn written_over(existing: &str, times: usize) -> String {
+        let dir = temp_root("env-switch");
+        std::fs::create_dir_all(&dir).unwrap();
+        let path = dir.join(".env");
+        std::fs::write(&path, existing).unwrap();
+        for _ in 0..times {
+            let env = compose(
+                &intelligence(),
+                &Model::default(),
+                &engine_status(None),
+                &Ports::default(),
+                &pinned(),
+                None,
+                &BTreeMap::new(),
+            );
+            write(&path, &env, &BTreeMap::new()).unwrap();
+        }
+        let text = std::fs::read_to_string(&path).unwrap();
+        std::fs::remove_dir_all(dir).unwrap();
+        text
+    }
+
+    fn switch_lines(text: &str) -> Vec<&str> {
+        text.lines()
+            .filter(|line| line.starts_with("FREEDUET_INTELLIGENCE"))
+            .collect()
+    }
+
+    #[test]
+    fn a_hand_written_off_is_kept_by_compose_and_write() {
+        let text = written_over("FREEDUET_INTELLIGENCE=off\n", 1);
+        assert_eq!(switch_lines(&text), ["FREEDUET_INTELLIGENCE=off"]);
+    }
+
+    #[test]
+    fn a_hand_written_on_stays_on_once() {
+        let text = written_over("FREEDUET_INTELLIGENCE=on\n", 2);
+        assert_eq!(switch_lines(&text), ["FREEDUET_INTELLIGENCE=on"]);
+    }
+
+    #[test]
+    fn a_typo_is_left_alone_so_the_server_refuses_it() {
+        let text = written_over("FREEDUET_INTELLIGENCE=of\n", 1);
+        assert_eq!(switch_lines(&text), ["FREEDUET_INTELLIGENCE=of"]);
+    }
+
+    #[test]
+    fn no_line_gets_on_once_and_a_second_write_adds_no_duplicate() {
+        let text = written_over("OPENAI_API_KEY=sk-somebodys-own\n", 2);
+        assert_eq!(switch_lines(&text), ["FREEDUET_INTELLIGENCE=on"]);
+    }
+
+    #[test]
+    fn an_empty_or_blank_value_counts_as_no_value() {
+        for existing in ["FREEDUET_INTELLIGENCE=\n", "FREEDUET_INTELLIGENCE=   \n"] {
+            let text = written_over(existing, 1);
+            assert_eq!(switch_lines(&text), ["FREEDUET_INTELLIGENCE=on"]);
+        }
     }
 
     #[test]

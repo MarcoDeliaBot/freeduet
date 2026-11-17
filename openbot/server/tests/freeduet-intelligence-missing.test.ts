@@ -65,8 +65,9 @@ describe("the real entry point with the switch missing and all three settings pr
     const port = (free.address() as { port: number }).port;
     await new Promise<void>((resolve) => free.close(() => resolve()));
     const directory = await mkdtemp(join(tmpdir(), "freeduet-missing-"));
+    let child: ReturnType<typeof Bun.spawn> | undefined;
     try {
-      const child = Bun.spawn([process.execPath, ENTRY_POINT], {
+      child = Bun.spawn([process.execPath, ENTRY_POINT], {
         cwd: directory,
         env: {
           PATH: process.env.PATH,
@@ -80,15 +81,28 @@ describe("the real entry point with the switch missing and all three settings pr
         stdout: "pipe",
         stderr: "pipe",
       });
-      const [stderr, code] = await Promise.all([
-        new Response(child.stderr).text(),
-        child.exited,
+      // A server that started would never exit: wait a bounded time, so a regression fails here
+      // instead of hanging, and is stopped in `finally`.
+      const running = child;
+      const exited = await Promise.race([
+        running.exited,
+        new Promise<"still running">((resolve) =>
+          setTimeout(() => resolve("still running"), 30_000),
+        ),
       ]);
+      // It stopped by itself, before anything here stopped it.
+      expect(exited).not.toBe("still running");
+      const code = running.exitCode;
+      const stderr = await new Response(
+        running.stderr as ReadableStream,
+      ).text();
       expect(code).not.toBe(0);
       expect(stderr).toContain(MISSING);
       expect(await listening(port)).toBe(false);
       expect(connections).toBe(0);
     } finally {
+      // Stops only the process this test started (by handle, never by pattern); a no-op once it exited.
+      child?.kill();
       outside.close();
       await rm(directory, { recursive: true, force: true });
     }

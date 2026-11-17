@@ -219,6 +219,27 @@ jobs:
       # question: every secret key a container demands has to be one the chart actually writes.
       # Getting that wrong is invisible until a pod starts, and every shipped target had it wrong.
       - run: bun scripts/check-rendered-chart.ts rendered.yaml
+      # FreeDuet (D65): the server refuses a missing FREEDUET_INTELLIGENCE, so the chart writes it. By
+      # default it says `on`; an operator's own `config.extraEnv` entry replaces it, and no container
+      # ever lists the name twice (server-side apply rejects duplicates).
+      - name: The Intelligence switch is written once
+        run: |
+          set -euo pipefail
+          helm template ci charts/openbot \
+            --values charts/openbot/ci/${{ matrix.target }}-values.yaml \
+            --set-string secrets.keyEncryptionKey="$(openssl rand -base64 32)" \
+            --api-versions agents.x-k8s.io/v1beta1/Sandbox \
+            --api-versions extensions.agents.x-k8s.io/v1beta1/SandboxTemplate \
+            --set-json 'config.extraEnv=[{"name":"FREEDUET_INTELLIGENCE","value":"off"}]' \
+            > rendered-off.yaml
+          # The value on the line after each `name: FREEDUET_INTELLIGENCE`, quotes dropped. With the
+          # chart's own line absent in the second render, a duplicate would show up as an `on`.
+          values() { grep -A1 -E '^ *- name: FREEDUET_INTELLIGENCE$' "$1" | grep -E '^ *value:' | sed -E 's/^ *value: *//; s/"//g'; }
+          [ -n "$(values rendered.yaml)" ]
+          [ "$(values rendered.yaml | sort -u)" = "on" ]
+          [ -n "$(values rendered-off.yaml)" ]
+          [ "$(values rendered-off.yaml | sort -u)" = "off" ]
+          echo "rendered: on by default, off when config.extraEnv names it, never both"
       # No target names a Learning credential, so the setup Job renders nowhere above. Render it with
       # one of each, and hold it to the same coherence check.
       - name: Learning setup Job renders
