@@ -108,6 +108,10 @@ class TurnContext:
     directory: Path  # the segment's private folder
     work: Path  # an empty working folder inside it
     diagnostics: Diagnostics
+    # D72. The pictures of the person's latest message and the prompt that notes them as shown. Only an engine that
+    # can pass a picture on reads them (Claude Code); every other engine reads `prompt`, which notes them as unseen.
+    pictures: tuple = field(default=(), repr=False)
+    picture_prompt: str | None = field(default=None, repr=False)
 
 
 @dataclass(frozen=True)

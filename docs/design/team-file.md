@@ -159,7 +159,7 @@ Signed files, once a catalogue exists (S10). A converter for the planned Grok im
 
 ## 4. Slices
 
-One PR each. Sizes follow [ENGINES_PLAN.md](../ENGINES_PLAN.md) section 2 [code: docs/ENGINES_PLAN.md:24]: S under 300 changed lines, M 300 to 1000, L over 1000.
+One PR each. Sizes follow [ENGINES_PLAN.md](../ENGINES_PLAN.md) section 2 [code: docs/ENGINES_PLAN.md, section 2]: S under 300 changed lines, M 300 to 1000, L over 1000.
 
 | # | Slice | Builds | Proof (tests) | Needs first | Size |
 |---|---|---|---|---|---|

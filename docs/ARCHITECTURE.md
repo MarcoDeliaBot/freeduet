@@ -153,6 +153,8 @@ Every member holds an `ask_assistant` tool for small, low-risk jobs, so subscrip
 | Fallback | If no free engine is available or a call fails, the tool says so and the member does the job itself |
 | Ledger | Each call is recorded in `freeduet_usage` with `billing: free`, so the savings meter shows it |
 
+The server's own short calls (titles, routing, tool selection, triage, voice summaries) try the free engines of `assistants.chain` first, then the person's subscription logins (`openbot/agent-freeduet/freeduet/server_calls.py:317-323`). The shipped defaults enable no free engine (`openbot/agent-freeduet/engines.example.yaml`), so with them those calls run on the subscription login. Auto-review and unknown calls never use an assistant.
+
 Acceptance (M3): a member summarising ten emails through assistants uses no subscription turns for those summaries; an assistant fed a prompt-injection email returns text and cannot trigger any action; with assistants disabled, every member still completes its eval cases.
 
 ## 4. Data and privacy

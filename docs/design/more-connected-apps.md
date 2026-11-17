@@ -102,7 +102,7 @@ Why these ten: they cover the eleven members' jobs. Mail (1, 6), calendar (2), d
 | S7 | Broker opt-in made explicit | ARCADE_API_KEY line; cost and custody note | No provider when OPENBOT_BROKER_PROVIDER is unset | D-a | S |
 | S8 | Loopback MCP as explicit opt-in | Per-server switch; default refusal kept | Default still refuses localhost [code: openbot/server/src/plugins/catalogue.ts:977-981] | D-b; security review | M |
 
-Each PR that touches policy.ts or catalogue.ts adds or updates its row in docs/UPSTREAM_TOUCHES.md [code: CLAUDE.md:49]. Sizes use the definitions in [code: docs/ENGINES_PLAN.md:24]: S under 300 changed lines, M 300 to 1000.
+Each PR that touches policy.ts or catalogue.ts adds or updates its row in docs/UPSTREAM_TOUCHES.md [code: CLAUDE.md:49]. Sizes use the definitions in [code: docs/ENGINES_PLAN.md, section 2]: S under 300 changed lines, M 300 to 1000.
 
 ## 5. Rules that must hold
 
