@@ -273,6 +273,8 @@ export function createMemoryDefaults(options: {
           threadId: options.mintThreadId(),
           intervalMinutes: DEFAULT_RESEARCH_INTERVAL_MINUTES,
           enabled: true,
+          // D80: the deployment default wrote this row, not the person.
+          enabledByPerson: false,
           nextRunAt: new Date(
             now() + DEFAULT_RESEARCH_INTERVAL_MINUTES * 60_000,
           ),
