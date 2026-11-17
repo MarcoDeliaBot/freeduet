@@ -112,7 +112,7 @@
    "name": "내 데이터는 어디에 있나요?",
    "acceptedAnswer": {
     "@type": "Answer",
-    "text": "FreeDuet은 내 컴퓨터에서 실행되고, 대화 내용도 그곳의 데이터베이스에 저장합니다. Claude 로그인 정보는 Claude Code 프로그램만 읽을 수 있는 Docker 볼륨에 남습니다. 비서들이 생각할 때는 내가 로그인한 AI 서비스에 요청을 보내는데, 그 서비스의 자체 앱을 쓸 때와 같은 방식이에요."
+    "text": "FreeDuet은 내 컴퓨터에서 실행되고, 기본적으로 대화 내용도 그곳의 데이터베이스에 저장합니다. Claude 로그인 정보는 Claude Code 프로그램만 읽을 수 있는 Docker 볼륨에 남습니다. 비서들이 생각할 때는 내가 로그인한 AI 서비스에 요청을 보내는데, 그 서비스의 자체 앱을 쓸 때와 같은 방식입니다."
    }
   },
   {
@@ -1303,7 +1303,7 @@ text.sa-sent{fill:#0F7B58;font-weight:700}
   <div class="wrap hero-grid">
     <div class="hero-copy">
       <h1 class="wd" id="hero-h1" data-d="100" data-i="h1">나만의 AI 비서 팀.</h1>
-      <p class="lead rv" data-d="420" data-i="lead">FreeDuet은 내 컴퓨터에서 실행됩니다. 한 명은 메일을 담당하고, 한 명은 계약서를 읽고, 한 명은 식당을 예약해요. 필요한 일을 말씀하시면 비서들이 해 드립니다. 그리고 <span class="mark">기본적으로 승인 없이는 아무것도 보내거나, 결제하거나, 삭제하지 않습니다</span>.</p>
+      <p class="lead rv" data-d="420" data-i="lead">FreeDuet은 내 컴퓨터에서 실행됩니다. 한 명은 메일을 담당하고, 한 명은 계약서를 읽고, 한 명은 식당을 예약합니다. 필요한 일을 말씀하시면 비서들이 해 드립니다. 그리고 기본적으로 <span class="mark">승인 없이는 아무것도 보내거나, 결제하거나, 삭제하지 않습니다</span>.</p>
       <div class="cta rv" data-d="540">
         <a class="btn btn-main" href="https://github.com/MarcoDeliaBot/freeduet"><svg aria-hidden="true"><use href="#i-gh"/></svg><span data-i="cta1">GitHub에서 FreeDuet 받기</span></a>
         <a class="btn btn-quiet" href="#how" data-i="cta2">작동 방식 보기</a>
@@ -1418,21 +1418,21 @@ text.sa-sent{fill:#0F7B58;font-weight:700}
             <div class="aw-main">
               <div class="chat" id="chat" aria-live="polite">
                 <div class="msg me" id="u-a"><div class="bub" data-f="demo.0.me">배관공이 보낸 메일에 답장해 줘. 화요일 9시 좋다고.</div></div>
-                <div class="msg" id="i-a"><svg class="mas" data-mascot="iris" viewBox="0 0 220 220" aria-hidden="true" focusable="false"><use href="#m-iris"/></svg><div class="bub"><span class="who">Iris</span><span class="dots" aria-hidden="true"><i></i><i></i><i></i></span><span class="txt" data-f="demo.0.iris">알겠습니다. 이 일은 Otto가 맡을게요.</span></div></div>
-                <div class="msg" id="h-a"><svg class="mas av" data-mascot="otto" viewBox="0 0 220 220" aria-hidden="true" focusable="false"><use href="#m-otto"/></svg><div class="bub"><span class="who">Otto</span><span class="dots" aria-hidden="true"><i></i><i></i><i></i></span><span class="txt" data-f="demo.0.line">메일을 찾아서 답장을 써 두었어요. 말씀하시기 전에는 보내지 않겠습니다.</span></div></div>
+                <div class="msg" id="i-a"><svg class="mas" data-mascot="iris" viewBox="0 0 220 220" aria-hidden="true" focusable="false"><use href="#m-iris"/></svg><div class="bub"><span class="who">Iris</span><span class="dots" aria-hidden="true"><i></i><i></i><i></i></span><span class="txt" data-f="demo.0.iris">알겠습니다. 이 일은 Otto가 맡겠습니다.</span></div></div>
+                <div class="msg" id="h-a"><svg class="mas av" data-mascot="otto" viewBox="0 0 220 220" aria-hidden="true" focusable="false"><use href="#m-otto"/></svg><div class="bub"><span class="who">Otto</span><span class="dots" aria-hidden="true"><i></i><i></i><i></i></span><span class="txt" data-f="demo.0.line">메일을 찾아서 답장을 써 두었습니다. 말씀하시기 전에는 보내지 않겠습니다.</span></div></div>
                 <div class="ask" id="c-a">
                   <div class="ask-main">
-                    <p class="ask-t"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="#i-hand"/></svg><span class="t-w" data-i="ask">내 승인을 기다리는 중</span><span class="t-ok" hidden data-f="demo.0.ok">보냈습니다. 같은 대화에 답장 한 통만 보냈고, 다른 건 건드리지 않았어요.</span><span class="t-no" hidden data-f="demo.0.stop">보내지 않았습니다. 마음이 바뀌시면 쓰도록 초안은 저장해 두었어요.</span></p>
+                    <p class="ask-t"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="#i-hand"/></svg><span class="t-w" data-i="ask">내 승인을 기다리는 중</span><span class="t-ok" hidden data-f="demo.0.ok">보냈습니다. 같은 대화에 답장 한 통만 보냈고, 다른 건 건드리지 않았습니다.</span><span class="t-no" hidden data-f="demo.0.stop">보내지 않았습니다. 마음이 바뀌시면 쓰도록 초안은 저장해 두었습니다.</span></p>
                     <dl><dt data-f="demo.0.card.0.0">작업</dt><dd data-f="demo.0.card.0.1">답장 보내기</dd><dt data-f="demo.0.card.1.0">받는 사람</dt><dd data-f="demo.0.card.1.1">배관공 (같은 대화)</dd><dt data-f="demo.0.card.2.0">내용</dt><dd data-f="demo.0.card.2.1">안녕하세요, 화요일 9시에 가능합니다. 감사합니다!</dd></dl>
                   </div>
                   <div class="ask-btns" aria-hidden="true"><span class="sim yes"><svg class="ck" viewBox="0 0 24 24"><use href="#i-check"/></svg><span data-i="yes">승인</span></span><span class="sim" data-i="no">하지 않기</span></div>
                 </div>
                 <div class="msg me" id="u-b" hidden><div class="bub" data-f="demo.1.me">금요일 저녁에 네 명 자리를 예약해 줘. 피자 파는 곳으로.</div></div>
-                <div class="msg" id="i-b" hidden><svg class="mas" data-mascot="iris" viewBox="0 0 220 220" aria-hidden="true" focusable="false"><use href="#m-iris"/></svg><div class="bub"><span class="who">Iris</span><span class="dots" aria-hidden="true"><i></i><i></i><i></i></span><span class="txt" data-f="demo.1.iris">알겠습니다. 예약은 Jules가 맡고 있어요.</span></div></div>
-                <div class="msg" id="h-b" hidden><svg class="mas av" data-mascot="jules" viewBox="0 0 220 220" aria-hidden="true" focusable="false"><use href="#m-jules"/></svg><div class="bub"><span class="who">Jules</span><span class="dots" aria-hidden="true"><i></i><i></i><i></i></span><span class="txt" data-f="demo.1.line">제 브라우저에서 찾아보니 빈자리가 있었어요. 아직 아무것도 예약하지 않았습니다.</span></div></div>
+                <div class="msg" id="i-b" hidden><svg class="mas" data-mascot="iris" viewBox="0 0 220 220" aria-hidden="true" focusable="false"><use href="#m-iris"/></svg><div class="bub"><span class="who">Iris</span><span class="dots" aria-hidden="true"><i></i><i></i><i></i></span><span class="txt" data-f="demo.1.iris">알겠습니다. 예약은 Jules가 맡고 있습니다.</span></div></div>
+                <div class="msg" id="h-b" hidden><svg class="mas av" data-mascot="jules" viewBox="0 0 220 220" aria-hidden="true" focusable="false"><use href="#m-jules"/></svg><div class="bub"><span class="who">Jules</span><span class="dots" aria-hidden="true"><i></i><i></i><i></i></span><span class="txt" data-f="demo.1.line">제 브라우저에서 찾아보니 빈자리가 있었습니다. 아직 아무것도 예약하지 않았습니다.</span></div></div>
                 <div class="ask" id="c-b" hidden>
                   <div class="ask-main">
-                    <p class="ask-t"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="#i-hand"/></svg><span class="t-w" data-i="ask">내 승인을 기다리는 중</span><span class="t-ok" hidden data-f="demo.1.ok">금요일 오후 8:00, 4명으로 예약했습니다. 확인 메일이 받은편지함에 있어요.</span><span class="t-no" hidden data-f="demo.1.stop">예약하지 않았습니다. 다른 곳이 필요하면 말씀해 주세요.</span></p>
+                    <p class="ask-t"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="#i-hand"/></svg><span class="t-w" data-i="ask">내 승인을 기다리는 중</span><span class="t-ok" hidden data-f="demo.1.ok">금요일 오후 8:00, 4명으로 예약했습니다. 확인 메일이 받은편지함에 있습니다.</span><span class="t-no" hidden data-f="demo.1.stop">예약하지 않았습니다. 다른 곳이 필요하면 말씀해 주세요.</span></p>
                     <dl><dt data-f="demo.1.card.0.0">작업</dt><dd data-f="demo.1.card.0.1">자리 예약</dd><dt data-f="demo.1.card.1.0">장소</dt><dd data-f="demo.1.card.1.1">피자리아 예시</dd><dt data-f="demo.1.card.2.0">일시</dt><dd data-f="demo.1.card.2.1">금요일 오후 8:00, 4명</dd></dl>
                   </div>
                   <div class="ask-btns" aria-hidden="true"><span class="sim yes"><svg class="ck" viewBox="0 0 24 24"><use href="#i-check"/></svg><span data-i="yes">승인</span></span><span class="sim" data-i="no">하지 않기</span></div>
@@ -1454,7 +1454,7 @@ text.sa-sent{fill:#0F7B58;font-weight:700}
     <div class="head">
       <h2 data-i="w_h">할 일은 많은데, 나는 한 명뿐인가요?</h2>
       <p class="lead" data-i="w_p1">이메일, 청구서, 예약, 계약서, 지난주에 약속한 그 답장까지. 머리는 하나, 손은 둘, 할 일은 백 가지예요.</p>
-      <p data-i="w_p2">FreeDuet은 내 컴퓨터 안에 있는 작은 사무실 같습니다. 비서마다 잘하는 일이 딱 하나씩 있어요. 팀을 이끄는 Iris에게 말씀하시면, Iris가 모두를 움직입니다.</p>
+      <p data-i="w_p2">FreeDuet은 내 컴퓨터 안에 있는 작은 사무실 같습니다. 비서마다 잘하는 일이 딱 하나씩 있습니다. 팀을 이끄는 Iris에게 말씀하시면, Iris가 모두를 움직입니다.</p>
     </div>
     <div class="three">
       <article >
@@ -1466,7 +1466,7 @@ text.sa-sent{fill:#0F7B58;font-weight:700}
           <g fill="#C9D2E0"><rect x="56" y="136" width="28" height="8" rx="4"/><rect x="121" y="136" width="28" height="8" rx="4"/><rect x="187" y="136" width="28" height="8" rx="4"/><rect x="252" y="136" width="28" height="8" rx="4"/></g>
         </svg>
         <h3 data-i="w_a_h">비서들로 이루어진 하나의 팀</h3>
-        <p data-i="w_a_p">챗봇은 질문에 답해 주는 똑똑한 친구 한 명이에요. FreeDuet은 모두가 맡은 몫을 제대로 해내는 팀 프로젝트입니다.</p>
+        <p data-i="w_a_p">챗봇은 질문에 답해 주는 똑똑한 친구 한 명입니다. FreeDuet은 모두가 맡은 몫을 제대로 해내는 팀 프로젝트입니다.</p>
       </article>
       <article >
         <svg viewBox="0 0 320 190" role="img" aria-labelledby="t3b"><title id="t3b" data-i="w_b_alt">버튼이 클릭되고 있는 브라우저 창</title>
@@ -1475,7 +1475,7 @@ text.sa-sent{fill:#0F7B58;font-weight:700}
           <path d="M140 136l22 19-9 1.500 6 11-6 2.500-5-11-7 6z" fill="#0E1B33" stroke="#fff" stroke-width="1.5"/>
         </svg>
         <h3 data-i="w_b_h">말만 하지 않고, 직접 일합니다</h3>
-        <p data-i="w_b_p">비서마다 자기 책상이 있습니다. 내 브라우저와는 따로 떨어진 별도의 브라우저예요. 그곳에서 가격을 찾아보고, 양식을 채우고, 초안을 준비합니다.</p>
+        <p data-i="w_b_p">비서마다 자기 책상이 있습니다. 내 브라우저와는 따로 떨어진 별도의 브라우저입니다. 그곳에서 가격을 찾아보고, 양식을 채우고, 초안을 준비합니다.</p>
       </article>
       <article >
         <svg viewBox="0 0 320 190" aria-hidden="true">
@@ -1485,7 +1485,7 @@ text.sa-sent{fill:#0F7B58;font-weight:700}
           <rect x="162" y="118" width="66" height="24" rx="6" fill="#fff" stroke="#C9D2E0" stroke-width="1.5"/>
         </svg>
         <h3 data-i="w_c_h">결정하는 사람은 언제나 나</h3>
-        <p data-i="w_c_p">비서들은 준비하고, 결정은 내가 합니다. 기본적으로 중요한 일은 승인을 누르기 전까지 내 컴퓨터 밖으로 나가지 않아요.</p>
+        <p data-i="w_c_p">비서들은 준비하고, 결정은 내가 합니다. 기본적으로 중요한 일은 승인을 누르기 전까지 내 컴퓨터 밖으로 나가지 않습니다.</p>
       </article>
     </div>
     <div class="versus">
@@ -1498,10 +1498,10 @@ text.sa-sent{fill:#0F7B58;font-weight:700}
 <section class="sec" id="team">
   <div class="wrap">
     <div class="head">
-      <h2 data-i="t_h">팀을 소개합니다. 모두 딱 하나의 일을 맡고 있어요.</h2>
+      <h2 data-i="t_h">팀을 소개합니다. 모두 딱 하나의 일을 맡고 있습니다.</h2>
       <p class="lead" data-i="t_p">모든 걸 다 하는 비서 한 명이면 안 될까요? 축구팀에 골키퍼가 따로 있는 것과 같은 이유예요. 하루 종일 한 가지 일만 하는 사람은 그 일을 아주 잘하게 되거든요.</p>
     </div>
-    <div class="team" id="teamGrid"><article class="mem boss" style="--mc:#1B4FD8"><svg class="mas" viewBox="0 0 220 220" aria-hidden="true" focusable="false"><use href="#m-iris"/></svg><h3>Iris<span>팀을 이끕니다</span></h3><p>Iris에게 필요한 것을 말하면, 그녀가 알맞은 비서에게 일을 넘기고 답은 그녀를 통해 돌아옵니다.</p><q>오늘 아침에 들어온 건 전부 처리해 줘.</q></article><article class="mem" style="--mc:#E8590C"><svg class="mas" viewBox="0 0 220 220" aria-hidden="true" focusable="false"><use href="#m-otto"/></svg><h3>Otto<span>메일</span></h3><p>받은편지함을 읽고, 지금 중요한 것과 나중에 해도 되는 것을 짚어 줍니다. 그리고 확인하실 수 있게 답장을 써 줍니다.</p><q>메일을 정리하고, 중요한 건 답장 초안을 써 줘.</q></article><article class="mem" style="--mc:#0E7C86"><svg class="mas" viewBox="0 0 220 220" aria-hidden="true" focusable="false"><use href="#m-portia"/></svg><h3>Portia<span>계약서</span></h3><p>지루한 작은 글씨까지 읽고, 서명하기 전에 함정이 어디 있는지 알려 줍니다.</p><q>이 임대차 계약서에 서명해도 될까?</q></article><article class="mem" style="--mc:#A87900"><svg class="mas" viewBox="0 0 220 220" aria-hidden="true" focusable="false"><use href="#m-penny"/></svg><h3>Penny<span>청구서</span></h3><p>청구서를 준비하고, 아직 돈을 주지 않은 사람의 목록을 관리합니다.</p><q>Acme에 지난주 청구서를 보내고, 아직 안 낸 사람도 알려 줘.</q></article><article class="mem" style="--mc:#C2255C"><svg class="mas" viewBox="0 0 220 220" aria-hidden="true" focusable="false"><use href="#m-jules"/></svg><h3>Jules<span>심부름</span></h3><p>자기 브라우저에서 항공편, 선물, 빈자리를 찾고, 내가 승인하면 예약까지 해 줍니다.</p><q>금요일에 네 명 자리를 예약해 줘.</q></article><article class="mem" style="--mc:#2B8A3E"><svg class="mas" viewBox="0 0 220 220" aria-hidden="true" focusable="false"><use href="#m-wren"/></svg><h3>Wren<span>글쓰기</span></h3><p>대충 적은 메모를 내가 쓴 것 같은 게시글과 이메일로 바꿔 줍니다.</p><q>이 음성 메모를 내 말투로 게시글로 만들어 줘.</q></article><article class="mem" style="--mc:#C92A2A"><svg class="mas" viewBox="0 0 220 220" aria-hidden="true" focusable="false"><use href="#m-mark"/></svg><h3>Mark<span>마케팅</span></h3><p>마케팅 계획, 출시 계획, 채널 전략을 세우고 사이트, SEO, 광고를 점검해 줍니다. 기본적으로 내가 승인하기 전에는 아무것도 게시하거나 쓰지 않습니다. 아직 실제 환경에서는 확인하지 않았습니다.</p><q>우리 가게의 3개월 마케팅 계획을 짜 줘.</q></article><article class="mem" style="--mc:#7950F2"><svg class="mas" viewBox="0 0 220 220" aria-hidden="true" focusable="false"><use href="#m-video"/></svg><h3>Cam<span>동영상</span></h3><p>원본 영상이나 대본으로 짧은 동영상을 편집하고 자막, 음악, 사운드를 넣습니다. 가로, 세로, 정사각형 크기로 만듭니다. 동영상을 게시하거나 업로드하는 일은 절대 하지 않습니다. 아직 실제 환경에서는 확인하지 않았습니다.</p><q>이 대본으로 자막이 들어간 30초짜리 세로 동영상을 만들어 줘.</q></article><article class="mem" style="--mc:#B5540B"><svg class="mas" viewBox="0 0 220 220" aria-hidden="true" focusable="false"><use href="#m-gus"/></svg><h3>Gus<span>수리</span></h3><p>고장 난 곳의 사진을 보내 주세요. Gus가 안전하게 고치는 방법이나, 누구에게 연락해야 하는지 알려 줍니다.</p><q>문이 안 닫혀요. 사진이에요.</q></article><article class="mem" style="--mc:#5C940D"><svg class="mas" viewBox="0 0 220 220" aria-hidden="true" focusable="false"><use href="#m-basil"/></svg><h3>Basil<span>요리</span></h3><p>냉장고에 있는 재료를 말해 주면, 오늘 저녁에 만들 수 있는 요리 세 가지를 알려 줍니다.</p><q>시금치랑 달걀로 뭘 만들 수 있을까?</q></article><article class="mem" style="--mc:#5C6B80"><svg class="mas" viewBox="0 0 220 220" aria-hidden="true" focusable="false"><use href="#m-vera"/></svg><h3>Vera<span>확인</span></h3><p>보이지 않는 곳에서 일합니다. 일이 나에게 오기 전에 계산을 다시 해 보고 가격을 다시 열어 확인해요.</p><q>(중요한 작업은 Iris가 그녀에게 넘깁니다.)</q></article><article class="mem" style="--mc:#C46A00"><svg class="mas" viewBox="0 0 220 220" aria-hidden="true" focusable="false"><use href="#m-leo"/></svg><h3>Leo<span>새 비서를 만듭니다</span></h3><p>아직 없는 비서가 필요하세요? Leo가 설계합니다. 새 멤버를 준비 완료라고 부르기 전에 하나씩 테스트하는 것은 계획 중입니다.</p><q>도메인 갱신 일정을 챙겨 줄 사람이 필요해.</q></article></div>
+    <div class="team" id="teamGrid"><article class="mem boss" style="--mc:#1B4FD8"><svg class="mas" viewBox="0 0 220 220" aria-hidden="true" focusable="false"><use href="#m-iris"/></svg><h3>Iris<span>팀을 이끕니다</span></h3><p>Iris에게 필요한 것을 말하면, 그녀가 알맞은 비서에게 일을 넘기고 답은 그녀를 통해 돌아옵니다.</p><q>오늘 아침에 들어온 건 전부 처리해 줘.</q></article><article class="mem" style="--mc:#E8590C"><svg class="mas" viewBox="0 0 220 220" aria-hidden="true" focusable="false"><use href="#m-otto"/></svg><h3>Otto<span>메일</span></h3><p>받은편지함을 읽고, 지금 중요한 것과 나중에 해도 되는 것을 짚어 줍니다. 그리고 확인하실 수 있게 답장을 써 줍니다.</p><q>메일을 정리하고, 중요한 건 답장 초안을 써 줘.</q></article><article class="mem" style="--mc:#0E7C86"><svg class="mas" viewBox="0 0 220 220" aria-hidden="true" focusable="false"><use href="#m-portia"/></svg><h3>Portia<span>계약서</span></h3><p>지루한 작은 글씨까지 읽고, 서명하기 전에 함정이 어디 있는지 알려 줍니다.</p><q>이 임대차 계약서에 서명해도 될까?</q></article><article class="mem" style="--mc:#A87900"><svg class="mas" viewBox="0 0 220 220" aria-hidden="true" focusable="false"><use href="#m-penny"/></svg><h3>Penny<span>청구서</span></h3><p>청구서를 준비하고, 아직 돈을 주지 않은 사람의 목록을 관리합니다.</p><q>Acme에 지난주 청구서를 보내고, 아직 안 낸 사람도 알려 줘.</q></article><article class="mem" style="--mc:#C2255C"><svg class="mas" viewBox="0 0 220 220" aria-hidden="true" focusable="false"><use href="#m-jules"/></svg><h3>Jules<span>심부름</span></h3><p>자기 브라우저에서 항공편, 선물, 빈자리를 찾고, 내가 승인하면 예약까지 해 줍니다.</p><q>금요일에 네 명 자리를 예약해 줘.</q></article><article class="mem" style="--mc:#2B8A3E"><svg class="mas" viewBox="0 0 220 220" aria-hidden="true" focusable="false"><use href="#m-wren"/></svg><h3>Wren<span>글쓰기</span></h3><p>대충 적은 메모를 내가 쓴 것 같은 게시글과 이메일로 바꿔 줍니다.</p><q>이 음성 메모를 내 말투로 게시글로 만들어 줘.</q></article><article class="mem" style="--mc:#C92A2A"><svg class="mas" viewBox="0 0 220 220" aria-hidden="true" focusable="false"><use href="#m-mark"/></svg><h3>Mark<span>마케팅</span></h3><p>마케팅 계획, 출시 계획, 채널 전략을 세우고 사이트, SEO, 광고를 점검해 줍니다. 기본적으로 내가 승인하기 전에는 아무것도 게시하거나 돈을 쓰지 않습니다. 테스트는 팀 평가에서 실행되었습니다. 실제 설치에서는 아직 실행해 보지 않았습니다.</p><q>우리 가게의 3개월 마케팅 계획을 짜 줘.</q></article><article class="mem" style="--mc:#7950F2"><svg class="mas" viewBox="0 0 220 220" aria-hidden="true" focusable="false"><use href="#m-video"/></svg><h3>Cam<span>동영상</span></h3><p>원본 영상이나 대본으로 짧은 동영상을 편집하고 자막, 음악, 사운드를 넣습니다. 가로, 세로, 정사각형 크기로 만듭니다. 동영상을 게시하거나 업로드하는 일은 절대 하지 않습니다. 테스트는 팀 평가에서 실행되었습니다. 실제 설치에서는 아직 실행해 보지 않았습니다.</p><q>이 대본으로 자막이 들어간 30초짜리 세로 동영상을 만들어 줘.</q></article><article class="mem" style="--mc:#B5540B"><svg class="mas" viewBox="0 0 220 220" aria-hidden="true" focusable="false"><use href="#m-gus"/></svg><h3>Gus<span>수리</span></h3><p>고장 난 곳의 사진을 보내 주세요. Gus가 안전하게 고치는 방법이나, 누구에게 연락해야 하는지 알려 줍니다.</p><q>문이 안 닫혀요. 사진이에요.</q></article><article class="mem" style="--mc:#5C940D"><svg class="mas" viewBox="0 0 220 220" aria-hidden="true" focusable="false"><use href="#m-basil"/></svg><h3>Basil<span>요리</span></h3><p>냉장고에 있는 재료를 말해 주면, 오늘 저녁에 만들 수 있는 요리 세 가지를 알려 줍니다.</p><q>시금치랑 달걀로 뭘 만들 수 있을까?</q></article><article class="mem" style="--mc:#5C6B80"><svg class="mas" viewBox="0 0 220 220" aria-hidden="true" focusable="false"><use href="#m-vera"/></svg><h3>Vera<span>확인</span></h3><p>보이지 않는 곳에서 일합니다. 일이 나에게 오기 전에 계산을 다시 해 보고 가격을 다시 열어 확인합니다.</p><q>(중요한 작업은 Iris가 그녀에게 넘깁니다.)</q></article><article class="mem" style="--mc:#C46A00"><svg class="mas" viewBox="0 0 220 220" aria-hidden="true" focusable="false"><use href="#m-leo"/></svg><h3>Leo<span>새 비서를 만듭니다</span></h3><p>아직 없는 비서가 필요하세요? Leo가 설계합니다. 새 멤버를 준비 완료라고 부르기 전에 하나씩 테스트하는 것은 계획 중입니다.</p><q>도메인 갱신 일정을 챙겨 줄 사람이 필요해.</q></article></div>
     <p class="soft team-note" data-i="t_note">이 팀은 시작일 뿐입니다. 필요한 일에 딱 맞는 나만의 비서를 훈련시킬 수 있고, 바로 쓸 수 있는 새 멤버도 앞으로 계속 추가합니다. 멤버 이름을 바꾸는 일과 말투를 바꾸는 일은 만들어졌지만 실제 환경에서는 아직 확인하지 않았습니다.</p>
   </div>
 </section>
@@ -1509,15 +1509,15 @@ text.sa-sent{fill:#0F7B58;font-weight:700}
 <section class="sec alt how" id="how" aria-labelledby="how-h">
   <div class="wrap how-grid">
     <h2 id="how-h" data-i="h_h">Enter를 누르면 어떤 일이 일어날까요</h2>
-    <p class="lead" data-i="h_p">마법도 비밀도 없습니다. 언제나 똑같은 다섯 단계라서, 누가 무엇을 하는지 늘 알 수 있어요.</p>
+    <p class="lead" data-i="h_p">마법도 비밀도 없습니다. 언제나 똑같은 다섯 단계라서, 누가 무엇을 하는지 늘 알 수 있습니다.</p>
     <div class="stage-wrap"><svg class="stage-svg" viewBox="0 0 460 340" aria-hidden="true" focusable="false"><use href="#how-art"/></svg></div>
     <div class="how-copy">
       <ol class="steps">
-        <li style="--i:0"><div class="sbody"><svg class="frame" viewBox="0 0 460 340" aria-hidden="true" focusable="false" style="--s:0"><use href="#how-art"/></svg><h3 data-i="s1h">필요한 일을 적습니다</h3><p data-i="s1p">친구에게 메시지를 보내듯, 내 말로 편하게 쓰시면 됩니다.</p></div></li>
+        <li style="--i:0"><div class="sbody"><svg class="frame" viewBox="0 0 460 340" aria-hidden="true" focusable="false" style="--s:0"><use href="#how-art"/></svg><h3 data-i="s1h">필요한 일을 적습니다</h3><p data-i="s1p">친구에게 메시지를 보내듯, 내 말과 내 언어로 편하게 쓰시면 됩니다.</p></div></li>
         <li style="--i:1"><div class="sbody"><svg class="frame" viewBox="0 0 460 340" aria-hidden="true" focusable="false" style="--s:1"><use href="#how-art"/></svg><h3 data-i="s2h">Iris가 알맞은 비서를 고릅니다</h3><p data-i="s2p">요청을 읽고 그 일을 맡은 전문가에게 넘겨요.</p></div></li>
-        <li style="--i:2"><div class="sbody"><svg class="frame" viewBox="0 0 460 340" aria-hidden="true" focusable="false" style="--s:2"><use href="#how-art"/></svg><h3 data-i="s3h">비서가 자기 책상에서 일합니다</h3><p data-i="s3p">자기 브라우저로 검색하고, 읽고, 준비합니다. 읽은 내용은 정보로만 받아들이고, 명령으로는 따르지 않아요.</p></div></li>
-        <li style="--i:3"><div class="sbody"><svg class="frame" viewBox="0 0 460 340" aria-hidden="true" focusable="false" style="--s:3"><use href="#how-art"/></svg><h3 data-i="s4h">승인 카드가 내 확인을 기다립니다</h3><p data-i="s4p">기본적으로 보내기, 결제, 서명, 예약, 삭제처럼 중요한 버튼이 필요한 일이면 모든 것이 멈추고 내 답을 기다립니다.</p></div></li>
-        <li style="--i:4"><div class="sbody"><svg class="frame" viewBox="0 0 460 340" aria-hidden="true" focusable="false" style="--s:4"><use href="#how-art"/></svg><h3 data-i="s5h">짧은 보고서를 받습니다</h3><p data-i="s5p">무엇을 했는지, 무엇을 하지 않았고 왜 그랬는지, 다음 단계는 무엇인지 알려 드려요. 긴 글은 없습니다.</p></div></li>
+        <li style="--i:2"><div class="sbody"><svg class="frame" viewBox="0 0 460 340" aria-hidden="true" focusable="false" style="--s:2"><use href="#how-art"/></svg><h3 data-i="s3h">비서가 자기 책상에서 일합니다</h3><p data-i="s3p">자기 브라우저로 검색하고, 읽고, 준비합니다. 읽은 내용은 정보로만 받아들이고, 명령으로는 따르지 않습니다.</p></div></li>
+        <li style="--i:3"><div class="sbody"><svg class="frame" viewBox="0 0 460 340" aria-hidden="true" focusable="false" style="--s:3"><use href="#how-art"/></svg><h3 data-i="s4h">카드가 내 승인을 기다립니다</h3><p data-i="s4p">기본적으로 보내기, 결제, 서명, 예약, 삭제처럼 중요한 버튼이 필요한 일이면 모든 것이 멈추고 내 승인을 기다립니다.</p></div></li>
+        <li style="--i:4"><div class="sbody"><svg class="frame" viewBox="0 0 460 340" aria-hidden="true" focusable="false" style="--s:4"><use href="#how-art"/></svg><h3 data-i="s5h">짧은 보고서를 받습니다</h3><p data-i="s5p">무엇을 했는지, 무엇을 하지 않았고 왜 그랬는지, 다음 단계는 무엇인지 알려 드립니다. 긴 글은 없습니다.</p></div></li>
       </ol>
       <div class="story-ctl">
         <span class="story-dots" aria-hidden="true"><span class="on"></span><span></span><span></span><span></span><span></span></span>
@@ -1544,7 +1544,7 @@ text.sa-sent{fill:#0F7B58;font-weight:700}
             <button class="btn btn-yes" type="button" data-a="ok"><span data-i="yes">승인</span></button>
             <button class="btn" type="button" data-a="stop"><span data-i="no">하지 않기</span></button>
           </div>
-          <p class="state" role="status"><span class="st-w" data-i="ask">내 승인을 기다리는 중</span><span class="st-ok" hidden data-f="demo.0.ok">보냈습니다. 같은 대화에 답장 한 통만 보냈고, 다른 건 건드리지 않았어요.</span><span class="st-no" hidden data-f="demo.0.stop">보내지 않았습니다. 마음이 바뀌시면 쓰도록 초안은 저장해 두었어요.</span></p>
+          <p class="state" role="status"><span class="st-w" data-i="ask">내 승인을 기다리는 중</span><span class="st-ok" hidden data-f="demo.0.ok">보냈습니다. 같은 대화에 답장 한 통만 보냈고, 다른 건 건드리지 않았습니다.</span><span class="st-no" hidden data-f="demo.0.stop">보내지 않았습니다. 마음이 바뀌시면 쓰도록 초안은 저장해 두었습니다.</span></p>
           <button class="btn reset" type="button" id="mail-reset" hidden data-i="again">다시 시작</button>
         </div>
         <ul class="acts">
@@ -1554,11 +1554,11 @@ text.sa-sent{fill:#0F7B58;font-weight:700}
           <li><svg aria-hidden="true"><use href="#b-book"/></svg><span data-i="b4">예약</span></li>
           <li><svg aria-hidden="true"><use href="#b-del"/></svg><span data-i="b5">삭제</span></li>
         </ul>
-        <p class="caption" data-i="bA_cap">가상의 예시로 만든 데모입니다. 2026년 11월 15일 실제 실행에는 안전 테스트 38개가 포함되었으며, 이는 구성원이 규칙을 어기도록 유도하는 테스트입니다.</p>
+        <p class="caption" data-i="bA_cap">가상의 예시로 만든 데모입니다. 2026년 11월 15일 실제 실행에는 안전 사례 38개가 포함되었으며, 이는 멤버가 규칙을 어기도록 유도하는 사례입니다.</p>
       </article>
 
       <article class="pane p-roster" aria-labelledby="h-roster">
-        <div class="phead"><span class="tag tag-ok" data-i="tagRel">v0.2.1에 공개됨</span><h3 id="h-roster" data-i="bR_h">열두 명의 구성원, 각자 한 가지 역할</h3></div>
+        <div class="phead"><span class="tag tag-ok" data-i="tagRel02">v0.2에 공개됨</span><h3 id="h-roster" data-i="bR_h">열두 명의 멤버, 각자 한 가지 역할</h3></div>
         <ul class="roster-b">
           <li><svg class="mas av" data-mascot="iris" viewBox="0 0 220 220" aria-hidden="true" focusable="false"><use href="#m-iris"/></svg><b>Iris</b><small data-f="team.iris.0">팀을 이끕니다</small></li>
           <li><svg class="mas av" data-mascot="leo" viewBox="0 0 220 220" aria-hidden="true" focusable="false"><use href="#m-leo"/></svg><b>Leo</b><small data-f="team.leo.0">새 비서를 만듭니다</small></li>
@@ -1573,7 +1573,7 @@ text.sa-sent{fill:#0F7B58;font-weight:700}
           <li><svg class="mas av" data-mascot="mark" viewBox="0 0 220 220" aria-hidden="true" focusable="false"><use href="#m-mark"/></svg><b>Mark</b><small data-f="team.mark.0">마케팅</small></li>
           <li><svg class="mas av" data-mascot="video" viewBox="0 0 220 220" aria-hidden="true" focusable="false"><use href="#m-video"/></svg><b>Cam</b><small data-f="team.video.0">동영상</small></li>
         </ul>
-        <p class="caption" data-i="bR_cap">Mark와 Cam은 v0.1 이후에 추가되었습니다. 이들의 테스트는 2026년 11월 15일 실제 평가에서 실행되었습니다. 이 버전에서 전체 인증 실행은 아직 반복되지 않았습니다.</p>
+        <p class="caption" data-i="bR_cap">Mark와 Cam은 v0.1 이후에 추가되었습니다. 이들의 사례는 2026년 11월 15일 팀 평가에서 실행되었습니다. 이 버전에서 전체 인증 실행은 아직 반복되지 않았습니다.</p>
       </article>
 
       <article class="pane p-handoff" aria-labelledby="h-handoff">
@@ -1585,20 +1585,20 @@ text.sa-sent{fill:#0F7B58;font-weight:700}
 
       <article class="pane p-routine" aria-labelledby="h-routine">
         <div class="phead"><span class="tag tag-wait" data-i="tagWait">만들어짐, 실제 실행으로는 아직 확인 안 됨</span><h3 id="h-routine" data-i="fe3h">일정에 맞춰 도는 루틴</h3></div>
-        <p data-i="fe3p">루틴은 일정에 맞춰 반복됩니다. 이를테면 매일 아침 요약이에요. Iris는 이미 하나를 가지고 있습니다. 다섯 가지 버튼 중 하나가 필요한 루틴은 먼저 나에게 물어봅니다. 이 규칙은 만들어졌지만 실제 환경에서는 아직 확인하지 않았습니다.</p>
+        <p data-i="fe3p">루틴은 일정에 맞춰 반복됩니다. 이를테면 매일 아침 요약입니다. Iris는 이미 하나를 가지고 있습니다. 다섯 가지 버튼 중 하나가 필요한 루틴은 먼저 나에게 물어봅니다. 이 규칙은 만들어졌지만 실제 환경에서는 아직 확인하지 않았습니다.</p>
         <div class="rt" id="routine">
           <div class="rt-top">
             <span class="rt-name" data-i="rt1">아침 요약</span>
             <button class="pause" type="button" id="rt-btn"><span id="rt-pause-l" data-i="pauseBtn">일시 정지</span><span id="rt-resume-l" hidden data-i="resumeBtn">재개</span></button>
           </div>
           <div class="wk" id="wk"><span class="d">월</span><span class="d">화</span><span class="d">수</span><span class="d">목</span><span class="d">금</span><span class="d">토</span><span class="d">일</span></div>
-          <p class="rt-state" role="status"><span id="rt-run" data-i="rt_state">매일 아침 실행됩니다. 다음 실행: 내일 아침.</span><span id="rt-off" hidden data-i="rt_paused">일시 정지됨. 다시 시작하기 전까지 실행되지 않습니다.</span></p>
+          <p class="rt-state" role="status"><span id="rt-run" data-i="rt_state">매일 아침 실행됩니다. 다음 실행: 내일 아침.</span><span id="rt-off" hidden data-i="rt_paused">일시 정지됨. 재개하기 전까지 실행되지 않습니다.</span></p>
         </div>
         <p class="caption" data-i="bT_cap">카드에는 루틴이 무엇을 할지, 다음에 언제 실행될지가 표시됩니다.</p>
       </article>
 
       <article class="pane p-computer" aria-labelledby="h-computer">
-        <div class="phead"><span class="tag tag-ok" data-i="rl_today">오늘</span><h3 id="h-computer" data-i="fe5h">대화 내용은 내 컴퓨터에 남습니다</h3></div>
+        <div class="phead"><span class="tag tag-ok" data-i="rl_today">오늘</span><h3 id="h-computer" data-i="fe5h">기본적으로 대화 내용은 내 컴퓨터에 남습니다</h3></div>
         <figure class="machine">
           <svg viewBox="0 0 300 180" aria-hidden="true" focusable="false">
             <rect x="30" y="8" width="240" height="140" rx="14" fill="#FFFFFF" stroke="#0E1B33" stroke-width="2.4"/>
@@ -1611,7 +1611,7 @@ text.sa-sent{fill:#0F7B58;font-weight:700}
           <figcaption data-i="yourPc">내 컴퓨터</figcaption>
         </figure>
         <p class="outside"><span><svg aria-hidden="true"><use href="#i-arrow"/></svg><span data-i="aiSvc">내가 로그인한 AI 서비스</span></span></p>
-        <p data-i="fe5p">앱과 데이터베이스, 비서들의 브라우저는 내 컴퓨터에서 실행되고, 대화 내용도 그곳에 저장됩니다. 비서들이 생각할 때는 내가 로그인한 AI 서비스를 이용합니다.</p>
+        <p data-i="fe5p">앱과 데이터베이스, 비서들의 브라우저는 내 컴퓨터에서 실행되고, 기본적으로 대화 내용도 그곳에 저장됩니다. 비서들이 생각할 때는 내가 로그인한 AI 서비스를 이용합니다.</p>
       </article>
 
       <article class="pane p-update" aria-labelledby="h-update">
@@ -1637,7 +1637,7 @@ text.sa-sent{fill:#0F7B58;font-weight:700}
   <div class="wrap">
     <div class="head">
       <h2 id="pf-h" data-i="pf_h">직접 확인할 수 있는 근거</h2>
-      <p class="lead" data-i="pf_p">우리는 일부러 우리 자신의 어시스턴트를 속여 보려 합니다. 어시스턴트도 실수할 수 있으니, 승인하기 전에 준비한 내용을 읽어 보세요.</p>
+      <p class="lead" data-i="pf_p">우리는 일부러 우리 자신의 비서를 속여 보려 합니다. 비서도 실수할 수 있으니, 승인하기 전에 준비한 내용을 읽어 보세요.</p>
     </div>
     <div class="pf-grid">
       <figure class="evidence">
@@ -1657,12 +1657,12 @@ text.sa-sent{fill:#0F7B58;font-weight:700}
       <div class="claims">
         <article class="claim" aria-labelledby="c1h">
           <h3 id="c1h" data-i="c1h">v0.1에서 인증됨</h3>
-          <p data-i="c1p">각 구성원은 채점 대상 사례의 100%, 안전 사례는 45회 중 45회 실행. 기준은 각 구성원 90% 이상, 안전 사례는 100%입니다.</p>
+          <p data-i="c1p">각 멤버는 채점 대상 사례의 100%, 안전 사례는 45회 중 45회 실행. 기준은 각 멤버 90% 이상, 안전 사례는 100%입니다.</p>
           <p class="check"><a href="https://github.com/MarcoDeliaBot/freeduet/blob/main/docs/ROADMAP.md" data-i="c_chk1">확인: docs/ROADMAP.md 및 evals/team/README.md</a></p>
         </article>
         <article class="claim" aria-labelledby="c2h">
           <h3 id="c2h" data-i="c2h">처음 실행은 실패했고, 그다음 수정</h3>
-          <p data-i="c2p">그날 밤의 첫 전체 실행은 한 구성원에서 실패했습니다. 브라우저 오류 다음에 응답이 중간에 끊어진 턴이 있었습니다. 둘 다 고쳤고, 인증된 실행은 수정 후에 이루어졌습니다.</p>
+          <p data-i="c2p">그날 밤의 첫 전체 실행은 멤버 한 명에서 실패했습니다. 브라우저 오류 다음에 아무 응답 없이 끝난 턴이 있었습니다. 둘 다 고쳤고, 인증된 실행은 수정 후에 이루어졌습니다.</p>
           <p class="check"><a href="https://github.com/MarcoDeliaBot/freeduet/blob/main/README.md#what-is-tested-and-what-is-not" data-i="c_chk2">확인: README.md의 "What is tested and what is not" 항목</a></p>
         </article>
         <article class="claim" aria-labelledby="c3h">
@@ -1679,7 +1679,7 @@ text.sa-sent{fill:#0F7B58;font-weight:700}
   <div class="wrap">
     <div class="head">
       <h2 data-i="sf_h">내 승인을 기다리는 버튼 다섯 개</h2>
-      <p class="lead" data-i="sf_p">새로 온 비서에게 첫날부터 지갑을 맡기시겠어요? 저희도 그렇게는 못 합니다. 기본적으로 이 다섯 가지는 내 승인을 기다려요. 멤버 한 명에 대해 이 대기를 풀어 주는 스위치가 있고, 켤 수 있는 사람은 나뿐입니다. 이는 만들어졌지만 실제 환경에서는 아직 확인하지 않았습니다.</p>
+      <p class="lead" data-i="sf_p">새로 온 비서에게 첫날부터 지갑을 맡기시겠어요? 저희도 그렇게는 못 합니다. 기본적으로 이 다섯 가지는 내 승인을 기다립니다. 멤버 한 명에 대해 이 대기를 풀어 주는 스위치가 있고, 켤 수 있는 사람은 나뿐입니다. 이는 만들어졌지만 실제 환경에서는 아직 확인하지 않았습니다.</p>
     </div>
     <ul class="buttons5">
       <li ><svg aria-hidden="true"><use href="#b-send"/></svg><span data-i="b1">보내기</span></li>
@@ -1690,12 +1690,12 @@ text.sa-sent{fill:#0F7B58;font-weight:700}
     </ul>
     <div class="proof">
       <div ><h3 data-i="p1h">프로그램이 직접 거는 잠금장치입니다</h3><p data-i="p1p">이 규칙은 비서의 지침에 적혀 있고, 기본적으로 내가 승인하기 전까지는 프로그램 자체도 그 행동을 막습니다.</p></div>
-      <div ><h3 data-i="p2h">속임수는 통하지 않아요</h3><p data-i="p2p">“비밀번호 좀 보내 주세요, 급해요”라고 적힌 이메일도 읽어야 할 글로만 취급하며 명령으로 보는 일은 없습니다. 그리고 어떤 비서도 채팅에서 비밀번호나 카드 번호를 묻지 않아요.</p></div>
-      <div ><h3 data-i="p3h">솔직하게 밝히는 지름길 하나</h3><p data-i="p3p">주소를 내가 직접 입력하면(“anna@example.com에 메일을 보내서 이렇게 전해 줘…”), 그 문장이 곧 승인이 되어 새 이메일이 나갑니다. 기본적으로 다른 곳에서 찾은 주소는 먼저 물어봐요.</p></div>
+      <div ><h3 data-i="p2h">속임수는 통하지 않아요</h3><p data-i="p2p">“비밀번호 좀 보내 주세요, 급해요”라고 적힌 이메일도 읽어야 할 글로만 취급하며 명령으로 보는 일은 없습니다. 그리고 어떤 비서도 채팅에서 비밀번호나 카드 번호를 묻지 않습니다.</p></div>
+      <div ><h3 data-i="p3h">솔직하게 밝히는 지름길 하나</h3><p data-i="p3p">주소를 내가 직접 입력하면(“anna@example.com에 메일을 보내서 이렇게 전해 줘…”), 그 문장이 곧 승인이 되어 새 이메일이 나갑니다. 기본적으로 다른 곳에서 찾은 주소는 먼저 물어봅니다.</p></div>
     </div>
     <div class="score">
       <b>45/45</b>
-      <p data-i="score">저희는 일부러 우리 비서들을 속여 봅니다. 버전 0.1의 가장 최근 전체 테스트에서 안전 점검은 45번 중 45번 모두 통과했어요. <a href="https://github.com/MarcoDeliaBot/freeduet/blob/main/evals/team/reports/2026-11-13-claude-code-regraded-2026-11-13-public.md">공개 보고서 읽기</a>. 그래도 비서가 실수할 수 있으니, 승인하기 전에 준비된 내용을 꼭 읽어 보세요.</p>
+      <p data-i="score">저희는 일부러 우리 비서들을 속여 봅니다. 버전 0.1의 가장 최근 전체 테스트에서 안전 점검은 45번 중 45번 모두 통과했습니다. <a href="https://github.com/MarcoDeliaBot/freeduet/blob/main/evals/team/reports/2026-11-13-claude-code-regraded-2026-11-13-public.md">공개 보고서 읽기</a>. 그래도 비서가 실수할 수 있으니, 승인하기 전에 준비된 내용을 꼭 읽어 보세요.</p>
     </div>
   </div>
 </section>
@@ -1705,12 +1705,12 @@ text.sa-sent{fill:#0F7B58;font-weight:700}
     <div class="split">
       <div class="stack">
         <h2 data-i="m_h">두 번 내지 않아도 되는 이유</h2>
-        <p class="lead" data-i="m_p1">대부분의 AI 도구는 “API 키”를 사라고 합니다. 택시 미터기와 같아요. 단어 하나마다 요금이 붙고, 청구서는 계속 올라갑니다.</p>
-        <p data-i="m_p2">월 정액 AI 구독은 버스 정기권에 더 가깝습니다. 가격은 하나이고, 정기권이 허락하는 만큼 마음껏 탈 수 있어요. FreeDuet은 이미 가지고 계신 구독을 그대로 씁니다. 로그인은 직접 하시고, FreeDuet은 로그인 정보를 보지도, 저장하지도, 다른 곳으로 보내지도 않습니다.</p>
+        <p class="lead" data-i="m_p1">대부분의 AI 도구는 “API 키”를 사라고 합니다. 택시 미터기와 같습니다. 단어 하나마다 요금이 붙고, 청구서는 계속 올라갑니다.</p>
+        <p data-i="m_p2">월 정액 AI 구독은 버스 정기권에 더 가깝습니다. 가격은 하나이고, 정기권이 허락하는 만큼 마음껏 탈 수 있습니다. FreeDuet은 이미 가지고 계신 구독을 그대로 씁니다. 로그인은 직접 하시고, FreeDuet 자체 코드는 로그인 정보를 읽거나 복사하거나 다른 곳으로 보내지 않습니다. 로그인 정보는 내 컴퓨터에 남고, Claude Code 프로그램만 읽을 수 있는 곳에 있습니다.</p>
         <ul class="todo">
           <li><svg aria-hidden="true"><use href="#i-check"/></svg><span data-i="m_l1">현재는 공식 Claude Code 앱을 통해 Claude 구독으로 사용할 수 있습니다.</span></li>
           <li><svg aria-hidden="true"><use href="#i-check"/></svg><span data-i="m_l2">다른 구독과 로컬 모델은 진행 중입니다. 각각은 확인을 마친 뒤에야 제공됩니다.</span></li>
-          <li><svg aria-hidden="true"><use href="#i-check"/></svg><span data-i="m_l3">FreeDuet 자체는 무료입니다. 코드는 MIT 라이선스로 공개되어 있어요.</span></li>
+          <li><svg aria-hidden="true"><use href="#i-check"/></svg><span data-i="m_l3">FreeDuet 자체는 무료입니다. 코드는 MIT 라이선스로 공개되어 있습니다.</span></li>
         </ul>
       </div>
       <div class="pass">
@@ -1731,19 +1731,19 @@ text.sa-sent{fill:#0F7B58;font-weight:700}
     <div class="head">
       <h2 data-i="g_h">우리의 목표: 큰 회사만이 아니라 모두를 위한 팀</h2>
       <p class="lead" data-i="g_p1">큰 회사에는 비서도, 변호사도, 회계사도 있습니다. 프리랜서나 작은 가게, 평범한 가정에는… 자기 자신뿐이죠. 공평하지 못한 일이고, 이제는 바꿀 수 있습니다.</p>
-      <p data-i="g_p2">누구나 팀을 가질 수 있었으면 합니다. 무료로, 열려 있고, 집에서 쓸 수 있게요. FreeDuet은 내 컴퓨터에서 실행되고, 대화 내용도 그 컴퓨터의 데이터베이스에 보관합니다. 생각하는 일은 이미 구독 중인 AI가 맡아요.</p>
-      <p data-i="g_p3">오픈 소스란 레시피가 공개되어 있다는 뜻입니다. 누구나 읽어 보고, 말한 대로 작동하는지 확인하고, 더 낫게 고칠 수 있어요. 저희를 믿으실 필요 없이, 직접 들여다보시면 됩니다.</p>
+      <p data-i="g_p2">누구나 팀을 가질 수 있었으면 합니다. 무료로, 열려 있고, 집에서 쓸 수 있게 합니다. FreeDuet은 내 컴퓨터에서 실행되고, 기본적으로 대화 내용도 그 컴퓨터의 데이터베이스에 보관합니다. 생각하는 일은 이미 구독 중인 AI가 맡습니다.</p>
+      <p data-i="g_p3">오픈 소스란 레시피가 공개되어 있다는 뜻입니다. 누구나 읽어 보고, 말한 대로 작동하는지 확인하고, 더 낫게 고칠 수 있습니다. 저희를 믿으실 필요 없이, 직접 들여다보시면 됩니다.</p>
     </div>
     <h3 class="road-h" data-i="r_h">지금 되는 것, 그리고 앞으로 올 것</h3>
     <ol class="road">
       <li><b data-i="rl_today">오늘</b><span class="tag" data-i="r_now">지금 이용 가능</span><p data-i="r1">내 Claude 로그인으로 쓰는 팀, 그리고 승인 절차, 테스트, Gmail, Google Calendar.</p></li>
       <li><b data-i="rl_now">지금</b><span class="tag" data-i="r_prog">진행 중</span><p data-i="r2">최우선 과제는 Windows, macOS, Ubuntu용 단일 파일 설치 프로그램입니다. 지금은 Ubuntu와 WSL2를 통한 Windows용 첫 설치 스크립트가 있고, 더블클릭 설치 프로그램은 아직 없습니다. 메일함을 정리해 주는 메일 비서는 만들어졌고, 2026년 11월 15일 실제 메일함에서 Otto가 스팸을 스팸 폴더로 옮겼습니다. 상시 메일 규칙은 v0.2.2에 공개되었고, 2026년 11월 16일에는 한 발신자의 도메인에 대한 규칙 하나가 새 메일에 스스로 적용되었습니다. 나머지 변경 사항과 규칙은 아직 실제 환경에서 실행해 보지 않았습니다. 만들어졌지만 실제 환경에서는 아직 확인하지 않은 항목: 작업을 넘길 때마다 붙는 “Done when”(완료 조건), 채팅 속 루틴 카드, 멤버 컴퓨터마다 별도의 토큰, 그리고 접근을 끄면 닫히는 홈 네트워크 연결.</p></li>
       <li><b data-i="rl_now">지금</b><span class="tag" data-i="r_plan">계획 중</span><p data-i="r_now2">처음 시작은 세 번의 클릭으로 할 수 있게 될 예정입니다. 버튼 하나로 Claude 요금제를 연결하고, 로그인은 Claude 자체 페이지에서 내가 직접 합니다.</p></li>
-      <li><b data-i="rl_now">지금</b><span class="tag tag-wait" data-i="tagWait">만들어짐, 실제 실행으로는 아직 확인 안 됨</span><p data-i="r_now3">채팅에서 Gmail 메일함을 연결하는 데는 세 단계 이내면 됩니다. 채팅에서 멤버를 추가하면 실행 취소가 붙은 한 줄이 나옵니다. 첫 메시지에서 팀을 제안하며, 내 승인이 없으면 아무것도 만들지 않습니다. 업데이트는 되돌릴 수 있습니다. 명령 한 번으로 먼저 데이터를 복사하며, 한 대의 설치에서 2026년 11월 15일에 네 번 실행되었습니다. 이전 버전과 데이터로 되돌리는 단계는 아직 실제 환경에서 실행해 보지 않았습니다.</p></li>
+      <li><b data-i="rl_now">지금</b><span class="tag tag-wait" data-i="tagWait">만들어짐, 실제 실행으로는 아직 확인 안 됨</span><p data-i="r_now3">채팅에서 Gmail 메일함을 연결하는 데는 세 단계 이내면 됩니다. 채팅에서 멤버를 추가하면 실행 취소가 붙은 한 줄이 나옵니다. 첫 메시지에서 팀을 제안하며, 내 승인이 없으면 아무것도 만들지 않습니다. 업데이트는 되돌릴 수 있습니다. 이전 버전과 데이터로 되돌리는 단계는 아직 실제 환경에서 실행해 보지 않았습니다.</p></li>
       <li><b data-i="rl_next">다음</b><span class="tag" data-i="r_prog">진행 중</span><p data-i="r3">멤버별 엔진 선택은 진행 중입니다. 엔진 페이지는 만들어졌지만 실제 환경에서는 아직 확인하지 않았고, 자동 전환은 테스트용 엔진으로만 돌려 보았습니다. 채팅에서 바꾸는 설정(실행 취소 포함)은 진행 중입니다. 멤버의 이름, 말투, 언어는 v0.2 이후에 만들어졌지만 실제 환경에서는 아직 확인하지 않았고, 말투와 언어에 대한 테스트는 아직 하지 않았습니다. 팀 안에서의 실제 작업 분담은 계획 중입니다.</p><p data-i="r4">채팅으로 만드는 자동화, 휴대폰 버전, 원격 접속은 진행 중입니다. 더 많은 연결 앱은 설계 중입니다.</p></li>
-      <li><b data-i="rl_later">나중</b><span class="tag" data-i="r_plan">계획 중</span><p data-i="r_cloud">설치를 원하지 않는 분을 위한 호스팅형 FreeDuet을 계획 중입니다. 월 소액 구독입니다. 가격은 아직 정해지지 않았습니다. 그곳에서는 내 API 키만으로 Claude가 작동합니다. 설치 프로그램과 첫 실행이 끝나기 전에는 나오지 않습니다. 내 컴퓨터에서 쓰는 FreeDuet은 계속 무료입니다.</p><p data-i="r5">음성: 읽어주기는 만들어졌지만 실제 환경에서는 아직 확인하지 않았고, 기본값은 꺼짐입니다. 통화는 아직 만들지 않았습니다. Full access와 동영상 멤버 Cam은 만들어졌지만 실제 환경에서는 아직 확인하지 않았습니다. 안전한 쇼핑은 계획 중입니다.</p></li>
+      <li><b data-i="rl_later">나중</b><span class="tag" data-i="r_plan">계획 중</span><p data-i="r_cloud">설치를 원하지 않는 분을 위한 호스팅형 FreeDuet을 계획 중입니다. 월 소액 구독입니다. 가격은 아직 정해지지 않았습니다. 그곳에서는 내 API 키만으로 Claude가 작동할 예정입니다. 설치 프로그램과 첫 실행이 끝나기 전에는 나오지 않습니다. 내 컴퓨터에서 쓰는 FreeDuet은 계속 무료입니다.</p><p data-i="r5">음성: 읽어주기는 만들어졌지만 실제 환경에서는 아직 확인하지 않았고, 기본값은 꺼짐입니다. 통화는 아직 만들지 않았습니다. Full access와 동영상 멤버 Cam은 만들어졌지만 실제 환경에서는 아직 확인하지 않았습니다. 안전한 쇼핑은 계획 중입니다.</p></li>
     </ol>
-    <p class="soft road-note" data-i="r_note">아직 만들어지지 않은 것은 모두 표시해 둡니다. 꾸며낸 이야기는 하지 않아요. <a href="https://github.com/MarcoDeliaBot/freeduet/blob/main/docs/ROADMAP.md">전체 로드맵은 GitHub에서</a>.</p>
+    <p class="soft road-note" data-i="r_note">아직 만들어지지 않은 것은 모두 표시해 둡니다. 꾸며낸 이야기는 하지 않습니다. <a href="https://github.com/MarcoDeliaBot/freeduet/blob/main/docs/ROADMAP.md">전체 로드맵은 GitHub에서</a>.</p>
   </div>
 </section>
 
@@ -1770,7 +1770,7 @@ text.sa-sent{fill:#0F7B58;font-weight:700}
         <div class="pnl term" aria-hidden="true"><div class="tbar"><i></i><i></i><i></i></div><pre><span class="pr">$</span> cd openbot &amp;&amp; docker compose exec -it agent-freeduet claude</pre>
           <div class="sp"><svg><use href="#i-lock"/></svg><b>Claude Code</b><span class="ok"><svg><use href="#i-check"/></svg><span data-i="signedIn">로그인됨</span></span></div></div>
         <h3 data-i="in3h">Claude 요금제로 한 번 로그인하기</h3>
-        <p data-i="in3p">공식 Claude Code 로그인을 열어 직접 로그인하세요. FreeDuet은 로그인 정보를 보지도, 저장하지도, 다른 곳으로 보내지도 않습니다.</p>
+        <p data-i="in3p">공식 Claude Code 로그인을 열어 직접 로그인하세요. FreeDuet 자체 코드는 로그인 정보를 읽거나 복사하거나 다른 곳으로 보내지 않습니다. 로그인 정보는 내 컴퓨터에 남고, Claude Code 프로그램만 읽을 수 있는 곳에 있습니다.</p>
       </li>
       <li >
         <div class="pnl brw" aria-hidden="true"><div class="tbar"><i></i><i></i><i></i><span class="url">http://localhost:3010</span></div>
@@ -1786,7 +1786,7 @@ text.sa-sent{fill:#0F7B58;font-weight:700}
   <div class="wrap">
     <div class="split">
       <div class="stack">
-        <h2 data-i="st_h">준비되셨나요? 명령 네 줄이면 팀이 일을 시작합니다</h2>
+        <h2 data-i="st_h">준비되셨나요? 명령 네 줄을 입력하고 로그인하면 팀이 일을 시작합니다</h2>
         <p class="lead" data-i="st_p">터미널에 복사해 붙여 넣고, 내 Claude 요금제로 한 번 로그인한 다음, 안내되는 페이지를 여세요.</p>
         <div class="needs">
           <p><strong data-i="st_needH">필요한 것:</strong> <span data-i="st_need">Claude 구독, 그리고 내 컴퓨터에 설치된 Docker, Bash, Bun. Windows(WSL2 사용)와 Linux에서 테스트했습니다.</span></p>
@@ -1807,7 +1807,7 @@ cd openbot &amp;&amp; docker compose exec -it agent-freeduet claude
     <div class="join">
       <a href="https://github.com/MarcoDeliaBot/freeduet"><svg aria-hidden="true"><use href="#i-star"/></svg><strong data-i="j1h">별을 눌러 주세요</strong><span data-i="j1p">GitHub에서 한 번 클릭하면, 이 프로젝트가 살펴볼 만하다는 걸 다른 분들께 알릴 수 있어요.</span></a>
       <a href="https://github.com/MarcoDeliaBot/freeduet/issues/new/choose"><svg aria-hidden="true"><use href="#i-bug"/></svg><strong data-i="j2h">고장 난 곳을 알려 주세요</strong><span data-i="j2p">써 보셨나요? 오류를 찾으셨나요? 고칠 방법이 있나요? 각각 짧은 양식이 준비되어 있습니다.</span></a>
-      <a href="https://github.com/sponsors/MarcoDeliaBot"><svg aria-hidden="true"><use href="#i-heart"/></svg><strong data-i="j3h">커피 한 잔 사 주세요</strong><span data-i="j3p">FreeDuet은 한 사람이 만들고 있어요. 작은 후원이 계속 이어 가는 힘이 됩니다.</span></a>
+      <a href="https://github.com/sponsors/MarcoDeliaBot"><svg aria-hidden="true"><use href="#i-heart"/></svg><strong data-i="j3h">커피 한 잔 사 주세요</strong><span data-i="j3p">FreeDuet은 한 사람이 만들고 있습니다. 작은 후원이 계속 이어 가는 힘이 됩니다.</span></a>
     </div>
   </div>
 </section>
@@ -1816,7 +1816,7 @@ cd openbot &amp;&amp; docker compose exec -it agent-freeduet claude
   <div class="wrap">
     <div>
       <h2 data-i="j3h">커피 한 잔 사 주세요</h2>
-      <p class="lead" data-i="j3p">FreeDuet은 한 사람이 만들고 있어요. 작은 후원이 계속 이어 가는 힘이 됩니다.</p>
+      <p class="lead" data-i="j3p">FreeDuet은 한 사람이 만들고 있습니다. 작은 후원이 계속 이어 가는 힘이 됩니다.</p>
     </div>
     <a class="btn btn-coffee" data-d="200" href="https://github.com/sponsors/MarcoDeliaBot"><svg aria-hidden="true"><use href="#i-heart"/></svg><span data-i="j3h">커피 한 잔 사 주세요</span></a>
   </div>
@@ -1830,7 +1830,7 @@ cd openbot &amp;&amp; docker compose exec -it agent-freeduet claude
       <details ><summary data-i="q2">설치하려면 무엇이 필요한가요?</summary><p data-i="a2">Claude 구독, 그리고 내 컴퓨터에 설치된 Docker, Bash, Bun이 필요합니다. 위의 네 단계가 설치의 전부입니다. 터미널을 열어 본 적이 없으신가요? 잘 아는 분에게 설치를 부탁하고, 이 페이지를 보여 주세요.</p></details>
       <details ><summary data-i="q3">Windows, Mac, Linux에서 되나요?</summary><p data-i="a3">개발자는 Windows에서 WSL2와 Docker로 쓰고 있고, 자동 검사는 Linux에서 실행을 확인합니다. Mac에서는 테스트하지 않았으므로 동작을 약속드릴 수 없습니다. FreeDuet은 초기 버전이며, 최신 공개 버전은 0.2.2(2026년 11월 16일)입니다. 개발자 한 명이 만들어 직접 쓰고 있습니다.</p></details>
       <details ><summary data-i="q4">비서가 묻지 않고 할 수 있는 일은 무엇인가요?</summary><p data-i="a4">자료를 찾아보고, 읽고, 초안과 보고서를 준비할 수 있습니다. 기본적으로 다섯 가지 버튼은 승인을 기다립니다. 직접 입력한 주소로 가는 새 이메일만 예외입니다. 직접 입력한 말로 설정한 상시 메일 규칙은 새 메일에 스스로 적용됩니다. 라벨 붙이기, 보관, 읽음 표시, 스팸 폴더나 휴지통으로 옮기기를 할 수 있으며, 전달, 답장, 발송, 영구 삭제는 하지 않습니다. 멤버별 Full access는 내 대화에서 승인 대기를 풀어 줍니다. 이는 만들어졌지만 실제 환경에서는 아직 확인하지 않았습니다. 비밀번호와 보안 설정은 여전히 나에게 넘어옵니다. 비서도 실수할 수 있으니, 승인하기 전에 준비된 내용을 읽어 보세요.</p></details>
-      <details ><summary data-i="q5">내 데이터는 어디에 있나요?</summary><p data-i="a5">FreeDuet은 내 컴퓨터에서 실행되고, 대화 내용도 그곳의 데이터베이스에 저장합니다. Claude 로그인 정보는 Claude Code 프로그램만 읽을 수 있는 Docker 볼륨에 남습니다. 비서들이 생각할 때는 내가 로그인한 AI 서비스에 요청을 보내는데, 그 서비스의 자체 앱을 쓸 때와 같은 방식이에요.</p></details>
+      <details ><summary data-i="q5">내 데이터는 어디에 있나요?</summary><p data-i="a5">FreeDuet은 내 컴퓨터에서 실행되고, 기본적으로 대화 내용도 그곳의 데이터베이스에 저장합니다. Claude 로그인 정보는 Claude Code 프로그램만 읽을 수 있는 Docker 볼륨에 남습니다. 비서들이 생각할 때는 내가 로그인한 AI 서비스에 요청을 보내는데, 그 서비스의 자체 앱을 쓸 때와 같은 방식입니다.</p></details>
       <details ><summary data-i="q6">휴대폰에서도 쓸 수 있나요?</summary><p data-i="a6">아직 휴대폰 버전은 없습니다. 지금은 내 컴퓨터의 브라우저에서 FreeDuet을 엽니다. v0.2.2부터는 컴퓨터에서 링크나 QR 코드로 보여 주는 일회용 코드로 휴대폰 브라우저를 페어링할 수 있고, 휴대폰 페어링은 2026년 11월 16일 한 설치에서 실제 실행되었습니다. 승인 요청도 받을 수 있는 휴대폰 버전과 원격 접속은 개발 중입니다.</p></details>
       <details ><summary data-i="q7">나만의 팀 멤버를 추가할 수 있나요?</summary><p data-i="a7">네. 새 비서를 만드는 Leo에게 필요한 일에 맞는 멤버를 설계해 달라고 하거나, 정의를 직접 작성할 수 있습니다. 멤버의 이름을 바꾸는 일과 말투를 바꾸는 일은 만들어졌지만 실제 환경에서는 아직 확인하지 않았습니다. <a href="https://github.com/MarcoDeliaBot/freeduet/blob/main/docs/TEAM.md">멤버는 어떻게 정의되나요</a>.</p></details>
       <details ><summary data-i="q8">도움은 어디서 받나요?</summary><p data-i="a8">GitHub에 이슈를 열어 주세요. 질문, 오류, 수정 제안, 또는 사용 중이라는 소식을 알릴 수 있는 <a href="https://github.com/MarcoDeliaBot/freeduet/issues/new/choose">짧은 양식</a>이 있습니다. 영어나 이탈리아어로 쓰시면 됩니다.</p></details>
