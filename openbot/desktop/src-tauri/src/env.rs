@@ -985,6 +985,41 @@ fn usable(key: &str, value: &str) -> bool {
 /// overwrites a choice somebody already made in the file.
 const DEFAULT_ONLY: [&str; 1] = ["FREEDUET_INTELLIGENCE"];
 
+/// What `bun --env-file` (which starts the server, `stack.rs`) reads for `name` in this file, or `None`
+/// when no line sets it. Read the way Bun reads it, checked against Bun itself: an optional leading
+/// `export` and whitespace around the key, the last assignment wins, a quoted value ends at its closing
+/// quote (an unterminated one is taken as written), an unquoted value ends at the first `#`, and the key
+/// is case-sensitive. The result is trimmed, as the server trims the switch.
+fn value_bun_reads(existing: &str, name: &str) -> Option<String> {
+    let mut found = None;
+    for line in existing.lines() {
+        let line = line.trim_start();
+        if line.starts_with('#') {
+            continue;
+        }
+        let line = match line.strip_prefix("export") {
+            Some(rest) if rest.starts_with(char::is_whitespace) => rest.trim_start(),
+            _ => line,
+        };
+        let Some((key, raw)) = line.split_once('=') else {
+            continue;
+        };
+        if key.trim() != name {
+            continue;
+        }
+        let raw = raw.trim();
+        let value = match raw.chars().next() {
+            Some(quote @ ('"' | '\'' | '`')) => match raw[1..].find(quote) {
+                Some(end) => &raw[1..1 + end],
+                None => raw,
+            },
+            _ => raw.split('#').next().unwrap_or(""),
+        };
+        found = Some(value.trim().to_string());
+    }
+    found
+}
+
 fn carried(existing: &str) -> BTreeMap<String, String> {
     let mut found = BTreeMap::new();
     for line in existing.lines() {
@@ -1157,20 +1192,14 @@ pub fn write(
         }
     };
     let carried = carried(&existing);
-    // D65: the keys this writes only when the file has no value for them. A value the person (or a
-    // typo) put there is kept as it is, so `off` stays `off` and a misspelling reaches the server,
-    // which refuses it. Empty or whitespace counts as no value.
+    // D65: the keys this writes only when the file has no value for them, in any form the server would
+    // read (`value_bun_reads`). A value the person (or a typo) put there is kept as it is, so `off`
+    // stays `off` and a misspelling reaches the server, which refuses it. Empty, blank or only a
+    // comment counts as no value.
     let held: Vec<&str> = DEFAULT_ONLY
         .iter()
         .copied()
-        .filter(|name| {
-            existing.lines().any(|line| {
-                !line.trim_start().starts_with('#')
-                    && line
-                        .split_once('=')
-                        .is_some_and(|(key, value)| key.trim() == *name && !value.trim().is_empty())
-            })
-        })
+        .filter(|name| value_bun_reads(&existing, name).is_some_and(|value| !value.is_empty()))
         .collect();
     let mut out = String::new();
 
@@ -1182,11 +1211,7 @@ pub fn write(
             continue;
         }
         let key = line.split('=').next().unwrap_or("").trim();
-        let held_line = held.contains(&key)
-            && line
-                .split_once('=')
-                .is_some_and(|(_, value)| !value.trim().is_empty());
-        let ours = !held_line && (owned.contains_key(key) || purge.contains_key(key));
+        let ours = !held.contains(&key) && (owned.contains_key(key) || purge.contains_key(key));
         if key.is_empty() || line.trim_start().starts_with('#') || !ours {
             out.push_str(line);
             out.push('\n');
@@ -1891,6 +1916,71 @@ HTTPS_PROXY=http://proxy:8080
     fn a_hand_written_on_stays_on_once() {
         let text = written_over("FREEDUET_INTELLIGENCE=on\n", 2);
         assert_eq!(switch_lines(&text), ["FREEDUET_INTELLIGENCE=on"]);
+    }
+
+    #[test]
+    fn every_form_bun_reads_as_a_value_is_kept_and_nothing_is_added() {
+        for line in [
+            "export FREEDUET_INTELLIGENCE=off",
+            "export   FREEDUET_INTELLIGENCE=off",
+            "export\tFREEDUET_INTELLIGENCE=off",
+            "FREEDUET_INTELLIGENCE = off",
+            "FREEDUET_INTELLIGENCE=\"off\"",
+            "FREEDUET_INTELLIGENCE='off'",
+            "  FREEDUET_INTELLIGENCE=off",
+            "\tFREEDUET_INTELLIGENCE=off",
+            "FREEDUET_INTELLIGENCE=off # a comment",
+            "FREEDUET_INTELLIGENCE=off#x",
+            "FREEDUET_INTELLIGENCE=\"off",
+            "FREEDUET_INTELLIGENCE=of",
+        ] {
+            let existing = format!("{line}\n");
+            for times in [1, 2] {
+                let text = written_over(&existing, times);
+                assert_eq!(
+                    text.lines()
+                        .filter(|l| l.contains("FREEDUET_INTELLIGENCE"))
+                        .collect::<Vec<_>>(),
+                    [line],
+                    "{line:?} after {times} write(s)"
+                );
+            }
+        }
+    }
+
+    #[test]
+    fn a_form_bun_reads_as_empty_gets_on_and_is_stable() {
+        for line in [
+            "FREEDUET_INTELLIGENCE=\"\"",
+            "FREEDUET_INTELLIGENCE=''",
+            "FREEDUET_INTELLIGENCE=# x",
+            "FREEDUET_INTELLIGENCE=\" \"",
+            "FREEDUET_INTELLIGENCE=   # c",
+        ] {
+            let once = written_over(&format!("{line}\n"), 1);
+            assert_eq!(
+                switch_lines(&once),
+                ["FREEDUET_INTELLIGENCE=on"],
+                "{line:?}"
+            );
+            let twice = written_over(&format!("{line}\n"), 2);
+            assert_eq!(twice, once, "{line:?} is stable");
+        }
+    }
+
+    #[test]
+    fn the_last_assignment_decides_as_in_bun() {
+        let kept = written_over("FREEDUET_INTELLIGENCE=\nFREEDUET_INTELLIGENCE=off\n", 1);
+        assert!(!kept.contains("FREEDUET_INTELLIGENCE=on"));
+        let rewritten = written_over("FREEDUET_INTELLIGENCE=off\nFREEDUET_INTELLIGENCE=\n", 1);
+        assert_eq!(switch_lines(&rewritten), ["FREEDUET_INTELLIGENCE=on"]);
+    }
+
+    #[test]
+    fn another_case_is_another_key_for_bun_so_on_is_written() {
+        let text = written_over("freeduet_intelligence=off\n", 1);
+        assert!(text.contains("freeduet_intelligence=off"));
+        assert!(text.contains("FREEDUET_INTELLIGENCE=on"));
     }
 
     #[test]
