@@ -15,7 +15,7 @@ Read these before changing anything:
 | File | What it holds |
 |---|---|
 | `docs/PROJECT.md` | Goals, rules, milestones M0–M5 |
-| `docs/M1_PLAN.md` | Every decision, numbered from D1 upward, with its reason and limits; there is no D23, and D53 is in `docs/design/mail-organise.md`. The highest number is found with the command below this table |
+| `docs/M1_PLAN.md` | Every decision, numbered from D1 upward, with its reason and limits; there is no D23, and D53 is in `docs/design/mail-organise.md`. The highest number is found with the command below this table, and open pull requests may add more |
 | `docs/UPSTREAM_TOUCHES.md` | Every upstream OpenBot file FreeDuet changed, and why. Add a row for each new one |
 | `docs/PROVIDERS.md` | Which engines are allowed and why (logins first) |
 | `NOTICE.md` | Third-party code we carry and its licence |
@@ -331,7 +331,7 @@ Mark (id `marketer`) was the first member added after v0.1, Cam (id `video`) the
   returns `undefined`, upstream's Intelligence contract, only for `on`. The server has no default: the
   install files write the line (`openbot/.env.example:382` is `off`, `openbot/scripts/start.sh:301-308`
   writes `off` when it is missing, `on` when `INTELLIGENCE_API_URL`, `INTELLIGENCE_GATEWAY_WS_URL` and
-  `INTELLIGENCE_API_KEY` are all set), the Helm chart writes `on`, and the desktop app writes `off` when its `.env` holds no value (D67; a value the person wrote stays, `on` included). A test or a
+  `INTELLIGENCE_API_KEY` are all set), the Helm chart writes `on` unless `config.extraEnv` names the switch, and the desktop app writes `off` when its `.env` holds no value (D67; a value the person wrote stays, `on` included). A test or a
   script that starts the server or calls `loadConfig` must say `on` or `off` itself
   (`server/tests/support/environment.ts` says `on`).
 - The desktop app runs the upstream example package, not the FreeDuet team: `openbot/desktop/src-tauri/src/env.rs:790` sets `TENANT_PACKAGE_DIR` to `../examples/fintech`, and `openbot/desktop/src-tauri/src/stack.rs:25` and `:84-95` start no `agent-freeduet`. So D65 and D67 on the desktop decide where conversations are kept, not what the members do (D67, `docs/M1_PLAN.md`, 17 November 2026).
@@ -364,7 +364,14 @@ Mark (id `marketer`) was the first member added after v0.1, Cam (id `video`) the
   slide with product links are off. The credit to the upstream authors stays.
 - A card raised inside a hand-off is also drawn in the conversation that asked (D52). The chat takes it from the
   person's approval inbox, where `askedIn` names the conversation that asked. One request, one decision route.
-- A picture attached in chat reaches `agent-freeduet` as a base64 `image` part (`resolvePart` in `openbot/server/src/channels/attachment-parts.ts`). `_part_text` in `openbot/agent-freeduet/freeduet/transcript.py` turns that part into a note that says the picture was attached and that the member cannot see it, and it never passes the picture's bytes on: no picture reaches the engine in this version (16–17 November 2026).
+- A picture attached in chat reaches `agent-freeduet` as a base64 `image` part (`resolvePart` in
+  `openbot/server/src/channels/attachment-parts.ts`). Since D72 (`docs/M1_PLAN.md`, section 51), a picture
+  in the person's latest message goes to the Claude CLI engine on stdin as base64, with
+  `--input-format stream-json` (`openbot/agent-freeduet/freeduet/claude_engine.py`, `transcript.py`). At
+  most 20 pictures, 5 MiB each and 10 MiB per turn are sent. Older pictures, the compatible engine and
+  hand-offs keep the D68 note from `_part_text`, which says the member cannot see the picture.
+  `FREEDUET_PICTURES=off` sends no picture. The full flag combination of a member's segment is not run
+  live (17 November 2026).
 - What decides whether a card was due: a call the gate allows by a personal rule, by the auto-review model or by Full access writes an `approval.evaluated` row in `audit_events`, and no `approval_requests` row (`openbot/server/src/approvals/store.ts:545`; the allow returns at `openbot/server/src/approvals/service.ts:528`, before `store.open` at `service.ts:550`). An allow that is only the default writes no row at all (`service.ts:396`). So "no card appeared" is not evidence that a tool was not called (16–17 November 2026).
 - In the app's chat, a member's next turn is built from the messages the app sends with the request (`openbot/server/src/copilot.ts:1435`, `sanitizeSeededHistory` over `input.messages`), not from the stored thread, so what the screen does not hold, the member does not see (16–17 November 2026). A headless turn, such as a routine, loads the stored thread instead (`openbot/toolkit/src/run-turn.ts:741`).
 
