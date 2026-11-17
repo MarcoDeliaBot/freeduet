@@ -65,7 +65,8 @@ describe("a pairing and its session", () => {
     await service.observeSession(withCookie(made.setCookie), async () => {
       throw new Error("lookup failed");
     });
-    expect(store.rows.get(made.id)?.sessionId).toBeUndefined();
+    expect(store.rows.get(made.id)).toMatchObject({ label: "Phone" });
+    expect(store.rows.get(made.id)).not.toHaveProperty("sessionId");
   });
 
   test("a revoke ends the session on the pairing, except the revoking browser's own", async () => {
