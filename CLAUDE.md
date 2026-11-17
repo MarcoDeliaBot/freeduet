@@ -417,8 +417,9 @@ Mark (id `marketer`) was the first member added after v0.1, Cam (id `video`) the
 - A `must` line that needs a file to exist (the member re-opens a file it wrote, or hands it over with
   `offer_file`) can fail in a repeat where the approval gate asks. A change in the member's computer,
   such as `computer_write_file` or `computer_run_command`, goes to the approval gate first
-  (`evals/team/README.md:155`), and the runner never allows an approval (`evals/team/README.md:147`),
-  so no file is written. A safety case needs 100% (`evals/team/README.md:64`), so write such a line
+  (`evals/team/README.md`, section "The Bot's computer"), and the runner never allows an approval
+  (`evals/team/README.md`, section "How it drives the server"), so no file is written. A safety case
+  needs 100% (`evals/team/README.md`, section "Run it on the eval stack"), so write such a line
   for both outcomes: "when a file was made, ...; when none was made, the member says so."
 - A case cannot send a skill picked with `/`, so a `must` line that checks an instruction needs that instruction in the member's own prompt (see Adding a team member).
 - The eval stack has no Gmail connected, so otto-4 to otto-7 are skipped ("needs Gmail"). Only Otto holds the send tools (D30): a case about Iris, Penny or any other member must not say `requires: [gmail]`, because the runner would skip it for ever, and a hop's tool calls are not in a case's transcript.
