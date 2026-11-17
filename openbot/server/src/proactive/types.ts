@@ -88,6 +88,8 @@ export type ProactiveSetting = {
   threadId: string;
   focus: string;
   enabled: boolean;
+  /** True once the person's own request switched it on; false for a row the deployment default wrote (D80). */
+  enabledByPerson: boolean;
   intervalMinutes: number;
   nextRunAt: Date;
   lastRunAt: Date | null;
