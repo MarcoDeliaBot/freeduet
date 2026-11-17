@@ -6,7 +6,7 @@ FreeDuet has three layers of help.
 |---|---|---|
 | **Starter team** | Iris and eleven members everyone needs: Iris, Vera, Leo, Otto, Portia, Penny, Jules, Wren, Gus, Basil, and Mark, the marketer, and Cam, the video maker, the first members added after v0.1 ([TEAM.md](TEAM.md)) | Always |
 | **Packs** | Specialists for particular jobs, installed with one request to Leo | When the person needs them |
-| **Assistants** | Light helpers every member calls for small jobs, on free models | Always, if a free engine is available |
+| **Assistants** | Light helpers for small jobs, on free models. No member can call one yet; today they serve only the server's own short calls | Always, if a free engine is available |
 
 **Rule: reuse before building.** A new member is written only when no starter member, pack member or ready-made profile already does the job. Leo checks this catalogue, the person's own skills and ready-made libraries such as [The Agency](https://github.com/msitarzewski/agency-agents) (MIT) first, adapts what exists, adds FreeDuet's shared rules and tests, and credits the source.
 
@@ -53,16 +53,16 @@ These are design choices to keep people safe and within the law. They are not le
 
 ## Assistants
 
-Light helpers that any member calls for small, low-risk jobs, so the members' subscription limits go to the work that matters.
+Light helpers for small, low-risk jobs. No member can call one yet, because no assistant tool is built. Today they serve only the server's own short calls (titles, routing, tool selection, triage, voice summaries), and those calls fall back to the person's subscription login when no free engine answers.
 
 | | |
 |---|---|
 | **Jobs** | Summarise, extract, classify, translate, reformat, proofread, write variants, tag |
-| **Engines** | Free only: local models (Ollama, LM Studio) and free model routes. Never a subscription's limits, never a metered API |
+| **Engines** | Free only in the assistant chain: local models (Ollama, LM Studio) and free model routes, never a metered API. The server's own short calls (titles, routing, tool selection, triage, voice summaries) try those free engines first, then the person's subscription logins (`server_calls.py:317-323`). The shipped defaults enable no free engine (`engines.example.yaml`), so with them those calls run on the subscription login. Auto-review and unknown calls never use an assistant. |
 | **Powers** | None. No tools, no browser, no memory, no internet. They receive text and return text |
 | **Trust** | Their output is data for the calling member, who checks it before using it. It is never an instruction |
-| **Limits** | Up to 10 calls per turn, bounded input size, timeout. If no free engine is available, the member does the job itself |
+| **Limits** | `max_calls_per_turn` (10 in the example) is read from the file but not enforced yet: no code counts the calls in a turn. Free engines are skipped for an input longer than `max_input_tokens` (`server_calls.py:401-403`), and each free call has an 8-second timeout (`assistants.py:15`). When no free engine answers, the server's short calls run on the subscription login. |
 | **Choosing models** | Per job type, from a public ranking of free models such as [FreeLLMArena](https://freellmarena.com), or by the person's choice |
-| **Counted** | In the savings meter, as work that cost nothing |
+| **Counted** | Not yet. The savings meter is not built (ENGINES_PLAN.md, section 7 and slice 12), so no assistant call is counted anywhere. Once the meter exists, assistant calls count as work that cost nothing. |
 
 Technical design: [ARCHITECTURE.md §3.5](ARCHITECTURE.md). Engines: `assistants` in `openbot/agent-freeduet/engines.example.yaml`.
