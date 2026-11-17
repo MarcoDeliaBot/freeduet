@@ -2,11 +2,15 @@
  * FREEDUET_INTELLIGENCE: whether conversations live in CopilotKit Intelligence or in FreeDuet's own
  * Postgres (issue #42).
  *
- * THREE ANSWERS, ONE OF THEM UPSTREAM'S. `off` runs without Intelligence. `on` is upstream OpenBot,
- * which refuses to start without its three settings. Unset is also upstream OpenBot, exactly, so
- * every upstream test keeps describing the code it was written for. FreeDuet's own `.env.example`
- * and `scripts/start.sh` write `off`, which is what makes off the default for a FreeDuet install
- * without changing what an unconfigured upstream deployment does.
+ * TWO ANSWERS, AND A MISSING ONE IS REFUSED (D65). `off` runs without Intelligence. `on` is upstream
+ * OpenBot, which refuses to start without its three settings. A switch that is unset, empty or only
+ * spaces is no longer a choice made for the person in either direction: it used to fall through to
+ * upstream, so a start that did not go through `scripts/start.sh` with the three settings present
+ * ran in Intelligence mode (threads and memory kept by the outside service) though nobody wrote
+ * `on`. It does not become `off` either: an installation whose conversations are already in
+ * Intelligence would then show none of them (the reason `start.sh` writes `on` in that case). The
+ * server stops and says which line to write. `scripts/start.sh` and `.env.example` write the line,
+ * so an install made with them never meets this.
  *
  * ANYTHING ELSE IS REFUSED. A typo such as `of` or `false` would otherwise fall through to upstream
  * and stop the server with a message about Intelligence keys the person meant to do without.
@@ -35,14 +39,22 @@ const INTELLIGENCE_VARIABLES = [
 export type LocalRuntime = Extract<RuntimeCapabilities, { mode: "local" }>;
 
 /**
- * The local runtime when the switch is off, or undefined for upstream's Intelligence contract.
- * Throws on a value that is neither on nor off.
+ * What the server says when the switch is missing. Plain words, one sentence for each way out, and
+ * the script that writes the line. Pinned by a test with this exact text.
+ */
+export const INTELLIGENCE_SWITCH_MISSING = `${INTELLIGENCE_SWITCH} is not set. Write ${INTELLIGENCE_SWITCH}=off in your settings file to keep your conversations on this computer, or ${INTELLIGENCE_SWITCH}=on to have them kept by the outside CopilotKit Intelligence service. scripts/start.sh writes it for you.`;
+
+/**
+ * The local runtime when the switch is off, or undefined for upstream's Intelligence contract (on).
+ * Throws on a missing value (unset, empty, only spaces) and on a value that is neither on nor off.
+ * The one definition: the runtime and both Learning readers in config.ts go through it.
  */
 export function localRuntimeFrom(
   environment: Record<string, string | undefined>,
 ): LocalRuntime | undefined {
   const value = environment[INTELLIGENCE_SWITCH]?.trim().toLowerCase();
-  if (!value || value === "on") return undefined;
+  if (!value) throw new Error(INTELLIGENCE_SWITCH_MISSING);
+  if (value === "on") return undefined;
   if (value !== "off")
     throw new Error(
       `${INTELLIGENCE_SWITCH} must be "on" or "off", not "${environment[INTELLIGENCE_SWITCH]}".`,

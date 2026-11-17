@@ -1,12 +1,12 @@
 import { describe, expect, test } from "bun:test";
 import {
   INTELLIGENCE_SWITCH,
+  INTELLIGENCE_SWITCH_MISSING,
   type LocalRuntime,
   localRuntimeFrom,
 } from "../src/freeduet/intelligence-switch";
 
-// FREEDUET_INTELLIGENCE as localRuntimeFrom reads it. Unset and blank values give upstream's
-// contract. `on` and `off` are read in any case, with spaces around them. Anything else is refused.
+// FREEDUET_INTELLIGENCE as localRuntimeFrom reads it. Unset and blank values are refused (D65). `on` and `off` are read in any case, with spaces around them. Anything else is refused.
 // With the switch off, ignoredIntelligenceVariables names the variables set to a non-blank value.
 
 // The Intelligence variables the switch lists while it is off, in the order the code lists them.
@@ -38,32 +38,46 @@ function refusalFor(value: string): string | undefined {
   }
 }
 
-describe("unset or blank: no local runtime, so upstream's Intelligence contract applies", () => {
-  test("unset: no local runtime, so upstream's contract applies, not the off the env files write", () => {
-    expect(localRuntimeFrom({})).toBeUndefined();
+const MISSING_MESSAGE =
+  "FREEDUET_INTELLIGENCE is not set. Write FREEDUET_INTELLIGENCE=off in your settings file to keep your conversations on this computer, or FREEDUET_INTELLIGENCE=on to have them kept by the outside CopilotKit Intelligence service. scripts/start.sh writes it for you.";
+
+describe("a missing switch (unset, empty or only spaces) is refused with one plain sentence (D65)", () => {
+  test("unset: refused with the exact text a person reads", () => {
+    expect(() => localRuntimeFrom({})).toThrow(MISSING_MESSAGE);
+    expect(INTELLIGENCE_SWITCH_MISSING).toBe(MISSING_MESSAGE);
   });
 
-  test("unset with the Intelligence variables set: still no local runtime, so no list", () => {
-    expect(
+  test("unset with the Intelligence variables set: still refused, never read as on", () => {
+    expect(() =>
       localRuntimeFrom({
+        INTELLIGENCE_API_URL: "http://localhost:7100",
+        INTELLIGENCE_GATEWAY_WS_URL: "ws://localhost:7103",
         INTELLIGENCE_API_KEY: "key",
         INTELLIGENCE_PROJECT_ID: "project",
       }),
-    ).toBeUndefined();
+    ).toThrow(MISSING_MESSAGE);
   });
 
   test("explicitly undefined is read as unset", () => {
-    expect(
+    expect(() =>
       localRuntimeFrom({ [INTELLIGENCE_SWITCH]: undefined }),
-    ).toBeUndefined();
+    ).toThrow(MISSING_MESSAGE);
   });
 
   test.each([
     ["the empty string", ""],
     ["three spaces", "   "],
     ["a tab", "\t"],
-  ])("%s is read as unset", (_, value) => {
-    expect(localRuntimeFrom({ [INTELLIGENCE_SWITCH]: value })).toBeUndefined();
+  ])("%s is read as unset and refused", (_, value) => {
+    expect(() => localRuntimeFrom({ [INTELLIGENCE_SWITCH]: value })).toThrow(
+      MISSING_MESSAGE,
+    );
+  });
+
+  test("the sentence offers both ways out and names the script that writes the line", () => {
+    expect(MISSING_MESSAGE).toContain("FREEDUET_INTELLIGENCE=off");
+    expect(MISSING_MESSAGE).toContain("FREEDUET_INTELLIGENCE=on");
+    expect(MISSING_MESSAGE).toContain("scripts/start.sh");
   });
 });
 

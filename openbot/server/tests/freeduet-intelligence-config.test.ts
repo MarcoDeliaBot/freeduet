@@ -1,6 +1,6 @@
 /**
- * FREEDUET_INTELLIGENCE (#42): unset is upstream OpenBot, `on` is upstream OpenBot, `off` boots with
- * no Intelligence key and names the keys it ignores once. And what the backend factory hands
+ * FREEDUET_INTELLIGENCE (#42): `on` is upstream OpenBot, `off` boots with no Intelligence key and
+ * names the keys it ignores once, and a missing value is refused (D65). And what the backend factory hands
  * index.ts in each mode.
  */
 import { describe, expect, spyOn, test } from "bun:test";
@@ -54,8 +54,12 @@ const UPSTREAM_RUNTIME: RuntimeCapabilities = {
 const NO_DATABASE = {} as Database;
 
 describe("FREEDUET_INTELLIGENCE", () => {
-  test("unset is upstream: the Intelligence runtime, exactly", () => {
-    expect(loadConfig(testEnvironment()).runtime).toEqual(UPSTREAM_RUNTIME);
+  test("unset is refused, not read as upstream (D65), even with the three settings present", () => {
+    const environment = testEnvironment();
+    delete environment.FREEDUET_INTELLIGENCE;
+    expect(() => loadConfig(environment)).toThrow(
+      "FREEDUET_INTELLIGENCE is not set. Write FREEDUET_INTELLIGENCE=off",
+    );
   });
 
   test("on is upstream too", () => {
@@ -64,17 +68,21 @@ describe("FREEDUET_INTELLIGENCE", () => {
     ).toEqual(UPSTREAM_RUNTIME);
   });
 
-  test.each([
-    ["on", { FREEDUET_INTELLIGENCE: "on" }],
-    ["unset", {}],
-  ])(
-    "%s without keys refuses to start, with upstream's message",
-    (_, extra) => {
-      expect(() => loadConfig(withoutIntelligence(extra))).toThrow(
-        "CopilotKit Intelligence is required and is not configured. Missing: INTELLIGENCE_API_URL, INTELLIGENCE_GATEWAY_WS_URL, INTELLIGENCE_API_KEY",
-      );
-    },
-  );
+  test("on without keys refuses to start, with upstream's message", () => {
+    expect(() =>
+      loadConfig(withoutIntelligence({ FREEDUET_INTELLIGENCE: "on" })),
+    ).toThrow(
+      "CopilotKit Intelligence is required and is not configured. Missing: INTELLIGENCE_API_URL, INTELLIGENCE_GATEWAY_WS_URL, INTELLIGENCE_API_KEY",
+    );
+  });
+
+  test("unset without keys is refused for the switch, not for the keys (D65)", () => {
+    const environment = withoutIntelligence();
+    delete environment.FREEDUET_INTELLIGENCE;
+    expect(() => loadConfig(environment)).toThrow(
+      "FREEDUET_INTELLIGENCE is not set.",
+    );
+  });
 
   test("off without any Intelligence setting boots in local mode", () => {
     const config = loadConfig(
@@ -262,7 +270,7 @@ describe("telemetry with Intelligence off", () => {
   });
 
   test.each([
-    ["unset", {}],
+    ["missing (the server refuses before telemetry matters, D65)", {}],
     ["on", { FREEDUET_INTELLIGENCE: "on" }],
   ])("is left to upstream with the switch %s", (_, set) => {
     const environment: Record<string, string | undefined> = { ...set };

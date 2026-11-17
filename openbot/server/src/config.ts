@@ -1060,7 +1060,8 @@ function oktaAuth(
  * deployment sets one, which is what a self-hosted Intelligence with its own licence needs.
  */
 function runtimeCapabilities(environment: Environment): RuntimeCapabilities {
-  // FreeDuet: FREEDUET_INTELLIGENCE=off runs without Intelligence (#42); unset or on is upstream.
+  // FreeDuet: FREEDUET_INTELLIGENCE=off runs without Intelligence (#42); on is upstream; a missing
+  // value is refused (D65, freeduet/intelligence-switch.ts).
   const local = localRuntimeFrom(environment);
   if (local) return local;
   const settings = {

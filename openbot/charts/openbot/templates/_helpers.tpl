@@ -409,6 +409,21 @@ and in whatever holds the release, which is not where `KEY_ENCRYPTION_KEY` belon
 - name: OPENBOT_PROACTIVE_DEFAULTS
   value: "false"
 {{- end }}
+{{- /* FreeDuet (D65): the server refuses to start when FREEDUET_INTELLIGENCE is missing, so the choice
+     is written here, next to the three settings it is about. This chart requires those three
+     (validation.yaml) and has always run the server in Intelligence mode, so `on` keeps exactly
+     today's behaviour. What the chart's default SHOULD be is the maintainer's open decision
+     (docs/design/intelligence-switch-missing.md); nothing here decides it. Left out when
+     `config.extraEnv` already names it (the way to get `off` with this chart today): the operator's
+     entry is then the only one, never a duplicate name. */}}
+{{- $switchNamed := false }}
+{{- range .Values.config.extraEnv }}
+{{- if eq (toString .name) "FREEDUET_INTELLIGENCE" }}{{- $switchNamed = true }}{{- end }}
+{{- end }}
+{{- if not $switchNamed }}
+- name: FREEDUET_INTELLIGENCE
+  value: "on"
+{{- end }}
 - name: INTELLIGENCE_API_URL
   value: {{ .Values.config.intelligence.apiUrl | quote }}
 - name: INTELLIGENCE_GATEWAY_WS_URL

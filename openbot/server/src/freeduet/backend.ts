@@ -3,7 +3,7 @@
  *
  * ONE FACTORY, BUILT ONCE AT BOOT. index.ts asks this for the thread client, the runner, memory's
  * Intelligence half and the entitlement answer, instead of building each from
- * `config.runtime.intelligence` at a dozen sites. With FREEDUET_INTELLIGENCE unset or `on` it returns
+ * `config.runtime.intelligence` at a dozen sites. With FREEDUET_INTELLIGENCE=`on` it returns
  * exactly the objects index.ts built before, so upstream behaviour is unchanged.
  *
  * WITH THE SWITCH OFF:
