@@ -116,9 +116,9 @@ describe("the move, from the seeded installation to the address", () => {
 
       expect(ran.err).toBe("");
       expect(ran.code).toBe(EXIT.ok);
-      expect(ran.out).toContain(`Moving 13 rows to ${PERSON_ADDRESS}.`);
+      expect(ran.out).toContain(`Moving 12 rows to ${PERSON_ADDRESS}.`);
       expect(ran.out).toContain(
-        `Done. 13 rows now belong to ${PERSON_ADDRESS}.`,
+        `Done. 12 rows now belong to ${PERSON_ADDRESS}.`,
       );
       expect(ran.out).toContain("pg_restore --clean --if-exists");
       // The way back is made first, once, and the move starts after it.
@@ -194,7 +194,7 @@ describe("the move, from the seeded installation to the address", () => {
         instructions: 1,
         conversations: 2,
         memories: 1,
-        routines: 2,
+        routines: 1,
         rules: 1,
         savedLogins: 1,
         apps: 1,
@@ -296,7 +296,7 @@ describe("the move, from the seeded installation to the address", () => {
       expect(payload.fromId).toBe(DEV_ACTOR.id);
       expect(payload.toId).toBe(toId);
       expect(payload.createdTarget).toBe(true);
-      expect(payload.total).toBe(13);
+      expect(payload.total).toBe(12);
       expect(payload.backup).toBe("fake.dump");
       expect(
         (payload.rows as Record<string, number>)["routines.owner_user_id"],
@@ -996,7 +996,7 @@ describe("a process killed in the middle of the move", () => {
       expect(again.err).toBe("");
       expect(again.code).toBe(EXIT.ok);
       expect(again.out).toContain(
-        `Done. 13 rows now belong to ${PERSON_ADDRESS}.`,
+        `Done. 12 rows now belong to ${PERSON_ADDRESS}.`,
       );
     },
     SLOW,

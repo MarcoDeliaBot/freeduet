@@ -59,11 +59,11 @@ describe("turning sign-in on for an installation that ran with none", () => {
 
     before = await seenBy(single, DEV_ACTOR.id);
 
-    // The team's two conversations and the daily review were made by the first request, and then
-    // the person added the rest.
+    // The team's two conversations were made by the first request, and then the person added
+    // the rest.
     expect(before.conversations).toHaveLength(2);
     expect(before.instructions).toBe("Always answer in two sentences.");
-    expect(before.routines).toHaveLength(2);
+    expect(before.routines).toHaveLength(1);
     expect(before.rules).toBe(1);
     expect(before.questions).toBe(1);
     expect(before.fullAccessBots).toEqual([IRIS]);
@@ -102,9 +102,8 @@ describe("turning sign-in on for an installation that ran with none", () => {
     for (const id of after.conversations) {
       expect(before.conversations).not.toContain(id);
     }
-    // One routine: the daily review, made again, not the Friday list the person asked for.
-    expect(after.routines).toHaveLength(1);
-    expect(before.routines).not.toContain(after.routines[0]);
+    // No routine: the daily review is only offered (D79), and the Friday list is not theirs.
+    expect(after.routines).toHaveLength(0);
   });
 
   test("all of it is still in the database, attached to the person nobody can sign in as", async () => {
@@ -113,7 +112,7 @@ describe("turning sign-in on for an installation that ran with none", () => {
       .select({ n: count() })
       .from(routines)
       .where(eq(routines.ownerUserId, DEV_ACTOR.id));
-    expect(routineRows?.n).toBe(2);
+    expect(routineRows?.n).toBe(1);
 
     const [questionRows] = await database
       .select({ n: count() })
