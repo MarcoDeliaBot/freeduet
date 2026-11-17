@@ -24,7 +24,7 @@ Ubuntu 22.04 or 24.04 with nothing installed, the path the README gives plus the
 | 6 | In the same terminal, `cd openbot && docker compose exec -it agent-freeduet claude`: Claude's own first-run screens, its login choice, a browser page, and a pasted code where the browser cannot reach the CLI | only the last line of `start.sh` mentions it; the person must find the command, which is long and names a container; the container name is wrong if the compose project differs | [code: README.md:150]; [code: openbot/scripts/start.sh:659-662]; [doc: https://code.claude.com/docs/en/authentication] |
 | 7 | Opens `http://localhost:3010`. `start.sh` opens it by itself the first time it makes the installation secret | pairing link expired (good two minutes) | [code: README.md:153]; [code: openbot/scripts/open.sh:15-17] |
 | 8 | Onboarding: welcome, computer, roster, then apps, notifications and the checklist. Six screens, none of them about Claude | none stops it; none helps the Claude step either | [code: openbot/app/src/routes/_authed/onboarding.tsx:508-512,652-675]; grep of `claude` in `app/src/components/onboarding/` finds nothing |
-| 9 | Writes to Iris (or the first-day greeting goes by itself) | **Not signed in** and the answer is one red sentence: "Claude Code is not signed in. Sign in once with `docker compose exec -it agent-freeduet claude`, then send your message again." | [code: openbot/agent-freeduet/freeduet/claude_cli.py:39-42,214]; [code: openbot/app/src/components/channels/channel-chat.tsx:1393-1406,1903-1907] |
+| 9 | Writes to Iris (or the first-day greeting goes by itself) | **Not signed in** and, until S2, the answer was one red sentence: "Claude Code is not signed in. Sign in once with `docker compose exec -it agent-freeduet claude`, then send your message again." | [code: openbot/agent-freeduet/freeduet/claude_cli.py:39-42,214]; [code: openbot/app/src/components/channels/channel-chat.tsx:1393-1406,1903-1907] |
 
 **Count.** 9 steps, of which 5 are in a terminal; 7 if the docker group needs no new login and onboarding is not counted. Not one of them is a click on a button in FreeDuet that connects Claude. The only Claude step is a command typed in a terminal.
 
@@ -91,7 +91,7 @@ Design.
 
 ## 5. Failure messages in plain words
 
-The app turns the engine reading and the run error into a card under the failed message. Interface text is English [docs: CLAUDE.md]. The current texts are in `claude_cli.py:39-42`, `claude_engine.py:108` and `claude_cli.py:262`.
+The app turns the engine reading and the run error into a card under the failed message. Interface text is English [docs: CLAUDE.md]. Until S2 the texts were in `claude_cli.py:39-42`, `claude_engine.py:108` and `claude_cli.py:262`; S2 replaced them with the plain-words texts in `claude_status.py`.
 
 | Situation | Words | Button beside it |
 |---|---|---|

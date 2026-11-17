@@ -87,7 +87,7 @@ Nothing else in D35 changes: a routine and a check-in still ask for every change
 
 Tests: `mail-rules.test.ts` (validation, matching), `mail-rules-gate.integration.test.ts` (the gate, on the app-password connection with a real approval service and a fake reviewer), `mail-rules-job.integration.test.ts` (the job against an in-memory mailbox), `mail-rules-routes.integration.test.ts`, and `app/tests/mail-rules-ui.test.tsx`.
 
-**Not verified.** Nothing ran on a real mailbox. The job and gate tests used the app-password connection with a fake mailbox; the OAuth connection was not exercised. The real transports' search results were not contract-tested against what the job reads. [verify] That a real Gmail IMAP search with `after:` and `before:` pages the way the fake does.
+**Not verified.** One rule, for one sender domain, was run live on one installation on 16 November 2026 ([ROADMAP.md](../ROADMAP.md), row "Mail rules"); no other kind of rule has run live. The job and gate tests used the app-password connection with a fake mailbox; the OAuth connection was not exercised. The real transports' search results were not contract-tested against what the job reads. [verify] That a real Gmail IMAP search with `after:` and `before:` pages the way the fake does.
 
 ## 8. Decisions left to the maintainer
 

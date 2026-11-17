@@ -160,7 +160,7 @@ Not built, and why:
 - **Run to messages (S2).** A history row links to its conversation, not to its run. That needs the turn to return a run id, and a migration.
 - **Paging and pruning (S4).** The history stops at 100 rows.
 - **Event triggers (V4).** Not on this view. Each Bot's Responsibilities page still lists them.
-- **Writes (S6 to S9).** The setup card, and the card's Pause, Resume and Cancel, are built in PR #241 (section 9.5). Not built: no change from chat, no daily budget, no zone per person, no routines held by Iris.
+- **Writes (S6 to S9).** The setup card, and the card's Pause, Resume and Cancel, are built in PR #241 (section 9.5). A change from chat is built: Edit sends the person's words, and the member's `update_routine` goes through the approval card [code: openbot/app/src/components/routines/routine-chat-card.tsx:114; openbot/server/src/plugins/builtin-routines.ts:150]. Not built: the setup card's Change button and the card that shows the old and new values (section 3, items 1 and 7), no daily budget, no zone per person, no routines held by Iris.
 
 For the maintainer to decide (none is taken here):
 
