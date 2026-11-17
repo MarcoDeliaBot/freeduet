@@ -547,6 +547,13 @@
       "when": 1794856262420,
       "tag": "0077_programs_helper_salts",
       "breakpoints": true
+    },
+    {
+      "idx": 78,
+      "version": "7",
+      "when": 1794899626185,
+      "tag": "0078_browser_pairing_session",
+      "breakpoints": true
     }
   ]
 }

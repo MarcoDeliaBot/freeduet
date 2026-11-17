@@ -1,0 +1,2 @@
+ALTER TABLE "browser_pairings" ADD COLUMN "session_id" text;--> statement-breakpoint
+ALTER TABLE "browser_pairings" ADD CONSTRAINT "browser_pairings_session_id_sessions_id_fk" FOREIGN KEY ("session_id") REFERENCES "public"."sessions"("id") ON DELETE set null ON UPDATE no action;
