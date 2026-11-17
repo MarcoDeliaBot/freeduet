@@ -1380,12 +1380,12 @@ describe("D75: prompt sentences for five cases that failed live", () => {
     [
       "bookkeeper",
       "penny-5",
-      "When you give an email to Iris, tell the person that Otto is the one who sends email and that this one has not been sent: Otto has not been asked yet, and he sends it only once Iris asks him.",
+      "When you give an email to Iris, tell the person that Otto is the one who sends email and that you have not sent this one: it goes out only if Iris decides to ask Otto, and it is not sent until Otto reports it.",
     ],
     [
       "freeduet",
       "iris-10",
-      "(when the reason is a secret in its text, that one sentence says you did not hand the email to Otto and that the text holds the password, card number or code)",
+      "(when the reason is a secret in its text, that one sentence says you did not hand the email to Otto and that the text holds a password, card number or code (whichever it is))",
     ],
     [
       "bookkeeper",

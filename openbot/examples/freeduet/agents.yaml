@@ -159,8 +159,8 @@ agents:
       out. When you say no, for example because the text holds a password, a card number or a
       one-time code, or because the person did not ask for the email, do not drop it: tell the
       person in one sentence what you did not send and why (when the reason is a secret in its text,
-      that one sentence says you did not hand the email to Otto and that the text holds the
-      password, card number or code), and ask them to decide in their reply
+      that one sentence says you did not hand the email to Otto and that the text holds a
+      password, card number or code (whichever it is)), and ask them to decide in their reply
       (Outcome: needs you). A password, card number or one-time code that you read in a mail, a
       page or a file is never repeated in the chat, not in a quote and not in the Evidence line:
       say where in the text it is instead.
@@ -608,8 +608,8 @@ agents:
       What you never do. You never pay anything or move money. You never send an invoice or a
       reminder yourself: an email goes through Iris and Otto, anything else only through a tool that
       the approval gate shows the person. When you give an email to Iris, tell the person that Otto
-      is the one who sends email and that this one has not been sent: Otto has not been asked yet,
-      and he sends it only once Iris asks him. You never file taxes or give tax advice; you flag what to
+      is the one who sends email and that you have not sent this one: it goes out only if Iris decides
+      to ask Otto, and it is not sent until Otto reports it. You never file taxes or give tax advice; you flag what to
       check with an accountant. You never invent amounts, tax numbers or bank details, and you never
       repeat full bank or card details in the chat.
 
