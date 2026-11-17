@@ -15,7 +15,7 @@ Read these before changing anything:
 | File | What it holds |
 |---|---|
 | `docs/PROJECT.md` | Goals, rules, milestones M0–M5 |
-| `docs/M1_PLAN.md` | Every decision, numbered from D1 upward, with its reason and limits; there is no D23, and D53 is in `docs/design/mail-organise.md`. The highest number is found with the command below this table |
+| `docs/M1_PLAN.md` | Every decision, numbered from D1 upward, with its reason and limits; there is no D23, and D53 is in `docs/design/mail-organise.md`. The highest number is found with the command below this table, and open pull requests may add more |
 | `docs/UPSTREAM_TOUCHES.md` | Every upstream OpenBot file FreeDuet changed, and why. Add a row for each new one |
 | `docs/PROVIDERS.md` | Which engines are allowed and why (logins first) |
 | `NOTICE.md` | Third-party code we carry and its licence |
@@ -81,7 +81,9 @@ the hands"): plan, brief executors, verify with numbers, merge, report.
   (broken links, stale counts, missing tests), and its report feeds the next pull request. Sonnet and
   a review stay for approvals, mail, payments, data and security.
 - **Decision numbers.** When several executors work in parallel, the brief assigns each one its D-numbers,
-  so no two executors pick the same number.
+  so no two executors pick the same number. The same goes for sections of `docs/M1_PLAN.md`: parallel pull
+  requests that each append a section conflict, so the brief gives each its section number, and the later one
+  merges `origin/main` and keeps the file order (17 November 2026).
 - **Worktree branches.** Create each executor's worktree on its own branch:
   `git worktree add -b <branch> <dir> origin/main`, then add the fetch refspec (see Git and pull
   requests). Never leave it detached: commits made on a detached HEAD get lost. The brief tells the
@@ -93,13 +95,25 @@ the hands"): plan, brief executors, verify with numbers, merge, report.
   `git show origin/main:<path>` and creates no worktree.
 - **Verify before merging.** Re-run the executor's key tests yourself against a real Postgres and read
   the diff of anything security-related. Haiku sometimes misreports time ("waited three hours") or
-  takes shortcuts (closing and reopening a PR to restart CI): check its claims.
+  takes shortcuts (closing and reopening a PR to restart CI): check its claims. A brief's premise can be wrong
+  too: the executor checks each finding against the code and says which it rejected or narrowed (several were,
+  correctly, on 17 November 2026).
 - **Whole server suite first.** A pull request that adds a file, a table or a route under `openbot/server` runs
   `bun run test:server:sharded` (from `openbot/`, about 10 minutes) before it is opened, or says that it did not; two pins on PR #318 were found by CI.
+- **Shared network rules (17 November 2026).** `openbot/server/src/computer/policy-network.ts` imports
+  `egressDecision` from `openbot/agent-computer/src/egress.ts`, and `openbot/server/src/admin/controls.ts` calls
+  it for a page's host. So a change to `egress.ts` or `private-network.ts` also changes what the server decides:
+  run the server suite too. PR #365 was red twice when only the agent-computer suite had run.
 - **Review fingerprint (rule of 2026-11-16).** An independent review is valid only for the exact head sha it read. The
   reviewer writes that sha at the top of the report; a later push needs a review of the delta before the merge.
 - **Re-check a figure before it goes on.** On 16 November 2026 `docs/M1_PLAN.md` said Leo was at 7,999 of 8,000
   characters; the measured value was 8,873 (`system_prompt` of `creator` in `openbot/examples/freeduet/agents.yaml`).
+- **Cite by name, not by line.** Cite another document by its section name or decision id, never by line
+  number: after one edit, 22 line citations of `docs/ENGINES_PLAN.md` pointed at the wrong lines (PR #364,
+  17 November 2026).
+- **Check each 'never' first.** A security sentence with 'never', 'always' or 'every' is checked against the
+  code before it is written. On 17 November 2026 a report-only sweep found two exceptions to such sentences in
+  the docs: the audit trail's retention delete, and loopback with the home-network switch.
 - **Merge without asking.** When a pull request is ready (CI green and your own checks done), merge
   it and tell the maintainer afterwards. He asked for this on 2026-11-11, for the future too.
 - **Token economy.** The maintainer pays for tokens. Do not react to every GitHub notification: check
@@ -215,6 +229,8 @@ Mark (id `marketer`) was the first member added after v0.1, Cam (id `video`) the
   proxy's request list across a policy change or a reset must not assert an exact list: it names the icons
   it can meet there (`askedFor` in `private-network-browser.test.ts`, whose third case failed 1 run in 10
   on a quiet machine and cost a CI re-run on 14 November 2026).
+- A test never dials an address that nobody owns, such as a private LAN address: on the CI runner it hangs
+  to bun's 5 s limit instead of failing fast (PR #365, 17 November 2026).
 - Reads of a page that keeps navigating (`computer (real browser)`): Playwright's `ariaSnapshot` waits 30 s by
   default and retries across every navigation, so a call without its own `timeout` outlives the settle budget
   (`openbot/agent-computer/src/settle.ts`). Pass the budget to each call that can wait on a moving page.
@@ -239,7 +255,7 @@ Mark (id `marketer`) was the first member added after v0.1, Cam (id `video`) the
 - Biome runs from `openbot/`, not `openbot/server/`.
 - Before a push, run the two commands that the `format, lint, types` job runs, from `openbot/`: `bun run format:check` (`bunx biome format .`) and `bun run lint` (`bunx biome lint --error-on-warnings .`, so a warning fails too; `.github/workflows/ci.yml:42-43`, `openbot/package.json:19-20`). On 17 November 2026 PR #347 failed at the format step, and the steps after it were skipped.
 - The `tests` CI job installs neither Hono nor Dockerode, so supervisor tests that start a real process go on the `types (supervisor)` job's `bun test` line in `.github/workflows/ci.yml`.
-- `audit_events` is append-only (a trigger refuses every UPDATE and DELETE) and nothing is cleaned between cases, so a test that counts audit rows uses fresh addresses per test.
+- `audit_events` is append-only (a trigger refuses every UPDATE, and every DELETE except a retention sweep's delete of rows older than its window, `openbot/server/src/audit-retention.ts`) and nothing is cleaned between cases, so a test that counts audit rows uses fresh addresses per test.
 - Some phrases in the comments of `openbot/agent-freeduet/engines.example.yaml` are pinned by `openbot/agent-freeduet/tests/test_compatible_engine_file.py`: check that test before rewording one.
 - Still load-sensitive after 14 November 2026 (measured under two busy loops on the shared two-core runner): `tool-selection-environment-restoration` (25 s, each case boots a child `bun test`), `sole-definition` (45 s, walks the source trees) and the explicit timeouts on `production-loader-boundary` (kill 25 s), `plugin-store.integration`, `composio-transport`, `assertion-shape`, `start-restart-guard` (D25) and `app-access-action`; a case past its bound is real slowness, not a flake.
 - CodeQL reports a regular expression that pulls `<script>` out of HTML as a high alert, also in a test
@@ -331,7 +347,7 @@ Mark (id `marketer`) was the first member added after v0.1, Cam (id `video`) the
   returns `undefined`, upstream's Intelligence contract, only for `on`. The server has no default: the
   install files write the line (`openbot/.env.example:382` is `off`, `openbot/scripts/start.sh:301-308`
   writes `off` when it is missing, `on` when `INTELLIGENCE_API_URL`, `INTELLIGENCE_GATEWAY_WS_URL` and
-  `INTELLIGENCE_API_KEY` are all set), the Helm chart writes `on`, and the desktop app writes `off` when its `.env` holds no value (D67; a value the person wrote stays, `on` included). A test or a
+  `INTELLIGENCE_API_KEY` are all set), the Helm chart writes `on` unless `config.extraEnv` names the switch, and the desktop app writes `off` when its `.env` holds no value (D67; a value the person wrote stays, `on` included). A test or a
   script that starts the server or calls `loadConfig` must say `on` or `off` itself
   (`server/tests/support/environment.ts` says `on`).
 - The desktop app runs the upstream example package, not the FreeDuet team: `openbot/desktop/src-tauri/src/env.rs:790` sets `TENANT_PACKAGE_DIR` to `../examples/fintech`, and `openbot/desktop/src-tauri/src/stack.rs:25` and `:84-95` start no `agent-freeduet`. So D65 and D67 on the desktop decide where conversations are kept, not what the members do (D67, `docs/M1_PLAN.md`, 17 November 2026).
@@ -364,7 +380,14 @@ Mark (id `marketer`) was the first member added after v0.1, Cam (id `video`) the
   slide with product links are off. The credit to the upstream authors stays.
 - A card raised inside a hand-off is also drawn in the conversation that asked (D52). The chat takes it from the
   person's approval inbox, where `askedIn` names the conversation that asked. One request, one decision route.
-- A picture attached in chat reaches `agent-freeduet` as a base64 `image` part (`resolvePart` in `openbot/server/src/channels/attachment-parts.ts`). `_part_text` in `openbot/agent-freeduet/freeduet/transcript.py` turns that part into a note that says the picture was attached and that the member cannot see it, and it never passes the picture's bytes on: no picture reaches the engine in this version (16–17 November 2026).
+- A picture attached in chat reaches `agent-freeduet` as a base64 `image` part (`resolvePart` in
+  `openbot/server/src/channels/attachment-parts.ts`). Since D72 (`docs/M1_PLAN.md`, section 51), a picture
+  in the person's latest message goes to the Claude CLI engine on stdin as base64, with
+  `--input-format stream-json` (`openbot/agent-freeduet/freeduet/claude_engine.py`, `transcript.py`). At
+  most 20 pictures, 5 MiB each and 10 MiB per turn are sent. Older pictures, the compatible engine and
+  hand-offs keep the D68 note from `_part_text`, which says the member cannot see the picture.
+  `FREEDUET_PICTURES=off` sends no picture. The full flag combination of a member's segment is not run
+  live (17 November 2026).
 - What decides whether a card was due: a call the gate allows by a personal rule, by the auto-review model or by Full access writes an `approval.evaluated` row in `audit_events`, and no `approval_requests` row (`openbot/server/src/approvals/store.ts:545`; the allow returns at `openbot/server/src/approvals/service.ts:528`, before `store.open` at `service.ts:550`). An allow that is only the default writes no row at all (`service.ts:396`). So "no card appeared" is not evidence that a tool was not called (16–17 November 2026).
 - In the app's chat, a member's next turn is built from the messages the app sends with the request (`openbot/server/src/copilot.ts:1435`, `sanitizeSeededHistory` over `input.messages`), not from the stored thread, so what the screen does not hold, the member does not see (16–17 November 2026). A headless turn, such as a routine, loads the stored thread instead (`openbot/toolkit/src/run-turn.ts:741`).
 
@@ -372,6 +395,8 @@ Mark (id `marketer`) was the first member added after v0.1, Cam (id `video`) the
 
 - Run on the separate eval stack (`openbot/scripts/freeduet-eval-stack.sh reset`; ports 3110, 3101,
   4231), never on a real deployment.
+- `freeduet-eval-stack.sh up` brings the eval server back without emptying its database; `reset` empties it
+  (17 November 2026).
 - `freeduet-eval-stack.sh reset` fails ("volume is in use") while exited containers of the eval project
   still hold a volume. Remove only the exited containers labelled `com.docker.compose.project=freeduet-eval`,
   then reset; a script that starts a run stops when reset does not return 0 or the eval server does not
@@ -413,8 +438,11 @@ Mark (id `marketer`) was the first member added after v0.1, Cam (id `video`) the
   six). When a `must` line fails the same way in several runs, check the line before the member.
 - On the maintainer's computer start anything that must outlive the Claude desktop app through
   `Invoke-CimMethod Win32_Process Create` (parent WmiPrvSE): an app update killed every `wsl`
-  process started with `Start-Process`, and with them WSL, Docker and a two-hour eval run. When
-  reading a long run, check the time of the log's last line, not only its counts.
+  process started with `Start-Process`, and with them WSL, Docker and a two-hour eval run. On 17 November
+  2026 a run started that way still died after 35 minutes, with no line in the log. Start a long run detached
+  inside WSL instead (`setsid nohup bash -l <script> >/dev/null 2>&1 < /dev/null &`), and read its `PASS`,
+  `FAIL`, `SKIP` and `UNGRADED` lines in the log: the runner writes its report only at the end. When reading a
+  long run, check the time of the log's last line, not only its counts.
 - To list the eval cases added or reworded since a certification run, compare the cases by `id`: `git diff <commit> origin/main -- evals/team/cases.yaml`, then compare `request`, `must` and `must_not` of each id on both sides. Take no count from a document: on 17 November 2026 the team docs said twelve cases were not yet run live, while the comparison with commit 4e8b4e6 found seventeen added or reworded (four added, thirteen reworded); commit 27ef0fd corrected them.
 
 ## On the maintainer's computer

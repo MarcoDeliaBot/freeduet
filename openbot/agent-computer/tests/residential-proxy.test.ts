@@ -1,4 +1,11 @@
-import { afterEach, describe, expect, test } from "bun:test";
+import {
+  afterAll,
+  afterEach,
+  beforeAll,
+  describe,
+  expect,
+  test,
+} from "bun:test";
 import { createServer, type IncomingMessage } from "node:http";
 import { connect, type Socket } from "node:net";
 import {
@@ -7,7 +14,12 @@ import {
   setEgressPolicy,
   startEgressFilter,
   stopEgressFilter,
+  allowLoopbackForTests,
 } from "../src/egress";
+
+// D73: the filter refuses loopback under every policy, and these cases serve their fixtures from it.
+beforeAll(() => allowLoopbackForTests(true));
+afterAll(() => allowLoopbackForTests(false));
 
 /**
  * A residential or ISP proxy, end to end: a Bot's request through the egress filter, the filter

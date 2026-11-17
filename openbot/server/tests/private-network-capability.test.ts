@@ -308,20 +308,26 @@ describe("a navigation, judged on the server before it reaches the computer", ()
     "http://172.16.0.1/",
     "http://172.31.255.254/",
     "http://100.64.0.1/",
+    "http://[fd00::1]/",
+    "http://[::ffff:192.168.1.1]/",
+    // Spelled as numbers, which the URL parser turns into the dotted address the browser will use.
+    "http://0300.0250.0.1/",
+  ];
+
+  /** This computer's own loopback and "this host": the switch never opens these (D73). */
+  const loopback = [
     "http://127.0.0.1:3001/",
     "http://localhost:3001/",
     "http://app.localhost/",
     "http://0.0.0.0:80/",
     "http://[::1]:3001/",
-    "http://[fd00::1]/",
-    "http://[::ffff:192.168.1.1]/",
-    // Spelled as numbers, which the URL parser turns into the dotted address the browser will use.
+    "http://[::127.0.0.1]/",
+    "http://[::ffff:127.0.0.1]/",
     "http://2130706433/",
     "http://0x7f.1/",
-    "http://0300.0250.0.1/",
   ];
 
-  test.each(insideTheNetwork)(
+  test.each([...insideTheNetwork, ...loopback])(
     "%s is refused by default, with a sentence that names the switch",
     (url) => {
       const decision = decideFromSnapshot(snapshot(), navigation(url));
@@ -346,6 +352,22 @@ describe("a navigation, judged on the server before it reaches the computer", ()
       // The same snapshot with the switch off refuses it, so this is the switch and nothing else.
       expect(decideFromSnapshot(snapshot(), navigation(url))?.forward).toBe(
         false,
+      );
+    },
+  );
+
+  test.each(loopback)(
+    "%s is refused whether or not the switch is on (D73)",
+    (url) => {
+      const on = snapshot({
+        rows: [row("organization", "", "cloudPrivateNetwork", true)],
+      });
+      for (const judged of [snapshot(), on]) {
+        const decision = decideFromSnapshot(judged, navigation(url));
+        expect(decision).toMatchObject({ allowed: false, forward: false });
+      }
+      expect(decideFromSnapshot(on, navigation(url))?.reason).toContain(
+        "whether or not",
       );
     },
   );

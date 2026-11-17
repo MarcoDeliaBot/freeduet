@@ -130,7 +130,7 @@ Verify in M2 against `openbot/docs/architecture.md`: the exact callback route re
 
 1. Move to the next engine **only** if the current one refused the turn **before accepting it**: no output, no tool call, no approval question. A limit hit after work started is never moved, because tools may already have run.
 2. The next engine must cover what the turn needs: tools and approvals if the turn uses tools, images if there are images, MCP for the tool bridge.
-3. **Logins first.** The router orders every chain as subscription engines, then free engines, then metered engines, whatever order the file lists them in. Metered engines (API keys and API credits) join only if the person enabled them, only after every login engine was tried, and only while under the daily and monthly caps.
+3. **Logins first.** The router orders every member's chain (its own in `engines.yaml`, or the default chain) as subscription engines, then free engines, then metered engines, whatever order the file lists them in. The assistant chain holds free engines only, and the server's own short calls try it first (section 3.5). Metered engines (API keys and API credits) join only if the person enabled them, only after every login engine was tried, and only while under the daily and monthly caps.
 4. Every switch is shown in the conversation: "Switched to Codex because Claude's weekly limit resets Thursday 09:00."
 5. A limited engine is skipped until its reset time, or a minute when it named none.
 6. The conversation keeps its main engine; the next message tries it again. Missing context is replayed from the stored transcript as quoted history.
@@ -141,7 +141,7 @@ Each engine has a tier, set in `engines.yaml`. A member can require a minimum ti
 
 ### 3.5 Assistants: light helpers on free models
 
-Every member holds an `ask_assistant` tool for small, low-risk jobs, so subscription limits go to the work that matters. Product view: [CATALOG.md](CATALOG.md#assistants).
+No member can call an assistant yet, because no assistant tool is built. The planned `ask_assistant` tool would let every member hand small, low-risk jobs to these light helpers, so subscription limits go to the work that matters. Product view: [CATALOG.md](CATALOG.md#assistants).
 
 | | |
 |---|---|

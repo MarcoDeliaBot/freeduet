@@ -29,6 +29,7 @@ import {
   ipv4Readings,
   ipv4Text,
   type PrivateRange,
+  isLoopbackRange,
   privateRangeOf,
 } from "./private-network";
 
@@ -493,12 +494,17 @@ export function isAlwaysDenied(addressInput: string): boolean {
 function privateDestination(
   hostInput: string,
   resolved: readonly string[],
+  only: (range: PrivateRange) => boolean = () => true,
 ): { subject: string; ofHost: boolean; range: PrivateRange } | null {
   const range = privateRangeOf(hostInput);
-  if (range) return { subject: hostInput.trim(), ofHost: true, range };
+  if (range && only(range)) {
+    return { subject: hostInput.trim(), ofHost: true, range };
+  }
   for (const address of resolved) {
     const inside = privateRangeOf(address);
-    if (inside) return { subject: address, ofHost: false, range: inside };
+    if (inside && only(inside)) {
+      return { subject: address, ofHost: false, range: inside };
+    }
   }
   return null;
 }
@@ -516,6 +522,7 @@ export function egressDecision(
   hostInput: string,
   port: number,
   resolved: readonly string[] = [],
+  options: { allowLoopback?: boolean } = {},
 ): EgressDecision {
   const host = normalizeHost(hostInput);
   const denied = [host, ...resolved].find(isAlwaysDenied);
@@ -526,9 +533,23 @@ export function egressDecision(
     };
   }
   if (policy.mode === "allow_all") {
+    // D73: the switch lifts the private LAN ranges and nothing else. This computer's own loopback
+    // (and `0.0.0.0`, `::`) stays refused with the switch on, like metadata and link-local.
     const inside = policy.allowPrivateNetwork
-      ? null
+      ? options.allowLoopback
+        ? null
+        : privateDestination(hostInput, resolved, isLoopbackRange)
       : privateDestination(hostInput, resolved);
+    if (inside && policy.allowPrivateNetwork) {
+      const where = inside.ofHost
+        ? inside.subject
+        : `${hostInput.trim()}, which resolves to ${inside.subject},`;
+      return {
+        allowed: false,
+        reason: `${where} is ${describePrivateRange(inside.range)}. A Bot's computer may not reach its own loopback, whether or not "Home and office network access" is switched on.`,
+        privateNetwork: inside.range,
+      };
+    }
     if (inside) {
       // The sentence a Bot reads, and tells the person: what the address is, and the one setting
       // that changes it.
@@ -611,6 +632,28 @@ export function setEgressResolver(next: Resolver | null) {
   resolver = next ?? systemResolver;
 }
 
+let loopbackForTests = false;
+
+/**
+ * FOR TESTS ONLY: let the filter connect to this machine's loopback, so a test's fixture server can
+ * be reached through it (D73 refuses loopback under every policy). Nothing in `src/` calls this;
+ * `egress-loopback-hook.test.ts` reads the sources to keep it so.
+ */
+export function allowLoopbackForTests(on: boolean) {
+  if (on && process.env.NODE_ENV === "production") {
+    throw new Error(
+      "allowLoopbackForTests is for tests and is refused in production.",
+    );
+  }
+  loopbackForTests = on;
+  endRefusedConnections();
+}
+
+/** Whether the test hook is on. A test of the loopback rule asserts it is off before it starts. */
+export function loopbackAllowedForTests(): boolean {
+  return loopbackForTests;
+}
+
 /**
  * Install (or with null, remove) the policy one Bot's connections are judged by.
  *
@@ -681,9 +724,13 @@ function judge(
   port: number,
   resolved: readonly string[],
 ): EgressDecision {
-  // Checked even with no policy to judge by, which EGRESS_POLICY_REQUIRED=0 allows.
+  // Checked even with no policy to judge by, which EGRESS_POLICY_REQUIRED=0 allows. Only that case
+  // (a developer's computer with no person to hold the switch) and a test's fixtures may reach loopback.
+  const allowLoopback = judging.length === 0 || loopbackForTests;
   for (const policy of judging.length > 0 ? judging : NO_SERVER_POLICY) {
-    const decision = egressDecision(policy, host, port, resolved);
+    const decision = egressDecision(policy, host, port, resolved, {
+      allowLoopback,
+    });
     if (!decision.allowed) return decision;
   }
   return { allowed: true, reason: "Allowed." };
