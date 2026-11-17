@@ -20,6 +20,7 @@ The goal, the evidence (file:line), the branch and worktree, the files you own a
 - Run your own targeted tests while you work and one full relevant suite at the end. Never run two heavy commands at once: the machine is shared.
 - If the task turns out to touch approvals, mail, payments, credentials or stored data, stop and report. That work belongs to a Sonnet executor and a review.
 - Never read, copy or forward credentials, never open a CLI's login or config directory, never put secrets or personal data in the repository, and never stop processes by pattern (`pkill -f`): stop only the PIDs you started.
+- Never call a scheduling, trigger or reminder tool: two Haiku executors created one-shot "placeholder" reminders by mistake on 17 November 2026, and they fired into the coordinator's session.
 - Public wording: no competitor names, no private projects, no praise of a company or product, no personal data. The maintainer is "the maintainer".
 - Do not edit `docs/ROADMAP.md` or `docs/M1_PLAN.md` unless the brief says so. Record what you built and what is not verified in the design doc the brief names.
 
