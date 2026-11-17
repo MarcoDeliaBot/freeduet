@@ -8,6 +8,7 @@ Each version says what was and was not run live. "Run live" means run on a real 
 
 ### Changed
 
+- Changing a research setting no longer switches it back on (follow-up to D78; `docs/M1_PLAN.md` section 57). A change that named only the focus or only the interval used to fill in the other fields with their defaults, so it switched a switched-off setting on, scheduled a run and reset the rest. Now a change touches only the fields it names, a run is scheduled only when the request itself turns a setting from off to on, and an empty change is refused with a 400. Built and tested against Postgres, not run live.
 - Background research is off until the person switches it on (D78; `docs/M1_PLAN.md` section 57). Before, every member read the person's connected mail and calendar every 240 minutes after a first conversation, without being asked. Now `OPENBOT_PROACTIVE_DEFAULTS` must be `true` or `1` (Helm: `config.memory.researchDefaults: true`) for it to switch on by itself. A research setting that exists keeps running: an installation updated from an earlier version keeps the rows it made, which cannot be told apart from ones a person chose; a person turns one off in the app's research settings. Built and tested in CI, not run live.
 
 ### Added
