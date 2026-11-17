@@ -46,6 +46,9 @@ page, a Bot's pages, Capabilities, Connections, Settings, conversations and Admi
 exact setting names an admin needs, such as `COMPOSIO_API_KEY`. Text written for the model, such
 as tool descriptions and instructions, is unchanged.
 
+Nine messages a person reads are plainer. The Undo note on a member now gives the seven-day limit,
+and a refused sign-in says installation rather than deployment. What happens does not change.
+
 ### Every settings screen is the same, slightly wider column
 
 Settings, Admin, Connections, Capabilities and each Bot's pages share one column width, now 720px instead of 630px, so

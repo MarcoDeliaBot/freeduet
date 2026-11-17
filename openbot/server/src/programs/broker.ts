@@ -351,7 +351,7 @@ export function createProgramsBroker(options: ProgramsBrokerOptions) {
       } catch {
         entry.reject(
           new ProgramsRefusedError(
-            "Your computer's answer was not in the agreed shape, so I did not use it.",
+            "Your computer's answer was not in the expected format, so FreeDuet did not use it.",
           ),
         );
       }

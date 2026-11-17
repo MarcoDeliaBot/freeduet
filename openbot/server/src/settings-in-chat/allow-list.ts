@@ -102,7 +102,7 @@ export function decideSettingRequest(
       return {
         ok: false,
         message:
-          "Say a language by its two-letter code or its English name, such as it or German, or default for the deployment's own language.",
+          "Say a language by its two-letter code or its English name, such as it (Italian) or German, or default for the installation's own language.",
       };
     return { ok: true, setting: "language", value: code };
   }

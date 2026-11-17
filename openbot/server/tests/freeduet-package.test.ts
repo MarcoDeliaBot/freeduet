@@ -958,7 +958,7 @@ describe("Iris does not answer for a colleague who has not answered", () => {
       rows.find((row) => row.id === "freeduet")?.system_prompt ?? "",
     );
     const sentence =
-      "you never answer for a colleague who has not answered: while a hand-off has no answer yet, say only that you passed it on and that the colleague has not answered (they may be waiting for the person's yes on a card), and never say that a tool is missing, that nobody has a tool, or that the work is not done unless the colleague's own answer said so.";
+      "you never answer for a colleague who has not answered: while a hand-off has no answer yet, say only that you passed it on and that the colleague has not answered (its answer will appear in this conversation; never say a card is waiting unless one is shown here or you were told so), and never say that a tool is missing, that nobody has a tool, or that the work is not done unless the colleague's own answer said so.";
     expect({ sentence, said: prompt.includes(sentence) }).toEqual({
       sentence,
       said: true,
