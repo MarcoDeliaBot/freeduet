@@ -1213,3 +1213,32 @@ Case lines. None is wrong against the product. Two are loose against the product
 - otto-6 must 2 and otto-7 must 2 say "settings, on his page for Gmail". The product's words are "in settings, on his page for Gmail and Google Calendar under Plugins" (an app-password connection says "(app password)"). The line passes with the sentence as written; "on his page for Gmail" is a subset. Suggested: "on his page for Gmail under Plugins in settings".
 - The comment above iris-12 and iris-13 said "Nothing in her prompt or in create_routine's text says so". It is reworded in `evals/team/cases.yaml` to "Her prompt says so (D71 ... section 50), and so does create_routine's text" (the comment only: no `must` or `must_not` line changed, no case added or removed).
 - penny-xlsx-2 must 1 and 2 stay as they are; with the new sentence they are exactly what her prompt says.
+
+## 52. The home and office network switch never opens loopback (D73)
+
+Found on 17 November 2026. With "Home and office network access" on, a member's computer could reach its own loopback through the network filter: `allow_all` skipped the private-range check (`openbot/agent-computer/src/egress.ts`, the `allow_all` branch of `egressDecision`), loopback and `localhost` are in the private ranges (`private-network.ts`), and a test pinned it (`private-network-egress.test.ts`, "the person's switch lets all of that through"). `docs/design/home-network.md` section 1 and the roadmap row say a member's computer stays refused from its own localhost, and the switch is labelled home and office network.
+
+| D73 | **The switch lifts only the private LAN ranges. Loopback (`127.0.0.0/8`, `::1`, IPv4-mapped, NAT64 and 6to4 forms of them, `localhost` and `*.localhost`, and `0.0.0.0/8` and `::`) is refused with the switch on or off, like metadata and link-local.** | **True in code and tests** |
+|---|---|---|
+
+What needs loopback from inside a member's computer through this filter: nothing found.
+- The filter judges the browser, always: Playwright puts `<-loopback>` in Chromium's bypass list, so a page's `localhost` goes through it (measured in `private-network-browser.test.ts`). The shell is not judged for its own loopback: `egressShellEnvironment` sets `NO_PROXY=127.0.0.1,localhost,::1`, so a member's own `curl`, `python -m http.server` or `ffmpeg` against its own `localhost` never meets the filter.
+- A member's browser cannot open `localhost` through `computer_navigate` in a production deployment in any case: `server/src/computer/target.ts` refuses it unless `AGENT_COMPUTER_ALLOW_PRIVATE_HOSTS=true`, which the server refuses with `NODE_ENV=production`. So the only member path that this change closes is a page's own subresources, WebSockets and redirects, and links the member did not type.
+- The browser's own control channel (Playwright's default is a pipe to Chromium, not a debugging port; not re-measured here) is not a connection through the filter.
+- What sits on loopback and should not be reachable by a page or a prompt injection: the filter itself (127.0.0.1, behind a secret), the computer's own API (behind its token and the host guard, D40), and anything else in the container.
+- A member that serves a page to itself and wants to see it in its browser could, before this, do it with the switch on. After it cannot. This is the same as with the switch off (decided 14 November 2026), and the recommendation was the stricter side. Left to the maintainer below if he wants a preview path.
+
+Built. `isLoopbackRange` (`private-network.ts`) names the ranges. `egressDecision` (`egress.ts`) refuses a host, or an address the host resolved to, in those ranges whenever `allowPrivateNetwork` is on, with its own sentence ("A Bot's computer may not reach its own loopback, whether or not ..."), and the switch-off sentence is unchanged. Open connections: nothing new is needed, because no connection to loopback can be open under a pushed policy; `judge` is still the one function a new and an open connection meet, so PR #196's close-on-tighten is untouched.
+
+**Unchanged on purpose: a computer with no API server and `EGRESS_POLICY_REQUIRED=0`** (a developer's or a test's, `NO_SERVER_POLICY`) keeps its whole-network-except-metadata rule, loopback included: nobody holds the switch there, and the first pushed policy brings the block. A test hook, `allowLoopbackForTests` in `egress.ts`, lets a fixture server on loopback be reached; no file under `src/` calls it, and `tests/egress-loopback-hook.test.ts` reads the sources to keep it so.
+
+Tests (`openbot/agent-computer`, Bun 1.4.4, `bun test`): before the change 4 of the new and rewritten cases failed (the rule table, the real-socket loopback case, the rebinding case, the no-server case); after, 632 pass and 4 fail, the same 4 as on plain main (two IPv6 listen cases with EAFNOSUPPORT in this sandbox, and two file-load errors, one of them the `web-bot-auth` package, which is not installed here). Real browser (`private-network-browser.test.ts`, headless Chromium, `PLAYWRIGHT_BROWSERS_PATH=/tmp/pn-pw-browsers`): 4 pass; its first case now says loopback is refused with the switch on, by address, by `localhost` and by a name that resolves to it. `bun run format:check`, `bun run lint` and `bun run typecheck:tests` from `openbot/` are clean; `bun run typecheck` in `agent-computer` is clean.
+
+Not run live: a real stack, a real Docker Desktop, a member's page that asks for its own `localhost` with the switch on. Not changed: a command that opens a raw socket around the filter, and the native desktop helper's own computer.
+
+Decisions left to the maintainer:
+
+| Decision | Options | Recommendation | Why |
+|---|---|---|---|
+| A member previews a page it serves itself | (a) as built: no way through the filter; (b) a separate, named setting for "this computer's own localhost", off by default | (a) | It is the stricter side and nothing found needs it; (b) is a new setting in the app and a public behaviour, so it is yours |
+| A developer's computer with no API server | (a) as built: loopback stays open there; (b) refuse it there too | (a) | There is no person to hold the switch and the first pushed policy brings the block; (b) breaks local development of the computer itself |
