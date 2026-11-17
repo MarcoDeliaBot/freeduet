@@ -1487,3 +1487,21 @@ Limits.
 - The server's floor itself is not changed (`policy.ts`, `always-ask.ts` belong to other pull requests).
 
 **Built so far.** The refusal in `index.ts`, `secret-masking.ts` (one definition, helpers, key list), `type` in the snapshot (`aria-snapshot.ts`), this section and the two test files. Verified: the tests above. Not verified: live use.
+
+## 61. WhatsApp and a chat channel for the phone are decided, with a design note (D82)
+
+Decided on 17 November 2026 by the maintainer. Two decisions the same day. First, WhatsApp is fundamental for FreeDuet and will be built (he had asked for it before; it was not in the roadmap). He wants to talk to the team and get its notices on WhatsApp, and a member reading his WhatsApp messages, read-only, so she learns how he answers, never writing as him without his approval. Second, a chat channel for the phone, Telegram first as the simplest, for notices and for answering an approval card with Allow once or Deny.
+
+Recorded in `docs/ROADMAP.md` (two rows, status Planned) and in `docs/design/whatsapp-and-chat-channels.md`. Docs only: no code, no upstream file, nothing shipped, so no row in `UPSTREAM_TOUCHES.md` and nothing in the changelog.
+
+| D82 | Decision | Where |
+|---|---|---|
+| A | Three separate capabilities, each with its own risk and its own slices: notices and approval answers; chatting with the team; a member reading the person's WhatsApp conversations (read-only). | Note, section 1 |
+| B | Whatever the transport, the safety rules live in the server: two-step pairing, one sender, private chats only, edited and forwarded messages never count, approval only by a button bound to one approval id with a single-use nonce and an expiry through the existing remote-answer gate, and never by free text, a voice note or a model's reading of "yes". A chat app has the powers of a remote session (D49) and no more. | Note, section 3 |
+| C | A gateway is configuration only: a URL and a token. Its code is never shipped, and AGPL gateway code is never copied. | CLAUDE.md, "Rules that never bend" |
+
+Recommendation (builds nothing that costs money or changes public behaviour until the maintainer answers): Telegram first, with polling; then WhatsApp through a gateway the person runs, with a plain warning about account restriction; the official Cloud API as the safe path later; reading conversations last, or not built.
+
+Waiting for the maintainer (the table is in the note, section 2.5): which transport first; whether he accepts the account risk of an unofficial gateway on his own number (a second number is the mitigation); whether reading his WhatsApp conversations is built at all, and what is stored (recommendation: a derived style note, not the raw messages); how much a notice may say (recommendation: a short summary); and whether any gateway is named in public documents (recommendation: none yet).
+
+**Built so far.** Nothing: this section, the note and the two roadmap rows. Verified: the licences and the official pages named in the note, read on 17 November 2026. Not verified: the Cloud API's current rates, Telegram's `callback_data` limit, any gateway on a real phone, and every behaviour above, which is unbuilt.
