@@ -1,6 +1,6 @@
 # Security
 
-FreeDuet agents read your mail, browse the web and can, with your approval, spend money. Security is a feature, not an afterthought. It is safe by default; if you want, you can turn on Full access for a member, which removes its approval cards, with or without payments (see [docs/FULL_ACCESS.md](docs/FULL_ACCESS.md)).
+FreeDuet agents read your mail, browse the web and can, with your approval, spend money. Security is a feature, not an afterthought. It is safe by default; if you want, you can turn on Full access for a member, which removes most of its approval cards, with or without payments; what still asks is under [What asks you, and what does not](#what-asks-you-and-what-does-not) and in [docs/FULL_ACCESS.md](docs/FULL_ACCESS.md).
 
 ## Reporting a vulnerability
 
