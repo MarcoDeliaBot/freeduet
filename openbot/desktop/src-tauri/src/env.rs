@@ -573,13 +573,14 @@ pub fn compose(
         }
     }
 
-    // FreeDuet (D65): the server refuses to start when FREEDUET_INTELLIGENCE is missing, and the
-    // desktop app has never written it. It passes the three settings below on every start (the app
-    // refuses to start without an Intelligence key and its screen says conversations are kept by the
-    // outside service), so `on` keeps exactly today's behaviour. `write` puts it in the file only when
-    // the file has no value for it (DEFAULT_ONLY), so a hand-written `off` is never overwritten. That this SHOULD be the desktop's
-    // default is the maintainer's open decision (docs/design/intelligence-switch-missing.md).
-    env.insert("FREEDUET_INTELLIGENCE".into(), "on".into());
+    // FreeDuet (D65, D67): the server refuses to start when FREEDUET_INTELLIGENCE is missing. The
+    // maintainer decided on 17 November 2026 that the desktop app says `off` then: conversations and
+    // memory stay in the install's own Postgres, as the site and the docs promise. The three settings
+    // below are still passed (the setup screen asks for them) and the server ignores them with `off`.
+    // `write` puts this in the file only when the file has no value for it (DEFAULT_ONLY), so a value
+    // the person wrote, `on` included, is never overwritten. A line this default wrote earlier as `on`
+    // cannot be told from the person's own `on`, so it stays `on` (docs/M1_PLAN.md, section 47).
+    env.insert("FREEDUET_INTELLIGENCE".into(), "off".into());
 
     // Trimmed, the way the model key beside it already is. All four values come from the same
     // setup screen, which enables its button on `value.trim() !== ""` and then sends the untrimmed
@@ -981,8 +982,8 @@ fn usable(key: &str, value: &str) -> bool {
 }
 
 /// Written only when the file holds no value for the key (see `write`). The Intelligence switch
-/// (D65): the desktop passes the three Intelligence settings, so it says `on`, but it never
-/// overwrites a choice somebody already made in the file.
+/// (D65, D67): the desktop says `off`, but it never overwrites a choice somebody already made in the
+/// file, `on` included.
 const DEFAULT_ONLY: [&str; 1] = ["FREEDUET_INTELLIGENCE"];
 
 /// What `bun --env-file` (which starts the server, `stack.rs`) reads for `name` in this file, or `None`
@@ -1864,9 +1865,9 @@ HTTPS_PROXY=http://proxy:8080
     }
 
     #[test]
-    fn the_intelligence_switch_is_written_as_on_beside_the_three_settings() {
-        // D65: a missing switch is refused by the server. The desktop passes the three settings, so
-        // it says `on`, which is what a missing switch meant before.
+    fn the_intelligence_switch_is_written_as_off_beside_the_three_settings() {
+        // D65, D67: a missing switch is refused by the server. The desktop says `off`: conversations
+        // stay on this computer. The three settings are still passed and the server ignores them.
         let env = compose(
             &intelligence(),
             &Model::default(),
@@ -1876,7 +1877,7 @@ HTTPS_PROXY=http://proxy:8080
             None,
             &BTreeMap::new(),
         );
-        assert_eq!(env["FREEDUET_INTELLIGENCE"], "on");
+        assert_eq!(env["FREEDUET_INTELLIGENCE"], "off");
         assert!(env.contains_key("INTELLIGENCE_API_KEY"));
     }
 
@@ -1952,7 +1953,7 @@ HTTPS_PROXY=http://proxy:8080
     }
 
     #[test]
-    fn a_form_bun_reads_as_empty_gets_on_and_is_stable() {
+    fn a_form_bun_reads_as_empty_gets_off_and_is_stable() {
         for line in [
             "FREEDUET_INTELLIGENCE=\"\"",
             "FREEDUET_INTELLIGENCE=''",
@@ -1963,7 +1964,7 @@ HTTPS_PROXY=http://proxy:8080
             let once = written_over(&format!("{line}\n"), 1);
             assert_eq!(
                 switch_lines(&once),
-                ["FREEDUET_INTELLIGENCE=on"],
+                ["FREEDUET_INTELLIGENCE=off"],
                 "{line:?}"
             );
             // Stable: a second write adds no second line (the secrets differ between runs, so the
@@ -1971,7 +1972,7 @@ HTTPS_PROXY=http://proxy:8080
             let twice = written_over(&format!("{line}\n"), 2);
             assert_eq!(
                 switch_lines(&twice),
-                ["FREEDUET_INTELLIGENCE=on"],
+                ["FREEDUET_INTELLIGENCE=off"],
                 "{line:?} twice"
             );
         }
@@ -1979,10 +1980,10 @@ HTTPS_PROXY=http://proxy:8080
 
     #[test]
     fn the_last_assignment_decides_as_in_bun() {
-        let kept = written_over("FREEDUET_INTELLIGENCE=\nFREEDUET_INTELLIGENCE=off\n", 1);
-        assert!(!kept.contains("FREEDUET_INTELLIGENCE=on"));
-        let rewritten = written_over("FREEDUET_INTELLIGENCE=off\nFREEDUET_INTELLIGENCE=\n", 1);
-        assert_eq!(switch_lines(&rewritten), ["FREEDUET_INTELLIGENCE=on"]);
+        let kept = written_over("FREEDUET_INTELLIGENCE=\nFREEDUET_INTELLIGENCE=on\n", 1);
+        assert!(!kept.contains("FREEDUET_INTELLIGENCE=off"));
+        let rewritten = written_over("FREEDUET_INTELLIGENCE=on\nFREEDUET_INTELLIGENCE=\n", 1);
+        assert_eq!(switch_lines(&rewritten), ["FREEDUET_INTELLIGENCE=off"]);
     }
 
     /// The file's bytes after composing and writing over `existing`, byte for byte.
@@ -2033,20 +2034,20 @@ HTTPS_PROXY=http://proxy:8080
     }
 
     #[test]
-    fn a_byte_order_mark_before_another_key_still_gets_on_once() {
+    fn a_byte_order_mark_before_another_key_still_gets_off_once() {
         let existing = "\u{feff}OPENAI_API_KEY=sk-somebodys-own\n";
         for times in [1, 2] {
             let text = String::from_utf8(written_bytes_over(existing.as_bytes(), times)).unwrap();
             assert!(text.starts_with(existing), "the BOM line is kept");
-            assert_eq!(switch_lines(&text), ["FREEDUET_INTELLIGENCE=on"]);
+            assert_eq!(switch_lines(&text), ["FREEDUET_INTELLIGENCE=off"]);
         }
     }
 
     #[test]
-    fn another_case_is_another_key_for_bun_so_on_is_written() {
-        let text = written_over("freeduet_intelligence=off\n", 1);
-        assert!(text.contains("freeduet_intelligence=off"));
-        assert!(text.contains("FREEDUET_INTELLIGENCE=on"));
+    fn another_case_is_another_key_for_bun_so_off_is_written() {
+        let text = written_over("freeduet_intelligence=on\n", 1);
+        assert!(text.contains("freeduet_intelligence=on"));
+        assert!(text.contains("FREEDUET_INTELLIGENCE=off"));
     }
 
     #[test]
@@ -2056,16 +2057,45 @@ HTTPS_PROXY=http://proxy:8080
     }
 
     #[test]
-    fn no_line_gets_on_once_and_a_second_write_adds_no_duplicate() {
+    fn no_line_gets_off_once_and_a_second_write_adds_no_duplicate() {
         let text = written_over("OPENAI_API_KEY=sk-somebodys-own\n", 2);
-        assert_eq!(switch_lines(&text), ["FREEDUET_INTELLIGENCE=on"]);
+        assert_eq!(switch_lines(&text), ["FREEDUET_INTELLIGENCE=off"]);
+    }
+
+    #[test]
+    fn a_line_the_desktop_wrote_as_on_earlier_stays_on() {
+        // D67: the on that an earlier desktop wrote (D65) cannot be told from the person's own on.
+        for times in [1, 2] {
+            let text = written_over("FREEDUET_INTELLIGENCE=on\n", times);
+            assert_eq!(switch_lines(&text), ["FREEDUET_INTELLIGENCE=on"]);
+        }
+    }
+
+    #[test]
+    fn every_form_of_on_is_kept_too() {
+        for line in [
+            "export FREEDUET_INTELLIGENCE=on",
+            "FREEDUET_INTELLIGENCE = on",
+            "FREEDUET_INTELLIGENCE=\"on\"",
+            "FREEDUET_INTELLIGENCE='on'",
+            "FREEDUET_INTELLIGENCE=on # a comment",
+        ] {
+            let text = written_over(&format!("{line}\n"), 1);
+            assert_eq!(
+                text.lines()
+                    .filter(|l| l.contains("FREEDUET_INTELLIGENCE"))
+                    .collect::<Vec<_>>(),
+                [line],
+                "{line:?}"
+            );
+        }
     }
 
     #[test]
     fn an_empty_or_blank_value_counts_as_no_value() {
         for existing in ["FREEDUET_INTELLIGENCE=\n", "FREEDUET_INTELLIGENCE=   \n"] {
             let text = written_over(existing, 1);
-            assert_eq!(switch_lines(&text), ["FREEDUET_INTELLIGENCE=on"]);
+            assert_eq!(switch_lines(&text), ["FREEDUET_INTELLIGENCE=off"]);
         }
     }
 

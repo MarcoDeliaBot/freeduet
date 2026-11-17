@@ -34,7 +34,7 @@ FreeDuet always runs on the subscriptions the person signed in to. API keys and 
 
 ## CopilotKit Intelligence (optional)
 
-FreeDuet does not need a CopilotKit key. `FREEDUET_INTELLIGENCE` in `openbot/.env.example` picks where conversations and memory are kept. The default is `off` in the files FreeDuet writes (`.env.example` and `scripts/start.sh`), decision D20 in [M1_PLAN.md](M1_PLAN.md). The server itself has no default: since 17 November 2026 (D65) it refuses to start when the line is missing, and says to write `off` or `on`. The desktop app and the Helm chart write `on`, as they always ran with Intelligence; what their default should be is not decided.
+FreeDuet does not need a CopilotKit key. `FREEDUET_INTELLIGENCE` in `openbot/.env.example` picks where conversations and memory are kept. The default is `off` in the files FreeDuet writes (`.env.example` and `scripts/start.sh`), decision D20 in [M1_PLAN.md](M1_PLAN.md). The server itself has no default: since 17 November 2026 (D65) it refuses to start when the line is missing, and says to write `off` or `on`. The desktop app writes `off` when its settings hold no value (D67, 17 November 2026, never over a value the person wrote), and the Helm chart writes `on`, as it always ran with Intelligence; the chart's default is not decided.
 
 | Setting | Conversations and memory | Cost | What you give up or need |
 |---|---|---|---|
