@@ -327,7 +327,7 @@ Mark (id `marketer`) was the first member added after v0.1, Cam (id `video`) the
   returns `undefined`, upstream's Intelligence contract, only for `on`. The server has no default: the
   install files write the line (`openbot/.env.example:382` is `off`, `openbot/scripts/start.sh:301-308`
   writes `off` when it is missing, `on` when `INTELLIGENCE_API_URL`, `INTELLIGENCE_GATEWAY_WS_URL` and
-  `INTELLIGENCE_API_KEY` are all set), and the desktop app and the Helm chart write `on`. A test or a
+  `INTELLIGENCE_API_KEY` are all set), the Helm chart writes `on`, and the desktop app writes `off` when its `.env` holds no value (D67; a value the person wrote stays, `on` included). A test or a
   script that starts the server or calls `loadConfig` must say `on` or `off` itself
   (`server/tests/support/environment.ts` says `on`).
 - Hand-off turns differ on the computer (D22). The RELAY (the answer coming back to the Bot that asked,
