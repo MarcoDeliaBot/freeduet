@@ -17,7 +17,7 @@ With no sign-in, every request is one fixed person. When a sign-in provider is t
 | With a provider, the account for a first sign-in is made by the sign-in library with a new id. The "new user" hook fires only for a new row. | [code: server/src/auth/index.ts:388-464] |
 | Every later sign-in re-applies the administrator floor and writes the sign-in audit rows. | [code: server/src/auth/index.ts:465-583], [code: server/src/auth/roles.ts:85-116] |
 | Every store reads and writes by the signed-in person's id. Nothing looks for `dev-local-user` once a provider is on. | [code: server/src/auth/guards.ts:55-100] |
-| The team's conversations and Iris's daily review are made for a person on their first `GET /api/me`, once, by a mark in `users.preferences`. | [code: server/src/freeduet/person-team.ts:1-35, 296-302], [code: server/src/app.ts:743-757] |
+| The team's conversations are made for a person on their first `GET /api/me`, once, by a mark in `users.preferences`; the daily review no longer is (D79: it is offered by Iris and made only after a yes and a card). | [code: server/src/freeduet/person-team.ts:1-35, 296-302], [code: server/src/app.ts:743-757] |
 
 **What a person sees, measured.** [proved: `server/tests/single-user-to-sign-in-problem.test.ts`, 3 tests, 32 expectations, passing on main because they assert the problem]. The test builds a scratch PostgreSQL, starts the app with no sign-in, lets the person use it, then starts a second app with a provider, signs in through the real callback as an administrator and reads what the app shows.
 
@@ -25,7 +25,7 @@ With no sign-in, every request is one fixed person. When a sign-in provider is t
 |---|---|---|
 | Conversations | 2 | 2, none of the old ids: made new for the new person |
 | Standing instructions | "Always answer in two sentences." | empty |
-| Routines | 2 (the daily review and one the person made) | 1 (the daily review, made again) |
+| Routines | 1 (the one the person made; before D79, 2 with the daily review) | 0 (before D79, 1: the daily review, made again) |
 | Approval rules | 1 | 0 |
 | Questions waiting for the person | 1 | 0 |
 | Full access | on for Iris | off for everybody |

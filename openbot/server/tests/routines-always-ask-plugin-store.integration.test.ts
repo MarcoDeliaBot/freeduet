@@ -44,6 +44,10 @@ import {
   type PrivateShareVerdict,
 } from "../src/proactive/private-share";
 import { useTriggerTools } from "../src/responsibilities/trigger-tools";
+import {
+  DAILY_REVIEW_CRON,
+  DAILY_REVIEW_INSTRUCTION,
+} from "../src/freeduet/person-team";
 import type { Routine } from "../src/routines/store";
 import { TEST_POOL, testDatabaseUrl } from "./support/database";
 import { FakeGmail } from "./support/fake-imap";
@@ -443,6 +447,41 @@ describe("(b) setting up, changing or deleting a routine or a trigger waits for 
       );
       expect(reached).toHaveLength(reached1);
     });
+
+  // D79 (docs/M1_PLAN.md section 58): the daily review is no longer made at first start. When the
+  // person says yes, Iris's own create_routine call, with the review's own words, meets this card.
+  test("D79: the daily review, made by Iris's create_routine after a yes, waits for a card with Full access on, and is made once after it", async () => {
+    await reset();
+    const args = {
+      instruction: DAILY_REVIEW_INSTRUCTION,
+      cron: DAILY_REVIEW_CRON,
+      timezone: "Europe/Rome",
+    };
+    const turn = {
+      messages: [typed("Yes, send me the daily review every morning")],
+      threadId: `thread-${randomUUID()}`,
+      runId: randomUUID(),
+      toolCallId: randomUUID(),
+    };
+    const held = await inTurn(turn, () =>
+      call(FULL, "create_routine", args),
+    ).catch((error: unknown) => error);
+    expect(held).toBeInstanceOf(HeadlessToolSuspension);
+    expect(reached).toEqual([]);
+    expect(storeCalls).toEqual([]);
+    const asked = await pending();
+    expect(asked).toHaveLength(1);
+    expect(asked[0]?.action.policy).toMatchObject({
+      behaviour: "ask",
+      source: "always_ask",
+    });
+    await approvals.decide(owner, asked[0]?.id as string, "allow_once");
+    const done = await inTurn(again(turn), () =>
+      call(FULL, "create_routine", args),
+    );
+    expect(done.isError).toBe(false);
+    expect(storeCalls.filter((name) => name === "create")).toEqual(["create"]);
+  });
 
   test("every tool that creates, changes, switches or deletes one is held, for the member with Full access", async () => {
     await reset();

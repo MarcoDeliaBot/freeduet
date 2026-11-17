@@ -18,6 +18,10 @@ import { fileURLToPath } from "node:url";
 import { parse } from "yaml";
 import { DEFAULT_WORKSPACE_LIMITS } from "../../agent-computer/src/workspace";
 import { OFFER_FILE_TOOL } from "../../shared/member-file";
+import {
+  DAILY_REVIEW_CRON,
+  DAILY_REVIEW_INSTRUCTION,
+} from "../src/freeduet/person-team";
 import { loadTenantPackage } from "../src/tenant-package";
 
 const packageDirectory = fileURLToPath(
@@ -1413,5 +1417,76 @@ describe("D75: prompt sentences for five cases that failed live", () => {
     }
     for (const row of rows)
       expect(String(row.system_prompt)).not.toContain("—");
+  });
+});
+
+// D79 (docs/M1_PLAN.md, section 58): the daily review is offered by Iris in words and created only
+// by her create_routine call after the person says yes. The text is read by a model: these tests pin
+// that the instruction is there, in Iris's prompt only, and carries the server's own words. Not yet
+// run live (case iris-26).
+describe("D79: Iris offers the daily review and sets it up only after a yes", () => {
+  test("only Iris's prompt carries the offer, with the exact instruction and the 08:30 schedule", async () => {
+    const rows = await memberRows();
+    const offer = "Your daily review is off until the person says yes";
+    for (const row of rows) {
+      const prompt = String(row.system_prompt).replace(/\s+/g, " ");
+      expect({ id: row.id, has: prompt.includes(offer) }).toEqual({
+        id: row.id,
+        has: row.id === "freeduet",
+      });
+    }
+    const iris = String(
+      rows.find((row) => row.id === "freeduet")?.system_prompt,
+    ).replace(/\s+/g, " ");
+    expect(iris).toContain(`"${DAILY_REVIEW_INSTRUCTION}"`);
+    expect(iris).toContain(`the schedule ${DAILY_REVIEW_CRON}, `);
+    expect(iris).toContain(
+      "so never say the review is on before the person has allowed that card.",
+    );
+    expect(iris).not.toContain("—");
+  });
+
+  test("she offers the review only when she holds the routine tools, says she cannot otherwise, and asks once when a yes does not name it", async () => {
+    const iris = String(
+      (await memberRows()).find((row) => row.id === "freeduet")?.system_prompt,
+    ).replace(/\s+/g, " ");
+    expect(iris).toContain(
+      "only when create_routine and list_routines are among your tools in this turn, one line that offers the daily review",
+    );
+    expect(iris).toContain(
+      "When the person asks for the daily review and you do not hold create_routine and list_routines, say in one sentence that you cannot set up routines yet and that Routines is switched on for you under Plugins, and create nothing.",
+    );
+    expect(iris).toContain(
+      "A yes that answers the proposal without naming the daily review is not a yes to it: ask once whether they want the daily review too, and call create_routine only after a yes to that.",
+    );
+    expect(iris).not.toContain("—");
+  });
+
+  test("she calls list_routines before create_routine, creates nothing when the review is there, and offers it unprompted only in the first proposal", async () => {
+    const iris = String(
+      (await memberRows()).find((row) => row.id === "freeduet")?.system_prompt,
+    ).replace(/\s+/g, " ");
+    const list = iris.indexOf("first call list_routines");
+    const create = iris.indexOf(
+      "otherwise call create_routine with exactly this instruction",
+    );
+    expect(list).toBeGreaterThan(0);
+    expect(create).toBeGreaterThan(list);
+    expect(iris).toContain(
+      "if a routine with this instruction is already there, say so and create nothing",
+    );
+    expect(iris).toContain(
+      "you never offer it unprompted except as the one line of the first proposal that says so",
+    );
+    // The offer is one of the proposal's lines, inside its limit of six.
+    expect(iris).toContain(
+      "reply with a proposal of at most six lines and nothing else",
+    );
+    expect(iris).toContain(
+      "then, only when create_routine and list_routines are among your tools in this turn, one line that offers the daily review (a short summary every morning at 08:30",
+    );
+    expect(iris).toContain(
+      "and no channelId, so that it posts in this conversation with you",
+    );
   });
 });

@@ -123,8 +123,8 @@ const REPORT = [
 describe("case file", () => {
   test("loads every case with a known member", async () => {
     const names = await loadMemberNames(PATHS.agents);
-    expect(cases.length).toBe(96);
-    expect(cases.filter((c) => c.safety).length).toBe(43);
+    expect(cases.length).toBe(97);
+    expect(cases.filter((c) => c.safety).length).toBe(44);
     expect(new Set(cases.map((c) => c.id)).size).toBe(cases.length);
     expect(cases.filter((c) => !names.has(c.member))).toEqual([]);
   });
@@ -213,8 +213,8 @@ describe("case file", () => {
   });
 
   // Routines and Settings are connectors a person grants to a Bot, so they are not on the eval stack
-  // until granted: iris-12, iris-13 and iris-17 need Routines, iris-14 Settings (docs/M1_PLAN.md D35).
-  test("requires names apps; otto-4 to otto-7, otto-9, otto-12, otto-14 and otto-16 need Gmail, and iris-12 to iris-14 and iris-17 need Routines or Settings", () => {
+  // until granted: iris-12, iris-13, iris-17 and iris-26 need Routines, iris-14 Settings (docs/M1_PLAN.md D35).
+  test("requires names apps; otto-4 to otto-7, otto-9, otto-12, otto-14 and otto-16 need Gmail, and iris-12 to iris-14, iris-17 and iris-26 need Routines or Settings", () => {
     expect(
       cases.filter((c) => c.requires.length).map((c) => [c.id, c.requires]),
     ).toEqual([
@@ -222,6 +222,7 @@ describe("case file", () => {
       ["iris-13", ["routines"]],
       ["iris-14", ["settings"]],
       ["iris-17", ["routines"]],
+      ["iris-26", ["routines"]],
       ["otto-4", ["gmail"]],
       ["otto-5", ["gmail"]],
       ["otto-6", ["gmail"]],
