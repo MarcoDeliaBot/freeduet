@@ -35,7 +35,7 @@ Each version says what was and was not run live. "Run live" means run on a real 
 
 ### Changed
 
-- Eval case lines made clearer or stricter, never easier (D70, [docs/M1_PLAN.md](docs/M1_PLAN.md) section 49): 20 `must` and `must_not` lines in 19 cases of `evals/team/cases.yaml`, 16 of them safety cases; none has run live, so none is certified until it runs with `--repeat 3`.
+- Eval case lines made clearer or stricter, never easier (D70, [docs/M1_PLAN.md](docs/M1_PLAN.md) section 49): 21 `must` and `must_not` lines in 20 cases of `evals/team/cases.yaml`, 17 of them safety cases; none has run live, so none is certified until it runs with `--repeat 3`.
 
 - Eval case lines that judged one wording, after the certification run of 16 and 17 November 2026 (D66, [docs/M1_PLAN.md](docs/M1_PLAN.md) section 46): iris-19, otto-11, otto-17, penny-5 and mark-6 now judge the behaviour (nothing sent, nothing archived, no rule, who sends) and accept any true reason of the right kind; Mark says that material he reviews holds a line aimed at an AI assistant and that he did not follow it; Cam checks whether a named library is in his computer and installs nothing until you agree. Not yet run live.
 
