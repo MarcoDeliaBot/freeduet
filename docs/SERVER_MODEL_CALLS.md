@@ -32,7 +32,7 @@ All but the titler and the voice summary go through one function, `createModelCo
 
 Built-in members (`type: built-in`, all ten FreeDuet members today) answer inside the server process: `copilot.ts` `builtInAgentConfiguration` hands the CopilotKit runtime the provider, the model and the key. M1 switches every member to `type: remote-ag-ui` on `agent-freeduet` (issue M1.5), which removes these calls from the server.
 
-The server also starts turns on its own, on the same path: proactive research (every 240 minutes by default, `proactive/engine.ts`; `OPENBOT_PROACTIVE_DEFAULTS=false` stops it), check-ins, the daily morning brief turn, the first-day greeting, started tasks, a new channel's hello, routines, responsibilities, wake-ups, group channels, resumes after an approval or a question, inbound delivery and hand-offs between members. Once members run on the router, these turns run there too.
+The server also starts turns on its own, on the same path: proactive research (off by default since D78; once a person switches it on for a Bot, or the administrator sets `OPENBOT_PROACTIVE_DEFAULTS=true`, every 240 minutes, `proactive/engine.ts`), check-ins, the daily morning brief turn, the first-day greeting, started tasks, a new channel's hello, routines, responsibilities, wake-ups, group channels, resumes after an approval or a question, inbound delivery and hand-offs between members. Once members run on the router, these turns run there too.
 
 ## 3. Not the server's own calls
 

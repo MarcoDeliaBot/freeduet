@@ -6,6 +6,10 @@ Each version says what was and was not run live. "Run live" means run on a real 
 
 ## [Unreleased]
 
+### Changed
+
+- Background research is off until the person switches it on (D78; `docs/M1_PLAN.md` section 57). Before, every member read the person's connected mail and calendar every 240 minutes after a first conversation, without being asked. Now `OPENBOT_PROACTIVE_DEFAULTS` must be `true` or `1` (Helm: `config.memory.researchDefaults: true`) for it to switch on by itself. A research setting that exists keeps running: an installation updated from an earlier version keeps the rows it made, which cannot be told apart from ones a person chose; a person turns one off in the app's research settings. Built and tested in CI, not run live.
+
 ### Added
 
 - Iris's daily review (08:30) is no longer created at first sign-in: Iris offers it once in words, and it exists only after the person says yes and allows the card that every routine setup gets (D79, `docs/M1_PLAN.md` section 58). A daily review that already exists is left exactly as it is. Safety case iris-26 added, not yet run live.

@@ -1313,11 +1313,37 @@ Limits. Not run live. Cases to run with `--repeat 3`: gus-6, penny-5, iris-10, p
 
 **Built so far.** The five sentences, the D75 test and this section. Verified: the tests above. The lists of cases not yet run live in `docs/ROADMAP.md` line 17, `README.md` and `evals/team/README.md` already name iris-10, gus-6, penny-5, penny-xlsx-1 and wren-docx-1, so no count or list changes (`CHANGELOG.md` names only penny-5, in an older entry, and keeps no list of cases changed since the certification). Not verified: every model behaviour.
 
+## 57. Background research is off until the person switches it on (D78)
+
+Decision (the maintainer, 17 November 2026). Before: `loadConfig` read `OPENBOT_PROACTIVE_DEFAULTS` with `switchedOn` (on unless `false` or `0`, `openbot/server/src/config.ts`), so `memoryDefaults.research` was true on every installation. `adoptResearch` (`openbot/server/src/memory/defaults.ts`) then inserted a `proactive_settings` row with `enabled: true` and a 240-minute interval for each person and member the first time the person spoke to that member alone. The engine then read the person's connected mail and calendar (read-only, proposes only) every 240 minutes and spent the person's subscription, with nothing in the safety documents saying so. No install script, no desktop env file and no test pinned "on" except the chart (it wrote the variable only to turn it off) and `config.test.ts`.
+
+| D78 | Built |
+|---|---|
+| Default | `OPENBOT_PROACTIVE_DEFAULTS` is off unless `true` or `1` (`switchedOnExplicitly`). With nothing written, `adoptResearch` returns false and no row is made, so no run is scheduled for anyone. |
+| A person who switches it on | Unchanged: the research settings route (`proactive/routes.ts`) writes the row and the engine runs it. It does not read the deployment switch. |
+| Administrator | `OPENBOT_PROACTIVE_DEFAULTS=true` (Helm `config.memory.researchDefaults: true`) restores the automatic switch-on, read-only, 240 minutes. The interval stays per setting, 15 to 1440 minutes. |
+| Stored rows | Never changed. A row (on or off) is left as it is; an opt-out in `default_opt_outs` still applies. |
+| Feature | Kept. Nothing removed. |
+
+Can the stored state tell "never chose" from "chose on"? No. A row made by the old default and a row a person made have the same columns (`enabled = true`, `interval_minutes`, `focus` may be empty in both), and the log line `research_adopted` goes to the console, not to a table. So this decision does NOT switch off existing rows: on an installation updated from an earlier version, a person whose research was switched on by the old default keeps it running until they turn it off.
+
+Open decision for the maintainer (not built):
+
+| Decision | Options | Recommendation | Reason |
+|---|---|---|---|
+| Existing rows made by the old default | (a) leave them (built); (b) at the update, set `enabled = false` on every row whose `created_at` equals the first conversation and `focus` is empty, a guess; (c) add a column that records the origin (`default` or `person`) for new rows and switch off old rows once, with a notice | (c), but only if the old rows may all be treated as defaults | A guess in (b) would change a person's explicit choice; (a) keeps the silent spend for people who never chose |
+
+Tests. `config.test.ts`: default config gives research off and sources on; `true` and `1` give on; `false`, `0` and any other word give off. `memory-defaults.integration.test.ts`: with the default config, `adoptResearch` and `personSpoke` create no row and nothing is due; with `true`, a row is made; an existing row, on or off, is left as it was; a person's own setting made through the store still runs when due.
+
+Limits. Not run live. Not verified: the Helm chart rendering (no `helm` run here); the full server suite is named in the pull request.
+
+**Built so far.** The switch, the comments, the docs, the chart default and the tests above. Verified: the tests above. Not verified: an update of a real installation; the open decision in the table.
+
 ## 58. The daily review is offered, not created at first start (D79)
 
 Added on 17 November 2026, by the maintainer's decision (D79). Built with option A of the executor's report.
 
-**Decision.** Iris's daily review (08:30) is not created, enabled, at the person's first sign-in. Iris offers it once, in words. When the person says yes, Iris calls `create_routine` with the review's own instruction and the schedule, and the card of D35 (section 18) asks before anything is scheduled. Declined or unanswered: no routine runs, and the server does not offer it again. A daily review that already exists stays exactly as it is, enabled or not.
+**Decision.** Iris's daily review (08:30) is not created, enabled, at the person's first sign-in. Iris offers it once, as one line of her first proposal (the reply to "What is your work?", at most six lines). When the person says yes to that line, or asks for the review at any time, Iris calls `list_routines` first and then `create_routine` with the review's own instruction and the schedule, and the card of D35 (section 18) asks before anything is scheduled. Declined or unanswered: no routine runs, and the server does not offer it again. A daily review that already exists stays exactly as it is, enabled or not.
 
 **Why.** D35 says a routine always waits for a card. D17 made the daily review at first sign-in with no card, which was the one routine that did not. `openbot/server/src/freeduet/person-team.ts` (`dailyReviewFor`, before) created it enabled on the first `GET /api/me`.
 
@@ -1326,22 +1352,24 @@ Added on 17 November 2026, by the maintainer's decision (D79). Built with option
 **The rule as built.**
 
 - `person-team.ts`: no pass creates a routine. A person with no `dailyReview` in the mark and no `dailyReviewProposed` gets one of two things, once: when a routine for Iris with `DAILY_REVIEW_INSTRUCTION` already exists (a pass that stopped before writing its mark), its id goes into `dailyReview` as it is; otherwise `dailyReviewProposed: true` is written and nothing else. From then on a pass reads the mark and does nothing. A routine the person deleted is never made again. `RoutineStore.create` is no longer among the dependencies. `DAILY_REVIEW_INSTRUCTION` and `DAILY_REVIEW_CRON` stay, and the tests pin Iris's prompt to them.
-- `examples/freeduet/agents.yaml`, Iris: one added sentence at the end of "Routines and approvals". She offers the review once, in her first reply after the first day's answer, and not again if the conversation already shows the offer; on a yes she calls `create_routine` with exactly the instruction, `30 8 * * *` and the person's own time zone (Europe/Rome when they have not said); she never says it is on before the person has allowed the card. The existing sentence pinned by D71 stays whole.
-- `shared/first-day.ts` and the app's three first-day bubbles are not touched: a fourth bubble would change the look of the app, which needs a preview first. The offer is Iris's own words in a later reply, which is why "once" is judged by the model from the conversation and not by the mark. `dailyReviewProposed` records that the server has left the review to Iris and will not create it.
+- `examples/freeduet/agents.yaml`, Iris, two edits. (1) In the first-proposal sentence, one line is added between the colleague lines and the closing question: it offers the daily review (a short summary every morning at 08:30 of what the team did, what failed and what is waiting, set up only on a yes). That is at most four colleague lines, this line and the question, so the six-line limit holds, and the offer is made once by construction: only in the first proposal, never to an existing installation, never inside an unrelated request. (2) A sentence at the end of "Routines and approvals": she never offers the review unprompted except in that line; when the person asks for it, or says yes to that line, she first calls `list_routines`, says so and creates nothing if a routine with this instruction is already there, and otherwise calls `create_routine` with exactly the instruction, `30 8 * * *`, the person's own time zone (Europe/Rome when unsaid) and no `channelId`; the card follows, and she never says it is on before it is allowed. The sentence pinned by D71 and every sentence of the first-day paragraph stay whole.
+- `shared/first-day.ts`, the first-day request and the app are not touched. On a first day where Gmail and Calendar are connected the answer is the three-part "get to know me" reply and there is no proposal, so no offer appears there; the person can ask for the review at any time, and a proposal comes at the first message about work.
+- Destination. The old server code passed Iris's conversation as `channelId`. `create_routine` with no `channelId` posts into the one channel the person shares with Iris; the standard package gives each member a conversation of their own, so that is the person's conversation with Iris (tested with several conversations present). If the person has made another conversation that includes Iris, the tool refuses with "more than one channel" and Iris asks which one (tested).
+- Duplicates. `create_routine` has no duplicate check (`plugins/builtin-routines.ts` `create_routine`, `routines/store.ts` `create`: only the cap of 20 enabled routines). The guard is Iris's prompt, which calls `list_routines` (it shows each instruction) before creating. Not added here; a server-side check is open.
+- A rolling deploy or a rollback: while old code is still running, it can still create the routine at first sign-in as before. Nothing changes for a person who already has one.
 - Who can allow the card: the person, as for every `create_routine` (D35), in the app, and from a paired phone as the existing rules already let a phone allow a card once. No route is new and `SAFETY_REQUIREMENTS` is unchanged.
 
-**Prompt length (Iris, characters, YAML parser, `system_prompt`).** 14,716 before, 15,464 after (+748). No limit test covers Iris (the 8,000 limit is Leo's).
+**Prompt length (Iris, characters, YAML parser, `system_prompt`).** 14,716 before, 15,792 after (+1,076). No limit test covers Iris (the 8,000 limit is Leo's).
 
 **What is verified.**
 
 - `freeduet-team.integration.test.ts` (real Postgres): the first pass creates no routine and marks `dailyReviewProposed`; a second pass and a restart make and offer nothing; two replicas at once mark once; an existing daily review, switched off by hand, is untouched and adopted into the mark; a routine the person made after a yes and then deleted stays deleted. Against the old `person-team.ts` seven of the twenty tests in `freeduet-team.test.ts` and `freeduet-team.integration.test.ts` fail; the one on an existing routine passes on both, because it pins unchanged behaviour. `freeduet-team.test.ts` pins the mark's reading.
 - `routines-always-ask-plugin-store.integration.test.ts`, through the real plugin store and gate with Full access on: `create_routine` with the review's own instruction and schedule is suspended with one `always_ask` card, nothing reaches the store until "allow once", and then it is made once.
-- `freeduet-package.test.ts` "D79": the offer sentence is in Iris's prompt only, carries `DAILY_REVIEW_INSTRUCTION` word for word and the schedule, and has no em dash.
+- `freeduet-package.test.ts` "D79": the offer sentence is in Iris's prompt only, carries `DAILY_REVIEW_INSTRUCTION` word for word and the schedule, has no em dash, puts `list_routines` before `create_routine`, says to create nothing when the review is there, and has the offer as a line of the six-line proposal.
 - The adoption tests (`single-user-adoption-*`, `single-user-to-sign-in-problem`) counted the daily review among a person's routines; they now count one routine (rows moved 13 to 12).
 
-**Not verified.** That Iris offers the review once, in the right reply, and creates it with the right arguments: a prompt that a model reads, not yet run live. Case `iris-26` (safety, `requires: [routines]`, written for both outcomes) grades only the yes turn; run it with `--id iris-26 --repeat 3`. Whether a person ever sees the offer is not graded by any case.
+**Not verified.** That Iris puts the review line in the proposal, keeps it within six lines, calls `list_routines` first and creates it with the right arguments: a prompt that a model reads, not yet run live. Case `iris-26` (safety, `requires: [routines]`, so skipped on the eval stack until the Routines connector is granted to Iris, written for both outcomes) is one turn, the person asking for the review outright: it grades what she says, not the proposal line and not the order of her calls. Run it with `--id iris-26 --repeat 3`, and iris-20 and iris-23 (the proposal, with a six-line measure) to see that the extra line does not break them.
 
 **Not changed.** Existing installations. Proactive code, `config.ts`, approvals policy, service and store, `SAFETY_REQUIREMENTS`, the site.
 
 **Built so far.** The mark change, the Iris sentence, case iris-26 and the counts that move with it (97 cases, 44 safety), this section.
-
