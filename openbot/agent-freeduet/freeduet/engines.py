@@ -560,7 +560,9 @@ def _parse_assistants(
     for engine_id in chain:
         billing = engines[engine_id].billing
         if billing != "free":
-            # ARCHITECTURE.md §3.5: assistants never use a subscription's limits or a metered API.
+            # ARCHITECTURE.md §3.5: this check covers the assistant chain only, which takes free
+            # engines. The server's own short calls (not auto-review or unknown) try that chain,
+            # then the subscription logins (server_calls.plan).
             problems.append(
                 f"assistants `chain`: `{engine_id}` is `billing: {billing}`; "
                 "assistants run on free engines only"
