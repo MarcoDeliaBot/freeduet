@@ -551,7 +551,7 @@ test("a same-tab activity echo does not append a lagging durable partial beside 
   if (!selfActivity) throw new Error("Missing self-reported Bot activity");
   history = async () => stored([initial, partialEcho]);
   await announce(1, channel, selfActivity);
-  expect(historyReads).toHaveLength(1);
+  expect(historyReads).toHaveLength(2);  // the mount's read and the read a send makes first (D69)
 
   expect(view.getByText(fullReply.content)).toBeTruthy();
   expect(view.queryByText(partialEcho.content)).toBeNull();
@@ -615,7 +615,7 @@ test("a same-timestamp different activity after a self echo still refreshes dura
   if (!selfActivity) throw new Error("Missing self-reported Bot activity");
 
   await announce(1, channel, selfActivity);
-  expect(historyReads).toHaveLength(1);
+  expect(historyReads).toHaveLength(2);  // the mount's read and the read a send makes first (D69)
   history = async () => stored([initial, relayed]);
   await announce(1, channel, {
     ...selfActivity,
@@ -624,7 +624,7 @@ test("a same-timestamp different activity after a self echo still refreshes dura
   });
 
   await view.findByText(relayed.content);
-  expect(historyReads).toHaveLength(2);
+  expect(historyReads).toHaveLength(3);
   expect(currentAgent().messages.map((message) => message.id)).toContain(
     relayed.id,
   );
@@ -694,7 +694,7 @@ test.each([
     history = async () => stored([initial, relayed]);
     await announce(1, channel, { ...selfActivity, ...override });
     await view.findByText(relayed.content);
-    expect(historyReads).toHaveLength(2);
+    expect(historyReads).toHaveLength(3);
     expect(currentAgent().messages.map((message) => message.id)).toContain(
       relayed.id,
     );

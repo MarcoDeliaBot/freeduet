@@ -110,6 +110,12 @@ const JOIN_DEADLINE_MS = 1500;
  */
 const SEND_WITHOUT_RUNTIME_AFTER_MS = 1500;
 
+/**
+ * How long a send waits to read the stored conversation first (see `catchUpWithStore`). A slow store
+ * must not hold a message the person typed, so past this the message goes with what the screen has.
+ */
+const CATCH_UP_BEFORE_SEND_MS = 2000;
+
 /** When a Bot's announced turn is read for, while the store may not have it yet. */
 const CATCH_UP_DELAYS_MS = [0, 750, 1500];
 /**
@@ -203,7 +209,7 @@ export function channelHistoryNotice({
  * Return the original array when nothing was added or corrected so refreshes can wait for the store
  * to catch up.
  */
-function mergeStoredMessages(
+export function mergeStoredMessages(
   local: Message[],
   stored: Message[],
   fromStore: ReadonlySet<string>,
@@ -1022,6 +1028,43 @@ export function ChannelChat({
   reportRef.current = report;
 
   /**
+   * READ THE STORED CONVERSATION BEFORE A MESSAGE GOES OUT (docs/M1_PLAN.md section 48, D69).
+   *
+   * What a Bot is sent on a turn is the list this screen holds (the server builds the run from the
+   * run's own input messages), and a turn the server ran while nobody here streamed it, such as the
+   * relay of a hand-off's answer, is in the store and may not be on this screen yet. On 17 November
+   * 2026 Otto finished a hand-off, Iris's relay of his answer was stored, and the person's next two
+   * messages went out without it: Iris said twice that Otto had not answered. The re-read that the
+   * roster's activity triggers (the effect above) is the only other thing that brings such a turn in,
+   * and a message typed in the gap beats it.
+   *
+   * The same merge as every other read: a stored message this screen lacks is added before its next
+   * shared anchor, nothing the screen holds is dropped or reordered, and it runs BEFORE the typed
+   * message is added, so that message is always the last one and the one the server reads as what the
+   * person typed. Bounded, and every failure is silent: the message is sent either way.
+   */
+  const catchUpWithStore = async () => {
+    if (followingRef.current) return;
+    try {
+      const stored = await readThreadMessages(channel.threadId, runtimeAgentId, {
+        deadlineMs: CATCH_UP_BEFORE_SEND_MS,
+      });
+      if (stored.availability === "unavailable") return;
+      const current = agentRef.current;
+      const messages = mergeStoredMessages(
+        current.messages,
+        stored.messages,
+        fromStore.current,
+      );
+      if (messages === current.messages) return;
+      rememberFromStore(fromStore.current, current.messages, messages);
+      current.setMessages(messages);
+    } catch {
+      // The send goes ahead with what the screen holds.
+    }
+  };
+
+  /**
    * Everything `say` does once it has something worth sending, split out so the counter it is
    * wrapped in covers every way out of here, a throw included.
    */
@@ -1074,6 +1117,7 @@ export function ChannelChat({
         return cachedVoiceArchive(channel.id);
       })
       .finally(() => clearTimeout(voiceHistoryTimer));
+    await catchUpWithStore();
     const target = agentRef.current;
     const existingMessageIds = new Set(
       target.messages.map((message) => message.id),
