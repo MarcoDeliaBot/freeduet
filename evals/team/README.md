@@ -110,7 +110,7 @@ Reset the stack before a run, as the first command above does. Within a run the 
 | `FREEDUET_EVAL_COOKIE` | A session cookie, sent as the `Cookie` header. Only needed when the server is not in single-user mode |
 | `FREEDUET_INSTALL_SECRET` | With `--env-file=openbot/.env.eval` the eval stack's installation secret (D28), sent as the cookie that makes the runner the person on a server with no sign-in. Only for a server on this machine, and the stack's own: `scripts/start.sh` writes it to `.env.eval` the first time |
 | `FREEDUET_EVAL_ENGINE` | The engine a live run certifies when `--engine` is not given (see [Which engine](#which-engine)) |
-| `MANAGED_AGENT_AG_UI_URL`, `MANAGED_AGENT_TOKEN` | The eval stack's agent (agent-freeduet): its address and its token. Every live run, the default run too, asks that agent which engines it runs (`GET <address>/engines`, the token in the `x-openbot-agent-token` header), and sends the token to that address only. `scripts/freeduet-eval-stack.sh` sets the address and `scripts/start.sh` makes the token; neither is printed or put in a report |
+| `MANAGED_AGENT_AG_UI_URL`, `MANAGED_AGENT_TOKEN` | The eval stack's agent (agent-freeduet): its address and its token. Every live run, the default run too, asks that agent which engines it runs (`GET <address>/engines`, the token in the `x-openbot-agent-token` header), and sends the token to that address only. `openbot/scripts/freeduet-eval-stack.sh` sets the address and `openbot/scripts/start.sh` makes the token; neither is printed or put in a report |
 
 ### The guard
 
