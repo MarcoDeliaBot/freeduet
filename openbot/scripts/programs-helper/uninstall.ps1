@@ -16,7 +16,7 @@ param([switch]$Yes)
 function Invoke-Uninstall {
     param([bool]$Yes, [string]$Directory = (Get-HelperDirectory), [string]$TaskName = 'FreeDuet Programs Helper')
     if (-not $Yes) {
-        $answer = Read-Host "Remove the task '$TaskName' and delete $Directory ? (y/n)"
+        $answer = Read-Host "Remove the task '$TaskName' and delete $Directory? (y/n)"
         if ($answer -notmatch '^[yY]') { Write-Host 'Nothing was changed.'; return 1 }
     }
     $task = Get-ScheduledTask -TaskName $TaskName -ErrorAction SilentlyContinue

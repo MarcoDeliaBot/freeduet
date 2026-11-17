@@ -385,7 +385,7 @@ async function execute(
     );
     io.out("");
     io.out(
-      "Next: start the server and sign in as that address. The sign-in finds the account this made.",
+      "Next: start the server and sign in as that address. The sign-in finds the account that this tool created.",
     );
     io.out("");
     for (const line of goingBack) io.out(line);

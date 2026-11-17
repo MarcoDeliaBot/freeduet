@@ -624,7 +624,7 @@ describe_step() {
       say "  \$ sudo systemctl daemon-reload"
       say "  \$ sudo systemctl enable freeduet.service" ;;
     docker-group)
-      say "Add you ($USER_NAME) to the \"docker\" group."
+      say "Add yourself ($USER_NAME) to the \"docker\" group."
       say "  Why: it lets you use Docker without sudo. Anybody in that group can control this whole computer"
       say "  through Docker, as with every Docker install."
       say "  \$ sudo usermod -aG docker $USER_NAME"

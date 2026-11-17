@@ -40,7 +40,7 @@ export const SIGNIN_ALLOWED_EMAILS_VARIABLE = "SIGNIN_ALLOWED_EMAILS";
 
 /** What a refused account is told. Names no list: who is on it is nobody else's business. */
 export const ADDRESS_REFUSAL_MESSAGE =
-  "This deployment is not open to that account. Ask the person who runs it to add your address.";
+  "This installation is not open to that account. Ask the person who runs it to add your address.";
 
 /** The reason on the audit row, beside the domain list's "email domain not admitted by this deployment". */
 export const ADDRESS_REFUSAL_REASON =
