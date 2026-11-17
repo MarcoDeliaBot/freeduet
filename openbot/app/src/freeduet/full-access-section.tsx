@@ -201,10 +201,12 @@ export function FreeDuetFullAccess() {
                   instead.
                 </p>
                 <p className="mt-1 text-muted-foreground text-sm">
-                  Passwords and security settings still need you. This applies
-                  to what you ask in your own chats, not to routines or
-                  check-ins. You can turn it off at any time, and it stops at
-                  once.
+                  Passwords and security settings still need you, also when they
+                  are changed by a command or a script it runs on its computer:
+                  the automatic reviewer reads each command and script once for
+                  that, even if you switched the reviewer off. This applies to
+                  what you ask in your own chats, not to routines or check-ins.
+                  You can turn it off at any time, and it stops at once.
                 </p>
               </>
             ) : (
@@ -219,10 +221,13 @@ export function FreeDuetFullAccess() {
                   The app recognises a payment by its built-in checks, so a
                   message that only mentions a payment may ask too, and a
                   payment worded in an unusual way might not be caught.
-                  Passwords and security settings still need you. This applies
-                  to what you ask in your own chats, not to routines or
-                  check-ins. You can turn it off at any time, and it stops at
-                  once.
+                  Passwords and security settings still need you, also when they
+                  are changed by a command or a script it runs on its computer,
+                  and so does a payment made that way: the automatic reviewer
+                  reads each command and script once for that, even if you
+                  switched the reviewer off. This applies to what you ask in
+                  your own chats, not to routines or check-ins. You can turn it
+                  off at any time, and it stops at once.
                 </p>
               </>
             )}

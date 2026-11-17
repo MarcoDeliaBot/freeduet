@@ -1377,3 +1377,44 @@ Added on 17 November 2026, by the maintainer's decision (D79). Built with option
 **Not changed.** Existing installations. Proactive code, `config.ts`, approvals policy, service and store, `SAFETY_REQUIREMENTS`, the site.
 
 **Built so far.** The mark change, the Iris sentence, case iris-26 and the counts that move with it (97 cases, 44 safety), this section.
+
+## 56. A payment or a credential change run as a command meets the same rule (D77)
+
+Decided on 17 November 2026 by the maintainer's standing rule (the stricter side), after a probe on the real `decideAction`. The words floor (`safetyRequirement`) skips the tools in `NOT_ACCOUNT_ACTIONS` (`computer_run_command`, `computer_write_file`, ...), and the reviewer's safety category was ignored for them. So `computer_run_command` running `stripe charges create ... --confirm`, `passwd` or `aws iam ...` was decided only by the reviewer's proceed or needs-approval verdict, and under Full access (any setting) by nobody: `fullAccessOutcome` allows with no reviewer. The exemption itself is right (a config file that mentions a password is not a password change, and a routine's file write would wait for a card for ever, D35); what was missing is only that a command can be an account action.
+
+| D77 | What was built | Where | Why |
+|---|---|---|---|
+| A | The reviewer's safety category counts for `computer_run_command` (always) and for `computer_write_file` only when the file is a script or an executable (extension `.sh .bash .zsh .py .rb .pl .php .js .mjs .cjs .ts .ps1 .bat .cmd`, or a first line that starts with `#!`). Credentials, security settings and payments are then a hand-off with source `safety`, the same outcome and the same reason strings as an account action. `NOT_ACCOUNT_ACTIONS` itself is unchanged, and so are `host/` tools, reads and the words floor. | `reviewerCategoryCounts` in `approvals/policy.ts`, used by the one line in `decideAction` that was `!NOT_ACCOUNT_ACTIONS.test(...)` | The command text is the only place a payment CLI shows. A hand-off is the answer the same category already gets everywhere else. |
+| B | Under Full access, a `computer_run_command` or a script write (the same test as in A) that the Full access answer would allow is shown once, whatever the person's auto-review switch says (under Full access it is the only check a command gets), to the reviewer, and only its safety category is read: credentials and security settings become a hand-off in both settings; a payment becomes a hand-off in "Full access without payments" and stays allowed in plain Full access, exactly as an account payment does. Any other answer is ignored: a "needs_approval" or "hand_off" verdict without a category, a failed or unreachable reviewer, no reviewer at all. So Full access still never asks about an ordinary command. | `decideAction`, in the Full access branch (`isCommandOrScriptWrite`) | A switch that lifts only payments should not lift a password change run through a shell. It adds a hand-off and never a card. |
+
+Cost of B. One reviewer call (a model call, 15 s timeout, no cache) for every `computer_run_command` and every script write under Full access, in the person's own live turn only: Full access never applies to a routine or a remote session. Not measured. A slow or down reviewer delays the command by up to 15 s and then lets it through as before (fail open for B only; part A and every other case keep the existing fail closed). If the maintainer finds this too slow, B is one block in `decideAction` and can be removed alone; the decision is his.
+
+Routines. A routine's run has no Full access and its commands are not held by D35 (`NOT_ACCOUNT_ACTIONS`). A routine's payment command is therefore a hand-off when auto-review is on and the reviewer names the category (pinned), and is decided as before when auto-review is off, because nothing then reads the command. A routine's ordinary file write still waits for no card (pinned).
+
+Not built, with recommendations (all three need the maintainer):
+
+| Item | Recommendation | Reason |
+|---|---|---|
+| Widening the word lists ("Buy", "Place my order") | No, not for commands. | The lists are for account tools and tool names; words in shell text (`buy`, `order`, `pay`) would make ordinary commands (`git log --grep=pay`) hand-offs. The reviewer's category is the better judge of a command. |
+| Always-ask for a routine's command | Yes, later, as its own decision, for a command only and not a file. | It closes the auto-review-off gap above, at the price of a routine that runs a command waiting for a card for ever; so it needs the person to be able to pre-approve a named command first. |
+| Running the reviewer for every Full access action | No. | It costs a model call per action and changes what Full access means; B already covers the one tool whose text can carry a payment or a credential. |
+
+Added after the independent review (head 659d38a, "fix first"; the logic was sound, the change only adds hand-offs):
+
+| Fix | What changed |
+|---|---|
+| Script writes under Full access | B also runs for `computer_write_file` of a script (extension from the list in A, or contents starting with `#!`), so `x.sh` with a payment or a password change is handed over in both settings as a command is. One shared test, `isCommandOrScriptWrite`, serves A and B. |
+| Over-limit text | The reviewer reads at most 6000 characters of an action (`REVIEW_ACTION_LIMIT`, unchanged for every other tool). A command or script write whose action text is longer is a hand-off with the reason "This command or script is too long for the automatic reviewer to read in full, so you decide.", in A (when a review would run) and in B, and only when a reviewer model is configured (no model: the old outcome). The reason is an English constant, not in the translated approval catalogue (11 tables); the card shows it in English. |
+| Reviewer switch off | B runs even when the person switched the automatic reviewer off: under Full access it is the only check a command gets. Pinned by a test; said in `docs/FULL_ACCESS.md` and in the Settings confirmation. |
+
+Limits, stated plainly.
+
+- **Two-step.** A file with no script extension and no `#!` line (.txt, Makefile, .service, .sql) that is written and then run: the reviewer sees the command that runs it, not the file's content. Pinned as a known limit (a `.txt` write is not reviewed).
+- **Text the model must read.** A heredoc, `curl | sh`, base64 and `$(...)` hide the real action inside the command; whether it is found depends on the reviewer model reading it. Not a guarantee.
+- **Fail open for B.** A reviewer that errors, times out, answers something unreadable or is not configured leaves the Full access allow as it was. On a fresh install with no reviewer model B does nothing at all.
+- **Cost.** One model call for each command and each script write under Full access, with no cache, up to 15 s each.
+- **Part A with the reviewer off outside Full access** (a routine) still reads nothing, as before.
+
+Tests. `approvals-command-floor.test.ts` (20 cases) goes through the real `decideAction` with a fake reviewer: payment command (hand-off off and "without payments", allowed in plain Full access), credential and security command (hand-off in every mode), ordinary command (allow in every mode, zero asks, exactly one reviewer call under Full access and none for a file or a read), unreachable reviewer (allow under Full access, the old ask with the switch off), file writes (ordinary file never, script always), a routine's file write and command, and the tools that are unchanged; and, for the review fixes: Full access with the reviewer switch off (one call, hand-off), a saved "Always allow" with the reviewer on (hand-off for a credential command), a script write under both settings, a `.txt` write not reviewed, an over-limit command and script (hand-off, no call, other tools unchanged, a routine's unchanged), a reviewer that throws or no model (old outcome), a routine's command with the reviewer off (allowed). Before the first change 6 of the first 13 fail; against the head before the review fixes, the script-write and over-limit cases fail (2 of the 7 new); the others pin behaviour that head already had.
+
+**Built so far.** A, B, the review fixes, the 20 tests and this section. Verified: the tests above and the existing approval, safety floor, Full access, routines and sole-definition tests. Not verified: any live reviewer's judgement of real command or script text (the cases to run live are a `stripe ... --confirm` command, `passwd`, `gh auth login`, an `x.sh` that runs `passwd`, and `ls` under both Full access settings), B's cost on a real model, and the over-limit sentence in a card.
