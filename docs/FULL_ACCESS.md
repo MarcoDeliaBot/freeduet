@@ -6,7 +6,7 @@ _Decided by the maintainer on 2026-11-14; its second setting, "without payments"
 
 | Choice | Sends, signs, books, publishes, deletes | Pays and buys | Still asks the person |
 |---|---|---|---|
-| **Off** (the default) | asks first | a payment the words find is handed to you; otherwise the reviewer decides | everything on this row |
+| **Off** (the default) | asks first | a payment the words find is handed to you; otherwise the reviewer decides while review is on | everything on this row |
 | **Full access without payments** | without asking | a payment the words find is **handed to you**; otherwise without asking | payments and purchases; passwords, credentials, security settings |
 | **Full access** | without asking | without asking | passwords, credentials, security settings |
 
