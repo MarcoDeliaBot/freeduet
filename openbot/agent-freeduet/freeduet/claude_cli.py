@@ -178,7 +178,7 @@ def picture_input(prompt: str, pictures) -> bytes:
     return (json.dumps(line, ensure_ascii=False) + "\n").encode("utf-8")
 
 
-_LONG_BASE64 = re.compile(r"[A-Za-z0-9+/=]{200,}")
+_LONG_BASE64 = re.compile(r"[A-Za-z0-9+/=]{64,}")
 
 
 def without_pictures(text: str, pictures) -> str:
@@ -232,13 +232,15 @@ def _clip(text: str, limit: int = 300) -> str:
     return text if len(text) <= limit else text[:limit] + "…"
 
 
-def failure_event(parser: StreamParser, stderr: str = "", exit_code: int | None = None) -> dict | None:
-    """The RUN_ERROR this run ended in, or None when it answered."""
+def failure_event(parser: StreamParser, stderr: str = "", exit_code: int | None = None, pictures=()) -> dict | None:
+    """The RUN_ERROR this run ended in, or None when it answered. With `pictures` (D72), what the CLI said is
+    cleaned of their bytes before it can reach the chat."""
+    clean = (lambda text: without_pictures(text, pictures) if text else text) if pictures else (lambda text: text)
     final = parser.final
     failed = final is None or final.is_error or parser.api_error_kind == "authentication_failed"
     if not failed:
         return None
-    said = " ".join(part for part in (final.text if final else None, parser.api_error, stderr) if part)
+    said = " ".join(part for part in (clean(final.text) if final else None, clean(parser.api_error), clean(stderr)) if part)
     if parser.api_error_kind == "authentication_failed" or is_sign_in_failure(said):
         return agui.run_error(SIGN_IN_MESSAGE, AUTH_REQUIRED)
     limit = classify(said, resets_at=parser.limit_resets_at)
@@ -247,7 +249,7 @@ def failure_event(parser: StreamParser, stderr: str = "", exit_code: int | None 
         limit = classify(f"Usage limit reached. {said}", resets_at=parser.limit_resets_at)
     if limit is not None:
         return agui.run_error(describe(LABEL, limit), ENGINE_LIMITED)
-    reported = " ".join(part for part in (final.text if final else None, parser.api_error) if part)
+    reported = " ".join(part for part in (clean(final.text) if final else None, clean(parser.api_error)) if part)
     if reported:
         return agui.run_error(f"{LABEL} could not finish this turn: {_clip(reported)}")
     code = f" (exit code {exit_code})" if exit_code not in (None, 0) else ""

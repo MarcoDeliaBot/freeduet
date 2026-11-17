@@ -74,6 +74,7 @@ PICTURE_SIGNATURES = {
 # because the model's own limit on one image is lower and a turn is sent again with every segment.
 MAX_PICTURE_BYTES = 5 * 1024 * 1024
 MAX_PICTURE_BYTES_PER_TURN = 10 * 1024 * 1024
+MAX_PICTURES_PER_TURN = 20
 
 
 @dataclass(frozen=True)
@@ -142,6 +143,15 @@ def _shown_note(name: str, mime: str, number: int, total: int) -> str:
     )
 
 
+def _too_many_note(name: str, mime: str) -> str:
+    return (
+        f"[The person attached a picture to this message: {name} ({mime}). There were too many pictures in "
+        "this message to show them all, so you cannot see this one. Tell the person plainly that this "
+        "picture was not shown because of how many were attached, and ask them to send fewer at a time or "
+        "to describe it. Never say that you only receive text, and never guess what the picture shows.]"
+    )
+
+
 def _too_large_note(name: str, mime: str) -> str:
     return (
         f"[The person attached a picture to this message: {name} ({mime}). It was too large to be shown to "
@@ -178,6 +188,8 @@ def _part_text(part, verdicts: dict | None = None) -> str:
     verdict = (verdicts or {}).get(id(part))
     if verdict == "large":
         return _too_large_note(name, mime)
+    if verdict == "many":
+        return _too_many_note(name, mime)
     if isinstance(verdict, tuple):
         return _shown_note(name, mime, *verdict)
     return _picture_note(name, mime)
@@ -196,7 +208,7 @@ def _picture(part: dict) -> Picture | str | None:
     if not isinstance(source, dict) or source.get("type") != "data":
         return None
     mime, data = source.get("mimeType"), source.get("value")
-    if mime not in PICTURE_SIGNATURES or not isinstance(data, str) or not data:
+    if not isinstance(mime, str) or mime not in PICTURE_SIGNATURES or not isinstance(data, str) or not data:
         return None
     # The size first, from the text's length, so that a huge value is never decoded to find that out.
     if len(data) * 3 // 4 > MAX_PICTURE_BYTES + 3:
@@ -230,16 +242,18 @@ def _latest_pictures(turn: list[dict]) -> tuple[dict, list[Picture]]:
         if not isinstance(part, dict) or part.get("type") != "image":
             continue
         found = _picture(part)
-        if isinstance(found, Picture) and spent + found.size > MAX_PICTURE_BYTES_PER_TURN:
+        if isinstance(found, Picture) and len(pictures) >= MAX_PICTURES_PER_TURN:
+            found = "many"
+        elif isinstance(found, Picture) and spent + found.size > MAX_PICTURE_BYTES_PER_TURN:
             found = "large"
-        if found == "large":
-            verdicts[id(part)] = "large"
+        if isinstance(found, str):
+            verdicts[id(part)] = found
         elif isinstance(found, Picture):
             spent += found.size
             pictures.append(found)
             verdicts[id(part)] = len(pictures)
     total = len(pictures)
-    return {key: (value, total) if value != "large" else value for key, value in verdicts.items()}, pictures
+    return {key: value if isinstance(value, str) else (value, total) for key, value in verdicts.items()}, pictures
 
 
 def _lessons_text(lessons) -> str:
@@ -377,7 +391,7 @@ def render(
         return "\n\n".join(part for part in (quoted, conversation, closing) if part)
 
     # Without a picture to send, nothing differs from before D72 except the note of one that was too large.
-    prompt = prompt_with({key: value for key, value in verdicts.items() if value == "large"})
+    prompt = prompt_with({key: value for key, value in verdicts.items() if isinstance(value, str)})
     picture_prompt = prompt_with(verdicts) if pictures else None
     system = _system_text(member, messages, context or [], lessons, notes)
     return Rendered(system=system, prompt=prompt, pictures=tuple(pictures), picture_prompt=picture_prompt)

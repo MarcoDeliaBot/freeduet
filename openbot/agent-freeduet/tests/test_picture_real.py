@@ -15,7 +15,7 @@ import pytest
 
 from freeduet import agui, claude_cli, segment, transcript
 from freeduet.members import resolve_member
-from freeduet.transcript import MAX_PICTURE_BYTES, MAX_PICTURE_BYTES_PER_TURN, Picture
+from freeduet.transcript import MAX_PICTURE_BYTES, MAX_PICTURE_BYTES_PER_TURN, MAX_PICTURES_PER_TURN, Picture
 from gateway_support import rig
 from helpers import SETTLE_NEVER, post_run, run_body, standing, types
 from test_compatible_engine import play
@@ -183,7 +183,8 @@ def test_the_switch_turns_the_pictures_off(client, fake_cli, monkeypatch):
     monkeypatch.setenv("FREEDUET_PICTURES", "off")
     _, seen = go(client, fake_cli, ask(picture()))
     assert "--input-format" not in seen["argv"] and "pictures" not in seen
-    assert "does not pass pictures on to the engine you run on" in seen["prompt"]
+    assert "does not pass pictures on to the engine you run on, so you cannot see it" in seen["prompt"]
+    assert "passed to you as image" not in seen["prompt"] and PNG_B64 not in seen["prompt"]
 
 
 # 5. The bytes are never logged or kept.
@@ -213,6 +214,7 @@ def test_a_cli_that_echoes_the_line_on_stderr_does_not_put_it_in_a_log_or_the_er
     wholes = "\n".join(r.getMessage() for r in caplog.records)
     assert PNG_B64[:200] not in wholes + json.dumps(events)
     assert "gave no answer to a turn with 1 picture(s)" in wholes  # and the failure is visible, with counts only
+    assert "cannot parse" not in wholes and "bytes on stderr (not logged" in wholes  # the tail is not logged at all
 
 
 def test_a_picture_does_not_print_in_its_repr_or_in_the_turn_context():
@@ -239,3 +241,58 @@ def test_the_compatible_engine_still_gets_the_note_and_plain_text(fake_cli, tmp_
     assert "--input-format" not in seen["argv"] and "pictures" not in seen
     assert "This version does not pass pictures on to the engine you run on, so you cannot see it" in seen["prompt"]
     assert PNG_B64 not in seen["prompt"]
+
+
+# The review of PR #359.
+@pytest.mark.parametrize("mime", [["image/png"], {"a": 1}, 5, None])
+def test_a_mime_type_that_is_not_text_is_a_note_and_never_an_exception(mime):
+    messages = ask(picture(mime=mime))
+    rendered = transcript.render(resolve_member("freeduet", messages), messages)
+    assert rendered.pictures == () and rendered.picture_prompt is None
+    assert "This version does not pass pictures on to the engine you run on, so you cannot see it" in rendered.prompt
+
+
+def test_more_than_twenty_pictures_are_not_all_shown():
+    messages = ask(*[picture(name=f"{n}.png") for n in range(25)])
+    rendered = transcript.render(resolve_member("freeduet", messages), messages)
+    assert len(rendered.pictures) == MAX_PICTURES_PER_TURN == 20
+    assert rendered.prompt.count("too many pictures in this message") == 5  # the same in every engine
+    assert rendered.picture_prompt.count("passed to you as image") == 20 and "image 20 of 20" in rendered.picture_prompt
+    assert rendered.picture_prompt.count("too many pictures in this message") == 5
+
+
+def failing(client, fake_cli, messages, stderr, times=3):
+    for n in range(times):
+        fake_cli.plan(*[[{"stderr": stderr}, {"exit": 1}]] * times)
+    for n in range(times):
+        events, _ = post_run(client, run_body(messages, run_id=f"run-{n}"))
+        assert types(events)[-1] == "RUN_ERROR"
+
+
+def engine_row(client):
+    from helpers import MANAGED_TOKEN
+    (only,) = client.get("/engines", headers={"x-openbot-agent-token": MANAGED_TOKEN}).json()["engines"]
+    return only
+
+
+TEXT = [standing(), {"id": "u1", "role": "user", "content": "hello"}]
+
+
+@pytest.mark.parametrize("words, kind", [("Request timed out", "degraded"), ("401 unauthorized", "signed_out")])
+def test_a_picture_turn_that_fails_never_moves_the_engines_health(client, fake_cli, words, kind):
+    failing(client, fake_cli, ask(picture()), words)
+    assert (engine_row(client)["state"], engine_row(client)["consecutive_failures"]) == ("ready", 0)
+
+
+@pytest.mark.parametrize("words, kind", [("Request timed out", "open"), ("401 unauthorized", "signed_out")])
+def test_the_same_failures_in_a_text_turn_still_count(client, fake_cli, words, kind):
+    failing(client, fake_cli, TEXT, words)
+    row = engine_row(client)
+    assert row["state"] == kind and row["consecutive_failures"] >= 1
+
+
+def test_the_error_in_the_chat_is_cleaned_of_the_picture(client, fake_cli):
+    leaked = "bad input " + PNG_B64[:300]
+    fake_cli.plan([{"events": [{"type": "result", "subtype": "error", "is_error": True, "result": leaked}]}])
+    events, _ = post_run(client, run_body(ask(picture())))
+    assert types(events)[-1] == "RUN_ERROR" and PNG_B64[:100] not in json.dumps(events)
