@@ -61,6 +61,7 @@ function settingWith(
     threadId: "research-thread",
     focus: "",
     enabled: true,
+    enabledByPerson: true,
     intervalMinutes: 60,
     nextRunAt: NOW,
     lastRunAt: null,
