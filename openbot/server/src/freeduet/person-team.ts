@@ -176,7 +176,9 @@ export function createPersonTeam(deps: PersonTeamDeps): PersonTeam {
    * Nothing is ever made here (D79): the routine is created only by Iris's `create_routine` after the
    * person says yes, and the card of D35 asks first.
    */
-  async function existingDailyReview(actor: AgentActor): Promise<string | null> {
+  async function existingDailyReview(
+    actor: AgentActor,
+  ): Promise<string | null> {
     if (!tenantPackage.agents.some((agent) => agent.id === iris)) return null;
     const existing = (await deps.routines.listFor(actor.id)).find(
       (routine) =>
