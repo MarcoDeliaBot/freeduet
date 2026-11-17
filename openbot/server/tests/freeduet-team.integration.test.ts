@@ -65,6 +65,7 @@ const people = {
   carol: `fd-carol-${suite}`,
   dan: `fd-dan-${suite}`,
   erin: `fd-erin-${suite}`,
+  frank: `fd-frank-${suite}`,
 } as const;
 const PEOPLE = Object.values(people);
 
@@ -204,7 +205,6 @@ function replica(
         database: handle,
         channels: channelStore,
         routines: {
-          create: (input) => routineStore.create(input),
           listFor: async (ownerUserId) => {
             await beforeRoutineCheck?.();
             return routineStore.listFor(ownerUserId);
@@ -475,7 +475,10 @@ describe("each person's conversations (#25) and daily review (D17)", () => {
     expect(Object.keys(mark.conversations).sort()).toEqual(
       CHANNELS.map((channel) => channel.id).sort(),
     );
-    expect(mark.dailyReview).toEqual(expect.any(String));
+    // D79: offered, never made. No routine, and the mark says the offer is left to Iris.
+    expect(mark.dailyReview).toBeUndefined();
+    expect(mark.dailyReviewProposed).toBe(true);
+    expect(await routinesOf(people.alice)).toEqual([]);
   });
 
   test("another person can neither list nor open them", async () => {
@@ -496,46 +499,53 @@ describe("each person's conversations (#25) and daily review (D17)", () => {
     );
   });
 
-  test("the daily review is Iris's, every morning at 08:30 Europe/Rome, in her conversation", async () => {
-    const made = await routinesOf(people.alice);
-    const main = mine.find((conversation) => conversation.name === "FreeDuet");
-    expect(made.length).toBe(1);
-    expect(made[0]).toMatchObject({
-      agentId: IRIS,
-      channelId: main?.id,
-      instruction: DAILY_REVIEW_INSTRUCTION,
-      cron: DAILY_REVIEW_CRON,
-      timezone: "Europe/Rome",
-      enabled: true,
-    });
-    expect((await markOf(people.alice)).mark.dailyReview).toBe(made[0]?.id);
-  });
-
-  test("asking again, or after a restart, makes nothing new and keeps the person's changes", async () => {
-    const [routine] = await routinesOf(people.alice);
-    if (!routine) throw new Error("no routine");
-    await here.routineStore.update(people.alice, routine.id, {
-      timezone: "America/New_York",
-    });
-
+  test("D79: a second pass, or a restart, offers and makes nothing again", async () => {
     const team = here.team();
     await team.ensure(people.alice);
     await team.ensure(people.alice);
     await here.team().ensure(people.alice);
 
     expect((await conversationsOf(people.alice)).length).toBe(CHANNELS.length);
-    const after = await routinesOf(people.alice);
-    expect(after.map((row) => [row.id, row.timezone])).toEqual([
-      [routine.id, "America/New_York"],
-    ]);
+    expect(await routinesOf(people.alice)).toEqual([]);
+    const { mark } = await markOf(people.alice);
+    expect(mark.dailyReviewProposed).toBe(true);
+    expect(mark.dailyReview).toBeUndefined();
+  });
+
+  test("D79: a daily review the person already has stays exactly as it is, enabled or not", async () => {
+    // Before the change a first pass made it; here it is made by hand, then switched off.
+    await here.channelStore.direct({ id: people.frank, role: "user" }, IRIS);
+    const made = await here.routineStore.create({
+      ownerUserId: people.frank,
+      agentId: IRIS,
+      instruction: DAILY_REVIEW_INSTRUCTION,
+      cron: DAILY_REVIEW_CRON,
+      timezone: "America/New_York",
+    });
+    await here.routineStore.setEnabled(people.frank, made.id, false);
+    const before = await routinesOf(people.frank);
+
+    await here.team().ensure(people.frank);
+    await here.team().ensure(people.frank);
+
+    expect(await routinesOf(people.frank)).toEqual(before);
+    const { mark } = await markOf(people.frank);
+    expect(mark.dailyReview).toBe(made.id);
+    expect(mark.dailyReviewProposed).toBeUndefined();
   });
 
   test("a conversation or routine the person deleted stays deleted", async () => {
     const alice: AgentActor = { id: people.alice, role: "user" };
     const inbox = mine.find((conversation) => conversation.name === "Inbox");
-    const [routine] = await routinesOf(people.alice);
-    if (!inbox || !routine) throw new Error("nothing to delete");
+    if (!inbox) throw new Error("nothing to delete");
     expect(await here.channelStore.softDelete(alice, inbox.id)).toBe(true);
+    // The person says yes in chat and later deletes what Iris set up (made here as that call would).
+    const routine = await here.routineStore.create({
+      ownerUserId: people.alice,
+      agentId: IRIS,
+      instruction: DAILY_REVIEW_INSTRUCTION,
+      cron: DAILY_REVIEW_CRON,
+    });
     await here.routineStore.remove(people.alice, routine.id);
 
     await here.team().ensure(people.alice);
@@ -562,9 +572,7 @@ describe("each person's conversations (#25) and daily review (D17)", () => {
     expect(withIris.map(({ id, name }) => ({ id, name }))).toEqual([
       { id: earlier.id, name: "FreeDuet" },
     ]);
-    expect(
-      (await routinesOf(people.carol)).map((row) => row.channelId),
-    ).toEqual([earlier.id]);
+    expect(await routinesOf(people.carol)).toEqual([]);
   });
 
   test("two first requests at once, on two replicas and on one, make one set", async () => {
@@ -585,12 +593,11 @@ describe("each person's conversations (#25) and daily review (D17)", () => {
     expect(new Set(conversations.map((row) => row.name)).size).toBe(
       CHANNELS.length,
     );
-    const made = await routinesOf(people.dan);
-    expect(made.length).toBe(1);
-    expect((await markOf(people.dan)).mark.dailyReview).toBe(made[0]?.id);
+    expect(await routinesOf(people.dan)).toEqual([]);
+    expect((await markOf(people.dan)).mark.dailyReviewProposed).toBe(true);
   });
 
-  test("two passes that only owe the daily review make one routine", async () => {
+  test("two passes that only owe the daily review mark the offer once and make no routine", async () => {
     // Conversations made while the package had no Iris among its members, so no review yet.
     const withoutIris = {
       ...tenantPackage,
@@ -609,8 +616,7 @@ describe("each person's conversations (#25) and daily review (D17)", () => {
     ]);
 
     expect((await conversationsOf(people.erin)).length).toBe(CHANNELS.length);
-    const made = await routinesOf(people.erin);
-    expect(made.length).toBe(1);
-    expect((await markOf(people.erin)).mark.dailyReview).toBe(made[0]?.id);
+    expect(await routinesOf(people.erin)).toEqual([]);
+    expect((await markOf(people.erin)).mark.dailyReviewProposed).toBe(true);
   });
 });

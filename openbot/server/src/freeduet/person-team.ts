@@ -21,6 +21,12 @@
  * makes only what the mark lacks, so a conversation or routine the person deleted stays deleted, a
  * restart repeats nothing, and a member added to the package later is still offered to everybody.
  *
+ * THE DAILY REVIEW IS OFFERED, NEVER MADE (D79, docs/M1_PLAN.md section 58). A routine waits for a
+ * card (D35), and a pass has no run to hang a card on, so no pass creates one. A person with no daily
+ * review gets `dailyReviewProposed` in the mark instead, once: Iris offers the review in words, and
+ * when the person says yes her `create_routine` call meets the D35 card. A routine already there,
+ * enabled or not, is adopted into the mark as it is; one the person deleted is never made again.
+ *
  * TWO REQUESTS AT ONCE. A pass holds a transaction-scoped advisory lock on the person and reads the
  * mark inside it, so a second pass, on this replica or another, waits and then finds the work done.
  * In one process passes run one at a time, so a pass waiting on the lock never holds more than one
@@ -41,7 +47,7 @@ import {
 import type { Database } from "../db/client";
 import { channels, users } from "../db/schema";
 import type { OnboardingStore } from "../people/onboarding";
-import { RoutineRefusedError, type RoutineStore } from "../routines/store";
+import type { RoutineStore } from "../routines/store";
 import type { TenantPackage } from "../tenant-package";
 import { isFreeDuetPackage } from "./hub-grants";
 
@@ -62,17 +68,20 @@ export const DEFAULT_TEAM_TIMEZONE = "Europe/Rome";
 export type TeamMark = {
   conversations: Record<string, string>;
   dailyReview?: string;
+  /**
+   * D79: the server has left the daily review to Iris to offer in words. Set once, when the person
+   * has no daily review; from then on no pass makes a routine or looks again.
+   */
+  dailyReviewProposed?: true;
 };
 
 export type PersonTeamDeps = {
   database: Database;
   channels: Pick<ChannelStore, "direct" | "create">;
-  routines: Pick<RoutineStore, "create" | "listFor">;
+  routines: Pick<RoutineStore, "listFor">;
   /** The person as the channel and routine stores check them, role included. */
   actorFor: (userId: string) => Promise<AgentActor>;
   tenantPackage: Pick<TenantPackage, "tenantId" | "agents" | "channels">;
-  /** The daily review's zone. Defaults to {@link DEFAULT_TEAM_TIMEZONE}. */
-  timezone?: string;
 };
 
 export type PersonTeam = {
@@ -98,6 +107,7 @@ export function readTeamMark(value: unknown): TeamMark {
   if (typeof stored.dailyReview === "string" && stored.dailyReview) {
     mark.dailyReview = stored.dailyReview;
   }
+  if (stored.dailyReviewProposed === true) mark.dailyReviewProposed = true;
   return mark;
 }
 
@@ -111,7 +121,6 @@ type PackageChannel = PersonTeamDeps["tenantPackage"]["channels"][number];
 export function createPersonTeam(deps: PersonTeamDeps): PersonTeam {
   const { database, tenantPackage } = deps;
   const iris = tenantPackage.tenantId;
-  const timezone = deps.timezone ?? DEFAULT_TEAM_TIMEZONE;
   /** People whose pass finished in this process. A restart reads the mark again. */
   const settled = new Set<string>();
   /** The pass under way for a person, which a second request for them waits on. */
@@ -162,48 +171,19 @@ export function createPersonTeam(deps: PersonTeamDeps): PersonTeam {
     }
   }
 
-  /** The daily review's routine id: one already there with Iris and this instruction, or a new one. */
-  async function dailyReviewFor(
-    actor: AgentActor,
-    mark: TeamMark,
-  ): Promise<string | null> {
+  /**
+   * The daily review's routine id when one is already there with Iris and this instruction, else null.
+   * Nothing is ever made here (D79): the routine is created only by Iris's `create_routine` after the
+   * person says yes, and the card of D35 asks first.
+   */
+  async function existingDailyReview(actor: AgentActor): Promise<string | null> {
     if (!tenantPackage.agents.some((agent) => agent.id === iris)) return null;
-    /*
-     * A routine made by a pass whose mark was never written (the process stopped in between) is
-     * found here rather than made twice. With no mark, nothing else made one with this exact text.
-     */
     const existing = (await deps.routines.listFor(actor.id)).find(
       (routine) =>
         routine.agentId === iris &&
         routine.instruction === DAILY_REVIEW_INSTRUCTION,
     );
-    if (existing) return existing.id;
-    const irisChannel = tenantPackage.channels.find(
-      (channel) =>
-        channel.permittedAgents.length === 1 &&
-        channel.permittedAgents[0] === iris,
-    );
-    const channelId = irisChannel
-      ? mark.conversations[irisChannel.id]
-      : undefined;
-    try {
-      const routine = await deps.routines.create({
-        ownerUserId: actor.id,
-        agentId: iris,
-        ...(channelId ? { channelId } : {}),
-        instruction: DAILY_REVIEW_INSTRUCTION,
-        cron: DAILY_REVIEW_CRON,
-        timezone,
-      });
-      return routine.id;
-    } catch (error) {
-      if (!(error instanceof RoutineRefusedError)) throw error;
-      warn("freeduet-team-daily-review-skipped", {
-        userId: actor.id,
-        reason: error.message,
-      });
-      return null;
-    }
+    return existing ? existing.id : null;
   }
 
   async function pass(userId: string): Promise<void> {
@@ -229,9 +209,11 @@ export function createPersonTeam(deps: PersonTeamDeps): PersonTeam {
           const id = await conversationFor(transaction, actor, channel);
           if (id) mark.conversations[channel.id] = id;
         }
-        if (!mark.dailyReview) {
-          const id = await dailyReviewFor(actor, mark);
+        if (!mark.dailyReview && !mark.dailyReviewProposed) {
+          const id = await existingDailyReview(actor);
           if (id) mark.dailyReview = id;
+          else if (tenantPackage.agents.some((agent) => agent.id === iris))
+            mark.dailyReviewProposed = true;
         }
 
         if (JSON.stringify(mark) === before) return;
