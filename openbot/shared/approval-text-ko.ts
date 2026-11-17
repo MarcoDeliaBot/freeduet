@@ -126,6 +126,8 @@ export const APPROVAL_TEXT_KO: CompleteApprovalTextTable = {
     "메일함의 이 변경은 당신의 메시지에서 요청한 것이 아니어서 먼저 묻습니다.",
   "reason.unattended":
     "이것은 당신이 보낸 메시지가 아니라 저절로 실행되는 루틴이나 트리거에서 왔으므로 항상 먼저 묻습니다.",
+  "reason.tooLongToReview":
+    "이 명령이나 스크립트는 너무 길어서 자동 검토기가 전체를 읽을 수 없으므로 당신이 직접 결정합니다.",
   "reason.automation":
     "루틴과 트리거는 나중에 당신 없이 실행되므로, 만들거나 바꾸거나 삭제할 때는 항상 먼저 묻습니다.",
   "reason.setting":

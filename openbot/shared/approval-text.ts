@@ -164,6 +164,8 @@ const EN = {
     "You did not ask for this change to your mailbox in your own message, so it asks you first.",
   "reason.unattended":
     "This came from a routine or a trigger running on its own, not from a message you sent, so it always asks you first.",
+  "reason.tooLongToReview":
+    "This command or script is too long for the automatic reviewer to read in full, so you decide.",
   "reason.automation":
     "Routines and triggers act later without you, so setting one up, changing it or deleting it always asks you first.",
   "reason.setting":
