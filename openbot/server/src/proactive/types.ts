@@ -14,24 +14,38 @@ export const MAX_INTERVAL_MINUTES = 1440;
 export const MAX_SUGGESTIONS_PER_RUN = 5;
 export const MAX_MEMORIES_PER_RUN = 10;
 
+const focusField = z.string().trim().max(1000);
+const intervalField = z
+  .number()
+  .int()
+  .min(MIN_INTERVAL_MINUTES)
+  .max(MAX_INTERVAL_MINUTES);
+
 export const proactiveSettingInputSchema = z
   .object({
     agentId: z.string().trim().min(1).max(128),
     channelId: z.string().trim().min(1).max(128),
-    focus: z.string().trim().max(1000).default(""),
-    intervalMinutes: z
-      .number()
-      .int()
-      .min(MIN_INTERVAL_MINUTES)
-      .max(MAX_INTERVAL_MINUTES)
-      .default(240),
+    focus: focusField.default(""),
+    intervalMinutes: intervalField.default(240),
     enabled: z.boolean().default(true),
   })
   .strict();
-export const proactiveSettingPatchSchema = proactiveSettingInputSchema
-  .pick({ focus: true, intervalMinutes: true, enabled: true })
-  .partial()
-  .strict();
+/**
+ * A change names only what it changes. These fields have no defaults on purpose: a default would
+ * fill in every field the request left out, and a request that only sets the focus would switch
+ * research back on and reset the interval (D78 follow-up). An empty change is refused.
+ */
+export const proactiveSettingPatchSchema = z
+  .object({
+    focus: focusField.optional(),
+    intervalMinutes: intervalField.optional(),
+    enabled: z.boolean().optional(),
+  })
+  .strict()
+  .refine(
+    (patch) => Object.values(patch).some((value) => value !== undefined),
+    "Say what to change: focus, intervalMinutes or enabled.",
+  );
 
 export const suggestionInputSchema = z
   .object({
