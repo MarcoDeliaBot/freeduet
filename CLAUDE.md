@@ -15,13 +15,13 @@ Read these before changing anything:
 | File | What it holds |
 |---|---|
 | `docs/PROJECT.md` | Goals, rules, milestones M0–M5 |
-| `docs/M1_PLAN.md` | Every decision (D1–D66; there is no D23, and D53 is in `docs/design/mail-organise.md`) with its reason and limits |
+| `docs/M1_PLAN.md` | Every decision, numbered from D1 upward, with its reason and limits; there is no D23, and D53 is in `docs/design/mail-organise.md`. The highest number is found with the command below this table |
 | `docs/UPSTREAM_TOUCHES.md` | Every upstream OpenBot file FreeDuet changed, and why. Add a row for each new one |
 | `docs/PROVIDERS.md` | Which engines are allowed and why (logins first) |
 | `NOTICE.md` | Third-party code we carry and its licence |
 | `evals/team/README.md` | The team evals: cases, live runner, thresholds |
 
-`docs/M1_PLAN.md` sections are out of numeric order on purpose (parallel work): "the last section" means the last one in the file, which is section 43.
+`docs/M1_PLAN.md` sections are out of numeric order on purpose (parallel work): "the last section" means the last one in the file; find it with `grep -n '^## ' docs/M1_PLAN.md | tail -1`. The highest decision number is found with `grep -o 'D[0-9]\+' docs/M1_PLAN.md | sort -t D -k2 -n | tail -1`.
 
 ## Rules that never bend
 
@@ -66,6 +66,8 @@ the hands"): plan, brief executors, verify with numbers, merge, report.
   `executor-sonnet`, `reviewer`); a brief adds only the task-specific part.
 - **Parallel executors.** When several executors run at once, give each its own files: two executors
   must never own the same file.
+- **No scheduling from executors (17 November 2026).** No executor or reviewer calls a scheduling, trigger or reminder tool: two Haiku executors created one-shot "placeholder" reminders by mistake on 17 November, and they fired into the coordinator's session. The same rule is in `.claude/agents/executor-haiku.md`, `executor-sonnet.md` and `reviewer.md`.
+- **Token limits (16–17 November 2026).** A Haiku executor can stop with a weekly-limit error (HTTP 429) in the middle of a task. Its work so far stays in its worktree, uncommitted. Briefs ask every executor to commit early, so the coordinator resumes the same executor rather than starting a new one.
 - **Haiku swarm (rule of 2026-11-15).** For humble work, send four to six Haiku executors at a time
   with maximum effort, never twenty: the sandbox has 2 CPUs and 7 GB, every executor runs tests, and
   each delivery must still be read and checked with numbers. Humble work is work whose files do not
@@ -235,6 +237,7 @@ Mark (id `marketer`) was the first member added after v0.1, Cam (id `video`) the
   Dockerfile, a service or a compose change, look at main's own run. A new `*/Dockerfile` under
   `openbot/` must be added to `openbot/.github/published-images.json`.
 - Biome runs from `openbot/`, not `openbot/server/`.
+- Before a push, run the two commands that the `format, lint, types` job runs, from `openbot/`: `bun run format:check` (`bunx biome format .`) and `bun run lint` (`bunx biome lint --error-on-warnings .`, so a warning fails too; `.github/workflows/ci.yml:42-43`, `openbot/package.json:19-20`). On 17 November 2026 PR #347 failed at the format step, and the steps after it were skipped.
 - The `tests` CI job installs neither Hono nor Dockerode, so supervisor tests that start a real process go on the `types (supervisor)` job's `bun test` line in `.github/workflows/ci.yml`.
 - `audit_events` is append-only (a trigger refuses every UPDATE and DELETE) and nothing is cleaned between cases, so a test that counts audit rows uses fresh addresses per test.
 - Some phrases in the comments of `openbot/agent-freeduet/engines.example.yaml` are pinned by `openbot/agent-freeduet/tests/test_compatible_engine_file.py`: check that test before rewording one.
@@ -242,6 +245,7 @@ Mark (id `marketer`) was the first member added after v0.1, Cam (id `video`) the
 - CodeQL reports a regular expression that pulls `<script>` out of HTML as a high alert, also in a test
   file (PR #325, `openbot/server/tests/programs-pairing.test.ts`, 16 November 2026). A test does not
   extract HTML with a regular expression: it compares against the exact string exported by the source.
+- A check whose conclusion is `neutral` is not a failure. CodeQL reported `neutral`, with the title "1 configuration not found", on PR #350, which changes only `NOTICE.md` (17 November 2026).
 
 ## Site (`site/`)
 
@@ -285,7 +289,7 @@ Mark (id `marketer`) was the first member added after v0.1, Cam (id `video`) the
   or the suite stops early with "Cannot find module '@/lib/generated/application-config'".
 - In this sandbox Playwright needs `PLAYWRIGHT_BROWSERS_PATH=/tmp/pn-pw-browsers`: `/opt/pw-browsers` holds Chromium 1243, and Playwright 1.62 asks for revision 1234, which only the shim maps.
 - CI runs the `agent-freeduet` and `python harness regressions` jobs on Python 3.12; this sandbox's default `python3` is 3.13.
-- `bun test <x>` filters by a substring of the file path, run from `openbot/`: `bun test freeduet-team-file` ran one file, 57 tests.
+- `bun test <x>` filters by a substring of the file path, run from `openbot/`: `bun test freeduet-team-file` runs every test file whose path contains that text, the `-export` files included, so one name can run more than one file.
 - `bun run typecheck:tests` covers `server/tests` only. Three server tests fail in the sandbox on
   plain main (the two `learning-*` "real provider" tests and the Mastra bridge): compare with main.
 - The Python harness (`openbot/agent-microsoft/requirements.txt`) is pinned since 2026-11-12: an
@@ -330,6 +334,7 @@ Mark (id `marketer`) was the first member added after v0.1, Cam (id `video`) the
   `INTELLIGENCE_API_KEY` are all set), the Helm chart writes `on`, and the desktop app writes `off` when its `.env` holds no value (D67; a value the person wrote stays, `on` included). A test or a
   script that starts the server or calls `loadConfig` must say `on` or `off` itself
   (`server/tests/support/environment.ts` says `on`).
+- The desktop app runs the upstream example package, not the FreeDuet team: `openbot/desktop/src-tauri/src/env.rs:790` sets `TENANT_PACKAGE_DIR` to `../examples/fintech`, and `openbot/desktop/src-tauri/src/stack.rs:25` and `:84-95` start no `agent-freeduet`. So D65 and D67 on the desktop decide where conversations are kept, not what the members do (D67, `docs/M1_PLAN.md`, 17 November 2026).
 - Hand-off turns differ on the computer (D22). The RELAY (the answer coming back to the Bot that asked,
   which runs in the person's own conversation) gets the member's computer tools through
   `toolsForTurn` in `server/src/agents/handoff-delivery.ts`, built like a routine's
@@ -359,6 +364,9 @@ Mark (id `marketer`) was the first member added after v0.1, Cam (id `video`) the
   slide with product links are off. The credit to the upstream authors stays.
 - A card raised inside a hand-off is also drawn in the conversation that asked (D52). The chat takes it from the
   person's approval inbox, where `askedIn` names the conversation that asked. One request, one decision route.
+- A picture attached in chat reaches `agent-freeduet` as a base64 `image` part (`resolvePart` in `openbot/server/src/channels/attachment-parts.ts`). `_part_text` in `openbot/agent-freeduet/freeduet/transcript.py` turns that part into a note that says the picture was attached and that the member cannot see it, and it never passes the picture's bytes on: no picture reaches the engine in this version (16–17 November 2026).
+- What decides whether a card was due: a call the gate allows by a personal rule, by the auto-review model or by Full access writes an `approval.evaluated` row in `audit_events`, and no `approval_requests` row (`openbot/server/src/approvals/store.ts:545`; the allow returns at `openbot/server/src/approvals/service.ts:528`, before `store.open` at `service.ts:550`). An allow that is only the default writes no row at all (`service.ts:396`). So "no card appeared" is not evidence that a tool was not called (16–17 November 2026).
+- In the app's chat, a member's next turn is built from the messages the app sends with the request (`openbot/server/src/copilot.ts:1435`, `sanitizeSeededHistory` over `input.messages`), not from the stored thread, so what the screen does not hold, the member does not see (16–17 November 2026). A headless turn, such as a routine, loads the stored thread instead (`openbot/toolkit/src/run-turn.ts:741`).
 
 ## Team evals
 
@@ -407,6 +415,7 @@ Mark (id `marketer`) was the first member added after v0.1, Cam (id `video`) the
   `Invoke-CimMethod Win32_Process Create` (parent WmiPrvSE): an app update killed every `wsl`
   process started with `Start-Process`, and with them WSL, Docker and a two-hour eval run. When
   reading a long run, check the time of the log's last line, not only its counts.
+- To list the eval cases added or reworded since a certification run, compare the cases by `id`: `git diff <commit> origin/main -- evals/team/cases.yaml`, then compare `request`, `must` and `must_not` of each id on both sides. Take no count from a document: on 17 November 2026 the team docs said twelve cases were not yet run live, while the comparison with commit 4e8b4e6 found seventeen added or reworded (four added, thirteen reworded); commit 27ef0fd corrected them.
 
 ## On the maintainer's computer
 
