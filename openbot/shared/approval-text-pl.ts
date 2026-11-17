@@ -153,6 +153,8 @@ export const APPROVAL_TEXT_PL: CompleteApprovalTextTable = {
     "Nie poprosiłeś o tę zmianę w skrzynce w swojej własnej wiadomości, więc najpierw pyta Ciebie.",
   "reason.unattended":
     "To pochodzi z rutyny lub wyzwalacza działającego samodzielnie, a nie z Twojej wiadomości, więc zawsze najpierw pyta Ciebie.",
+  "reason.tooLongToReview":
+    "To polecenie lub skrypt jest zbyt długie, by automatyczny recenzent mógł przeczytać je w całości, więc decydujesz Ty.",
   "reason.automation":
     "Rutyny i wyzwalacze działają później bez Ciebie, więc ich tworzenie, zmiana lub usunięcie zawsze najpierw pyta Ciebie.",
   "reason.setting":
