@@ -1,5 +1,11 @@
 /**
- * Memory and background research, on by default.
+ * Memory sources on by default; background research OFF by default (FreeDuet, D78).
+ *
+ * Research now switches on by itself only when the administrator sets OPENBOT_PROACTIVE_DEFAULTS=true
+ * (`options.research`). Without it `adoptResearch` writes nothing, and a person switches research on
+ * for a Bot themselves (`proactive/routes.ts`). A row that exists is never changed here, so research
+ * a person chose, or one an earlier version adopted for them, keeps running. The text below is the
+ * upstream design, which describes the switch as on.
  *
  * Both used to start only when a person set them up by hand, one Bot and one app at a time, so on a
  * fresh deployment a Bot remembered what it was told and nothing else. Now:
@@ -123,7 +129,7 @@ export function createMemoryDefaults(options: {
   ingestion: Pick<MemoryIngestion, "defaultSourceCandidates" | "sync">;
   /** OPENBOT_MEMORY_SOURCE_DEFAULTS, on unless switched off. */
   sources: boolean;
-  /** OPENBOT_PROACTIVE_DEFAULTS, on unless switched off. */
+  /** OPENBOT_PROACTIVE_DEFAULTS, off unless "true" or "1" (D78). */
   research: boolean;
   /** The Bots in this person's conversation, or null when it is not theirs. */
   channelBots(ownerUserId: string, channelId: string): Promise<string[] | null>;

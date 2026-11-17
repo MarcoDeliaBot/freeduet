@@ -426,8 +426,9 @@ alone, OpenBot switches on read-only background research by that Bot, and from a
 makes each app the person connected in their own account a memory source for it (not on a Team Bot
 somebody else published, where their accounts need consent). A person who turns either off, or
 removes it, keeps it that way, through a Bot reset too.
-`config.memory.sourceDefaults: false` and `config.memory.researchDefaults: false` stop new defaults
-for the whole deployment.
+`config.memory.sourceDefaults: false` stops new memory-source defaults for the whole deployment.
+FreeDuet (D78): `config.memory.researchDefaults` is `false` by default, so research is switched on only
+by a person; `true` restores the automatic switch-on.
 
 ## Slack, Teams, text messages, push, SCIM, inbound email and OpenTelemetry
 
