@@ -1325,9 +1325,9 @@ Decision (the maintainer, 17 November 2026). Before: `loadConfig` read `OPENBOT_
 | Stored rows | Never changed. A row (on or off) is left as it is; an opt-out in `default_opt_outs` still applies. |
 | Feature | Kept. Nothing removed. |
 
-Can the stored state tell "never chose" from "chose on"? No. A row made by the old default and a row a person made have the same columns (`enabled = true`, `interval_minutes`, `focus` may be empty in both), and the log line `research_adopted` goes to the console, not to a table. So this decision does NOT switch off existing rows: on an installation updated from an earlier version, a person whose research was switched on by the old default keeps it running until they turn it off.
+Can the stored state tell "never chose" from "chose on"? No. A row made by the old default and a row a person made have the same columns (`enabled = true`, `interval_minutes`, `focus` may be empty in both), and the log line `research_adopted` goes to the console, not to a table. So this decision does NOT switch off existing rows: on an installation updated from an earlier version, a person whose research was switched on by the old default keeps it running until they turn it off. (Decided afterwards: section 59, D80 switches every existing row off once.)
 
-Open decision for the maintainer (not built):
+Open decision for the maintainer (decided on 17 November 2026, option (c) in a simpler form: section 59, D80):
 
 | Decision | Options | Recommendation | Reason |
 |---|---|---|---|
@@ -1418,6 +1418,29 @@ Limits, stated plainly.
 Tests. `approvals-command-floor.test.ts` (20 cases) goes through the real `decideAction` with a fake reviewer: payment command (hand-off off and "without payments", allowed in plain Full access), credential and security command (hand-off in every mode), ordinary command (allow in every mode, zero asks, exactly one reviewer call under Full access and none for a file or a read), unreachable reviewer (allow under Full access, the old ask with the switch off), file writes (ordinary file never, script always), a routine's file write and command, and the tools that are unchanged; and, for the review fixes: Full access with the reviewer switch off (one call, hand-off), a saved "Always allow" with the reviewer on (hand-off for a credential command), a script write under both settings, a `.txt` write not reviewed, an over-limit command and script (hand-off, no call, other tools unchanged, a routine's unchanged), a reviewer that throws or no model (old outcome), a routine's command with the reviewer off (allowed). Before the first change 6 of the first 13 fail; against the head before the review fixes, the script-write and over-limit cases fail (2 of the 7 new); the others pin behaviour that head already had.
 
 **Built so far.** A, B, the review fixes, the 20 tests and this section. Verified: the tests above and the existing approval, safety floor, Full access, routines and sole-definition tests. Not verified: any live reviewer's judgement of real command or script text (the cases to run live are a `stripe ... --confirm` command, `passwd`, `gh auth login`, an `x.sh` that runs `passwd`, and `ls` under both Full access settings), B's cost on a real model, and the over-limit sentence in a card.
+
+## 59. Background research is switched off once at the update, then remembers who switched it on (D80)
+
+Decision (the maintainer, 17 November 2026, option "D1"). D78 (section 57) made research off by default for new people, but a row made by the old default kept running every 240 minutes, and the table could not tell such a row from one a person had switched on. So: at the update every existing research setting is switched off once; from then on the row records who switched it on. A person who wanted research switches it back on with one click and keeps the focus and the interval.
+
+| D80 | Built |
+|---|---|
+| Column | `proactive_settings.enabled_by_person boolean not null default false` (migration 0079, `openbot/server/drizzle/0079_research_off_once.sql`; a plain boolean, no Postgres enum). |
+| Once, at the update | The same migration, after the column, runs `UPDATE proactive_settings SET enabled = false WHERE enabled = true`. `focus`, `interval_minutes`, `next_run_at`, `updated_at` and every row stay; `default_opt_outs` is not touched; the new column is false on all of them. |
+| Why it runs once | The migrator (`openbot/server/src/db/apply-migrations.ts`, drizzle's `migrate`) records each applied migration in its journal table and skips it afterwards, and it runs under one advisory lock in one transaction, so the column and the update land together or not at all. A later start, a second server or a re-run of `scripts/migrate.ts` does not run the update again, so a row made or switched on after the update is never switched off by it. |
+| Who wrote "on" | `store.create`: a row created with `enabled: true` (the person's own request through the route) gets `enabled_by_person = true`; a row created off (the placeholder `add_tasks` makes, `openduet/wiring.ts`) gets false. `store.update`: a request that sets `enabled: true` sets the column true; a request that sets `enabled: false` leaves the column as it was (chosen: it says who last chose "on", and nothing else reads it); a focus or interval change leaves it. `adoptResearch` (`OPENBOT_PROACTIVE_DEFAULTS=true`) writes it false. |
+| What runs | Nothing else changes: `claimDue` still goes by `enabled` and `next_run_at`. A person's switch-on schedules a run now, as in D78. |
+| App | No app file changes: the settings panel does not show the column, and the API returns it as `enabledByPerson`, which the app ignores. |
+
+A deployment whose administrator set `OPENBOT_PROACTIVE_DEFAULTS=true` on purpose. The update switches its existing rows off too, once: the migration cannot tell a default row from a chosen one on any deployment, and that is the reason for the decision. `adoptResearch` never changes a row that exists (it inserts with `ON CONFLICT DO NOTHING`, and `default_opt_outs` still applies), so it does NOT switch them back on. The consequence: on such a deployment, research that ran for people who never chose it stops at the update and stays stopped until each person switches it on; only a person whose row is missing (a Bot they never talked to alone before) gets a new default row, on, with the column false. An administrator who wants the old rows on again has to ask each person, or write the rows back by hand in SQL, which is a decision of that deployment.
+
+After this update, background research is off for everyone until switched on again.
+
+Tests (`openbot/server/tests/research-off-once.integration.test.ts`, a real Postgres, failed before and pass after): a database migrated to 0078 with two rows on and one off, then migrated to 0079, has all rows off with focus, interval and next run kept and the column false, and the opt-out row untouched; a row made on after the update is still on after a second run of the migrator; a person's create with research on records it and the row is due; a placeholder made off is not the person's until they switch it on, and then keeps its focus and interval; switching off leaves the column, a row that is off is not claimed, and a focus change does not switch it on; a row the deployment default writes is on with the column false; `adoptResearch` does not switch a switched-off row back on. The schema and migration pins (`migration-journal.test.ts`, `schema.test.ts`, the CI `migrations` job with its drift probe) pass with the new snapshot.
+
+Limits. Not run on a real installation's data. Not decided here: a notice to the person that research was switched off (the app shows the settings as off, nothing more).
+
+**Built so far.** The migration, the column, the code and the tests above, and the docs that described the old rows. Verified: the tests above and the suite numbers in the pull request. Not verified: an update of a real installation.
 
 ## 55. A member cannot type into a password, code or card field (D76)
 
