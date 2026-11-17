@@ -78,18 +78,49 @@ def _as_text(value) -> str:
     return json.dumps(value, ensure_ascii=False)
 
 
+MAX_LABEL = 80
+
+
+def _label(value) -> str:
+    """A file's name as one short line. A name is somebody else's text (the person's file, or anything
+    a page or a mail called it), so it never carries a line break, a bracket or more than MAX_LABEL
+    characters into the note the model reads."""
+    text = " ".join(str(value).split()) if isinstance(value, str) else ""
+    text = text.replace("[", "(").replace("]", ")")
+    return text[:MAX_LABEL]
+
+
+def _picture_note(name: str, mime: str) -> str:
+    return (
+        f"[The person attached a picture to this message: {name} ({mime}). This version does not pass "
+        "pictures on to the engine you run on, so you cannot see it. Tell the person plainly that a "
+        "picture was attached and that you could not see it, and ask them to describe it or to type "
+        "out the part that matters. Never say that you only receive text, and never guess what the "
+        "picture shows.]"
+    )
+
+
+def _file_note(name: str, mime: str) -> str:
+    return (
+        f"[The person attached a file to this message: {name} ({mime}). This version does not pass "
+        "this kind of file on to the engine you run on, so you cannot open it. Tell the person "
+        "plainly that a file was attached and that you could not open it, and ask them to paste "
+        "the part that matters. Never say that you only receive text, and never guess what it holds.]"
+    )
+
+
 def _part_text(part) -> str:
+    """A text part as its text. Any other part (a picture, a recording, a file) as one note that says it
+    was attached and could not be shown, never its bytes: none is sent to the engine in this version."""
     if not isinstance(part, dict):
         return ""
     if part.get("type") == "text":
         return _as_text(part.get("text"))
     source = part.get("source") if isinstance(part.get("source"), dict) else {}
-    name = part.get("filename") or part.get("name") or part.get("type") or "file"
-    mime = part.get("mimeType") or source.get("mimeType") or "unknown type"
-    return (
-        f"[Attached: {name} ({mime}). This engine receives text only in this version, "
-        "so the file's content is not shown here.]"
-    )
+    metadata = part.get("metadata") if isinstance(part.get("metadata"), dict) else {}
+    name = _label(metadata.get("filename") or part.get("filename") or part.get("name")) or "unnamed"
+    mime = _label(part.get("mimeType") or source.get("mimeType")) or "unknown type"
+    return _picture_note(name, mime) if part.get("type") == "image" else _file_note(name, mime)
 
 
 def _content_text(content) -> str:
