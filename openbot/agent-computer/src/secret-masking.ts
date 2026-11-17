@@ -211,6 +211,35 @@ export function wipeWriteTarget(element: Element): void {
   }
 }
 
+/**
+ * The page-side question for the element that holds the focus when no ref was named: sensitive, or a
+ * custom element (a hyphenated tag) with no readable shadow root, which is what the page shows for a
+ * CLOSED root: the real field inside cannot be asked, so a key that writes text is refused as for a
+ * sensitive one. A custom element with no root at all is refused too (Space on a focused
+ * `<my-button>` named by no ref), and a closed root on a host with an ordinary tag is not caught.
+ * Self-contained, because it is serialised.
+ */
+export function isSensitiveOrUnreadableFocus(
+  element: Element,
+  selector: string,
+): boolean {
+  const tag = element.tagName.toLowerCase();
+  const target =
+    tag === "label"
+      ? ((element as HTMLLabelElement).control ?? element)
+      : element;
+  if (target.closest(selector)) return true;
+  const security = getComputedStyle(target).getPropertyValue(
+    "-webkit-text-security",
+  );
+  if (security !== "" && security !== "none") return true;
+  return (
+    tag.includes("-") &&
+    !element.shadowRoot &&
+    !(element as HTMLElement).isContentEditable
+  );
+}
+
 /** The page-side lookup of the element holding the keyboard focus, through shadow roots. */
 function focusedElementOfFrame(): Element | null {
   let active: Element | null = document.activeElement;
@@ -289,7 +318,7 @@ async function focusedFieldIsSensitive(page: FieldPage): Promise<boolean> {
         const element = handle.asElement();
         if (!element) return false;
         return await element.evaluate(
-          isSensitiveWriteTarget,
+          isSensitiveOrUnreadableFocus,
           SENSITIVE_FIELD_SELECTOR,
         );
       } catch {

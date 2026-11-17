@@ -362,6 +362,38 @@ describe.skipIf(!asked)(
       await tab.close();
     });
 
+    test("with no ref, a focus inside a CLOSED shadow root cannot be read, so a text key is refused; Enter still goes", async () => {
+      const tab = await pageWith(`<my-pin id="host"></my-pin>`);
+      await tab.evaluate(() => {
+        const root = document
+          .getElementById("host")
+          ?.attachShadow({ mode: "closed" });
+        if (root) {
+          root.innerHTML = `<input type="password">`;
+          root.querySelector("input")?.focus();
+        }
+      });
+      expect(await tab.evaluate(() => document.activeElement?.id)).toBe("host");
+      await refused(press(tab, "7"));
+      await press(tab, "Enter");
+      await tab.close();
+    });
+
+    test("with no ref, a closed root on a host with an ordinary tag is a known gap and is typed into", async () => {
+      const tab = await pageWith(`<div id="host" tabindex="0"></div>`);
+      await tab.evaluate(() => {
+        const root = document
+          .getElementById("host")
+          ?.attachShadow({ mode: "closed" });
+        if (root) {
+          root.innerHTML = `<input type="password">`;
+          root.querySelector("input")?.focus();
+        }
+      });
+      await press(tab, "7");
+      await tab.close();
+    });
+
     test("a field that turns into a password field on the keypress is wiped", async () => {
       const tab = await pageWith(
         `<input id="f" type="text" aria-label="Notes" oninput="this.type='password'">`,
