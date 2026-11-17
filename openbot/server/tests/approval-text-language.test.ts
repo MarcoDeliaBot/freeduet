@@ -191,6 +191,7 @@ describe("a stored reason on a card", () => {
     ["reason.payments", {}],
     ["reason.remoteWrite", {}],
     ["reason.unattended", {}],
+    ["reason.tooLongToReview", {}],
     ["reason.mailboxNotAsked", {}],
     ["reason.reviewerUnreachable", { error: "timeout 15000ms" }],
   ] as const;

@@ -109,7 +109,7 @@ describe("signing in after the move, the address the person gave", () => {
 
     // Spelled out, so that a `before` that had gone empty could not make this pass by agreeing with it.
     expect(after.conversations).toHaveLength(2);
-    expect(after.routines).toHaveLength(2);
+    expect(after.routines).toHaveLength(1);
     expect(after.instructions).toBe("Always answer in two sentences.");
     expect(after.rules).toBe(1);
     expect(after.questions).toBe(1);
@@ -203,7 +203,7 @@ describe("signing in BEFORE running the move: the empty account the sign-in made
     expect(moved.err).toBe("");
     expect(moved.code).toBe(EXIT.ok);
     expect(moved.out).toContain(
-      `Done. 13 rows now belong to ${PERSON_ADDRESS}.`,
+      `Done. 12 rows now belong to ${PERSON_ADDRESS}.`,
     );
 
     // The server started again; the cookie the person's browser kept from the first sign-in is the same.

@@ -130,6 +130,8 @@ export const APPROVAL_TEXT_DE: CompleteApprovalTextTable = {
     "Du hast diese Änderung an deinem Postfach nicht in deiner eigenen Nachricht verlangt, deshalb fragt es dich zuerst.",
   "reason.unattended":
     "Das kommt von einer Routine oder einem Trigger, die von allein laufen, nicht von einer Nachricht von dir. Deshalb fragt FreeDuet dich immer zuerst.",
+  "reason.tooLongToReview":
+    "Dieser Befehl oder dieses Skript ist zu lang, als dass der automatische Prüfer es vollständig lesen könnte. Deshalb entscheidest du.",
   "reason.automation":
     "Routinen und Trigger handeln später ohne dich. Deshalb fragt FreeDuet dich immer zuerst, wenn eine eingerichtet, geändert oder gelöscht wird.",
   "reason.setting":

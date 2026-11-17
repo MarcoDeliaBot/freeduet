@@ -15,7 +15,7 @@ yet run live.
    shown when the first-day request asks for it.
 2. The person says what their work is. Iris replies with at most six lines: one line each for three or four
    colleagues from the team who fit that work, each saying what that colleague would do for this person, then
-   one closing question that offers a first small job to try.
+   one line that offers the daily review (D79, set up only on a yes), then one closing question that offers a first small job to try.
 3. If nobody on the team covers the work, Iris says so in one line and that Leo can design a colleague if the
    person wants one. Leo starts only when the person asks.
 4. Nothing starts from a proposal. A hand-off, a task, a routine, a lesson or a setting waits for the person's yes

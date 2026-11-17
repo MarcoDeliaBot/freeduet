@@ -168,6 +168,12 @@ test("Full access shows one warning that says there is no limit on the amount, a
       /There is no limit on the amount it can pay: spending caps do not exist yet \(they are planned for v0\.4\)/,
     ),
   ).toBeTruthy();
+  // D77 wording: true whether or not a reviewer model is set up.
+  expect(
+    view.getByText(
+      /When an automatic reviewer is set up, it also reads each command and script the member runs on its computer once for that, even if you switched the reviewer off; when none is set up, a command is not read\./,
+    ),
+  ).toBeTruthy();
   expect(sent).toEqual([]);
   // The choice that is selected is still the saved one, until the person confirms.
   expect(selected(view, "Jules")).toEqual(["Off"]);
@@ -210,6 +216,11 @@ test("Full access without payments shows one confirmation that says payments sti
   expect(
     await view.findByText(
       /Jules will send, sign, book and delete without asking you first\. Payments and purchases still ask you\./,
+    ),
+  ).toBeTruthy();
+  expect(
+    view.getByText(
+      /When an automatic reviewer is set up, it also reads each command and script the member runs on its computer once for a password, a security setting or a payment made that way, even if you switched the reviewer off; when none is set up, a command is not read\./,
     ),
   ).toBeTruthy();
   // The warning about the amount belongs to Full access, not to this one.

@@ -35,6 +35,10 @@ import {
 } from "../mail-rules";
 import { isNewEmailSend, shareTargetOf } from "../share-target";
 import type { AccountMode } from "../shared-accounts";
+import {
+  undeclaredArguments,
+  undeclaredArgumentsSentence,
+} from "../builtin-routines";
 import { transportFor } from "../transport";
 import {
   recipientsTypedByPerson,
@@ -779,6 +783,27 @@ export function callMethods(context: StoreContext) {
             runInitiator: context.initiator,
             callInitiator: input.initiator,
           });
+        }
+      }
+      // D81: a Routines write with an argument the tool does not declare is refused before any card exists.
+      if (effect === "write" && access.transport === "builtin-routines") {
+        const extra = undeclaredArguments(toolName, vendorArgs);
+        if (extra.length > 0) {
+          await recordAuditEvent(auditStore, {
+            eventType: "mcp.call_rejected",
+            targetType: "mcp_tool",
+            targetId: input.ref,
+            ...(input.initiator ? { initiator: input.initiator } : {}),
+            payload: {
+              ...decided,
+              decision: { ...decided.decision, carriedOut: false },
+              refusal: "routines_call_undeclared_arguments",
+            },
+          });
+          throw new PluginRefusedError(
+            undeclaredArgumentsSentence(toolName, extra),
+            null,
+          );
         }
       }
       const approval = await options.approvalGate?.({

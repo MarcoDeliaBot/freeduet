@@ -405,9 +405,10 @@ and in whatever holds the release, which is not where `KEY_ENCRYPTION_KEY` belon
 - name: OPENBOT_MEMORY_SOURCE_DEFAULTS
   value: "false"
 {{- end }}
-{{- if eq (toString $memory.researchDefaults) "false" }}
+{{- /* FreeDuet (D78): background research is off unless explicitly true. */}}
+{{- if eq (toString $memory.researchDefaults) "true" }}
 - name: OPENBOT_PROACTIVE_DEFAULTS
-  value: "false"
+  value: "true"
 {{- end }}
 {{- /* FreeDuet (D65): the server refuses to start when FREEDUET_INTELLIGENCE is missing, so the choice
      is written here, next to the three settings it is about. This chart requires those three

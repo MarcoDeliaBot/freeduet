@@ -14,9 +14,10 @@ export type DefaultFeature = "memory_source" | "proactive_research";
 /**
  * A default a person turned down, so OpenBot never switches it back on.
  *
- * Memory sources and background research are on by default (see `memory/defaults.ts`): a person who
- * talks to one of their Bots gets research from it, and each app they connected that the Bot can read
- * becomes a memory source. Turning one OFF keeps its row with `enabled = false`, and that row alone
+ * Memory sources are on by default, and background research only when the deployment asks for it
+ * (OPENBOT_PROACTIVE_DEFAULTS=true, D78; see `memory/defaults.ts`): a person who talks to one of
+ * their Bots gets each app they connected that the Bot can read as a memory source, and research
+ * from it where research is on by default. Turning one OFF keeps its row with `enabled = false`, and that row alone
  * stops it coming back. REMOVING one deletes the row, so the removal is written here instead, and
  * adoption reads this table before it creates anything.
  *

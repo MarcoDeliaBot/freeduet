@@ -329,6 +329,10 @@ export function createProactiveStore(database: Database) {
           ownerUserId: owner,
           threadId,
           ...parsed,
+          // D80: a row made here is the person's own request (the route) or a placeholder that is
+          // off (add_tasks), so it records "on" as theirs only when it is created on. The
+          // deployment default writes its row in memory/defaults.ts, which leaves this false.
+          enabledByPerson: parsed.enabled,
         })
         .onConflictDoNothing()
         .returning();
@@ -344,7 +348,18 @@ export function createProactiveStore(database: Database) {
         .update(proactiveSettings)
         .set({
           ...patch,
-          ...(patch.enabled ? { nextRunAt: new Date() } : {}),
+          // D80: a person's request that switches research on records it. Switching off leaves
+          // the column as it is: it says who last chose "on", and only `enabled` decides a run.
+          ...(patch.enabled ? { enabledByPerson: true } : {}),
+          // A run is scheduled now only when this request turns a switched-off setting on. Already
+          // on (true to true), an interval change and a focus change keep the stored next run.
+          // The test is in the same statement, so two requests cannot both see "off". The time is the
+          // server's clock, as before, so a run claimed right after is never earlier than it.
+          ...(patch.enabled
+            ? {
+                nextRunAt: sql`CASE WHEN ${proactiveSettings.enabled} THEN ${proactiveSettings.nextRunAt} ELSE ${new Date().toISOString()}::timestamptz END`,
+              }
+            : {}),
           updatedAt: new Date(),
         })
         .where(owned(owner, id))

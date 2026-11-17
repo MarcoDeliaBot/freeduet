@@ -124,13 +124,13 @@ describe("the dry run, for an installation that ran with no sign-in", () => {
       expect(ran.out).toContain(
         `To    ${PERSON_ADDRESS} (no account yet: the move makes one, and your first sign-in finds it)`,
       );
-      // What the person made, as the seeding made it: one of each, two routines (the daily review and
-      // the Friday list), and the two conversations the team opened.
+      // What the person made, as the seeding made it: one of each, one routine (the Friday list; the
+      // daily review is only offered, D79), and the two conversations the team opened.
       expect(ran.out).toContain("  Settings: 1");
       expect(ran.out).toContain("    standing instructions: 1");
       expect(ran.out).toContain("    conversations the person is in: 2");
       expect(ran.out).toContain("    memories: 1");
-      expect(ran.out).toContain("    routines: 2");
+      expect(ran.out).toContain("    routines: 1");
       expect(ran.out).toContain(
         "    queued work, follow-ups, waiting questions and Activity: 1",
       );
@@ -783,7 +783,7 @@ describe("the script itself, run the way the person runs it", () => {
       );
       expect(ran.code).toBe(EXIT.ok);
       expect(ran.out).toContain("This is a dry run. Nothing is written.");
-      expect(ran.out).toContain("    routines: 2");
+      expect(ran.out).toContain("    routines: 1");
       expect(await snapshot(world.database)).toEqual(before);
     },
     SLOW,

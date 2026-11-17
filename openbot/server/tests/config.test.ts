@@ -1094,23 +1094,42 @@ describe("automatic Learning container assignment", () => {
 });
 
 describe("memory sources and background research", () => {
-  test("are on by default for a fresh deployment", () => {
+  // FreeDuet (D78): sources are on by default, background research is off until switched on.
+  test("sources are on and research is off for a fresh deployment", () => {
     expect(loadConfig(baseEnvironment).memoryDefaults).toEqual({
       sources: true,
-      research: true,
+      research: false,
     });
   });
 
-  test.each(["false", "0"])("each switches off on its own with %p", (value) => {
-    expect(
-      loadConfig({ ...baseEnvironment, OPENBOT_MEMORY_SOURCE_DEFAULTS: value })
-        .memoryDefaults,
-    ).toEqual({ sources: false, research: true });
+  test.each(["false", "0"])(
+    "sources switch off on their own with %p",
+    (value) => {
+      expect(
+        loadConfig({
+          ...baseEnvironment,
+          OPENBOT_MEMORY_SOURCE_DEFAULTS: value,
+        }).memoryDefaults,
+      ).toEqual({ sources: false, research: false });
+    },
+  );
+
+  test.each(["true", "1"])("research switches on only with %p", (value) => {
     expect(
       loadConfig({ ...baseEnvironment, OPENBOT_PROACTIVE_DEFAULTS: value })
         .memoryDefaults,
-    ).toEqual({ sources: true, research: false });
+    ).toEqual({ sources: true, research: true });
   });
+
+  test.each(["false", "0", "", "yes", "on"])(
+    "research stays off with %p",
+    (value) => {
+      expect(
+        loadConfig({ ...baseEnvironment, OPENBOT_PROACTIVE_DEFAULTS: value })
+          .memoryDefaults.research,
+      ).toBe(false);
+    },
+  );
 });
 
 /**
