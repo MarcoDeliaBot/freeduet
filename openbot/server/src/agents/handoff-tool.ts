@@ -241,7 +241,7 @@ export function handoffTool(options: {
        * way, and the model is owed something it can say out loud.
        */
       return outcome.ok
-        ? `${HANDED_OVER}${outcome.toName}. It has not replied yet: its answer arrives later as a separate message in this conversation. End your turn now with one sentence telling the person you asked it and what for, and do not answer on its behalf. Anything you say is its answer before then would be made up, even if you know the answer yourself. It may be waiting for the person's yes on a card, and nothing comes back while it waits: until it answers, say only that the work was passed on and has not been answered yet, never that a tool is missing or that the work is not done.`
+        ? `${HANDED_OVER}${outcome.toName}. It has not replied yet: its answer arrives later as a separate message in this conversation. End your turn now with one sentence telling the person you asked it and what for, and do not answer on its behalf. Anything you say is its answer before then would be made up, even if you know the answer yourself. If it stops on a card that only the person can decide, the card is shown in this conversation and you are told, so never say that a card is waiting before then; nothing comes back while a card is open. Until it answers, say only that the work was passed on and has not been answered yet, never that a tool is missing or that the work is not done.`
         : outcome.refusal;
     },
   };
