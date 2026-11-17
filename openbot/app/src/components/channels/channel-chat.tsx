@@ -1046,9 +1046,13 @@ export function ChannelChat({
   const catchUpWithStore = async () => {
     if (followingRef.current) return;
     try {
-      const stored = await readThreadMessages(channel.threadId, runtimeAgentId, {
-        deadlineMs: CATCH_UP_BEFORE_SEND_MS,
-      });
+      const stored = await readThreadMessages(
+        channel.threadId,
+        runtimeAgentId,
+        {
+          deadlineMs: CATCH_UP_BEFORE_SEND_MS,
+        },
+      );
       if (stored.availability === "unavailable") return;
       const current = agentRef.current;
       const messages = mergeStoredMessages(
