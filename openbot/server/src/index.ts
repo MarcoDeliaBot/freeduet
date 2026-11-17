@@ -647,8 +647,6 @@ const policyListener = await startPolicyListener(
 const bootAuditStore = createAuditStore(database);
 // Tools an update added, for a member whose grants carry the automatic mark (D45).
 await applyAutomaticGrants(database, bootAuditStore, tenantPackage);
-// Iris holds Routines by default, once, so the daily review can be offered (D81).
-await applyIrisRoutines(database, bootAuditStore, tenantPackage);
 // The gallery every headless turn offers its Bot, refusals written to the same trail.
 const componentCatalog = headlessComponentCatalog({
   store: componentStore,
@@ -1089,6 +1087,12 @@ const pluginStore = createPluginStore({
   broker: composio?.broker,
   brokerProvider,
 });
+// Iris holds Routines by default, once, so the daily review can be offered (D81, docs/M1_PLAN.md section 60).
+await applyIrisRoutines(database, bootAuditStore, tenantPackage, () =>
+  pluginStore
+    .addServer({ key: "routines", by: "freeduet-automatic" })
+    .then(() => {}),
+);
 
 /*
  * Personal ⇄ Shared for a brokered app. Built here because it needs the plugin store, the shared-use

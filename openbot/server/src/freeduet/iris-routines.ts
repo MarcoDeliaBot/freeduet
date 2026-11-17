@@ -20,13 +20,19 @@
  * the tools the catalogue declares for `routines`: two reads and seven writes. A grant is a tool, not an
  * approval: every write still meets the always-ask card (D35) in every mode, Full access included.
  *
+ * THE CONNECTOR ITSELF. A grant offers a tool only while the connector's row exists (`mcp_servers`, with its tool
+ * list), and on a plain installation nobody has added Routines under Plugins. So, before the grant, the seed
+ * adds the connector when it is not there (`ensureServer`, which index.ts passes as `pluginStore.addServer`),
+ * and never rewrites an administrator's own row. If adding it fails, no marker is written and the next start
+ * tries again.
+ *
  * NEVER WIDEN A HAND-MADE SET. If Iris already holds any `routines/*` row when the marker is absent, her
  * grants are left exactly as they are and the marker is still written.
  */
 import { and, eq, sql } from "drizzle-orm";
 import { type AuditStore, recordAuditEvent } from "../audit";
 import type { Database } from "../db/client";
-import { enterpriseSettings, pluginGrants } from "../db/schema";
+import { enterpriseSettings, mcpServers, pluginGrants } from "../db/schema";
 import {
   AUTOMATIC_GRANT,
   automaticToolRefs,
@@ -53,15 +59,69 @@ export type IrisRoutinesOutcome =
  * The grant itself, for the Bot `iris`. The caller has already decided that the package is FreeDuet's and has
  * an Iris ({@link applyIrisRoutines}); this checks that the Bot is a member of that package.
  */
+async function marker(database: Database) {
+  const [row] = await database
+    .select({ key: enterpriseSettings.key })
+    .from(enterpriseSettings)
+    .where(eq(enterpriseSettings.key, IRIS_ROUTINES_KEY));
+  return row;
+}
+
+async function holdsAny(database: Database, iris: string) {
+  const rows = await database
+    .select({ ref: pluginGrants.ref })
+    .from(pluginGrants)
+    .where(
+      and(
+        eq(pluginGrants.kind, "mcp"),
+        eq(pluginGrants.agentId, iris),
+        sql`split_part(${pluginGrants.ref}, '/', 1) = ${IRIS_ROUTINES_SERVER}`,
+      ),
+    );
+  return rows.length > 0;
+}
+
 export async function seedIrisRoutines(
   database: Database,
   auditStore: AuditStore,
   iris: string,
+  ensureServer?: () => Promise<void>,
 ): Promise<IrisRoutinesOutcome> {
   // Her row is made by the package sync, which runs first; without it (or not a package member) nothing is
   // written, so a later start can still do it.
   if (!(await isFreeDuetMember(database, iris)))
     return { status: "not-applicable" };
+
+  /*
+   * A grant offers a tool only while the connector's own row exists (`mcp_servers`, with its tool list): on a
+   * plain installation nobody has added Routines under Plugins, so the grant alone would offer nothing. When
+   * the marker is absent and Iris holds no Routines row yet, the connector is added first, only if it is not
+   * there, so an administrator's own row is never rewritten. A failure here writes no marker, and the next
+   * start tries again.
+   */
+  if (
+    ensureServer &&
+    !(await marker(database)) &&
+    !(await holdsAny(database, iris))
+  ) {
+    const [server] = await database
+      .select({ id: mcpServers.id })
+      .from(mcpServers)
+      .where(eq(mcpServers.id, IRIS_ROUTINES_SERVER));
+    if (!server) {
+      try {
+        await ensureServer();
+      } catch (error) {
+        console.warn(
+          JSON.stringify({
+            type: "freeduet-iris-routines-server-failed",
+            message: error instanceof Error ? error.message : String(error),
+          }),
+        );
+        return { status: "not-applicable" };
+      }
+    }
+  }
 
   const outcome = await database.transaction(
     async (transaction): Promise<IrisRoutinesOutcome> => {
@@ -139,12 +199,18 @@ export async function applyIrisRoutines(
   tenantPackage: Pick<TenantPackage, "tenantId"> & {
     agents: readonly { id: string }[];
   },
+  ensureServer?: () => Promise<void>,
 ): Promise<IrisRoutinesOutcome> {
   if (!isFreeDuetPackage(tenantPackage)) return { status: "not-applicable" };
   const iris = tenantPackage.tenantId;
   if (!tenantPackage.agents.some((agent) => agent.id === iris))
     return { status: "not-applicable" };
-  const outcome = await seedIrisRoutines(database, auditStore, iris);
+  const outcome = await seedIrisRoutines(
+    database,
+    auditStore,
+    iris,
+    ensureServer,
+  );
   if (outcome.status === "granted" || outcome.status === "left-as-is")
     console.info(
       JSON.stringify({

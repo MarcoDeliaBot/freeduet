@@ -325,6 +325,66 @@ describe("the first start grants Routines to Iris, once", () => {
   });
 });
 
+describe("the connector row", () => {
+  const dropServer = () =>
+    database.delete(mcpServers).where(eq(mcpServers.id, ROUTINES));
+
+  test("a plain installation with no Routines row: the seed adds it, once, and the tools are then offered to Iris", async () => {
+    await dropServer();
+    let added = 0;
+    const ensure = async () => {
+      added += 1;
+      await store.addServer({ key: ROUTINES, by: AUTOMATIC_GRANT });
+    };
+    expect((await seedIrisRoutines(database, audit, IRIS, ensure)).status).toBe(
+      "granted",
+    );
+    await seedIrisRoutines(database, audit, IRIS, ensure);
+    expect(added).toBe(1);
+    expect(
+      (await store.listForAgent(IRIS)).tools.map((tool) => tool.ref),
+    ).toContain(`${ROUTINES}/create_routine`);
+  });
+
+  test("an administrator's own row is not rewritten", async () => {
+    let added = 0;
+    await seedIrisRoutines(database, audit, IRIS, async () => {
+      added += 1;
+    });
+    expect(added).toBe(0);
+  });
+
+  test("when adding it fails nothing is granted and no marker is written, so the next start tries again", async () => {
+    await dropServer();
+    const failed = await seedIrisRoutines(database, audit, IRIS, async () => {
+      throw new Error("no");
+    });
+    expect(failed.status).toBe("not-applicable");
+    expect(await marker()).toBeUndefined();
+    expect((await held(IRIS)).size).toBe(0);
+    const retry = await seedIrisRoutines(database, audit, IRIS, () =>
+      store.addServer({ key: ROUTINES, by: AUTOMATIC_GRANT }).then(() => {}),
+    );
+    expect(retry.status).toBe("granted");
+  });
+
+  test("a hand-made grant means the connector is not touched either", async () => {
+    await dropServer();
+    await database.insert(pluginGrants).values({
+      kind: "mcp",
+      ref: `${ROUTINES}/list_routines`,
+      agentId: IRIS,
+      grantedBy: "admin@example.com",
+    });
+    let added = 0;
+    await seedIrisRoutines(database, audit, IRIS, async () => {
+      added += 1;
+    });
+    expect(added).toBe(0);
+    await store.addServer({ key: ROUTINES, by: owner });
+  });
+});
+
 describe("a removal or a trim by hand stays", () => {
   test("a second start adds nothing", async () => {
     await seedIrisRoutines(database, audit, IRIS);
