@@ -8,7 +8,7 @@ Tags: **[code: path:line]** read on origin/main 5b96410 (code paths start at `op
 
 - You switch "Home and office network access" off, turn "Cloud network access" off, or take a rule out of a network list. Every connection the old setting allowed and the new one would refuse is closed at once, not only refused the next time. A page, a download or a command sees the connection drop.
 - A setting that becomes wider closes nothing.
-- Decided 14 November 2026: a member's computer stays refused from its own localhost. Built on 17 November 2026 (D73, [M1_PLAN.md](../M1_PLAN.md) section 52): the switch lifts only the private LAN ranges, and loopback (`127.0.0.0/8`, `::1`, `0.0.0.0`, `localhost` names) is refused with the switch on as well as off.
+- Decided 14 November 2026: a member's computer stays refused from its own localhost. Built on 17 November 2026 (D73, [M1_PLAN.md](../M1_PLAN.md) section 52): the switch lifts only the private LAN ranges, and loopback (`127.0.0.0/8`, `::1`, `0.0.0.0`, `localhost` names) is refused with the switch on as well as off, by the computer's filter (`agent-computer/src/egress.ts`) and by the server's navigation judge (`server/src/admin/controls.ts`, which calls the same `egressDecision`; tests in `server/tests/private-network-capability.test.ts`).
 - Cloud metadata and link-local addresses were never open, with the switch on or off. They are still refused before any connection exists.
 
 ## 2. What was measured before the change
