@@ -160,7 +160,7 @@ A real person's voice needs that person's consent. XTTS-v2 clones from a short c
 
 ## 8. Built so far
 
-Slice S1 (section 4) is built on branch `voice-slice-1`. Slices S2 to S6 are not built.
+Slice S1 (section 4) is built and merged in PR #197. Slices S2 to S6 are not built.
 
 What S1 does:
 

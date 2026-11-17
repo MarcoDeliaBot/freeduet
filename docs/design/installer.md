@@ -210,7 +210,7 @@ The four steps, as the job asserts them:
 
 In CI the file runs in the `tests` job through `bun run test:ci`, which discovers it under `openbot/` and checks a floor of 400 tests.
 
-**Not verified here:** the job itself (no containers and no Docker on this machine), the real Bun download, apt in the images, Docker Hub pulls on hosted runners, and the first CI run. shellcheck ran on `install.sh` and on the job's check script: only SC1091, an info note.
+**Not verified here:** the job itself (no containers and no Docker on this machine), the real Bun download, apt in the images and Docker Hub pulls on hosted runners. CI runs the job on main: on the run of the merge of PR #346, both the Ubuntu 22.04 and the Ubuntu 24.04 legs succeeded. shellcheck ran on `install.sh` and on the job's check script: only SC1091, an info note.
 
 **Decisions for the maintainer.** Section 7 was written before this job existed. This table brings forward the choices that the job changes.
 

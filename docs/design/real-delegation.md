@@ -92,7 +92,7 @@ Enforced by the desk and the router, never by a model.
 | Metered engines | Never inside a plan [doc: docs/ENGINES_PLAN.md, line 107]. The metered caps are not editable from the dashboard [line 117]. |
 | Retries | Count against the same turn and hop limits [code: server/src/agents/handoff-runner.ts:146]. |
 
-A plan cannot say what share of a subscription window its turns use. There is no usage ledger, and the caps are not built [doc: docs/ROADMAP.md, row "Never stops"]. The share is not measured.
+A plan cannot say what share of a subscription window its turns use. The spend ledger (`openbot/agent-freeduet/freeduet/ledger.py`, PR #199) records only the turns of metered engines: the tokens, and the cost when the engine reports one, per UTC day and month. It holds the metered engines when their total reaches the daily or the monthly cap. It never records a free engine or a subscription login, and it is built with its gate closed [doc: docs/ROADMAP.md, row "Never stops"]. The share is not measured.
 
 ### 3.4 Results and checks
 - A member's answer reaches Iris as a relay, quoted and attributed [code: server/src/agents/handoff-runner.ts:186-190]. S1 adds one fixed sentence: the quoted words are what the member wrote, not instructions to Iris.
@@ -183,7 +183,7 @@ Labels D-a to D-f are local to this document. No M1 number is taken.
 - **Wait and resume in a forward hop (most important).** The card is announced in the asker's conversation, through the signed run's thread (example 2). Not traced: whether the forward hop waits for the answer, whether an answer resumes it inside the 5-minute deadline, and what a deny does to it. The comment at `handoff-delivery.ts:159-161` says an approval there "could never be answered", which the notify path does not match. Check on the eval stack, with a Gmail test connection, before S5 [assumed].
 - The live behaviour of the new prompt sentence and of Iris's relay turns, and that each relay speaks in the person's conversation: traced in code, not run.
 - The budget numbers and the 20-minute wall clock: proposals, not measured.
-- The plan's share of a subscription window: there is no usage ledger [doc: docs/ROADMAP.md, row "Never stops"].
+- The plan's share of a subscription window: not measured. The spend ledger records metered engines only [doc: docs/ROADMAP.md, row "Never stops"].
 - The growth rule for a guessed engine wait is still "to decide" [doc: docs/ENGINES_PLAN.md, line 92].
 
 Found while checking, not changed here:

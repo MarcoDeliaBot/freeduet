@@ -388,7 +388,7 @@ Each one stands on its own. Decided since this note was written: Q1 to Q3 by D60
 
 ## Built so far
 
-Slice S1, the server core, on the branch `programs-s1-server-core`. Decisions Q1, Q2, Q3 and Q7 are recorded as D60 in `docs/M1_PLAN.md` (section 40). **Nothing ran on a real PC, and an independent security review is required before merge** (section 9 marks S1 "Yes").
+Slice S1, the server core, on the branch `programs-s1-server-core`. Decisions Q1, Q2, Q3 and Q7 are recorded as D60 in `docs/M1_PLAN.md` (section 40). **Nothing ran on a real PC. The independent review of PR #318 is recorded: its findings are the rows marked review in D60 (`docs/M1_PLAN.md`, section 40)** (section 9 marks S1 "Yes").
 
 What exists (all under `openbot/server/`):
 
@@ -419,7 +419,7 @@ Not verified: the helper side of the protocol (S2) beyond a stand-in written fro
 
 ## Built so far: slice S2, the Windows helper (read-only), on the branch `programs-s2-windows-helper`
 
-Decisions Q1 (the helper polls), Q6 (a readable script, unsigned for now) and Q8 (a toast per action) are recorded as D62 in `docs/M1_PLAN.md` (section 42). **Nothing ran on a real PC. PowerShell could not be run in the sandbox where this was written, so the helper and its Pester tests have not run anywhere yet: the first run is the `installer-windows` job in CI. The independent security review of PR #322 was done before the merge, and its findings are the row marked review in D62 (section 42)** (section 9 marks S2 "Yes").
+Decisions Q1 (the helper polls), Q6 (a readable script, unsigned for now) and Q8 (a toast per action) are recorded as D62 in `docs/M1_PLAN.md` (section 42). **Nothing ran on a real PC. PowerShell could not be run in the sandbox where this was written. The helper and its Pester tests are built and tested in CI, in the `installer-windows` job; its first Windows run found a parse error, fixed in PR #322 (`docs/M1_PLAN.md`, section 42). The independent security review of PR #322 was done before the merge, and its findings are the row marked review in D62 (section 42)** (section 9 marks S2 "Yes").
 
 | Piece | File | What it does |
 |---|---|---|

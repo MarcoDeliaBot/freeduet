@@ -114,7 +114,7 @@ Before anyone uses it from outside the home network, slices 1 to 3 must ship. No
 1. Follow 3.1 with a public name: an own domain, a reverse proxy and port 443, or a tunnel the person runs.
 2. Sign in on the phone.
 
-- Must be built: slice 1 before any exposure; slice 2 if PR 129 is not merged; slice 3; docs.
+- Must be built: slice 1 before any exposure; slice 2 only as a test of PR 129's guard, since PR 129 is merged (section 2.7); slice 3; docs.
 - Lost phone: until slice 3 ships, the person cannot end one phone's session from the computer (2.5).
 - Shared link: a sign-in page gives nothing without the account. A session left on a shared phone is the risk, and slice 3 covers it.
 - Replay: a `Secure` cookie is sent only over https [doc: https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Set-Cookie]. How this code sets its cookie flags was not read [assumed].
@@ -272,7 +272,7 @@ Size: S under 300 changed lines, M 300 to 1000, L over 1000.
 | # | Builds | Proof | Needs first | Size |
 |---|---|---|---|---|
 | 1 | An exact-address sign-in list, `SIGNIN_ALLOWED_EMAILS`, checked where the domain list is checked (`openbot/server/src/auth/index.ts:399, 467`). Unset means unchanged. | Extend `openbot/server/tests/email-domain.test.ts`: a non-listed address is refused at sign-in; unset admits as before. | none | S |
-| 2 | Refuse the implicit administrator for a request that carries forwarding headers (`X-Forwarded-For`, `Forwarded`, `X-Real-IP`). If PR 129 merges, this becomes a test of its guard. | `openbot/server/tests/single-user-peer.test.ts` and `openbot/server/tests/dev-actor.integration.test.ts`: a forwarded loopback request gets 401; container tool calls still pass. | decision 6; PR 129 status | S |
+| 2 | Refuse the implicit administrator for a request that carries forwarding headers (`X-Forwarded-For`, `Forwarded`, `X-Real-IP`). PR 129 is merged, so this is a test of its guard. | `openbot/server/tests/single-user-peer.test.ts` and `openbot/server/tests/dev-actor.integration.test.ts`: a forwarded loopback request gets 401; container tool calls still pass. | decision 6; PR 129 status | S |
 | 3 | "Sign out other sessions": one endpoint and one button in Settings. | Integration test: after the call the other session gets 401; the current session still works. | Better Auth session routes [assumed] | M |
 | 4 | Phone scope: a session marked as a phone cannot reach Full access, approval rules, connected accounts, sharing or security settings. | Route tests through the real guard, as the Full access tests do. | slice 3; decision 5 | M |
 | 5 | Docs: the 3.1 recipes for a tailnet and for a domain, and a manual checklist. | Manual, on a real phone over https: sign in; a wrong account is refused; sign-out cuts the phone. | slices 1 to 3 | S |
