@@ -1312,3 +1312,41 @@ Tests. `freeduet-package.test.ts` gains "D75": each sentence is in its own membe
 Limits. Not run live. Cases to run with `--repeat 3`: gus-6, penny-5, iris-10, penny-xlsx-1, wren-docx-1; also gus-7, penny-xlsx-2, iris-14 and iris-19 to see that the longer prompts changed nothing else. wren-docx-1 and penny-xlsx-1 depend on the eval stack's computer, and a missing office tool (the python-docx install failed in the failed run) can still make the honest outcome "no file made"; the new sentence asks only that she says so.
 
 **Built so far.** The five sentences, the D75 test and this section. Verified: the tests above. The lists of cases not yet run live in `docs/ROADMAP.md` line 17, `README.md` and `evals/team/README.md` already name iris-10, gus-6, penny-5, penny-xlsx-1 and wren-docx-1, so no count or list changes (`CHANGELOG.md` names only penny-5, in an older entry, and keeps no list of cases changed since the certification). Not verified: every model behaviour.
+
+## 55. A member cannot type into a password, code or card field (D76)
+
+Finding (checked on main at d642421): the computer's `/type` filled any element ref. The server's safety floor (`safetyRequirement`) reads only a field's accessible name and the typed text, and the snapshot carried no `type`, so `element.type` in the gateway was always empty. A field labelled "Password" went to the person; a password or one-time-code field with another label, no label or a label in another language was filled by the model.
+
+Decision (the maintainer's standing rule, the stricter side): the computer refuses a model's writes into a field the page marks as sensitive. **The refusal is unconditional.** It does not look at Full access, a routine, a hand-off or the approval gate, because it sits on the computer, below all of them. Full access lifts payments only and sends credentials to the person in both settings (`fullAccessOutcome`), so this is the same rule one layer down: Full access does not make a model type a password. The person's own paths are unchanged and do not go through the check.
+
+What counts as sensitive, from one definition (`SENSITIVE_FIELD_SELECTOR`, `agent-computer/src/secret-masking.ts`, no second one): `input[type=password]`; `autocomplete` tokens `current-password`, `new-password`, `one-time-code`, `cc-number`, `cc-csc`, `cc-exp`, `cc-exp-month`, `cc-exp-year` (on any element, so a textarea or a contenteditable carrying one counts; case-insensitive); the mark a secret leaves (`data-openbot-secret`), also on an ancestor; and a field drawn as dots with `-webkit-text-security`. A `<label>` is followed to its control, as Playwright's `fill` does. Extending the selector (the three expiry tokens, no `input` prefix, case) also widens what snapshots and screenshots mask; that is the stricter side too.
+
+Every route that can write into a page, and what it does now:
+
+| Route | Who | Now |
+|---|---|---|
+| `/type` (`computer_type`) | model | `fillUnlessSecret`: asked before the fill, after focusing (a field that turns into a password field on focus), and after the fill (a flip during it wipes what landed). Refused with 403 and the sentence. |
+| `/key` (`computer_key`) with a ref | model | `pressKeyUnlessSecret`: a key that can write a character (any key not on a list of non-text keys, key codes such as `KeyA` or `Digit5`, paste chords, `Shift+Insert`) is refused when the ref's field is sensitive; asked again afterwards, with a wipe. Enter, Tab, arrows, Backspace, Delete, F-keys, select-all and copy still go through (Enter submits a form the person filled). |
+| `/key` with no ref | model | The same, for the field holding the focus in any frame, through shadow roots; a frame that cannot be asked counts as sensitive. |
+| `/click`, `/scroll`, `/navigate`, `/snapshot`, `/read`, `/screenshot` | model | Write no text into a field. Unchanged. |
+| `/exec`, `/files/*` | model | Act in the Bot's own workspace, not on the page. Unchanged. No route evaluates script, pastes, selects an option or uploads a file into a page. |
+| `/human/secret` | person, only while the Bot has asked with `computer_request_secret` | Unchanged: `fill` directly. |
+| `/human/type`, `/human/key`, the viewer's input socket | person with the wheel | Unchanged. |
+| `/sign-in/fill`, `/sign-in/code` | the private sign-in form, server to computer | Unchanged. |
+
+The sentence the member repeats to the person: "This field is for a password, a code or a card number, and only the person can fill it. Nothing was typed. Click the field and ask with computer_request_secret, so the person enters it themselves." (`SECRET_FIELD_REFUSAL`). It reaches the member as a 403 from the computer, which the client already maps to a refusal with its text.
+
+Does anything legitimately have a model type into such a field? Searched `examples/freeduet/agents.yaml` and `skills.yaml`, the server's computer tools and the app's flows: no. Every member's prompt says a secret is never typed by the member (Gus: "you never type secrets yourself"; the booking and directory-submission skills hand logins to the person), the person's login goes through the private sign-in form (`sign-in.ts`), and a one-off secret through `computer_request_secret`. So nothing was left unbuilt for this reason.
+
+Defence in depth (second part): the snapshot now carries each form control's `type` (`inputTypes` in `secret-masking.ts`, read from the page after the tree is parsed), so the gateway's `element.type` and an operator's CEL rules see `password` whatever the label says. It needs no server change: `SnapshotElement.type` already existed in `server/src/computer/schema.ts` and the gateway already reads it. Not built: `autocomplete` on the snapshot element (it would need a new field in the server schema and a change to the floor in `approvals/policy.ts`, which another pull request owns). The computer's refusal is the control.
+
+Tests (`agent-computer/tests`). `secret-field-write.test.ts`, real Chromium: 19 kinds of sensitive field refused with the sentence and the value read back empty; hidden field; flip on focus; flip while the text lands (wiped); a password in a frame and in a shadow root; keys with a ref, with no ref, in a frame, in a shadow root, and a flip on the keypress; the keys that write nothing still pass; plain text field, textarea, contenteditable and `submit` still typed; a ref that names nothing is a plain failure; `type` in the snapshot; a table of 30 keys. `secret-field-routes.test.ts` (source pin, no browser): `performAction` reaches a field only through the two helpers, `/human/secret` still fills directly, and no other file writes into a page without being named. With the sensitivity check switched off, 29 of the 66 cases in the first file fail (the ones that pass are plain-field and pure-key cases).
+
+Limits.
+- **Not run live:** no member, no real site and no dispatcher round trip: the dispatcher cannot reach a local page (loopback is never allowed, D73), so the real-browser tests call the helpers that `index.ts` calls, and the route wiring is pinned at source level.
+- **The race.** Check and fill are separate calls, so a page that turns a field into a password field inside that gap has the text in the field for a few milliseconds; it is then wiped and refused, and the text is never returned to the model. A page script could read it in that window.
+- A browser's own password manager, if one were switched on, is not a route a model drives; not covered here.
+- A text field with none of the markers above is typed into: a page can hide a secret field from every one of these signals.
+- The server's floor itself is not changed (`policy.ts`, `always-ask.ts` belong to other pull requests).
+
+**Built so far.** The refusal in `index.ts`, `secret-masking.ts` (one definition, helpers, key list), `type` in the snapshot (`aria-snapshot.ts`), this section and the two test files. Verified: the tests above. Not verified: live use.
