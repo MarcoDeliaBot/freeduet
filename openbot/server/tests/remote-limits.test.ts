@@ -116,7 +116,7 @@ describe("isRemote: the cookie, asked of the person the session names, and nothi
     expect(await isRemote(ownGate, request(), "u-user")).toBe(false);
     expect(
       await own.service.revoke("u-user", "seed-user-computer", "test"),
-    ).toBe(true);
+    ).toEqual({ sessionEnded: false });
     expect(await isRemote(ownGate, request(), "u-user")).toBe(true);
   });
 

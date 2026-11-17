@@ -211,7 +211,7 @@ export function PairedBrowsers() {
 
   return (
     <PageSection
-      description="A phone or another browser that is paired works like this one. Revoke one and it is cut off at its next request."
+      description="A phone or another browser that is paired works like this one. Revoke one and it is cut off at its next request and signed out."
       title="Pair a phone or another browser"
     >
       {canPair ? (
