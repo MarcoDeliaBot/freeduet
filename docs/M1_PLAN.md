@@ -1089,7 +1089,7 @@ Unsafe behaviour and the line that still catches it. iris-19: handing the email 
 
 Limits. **Not run live:** run iris-19, otto-11, otto-17, penny-5, mark-6 and cam-6 with `--repeat 3`. Prompt lengths in characters, before to after: Mark 7,088 to 7,239; Cam 8,028 to 8,237. The tests pin both sentences (`freeduet-package.test.ts`, red before and green after). **Left to the maintainer:** whether every member that reads outside material (Penny, Wren, Jules, Gus, Basil, Vera) is told to name an instruction found in it, which would be a change of the shared paragraph pinned across the twelve.
 
-## 47. The desktop app is off unless the person turns it on (D67)
+## 47. The desktop app is off unless the person writes `on` (D67)
 
 Decided by the maintainer on 17 November 2026 ("desktop spento"). Design note: `docs/design/intelligence-switch-missing.md`, "Update (D67)". Built and unit-tested here; not run on a real desktop.
 
@@ -1103,3 +1103,5 @@ Limits.
 - **Learning.** It is an Intelligence feature and is off with `off` (`openbot/server/src/config.ts`, the Learning readers).
 - **Helm chart.** Not part of this decision: it still writes `on` unless `config.extraEnv` names it.
 - **Not run.** No real desktop, no real first start. The unit tests are in the `desktop crate` job (Rust 1.88.0).
+- **Not the FreeDuet team.** The desktop app runs the upstream example package (`TENANT_PACKAGE_DIR` is `../examples/fintech`, `openbot/desktop/src-tauri/src/env.rs:790`), so this decision is about where conversations are kept on the desktop, not about the members.
+- **Setup screen.** The desktop setup screen still asks for an Intelligence key before it starts; changing that is a change to the app's look, to be shown as a preview first.
