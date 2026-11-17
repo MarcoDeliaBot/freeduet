@@ -941,7 +941,7 @@ Limits. Built so far: S1, S2, S4 (the switch) and S5 in its option-(b) form; the
 
 ## 37. On a computer the app uses the whole screen (D55)
 
-Decided by the maintainer on 16 November 2026, from the prototype of the wide app. Built as a preview; not merged and not run live. His three choices are the three rows after the first.
+Decided by the maintainer on 16 November 2026, from the prototype of the wide app. Built as a preview and merged in PR #303, with the faces fix in PR #314; the maintainer's yes for the look is not recorded here; not run live. His three choices are the three rows after the first.
 
 | # | Decision | Why |
 |---|---|---|
@@ -954,7 +954,7 @@ Limits. **No approval rule, route or decision logic changed.** Nothing phones ho
 
 ## 38. Office files: Excel and Word first (D58)
 
-Decided by the maintainer on 16 November 2026 (the note [design/office-files.md](design/office-files.md); open decisions Q2, Q4 and Q7 answered by the coordinator under his standing rule). Slices S1 and S2 are built on the branch `office-files-s1-s2`, which carries the commit of the design note (PR #309); not merged and not run live. This is the next free section on origin/main (37 was the last when it was written; PR #305 edits inside section 35 only).
+Decided by the maintainer on 16 November 2026 (the note [design/office-files.md](design/office-files.md); open decisions Q2, Q4 and Q7 answered by the coordinator under his standing rule). Slices S1 and S2 are merged in PR #311; the design note came in PR #309. Not run live. This is the next free section on origin/main (37 was the last when it was written; PR #305 edits inside section 35 only).
 
 | # | Decision | Why |
 |---|---|---|
@@ -980,7 +980,7 @@ Limits. **No approval, mail, payment or Full-access rule and no tool changed.** 
 
 ## 40. Programs on the person's own computer: the server core and four decisions (D60)
 
-Decided by the maintainer on 16 November 2026 (the note [design/programs-on-your-computer.md](design/programs-on-your-computer.md); its open decisions Q1, Q2, Q3 and Q7 answered by the coordinator under the standing rule "go with the recommendation"). Slice S1 is built on the branch `programs-s1-server-core`: the server only, with a helper played in process by the tests. Not merged, not reviewed independently yet, and nothing ran on a real PC.
+Decided by the maintainer on 16 November 2026 (the note [design/programs-on-your-computer.md](design/programs-on-your-computer.md); its open decisions Q1, Q2, Q3 and Q7 answered by the coordinator under the standing rule "go with the recommendation"). Slice S1 is merged in PR #318 (branch `programs-s1-server-core`): the server only, with a helper played in process by the tests. It was reviewed independently before the merge (the rows marked review below), and nothing ran on a real PC.
 
 | # | Decision | Why |
 |---|---|---|
@@ -994,11 +994,11 @@ Decided by the maintainer on 16 November 2026 (the note [design/programs-on-your
 | D60 (built) | **One secret per person, derived from the deployment's own key and a per-person random salt** (`programs_helper_salts`, made when the switch goes from off to on, so switching on again rotates it and a helper that held the old secret is refused). The secret itself is never stored, never returned by a route, never in a member's computer. A broker refuses a poll or result stamped before its own start (a restart does not reopen the replay window). One operation in flight per person. | The member's computer can read its parent's environment (`design/per-computer-token.md`), so the secret must live only in the server and the helper; a key that is the same for everyone who copies the example would otherwise let any of them sign. |
 | D60 (review) | **The switch refuses to go on while the deployment still uses the public example key** (route answers 409). What the helper says in an error is cleaned of invisible characters, cut at 200 characters and shown after a fixed sentence that says it is data. The two helper routes read at most 512 KiB. A tool cannot be built without a gate. | Findings of the independent review of PR #318. |
 
-Limits. **Not built:** the helper (S2), update and install (S3, S4), Gus's and Iris's prompt text and the Settings screen (S5), the cards' per-language text (the reason is English for now), evals (S6), the cap of five actions an hour, and the denial of a programs card that is pending when the switch goes off (it fails closed instead: the resumed call finds the switch off and is refused). **An independent security review is required before merge.** **Nothing ran on a real PC;** every Windows claim in the design note is still from documentation.
+Limits. **Not built:** the helper (S2), update and install (S3, S4), Gus's and Iris's prompt text and the Settings screen (S5), the cards' per-language text (the reason is English for now), evals (S6), the cap of five actions an hour, and the denial of a programs card that is pending when the switch goes off (it fails closed instead: the resumed call finds the switch off and is refused). **The independent security review of PR #318 is done; its findings are the rows marked review above.** **Nothing ran on a real PC;** every Windows claim in the design note is still from documentation.
 
 ## 41. LibreOffice in the member's computer: recalculate a sheet, make a PDF (D61)
 
-Decided by the maintainer on 16 November 2026 (answer "yes" to Q1 and Q5 of [design/office-files.md](design/office-files.md), for the recalculation and PDF part). Built on the branch `office-libreoffice`; not merged and not run live. Section 40 (D60) is another branch's.
+Decided by the maintainer on 16 November 2026 (answer "yes" to Q1 and Q5 of [design/office-files.md](design/office-files.md), for the recalculation and PDF part). Merged in PR #317; not run live. Section 40 (D60) was merged separately, in PR #318.
 
 | # | Decision | Why |
 |---|---|---|
@@ -1014,7 +1014,7 @@ Decided by the maintainer on 16 November 2026 (answer "yes" to Q1 and Q5 of [des
 
 ## 42. Programs on the person's own computer: the Windows helper, read-only (D62)
 
-Decided by the maintainer on 16 November 2026 (Q1, Q6 and Q8 of [design/programs-on-your-computer.md](design/programs-on-your-computer.md), under the standing rule "go with the recommendation"). Slice S2 is built on the branch `programs-s2-windows-helper`: the helper and its setup, read actions only. Not merged, not reviewed independently yet, and **nothing has run on a real PC; PowerShell was not available where it was written, so the helper's first run is the `installer-windows` job in CI.** Section 40 (D60) is the server core this speaks to.
+Decided by the maintainer on 16 November 2026 (Q1, Q6 and Q8 of [design/programs-on-your-computer.md](design/programs-on-your-computer.md), under the standing rule "go with the recommendation"). Slice S2 is merged in PR #322 (branch `programs-s2-windows-helper`): the helper and its setup, read actions only. It was reviewed independently before the merge (the row marked review below). Its first Windows run found a parse error, fixed in the same PR (commit 24477b7), and **nothing has run on a real PC.** Section 40 (D60) is the server core this speaks to.
 
 | # | Decision | Why |
 |---|---|---|
@@ -1033,7 +1033,7 @@ Limits. **Not built:** update and install (S3, S4), Gus's and Iris's prompt text
 
 ## 43. Programs on the person's own computer: the members' words (D63)
 
-Decided by the maintainer on 16 November 2026 (design note section 6.2, recommendation taken under the standing rule "go with the recommendation"). Slice S5a, built on the branch `programs-s5a-gus-and-fixes`: the prompt text only (the Settings screen is the rest of S5 and needs a preview and the maintainer's yes). Not merged, not reviewed independently yet, the prompts and the new eval cases are **not yet run live**, and nothing ran on a real PC. Sections 40 (D60) and 42 (D62) are the server and the helper this speaks about.
+Decided by the maintainer on 16 November 2026 (design note section 6.2, recommendation taken under the standing rule "go with the recommendation"). Slice S5a is merged in PR #325 (branch `programs-s5a-gus-and-fixes`), and its follow-up from the review is in PR #331: the prompt text only (the Settings screen is the rest of S5 and needs a preview and the maintainer's yes). It was reviewed independently (see the follow-up below). The prompts and the new eval cases are **not yet run live**, and nothing ran on a real PC. Sections 40 (D60) and 42 (D62) are the server and the helper this speaks about.
 
 | # | Decision | Why |
 |---|---|---|
