@@ -1,6 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import type { AuditEventInput, AuditStore } from "../src/audit";
 import {
+  ActionRefusedError,
   createComputerGateway,
   WorkspaceRefusedError,
 } from "../src/computer/gateway";
@@ -84,5 +85,55 @@ describe("a refusal made on the computer", () => {
       "computer.action_failed",
     ]);
     expect(JSON.stringify(rows)).not.toContain(TYPED);
+  });
+
+  test("a rule on element.type sees the field's real type (D76)", async () => {
+    const reached: string[] = [];
+    const provider: ComputerProvider = {
+      name: "test",
+      isolation: "per-bot",
+      locate: async () => "http://agent-computer:4100",
+      status: async (botId) => ({ botId, state: "ready" }),
+      stop: async () => ({ wasRunning: true }),
+      reset: async () => ({ cleared: true }),
+      list: async () => [],
+    };
+    const fetchImpl = (async (url: string) => {
+      const path = new URL(url).pathname;
+      reached.push(path);
+      if (path === "/snapshot")
+        return Response.json({
+          snapshotId: 1,
+          url: "https://example.com/login",
+          title: "Login",
+          truncated: false,
+          elements: [
+            { ref: "e1", role: "textbox", name: "Notes", type: "text" },
+            { ref: "e2", role: "textbox", name: "Notes", type: "password" },
+          ],
+        });
+      return Response.json({
+        action: "type",
+        url: "https://example.com/login",
+        elapsedMs: 1,
+      });
+    }) as unknown as typeof fetch;
+    const gateway = createComputerGateway({
+      provider,
+      fetchImpl,
+      auditStore: { insert: async () => undefined },
+      policy: () => ({
+        mode: "enforce",
+        deny: ['element.type == "password"'],
+        allow: ['element.type == "text"'],
+      }),
+    });
+    await gateway.snapshot("bot-1");
+    const actor = { id: "dev-local-user" };
+    await gateway.type("bot-1", actor, { ref: "e1", snapshotId: 1, text: "x" });
+    expect(reached).toContain("/type");
+    await expect(
+      gateway.type("bot-1", actor, { ref: "e2", snapshotId: 1, text: "x" }),
+    ).rejects.toThrow(ActionRefusedError);
   });
 });

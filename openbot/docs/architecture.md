@@ -54,6 +54,7 @@ Policy rules can inspect:
 - `actor.id`
 - `page.url`, `page.host`
 - `element.ref`, `element.role`, `element.name`, `element.type`
+  (`element.type` is the form control's real type, such as `text` or `password`, from FreeDuet's D76 on; before, it was always empty, so a rule written on it did not work as written.)
 - `key`
 - `command`
 - `file.path`, `file.name`, `file.extension`
