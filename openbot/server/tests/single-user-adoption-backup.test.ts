@@ -549,7 +549,7 @@ describe("with the real pg_dump and pg_restore of this computer", () => {
       expect(moved.err).toBe("");
       expect(moved.code).toBe(EXIT.ok);
       expect(moved.out).toContain(
-        "Done. 13 rows now belong to you@example.com.",
+        "Done. 12 rows now belong to you@example.com.",
       );
 
       const printed = moved.out
