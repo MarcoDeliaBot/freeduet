@@ -127,6 +127,8 @@ export const APPROVAL_TEXT_PT: CompleteApprovalTextTable = {
     "Não pediste esta alteração à tua caixa de correio na tua própria mensagem, por isso pergunta-te primeiro.",
   "reason.unattended":
     "Isto vem de uma rotina ou de um gatilho que corre sozinho, não de uma mensagem tua, por isso pergunta-te sempre primeiro.",
+  "reason.tooLongToReview":
+    "Este comando ou script é demasiado longo para o revisor automático o ler por inteiro, por isso decides tu.",
   "reason.automation":
     "As rotinas e os gatilhos agem mais tarde sem ti, por isso criar um, alterá-lo ou apagá-lo pergunta-te sempre primeiro.",
   "reason.setting":

@@ -128,6 +128,8 @@ export const APPROVAL_TEXT_TR: CompleteApprovalTextTable = {
     "Posta kutundaki bu değişikliği kendi mesajında istemedin, bu yüzden önce sana soruyor.",
   "reason.unattended":
     "Bu, senin gönderdiğin bir mesajdan değil, kendi kendine çalışan bir rutinden veya tetikleyiciden geldi, bu yüzden her zaman önce sana soruyor.",
+  "reason.tooLongToReview":
+    "Bu komut veya betik, otomatik denetçinin tamamını okuyamayacağı kadar uzun, bu yüzden karar sende.",
   "reason.automation":
     "Rutinler ve tetikleyiciler sonradan sen olmadan çalışır, bu yüzden birini kurmak, değiştirmek veya silmek her zaman önce sana soruyor.",
   "reason.setting":

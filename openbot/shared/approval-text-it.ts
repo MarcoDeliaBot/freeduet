@@ -130,6 +130,8 @@ export const APPROVAL_TEXT_IT: CompleteApprovalTextTable = {
     "Nel tuo messaggio non hai chiesto questa modifica alla tua casella, quindi te lo chiede prima.",
   "reason.unattended":
     "Questa richiesta arriva da una routine o da un trigger che gira da solo, non da un tuo messaggio, quindi te lo chiede sempre prima.",
+  "reason.tooLongToReview":
+    "Questo comando o script è troppo lungo perché il revisore automatico lo legga per intero, quindi decidi tu.",
   "reason.automation":
     "Le routine e i trigger agiscono più tardi senza di te, quindi crearne uno, cambiarlo o eliminarlo te lo chiede sempre prima.",
   "reason.setting":

@@ -4,7 +4,16 @@
  * with a fake reviewer that counts its calls.
  */
 import { describe, expect, test } from "bun:test";
-import { decideAction, reviewerCategoryCounts } from "../src/approvals/policy";
+import {
+  APPROVAL_TEXT_EN,
+  approvalText,
+  localizedReason,
+} from "@openbot/shared/approval-text";
+import {
+  decideAction,
+  reviewerCategoryCounts,
+  TOO_LONG_TO_REVIEW_REASON,
+} from "../src/approvals/policy";
 import type {
   ApprovalCandidate,
   ApprovalRule,
@@ -316,6 +325,17 @@ describe("D77 review fixes: Full access, scripts, long text, reviewer switch", (
       expect(result).toMatchObject({ behaviour: "hand_off", source: "safety" });
       expect(result.reason).toContain("too long");
     }
+    // the card shows the stored reason through localizedReason: English stays, another language is translated
+    const stored = (await decide(LONG, "off", "none")).result.reason as string;
+    expect(stored).toBe(TOO_LONG_TO_REVIEW_REASON);
+    expect(stored).toBe(APPROVAL_TEXT_EN["reason.tooLongToReview"] as string);
+    expect(localizedReason(stored, "en")).toBe(stored);
+    expect(localizedReason(stored, "it")).toBe(
+      "Questo comando o script è troppo lungo perché il revisore automatico lo legga per intero, quindi decidi tu.",
+    );
+    expect(localizedReason(stored, "it")).toBe(
+      approvalText("reason.tooLongToReview", "it"),
+    );
     const script = await decide(
       write("big.sh", "a".repeat(7000)),
       "full",

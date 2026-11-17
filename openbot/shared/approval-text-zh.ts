@@ -115,6 +115,8 @@ export const APPROVAL_TEXT_ZH: CompleteApprovalTextTable = {
     "你在自己的消息里没有要求对邮箱做这个更改,所以先问你。",
   "reason.unattended":
     "这来自自动运行的例行任务或触发器,而不是你发的消息,所以总是先问你。",
+  "reason.tooLongToReview":
+    "这条命令或脚本太长,自动审核员无法完整阅读,所以由你决定。",
   "reason.automation":
     "例行任务和触发器之后会在没有你的情况下运行,所以创建、更改或删除它们总是先问你。",
   "reason.setting":

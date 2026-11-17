@@ -126,6 +126,8 @@ export const APPROVAL_TEXT_JA: CompleteApprovalTextTable = {
     "メールボックスへのこの変更は、あなた自身のメッセージでは求められていないため、先に確認します。",
   "reason.unattended":
     "これはあなたのメッセージではなく、自動で動くルーティンまたはトリガーからのため、必ず先に確認します。",
+  "reason.tooLongToReview":
+    "このコマンドまたはスクリプトは長すぎて、自動レビュアーが全文を読めないため、あなたが判断します。",
   "reason.automation":
     "ルーティンやトリガーは後からあなたなしで動くため、作成・変更・削除は必ず先に確認します。",
   "reason.setting":
