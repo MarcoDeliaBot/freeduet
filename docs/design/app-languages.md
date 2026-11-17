@@ -2,7 +2,7 @@
 
 **Decided 14 November 2026: no translation of the app for now.** Status: Not planned for now. The app stays in English. FreeDuet aims at a worldwide public, English first. Members still answer in the person's language (D26, unchanged). The analysis below stays as it was written.
 
-Design only, no product code. Written 2026-11-14 for the roadmap row [The app in more languages](../ROADMAP.md). Checked against origin/main at commit 021cad8.
+Design only, no product code. Written 2026-11-14 for the roadmap row [The app in more languages](../ROADMAP.md). Checked against origin/main at the time of writing.
 
 Markers: [code: path:line] is a line of this repository, read or grepped at 021cad8. A folder marker names a folder. [doc: URL] is an outside page. [assumed] is not checked here. Candidate strings are text that may reach the screen. They are counted by a TypeScript parse (method in section 2).
 

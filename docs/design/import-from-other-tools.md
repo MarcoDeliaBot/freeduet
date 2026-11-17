@@ -1,6 +1,6 @@
 # Import from other agent tools: design
 
-Design. Slice 1 (the parsers) is on main through PR #168. Slice 2 (the preview) is on main through PR #214: it adds one route for the signed-in person, `POST /api/freeduet/import/preview` [code: openbot/server/src/app.ts:812-813], that returns a preview and stores nothing; no screen shows it yet. Written 2026-11-14 for two ROADMAP rows: "Bring your data from other agents" and "Import from Grok Bot". Base: commit 452e060, where the branch started.
+Design. Slice 1 (the parsers) is on main through PR #168. Slice 2 (the preview) is on main through PR #214: it adds one route for the signed-in person, `POST /api/freeduet/import/preview` [code: openbot/server/src/app.ts:812-813], that returns a preview and stores nothing; no screen shows it yet. Written 2026-11-14 for two ROADMAP rows: "Bring your data from other agents" and "Import from Grok Bot". Base: the main branch as it stood on 14 November 2026, where the branch started.
 
 Tags: [code: path:line] = read in this repository at commit 452e060. [doc: URL] = stated by a public page, read 2026-11-14 through a summarising fetch; no text is copied. [assumed] = not checked. Design choices carry no tag: they are proposals.
 

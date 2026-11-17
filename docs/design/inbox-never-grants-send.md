@@ -1,6 +1,6 @@
 # Approving in the inbox never gives a tool that sends
 
-Built in PR #208 (see "Built so far" at the end). Written 2026-11-14. Base: origin/main c93c947.
+Built in PR #208 (see "Built so far" at the end). Written 2026-11-14. Base: origin/main of that day.
 
 Decided by the maintainer on 14 November 2026: approving a request in the inbox never gives a Bot a tool that sends (an email, a message, a post, a form, a payment). A tool that sends is given from the settings page, by the person, and from nowhere else. What sends is never recognised by a word in a tool's name: each catalogue entry carries an explicit list, in the same style as `readTools`, and everything else asks, as D33 says. D30 stays true: no member but Otto holds a send tool.
 

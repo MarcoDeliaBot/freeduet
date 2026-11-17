@@ -1,6 +1,6 @@
 # "Done when" on every hand-off
 
-Built in PR #243 (see "Built so far", section 7). Written 2026-11-15 on origin/main cec4464 and merged with origin/main 0259785 before the pull request.
+Built in PR #243 (see "Built so far", section 7). Written 2026-11-15 on origin/main of that day and merged with origin/main again before the pull request.
 
 Decided by the maintainer on 15 November 2026 (docs/ROADMAP.md, "Done when" on every hand-off): when Iris passes a job to a member she writes, in one line, what counts as done. The person sees that line under the hand-off, and the answer that comes back is checked against it. This file covers the first slice only.
 

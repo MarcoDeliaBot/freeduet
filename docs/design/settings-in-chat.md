@@ -1,6 +1,6 @@
 # Settings changed in chat, with Undo, and a control dashboard
 
-Design, and slice 1 on main through PR #175 (see "Built so far" at the end). Written 2026-11-14 for two rows of [ROADMAP.md](../ROADMAP.md): "Settings changed in chat, with Undo" and "A control dashboard". Base: origin/main 021cad8.
+Design, and slice 1 on main through PR #175 (see "Built so far" at the end). Written 2026-11-14 for two rows of [ROADMAP.md](../ROADMAP.md): "Settings changed in chat, with Undo" and "A control dashboard". Base: origin/main of that day.
 
 Tags: **[code: path:line]** read on origin/main. Code paths start at `openbot/`; doc paths start at the repository root. **[assumed]** my inference, not checked. **[verify]** unknown; a spike on a real install must settle it. Nothing tagged [verify] ships unchecked.
 

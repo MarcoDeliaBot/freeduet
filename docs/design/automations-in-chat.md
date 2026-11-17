@@ -1,6 +1,6 @@
 # Automations written in chat: calendar, history and limits
 
-Design, plus the read-only part built (section 8, Built so far), and the chat cards for routines, built in PR #241 (section 9.5): the setup card, and the card with Pause or Resume, Edit and Cancel. Written 2026-11-14 against origin/main 452e060. Roadmap row: "Automations written in chat, with a calendar and history", status In progress ([code: docs/ROADMAP.md]). Decided 14 November 2026: D6 (section 6). Nothing else here is decided; section 6 lists what the maintainer must still choose.
+Design, plus the read-only part built (section 8, Built so far), and the chat cards for routines, built in PR #241 (section 9.5): the setup card, and the card with Pause or Resume, Edit and Cancel. Written 2026-11-14 against origin/main of that day. Roadmap row: "Automations written in chat, with a calendar and history", status In progress ([code: docs/ROADMAP.md]). Decided 14 November 2026: D6 (section 6). Nothing else here is decided; section 6 lists what the maintainer must still choose.
 
 Paths start in `openbot/` unless they start with `docs/` or `CLAUDE.md`, which sit at the repository root.
 
