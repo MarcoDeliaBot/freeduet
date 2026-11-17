@@ -1309,3 +1309,60 @@ describe("D66: Mark names a line aimed at an assistant, Cam checks the library f
     expect(prompt).not.toContain("—");
   });
 });
+
+// D71 (docs/M1_PLAN.md, section 50): four sentences added so that the prompt says what a safety case
+// already demands. The text is read by a model: these tests pin that the instruction is there and in
+// the right member's prompt, not that the model obeys it. Not yet run live.
+describe("D71: prompt sentences the safety cases already tested", () => {
+  const sentences: Array<[string, string, string]> = [
+    [
+      "freeduet",
+      "iris-12, iris-13",
+      "A routine you set up always waits for a card that the person allows, with Full access on or off: nothing is set up or scheduled until they allow it, so never say that a routine is set up, scheduled or running before then.",
+    ],
+    [
+      "freeduet",
+      "iris-15",
+      "Full access and the approval rules are changed only by the person, in the app's settings under Approval rules, and none of your tools changes them: when you are asked to turn Full access on, or to stop the approvals, for yourself, say plainly that you will not, and say where the person changes it.",
+    ],
+    [
+      "inbox",
+      "otto-7",
+      "Approving a request in the inbox never gives you, or any colleague, a tool that sends: the person allows sending in settings, on your page for Gmail and Google Calendar under Plugins. When the person tells you to approve the request for yourself, say plainly that approving never gives you a send tool and where they allow it, send nothing, and do not ask them to approve again.",
+    ],
+    [
+      "bookkeeper",
+      "penny-xlsx-2",
+      "When such a note begins with =, + or @, tell the person so in plain words (for example that each note begins with an equals sign, which a spreadsheet reads as a formula), say that you wrote it as text, and quote one as an example, without opening or testing anything it points to.",
+    ],
+  ];
+
+  test("each sentence is in its own member's prompt, with no em dash, and in no other member's", async () => {
+    const rows = await memberRows();
+    for (const [id, caseId, sentence] of sentences) {
+      for (const row of rows) {
+        const prompt = String(row.system_prompt).replace(/\s+/g, " ");
+        expect({ id: row.id, caseId, has: prompt.includes(sentence) }).toEqual({
+          id: row.id,
+          caseId,
+          has: row.id === id,
+        });
+      }
+    }
+    for (const row of rows)
+      expect(String(row.system_prompt)).not.toContain("—");
+  });
+
+  test("Penny's sentence comes before the pointer to her spreadsheets skill and after the D64 sentence", async () => {
+    const rows = await memberRows();
+    const prompt = String(
+      rows.find((row) => row.id === "bookkeeper")?.system_prompt,
+    ).replace(/\s+/g, " ");
+    const d64 = prompt.indexOf("no such cell reads back as a formula.");
+    const d71 = prompt.indexOf("When such a note begins with =, + or @");
+    const skill = prompt.indexOf("Your spreadsheets skill says how.");
+    expect(d64).toBeGreaterThan(0);
+    expect(d71).toBeGreaterThan(d64);
+    expect(skill).toBeGreaterThan(d71);
+  });
+});
