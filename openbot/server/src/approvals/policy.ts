@@ -236,6 +236,75 @@ export const NOT_ACCOUNT_ACTIONS =
  */
 export const PROGRAMS_TOOLS = /^programs\//;
 
+/**
+ * FreeDuet, D77 (docs/M1_PLAN.md section 56): the part of the Bot's own computer where the reviewer's
+ * safety category still counts. The words floor above skips every `NOT_ACCOUNT_ACTIONS` tool, so a
+ * command that pays or changes a credential (`stripe charges create ... --confirm`, `passwd`, `gh auth`)
+ * is not found by it. The reviewer's category is the only thing that can find it, so for these two it is
+ * taken seriously: a command always, and a file write only when the file is a script or an executable
+ * (the command that runs it is judged on its own). An ordinary command or file is not a category: the
+ * reviewer says "none" and nothing changes.
+ */
+const SCRIPT_FILE = /\.(sh|bash|zsh|py|rb|pl|php|js|mjs|cjs|ts|ps1|bat|cmd)$/i;
+
+/**
+ * D77: a command on the Bot's computer, or a write of a script (a script extension from the list above,
+ * or contents that start with `#!`). Only these two are looked at by the reviewer's safety category and
+ * by the Full access check below. A file of any other kind (.txt, Makefile, .service, .sql) is NOT: it
+ * is a known limit, written in docs/M1_PLAN.md section 56.
+ */
+export function isCommandOrScriptWrite(candidate: ApprovalCandidate): boolean {
+  if (candidate.effect === "read") return false;
+  if (candidate.toolRef === "computer_run_command") return true;
+  if (candidate.toolRef === "computer_write_file") {
+    const args = (candidate.args ?? {}) as Record<string, unknown>;
+    const named = args.path ?? args.filePath;
+    const path = typeof named === "string" ? named : "";
+    const text = [args.contents, args.content, args.text].find(
+      (value): value is string => typeof value === "string",
+    );
+    return SCRIPT_FILE.test(path) || (text?.startsWith("#!") ?? false);
+  }
+  return false;
+}
+
+export function reviewerCategoryCounts(candidate: ApprovalCandidate): boolean {
+  if (!NOT_ACCOUNT_ACTIONS.test(candidate.toolRef)) return true;
+  return isCommandOrScriptWrite(candidate);
+}
+
+/** What the reviewer is shown of an action, before it is cut to {@link REVIEW_ACTION_LIMIT}. */
+function reviewActionJson(candidate: ApprovalCandidate): string {
+  return JSON.stringify(
+    {
+      tool: candidate.toolRef,
+      effect: candidate.effect,
+      target: candidate.scope,
+      detail: candidate.target,
+      arguments: candidate.args,
+    },
+    null,
+    2,
+  );
+}
+
+/** The longest action text the reviewer reads (characters). Unchanged for every tool. */
+export const REVIEW_ACTION_LIMIT = 6000;
+
+/**
+ * D77: a command or script write longer than the reviewer reads is not judged on a cut text (the
+ * dangerous line could be after the cut). It is handed to the person instead. Other tools are cut as
+ * before.
+ */
+export const TOO_LONG_TO_REVIEW_REASON =
+  "This command or script is too long for the automatic reviewer to read in full, so you decide.";
+export function tooLongToReview(candidate: ApprovalCandidate): boolean {
+  return (
+    isCommandOrScriptWrite(candidate) &&
+    reviewActionJson(candidate).length > REVIEW_ACTION_LIMIT
+  );
+}
+
 export function safetyRequirement(
   candidate: ApprovalCandidate,
 ): { id: string; reason: string } | undefined {
@@ -291,7 +360,8 @@ export function toolNameHitsSafetyWords(toolName: string): boolean {
  * no answer from this function, so the gate hands it to the person exactly as it does with the switch
  * off. Credentials and security settings are still handed to the person in both, and an admin's team
  * rule that asks or hands off still wins. Both override the person's own rules, "ask before making
- * changes" and auto-review, and do not call the reviewer.
+ * changes" and auto-review. This function itself never calls the reviewer; `decideAction` asks it once
+ * more for a command or a script write (D77), and that can only add a hand-off.
  *
  * Fail closed: a mode this build does not know answers nothing, so the gate carries on as if the
  * switch were off.
@@ -532,17 +602,7 @@ export async function reviewAction(input: {
     input.request || "(no request text was available)",
     "</request>",
     "<action>",
-    JSON.stringify(
-      {
-        tool: input.candidate.toolRef,
-        effect: input.candidate.effect,
-        target: input.candidate.scope,
-        detail: input.candidate.target,
-        arguments: input.candidate.args,
-      },
-      null,
-      2,
-    ).slice(0, 6000),
+    reviewActionJson(input.candidate).slice(0, REVIEW_ACTION_LIMIT),
     "</action>",
   ].join("\n");
   try {
@@ -631,7 +691,43 @@ export async function decideAction(input: {
       input.team,
       input.fullAccess,
     );
-    if (granted) return granted;
+    if (granted) {
+      // D77: Full access never asks about an ordinary command or script, and it still does not. For a
+      // command or a script write only, the reviewer is asked once more (whatever the person's
+      // auto-review switch says: under Full access this is the only floor for them), and only its safety
+      // category is read: a credential or a security setting (both modes), a payment ("without
+      // payments" only) is handed to the person. A command or script too long to be read in full is
+      // handed to the person too. No reviewer, a failed one, an unknown category or any verdict at all
+      // leaves the allow as it was: this adds a hand-off and never a card.
+      if (isCommandOrScriptWrite(candidate) && input.model) {
+        if (tooLongToReview(candidate))
+          return {
+            behaviour: "hand_off",
+            source: "safety",
+            reason: TOO_LONG_TO_REVIEW_REASON,
+          };
+        const review = await reviewAction({
+          model: input.model,
+          candidate,
+          request: requestOf(input.messages),
+          ...(input.language ? { language: input.language } : {}),
+        });
+        const category = review.safety;
+        if (
+          !review.failedClosed &&
+          category &&
+          category !== "none" &&
+          (category !== "payments" || input.fullAccess !== "full")
+        )
+          return {
+            behaviour: "hand_off",
+            source: "safety",
+            reason: SAFETY_REASONS[category],
+            review,
+          };
+      }
+      return granted;
+    }
   }
   if (safety)
     return {
@@ -669,28 +765,36 @@ export async function decideAction(input: {
   const autoReview = input.autoReview && !savedAllow;
   // Nothing the person typed can be traced to this turn: there is nothing for a reviewer to judge.
   const mailboxReview = mailboxChange?.request != null;
-  const review =
+  const reviewWanted =
     (autoReview && reviewable(candidate) && !candidate.personAnswered) ||
     matched?.rule.behaviour === "pre_approved" ||
-    mailboxReview
-      ? await reviewAction({
-          model: input.model,
-          candidate,
-          request: mailboxChange
-            ? (mailboxChange.request ?? "")
-            : requestOf(input.messages),
-          ...(mailboxChange ? { mailbox: true } : {}),
-          ...(input.language ? { language: input.language } : {}),
-          ...(matched
-            ? {
-                rule: {
-                  behaviour: matched.rule.behaviour,
-                  layer: matched.layer,
-                },
-              }
-            : {}),
-        })
-      : undefined;
+    mailboxReview;
+  // D77: a command or script write the reviewer cannot read in full is never judged on a cut text.
+  if (reviewWanted && input.model && tooLongToReview(candidate))
+    return {
+      behaviour: "hand_off",
+      source: "safety",
+      reason: TOO_LONG_TO_REVIEW_REASON,
+    };
+  const review = reviewWanted
+    ? await reviewAction({
+        model: input.model,
+        candidate,
+        request: mailboxChange
+          ? (mailboxChange.request ?? "")
+          : requestOf(input.messages),
+        ...(mailboxChange ? { mailbox: true } : {}),
+        ...(input.language ? { language: input.language } : {}),
+        ...(matched
+          ? {
+              rule: {
+                behaviour: matched.rule.behaviour,
+                layer: matched.layer,
+              },
+            }
+          : {}),
+      })
+    : undefined;
   /*
    * The reviewer's own safety classification, on top of the keyword floor above. It can only add a
    * hand-off: a reviewer that says "none" or cannot be reached leaves the keyword result standing.
@@ -700,7 +804,7 @@ export async function decideAction(input: {
     category &&
     category !== "none" &&
     !review.failedClosed &&
-    !NOT_ACCOUNT_ACTIONS.test(candidate.toolRef)
+    reviewerCategoryCounts(candidate)
   )
     return {
       behaviour: "hand_off",
