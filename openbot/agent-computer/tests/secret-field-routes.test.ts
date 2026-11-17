@@ -44,6 +44,28 @@ describe("writes into a page", () => {
     );
   });
 
+  test("nothing in the refusal reads an approval, Full access or a rule", () => {
+    // The refusal is made on the computer and cannot be lifted from above: neither the helpers nor
+    // the model's route take an option that could skip it.
+    const masking = readFileSync(join(SRC, "secret-masking.ts"), "utf8");
+    const start = masking.indexOf("A model never types into a field");
+    const guarded = masking
+      .slice(start)
+      .split("\n")
+      .filter((line) => !/^\s*(\/\/|\*|\/\*)/.test(line))
+      .join("\n");
+    expect(guarded).not.toMatch(
+      /approv|full.?access|allow|override|force|bypass/i,
+    );
+    const index = readFileSync(join(SRC, "index.ts"), "utf8");
+    const route = index.slice(index.indexOf("async function performAction"));
+    const typed = route.slice(
+      route.indexOf('action === "/type"'),
+      route.indexOf('action === "/key"'),
+    );
+    expect(typed).not.toMatch(/approv|full.?access|override|force|bypass/i);
+  });
+
   test("no other file writes into a page", () => {
     const found: Record<string, number> = {};
     for (const file of readdirSync(SRC).filter((name) =>

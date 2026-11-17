@@ -157,7 +157,7 @@ export async function inputTypes(
 
 /** The sentence a member repeats to the person. Plain words, no technical names but the tool. */
 export const SECRET_FIELD_REFUSAL =
-  "This field is for a password, a code or a card number, and only the person can fill it. Nothing was typed. Click the field and ask with computer_request_secret, so the person enters it themselves.";
+  "This field is for a password, a code or a card number, so the person types it themselves, in the live browser view or on the site. Nothing was typed. Click the field and ask with computer_request_secret.";
 
 /** Thrown when a model's write is refused. The dispatcher answers 403 with this sentence. */
 export class SecretFieldError extends Error {
