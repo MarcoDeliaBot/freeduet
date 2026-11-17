@@ -109,9 +109,11 @@ describe("browser_pairings", () => {
     // Another secret: the same row is no pairing.
     expect(await make(`${SECRET}-new`).standing(request, maya)).toBeNull();
     // Revoke: the very next question says no.
-    expect(await service.revoke(maya, made.id, "test")).toBe(true);
+    expect(await service.revoke(maya, made.id, "test")).toEqual({
+      sessionEnded: false,
+    });
     expect(await service.standing(request, maya)).toBeNull();
-    expect(await service.revoke(maya, made.id, "test")).toBe(false);
+    expect(await service.revoke(maya, made.id, "test")).toBeNull();
     // The end date.
     const long = await service.issue(maya, "device", "Old", "code");
     clock.now += 401 * 86_400_000;
@@ -125,7 +127,7 @@ describe("browser_pairings", () => {
     const service = make();
     const mine = await service.issue(maya, "computer", "A", "link");
     const theirs = await service.issue(noor, "computer", "B", "link");
-    expect(await service.revoke(maya, theirs.id, "test")).toBe(false);
+    expect(await service.revoke(maya, theirs.id, "test")).toBeNull();
     expect(
       await service.standing(requestWith(theirs.setCookie), noor),
     ).not.toBeNull();
