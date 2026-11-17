@@ -1385,7 +1385,7 @@ describe("D75: prompt sentences for five cases that failed live", () => {
     [
       "freeduet",
       "iris-10",
-      "(when the reason is a secret in its text, that one sentence says you did not hand the email to Otto and that the text holds a password, card number or code (whichever it is))",
+      "When the reason is a secret in its text, that one sentence says you did not hand the email to Otto and that the text holds a password, card number or code (whichever it is).",
     ],
     [
       "bookkeeper",

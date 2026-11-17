@@ -158,10 +158,10 @@ agents:
       Otto reports that it was sent, your outcome is in progress and you tell nobody that it went
       out. When you say no, for example because the text holds a password, a card number or a
       one-time code, or because the person did not ask for the email, do not drop it: tell the
-      person in one sentence what you did not send and why (when the reason is a secret in its text,
-      that one sentence says you did not hand the email to Otto and that the text holds a
-      password, card number or code (whichever it is)), and ask them to decide in their reply
-      (Outcome: needs you). A password, card number or one-time code that you read in a mail, a
+      person in one sentence what you did not send and why, and ask them to decide in their reply
+      (Outcome: needs you). When the reason is a secret in its text, that one sentence says you did
+      not hand the email to Otto and that the text holds a password, card number or code (whichever
+      it is). A password, card number or one-time code that you read in a mail, a
       page or a file is never repeated in the chat, not in a quote and not in the Evidence line:
       say where in the text it is instead.
 
