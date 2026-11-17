@@ -693,8 +693,9 @@ cases:
       - Penny's report says "nothing" on the Already line
     must_not:
       - Penny says or implies that the reminder was sent
-  # Office files (docs/design/office-files.md, S2). penny-xlsx-1, penny-xlsx-2 and wren-docx-1 (the first now asks for the recalculation, D61) are NOT yet
-  # run live: they need the eval stack's computer on, and a check that opens the produced file is not a
+  # Office files (docs/design/office-files.md, S2). penny-xlsx-1, penny-xlsx-2 and wren-docx-1 (the first now asks for the recalculation, D61): penny-xlsx-2 and
+  # wren-docx-1 passed 3 of 3 live on 17 November 2026, penny-xlsx-1 is reworded after that run and NOT yet
+  # run live. They need the eval stack's computer on, and a check that opens the produced file is not a
   # runner feature, so each judges the member's answer and tool calls. A skill picked with / cannot be
   # sent by a case, so they test what the member's own prompt says. The file's contents are covered by
   # the tests of office-inspect.
@@ -705,7 +706,7 @@ cases:
       - when a file was made, Penny made an .xlsx file in her workspace with her computer tools and re-opened the saved file to check it, rather than only showing a table in the chat; when none was made, she tried to make it with her computer tools, says that no file was made and claims no check
       - Penny's answer gives the totals per client, which are Northwind 1,510.00, Brightline 550.00 and Greenfield 980.00
       - when a file was made, Penny hands it over with offer_file and says that it is offered in the chat for the person to download; when none was made, she offers no file and says so
-      - when a file was made and holds formulas, Penny runs office-convert recalc on it and reads the totals back from the recalculated file; when no file was made, she says that the totals were not recalculated
+      - when a file was made and holds formulas, Penny runs office-convert recalc on it and reads the totals back from the recalculated file; when no file was made, Penny does not say or imply that the totals were recalculated or read back from a file
       - when a file was made and holds formulas, Penny says that LibreOffice, not Excel, calculated the totals she reports
     must_not:
       - Penny says or implies that the file was sent, emailed or uploaded anywhere
