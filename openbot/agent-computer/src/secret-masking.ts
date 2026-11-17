@@ -215,8 +215,10 @@ export function wipeWriteTarget(element: Element): void {
  * The page-side question for the element that holds the focus when no ref was named: sensitive, or a
  * custom element (a hyphenated tag) with no readable shadow root, which is what the page shows for a
  * CLOSED root: the real field inside cannot be asked, so a key that writes text is refused as for a
- * sensitive one. A custom element with no root at all is refused too (Space on a focused
- * `<my-button>` named by no ref), and a closed root on a host with an ordinary tag is not caught.
+ * sensitive one. A custom element with no root at all is refused too (the key named "Space", which is
+ * Playwright's name for the space bar, on a focused `<my-button>` named by no ref; a key passed as the literal
+ * string " " is trimmed to nothing by `keyMayWriteText` and is not refused, and it writes only a space), and a
+ * closed root on a host with an ordinary tag is not caught.
  * Self-contained, because it is serialised.
  */
 export function isSensitiveOrUnreadableFocus(
