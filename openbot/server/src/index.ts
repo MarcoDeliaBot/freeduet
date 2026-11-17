@@ -6,6 +6,7 @@ import "./freeduet/telemetry-off";
 import "./freeduet/plan-token";
 // FreeDuet: the team's hub grants and each person's conversations (docs/UPSTREAM_TOUCHES.md).
 import { applyAutomaticGrants } from "./freeduet/automatic-grants";
+import { applyIrisRoutines } from "./freeduet/iris-routines";
 import { applyFreeDuetPackage, isFreeDuetPackage } from "./freeduet/hub-grants";
 import { selfHostBannerOptions } from "./freeduet/no-promotions";
 import { pinModelBaseToRouter } from "./freeduet/model-base";
@@ -1086,6 +1087,14 @@ const pluginStore = createPluginStore({
   broker: composio?.broker,
   brokerProvider,
 });
+// Iris holds Routines by default, once, so the daily review can be offered (D81, docs/M1_PLAN.md section 60).
+await applyIrisRoutines(database, bootAuditStore, tenantPackage, (needs) =>
+  needs === "add"
+    ? pluginStore
+        .addServer({ key: "routines", by: "freeduet-automatic" })
+        .then(() => {})
+    : pluginStore.refreshTools("routines").then(() => {}),
+);
 
 /*
  * Personal ⇄ Shared for a brokered app. Built here because it needs the plugin store, the shared-use

@@ -386,6 +386,42 @@ export function personWasAsked(
   );
 }
 
+/**
+ * D81: what a Routines write will do, first and in this order whatever order the model wrote its arguments
+ * in: the instruction, the schedule, the time zone, the channel, whether it is on, and for a trigger its kind
+ * and what it listens for. Nothing is cut: a long instruction wraps, and Details holds the raw request. Only
+ * names the tools declare are read here; the server refuses any other argument before a card is made.
+ */
+const ROUTINE_FIELDS: [string, string][] = [
+  ["instruction", "Instruction"],
+  ["cron", "Schedule"],
+  ["timezone", "Time zone"],
+  ["channelId", "Channel"],
+  ["enabled", "Switched on"],
+  ["kind", "Kind"],
+  ["eventTypes", "Listens for"],
+  ["fieldPath", "Field"],
+  ["fieldEquals", "Equals"],
+  ["repository", "Repository"],
+  ["allowedSenders", "Senders"],
+  ["teamId", "Team"],
+  ["mode", "Mode"],
+  ["channels", "Channels"],
+  ["phrases", "Phrases"],
+  ["reactions", "Reactions"],
+];
+
+function describeRoutineFields(
+  args: Record<string, unknown>,
+): ApprovalView["fields"] {
+  const fields: ApprovalView["fields"] = [];
+  for (const [key, label] of ROUTINE_FIELDS) {
+    const shown = display(args[key]);
+    if (shown) fields.push({ label, value: shown });
+  }
+  return fields;
+}
+
 export function describeApproval(
   request: Pick<ApprovalRequest, "action">,
   language?: ApprovalLanguage,
@@ -422,7 +458,14 @@ export function describeApproval(
 
   const fields: ApprovalView["fields"] = [];
   let body: string | null = null;
-  if (args && typeof args === "object" && !Array.isArray(args)) {
+  if (
+    prefix === "routines" &&
+    args &&
+    typeof args === "object" &&
+    !Array.isArray(args)
+  ) {
+    fields.push(...describeRoutineFields(args as Record<string, unknown>));
+  } else if (args && typeof args === "object" && !Array.isArray(args)) {
     const entries = Object.entries(args as Record<string, unknown>);
     const pick = (pattern: RegExp, label: string) => {
       for (const [key, value] of entries) {

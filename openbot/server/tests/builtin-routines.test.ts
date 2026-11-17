@@ -316,41 +316,33 @@ describe("dispatch", () => {
 });
 
 describe("attribution", () => {
-  test("an owner named in the arguments is ignored", async () => {
+  // D81: an owner or a Bot named in the arguments is not "ignored" any more, it is refused, because the tool
+  // declares no such field (`undeclaredArguments`); nothing is created, changed or deleted for anybody.
+  test("an owner named in the arguments is refused, and nothing is created", async () => {
     const calls = recordingTools();
-    await callTool(CONNECTION, "create_routine", {
+    const result = await callTool(CONNECTION, "create_routine", {
       ownerUserId: "someone-else",
       agentId: "another-bot",
       instruction: "Post the standup summary.",
       cron: "0 9 * * 1-5",
     });
 
-    const created = calls.find((call) => call.method === "create");
-    expect(created?.method === "create" && created.input.ownerUserId).toBe(
-      "user_asker",
-    );
-    expect(created?.method === "create" && created.input.agentId).toBe(
-      "bot_helper",
-    );
+    expect(result.isError).toBe(true);
+    expect(calls).toEqual([]);
   });
 
-  test("an owner named in the arguments is ignored by list, update and delete", async () => {
+  test("an owner named in the arguments is refused by list, update and delete", async () => {
     const calls = recordingTools();
     const spoofed = { ownerUserId: "someone-else", agentId: "another-bot" };
-    await callTool(CONNECTION, "list_routines", { ...spoofed });
-    await callTool(CONNECTION, "update_routine", {
-      ...spoofed,
-      id: "routine_1",
-      instruction: "Something else.",
-    });
-    await callTool(CONNECTION, "delete_routine", {
-      ...spoofed,
-      id: "routine_1",
-    });
-
-    for (const call of calls) {
-      expect(call).toMatchObject({ ownerUserId: "user_asker" });
+    for (const [tool, args] of [
+      ["list_routines", {}],
+      ["update_routine", { id: "routine_1", instruction: "Something else." }],
+      ["delete_routine", { id: "routine_1" }],
+    ] as const) {
+      const result = await callTool(CONNECTION, tool, { ...spoofed, ...args });
+      expect(result.isError).toBe(true);
     }
+    expect(calls).toEqual([]);
   });
 
   test("a run attributed to nobody is refused", async () => {
