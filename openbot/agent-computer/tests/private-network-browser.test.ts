@@ -7,6 +7,7 @@ import type { Page } from "playwright";
 import {
   type EgressPolicy,
   setEgressPolicy,
+  allowLoopbackForTests,
   setEgressResolver,
   startEgressFilter,
   stopEgressFilter,
@@ -205,7 +206,7 @@ describe.skipIf(!asked)("a Bot's browser and the home network", () => {
     };
   }
 
-  test("a service on the computer itself is refused by default, by address, by name and by a name that resolves to it, and is reached once the switch is on", async () => {
+  test("a service on the computer itself is refused by address, by name and by a name that resolves to it, with the switch off and with it on (D73)", async () => {
     const local = origin();
     await startEgressFilter({ env: {} });
     // The browser hands a name to the filter unresolved, and the filter resolves it here.
@@ -238,18 +239,23 @@ describe.skipIf(!asked)("a Bot's browser and the home network", () => {
       // Not one of them connected.
       expect(local.reached()).toBe(0);
 
-      // The person switches it on, and the next navigation is judged by the new policy.
+      // The person switches it on, and the next navigation is judged by the new policy: D73, the
+      // switch lifts the home and office ranges and never this computer's own loopback.
       setEgressPolicy(BOT, switchedOn);
       for (const target of targets) {
-        const before = local.reached();
         const outcome = await visit(page, target);
-        expect({ target, status: outcome.status, text: outcome.text }).toEqual({
+        expect({
           target,
-          status: 200,
-          text: "a service on this computer",
+          status: outcome.status,
+          refused: outcome.refused,
+        }).toEqual({
+          target,
+          status: 403,
+          refused: true,
         });
-        expect(local.reached()).toBeGreaterThan(before);
+        expect(outcome.text).toContain("whether or not");
       }
+      expect(local.reached()).toBe(0);
 
       // And switched off again, it is refused again.
       setEgressPolicy(BOT, blocked);
@@ -419,6 +425,9 @@ describe.skipIf(!asked)("a Bot's browser and the home network", () => {
       },
     });
     await startEgressFilter({ env: {} });
+    // The service is on loopback, which the switch does not open (D73): the test's hook does, so the
+    // tunnel exists for the close on tighten to be tested.
+    allowLoopbackForTests(true);
     const browser = await launch();
     try {
       const page = await browser.page();
@@ -473,6 +482,7 @@ describe.skipIf(!asked)("a Bot's browser and the home network", () => {
         await page.evaluate(() => (window as unknown as Probe).events),
       ).not.toContain("message:echo after");
     } finally {
+      allowLoopbackForTests(false);
       await browser.done();
       service.stop(true);
     }
