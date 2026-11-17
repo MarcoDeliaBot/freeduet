@@ -4,7 +4,7 @@ _Version 1.0 of this document · 2026-11-07 · Status: approved for build_
 
 ## 1. In one sentence
 
-FreeDuet is a self-hosted team of AI employees that runs on the AI subscriptions people already pay for, works on its own computers, asks before it acts, and never stops when one subscription runs out.
+FreeDuet is a self-hosted team of AI employees that runs on the AI subscriptions people already pay for, works on its own computers, asks before it acts (within the limits in [SECURITY.md](../SECURITY.md#what-asks-you-and-what-does-not)), and never stops when one subscription runs out.
 
 ## 2. Why now
 
@@ -25,7 +25,7 @@ FreeDuet is a self-hosted team of AI employees that runs on the AI subscriptions
 ## 4. Principles
 
 1. **Logins first; tokens only by choice.** Members run on the subscriptions the person signed in to. API keys and API credits, including those included in a plan, are off by default, switched on only by the person, always last in a chain, and capped. FreeDuet must start and work with zero API keys.
-2. **Ask before acting, by default.** Sending, paying, signing, booking, publishing and deleting go through an approval the person sees. The person can turn on Full access for one member, and that member then acts without approval cards, payments included; passwords, credentials and security settings stay with the person ([FULL_ACCESS.md](FULL_ACCESS.md)).
+2. **Ask before acting, by default.** A payment, a password or a security setting goes to the person when a fixed rule's English and Italian words find it; sending, signing, booking, publishing and deleting are judged by a reviewer model against what the person typed, and ask unless clearly what was asked. A few cases go without a card (a typed recipient, a standing mail rule, a saved "Always allow", Full access), and commands in a member's own computer do not meet the fixed rule: the list is in [SECURITY.md](../SECURITY.md#what-asks-you-and-what-does-not). The person can turn on Full access for one member, and that member then acts without approval cards, payments included, for whatever the fixed rule's words do not find; a password, credential or security setting that they do find still goes to the person ([FULL_ACCESS.md](FULL_ACCESS.md)).
 3. **Never hold a subscription secret.** The person signs in to official tools through the provider's own flow.
 4. **One member, one job.** Small, testable, replaceable members; a Chief of Staff in front.
 5. **Thin fork, upstream first.** Extension points before patches; generic fixes go back to OpenBot.
@@ -122,7 +122,7 @@ The full threat model is in [SECURITY.md](../SECURITY.md). The controls, in shor
 | Threat | Control |
 |---|---|
 | Prompt injection from mail, documents or web pages | Every prompt treats read content as data; actions still need approval; Otto reports suspicious instructions instead of obeying them |
-| An agent spends money it should not | Purchase permits bound to merchant and total, single use, 10 minutes; caps; no "Always allow" for purchases; quality floor for the buying engine |
+| An agent spends money it should not | Today: a payment found by the fixed rule's words goes to the person, with no "Always allow"; one the words miss goes to the reviewer model. Planned for v0.4, not built: purchase permits bound to merchant and total, single use, 10 minutes; caps; a quality floor for the buying engine |
 | Credentials leak | Subscription credentials never enter FreeDuet; site logins through the masked box or take-over; API keys encrypted and write-only; secrets redacted from audit |
 | An agent touches the host | CLI engines run with no built-in tools; only the member's granted tools through the gateway; computers isolated per member |
 | Data leaves unintentionally | OpenBot's outgoing-message checks; telemetry off by default; nothing sent to FreeDuet maintainers |
@@ -168,7 +168,7 @@ No usage telemetry is collected; adoption is measured only through public number
 | "Duet" is Anthropic's product name | Medium | High | Trademark check before launch; a reserve name ready; "not affiliated" everywhere |
 | Upstream OpenBot changes fast | High | Medium | Thin fork, weekly upstream merge, our code in separate folders |
 | CopilotKit Intelligence dependency | Medium | Medium | Free plan by default; follow the self-hosted option; isolate memory calls |
-| An agent mistake costs money | Low with controls | High | F7 controls; low default caps; red-team suite |
+| An agent mistake costs money | Low with controls | High | F7 controls and low default caps (planned for v0.4, not built); red-team suite |
 | Maintainer time | High | Medium | Tight scope per milestone; contributors welcome after M1 |
 
 ## 14. Decisions taken
@@ -189,7 +189,7 @@ The features below are how the team works day to day. Third-party code keeps its
 | Feature | Milestone | What it does |
 |---|---|---|
 | **F10. Guardian** | M3 | Pauses a member that loops: more than 5 runs on the same task, more than 20 runs in an hour, or 3 deliveries rejected in a row. Only the person can resume it, after a check. Protects subscription limits from runaway agents. |
-| **F11. Owner-only operations** | M1 | A fixed list that no mode, rule or delegation can lower: spending or raising a budget; messages to people outside the team; deleting data; changing permissions, keys or configuration; resuming a paused member without a check; publishing. Enforced by the gateway, tested in CI. One exception, and only the person can make it: Full access, an off-by-default switch per member that removes the approval card for spending, messages, deleting and publishing, in the person's own chats ([FULL_ACCESS.md](FULL_ACCESS.md)). Changing permissions, passwords, keys, security settings and configuration stays with the person under Full access, and so does resuming a paused member without a check. |
+| **F11. Owner-only operations** | M1 | A fixed list that no mode, rule or delegation can lower: spending or raising a budget; messages to people outside the team; deleting data; changing permissions, keys or configuration; resuming a paused member without a check; publishing. Planned as enforced by the gateway and tested in CI; today only payments, passwords and security settings are held by a fixed rule, and only by words, and the rest of the list is judged by the reviewer model or asked by default. One exception, and only the person can make it: Full access, an off-by-default switch per member that removes the approval card for spending, messages, deleting and publishing, in the person's own chats ([FULL_ACCESS.md](FULL_ACCESS.md)). Changing permissions, passwords, keys, security settings and configuration stays with the person under Full access, and so does resuming a paused member without a check. |
 | **F12. Review before delivery** | M1, M3 | Deliverables that matter (contracts, invoices, posts, purchases) are checked by an independent reviewer running on a different engine from the one that produced them, before the person sees them. At most 3 rounds, then Iris decides. Done by Vera, the Reviewer, from v0.1; the different-engine rule arrives with the router chains in v0.3. |
 | **F13. Portable memory** | M3 | Every night, memory, standing rules, delegations, events and tasks are exported to plain files with a SHA-256 manifest. They can be searched without the app and imported into a new base. Removes the lock-in to any single memory service. |
 | **F14. Continuity and handoff** | M1, M3 | **M1:** every member keeps a checkpoint of its work (goal, decisions, what is done, evidence, failures and attempts, what was already sent or paid, next step) with a checkpoint writer under the MIT licence (see [NOTICE.md](../NOTICE.md)). Its report to Iris is that checkpoint (F24). After a restart nothing is redone, and anything that sends or pays is checked before it is tried again. **M3:** when the router moves a member to the next subscription, it hands over the latest checkpoint, so work resumes without losing context. |

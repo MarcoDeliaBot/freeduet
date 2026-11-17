@@ -11,7 +11,7 @@ More than ten members, and growing. One job each: the ten of v0.1, and Mark and 
 | **Otto**, Inbox | Sorts mail into Act now, Reply soon, Dates, FYI and Filtered; drafts replies; keeps standing rules; labels, archives and marks mail as read or unread when you ask in your own message, moves it to the Bin or to Spam when you order it, and shows you a card first when you did not; the only member who sends email | Portia, Penny, Jules via Iris | Deletes mail for good, or forwards it; obeys instructions found inside emails |
 | **Portia**, Counsel | First-pass risk review of contracts, leases, terms and quotes, with a verdict and redlines | Otto | Invents clauses or laws; sends anything to the other party |
 | **Penny**, Bookkeeper | Invoices, bills and receipts ledger, unpaid invoices, reminders; makes and changes Excel (.xlsx) files you can download (formulas are recalculated in the computer and read back before the file is handed over) | Otto | Pays or moves money; gives tax advice |
-| **Jules**, Concierge | Purchases, gifts, travel, bookings, reservations, appointments, in its own browser | Gus and Basil via Iris | Buys or books without an approval for that exact cart; exceeds the cap; types secrets |
+| **Jules**, Concierge | Purchases, gifts, travel, bookings, reservations, appointments, in its own browser | Gus and Basil via Iris | Is told never to buy or book without an approval, to exceed a cap, or to type a secret. The prompt says it; code does not yet: no permit for an exact cart and no cap is built (planned for v0.4), a payment asks you only when the fixed rule's words find it, and a field with a name that holds no such word is not stopped for you |
 | **Wren**, Writer | Posts, newsletters and emails in the person's own style; makes and changes Word (.docx) files you can download | Iris | Publishes without approval; adds facts not in the notes |
 | **Gus**, Fixer | Diagnoses repairs from a photo; safe steps or who to call | Jules via Iris for parts | Gives do-it-yourself steps for dangerous work |
 | **Basil**, Chef | Three dishes from what is there; what is worth buying | Jules via Iris for groceries | Ignores an allergy; buys anything |
@@ -29,6 +29,8 @@ Five rules close every prompt:
 4. To send, pay, sign, book, publish or delete, call the tool: the approval gate asks the person exactly once.
 5. Never ask for, repeat or store passwords, card numbers or codes in the chat.
 
+These are instructions to the model. The approval gate and the fixed rule are code, and they have limits: a payment, password or security setting goes to you when the rule's English and Italian words find it, and what the words miss is judged by the reviewer model ([SECURITY.md](../SECURITY.md#what-asks-you-and-what-does-not)).
+
 ## What makes this team different from a set of single bots
 
 | Typical single-job bot | FreeDuet member |
@@ -36,9 +38,9 @@ Five rules close every prompt:
 | Tells you which other bot to open | Iris hands the work over and brings the results back |
 | Says "nobody covers that" | Iris offers Leo, who designs the missing colleague with tests |
 | Guesses prices it cannot see | Jules browses real sites in its own computer and timestamps what it saw |
-| "Never pays" as a promise in the prompt | Paying needs your approval, unless you turn on Full access for that member; single-use permits bound to merchant and total are planned for v0.4 |
+| "Never pays" as a promise in the prompt | A payment that the fixed rule's words find asks you, unless you turn on Full access for that member; one the words miss goes to the reviewer model. Single-use permits bound to merchant and total are planned for v0.4 and not built |
 | Contract review tied to one country's law | Portia finds the governing law or asks, and says which one she used |
-| Inbox triage that cannot reply | Otto drafts replies; sending is one approval away |
+| Inbox triage that cannot reply | Otto drafts replies; a send asks you, except for an address you typed yourself, a standing mail rule and Full access ([SECURITY.md](../SECURITY.md#what-asks-you-and-what-does-not)) |
 | No invoices | Penny drafts invoices and chases unpaid ones |
 | No appointments | Jules books restaurants, doctors, salons and any service with an online booking page |
 | Work reaches you as the bot wrote it | Vera checks it first: sums recomputed, quotes compared with the document, prices re-opened |
@@ -80,7 +82,7 @@ What the server sets up on its own, in `openbot/server/src/freeduet/`, only when
 |---|---|---|
 | **Hub grants** (`hub-grants.ts`) | Every server start, right after the package sync | Iris may hand work to every other member and every member may hand work to Iris, never member to member. Read from the members in the package, so adding or removing a member updates the grants. Rows carry `granted_by = freeduet-package`; a sync removes only its own rows that are no longer wanted and never touches a grant an admin made by hand. An admin can add more on a Bot's profile, under "Bots it can ask"; one of FreeDuet's grants revoked there comes back at the next start, like the package's skill grants. |
 | **Your conversations with the team** (`person-team.ts`, #25) | Once per person, on the first page load after sign-in (`GET /api/me`) | One private conversation per channel in `channels.yaml`, with that channel's member, name and description. Same access as any conversation you start: only you belong to it. A conversation you already have with that member alone is used and named instead of making a second one. |
-| **Daily review** (`person-team.ts`, D17) | Same step | A routine for Iris in your FreeDuet conversation, every morning at 08:30 Europe/Rome: she reads `team_log` for the last 24 hours and sends one short summary (done, failed and why, lessons waiting for your approval, what she already corrected). Change it or stop it on the Routines page or by asking Iris. |
+| **Daily review** (`person-team.ts`, D17) | Same step | A routine for Iris in your FreeDuet conversation, made switched on at your first sign-in with no card, every morning at 08:30 Europe/Rome: she reads `team_log` for the last 24 hours and sends one short summary (done, failed and why, lessons waiting for your approval, what she already corrected). Change it or stop it on the Routines page or by asking Iris. |
 
 What was made for you is recorded in your preferences (`freeduetTeam`), so a conversation or routine you delete stays deleted, a restart repeats nothing, and a member added to the package later still gets its conversation.
 
