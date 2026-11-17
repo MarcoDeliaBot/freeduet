@@ -1,5 +1,7 @@
 # Executor brief
 
+> Historical brief, dated 17 November 2026: the milestones below are the plan as first written. For what has shipped, read [ROADMAP.md](ROADMAP.md).
+
 Instructions for the coding agent (Claude Code, Codex or a person) that builds FreeDuet. Read [PROJECT.md](PROJECT.md), [ARCHITECTURE.md](ARCHITECTURE.md) and [PROVIDERS.md](PROVIDERS.md) first.
 
 ## Working rules
@@ -32,7 +34,7 @@ Done when: `bash scripts/start.sh` opens FreeDuet; Iris answers in the main chan
 Tasks
 1. Create `openbot/agent-freeduet` as an AG-UI service alongside the other `agent-*` services, with a Dockerfile that installs the official Claude Code CLI, unmodified.
 2. Port the adapter contract and the Claude CLI adapter from Anil-matcha/open-duet (`backend/app/services/provider_adapter.py`, `claude_adapter.py`, `engine_errors.py`, `engine_registry.py`), with attribution.
-3. Build the `freeduet-tools` MCP bridge: it lists only the member's granted OpenBot tools and forwards each call to the gateway with the member's tool token. Find the exact callback route in `openbot/docs/architecture.md` and the server's tool routes.
+3. Build the `freeduet` MCP bridge: it lists only the member's granted OpenBot tools and forwards each call to the gateway with the member's tool token. Find the exact callback route in `openbot/docs/architecture.md` and the server's tool routes.
 4. Start Claude Code with no built-in tools and only the bridge (`--tools ""`, `--strict-mcp-config`, `--mcp-config`, permission prompts over stdio).
 5. Switch every member to `type: remote-ag-ui` pointing at `agent-freeduet`, which reads the prompt from `agents.yaml`. Keep a `FREEDUET_ROUTER=off` switch that falls back to the built-in members.
 6. Route every server-side model call from `docs/SERVER_MODEL_CALLS.md` through `agent-freeduet`.
