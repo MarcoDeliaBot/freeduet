@@ -573,6 +573,13 @@ pub fn compose(
         }
     }
 
+    // FreeDuet (D65): the server refuses to start when FREEDUET_INTELLIGENCE is missing, and the
+    // desktop app has never written it. It passes the three settings below on every start (the app
+    // refuses to start without an Intelligence key and its screen says conversations are kept by the
+    // outside service), so `on` keeps exactly today's behaviour. That this SHOULD be the desktop's
+    // default is the maintainer's open decision (docs/design/intelligence-switch-missing.md).
+    env.insert("FREEDUET_INTELLIGENCE".into(), "on".into());
+
     // Trimmed, the way the model key beside it already is. All four values come from the same
     // setup screen, which enables its button on `value.trim() !== ""` and then sends the untrimmed
     // string, so a key copied from a provider's dashboard with the trailing space the selection
@@ -1798,6 +1805,23 @@ HTTPS_PROXY=http://proxy:8080
             crate::stack::BundledBots::for_credential(&ModelCredential::None)
         )
         .contains(&"agent-langgraph"));
+    }
+
+    #[test]
+    fn the_intelligence_switch_is_written_as_on_beside_the_three_settings() {
+        // D65: a missing switch is refused by the server. The desktop passes the three settings, so
+        // it says `on`, which is what a missing switch meant before.
+        let env = compose(
+            &intelligence(),
+            &Model::default(),
+            &engine_status(None),
+            &Ports::default(),
+            &pinned(),
+            None,
+            &BTreeMap::new(),
+        );
+        assert_eq!(env["FREEDUET_INTELLIGENCE"], "on");
+        assert!(env.contains_key("INTELLIGENCE_API_KEY"));
     }
 
     #[test]

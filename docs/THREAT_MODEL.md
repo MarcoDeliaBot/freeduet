@@ -118,7 +118,7 @@ Residual risk. One maintainer: the branch rule requires zero reviews, so the per
 
 ### T11. Telemetry and data leaving the machine
 
-Control. Off by default [code: openbot/server/src/freeduet/telemetry-off.ts:19; docs/telemetry.md]. The member's model calls go to Anthropic through the person's own Claude Code sign-in, as the person asked. Conversations stay in the installation's database unless CopilotKit Intelligence is switched on by the person, which is off by default [code: openbot/scripts/freeduet-clean-start-check.sh, the `mode: local` check] [test: openbot/server/tests/telemetry.test.ts].
+Control. Off by default [code: openbot/server/src/freeduet/telemetry-off.ts:19; docs/telemetry.md]. The member's model calls go to Anthropic through the person's own Claude Code sign-in, as the person asked. Conversations stay in the installation's database unless CopilotKit Intelligence is switched on by the person, which is off in the files the install scripts write [code: openbot/scripts/freeduet-clean-start-check.sh, the `mode: local` check]. The server does not default the choice: a missing `FREEDUET_INTELLIGENCE` is refused at start-up (D65, `openbot/server/src/freeduet/intelligence-switch.ts`), and the desktop app and the Helm chart write `on`, so conversations of those two are kept by the outside service (their default is the maintainer's open decision) [test: openbot/server/tests/telemetry.test.ts].
 
 Residual risk. Whatever a member reads goes to Anthropic as part of the prompt. That is how the product works, and it is not something the controls above limit.
 

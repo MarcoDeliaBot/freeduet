@@ -26,8 +26,8 @@ Read these before changing anything:
 ## Rules that never bend
 
 - **Logins first.** Members run on the person's subscription logins. A metered API is never first in
-  any chain and never on by default. CopilotKit Intelligence is optional and off by default
-  (`FREEDUET_INTELLIGENCE=off`, D20).
+  any chain and never on by default. CopilotKit Intelligence is optional and off in what the install
+  scripts write (`FREEDUET_INTELLIGENCE=off`, D20); the server has no default and refuses a missing line (D65).
 - **Third-party gateways are configuration only.** The engine plan is `docs/ENGINES_PLAN.md`: a
   gateway's code is never shipped, and AGPL gateway code is never copied.
 - **Never read, copy or forward subscription credentials.** Never open the Claude CLI's login or

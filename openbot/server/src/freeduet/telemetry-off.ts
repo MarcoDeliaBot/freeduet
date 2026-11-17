@@ -11,7 +11,7 @@
  * index.ts imports this right after `./telemetry` and before anything that imports the runtime.
  *
  * ONLY AN EMPTY VARIABLE IS FILLED IN. Any value the person set, `false` included, is theirs and is
- * left as it is. With the switch unset or `on`, this does nothing: upstream behaviour.
+ * left as it is. With the switch `on`, this does nothing: upstream behaviour. A missing switch does nothing here either: the server refuses to start before it matters (D65).
  */
 import { INTELLIGENCE_SWITCH } from "./intelligence-switch";
 

@@ -301,7 +301,7 @@ function RosterStep() {
  * Where an evaluator's data is kept, said as the server actually keeps it.
  *
  * CONVERSATIONS AND MEMORY DEPEND ON THE SERVER'S ANSWER: `mode` on `/api/capabilities`. With
- * CopilotKit Intelligence on (FREEDUET_INTELLIGENCE unset or `on`, upstream OpenBot) the server refuses
+ * CopilotKit Intelligence on (FREEDUET_INTELLIGENCE=on, upstream OpenBot) the server refuses
  * to start without its three settings (`INTELLIGENCE_API_URL` and `INTELLIGENCE_API_KEY`, see
  * `.env.example` and `docs/telemetry.md`), because Intelligence owns durable threads and memory. Its
  * address defaults to CopilotKit's managed service, and only somebody who runs Intelligence

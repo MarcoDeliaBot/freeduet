@@ -135,11 +135,22 @@ login_volume() {
 # write invented ones into them, whatever database this stack has. So: a project of its own.
 #
 # With FREEDUET_INTELLIGENCE=off (#42; .env.example's value, and start.sh writes it when the line is
-# missing) there is no Intelligence: conversations and memories are in this stack's own database,
+# missing and the three settings are not all there) there is no Intelligence: conversations and memories are in this stack's own database,
 # which is already separate. No key is needed and none is asked for.
+#
+# A missing line is no longer read as off (D65): the server refuses to start without the switch. The
+# stack starts through start.sh, which writes the line before the server runs, `on` when the three
+# settings are in .env.eval and `off` otherwise. This reads the missing line the same way, so what is
+# checked here is what the server will run. A fresh .env.eval has `off` (copied from .env.example) and
+# the person's two addresses but no key, so it is `off` either way.
 check_intelligence() {
-  local key person shared
-  if [ "$(setting FREEDUET_INTELLIGENCE)" != on ]; then
+  local key person shared mode
+  mode="$(setting FREEDUET_INTELLIGENCE)"
+  if [ -z "$mode" ]; then
+    if [ -n "$(setting INTELLIGENCE_API_URL)" ] && [ -n "$(setting INTELLIGENCE_GATEWAY_WS_URL)" ] \
+       && [ -n "$(setting INTELLIGENCE_API_KEY)" ]; then mode=on; else mode=off; fi
+  fi
+  if [ "$mode" != on ]; then
     info "  Intelligence: off. Conversations and memories are in the eval stack's own database."
     INTELLIGENCE_SHARED=false
     return 0

@@ -970,6 +970,9 @@ jobs:
           # meant it. This was `OPENBOT_DEV_NO_AUTH=1` before, which the code never accepted at all,
           # since it compares against the exact string "true"; it did nothing and nothing noticed.
           #
+          # `FREEDUET_INTELLIGENCE=on` is written out because the server refuses a missing switch (D65):
+          # this job used to rely on the silent default, which was `on`.
+          #
           # Placeholders, not secrets. `loadConfig` refuses to start without Intelligence and a
           # licence configured, but it only checks that they are present and well-formed; nothing is
           # contacted at start-up and /api/capabilities reads config alone. So this proves the image
@@ -981,7 +984,8 @@ jobs:
             -e KEY_ENCRYPTION_KEY="$(openssl rand -base64 32)" \
             -e TRUSTED_ORIGINS=http://localhost:3001 \
              -e OPENBOT_SINGLE_USER=true \
-             -e INTELLIGENCE_API_URL=https://api.intelligence.copilotkit.ai \
+            -e FREEDUET_INTELLIGENCE=on \
+            -e INTELLIGENCE_API_URL=https://api.intelligence.copilotkit.ai \
             -e INTELLIGENCE_GATEWAY_WS_URL=wss://realtime.intelligence.copilotkit.ai \
             -e INTELLIGENCE_API_KEY=ci-not-a-real-key \
             openbot:ci

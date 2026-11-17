@@ -7,7 +7,9 @@ there is no separate analytics SDK or key to configure.
 
 ## What is required
 
-A CopilotKit Intelligence project is required. The server refuses to start without
+A CopilotKit Intelligence project is required only with `FREEDUET_INTELLIGENCE=on`. FreeDuet's server
+refuses to start when that line is missing (D65): write `off` to keep conversations on this computer,
+or `on` to use Intelligence. With `on` the server refuses to start without
 `INTELLIGENCE_API_KEY`, and `scripts/start.sh` stops unless the runtime reports a valid licence.
 Intelligence holds threads and memory, so an OpenDuet without it would forget every conversation.
 
