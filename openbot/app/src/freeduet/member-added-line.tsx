@@ -120,7 +120,8 @@ export function MemberAddedLine({
           <dd>
             Removes {name}
             {skills.length > 0 ? " and the skills it was given" : ""}. It works
-            only while {name} has not been used, shared or changed.
+            only within seven days, and only while {name} has not been used,
+            shared or changed.
           </dd>
           {!undone ? (
             <dd className="col-span-2">

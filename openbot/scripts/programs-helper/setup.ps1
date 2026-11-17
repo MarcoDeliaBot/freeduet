@@ -169,7 +169,7 @@ function Invoke-Setup {
     if (-not $NoTask) {
         Register-HelperTask -Directory $Directory
         Start-ScheduledTask -TaskName $script:TaskName
-        Write-Host "Task '$($script:TaskName)' made (at your log on, as you, not elevated) and started."
+        Write-Host "Task '$($script:TaskName)' created (runs at log on, as you, not elevated) and started."
         Write-Host 'The task runs the helper with execution policy RemoteSigned (not Bypass); the copy of the script is unblocked for that.'
     }
     Write-Host ('Log, readable any time: ' + (Join-Path $Directory 'helper.log'))
