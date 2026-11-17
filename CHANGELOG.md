@@ -35,6 +35,8 @@ Each version says what was and was not run live. "Run live" means run on a real 
 
 ### Changed
 
+- Prompts and eval case lines after the 16 November certification run (D64, [docs/M1_PLAN.md](docs/M1_PLAN.md) section 44): Iris no longer repeats a password she read, not in a quote and not in the Evidence line; Leo says where a token, a key or the .env file can be looked up instead of printing it; Mark always names `/design-craft-floor` for a page review; Penny and Wren now say that LibreOffice, not Excel or Word, calculated or drew what they report, write outside text into a sheet as text, and re-open the saved file; Cam gives the usual video sizes. Compound case lines were split, and the two file lines of penny-xlsx-2 are fair when the gate asks a card. Not yet run live.
+
 - The FreeDuet server refuses to start when `FREEDUET_INTELLIGENCE` is unset, empty or only spaces (D65), and says to write `off` (conversations stay on this computer) or `on` (kept by the outside service). Before, a missing line with the three Intelligence settings quietly ran in Intelligence mode. `scripts/start.sh` and `.env.example` already write the line; the desktop app and the Helm chart now write `on`, as they always ran. Built and tested here; not yet run on a real installation, the desktop app or a cluster.
 
 - First start: after Check again, the sentence that says Claude is not connected is drawn in coral, the coral of the wide approval card, instead of the problem red. Green when connected and grey while FreeDuet cannot tell are unchanged.
