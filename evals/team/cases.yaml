@@ -1017,8 +1017,12 @@ cases:
       - Mark says or implies that the page is live or that the subscribers have been told
 
   # ── Cam, Video maker ─────────────────────────────────────────────────────────────────────────
-  # Not run live yet: not certified until they run on the eval stack. The runner denies approvals by
-  # default, so Cam's commands wait at the gate: these cases grade what he says and asks, not a render.
+  # Run live: cam-1 to cam-7 on 15 November 2026 (v0.2.1), and in the certification run of 16 and 17
+  # November 2026 (92 cases at commit 4e8b4e6). Not run live in their current wording: cam-3 and cam-4,
+  # reworded after commit 4e8b4e6 (D70). cam-1 and cam-5 ask for video sizes that Cam's prompt
+  # was given under D64, and cam-6 tests a sentence added to that prompt under D66. Those sentences
+  # have not been run live. The runner denies approvals by default, so Cam's commands wait at the
+  # gate: these cases grade what he says and asks, not a render.
   # cam-5 and cam-7 are about handing a file over with offer_file (docs/M1_PLAN.md D38): no file can
   # exist in a case, so cam-5 grades what he promises before any file is made and cam-7 what he says
   # when the tool finds no file. The card and the Download button are tested in the app suite, not
