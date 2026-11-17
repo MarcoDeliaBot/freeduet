@@ -236,6 +236,32 @@ export const NOT_ACCOUNT_ACTIONS =
  */
 export const PROGRAMS_TOOLS = /^programs\//;
 
+/**
+ * FreeDuet, D77 (docs/M1_PLAN.md section 56): the part of the Bot's own computer where the reviewer's
+ * safety category still counts. The words floor above skips every `NOT_ACCOUNT_ACTIONS` tool, so a
+ * command that pays or changes a credential (`stripe charges create ... --confirm`, `passwd`, `gh auth`)
+ * is not found by it. The reviewer's category is the only thing that can find it, so for these two it is
+ * taken seriously: a command always, and a file write only when the file is a script or an executable
+ * (the command that runs it is judged on its own). An ordinary command or file is not a category: the
+ * reviewer says "none" and nothing changes.
+ */
+const SCRIPT_FILE = /\.(sh|bash|zsh|py|rb|pl|php|js|mjs|cjs|ts|ps1|bat|cmd)$/i;
+export function reviewerCategoryCounts(candidate: ApprovalCandidate): boolean {
+  if (!NOT_ACCOUNT_ACTIONS.test(candidate.toolRef)) return true;
+  if (candidate.effect === "read") return false;
+  if (candidate.toolRef === "computer_run_command") return true;
+  if (candidate.toolRef === "computer_write_file") {
+    const args = (candidate.args ?? {}) as Record<string, unknown>;
+    const named = args.path ?? args.filePath;
+    const path = typeof named === "string" ? named : "";
+    const text = [args.contents, args.content, args.text].find(
+      (value): value is string => typeof value === "string",
+    );
+    return SCRIPT_FILE.test(path) || (text?.startsWith("#!") ?? false);
+  }
+  return false;
+}
+
 export function safetyRequirement(
   candidate: ApprovalCandidate,
 ): { id: string; reason: string } | undefined {
@@ -631,7 +657,34 @@ export async function decideAction(input: {
       input.team,
       input.fullAccess,
     );
-    if (granted) return granted;
+    if (granted) {
+      // D77: Full access never asks about an ordinary command, and it still does not. For a command
+      // only, the reviewer is asked once more, and only its safety category is read: a credential or a
+      // security setting (both modes), a payment ("without payments" only) is handed to the person.
+      // No reviewer, a failed one, an unknown category or any verdict at all leaves the allow as it
+      // was: this adds a hand-off and never a card.
+      if (candidate.toolRef === "computer_run_command" && input.model) {
+        const review = await reviewAction({
+          model: input.model,
+          candidate,
+          request: requestOf(input.messages),
+          ...(input.language ? { language: input.language } : {}),
+        });
+        const category = review.safety;
+        if (
+          !review.failedClosed &&
+          category !== "none" &&
+          (category !== "payments" || input.fullAccess !== "full")
+        )
+          return {
+            behaviour: "hand_off",
+            source: "safety",
+            reason: SAFETY_REASONS[category],
+            review,
+          };
+      }
+      return granted;
+    }
   }
   if (safety)
     return {
@@ -700,7 +753,7 @@ export async function decideAction(input: {
     category &&
     category !== "none" &&
     !review.failedClosed &&
-    !NOT_ACCOUNT_ACTIONS.test(candidate.toolRef)
+    reviewerCategoryCounts(candidate)
   )
     return {
       behaviour: "hand_off",
