@@ -219,3 +219,142 @@ describe("other tools are unchanged", () => {
     expect(result.behaviour).toBe("allow");
   });
 });
+
+describe("D77 review fixes: Full access, scripts, long text, reviewer switch", () => {
+  const LONG = run(`echo ${"a".repeat(7000)}`);
+
+  test("Full access with the reviewer switch OFF still asks the reviewer once for a command", async () => {
+    for (const mode of ["full", "no_payments"] as const) {
+      const cred = await decide(PASSWD, mode, "credentials", {
+        autoReview: false,
+      });
+      expect(cred.calls).toHaveLength(1);
+      expect(cred.result).toMatchObject({
+        behaviour: "hand_off",
+        source: "safety",
+      });
+    }
+    const pay = await decide(STRIPE, "no_payments", "payments", {
+      autoReview: false,
+    });
+    expect(pay.calls).toHaveLength(1);
+    expect(pay.result.behaviour).toBe("hand_off");
+    const plain = await decide(LS, "full", "none", { autoReview: false });
+    expect(plain.calls).toHaveLength(1);
+    expect(plain.result).toMatchObject({
+      behaviour: "allow",
+      source: "full_access",
+    });
+  });
+
+  test("a saved 'Always allow' with the reviewer on still hands off a credential command", async () => {
+    const calls: string[] = [];
+    const result = await decideAction({
+      candidate: PASSWD,
+      team: [],
+      personal: [
+        {
+          id: "r1",
+          ownerUserId: "owner",
+          botId: "bot",
+          toolRef: "computer_run_command",
+          effect: "write",
+          scope: "computer",
+          behaviour: "allow",
+          revokedAt: null,
+          createdAt: new Date(),
+        } satisfies ApprovalRule,
+      ],
+      customRulesEnabled: true,
+      autoReview: true,
+      askBeforeChanges: false,
+      model: reviewer("credentials", calls),
+    });
+    expect(calls).toHaveLength(1);
+    expect(result).toMatchObject({ behaviour: "hand_off", source: "safety" });
+  });
+
+  test("a script write is handed over under both Full access settings", async () => {
+    for (const mode of ["full", "no_payments"] as const)
+      for (const file of [
+        write("x.sh", "passwd marco"),
+        write("run", "#!/bin/sh\npasswd marco"),
+      ]) {
+        const { result, calls } = await decide(file, mode, "credentials");
+        expect(calls).toHaveLength(1);
+        expect(result).toMatchObject({
+          behaviour: "hand_off",
+          source: "safety",
+        });
+      }
+    const pay = await decide(write("pay.sh", "stripe ..."), "full", "payments");
+    expect(pay.result.source).toBe("full_access");
+    const pay2 = await decide(
+      write("pay.sh", "stripe ..."),
+      "no_payments",
+      "payments",
+    );
+    expect(pay2.result.behaviour).toBe("hand_off");
+  });
+
+  test("a .txt write is not reviewed (known limit: written, then run)", async () => {
+    for (const mode of ["full", "no_payments"] as const) {
+      const { result, calls } = await decide(
+        write("steps.txt", "passwd marco"),
+        mode,
+        "credentials",
+      );
+      expect(calls).toHaveLength(0);
+      expect(result.source).toBe("full_access");
+    }
+  });
+
+  test("a command longer than the reviewer reads is a hand-off, never judged cut", async () => {
+    for (const mode of ["off", "full", "no_payments"] as const) {
+      const { result, calls } = await decide(LONG, mode, "none");
+      expect(calls).toHaveLength(0);
+      expect(result).toMatchObject({ behaviour: "hand_off", source: "safety" });
+      expect(result.reason).toContain("too long");
+    }
+    const script = await decide(
+      write("big.sh", "a".repeat(7000)),
+      "full",
+      "none",
+    );
+    expect(script.result.behaviour).toBe("hand_off");
+    // another tool is cut as before, not handed off
+    const other = await decide(
+      { ...LS, toolRef: "host/run", args: { command: "a".repeat(7000) } },
+      "off",
+      "none",
+    );
+    expect(other.result.behaviour).toBe("allow");
+    // reviewer switch off outside Full access: nothing reads the command, as before
+    const routine = await decide(LONG, "off", "none", { autoReview: false });
+    expect(routine.result.behaviour).toBe("allow");
+  });
+
+  test("a reviewer that throws, or no model, leaves exactly the old outcome", async () => {
+    for (const mode of ["full", "no_payments"] as const)
+      for (const c of [PASSWD, write("x.sh", "passwd"), LONG]) {
+        // A long command is handed over before the reviewer is called, so a throwing one is no matter.
+        for (const m of (c === LONG
+          ? ["none-model"]
+          : ["down", "none-model"]) as ("down" | "none-model")[]) {
+          const { result } = await decide(c, mode, m);
+          expect(result).toMatchObject({
+            behaviour: "allow",
+            source: "full_access",
+          });
+        }
+      }
+  });
+
+  test("a routine's command with the reviewer off still runs", async () => {
+    const { result, calls } = await decide(PASSWD, "off", "credentials", {
+      autoReview: false,
+    });
+    expect(calls).toHaveLength(0);
+    expect(result.behaviour).toBe("allow");
+  });
+});
