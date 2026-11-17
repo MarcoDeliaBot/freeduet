@@ -6,6 +6,7 @@ import "./freeduet/telemetry-off";
 import "./freeduet/plan-token";
 // FreeDuet: the team's hub grants and each person's conversations (docs/UPSTREAM_TOUCHES.md).
 import { applyAutomaticGrants } from "./freeduet/automatic-grants";
+import { applyIrisRoutines } from "./freeduet/iris-routines";
 import { applyFreeDuetPackage, isFreeDuetPackage } from "./freeduet/hub-grants";
 import { selfHostBannerOptions } from "./freeduet/no-promotions";
 import { pinModelBaseToRouter } from "./freeduet/model-base";
@@ -646,6 +647,8 @@ const policyListener = await startPolicyListener(
 const bootAuditStore = createAuditStore(database);
 // Tools an update added, for a member whose grants carry the automatic mark (D45).
 await applyAutomaticGrants(database, bootAuditStore, tenantPackage);
+// Iris holds Routines by default, once, so the daily review can be offered (D81).
+await applyIrisRoutines(database, bootAuditStore, tenantPackage);
 // The gallery every headless turn offers its Bot, refusals written to the same trail.
 const componentCatalog = headlessComponentCatalog({
   store: componentStore,
