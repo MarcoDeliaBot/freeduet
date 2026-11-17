@@ -38,6 +38,8 @@ async function runProductionEntry() {
       "COMPUTER_TOKEN=synthetic-computer-token",
       "WORKER_SHARED_SECRET=synthetic-worker-secret",
       "AGENT_TOOL_TOKEN=synthetic-tool-token",
+      // Must be written (D65); upstream's three settings mean `on`.
+      "FREEDUET_INTELLIGENCE=on",
       "INTELLIGENCE_API_URL=http://127.0.0.1:59991",
       "INTELLIGENCE_GATEWAY_WS_URL=ws://127.0.0.1:59992",
       "INTELLIGENCE_API_KEY=synthetic-intelligence-key",

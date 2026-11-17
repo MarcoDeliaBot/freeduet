@@ -13,6 +13,8 @@ const baseEnvironment = {
   BETTER_AUTH_SECRET: "a-long-enough-local-development-auth-secret",
   BETTER_AUTH_URL: "http://localhost:3001",
   INITIAL_ADMIN_EMAILS: "admin@openbot.test",
+  // Must be written (D65); these tests describe upstream's three settings, which is `on`.
+  FREEDUET_INTELLIGENCE: "on",
   INTELLIGENCE_API_URL: "http://localhost:7100",
   INTELLIGENCE_GATEWAY_WS_URL: "ws://localhost:7103",
   INTELLIGENCE_API_KEY: "tenant-api-key",
@@ -88,6 +90,7 @@ describe("deployment configuration", () => {
     const config = loadConfig({
       DATABASE_URL: baseEnvironment.DATABASE_URL,
       KEY_ENCRYPTION_KEY: baseEnvironment.KEY_ENCRYPTION_KEY,
+      FREEDUET_INTELLIGENCE: baseEnvironment.FREEDUET_INTELLIGENCE,
       INTELLIGENCE_API_URL: baseEnvironment.INTELLIGENCE_API_URL,
       INTELLIGENCE_GATEWAY_WS_URL: baseEnvironment.INTELLIGENCE_GATEWAY_WS_URL,
       INTELLIGENCE_API_KEY: baseEnvironment.INTELLIGENCE_API_KEY,
@@ -155,6 +158,7 @@ describe("deployment configuration", () => {
       loadConfig({
         DATABASE_URL: baseEnvironment.DATABASE_URL,
         KEY_ENCRYPTION_KEY: baseEnvironment.KEY_ENCRYPTION_KEY,
+        FREEDUET_INTELLIGENCE: "on",
         MANAGED_AGENT_AG_UI_URL: baseEnvironment.MANAGED_AGENT_AG_UI_URL,
         MANAGED_AGENT_TOKEN: baseEnvironment.MANAGED_AGENT_TOKEN,
       }),

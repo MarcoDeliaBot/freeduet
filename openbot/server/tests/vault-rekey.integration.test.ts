@@ -159,6 +159,8 @@ describe("keys", () => {
       BETTER_AUTH_SECRET: "a-long-enough-local-development-auth-secret",
       BETTER_AUTH_URL: "http://localhost:3001",
       INITIAL_ADMIN_EMAILS: "admin@openbot.test",
+      // Must be written (D65); upstream's three settings mean `on`.
+      FREEDUET_INTELLIGENCE: "on",
       INTELLIGENCE_API_URL: "http://localhost:7100",
       INTELLIGENCE_GATEWAY_WS_URL: "ws://localhost:7103",
       INTELLIGENCE_API_KEY: "tenant-api-key",

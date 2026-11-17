@@ -4,6 +4,8 @@ import { loadConfig } from "../src/config";
 const environment = {
   DATABASE_URL: "postgres://openbot:openbot@localhost:5432/openbot",
   KEY_ENCRYPTION_KEY: "b3BlbmJvdC1wcm9kdWN0aW9uLXRlc3Qta2V5LTMyMzI=",
+  // Must be written (D65); upstream's three settings mean `on`.
+  FREEDUET_INTELLIGENCE: "on",
   INTELLIGENCE_API_URL: "https://api.intelligence.copilotkit.ai",
   INTELLIGENCE_GATEWAY_WS_URL: "wss://realtime.intelligence.copilotkit.ai",
   INTELLIGENCE_API_KEY: "test-project-key",
