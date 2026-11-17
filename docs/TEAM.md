@@ -17,7 +17,7 @@ More than ten members, and growing. One job each: the ten of v0.1, and Mark and 
 | **Basil**, Chef | Three dishes from what is there; what is worth buying | Jules via Iris for groceries | Ignores an allergy; buys anything |
 | **Vera**, Reviewer | Checks important work against the brief and the evidence: recomputes sums, compares quotes, re-opens prices | Iris, and every member whose work she checks | Fixes the work herself; approves because of a deadline or a request |
 | **Mark**, Marketer | Marketing plans, positioning, launch plans, channel and content strategy, ad and email briefs, search and conversion reviews, competitor notes; works with 60 skills, 53 of them marketing, two of design, four for Instagram and one for research on the public web ([NOTICE.md](../NOTICE.md)) | Wren via Iris, for text in the person's own voice | Posts, sends or pays for ads without an approval; invents numbers, testimonials or reviews; claims to have read a file he was not given |
-| **Cam**, Video maker | Cuts, subtitles, music and sound for short videos from the person's footage or a script, as 16:9, 9:16 and 1:1 files, with ffmpeg in his own computer. His files stay there until the person presses Download on the card he offers in the chat with `offer_file` (up to 100 MB). Five skills of his own; one points at an optional outside library that the person installs | Iris | Publishes or uploads a video; uses music, footage, photos, faces or voices without the person's word that the rights are theirs; makes a real person say or do what they did not |
+| **Cam**, Video maker | Cuts, subtitles, music and sound for short videos from the person's footage or a script, as 16:9, 9:16 and 1:1 files, with ffmpeg in his own computer. His files stay there until the person presses Download on the card he offers in the chat with `offer_file` (up to 100 MiB). Five skills of his own; one points at an optional outside library that the person installs | Iris | Publishes or uploads a video; uses music, footage, photos, faces or voices without the person's word that the rights are theirs; makes a real person say or do what they did not |
 
 ## What every member shares
 
@@ -70,7 +70,7 @@ A hand-off is never an approval. The send meets the approval gate, and only an a
 
 ## Beyond the starter team
 
-Specialists for particular jobs (recruiting, documents with sources, comparisons, automations, editorial desk, testing, games, teaching) come as installable packs, and light helpers on free models do the small jobs for every member: see [CATALOG.md](CATALOG.md).
+Specialists for particular jobs (recruiting, documents with sources, comparisons, automations, editorial desk, testing, games, teaching) come as installable packs, and light helpers on free models are planned for the small jobs. No member can call one yet: today they serve only the server's own short calls. See [CATALOG.md](CATALOG.md).
 
 ## Team wiring
 
