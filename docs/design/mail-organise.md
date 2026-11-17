@@ -1,6 +1,6 @@
 # Organise a mailbox: labels, archive, read and unread
 
-Built on the branch `mail-organise` and not yet merged (see "Built so far", section 8). Written 2026-11-15 on origin/main 225caee; origin/main 38c4b48 (a change under `site/` only) and then bfdc4ad (a change to `docs/ROADMAP.md` only) were merged before the pull request.
+Built in PR #254 (see "Built so far", section 8). Written 2026-11-15 on origin/main 225caee; origin/main 38c4b48 (a change under `site/` only) and then bfdc4ad (a change to `docs/ROADMAP.md` only) were merged before the pull request.
 
 Decided by the maintainer on 15 November 2026: "a mail assistant cannot have this limit". He asked Otto to create a Gmail label called FreeDuet and to file the repository's automatic notifications under it, out of the Inbox. With the app-password connection (`google-imap`) Otto could not: a member held three reads (`gmail_search_messages`, `gmail_read_message`, `calendar_list_events`) and two sends, and nothing that changes a mailbox. Both Gmail connections now give a member the tools to organise one. This file covers the first slice only.
 
@@ -136,7 +136,7 @@ Branch `mail-organise`. No migration, no setting, no route, no Python change. On
 | `openbot/docs/plugins/google-workspace.md`, `openbot/docs/configuration.md`, `docs/TEAM.md`, `docs/COMPARISON.md`, `docs/M0_DEMO.md` | The tools, the scope and the limits; Otto's row; the case counts |
 | `docs/UPSTREAM_TOUCHES.md` | Rows at the end of the table |
 
-Not changed, by the brief: `docs/ROADMAP.md`, `docs/M1_PLAN.md`, `README.md`, `site/`. `README.md` line 161 still says 72 cases (216 conversations) and the cases not yet run live do not include these three; the roadmap row for mailbox organising, and a decision record in `docs/M1_PLAN.md`, are the coordinator's.
+Not changed, by the brief: `docs/ROADMAP.md`, `docs/M1_PLAN.md`, `README.md`, `site/`. `README.md` line 161 said 72 cases (216 conversations) when the brief was written, and now says 96 cases and the cases not yet run live do not include these three; the roadmap row for mailbox organising, and a decision record in `docs/M1_PLAN.md`, are the coordinator's.
 
 **Tests, on main's source and on the branch.**
 
@@ -271,7 +271,7 @@ Run on 15 November 2026 from `openbot/`, one command at a time.
 | Q7 | A label named like a payment or a password | The safety floor hands it to the person, so no card is shown, it is "always done by the person" | (a) as built; (b) read the floor's words only in the tool's reference and scope for these four | (a) | It is rare and conservative, and narrowing the floor is not this slice's call |
 | Q8 | The evals | Three cases added, not run | Run `otto-8,otto-9,otto-10` live, `otto-9` on a stack with Gmail connected | Run them | New cases are not certified until they run live; the eval stack has no Gmail |
 | Q9 | Putting a message back in the Inbox | Not built: `INBOX` is refused as a label to add | (a) as built; (b) a fifth write, `gmail_unarchive_messages`, with the same card | (a) now, (b) when the first person asks | An archive can be undone in Gmail; a tool for it is the same size as archive and has to be reviewed the same way |
-| Q10 | The record of this decision | Not recorded in `docs/M1_PLAN.md`, `docs/ROADMAP.md`, `README.md` or `site/`, by the brief | The coordinator takes a decision number, moves the roadmap row and the 72 → 75 in `README.md` line 161 | Do it with the merge | The roadmap follows decisions at once |
+| Q10 | The record of this decision | Not recorded by the brief; now in section 12 of this file, which `docs/M1_PLAN.md` points to, and in the roadmap row "A mail assistant that tidies your mailbox" | The coordinator takes a decision number, moves the roadmap row and the 72 → 75 in `README.md` line 161 | Do it with the merge | The roadmap follows decisions at once |
 | Q11 | The planted defects | Run by hand and recorded in section 8 | (a) as built; (b) add them to `openbot/scripts/mutation-register.ts` | (b) later | The register is a shared file, so it is a separate small change, and it makes the next change to this code run the same checks |
 
 ## 10. Move to the Bin (D41)

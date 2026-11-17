@@ -56,6 +56,5 @@ agent-freeduet only. The plan is in [ENGINES_PLAN.md](../ENGINES_PLAN.md) 9.1.
 7. **Other runtimes.** LM Studio and vLLM are neither built nor checked, and row 8's OpenAI-compatible loop was not
    built. Decide whether to keep it in the plan.
 8. **Review.** The no-key path decides whether a request leaves with no key. Recommend a Sonnet review of
-   `freeduet/compatible_engine.py` (`_token`, `child_env`, `answers_on_this_machine`, `Scrubber`) before merge.
-9. **Merge order.** `engines.py` is also edited by the spend-ledger work. Decide which PR merges first; the second one
-   must merge with the first one's `engines.py`.
+   `freeduet/compatible_engine.py` (`_token`, `child_env`, `answers_on_this_machine`, `Scrubber`) before merge; the work merged as PR #194.
+9. **Merge order.** `engines.py` is also edited by the spend-ledger work. The spend ledger merged as PR #199, after PR #194.

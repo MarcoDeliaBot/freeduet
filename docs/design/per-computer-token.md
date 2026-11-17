@@ -1,6 +1,6 @@
 # A token of its own for each Bot's computer
 
-Slice 1, on the branch `per-computer-token` (see "Built so far" at the end). Written 2026-11-14 from a security review finding of the same day. Base: origin/main 975aa52.
+Slice 1, merged as PR #198 (see "Built so far" at the end). Written 2026-11-14 from a security review finding of the same day. Base: origin/main 975aa52.
 
 Tags: **[code: path:line]** read on origin/main 975aa52 (a line number after the change is marked "now"). Code paths start at `openbot/`; doc paths start at the repository root. **[ran]** run on main with a script, output kept. **[assumed]** my inference, not checked. **[verify]** unknown; a run on a real install must settle it.
 
@@ -79,7 +79,7 @@ Rotating `SUPERVISOR_TOKEN` has the same effect on every computer, and nothing e
 
 ## 4. Built so far
 
-On the branch, not merged. Nothing here has run on Docker or with a model (see 4.4).
+Merged as PR #198. Nothing here has run on Docker or with a model (see 4.4).
 
 ### 4.1 What is built
 

@@ -15,7 +15,7 @@ Read these before changing anything:
 | File | What it holds |
 |---|---|
 | `docs/PROJECT.md` | Goals, rules, milestones M0–M5 |
-| `docs/M1_PLAN.md` | Every decision (D1–D63; there is no D23, and D53 is in `docs/design/mail-organise.md`) with its reason and limits |
+| `docs/M1_PLAN.md` | Every decision (D1–D66; there is no D23, and D53 is in `docs/design/mail-organise.md`) with its reason and limits |
 | `docs/UPSTREAM_TOUCHES.md` | Every upstream OpenBot file FreeDuet changed, and why. Add a row for each new one |
 | `docs/PROVIDERS.md` | Which engines are allowed and why (logins first) |
 | `NOTICE.md` | Third-party code we carry and its licence |

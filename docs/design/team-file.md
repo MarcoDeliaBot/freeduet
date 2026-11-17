@@ -115,7 +115,7 @@ The card is the approval, as `save_bot` is [code: bot-tools.tsx:98-106]. It show
 
 ### 3.4 Threat model: a member written by a stranger
 
-Assets: the person's accounts and money, their conversations and memories, their plan's allowance, the server's secrets, the other members, and the person's attention. Logins come first, so members run on the person's own subscription logins [code: docs/ROADMAP.md:74]. Actors: a stranger who publishes a file, and anyone who changes a copy in transit.
+Assets: the person's accounts and money, their conversations and memories, their plan's allowance, the server's secrets, the other members, and the person's attention. Logins come first, so members run on the person's own subscription logins [code: docs/ROADMAP.md, section "What will not change"]. Actors: a stranger who publishes a file, and anyone who changes a copy in transit.
 
 A model reads the prompt as instructions, so the prompt is never the safety layer. OWASP lists prompt injection (LLM01:2025) and excessive agency (LLM06:2025) as risks [doc: https://genai.owasp.org/llm-top-10/]. The layers in the table do the stopping.
 
@@ -176,7 +176,7 @@ One PR each. Sizes follow [ENGINES_PLAN.md](../ENGINES_PLAN.md) section 2 [code:
 
 ## 5. Rules that must hold
 
-- **Logins first.** A file never sets an engine, a metered key or an order. The person sets those [code: docs/ROADMAP.md:74].
+- **Logins first.** A file never sets an engine, a metered key or an order. The person sets those [code: docs/ROADMAP.md, section "What will not change"].
 - **Never read, copy or forward subscription credentials.** Export never opens the Claude login or config directories, and the format has no credential field.
 - **No secrets and no personal data in the repository.** Fixtures are invented, canary strings are synthetic, and no real member file or run report is committed.
 - **The person's approval.** Each write by an imported member meets the gate. Hand-offs stay unapproved in advance: the pre-approval needs the package mark (decision 5). Decided 14 November 2026: send tools are never recognised by name; an explicit list names them, and everything else asks.
@@ -212,7 +212,7 @@ One PR each. Sizes follow [ENGINES_PLAN.md](../ENGINES_PLAN.md) section 2 [code:
 
 ## Built so far
 
-Slice S1 (section 4) is on main, merged through PR #174: the two formats and the reader, with tests. S2 to S10 are not started. The reader is pure: it writes nothing, touches no database, and makes no card or Bot.
+Slice S1 (section 4) is on main, merged through PR #174: the two formats and the reader, with tests. Slice S2 (the export) is merged as PR #216. S3 to S10 are not started. The reader is pure: it writes nothing, touches no database, and makes no card or Bot.
 
 **Built**
 - `openbot/server/src/freeduet/team-file.ts`: the formats `freeduet-member/1` and `freeduet-team/1`, and `readTeamFile(text, package)`. It returns the first refusal, with the path of the field and one plain sentence, or the file read, with its notices.
@@ -281,7 +281,7 @@ Layers that do not refuse, so the text survives them: the database column `agent
 
 ### Slice S2 (export): built so far
 
-Slice S2 of section 4, the export, is built on branch `team-file-export`. Not verified in a browser; no import (S3 to S6) exists.
+Slice S2 of section 4, the export, is merged as PR #216. Not verified in a browser; no import (S3 to S6) exists.
 
 **Built**
 - `openbot/server/src/freeduet/team-file-export.ts` (pure): writes the two formats from an allow-list, field by field. Instructions are the author's text: the package's "Email." paragraph and shared rules are taken off the end, so the reader adds them once. A paragraph left in the middle of a text is refused. It also scans text for an e-mail address, the administrator's own address and name (whole word), and refuses a sending tool by name.
@@ -373,7 +373,7 @@ The limit for an imported member's instructions is now 10,000 characters, counte
 - `openbot/server/src/agents/role-description-limit.ts`: `IMPORTED_ROLE_DESCRIPTION_LIMIT` is 10,000, so the server and the reader stay equal (the invariant test pins them).
 - Comments only: `openbot/server/src/agents/imported-member.ts`, `openbot/app/src/lib/agents/queries.ts`, `openbot/server/tests/agent-routes.test.ts`.
 - Tests: the edges in `freeduet-team-file.test.ts`, `imported-member.integration.test.ts` and `bot-setup.test.tsx` now sit at 10,000 and 10,001. One test is new, and replaces the margin test of the first version: the shipped members that do not fit the imported limit are pinned to `concierge` (Jules), `freeduet` (Iris) and `inbox` (Otto), and `creator` (Leo) is asserted as fitting.
-- Docs: `CHANGELOG.md` (one line), the three rows of `docs/UPSTREAM_TOUCHES.md` that state the number, and the three pages the coordinator named: `docs/ROADMAP.md` (lines 11 and 91), `docs/M1_PLAN.md` (line 977) and `README.md` (line 193). Each gives 10,000 as the current limit and keeps 8,000 where it records history: the v0.2.1 release, PRs #203 and #218, and the decision of 14 November 2026.
+- Docs: `CHANGELOG.md` (one line), the three rows of `docs/UPSTREAM_TOUCHES.md` that state the number, and the three pages the coordinator named: `docs/ROADMAP.md` (line 11 and the row "Teams and members from one file"), `docs/M1_PLAN.md` (line 977) and `README.md` (line 193). Each gives 10,000 as the current limit and keeps 8,000 where it records history: the v0.2.1 release, PRs #203 and #218, and the decision of 14 November 2026.
 
 **The pinned list measures what the reader composes.** It takes each member's author's text, the Email paragraph and the shared rules, joined by a blank line, and compares the result with 10,000. On 16 November 2026 the appended text is 3,836 characters: the standard Email paragraph (452), the shared rules (3,380) and two separators of 2 characters each. An author's own text may therefore have at most 6,164 characters. These figures were read from `agents.yaml` for the ten members that carry the standard paragraph. An author's text with a shared paragraph inside it cannot be written as a team file at all (`authorTextOf` returns null), and the test counts that member as not fitting.
 

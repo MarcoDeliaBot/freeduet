@@ -1,6 +1,6 @@
 # Sealing the saved secrets again with a new key
 
-Built in one slice on the branch `vault-rekey-tool`: the command, the part of it that touches the database, tests, and one line in `start.sh`. It has not been run on a real installation. Written 2026-11-14 against origin/main 3881bb6 with the branch merged. Reviewed independently the same day (section 8.6), which changed four things in it.
+Built in one slice, merged as PR #201: the command, the part of it that touches the database, tests, and one line in `start.sh`. It has not been run on a real installation. Written 2026-11-14 against origin/main 3881bb6 with the branch merged. Reviewed independently the same day (section 8.6), which changed four things in it.
 
 Markers: [code: path:line] is a line of this repository at that tree. [assumed] is not checked here. Paths are from the repository root.
 

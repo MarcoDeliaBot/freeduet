@@ -1,7 +1,7 @@
 # Design: connected apps beyond today's few
 
 - Status: design. Slices S1 and S2 (D33) are on main, through PR #156; nothing else is built. Date: 2026-11-14. Base: origin/main at 452e060.
-- Roadmap row: "Many more connected apps" [code: docs/ROADMAP.md:49], status In design.
+- Roadmap row: "Many more connected apps" [code: docs/ROADMAP.md], status In design.
 - Markers: `[code: path:line]` was read on origin/main at 452e060, paths from the repository root. `[doc: URL]` was read on 2026-11-14. `[assumed]` was not checked here; section 7 lists each one.
 - The golden rule ("keep the person's life simple": connecting an app must not need a developer console) comes from the brief. The phrase is not in the repository: a search of docs/, CLAUDE.md and README.md finds nothing [assumed].
 
@@ -36,8 +36,8 @@ Hubs and transport
 
 Grants and roadmap
 - A grant is one row per kind (mcp, skill or bot), reference and agent [code: openbot/server/src/plugins/plugin-store/grants.ts:16-28; openbot/server/src/plugins/plugin-store/model.ts:57]. There is no per-tool switch: skippedTools lists names left out of the last listing because no model could be offered them [code: openbot/server/src/db/schema/plugins.ts:141-147].
-- A connector connected before a tool existed never gets that tool; the fix is planned [code: docs/ROADMAP.md:34].
-- The roadmap asks whether a hub fits the rule that sign-in happens in the tool's own flow and FreeDuet stores no passwords [code: docs/ROADMAP.md:49; docs/CONNECTORS.md:23-24].
+- A connector connected before a tool existed never gets that tool; the fix is built, not yet run live [code: docs/ROADMAP.md, row "New connector tools reach existing connections"].
+- The roadmap asks whether a hub fits the rule that sign-in happens in the tool's own flow and FreeDuet stores no passwords [code: docs/ROADMAP.md, row "Many more connected apps"; docs/CONNECTORS.md:23-24].
 - The persona has "mail, invoices, contracts, bookings" [code: docs/PROJECT.md:20]. The team is Iris and eleven members [code: CLAUDE.md:8-9]; their jobs are listed in [code: docs/TEAM.md:9-20].
 
 ## 3. Design
@@ -113,7 +113,7 @@ Each PR that touches policy.ts or catalogue.ts adds or updates its row in docs/U
 - Public wording: vendor claims cite public pages only [code: CLAUDE.md:34-35].
 - The person's approval stays for real account actions; only the D27 and D27a exceptions apply [code: CLAUDE.md:36-42]. Full access lifts only payments [code: CLAUDE.md:43-47].
 - Change only what was asked [code: CLAUDE.md:48]. Upstream changes stay minimal, one row each [code: CLAUDE.md:49]; rows exist for policy.ts and catalogue.ts [code: docs/UPSTREAM_TOUCHES.md:41, 84, 170].
-- No telemetry by default; one free licence with no paid-only part [code: docs/ROADMAP.md:76, 78].
+- No telemetry by default; one free licence with no paid-only part [code: docs/ROADMAP.md, section "What will not change"].
 - Sign-in happens in the tool's own flow, and FreeDuet stores no tool passwords or session tokens [code: docs/CONNECTORS.md:23-24]. A broker holds the tokens, so FreeDuet does not store them, but the person's data then passes through the broker (D-a).
 - Sends, payments, signatures, bookings and deletions keep asking [code: docs/PROJECT.md:28].
 - **Decided 14 November 2026:** only you connect a new app. A member may propose one with a card.

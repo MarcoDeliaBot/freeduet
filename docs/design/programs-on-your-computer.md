@@ -323,7 +323,7 @@ Sizes are for one executor. S = under a day, M = a day or two, L = more. "Review
 
 ## 10. Open decisions for the maintainer
 
-Each one stands on its own.
+Each one stands on its own. Decided since this note was written: Q1 to Q3 by D60 (M1_PLAN section 40), and Q4 by D63 (section 43): Gus alone holds the capability. Q5 is still open, and slice S4 waits for it.
 
 **Q1. How the helper and the server talk.**
 - Context: the server runs in WSL on this installation, the helper on Windows. A helper that listens on loopback needs the server to reach it, which from WSL is not loopback [verify]; a helper that polls needs the server's port to be reachable from Windows, which WSL publishes by default [verify].

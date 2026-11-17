@@ -1,6 +1,6 @@
 # Phone and remote access: design
 
-Plan only, no product code. Written 2026-11-14 for two roadmap rows, "Phone" and "Remote access to your own FreeDuet" ([ROADMAP.md](../ROADMAP.md)). Read with [M1_PLAN.md](../M1_PLAN.md) and [SECURITY.md](../../SECURITY.md). Open pull request 129 is treated as a neighbour. Nothing here needs it merged.
+Slices 1 and 4 have product code, merged as PR #195 and PR #221 (see "Built so far"). Written 2026-11-14 for two roadmap rows, "Phone" and "Remote access to your own FreeDuet" ([ROADMAP.md](../ROADMAP.md)). Read with [M1_PLAN.md](../M1_PLAN.md) and [SECURITY.md](../../SECURITY.md). Pull request 129 was treated as a neighbour; it is merged.
 
 Tags: **[code: path:line]** read on origin/main at 452e060. **[doc: URL]** a public page or pull request, read on 2026-11-14. **[assumed]** my inference, a behaviour I did not run, or a page I could not read. Nothing tagged [assumed] may be built on as if it were true.
 
@@ -67,7 +67,7 @@ Tags: **[code: path:line]** read on origin/main at 452e060. **[doc: URL]** a pub
 - Only the person changes Full access, through `PUT /api/approvals/full-access/:botId`, behind the user guard and the same-origin guard [code: docs/FULL_ACCESS.md:17-19]. A phone signed in as the person would pass both [assumed].
 - A new email goes out without a card when the person typed the recipient in the live turn [code: docs/M1_PLAN.md D27]. A phone's typed message would count the same way [assumed].
 
-### 2.7 PR 129 (open, not merged; head c41cbabe)
+### 2.7 PR 129 (merged)
 
 - It adds an installation secret. In single-user mode, a loopback request counts as the person only with that secret. The browser gets a cookie (HttpOnly, SameSite=Strict, Path=/api) from a one-time link (256 bits, 120 s, single use) [doc: https://github.com/MarcoDeliaBot/freeduet/pull/129].
 - Containers never get the secret. Multi-user, `OPENBOT_HOST` and no-secret installs stay as they are [doc: https://github.com/MarcoDeliaBot/freeduet/pull/129].
@@ -319,7 +319,7 @@ Size: S under 300 changed lines, M 300 to 1000, L over 1000.
 
 ## Built so far
 
-Slice 1 (section 4) is built on branch `phone-v1-slice-1`: the exact-address sign-in list, `SIGNIN_ALLOWED_EMAILS`, with tests. Slices 2 to 8 are not started. Single-user mode, the Host guard, the installation secret and the way sign-in itself works are not changed. Section 6, decision 2 is still marked open: the slice builds its recommendation, (a), as an opt-in, so a deployment that does not set the variable behaves exactly as before.
+Slice 1 (section 4) is merged as PR #195: the exact-address sign-in list, `SIGNIN_ALLOWED_EMAILS`, with tests. Slice 4 is merged as PR #221 (see below). Slices 2 to 3 and 5 to 8 are not started. Single-user mode, the Host guard, the installation secret and the way sign-in itself works are not changed. Section 6, decision 2 is still marked open: the slice builds its recommendation, (a), as an opt-in, so a deployment that does not set the variable behaves exactly as before.
 
 **Built**
 - `openbot/server/src/freeduet/signin-allowlist.ts` (new): the rule. `normalizeAddress` reduces an address to one spelling (split on the last `@`; the domain lower-cased, IDNA, no trailing dot; the local part lower-cased and otherwise left alone, so `a.b`, `ab` and `a+tag` are three addresses). It refuses what is not a plain address: whitespace or a control, format or unassigned character, a display name, a quoted local part, a second `@`, a comma or semicolon list, a wildcard (`*`, `?`), a path, query, port or literal after the domain, more than 254 characters. `emailAddressAllowed` admits everybody when no list is set, and refuses an address it cannot read once one is. `signInAllowedEmails` reads the variable.
@@ -344,7 +344,7 @@ Slice 1 (section 4) is built on branch `phone-v1-slice-1`: the exact-address sig
 - A session that exists is not ended when its address leaves the list. A session lasts as long as Better Auth's default, seven days renewed while in use [assumed: OpenBot sets no `expiresIn`, `auth/index.ts`]. Until then the remedy is People, Remove access (decision A below).
 - The list is checked against the address the provider returns, and OpenBot never requires that to be a verified one (section 5, the rule on domain lists). That holds for Google, Okta and one Entra directory, where the address is the account's own, and is why multi-tenant Entra is refused. An address changed at the provider is a new address and is refused until the list is changed.
 - The Helm chart has `config.allowedEmailDomains` and no `config.allowedEmails`. On the host, `scripts/start.sh` starts the server with the whole `.env` (`bun --env-file`), so the variable reaches it there [code: openbot/scripts/start.sh:47-48, 813]; read, not run.
-- Slice 4 (phone scope) is built on a separate branch, `remote-session-limited-powers`; see the next block. On this branch it is not built.
+- Slice 4 (phone scope) is merged as PR #221; see the next block.
 
 **Decisions left to the maintainer**
 
@@ -356,7 +356,7 @@ Slice 1 (section 4) is built on branch `phone-v1-slice-1`: the exact-address sig
 | D | Entra `consumers` | (a) Refused with `common` and `organizations`, as built. (b) Allowed, because personal Microsoft accounts are the account's own address. | (a) until someone needs it. | I have no evidence that the address of a personal Microsoft account is verified [assumed], and a refused start-up is cheap to relax later. |
 | E | How the server knows a request is "at the computer", for slice 4 | (a) Extend D28's installation secret cookie to deployments with sign-in: a request is local only if it holds the cookie, and every other signed-in request is remote. (b) Mark sessions as phone sessions at sign-in. (c) Read the browser's user agent. | (a), if the maintainer agrees to change D28's "a deployment with sign-in is exactly as it was". Not (c). | (a) cannot be claimed by the sender: a phone that does not hold the cookie is remote whatever it says. (b) needs the phone to declare itself, so it fails open. (c) is spoofable. (a) changes a recorded decision, so it is the maintainer's call, and slice 3 comes before slice 4 in section 4 as it stands. |
 
-**Slice 4, built on branch `remote-session-limited-powers` (15 November 2026)**
+**Slice 4, merged as PR #221 (15 November 2026)**
 
 *Built.* With sign-in configured, a request is "at the computer" only if it holds the installation-secret cookie (D28, extended: this changes D28's sentence "a deployment with sign-in is unchanged"). Every other signed-in session is remote and may read conversations, chat with members, see a whole approval request, and allow it once or deny it. Everything else is refused with 403 and one sentence. The list is data (`openbot/server/src/auth/remote-limits.ts`), one deny-by-default middleware in `createApp`, plus the live-screen upgrade in `http-server.ts`; a route nobody listed is refused, and a test fails when the app gains a route the list does not decide. The approval answer has its own rule (`approvals/remote-answer.ts`): only allow-once or deny, and never for a hand-off, a safety request, a setting, a connection, a routine, or a computer or host tool. Pairing works with sign-in: `bash scripts/open.sh`, run in the administrator's browser, redeems the link (loopback, then a signed-in administrator). PR #200's `at-the-computer.ts` is the one notion of "at the computer"; there is no second one. After the update, every browser of an existing sign-in deployment is remote until that command is run once. Without sign-in nothing changes.
 
