@@ -419,7 +419,7 @@ Not verified: the helper side of the protocol (S2) beyond a stand-in written fro
 
 ## Built so far: slice S2, the Windows helper (read-only), on the branch `programs-s2-windows-helper`
 
-Decisions Q1 (the helper polls), Q6 (a readable script, unsigned for now) and Q8 (a toast per action) are recorded as D62 in `docs/M1_PLAN.md` (section 42). **Nothing ran on a real PC. PowerShell could not be run in the sandbox where this was written, so the helper and its Pester tests have not run anywhere yet: the first run is the `installer-windows` job in CI. An independent security review is required before merge** (section 9 marks S2 "Yes").
+Decisions Q1 (the helper polls), Q6 (a readable script, unsigned for now) and Q8 (a toast per action) are recorded as D62 in `docs/M1_PLAN.md` (section 42). **Nothing ran on a real PC. PowerShell could not be run in the sandbox where this was written, so the helper and its Pester tests have not run anywhere yet: the first run is the `installer-windows` job in CI. The independent security review of PR #322 was done before the merge, and its findings are the row marked review in D62 (section 42)** (section 9 marks S2 "Yes").
 
 | Piece | File | What it does |
 |---|---|---|
