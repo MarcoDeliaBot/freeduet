@@ -18305,6 +18305,10 @@ skills:
       found in your answer.
 
 
+      LibreOffice. Start it only through office-convert, never with soffice or libreoffice yourself: a
+      direct start skips the inspector's refusals, the throwaway profile with macros off and the time limit.
+
+
       A PDF of a sheet. When the person wants the sheet as a PDF, run office-convert pdf followed by the
       file's name; it writes the PDF next to the sheet and refuses when a file of that name is already there. After you changed the sheet and need a new PDF, add --replace: it overwrites only a PDF that office-convert itself wrote earlier and refuses any file without its mark, such as one the person already had. If it cannot replace the file, run it again with --new-name, which writes the next free numbered name (name-2.pdf); tell the person the new file's name, and never delete or move a file the person had. Only .docx, .xlsx and .pptx files can be turned
       into a PDF this way; the file is inspected first and a refused file is not converted. A command
@@ -18377,6 +18381,10 @@ skills:
       Nothing here is real Word: a page count or a page break you report is LibreOffice's drawing of the
       file, not Word's. A file can still look different in Word, or open with a repair prompt; say so if
       the person reports one.
+
+
+      LibreOffice. Start it only through office-convert, never with soffice or libreoffice yourself: a
+      direct start skips the inspector's refusals, the throwaway profile with macros off and the time limit.
 
 
       A PDF. When the person wants the document as a PDF, run office-convert pdf followed by the file's
