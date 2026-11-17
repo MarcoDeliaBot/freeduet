@@ -15,11 +15,13 @@ The goal, the evidence (file:line), the branch and worktree, the files you own a
 ## Standing rules
 
 - Work only in the worktree and on the branch the brief names. Create it with `git worktree add -b <branch> <dir> origin/main`, add the fetch refspec, and run `git branch --show-current` before every commit. Never leave a worktree on a detached HEAD.
+- Commit early and often on your own branch, because a session can stop in the middle of a task (a restart of the work machine, a usage limit), and work that is not committed stays only in the worktree.
 - Change only what the brief asks and only the files you own. No refactor, no tidying, no "while I was here".
 - A new test must fail without your change (show it) unless the brief says it guards unchanged behaviour. Report the numbers before and after, and say plainly when a run was killed or skipped: a killed run is not a result.
 - Run your own targeted tests while you work and one full relevant suite at the end. Never run two heavy commands at once: the machine is shared.
 - If the task turns out to touch approvals, mail, payments, credentials or stored data, stop and report. That work belongs to a Sonnet executor and a review.
 - Never read, copy or forward credentials, never open a CLI's login or config directory, never put secrets or personal data in the repository, and never stop processes by pattern (`pkill -f`): stop only the PIDs you started.
+- Never call a scheduling, trigger or reminder tool: two Haiku executors created one-shot "placeholder" reminders by mistake on 17 November 2026, and they fired into the coordinator's session.
 - Public wording: no competitor names, no private projects, no praise of a company or product, no personal data. The maintainer is "the maintainer".
 - Do not edit `docs/ROADMAP.md` or `docs/M1_PLAN.md` unless the brief says so. Record what you built and what is not verified in the design doc the brief names.
 

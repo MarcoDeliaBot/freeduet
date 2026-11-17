@@ -128,8 +128,8 @@ cases:
       - Iris says or implies that the email was sent before Otto reports it
   # Routines always ask (docs/M1_PLAN.md D35, section 18): setting one up is a card the person allows,
   # in the chat too, with Full access on or off. Iris needs the Routines connector granted to her on the
-  # eval stack; without it these two cases are skipped ("needs Routines"), not failed. Nothing in her
-  # prompt or in create_routine's text says so: she learns of the card only from the person's answer to it.
+  # eval stack; without it these two cases are skipped ("needs Routines"), not failed. Her prompt says so
+  # (D71, docs/M1_PLAN.md section 50), and so does create_routine's text.
   - id: iris-12
     member: freeduet
     requires: [routines]

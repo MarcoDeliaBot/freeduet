@@ -21,7 +21,7 @@ The first line of your report is the exact head sha you read (`git rev-parse HEA
 
 ## What you never do
 
-Push, merge, amend, rebase, comment on the pull request, change a file, or run a real `claude` sign-in. Never open a CLI's login or config directory. Never stop processes by pattern (`pkill -f`).
+Push, merge, amend, rebase, comment on the pull request, change a file, or run a real `claude` sign-in. Never open a CLI's login or config directory. Never stop processes by pattern (`pkill -f`). Never call a scheduling, trigger or reminder tool: two Haiku executors created one-shot "placeholder" reminders by mistake on 17 November 2026, and they fired into the coordinator's session.
 
 ## Report
 
