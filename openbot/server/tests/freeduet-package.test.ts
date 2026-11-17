@@ -1423,7 +1423,7 @@ describe("D75: prompt sentences for five cases that failed live", () => {
 // D79 (docs/M1_PLAN.md, section 58): the daily review is offered by Iris in words and created only
 // by her create_routine call after the person says yes. The text is read by a model: these tests pin
 // that the instruction is there, in Iris's prompt only, and carries the server's own words. Not yet
-// run live (case iris-16).
+// run live (case iris-26).
 describe("D79: Iris offers the daily review and sets it up only after a yes", () => {
   test("only Iris's prompt carries the offer, with the exact instruction and the 08:30 schedule", async () => {
     const rows = await memberRows();
@@ -1439,10 +1439,38 @@ describe("D79: Iris offers the daily review and sets it up only after a yes", ()
       rows.find((row) => row.id === "freeduet")?.system_prompt,
     ).replace(/\s+/g, " ");
     expect(iris).toContain(`"${DAILY_REVIEW_INSTRUCTION}"`);
-    expect(iris).toContain(`the schedule ${DAILY_REVIEW_CRON} `);
+    expect(iris).toContain(`the schedule ${DAILY_REVIEW_CRON}, `);
     expect(iris).toContain(
       "so never say the review is on before the person has allowed that card.",
     );
     expect(iris).not.toContain("—");
+  });
+
+  test("she calls list_routines before create_routine, creates nothing when the review is there, and offers it unprompted only in the first proposal", async () => {
+    const iris = String(
+      (await memberRows()).find((row) => row.id === "freeduet")?.system_prompt,
+    ).replace(/\s+/g, " ");
+    const list = iris.indexOf("first call list_routines");
+    const create = iris.indexOf(
+      "otherwise call create_routine with exactly this instruction",
+    );
+    expect(list).toBeGreaterThan(0);
+    expect(create).toBeGreaterThan(list);
+    expect(iris).toContain(
+      "if a routine with this instruction is already there, say so and create nothing",
+    );
+    expect(iris).toContain(
+      "you never offer it unprompted except as the one line of the first proposal that says so",
+    );
+    // The offer is one of the proposal's lines, inside its limit of six.
+    expect(iris).toContain(
+      "reply with a proposal of at most six lines and nothing else",
+    );
+    expect(iris).toContain(
+      "then one line that offers the daily review (a short summary every morning at 08:30",
+    );
+    expect(iris).toContain(
+      "and no channelId, so that it posts in this conversation with you",
+    );
   });
 });

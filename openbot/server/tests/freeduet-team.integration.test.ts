@@ -66,6 +66,7 @@ const people = {
   dan: `fd-dan-${suite}`,
   erin: `fd-erin-${suite}`,
   frank: `fd-frank-${suite}`,
+  grace: `fd-grace-${suite}`,
 } as const;
 const PEOPLE = Object.values(people);
 
@@ -532,6 +533,42 @@ describe("each person's conversations (#25) and daily review (D17)", () => {
     const { mark } = await markOf(people.frank);
     expect(mark.dailyReview).toBe(made.id);
     expect(mark.dailyReviewProposed).toBeUndefined();
+  });
+
+  test("D79: create_routine with no channelId, as Iris is told to call it, posts in the person's conversation with Iris", async () => {
+    await here.team().ensure(people.grace);
+    const conversations = await conversationsOf(people.grace);
+    const withIris = conversations.filter(
+      (conversation) =>
+        conversation.agentIds.length === 1 && conversation.agentIds[0] === IRIS,
+    );
+    // Several conversations (one per member), and exactly one that Iris shares.
+    expect(conversations.length).toBeGreaterThan(1);
+    expect(withIris).toHaveLength(1);
+
+    const made = await here.routineStore.create({
+      ownerUserId: people.grace,
+      agentId: IRIS,
+      instruction: DAILY_REVIEW_INSTRUCTION,
+      cron: DAILY_REVIEW_CRON,
+      timezone: "Europe/Rome",
+    });
+    expect(made.channelId).toBe(withIris[0]?.id);
+
+    // A second conversation that Iris shares makes the same call ask which one, as the prompt says.
+    await here.channelStore.create({ id: people.grace, role: "user" }, [
+      IRIS,
+      PENNY,
+    ]);
+    await expect(
+      here.routineStore.create({
+        ownerUserId: people.grace,
+        agentId: IRIS,
+        instruction: DAILY_REVIEW_INSTRUCTION,
+        cron: DAILY_REVIEW_CRON,
+        timezone: "Europe/Rome",
+      }),
+    ).rejects.toThrow("more than one channel");
   });
 
   test("a conversation or routine the person deleted stays deleted", async () => {
