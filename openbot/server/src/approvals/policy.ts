@@ -673,6 +673,7 @@ export async function decideAction(input: {
         const category = review.safety;
         if (
           !review.failedClosed &&
+          category &&
           category !== "none" &&
           (category !== "payments" || input.fullAccess !== "full")
         )
