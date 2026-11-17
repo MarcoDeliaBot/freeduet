@@ -99,7 +99,7 @@ CASES = [
          {"text": "Invalid API key · Please run /login"}, AUTH),
     Case("claude-oauth-token-revoked", f"{ENGINE_ERRORS}:53",
          {"text": "OAuth token has been revoked"}, AUTH),
-    Case("codex-usage-limit", "docs/ENGINES_PLAN.md:60",
+    Case("codex-usage-limit", "docs/ENGINES_PLAN.md:62",
          {"text": "You've hit your usage limit."}, USAGE_LIMIT),
     # A wait phrase the repository quotes (engine_errors.py:40) inside a sentence made for the test.
     Case("wait-in-seconds", SYNTHETIC + "the wait phrase quoted at engine_errors.py:40, in a sentence of our own",
@@ -137,7 +137,7 @@ CASES = [
          {"status": 429, "headers": {"Retry-After": "30"}}, RATE_LIMIT, at(seconds=30)),
     Case("http-429-insufficient-quota", f"{ASK_RS}:392",
          {"status": 429, "text": "Error code: 429 - insufficient_quota"}, CREDITS),
-    Case("http-429-usage-limit", SYNTHETIC + "the words of docs/ENGINES_PLAN.md:60 under a status made for the test",
+    Case("http-429-usage-limit", SYNTHETIC + "the words of docs/ENGINES_PLAN.md, section 4, Codex CLI row, under a status made for the test",
          {"status": 429, "text": "You've hit your usage limit."}, USAGE_LIMIT),
     Case("http-402-bare", SYNTHETIC + "a status alone (RFC 9110, 402)", {"status": 402}, CREDITS),
     Case("http-400-credit-balance",

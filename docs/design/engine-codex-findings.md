@@ -1,6 +1,6 @@
 # Codex engine: desk findings for slice 9
 
-Status: desk research, written 2026-11-14 against origin/main 4932d12. Nothing was installed, run or signed in. The hands-on half is the spike in section 7.3. Companion to [ENGINES_PLAN.md](../ENGINES_PLAN.md): section 4 (Codex row, line 60), section 9 (slice 9, line 169) and decision E1 (line 197).
+Status: desk research, written 2026-11-14 against origin/main 4932d12. Nothing was installed, run or signed in. The hands-on half is the spike in section 7.3. Companion to [ENGINES_PLAN.md](../ENGINES_PLAN.md): section 4 (Codex row), section 9.1 (slice 9) and decision E1 (section 9.3).
 
 Markers. **[code: path:line]** is a file of this repository read on origin/main at 4932d12. Paths are relative to `openbot/agent-freeduet/` for code and config; `docs/`, `README.md`, `CLAUDE.md` and `evals/` are repository-root paths. **[doc: URL]** is an outside page read on 2026-11-14. The OpenAI pages were read through a summarizing fetch, not as raw text, so every exact name in them is to be re-checked in the spike. **[assumed]** is not verified.
 
@@ -8,13 +8,13 @@ Markers. **[code: path:line]** is a file of this repository read on origin/main 
 
 - A person with a ChatGPT plan can run a member on Codex, signed in once with Codex's own login inside the container, as the Claude login works today [code: Dockerfile:5-8].
 - The member sees only the `freeduet` tools, every call passes OpenBot's approval gate, and a limit is said in plain words with its reset time when one is known [code: freeduet/segment.py:12-14; freeduet/claude_cli.py:194-213].
-- FreeDuet never reads, copies or forwards the Codex login (decision E1) [code: docs/ENGINES_PLAN.md:197], and a metered API joins an engine chain only if the person enabled it [code: docs/PROVIDERS.md:16].
+- FreeDuet never reads, copies or forwards the Codex login (decision E1) [code: docs/ENGINES_PLAN.md, section 9.3, E1], and a metered API joins an engine chain only if the person enabled it [code: docs/PROVIDERS.md:16].
 
 ## 2. What exists today in the code
 
-The lockdown rule: an engine that cannot be locked down is not offered [code: docs/ENGINES_PLAN.md:14]. The Claude path meets the requirements below. A Codex adapter must meet the same ones.
+The lockdown rule: an engine that cannot be locked down is not offered [code: docs/ENGINES_PLAN.md, section 1, constraint 2]. The Claude path meets the requirements below. A Codex adapter must meet the same ones.
 
-- **The engine seam is on main** (slice 1 [code: docs/ENGINES_PLAN.md:179]). `EngineAdapter` declares `key`, `label`, `kind` (its comment lists cli, app-server, acp, api) and `capabilities`, plus `child_env()` and `run_turn(ctx, sink, gate)`. `probe()` and `limit` are not in it yet [code: freeduet/engine_adapter.py:8-9, 76-90]. `ClaudeEngine` is the only adapter, kind `cli` [code: freeduet/claude_engine.py:32-36]. `segment.py` takes any adapter and defaults to Claude [code: freeduet/segment.py:214-217].
+- **The engine seam is on main** (slice 1 [code: docs/ENGINES_PLAN.md, section 9.1, slice 1]). `EngineAdapter` declares `key`, `label`, `kind` (its comment lists cli, app-server, acp, api) and `capabilities`, plus `child_env()` and `run_turn(ctx, sink, gate)`. `probe()` and `limit` are not in it yet [code: freeduet/engine_adapter.py:8-9, 76-90]. `ClaudeEngine` is the only adapter, kind `cli` [code: freeduet/claude_engine.py:32-36]. `segment.py` takes any adapter and defaults to Claude [code: freeduet/segment.py:214-217].
 - **The sink contract.** An engine writes the `stream_json` items (MessageStart, TextDelta, ToolUse, Refused), then `Finished`, then `end()` [code: freeduet/engine_adapter.py:65-73]. Only the Claude parser produces them today [code: freeduet/claude_engine.py:83-90].
 - **No Codex code exists in `freeduet/`.** The word appears only in tests, in the agent's README (line 69) and in the example config [code: openbot/agent-freeduet/tests/test_engines.py; openbot/agent-freeduet/README.md:69; engines.example.yaml:21-27].
 
@@ -46,8 +46,8 @@ Parts of the Claude path that a Codex adapter cannot reuse as they are:
 - The image installs only the Claude CLI [code: Dockerfile:23-24].
 - Codex is declared on the route E1 rejected: `engines.example.yaml:21-27` (`kind: app-server`, `enabled: false`, commented "planned, not built: on once its checks pass (PROVIDERS.md)"), README.md:135 and :169, docs/PROVIDERS.md:26 and :56, docs/PROJECT.md:113, docs/EXECUTOR_BRIEF.md:52, and docs/ROADMAP.md, row "Every engine, chosen per member" ("Codex is planned, not built").
 - An upstream OpenBot path reads a ChatGPT plan token file and renews it with a refresh token [code: openbot/agent-langgraph-agui/src/main.py:116-145]. No file in `freeduet/` imports it; the only reference to that agent is a docstring at freeduet/bridge/callback.py:7. The adapter must not reuse it.
-- The only Codex limit text in the tests is "You've hit your usage limit.", cited to third-party issue titles [code: tests/test_failure_classifier.py:102-103; docs/ENGINES_PLAN.md:60].
-- Two limit readers exist. The run path uses `engine_errors.py`. The slice-2 classifier, `failure_classifier.py`, imports the same readers and is wired into no run path [code: freeduet/claude_cli.py:29; docs/ENGINES_PLAN.md:177; freeduet/failure_classifier.py:64-71, 220].
+- The only Codex limit text in the tests is "You've hit your usage limit.", cited to third-party issue titles [code: tests/test_failure_classifier.py:102-103; docs/ENGINES_PLAN.md, section 4, Codex CLI row].
+- Two limit readers exist. The run path uses `engine_errors.py`. The slice-2 classifier, `failure_classifier.py`, imports the same readers and is wired into no run path [code: freeduet/claude_cli.py:29; docs/ENGINES_PLAN.md, section 9.1, slice 2; freeduet/failure_classifier.py:64-71, 220].
 
 ## 3. The design
 
@@ -97,7 +97,7 @@ LOCK=(--ephemeral --ignore-user-config --ignore-rules --skip-git-repo-check --sa
 CODEX_HOME=<the person's volume> codex exec - --json "${LOCK[@]}" < prompt.txt
 ```
 
-- If the shell and PTY tools cannot be switched off, deny reads of `CODEX_HOME` with `permissions.filesystem.deny_read` [assumed syntax]. No proof, no offer [code: docs/ENGINES_PLAN.md:14, :64].
+- If the shell and PTY tools cannot be switched off, deny reads of `CODEX_HOME` with `permissions.filesystem.deny_read` [assumed syntax]. No proof, no offer [code: docs/ENGINES_PLAN.md, section 1, constraint 2; section 4, note 2].
 - Limits: map the `turn.failed` or `error` text through `classify`. By reading the pattern, the existing one already matches "hit your usage limit" [code: freeduet/engine_errors.py:27]. Add a reset pattern for "or try again at", which `_IN` does not read [code: freeduet/engine_errors.py:41-44]. Add it once, in `engine_errors.py`, because the slice-2 classifier reads the same readers [code: freeduet/failure_classifier.py:64-71].
 - Sign-in: the person runs `codex login --device-auth` in the container, as the Claude step is run [code: Dockerfile:5-8; doc: https://learn.chatgpt.com/docs/developer-commands?surface=cli]. The container path is [assumed].
 - Ships with `enabled: false`. It turns on only after the lockdown proof, the evals at the thresholds, and OpenAI's written answer on terms [code: docs/PROVIDERS.md:17].
@@ -106,16 +106,16 @@ CODEX_HOME=<the person's volume> codex exec - --json "${LOCK[@]}" < prompt.txt
 
 - A sign-in check before a turn, once the status command is known [assumed].
 - A model per member (`-m`) and profiles.
-- Token counts from `turn.completed` into the ledger [doc: https://learn.chatgpt.com/docs/non-interactive-mode.md, sample `usage`] (the ledger is in [code: docs/ENGINES_PLAN.md:138-140]).
+- Token counts from `turn.completed` into the ledger [doc: https://learn.chatgpt.com/docs/non-interactive-mode.md, sample `usage`] (the ledger is in [code: docs/ENGINES_PLAN.md, section 7]).
 - Server-side text calls on Codex, with every tool off (L16).
-- Ask-first mode and the chain rules [code: docs/ENGINES_PLAN.md:82-121].
+- Ask-first mode and the chain rules [code: docs/ENGINES_PLAN.md, section 5].
 
 ## 4. Slices
 
 | Slice | Builds | Tests that prove it | Needs first | Size |
 |---|---|---|---|---|
 | 9a Spike | The steps of 7.3 on a disposable VM; synthetic fixtures only; findings added to this file | Every probe has its expected result written down before the run | This file; decision D3 | S |
-| 9b Adapter, off | `codex_engine.py` (a second EngineAdapter); command builder; child environment without OpenAI keys; JSON-lines parser into stream_json items; failure mapping; `cli` entry in `engines.yaml` (the loader already accepts `cli` [code: freeduet/engines.py:23]) | Fake `codex` tests (one call, stop, no second call); environment test (no OpenAI key name reaches the child); lockdown test on the real binary [code: docs/ENGINES_PLAN.md:64] | 9a; slice 1, built [code: docs/ENGINES_PLAN.md:179]; ENGINES_PLAN slices 3 and 4 [code: docs/ENGINES_PLAN.md:163-164] | M (L together with the chain) |
+| 9b Adapter, off | `codex_engine.py` (a second EngineAdapter); command builder; child environment without OpenAI keys; JSON-lines parser into stream_json items; failure mapping; `cli` entry in `engines.yaml` (the loader already accepts `cli` [code: freeduet/engines.py:23]) | Fake `codex` tests (one call, stop, no second call); environment test (no OpenAI key name reaches the child); lockdown test on the real binary [code: docs/ENGINES_PLAN.md, section 4, note 2] | 9a; slice 1, built [code: docs/ENGINES_PLAN.md, section 9.1, slice 1]; ENGINES_PLAN slices 3 and 4 [code: docs/ENGINES_PLAN.md, section 9.1, slices 3 and 4] | M (L together with the chain) |
 | 9c Image and docs | Pinned install in the agent-freeduet Dockerfile; `CODEX_HOME` volume; build check; codex entry in `engines.example.yaml` rewritten for E1 (today `kind: app-server`, lines 21-27); PROVIDERS.md row | Build check prints the version; the credentials test stays green with `.codex` and `CODEX_HOME` | 9b; decision D5 | S |
 | 9d Limit and sign-in text | Patterns for the exact strings; reset-time parse | Spike fixtures; new cases in `tests/test_failure_classifier.py` | 9a | S |
 | 9e Evals | Member cases run on Codex | Each member at least 90%; safety cases 100% [code: CLAUDE.md:237] | ENGINES_PLAN slice 4 (the runner selects the engine) | M |
@@ -132,7 +132,7 @@ CODEX_HOME=<the person's volume> codex exec - --json "${LOCK[@]}" < prompt.txt
 | D1 | Terms for a ChatGPT login used by a self-hosted orchestrator | (a) off until OpenAI answers in writing; (b) on now for the person's own machine; (c) the Sign in with ChatGPT program | (a), and send the written question now | No page read says it is allowed; PROVIDERS.md rule 5 [code: docs/PROVIDERS.md:17]; (c) is the token route E1 rejected |
 | D2 | Codex surface | (a) `codex exec --json`; (b) `codex app-server` | (a) | One process per segment fits D6; app-server adds client approval code; the seam allows both [code: freeduet/engine_adapter.py:79]; use (b) only if exec cannot stop at a call |
 | D3 | Spike machine and login | (a) a disposable VM with one plan login, wiped after; (b) another account | (a) | docs/PROVIDERS.md:14 (one login per person) and D1 apply to any account used |
-| D4 | Lockdown bar | (a) every built-in tool off, shown by test, or Codex is not offered; (b) read-only sandbox alone | (a) | docs/ENGINES_PLAN.md:14 (row 2); shell, PTY exec and apply_patch are not all shown switchable |
+| D4 | Lockdown bar | (a) every built-in tool off, shown by test, or Codex is not offered; (b) read-only sandbox alone | (a) | docs/ENGINES_PLAN.md, section 1, constraint 2; shell, PTY exec and apply_patch are not all shown switchable |
 | D5 | Public wording of the Codex route | (a) one docs PR now, aligned to E1; (b) inside slice 9c | (a) | README.md:135 states a route the maintainer rejected on 14 November |
 
 ## 7. What was not verified

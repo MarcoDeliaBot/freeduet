@@ -13,6 +13,7 @@ import {
   egressShellEnvironment,
   handleEgressPolicyRequest,
   isAlwaysDenied,
+  loopbackAllowedForTests,
   parseEgressPolicy,
   setEgressPolicy,
   setEgressResolver,
@@ -81,6 +82,9 @@ describe("the rule: allow_all and the private ranges", () => {
     // As the API server hands it over: `URL.host`, with the port.
     ["192.168.1.1:8080", "192.168.0.0/16"],
     ["[::1]:3000", "::1/128"],
+    // IPv4-compatible: refused whole, whatever the tail (D73).
+    ["[::127.0.0.1]", "::/96"],
+    ["[::7f00:1]", "::/96"],
   ];
 
   test("every private and special range is refused, by name of the range and of the setting", () => {
@@ -180,9 +184,10 @@ describe("the rule: allow_all and the private ranges", () => {
 
   // The private LAN ranges the switch lifts. Loopback and "this host" are not among them (D73).
   const isLoopbackSpelling = (range: string) =>
-    ["127.0.0.0/8", "0.0.0.0/8", "::1/128", "::/128"].includes(range);
+    ["127.0.0.0/8", "0.0.0.0/8", "::1/128", "::/128", "::/96"].includes(range);
 
   test("the person's switch lets the private LAN ranges through, and not loopback or this host (D73)", () => {
+    expect(loopbackAllowedForTests()).toBe(false);
     // Without it, the same destinations are refused, so what changes below is the switch and nothing else.
     for (const [host] of refused) {
       expect({ host, ...egressDecision(blocked, host, 443) }).toMatchObject({
@@ -617,7 +622,10 @@ describe("the filter makes the connection itself", () => {
       `foo.localhost:${target.port}`,
       `0.0.0.0:${target.port}`,
       `0:${target.port}`,
+      `[::127.0.0.1]:${target.port}`,
+      `[::7f00:1]:${target.port}`,
     ];
+    expect(loopbackAllowedForTests()).toBe(false);
     try {
       // Pushed to the running computer, as the API server does it.
       const pushed = await handleEgressPolicyRequest(
@@ -650,6 +658,7 @@ describe("the filter makes the connection itself", () => {
   });
 
   test("a name that resolves to loopback is refused with the switch on, and never connected to (rebinding)", async () => {
+    expect(loopbackAllowedForTests()).toBe(false);
     const target = await origin();
     const filter = await startEgressFilter({ env: {} });
     setEgressPolicy(BOT, switchedOn);

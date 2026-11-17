@@ -229,6 +229,14 @@ def main(args: list[str]) -> int:
     if probed is not None:
         return probed
     prompt = sys.stdin.read()
+    pictures = None
+    if value_after(args, "--input-format") == "stream-json":
+        # D72: the user line the real CLI reads. `prompt` is then the text blocks, so everything that reads
+        # the prompt reads the same words; the image blocks are in `pictures`, as they were sent.
+        lines = [json.loads(line) for line in prompt.splitlines() if line.strip()]
+        content = lines[0]["message"]["content"] if lines else []
+        pictures = [block["source"] for block in content if block.get("type") == "image"]
+        prompt = "\n".join(block["text"] for block in content if block.get("type") == "text")
     followup = REPORT_GUARD_MARKER in prompt
     counter = DIR / ("followup-count" if followup else "count")
     index = int(counter.read_text()) if counter.exists() else 0
@@ -244,6 +252,8 @@ def main(args: list[str]) -> int:
         "argv": args, "pid": os.getpid(), "env": sorted(os.environ), "cwd": os.getcwd(),
         "cwd_entries": sorted(os.listdir(".")), "prompt": prompt, "mcp_config": config,
     }
+    if pictures is not None:
+        record.update({"input_format": "stream-json", "stdin_lines": len(lines), "pictures": pictures})
     turn = Turn(record, DIR / (f"followup-{index}.json" if followup else f"run-{index}.json"))
     turn.save()
 

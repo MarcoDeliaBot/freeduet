@@ -637,11 +637,21 @@ let loopbackForTests = false;
 /**
  * FOR TESTS ONLY: let the filter connect to this machine's loopback, so a test's fixture server can
  * be reached through it (D73 refuses loopback under every policy). Nothing in `src/` calls this;
- * `egress-loopback.test.ts` reads the sources to keep it so.
+ * `egress-loopback-hook.test.ts` reads the sources to keep it so.
  */
 export function allowLoopbackForTests(on: boolean) {
+  if (on && process.env.NODE_ENV === "production") {
+    throw new Error(
+      "allowLoopbackForTests is for tests and is refused in production.",
+    );
+  }
   loopbackForTests = on;
   endRefusedConnections();
+}
+
+/** Whether the test hook is on. A test of the loopback rule asserts it is off before it starts. */
+export function loopbackAllowedForTests(): boolean {
+  return loopbackForTests;
 }
 
 /**

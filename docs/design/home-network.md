@@ -13,7 +13,9 @@ Tags: **[code: path:line]** read on origin/main 5b96410 (code paths start at `op
 
 ## 2. What was measured before the change
 
-| Case | On main | Where |
+**State before PR #196** (origin/main 5b96410, the base of PR #196, which merged as `8a947ed`). **Status, 17 November 2026:** the code references in this table are that commit's lines. What is true now, on origin/main ccfffad: `setEgressPolicy` ends the refused connections itself (`agent-computer/src/egress.ts:621-625`, the call at line 624), and so does every later policy change (`endRefusedConnections`, line 813). `decide` (line 692) reads the policy before the name lookup, and `carry` (line 797, called at lines 1127 and 1195) judges the connection again with the policies in force just before it is carried. A plain request leaves on a connection of its own (`agent: false`, line 1334). `stopEgressFilter` (lines 1270-1281) ends every connection it carries (`endAllConnections`, line 1277) and does not wait for them.
+
+| Case | On main before PR #196 | Where (main before PR #196) |
 |---|---|---|
 | A tunnel (CONNECT) opened to a home-network address with the switch on | Kept carrying data after the switch went off. Only a new CONNECT got 403. A page's WebSocket to a service on the computer kept echoing in a real Chromium [measured] | The two sockets are piped and the policy is never read again [code: agent-computer/src/egress.ts:969-1008, the pipes at 999-1000]. `setEgressPolicy` only stores the policy [code: egress.ts:611] |
 | A plain-HTTP response that was still streaming | Kept streaming after the switch went off [measured] | Judged once, when the request arrived [code: egress.ts:966] |
@@ -52,7 +54,7 @@ So plain HTTP was not entirely "judged per request and fine": the streaming resp
 
 | What | Result |
 |---|---|
-| `egress-tighten.test.ts` (30 tests, real sockets, a fake upstream that echoes, bounded waits on close events, no sleeps) | 30 pass on the branch in every run, on Bun 1.4.4 and on Bun 1.4.3 (the version CI pins): the full 30 passed three runs in three on 1.4.3, and the 26 first written had passed nine runs of the file alone (six on 1.4.4, three on 1.4.3). On main's `egress.ts`: 1 pass, 29 fail. The pass is a guard, labelled in its title (nothing is closed on main either). 5 of the 29 fail on main only because the counter they read does not exist; 24 fail on behaviour |
+| `egress-tighten.test.ts` (30 tests: 29 `test(` calls in the file, one of which, at line 367, runs once for each of the two entries of its loop; real sockets, a fake upstream that echoes, bounded waits on close events, no sleeps) | 30 pass on the branch in every run, on Bun 1.4.4 and on Bun 1.4.3 (the version CI pins): the full 30 passed three runs in three on 1.4.3, and the 26 first written had passed nine runs of the file alone (six on 1.4.4, three on 1.4.3). On main's `egress.ts`: 1 pass, 29 fail. The pass is a guard, labelled in its title (nothing is closed on main either). 5 of the 29 fail on main only because the counter they read does not exist; 24 fail on behaviour |
 | `private-network-browser.test.ts`, real Chromium, one new case (a page's WebSocket opened with the switch on, switch turned off) | 4 pass on the branch (Bun 1.4.4 and 1.4.3), and the new case alone passed 6 runs in 6. On main's `egress.ts` the new case fails (the page's socket does not close within 10 s) and the other three pass |
 | The CI list `computer (real browser)`, ten files in one process | 44 pass, 0 fail |
 | The whole `agent-computer` suite | 659 pass, 74 skip, 2 fail. The two are the IPv6 cases that cannot listen on `::1` here (`EAFNOSUPPORT`); they fail the same way on main |

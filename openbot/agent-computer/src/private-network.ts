@@ -361,7 +361,7 @@ function ipv6RangeOf(bytes: Uint8Array): PrivateRange | null {
 
 /**
  * Whether a range is this computer's own loopback or "this host" (D73): 127.0.0.0/8, `0.0.0.0/8`,
- * `::1` and `::`. IPv4-mapped, NAT64 and 6to4 forms, and `localhost` names, arrive here already as
+ * `::1` and `::`, and the whole deprecated `::/96`. IPv4-mapped, NAT64 and 6to4 forms, and `localhost` names, arrive here already as
  * the IPv4 range they carry. The home and office network switch never lifts these.
  */
 export function isLoopbackRange(range: PrivateRange): boolean {
@@ -369,7 +369,10 @@ export function isLoopbackRange(range: PrivateRange): boolean {
     range.range === "127.0.0.0/8" ||
     range.range === "0.0.0.0/8" ||
     range.range === "::1/128" ||
-    range.range === "::/128"
+    range.range === "::/128" ||
+    // IPv4-compatible `::a.b.c.d`, deprecated and routed nowhere: refused whole, so `::127.0.0.1`
+    // and `::7f00:1` are not a way round, whatever the tail says.
+    range.range === "::/96"
   );
 }
 
