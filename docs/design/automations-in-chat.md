@@ -75,13 +75,13 @@ Three gaps matter most:
 5. **History with paging.** Cursor paging on `GET /api/routines/:id/runs`. Rows with `scheduled_for` set (item 2) show "Missed". Decided 14 November 2026: run history is kept 90 days.
 6. **Pause, run now and delete stay as they are.** Delete keeps its confirm dialog and says the history goes too, because runs are deleted with their routine ([code: openbot/server/src/db/schema/coworker.ts:157]).
 7. **Edit is a chat act.** "Change it to 10:00" calls `update_routine`, and the card shows the old and new values.
-8. **Limits.** Keep 20 enabled routines and the 15-minute floor ([code: schedule.ts:4]). Add a daily budget of routine turns per person, scheduled or run now, checked in the runner before `runTurn` ([code: openbot/server/src/routines/runner.ts:142-145]). Add a 60-minute floor for routines made in chat. The numbers are D3. Routines may not chain turns past their limits ([code: docs/ENGINES_PLAN.md:148]).
+8. **Limits.** Keep 20 enabled routines and the 15-minute floor ([code: schedule.ts:4]). Add a daily budget of routine turns per person, scheduled or run now, checked in the runner before `runTurn` ([code: openbot/server/src/routines/runner.ts:142-145]). Add a 60-minute floor for routines made in chat. The numbers are D3. Routines may not chain turns past their limits ([code: docs/ENGINES_PLAN.md, section 8, rule "No long autonomous pipelines"]).
 9. **Who creates for whom.** A member creates routines only for itself: the tool takes the Bot from the connection ([code: builtin-routines.ts:378, 415-417]). No member may address another, and the hand-off depth is 1 ([code: openbot/server/src/freeduet/hub-grants.ts:9-11]). So a routine for a member goes through Iris. Iris holds the routine and hands the work over on each firing. The hand-off is pre-approved ([code: docs/M1_PLAN.md:82], D21), and the member's own writes still ask. The cost is two turns per firing [assumed].
 
 ### 3.2 After V1
 
 - V2: "catch up once" for morning routines, inside a window (D2). A zone per person (D5), used by new routines and by the daily review, replacing the constant at [code: openbot/server/src/freeduet/person-team.ts:59].
-- V3: a routine waits when an engine is down, instead of failing. Needs the engine breaker wired ([code: openbot/agent-freeduet/freeduet/engine_breaker.py:8]) and the engine plan ([code: docs/ENGINES_PLAN.md:107, 148]).
+- V3: a routine waits when an engine is down, instead of failing. Needs the engine breaker wired ([code: openbot/agent-freeduet/freeduet/engine_breaker.py:8]) and the engine plan ([code: docs/ENGINES_PLAN.md, section 5, switch rule "Unattended turns"; section 8, rule "No long autonomous pipelines"]).
 - V4: event triggers ([code: openbot/server/src/responsibilities/trigger-tools.ts:56-146]) in the same calendar and history.
 - Later: routines Iris holds for members (D4); a cap on routines running at once, which the upstream doc lists as open ([code: openbot/docs/routines.md:116-119]).
 
@@ -106,7 +106,7 @@ S1 to S7 edit OpenBot files, so each needs a row in `docs/UPSTREAM_TOUCHES.md` (
 
 ## 5. Rules that must hold
 
-- **Logins first.** A routine turn runs on the person's subscription login. No metered engine is added to routines ([code: CLAUDE.md:26-28]; [code: docs/ENGINES_PLAN.md:107]).
+- **Logins first.** A routine turn runs on the person's subscription login. No metered engine is added to routines ([code: CLAUDE.md:26-28]; [code: docs/ENGINES_PLAN.md, section 5, switch rule "Unattended turns"]).
 - **Credentials.** The card, the calendar and the history never show or store login data ([code: CLAUDE.md:31-32]).
 - **No personal data.** Test fixtures use invented names and zones ([code: CLAUDE.md:33]).
 - **Approval.** Account actions keep the person's approval. A routine write asks unless D6 decides otherwise ([code: CLAUDE.md:36-42]).
