@@ -84,6 +84,11 @@ the hands"): plan, brief executors, verify with numbers, merge, report.
   `git worktree add -b <branch> <dir> origin/main`, then add the fetch refspec (see Git and pull
   requests). Never leave it detached: commits made on a detached HEAD get lost. The brief tells the
   executor to run `git branch --show-current` before it commits.
+- **Worktree cleanup (rule of 2026-11-17).** Each worktree has its own `node_modules` (see Local
+  testing), so kept worktrees use up disk space. After a pull request is merged, the coordinator removes
+  that executor's worktree with `git worktree remove` only when `git merge-base --is-ancestor <branch>
+  origin/main` succeeds and `git status` shows no change. A report-only executor reads files with
+  `git show origin/main:<path>` and creates no worktree.
 - **Verify before merging.** Re-run the executor's key tests yourself against a real Postgres and read
   the diff of anything security-related. Haiku sometimes misreports time ("waited three hours") or
   takes shortcuts (closing and reopening a PR to restart CI): check its claims.
@@ -247,11 +252,20 @@ Mark (id `marketer`) was the first member added after v0.1, Cam (id `video`) the
   Google Fonts, so screenshots need the fonts served locally.
 - The build writes twelve pages (`site/index.html` and `site/<code>/index.html`) and `site/sitemap.xml`:
   commit all of them. `node site/tools/checklang.js` also runs `tools/checkpages.py`.
+- Each FAQ answer (keys `a1` to `a8`) appears twice in a built page: as visible text (`data-i` in
+  `site/src/body.html`) and in the FAQPage JSON-LD built from the same key (`site/tools/build.py:269-271`),
+  so a change to an answer key changes both. `site/tools/checkpages.py:14-15` checks that they match.
+- The three cards that show the `tagRel` badge (`site/src/body.html:241`, `:264`, `:321`) share one key.
+  When one card's badge must read differently, add a new key to all twelve `site/src/lang/*.json` files:
+  `node site/tools/checklang.js` requires the same keys in every language (`site/tools/checklang.js:12-17`).
 
 ## Local testing
 
 - Postgres 16 binaries are at `/usr/lib/postgresql/16/bin`. A sandbox running as root cannot `initdb`
-  as root: reuse a running test cluster or start one as a non-root user. Point tests at it with
+  as root: reuse a running test cluster or start one as a non-root user. From a root sandbox,
+  `runuser -u postgres -- /usr/lib/postgresql/16/bin/initdb -D <dir> --auth=trust` creates a throwaway
+  cluster as the `postgres` user: pass each argument as its own word (one quoted string fails with
+  "No such file or directory"), and `--auth=trust` asks for no password. Point tests at it with
   `TEST_DATABASE_URL`. A fresh test database needs `bun scripts/migrate.ts` first, and that script
   reads `DATABASE_URL`, not `TEST_DATABASE_URL`: set both to the same database.
 - `migrate.ts` lives in `openbot/server/scripts`: run it from `openbot/server`, as `bun scripts/migrate.ts`.
@@ -308,6 +322,11 @@ Mark (id `marketer`) was the first member added after v0.1, Cam (id `video`) the
   while the router is on (`server/src/freeduet/model-base.ts`).
 - CopilotKit's runtime sends `licenseStatus` only with Intelligence on: identify the server by
   `/api/capabilities` instead.
+- `localRuntimeFrom` (`openbot/server/src/freeduet/intelligence-switch.ts:44-45`) returns `undefined`,
+  upstream's Intelligence contract, when `FREEDUET_INTELLIGENCE` is unset, empty or only spaces. The
+  default `off` comes from the install files: `openbot/.env.example:382` sets it, and
+  `openbot/scripts/start.sh:301-308` writes `off` when the line is missing, unless
+  `INTELLIGENCE_API_URL`, `INTELLIGENCE_GATEWAY_WS_URL` and `INTELLIGENCE_API_KEY` are all set (then `on`).
 - Hand-off turns differ on the computer (D22). The RELAY (the answer coming back to the Bot that asked,
   which runs in the person's own conversation) gets the member's computer tools through
   `toolsForTurn` in `server/src/agents/handoff-delivery.ts`, built like a routine's
@@ -359,6 +378,13 @@ Mark (id `marketer`) was the first member added after v0.1, Cam (id `video`) the
 - A `must` or `must_not` line has to stand on its own. The grader skipped "tells the person why" (no
   subject) in several runs. A check left without a verdict is retried once; its reason now says what
   the grader sent (#78, #80).
+- A `must` line that needs a file to exist (the member re-opens a file it wrote, or hands it over with
+  `offer_file`) can fail in a repeat where the approval gate asks. A change in the member's computer,
+  such as `computer_write_file` or `computer_run_command`, goes to the approval gate first
+  (`evals/team/README.md:155`), and the runner never allows an approval (`evals/team/README.md:147`),
+  so no file is written. A safety case needs 100% (`evals/team/README.md:64`), so write such a line
+  for both outcomes: "when a file was made, ...; when none was made, the member says so."
+- A case cannot send a skill picked with `/`, so a `must` line that checks an instruction needs that instruction in the member's own prompt (see Adding a team member).
 - The eval stack has no Gmail connected, so otto-4 to otto-7 are skipped ("needs Gmail"). Only Otto holds the send tools (D30): a case about Iris, Penny or any other member must not say `requires: [gmail]`, because the runner would skip it for ever, and a hop's tool calls are not in a case's transcript.
 - A grader that fails is not a member that fails. A grader call that errors (HTTP 5xx, timeout,
   unreadable reply) is asked again, 4 calls at most; if none answers the run is `ungraded`, not
