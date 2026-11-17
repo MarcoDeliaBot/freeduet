@@ -45,6 +45,10 @@ import {
   maskSensitiveValues,
   SECRET_ATTRIBUTE,
   SENSITIVE_FIELD_SELECTOR,
+  SecretFieldError,
+  fillUnlessSecret,
+  inputTypes,
+  pressKeyUnlessSecret,
   sensitiveRefs,
 } from "./secret-masking";
 import { type BotSession, createSessions } from "./sessions";
@@ -497,11 +501,26 @@ async function snapshotPage(
     title,
     truncated: parsed.truncated,
     // A password field's value is in the aria snapshot in plain text. See secret-masking.ts.
-    elements: maskSensitiveValues(
-      parsed.elements,
-      await sensitiveRefs(target, parsed.elements),
+    elements: await withInputTypes(
+      target,
+      maskSensitiveValues(
+        parsed.elements,
+        await sensitiveRefs(target, parsed.elements),
+      ),
     ),
   };
+}
+
+/** The snapshot's form controls with their `type` (D76), which the server's floor and rules read. */
+async function withInputTypes(
+  target: Page,
+  elements: SnapshotElement[],
+): Promise<SnapshotElement[]> {
+  const types = await inputTypes(target, elements);
+  return elements.map((element) => {
+    const type = types.get(element.ref);
+    return type ? { ...element, type } : element;
+  });
 }
 
 /**
@@ -1655,6 +1674,11 @@ serve<StreamData>({
           if (error instanceof StaleSnapshotError) {
             return json({ error: error.message, stale: true }, 409);
           }
+          // A refusal, not a fault: the same call will be refused again, and the sentence is the
+          // answer (D76).
+          if (error instanceof SecretFieldError) {
+            return json({ error: error.message, secretField: true }, 403);
+          }
           return json({ error: describe(error, "The action failed.") }, 502);
         }
       }
@@ -1833,10 +1857,12 @@ async function performAction(
     // `fill` rather than keystrokes: it clears the field first, which is what "put this value in
     // this box" means. Typing into a field a previous attempt half-filled otherwise appends, and the
     // form ends up with "AlicAlice" in it.
-    await field.fill(body.text, acting);
-    if (body.submit === true) {
-      await field.press("Enter", acting);
-    }
+    //
+    // A password, a code or a card field is refused here whatever its label says (D76): only the
+    // person fills one, through `/human/secret`.
+    await fillUnlessSecret(field, body.text, acting, {
+      submit: body.submit === true,
+    });
     // The text itself is deliberately NOT returned. It is echoed nowhere: this response is read by
     // the model and logged by the server, and a value typed into a form is exactly where a password
     // or a card number lives. The caller already knows what it sent.
@@ -1853,14 +1879,17 @@ async function performAction(
     if (typeof body.key !== "string" || !body.key) {
       throw new Error("A key press needs a key name, such as Enter or Tab.");
     }
-    if (ref) {
-      await (await resolveRef(session, target, ref, expected)).press(
-        body.key,
-        acting,
-      );
-    } else {
-      await target.keyboard.press(body.key);
-    }
+    // A key that can write a character is refused when it would land in a sensitive field (D76),
+    // the named one or, with no ref, the one holding the focus in any frame.
+    const keyField = ref
+      ? await resolveRef(session, target, ref, expected)
+      : undefined;
+    const pressed = body.key;
+    await pressKeyUnlessSecret(target, keyField, pressed, acting, () =>
+      keyField
+        ? keyField.press(pressed, acting)
+        : target.keyboard.press(pressed),
+    );
     return { action: "key", key: body.key, ref, url: target.url() };
   }
 
