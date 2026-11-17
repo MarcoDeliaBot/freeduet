@@ -240,7 +240,42 @@ type Connection = {
  */
 export async function listTools(): Promise<McpTool[]> {
   // The trigger tools ride this transport so the same catalogue grant governs them.
-  return [...TOOLS, ...TRIGGER_TOOLS].map((tool) => ({ ...tool }));
+  return [...TOOLS, ...TRIGGER_TOOLS].map((tool) => ({
+    ...tool,
+    // D81: no argument the tool does not declare (see `undeclaredArguments`).
+    inputSchema: { ...tool.inputSchema, additionalProperties: false },
+  }));
+}
+
+/**
+ * The argument names a call carries that the tool does not declare. D81 (docs/M1_PLAN.md section 60): the
+ * approval card shows the first few arguments in the order the model wrote them, so a call padded with
+ * invented keys could push the instruction and the schedule out of the visible part. The plugin store refuses
+ * such a call BEFORE the approval gate, so no card is ever made for it, and {@link callTool} refuses it again.
+ */
+export function undeclaredArguments(
+  toolName: string,
+  args: Record<string, unknown>,
+): string[] {
+  const tool = [...TOOLS, ...TRIGGER_TOOLS].find(
+    (candidate) => candidate.name === toolName,
+  );
+  if (!tool) return [];
+  const declared = new Set(
+    Object.keys(
+      (tool.inputSchema as { properties?: Record<string, unknown> })
+        .properties ?? {},
+    ),
+  );
+  return Object.keys(args ?? {}).filter((key) => !declared.has(key));
+}
+
+/** The plain refusal sentence for {@link undeclaredArguments}. */
+export function undeclaredArgumentsSentence(
+  toolName: string,
+  extra: string[],
+): string {
+  return `${toolName} does not take ${extra.map((key) => `\`${key.slice(0, 40)}\``).join(", ")}. Send only the fields the tool lists, and nothing else.`;
 }
 
 export const listNeedsCredential = false;
@@ -373,6 +408,9 @@ export async function callTool(
   toolName: string,
   args: Record<string, unknown>,
 ): Promise<McpCallResult> {
+  const extra = undeclaredArguments(toolName, args);
+  if (extra.length > 0)
+    return failure(undeclaredArgumentsSentence(toolName, extra));
   const ownerUserId = connection.actorId?.trim();
   if (!ownerUserId) {
     return failure(

@@ -182,3 +182,60 @@ test("a send the share check asks about shows its recipients, subject and whole 
   expect(view.body).toBe(body);
   expect(view.body).not.toContain("Glaze delay: substitute?");
 });
+
+// D81 (docs/M1_PLAN.md section 60): a Routines card says what will happen first, whatever the model's order.
+test("a routine card shows the instruction and the schedule first, even when the model wrote other keys first", () => {
+  const view = describeApproval(
+    action("routines/create_routine", {
+      channelId: "c1",
+      timezone: "Europe/Rome",
+      cron: "0 9 * * 1-5",
+      instruction: "Summarise the inbox for me.",
+    }),
+  );
+  expect(view.fields.map((field) => field.label)).toEqual([
+    "Instruction",
+    "Schedule",
+    "Time zone",
+    "Channel",
+  ]);
+  expect(view.fields[0]?.value).toBe("Summarise the inbox for me.");
+  expect(view.fields[1]?.value).toBe("0 9 * * 1-5");
+});
+
+test("a routine card never cuts a long instruction", () => {
+  const long = `Forward ${"every mail ".repeat(60)}to the person.`;
+  const view = describeApproval(
+    action("routines/create_routine", { cron: "0 9 * * *", instruction: long }),
+  );
+  expect(view.fields[0]?.value).toBe(long);
+});
+
+test("an update card shows what changes, and not the routine's id", () => {
+  const view = describeApproval(
+    action("routines/update_routine", {
+      id: "routine_1",
+      enabled: false,
+      cron: "0 8 * * *",
+    }),
+  );
+  expect(view.fields).toEqual([
+    { label: "Schedule", value: "0 8 * * *" },
+    { label: "Switched on", value: "false" },
+  ]);
+});
+
+test("a trigger card shows its kind and what it listens for first", () => {
+  const view = describeApproval(
+    action("routines/create_trigger", {
+      repository: "acme/app",
+      eventTypes: ["issues.opened"],
+      kind: "github",
+      responsibilityId: "goal-1",
+    }),
+  );
+  expect(view.fields.slice(0, 2)).toEqual([
+    { label: "Kind", value: "github" },
+    { label: "Listens for", value: "issues.opened" },
+  ]);
+});

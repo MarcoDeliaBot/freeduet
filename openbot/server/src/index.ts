@@ -1088,10 +1088,12 @@ const pluginStore = createPluginStore({
   brokerProvider,
 });
 // Iris holds Routines by default, once, so the daily review can be offered (D81, docs/M1_PLAN.md section 60).
-await applyIrisRoutines(database, bootAuditStore, tenantPackage, () =>
-  pluginStore
-    .addServer({ key: "routines", by: "freeduet-automatic" })
-    .then(() => {}),
+await applyIrisRoutines(database, bootAuditStore, tenantPackage, (needs) =>
+  needs === "add"
+    ? pluginStore
+        .addServer({ key: "routines", by: "freeduet-automatic" })
+        .then(() => {})
+    : pluginStore.refreshTools("routines").then(() => {}),
 );
 
 /*

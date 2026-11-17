@@ -67,7 +67,7 @@ function install() {
 }
 afterEach(() => useTriggerTools(null));
 
-test("create_trigger is attributed to the connection and never echoes the key", async () => {
+test("create_trigger refuses an owner or a secret in its arguments (D81), and never echoes the value", async () => {
   const calls = install();
   const result = await callTool(CONNECTION, "create_trigger", {
     responsibilityId: "goal-1",
@@ -76,13 +76,20 @@ test("create_trigger is attributed to the connection and never echoes the key", 
     ownerUserId: "attacker",
     secret: "pasted-in-chat",
   });
-  expect(result.isError).toBe(false);
-  expect(result.text).not.toContain("whsec_");
+  expect(result.isError).toBe(true);
   expect(result.text).not.toContain("pasted-in-chat");
-  expect(result.text).toContain(
+  expect(calls.find((call) => call[0] === "create")).toBeUndefined();
+  const clean = await callTool(CONNECTION, "create_trigger", {
+    responsibilityId: "goal-1",
+    kind: "webhook",
+    eventTypes: ["deploy"],
+  });
+  expect(clean.isError).toBe(false);
+  expect(clean.text).not.toContain("whsec_");
+  expect(clean.text).toContain(
     `https://openbot.example.test/api/events/triggers/${TRIGGER_ID}`,
   );
-  expect(result.text).toContain("Responsibilities page");
+  expect(clean.text).toContain("Responsibilities page");
   expect(calls.find((call) => call[0] === "create")).toEqual([
     "create",
     "owner-1",

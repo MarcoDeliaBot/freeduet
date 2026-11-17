@@ -22,7 +22,7 @@
  *
  * THE CONNECTOR ITSELF. A grant offers a tool only while the connector's row exists (`mcp_servers`, with its tool
  * list), and on a plain installation nobody has added Routines under Plugins. So, before the grant, the seed
- * adds the connector when it is not there (`ensureServer`, which index.ts passes as `pluginStore.addServer`),
+ * adds the connector when it is not there (`ensureServer`, which index.ts passes as `pluginStore.addServer`, or `refreshTools` when the row is there but its tools were never listed),
  * and never rewrites an administrator's own row. If adding it fails, no marker is written and the next start
  * tries again.
  *
@@ -85,7 +85,7 @@ export async function seedIrisRoutines(
   database: Database,
   auditStore: AuditStore,
   iris: string,
-  ensureServer?: () => Promise<void>,
+  ensureServer?: (needs: "add" | "refresh") => Promise<void>,
 ): Promise<IrisRoutinesOutcome> {
   // Her row is made by the package sync, which runs first; without it (or not a package member) nothing is
   // written, so a later start can still do it.
@@ -105,12 +105,22 @@ export async function seedIrisRoutines(
     !(await holdsAny(database, iris))
   ) {
     const [server] = await database
-      .select({ id: mcpServers.id })
+      .select({
+        id: mcpServers.id,
+        refreshed: mcpServers.toolsRefreshedAt,
+      })
       .from(mcpServers)
       .where(eq(mcpServers.id, IRIS_ROUTINES_SERVER));
-    if (!server) {
+    // Missing: add it. There, but its tools never listed (an earlier add that failed halfway): list them now,
+    // or the grant would offer an empty list and the marker would say it was done.
+    const needs = !server
+      ? "add"
+      : server.refreshed === null
+        ? "refresh"
+        : null;
+    if (needs) {
       try {
-        await ensureServer();
+        await ensureServer(needs);
       } catch (error) {
         console.warn(
           JSON.stringify({
@@ -199,7 +209,7 @@ export async function applyIrisRoutines(
   tenantPackage: Pick<TenantPackage, "tenantId"> & {
     agents: readonly { id: string }[];
   },
-  ensureServer?: () => Promise<void>,
+  ensureServer?: (needs: "add" | "refresh") => Promise<void>,
 ): Promise<IrisRoutinesOutcome> {
   if (!isFreeDuetPackage(tenantPackage)) return { status: "not-applicable" };
   const iris = tenantPackage.tenantId;
