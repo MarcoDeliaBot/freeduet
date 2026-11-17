@@ -246,6 +246,7 @@ describe("proactive run", () => {
       threadId: "proactive-thread",
       focus: "",
       enabled: true,
+      enabledByPerson: true,
       intervalMinutes: 240,
       nextRunAt: new Date(),
       lastRunAt: null,
