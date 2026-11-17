@@ -26,9 +26,8 @@ bash scripts/start.sh
 | `INTELLIGENCE_API_KEY`        | Runtime key for the Intelligence project. Required with `FREEDUET_INTELLIGENCE=on`.                                                             |
 
 `DATABASE_URL` and `KEY_ENCRYPTION_KEY` stop server startup if missing. The three `INTELLIGENCE_`
-values are checked only with `FREEDUET_INTELLIGENCE=on`, and then as a set, so a partial set is refused
-as a misconfiguration rather than treated as unconfigured. With `FREEDUET_INTELLIGENCE=off` they are not
-read.
+values are required only with `FREEDUET_INTELLIGENCE=on`: the server stops at startup if any of them is
+missing, and its message names the missing ones. With `FREEDUET_INTELLIGENCE=off` they are not read.
 
 **`FREEDUET_INTELLIGENCE`** chooses where conversations and memory are kept. It has no default. Unset,
 empty, or any value other than `on` or `off` stops the server at start, with a message that names the two
@@ -42,7 +41,8 @@ values (capitals and spaces around the value are ignored; D65).
 
 When the settings file has no line for it, `scripts/start.sh` writes `on` if `INTELLIGENCE_API_URL`,
 `INTELLIGENCE_GATEWAY_WS_URL` and `INTELLIGENCE_API_KEY` are all set, which is an install from before this
-switch whose conversations are in Intelligence. Otherwise it writes `off`.
+switch whose conversations are in Intelligence. Otherwise it writes `off`. The desktop app writes
+`off` when the file has no line for it, and never overwrites a value already there, `on` included.
 
 With the one-command start you set neither `DATABASE_URL` nor `KEY_ENCRYPTION_KEY`:
 `scripts/start.sh` makes a password for the database Compose starts and a key for the vault, once, the
