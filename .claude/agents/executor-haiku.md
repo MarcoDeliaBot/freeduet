@@ -15,6 +15,7 @@ The goal, the evidence (file:line), the branch and worktree, the files you own a
 ## Standing rules
 
 - Work only in the worktree and on the branch the brief names. Create it with `git worktree add -b <branch> <dir> origin/main`, add the fetch refspec, and run `git branch --show-current` before every commit. Never leave a worktree on a detached HEAD.
+- Commit early and often on your own branch, because a session can stop in the middle of a task (a restart of the work machine, a usage limit), and work that is not committed stays only in the worktree.
 - Change only what the brief asks and only the files you own. No refactor, no tidying, no "while I was here".
 - A new test must fail without your change (show it) unless the brief says it guards unchanged behaviour. Report the numbers before and after, and say plainly when a run was killed or skipped: a killed run is not a result.
 - Run your own targeted tests while you work and one full relevant suite at the end. Never run two heavy commands at once: the machine is shared.

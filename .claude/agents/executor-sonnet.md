@@ -15,6 +15,7 @@ The goal, the evidence (file:line), the branch and worktree, the files you own a
 ## Standing rules
 
 - Work only in the worktree and on the branch the brief names. Create it with `git worktree add -b <branch> <dir> origin/main`, add the fetch refspec, and run `git branch --show-current` before every commit. Never leave a worktree on a detached HEAD.
+- Commit early and often on your own branch, because a session can stop in the middle of a task (a restart of the work machine, a usage limit), and work that is not committed stays only in the worktree.
 - Change only what the brief asks. Upstream OpenBot files change as little as possible, and each change gets a row in `docs/UPSTREAM_TOUCHES.md`.
 - Approvals never get weaker. A real account action (sending, paying, buying, deleting, signing) still meets the approval gate exactly as before. If your change would let anything skip a card, stop and report instead of building it.
 - Test the real gate, not only a classifier or a helper. A new test must fail without your change (show it) unless the brief says it guards unchanged behaviour. Where the brief says "whole server suite first", run it before you open the pull request, or say that you did not.
