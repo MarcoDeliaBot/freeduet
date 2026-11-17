@@ -1,6 +1,8 @@
 import { afterAll, beforeAll, expect, test } from "bun:test";
 import { randomUUID } from "node:crypto";
 import { eq, inArray } from "drizzle-orm";
+import { Hono } from "hono";
+import type { AppVariables } from "../src/auth/guards";
 import { createAuditStore } from "../src/audit";
 import { createCredentialStore } from "../src/credentials";
 import { createDatabase } from "../src/db/client";
@@ -15,8 +17,13 @@ import { createMemoryIngestion } from "../src/memory/ingestion";
 import { createMemoryStore } from "../src/memory/store";
 import { MemoryRefusedError } from "../src/memory/types";
 import { createPluginStore } from "../src/plugins/store";
-import { replyEnding, replyTail } from "../src/proactive/engine";
+import {
+  type ProactiveEngine,
+  replyEnding,
+  replyTail,
+} from "../src/proactive/engine";
 import { proactiveInitiator } from "../src/proactive/restriction";
+import { createProactiveRoutes } from "../src/proactive/routes";
 import { createProactiveStore } from "../src/proactive/store";
 import {
   ProactiveNotFoundError,
@@ -30,6 +37,7 @@ const owner = `${prefix}-owner`;
 const other = `${prefix}-other`;
 const bot = `${prefix}-bot`;
 const secondBot = `${prefix}-second-bot`;
+const patchBot = `${prefix}-patch-bot`;
 const server = `${prefix}-connector`;
 const ref = `${server}/list_issues`;
 const auditStore = createAuditStore(database);
@@ -54,9 +62,10 @@ beforeAll(async () => {
   await database.insert(agents).values([
     { id: bot, name: "Research Bot", type: "built_in", configuration: {} },
     { id: secondBot, name: "Second Bot", type: "built_in", configuration: {} },
+    { id: patchBot, name: "Patch Bot", type: "built_in", configuration: {} },
   ]);
   await database.insert(agentProfiles).values(
-    [bot, secondBot].map((agentId) => ({
+    [bot, secondBot, patchBot].map((agentId) => ({
       agentId,
       ownerUserId: owner,
       title: agentId,
@@ -83,7 +92,9 @@ beforeAll(async () => {
 });
 afterAll(async () => {
   await database.delete(users).where(inArray(users.id, [owner, other]));
-  await database.delete(agents).where(inArray(agents.id, [bot, secondBot]));
+  await database
+    .delete(agents)
+    .where(inArray(agents.id, [bot, secondBot, patchBot]));
   await database.delete(mcpServers).where(eq(mcpServers.id, server));
   await database.$client.close();
 });
@@ -458,4 +469,100 @@ test("what the person hid is read back for this Bot only, and only since the win
   expect(hidden).not.toContain("Book the kiln technician");
   expect(await proactive.hiddenSince(owner, secondBot, since)).toEqual([]);
   expect(await proactive.hiddenSince(other, bot, since)).toEqual([]);
+});
+
+// A change names only what it changes (follow-up to D78): a default in the patch schema once filled
+// in every field the request left out, so changing the focus switched research back on.
+test("a change to a research setting touches only the fields it names", async () => {
+  const app = new Hono<{ Variables: AppVariables }>();
+  app.route(
+    "/api/proactive",
+    createProactiveRoutes(proactive, {} as ProactiveEngine, async (c, next) => {
+      c.set("actor", { id: owner } as AppVariables["actor"]);
+      await next();
+    }),
+  );
+  const created = await proactive.create(
+    owner,
+    {
+      agentId: patchBot,
+      channelId: `${prefix}-patch-channel`,
+      focus: "invoices",
+      intervalMinutes: 60,
+      enabled: false,
+    },
+    `${prefix}-patch-thread`,
+  );
+  const patch = (body: unknown) =>
+    app.request(`/api/proactive/settings/${created.id}`, {
+      method: "PATCH",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify(body),
+    });
+  const stored = async () => proactive.get(owner, created.id);
+  const before = await stored();
+  expect(before.enabled).toBe(false);
+
+  // Only the focus: still off, no run scheduled, interval kept.
+  expect((await patch({ focus: "quotes" })).status).toBe(200);
+  let row = await stored();
+  expect(row).toMatchObject({
+    enabled: false,
+    focus: "quotes",
+    intervalMinutes: 60,
+  });
+  expect(row.nextRunAt.getTime()).toBe(before.nextRunAt.getTime());
+
+  // Only the interval: still off, no run scheduled, focus kept.
+  expect((await patch({ intervalMinutes: 30 })).status).toBe(200);
+  row = await stored();
+  expect(row).toMatchObject({
+    enabled: false,
+    focus: "quotes",
+    intervalMinutes: 30,
+  });
+  expect(row.nextRunAt.getTime()).toBe(before.nextRunAt.getTime());
+
+  // Nothing named, or a key that is not a setting: refused, nothing changes.
+  expect((await patch({})).status).toBe(400);
+  expect((await patch({ agentId: secondBot })).status).toBe(400);
+  expect((await patch({ enabled: "yes" })).status).toBe(400);
+  expect((await patch({ intervalMinutes: 5 })).status).toBe(400);
+  row = await stored();
+  expect(row).toMatchObject({
+    enabled: false,
+    focus: "quotes",
+    intervalMinutes: 30,
+  });
+
+  // Switching on is its own request: it schedules a run now and keeps focus and interval.
+  const turnedOn = await patch({ enabled: true });
+  expect(turnedOn.status).toBe(200);
+  row = await stored();
+  expect(row).toMatchObject({
+    enabled: true,
+    focus: "quotes",
+    intervalMinutes: 30,
+  });
+  expect(row.nextRunAt.getTime()).toBeGreaterThan(before.nextRunAt.getTime());
+
+  // On already: another change, or enabled true again, keeps the stored next run.
+  const scheduled = row.nextRunAt.getTime();
+  expect((await patch({ enabled: true })).status).toBe(200);
+  expect((await patch({ intervalMinutes: 120 })).status).toBe(200);
+  expect((await patch({ focus: "" })).status).toBe(200);
+  row = await stored();
+  expect(row).toMatchObject({
+    enabled: true,
+    focus: "",
+    intervalMinutes: 120,
+  });
+  expect(row.nextRunAt.getTime()).toBe(scheduled);
+
+  // Switching off keeps focus and interval.
+  expect((await patch({ enabled: false })).status).toBe(200);
+  expect(await stored()).toMatchObject({
+    enabled: false,
+    intervalMinutes: 120,
+  });
 });
