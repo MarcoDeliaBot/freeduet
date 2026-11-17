@@ -78,6 +78,8 @@ export type SnapshotElement = {
    * `javascript:` or `mailto:` link, an anchor on the same page) and for one whose address is not known.
    */
   href?: string;
+  /** An `input`'s type, read from the page after parsing (`secret-masking.ts`), never from the tree. */
+  type?: string;
   disabled?: boolean;
   checked?: boolean;
 };
