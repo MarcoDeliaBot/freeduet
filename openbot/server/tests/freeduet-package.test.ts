@@ -18,6 +18,10 @@ import { fileURLToPath } from "node:url";
 import { parse } from "yaml";
 import { DEFAULT_WORKSPACE_LIMITS } from "../../agent-computer/src/workspace";
 import { OFFER_FILE_TOOL } from "../../shared/member-file";
+import {
+  DAILY_REVIEW_CRON,
+  DAILY_REVIEW_INSTRUCTION,
+} from "../src/freeduet/person-team";
 import { loadTenantPackage } from "../src/tenant-package";
 
 const packageDirectory = fileURLToPath(
@@ -1413,5 +1417,32 @@ describe("D75: prompt sentences for five cases that failed live", () => {
     }
     for (const row of rows)
       expect(String(row.system_prompt)).not.toContain("—");
+  });
+});
+
+// D79 (docs/M1_PLAN.md, section 58): the daily review is offered by Iris in words and created only
+// by her create_routine call after the person says yes. The text is read by a model: these tests pin
+// that the instruction is there, in Iris's prompt only, and carries the server's own words. Not yet
+// run live (case iris-16).
+describe("D79: Iris offers the daily review and sets it up only after a yes", () => {
+  test("only Iris's prompt carries the offer, with the exact instruction and the 08:30 schedule", async () => {
+    const rows = await memberRows();
+    const offer = "Your daily review is off until the person says yes";
+    for (const row of rows) {
+      const prompt = String(row.system_prompt).replace(/\s+/g, " ");
+      expect({ id: row.id, has: prompt.includes(offer) }).toEqual({
+        id: row.id,
+        has: row.id === "freeduet",
+      });
+    }
+    const iris = String(
+      rows.find((row) => row.id === "freeduet")?.system_prompt,
+    ).replace(/\s+/g, " ");
+    expect(iris).toContain(`"${DAILY_REVIEW_INSTRUCTION}"`);
+    expect(iris).toContain(`the schedule ${DAILY_REVIEW_CRON} `);
+    expect(iris).toContain(
+      "so never say the review is on before the person has allowed that card.",
+    );
+    expect(iris).not.toContain("—");
   });
 });

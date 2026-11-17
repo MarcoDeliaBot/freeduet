@@ -300,7 +300,7 @@ describe("the move, from the seeded installation to the address", () => {
       expect(payload.backup).toBe("fake.dump");
       expect(
         (payload.rows as Record<string, number>)["routines.owner_user_id"],
-      ).toBe(2);
+      ).toBe(1);
       expect(JSON.stringify(payload)).not.toContain("/nowhere");
     },
     SLOW,
