@@ -202,7 +202,7 @@ export function createProgramsRoutes(options: {
         {
           error:
             made.reason === "off"
-              ? "Switch programs on this computer on first."
+              ? "Turn on programs on this computer first."
               : "Too many codes. Wait a minute.",
         },
         made.reason === "off" ? 409 : 429,
