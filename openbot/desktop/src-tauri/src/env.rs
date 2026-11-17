@@ -1963,8 +1963,14 @@ HTTPS_PROXY=http://proxy:8080
                 ["FREEDUET_INTELLIGENCE=on"],
                 "{line:?}"
             );
+            // Stable: a second write adds no second line (the secrets differ between runs, so the
+            // whole file is not compared).
             let twice = written_over(&format!("{line}\n"), 2);
-            assert_eq!(twice, once, "{line:?} is stable");
+            assert_eq!(
+                switch_lines(&twice),
+                ["FREEDUET_INTELLIGENCE=on"],
+                "{line:?} twice"
+            );
         }
     }
 
