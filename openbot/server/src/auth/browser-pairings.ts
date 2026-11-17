@@ -7,7 +7,7 @@ import {
 import { and, asc, eq, gt, isNull, ne } from "drizzle-orm";
 import { type AuditStore, recordAuditEvent } from "../audit";
 import type { Database } from "../db/client";
-import { browserPairings } from "../db/schema";
+import { browserPairings, sessions } from "../db/schema";
 import { isLoopbackPeer } from "./peer";
 
 /**
@@ -30,6 +30,13 @@ import { isLoopbackPeer } from "./peer";
  * That path (`adoptLegacy`) exists only so nobody has to pair again; REMOVE IT after 16 February 2027, three
  * months after this ships, by which time every browser in use has been through it (D49 says so too).
  *
+ * THE SESSION (D74). A pairing also records the id of the sign-in session its browser was last seen with
+ * (`session_id`, never the session's token). Revoking the pairing ends that session too, so a lost phone is not
+ * only cut off from the computer but signed out. The id is written when the browser is seen with a session
+ * (`observeSession`, from the middleware in front of every route) and again when it signs in anew. It is never
+ * ended through any other person's pairing, and never the session of the browser that is doing the revoking,
+ * unless that browser is the one being revoked.
+ *
  * WHAT NOTHING HERE WRITES TO A LOG, THE TRAIL OR AN ANSWER: the token, the code, the secret. The audit trail
  * gets the pairing's id, its kind and how it came about.
  */
@@ -50,7 +57,15 @@ export type NewPairing = PairingView & {
   userId: string;
   tokenHash: string;
   secretTag: string;
+  /** The sign-in session the browser was seen with, if it is known when the pairing is made. */
+  sessionId?: string | null;
 };
+
+/** A live pairing as the server reads it: the view, and the session it was last seen with. */
+export type LivePairing = PairingView & { sessionId: string | null };
+
+/** What a revoke did: the pairing is ended; whether its browser's sign-in session was ended with it. */
+export type RevokeResult = { sessionEnded: boolean };
 
 /** Where pairings are kept. A Postgres table in the server, a map in a test. */
 export type PairingStore = {
@@ -61,12 +76,22 @@ export type PairingStore = {
     tokenHash: string;
     secretTag: string;
     now: Date;
-  }): Promise<PairingView | null>;
-  touch(id: string, now: Date): Promise<void>;
+  }): Promise<LivePairing | null>;
+  /** Writes `last seen`, and the session the browser is seen with when there is one. */
+  touch(id: string, now: Date, sessionId?: string): Promise<void>;
   /** Live pairings of one person, oldest first. */
   list(userId: string, secretTag: string, now: Date): Promise<PairingView[]>;
-  /** Ends one live pairing of this person. False where there is none. */
-  revoke(userId: string, id: string, now: Date): Promise<boolean>;
+  /**
+   * Ends one live pairing of this person, and the sign-in session it was last seen with, except `keepSessionId`
+   * (the session of the browser doing the revoking). Null where there is no such pairing. The session is ended
+   * only where it is this person's own.
+   */
+  revoke(
+    userId: string,
+    id: string,
+    now: Date,
+    keepSessionId?: string | null,
+  ): Promise<RevokeResult | null>;
   rename(
     userId: string,
     id: string,
@@ -99,7 +124,7 @@ export function createPgPairingStore(database: Database): PairingStore {
     },
     async findLive({ userId, tokenHash, secretTag, now }) {
       const [row] = await database
-        .select(view)
+        .select({ ...view, sessionId: browserPairings.sessionId })
         .from(browserPairings)
         .where(
           and(
@@ -110,10 +135,10 @@ export function createPgPairingStore(database: Database): PairingStore {
         .limit(1);
       return row ?? null;
     },
-    async touch(id, now) {
+    async touch(id, now, sessionId) {
       await database
         .update(browserPairings)
-        .set({ lastSeenAt: now })
+        .set({ lastSeenAt: now, ...(sessionId ? { sessionId } : {}) })
         .where(eq(browserPairings.id, id));
     },
     list: (userId, secretTag, now) =>
@@ -122,20 +147,33 @@ export function createPgPairingStore(database: Database): PairingStore {
         .from(browserPairings)
         .where(live(userId, secretTag, now))
         .orderBy(asc(browserPairings.createdAt), asc(browserPairings.id)),
-    async revoke(userId, id, now) {
-      const rows = await database
-        .update(browserPairings)
-        .set({ revokedAt: now })
-        .where(
-          and(
-            eq(browserPairings.id, id),
-            eq(browserPairings.userId, userId),
-            isNull(browserPairings.revokedAt),
-          ),
-        )
-        .returning({ id: browserPairings.id });
-      return rows.length > 0;
-    },
+    revoke: (userId, id, now, keepSessionId) =>
+      // One transaction: the pairing is not ended with its session left alive because the second step failed.
+      database.transaction(async (tx) => {
+        const rows = await tx
+          .update(browserPairings)
+          .set({ revokedAt: now })
+          .where(
+            and(
+              eq(browserPairings.id, id),
+              eq(browserPairings.userId, userId),
+              isNull(browserPairings.revokedAt),
+            ),
+          )
+          .returning({ sessionId: browserPairings.sessionId });
+        const row = rows[0];
+        if (!row) return null;
+        if (!row.sessionId || row.sessionId === keepSessionId)
+          return { sessionEnded: false };
+        // The person's own session only: the id on the pairing is never trusted alone.
+        const ended = await tx
+          .delete(sessions)
+          .where(
+            and(eq(sessions.id, row.sessionId), eq(sessions.userId, userId)),
+          )
+          .returning({ id: sessions.id });
+        return { sessionEnded: ended.length > 0 };
+      }),
     async rename(userId, id, label, now) {
       const rows = await database
         .update(browserPairings)
@@ -168,7 +206,10 @@ export function createPgPairingStore(database: Database): PairingStore {
 }
 
 /** The same behaviour in memory, for tests and for a deployment with no database. Not shared between processes. */
-export function createMemoryPairingStore(): PairingStore & {
+export function createMemoryPairingStore(
+  /** Ends a person's session where the test has any; true when one ended. */
+  endSession?: (userId: string, sessionId: string) => Promise<boolean>,
+): PairingStore & {
   rows: Map<string, NewPairing & { revokedAt: Date | null }>;
 } {
   const rows = new Map<string, NewPairing & { revokedAt: Date | null }>();
@@ -200,12 +241,14 @@ export function createMemoryPairingStore(): PairingStore & {
           row.tokenHash === tokenHash &&
           isLive(row, secretTag, now)
         )
-          return toView(row);
+          return { ...toView(row), sessionId: row.sessionId ?? null };
       return null;
     },
-    async touch(id, now) {
+    async touch(id, now, sessionId) {
       const row = rows.get(id);
-      if (row) row.lastSeenAt = now;
+      if (!row) return;
+      row.lastSeenAt = now;
+      if (sessionId) row.sessionId = sessionId;
     },
     async list(userId, secretTag, now) {
       return [...rows.values()]
@@ -213,11 +256,14 @@ export function createMemoryPairingStore(): PairingStore & {
         .sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime())
         .map(toView);
     },
-    async revoke(userId, id, now) {
+    async revoke(userId, id, now, keepSessionId) {
       const row = rows.get(id);
-      if (!row || row.userId !== userId || row.revokedAt) return false;
+      if (!row || row.userId !== userId || row.revokedAt) return null;
       row.revokedAt = now;
-      return true;
+      const session = row.sessionId;
+      if (!session || session === keepSessionId || !endSession)
+        return { sessionEnded: false };
+      return { sessionEnded: await endSession(userId, session) };
     },
     async rename(userId, id, label, now) {
       const row = rows.get(id);
@@ -346,7 +392,13 @@ export type PairingOptions = {
   now?: () => number;
 };
 
-export type Standing = { id: string; kind: PairingKind; label: string };
+export type Standing = {
+  id: string;
+  kind: PairingKind;
+  label: string;
+  /** The session this browser's pairing was last seen with (D74), as far as the server knows. */
+  sessionId: string | null;
+};
 
 /** The result of trying a code. */
 export type RedeemOutcome =
@@ -364,6 +416,8 @@ export function createBrowserPairings(options: PairingOptions) {
   // A token adopted during this very request (the old cookie, upgraded), read before the cookie.
   const adopted = new WeakMap<Request, string>();
   const lastTouched = new Map<string, number>();
+  // When `observeSession` last settled each browser's cookies (a hash of the header, never the header).
+  const observed = new Map<string, number>();
   // One live code per person, so a new one replaces the last. Held in memory: a code outlives two minutes
   // nowhere, and a restart in between is simply a new code.
   const codes = new Map<string, { hash: string; expires: number }>();
@@ -460,7 +514,11 @@ export function createBrowserPairings(options: PairingOptions) {
      * says, never of whoever owns the token: a token of person A never makes person B at the computer.
      * A store that fails throws, and every caller counts that as remote.
      */
-    async standing(request: Request, userId: string): Promise<Standing | null> {
+    async standing(
+      request: Request,
+      userId: string,
+      sessionId?: string,
+    ): Promise<Standing | null> {
       const tokens = [
         ...(adopted.has(request) ? [adopted.get(request) as string] : []),
         ...cookieValues(request, cookie),
@@ -474,11 +532,19 @@ export function createBrowserPairings(options: PairingOptions) {
         });
         if (!row) continue;
         const last = lastTouched.get(row.id) ?? 0;
-        if (now() - last >= TOUCH_EVERY_MS) {
+        // A different session than the one on record (the browser signed in anew) is written at once; the rest is
+        // throttled like `last seen`.
+        const changed = sessionId !== undefined && sessionId !== row.sessionId;
+        if (changed || now() - last >= TOUCH_EVERY_MS) {
           lastTouched.set(row.id, now());
-          await store.touch(row.id, new Date(now())).catch(() => {});
+          await store.touch(row.id, new Date(now()), sessionId).catch(() => {});
         }
-        return { id: row.id, kind: row.kind, label: row.label };
+        return {
+          id: row.id,
+          kind: row.kind,
+          label: row.label,
+          sessionId: sessionId ?? row.sessionId,
+        };
       }
       return null;
     },
@@ -493,6 +559,39 @@ export function createBrowserPairings(options: PairingOptions) {
       const made = await create(userId, kind, label);
       await record("pairing.redeemed", userId, made.id, { kind, via });
       return made;
+    },
+
+    /**
+     * D74: remembers which sign-in session this browser's pairing is seen with, so that revoking it can end that
+     * session. Called by the middleware in front of every route, for a request that holds a pairing cookie. `resolve`
+     * says who and which session the request has (the call every guard makes); it is asked at most once a minute for
+     * the same cookies, and at once when they change (a new sign-in). A fault here is never the request's: it is
+     * swallowed, and the next request tries again.
+     */
+    async observeSession(
+      request: Request,
+      resolve: () => Promise<{ userId: string; sessionId: string } | null>,
+    ): Promise<void> {
+      const held = cookieValues(request, cookie).some((value) =>
+        TOKEN_SHAPE.test(value),
+      );
+      if (!held) return;
+      const key = sha256(request.headers.get("cookie") ?? "");
+      const current = now();
+      const seen = observed.get(key);
+      if (seen !== undefined && current - seen < TOUCH_EVERY_MS) return;
+      try {
+        const who = await resolve();
+        if (!who) return;
+        // `standing` writes the session when it is not the one on record.
+        if (await this.standing(request, who.userId, who.sessionId))
+          observed.set(key, current);
+        if (observed.size > 2000)
+          for (const [other, at] of observed)
+            if (current - at >= TOUCH_EVERY_MS) observed.delete(other);
+      } catch {
+        // Not the request's business.
+      }
     },
 
     clearHeaders(): string[] {
@@ -600,9 +699,28 @@ export function createBrowserPairings(options: PairingOptions) {
 
     list: (userId: string) => store.list(userId, tag, new Date(now())),
 
-    async revoke(userId: string, id: string, by: string): Promise<boolean> {
-      const done = await store.revoke(userId, id, new Date(now()));
-      if (done) await record("pairing.revoked", userId, id, { by });
+    /**
+     * Ends one pairing of this person and, with it, the sign-in session of that browser (D74). `keepSessionId` is the
+     * session of the browser doing the revoking: it is not ended, unless that browser is the one revoked (the caller
+     * then passes nothing). Null where there is no such live pairing.
+     */
+    async revoke(
+      userId: string,
+      id: string,
+      by: string,
+      keepSessionId?: string | null,
+    ): Promise<RevokeResult | null> {
+      const done = await store.revoke(
+        userId,
+        id,
+        new Date(now()),
+        keepSessionId,
+      );
+      if (done)
+        await record("pairing.revoked", userId, id, {
+          by,
+          sessionEnded: done.sessionEnded,
+        });
       return done;
     },
 

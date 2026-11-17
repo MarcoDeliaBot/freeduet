@@ -15,7 +15,8 @@ import type { PairingGate } from "./install-secret";
  *    session's and nothing in the body names anybody, so a code is only ever good for the person who made it.
  *    The code travels in the body of a POST, never in a URL (a URL goes to logs and to Referer headers).
  *  - `PATCH /:id` and `DELETE /:id`: rename and revoke. A `computer` pairing may do either to any pairing of its
- *    person; a `device` only to itself.
+ *    person; a `device` only to itself. Revoking also ends the sign-in session that browser was last seen with
+ *    (D74), never the revoking browser's own unless it is the one revoked.
  *
  * Every answer is `no-store`. Nothing here returns a token or a hash, and nothing logs a code.
  */
@@ -189,7 +190,14 @@ export function createBrowserPairingRoutes(
     const standing = await pairings
       .standing(context.req.raw, me)
       .catch(() => null);
-    const done = await pairings.revoke(me, id, standing?.id ?? "unknown");
+    // D74: the revoke also ends the sign-in session of the browser that held the pairing. Never the session of the
+    // browser doing the revoking, unless that is the browser revoked.
+    const done = await pairings.revoke(
+      me,
+      id,
+      standing?.id ?? "unknown",
+      allowed.self ? null : (standing?.sessionId ?? null),
+    );
     if (!done)
       return context.json(
         { error: "There is no such pairing." },
@@ -204,10 +212,13 @@ export function createBrowserPairingRoutes(
     if (allowed.self)
       for (const header of pairings.clearHeaders())
         headers.append("Set-Cookie", header);
-    return new Response(JSON.stringify({ revoked: true }), {
-      status: 200,
-      headers,
-    });
+    return new Response(
+      JSON.stringify({ revoked: true, signedOut: done.sessionEnded }),
+      {
+        status: 200,
+        headers,
+      },
+    );
   });
 
   return routes;

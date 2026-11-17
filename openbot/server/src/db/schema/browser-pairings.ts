@@ -1,5 +1,5 @@
 import { index, pgTable, text, timestamp } from "drizzle-orm/pg-core";
-import { users } from "./core";
+import { sessions, users } from "./core";
 
 /**
  * Browsers paired with the computer FreeDuet runs on (docs/M1_PLAN.md D49), with sign-in only.
@@ -32,6 +32,15 @@ export const browserPairings = pgTable(
       .defaultNow(),
     expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
     revokedAt: timestamp("revoked_at", { withTimezone: true }),
+    /**
+     * The sign-in session this browser was last seen with (docs/M1_PLAN.md D74), so that revoking the pairing can end
+     * that session too. Set when the pairing is seen with a session, and again whenever the browser signs in anew.
+     * Null until the first time, and again once the session is gone (`on delete set null`: sign-out, expiry, SSO
+     * revocation, or this very revoke). Only an id, never the session's token.
+     */
+    sessionId: text("session_id").references(() => sessions.id, {
+      onDelete: "set null",
+    }),
   },
   (table) => [index("browser_pairings_user_idx").on(table.userId)],
 );
