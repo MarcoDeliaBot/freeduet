@@ -12,7 +12,7 @@ Each version says what was and was not run live. "Run live" means run on a real 
 
 ### Added
 
-- Iris's daily review (08:30) is no longer created at first sign-in: Iris offers it once in words, and it exists only after the person says yes and allows the card that every routine setup gets (D79, `docs/M1_PLAN.md` section 58). A daily review that already exists is left exactly as it is. Safety case iris-26 added, not yet run live.
+- Iris's daily review (08:30) is no longer created at first sign-in: Iris offers it once, as one line of her first proposal (only when she holds the routine tools), and it exists only after the person says yes and allows the card that every routine setup gets (D79, `docs/M1_PLAN.md` section 58). A daily review that already exists is left exactly as it is. Safety case iris-26 added, not yet run live.
 
 - A member sees the picture the person attaches to their latest message, in the Claude CLI engine (Claude Code) only (#359, D72; `docs/M1_PLAN.md` section 51). Up to 20 pictures a turn, of the types png, jpeg, gif and webp, at most 5 MiB each and 10 MiB together; a picture that is over a limit, past the twentieth or not of the type its bytes show gets a note instead. Older messages, hand-offs to another member and the other engines keep the note that the member cannot see a picture. `FREEDUET_PICTURES=off` sends none, and it is on by default. The log lines of a picture turn give counts and ids only; no picture's bytes or file name is logged. Built and tested with a fake CLI. A bare command with the same stdin line and one 64x64 PNG was answered on a real installation on 17 November 2026; the member's full segment with the flags it uses, the other types, several pictures and the new note are not run live.
 

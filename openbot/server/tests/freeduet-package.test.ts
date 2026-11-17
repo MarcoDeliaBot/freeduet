@@ -1446,6 +1446,22 @@ describe("D79: Iris offers the daily review and sets it up only after a yes", ()
     expect(iris).not.toContain("—");
   });
 
+  test("she offers the review only when she holds the routine tools, says she cannot otherwise, and asks once when a yes does not name it", async () => {
+    const iris = String(
+      (await memberRows()).find((row) => row.id === "freeduet")?.system_prompt,
+    ).replace(/\s+/g, " ");
+    expect(iris).toContain(
+      "only when create_routine and list_routines are among your tools in this turn, one line that offers the daily review",
+    );
+    expect(iris).toContain(
+      "When the person asks for the daily review and you do not hold create_routine and list_routines, say in one sentence that you cannot set up routines yet and that Routines is switched on for you under Plugins, and create nothing.",
+    );
+    expect(iris).toContain(
+      "A yes that answers the proposal without naming the daily review is not a yes to it: ask once whether they want the daily review too, and call create_routine only after a yes to that.",
+    );
+    expect(iris).not.toContain("—");
+  });
+
   test("she calls list_routines before create_routine, creates nothing when the review is there, and offers it unprompted only in the first proposal", async () => {
     const iris = String(
       (await memberRows()).find((row) => row.id === "freeduet")?.system_prompt,
@@ -1467,7 +1483,7 @@ describe("D79: Iris offers the daily review and sets it up only after a yes", ()
       "reply with a proposal of at most six lines and nothing else",
     );
     expect(iris).toContain(
-      "then one line that offers the daily review (a short summary every morning at 08:30",
+      "then, only when create_routine and list_routines are among your tools in this turn, one line that offers the daily review (a short summary every morning at 08:30",
     );
     expect(iris).toContain(
       "and no channelId, so that it posts in this conversation with you",
