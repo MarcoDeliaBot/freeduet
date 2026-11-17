@@ -504,6 +504,19 @@ export function createRemoteLimits(
   auth: Pick<AuthService, "api"> | undefined,
 ): MiddlewareHandler {
   return async (context, next) => {
+    // D74: a browser that holds a pairing cookie says which sign-in session it is using, so that revoking the pairing
+    // can end it. Before the list: the common request is on it. Never refuses and never fails the request.
+    if (auth)
+      await gate.pairings.observeSession(context.req.raw, async () => {
+        const session = (await auth.api.getSession({
+          headers: context.req.raw.headers,
+          query: { disableCookieCache: true },
+        })) as { session?: { id?: unknown }; user: { id: string } } | null;
+        const sessionId = session?.session?.id;
+        return session && typeof sessionId === "string"
+          ? { userId: session.user.id, sessionId }
+          : null;
+      });
     const url = new URL(context.req.url);
     if (remoteMayReach(context.req.method, url.pathname, context.req.path)) {
       return next();
