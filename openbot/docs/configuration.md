@@ -20,13 +20,29 @@ bash scripts/start.sh
 | ----------------------------- | ----------------------------------------------------------------------------------------------------- |
 | `DATABASE_URL`                | PostgreSQL connection string.                                                                         |
 | `KEY_ENCRYPTION_KEY`          | Base64-encoded 32-byte key for encrypted stored credentials. Generate with `openssl rand -base64 32`. |
-| `INTELLIGENCE_API_URL`        | CopilotKit Intelligence API URL.                                                                      |
-| `INTELLIGENCE_GATEWAY_WS_URL` | CopilotKit Intelligence realtime gateway URL.                                                         |
-| `INTELLIGENCE_API_KEY`        | Runtime key for the Intelligence project.                                                             |
+| `FREEDUET_INTELLIGENCE`       | `on` or `off`. No default: see below. |
+| `INTELLIGENCE_API_URL`        | CopilotKit Intelligence API URL. Required with `FREEDUET_INTELLIGENCE=on`.                                                                      |
+| `INTELLIGENCE_GATEWAY_WS_URL` | CopilotKit Intelligence realtime gateway URL. Required with `FREEDUET_INTELLIGENCE=on`.                                                         |
+| `INTELLIGENCE_API_KEY`        | Runtime key for the Intelligence project. Required with `FREEDUET_INTELLIGENCE=on`.                                                             |
 
-All five above stop server startup if missing. The three `INTELLIGENCE_` values are additionally
-checked as a set, so a partial set is refused as a misconfiguration rather than treated as
-unconfigured.
+`DATABASE_URL` and `KEY_ENCRYPTION_KEY` stop server startup if missing. The three `INTELLIGENCE_`
+values are checked only with `FREEDUET_INTELLIGENCE=on`, and then as a set, so a partial set is refused
+as a misconfiguration rather than treated as unconfigured. With `FREEDUET_INTELLIGENCE=off` they are not
+read.
+
+**`FREEDUET_INTELLIGENCE`** chooses where conversations and memory are kept. It has no default. Unset,
+empty, or any value other than `on` or `off` stops the server at start, with a message that names the two
+values (capitals and spaces around the value are ignored; D65).
+
+- `off` keeps them in FreeDuet's own PostgreSQL database and runs without CopilotKit Intelligence. The
+  Intelligence settings are then not checked, `INTELLIGENCE_SERVICE_TOKEN`, `INTELLIGENCE_PROJECT_ID` and
+  `CPK_INTELLIGENCE_LEARNING_CONTAINER_ID` have no effect, and the boot log (`freeduet-intelligence-off`)
+  lists each Intelligence credential that is set.
+- `on` keeps them in CopilotKit Intelligence, and the server then needs the three `INTELLIGENCE_` values.
+
+When the settings file has no line for it, `scripts/start.sh` writes `on` if `INTELLIGENCE_API_URL`,
+`INTELLIGENCE_GATEWAY_WS_URL` and `INTELLIGENCE_API_KEY` are all set, which is an install from before this
+switch whose conversations are in Intelligence. Otherwise it writes `off`.
 
 With the one-command start you set neither `DATABASE_URL` nor `KEY_ENCRYPTION_KEY`:
 `scripts/start.sh` makes a password for the database Compose starts and a key for the vault, once, the
@@ -43,8 +59,10 @@ logs `intelligence-entitlement-not-ready`, naming the fix, when the answer is no
 the product. It needs `MANAGED_AGENT_TOKEN` beside it, or the server refuses to start. Unset, the
 server starts without a managed Bot, the shipped Risk Analyst coworker is omitted, and creating a
 coworker without its own endpoint is refused. A leftover token with no URL is ignored. The
-one-container image has no Bot process, so leave the URL unset there. `scripts/start.sh` points it
-at `agent-langgraph` on a laptop.
+one-container image has no Bot process, so leave the URL unset there. With the router on, which is the
+default (`FREEDUET_ROUTER`), `scripts/start.sh` points it at the agent-freeduet service on `FREEDUET_PORT`,
+4230 by default, unless you set the URL yourself. Only with `FREEDUET_ROUTER=off` does it point at
+`agent-langgraph` on `LANGGRAPH_PORT`.
 
 ## General variables
 
@@ -53,7 +71,7 @@ at `agent-langgraph` on a laptop.
 | `PORT`               | `3001`                             | API server port. `SERVER_PORT` names the same port; set either, or both to the same value, or the server refuses to start. |
 | `OPENBOT_HOST`       | this machine with no sign-in; every interface with sign-in | Where the API server and the app's dev, preview and installed servers listen. A comma-separated list of addresses; `0.0.0.0`, `::` or `*` is every interface. See [Where it listens](#where-it-listens). |
 | `NODE_ENV`           | unset                              | `production` refuses the example `KEY_ENCRYPTION_KEY` and ignores `OPENDUET_FAKE_GOOGLE_URL`. It does not decide whether sign-in is required; see `OPENBOT_SINGLE_USER`. |
-| `TENANT_PACKAGE_DIR` | `../examples/fintech`              | Tenant package directory, resolved from `server/`.                  |
+| `TENANT_PACKAGE_DIR` | `../examples/openduet`              | Tenant package directory, resolved from `server/`. For a FreeDuet install, `scripts/start.sh` uses `../examples/freeduet` when it is unset, and the agent-freeduet service reads its prompts from that directory by default.                  |
 | `DEPLOYMENT_ID`      | the tenant package's id            | Names this deployment inside a shared Intelligence project, and prefixes the identity a Shared app's account is held under at the vendor. That identity is fixed when the app is made Shared, so changing this later does not move it. |
 | `OPENAI_API_KEY`     | unset                              | Default model key for built-in agents and both shipped Bots.        |
 | `OPENAI_BASE_URL`    | unset                              | OpenAI-compatible endpoint that key is spent against. See below.    |
@@ -63,6 +81,8 @@ at `agent-langgraph` on a laptop.
 | `GOOGLE_API_KEY`     | unset                              | Google key when `BOT_PROVIDER=google`.                              |
 | `GOOGLE_GENERATIVE_AI_BASE_URL` | unset                   | Google-compatible endpoint that key is spent against.               |
 | `OPENDUET_FAKE_GOOGLE_URL` | unset                        | Development only. Points the Gmail and Google Calendar connector at `scripts/fake-google` instead of Google, for trying it without a Google account. Ignored, with a warning, when `NODE_ENV=production`; never affects Google Drive. See [Gmail and Google Calendar](plugins/google-workspace.md#trying-it-without-a-google-account). |
+| `OPENDUET_DEV_FAIL_TASKS_WHILE` | unset | Development only. While the file it names exists, every task's turn fails partway through, the way a turn does when its model provider drops. Ignored, with a warning, when `NODE_ENV=production`. |
+| `OPENDUET_TEST_FAIL_STARTED_TASK` | unset | Development only. The first try of each started task whose text contains this text fails, as a turn that ran out of time does. Ignored when `NODE_ENV=production`. |
 | `BOT_MODEL`          | the Bot's row in the spec file   | Model for whichever Bot is starting. Unset, it comes from that Bot's row in [the provider spec file](#the-provider-spec-file); the provider fallbacks are `gpt-5.5`, `claude-sonnet-4-5`, and `gemini-2.5-flash`. |
 | `AGENT_BOT_MODEL`    | `gpt-5.5`                          | Model for the proof-of-concept Bot (`agent-bot`), kept separate because it speaks `/v1/chat/completions` directly and refuses a model it cannot use. |
 | `BOT_RESPONSES_API`  | `false`                            | Makes `agent-langgraph` use the OpenAI Responses API.               |
@@ -70,11 +90,14 @@ at `agent-langgraph` on a laptop.
 | `AGENT_STALL_TIMEOUT_MS` | unset (off)                    | How long a Bot's stream may produce nothing before the turn is ended for it. |
 | `AGENT_TOOL_TOKEN`   | unset; `start.sh` generates one    | The secret a framework Bot presents when it calls a granted tool back through this server. |
 | `APP_DIST_DIR`       | unset                              | Where the built app is, when this process serves it. Set inside the container image; unset in development, where Vite serves the app. |
-| `AUDIT_RETENTION_DAYS` | unset                            | Whole number of days to keep audit rows; older ones are removed. Unset keeps the trail forever. |
+| `AUDIT_RETENTION_DAYS` | unset                            | Whole number of days, at least 1, to keep audit rows; older ones are removed. `0` or less, or a value that is not a whole number, stops the server at start. Unset keeps the trail forever. |
 | `WORKER_SHARED_SECRET` | unset; `start.sh` generates one | The secret the routines worker presents to fire a due routine. Without it the server refuses every handoff, whether or not a worker exists to send one. |
 | `OPENBOT_GENERATIVE_UI` | unset (capability on)               | Set `false` or `0` to stop Bots from answering with generated interfaces. |
 | `OPENBOT_SELF_HOST_BANNER` | unset (banner on)               | Set `false` or `0` to hide the bar offering help self-hosting OpenBot, for everybody. It never shows on a paid Intelligence plan, and each person can also close it for themselves. |
 | `OPENBOT_ACCESSIBILITY_DISABLED` | unset | `true` or `1` stops naming OpenDuet on the analytics the runtime already sends. |
+| `OPENBOT_DISTRIBUTION` | unset | Set to `desktop` by the desktop app. The app's closed metadata (platform, architecture, container engine, OpenBot and OS version) then joins the analytics events the runtime already sends. Any other value adds nothing. |
+| `FREEDUET_PICTURES` | unset (on) | FreeDuet. A picture in a person's latest message goes to Claude Code as an image when it can be shown (D72). `off`, `0`, `false` or `no` sends none, and every turn is then as in D68. |
+| `FREEDUET_IMAGE` | `freeduet-agent-freeduet:latest` | FreeDuet. The image the agent-freeduet service runs. Unset, Compose builds it from `agent-freeduet/Dockerfile`. Set it to a published reference, with `IMAGE_PULL_POLICY=missing`, and Compose pulls it instead, as in [Images](#images). |
 | `COMPOSIO_API_KEY`   | unset                              | One key for the whole deployment, for the broker that holds people's accounts for a few hundred apps. Unset, there is nothing to connect, nothing to grant and no Composio tool for a Bot to call; what remains is one row that goes nowhere, under **More apps** on the admin Plugins page, naming this variable. See [Composio](plugins/composio.md). |
 
 **`OPENBOT_GENERATIVE_UI`** enables generated interfaces by default: streamed HTML/CSS/JavaScript
@@ -536,7 +559,7 @@ policies apply. See [OpenAI WebRTC](https://developers.openai.com/api/docs/guide
 **Some variables belong to the desktop app, not to you.** A desktop installation writes these into
 its own deployment's `.env` and owns their values: `OPENBOT_MODEL_OAUTH_FILE`, `CHATGPT_AUTH_FILE`,
 `CLAUDE_CODE_OAUTH_TOKEN` (ignored by FreeDuet), and the `PICKED_HARNESS_*` names that describe the Bot picked during setup
-(`PICKED_HARNESS_IMAGE`, `PICKED_HARNESS_URL`, `PICKED_HARNESS_PORT` and the rest). The server reads
+(`PICKED_HARNESS_IMAGE`, `PICKED_HARNESS_URL`, `PICKED_HARNESS_PORT` and the rest). `PICKED_HARNESS_SOURCE` says which kind it is: `installed` for the published harness image the desktop installs, or `byo` for an AG-UI endpoint the person already runs. With a model plan chosen for built-in Bots, `byo` is refused, because the plan needs the installed harness. The server reads
 `PICKED_HARNESS_IMAGE` and `PICKED_HARNESS_URL` to hand that Bot `MANAGED_AGENT_TOKEN`, and refuses to
 start when they are set without it. When a model provider is connected by OAuth rather than by key, the
 desktop also points `OPENAI_BASE_URL` at OpenBot's own loopback route and sets `OPENAI_API_KEY` to a
@@ -1036,8 +1059,8 @@ them, including a saved off. See [automatic-learning.md](automatic-learning.md).
 | `OPENBOT_LEARNING_AUTO_ASSIGN`           | `false` or `0` stops the server assigning the project's `openbot` container automatically. On otherwise, and off whenever `CPK_INTELLIGENCE_LEARNING_CONTAINER_ID` is set. |
 | `INTELLIGENCE_SERVICE_TOKEN`             | An Intelligence service token that creates the `openbot` Learning container (local evaluation installs only; see [Creating the container](automatic-learning.md#creating-the-container)). Requires `INTELLIGENCE_PROJECT_ID`. |
 | `INTELLIGENCE_PROJECT_ID`                | The numeric ID of the runtime key's Intelligence project, where the service token creates the container. Set both or neither, or the server refuses to start. |
-| `OPENBOT_MEMORY_SOURCE_DEFAULTS`         | `false` or `0` stops OpenBot making each app a person connected into a memory source for the Bots they talk to. On otherwise. Existing sources are left as they are. |
-| `OPENBOT_PROACTIVE_DEFAULTS`             | `false` or `0` stops OpenBot switching on background research for the Bots a person talks to. On otherwise. Existing settings are left as they are. |
+| `OPENBOT_MEMORY_SOURCE_DEFAULTS`         | On by default. Each app a person connected in their own account becomes a memory source for each Bot they talk to, if that Bot can read it. `false` or `0` stops OpenBot making them. Existing sources are left as they are. |
+| `OPENBOT_PROACTIVE_DEFAULTS`             | On by default. For a Bot a person talks to in a conversation with that Bot alone, background research runs every 240 minutes to begin with: a read-only run whose suggestions land in that conversation. `false` or `0` stops OpenBot switching background research on for the Bots a person talks to. Existing settings are left as they are. |
 
 ## OpenTelemetry export
 
