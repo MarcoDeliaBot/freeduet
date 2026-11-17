@@ -1060,7 +1060,7 @@ them, including a saved off. See [automatic-learning.md](automatic-learning.md).
 | `INTELLIGENCE_SERVICE_TOKEN`             | An Intelligence service token that creates the `openbot` Learning container (local evaluation installs only; see [Creating the container](automatic-learning.md#creating-the-container)). Requires `INTELLIGENCE_PROJECT_ID`. |
 | `INTELLIGENCE_PROJECT_ID`                | The numeric ID of the runtime key's Intelligence project, where the service token creates the container. Set both or neither, or the server refuses to start. |
 | `OPENBOT_MEMORY_SOURCE_DEFAULTS`         | On by default. Each app a person connected in their own account becomes a memory source for each Bot they talk to, if that Bot can read it. `false` or `0` stops OpenBot making them. Existing sources are left as they are. |
-| `OPENBOT_PROACTIVE_DEFAULTS`             | On by default. For a Bot a person talks to in a conversation with that Bot alone, background research runs every 240 minutes to begin with: a read-only run whose suggestions land in that conversation. `false` or `0` stops OpenBot switching background research on for the Bots a person talks to. Existing settings are left as they are. |
+| `OPENBOT_PROACTIVE_DEFAULTS`             | Off by default (FreeDuet, D78). `true` or `1` makes OpenBot switch background research on by itself for a Bot a person talks to in a conversation with that Bot alone: a read-only run every 240 minutes to begin with, whose suggestions land in that conversation. Without it, research runs only for a person who switched it on for a Bot. Existing settings are left as they are. |
 
 ## OpenTelemetry export
 
