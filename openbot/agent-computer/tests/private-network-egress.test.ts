@@ -6,12 +6,14 @@ import {
 import { connect, createServer, type Socket } from "node:net";
 import {
   type EgressPolicy,
+  allowLoopbackForTests,
   egressDecision,
   egressFor,
   egressPolicyFor,
   egressShellEnvironment,
   handleEgressPolicyRequest,
   isAlwaysDenied,
+  loopbackAllowedForTests,
   parseEgressPolicy,
   setEgressPolicy,
   setEgressResolver,
@@ -80,6 +82,9 @@ describe("the rule: allow_all and the private ranges", () => {
     // As the API server hands it over: `URL.host`, with the port.
     ["192.168.1.1:8080", "192.168.0.0/16"],
     ["[::1]:3000", "::1/128"],
+    // IPv4-compatible: refused whole, whatever the tail (D73).
+    ["[::127.0.0.1]", "::/96"],
+    ["[::7f00:1]", "::/96"],
   ];
 
   test("every private and special range is refused, by name of the range and of the setting", () => {
@@ -177,7 +182,12 @@ describe("the rule: allow_all and the private ranges", () => {
     );
   });
 
-  test("the person's switch lets all of that through", () => {
+  // The private LAN ranges the switch lifts. Loopback and "this host" are not among them (D73).
+  const isLoopbackSpelling = (range: string) =>
+    ["127.0.0.0/8", "0.0.0.0/8", "::1/128", "::/128", "::/96"].includes(range);
+
+  test("the person's switch lets the private LAN ranges through, and not loopback or this host (D73)", () => {
+    expect(loopbackAllowedForTests()).toBe(false);
     // Without it, the same destinations are refused, so what changes below is the switch and nothing else.
     for (const [host] of refused) {
       expect({ host, ...egressDecision(blocked, host, 443) }).toMatchObject({
@@ -185,17 +195,62 @@ describe("the rule: allow_all and the private ranges", () => {
         allowed: false,
       });
     }
-    for (const [host] of refused) {
+    for (const [host, range] of refused) {
       // Metadata and link-local are not in this list, and are not lifted by it (below).
+      const decision = egressDecision(switchedOn, host, 443);
+      expect({ host, allowed: decision.allowed }).toEqual({
+        host,
+        allowed: !isLoopbackSpelling(range),
+      });
+      if (isLoopbackSpelling(range)) {
+        expect(decision.privateNetwork?.range).toBe(range);
+        expect(decision.reason).toContain("whether or not");
+      }
+    }
+    // The IPv4-carrying forms are judged by the address they carry, so mapped, NAT64 and 6to4
+    // loopback are refused too, and a LAN address in them is still let through.
+    for (const host of [
+      "[::ffff:127.0.0.1]",
+      "[::ffff:7f00:1]",
+      "[64:ff9b::7f00:1]",
+      "[2002:7f00:1::]",
+      "[::ffff:0.0.0.0]",
+    ]) {
       expect({ host, ...egressDecision(switchedOn, host, 443) }).toMatchObject({
         host,
-        allowed: true,
+        allowed: false,
       });
+    }
+    // A name resolves to loopback: refused, whatever else it resolves to.
+    for (const resolved of [
+      ["127.0.0.1"],
+      ["::1"],
+      ["::ffff:127.0.0.1"],
+      ["93.184.216.34", "127.0.0.1"],
+      ["0.0.0.0"],
+    ]) {
+      const decision = egressDecision(
+        switchedOn,
+        "rebind.example.test",
+        443,
+        resolved,
+      );
+      expect({ resolved, allowed: decision.allowed }).toEqual({
+        resolved,
+        allowed: false,
+      });
+      expect(decision.reason).toContain(
+        "rebind.example.test, which resolves to",
+      );
     }
     expect(
       egressDecision(switchedOn, "nas.example.test", 443, ["192.168.1.20"])
         .allowed,
     ).toBe(true);
+    // A computer's own address, where the switch is off, keeps the sentence it always had.
+    expect(egressDecision(blocked, "127.0.0.1", 443).reason).toBe(
+      '127.0.0.1 is a loopback address (127.0.0.0/8). A Bot\'s computer may not reach the home or office network unless "Home and office network access" is switched on for its owner.',
+    );
   });
 
   const metadata = [
@@ -551,26 +606,27 @@ describe("the filter makes the connection itself", () => {
     }
   });
 
-  test("the person's switch lets the same destinations through, and the next connection sees it", async () => {
+  test("the person's switch does not open loopback in any spelling (D73), by CONNECT or plain request, and nothing is connected to", async () => {
     const target = await origin();
     const filter = await startEgressFilter({ env: {} });
     setEgressPolicy(BOT, blocked);
-    const reachable = [
+    const spellings = [
       `127.0.0.1:${target.port}`,
       `2130706433:${target.port}`,
       `0x7f.1:${target.port}`,
       `127.1:${target.port}`,
       `0177.0.0.1:${target.port}`,
+      `[::ffff:127.0.0.1]:${target.port}`,
+      `[::ffff:7f00:1]:${target.port}`,
       `localhost:${target.port}`,
+      `foo.localhost:${target.port}`,
+      `0.0.0.0:${target.port}`,
+      `0:${target.port}`,
+      `[::127.0.0.1]:${target.port}`,
+      `[::7f00:1]:${target.port}`,
     ];
+    expect(loopbackAllowedForTests()).toBe(false);
     try {
-      for (const authority of reachable) {
-        expect(status(await tunnel(filter.port, authority))).toBe(
-          "HTTP/1.1 403 Forbidden",
-        );
-      }
-      expect(target.reached()).toBe(0);
-
       // Pushed to the running computer, as the API server does it.
       const pushed = await handleEgressPolicyRequest(
         BOT,
@@ -580,27 +636,71 @@ describe("the filter makes the connection itself", () => {
         }),
       );
       expect(pushed.status).toBe(200);
-      for (const authority of reachable) {
-        expect({
+      for (const authority of spellings) {
+        const tunnelled = await tunnel(filter.port, authority);
+        expect({ authority, status: status(tunnelled) }).toEqual({
           authority,
-          status: status(await tunnel(filter.port, authority)),
-        }).toEqual({
-          authority,
-          status: "HTTP/1.1 200 Connection Established",
+          status: "HTTP/1.1 403 Forbidden",
         });
-        expect(await fetchVia(filter.port, authority)).toContain("reached");
+        // `foo.localhost` does not resolve in this sandbox, so it is refused as unresolved here.
+        if (!authority.startsWith("foo.")) {
+          expect(tunnelled).toContain("loopback");
+          expect(tunnelled).toContain("whether or not");
+        }
+        expect(status(await fetchVia(filter.port, authority))).toBe(
+          "HTTP/1.1 403 Forbidden",
+        );
       }
-      expect(target.reached()).toBeGreaterThanOrEqual(reachable.length * 2);
-
-      // And off again: the very next connection is refused.
-      setEgressPolicy(BOT, blocked);
-      expect(
-        status(await tunnel(filter.port, `127.0.0.1:${target.port}`)),
-      ).toBe("HTTP/1.1 403 Forbidden");
+      expect(target.reached()).toBe(0);
     } finally {
       await target.close();
     }
   });
+
+  test("a name that resolves to loopback is refused with the switch on, and never connected to (rebinding)", async () => {
+    expect(loopbackAllowedForTests()).toBe(false);
+    const target = await origin();
+    const filter = await startEgressFilter({ env: {} });
+    setEgressPolicy(BOT, switchedOn);
+    setEgressResolver(async (host) =>
+      host === "rebind.example.test"
+        ? ["127.0.0.1"]
+        : host === "mixed.example.test"
+          ? ["93.184.216.34", "127.0.0.1"]
+          : host === "mapped.example.test"
+            ? ["::ffff:127.0.0.1"]
+            : host === "v6.example.test"
+              ? ["::1"]
+              : [],
+    );
+    try {
+      for (const name of [
+        "rebind.example.test",
+        "mixed.example.test",
+        "mapped.example.test",
+        "v6.example.test",
+      ]) {
+        const answer = await tunnel(filter.port, `${name}:${target.port}`);
+        expect({ name, status: status(answer) }).toEqual({
+          name,
+          status: "HTTP/1.1 403 Forbidden",
+        });
+        expect(answer).toContain("resolves to");
+        expect(answer).toContain("loopback");
+        expect(
+          status(await fetchVia(filter.port, `${name}:${target.port}`)),
+        ).toBe("HTTP/1.1 403 Forbidden");
+      }
+      expect(target.reached()).toBe(0);
+    } finally {
+      await target.close();
+    }
+  });
+
+  // No socket-level case for the LAN with the switch on: it would dial an address nobody here owns,
+  // and on a CI runner that hangs instead of failing fast. The decision-level table above ("the
+  // person's switch lets the private LAN ranges through ...") is the proof, and it covers a name that
+  // resolves to a LAN address. The LAN path through a real socket is not proven by a test.
 
   test("with the switch on, the address that was checked is the address connected to", async () => {
     const target = await origin();
@@ -613,6 +713,8 @@ describe("the filter makes the connection itself", () => {
     ).toBe("HTTP/1.1 403 Forbidden");
     expect(target.reached()).toBe(0);
     setEgressPolicy(BOT, switchedOn);
+    // The fixture is on loopback, which the switch does not open (D73): only the test's hook does.
+    allowLoopbackForTests(true);
     let lookups = 0;
     // Answers once. A connection made by name would ask again, and find nothing.
     setEgressResolver(async (host) => {
@@ -626,6 +728,7 @@ describe("the filter makes the connection itself", () => {
       ).toContain("reached");
       expect(lookups).toBe(1);
     } finally {
+      allowLoopbackForTests(false);
       await target.close();
     }
   });
@@ -687,6 +790,7 @@ describe("the filter makes the connection itself", () => {
     const filter = await startEgressFilter({ env: {} });
     setEgressPolicy("a", switchedOn);
     setEgressPolicy("b", blocked);
+    allowLoopbackForTests(true); // the fixture is on loopback (D73)
     try {
       expect(
         status(await tunnel(filter.port, `127.0.0.1:${target.port}`, true)),
@@ -696,6 +800,7 @@ describe("the filter makes the connection itself", () => {
         status(await tunnel(filter.port, `127.0.0.1:${target.port}`, true)),
       ).toBe("HTTP/1.1 200 Connection Established");
     } finally {
+      allowLoopbackForTests(false);
       await target.close();
     }
   });
@@ -717,10 +822,11 @@ describe("the filter makes the connection itself", () => {
       expect(
         status(await tunnel(filter.port, `127.0.0.1:${target.port}`)),
       ).toBe("HTTP/1.1 403 Forbidden");
+      // D73: a pushed policy, switch on or off, never opens loopback; only a computer pushed nothing does.
       setEgressPolicy(BOT, switchedOn);
       expect(
         status(await tunnel(filter.port, `127.0.0.1:${target.port}`)),
-      ).toBe("HTTP/1.1 200 Connection Established");
+      ).toBe("HTTP/1.1 403 Forbidden");
     } finally {
       await target.close();
     }

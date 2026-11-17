@@ -1,4 +1,11 @@
-import { afterEach, describe, expect, test } from "bun:test";
+import {
+  afterAll,
+  afterEach,
+  beforeAll,
+  describe,
+  expect,
+  test,
+} from "bun:test";
 import { createServer, type IncomingMessage, type Server } from "node:http";
 import { connect, type Socket } from "node:net";
 import {
@@ -11,7 +18,12 @@ import {
   setEgressResolver,
   startEgressFilter,
   stopEgressFilter,
+  allowLoopbackForTests,
 } from "../src/egress";
+
+// D73: the filter refuses loopback under every policy, and these cases serve their fixtures from it.
+beforeAll(() => allowLoopbackForTests(true));
+afterAll(() => allowLoopbackForTests(false));
 
 describe("the network policy rules", () => {
   test("allow_all and deny_all ignore the rules", () => {
