@@ -4,6 +4,7 @@ claude_cli.py still holds the command, the environment and the failure text."""
 
 import asyncio
 import logging
+import os
 from contextlib import suppress
 
 from . import agui, claude_cli
@@ -16,6 +17,12 @@ log = logging.getLogger("freeduet.segment")
 
 MAX_STDERR = 64 * 1024
 PIPE_DRAIN_SECONDS = 2.0
+
+
+def pictures_on() -> bool:
+    """D72's switch: `FREEDUET_PICTURES=off` sends no picture to Claude Code, whatever the turn holds. Set it
+    if a live turn with a picture fails and the cause is not yet found: the note of D68 is then used again."""
+    return os.environ.get("FREEDUET_PICTURES", "").strip().lower() not in {"off", "0", "false", "no"}
 
 
 def mcp_state(parser: StreamParser, offered) -> str:
@@ -80,9 +87,19 @@ class ClaudeEngine(EngineAdapter):
         readers: tuple[asyncio.Task, ...] = ()
         process = None
 
+        pictures = ctx.pictures if ctx.picture_prompt is not None and pictures_on() else ()
+
         def log_the_end() -> None:
             if stderr and parser.final is None:
-                log.info("claude stderr: %s", bytes(stderr[-2000:]).decode("utf-8", errors="replace"))
+                tail = bytes(stderr[-2000:]).decode("utf-8", errors="replace")
+                log.info("claude stderr: %s", claude_cli.without_pictures(tail, pictures))
+            if pictures and not health.answered:
+                # The one place a failure of the stream-json input with pictures shows in the logs: counts only.
+                log.warning(
+                    "claude gave no answer to a turn with %d picture(s) sent as stream-json input "
+                    "(thread %s, run %s); FREEDUET_PICTURES=off turns the pictures off",
+                    len(pictures), ctx.diagnostics.thread_id, ctx.diagnostics.run_id,
+                )
             if parser.unavailable:
                 # The call went nowhere: the CLI answered it itself, so no stored transcript shows it.
                 about = ctx.diagnostics
@@ -102,16 +119,28 @@ class ClaudeEngine(EngineAdapter):
         ctx.diagnostics.at_close.append(log_the_end)
         try:
             config = claude_cli.write_mcp_config(ctx.directory, gate.port, gate.secret)
-            command = claude_cli.build_command(self._binary or claude_cli.claude_bin(), config, ctx.system, ctx.directory)
+            command = claude_cli.build_command(
+                self._binary or claude_cli.claude_bin(), config, ctx.system, ctx.directory, bool(pictures)
+            )
             try:
                 process = await claude_cli.start(command, ctx.work, self.child_env())
             except OSError:
                 return Outcome(agui.run_error(MISSING_SENTENCE))
             sink.started()
+            if pictures:
+                # Counts and types only: never a byte of a picture, and never a name the person gave it.
+                log.info(
+                    "claude gets %d picture(s) as stream-json input (%s, %d bytes; thread %s, run %s)",
+                    len(pictures), ", ".join(sorted({p.media_type for p in pictures})),
+                    sum(p.size for p in pictures), ctx.diagnostics.thread_id, ctx.diagnostics.run_id,
+                )
 
             async def feed_stdin():
                 with suppress(BrokenPipeError, ConnectionError):
-                    process.stdin.write(ctx.prompt.encode("utf-8"))
+                    # stdin only (D7): the pictures are in this one write and in no file, argument or variable of the CLI.
+                    process.stdin.write(
+                        claude_cli.picture_input(ctx.picture_prompt, pictures) if pictures else ctx.prompt.encode("utf-8")
+                    )
                     await process.stdin.drain()
                     process.stdin.close()
 
@@ -143,7 +172,7 @@ class ClaudeEngine(EngineAdapter):
                 await asyncio.wait_for(process.wait(), 5)
             with suppress(TimeoutError, asyncio.CancelledError):
                 await asyncio.wait_for(asyncio.shield(stderr_task), 2)
-            said = bytes(stderr).decode("utf-8", errors="replace")
+            said = claude_cli.without_pictures(bytes(stderr).decode("utf-8", errors="replace"), pictures)
             note_stream_end(health, parser, said, process.returncode)
             return Outcome(claude_cli.failure_event(parser, said, process.returncode) or agui.run_error(
                 f"{claude_cli.LABEL} ended without an answer."

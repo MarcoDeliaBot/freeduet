@@ -154,9 +154,39 @@ def _system_args(system_text: str, directory: Path) -> list[str]:
     return ["--append-system-prompt-file", str(path)]
 
 
-def build_command(executable: str, mcp_config: Path, system_text: str, directory: Path) -> list[str]:
-    """A member's segment: the lockdown, the freeduet bridge as the only MCP server."""
-    return [executable, *LOCKDOWN_ARGS, "--mcp-config", str(mcp_config), *_system_args(system_text, directory)]
+# D72. A turn that carries a picture reads stdin as stream-json: one user line, then end of file.
+PICTURE_INPUT_ARGS = ["--input-format", "stream-json"]
+
+
+def build_command(executable: str, mcp_config: Path, system_text: str, directory: Path, pictures: bool = False) -> list[str]:
+    """A member's segment: the lockdown, the freeduet bridge as the only MCP server. With `pictures` the
+    CLI reads its input as stream-json (D72); without, the command is what it always was."""
+    extra = PICTURE_INPUT_ARGS if pictures else []
+    return [executable, *LOCKDOWN_ARGS, *extra, "--mcp-config", str(mcp_config), *_system_args(system_text, directory)]
+
+
+def picture_input(prompt: str, pictures) -> bytes:
+    """The one stdin line of a turn with pictures: the user's message as the pictures (image blocks, base64,
+    in order) and then the rendered prompt as one text block. The shape the CLI was shown to read on
+    17 November 2026 (D72). Built in memory and written to the pipe; it is never logged or put in a file."""
+    content = [
+        {"type": "image", "source": {"type": "base64", "media_type": picture.media_type, "data": picture.data}}
+        for picture in pictures
+    ]
+    content.append({"type": "text", "text": prompt})
+    line = {"type": "user", "message": {"role": "user", "content": content}}
+    return (json.dumps(line, ensure_ascii=False) + "\n").encode("utf-8")
+
+
+_LONG_BASE64 = re.compile(r"[A-Za-z0-9+/=]{200,}")
+
+
+def without_pictures(text: str, pictures) -> str:
+    """`text` with every picture's bytes taken out, for anything that may be logged or shown: the CLI could
+    echo part of a line it could not read on its stderr."""
+    for picture in pictures:
+        text = text.replace(picture.data, "[picture data]")
+    return _LONG_BASE64.sub("[picture data]", text) if pictures else text
 
 
 def build_text_command(executable: str, system_text: str, model: str | None, directory: Path) -> list[str]:

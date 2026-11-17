@@ -288,7 +288,9 @@ async def run_segment(run: RunInput, member: Member, notes: SegmentNotes | None 
             work.mkdir()
             port = await host.start()
             ready = asyncio.get_running_loop().create_future()
-            turn = TurnContext(rendered.system, rendered.prompt, directory, work, diagnostics)
+            turn = TurnContext(
+                rendered.system, rendered.prompt, directory, work, diagnostics, rendered.pictures, rendered.picture_prompt
+            )
             engine_task = asyncio.create_task(engine.run_turn(turn, _InboxSink(inbox, ready), Gate(port, host.secret)))
             await asyncio.wait({engine_task, ready}, return_when=asyncio.FIRST_COMPLETED)
             if not ready.done():
