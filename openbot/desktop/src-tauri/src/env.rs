@@ -988,10 +988,13 @@ const DEFAULT_ONLY: [&str; 1] = ["FREEDUET_INTELLIGENCE"];
 /// What `bun --env-file` (which starts the server, `stack.rs`) reads for `name` in this file, or `None`
 /// when no line sets it. Read the way Bun reads it, checked against Bun itself: an optional leading
 /// `export` and whitespace around the key, the last assignment wins, a quoted value ends at its closing
-/// quote (an unterminated one is taken as written), an unquoted value ends at the first `#`, and the key
-/// is case-sensitive. The result is trimmed, as the server trims the switch.
+/// quote (an unterminated one is taken as written), an unquoted value ends at the first `#`, a leading
+/// byte order mark is ignored, and the key is case-sensitive. The result is trimmed, as the server trims the switch.
 fn value_bun_reads(existing: &str, name: &str) -> Option<String> {
     let mut found = None;
+    // Bun drops one leading UTF-8 byte order mark (Windows Notepad writes one): the first line is
+    // read as if it were not there. `write` keeps that line byte for byte, BOM included.
+    let existing = existing.strip_prefix('\u{feff}').unwrap_or(existing);
     for line in existing.lines() {
         let line = line.trim_start();
         if line.starts_with('#') {
@@ -1980,6 +1983,63 @@ HTTPS_PROXY=http://proxy:8080
         assert!(!kept.contains("FREEDUET_INTELLIGENCE=on"));
         let rewritten = written_over("FREEDUET_INTELLIGENCE=off\nFREEDUET_INTELLIGENCE=\n", 1);
         assert_eq!(switch_lines(&rewritten), ["FREEDUET_INTELLIGENCE=on"]);
+    }
+
+    /// The file's bytes after composing and writing over `existing`, byte for byte.
+    fn written_bytes_over(existing: &[u8], times: usize) -> Vec<u8> {
+        let dir = temp_root("env-bom");
+        std::fs::create_dir_all(&dir).unwrap();
+        let path = dir.join(".env");
+        std::fs::write(&path, existing).unwrap();
+        for _ in 0..times {
+            let env = compose(
+                &intelligence(),
+                &Model::default(),
+                &engine_status(None),
+                &Ports::default(),
+                &pinned(),
+                None,
+                &BTreeMap::new(),
+            );
+            write(&path, &env, &BTreeMap::new()).unwrap();
+        }
+        let bytes = std::fs::read(&path).unwrap();
+        std::fs::remove_dir_all(dir).unwrap();
+        bytes
+    }
+
+    #[test]
+    fn a_byte_order_mark_before_the_first_line_does_not_hide_the_value() {
+        for line in [
+            "FREEDUET_INTELLIGENCE=off",
+            "export FREEDUET_INTELLIGENCE=off",
+            "FREEDUET_INTELLIGENCE=of",
+        ] {
+            let existing = format!("\u{feff}{line}\n");
+            for times in [1, 2] {
+                let bytes = written_bytes_over(existing.as_bytes(), times);
+                let text = String::from_utf8(bytes).unwrap();
+                assert!(
+                    text.starts_with(&existing),
+                    "{line:?}: the BOM line stays first, byte for byte, after {times} write(s)"
+                );
+                assert_eq!(
+                    text.matches("FREEDUET_INTELLIGENCE").count(),
+                    1,
+                    "{line:?}: no second line after {times} write(s)"
+                );
+            }
+        }
+    }
+
+    #[test]
+    fn a_byte_order_mark_before_another_key_still_gets_on_once() {
+        let existing = "\u{feff}OPENAI_API_KEY=sk-somebodys-own\n";
+        for times in [1, 2] {
+            let text = String::from_utf8(written_bytes_over(existing.as_bytes(), times)).unwrap();
+            assert!(text.starts_with(existing), "the BOM line is kept");
+            assert_eq!(switch_lines(&text), ["FREEDUET_INTELLIGENCE=on"]);
+        }
     }
 
     #[test]
