@@ -1,8 +1,8 @@
 # "Done when" on every hand-off
 
-Built on the branch `handoff-done-when` and not yet merged (see "Built so far", section 7). Written 2026-11-15 on origin/main cec4464 and merged with origin/main 0259785 before the pull request.
+Built in PR #243 (see "Built so far", section 7). Written 2026-11-15 on origin/main of that day and merged with origin/main again before the pull request.
 
-Decided by the maintainer on 15 November 2026 (`docs/ROADMAP.md:35`, "Done when" on every hand-off): when Iris passes a job to a member she writes, in one line, what counts as done. The person sees that line under the hand-off, and the answer that comes back is checked against it. This file covers the first slice only.
+Decided by the maintainer on 15 November 2026 (docs/ROADMAP.md, "Done when" on every hand-off): when Iris passes a job to a member she writes, in one line, what counts as done. The person sees that line under the hand-off, and the answer that comes back is checked against it. This file covers the first slice only.
 
 Tags: **[code: path:line]** read on origin/main at cec4464. Code paths start at `openbot/`; doc paths start at the repository root. **[tested]** a test in this branch fails on main's source and passes now. **[verify]** unknown; a real install must settle it.
 
@@ -72,7 +72,7 @@ Done when: <the line>
 - **Whether Iris writes a good line, and whether the asking member judges honestly whether the answer meets it.** Both are a model's behaviour. [verify]
 - The row was drawn in happy-dom, not in a browser. Its spacing (`-mt-2`, `pl-[49px]`, so that the line stands under the label and not under the icon) was chosen by reading `ToolLine`, not by looking at it.
 - The prompts and tool text a model reads were not run live. Which cases to run: `iris-18,iris-19`, then `--member freeduet` (all of Iris's cases), because her prompt changed by one sentence.
-- The `delegate` tool that Iris's prompt names ("if the delegate tool is available") and the `delegate-work` skill are not defined anywhere in this repository's code, so the line is asked for on `message_bot` only (Q9).
+- The `delegate` tool that Iris's prompt names ("if the delegate tool is available") is not defined anywhere in this repository's code. The `delegate-work` skill that names it is defined (`openbot/examples/freeduet/skills.yaml:325`), so the line is asked for on `message_bot` only (Q9).
 
 ## 7. Built so far
 
@@ -92,7 +92,7 @@ Branch `handoff-done-when`. No migration, no setting, no route, no new tool, no 
 | `evals/team/cases.yaml`, `evals/team/fixtures/live/email-greenfield-supplier-list.txt`, `evals/team/run.test.ts`, `evals/team/README.md` | iris-18 and iris-19 (safety), their fixture, the pins 70 → 72 cases and 32 → 33 safety, one test about the two cases, and a "not certified" paragraph |
 | `docs/COMPARISON.md`, `docs/M0_DEMO.md` | The case counts only |
 
-Not changed, by the brief: `docs/ROADMAP.md`, `docs/M1_PLAN.md`, `README.md`, `site/`. `README.md` line 161 and `docs/ROADMAP.md` line 13 still say 70 cases, and the roadmap row still says "Planned": the coordinator moves them.
+Not changed, by the brief: `docs/ROADMAP.md`, `docs/M1_PLAN.md`, `README.md`, `site/`. `README.md` line 161 and `docs/ROADMAP.md` line 13 said 70 cases, and the roadmap row said "Planned": the coordinator moved them. The roadmap row now says "Built; not yet run live", and `README.md` line 161 says 96 cases.
 
 **Tests, on main's source and on the branch.** A `guard:` test pins behaviour that must not change: it passes on main and must keep passing, and several were shown to fail against a planted defect (below).
 
@@ -155,7 +155,7 @@ One planted defect is not caught here: removing the `handoff-` id check in `plug
 | Q5 | What comes next when the answer does not meet the line | Only a sentence in the asker's report | (a) as built; (b) the asker offers to ask again, in words; (c) a button; (d) one automatic second round | (b), then (c) with the plan work | A second round of a hand-off that sent something must not send it twice; that belongs with the plan and its checks |
 | Q6 | The audit trail | The line is on the `agent.handoff_offered` row | (a) as built; (b) leave the trail as it was | (a) | The hop row is dropped after a day; the trail is the only lasting record of what counted as done. Remove one line to undo |
 | Q7 | Where the person sees it | Always under the row | (a) as built; (b) only when the row is opened | (a) | The roadmap says "under the hand-off" |
-| Q8 | The record of this decision | Not recorded in `docs/M1_PLAN.md`, `docs/ROADMAP.md`, `README.md` or `site/`, by the brief | The coordinator takes a decision number and moves the roadmap row | Do it with the merge | The roadmap row still says "Planned" |
+| Q8 | The record of this decision | Not recorded by the brief; now in `docs/ROADMAP.md` (row "Done when" on every hand-off) | The coordinator takes a decision number and moves the roadmap row | Do it with the merge | The roadmap row said "Planned"; it now says "Built; not yet run live" |
 | Q9 | The `delegate` tool and the `delegate-work` skill | Not touched. The line is asked for on `message_bot` only | (a) as built; (b) ask for it there too, if a runtime offers that tool | (a) | Iris's prompt and that skill say "if the delegate tool is available", and no code in this repository defines a tool of that name: the one hand-off tool that exists here is `message_bot` |
 | Q10 | The planted defects | Run by hand and recorded in section 7 | (a) as built; (b) add them to `scripts/mutation-register.ts` | (b) later | The register is a shared file, so it is a separate small change, and it makes the next change to this code run the same checks |
-| Q11 | The numbers in `README.md` and `docs/ROADMAP.md` | Not edited, by the brief | The coordinator moves "70 cases" to 72, and the cases not yet run live to include iris-18 and iris-19 | Do it with the merge | The two files still say 70 |
+| Q11 | The numbers in `README.md` and `docs/ROADMAP.md` | Not edited, by the brief | The coordinator moves "70 cases" to 72, and the cases not yet run live to include iris-18 and iris-19 | Do it with the merge | The two files said 70 when the brief was written; both now say 96 cases |

@@ -2,7 +2,7 @@
 
 **Decided 14 November 2026: no translation of the app for now.** Status: Not planned for now. The app stays in English. FreeDuet aims at a worldwide public, English first. Members still answer in the person's language (D26, unchanged). The analysis below stays as it was written.
 
-Design only, no product code. Written 2026-11-14 for the roadmap row [The app in more languages](../ROADMAP.md) (line 53). Checked against origin/main at commit 021cad8.
+Design only, no product code. Written 2026-11-14 for the roadmap row [The app in more languages](../ROADMAP.md). Checked against origin/main at the time of writing.
 
 Markers: [code: path:line] is a line of this repository, read or grepped at 021cad8. A folder marker names a folder. [doc: URL] is an outside page. [assumed] is not checked here. Candidate strings are text that may reach the screen. They are counted by a TypeScript parse (method in section 2).
 
@@ -58,7 +58,7 @@ Markers: [code: path:line] is a line of this repository, read or grepped at 021c
 **Preferences and pairing.**
 
 - A per-person preference route exists [code: openbot/server/src/user-preferences-routes.ts:13], with a client [code: openbot/app/src/components/settings/message-list-preference.tsx:25].
-- No pairing screen exists in the app. The roadmap marks pairing "In design" [code: docs/ROADMAP.md:50].
+- A pairing screen exists under Settings [code: openbot/app/src/components/settings/pair-devices.tsx, PR #283]. The roadmap row "A token for each paired browser" is marked built.
 
 **The upstream registry.**
 
@@ -119,11 +119,11 @@ Markers: [code: path:line] is a line of this repository, read or grepped at 021c
 
 ### 3.5 What comes after v1
 
-- Per-person language. The preference route already exists [code: openbot/server/src/user-preferences-routes.ts:13], and the deployment setting stays the default. The roadmap already lists language under "Settings changed in chat" [code: docs/ROADMAP.md:47]. Size L.
+- Per-person language. The preference route already exists [code: openbot/server/src/user-preferences-routes.ts:13], and the deployment setting stays the default. Built in PR #222, not yet run live (roadmap row "Settings changed in chat, with Undo"). Size L.
 - Admin pages (620 candidates): size L. Rest of settings (87 candidates): size M.
 - Server sentences the person reads (section 2): size S to M.
 - Agent-freeduet text: size S. `tool_notes.py` can stay English.
-- Pairing: no code yet, so its screens will be new files.
+- Pairing is built (PR #283, migration 0076); later pairing screens will be new files.
 - The site is already multilingual and stays separate.
 
 ## 4. Slices
@@ -149,7 +149,7 @@ Counts per file come from the parse in section 2 [code: openbot/app/src/routes/s
 - **The person's approval for real account actions** [code: CLAUDE.md:36]. Translation changes no action, and a label keeps the action it names. Approval wording gets a native reviewer before release (decision 5).
 - **Change only what was asked** [code: CLAUDE.md:48]. v1 changes only the listed strings, and the English render stays the same.
 - **Upstream changes stay minimal** [code: CLAUDE.md:49]. One registry row per upstream file. Nine files need a new row (section 4).
-- **Roadmap follows decisions** [code: CLAUDE.md:77]. When the maintainer decides, row 53 of [code: docs/ROADMAP.md:53] changes in the same session.
+- **Roadmap follows decisions** [code: CLAUDE.md:77]. When the maintainer decides, the row "The app in more languages" in docs/ROADMAP.md changes in the same session.
 
 ## 6. Open decisions
 

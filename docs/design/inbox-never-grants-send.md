@@ -1,6 +1,6 @@
 # Approving in the inbox never gives a tool that sends
 
-Built on the branch `inbox-never-grants-send` and not yet merged (see "Built so far" at the end). Written 2026-11-14. Base: origin/main c93c947.
+Built in PR #208 (see "Built so far" at the end). Written 2026-11-14. Base: origin/main of that day.
 
 Decided by the maintainer on 14 November 2026: approving a request in the inbox never gives a Bot a tool that sends (an email, a message, a post, a form, a payment). A tool that sends is given from the settings page, by the person, and from nowhere else. What sends is never recognised by a word in a tool's name: each catalogue entry carries an explicit list, in the same style as `readTools`, and everything else asks, as D33 says. D30 stays true: no member but Otto holds a send tool.
 
@@ -83,7 +83,7 @@ Paths relative to `openbot/`.
 | Q3 | The lists for Firecrawl and Notion | Firecrawl: `firecrawl_interact` and the two feedback tools. Notion: `notion-create-comment` | Add the monitor tools and other Notion tools once a real listing shows their names | Extend after the first live Refresh tools | The names come from documentation, not from a live server |
 | Q4 | Request access for a tool only settings gives (Bot's page, chat card, `show_app_access`) | Unchanged: it still files a request, and the inbox row says to allow it in settings | (a) as built; (b) show "Allow in settings" with the link instead, and file nothing | (b), as a follow-up | On a one-person installation the person is the administrator, and a request to themselves is a detour. It touches three screens and the model's text, which the brief did not ask for |
 | Q5 | A request left pending after the person allowed the send in settings | It waits until somebody presses Approve (which gives nothing) or Dismiss | (a) as built; (b) close it when nothing is wanted any more | (b), later | Not part of this rule, and it applies to any grant made on the Bot's page |
-| Q6 | The record of this decision | Not recorded in `docs/M1_PLAN.md` or `docs/ROADMAP.md`, by the brief | The coordinator gives it a decision number and edits the sentences in 4.6 | Do it with the merge | The two documents still say the opposite |
+| Q6 | The record of this decision | Not recorded by the brief; now in `docs/M1_PLAN.md` (the PR #208 entry) and `docs/ROADMAP.md` | The coordinator gives it a decision number and edits the sentences in 4.6 | Do it with the merge | Both now say that approving from the inbox never grants a sending tool |
 
 ### 4.5 Suggested eval cases (not written, not run)
 
@@ -98,5 +98,5 @@ Run on the eval stack. The stack has no Gmail, so cases that need one cannot run
 - `docs/M1_PLAN.md`, D30 limits (line 346): "the app-access card and approval grant read-only actions by default" should add that a tool on an entry's `sendTools` is never granted by approving, named or not.
 - `docs/M1_PLAN.md`, D31 (line 369): "approves exactly those (`refs`), a send included, because the press is the choice" is now false: a send is never given by the press. "A send still asks at the call ... the approval naming the send" becomes the settings grant. "What approving gives ... refuses with their names" should add the 403 and the new case of a top-up that wants only sends. "T. What the member reads" should add the sentence for a want only settings gives.
 - `docs/M1_PLAN.md` verification table (lines 376-379): `app-access-wants.integration.test.ts` now has 19 tests, `app/tests/app-access-wants.test.tsx` 18; the two new files are not listed.
-- `docs/ROADMAP.md`, "New connector tools reach existing connections" (line 34): "you approve it" should say that a tool that sends is allowed in settings and the request says so. The list under "What will not change" (line 87) could carry the rule itself.
+- `docs/ROADMAP.md`, "New connector tools reach existing connections": the row now says "you allow it once", and that send tools are granted only from settings. The list under "What will not change" could carry the rule itself.
 - `README.md`: no sentence found that says the opposite.

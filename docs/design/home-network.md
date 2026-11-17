@@ -1,6 +1,6 @@
 # Home network: open connections close when you switch it off
 
-Built on the branch `egress-close-tunnels-on-tighten` on 2026-11-14, from origin/main 5b96410, for the maintainer's decision of that evening ([ROADMAP.md](../ROADMAP.md), "Home network: open connections close when you switch it off"). Not merged, not run on a real stack. This file does not edit the roadmap.
+Built on the branch `egress-close-tunnels-on-tighten` on 2026-11-14, from origin/main of that day, for the maintainer's decision of that evening ([ROADMAP.md](../ROADMAP.md), "Home network: open connections close when you switch it off"). Merged as PR #196. Not run on a real stack. This file does not edit the roadmap.
 
 Tags: **[code: path:line]** read on origin/main 5b96410 (code paths start at `openbot/`). **[measured]** run on this machine with the real filter, over real sockets or in a real Chromium. The filter is the computer's own network proxy ([M1_PLAN.md](../M1_PLAN.md), D36).
 
