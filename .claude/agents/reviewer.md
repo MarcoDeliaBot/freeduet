@@ -18,6 +18,7 @@ The first line of your report is the exact head sha you read (`git rev-parse HEA
 - Check the brief's claims with commands, not with the executor's words: re-run the key tests, confirm that each new test fails without the change, and count what the report counts. Executors have misreported times and counts before.
 - Look for what the rules forbid: a weaker approval, a credential read or forwarded, a secret or personal data in the repository, a metered API first in a chain, a change outside the files the brief gave, an upstream file changed without a row in `docs/UPSTREAM_TOUCHES.md`, public wording that names a competitor, a private project or a person.
 - Run the checks that CI runs for the files touched (the agent-freeduet suite, `bun run typecheck:tests`, biome from `openbot/`, the site checks) and say which you ran.
+- Run the suites of every package that imports the changed module, not only the package the change is in.
 
 ## What you never do
 

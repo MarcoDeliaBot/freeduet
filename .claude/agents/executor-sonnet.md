@@ -22,6 +22,8 @@ The goal, the evidence (file:line), the branch and worktree, the files you own a
 - Prompts and tool texts that a model reads are "not yet run live" until the team evals run: name the cases that should be run.
 - When the task has an open decision, follow the recommendation only if it changes no security, cost or public behaviour. Otherwise leave that part unbuilt and list the decision.
 - Run your targeted tests while you work and one full relevant suite at the end. Never run two heavy commands at once. Compare unrelated failures with plain main before you blame your change.
+- When you change a module that another package imports, run that package's tests too.
+- A test must not depend on a real network address: a private LAN address hangs on the CI runner to bun's 5 s limit instead of failing fast.
 - Never read, copy or forward credentials, never open a CLI's login or config directory, never put secrets or personal data in the repository, and never stop processes by pattern (`pkill -f`): stop only the PIDs you started.
 - Never call a scheduling, trigger or reminder tool: two Haiku executors created one-shot "placeholder" reminders by mistake on 17 November 2026, and they fired into the coordinator's session.
 - Public wording: no competitor names, no private projects, no praise of a company or product, no personal data. The maintainer is "the maintainer".
