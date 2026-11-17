@@ -205,12 +205,14 @@ config:
         name: ""
         key: token
       projectId: ""
-  # Memory sources and background research, on by default for each person and Bot (OpenBot turns
-  # them on when a person talks to a Bot, and never back on once the person turns one off or removes
-  # it). false stops new defaults for the whole deployment; existing settings are left as they are.
+  # Memory sources are on by default for each person and Bot (OpenBot turns them on when a person
+  # talks to a Bot, and never back on once the person turns one off or removes it). false stops new
+  # defaults for the whole deployment; existing settings are left as they are.
+  # FreeDuet (D78): background research is off until a person switches it on for a Bot. true makes
+  # OpenBot switch it on by itself for each person and Bot they talk to.
   memory:
     sourceDefaults: true
-    researchDefaults: true
+    researchDefaults: false
   # How far one Bot may hand work to another.
   #
   # A Bot addressing another is a grant an administrator makes, and these are the ceilings on what

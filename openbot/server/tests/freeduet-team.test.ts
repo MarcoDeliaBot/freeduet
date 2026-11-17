@@ -119,6 +119,13 @@ describe("each person's team (#25, D17)", () => {
     expect(
       readTeamMark({ conversations: {}, dailyReview: "routine_1" }),
     ).toEqual({ conversations: {}, dailyReview: "routine_1" });
+    // D79: the offer mark is read only as the literal true.
+    expect(
+      readTeamMark({ conversations: {}, dailyReviewProposed: true }),
+    ).toEqual({ conversations: {}, dailyReviewProposed: true });
+    expect(
+      readTeamMark({ conversations: {}, dailyReviewProposed: "yes" }),
+    ).toEqual({ conversations: {} });
   });
 
   test("/api/me's onboarding read waits for the person's team, then answers as before", async () => {
@@ -162,9 +169,6 @@ describe("each person's team (#25, D17)", () => {
         },
       },
       routines: {
-        create: async () => {
-          throw new Error("not reached");
-        },
         listFor: async () => [],
       },
       actorFor: async (id) => ({ id, role: "user" }),

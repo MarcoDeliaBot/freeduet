@@ -1521,8 +1521,9 @@ const deliveryScopeFor: DeliveryScopeResolver = async (
 };
 
 /*
- * Memory sources and background research, on by default for each person and Bot, and never switched
- * back on once the person turns one down. See memory/defaults.ts.
+ * Memory sources are on by default for each person and Bot; background research is off unless the
+ * deployment sets OPENBOT_PROACTIVE_DEFAULTS=true (D78). Neither is switched back on once the person
+ * turns it down. See memory/defaults.ts.
  */
 const memoryDefaults = createMemoryDefaults({
   database,

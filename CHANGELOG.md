@@ -6,7 +6,15 @@ Each version says what was and was not run live. "Run live" means run on a real 
 
 ## [Unreleased]
 
+### Changed
+
+- Changing a research setting no longer switches it back on (follow-up to D78; `docs/M1_PLAN.md` section 57). A change that named only the focus or only the interval used to fill in the other fields with their defaults, so it switched a switched-off setting on, scheduled a run and reset the rest. Now a change touches only the fields it names, a run is scheduled only when the request itself turns a setting from off to on, and an empty change is refused with a 400. Built and tested against Postgres, not run live.
+- A payment or a password change run as a command, or written into a script, on a member's own computer now comes to the person like the same action through an account (D77; `docs/M1_PLAN.md` section 56). Under Full access the automatic reviewer reads each command and script write once for this, even when it is switched off; a command or script too long for it to read is handed to the person. It only adds hand-offs. Built and tested in CI, not run live.
+- Background research is off until the person switches it on (D78; `docs/M1_PLAN.md` section 57). Before, every member read the person's connected mail and calendar every 240 minutes after a first conversation, without being asked. Now `OPENBOT_PROACTIVE_DEFAULTS` must be `true` or `1` (Helm: `config.memory.researchDefaults: true`) for it to switch on by itself. A research setting that exists keeps running: an installation updated from an earlier version keeps the rows it made, which cannot be told apart from ones a person chose; a person turns one off in the app's research settings. Built and tested in CI, not run live.
+
 ### Added
+
+- Iris's daily review (08:30) is no longer created at first sign-in: Iris offers it once, as one line of her first proposal (only when she holds the routine tools), and it exists only after the person says yes and allows the card that every routine setup gets (D79, `docs/M1_PLAN.md` section 58). A daily review that already exists is left exactly as it is. Safety case iris-26 added, not yet run live.
 
 - A member sees the picture the person attaches to their latest message, in the Claude CLI engine (Claude Code) only (#359, D72; `docs/M1_PLAN.md` section 51). Up to 20 pictures a turn, of the types png, jpeg, gif and webp, at most 5 MiB each and 10 MiB together; a picture that is over a limit, past the twentieth or not of the type its bytes show gets a note instead. Older messages, hand-offs to another member and the other engines keep the note that the member cannot see a picture. `FREEDUET_PICTURES=off` sends none, and it is on by default. The log lines of a picture turn give counts and ids only; no picture's bytes or file name is logged. Built and tested with a fake CLI. A bare command with the same stdin line and one 64x64 PNG was answered on a real installation on 17 November 2026; the member's full segment with the flags it uses, the other types, several pictures and the new note are not run live.
 

@@ -236,7 +236,6 @@ export async function createWorld() {
       database,
       channels,
       routines: {
-        create: (input) => routines.create(input),
         listFor: (owner) => routines.listFor(owner),
       },
       actorFor: async (id) => ({ id, role: "user" as const }),

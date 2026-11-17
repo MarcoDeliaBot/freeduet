@@ -6,10 +6,12 @@
  * setting that is not here is refused in the same plain sentence whatever it is called, and the person
  * changes it in the app.
  *
- * Decided on 14 November 2026: only harmless settings can be changed from chat. Slice 1 holds one, how
- * much a Bot may interrupt the person. `none` is the person's own choice in the app, so a member cannot
- * set it. Routines and triggers are not here (D35: a card every time), and nothing about approvals, Full
- * access, connections, grants, the computer, the browser, the network, payments or credentials is ever
+ * Decided on 14 November 2026: only harmless settings can be changed from chat. The list holds four: how
+ * much a Bot may interrupt the person (`notifications`), the name the person uses for a team member
+ * (`name`), how a member talks to the person (`tone`) and the language the person reads (`language`).
+ * Slice 1 as merged held only `notifications`. `none` is the person's own choice in the app, so a member
+ * cannot set it. Routines and triggers are not here (D35: a card every time), and nothing about approvals,
+ * Full access, connections, grants, the computer, the browser, the network, payments or credentials is ever
  * listed.
  */
 

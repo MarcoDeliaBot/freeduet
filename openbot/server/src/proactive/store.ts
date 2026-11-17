@@ -344,7 +344,15 @@ export function createProactiveStore(database: Database) {
         .update(proactiveSettings)
         .set({
           ...patch,
-          ...(patch.enabled ? { nextRunAt: new Date() } : {}),
+          // A run is scheduled now only when this request turns a switched-off setting on. Already
+          // on (true to true), an interval change and a focus change keep the stored next run.
+          // The test is in the same statement, so two requests cannot both see "off". The time is the
+          // server's clock, as before, so a run claimed right after is never earlier than it.
+          ...(patch.enabled
+            ? {
+                nextRunAt: sql`CASE WHEN ${proactiveSettings.enabled} THEN ${proactiveSettings.nextRunAt} ELSE ${new Date().toISOString()}::timestamptz END`,
+              }
+            : {}),
           updatedAt: new Date(),
         })
         .where(owned(owner, id))
