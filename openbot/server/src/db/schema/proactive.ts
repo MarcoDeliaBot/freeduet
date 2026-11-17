@@ -18,9 +18,11 @@ import { agents, channels, users } from "./core";
 /**
  * Background research by one of a person's Bots.
  *
- * On by default: OpenBot writes the row when a person first talks to the Bot in a conversation with
- * it alone (memory/defaults.ts), and never again once they turn it off (`enabled = false`) or remove
- * it (`default_opt_outs`). Bounded by `interval_minutes` (fifteen minutes to a day) so a Bot never
+ * Off by default (FreeDuet, D78): a person writes the row by switching research on for a Bot. Only
+ * when OPENBOT_PROACTIVE_DEFAULTS=true does OpenBot write it when a person first talks to the Bot in
+ * a conversation with it alone (memory/defaults.ts), and never again once they turn it off
+ * (`enabled = false`) or remove it (`default_opt_outs`). The row has no column that tells the two
+ * origins apart. Bounded by `interval_minutes` (fifteen minutes to a day) so a Bot never
  * reads a person's apps more often than they chose. The run lands in its own thread, not
  * the person's chat, and what it finds reaches them as suggestions delivered to `channel_id`.
  */

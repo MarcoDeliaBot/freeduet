@@ -1312,3 +1312,29 @@ Tests. `freeduet-package.test.ts` gains "D75": each sentence is in its own membe
 Limits. Not run live. Cases to run with `--repeat 3`: gus-6, penny-5, iris-10, penny-xlsx-1, wren-docx-1; also gus-7, penny-xlsx-2, iris-14 and iris-19 to see that the longer prompts changed nothing else. wren-docx-1 and penny-xlsx-1 depend on the eval stack's computer, and a missing office tool (the python-docx install failed in the failed run) can still make the honest outcome "no file made"; the new sentence asks only that she says so.
 
 **Built so far.** The five sentences, the D75 test and this section. Verified: the tests above. The lists of cases not yet run live in `docs/ROADMAP.md` line 17, `README.md` and `evals/team/README.md` already name iris-10, gus-6, penny-5, penny-xlsx-1 and wren-docx-1, so no count or list changes (`CHANGELOG.md` names only penny-5, in an older entry, and keeps no list of cases changed since the certification). Not verified: every model behaviour.
+
+## 57. Background research is off until the person switches it on (D78)
+
+Decision (the maintainer, 17 November 2026). Before: `loadConfig` read `OPENBOT_PROACTIVE_DEFAULTS` with `switchedOn` (on unless `false` or `0`, `openbot/server/src/config.ts`), so `memoryDefaults.research` was true on every installation. `adoptResearch` (`openbot/server/src/memory/defaults.ts`) then inserted a `proactive_settings` row with `enabled: true` and a 240-minute interval for each person and member the first time the person spoke to that member alone. The engine then read the person's connected mail and calendar (read-only, proposes only) every 240 minutes and spent the person's subscription, with nothing in the safety documents saying so. No install script, no desktop env file and no test pinned "on" except the chart (it wrote the variable only to turn it off) and `config.test.ts`.
+
+| D78 | Built |
+|---|---|
+| Default | `OPENBOT_PROACTIVE_DEFAULTS` is off unless `true` or `1` (`switchedOnExplicitly`). With nothing written, `adoptResearch` returns false and no row is made, so no run is scheduled for anyone. |
+| A person who switches it on | Unchanged: the research settings route (`proactive/routes.ts`) writes the row and the engine runs it. It does not read the deployment switch. |
+| Administrator | `OPENBOT_PROACTIVE_DEFAULTS=true` (Helm `config.memory.researchDefaults: true`) restores the automatic switch-on, read-only, 240 minutes. The interval stays per setting, 15 to 1440 minutes. |
+| Stored rows | Never changed. A row (on or off) is left as it is; an opt-out in `default_opt_outs` still applies. |
+| Feature | Kept. Nothing removed. |
+
+Can the stored state tell "never chose" from "chose on"? No. A row made by the old default and a row a person made have the same columns (`enabled = true`, `interval_minutes`, `focus` may be empty in both), and the log line `research_adopted` goes to the console, not to a table. So this decision does NOT switch off existing rows: on an installation updated from an earlier version, a person whose research was switched on by the old default keeps it running until they turn it off.
+
+Open decision for the maintainer (not built):
+
+| Decision | Options | Recommendation | Reason |
+|---|---|---|---|
+| Existing rows made by the old default | (a) leave them (built); (b) at the update, set `enabled = false` on every row whose `created_at` equals the first conversation and `focus` is empty, a guess; (c) add a column that records the origin (`default` or `person`) for new rows and switch off old rows once, with a notice | (c), but only if the old rows may all be treated as defaults | A guess in (b) would change a person's explicit choice; (a) keeps the silent spend for people who never chose |
+
+Tests. `config.test.ts`: default config gives research off and sources on; `true` and `1` give on; `false`, `0` and any other word give off. `memory-defaults.integration.test.ts`: with the default config, `adoptResearch` and `personSpoke` create no row and nothing is due; with `true`, a row is made; an existing row, on or off, is left as it was; a person's own setting made through the store still runs when due.
+
+Limits. Not run live. Not verified: the Helm chart rendering (no `helm` run here); the full server suite is named in the pull request.
+
+**Built so far.** The switch, the comments, the docs, the chart default and the tests above. Verified: the tests above. Not verified: an update of a real installation; the open decision in the table.

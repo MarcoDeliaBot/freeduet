@@ -235,8 +235,9 @@ export type DeploymentConfig = {
   learningSetup?: { serviceToken: string; projectId: string };
   /**
    * Memory sources and background research OpenBot switches on for each person (memory/defaults.ts).
-   * Both on unless OPENBOT_MEMORY_SOURCE_DEFAULTS or OPENBOT_PROACTIVE_DEFAULTS is "false" or "0".
-   * Switching either off stops new defaults and leaves every existing row as it is.
+   * Sources are on unless OPENBOT_MEMORY_SOURCE_DEFAULTS is "false" or "0". FreeDuet (D78): research
+   * is OFF unless OPENBOT_PROACTIVE_DEFAULTS is "true" or "1"; a person can still switch it on for
+   * a Bot. Neither switch touches an existing row.
    */
   memoryDefaults: { sources: boolean; research: boolean };
   /** Audio configuration is independent of agent model providers. */
@@ -1493,7 +1494,7 @@ export function loadConfig(
     ...learningSetupCredential(environment),
     memoryDefaults: {
       sources: switchedOn(environment, "OPENBOT_MEMORY_SOURCE_DEFAULTS"),
-      research: switchedOn(environment, "OPENBOT_PROACTIVE_DEFAULTS"),
+      research: switchedOnExplicitly(environment, "OPENBOT_PROACTIVE_DEFAULTS"),
     },
     agentStallTimeoutMs: agentStallTimeoutMs(environment),
     auditRetentionDays: auditRetentionDays(environment),
@@ -1597,6 +1598,12 @@ function learningAutoAssignEnabled(environment: Environment): boolean {
 function switchedOn(environment: Environment, name: string): boolean {
   const value = optional(environment, name);
   return value !== "false" && value !== "0";
+}
+
+/** FreeDuet (D78): off unless the variable is "true" or "1". */
+function switchedOnExplicitly(environment: Environment, name: string): boolean {
+  const value = optional(environment, name);
+  return value === "true" || value === "1";
 }
 
 /** The service token and its project, both or neither. See `DeploymentConfig.learningSetup`. */

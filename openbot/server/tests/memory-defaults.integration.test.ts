@@ -23,7 +23,9 @@ import { createMemoryIngestion } from "../src/memory/ingestion";
 import { createMemoryStore } from "../src/memory/store";
 import { createPluginStore } from "../src/plugins/store";
 import { createProactiveStore } from "../src/proactive/store";
+import { loadConfig } from "../src/config";
 import { TEST_POOL, testDatabaseUrl } from "./support/database";
+import { testEnvironment } from "./support/environment";
 
 const database = createDatabase(testDatabaseUrl(), TEST_POOL);
 const suite = randomUUID().slice(0, 8);
@@ -352,7 +354,66 @@ describe("memory sources, on by default", () => {
   });
 });
 
-describe("background research, on by default", () => {
+describe("background research, off by default (D78)", () => {
+  const channel = `channel-${suite}`;
+  // What the server builds from an environment that writes nothing about research.
+  const defaultResearch = loadConfig(testEnvironment()).memoryDefaults.research;
+
+  test("with no setting written, nobody gets research and nothing is due", async () => {
+    await reset();
+    expect(defaultResearch).toBe(false);
+    const off = defaults({ research: defaultResearch });
+    expect(await off.adoptResearch(owner, bot, channel)).toBe(false);
+    off.personSpoke(owner, channel);
+    for (let attempt = 0; attempt < 50; attempt++) {
+      if ((await sourcesOf(owner, bot)).length) break;
+      await Bun.sleep(50);
+    }
+    // The source default still ran, so the talk was seen; research wrote nothing.
+    expect(await sourcesOf(owner, bot)).toHaveLength(1);
+    expect(await researchOf(owner, bot)).toEqual([]);
+    expect(
+      (await proactive.claimDue(10)).filter((row) => row.ownerUserId === owner),
+    ).toEqual([]);
+  });
+
+  test("switched on by the administrator, research is adopted", async () => {
+    await reset();
+    const on = loadConfig(
+      testEnvironment({ OPENBOT_PROACTIVE_DEFAULTS: "true" }),
+    ).memoryDefaults.research;
+    expect(
+      await defaults({ research: on }).adoptResearch(owner, bot, channel),
+    ).toBe(true);
+    expect(await researchOf(owner, bot)).toMatchObject([{ enabled: true }]);
+  });
+
+  test("a stored choice is left alone when the default is off, and a person's own setting runs", async () => {
+    await reset();
+    // The person switched research on themselves, due now.
+    const created = await proactive.create(
+      owner,
+      { agentId: bot, channelId: channel, intervalMinutes: 60 },
+      `thread-${randomUUID()}`,
+    );
+    const off = defaults({ research: false });
+    expect(await off.adoptResearch(owner, bot, channel)).toBe(false);
+    expect(await researchOf(owner, bot)).toMatchObject([
+      { id: created.id, enabled: true, intervalMinutes: 60 },
+    ]);
+    await proactive.update(owner, created.id, { enabled: false });
+    expect(await off.adoptResearch(owner, bot, channel)).toBe(false);
+    expect(await researchOf(owner, bot)).toMatchObject([
+      { id: created.id, enabled: false },
+    ]);
+    await proactive.update(owner, created.id, { enabled: true });
+    expect(
+      (await proactive.claimDue(10)).some((row) => row.id === created.id),
+    ).toBe(true);
+  });
+});
+
+describe("background research, when switched on", () => {
   const channel = `channel-${suite}`;
 
   test("a fresh person gets research from the Bot they talk to, read-only and a full interval out", async () => {
