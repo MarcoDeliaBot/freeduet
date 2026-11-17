@@ -130,6 +130,8 @@ export const APPROVAL_TEXT_FR: CompleteApprovalTextTable = {
     "Tu n'as pas demandé ce changement dans ta boîte mail dans ton propre message, donc on te demande d'abord.",
   "reason.unattended":
     "Cela vient d'une routine ou d'un déclencheur qui tourne tout seul, pas d'un message de toi, donc on te demande toujours d'abord.",
+  "reason.tooLongToReview":
+    "Cette commande ou ce script est trop long pour que le relecteur automatique le lise en entier, donc c'est toi qui décides.",
   "reason.automation":
     "Les routines et les déclencheurs agissent plus tard sans toi : en créer un, le modifier ou le supprimer te demande toujours d'abord.",
   "reason.setting":

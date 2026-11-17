@@ -127,6 +127,8 @@ export const APPROVAL_TEXT_ES: CompleteApprovalTextTable = {
     "No pediste este cambio en tu buzón en tu propio mensaje, así que te pregunta primero.",
   "reason.unattended":
     "Esto viene de una rutina o un disparador que funciona solo, no de un mensaje tuyo, así que siempre te pregunta primero.",
+  "reason.tooLongToReview":
+    "Este comando o script es demasiado largo para que el revisor automático lo lea entero, así que decides tú.",
   "reason.automation":
     "Las rutinas y los disparadores actúan más tarde sin ti, así que crear uno, cambiarlo o borrarlo siempre te pregunta primero.",
   "reason.setting":
