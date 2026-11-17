@@ -14,11 +14,11 @@ Tags: `[code: path:line]` read in this repository. `[doc: URL]` stated on xAI's 
 
 ### 2.1 The engine seam is on main
 
-- The adapter contract has two methods that matter here: `child_env` and `run_turn` [code: openbot/agent-freeduet/freeduet/engine_adapter.py:76-90]. `probe()` and `limit` belong to slice 2 and are not in the contract yet [code: openbot/agent-freeduet/freeduet/engine_adapter.py:8-9].
-- `ClaudeEngine` is the only adapter in the package [code: openbot/agent-freeduet/freeduet/claude_engine.py:32]. It starts the process, writes the prompt to stdin, reads stdout into parser items and ends the turn [code: openbot/agent-freeduet/freeduet/claude_engine.py:41-123].
+- The adapter contract has two methods that matter here: `child_env` and `run_turn` [code: openbot/agent-freeduet/freeduet/engine_adapter.py:147, :159]. `probe()` is in the contract now [code: openbot/agent-freeduet/freeduet/engine_adapter.py:8, :152]; `limit` is not: a limit is stated through `Diagnostics.health` [code: openbot/agent-freeduet/freeduet/engine_adapter.py:8-10].
+- `ClaudeEngine` and `CompatibleEngine` are the two engine kinds in the package [code: openbot/agent-freeduet/freeduet/claude_engine.py:54; openbot/agent-freeduet/freeduet/compatible_engine.py:380]. `ClaudeEngine` starts the process, writes the prompt to stdin, reads stdout into parser items and ends the turn [code: openbot/agent-freeduet/freeduet/claude_engine.py:75].
 - `run_segment` takes any adapter and defaults to Claude [code: openbot/agent-freeduet/freeduet/segment.py:214-217].
 - The golden harness pins the run path. The goldens folder holds 52 recorded scenarios that must stay byte-identical [code: openbot/agent-freeduet/tests/test_engine_goldens.py:1-7].
-- No run path imports the slice-2 modules. `engine_breaker.py` imports `failure_classifier` [code: openbot/agent-freeduet/freeduet/engine_breaker.py:101]. No package module imports `engine_breaker` or `json_salvage`.
+- The engine chain reaches the breaker: `engine_router.py` and `app.py` import `engine_state` [code: openbot/agent-freeduet/freeduet/engine_router.py:66; openbot/agent-freeduet/freeduet/app.py:22], and `engine_state.py` imports `engine_breaker` [code: openbot/agent-freeduet/freeduet/engine_state.py:83]. `engine_breaker.py` imports `failure_classifier` [code: openbot/agent-freeduet/freeduet/engine_breaker.py:106]. No package module imports `json_salvage`.
 
 ### 2.2 What an adapter must reproduce from Claude Code
 

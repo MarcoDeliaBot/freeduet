@@ -1,6 +1,6 @@
 # Automations written in chat: calendar, history and limits
 
-Design, plus the read-only part built (section 8, Built so far). No write is built. Written 2026-11-14 against origin/main 452e060. Roadmap row: "Automations written in chat, with a calendar and history", status In design ([code: docs/ROADMAP.md:46]). Decided 14 November 2026: D6 (section 6). Nothing else here is decided; section 6 lists what the maintainer must still choose.
+Design, plus the read-only part built (section 8, Built so far), and the chat cards for routines, built in PR #241 (section 9.5): the setup card, and the card with Pause or Resume, Edit and Cancel. Written 2026-11-14 against origin/main of that day. Roadmap row: "Automations written in chat, with a calendar and history", status In progress ([code: docs/ROADMAP.md]). Decided 14 November 2026: D6 (section 6). Nothing else here is decided; section 6 lists what the maintainer must still choose.
 
 Paths start in `openbot/` unless they start with `docs/` or `CLAUDE.md`, which sit at the repository root.
 
@@ -156,15 +156,15 @@ Built:
 
 Not built, and why:
 
-- **Missed runs (S1).** No "Missed" label and no row for a gap. Both need a change to the sweep and a new column.
+- **Missed runs (S1).** Built in PR #207 (migration 0070, `scheduled_for`): the "Missed" label, and a missed run is recorded.
 - **Run to messages (S2).** A history row links to its conversation, not to its run. That needs the turn to return a run id, and a migration.
 - **Paging and pruning (S4).** The history stops at 100 rows.
 - **Event triggers (V4).** Not on this view. Each Bot's Responsibilities page still lists them.
-- **Writes (S6 to S9).** No setup card, no change from chat, no daily budget, no zone per person, no routines held by Iris.
+- **Writes (S6 to S9).** The setup card, and the card's Pause, Resume and Cancel, are built in PR #241 (section 9.5). Not built: no change from chat, no daily budget, no zone per person, no routines held by Iris.
 
 For the maintainer to decide (none is taken here):
 
-1. Missed runs: S1 changes the sweep and adds one nullable column (`scheduled_for`). Build it now, or wait? Decided 14 November 2026: build it, with the "Missed" label.
+1. Missed runs: S1 changes the sweep and adds one nullable column (`scheduled_for`). Build it now, or wait? Decided 14 November 2026: build it, with the "Missed" label. Built in PR #207 (section 8).
 2. Run links: S2 adds a run id and a thread id to each run, with one migration and a change to what the turn returns. Build it? Decided 14 November 2026: build it, so that a run links to its conversation.
 3. History size: paging with 90-day pruning (S4), or the latest 100 rows? Decided 14 November 2026: paging with 90-day pruning (S4).
 4. Caps: 14 days, 500 runs and 100 history rows are proposals. Confirm or change them.

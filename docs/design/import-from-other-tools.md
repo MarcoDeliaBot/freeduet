@@ -1,6 +1,6 @@
 # Import from other agent tools: design
 
-Design. Slice 1 (the parsers) is on main through PR #168. Slice 2 (the preview, branch `import-slice-2`) adds one owner-only route that returns a preview and stores nothing; no screen shows it yet. Written 2026-11-14 for two ROADMAP rows: "Bring your data from other agents" [code: docs/ROADMAP.md:45] and "Import from Grok Bot" [code: docs/ROADMAP.md:63]. Base: commit 452e060, where the branch started.
+Design. Slice 1 (the parsers) is on main through PR #168. Slice 2 (the preview) is on main through PR #214: it adds one route for the signed-in person, `POST /api/freeduet/import/preview` [code: openbot/server/src/app.ts:812-813], that returns a preview and stores nothing; no screen shows it yet. Written 2026-11-14 for two ROADMAP rows: "Bring your data from other agents" and "Import from Grok Bot". Base: the main branch as it stood on 14 November 2026, where the branch started.
 
 Tags: [code: path:line] = read in this repository at commit 452e060. [doc: URL] = stated by a public page, read 2026-11-14 through a summarising fetch; no text is copied. [assumed] = not checked. Design choices carry no tag: they are proposals.
 
@@ -58,9 +58,9 @@ What confirm writes:
 - Skill: a `skills` row with origin `imported`, owned by the importing person (`ownerUserId`), so nobody else sees it in their `/` menu [code: openbot/server/src/db/schema/plugins.ts:709-713; openbot/server/src/plugins/plugin-store/skills.ts:17], and optionally a `pluginGrants` row of kind `skill` to the Bot the person picked, which must be one they own [code: plugins.ts:796-812; plugin-store/skills.ts:287]. No `skillTools` row.
 - Fact: a `personalMemories` row, `formedBy` `import`, `reviewState` `confirmed`, provenance naming the export [code: memory.ts:61-80; openbot/server/src/memory/store.ts:425-428]. Who may recall it is decision 1. Decided 14 November 2026: Iris holds it and passes it to the member who needs it.
 - Schedule: a `routines` row, switched off when confirm writes it, with its cron passed through the same check as the tool boundary [code: coworker.ts:112]. Decided 14 November 2026: the person switches each one on with its card.
-- Connected-app name: a suggestion to connect in the tool's own sign-in flow, as FreeDuet's rule requires. No grant [code: docs/ROADMAP.md:49].
+- Connected-app name: a suggestion to connect in the tool's own sign-in flow, as FreeDuet's rule requires. No grant [code: docs/ROADMAP.md, row "Many more connected apps"].
 
-Never imported: credentials, tokens, passwords, cookies, API keys and iCal secrets [code: CLAUDE.md:31-33; docs/ROADMAP.md:44]; chat history [code: docs/import/grok-export-prompt.md:41]; approval rules, Full access, grants (`pluginGrants`, every kind), connected accounts, members' permissions and paid engines [code: docs/ROADMAP.md:47; openbot/server/src/db/schema/plugins.ts:786-812].
+Never imported: credentials, tokens, passwords, cookies, API keys and iCal secrets [code: CLAUDE.md:31-33; docs/ROADMAP.md, row "Teams and members from one file"]; chat history [code: docs/import/grok-export-prompt.md:41]; approval rules, Full access, grants (`pluginGrants`, every kind), connected accounts, members' permissions and paid engines [code: docs/ROADMAP.md, row "Settings changed in chat, with Undo"; openbot/server/src/db/schema/plugins.ts:786-812].
 
 ### 3.2 Checks on imported text
 
@@ -81,7 +81,7 @@ The server runs these before the review screen. Each adds a warning or refuses t
 What the member sees at run time:
 - The imported text is quoted inside a fixed frame. The frame says it is the person's own chosen instruction, and that it cannot change the member's rules or approvals.
 - The shared rules come after it [code: openbot/examples/freeduet/agents.yaml:108-111].
-- The frame is an instruction to the model, not a boundary. The boundary is the approval gate on each action [code: docs/PROJECT.md:124]. The roadmap's automation rule covers routines: nothing is sent, paid, signed, booked or deleted without approval [code: docs/ROADMAP.md:46]. Full access never applies to routines [code: CLAUDE.md:43-47].
+- The frame is an instruction to the model, not a boundary. The boundary is the approval gate on each action [code: docs/PROJECT.md:124]. The roadmap's automation rule covers routines: nothing is sent, paid, signed, booked or deleted without approval [code: docs/ROADMAP.md, row "Automations written in chat, with a calendar and history"]. Full access never applies to routines [code: CLAUDE.md:43-47].
 
 ### 3.3 Provenance and licence
 
@@ -97,14 +97,14 @@ Each item stores: source tool, export format, file name, SHA-256 of its text at 
 | Grok Bot | No file export named. Template links carry identity, description, skills and routines; a duplicate, described for iPhone only, leaves out past chats, learned memory and attachments [doc: https://docs.x.ai/grok-bot/bots] | Bot identity and setup | No file format | The paste route in grok-export-prompt.md |
 
 Two more public routes:
-- A vendor's memory import has the person paste the other assistant's reply into a box in Claude's memory settings. Claude saves each extracted item as its own entry, needs no approval first, and lets the person review afterwards. No size limit is stated [doc: https://support.claude.com/en/articles/12123587-import-and-export-your-memory-from-other-ai-providers]. FreeDuet's rule is the opposite: nothing is saved without confirmation [code: docs/ROADMAP.md:45].
+- A vendor's memory import has the person paste the other assistant's reply into a box in Claude's memory settings. Claude saves each extracted item as its own entry, needs no approval first, and lets the person review afterwards. No size limit is stated [doc: https://support.claude.com/en/articles/12123587-import-and-export-your-memory-from-other-ai-providers]. FreeDuet's rule is the opposite: nothing is saved without confirmation [code: docs/ROADMAP.md, row "Bring your data from other agents"].
 - The SKILL.md format: a folder with a SKILL.md file. Its frontmatter needs `name` and `description`; `license`, `compatibility`, `metadata` and `allowed-tools` are optional. Optional folders are `scripts/`, `references/` and `assets/` [doc: https://agentskills.io/specification].
 
 ### 3.5 After v1
 
-- A later team file, for whole teams, as the ROADMAP row plans [code: docs/ROADMAP.md:44]. Restricted items stay out of it.
+- A later team file, for whole teams, as the ROADMAP row plans [code: docs/ROADMAP.md, row "Teams and members from one file"]. Restricted items stay out of it.
 - Gemini Gems, once the format is known.
-- Harmless settings (language, tone, names), once settings in chat exist [code: docs/ROADMAP.md:47].
+- Harmless settings (language, tone, names), now that settings in chat exist [code: docs/ROADMAP.md, row "Settings changed in chat, with Undo"].
 - Importing Intelligence conversations: "a possible later phase" [code: docs/M1_PLAN.md:111].
 - Chat history only as its own decision, opt-in. The default stays never [code: docs/import/grok-export-prompt.md:41].
 
@@ -149,7 +149,7 @@ and checks the digests the preview showed. The "Stores?" column says which slice
 | 4 | How confirmation is given | (a) a click on the review screen, against stored hashes; (b) a typed "approve" line, as for lessons | (a) | A click cannot be written by a model or relayed; the typed rule cannot tell the person from a relay [code: lessons.py:26-28] |
 | 5 | Schedules | (a) Leo proposes a cron, the person confirms with the next three runs shown; (b) the person writes it; (c) keep as text | Decided 14 November 2026: (a), and imported schedules arrive switched off; the person switches each one on with its card. | The export gives schedules in plain words [code: docs/import/grok-export-prompt.md:18] |
 | 6 | Other tools in v1 | (a) paste route and SKILL.md only; (b) Gemini Gems, after the maintainer checks a sample export; (c) ChatGPT or Claude archives | (a) now, (b) later | The ChatGPT and Claude pages name no agent or memory list [doc: https://help.openai.com/articles/7260999]; the Gems format is not named [doc: https://support.google.com/gemini/answer/16920332] |
-| 7 | Staged copy before confirmation | (a) a staging table, visible only to the person, expires after seven days; (b) no server copy: the browser keeps the file and sends it again at confirm | Decided 14 November 2026: (b). A draft is shown before confirmation, and nothing is saved before it. | The ROADMAP row sets the confirmation rule [code: docs/ROADMAP.md:45]. A staged copy is written before confirmation, so the maintainer must say whether the rule covers it. (b) keeps the literal reading, at the cost of a second upload |
+| 7 | Staged copy before confirmation | (a) a staging table, visible only to the person, expires after seven days; (b) no server copy: the browser keeps the file and sends it again at confirm | Decided 14 November 2026: (b). A draft is shown before confirmation, and nothing is saved before it. | The ROADMAP row sets the confirmation rule [code: docs/ROADMAP.md, row "Bring your data from other agents"]. A staged copy is written before confirmation, so the maintainer must say whether the rule covers it. (b) keeps the literal reading, at the cost of a second upload |
 | 8 | Enforce the cap of 50 | (a) every live fact a person holds, typed or imported, counts, and a store refuses a 51st at confirm; (b) only imported facts count; (c) no cap in code | (a), at confirm; the maintainer decides whether typed facts are refused too | Decided 14 November 2026 that imported facts count inside 50, but no store counts a person's facts today (`openbot/server/src/memory/store.ts`). The preview counts every live fact it holds, so its room can differ from what a later store enforces |
 | 9 | Control characters in an imported fact | (a) strip them in the preview only; (b) refuse them at parse; (c) strip them at confirm, before the digest is taken | (b) | The parser keeps C0 control characters, so the text a person sees and the text a digest covers differ until one of these is chosen. `checkText` refuses zero-width and direction marks only (`openbot/server/src/freeduet/import/checks.ts:11`) |
 | 10 | The secret heuristics | (a) keep the list as built; (b) widen it to every long token; (c) narrow the labelled rule further | (a), with a test for each pattern added later | A plain sentence can be flagged, and the fact is then dropped with its reason shown. A miss keeps a secret in a fact that the review (S3) must still show the person |

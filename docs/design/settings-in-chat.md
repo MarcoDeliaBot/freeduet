@@ -1,6 +1,6 @@
 # Settings changed in chat, with Undo, and a control dashboard
 
-Design, and slice 1 on main through PR #175 (see "Built so far" at the end). Written 2026-11-14 for two rows of [ROADMAP.md](../ROADMAP.md): "Settings changed in chat, with Undo" (row 47) and "A control dashboard" (row 48). Base: origin/main 021cad8.
+Design, and slice 1 on main through PR #175 (see "Built so far" at the end). Written 2026-11-14 for two rows of [ROADMAP.md](../ROADMAP.md): "Settings changed in chat, with Undo" and "A control dashboard". Base: origin/main of that day.
 
 Tags: **[code: path:line]** read on origin/main. Code paths start at `openbot/`; doc paths start at the repository root. **[assumed]** my inference, not checked. **[verify]** unknown; a spike on a real install must settle it. Nothing tagged [verify] ships unchecked.
 
@@ -61,7 +61,7 @@ Classes: **C1** a member may change it in chat, from the person's own words, wit
 - **R3. Every change is recorded.** One `configuration.changed` event per change, with the old value, the new value, the turn and the actor [code: server/src/audit.ts:51]. Secret values are never written; redaction keys on field names [code: server/src/plugins/catalogue.ts:919]. The trail is append-only [code: server/src/db/schema/core.ts:471].
 - **R4. Undo is compare-and-set.** It restores the old value only while the current value is still the one the change set. Otherwise it refuses and says what changed. Undo is the person's button, so it may resume a trigger that a member paused.
 - **R5. The list only narrows.** A member never widens it. The person's switch can only narrow it: the stricter of the two applies, as the host-command cap does [code: server/src/approvals/policy.ts:580-581]. Proposed cap: three setting changes per turn [assumed: to be measured].
-- **R6. Never on the list:** approvals, Full access, connections, grants, members' permissions, paid engines, credentials, security settings [code: docs/ROADMAP.md, row 47].
+- **R6. Never on the list:** approvals, Full access, connections, grants, members' permissions, paid engines, credentials, security settings [code: docs/ROADMAP.md, row "Settings changed in chat, with Undo"].
 
 ### 3.2 The smallest version worth shipping
 
@@ -76,8 +76,8 @@ The first version adds controls to two changes members can already make: a routi
 - Tone (three fixed choices) and language, per person, through one new tool with its own list. Names as a per-person alias. Decided 14 November 2026: besides notifications (already built), the only other settings changed from chat are a member's name, tone and language. The run note follows the D26 pattern: a forwarded prop and a line for the member [code: server/src/freeduet/person-language.ts:72] (slices 4 and 5).
 - A change list in the app that reads the record, with Undo (slice 6).
 - The control dashboard: one row per setting, with a switch that lets members change it in chat. The effective permission is the stricter of the server list and the switch. It builds on the Engines dashboard [docs/ENGINES_PLAN.md, section 2] (slice 7).
-- The credentials panel (row 48), after the Engines work. Subscription logins are never stored there [docs/ROADMAP.md, row 48] (slice 8).
-- Automations written in chat share this mechanism [docs/ROADMAP.md, row 47].
+- The credentials panel, after the Engines work. Subscription logins are never stored there [docs/ROADMAP.md, row "A control dashboard"] (slice 8).
+- Automations written in chat share this mechanism [docs/ROADMAP.md, row "Settings changed in chat, with Undo"].
 
 ### 3.4 What it never does
 
@@ -103,7 +103,7 @@ One PR each. Slice 2 is security work: Sonnet, as CLAUDE.md asks.
 - **Logins first.** No paid engine joins the member list. Paid engines stay in docs/ENGINES_PLAN.md and are never C1.
 - **Never read, copy or forward subscription credentials.** The record and Undo hold setting values only, never login state or CLI configuration.
 - **No secrets and no personal data in the repository.** This file has none. Aliases, tone choices and the record live in the database. Tests use synthetic names.
-- **The person's approval for real account actions.** A setting change is not an account action. A changed routine still asks before it sends, pays, signs, books or deletes [docs/ROADMAP.md, row 46].
+- **The person's approval for real account actions.** A setting change is not an account action. A changed routine still asks before it sends, pays, signs, books or deletes [docs/ROADMAP.md, row "Automations written in chat, with a calendar and history"].
 - **Full access never lifts a setting** (Q3). It stays with the person's own turn, as docs/FULL_ACCESS.md sets out.
 - **Change only what was asked.** The first version changes the gate for two tools only. It does not change the reviewer.
 - **Upstream changes stay minimal.** Slices touch `server/src/approvals/policy.ts` (rows exist) and six files with no row in docs/UPSTREAM_TOUCHES.md today: `server/src/plugins/builtin-routines.ts`, `server/src/routines/routes.ts`, `server/src/responsibilities/trigger-tools.ts`, `server/src/agents/lifecycle-routes.ts`, `server/src/agents/profile-store.ts` and `server/src/user-preferences-routes.ts`. Each slice that touches one adds its row. Whether each is an upstream file FreeDuet changed is [assumed]; each has one commit in this repository's history, 6ca80ef.
@@ -130,7 +130,7 @@ One PR each. Slice 2 is security work: Sonnet, as CLAUDE.md asks.
 - How often the reviewer approves routine changes: no eval case covers them [code: evals/team/cases.yaml] [verify].
 - The Engines dashboard's state: docs/ENGINES_PLAN.md is a plan, and I did not check the app [assumed: not built].
 - No test, app or eval was run. Anchors were read on origin/main 021cad8, by reading, not by a build.
-- ROADMAP.md was not edited, as the brief requires. When Q1 to Q6 are decided, rows 47 and 48 must change in the same session.
+- ROADMAP.md was not edited, as the brief requires. When Q1 to Q6 are decided, the rows "Settings changed in chat, with Undo" and "A control dashboard" must change in the same session.
 
 ## 8. Built so far
 
@@ -255,7 +255,7 @@ Update: section 8.9 closes that gap. N4 is decided (b) and built, and N5 is answ
 
 - **Built:** nothing in `server/src`, `app/src` or `shared/`. No upstream file changed, so `docs/UPSTREAM_TOUCHES.md` has no new row.
 - **Added:** five guard tests in `server/tests/settings-in-chat.integration.test.ts`, under "guards of today's behaviour, section 8.8". They run through the real approval service, the real database and the real tool. Each passes on main's source, so each guards unchanged behaviour.
-- **Not built:** a member's display name, tone and language (N1 to N3). Each is new stored state, and a language or tone also changes what a member writes.
+- **Built in PR #222, not yet run live:** a member's display name, tone and language (N1 to N3). Each is new stored state, and a language or tone also changes what a member writes.
 
 #### What is stored today, for each of the three
 
@@ -298,7 +298,7 @@ Results: `bun test settings-in-chat` passes 76 of 76 in 4 files (71 before these
 | N3 | A member's language | (a) one value per person, read into every member's run note (D26 moves from the deployment to the person); (b) one value per member, as the 14 November list words it; (c) keep the deployment variable | (a) | D26 is one setting because the person reads one language. A value per member has the team answer one person in different languages. (a) changes D26, so it needs a yes |
 | N4 | A change in a routine's run, or in a hand-off chain a routine began | (a) keep the card, as built: a yes from the person lets the change happen inside the run; (b) refuse before any card | (b) | The 14 November rule says never. The refusal belongs in the gate (`always-ask.ts`, `approvals/service.ts`), which this task may not touch. It is a Sonnet slice with a review |
 | N5 | Is the Settings grant offered to a forward hop? | (a) verify on a real hand-off; (b) if it is offered, remove the settings tool from every run with no person in the conversation | (a), then (b) if it is offered | A forward hop's approval cannot be answered in its scratch thread (`handoff-delivery.ts:159-161`). Not traced in this task |
-| N6 | ROADMAP row 47 | (a) narrow the row to the 14 November list; (b) keep it | (a), by the coordinator | The row still lists routine times and pausing a routine, which the 14 November list does not. The roadmap is the coordinator's to change |
+| N6 | ROADMAP row "Settings changed in chat, with Undo" | (a) narrow the row to the 14 November list; (b) keep it | (a), by the coordinator | The row still lists routine times and pausing a routine, which the 14 November list does not. The roadmap is the coordinator's to change |
 
 If N1 is decided as (a), these are the rules a display name needs. Each is to be built and tested then, and none is built now:
 
@@ -322,7 +322,7 @@ If N1 is decided as (a), these are the rules a display name needs. Each is to be
 - N5: whether the Settings grant is offered to a forward hop. `copilot.ts:1520-1523` chooses the offered tools for each run, and the hand-off path was not traced to the grant.
 - The routine's card as the person sees it. Nothing was looked at in the app.
 - The app: nothing changed for the three settings, so no card state exists for them.
-- ROADMAP row 47 was read, not changed (N6).
+- ROADMAP row "Settings changed in chat, with Undo" was read, not changed (N6).
 
 ### 8.9 A setting is never changed in a run nobody is attending (built)
 
@@ -397,7 +397,7 @@ It is still in the person's list. If they allow it after the update, nothing is 
 
 R2 (a key not on the list gets a card first, section 8.5) is not changed. In a run nobody is attending, an unlisted key now gets the refusal above, before any card.
 
-For the coordinator, once this is reviewed and merged: `docs/ROADMAP.md` row 47 ends "and one rule of the decision above that the built code does not yet keep: a routine run still gets a card for a setting change, where it must be refused", and says "every change asks you with a card". The first should say the rule is built and not yet run live, and the second should say "in your own conversation". `docs/M1_PLAN.md` section 18 (D35) says a write in a routine run "always goes to the approval gate and waits for the card"; a write on the Settings connector is now the one exception, refused before the gate. This change edits neither file.
+For the coordinator, once this is reviewed and merged: `docs/ROADMAP.md` row "Settings changed in chat, with Undo" ended "and one rule of the decision above that the built code does not yet keep: a routine run still gets a card for a setting change, where it must be refused", and says "every change asks you with a card". The row now says the rule is built in PR #210, and that a setting is changed only "in your own live chat turn". `docs/M1_PLAN.md` section 18 (D35) says a write in a routine run "always goes to the approval gate and waits for the card"; a write on the Settings connector is now the one exception, refused before the gate. This change edits neither file.
 
 ### 8.10 A member's name, tone and language, per person (name: built; tone and language: see below)
 

@@ -1,12 +1,12 @@
 # First start in three clicks
 
-Design for the roadmap row "First start in three clicks" ([ROADMAP.md](../ROADMAP.md), Now, status Planned). Written 2026-11-15. The maintainer decided its six open decisions on 16 November 2026, taking the note's own recommendation each time (section 8). S1, S2, S4 and S5 in its option-(b) form are built (section 10).
+Design for the roadmap row "First start in three clicks" ([ROADMAP.md](../ROADMAP.md), Now, status In progress). Written 2026-11-15. The maintainer decided its six open decisions on 16 November 2026, taking the note's own recommendation each time (section 8). S1, S2, S4 and S5 in its option-(b) form are built (section 10).
 
 Markers. **[code: path:line]** read on origin/main (2d49770). **[docs: file]** stated in this repository's docs. **[doc: URL]** stated by an outside official page, read 2026-11-15. **[assumed]** my inference; nothing marked so may be built on as if true. Line numbers are of that commit.
 
 ## 0. The promise, and what "three clicks" counts
 
-The row promises: open FreeDuet, press one button to connect your Claude plan (FreeDuet installs Claude's own program for you and opens Claude's sign-in page), and Iris is ready. A missing engine is said in plain words in the chat with the button beside it. **Check again** works without restarting anything [docs: docs/ROADMAP.md:36].
+The row promises: open FreeDuet, press one button to connect your Claude plan (FreeDuet installs Claude's own program for you and opens Claude's sign-in page), and Iris is ready. A missing engine is said in plain words in the chat with the button beside it. **Check again** works without restarting anything [docs: docs/ROADMAP.md, row "First start in three clicks"].
 
 **What counts.** Clicks are counted from the moment the FreeDuet page is open in the person's browser. Installing Docker, restarting Windows and starting the stack are the installer's job ([design/installer.md](installer.md)), not clicks, and section 2 says plainly where they stay in the way. Typing in Claude's own sign-in page is the person's step on Claude's page and is not a FreeDuet click. This definition is open decision D4.
 
@@ -77,7 +77,7 @@ Design.
 4. **The code.** If Claude's page shows a code, the person pastes it into one box on the card. The server passes it to the agent, which writes it to the child's input and forgets it: never stored, never logged, never in the audit trail, length-limited, once. FreeDuet never gets a token back. Afterwards the CLI has written its own login inside the volume. FreeDuet then runs the existing probe and reads `loggedIn` only [code: openbot/agent-freeduet/freeduet/claude_cli.py:323-333]. **This is the one place the design touches Anthropic's rule** "may not collect, store, or intermediate Claude.ai credentials or session tokens" [doc: https://code.claude.com/docs/en/legal-and-compliance]: a one-time authorisation code is not a token, but FreeDuet would carry it. D1 puts it to the maintainer, with the safe fallback built first: the card shows the exact command ready to copy and the person pastes the code in a terminal themselves.
 5. **Limits.** One login at a time; ends after 10 minutes [assumed] or on **Cancel**; the person's pasted code is refused after the child has exited.
 6. **Who may press.** The routes need an administrator at the computer, exactly as the Engines page's changes do: not a remote session, not a tunnel [code: openbot/server/src/freeduet/engines-routes.ts:480-484; at-the-computer.ts:1-25]. With sign-in on and a remote session, the card says to open FreeDuet on the computer.
-7. **Hosted FreeDuet.** The hosted version must not offer sign-in with a Claude plan [docs: docs/ROADMAP.md:86]. No deployment switch for that exists today (a search of `server/src` and `shared` for "hosted" found only unrelated comments [code: openbot/server/src/app.ts:1562-1568]). The new routes check a setting on the server, `FREEDUET_DEPLOYMENT=hosted` ([assumed] name, D6), and answer 404 when it is set; the app also hides the button, but the server is what enforces it.
+7. **Hosted FreeDuet.** The hosted version must not offer sign-in with a Claude plan [docs: docs/ROADMAP.md, row "First start in three clicks"]. The switch is the server setting `FREEDUET_DEPLOYMENT=hosted` [code: openbot/server/src/freeduet/deployment.ts] (D6), and the Claude check route answers 404 when it is set [code: openbot/server/src/freeduet/engines-routes.ts:608-612]; the app also hides the button, but the server is what enforces it.
 
 ## 4. "Check again", with nothing restarted
 
@@ -175,7 +175,7 @@ Recommendation: (a), before any FreeDuet desktop build is published. Why: a Free
 
 **D6. How hosted FreeDuet is told apart.**
 **Decided (16 November 2026):** option (a). `FREEDUET_DEPLOYMENT=hosted`, default self-hosted, enforced by the server; built in S4.
-Context: the hosted version must not offer sign-in with a Claude plan [docs: docs/ROADMAP.md:86]; no such switch exists.
+Context: the hosted version must not offer sign-in with a Claude plan [docs: docs/ROADMAP.md, row "First start in three clicks"]; the switch `FREEDUET_DEPLOYMENT=hosted` exists now [code: openbot/server/src/freeduet/deployment.ts].
 Options: (a) a server setting `FREEDUET_DEPLOYMENT=hosted`, default self-hosted, enforced by the server; (b) a build flag; (c) decide it when the cloud is built.
 Recommendation: (a), in S4. Why: the gate is a safety line, so it is cheap to build now and costs more to retrofit; the default keeps every current install unchanged.
 

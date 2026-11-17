@@ -1,8 +1,8 @@
 # Updates that can go back: the command
 
-First slice, on the branch `update-that-goes-back`: the command `openbot/scripts/update.sh`, its tests, and a page about it in the configuration docs. **It has NOT been run on a real installation.** What was tested, and how, is in section 4. Written 2026-11-15 against origin/main 0259785, and revised the same day after an independent review of the pull request (eight fixes, listed in section 4).
+First slice, merged as PR #245: the command `openbot/scripts/update.sh`, its tests, and a page about it in the configuration docs. The roadmap row "Updates that can go back" says: "Run live on one installation on 15 November 2026: the update was run four times, each time with a database backup taken first. The step that puts the version and the data back is not among those runs." What was tested, and how, is in section 4. Written 2026-11-15 against origin/main as it stood that day, and revised the same day after an independent review of the pull request (eight fixes, listed in section 4).
 
-The product decision is the roadmap row "Updates that can go back" [code: docs/ROADMAP.md:38]: one command updates FreeDuet, copies the data first, checks that the app answers, and if it does not, puts back the version and the data the person had, by itself. The copy stays on the person's computer, readable only by them. Nothing is updated without the person's command. The notice in the app that a newer version exists is the next slice and is not built here.
+The product decision is the roadmap row "Updates that can go back" [code: docs/ROADMAP.md]: one command updates FreeDuet, copies the data first, checks that the app answers, and if it does not, puts back the version and the data the person had, by itself. The copy stays on the person's computer, readable only by them. Nothing is updated without the person's command. The notice in the app that a newer version exists is the next slice and is not built here.
 
 Markers: [code: path:line] is a line of this repository at that tree. [assumed] is not checked here. Paths are from the repository root.
 
