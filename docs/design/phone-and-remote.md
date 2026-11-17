@@ -59,7 +59,7 @@ Tags: **[code: path:line]** read on origin/main at 452e060. **[doc: URL]** a pub
 
 - Bun closes a connection after 10 s of silence [code: openbot/server/src/freeduet/keep-alive.ts:4; openbot/server/src/delivery/opentag.ts:425-426]. The server wrapper writes every 5 s [code: openbot/server/src/freeduet/keep-alive.ts:27-30]. M1 D8 has the agent's own stream send a keep-alive every 15 s [code: docs/M1_PLAN.md D8].
 - A device registers only for a signed-in person, and only with the matching Expo project id [code: openbot/server/src/delivery/routes.ts:92, 199-212]. A signed-in person can also delete a device [code: openbot/server/src/delivery/routes.ts:225-226].
-- The app's screens show no session list and offer no way to end one session [code: a search of openbot/app/src finds none]. The server ends sessions in one place: turning SSO-required on ends sessions made without SSO [code: openbot/server/src/auth/sso-required.ts:16; openbot/server/src/admin/routes.ts:275]. Better Auth's own session routes were not checked [assumed].
+- The app's screens show no session list and offer no way to end one session [code: a search of openbot/app/src finds none]. The server ends sessions in one place: turning SSO-required on ends sessions made without SSO [code: openbot/server/src/auth/sso-required.ts:16; openbot/server/src/admin/routes.ts:275]. Better Auth's own session routes were not checked [assumed]. **Status, 17 November 2026 (D74):** a Revoke on a paired browser's row now also ends that browser's sign-in session, when the pairing recorded one (`PairingStore.revoke`, section 3.5.6), so a paired browser's session can now be ended from Settings. The server's own code ends a session in that function as well as in the SSO-required rule. There is still no session list.
 - No session length is set in `openbot/server/src/auth/` [code: a search for expiresIn and updateAge finds none]. The library default was not checked [assumed].
 
 ### 2.6 Full access and approvals
@@ -115,7 +115,7 @@ Before anyone uses it from outside the home network, slices 1 to 3 must ship. No
 2. Sign in on the phone.
 
 - Must be built: slice 1 before any exposure; slice 2 only as a test of PR 129's guard, since PR 129 is merged (section 2.7); slice 3; docs.
-- Lost phone: until slice 3 ships, the person cannot end one phone's session from the computer (2.5).
+- Lost phone: until slice 3 ships, the person cannot end one phone's session from the computer (2.5). **Status, 17 November 2026 (D74):** for a phone that holds a pairing this is no longer so: a Revoke from the computer also ends the phone's sign-in session, when the pairing recorded one (section 3.5.6). A phone with a session and no pairing is not ended by Revoke, and the sign-out-other-sessions button of slice 3 is not built.
 - Shared link: a sign-in page gives nothing without the account. A session left on a shared phone is the risk, and slice 3 covers it.
 - Replay: a `Secure` cookie is sent only over https [doc: https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Set-Cookie]. How this code sets its cookie flags was not read [assumed].
 - A stranger with a provider account is admitted until slice 1 exists. The code comment says Google can narrow sign-in to Workspace domains, and that a deployment should use that setting too [code: openbot/server/src/auth/email-domain.ts:4-8].
@@ -131,7 +131,7 @@ Before anyone uses it from outside the home network, slices 1 to 3 must ship. No
 - Must be built: slices 1, 2 and 3, and docs. Whether the provider accepts a tailnet name as a redirect address is not checked [assumed].
 - Critical: the app would see the proxy's connection as loopback [assumed: from the serve reference and peer.ts:13-19]. The deployment guide already accepts a Tailscale address in single-user mode, where anybody on that network is the administrator [code: openbot/docs/deployment.md:148-150]. With a tailnet, sign-in must be on.
 - Names: the machine and tailnet names appear in public certificate logs, and certificates expire after 90 days [doc: https://tailscale.com/docs/how-to/set-up-https-certificates].
-- Lost phone: removing it from the tailnet cuts its reach. Its FreeDuet session stays valid until slice 3 ships.
+- Lost phone: removing it from the tailnet cuts its reach. Its FreeDuet session stays valid until slice 3 ships. **Status, 17 November 2026 (D74):** removing the phone from the tailnet still ends no session. If the phone holds a pairing, a Revoke from the computer now also ends its sign-in session (section 3.5.6).
 - Shared link: sharing a device with another user gives that user reach. Sign-in still gates the app.
 - The tailnet is a third-party service. Its traffic is encrypted end to end [assumed].
 
@@ -265,6 +265,8 @@ Limits and audit. A code is used up by the first success, refused after 2 minute
 
 What a thief of a paired phone can do until the person revokes it: what the browser at the computer can do for that person. Full access, approvals, connected accounts and the rest are open to it. That is the price of "works like the browser at the computer"; revoking from the computer, or changing the installation secret, ends it. A `device` pairing is "at the computer" in the sense of this section but never in the sense of the Engines page, which also wants this machine's loopback (3.5.1).
 
+**Status, 17 November 2026 (D74).** A Revoke now also ends the sign-in session that browser was last seen with, so a revoked phone is signed out at its next request, and is not left signed in with remote powers, unless it shares that session with the browser doing the revoking. The session ended is the one the pairing recorded (`PairingStore.revoke`, and the `DELETE /:id` route in `browser-pairing-routes.ts`). A pairing never seen with a session ends none, and the revoking browser's own session is kept unless it revokes itself. Changing the installation secret still ends every pairing and no session, so a phone that keeps its session is remote after such a change, with the limits of section 3.5.2. Checked by reading the code on main as of 17 November 2026; not run live. The limits are in section 53 of `M1_PLAN.md`.
+
 ## 4. Slices
 
 Size: S under 300 changed lines, M 300 to 1000, L over 1000.
@@ -334,6 +336,8 @@ Slice 1 (section 4) is merged as PR #195: the exact-address sign-in list, `SIGNI
 | Slice 8, manifest and service worker | Not built. No manifest link and no service worker. | `openbot/app/index.html` has no manifest link; no service worker under `openbot/app` |
 
 Slices 1 and 4 are built, as above (PR #195 and PR #221).
+
+**Status, 17 November 2026, after D74 (PR #366).** The slice 3 row of the table above was checked before D74, and its session part is out of date: slice 3 is part built. Revoking a pairing now also ends the sign-in session that browser was last seen with. The code is `PairingStore.revoke` in `openbot/server/src/auth/browser-pairings.ts`, the route is in `openbot/server/src/auth/browser-pairing-routes.ts`, and migration `openbot/server/drizzle/0078_browser_pairing_session.sql` adds the column. Checked by reading the code on main as of 17 November 2026; the tests named in section 53 were not run for this status. Not built: the sign-out-other-sessions endpoint and button, and a list of sessions.
 
 **Built**
 - `openbot/server/src/freeduet/signin-allowlist.ts` (new): the rule. `normalizeAddress` reduces an address to one spelling (split on the last `@`; the domain lower-cased, IDNA, no trailing dot; the local part lower-cased and otherwise left alone, so `a.b`, `ab` and `a+tag` are three addresses). It refuses what is not a plain address: whitespace or a control, format or unassigned character, a display name, a quoted local part, a second `@`, a comma or semicolon list, a wildcard (`*`, `?`), a path, query, port or literal after the domain, more than 254 characters. `emailAddressAllowed` admits everybody when no list is set, and refuses an address it cannot read once one is. `signInAllowedEmails` reads the variable.
