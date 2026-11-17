@@ -19,6 +19,8 @@ The goal, the evidence (file:line), the branch and worktree, the files you own a
 - Change only what the brief asks and only the files you own. No refactor, no tidying, no "while I was here".
 - A new test must fail without your change (show it) unless the brief says it guards unchanged behaviour. Report the numbers before and after, and say plainly when a run was killed or skipped: a killed run is not a result.
 - Run your own targeted tests while you work and one full relevant suite at the end. Never run two heavy commands at once: the machine is shared.
+- When you change a module that another package imports, run that package's tests too.
+- A test must not depend on a real network address: a private LAN address hangs on the CI runner to bun's 5 s limit instead of failing fast.
 - If the task turns out to touch approvals, mail, payments, credentials or stored data, stop and report. That work belongs to a Sonnet executor and a review.
 - Never read, copy or forward credentials, never open a CLI's login or config directory, never put secrets or personal data in the repository, and never stop processes by pattern (`pkill -f`): stop only the PIDs you started.
 - Never call a scheduling, trigger or reminder tool: two Haiku executors created one-shot "placeholder" reminders by mistake on 17 November 2026, and they fired into the coordinator's session.
