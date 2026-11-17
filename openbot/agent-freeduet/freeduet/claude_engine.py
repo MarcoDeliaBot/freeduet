@@ -4,10 +4,12 @@ claude_cli.py still holds the command, the environment and the failure text."""
 
 import asyncio
 import logging
+import os
 from contextlib import suppress
 
 from . import agui, claude_cli
 from .claude_status import MISSING_SENTENCE
+from .failure_classifier import REJECTED, Failure
 from .engine_adapter import EngineAdapter, Finished, Gate, Health, Outcome, ProbeResult, Sink, TurnContext
 from .stream_json import MCP_PREFIX, Final, StreamParser
 
@@ -16,6 +18,12 @@ log = logging.getLogger("freeduet.segment")
 
 MAX_STDERR = 64 * 1024
 PIPE_DRAIN_SECONDS = 2.0
+
+
+def pictures_on() -> bool:
+    """D72's switch: `FREEDUET_PICTURES=off` sends no picture to Claude Code, whatever the turn holds. Set it
+    if a live turn with a picture fails and the cause is not yet found: the note of D68 is then used again."""
+    return os.environ.get("FREEDUET_PICTURES", "").strip().lower() not in {"off", "0", "false", "no"}
 
 
 def mcp_state(parser: StreamParser, offered) -> str:
@@ -30,23 +38,30 @@ def mcp_state(parser: StreamParser, offered) -> str:
     return f"{status}; init listed all {len(offered)} offered tools"
 
 
-def note_result(health: Health, parser: StreamParser) -> None:
+def note_result(health: Health, parser: StreamParser, pictures=()) -> None:
     """The CLI's result line was read: say how the turn went, from what the CLI itself said. Only notes;
     whatever goes wrong here is swallowed, because the turn must run exactly as it did before anyone recorded it."""
     try:
         failure = claude_cli.turn_failure(parser)
     except Exception:  # noqa: BLE001
         return
-    health.failure = failure
+    health.failure = _not_the_engines(failure, pictures)
     health.answered = health.answered or failure is None
 
 
-def note_stream_end(health: Health, parser: StreamParser, said: str, exit_code: int | None) -> None:
+def _not_the_engines(failure, pictures):
+    """D72. A turn that carried pictures and failed says nothing certain about the engine: the cause may be
+    the picture or the untested flag combination, so it is reported as a refused request (which moves no
+    state, whatever the classifier made of the words). The chat still gets the CLI's own error."""
+    return Failure(REJECTED) if pictures and failure is not None else failure
+
+
+def note_stream_end(health: Health, parser: StreamParser, said: str, exit_code: int | None, pictures=()) -> None:
     """The output ended with no result line: the verdict is what the CLI said on stderr and how it exited."""
     try:
         if parser.final is not None:
             return  # the result line already said how it went
-        health.failure = claude_cli.turn_failure(parser, said, exit_code)
+        health.failure = _not_the_engines(claude_cli.turn_failure(parser, said, exit_code), pictures)
     except Exception:  # noqa: BLE001
         return
 
@@ -80,9 +95,21 @@ class ClaudeEngine(EngineAdapter):
         readers: tuple[asyncio.Task, ...] = ()
         process = None
 
+        pictures = ctx.pictures if ctx.picture_prompt is not None and pictures_on() else ()
+
         def log_the_end() -> None:
             if stderr and parser.final is None:
-                log.info("claude stderr: %s", bytes(stderr[-2000:]).decode("utf-8", errors="replace"))
+                if pictures:
+                    log.info("claude wrote %d bytes on stderr (not logged: the turn carried pictures)", len(stderr))
+                else:
+                    log.info("claude stderr: %s", bytes(stderr[-2000:]).decode("utf-8", errors="replace"))
+            if pictures and not health.answered:
+                # The one place a failure of the stream-json input with pictures shows in the logs: counts only.
+                log.warning(
+                    "claude gave no answer to a turn with %d picture(s) sent as stream-json input "
+                    "(thread %s, run %s); FREEDUET_PICTURES=off turns the pictures off",
+                    len(pictures), ctx.diagnostics.thread_id, ctx.diagnostics.run_id,
+                )
             if parser.unavailable:
                 # The call went nowhere: the CLI answered it itself, so no stored transcript shows it.
                 about = ctx.diagnostics
@@ -102,16 +129,28 @@ class ClaudeEngine(EngineAdapter):
         ctx.diagnostics.at_close.append(log_the_end)
         try:
             config = claude_cli.write_mcp_config(ctx.directory, gate.port, gate.secret)
-            command = claude_cli.build_command(self._binary or claude_cli.claude_bin(), config, ctx.system, ctx.directory)
+            command = claude_cli.build_command(
+                self._binary or claude_cli.claude_bin(), config, ctx.system, ctx.directory, bool(pictures)
+            )
             try:
                 process = await claude_cli.start(command, ctx.work, self.child_env())
             except OSError:
                 return Outcome(agui.run_error(MISSING_SENTENCE))
             sink.started()
+            if pictures:
+                # Counts and types only: never a byte of a picture, and never a name the person gave it.
+                log.info(
+                    "claude gets %d picture(s) as stream-json input (%s, %d bytes; thread %s, run %s)",
+                    len(pictures), ", ".join(sorted({p.media_type for p in pictures})),
+                    sum(p.size for p in pictures), ctx.diagnostics.thread_id, ctx.diagnostics.run_id,
+                )
 
             async def feed_stdin():
                 with suppress(BrokenPipeError, ConnectionError):
-                    process.stdin.write(ctx.prompt.encode("utf-8"))
+                    # stdin only (D7): the pictures are in this one write and in no file, argument or variable of the CLI.
+                    process.stdin.write(
+                        claude_cli.picture_input(ctx.picture_prompt, pictures) if pictures else ctx.prompt.encode("utf-8")
+                    )
                     await process.stdin.drain()
                     process.stdin.close()
 
@@ -120,8 +159,8 @@ class ClaudeEngine(EngineAdapter):
                     while line := await process.stdout.readline():
                         for item in parser.feed(line):
                             if isinstance(item, Final):
-                                note_result(health, parser)
-                                item = Finished(item.text, lambda: claude_cli.failure_event(parser))
+                                note_result(health, parser, pictures)
+                                item = Finished(item.text, lambda: claude_cli.failure_event(parser, pictures=pictures))
                             else:
                                 health.answered = True  # a message started, text came, or a tool was called
                             await sink.put(item)
@@ -143,9 +182,9 @@ class ClaudeEngine(EngineAdapter):
                 await asyncio.wait_for(process.wait(), 5)
             with suppress(TimeoutError, asyncio.CancelledError):
                 await asyncio.wait_for(asyncio.shield(stderr_task), 2)
-            said = bytes(stderr).decode("utf-8", errors="replace")
-            note_stream_end(health, parser, said, process.returncode)
-            return Outcome(claude_cli.failure_event(parser, said, process.returncode) or agui.run_error(
+            said = claude_cli.without_pictures(bytes(stderr).decode("utf-8", errors="replace"), pictures)
+            note_stream_end(health, parser, said, process.returncode, pictures)
+            return Outcome(claude_cli.failure_event(parser, said, process.returncode, pictures) or agui.run_error(
                 f"{claude_cli.LABEL} ended without an answer."
             ))
         finally:

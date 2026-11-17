@@ -24,9 +24,11 @@ written under the registered name; a tool the run does not serve keeps its own n
 never suggests a call the CLI could not make. RUNTIME_NOTE says the same in words.
 """
 
+import base64
+import binascii
 import json
 import re
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 from .members import Member, bot_row_owner, is_other_bots_row
 from .stream_json import MCP_PREFIX
@@ -59,10 +61,42 @@ _TAGS = re.compile(
 )
 
 
+# D72. A picture in the person's latest message may go to the Claude CLI as an image block. Only these
+# types (the ones the server's attachments let through as pictures, shared/attachments.ts
+# ACCEPTED_IMAGE_MIME), each checked against the first bytes of what was sent under that name.
+PICTURE_SIGNATURES = {
+    "image/png": (b"\x89PNG\r\n\x1a\n",),
+    "image/jpeg": (b"\xff\xd8\xff",),
+    "image/gif": (b"GIF87a", b"GIF89a"),
+    "image/webp": (b"RIFF",),  # and b"WEBP" at byte 8, checked below
+}
+# Decoded bytes. The server lets 8 MiB through for one picture (MAX_IMAGE_BYTES); the engine is sent less,
+# because the model's own limit on one image is lower and a turn is sent again with every segment.
+MAX_PICTURE_BYTES = 5 * 1024 * 1024
+MAX_PICTURE_BYTES_PER_TURN = 10 * 1024 * 1024
+MAX_PICTURES_PER_TURN = 20
+
+
+@dataclass(frozen=True)
+class Picture:
+    """One picture to put in front of the engine. It lives in memory for the segment and nowhere else:
+    `data` is the base64 text, kept out of repr so that no log line or traceback can print it."""
+
+    media_type: str
+    data: str = field(repr=False)
+    name: str = ""
+    size: int = 0  # decoded bytes
+
+
 @dataclass(frozen=True)
 class Rendered:
     system: str
     prompt: str
+    # D72: the pictures of the person's latest message that an engine able to show them may be sent, and the
+    # prompt that goes with them (the same conversation, those pictures noted as shown). Empty and None
+    # when there is none: `prompt` is then the only prompt, as it always was.
+    pictures: tuple[Picture, ...] = field(default=(), repr=False)
+    picture_prompt: str | None = field(default=None, repr=False)
 
 
 def _escape(text: str) -> str:
@@ -100,6 +134,33 @@ def _picture_note(name: str, mime: str) -> str:
     )
 
 
+def _shown_note(name: str, mime: str, number: int, total: int) -> str:
+    return (
+        f"[The person attached a picture to this message: {name} ({mime}). It is passed to you as image "
+        f"{number} of {total} of this message, in the order they were attached: look at it, and answer "
+        "from what you see. If you cannot make out the part that matters, say so and ask the person; "
+        "never guess what the picture shows.]"
+    )
+
+
+def _too_many_note(name: str, mime: str) -> str:
+    return (
+        f"[The person attached a picture to this message: {name} ({mime}). There were too many pictures in "
+        "this message to show them all, so you cannot see this one. Tell the person plainly that this "
+        "picture was not shown because of how many were attached, and ask them to send fewer at a time or "
+        "to describe it. Never say that you only receive text, and never guess what the picture shows.]"
+    )
+
+
+def _too_large_note(name: str, mime: str) -> str:
+    return (
+        f"[The person attached a picture to this message: {name} ({mime}). It was too large to be shown to "
+        "you, so you cannot see it. Tell the person plainly that a picture was attached and was too large "
+        "to show, and ask them to attach a smaller one or to describe it. Never say that you only receive "
+        "text, and never guess what the picture shows.]"
+    )
+
+
 def _file_note(name: str, mime: str) -> str:
     return (
         f"[The person attached a file to this message: {name} ({mime}). This version does not pass "
@@ -109,9 +170,11 @@ def _file_note(name: str, mime: str) -> str:
     )
 
 
-def _part_text(part) -> str:
+def _part_text(part, verdicts: dict | None = None) -> str:
     """A text part as its text. Any other part (a picture, a recording, a file) as one note that says it
-    was attached and could not be shown, never its bytes: none is sent to the engine in this version."""
+    was attached and could not be shown, never its bytes. `verdicts` is what `_latest_pictures` decided
+    about the pictures of the person's latest message (D72), by the identity of the part: "large", or
+    the number of the image that is passed along (then only when this is the picture prompt)."""
     if not isinstance(part, dict):
         return ""
     if part.get("type") == "text":
@@ -120,13 +183,77 @@ def _part_text(part) -> str:
     metadata = part.get("metadata") if isinstance(part.get("metadata"), dict) else {}
     name = _label(metadata.get("filename") or part.get("filename") or part.get("name")) or "unnamed"
     mime = _label(part.get("mimeType") or source.get("mimeType")) or "unknown type"
-    return _picture_note(name, mime) if part.get("type") == "image" else _file_note(name, mime)
+    if part.get("type") != "image":
+        return _file_note(name, mime)
+    verdict = (verdicts or {}).get(id(part))
+    if verdict == "large":
+        return _too_large_note(name, mime)
+    if verdict == "many":
+        return _too_many_note(name, mime)
+    if isinstance(verdict, tuple):
+        return _shown_note(name, mime, *verdict)
+    return _picture_note(name, mime)
 
 
-def _content_text(content) -> str:
+def _content_text(content, verdicts: dict | None = None) -> str:
     if isinstance(content, list):
-        return "\n".join(text for text in (_part_text(part) for part in content) if text)
+        return "\n".join(text for text in (_part_text(part, verdicts) for part in content) if text)
     return _as_text(content)
+
+
+def _picture(part: dict) -> Picture | str | None:
+    """The picture in this image part, "large" when it is over the size limit, None when it cannot be shown
+    (not a type the server lets through, not base64, or bytes that are not the type they are said to be)."""
+    source = part.get("source")
+    if not isinstance(source, dict) or source.get("type") != "data":
+        return None
+    mime, data = source.get("mimeType"), source.get("value")
+    if not isinstance(mime, str) or mime not in PICTURE_SIGNATURES or not isinstance(data, str) or not data:
+        return None
+    # The size first, from the text's length, so that a huge value is never decoded to find that out.
+    if len(data) * 3 // 4 > MAX_PICTURE_BYTES + 3:
+        return "large"
+    try:
+        raw = base64.b64decode(data, validate=True)
+    except (binascii.Error, ValueError):
+        return None
+    if len(raw) > MAX_PICTURE_BYTES:
+        return "large"
+    if not raw.startswith(PICTURE_SIGNATURES[mime]) or (mime == "image/webp" and raw[8:12] != b"WEBP"):
+        return None
+    metadata = part.get("metadata") if isinstance(part.get("metadata"), dict) else {}
+    name = _label(metadata.get("filename") or part.get("filename") or part.get("name")) or "unnamed"
+    return Picture(media_type=mime, data=data, name=name, size=len(raw))
+
+
+def _latest_pictures(turn: list[dict]) -> tuple[dict, list[Picture]]:
+    """D72. The pictures of the person's LATEST message (the last user message of the turn, which is still
+    the last one when the member's own calls and their results follow it) that can be sent to the engine,
+    and what to say of each image part of it. A picture in an older message is never one of them: it would
+    be sent again with every later turn, which is what the server's budgets exist to prevent."""
+    last = next((message for message in reversed(turn) if message["role"] == "user"), None)
+    content = last.get("content") if last else None
+    if not isinstance(content, list):
+        return {}, []
+    verdicts: dict = {}
+    pictures: list[Picture] = []
+    spent = 0
+    for part in content:
+        if not isinstance(part, dict) or part.get("type") != "image":
+            continue
+        found = _picture(part)
+        if isinstance(found, Picture) and len(pictures) >= MAX_PICTURES_PER_TURN:
+            found = "many"
+        elif isinstance(found, Picture) and spent + found.size > MAX_PICTURE_BYTES_PER_TURN:
+            found = "large"
+        if isinstance(found, str):
+            verdicts[id(part)] = found
+        elif isinstance(found, Picture):
+            spent += found.size
+            pictures.append(found)
+            verdicts[id(part)] = len(pictures)
+    total = len(pictures)
+    return {key: value if isinstance(value, str) else (value, total) for key, value in verdicts.items()}, pictures
 
 
 def _lessons_text(lessons) -> str:
@@ -229,34 +356,42 @@ def render(
     (the report guard's follow-up, report_guard.py). `served` are the plain names of the tools this
     run's bridge serves: earlier calls to them, and their results, are written under the name the CLI
     registers them by (mcp__freeduet__<name>), so the model calls them that way too."""
-    names: dict[str, str] = {}
-    blocks: list[str] = []
     turn = [message for message in messages if message.get("role") in {"user", "assistant", "tool"}]
-    for message in turn:
-        role = message["role"]
-        if role == "user":
-            blocks.append(f"<user>\n{_escape(_content_text(message.get('content')))}\n</user>")
-        elif role == "assistant":
-            parts = []
-            text = _content_text(message.get("content")).strip()
-            if text:
-                parts.append(_escape(text))
-            for call_id, name, arguments in _tool_calls(message):
-                name = names[call_id] = _called_as(name, served)
-                parts.append(
-                    f'<tool_call id="{_attr(call_id)}" name="{_attr(name)}">{_escape(arguments)}</tool_call>'
-                )
-            if parts:
-                blocks.append("<assistant>\n" + "\n".join(parts) + "\n</assistant>")
-        else:
-            call_id = _as_text(message.get("toolCallId"))
-            status = ' status="error"' if message.get("error") else ""
-            blocks.append(
-                f'<tool_result id="{_attr(call_id)}" name="{_attr(names.get(call_id, ""))}"{status}>\n'
-                f"{_escape(_content_text(message.get('content')))}\n</tool_result>"
-            )
-    conversation = "<conversation>\n" + "\n\n".join(blocks) + "\n</conversation>" if blocks else ""
-    quoted = "\n\n".join(_quoted_rows(member, messages))
+    verdicts, pictures = _latest_pictures(turn)
     closing = closing or _closing_instruction(turn)
-    prompt = "\n\n".join(part for part in (quoted, conversation, closing) if part)
-    return Rendered(system=_system_text(member, messages, context or [], lessons, notes), prompt=prompt)
+    quoted = "\n\n".join(_quoted_rows(member, messages))
+
+    def prompt_with(shown: dict) -> str:
+        names: dict[str, str] = {}
+        blocks: list[str] = []
+        for message in turn:
+            role = message["role"]
+            if role == "user":
+                blocks.append(f"<user>\n{_escape(_content_text(message.get('content'), shown))}\n</user>")
+            elif role == "assistant":
+                parts = []
+                text = _content_text(message.get("content")).strip()
+                if text:
+                    parts.append(_escape(text))
+                for call_id, name, arguments in _tool_calls(message):
+                    name = names[call_id] = _called_as(name, served)
+                    parts.append(
+                        f'<tool_call id="{_attr(call_id)}" name="{_attr(name)}">{_escape(arguments)}</tool_call>'
+                    )
+                if parts:
+                    blocks.append("<assistant>\n" + "\n".join(parts) + "\n</assistant>")
+            else:
+                call_id = _as_text(message.get("toolCallId"))
+                status = ' status="error"' if message.get("error") else ""
+                blocks.append(
+                    f'<tool_result id="{_attr(call_id)}" name="{_attr(names.get(call_id, ""))}"{status}>\n'
+                    f"{_escape(_content_text(message.get('content')))}\n</tool_result>"
+                )
+        conversation = "<conversation>\n" + "\n\n".join(blocks) + "\n</conversation>" if blocks else ""
+        return "\n\n".join(part for part in (quoted, conversation, closing) if part)
+
+    # Without a picture to send, nothing differs from before D72 except the note of one that was too large.
+    prompt = prompt_with({key: value for key, value in verdicts.items() if isinstance(value, str)})
+    picture_prompt = prompt_with(verdicts) if pictures else None
+    system = _system_text(member, messages, context or [], lessons, notes)
+    return Rendered(system=system, prompt=prompt, pictures=tuple(pictures), picture_prompt=picture_prompt)
