@@ -15,13 +15,13 @@ Read these before changing anything:
 | File | What it holds |
 |---|---|
 | `docs/PROJECT.md` | Goals, rules, milestones M0–M5 |
-| `docs/M1_PLAN.md` | Every decision (D1–D67 as of 17 November 2026; there is no D23, and D53 is in `docs/design/mail-organise.md`) with its reason and limits |
+| `docs/M1_PLAN.md` | Every decision, numbered from D1 upward, with its reason and limits; there is no D23, and D53 is in `docs/design/mail-organise.md`. The highest number is found with the command below this table |
 | `docs/UPSTREAM_TOUCHES.md` | Every upstream OpenBot file FreeDuet changed, and why. Add a row for each new one |
 | `docs/PROVIDERS.md` | Which engines are allowed and why (logins first) |
 | `NOTICE.md` | Third-party code we carry and its licence |
 | `evals/team/README.md` | The team evals: cases, live runner, thresholds |
 
-`docs/M1_PLAN.md` sections are out of numeric order on purpose (parallel work): "the last section" means the last one in the file; find it with `grep -n '^## ' docs/M1_PLAN.md | tail -1`.
+`docs/M1_PLAN.md` sections are out of numeric order on purpose (parallel work): "the last section" means the last one in the file; find it with `grep -n '^## ' docs/M1_PLAN.md | tail -1`. The highest decision number is found with `grep -o 'D[0-9]\+' docs/M1_PLAN.md | sort -t D -k2 -n | tail -1`.
 
 ## Rules that never bend
 
@@ -364,7 +364,7 @@ Mark (id `marketer`) was the first member added after v0.1, Cam (id `video`) the
   slide with product links are off. The credit to the upstream authors stays.
 - A card raised inside a hand-off is also drawn in the conversation that asked (D52). The chat takes it from the
   person's approval inbox, where `askedIn` names the conversation that asked. One request, one decision route.
-- A picture attached in chat reaches `agent-freeduet` as a base64 `image` part (`openbot/server/src/channels/attachment-parts.ts:492`, in `resolvePart`). `_part_text` in `openbot/agent-freeduet/freeduet/transcript.py:81` writes a text note in place of every non-text part, so on this path the member gets text only (16–17 November 2026). An open pull request (#347) is about that note's wording: cite the code, not the note.
+- A picture attached in chat reaches `agent-freeduet` as a base64 `image` part (`resolvePart` in `openbot/server/src/channels/attachment-parts.ts`). `_part_text` in `openbot/agent-freeduet/freeduet/transcript.py` turns that part into a note that says the picture was attached and that the member cannot see it, and it never passes the picture's bytes on: no picture reaches the engine in this version (16–17 November 2026).
 - What decides whether a card was due: a call the gate allows by a personal rule, by the auto-review model or by Full access writes an `approval.evaluated` row in `audit_events`, and no `approval_requests` row (`openbot/server/src/approvals/store.ts:545`; the allow returns at `openbot/server/src/approvals/service.ts:528`, before `store.open` at `service.ts:550`). An allow that is only the default writes no row at all (`service.ts:396`). So "no card appeared" is not evidence that a tool was not called (16–17 November 2026).
 - In the app's chat, a member's next turn is built from the messages the app sends with the request (`openbot/server/src/copilot.ts:1435`, `sanitizeSeededHistory` over `input.messages`), not from the stored thread, so what the screen does not hold, the member does not see (16–17 November 2026). A headless turn, such as a routine, loads the stored thread instead (`openbot/toolkit/src/run-turn.ts:741`).
 
