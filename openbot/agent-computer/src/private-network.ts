@@ -359,6 +359,20 @@ function ipv6RangeOf(bytes: Uint8Array): PrivateRange | null {
   return null;
 }
 
+/**
+ * Whether a range is this computer's own loopback or "this host" (D73): 127.0.0.0/8, `0.0.0.0/8`,
+ * `::1` and `::`. IPv4-mapped, NAT64 and 6to4 forms, and `localhost` names, arrive here already as
+ * the IPv4 range they carry. The home and office network switch never lifts these.
+ */
+export function isLoopbackRange(range: PrivateRange): boolean {
+  return (
+    range.range === "127.0.0.0/8" ||
+    range.range === "0.0.0.0/8" ||
+    range.range === "::1/128" ||
+    range.range === "::/128"
+  );
+}
+
 /** `localhost` and `*.localhost` are the computer's own loopback by definition (RFC 6761). */
 function isLocalhostName(host: string): boolean {
   return host === "localhost" || host.endsWith(".localhost");
