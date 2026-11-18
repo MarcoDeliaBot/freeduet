@@ -262,6 +262,7 @@ Mark (id `marketer`) was the first member added after v0.1, Cam (id `video`) the
   file (PR #325, `openbot/server/tests/programs-pairing.test.ts`, 16 November 2026). A test does not
   extract HTML with a regular expression: it compares against the exact string exported by the source.
 - A check whose conclusion is `neutral` is not a failure. CodeQL reported `neutral`, with the title "1 configuration not found", on PR #350, which changes only `NOTICE.md` (17 November 2026).
+- `openbot/agent-mastra/package.json` asks for every dependency at `*` and has no lockfile, and its Dockerfile runs a plain `bun install`: a new release of a transitive dependency can turn `component dockerfiles` red on main and on every pull request labelled `full-ci` with no change of ours. On 18 November 2026 the image stopped building ("Code is nested too deeply", a `RollupError`) about an hour after rollup 4.68.6 was published; an `overrides` entry pins rollup 4.68.5. When that job goes red in `agent-mastra`, compare the publish times of its dependencies with the last green run before reading our diff.
 
 ## Site (`site/`)
 
