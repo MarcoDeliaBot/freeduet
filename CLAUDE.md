@@ -78,7 +78,9 @@ the hands"): plan, brief executors, verify with numbers, merge, report.
   effort are always at work on humble tasks, four to six at a time as the swarm rule says; when one
   delivers, the coordinator starts the next. When no humble task with files of its own is free (open
   pull requests own the files), an idle Haiku executor does a report-only sweep that edits nothing
-  (broken links, stale counts, missing tests), and its report feeds the next pull request. Sonnet and
+  (broken links, stale counts, missing tests), and its report feeds the next pull request. When choosing the
+  next humble task, prefer one that helps a built item run live (a script, a checklist, a measurement) over a
+  new feature (D97, 18 November 2026): the roadmap holds dozens of items built and not run live. Sonnet and
   a review stay for approvals, mail, payments, data and security.
 - **Decision numbers.** When several executors work in parallel, the brief assigns each one its D-numbers,
   so no two executors pick the same number. The same goes for sections of `docs/M1_PLAN.md`: parallel pull

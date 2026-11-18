@@ -1573,3 +1573,25 @@ Limits. **Not run live**: no installation we run receives mail through the provi
 Tests. `openbot/server/tests/responsibility-triggers.test.ts`: the harness now lists a sender by default, because the cases that exercise signatures and routing need a delivery; one new case, "an email trigger with no allowed senders is started by nobody (D84)", fails on the old line (30 pass, 1 fail) and passes here (31 pass).
 
 **Built so far.** The ingress line, the comment on the schema, the tool description, the test, the sentences in `SECURITY.md` and `docs/THREAT_MODEL.md`, and this section. The code edit was made by a local model from an exact instruction and checked line by line before it was committed.
+
+## 65. The review of 18 November 2026: what is added, what waits, what stays (D86 to D98)
+
+An outside look at the project on 18 November 2026 counted 41 roadmap lines that say an item is built and not yet run live, four releases in four days, and no user other than the maintainer. The maintainer answered point by point the same evening. Section 64 is held by the open pull request for D85.
+
+| Id | Decision | Why |
+|---|---|---|
+| D86 | A group of ten outside testers is not possible for now. How to get runs on other machines stays open; the first answer proposed is clean virtual machines (Windows, Ubuntu, macOS). | The maintainer has no such group to call on. |
+| D87 | A member's computer starts only when that member has work, and at most three run at the same moment. The memory, processor and disk FreeDuet needs are measured on a real machine and published. | Twelve computers with a browser each were never measured; only the disk is written down (`docs/design/installer.md`). The limit of three is the maintainer's. |
+| D88 | Measure what a typical day uses of the person's plan. The goal is to run on free models only, or to share the work between free and paid ones. The rules on metered keys do not change: never first, never on by default, always capped. | `docs/PROVIDERS.md` notes that plan limits assume ordinary individual use; no day of FreeDuet was measured against them. |
+| D89 | Recorded as an open problem: `docs/PROJECT.md` answers the risk "upstream changes fast" with a weekly upstream merge; no pull request has merged upstream so far, and the fork is no longer thin. Whether to follow upstream (OpenDuet, renamed OpenFuse on 13 November 2026) or to go its own way is the maintainer's decision. | A promise written in a public document and not kept. |
+| D90 | Releases continue. There is no stop to new features while built items are run live. | The work is often interrupted; a stop would not be kept, and publishing keeps the project moving. |
+| D91 | A test bench of known attacks hidden in mail, pages and files runs against every release, and its result is published with the release. | Instructions hidden in what a member reads are the main risk of a team that reads mail and the web; the safety cases test behaviour, not a fixed, growing list of attacks. |
+| D92 | Automatic backups on a visible schedule, kept on the person's computer, and a restore written and tried from an empty machine. | Today only the update copies the data first. |
+| D93 | A clean uninstall, and an export of all the person's data in one file or its deletion, after confirmation. | Neither exists today. |
+| D94 | A diagnostic report the person makes with a button, reads, and attaches to an issue: versions, settings and recent errors, with no personal data or conversation. Nothing is sent by itself. | With no telemetry, a problem on another machine otherwise costs days of questions. |
+| D95 | The roadmap becomes short: Now holds five items at most, and the detailed status of every item moves to an internal status log that the roadmap links to. Nothing is dropped. | About thirty items sit under Now, and some rows run past 300 words. |
+| D96 | Updating and installing programs on the person's computer (slices S3 and S4), WhatsApp and the Telegram channel start only after the items under Now have run live. | They change the person's real computer or open a new way in; the basics under them are not yet run live. |
+| D97 | An idle Haiku executor prefers a task that helps a built item run live (a script, a checklist, a measurement) over a new feature (`CLAUDE.md`, "Haiku always on"). | The roadmap holds dozens of items built and not run live. |
+| D98 | Open: whether new mascot drawings replace the round blue mascot on the site and in the app. The maintainer decides, with a preview first. | New drawings were made on 18 November 2026; the current mascot is in `openbot/shared/mascot.json`. |
+
+Not recorded: keeping Claude as the only engine until v1.0, which the review also proposed. It conflicts with D88, the goal of free models.
