@@ -105,8 +105,8 @@ The Dockerfiles below install these packages and programs. Versions are given on
 | `agent-computer` | Bun | 1.4.3 (image tag and digest, line 10) | copied from the `oven/bun` image, line 21 | to confirm |
 | `agent-computer` | Playwright | 1.62.1 (`PLAYWRIGHT_VERSION`, line 15; locked in `openbot/agent-computer/bun.lock`, line 109) | `bunx --bun "playwright@${PLAYWRIGHT_VERSION}"`, line 26 | to confirm |
 | `agent-computer` | Chromium | not pinned in the Dockerfile | `playwright install --with-deps chromium`, line 26 | to confirm |
-| `agent-computer` | LibreOffice and two fonts | not pinned | `apt-get install`, lines 43-45 | listed in the LibreOffice section above |
-| `agent-computer` | Python toolkit | pinned in `office-requirements.txt` | `pip install --require-hashes`, lines 48-50 | listed in the Python section above |
+| `agent-computer` | LibreOffice and two fonts | not pinned | the `apt-get install` step for LibreOffice, which also deletes its launcher links from `/usr/bin` (D85) | listed in the LibreOffice section above |
+| `agent-computer` | Python toolkit | pinned in `office-requirements.txt` | the `pip install --require-hashes` step for the office toolkit | listed in the Python section above |
 | all-in-one | ca-certificates, curl, unzip, xz-utils | not pinned | `apt-get install`, lines 34-35 | licence in the package's own copyright file |
 | all-in-one | Node.js and npm | 24.18.1 (image tag, line 20) | copied from the `node` image, line 32 | to confirm |
 | all-in-one | Bun | 1.4.3 (image tag and digest, line 21) | copied from the `oven/bun` image, line 33 | to confirm |
