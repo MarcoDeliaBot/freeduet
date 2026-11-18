@@ -99,16 +99,16 @@ The Dockerfiles below install these packages and programs. Versions are given on
 | Image | Package or program | Version | Installed by | License |
 |---|---|---|---|---|
 | `agent-computer` | ca-certificates, curl, unzip, xz-utils | not pinned | `apt-get install`, lines 22-24 | licence in the package's own copyright file |
-| `agent-computer` | ffmpeg | not pinned | `apt-get install`, lines 22-24 | LGPL-2.1+ or GPL-2+, depending on the build Debian ships (line 104) |
+| `agent-computer` | ffmpeg | not pinned | `apt-get install`, lines 22-24 | GPL-2.0-or-later: the Ubuntu 24.04 build has `--enable-gpl` (checked on 18 November 2026, see the Local Whisper section) |
 | `agent-computer` | git, python3, python3-venv | not pinned | `apt-get install`, lines 22-24 | licence in the package's own copyright file |
-| `agent-computer` | Node.js and npm | 24.18.1 (image tag, line 9) | copied from the `node` image, line 20 | to confirm |
+| `agent-computer` | Node.js and npm | 24.18.1 (image tag, line 9) | copied from the `node` image, line 20 | MIT for Node.js's own code (© Node.js contributors); the components it bundles keep their own licences, listed in Node's LICENSE file |
 | `agent-computer` | Bun | 1.4.3 (image tag and digest, line 10) | copied from the `oven/bun` image, line 21 | to confirm |
-| `agent-computer` | Playwright | 1.62.1 (`PLAYWRIGHT_VERSION`, line 15; locked in `openbot/agent-computer/bun.lock`, line 109) | `bunx --bun "playwright@${PLAYWRIGHT_VERSION}"`, line 26 | to confirm |
+| `agent-computer` | Playwright | 1.62.1 (`PLAYWRIGHT_VERSION`, line 15; locked in `openbot/agent-computer/bun.lock`, line 109) | `bunx --bun "playwright@${PLAYWRIGHT_VERSION}"`, line 26 | Apache-2.0 (the LICENSE file in the npm package) |
 | `agent-computer` | Chromium | not pinned in the Dockerfile | `playwright install --with-deps chromium`, line 26 | to confirm |
 | `agent-computer` | LibreOffice and two fonts | not pinned | `apt-get install`, lines 43-45 | listed in the LibreOffice section above |
 | `agent-computer` | Python toolkit | pinned in `office-requirements.txt` | `pip install --require-hashes`, lines 48-50 | listed in the Python section above |
 | all-in-one | ca-certificates, curl, unzip, xz-utils | not pinned | `apt-get install`, lines 34-35 | licence in the package's own copyright file |
-| all-in-one | Node.js and npm | 24.18.1 (image tag, line 20) | copied from the `node` image, line 32 | to confirm |
+| all-in-one | Node.js and npm | 24.18.1 (image tag, line 20) | copied from the `node` image, line 32 | MIT for Node.js's own code (© Node.js contributors); the components it bundles keep their own licences, listed in Node's LICENSE file |
 | all-in-one | Bun | 1.4.3 (image tag and digest, line 21) | copied from the `oven/bun` image, line 33 | to confirm |
 | all-in-one | Playwright and Chromium | 1.62.1 (`PLAYWRIGHT_VERSION`, line 26) | `bunx --bun "playwright@${PLAYWRIGHT_VERSION}" install --with-deps chromium`, line 37 | to confirm |
 | all-in-one | s6-overlay | 3.2.1.0 (`S6_OVERLAY_VERSION`, line 100) | downloaded from GitHub, lines 105 and 111-115 | to confirm |
@@ -117,9 +117,22 @@ The Dockerfiles below install these packages and programs. Versions are given on
 | `whisper` | ffmpeg | not pinned | `apt-get install` in the runtime stage, line 40 | LGPL-2.1+ or GPL-2+, depending on the build Debian ships (line 104) |
 | `whisper` | libgomp1 | not pinned | `apt-get install` in the runtime stage, line 40 | licence in the package's own copyright file |
 | `whisper` | build-essential, cmake, git, ca-certificates | not pinned | `apt-get install` in the build stage, line 25 | none: not in the runtime image (only `whisper-server` is copied, line 43) |
-| `agent-freeduet` | Node.js and npm | 24.18.1 (image tag, line 12) | node binary and global modules copied, lines 16-17; npm and npx linked, lines 18-19 | to confirm |
+| `agent-freeduet` | Node.js and npm | 24.18.1 (image tag, line 12) | node binary and global modules copied, lines 16-17; npm and npx linked, lines 18-19 | MIT for Node.js's own code (© Node.js contributors); the components it bundles keep their own licences, listed in Node's LICENSE file |
 | `agent-freeduet` | @anthropic-ai/claude-code | 2.1.311 (`CLAUDE_CODE_VERSION`, line 22) | `npm install -g`, line 23 | to confirm |
 | `supervisor` | SPIRE (`spire-server` binary) | 1.15.1 (image tag, line 8) | copied from `ghcr.io/spiffe/spire-server:1.15.1`, line 19 | to confirm |
+| Compose only (not published) | BusyBox (`busybox:1.37`, the `spire-init` service) | 1.37 (image tag) | pulled as an image | GPL-2.0 (busybox.net) |
+
+## Python libraries in the `agent-freeduet` image
+
+Installed with `pip` from `openbot/agent-freeduet/requirements.txt`. Each licence below was read in the package's own metadata or licence file on 17 November 2026.
+
+| Library | Version | License | What it does here |
+|---|---|---|---|
+| fastapi | 0.162.2 | MIT | The service's web framework |
+| uvicorn | 0.38.0 | BSD-3-Clause | Runs the service |
+| httpx | 0.28.1 | BSD-3-Clause | Calls to the server and to engines |
+| PyYAML | 6.0.3 | MIT | Reads `engines.yaml` |
+| pytest | 9.2.0 | MIT | Tests only |
 
 ## Local Whisper for dictation (D25)
 
@@ -135,13 +148,22 @@ Fetched or built on the person's own computer when they switch `FREEDUET_DICTATI
 
 The `whisper` image is listed in `openbot/.github/published-images.json`. Once an image is published, its FFmpeg (the Debian package, installed with `apt-get` in `openbot/whisper/Dockerfile`) brings GPL obligations that must be stated in this file at that time, if the Debian build is the GPL one (to confirm).
 
+Checked on 18 November 2026 in an `agent-computer` image built from this repository (Ubuntu 24.04 package `ffmpeg` 7:6.1.1-3ubuntu5): `ffmpeg -buildconf` shows `--enable-gpl`, and neither `--enable-nonfree` nor `--enable-version3`. So that FFmpeg is the GPL build (GPL version 2 or later). It is installed as a separate program from the distribution's archive, and it is not copied into or linked with FreeDuet's own code (D61). Its source is the distribution's source package (`apt-get source ffmpeg` on the same release). The `whisper` image installs the package of its own base image, and its build was not checked on that date.
+
 ## Font used by the app
 
 Installed from npm and used as it is, not copied into this repository. No font file is tracked by git.
 
 | Font | License | What FreeDuet uses |
 |---|---|---|
-| Inter (variable), through [`@fontsource-variable/inter`](https://www.npmjs.com/package/@fontsource-variable/inter) 5.3.0 | SIL Open Font License 1.1 (to confirm: the npm registry gives `OFL-1.1` for 5.3.0; the licence file ships in the npm package, not in this repository) | The app's sans-serif face (`--font-sans` in `openbot/app/src/styles.css`), imported in `openbot/app/src/routes/__root.tsx` and `openbot/app/src/styles.css`, pinned in `openbot/bun.lock` |
+| Inter (variable), through [`@fontsource-variable/inter`](https://www.npmjs.com/package/@fontsource-variable/inter) 5.3.0 | SIL Open Font License 1.1, Copyright 2016 The Inter Project Authors (the LICENSE file in the npm package) | The app's sans-serif face (`--font-sans` in `openbot/app/src/styles.css`), imported in `openbot/app/src/routes/__root.tsx` and `openbot/app/src/styles.css`, pinned in `openbot/bun.lock` |
+
+The public site (`site/`) loads two more fonts from Google Fonts; neither is in the repository.
+
+| Font | License | Where |
+|---|---|---|
+| Schibsted Grotesk | SIL Open Font License 1.1 | `site/tools/build.py` |
+| IBM Plex Sans | SIL Open Font License 1.1 (read in the Debian `fonts-ibm-plex` copyright file, not upstream) | `site/tools/build.py` |
 
 ## Crates of the desktop shell under MPL-2.0 (to confirm)
 
