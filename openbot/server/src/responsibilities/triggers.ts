@@ -126,8 +126,8 @@ export const triggerConfigSchema = z.discriminatedUnion("kind", [
     .object({
       kind: z.literal("email"),
       /**
-       * Addresses (`ops@example.com`) or domains (`example.com`) allowed to trigger. Empty admits any
-       * sender. When set, SES must also report DMARC or DKIM as PASS, so a forged From is refused: SES
+       * Addresses (`ops@example.com`) or domains (`example.com`) allowed to trigger. Empty admits no
+       * sender (FreeDuet, D84). SES must also report DMARC or DKIM as PASS, so a forged From is refused: SES
        * reports DKIM as GRAY, not PASS, when the signing domain does not match the From domain.
        */
       allowedSenders: z.array(shortText(254)).max(20).default([]),

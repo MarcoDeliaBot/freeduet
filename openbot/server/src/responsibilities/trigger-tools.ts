@@ -101,7 +101,8 @@ export const TRIGGER_TOOLS: readonly McpToolShape[] = Object.freeze([
         },
         allowedSenders: {
           ...stringList,
-          description: "Email only: addresses or domains.",
+          description:
+            "Email only: addresses or domains allowed to start it. Required: with none, no mail starts the trigger.",
         },
         teamId: { type: "string", description: "Slack only: T…" },
         mode: {
