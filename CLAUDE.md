@@ -113,7 +113,7 @@ the hands"): plan, brief executors, verify with numbers, merge, report.
   17 November 2026).
 - **Check each 'never' first.** A security sentence with 'never', 'always' or 'every' is checked against the
   code before it is written. On 17 November 2026 a report-only sweep found two exceptions to such sentences in
-  the docs: the audit trail's retention delete, and loopback with the home-network switch. A review of PR #375 the same day found two more in the safety documents: "a trigger's address alone does not fire it" (an email trigger with no allowed senders is started by a mail from anyone) and "a member never types a password" (the refusal reads the page's markers only).
+  the docs: the audit trail's retention delete, and loopback with the home-network switch. A review of PR #375 the same day found two more in the safety documents: "a trigger's address alone does not fire it" (an email trigger with no allowed senders was then started by a mail from anyone; D84 changed that on 18 November 2026) and "a member never types a password" (the refusal reads the page's markers only).
 - **Merge without asking.** When a pull request is ready (CI green and your own checks done), merge
   it and tell the maintainer afterwards. He asked for this on 2026-11-11, for the future too.
 - **Token economy.** The maintainer pays for tokens. Do not react to every GitHub notification: check
