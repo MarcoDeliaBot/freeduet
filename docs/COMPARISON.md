@@ -55,10 +55,23 @@ _Last checked: 2026-11-14, from each project's own README and the documentation 
 | **An Engines or Providers settings page** | The Engines page in Admin shows each member's chain and offers automatic or ask-first per member, with Undo (built; not yet run live). In progress: its other controls (order, pin, off) | — | — | ✅ Settings → Engines | ✅ a Providers screen in settings | — | ✅ Settings → Engines, and keys in App Settings |
 | **Local models (Ollama, LM Studio)** | Built, off by default: a key-free entry for a model on your computer through Ollama's Anthropic-compatible endpoint, and a second engine kind for a local router you run. Neither has run with a real model yet. LM Studio is not set up as an entry | — | — | ✅ through an OpenAI-compatible API | ✅ finds local model servers | — | ✅ any OpenAI-compatible endpoint, set in configuration; its docs name vLLM, LM Studio and Ollama |
 | **Control from other tools and scripts (an MCP server, a command line)** | Not on the roadmap yet | — | — | — | — | — | ✅ an MCP server for clients such as Claude Desktop and Cursor, and an `openmausbot` command line |
+| **Voice: replies read aloud, voice calls, dictation** | In progress: reading aloud with a local voice is built; voice calls and dictation are not finished | — | — | — | — | — | ✅ replies read aloud, voice calls in which the bot asks for approvals out loud, dictation from the microphone |
+| **Separate channels for each context (work, personal, a project)** | Each person has a conversation with each member, and the team's channels; channels the person makes for a context are not built | — | — | — | — | — | ✅ channels for work, personal and each project, each with its own transcript, instructions and bots |
+| **Hundreds of apps to connect with one click** | In design: today Gmail and Google Calendar, plus the connectors of the project FreeDuet is forked from | — | — | — | — | — | ✅ a catalogue of apps through Composio: Gmail, Slack, GitHub and hundreds more |
+| **Automations that start from an event in a connected app** | Built, not yet run live: triggers from a webhook, from some services and from email; no catalogue of app events | — | — | — | — | — | ✅ a bot starts when something happens in a connected app, set up from one sentence |
+| **The bot uses the person's own computer** | Built in part, never run on a PC: programs only (list and updates), every action with a card, off until the person switches it on | — | — | — | — | — | ✅ on Mac and Windows the bot can control the local computer; on Ubuntu in beta and only on request |
+| **Engines added by configuration** | Built, off by default: a second engine kind, Anthropic-compatible; ACP and OpenAI-compatible are planned | — | — | — | — | — | ✅ any program that speaks ACP, or an OpenAI-compatible endpoint, by configuration |
+| **A public catalogue of ready teams to install** | Not built: a team can be exported to a file; importing one is not built | — | — | — | — | — | ✅ a public catalogue of teams and a public repository of playbooks, installed in one click after a review screen |
+| **A shared library for an organisation** | Not built | — | — | — | — | — | ✅ computers connected to an organisation receive the packages its administrator shares |
+| **The bot that answers is chosen automatically** | Iris, the head, hands work to the right member; there is no model dedicated to the choice | — | — | — | — | — | ✅ with a key for a decision model, rooms set to automatic choose the bot in a few hundred milliseconds |
+
+The last nine rows were added on 18 November 2026 from OpenMausBot's own README of 17 November 2026. They were checked for OpenMausBot and for FreeDuet only: the — in the other five columns means "not checked", not "absent".
 
 Importing agents from another tool is in the main table above (Grok Bot import: Planned, v1.0).
 
 ## The short version
+
+**Counted honestly, FreeDuet is behind on finished work.** Over the rows of both tables, on 18 November 2026: OpenMausBot has 22 functions finished and published, FreeDuet has 11. FreeDuet has 22 more that are built in part or built and never run on a real installation; OpenMausBot has 7 such rows. Most rows of the first table are FreeDuet's own ideas, which is why a plain count of ticks would flatter it. What FreeDuet has that the others do not is below; what it lacks is in the table above.
 
 FreeDuet is the only project that combines **all three**:
 
