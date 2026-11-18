@@ -652,7 +652,9 @@ describe("inbound email via SES -> SNS", () => {
       content: mime,
     });
   }
-  function harness(config: Record<string, unknown> = {}) {
+  function harness(
+    config: Record<string, unknown> = { allowedSenders: ["example.com"] },
+  ) {
     const events: ResponsibilityEvent[] = [];
     const confirmed: string[] = [];
     const fetched: string[] = [];
@@ -788,6 +790,11 @@ describe("inbound email via SES -> SNS", () => {
     const otherSender = harness({ allowedSenders: ["ops@other.test"] });
     await otherSender.post(signed({ ...base, Message: notification("PASS") }));
     expect(otherSender.events).toHaveLength(0);
+  });
+  test("an email trigger with no allowed senders is started by nobody (D84)", async () => {
+    const nobody = harness({ allowedSenders: [] });
+    await nobody.post(signed({ ...base, Message: notification("PASS") }));
+    expect(nobody.events).toHaveLength(0);
   });
   test("a signed SubscriptionConfirmation from the allowed topic is confirmed", async () => {
     const { confirmed, post } = harness();

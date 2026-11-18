@@ -423,9 +423,11 @@ export function createEmailTriggerRoutes(
       const trigger = await deps.directory.resolve(id);
       if (trigger?.config.kind !== "email") continue;
       const config = trigger.config;
+      // FreeDuet (D84): an email trigger with no allowed senders is started by nobody.
       const allowed =
-        config.allowedSenders.length === 0 ||
-        (authenticated && senderAllowed(from, config.allowedSenders));
+        config.allowedSenders.length > 0 &&
+        authenticated &&
+        senderAllowed(from, config.allowedSenders);
       results.push(
         await deliverToTrigger(
           deps,
