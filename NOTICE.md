@@ -165,6 +165,10 @@ The public site (`site/`) loads two more fonts from Google Fonts; neither is in 
 | Schibsted Grotesk | SIL Open Font License 1.1 | `site/tools/build.py` |
 | IBM Plex Sans | SIL Open Font License 1.1 (read in the Debian `fonts-ibm-plex` copyright file, not upstream) | `site/tools/build.py` |
 
+## Audio of the launch video (to confirm)
+
+The sound track of `site/video/freeduet-launch.mp4`, the video on the public site, was made with a free generator; which one, and under which terms, is not yet checked (recorded on 19 November 2026). If its terms do not allow use on a public project, the track will be replaced.
+
 ## Crates of the desktop shell under MPL-2.0 (to confirm)
 
 These are transitive dependencies locked in `openbot/desktop/src-tauri/Cargo.lock`; none is named in `openbot/desktop/src-tauri/Cargo.toml`. The lock file carries no licences, so each licence is to confirm with `cargo-license`.
