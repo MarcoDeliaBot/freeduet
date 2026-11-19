@@ -1,4 +1,4 @@
-# Ported from AI Continuity (https://github.com/MarcoDeliaBot/ai-continuity):
+# Ported from the maintainer's own checkpoint writer (MIT, not published):
 #   checkpoint.py (the checkpoint writer: validate_state, confined, atomic_write, render, save)
 #   continuity/core.py (redact, redact_values)
 #
@@ -36,7 +36,7 @@
 #   card numbers in a checkpoint).
 # - History files are published without ever replacing an existing one, and made read-only.
 # - latest_checkpoint() reads back the newest valid entry for one member and thread.
-"""Work checkpoints for FreeDuet's members, after AI Continuity's checkpoint writer.
+"""Work checkpoints for FreeDuet's members, after the maintainer's own checkpoint writer.
 
 A checkpoint keeps the facts of a member's work report (docs/ARCHITECTURE.md §2.5) so that the
 router, Iris or the person can resume the task after an engine switch or an interruption. The
