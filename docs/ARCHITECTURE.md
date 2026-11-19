@@ -82,7 +82,7 @@ Planned, not built: table `freeduet_usage`: member, engine, model, input, output
 
 ### 2.5 Work reports and checkpoints (built, milestone M1)
 
-Every member ends a piece of work with the report its prompt defines (shared rules in `agents.yaml`), and keeps the same facts as a checkpoint, using the checkpoint writer of [AI Continuity](https://github.com/MarcoDeliaBot/ai-continuity) (MIT, by the maintainer), ported with attribution.
+Every member ends a piece of work with the report its prompt defines (shared rules in `agents.yaml`), and keeps the same facts as a checkpoint, using the maintainer's own checkpoint writer (MIT), ported with attribution.
 
 | Report line | Checkpoint field | Rule |
 |---|---|---|
