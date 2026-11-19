@@ -8,7 +8,7 @@
 | [CopilotKit/OpenBot](https://github.com/CopilotKit/openbot) (inside `openbot/`) | MIT, © 2026 CopilotKit | Server, app, worker, a computer per agent, the action gateway, approvals, audit, credentials and connectors. |
 | [Anil-matcha/open-duet](https://github.com/Anil-matcha/open-duet) | Apache-2.0 | Three files are ported from open-duet into `openbot/agent-freeduet/freeduet/`: the Claude CLI launch and outcome (`claude_cli.py`), the limit patterns (`engine_errors.py`) and the stream parser (`stream_json.py`). Ported files keep the Apache-2.0 license text in `openbot/agent-freeduet/`, carry a header naming the original file, and state that they were changed. |
 | [CopilotKit's SqliteAgentRunner](https://github.com/CopilotKit/CopilotKit) (`@copilotkit/sqlite-runner` 1.77.0) | MIT, © Atai Barkai | Ported to Postgres as FreeDuet's agent runner for conversations kept without CopilotKit Intelligence (#42), in `openbot/server/src/freeduet/threads/pg-runner.ts`, which carries the MIT notice, names the original file and lists the changes. |
-| [AI Continuity](https://github.com/MarcoDeliaBot/ai-continuity) | MIT, © 2026 Marco D'Elia | The checkpoint writer behind members' work reports and the handoff between engines (F14, F24), ported into `openbot/agent-freeduet/freeduet/checkpoints.py` with its MIT notice, the original files named and the changes listed. |
+| Code by the same author (not published) | MIT, © 2026 Marco D'Elia | The checkpoint writer behind members' work reports and the handoff between engines (F14, F24), ported into `openbot/agent-freeduet/freeduet/checkpoints.py` with its MIT notice, the original files named and the changes listed. |
 | [Humanizer](https://github.com/blader/humanizer) 4.0.0 | MIT, © 2025 Siqi Chen | Wren's `humanizer` skill: the body of the upstream `SKILL.md` (commit b48c832), copied unchanged into `openbot/examples/freeduet/skills.yaml`. |
 | [Marketing Skills](https://github.com/coreyhaines31/marketingskills) | MIT, © 2025 Corey Haines | Mark's 53 marketing skills, granted to him only: the body of each upstream `skills/<name>/SKILL.md` (commit 1f83744, 2026-11-11), copied unchanged into `openbot/examples/freeduet/skills.yaml`, with `tools: []`. The upstream `references/`, `evals/`, `assets/`, `tools/` and `scripts/` folders are not carried. Mark's prompt names references files, scripts and command-line tools as things he does not have; it does not name `evals/` or `assets/`. |
 | [Impeccable](https://github.com/pbakaus/impeccable) | Apache-2.0, © 2025 Paul Bakaus | Mark's `design-craft-floor` skill: the body of one upstream reference file, `skill/reference/craft-floor.md` (commit d41d986), copied unchanged into `openbot/examples/freeduet/skills.yaml`, with no tools key, which the loader reads as an empty list, granted to him only. Its scripts, hooks, engine and other files are not carried. The Apache-2.0 licence text is in `openbot/agent-freeduet/LICENSE-APACHE-2.0`, the copy this repository keeps. |
@@ -41,7 +41,7 @@ SOFTWARE.
 
 ## Libraries added to the server for Gmail and Calendar with an app password (D24)
 
-Installed from npm and used as they are, not copied into this repository. The first three are the direct dependencies of `openbot/server`; the rest come with them. None is MPL or copyleft: the one dual-licensed package, `@zone-eu/mailsplit`, offers MIT and is used under MIT.
+Installed from npm and used as they are, not copied into this repository. The first three are the direct dependencies of `openbot/server`; the rest come with them. None is MPL or copyleft: the one dual-licensed package, `@zone-eu/mailsplit`, offers MIT and is used under MIT. nodemailer's licence, MIT-0, is permissive but not literally MIT, Apache-2.0 or BSD: the maintainer accepted it by name on 17 November 2026.
 
 | Library | Version | License | What it does here |
 |---|---|---|---|
@@ -105,8 +105,8 @@ The Dockerfiles below install these packages and programs. Versions are given on
 | `agent-computer` | Bun | 1.4.3 (image tag and digest, line 10) | copied from the `oven/bun` image, line 21 | to confirm |
 | `agent-computer` | Playwright | 1.62.1 (`PLAYWRIGHT_VERSION`, line 15; locked in `openbot/agent-computer/bun.lock`, line 109) | `bunx --bun "playwright@${PLAYWRIGHT_VERSION}"`, line 26 | Apache-2.0 (the LICENSE file in the npm package) |
 | `agent-computer` | Chromium | not pinned in the Dockerfile | `playwright install --with-deps chromium`, line 26 | to confirm |
-| `agent-computer` | LibreOffice and two fonts | not pinned | `apt-get install`, lines 43-45 | listed in the LibreOffice section above |
-| `agent-computer` | Python toolkit | pinned in `office-requirements.txt` | `pip install --require-hashes`, lines 48-50 | listed in the Python section above |
+| `agent-computer` | LibreOffice and two fonts | not pinned | the `apt-get install` step for LibreOffice, which also deletes its launcher links from `/usr/bin` (D85) | listed in the LibreOffice section above |
+| `agent-computer` | Python toolkit | pinned in `office-requirements.txt` | the `pip install --require-hashes` step for the office toolkit | listed in the Python section above |
 | all-in-one | ca-certificates, curl, unzip, xz-utils | not pinned | `apt-get install`, lines 34-35 | licence in the package's own copyright file |
 | all-in-one | Node.js and npm | 24.18.1 (image tag, line 20) | copied from the `node` image, line 32 | MIT for Node.js's own code (© Node.js contributors); the components it bundles keep their own licences, listed in Node's LICENSE file |
 | all-in-one | Bun | 1.4.3 (image tag and digest, line 21) | copied from the `oven/bun` image, line 33 | to confirm |
@@ -164,6 +164,10 @@ The public site (`site/`) loads two more fonts from Google Fonts; neither is in 
 |---|---|---|
 | Schibsted Grotesk | SIL Open Font License 1.1 | `site/tools/build.py` |
 | IBM Plex Sans | SIL Open Font License 1.1 (read in the Debian `fonts-ibm-plex` copyright file, not upstream) | `site/tools/build.py` |
+
+## Audio of the launch video (to confirm)
+
+The sound track of `site/video/freeduet-launch.mp4`, the video on the public site, was made with a free generator; which one, and under which terms, is not yet checked (recorded on 19 November 2026). If its terms do not allow use on a public project, the track will be replaced.
 
 ## Crates of the desktop shell under MPL-2.0 (to confirm)
 

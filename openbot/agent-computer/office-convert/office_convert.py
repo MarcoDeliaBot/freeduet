@@ -60,6 +60,14 @@ import zipfile
 import xml.etree.ElementTree as ET
 from xml.sax.saxutils import unescape
 
+# Where the image keeps LibreOffice once its launchers are off PATH (D85). A `soffice` on PATH, as on a
+# developer's machine or in the tests, is used first.
+PRIVATE_SOFFICE = "/usr/lib/libreoffice/program/soffice"
+
+
+def find_soffice():
+    return shutil.which("soffice") or (PRIVATE_SOFFICE if os.path.isfile(PRIVATE_SOFFICE) else None)
+
 TOTAL_SECONDS = 105  # the whole call; computer_run_command stops a command at about 120
 INSPECT_SECONDS = 25  # the inspector's share, never more than what is left
 RESERVE_SECONDS = 8  # kept back for killing, waiting for and removing what was started, and placing the result
@@ -684,7 +692,7 @@ def convert_in(mode, dirfd, folder, name, keep, replace, started, new_name=False
                     "This workbook has links to other workbooks or data connections. Values that come from them are NOT "
                     "refreshed: they are the stale values stored in the file."
                 )
-        soffice = shutil.which("soffice")
+        soffice = find_soffice()
         if not soffice:
             raise Stop("LibreOffice (soffice) is not installed in this computer.", 2)
         run_soffice(soffice, work, source, target_format, outdir, timeout=max(1, left(started, RESERVE_SECONDS)))

@@ -1,4 +1,4 @@
-"""The checkpoint writer ported from AI Continuity (freeduet/checkpoints.py), on temporary directories."""
+"""The checkpoint writer ported from the maintainer's own checkpoint writer (freeduet/checkpoints.py), on temporary directories."""
 
 import json
 import os
