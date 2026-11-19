@@ -24,7 +24,7 @@
  },
  "w_h": "Troppe cose da fare, e tu sei uno solo?",
  "w_p1": "Email, fatture, prenotazioni, contratti, quella risposta promessa la settimana scorsa. Una testa, due mani, cento cose da fare.",
- "w_p2": "FreeDuet è come un piccolo ufficio di assistenti dentro il tuo computer. Ogni assistente sa fare bene un solo lavoro. Tu parli con Iris, quella che guida la squadra, e lei mette tutti in movimento.",
+ "w_p2": "FreeDuet è come un piccolo ufficio di assistenti dentro il tuo computer. Ogni assistente sa fare bene un solo lavoro. Tu parli con Iris, quella che guida la squadra, e lei coordina tutti.",
  "w_a_alt": "Una coordinatrice collegata a quattro specialisti",
  "w_a_h": "Una squadra di assistenti",
  "w_a_p": "Un chatbot è un amico sveglio che risponde alle domande. FreeDuet è un lavoro di gruppo in cui ognuno fa davvero la sua parte.",
@@ -91,7 +91,7 @@
  "pass2": "Un abbonamento che hai già",
  "g_h": "L'obiettivo: una squadra per tutti, non solo per le grandi aziende",
  "g_p1": "Una grande azienda ha assistenti, avvocati e contabili. Un libero professionista, un piccolo negozio o una famiglia hanno… sé stessi. È ingiusto, e adesso può cambiare.",
- "g_p2": "Vogliamo che chiunque possa avere una squadra: gratis, aperta e in casa. FreeDuet gira sul tuo computer e, di default, tiene le sue conversazioni in un archivio su quel computer. A pensare è l'AI a cui sei già abbonato.",
+ "g_p2": "Vogliamo che chiunque possa avere una squadra: gratis, aperta e in casa. FreeDuet gira sul tuo computer e, di default, tiene le sue conversazioni in un archivio su quel computer. Il ragionamento lo fa l'AI a cui sei già abbonato.",
  "g_p3": "Open source vuol dire che la ricetta è pubblica. Chiunque può leggerla, controllare che faccia quello che dice e migliorarla. Non devi fidarti di noi. Puoi guardare.",
  "r_h": "Cosa funziona oggi e cosa arriverà",
  "rl_today": "Oggi",
@@ -101,7 +101,7 @@
  "r_now": "Disponibile",
  "r_prog": "In corso",
  "r1": "La squadra sul tuo accesso Claude, con approvazioni, collaudi, Gmail e Google Calendar.",
- "r2": "Priorità assoluta: un installer in un file per Windows, macOS e Ubuntu. Oggi ci sono i primi script di installazione per Ubuntu e per Windows con WSL2, e non c'è ancora un installer a doppio clic. Anche un assistente che mette in ordine la tua posta è costruito: il 15 novembre 2026 Otto ha spostato lo spam nella cartella Spam di una casella reale. Le regole permanenti sulla posta sono pubblicate nella v0.2.2: il 16 novembre 2026 una regola per il dominio di un mittente ha agito da sola sulla posta nuova. Le altre modifiche e regole non sono ancora state provate sul campo. Costruiti, ma non ancora provati sul campo: «Done when» (fatto quando) a ogni passaggio di lavoro, la scheda della routine in chat, un token per il computer di ogni membro, e connessioni verso la rete di casa che si chiudono quando disattivi l'accesso.",
+ "r2": "Priorità assoluta: un installer in un file per Windows, macOS e Ubuntu. Oggi ci sono i primi script di installazione per Ubuntu e per Windows con WSL2, e non c'è ancora un installer a doppio clic. Anche un assistente che mette in ordine la tua posta è costruito: il 15 novembre 2026 Otto ha spostato lo spam nella cartella Spam di una casella reale. Le regole permanenti sulla posta sono incluse nella v0.2.2: il 16 novembre 2026 una regola per il dominio di un mittente ha agito da sola sulla posta nuova. Le altre modifiche e regole non sono ancora state provate sul campo. Costruiti, ma non ancora provati sul campo: «Done when» (fatto quando) a ogni passaggio di lavoro, la scheda della routine in chat, un token per il computer di ogni membro, e connessioni verso la rete di casa che si chiudono quando disattivi l'accesso.",
  "r3": "La scelta del motore di ogni membro è in corso: la pagina Motori è costruita, ma non ancora provata sul campo, e il passaggio automatico è stato eseguito solo con motori di prova. Le impostazioni cambiate in chat, con Annulla, sono in corso. Il nome, il tono e la lingua di un membro sono costruiti dopo la v0.2, ma non ancora provati sul campo, e nessun test è stato ancora eseguito su tono e lingua. La delega vera è in programma.",
  "r4": "Automazioni scritte in chat, una versione per il telefono e l'accesso da remoto sono in corso. Più app collegate sono in progettazione.",
  "r5": "Voce: la lettura ad alta voce è costruita, ma non ancora provata sul campo, e disattivata di default; le chiamate non sono ancora costruite. Full access e Cam sono costruiti, ma non ancora provati sul campo. Acquisti sicuri: in programma.",
@@ -125,7 +125,7 @@
  "st_p": "Copiali in un terminale, accedi una volta con il tuo piano Claude, poi apri la pagina che ti indica.",
  "st_needH": "Cosa ti serve:",
  "st_need": "un abbonamento Claude, più Docker, Bash e Bun sul computer. Provato su Windows (con WSL2) e su Linux.",
- "st_kid": "Mai aperto un terminale? Fallo installare a una persona tecnica e mostrale questa pagina.",
+ "st_kid": "Mai aperto un terminale? Chiedi a una persona tecnica di installarlo e mostrale questa pagina.",
  "copy": "Copia i comandi",
  "j1h": "Metti una stella",
  "j1p": "Un clic su GitHub dice agli altri che questo progetto merita un'occhiata.",
@@ -137,7 +137,7 @@
  "q1": "Cosa è gratis e cosa pago?",
  "a1": "FreeDuet è gratuito e open source con licenza MIT, anche per uso professionale. L'unica cosa che paghi è l'abbonamento AI che usi con lui, che oggi è un piano Claude. Non c'è nessuna chiave API da comprare.",
  "q2": "Cosa mi serve per installarlo?",
- "a2": "Un abbonamento Claude, più Docker, Bash e Bun sul computer. I quattro passi qui sopra sono tutta l'installazione. Mai aperto un terminale? Fallo installare a una persona tecnica e mostrale questa pagina.",
+ "a2": "Un abbonamento Claude, più Docker, Bash e Bun sul computer. I quattro passi qui sopra sono tutta l'installazione. Mai aperto un terminale? Chiedi a una persona tecnica di installarlo e mostrale questa pagina.",
  "q3": "Funziona su Windows, Mac e Linux?",
  "a3": "Lo sviluppatore lo usa su Windows con WSL2 e Docker, e i nostri controlli automatici lo avviano su Linux. Su Mac non è stato provato, quindi non possiamo promettere che funzioni. FreeDuet è una prima uscita: l'ultima versione pubblicata è la 0.2.2 (16 novembre 2026), costruita e usata da un solo manutentore.",
  "q4": "Cosa può fare un assistente senza chiedermelo?",
@@ -168,7 +168,7 @@
   "otto": [
    "posta",
    "Legge la tua posta, indica cosa conta adesso e cosa può aspettare, e scrive le risposte da farti controllare.",
-   "Ordina la posta e prepara le risposte importanti."
+   "Smista la posta e prepara le risposte importanti."
   ],
   "portia": [
    "contratti",
@@ -192,12 +192,12 @@
   ],
   "mark": [
    "marketing",
-   "Prepara il tuo piano di marketing, il piano di lancio e la strategia dei canali, e rivede il tuo sito, la SEO e le pubblicità. Di default, non pubblica e non spende nulla senza il tuo sì. I suoi casi sono girati nelle valutazioni della squadra. Non ancora provato su un'installazione reale.",
+   "Prepara il tuo piano di marketing, il piano di lancio e la strategia dei canali, e rivede il tuo sito, la SEO e le pubblicità. Di default, non pubblica e non spende nulla senza il tuo sì. I suoi casi sono stati eseguiti negli esami della squadra. Non ancora provato su un'installazione reale.",
    "Preparami un piano di marketing di tre mesi per il mio negozio."
   ],
   "video": [
    "video",
-   "Taglia, sottotitola e aggiunge musica e suoni a brevi video dai tuoi filmati o da un copione, in formato orizzontale, verticale e quadrato. Non pubblica né carica mai un video. I suoi casi sono girati nelle valutazioni della squadra. Non ancora provato su un'installazione reale.",
+   "Taglia, sottotitola e aggiunge musica e suoni a brevi video dai tuoi filmati o da un copione, in formato orizzontale, verticale e quadrato. Non pubblica né carica mai un video. I suoi casi sono stati eseguiti negli esami della squadra. Non ancora provato su un'installazione reale.",
    "Fammi un video verticale di 30 secondi da questo copione, con i sottotitoli."
   ],
   "gus": [
@@ -212,7 +212,7 @@
   ],
   "vera": [
    "controllo",
-   "Lavora dietro le quinte. Rifà le somme e riapre i prezzi prima che il lavoro arrivi a te.",
+   "Lavora dietro le quinte. Rifà i conti e ricontrolla i prezzi prima che il lavoro arrivi a te.",
    "(Iris le affida il lavoro importante.)"
   ],
   "leo": [
@@ -261,7 +261,7 @@
      "venerdì, ore 20:00, 4 persone"
     ]
    ],
-   "ok": "Prenotato per venerdì alle 20:00, 4 persone. La conferma è nella tua posta.",
+   "ok": "Prenotato per venerdì alle 20:00, 4 persone. La conferma è nella tua casella di posta.",
    "stop": "Niente prenotato. Dimmi se vuoi altri posti."
   }
  ],
@@ -277,13 +277,13 @@
  "again": "Ricomincia",
  "bA_cap": "Demo con esempi inventati. La prova dal vivo del 15 novembre 2026 comprendeva 38 casi di sicurezza, che cercano di far infrangere una regola a un membro.",
  "bR_h": "Dodici membri, un compito ciascuno",
- "bR_cap": "Mark e Cam sono stati aggiunti dopo la v0.1. I loro casi sono girati nelle valutazioni della squadra del 15 novembre 2026. Nessuna prova di certificazione completa è stata superata dopo la v0.1.",
+ "bR_cap": "Mark e Cam sono stati aggiunti dopo la v0.1. I loro casi sono stati eseguiti negli esami della squadra del 15 novembre 2026. Nessuna prova di certificazione completa è stata superata dopo la v0.1.",
  "bH_h": "Un passaggio con la riga «fatto quando»",
  "bH_from": "Iris a Otto",
  "bH_msg": "Otto, ordina la posta e prepara le risposte che contano.",
  "bH_dw": "Fatto quando",
  "bH_dwv": "ogni messaggio che richiede una risposta ha una bozza leggibile, e non si invia nulla.",
- "bH_cap": "Iris scrive la riga «fatto quando», e la risposta che torna viene confrontata con essa. Un compito che richiede il tuo sì chiede comunque.",
+ "bH_cap": "Iris scrive la riga «fatto quando», e la risposta che torna viene confrontata con essa. Un compito che richiede il tuo sì te lo chiede comunque.",
  "bT_cap": "La scheda mostra cosa farà la routine e quando girerà la prossima volta.",
  "pauseBtn": "Pausa",
  "resumeBtn": "Riprendi",
@@ -301,7 +301,7 @@
  "bU_k1": "La copia resta sul tuo computer.",
  "bU_k2": "Nulla si aggiorna senza il tuo comando.",
  "bU_k3": "L'aggiornamento è stato eseguito quattro volte su un'installazione reale il 15 novembre 2026, ogni volta con un backup del database fatto prima.",
- "bU_cap": "Provato sul campo su un'installazione il 15 novembre 2026: l'aggiornamento è fatto, il ritorno indietro deve ancora arrivare.",
+ "bU_cap": "Provato sul campo su un'installazione il 15 novembre 2026: l'aggiornamento è riuscito, il ritorno alla versione precedente non è ancora stato provato.",
  "pf_h": "Prove che puoi verificare",
  "pf_p": "Cerchiamo apposta di ingannare i nostri assistenti. Gli assistenti possono comunque sbagliare, quindi leggi ciò che preparano prima di approvarlo.",
  "ev_count": "45 esecuzioni di sicurezza su 45 superate in v0.1",
@@ -311,7 +311,7 @@
  "c1p": "Ogni membro al 100% dei suoi casi valutati, e i casi di sicurezza superati in 45 esecuzioni su 45. La soglia è il 90% o più per ogni membro e il 100% per i casi di sicurezza.",
  "c_chk1": "Verifica: docs/ROADMAP.md ed evals/team/README.md",
  "c2h": "Una prima prova fallita, poi le correzioni",
- "c2p": "La prima prova completa di quella notte è fallita su un membro, con un errore del browser e poi un turno finito nel silenzio. Entrambi sono stati corretti, e la prova certificata è venuta dopo le correzioni.",
+ "c2p": "La prima prova completa di quella notte è fallita su un membro, con un errore del browser e poi un turno finito senza risposta. Entrambi sono stati corretti, e la prova certificata è venuta dopo le correzioni.",
  "c_chk2": "Verifica: README.md, «What is tested and what is not»",
  "c3h": "Due prove dal vivo dopo la v0.1",
  "c3p": "Il 15 novembre 2026 le valutazioni della squadra sono girate dal vivo sulla v0.2.1: 84 casi, di cui 38 di sicurezza. Ne sono passati 66 su 73 valutati e 11 sono stati saltati. Quella prova non ha raggiunto le soglie. Anche Mark e Cam vi hanno partecipato. Una seconda prova, con tre ripetizioni il 16 e 17 novembre, ha fallito anch'essa alcuni casi. Nessuna prova completa è stata superata dopo la v0.1.",
