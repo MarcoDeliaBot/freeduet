@@ -39,9 +39,11 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 # for real, so an image whose toolkit does not work fails to build.
 # LibreOffice (MPL-2.0), headless: Writer, Calc and Impress cores from the distribution, nothing else (no Java,
 # no GUI extras, no recommended packages). Installed, never copied or modified (docs/M1_PLAN.md section 41, D61).
-# It is used only through `office-convert`, which recalculates a sheet and makes a PDF.
+# It is meant to be used through `office-convert`, which recalculates a sheet and makes a PDF. Its launchers are taken
+# off PATH below (D85), so `soffice` and `libreoffice` are not commands here; the program stays at its own path.
 RUN apt-get update && apt-get install -y --no-install-recommends \
       libreoffice-writer libreoffice-calc libreoffice-impress fonts-liberation fonts-dejavu-core \
+  && find /usr/bin -maxdepth 1 -type l -lname '*libreoffice*' -delete \
   && rm -rf /root/.cache /tmp/* /var/lib/apt/lists/*
 
 COPY agent-computer/office-requirements.txt /opt/office-requirements.txt
@@ -53,7 +55,7 @@ RUN python3 -m venv /opt/office \
   && rm -rf /root/.cache
 COPY agent-computer/office-inspect/office_inspect.py /usr/local/lib/office-inspect/office_inspect.py
 COPY agent-computer/office-inspect/office-inspect agent-computer/office-inspect/office-python /usr/local/bin/
-# `office-convert` (ours) is the only way a member runs LibreOffice: two fixed jobs, `recalc` and `pdf`, after
+# `office-convert` (ours) is the intended way a member runs LibreOffice: two fixed jobs, `recalc` and `pdf`, after
 # `office-inspect` has passed the file, with a throwaway profile, macros off and one overall limit of 105 seconds.
 COPY agent-computer/office-convert/office_convert.py /usr/local/lib/office-convert/office_convert.py
 COPY agent-computer/office-convert/office-convert /usr/local/bin/
@@ -64,7 +66,9 @@ RUN chmod 0755 /usr/local/bin/office-inspect /usr/local/bin/office-python /usr/l
   && rm -f /tmp/office-smoke.docx
 # Build check for LibreOffice: its version, then a real recalculation (a formula with no stored value must come out
 # as 42.5, printed and in a kept copy) and a real PDF through `office-convert`, so an image whose LibreOffice does not work fails to build.
-RUN soffice --headless --version \
+RUN /usr/lib/libreoffice/program/soffice --headless --version \
+  && ! command -v soffice \
+  && ! command -v libreoffice \
   && mkdir /tmp/lo-smoke && cd /tmp/lo-smoke \
   && office-python -c "import openpyxl, docx; w = openpyxl.Workbook(); s = w.active; s['A1'] = 10; s['A2'] = 32.5; s['A3'] = '=SUM(A1:A2)'; w.save('t.xlsx'); d = docx.Document(); d.add_heading('Smoke', 1); d.save('t.docx')" \
   && office-convert recalc t.xlsx | grep -q '"value": 42.5' \

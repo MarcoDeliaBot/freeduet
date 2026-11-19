@@ -1573,3 +1573,17 @@ Limits. **Not run live**: no installation we run receives mail through the provi
 Tests. `openbot/server/tests/responsibility-triggers.test.ts`: the harness now lists a sender by default, because the cases that exercise signatures and routing need a delivery; one new case, "an email trigger with no allowed senders is started by nobody (D84)", fails on the old line (30 pass, 1 fail) and passes here (31 pass).
 
 **Built so far.** The ingress line, the comment on the schema, the tool description, the test, the sentences in `SECURITY.md` and `docs/THREAT_MODEL.md`, and this section. The code edit was made by a local model from an exact instruction and checked line by line before it was committed.
+
+## 64. LibreOffice's launchers are taken off PATH in the member's computer (D85)
+
+Added on 2026-11-18. D61 (section 41) meant LibreOffice to be reached through `office-convert`, which runs `office-inspect` first and starts the program with a throwaway profile, macros off and a time limit. In the live run of 17 November 2026 Wren counted pages on a PDF she made by starting `soffice` herself (D83, section 62). D83 put the rule in two prompts and two skills, which is a request to a model. This section adds what the image can do.
+
+| # | Decision | Why |
+|---|---|---|
+| D85 | **`soffice` and `libreoffice` are not commands in the member's computer.** (1) After `apt-get install`, the image deletes every link in `/usr/bin` that points into LibreOffice's own directory (`find /usr/bin -maxdepth 1 -type l -lname '*libreoffice*' -delete`). The package is not changed and nothing is copied. (2) `office-convert` looks for `soffice` on PATH first, as on a developer's machine and in the tests, and then at the program's own path, `/usr/lib/libreoffice/program/soffice` (`find_soffice` in `office_convert.py`). (3) The image build fails if either name is still a command, and it still runs a real recalculation and a real PDF through `office-convert`. | A member that types `soffice` by habit now gets "command not found" and is left with the wrapper. That is the mistake that was seen. |
+
+Limits. **This is not a barrier.** A member is root in its own computer with every capability dropped, so it can start the program by its full path, or make the link again; the image only removes the easy way. The inspector's refusals, the throwaway profile and the time limit are still skipped by anyone who does that. **Not run live**, and not built here: there is no Docker in the place this was written, so the Dockerfile lines are checked by CI's image jobs on this pull request (`full-ci`). A later `apt-get upgrade` of LibreOffice inside a running computer would put the links back; the image does not upgrade packages at run time.
+
+Tests. `openbot/agent-computer/office-convert/tests/test_office_convert.py`: one new case for the search (PATH first, then the program's own path, then nothing). The case "a missing LibreOffice says so" runs the tool in its own process and so cannot move the path: it is skipped where LibreOffice is installed at that path, and the new case covers the search there. 119 pass, 1 skipped on a machine with LibreOffice installed.
+
+**Built so far.** The three Dockerfile changes, `find_soffice`, the tests, the comments that said "only" in the Dockerfile, and this section. The first edit of the Dockerfile and of the tool was made by a local model from an exact instruction and checked line by line; the test design was then corrected by hand.

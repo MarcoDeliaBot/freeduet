@@ -503,6 +503,27 @@ def test_recalc_says_values_from_external_links_are_not_refreshed(work, stub):
 
 # ---- when LibreOffice misbehaves ------------------------------------------------------------------------------
 
+def test_libreoffice_is_found_on_path_first_then_at_its_own_path(tmp_path, monkeypatch):
+    # D85: the image takes the launchers off PATH, so the tool also looks at the program's own path.
+    monkeypatch.setenv("PATH", "/nonexistent")
+    monkeypatch.setattr(oc, "PRIVATE_SOFFICE", str(tmp_path / "absent"))
+    assert oc.find_soffice() is None
+    private = tmp_path / "soffice"
+    private.write_text("")
+    monkeypatch.setattr(oc, "PRIVATE_SOFFICE", str(private))
+    assert oc.find_soffice() == str(private)
+    on_path = tmp_path / "bin"
+    on_path.mkdir()
+    launcher = on_path / "soffice"
+    launcher.write_text("#!/bin/sh\n")
+    launcher.chmod(0o755)
+    monkeypatch.setenv("PATH", str(on_path))
+    assert oc.find_soffice() == str(launcher)
+
+
+# The tool runs in its own process here, so the test cannot move PRIVATE_SOFFICE: where LibreOffice is installed at
+# that path the tool finds it, and the case above covers the search instead.
+@pytest.mark.skipif(os.path.isfile(oc.PRIVATE_SOFFICE), reason="LibreOffice is installed at its own path here")
 def test_a_missing_libreoffice_says_so(work, monkeypatch):
     monkeypatch.setenv("PATH", "/nonexistent")
     f = zipped(work / "a.docx", docx_parts())
@@ -818,7 +839,10 @@ def test_a_helper_that_outlives_a_killed_libreoffice_is_reaped(work, stub, monke
 
 # ---- the real program, where it is installed ------------------------------------------------------------------
 
-needs_soffice = pytest.mark.skipif(shutil.which("soffice") is None, reason="LibreOffice is not installed here")
+needs_soffice = pytest.mark.skipif(
+    shutil.which("soffice") is None and not os.path.isfile(oc.PRIVATE_SOFFICE),
+    reason="LibreOffice is not installed here",
+)
 
 
 @needs_soffice
