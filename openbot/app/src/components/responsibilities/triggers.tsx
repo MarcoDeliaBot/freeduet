@@ -700,7 +700,7 @@ function NewTriggerDialog({
                   {kind === "email" && (
                     <Field className="sm:col-span-2">
                       <FieldLabel htmlFor={`${id}-senders`}>
-                        Allowed senders (blank: anyone)
+                        Allowed senders (blank: nobody)
                       </FieldLabel>
                       <Input
                         id={`${id}-senders`}
