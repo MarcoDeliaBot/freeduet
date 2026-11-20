@@ -24,6 +24,8 @@ The public website: one static page, built once per language, twelve URLs.
 
 Hosting: Cloudflare Pages, output directory `site`, no build command.
 
+`404.html` is the page for an address that does not exist. Cloudflare Pages serves it with the status 404; without it Pages answered every unknown address with the home page and the status 200 (a "soft 404" for search engines). It is written by hand, not by the build, and says `noindex`.
+
 Every claim on the page must match the README of this repository. What is planned is labelled as planned.
 
 ## Motion and spacing
