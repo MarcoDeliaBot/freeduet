@@ -240,6 +240,8 @@ The vault's own events stay, with the engine id as the key id and no value: `cre
 
 ### 6.8 Who may do it
 
+*Changed by D106 (20 November 2026, `docs/M1_PLAN.md` section 68): with sign-in and an installation secret, an administrator whose browser holds a live `computer` pairing may also change the choices through a tunnel. The text below is the rule before D106, which still holds for a deployment with no gate and for every other route.*
+
 All of these, together:
 
 1. **An administrator**, by the existing guard [code: `requireAdmin`].

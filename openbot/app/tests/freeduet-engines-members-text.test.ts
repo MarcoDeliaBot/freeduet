@@ -132,6 +132,9 @@ describe("why the controls do not work, and what a change says", () => {
     expect(blockText("not_at_the_computer")).toBe(
       "Change these on the computer FreeDuet runs on.",
     );
+    expect(blockText("not_paired_with_the_computer")).toBe(
+      "Pair this browser with the computer FreeDuet runs on first: run `bash scripts/open.sh` there and open the link here.",
+    );
     expect(blockText("agent_too_old")).toBe("Update FreeDuet to change this.");
     expect(blockText("choices_unreadable")).toBe(CHOICES_UNREADABLE);
   });

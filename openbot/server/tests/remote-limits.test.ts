@@ -342,7 +342,7 @@ describe("the Engines routes with the marker", () => {
     expect(answer.status).toBe(403);
     expect(await answer.json()).toEqual({
       error:
-        "Change this on the computer FreeDuet runs on. Nothing was changed.",
+        "Pair this browser with the computer FreeDuet runs on first (run `bash scripts/open.sh` there and open the link in this browser), or change this on that computer. Nothing was changed.",
     });
   });
 
