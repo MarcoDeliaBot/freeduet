@@ -183,16 +183,17 @@ async def engines_panel_change(provider: str, request: Request):
 async def engines_panel_order(member: str, request: Request):
     """D112: one member's engines in a new order. The body is {"order": [engine ids]}, the whole chain as the page shows it."""
     body = await _json_body(request)
-    router = getattr(app.state, "engine_router", None)
-    shown = None
-    if router is not None:
-        try:
-            found = router.overview([member])
-            shown = list(found[0]["chain"]) if found else None
-        except Exception:  # noqa: BLE001 - without the router's view the file's own chain decides
-            shown = None
     try:
         async with engine_panel._lock:
+            # Read inside the lock: a card change made meanwhile rebuilds the router, and this must see that chain.
+            router = getattr(app.state, "engine_router", None)
+            shown = None
+            if router is not None:
+                try:
+                    found = router.overview([member])
+                    shown = list(found[0]["chain"]) if found else None
+                except Exception:  # noqa: BLE001 - without the router's view the file's own chain decides
+                    shown = None
             result = engine_panel.apply_order(member, body.get("order"), current=shown)
             if result["changed"]:
                 _apply_file_change()

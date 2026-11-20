@@ -609,6 +609,29 @@ def test_the_order_route_applies_from_the_next_message_and_refuses_what_the_pane
     assert client.put("/engines/panel/members/nobody/order", json={"order": []}, headers=AUTH).status_code == 404
 
 
+def test_the_order_route_reads_the_chain_inside_the_lock_so_a_card_change_cannot_make_it_stale(client, data, monkeypatch):
+    events = []
+
+    class Recording:
+        async def __aenter__(self):
+            events.append("lock")
+
+        async def __aexit__(self, *_):
+            events.append("unlock")
+
+    router = app.state.engine_router
+    real_overview = router.overview
+
+    def overview(members):
+        events.append("overview")
+        return real_overview(members)
+
+    monkeypatch.setattr(panel, "_lock", Recording())
+    monkeypatch.setattr(router, "overview", overview)
+    client.put("/engines/panel/members/freeduet/order", json={"order": ["claude-code"]}, headers=AUTH)
+    assert events[:2] == ["lock", "overview"]
+
+
 # ── Key folder safety ────────────────────────────────────────────────────────────────────────────
 
 

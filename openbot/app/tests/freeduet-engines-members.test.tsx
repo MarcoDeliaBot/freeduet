@@ -789,3 +789,46 @@ test("a member with one engine has nothing to move", async () => {
   await view.findByText("Leo");
   expect(view.queryAllByRole("button")).toHaveLength(0);
 });
+
+test("the arrows and Undo stay disabled until the list has been read again after a move", async () => {
+  server.members = [member({ id: "iris", chain: THREE })];
+  const view = draw();
+  await view.findByText("Iris");
+  // From now on the list is held back until the test lets it through.
+  let release: () => void = () => {};
+  const gate = new Promise<void>((resolve) => {
+    release = resolve;
+  });
+  const before = global.fetch;
+  global.fetch = Object.assign(
+    async (path: Parameters<typeof fetch>[0], init?: RequestInit) => {
+      if (String(path) === "/api/freeduet/engines" && !init?.method) await gate;
+      return before(path, init);
+    },
+    { preconnect: originalFetch.preconnect },
+  );
+  const user = userEvent.setup({ document });
+  await user.click(
+    view.getByRole("button", { name: "Move Codex up for Iris" }),
+  );
+  await waitFor(() => expect(sent).toHaveLength(1));
+  // The save went through; the list is still being read: the row is still the old chain, and nothing can be pressed.
+  await new Promise((resolve) => setTimeout(resolve, 50));
+  expect(order(view, 0)).toEqual(["Claude Code", "Codex", "A gateway"]);
+  for (const button of view.getAllByRole("button"))
+    expect((button as HTMLButtonElement).disabled).toBe(true);
+  release();
+  await waitFor(() =>
+    expect(order(view, 0)).toEqual(["Codex", "Claude Code", "A gateway"]),
+  );
+  await waitFor(() =>
+    expect(
+      (
+        view.getByRole("button", {
+          name: "Move Claude Code up for Iris",
+        }) as HTMLButtonElement
+      ).disabled,
+    ).toBe(false),
+  );
+  global.fetch = before;
+});

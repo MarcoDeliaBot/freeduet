@@ -123,7 +123,7 @@ export function FreeDuetEngines() {
 
             {(reading.members?.length ?? 0) > 0 ? (
               <EngineMembers
-                onChanged={() => void engines.refetch()}
+                onChanged={() => engines.refetch()}
                 reading={reading}
               />
             ) : null}
