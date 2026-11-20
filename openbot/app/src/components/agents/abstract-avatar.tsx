@@ -1,5 +1,6 @@
 import { MicOrb } from "@/components/duet/mic-orb";
 import type { OrbColour } from "@/components/duet/mic-orb-draw";
+import { MemberPicture, mascotKeyOf } from "@/freeduet/wide/mascot";
 import { isTenantBot } from "@/lib/agents/primary-bot";
 
 /** The orb's colours another Bot can wear: every one but Ocean, which is the tenant's own Bot's. */
@@ -19,6 +20,30 @@ export function orbColourFor(id: string): OrbColour {
     hash = Math.imul(hash, 0x01000193) >>> 0;
   }
   return OTHER_COLOURS[hash % OTHER_COLOURS.length] ?? "ember";
+}
+
+/**
+ * A Bot's face, the one place every avatar is drawn: a FreeDuet team member (an id the mascot file lists)
+ * wears its drawn mascot; any other Bot, the upstream's or one the person made, keeps the mic orb.
+ */
+export function BotFace({
+  id,
+  size,
+  still = true,
+}: {
+  id: string;
+  size: number;
+  still?: boolean;
+}) {
+  if (mascotKeyOf(id) !== null)
+    return <MemberPicture agentId={id} size={size} />;
+  return (
+    <MicOrb
+      colour={isTenantBot(id) ? "ocean" : orbColourFor(id)}
+      size={size}
+      still={still}
+    />
+  );
 }
 
 /**
@@ -42,7 +67,6 @@ export function AbstractAvatar({
   seed?: string;
   size?: number;
 }) {
-  const own = isTenantBot(id);
   return (
     <span
       role="img"
@@ -52,7 +76,7 @@ export function AbstractAvatar({
     >
       {/* The drawing carries its own role; hidden so the coworker is announced once, by name. */}
       <span aria-hidden="true" className="contents">
-        <MicOrb colour={own ? "ocean" : orbColourFor(id)} size={size} still />
+        <BotFace id={id} size={size} />
       </span>
     </span>
   );
