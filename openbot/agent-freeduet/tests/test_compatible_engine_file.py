@@ -233,7 +233,8 @@ def test_a_key_file_in_a_hidden_folder_is_a_problem_of_the_file_that_says_so_and
     "http://host.docker.internal:3002",
 ])
 def test_an_address_the_key_may_travel_to(address):
-    assert config_with({"base_url": address}).engines["gw"].base_url == address
+    # a free entry at OpenRouter must name a free model (D107), which the others ignore
+    assert config_with({"base_url": address, "model": "openrouter/free"}).engines["gw"].base_url == address
 
 
 @pytest.mark.parametrize("address, fragment", [
@@ -295,7 +296,7 @@ def test_the_shipped_example_has_no_active_entry_of_this_kind():
 
 def test_the_commented_out_examples_are_valid_and_off():
     entries = commented_entries()
-    assert set(entries) == {"my-gateway", "local-free-router", "local-models"}
+    assert set(entries) == {"my-gateway", "local-free-router", "local-models", "openrouter-free-claude"}
     data = {
         "engines": {"claude-code": dict(CLAUDE_ENTRY), **copy.deepcopy(entries)},
         "chains": {"default": ["claude-code"]},
@@ -311,6 +312,7 @@ def test_the_commented_out_examples_are_valid_and_off():
     assert config.engines["my-gateway"].billing == "metered"
     assert config.engines["local-free-router"].billing == "free"
     assert config.engines["local-models"].billing == "free"
+    assert config.engines["openrouter-free-claude"].billing == "free"  # D107, test_openrouter_free.py
 
 
 def test_the_local_models_example_takes_no_key_and_says_how_a_container_reaches_ollama():
@@ -343,7 +345,11 @@ def test_the_example_says_plainly_that_a_paid_endpoint_is_not_run_yet():
 
 def test_the_paid_example_is_refused_once_switched_on_and_the_free_one_is_not():
     entries = commented_entries()
-    switched_on = {name: {**copy.deepcopy(entry), "enabled": True, "model": "some-model"} for name, entry in entries.items()}
+    # the OpenRouter example keeps its own free model: D107 refuses any other at that address
+    switched_on = {
+        name: {**copy.deepcopy(entry), "enabled": True, **({} if name == "openrouter-free-claude" else {"model": "some-model"})}
+        for name, entry in entries.items()
+    }
     config = parse_engines({
         "engines": {"claude-code": dict(CLAUDE_ENTRY), **switched_on},
         "chains": {"default": ["claude-code", "my-gateway", "local-free-router"]},

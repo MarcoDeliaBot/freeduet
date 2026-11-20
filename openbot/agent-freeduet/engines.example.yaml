@@ -69,8 +69,8 @@ engines:
   # It is never first in a chain (logins come first), and `tier` is C unless you say otherwise: the quality floor
   # keeps a skill that needs a better model off it. Plain http is accepted only for this machine; anything else is https.
   #
-  # OpenRouter's FREE models, for a member (D100, D107; provider terms read 2026-11-20, see docs/PROVIDERS.md). Off, and in no
-  # chain: to use it, put your own OpenRouter key where `credential_secret_ref` says (the variable OPENROUTER_API_KEY of this
+  # OpenRouter's FREE models, for a member (D100, D107; provider terms read 2026-11-20, see docs/PROVIDERS.md). An example, so off
+  # and in no chain: to use it, uncomment it, put your own OpenRouter key where `credential_secret_ref` says (the variable OPENROUTER_API_KEY of this
   # service, or `file:/absolute/path`), set `enabled: true` and write `openrouter-free-claude` in a chain, after `claude-code`.
   # READ BEFORE YOU SWITCH IT ON:
   #  - A FREE CLOUD TIER MAY KEEP OR USE WHAT IT IS SENT (D101). Everything the member reads for a turn leaves this machine for
@@ -84,15 +84,15 @@ engines:
   #    a list of fallback models: OpenRouter can bill a paid model when a `:free` model falls back to one.
   #  - Whether a free model calls tools well enough to run a member is not checked: it stays tier C, and the quality floor keeps
   #    the skills that need better off it.
-  openrouter-free-claude:
-    kind: anthropic-compatible
-    base_url: https://openrouter.ai/api                 # OpenRouter's Anthropic-format address, without /v1/messages
-    credential_secret_ref: env:OPENROUTER_API_KEY
-    billing: free
-    model: openrouter/free                              # or "<provider>/<model>:free"; nothing else is accepted
-    tier: C
-    enabled: false
-
+  # openrouter-free-claude:
+  #   kind: anthropic-compatible
+  #   base_url: https://openrouter.ai/api                 # OpenRouter's Anthropic-format address, without /v1/messages
+  #   credential_secret_ref: env:OPENROUTER_API_KEY
+  #   billing: free
+  #   model: openrouter/free                              # or "<provider>/<model>:free"; nothing else is accepted
+  #   tier: C
+  #   enabled: false
+  #
   # A paid gateway, as it would be written once its limits can be kept (with `metered.enforce: ledger` below). Refused for now.
   # my-gateway:
   #   kind: anthropic-compatible

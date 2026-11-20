@@ -155,7 +155,6 @@ MODEL_VARIABLES = (
     "ANTHROPIC_DEFAULT_OPUS_MODEL",
     "ANTHROPIC_DEFAULT_SONNET_MODEL",
     "ANTHROPIC_DEFAULT_HAIKU_MODEL",
-    "CLAUDE_CODE_SUBAGENT_MODEL",  # D107: a sub-agent never asks for a model the entry did not name
 )
 HOME_FOLDER = "gateway-home"
 CONFIG_FOLDER = "gateway-config"

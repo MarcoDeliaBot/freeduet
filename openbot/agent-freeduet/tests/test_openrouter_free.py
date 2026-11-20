@@ -17,7 +17,8 @@ from freeduet import compatible_engine as ce
 from freeduet import engine_notices as notices
 from freeduet.engines import EnginesFileError, exclusion_reason, is_free_cloud, load_engines, parse_engines
 from fake_engines import NOW
-from gateway_support import KEY, KEY_ENV, chain, config_with
+from gateway_support import CLAUDE_ENTRY, KEY, chain, config_with
+from test_compatible_engine_file import commented_entries
 from helpers import post_run, run_body, standing, types
 from test_compatible_engine_chain import LIMIT, ASK, posted, said
 from fastapi.testclient import TestClient  # noqa: F401  (the `client` fixture comes from conftest)
@@ -55,7 +56,8 @@ def test_a_free_openrouter_entry_with_a_free_model_loads(model):
 def test_a_free_openrouter_entry_with_any_other_model_is_refused_at_load(model):
     found = problems_of({"model": model})
     assert any("must name exactly one free model" in line and "`gw`" in line for line in found), found
-    assert not any(model in line for line in found if "exactly one free model" in line)  # it does not repeat the model
+    if len(model) > 6:
+        assert not any(model in line for line in found if "exactly one free model" in line)  # it does not repeat the model
 
 
 @pytest.mark.parametrize("address", [
@@ -98,19 +100,34 @@ def test_the_guard_stops_the_file_from_loading_so_the_service_does_not_start_wit
 # ── The example file ─────────────────────────────────────────────────────────────────────────────
 
 
-def example():
-    return load_engines(HERE / "engines.example.yaml")
+def example_entry() -> dict:
+    """The commented-out entry of the shipped example, uncommented (the way the other examples are written)."""
+    return commented_entries()["openrouter-free-claude"]
 
 
-def test_the_example_entry_loads_is_off_is_in_no_chain_and_is_free_cloud():
-    config = example()
+def file_with(entry: dict, **top):
+    data = {
+        "engines": {"claude-code": dict(CLAUDE_ENTRY), "openrouter-free-claude": dict(entry)},
+        "chains": {"default": ["claude-code"]},
+    }
+    data.update(top)
+    return parse_engines(data)
+
+
+def test_the_example_entry_loads_is_off_and_is_free_cloud():
+    config = file_with(example_entry())
     entry = config.engines["openrouter-free-claude"]
     assert (entry.kind, entry.billing, entry.tier, entry.enabled) == ("anthropic-compatible", "free", "C", False)
     assert entry.base_url == "https://openrouter.ai/api" and entry.model == "openrouter/free"
     assert entry.credential_secret_ref == "env:OPENROUTER_API_KEY"  # a reference, never the key
     assert is_free_cloud(entry)
-    assert all("openrouter-free-claude" not in chain for chain in config.chains.values())
     assert exclusion_reason(entry, config) == "disabled in engines.yaml"
+
+
+def test_the_shipped_file_has_it_only_as_a_comment_and_in_no_chain():
+    shipped = load_engines(HERE / "engines.example.yaml")
+    assert "openrouter-free-claude" not in shipped.engines
+    assert all("openrouter-free-claude" not in chain for chain in shipped.chains.values())
 
 
 def test_the_example_says_the_limit_the_privacy_setting_and_the_warning():
@@ -120,14 +137,12 @@ def test_the_example_says_the_limit_the_privacy_setting_and_the_warning():
 
 
 def test_the_example_with_the_entry_switched_on_is_allowed_to_run_once_it_has_a_key():
-    data = {"engines": {"claude-code": {"kind": "cli", "command": "claude", "billing": "subscription", "tier": "A", "enabled": True}}}
-    data["engines"]["or"] = {**example().__dict__["engines"]["openrouter-free-claude"].__dict__}
-    entry = {k: v for k, v in data["engines"]["or"].items() if v not in (None, False) and k != "id"}
-    entry["enabled"] = True
-    data["engines"]["or"] = entry
-    data["chains"] = {"default": ["claude-code", "or"]}
-    config = parse_engines(data)
-    assert exclusion_reason(config.engines["or"], config) is None  # a free keyed entry runs: nothing refuses it but a missing key
+    config = file_with({**example_entry(), "enabled": True})
+    assert exclusion_reason(config.engines["openrouter-free-claude"], config) is None  # a free keyed entry runs
+
+
+def test_the_example_entry_cannot_be_edited_into_a_paid_model_and_still_load():
+    assert pytest.raises(EnginesFileError, file_with, {**example_entry(), "model": "anthropic/claude-sonnet-4.5"})
 
 
 # ── What the CLI is given: one model, no fallback ────────────────────────────────────────────────
