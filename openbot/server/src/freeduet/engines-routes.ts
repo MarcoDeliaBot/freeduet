@@ -41,6 +41,7 @@
  * into English sentences and the times into the person's time zone; the server knows neither.
  */
 import { Hono, type MiddlewareHandler } from "hono";
+import type { AuditSink } from "../audit";
 import { type AppVariables, requireAdmin } from "../auth/guards";
 import type { PairingGate } from "../auth/install-secret";
 import type { ManagedAgentConfig } from "../config";
@@ -182,6 +183,193 @@ export type EnginesDashboard = {
   canChange: boolean;
   cannotChange: ChangeBlock | null;
 };
+
+// ── THE PROVIDER CARDS (D109, docs/design/engines-three-clicks.md) ───────────────────────────────
+
+/** The providers agent-freeduet's `engine_panel.py` knows. Anything else is refused before it is forwarded. */
+export const PROVIDER_IDS = [
+  "ollama",
+  "llamacpp",
+  "lmstudio",
+  "groq",
+  "cerebras",
+  "google",
+  "mistral",
+  "openrouter",
+  "cloudflare",
+  "anthropic-api",
+] as const;
+export type ProviderId = (typeof PROVIDER_IDS)[number];
+const PROVIDER_TAGS = ["local", "free", "trial", "paid"] as const;
+const PANEL_PATH = "/engines/panel";
+/** A key is short; anything much longer is not one, and is never read further. */
+const MAX_KEY_BODY_CHARACTERS = 2_048;
+const MAX_MODELS = 300;
+
+/** One card as the page draws it. No key, no path: `keySaved` is all the page ever learns about a key. */
+export type ProviderView = {
+  id: ProviderId;
+  tag: (typeof PROVIDER_TAGS)[number];
+  enabled: boolean;
+  baseUrl: string;
+  model: string;
+  keySaved: boolean;
+  needsKey: boolean;
+  cloud: boolean;
+  forMembers: boolean;
+  forAssistants: boolean;
+  blocked: "paid" | "trial_needs_card" | null;
+  addressFixed: boolean;
+};
+
+/** The words agent-freeduet refuses a card change with, and the sentence the person reads for each. */
+export const PANEL_SENTENCES: Record<string, string> = {
+  paid: "This engine costs money. It cannot be switched on here until spending caps exist.",
+  trial_needs_card:
+    "Its free tier is a trial that needs a card, so it is not offered as free. It cannot be switched on here.",
+  key_first: "Save a key first. Nothing was changed.",
+  model_first: "Choose a model first. Nothing was changed.",
+  address_first: "Write your own account in the server address first. Nothing was changed.",
+  address_shape: "That server address is not valid. Nothing was changed.",
+  address_fixed: "This provider's address cannot be changed. Nothing was changed.",
+  model_shape: "That model name is not valid. Nothing was changed.",
+  model_not_free:
+    "Only a free model is accepted here: one that ends in :free, or openrouter/free. Nothing was changed.",
+  key_shape: "That does not look like a key. Nothing was saved.",
+  no_key_needed: "This engine takes no key.",
+  file_is_yours:
+    "You wrote an engines file of your own, so this page leaves it alone. Change it there.",
+  unknown_provider: "There is no such provider.",
+  invalid: "That change is not accepted. Nothing was changed.",
+  enabled_shape: "That change is not accepted. Nothing was changed.",
+  file_unreadable: "The engines file could not be read. Nothing was changed.",
+  file_not_written: "The change could not be saved. Nothing was changed.",
+};
+const PANEL_FALLBACK = "That could not be done. Nothing was changed.";
+const NO_AUDIT = "This installation cannot record the change, so nothing was changed.";
+/** The closed list of outcomes a Test or Load list answers with. The page says each in words. */
+const CHECK_CODES = [
+  "ok",
+  "key_wrong",
+  "model_missing",
+  "limit",
+  "credit",
+  "unreachable",
+  "timeout",
+  "other",
+] as const;
+
+function providerOf(value: unknown): ProviderView | null {
+  if (!value || typeof value !== "object") return null;
+  const raw = value as Record<string, unknown>;
+  const id = PROVIDER_IDS.find((known) => known === raw.id);
+  const tag = PROVIDER_TAGS.find((known) => known === raw.tag);
+  if (!id || !tag) return null;
+  const flag = (name: string) => raw[name] === true;
+  return {
+    id,
+    tag,
+    enabled: flag("enabled"),
+    baseUrl: typeof raw.baseUrl === "string" ? raw.baseUrl.slice(0, 300) : "",
+    model: typeof raw.model === "string" ? raw.model.slice(0, 120) : "",
+    keySaved: flag("keySaved"),
+    needsKey: flag("needsKey"),
+    cloud: flag("cloud"),
+    forMembers: flag("forMembers"),
+    forAssistants: flag("forAssistants"),
+    blocked:
+      raw.blocked === "paid" || raw.blocked === "trial_needs_card"
+        ? raw.blocked
+        : null,
+    addressFixed: flag("addressFixed"),
+  };
+}
+
+/** What the page is told about the cards. `locked` is set when the person's own engines file is in use. */
+export type ProvidersReading = {
+  providers: ProviderView[];
+  providersLocked: "file_is_yours" | null;
+};
+
+type AgentAnswer = { status: number; body: unknown };
+
+/** One request to agent-freeduet's card routes. Never throws; `null` is "no answer". The token goes to this address only. */
+async function callPanel(
+  reach: EnginesReach,
+  method: string,
+  path: string,
+  body?: unknown,
+): Promise<AgentAnswer | null> {
+  try {
+    if (!routerOn(reach.environment)) return null;
+    const agent = reach.managedAgent;
+    if (!agent?.endpoint || !agent.token) return null;
+    const response = await (reach.fetch ?? fetch)(
+      new URL(`${PANEL_PATH}${path}`, agent.endpoint),
+      {
+        method,
+        headers: {
+          [AGENT_TOKEN_HEADER]: agent.token,
+          ...(body === undefined ? {} : { "content-type": "application/json" }),
+        },
+        ...(body === undefined ? {} : { body: JSON.stringify(body) }),
+        redirect: "error",
+        signal: AbortSignal.timeout(CHECK_TIMEOUT_MS),
+      },
+    );
+    const text = await response.text();
+    if (text.length > MAX_REPLY_CHARACTERS) return null;
+    return { status: response.status, body: JSON.parse(text) };
+  } catch {
+    return null;
+  }
+}
+
+async function readProviders(
+  reach: EnginesReach,
+): Promise<ProvidersReading | null> {
+  const answer = await callPanel(reach, "GET", "");
+  if (!answer || answer.status !== 200) return null;
+  const raw = answer.body as { providers?: unknown; reason?: unknown };
+  if (!Array.isArray(raw?.providers)) return null;
+  return {
+    providers: raw.providers
+      .slice(0, PROVIDER_IDS.length)
+      .map(providerOf)
+      .filter((card): card is ProviderView => card !== null),
+    providersLocked: raw.reason === "file_is_yours" ? "file_is_yours" : null,
+  };
+}
+
+/** The refusal a card change got, as `{ error, code }` with the sentence from the closed list. */
+function panelRefusal(answer: AgentAnswer | null): {
+  status: 400 | 404 | 409 | 502;
+  body: { error: string; code: string };
+} {
+  if (!answer) {
+    return {
+      status: 502,
+      body: {
+        error: "FreeDuet's engine service did not answer. Nothing was changed.",
+        code: "unreachable",
+      },
+    };
+  }
+  const code = (answer.body as { error?: unknown } | null)?.error;
+  const known = typeof code === "string" && code in PANEL_SENTENCES;
+  return {
+    status:
+      answer.status === 404 ? 404 : answer.status === 409 ? 409 : 400,
+    body: {
+      error: known ? PANEL_SENTENCES[code as string] : PANEL_FALLBACK,
+      code: known ? (code as string) : "other",
+    },
+  };
+}
+
+function isProviderId(value: string): value is ProviderId {
+  return (PROVIDER_IDS as readonly string[]).includes(value);
+}
 
 const OFF: EnginesReading = { reason: "off", engines: [] };
 const NOT_SET_UP: EnginesReading = { reason: "not_set_up", engines: [] };
@@ -509,6 +697,8 @@ export function createEnginesRoutes(
   reach: () => EnginesReach,
   choices?: EngineChoices,
   pairing?: PairingGate,
+  /** Where provider and key changes are recorded (D109). Without it they are refused: a change with no record is not made. */
+  audit?: AuditSink,
 ) {
   const routes = new Hono<{ Variables: AppVariables }>();
   routes.use("*", requireUser);
@@ -550,7 +740,12 @@ export function createEnginesRoutes(
       canChange: listed && cannotChange === null,
       cannotChange,
     };
-    return context.json({ ...agent.reading, ...dashboard }, 200, noStore);
+    const cards = listed ? await readProviders(reach()) : null;
+    return context.json(
+      { ...agent.reading, ...dashboard, ...(cards ?? {}) },
+      200,
+      noStore,
+    );
   });
 
   /**
@@ -629,6 +824,156 @@ export function createEnginesRoutes(
         return context.json({ error: error.message }, error.status);
       throw error;
     }
+  });
+
+  // ── The provider cards (D109). The same two guards as every change here: an administrator, at the computer or (D106) with
+  // a browser paired as a `computer`. A key arrives only in the body of `PUT /providers/:id/key`, goes to agent-freeduet
+  // and nowhere else, and is in no answer, no audit row and no log line: this file never logs. A member's tool cannot reach
+  // these routes (they take the person's session, and a remote session is refused in remote-limits.ts).
+  const providerGuard = async (context: Parameters<typeof requireAdmin>[0]) => {
+    const { refused, viaTunnel } = await mayChange(context);
+    if (refused) return { refused, viaTunnel, id: null as ProviderId | null };
+    const id = context.req.param("providerId") ?? "";
+    if (!isProviderId(id)) {
+      return {
+        refused: context.json({ error: PANEL_SENTENCES.unknown_provider, code: "unknown_provider" }, 404),
+        viaTunnel,
+        id: null as ProviderId | null,
+      };
+    }
+    return { refused: undefined, viaTunnel, id: id as ProviderId | null };
+  };
+  const recordProvider = async (
+    actorUserId: string,
+    providerId: ProviderId,
+    change: string,
+    extra: Record<string, unknown>,
+    viaTunnel: boolean,
+  ) => {
+    await audit?.record({
+      eventType: "configuration.changed",
+      targetType: "engine_provider",
+      targetId: providerId,
+      actorUserId,
+      payload: {
+        change,
+        providerId,
+        ...extra,
+        ...(viaTunnel ? { via: "tunnel" } : {}),
+      },
+    });
+  };
+  const noStore = { "Cache-Control": "no-store" };
+
+  routes.put("/providers/:providerId", async (context) => {
+    const { refused, viaTunnel, id } = await providerGuard(context);
+    if (refused || !id) return refused as Response;
+    if (!audit) return context.json({ error: NO_AUDIT, code: "no_audit" }, 503);
+    let body: Record<string, unknown> = {};
+    try {
+      const parsed = await context.req.json();
+      if (parsed && typeof parsed === "object") body = parsed as Record<string, unknown>;
+    } catch {
+      // Not JSON: nothing to change, and the agent says so.
+    }
+    const send: Record<string, unknown> = {};
+    if ("enabled" in body) send.enabled = body.enabled;
+    if ("baseUrl" in body) send.baseUrl = body.baseUrl;
+    if ("model" in body) send.model = body.model;
+    const answer = await callPanel(reach(), "PUT", `/${id}`, send);
+    const card = providerOf(
+      (answer?.body as { provider?: unknown } | null)?.provider,
+    );
+    if (!answer || answer.status !== 200 || !card) {
+      const failure = panelRefusal(answer);
+      return context.json(failure.body, failure.status);
+    }
+    await recordProvider(
+      context.var.actor.id,
+      id,
+      "engine_provider_changed",
+      {
+        fields: Object.keys(send),
+        ...(typeof send.enabled === "boolean" ? { enabled: send.enabled } : {}),
+      },
+      viaTunnel,
+    );
+    return context.json({ provider: card }, 200, noStore);
+  });
+
+  routes.put("/providers/:providerId/key", async (context) => {
+    const { refused, viaTunnel, id } = await providerGuard(context);
+    if (refused || !id) return refused as Response;
+    if (!audit) return context.json({ error: NO_AUDIT, code: "no_audit" }, 503);
+    let key: unknown;
+    try {
+      const text = await context.req.text();
+      if (text.length <= MAX_KEY_BODY_CHARACTERS) {
+        key = (JSON.parse(text) as { key?: unknown } | null)?.key;
+      }
+    } catch {
+      // Not JSON: no key, and the agent refuses it by shape.
+    }
+    const answer = await callPanel(reach(), "PUT", `/${id}/key`, {
+      key: typeof key === "string" ? key : null,
+    });
+    if (!answer || answer.status !== 200) {
+      const failure = panelRefusal(answer);
+      return context.json(failure.body, failure.status);
+    }
+    await recordProvider(context.var.actor.id, id, "engine_key_saved", {}, viaTunnel);
+    return context.json({ keySaved: true }, 200, noStore);
+  });
+
+  routes.delete("/providers/:providerId/key", async (context) => {
+    const { refused, viaTunnel, id } = await providerGuard(context);
+    if (refused || !id) return refused as Response;
+    if (!audit) return context.json({ error: NO_AUDIT, code: "no_audit" }, 503);
+    const answer = await callPanel(reach(), "DELETE", `/${id}/key`);
+    if (!answer || answer.status !== 200) {
+      const failure = panelRefusal(answer);
+      return context.json(failure.body, failure.status);
+    }
+    await recordProvider(context.var.actor.id, id, "engine_key_removed", {}, viaTunnel);
+    return context.json({ keySaved: false }, 200, noStore);
+  });
+
+  // Load list and Test use the SAVED key inside agent-freeduet; nothing is stored, so no audit row (like "Check again").
+  routes.post("/providers/:providerId/models", async (context) => {
+    const { refused, id } = await providerGuard(context);
+    if (refused || !id) return refused as Response;
+    const answer = await callPanel(reach(), "POST", `/${id}/models`);
+    if (!answer || answer.status !== 200) {
+      const failure = panelRefusal(answer);
+      return context.json(failure.body, failure.status);
+    }
+    const raw = answer.body as { code?: unknown; models?: unknown };
+    const code = CHECK_CODES.find((known) => known === raw.code) ?? "other";
+    const models = (Array.isArray(raw.models) ? raw.models : [])
+      .filter((name): name is string => typeof name === "string" && name.length <= 120)
+      .slice(0, MAX_MODELS);
+    return context.json({ ok: code === "ok", code, models }, 200, noStore);
+  });
+
+  routes.post("/providers/:providerId/test", async (context) => {
+    const { refused, id } = await providerGuard(context);
+    if (refused || !id) return refused as Response;
+    const answer = await callPanel(reach(), "POST", `/${id}/test`);
+    if (!answer || answer.status !== 200) {
+      const failure = panelRefusal(answer);
+      return context.json(failure.body, failure.status);
+    }
+    const raw = answer.body as { code?: unknown; status?: unknown };
+    const code = CHECK_CODES.find((known) => known === raw.code) ?? "other";
+    return context.json(
+      {
+        ok: code === "ok",
+        code,
+        status: Number.isInteger(raw.status) ? (raw.status as number) : null,
+      },
+      200,
+      noStore,
+    );
   });
   // "Check again" (first-start design, section 4): the two guards of a change, an administrator at the computer. It asks
   // agent-freeduet to look at Claude Code now and keeps nothing here: no change is stored and no audit row is written.
