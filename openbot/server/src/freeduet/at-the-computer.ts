@@ -42,3 +42,35 @@ export async function atTheComputer(
   if (!isDirectRequest(env, request)) return false;
   return pairing === undefined || !(await isRemote(pairing, request, userId));
 }
+
+/** The verdict of `mayChangeEngines`: whether the change may go on, and whether it came through an intermediary. */
+export type EngineChangeVerdict = { allowed: boolean; viaTunnel: boolean };
+
+/**
+ * D106 (docs/M1_PLAN.md, section 68): who may change the engine choices, and ONLY them. The administrator is "at the
+ * computer" as `atTheComputer` says, OR, with sign-in and an installation secret, signed in from a browser that holds
+ * a live pairing of kind `computer` of the SAME person, whether or not the request came through a tunnel or a proxy
+ * that runs on this machine (the maintainer's decision of 20 November 2026: nobody else can sign in as the
+ * administrator). The pairing is asked of the gate's own `standing` (the one definition, auth/remote-limits.ts); a
+ * `device` pairing (a phone), no pairing and a failing lookup are refused. Without a gate (single-user mode, or sign-in
+ * with no secret) the answer is `atTheComputer`'s and a tunnel is still refused.
+ *
+ * Nothing else asks this: every other "at the computer" route keeps `atTheComputer` and its direct-request condition.
+ */
+export async function mayChangeEngines(
+  env: unknown,
+  request: Request,
+  pairing: PairingGate | undefined,
+  userId: string,
+): Promise<EngineChangeVerdict> {
+  const direct = isDirectRequest(env, request);
+  if (await atTheComputer(env, request, pairing, userId))
+    return { allowed: true, viaTunnel: false };
+  if (!pairing) return { allowed: false, viaTunnel: !direct };
+  try {
+    const standing = await pairing.pairings.standing(request, userId);
+    return { allowed: standing?.kind === "computer", viaTunnel: !direct };
+  } catch {
+    return { allowed: false, viaTunnel: !direct };
+  }
+}

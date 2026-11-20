@@ -57,6 +57,7 @@ export type LeftOutWhy =
 /** Why the page may not change anything, in one word (server/src/freeduet/engines-routes.ts, `ChangeBlock`). */
 export type ChangeBlock =
   | "not_at_the_computer"
+  | "not_paired_with_the_computer"
   | "agent_too_old"
   | "choices_unreadable";
 
@@ -351,6 +352,8 @@ export function blockText(block: ChangeBlock): string {
   switch (block) {
     case "not_at_the_computer":
       return "Change these on the computer FreeDuet runs on.";
+    case "not_paired_with_the_computer":
+      return "Pair this browser with the computer FreeDuet runs on first: run `bash scripts/open.sh` there and open the link here.";
     case "agent_too_old":
       return "Update FreeDuet to change this.";
     case "choices_unreadable":

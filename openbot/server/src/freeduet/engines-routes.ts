@@ -22,9 +22,10 @@
  * is ids and words from closed lists (`memberOf`): no address, no key reference, no path, however the file spells them.
  * The person's own choice of mode (engine-choices.ts) is laid over the file's, and the answer says which it is.
  *
- * WHO MAY CHANGE. An administrator who is also at the computer FreeDuet runs on (at-the-computer.ts): a remote
- * session, a tunnel and a non-administrator are refused and nothing is written. With sign-in and an installation
- * secret, "at the computer" also means a browser paired with it (`pairing`, the gate of auth/remote-limits.ts). The
+ * WHO MAY CHANGE. An administrator who is also at the computer FreeDuet runs on (at-the-computer.ts), or, since D106,
+ * with sign-in and an installation secret, signed in from a browser holding a live `computer` pairing of the same
+ * person, through a tunnel too (`mayChangeEngines`). A remote session, a phone paired as a `device`, an unpaired
+ * browser, a tunnel in single-user mode and a non-administrator are refused and nothing is written. The
  * page is told whether it may (`canChange`) and, if not, which of the three words says why, so it shows the
  * information and disables the controls.
  * The change is stored on this server, written to the audit trail, and undone with its change id (engine-choices.ts).
@@ -43,7 +44,7 @@ import { Hono, type MiddlewareHandler } from "hono";
 import { type AppVariables, requireAdmin } from "../auth/guards";
 import type { PairingGate } from "../auth/install-secret";
 import type { ManagedAgentConfig } from "../config";
-import { atTheComputer } from "./at-the-computer";
+import { mayChangeEngines } from "./at-the-computer";
 import { isHosted } from "./deployment";
 import {
   CHANGE_ID,
@@ -169,6 +170,7 @@ export type MemberSummary = {
 /** Why the page may not change anything, in one word. The page says the sentence. */
 export type ChangeBlock =
   | "not_at_the_computer"
+  | "not_paired_with_the_computer"
   | "agent_too_old"
   | "choices_unreadable";
 
@@ -488,6 +490,9 @@ export async function checkClaude(reach: EnginesReach): Promise<ClaudeCheck> {
 /** What a person is told when a change is asked of a session that is not at the computer. */
 const NOT_AT_THE_COMPUTER =
   "Change this on the computer FreeDuet runs on. Nothing was changed.";
+/** D106: with sign-in and a secret, the way in is to pair this browser, so the sentence says how. */
+const NOT_PAIRED_WITH_THE_COMPUTER =
+  "Pair this browser with the computer FreeDuet runs on first (run `bash scripts/open.sh` there and open the link in this browser), or change this on that computer. Nothing was changed.";
 const NO_CHOICES_HERE =
   "This installation does not keep engine choices, so nothing was changed.";
 const NO_SUCH_CHANGE = "There is no engine change with that id.";
@@ -521,13 +526,17 @@ export function createEnginesRoutes(
     const listed = agent.reading.reason === null;
     const cannotChange: ChangeBlock | null = !listed
       ? null
-      : !(await atTheComputer(
-            context.env,
-            context.req.raw,
-            pairing,
-            context.var.actor.id,
-          ))
-        ? "not_at_the_computer"
+      : !(
+            await mayChangeEngines(
+              context.env,
+              context.req.raw,
+              pairing,
+              context.var.actor.id,
+            )
+          ).allowed
+        ? pairing
+          ? "not_paired_with_the_computer"
+          : "not_at_the_computer"
         : (agent.choicesVersion ?? 0) < CHOICES_VERSION
           ? "agent_too_old"
           : saved.state === "unreadable"
@@ -544,20 +553,36 @@ export function createEnginesRoutes(
     return context.json({ ...agent.reading, ...dashboard }, 200, noStore);
   });
 
-  /** The two guards every change passes before anything is read: an administrator, at the computer. */
-  const mayChange = async (context: Parameters<typeof requireAdmin>[0]) =>
-    requireAdmin(context) ??
-    ((await atTheComputer(
+  /**
+   * The two guards every change passes before anything is read: an administrator, at the computer or (D106) signed in
+   * from a browser paired with it as a `computer`. A change that came through a tunnel is marked, for the audit trail.
+   */
+  const mayChange = async (context: Parameters<typeof requireAdmin>[0]) => {
+    const denied = requireAdmin(context);
+    if (denied) return { refused: denied, viaTunnel: false };
+    const verdict = await mayChangeEngines(
       context.env,
       context.req.raw,
       pairing,
       context.var.actor.id,
-    ))
-      ? undefined
-      : context.json({ error: NOT_AT_THE_COMPUTER }, 403));
+    );
+    return verdict.allowed
+      ? { refused: undefined, viaTunnel: verdict.viaTunnel }
+      : {
+          refused: context.json(
+            {
+              error: pairing
+                ? NOT_PAIRED_WITH_THE_COMPUTER
+                : NOT_AT_THE_COMPUTER,
+            },
+            403,
+          ),
+          viaTunnel: false,
+        };
+  };
 
   routes.put("/members/:memberId/mode", async (context) => {
-    const refused = await mayChange(context);
+    const { refused, viaTunnel } = await mayChange(context);
     if (refused) return refused;
     if (!choices) return context.json({ error: NO_CHOICES_HERE }, 503);
     let body: unknown = null;
@@ -575,6 +600,7 @@ export function createEnginesRoutes(
         memberId: context.req.param("memberId"),
         mode: mode as EngineMode,
         actorUserId: context.var.actor.id,
+        ...(viaTunnel ? { via: "tunnel" as const } : {}),
       });
       return context.json(outcome, 200, { "Cache-Control": "no-store" });
     } catch (error) {
@@ -585,7 +611,7 @@ export function createEnginesRoutes(
   });
 
   routes.post("/changes/:changeId/undo", async (context) => {
-    const refused = await mayChange(context);
+    const { refused, viaTunnel } = await mayChange(context);
     if (refused) return refused;
     if (!choices) return context.json({ error: NO_CHOICES_HERE }, 503);
     const changeId = context.req.param("changeId");
@@ -595,6 +621,7 @@ export function createEnginesRoutes(
       const outcome = await choices.undo({
         changeId: changeId.toLowerCase(),
         actorUserId: context.var.actor.id,
+        ...(viaTunnel ? { via: "tunnel" as const } : {}),
       });
       return context.json(outcome, 200, { "Cache-Control": "no-store" });
     } catch (error) {
@@ -610,7 +637,7 @@ export function createEnginesRoutes(
   routes.post("/claude/check", async (context) => {
     if (isHosted(reach().environment))
       return context.json({ error: "Not found" }, 404);
-    const refused = await mayChange(context);
+    const { refused } = await mayChange(context);
     if (refused) return refused;
     return context.json(await checkClaude(reach()), 200, {
       "Cache-Control": "no-store",

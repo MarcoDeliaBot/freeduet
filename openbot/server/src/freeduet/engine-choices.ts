@@ -114,8 +114,14 @@ export type EngineChoices = {
     memberId: string;
     mode: EngineMode;
     actorUserId: string;
+    /** `tunnel` when the request came through an intermediary (D106); written to the audit row, absent otherwise. */
+    via?: "tunnel";
   }): Promise<ModeOutcome>;
-  undo(input: { changeId: string; actorUserId: string }): Promise<UndoOutcome>;
+  undo(input: {
+    changeId: string;
+    actorUserId: string;
+    via?: "tunnel";
+  }): Promise<UndoOutcome>;
 };
 
 type StoredMembers = Record<string, MemberChoice>;
@@ -296,7 +302,7 @@ export function createEngineChoices(deps: {
     current: () => snapshot,
 
     async setMode(input) {
-      const { memberId, mode, actorUserId } = input;
+      const { memberId, mode, actorUserId, via } = input;
       if (!MEMBER_ID.test(memberId))
         throw new EngineChoiceRefusedError(
           "That is not a team member this page can change.",
@@ -336,6 +342,7 @@ export function createEngineChoices(deps: {
               memberId,
               previousValue: previous,
               newValue: mode,
+              ...(via ? { via } : {}),
             },
           });
         } catch (error) {
@@ -348,7 +355,7 @@ export function createEngineChoices(deps: {
     },
 
     async undo(input) {
-      const { changeId, actorUserId } = input;
+      const { changeId, actorUserId, via } = input;
       if (!CHANGE_ID.test(changeId))
         throw new EngineChoiceRefusedError(NO_SUCH_CHANGE, 404);
       return serial(async (): Promise<UndoOutcome> => {
@@ -399,6 +406,7 @@ export function createEngineChoices(deps: {
               memberId: recorded.memberId,
               previousValue: recorded.newValue,
               newValue: recorded.previousValue,
+              ...(via ? { via } : {}),
             },
           });
         } catch (error) {
