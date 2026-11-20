@@ -154,6 +154,13 @@ def switched(lang: str, old: str, kind: str, until: datetime | None, new: str, p
     return f"{why}, {tail}"
 
 
+def free_cloud(lang: str) -> str:
+    """D101: one short sentence added to a notice that names an engine which is a free cloud service."""
+    if lang == "it":
+        return "È un servizio cloud gratuito: potrebbe conservare ciò che gli viene inviato."
+    return "It is a free cloud service and may keep what it is sent."
+
+
 def without_tools(lang: str, tools: list[str], tier: str) -> str:
     names = ", ".join(tools)
     if lang == "it":
