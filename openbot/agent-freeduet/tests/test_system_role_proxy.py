@@ -262,3 +262,29 @@ def test_the_ca_bundle_the_cli_would_read_is_the_one_the_hop_uses(monkeypatch):
     monkeypatch.setenv("NODE_EXTRA_CA_CERTS", certifi.where())
     SystemRoleProxy("https://gateway.example.com")
     assert made[0] is True and isinstance(made[1], ssl.SSLContext)
+
+
+def test_the_extra_ca_file_adds_to_the_default_cas_and_a_bad_one_is_ignored(tmp_path):
+    import shutil
+    import subprocess
+
+    import pytest
+
+    from freeduet.system_role_proxy import _verify_with
+
+    if shutil.which("openssl") is None:
+        pytest.skip("openssl is not installed")
+    pem, key = tmp_path / "extra.pem", tmp_path / "extra.key"
+    subprocess.run(
+        ["openssl", "req", "-x509", "-newkey", "rsa:2048", "-nodes", "-keyout", str(key), "-out", str(pem),
+         "-days", "2", "-subj", "/CN=freeduet-test-extra-ca"],
+        check=True, capture_output=True,
+    )
+    default = len(httpx.create_ssl_context().get_ca_certs())
+    context = _verify_with(str(pem))
+    names = [dict(item[0] for item in cert["subject"]).get("commonName") for cert in context.get_ca_certs()]
+    assert "freeduet-test-extra-ca" in names
+    assert len(context.get_ca_certs()) == default + 1 and default > 1  # added to the default CAs, not instead of them
+    broken = tmp_path / "broken.pem"
+    broken.write_text("not a certificate")
+    assert _verify_with(str(broken)) is True and _verify_with(str(tmp_path / "missing.pem")) is True

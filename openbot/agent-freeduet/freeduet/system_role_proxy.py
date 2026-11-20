@@ -6,7 +6,7 @@ accepts that; Ollama's Anthropic-compatible ``/v1/messages`` answers 500 "no use
 time, so no turn on a local model could start (seen live on 20 November 2026). The CLI is not ours to change, so
 this module sits in agent-freeduet's own path to the endpoint: it moves every message whose role is ``system`` or
 ``developer`` into the request's top-level ``system`` field, which is where the protocol puts system text, and
-forwards the request. Nothing else is changed. The real Claude engine does not use it: it talks to Anthropic directly.
+forwards the request. Of a moved message only its text blocks move, and nothing else in the request is changed. The real Claude engine does not use it: it talks to Anthropic directly.
 
 WHAT IT IS NOT. It has no upstream of its own: the address is the entry's, fixed when it is built. It listens on this
 machine's loopback only, on a port the system picks, for one turn. It adds no header. The
@@ -40,6 +40,21 @@ MAX_BODY = 64 * 1024 * 1024  # a request with pictures is large; past this it is
 _HOP = frozenset(
     {"connection", "keep-alive", "proxy-connection", "transfer-encoding", "te", "trailer", "upgrade", "content-length", "host"}
 )
+
+
+def _verify_with(bundle: str | None):
+    """What httpx verifies the upstream with: its own default CAs, plus the file ``NODE_EXTRA_CA_CERTS`` names, which the CLI
+    adds to its trust store and httpx does not read. The file ADDS to the default CAs, never replaces them. A file that cannot
+    be read or is not a certificate bundle leaves the default, and only the kind of error is logged."""
+    if not bundle:
+        return True
+    try:
+        context = httpx.create_ssl_context()
+        context.load_verify_locations(cafile=bundle)
+    except (ssl.SSLError, OSError) as error:
+        log.warning("system-role proxy: NODE_EXTRA_CA_CERTS was not used (%s)", type(error).__name__)
+        return True
+    return context
 
 
 def _plain_target(target: str) -> bool:
@@ -130,7 +145,7 @@ class SystemRoleProxy:
         parts = urlsplit(self._upstream)
         self._base = f"{parts.scheme}://{parts.netloc}{parts.path}"
         bundle = os.environ.get("NODE_EXTRA_CA_CERTS")
-        verify = ssl.create_default_context(cafile=bundle) if bundle and os.path.isfile(bundle) else True
+        verify = _verify_with(bundle)
         self._client = httpx.AsyncClient(
             timeout=httpx.Timeout(connect=10.0, read=900.0, write=30.0, pool=10.0),
             trust_env=use_environment_proxy,
