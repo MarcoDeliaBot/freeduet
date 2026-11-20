@@ -8,15 +8,18 @@ import {
 import { type ComponentProps, useState } from "react";
 import { DuetIcon } from "@/components/duet/icons";
 import { MicOrb } from "@/components/duet/mic-orb";
+import { useActiveBotId } from "@/lib/copilot/active-bot";
 import { currentUserQueryOptions } from "@/lib/auth/queries";
 import { appConfig } from "@/lib/generated/application-config";
 import { cn } from "@/lib/utils";
+import { mascotKeyOf } from "@/freeduet/wide/mascot";
 import {
   useChatOrb,
   useChatStep,
   useChatWorking,
   useUnownedServerWork,
 } from "./chat-presence";
+import { MemberOrb } from "./member-orb";
 import { usePageChromeState } from "./page-chrome";
 
 const DISC =
@@ -96,9 +99,17 @@ export function ShellHeader({
   );
 }
 
-/** Its own component, so a keystroke in Chat re-renders the orb and not the whole header. */
+/**
+ * Its own component, so a keystroke in Chat re-renders the orb and not the whole header.
+ *
+ * When the surface drives a FreeDuet team member, its drawn mascot wears the same states as a ring
+ * (`MemberOrb`); any other Bot keeps the mic orb.
+ */
 export function ChatOrb({ size }: { size: number }) {
   const { state, keystrokes } = useChatOrb();
+  const botId = useActiveBotId();
+  if (mascotKeyOf(botId) !== null)
+    return <MemberOrb agentId={botId} size={size} state={state} />;
   return <MicOrb keystrokes={keystrokes} size={size} state={state} />;
 }
 
