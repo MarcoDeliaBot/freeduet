@@ -161,6 +161,13 @@ def free_cloud(lang: str) -> str:
     return "It is a free cloud service and may keep what it is sent."
 
 
+def local_reading(lang: str, label: str) -> str:
+    """D108: said once when a local model has been silent for a while, so the wait is not silence: it is reading the prompt."""
+    if lang == "it":
+        return f"Il modello locale ({label}) sta leggendo la richiesta: può servire qualche minuto prima della risposta."
+    return f"The local model ({label}) is reading your request: it can take a few minutes before the answer starts."
+
+
 def without_tools(lang: str, tools: list[str], tier: str) -> str:
     names = ", ".join(tools)
     if lang == "it":

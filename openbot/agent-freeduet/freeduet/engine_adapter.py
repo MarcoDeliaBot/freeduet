@@ -112,6 +112,8 @@ class TurnContext:
     # can pass a picture on reads them (Claude Code); every other engine reads `prompt`, which notes them as unseen.
     pictures: tuple = field(default=(), repr=False)
     picture_prompt: str | None = field(default=None, repr=False)
+    # D108. The light turn of a local model: `system` is the whole system prompt (the CLI's own default is replaced, not added to).
+    light: bool = False
 
 
 @dataclass(frozen=True)

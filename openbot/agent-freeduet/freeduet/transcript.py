@@ -48,6 +48,28 @@ RUNTIME_NOTE = (
     "say a tool is unavailable without the reason you were given."
 )
 
+# D108, the light turn (a local model). What it drops from the system text and what it keeps, by the id OpenBot gives each
+# system row and the description it gives each context entry. A row it does not know is KEPT, never dropped by a guess.
+LIGHT_DROPPED_ROWS = ("openbot:learned-skills", "granted-tools:")  # the skill catalog; the holdings guidance for tools the turn is not offered
+LIGHT_DROPPED_CONTEXT = ("OpenBot learned skills",)
+# The personal memory is NEVER cut: it holds the person's allergies and "never X" records, as JSON, and a cut would lose one silently.
+LIGHT_ROW_CAPS = {"openduet:channel": 3000}
+LIGHT_NEVER_CUT_ROWS = ("openbot:personal-memory",)
+LIGHT_NEVER_CUT_CONTEXT = ("OpenBot personal memory",)
+LIGHT_CONTEXT_CAP = 3000  # a context entry no row carried
+LIGHT_ROW_CAP = 6000  # any other row the light turn keeps
+LIGHT_CUT = "\n[The rest of this note is left out of this short turn.]"
+# The tools a plain conversation turn keeps: the hand-off, the question to the person, the two memory tools.
+LIGHT_TOOLS = frozenset({"message_bot", "ask_person", "recall_personal_memory", "remember_personal_fact"})
+
+LIGHT_NOTE = (
+    "This is a short turn on a model that runs on this machine: only the tools message_bot, ask_person, "
+    "recall_personal_memory and remember_personal_fact are offered, and the long notes about connected systems and "
+    "skills are left out. Answer from the conversation. If the person needs something that takes another tool (the "
+    "browser or the computer, mail, the calendar, a connected system), say in one sentence that this local model "
+    "cannot do it on this turn and that a stronger engine can; never pretend to use a tool you do not have."
+)
+
 LESSONS_HEADING = "Lessons the person approved for you, newest last. Follow them:"
 MAX_LESSONS = 20
 
@@ -262,14 +284,24 @@ def _lessons_text(lessons) -> str:
     return "\n".join([LESSONS_HEADING, *(f"- {item}" for item in items)]) if items else ""
 
 
-def _own_rows(member: Member, messages: list[dict]) -> list[str]:
+def _capped(text: str, cap: int) -> str:
+    return text if len(text) <= cap else text[:cap].rstrip() + LIGHT_CUT
+
+
+def _own_rows(member: Member, messages: list[dict], light: bool = False) -> list[str]:
     """This member's system rows: its own standing role first, then the others in OpenBot's order.
-    Another Bot's role or holdings row is not one of them."""
+    Another Bot's role or holdings row is not one of them. The light turn (D108) leaves out the rows of
+    LIGHT_DROPPED_ROWS and cuts a long one to its cap; the member's own standing role is never cut."""
     own, rest = [], []
     for message in messages:
         if message.get("role") not in SYSTEM_ROLES or is_other_bots_row(message, member.id):
             continue
+        message_id = _as_text(message.get("id"))
+        if light and message_id.startswith(LIGHT_DROPPED_ROWS):
+            continue
         text = _content_text(message.get("content")).strip()
+        if light and bot_row_owner(message) != member.id and message_id not in LIGHT_NEVER_CUT_ROWS:
+            text = _capped(text, LIGHT_ROW_CAPS.get(message_id, LIGHT_ROW_CAP))
         (own if bot_row_owner(message) == member.id else rest).append(text)
     return own + rest
 
@@ -286,18 +318,30 @@ def _quoted_rows(member: Member, messages: list[dict]) -> list[str]:
     return [QUOTED_NOTE, *blocks] if blocks else []
 
 
-def _system_text(member: Member, messages: list[dict], context: list[dict], lessons=(), notes=()) -> str:
+def _system_text(
+    member: Member, messages: list[dict], context: list[dict], lessons=(), notes=(), light: bool = False
+) -> str:
     sections = [member.system_prompt]
     # A Bot without a row in agents.yaml runs on its standing role: that row is the prompt already.
     # The same text in two rows (an earlier copy under another id) is said once.
-    for row in _own_rows(member, messages):
+    for row in _own_rows(member, messages, light):
         if row and row not in sections:
             sections.append(row)
     # OpenBot sends the person's memory, the channel's purpose and learned skills twice: a system row
     # for remote Bots and a context entry for built-in ones (openduet/run-channel.ts). Once is enough.
     said = set(sections)
+    sent_as_rows = {
+        _content_text(message.get("content")).strip() for message in messages if message.get("role") in SYSTEM_ROLES
+    }
     for entry in context:
+        if light and _as_text(entry.get("description")).strip() in LIGHT_DROPPED_CONTEXT:
+            continue
         value = _as_text(entry.get("value")).strip()
+        if light:
+            if value in sent_as_rows:  # a row already said it (kept, cut or dropped): not again
+                continue
+            if _as_text(entry.get("description")).strip() not in LIGHT_NEVER_CUT_CONTEXT:
+                value = _capped(value, LIGHT_CONTEXT_CAP)
         if value and value not in said:
             said.add(value)
             description = _as_text(entry.get("description")).strip()
@@ -349,6 +393,7 @@ def render(
     notes=(),
     closing: str | None = None,
     served=(),
+    light: bool = False,
 ) -> Rendered:
     """The system text and the stdin prompt for one segment. `lessons` are this member's active
     lessons, oldest first (lessons.active_for); `notes` are this run's own runtime notes
@@ -393,5 +438,5 @@ def render(
     # Without a picture to send, nothing differs from before D72 except the note of one that was too large.
     prompt = prompt_with({key: value for key, value in verdicts.items() if isinstance(value, str)})
     picture_prompt = prompt_with(verdicts) if pictures else None
-    system = _system_text(member, messages, context or [], lessons, notes)
+    system = _system_text(member, messages, context or [], lessons, notes, light)
     return Rendered(system=system, prompt=prompt, pictures=tuple(pictures), picture_prompt=picture_prompt)

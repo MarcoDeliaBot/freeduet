@@ -161,7 +161,10 @@ async def _read_request(reader: asyncio.StreamReader) -> tuple[str, str, list[tu
 class SystemRoleProxy:
     """One per turn: ``async with SystemRoleProxy(base_url) as proxy``, then point the CLI at ``proxy.url``."""
 
-    def __init__(self, upstream: str, *, use_environment_proxy: bool = False, pinned_model: str | None = None):
+    def __init__(
+        self, upstream: str, *, use_environment_proxy: bool = False, pinned_model: str | None = None, read_seconds: float = 900.0
+    ):
+        """`read_seconds`: how long the upstream may be silent (D108: a local model's first read of a long prompt)."""
         self._pinned = pinned_model  # an OpenRouter free entry's one model (D107): every request is made to ask for it alone
         self._upstream = upstream.rstrip("/")
         parts = urlsplit(self._upstream)
@@ -169,7 +172,7 @@ class SystemRoleProxy:
         bundle = os.environ.get("NODE_EXTRA_CA_CERTS")
         verify = _verify_with(bundle)
         self._client = httpx.AsyncClient(
-            timeout=httpx.Timeout(connect=10.0, read=900.0, write=30.0, pool=10.0),
+            timeout=httpx.Timeout(connect=10.0, read=read_seconds, write=30.0, pool=10.0),
             trust_env=use_environment_proxy,
             verify=verify,
         )

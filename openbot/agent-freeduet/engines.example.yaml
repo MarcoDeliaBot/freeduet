@@ -126,6 +126,11 @@ engines:
   # OLLAMA_HOST=0.0.0.0:11434 (on systemd: Environment="OLLAMA_HOST=0.0.0.0:11434").
   # Write the name of a model you pulled (`ollama list`). Whether it calls tools well is not checked here: it stays tier C
   # until the team evals pass on it. Write `metered` instead of `free` for a server that forwards to paid providers.
+  # A local model reads a long prompt slowly (about 80 tokens a second on one GPU), so its first word can take minutes. For a
+  # free entry on this machine or network FreeDuet waits up to 900 seconds for it, tells you the model is reading, and sends
+  # a light turn: the member's own prompt, four tools (message_bot, ask_person and the two memory tools) and none of the long
+  # notes about skills and connected systems. Write `first_answer_seconds: 1800` for a slower machine (10 to 7200; refused for
+  # a cloud entry, whose limit is never lengthened) and `light: false` to send the full turn, with every tool, instead.
   # local-models:
   #   kind: anthropic-compatible
   #   base_url: http://host.docker.internal:11434
