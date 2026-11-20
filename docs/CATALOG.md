@@ -12,6 +12,17 @@ FreeDuet has three layers of help.
 
 Every pack member is written by Leo, with its tests, and checked by Vera before it joins. Packs are planned for M2 onwards ([PROJECT.md](PROJECT.md), F20); none is in v0.2, v0.2.1 or v0.2.2.
 
+## Planned starter members
+
+Two members are planned. Nothing of either is built: there is no member file, prompt, skill or eval case yet, and neither is in any version. Each joins the starter team only when it is built, with its own evals; the team lists change then ([ROADMAP.md](ROADMAP.md), "A growing team"). Before either is written, the reuse rule above applies: Leo checks this catalogue and the ready-made libraries first.
+
+| Member | Job | Uses | Never | Status |
+|---|---|---|---|---|
+| **Rex**, the model trainer | Tests the models a person can use (local models and the free cloud engines on the Engines page) against the team's eval cases; measures speed, quality and the safety rules; recommends which engine fits which member; keeps the public table of free models and warns when a model gets worse | The team evals and their runner; the Engines page, where the person decides | Changes an engine himself (he proposes, the person decides); spends money; starts an eval run that uses the person's Claude plan before the person's yes; trains a model in this plan | Planned; the next member to build (D110) |
+| **Mira**, the image member | Draws collages, canvas graphics, posters and social posts in code; edits photos in her own computer with free tools (ImageMagick, Pillow, rembg); makes generated images from a prompt once an engine is chosen; her delivery table covers social, e-commerce, print at 300 dpi and a maximum file size | Her own computer and its free tools; the photos you attach, once they reach her computer as files (the attachments row in Next) | Uses a photo, a face or a voice without the person's word that the rights are theirs; makes a real person look or sound as if they said or did what they did not; leaves an image an AI made unlabelled; uses a paid image engine before spending caps exist (v0.4) | Planned; third in the order (D111) |
+
+Order of work, decided on 20 November 2026 (D111): Rex first, then the chat attachments row in Next, then Mira. The product is for an international audience, so names and texts are not regional. Their avatars follow the team character of D98: a turquoise half, always FreeDuet's, and a half in the member's colour, with the member's tool of the trade on the belly. Rex has a red half (`#E5484D`) and a dumbbell on the belly. Mira has a fuchsia half (`#C2369B`) and a camera on the belly. Neither avatar is in the app yet.
+
 ## Packs
 
 | Pack | Member | Job | Uses | Never | Start from |
