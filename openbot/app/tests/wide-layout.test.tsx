@@ -1,6 +1,5 @@
 import { afterAll, afterEach, beforeAll, expect, test } from "bun:test";
 import { GlobalRegistrator } from "@happy-dom/global-registrator";
-import mascot from "@openbot/shared/mascot.json";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import {
   createMemoryHistory,
@@ -23,6 +22,7 @@ import {
   MemberFace,
   mascotKeyOf,
 } from "@/freeduet/wide/mascot";
+import drawn from "@/freeduet/wide/mascot-drawn.json";
 import { memberStates, memberTarget, orderTeam } from "@/freeduet/wide/team";
 import { type AgentProfile, agentKeys } from "@/lib/agents/queries";
 import { approvalInboxOptions } from "@/lib/approvals";
@@ -32,7 +32,7 @@ import { settleReactWork } from "./settle-react-work";
 /**
  * D55: the wide layout. Below 1024 px nothing is drawn that was not drawn before; from 1024 the team
  * column is there as faces, from 1280 with names and what each member is doing. The twelve members
- * have the twelve faces of the home page, and a member somebody trained has the plain one.
+ * have the twelve drawings of 18 November 2026, and a member somebody trained has the plain one.
  */
 
 beforeAll(() => GlobalRegistrator.register({ url: "http://localhost:3010" }));
@@ -280,7 +280,7 @@ test("the column's three destinations are the tab bar's three, with Tasks' count
   ]);
 });
 
-test("the faces come from the home page's file: twelve art keys, every member mapped to its own", () => {
+test("the faces come from the drawings: twelve art keys, every member mapped to its own", () => {
   expect(MASCOT_KEYS).toHaveLength(12);
   const ids = TEAM.map(([id]) => id);
   const keys = ids.map((id) => mascotKeyOf(id));
@@ -319,7 +319,7 @@ test("each of the twelve faces draws its own symbol, and a trained member gets t
     const target = face.querySelector("use")?.getAttribute("href") ?? "";
     expect(view.container.querySelector(target)).not.toBeNull();
   }
-  expect(Object.keys(mascot.team)).toHaveLength(12);
+  expect(Object.keys(drawn.team)).toHaveLength(12);
 });
 
 test("the order, the states and where a row goes", () => {

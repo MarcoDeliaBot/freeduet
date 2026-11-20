@@ -12,6 +12,8 @@ Each version says what was and was not run live. "Run live" means run on a real 
 
 ### Changed
 
+- The twelve member faces in the app are the new mascot drawings of 18 November 2026 (`openbot/app/src/freeduet/wide/mascot-drawn.json`), in place of the round blue bubble. The home page still draws the round bubble from `openbot/shared/mascot.json`, and so does the plain face of a member somebody trained; whether the home page follows is the maintainer's decision (D98). Built and tested, not run live.
+
 - The Engines page can be changed from the administrator's own paired browser through a tunnel (D106; `docs/M1_PLAN.md` section 68). Before, a request that came through a Cloudflare or Tailscale tunnel on the same machine was refused with "Change these on the computer FreeDuet runs on." Now, with sign-in and an installation secret, a signed-in administrator whose browser holds a live `computer` pairing (`bash scripts/open.sh` on the computer) can change a member's "Switch automatically / Ask me first" choice and undo it, whether or not the request came through a tunnel. A phone paired as a `device`, an unpaired browser and a non-administrator are still refused, as is everything else that asks "at the computer" (programs, pairing, secrets, connections, Full access, approval rules). The audit row of a change made through a tunnel says `via: tunnel`, and the page now says how to pair a browser. Risk: a stolen session cookie together with the pairing cookie of that browser can change the engine order mode from anywhere. Built and tested, not run live through the maintainer's own tunnel.
 
 ### Fixed
