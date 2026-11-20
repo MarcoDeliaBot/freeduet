@@ -19,7 +19,8 @@ import { LOOPBACK_PEER } from "./support/loopback-peer";
 
 const TOKEN = "providers-agent-token";
 const KEY = "gsk_CANARYkey0123456789abcdef";
-const ADDRESS = "https://api.cloudflare.com/client/v4/accounts/ACCOUNTCANARY/ai/v1";
+const ADDRESS =
+  "https://api.cloudflare.com/client/v4/accounts/ACCOUNTCANARY/ai/v1";
 
 const CARD = {
   id: "groq",
@@ -56,7 +57,9 @@ function agent(panel: (request: Request, path: string) => Response) {
         return Response.json({ error: "unauthorised" }, { status: 401 });
       if (path === "/engines")
         return Response.json({
-          engines: [{ id: "claude", label: "Claude Code", kind: "cli", state: "ready" }],
+          engines: [
+            { id: "claude", label: "Claude Code", kind: "cli", state: "ready" },
+          ],
           members: [],
           choices_version: 1,
         });
@@ -66,9 +69,17 @@ function agent(panel: (request: Request, path: string) => Response) {
   stubs.push({ stop: () => server.stop(true) });
   const reach: EnginesReach = {
     environment: {},
-    managedAgent: { endpoint: new URL(`http://127.0.0.1:${server.port}/`), token: TOKEN },
+    managedAgent: {
+      endpoint: new URL(`http://127.0.0.1:${server.port}/`),
+      token: TOKEN,
+    },
   };
-  return { seen, reach, panelCalls: () => seen.filter((call) => call.path.startsWith("/engines/panel")) };
+  return {
+    seen,
+    reach,
+    panelCalls: () =>
+      seen.filter((call) => call.path.startsWith("/engines/panel")),
+  };
 }
 
 function setup(
@@ -80,7 +91,11 @@ function setup(
     handler: () => new Response(null, { status: 204 }),
     api: {
       getSession: async () => ({
-        user: { id: "person-1", email: "p@openbot.test", role: options.role ?? "admin" },
+        user: {
+          id: "person-1",
+          email: "p@openbot.test",
+          role: options.role ?? "admin",
+        },
       }),
     },
   };
@@ -126,14 +141,20 @@ describe("the list", () => {
   test("carries the cards reduced to the closed fields, with a key shown only as saved", async () => {
     const stub = agent((_request, path) =>
       path === "/engines/panel"
-        ? ok({ editable: true, reason: null, providers: [CARD, { ...CARD, id: "made-up" }] })
+        ? ok({
+            editable: true,
+            reason: null,
+            providers: [CARD, { ...CARD, id: "made-up" }],
+          })
         : ok({}),
     );
     const { call } = setup(stub.reach);
     const answer = await call("GET", "");
     const text = await answer.text();
     const body = JSON.parse(text);
-    expect(body.providers.map((card: { id: string }) => card.id)).toEqual(["groq"]);
+    expect(body.providers.map((card: { id: string }) => card.id)).toEqual([
+      "groq",
+    ]);
     expect(body.providers[0].keySaved).toBe(true);
     expect(text).not.toContain(KEY);
     expect(text).not.toContain("secretPath");
@@ -142,7 +163,9 @@ describe("the list", () => {
   });
 
   test("says when the person's own engines file is in use", async () => {
-    const stub = agent(() => ok({ editable: false, reason: "file_is_yours", providers: [CARD] }));
+    const stub = agent(() =>
+      ok({ editable: false, reason: "file_is_yours", providers: [CARD] }),
+    );
     const body = await (await setup(stub.reach).call("GET", "")).json();
     expect(body.providersLocked).toBe("file_is_yours");
   });
@@ -170,7 +193,9 @@ describe("who may change a card", () => {
     const stub = agent(() => ok({ provider: CARD }));
     const { call, events } = setup(stub.reach);
     for (const [method, path, body] of writes) {
-      const answer = await call(method, path, body, { "cf-connecting-ip": "203.0.113.9" });
+      const answer = await call(method, path, body, {
+        "cf-connecting-ip": "203.0.113.9",
+      });
       expect(answer.status).toBe(403);
       expect(await answer.text()).not.toContain(KEY);
     }
@@ -181,8 +206,12 @@ describe("who may change a card", () => {
   test("a provider the service does not know is refused before it is forwarded", async () => {
     const stub = agent(() => ok({}));
     const { call } = setup(stub.reach);
-    expect((await call("PUT", "/providers/..%2Fadmin/key", { key: KEY })).status).toBe(404);
-    expect((await call("PUT", "/providers/nothing", { enabled: true })).status).toBe(404);
+    expect(
+      (await call("PUT", "/providers/..%2Fadmin/key", { key: KEY })).status,
+    ).toBe(404);
+    expect(
+      (await call("PUT", "/providers/nothing", { enabled: true })).status,
+    ).toBe(404);
     expect(stub.panelCalls()).toHaveLength(0);
   });
 
@@ -229,21 +258,33 @@ describe("a change", () => {
   });
 
   test("that the agent refuses says one sentence from the closed list, and is not recorded", async () => {
-    const stub = agent(() => Response.json({ error: "model_not_free" }, { status: 400 }));
+    const stub = agent(() =>
+      Response.json({ error: "model_not_free" }, { status: 400 }),
+    );
     const { call, events } = setup(stub.reach);
-    const answer = await call("PUT", "/providers/openrouter", { enabled: true, model: "x/paid" });
+    const answer = await call("PUT", "/providers/openrouter", {
+      enabled: true,
+      model: "x/paid",
+    });
     expect(answer.status).toBe(400);
     const body = await answer.json();
     expect(body.code).toBe("model_not_free");
     expect(body.error).toContain("free");
     expect(events).toHaveLength(0);
-    const odd = agent(() => Response.json({ error: `leaks ${KEY}` }, { status: 400 }));
-    const text = await (await setup(odd.reach).call("PUT", "/providers/groq", {})).text();
+    const odd = agent(() =>
+      Response.json({ error: `leaks ${KEY}` }, { status: 400 }),
+    );
+    const text = await (
+      await setup(odd.reach).call("PUT", "/providers/groq", {})
+    ).text();
     expect(text).not.toContain(KEY);
   });
 
   test("an agent that does not answer is said as one fact, with nothing recorded", async () => {
-    const { call, events } = setup({ environment: {}, managedAgent: undefined });
+    const { call, events } = setup({
+      environment: {},
+      managedAgent: undefined,
+    });
     const answer = await call("PUT", "/providers/groq", { enabled: false });
     expect(answer.status).toBe(502);
     expect(events).toHaveLength(0);
@@ -259,7 +300,9 @@ describe("a key", () => {
     const text = await saved.text();
     expect(JSON.parse(text)).toEqual({ keySaved: true });
     expect(text).not.toContain(KEY);
-    expect(JSON.parse(stub.panelCalls()[0]?.body ?? "{}")).toEqual({ key: KEY });
+    expect(JSON.parse(stub.panelCalls()[0]?.body ?? "{}")).toEqual({
+      key: KEY,
+    });
     expect(JSON.stringify(events)).not.toContain(KEY);
     expect(JSON.stringify(events[0])).toContain("engine_key_saved");
 
@@ -270,11 +313,17 @@ describe("a key", () => {
   });
 
   test("that is far too long is not read, and a refusal never repeats it", async () => {
-    const stub = agent(() => Response.json({ error: "key_shape" }, { status: 400 }));
+    const stub = agent(() =>
+      Response.json({ error: "key_shape" }, { status: 400 }),
+    );
     const { call } = setup(stub.reach);
-    const answer = await call("PUT", "/providers/groq/key", { key: "k".repeat(5_000) });
+    const answer = await call("PUT", "/providers/groq/key", {
+      key: "k".repeat(5_000),
+    });
     expect(answer.status).toBe(400);
-    expect(JSON.parse(stub.panelCalls()[0]?.body ?? "{}")).toEqual({ key: null });
+    expect(JSON.parse(stub.panelCalls()[0]?.body ?? "{}")).toEqual({
+      key: null,
+    });
     expect(await answer.text()).not.toContain("kkkkkkkkkk");
   });
 });
@@ -288,9 +337,17 @@ describe("Test and Load list", () => {
     );
     const { call, events } = setup(stub.reach);
     const test_ = await (await call("POST", "/providers/groq/test")).text();
-    expect(JSON.parse(test_)).toEqual({ ok: false, code: "limit", status: 429 });
+    expect(JSON.parse(test_)).toEqual({
+      ok: false,
+      code: "limit",
+      status: 429,
+    });
     const list = await (await call("POST", "/providers/groq/models")).text();
-    expect(JSON.parse(list)).toEqual({ ok: true, code: "ok", models: ["a", "b"] });
+    expect(JSON.parse(list)).toEqual({
+      ok: true,
+      code: "ok",
+      models: ["a", "b"],
+    });
     expect(test_ + list).not.toContain(KEY);
     expect(events).toHaveLength(0);
   });

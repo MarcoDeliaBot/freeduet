@@ -7,6 +7,8 @@
  * know it. Keep the state names in step with the server.
  */
 
+import type { ProviderView } from "./engines-providers-text";
+
 export type EngineState =
   | "ready"
   | "degraded"
@@ -81,6 +83,9 @@ export type MemberSummary = {
  * person's choices (slice 7); a server that does not leaves them out, and the page is the read-only one of slice 6.
  */
 export type EnginesReading = {
+  /** The provider cards (D109); absent when the service behind the server does not have them. */
+  providers?: ProviderView[];
+  providersLocked?: "file_is_yours" | null;
   reason: EngineReason | null;
   engines: EngineSummary[];
   members?: MemberSummary[];
@@ -236,7 +241,7 @@ export const KEYS_TITLE = "Keys";
 export const KEYS_TEXT =
   "Only keys for gateways will be kept here. Your Claude and ChatGPT sign-ins are never stored by FreeDuet.";
 export const KEYS_NOT_BUILT =
-  "Adding a key from this page is not available yet.";
+  "A key is added on its engine's card. It is kept on this installation and never shown again.";
 
 /**
  * The Spending panel. The server sends no spending figure yet, so the page shows no amount. It says what it cannot show,

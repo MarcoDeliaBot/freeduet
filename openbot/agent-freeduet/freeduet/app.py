@@ -401,7 +401,10 @@ def mount_server_calls(target: FastAPI, module_name: str = SERVER_CALLS_MODULE) 
     if importlib.util.find_spec(module_name) is None:
         return False
     module = importlib.import_module(module_name)
-    module.configure(run_claude_text=claude_text_runner(module), resolve_secret=_resolve_secret)
+    runtime = module.configure(run_claude_text=claude_text_runner(module))
+    # D109: a free `openai-compatible` entry keeps its key in a file the Engines page wrote; the light assistants read it here.
+    if getattr(runtime, "resolve_secret", False) is None:
+        runtime.resolve_secret = _resolve_secret
     target.include_router(module.router)
     return True
 

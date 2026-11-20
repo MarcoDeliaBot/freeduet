@@ -217,7 +217,7 @@ describe("the word on each engine's card", () => {
 
   test("the Keys and Spending panels say what the page does not do, and show no amount", () => {
     expect(KEYS_NOT_BUILT).toBe(
-      "Adding a key from this page is not available yet.",
+      "A key is added on its engine's card. It is kept on this installation and never shown again.",
     );
     expect(SPENDING_TEXT).not.toMatch(/\d|EUR|€|\$/);
     expect(KEYS_TEXT).not.toMatch(/api[ _-]?key|paste/i);

@@ -229,9 +229,11 @@ export const PANEL_SENTENCES: Record<string, string> = {
     "Its free tier is a trial that needs a card, so it is not offered as free. It cannot be switched on here.",
   key_first: "Save a key first. Nothing was changed.",
   model_first: "Choose a model first. Nothing was changed.",
-  address_first: "Write your own account in the server address first. Nothing was changed.",
+  address_first:
+    "Write your own account in the server address first. Nothing was changed.",
   address_shape: "That server address is not valid. Nothing was changed.",
-  address_fixed: "This provider's address cannot be changed. Nothing was changed.",
+  address_fixed:
+    "This provider's address cannot be changed. Nothing was changed.",
   model_shape: "That model name is not valid. Nothing was changed.",
   model_not_free:
     "Only a free model is accepted here: one that ends in :free, or openrouter/free. Nothing was changed.",
@@ -246,7 +248,8 @@ export const PANEL_SENTENCES: Record<string, string> = {
   file_not_written: "The change could not be saved. Nothing was changed.",
 };
 const PANEL_FALLBACK = "That could not be done. Nothing was changed.";
-const NO_AUDIT = "This installation cannot record the change, so nothing was changed.";
+const NO_AUDIT =
+  "This installation cannot record the change, so nothing was changed.";
 /** The closed list of outcomes a Test or Load list answers with. The page says each in words. */
 const CHECK_CODES = [
   "ok",
@@ -329,7 +332,7 @@ async function readProviders(
   reach: EnginesReach,
 ): Promise<ProvidersReading | null> {
   const answer = await callPanel(reach, "GET", "");
-  if (!answer || answer.status !== 200) return null;
+  if (answer?.status !== 200) return null;
   const raw = answer.body as { providers?: unknown; reason?: unknown };
   if (!Array.isArray(raw?.providers)) return null;
   return {
@@ -358,8 +361,7 @@ function panelRefusal(answer: AgentAnswer | null): {
   const code = (answer.body as { error?: unknown } | null)?.error;
   const known = typeof code === "string" && code in PANEL_SENTENCES;
   return {
-    status:
-      answer.status === 404 ? 404 : answer.status === 409 ? 409 : 400,
+    status: answer.status === 404 ? 404 : answer.status === 409 ? 409 : 400,
     body: {
       error: known ? PANEL_SENTENCES[code as string] : PANEL_FALLBACK,
       code: known ? (code as string) : "other",
@@ -836,7 +838,10 @@ export function createEnginesRoutes(
     const id = context.req.param("providerId") ?? "";
     if (!isProviderId(id)) {
       return {
-        refused: context.json({ error: PANEL_SENTENCES.unknown_provider, code: "unknown_provider" }, 404),
+        refused: context.json(
+          { error: PANEL_SENTENCES.unknown_provider, code: "unknown_provider" },
+          404,
+        ),
         viaTunnel,
         id: null as ProviderId | null,
       };
@@ -872,7 +877,8 @@ export function createEnginesRoutes(
     let body: Record<string, unknown> = {};
     try {
       const parsed = await context.req.json();
-      if (parsed && typeof parsed === "object") body = parsed as Record<string, unknown>;
+      if (parsed && typeof parsed === "object")
+        body = parsed as Record<string, unknown>;
     } catch {
       // Not JSON: nothing to change, and the agent says so.
     }
@@ -884,7 +890,7 @@ export function createEnginesRoutes(
     const card = providerOf(
       (answer?.body as { provider?: unknown } | null)?.provider,
     );
-    if (!answer || answer.status !== 200 || !card) {
+    if (answer?.status !== 200 || !card) {
       const failure = panelRefusal(answer);
       return context.json(failure.body, failure.status);
     }
@@ -917,11 +923,17 @@ export function createEnginesRoutes(
     const answer = await callPanel(reach(), "PUT", `/${id}/key`, {
       key: typeof key === "string" ? key : null,
     });
-    if (!answer || answer.status !== 200) {
+    if (answer?.status !== 200) {
       const failure = panelRefusal(answer);
       return context.json(failure.body, failure.status);
     }
-    await recordProvider(context.var.actor.id, id, "engine_key_saved", {}, viaTunnel);
+    await recordProvider(
+      context.var.actor.id,
+      id,
+      "engine_key_saved",
+      {},
+      viaTunnel,
+    );
     return context.json({ keySaved: true }, 200, noStore);
   });
 
@@ -930,11 +942,17 @@ export function createEnginesRoutes(
     if (refused || !id) return refused as Response;
     if (!audit) return context.json({ error: NO_AUDIT, code: "no_audit" }, 503);
     const answer = await callPanel(reach(), "DELETE", `/${id}/key`);
-    if (!answer || answer.status !== 200) {
+    if (answer?.status !== 200) {
       const failure = panelRefusal(answer);
       return context.json(failure.body, failure.status);
     }
-    await recordProvider(context.var.actor.id, id, "engine_key_removed", {}, viaTunnel);
+    await recordProvider(
+      context.var.actor.id,
+      id,
+      "engine_key_removed",
+      {},
+      viaTunnel,
+    );
     return context.json({ keySaved: false }, 200, noStore);
   });
 
@@ -943,14 +961,17 @@ export function createEnginesRoutes(
     const { refused, id } = await providerGuard(context);
     if (refused || !id) return refused as Response;
     const answer = await callPanel(reach(), "POST", `/${id}/models`);
-    if (!answer || answer.status !== 200) {
+    if (answer?.status !== 200) {
       const failure = panelRefusal(answer);
       return context.json(failure.body, failure.status);
     }
     const raw = answer.body as { code?: unknown; models?: unknown };
     const code = CHECK_CODES.find((known) => known === raw.code) ?? "other";
     const models = (Array.isArray(raw.models) ? raw.models : [])
-      .filter((name): name is string => typeof name === "string" && name.length <= 120)
+      .filter(
+        (name): name is string =>
+          typeof name === "string" && name.length <= 120,
+      )
       .slice(0, MAX_MODELS);
     return context.json({ ok: code === "ok", code, models }, 200, noStore);
   });
@@ -959,7 +980,7 @@ export function createEnginesRoutes(
     const { refused, id } = await providerGuard(context);
     if (refused || !id) return refused as Response;
     const answer = await callPanel(reach(), "POST", `/${id}/test`);
-    if (!answer || answer.status !== 200) {
+    if (answer?.status !== 200) {
       const failure = panelRefusal(answer);
       return context.json(failure.body, failure.status);
     }

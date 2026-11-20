@@ -1,0 +1,191 @@
+/**
+ * The provider cards' sentences (D109, docs/design/engines-three-clicks.md). Pure: no React, no request.
+ *
+ * What a card CAN do is decided by the service and sent as facts (`forMembers`, `blocked`, `keySaved`); this module only says
+ * it in English. The facts that never change (a provider's name, what it is, a suggested model) live here.
+ */
+
+export type ProviderId =
+  | "ollama"
+  | "llamacpp"
+  | "lmstudio"
+  | "groq"
+  | "cerebras"
+  | "google"
+  | "mistral"
+  | "openrouter"
+  | "cloudflare"
+  | "anthropic-api";
+
+export type ProviderTag = "local" | "free" | "trial" | "paid";
+
+/** One card as the server sends it (server/src/freeduet/engines-routes.ts, `ProviderView`). Never a key. */
+export type ProviderView = {
+  id: ProviderId;
+  tag: ProviderTag;
+  enabled: boolean;
+  baseUrl: string;
+  model: string;
+  keySaved: boolean;
+  needsKey: boolean;
+  cloud: boolean;
+  forMembers: boolean;
+  forAssistants: boolean;
+  blocked: "paid" | "trial_needs_card" | null;
+  addressFixed: boolean;
+};
+
+/** The order of the cards: your own computer first, then the free services, then the ones that cost or need a card. */
+export const PROVIDER_ORDER: readonly ProviderId[] = [
+  "ollama",
+  "llamacpp",
+  "lmstudio",
+  "groq",
+  "google",
+  "mistral",
+  "openrouter",
+  "cloudflare",
+  "cerebras",
+  "anthropic-api",
+];
+
+/** A model written in the box before the person chooses one, so the three clicks work. It is a suggestion: Test says if it is wrong. */
+export const PROVIDER_TEXT: Record<
+  ProviderId,
+  { name: string; blurb: string; suggestedModel: string }
+> = {
+  ollama: {
+    name: "Ollama",
+    blurb: "Models that run on your own computer.",
+    suggestedModel: "",
+  },
+  llamacpp: {
+    name: "llama.cpp server",
+    blurb: "A llama.cpp server on your own computer or network.",
+    suggestedModel: "",
+  },
+  lmstudio: {
+    name: "LM Studio",
+    blurb: "The local server of LM Studio on your own computer.",
+    suggestedModel: "",
+  },
+  groq: {
+    name: "Groq",
+    blurb: "Fast open models, free with daily limits.",
+    suggestedModel: "llama-3.1-8b-instant",
+  },
+  google: {
+    name: "Google AI Studio",
+    blurb: "Gemini models, free with limits.",
+    suggestedModel: "gemini-2.0-flash",
+  },
+  mistral: {
+    name: "Mistral",
+    blurb: "Mistral models on the free plan, with limits.",
+    suggestedModel: "mistral-small-latest",
+  },
+  openrouter: {
+    name: "OpenRouter",
+    blurb:
+      "Only models that cost nothing: an id ending in :free, or openrouter/free.",
+    suggestedModel: "openrouter/free",
+  },
+  cloudflare: {
+    name: "Cloudflare Workers AI",
+    blurb:
+      "Open models on Cloudflare, free with a daily allowance. Put your own account in the address.",
+    suggestedModel: "@cf/meta/llama-3.1-8b-instruct",
+  },
+  cerebras: {
+    name: "Cerebras",
+    blurb: "Very fast open models.",
+    suggestedModel: "",
+  },
+  "anthropic-api": {
+    name: "Anthropic API",
+    blurb: "Claude on pay-as-you-go credits.",
+    suggestedModel: "",
+  },
+};
+
+export const TAG_TEXT: Record<
+  ProviderTag,
+  { label: string; tone: "green" | "blue" | "amber" | "neutral" }
+> = {
+  local: { label: "Local", tone: "green" },
+  free: { label: "Free with limits", tone: "blue" },
+  trial: { label: "Trial, needs a card", tone: "amber" },
+  paid: { label: "Paid", tone: "neutral" },
+};
+
+export const PROVIDERS_TITLE = "Add an engine";
+export const PROVIDERS_DESCRIPTION =
+  "Switch an engine on, paste its key and press Save, then press Test. A change applies from the next message.";
+export const CLOUD_WARNING = "Data sent to this service leaves your computer.";
+export const LABELS = {
+  address: "Server address",
+  model: "Model",
+  key: "Key",
+  loadList: "Load list",
+  save: "Save",
+  saveSettings: "Save settings",
+  remove: "Remove",
+  test: "Test",
+} as const;
+export const KEY_SAVED = "Key saved. It is never shown again.";
+export const KEY_PLACEHOLDER = "Paste the key here";
+export const NOT_ON_YET_KEY = "Not on yet. Paste the key and press Save.";
+export const NOT_ON_YET_SETTINGS =
+  "Not on yet. Choose a model and press Save settings.";
+export const SETTINGS_SAVED = "Saved. It applies from the next message.";
+export const KEY_REMOVED = "Key removed. The engine is off.";
+export const LOCKED_OWN_FILE =
+  "You wrote an engines file of your own, so these cards only show it. Change it there.";
+
+/** What the card says about who can use it. Members run only on Claude Code and on Anthropic-format engines today. */
+export function usersText(
+  card: Pick<ProviderView, "blocked" | "forMembers" | "forAssistants">,
+): string {
+  if (card.blocked === "paid") {
+    return "Off until spending caps exist. FreeDuet will not let a paid engine run before then.";
+  }
+  if (card.blocked === "trial_needs_card") {
+    return "Its free tier is a trial that needs a card, so FreeDuet does not offer it as free. It stays off.";
+  }
+  if (card.forMembers) {
+    return "For members: yes, after their Claude login. For the light assistants: yes.";
+  }
+  return "For members: not yet. For the light assistants: yes.";
+}
+
+/** The outcome of Test or Load list, in one sentence. Never the key and never the provider's own words. */
+export function checkText(code: string): string {
+  switch (code) {
+    case "ok":
+      return "It answered. It works.";
+    case "key_wrong":
+      return "The key was not accepted (401). Check it and save it again.";
+    case "model_missing":
+      return "The server does not know that model or address (404). Check the model.";
+    case "limit":
+      return "The limit is used up for now (429). Try again later.";
+    case "credit":
+      return "This account has no credit left (402).";
+    case "timeout":
+      return "It did not answer in time.";
+    case "unreachable":
+      return "Nothing answered at that address.";
+    default:
+      return "It did not work.";
+  }
+}
+
+export function modelsLoadedText(count: number): string {
+  return count === 0
+    ? "The list is empty. Type the model name."
+    : `${count} ${count === 1 ? "model" : "models"} loaded. Pick one in the box.`;
+}
+
+export function cardLabel(name: string, what: string): string {
+  return `${name}: ${what}`;
+}
