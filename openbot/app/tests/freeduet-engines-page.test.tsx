@@ -185,7 +185,9 @@ test("Keys is words only, and Spending shows no amount", async () => {
   await waitFor(() => view.getByText("Claude Code"));
   expect(view.getByRole("heading", { level: 2, name: "Keys" })).toBeTruthy();
   expect(
-    view.getByText("Adding a key from this page is not available yet."),
+    view.getByText(
+      "A key is added on its engine's card. It is kept on this installation and never shown again.",
+    ),
   ).toBeTruthy();
   expect(view.container.querySelector("input")).toBeNull();
   expect(view.container.querySelector("button")).toBeNull();

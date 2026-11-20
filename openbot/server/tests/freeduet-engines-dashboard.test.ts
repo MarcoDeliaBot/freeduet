@@ -379,8 +379,10 @@ describe("GET: the members, the choices, and whether the page may change them", 
       canChange: true,
       cannotChange: null,
     });
-    expect(agent.seen).toHaveLength(1);
-    expect(agent.seen[0]?.headers.get("x-openbot-agent-token")).toBe(TOKEN);
+    // The engine list, then the provider cards (D109); both carry the token and go to the agent only.
+    expect(agent.seen).toHaveLength(2);
+    for (const request of agent.seen)
+      expect(request.headers.get("x-openbot-agent-token")).toBe(TOKEN);
   });
 
   test("the person's choice is laid over the file's, and the answer says it is the person's", async () => {

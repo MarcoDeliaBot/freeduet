@@ -4,6 +4,7 @@ import { PageEmpty, PageShell } from "@/components/layout/page-shell";
 import { StaggerItem } from "@/components/layout/stagger";
 import { client } from "@/lib/client";
 import { EngineMembers } from "./engines-members";
+import { EngineProviders } from "./engines-providers";
 import {
   ASIDE_LABEL,
   ENGINE_STATES_TITLE,
@@ -29,8 +30,7 @@ import {
  * docs/design/engines-dashboard.md): each engine as a card, with one word for its state (the pill) and one sentence
  * below it, the time it waits until in the person's own time zone where it waits. Beside the cards, on a wide screen,
  * the Keys and Spending panels, which hold words only. Below the cards, where the server keeps the person's choices,
- * each member's engines and one choice for what happens when an engine runs out (engines-members.tsx). No card can be
- * clicked to change anything. Kept in app/src/freeduet/ so the upstream admin page only gains one row and the route
+ * each member's engines and one choice for what happens when an engine runs out (engines-members.tsx). The provider cards (engines-providers.tsx) are the one place a person switches an engine on and saves its key. Kept in app/src/freeduet/ so the upstream admin page only gains one row and the route
  * file one import (docs/UPSTREAM_TOUCHES.md).
  */
 
@@ -115,6 +115,11 @@ export function FreeDuetEngines() {
                 </ul>
               </section>
             )}
+
+            <EngineProviders
+              onChanged={() => void engines.refetch()}
+              reading={reading}
+            />
 
             {(reading.members?.length ?? 0) > 0 ? (
               <EngineMembers

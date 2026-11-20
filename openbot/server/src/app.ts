@@ -30,6 +30,7 @@ import {
   type AuditStore,
   auditEventsToCsv,
   auditQueryFromUrl,
+  auditSink,
   DEPLOYMENT_INITIATOR,
   readAuditExportRows,
   recordAuditEvent,
@@ -789,6 +790,8 @@ export function createApp(
       coworker?.engineChoices,
       // With sign-in and a secret, "at the computer" also asks for a live pairing of this person (at-the-computer.ts).
       pairingGate,
+      // D109: provider and key changes are recorded, and refused where there is nowhere to record them.
+      auditStore ? auditSink(auditStore) : undefined,
     ),
   );
   // D60: programs on the person's own computer. The helper's two doors carry a signed body and no session; the person's two
