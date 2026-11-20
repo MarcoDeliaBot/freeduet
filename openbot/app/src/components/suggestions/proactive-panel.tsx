@@ -199,7 +199,7 @@ export function ProactiveResearchSettings({
           Turn on research
         </Button>
       }
-      description="On by default once you start a conversation with just this Bot: it looks through the apps it can already read every four hours, forms memories for you to review and suggests next steps. It can only read: it cannot send messages, change anything in an app, or use a browser or computer. Turn it off or remove it and it stays that way."
+      description="Off until you turn it on for this Bot, unless your administrator turned it on for everyone. When it is on, it looks through the apps it can already read every four hours, forms memories for you to review and suggests next steps. It can only read: it cannot send messages, change anything in an app, or use a browser or computer. Turn it off or remove it and it stays that way."
       title="Background research"
     >
       {settings.isPending ? null : settings.error ? (
