@@ -454,6 +454,184 @@ def test_the_pages_own_file_carries_the_marker_and_each_replacement_keeps_a_back
     assert panel.panel_state()["editable"] is True  # still its own file
 
 
+# ── D112: the person puts a member's engines in order by hand ────────────────────────────────────
+
+
+def _chef_with_two_free_engines():
+    panel.save_key("openrouter", "sk-or-v1-CANARYkey0123456789")
+    panel.apply_change("openrouter", enabled=True, model="openrouter/free", members=["chef"])
+    panel.apply_change("ollama", enabled=True, model="qwen2.5:7b")
+
+
+def _shown(member):
+    from freeduet.engines import ordered_chain
+
+    return [engine.id for engine in ordered_chain(member, load_engines())]
+
+
+def test_a_permutation_is_written_in_that_order_with_a_backup_and_the_loader_keeps_it(data):
+    _chef_with_two_free_engines()
+    assert _shown("chef") == ["claude-code", "openrouter-member", "ollama-member"]
+    result = panel.apply_order("chef", ["claude-code", "ollama-member", "openrouter-member"])
+    assert result == {"member": "chef", "chain": ["claude-code", "ollama-member", "openrouter-member"], "changed": True}
+    assert _shown("chef") == ["claude-code", "ollama-member", "openrouter-member"]
+    # engines the chain names that do not run keep their place; the other members are untouched
+    file_chain = load_engines().chains["chef"]
+    assert file_chain[:3] == ("claude-code", "codex", "local") and set(file_chain) >= {"openrouter", "openrouter-member", "ollama-member"}
+    assert _shown("freeduet") == ["claude-code", "ollama-member"]
+    assert len(list(data.glob("engines.yaml.bak-*"))) >= 1
+    assert (data / "engines.yaml").read_text().splitlines()[0] == panel.MARKER
+
+
+def test_a_member_on_the_default_chain_is_judged_by_that_chain(data):
+    _chef_with_two_free_engines()
+    assert "inbox" not in load_engines().chains
+    panel.apply_order("inbox", ["claude-code", "ollama-member"])  # the same order: nothing to write
+    assert "inbox" not in load_engines().chains
+    # one login and one free engine: the only other order is the router's rule undone, so it is refused
+    with pytest.raises(panel.PanelRefused) as caught:
+        panel.apply_order("inbox", ["ollama-member", "claude-code"])
+    assert caught.value.code == "order_logins_first"
+
+
+def test_the_same_order_writes_nothing(data):
+    _chef_with_two_free_engines()
+    before = (data / "engines.yaml").read_bytes()
+    backups = len(list(data.glob("engines.yaml.bak-*")))
+    result = panel.apply_order("chef", ["claude-code", "openrouter-member", "ollama-member"])
+    assert result["changed"] is False
+    assert (data / "engines.yaml").read_bytes() == before
+    assert len(list(data.glob("engines.yaml.bak-*"))) == backups
+
+
+@pytest.mark.parametrize(
+    "order",
+    [
+        ["claude-code", "openrouter-member"],  # drops one
+        ["claude-code", "openrouter-member", "ollama-member", "codex"],  # adds one
+        ["claude-code", "openrouter-member", "made-up"],  # unknown id
+        ["claude-code", "openrouter-member", "openrouter-member"],  # repeats one
+        "claude-code",
+        [5, "claude-code", "openrouter-member"],
+        None,
+    ],
+)
+def test_an_order_that_is_not_a_permutation_is_refused_and_nothing_is_written(data, order):
+    _chef_with_two_free_engines()
+    before = (data / "engines.yaml").read_bytes()
+    with pytest.raises(panel.PanelRefused) as caught:
+        panel.apply_order("chef", order)
+    assert caught.value.code in ("order_not_permutation", "order_shape")
+    assert (data / "engines.yaml").read_bytes() == before
+
+
+def test_an_unknown_member_is_refused(data):
+    _chef_with_two_free_engines()
+    before = (data / "engines.yaml").read_bytes()
+    for member in ("nobody", None, "default", 5):
+        with pytest.raises(panel.PanelRefused) as caught:
+            panel.apply_order(member, ["claude-code", "ollama-member"])
+        assert caught.value.code == "unknown_member"
+    assert (data / "engines.yaml").read_bytes() == before
+
+
+def test_a_free_engine_before_a_login_is_refused_because_the_router_would_undo_it(data):
+    _chef_with_two_free_engines()
+    before = (data / "engines.yaml").read_bytes()
+    with pytest.raises(panel.PanelRefused) as caught:
+        panel.apply_order("chef", ["openrouter-member", "claude-code", "ollama-member"])
+    assert caught.value.code == "order_logins_first"
+    assert (data / "engines.yaml").read_bytes() == before
+
+
+def test_a_metered_engine_is_never_put_before_a_login_or_a_free_engine(data):
+    _chef_with_two_free_engines()
+    path = data / "engines.yaml"
+    document = yaml.safe_load(path.read_text())
+    document["metered"] = {"enabled": True, "daily_cap": 5, "monthly_cap": 50, "currency": "USD"}
+    document["engines"]["anthropic-api"]["enabled"] = True
+    document["chains"]["chef"].insert(1, "anthropic-api")  # written before the free ones: the router still puts it last
+    path.write_text(panel.MARKER + "\n" + yaml.safe_dump(document, sort_keys=False))
+    shown = _shown("chef")
+    assert shown[-1] == "anthropic-api" and len(shown) == 4
+    before = path.read_bytes()
+    for bad in (
+        ["anthropic-api", *shown[:-1]],
+        [shown[0], "anthropic-api", *shown[1:-1]],
+        [*shown[:-2], "anthropic-api", shown[-2]],
+    ):
+        with pytest.raises(panel.PanelRefused) as caught:
+            panel.apply_order("chef", bad)
+        assert caught.value.code == "order_logins_first"
+    assert path.read_bytes() == before
+    # a free engine may still move among the free ones, with the metered one kept last
+    panel.apply_order("chef", [shown[0], shown[2], shown[1], "anthropic-api"])
+    assert _shown("chef")[-1] == "anthropic-api"
+
+
+def test_an_order_is_refused_for_a_file_the_page_did_not_write(tmp_path, monkeypatch):
+    own = tmp_path / "engines.yaml"
+    text = "# mine\n" + panel.EXAMPLE_ENGINES_FILE.read_text()
+    own.write_text(text)
+    monkeypatch.setenv("FREEDUET_DATA_DIR", str(tmp_path))
+    monkeypatch.setenv("FREEDUET_ENGINES_FILE", str(own))
+    team = tmp_path / "team.yaml"
+    team.write_text("agents:\n  - id: chef\n    name: chef\n    system_prompt: x\n")
+    monkeypatch.setenv("FREEDUET_AGENTS_FILE", str(team))
+    with pytest.raises(panel.PanelRefused) as caught:
+        panel.apply_order("chef", ["claude-code"])
+    assert (caught.value.code, caught.value.status) == ("file_is_yours", 409)
+    assert own.read_text() == text and sorted(p.name for p in tmp_path.iterdir()) == ["engines.yaml", "team.yaml"]
+
+
+def test_the_order_route_applies_from_the_next_message_and_refuses_what_the_panel_refuses(client, data):
+    client.put("/engines/panel/openrouter/key", json={"key": "sk-or-v1-CANARYkey0123456789"}, headers=AUTH)
+    client.put("/engines/panel/openrouter", json={"enabled": True, "model": "openrouter/free", "members": ["chef"]}, headers=AUTH)
+    client.put("/engines/panel/ollama", json={"enabled": True, "model": "qwen2.5:7b"}, headers=AUTH)
+    url = "/engines/panel/members/chef/order"
+    assert client.put(url, json={"order": []}).status_code == 401
+    assert [m["chain"] for m in client.get("/engines", headers=AUTH).json()["members"] if m["id"] == "chef"] == [
+        ["claude-code", "openrouter-member", "ollama-member"]
+    ]
+    done = client.put(url, json={"order": ["claude-code", "ollama-member", "openrouter-member"]}, headers=AUTH)
+    assert done.status_code == 200 and done.json()["changed"] is True
+    assert [m["chain"] for m in client.get("/engines", headers=AUTH).json()["members"] if m["id"] == "chef"] == [
+        ["claude-code", "ollama-member", "openrouter-member"]
+    ]
+    assert app.state.engine_router._runnable("chef") == ["claude-code", "ollama-member", "openrouter-member"]
+    for body, code, status in (
+        ({"order": ["claude-code", "ollama-member"]}, "order_not_permutation", 400),
+        ({"order": ["ollama-member", "claude-code", "openrouter-member"]}, "order_logins_first", 400),
+        ({}, "order_shape", 400),
+    ):
+        refused = client.put(url, json=body, headers=AUTH)
+        assert (refused.status_code, refused.json()["error"]) == (status, code)
+    assert client.put("/engines/panel/members/nobody/order", json={"order": []}, headers=AUTH).status_code == 404
+
+
+def test_the_order_route_reads_the_chain_inside_the_lock_so_a_card_change_cannot_make_it_stale(client, data, monkeypatch):
+    events = []
+
+    class Recording:
+        async def __aenter__(self):
+            events.append("lock")
+
+        async def __aexit__(self, *_):
+            events.append("unlock")
+
+    router = app.state.engine_router
+    real_overview = router.overview
+
+    def overview(members):
+        events.append("overview")
+        return real_overview(members)
+
+    monkeypatch.setattr(panel, "_lock", Recording())
+    monkeypatch.setattr(router, "overview", overview)
+    client.put("/engines/panel/members/freeduet/order", json={"order": ["claude-code"]}, headers=AUTH)
+    assert events[:2] == ["lock", "overview"]
+
+
 # ── Key folder safety ────────────────────────────────────────────────────────────────────────────
 
 

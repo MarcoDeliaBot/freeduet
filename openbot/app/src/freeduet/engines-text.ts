@@ -258,6 +258,13 @@ export const ASIDE_LABEL = "Keys and spending";
 export const MEMBERS_TITLE = "Who uses what";
 export const MEMBERS_DESCRIPTION =
   "The engines each member tries, in the order it tries them, and what happens when one runs out. A change applies from the member's next message, and you can undo it.";
+/** D112: the order by hand. One sentence above the table, and the words a screen reader reads for each arrow. */
+export const ORDER_NOTE =
+  "Use the arrows to move an engine one place. Your own logins always come first, then free engines, then paid ones, so an engine moves only within its group.";
+export const moveUpLabel = (engine: string, name: string): string =>
+  `Move ${engine} up for ${name}`;
+export const moveDownLabel = (engine: string, name: string): string =>
+  `Move ${engine} down for ${name}`;
 export const MEMBER_COLUMNS = {
   member: "Member",
   order: "Order of engines",

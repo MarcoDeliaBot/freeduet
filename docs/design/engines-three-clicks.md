@@ -93,3 +93,46 @@ page shows an error. Only a failing database causes that.
 ## 7. Decisions left to the maintainer
 
 See the pull request.
+
+## 8. The order of a member's engines, by hand (D112)
+
+Seen live on 20 November 2026: OpenRouter was switched on for Iris, but the local model answered. A card switched on is
+appended to the end of a chain (`_set_chains`), so the order was the order of switching on, and the "Who uses what" table
+only showed it.
+
+**What it does.** Each engine in a member's row has an arrow up and an arrow down ("Move OpenRouter up for Iris"); the first
+has no Up and the last no Down. One click moves one engine one place. The page sends `PUT /api/freeduet/engines/members/:memberId/order`
+with `{ order: [engine ids] }`, the member's whole chain as shown, in the new order. It applies from the member's next message
+(the router is rebuilt from the file, as for a card). Undo of the row puts the previous order back with one more request of
+the same kind.
+
+**Rules, all from D109.** Only the page's own file, the one that starts with the marker line (otherwise `file_is_yours`, 409);
+the loader validates the document before it is written; a backup `engines.yaml.bak-*` as for a card; the same guard as every
+other change here (`mayChangeEngines`, D106: an administrator at the computer or with a paired `computer` browser; a remote
+session, a phone and a non-administrator are refused and nothing reaches the agent); a change that cannot be recorded is not
+made (the audit row is `configuration.changed`, `engine_member_order`, payload `engine_order_changed`, the member and the new
+order); an order already in use writes nothing and records nothing. The new route sits under `/api/freeduet/engines`, which
+`createApp`'s deny-by-default list and `remote-limits.ts` (`ALL /api/freeduet/engines/*`) already cover.
+
+**What the agent refuses** (`engine_panel.apply_order`): a member that is not on the team (`unknown_member`, 404); an order
+that is not a permutation of the member's chain as the router sees it (`order_not_permutation`: nothing added, nothing dropped,
+nothing unknown, no repeat), and a body that is not a list of ids (`order_shape`). The engines of the file's chain that do not
+run (left out, or without an adapter) keep their places; a member that uses the `default` chain gets a chain of its own, as
+when a cloud engine is chosen for it.
+
+**Logins first stays.** The router orders every chain subscription, then free, then metered, whatever the file says
+(`engines.order_logins_first`, CLAUDE.md "Logins first"). So moving an engine across a group would be a promise the router
+does not keep. After the move, the agent asks the loader for the member's chain again, and when it differs from the order
+asked for the change is refused (`order_logins_first`) and nothing is written. That covers a metered engine before a login or
+a free engine, and also a free engine before a login. The arrows therefore work inside a group (for example, between two free
+engines such as OpenRouter and the local model); the page says so in one sentence above the table. It does not know an engine's
+billing, so a move across groups is refused by the agent and the sentence is shown, not hidden by the page.
+
+**Built so far.** `engine_panel.apply_order`, `PUT /engines/panel/members/{member}/order` in agent-freeduet, the server route,
+the arrows and Undo in `app/src/freeduet/engines-members.tsx`. Tests: `tests/test_engine_panel.py` (15 new),
+`server/tests/freeduet-engines-order.test.ts` (11), `app/tests/freeduet-engines-members.test.tsx` (6 new, 1 reworded).
+
+**Not verified.** Not run live: a real engines file, a real turn after a move. The look of the arrows is not seen by the
+maintainer yet (preview screenshot with the pull request). The order of the engines the router shows is the effective one;
+a pin in the file's `switching:` block is not touched by the order.
+
