@@ -89,7 +89,11 @@ function Ring({
     return frame(
       { borderColor: ACCENT },
       { opacity: [0.45, 1, 0.45] },
-      { duration: BREATH_S, ease: "easeInOut", repeat: Number.POSITIVE_INFINITY },
+      {
+        duration: BREATH_S,
+        ease: "easeInOut",
+        repeat: Number.POSITIVE_INFINITY,
+      },
     );
   }
   if (state === "thinking") {
