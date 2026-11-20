@@ -99,6 +99,7 @@ NORMAL_WAITS = [
 # (kind, said, resets_at) that classify(text, now=NOW) returns, generated from unmodified main (origin/main);
 # None where main returns None. The three absurd waits main raised on are pinned to the fixed behaviour.
 GOLDEN = {
+    'rate_limited': ('rate_limit', 'rate_limited', None),  # a word of the Engines page's Test (D109), read by the unchanged classifier of main
     ' usage limit': ('usage_limit', 'usage limit', None),
     ' usage limit ': ('usage_limit', 'usage limit', None),
     '429': ('rate_limit', '429', None),

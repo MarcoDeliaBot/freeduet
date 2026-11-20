@@ -28,7 +28,7 @@ import {
   TAG_TEXT,
   USE_FOR_NONE,
   USE_FOR_TITLE,
-  useForWarning,
+  warningFor,
   usersText,
 } from "./engines-providers-text";
 import { blockText, type EnginesReading } from "./engines-text";
@@ -247,7 +247,7 @@ function ProviderCard({
           </legend>
           {card.useFor.available.map((id) => {
             const ticked = card.useFor?.chosen.includes(id) ?? false;
-            const warning = ticked ? useForWarning(id) : null;
+            const warning = ticked ? warningFor(id) : null;
             return (
               <div key={id}>
                 <label className="type-label flex items-center gap-2">

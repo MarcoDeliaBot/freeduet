@@ -183,7 +183,7 @@ export const USE_FOR_NONE =
   "No member uses it yet. The light assistants do. Tick the members who may send their work to this service.";
 
 /** What a ticked member sends to a free cloud service. Only the two members whose work is mail or bookings say more. */
-export function useForWarning(memberId: string): string | null {
+export function warningFor(memberId: string): string | null {
   if (memberId === "inbox") return "Sends your mail to this service.";
   if (memberId === "concierge") return "Sends your bookings to this service.";
   return null;
