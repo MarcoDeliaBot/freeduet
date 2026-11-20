@@ -47,6 +47,7 @@ ANTHROPIC_NAMES = {
 }
 ALLOWED_NAMES = (
     set(ce.PASSED_ENV) | set(claude_cli.FIXED_ENV) | set(ce.GATEWAY_ENV) | ANTHROPIC_NAMES | {"HOME", "CLAUDE_CONFIG_DIR"}
+    | set(ce.PATIENCE_VARIABLES)  # D108: a local model's own waits
 )
 #: What a loopback server answers with: an HTTP status line and an empty JSON body.
 ANSWER = b"HTTP/1.1 200 OK\r\nContent-Length: 2\r\nConnection: close\r\n\r\n{}"

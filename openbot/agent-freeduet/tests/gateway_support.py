@@ -42,6 +42,7 @@ ENTRY = {
     "billing": "free",
     "model": MODEL,
     "enabled": True,
+    "light": False,  # D108: an entry on loopback is a local model, and gets the light turn unless it says no; these tests run the full turn
 }
 CLAUDE_ENTRY = {"kind": "cli", "command": "claude", "billing": "subscription", "tier": "A", "enabled": True}
 

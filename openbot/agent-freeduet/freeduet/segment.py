@@ -229,20 +229,22 @@ async def run_segment(run: RunInput, member: Member, notes: SegmentNotes | None 
                       engine: EngineAdapter | None = None, *, announce: bool = True,
                       extra_notes: tuple[str, ...] = (), light: bool = False) -> AsyncIterator[dict]:
     """`announce=False` and `extra_notes` are for the engine chain (engine_router.py), which runs this once per
-    engine it tries inside one turn: it has already sent RUN_STARTED, and tells the next engine what happened."""
+    engine it tries inside one turn: it has already sent RUN_STARTED, and tells the next engine what happened.
+    `light` is the light turn of a local model (D108; transcript.py, LIGHT_*): a smaller system text and only the tools of
+    a plain conversation, with a note that says so. Approvals are the server's, not the prompt's, so none changes."""
     if announce:
         yield agui.run_started(run)
     engine = engine if engine is not None else ClaudeEngine()
     notes = notes if notes is not None else SegmentNotes()
     active_lessons = await _lessons_for(run, member)
     # The tool notes, then the person's language when the deployment set one (person_language.py).
-    if light:
-        run = dataclasses.replace(run, tools=[tool for tool in run.tools if tool.get("name") in transcript.LIGHT_TOOLS])
     run_notes = [*tool_notes.notes_for(run, member), *person_language.notes_for(run), *person_tone.notes_for(run), *extra_notes]
     if light:
+        # The notes above were written from the tools OpenBot offered; the light turn then keeps only a plain turn's tools.
+        run = dataclasses.replace(run, tools=[tool for tool in run.tools if tool.get("name") in transcript.LIGHT_TOOLS])
         run_notes.append(transcript.LIGHT_NOTE)
     offered = {tool["name"] for tool in run.tools}
-    local = iris_tools.for_run(run, member.id, offered)
+    local = None if light else iris_tools.for_run(run, member.id, offered)  # Iris's team-log and lesson tools are not a plain turn's
     # What the bridge serves: the transcript writes earlier calls to these under the name the CLI
     # registers them by, mcp__freeduet__<name> (transcript.py).
     served = offered | (local.names if local else frozenset())
