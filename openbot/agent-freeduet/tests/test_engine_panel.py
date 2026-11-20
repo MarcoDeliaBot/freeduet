@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import asyncio
 import json
+import os
 import logging
 import stat
 
@@ -23,6 +24,7 @@ from helpers import MANAGED_TOKEN
 
 KEY = "gsk_CANARYkey0123456789abcdef"
 AUTH = {"x-openbot-agent-token": MANAGED_TOKEN}
+TEAM = ["freeduet", "inbox", "concierge", "chef"]
 
 
 @pytest.fixture
@@ -30,6 +32,9 @@ def data(tmp_path, monkeypatch):
     monkeypatch.setenv("FREEDUET_DATA_DIR", str(tmp_path))
     monkeypatch.setenv("FREEDUET_ENGINES_FILE", str(tmp_path / "no-such-own-file.yaml"))
     monkeypatch.setenv("MANAGED_AGENT_TOKEN", MANAGED_TOKEN)
+    team = tmp_path / "team.yaml"
+    team.write_text("agents:\n" + "".join(f"  - id: {m}\n    name: {m}\n    system_prompt: x\n" for m in TEAM))
+    monkeypatch.setenv("FREEDUET_AGENTS_FILE", str(team))
     return tmp_path
 
 
@@ -129,23 +134,128 @@ def test_openrouter_keeps_the_free_model_guard_of_d107(data):
     with pytest.raises(panel.PanelRefused) as caught:
         panel.apply_change("openrouter", base_url="https://evil.example.com/v1")
     assert caught.value.code == "address_fixed"
+    # A free cloud engine joins NO member's chain until the person ticks that member (review of PR #414).
+    assert not any("openrouter-member" in ids for ids in config.chains.values())
 
 
-def test_a_cloud_address_must_be_https_and_cloudflare_needs_its_account(data):
+def test_a_cloud_provider_keeps_to_its_own_host_and_cloudflare_only_the_account_is_editable(data):
     panel.save_key("cloudflare", "cf_CANARYtoken0123456789")
     with pytest.raises(panel.PanelRefused) as caught:
         panel.apply_change("cloudflare", enabled=True, model="@cf/meta/llama-3.1-8b-instruct")
     assert caught.value.code == "address_first"
-    with pytest.raises(panel.PanelRefused) as caught:
-        panel.apply_change("groq", base_url="http://api.groq.com/openai/v1")
-    assert caught.value.code == "address_shape"
+    for provider, bad in (
+        ("groq", "http://api.groq.com/openai/v1"),
+        ("groq", "https://evil.example.com/openai/v1"),
+        ("groq", "https://api.groq.com.evil.example/openai/v1"),
+        ("groq", "https://api.groq.com:8443/openai/v1"),
+        ("google", "https://user:pw@generativelanguage.googleapis.com/v1beta/openai"),
+    ):
+        with pytest.raises(panel.PanelRefused) as caught:
+            panel.apply_change(provider, base_url=bad)
+        assert caught.value.code in {"address_fixed", "address_host", "address_shape"}, bad
+    for bad in (
+        "https://evil.example.com/client/v4/accounts/abc12345678/ai/v1",
+        "https://api.cloudflare.com@evil.example.com/client/v4/accounts/abc12345678/ai/v1",
+        "https://api.cloudflare.com/client/v4/accounts/abc12345678/ai/v1/../../x",
+        "https://api.cloudflare.com/client/v4/accounts/abc12345678/ai/v1?x=1",
+        "https://api.cloudflare.com:444/client/v4/accounts/abc12345678/ai/v1",
+        "http://api.cloudflare.com/client/v4/accounts/abc12345678/ai/v1",
+    ):
+        with pytest.raises(panel.PanelRefused):
+            panel.apply_change("cloudflare", base_url=bad)
+    assert not (data / "engines.yaml").exists()
     panel.apply_change(
         "cloudflare",
         enabled=True,
         model="@cf/meta/llama-3.1-8b-instruct",
-        base_url="https://api.cloudflare.com/client/v4/accounts/abc123/ai/v1",
+        base_url="https://api.cloudflare.com/client/v4/accounts/abc12345678/ai/v1",
     )
     assert "cloudflare-assist" in load_engines().assistants.chain
+
+
+@pytest.mark.parametrize(
+    "address,fine",
+    [
+        ("http://host.docker.internal:11434/v1", True),
+        ("http://localhost:8080/v1", True),
+        ("http://127.0.0.1:1234/v1", True),
+        ("http://192.168.1.20:8080/v1", True),
+        ("http://10.0.0.5:8080", True),
+        ("http://169.254.1.1:8080", True),
+        ("http://[fd00::1]:8080/v1", True),
+        ("http://studio.local:1234/v1", True),
+        ("http://host.docker.internal:4230/v1", False),  # the agent itself
+        ("http://localhost:3001/v1", False),  # the server
+        ("http://127.0.0.1:5432", False),  # postgres
+        ("http://postgres:5432", False),
+        ("http://supervisor:8080", False),
+        ("http://agent-freeduet:11434", False),
+        ("http://agent-computer:11434", False),
+        ("http://8.8.8.8:11434/v1", False),
+        ("http://example.com:11434/v1", False),
+        ("http://user@localhost:11434/v1", False),
+        ("ftp://localhost:11434/v1", False),
+        ("http://localhost:11434/v1?x=1", False),
+    ],
+)
+def test_a_local_card_reaches_this_machine_or_network_and_never_freeduets_own_services(data, address, fine):
+    if fine:
+        assert panel.apply_change("llamacpp", base_url=address, model="m")["baseUrl"] == address
+    else:
+        with pytest.raises(panel.PanelRefused):
+            panel.apply_change("llamacpp", base_url=address, model="m")
+        assert not (data / "engines.yaml").exists()
+
+
+def test_the_agents_own_configured_port_is_refused_too(data, monkeypatch):
+    monkeypatch.setenv("FREEDUET_PORT", "4999")
+    with pytest.raises(panel.PanelRefused):
+        panel.apply_change("llamacpp", base_url="http://localhost:4999/v1", model="m")
+
+
+def test_a_key_is_never_sent_to_a_host_the_file_was_changed_to(data):
+    panel.save_key("groq", KEY)
+    panel.apply_change("groq", enabled=True, model="m")
+    document = yaml.safe_load((data / "engines.yaml").read_text())
+    document["engines"]["groq-assist"]["base_url"] = "https://evil.example.com/openai/v1"
+    (data / "engines.yaml").write_text(panel.MARKER + "\n" + yaml.safe_dump(document))
+    seen: list[httpx.Request] = []
+    for call in (panel.test_provider, panel.list_models):
+        with pytest.raises(panel.PanelRefused):
+            asyncio.run(call("groq", transport=transport(200, seen)))
+    assert seen == []
+
+
+def test_a_cloud_engine_joins_only_the_members_the_person_ticks_and_a_local_one_joins_everyone(data):
+    panel.save_key("openrouter", "sk-or-v1-CANARYkey0123456789")
+    panel.apply_change("openrouter", enabled=True, model="openrouter/free")
+    shown = panel.panel_state()["providers"]
+    use = next(c for c in shown if c["id"] == "openrouter")["useFor"]
+    assert use == {"available": TEAM, "chosen": []}
+    assert next(c for c in shown if c["id"] == "groq")["useFor"] is None
+    assert next(c for c in shown if c["id"] == "ollama")["useFor"] is None
+    panel.apply_change("openrouter", members=["chef", "inbox"])
+    config = load_engines()
+    assert "openrouter-member" in config.chains["chef"] and "openrouter-member" in config.chains["inbox"]
+    assert "openrouter-member" not in config.chains["default"]
+    assert "openrouter-member" not in config.chains["freeduet"]
+    assert "openrouter-member" not in config.chains["concierge"]
+    assert next(c for c in panel.panel_state()["providers"] if c["id"] == "openrouter")["useFor"]["chosen"] == ["chef", "inbox"]
+    panel.apply_change("openrouter", members=["chef"])
+    assert "openrouter-member" not in load_engines().chains["inbox"]
+    for bad in (["nobody"], "chef", [5], ["chef", None]):
+        with pytest.raises(panel.PanelRefused) as caught:
+            panel.apply_change("openrouter", members=bad)
+        assert caught.value.code == "members_shape"
+    panel.apply_change("openrouter", enabled=False)
+    assert not any("openrouter-member" in ids for ids in load_engines().chains.values())
+    with pytest.raises(panel.PanelRefused) as caught:
+        panel.apply_change("openrouter", members=["chef"])
+    assert caught.value.code == "switch_on_first"
+    with pytest.raises(panel.PanelRefused):
+        panel.apply_change("groq", members=["chef"])  # no member entry at all
+    panel.apply_change("ollama", enabled=True, model="qwen2.5:7b")
+    assert all("ollama-member" in ids for ids in load_engines().chains.values())
 
 
 def test_a_file_of_the_persons_own_is_never_touched(tmp_path, monkeypatch):
@@ -172,14 +282,15 @@ def transport(status, seen=None, body=None):
 
 
 @pytest.mark.parametrize(
-    "status,code", [(200, "ok"), (401, "key_wrong"), (403, "key_wrong"), (404, "model_missing"), (429, "limit"), (402, "credit"), (500, "other")]
+    "status,code",
+    [(200, "ok"), (401, "key_rejected"), (403, "key_rejected"), (404, "model_missing"), (429, "rate_limited"), (402, "rate_limited"), (500, "unreachable"), (302, "unreachable")],
 )
 def test_the_test_button_says_one_word_and_never_the_key(data, status, code):
     panel.save_key("groq", KEY)
     panel.apply_change("groq", enabled=True, model="llama-3.1-8b-instant")
     seen: list[httpx.Request] = []
     result = asyncio.run(panel.test_provider("groq", transport=transport(status, seen)))
-    assert result == {"ok": status == 200, "code": code, "status": status}
+    assert result == {"ok": status == 200, "code": code}  # the upstream status is never passed on
     assert seen[0].headers["authorization"] == f"Bearer {KEY}"
     assert seen[0].url.path.endswith("/chat/completions")
     assert KEY not in json.dumps(result)
@@ -192,7 +303,7 @@ def test_the_test_button_reports_an_unreachable_server_without_the_error_text(da
         raise httpx.ConnectError("boom http://host.docker.internal:11434")
 
     result = asyncio.run(panel.test_provider("ollama", transport=httpx.MockTransport(refuse)))
-    assert result == {"ok": False, "code": "unreachable", "status": None}
+    assert result == {"ok": False, "code": "unreachable"}
 
 
 def test_the_model_list_is_cleaned_and_openrouter_shows_only_free_ones(data):
@@ -204,7 +315,7 @@ def test_the_model_list_is_cleaned_and_openrouter_shows_only_free_ones(data):
     result = asyncio.run(panel.list_models("google", transport=transport(200, body={"data": [{"id": "models/gemini-2.0-flash"}]})))
     assert result["models"] == ["gemini-2.0-flash"]
     result = asyncio.run(panel.list_models("google", transport=transport(401)))
-    assert result["code"] == "key_wrong" and result["models"] == []
+    assert result["code"] == "key_rejected" and result["models"] == []
 
 
 # ── Through the real service ─────────────────────────────────────────────────────────────────────
@@ -270,3 +381,84 @@ def test_the_real_service_wires_the_secret_reader_into_the_light_assistants():
     assert server_calls.get_runtime().resolve_secret is not None
     server_calls.reload_engines()
     assert server_calls.get_runtime().engines is None
+
+
+# ── B1: the page recognises only its own file ────────────────────────────────────────────────────
+
+
+def test_an_unmarked_file_at_the_panels_own_path_is_the_persons_and_is_never_rewritten(tmp_path, monkeypatch):
+    own = tmp_path / "engines.yaml"
+    text = "# my own notes, kept\n" + panel.EXAMPLE_ENGINES_FILE.read_text()
+    own.write_text(text)
+    monkeypatch.setenv("FREEDUET_DATA_DIR", str(tmp_path))
+    monkeypatch.setenv("FREEDUET_ENGINES_FILE", str(own))  # the same path: the maintainer's real setup
+    state = panel.panel_state()
+    assert state["editable"] is False and state["reason"] == "file_is_yours"
+    for call in (
+        lambda: panel.apply_change("ollama", enabled=True, model="m"),
+        lambda: panel.apply_change("ollama", model="m"),
+        lambda: panel.save_key("groq", KEY),
+    ):
+        with pytest.raises(panel.PanelRefused) as caught:
+            call()
+        assert (caught.value.code, caught.value.status) == ("file_is_yours", 409)
+    assert own.read_text() == text
+    assert list(tmp_path.iterdir()) == [own]  # no backup, no key folder, no temporary file
+
+
+def test_an_unmarked_file_at_the_panel_path_is_the_persons_even_with_no_variable(tmp_path, monkeypatch):
+    own = tmp_path / "engines.yaml"
+    own.write_text(panel.EXAMPLE_ENGINES_FILE.read_text())
+    monkeypatch.setenv("FREEDUET_DATA_DIR", str(tmp_path))
+    monkeypatch.setenv("FREEDUET_ENGINES_FILE", str(tmp_path / "absent.yaml"))
+    assert panel.own_file_in_use() is True
+    with pytest.raises(panel.PanelRefused):
+        panel.apply_change("ollama", enabled=True, model="m")
+
+
+def test_the_pages_own_file_carries_the_marker_and_each_replacement_keeps_a_backup(data):
+    panel.apply_change("ollama", enabled=True, model="m1")
+    path = data / "engines.yaml"
+    assert path.read_text().splitlines()[0] == panel.MARKER
+    assert stat.S_IMODE(path.stat().st_mode) == 0o600
+    assert list(data.glob("engines.yaml.bak-*")) == []  # nothing to back up at the first write
+    first = path.read_text()
+    panel.apply_change("ollama", model="m2")
+    backups = sorted(data.glob("engines.yaml.bak-*"))
+    assert len(backups) == 1 and backups[0].read_text() == first
+    for n in range(8):
+        panel.apply_change("ollama", model=f"m{n + 3}")
+    assert len(list(data.glob("engines.yaml.bak-*"))) == panel.MAX_BACKUPS
+    assert panel.panel_state()["editable"] is True  # still its own file
+
+
+# ── Key folder safety ────────────────────────────────────────────────────────────────────────────
+
+
+def test_the_keys_folder_is_made_700_and_a_link_in_its_place_is_refused(data):
+    old = os.umask(0o022)
+    try:
+        panel.save_key("groq", KEY)
+    finally:
+        os.umask(old)
+    assert stat.S_IMODE((data / "keys").stat().st_mode) == 0o700
+    panel.remove_key("groq")
+    elsewhere = data / "elsewhere"
+    elsewhere.mkdir()
+    (data / "keys").rmdir()
+    (data / "keys").symlink_to(elsewhere)
+    with pytest.raises(panel.PanelRefused):
+        panel.save_key("groq", KEY)
+    assert list(elsewhere.iterdir()) == []
+    assert panel.key_saved(panel.PROVIDERS["groq"]) is False
+
+
+def test_a_key_file_that_is_a_link_is_not_a_key(data):
+    (data / "keys").mkdir(mode=0o700)
+    target = data / "other-secret"
+    target.write_text(KEY + "\n")
+    (data / "keys" / "groq").symlink_to(target)
+    assert panel.key_saved(panel.PROVIDERS["groq"]) is False
+    with pytest.raises(panel.PanelRefused):
+        panel.save_key("groq", "gsk_ANOTHERkey0123456789abcdef")
+    assert target.read_text().strip() == KEY

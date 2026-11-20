@@ -35,6 +35,7 @@ const CARD = {
   forAssistants: true,
   blocked: null,
   addressFixed: false,
+  useFor: { available: ["freeduet", "inbox", "BAD ID", 5], chosen: ["inbox"] },
   secretPath: "/data/keys/groq",
   key: KEY,
 };
@@ -160,6 +161,11 @@ describe("the list", () => {
     expect(text).not.toContain("secretPath");
     expect(text).not.toContain("/data/keys");
     expect(body.providersLocked).toBeNull();
+    // The member lists are reduced to member ids: nothing else gets through.
+    expect(body.providers[0].useFor).toEqual({
+      available: ["freeduet", "inbox"],
+      chosen: ["inbox"],
+    });
   });
 
   test("says when the person's own engines file is in use", async () => {
@@ -257,6 +263,24 @@ describe("a change", () => {
     expect(row).toContain("engine_provider_changed");
   });
 
+  test("of members for a cloud engine is forwarded and recorded by member id", async () => {
+    const stub = agent(() => ok({ provider: CARD }));
+    const { call, events } = setup(stub.reach);
+    const answer = await call("PUT", "/providers/openrouter", {
+      members: ["inbox", "chef", "bad id!", 5],
+    });
+    expect(answer.status).toBe(200);
+    expect(JSON.parse(stub.panelCalls()[0]?.body ?? "{}")).toEqual({
+      members: ["inbox", "chef", "bad id!", 5],
+    });
+    expect(events[0]).toMatchObject({
+      payload: {
+        change: "engine_provider_changed",
+        members: ["inbox", "chef"],
+      },
+    });
+  });
+
   test("that the agent refuses says one sentence from the closed list, and is not recorded", async () => {
     const stub = agent(() =>
       Response.json({ error: "model_not_free" }, { status: 400 }),
@@ -332,15 +356,28 @@ describe("Test and Load list", () => {
   test("answer a closed shape: nothing the agent adds gets through", async () => {
     const stub = agent((_request, path) =>
       path.endsWith("/test")
-        ? ok({ ok: true, code: "limit", status: 429, key: KEY, body: "raw" })
+        ? ok({
+            ok: true,
+            code: "rate_limited",
+            status: 429,
+            key: KEY,
+            body: "raw",
+          })
         : ok({ ok: true, code: "ok", models: ["a", "b", 5], key: KEY }),
     );
     const { call, events } = setup(stub.reach);
     const test_ = await (await call("POST", "/providers/groq/test")).text();
-    expect(JSON.parse(test_)).toEqual({
+    expect(JSON.parse(test_)).toEqual({ ok: false, code: "rate_limited" });
+    const odd = agent(() =>
+      ok({ ok: true, code: "HTTP 418 teapot", status: 418 }),
+    );
+    expect(
+      await (
+        await setup(odd.reach).call("POST", "/providers/groq/test")
+      ).json(),
+    ).toEqual({
       ok: false,
-      code: "limit",
-      status: 429,
+      code: "unreachable",
     });
     const list = await (await call("POST", "/providers/groq/models")).text();
     expect(JSON.parse(list)).toEqual({

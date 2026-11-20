@@ -170,7 +170,8 @@ async def engines_panel_change(provider: str, request: Request):
     try:
         async with engine_panel._lock:
             card = engine_panel.apply_change(
-                provider, enabled=body.get("enabled"), base_url=body.get("baseUrl"), model=body.get("model")
+                provider, enabled=body.get("enabled"), base_url=body.get("baseUrl"), model=body.get("model"),
+                members=body.get("members"),
             )
             _apply_file_change()
     except engine_panel.PanelRefused as error:

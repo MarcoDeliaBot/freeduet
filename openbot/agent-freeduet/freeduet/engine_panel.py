@@ -29,16 +29,20 @@ from __future__ import annotations
 
 import asyncio
 import copy
+import ipaddress
 import os
 import re
+import stat
 import tempfile
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Mapping
+from urllib.parse import urlsplit
 
 import httpx
 import yaml
 
+from .members import load_prompts
 from .engines import (
     COMPATIBLE_KIND,
     EXAMPLE_ENGINES_FILE,
@@ -59,10 +63,15 @@ REQUEST_TIMEOUT_S = 8.0
 MAX_MODELS = 300
 _MODEL = re.compile(r"[@A-Za-z0-9][A-Za-z0-9._:/@\-]{0,119}")
 _FREE_SUFFIX = re.compile(r"[A-Za-z0-9][A-Za-z0-9._\-]*(/[A-Za-z0-9][A-Za-z0-9._\-]*)+:free")
+#: The first line of a file the Engines page wrote. The page recognises its own file by this line and by nothing else: a file
+#: without it is the person's, whatever its name or place, and is never written (B1 of the review of PR #414).
+MARKER = "# FreeDuet Engines page file (D109): written by the page, replaced on each change. Backups: engines.yaml.bak-*"
 _HEADER = (
-    "# Written by FreeDuet's Engines page (D109). Change it there. A file of your own at FREEDUET_ENGINES_FILE takes its\n"
-    "# place and is never touched. Keys are not in this file: each is in its own file under the data folder.\n"
+    MARKER + "\n"
+    "# Change it on the Engines page. A file of your own is never touched by the page. Keys are not in this file: each is in\n"
+    "# its own file under the data folder.\n"
 )
+MAX_BACKUPS = 5
 
 LOCAL, FREE, TRIAL, PAID = "local", "free", "trial", "paid"
 
@@ -101,10 +110,10 @@ PROVIDERS: Mapping[str, Provider] = {
         Provider("ollama", LOCAL, "http://host.docker.internal:11434/v1", False, member_base="http://host.docker.internal:11434"),
         Provider("llamacpp", LOCAL, "http://host.docker.internal:8080/v1", False),
         Provider("lmstudio", LOCAL, "http://host.docker.internal:1234/v1", False),
-        Provider("groq", FREE, "https://api.groq.com/openai/v1", True),
-        Provider("cerebras", TRIAL, "https://api.cerebras.ai/v1", True, blocked="trial_needs_card"),
-        Provider("google", FREE, "https://generativelanguage.googleapis.com/v1beta/openai", True),
-        Provider("mistral", FREE, "https://api.mistral.ai/v1", True),
+        Provider("groq", FREE, "https://api.groq.com/openai/v1", True, address_fixed=True),
+        Provider("cerebras", TRIAL, "https://api.cerebras.ai/v1", True, blocked="trial_needs_card", address_fixed=True),
+        Provider("google", FREE, "https://generativelanguage.googleapis.com/v1beta/openai", True, address_fixed=True),
+        Provider("mistral", FREE, "https://api.mistral.ai/v1", True, address_fixed=True),
         Provider(
             "openrouter", FREE, "https://openrouter.ai/api/v1", True,
             member_base="https://openrouter.ai/api", address_fixed=True, free_model_only=True,
@@ -113,7 +122,7 @@ PROVIDERS: Mapping[str, Provider] = {
             "cloudflare", FREE, "https://api.cloudflare.com/client/v4/accounts/<ACCOUNT_ID>/ai/v1", True,
             address_to_fill=True,
         ),
-        Provider("anthropic-api", PAID, "https://api.anthropic.com/v1", True, blocked="paid"),
+        Provider("anthropic-api", PAID, "https://api.anthropic.com/v1", True, blocked="paid", address_fixed=True),
     )
 }
 
@@ -147,10 +156,70 @@ def key_file(provider: Provider, environ: Mapping[str, str] | None = None) -> Pa
     return data_dir(environ) / KEYS_DIR_NAME / provider.id
 
 
+def _key_path_safe(provider: Provider, environ: Mapping[str, str] | None = None) -> bool:
+    """`keys/` is a real directory and the key's file is a real file, not a link to somewhere else. A path that does not exist
+    yet is safe. Looks at the links themselves (lstat), never through them."""
+    path = key_file(provider, environ)
+    for part in (path.parent, path):
+        try:
+            mode = os.lstat(part).st_mode
+        except FileNotFoundError:
+            continue
+        except OSError:
+            return False
+        if stat.S_ISLNK(mode) or not (stat.S_ISDIR(mode) if part == path.parent else stat.S_ISREG(mode)):
+            return False
+    return True
+
+
+def _ensure_keys_dir(path: Path) -> None:
+    """Create `keys/` with mode 700 from the start (no moment with a wider mode), refusing a link or a file in its place."""
+    if os.path.lexists(path):
+        if stat.S_ISLNK(os.lstat(path).st_mode) or not path.is_dir():
+            raise PanelRefused("file_not_written", 500)
+    else:
+        previous = os.umask(0o077)
+        try:
+            os.makedirs(path, mode=0o700, exist_ok=True)
+        finally:
+            os.umask(previous)
+    os.chmod(path, 0o700)
+
+
+def _is_marked(path: Path) -> bool:
+    """Whether the file starts with the page's own marker line. Reads one line; any failure is "not ours"."""
+    try:
+        with open(path, encoding="utf-8") as handle:
+            return handle.readline().rstrip("\n") == MARKER
+    except (OSError, UnicodeDecodeError):
+        return False
+
+
 def own_file_in_use(environ: Mapping[str, str] | None = None) -> bool:
-    """Whether the person wrote an engines file of their own, which the page then leaves alone."""
+    """Whether the engines file in use is the person's, which the page then leaves alone. It is the page's own only when it is
+    in the data folder AND carries the page's marker line: a hand-made file at the very same path (the installation that sets
+    ``FREEDUET_ENGINES_FILE`` to it) is the person's."""
     chosen = engines_file_path(environ)
-    return chosen != EXAMPLE_ENGINES_FILE and chosen != panel_file(environ)
+    if chosen == EXAMPLE_ENGINES_FILE:
+        return False
+    return not (chosen == panel_file(environ) and _is_marked(chosen))
+
+
+def _backup(path: Path) -> None:
+    """Keep a timestamped copy of the file about to be replaced, and the last five copies only."""
+    if not path.is_file():
+        return
+    from datetime import UTC, datetime
+    import shutil
+
+    stamp = datetime.now(UTC).strftime("%Y%m%dT%H%M%S%fZ")
+    try:
+        shutil.copy2(path, path.with_name(f"{path.name}.bak-{stamp}"))
+        olds = sorted(path.parent.glob(f"{path.name}.bak-*"))
+        for old in olds[:-MAX_BACKUPS]:
+            old.unlink()
+    except OSError as error:
+        raise PanelRefused("file_not_written", 500) from error
 
 
 def _provider(provider_id: str) -> Provider:
@@ -166,7 +235,7 @@ def _provider(provider_id: str) -> Provider:
 def _load_document(environ: Mapping[str, str] | None = None) -> dict[str, Any]:
     """The panel's file when there is one, else the shipped example: the starting point of a change."""
     path = panel_file(environ)
-    source = path if path.is_file() else EXAMPLE_ENGINES_FILE
+    source = path if path.is_file() and _is_marked(path) else EXAMPLE_ENGINES_FILE
     try:
         with open(source, encoding="utf-8") as handle:
             data = yaml.safe_load(handle)
@@ -199,7 +268,10 @@ def _write_document(document: dict[str, Any], environ: Mapping[str, str] | None 
     except EnginesFileError as error:
         raise PanelRefused("invalid") from error
     path = panel_file(environ)
+    if path.exists() and not _is_marked(path):
+        raise PanelRefused("file_is_yours", 409)  # never over a file the page did not write
     path.parent.mkdir(parents=True, exist_ok=True)
+    _backup(path)
     text = _HEADER + yaml.safe_dump(document, sort_keys=False, allow_unicode=True)
     handle, temporary = tempfile.mkstemp(dir=path.parent, prefix=".engines-", suffix=".tmp")
     try:
@@ -229,7 +301,7 @@ def key_saved(provider: Provider, environ: Mapping[str, str] | None = None) -> b
     """Whether a usable key is saved for the provider. Reads it only to judge its shape; says nothing else."""
     from .compatible_engine import read_key
 
-    if not provider.needs_key:
+    if not provider.needs_key or not _key_path_safe(provider, environ):
         return False
     return read_key(f"file:{key_file(provider, environ)}", os.environ if environ is None else environ) is not None
 
@@ -259,9 +331,11 @@ def save_key(provider_id: str, key: Any, environ: Mapping[str, str] | None = Non
     path = key_file(provider, environ)
     if in_hidden_folder(str(path)):
         raise PanelRefused("file_not_written", 500)
+    if not _key_path_safe(provider, environ):
+        raise PanelRefused("file_not_written", 500)
     try:
-        path.parent.mkdir(parents=True, exist_ok=True)
-        os.chmod(path.parent, 0o700)
+        data_dir(environ).mkdir(parents=True, exist_ok=True)
+        _ensure_keys_dir(path.parent)
         handle, temporary = tempfile.mkstemp(dir=path.parent, prefix=".key-")
         try:
             with os.fdopen(handle, "w", encoding="ascii") as out:
@@ -281,6 +355,8 @@ def save_key(provider_id: str, key: Any, environ: Mapping[str, str] | None = Non
 def remove_key(provider_id: str, environ: Mapping[str, str] | None = None) -> None:
     """Delete the key's file. Missing is fine."""
     provider = _provider(provider_id)
+    if not _key_path_safe(provider, environ):
+        raise PanelRefused("file_not_written", 500)
     try:
         key_file(provider, environ).unlink()
     except FileNotFoundError:
@@ -312,6 +388,7 @@ def _card(provider: Provider, document: Mapping[str, Any], environ: Mapping[str,
         "forAssistants": provider.blocked is None,
         "blocked": provider.blocked,
         "addressFixed": provider.address_fixed,
+        "useFor": _use_for(provider, document),
     }
 
 
@@ -329,23 +406,62 @@ def panel_state(environ: Mapping[str, str] | None = None) -> dict[str, Any]:
 # ── Changing a card ──────────────────────────────────────────────────────────────────────────────
 
 
-def _checked_address(provider: Provider, value: Any) -> str:
+#: Ports of FreeDuet's own services, which a local card never points at (the agent itself, the server, the app, the database).
+_REFUSED_LOCAL_PORTS = frozenset({3001, 3010, 3101, 3110, 4230, 4231, 5432})
+_ACCOUNT = re.compile(r"[A-Za-z0-9]{8,64}")
+_LOCAL_PATH = re.compile(r"(/[A-Za-z0-9._~\-]*){0,8}")
+
+
+def _local_host_ok(host: str) -> bool:
+    """Loopback, `host.docker.internal`, a private, link-local or unique-local address literal, or a `*.local` name. A name
+    with no dot (a service name on the compose network: postgres, supervisor, agent-freeduet...) is never one of them."""
+    host = host.lower().rstrip(".")
+    if host in ("localhost", "host.docker.internal"):
+        return True
+    if host.endswith(".local") and len(host) > len(".local") and re.fullmatch(r"[a-z0-9.\-]+", host):
+        return True
+    try:
+        address = ipaddress.ip_address(host)
+    except ValueError:
+        return False
+    return address.is_loopback or address.is_private or address.is_link_local
+
+
+def checked_address(provider: Provider, value: Any, environ: Mapping[str, str] | None = None) -> str:
+    """The address a card may use, or a refusal. A key is sent only to the host a provider's own card names (B2 of the review of
+    PR #414): a cloud provider's host is its own, and only Cloudflare's account part is the person's to write. A local card
+    may reach this machine or its own network, and never one of FreeDuet's own services."""
     if not isinstance(value, str):
         raise PanelRefused("address_shape")
-    text = value.strip()
+    text = value.strip().rstrip("/")
+    if not text or len(text) > 300 or re.search(r"[\s<>]", text):
+        raise PanelRefused("address_shape")
     if provider.address_fixed:
-        if text != provider.base_url:
+        if text != provider.base_url.rstrip("/"):
             raise PanelRefused("address_fixed")
         return text
-    if (
-        not text
-        or len(text) > 300
-        or re.search(r"\s|<|>", text)
-        or not re.match(r"^https?://[^/@]+(/.*)?$", text)
-        or (provider.cloud and not text.startswith("https://"))
-    ):
+    try:
+        parts = urlsplit(text)
+        port = parts.port
+    except ValueError as error:
+        raise PanelRefused("address_shape") from error
+    host = (parts.hostname or "").lower()
+    if parts.username is not None or parts.password is not None or "@" in parts.netloc or parts.query or parts.fragment:
         raise PanelRefused("address_shape")
-    return text.rstrip("/")
+    if provider.cloud:
+        expected = urlsplit(provider.base_url)
+        if parts.scheme != "https" or host != expected.hostname or port is not None:
+            raise PanelRefused("address_host")
+        if not re.fullmatch(r"/client/v4/accounts/[A-Za-z0-9]{8,64}/ai/v1", parts.path):
+            raise PanelRefused("address_shape")
+        return text
+    env = os.environ if environ is None else environ
+    own = {int(v) for v in (env.get("FREEDUET_PORT"), env.get("PORT")) if v and v.strip().isdigit()}
+    if parts.scheme not in ("http", "https") or not _local_host_ok(host) or not _LOCAL_PATH.fullmatch(parts.path):
+        raise PanelRefused("address_host")
+    if port is not None and (port in _REFUSED_LOCAL_PORTS or port in own):
+        raise PanelRefused("address_host")
+    return text
 
 
 def _checked_model(provider: Provider, value: Any) -> str:
@@ -366,7 +482,35 @@ def _member_address(provider: Provider, base_url: str) -> str | None:
     return re.sub(r"/v1/?$", "", base_url)
 
 
-def _set_chains(document: dict[str, Any], provider: Provider, on: bool) -> None:
+def _available_members() -> list[str]:
+    """The team's member ids (the keys of chains), from the team file. Empty when there is none."""
+    try:
+        return [member for member in load_prompts() if isinstance(member, str)]
+    except Exception:  # noqa: BLE001 - the card then offers nobody
+        return []
+
+
+def _chosen_members(provider: Provider, document: Mapping[str, Any]) -> list[str]:
+    chains = document.get("chains")
+    if not isinstance(chains, Mapping):
+        return []
+    return sorted(
+        name for name, ids in chains.items()
+        if name != "default" and isinstance(ids, list) and provider.member_id in ids
+    )
+
+
+def _use_for(provider: Provider, document: Mapping[str, Any]) -> dict[str, Any] | None:
+    """Which members a CLOUD engine with a member entry is used for. None for any other card (a local engine joins every chain)."""
+    if provider.member_base is None or not provider.cloud:
+        return None
+    return {"available": _available_members(), "chosen": _chosen_members(provider, document)}
+
+
+def _set_chains(document: dict[str, Any], provider: Provider, on: bool, members: list[str] | None = None) -> None:
+    """The assistants' chain, and the members' chains. A LOCAL engine joins every chain. A CLOUD engine joins only the chains of
+    the members the person chose (decision of the review of PR #414: what a free cloud service reads is the person's choice,
+    member by member, and none by default); the `default` chain never gets it."""
     assistants = document.setdefault("assistants", {})
     if isinstance(assistants, dict):
         chain = [item for item in (assistants.get("chain") or []) if item != provider.assist_id]
@@ -374,12 +518,17 @@ def _set_chains(document: dict[str, Any], provider: Provider, on: bool) -> None:
             chain.append(provider.assist_id)
         assistants["chain"] = chain
     chains = document.get("chains")
-    if provider.member_base is not None and isinstance(chains, dict):
-        for name, ids in list(chains.items()):
-            kept = [item for item in (ids or []) if item != provider.member_id]
-            if on:
-                kept.append(provider.member_id)
-            chains[name] = kept
+    if provider.member_base is None or not isinstance(chains, dict):
+        return
+    chosen = [] if not (on and provider.cloud) else (members if members is not None else _chosen_members(provider, document))
+    for name, ids in list(chains.items()):
+        chains[name] = [item for item in (ids or []) if item != provider.member_id]
+        if on and not provider.cloud:
+            chains[name].append(provider.member_id)
+    for member in chosen:
+        if member not in chains:
+            chains[member] = list(chains.get("default") or [])
+        chains[member] = [*chains[member], provider.member_id]
 
 
 def apply_change(
@@ -388,10 +537,12 @@ def apply_change(
     enabled: Any = None,
     base_url: Any = None,
     model: Any = None,
+    members: Any = None,
     environ: Mapping[str, str] | None = None,
 ) -> dict[str, Any]:
-    """Switch a card on or off and set its address and model, all or any. Raises :class:`PanelRefused` and writes nothing
-    when the change cannot be made; otherwise the engines file is replaced and the new card is returned."""
+    """Switch a card on or off, set its address and model, and (a cloud engine a member can run on) choose which members use it.
+    Raises :class:`PanelRefused` and writes nothing when the change cannot be made; otherwise the engines file is replaced and
+    the new card is returned."""
     provider = _provider(provider_id)
     if own_file_in_use(environ):
         raise PanelRefused("file_is_yours", 409)
@@ -403,9 +554,23 @@ def apply_change(
     document = copy.deepcopy(_load_document(environ))
     table = _engines(document)
     current = table.get(provider.assist_id) if isinstance(table.get(provider.assist_id), dict) else {}
-    address = _checked_address(provider, base_url) if base_url is not None else current.get("base_url", provider.base_url)
+    address = checked_address(provider, base_url, environ) if base_url is not None else current.get("base_url", provider.base_url)
     chosen_model = _checked_model(provider, model) if model is not None else current.get("model")
     switched_on = enabled if enabled is not None else bool(current.get("enabled") is True)
+
+    chosen_members: list[str] | None = None
+    if members is not None:
+        known = _available_members()
+        if (
+            provider.member_base is None
+            or not provider.cloud
+            or not isinstance(members, list)
+            or not all(isinstance(item, str) and item in known for item in members)
+        ):
+            raise PanelRefused("members_shape")
+        if members and not switched_on:
+            raise PanelRefused("switch_on_first")
+        chosen_members = sorted(set(members))
 
     if switched_on:
         if not isinstance(chosen_model, str) or not chosen_model.strip() or not _MODEL.fullmatch(chosen_model):
@@ -416,6 +581,8 @@ def apply_change(
             raise PanelRefused("key_first")
     if not isinstance(address, str):
         raise PanelRefused("address_shape")
+    if "<" not in address:
+        address = checked_address(provider, address, environ)  # also an address already in the file: judged again
 
     reference = f"file:{key_file(provider, environ)}" if provider.needs_key else None
     shared: dict[str, Any] = {"billing": "free", "tier": "C", "enabled": bool(switched_on)}
@@ -433,7 +600,7 @@ def apply_change(
         else:
             member["no_key"] = True
         table[provider.member_id] = member
-    _set_chains(document, provider, bool(switched_on))
+    _set_chains(document, provider, bool(switched_on), chosen_members)
     _write_document(document, environ)
     return _card(provider, document, environ)
 
@@ -442,17 +609,16 @@ def apply_change(
 
 
 def _classify(status: int) -> str:
+    """The HTTP status as one word of a closed list. The status itself is never passed on."""
     if status == 200:
         return "ok"
     if status in (401, 403):
-        return "key_wrong"
+        return "key_rejected"
     if status in (400, 404, 422):
         return "model_missing"
-    if status == 402:
-        return "credit"
-    if status == 429:
-        return "limit"
-    return "other"
+    if status in (402, 429):
+        return "rate_limited"
+    return "unreachable"
 
 
 async def _ask(
@@ -461,8 +627,9 @@ async def _ask(
     key: str | None,
     body: dict[str, Any] | None,
     transport: httpx.AsyncBaseTransport | None,
-) -> tuple[str, int | None, Any]:
-    """One request. ``(code, status, json-or-None)``. The key goes in a header; nothing it can appear in comes back."""
+) -> tuple[str, Any]:
+    """One request. ``(code, json-or-None)`` with the code from the closed list of :func:`_classify`. The key goes in a header
+    to the address :func:`checked_address` already judged; nothing it can appear in comes back."""
     headers = {"content-type": "application/json"}
     if key:
         headers["authorization"] = f"Bearer {key}"
@@ -471,19 +638,15 @@ async def _ask(
             timeout=REQUEST_TIMEOUT_S, transport=transport, trust_env=False, follow_redirects=False
         ) as client:
             response = await client.request(method, url, json=body, headers=headers)
-    except httpx.TimeoutException:
-        return "timeout", None, None
-    except httpx.HTTPError:
-        return "unreachable", None, None
-    except Exception:  # noqa: BLE001 - never a reason to leak what the library wrote
-        return "unreachable", None, None
+    except Exception:  # noqa: BLE001 - a timeout, a refused connection, anything: one word, never what the library wrote
+        return "unreachable", None
     parsed: Any = None
     if response.status_code == 200:
         try:
             parsed = response.json()
         except ValueError:
-            return "other", 200, None
-    return _classify(response.status_code), response.status_code, parsed
+            return "unreachable", None
+    return _classify(response.status_code), parsed
 
 
 def _configured(provider_id: str, environ: Mapping[str, str] | None) -> tuple[Provider, str, str, str | None]:
@@ -495,16 +658,20 @@ def _configured(provider_id: str, environ: Mapping[str, str] | None) -> tuple[Pr
     entry = table.get(provider.assist_id) if isinstance(table.get(provider.assist_id), Mapping) else {}
     base = entry.get("base_url") if isinstance(entry.get("base_url"), str) else provider.base_url
     model = entry.get("model") if isinstance(entry.get("model"), str) else ""
+    if provider.address_to_fill and "<" in base:
+        raise PanelRefused("address_first")
+    # Judged again at the moment a key is about to be sent: whatever the file holds, a key goes only to the provider's own host.
+    base = checked_address(provider, base, environ)
     key = None
     if provider.needs_key:
         from .compatible_engine import read_key
 
+        if not _key_path_safe(provider, environ):
+            raise PanelRefused("key_first")
         key = read_key(f"file:{key_file(provider, environ)}", os.environ if environ is None else environ)
         if key is None:
             raise PanelRefused("key_first")
-    if provider.address_to_fill and "<" in base:
-        raise PanelRefused("address_first")
-    return provider, base.rstrip("/"), model, key
+    return provider, base, model, key
 
 
 async def test_provider(
@@ -512,13 +679,14 @@ async def test_provider(
     environ: Mapping[str, str] | None = None,
     transport: httpx.AsyncBaseTransport | None = None,
 ) -> dict[str, Any]:
-    """A tiny real request with the saved key: one word for the outcome, and the HTTP status. Never a key or a body."""
+    """A tiny real request with the saved key: one word from a closed list (ok, key_rejected, model_missing, rate_limited,
+    unreachable). Never a key, a body or the provider's own status."""
     _provider_checked, base, model, key = _configured(provider_id, environ)
     if not model:
         raise PanelRefused("model_first")
     payload = {"model": model, "messages": [{"role": "user", "content": "Reply with the word ok."}], "max_tokens": 8, "stream": False}
-    code, status, _ = await _ask("POST", f"{base}/chat/completions", key, payload, transport)
-    return {"ok": code == "ok", "code": code, "status": status}
+    code, _ = await _ask("POST", f"{base}/chat/completions", key, payload, transport)
+    return {"ok": code == "ok", "code": code}
 
 
 async def list_models(
@@ -528,9 +696,9 @@ async def list_models(
 ) -> dict[str, Any]:
     """The model ids the provider lists (the OpenAI format's `GET /models`), at most 300. For OpenRouter only the free ones."""
     provider, base, _model, key = _configured(provider_id, environ)
-    code, status, body = await _ask("GET", f"{base}/models", key, None, transport)
+    code, body = await _ask("GET", f"{base}/models", key, None, transport)
     if code != "ok":
-        return {"ok": False, "code": code, "status": status, "models": []}
+        return {"ok": False, "code": code, "models": []}
     rows = body.get("data") if isinstance(body, dict) else None
     ids: list[str] = []
     for row in rows if isinstance(rows, list) else []:
@@ -540,7 +708,7 @@ async def list_models(
         name = name.removeprefix("models/")
         if _MODEL.fullmatch(name) and (not provider.free_model_only or name == OPENROUTER_FREE_ROUTER or _FREE_SUFFIX.fullmatch(name)):
             ids.append(name)
-    return {"ok": True, "code": "ok", "status": status, "models": sorted(set(ids))[:MAX_MODELS]}
+    return {"ok": True, "code": "ok", "models": sorted(set(ids))[:MAX_MODELS]}
 
 
 __all__ = [

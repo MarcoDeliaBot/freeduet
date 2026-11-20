@@ -220,6 +220,11 @@ export type ProviderView = {
   forAssistants: boolean;
   blocked: "paid" | "trial_needs_card" | null;
   addressFixed: boolean;
+  /**
+   * For a free cloud engine a member can run on (OpenRouter): the members the person may choose from, and the ones chosen.
+   * Null for every other card (a local engine joins every member; an OpenAI-format-only engine joins none).
+   */
+  useFor: { available: string[]; chosen: string[] } | null;
 };
 
 /** The words agent-freeduet refuses a card change with, and the sentence the person reads for each. */
@@ -228,6 +233,11 @@ export const PANEL_SENTENCES: Record<string, string> = {
   trial_needs_card:
     "Its free tier is a trial that needs a card, so it is not offered as free. It cannot be switched on here.",
   key_first: "Save a key first. Nothing was changed.",
+  address_host:
+    "That address is not allowed. A key goes only to the provider's own address, and a local engine only to this computer or your own network. Nothing was changed.",
+  members_shape: "Those members cannot be chosen. Nothing was changed.",
+  switch_on_first:
+    "Switch the engine on before choosing members. Nothing was changed.",
   model_first: "Choose a model first. Nothing was changed.",
   address_first:
     "Write your own account in the server address first. Nothing was changed.",
@@ -253,13 +263,10 @@ const NO_AUDIT =
 /** The closed list of outcomes a Test or Load list answers with. The page says each in words. */
 const CHECK_CODES = [
   "ok",
-  "key_wrong",
+  "key_rejected",
   "model_missing",
-  "limit",
-  "credit",
+  "rate_limited",
   "unreachable",
-  "timeout",
-  "other",
 ] as const;
 
 function providerOf(value: unknown): ProviderView | null {
@@ -285,7 +292,21 @@ function providerOf(value: unknown): ProviderView | null {
         ? raw.blocked
         : null,
     addressFixed: flag("addressFixed"),
+    useFor: useForOf(raw.useFor),
   };
+}
+
+const MEMBER_ID_LIST = /^[a-z][a-z0-9_-]{0,31}$/;
+function useForOf(value: unknown): ProviderView["useFor"] {
+  if (!value || typeof value !== "object") return null;
+  const raw = value as Record<string, unknown>;
+  const ids = (list: unknown) =>
+    (Array.isArray(list) ? list : [])
+      .filter(
+        (id): id is string => typeof id === "string" && MEMBER_ID_LIST.test(id),
+      )
+      .slice(0, 64);
+  return { available: ids(raw.available), chosen: ids(raw.chosen) };
 }
 
 /** What the page is told about the cards. `locked` is set when the person's own engines file is in use. */
@@ -886,6 +907,7 @@ export function createEnginesRoutes(
     if ("enabled" in body) send.enabled = body.enabled;
     if ("baseUrl" in body) send.baseUrl = body.baseUrl;
     if ("model" in body) send.model = body.model;
+    if ("members" in body) send.members = body.members;
     const answer = await callPanel(reach(), "PUT", `/${id}`, send);
     const card = providerOf(
       (answer?.body as { provider?: unknown } | null)?.provider,
@@ -901,6 +923,16 @@ export function createEnginesRoutes(
       {
         fields: Object.keys(send),
         ...(typeof send.enabled === "boolean" ? { enabled: send.enabled } : {}),
+        ...(Array.isArray(send.members)
+          ? {
+              members: send.members
+                .filter(
+                  (id): id is string =>
+                    typeof id === "string" && MEMBER_ID_LIST.test(id),
+                )
+                .slice(0, 64),
+            }
+          : {}),
       },
       viaTunnel,
     );
@@ -966,7 +998,8 @@ export function createEnginesRoutes(
       return context.json(failure.body, failure.status);
     }
     const raw = answer.body as { code?: unknown; models?: unknown };
-    const code = CHECK_CODES.find((known) => known === raw.code) ?? "other";
+    const code =
+      CHECK_CODES.find((known) => known === raw.code) ?? "unreachable";
     const models = (Array.isArray(raw.models) ? raw.models : [])
       .filter(
         (name): name is string =>
@@ -984,17 +1017,10 @@ export function createEnginesRoutes(
       const failure = panelRefusal(answer);
       return context.json(failure.body, failure.status);
     }
-    const raw = answer.body as { code?: unknown; status?: unknown };
-    const code = CHECK_CODES.find((known) => known === raw.code) ?? "other";
-    return context.json(
-      {
-        ok: code === "ok",
-        code,
-        status: Number.isInteger(raw.status) ? (raw.status as number) : null,
-      },
-      200,
-      noStore,
-    );
+    const raw = answer.body as { code?: unknown };
+    const code =
+      CHECK_CODES.find((known) => known === raw.code) ?? "unreachable";
+    return context.json({ ok: code === "ok", code }, 200, noStore);
   });
   // "Check again" (first-start design, section 4): the two guards of a change, an administrator at the computer. It asks
   // agent-freeduet to look at Claude Code now and keeps nothing here: no change is stored and no audit row is written.
