@@ -262,3 +262,11 @@ def test_the_light_assistants_read_the_saved_key(data):
     panel.save_key("groq", KEY)
     assert _resolve_secret(f"file:{data}/keys/groq") == KEY
     assert _resolve_secret(f"file:{data}/keys/none") is None
+
+
+def test_the_real_service_wires_the_secret_reader_into_the_light_assistants():
+    from freeduet import server_calls
+
+    assert server_calls.get_runtime().resolve_secret is not None
+    server_calls.reload_engines()
+    assert server_calls.get_runtime().engines is None
