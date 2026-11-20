@@ -181,9 +181,29 @@ def test_a_cloud_provider_keeps_to_its_own_host_and_cloudflare_only_the_account_
         ("http://127.0.0.1:1234/v1", True),
         ("http://192.168.1.20:8080/v1", True),
         ("http://10.0.0.5:8080", True),
-        ("http://169.254.1.1:8080", True),
+        ("http://169.254.1.1:8080", False),  # link-local is refused whole
         ("http://[fd00::1]:8080/v1", True),
         ("http://studio.local:1234/v1", True),
+        ("http://198.19.255.1:11435/v1", True),  # the host forwarder for Ollama: exactly this one
+        ("http://198.19.255.1:11434/v1", False),
+        ("http://198.19.255.1:8080/v1", False),
+        ("http://198.19.255.2:11435/v1", False),
+        ("http://198.19.0.5:11435/v1", False),
+        ("http://198.18.0.5:8080/v1", False),
+        ("http://172.18.0.2:8080/v1", False),  # a container on a compose network
+        ("http://172.16.0.1:8080", False),
+        ("http://172.31.255.254:8080", False),
+        ("http://172.15.0.1:8080", False),  # outside 172.16/12 and not private: refused as public
+        ("http://169.254.169.254/latest/meta-data", False),  # the metadata service
+        ("http://169.254.169.254:80", False),
+        ("http://[fe80::1]:8080", False),
+        ("http://[::ffff:169.254.169.254]:80", False),
+        ("http://127.0.0.1:4300", False),  # the supervisor
+        ("http://host.docker.internal:4300", False),
+        ("http://localhost:4500", False),  # the supervisor's published port
+        ("http://192.168.0.1:8080/v1", True),
+        ("http://192.168.255.254:11434", True),
+        ("http://10.255.0.9:8080", True),
         ("http://host.docker.internal:4230/v1", False),  # the agent itself
         ("http://localhost:3001/v1", False),  # the server
         ("http://127.0.0.1:5432", False),  # postgres
@@ -207,10 +227,12 @@ def test_a_local_card_reaches_this_machine_or_network_and_never_freeduets_own_se
         assert not (data / "engines.yaml").exists()
 
 
-def test_the_agents_own_configured_port_is_refused_too(data, monkeypatch):
+def test_the_agents_own_and_the_supervisors_configured_ports_are_refused_too(data, monkeypatch):
     monkeypatch.setenv("FREEDUET_PORT", "4999")
-    with pytest.raises(panel.PanelRefused):
-        panel.apply_change("llamacpp", base_url="http://localhost:4999/v1", model="m")
+    monkeypatch.setenv("SUPERVISOR_PORT", "4777")
+    for port in (4999, 4777):
+        with pytest.raises(panel.PanelRefused):
+            panel.apply_change("llamacpp", base_url=f"http://localhost:{port}/v1", model="m")
 
 
 def test_a_key_is_never_sent_to_a_host_the_file_was_changed_to(data):

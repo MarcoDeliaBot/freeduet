@@ -406,15 +406,23 @@ def panel_state(environ: Mapping[str, str] | None = None) -> dict[str, Any]:
 # ── Changing a card ──────────────────────────────────────────────────────────────────────────────
 
 
-#: Ports of FreeDuet's own services, which a local card never points at (the agent itself, the server, the app, the database).
-_REFUSED_LOCAL_PORTS = frozenset({3001, 3010, 3101, 3110, 4230, 4231, 5432})
+#: Ports of FreeDuet's own services, which a local card never points at (the agent itself, the server, the app, the supervisor and its published port, the database).
+_REFUSED_LOCAL_PORTS = frozenset({3001, 3010, 3101, 3110, 4230, 4231, 4300, 4500, 5432})
 _ACCOUNT = re.compile(r"[A-Za-z0-9]{8,64}")
 _LOCAL_PATH = re.compile(r"(/[A-Za-z0-9._~\-]*){0,8}")
 
 
-def _local_host_ok(host: str) -> bool:
-    """Loopback, `host.docker.internal`, a private, link-local or unique-local address literal, or a `*.local` name. A name
-    with no dot (a service name on the compose network: postgres, supervisor, agent-freeduet...) is never one of them."""
+#: Address ranges the Docker networks of this installation use. A bare address in them is a container (or the Docker host's own
+#: bridge), not a computer of the person's, so a local card never points at one. The one exception is the host forwarder.
+_DOCKER_RANGES = tuple(ipaddress.ip_network(net) for net in ("172.16.0.0/12", "198.18.0.0/15"))
+_HOST_FORWARDER = (ipaddress.ip_address("198.19.255.1"), 11435)  # reaches the Ollama on the host (docs/design/local-models.md)
+
+
+def _local_host_ok(host: str, port: int | None = None) -> bool:
+    """Loopback, `host.docker.internal`, a `*.local` name, or an address literal in the person's own LAN (10.0.0.0/8,
+    192.168.0.0/16, unique-local IPv6). Never: link-local (169.254.0.0/16 holds a cloud's metadata service, fe80::/10), the
+    Docker networks' ranges (172.16.0.0/12, 198.18.0.0/15) except the host forwarder 198.19.255.1 on port 11435, a public
+    address, or a name with no dot (a service of the compose network: postgres, supervisor, agent-freeduet...)."""
     host = host.lower().rstrip(".")
     if host in ("localhost", "host.docker.internal"):
         return True
@@ -424,7 +432,15 @@ def _local_host_ok(host: str) -> bool:
         address = ipaddress.ip_address(host)
     except ValueError:
         return False
-    return address.is_loopback or address.is_private or address.is_link_local
+    if isinstance(address, ipaddress.IPv6Address) and address.ipv4_mapped is not None:
+        address = address.ipv4_mapped
+    if address.is_link_local:
+        return False
+    if address == _HOST_FORWARDER[0]:
+        return port == _HOST_FORWARDER[1]
+    if any(address in net for net in _DOCKER_RANGES if address.version == net.version):
+        return False
+    return address.is_loopback or address.is_private
 
 
 def checked_address(provider: Provider, value: Any, environ: Mapping[str, str] | None = None) -> str:
@@ -458,8 +474,8 @@ def checked_address(provider: Provider, value: Any, environ: Mapping[str, str] |
             raise PanelRefused("address_shape")
         return text
     env = os.environ if environ is None else environ
-    own = {int(v) for v in (env.get("FREEDUET_PORT"), env.get("PORT")) if v and v.strip().isdigit()}
-    if parts.scheme not in ("http", "https") or not _local_host_ok(host) or not _LOCAL_PATH.fullmatch(parts.path):
+    own = {int(v) for v in (env.get("FREEDUET_PORT"), env.get("PORT"), env.get("SUPERVISOR_PORT")) if v and v.strip().isdigit()}
+    if parts.scheme not in ("http", "https") or not _local_host_ok(host, port) or not _LOCAL_PATH.fullmatch(parts.path):
         raise PanelRefused("address_host")
     if port is not None and (port in _REFUSED_LOCAL_PORTS or port in own):
         raise PanelRefused("address_host")

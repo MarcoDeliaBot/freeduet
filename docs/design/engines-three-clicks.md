@@ -43,9 +43,12 @@ the settings. (Decision of the review of PR #414: safety first; the maintainer m
   loader refuses writes nothing. OpenRouter's free-model guard (D107) is checked first, with its own word (`model_not_free`).
 - An address is judged at every write and again just before a key is sent (B2 of the review). A cloud provider's host is its
   own (`api.groq.com`, ...), https, no port, no user name, no query; only Cloudflare's account part is the person's to write.
-  A local card may use `localhost`, `host.docker.internal`, a private, link-local or unique-local address literal or a
-  `*.local` name, and never a name with no dot (a service of the compose network), FreeDuet's own ports (4230, 3001, 3010, 5432
-  and the agent's configured port) or a public address.
+  A local card may use `localhost`, `host.docker.internal`, a `*.local` name or an address literal in the person's own
+  LAN (10.0.0.0/8, 192.168.0.0/16, unique-local IPv6). It never uses: a link-local address (169.254.0.0/16, which holds a
+  cloud's metadata service, and fe80::/10); the Docker networks' ranges (172.16.0.0/12 and 198.18.0.0/15), except the host
+  forwarder 198.19.255.1 on port 11435 (the Ollama on the host); a public address; a name with no dot (a service of the
+  compose network); or FreeDuet's own ports (4230, 4231, 3001, 3010, 3101, 3110, 4300 and 4500 for the supervisor, 5432, and the
+  configured `FREEDUET_PORT`, `PORT` and `SUPERVISOR_PORT`).
 - A key is a file `<data>/keys/<provider>` (mode 600, folder 700, made with mode 700 from the start; a link in either place is
   refused and never followed); the engines file holds only `credential_secret_ref:
   file:<that path>`. The loader's refusals still apply: no hidden folder, no Claude sign-in folder, no Claude plan token.
@@ -77,7 +80,7 @@ ones). Both give up after 8 s, under the 10 s a Bun connection may sit silent.
 ## 6. Built so far
 
 Built and tested in CI: the agent module and routes, the server routes, the app cards. Tests: `tests/test_engine_panel.py`
-(59), `server/tests/freeduet-engines-providers.test.ts` (13), `app/tests/freeduet-engines-providers.test.tsx` (12).
+(60), `server/tests/freeduet-engines-providers.test.ts` (13), `app/tests/freeduet-engines-providers.test.tsx` (12).
 
 Not verified: nothing was run against a real provider, a real Ollama or a real Docker volume (does `/data` accept the key
 folder's modes there?); the suggested model names (Groq, Google, Mistral, Cloudflare) are from memory and Test is the check;
