@@ -1,3 +1,4 @@
+import { IconChevronDown, IconChevronUp } from "@tabler/icons-react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { DuetCard } from "@/components/duet/kit";
@@ -20,6 +21,9 @@ import {
   type MemberSummary,
   modeControlLabel,
   modeGroupLabel,
+  moveDownLabel,
+  moveUpLabel,
+  ORDER_NOTE,
   pinText,
   SAVED_TEXT,
   sourceText,
@@ -68,6 +72,33 @@ async function setMode(
   return response.json();
 }
 
+type OrderChange = { memberId: string; chain: string[]; changed: boolean };
+
+/** D112: one member's engines in a new order: the whole chain as the page shows it, moved. */
+async function setOrder(
+  memberId: string,
+  order: string[],
+): Promise<OrderChange> {
+  const response = await client(
+    `${ENGINES_PATH}/members/${encodeURIComponent(memberId)}/order`,
+    {
+      method: "PUT",
+      body: { order },
+      fallback: "The order could not be saved.",
+    },
+  );
+  return response.json();
+}
+
+/** `chain` with the engine at `at` moved one place, or null when there is no such place. */
+function moved(chain: string[], at: number, by: -1 | 1): string[] | null {
+  const to = at + by;
+  if (to < 0 || to >= chain.length) return null;
+  const next = [...chain];
+  [next[at], next[to]] = [next[to] as string, next[at] as string];
+  return next;
+}
+
 async function undoChange(changeId: string): Promise<void> {
   await client(`${ENGINES_PATH}/changes/${encodeURIComponent(changeId)}/undo`, {
     method: "POST",
@@ -87,6 +118,8 @@ export function EngineMembers({
   /** The latest change of each member made on this page, which is the one an Undo can still take back. */
   const [undoable, setUndoable] = useState<Record<string, string>>({});
   const [said, setSaid] = useState<Record<string, string>>({});
+  /** The order a member had before its latest move on this page: what Undo puts back (D112). */
+  const [orderBefore, setOrderBefore] = useState<Record<string, string[]>>({});
 
   const change = useMutation({
     mutationFn: (input: { memberId: string; mode: EngineMode }) =>
@@ -98,7 +131,36 @@ export function EngineMembers({
           ? { ...rest, [outcome.memberId]: outcome.changeId }
           : rest;
       });
+      setOrderBefore((now) => {
+        const { [outcome.memberId]: _order, ...rest } = now;
+        return rest;
+      });
       setSaid((now) => ({ ...now, [outcome.memberId]: SAVED_TEXT }));
+      onChanged();
+    },
+  });
+  const reorder = useMutation({
+    mutationFn: (input: {
+      memberId: string;
+      order: string[];
+      before: string[];
+      undoing: boolean;
+    }) => setOrder(input.memberId, input.order),
+    onSuccess: (outcome, input) => {
+      setUndoable((now) => {
+        const { [input.memberId]: _mode, ...rest } = now;
+        return rest;
+      });
+      setOrderBefore((now) => {
+        const { [input.memberId]: _order, ...rest } = now;
+        return input.undoing || !outcome.changed
+          ? rest
+          : { ...rest, [input.memberId]: input.before };
+      });
+      setSaid((now) => ({
+        ...now,
+        [input.memberId]: input.undoing ? UNDONE_TEXT : SAVED_TEXT,
+      }));
       onChanged();
     },
   });
@@ -120,8 +182,8 @@ export function EngineMembers({
 
   const block = reading.cannotChange ?? null;
   const usable = reading.canChange === true;
-  const busy = change.isPending || undo.isPending;
-  const failure = change.error ?? undo.error;
+  const busy = change.isPending || undo.isPending || reorder.isPending;
+  const failure = change.error ?? undo.error ?? reorder.error;
 
   const engineName = (id: string) =>
     reading.engines.find((engine) => engine.id === id)?.name ?? id;
@@ -131,7 +193,21 @@ export function EngineMembers({
   const choose = (member: MemberSummary, mode: EngineMode) => {
     if (!usable || busy || mode === member.mode) return;
     undo.reset();
+    reorder.reset();
     change.mutate({ memberId: member.id, mode });
+  };
+
+  const move = (member: MemberSummary, at: number, by: -1 | 1) => {
+    const order = moved(member.chain, at, by);
+    if (!usable || busy || !order) return;
+    change.reset();
+    undo.reset();
+    reorder.mutate({
+      memberId: member.id,
+      order,
+      before: member.chain,
+      undoing: false,
+    });
   };
 
   return (
@@ -150,6 +226,9 @@ export function EngineMembers({
       ) : null}
       {!usable && block && block !== "choices_unreadable" ? (
         <p className="mt-3 text-duet-ink-2 text-sm">{blockText(block)}</p>
+      ) : null}
+      {usable ? (
+        <p className="mt-3 text-duet-ink-2 text-sm">{ORDER_NOTE}</p>
       ) : null}
       {failure ? (
         <p className="mt-3 mb-2 text-destructive text-sm" role="alert">
@@ -181,6 +260,7 @@ export function EngineMembers({
                 const name = memberName(member.id);
                 const alone = aloneText(member.chain, engineName);
                 const undoId = undoable[member.id];
+                const backOrder = orderBefore[member.id];
                 return (
                   <tr
                     className="border-duet-hair-2 border-t align-top"
@@ -210,6 +290,36 @@ export function EngineMembers({
                                 {at + 1}
                               </span>
                               <span>{engineName(id)}</span>
+                              <span className="-mr-1 inline-flex">
+                                {at > 0 ? (
+                                  <Button
+                                    aria-label={moveUpLabel(
+                                      engineName(id),
+                                      name,
+                                    )}
+                                    disabled={!usable || busy}
+                                    onClick={() => move(member, at, -1)}
+                                    size="icon-xs"
+                                    variant="ghost"
+                                  >
+                                    <IconChevronUp />
+                                  </Button>
+                                ) : null}
+                                {at < member.chain.length - 1 ? (
+                                  <Button
+                                    aria-label={moveDownLabel(
+                                      engineName(id),
+                                      name,
+                                    )}
+                                    disabled={!usable || busy}
+                                    onClick={() => move(member, at, 1)}
+                                    size="icon-xs"
+                                    variant="ghost"
+                                  >
+                                    <IconChevronDown />
+                                  </Button>
+                                ) : null}
+                              </span>
                             </li>
                           ))}
                         </ol>
@@ -270,12 +380,24 @@ export function EngineMembers({
                       {said[member.id] ? (
                         <p className="mt-2 flex flex-wrap items-center gap-2 text-sm">
                           <span role="status">{said[member.id]}</span>
-                          {undoId ? (
+                          {undoId || backOrder ? (
                             <Button
                               aria-label={undoLabel(name)}
                               disabled={busy}
                               onClick={() => {
                                 change.reset();
+                                reorder.reset();
+                                if (backOrder) {
+                                  undo.reset();
+                                  reorder.mutate({
+                                    memberId: member.id,
+                                    order: backOrder,
+                                    before: member.chain,
+                                    undoing: true,
+                                  });
+                                  return;
+                                }
+                                if (!undoId) return;
                                 undo.mutate({
                                   memberId: member.id,
                                   changeId: undoId,

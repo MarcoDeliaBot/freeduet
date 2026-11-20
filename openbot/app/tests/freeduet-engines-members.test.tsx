@@ -213,6 +213,29 @@ beforeEach(() => {
           mode,
         });
       }
+      const order = /^\/api\/freeduet\/engines\/members\/([^/]+)\/order$/.exec(
+        url,
+      );
+      if (order && method === "PUT") {
+        const memberId = decodeURIComponent(order[1] ?? "");
+        const next = (JSON.parse(String(init?.body)) as { order: string[] })
+          .order;
+        const row = server.members.find((entry) => entry.id === memberId);
+        if (!row)
+          return Response.json({ error: "No such member." }, { status: 404 });
+        // The real server refuses what is not a permutation of the chain.
+        if (
+          next.length !== row.chain.length ||
+          [...next].sort().join() !== [...row.chain].sort().join()
+        )
+          return Response.json(
+            { error: "That order is not accepted." },
+            { status: 400 },
+          );
+        const changed = next.join() !== row.chain.join();
+        row.chain = next;
+        return Response.json({ memberId, chain: next, changed });
+      }
       const undo = /^\/api\/freeduet\/engines\/changes\/([^/]+)\/undo$/.exec(
         url,
       );
@@ -538,25 +561,32 @@ test("with no list to show there is no member section", async () => {
   expect(reads).toEqual(["/api/freeduet/engines"]);
 });
 
-test("the only controls on the page are the two answers for each member and an Undo: no text field, no key field, no switch, no link", async () => {
+test("the only controls on the page are the two answers for each member, the arrows that move an engine, and an Undo: no text field, no key field, no switch, no link", async () => {
   const view = draw();
   await view.findByText("Iris");
   const before = Array.from(view.container.querySelectorAll(INTERACTIVE));
-  expect(before).toHaveLength(4);
-  for (const control of before) {
-    expect(control.tagName).toBe("INPUT");
+  // Four answers, and two arrows for Iris's two engines (Leo has one: nothing to move).
+  expect(before).toHaveLength(6);
+  expect(before.filter((control) => control.tagName === "INPUT")).toHaveLength(
+    4,
+  );
+  for (const control of before.filter((entry) => entry.tagName === "INPUT"))
     expect((control as HTMLInputElement).type).toBe("radio");
-  }
+  expect(
+    before
+      .filter((control) => control.tagName !== "INPUT")
+      .map((control) => control.getAttribute("aria-label")),
+  ).toEqual(["Move Claude Code down for Iris", "Move Codex up for Iris"]);
   const user = userEvent.setup({ document });
   await user.click(radio(view, "Ask me first", "Iris"));
   await view.findByRole("button", { name: "Undo the change for Iris" });
   const after = Array.from(view.container.querySelectorAll(INTERACTIVE));
-  expect(after).toHaveLength(5);
+  expect(after).toHaveLength(7);
   expect(
     after
       .filter((control) => control.tagName !== "INPUT")
       .map((control) => control.tagName),
-  ).toEqual(["BUTTON"]);
+  ).toEqual(["BUTTON", "BUTTON", "BUTTON"]);
   expect(view.container.querySelector('input[type="password"]')).toBeNull();
   expect(view.container.querySelector('input[type="text"]')).toBeNull();
   expect(view.container.querySelector("textarea")).toBeNull();
@@ -640,4 +670,122 @@ test("the page says nothing of keys, prices or where to get a key", async () => 
   await view.findByText("Iris");
   const text = view.container.textContent ?? "";
   expect(text).not.toMatch(/api[ _-]?key|per token|\$\d|https?:|no api fees/i);
+});
+
+// ── D112: the order by hand ──────────────────────────────────────────────────────────────────────
+
+const THREE = ["claude", "codex", "gateway"];
+const order = (view: View, memberIndex: number) => {
+  const lists = view.getAllByRole("list", { name: /^Tries / });
+  return within(lists[memberIndex] as HTMLElement)
+    .getAllByRole("listitem")
+    .map((item) => item.textContent?.replace(/^\d/, ""));
+};
+
+test("each engine has an arrow up and an arrow down, except that the first has no Up and the last no Down", async () => {
+  server.members = [member({ id: "iris", chain: THREE })];
+  const view = draw();
+  await view.findByText("Iris");
+  const labels = view
+    .getAllByRole("button")
+    .map((button) => button.getAttribute("aria-label"));
+  expect(labels).toEqual([
+    "Move Claude Code down for Iris",
+    "Move Codex up for Iris",
+    "Move Codex down for Iris",
+    "Move A gateway up for Iris",
+  ]);
+});
+
+test("an arrow sends the member and the whole new order, nothing else, says when it applies and offers an Undo", async () => {
+  server.members = [member({ id: "iris", chain: THREE })];
+  const view = draw();
+  await view.findByText("Iris");
+  const user = userEvent.setup({ document });
+  await user.click(
+    view.getByRole("button", { name: "Move A gateway up for Iris" }),
+  );
+  await waitFor(() =>
+    expect(sent).toEqual([
+      {
+        method: "PUT",
+        path: "/api/freeduet/engines/members/iris/order",
+        body: { order: ["claude", "gateway", "codex"] },
+      },
+    ]),
+  );
+  await view.findByText("Saved. It applies from the member's next message.");
+  await waitFor(() =>
+    expect(order(view, 0)).toEqual(["Claude Code", "A gateway", "Codex"]),
+  );
+  expect(
+    view.getByRole("button", { name: "Undo the change for Iris" }),
+  ).toBeTruthy();
+  // The list was read again after the change.
+  expect(reads.filter((url) => url === "/api/freeduet/engines").length).toBe(2);
+});
+
+test("Undo puts the previous order back with one more request and goes away", async () => {
+  server.members = [member({ id: "iris", chain: THREE })];
+  const view = draw();
+  await view.findByText("Iris");
+  const user = userEvent.setup({ document });
+  await user.click(
+    view.getByRole("button", { name: "Move Claude Code down for Iris" }),
+  );
+  await user.click(
+    await view.findByRole("button", { name: "Undo the change for Iris" }),
+  );
+  await waitFor(() => expect(sent).toHaveLength(2));
+  expect(sent[1]).toEqual({
+    method: "PUT",
+    path: "/api/freeduet/engines/members/iris/order",
+    body: { order: THREE },
+  });
+  await view.findByText(
+    "Undone. The previous setting applies from the member's next message.",
+  );
+  await waitFor(() =>
+    expect(order(view, 0)).toEqual(["Claude Code", "Codex", "A gateway"]),
+  );
+  expect(view.queryByRole("button", { name: /Undo/ })).toBeNull();
+});
+
+test("a move the server refuses is said in its words and the order stays", async () => {
+  server.members = [member({ id: "iris", chain: THREE })];
+  server.refuse = {
+    status: 400,
+    error:
+      "Your own logins always go first, then free engines, then paid ones. That order cannot be kept. Nothing was changed.",
+  };
+  const view = draw();
+  await view.findByText("Iris");
+  const user = userEvent.setup({ document });
+  await user.click(
+    view.getByRole("button", { name: "Move Codex up for Iris" }),
+  );
+  await view.findByRole("alert");
+  expect(view.getByRole("alert").textContent).toContain(
+    "That order cannot be kept",
+  );
+  expect(order(view, 0)).toEqual(["Claude Code", "Codex", "A gateway"]);
+  expect(view.queryByRole("button", { name: /Undo/ })).toBeNull();
+});
+
+test("away from the computer the arrows are not offered and nothing is sent", async () => {
+  server.canChange = false;
+  server.cannotChange = "not_at_the_computer";
+  server.members = [member({ id: "iris", chain: THREE })];
+  const view = draw();
+  await view.findByText("Iris");
+  for (const button of view.getAllByRole("button"))
+    expect((button as HTMLButtonElement).disabled).toBe(true);
+  expect(sent).toEqual([]);
+});
+
+test("a member with one engine has nothing to move", async () => {
+  server.members = [member({ id: "leo", chain: ["claude"] })];
+  const view = draw();
+  await view.findByText("Leo");
+  expect(view.queryAllByRole("button")).toHaveLength(0);
 });
