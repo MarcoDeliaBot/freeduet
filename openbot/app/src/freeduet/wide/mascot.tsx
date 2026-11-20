@@ -115,3 +115,42 @@ export function MemberFace({
     </svg>
   );
 }
+
+/**
+ * A member's face drawn inline, for the shared avatars (`BotFace` in `components/agents/abstract-avatar.tsx`).
+ * `MemberFace` points at a `<symbol>` that only `MascotSprite` defines, and that sprite is mounted by the
+ * wide frame alone, so on a phone the `<use>` drew nothing. This carries the art itself: each drawing is
+ * self-contained (its clip path is inside it), so nothing else on the page is needed. The box and the
+ * canvas are the ones `MemberFace` uses. Renders nothing for an id nobody drew.
+ */
+export function MemberPicture({
+  agentId,
+  size = 40,
+}: {
+  agentId: string;
+  size?: number;
+}) {
+  const key = mascotKeyOf(agentId);
+  if (key === null) return null;
+  const scale = size / BUBBLE_BOX.size;
+  const canvas = ART * scale;
+  const left = (BUBBLE_BOX.left + ART_ORIGIN) * scale;
+  const top = (BUBBLE_BOX.top + ART_ORIGIN) * scale;
+  return (
+    <svg
+      aria-hidden="true"
+      className="pointer-events-none block max-w-none shrink-0"
+      data-face={key}
+      focusable="false"
+      height={canvas}
+      style={{
+        margin: `${-top}px ${-(canvas - size - left)}px ${-(canvas - size - top)}px ${-left}px`,
+      }}
+      viewBox={ART_BOX}
+      width={canvas}
+      // The drawing is the file this repository ships (`mascot-drawn.json`), never anything a person or a model wrote.
+      // biome-ignore lint/security/noDangerouslySetInnerHtml: static, repository-owned art
+      dangerouslySetInnerHTML={{ __html: TEAM[key] ?? "" }}
+    />
+  );
+}
