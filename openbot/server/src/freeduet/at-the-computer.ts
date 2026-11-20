@@ -19,6 +19,8 @@
  *     Without one (single-user mode, where every route already asks for the cookie, and a sign-in deployment that has
  *     no secret) the answer is what it always was.
  *
+ * One exception, for the engine choices only (D106): `mayChangeEngines`, below. Everything else asks this function.
+ *
  * WHAT THIS IS NOT. It is a second lock and not the first. On Docker Desktop a Bot's computer reaches the server as
  * loopback too (docs/M1_PLAN.md D39), so what keeps that out is the pairing cookie of single-user mode (D28) or the
  * session of a deployment with sign-in, which every `/api` route already needs.
