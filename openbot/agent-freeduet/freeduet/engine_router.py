@@ -72,6 +72,7 @@ from .engines import (
     chain_ids,
     exclusion_code,
     exclusion_reason,
+    is_free_cloud,
     ledger_engine_ids,
     ordered_chain,
     paid_gateway_gap,
@@ -357,12 +358,17 @@ class Router:
                     yield agui.run_error(notices.loop_stop(lang, switches), ENGINE_LIMITED)
                     return
                 if choice.mode == "ask-first" and not authorised:
-                    for event in _say(notices.asked(lang, *stopped, self.adapters[key].label, self.state.now())):
+                    asked = notices.asked(lang, *stopped, self.adapters[key].label, self.state.now())
+                    if is_free_cloud(self.config.engines[key]):
+                        asked = f"{asked} {notices.free_cloud(lang)}"
+                    for event in _say(asked):
                         yield event
                     yield agui.run_finished(run)
                     return
                 switches += 1
                 pending.append(notices.switched(lang, *stopped, self.adapters[key].label, progress, self.state.now()))
+                if is_free_cloud(self.config.engines[key]):
+                    pending.append(notices.free_cloud(lang))  # D101: where the work goes is the person's choice, so say it
             ticket = self.state.begin(key)
             if ticket is None:  # the breaker said no between the look and the ask (a half-open probe taken)
                 tried.add(key)

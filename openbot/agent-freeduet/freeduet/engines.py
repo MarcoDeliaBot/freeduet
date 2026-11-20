@@ -29,6 +29,7 @@ from types import MappingProxyType
 from typing import Any, Iterable, Mapping
 from urllib.parse import urlsplit
 
+import httpx
 import yaml
 
 COMPATIBLE_KIND = "anthropic-compatible"
@@ -281,6 +282,10 @@ def _base_url_problem(base_url: str) -> str | None:
         return "`base_url` is not a valid address"
     if parts.scheme not in ("http", "https") or not parts.hostname:
         return "`base_url` must be an http:// or https:// address with a host name"
+    if not parts.netloc.isascii():
+        # httpx turns some non-ASCII characters (a full-width dot) into ordinary ones, so the host it dials is not the host
+        # that was read here; no gateway needs such a name (D107).
+        return "`base_url` must use an ASCII host name"
     if parts.username is not None or parts.password is not None or "@" in parts.netloc:
         return "`base_url` must not carry a user name or a password; the key goes in `credential_secret_ref`"
     if parts.query or parts.fragment or "?" in base_url or "#" in base_url:
@@ -339,6 +344,42 @@ def _compatible_problems(
             "the key itself never goes in this file"
         )
     return found
+
+
+#: The host of OpenRouter's Anthropic-format address, and the only two shapes of model a `billing: free` entry may ask it for
+#: (D107; OpenRouter's pages, read 2026-11-20): a model id that ends in `:free`, or the `openrouter/free` router. A fallback
+#: list on a request that names a `:free` model can bill a paid model (openrouter.ai/docs/guides/routing/model-variants/free),
+#: so the entry names ONE model, and nothing here or in the CLI's command line ever sends a list of them.
+OPENROUTER_HOST = "openrouter.ai"
+OPENROUTER_FREE_ROUTER = "openrouter/free"
+_FREE_MODEL_ID = re.compile(r"[A-Za-z0-9][A-Za-z0-9._\-]*(/[A-Za-z0-9][A-Za-z0-9._\-]*)+:free")
+
+
+def is_openrouter(base_url: str | None) -> bool:
+    """Whether an address is OpenRouter's (the host `openrouter.ai` or a sub-domain of it). The host is computed the way httpx
+    computes it, because httpx is what sends the request: it normalises a full-width or ideographic dot (U+FF0E, U+3002) to
+    "." where `urlsplit` does not. An address httpx cannot read counts as OpenRouter's (the caller then applies the guard).
+    The guard reads the host WRITTEN in the file: a private gateway or a CNAME that fronts OpenRouter is outside it."""
+    try:
+        host = (httpx.URL(base_url or "").host or "").lower().rstrip(".")
+    except Exception:  # noqa: BLE001 - not an address httpx accepts: refuse, do not guess
+        return True
+    return host == OPENROUTER_HOST or host.endswith("." + OPENROUTER_HOST)
+
+
+def openrouter_free_problem(where: str, base_url: str | None, billing: Any, model: str | None) -> str | None:
+    """Why an `anthropic-compatible` entry at OpenRouter that says `billing: free` is refused, or None. Free is the person's own
+    statement and FreeDuet cannot see what OpenRouter charges, so the one thing it can check is the model: only a `:free` id or
+    the `openrouter/free` router costs nothing, and a list of models (a comma) is how a request falls back to a paid one."""
+    if billing != "free" or not is_openrouter(base_url):
+        return None
+    if model is not None and (model == OPENROUTER_FREE_ROUTER or _FREE_MODEL_ID.fullmatch(model)):
+        return None
+    return (
+        f"{where}: an entry at OpenRouter that says `billing: free` must name exactly one free model: an id that ends in "
+        f"`:free` (for example `<provider>/<model>:free`) or `{OPENROUTER_FREE_ROUTER}`. A paid model, a list of models or a "
+        "placeholder can charge you, so this entry is refused; write `billing: metered` for a paid model"
+    )
 
 
 def _parse_engine_table(raw: Any, problems: list[str]) -> dict[str, Engine]:
@@ -419,6 +460,9 @@ def _parse_engine(engine_id: str, entry: Any, problems: list[str]) -> Engine | N
             problems.append(f"{where}: `base_url` must start with http:// or https://")
     if kind == COMPATIBLE_KIND:
         problems.extend(_compatible_problems(where, base_url, secret_ref, command, no_key is True))
+        refused = openrouter_free_problem(where, base_url, billing, model)
+        if refused is not None:
+            problems.append(refused)
     if kind in API_KINDS and model is None:
         problems.append(f"{where}: a `{kind}` engine needs `model`")
     if enabled is True and model is not None and _PLACEHOLDER.match(model):
@@ -747,6 +791,18 @@ def exclusion_code(engine: Engine, config: EnginesConfig) -> str | None:
         if config.metered.daily_cap <= 0 or config.metered.monthly_cap <= 0:
             return "cap_zero"
     return None
+
+
+def is_free_cloud(engine: Engine) -> bool:
+    """A free engine that is not on this machine: an API kind at an address that is not local. What it is sent leaves the
+    machine, and a free cloud tier may keep it or use it (D101). A login, a local model and a paid engine are not."""
+    if engine.billing != "free" or engine.kind not in API_KINDS:
+        return False
+    try:
+        host = urlsplit(engine.base_url or "").hostname
+    except ValueError:
+        return False
+    return bool(host) and not is_local_host(host)
 
 
 def is_allowed(engine: Engine, config: EnginesConfig) -> bool:

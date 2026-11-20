@@ -96,6 +96,7 @@ from .engines import (
     exclusion_reason,
     in_hidden_folder,
     is_local_host,
+    is_openrouter,
     paid_gateway_refused,
     parse_secret_ref,
 )
@@ -155,6 +156,8 @@ MODEL_VARIABLES = (
     "ANTHROPIC_DEFAULT_OPUS_MODEL",
     "ANTHROPIC_DEFAULT_SONNET_MODEL",
     "ANTHROPIC_DEFAULT_HAIKU_MODEL",
+    "ANTHROPIC_SMALL_FAST_MODEL",  # D107: the older name of the background model
+    "CLAUDE_CODE_SUBAGENT_MODEL",  # D107: a sub-agent asks for the entry's model too
 )
 HOME_FOLDER = "gateway-home"
 CONFIG_FOLDER = "gateway-config"
@@ -533,8 +536,10 @@ class CompatibleEngine(EngineAdapter):
             # D105: the CLI sends its environment section as a message with role "system"; an endpoint such as Ollama
             # refuses that. A loopback hop of this turn moves it into the top-level `system` field and changes nothing else.
             host = urlsplit(self._engine.base_url or "").hostname
+            # D107: an OpenRouter entry that says free is pinned to its one model at the hop, with no fallback keys in the body.
+            pinned = self._engine.model if self._engine.billing == "free" and is_openrouter(self._engine.base_url) else None
             proxy = await SystemRoleProxy(
-                self._engine.base_url or "", use_environment_proxy=not (host and is_local_host(host))
+                self._engine.base_url or "", use_environment_proxy=not (host and is_local_host(host)), pinned_model=pinned
             ).__aenter__()
             env["ANTHROPIC_BASE_URL"] = proxy.url
             _bypass_proxy(env, "127.0.0.1")
