@@ -132,7 +132,8 @@ def test_the_cli_is_given_the_endpoint_the_key_and_the_model_and_nothing_of_the_
     assert said(events) == "Hello from the gateway." and types(events)[-1] == "RUN_FINISHED"
     (turn,) = gw.turns()
     env = turn["env"]
-    assert env["ANTHROPIC_BASE_URL"] == BASE_URL  # the entry's address, not the one this service was given
+    # D105: the CLI is pointed at this turn's loopback hop, which forwards to the entry's address (test_system_role_proxy.py)
+    assert env["ANTHROPIC_BASE_URL"].startswith("http://127.0.0.1:") and env["ANTHROPIC_BASE_URL"] != BASE_URL
     assert env["ANTHROPIC_AUTH_TOKEN"] == KEY  # the key goes as the bearer token
     assert env["ANTHROPIC_API_KEY"] == ""  # blank on purpose: the other credential variable would take precedence
     for name in ("ANTHROPIC_MODEL", "ANTHROPIC_DEFAULT_OPUS_MODEL", "ANTHROPIC_DEFAULT_SONNET_MODEL", "ANTHROPIC_DEFAULT_HAIKU_MODEL"):
@@ -184,8 +185,9 @@ def test_a_gateway_on_this_machine_is_not_reached_through_the_services_proxy(fak
     play(gw.engine)
     env = gw.turns()[0]["env"]
     assert env["HTTPS_PROXY"] == "http://proxy.invalid:3128"
-    assert env["NO_PROXY"].split(",") == ["internal.example", "host.docker.internal"]
-    assert env["no_proxy"].split(",") == ["host.docker.internal"]  # the lower-case name too: tools read either
+    # host.docker.internal for the gateway itself, 127.0.0.1 for this turn's loopback hop (D105)
+    assert env["NO_PROXY"].split(",") == ["internal.example", "host.docker.internal", "127.0.0.1"]
+    assert env["no_proxy"].split(",") == ["host.docker.internal", "127.0.0.1"]  # the lower-case name too: tools read either
 
 
 def test_a_remote_gateway_keeps_the_proxy_the_service_was_given(fake_cli, tmp_path, monkeypatch):
@@ -196,7 +198,8 @@ def test_a_remote_gateway_keeps_the_proxy_the_service_was_given(fake_cli, tmp_pa
     gw.plan([{"text": "Done."}])
     play(gw.engine)
     env = gw.turns()[0]["env"]
-    assert env["NO_PROXY"] == "internal.example" and "no_proxy" not in env
+    # only the loopback hop (D105) is bypassed; the gateway itself is still reached through the proxy
+    assert env["NO_PROXY"].split(",") == ["internal.example", "127.0.0.1"] and env["no_proxy"] == "127.0.0.1"
 
 
 def test_without_any_proxy_nothing_is_added(fake_cli, tmp_path, monkeypatch):

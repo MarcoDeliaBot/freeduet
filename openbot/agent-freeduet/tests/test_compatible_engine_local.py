@@ -35,7 +35,7 @@ LOCAL = "http://127.0.0.1:11434"
 KEY_FREE = {"no_key": True, "base_url": LOCAL, "credential_secret_ref": None}
 ASK = [standing(), {"id": "u1", "role": "user", "content": "Write the plan as a page."}]
 LIMIT = {"replay": "usage_limit.jsonl"}
-UNTIL = "00:00 UTC"
+UNTIL = "Jan 1, 2100 at 00:00 UTC"  # D105: the reset is on another UTC day than the fake clock, so the date is said
 #: A sign-in as Claude Code keeps it (invented). It is planted in the service's own folders; no child may ever see it.
 SIGN_IN_CANARY = "canary-sign-in-never-sent-4471"
 SIGN_IN = json.dumps({"claudeAiOauth": {"accessToken": SIGN_IN_CANARY}})
@@ -183,7 +183,7 @@ def test_the_cli_of_a_key_free_endpoint_gets_the_placeholder_and_no_sign_in_of_a
     (turn,) = gw.turns()
     env = turn["env"]
     assert env["ANTHROPIC_AUTH_TOKEN"] == ce.NO_KEY_TOKEN and env["ANTHROPIC_API_KEY"] == ""
-    assert env["ANTHROPIC_BASE_URL"] == LOCAL
+    assert env["ANTHROPIC_BASE_URL"].startswith("http://127.0.0.1:") and env["ANTHROPIC_BASE_URL"] != LOCAL  # D105: the loopback hop
     assert "CLAUDE_CODE_OAUTH_TOKEN" not in env
     assert set(env) - SHELL_EXTRAS <= ALLOWED_NAMES, sorted(set(env) - SHELL_EXTRAS - ALLOWED_NAMES)
     for name, value in service.items():

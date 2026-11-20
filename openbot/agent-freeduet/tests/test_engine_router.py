@@ -22,7 +22,7 @@ from helpers import post_run, run_body, standing, tool, types
 ASK = [standing(), {"id": "u1", "role": "user", "content": "Write the plan as a page."}]
 LIMIT = {"replay": "usage_limit.jsonl"}
 SIGNED_OUT_PLAN = {"replay": "not_signed_in.jsonl"}
-UNTIL = "00:00 UTC"
+UNTIL = "Jan 1, 2100 at 00:00 UTC"  # D105: the reset is on another UTC day than the fake clock, so the date is said
 DEPLOYMENT = ["message_bot"]
 TOOLS = [tool("message_bot", {"bot": {"type": "string"}, "message": {"type": "string"}}), tool("write_page")]
 
@@ -180,7 +180,7 @@ def test_ask_first_wait_stops_with_a_plain_message(client, fake_cli, tmp_path):
     events = posted(client, team, history, run_id="run-2")
     assert types(events)[-1] == "RUN_FINISHED"
     assert said(events) == (
-        f"Understood, I will not switch. Waiting for Claude Code (back at {UNTIL}): send your message again when you like."
+        f"Understood, I will not switch. Waiting for Claude Code (back on {UNTIL}): send your message again when you like."
     )
     assert team["codex"].runs() == 0
 
@@ -256,7 +256,7 @@ def test_when_every_engine_is_limited_the_person_is_told_when_the_first_is_back(
     team["codex"].plan([LIMIT])
     events = posted(client, team)
     assert events[-1]["code"] == "FREEDUET_ENGINE_LIMITED"
-    assert events[-1]["message"] == f"Every engine is unavailable right now. The earliest is back at {UNTIL}. Your message is kept: send it again later."
+    assert events[-1]["message"] == f"Every engine is unavailable right now. The earliest is back on {UNTIL}. Your message is kept: send it again later."
 
 
 # ── notices in the person's language ───────────────────────────────────────────────────────────────
@@ -272,7 +272,7 @@ def test_the_notice_is_in_italian_for_a_person_who_reads_italian(client, fake_cl
     events = post_run(client, body)[0]
     assert said(events) == (
         "Prima parte."
-        f"Claude Code ha raggiunto il limite fino alle {UNTIL}, quindi Codex continua da dove si era fermato, senza ripetere il testo."
+        f"Claude Code ha raggiunto il limite fino al 1 gennaio 2100 alle 00:00 UTC, quindi Codex continua da dove si era fermato, senza ripetere il testo."
         "Seconda parte."
     )
 

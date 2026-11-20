@@ -30,7 +30,7 @@ from helpers import MANAGED_TOKEN, post_run, run_body, standing, tool, types
 
 ASK = [standing(), {"id": "u1", "role": "user", "content": "Write the plan as a page."}]
 LIMIT = {"replay": "usage_limit.jsonl"}
-UNTIL = "00:00 UTC"
+UNTIL = "Jan 1, 2100 at 00:00 UTC"  # D105: the reset is on another UTC day than the fake clock, so the date is said
 TOOLS = [tool("write_page")]
 PAID = {"billing": "metered"}
 OPT_IN = {"enabled": True, "daily_cap": 5, "monthly_cap": 50}
@@ -241,7 +241,7 @@ def test_a_paid_gateway_left_out_is_named_when_nothing_else_can_answer(client, f
     events = posted(client, team)
     assert types(events)[-1] == "RUN_ERROR" and events[-1]["code"] == "FREEDUET_ENGINE_LIMITED"
     assert events[-1]["message"] == (
-        f"Every engine is unavailable right now. The earliest is back at {UNTIL}. {PAID_SENTENCE} "
+        f"Every engine is unavailable right now. The earliest is back on {UNTIL}. {PAID_SENTENCE} "
         "Your message is kept: send it again later."
     )
     assert "metered:" not in events[-1]["message"]  # nothing in that block would make it run
@@ -394,7 +394,7 @@ def test_when_every_engine_is_out_a_refused_key_is_said_because_the_person_can_m
     events = posted(client, team)
     assert events[-1]["code"] == "FREEDUET_ENGINE_LIMITED"
     assert events[-1]["message"] == (
-        f"Every engine is unavailable right now. The earliest is back at {UNTIL}. "
+        f"Every engine is unavailable right now. The earliest is back on {UNTIL}. "
         "gw has no key its gateway accepts. Your message is kept: send it again later."
     )
 
