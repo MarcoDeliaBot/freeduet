@@ -434,6 +434,8 @@ def checked_address(provider: Provider, value: Any, environ: Mapping[str, str] |
     if not isinstance(value, str):
         raise PanelRefused("address_shape")
     text = value.strip().rstrip("/")
+    if provider.address_to_fill and "<" in text:
+        raise PanelRefused("address_first")
     if not text or len(text) > 300 or re.search(r"[\s<>]", text):
         raise PanelRefused("address_shape")
     if provider.address_fixed:

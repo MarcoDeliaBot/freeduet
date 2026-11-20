@@ -42,7 +42,7 @@ afterEach(() => {
 const KEY = "gsk_CANARYkey0123456789abcdef";
 const sent: { method: string; path: string; body: unknown }[] = [];
 let cards: ProviderView[];
-let testAnswer: { ok: boolean; code: string; status: number | null };
+let testAnswer: { ok: boolean; code: string };
 
 function card(id: ProviderId, over: Partial<ProviderView> = {}): ProviderView {
   const local = id === "ollama" || id === "llamacpp" || id === "lmstudio";
@@ -71,7 +71,11 @@ function card(id: ProviderId, over: Partial<ProviderView> = {}): ProviderView {
         : id === "anthropic-api"
           ? "paid"
           : null,
-    addressFixed: id === "openrouter",
+    addressFixed: id === "openrouter" || id === "groq",
+    useFor:
+      id === "openrouter"
+        ? { available: ["freeduet", "inbox", "concierge", "chef"], chosen: [] }
+        : null,
     ...over,
   };
 }
@@ -90,12 +94,13 @@ function reading(over: Partial<EnginesReading> = {}): EnginesReading {
 beforeEach(() => {
   sent.length = 0;
   cards = PROVIDER_ORDER.map((id) => card(id));
-  testAnswer = { ok: true, code: "ok", status: 200 };
+  testAnswer = { ok: true, code: "ok" };
   global.fetch = Object.assign(
     async (path: Parameters<typeof fetch>[0], init?: RequestInit) => {
       const url = new URL(String(path), "http://localhost");
       const method = init?.method ?? "GET";
       const body = init?.body ? JSON.parse(String(init.body)) : undefined;
+      if (url.pathname === "/api/agents") return Response.json([]); // the names of the members
       sent.push({ method, path: url.pathname, body });
       const id = url.pathname.split("/")[5] as ProviderId;
       const target = cards.find((entry) => entry.id === id);
@@ -112,6 +117,8 @@ beforeEach(() => {
         return json({ ok: true, code: "ok", models: ["m-one", "m-two"] });
       if (url.pathname.endsWith("/test")) return json(testAnswer);
       if (target && method === "PUT") {
+        if (Array.isArray(body.members) && target.useFor)
+          target.useFor = { ...target.useFor, chosen: body.members };
         Object.assign(target, {
           ...(typeof body.enabled === "boolean"
             ? { enabled: body.enabled }
@@ -204,6 +211,47 @@ test("a cloud card warns that data leaves the computer, a local one does not, an
   expect(usersText(card("lmstudio"))).toMatch(/For members: not yet/);
 });
 
+test("a free cloud card says that free is FreeDuet's label and that some providers bill", () => {
+  const view = draw();
+  expect(
+    cardOf(view, "Google AI Studio").getByText(
+      /FreeDuet's label.*Google, for one.*bill/,
+    ),
+  ).toBeTruthy();
+  expect(cardOf(view, "Ollama").queryByText(/FreeDuet's label/)).toBeNull();
+});
+
+test("a free cloud engine a member can run on is used by nobody until members are ticked, and mail and bookings say so", async () => {
+  cards = cards.map((entry) =>
+    entry.id === "openrouter"
+      ? { ...entry, enabled: true, keySaved: true, model: "openrouter/free" }
+      : entry,
+  );
+  const user = userEvent.setup({ document });
+  const view = draw();
+  const one = cardOf(view, "OpenRouter");
+  expect(one.getByText(/No member uses it yet/)).toBeTruthy();
+  for (const box of one.getAllByRole("checkbox"))
+    expect((box as HTMLInputElement).checked).toBe(false);
+  await user.click(one.getByLabelText("inbox"));
+  await waitFor(() => one.getByText("Sends your mail to this service."));
+  expect(sent.at(-1)).toMatchObject({
+    method: "PUT",
+    body: { members: ["inbox"] },
+  });
+  await user.click(one.getByLabelText("concierge"));
+  await waitFor(() => one.getByText("Sends your bookings to this service."));
+  expect(sent.at(-1)?.body).toEqual({ members: ["inbox", "concierge"] });
+  expect(one.queryByText("Sends your mail to this service.")).toBeTruthy();
+  await user.click(one.getByLabelText("inbox"));
+  await waitFor(() =>
+    expect(one.queryByText("Sends your mail to this service.")).toBeNull(),
+  );
+  // No other card has the choice: a local engine joins everyone, an OpenAI-format-only engine joins nobody.
+  expect(cardOf(view, "Ollama").queryByText("Use for")).toBeNull();
+  expect(cardOf(view, "Groq").queryByText("Use for")).toBeNull();
+});
+
 test("a paid card and a trial card cannot be switched on and say why, with no field to fill", () => {
   const view = draw();
   for (const [name, why] of [
@@ -267,15 +315,23 @@ test("Test says why it failed in words and never shows a key", async () => {
       ? { ...entry, enabled: true, keySaved: true, model: "m" }
       : entry,
   );
-  testAnswer = { ok: false, code: "key_wrong", status: 401 };
+  testAnswer = { ok: false, code: "key_rejected" };
   const user = userEvent.setup({ document });
   const view = draw();
   await user.click(cardOf(view, "Groq").getByRole("button", { name: "Test" }));
-  await waitFor(() => cardOf(view, "Groq").getByText(/401/));
+  await waitFor(() => cardOf(view, "Groq").getByText(/key was not accepted/));
   expect(view.container.textContent).not.toContain(KEY);
-  expect(checkText("limit")).toMatch(/429/);
-  expect(checkText("model_missing")).toMatch(/404/);
-  expect(checkText("anything else")).toBe("It did not work.");
+  for (const code of [
+    "ok",
+    "key_rejected",
+    "model_missing",
+    "rate_limited",
+    "unreachable",
+    "401",
+  ]) {
+    expect(checkText(code)).not.toMatch(/\d{3}/); // no upstream number is ever said
+  }
+  expect(checkText("anything else")).toBe(checkText("unreachable"));
 });
 
 test("a local card with no key is switched on by choosing a model and saving", async () => {

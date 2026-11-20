@@ -1,14 +1,16 @@
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { useId, useState } from "react";
 import { DuetCard, OutcomePill } from "@/components/duet/kit";
 import { PageSection } from "@/components/layout/page-shell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
+import { agentListQueryOptions } from "@/lib/agents/queries";
 import { client } from "@/lib/client";
 import {
   CLOUD_WARNING,
   checkText,
+  FREE_NOTE,
   KEY_PLACEHOLDER,
   KEY_REMOVED,
   KEY_SAVED,
@@ -24,6 +26,9 @@ import {
   type ProviderView,
   SETTINGS_SAVED,
   TAG_TEXT,
+  USE_FOR_NONE,
+  USE_FOR_TITLE,
+  useForWarning,
   usersText,
 } from "./engines-providers-text";
 import { blockText, type EnginesReading } from "./engines-text";
@@ -54,10 +59,12 @@ async function put(id: string, path: string, body: unknown, fallback: string) {
 function ProviderCard({
   card,
   canChange,
+  memberName,
   onChanged,
 }: {
   card: ProviderView;
   canChange: boolean;
+  memberName: (id: string) => string;
   onChanged: () => void;
 }) {
   const text = PROVIDER_TEXT[card.id];
@@ -140,6 +147,12 @@ function ProviderCard({
       done(SETTINGS_SAVED);
     },
   });
+  const choose = useMutation({
+    mutationFn: async (members: string[]) => {
+      await put(card.id, "", { members }, "That could not be changed.");
+      done(SETTINGS_SAVED);
+    },
+  });
   const load = useMutation({
     mutationFn: async () => {
       const response = await client(
@@ -218,9 +231,52 @@ function ProviderCard({
 
       <p className="type-label text-duet-ink-2">{usersText(card)}</p>
       {card.cloud && card.blocked === null ? (
-        <p className="type-label text-duet-amber" role="note">
-          {CLOUD_WARNING}
-        </p>
+        <>
+          <p className="type-label text-duet-amber" role="note">
+            {CLOUD_WARNING}
+          </p>
+          {card.tag === "free" ? (
+            <p className="type-label text-duet-ink-2">{FREE_NOTE}</p>
+          ) : null}
+        </>
+      ) : null}
+      {card.useFor && card.enabled ? (
+        <fieldset className="grid gap-1.5" disabled={locked || busy}>
+          <legend className="type-label text-duet-ink-2">
+            {USE_FOR_TITLE}
+          </legend>
+          {card.useFor.available.map((id) => {
+            const ticked = card.useFor?.chosen.includes(id) ?? false;
+            const warning = ticked ? useForWarning(id) : null;
+            return (
+              <div key={id}>
+                <label className="type-label flex items-center gap-2">
+                  <input
+                    checked={ticked}
+                    onChange={() => {
+                      const now = card.useFor?.chosen ?? [];
+                      choose.mutate(
+                        ticked
+                          ? now.filter((item) => item !== id)
+                          : [...now, id],
+                      );
+                    }}
+                    type="checkbox"
+                  />
+                  {memberName(id)}
+                </label>
+                {warning ? (
+                  <p className="type-label ml-6 text-duet-amber" role="note">
+                    {warning}
+                  </p>
+                ) : null}
+              </div>
+            );
+          })}
+          {card.useFor.chosen.length === 0 ? (
+            <p className="type-label text-duet-ink-2">{USE_FOR_NONE}</p>
+          ) : null}
+        </fieldset>
       ) : null}
 
       {card.blocked === null ? (
@@ -373,6 +429,12 @@ export function EngineProviders({
   onChanged: () => void;
 }) {
   const cards = reading.providers ?? [];
+  const agents = useQuery({
+    ...agentListQueryOptions(),
+    enabled: cards.length > 0 && !reading.reason,
+  });
+  const memberName = (id: string) =>
+    agents.data?.find((agent) => agent.id === id)?.name ?? id;
   if (reading.reason || cards.length === 0) return null;
 
   const locked = reading.providersLocked === "file_is_yours";
@@ -400,6 +462,7 @@ export function EngineProviders({
             <ProviderCard
               canChange={usable}
               card={card}
+              memberName={memberName}
               onChanged={onChanged}
             />
           </li>

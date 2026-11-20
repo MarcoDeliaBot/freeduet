@@ -25,16 +25,29 @@ Members run on `claude-code` and on `anthropic-compatible` engines only (`docs/E
 | Cerebras | no | no: shown, marked "Trial, needs a card", not offered as free (terms read 20 November 2026) |
 | Anthropic API | no | no: paid, cannot be switched on until spending caps exist |
 
-Switching a card on adds its assistant entry to `assistants.chain` and its member entry (if it has one) to every chain; the
-router still puts logins first. Switching off removes them and keeps the settings.
+Switching a card on adds its assistant entry to `assistants.chain`. A LOCAL engine with a member entry (Ollama) joins every
+member's chain. A free CLOUD engine with a member entry (OpenRouter) joins NO member's chain until the person ticks members
+on its card ("Use for"); the `default` chain never gets it, and a ticked member without a chain of its own gets a copy of
+`default` plus the engine. Ticking Otto (`inbox`) or Jules (`concierge`) says on the card that it sends your mail, or your
+bookings, to this service. The router still puts logins first. Switching off removes the engine from every chain and keeps
+the settings. (Decision of the review of PR #414: safety first; the maintainer may change it later.)
 
 ## 3. Where things are kept
 
-- `engine_panel.py` in agent-freeduet owns the file the page writes: `<FREEDUET_DATA_DIR>/engines.yaml`. A file the person
-  wrote at `FREEDUET_ENGINES_FILE` always wins and is never touched; the cards then only show it (`file_is_yours`).
+- `engine_panel.py` in agent-freeduet owns the file the page writes: `<FREEDUET_DATA_DIR>/engines.yaml`. It recognises its own
+  file ONLY by its first line, a marker. A file without the marker is the person's, whatever its name or place (also
+  `FREEDUET_ENGINES_FILE` set to that very path): it is never written, every change answers `file_is_yours` (409), and the
+  cards only show it. Each replacement of the page's own file first keeps a timestamped copy
+  (`engines.yaml.bak-<time>`, the last five).
 - Every change is validated by the loader (`engines.parse_engines`) before the file is replaced in one step. A change the
   loader refuses writes nothing. OpenRouter's free-model guard (D107) is checked first, with its own word (`model_not_free`).
-- A key is a file `<data>/keys/<provider>` (mode 600, folder 700); the engines file holds only `credential_secret_ref:
+- An address is judged at every write and again just before a key is sent (B2 of the review). A cloud provider's host is its
+  own (`api.groq.com`, ...), https, no port, no user name, no query; only Cloudflare's account part is the person's to write.
+  A local card may use `localhost`, `host.docker.internal`, a private, link-local or unique-local address literal or a
+  `*.local` name, and never a name with no dot (a service of the compose network), FreeDuet's own ports (4230, 3001, 3010, 5432
+  and the agent's configured port) or a public address.
+- A key is a file `<data>/keys/<provider>` (mode 600, folder 700, made with mode 700 from the start; a link in either place is
+  refused and never followed); the engines file holds only `credential_secret_ref:
   file:<that path>`. The loader's refusals still apply: no hidden folder, no Claude sign-in folder, no Claude plan token.
   No function returns a key, puts one in an error or logs one. Removing a key deletes the file and switches the card off.
 - A change applies from the next message: the router is rebuilt from the file and the light assistants read it again. The
@@ -56,19 +69,19 @@ agent-freeduet; the browser never sends it again.
 
 ## 5. Test and Load list
 
-Test sends one tiny chat request (8 tokens) to the provider's OpenAI-format address and answers one word: it works, the key
-is wrong (401/403), the model or address is wrong (400/404/422), the limit is used up (429), no credit (402), no answer in
-time, nothing at that address, or did not work. Load list reads `GET /models`, at most 300 names (OpenRouter: only the free
+Test sends one tiny chat request (8 tokens) to the provider's OpenAI-format address and answers one word of a closed list:
+`ok`, `key_rejected`, `model_missing`, `rate_limited` (a limit or no credit left) or `unreachable` (no answer, a timeout, or
+anything else). The provider's own status is never passed on. Load list reads `GET /models`, at most 300 names (OpenRouter: only the free
 ones). Both give up after 8 s, under the 10 s a Bun connection may sit silent.
 
 ## 6. Built so far
 
 Built and tested in CI: the agent module and routes, the server routes, the app cards. Tests: `tests/test_engine_panel.py`
-(30), `server/tests/freeduet-engines-providers.test.ts` (12), `app/tests/freeduet-engines-providers.test.tsx` (11).
+(59), `server/tests/freeduet-engines-providers.test.ts` (13), `app/tests/freeduet-engines-providers.test.tsx` (12).
 
 Not verified: nothing was run against a real provider, a real Ollama or a real Docker volume (does `/data` accept the key
 folder's modes there?); the suggested model names (Groq, Google, Mistral, Cloudflare) are from memory and Test is the check;
-a free model's quality calling tools is not checked (tier C, as D107); the look is not seen by the maintainer. Run live:
+"Free" is FreeDuet's label from the provider's terms (the card says so, and that Google bills if billing is switched on for the project); a free model's quality calling tools is not checked (tier C, as D107); the look is not seen by the maintainer. Run live:
 install, switch Ollama on with a pulled model, ask a member something, switch it off; then Groq with a real key and Test.
 
 Known limit: a change is recorded after the agent has made it, so if the audit write itself fails the change stands and the

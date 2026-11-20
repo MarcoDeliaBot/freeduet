@@ -33,6 +33,8 @@ export type ProviderView = {
   forAssistants: boolean;
   blocked: "paid" | "trial_needs_card" | null;
   addressFixed: boolean;
+  /** A free cloud engine a member can run on: who may be chosen and who is. Null for every other card. */
+  useFor: { available: string[]; chosen: string[] } | null;
 };
 
 /** The order of the cards: your own computer first, then the free services, then the ones that cost or need a card. */
@@ -158,26 +160,33 @@ export function usersText(
   return "For members: not yet. For the light assistants: yes.";
 }
 
-/** The outcome of Test or Load list, in one sentence. Never the key and never the provider's own words. */
+/** The outcome of Test or Load list, in one sentence, from the closed list the server sends. Never the key, a number or the provider's own words. */
 export function checkText(code: string): string {
   switch (code) {
     case "ok":
       return "It answered. It works.";
-    case "key_wrong":
-      return "The key was not accepted (401). Check it and save it again.";
+    case "key_rejected":
+      return "The key was not accepted. Check it and save it again.";
     case "model_missing":
-      return "The server does not know that model or address (404). Check the model.";
-    case "limit":
-      return "The limit is used up for now (429). Try again later.";
-    case "credit":
-      return "This account has no credit left (402).";
-    case "timeout":
-      return "It did not answer in time.";
-    case "unreachable":
-      return "Nothing answered at that address.";
+      return "The server does not know that model. Check the model name.";
+    case "rate_limited":
+      return "The limit or the credit is used up for now. Try again later.";
     default:
-      return "It did not work.";
+      return "Nothing answered, or the answer was not understood.";
   }
+}
+
+export const FREE_NOTE =
+  "\u201cFree\u201d is FreeDuet's label, taken from the provider's terms. Some providers (Google, for one) bill you if billing is switched on for your project.";
+export const USE_FOR_TITLE = "Use for";
+export const USE_FOR_NONE =
+  "No member uses it yet. The light assistants do. Tick the members who may send their work to this service.";
+
+/** What a ticked member sends to a free cloud service. Only the two members whose work is mail or bookings say more. */
+export function useForWarning(memberId: string): string | null {
+  if (memberId === "inbox") return "Sends your mail to this service.";
+  if (memberId === "concierge") return "Sends your bookings to this service.";
+  return null;
 }
 
 export function modelsLoadedText(count: number): string {
