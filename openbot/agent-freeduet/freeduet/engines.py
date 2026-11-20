@@ -29,6 +29,7 @@ from types import MappingProxyType
 from typing import Any, Iterable, Mapping
 from urllib.parse import urlsplit
 
+import httpx
 import yaml
 
 COMPATIBLE_KIND = "anthropic-compatible"
@@ -281,6 +282,10 @@ def _base_url_problem(base_url: str) -> str | None:
         return "`base_url` is not a valid address"
     if parts.scheme not in ("http", "https") or not parts.hostname:
         return "`base_url` must be an http:// or https:// address with a host name"
+    if not parts.netloc.isascii():
+        # httpx turns some non-ASCII characters (a full-width dot) into ordinary ones, so the host it dials is not the host
+        # that was read here; no gateway needs such a name (D107).
+        return "`base_url` must use an ASCII host name"
     if parts.username is not None or parts.password is not None or "@" in parts.netloc:
         return "`base_url` must not carry a user name or a password; the key goes in `credential_secret_ref`"
     if parts.query or parts.fragment or "?" in base_url or "#" in base_url:
@@ -351,11 +356,14 @@ _FREE_MODEL_ID = re.compile(r"[A-Za-z0-9][A-Za-z0-9._\-]*(/[A-Za-z0-9][A-Za-z0-9
 
 
 def is_openrouter(base_url: str | None) -> bool:
-    """Whether an address is OpenRouter's (the host `openrouter.ai` or a sub-domain of it, any case)."""
+    """Whether an address is OpenRouter's (the host `openrouter.ai` or a sub-domain of it). The host is computed the way httpx
+    computes it, because httpx is what sends the request: it normalises a full-width or ideographic dot (U+FF0E, U+3002) to
+    "." where `urlsplit` does not. An address httpx cannot read counts as OpenRouter's (the caller then applies the guard).
+    The guard reads the host WRITTEN in the file: a private gateway or a CNAME that fronts OpenRouter is outside it."""
     try:
-        host = (urlsplit(base_url or "").hostname or "").lower().rstrip(".")
-    except ValueError:
-        return False
+        host = (httpx.URL(base_url or "").host or "").lower().rstrip(".")
+    except Exception:  # noqa: BLE001 - not an address httpx accepts: refuse, do not guess
+        return True
     return host == OPENROUTER_HOST or host.endswith("." + OPENROUTER_HOST)
 
 

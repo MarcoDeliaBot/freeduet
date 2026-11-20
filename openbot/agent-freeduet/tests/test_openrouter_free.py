@@ -8,6 +8,7 @@ invented or is only parsed, and a free model's tool calls through the CLI are no
 
 from __future__ import annotations
 
+import json
 from pathlib import Path
 
 import pytest
@@ -154,10 +155,11 @@ def test_the_cli_is_given_the_one_model_and_no_fallback_or_model_list(tmp_path):
     env = engine._environment({}, KEY)
     for name in ce.MODEL_VARIABLES:
         assert env[name] == "openrouter/free", name
+    assert {"ANTHROPIC_SMALL_FAST_MODEL", "CLAUDE_CODE_SUBAGENT_MODEL"} <= set(ce.MODEL_VARIABLES)
     assert not any("," in value for name, value in env.items() if "MODEL" in name)
     command = claude_cli.build_command("claude", tmp_path / "mcp.json", "system", tmp_path)
     assert not any("fallback" in part.lower() or part == "--models" for part in command)
-    assert "--model" not in command or command[command.index("--model") + 1] == command[command.index("--model") + 1].split(",")[0]
+    assert "--model" not in command
 
 
 # ── A free keyed turn through the D105 hop ───────────────────────────────────────────────────────
@@ -213,3 +215,65 @@ def test_is_free_cloud_is_false_for_logins_local_and_paid():
     assert not is_free_cloud(config_with().engines["gw"])  # 127.0.0.1
     assert not is_free_cloud(config_with({"base_url": "https://gateway.example.com", "billing": "metered"}).engines["gw"])
     assert is_free_cloud(config_with({"base_url": "https://gateway.example.com"}).engines["gw"])
+
+
+# ── The host as httpx reads it (a full-width or ideographic dot) ─────────────────────────────────
+
+
+@pytest.mark.parametrize("address", ["https://openrouter\uff0eai/api", "https://openrouter\u3002ai/api", "https://www\uff0eopenrouter.ai/api"])
+def test_a_unicode_dot_in_the_host_cannot_hide_openrouter(address):
+    import httpx
+
+    assert httpx.URL(address).host.endswith("openrouter.ai")  # what httpx dials
+    found = problems_of({"base_url": address, "model": "anthropic/claude-sonnet-4.5"})
+    assert any("ASCII host name" in line for line in found), found
+    assert any("exactly one free model" in line for line in found), found  # and the guard sees it as OpenRouter too
+
+
+def test_a_non_ascii_host_is_refused_for_every_compatible_entry():
+    assert any("ASCII host name" in line for line in problems_of({"base_url": "https://gateway\uff0eexample.com", "model": "m"}))
+    assert any("ASCII host name" in line for line in problems_of({"base_url": "https://gäteway.example.com", "billing": "metered"}))
+
+
+# ── The hop pins the model (D107) ────────────────────────────────────────────────────────────────
+
+
+def test_pin_model_sets_the_model_and_drops_the_fallback_keys():
+    from freeduet.system_role_proxy import rewrite
+
+    raw = json.dumps({"model": "anthropic/claude-sonnet-4.5", "models": ["a", "b"], "route": "fallback", "provider": {"order": ["x"]},
+                      "messages": [{"role": "user", "content": "hi"}]}).encode()
+    body = json.loads(rewrite(raw, "openrouter/free"))
+    assert body["model"] == "openrouter/free"
+    assert not {"models", "route", "provider"} & set(body)
+    assert body["messages"] == [{"role": "user", "content": "hi"}]
+    assert rewrite(raw) == raw  # an entry that is not pinned is not touched
+
+
+def test_the_hop_of_a_free_openrouter_entry_is_pinned_and_other_entries_are_not(monkeypatch):
+    seen = []
+
+    class Spy(ce.SystemRoleProxy):
+        def __init__(self, upstream, **kwargs):
+            seen.append(kwargs.get("pinned_model"))
+            super().__init__(upstream, **kwargs)
+
+    monkeypatch.setattr(ce, "SystemRoleProxy", Spy)
+    from helpers import run_body  # noqa: F401
+
+    for entry, expected in (({**OPENROUTER, "model": "openrouter/free"}, "openrouter/free"),
+                            ({"base_url": "https://gateway.example.com", "model": "m"}, None)):
+        config = config_with({**entry, "enabled": True})
+        engine = ce.CompatibleEngine(config.engines["gw"], config, binary="/nonexistent-claude")
+        monkeypatch.setenv("FREEDUET_TEST_GATEWAY_KEY", KEY)
+        import asyncio
+        from freeduet import agui, segment
+        from freeduet.members import resolve_member
+
+        async def go():
+            run = agui.parse_run_input(run_body(ASK))
+            member = resolve_member(run.bot_id, run.messages)
+            return [e async for e in segment.run_segment(run, member, engine=engine)]
+
+        asyncio.run(go())
+    assert seen == ["openrouter/free", None]

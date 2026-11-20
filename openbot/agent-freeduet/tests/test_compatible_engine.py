@@ -56,6 +56,8 @@ SERVICE_SECRETS = ("MANAGED_AGENT_TOKEN", "AGENT_TOOL_TOKEN", "OPENBOT_TOOL_URL"
 ANTHROPIC_NAMES = {
     "ANTHROPIC_BASE_URL", "ANTHROPIC_AUTH_TOKEN", "ANTHROPIC_API_KEY", "ANTHROPIC_MODEL",
     "ANTHROPIC_DEFAULT_OPUS_MODEL", "ANTHROPIC_DEFAULT_SONNET_MODEL", "ANTHROPIC_DEFAULT_HAIKU_MODEL",
+    # D107: two more model variables, both set to the entry's one model so no background call or sub-agent asks for another
+    "ANTHROPIC_SMALL_FAST_MODEL", "CLAUDE_CODE_SUBAGENT_MODEL",
 }
 ALLOWED_NAMES = (
     set(ce.PASSED_ENV) | set(claude_cli.FIXED_ENV) | set(ce.GATEWAY_ENV) | ANTHROPIC_NAMES | {"HOME", "CLAUDE_CONFIG_DIR"}
@@ -136,9 +138,10 @@ def test_the_cli_is_given_the_endpoint_the_key_and_the_model_and_nothing_of_the_
     assert env["ANTHROPIC_BASE_URL"].startswith("http://127.0.0.1:") and env["ANTHROPIC_BASE_URL"] != BASE_URL
     assert env["ANTHROPIC_AUTH_TOKEN"] == KEY  # the key goes as the bearer token
     assert env["ANTHROPIC_API_KEY"] == ""  # blank on purpose: the other credential variable would take precedence
-    for name in ("ANTHROPIC_MODEL", "ANTHROPIC_DEFAULT_OPUS_MODEL", "ANTHROPIC_DEFAULT_SONNET_MODEL", "ANTHROPIC_DEFAULT_HAIKU_MODEL"):
+    for name in ("ANTHROPIC_MODEL", "ANTHROPIC_DEFAULT_OPUS_MODEL", "ANTHROPIC_DEFAULT_SONNET_MODEL", "ANTHROPIC_DEFAULT_HAIKU_MODEL",
+                 "ANTHROPIC_SMALL_FAST_MODEL", "CLAUDE_CODE_SUBAGENT_MODEL"):  # the last two: D107
         assert env[name] == MODEL
-    assert {name for name in env if name.startswith("ANTHROPIC_")} == ANTHROPIC_NAMES
+    assert {name for name in env if name.startswith("ANTHROPIC_")} == ANTHROPIC_NAMES - {"CLAUDE_CODE_SUBAGENT_MODEL"}
     assert "CLAUDE_CODE_OAUTH_TOKEN" not in env
     for name, value in service.items():
         assert value not in env.values(), f"the service's {name} reached the CLI"

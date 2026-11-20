@@ -100,13 +100,34 @@ def normalize(body: dict) -> bool:
     return True
 
 
-def rewrite(raw: bytes) -> bytes:
-    """The request body with system-role messages moved; the bytes unchanged when there are none or it is not JSON."""
+#: Keys of a request body that make OpenRouter try other models than the one named (`models`, `route`) or choose providers
+#: (`provider`); a free entry never sends them (D107).
+FALLBACK_KEYS = ("models", "route", "provider")
+
+
+def pin_model(body: dict, model: str) -> bool:
+    """Make the request ask for exactly ``model``: set ``body["model"]`` and drop the fallback keys. True when anything changed."""
+    changed = body.get("model") != model
+    body["model"] = model
+    for key in FALLBACK_KEYS:
+        if key in body:
+            del body[key]
+            changed = True
+    return changed
+
+
+def rewrite(raw: bytes, pinned: str | None = None) -> bytes:
+    """The request body with system-role messages moved, and with its model pinned when ``pinned`` is given; the bytes unchanged
+    when there is nothing to do or it is not JSON."""
     try:
         body = json.loads(raw)
     except ValueError:
         return raw
-    if not isinstance(body, dict) or not normalize(body):
+    if not isinstance(body, dict):
+        return raw
+    moved = normalize(body)
+    fixed = pin_model(body, pinned) if pinned else False
+    if not moved and not fixed:
         return raw
     return json.dumps(body, ensure_ascii=False, separators=(",", ":")).encode("utf-8")
 
@@ -140,7 +161,8 @@ async def _read_request(reader: asyncio.StreamReader) -> tuple[str, str, list[tu
 class SystemRoleProxy:
     """One per turn: ``async with SystemRoleProxy(base_url) as proxy``, then point the CLI at ``proxy.url``."""
 
-    def __init__(self, upstream: str, *, use_environment_proxy: bool = False):
+    def __init__(self, upstream: str, *, use_environment_proxy: bool = False, pinned_model: str | None = None):
+        self._pinned = pinned_model  # an OpenRouter free entry's one model (D107): every request is made to ask for it alone
         self._upstream = upstream.rstrip("/")
         parts = urlsplit(self._upstream)
         self._base = f"{parts.scheme}://{parts.netloc}{parts.path}"
@@ -207,7 +229,7 @@ class SystemRoleProxy:
             return
         path = urlsplit(target)
         if path.path.rstrip("/").endswith("/v1/messages"):
-            body = rewrite(body)
+            body = rewrite(body, self._pinned)
         sent = [(name, value) for name, value in headers if name.lower() not in _HOP]
         try:
             upstream = self._client.build_request(method, self._base + path.path + (f"?{path.query}" if path.query else ""), headers=sent, content=body)
