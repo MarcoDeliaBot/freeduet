@@ -292,6 +292,12 @@ def configure(
     return _runtime
 
 
+def reload_engines() -> None:
+    """Read engines.yaml again at the next request (the Engines page changed it, D109)."""
+    if _runtime is not None:
+        _runtime.engines = None
+
+
 def get_runtime() -> AuxRuntime:
     """FastAPI dependency. Tests may override it with ``app.dependency_overrides``."""
     global _runtime

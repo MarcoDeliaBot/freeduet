@@ -13,13 +13,14 @@ import importlib
 import importlib.util
 import logging
 import os
+import sys
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse, StreamingResponse
 
-from . import agui, checkpoints, claude_cli, claude_status, engine_choices, engine_router, engine_state, origin, report, team_log
+from . import agui, checkpoints, claude_cli, claude_status, engine_choices, engine_panel, engine_router, engine_state, origin, report, team_log
 from .claude_engine import ClaudeEngine
 from .engine_adapter import EngineAdapter
 from .members import MemberError, load_prompts, resolve_member
@@ -33,6 +34,15 @@ OPEN_PATHS = {"/health"}
 log = logging.getLogger("freeduet")
 
 
+def _build_router(target: FastAPI):
+    """The router for the engines file in use, or None when there is no state or the file cannot be read."""
+    state = getattr(target.state, "engine_state", None)
+    if state is None:
+        return None
+    engines_now = {engine.key: engine for engine in (ClaudeEngine(),)}
+    return engine_router.router_from_environment(state, engines_now)
+
+
 @asynccontextmanager
 async def lifespan(target: FastAPI):
     # The engine state reads its file here, once, so that no turn reads (or logs) it.
@@ -41,10 +51,7 @@ async def lifespan(target: FastAPI):
     except Exception:  # noqa: BLE001 - recording is never a reason for the service not to start
         log.warning("engine state not started: it is made on first use", exc_info=True)
         target.state.engine_state = None
-    target.state.engine_router = None
-    if target.state.engine_state is not None:
-        engines_now = {engine.key: engine for engine in (ClaudeEngine(),)}
-        target.state.engine_router = engine_router.router_from_environment(target.state.engine_state, engines_now)
+    target.state.engine_router = _build_router(target)
     try:
         yield
     finally:
@@ -120,6 +127,100 @@ async def engines():
     # control on only where it is here.
     body["choices_version"] = engine_choices.VERSION
     return JSONResponse(body, headers={"Cache-Control": "no-store"})
+
+
+# ── THE PROVIDER CARDS (D109, engine_panel.py) ───────────────────────────────────────────────────
+# The server calls these with the deployment token after it has decided WHO may (D106). A key arrives only in
+# `PUT /engines/panel/{id}/key` and is never returned, logged or put in an error. A change takes effect from the next
+# message: the router is rebuilt from the file, and the light assistants read the file again.
+def _apply_file_change() -> None:
+    state = getattr(app.state, "engine_state", None)
+    before = state.engine_ids() if state is not None else set()
+    app.state.engine_router = _build_router(app)
+    router = app.state.engine_router
+    if state is not None and router is not None:
+        for gone in before - set(router.adapters):
+            state.retire(gone)
+    module = sys.modules.get(SERVER_CALLS_MODULE)
+    reload_engines = getattr(module, "reload_engines", None)
+    if callable(reload_engines):
+        reload_engines()
+
+
+def _refusal(error: engine_panel.PanelRefused) -> JSONResponse:
+    return JSONResponse({"error": error.code}, status_code=error.status, headers={"Cache-Control": "no-store"})
+
+
+async def _json_body(request: Request) -> dict:
+    try:
+        body = await request.json()
+    except ValueError:
+        return {}
+    return body if isinstance(body, dict) else {}
+
+
+@app.get("/engines/panel")
+async def engines_panel():
+    return JSONResponse(engine_panel.panel_state(), headers={"Cache-Control": "no-store"})
+
+
+@app.put("/engines/panel/{provider}")
+async def engines_panel_change(provider: str, request: Request):
+    body = await _json_body(request)
+    try:
+        async with engine_panel._lock:
+            card = engine_panel.apply_change(
+                provider, enabled=body.get("enabled"), base_url=body.get("baseUrl"), model=body.get("model")
+            )
+            _apply_file_change()
+    except engine_panel.PanelRefused as error:
+        return _refusal(error)
+    return JSONResponse({"provider": card}, headers={"Cache-Control": "no-store"})
+
+
+@app.put("/engines/panel/{provider}/key")
+async def engines_panel_save_key(provider: str, request: Request):
+    body = await _json_body(request)
+    try:
+        async with engine_panel._lock:
+            engine_panel.save_key(provider, body.get("key"))
+    except engine_panel.PanelRefused as error:
+        return _refusal(error)
+    return JSONResponse({"keySaved": True}, headers={"Cache-Control": "no-store"})
+
+
+@app.delete("/engines/panel/{provider}/key")
+async def engines_panel_remove_key(provider: str):
+    try:
+        async with engine_panel._lock:
+            engine_panel.remove_key(provider)
+            # A cloud engine with no key cannot answer, so the card goes off with it.
+            card = next((c for c in engine_panel.panel_state()["providers"] if c["id"] == provider), None)
+            if card is not None and card["enabled"] and card["needsKey"] and not engine_panel.own_file_in_use():
+                engine_panel.apply_change(provider, enabled=False)
+                _apply_file_change()
+    except engine_panel.PanelRefused as error:
+        return _refusal(error)
+    return JSONResponse({"keySaved": False}, headers={"Cache-Control": "no-store"})
+
+
+@app.post("/engines/panel/{provider}/models")
+async def engines_panel_models(provider: str):
+    try:
+        result = await engine_panel.list_models(provider)
+    except engine_panel.PanelRefused as error:
+        return _refusal(error)
+    return JSONResponse(result, headers={"Cache-Control": "no-store"})
+
+
+@app.post("/engines/panel/{provider}/test")
+async def engines_panel_test(provider: str):
+    try:
+        result = await engine_panel.test_provider(provider)
+    except engine_panel.PanelRefused as error:
+        return _refusal(error)
+    return JSONResponse(result, headers={"Cache-Control": "no-store"})
+# ─────────────────────────────────────────────────────────────────────────────────────────────────
 
 
 @app.post("/engines/claude/check")
@@ -286,13 +387,21 @@ def claude_text_runner(module):
     return run_claude_text
 
 
+def _resolve_secret(reference: str) -> str | None:
+    """The key a free `openai-compatible` entry names (D109): `file:` or `env:` as the loader's `parse_secret_ref` allows, read
+    with the same refusals as a member's key (compatible_engine.read_key). Never raises, never says what it read."""
+    from .compatible_engine import read_key
+
+    return read_key(reference, os.environ)
+
+
 def mount_server_calls(target: FastAPI, module_name: str = SERVER_CALLS_MODULE) -> bool:
     """Mount stream B's `/v1/messages` router when its module exists. A module that exists but
     fails to import is an error, not a silent absence."""
     if importlib.util.find_spec(module_name) is None:
         return False
     module = importlib.import_module(module_name)
-    module.configure(run_claude_text=claude_text_runner(module))
+    module.configure(run_claude_text=claude_text_runner(module), resolve_secret=_resolve_secret)
     target.include_router(module.router)
     return True
 

@@ -160,7 +160,11 @@ def engines_file_path(environ: Mapping[str, str] | None = None) -> Path:
     env = os.environ if environ is None else environ
     configured = (env.get("FREEDUET_ENGINES_FILE") or "").strip() or DEFAULT_ENGINES_FILE
     candidate = Path(configured)
-    return candidate if candidate.is_file() else EXAMPLE_ENGINES_FILE
+    if candidate.is_file():
+        return candidate
+    # D109: the file the Engines page writes, in the data folder; a file of the person's own above always wins.
+    written = Path((env.get("FREEDUET_DATA_DIR") or "").strip() or "/data") / "engines.yaml"
+    return written if written.is_file() else EXAMPLE_ENGINES_FILE
 
 
 def load_engines(

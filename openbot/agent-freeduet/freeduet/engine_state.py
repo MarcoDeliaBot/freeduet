@@ -228,6 +228,7 @@ class EngineState:
         self._engines: dict[str, EngineAdapter] = {}
         self._probed: dict[str, Probed] = {}
         self._refused: dict[str, Refused] = {}
+        self._retired: set[str] = set()
         self._lock = threading.Lock()
         self._ledger: Ledger | None = None  # set by attach_ledger, only when an engine is held to the limits
         self._limits: Limits | None = None
@@ -240,7 +241,19 @@ class EngineState:
         which is where its saved state is read."""
         with self._lock:
             self._engines[engine.key] = engine
+            self._retired.discard(engine.key)
         self._registry.get(engine.key)
+
+    def retire(self, engine_id: str) -> None:
+        """Stop listing an engine the person switched off on the Engines page (D109). Its saved breaker stays."""
+        with self._lock:
+            self._engines.pop(engine_id, None)
+            self._refused.pop(engine_id, None)
+            self._retired.add(engine_id)
+
+    def engine_ids(self) -> set[str]:
+        with self._lock:
+            return set(self._engines)
 
     def register_refused(self, engine_id: str, label: str, kind: str, reason: str) -> None:
         """Make an engine the person switched on, and the service will not run, known to the snapshot as not runnable
@@ -368,10 +381,13 @@ class EngineState:
     def snapshot(self) -> StateSnapshot:
         with self._lock:
             engines, probed, refused = dict(self._engines), dict(self._probed), dict(self._refused)
+            retired = set(self._retired)
         ledger, limits, ledgered = self._ledger, self._limits, self._ledgered
         hold = ledger.hold(limits) if ledger is not None and limits is not None and ledgered else None
         rows = []
         for shown in self._registry.snapshots():
+            if shown.engine_id in retired:
+                continue
             engine = engines.get(shown.engine_id)
             found = probed.get(shown.engine_id)
             result = found.result if found is not None else None
