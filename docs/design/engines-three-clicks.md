@@ -64,7 +64,7 @@ ones). Both give up after 8 s, under the 10 s a Bun connection may sit silent.
 ## 6. Built so far
 
 Built and tested in CI: the agent module and routes, the server routes, the app cards. Tests: `tests/test_engine_panel.py`
-(30), `server/tests/freeduet-engines-providers.test.ts` (12), `app/tests/freeduet-engines-providers.test.tsx` (10).
+(30), `server/tests/freeduet-engines-providers.test.ts` (12), `app/tests/freeduet-engines-providers.test.tsx` (11).
 
 Not verified: nothing was run against a real provider, a real Ollama or a real Docker volume (does `/data` accept the key
 folder's modes there?); the suggested model names (Groq, Google, Mistral, Cloudflare) are from memory and Test is the check;
