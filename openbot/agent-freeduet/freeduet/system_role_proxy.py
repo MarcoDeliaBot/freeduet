@@ -9,10 +9,14 @@ this module sits in agent-freeduet's own path to the endpoint: it moves every me
 forwards the request. Nothing else is changed. The real Claude engine does not use it: it talks to Anthropic directly.
 
 WHAT IT IS NOT. It has no upstream of its own: the address is the entry's, fixed when it is built. It listens on this
-machine's loopback only, on a port the system picks, for one turn. It adds no header and reads none: the
-``Authorization`` the CLI sends (the entry's own key, or the key-free placeholder) is passed on as it came and is never
-logged, stored or put in an error. It logs no body. An answer is passed through byte for byte as it arrives, so a
-stream stays a stream.
+machine's loopback only, on a port the system picks, for one turn. It adds no header. The
+``Authorization`` the CLI sends (the entry's own key, or the key-free placeholder) is passed on, so a keyed gateway's key
+travels through this hop too; it is never logged, stored or put in an error. It logs no body. End-to-end headers are
+passed on (the ones that describe one hop are not), and an answer is passed through as its bytes arrive, so a stream stays
+a stream. Each request uses its own connection to the CLI (the answer says ``connection: close``). Only the target's path
+and query are taken from the CLI's request, and a target that is not a plain path is refused with 400, so the upstream's
+host can never change. Of a moved message only its text blocks move. httpx does not read ``NODE_EXTRA_CA_CERTS``, which
+the CLI does, so when that variable names a file it is passed as the CA bundle for the upstream.
 """
 
 from __future__ import annotations
@@ -20,6 +24,8 @@ from __future__ import annotations
 import asyncio
 import json
 import logging
+import os
+import ssl
 from contextlib import suppress
 from urllib.parse import urlsplit
 
@@ -28,12 +34,24 @@ import httpx
 log = logging.getLogger("freeduet.system_role_proxy")
 
 SYSTEM_ROLES = frozenset({"system", "developer"})
-MAX_HEAD = 64 * 1024
+MAX_HEAD = 64 * 1024  # the stream reader's limit for the request head: a longer one is refused
 MAX_BODY = 64 * 1024 * 1024  # a request with pictures is large; past this it is not a Messages request
 #: Never copied from one side to the other: they describe the hop, not the message.
 _HOP = frozenset(
     {"connection", "keep-alive", "proxy-connection", "transfer-encoding", "te", "trailer", "upgrade", "content-length", "host"}
 )
+
+
+def _plain_target(target: str) -> bool:
+    """A request target the hop forwards: a path that starts with one "/", with no userinfo marker, backslash, space or control
+    character. Anything else (``@host``, an absolute URI, ``//host``) could move the request to another host and is refused."""
+    return (
+        target.startswith("/")
+        and not target.startswith("//")
+        and "@" not in target
+        and "\\" not in target
+        and all(ch.isprintable() and not ch.isspace() for ch in target)
+    )
 
 
 def _text_of(content) -> str:
@@ -80,8 +98,6 @@ def rewrite(raw: bytes) -> bytes:
 
 async def _read_request(reader: asyncio.StreamReader) -> tuple[str, str, list[tuple[str, str]], bytes] | None:
     head = await reader.readuntil(b"\r\n\r\n")
-    if len(head) > MAX_HEAD:
-        return None
     lines = head.decode("latin-1").split("\r\n")
     method, target, _ = lines[0].split(" ", 2)
     headers = [tuple(line.split(":", 1)) for line in lines[1:] if ":" in line]
@@ -95,10 +111,10 @@ async def _read_request(reader: asyncio.StreamReader) -> tuple[str, str, list[tu
                 while (await reader.readline()).strip():
                     pass
                 break
+            if len(body) + size > MAX_BODY:
+                return None
             body.extend(await reader.readexactly(size))
             await reader.readexactly(2)
-            if len(body) > MAX_BODY:
-                return None
         return method, target, headers, bytes(body)
     length = int(lowered.get("content-length", "0") or 0)
     if length > MAX_BODY:
@@ -111,15 +127,21 @@ class SystemRoleProxy:
 
     def __init__(self, upstream: str, *, use_environment_proxy: bool = False):
         self._upstream = upstream.rstrip("/")
+        parts = urlsplit(self._upstream)
+        self._base = f"{parts.scheme}://{parts.netloc}{parts.path}"
+        bundle = os.environ.get("NODE_EXTRA_CA_CERTS")
+        verify = ssl.create_default_context(cafile=bundle) if bundle and os.path.isfile(bundle) else True
         self._client = httpx.AsyncClient(
-            timeout=httpx.Timeout(connect=10.0, read=900.0, write=30.0, pool=10.0), trust_env=use_environment_proxy
+            timeout=httpx.Timeout(connect=10.0, read=900.0, write=30.0, pool=10.0),
+            trust_env=use_environment_proxy,
+            verify=verify,
         )
         self._server: asyncio.AbstractServer | None = None
         self._handlers: set[asyncio.Task] = set()
         self.url = ""
 
     async def __aenter__(self) -> SystemRoleProxy:
-        self._server = await asyncio.start_server(self._accept, "127.0.0.1", 0)
+        self._server = await asyncio.start_server(self._accept, "127.0.0.1", 0, limit=MAX_HEAD)
         self.url = f"http://127.0.0.1:{self._server.sockets[0].getsockname()[1]}"
         return self
 
@@ -139,42 +161,46 @@ class SystemRoleProxy:
         task.add_done_callback(self._handlers.discard)
 
     async def _serve(self, reader: asyncio.StreamReader, writer: asyncio.StreamWriter) -> None:
+        """One request, one answer, then the connection is closed (the answer says so)."""
         try:
-            while True:
-                try:
-                    request = await _read_request(reader)
-                except (asyncio.IncompleteReadError, ConnectionError, ValueError):
-                    return
-                if request is None:
-                    return
-                if not await self._forward(request, writer):
-                    return
-        except (ConnectionError, asyncio.CancelledError):
+            request = await _read_request(reader)
+            if request is None:
+                await self._refuse(writer, "400 Bad Request", "the request is too large")
+            else:
+                await self._forward(request, writer)
+        except (asyncio.IncompleteReadError, ConnectionError, asyncio.CancelledError):
             return
+        except Exception as error:  # noqa: BLE001 - only the kind of failure is logged: no address, header or body
+            log.warning("system-role proxy: a request was dropped (%s)", type(error).__name__)
         finally:
             with suppress(Exception):
                 writer.close()
 
-    async def _forward(self, request, writer: asyncio.StreamWriter) -> bool:
+    @staticmethod
+    async def _refuse(writer: asyncio.StreamWriter, status: str, message: str) -> None:
+        data = json.dumps({"type": "error", "error": {"type": "api_error", "message": message}}).encode("utf-8")
+        writer.write(
+            f"HTTP/1.1 {status}\r\ncontent-type: application/json\r\nconnection: close\r\ncontent-length: {len(data)}\r\n\r\n".encode()
+            + data
+        )
+        await writer.drain()
+
+    async def _forward(self, request, writer: asyncio.StreamWriter) -> None:
         method, target, headers, body = request
+        if not _plain_target(target):
+            await self._refuse(writer, "400 Bad Request", "the request target is not a plain path")
+            return
         path = urlsplit(target)
         if path.path.rstrip("/").endswith("/v1/messages"):
             body = rewrite(body)
         sent = [(name, value) for name, value in headers if name.lower() not in _HOP]
         try:
-            upstream = self._client.build_request(method, self._upstream + target, headers=sent, content=body)
+            upstream = self._client.build_request(method, self._base + path.path + (f"?{path.query}" if path.query else ""), headers=sent, content=body)
             response = await self._client.send(upstream, stream=True)
         except httpx.HTTPError as error:
             log.warning("system-role proxy: the endpoint could not be reached (%s)", type(error).__name__)
-            message = json.dumps({"type": "error", "error": {"type": "api_error", "message": "the endpoint could not be reached"}})
-            data = message.encode("utf-8")
-            writer.write(
-                b"HTTP/1.1 502 Bad Gateway\r\ncontent-type: application/json\r\nconnection: close\r\n"
-                + f"content-length: {len(data)}\r\n\r\n".encode()
-                + data
-            )
-            await writer.drain()
-            return False
+            await self._refuse(writer, "502 Bad Gateway", "the endpoint could not be reached")
+            return
         try:
             head = [f"HTTP/1.1 {response.status_code} {response.reason_phrase}"]
             head += [f"{name}: {value}" for name, value in response.headers.multi_items() if name.lower() not in _HOP]
@@ -188,4 +214,3 @@ class SystemRoleProxy:
             await writer.drain()
         finally:
             await response.aclose()
-        return False
