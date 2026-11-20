@@ -1,4 +1,10 @@
-import { motion, useReducedMotion } from "motion/react";
+import type { CSSProperties } from "react";
+import {
+  motion,
+  type TargetAndTransition,
+  type Transition,
+  useReducedMotion,
+} from "motion/react";
 import type { MicOrbState } from "@/components/duet/mic-orb";
 import { MemberPicture } from "@/freeduet/wide/mascot";
 
@@ -76,7 +82,11 @@ function Ring({
     borderWidth: RING,
     borderColor: FAINT,
   };
-  const frame = (extra: object, animate: object, transition: object) => (
+  const frame = (
+    extra: CSSProperties,
+    animate: TargetAndTransition,
+    transition: Transition,
+  ) => (
     <motion.span
       animate={reduced ? undefined : animate}
       data-ring-state={state}
