@@ -112,7 +112,7 @@ export function EngineMembers({
 }: {
   reading: EnginesReading;
   /** Called after a change or an Undo went through, so the page reads the list again. */
-  onChanged: () => void | Promise<unknown>;
+  onChanged: () => unknown;
 }) {
   const agents = useQuery(agentListQueryOptions());
   /** The latest change of each member made on this page, which is the one an Undo can still take back. */
