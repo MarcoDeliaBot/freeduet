@@ -1,9 +1,9 @@
 import { createHash } from "node:crypto";
 import { afterAll, afterEach, beforeAll, expect, test } from "bun:test";
 import { GlobalRegistrator } from "@happy-dom/global-registrator";
-import mascot from "@openbot/shared/mascot.json";
 import { cleanup, render } from "@testing-library/react";
 import { ART_BOX, MascotSprite, MemberFace } from "@/freeduet/wide/mascot";
+import drawn from "@/freeduet/wide/mascot-drawn.json";
 import { settleReactWork } from "./settle-react-work";
 
 /**
@@ -21,33 +21,45 @@ afterAll(async () => {
 });
 
 /**
- * Each art's drawn extent on the 220 canvas, [left, top, right, bottom], measured with `getBBox()` of the
- * art's own group in Chromium 153 (strokes not included, so STROKE is added). To measure again after the
- * art changes: put `mascot.defs` and the art in one svg and read `getBBox()` of each `<g>`.
+ * Each face's drawn extent on the 220 canvas, [left, top, right, bottom]: the box of each drawn child, moved by
+ * its own transform, in headless Chromium (strokes not included, so STROKE is added). A rotated child is taken
+ * by the corners of its box, so the figures are a bound. The water group is left out: its two half-rectangles
+ * are clipped to the bubble, and getBBox() does not apply a clip. To measure again after the drawings change,
+ * render each face in its own svg on the 220 canvas and take the same boxes.
  */
 const EXTENT: Record<string, [number, number, number, number]> = {
-  iris: [20, 40, 200, 210],
-  leo: [38, 48, 194.2, 210],
-  otto: [21.2, 28, 182, 210],
-  portia: [38, 48, 202, 210],
-  penny: [38, 11.5, 182, 210],
-  jules: [38, 11.8, 207, 210],
-  wren: [38, 35, 195.6, 210],
-  gus: [38, 28, 182, 210],
-  basil: [38, 11, 182, 210],
-  vera: [38, 48, 182, 210],
-  mark: [38, 48, 220, 210],
-  video: [38, 48, 198, 210],
+  iris: [31.06, 14, 188.94, 209],
+  leo: [31.06, 14, 188.94, 209],
+  otto: [31.06, 14, 188.94, 209],
+  portia: [31.06, 14, 188.94, 209],
+  penny: [31.06, 14, 188.94, 209],
+  jules: [31.06, 14, 188.94, 209],
+  wren: [31.06, 14, 188.94, 209],
+  gus: [31.06, 14, 188.94, 209],
+  basil: [31.06, 14, 188.94, 209],
+  vera: [31.06, 14, 188.94, 209],
+  mark: [31.06, 14, 188.94, 209],
+  video: [31.06, 14, 188.94, 209],
 };
 const STROKE = 3;
-/** The whole art, so that a changed drawing makes the table above be measured again. */
-const ART_SHA1 = "3a5b8870fe3131e724f8a3a4c4d86870f4be4494";
+/** The drawings, so that a changed drawing makes the table above be measured again. */
+const ART_SHA1 = "b51ecacc1c4df92d9ba9012180d6ff643cc9e9d7";
 
 test("the art is the one the extents were measured on", () => {
-  expect(Object.keys(EXTENT).sort()).toEqual(Object.keys(mascot.team).sort());
+  expect(Object.keys(EXTENT).sort()).toEqual(Object.keys(drawn.team).sort());
   expect(
-    createHash("sha1").update(JSON.stringify(mascot.team)).digest("hex"),
+    createHash("sha1").update(JSON.stringify(drawn.team)).digest("hex"),
   ).toBe(ART_SHA1);
+});
+
+test("the twelve faces are the drawings, each with its own clip, and not the round bubble", () => {
+  const view = render(<MascotSprite />);
+  for (const key of Object.keys(drawn.team)) {
+    const symbol = view.container.querySelector(
+      `symbol#duet-m-${key}`,
+    ) as Element;
+    expect(symbol.querySelector(`#fd-${key}-clip`)).not.toBeNull();
+  }
 });
 
 test("every accessory lies inside the viewBox its symbol is drawn in, so no overflow is needed", () => {

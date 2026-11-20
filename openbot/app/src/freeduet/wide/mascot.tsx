@@ -1,9 +1,12 @@
 import mascot from "@openbot/shared/mascot.json";
 import { cn } from "@/lib/utils";
+import drawn from "./mascot-drawn.json";
 
 /**
- * The twelve mascot faces in the app, drawn from the same file as the home page
- * (`openbot/shared/mascot.json`, D55): one round blue water bubble and one accessory each.
+ * The twelve member faces in the app: the drawings of 18 November 2026 (`./mascot-drawn.json`), one water
+ * bubble and one accessory each. The paints and the plain face come from the home page's file
+ * (`openbot/shared/mascot.json`, D55), which the site still draws with the round blue bubble. The site does
+ * not read the drawings, so the two differ until the maintainer decides D98.
  *
  * Which member wears which: the id the member has in `agents.yaml`. A member somebody trained
  * themselves has an id nobody listed, and gets the bubble with the plain face and nothing on it.
@@ -23,8 +26,11 @@ export const MEMBER_MASCOT: Readonly<Record<string, string>> = {
   video: "video",
 };
 
-/** The twelve art keys of the file, in the order the home page lists them. */
-export const MASCOT_KEYS = Object.keys(mascot.team);
+/** The drawings, one per member, in the order the file lists them. */
+const TEAM: Readonly<Record<string, string>> = drawn.team;
+
+/** The twelve art keys of the drawings. */
+export const MASCOT_KEYS = Object.keys(TEAM);
 
 /** The art key for a member id, or `null` for a member nobody drew (one the person trained). */
 export function mascotKeyOf(agentId: string): string | null {
@@ -33,8 +39,9 @@ export function mascotKeyOf(agentId: string): string | null {
 
 /**
  * The face is drawn on the whole 220 by 220 canvas of the art plus 10 around it, not cropped to the bubble: the bubble
- * (144 wide, 38 to 182 across and 48 to 192 down) sits in a 148 box at 36, 46, and the accessory (cap,
- * coin, hat, headset, envelope) is drawn past that box, so it has to be INSIDE the picture. Before, the
+ * (144 wide, 38 to 182 across and 48 to 192 down; the drawings' bubble is 130 wide, in the same box) sits in a 148
+ * box at 36, 46, and the accessory (cap, coin, hat, headset, envelope) is drawn past that box, so it has to be
+ * INSIDE the picture. Before, the
  * crop was tight and the accessory stuck out through `overflow: visible`, on the symbol and on the
  * svg; a real Chrome clipped it at the edge of the box all the same (the maintainer's screenshot,
  * 16 November 2026). Nothing here relies on an overflow any more: every accessory lies inside the
@@ -48,7 +55,7 @@ const ART_ORIGIN = 10;
 const BUBBLE_BOX = { size: 148, left: 36, top: 46 };
 
 const SYMBOLS = [
-  ...Object.entries(mascot.team).map(
+  ...Object.entries(TEAM).map(
     ([key, art]) =>
       `<symbol id="duet-m-${key}" viewBox="${ART_BOX}">${art}</symbol>`,
   ),
