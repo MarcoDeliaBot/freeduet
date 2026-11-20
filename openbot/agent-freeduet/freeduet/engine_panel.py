@@ -50,6 +50,7 @@ from .engines import (
     EnginesFileError,
     engines_file_path,
     in_hidden_folder,
+    ordered_chain,
     parse_engines,
 )
 
@@ -621,6 +622,59 @@ def apply_change(
     _set_chains(document, provider, bool(switched_on), chosen_members)
     _write_document(document, environ)
     return _card(provider, document, environ)
+
+
+def apply_order(
+    member_id: Any,
+    order: Any,
+    *,
+    current: list[str] | None = None,
+    environ: Mapping[str, str] | None = None,
+) -> dict[str, Any]:
+    """D112: put one member's engines in a new order, by hand. ``order`` is the member's whole chain as the page shows it
+    (``current``, else every engine of the member's chain that will run), in the new order. It must be a permutation of
+    it: nothing added, nothing dropped, nothing unknown. Engines the chain names that do not run keep their place in the file.
+    The same rules as every change here: only the page's own marked file (`file_is_yours`), validated by the loader, a
+    backup, written in one step.
+
+    The router puts subscription logins first, then free engines, then metered ones, whatever order the file lists
+    (``engines.order_logins_first``). So an order that this rule would undo, a metered engine before a login or a free engine,
+    is refused (`order_logins_first`) and nothing is written: the page never promises an order the router would not keep.
+    Returns ``{"member", "chain", "changed"}``; nothing is written when the order is the one in use."""
+    if own_file_in_use(environ):
+        raise PanelRefused("file_is_yours", 409)
+    if not isinstance(member_id, str) or member_id not in _available_members():
+        raise PanelRefused("unknown_member", 404)
+    if not isinstance(order, list) or not all(isinstance(item, str) for item in order):
+        raise PanelRefused("order_shape")
+    document = copy.deepcopy(_load_document(environ))
+    try:
+        config = parse_engines(document, source="the engines page")
+        shown = list(current) if current is not None else [engine.id for engine in ordered_chain(member_id, config)]
+    except EnginesFileError as error:
+        raise PanelRefused("invalid") from error
+    if len(set(order)) != len(order) or sorted(order) != sorted(shown):
+        raise PanelRefused("order_not_permutation")
+    chains = document.get("chains")
+    if not isinstance(chains, dict):
+        raise PanelRefused("file_unreadable", 500)
+    in_file = list(chains.get(member_id) or chains.get("default") or [])
+    if not set(shown) <= set(in_file):
+        raise PanelRefused("order_not_permutation")
+    if order == shown:
+        return {"member": member_id, "chain": shown, "changed": False}
+    slots = [at for at, engine in enumerate(in_file) if engine in set(shown)]
+    for slot, engine in zip(slots, order):
+        in_file[slot] = engine
+    chains[member_id] = in_file
+    try:
+        kept = [engine.id for engine in ordered_chain(member_id, parse_engines(document, source="the engines page")) if engine.id in set(shown)]
+    except EnginesFileError as error:
+        raise PanelRefused("invalid") from error
+    if kept != order:
+        raise PanelRefused("order_logins_first")
+    _write_document(document, environ)
+    return {"member": member_id, "chain": order, "changed": True}
 
 
 # ── The two small requests a card makes ──────────────────────────────────────────────────────────

@@ -6,6 +6,8 @@
  *                                                        person's choices are kept here, { members, choices, canChange,
  *                                                        cannotChange }
  *   PUT  /api/freeduet/engines/members/:memberId/mode    the administrator at the computer: automatic or ask first
+ *   PUT  /api/freeduet/engines/members/:memberId/order   the administrator at the computer (D112): one member's engines
+ *                                                        in a new order, written by agent-freeduet to its own marked file
  *   POST /api/freeduet/engines/changes/:changeId/undo    the administrator at the computer: put the old choice back
  *   POST /api/freeduet/engines/claude/check              the administrator at the computer: check Claude Code now
  *                                                        (docs/design/first-start.md, "Check again"); three facts back
@@ -256,6 +258,12 @@ export const PANEL_SENTENCES: Record<string, string> = {
   enabled_shape: "That change is not accepted. Nothing was changed.",
   file_unreadable: "The engines file could not be read. Nothing was changed.",
   file_not_written: "The change could not be saved. Nothing was changed.",
+  unknown_member: "There is no such member.",
+  order_shape: "That order is not accepted. Nothing was changed.",
+  order_not_permutation:
+    "That order does not hold the same engines as the member has now. Nothing was changed.",
+  order_logins_first:
+    "Your own logins always go first, then free engines, then paid ones. That order cannot be kept. Nothing was changed.",
 };
 const PANEL_FALLBACK = "That could not be done. Nothing was changed.";
 const NO_AUDIT =
@@ -297,6 +305,9 @@ function providerOf(value: unknown): ProviderView | null {
 }
 
 const MEMBER_ID_LIST = /^[a-z][a-z0-9_-]{0,31}$/;
+/** An engine id as the engines file spells it, and how many one member's order may hold. */
+const ENGINE_ID = /^[a-z0-9][a-z0-9_-]{0,63}$/;
+const MAX_ORDER = 32;
 function useForOf(value: unknown): ProviderView["useFor"] {
   if (!value || typeof value !== "object") return null;
   const raw = value as Record<string, unknown>;
@@ -937,6 +948,73 @@ export function createEnginesRoutes(
       viaTunnel,
     );
     return context.json({ provider: card }, 200, noStore);
+  });
+
+  // D112: one member's engines in a new order, by hand. The same guard and the same audit as a card change. The body is
+  // the member's whole chain as the page shows it, in the new order; agent-freeduet checks that it is a permutation of the
+  // chain, keeps logins first and writes only its own marked file. Nothing else of the body is forwarded.
+  routes.put("/members/:memberId/order", async (context) => {
+    const { refused, viaTunnel } = await mayChange(context);
+    if (refused) return refused;
+    if (!audit) return context.json({ error: NO_AUDIT, code: "no_audit" }, 503);
+    const memberId = context.req.param("memberId");
+    if (!MEMBER_ID_LIST.test(memberId))
+      return context.json(
+        {
+          error: PANEL_SENTENCES.unknown_member,
+          code: "unknown_member",
+        },
+        404,
+      );
+    let order: unknown;
+    try {
+      order = ((await context.req.json()) as { order?: unknown } | null)?.order;
+    } catch {
+      // Not JSON: there is no order in it, and the answer below says so.
+    }
+    if (
+      !Array.isArray(order) ||
+      order.length > MAX_ORDER ||
+      !order.every((id) => typeof id === "string" && ENGINE_ID.test(id))
+    )
+      return context.json(
+        { error: PANEL_SENTENCES.order_shape, code: "order_shape" },
+        400,
+      );
+    const answer = await callPanel(
+      reach(),
+      "PUT",
+      `/members/${memberId}/order`,
+      { order },
+    );
+    const raw = answer?.body as { chain?: unknown; changed?: unknown } | null;
+    const chain = Array.isArray(raw?.chain)
+      ? raw.chain
+          .filter(
+            (id): id is string => typeof id === "string" && ENGINE_ID.test(id),
+          )
+          .slice(0, MAX_ORDER)
+      : null;
+    if (answer?.status !== 200 || !chain) {
+      const failure = panelRefusal(answer);
+      return context.json(failure.body, failure.status);
+    }
+    const changed = raw?.changed === true;
+    if (changed) {
+      await audit.record({
+        eventType: "configuration.changed",
+        targetType: "engine_member_order",
+        targetId: memberId,
+        actorUserId: context.var.actor.id,
+        payload: {
+          change: "engine_order_changed",
+          memberId,
+          newValue: chain,
+          ...(viaTunnel ? { via: "tunnel" } : {}),
+        },
+      });
+    }
+    return context.json({ memberId, chain, changed }, 200, noStore);
   });
 
   routes.put("/providers/:providerId/key", async (context) => {
