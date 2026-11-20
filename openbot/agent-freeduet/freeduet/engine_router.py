@@ -70,6 +70,9 @@ from .engines import (
     EnginesConfig,
     Switching,
     chain_ids,
+    first_answer_limit,
+    is_light,
+    is_local_model,
     exclusion_code,
     exclusion_reason,
     is_free_cloud,
@@ -90,6 +93,7 @@ from .segment import SegmentNotes, run_segment
 log = logging.getLogger("freeduet.engine_router")
 
 MAX_SWITCHES = 2
+LOCAL_NOTICE_AFTER_SECONDS = 15.0  # D108: a local model silent this long is said to be reading
 PROBE_EVERY_SECONDS = 60.0
 PROBE_WAIT_SECONDS = 10.0
 SWITCHABLE = frozenset({RATE_LIMIT, USAGE_LIMIT, CREDITS, AUTH, TRANSIENT})
@@ -396,15 +400,39 @@ class Router:
                 )
             attempt = _Attempt(self.adapters[key], self.state, ticket)
             sub = dataclasses.replace(run, messages=[*run.messages, *produced], tools=tools)
-            stream = run_segment(sub, member, notes, attempt, announce=False, extra_notes=tuple(attempt_notes))
+            stream = run_segment(
+                sub, member, notes, attempt, announce=False, extra_notes=tuple(attempt_notes),
+                light=is_light(engine),
+            )
             held: dict | None = None
             saw_output, finished = False, False
             builder = _Produced()
             try:
+                limit = first_answer_limit(engine) or first_output_seconds()  # D108: only a local model has its own
+                local = is_local_model(engine)
+                said_reading = False
+                loop = asyncio.get_running_loop()
+                pending_event = None
                 while True:
-                    wait = first_output_seconds() if not saw_output else None
-                    pending_event = asyncio.ensure_future(_next(stream))
-                    await asyncio.wait({pending_event}, timeout=wait)
+                    if pending_event is None:
+                        pending_event = asyncio.ensure_future(_next(stream))
+                        waited = 0.0
+                    if saw_output:
+                        await asyncio.wait({pending_event})
+                    else:
+                        # The limit counts from the last event the engine gave, as before. A local model that has said
+                        # nothing for a while is told it is reading (once), so a long first read is not silence.
+                        left = limit - waited
+                        if local and not said_reading:
+                            left = min(left, max(LOCAL_NOTICE_AFTER_SECONDS - waited, 0.0))
+                        began = loop.time()
+                        await asyncio.wait({pending_event}, timeout=left)
+                        waited += loop.time() - began
+                        if not pending_event.done() and local and not said_reading and waited < limit:
+                            said_reading = True
+                            for event in _say(notices.local_reading(lang, self.adapters[key].label)):
+                                yield event
+                            continue
                     if not pending_event.done():
                         # The hint is set BEFORE the segment is stopped, because stopping it settles the ticket.
                         attempt.hint = "first_output"
@@ -414,6 +442,7 @@ class Router:
                         held = {"type": "RUN_ERROR", "message": ""}
                         break
                     event = pending_event.result()
+                    pending_event = None
                     if event is _END:
                         break
                     kind = event["type"]

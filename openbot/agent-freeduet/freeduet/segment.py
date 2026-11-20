@@ -50,6 +50,7 @@ the last tool it called. The CLI's own result text stands in for the answer when
 """
 
 import asyncio
+import dataclasses
 import json
 import logging
 import tempfile
@@ -226,7 +227,7 @@ class _InboxSink:
 
 async def run_segment(run: RunInput, member: Member, notes: SegmentNotes | None = None,
                       engine: EngineAdapter | None = None, *, announce: bool = True,
-                      extra_notes: tuple[str, ...] = ()) -> AsyncIterator[dict]:
+                      extra_notes: tuple[str, ...] = (), light: bool = False) -> AsyncIterator[dict]:
     """`announce=False` and `extra_notes` are for the engine chain (engine_router.py), which runs this once per
     engine it tries inside one turn: it has already sent RUN_STARTED, and tells the next engine what happened."""
     if announce:
@@ -235,13 +236,17 @@ async def run_segment(run: RunInput, member: Member, notes: SegmentNotes | None 
     notes = notes if notes is not None else SegmentNotes()
     active_lessons = await _lessons_for(run, member)
     # The tool notes, then the person's language when the deployment set one (person_language.py).
+    if light:
+        run = dataclasses.replace(run, tools=[tool for tool in run.tools if tool.get("name") in transcript.LIGHT_TOOLS])
     run_notes = [*tool_notes.notes_for(run, member), *person_language.notes_for(run), *person_tone.notes_for(run), *extra_notes]
+    if light:
+        run_notes.append(transcript.LIGHT_NOTE)
     offered = {tool["name"] for tool in run.tools}
     local = iris_tools.for_run(run, member.id, offered)
     # What the bridge serves: the transcript writes earlier calls to these under the name the CLI
     # registers them by, mcp__freeduet__<name> (transcript.py).
     served = offered | (local.names if local else frozenset())
-    rendered = transcript.render(member, run.messages, run.context, active_lessons, run_notes, served=served)
+    rendered = transcript.render(member, run.messages, run.context, active_lessons, run_notes, served=served, light=light)
     inbox: asyncio.Queue = asyncio.Queue()
     handed_over: list[str] = []  # refused calls to offered tools that this segment handed to OpenBot
     tasks: set[asyncio.Task] = set()
@@ -289,7 +294,8 @@ async def run_segment(run: RunInput, member: Member, notes: SegmentNotes | None 
             port = await host.start()
             ready = asyncio.get_running_loop().create_future()
             turn = TurnContext(
-                rendered.system, rendered.prompt, directory, work, diagnostics, rendered.pictures, rendered.picture_prompt
+                rendered.system, rendered.prompt, directory, work, diagnostics, rendered.pictures, rendered.picture_prompt,
+                light=light,
             )
             engine_task = asyncio.create_task(engine.run_turn(turn, _InboxSink(inbox, ready), Gate(port, host.secret)))
             await asyncio.wait({engine_task, ready}, return_when=asyncio.FIRST_COMPLETED)

@@ -94,6 +94,7 @@ from .engines import (
     Engine,
     EnginesConfig,
     exclusion_reason,
+    first_answer_limit,
     in_hidden_folder,
     is_local_host,
     is_openrouter,
@@ -228,6 +229,22 @@ class Scrubber:
         for form in self._data:
             value = value.replace(form, REDACTED.encode("utf-8"))
         return value
+
+
+#: D108. The CLI's own waits, which it honours from its environment: the whole request (default 600 s, and it retries
+#: after) and the wait for the first byte. A local model that reads a long prompt first needs them as long as the router's.
+PATIENCE_VARIABLES = ("API_TIMEOUT_MS", "CLAUDE_STREAM_FIRST_BYTE_TIMEOUT_MS", "CLAUDE_STREAM_IDLE_TIMEOUT_MS")
+PATIENCE_SLACK_SECONDS = 60.0
+
+
+def patience_env(engine: Engine) -> dict[str, str]:
+    """Nothing for a cloud engine or a login (their limits are never lengthened); for a local model, the three waits
+    set to its first-answer limit and a minute."""
+    limit = first_answer_limit(engine)
+    if limit is None:
+        return {}
+    milliseconds = str(int((limit + PATIENCE_SLACK_SECONDS) * 1000))
+    return {name: milliseconds for name in PATIENCE_VARIABLES}
 
 
 def _bypass_proxy(env: dict[str, str], host: str) -> None:
@@ -401,6 +418,7 @@ class CompatibleEngine(EngineAdapter):
         env = {name: source[name] for name in PASSED_ENV if source.get(name)}
         env.update(claude_cli.FIXED_ENV)
         env.update(GATEWAY_ENV)
+        env.update(patience_env(self._engine))  # D108
         base_url = self._engine.base_url or ""
         env["ANTHROPIC_BASE_URL"] = base_url
         env["ANTHROPIC_AUTH_TOKEN"] = key  # sent as `Authorization: Bearer`
@@ -531,15 +549,21 @@ class CompatibleEngine(EngineAdapter):
         ctx.diagnostics.at_close.append(log_the_end)
         try:
             config = claude_cli.write_mcp_config(ctx.directory, gate.port, gate.secret)
-            command = claude_cli.build_command(self._binary or claude_cli.claude_bin(), config, ctx.system, ctx.directory)
+            command = claude_cli.build_command(
+                self._binary or claude_cli.claude_bin(), config, ctx.system, ctx.directory, replace_system=ctx.light
+            )
             env = {**self._environment(os.environ, key), **_private_homes(ctx.directory)}
             # D105: the CLI sends its environment section as a message with role "system"; an endpoint such as Ollama
             # refuses that. A loopback hop of this turn moves it into the top-level `system` field and changes nothing else.
             host = urlsplit(self._engine.base_url or "").hostname
             # D107: an OpenRouter entry that says free is pinned to its one model at the hop, with no fallback keys in the body.
             pinned = self._engine.model if self._engine.billing == "free" and is_openrouter(self._engine.base_url) else None
+            patience = first_answer_limit(self._engine)  # D108: None for anything that is not a local model
             proxy = await SystemRoleProxy(
-                self._engine.base_url or "", use_environment_proxy=not (host and is_local_host(host)), pinned_model=pinned
+                self._engine.base_url or "",
+                use_environment_proxy=not (host and is_local_host(host)),
+                pinned_model=pinned,
+                read_seconds=max(900.0, patience + PATIENCE_SLACK_SECONDS) if patience is not None else 900.0,
             ).__aenter__()
             env["ANTHROPIC_BASE_URL"] = proxy.url
             _bypass_proxy(env, "127.0.0.1")

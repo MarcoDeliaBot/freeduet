@@ -144,25 +144,30 @@ def write_mcp_config(directory: Path, port: int, secret: str) -> Path:
     return path
 
 
-def _system_args(system_text: str, directory: Path) -> list[str]:
+def _system_args(system_text: str, directory: Path, replace: bool = False) -> list[str]:
+    """`replace` (D108, the light turn) puts the text in place of the CLI's own default prompt, about 4.5 thousand
+    characters of coding-agent instructions; otherwise it is added after it."""
     if not system_text:
         return []
+    flag = "--system-prompt" if replace else "--append-system-prompt"
     if len(system_text.encode("utf-8")) <= MAX_INLINE_SYSTEM_BYTES:
-        return ["--append-system-prompt", system_text]
+        return [flag, system_text]
     path = directory / "system.txt"
     path.write_text(system_text, encoding="utf-8")
-    return ["--append-system-prompt-file", str(path)]
+    return [f"{flag}-file", str(path)]
 
 
 # D72. A turn that carries a picture reads stdin as stream-json: one user line, then end of file.
 PICTURE_INPUT_ARGS = ["--input-format", "stream-json"]
 
 
-def build_command(executable: str, mcp_config: Path, system_text: str, directory: Path, pictures: bool = False) -> list[str]:
+def build_command(
+    executable: str, mcp_config: Path, system_text: str, directory: Path, pictures: bool = False, replace_system: bool = False
+) -> list[str]:
     """A member's segment: the lockdown, the freeduet bridge as the only MCP server. With `pictures` the
     CLI reads its input as stream-json (D72); without, the command is what it always was."""
     extra = PICTURE_INPUT_ARGS if pictures else []
-    return [executable, *LOCKDOWN_ARGS, *extra, "--mcp-config", str(mcp_config), *_system_args(system_text, directory)]
+    return [executable, *LOCKDOWN_ARGS, *extra, "--mcp-config", str(mcp_config), *_system_args(system_text, directory, replace_system)]
 
 
 def picture_input(prompt: str, pictures) -> bytes:

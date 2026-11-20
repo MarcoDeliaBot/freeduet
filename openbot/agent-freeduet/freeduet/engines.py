@@ -66,6 +66,8 @@ _ENGINE_KEYS = frozenset(
         "model",
         "credential_secret_ref",
         "no_key",
+        "first_answer_seconds",
+        "light",
     }
 )
 _TOP_KEYS = frozenset({"engines", "metered", "chains", "quality_floor", "assistants", "switching"})
@@ -106,6 +108,11 @@ class Engine:
     locked_reason: str | None = None
     experimental_local_login: bool = False
     no_key: bool = False  # an `anthropic-compatible` endpoint on this machine that takes no key (see _compatible_problems)
+    # D108. How long a LOCAL model may take to start its answer (a slow first read of a long prompt), in seconds; None is
+    # the default for a local entry. Only a local entry may set it (`is_local_model`): the limit of a cloud or login engine is never lengthened.
+    first_answer_seconds: float | None = None
+    # D108. True sends this entry the light turn (a much smaller prompt); False never does; None is "yes for a local model".
+    light: bool | None = None
 
 
 @dataclass(frozen=True)
@@ -240,6 +247,57 @@ def is_local_host(host: str | None) -> bool:
         return ipaddress.ip_address(name).is_loopback
     except ValueError:
         return False
+
+
+#: D108. The bounds of `first_answer_seconds`, and the default for a local entry: a 35,000-token prompt read at 80 tokens a
+#: second takes about 440 s before the first word (seen live, 20 November 2026).
+MIN_FIRST_ANSWER_SECONDS = 10.0
+MAX_FIRST_ANSWER_SECONDS = 7200.0
+LOCAL_FIRST_ANSWER_SECONDS = 900.0
+
+
+def _is_private_host(host: str | None) -> bool:
+    """This machine, or a private network address (10.x, 172.16-31.x, 192.168.x, link-local) or a `.local` name."""
+    name = (host or "").strip().lower()
+    if is_local_host(name) or name.endswith(".local"):
+        return True
+    try:
+        address = ipaddress.ip_address(name)
+    except ValueError:
+        return False
+    return address.is_private or address.is_link_local
+
+
+def _local_endpoint(billing: Any, base_url: str | None, no_key: bool) -> bool:
+    if billing != "free":
+        return False
+    if no_key:
+        return True
+    try:
+        return _is_private_host(urlsplit(base_url or "").hostname)
+    except ValueError:
+        return False
+
+
+def is_local_model(engine: Engine) -> bool:
+    """A model that runs on this machine or this network, for free: an `anthropic-compatible` entry that says `billing: free`
+    and takes no key, or whose host is loopback or a private address (D108). A cloud engine, a login and a paid gateway are not."""
+    return engine.kind == COMPATIBLE_KIND and _local_endpoint(engine.billing, engine.base_url, engine.no_key)
+
+
+def first_answer_limit(engine: Engine) -> float | None:
+    """How long this engine may say nothing before the router moves on, or None for the router's own limit (D108). Only a
+    local model has one: the entry's `first_answer_seconds`, else 900 s."""
+    if not is_local_model(engine):
+        return None
+    return engine.first_answer_seconds if engine.first_answer_seconds is not None else LOCAL_FIRST_ANSWER_SECONDS
+
+
+def is_light(engine: Engine) -> bool:
+    """Whether a turn on this engine is the light turn (D108): the entry's own `light`, else yes for a local model."""
+    if engine.light is not None:
+        return engine.light
+    return is_local_model(engine)
 
 
 def in_hidden_folder(path: str) -> bool:
@@ -431,6 +489,19 @@ def _parse_engine(engine_id: str, entry: Any, problems: list[str]) -> Engine | N
     elif no_key and kind != COMPATIBLE_KIND:
         problems.append(f"{where}: `no_key` is only for an `{COMPATIBLE_KIND}` engine")
 
+    first_answer = entry.get("first_answer_seconds")
+    if first_answer is not None and (
+        not _is_number(first_answer) or not MIN_FIRST_ANSWER_SECONDS <= first_answer <= MAX_FIRST_ANSWER_SECONDS
+    ):
+        problems.append(
+            f"{where}: `first_answer_seconds` must be a number from {MIN_FIRST_ANSWER_SECONDS:g} to {MAX_FIRST_ANSWER_SECONDS:g}"
+        )
+    light = entry.get("light")
+    if light is not None and not _is_bool(light):
+        problems.append(f"{where}: `light` must be true or false, not {light!r}")
+    elif light is not None and kind != COMPATIBLE_KIND:
+        problems.append(f"{where}: `light` is only for an `{COMPATIBLE_KIND}` engine")
+
     command = _optional_text(entry, "command", where, problems)
     base_url = _optional_text(entry, "base_url", where, problems)
     model = _optional_text(entry, "model", where, problems)
@@ -463,6 +534,11 @@ def _parse_engine(engine_id: str, entry: Any, problems: list[str]) -> Engine | N
         refused = openrouter_free_problem(where, base_url, billing, model)
         if refused is not None:
             problems.append(refused)
+    if first_answer is not None and _is_number(first_answer) and not (
+        kind == COMPATIBLE_KIND and _local_endpoint(billing, base_url, no_key is True)
+    ):
+        # D108: a cloud or login engine keeps the router's limit; only a model on this machine or this network may take longer.
+        problems.append(f"{where}: `first_answer_seconds` is only for a free `{COMPATIBLE_KIND}` entry on this machine or network")
     if kind in API_KINDS and model is None:
         problems.append(f"{where}: a `{kind}` engine needs `model`")
     if enabled is True and model is not None and _PLACEHOLDER.match(model):
@@ -483,6 +559,8 @@ def _parse_engine(engine_id: str, entry: Any, problems: list[str]) -> Engine | N
         locked_reason=locked_reason,
         experimental_local_login=experimental,
         no_key=no_key is True,
+        first_answer_seconds=float(first_answer) if first_answer is not None and _is_number(first_answer) else None,
+        light=light if _is_bool(light) else None,
     )
 
 
