@@ -101,6 +101,7 @@ from .engines import (
 )
 from .failure_classifier import AUTH, LIMIT_KINDS, UNKNOWN, Failure, classify_failure
 from .stream_json import Final, StreamParser
+from .system_role_proxy import SystemRoleProxy
 
 log = logging.getLogger("freeduet.compatible_engine")
 
@@ -499,6 +500,7 @@ class CompatibleEngine(EngineAdapter):
         tasks: set[asyncio.Task] = set()
         readers: tuple[asyncio.Task, ...] = ()
         process = None
+        proxy: SystemRoleProxy | None = None
 
         def said() -> str:
             return scrub.text(bytes(stderr).decode("utf-8", errors="replace"))
@@ -528,6 +530,14 @@ class CompatibleEngine(EngineAdapter):
             config = claude_cli.write_mcp_config(ctx.directory, gate.port, gate.secret)
             command = claude_cli.build_command(self._binary or claude_cli.claude_bin(), config, ctx.system, ctx.directory)
             env = {**self._environment(os.environ, key), **_private_homes(ctx.directory)}
+            # D105: the CLI sends its environment section as a message with role "system"; an endpoint such as Ollama
+            # refuses that. A loopback hop of this turn moves it into the top-level `system` field and changes nothing else.
+            host = urlsplit(self._engine.base_url or "").hostname
+            proxy = await SystemRoleProxy(
+                self._engine.base_url or "", use_environment_proxy=not (host and is_local_host(host))
+            ).__aenter__()
+            env["ANTHROPIC_BASE_URL"] = proxy.url
+            _bypass_proxy(env, "127.0.0.1")
             try:
                 process = await claude_cli.start(command, ctx.work, env)
             except OSError:
@@ -586,6 +596,8 @@ class CompatibleEngine(EngineAdapter):
             for task in list(tasks):
                 with suppress(asyncio.CancelledError, Exception):
                     await task
+            if proxy is not None:
+                await proxy.__aexit__(None, None, None)
 
 
 def adapters_from_config(config: EnginesConfig, binary: str | None = None) -> dict[str, EngineAdapter]:

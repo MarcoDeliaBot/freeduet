@@ -201,20 +201,20 @@ def test_when_claude_is_limited_and_the_paid_engine_is_held_the_person_is_told_b
     events = go(client, team)
     assert (events[-1]["type"], events[-1]["code"]) == ("RUN_ERROR", "FREEDUET_ENGINE_LIMITED")
     assert events[-1]["message"] == (
-        f"Every engine is unavailable right now. The earliest is back at 00:00 UTC. {DAILY_STOP}. "
+        f"Every engine is unavailable right now. The earliest is back on Nov 15, 2026 at 00:00 UTC. {DAILY_STOP}. "
         "Your message is kept: send it again later."
     )
     assert team["paid"].runs() == 0
     italian = go(client, team, "run-2", italian=True)  # Claude is held open by its breaker now: not even started again
     assert italian[-1]["message"] == (
-        "Ora nessun motore è disponibile. Il primo torna alle 00:00 UTC. "
+        "Ora nessun motore è disponibile. Il primo torna il 15 novembre 2026 alle 00:00 UTC. "
         "paid ha raggiunto il limite giornaliero che hai impostato (1.00 EUR). Il tuo messaggio è conservato: rimandalo più tardi."
     )
     assert team.claude.runs() == 1
 
 
 def test_a_months_limit_is_not_called_a_time_of_day_but_a_days_limit_is(tmp_path, fake_cli, monkeypatch):
-    # The notices write a clock time ("back at 00:00 UTC"), true of a day's limit and not of a month's: the router hands the
+    # The notices write a clock time ("back on Nov 15, 2026 at 00:00 UTC"), true of a day's limit and not of a month's: the router hands the
     # month's end to no notice, so that a month-long hold is never announced as tonight.
     day = paid_team(folder(tmp_path, "day"), fake_cli, monkeypatch)
     day.ledger.record("paid", spend(1.0), "EUR")

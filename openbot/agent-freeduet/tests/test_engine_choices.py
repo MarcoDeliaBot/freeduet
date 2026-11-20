@@ -23,7 +23,7 @@ from helpers import post_run, run_body, standing, types
 
 ASK = [standing(), {"id": "u1", "role": "user", "content": "Write the plan as a page."}]
 LIMIT = {"replay": "usage_limit.jsonl"}
-UNTIL = "00:00 UTC"
+UNTIL = "Jan 1, 2100 at 00:00 UTC"  # D105: the reset is on another UTC day than the fake clock, so the date is said
 QUESTION = (
     f'Claude Code reached its limit until {UNTIL}. Switch to Codex, wait, or pick another? '
     'Reply "switch", "wait", or name another engine.'

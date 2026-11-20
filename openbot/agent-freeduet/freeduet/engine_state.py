@@ -338,6 +338,10 @@ class EngineState:
         except Exception:  # noqa: BLE001
             log.warning("engine state: a probe was not applied", exc_info=True)
 
+    def now(self) -> datetime:
+        """The service's clock, in UTC: what the notices call today."""
+        return self._stamp()
+
     def _stamp(self) -> datetime:
         try:
             moment = self._now() if self._now is not None else None

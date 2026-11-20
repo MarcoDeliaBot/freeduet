@@ -308,7 +308,7 @@ class Router:
             if what == "wait":
                 row = self.state.row(order[0]) if order else None
                 label = self.adapters[order[0]].label if order else ""
-                for event in _say(notices.waiting(lang, label, row.limited_until if row else None)):
+                for event in _say(notices.waiting(lang, label, row.limited_until if row else None, self.state.now())):
                     yield event
                 yield agui.run_finished(run)
                 return
@@ -339,14 +339,14 @@ class Router:
             key = self._pick(order, tried, floors, blocked)
             if key is None:
                 if choice.pin is not None and blocked:
-                    yield agui.run_error(notices.pinned(lang, *blocked[-1]), ENGINE_LIMITED)
+                    yield agui.run_error(notices.pinned(lang, *blocked[-1], now=self.state.now()), ENGINE_LIMITED)
                     return
                 until = min((b[2] for b in blocked if b[2] is not None), default=None)
                 key_off = [label for label, kind, _ in blocked if kind == notices.KEY]
                 held_off = [(label, kind) for label, kind, _ in blocked if isinstance(kind, notices.Held)]
                 paid = self._paid_left_out(member.id)
                 yield agui.run_error(
-                    notices.all_limited(lang, until, paid, key_off, held_off, self._paid_gaps(paid)), ENGINE_LIMITED
+                    notices.all_limited(lang, until, paid, key_off, held_off, self._paid_gaps(paid), self.state.now()), ENGINE_LIMITED
                 )
                 return
             if stopped is None and blocked:
@@ -357,12 +357,12 @@ class Router:
                     yield agui.run_error(notices.loop_stop(lang, switches), ENGINE_LIMITED)
                     return
                 if choice.mode == "ask-first" and not authorised:
-                    for event in _say(notices.asked(lang, *stopped, self.adapters[key].label)):
+                    for event in _say(notices.asked(lang, *stopped, self.adapters[key].label, self.state.now())):
                         yield event
                     yield agui.run_finished(run)
                     return
                 switches += 1
-                pending.append(notices.switched(lang, *stopped, self.adapters[key].label, progress))
+                pending.append(notices.switched(lang, *stopped, self.adapters[key].label, progress, self.state.now()))
             ticket = self.state.begin(key)
             if ticket is None:  # the breaker said no between the look and the ask (a half-open probe taken)
                 tried.add(key)

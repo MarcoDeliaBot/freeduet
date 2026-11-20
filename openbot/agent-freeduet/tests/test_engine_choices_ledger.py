@@ -26,9 +26,9 @@ DAILY_STOP = "paid reached the daily limit you set (1.00 EUR)"
 PINNED = ", and this assistant is pinned to it, so I stopped here and did not switch to another engine."
 CLAUDE_ANSWERS = f"{DAILY_STOP}, so Claude Code is answering instead.Claude answered."
 HELD_QUESTION = f'{DAILY_STOP}. Switch to Claude Code, wait, or pick another? Reply "switch", "wait", or name another engine.'
-OFFERED_QUESTION = 'Claude Code reached its limit until 00:00 UTC. Switch to paid, wait, or pick another? Reply "switch", "wait", or name another engine.'
+OFFERED_QUESTION = 'Claude Code reached its limit until Jan 1, 2100 at 00:00 UTC. Switch to paid, wait, or pick another? Reply "switch", "wait", or name another engine.'
 NO_ENGINE = (
-    "Every engine is unavailable right now. The earliest is back at 00:00 UTC. "
+    "Every engine is unavailable right now. The earliest is back on Nov 15, 2026 at 00:00 UTC. "
     f"{DAILY_STOP}. Your message is kept: send it again later."
 )
 

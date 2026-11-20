@@ -6,6 +6,10 @@ Each version says what was and was not run live. "Run live" means run on a real 
 
 ## [Unreleased]
 
+### Fixed
+
+- A member's turn on a local model (Ollama) no longer fails at the request, and the engine notices name the day (D105; `docs/M1_PLAN.md` section 67). (1) The Claude Code CLI sends its "# Environment" section as a message with role "system" after the user's message, and Ollama's Anthropic-compatible endpoint answers 500 "no user query found in messages", so three tries later the breaker marked the engine unavailable (seen live on 20 November 2026). An `anthropic-compatible` entry now reaches its endpoint through a loopback hop of agent-freeduet that moves such messages into the request's top-level `system` field and changes nothing else; the Claude engine is untouched. (2) "Claude Code ha raggiunto il limite fino alle 06:00 UTC" gave no day for a limit that reset two days later; every notice that names a reset now says the date too when it is not today (UTC), in English and Italian. Not run live again: the first real turn on a local model is still not proven; the fix is for the request shape seen on 20 November 2026.
+
 ### Changed
 
 - The description of background research in a member's Memory page says it is off until you turn it on (follow-up to D80). It still said "on by default", which stopped being true with D80. Found in the live test of 20 November 2026, which saw the setting off on a real installation.

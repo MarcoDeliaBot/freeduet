@@ -47,8 +47,51 @@ def language_of(run) -> str:
     return "it" if code == "it" else "en"
 
 
+_MONTHS = {
+    "en": ("Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"),
+    "it": ("gennaio", "febbraio", "marzo", "aprile", "maggio", "giugno", "luglio", "agosto", "settembre", "ottobre", "novembre", "dicembre"),
+}
+
+
 def clock(moment: datetime | None) -> str | None:
     return moment.astimezone(UTC).strftime("%H:%M UTC") if moment is not None else None
+
+
+def _now(now: datetime | None) -> datetime:
+    return datetime.now(UTC) if now is None else now.astimezone(UTC)
+
+
+def when_of(lang: str, moment: datetime | None, now: datetime | None = None) -> tuple[str | None, str] | None:
+    """A time as the notices say it: the clock time in UTC and, when that moment is not on today's date in UTC, the date too
+    (D105). A reset a few days away, such as a weekly limit's, said as a bare "06:00 UTC" reads as already past. The year is
+    added only when it is not this year's."""
+    if moment is None:
+        return None
+    moment, today = moment.astimezone(UTC), _now(now)
+    time = moment.strftime("%H:%M UTC")
+    if moment.date() == today.date():
+        return None, time
+    month = _MONTHS[lang][moment.month - 1]
+    if lang == "it":
+        date = f"{moment.day} {month}" + (f" {moment.year}" if moment.year != today.year else "")
+    else:
+        date = f"{month} {moment.day}" + (f", {moment.year}" if moment.year != today.year else "")
+    return date, time
+
+
+def _until(lang: str, when: tuple[str | None, str]) -> str:
+    date, time = when
+    if lang == "it":
+        return f"fino al {date} alle {time}" if date else f"fino alle {time}"
+    return f"until {date} at {time}" if date else f"until {time}"
+
+
+def _back(lang: str, when: tuple[str | None, str]) -> str:
+    """"at 06:00 UTC", or with the date: "on Nov 22 at 06:00 UTC" (Italian: "alle ..." or "il 22 novembre alle ...")."""
+    date, time = when
+    if lang == "it":
+        return f"il {date} alle {time}" if date else f"alle {time}"
+    return f"on {date} at {time}" if date else f"at {time}"
 
 
 def _held(lang: str, label: str, held: Held) -> str:
@@ -66,21 +109,21 @@ def _held(lang: str, label: str, held: Held) -> str:
     return f"{label} is held back because FreeDuet cannot tell what it has cost"
 
 
-def _reason(lang: str, label: str, kind: str, until: str | None) -> str:
+def _reason(lang: str, label: str, kind: str, until: tuple[str | None, str] | None) -> str:
     """The first half of a notice: why `label` cannot take the turn."""
     if isinstance(kind, Held):
         return _held(lang, label, kind)
     limited = kind in (RATE_LIMIT, USAGE_LIMIT, CREDITS)
     if lang == "it":
         if limited:
-            return f"{label} ha raggiunto il limite fino alle {until}" if until else f"{label} ha raggiunto il limite"
+            return f"{label} ha raggiunto il limite {_until(lang, until)}" if until else f"{label} ha raggiunto il limite"
         if kind == AUTH:
             return f"{label} non ha effettuato l'accesso"
         if kind == KEY:
             return f"{label} non ha una chiave accettata dal suo gateway"
         return f"{label} non risponde"
     if limited:
-        return f"{label} reached its limit until {until}" if until else f"{label} reached its limit"
+        return f"{label} reached its limit {_until(lang, until)}" if until else f"{label} reached its limit"
     if kind == AUTH:
         return f"{label} is not signed in"
     if kind == KEY:
@@ -88,14 +131,14 @@ def _reason(lang: str, label: str, kind: str, until: str | None) -> str:
     return f"{label} is not answering"
 
 
-def reason(lang: str, label: str, kind: str, until: datetime | None) -> str:
-    return _reason(lang, label, kind, clock(until))
+def reason(lang: str, label: str, kind: str, until: datetime | None, now: datetime | None = None) -> str:
+    return _reason(lang, label, kind, when_of(lang, until, now))
 
 
-def switched(lang: str, old: str, kind: str, until: datetime | None, new: str, progress: str) -> str:
+def switched(lang: str, old: str, kind: str, until: datetime | None, new: str, progress: str, now: datetime | None = None) -> str:
     """The one line shown at a switch. `progress` says how far the turn got, so the person knows whether anything
     was already said or done."""
-    why = reason(lang, old, kind, until)
+    why = reason(lang, old, kind, until, now)
     if lang == "it":
         tail = {
             NONE: f"quindi risponde {new} al suo posto.",
@@ -118,24 +161,24 @@ def without_tools(lang: str, tools: list[str], tier: str) -> str:
     return f"I cannot use {names} here: only a tier {tier} engine may."
 
 
-def asked(lang: str, old: str, kind: str, until: datetime | None, new: str) -> str:
-    why = reason(lang, old, kind, until)
+def asked(lang: str, old: str, kind: str, until: datetime | None, new: str, now: datetime | None = None) -> str:
+    why = reason(lang, old, kind, until, now)
     if lang == "it":
         return f'{why}. Passo a {new}, aspetto, o ne scelgo un altro? Rispondi "passa", "aspetta" o scrivi il nome di un altro motore.'
     return f'{why}. Switch to {new}, wait, or pick another? Reply "switch", "wait", or name another engine.'
 
 
-def waiting(lang: str, label: str, until: datetime | None) -> str:
-    when = clock(until)
+def waiting(lang: str, label: str, until: datetime | None, now: datetime | None = None) -> str:
+    when = when_of(lang, until, now)
     if lang == "it":
-        back = f" (torna alle {when})" if when else ""
+        back = f" (torna {_back(lang, when)})" if when else ""
         return f"Va bene, non cambio motore. Aspetto {label}{back}: manda di nuovo il messaggio quando vuoi."
-    back = f" (back at {when})" if when else ""
+    back = f" (back {_back(lang, when)})" if when else ""
     return f"Understood, I will not switch. Waiting for {label}{back}: send your message again when you like."
 
 
-def pinned(lang: str, label: str, kind: str, until: datetime | None) -> str:
-    why = reason(lang, label, kind, until)
+def pinned(lang: str, label: str, kind: str, until: datetime | None, now: datetime | None = None) -> str:
+    why = reason(lang, label, kind, until, now)
     if lang == "it":
         return f"{why}, e questo assistente è fissato su di esso: mi fermo qui e non passo a un altro motore."
     return f"{why}, and this assistant is pinned to it, so I stopped here and did not switch to another engine."
@@ -221,13 +264,14 @@ def all_limited(
     key_labels: Sequence[str] = (),
     held: Sequence[tuple[str, str]] = (),
     paid_gaps: Mapping[str, str] | None = None,
+    now: datetime | None = None,
 ) -> str:
-    when = clock(until)
+    when = when_of(lang, until, now)
     extra = key_refused(lang, key_labels) + held_off(lang, held) + paid_off(lang, paid_off_labels, paid_gaps)
     if lang == "it":
-        back = f" Il primo torna alle {when}." if when else ""
+        back = f" Il primo torna {_back(lang, when)}." if when else ""
         return f"Ora nessun motore è disponibile.{back}{extra} Il tuo messaggio è conservato: rimandalo più tardi."
-    back = f" The earliest is back at {when}." if when else ""
+    back = f" The earliest is back {_back(lang, when)}." if when else ""
     return f"Every engine is unavailable right now.{back}{extra} Your message is kept: send it again later."
 
 
