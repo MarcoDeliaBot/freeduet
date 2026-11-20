@@ -238,10 +238,11 @@ async def run_segment(run: RunInput, member: Member, notes: SegmentNotes | None 
     notes = notes if notes is not None else SegmentNotes()
     active_lessons = await _lessons_for(run, member)
     # The tool notes, then the person's language when the deployment set one (person_language.py).
+    if light:
+        run = dataclasses.replace(run, tools=[tool for tool in run.tools if tool.get("name") in transcript.LIGHT_TOOLS])
+    # Written after the light filter, so no note describes a tool this turn does not offer.
     run_notes = [*tool_notes.notes_for(run, member), *person_language.notes_for(run), *person_tone.notes_for(run), *extra_notes]
     if light:
-        # The notes above were written from the tools OpenBot offered; the light turn then keeps only a plain turn's tools.
-        run = dataclasses.replace(run, tools=[tool for tool in run.tools if tool.get("name") in transcript.LIGHT_TOOLS])
         run_notes.append(transcript.LIGHT_NOTE)
     offered = {tool["name"] for tool in run.tools}
     local = None if light else iris_tools.for_run(run, member.id, offered)  # Iris's team-log and lesson tools are not a plain turn's

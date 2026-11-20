@@ -407,12 +407,12 @@ class Router:
             held: dict | None = None
             saw_output, finished = False, False
             builder = _Produced()
+            pending_event = None
             try:
                 limit = first_answer_limit(engine) or first_output_seconds()  # D108: only a local model has its own
                 local = is_local_model(engine)
                 said_reading = False
                 loop = asyncio.get_running_loop()
-                pending_event = None
                 while True:
                     if pending_event is None:
                         pending_event = asyncio.ensure_future(_next(stream))
@@ -459,6 +459,11 @@ class Router:
                     if finished:
                         break
             finally:
+                if pending_event is not None and not pending_event.done():
+                    # The client went away while a notice was being yielded: the read of the stream must not outlive it.
+                    pending_event.cancel()
+                    with contextlib.suppress(asyncio.CancelledError, Exception):
+                        await pending_event
                 await stream.aclose()
                 attempt.settle()
             if finished:

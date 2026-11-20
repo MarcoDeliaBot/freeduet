@@ -163,15 +163,45 @@ def members():
 
 def test_the_light_system_text_drops_the_catalog_and_the_holdings_cuts_the_memory_and_keeps_the_rest():
     member = Member("chef", "You are Basil, the chef. SHARED RULES PARAGRAPH.")
-    rows = system_rows("chef", member.system_prompt)
+    rows = system_rows("chef", member.system_prompt, channel=5000)
     light = transcript.render(member, rows, context_of(rows), notes=[transcript.LIGHT_NOTE], light=True).system
     assert "CATALOG" not in light and "HOLDINGS" not in light
     assert light.startswith("You are Basil, the chef. SHARED RULES PARAGRAPH.")
-    assert "MEMORY" in light and transcript.LIGHT_CUT.strip() in light  # cut, and says so
+    assert "m" * 20000 in light  # the personal memory is never cut
+    assert transcript.LIGHT_CUT.strip() in light  # the channel row is cut, and says so
     assert "CHANNEL" in light and transcript.LIGHT_NOTE in light and transcript.RUNTIME_NOTE in light
     assert light.count("MEMORY") == 1  # the context entry that repeats the row does not bring it back whole
     full = transcript.render(member, rows, context_of(rows)).system
-    assert "CATALOG" in full and "HOLDINGS" in full and len(full) > 4 * len(light)
+    assert "CATALOG" in full and "HOLDINGS" in full and len(full) > 3 * len(light)
+
+
+def test_a_record_past_six_thousand_characters_of_the_personal_memory_reaches_the_light_prompt():
+    import json
+
+    member = Member("chef", "You are Basil.")
+    records = [{"id": f"r{i}", "text": "Likes " + "pasta " * 30} for i in range(40)]
+    records.append({"id": "allergy", "text": "ALLERGY: never any peanuts, severe"})
+    memory = "CRITICAL: respect every record below.\n" + json.dumps(records)
+    assert memory.index("peanuts") > 6000
+    rows = [
+        {"id": "standing-role:chef", "role": "system", "content": member.system_prompt},
+        {"id": "openbot:personal-memory", "role": "system", "content": memory},
+        {"id": "u1", "role": "user", "content": "Dinner?"},
+    ]
+    for context in ([], [{"description": "OpenBot personal memory", "value": memory}]):
+        assert "never any peanuts" in transcript.render(member, rows, context, light=True).system
+    only_context = [rows[0], rows[2]]  # a built-in Bot: the memory arrives only as a context entry
+    assert "never any peanuts" in transcript.render(member, only_context, [{"description": "OpenBot personal memory", "value": memory}], light=True).system
+
+
+def test_the_channel_row_and_its_context_entry_are_cut_at_the_same_three_thousand_characters():
+    member = Member("chef", "You are Basil.")
+    channel = "CHANNEL " + "c" * 5000
+    rows = [{"id": "standing-role:chef", "role": "system", "content": member.system_prompt}, {"id": "openduet:channel", "role": "system", "content": channel}]
+    as_row = transcript.render(member, rows, [], light=True).system
+    as_context = transcript.render(member, rows[:1], [{"description": "Channel", "value": channel}], light=True).system
+    assert "c" * 2900 in as_row and "c" * 3001 not in as_row
+    assert "c" * 2900 in as_context and "c" * 3001 not in as_context
 
 
 def test_an_unknown_row_is_kept_not_dropped_by_a_guess():
@@ -182,12 +212,12 @@ def test_an_unknown_row_is_kept_not_dropped_by_a_guess():
 
 @pytest.mark.parametrize("member", members(), ids=lambda m: m.id)
 def test_every_members_light_prompt_keeps_its_whole_own_prompt_and_stays_under_eight_thousand_tokens(member):
-    rows = system_rows(member.id, member.system_prompt)  # a memory, a catalog and holdings far larger than a normal turn's
+    rows = system_rows(member.id, member.system_prompt, memory=6000)  # a normal memory (the light turn never cuts it); a catalog and holdings far larger than a normal turn's
     light = transcript.render(member, rows, context_of(rows), notes=[transcript.LIGHT_NOTE], light=True).system
     assert member.system_prompt in light  # the shared rules and every other rule of the member, word for word
     assert len(light) <= 28_000  # about 7,000 tokens at 4 characters a token, with the tool list and the question still to add
     full = transcript.render(member, rows, context_of(rows)).system
-    assert len(full) > 75_000  # the shape seen live: 79,521 characters in one system block
+    assert len(full) > 60_000  # the shape seen live: 79,521 characters in one system block
 
 
 TOOLS = [

@@ -52,9 +52,13 @@ RUNTIME_NOTE = (
 # system row and the description it gives each context entry. A row it does not know is KEPT, never dropped by a guess.
 LIGHT_DROPPED_ROWS = ("openbot:learned-skills", "granted-tools:")  # the skill catalog; the holdings guidance for tools the turn is not offered
 LIGHT_DROPPED_CONTEXT = ("OpenBot learned skills",)
-LIGHT_ROW_CAPS = {"openbot:personal-memory": 6000, "openduet:channel": 3000}
+# The personal memory is NEVER cut: it holds the person's allergies and "never X" records, as JSON, and a cut would lose one silently.
+LIGHT_ROW_CAPS = {"openduet:channel": 3000}
+LIGHT_NEVER_CUT_ROWS = ("openbot:personal-memory",)
+LIGHT_NEVER_CUT_CONTEXT = ("OpenBot personal memory",)
+LIGHT_CONTEXT_CAP = 3000  # a context entry no row carried
 LIGHT_ROW_CAP = 6000  # any other row the light turn keeps
-LIGHT_CUT = "\n[The rest of this note is left out of this short turn. Use recall_personal_memory if you need more.]"
+LIGHT_CUT = "\n[The rest of this note is left out of this short turn.]"
 # The tools a plain conversation turn keeps: the hand-off, the question to the person, the two memory tools.
 LIGHT_TOOLS = frozenset({"message_bot", "ask_person", "recall_personal_memory", "remember_personal_fact"})
 
@@ -296,7 +300,7 @@ def _own_rows(member: Member, messages: list[dict], light: bool = False) -> list
         if light and message_id.startswith(LIGHT_DROPPED_ROWS):
             continue
         text = _content_text(message.get("content")).strip()
-        if light and bot_row_owner(message) != member.id:
+        if light and bot_row_owner(message) != member.id and message_id not in LIGHT_NEVER_CUT_ROWS:
             text = _capped(text, LIGHT_ROW_CAPS.get(message_id, LIGHT_ROW_CAP))
         (own if bot_row_owner(message) == member.id else rest).append(text)
     return own + rest
@@ -336,7 +340,8 @@ def _system_text(
         if light:
             if value in sent_as_rows:  # a row already said it (kept, cut or dropped): not again
                 continue
-            value = _capped(value, LIGHT_ROW_CAP)
+            if _as_text(entry.get("description")).strip() not in LIGHT_NEVER_CUT_CONTEXT:
+                value = _capped(value, LIGHT_CONTEXT_CAP)
         if value and value not in said:
             said.add(value)
             description = _as_text(entry.get("description")).strip()
