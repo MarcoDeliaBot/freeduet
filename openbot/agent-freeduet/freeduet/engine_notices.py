@@ -19,6 +19,27 @@ from .tools_as_text import TOOLS_AS_TEXT
 from .ledger import DAILY, MONTHLY
 
 NONE, TEXT, TOOL = "none", "text", "tool"  # how far the turn got on the engine that stopped
+class Upstream(str):
+    """D121: the kind of an engine whose model the provider behind a router rate-limited (OpenRouter's free models: the
+    provider answers 429 to every request for a while). A string, like ``Held``; ``model`` is the model's id."""
+
+    model: str
+
+    def __new__(cls, model: str):
+        kind = super().__new__(cls, "upstream-limited")
+        kind.model = model
+        return kind
+
+
+def upstream_note(model: str) -> str:
+    """What the Engines page shows beside the engine (English, like the other notes of the router)."""
+    return f"The free model {model} is rate-limited by its provider; choose another model on the OpenRouter card."
+
+
+def is_upstream_note(text: str | None) -> bool:
+    return isinstance(text, str) and text == upstream_note(text.removeprefix("The free model ").split(" is rate-limited")[0])
+
+
 #: A kind of its own for an engine that runs on a key (an `anthropic-compatible` gateway): the key is missing or
 #: refused, which is not a sign-in the person can do in a terminal. Chosen by the router, never by the classifier.
 KEY = "key"
@@ -115,6 +136,10 @@ def _reason(lang: str, label: str, kind: str, until: tuple[str | None, str] | No
     if isinstance(kind, Held):
         return _held(lang, label, kind)
     limited = kind in (RATE_LIMIT, USAGE_LIMIT, CREDITS)
+    if isinstance(kind, Upstream):  # D121
+        if lang == "it":
+            return f"{label}: il modello gratuito {kind.model} è limitato dal suo fornitore (scegli un altro modello nella scheda OpenRouter)"
+        return f"{label}: the free model {kind.model} is rate-limited by its provider (choose another model on the OpenRouter card)"
     if kind == TOOLS_AS_TEXT:  # D116
         if lang == "it":
             return f"{label} ha scritto le chiamate agli strumenti come testo invece di usarle"
@@ -171,6 +196,28 @@ def local_reading(lang: str, label: str) -> str:
     if lang == "it":
         return f"Il modello locale ({label}) sta leggendo la richiesta: può servire qualche minuto prima della risposta."
     return f"The local model ({label}) is reading your request: it can take a few minutes before the answer starts."
+
+
+def hold_wait(lang: str, label: str, seconds: int) -> str:
+    """D121: one line when an engine asks to wait a short while (a per-minute rate limit) and the turn waits for it and tries
+    it again, instead of moving to another engine."""
+    if lang == "it":
+        return f"{label} chiede di attendere {seconds} {'secondo' if seconds == 1 else 'secondi'}; aspetto e riprovo."
+    return f"{label} asks to wait {seconds} {'second' if seconds == 1 else 'seconds'}; I wait and try again."
+
+
+def conversation_too_long(lang: str, label: str) -> str:
+    """D121: the least a turn needs (the standing text, the person's memory and their latest message) does not fit the engine's
+    context, so nothing is sent to it."""
+    if lang == "it":
+        return (
+            f"Questa conversazione è troppo lunga per {label}, anche lasciando fuori i messaggi precedenti. "
+            "Avvia una nuova conversazione e ripeti la richiesta."
+        )
+    return (
+        f"This conversation is too long for {label}, even with the earlier messages left out. "
+        "Start a new conversation and ask again."
+    )
 
 
 def without_tools(lang: str, tools: list[str], tier: str) -> str:

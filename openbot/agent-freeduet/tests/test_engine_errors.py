@@ -147,6 +147,7 @@ GOLDEN = {
     'rate limit, try again in 1 day and 12 hours': ('rate_limit', 'rate limit, try again in 1 day and 12 hours', '2026-11-15T22:00:00+00:00'),
     'rate limit, try again in 1.5 hours': ('rate_limit', 'rate limit, try again in 1.5 hours', '2026-11-14T11:30:00+00:00'),
     'rate limit, try again in 12 days x 2 s': ('rate_limit', 'rate limit, try again in 12 days x 2 s', '2026-11-26T10:00:00+00:00'),
+    'API Error: 429 {"error":{"message":"Provider returned error","code":429,"metadata":{"raw":"google/gemma-4-26b-a4b-it:free is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits","provider_name":"Google AI Studio"}}}': ('rate_limit', 'API Error: 429 {"error":{"message":"Provider returned error","code":429,"metadata":{"raw":"google/gemma-4-26b-a4b-it:free is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits","provider_name":"Google AI Studio"}}}', None),
     'rate limit, try again in 1d 1h 1m 1s': ('rate_limit', 'rate limit, try again in 1d 1h 1m 1s', '2026-11-15T11:01:01+00:00'),
     'rate limit, try again in 1x': ('rate_limit', 'rate limit, try again in 1x', None),
     'rate limit, try again in 2 hr, 15 min and 30 seconds': ('rate_limit', 'rate limit, try again in 2 hr, 15 min and 30 seconds', '2026-11-14T12:15:30+00:00'),

@@ -62,6 +62,7 @@ from pathlib import Path
 from . import (
     agui,
     claude_cli,
+    engine_notices,
     iris_tools,
     lessons,
     origin,
@@ -227,11 +228,14 @@ class _InboxSink:
 
 async def run_segment(run: RunInput, member: Member, notes: SegmentNotes | None = None,
                       engine: EngineAdapter | None = None, *, announce: bool = True,
-                      extra_notes: tuple[str, ...] = (), light: bool = False) -> AsyncIterator[dict]:
+                      extra_notes: tuple[str, ...] = (), light: bool = False,
+                      context_tokens: int | None = None) -> AsyncIterator[dict]:
     """`announce=False` and `extra_notes` are for the engine chain (engine_router.py), which runs this once per
     engine it tries inside one turn: it has already sent RUN_STARTED, and tells the next engine what happened.
     `light` is the light turn of a local model (D108; transcript.py, LIGHT_*): a smaller system text and only the tools of
-    a plain conversation, with a note that says so. Approvals are the server's, not the prompt's, so none changes."""
+    a plain conversation, with a note that says so. Approvals are the server's, not the prompt's, so none changes.
+    `context_tokens` (D121) is the context size of an engine that has a known one: the transcript is cut to fit it (oldest turns
+    first, transcript.render), and a turn whose least part does not fit stops here with a plain message, before anything is sent."""
     if announce:
         yield agui.run_started(run)
     engine = engine if engine is not None else ClaudeEngine()
@@ -249,7 +253,13 @@ async def run_segment(run: RunInput, member: Member, notes: SegmentNotes | None 
     # What the bridge serves: the transcript writes earlier calls to these under the name the CLI
     # registers them by, mcp__freeduet__<name> (transcript.py).
     served = offered | (local.names if local else frozenset())
-    rendered = transcript.render(member, run.messages, run.context, active_lessons, run_notes, served=served, light=light)
+    try:
+        rendered = transcript.render(
+            member, run.messages, run.context, active_lessons, run_notes, served=served, light=light, context_tokens=context_tokens
+        )
+    except transcript.ContextTooSmall:
+        yield agui.run_error(engine_notices.conversation_too_long(engine_notices.language_of(run), engine.label))
+        return
     inbox: asyncio.Queue = asyncio.Queue()
     handed_over: list[str] = []  # refused calls to offered tools that this segment handed to OpenBot
     tasks: set[asyncio.Task] = set()
