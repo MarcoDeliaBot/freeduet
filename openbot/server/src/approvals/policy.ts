@@ -1,5 +1,12 @@
 import { approvalText } from "@openbot/shared/approval-text";
 import type { Message } from "@ag-ui/client";
+import {
+  CREDENTIALS_OTHER_LANGUAGES,
+  PAYMENTS_OTHER_LANGUAGES,
+  SECURITY_SETTINGS_OTHER_LANGUAGES,
+  foldWords,
+  type CompiledWords,
+} from "./safety-words";
 import { z } from "zod";
 import type {
   ApprovalCandidate,
@@ -182,6 +189,11 @@ const SAFETY_REQUIREMENTS: readonly {
   extra?: readonly RegExp[];
   /** FreeDuet: patterns for the tool's own name only. */
   inToolName?: readonly RegExp[];
+  /**
+   * FreeDuet, D131: the words in the ten other site languages (`safety-words.ts`), matched on the FOLDED
+   * words of the action (NFKC, lower case, no accents) and, for `inToolName`, on the folded tool name.
+   */
+  otherLanguages?: CompiledWords;
 }[] = [
   {
     id: "credentials",
@@ -189,6 +201,7 @@ const SAFETY_REQUIREMENTS: readonly {
     pattern:
       /pass(word|code|phrase)|passwd|\b2fa\b|two[-_ ]?factor|\bmfa\b|one[-_ ]?time[-_ ]?code|\botp\b|recovery[-_ ]?(code|key|email|phone)|security[-_ ]?question|api[-_ ]?key|access[-_ ]?token|credential|sign[-_ ]?in[-_ ]?method/i,
     extra: CREDENTIALS_IT,
+    otherLanguages: CREDENTIALS_OTHER_LANGUAGES,
   },
   {
     id: "security_settings",
@@ -196,6 +209,7 @@ const SAFETY_REQUIREMENTS: readonly {
     pattern:
       /security[-_ ]?settings?|\/settings\/security|account[-_ ]?security|sharing[-_ ]?settings?|share[-_ ]?with[-_ ]?(anyone|public)|make[-_ ]?public|admin[-_ ]?role|grant[-_ ]?admin|permission[-_ ]?settings?|delete[-_ ]?(my[-_ ]?)?account|close[-_ ]?account/i,
     extra: SECURITY_SETTINGS_IT_EN,
+    otherLanguages: SECURITY_SETTINGS_OTHER_LANGUAGES,
   },
   {
     id: "payments",
@@ -204,6 +218,7 @@ const SAFETY_REQUIREMENTS: readonly {
       /payment|\bpay(ing)?\b|pay[-_ ]?now|checkout|purchase|place[-_ ]?order|buy[-_ ]?now|\bwire\b|bank[-_ ]?transfer|transfer[-_ ]?(money|funds)|send[-_ ]?money|credit[-_ ]?card|card[-_ ]?number|\bcvv\b|\biban\b|routing[-_ ]?number|billing/i,
     extra: PAYMENTS_IT_EN,
     inToolName: MONEY_TOOL_NAMES,
+    otherLanguages: PAYMENTS_OTHER_LANGUAGES,
   },
 ];
 
@@ -328,14 +343,33 @@ export function safetyRequirement(
 
 function safetyEntryMatches(
   entry: (typeof SAFETY_REQUIREMENTS)[number],
-  words: string,
+  rawWords: string,
   toolRef: string,
 ): boolean {
+  // D131: the words are read in NFKC (full-width forms, zero-width characters) for the English and Italian
+  // lists too, and folded further for the other languages.
+  const words = rawWords.normalize("NFKC").replace(ZERO_WIDTH, "");
   return (
     entry.pattern.test(words) ||
     Boolean(entry.extra?.some((pattern) => pattern.test(words))) ||
-    Boolean(entry.inToolName?.some((pattern) => pattern.test(toolRef)))
+    Boolean(entry.inToolName?.some((pattern) => pattern.test(toolRef))) ||
+    otherLanguagesMatch(entry.otherLanguages, words, toolRef)
   );
+}
+
+const ZERO_WIDTH = /[\u00ad\u200b-\u200f\u2060\ufeff]/g;
+
+function otherLanguagesMatch(
+  compiled: CompiledWords | undefined,
+  words: string,
+  toolRef: string,
+): boolean {
+  if (!compiled) return false;
+  const folded = foldWords(words);
+  if (compiled.inWords.some((pattern) => pattern.test(folded))) return true;
+  if (!compiled.inToolName.length) return false;
+  const foldedTool = foldWords(toolRef);
+  return compiled.inToolName.some((pattern) => pattern.test(foldedTool));
 }
 
 /**
