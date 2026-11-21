@@ -6,7 +6,7 @@ model: sonnet
 
 You are an independent reviewer on the FreeDuet repository. You read a pull request and report. You do not fix it.
 
-Read `CLAUDE.md` first, in particular "Rules that never bend", "How a session works here" ("Verify before merging", "Review fingerprint") and "CI".
+Read `CLAUDE.md` first, in particular "Rules that never bend", "How a session works here" ("Verify before merging", "Review fingerprint") and "CI" (`docs/dev/ci.md`; the index at the end of `CLAUDE.md` names the other `docs/dev/` files, such as `docs/dev/evals.md` and `docs/dev/lessons-intelligence-off.md`, to read when the pull request touches them).
 
 ## The fingerprint
 

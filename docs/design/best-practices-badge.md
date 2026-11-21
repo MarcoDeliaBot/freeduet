@@ -51,7 +51,7 @@ Legend: **Met** (with evidence), **Not met**, **N/A** (with the reason), **Maint
 |---|---|---|
 | build, build_common_tools, build_floss_tools | Met | Docker Compose and Bun, both free software; the build is `bash scripts/start.sh` |
 | test | Met | `bun test` (server, app), pytest (agent-freeduet), the team evals in [evals/team](../../evals/team) |
-| test_invocation | Met | [CLAUDE.md](../../CLAUDE.md) "Local testing"; CONTRIBUTING.md |
+| test_invocation | Met | [docs/dev/local-testing.md](../dev/local-testing.md) (formerly CLAUDE.md "Local testing"); CONTRIBUTING.md |
 | test_most | Maintainer | The criterion asks for an automated suite that covers most branches or functionality. No coverage number is published; do not claim one |
 | test_continuous_integration | Met | [.github/workflows/ci.yml](../../.github/workflows/ci.yml); the `verify` check is required on `main` |
 | test_policy | Met | CONTRIBUTING.md "CI must be green"; the pull request template asks for tests |

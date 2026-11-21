@@ -61,7 +61,7 @@ Depth is the hop depth. The eval cases named here are analogues. Their fixtures 
 - Example 1 stops at step 2. Depth 2 for Iris's relays removes the second person message and needs no card (S1).
 - Example 2 stops at the card. The wiring announces it in the person's conversation, but whether the hop waits and resumes is not traced. Iris also cannot hand on from a relay, so S1 alone does not finish it; S5 does, once the wait is checked.
 - Example 3 stops inside the forward hop: no browser, no purchase tool. Depth does not help. It needs decision D-e, and no slice gives forward hops computer tools.
-- No eval shows any of this. A fixture cannot put a relay into a case, and a hop's tool calls are not in a case's transcript [doc: CLAUDE.md, "Team evals"].
+- No eval shows any of this. A fixture cannot put a relay into a case, and a hop's tool calls are not in a case's transcript [doc: docs/dev/evals.md, formerly CLAUDE.md "Team evals"].
 
 ## 3. The design
 
