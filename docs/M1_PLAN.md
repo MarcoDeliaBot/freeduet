@@ -1870,3 +1870,28 @@ Built on 21 November 2026 from D110 (section 72), with the maintainer's choice o
 | The default context of a local model whose size is unknown | 32,768 (built); or 8,192 | 32,768 | With 8,192 the standing text of a member alone (about 14,000 tokens for Iris) would be refused on every turn for a person whose Ollama serves more but whose size the page cannot read; the page writes the real size when the model sets `num_ctx` |
 | Cut the oldest messages, or summarise them | Cut with a note (built); or summarise first | Cut | A summary is a model call that costs time and money and can lose a "never" |
 
+
+## 81. Eight items from two research reports, in Next (D123)
+
+**Decided 21 November 2026 by the maintainer.** Two research reports of the same day were read: one on browser-use 1.0 against the browser of FreeDuet, one on "code mode", a model that writes a short script that calls tools instead of calling them one by one. Their findings are written as our own items; no code or test was copied from either project. The eight items are in [ROADMAP.md](ROADMAP.md), Next, rows 91 to 98, in the maintainer's priority order:
+
+1. Browser actions say what changed (row 91, effort S to M). A click or a typed entry returns what happened, so a snapshot is not needed after most actions.
+2. Native select menus and date fields (row 92, effort S). A test that fails first, then the change.
+3. Measure the model calls of each member turn (row 93, effort S). Prerequisite for item 7: no saving is promised before it is measured.
+4. Read several pages in one call, read only (row 94, effort S). The first step of code mode.
+5. Upload a file into a web page, behind the approval gate (row 95, effort M). A product and safety change: design first.
+6. Several browser tabs (row 96, effort M).
+7. Code mode for members, read only (row 97, effort M). Starts after items 3 and 4 are measured. Every call the script makes still goes through the gate and the network rules, and writes stay single calls, each with its card. Writes inside a script are not planned.
+8. A shorter CLAUDE.md (row 98, effort S). Moves the CI, site, team evals, maintainer's computer and local testing sections into skills. The saving, about 7,000 to 8,000 tokens per session, is an estimate and not yet measured.
+
+**Not adopted:** browser-use as a library or engine (see "What we don't adopt" in ROADMAP.md). It bypasses the approval gate and the network rules, makes a second model call per step, and its own documentation says it is not a sandbox.
+
+**Not built.** All eight rows are Planned. No code, test or prompt changed in this decision.
+
+**Decisions for the maintainer.**
+
+| Decision | Options | Recommendation | Reason |
+|---|---|---|---|
+| Upload a file into a web page (row 95) | Design first, then build; or build now | Design first | It is a write to a site and touches the approval gate |
+| Code mode (row 97) | Start after items 3 and 4 are measured; or start now | After measurement | The saving is not known until the calls per turn are measured |
+| Shorter CLAUDE.md (row 98) | Move sections into skills now; or after a preview of the new structure | Preview first | It changes the file every session reads, so the maintainer sees the new layout first |
