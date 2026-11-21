@@ -70,7 +70,7 @@ _ENGINE_KEYS = frozenset(
         "light",
     }
 )
-_TOP_KEYS = frozenset({"engines", "metered", "chains", "quality_floor", "assistants", "switching"})
+_TOP_KEYS = frozenset({"engines", "metered", "chains", "quality_floor", "assistants", "switching", "own_order"})
 _SWITCHING_KEYS = frozenset({"mode", "pin"})
 MODES = ("automatic", "ask-first")
 _METERED_KEYS = frozenset({"enabled", "currency", "daily_cap", "monthly_cap", "enforce"})
@@ -150,6 +150,9 @@ class EnginesConfig:
     assistants: Assistants
     source: str = "<memory>"
     switching: Mapping[str, Switching] = MappingProxyType({})
+    #: D115: members whose chain the person ordered by hand and confirmed. Their file order is kept as written; every other
+    #: chain is sorted logins first (:func:`order_logins_first`). Empty by default.
+    own_order: frozenset[str] = frozenset()
 
 
 # ── Loading ──────────────────────────────────────────────────────────────────────────────────────
@@ -199,6 +202,7 @@ def parse_engines(data: Any, source: str = "<memory>") -> EnginesConfig:
     floor = _parse_quality_floor(data.get("quality_floor"), problems)
     assistants = _parse_assistants(data.get("assistants"), engines, problems)
     switching = _parse_switching(data.get("switching"), engines, problems)
+    own_order = _parse_own_order(data.get("own_order"), problems)
 
     if problems:
         raise EnginesFileError(source, problems)
@@ -210,6 +214,7 @@ def parse_engines(data: Any, source: str = "<memory>") -> EnginesConfig:
         assistants=assistants,
         source=source,
         switching=MappingProxyType(switching),
+        own_order=own_order,
     )
 
 
@@ -637,6 +642,26 @@ def _parse_chains(
     return chains
 
 
+def _parse_own_order(raw: Any, problems: list[str]) -> frozenset[str]:
+    """D115: ``own_order`` is a list of member ids, each once. Absent or empty means every chain is sorted logins first."""
+    if raw is None:
+        return frozenset()
+    if not isinstance(raw, list):
+        problems.append("`own_order` must be a list of member ids")
+        return frozenset()
+    seen: list[str] = []
+    for item in raw:
+        if not isinstance(item, str) or not item.strip():
+            problems.append(f"own_order: {item!r} is not a member id")
+        elif item == DEFAULT_CHAIN:
+            problems.append("own_order: `default` is not a member; the default chain is always sorted logins first")
+        elif item in seen:
+            problems.append(f"own_order: `{item}` is listed twice")
+        else:
+            seen.append(item)
+    return frozenset(seen)
+
+
 def _parse_quality_floor(raw: Any, problems: list[str]) -> dict[str, Mapping[str, str]]:
     if raw is None:
         return {}
@@ -924,7 +949,8 @@ def ordered_chain(
     *,
     min_tier: str | None = None,
 ) -> list[Engine]:
-    """The engines a member may run on, logins first, with every excluded engine removed.
+    """The engines a member may run on, with every excluded engine removed. Logins first (subscription, then free, then
+    metered) unless the member is in ``own_order`` (D115): then the person's order is kept as the file writes it.
 
     ``min_tier`` drops engines below a quality floor (see :func:`required_tier`). When ``config`` is
     not given, the engines file is loaded from ``FREEDUET_ENGINES_FILE``.
@@ -933,11 +959,35 @@ def ordered_chain(
     if min_tier is not None and min_tier not in TIERS:
         raise ValueError(f"min_tier must be one of {', '.join(TIERS)}")
     candidates = (cfg.engines[engine_id] for engine_id in chain_ids(member, cfg))
-    return order_logins_first(
+    wanted = [
         engine
         for engine in candidates
         if is_allowed(engine, cfg) and tier_at_least(engine.tier, min_tier)
-    )
+    ]
+    if member in cfg.own_order and member != DEFAULT_CHAIN:
+        return wanted
+    return order_logins_first(wanted)
+
+
+def order_break(engines: Iterable[Engine]) -> str | None:
+    """D115: how an order leaves the logins-first rule, or None when it keeps it. ``paid_before_free_or_login`` when a metered
+    engine stands before a subscription or a free one (the worse case, so it wins); ``free_before_login`` when a free engine
+    stands before a subscription login."""
+    seen_free = seen_metered = False
+    kind = None
+    for engine in engines:
+        if engine.billing == "subscription":
+            if seen_metered:
+                return "paid_before_free_or_login"
+            if seen_free:
+                kind = "free_before_login"
+        elif engine.billing == "free":
+            if seen_metered:
+                return "paid_before_free_or_login"
+            seen_free = True
+        else:
+            seen_metered = True
+    return kind
 
 
 def assistant_chain(config: EnginesConfig | None = None) -> list[Engine]:

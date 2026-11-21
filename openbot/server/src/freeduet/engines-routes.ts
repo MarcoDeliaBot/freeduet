@@ -154,6 +154,10 @@ export type AgentMember = {
   /** The file's mode: the person's choice is not in it. */
   mode: EngineMode;
   pin: string | null;
+  /** D115: the person ordered this member's engines by hand, so logins are not necessarily first. */
+  ownOrder: boolean;
+  /** D115: the same engines with logins first, which "use the recommended order" sends back. */
+  recommendedChain: string[];
 };
 
 /** One member as the page shows it: the file's values with the person's choice of mode laid over. */
@@ -168,6 +172,10 @@ export type MemberSummary = {
   /** Whether `mode` is the person's choice. */
   chosen: boolean;
   pin: string | null;
+  /** D115: the order is the person's own and may leave logins first; the page says so and offers the way back. */
+  ownOrder: boolean;
+  /** D115: the recommended order of the same engines, logins first. */
+  recommendedChain: string[];
 };
 
 /** Why the page may not change anything, in one word. The page says the sentence. */
@@ -262,9 +270,20 @@ export const PANEL_SENTENCES: Record<string, string> = {
   order_shape: "That order is not accepted. Nothing was changed.",
   order_not_permutation:
     "That order does not hold the same engines as the member has now. Nothing was changed.",
-  order_logins_first:
-    "Your own logins always go first, then free engines, then paid ones. That order cannot be kept. Nothing was changed.",
+  order_needs_confirmation:
+    "That order puts a free or paid engine before your own logins. Confirm it to use it. Nothing was changed.",
 };
+/** D115: the two ways an order can leave the logins-first group order; the agent names one, the page says it in words. */
+export const ORDER_BREAK_KINDS = [
+  "free_before_login",
+  "paid_before_free_or_login",
+] as const;
+export type OrderBreakKind = (typeof ORDER_BREAK_KINDS)[number];
+function orderBreakKind(value: unknown): OrderBreakKind | null {
+  return (ORDER_BREAK_KINDS as readonly unknown[]).includes(value)
+    ? (value as OrderBreakKind)
+    : null;
+}
 const PANEL_FALLBACK = "That could not be done. Nothing was changed.";
 const NO_AUDIT =
   "This installation cannot record the change, so nothing was changed.";
@@ -379,7 +398,7 @@ async function readProviders(
 /** The refusal a card change got, as `{ error, code }` with the sentence from the closed list. */
 function panelRefusal(answer: AgentAnswer | null): {
   status: 400 | 404 | 409 | 502;
-  body: { error: string; code: string };
+  body: { error: string; code: string; kind?: OrderBreakKind };
 } {
   if (!answer) {
     return {
@@ -392,11 +411,16 @@ function panelRefusal(answer: AgentAnswer | null): {
   }
   const code = (answer.body as { error?: unknown } | null)?.error;
   const known = typeof code === "string" && code in PANEL_SENTENCES;
+  const kind =
+    code === "order_needs_confirmation"
+      ? orderBreakKind((answer.body as { kind?: unknown }).kind)
+      : null;
   return {
     status: answer.status === 404 ? 404 : answer.status === 409 ? 409 : 400,
     body: {
       error: known ? PANEL_SENTENCES[code as string] : PANEL_FALLBACK,
       code: known ? (code as string) : "other",
+      ...(kind ? { kind } : {}),
     },
   };
 }
@@ -565,6 +589,8 @@ export function memberOf(row: unknown): AgentMember | null {
     leftOut,
     mode: isEngineMode(raw.mode) ? raw.mode : "automatic",
     pin: textOf(raw.pin),
+    ownOrder: raw.own_order === true,
+    recommendedChain: ids(raw.recommended_chain),
   };
 }
 
@@ -653,6 +679,8 @@ function viewOf(member: AgentMember, choices: ChoicesSnapshot): MemberSummary {
     fileMode: member.mode,
     chosen: chosen !== undefined,
     pin: member.pin,
+    ownOrder: member.ownOrder,
+    recommendedChain: member.recommendedChain,
   };
 }
 
@@ -967,15 +995,23 @@ export function createEnginesRoutes(
         404,
       );
     let order: unknown;
+    let confirmed: unknown;
     try {
-      order = ((await context.req.json()) as { order?: unknown } | null)?.order;
+      const sent = (await context.req.json()) as {
+        order?: unknown;
+        confirmed?: unknown;
+      } | null;
+      order = sent?.order;
+      confirmed = sent?.confirmed;
     } catch {
       // Not JSON: there is no order in it, and the answer below says so.
     }
     if (
       !Array.isArray(order) ||
       order.length > MAX_ORDER ||
-      !order.every((id) => typeof id === "string" && ENGINE_ID.test(id))
+      !order.every((id) => typeof id === "string" && ENGINE_ID.test(id)) ||
+      // D115: the confirmation is a boolean and nothing else; a word or a number that looks like a yes is not one.
+      (confirmed !== undefined && typeof confirmed !== "boolean")
     )
       return context.json(
         { error: PANEL_SENTENCES.order_shape, code: "order_shape" },
@@ -985,9 +1021,14 @@ export function createEnginesRoutes(
       reach(),
       "PUT",
       `/members/${memberId}/order`,
-      { order },
+      confirmed === true ? { order, confirmed: true } : { order },
     );
-    const raw = answer?.body as { chain?: unknown; changed?: unknown } | null;
+    const raw = answer?.body as {
+      chain?: unknown;
+      changed?: unknown;
+      ownOrder?: unknown;
+      confirmedKind?: unknown;
+    } | null;
     const chain = Array.isArray(raw?.chain)
       ? raw.chain
           .filter(
@@ -1000,6 +1041,9 @@ export function createEnginesRoutes(
       return context.json(failure.body, failure.status);
     }
     const changed = raw?.changed === true;
+    const ownOrder = raw?.ownOrder === true;
+    // D115: what the person confirmed is what the agent says it needed confirming, not what the request claimed.
+    const confirmedKind = orderBreakKind(raw?.confirmedKind);
     if (changed) {
       await audit.record({
         eventType: "configuration.changed",
@@ -1010,11 +1054,15 @@ export function createEnginesRoutes(
           change: "engine_order_changed",
           memberId,
           newValue: chain,
+          ownOrder,
+          ...(confirmedKind
+            ? { confirmed: true, confirmedKind }
+            : { confirmed: false }),
           ...(viaTunnel ? { via: "tunnel" } : {}),
         },
       });
     }
-    return context.json({ memberId, chain, changed }, 200, noStore);
+    return context.json({ memberId, chain, changed, ownOrder }, 200, noStore);
   });
 
   routes.put("/providers/:providerId/key", async (context) => {

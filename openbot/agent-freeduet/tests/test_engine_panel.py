@@ -10,6 +10,7 @@ import json
 import os
 import logging
 import stat
+from pathlib import Path
 
 import httpx
 import pytest
@@ -473,7 +474,7 @@ def test_a_permutation_is_written_in_that_order_with_a_backup_and_the_loader_kee
     _chef_with_two_free_engines()
     assert _shown("chef") == ["claude-code", "openrouter-member", "ollama-member"]
     result = panel.apply_order("chef", ["claude-code", "ollama-member", "openrouter-member"])
-    assert result == {"member": "chef", "chain": ["claude-code", "ollama-member", "openrouter-member"], "changed": True}
+    assert result == {"member": "chef", "chain": ["claude-code", "ollama-member", "openrouter-member"], "changed": True, "ownOrder": False, "confirmedKind": None}
     assert _shown("chef") == ["claude-code", "ollama-member", "openrouter-member"]
     # engines the chain names that do not run keep their place; the other members are untouched
     file_chain = load_engines().chains["chef"]
@@ -488,10 +489,10 @@ def test_a_member_on_the_default_chain_is_judged_by_that_chain(data):
     assert "inbox" not in load_engines().chains
     panel.apply_order("inbox", ["claude-code", "ollama-member"])  # the same order: nothing to write
     assert "inbox" not in load_engines().chains
-    # one login and one free engine: the only other order is the router's rule undone, so it is refused
+    # one login and one free engine: the only other order leaves the group order, so it needs the person's confirmation (D115)
     with pytest.raises(panel.PanelRefused) as caught:
         panel.apply_order("inbox", ["ollama-member", "claude-code"])
-    assert caught.value.code == "order_logins_first"
+    assert (caught.value.code, caught.value.status, caught.value.kind) == ("order_needs_confirmation", 409, "free_before_login")
 
 
 def test_the_same_order_writes_nothing(data):
@@ -535,16 +536,22 @@ def test_an_unknown_member_is_refused(data):
     assert (data / "engines.yaml").read_bytes() == before
 
 
-def test_a_free_engine_before_a_login_is_refused_because_the_router_would_undo_it(data):
+def test_a_free_engine_before_a_login_needs_the_confirmation_and_nothing_is_written_without_it(data):
     _chef_with_two_free_engines()
     before = (data / "engines.yaml").read_bytes()
+    for confirmed in (False, None, "true", 1):
+        with pytest.raises(panel.PanelRefused) as caught:
+            panel.apply_order("chef", ["openrouter-member", "claude-code", "ollama-member"], confirmed=confirmed)
+        assert caught.value.code in ("order_needs_confirmation", "order_shape")
+        assert (data / "engines.yaml").read_bytes() == before
     with pytest.raises(panel.PanelRefused) as caught:
         panel.apply_order("chef", ["openrouter-member", "claude-code", "ollama-member"])
-    assert caught.value.code == "order_logins_first"
+    assert (caught.value.code, caught.value.status, caught.value.kind) == ("order_needs_confirmation", 409, "free_before_login")
     assert (data / "engines.yaml").read_bytes() == before
+    assert load_engines().own_order == frozenset()
 
 
-def test_a_metered_engine_is_never_put_before_a_login_or_a_free_engine(data):
+def test_a_metered_engine_is_never_put_before_a_login_or_a_free_engine_without_the_confirmation(data):
     _chef_with_two_free_engines()
     path = data / "engines.yaml"
     document = yaml.safe_load(path.read_text())
@@ -562,8 +569,9 @@ def test_a_metered_engine_is_never_put_before_a_login_or_a_free_engine(data):
     ):
         with pytest.raises(panel.PanelRefused) as caught:
             panel.apply_order("chef", bad)
-        assert caught.value.code == "order_logins_first"
+        assert (caught.value.code, caught.value.kind) == ("order_needs_confirmation", "paid_before_free_or_login")
     assert path.read_bytes() == before
+    assert _shown("chef")[-1] == "anthropic-api"  # the file lists it second, and without the opt-in the router still puts it last
     # a free engine may still move among the free ones, with the metered one kept last
     panel.apply_order("chef", [shown[0], shown[2], shown[1], "anthropic-api"])
     assert _shown("chef")[-1] == "anthropic-api"
@@ -601,12 +609,106 @@ def test_the_order_route_applies_from_the_next_message_and_refuses_what_the_pane
     assert app.state.engine_router._runnable("chef") == ["claude-code", "ollama-member", "openrouter-member"]
     for body, code, status in (
         ({"order": ["claude-code", "ollama-member"]}, "order_not_permutation", 400),
-        ({"order": ["ollama-member", "claude-code", "openrouter-member"]}, "order_logins_first", 400),
+        ({"order": ["ollama-member", "claude-code", "openrouter-member"]}, "order_needs_confirmation", 409),
+        ({"order": ["ollama-member", "claude-code", "openrouter-member"], "confirmed": "yes"}, "order_shape", 400),
         ({}, "order_shape", 400),
     ):
         refused = client.put(url, json=body, headers=AUTH)
         assert (refused.status_code, refused.json()["error"]) == (status, code)
     assert client.put("/engines/panel/members/nobody/order", json={"order": []}, headers=AUTH).status_code == 404
+
+
+def _chef_file():
+    return yaml.safe_load((Path(os.environ["FREEDUET_DATA_DIR"]) / "engines.yaml").read_text())
+
+
+def test_a_confirmed_out_of_group_order_is_written_and_the_member_joins_own_order(data):
+    _chef_with_two_free_engines()
+    wanted = ["openrouter-member", "claude-code", "ollama-member"]
+    result = panel.apply_order("chef", wanted, confirmed=True)
+    assert result == {"member": "chef", "chain": wanted, "changed": True, "ownOrder": True, "confirmedKind": "free_before_login"}
+    assert _chef_file()["own_order"] == ["chef"]
+    assert load_engines().own_order == frozenset({"chef"})
+    assert _shown("chef") == wanted  # the router keeps the written order for this member
+    assert _shown("freeduet") == ["claude-code", "ollama-member"]  # nobody else is touched
+    assert len(list(data.glob("engines.yaml.bak-*"))) >= 1
+    assert (data / "engines.yaml").read_text().splitlines()[0] == panel.MARKER
+    assert panel.apply_order("chef", wanted, confirmed=True)["changed"] is False  # the same order again writes nothing
+
+
+def test_a_confirmed_paid_first_order_is_kept_only_for_that_member_and_switches_nothing_on(data):
+    _chef_with_two_free_engines()
+    path = data / "engines.yaml"
+    document = yaml.safe_load(path.read_text())
+    document["metered"] = {"enabled": True, "daily_cap": 5, "monthly_cap": 50, "currency": "USD"}
+    document["engines"]["anthropic-api"]["enabled"] = True
+    document["chains"]["chef"].insert(1, "anthropic-api")
+    path.write_text(panel.MARKER + "\n" + yaml.safe_dump(document, sort_keys=False))
+    shown = _shown("chef")
+    assert shown[-1] == "anthropic-api"
+    wanted = ["anthropic-api", *shown[:-1]]
+    result = panel.apply_order("chef", wanted, confirmed=True)
+    assert result["confirmedKind"] == "paid_before_free_or_login"
+    assert _shown("chef") == wanted
+    after = _chef_file()
+    assert after["metered"] == document["metered"] and after["engines"]["anthropic-api"]["enabled"] is True  # no switch changed
+
+
+def test_a_member_on_own_order_moves_back_to_the_sorted_order_and_leaves_the_list(data):
+    _chef_with_two_free_engines()
+    panel.apply_order("chef", ["openrouter-member", "claude-code", "ollama-member"], confirmed=True)
+    back = panel.apply_order("chef", ["claude-code", "openrouter-member", "ollama-member"])  # no confirmation needed
+    assert back["changed"] is True and back["ownOrder"] is False and back["confirmedKind"] is None
+    assert "own_order" not in _chef_file()
+    assert _shown("chef") == ["claude-code", "openrouter-member", "ollama-member"]
+    # a second member on own order keeps the list with one entry left
+    panel.apply_order("chef", ["ollama-member", "claude-code", "openrouter-member"], confirmed=True)
+    panel.apply_order("inbox", ["ollama-member", "claude-code"], confirmed=True)
+    assert sorted(_chef_file()["own_order"]) == ["chef", "inbox"]
+    panel.apply_order("chef", ["claude-code", "ollama-member", "openrouter-member"])
+    assert _chef_file()["own_order"] == ["inbox"]
+
+
+def test_an_out_of_group_move_inside_an_own_order_still_needs_the_confirmation(data):
+    _chef_with_two_free_engines()
+    panel.apply_order("chef", ["openrouter-member", "claude-code", "ollama-member"], confirmed=True)
+    before = (data / "engines.yaml").read_bytes()
+    with pytest.raises(panel.PanelRefused) as caught:
+        panel.apply_order("chef", ["ollama-member", "openrouter-member", "claude-code"])
+    assert caught.value.code == "order_needs_confirmation"
+    assert (data / "engines.yaml").read_bytes() == before
+
+
+def test_the_confirmation_does_not_unlock_a_file_the_page_did_not_write(tmp_path, monkeypatch):
+    own = tmp_path / "engines.yaml"
+    text = "# mine\n" + panel.EXAMPLE_ENGINES_FILE.read_text()
+    own.write_text(text)
+    monkeypatch.setenv("FREEDUET_DATA_DIR", str(tmp_path))
+    monkeypatch.setenv("FREEDUET_ENGINES_FILE", str(own))
+    with pytest.raises(panel.PanelRefused) as caught:
+        panel.apply_order("chef", ["codex", "claude-code"], confirmed=True)
+    assert (caught.value.code, caught.value.status) == ("file_is_yours", 409)
+    assert own.read_text() == text
+
+
+def test_the_order_route_forwards_confirmed_only_as_a_boolean_and_answers_the_kind(client, data):
+    client.put("/engines/panel/openrouter/key", json={"key": "sk-or-v1-CANARYkey0123456789"}, headers=AUTH)
+    client.put("/engines/panel/openrouter", json={"enabled": True, "model": "openrouter/free", "members": ["chef"]}, headers=AUTH)
+    url = "/engines/panel/members/chef/order"
+    wanted = ["openrouter-member", "claude-code"]
+    asked = client.put(url, json={"order": wanted}, headers=AUTH)
+    assert (asked.status_code, asked.json()) == (409, {"error": "order_needs_confirmation", "kind": "free_before_login"})
+    for loose in ("true", 1, "yes", [True]):
+        assert client.put(url, json={"order": wanted, "confirmed": loose}, headers=AUTH).json()["error"] == "order_shape"
+    done = client.put(url, json={"order": wanted, "confirmed": True}, headers=AUTH)
+    assert done.status_code == 200 and done.json()["ownOrder"] is True and done.json()["confirmedKind"] == "free_before_login"
+    chef = [m for m in client.get("/engines", headers=AUTH).json()["members"] if m["id"] == "chef"][0]
+    assert chef["chain"] == wanted and chef["own_order"] is True
+    assert chef["recommended_chain"] == ["claude-code", "openrouter-member"]  # what "back to the recommended order" sends
+    assert app.state.engine_router._runnable("chef") == wanted
+    back = client.put(url, json={"order": chef["recommended_chain"]}, headers=AUTH)
+    assert back.status_code == 200 and back.json()["ownOrder"] is False
+    assert app.state.engine_router._runnable("chef") == ["claude-code", "openrouter-member"]
 
 
 def test_the_order_route_reads_the_chain_inside_the_lock_so_a_card_change_cannot_make_it_stale(client, data, monkeypatch):

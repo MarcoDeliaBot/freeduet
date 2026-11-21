@@ -1,7 +1,7 @@
 """The spend ledger: what the engines that cost money have cost, kept in a file, and the verdict on their limits.
 
 docs/ENGINES_PLAN.md slice 12 (its first part: the ledger and the limits, not the card), decisions E3 and E5 (9.3),
-docs/PROVIDERS.md rule 4: an engine that costs money is never first, never on by default, and capped. This module is
+docs/PROVIDERS.md rule 4: an engine that costs money is never on by default, not first unless the person confirmed that order for the member (D115), and capped. This module is
 the cap's memory and its verdict. It knows an engine id, a number and a time, and nothing of engines.yaml, the router
 or a stream, so a test can drive it with a made-up clock.
 

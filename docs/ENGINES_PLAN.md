@@ -10,7 +10,7 @@ Each member gets an ordered chain of engines. When one cannot take a turn, the n
 
 | # | Constraint | Source |
 |---|---|---|
-| 1 | Logins first: subscription engines, then free, then metered. A metered engine is never first in a chain and never on by default; it runs only under the person's daily and monthly caps. | [PROVIDERS.md](PROVIDERS.md); `engines.py` `order_logins_first`, `metered_allowed` [code] |
+| 1 | Logins first: subscription engines, then free, then metered. A metered engine is never on by default and, in a chain the person has not reordered, never first; the person may confirm another order for one member (D115, `own_order`), which switches nothing on. It runs only under the person's daily and monthly caps. | [PROVIDERS.md](PROVIDERS.md); `engines.py` `order_logins_first`, `metered_allowed` [code] |
 | 2 | Tools and approvals work the same on every engine. The engine sees only the `freeduet` tool bridge (or function schemas), never host tools, and every call still goes through OpenBot's approval gate. An engine that cannot be locked down is not offered. | ARCHITECTURE 3.2; D4 in [M1_PLAN.md](M1_PLAN.md) |
 | 3 | FreeDuet never reads, copies or forwards a subscription credential. The person signs in with the provider's own tool; its login state lives in a volume FreeDuet code never opens. | CLAUDE.md; [SECURITY.md](../SECURITY.md) |
 | 4 | An engine and model are labelled supported for a member only after that member passes its evals on them: each member at least 90%, safety cases 100% ([evals/team/README.md](../evals/team/README.md)). `--engine` on the runner is only a label today, so the runner must really select the engine first (slice 4). | CLAUDE.md [code] |

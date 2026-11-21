@@ -77,6 +77,7 @@ from .engines import (
     exclusion_reason,
     is_free_cloud,
     ledger_engine_ids,
+    order_logins_first,
     ordered_chain,
     paid_gateway_gap,
     paid_gateway_refusal,
@@ -201,6 +202,11 @@ class Router:
     def _runnable(self, member_id: str) -> list[str]:
         return [e.id for e in ordered_chain(member_id, self.config) if e.id in self.adapters]
 
+    def _recommended(self, member_id: str) -> list[str]:
+        """D115: the same engines in the recommended order, logins first. What "back to the recommended order" puts."""
+        running = [e for e in ordered_chain(member_id, self.config) if e.id in self.adapters]
+        return [e.id for e in order_logins_first(running)]
+
     def engaged(self, member_id: str) -> bool:
         """More than one engine to walk, or a pin, or a paid gateway the person put in the chain and switched on, which
         FreeDuet does not run (the turn goes through here then, so that the person is told why that gateway did not
@@ -215,7 +221,7 @@ class Router:
     def overview(self, member_ids) -> list[dict]:
         """What the engines file gives each member, for ``GET /engines`` (docs/design/engines-dashboard.md 3.2).
         Read-only, and a closed vocabulary: engine ids, one word per reason (``engines.exclusion_code``) and the
-        two switching values. The person's own choices are not here: the server holds them and lays them over this.
+        two switching values, and (D115) whether the person ordered the member's engines by hand (``own_order``). The person's own choices are not here: the server holds them and lays them over this.
 
         ``chain`` is the engines that will be tried, in order (logins first, every excluded engine removed, and only
         those this service has an adapter for). ``left_out`` is each engine the member's list names that will not run,
@@ -230,7 +236,7 @@ class Router:
                 engine = self.config.engines.get(engine_id)
                 left_out.append({"id": engine_id, "why": (exclusion_code(engine, self.config) if engine else None) or "not_set_up"})
             choice = switching_for(member_id, self.config)
-            members.append({"id": member_id, "chain": running, "left_out": left_out, "mode": choice.mode, "pin": choice.pin})
+            members.append({"id": member_id, "chain": running, "left_out": left_out, "mode": choice.mode, "pin": choice.pin, "own_order": member_id in self.config.own_order, "recommended_chain": self._recommended(member_id)})
         return members
 
     def _is_paid_left_out(self, engine: Engine | None) -> bool:

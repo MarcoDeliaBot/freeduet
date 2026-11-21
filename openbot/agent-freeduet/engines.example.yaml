@@ -1,8 +1,10 @@
 # FreeDuet engines. Copy to engines.yaml and adjust. See docs/PROVIDERS.md before enabling any route.
 #
-# THE RULE: logins first. Subscriptions you signed in to yourself are always tried first.
-# API keys and API credits (including the credits that come with a Claude plan) are optional: they run
-# only if you switch them on, only after every login engine in the chain, and only under your caps.
+# THE RULE: logins first. Subscriptions you signed in to yourself are tried first, in every chain you have not
+# reordered. API keys and API credits (including the credits that come with a Claude plan) are optional: they run
+# only if you switch them on, and by default only after every login engine in the chain, under your caps. The one way
+# to change that order is yours: on the Engines page you may put another engine first for one member and confirm it
+# (D115); the member is then named in `own_order:` and keeps its order as written. Nothing here is switched on by that.
 #
 # kind:     cli | app-server | acp | anthropic-api | openai-compatible | anthropic-compatible
 # billing:  subscription | free | metered
@@ -66,7 +68,7 @@ engines:
   # is refused whatever the `metered:` block below says: nothing starts it, and the log, the chat and the engine list say so.
   # The `metered:` block is still read and checked, so what you write now keeps its meaning when the lock is opened.
   # Free endpoints and your own logins work.
-  # It is never first in a chain (logins come first), and `tier` is C unless you say otherwise: the quality floor
+  # It is not first in a chain unless you chose that order for the member (logins come first; D115), and `tier` is C unless you say otherwise: the quality floor
   # keeps a skill that needs a better model off it. Plain http is accepted only for this machine; anything else is https.
   #
   # OpenRouter's FREE models, for a member (D100, D107; provider terms read 2026-11-20, see docs/PROVIDERS.md). An example, so off
@@ -193,7 +195,9 @@ metered:
   # enforce: ledger    # `none` (the default) or `ledger`: say that FreeDuet keeps these caps with its spend ledger
 
 # Chains per member, tried in order. The router enforces the rule whatever the order written here:
-# subscription engines first, then free, then metered. A metered engine can never be first.
+# subscription engines first, then free, then metered. A metered engine is not first, unless the member is named in
+# `own_order:` (D115, written by the Engines page after you confirmed the order; never present in this example): that
+# member's chain is then kept exactly as written. The `default` chain is always sorted.
 chains:
   default: [claude-code, codex, local, anthropic-api]
   freeduet: [claude-code, codex, anthropic-api]   # Iris

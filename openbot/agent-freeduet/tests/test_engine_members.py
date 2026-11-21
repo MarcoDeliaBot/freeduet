@@ -67,6 +67,8 @@ def test_the_default_install_lists_each_member_with_claude_alone(client, monkeyp
             "left_out": [{"id": "codex", "why": "disabled"}, {"id": "anthropic-api", "why": "disabled"}],
             "mode": "automatic",
             "pin": None,
+            "own_order": False,
+            "recommended_chain": ["claude-code"],
         },
         {
             "id": "chef",
@@ -78,6 +80,8 @@ def test_the_default_install_lists_each_member_with_claude_alone(client, monkeyp
             ],
             "mode": "automatic",
             "pin": None,
+            "own_order": False,
+            "recommended_chain": ["claude-code"],
         },
     ]
     # The Claude row is what it was: one engine, the same fields.
@@ -221,7 +225,7 @@ def test_no_address_key_reference_or_path_is_in_the_members(client, fake_cli, tm
     ):
         assert secret not in text, secret
     for member in members.values():
-        assert set(member) == {"id", "chain", "left_out", "mode", "pin"}
+        assert set(member) == {"id", "chain", "left_out", "mode", "pin", "own_order", "recommended_chain"}
         assert all(set(entry) == {"id", "why"} and entry["why"] in WORDS for entry in member["left_out"])
 
 

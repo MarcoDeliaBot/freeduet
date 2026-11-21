@@ -174,6 +174,54 @@ def test_metered_is_never_first_in_any_order(order):
     assert ids(chain)[:2] == written_logins
 
 
+@pytest.mark.parametrize("order", list(itertools.permutations(MIXED)))
+def test_a_member_in_own_order_keeps_the_written_order_and_nobody_else_does(order):
+    """D115: the opt-in is per member. The chain in it is as written; every other chain, the default one included, is sorted."""
+
+    def mutate(data):
+        data["chains"]["default"] = list(order)
+        data["chains"]["chef"] = list(order)
+        data["own_order"] = ["chef"]
+
+    cfg = config(mutate)
+    assert ids(engines.ordered_chain("chef", cfg)) == list(order)
+    sorted_ids = ids(engines.ordered_chain("default", cfg))
+    assert [engine.billing for engine in engines.ordered_chain("default", cfg)] == [
+        "subscription", "subscription", "free", "metered", "metered"
+    ]
+    assert sorted_ids != [] and ids(engines.ordered_chain("other", cfg)) == sorted_ids  # a member on the default chain
+
+
+def test_own_order_changes_no_switch_a_paid_engine_still_needs_the_persons_metered_words():
+    def mutate(data):
+        data["metered"]["enabled"] = False
+        data["chains"]["chef"] = ["openrouter", "anthropic-api", "claude-code"]
+        data["own_order"] = ["chef"]
+
+    cfg = config(mutate)
+    assert ids(engines.ordered_chain("chef", cfg)) == ["claude-code"]  # still left out, first in the file or not
+    assert engines.metered_allowed(cfg) is False
+
+
+def test_without_own_order_metered_is_never_first_even_when_the_file_writes_it_first():
+    def mutate(data):
+        data["chains"]["chef"] = ["openrouter", "anthropic-api", "local", "claude-code"]
+
+    cfg = config(mutate)
+    assert cfg.own_order == frozenset()
+    assert ids(engines.ordered_chain("chef", cfg))[0] == "claude-code"
+
+
+def test_order_break_names_the_kind_or_none():
+    cfg = config()
+    pick = lambda *names: [cfg.engines[name] for name in names]  # noqa: E731
+    assert engines.order_break(pick("claude-code", "local", "openrouter")) is None
+    assert engines.order_break(pick("local", "claude-code")) == "free_before_login"
+    assert engines.order_break(pick("openrouter", "claude-code")) == "paid_before_free_or_login"
+    assert engines.order_break(pick("claude-code", "openrouter", "local")) == "paid_before_free_or_login"
+    assert engines.order_break(pick("local", "openrouter", "claude-code")) == "paid_before_free_or_login"
+
+
 def test_a_chain_of_only_metered_engines_is_empty_while_metered_is_off():
     def mutate(data):
         data["metered"]["enabled"] = False
@@ -339,6 +387,10 @@ def _delete(path: str):
         (_set("metered.enabled", "yes please"), "metered: `enabled` must be true or false"),
         (_set("quality_floor.concierge.request_purchase", "S"), "must name a tier"),
         (_set("routers", {}), "unknown top-level key `routers`"),
+        (_set("own_order", "chef"), "`own_order` must be a list"),
+        (_set("own_order", ["chef", "chef"]), "`chef` is listed twice"),
+        (_set("own_order", [5]), "is not a member id"),
+        (_set("own_order", ["default"]), "`default` is not a member"),
     ],
 )
 def test_invalid_files_are_refused(mutate, expected):

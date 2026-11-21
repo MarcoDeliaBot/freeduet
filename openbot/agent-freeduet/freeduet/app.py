@@ -148,7 +148,10 @@ def _apply_file_change() -> None:
 
 
 def _refusal(error: engine_panel.PanelRefused) -> JSONResponse:
-    return JSONResponse({"error": error.code}, status_code=error.status, headers={"Cache-Control": "no-store"})
+    payload: dict[str, str] = {"error": error.code}
+    if error.kind is not None:
+        payload["kind"] = error.kind  # D115: one word of a closed pair, never a value from the request
+    return JSONResponse(payload, status_code=error.status, headers={"Cache-Control": "no-store"})
 
 
 async def _json_body(request: Request) -> dict:
@@ -181,7 +184,8 @@ async def engines_panel_change(provider: str, request: Request):
 
 @app.put("/engines/panel/members/{member}/order")
 async def engines_panel_order(member: str, request: Request):
-    """D112: one member's engines in a new order. The body is {"order": [engine ids]}, the whole chain as the page shows it."""
+    """D112: one member's engines in a new order. The body is {"order": [engine ids]}, the whole chain as the page shows it,
+    and, for an order that leaves the logins-first group order, {"confirmed": true} (D115)."""
     body = await _json_body(request)
     try:
         async with engine_panel._lock:
@@ -194,7 +198,9 @@ async def engines_panel_order(member: str, request: Request):
                     shown = list(found[0]["chain"]) if found else None
                 except Exception:  # noqa: BLE001 - without the router's view the file's own chain decides
                     shown = None
-            result = engine_panel.apply_order(member, body.get("order"), current=shown)
+            result = engine_panel.apply_order(
+                member, body.get("order"), current=shown, confirmed=body.get("confirmed", False)
+            )
             if result["changed"]:
                 _apply_file_change()
     except engine_panel.PanelRefused as error:
