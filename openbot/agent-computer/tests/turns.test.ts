@@ -157,6 +157,7 @@ describe("which calls take a turn", () => {
       ["GET", "/read"],
       ["POST", "/click"],
       ["POST", "/type"],
+      ["POST", "/select"],
       ["POST", "/key"],
       ["POST", "/scroll"],
     ]) {
