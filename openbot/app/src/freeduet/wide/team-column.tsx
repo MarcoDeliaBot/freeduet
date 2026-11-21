@@ -267,7 +267,7 @@ function Team({ full }: { full: boolean }) {
  * The foot of the column: the channels the person made, New channel, Archived, Manage and Settings,
  * which are the phone menu's own rows, so every place it opens is one press from here too.
  */
-function Places({ onNewChannel }: { onNewChannel: () => void }) {
+export function Places({ onNewChannel }: { onNewChannel: () => void }) {
   const navigate = useNavigate();
   const { data: user } = useQuery(currentUserQueryOptions());
   const { data: capabilities } = useQuery(deploymentCapabilitiesQueryOptions());
@@ -435,6 +435,8 @@ function Places({ onNewChannel }: { onNewChannel: () => void }) {
         >
           <RowIcon name="settings" />
           Settings
+          {/* Where Manage is hidden (FreeDuet's package), the Bots badge rides on this row instead. */}
+          {showsManageGroup() ? null : <BotsNavBadge />}
         </Link>
         {capabilities?.localEvaluation === false ? (
           <button
