@@ -586,30 +586,43 @@ class Router:
               blocked: list[tuple[str, str, datetime | None]]) -> str | None:
         """The next engine that is available now, preferring ones that meet the quality floor. Looks without
         asking the breaker for a ticket; engines it finds unavailable are noted in `blocked` (once each)."""
-        available: list[str] = []
+        # First look at every engine without recording anything, then record the engines up to the one chosen (and any cap-held one):
+        # a limited engine that stands AFTER the chosen one is not "stopped" (it would not have answered first), and
+        # it is noted when the walk reaches it (D119).
+        looked: list[tuple[str, tuple[str, object, datetime | None] | None]] = []
         for key in order:
             if key in tried:
                 continue
             hold = self.state.hold_of(key)  # what the engine has cost: a limit the person set, or a ledger that cannot tell
             if hold is not None:
-                tried.add(key)
                 # "Back at 00:00 UTC" is only true of a day's limit: a month's is weeks away, and the notices write a time, not a date.
-                blocked.append((self.adapters[key].label, notices.Held(hold.kind, hold.cap_text), hold.until if hold.kind == DAILY else None))
+                looked.append((key, (self.adapters[key].label, notices.Held(hold.kind, hold.cap_text), hold.until if hold.kind == DAILY else None)))
                 continue
             row = self.state.row(key)
             if row is not None and not row.available:
-                tried.add(key)
                 kind = AUTH if row.state == SIGNED_OUT else (row.last_failure_kind or USAGE_LIMIT)
-                blocked.append((self.adapters[key].label, self._notice_kind(key, kind), row.limited_until))
+                looked.append((key, (self.adapters[key].label, self._notice_kind(key, kind), row.limited_until)))
                 continue
-            available.append(key)
-        if not available:
-            return None
-        if floors:
-            for key in available:
-                if all(tier_at_least(self.config.engines[key].tier, t) for t in floors.values()):
-                    return key
-        return available[0]
+            looked.append((key, None))
+        available = [key for key, why in looked if why is None]
+        chosen: str | None = None
+        if available:
+            chosen = available[0]
+            if floors:
+                for key in available:
+                    if all(tier_at_least(self.config.engines[key].tier, t) for t in floors.values()):
+                        chosen = key
+                        break
+        recording = True  # up to the chosen engine; every engine when none is available
+        for key, why in looked:
+            # A cap the person set (Held) is told wherever the engine stands: the notices that say who was skipped for the
+            # cap are pinned by the ledger tests, and that is a decision of the maintainer's, not part of D119.
+            if why is not None and (recording or isinstance(why[1], notices.Held)):
+                tried.add(key)
+                blocked.append(why)
+            if key == chosen:
+                recording = False
+        return chosen
 
 
 class _Produced:
