@@ -308,7 +308,8 @@ const ES_SECURITY: WordList = {
 // ─────────────────────────────────────────────────────────────────────────────────────────────────────
 // French
 // ─────────────────────────────────────────────────────────────────────────────────────────────────────
-const FR_ART = "(?:(?:la|le|l'|ma|mon|votre|notre|cette|ce|une|un|ta|ton|mes|vos)~)*";
+const FR_ART =
+  "(?:(?:la|le|l'|ma|mon|votre|notre|cette|ce|une|un|ta|ton|mes|vos)~)*";
 const FR_PAYMENTS: WordList = {
   words: [
     "paiements?",
@@ -388,7 +389,8 @@ const FR_SECURITY: WordList = {
 // ─────────────────────────────────────────────────────────────────────────────────────────────────────
 // Portuguese (Brazil and Portugal)
 // ─────────────────────────────────────────────────────────────────────────────────────────────────────
-const PT_ART = "(?:(?:o|a|seu|sua|meu|minha|um|uma|este|esta|esse|essa|do|da) )*";
+const PT_ART =
+  "(?:(?:o|a|seu|sua|meu|minha|um|uma|este|esta|esse|essa|do|da) )*";
 const PT_PAYMENTS: WordList = {
   words: [
     "pag(?:ar|ue|amento|amentos|ando|ado|o|os|a)",
@@ -433,7 +435,13 @@ const PT_PAYMENTS: WordList = {
     "faturamento",
     "(?:dados|endereco) de cobranca",
   ],
-  tools: ["transferencia", "assinatura", "subscricao", "cartao_presente", "recarga"],
+  tools: [
+    "transferencia",
+    "assinatura",
+    "subscricao",
+    "cartao_presente",
+    "recarga",
+  ],
 };
 const PT_CREDENTIALS: WordList = {
   words: [
@@ -509,7 +517,13 @@ const PL_PAYMENTS: WordList = {
     "dane do faktury",
   ],
   parts: [],
-  tools: ["przelew", "subskrypcj", "platnosc", "doladowanie", "karta_podarunkowa"],
+  tools: [
+    "przelew",
+    "subskrypcj",
+    "platnosc",
+    "doladowanie",
+    "karta_podarunkowa",
+  ],
 };
 const PL_CREDENTIALS: WordList = {
   words: [
@@ -1011,16 +1025,56 @@ type Language = {
 
 /** The ten languages added by D131, in the order of the site's language list. */
 export const SAFETY_LANGUAGES: Readonly<Record<string, Language>> = {
-  de: { payments: DE_PAYMENTS, credentials: DE_CREDENTIALS, security: DE_SECURITY },
-  es: { payments: ES_PAYMENTS, credentials: ES_CREDENTIALS, security: ES_SECURITY },
-  fr: { payments: FR_PAYMENTS, credentials: FR_CREDENTIALS, security: FR_SECURITY },
-  ja: { payments: JA_PAYMENTS, credentials: JA_CREDENTIALS, security: JA_SECURITY },
-  ko: { payments: KO_PAYMENTS, credentials: KO_CREDENTIALS, security: KO_SECURITY },
-  pl: { payments: PL_PAYMENTS, credentials: PL_CREDENTIALS, security: PL_SECURITY },
-  pt: { payments: PT_PAYMENTS, credentials: PT_CREDENTIALS, security: PT_SECURITY },
-  ru: { payments: RU_PAYMENTS, credentials: RU_CREDENTIALS, security: RU_SECURITY },
-  tr: { payments: TR_PAYMENTS, credentials: TR_CREDENTIALS, security: TR_SECURITY },
-  zh: { payments: ZH_PAYMENTS, credentials: ZH_CREDENTIALS, security: ZH_SECURITY },
+  de: {
+    payments: DE_PAYMENTS,
+    credentials: DE_CREDENTIALS,
+    security: DE_SECURITY,
+  },
+  es: {
+    payments: ES_PAYMENTS,
+    credentials: ES_CREDENTIALS,
+    security: ES_SECURITY,
+  },
+  fr: {
+    payments: FR_PAYMENTS,
+    credentials: FR_CREDENTIALS,
+    security: FR_SECURITY,
+  },
+  ja: {
+    payments: JA_PAYMENTS,
+    credentials: JA_CREDENTIALS,
+    security: JA_SECURITY,
+  },
+  ko: {
+    payments: KO_PAYMENTS,
+    credentials: KO_CREDENTIALS,
+    security: KO_SECURITY,
+  },
+  pl: {
+    payments: PL_PAYMENTS,
+    credentials: PL_CREDENTIALS,
+    security: PL_SECURITY,
+  },
+  pt: {
+    payments: PT_PAYMENTS,
+    credentials: PT_CREDENTIALS,
+    security: PT_SECURITY,
+  },
+  ru: {
+    payments: RU_PAYMENTS,
+    credentials: RU_CREDENTIALS,
+    security: RU_SECURITY,
+  },
+  tr: {
+    payments: TR_PAYMENTS,
+    credentials: TR_CREDENTIALS,
+    security: TR_SECURITY,
+  },
+  zh: {
+    payments: ZH_PAYMENTS,
+    credentials: ZH_CREDENTIALS,
+    security: ZH_SECURITY,
+  },
 };
 
 const all = Object.values(SAFETY_LANGUAGES);
