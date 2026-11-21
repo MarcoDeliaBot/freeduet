@@ -170,11 +170,16 @@ async def engines_panel():
 @app.put("/engines/panel/{provider}")
 async def engines_panel_change(provider: str, request: Request):
     body = await _json_body(request)
+    # D121: an Ollama card's context size is asked of Ollama itself, outside the lock (a request may take a few seconds).
+    # An unreadable size is simply not written. Only the model of this change is asked; a change of another kind asks nothing.
+    context = None
+    if provider == "ollama" and isinstance(body.get("model"), str):
+        context = await engine_panel.local_context(provider, body.get("model"), body.get("baseUrl"))
     try:
         async with engine_panel._lock:
             card = engine_panel.apply_change(
                 provider, enabled=body.get("enabled"), base_url=body.get("baseUrl"), model=body.get("model"),
-                members=body.get("members"),
+                members=body.get("members"), context_tokens=context,
             )
             _apply_file_change()
     except engine_panel.PanelRefused as error:

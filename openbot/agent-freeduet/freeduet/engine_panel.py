@@ -50,6 +50,8 @@ from .engines import (
     EXAMPLE_ENGINES_FILE,
     OPENROUTER_FREE_ROUTER,
     EnginesFileError,
+    MAX_CONTEXT_TOKENS,
+    MIN_CONTEXT_TOKENS,
     engines_file_path,
     in_hidden_folder,
     is_local_host,
@@ -585,11 +587,14 @@ def apply_change(
     base_url: Any = None,
     model: Any = None,
     members: Any = None,
+    context_tokens: Any = None,
     environ: Mapping[str, str] | None = None,
 ) -> dict[str, Any]:
     """Switch a card on or off, set its address and model, and (a cloud engine a member can run on) choose which members use it.
     Raises :class:`PanelRefused` and writes nothing when the change cannot be made; otherwise the engines file is replaced and
-    the new card is returned."""
+    the new card is returned. ``context_tokens`` (D121) is the model's context size when the caller could read it (``local_context``);
+    for a free OpenRouter model it is taken from the model list the page fetched. It is written on the member entry only, and only
+    when it is known: an unknown size is not guessed here, the loader's default for a local model applies."""
     provider = _provider(provider_id)
     if own_file_in_use(environ):
         raise PanelRefused("file_is_yours", 409)
@@ -655,10 +660,28 @@ def apply_change(
             member["credential_secret_ref"] = reference
         else:
             member["no_key"] = True
+        known = _known_context(provider, chosen_model, context_tokens)
+        before = table.get(provider.member_id)
+        if known is None and isinstance(before, Mapping) and before.get("model") == chosen_model:
+            known = _known_context(provider, chosen_model, before.get("context_tokens"))  # the same model: what was read stays
+        if known is not None:
+            member["context_tokens"] = known
         table[provider.member_id] = member
     _set_chains(document, provider, bool(switched_on), chosen_members)
     _write_document(document, environ)
     return _card(provider, document, environ)
+
+
+def _known_context(provider: Provider, model: Any, given: Any) -> int | None:
+    """D121. The context size to write for this member entry: the one the caller gave (read from Ollama), else the one OpenRouter's
+    model list gave for this model. None when neither is known or valid; a value out of the loader's bounds is dropped here, so a
+    wrong number read from a provider can never make the loader refuse the whole file."""
+    value = given
+    if value is None and provider.free_model_only and isinstance(model, str):
+        value = _free_models_cache["contexts"].get(model)
+    if isinstance(value, bool) or not isinstance(value, int) or not MIN_CONTEXT_TOKENS <= value <= MAX_CONTEXT_TOKENS:
+        return None
+    return value
 
 
 def _set_own_order(document: dict[str, Any], member_id: str, on: bool) -> None:
@@ -855,13 +878,74 @@ async def list_models(
     return {"ok": True, "code": "ok", "models": sorted(set(ids))[:MAX_MODELS]}
 
 
+# ── The context size of a local model (D121) ─────────────────────────────────────────────────────
+
+
+def _num_ctx(body: Any) -> int | None:
+    """The `num_ctx` that Ollama's `POST /api/show` lists in a model's `parameters` text (a Modelfile's `PARAMETER num_ctx`), limited to
+    the model's own `<architecture>.context_length` when that is listed too. None when the model does not set one: Ollama then serves
+    its own default, which this cannot read, so the size stays unknown and the loader's default applies."""
+    if not isinstance(body, Mapping):
+        return None
+    text = body.get("parameters")
+    found = None
+    for line in text.splitlines() if isinstance(text, str) else []:
+        parts = line.split()
+        if len(parts) == 2 and parts[0] == "num_ctx" and parts[1].isdigit():
+            found = int(parts[1])
+    if found is None:
+        return None
+    info = body.get("model_info")
+    limits = [v for k, v in info.items() if isinstance(k, str) and k.endswith(".context_length") and isinstance(v, int) and not isinstance(v, bool)] if isinstance(info, Mapping) else []
+    return min(found, *limits) if limits else found
+
+
+async def local_context(
+    provider_id: str,
+    model: Any,
+    base_url: Any = None,
+    environ: Mapping[str, str] | None = None,
+    transport: httpx.AsyncBaseTransport | None = None,
+) -> int | None:
+    """D121. The context size of an Ollama model, asked of the Ollama the card points at (`POST /api/show`, no key), or None when it
+    cannot be read. It never raises and never reaches an address the card's own rules refuse: the address is judged again here."""
+    try:
+        provider = _provider(provider_id)
+        if provider.id != "ollama" or not isinstance(model, str) or not _MODEL.fullmatch(model.strip()):
+            return None
+        document = _read_document(environ)
+        table = document.get("engines") if isinstance(document.get("engines"), Mapping) else {}
+        entry = table.get(provider.assist_id) if isinstance(table.get(provider.assist_id), Mapping) else {}
+        address = base_url if isinstance(base_url, str) and base_url.strip() else entry.get("base_url", provider.base_url)
+        root = re.sub(r"/v1/?$", "", checked_address(provider, address, environ))
+        code, body = await _ask("POST", f"{root}/api/show", None, {"model": model.strip()}, transport)
+        return _num_ctx(body) if code == "ok" else None
+    except Exception:  # noqa: BLE001 - the size is a help, never a reason to refuse a card
+        return None
+
+
 # ── The free models that support tools (D116) ────────────────────────────────────────────────────
 
 #: OpenRouter's public list of models. It needs no key and none is sent: this is a plain GET of a public page.
 OPENROUTER_MODELS_URL = "https://openrouter.ai/api/v1/models"
 #: How long a fetched list is reused. Free models change often, so a day would be too long; an hour keeps the page quick.
 FREE_MODELS_TTL_S = 3600.0
-_free_models_cache: dict[str, Any] = {"at": None, "models": []}
+_free_models_cache: dict[str, Any] = {"at": None, "models": [], "contexts": {}}
+
+
+def free_model_contexts_from(body: Any) -> dict[str, int]:
+    """D121. The `context_length` OpenRouter lists for each of the models `free_tool_models_from` keeps, by id. A row with no whole
+    number there is left out (its size is then unknown, never guessed)."""
+    rows = body.get("data") if isinstance(body, Mapping) else None
+    kept = set(free_tool_models_from(body))
+    found: dict[str, int] = {}
+    for row in rows if isinstance(rows, list) else []:
+        if not isinstance(row, Mapping) or row.get("id") not in kept:
+            continue
+        length = row.get("context_length")
+        if isinstance(length, int) and not isinstance(length, bool) and length > 0:
+            found[row["id"]] = length
+    return found
 
 
 def free_tool_models_from(body: Any) -> list[str]:
@@ -914,7 +998,7 @@ async def free_tool_models(
         body = None
     models = free_tool_models_from(body) if body is not None else []
     if models:
-        cache["at"], cache["models"] = moment, models
+        cache["at"], cache["models"], cache["contexts"] = moment, models, free_model_contexts_from(body)
         return {"models": [OPENROUTER_FREE_ROUTER, *models], "source": "live"}
     if cache["models"]:
         return {"models": [OPENROUTER_FREE_ROUTER, *cache["models"]], "source": "stale"}
@@ -923,12 +1007,14 @@ async def free_tool_models(
 
 def forget_free_models() -> None:
     """Empty the cache (tests, and a restart of nothing: the cache lives only in this process)."""
-    _free_models_cache.update(at=None, models=[])
+    _free_models_cache.update(at=None, models=[], contexts={})
 
 
 __all__ = [
     "free_tool_models",
     "free_tool_models_from",
+    "free_model_contexts_from",
+    "local_context",
     "forget_free_models",
     "PROVIDERS",
     "PanelRefused",

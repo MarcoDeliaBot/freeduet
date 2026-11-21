@@ -38,6 +38,13 @@ whether the router asks before it switches. It never decides what may run: the l
 engine of the order, whatever the mode, and whatever the person answers to a question (``switch``, or the name of an
 engine), so an engine held by a cap is skipped in either mode and no answer lifts the hold.
 
+SHORT HOLDS WAIT (D121). When the engine that should answer asks for a short wait (``HOLD_WAIT_MAX_SECONDS``, a rate limit or a
+usage limit whose end is within that time, from ``Retry-After`` or the breaker's hold), the turn says so in one line, waits and
+tries THAT engine again, once per turn (``MAX_HOLD_WAITS``), instead of switching. A second failure, a longer hold, a cap the
+person set, a sign-in or any other failure switch as before (and ask-first asks then). A wait changes no engine, so it needs no
+answer in ask-first mode and counts no switch; a pin waits too. While it waits the turn's stream stays open: ``agui.sse`` sends a
+keep-alive comment whenever nothing was sent for ``KEEPALIVE_SECONDS``, the same way as for a local model that is reading.
+
 BOUNDS. ``MAX_SWITCHES`` (2, the plan's loop guard) engine switches per turn, then a plain message.
 ``FIRST_OUTPUT_SECONDS`` without a word or a tool call from an engine is a ``transient`` failure of that engine
 and the turn moves on; the segment's own whole-turn timeout stays the segment's and is recorded as ``transient``
@@ -52,6 +59,7 @@ import asyncio
 import contextlib
 import dataclasses
 import logging
+import math
 import os
 import time
 from collections.abc import AsyncIterator, Mapping
@@ -70,9 +78,11 @@ from .engines import (
     EnginesConfig,
     Switching,
     chain_ids,
+    context_limit,
     first_answer_limit,
     is_light,
     is_local_model,
+    is_openrouter,
     exclusion_code,
     exclusion_reason,
     is_free_cloud,
@@ -90,15 +100,20 @@ from .failure_classifier import AUTH, CREDITS, RATE_LIMIT, TRANSIENT, USAGE_LIMI
 from .tools_as_text import NOTE as TOOLS_AS_TEXT_NOTE, TOOLS_AS_TEXT, looks_like_tool_call_text
 from .ledger import DAILY, Ledger, Limits
 from .members import Member
-from .segment import SegmentNotes, run_segment
+from .segment import CONTEXT_TOO_SMALL, SegmentNotes, run_segment
 
 log = logging.getLogger("freeduet.engine_router")
 
 MAX_SWITCHES = 2
+# D121: an engine that asks the turn to wait this long or less (a per-minute rate limit: `Retry-After`, or the limit the breaker holds
+# it to) is waited for and tried again once, not left for another engine. A longer hold switches as before.
+HOLD_WAIT_MAX_SECONDS = 90.0
+HOLD_WAIT_CUSHION_SECONDS = 1.0  # past the stated moment, so the engine is not asked a second too early
+MAX_HOLD_WAITS = 1  # waits in one turn, so a chain of engines that all rate-limit cannot hold a turn for minutes
 LOCAL_NOTICE_AFTER_SECONDS = 15.0  # D108: a local model silent this long is said to be reading
 PROBE_EVERY_SECONDS = 60.0
 PROBE_WAIT_SECONDS = 10.0
-SWITCHABLE = frozenset({RATE_LIMIT, USAGE_LIMIT, CREDITS, AUTH, TRANSIENT, TOOLS_AS_TEXT})
+SWITCHABLE = frozenset({RATE_LIMIT, USAGE_LIMIT, CREDITS, AUTH, TRANSIENT, TOOLS_AS_TEXT, notices.TOO_LONG})
 TOOK_TOO_LONG = "took too long on this turn"
 
 
@@ -122,6 +137,7 @@ class _Attempt(EngineAdapter):
         self.health: Health | None = None
         self.hint: str | None = None  # "first_output" or "whole_turn"
         self.tools_as_text = False  # D116: the turn ended with a tool call written as text; set by the router
+        self.too_long = False  # D121: the transcript could not fit this engine's context and nothing was sent; set by the router
         self._settled = False
 
     def child_env(self, source=None):
@@ -150,6 +166,8 @@ class _Attempt(EngineAdapter):
     def failure(self) -> Failure | None:
         if self.tools_as_text:
             return Failure(TOOLS_AS_TEXT)
+        if self.too_long:
+            return Failure(notices.TOO_LONG)  # not the engine's health: it never ran, so the breaker is told nothing
         if self.health is not None and self.health.failure is not None:
             return self.health.failure
         return Failure(TRANSIENT) if self.hint == "first_output" else None
@@ -254,8 +272,9 @@ _RANK = {notices.NONE: 0, notices.TEXT: 1, notices.TOOL: 2}
 
 class Router:
     def __init__(self, state: EngineState, adapters: Mapping[str, EngineAdapter], config: EnginesConfig,
-                 clock=time.monotonic, ledger: Ledger | None = None):
+                 clock=time.monotonic, ledger: Ledger | None = None, sleep=asyncio.sleep):
         self.state, self.adapters, self.config, self._clock = state, dict(adapters), config, clock
+        self._sleep = sleep  # D121: a test passes a sleep that moves its fake clock
         self._probed_at: dict[str, float] = {}
         for adapter in self.adapters.values():
             state.register(adapter)
@@ -349,6 +368,18 @@ class Router:
             except Exception:  # noqa: BLE001 - a probe never fails a turn
                 log.warning("engine probe did not finish", exc_info=True)
 
+    # -- a short hold (D121) --------------------------------------------------------------------
+
+    def _short_hold(self, kind, until: datetime | None) -> int | None:
+        """The whole seconds to wait for an engine held by a rate limit or a usage limit that ends within HOLD_WAIT_MAX_SECONDS, or
+        None: another kind of stop, a cap the person set (never lifted by waiting), no known end, an end already past or too far."""
+        if isinstance(kind, notices.Held) or kind not in (RATE_LIMIT, USAGE_LIMIT) or until is None:
+            return None
+        seconds = (until - self.state.now()).total_seconds()
+        if seconds <= 0 or seconds > HOLD_WAIT_MAX_SECONDS:
+            return None
+        return math.ceil(seconds)
+
     # -- the ask-first answer -------------------------------------------------------------------
 
     @staticmethod
@@ -420,11 +451,36 @@ class Router:
         switches = 0
         stopped: tuple[str, str, datetime | None] | None = None  # the engine we are moving on from
         last_failed: tuple[str, str, datetime | None] | None = None  # the last engine that ran and failed (D119: not blocked[-1])
+        blocked_keys: list[str] = []  # D121: the engine of each entry of `blocked`
+        waited_for: set[str] = set()  # D121: engines this turn has already waited for
+        ran = 0  # attempts made so far in this turn
+
 
         while True:
-            key = self._pick(order, tried, floors, blocked)
+            key = self._pick(order, tried, floors, blocked, blocked_keys)
+            if ran == 0 and blocked and len(waited_for) < MAX_HOLD_WAITS and blocked_keys[0] not in waited_for:
+                # D121: the engine that should have answered first is held for a short while: wait for it, then look again.
+                first_key = blocked_keys[0]
+                seconds = (
+                    self._short_hold(blocked[0][1], blocked[0][2])
+                    if key is None or order.index(first_key) < order.index(key)
+                    else None
+                )
+                if seconds is not None:
+                    waited_for.add(first_key)
+                    for event in _say(notices.hold_wait(lang, blocked[0][0], seconds)):
+                        yield event
+                    await self._sleep(seconds + HOLD_WAIT_CUSHION_SECONDS)
+                    tried.clear()
+                    blocked.clear()
+                    blocked_keys.clear()
+                    continue
             if key is None:
                 reason = last_failed or (blocked[-1] if blocked else None)
+                if reason is not None and reason[1] == notices.TOO_LONG:
+                    # D121: no engine is left that can hold this conversation: say so, with the likely causes.
+                    yield agui.run_error(notices.conversation_too_long(lang, reason[0]), CONTEXT_TOO_SMALL)
+                    return
                 if choice.pin is not None and blocked:
                     yield agui.run_error(notices.pinned(lang, *reason, now=self.state.now()), ENGINE_LIMITED)
                     return
@@ -465,6 +521,7 @@ class Router:
             if ticket is None:  # the breaker said no between the look and the ask (a half-open probe taken)
                 tried.add(key)
                 continue
+            ran += 1
             engine = self.config.engines[key]
             missing = {n: t for n, t in floors.items() if not tier_at_least(engine.tier, t)}
             tools = [t for t in run.tools if t["name"] not in missing]
@@ -490,7 +547,7 @@ class Router:
             sub = dataclasses.replace(run, messages=[*run.messages, *produced], tools=tools)
             stream = run_segment(
                 sub, member, notes, attempt, announce=False, extra_notes=tuple(attempt_notes),
-                light=is_light(engine),
+                light=is_light(engine), context_tokens=context_limit(engine),
             )
             held: dict | None = None
             saw_output, finished = False, False
@@ -537,6 +594,8 @@ class Router:
                     kind = event["type"]
                     if kind == "RUN_ERROR":
                         held = event
+                        if event.get("code") == CONTEXT_TOO_SMALL:
+                            attempt.too_long = True
                         if TOOK_TOO_LONG in str(event.get("message") or ""):
                             attempt.hint = "whole_turn"
                         break
@@ -581,12 +640,29 @@ class Router:
                 return
             row = self.state.row(key)
             until = (row.limited_until if row else None) or failure.retry_at
-            stopped = (self.adapters[key].label, self._notice_kind(key, failure.kind), until)
+            shown_kind = self._notice_kind(key, failure.kind)
+            if failure.upstream and is_openrouter(self.config.engines[key].base_url):
+                # D121: the provider behind the router limited this model: it is unavailable, not slow. Switch (no wait), say why,
+                # and keep the reason where the Engines page can show it.
+                model = self.config.engines[key].model or key
+                shown_kind = notices.Upstream(model)
+                self.state.note(key, notices.upstream_note(model))
+            seconds = self._short_hold(shown_kind, until) if len(waited_for) < MAX_HOLD_WAITS and key not in waited_for else None
+            if seconds is not None:
+                # D121: a short hold: say so, wait, and try the same engine once more. Nothing is recorded as stopped.
+                waited_for.add(key)
+                tried.discard(key)
+                for event in _say(notices.hold_wait(lang, self.adapters[key].label, seconds)):
+                    yield event
+                await self._sleep(seconds + HOLD_WAIT_CUSHION_SECONDS)
+                continue
+            stopped = (self.adapters[key].label, shown_kind, until)
             blocked.append(stopped)
+            blocked_keys.append(key)
             last_failed = stopped
 
     def _pick(self, order: list[str], tried: set[str], floors: dict[str, str],
-              blocked: list[tuple[str, str, datetime | None]]) -> str | None:
+              blocked: list[tuple[str, str, datetime | None]], blocked_keys: list[str] | None = None) -> str | None:
         """The next engine that is available now, preferring ones that meet the quality floor. Looks without
         asking the breaker for a ticket; engines it finds unavailable are noted in `blocked` (once each)."""
         # First look at every engine without recording anything, then record the engines up to the one chosen (and any cap-held one):
@@ -604,7 +680,10 @@ class Router:
             row = self.state.row(key)
             if row is not None and not row.available:
                 kind = AUTH if row.state == SIGNED_OUT else (row.last_failure_kind or USAGE_LIMIT)
-                looked.append((key, (self.adapters[key].label, self._notice_kind(key, kind), row.limited_until)))
+                shown = self._notice_kind(key, kind)
+                if notices.is_upstream_note(row.note) and kind == RATE_LIMIT:
+                    shown = notices.Upstream(self.config.engines[key].model or key)  # D121: told again while it stays held
+                looked.append((key, (self.adapters[key].label, shown, row.limited_until)))
                 continue
             looked.append((key, None))
         available = [key for key, why in looked if why is None]
@@ -623,6 +702,8 @@ class Router:
             if why is not None and (recording or isinstance(why[1], notices.Held)):
                 tried.add(key)
                 blocked.append(why)
+                if blocked_keys is not None:
+                    blocked_keys.append(key)
             if key == chosen:
                 recording = False
         return chosen
@@ -697,4 +778,4 @@ def router_from_environment(state: EngineState, adapters: Mapping[str, EngineAda
         return None
 
 
-__all__ = ["MAX_SWITCHES", "PROBE_EVERY_SECONDS", "Router", "router_from_environment"]
+__all__ = ["HOLD_WAIT_MAX_SECONDS", "MAX_SWITCHES", "PROBE_EVERY_SECONDS", "Router", "router_from_environment"]

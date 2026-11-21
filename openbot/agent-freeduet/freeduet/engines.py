@@ -69,6 +69,7 @@ _ENGINE_KEYS = frozenset(
         "first_answer_seconds",
         "light",
         "router",
+        "context_tokens",
     }
 )
 _TOP_KEYS = frozenset({"engines", "metered", "chains", "quality_floor", "assistants", "switching", "own_order"})
@@ -118,6 +119,10 @@ class Engine:
     # (FreeLLMAPI): it is NOT a local model (`is_local_model` is false: the router's own patience, no "reading" notice) and it
     # IS a free cloud engine (`is_free_cloud`: the D101 sentence). Only a free API entry may say it.
     router: bool = False
+    # D121. How many tokens of context this model has, as the person or the Engines page wrote it (the page reads it from Ollama or
+    # from OpenRouter's model list). None is "not said": a local model is then taken to have DEFAULT_LOCAL_CONTEXT_TOKENS, any other
+    # engine none (`context_limit`). Only an `anthropic-compatible` entry may set it.
+    context_tokens: int | None = None
 
 
 @dataclass(frozen=True)
@@ -309,6 +314,21 @@ def first_answer_limit(engine: Engine) -> float | None:
     if not is_local_model(engine):
         return None
     return engine.first_answer_seconds if engine.first_answer_seconds is not None else LOCAL_FIRST_ANSWER_SECONDS
+
+
+#: D121. The bounds of `context_tokens`, and what a local model is taken to have when the entry does not say (Ollama's own limit can
+#: be read only by the Engines page; 32,768 is what a model that fits a small computer usually serves).
+MIN_CONTEXT_TOKENS = 2048
+MAX_CONTEXT_TOKENS = 4_000_000
+DEFAULT_LOCAL_CONTEXT_TOKENS = 32768
+
+
+def context_limit(engine: Engine) -> int | None:
+    """D121. The context size, in tokens, that a transcript sent to this engine must fit: the entry's `context_tokens`, else
+    DEFAULT_LOCAL_CONTEXT_TOKENS for a local model, else None (no known limit: the transcript is sent whole, as before)."""
+    if engine.context_tokens is not None:
+        return engine.context_tokens
+    return DEFAULT_LOCAL_CONTEXT_TOKENS if is_local_model(engine) else None
 
 
 def is_light(engine: Engine) -> bool:
@@ -520,6 +540,17 @@ def _parse_engine(engine_id: str, entry: Any, problems: list[str]) -> Engine | N
     elif light is not None and kind != COMPATIBLE_KIND:
         problems.append(f"{where}: `light` is only for an `{COMPATIBLE_KIND}` engine")
 
+    context_tokens = entry.get("context_tokens")
+    if context_tokens is not None and (
+        isinstance(context_tokens, bool) or not isinstance(context_tokens, int)
+        or not MIN_CONTEXT_TOKENS <= context_tokens <= MAX_CONTEXT_TOKENS
+    ):
+        problems.append(
+            f"{where}: `context_tokens` must be a whole number from {MIN_CONTEXT_TOKENS} to {MAX_CONTEXT_TOKENS}, not {context_tokens!r}"
+        )
+    elif context_tokens is not None and kind != COMPATIBLE_KIND:
+        problems.append(f"{where}: `context_tokens` is only for an `{COMPATIBLE_KIND}` engine")
+
     router = entry.get("router")
     if router is not None and not _is_bool(router):
         problems.append(f"{where}: `router` must be true or false, not {router!r}")
@@ -588,6 +619,7 @@ def _parse_engine(engine_id: str, entry: Any, problems: list[str]) -> Engine | N
         first_answer_seconds=float(first_answer) if first_answer is not None and _is_number(first_answer) else None,
         light=light if _is_bool(light) else None,
         router=router is True,
+        context_tokens=context_tokens if isinstance(context_tokens, int) and not isinstance(context_tokens, bool) else None,
     )
 
 
