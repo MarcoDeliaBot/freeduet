@@ -46,37 +46,37 @@ const reached: string[] = [];
 
 const gatewayWith = (approvalGate: (candidate: never) => Promise<unknown>) =>
   createComputerGateway({
-  provider: {
-    name: "test",
-    isolation: "per-bot",
-    locate: async () => "http://computer:4100",
-    status: async (id) => ({ botId: id, state: "ready" }),
-    list: async () => [],
-    stop: async () => ({ wasRunning: true }),
-    reset: async () => ({ cleared: true }),
-  },
-  auditStore: { insert: async () => undefined },
-  policy: () => ({ mode: "enforce", allow: ["true"], deny: [] }),
-  approvalGate: approvalGate as never,
-  fetchImpl: (async (url: URL | RequestInfo, init?: RequestInit) => {
-    const path = new URL(String(url)).pathname;
-    reached.push(path);
-    if (path === "/navigate")
+    provider: {
+      name: "test",
+      isolation: "per-bot",
+      locate: async () => "http://computer:4100",
+      status: async (id) => ({ botId: id, state: "ready" }),
+      list: async () => [],
+      stop: async () => ({ wasRunning: true }),
+      reset: async () => ({ cleared: true }),
+    },
+    auditStore: { insert: async () => undefined },
+    policy: () => ({ mode: "enforce", allow: ["true"], deny: [] }),
+    approvalGate: approvalGate as never,
+    fetchImpl: (async (url: URL | RequestInfo, init?: RequestInit) => {
+      const path = new URL(String(url)).pathname;
+      reached.push(path);
+      if (path === "/navigate")
+        return Response.json({
+          url: "https://shop.example/",
+          title: "Shop",
+          text: "a gift",
+          truncated: false,
+          elapsedMs: 1,
+        });
       return Response.json({
-        url: "https://shop.example/",
-        title: "Shop",
-        text: "a gift",
-        truncated: false,
+        action: "click",
+        url:
+          JSON.parse(String(init?.body ?? "{}")).url ?? "https://shop.example/",
         elapsedMs: 1,
       });
-    return Response.json({
-      action: "click",
-      url:
-        JSON.parse(String(init?.body ?? "{}")).url ?? "https://shop.example/",
-      elapsedMs: 1,
-    });
-  }) as unknown as typeof fetch,
-});
+    }) as unknown as typeof fetch,
+  });
 const gateway = gatewayWith((candidate) => service.gate(candidate as never));
 
 const profile = (overrides: Partial<AgentProfile> = {}): AgentProfile => ({

@@ -335,14 +335,13 @@ export function createHandoffDelivery(options: {
          * in the conversation they are watching; for a forward hop it is drawn in the conversation
          * that asked (D52). See `toolsForTurn` above.
          */
-        const computer =
-          toolsForTurn
-            ? await toolsForTurn({
-                ownerUserId: work.actorId,
-                agentId: work.toBotId,
-                initiator: handoffInitiator(work.fromBotId, work.initiator),
-              })
-            : [];
+        const computer = toolsForTurn
+          ? await toolsForTurn({
+              ownerUserId: work.actorId,
+              agentId: work.toBotId,
+              initiator: handoffInitiator(work.fromBotId, work.initiator),
+            })
+          : [];
 
         /*
          * The conversation's lock, before a single event is streamed.
