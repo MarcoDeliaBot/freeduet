@@ -112,18 +112,25 @@ export type NavigateResult = {
  *
  * Fixed limits, stated to the member in the tool's description and enforced here as well as on the
  * computer: at most {@link READ_PAGES_MAX_URLS} addresses (each is a real page load of up to 38 s,
- * so five keep one call inside the server's deadlines and under half a minute of text to read),
- * {@link READ_PAGES_PER_PAGE_CHARS} characters of text and links per page (`computer_navigate`'s own
- * limit, so a page reads the same either way) and {@link READ_PAGES_TOTAL_CHARS} in all (five
- * full pages, never more than five navigations would have returned).
+ * so five keep one call inside the server's deadlines), {@link READ_PAGES_PER_PAGE_CHARS} characters
+ * of text and links per page (`computer_navigate`'s own limit, so a page reads the same either way)
+ * and {@link READ_PAGES_TOTAL_CHARS} in all, shared equally: `readPagesLimit(n)` is each page's room
+ * for a call of `n`. Equal shares, and not "first come, first served", so a long page early in the
+ * list cannot leave the last one with nothing, and the answer does not depend on how long each page is.
  */
 export const READ_PAGES_MAX_URLS = 5;
 export const READ_PAGES_PER_PAGE_CHARS = 6000;
-export const READ_PAGES_TOTAL_CHARS = 30_000;
+export const READ_PAGES_TOTAL_CHARS = 24_000;
 /** No further page is opened after this long: the rest are reported as not read. */
 export const READ_PAGES_BUDGET_MS = 120_000;
-/** A page given less room than this is not opened: a stub of a page misleads more than it helps. */
-export const READ_PAGES_MIN_CHARS = 1000;
+
+/** How many characters each page of a call for `count` addresses may give back. */
+export function readPagesLimit(count: number): number {
+  return Math.min(
+    READ_PAGES_PER_PAGE_CHARS,
+    Math.floor(READ_PAGES_TOTAL_CHARS / Math.max(count, 1)),
+  );
+}
 
 /** What the computer's `/read-page` answers for one address. `notRead` is a page it would not read. */
 export type ReadPageResult = {

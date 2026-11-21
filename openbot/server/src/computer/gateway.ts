@@ -101,9 +101,7 @@ import type {
 import {
   READ_PAGES_BUDGET_MS,
   READ_PAGES_MAX_URLS,
-  READ_PAGES_MIN_CHARS,
-  READ_PAGES_PER_PAGE_CHARS,
-  READ_PAGES_TOTAL_CHARS,
+  readPagesLimit,
 } from "./schema";
 import {
   createInMemorySnapshotStore,
@@ -1114,7 +1112,8 @@ export function createComputerGateway(
       }
       const startedAt = Date.now();
       const pages: ReadPagesPage[] = [];
-      let used = 0;
+      // Each page gets an equal share of the call's total, so the order of the list changes nothing.
+      const room = readPagesLimit(urls.length);
       // Set when the computer itself cannot be reached: asking again for each page would only wait again.
       let unreachable: string | undefined;
       for (const raw of urls) {
@@ -1128,17 +1127,6 @@ export function createComputerGateway(
             url,
             error:
               "Not read: this call ran out of time. Ask for this page again on its own.",
-          });
-          continue;
-        }
-        const room = Math.min(
-          READ_PAGES_PER_PAGE_CHARS,
-          READ_PAGES_TOTAL_CHARS - used,
-        );
-        if (room < READ_PAGES_MIN_CHARS) {
-          pages.push({
-            url,
-            error: `Not read: the pages before it used the ${READ_PAGES_TOTAL_CHARS} characters one call returns. Ask for this page again on its own.`,
           });
           continue;
         }
@@ -1156,7 +1144,6 @@ export function createComputerGateway(
             continue;
           }
           const cut = cutPageText(page.text, room);
-          used += cut.text.length;
           pages.push({
             url,
             finalUrl: page.url,
