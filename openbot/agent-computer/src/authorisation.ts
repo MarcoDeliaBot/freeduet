@@ -69,6 +69,8 @@ const ACTING_PATHS = new Set([
   "/navigate",
   "/click",
   "/type",
+  // Choosing in a native menu or filling a date field: typing by another name, refused the same way.
+  "/select",
   "/key",
   "/scroll",
   "/exec",
@@ -84,5 +86,12 @@ export function actsOnTheComputer(pathname: string): boolean {
 
 /** Only page mutations need a fresh browser snapshot after handback. */
 export function mutatesBrowser(pathname: string): boolean {
-  return ["/navigate", "/click", "/type", "/key", "/scroll"].includes(pathname);
+  return [
+    "/navigate",
+    "/click",
+    "/type",
+    "/select",
+    "/key",
+    "/scroll",
+  ].includes(pathname);
 }

@@ -116,6 +116,7 @@ describe("what the wheel stops while a person is driving", () => {
       "/navigate",
       "/click",
       "/type",
+      "/select",
       "/key",
       "/scroll",
       "/exec",

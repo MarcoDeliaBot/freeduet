@@ -355,6 +355,24 @@ export function createComputerRoutes(
     }),
   );
 
+  routes.post("/:botId/select", (context) =>
+    act(context, (botId, actor, body, signal) => {
+      const ref = asRef(body);
+      if (!ref) return badRef;
+      const value = body?.value;
+      if (
+        typeof value !== "string" &&
+        !(Array.isArray(value) && value.every((v) => typeof v === "string"))
+      ) {
+        return {
+          error:
+            "The value to choose is required: an option label or value (a list for a multiple menu), or an ISO date or time.",
+        };
+      }
+      return gateway.select(botId, actor, { ...ref, value }, signal);
+    }),
+  );
+
   routes.post("/:botId/key", (context) =>
     act(context, (botId, actor, body, signal) => {
       if (typeof body?.key !== "string" || !body.key) {

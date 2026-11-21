@@ -31,7 +31,7 @@ const PRESETS: { label: string; rule: string; cost?: string }[] = [
     // flag that presses it once the text is in, and a rule naming only `computer_key` left that door
     // open.
     rule: '(intent == "activate" && contains(element.name, "submit")) || ((tool.name == "computer_key" || tool.name == "computer_type") && key == "Enter")',
-    cost: "Also stops the Bot pressing Enter anywhere else. A form can submit from Enter in any field.",
+    cost: "Also stops the Bot pressing Enter anywhere else. A form can submit from Enter in any field. It does not cover choosing in a menu or a date field, whose change can submit a form by itself.",
   },
   {
     label: "Never type into a password field",

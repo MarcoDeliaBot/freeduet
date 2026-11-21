@@ -64,6 +64,7 @@ const TURN_ROUTES = new Set([
   "GET /read",
   "POST /click",
   "POST /type",
+  "POST /select",
   "POST /key",
   "POST /scroll",
 ]);

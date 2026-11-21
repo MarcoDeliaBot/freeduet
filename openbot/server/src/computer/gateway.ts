@@ -88,6 +88,7 @@ import type {
   SignInFillResult,
   SnapshotElement,
   SnapshotResult,
+  SelectInput,
   TypeInput,
   WriteFileInput,
   WriteFileResult,
@@ -180,6 +181,12 @@ export interface ComputerGateway {
     botId: string,
     actor: ActionActor,
     input: TypeInput,
+    signal?: AbortSignal,
+  ): Promise<ActionResult>;
+  select(
+    botId: string,
+    actor: ActionActor,
+    input: SelectInput,
     signal?: AbortSignal,
   ): Promise<ActionResult>;
   key(
@@ -1100,6 +1107,41 @@ export function createComputerGateway(
       );
     },
 
+    /**
+     * A native menu or a date field (D123). Typing by another name, so it is governed exactly as
+     * `type` is: the same policy, the same audit row, the same approval gate, effect `write`. The
+     * policy sees intent `type` and the element's own role, name and type. There is no `key`, but that
+     * does not make a choice inert: a menu change can run the page's own handler, which may submit a
+     * form, navigate or send a request. The "Never submit a form" preset does not cover that; the
+     * person's approval card or allow rule is the protection, as for a typed entry.
+     */
+    select(
+      botId: string,
+      actor: ActionActor,
+      input: SelectInput,
+      signal?: AbortSignal,
+    ) {
+      return govern(
+        "computer_select",
+        botId,
+        actor,
+        {
+          ref: input.ref,
+          snapshotId: input.snapshotId,
+          ...(signal ? { signal } : {}),
+        },
+        (address) =>
+          post<ActionResult>(
+            botId,
+            "/select",
+            input,
+            signal,
+            undefined,
+            address,
+          ),
+      );
+    },
+
     key(
       botId: string,
       actor: ActionActor,
@@ -1302,6 +1344,8 @@ export function intentOf(
     case "computer_click":
       return "activate";
     case "computer_key":
+    // A menu or date choice changes a field the way typing does, and has no key of its own (D123). The page's change handler may still act.
+    case "computer_select":
     // A type carrying `submit` ends in Enter, and the same reasoning applies to it: what the
     // keypress does is press whatever the form activates, whichever tool asked for it.
     case "computer_type":

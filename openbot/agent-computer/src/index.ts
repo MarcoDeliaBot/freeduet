@@ -51,6 +51,13 @@ import {
   pressKeyUnlessSecret,
   sensitiveRefs,
 } from "./secret-masking";
+import {
+  ChoiceError,
+  chooseOnField,
+  describeChoiceField,
+  isNativeOption,
+  OPTIONS_LIMIT,
+} from "./select-field";
 import { type BotSession, createSessions } from "./sessions";
 import {
   collectWhenSettled,
@@ -501,11 +508,14 @@ async function snapshotPage(
     title,
     truncated: parsed.truncated,
     // A password field's value is in the aria snapshot in plain text. See secret-masking.ts.
-    elements: await withInputTypes(
+    elements: await withChoiceDetails(
       target,
-      maskSensitiveValues(
-        parsed.elements,
-        await sensitiveRefs(target, parsed.elements),
+      await withInputTypes(
+        target,
+        maskSensitiveValues(
+          parsed.elements,
+          await sensitiveRefs(target, parsed.elements),
+        ),
       ),
     ),
   };
@@ -521,6 +531,70 @@ async function withInputTypes(
     const type = types.get(element.ref);
     return type ? { ...element, type } : element;
   });
+}
+
+/**
+ * What a native menu offers and what a date field holds (D123, item 2).
+ *
+ * A `<select>` shows in the aria tree as a combobox or listbox with no value and options that cannot
+ * be clicked, so the member could neither read the choices nor tell which was picked. Each menu gets its
+ * `options` (label, value when it differs, disabled, selected), capped at {@link OPTIONS_LIMIT} with the
+ * rest counted, plus `multiple`, and its `value` becomes the selected label(s). A date field gets its
+ * `min` and `max`. The native options themselves are dropped from the list: they take up its cap and
+ * a click on one fails. A sensitive field (D76) gets none of this and keeps its masked value.
+ */
+async function withChoiceDetails(
+  target: Page,
+  elements: SnapshotElement[],
+): Promise<SnapshotElement[]> {
+  const asked = {
+    selector: SENSITIVE_FIELD_SELECTOR,
+    limit: OPTIONS_LIMIT,
+    textLimit: 120,
+  };
+  const details = await Promise.all(
+    elements.map(async (element) => {
+      const locator = () => target.locator(`aria-ref=${element.ref}`);
+      if (element.role === "option") {
+        const native = await locator()
+          .evaluate(isNativeOption, undefined, { timeout: 1_000 })
+          .catch(() => false);
+        return native ? null : element;
+      }
+      if (
+        element.role !== "combobox" &&
+        element.role !== "listbox" &&
+        element.role !== "textbox"
+      )
+        return element;
+      const found = await locator()
+        .evaluate(describeChoiceField, asked, { timeout: 1_000 })
+        .catch(() => undefined);
+      if (!found || found.kind === "other" || found.sensitive) return element;
+      if (found.kind === "date")
+        return {
+          ...element,
+          ...(found.min ? { min: found.min } : {}),
+          ...(found.max ? { max: found.max } : {}),
+        };
+      const shown = found.options
+        .filter((option) => option.selected)
+        .map((option) => option.label)
+        .join(", ");
+      return {
+        ...element,
+        ...(shown ? { value: shown } : {}),
+        ...(found.multiple ? { multiple: true } : {}),
+        options: found.options,
+        ...(found.total > found.options.length
+          ? { optionsTotal: found.total }
+          : {}),
+      };
+    }),
+  );
+  return details.filter(
+    (element): element is SnapshotElement => element !== null,
+  );
 }
 
 /**
@@ -1679,6 +1753,11 @@ serve<StreamData>({
           if (error instanceof SecretFieldError) {
             return json({ error: error.message, secretField: true }, 403);
           }
+          // A choice the page does not offer (no such option, a disabled one, a malformed date): the
+          // caller's request is what is wrong, so a 400 with the sentence, and nothing was changed.
+          if (error instanceof ChoiceError) {
+            return json({ error: error.message }, 400);
+          }
           return json({ error: describe(error, "The action failed.") }, 502);
         }
       }
@@ -1736,9 +1815,10 @@ type ActionBody = {
   key?: unknown;
   deltaY?: unknown;
   submit?: unknown;
+  value?: unknown;
 };
 
-const ACTIONS = new Set(["/click", "/type", "/key", "/scroll"]);
+const ACTIONS = new Set(["/click", "/type", "/select", "/key", "/scroll"]);
 
 const HUMAN_INPUT = new Set([
   "/human/click",
@@ -1873,6 +1953,25 @@ async function performAction(
       submitted: body.submit === true,
       url: target.url(),
     };
+  }
+
+  if (action === "/select") {
+    if (!ref)
+      throw new Error("Choosing needs the ref of a menu or a date field.");
+    const choice = body.value;
+    if (
+      typeof choice !== "string" &&
+      !(Array.isArray(choice) && choice.every((c) => typeof c === "string"))
+    ) {
+      throw new Error(
+        "Choosing needs a value: an option label or value, a list of them for a multiple menu, or an ISO date or time.",
+      );
+    }
+    const field = await resolveRef(session, target, ref, expected);
+    // Refused for a sensitive field with the typed entry's own sentence (D76), then checked against what
+    // the page offers. What the field now shows is returned: unlike typed text it is not free text.
+    const outcome = await chooseOnField(field, choice, acting);
+    return { action: "select", ref, ...outcome, url: target.url() };
   }
 
   if (action === "/key") {

@@ -487,6 +487,7 @@ export const EXECUTORS: Record<string, Executor | "gate"> = {
   computer_snapshot: (context) => browserRead(context, "/snapshot"),
   // The changes (approval-tools.tsx `writes`).
   computer_type: "gate",
+  computer_select: "gate",
   computer_click: "gate",
   computer_key: "gate",
   computer_run_command: "gate",

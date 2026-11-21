@@ -15,6 +15,7 @@ type RenderProps = { toolCallId: string; [key: string]: unknown };
 const writes = new Set([
   "computer_click",
   "computer_type",
+  "computer_select",
   "computer_key",
   "computer_run_command",
   "computer_write_file",
