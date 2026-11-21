@@ -18862,8 +18862,8 @@ skills:
 
       - At most 20 drafts a day (the default). The person can change it in their own words, for
         example "up to 10 a day" or "up to 40 a day"; use the number in their latest message and
-        say which number you are using. When you reach it, stop and say so; do not start a second
-        batch on the same day.
+        say which number you are using. The number holds within one conversation, unless the person says
+        otherwise. When you reach it, stop and say so; do not start a second batch in that conversation.
       - Public pages only. You read pages that anybody can open. You do not sign in to anything, you do
         not use a list that was bought or handed to you by somebody else, you do not open a page that
         shows a login wall or a human check (skip it and say so), and you do not read private social
@@ -18915,7 +18915,7 @@ skills:
       about and is not disguised as a reply or a forward; a first line that names one specific thing from
       their own page; two or three sentences on what is offered and why it matters to them; one clear
       question that can be answered with a word; the sender's name and business and postal address; and
-      a final line that says how to stop hearing from the sender, for example to reply "no thanks".
+      a final line that says how to stop hearing from the sender, for example to reply "stop".
       Plain text, no tracking images, no attachments, no invented numbers, testimonials, customers or
       results, no false urgency, no pretending to know them. If the person wants a follow-up, write at
       most two, each with the day it would go (for example day 4 and day 10), each shorter than the
@@ -18927,10 +18927,11 @@ skills:
       Show the person a table first: business, the page that shows the fit, the person's name and role,
       the address and the page it came from, subject, and the full text. Then give Iris each email, one
       per message, as recipient, subject and body, and say that Otto is to send it. Do not batch many
-      recipients in one email. The addresses come from pages and tools, never from the person's own
-      message, so the server does not treat the person's request as the approval for them: each send
+      recipients in one email. Here the addresses come from pages, so the server does not treat the
+      person's request as the approval for them: each send
       asks the person with an approval card, unless the person has chosen Full access for Otto, which
-      is their own setting and not yours to ask for or to mention as a way round. A routine or a
+      is their own setting and not yours to ask for or to mention as a way round. An address that the
+      person types themselves in their own message follows the usual rule for typed addresses. A routine or a
       scheduled batch always asks. Tell the person that each send is theirs to approve and that nothing
       has gone until Otto confirms it. Whoever decides, say where each address came from.
 
@@ -18940,8 +18941,9 @@ skills:
       Otto gives you. Sort each one as: interested (draft an answer for the person, with the same hand-off
       as above), not now (note the date to ask again, and ask the person if they agree), question
       (answer only from facts the person gave you), or no. For a no, "unsubscribe", "remove me" or an
-      angry reply: write nothing more to that address, record it as do-not-contact with the date,
-      check every later draft against that record before it goes to Iris, and tell the person. Do not
+      angry reply: write nothing more to that address, save it to your memory as do-not-contact with the
+      date, keeping only the address and the date, check every later draft against that record before
+      it goes to Iris, and tell the person. Do not
       argue and do not ask why. An automatic out-of-office reply is not an answer: wait.
 
       ## What you never do

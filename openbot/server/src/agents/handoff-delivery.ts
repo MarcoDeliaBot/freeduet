@@ -154,11 +154,13 @@ export function createHandoffDelivery(options: {
    */
   admission: TurnAdmission;
   /**
-   * The computer tools a RELAY turn gets: the same ones an ordinary turn of that Bot in that
-   * conversation gets (FreeDuet, docs/M1_PLAN.md D22). Asked only for a turn that runs in the
-   * conversation the person is watching (`work.answerIn`: the relay of an answer, or a notice). A
-   * forward hop runs in a scratch thread nobody sees, where an approval could never be answered, and
-   * is never asked. Absent, as upstream has it, no hop gets any.
+   * The computer tools a hop gets: the same ones an ordinary turn of that Bot gets (FreeDuet,
+   * docs/M1_PLAN.md D22 for the relay, D130 for the forward hop). Asked for every hop: the relay of
+   * an answer or a notice (`work.answerIn`, in the conversation the person is watching) and the
+   * forward hop (a scratch thread nobody sees). Without it a member asked by a colleague could never
+   * use its own browser. A card a forward hop raises is drawn in the conversation that asked (D48,
+   * D52) and the decision resumes the hop (`handoff-resume.ts`), so it can be answered. Absent, as
+   * upstream has it, no hop gets any.
    */
   toolsForTurn?: (input: {
     ownerUserId: string;
@@ -327,19 +329,19 @@ export function createHandoffDelivery(options: {
         );
 
         /*
-         * A relay's computer, resolved before the lock is taken so a failure here leaks nothing. The
+         * The hop's computer, resolved before the lock is taken so a failure here leaks nothing. The
          * same call a routine or a wake-up makes, under the same middleware: a gated action stops the
-         * run with an approval in the conversation the person is watching, and nothing runs before
-         * they decide. Only a turn that speaks in that conversation; see `toolsForTurn` above.
+         * run with an approval, and nothing runs before the person decides. For a relay that card is
+         * in the conversation they are watching; for a forward hop it is drawn in the conversation
+         * that asked (D52). See `toolsForTurn` above.
          */
-        const computer =
-          work.answerIn && toolsForTurn
-            ? await toolsForTurn({
-                ownerUserId: work.actorId,
-                agentId: work.toBotId,
-                initiator: handoffInitiator(work.fromBotId, work.initiator),
-              })
-            : [];
+        const computer = toolsForTurn
+          ? await toolsForTurn({
+              ownerUserId: work.actorId,
+              agentId: work.toBotId,
+              initiator: handoffInitiator(work.fromBotId, work.initiator),
+            })
+          : [];
 
         /*
          * The conversation's lock, before a single event is streamed.

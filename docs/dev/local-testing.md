@@ -49,3 +49,7 @@ Moved out of `CLAUDE.md`. Read it before running tests in a worktree or a sandbo
 - In a test, pass the coworker object to `createApp(...)` as `never`, as `server/tests/openduet-setup.test.ts` does: it is parameter 35, and every parameter from 4 on is optional, so a wrong count still type-checks.
 - A test that mocks `dockerode` and imports `../src/docker` shares the module cache with the other files: import it with a unique query (`../src/docker?<name>`, as `supervisor/tests/computer-token-ensure.test.ts` does).
 
+## Text safety check
+
+`openbot/scripts/check-text-safety.ts` (workflow `text-safety.yml`) scans every tracked text file for hidden or bidirectional Unicode characters and for absolute paths into a person's home folder. Run it from anywhere in the repository with `bun openbot/scripts/check-text-safety.ts`; it needs no install. A hit fails the check unless `ALLOWLIST` in the same file names that file, that hit and a reason. An allowlist entry that matches no hit, or has no reason, also fails it. A new hit is fixed in the text when it is an accident, and allowlisted with a reason when it is a test input, a generic example or a container service user. `bun test` in `openbot/` runs the check's own tests and a scan of the repository.
+
