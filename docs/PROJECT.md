@@ -31,6 +31,7 @@ FreeDuet is a self-hosted team of AI employees that runs on the AI subscriptions
 5. **Thin fork, upstream first.** Extension points before patches; generic fixes go back to OpenBot.
 6. **Every language.** Members reply in the language the person writes in; the interface is English for now, with some cards also in Italian; translation is not planned for now.
 7. **Measure before claiming.** Every member has evals; every release publishes its pass rate.
+8. **Three clicks at most.** Anything a person starts (connecting an app, adding an engine, adding a member, setting a routine, approving) takes three clicks or steps at most, and a screen that asks for more is a defect (D125).
 
 ## 5. What we reuse, what we port, what we build
 
@@ -60,7 +61,7 @@ Done when: FreeDuet starts and works with **zero** API keys; every member passes
 
 `agent-freeduet` runs each member on its own engine chain: logins first (Claude Code in M1; Codex and other subscriptions in M2, once their terms are checked), then local models, then API engines only if the person switched them on. See [ARCHITECTURE.md §3](ARCHITECTURE.md).
 
-Done when: approvals behave identically on every engine; a metered engine can never run first, whatever order a chain is written in; no credential file of a provider is ever read by FreeDuet code (checked by a test that watches file access).
+Done when: approvals behave identically on every engine; a metered engine can never run first, whatever order a chain is written in, unless the person confirmed another order for that member (D115); no credential file of a provider is ever read by FreeDuet code (checked by a test that watches file access).
 
 ### F3. Engines page (M2)
 
@@ -109,7 +110,7 @@ Durations are estimates for one maintainer with a coding agent.
 | Milestone | Scope | Demo that closes it | Estimate |
 |---|---|---|---|
 | **M0 Fork** | Repository from OpenDuet with history; rename to FreeDuet; tenant package in place; OpenBot's plan-token option removed; telemetry off by default; list of every server-side model call; CI green | `scripts/start.sh` opens FreeDuet with Iris answering | 2–3 days |
-| **M1 v0.1 The team on your login** | `agent-freeduet` with the Claude Code adapter and the tool bridge; ten members routed through it; server-side model calls routed too; eval runner; Docker one-command start on Linux; CopilotKit Intelligence optional and off by default, conversations and memory in FreeDuet's own database (#42, decided 2026-11-08) | Iris handles a mixed request on a Claude login, with no API key configured | 2–3 weeks |
+| **M1 v0.1 The team on your login** | `agent-freeduet` with the Claude Code adapter and the tool bridge; ten members routed through it at v0.1; server-side model calls routed too; eval runner; Docker one-command start on Linux; CopilotKit Intelligence optional and off by default, conversations and memory in FreeDuet's own database (#42, decided 2026-11-08) | Iris handles a mixed request on a Claude login, with no API key configured | 2–3 weeks |
 | **M2 v0.2 More subscriptions** | Codex (after its hands-on check and terms check), ACP and OpenAI-compatible adapters (local models first, API keys optional and last); Engines page | A day of work across two logins with zero metered spend | 2 weeks |
 | **M3 v0.3 Never stops** | Engine chains, caps, ledger, savings card, `delegate` | A limit hit live, work continues, savings card updates | 2 weeks |
 | **M4 v0.4 Safe purchases** | `request_purchase`, permits, caps, checkout rule, hand-over, red-team suite | A real low-cost purchase with approval; an over-cap attempt refused | 2 weeks |

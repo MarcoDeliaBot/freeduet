@@ -313,6 +313,46 @@ export function createComputerRoutes(
     }
   });
 
+  /**
+   * Several pages in one call (D127). The same actor as a navigation, and each address is decided on
+   * as one inside the gateway; this route checks only the shape of the request.
+   */
+  routes.post("/:botId/read-pages", async (context) => {
+    const body = (await context.req.json().catch(() => null)) as {
+      urls?: unknown;
+    } | null;
+    if (
+      !Array.isArray(body?.urls) ||
+      !body.urls.every((url) => typeof url === "string")
+    ) {
+      return context.json(
+        { error: "A list of web addresses (urls) is required." },
+        400,
+      );
+    }
+    try {
+      const botId = context.req.param("botId") ?? "default";
+      return context.json(
+        await gateway.readPages(
+          botId,
+          {
+            id: context.var.actor.id,
+            ...(context.var.actor.email === DEV_ACTOR_EMAIL
+              ? {}
+              : { userId: context.var.actor.id }),
+          },
+          { urls: body.urls },
+          context.req.raw.signal,
+        ),
+      );
+    } catch (error) {
+      if (error instanceof ActionRefusedError) {
+        return context.json({ error: error.message, rule: error.rule }, 403);
+      }
+      return context.json(errorBody(error), statusFor(error));
+    }
+  });
+
   routes.post("/:botId/snapshot", async (context) => {
     try {
       return context.json(await gateway.snapshot(context.req.param("botId")));
@@ -352,6 +392,24 @@ export function createComputerRoutes(
         },
         signal,
       );
+    }),
+  );
+
+  routes.post("/:botId/select", (context) =>
+    act(context, (botId, actor, body, signal) => {
+      const ref = asRef(body);
+      if (!ref) return badRef;
+      const value = body?.value;
+      if (
+        typeof value !== "string" &&
+        !(Array.isArray(value) && value.every((v) => typeof v === "string"))
+      ) {
+        return {
+          error:
+            "The value to choose is required: an option label or value (a list for a multiple menu), or an ISO date or time.",
+        };
+      }
+      return gateway.select(botId, actor, { ...ref, value }, signal);
     }),
   );
 

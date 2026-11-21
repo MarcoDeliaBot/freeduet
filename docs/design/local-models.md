@@ -16,7 +16,7 @@ agent-freeduet only. The plan is in [ENGINES_PLAN.md](../ENGINES_PLAN.md) 9.1.
   An answer makes the engine usable. No answer gives `not answering`, which does not mark the engine signed out
   (`answers_on_this_machine`; `NOT_ANSWERING` in `freeduet/engine_adapter.py`).
 - **Example.** A commented `local-models` block with a Linux bind note in `engines.example.yaml`, after
-  `local-free-router`. Off by default, never first in a chain.
+  `local-free-router`. Off by default, never first in a chain by default (D115).
 - **Docs.** A README subsection, the ENGINES_PLAN 9.1 note, and the PROVIDERS row for local models.
 - **Untouched.** `engine_router.py` and the 52 goldens.
 - **Tests.** 25 new tests in `tests/test_compatible_engine_local.py`, and 2 changed in

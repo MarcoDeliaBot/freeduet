@@ -22,11 +22,13 @@ import type {
  */
 export const COMPUTER_TOOLS = [
   "computer_navigate",
+  "computer_read_pages",
   "computer_screenshot",
   "computer_read",
   "computer_snapshot",
   "computer_click",
   "computer_type",
+  "computer_select",
   "computer_key",
   "computer_scroll",
   "computer_read_file",
@@ -53,8 +55,12 @@ export const COMPUTER_ACTING_TOOLS = [
   // about an attempt to reach the cloud metadata endpoint, the single most security-relevant thing a
   // Bot can try, while ticking a radio button is recorded. Governing it puts both in the trail.
   "computer_navigate",
+  // Several pages in one call (D127). Each address is decided on as a navigation, under that name.
+  "computer_read_pages",
   "computer_click",
   "computer_type",
+  // A native menu or a date field (D123): changes a page field like `computer_type`, so it is decided on.
+  "computer_select",
   "computer_key",
   "computer_scroll",
   "computer_read_file",
@@ -98,6 +104,62 @@ export type NavigateResult = {
    */
   truncated: boolean;
   /** Wall-clock ms the navigation took, for the progress line in the transcript. */
+  elapsedMs: number;
+};
+
+/**
+ * `computer_read_pages` (D127): a list of pages read in one call, read only.
+ *
+ * Fixed limits, stated to the member in the tool's description and enforced here as well as on the
+ * computer: at most {@link READ_PAGES_MAX_URLS} addresses (each is a real page load of up to 38 s,
+ * so five keep one call inside the server's deadlines), {@link READ_PAGES_PER_PAGE_CHARS} characters
+ * of text and links per page (`computer_navigate`'s own limit, so a page reads the same either way)
+ * and {@link READ_PAGES_TOTAL_CHARS} in all, shared equally: `readPagesLimit(n)` is each page's room
+ * for a call of `n`. Equal shares, and not "first come, first served", so a long page early in the
+ * list cannot leave the last one with nothing, and the answer does not depend on how long each page is.
+ */
+export const READ_PAGES_MAX_URLS = 5;
+export const READ_PAGES_PER_PAGE_CHARS = 6000;
+export const READ_PAGES_TOTAL_CHARS = 24_000;
+/** No further page is opened after this long: the rest are reported as not read. */
+export const READ_PAGES_BUDGET_MS = 120_000;
+
+/** How many characters each page of a call for `count` addresses may give back. */
+export function readPagesLimit(count: number): number {
+  return Math.min(
+    READ_PAGES_PER_PAGE_CHARS,
+    Math.floor(READ_PAGES_TOTAL_CHARS / Math.max(count, 1)),
+  );
+}
+
+/** What the computer's `/read-page` answers for one address. `notRead` is a page it would not read. */
+export type ReadPageResult = {
+  url: string;
+  title: string;
+  text: string;
+  truncated: boolean;
+  notRead?: string;
+  elapsedMs?: number;
+};
+export type ReadPagesInput = { urls: string[] };
+export type ReadPagesPage = {
+  /** The address that was asked for, as given. */
+  url: string;
+  /** Where the page ended up, after redirects. Absent when the page was not read. */
+  finalUrl?: string;
+  title?: string;
+  text?: string;
+  /** True when the page was longer than the room it was given, or links were left out. */
+  truncated?: boolean;
+  /** Why this page was not read, in plain words. The other pages are not affected. */
+  error?: string;
+};
+export type ReadPagesResult = {
+  /** The untrusted-content notice for the pages' own fields. See untrusted-content.ts. */
+  untrusted?: string;
+  pages: ReadPagesPage[];
+  /** True when any page was cut. */
+  truncated: boolean;
   elapsedMs: number;
 };
 
@@ -145,6 +207,24 @@ export type SnapshotElement = {
   type?: string;
   disabled?: boolean;
   checked?: boolean;
+  /**
+   * For a native `<select>` (D123): what it offers, so `computer_select` can choose. A label, the value
+   * the page submits when it differs, and whether the option is disabled or selected. Capped; see
+   * `optionsTotal`. Absent for a custom drop-down, which has no list to read.
+   */
+  options?: Array<{
+    label: string;
+    value?: string;
+    disabled?: boolean;
+    selected?: boolean;
+  }>;
+  /** How many options the menu has, when `options` lists fewer. */
+  optionsTotal?: number;
+  /** A menu that takes several options at once: `computer_select` then takes a list. */
+  multiple?: boolean;
+  /** A date or time field's bounds, as the page wrote them (ISO). */
+  min?: string;
+  max?: string;
 };
 
 export type SnapshotResult = {
@@ -174,6 +254,12 @@ export type TypeInput = ActionTarget & {
   /** Press Enter afterwards. How a Bot submits a single-field form without hunting for the button. */
   submit?: boolean;
 };
+/**
+ * `value` is an option's label or value for a menu (a list for a multiple menu; an empty list clears it),
+ * or an ISO date or time for a date field (`2026-03-28`, `14:30`, `2026-03-28T14:30`, `2026-03`,
+ * `2026-W13`; an empty string clears it).
+ */
+export type SelectInput = ActionTarget & { value: string | string[] };
 export type KeyInput = Partial<ActionTarget> & { key: string };
 export type ScrollInput = { deltaY?: number };
 
@@ -186,7 +272,7 @@ export type ScrollInput = { deltaY?: number };
  * secret into two places that keep it. `characters` is enough to confirm the field was filled.
  */
 export type ActionResult = {
-  action: "click" | "type" | "key" | "scroll";
+  action: "click" | "type" | "select" | "key" | "scroll";
   ref?: string;
   /**
    * The label of the element acted on, as the gateway resolved it.
@@ -197,6 +283,26 @@ export type ActionResult = {
   /** For `type`: how much was entered, never what. */
   characters?: number;
   submitted?: boolean;
+  /**
+   * For `select` on a menu: the option(s) the menu shows as chosen after the call. Unlike typed text
+   * this is what the page offered, and a sensitive field is refused before anything is read.
+   */
+  selected?: Array<{ label: string; value: string }>;
+  /** For `select` on a date field: the value the field now holds (ISO), and its type. */
+  value?: string;
+  inputType?: string;
+  /** For a date the page holds but its own min, max or step rule rejects: kept, and said. */
+  outOfRange?: true;
+  /** For a cleared date field: it is now empty, and `required` says the page requires a value. */
+  cleared?: true;
+  required?: true;
+  /**
+   * The change made the page navigate (a handler submitted a form or set the address), so the field
+   * could not be read back: for a menu `selected` is the option(s) requested, and `url` is where the
+   * page now is.
+   */
+  navigated?: true;
+  kind?: "select" | "date";
   key?: string;
   deltaY?: number;
   /** Where the page ended up, which is how a Bot notices that its click navigated. */

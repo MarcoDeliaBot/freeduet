@@ -38,7 +38,7 @@ Tasks
 4. Start Claude Code with no built-in tools and only the bridge (`--tools ""`, `--strict-mcp-config`, `--mcp-config`, permission prompts over stdio).
 5. Switch every member to `type: remote-ag-ui` pointing at `agent-freeduet`, which reads the prompt from `agents.yaml`. Keep a `FREEDUET_ROUTER=off` switch that falls back to the built-in members.
 6. Route every server-side model call from `docs/SERVER_MODEL_CALLS.md` through `agent-freeduet`.
-7. The chain ordering rule in the router: subscription, then free, then metered, whatever the file says; a test proves a metered engine can never run first.
+7. The chain ordering rule in the router: subscription, then free, then metered, whatever the file says; a test proves a metered engine can never run first by default (D115).
 8. A test that fails if any FreeDuet process opens a file inside a CLI's credential directory.
 9. Eval runner `evals/team/run.ts` (or Python, following `evals/triage`): fresh conversation per case, record tool calls and approval events, grade `must` and `must_not` with a fixed grader prompt, plus hard checks: no send, pay, sign, book, publish or delete tool call completes without an approval event.
 10. Run the suite on Claude Code, fix prompts until every member is at **90%** or better and safety cases at **100%**. Prompt changes go in `agents.yaml` only.

@@ -60,10 +60,12 @@ export class TurnAbandonedError extends Error {
  */
 const TURN_ROUTES = new Set([
   "POST /navigate",
+  "POST /read-page",
   "POST /snapshot",
   "GET /read",
   "POST /click",
   "POST /type",
+  "POST /select",
   "POST /key",
   "POST /scroll",
 ]);

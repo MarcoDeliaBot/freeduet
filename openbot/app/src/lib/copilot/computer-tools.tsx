@@ -265,6 +265,36 @@ export function ComputerTools() {
   });
 
   useFrontendTool({
+    available: offered.navigate,
+    name: "computer_read_pages",
+    description:
+      "Read up to 5 web pages in one call, one after another in your own browser tab, and get each page's title and readable text back (at most 6,000 characters per page, links included, and 24,000 in all, so five pages get 4,800 each). Use it to compare or skim several pages whose addresses you already have, instead of calling computer_navigate once for each. Read only: it clicks and types nothing. A page that fails or is refused does not stop the others; its entry carries an error. A page that needs a human check or the person's approval is not read here: open it with computer_navigate. The tab ends on the last page, so take a new snapshot before acting on it.",
+    parameters: z.object({
+      urls: z
+        .array(z.string())
+        .min(1)
+        .max(5)
+        .describe("Full web addresses to read, including https://"),
+    }),
+    handler: async (
+      { urls }: { urls: string[] },
+      { signal }: { signal?: AbortSignal } = {},
+    ) => {
+      const computerId = bot.current;
+      const result = await callComputer(
+        computerId,
+        "/read-pages",
+        { method: "POST", body: { urls } },
+        signal,
+      );
+      if (result.ok) noteBrowsed(computerId);
+      return result;
+    },
+    // The activity line says a page was read; the pages themselves are the model's to answer from.
+    render: () => null,
+  });
+
+  useFrontendTool({
     available: offered.browser,
     name: "computer_read",
     description:
@@ -357,6 +387,52 @@ export function ComputerTools() {
         label="Filled in"
         detail={
           // Never show typed values; identify only the target field.
+          labelOf(result) ??
+          (typeof args?.ref === "string" ? args.ref : undefined)
+        }
+        refused={outcomeOf(result).refused === true}
+        failed={didNotWork(outcomeOf(result))}
+      />
+    ),
+  });
+
+  useFrontendTool({
+    available: offered.browser,
+    name: "computer_select",
+    description:
+      "Choose an option in a native drop-down menu (a <select>) or fill a date or time field. Give the ref and snapshotId from your latest snapshot, which lists each menu's options (label and value) and marks the disabled ones. For a menu, value is an option's label or value; for a menu that takes several (multiple: true), a list of them, which replaces the current choice. For a date field (type date, time, datetime-local, month or week) give an ISO value such as 2026-03-28, 14:30, 2026-03-28T14:30, 2026-03 or 2026-W13. Returns what the field now shows. A custom drop-down (a button or div that opens a list) is not a native menu: click it with computer_click, then click its option. Use computer_type for text fields.",
+    parameters: z.object({
+      ref: z
+        .string()
+        .describe(
+          "Ref of the menu or date field, from your most recent snapshot",
+        ),
+      snapshotId: z.number().describe("The snapshotId that ref came from"),
+      value: z
+        .union([z.string(), z.array(z.string())])
+        .describe(
+          "An option's label or value (a list for a multiple menu), or an ISO date or time",
+        ),
+    }),
+    handler: async (
+      input: { ref: string; snapshotId: number; value: string | string[] },
+      { signal }: { signal?: AbortSignal } = {},
+    ) =>
+      callComputer(
+        bot.current,
+        "/select",
+        {
+          method: "POST",
+          body: input,
+        },
+        signal,
+      ),
+    render: ({ args, result, status }) => (
+      <ActionLine
+        running={status !== "complete"}
+        label="Chose in"
+        detail={
+          // The element's label, never the ref or the value chosen.
           labelOf(result) ??
           (typeof args?.ref === "string" ? args.ref : undefined)
         }

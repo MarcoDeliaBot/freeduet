@@ -69,6 +69,7 @@ const BROWSER = [
   "computer_screenshot",
   "computer_click",
   "computer_type",
+  "computer_select",
   "computer_key",
   "computer_scroll",
   "computer_request_help",
@@ -87,6 +88,7 @@ describe("a switched-off computer is not offered in a server-run turn", () => {
     expect(all).toEqual(
       expect.arrayContaining([
         "computer_navigate",
+        "computer_read_pages",
         ...BROWSER,
         ...FILES,
         "report_refusal",
@@ -108,11 +110,13 @@ describe("a switched-off computer is not offered in a server-run turn", () => {
   test("each switch hides exactly its part, as the app's offer does", async () => {
     const noBrowser = await offeredNames(switches(row("cloudBrowser", false)));
     expect(noBrowser).toEqual(expect.arrayContaining(FILES));
-    for (const name of ["computer_navigate", ...BROWSER])
+    for (const name of ["computer_navigate", "computer_read_pages", ...BROWSER])
       expect(noBrowser).not.toContain(name);
 
     const noNetwork = await offeredNames(switches(row("cloudNetwork", false)));
     expect(noNetwork).not.toContain("computer_navigate");
+    // Opening pages, so the network switch hides the batch read as it hides the single one (D127).
+    expect(noNetwork).not.toContain("computer_read_pages");
     expect(noNetwork).toEqual(expect.arrayContaining([...BROWSER, ...FILES]));
 
     const noComputer = await offeredNames(
@@ -120,7 +124,11 @@ describe("a switched-off computer is not offered in a server-run turn", () => {
     );
     for (const name of FILES) expect(noComputer).not.toContain(name);
     expect(noComputer).toEqual(
-      expect.arrayContaining(["computer_navigate", ...BROWSER]),
+      expect.arrayContaining([
+        "computer_navigate",
+        "computer_read_pages",
+        ...BROWSER,
+      ]),
     );
   });
 

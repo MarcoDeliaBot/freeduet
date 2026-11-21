@@ -39,7 +39,7 @@ What the promise does not include, stated now so nobody builds toward it by acci
 
 - `offer_file` (D38) takes the relative path of one file in the member's workspace. The server looks at it through the gateway's `downloadFile` (policy, audit row, workspace confinement, size) and returns a card with the name, size and a Download button; the bytes move only when the person presses it, on their own session. It asks for no approval [code: `server/src/freeduet/member-files.ts:1-60, 128-175`].
 - The limit is 100 MiB, the computer's `downloadBytes` [code: `agent-computer/src/workspace.ts:97, 314-318`]. Every office file here is far below it.
-- The tool is built for every member, not only Cam [code: `server/src/index.ts:1584-1596`; `member-files.ts:128-150`: no member filter]. Only Cam's prompt describes it today [code: `examples/freeduet/agents.yaml:1286-1296`]. A member's prompt does not name the tool to a model that was never told: Penny, Portia, Wren and Mark would need a sentence (section 5), outside the shared-rules paragraph, which a test pins word for word across members [docs: CLAUDE.md, "Adding a team member"].
+- The tool is built for every member, not only Cam [code: `server/src/index.ts:1584-1596`; `member-files.ts:128-150`: no member filter]. Only Cam's prompt describes it today [code: `examples/freeduet/agents.yaml:1286-1296`]. A member's prompt does not name the tool to a model that was never told: Penny, Portia, Wren and Mark would need a sentence (section 5), outside the shared-rules paragraph, which a test pins word for word across members [docs: docs/dev/adding-a-member.md, formerly CLAUDE.md "Adding a team member"].
 
 ### 1.4 How a person's file reaches a member today
 

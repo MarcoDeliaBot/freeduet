@@ -482,11 +482,14 @@ export const EXECUTORS: Record<string, Executor | "gate"> = {
     const resumed = await awaitHandoff(context, challenge.requestId);
     return { ...resumed, challenge, challengeResolved: resumed.ok };
   },
+  // computer-tools.tsx `computer_read_pages` -> `callComputer` on the route (no handoff: a human check is not raised)
+  computer_read_pages: post("/read-pages"),
   // `computer_read` and `computer_snapshot` -> handoff.ts `runBrowserRead`
   computer_read: (context) => browserRead(context, "/read"),
   computer_snapshot: (context) => browserRead(context, "/snapshot"),
   // The changes (approval-tools.tsx `writes`).
   computer_type: "gate",
+  computer_select: "gate",
   computer_click: "gate",
   computer_key: "gate",
   computer_run_command: "gate",

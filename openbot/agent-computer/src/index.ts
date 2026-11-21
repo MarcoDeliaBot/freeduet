@@ -33,6 +33,7 @@ import {
 } from "./navigation";
 import { collectPageLinks, composePageText, pageBaseUrl } from "./page-links";
 import { createProfiles, numberFromEnv, VIEWPORT } from "./profiles";
+import { challengeNotice, parseReadPageLimit } from "./read-page";
 import {
   parseExecTimeout,
   parseInputMessage,
@@ -51,6 +52,13 @@ import {
   pressKeyUnlessSecret,
   sensitiveRefs,
 } from "./secret-masking";
+import {
+  ChoiceError,
+  chooseOnField,
+  describeChoiceField,
+  isNativeOption,
+  OPTIONS_LIMIT,
+} from "./select-field";
 import { type BotSession, createSessions } from "./sessions";
 import {
   collectWhenSettled,
@@ -445,6 +453,7 @@ async function restoreHandoffPage(botId: string): Promise<void> {
  */
 async function readablePageText(
   target: Page,
+  limit: number = TEXT_EXTRACT_LIMIT,
 ): Promise<{ text: string; truncated: boolean }> {
   const raw = await target.evaluate(() => {
     const clone = document.body?.cloneNode(true) as HTMLElement | undefined;
@@ -458,7 +467,7 @@ async function readablePageText(
   const collapsed = raw.replace(/\n{3,}/g, "\n\n").trim();
   // The list of addresses shares the limit with the text, so the result never grows past it.
   const { base, links } = await collectPageLinks(target);
-  return composePageText(collapsed, links, base, TEXT_EXTRACT_LIMIT);
+  return composePageText(collapsed, links, base, limit);
 }
 
 /**
@@ -501,11 +510,14 @@ async function snapshotPage(
     title,
     truncated: parsed.truncated,
     // A password field's value is in the aria snapshot in plain text. See secret-masking.ts.
-    elements: await withInputTypes(
+    elements: await withChoiceDetails(
       target,
-      maskSensitiveValues(
-        parsed.elements,
-        await sensitiveRefs(target, parsed.elements),
+      await withInputTypes(
+        target,
+        maskSensitiveValues(
+          parsed.elements,
+          await sensitiveRefs(target, parsed.elements),
+        ),
       ),
     ),
   };
@@ -521,6 +533,70 @@ async function withInputTypes(
     const type = types.get(element.ref);
     return type ? { ...element, type } : element;
   });
+}
+
+/**
+ * What a native menu offers and what a date field holds (D123, item 2).
+ *
+ * A `<select>` shows in the aria tree as a combobox or listbox with no value and options that cannot
+ * be clicked, so the member could neither read the choices nor tell which was picked. Each menu gets its
+ * `options` (label, value when it differs, disabled, selected), capped at {@link OPTIONS_LIMIT} with the
+ * rest counted, plus `multiple`, and its `value` becomes the selected label(s). A date field gets its
+ * `min` and `max`. The native options themselves are dropped from the list: they take up its cap and
+ * a click on one fails. A sensitive field (D76) gets none of this and keeps its masked value.
+ */
+async function withChoiceDetails(
+  target: Page,
+  elements: SnapshotElement[],
+): Promise<SnapshotElement[]> {
+  const asked = {
+    selector: SENSITIVE_FIELD_SELECTOR,
+    limit: OPTIONS_LIMIT,
+    textLimit: 120,
+  };
+  const details = await Promise.all(
+    elements.map(async (element) => {
+      const locator = () => target.locator(`aria-ref=${element.ref}`);
+      if (element.role === "option") {
+        const native = await locator()
+          .evaluate(isNativeOption, undefined, { timeout: 1_000 })
+          .catch(() => false);
+        return native ? null : element;
+      }
+      if (
+        element.role !== "combobox" &&
+        element.role !== "listbox" &&
+        element.role !== "textbox"
+      )
+        return element;
+      const found = await locator()
+        .evaluate(describeChoiceField, asked, { timeout: 1_000 })
+        .catch(() => undefined);
+      if (!found || found.kind === "other" || found.sensitive) return element;
+      if (found.kind === "date")
+        return {
+          ...element,
+          ...(found.min ? { min: found.min } : {}),
+          ...(found.max ? { max: found.max } : {}),
+        };
+      const shown = found.options
+        .filter((option) => option.selected)
+        .map((option) => option.label)
+        .join(", ");
+      return {
+        ...element,
+        ...(shown ? { value: shown } : {}),
+        ...(found.multiple ? { multiple: true } : {}),
+        options: found.options,
+        ...(found.total > found.options.length
+          ? { optionsTotal: found.total }
+          : {}),
+      };
+    }),
+  );
+  return details.filter(
+    (element): element is SnapshotElement => element !== null,
+  );
 }
 
 /**
@@ -1393,6 +1469,115 @@ serve<StreamData>({
         }
       }
 
+      /*
+       * One page of `computer_read_pages` (D127). The server asks for each address in turn, after its own
+       * decision on it, so this route holds no list and decides nothing. It opens the address in the Bot's
+       * tab and reads it as `/navigate` does, cut to the limit asked for, and differs in two ways: it never
+       * opens a request for help (a human check comes back as `notRead`), and it reads nothing but text.
+       */
+      if (url.pathname === "/read-page" && request.method === "POST") {
+        const body = (await request.json().catch(() => null)) as {
+          url?: unknown;
+          limit?: unknown;
+        } | null;
+        const parsed = parseNavigateUrl(body?.url);
+        if (!parsed.ok) return json({ error: parsed.error }, 400);
+        const asked = parseReadPageLimit(body?.limit);
+        if (!asked.ok) return json({ error: asked.error }, 400);
+
+        const startedAt = Date.now();
+        let watch: ReturnType<typeof watchNavigations> | undefined;
+        try {
+          const target = await currentPage(botId, "navigate");
+          session.control.assertBotMayAct(true);
+          watch = watchNavigations(target);
+          let response: Awaited<ReturnType<typeof navigateWebPage>> | null =
+            null;
+          try {
+            response = await navigateWebPage(
+              target,
+              parsed.url,
+              RUNTIME.backend,
+              NAVIGATION_TIMEOUT_MS,
+            );
+          } catch (error) {
+            if (!pageMovedOn(error, watch.count())) throw error;
+          }
+          // A new document: every ref handed out before it is retired, as after any navigation.
+          session.snapshotId += 1;
+          const cfMitigated = response
+            ? await response.headerValue("cf-mitigated").catch(() => undefined)
+            : undefined;
+          const { value: page } = await collectWhenSettled(
+            target,
+            async () => {
+              assertPageAccess(RUNTIME.backend, target.url());
+              return {
+                url: target.url(),
+                title: await target.title(),
+                extract: await readablePageText(target, asked.limit),
+                signal: await readChallengeSignal(target, { cfMitigated }),
+              };
+            },
+            {
+              quietMs: SETTLE_QUIET_MS,
+              signal: request.signal,
+              watch,
+              holdDocument: async () => {
+                const body = await target.evaluateHandle(() => document.body);
+                return {
+                  intact: () =>
+                    body.evaluate(
+                      (element) =>
+                        element === null ||
+                        (element.isConnected && element === document.body),
+                    ),
+                  release: () => body.dispose(),
+                };
+              },
+            },
+          );
+          const notRead = challengeNotice(page.signal);
+          return json({
+            url: page.url,
+            title: page.title,
+            text: notRead ? "" : page.extract.text,
+            truncated: notRead ? false : page.extract.truncated,
+            ...(notRead ? { notRead } : {}),
+            elapsedMs: Date.now() - startedAt,
+          });
+        } catch (error) {
+          if (
+            error instanceof ControlError ||
+            error instanceof SnapshotRequiredError
+          )
+            throw error;
+          if (request.signal.aborted)
+            return json({ error: "Stopped.", stopped: true }, 499);
+          if (isInterruptedByAnotherNavigation(error))
+            return json(
+              { error: PAGE_MOVED_AWAY_MESSAGE, pageNotReady: true },
+              502,
+            );
+          if (error instanceof Error && error.name === "TimeoutError")
+            return json(
+              {
+                error: pageLoadTimeoutMessage(NAVIGATION_TIMEOUT_MS),
+                pageNotReady: true,
+              },
+              502,
+            );
+          return pageReadFailure(error, "Reading the page failed.", {
+            botId,
+            tool: "read-page",
+            startedAt,
+            aborted: request.signal.aborted,
+          });
+        } finally {
+          watch?.stop();
+        }
+      }
+
       if (url.pathname === "/screenshot" && request.method === "GET") {
         try {
           const target = await currentPage(botId);
@@ -1679,6 +1864,11 @@ serve<StreamData>({
           if (error instanceof SecretFieldError) {
             return json({ error: error.message, secretField: true }, 403);
           }
+          // A choice the page does not offer (no such option, a disabled one, a malformed date): the
+          // caller's request is what is wrong, so a 400 with the sentence, and nothing was changed.
+          if (error instanceof ChoiceError) {
+            return json({ error: error.message }, 400);
+          }
           return json({ error: describe(error, "The action failed.") }, 502);
         }
       }
@@ -1736,9 +1926,10 @@ type ActionBody = {
   key?: unknown;
   deltaY?: unknown;
   submit?: unknown;
+  value?: unknown;
 };
 
-const ACTIONS = new Set(["/click", "/type", "/key", "/scroll"]);
+const ACTIONS = new Set(["/click", "/type", "/select", "/key", "/scroll"]);
 
 const HUMAN_INPUT = new Set([
   "/human/click",
@@ -1873,6 +2064,25 @@ async function performAction(
       submitted: body.submit === true,
       url: target.url(),
     };
+  }
+
+  if (action === "/select") {
+    if (!ref)
+      throw new Error("Choosing needs the ref of a menu or a date field.");
+    const choice = body.value;
+    if (
+      typeof choice !== "string" &&
+      !(Array.isArray(choice) && choice.every((c) => typeof c === "string"))
+    ) {
+      throw new Error(
+        "Choosing needs a value: an option label or value, a list of them for a multiple menu, or an ISO date or time.",
+      );
+    }
+    const field = await resolveRef(session, target, ref, expected);
+    // Refused for a sensitive field with the typed entry's own sentence (D76), then checked against what
+    // the page offers. What the field now shows is returned: unlike typed text it is not free text.
+    const outcome = await chooseOnField(field, choice, acting);
+    return { action: "select", ref, ...outcome, url: target.url() };
   }
 
   if (action === "/key") {

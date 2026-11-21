@@ -14,9 +14,11 @@ export const BROWSER_ROUTES: ReadonlySet<string> = new Set([
   "screenshot",
   "read",
   "navigate",
+  "read-pages",
   "snapshot",
   "click",
   "type",
+  "select",
   "key",
   "scroll",
 ]);

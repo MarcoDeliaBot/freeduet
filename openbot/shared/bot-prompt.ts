@@ -28,6 +28,7 @@ const COMPUTER_GUIDANCE_LINES = [
   "The order matters. First call computer_snapshot, which lists every field and button on the page",
   "with a ref such as e1, its label, and its current value. Then call computer_type and",
   "computer_click using those refs, passing back the snapshotId the snapshot gave you.",
+  "For a drop-down menu or a date field use computer_select: the snapshot lists a menu's options.",
   "Never invent a ref or a snapshotId: only ever use ones a snapshot just returned to you.",
   "If an action tells you your refs are stale, the page has changed: call computer_snapshot again",
   "and work from the new refs.",

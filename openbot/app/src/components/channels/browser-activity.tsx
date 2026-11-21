@@ -4,10 +4,12 @@ type BrowserStep = Extract<VisibleChatItem, { kind: "tool" }>;
 
 const labels: Record<string, string> = {
   computer_navigate: "Opened page",
+  computer_read_pages: "Read pages",
   computer_read: "Read page",
   computer_snapshot: "Inspected page",
   computer_click: "Clicked on page",
   computer_type: "Filled in field",
+  computer_select: "Chose an option",
   computer_key: "Pressed key",
   computer_scroll: "Scrolled page",
 };

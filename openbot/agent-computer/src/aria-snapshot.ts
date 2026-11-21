@@ -82,6 +82,20 @@ export type SnapshotElement = {
   type?: string;
   disabled?: boolean;
   checked?: boolean;
+  /** A native `<select>`'s options (D123): `computer_select` chooses among these. Capped. */
+  options?: Array<{
+    label: string;
+    value?: string;
+    disabled?: boolean;
+    selected?: boolean;
+  }>;
+  /** How many options the menu has when `options` lists fewer. */
+  optionsTotal?: number;
+  /** A menu that takes several options at once. */
+  multiple?: boolean;
+  /** A date or time field's own bounds, as the page wrote them. */
+  min?: string;
+  max?: string;
 };
 
 /** The descriptor half of an entry: everything before the colon. */

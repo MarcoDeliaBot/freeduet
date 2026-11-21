@@ -67,8 +67,12 @@ export function isOpenPath(pathname: string): boolean {
  */
 const ACTING_PATHS = new Set([
   "/navigate",
+  // Opening one page of a batch read (D127): it moves the Bot's tab, so it is refused like `/navigate`.
+  "/read-page",
   "/click",
   "/type",
+  // Choosing in a native menu or filling a date field: typing by another name, refused the same way.
+  "/select",
   "/key",
   "/scroll",
   "/exec",
@@ -84,5 +88,13 @@ export function actsOnTheComputer(pathname: string): boolean {
 
 /** Only page mutations need a fresh browser snapshot after handback. */
 export function mutatesBrowser(pathname: string): boolean {
-  return ["/navigate", "/click", "/type", "/key", "/scroll"].includes(pathname);
+  return [
+    "/navigate",
+    "/read-page",
+    "/click",
+    "/type",
+    "/select",
+    "/key",
+    "/scroll",
+  ].includes(pathname);
 }

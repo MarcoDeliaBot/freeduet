@@ -36,6 +36,30 @@ describe("writes into a page", () => {
     expect(index).toContain("secretField: true }, 403");
   });
 
+  test("the model's menu and date entry checks the field before it writes", () => {
+    const field = readFileSync(join(SRC, "select-field.ts"), "utf8");
+    const choose = field.slice(
+      field.indexOf("export async function chooseOnField"),
+    );
+    // The refusal comes before the first write, and nothing in the entry can lift it.
+    expect(choose.indexOf("throw new SecretFieldError()")).toBeGreaterThan(-1);
+    expect(choose.indexOf("throw new SecretFieldError()")).toBeLessThan(
+      choose.indexOf("field.fill("),
+    );
+    expect(choose.indexOf("throw new SecretFieldError()")).toBeLessThan(
+      choose.indexOf("field.selectOption("),
+    );
+    expect(choose).not.toMatch(/approv|full.?access|override|force|bypass/i);
+    const index = readFileSync(join(SRC, "index.ts"), "utf8");
+    const route = index.slice(index.indexOf("async function performAction"));
+    expect(
+      route.slice(
+        route.indexOf('action === "/select"'),
+        route.indexOf('action === "/key"'),
+      ),
+    ).toContain("chooseOnField(");
+  });
+
   test("the person's secret entry still fills directly", () => {
     const index = readFileSync(join(SRC, "index.ts"), "utf8");
     const entry = index.slice(index.indexOf('"/human/secret"'));
@@ -80,6 +104,8 @@ describe("writes into a page", () => {
       "index.ts": 5,
       "screencast.ts": 1,
       "secret-masking.ts": 2,
+      // The model's menu and date entry (D123): refuses a sensitive field before it writes.
+      "select-field.ts": 2,
       "sign-in.ts": 3,
     });
   });
