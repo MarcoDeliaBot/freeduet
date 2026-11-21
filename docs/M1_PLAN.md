@@ -1895,3 +1895,31 @@ Built on 21 November 2026 from D110 (section 72), with the maintainer's choice o
 | Upload a file into a web page (row 95) | Design first, then build; or build now | Design first | It is a write to a site and touches the approval gate |
 | Code mode (row 97) | Start after items 3 and 4 are measured; or start now | After measurement | The saving is not known until the calls per turn are measured |
 | Shorter CLAUDE.md (row 98) | Move sections into skills now; or after a preview of the new structure | Preview first | It changes the file every session reads, so the maintainer sees the new layout first |
+
+## 82. Four items from the competitor radar of 21 November 2026, in Next (D124)
+
+**Recorded 21 November 2026 from the competitor radar of the same day**, which read public release notes and news of other agent products. The findings are written as our own ideas; no code, text or design was taken from any project. The four items are in [ROADMAP.md](ROADMAP.md), Next, rows 99 to 102, in this order:
+
+1. A new conversation with a member (row 99, effort S to M). A button or shortcut opens a blank conversation with the same member: its memory is kept, its history is not carried over, and it is saved only at its first message. Reason: a long conversation exceeds the context of a free or local model and slows every turn. Seen live on 21 November 2026, Iris's thread was about 410,000 characters.
+2. When a chat is too long, offer a fresh conversation (row 100, effort S). When the server had to cut the history (D121, section 79), the member says so and offers item 1 in one click. Depends on item 1.
+3. A second login of your own as a fallback (row 101, effort M). When you hold more than one subscription login of your own, FreeDuet may move to the next one when one is limited or its sign-in is refused. Only logins you own and added yourself. Constraint: check each provider's terms before building.
+4. Do not repeat the answer when a turn is continued (row 102, effort S). After a continuation (a wait and retry under D121, or a switch of engine), the member does not repeat text already on screen. A test is written first and must fail before the fix.
+
+**Not adopted:** hosted cloud, trial and plan features of other products, and mobile APK builds. FreeDuet is a self-hosted product, so these are out of scope.
+
+**To watch (no roadmap rows yet):**
+
+- Orchestrators that hand work to other tools. Iris handing a job to a colleague (D122, section 80) is our answer; no row is added until a gap is seen in use.
+- News about agents that read mail or a calendar without asking. Our approval cards are the difference. A sentence on the site could say so later; it is a change to the public site, so a preview comes first.
+- Always-on agents inside a $20 plan. Our members run on the person's own logins and stop when a limit is reached; we do not promise always-on operation.
+- Sites that start to detect agent browsers. This may affect Jules's research and is to be watched, with no change proposed.
+
+**Not built.** All four rows are Planned when this decision is recorded. It changes no code, test or prompt. Row 2 of the Now table (the FreeLLMAPI card) is built and not yet run live, merged as #426 on 21 November 2026 (D113, section 73).
+
+**Decisions for the maintainer.**
+
+| Decision | Options | Recommendation | Reason |
+|---|---|---|---|
+| New conversation with a member (row 99) | Build now; or after the trust rows in Now | After the Now rows | It changes what a member sees in a chat, so the maintainer sees the button first |
+| Second login as a fallback (row 101) | Build now; or check each provider's terms first | Check terms first | A provider's terms decide whether a second login of one person may be used this way |
+| Site sentence on agents that read mail (To watch) | Write it now; or later with a preview | Later, with a preview | It is a change to the public site |
