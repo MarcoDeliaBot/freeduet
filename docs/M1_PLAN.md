@@ -1886,7 +1886,7 @@ Built on 21 November 2026 from D110 (section 72), with the maintainer's choice o
 
 **Not adopted:** browser-use as a library or engine (see "What we don't adopt" in ROADMAP.md). It bypasses the approval gate and the network rules, makes a second model call per step, and its own documentation says it is not a sandbox.
 
-**Not built.** All eight rows are Planned. No code, test or prompt changed in this decision.
+**Not built.** All eight rows were Planned when this decision was taken, and it changed no code, test or prompt. **Status:** row 93 is built and not yet run live (the read-only script `openbot/scripts/freeduet-turn-cost.ts`, its test and `docs/live-tests/turn-cost.md`); the other seven rows are still Planned.
 
 **Decisions for the maintainer.**
 
