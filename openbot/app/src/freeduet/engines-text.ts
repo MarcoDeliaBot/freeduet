@@ -41,6 +41,8 @@ export type EngineSummary = {
   until: string | null;
   /** Set only for a refused engine: the cleaned sentence that says why it is not run. */
   refusal: string | null;
+  /** D116: set only when the engine's last turn ended with a tool call written as text instead of used. */
+  note?: "tools_as_text";
 };
 
 /** What happens when an engine runs out (docs/design/engines-dashboard.md). */
@@ -147,8 +149,24 @@ export function untilText(
  */
 export function engineStateText(
   engine: Pick<EngineSummary, "state" | "until"> &
-    Partial<Pick<EngineSummary, "kind" | "refusal">>,
+    Partial<Pick<EngineSummary, "kind" | "refusal" | "note">>,
   now: Date = new Date(),
+  timeZone?: string,
+): string {
+  const said = engineStateBase(engine, now, timeZone);
+  return engine.note === "tools_as_text"
+    ? `${said}. ${TOOLS_AS_TEXT_NOTE}`
+    : said;
+}
+
+/** D116: what the page adds to an engine whose last answer was a tool call written as text. */
+export const TOOLS_AS_TEXT_NOTE =
+  "Its last answer wrote its tool calls as text instead of using them: choose a model that supports tools";
+
+function engineStateBase(
+  engine: Pick<EngineSummary, "state" | "until"> &
+    Partial<Pick<EngineSummary, "kind" | "refusal">>,
+  now: Date,
   timeZone?: string,
 ): string {
   const at = engine.until ? untilText(engine.until, now, timeZone) : null;

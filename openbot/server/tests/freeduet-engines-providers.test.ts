@@ -184,6 +184,7 @@ describe("who may change a card", () => {
     ["DELETE", "/providers/groq/key", undefined],
     ["POST", "/providers/groq/models", undefined],
     ["POST", "/providers/groq/test", undefined],
+    ["POST", "/providers/openrouter/free-models", undefined],
   ];
 
   test("a non-administrator is refused on every route and nothing reaches the agent", async () => {
@@ -387,5 +388,61 @@ describe("Test and Load list", () => {
     });
     expect(test_ + list).not.toContain(KEY);
     expect(events).toHaveLength(0);
+  });
+});
+
+describe("the free models that support tools (D116)", () => {
+  test("the list is read through the agent, reduced to free ids and one word for where it came from", async () => {
+    const stub = agent((_request, path) =>
+      path.endsWith("/free-models")
+        ? ok({
+            models: [
+              "openrouter/free",
+              "a/b:free",
+              "vendor/paid-model",
+              "x/y:free,vendor/paid",
+              "bad id:free",
+              5,
+              `${"a".repeat(130)}/m:free`,
+            ],
+            source: "live",
+            key: KEY,
+          })
+        : ok({}),
+    );
+    const { call, events } = setup(stub.reach);
+    const text = await (
+      await call("POST", "/providers/openrouter/free-models")
+    ).text();
+    expect(JSON.parse(text)).toEqual({
+      models: ["openrouter/free", "a/b:free"],
+      source: "live",
+    });
+    expect(text).not.toContain(KEY);
+    expect(stub.panelCalls().map((c) => `${c.method} ${c.path}`)).toEqual([
+      "POST /engines/panel/openrouter/free-models",
+    ]);
+    expect(events).toHaveLength(0);
+  });
+
+  test("an odd answer is the router alone, and an unknown word for the source is the fallback", async () => {
+    const stub = agent(() => ok({ models: "nope", source: "from somewhere" }));
+    const { call } = setup(stub.reach);
+    expect(
+      await (await call("POST", "/providers/openrouter/free-models")).json(),
+    ).toEqual({ models: ["openrouter/free"], source: "fallback" });
+  });
+
+  test("a model reaches the agent only as a short string", async () => {
+    const stub = agent(() => ok({ provider: CARD }));
+    const { call } = setup(stub.reach);
+    await call("PUT", "/providers/openrouter", { model: { id: "a/b:free" } });
+    await call("PUT", "/providers/openrouter", { model: "a".repeat(121) });
+    await call("PUT", "/providers/openrouter", { model: "a/b:free" });
+    const bodies = stub
+      .panelCalls()
+      .filter((c) => c.method === "PUT")
+      .map((c) => JSON.parse(c.body));
+    expect(bodies).toEqual([{}, {}, { model: "a/b:free" }]);
   });
 });

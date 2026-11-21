@@ -10,7 +10,11 @@ import { client } from "@/lib/client";
 import {
   CLOUD_WARNING,
   checkText,
+  FREE_MODELS_LOADING,
+  FREE_MODELS_NOTE,
   FREE_NOTE,
+  FREE_ROUTER_LABEL,
+  freeModelsSourceText,
   KEY_PLACEHOLDER,
   KEY_REMOVED,
   KEY_SAVED,
@@ -47,6 +51,10 @@ import { blockText, type EnginesReading } from "./engines-text";
 const PROVIDERS_PATH = "/api/freeduet/engines/providers";
 
 type Check = { ok: boolean; code: string };
+type FreeModels = { models: string[]; source: string };
+/** D116: the one card that chooses its model from OpenRouter's public list of free models that can use tools. */
+const FREE_CHOICE_ID = "openrouter";
+const FREE_ROUTER = "openrouter/free";
 
 async function put(id: string, path: string, body: unknown, fallback: string) {
   return client(`${PROVIDERS_PATH}/${encodeURIComponent(id)}${path}`, {
@@ -79,6 +87,28 @@ function ProviderCard({
   const [wantOn, setWantOn] = useState(false);
   const [said, setSaid] = useState<string | null>(null);
   const [check, setCheck] = useState<Check | null>(null);
+  const freeChoice = card.id === FREE_CHOICE_ID;
+  // The list is public and needs no key, so it is read as soon as the card is drawn. The server caches it and falls back
+  // to the router alone when OpenRouter cannot be reached.
+  const freeModels = useQuery({
+    queryKey: ["freeduet", "engines", "free-models", card.id],
+    enabled: freeChoice && card.blocked === null,
+    staleTime: 10 * 60 * 1000,
+    queryFn: async (): Promise<FreeModels> => {
+      const response = await client(
+        `${PROVIDERS_PATH}/${encodeURIComponent(card.id)}/free-models`,
+        { method: "POST", fallback: "The list could not be loaded." },
+      );
+      return (await response.json()) as FreeModels;
+    },
+  });
+  const freeOptions = [
+    ...new Set([
+      FREE_ROUTER,
+      ...(freeModels.data?.models ?? []),
+      ...(model.trim() ? [model.trim()] : []), // what the file holds stays choosable, so opening the card changes nothing
+    ]),
+  ];
 
   const settings = { baseUrl: address, model };
   const settingsChanged = address !== card.baseUrl || model !== card.model;
@@ -291,35 +321,67 @@ function ProviderCard({
             />
           </label>
 
-          <div className="grid gap-1">
-            <label
-              className="type-label text-duet-ink-2"
-              htmlFor={`${ids}-model`}
-            >
-              {LABELS.model}
-            </label>
-            <div className="flex gap-2">
-              <Input
+          {freeChoice ? (
+            <div className="grid gap-1">
+              <label
+                className="type-label text-duet-ink-2"
+                htmlFor={`${ids}-model`}
+              >
+                {LABELS.model}
+              </label>
+              <select
+                className="h-9 w-full min-w-0 rounded-lg border border-input bg-transparent px-2.5 py-1 text-base outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm dark:bg-input/30"
                 disabled={locked}
                 id={`${ids}-model`}
-                list={`${ids}-models`}
                 onChange={(event) => setModel(event.target.value)}
-                value={model}
-              />
-              <datalist id={`${ids}-models`}>
-                {models.map((name) => (
-                  <option key={name} value={name} />
-                ))}
-              </datalist>
-              <Button
-                disabled={locked || load.isPending || !ready}
-                onClick={() => load.mutate()}
-                variant="outline"
+                value={model.trim() || FREE_ROUTER}
               >
-                {LABELS.loadList}
-              </Button>
+                {freeOptions.map((name) => (
+                  <option key={name} value={name}>
+                    {name === FREE_ROUTER ? FREE_ROUTER_LABEL : name}
+                  </option>
+                ))}
+              </select>
+              <p className="type-label text-duet-ink-2">
+                {freeModels.isPending
+                  ? FREE_MODELS_LOADING
+                  : (freeModelsSourceText(
+                      freeModels.data?.source ?? "fallback",
+                    ) ?? "")}
+              </p>
+              <p className="type-label text-duet-ink-2">{FREE_MODELS_NOTE}</p>
             </div>
-          </div>
+          ) : (
+            <div className="grid gap-1">
+              <label
+                className="type-label text-duet-ink-2"
+                htmlFor={`${ids}-model`}
+              >
+                {LABELS.model}
+              </label>
+              <div className="flex gap-2">
+                <Input
+                  disabled={locked}
+                  id={`${ids}-model`}
+                  list={`${ids}-models`}
+                  onChange={(event) => setModel(event.target.value)}
+                  value={model}
+                />
+                <datalist id={`${ids}-models`}>
+                  {models.map((name) => (
+                    <option key={name} value={name} />
+                  ))}
+                </datalist>
+                <Button
+                  disabled={locked || load.isPending || !ready}
+                  onClick={() => load.mutate()}
+                  variant="outline"
+                >
+                  {LABELS.loadList}
+                </Button>
+              </div>
+            </div>
+          )}
 
           {card.needsKey ? (
             <div className="grid gap-1">

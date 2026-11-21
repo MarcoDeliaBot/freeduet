@@ -43,6 +43,8 @@ const KEY = "gsk_CANARYkey0123456789abcdef";
 const sent: { method: string; path: string; body: unknown }[] = [];
 let cards: ProviderView[];
 let testAnswer: { ok: boolean; code: string };
+let freeAnswer: { models: string[]; source: string };
+const freeCalls: { method: string; path: string }[] = [];
 
 function card(id: ProviderId, over: Partial<ProviderView> = {}): ProviderView {
   const local = id === "ollama" || id === "llamacpp" || id === "lmstudio";
@@ -93,14 +95,23 @@ function reading(over: Partial<EnginesReading> = {}): EnginesReading {
 
 beforeEach(() => {
   sent.length = 0;
+  freeCalls.length = 0;
   cards = PROVIDER_ORDER.map((id) => card(id));
   testAnswer = { ok: true, code: "ok" };
+  freeAnswer = {
+    models: ["openrouter/free", "a/tools-one:free", "b/tools-two:free"],
+    source: "live",
+  };
   global.fetch = Object.assign(
     async (path: Parameters<typeof fetch>[0], init?: RequestInit) => {
       const url = new URL(String(path), "http://localhost");
       const method = init?.method ?? "GET";
       const body = init?.body ? JSON.parse(String(init.body)) : undefined;
       if (url.pathname === "/api/agents") return Response.json([]); // the names of the members
+      if (url.pathname.endsWith("/free-models")) {
+        freeCalls.push({ method, path: url.pathname });
+        return Response.json(freeAnswer); // read when the card is drawn: kept apart so the cases below read `sent` from the click
+      }
       sent.push({ method, path: url.pathname, body });
       const id = url.pathname.split("/")[5] as ProviderId;
       const target = cards.find((entry) => entry.id === id);
@@ -414,4 +425,72 @@ test("with an engines file of the person's own the cards only show it", () => {
 test("a server with no cards leaves the section out", () => {
   const view = draw({ providers: [] });
   expect(view.queryByText("Add an engine")).toBeNull();
+});
+
+// ── D116: a model choice on the OpenRouter card ──────────────────────────────────────────────────
+
+test("the OpenRouter card chooses its model from a list, keeps the free router, and says the free models change", async () => {
+  cards = cards.map((entry) =>
+    entry.id === "openrouter"
+      ? { ...entry, enabled: true, keySaved: true, model: "openrouter/free" }
+      : entry,
+  );
+  const user = userEvent.setup({ document });
+  const view = draw();
+  const one = cardOf(view, "OpenRouter");
+  const select = (await waitFor(() => {
+    const found = one.getByLabelText("Model") as HTMLSelectElement;
+    expect(found.options.length).toBe(3);
+    return found;
+  })) as HTMLSelectElement;
+  expect(select.tagName).toBe("SELECT");
+  expect([...select.options].map((option) => option.value)).toEqual([
+    "openrouter/free",
+    "a/tools-one:free",
+    "b/tools-two:free",
+  ]);
+  expect(select.value).toBe("openrouter/free");
+  expect(
+    one.getByText("Free models change often and may keep what you send."),
+  ).toBeTruthy();
+  expect(one.queryByText("Load list")).toBeNull(); // the public list needs no key and no button
+  expect(freeCalls).toEqual([
+    {
+      method: "POST",
+      path: "/api/freeduet/engines/providers/openrouter/free-models",
+    },
+  ]);
+  await user.selectOptions(select, "a/tools-one:free");
+  await user.click(one.getByRole("button", { name: "Save settings" }));
+  await waitFor(() =>
+    expect(sent.at(-1)).toMatchObject({
+      method: "PUT",
+      body: { enabled: true, model: "a/tools-one:free" },
+    }),
+  );
+});
+
+test("when OpenRouter cannot be reached the card offers the free router and says so", async () => {
+  freeAnswer = { models: ["openrouter/free"], source: "fallback" };
+  const view = draw();
+  const one = cardOf(view, "OpenRouter");
+  await waitFor(() => one.getByText(/Could not reach OpenRouter just now/));
+  expect(
+    (one.getByLabelText("Model") as HTMLSelectElement).options.length,
+  ).toBe(1);
+});
+
+test("a model the file already holds stays choosable and no other card gets a list", async () => {
+  cards = cards.map((entry) =>
+    entry.id === "openrouter"
+      ? { ...entry, enabled: true, keySaved: true, model: "old/kept:free" }
+      : entry,
+  );
+  const view = draw();
+  const select = (await waitFor(() =>
+    cardOf(view, "OpenRouter").getByLabelText("Model"),
+  )) as HTMLSelectElement;
+  expect(select.value).toBe("old/kept:free");
+  expect(cardOf(view, "Groq").getByLabelText("Model").tagName).toBe("INPUT");
+  expect(freeCalls).toHaveLength(1);
 });

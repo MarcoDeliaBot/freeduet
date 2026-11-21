@@ -104,6 +104,15 @@ describe("the breaker's states, named for a person", () => {
     expect(stateOf("refused", null)).toBe("refused");
   });
 
+  test("D116: the note about a tool call written as text passes as one fixed word, and nothing else does", () => {
+    const base = { id: "a", label: "A", state: "ready" };
+    expect(summaryOf({ ...base, note: "tools_as_text" })?.note).toBe(
+      "tools_as_text",
+    );
+    expect(summaryOf({ ...base, note: "<script>" })).not.toHaveProperty("note");
+    expect(summaryOf(base)).not.toHaveProperty("note");
+  });
+
   test("only a waiting state keeps its time, and an unreadable time is no time", () => {
     const limited = summaryOf({
       id: "a",

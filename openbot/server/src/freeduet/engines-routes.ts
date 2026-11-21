@@ -123,6 +123,11 @@ export type EngineSummary = {
   until: string | null;
   /** Set only for a `refused` engine: the sentence that says why it is not run, cleaned by `cleanRefusal`. */
   refusal: string | null;
+  /**
+   * D116: only when the engine's last turn ended with a tool call written as text instead of used (a small free model does
+   * that). One fixed word, and absent otherwise, so no row changes for an engine that never did.
+   */
+  note?: "tools_as_text";
 };
 
 export type EnginesReading = {
@@ -215,6 +220,12 @@ const PANEL_PATH = "/engines/panel";
 /** A key is short; anything much longer is not one, and is never read further. */
 const MAX_KEY_BODY_CHARACTERS = 2_048;
 const MAX_MODELS = 300;
+const MAX_MODEL_CHARACTERS = 120;
+/** D116: a model id the card may offer from OpenRouter's free list: one that ends in `:free`, or the router. */
+const FREE_MODEL =
+  /^[A-Za-z0-9][A-Za-z0-9._-]*(?:\/[A-Za-z0-9][A-Za-z0-9._-]*)+:free$/;
+const FREE_ROUTER = "openrouter/free";
+const FREE_SOURCES = ["live", "cached", "stale", "fallback"] as const;
 
 /** One card as the page draws it. No key, no path: `keySaved` is all the page ever learns about a key. */
 export type ProviderView = {
@@ -548,6 +559,7 @@ export function summaryOf(row: unknown): EngineSummary | null {
     state,
     until: TIMED_STATES.has(state) ? timeOf(raw.limited_until) : null,
     refusal: refusalOf(state, raw.refusal),
+    ...(raw.note === "tools_as_text" ? { note: "tools_as_text" as const } : {}),
   };
 }
 
@@ -945,7 +957,13 @@ export function createEnginesRoutes(
     const send: Record<string, unknown> = {};
     if ("enabled" in body) send.enabled = body.enabled;
     if ("baseUrl" in body) send.baseUrl = body.baseUrl;
-    if ("model" in body) send.model = body.model;
+    // D116: a model reaches the agent only as a short string; the agent's guard (a free model only) decides the rest.
+    if (
+      "model" in body &&
+      typeof body.model === "string" &&
+      body.model.length <= MAX_MODEL_CHARACTERS
+    )
+      send.model = body.model;
     if ("members" in body) send.members = body.members;
     const answer = await callPanel(reach(), "PUT", `/${id}`, send);
     const card = providerOf(
@@ -1133,6 +1151,35 @@ export function createEnginesRoutes(
       )
       .slice(0, MAX_MODELS);
     return context.json({ ok: code === "ok", code, models }, 200, noStore);
+  });
+
+  // D116: the free models that support tools, from OpenRouter's public list (no key is used), read through the agent. Nothing
+  // is stored, so no audit row. Only a closed shape comes back: ids that pass the free-model guard, and one word for where
+  // the list came from.
+  routes.post("/providers/:providerId/free-models", async (context) => {
+    const { refused, id } = await providerGuard(context);
+    if (refused || !id) return refused as Response;
+    const answer = await callPanel(reach(), "POST", `/${id}/free-models`);
+    if (answer?.status !== 200) {
+      const failure = panelRefusal(answer);
+      return context.json(failure.body, failure.status);
+    }
+    const raw = answer.body as { models?: unknown; source?: unknown };
+    const models = (Array.isArray(raw.models) ? raw.models : [])
+      .filter(
+        (name): name is string =>
+          typeof name === "string" &&
+          name.length <= MAX_MODEL_CHARACTERS &&
+          (name === FREE_ROUTER || FREE_MODEL.test(name)),
+      )
+      .slice(0, MAX_MODELS);
+    const source =
+      FREE_SOURCES.find((known) => known === raw.source) ?? "fallback";
+    return context.json(
+      { models: models.length > 0 ? models : [FREE_ROUTER], source },
+      200,
+      noStore,
+    );
   });
 
   routes.post("/providers/:providerId/test", async (context) => {
