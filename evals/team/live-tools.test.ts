@@ -239,6 +239,7 @@ describe("the tools offered", () => {
     // Every tool the app registers, in its order, and the runner can run each one.
     expect(app.map((tool) => tool.name)).toEqual([
       "computer_navigate",
+      "computer_read_pages",
       "computer_read",
       "computer_snapshot",
       "computer_type",
@@ -1119,7 +1120,7 @@ describe("the report", () => {
         "computer_navigate",
       );
       expect(on.markdown).toContain(
-        "Computer tools: offered as the web app offers them (16: computer_navigate,",
+        "Computer tools: offered as the web app offers them (17: computer_navigate,",
       );
       expect(on.markdown).toContain("in 1 of 1 cases run, 0 calls made.");
       expect(off.code).toBe(0);
