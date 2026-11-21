@@ -31,6 +31,7 @@ import { taskListQueryOptions } from "@/lib/tasks/queries";
 import { cn } from "@/lib/utils";
 import { queryClient } from "@/query-client";
 import type { WideBand } from "./band";
+import { showsManageGroup } from "@/freeduet/manage-group";
 import { MemberFace } from "./mascot";
 import { memberStates, memberTarget, orderTeam, STATE_TEXT } from "./team";
 
@@ -266,7 +267,7 @@ function Team({ full }: { full: boolean }) {
  * The foot of the column: the channels the person made, New channel, Archived, Manage and Settings,
  * which are the phone menu's own rows, so every place it opens is one press from here too.
  */
-function Places({ onNewChannel }: { onNewChannel: () => void }) {
+export function Places({ onNewChannel }: { onNewChannel: () => void }) {
   const navigate = useNavigate();
   const { data: user } = useQuery(currentUserQueryOptions());
   const { data: capabilities } = useQuery(deploymentCapabilitiesQueryOptions());
@@ -378,50 +379,55 @@ function Places({ onNewChannel }: { onNewChannel: () => void }) {
         </>
       ) : null}
       <div className="mt-1 flex flex-col border-duet-hair border-t pt-1">
-        <h2>
-          <button
-            aria-controls={manage.id}
-            aria-expanded={manage.open}
-            className={cn(ROW, FOCUS)}
-            onClick={manage.toggle}
-            type="button"
-          >
-            <DuetIcon
-              className={cn(
-                "transition-transform motion-reduce:transition-none",
-                manage.open && "rotate-90",
-              )}
-              name="chevronRight"
-              size={22}
-            />
-            Manage
-            {manage.open ? null : <BotsNavBadge />}
-          </button>
-        </h2>
-        <div className="flex flex-col" hidden={!manage.open} id={manage.id}>
-          {MANAGE_PAGES.map((page) => (
-            <Link
-              activeProps={{ className: "bg-duet-tile" }}
-              className={cn(ROW, FOCUS)}
-              key={page.label}
-              to={page.to}
-            >
-              <RowIcon name={page.icon} />
-              {page.label}
-              {page.badge}
-            </Link>
-          ))}
-          {user?.role === "admin" ? (
-            <Link
-              activeProps={{ className: "bg-duet-tile" }}
-              className={cn(ROW, FOCUS)}
-              to="/admin"
-            >
-              <RowIcon name="shieldLock" />
-              Admin
-            </Link>
-          ) : null}
-        </div>
+        {/* FreeDuet's own package has no Manage group: each page is a row in Settings. */}
+        {showsManageGroup() ? (
+          <>
+            <h2>
+              <button
+                aria-controls={manage.id}
+                aria-expanded={manage.open}
+                className={cn(ROW, FOCUS)}
+                onClick={manage.toggle}
+                type="button"
+              >
+                <DuetIcon
+                  className={cn(
+                    "transition-transform motion-reduce:transition-none",
+                    manage.open && "rotate-90",
+                  )}
+                  name="chevronRight"
+                  size={22}
+                />
+                Manage
+                {manage.open ? null : <BotsNavBadge />}
+              </button>
+            </h2>
+            <div className="flex flex-col" hidden={!manage.open} id={manage.id}>
+              {MANAGE_PAGES.map((page) => (
+                <Link
+                  activeProps={{ className: "bg-duet-tile" }}
+                  className={cn(ROW, FOCUS)}
+                  key={page.label}
+                  to={page.to}
+                >
+                  <RowIcon name={page.icon} />
+                  {page.label}
+                  {page.badge}
+                </Link>
+              ))}
+              {user?.role === "admin" ? (
+                <Link
+                  activeProps={{ className: "bg-duet-tile" }}
+                  className={cn(ROW, FOCUS)}
+                  to="/admin"
+                >
+                  <RowIcon name="shieldLock" />
+                  Admin
+                </Link>
+              ) : null}
+            </div>
+          </>
+        ) : null}
         <Link
           activeProps={{ className: "bg-duet-tile" }}
           className={cn(ROW, FOCUS)}
@@ -429,6 +435,8 @@ function Places({ onNewChannel }: { onNewChannel: () => void }) {
         >
           <RowIcon name="settings" />
           Settings
+          {/* Where Manage is hidden (FreeDuet's package), the Bots badge rides on this row instead. */}
+          {showsManageGroup() ? null : <BotsNavBadge />}
         </Link>
         {capabilities?.localEvaluation === false ? (
           <button
