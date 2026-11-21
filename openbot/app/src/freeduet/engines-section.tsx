@@ -5,6 +5,7 @@ import { StaggerItem } from "@/components/layout/stagger";
 import { client } from "@/lib/client";
 import { EngineMembers } from "./engines-members";
 import { EngineProviders } from "./engines-providers";
+import { EngineTokens } from "./engines-tokens";
 import {
   ASIDE_LABEL,
   ENGINE_STATES_TITLE,
@@ -127,6 +128,8 @@ export function FreeDuetEngines() {
                 reading={reading}
               />
             ) : null}
+
+            <EngineTokens reading={reading} />
           </div>
 
           <aside
