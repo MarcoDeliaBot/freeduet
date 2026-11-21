@@ -7,7 +7,11 @@ from __future__ import annotations
 
 import pytest
 
+from datetime import UTC, datetime
+
 from freeduet import engine_notices as notices
+from freeduet.engine_adapter import Health
+from freeduet.failure_classifier import USAGE_LIMIT, Failure
 from freeduet.tools_as_text import looks_like_tool_call_text, prose_before
 from test_compatible_engine_chain import chain, posted, said, types, TOOLS, ASK, LIMIT, UNTIL
 from test_engine_router import DEPLOYMENT, TOOLS as HANDOFF_TOOLS
@@ -225,3 +229,14 @@ def test_a_text_call_after_a_real_tool_call_gets_one_sentence_and_nothing_is_rep
 
 def test_the_after_tools_sentence_is_in_italian():
     assert "non è stato fatto altro" in notices.tools_as_text_after_tools("it", "gw")
+
+
+def test_a_limited_engine_after_the_one_that_wrote_a_call_as_text_does_not_hide_the_plain_stop(client, fake_cli, tmp_path, monkeypatch):
+    """D119: the stop is decided by the engine that ran and failed, not by the last engine the walk noted as unavailable."""
+    team = three(tmp_path, monkeypatch, chains={"default": ["gw", "gw2"]})
+    state = team.router.state
+    state.finish("gw2", state.begin("gw2"), Health(failure=Failure(USAGE_LIMIT, datetime(2100, 1, 1, tzinfo=UTC))))
+    team.gw.plan([{"text": CALL}])
+    events = posted(client, team)
+    assert "wrote its tool calls as text" in said(events)
+    assert types(events)[-1] == "RUN_FINISHED"
