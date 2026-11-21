@@ -186,7 +186,8 @@ class _TextGuard:
     text-written tool call (``tools_as_text.looks_like_tool_call_text``). Used only for an engine that runs on a key (a
     gateway), where a small model may do this. Nothing is parsed or run."""
 
-    def __init__(self):
+    def __init__(self, tools_offered: bool = True):
+        self._tools_offered = tools_offered
         self._start: dict | None = None
         self._id: str | None = None
         self._text = ""
@@ -197,7 +198,14 @@ class _TextGuard:
 
     @property
     def tools_as_text(self) -> bool:
+        """The LAST message of the attempt is a text-written call and nothing real was done before it: the engine failed the turn."""
         return self.flagged and not self.tool_seen
+
+    @property
+    def text_call_after_tools(self) -> bool:
+        """The last message is a text-written call, but a real tool call was made before it: nothing is run or repeated, the
+        person is told in one sentence."""
+        return self.flagged and self.tool_seen
 
     def _open(self) -> list[dict]:
         if self._opened or self._start is None:
@@ -217,7 +225,9 @@ class _TextGuard:
         kind = event["type"]
         if kind.startswith("TOOL_CALL"):
             self.tool_seen = True
+            self.flagged = False  # a real call came after any text-written one: that text was only noise
         if kind == "TEXT_MESSAGE_START":
+            self.flagged = False  # only the LAST message of the attempt decides
             self._start, self._id = event, event.get("messageId")
             self._text, self._sent, self._opened = "", 0, False
             return []
@@ -228,7 +238,7 @@ class _TextGuard:
         if kind == "TEXT_MESSAGE_END" and self._start is not None:
             out: list[dict] = []
             if self._sent < len(self._text):
-                if looks_like_tool_call_text(self._text):
+                if looks_like_tool_call_text(self._text, self._tools_offered):
                     self.flagged = True
                 else:
                     out = self._content(len(self._text))
@@ -483,7 +493,7 @@ class Router:
             held: dict | None = None
             saw_output, finished = False, False
             builder = _Produced()
-            guard = _TextGuard() if self.adapters[key].kind == COMPATIBLE_KIND else None
+            guard = _TextGuard(bool(tools)) if self.adapters[key].kind == COMPATIBLE_KIND else None
             pending_event = None
             try:
                 limit = first_answer_limit(engine) or first_output_seconds()  # D108: only a local model has its own
@@ -534,6 +544,10 @@ class Router:
                         attempt.tools_as_text = True
                         held = {"type": "RUN_ERROR", "message": ""}
                         break
+                    if kind == "RUN_FINISHED" and guard is not None and guard.text_call_after_tools:
+                        for out in _say(notices.tools_as_text_after_tools(lang, self.adapters[key].label)):
+                            builder.see(out)
+                            yield out
                     if kind == "RUN_FINISHED":
                         finished = True
                     saw_output = saw_output or kind.startswith(("TEXT_MESSAGE_CONTENT", "TOOL_CALL"))

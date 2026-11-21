@@ -308,6 +308,13 @@ def tools_as_text_stop(lang: str, label: str) -> str:
     )
 
 
+def tools_as_text_after_tools(lang: str, label: str) -> str:
+    """D116: the engine had already used a tool, then ended with a tool call written as text. Nothing is run or repeated."""
+    if lang == "it":
+        return f"{label} ha concluso con una chiamata a uno strumento scritta come testo; non è stato fatto altro."
+    return f"{label} ended with a tool call written as text; nothing more was done."
+
+
 def loop_stop(lang: str, switches: int) -> str:
     if lang == "it":
         return (

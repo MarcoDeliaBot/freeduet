@@ -16,7 +16,7 @@ is not one. The shapes:
   closing tag, when the tag has a ``name=`` attribute or its body starts with ``{`` or ``[``;
 * ``<|tool_call|>`` and ``<|tool_call_start|>`` (the special tokens of a few small models), likewise;
 * a fenced block opened with ```tool_call (or ```tool_calls, ```function_call) that runs to the end;
-* the whole message being one JSON object, or a list of them, with a ``name`` and ``arguments`` (or ``parameters``,
+* (only when the turn offered tools) the whole message being one JSON object, or a list of them, with a ``name`` and ``arguments`` (or ``parameters``,
   or ``input``).
 """
 
@@ -72,6 +72,9 @@ def _json_call(text: str) -> bool:
 
 def _block_body_is_call(body: str, attrs: str | None) -> bool:
     """A tag or fence counts only with a name attribute, or a body that is JSON-like, and nothing of prose after the block."""
+    closer = _CLOSERS.search(body)
+    if closer is not None and body[closer.end():].strip():
+        return False  # prose after the block: the message does not END with it
     inner = _CLOSERS.sub("", body).strip()
     named = attrs is not None and _NAME_ATTRIBUTE.search(attrs) is not None
     if named:
@@ -79,12 +82,16 @@ def _block_body_is_call(body: str, attrs: str | None) -> bool:
     return bool(inner) and inner[0] in "{["
 
 
-def looks_like_tool_call_text(text: object) -> bool:
-    """Whether an assistant message is, or ends with, a tool call written as text. False for anything else, and for a non-string."""
+def looks_like_tool_call_text(text: object, tools_offered: bool = True) -> bool:
+    """Whether an assistant message is, or ends with, a tool call written as text. False for anything else, and for a non-string.
+
+    A whole message that is only JSON (bare, or in a fence of its own) counts only when the turn offered tools
+    (``tools_offered``): a member asked to give JSON as its answer, with no tool to call, must not be switched. A tag or a
+    ```tool_call fence names a call in itself, so it counts whatever was offered."""
     if not isinstance(text, str) or not text.strip():
         return False
     read = text if len(text) <= MAX_READ else text[-MAX_READ:]
-    if _json_call(read):
+    if tools_offered and _json_call(read):
         return True
     match = _FENCE.search(read)
     if match is not None and _block_body_is_call(match.group("body"), None):
