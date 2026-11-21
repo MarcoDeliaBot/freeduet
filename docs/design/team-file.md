@@ -19,7 +19,7 @@ Tags: **[code: path:line]** read in this repository. **[doc: URL]** stated by an
 - Five files are required: brand, agents, channels, model and knowledge. `theme.css` and `skills.yaml` are optional. Every `agents/*.yaml` file is read as well [code: openbot/server/src/tenant-package.ts:728-734, 744-749, 757-763, 703-721].
 - `${NAME}` is replaced from `process.env` in the five required files, in `skills.yaml` and in `agents/` files. A `:-` fallback is allowed, and an unset name throws. `theme.css` is not expanded [code: openbot/server/src/tenant-package.ts:330-346, 717, 737-740, 758].
 - A remote member with no endpoint is left out [code: tenant-package.ts:396-403]. A member id that is a deployment route is refused [code: tenant-package.ts:391-395]. For a `built_in` member, `system_prompt` becomes its configuration [code: tenant-package.ts:418-425].
-- `agents.yaml` has twelve entries: Iris and eleven members [code: openbot/examples/freeduet/agents.yaml:24, 147]. A YAML parser measured their prompts at 4,653 to 12,453 characters, and their role descriptions at 80 to 155 characters [code: openbot/examples/freeduet/agents.yaml].
+- `agents.yaml` has thirteen entries: Iris and twelve members [code: openbot/examples/freeduet/agents.yaml:24, 147]. A YAML parser measured their prompts at 4,653 to 12,453 characters, and their role descriptions at 80 to 155 characters [code: openbot/examples/freeduet/agents.yaml].
 
 **The router's prompt.**
 - The router is on unless `FREEDUET_ROUTER` is `off` [code: openbot/server/src/freeduet/model-base.ts:26-30].
@@ -306,7 +306,7 @@ Slice S2 of section 4, the export, is merged as PR #216. Not verified in a brows
 - Not run against a live eval stack. A file never certifies itself (section 3.5).
 
 **Findings about the S1 reader** (read, not changed here)
-- The reader reserves the names of all twelve shipped coworkers (Iris and eleven members). No file can carry one of them, so the shipped members cannot be exported under their names and imported back. The route therefore exports only members the administrator owns, and refuses a shipped name by 404.
+- The reader reserves the names of all thirteen shipped coworkers (Iris and twelve members). No file can carry one of them, so the shipped members cannot be exported under their names and imported back. The route therefore exports only members the administrator owns, and refuses a shipped name by 404.
 - The shipped team's skill text is 901,342 bytes in compact JSON, and Mark's skills alone are 837,567. A whole shipped team file would sit at or past the reader's 1 MB bound (`TEAM_FILE_LIMITS.fileBytes`).
 - The package joins its paragraphs with one line break; the reader joins the composed instructions with a blank line (`team-file.ts`, the `join("\n\n")` in `readMember`). The words are the same; the whitespace is not.
 - Iris carries neither paragraph, and Otto carries the shared rules and his own Email paragraph, so neither composes to its package text.
