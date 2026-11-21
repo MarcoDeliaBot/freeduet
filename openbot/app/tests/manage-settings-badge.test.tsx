@@ -19,7 +19,7 @@ import { settleReactWork } from "./settle-react-work";
 
 /*
  * Where the Bots unread badge sits. Manage carries it while the group is drawn; where Manage is
- * hidden (FreeDuet's package), the Settings row carries it instead, in the drawer and the wide
+ * hidden (FreeDuet's package), the Bots entry at the top level carries it instead (D129), in the drawer and the wide
  * column alike. The test follows the loaded package, so run it under both generated configs.
  */
 
@@ -92,9 +92,9 @@ function draw(ui: ReactNode) {
 const unreadDot = (scope: HTMLElement) =>
   within(scope).queryByRole("img", { name: "Unread messages" });
 
-test("the Bots unread dot sits on Settings where Manage is hidden, and on Manage where it is drawn", async () => {
+test("the Bots unread dot sits on the Bots entry where Manage is hidden, and on Manage where it is drawn", async () => {
   serving();
-  const onSettings = !showsManageGroup(appConfig.brand.tenantId);
+  const flat = !showsManageGroup(appConfig.brand.tenantId);
 
   const drawer = draw(
     <MenuSheet onNewChannel={() => {}} onOpenChange={() => {}} open />,
@@ -103,18 +103,19 @@ test("the Bots unread dot sits on Settings where Manage is hidden, and on Manage
   const settings = await within(dialog).findByRole("link", {
     name: /^Settings/,
   });
-  await waitFor(() => {
-    const dotOnSettings = unreadDot(settings) !== null;
-    expect(dotOnSettings).toBe(onSettings);
-  });
+  expect(unreadDot(settings)).toBeNull();
+  const bots = within(dialog).queryByRole("link", { name: /^Bots/ });
+  expect(bots === null).toBe(!flat);
+  if (bots) await waitFor(() => expect(unreadDot(bots)).not.toBeNull());
   const manage = within(dialog).queryByRole("button", { name: /^Manage/ });
-  expect(manage === null).toBe(onSettings);
-  if (manage) expect(unreadDot(manage) !== null).toBe(!onSettings);
+  expect(manage === null).toBe(flat);
+  if (manage) await waitFor(() => expect(unreadDot(manage)).not.toBeNull());
   drawer.unmount();
 
   const column = draw(<Places onNewChannel={() => {}} />);
   const wideSettings = await column.findByRole("link", { name: /^Settings/ });
-  await waitFor(() => {
-    expect(unreadDot(wideSettings) !== null).toBe(onSettings);
-  });
+  expect(unreadDot(wideSettings)).toBeNull();
+  const wideBots = column.queryByRole("link", { name: /^Bots/ });
+  expect(wideBots === null).toBe(!flat);
+  if (wideBots) await waitFor(() => expect(unreadDot(wideBots)).not.toBeNull());
 });
