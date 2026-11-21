@@ -136,7 +136,7 @@ def test_the_two_recorded_streams_differ_only_in_what_the_cli_priced_them_at():
 def test_the_tokens_go_to_health_and_the_cost_the_cli_printed_does_not(name):
     health = Health()
     note_usage(health, parsed(lines_of(name)))
-    assert health.usage == Usage(input_tokens=1264, output_tokens=56)
+    assert health.usage == Usage(input_tokens=1264, output_tokens=56, cache_read_tokens=20, cache_write_tokens=10)  # D102: the cached part, apart
     assert health.usage.cost is None and health.usage.currency is None  # "cost unknown": a money limit cannot hold on it
 
 

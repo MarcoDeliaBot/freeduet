@@ -445,7 +445,7 @@ def test_no_engine_text_and_no_secret_is_ever_written_to_the_file_or_the_snapsho
     assert set(Failure.__dataclass_fields__) == {"kind", "retry_at", "upstream"}  # D121: `upstream` is a flag, never text
     # `usage` (the spend ledger's input) is numbers and a currency code: the same guard holds for it, field by field.
     assert set(Health.__dataclass_fields__) == {"answered", "failure", "usage"}
-    assert set(Usage.__dataclass_fields__) == {"input_tokens", "output_tokens", "cost", "currency"}
+    assert set(Usage.__dataclass_fields__) == {"input_tokens", "output_tokens", "cost", "currency", "cache_read_tokens", "cache_write_tokens"}
 
 
 # ── Recording never fails a turn ────────────────────────────────────────────────────────────────

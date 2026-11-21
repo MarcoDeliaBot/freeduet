@@ -20,7 +20,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse, StreamingResponse
 
-from . import agui, checkpoints, claude_cli, claude_status, engine_choices, engine_panel, engine_router, engine_state, origin, report, team_log
+from . import agui, checkpoints, claude_cli, claude_status, engine_choices, engine_panel, engine_router, engine_state, origin, report, team_log, usage_counter
 from .claude_engine import ClaudeEngine
 from .engine_adapter import EngineAdapter
 from .members import MemberError, load_prompts, resolve_member
@@ -126,6 +126,17 @@ async def engines():
     # The version of the person's choices this service honours (engine_choices.py): the server's page turns a
     # control on only where it is here.
     body["choices_version"] = engine_choices.VERSION
+    return JSONResponse(body, headers={"Cache-Control": "no-store"})
+
+
+@app.get("/engines/usage")
+async def engines_usage():
+    """D102: the token counter, read-only, behind the same token as `GET /engines`. Counts only (usage_counter.py)."""
+    try:
+        body = usage_counter.counter().view()
+    except Exception:  # noqa: BLE001 - a counter that fails is "not available", never a refusal of the page
+        log.warning("token counter unavailable", exc_info=True)
+        body = {"timezone": "UTC", "window_days": usage_counter.WINDOW_DAYS, "rows": [], "engines": [], "problem": True}
     return JSONResponse(body, headers={"Cache-Control": "no-store"})
 
 
