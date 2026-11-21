@@ -287,8 +287,6 @@ async def run_segment(run: RunInput, member: Member, notes: SegmentNotes | None 
     async def guard(story: report_guard.Story) -> tuple[str, str] | None:
         """The report lines to add to a turn that ends without a complete one, with the separator to
         put before them, or None (report_guard.py)."""
-        if cannot_asked and story.called and notes.cannot_guard == cannot_guard.UNCHANGED:
-            notes.cannot_guard = cannot_guard.RETRIED  # the second turn did something: it made a call
         if not report_guard.applies(
             run.messages, story.reply(), story.called, member.id, report_guard.colleague_names()
         ):
@@ -335,6 +333,11 @@ async def run_segment(run: RunInput, member: Member, notes: SegmentNotes | None 
             async def failed_exit() -> dict:
                 """The stream ended without a result line: the engine says why."""
                 return (await engine_task).error
+
+            def mark_called() -> None:
+                """The second turn made a call (a hand-off, even one that then paused for the person)."""
+                if notes.cannot_guard == cannot_guard.UNCHANGED:
+                    notes.cannot_guard = cannot_guard.RETRIED
 
             def mark_failed() -> None:
                 notes.cannot_guard = cannot_guard.FAILED
@@ -392,7 +395,7 @@ async def run_segment(run: RunInput, member: Member, notes: SegmentNotes | None 
                     log.warning("cannot guard failed", exc_info=True)
                     return False
 
-            async for event in _drive(run, offered, inbox, spawn, failed_exit, local, guard, handed_over, retry, mark_failed):
+            async for event in _drive(run, offered, inbox, spawn, failed_exit, local, guard, handed_over, retry, mark_failed, mark_called):
                 yield event
         finally:
             if engine_task is not None:
@@ -415,7 +418,8 @@ async def _drive(run: RunInput, offered: set[str], inbox: asyncio.Queue, spawn, 
                  guard: Callable[[report_guard.Story], Awaitable[str | None]] | None = None,
                  handed_over: list[str] | None = None,
                  retry: Callable[[report_guard.Story, int], Awaitable[bool]] | None = None,
-                 cannot_failed: Callable[[], None] = lambda: None):
+                 cannot_failed: Callable[[], None] = lambda: None,
+                 cannot_called: Callable[[], None] = lambda: None):
     """The segment's state machine. Ends with exactly one RUN_FINISHED or RUN_ERROR."""
     handed_over = handed_over if handed_over is not None else []
     local_names = local.names if local is not None else frozenset()
@@ -470,6 +474,8 @@ async def _drive(run: RunInput, offered: set[str], inbox: asyncio.Queue, spawn, 
         parent = text.id_for(use.message_id) if use else text.last
         events = [*text.close(), *agui.tool_call_events(call_id, call.name, call.arguments, parent)]
         story.call(call_id, call.name, call.arguments)
+        if generation > 0:
+            cannot_called()
         if call.name in run.deployment_tools:
             in_flight += 1
 

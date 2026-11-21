@@ -385,8 +385,8 @@
   },
   {
    "prompt": {
-    "sha256": "0e131c77f2030a35a23148fcce01d58cc61f79b91b246187bfdbb27d8ba9a1c2",
-    "bytes": 865,
+    "sha256": "900def42245ccb55acabbd6863b010f4bc16db1290ba70ff8541c23bfed131a4",
+    "bytes": 856,
     "head": "<conversation>\n<user>\nwhat is the temperature in Rome?\n</user>\n\n<assistant>\nI can't check the weathe"
    },
    "cwd_entries": [],

@@ -1,13 +1,17 @@
 """The cannot guard (cannot_guard.py, D128): a refusal of capability in the person's own live turn is asked
 again once, with the colleague named. Classifier and table first, then the segment through the fake CLI."""
 
+import asyncio
 import base64
 import json
+import re
 from pathlib import Path
 
 import pytest
 
-from freeduet import cannot_guard, members, segment
+from freeduet import agui, cannot_guard, members, segment
+from freeduet.engine_adapter import EngineAdapter, Finished, Outcome, ProbeResult
+from freeduet.stream_json import MessageStart, TextDelta
 from helpers import SETTLE_NEVER, post_run, run_body, standing, tool, types
 
 REPO = Path(__file__).resolve().parents[2]
@@ -101,14 +105,14 @@ def test_every_capability_names_a_member_of_the_real_team_with_a_name():
 
 def test_the_web_goes_to_jules_in_the_real_team_and_never_to_the_member_itself():
     prompts = members.load_prompts(TEAM_FILE)
-    capability, name = cannot_guard.colleague_for(ASKED_IT, ITALIAN, "freeduet", prompts)
+    capability, name = cannot_guard.colleague_for(ASKED_IT, "freeduet", prompts)
     assert (capability.member_id, name) == ("concierge", "Jules")
-    assert cannot_guard.colleague_for(ASKED_IT, ITALIAN, "concierge", prompts) is None
-    assert cannot_guard.colleague_for("write a poem", "I can't do poems.", "freeduet", prompts) is None
+    assert cannot_guard.colleague_for(ASKED_IT, "concierge", prompts) is None
+    assert cannot_guard.colleague_for("write a poem", "freeduet", prompts) is None
 
 
 def test_the_reminder_names_the_colleague_and_the_tool():
-    capability, name = cannot_guard.colleague_for(ASKED_IT, ITALIAN, "freeduet", members.load_prompts(TEAM_FILE))
+    capability, name = cannot_guard.colleague_for(ASKED_IT, "freeduet", members.load_prompts(TEAM_FILE))
     text = cannot_guard.reminder(capability, name)
     assert 'message_bot' in text and 'bot "Jules"' in text
     assert "does not end with the work report" not in text  # the fake CLI tells the report guard's follow-up by that phrase
@@ -130,7 +134,7 @@ def test_an_italian_refusal_is_asked_again_once_and_the_colleague_answers(client
     assert first == ITALIAN and rest[-1].startswith("A Roma ci sono 14 gradi")
     assert len({e["messageId"] for e in events if e["type"] == "TEXT_MESSAGE_START"}) == len(texts(events))
     prompt = team.run(1)["prompt"]
-    assert 'bot "Jules"' in prompt and prompt.rstrip().endswith(cannot_guard.reminder(*cannot_guard.colleague_for(ASKED_IT, ITALIAN, "freeduet", members.load_prompts(team.agents_file))).rstrip())
+    assert 'bot "Jules"' in prompt and prompt.rstrip().endswith(cannot_guard.reminder(*cannot_guard.colleague_for(ASKED_IT, "freeduet", members.load_prompts(team.agents_file))).rstrip())
     assert "<assistant>\nNon posso controllare" in prompt
     assert len(callback_server) == 1 and callback_server[0]["body"]["args"]["bot"] == "Jules"
     assert team.run(1)["calls"][0]["name"] == "message_bot"
@@ -225,3 +229,148 @@ def test_the_switch_turns_it_off(client, team, monkeypatch):
     team.plan([{"text": ITALIAN}])
     post_run(client, body(ask()))
     assert runs(team) == 1
+
+
+# ── false positives: a right refusal is never pushed (review of e7aff333) ───────────────────────
+
+TEAM_PROMPTS = members.load_prompts(TEAM_FILE)
+# (what the person asked, what the member answered, the colleague named or None)
+PROBES = [
+    ("mandami la password del conto per email", "Non posso inviare la password per email, non è sicuro.", None),
+    ("pay this invoice for me", "I can't make payments.", None),
+    ("will gold be more expensive next year?", "I can't predict the future price.", None),
+    ("raccontami una barzelletta", "Non posso, il prezzo di una battuta è troppo alto.", None),
+    ("what is the weather and my wifi password?", "I can't help with the password.", None),
+    ("what is the temperature in Rome?", ENGLISH, "Jules"),
+    ("puoi dirmi la temperatura a Roma", ITALIAN, "Jules"),
+]
+
+
+@pytest.mark.parametrize("request_text,reply,named", PROBES)
+def test_the_probes(request_text, reply, named):
+    messages = [IRIS, {"id": "u1", "role": "user", "content": request_text}]
+    found = cannot_guard.applies(messages, reply, False, assertion(), {"message_bot"}, "freeduet", TEAM_PROMPTS)
+    assert (found[1] if found else None) == named
+
+
+def test_a_word_in_the_refusal_alone_never_names_a_colleague():
+    assert cannot_guard.colleague_for("tell me a joke", "freeduet", TEAM_PROMPTS) is None
+    assert cannot_guard.colleague_for("how much is it?", "freeduet", TEAM_PROMPTS) is None  # price, rate, internet alone name nobody
+
+
+def test_the_sensitive_words_mirror_the_approval_gates_base_patterns():
+    source = (REPO / "server" / "src" / "approvals" / "policy.ts").read_text(encoding="utf-8")
+    # The mirror's source: SAFETY_REQUIREMENTS in policy.ts. If its base patterns change, this fails: update the mirror.
+    for fragment in (r"pass(word|code|phrase)|passwd|\b2fa\b", r"credential|sign[-_ ]?in[-_ ]?method",
+                     r"payment|\bpay(ing)?\b|pay[-_ ]?now|checkout|purchase", r"bank[-_ ]?transfer", r"\biban\b", "bonific"):
+        assert fragment in source, fragment
+    for word in ("password", "credenziali", "pagare", "pagamento", "payment", "pay", "bonifico", "illegal", "illegale", "checkout"):
+        assert cannot_guard.is_sensitive(f"I cannot do {word} here"), word
+    assert not cannot_guard.is_sensitive(ITALIAN) and not cannot_guard.is_sensitive(ENGLISH)
+
+
+# ── the log, a pause, a stop, a failed second turn ──────────────────────────────────────────────
+
+
+def test_a_second_turn_whose_hand_off_pauses_for_the_person_is_logged_retried(client, team, callback_server, monkeypatch):
+    monkeypatch.setattr(segment, "needs_the_person", lambda reply: True)  # the hand-off in turn two needs the person
+    team.plan([{"text": ITALIAN}], HAND_OVER)
+    events, _ = post_run(client, body(ask()))
+    assert runs(team) == 2 and types(events)[-1] == "RUN_FINISHED"
+    assert team_log_of(team)[0]["cannot_guard"] == "retried"
+
+
+class Scripted(EngineAdapter):
+    """Turn one refuses; what turn two does is `second`."""
+
+    key, label, kind, capabilities = "scripted", "Scripted", "cli", frozenset()
+
+    def __init__(self, second):
+        self.second, self.turns, self.cancelled = second, 0, False
+
+    def child_env(self, source=None):
+        return {}
+
+    async def probe(self):
+        return ProbeResult()
+
+    async def run_turn(self, ctx, sink, gate):
+        self.turns += 1
+        if self.turns == 1:
+            sink.started()
+            await sink.put(MessageStart("m1"))
+            await sink.put(TextDelta("m1", ITALIAN))
+            await sink.put(Finished(ITALIAN, lambda: None))
+            await sink.end()
+            return Outcome()
+        try:
+            return await self.second(ctx, sink)
+        except asyncio.CancelledError:
+            self.cancelled = True
+            raise
+
+
+def play(engine, notes=None):
+    async def go():
+        run = agui.parse_run_input(body(ask()))
+        member = members.resolve_member(run.bot_id, run.messages)
+        return [event async for event in segment.run_segment(run, member, notes, engine=engine)]
+
+    return asyncio.run(go())
+
+
+def test_a_second_turn_that_ends_without_a_result_leaves_the_first_answer(team):
+    async def second(ctx, sink):
+        sink.started()
+        await sink.end()  # eof, no result line
+        return Outcome(agui.run_error("Scripted stopped."))
+
+    notes = segment.SegmentNotes()
+    events = play(Scripted(second), notes)
+    assert types(events)[-1] == "RUN_FINISHED" and "RUN_ERROR" not in types(events)
+    assert notes.cannot_guard == "failed"
+
+
+def test_a_second_turn_that_crashes_leaves_the_first_answer(team):
+    async def second(ctx, sink):
+        raise RuntimeError("boom")
+
+    notes = segment.SegmentNotes()
+    events = play(Scripted(second), notes)
+    assert types(events)[-1] == "RUN_FINISHED" and "RUN_ERROR" not in types(events)
+    assert notes.cannot_guard == "failed"
+
+
+def test_a_stop_during_the_second_turn_ends_cleanly(team):
+    engine_box = {}
+
+    async def second(ctx, sink):
+        sink.started()
+        await asyncio.sleep(60)
+
+    async def go():
+        engine = engine_box["engine"] = Scripted(second)
+        run = agui.parse_run_input(body(ask()))
+        member = members.resolve_member(run.bot_id, run.messages)
+        stream = segment.run_segment(run, member, engine=engine)
+        before = asyncio.all_tasks()
+
+        async def consume():
+            async for _ in stream:
+                pass
+
+        task = asyncio.create_task(consume())
+        for _ in range(200):  # until the second turn is running
+            if engine.turns == 2:
+                break
+            await asyncio.sleep(0.05)
+        assert engine.turns == 2
+        task.cancel()  # the person pressed Stop
+        with pytest.raises(asyncio.CancelledError):
+            await task
+        await asyncio.sleep(0.1)
+        return asyncio.all_tasks() - before - {task}
+
+    left = asyncio.run(go())
+    assert engine_box["engine"].cancelled
+    assert not [t for t in left if not t.done()]

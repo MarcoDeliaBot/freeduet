@@ -122,17 +122,16 @@ def _words(*alternatives: str) -> re.Pattern:
 # tests/test_cannot_guard.py reads each id in the team file and the capability in that member's prompt.
 CAPABILITIES: tuple[Capability, ...] = (
     Capability(
-        "web", "concierge", "a browser and the web, so a quick look-up (the weather, news, opening hours, a price, an address)",
+        "web", "concierge", "a browser and the web, so a quick look-up (the weather, news, opening hours, an address)",
         _words(
-            r"weather", r"forecast", r"temperatur", r"meteo", r"previsioni", r"tempo reale", r"real[- ]?time", r"live data",
-            r"news\b", r"notizie", r"headline", r"opening hours", r"orari di apertura", r"stock price", r"exchange rate",
-            r"cambio", r"quotazion", r"prezzo", r"price of", r"look (?:it )?up", r"search the (?:web|internet)", r"cerca(?:re)? (?:sul|su) (?:web|internet)",
-            r"internet", r"browse", r"navigar", r"sito web", r"website", r"clima\b", r"noticias", r"wetter", r"nachrichten", r"m[eé]t[eé]o",
+            r"weather", r"forecast", r"temperatur", r"meteo", r"previsioni", r"tempo reale", r"real[- ]?time",
+            r"news\b", r"notizie", r"headlines?", r"opening hours", r"orari di apertura", r"stock price", r"exchange rate",
+            r"search the (?:web|internet)", r"cerca(?:re)? (?:online|sul web|su internet)", r"wetter", r"nachrichten", r"noticias",
         ),
     ),
     Capability(
         "mail", "inbox", "the person's mailbox (reading, sorting and, with the person's approval, sending mail)",
-        _words(r"e-?mails?\b", r"\bmail\b", r"inbox", r"posta\b", r"casella", r"gmail", r"messaggi di posta", r"correo", r"courriel"),
+        _words(r"e-?mails?\b", r"\bmail\b", r"inbox", r"gmail", r"posta in arrivo", r"casella di posta"),
     ),
     Capability(
         "money", "bookkeeper", "the small-business money paperwork (invoices, receipts, who owes what)",
@@ -155,22 +154,46 @@ def _name_of(prompt: str) -> str | None:
 
 
 def colleague_for(
-    request: str, reply: str, member_id: str, prompts: dict[str, str] | None = None
+    request: str, member_id: str, prompts: dict[str, str] | None = None
 ) -> tuple[Capability, str] | None:
-    """The first capability the request or the refusal is about whose member is not this one and is in the
-    team file, with that member's name. None when nothing matches: the refusal passes through."""
+    """The first capability the PERSON'S REQUEST is about whose member is not this one and is in the team
+    file, with that member's name. The refusal's own words are not read: a stray word in a refusal ("I can't
+    predict the future price") must not name a colleague. None when nothing matches: the refusal passes through."""
     try:
         prompts = members.load_prompts() if prompts is None else prompts
     except MemberError:
         return None
-    text = f"{request}\n{reply}"
     for capability in CAPABILITIES:
-        if capability.member_id == member_id or not capability.pattern.search(text):
+        if capability.member_id == member_id or not capability.pattern.search(request):
             continue
         name = _name_of(prompts.get(capability.member_id, ""))
         if name:
             return capability, name
     return None
+
+
+# ── never for a safety, credential or payment matter ─────────────────────────────────────────────
+
+# The words of the approval gate's SAFETY_REQUIREMENTS (openbot/server/src/approvals/policy.ts: credentials,
+# security settings, payments), mirrored here because that list is TypeScript, plus the illegal. A refusal about
+# one of these is very likely a right refusal, so the guard never pushes it (the approval gate is not
+# involved: this only decides not to ask again). tests/test_cannot_guard.py reads policy.ts and fails if its
+# base patterns are no longer the ones mirrored here.
+_SENSITIVE = re.compile(
+    r"pass(?:word|code|phrase)|passwd|\b2fa\b|two[-_ ]?factor|\bmfa\b|\botp\b|one[-_ ]?time[-_ ]?code|"
+    r"recovery[-_ ]?(?:code|key|email|phone)|security[-_ ]?question|api[-_ ]?key|access[-_ ]?token|credential|"
+    r"credenzial|codice (?:otp|monouso|di verifica|di accesso|di sicurezza)|chiave (?:api|segreta)|"
+    r"security[-_ ]?settings?|impostazioni (?:di )?sicurezza|delete[-_ ]?(?:my[-_ ]?)?account|elimina(?:re)? (?:il )?(?:mio )?account|"
+    r"payment|\bpay(?:ing)?\b|checkout|purchase|place[-_ ]?order|buy[-_ ]?now|\bwire\b|bank[-_ ]?transfer|transfer[-_ ]?(?:money|funds)|"
+    r"send[-_ ]?money|credit[-_ ]?card|card[-_ ]?number|\bcvv\b|\biban\b|billing|"
+    r"\bpaga|pagament|bonific|acquist|compra|carta di credito|"
+    r"illegal|illegale|illecit|\bhack|\bmalware|\bphishing",
+    re.IGNORECASE,
+)
+
+
+def is_sensitive(text: str) -> bool:
+    return _SENSITIVE.search(_plain(text)) is not None
 
 
 # ── when it applies ──────────────────────────────────────────────────────────────────────────────
@@ -201,7 +224,10 @@ def applies(
     if not is_refusal(reply):
         return None
     latest = latest_user_message(messages)
-    return colleague_for(message_text(latest) if latest else "", reply, member_id, prompts)
+    request = message_text(latest).split(origin.GROUP_TRANSCRIPT, 1)[0] if latest else ""
+    if is_sensitive(request) or is_sensitive(reply):
+        return None
+    return colleague_for(request, member_id, prompts)
 
 
 def reminder(capability: Capability, name: str) -> str:
