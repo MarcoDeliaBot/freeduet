@@ -19,6 +19,7 @@ const TEAM_ORDER = [
   "chef",
   "marketer",
   "video",
+  "trainer",
   "creator",
 ];
 
@@ -90,7 +91,7 @@ export function memberTarget(
     : { to: "/channel/new", agent: agent.id };
 }
 
-/** Whether a member has one of the twelve faces, for the tests and the neutral fallback. */
+/** Whether a member has one of the thirteen faces, for the tests and the neutral fallback. */
 export function hasOwnFace(agentId: string): boolean {
   return mascotKeyOf(agentId) !== null;
 }
