@@ -1934,3 +1934,24 @@ Built on 21 November 2026 from D110 (section 72), with the maintainer's choice o
 - **Principle.** [PROJECT.md](PROJECT.md), section 4, principle 8, states the rule in one line.
 
 **Not changed.** No code, prompt, test or approval rule. The engine card (D109) and the mailbox button are built and not yet run live, as the roadmap says.
+
+## 85. Read several pages in one call, read only (D127)
+
+**Decided 21 November 2026 by the maintainer** ("go", on item 4 of D123, section 81, roadmap row 94). Design and limits: [design/read-pages.md](design/read-pages.md).
+
+- **What a member gets.** A tool `computer_read_pages` with `urls`, one to five web addresses. It reads them one after another in the member's own browser tab and returns, for each, `url`, `finalUrl`, `title`, `text`, `truncated` and, when the page was not read, `error`. A page that fails, is refused or is a human check carries its own error and the others are still read.
+- **Limits, fixed.** At most 5 addresses (each is a page load of up to 38 s, so five keep the call inside the server's deadlines); at most 6,000 characters of text and links per page (the limit of `computer_navigate`, so a page reads the same either way); 24,000 characters in all, shared equally (`readPagesLimit`: 4,800 each for five pages), so the answer does not depend on how long the first page is; no page is opened after 120 s. The server clamps what the computer sends back to the same limits.
+- **Read only, and never weaker than a navigation.** Each address goes through the gateway's `govern` once, under the tool name `computer_navigate` and intent `navigate`: the operator's policy, the audit row (one per page, named `computer_navigate`), the enterprise switches and the literal private-address refusal in `admin/controls.ts`, the approval gate (effect `read`, scope the page's host, target the page) and the transport's target floor all see the same thing as for a single navigation. A rule written against `computer_navigate` therefore covers the batch. The computer's egress filter is the one that loads every page of the Bot's browser, so a name that resolves to a private address and a redirect to one are refused there. Nothing in this change touches `egress.ts`, `private-network.ts` or `approvals/policy.ts`.
+- **Offered like a navigation.** Only when the person's browser and network switches are both on (`computer/offered.ts`, the `NAVIGATE` set); a server-run turn and the app offer it by the same rule.
+- **Not in a batch.** A page that raises a human check is reported as not read and opens no request for help (the member opens it with `computer_navigate`, which can ask the person). The approval gate keeps one request per tool call: a page whose rule asks for a card is asked about as a navigation is, and a later page of the same call that would need its own card is refused with the gate's sentence. No page frame is kept for the screen.
+- **Prompt.** One sentence in Jules's prompt (`agents.yaml`, 13,874 to 14,063 characters; no pinned limit applies to him). Leo's prompt is at the imported-member limit of 10,000 characters (`freeduet-team-file.test.ts`) and is not changed.
+
+**Built so far.** `openbot/agent-computer/src/read-page.ts` and the route `POST /read-page` in `index.ts` (one page, read as `/navigate` reads it, cut to the limit asked for); `server/src/computer/{schema,client,gateway,routes,browser-routes,headless-tools,offered}.ts`; the app registration and label; the eval runner's route table. Tests: `server/tests/computer-read-pages.test.ts` (29), `agent-computer/tests/read-page.test.ts` and `read-page-browser.test.ts` (real Chromium, 7, in the `computer (real browser)` CI line). Not verified: a live member turn (cases to run on the eval stack: jules-1 and jules-2, and a case that gives Jules three addresses to compare), the egress filter on a redirect through this route (the filter is the browser's, tested in `private-network-browser.test.ts`; not run through `/read-page`), and the token saving, which row 93's script is to measure.
+
+**Decisions for the maintainer.**
+
+| Decision | Options | Recommendation | Reason |
+|---|---|---|---|
+| Limits | 5 pages, 6,000 each, 24,000 in all (built); or 8,000 each | Keep 6,000 | Equal to `computer_navigate`, so one page reads the same either way; a raised limit costs tokens on every call |
+| Audit name | Rows named `computer_navigate` (built); or a new name `computer_read_pages` | Keep `computer_navigate` | A rule or a trail query on `computer_navigate` keeps covering every page opened; a new name would need every operator rule written twice |
+| Several cards in one call | One request per call, later pages refused (built); or one card for the whole list | Keep | A card for a list would approve pages the person did not see; it only matters when a rule asks about reads, which the default never does |

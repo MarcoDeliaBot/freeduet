@@ -23,7 +23,7 @@ import {
   READ_PAGES_TOOL_DESCRIPTION,
 } from "../src/computer/headless-tools";
 import {
-  computerToolsOffered,
+  type CapabilitySwitches,
   withOfferedComputerTools,
 } from "../src/computer/offered";
 import type { ActionPolicy } from "../src/computer/policy";
@@ -592,7 +592,7 @@ describe("policy, audit and the approval gate see each page as a navigation", ()
 });
 
 describe("which tools a turn is offered", () => {
-  const names = (capabilities: Parameters<typeof computerToolsOffered>[0]) =>
+  const names = (capabilities: CapabilitySwitches | undefined) =>
     withOfferedComputerTools(
       createHeadlessComputerTools({
         gateway: {} as ComputerGateway,
