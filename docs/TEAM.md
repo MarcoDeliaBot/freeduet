@@ -1,6 +1,6 @@
 # The team
 
-More than ten members, and growing. One job each: the ten of v0.1, and Mark, Cam and Rex, the first ones added after it. The prompts live in [`openbot/examples/freeduet/agents.yaml`](../openbot/examples/freeduet/agents.yaml); this page is the human-readable overview.
+Iris and twelve members, and growing. One job each: the ten of v0.1, and Mark, Cam and Rex, the first ones added after it. The prompts live in [`openbot/examples/freeduet/agents.yaml`](../openbot/examples/freeduet/agents.yaml); this page is the human-readable overview.
 
 ## Who does what
 
