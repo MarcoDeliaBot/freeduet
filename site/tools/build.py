@@ -138,7 +138,7 @@ def get_path(root, path):
 # The art is shared with the app, which draws the same faces (D55): one file, `openbot/shared/mascot.json`.
 MASCOT_FILE = Path(__file__).resolve().parents[2] / "openbot" / "shared" / "mascot.json"
 # The member drawings are the app's (approved for the app on 20 November 2026, PR #412 and #417): the site reads the
-# same file, `openbot/app/src/freeduet/wide/mascot-drawn.json`, for its twelve `team` entries.
+# same file, `openbot/app/src/freeduet/wide/mascot-drawn.json`, for its `team` entries.
 MASCOT_DRAWN_FILE = Path(__file__).resolve().parents[2] / "openbot" / "app" / "src" / "freeduet" / "wide" / "mascot-drawn.json"
 MEMBER_IDS = ["iris", "leo", "otto", "portia", "penny", "jules", "wren", "gus", "basil", "vera", "mark", "video", "rex"]
 FACE_IDS = ["idle", "listen", "think", "work", "ask", "done"]
