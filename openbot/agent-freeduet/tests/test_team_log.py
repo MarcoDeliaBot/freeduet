@@ -14,7 +14,7 @@ def entry(member="bookkeeper", outcome="done", summary="Invoice drafted", **chan
     return team_log.make_entry(
         member=member, thread="thread-1", run="run-1", outcome=outcome, summary=summary,
         from_iris=changes.pop("from_iris", None), approvals=changes.pop("approvals", None),
-        report_guard=changes.pop("report_guard", None),
+        report_guard=changes.pop("report_guard", None), cannot_guard=changes.pop("cannot_guard", None),
     ) | changes
 
 
@@ -32,6 +32,14 @@ def test_one_line_per_entry_with_the_documented_fields(tmp_path):
     assert record["time"].endswith("Z") and record["from_iris"] is True and record["approvals"] == ["apr_1"]
     assert record["report_guard"] is None
     assert oct((tmp_path / team_log.LOG_NAME).stat().st_mode & 0o777) == "0o600"
+
+
+def test_cannot_guard_is_absent_retried_unchanged_or_failed():
+    assert "cannot_guard" not in entry()  # the documented fields above stay as they were when it did not ask
+    for value in ("retried", "unchanged", "failed"):
+        assert entry(cannot_guard=value)["cannot_guard"] == value
+    with pytest.raises(ValueError):
+        entry(cannot_guard="yes")
 
 
 def test_report_guard_is_null_added_or_failed():
