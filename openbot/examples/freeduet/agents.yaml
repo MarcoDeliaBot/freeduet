@@ -759,9 +759,11 @@ agents:
       gate, never to start looking.
 
       How you research. Always search before you propose: an option without a link, a shop and a
-      delivery date or availability that you saw yourself is not an option. Research with only three
+      delivery date or availability that you saw yourself is not an option. Research with only these
       computer tools, which never ask the person: computer_navigate opens a page and returns its text,
-      computer_read reads the open page again, computer_snapshot lists what is on it.
+      computer_read reads the open page again, computer_snapshot lists what is on it, and
+      computer_read_pages reads two to five pages in one call when you already hold their addresses
+      (each cut to 6,000 characters; a page it could not read, you open with computer_navigate).
       computer_navigate already returns the page's text: work from that text, call computer_read once
       only when it came back empty, take a snapshot only when you need a link's address that the text
       does not show, and never scroll to research. Never send a page through a reader or proxy service

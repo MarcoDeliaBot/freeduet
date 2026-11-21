@@ -114,6 +114,7 @@ describe("what the wheel stops while a person is driving", () => {
   test("every path that acts on the computer, the shell and a workspace write included", () => {
     for (const path of [
       "/navigate",
+      "/read-page",
       "/click",
       "/type",
       "/select",

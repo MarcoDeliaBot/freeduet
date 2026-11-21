@@ -1,5 +1,5 @@
 import type { HandoffRequest } from "@openbot/shared/computer-control";
-import type { NavigateResult } from "./schema";
+import type { NavigateResult, ReadPageResult } from "./schema";
 import { checkNavigationTarget } from "./target";
 
 /** The computer did not accept or answer a request. */
@@ -191,6 +191,17 @@ export interface ComputerTransport {
     url: string,
     toolCallId?: string,
   ): Promise<NavigateResult>;
+  /**
+   * One page of `computer_read_pages` (D127): the same target check as {@link navigate}, then the
+   * computer's read-only `/read-page`, cut to `limit` characters.
+   */
+  readPage(
+    baseUrl: string,
+    botId: string,
+    url: string,
+    limit: number,
+    caller?: AbortSignal,
+  ): Promise<ReadPageResult>;
   download(
     baseUrl: string,
     botId: string,
@@ -420,12 +431,36 @@ export function createComputerTransport(
     });
   }
 
-  return { call, post, navigate, download };
+  async function readPage(
+    baseUrl: string,
+    botId: string,
+    url: string,
+    limit: number,
+    caller?: AbortSignal,
+  ): Promise<ReadPageResult> {
+    // The same floor as a navigation, so a page of a batch is refused as it would be on its own.
+    const verdict = checkNavigationTarget(url, {
+      allowPrivateHosts: options.allowPrivateHosts,
+    });
+    if (!verdict.allowed) {
+      throw new NavigationRefusedError(verdict.reason);
+    }
+    return post<ReadPageResult>(
+      baseUrl,
+      botId,
+      "/read-page",
+      { url: verdict.url, limit },
+      caller,
+    );
+  }
+
+  return { call, post, navigate, readPage, download };
 }
 
 /** The routes that read a page, as opposed to acting on a ref in it. */
 const PAGE_READ_ROUTES = new Set([
   "/navigate",
+  "/read-page",
   "/snapshot",
   "/read",
   "/screenshot",

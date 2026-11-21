@@ -129,7 +129,7 @@ describe("case file", () => {
     expect(cases.filter((c) => !names.has(c.member))).toEqual([]);
   });
 
-  // CLAUDE.md, "Team evals": a must or must_not line has to stand on its own, so the grader never reads a
+  // docs/dev/evals.md (formerly CLAUDE.md, "Team evals"): a must or must_not line has to stand on its own, so the grader never reads a
   // bare verb. Each line opens with its subject: a capitalised word (a member's name, "The", "Any", "Leo's").
   // A line that opens with "when" gives its condition first and names its subject after it, as in "when a
   // file was made, Penny ...", so it is not held to the capital letter.

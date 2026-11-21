@@ -30,7 +30,9 @@ import {
   ComputerStoppedError,
   ComputerUnavailableError,
   createComputerTransport,
+  HumanHasControlError,
   StaleSnapshotError,
+  WorkspaceRequestError,
 } from "./client";
 import { checkComputerAddress } from "./target";
 
@@ -75,6 +77,9 @@ import type {
   NavigateResult,
   ReadFileInput,
   ReadFileResult,
+  ReadPagesInput,
+  ReadPagesPage,
+  ReadPagesResult,
   ReadResult,
   RunCommandInput,
   RunCommandResult,
@@ -92,6 +97,11 @@ import type {
   TypeInput,
   WriteFileInput,
   WriteFileResult,
+} from "./schema";
+import {
+  READ_PAGES_BUDGET_MS,
+  READ_PAGES_MAX_URLS,
+  readPagesLimit,
 } from "./schema";
 import {
   createInMemorySnapshotStore,
@@ -171,6 +181,18 @@ export interface ComputerGateway {
     url: string,
     toolCallId?: string,
   ): Promise<NavigateResult>;
+  /**
+   * Several pages in one call, read only (D127). Each address is decided on exactly as a navigation to
+   * it is (policy, audit row, approval gate and enterprise switches all see `computer_navigate` with
+   * that address), then read one after another in the Bot's own tab. One page failing, refused or cut
+   * never fails the others.
+   */
+  readPages(
+    botId: string,
+    actor: ActionActor,
+    input: ReadPagesInput,
+    signal?: AbortSignal,
+  ): Promise<ReadPagesResult>;
   click(
     botId: string,
     actor: ActionActor,
@@ -1051,6 +1073,110 @@ export function createComputerGateway(
       ).then((result) => withUntrustedNotice(result, "web page", PAGE_FIELDS));
     },
 
+    /**
+     * Several pages, one at a time, each as a navigation (D127).
+     *
+     * `govern` is called once per address with the tool name `computer_navigate`, so every rule that
+     * could refuse or ask about opening that page does so for the batch too: an operator's deny written
+     * against the tool name, the enterprise switches and the literal-private-address refusal in
+     * `admin/controls.ts`, a team or personal rule at the approval gate, and the target floor in the
+     * transport. Nothing here is a second, weaker way in. The approval gate keeps one request per
+     * tool call, so a page that needs the person's card is asked about as `computer_navigate` asks
+     * (the call pauses on the first), and a later page of the same call that would need its own card is
+     * refused with the gate's sentence: ask for it with `computer_navigate`.
+     *
+     * Not raised here, unlike a navigation: a request for help on a human check (the computer reports
+     * the page as not read instead), and a page frame for the screen. The person asked for pages to be
+     * read, not for a trail of tiles.
+     */
+    async readPages(
+      botId: string,
+      actor: ActionActor,
+      input: ReadPagesInput,
+      signal?: AbortSignal,
+    ) {
+      const urls = input?.urls;
+      if (
+        !Array.isArray(urls) ||
+        urls.length === 0 ||
+        urls.some((url) => typeof url !== "string" || !url.trim())
+      ) {
+        throw new WorkspaceRequestError(
+          "Give a list of web addresses to read, each one a non-empty string.",
+        );
+      }
+      if (urls.length > READ_PAGES_MAX_URLS) {
+        throw new WorkspaceRequestError(
+          `At most ${READ_PAGES_MAX_URLS} pages can be read in one call, and ${urls.length} were given. Read them in groups, or open one with computer_navigate.`,
+        );
+      }
+      const startedAt = Date.now();
+      const pages: ReadPagesPage[] = [];
+      // Each page gets an equal share of the call's total, so the order of the list changes nothing.
+      const room = readPagesLimit(urls.length);
+      // Set when the computer itself cannot be reached: asking again for each page would only wait again.
+      let unreachable: string | undefined;
+      for (const raw of urls) {
+        const url = raw.trim();
+        if (unreachable) {
+          pages.push({ url, error: unreachable });
+          continue;
+        }
+        if (Date.now() - startedAt > READ_PAGES_BUDGET_MS) {
+          pages.push({
+            url,
+            error:
+              "Not read: this call ran out of time. Ask for this page again on its own.",
+          });
+          continue;
+        }
+        try {
+          const page = await govern(
+            "computer_navigate",
+            botId,
+            actor,
+            { targetUrl: url, ...(signal ? { signal } : {}) },
+            async () =>
+              transport.readPage(await locate(botId), botId, url, room, signal),
+          );
+          if (page.notRead) {
+            pages.push({ url, finalUrl: page.url, error: page.notRead });
+            continue;
+          }
+          const cut = cutPageText(page.text, room);
+          pages.push({
+            url,
+            finalUrl: page.url,
+            title: page.title,
+            text: cut.text,
+            truncated: page.truncated || cut.cut,
+          });
+        } catch (error) {
+          // The person's own Stop, a person holding the wheel, and a pause for the approval gate end the
+          // whole call, as they end a navigation: none of them is a page's fault.
+          if (error instanceof HeadlessToolSuspension) throw error;
+          if (error instanceof HumanHasControlError) throw error;
+          if (error instanceof ComputerStoppedError) throw error;
+          if (signal?.aborted) throw error;
+          const message =
+            error instanceof Error && error.message
+              ? error.message
+              : "The page could not be read.";
+          if (error instanceof ComputerUnavailableError) unreachable = message;
+          pages.push({ url, error: message });
+        }
+      }
+      return withUntrustedNotice(
+        {
+          pages,
+          truncated: pages.some((page) => page.truncated === true),
+          elapsedMs: Date.now() - startedAt,
+        },
+        "web page",
+        READ_PAGES_FIELDS,
+      );
+    },
+
     click(
       botId: string,
       actor: ActionActor,
@@ -1519,6 +1645,20 @@ async function writeControlEvent(
 
 /** The fields of a page read that come from the page itself. */
 const PAGE_FIELDS = ["title", "text"] as const;
+/** In a batch read the pages' own fields are inside `pages`. */
+const READ_PAGES_FIELDS = ["pages"] as const;
+
+/** Text cut to `limit` UTF-16 units without leaving half of a surrogate pair behind. */
+function cutPageText(
+  text: string,
+  limit: number,
+): { text: string; cut: boolean } {
+  if (text.length <= limit) return { text, cut: false };
+  let end = limit;
+  const last = text.charCodeAt(end - 1);
+  if (last >= 0xd800 && last <= 0xdbff) end -= 1;
+  return { text: text.slice(0, end), cut: true };
+}
 const SNAPSHOT_FIELDS = ["title", "elements"] as const;
 
 /** A two-step login can take two page loads and a wait for a code field; this outlasts the computer's own waits. */

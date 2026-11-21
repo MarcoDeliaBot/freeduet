@@ -54,4 +54,4 @@ Use FreeDuet and tell us, with the [I am using it](https://github.com/MarcoDelia
 
 Follow the [quick start in the README](README.md#quick-start) to run FreeDuet.
 
-To run the tests, see "Local testing" in [CLAUDE.md](CLAUDE.md). For example, `bun test` runs from `openbot/`.
+To run the tests, see [docs/dev/local-testing.md](docs/dev/local-testing.md) (formerly "Local testing" in `CLAUDE.md`). For example, `bun test` runs from `openbot/`.

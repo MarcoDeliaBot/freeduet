@@ -22,6 +22,7 @@ import type {
  */
 export const COMPUTER_TOOLS = [
   "computer_navigate",
+  "computer_read_pages",
   "computer_screenshot",
   "computer_read",
   "computer_snapshot",
@@ -54,6 +55,8 @@ export const COMPUTER_ACTING_TOOLS = [
   // about an attempt to reach the cloud metadata endpoint, the single most security-relevant thing a
   // Bot can try, while ticking a radio button is recorded. Governing it puts both in the trail.
   "computer_navigate",
+  // Several pages in one call (D127). Each address is decided on as a navigation, under that name.
+  "computer_read_pages",
   "computer_click",
   "computer_type",
   // A native menu or a date field (D123): changes a page field like `computer_type`, so it is decided on.
@@ -101,6 +104,62 @@ export type NavigateResult = {
    */
   truncated: boolean;
   /** Wall-clock ms the navigation took, for the progress line in the transcript. */
+  elapsedMs: number;
+};
+
+/**
+ * `computer_read_pages` (D127): a list of pages read in one call, read only.
+ *
+ * Fixed limits, stated to the member in the tool's description and enforced here as well as on the
+ * computer: at most {@link READ_PAGES_MAX_URLS} addresses (each is a real page load of up to 38 s,
+ * so five keep one call inside the server's deadlines), {@link READ_PAGES_PER_PAGE_CHARS} characters
+ * of text and links per page (`computer_navigate`'s own limit, so a page reads the same either way)
+ * and {@link READ_PAGES_TOTAL_CHARS} in all, shared equally: `readPagesLimit(n)` is each page's room
+ * for a call of `n`. Equal shares, and not "first come, first served", so a long page early in the
+ * list cannot leave the last one with nothing, and the answer does not depend on how long each page is.
+ */
+export const READ_PAGES_MAX_URLS = 5;
+export const READ_PAGES_PER_PAGE_CHARS = 6000;
+export const READ_PAGES_TOTAL_CHARS = 24_000;
+/** No further page is opened after this long: the rest are reported as not read. */
+export const READ_PAGES_BUDGET_MS = 120_000;
+
+/** How many characters each page of a call for `count` addresses may give back. */
+export function readPagesLimit(count: number): number {
+  return Math.min(
+    READ_PAGES_PER_PAGE_CHARS,
+    Math.floor(READ_PAGES_TOTAL_CHARS / Math.max(count, 1)),
+  );
+}
+
+/** What the computer's `/read-page` answers for one address. `notRead` is a page it would not read. */
+export type ReadPageResult = {
+  url: string;
+  title: string;
+  text: string;
+  truncated: boolean;
+  notRead?: string;
+  elapsedMs?: number;
+};
+export type ReadPagesInput = { urls: string[] };
+export type ReadPagesPage = {
+  /** The address that was asked for, as given. */
+  url: string;
+  /** Where the page ended up, after redirects. Absent when the page was not read. */
+  finalUrl?: string;
+  title?: string;
+  text?: string;
+  /** True when the page was longer than the room it was given, or links were left out. */
+  truncated?: boolean;
+  /** Why this page was not read, in plain words. The other pages are not affected. */
+  error?: string;
+};
+export type ReadPagesResult = {
+  /** The untrusted-content notice for the pages' own fields. See untrusted-content.ts. */
+  untrusted?: string;
+  pages: ReadPagesPage[];
+  /** True when any page was cut. */
+  truncated: boolean;
   elapsedMs: number;
 };
 
