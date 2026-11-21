@@ -184,7 +184,7 @@ function RosterRows({
           <Fragment key={agent.id}>
             {index > 0 ? <Separator /> : null}
             {message ? (
-              <div className="flex items-center gap-1">
+              <div className="flex items-center gap-1 pr-2">
                 {row}
                 <Button
                   aria-label={`Message ${agent.name}`}
