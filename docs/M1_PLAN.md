@@ -2014,3 +2014,28 @@ reference is printed under the line. The person clicks the amount to switch euro
 | A refusal that matches no capability in the table | Pass through (built); or retry with a generic reminder that asks the member to look at its colleagues' roles | Keep pass-through | A right refusal (something the member must not do) would cost a second turn and might be pushed; the table covers the cases seen |
 | The first refusal stays on the screen | Second message after it (built); or hold the final message back until the guard has looked | Keep | Holding back changes streaming for every turn; the refusal is followed at once by the answer |
 | A refusal ending with a question | Not retried (built); or retried | Keep | Often a real clarification |
+
+## 87. The menu at one level (D129)
+
+**Decided 21 November 2026 by the maintainer:** option B of the audit under D125 ("three clicks at most", [PROJECT.md](PROJECT.md), principle 8), after the closed "Manage" group was hidden (PR #433). The audit found that Bots, Connections, Routines and Approval rules sat behind Menu, Manage, page, and Engines behind Menu, Admin, the Engines card.
+
+**D129.** In FreeDuet's own package the side menu (the wide column) and the menu sheet (phone) list these pages as direct entries with an icon, above Settings: Bots (carrying the unread badge that Manage and then Settings used to carry), Connections, Routines, Approval rules, and Engines for an administrator only (`flatMenuEntries` in `app/src/freeduet/manage-group.ts`, which is empty for any other package; those keep Manage as upstream has it). Settings stays, and its own page still lists every page (the Bots badge stays there too). Two shortcuts on lists, also FreeDuet's package only: each Bots row has a Message button that opens a new conversation with that Bot (`/channel/new?agent=`), and each Connections row of an app that connects with one consent screen has a Connect (or Reconnect) button that starts the same connect call as the app's page. Apps that need a form (an app password) or an account link still open their page: the button is not drawn for them.
+
+| Task (clicks until the control is pressed, counted from the menu in view) | Before (Manage closed) | After |
+|---|---|---|
+| Add a member | Manage, Bots, New Bot: 3 | Bots, New Bot: 2 |
+| Add an engine (an administrator) | Manage, Admin, the Engines card, the add control: 4 | Engines, the add control: 2 |
+| Connect Gmail with one consent screen | Manage, Connections, the row, Connect: 4 | Connections, Connect on the row: 2 |
+| Connect Gmail by app password (until the form is open) | Manage, Connections, the row: 3 | Connections, the row: 2 |
+| Message a member from the Bots list | Manage, Bots, the row, Message: 4 | Bots, Message on the row: 2 |
+
+On a phone each count is one higher, for opening the menu, before and after. Typing in forms is not counted. Messaging a member from the chat's own member list is unchanged.
+
+**Built so far.** `manage-group.ts` (`isFreeDuetApp`, `flatMenuEntries`), `menu-sheet.tsx`, `wide/team-column.tsx`, `bots/bot-roster.tsx`, `routes/_authed/_app/connections.index.tsx`. Tests: `app/tests/flat-menu.test.tsx` (entries for FreeDuet's package, Engines only for an administrator, other packages unchanged in both menus, Message and Connect route and call correctly), and `manage-settings-badge.test.tsx` now pins the badge on the Bots entry. The DOM cases follow the loaded package: run under both generated configs. Not verified: a person using it on a real screen (preview screenshots are made from the real components with mocked data); the Connect button against a real vendor's consent screen.
+
+**Decisions for the maintainer.**
+
+| Decision | Options | Recommendation | Reason |
+|---|---|---|---|
+| Capabilities | Stays in Settings (built); or a sixth top-level entry | Stays in Settings | It is rarely opened and the menu stays short |
+| Connect button for form apps | Open the page (built); or a dialog on the row | Open the page | The password is typed in the app's own form, never in a list row |

@@ -4,7 +4,7 @@ import { Link, type LinkOptions, useNavigate } from "@tanstack/react-router";
 import { type ReactNode, useId, useRef, useState } from "react";
 import { BotsNavBadge } from "@/components/bot-profile/attention";
 import { ChannelGlyph } from "@/components/duet/channel-look";
-import { showsManageGroup } from "@/freeduet/manage-group";
+import { flatMenuEntries, showsManageGroup } from "@/freeduet/manage-group";
 import { DuetIcon, type DuetIconName } from "@/components/duet/icons";
 import {
   Sheet,
@@ -383,6 +383,20 @@ export function MenuSheet({
                 </div>
               </>
             ) : null}
+            {/* FreeDuet's package: Bots, Connections, Routines, Approval rules and (for an administrator) Engines, one tap each (D129). */}
+            {flatMenuEntries(user?.role === "admin").map((entry) => (
+              <Link
+                activeProps={{ className: "bg-duet-tile" }}
+                className={ROW}
+                key={entry.to}
+                onClick={close}
+                to={entry.to}
+              >
+                <RowIcon name={entry.icon} />
+                {entry.label}
+                {entry.badge === "bots" ? <BotsNavBadge /> : null}
+              </Link>
+            ))}
             <Link
               activeProps={{ className: "bg-duet-tile" }}
               className={ROW}
@@ -391,8 +405,6 @@ export function MenuSheet({
             >
               <RowIcon name="settings" />
               Settings
-              {/* Where Manage is hidden (FreeDuet's package), the Bots badge rides on this row instead. */}
-              {showsManageGroup() ? null : <BotsNavBadge />}
             </Link>
             {capabilities?.localEvaluation === false ? (
               <button
