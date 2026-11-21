@@ -208,7 +208,7 @@ describe("who sends email, and what each member is told", () => {
     const others = (await rows()).filter(
       (row) => row.id !== "freeduet" && row.id !== "inbox",
     );
-    expect(others).toHaveLength(10);
+    expect(others).toHaveLength(11);
     for (const row of others) {
       expect({
         member: row.id,

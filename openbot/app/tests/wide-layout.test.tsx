@@ -31,8 +31,8 @@ import { settleReactWork } from "./settle-react-work";
 
 /**
  * D55: the wide layout. Below 1024 px nothing is drawn that was not drawn before; from 1024 the team
- * column is there as faces, from 1280 with names and what each member is doing. The twelve members
- * have the twelve drawings of 18 November 2026, and a member somebody trained has the plain one.
+ * column is there as faces, from 1280 with names and what each member is doing. The thirteen members
+ * have the thirteen drawings of 18 November 2026, and a member somebody trained has the plain one.
  */
 
 beforeAll(() => GlobalRegistrator.register({ url: "http://localhost:3010" }));
@@ -85,6 +85,7 @@ const TEAM: [string, string, string][] = [
   ["reviewer", "Vera", "Reviewer"],
   ["marketer", "Mark", "Marketer"],
   ["video", "Cam", "Video maker"],
+  ["trainer", "Rex", "Model trainer"],
 ];
 
 const agent = (id: string, name: string, title: string): AgentProfile =>
@@ -103,7 +104,7 @@ const agent = (id: string, name: string, title: string): AgentProfile =>
 
 const roster = [
   ...TEAM.map(([id, name, title]) => agent(id, name, title)),
-  agent("my-own-1", "Rex", "Trained by me"),
+  agent("my-own-1", "Pip", "Trained by me"),
 ];
 
 const waitingMail = {
@@ -215,15 +216,15 @@ test("below 1024 the frame draws its children and nothing else: no column, no sp
   expect(phone.container.querySelector("aside")).toBeNull();
 });
 
-test("at 1280 the column lists all twelve members, plus one of the person's own, with names and states", async () => {
+test("at 1280 the column lists all thirteen members, plus one of the person's own, with names and states", async () => {
   const view = draw(1280);
   const list = await view.findByTestId("team-list");
   const rows = within(list).getAllByRole("link");
-  expect(rows).toHaveLength(13);
+  expect(rows).toHaveLength(14);
   const names = rows.map(
     (row) => row.getAttribute("aria-label")?.split(",")[0],
   );
-  expect(names.slice(0, 12)).toEqual([
+  expect(names.slice(0, 13)).toEqual([
     "Iris",
     "Otto",
     "Portia",
@@ -235,9 +236,10 @@ test("at 1280 the column lists all twelve members, plus one of the person's own,
     "Basil",
     "Mark",
     "Cam",
+    "Rex",
     "Leo",
   ]);
-  expect(names[12]).toBe("Rex");
+  expect(names[13]).toBe("Pip");
   // Otto has a card waiting in the inbox: his state says so, the others show their job.
   expect(within(list).getByText("Waiting for you")).toBeTruthy();
   expect(within(list).getByText("Chief of Staff")).toBeTruthy();
@@ -249,7 +251,7 @@ test("from 1024 to 1279 the column is faces and icons, and every row still has i
   const view = draw(1100);
   const list = await view.findByTestId("team-list");
   const rows = within(list).getAllByRole("link");
-  expect(rows).toHaveLength(13);
+  expect(rows).toHaveLength(14);
   expect(view.container.querySelector("aside")?.getAttribute("data-band")).toBe(
     "faces",
   );
@@ -280,16 +282,16 @@ test("the column's three destinations are the tab bar's three, with Tasks' count
   ]);
 });
 
-test("the faces come from the drawings: twelve art keys, every member mapped to its own", () => {
-  expect(MASCOT_KEYS).toHaveLength(12);
+test("the faces come from the drawings: thirteen art keys, every member mapped to its own", () => {
+  expect(MASCOT_KEYS).toHaveLength(13);
   const ids = TEAM.map(([id]) => id);
   const keys = ids.map((id) => mascotKeyOf(id));
-  expect(new Set(keys).size).toBe(12);
+  expect(new Set(keys).size).toBe(13);
   for (const key of keys) expect(MASCOT_KEYS).toContain(key as string);
   expect(Object.keys(MEMBER_MASCOT).sort()).toEqual([...ids].sort());
 });
 
-test("each of the twelve faces draws its own symbol, and a trained member gets the plain face", () => {
+test("each of the thirteen faces draws its own symbol, and a trained member gets the plain face", () => {
   const view = render(
     <div>
       <MascotSprite />
@@ -312,6 +314,7 @@ test("each of the twelve faces draws its own symbol, and a trained member gets t
     "vera",
     "mark",
     "video",
+    "rex",
     "neutral",
   ]);
   // Every face points at a symbol the sprite really defines.
@@ -319,7 +322,7 @@ test("each of the twelve faces draws its own symbol, and a trained member gets t
     const target = face.querySelector("use")?.getAttribute("href") ?? "";
     expect(view.container.querySelector(target)).not.toBeNull();
   }
-  expect(Object.keys(drawn.team)).toHaveLength(12);
+  expect(Object.keys(drawn.team)).toHaveLength(13);
 });
 
 test("the order, the states and where a row goes", () => {

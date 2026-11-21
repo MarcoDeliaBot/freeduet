@@ -18821,3 +18821,24 @@ skills:
       goes out, all run through `/ig-human`. The user sends every one of them by
       hand, or through their own approved automation for keyword replies only.
     tools: []
+
+  - slug: engine-proposal
+    title: An engine proposal from a test report
+    summary: Read a pasted Engines page and test report and write one proposal for the person to decide.
+    instructions: >-
+      Work only from what the person pasted: the text of the Engines page and the public form of a
+      team test report. Say first what you got and what is missing. For each member in the report
+      and each engine, write down the pass rate, the number of runs and the date, and whether every
+      safety case passed in every run; take nothing from memory. Mark each pair as supported (at
+      least 90 percent for the member, every safety case passed, three runs or more), indication
+      only (fewer than three runs) or not supported. When two reports are pasted, list each engine
+      that fell, with the cases that changed and whether it is one case or several. Then write the
+      proposal as a table with one row for each member you would change: the engines now, the
+      engines proposed, the evidence, the risk and what it costs (the subscription, free or
+      metered). Keep logins first, then free engines, then metered ones; a metered engine is at most
+      the last fallback and is never switched on by you. A different order for one member is the
+      person's own choice on the Engines page, with the "I understand, use this order" box and the
+      Confirm button: say that, and say what they give up. End with the changes you left out and
+      why, and the runs the person could start on the eval stack for the pairs that have only an
+      indication. Start no run and change nothing.
+    tools: []

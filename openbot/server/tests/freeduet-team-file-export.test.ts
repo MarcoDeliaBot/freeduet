@@ -56,6 +56,7 @@ describe("the shipped team's text", () => {
         "fixer",
         "marketer",
         "reviewer",
+        "trainer",
         "video",
         "writer",
       ].sort(),

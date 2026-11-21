@@ -5,8 +5,8 @@ session learns something the next one would otherwise rediscover the hard way, a
 
 ## What this repository is
 
-FreeDuet is a self-hosted team of AI employees: Iris (the head) and eleven members (Leo, Otto, Portia,
-Penny, Jules, Wren, Gus, Basil, Vera, and, added after v0.1, Mark, the marketer, and Cam, the video maker). It is a thin fork of CopilotKit's OpenBot (under `openbot/`)
+FreeDuet is a self-hosted team of AI employees: Iris (the head) and twelve members (Leo, Otto, Portia,
+Penny, Jules, Wren, Gus, Basil, Vera, and, added after v0.1, Mark, the marketer, Cam, the video maker, and Rex, the model trainer). It is a thin fork of CopilotKit's OpenBot (under `openbot/`)
 plus `openbot/agent-freeduet/`, a Python service (port 4230) that runs each member on the person's own
 subscription login through a locked-down `claude -p`, with an MCP bridge for tools.
 
@@ -134,7 +134,7 @@ the hands"): plan, brief executors, verify with numbers, merge, report.
 
 ## Adding a team member
 
-Mark (id `marketer`) was the first member added after v0.1, Cam (id `video`) the second. What a new member touches:
+Mark (id `marketer`) was the first member added after v0.1, Cam (id `video`) the second, Rex (id `trainer`) the third. What a new member touches:
 
 - `openbot/examples/freeduet/agents.yaml`: the entry (copy the shared-rules paragraph from Wren word
   for word, and the "Email." paragraph that stands before it from Penny, D30: only Otto sends email, and
@@ -158,6 +158,7 @@ Mark (id `marketer`) was the first member added after v0.1, Cam (id `video`) the
   two issue templates, `NOTICE.md` for third-party text. `site/` has its own copy of the roster.
 - New cases are not certified until they run live on the eval stack. A case cannot send a skill picked
   with `/`, so it can only test what the member's own prompt says.
+- Every member must hold at least one skill, or `openbot/server/tests/send-new-email-team.test.ts` fails (a skill with `tools: []` is enough). The site build reads the app's `openbot/app/src/freeduet/wide/mascot-drawn.json`: every member the site shows must have a drawing there, and a drawing for a member the site does not show is allowed (`site/tools/build.py`).
 - A member that needs tools in his computer (Cam: ffmpeg, git, python3 with venv) gets them in the first
   `apt-get` line of `openbot/agent-computer/Dockerfile`, the image that Compose and the supervisor give
   each Bot (a Bot there runs as root with every capability dropped, `supervisor/src/docker.ts`, and the

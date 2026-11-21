@@ -147,8 +147,10 @@ MASCOT = re.compile(r'(<svg\b[^>]*\sdata-mascot="(\w+)"[^>]*>)</svg>')
 
 def mascot_defs(M):
     """The sprite part of the mascot: the paints and the bubble, the headset, and one symbol per member (220 x 220)."""
-    if sorted(M["team"]) != sorted(MEMBER_IDS):
-        raise ValueError("mascot.json must hold exactly the twelve members")
+    # The app's file may hold more drawings than the site shows (Rex, added after v0.1, is drawn in the app only: the
+    # public site's roster waits for the maintainer's yes). Every member the site shows must have a drawing.
+    if not set(MEMBER_IDS) <= set(M["team"]):
+        raise ValueError("mascot.json must hold a drawing for each of the twelve members the site shows")
     symbols = "".join('<symbol id="m-%s" viewBox="0 0 220 220">%s</symbol>' % (k, M["team"][k]) for k in MEMBER_IDS)
     return M["defs"] + '<g id="m-headset">' + M["headset"] + "</g>" + symbols
 
