@@ -44,7 +44,7 @@
  "fe3h": "Routines on a schedule",
  "fe3p": "A routine repeats on a schedule, like a summary every morning. Iris offers one, a daily review, and makes it only after you say yes (new since v0.2.2). A routine that needs one of the five buttons asks you first; that rule is built but not yet run live.",
  "fe5h": "By default, your conversations stay on your computer",
- "fe5p": "The app, its database and the assistants' browsers run on your computer, and by default the conversations are stored there. To think, the assistants use the AI service you signed in to.",
+ "fe5p": "The app, its database and the assistants' browsers run on your computer, and by default the conversations are stored there. To think, the assistants use the AI service you signed in to, unless you add a free model on the Engines page, which receives what it is sent.",
  "apTitle": "Send this email?",
  "rt1": "Morning summary",
  "signedIn": "Signed in",
@@ -64,7 +64,7 @@
  "s4p": "By default, if the job needs a big button (send, pay, sign, book, delete), everything stops and waits for you.",
  "s5h": "You get a short report",
  "s5p": "What was done, what was not done and why, and what the next step is. No walls of text.",
- "flowMore": "…and Gus, Basil, Mark, Cam and Leo",
+ "flowMore": "…and Gus, Basil, Mark, Cam, Rex and Leo",
  "sf_h": "Five buttons that wait for your yes",
  "sf_p": "Would you give a new assistant your wallet on the first day? Neither would we. So these five wait for your yes by default. A switch that lifts this for one member, which only you can turn on, is built but not yet run live. Plain Full access also lifts the wait for payments, and no spending limit exists yet. \"Full access without payments\" keeps them waiting.",
  "b1": "Send",
@@ -83,7 +83,7 @@
  "m_p1": "Most AI tools make you buy an \"API key\". That works like a taxi meter: every word costs a little, and the bill keeps climbing.",
  "m_p2": "A monthly AI subscription is more like a bus pass: one price, ride as much as the pass allows. FreeDuet runs on the pass you already have. You sign in yourself. FreeDuet's own code never reads, copies or forwards your login; it stays on your computer, in a place only the Claude Code program reads.",
  "m_l1": "Today it works with a Claude subscription, through the official Claude Code app.",
- "m_l2": "More subscriptions and local models are in progress, and each one is offered only after it is checked.",
+ "m_l2": "More subscriptions are in progress. Local models, OpenRouter's free models and your own FreeLLMAPI router are built and can be added on the Engines page. None of them runs first for a member unless you choose that order, and a model counts as supported only after the team's tests pass on it.",
  "m_l3": "FreeDuet itself costs nothing: the code is public under the MIT licence.",
  "pass1": "Pay for every word",
  "pass2": "One pass you already have",
@@ -100,7 +100,7 @@
  "r1": "The team on your own Claude login, with approvals, tests, Gmail and Google Calendar.",
  "r_prog": "In progress",
  "r2": "Top priority: a one-file installer for Windows, macOS and Ubuntu. Today there are first-step scripts for Ubuntu and for Windows through WSL2, and no double-click installer yet. A mail assistant that tidies your mailbox is built: on 15 November 2026 Otto moved spam to the Spam folder of a real mailbox. Standing mail rules are in v0.2.2: on 16 November 2026 one rule, for one sender domain, applied to new mail by itself. The other changes and rules are not yet run live. Built but not yet run live: \"Done when\" on every hand-off, the routine's card in the chat, a token for each member's computer, and home network connections that close when you switch it off.",
- "r3": "Engines chosen per member are in progress: the Engines page is built but not yet run live, and the automatic switch has only run with test engines. Settings changed in chat, with Undo, are in progress. A member's name, tone and language are built after v0.2 but not yet run live, and no test has run on tone or language yet. Real delegation is planned.",
+ "r3": "Engines chosen per member are in progress: the Engines page is built but not yet run live. On it you can add a local model, OpenRouter's free models or your own FreeLLMAPI router in three clicks, and choose the order of each member's engines after a warning and a tick. A free model that writes its tool call as text does not end the turn: the next engine answers instead. When a free model asks for a short wait, FreeDuet waits and tries again. Settings changed in chat, with Undo, are in progress. A member's name, tone and language are built after v0.2 but not yet run live, and no test has run on tone or language yet. Real delegation is planned.",
  "r4": "Automations written in chat, a phone version and remote access are in progress. More connected apps are in design.",
  "r5": "Voice: read aloud is built but not yet run live, and off by default; calls are not built yet. Full access and Cam are built but not yet run live. Safe purchases are planned.",
  "r_cloud": "A hosted FreeDuet for people who prefer not to install is planned, for a small monthly subscription. The price is not set yet. There, Claude would work only with your own API key. Not before the installer and the first start are done. On your own computer, FreeDuet stays free.",
@@ -133,7 +133,7 @@
  "j3p": "FreeDuet is built by one person. A small donation keeps it going.",
  "q_h": "Questions people ask first",
  "q1": "What is free, and what do I pay for?",
- "a1": "FreeDuet is free and open source under the MIT licence, also for business use. The only thing you pay for is the AI subscription you use with it, which today is a Claude plan. There is no API key to buy.",
+ "a1": "FreeDuet is free and open source under the MIT licence, also for business use. The only thing you pay for is the AI subscription you use with it, which today is a Claude plan. You can also add free models on the Engines page; their providers may keep what they are sent. There is no API key to buy.",
  "q2": "What do I need to install it?",
  "a2": "A Claude subscription, and Docker, Bash and Bun on your computer. The four steps above are the whole install. Never opened a terminal? Ask someone technical to set it up, and show them this page.",
  "q3": "Does it work on Windows, Mac and Linux?",
@@ -141,7 +141,7 @@
  "q4": "What can an assistant do without asking me?",
  "a4": "It can look things up, read, and prepare drafts and reports. By default, the five buttons wait for your Approve, except a new email to an address you typed. A standing mail rule that you set in your own words applies to new mail by itself: it can label, archive, mark as read, or move mail to Spam or the Bin, and it never forwards, replies, sends or deletes for good. Full access, per member, lifts the waiting in your own chats; it is built but not yet run live. Plain Full access also lifts payments; \"without payments\" does not. Passwords and security settings still come to you, but the check reads English and Italian words only, and a command or script is checked only when an automatic reviewer is set up. Assistants can still make mistakes, so read what they prepare before you approve it.",
  "q5": "Where is my data?",
- "a5": "FreeDuet runs on your computer and, by default, keeps its conversations in a database there. Your Claude login stays in a Docker volume that only the Claude Code program reads. To think, the assistants send your request to the AI service you signed in to, as its own app would.",
+ "a5": "FreeDuet runs on your computer and, by default, keeps its conversations in a database there. Your Claude login stays in a Docker volume that only the Claude Code program reads. To think, the assistants send your request to the AI service you signed in to, as its own app would. If you add an engine on the Engines page, such as a free cloud model, OpenRouter or your own FreeLLMAPI router, that member's messages go to it too, and it may keep them.",
  "q6": "Can I use it from my phone?",
  "a6": "Not a phone version yet. Today FreeDuet opens in the browser on your computer. Since v0.2.2 a phone's browser can be paired from the computer with a one-time code, shown as a link or a QR code, and pairing a phone was run live on one installation on 16 November 2026. The phone version, where you also get approval requests, and remote access are in progress.",
  "q7": "Can I add my own team member?",
@@ -162,7 +162,7 @@
  "team": {
   "iris": [
    "runs the team",
-   "You tell Iris what you need. She hands it to the right assistant, and the answer comes back through her.",
+   "You tell Iris what you need. She hands it to the right assistant, and the answer comes back through her. If a colleague's tools can do the job, she asks that colleague first, and says she cannot only when nobody on the team can.",
    "Handle everything that came in this morning."
   ],
   "otto": [
@@ -215,9 +215,14 @@
    "Works behind the scenes. She redoes the sums and re-opens the prices before the work reaches you.",
    "(Iris sends her the important work.)"
   ],
+  "rex": [
+   "model trainer",
+   "Compares the team's test reports for the engines you can use and proposes which engine fits which member. He starts no test run and changes no engine: you decide on the Engines page. Built, not yet run live.",
+   "Basil runs on my local model now. Is that good enough?"
+  ],
   "leo": [
    "builds new assistants",
-   "Need an assistant that doesn't exist yet? Leo designs it. Testing each new member before it is called ready is planned.",
+   "Need an assistant that doesn't exist yet? Leo designs it. When a tool is missing, Leo proposes one with its source and licence, and nothing is installed without your yes. Testing each new member before it is called ready is planned.",
    "I need someone who tracks my domain renewals."
   ]
  },
@@ -277,7 +282,7 @@
  "again": "Start again",
  "bA_cap": "Demo with made-up examples. The live run of 15 November 2026 included 38 safety cases, which try to make a member break a rule.",
  "bR_h": "Twelve members, one job each",
- "bR_cap": "Mark and Cam were added after v0.1. Their cases ran in the team evals of 15 November 2026. No full certification run has passed since v0.1.",
+ "bR_cap": "Mark and Cam were added after v0.1. Their cases ran in the team evals of 15 November 2026. Rex, the model trainer, was added after v0.2.2 and is built, not yet run live. No full certification run has passed since v0.1.",
  "bH_h": "A hand-off with a done-when line",
  "bH_from": "Iris to Otto",
  "bH_msg": "Otto, sort the mail and draft the replies that matter.",

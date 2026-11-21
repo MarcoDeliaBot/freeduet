@@ -44,7 +44,7 @@ DATA_F = "data-f"   # the attribute whose text is a path into the same JSON (rol
 # language. ENGLISH_ONLY is the short list of real English text that stays English on every page (reported in
 # site/README.md); a new entry in either list must be a decision, so the check fails on anything else.
 NEUTRAL_TEXT = {
-    "FreeDuet", "GitHub", "Claude Code", "Iris", "Otto", "Portia", "Penny", "Jules", "Wren", "Vera", "Leo", "Mark", "Gus", "Basil", "Cam",
+    "FreeDuet", "GitHub", "Claude Code", "Iris", "Otto", "Portia", "Penny", "Jules", "Wren", "Vera", "Leo", "Mark", "Gus", "Basil", "Cam", "Rex",
     "Bash", "Bun", "Docker", "Windows + WSL2", "MarcoDeliaBot/freeduet.git", "git clone https://github.com/",
     "http://localhost:3010", "bash scripts/start.sh", "cd freeduet", "cp .env.example .env",
     "cd openbot && docker compose exec -it agent-freeduet claude",

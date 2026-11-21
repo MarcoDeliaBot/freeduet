@@ -44,7 +44,7 @@
  "fe3h": "Rutyny według harmonogramu",
  "fe3p": "Rutyna powtarza się według harmonogramu, na przykład jako podsumowanie każdego ranka. Iris proponuje jedną, codzienny przegląd, i tworzy ją dopiero po Twoim „tak” (nowość od v0.2.2). Rutyna, która potrzebuje jednego z pięciu przycisków, najpierw pyta Ciebie; ta zasada jest zbudowana, ale jeszcze nie sprawdzona na żywo.",
  "fe5h": "Domyślnie Twoje rozmowy zostają na Twoim komputerze",
- "fe5p": "Aplikacja, jej baza danych i przeglądarki asystentów działają na Twoim komputerze, a domyślnie rozmowy są tam zapisywane. Żeby myśleć, asystenci korzystają z usługi AI, do której się zalogowałeś.",
+ "fe5p": "Aplikacja, jej baza danych i przeglądarki asystentów działają na Twoim komputerze, a domyślnie rozmowy są tam zapisywane. Żeby myśleć, asystenci korzystają z usługi AI, do której się zalogowałeś, chyba że dodasz na stronie Silniki darmowy model; ten otrzymuje to, co mu wysłano.",
  "apTitle": "Wysłać tego e-maila?",
  "rt1": "Poranne podsumowanie",
  "signedIn": "Zalogowano",
@@ -64,7 +64,7 @@
  "s4p": "Domyślnie, jeśli zadanie wymaga dużego przycisku (wysłać, zapłacić, podpisać, zarezerwować, usunąć), wszystko się zatrzymuje i czeka na Ciebie.",
  "s5h": "Dostajesz krótki raport",
  "s5p": "Co zrobiono, czego nie zrobiono i dlaczego oraz jaki jest następny krok. Bez ścian tekstu.",
- "flowMore": "…oraz Gus, Basil, Mark, Cam i Leo",
+ "flowMore": "…oraz Gus, Basil, Mark, Cam, Rex i Leo",
  "sf_h": "Pięć przycisków, które czekają na Twoje „tak”",
  "sf_p": "Dałbyś nowemu asystentowi swój portfel pierwszego dnia? My też nie. Domyślnie te pięć działań czeka na Twoje „tak”. Przełącznik, który znosi to dla jednego członka i który tylko Ty możesz włączyć, jest zbudowany, ale jeszcze nie sprawdzony na żywo. Zwykły Full access znosi czekanie także przy płatnościach, a limitu wydatków jeszcze nie ma. „Full access bez płatności” zostawia je w oczekiwaniu.",
  "b1": "Wysłać",
@@ -83,7 +83,7 @@
  "m_p1": "Większość narzędzi AI każe kupić „klucz API”. To działa jak taksometr: każde słowo kosztuje trochę, a rachunek ciągle rośnie.",
  "m_p2": "Miesięczny abonament AI jest bardziej jak bilet miesięczny: jedna cena i jeździsz tyle, ile bilet pozwala. FreeDuet działa na abonamencie, który już masz. Logujesz się sam. Własny kod FreeDuet nigdy nie czyta, nie kopiuje ani nie przekazuje dalej Twoich danych logowania: zostają na Twoim komputerze, w miejscu, które czyta tylko program Claude Code.",
  "m_l1": "Dziś działa z abonamentem Claude, przez oficjalną aplikację Claude Code.",
- "m_l2": "Kolejne abonamenty i modele lokalne są w toku, a każdy z nich jest proponowany dopiero po sprawdzeniu.",
+ "m_l2": "Kolejne subskrypcje są w toku. Modele lokalne, darmowe modele OpenRouter i własny router FreeLLMAPI są zbudowane i można je dodać na stronie Silniki. Żaden z nich nie działa u członka jako pierwszy, chyba że sam wybierzesz taką kolejność, a model uznaje się za obsługiwany dopiero wtedy, gdy testy zespołu z nim przejdą.",
  "m_l3": "Sam FreeDuet nic nie kosztuje: kod jest publiczny, na licencji MIT.",
  "pass1": "Płacisz za każde słowo",
  "pass2": "Jeden bilet, który już masz",
@@ -100,7 +100,7 @@
  "r1": "Zespół na Twoim własnym logowaniu do Claude, z zatwierdzaniem, testami, Gmailem i Google Calendar.",
  "r_prog": "W toku",
  "r2": "Priorytet numer jeden: instalator w jednym pliku dla Windows, macOS i Ubuntu. Są już pierwsze skrypty instalacyjne dla Ubuntu i dla Windows przez WSL2, ale instalatora dwuklikowego jeszcze nie ma. Asystent poczty, który porządkuje Twoją skrzynkę, jest zbudowany: 15 listopada 2026 Otto przeniósł spam do folderu Spam prawdziwej skrzynki. Stałe reguły poczty są w wersji v0.2.2: 16 listopada 2026 jedna reguła dla domeny jednego nadawcy zadziałała sama na nowej poczcie. Pozostałe zmiany i reguły nie zostały jeszcze sprawdzone na żywo. Zbudowane, ale jeszcze nie sprawdzone na żywo: „Done when” („gotowe, gdy”) przy każdym przekazaniu, karta rutyny w czacie, osobny token dla komputera każdego członka oraz połączenia z siecią domową, które zamykają się po wyłączeniu dostępu.",
- "r3": "Wybór silnika dla każdego członka jest w toku: strona Silniki jest zbudowana, ale jeszcze nie sprawdzona na żywo, a automatyczne przełączanie działało tylko na silnikach testowych. Ustawienia zmieniane w czacie, wraz z Cofnij, są w toku. Imię, ton i język członka są zbudowane po v0.2, ale jeszcze nie sprawdzone na żywo, a żaden test nie został jeszcze przeprowadzony dla tonu ani języka. Prawdziwe delegowanie zadań jest planowane.",
+ "r3": "Wybór silnika dla każdego członka jest w toku: strona Silniki jest zbudowana, ale jeszcze nie sprawdzona na żywo. Na niej w trzech kliknięciach dodasz model lokalny, darmowe modele OpenRouter albo własny router FreeLLMAPI, a po ostrzeżeniu i zaznaczeniu pola wybierzesz kolejność silników każdego członka. Darmowy model, który zapisze wywołanie narzędzia jako tekst, nie kończy tury: odpowiada następny silnik. Gdy darmowy model prosi o krótkie czekanie, FreeDuet czeka i próbuje ponownie. Ustawienia zmieniane w czacie, wraz z Cofnij, są w toku. Imię, ton i język członka są zbudowane po v0.2, ale jeszcze nie sprawdzone na żywo, a żaden test tonu ani języka jeszcze nie został przeprowadzony. Prawdziwe delegowanie jest zaplanowane.",
  "r4": "Automatyzacje pisane w czacie, wersja na telefon i zdalny dostęp są w toku. Więcej połączonych aplikacji jest w projektowaniu.",
  "r5": "Głos: czytanie na głos jest zbudowane, ale jeszcze nie sprawdzone na żywo, i jest domyślnie wyłączone; połączenia jeszcze nie są zbudowane. Full access i Cam są zbudowane, ale jeszcze nie sprawdzone na żywo. Bezpieczne zakupy: planowane.",
  "r_cloud": "Hostowana wersja FreeDuet, uruchamiana na serwerze, dla osób, które wolą niczego nie instalować, jest planowana, jako niewielki abonament miesięczny. Cena nie jest jeszcze ustalona. Tam Claude działałby wyłącznie z Twoim własnym kluczem API. Nie wcześniej niż po zakończeniu instalatora i pierwszego uruchomienia. Na własnym komputerze FreeDuet pozostaje darmowy.",
@@ -133,7 +133,7 @@
  "j3p": "FreeDuet buduje jedna osoba. Mała darowizna pozwala mu działać dalej.",
  "q_h": "Pytania, które ludzie zadają najpierw",
  "q1": "Co jest darmowe, a za co płacę?",
- "a1": "FreeDuet jest darmowy i open source na licencji MIT, także do użytku w firmie. Płacisz tylko za abonament AI, z którym go używasz, a dziś jest to plan Claude. Nie musisz kupować klucza API.",
+ "a1": "FreeDuet jest darmowy i open source na licencji MIT, także do użytku firmowego. Płacisz tylko za subskrypcję AI, z której korzystasz, a dziś jest to plan Claude. Darmowe modele możesz też dodać na stronie Silniki; ich dostawcy mogą zachować to, co do nich wysłano. Nie ma klucza API do kupienia.",
  "q2": "Czego potrzebuję, żeby go zainstalować?",
  "a2": "Abonament Claude oraz Docker, Bash i Bun na komputerze. Cztery kroki powyżej to cała instalacja. Nigdy nie otwierałeś terminala? Poproś o instalację kogoś technicznego i pokaż mu tę stronę.",
  "q3": "Czy działa na Windows, Macu i Linuksie?",
@@ -141,7 +141,7 @@
  "q4": "Co asystent może zrobić bez pytania mnie?",
  "a4": "Może wyszukiwać informacje, czytać oraz przygotowywać szkice i raporty. Domyślnie pięć przycisków czeka na Twoje zatwierdzenie, z wyjątkiem nowego e-maila na adres, który sam wpisałeś. Stała reguła poczty, którą ustawisz własnymi słowami, działa sama na nowej poczcie: może dodawać etykiety, archiwizować, oznaczać jako przeczytane albo przenosić do folderu Spam lub Kosza. Nigdy nie przekazuje, nie odpowiada, nie wysyła i nie usuwa na stałe. Full access, włączany dla członka, znosi to w Twoich rozmowach; to jest zbudowane, ale jeszcze nie sprawdzone na żywo. Zwykły Full access znosi czekanie także przy płatnościach; „bez płatności” tego nie robi. Hasła i bezpieczeństwo zostają przy Tobie, ale kontrola czyta tylko słowa angielskie i włoskie, a polecenie lub skrypt jest sprawdzany tylko wtedy, gdy skonfigurowano automatycznego recenzenta. Asystenci nadal mogą się mylić, więc przeczytaj, co przygotowali, zanim zatwierdzisz.",
  "q5": "Gdzie są moje dane?",
- "a5": "FreeDuet działa na Twoim komputerze i domyślnie trzyma tam swoje rozmowy w bazie danych. Twoje logowanie do Claude zostaje w wolumenie Dockera, który czyta tylko program Claude Code. Żeby myśleć, asystenci wysyłają Twoją prośbę do usługi AI, do której się zalogowałeś, tak jak zrobiłaby to jej własna aplikacja.",
+ "a5": "FreeDuet działa na Twoim komputerze i domyślnie trzyma tam swoje rozmowy w bazie danych. Twoje logowanie do Claude zostaje w wolumenie Dockera, który czyta tylko program Claude Code. Żeby myśleć, asystenci wysyłają Twoją prośbę do usługi AI, do której się zalogowałeś, tak jak zrobiłaby to jej własna aplikacja. Jeśli dodasz na stronie Silniki silnik, na przykład darmowy model w chmurze, OpenRouter albo własny router FreeLLMAPI, wiadomości tego członka trafią też tam i może je zachować.",
  "q6": "Czy mogę używać go na telefonie?",
  "a6": "Jeszcze nie ma wersji na telefon. Dziś FreeDuet otwiera się w przeglądarce na Twoim komputerze. Od wersji v0.2.2 przeglądarkę w telefonie można sparować z komputera jednorazowym kodem, pokazanym jako link lub kod QR, a parowanie telefonu zostało uruchomione na żywo na jednej instalacji 16 listopada 2026. Wersja na telefon, na której dostajesz też prośby o zatwierdzenie, oraz zdalny dostęp są w toku.",
  "q7": "Czy mogę dodać własnego członka zespołu?",
@@ -162,7 +162,7 @@
  "team": {
   "iris": [
    "kieruje zespołem",
-   "Mówisz Iris, czego potrzebujesz. Ona przekazuje to odpowiedniemu asystentowi, a odpowiedź wraca przez nią.",
+   "Mówisz Iris, czego potrzebujesz. Ona przekazuje to właściwemu asystentowi, a odpowiedź wraca przez nią. Jeśli narzędzia kolegi mogą wykonać zadanie, najpierw pyta tego kolegę, a mówi, że nie potrafi, tylko wtedy, gdy nikt w zespole nie może.",
    "Zajmij się wszystkim, co przyszło dziś rano."
   ],
   "otto": [
@@ -215,9 +215,14 @@
    "Pracuje za kulisami. Liczy wszystko jeszcze raz i ponownie otwiera ceny, zanim praca do Ciebie trafi.",
    "(Iris przekazuje jej ważną pracę.)"
   ],
+  "rex": [
+   "trener modeli",
+   "Porównuje raporty testów zespołu dla silników, z których możesz korzystać, i proponuje, który silnik pasuje do którego członka. Sam nie uruchamia żadnego testu i nie zmienia silnika: decydujesz Ty, na stronie Silniki. Zbudowany, jeszcze nie sprawdzony na żywo.",
+   "Basil działa teraz na moim lokalnym modelu. Czy to wystarczy?"
+  ],
   "leo": [
    "buduje nowych asystentów",
-   "Potrzebujesz asystenta, którego jeszcze nie ma? Leo go zaprojektuje. Testowanie każdego nowego członka, zanim zostanie uznany za gotowego, jest planowane.",
+   "Potrzebujesz asystenta, którego jeszcze nie ma? Leo go zaprojektuje. Gdy brakuje narzędzia, Leo proponuje je ze źródłem i licencją, a bez Twojej zgody nic nie zostaje zainstalowane. Testowanie każdego nowego członka, zanim uzna się go za gotowego, jest zaplanowane.",
    "Potrzebuję kogoś, kto pilnuje terminów odnowienia moich domen."
   ]
  },
@@ -277,7 +282,7 @@
  "again": "Zacznij od nowa",
  "bA_cap": "Demo z wymyślonymi przykładami. Testy na żywo z 15 listopada 2026 objęły 38 przypadków bezpieczeństwa, które próbują skłonić członka zespołu do złamania zasady.",
  "bR_h": "Dwunastu członków, każdy z jednym zadaniem",
- "bR_cap": "Mark i Cam zostali dodani po v0.1. Ich przypadki przeszły w testach zespołu z 15 listopada 2026. Od v0.1 żaden pełny przebieg certyfikacyjny nie przeszedł.",
+ "bR_cap": "Mark i Cam zostali dodani po v0.1. Ich przypadki przeszły w testach zespołu 15 listopada 2026. Rex, trener modeli, został dodany po v0.2.2 i jest zbudowany, ale jeszcze nie sprawdzony na żywo. Od v0.1 żaden pełny przebieg certyfikacyjny nie został zaliczony.",
  "bH_h": "Przekazanie z linijką „gotowe, gdy”",
  "bH_from": "Iris do Otto",
  "bH_msg": "Otto, posortuj pocztę i przygotuj szkice ważnych odpowiedzi.",

@@ -138,19 +138,18 @@ def get_path(root, path):
 # The art is shared with the app, which draws the same faces (D55): one file, `openbot/shared/mascot.json`.
 MASCOT_FILE = Path(__file__).resolve().parents[2] / "openbot" / "shared" / "mascot.json"
 # The member drawings are the app's (approved for the app on 20 November 2026, PR #412 and #417): the site reads the
-# same file, `openbot/app/src/freeduet/wide/mascot-drawn.json`, for its twelve `team` entries.
+# same file, `openbot/app/src/freeduet/wide/mascot-drawn.json`, for its `team` entries.
 MASCOT_DRAWN_FILE = Path(__file__).resolve().parents[2] / "openbot" / "app" / "src" / "freeduet" / "wide" / "mascot-drawn.json"
-MEMBER_IDS = ["iris", "leo", "otto", "portia", "penny", "jules", "wren", "gus", "basil", "vera", "mark", "video"]
+MEMBER_IDS = ["iris", "leo", "otto", "portia", "penny", "jules", "wren", "gus", "basil", "vera", "mark", "video", "rex"]
 FACE_IDS = ["idle", "listen", "think", "work", "ask", "done"]
 MASCOT = re.compile(r'(<svg\b[^>]*\sdata-mascot="(\w+)"[^>]*>)</svg>')
 
 
 def mascot_defs(M):
     """The sprite part of the mascot: the paints and the bubble, the headset, and one symbol per member (220 x 220)."""
-    # The app's file may hold more drawings than the site shows (Rex, added after v0.1, is drawn in the app only: the
-    # public site's roster waits for the maintainer's yes). Every member the site shows must have a drawing.
+    # The app's file may hold more drawings than the site shows. Every member the site shows must have a drawing.
     if not set(MEMBER_IDS) <= set(M["team"]):
-        raise ValueError("mascot.json must hold a drawing for each of the twelve members the site shows")
+        raise ValueError("mascot.json must hold a drawing for each member the site shows")
     symbols = "".join('<symbol id="m-%s" viewBox="0 0 220 220">%s</symbol>' % (k, M["team"][k]) for k in MEMBER_IDS)
     return M["defs"] + '<g id="m-headset">' + M["headset"] + "</g>" + symbols
 

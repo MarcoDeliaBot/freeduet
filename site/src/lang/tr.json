@@ -44,7 +44,7 @@
  "fe3h": "Zamanlanmış rutinler",
  "fe3p": "Rutin, her sabah bir özet gibi, bir takvime göre tekrarlanır. Iris bir tane önerir, günlük gözden geçirme, ve onu ancak sen evet dedikten sonra etkinleştirir (v0.2.2'den beri yeni). Beş düğmeden birine ihtiyaç duyan bir rutin önce sana sorar; bu kural hazır, ancak henüz gerçek bir kurulumda test edilmedi.",
  "fe5h": "Varsayılan olarak konuşmaların bilgisayarında kalır",
- "fe5p": "Uygulama, veritabanı ve asistanların tarayıcıları bilgisayarında çalışır; varsayılan olarak konuşmalar da orada saklanır. Asistanlar düşünmek için giriş yaptığın yapay zekâ hizmetini kullanır.",
+ "fe5p": "Uygulama, veritabanı ve asistanların tarayıcıları bilgisayarında çalışır; varsayılan olarak konuşmalar da orada saklanır. Asistanlar düşünmek için giriş yaptığın yapay zekâ hizmetini kullanır; ancak Motorlar sayfasında ücretsiz bir model eklersen, o model kendisine gönderileni alır.",
  "apTitle": "Bu e-posta gönderilsin mi?",
  "rt1": "Sabah özeti",
  "signedIn": "Giriş yapıldı",
@@ -64,7 +64,7 @@
  "s4p": "Varsayılan olarak, iş büyük bir düğme gerektiriyorsa (göndermek, ödemek, imzalamak, rezervasyon yapmak, silmek) her şey durur ve seni bekler.",
  "s5h": "Kısa bir rapor alırsın",
  "s5p": "Neyin yapıldığı, neyin yapılmadığı ve nedeni, bir de sıradaki adım. Upuzun metinler yok.",
- "flowMore": "…ve Gus, Basil, Mark, Cam ile Leo",
+ "flowMore": "…ve Gus, Basil, Mark, Cam, Rex ve Leo",
  "sf_h": "Sen onaylayana kadar bekleyen beş düğme",
  "sf_p": "Yeni bir asistana ilk gün cüzdanını verir miydin? Biz de vermezdik. Bu yüzden bu beş işlem varsayılan olarak senin onayını bekler. Tek bir üye için bunu kaldıran ve yalnızca senin açabileceğin bir geçiş yapıldı, ama henüz canlı olarak çalıştırılmadı. Sade Full access, ödemelerdeki beklemeyi de kaldırır ve henüz bir harcama sınırı yoktur. «Ödemesiz Full access» onları beklemede tutar.",
  "b1": "Göndermek",
@@ -83,7 +83,7 @@
  "m_p1": "Çoğu yapay zekâ aracı sana bir “API anahtarı” aldırır. Bu, taksimetre gibi çalışır: her kelime biraz tutar ve hesap durmadan yükselir.",
  "m_p2": "Aylık bir yapay zekâ aboneliği ise otobüs kartına benzer: tek bir fiyat, kartın izin verdiği kadar bin. FreeDuet, zaten sahip olduğun kartla çalışır. Giriş işlemini sen yaparsın. FreeDuet'in kendi kodu giriş bilgilerini asla okumaz, kopyalamaz ya da başkasına iletmez: bilgiler bilgisayarında, yalnızca Claude Code programının okuduğu bir yerde durur.",
  "m_l1": "Bugün resmî Claude Code uygulaması üzerinden bir Claude aboneliğiyle çalışıyor.",
- "m_l2": "Daha fazla abonelik ve yerel modeller devam ediyor; her biri yalnızca kontrol edildikten sonra sunulur.",
+ "m_l2": "Diğer abonelikler devam ediyor. Yerel modeller, OpenRouter'ın ücretsiz modelleri ve kendi FreeLLMAPI yönlendiriciniz yapıldı ve Motorlar sayfasından eklenebilir. Siz o sırayı seçmediğiniz sürece hiçbiri bir üye için ilk sırada çalışmaz; bir model, ekibin testleri onda geçmeden desteklenen sayılmaz.",
  "m_l3": "FreeDuet'in kendisi hiçbir şeye mal olmaz: kod MIT lisansıyla herkese açık.",
  "pass1": "Her kelimeye para ödersin",
  "pass2": "Zaten sahip olduğun tek bir kart",
@@ -100,7 +100,7 @@
  "r1": "Kendi Claude girişinle çalışan ekip; onaylar, testler, Gmail ve Google Calendar ile birlikte.",
  "r_prog": "Devam ediyor",
  "r2": "Birinci öncelik: Windows, macOS ve Ubuntu için tek dosyalık kurulum programı. Bugün Ubuntu için ve WSL2 üzerinden Windows için ilk kurulum betikleri var; çift tıklamayla kurulum programı ise henüz yok. Gelen kutunu düzenleyen posta asistanı yapıldı: 15 Kasım 2026'da Otto, gerçek bir posta kutusunda spam'i Spam klasörüne taşıdı. Kalıcı posta kuralları v0.2.2 sürümünde yayımlandı: 16 Kasım 2026'da bir gönderenin alan adı için tanımlanan bir kural, yeni postalarda kendiliğinden çalıştı. Diğer değişiklikler ve kurallar ise henüz canlı olarak çalıştırılmadı. Yapıldı, ama henüz canlı olarak çalıştırılmadı: her görev devrinde “Done when” (tamamlandığında), sohbetteki rutin kartı, her üyenin bilgisayarına özel bir token ve erişimi kapattığında kapanan ev ağı bağlantıları.",
- "r3": "Her üye için seçilen motorlar devam ediyor: Motorlar sayfası yapıldı, ama henüz canlı olarak çalıştırılmadı; otomatik geçiş yalnızca deneme motorlarıyla çalıştı. Sohbette Geri Al ile birlikte değiştirilen ayarlar devam ediyor. Bir üyenin adı, tonu ve dili v0.2'den sonra yapıldı, ama henüz canlı olarak çalıştırılmadı; ton ve dil üzerinde henüz hiçbir test çalışmadı. Gerçek delegasyon planlanıyor.",
+ "r3": "Her üye için motor seçimi devam ediyor: Motorlar sayfası yapıldı, ama henüz canlı olarak çalıştırılmadı. Bu sayfada yerel bir model, OpenRouter'ın ücretsiz modelleri ya da kendi FreeLLMAPI yönlendiricin üç tıklamayla eklenebilir; bir uyarı ve onay kutusundan sonra her üyenin motorlarının sırası seçilebilir. Araç çağrısını metin olarak yazan ücretsiz bir model turu bitirmez: sıradaki motor yanıt verir. Ücretsiz bir model kısa bir bekleme istediğinde FreeDuet bekler ve yeniden dener. Sohbette Geri Al ile değiştirilen ayarlar devam ediyor. Bir üyenin adı, tonu ve dili v0.2'den sonra yapıldı, ama henüz canlı olarak çalıştırılmadı; ton ve dil üzerinde henüz hiçbir test yapılmadı. Gerçek devretme planlanıyor.",
  "r4": "Sohbette yazılan otomasyonlar, telefon sürümü ve uzaktan erişim devam ediyor. Daha fazla bağlı uygulama tasarım aşamasında.",
  "r5": "Ses: sesli okuma yapıldı, ama henüz canlı olarak çalıştırılmadı ve varsayılan olarak kapalı; çağrılar henüz yapılmadı. Full access ve Cam yapıldı, ama henüz canlı olarak çalıştırılmadı. Güvenli alışveriş planlanıyor.",
  "r_cloud": "Kurulum yapmak istemeyenler için bulutta barındırılan bir FreeDuet, küçük bir aylık abonelikle planlanıyor. Fiyat henüz belirlenmedi. Orada Claude yalnızca senin kendi API anahtarınla çalışırdı. Kurulum programı ve ilk başlatma bitmeden önce olmaz. Kendi bilgisayarında ise FreeDuet ücretsiz kalır.",
@@ -133,7 +133,7 @@
  "j3p": "FreeDuet'i tek bir kişi yapıyor. Küçük bir bağış onu ayakta tutar.",
  "q_h": "İnsanların ilk sorduğu sorular",
  "q1": "Ne ücretsiz, ne için ödeme yapıyorum?",
- "a1": "FreeDuet, MIT lisansıyla ücretsiz ve açık kaynaktır; ticari kullanım için de. Ödediğin tek şey, onunla birlikte kullandığın yapay zekâ aboneliğidir; bugün bu bir Claude planıdır. Satın alman gereken bir API anahtarı yoktur.",
+ "a1": "FreeDuet, MIT lisansı altında ücretsiz ve açık kaynaklıdır; iş amaçlı kullanım için de geçerlidir. Ödediğiniz tek şey, onunla birlikte kullandığınız yapay zekâ aboneliğidir; bugün bu bir Claude planıdır. Motorlar sayfasında ücretsiz modeller de ekleyebilirsiniz; sağlayıcıları, kendilerine gönderilenleri saklayabilir. Satın alınacak bir API anahtarı yoktur.",
  "q2": "Kurmak için neye ihtiyacım var?",
  "a2": "Bir Claude aboneliği, bir de bilgisayarında Docker, Bash ve Bun. Yukarıdaki dört adım kurulumun tamamıdır. Hiç terminal açmadın mı? Kurulumu teknik bilgisi olan birine yaptır ve ona bu sayfayı göster.",
  "q3": "Windows, Mac ve Linux'ta çalışıyor mu?",
@@ -141,7 +141,7 @@
  "q4": "Bir asistan bana sormadan neler yapabilir?",
  "a4": "Bir şeyleri araştırabilir, okuyabilir, taslak ve rapor hazırlayabilir. Varsayılan olarak beş düğme senin Onayla'nı bekler; tek istisna, kendi yazdığın bir adrese giden yeni e-postadır. Kendi cümlelerinle kurduğun kalıcı bir posta kuralı yeni postalarda kendiliğinden çalışır: etiketleyebilir, arşivleyebilir, okundu olarak işaretleyebilir ya da Spam'e veya Çöp Kutusu'na taşıyabilir. Asla iletmez, yanıtlamaz, göndermez ve kalıcı olarak silmez. Full access, üye başına, kendi sohbetlerindeki beklemeyi kaldırır; yapıldı, ama henüz canlı olarak çalıştırılmadı. Sade Full access ödemelerdeki beklemeyi de kaldırır; «ödemesiz» kaldırmaz. Şifreler ve güvenlik ayarları yine sana bırakılır, ama kontrol yalnızca İngilizce ve İtalyanca sözcükleri okur ve bir komut ya da betik ancak otomatik bir gözden geçirici kuruluysa kontrol edilir. Asistanlar yine de hata yapabilir; bu yüzden onaylamadan önce hazırladıklarını oku.",
  "q5": "Verilerim nerede?",
- "a5": "FreeDuet bilgisayarında çalışır ve varsayılan olarak konuşmalarını orada bir veritabanında tutar. Claude girişin, yalnızca Claude Code programının okuduğu bir Docker biriminde kalır. Asistanlar düşünmek için isteğini, giriş yaptığın yapay zekâ hizmetine, o hizmetin kendi uygulamasının yapacağı gibi gönderir.",
+ "a5": "FreeDuet bilgisayarında çalışır ve varsayılan olarak konuşmalarını orada bir veritabanında tutar. Claude girişin, yalnızca Claude Code programının okuduğu bir Docker biriminde kalır. Asistanlar düşünmek için isteğini, giriş yaptığın yapay zekâ hizmetine, o hizmetin kendi uygulamasının yapacağı gibi gönderir. Motorlar sayfasına ücretsiz bulut modeli, OpenRouter ya da kendi FreeLLMAPI yönlendiricin gibi bir motor eklersen, o üyenin mesajları da oraya gider ve orada saklanabilir.",
  "q6": "Telefonumdan kullanabilir miyim?",
  "a6": "Henüz telefon sürümü yok. Bugün FreeDuet, bilgisayarındaki tarayıcıda açılıyor. v0.2.2'den beri bir telefonun tarayıcısı, bilgisayardan bağlantı ya da QR kod olarak gösterilen tek kullanımlık kodla eşleştirilebiliyor; telefon eşleştirmesi 16 Kasım 2026'da bir kurulumda canlı çalıştırıldı. Onay isteklerinin de geldiği telefon sürümü ve uzaktan erişim üzerinde çalışılıyor.",
  "q7": "Kendi ekip üyemi ekleyebilir miyim?",
@@ -162,7 +162,7 @@
  "team": {
   "iris": [
    "ekibi yönetir",
-   "Iris'e ne istediğini söylersin. O, işi doğru asistana verir ve cevap onun üzerinden geri gelir.",
+   "Iris'e neye ihtiyacın olduğunu söylersin. Onu doğru asistana iletir ve yanıt onun aracılığıyla geri gelir. Bir meslektaşının araçları işi yapabiliyorsa, önce o meslektaşa sorar; yapamaz demesi ancak ekipteki kimse yapamıyorsa olur.",
    "Bu sabah gelen her şeyle ilgilen."
   ],
   "otto": [
@@ -215,9 +215,14 @@
    "Perde arkasında çalışır. İş sana ulaşmadan önce toplamları yeniden yapar, fiyatları yeniden açıp bakar.",
    "(Iris ona önemli işleri gönderir.)"
   ],
+  "rex": [
+   "model eğitmeni",
+   "Kullanabileceğin motorlar için ekibin test raporlarını karşılaştırır ve hangi motorun hangi üyeye uyduğunu önerir. Kendisi test çalıştırmaz ve hiçbir motoru değiştirmez: Motorlar sayfasında kararı sen verirsin. Yapıldı, henüz canlı olarak çalıştırılmadı.",
+   "Basil artık yerel modelimde çalışıyor. Bu yeterli mi?"
+  ],
   "leo": [
    "yeni asistanlar kurar",
-   "Henüz var olmayan bir asistana mı ihtiyacın var? Leo onu tasarlar. Her yeni üyenin hazır sayılmadan önce test edilmesi planlanıyor.",
+   "Henüz olmayan bir asistana mı ihtiyacın var? Leo onu tasarlar. Bir araç eksikse Leo, kaynağı ve lisansıyla birlikte bir tane önerir; senin onayın olmadan hiçbir şey kurulmaz. Her yeni üyeyi hazır sayılmadan önce test etmek planlanıyor.",
    "Alan adlarımın yenileme tarihlerini takip edecek birine ihtiyacım var."
   ]
  },
@@ -277,7 +282,7 @@
  "again": "Baştan başla",
  "bA_cap": "Uydurma örneklerle demo. 15 Kasım 2026 canlı çalıştırması, bir üyeyi kuralı çiğnemeye zorlamayı deneyen 38 güvenlik senaryosunu içeriyordu.",
  "bR_h": "On iki üye, her birinin tek bir işi var",
- "bR_cap": "Mark ve Cam v0.1'den sonra eklendi. Vakaları 15 Kasım 2026 ekip değerlendirmelerinde çalıştı. v0.1'den beri hiçbir tam sertifikasyon çalıştırması geçemedi.",
+ "bR_cap": "Mark ve Cam, v0.1'den sonra eklendi. Vakaları 15 Kasım 2026 ekip değerlendirmelerinde çalıştırıldı. Model eğitmeni Rex, v0.2.2'den sonra eklendi; yapıldı, ama henüz canlı olarak çalıştırılmadı. v0.1'den bu yana tam bir sertifikasyon çalıştırması geçmedi.",
  "bH_h": "“Tamamlandığında” satırlı devir",
  "bH_from": "Iris'ten Otto'ya",
  "bH_msg": "Otto, postayı düzenle ve önemli yanıtların taslağını hazırla.",
