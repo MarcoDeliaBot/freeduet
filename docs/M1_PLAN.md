@@ -1923,3 +1923,14 @@ Built on 21 November 2026 from D110 (section 72), with the maintainer's choice o
 | New conversation with a member (row 99) | Build now; or after the trust rows in Now | After the Now rows | It changes what a member sees in a chat, so the maintainer sees the button first |
 | Second login as a fallback (row 101) | Build now; or check each provider's terms first | Check terms first | A provider's terms decide whether a second login of one person may be used this way |
 | Site sentence on agents that read mail (To watch) | Write it now; or later with a preview | Later, with a preview | It is a change to the public site |
+
+## 83. Roadmap order and the three-click rule (D125)
+
+**Decided by the maintainer on 21 November 2026:** "Before Rex put the token counter and engines in three clicks; the three-click philosophy goes everywhere possible."
+
+- **Order of Now.** [ROADMAP.md](ROADMAP.md), Now, is now 1 Engine order by hand, 2 a FreeLLMAPI card, 3 a token counter (D102), 4 engines added in three clicks (D109), 5 Rex, then the rest in their previous order. The rows keep their text.
+- **Three steps at most is a rule for every flow.** The row moves into Now as row 6 and its status reads "Rule (D125); applied: mailbox button, engines (D109); audit of the other flows in progress". The flows it covers are connecting an app, adding an engine, adding a member, setting a routine and approving. The audit of the other flows is in progress and is not built.
+- **Mail rules moves to the top of Next.** It was row 15 of Now, which keeps 15 for First start in three clicks, so Mail rules takes the next free number of Next, 103 (`docs/live-tests/mail-rules-round.md` now cites it).
+- **Principle.** [PROJECT.md](PROJECT.md), section 4, principle 8, states the rule in one line.
+
+**Not changed.** No code, prompt, test or approval rule. The engine card (D109) and the mailbox button are built and not yet run live, as the roadmap says.

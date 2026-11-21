@@ -1,6 +1,6 @@
 # FreeDuet: live test, mail rules
 
-This checklist checks mail rules (decision D46) on your own installation. You tell Otto a standing rule in your own words. FreeDuet keeps the rule and applies it to new mail about every five minutes. The rules are FreeDuet's own, not Gmail filters. The feature came out in v0.2.2 (CHANGELOG, 16 November 2026, PR #274). Only one rule, for one sender domain, has been run live (ROADMAP row 15). It takes about 10 to 20 minutes.
+This checklist checks mail rules (decision D46) on your own installation. You tell Otto a standing rule in your own words. FreeDuet keeps the rule and applies it to new mail about every five minutes. The rules are FreeDuet's own, not Gmail filters. The feature came out in v0.2.2 (CHANGELOG, 16 November 2026, PR #274). Only one rule, for one sender domain, has been run live (ROADMAP row 103). It takes about 10 to 20 minutes.
 
 ## Before you start
 

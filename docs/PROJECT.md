@@ -31,6 +31,7 @@ FreeDuet is a self-hosted team of AI employees that runs on the AI subscriptions
 5. **Thin fork, upstream first.** Extension points before patches; generic fixes go back to OpenBot.
 6. **Every language.** Members reply in the language the person writes in; the interface is English for now, with some cards also in Italian; translation is not planned for now.
 7. **Measure before claiming.** Every member has evals; every release publishes its pass rate.
+8. **Three clicks at most.** Anything a person starts (connecting an app, adding an engine, adding a member, setting a routine, approving) takes three clicks or steps at most, and a screen that asks for more is a defect (D125).
 
 ## 5. What we reuse, what we port, what we build
 
