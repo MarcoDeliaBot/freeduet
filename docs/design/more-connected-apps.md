@@ -38,7 +38,7 @@ Grants and roadmap
 - A grant is one row per kind (mcp, skill or bot), reference and agent [code: openbot/server/src/plugins/plugin-store/grants.ts:16-28; openbot/server/src/plugins/plugin-store/model.ts:57]. There is no per-tool switch: skippedTools lists names left out of the last listing because no model could be offered them [code: openbot/server/src/db/schema/plugins.ts:141-147].
 - A connector connected before a tool existed never gets that tool; the fix is built, not yet run live [code: docs/ROADMAP.md, row "New connector tools reach existing connections"].
 - The roadmap asks whether a hub fits the rule that sign-in happens in the tool's own flow and FreeDuet stores no passwords [code: docs/ROADMAP.md, row "Many more connected apps"; docs/CONNECTORS.md:23-24].
-- The persona has "mail, invoices, contracts, bookings" [code: docs/PROJECT.md:20]. The team is Iris and eleven members [code: CLAUDE.md:8-9]; their jobs are listed in [code: docs/TEAM.md:9-20].
+- The persona has "mail, invoices, contracts, bookings" [code: docs/PROJECT.md:20]. The team is Iris and twelve members [code: CLAUDE.md:8-9]; their jobs are listed in [code: docs/TEAM.md:9-20].
 
 ## 3. Design
 
@@ -87,7 +87,7 @@ Two small PRs make today's connectors fail closed and consistent (S1, S2). A thi
 | 9 | DocuSign | Portia (contract review); the person signs [code: docs/TEAM.md:12] | Hosted MCP; integration key; custom agents allowlisted before production [doc: https://www.docusign.com/blog/developers/docusign-mcp-server-general-availability] | 3 (broker or own app) |
 | 10 | Slack | Team messaging, if the person has a team [assumed] | Hosted MCP, no dynamic registration [doc: https://docs.slack.dev/ai/slack-mcp-server/] | 3, or Telegram (M5 [code: docs/CONNECTORS.md:59]) |
 
-Why these ten: they cover the eleven members' jobs. Mail (1, 6), calendar (2), documents (4, 5), invoices (8), contracts (9), messaging (10) and storage (3, 7). Penny never pays or moves money [code: docs/TEAM.md:13], but her reminders depend on the word check (D-c).
+Why these ten: they cover the twelve members' jobs. Mail (1, 6), calendar (2), documents (4, 5), invoices (8), contracts (9), messaging (10) and storage (3, 7). Penny never pays or moves money [code: docs/TEAM.md:13], but her reminders depend on the word check (D-c).
 
 ## 4. Slices, one PR each
 

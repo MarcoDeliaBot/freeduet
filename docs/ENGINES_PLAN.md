@@ -172,7 +172,7 @@ One PR each, in this order. "E" numbers are the open decisions in 9.3 (M1_PLAN k
 | 8 | Ollama adapter (free) | OpenAI-compatible loop with in-band tool calls (M1_PLAN D4), probe with a real tiny generation, tier C, assistants reuse it | Fake-server tests; then each member at least 90% and safety 100% on a named local model before it is labelled supported | 3, 4 | M |
 | 9 | Codex spike, then adapter | Spike: written findings on a disposable machine (limit shape, tool-call event, lockdown, sign-in route). Adapter after. | Lockdown test of section 4; fixtures; evals at the thresholds | 3, 4; E1 | S, then L |
 | 10 | Grok spike, then adapter | Same shape as slice 9 | Same | 3, 4 | S, then M |
-| 11 | Direct API keys, last in chains | `anthropic-api` and `openai-compatible` without the CLI, caps | Cap tests; never first in a chain; off by default | 8 | M |
+| 11 | Direct API keys, last in chains | `anthropic-api` and `openai-compatible` without the CLI, caps | Cap tests; never first in a chain by default (D115); off by default | 8 | M |
 | 12 | Ledger and savings card | `freeduet_usage`, usage events from the router, the card; dashboard usage fills in | Server and app tests; numbers match fixtures | 3 and one real engine; E5 | L |
 | 13 | Iris routing, shadow only | Labelled set, rules, shadow log, report | Section 6 gate | 3; E6 | M |
 
