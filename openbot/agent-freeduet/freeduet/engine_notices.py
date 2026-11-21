@@ -173,6 +173,28 @@ def local_reading(lang: str, label: str) -> str:
     return f"The local model ({label}) is reading your request: it can take a few minutes before the answer starts."
 
 
+def hold_wait(lang: str, label: str, seconds: int) -> str:
+    """D121: one line when an engine asks to wait a short while (a per-minute rate limit) and the turn waits for it and tries
+    it again, instead of moving to another engine."""
+    if lang == "it":
+        return f"{label} chiede di attendere {seconds} {'secondo' if seconds == 1 else 'secondi'}; aspetto e riprovo."
+    return f"{label} asks to wait {seconds} {'second' if seconds == 1 else 'seconds'}; I wait and try again."
+
+
+def conversation_too_long(lang: str, label: str) -> str:
+    """D121: the least a turn needs (the standing text, the person's memory and their latest message) does not fit the engine's
+    context, so nothing is sent to it."""
+    if lang == "it":
+        return (
+            f"Questa conversazione è troppo lunga per {label}, anche lasciando fuori i messaggi precedenti. "
+            "Avvia una nuova conversazione e ripeti la richiesta."
+        )
+    return (
+        f"This conversation is too long for {label}, even with the earlier messages left out. "
+        "Start a new conversation and ask again."
+    )
+
+
 def without_tools(lang: str, tools: list[str], tier: str) -> str:
     names = ", ".join(tools)
     if lang == "it":

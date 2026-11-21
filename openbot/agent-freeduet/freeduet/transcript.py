@@ -70,6 +70,72 @@ LIGHT_NOTE = (
     "cannot do it on this turn and that a stronger engine can; never pretend to use a tool you do not have."
 )
 
+# D121, the transcript fits the engine. No tokenizer is available, so a token is estimated as CHARS_PER_TOKEN characters (3 is
+# conservative: English prose is nearer 4, code, Italian and JSON nearer 3). An engine's context is used only up to CONTEXT_USE,
+# and ANSWER_RESERVE_TOKENS stay free for the reply (the tool list the engine also reads is inside the margin).
+CHARS_PER_TOKEN = 3
+CONTEXT_USE = 0.85
+ANSWER_RESERVE_TOKENS = 2048
+TRIMMED_NOTE = "[Earlier messages of this conversation were left out to fit this model.]"
+
+
+class ContextTooSmall(Exception):
+    """Even the least a turn needs (the system text, the person's memory and their latest message) does not fit the engine's
+    context. ``needed`` and ``available`` are estimated tokens."""
+
+    def __init__(self, needed: int, available: int):
+        super().__init__(f"the least this turn needs is about {needed} tokens and the engine has about {available}")
+        self.needed, self.available = needed, available
+
+
+def budget_chars(context_tokens: int) -> int:
+    """The characters of system text plus prompt that fit an engine of this many tokens (D121). Zero or less: nothing fits."""
+    return int((context_tokens * CONTEXT_USE - ANSWER_RESERVE_TOKENS) * CHARS_PER_TOKEN)
+
+
+def _units(turn: list[dict]) -> list[list[dict]]:
+    """The conversation as units that are dropped whole: a message, or an assistant message with its tool calls and the tool
+    results that follow it, so a call and its result are never separated."""
+    units: list[list[dict]] = []
+    for message in turn:
+        if message["role"] == "tool" and units:
+            units[-1].append(message)
+        else:
+            units.append([message])
+    return units
+
+
+def _fit_turn(turn: list[dict], fixed: int, budget: int, length) -> tuple[list[dict], bool]:
+    """Drop the oldest units of `turn` until `fixed` plus `length(kept)` fits `budget`. Everything from the person's latest
+    message on is never dropped. Returns the kept messages and whether any was dropped; raises ContextTooSmall when even the
+    protected tail does not fit."""
+    last_user = max((i for i, message in enumerate(turn) if message["role"] == "user"), default=0)
+    units = _units(turn)
+    # The first unit that holds the latest user message (or what follows it) starts the protected tail.
+    position, protected_from = 0, len(units)
+    for index, unit in enumerate(units):
+        if position + len(unit) > last_user:
+            protected_from = index
+            break
+        position += len(unit)
+
+    def used(dropped: int) -> int:
+        return fixed + length([message for unit in units[dropped:] for message in unit], dropped > 0)
+
+    if used(0) <= budget:
+        return turn, False
+    if used(protected_from) > budget:
+        raise ContextTooSmall(-(-used(protected_from) // CHARS_PER_TOKEN), max(budget, 0) // CHARS_PER_TOKEN)
+    low, high = 1, protected_from  # the least number of units to drop: more is always smaller, so look for the edge
+    while low < high:
+        middle = (low + high) // 2
+        if used(middle) <= budget:
+            high = middle
+        else:
+            low = middle + 1
+    return [message for unit in units[low:] for message in unit], True
+
+
 LESSONS_HEADING = "Lessons the person approved for you, newest last. Follow them:"
 MAX_LESSONS = 20
 
@@ -394,22 +460,27 @@ def render(
     closing: str | None = None,
     served=(),
     light: bool = False,
+    context_tokens: int | None = None,
 ) -> Rendered:
     """The system text and the stdin prompt for one segment. `lessons` are this member's active
     lessons, oldest first (lessons.active_for); `notes` are this run's own runtime notes
     (tool_notes.py), after the lessons. `closing` replaces the last line that says what to do next
     (the report guard's follow-up, report_guard.py). `served` are the plain names of the tools this
     run's bridge serves: earlier calls to them, and their results, are written under the name the CLI
-    registers them by (mcp__freeduet__<name>), so the model calls them that way too."""
-    turn = [message for message in messages if message.get("role") in {"user", "assistant", "tool"}]
-    verdicts, pictures = _latest_pictures(turn)
-    closing = closing or _closing_instruction(turn)
+    registers them by (mcp__freeduet__<name>), so the model calls them that way too.
+    `context_tokens` (D121) is the engine's context size when it is known: the oldest turns are then left out, with one note,
+    until the system text and the prompt fit it; the system text (the person's memory included) and the person's latest message
+    are never cut, and ContextTooSmall is raised when they alone do not fit."""
+    full_turn = [message for message in messages if message.get("role") in {"user", "assistant", "tool"}]
+    closing = closing or _closing_instruction(full_turn)
     quoted = "\n\n".join(_quoted_rows(member, messages))
 
-    def prompt_with(shown: dict) -> str:
+    def prompt_with(shown: dict, kept: list[dict] | None = None, cut: bool | None = None) -> str:
+        kept = turn if kept is None else kept  # `turn` and `trimmed` are set below, before any call without arguments
+        cut = trimmed if cut is None else cut
         names: dict[str, str] = {}
         blocks: list[str] = []
-        for message in turn:
+        for message in kept:
             role = message["role"]
             if role == "user":
                 blocks.append(f"<user>\n{_escape(_content_text(message.get('content'), shown))}\n</user>")
@@ -433,10 +504,17 @@ def render(
                     f"{_escape(_content_text(message.get('content')))}\n</tool_result>"
                 )
         conversation = "<conversation>\n" + "\n\n".join(blocks) + "\n</conversation>" if blocks else ""
-        return "\n\n".join(part for part in (quoted, conversation, closing) if part)
+        return "\n\n".join(part for part in (quoted, TRIMMED_NOTE if cut else "", conversation, closing) if part)
+
+    system = _system_text(member, messages, context or [], lessons, notes, light)
+    turn, trimmed = full_turn, False
+    if context_tokens is not None:
+        turn, trimmed = _fit_turn(
+            full_turn, len(system), budget_chars(context_tokens), lambda kept, cut: len(prompt_with({}, kept, cut))
+        )
+    verdicts, pictures = _latest_pictures(turn)
 
     # Without a picture to send, nothing differs from before D72 except the note of one that was too large.
     prompt = prompt_with({key: value for key, value in verdicts.items() if isinstance(value, str)})
     picture_prompt = prompt_with(verdicts) if pictures else None
-    system = _system_text(member, messages, context or [], lessons, notes, light)
     return Rendered(system=system, prompt=prompt, pictures=tuple(pictures), picture_prompt=picture_prompt)
