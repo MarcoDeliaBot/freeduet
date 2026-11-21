@@ -87,6 +87,7 @@ from .engines import (
     tier_at_least,
 )
 from .failure_classifier import AUTH, CREDITS, RATE_LIMIT, TRANSIENT, USAGE_LIMIT, Failure
+from .tools_as_text import NOTE as TOOLS_AS_TEXT_NOTE, TOOLS_AS_TEXT, looks_like_tool_call_text
 from .ledger import DAILY, Ledger, Limits
 from .members import Member
 from .segment import SegmentNotes, run_segment
@@ -97,7 +98,7 @@ MAX_SWITCHES = 2
 LOCAL_NOTICE_AFTER_SECONDS = 15.0  # D108: a local model silent this long is said to be reading
 PROBE_EVERY_SECONDS = 60.0
 PROBE_WAIT_SECONDS = 10.0
-SWITCHABLE = frozenset({RATE_LIMIT, USAGE_LIMIT, CREDITS, AUTH, TRANSIENT})
+SWITCHABLE = frozenset({RATE_LIMIT, USAGE_LIMIT, CREDITS, AUTH, TRANSIENT, TOOLS_AS_TEXT})
 TOOK_TOO_LONG = "took too long on this turn"
 
 
@@ -120,6 +121,7 @@ class _Attempt(EngineAdapter):
         self.key, self.label, self.kind, self.capabilities = engine.key, engine.label, engine.kind, engine.capabilities
         self.health: Health | None = None
         self.hint: str | None = None  # "first_output" or "whole_turn"
+        self.tools_as_text = False  # D116: the turn ended with a tool call written as text; set by the router
         self._settled = False
 
     def child_env(self, source=None):
@@ -146,6 +148,8 @@ class _Attempt(EngineAdapter):
 
     @property
     def failure(self) -> Failure | None:
+        if self.tools_as_text:
+            return Failure(TOOLS_AS_TEXT)
         if self.health is not None and self.health.failure is not None:
             return self.health.failure
         return Failure(TRANSIENT) if self.hint == "first_output" else None
@@ -173,6 +177,76 @@ def _text_of(message: dict) -> str:
     if isinstance(content, list):
         return "".join(part.get("text", "") for part in content if isinstance(part, dict))
     return ""
+
+
+class _TextGuard:
+    """D116: holds back the part of an assistant message that could be a tool call written as text, so that it is never
+    delivered as the answer. Prose is streamed as it comes; from the first ``<``, ``{`` or backtick the rest of the message is
+    held until the message ends, and then delivered when it is ordinary text, or dropped when the whole message ends with a
+    text-written tool call (``tools_as_text.looks_like_tool_call_text``). Used only for an engine that runs on a key (a
+    gateway), where a small model may do this. Nothing is parsed or run."""
+
+    def __init__(self, tools_offered: bool = True):
+        self._tools_offered = tools_offered
+        self._start: dict | None = None
+        self._id: str | None = None
+        self._text = ""
+        self._sent = 0
+        self._opened = False
+        self.flagged = False
+        self.tool_seen = False
+
+    @property
+    def tools_as_text(self) -> bool:
+        """The LAST message of the attempt is a text-written call and nothing real was done before it: the engine failed the turn."""
+        return self.flagged and not self.tool_seen
+
+    @property
+    def text_call_after_tools(self) -> bool:
+        """The last message is a text-written call, but a real tool call was made before it: nothing is run or repeated, the
+        person is told in one sentence."""
+        return self.flagged and self.tool_seen
+
+    def _open(self) -> list[dict]:
+        if self._opened or self._start is None:
+            return []
+        self._opened = True
+        return [self._start]
+
+    def _content(self, upto: int) -> list[dict]:
+        if upto <= self._sent:
+            return []
+        events = self._open()
+        events.append({**agui.text_content(self._id or "", self._text[self._sent:upto])})
+        self._sent = upto
+        return events
+
+    def feed(self, event: dict) -> list[dict]:
+        kind = event["type"]
+        if kind.startswith("TOOL_CALL"):
+            self.tool_seen = True
+            self.flagged = False  # a real call came after any text-written one: that text was only noise
+        if kind == "TEXT_MESSAGE_START":
+            self.flagged = False  # only the LAST message of the attempt decides
+            self._start, self._id = event, event.get("messageId")
+            self._text, self._sent, self._opened = "", 0, False
+            return []
+        if kind == "TEXT_MESSAGE_CONTENT" and self._start is not None:
+            self._text += event.get("delta") or ""
+            cut = next((i for i in range(self._sent, len(self._text)) if self._text[i] in "<{`"), len(self._text))
+            return self._content(cut)
+        if kind == "TEXT_MESSAGE_END" and self._start is not None:
+            out: list[dict] = []
+            if self._sent < len(self._text):
+                if looks_like_tool_call_text(self._text, self._tools_offered):
+                    self.flagged = True
+                else:
+                    out = self._content(len(self._text))
+            if self._opened:
+                out.append(event)
+            self._start = None
+            return out
+        return [event]
 
 
 _RANK = {notices.NONE: 0, notices.TEXT: 1, notices.TOOL: 2}
@@ -352,6 +426,12 @@ class Router:
                 if choice.pin is not None and blocked:
                     yield agui.run_error(notices.pinned(lang, *blocked[-1], now=self.state.now()), ENGINE_LIMITED)
                     return
+                if blocked and blocked[-1][1] == TOOLS_AS_TEXT:
+                    # D116: the last engine that could answer wrote its tool calls as text: a plain message, not "unavailable".
+                    for event in _say(notices.tools_as_text_stop(lang, blocked[-1][0])):
+                        yield event
+                    yield agui.run_finished(run)
+                    return
                 until = min((b[2] for b in blocked if b[2] is not None), default=None)
                 key_off = [label for label, kind, _ in blocked if kind == notices.KEY]
                 held_off = [(label, kind) for label, kind, _ in blocked if isinstance(kind, notices.Held)]
@@ -413,6 +493,7 @@ class Router:
             held: dict | None = None
             saw_output, finished = False, False
             builder = _Produced()
+            guard = _TextGuard(bool(tools)) if self.adapters[key].kind == COMPATIBLE_KIND else None
             pending_event = None
             try:
                 limit = first_answer_limit(engine) or first_output_seconds()  # D108: only a local model has its own
@@ -457,11 +538,22 @@ class Router:
                         if TOOK_TOO_LONG in str(event.get("message") or ""):
                             attempt.hint = "whole_turn"
                         break
+                    if kind == "RUN_FINISHED" and guard is not None and guard.tools_as_text:
+                        # D116: the turn ended with a tool call written as text. It is not the answer and is never run: this
+                        # engine failed the turn for that reason, and the turn moves on.
+                        attempt.tools_as_text = True
+                        held = {"type": "RUN_ERROR", "message": ""}
+                        break
+                    if kind == "RUN_FINISHED" and guard is not None and guard.text_call_after_tools:
+                        for out in _say(notices.tools_as_text_after_tools(lang, self.adapters[key].label)):
+                            builder.see(out)
+                            yield out
                     if kind == "RUN_FINISHED":
                         finished = True
-                    builder.see(event)
                     saw_output = saw_output or kind.startswith(("TEXT_MESSAGE_CONTENT", "TOOL_CALL"))
-                    yield event
+                    for out in (guard.feed(event) if guard is not None else [event]):
+                        builder.see(out)
+                        yield out
                     if finished:
                         break
             finally:
@@ -478,6 +570,8 @@ class Router:
             progress = max(progress, builder.progress, key=_RANK.get)
             failure = attempt.failure
             tried.add(key)
+            if attempt.tools_as_text:
+                self.state.note(key, TOOLS_AS_TEXT_NOTE)  # the Engines page can say so
             if held is None:  # the segment ended with no terminal event: leave it to the app's own guard
                 return
             if attempt.hint == "whole_turn" or failure is None or failure.kind not in SWITCHABLE:

@@ -764,3 +764,114 @@ def test_a_key_file_that_is_a_link_is_not_a_key(data):
     with pytest.raises(panel.PanelRefused):
         panel.save_key("groq", "gsk_ANOTHERkey0123456789abcdef")
     assert target.read_text().strip() == KEY
+
+
+# ── D116: a model choice on the OpenRouter card ──────────────────────────────────────────────────
+
+OPENROUTER_ANSWER = {
+    "data": [
+        {"id": "meta-llama/llama-3.3-70b-instruct:free", "supported_parameters": ["tools", "temperature"]},
+        {"id": "liquid/lfm-3-1.7b:free", "supported_parameters": ["temperature"]},  # no tools
+        {"id": "vendor/paid-model", "supported_parameters": ["tools"]},  # not free
+        {"id": "x/y:free-extra", "supported_parameters": ["tools"]},  # not ending in :free
+        {"id": "openrouter/free", "supported_parameters": ["tools"]},  # the router is added by the card itself
+        {"id": "bad id:free", "supported_parameters": ["tools"]},
+        {"id": "a/b:free", "supported_parameters": ["tools"]},
+        {"id": "c/d:free"},
+        {"id": 7, "supported_parameters": ["tools"]},
+        "junk",
+    ]
+}
+
+
+@pytest.fixture(autouse=False)
+def fresh_cache():
+    panel.forget_free_models()
+    yield
+    panel.forget_free_models()
+
+
+def test_only_free_models_that_support_tools_are_kept():
+    assert panel.free_tool_models_from(OPENROUTER_ANSWER) == ["a/b:free", "meta-llama/llama-3.3-70b-instruct:free"]
+    assert panel.free_tool_models_from(None) == [] and panel.free_tool_models_from({"data": "x"}) == []
+
+
+def test_the_free_model_list_has_the_router_first_and_is_cached(fresh_cache):
+    calls = []
+
+    async def fetch():
+        calls.append(1)
+        return OPENROUTER_ANSWER
+
+    clock = [1000.0]
+    first = asyncio.run(panel.free_tool_models("openrouter", fetch=fetch, now=lambda: clock[0]))
+    assert first == {"models": ["openrouter/free", "a/b:free", "meta-llama/llama-3.3-70b-instruct:free"], "source": "live"}
+    second = asyncio.run(panel.free_tool_models("openrouter", fetch=fetch, now=lambda: clock[0] + 10))
+    assert second["source"] == "cached" and second["models"] == first["models"] and len(calls) == 1
+    asyncio.run(panel.free_tool_models("openrouter", fetch=fetch, now=lambda: clock[0] + panel.FREE_MODELS_TTL_S + 1))
+    assert len(calls) == 2  # fetched again after the hour
+
+
+def test_when_the_fetch_fails_the_last_list_is_kept_and_with_none_the_router_alone(fresh_cache):
+    async def broken():
+        raise RuntimeError("no network")
+
+    async def empty():
+        return None
+
+    assert asyncio.run(panel.free_tool_models("openrouter", fetch=broken, now=lambda: 1.0)) == {
+        "models": ["openrouter/free"], "source": "fallback"}
+
+    async def good():
+        return OPENROUTER_ANSWER
+
+    asyncio.run(panel.free_tool_models("openrouter", fetch=good, now=lambda: 2.0))
+    stale = asyncio.run(panel.free_tool_models("openrouter", fetch=empty, now=lambda: 2.0 + panel.FREE_MODELS_TTL_S + 5))
+    assert stale["source"] == "stale" and "a/b:free" in stale["models"]
+
+
+def test_the_public_fetch_sends_no_key_and_no_cookie_and_fails_to_the_fallback(fresh_cache, data):
+    panel.save_key("openrouter", "sk-or-v1-CANARYkey0123456789")
+    seen = []
+    result = asyncio.run(panel.free_tool_models("openrouter", transport=transport(200, seen, OPENROUTER_ANSWER)))
+    assert result["source"] == "live" and len(seen) == 1
+    assert str(seen[0].url) == "https://openrouter.ai/api/v1/models"
+    assert "authorization" not in seen[0].headers and "cookie" not in seen[0].headers
+    panel.forget_free_models()
+    down = asyncio.run(panel.free_tool_models("openrouter", transport=transport(503, None, {})))
+    assert down == {"models": ["openrouter/free"], "source": "fallback"}
+
+
+def test_only_the_openrouter_card_has_a_free_model_list(fresh_cache):
+    for other in ("groq", "ollama"):
+        with pytest.raises(panel.PanelRefused) as caught:
+            asyncio.run(panel.free_tool_models(other, fetch=lambda: None))
+        assert caught.value.code == "unknown_provider"
+
+
+def test_a_model_from_the_list_is_written_and_pinned_and_a_paid_one_is_refused(data):
+    panel.save_key("openrouter", "sk-or-v1-CANARYkey0123456789")
+    panel.apply_change("openrouter", enabled=True, model="openrouter/free")
+    chosen = "meta-llama/llama-3.3-70b-instruct:free"
+    shown = panel.apply_change("openrouter", model=chosen)
+    assert shown["model"] == chosen
+    written = yaml.safe_load((data / "engines.yaml").read_text())
+    assert written["engines"]["openrouter-member"]["model"] == chosen and written["engines"]["openrouter-assist"]["model"] == chosen
+    env = adapters_from_config(load_engines())["openrouter-member"]._environment({}, "k")
+    assert env["ANTHROPIC_MODEL"] == chosen and env["CLAUDE_CODE_SUBAGENT_MODEL"] == chosen  # pinned in the hop
+    for paid in ("vendor/paid-model", "openrouter/auto", "a/b:free,vendor/paid"):
+        with pytest.raises(panel.PanelRefused) as caught:
+            panel.apply_change("openrouter", model=paid)
+        assert caught.value.code in ("model_not_free", "model_shape")
+    assert card("openrouter")["model"] == chosen  # the refusals changed nothing
+
+
+def test_the_service_answers_the_free_model_list(fresh_cache, data, monkeypatch):
+    async def fake(provider_id, **_):
+        return {"models": ["openrouter/free", "a/b:free"], "source": "live"}
+
+    monkeypatch.setattr(panel, "free_tool_models", fake)
+    with TestClient(app) as client:
+        answer = client.post("/engines/panel/openrouter/free-models", headers=AUTH)
+        assert answer.status_code == 200 and answer.json()["models"] == ["openrouter/free", "a/b:free"]
+        assert client.post("/engines/panel/openrouter/free-models").status_code in (401, 403)

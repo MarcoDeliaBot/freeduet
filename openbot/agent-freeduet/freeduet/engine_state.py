@@ -157,6 +157,8 @@ class EngineRow:
     #: Only an engine the spend ledger holds to the limits has one (numbers: the limits, what was spent, the engine's own
     #: totals; see :meth:`freeduet.ledger.Ledger.view`). Left out of every other row, so a default install is unchanged.
     spend: dict[str, Any] | None = None
+    #: D116: one fixed word about the engine's last turn (``tools_as_text``), left out of every row that has none.
+    note: str | None = None
 
     def as_json(self) -> dict[str, Any]:
         shown = {
@@ -178,6 +180,8 @@ class EngineRow:
             shown["refusal"] = self.refusal
         if self.spend is not None:
             shown["spend"] = self.spend
+        if self.note is not None:
+            shown["note"] = self.note
         return shown
 
 
@@ -229,6 +233,7 @@ class EngineState:
         self._probed: dict[str, Probed] = {}
         self._refused: dict[str, Refused] = {}
         self._retired: set[str] = set()
+        self._notes: dict[str, str] = {}  # D116: what the router saw on an engine's last turn, until a turn goes well
         self._lock = threading.Lock()
         self._ledger: Ledger | None = None  # set by attach_ledger, only when an engine is held to the limits
         self._limits: Limits | None = None
@@ -243,6 +248,11 @@ class EngineState:
             self._engines[engine.key] = engine
             self._retired.discard(engine.key)
         self._registry.get(engine.key)
+
+    def note(self, key: str, what: str) -> None:
+        """D116: remember one fixed word about an engine (``tools_as_text``) for the Engines page. It does not move the breaker."""
+        with self._lock:
+            self._notes[key] = what
 
     def retire(self, engine_id: str) -> None:
         """Stop listing an engine the person switched off on the Engines page (D109). Its saved breaker stays."""
@@ -300,6 +310,8 @@ class EngineState:
                 if ticket is not None:
                     ticket.failure(failure)
             elif answered:
+                with self._lock:
+                    self._notes.pop(key, None)
                 if ticket is not None:
                     ticket.success()
                 else:
@@ -381,6 +393,7 @@ class EngineState:
     def snapshot(self) -> StateSnapshot:
         with self._lock:
             engines, probed, refused = dict(self._engines), dict(self._probed), dict(self._refused)
+            notes = dict(self._notes)
             retired = set(self._retired)
         ledger, limits, ledgered = self._ledger, self._limits, self._ledgered
         hold = ledger.hold(limits) if ledger is not None and limits is not None and ledgered else None
@@ -418,6 +431,7 @@ class EngineState:
                     probe_problem=result.problem if result is not None else None,
                     refusal=refusal,
                     spend=spend,
+                    note=notes.get(shown.engine_id),
                 )
             )
         shown = {row.id for row in rows}

@@ -134,6 +134,21 @@ export const LABELS = {
   remove: "Remove",
   test: "Test",
 } as const;
+/** D116: under the OpenRouter model choice. One line: the free list changes often, and a free service may keep what it is sent (D101). */
+export const FREE_MODELS_NOTE =
+  "Free models change often and may keep what you send.";
+export const FREE_MODELS_LOADING =
+  "Loading the free models that can use tools.";
+/** Where the list came from, when it is not a fresh one. The router `openrouter/free` is always in it. */
+export function freeModelsSourceText(source: string): string | null {
+  if (source === "stale")
+    return "Could not reach OpenRouter just now. This is the last list that was loaded.";
+  if (source === "fallback")
+    return "Could not reach OpenRouter just now. Only the free router is offered.";
+  return null;
+}
+export const FREE_ROUTER_LABEL =
+  "openrouter/free (OpenRouter picks a free model)";
 export const KEY_SAVED = "Key saved. It is never shown again.";
 export const KEY_PLACEHOLDER = "Paste the key here";
 export const NOT_ON_YET_KEY = "Not on yet. Paste the key and press Save.";

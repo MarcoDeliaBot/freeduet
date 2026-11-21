@@ -34,6 +34,8 @@ import os
 import re
 import stat
 import tempfile
+import time
+from collections.abc import Awaitable, Callable
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Mapping
@@ -822,7 +824,81 @@ async def list_models(
     return {"ok": True, "code": "ok", "models": sorted(set(ids))[:MAX_MODELS]}
 
 
+# ── The free models that support tools (D116) ────────────────────────────────────────────────────
+
+#: OpenRouter's public list of models. It needs no key and none is sent: this is a plain GET of a public page.
+OPENROUTER_MODELS_URL = "https://openrouter.ai/api/v1/models"
+#: How long a fetched list is reused. Free models change often, so a day would be too long; an hour keeps the page quick.
+FREE_MODELS_TTL_S = 3600.0
+_free_models_cache: dict[str, Any] = {"at": None, "models": []}
+
+
+def free_tool_models_from(body: Any) -> list[str]:
+    """The ids in an OpenRouter models answer that cost nothing and can use tools: an id that ends in `:free` (the guard of
+    D107, the same one that checks a model the person chooses) whose ``supported_parameters`` include ``tools``. At most 300,
+    sorted. Anything of another shape is skipped, so a changed answer gives a shorter list and never an error."""
+    rows = body.get("data") if isinstance(body, Mapping) else None
+    found: set[str] = set()
+    for row in rows if isinstance(rows, list) else []:
+        if not isinstance(row, Mapping):
+            continue
+        name, parameters = row.get("id"), row.get("supported_parameters")
+        if (
+            isinstance(name, str)
+            and _FREE_SUFFIX.fullmatch(name)
+            and _MODEL.fullmatch(name)
+            and isinstance(parameters, list)
+            and "tools" in parameters
+        ):
+            found.add(name)
+    return sorted(found)[:MAX_MODELS]
+
+
+async def _fetch_models(transport: httpx.AsyncBaseTransport | None) -> Any:
+    code, body = await _ask("GET", OPENROUTER_MODELS_URL, None, None, transport)
+    return body if code == "ok" else None
+
+
+async def free_tool_models(
+    provider_id: str,
+    fetch: Callable[[], Awaitable[Any]] | None = None,
+    now: Callable[[], float] = time.monotonic,
+    transport: httpx.AsyncBaseTransport | None = None,
+) -> dict[str, Any]:
+    """The models the OpenRouter card offers besides the router: ``{"models": [...], "source": "live" | "cached" | "stale" |
+    "fallback"}``. The router `openrouter/free` is always first and always there. The list is fetched from OpenRouter's public
+    page and reused for an hour; when the fetch fails, the last list that was fetched is kept (``stale``), and with none the
+    answer is the router alone (``fallback``). Only the card of a provider with the free-model guard has one. ``fetch`` and
+    ``now`` are for tests: a test never reaches the network."""
+    provider = _provider(provider_id)
+    if not provider.free_model_only:
+        raise PanelRefused("unknown_provider", 404)
+    cache = _free_models_cache
+    moment = now()
+    if cache["at"] is not None and moment - cache["at"] < FREE_MODELS_TTL_S:
+        return {"models": [OPENROUTER_FREE_ROUTER, *cache["models"]], "source": "cached"}
+    try:
+        body = await (fetch() if fetch is not None else _fetch_models(transport))
+    except Exception:  # noqa: BLE001 - any failure is the same: keep what we had
+        body = None
+    models = free_tool_models_from(body) if body is not None else []
+    if models:
+        cache["at"], cache["models"] = moment, models
+        return {"models": [OPENROUTER_FREE_ROUTER, *models], "source": "live"}
+    if cache["models"]:
+        return {"models": [OPENROUTER_FREE_ROUTER, *cache["models"]], "source": "stale"}
+    return {"models": [OPENROUTER_FREE_ROUTER], "source": "fallback"}
+
+
+def forget_free_models() -> None:
+    """Empty the cache (tests, and a restart of nothing: the cache lives only in this process)."""
+    _free_models_cache.update(at=None, models=[])
+
+
 __all__ = [
+    "free_tool_models",
+    "free_tool_models_from",
+    "forget_free_models",
     "PROVIDERS",
     "PanelRefused",
     "apply_change",

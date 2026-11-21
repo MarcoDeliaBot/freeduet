@@ -223,3 +223,12 @@ describe("the word on each engine's card", () => {
     expect(KEYS_TEXT).not.toMatch(/api[ _-]?key|paste/i);
   });
 });
+
+test("D116: an engine whose last answer was a tool call written as text says so, and only then", () => {
+  expect(engineStateText({ state: "ready", until: null })).toBe("Ready");
+  expect(
+    engineStateText({ state: "ready", until: null, note: "tools_as_text" }),
+  ).toBe(
+    "Ready. Its last answer wrote its tool calls as text instead of using them: choose a model that supports tools",
+  );
+});

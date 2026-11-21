@@ -243,6 +243,17 @@ async def engines_panel_models(provider: str):
     return JSONResponse(result, headers={"Cache-Control": "no-store"})
 
 
+@app.post("/engines/panel/{provider}/free-models")
+async def engines_panel_free_models(provider: str):
+    """D116: the free models that support tools, from OpenRouter's public list (no key is sent), cached; the router alone
+    when the list cannot be fetched."""
+    try:
+        result = await engine_panel.free_tool_models(provider)
+    except engine_panel.PanelRefused as error:
+        return _refusal(error)
+    return JSONResponse(result, headers={"Cache-Control": "no-store"})
+
+
 @app.post("/engines/panel/{provider}/test")
 async def engines_panel_test(provider: str):
     try:
