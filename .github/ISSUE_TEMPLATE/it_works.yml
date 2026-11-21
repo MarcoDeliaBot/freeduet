@@ -44,6 +44,7 @@ body:
         - label: Vera
         - label: Mark
         - label: Cam
+        - label: Rex
   - type: textarea
     id: works
     attributes:

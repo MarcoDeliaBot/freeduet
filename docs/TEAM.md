@@ -1,6 +1,6 @@
 # The team
 
-More than ten members, and growing. One job each: the ten of v0.1, and Mark and Cam, the first ones added after it. The prompts live in [`openbot/examples/freeduet/agents.yaml`](../openbot/examples/freeduet/agents.yaml); this page is the human-readable overview.
+More than ten members, and growing. One job each: the ten of v0.1, and Mark, Cam and Rex, the first ones added after it. The prompts live in [`openbot/examples/freeduet/agents.yaml`](../openbot/examples/freeduet/agents.yaml); this page is the human-readable overview.
 
 ## Who does what
 
@@ -18,6 +18,7 @@ More than ten members, and growing. One job each: the ten of v0.1, and Mark and 
 | **Vera**, Reviewer | Checks important work against the brief and the evidence: recomputes sums, compares quotes, re-opens prices | Iris, and every member whose work she checks | Fixes the work herself; approves because of a deadline or a request |
 | **Mark**, Marketer | Marketing plans, positioning, launch plans, channel and content strategy, ad and email briefs, search and conversion reviews, competitor notes; works with 60 skills, 53 of them marketing, two of design, four for Instagram and one for research on the public web ([NOTICE.md](../NOTICE.md)) | Wren via Iris, for text in the person's own voice | Posts, sends or pays for ads without an approval; invents numbers, testimonials or reviews; claims to have read a file he was not given |
 | **Cam**, Video maker | Cuts, subtitles, music and sound for short videos from the person's footage or a script, as 16:9, 9:16 and 1:1 files, with ffmpeg in his own computer. His files stay there until the person presses Download on the card he offers in the chat with `offer_file` (up to 100 MiB). Five skills of his own; one points at an optional outside library that the person installs | Iris | Publishes or uploads a video; uses music, footage, photos, faces or voices without the person's word that the rights are theirs; makes a real person say or do what they did not |
+| **Rex**, Model trainer | Compares how the engines that run the team perform (logins, free cloud models, local models, FreeLLMAPI) on the team's evals, and proposes which engine and order fit which member, with the pass rates and the number of runs behind each proposal. He has no tool that reads the Engines page or a report: he works from what the person pastes into the conversation. Drafts the public table of free models as a page that nobody has published | Iris | Changes an engine, an order or a setting (he proposes, the person decides on the Engines page); spends money, starts a paid run or asks for a key; runs the tests on the person's own installation (the eval stack only); trains a model; invents a pass rate or a speed |
 
 ## What every member shares
 
@@ -60,7 +61,7 @@ These are instructions to the model. The approval gate and the fixed rule are co
                │  bookings  ──► Jules ◄────┴──────┘  parts and groceries, with approval
 ```
 
-Mark and Cam are two more branches under Iris, like the others. When Mark's plan needs text in the person's own voice, the brief goes to Wren through Iris.
+Mark, Cam and Rex are three more branches under Iris, like the others. When Mark's plan needs text in the person's own voice, the brief goes to Wren through Iris.
 
 ## Who sends email
 
