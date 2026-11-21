@@ -27,7 +27,10 @@ The new tool is an acting tool in the same sense as `computer_type`:
 
 - `COMPUTER_TOOLS` and `COMPUTER_ACTING_TOOLS` (`server/src/computer/schema.ts`) both name it.
 - `intentOf` gives it the intent `type`, so a policy rule or a safety rule written by intent covers it. It has
-  no `key`, so it can never be an activation and presses nothing.
+  no `key` of its own, so it is never an activation by intent. That does not make a choice inert: a menu or
+  date change fires the page's own `input` and `change` handlers, and a handler can submit a form, navigate
+  or send a request (`onchange="this.form.submit()"`). The protection is the approval gate: the person's card
+  or allow rule, as for a typed entry.
 - The gateway's `govern` handles it exactly as it handles a typed entry: the policy sees the element the
   server resolved, an audit row is written either way, and the approval gate gets a candidate with effect
   `write`, the page's host as scope and the element as target. The words floor (`safetyRequirement`) reads
@@ -65,6 +68,16 @@ The new tool is an acting tool in the same sense as `computer_type`:
 - **Answer.** What the field now shows, read back from the page: for a menu `selected: [{label, value}]`, for
   a date `value` and `inputType`. It is not an echo of the request, so a page that did not keep the value
   shows it. This also starts D123 item 1 ("browser actions say what changed") for this tool.
+- **When the page moves.** After the change the computer waits one quiet period and a bounded load wait (the
+  settle constants of `settle.ts`) and counts main-frame navigations from the change to the end of the
+  read-back. If the change navigated the page (`onchange="this.form.submit()"`, or a handler that sets the
+  address a moment later), the field is gone, so the answer carries `navigated: true` and the new `url`, and
+  `selected` (or `value`) is what was requested, not a read-back. A handler that only sends a request leaves
+  the field in place and is read back as usual. Without this, the read-back failed and the route answered 502
+  for a change that had happened.
+- **Clearing.** An empty value clears a date field and the answer says `cleared: true`, and `required: true`
+  when the page requires a value. `outOfRange` is only for a non-empty value that the field's own `min`,
+  `max` or `step` rejects.
 - **Snapshot.** Each native menu carries `options` (label, the value when it differs, `disabled`, `selected`),
   capped at 50 with `optionsTotal` saying how many there are, `multiple`, and its `value` set to the chosen
   label(s). A date field carries its `min` and `max`. The menu's own `option` elements are left out of the
@@ -76,10 +89,14 @@ a refusal for a sensitive field is the same 403 as a typed entry, and a stale re
 ## Limits and decisions
 
 - A policy rule that names `tool.name == "computer_type"` and nothing else does not cover `computer_select`.
-  The shipped "never submit" rule is not affected (a choice has no `key` and activates nothing). An operator
-  who wants to stop all form filling writes `intent == "type"`, which covers both. Recorded here, tested in
+  The shipped "Never submit a form" preset does NOT cover a choice either: it stops activations of a
+  "submit" element and the Enter key, and a menu change that submits through a page handler is neither. Its
+  caveat text in Boundaries says so. An operator who wants to stop all form filling writes `intent == "type"`, which covers both. Recorded here, tested in
   `server/tests/computer-select.test.ts`, and not changed: giving the tool another name in the policy context
   would make the audit trail say something untrue.
+- The snapshot asks the page about every textbox, combobox and listbox. It is not skipped when the page has
+  no `<select>` (a quick `querySelector` check would miss selects in a shadow root or a frame); the cost is
+  one short round trip per field, in parallel.
 - A demonstration recording (`demonstrations/draft.ts`) does not draft `computer_select` steps: a recorded
   menu choice is still turned into a typing step. Not changed here.
 - Not run live. The prompt line in `shared/bot-prompt.ts` and the tool description are text a model reads and

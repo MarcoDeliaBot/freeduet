@@ -232,8 +232,17 @@ export type ActionResult = {
   /** For `select` on a date field: the value the field now holds (ISO), and its type. */
   value?: string;
   inputType?: string;
-  /** For a date the page holds but its own min/max rule rejects: kept, and said. */
+  /** For a date the page holds but its own min, max or step rule rejects: kept, and said. */
   outOfRange?: true;
+  /** For a cleared date field: it is now empty, and `required` says the page requires a value. */
+  cleared?: true;
+  required?: true;
+  /**
+   * The change made the page navigate (a handler submitted a form or set the address), so the field
+   * could not be read back: for a menu `selected` is the option(s) requested, and `url` is where the
+   * page now is.
+   */
+  navigated?: true;
   kind?: "select" | "date";
   key?: string;
   deltaY?: number;

@@ -1110,8 +1110,10 @@ export function createComputerGateway(
     /**
      * A native menu or a date field (D123). Typing by another name, so it is governed exactly as
      * `type` is: the same policy, the same audit row, the same approval gate, effect `write`. The
-     * policy sees intent `type` and the element's own role, name and type; there is no `key`, because
-     * choosing presses nothing, so no form is sent by it.
+     * policy sees intent `type` and the element's own role, name and type. There is no `key`, but that
+     * does not make a choice inert: a menu change can run the page's own handler, which may submit a
+     * form, navigate or send a request. The "Never submit a form" preset does not cover that; the
+     * person's approval card or allow rule is the protection, as for a typed entry.
      */
     select(
       botId: string,
@@ -1342,7 +1344,7 @@ export function intentOf(
     case "computer_click":
       return "activate";
     case "computer_key":
-    // A menu or date choice changes a field the way typing does and presses nothing (D123).
+    // A menu or date choice changes a field the way typing does, and has no key of its own (D123). The page's change handler may still act.
     case "computer_select":
     // A type carrying `submit` ends in Enter, and the same reasoning applies to it: what the
     // keypress does is press whatever the form activates, whichever tool asked for it.

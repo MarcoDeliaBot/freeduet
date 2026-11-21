@@ -25,7 +25,12 @@
  * left out of the snapshot and refused for a write.
  */
 
-import type { Locator } from "playwright";
+import type { Frame, Locator, Page } from "playwright";
+import {
+  isNavigationRace,
+  SETTLE_LOAD_WAIT_MS,
+  SETTLE_QUIET_MS,
+} from "./settle";
 import {
   isSensitiveWriteTarget,
   SecretFieldError,
@@ -262,9 +267,11 @@ function offered(options: MenuOption[]): string {
 /**
  * Which option a request names, by its index.
  *
- * Exact label first, then exact value, then the label ignoring case. Each step must name ONE option:
- * two options with the same label, or a label that is one option's value and another's label, are
- * refused rather than guessed at, because choosing the wrong "Delivery" is worse than asking.
+ * Label first: the exact label, then the exact value, then the label ignoring case. The first step
+ * that finds anything decides, so an option whose label equals another option's value wins by its label
+ * (the label is what the page shows and what the member read in the snapshot). Within a step the
+ * match must be ONE option: two options with the same label (or the same value) are refused rather than
+ * guessed at, because choosing the wrong "Delivery" is worse than asking.
  */
 export function matchOption(options: MenuOption[], wanted: string): number {
   const norm = (text: string) => text.replace(/\s+/g, " ").trim();
@@ -297,16 +304,83 @@ export function matchOption(options: MenuOption[], wanted: string): number {
 }
 
 export type ChoiceResult =
-  | {
+  | ({
       kind: "select";
+      /** What the menu shows as chosen; the requested option(s) when `navigated` and it could not be read. */
       selected: Array<{ label: string; value: string }>;
-    }
-  | {
+    } & Moved)
+  | ({
       kind: "date";
       inputType: DateInputType;
       value: string;
+      /** The page's own min, max or step rejects the value. Never set for a clear. */
       outOfRange?: true;
-    };
+      /** The value was cleared, and the field is required by the page. */
+      cleared?: true;
+      required?: true;
+    } & Moved);
+
+/**
+ * A change handler can move the page (`onchange="this.form.submit()"`) or start a request. When the
+ * page navigated after the change, the field is gone, so the result says so and carries the request as
+ * the thing that was chosen, not a read-back that could not happen. The new address is `url`.
+ */
+export type Moved = { navigated?: true };
+
+const pause = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
+/**
+ * Do a change, wait as long as the page takes to settle, and read the field back.
+ *
+ * The page gets one quiet period (`SETTLE_QUIET_MS`) and a bounded load wait (`SETTLE_LOAD_WAIT_MS`)
+ * after the change, which is enough for a handler that submits a form or sets `location`. A main-frame
+ * navigation counted at any point from the change to the end of the read means the change happened and
+ * the read-back is not available: the caller's `fallback` is returned with `navigated: true`. A request
+ * a handler sends without navigating needs nothing: the field is still there to read.
+ */
+async function changeAndRead<T>(
+  page: Page,
+  act: () => Promise<void>,
+  read: () => Promise<T>,
+  fallback: () => T,
+): Promise<{ value: T } & Moved> {
+  let navigations = 0;
+  const main = page.mainFrame();
+  const onNavigated = (frame: Frame) => {
+    if (frame === main) navigations += 1;
+  };
+  page.on("framenavigated", onNavigated);
+  const moved = async () => {
+    await page
+      .waitForLoadState("load", { timeout: SETTLE_LOAD_WAIT_MS })
+      .catch(() => undefined);
+    return { value: fallback(), navigated: true as const };
+  };
+  try {
+    try {
+      await act();
+    } catch (error) {
+      // The change landed and the page moved on while the action was finishing.
+      if (navigations > 0 && isNavigationRace(error)) return await moved();
+      throw error;
+    }
+    await pause(SETTLE_QUIET_MS);
+    await page
+      .waitForLoadState("load", { timeout: SETTLE_LOAD_WAIT_MS })
+      .catch(() => undefined);
+    if (navigations > 0) return await moved();
+    try {
+      const value = await read();
+      if (navigations > 0) return await moved();
+      return { value };
+    } catch (error) {
+      if (navigations > 0 || isNavigationRace(error)) return await moved();
+      throw error;
+    }
+  } finally {
+    page.off("framenavigated", onNavigated);
+  }
+}
 
 /**
  * Choose in a menu or fill a date field, and read back what the field now shows.
@@ -360,32 +434,55 @@ export async function chooseOnField(
     const problem =
       value === "" ? undefined : checkDateValue(before.type, value);
     if (problem) throw new ChoiceError(`${problem} Nothing was changed.`);
-    await field.fill(value, options);
-    const after = await field.evaluate(describeChoiceField, {
-      selector: SENSITIVE_FIELD_SELECTOR,
-      limit: 0,
-      textLimit: OPTION_TEXT_LIMIT,
-    });
-    if (after.kind !== "date")
-      throw new ChoiceError(
-        "The field changed into something else while it was filled.",
-      );
-    // Playwright pads a seconds-less time the way the page does, so the read-back is the truth. A
-    // value the page did not keep (the browser drops what it cannot parse) is said, not hidden.
-    if (value !== "" && after.value === "")
-      throw new ChoiceError(
-        `The page did not keep ${JSON.stringify(value)}. The field is empty.`,
-      );
-    const inRange = await field.evaluate(
-      (element) => (element as HTMLInputElement).validity.valid,
-      undefined,
-      { timeout: options.timeout },
+    const changed = await changeAndRead(
+      field.page(),
+      () => field.fill(value, options),
+      async () => {
+        const after = await field.evaluate(describeChoiceField, {
+          selector: SENSITIVE_FIELD_SELECTOR,
+          limit: 0,
+          textLimit: OPTION_TEXT_LIMIT,
+        });
+        if (after.kind !== "date")
+          throw new ChoiceError(
+            "The field changed into something else while it was filled.",
+          );
+        // Playwright pads a seconds-less time the way the page does, so the read-back is the truth. A
+        // value the page did not keep (the browser drops what it cannot parse) is said, not hidden.
+        if (value !== "" && after.value === "")
+          throw new ChoiceError(
+            `The page did not keep ${JSON.stringify(value)}. The field is empty.`,
+          );
+        const state = await field.evaluate(
+          (element) => {
+            const input = element as HTMLInputElement;
+            const v = input.validity;
+            return {
+              rejected: v.rangeUnderflow || v.rangeOverflow || v.stepMismatch,
+              required: input.required,
+            };
+          },
+          undefined,
+          { timeout: options.timeout },
+        );
+        return { value: after.value, ...state };
+      },
+      () => ({ value, rejected: false, required: false }),
     );
+    const read = changed.value;
     return {
       kind: "date",
       inputType: before.type,
-      value: after.value,
-      ...(inRange ? {} : { outOfRange: true as const }),
+      value: read.value,
+      // Clearing is never "out of range": a required field that is now empty says it is required.
+      ...(value === ""
+        ? read.required
+          ? { required: true as const }
+          : {}
+        : {}),
+      ...(value === "" ? { cleared: true as const } : {}),
+      ...(value !== "" && read.rejected ? { outOfRange: true as const } : {}),
+      ...(changed.navigated ? { navigated: true as const } : {}),
     };
   }
 
@@ -403,15 +500,31 @@ export async function chooseOnField(
     timeout: options.timeout,
   });
   const indexes = [...new Set(wanted.map((entry) => matchOption(all, entry)))];
-  await field.selectOption(
-    indexes.map((index) => ({ index })),
-    options,
+  const changed = await changeAndRead(
+    field.page(),
+    async () => {
+      await field.selectOption(
+        indexes.map((index) => ({ index })),
+        options,
+      );
+    },
+    async () => {
+      const after = await field.evaluate(readAllOptions, undefined, {
+        timeout: options.timeout,
+      });
+      return after
+        .filter((option) => option.selected)
+        .map((option) => ({ label: option.label, value: option.value ?? "" }));
+    },
+    () =>
+      indexes.map((index) => ({
+        label: all[index]?.label ?? "",
+        value: all[index]?.value ?? "",
+      })),
   );
-  const after = await field.evaluate(readAllOptions, undefined, {
-    timeout: options.timeout,
-  });
-  const selected = after
-    .filter((option) => option.selected)
-    .map((option) => ({ label: option.label, value: option.value ?? "" }));
-  return { kind: "select", selected };
+  return {
+    kind: "select",
+    selected: changed.value,
+    ...(changed.navigated ? { navigated: true as const } : {}),
+  };
 }

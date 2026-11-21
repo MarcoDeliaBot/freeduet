@@ -117,7 +117,7 @@ describe("the contract", () => {
     expect(isActingTool("computer_select")).toBe(true);
   });
 
-  test("its intent is the one typing has, and it presses nothing", () => {
+  test("its intent is the one typing has, and it has no key of its own", () => {
     expect(intentOf("computer_select", undefined)).toBe("type");
     expect(intentOf("computer_type", undefined)).toBe("type");
     // A select never carries a key, so it can never become an activation.

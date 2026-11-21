@@ -310,6 +310,91 @@ describe.skipIf(!asked)("in a real browser", () => {
     await tab.close();
   }, 15_000);
 
+  test("clearing a date is not out of range: a required field says it is required", async () => {
+    const tab = await pageWithFixture();
+    await tab.evaluate(() =>
+      document.getElementById("day")?.setAttribute("required", ""),
+    );
+    const day = await field(tab, "Day");
+    await chooseOnField(day, "2026-03-28", acting);
+    const cleared = await chooseOnField(day, "", acting);
+    expect(cleared).toEqual({
+      kind: "date",
+      inputType: "date",
+      value: "",
+      cleared: true,
+      required: true,
+    });
+    expect(cleared).not.toHaveProperty("outOfRange");
+    await tab.close();
+  }, 15_000);
+
+  test("a menu whose change submits a form reports the navigation instead of failing", async () => {
+    const tab = await browser.newPage();
+    await tab.route("http://fixture.test/**", (route) =>
+      route.fulfill({
+        contentType: "text/html",
+        body: "<!doctype html><title>Done</title><body>Sent</body>",
+      }),
+    );
+    await tab.setContent(
+      `<!doctype html><body><form action="http://fixture.test/submit" method="get"><label>Plan <select name="plan" onchange="this.form.submit()"><option value="">Choose</option><option value="a">Basic</option><option value="b">Pro</option></select></label></form>`,
+    );
+    const result = await chooseOnField(await field(tab, "Plan"), "Pro", acting);
+    expect(result).toEqual({
+      kind: "select",
+      selected: [{ label: "Pro", value: "b" }],
+      navigated: true,
+    });
+    expect(tab.url()).toContain("http://fixture.test/submit?plan=b");
+    await tab.close();
+  }, 20_000);
+
+  test("a date whose change navigates after a short delay is reported too", async () => {
+    const tab = await browser.newPage();
+    await tab.route("http://fixture.test/**", (route) =>
+      route.fulfill({ contentType: "text/html", body: "<body>Moved</body>" }),
+    );
+    await tab.setContent(
+      `<!doctype html><body><label>When <input type="date" onchange="setTimeout(() => { location.href = 'http://fixture.test/later' }, 100)"></label>`,
+    );
+    const result = await chooseOnField(
+      await field(tab, "When"),
+      "2026-03-28",
+      acting,
+    );
+    expect(result).toMatchObject({
+      kind: "date",
+      value: "2026-03-28",
+      navigated: true,
+    });
+    expect(tab.url()).toBe("http://fixture.test/later");
+    await tab.close();
+  }, 20_000);
+
+  test("a menu whose change sends a request without navigating is read back as usual", async () => {
+    const tab = await browser.newPage();
+    const asked: string[] = [];
+    await tab.route("http://fixture.test/**", (route) => {
+      asked.push(route.request().url());
+      return route.fulfill({
+        contentType: "application/json",
+        headers: { "access-control-allow-origin": "*" },
+        body: "{}",
+      });
+    });
+    await tab.setContent(
+      `<!doctype html><body><label>Plan <select onchange="fetch('http://fixture.test/save?plan=' + this.value)"><option value="a">Basic</option><option value="b">Pro</option></select></label>`,
+    );
+    const result = await chooseOnField(await field(tab, "Plan"), "Pro", acting);
+    expect(result).toEqual({
+      kind: "select",
+      selected: [{ label: "Pro", value: "b" }],
+    });
+    expect(asked.some((url) => url.includes("plan=b"))).toBe(true);
+    await tab.close();
+  }, 20_000);
+
   test("a custom drop-down is not handled here and the member is told how to use it", async () => {
     const tab = await pageWithFixture();
     expect(
