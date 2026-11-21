@@ -955,7 +955,7 @@ describe("Cam, the video maker", () => {
 });
 
 /**
- * Rex, the model trainer (D110, built with D120): the third member added after v0.1. He holds no skill and
+ * Rex, the model trainer (D110, built with D120): the third member added after v0.1. He holds one skill with no tools and
  * no tool that changes an engine. He reads only what the person pastes, so his prompt says so.
  */
 describe("Rex, the model trainer", () => {
