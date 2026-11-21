@@ -762,10 +762,22 @@ export type TokenCounts = {
   outputTokens: number;
   cacheReadTokens: number;
   cacheWriteTokens: number;
+  /** D126: wall-clock seconds of the attempts, measured by agent-freeduet; there even when no tokens were reported. */
+  seconds: number;
 };
+/** D126: what the engine is, for "tokens saved": only `free_cloud` and `local` save anything. */
+export const TOKEN_CLASSES = [
+  "free_cloud",
+  "local",
+  "login",
+  "metered",
+  "other",
+] as const;
+export type TokenClass = (typeof TOKEN_CLASSES)[number];
 export type TokenRow = {
   member: string | null;
   engine: string;
+  class: TokenClass;
   today: TokenCounts;
   week: TokenCounts;
 };
@@ -787,6 +799,7 @@ const NO_COUNTS: TokenCounts = {
   outputTokens: 0,
   cacheReadTokens: 0,
   cacheWriteTokens: 0,
+  seconds: 0,
 };
 
 function countOf(value: unknown): number {
@@ -805,6 +818,7 @@ function countsOf(raw: unknown): TokenCounts {
     outputTokens: countOf(counts.output_tokens),
     cacheReadTokens: countOf(counts.cache_read_tokens),
     cacheWriteTokens: countOf(counts.cache_write_tokens),
+    seconds: countOf(counts.seconds),
   };
 }
 
@@ -818,9 +832,13 @@ function usageRowOf(raw: unknown, withMember: boolean): TokenRow | null {
       ? row.member
       : null;
   if (withMember && member === null) return null;
+  const kind = (TOKEN_CLASSES as readonly unknown[]).includes(row.class)
+    ? (row.class as TokenClass)
+    : "other";
   return {
     member,
     engine,
+    class: kind,
     today: countsOf(row.today),
     week: countsOf(row.week),
   };

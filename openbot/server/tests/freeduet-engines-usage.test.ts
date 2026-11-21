@@ -24,6 +24,7 @@ const COUNTS = {
   output_tokens: 300,
   cache_read_tokens: 40,
   cache_write_tokens: 5,
+  seconds: 1105,
 };
 const AGENT_ANSWER = {
   timezone: "UTC",
@@ -33,14 +34,30 @@ const AGENT_ANSWER = {
     {
       member: "creator",
       engine: "claude-code",
+      class: "login",
       today: COUNTS,
-      week: { ...COUNTS, turns: 9 },
+      week: { ...COUNTS, turns: 9, seconds: 7300 },
       text: "a message the person wrote",
     },
-    { member: "chef", engine: "local", today: COUNTS, week: COUNTS },
+    {
+      member: "chef",
+      engine: "local",
+      class: "local",
+      today: COUNTS,
+      week: COUNTS,
+    },
+    {
+      member: "chef",
+      engine: "odd",
+      class: "<script>",
+      today: { ...COUNTS, seconds: "12", reported_turns: 0 },
+      week: { ...COUNTS, seconds: -3 },
+    },
     { member: "../etc/passwd", engine: "x", today: COUNTS, week: COUNTS },
   ],
-  engines: [{ engine: "claude-code", today: COUNTS, week: COUNTS }],
+  engines: [
+    { engine: "claude-code", class: "login", today: COUNTS, week: COUNTS },
+  ],
   problem: false,
 };
 
@@ -154,10 +171,17 @@ describe("GET /api/freeduet/engines/usage: the same authority as the Engines pag
     expect(body.rows.map((row: { member: string }) => row.member)).toEqual([
       "creator",
       "chef",
+      "chef",
     ]);
+    // D126: a class that is not one of the five is "other"; a time that is not a whole count is 0.
+    expect(body.rows[2].class).toBe("other");
+    expect(body.rows[2].today.seconds).toBe(0);
+    expect(body.rows[2].week.seconds).toBe(0);
+    expect(body.rows[1].class).toBe("local");
     expect(body.rows[0]).toEqual({
       member: "creator",
       engine: "claude-code",
+      class: "login",
       today: {
         turns: 3,
         reportedTurns: 2,
@@ -165,6 +189,7 @@ describe("GET /api/freeduet/engines/usage: the same authority as the Engines pag
         outputTokens: 300,
         cacheReadTokens: 40,
         cacheWriteTokens: 5,
+        seconds: 1105,
       },
       week: {
         turns: 9,
@@ -173,6 +198,7 @@ describe("GET /api/freeduet/engines/usage: the same authority as the Engines pag
         outputTokens: 300,
         cacheReadTokens: 40,
         cacheWriteTokens: 5,
+        seconds: 7300,
       },
     });
     expect(body.engines[0].engine).toBe("claude-code");
@@ -227,6 +253,8 @@ describe("readUsage", () => {
       outputTokens: 0,
       cacheReadTokens: 0,
       cacheWriteTokens: 0,
+      seconds: 0,
     });
+    expect(usage.rows[0].class).toBe("other");
   });
 });

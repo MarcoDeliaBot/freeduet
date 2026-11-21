@@ -1,10 +1,24 @@
 import { useQuery } from "@tanstack/react-query";
+import { useState } from "react";
 import { DuetCard } from "@/components/duet/kit";
 import { PageSection } from "@/components/layout/page-shell";
 import { agentListQueryOptions } from "@/lib/agents/queries";
 import { client } from "@/lib/client";
 import type { EnginesReading } from "./engines-text";
 import {
+  CURRENCY_HELP,
+  CURRENCY_STORAGE_KEY,
+  type Currency,
+  DEFAULT_CURRENCY,
+  formatMoney,
+  listPriceUsd,
+  referenceLine,
+  SAVED_LABELS,
+  SAVED_NOTE,
+  type Saved,
+  savedFor,
+  savedTimeText,
+  savedTokensText,
   TOKENS_ALL_ENGINES,
   TOKENS_COLUMNS,
   TOKENS_DESCRIPTION,
@@ -28,6 +42,101 @@ import {
 
 const REFRESH_MS = 30_000;
 
+/** The person's choice of euros or dollars, kept in this browser only. A browser that refuses storage still works: the choice
+ * then lasts until the page is closed. */
+export function readCurrency(): Currency {
+  try {
+    const stored = window.localStorage.getItem(CURRENCY_STORAGE_KEY);
+    return stored === "usd" || stored === "eur" ? stored : DEFAULT_CURRENCY;
+  } catch {
+    return DEFAULT_CURRENCY;
+  }
+}
+
+function writeCurrency(currency: Currency): void {
+  try {
+    window.localStorage.setItem(CURRENCY_STORAGE_KEY, currency);
+  } catch {
+    // Not remembered; nothing else depends on it.
+  }
+}
+
+function SavedPart({
+  saved,
+  currency,
+  onToggle,
+}: {
+  saved: Saved;
+  currency: Currency;
+  onToggle: () => void;
+}) {
+  const tokens = savedTokensText(saved);
+  const time = savedTimeText(saved);
+  if (!tokens && !time) return <>nothing yet</>;
+  const amount = formatMoney(
+    listPriceUsd(saved.inputTokens, saved.outputTokens),
+    currency,
+  );
+  const other = currency === "eur" ? "dollars" : "euros";
+  return (
+    <>
+      {tokens ? (
+        <>
+          {tokens} ≈{" "}
+          <button
+            aria-label={`${amount}. Show amounts in ${other}`}
+            className="font-semibold underline decoration-dotted underline-offset-2"
+            onClick={onToggle}
+            type="button"
+          >
+            {amount}
+          </button>
+        </>
+      ) : null}
+      {tokens && time ? ", " : null}
+      {time ? (
+        <>
+          {tokens ? "plus " : ""}
+          {time}
+        </>
+      ) : null}
+    </>
+  );
+}
+
+function SavedLine({ rows }: { rows: TokenRow[] }) {
+  const [currency, setCurrency] = useState<Currency>(readCurrency);
+  const toggle = () => {
+    const next: Currency = currency === "eur" ? "usd" : "eur";
+    setCurrency(next);
+    writeCurrency(next);
+  };
+  return (
+    <div className="mt-3 text-sm" data-testid="tokens-saved">
+      <p>
+        <span className="font-semibold">{SAVED_LABELS.week}:</span>{" "}
+        <SavedPart
+          currency={currency}
+          onToggle={toggle}
+          saved={savedFor(rows, "week")}
+        />
+        {". "}
+        <span className="text-duet-ink-2">{SAVED_LABELS.today}:</span>{" "}
+        <SavedPart
+          currency={currency}
+          onToggle={toggle}
+          saved={savedFor(rows, "today")}
+        />
+        {"."}
+      </p>
+      <p className="type-label mt-1 text-duet-ink-2">
+        {referenceLine()} {CURRENCY_HELP}
+      </p>
+      <p className="type-label mt-1 text-duet-ink-2">{SAVED_NOTE}</p>
+    </div>
+  );
+}
+
 export const tokensKeys = { all: ["freeduet", "engines", "usage"] as const };
 
 export function tokensQueryOptions() {
@@ -46,7 +155,10 @@ function Cell({ counts }: { counts: TokenCounts }) {
   const cell = tokensCell(counts);
   return (
     <td className="px-3 py-3 tabular-nums">
-      {cell.text}
+      <span className="whitespace-nowrap">{cell.text}</span>
+      {cell.time ? (
+        <span className="type-label block text-duet-ink-2">{cell.time}</span>
+      ) : null}
       {cell.note ? (
         <span className="type-label block text-duet-ink-2">{cell.note}</span>
       ) : null}
@@ -151,6 +263,9 @@ export function EngineTokens({ reading }: { reading: EnginesReading }) {
             </table>
           </section>
         </DuetCard>
+      ) : null}
+      {data && !data.reason && data.rows.length > 0 ? (
+        <SavedLine rows={data.rows} />
       ) : null}
       {data && !data.reason && data.rows.length > 0 ? (
         <p className="type-label mt-2 text-duet-ink-2">{TOKENS_NOTE}</p>
