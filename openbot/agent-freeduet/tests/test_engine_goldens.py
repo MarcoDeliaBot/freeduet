@@ -363,6 +363,28 @@ def report_guard_adds_the_report(rig):
 
 
 @scenario
+def cannot_guard_hands_a_refusal_to_a_colleague(rig):
+    """D128: the person's own turn ends in "I can't"; the member is asked once more with Jules named, calls
+    message_bot, and answers from what comes back. Two CLI runs, one segment."""
+    import base64
+    rig.monkeypatch.setattr(segment, "SETTLE_SECONDS", SETTLE_NEVER)  # each CLI run plays its steps, then ends by itself
+    rig.with_agents("agents:\n  - id: freeduet\n    system_prompt: You are Iris.\n  - id: concierge\n    system_prompt: You are Jules, the concierge.\n")
+    rig.answers.append({"text": "Jules: 14 degrees in Rome (weather service, 21 Nov).", "isError": False})
+    rig.plan(
+        [{"text": "I can't check the weather in Rome: I don't have access to weather services."}],
+        [{"tool": {"name": "message_bot", "input": {"bot": "Jules", "task": "Temperature in Rome"}}, "text": "Asking Jules."},
+         {"text": "It is 14 degrees in Rome, says Jules."}],
+    )
+    request = run_body(
+        [IRIS, {"id": "u1", "role": "user", "content": "what is the temperature in Rome?"}],
+        tools=[tool("message_bot", {"bot": {"type": "string"}, "task": {"type": "string"}})], deployment=["message_bot"],
+    )
+    claims = base64.urlsafe_b64encode(json.dumps({"initiator": {"kind": "person"}}).encode()).decode().rstrip("=")
+    request["forwardedProps"]["openbotRun"] = f"{claims}.signature"
+    rig.post(request)
+
+
+@scenario
 def report_guard_follow_up_without_a_report(rig):
     rig.plan([{"text": REPLY}])
     rig.followups([{"text": f"{REPLY}\nOutcome: done\nDone: sorted"}], [{"text": REPORT}])

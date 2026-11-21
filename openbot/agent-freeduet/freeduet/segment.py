@@ -43,6 +43,11 @@ When the CLI's final result ends a turn that did work without the six-line repor
 (report_guard.py) asks once, with no tools, and streams the report it gets as the end of the same
 assistant message; `SegmentNotes.report_guard` tells the team log that it asked.
 
+When the final answer of the person's own live turn is a refusal of capability ("I can't, I have no access")
+and a colleague has the capability, the cannot guard (cannot_guard.py, D128) asks the member once more, in this
+same segment: a second turn of the same engine on the same bridge, with a reminder that names the colleague.
+`SegmentNotes.cannot_guard` tells the team log.
+
 A turn never ends with no text for the person. When the final result comes with no words at all (the
 CLI ended its turn on a tool's error result and said nothing) and the guard adds nothing either, the
 segment streams report_guard.no_answer_text: one fixed sentence that says the member stopped and names
@@ -68,6 +73,7 @@ from . import (
     origin,
     person_language,
     person_tone,
+    cannot_guard,
     report_guard,
     team_log,
     tool_notes,
@@ -95,6 +101,7 @@ class SegmentNotes:
     """What the segment did that its events do not show, for the team log (app.py)."""
 
     report_guard: str | None = None  # report_guard.ADDED or FAILED once the guard asked
+    cannot_guard: str | None = None  # cannot_guard.UNCHANGED, RETRIED or FAILED once the cannot guard asked again
 
 
 def _same(a: dict, b: dict) -> bool:
@@ -213,14 +220,14 @@ async def _answer_locally(local: iris_tools.IrisTools, call: ipc.BridgeCall, see
 class _InboxSink:
     """What an engine writes to: the segment's inbox, in the order the engine read it."""
 
-    def __init__(self, inbox: asyncio.Queue, ready: asyncio.Future):
-        self.inbox, self.ready = inbox, ready
+    def __init__(self, inbox: asyncio.Queue, ready: asyncio.Future, generation: int = 0):
+        self.inbox, self.ready, self.generation = inbox, ready, generation
 
     async def put(self, item) -> None:
         await self.inbox.put(("stream", item))
 
     async def end(self) -> None:
-        await self.inbox.put(("eof", None))
+        await self.inbox.put(("eof", self.generation))  # the segment ignores the end of an engine turn it has replaced
 
     def started(self) -> None:
         if not self.ready.done():
@@ -274,9 +281,13 @@ async def run_segment(run: RunInput, member: Member, notes: SegmentNotes | None 
     async def on_call(call: ipc.BridgeCall) -> None:
         await inbox.put(("call", call))
 
+    cannot_asked = False  # the cannot guard started its one second turn
+
     async def guard(story: report_guard.Story) -> tuple[str, str] | None:
         """The report lines to add to a turn that ends without a complete one, with the separator to
         put before them, or None (report_guard.py)."""
+        if cannot_asked and story.called and notes.cannot_guard == cannot_guard.UNCHANGED:
+            notes.cannot_guard = cannot_guard.RETRIED  # the second turn did something: it made a call
         if not report_guard.applies(
             run.messages, story.reply(), story.called, member.id, report_guard.colleague_names()
         ):
@@ -323,7 +334,63 @@ async def run_segment(run: RunInput, member: Member, notes: SegmentNotes | None 
                 """The stream ended without a result line: the engine says why."""
                 return (await engine_task).error
 
-            async for event in _drive(run, offered, inbox, spawn, failed_exit, local, guard, handed_over):
+            def mark_failed() -> None:
+                notes.cannot_guard = cannot_guard.FAILED
+
+            async def retry(story: report_guard.Story, generation: int) -> bool:
+                """The cannot guard (cannot_guard.py): start the one second turn when it applies. Never raises."""
+                nonlocal engine_task, cannot_asked
+                if cannot_asked or not cannot_guard.enabled():
+                    return False
+                try:
+                    found = cannot_guard.applies(
+                        run.messages, story.reply(), story.called, run.assertion, offered, member.id
+                    )
+                    if found is None:
+                        return False
+                    again = transcript.render(
+                        member, [*run.messages, *story.messages], run.context, active_lessons, run_notes,
+                        closing=cannot_guard.reminder(*found), served=served, light=light, context_tokens=context_tokens,
+                    )
+                    previous = engine_task
+                    if previous is not None:  # it has given its result: let it end, never hold the turn for it
+                        await asyncio.wait({previous}, timeout=5)
+                        previous.cancel()
+                        with suppress(asyncio.CancelledError, Exception):
+                            await previous
+                    second = TurnContext(
+                        again.system, again.prompt, directory, work, diagnostics, (), None, light=light
+                    )
+                    sink = _InboxSink(inbox, asyncio.get_running_loop().create_future(), generation)
+
+                    async def run_again() -> None:
+                        try:
+                            await engine.run_turn(second, sink, Gate(port, host.secret))
+                            # A turn that started reports its end through the stream (a result line, or eof);
+                            # only one that never started (no CLI, a crash) says nothing, and is told here.
+                            failed = not sink.ready.done()
+                        except asyncio.CancelledError:
+                            raise
+                        except Exception:  # noqa: BLE001 - the first answer stands
+                            log.warning("cannot guard: the second turn crashed", exc_info=True)
+                            failed = True
+                        if failed:
+                            notes.cannot_guard = cannot_guard.FAILED
+                            await inbox.put(("retry_failed", generation))
+
+                    cannot_asked = True
+                    notes.cannot_guard = cannot_guard.UNCHANGED
+                    log.info(
+                        "cannot guard: asked %s again for a refusal and named %s (thread %s, run %s)",
+                        member.id, found[1], run.thread_id, run.run_id,
+                    )
+                    engine_task = asyncio.create_task(run_again())
+                    return True
+                except Exception:  # noqa: BLE001 - the guard never fails a turn
+                    log.warning("cannot guard failed", exc_info=True)
+                    return False
+
+            async for event in _drive(run, offered, inbox, spawn, failed_exit, local, guard, handed_over, retry, mark_failed):
                 yield event
         finally:
             if engine_task is not None:
@@ -343,7 +410,9 @@ async def run_segment(run: RunInput, member: Member, notes: SegmentNotes | None 
 async def _drive(run: RunInput, offered: set[str], inbox: asyncio.Queue, spawn, failed_exit,
                  local: iris_tools.IrisTools | None = None,
                  guard: Callable[[report_guard.Story], Awaitable[str | None]] | None = None,
-                 handed_over: list[str] | None = None):
+                 handed_over: list[str] | None = None,
+                 retry: Callable[[report_guard.Story, int], Awaitable[bool]] | None = None,
+                 cannot_failed: Callable[[], None] = lambda: None):
     """The segment's state machine. Ends with exactly one RUN_FINISHED or RUN_ERROR."""
     handed_over = handed_over if handed_over is not None else []
     local_names = local.names if local is not None else frozenset()
@@ -351,6 +420,7 @@ async def _drive(run: RunInput, offered: set[str], inbox: asyncio.Queue, spawn, 
     deadline = loop.time() + SEGMENT_TIMEOUT_SECONDS
     text = _Text()
     story = report_guard.Story()  # this segment's reply and calls, for the report guard
+    generation = 0  # the engine turn being read: the cannot guard starts a second one (cannot_guard.py)
     seen: list[ToolUse] = []  # tool_use lines no bridge call has claimed yet
     waiting: list[ipc.BridgeCall] = []  # bridge calls whose tool_use line has not been read yet
     in_flight = 0  # deployment calls running
@@ -367,6 +437,22 @@ async def _drive(run: RunInput, offered: set[str], inbox: asyncio.Queue, spawn, 
             agui.text_end(message_id),
             agui.run_finished(run),
         ]
+
+    async def ending() -> list[dict]:
+        """What closes a turn that ends in text: the report guard's lines, else the fixed sentence for a turn
+        with no text at all (report_guard.py)."""
+        events: list[dict] = []
+        added = await guard(story) if guard is not None else None
+        if added:
+            events.extend(text.append(*added))
+        elif not story.reply().strip():
+            # Nothing for the person: never end a turn in silence (report_guard.py).
+            log.warning(
+                "segment ended with no text for the person (thread %s, run %s, last call %s)",
+                run.thread_id, run.run_id, report_guard.last_attempt(run.messages, story),
+            )
+            events.extend(text.append(report_guard.no_answer_text(run.messages, story)))
+        return events
 
     def claim(call: ipc.BridgeCall) -> ToolUse | None:
         for use in seen:
@@ -438,6 +524,17 @@ async def _drive(run: RunInput, offered: set[str], inbox: asyncio.Queue, spawn, 
                         yield event
                     return
                 failure = None if handed else payload.failure()
+                if failure is not None and generation > 0:
+                    # The cannot guard's second turn failed (a limit, an error): the first answer is whole
+                    # and already shown, so the turn ends with it (cannot_guard.py: it never breaks a turn).
+                    log.warning("cannot guard: the second turn failed; the first answer stands (thread %s)", run.thread_id)
+                    cannot_failed()
+                    for event in await ending():
+                        yield event
+                    for event in text.close():
+                        yield event
+                    yield agui.run_finished(run)
+                    return
                 if failure is None and not handed:
                     # The turn ends here. The CLI's result text can carry what no delta did: all of the
                     # answer, or the end of it. Only text that is not on the person's screen is sent,
@@ -448,19 +545,17 @@ async def _drive(run: RunInput, offered: set[str], inbox: asyncio.Queue, spawn, 
                         story.extend_last(unsent)
                         for event in text.append(unsent, "") if shown.strip() else text.delta("result", unsent):
                             yield event
+                    # A refusal of capability gets one second turn, with the colleague named (cannot_guard.py).
+                    if retry is not None and await retry(story, generation + 1):
+                        generation += 1
+                        for event in text.close():
+                            yield event
+                        text = _Text()  # a new answer is a new message; its CLI ids may repeat the first turn's
+                        story.next_turn()
+                        continue
                     # A turn that did work closes with its report (report_guard.py).
-                    added = await guard(story) if guard is not None else None
-                    if added:
-                        for event in text.append(*added):
-                            yield event
-                    elif not story.reply().strip():
-                        # Nothing for the person: never end a turn in silence (report_guard.py).
-                        log.warning(
-                            "segment ended with no text for the person (thread %s, run %s, last call %s)",
-                            run.thread_id, run.run_id, report_guard.last_attempt(run.messages, story),
-                        )
-                        for event in text.append(report_guard.no_answer_text(run.messages, story)):
-                            yield event
+                    for event in await ending():
+                        yield event
                 for event in text.close():
                     yield event
                 yield failure or agui.run_finished(run)
@@ -521,10 +616,33 @@ async def _drive(run: RunInput, offered: set[str], inbox: asyncio.Queue, spawn, 
                 yield agui.run_finished(run)
                 return
 
+        elif kind == "retry_failed":
+            if payload != generation:
+                continue
+            # The second turn could not run: the first answer stands, as if the guard had not asked.
+            for event in await ending():
+                yield event
+            for event in text.close():
+                yield event
+            yield agui.run_finished(run)
+            return
+
         elif kind == "eof":
+            if payload is not None and payload != generation:
+                continue  # the end of the turn the cannot guard replaced
             if blocked:
                 for event in ask_the_person():
                     yield event
+                return
+            if generation > 0 and not handed:
+                # The second turn ended with no result line: the first answer stands.
+                log.warning("cannot guard: the second turn gave no result; the first answer stands (thread %s)", run.thread_id)
+                cannot_failed()
+                for event in await ending():
+                    yield event
+                for event in text.close():
+                    yield event
+                yield agui.run_finished(run)
                 return
             for event in text.close():
                 yield event

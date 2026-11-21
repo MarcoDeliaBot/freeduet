@@ -39,6 +39,7 @@ and [docs/ARCHITECTURE.md §3](../../docs/ARCHITECTURE.md).
 | `freeduet/bridge/` | The stdio MCP server the CLI starts, and its loopback line to the parent |
 | `freeduet/report.py`, `checkpoints.py` | The six report lines read from a member's final text, mapped to a checkpoint and saved |
 | `freeduet/report_guard.py` | A turn that did work and ended without its report: one follow-up with no tools asks for it, added to the same message. A turn that ends with no text at all gets one fixed sentence naming the last tool it called |
+| `freeduet/cannot_guard.py` | The person's own turn that ends in "I can't" while a colleague has the capability (the web: Jules): one second turn in the same segment, with the colleague named, at most once; never for routines or hand-offs (D128) |
 | `freeduet/tool_notes.py` | The exact reason `message_bot` was not offered on a run (a hand-off at OpenBot's depth limit, or none given), in the member's system text |
 | `freeduet/person_language.py` | `forwardedProps.openbotPersonLanguage` (from `FREEDUET_PERSON_LANGUAGE`, D26) read as a code and a name, and the one run note that tells the member which language the person reads in a turn nobody wrote |
 | `freeduet/team_log.py`, `lessons.py`, `iris_tools.py`, `origin.py`, `locking.py` | The team log, lessons and Iris's tools; who handed a run over; file locks |
@@ -54,7 +55,7 @@ and [docs/ARCHITECTURE.md §3](../../docs/ARCHITECTURE.md).
 | Path | What |
 |---|---|
 | `handoff/<botId>/<threadId>/` | Checkpoints: immutable JSON history and a readable `HANDOFF.md` |
-| `team-log.jsonl` | One line per segment: time, member, thread, run, outcome, summary, `from_iris`, approvals, `report_guard` (whether the report guard had to ask). Rotated at 10 MB |
+| `team-log.jsonl` | One line per segment: time, member, thread, run, outcome, summary, `from_iris`, approvals, `report_guard` (whether the report guard had to ask), and `cannot_guard` when the cannot guard asked again. Rotated at 10 MB |
 | `lessons/<member>.json` | Lessons, pending until the person replies `approve <code>` to Iris (rule in `freeduet/lessons.py`) |
 | `engine-state.json` | Each engine's state (ready, degraded, open, half-open, signed out), limited-until and counters, so a limit survives a restart. No engine text, no account, no key. `FREEDUET_ENGINE_STATE_FILE` moves it (a bare name is a file of this directory). A missing or corrupt file starts clean and is named in `GET /engines` |
 | `engine-ledger.json` | Only when a paid engine is held to the person's limits, which no release so far does: per turn what the engine reported (tokens, and a cost only if it stated one), the totals per UTC day and month. No message, key, path or member. `FREEDUET_ENGINE_LEDGER_FILE` moves it (a bare name is a file of this directory). A damaged file is never read as "nothing spent" (see "The spend ledger and the limits" below) |
