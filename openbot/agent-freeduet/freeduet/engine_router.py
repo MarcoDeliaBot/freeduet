@@ -419,16 +419,18 @@ class Router:
         progress = notices.NONE
         switches = 0
         stopped: tuple[str, str, datetime | None] | None = None  # the engine we are moving on from
+        last_failed: tuple[str, str, datetime | None] | None = None  # the last engine that ran and failed (D119: not blocked[-1])
 
         while True:
             key = self._pick(order, tried, floors, blocked)
             if key is None:
+                reason = last_failed or (blocked[-1] if blocked else None)
                 if choice.pin is not None and blocked:
-                    yield agui.run_error(notices.pinned(lang, *blocked[-1], now=self.state.now()), ENGINE_LIMITED)
+                    yield agui.run_error(notices.pinned(lang, *reason, now=self.state.now()), ENGINE_LIMITED)
                     return
-                if blocked and blocked[-1][1] == TOOLS_AS_TEXT:
+                if reason is not None and reason[1] == TOOLS_AS_TEXT:
                     # D116: the last engine that could answer wrote its tool calls as text: a plain message, not "unavailable".
-                    for event in _say(notices.tools_as_text_stop(lang, blocked[-1][0])):
+                    for event in _say(notices.tools_as_text_stop(lang, reason[0])):
                         yield event
                     yield agui.run_finished(run)
                     return
@@ -581,6 +583,7 @@ class Router:
             until = (row.limited_until if row else None) or failure.retry_at
             stopped = (self.adapters[key].label, self._notice_kind(key, failure.kind), until)
             blocked.append(stopped)
+            last_failed = stopped
 
     def _pick(self, order: list[str], tried: set[str], floors: dict[str, str],
               blocked: list[tuple[str, str, datetime | None]]) -> str | None:
