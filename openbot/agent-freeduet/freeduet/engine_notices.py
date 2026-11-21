@@ -15,6 +15,7 @@ from datetime import UTC, datetime
 
 from .engines import GAP_CLOSED, GAP_COST, GAP_SETUP, PAID_GATEWAY_NO_COST, PAID_GATEWAY_NOT_RUN, PAID_GATEWAY_SETUP
 from .failure_classifier import AUTH, CREDITS, RATE_LIMIT, TRANSIENT, USAGE_LIMIT
+from .tools_as_text import TOOLS_AS_TEXT
 from .ledger import DAILY, MONTHLY
 
 NONE, TEXT, TOOL = "none", "text", "tool"  # how far the turn got on the engine that stopped
@@ -114,6 +115,10 @@ def _reason(lang: str, label: str, kind: str, until: tuple[str | None, str] | No
     if isinstance(kind, Held):
         return _held(lang, label, kind)
     limited = kind in (RATE_LIMIT, USAGE_LIMIT, CREDITS)
+    if kind == TOOLS_AS_TEXT:  # D116
+        if lang == "it":
+            return f"{label} ha scritto le chiamate agli strumenti come testo invece di usarle"
+        return f"{label} wrote its tool calls as text instead of using them"
     if lang == "it":
         if limited:
             return f"{label} ha raggiunto il limite {_until(lang, until)}" if until else f"{label} ha raggiunto il limite"
@@ -287,6 +292,20 @@ def all_limited(
         return f"Ora nessun motore è disponibile.{back}{extra} Il tuo messaggio è conservato: rimandalo più tardi."
     back = f" The earliest is back {_back(lang, when)}." if when else ""
     return f"Every engine is unavailable right now.{back}{extra} Your message is kept: send it again later."
+
+
+def tools_as_text_stop(lang: str, label: str) -> str:
+    """D116: the last engine that could answer wrote its tool calls as text, so nothing was done."""
+    if lang == "it":
+        return (
+            f"{label} ha scritto le chiamate agli strumenti come testo invece di usarle, quindi non ha potuto fare il lavoro "
+            "(un modello gratuito scelto a caso può non saper usare gli strumenti). Scegli un altro modello o un altro motore "
+            "nella pagina Motori e rimanda il messaggio."
+        )
+    return (
+        f"{label} wrote its tool calls as text instead of using them, so it could not do the work (a free model picked at "
+        "random may not be able to use tools). Choose another model or engine on the Engines page, then send your message again."
+    )
 
 
 def loop_stop(lang: str, switches: int) -> str:
