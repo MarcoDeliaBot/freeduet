@@ -83,6 +83,7 @@ from .stream_json import MessageStart, Refused, TextDelta, ToolUse
 
 log = logging.getLogger("freeduet.segment")
 
+CONTEXT_TOO_SMALL = "FREEDUET_CONTEXT_TOO_SMALL"  # D121: the code of the RUN_ERROR of a transcript that cannot fit the engine
 SETTLE_SECONDS = 0.3
 MATCH_SECONDS = 1.0
 SEGMENT_TIMEOUT_SECONDS = 1800.0
@@ -258,7 +259,8 @@ async def run_segment(run: RunInput, member: Member, notes: SegmentNotes | None 
             member, run.messages, run.context, active_lessons, run_notes, served=served, light=light, context_tokens=context_tokens
         )
     except transcript.ContextTooSmall:
-        yield agui.run_error(engine_notices.conversation_too_long(engine_notices.language_of(run), engine.label))
+        # D121: the router reads this code and moves on to an engine with a larger context; alone it ends the turn with this text.
+        yield agui.run_error(engine_notices.conversation_too_long(engine_notices.language_of(run), engine.label), CONTEXT_TOO_SMALL)
         return
     inbox: asyncio.Queue = asyncio.Queue()
     handed_over: list[str] = []  # refused calls to offered tools that this segment handed to OpenBot

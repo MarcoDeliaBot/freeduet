@@ -268,7 +268,7 @@ def _private_homes(directory: Path) -> dict[str, str]:
     return {"HOME": str(home), "CLAUDE_CONFIG_DIR": str(config)}
 
 
-def turn_verdict(parser: StreamParser, stderr: str = "", exit_code: int | None = None) -> Failure | None:
+def turn_verdict(parser: StreamParser, stderr: str = "", exit_code: int | None = None, openrouter: bool = False) -> Failure | None:
     """How the turn went, for the breaker and for the person: None when the CLI answered, else the classifier's verdict
     on what the CLI said (``claude_cli.turn_failure``), with the HTTP status the CLI reports (``api_error_status``)
     asked when the words alone say nothing. The status is what tells a gateway's 502 or 400 from a failure nobody can
@@ -283,8 +283,9 @@ def turn_verdict(parser: StreamParser, stderr: str = "", exit_code: int | None =
     status = parser.api_error_status
     if status == 403:
         return Failure(UNKNOWN)
-    if failure.kind == RATE_LIMIT and is_upstream_rate_limit(" ".join(part for part in (_reported(parser), stderr) if part)):
-        # D121: the model's own provider limited it, behind the router; waiting a little does not help, so no wait is carried.
+    if openrouter and failure.kind == RATE_LIMIT and is_upstream_rate_limit(" ".join(part for part in (_reported(parser), stderr) if part)):
+        # D121: the model's own provider limited it, behind OpenRouter (only its wording is read; another gateway keeps the wait it
+        # stated); waiting a little does not help, so no wait is carried.
         return dataclasses.replace(failure, retry_at=None, upstream=True)
     if failure.kind == UNKNOWN and status is not None:
         said = " ".join(part for part in (_reported(parser), stderr) if part)
@@ -302,23 +303,23 @@ def _reported(parser: StreamParser) -> str:
     return " ".join(parts)
 
 
-def note_result(health: Health, parser: StreamParser) -> None:
+def note_result(health: Health, parser: StreamParser, openrouter: bool = False) -> None:
     """The CLI's result line was read: say how the turn went. Only notes; whatever goes wrong here is swallowed, because
     the turn must run exactly as it would have before anyone recorded it (as ``claude_engine.note_result``)."""
     try:
-        failure = turn_verdict(parser)
+        failure = turn_verdict(parser, openrouter=openrouter)
     except Exception:  # noqa: BLE001
         return
     health.failure = failure
     health.answered = health.answered or failure is None
 
 
-def note_stream_end(health: Health, parser: StreamParser, said: str, exit_code: int | None) -> None:
+def note_stream_end(health: Health, parser: StreamParser, said: str, exit_code: int | None, openrouter: bool = False) -> None:
     """The output ended with no result line: the verdict is what the CLI said on stderr and how it exited."""
     try:
         if parser.final is not None:
             return  # the result line already said how it went
-        health.failure = turn_verdict(parser, said, exit_code)
+        health.failure = turn_verdict(parser, said, exit_code, openrouter)
     except Exception:  # noqa: BLE001
         return
 
@@ -336,13 +337,14 @@ def note_usage(health: Health, parser: StreamParser) -> None:
 
 
 def failure_event(
-    parser: StreamParser, label: str, scrub: Scrubber, stderr: str = "", exit_code: int | None = None, *, keyless: bool = False
+    parser: StreamParser, label: str, scrub: Scrubber, stderr: str = "", exit_code: int | None = None, *, keyless: bool = False,
+    openrouter: bool = False,
 ) -> dict | None:
     """The RUN_ERROR this turn ended in, or None when it answered. The verdict is :func:`turn_verdict`, so what the
     person is told and what the breaker records are one; the words are this engine's label and the gateway's,
     scrubbed. A refused key is not Claude's sign-in: the message never carries ``OPENBOT_MODEL_AUTH_REQUIRED``, which
     would send the person to a Claude login that has nothing to do with it. ``stderr`` is text already scrubbed."""
-    failure = turn_verdict(parser, stderr, exit_code)
+    failure = turn_verdict(parser, stderr, exit_code, openrouter)
     if failure is None:
         return None
     reported = _reported(parser)
@@ -519,6 +521,7 @@ class CompatibleEngine(EngineAdapter):
                 )
             )
         keyless = self._engine.no_key
+        via_openrouter = is_openrouter(self._engine.base_url)  # D121: only OpenRouter's wording of an upstream limit is read
         scrub = Scrubber(None if keyless else key)
         parser = StreamParser()
         stderr = bytearray()  # raw, bounded, and only ever read through said()
@@ -588,8 +591,8 @@ class CompatibleEngine(EngineAdapter):
                     while line := await process.stdout.readline():
                         for item in parser.feed(scrub.data(line)):
                             if isinstance(item, Final):
-                                note_result(health, parser)
-                                item = Finished(item.text, lambda: failure_event(parser, self.label, scrub, keyless=keyless))
+                                note_result(health, parser, via_openrouter)
+                                item = Finished(item.text, lambda: failure_event(parser, self.label, scrub, keyless=keyless, openrouter=via_openrouter))
                             else:
                                 health.answered = True  # a message started, text came, or a tool was called
                             await sink.put(item)
@@ -611,9 +614,9 @@ class CompatibleEngine(EngineAdapter):
                 await asyncio.wait_for(process.wait(), 5)
             with suppress(TimeoutError, asyncio.CancelledError):
                 await asyncio.wait_for(asyncio.shield(stderr_task), 2)
-            note_stream_end(health, parser, said(), process.returncode)
+            note_stream_end(health, parser, said(), process.returncode, via_openrouter)
             return Outcome(
-                failure_event(parser, self.label, scrub, said(), process.returncode, keyless=keyless)
+                failure_event(parser, self.label, scrub, said(), process.returncode, keyless=keyless, openrouter=via_openrouter)
                 or agui.run_error(f"{self.label} ended without an answer.")
             )
         finally:

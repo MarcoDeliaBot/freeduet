@@ -43,6 +43,9 @@ def is_upstream_note(text: str | None) -> bool:
 #: A kind of its own for an engine that runs on a key (an `anthropic-compatible` gateway): the key is missing or
 #: refused, which is not a sign-in the person can do in a terminal. Chosen by the router, never by the classifier.
 KEY = "key"
+#: D121: a kind of its own for an engine whose context cannot hold the least a turn needs. Chosen by the router, never by the classifier,
+#: and never counted by the breaker: a long conversation is not the engine's health.
+TOO_LONG = "too_long"
 
 
 class Held(str):
@@ -136,6 +139,10 @@ def _reason(lang: str, label: str, kind: str, until: tuple[str | None, str] | No
     if isinstance(kind, Held):
         return _held(lang, label, kind)
     limited = kind in (RATE_LIMIT, USAGE_LIMIT, CREDITS)
+    if kind == TOO_LONG:  # D121: said when the turn moves on from this engine
+        if lang == "it":
+            return f"La conversazione è troppo lunga per {label}"
+        return f"The conversation is too long for {label}"
     if isinstance(kind, Upstream):  # D121
         if lang == "it":
             return f"{label}: il modello gratuito {kind.model} è limitato dal suo fornitore (scegli un altro modello nella scheda OpenRouter)"
@@ -212,10 +219,12 @@ def conversation_too_long(lang: str, label: str) -> str:
     if lang == "it":
         return (
             f"Questa conversazione è troppo lunga per {label}, anche lasciando fuori i messaggi precedenti. "
+            "Di solito dipende da una conversazione lunga, da una memoria molto grande o dal risultato molto grande di uno strumento in questo turno. "
             "Avvia una nuova conversazione e ripeti la richiesta."
         )
     return (
         f"This conversation is too long for {label}, even with the earlier messages left out. "
+        "The likely cause is a long conversation, a large memory, or a large tool result in this turn. "
         "Start a new conversation and ask again."
     )
 

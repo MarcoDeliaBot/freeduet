@@ -264,3 +264,30 @@ def test_the_upstream_words_are_read_only_from_openrouters_wording():
     assert is_upstream_rate_limit("x/y:free is temporarily " + "rate-" + "limited" + " upstream. Please retry shortly")
     assert not is_upstream_rate_limit("You are being " + "rate" + " limited, try later")
     assert not is_upstream_rate_limit(None)
+
+
+# -- only OpenRouter's wording of an upstream limit drops the stated wait -------------------------------------------------
+
+
+def _upstream_parser(extra=" Try again in 20s."):
+    from freeduet.stream_json import StreamParser
+    from test_engine_state import FIXTURES
+
+    parser = StreamParser()
+    for line in (FIXTURES / "gateway_429_upstream.jsonl").read_text().splitlines():
+        parser.feed(line.replace("Please retry shortly", "Please retry shortly." + extra) + "\n")
+    return parser
+
+
+def test_another_gateways_stated_wait_is_kept_even_with_the_same_words():
+    from freeduet import compatible_engine as ce
+
+    other = ce.turn_verdict(_upstream_parser(), "", 1)
+    assert other.kind == "rate_limit" and other.upstream is False and other.retry_at is not None
+
+
+def test_openrouters_upstream_limit_carries_no_wait_and_is_flagged():
+    from freeduet import compatible_engine as ce
+
+    failure = ce.turn_verdict(_upstream_parser(), "", 1, openrouter=True)
+    assert failure.kind == "rate_limit" and failure.upstream is True and failure.retry_at is None

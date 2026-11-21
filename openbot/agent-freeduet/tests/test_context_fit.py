@@ -220,3 +220,70 @@ def test_a_bad_context_size_is_refused(value):
 def test_a_login_engine_cannot_carry_a_context_size():
     with pytest.raises(EnginesFileError, match="context_tokens"):
         parse_engines({"engines": {"c": {**CLAUDE_ENTRY, "context_tokens": 65536}}, "chains": {"default": ["c"]}})
+
+
+# -- a conversation too long for one engine moves on to an engine that can hold it ----------------------------------------
+
+
+def two_gateways(tmp_path, monkeypatch, small=2048, large=65536):
+    import dataclasses
+
+    team = chain(tmp_path, monkeypatch, {**LOCAL, "context_tokens": small}, key=None, extra_gateways=("gw2",))
+    config = team.router.config
+    engines = {**config.engines, "gw2": dataclasses.replace(config.engines["gw2"], context_tokens=large)}
+    team.router.config = dataclasses.replace(config, engines=engines)
+    app.state.engine_router = team.router
+    return team
+
+
+BIG = [standing(content="s" * 9000), {"id": "u1", "role": "user", "content": "Hello"}]
+
+
+def test_a_too_long_conversation_moves_on_to_an_engine_with_a_larger_context(client, fake_cli, tmp_path, monkeypatch):
+    team = two_gateways(tmp_path, monkeypatch)
+    fake_cli.plan([LIMIT])
+    team.gateways["gw"].plan([{"text": "Never run."}])
+    team.gateways["gw2"].plan([{"text": "The larger model answered."}])
+    events = post_run(client, run_body(BIG))[0]
+    text = "".join(e["delta"] for e in events if e["type"] == "TEXT_MESSAGE_CONTENT")
+    assert "RUN_ERROR" not in [e["type"] for e in events] and events[-1]["type"] == "RUN_FINISHED"
+    assert "The conversation is too long for gw, so gw2 is answering instead." in text
+    assert text.endswith("The larger model answered.")
+    assert team.gateways["gw"].turns() == []  # nothing was sent to the small one
+    assert len(team.gateways["gw2"].turns()) == 1
+    assert team.state.row("gw").last_failure_kind in (None, "unknown")  # the breaker was told nothing of it
+
+
+def test_a_too_long_conversation_does_not_wait_and_is_not_asked_again_on_the_same_turn(client, fake_cli, tmp_path, monkeypatch):
+    team = two_gateways(tmp_path, monkeypatch)
+    slept = []
+
+    async def record(seconds):
+        slept.append(seconds)
+
+    team.router._sleep = record
+    fake_cli.plan([LIMIT])
+    team.gateways["gw2"].plan([{"text": "Done."}])
+    post_run(client, run_body(BIG))
+    assert slept == []
+
+
+def test_too_long_is_said_only_when_no_engine_is_left_and_names_the_likely_causes(client, fake_cli, tmp_path, monkeypatch):
+    team = two_gateways(tmp_path, monkeypatch, large=2048)
+    fake_cli.plan([LIMIT])
+    events = post_run(client, run_body(BIG))[0]
+    errors = [e for e in events if e["type"] == "RUN_ERROR"]
+    assert len(errors) == 1
+    message = errors[0]["message"]
+    assert "too long for gw2" in message  # the last engine that was tried
+    assert "long conversation, a large memory, or a large tool result in this turn" in message and "Start a new conversation" in message
+    assert team.gateways["gw"].turns() == [] and team.gateways["gw2"].turns() == []
+
+
+def test_too_long_in_the_persons_language_when_none_is_left(client, fake_cli, tmp_path, monkeypatch):
+    team = two_gateways(tmp_path, monkeypatch, large=2048)
+    fake_cli.plan([LIMIT])
+    body = run_body(BIG)
+    body["forwardedProps"]["openbotPersonLanguage"] = {"code": "it", "name": "Italian"}
+    message = next(e["message"] for e in post_run(client, body)[0] if e["type"] == "RUN_ERROR")
+    assert "troppo lunga per gw2" in message and "memoria molto grande" in message and "nuova conversazione" in message

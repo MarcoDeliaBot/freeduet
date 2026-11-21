@@ -100,7 +100,7 @@ from .failure_classifier import AUTH, CREDITS, RATE_LIMIT, TRANSIENT, USAGE_LIMI
 from .tools_as_text import NOTE as TOOLS_AS_TEXT_NOTE, TOOLS_AS_TEXT, looks_like_tool_call_text
 from .ledger import DAILY, Ledger, Limits
 from .members import Member
-from .segment import SegmentNotes, run_segment
+from .segment import CONTEXT_TOO_SMALL, SegmentNotes, run_segment
 
 log = logging.getLogger("freeduet.engine_router")
 
@@ -113,7 +113,7 @@ MAX_HOLD_WAITS = 1  # waits in one turn, so a chain of engines that all rate-lim
 LOCAL_NOTICE_AFTER_SECONDS = 15.0  # D108: a local model silent this long is said to be reading
 PROBE_EVERY_SECONDS = 60.0
 PROBE_WAIT_SECONDS = 10.0
-SWITCHABLE = frozenset({RATE_LIMIT, USAGE_LIMIT, CREDITS, AUTH, TRANSIENT, TOOLS_AS_TEXT})
+SWITCHABLE = frozenset({RATE_LIMIT, USAGE_LIMIT, CREDITS, AUTH, TRANSIENT, TOOLS_AS_TEXT, notices.TOO_LONG})
 TOOK_TOO_LONG = "took too long on this turn"
 
 
@@ -137,6 +137,7 @@ class _Attempt(EngineAdapter):
         self.health: Health | None = None
         self.hint: str | None = None  # "first_output" or "whole_turn"
         self.tools_as_text = False  # D116: the turn ended with a tool call written as text; set by the router
+        self.too_long = False  # D121: the transcript could not fit this engine's context and nothing was sent; set by the router
         self._settled = False
 
     def child_env(self, source=None):
@@ -165,6 +166,8 @@ class _Attempt(EngineAdapter):
     def failure(self) -> Failure | None:
         if self.tools_as_text:
             return Failure(TOOLS_AS_TEXT)
+        if self.too_long:
+            return Failure(notices.TOO_LONG)  # not the engine's health: it never ran, so the breaker is told nothing
         if self.health is not None and self.health.failure is not None:
             return self.health.failure
         return Failure(TRANSIENT) if self.hint == "first_output" else None
@@ -474,6 +477,10 @@ class Router:
                     continue
             if key is None:
                 reason = last_failed or (blocked[-1] if blocked else None)
+                if reason is not None and reason[1] == notices.TOO_LONG:
+                    # D121: no engine is left that can hold this conversation: say so, with the likely causes.
+                    yield agui.run_error(notices.conversation_too_long(lang, reason[0]), CONTEXT_TOO_SMALL)
+                    return
                 if choice.pin is not None and blocked:
                     yield agui.run_error(notices.pinned(lang, *reason, now=self.state.now()), ENGINE_LIMITED)
                     return
@@ -587,6 +594,8 @@ class Router:
                     kind = event["type"]
                     if kind == "RUN_ERROR":
                         held = event
+                        if event.get("code") == CONTEXT_TOO_SMALL:
+                            attempt.too_long = True
                         if TOOK_TOO_LONG in str(event.get("message") or ""):
                             attempt.hint = "whole_turn"
                         break
