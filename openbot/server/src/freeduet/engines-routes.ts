@@ -79,6 +79,10 @@ const MAX_REPLY_CHARACTERS = 262_144;
 const MAX_ENGINES = 64;
 const MAX_TEXT_CHARACTERS = 120;
 
+/** agent-freeduet's token counter (D102, usage_counter.py). */
+export const AGENT_USAGE_PATH = "/engines/usage";
+const MAX_USAGE_ROWS = 512;
+
 /** The states the app can say a sentence about. Keep in step with app/src/freeduet/engines-text.ts. */
 export const ENGINE_STATES = [
   "ready",
@@ -750,6 +754,129 @@ export async function checkClaude(reach: EnginesReach): Promise<ClaudeCheck> {
   }
 }
 
+/** One period's counts for one member and engine. `reportedTurns` is how many of `turns` carried a token count. */
+export type TokenCounts = {
+  turns: number;
+  reportedTurns: number;
+  inputTokens: number;
+  outputTokens: number;
+  cacheReadTokens: number;
+  cacheWriteTokens: number;
+};
+export type TokenRow = {
+  member: string | null;
+  engine: string;
+  today: TokenCounts;
+  week: TokenCounts;
+};
+/** D102. Counts by member and engine, today and the last seven days, in UTC. Numbers and ids only: no text, no key. */
+export type TokenUsage = {
+  reason: EnginesReason | null;
+  timezone: "UTC";
+  windowDays: number;
+  rows: TokenRow[];
+  engines: TokenRow[];
+  /** agent-freeduet could not read its own counter file: the numbers may be missing. */
+  problem: boolean;
+};
+
+const NO_COUNTS: TokenCounts = {
+  turns: 0,
+  reportedTurns: 0,
+  inputTokens: 0,
+  outputTokens: 0,
+  cacheReadTokens: 0,
+  cacheWriteTokens: 0,
+};
+
+function countOf(value: unknown): number {
+  return typeof value === "number" && Number.isSafeInteger(value) && value >= 0
+    ? value
+    : 0;
+}
+
+function countsOf(raw: unknown): TokenCounts {
+  if (typeof raw !== "object" || raw === null) return NO_COUNTS;
+  const counts = raw as Record<string, unknown>;
+  return {
+    turns: countOf(counts.turns),
+    reportedTurns: countOf(counts.reported_turns),
+    inputTokens: countOf(counts.input_tokens),
+    outputTokens: countOf(counts.output_tokens),
+    cacheReadTokens: countOf(counts.cache_read_tokens),
+    cacheWriteTokens: countOf(counts.cache_write_tokens),
+  };
+}
+
+function usageRowOf(raw: unknown, withMember: boolean): TokenRow | null {
+  if (typeof raw !== "object" || raw === null) return null;
+  const row = raw as Record<string, unknown>;
+  const engine = textOf(row.engine);
+  if (engine === null) return null;
+  const member =
+    typeof row.member === "string" && MEMBER_ID.test(row.member)
+      ? row.member
+      : null;
+  if (withMember && member === null) return null;
+  return {
+    member,
+    engine,
+    today: countsOf(row.today),
+    week: countsOf(row.week),
+  };
+}
+
+/**
+ * Ask agent-freeduet for the token counter: one GET, same token and address as `GET /engines`. Never throws. A failure
+ * is one of the three reasons and no numbers.
+ */
+export async function readUsage(reach: EnginesReach): Promise<TokenUsage> {
+  const none = (reason: EnginesReason): TokenUsage => ({
+    reason,
+    timezone: "UTC",
+    windowDays: 7,
+    rows: [],
+    engines: [],
+    problem: false,
+  });
+  try {
+    if (!routerOn(reach.environment)) return none("off");
+    const agent = reach.managedAgent;
+    if (!agent?.endpoint || !agent.token) return none("not_set_up");
+    const response = await (reach.fetch ?? fetch)(
+      new URL(AGENT_USAGE_PATH, agent.endpoint),
+      {
+        headers: { [AGENT_TOKEN_HEADER]: agent.token },
+        // The token goes to this address and nowhere else: a redirect is not followed.
+        redirect: "error",
+        signal: AbortSignal.timeout(READ_TIMEOUT_MS),
+      },
+    );
+    if (!response.ok) return none("unreachable");
+    const text = await response.text();
+    if (text.length > MAX_REPLY_CHARACTERS) return none("unreachable");
+    const body = JSON.parse(text) as Record<string, unknown>;
+    if (!Array.isArray(body.rows) || !Array.isArray(body.engines))
+      return none("unreachable");
+    return {
+      reason: null,
+      timezone: "UTC",
+      windowDays: 7,
+      rows: body.rows
+        .slice(0, MAX_USAGE_ROWS)
+        .map((row) => usageRowOf(row, true))
+        .filter((row): row is TokenRow => row !== null),
+      engines: body.engines
+        .slice(0, MAX_ENGINES)
+        .map((row) => usageRowOf(row, false))
+        .filter((row): row is TokenRow => row !== null),
+      problem: body.problem === true,
+    };
+  } catch {
+    return none("unreachable");
+  }
+}
+
 /** What a person is told when a change is asked of a session that is not at the computer. */
 const NOT_AT_THE_COMPUTER =
   "Change this on the computer FreeDuet runs on. Nothing was changed.";
@@ -821,6 +948,15 @@ export function createEnginesRoutes(
       200,
       noStore,
     );
+  });
+
+  // D102: the token counter. Read-only, the same authority as the page itself (administrators), and no change is made.
+  routes.get("/usage", async (context) => {
+    const denied = requireAdmin(context);
+    if (denied) return denied;
+    return context.json(await readUsage(reach()), 200, {
+      "Cache-Control": "no-store",
+    });
   });
 
   /**

@@ -1923,3 +1923,17 @@ Built on 21 November 2026 from D110 (section 72), with the maintainer's choice o
 | New conversation with a member (row 99) | Build now; or after the trust rows in Now | After the Now rows | It changes what a member sees in a chat, so the maintainer sees the button first |
 | Second login as a fallback (row 101) | Build now; or check each provider's terms first | Check terms first | A provider's terms decide whether a second login of one person may be used this way |
 | Site sentence on agents that read mail (To watch) | Write it now; or later with a preview | Later, with a preview | It is a change to the public site |
+
+## 83. The token counter (D102, D126)
+
+**D126.** The token counter of D102 is built as a small file in agent-freeduet's data directory (`token-usage.json`), not as a
+change to the spend ledger and not as a database table. It counts, per UTC day, member and engine, the turns, the turns that
+carried a token count, and the input, output and cached tokens the engine itself reported. An engine that reported nothing is
+shown as "not reported". The Engines page gets a "Tokens" section (today and last seven days; a total per engine), read through
+`GET /api/freeduet/engines/usage` with the authority of the page. No cost is stored and no price is worked out. The design and
+what is not built are in `docs/design/token-counter.md`. D102's status is now: built, not yet run live (21 November 2026).
+
+| Decision | Options | Recommendation | Reason |
+|---|---|---|---|
+| Free-tier request counter of OpenRouter | Read it from the provider's key endpoint with the saved key; or leave to the provider's own page | Later, as its own change | It would be the first new outbound call that carries a saved key, so it deserves its own review |
+| Days in the person's time zone | UTC (built); or the browser's zone | UTC for now | The ledger and every notice already say UTC; a second rule would make the two disagree |
