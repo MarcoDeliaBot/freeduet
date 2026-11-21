@@ -85,7 +85,7 @@
  "m_p1": "La mayoría de las herramientas de IA te hacen comprar una «clave API». Funciona como el taxímetro: cada palabra cuesta un poco y la cuenta no para de subir.",
  "m_p2": "Una suscripción mensual de IA se parece más a un abono de autobús: un solo precio, y viajas lo que el abono permita. FreeDuet usa el abono que ya tienes. Tú inicias sesión. El código propio de FreeDuet nunca lee, copia ni reenvía tus credenciales: quedan en tu ordenador, en un lugar que solo lee el programa Claude Code.",
  "m_l1": "Hoy funciona con una suscripción de Claude, a través de la app oficial Claude Code.",
- "m_l2": "Otras suscripciones están en curso. Los modelos locales, los modelos gratuitos de OpenRouter y tu propio router FreeLLMAPI están construidos y se pueden añadir en la página de Motores. Ninguno va primero para un miembro salvo que elijas ese orden, y un modelo solo cuenta como compatible después de que pasen en él las pruebas del equipo.",
+ "m_l2": "Otras suscripciones están en curso. Los modelos locales, los modelos gratuitos de OpenRouter y tu propio router FreeLLMAPI están construidos y se pueden añadir en la página de Motores. Ninguno de ellos va primero para un miembro salvo que elijas ese orden, y un modelo solo cuenta como compatible después de que las pruebas del equipo lo aprueben.",
  "m_l3": "FreeDuet en sí no cuesta nada: el código es público, con licencia MIT.",
  "pass1": "Pagas cada palabra",
  "pass2": "Un abono que ya tienes",
