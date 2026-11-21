@@ -1035,11 +1035,31 @@ describe("Rex, the model trainer", () => {
     expect(own).not.toContain("\u2014");
   });
 
-  test("holds no skill and no skill of another member's, and Iris and Leo name him", async () => {
+  test("holds one skill, written here with no tools, no placeholder and no dash, that nobody else holds, and Iris and Leo name him", async () => {
     const tenantPackage = await loadWith(MODES.remote);
     expect(
       tenantPackage.agents.find((agent) => agent.id === "trainer")?.skills,
-    ).toEqual([]);
+    ).toEqual(["engine-proposal"]);
+    for (const agent of tenantPackage.agents.filter(
+      (candidate) => candidate.id !== "trainer",
+    ))
+      expect({
+        member: agent.id,
+        has: agent.skills.includes("engine-proposal"),
+      }).toEqual({ member: agent.id, has: false });
+    const shipped = tenantPackage.skills.find(
+      (skill) => skill.slug === "engine-proposal",
+    );
+    const written = (
+      parse(await readFile(skillsFile, "utf8")) as {
+        skills: { slug: string; instructions: string }[];
+      }
+    ).skills.find((skill) => skill.slug === "engine-proposal");
+    expect(shipped?.tools).toEqual([]);
+    expect(shipped?.summary.length ?? 999).toBeLessThanOrEqual(112);
+    expect(written?.instructions).not.toContain(PLACEHOLDER_START);
+    expect(written?.instructions).not.toContain("\u2014");
+    expect(written?.instructions).toContain("Start no run and change nothing.");
     const { rows } = await rex();
     for (const id of ["freeduet", "creator"]) {
       const prompt = String(rows.find((row) => row.id === id)?.system_prompt);

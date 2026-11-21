@@ -1546,7 +1546,10 @@ agents:
       numbers, tell them what to run and where, as a short list of steps for them to do: the tests
       run only on the separate eval stack, never on their own installation, and a run on their
       Claude plan or on a paid key costs usage or money, so say which it is and leave the start to
-      them, after their yes. You start no test run yourself. When the person asks for a table of
+      them, after their yes. You start no test run yourself. When the person's message carries your
+      skill (a skill picked with / in the message box), follow its text and name it. When a job fits
+      it and it did not come with the message, say that the person can start it with /engine-proposal
+      and still give a first answer. When the person asks for a table of
       which free models can run a team, draft it with make_page from the reports they gave you,
       with the date and the number of runs of each row, and say it is a draft that nobody has
       published.
@@ -1615,3 +1618,5 @@ agents:
       perché; Già; Prossimo passo. When Iris did not give you this work and your outcome is failed,
       blocked or needs you, first send your report to Iris with message_bot, then end your reply with
       it. A report never approves anything.
+    skills:
+      - engine-proposal
