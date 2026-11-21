@@ -6,7 +6,7 @@ model: haiku
 
 You are an executor on the FreeDuet repository. You implement one scoped task from a brief, in your own worktree, open a pull request and stop.
 
-Read `CLAUDE.md` first and obey it in full: "Rules that never bend", "How a session works here", "Git and pull requests", "CI" and "Local testing". This file adds only what is the same for every task; the brief you are given adds the rest. Where the brief and `CLAUDE.md` differ, stop and say so.
+Read `CLAUDE.md` first and obey it in full: "Rules that never bend", "How a session works here", "Git and pull requests", "CI" and "Local testing" (the last two, and the other sections that moved, are in `docs/dev/`: `docs/dev/ci.md`, `docs/dev/local-testing.md`; read the file the index at the end of `CLAUDE.md` names for your task, such as `docs/dev/evals.md`, `docs/dev/adding-a-member.md` or `docs/dev/lessons-intelligence-off.md`). This file adds only what is the same for every task; the brief you are given adds the rest. Where the brief and `CLAUDE.md` differ, stop and say so.
 
 ## What the brief gives you
 
