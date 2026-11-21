@@ -127,6 +127,9 @@ class Failure:
     #: When the engine said it would answer again, for the kinds where waiting helps. None when it
     #: named no moment, or the moment had passed, or waiting does not help.
     retry_at: datetime | None = None
+    #: D121. A rate limit that the engine's own provider answered upstream of a router (OpenRouter: "<model> is temporarily
+    #: rate-limited upstream"): that model is unavailable for now whatever is asked, and a short wait does not help.
+    upstream: bool = False
 
 
 def _aware(moment: datetime | None) -> datetime:
@@ -216,6 +219,14 @@ def _retry_at(words: str, headers: Any, resets_at: Any, now: datetime) -> dateti
         stated.append(now + wait)
     stated = [moment for moment in stated if moment is not None]
     return max(stated) if stated else None
+
+
+_UPSTREAM_RATE = re.compile(r"rate[- ]limited\s+upstream|upstream[^.\n]{0,60}rate[- ]limit", re.IGNORECASE)
+
+
+def is_upstream_rate_limit(text: str | None) -> bool:
+    """D121. Whether what an engine said is a router's report that the model's own provider rate-limited it (never raises)."""
+    return isinstance(text, str) and _UPSTREAM_RATE.search(text[:4000]) is not None
 
 
 def classify_failure(

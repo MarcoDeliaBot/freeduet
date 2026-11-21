@@ -60,6 +60,7 @@ the endpoint does reliably.
 
 from __future__ import annotations
 
+import dataclasses
 import asyncio
 import json
 import logging
@@ -101,7 +102,7 @@ from .engines import (
     paid_gateway_refused,
     parse_secret_ref,
 )
-from .failure_classifier import AUTH, LIMIT_KINDS, UNKNOWN, Failure, classify_failure
+from .failure_classifier import AUTH, LIMIT_KINDS, RATE_LIMIT, UNKNOWN, Failure, classify_failure, is_upstream_rate_limit
 from .stream_json import Final, StreamParser
 from .system_role_proxy import SystemRoleProxy
 
@@ -282,6 +283,9 @@ def turn_verdict(parser: StreamParser, stderr: str = "", exit_code: int | None =
     status = parser.api_error_status
     if status == 403:
         return Failure(UNKNOWN)
+    if failure.kind == RATE_LIMIT and is_upstream_rate_limit(" ".join(part for part in (_reported(parser), stderr) if part)):
+        # D121: the model's own provider limited it, behind the router; waiting a little does not help, so no wait is carried.
+        return dataclasses.replace(failure, retry_at=None, upstream=True)
     if failure.kind == UNKNOWN and status is not None:
         said = " ".join(part for part in (_reported(parser), stderr) if part)
         return classify_failure(said, status=status)

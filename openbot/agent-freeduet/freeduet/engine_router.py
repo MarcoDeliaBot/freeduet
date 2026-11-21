@@ -82,6 +82,7 @@ from .engines import (
     first_answer_limit,
     is_light,
     is_local_model,
+    is_openrouter,
     exclusion_code,
     exclusion_reason,
     is_free_cloud,
@@ -630,7 +631,14 @@ class Router:
                 return
             row = self.state.row(key)
             until = (row.limited_until if row else None) or failure.retry_at
-            seconds = self._short_hold(failure.kind, until) if len(waited_for) < MAX_HOLD_WAITS and key not in waited_for else None
+            shown_kind = self._notice_kind(key, failure.kind)
+            if failure.upstream and is_openrouter(self.config.engines[key].base_url):
+                # D121: the provider behind the router limited this model: it is unavailable, not slow. Switch (no wait), say why,
+                # and keep the reason where the Engines page can show it.
+                model = self.config.engines[key].model or key
+                shown_kind = notices.Upstream(model)
+                self.state.note(key, notices.upstream_note(model))
+            seconds = self._short_hold(shown_kind, until) if len(waited_for) < MAX_HOLD_WAITS and key not in waited_for else None
             if seconds is not None:
                 # D121: a short hold: say so, wait, and try the same engine once more. Nothing is recorded as stopped.
                 waited_for.add(key)
@@ -639,7 +647,7 @@ class Router:
                     yield event
                 await self._sleep(seconds + HOLD_WAIT_CUSHION_SECONDS)
                 continue
-            stopped = (self.adapters[key].label, self._notice_kind(key, failure.kind), until)
+            stopped = (self.adapters[key].label, shown_kind, until)
             blocked.append(stopped)
             blocked_keys.append(key)
             last_failed = stopped
@@ -663,7 +671,10 @@ class Router:
             row = self.state.row(key)
             if row is not None and not row.available:
                 kind = AUTH if row.state == SIGNED_OUT else (row.last_failure_kind or USAGE_LIMIT)
-                looked.append((key, (self.adapters[key].label, self._notice_kind(key, kind), row.limited_until)))
+                shown = self._notice_kind(key, kind)
+                if notices.is_upstream_note(row.note) and kind == RATE_LIMIT:
+                    shown = notices.Upstream(self.config.engines[key].model or key)  # D121: told again while it stays held
+                looked.append((key, (self.adapters[key].label, shown, row.limited_until)))
                 continue
             looked.append((key, None))
         available = [key for key, why in looked if why is None]

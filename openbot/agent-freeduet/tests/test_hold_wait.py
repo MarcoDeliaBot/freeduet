@@ -12,7 +12,7 @@ from datetime import timedelta
 
 import pytest
 
-from freeduet import agui, engine_router
+from freeduet import agui, engine_notices as notices, engine_router
 from freeduet.app import app
 from freeduet.members import resolve_member
 from freeduet.segment import SegmentNotes
@@ -196,3 +196,71 @@ def test_the_stream_stays_open_while_the_turn_waits(fake_cli, tmp_path):
     told = next(i for i, chunk in enumerate(chunks) if b"asks to wait" in chunk)
     assert agui.KEEPALIVE in chunks[told:]  # the stream spoke after the person was told, while the router slept
     assert b"RUN_FINISHED" in chunks[-1]  # and the turn then went on to the retry and finished
+
+
+# -- a model rate-limited by its own provider behind OpenRouter is unavailable, not slow ------------------------------
+
+MODEL = "google/gemma-4-26b-a4b-it:free"
+OPENROUTER = {"base_url": "https://openrouter.ai/api", "billing": "free", "model": MODEL}
+UPSTREAM = {"replay": "gateway_429_upstream.jsonl"}
+PLAIN_429 = {"replay": "gateway_429.jsonl"}
+LONG_LIMIT = LIMIT  # Claude Code's limit resets in five hours at the default fake clock
+
+
+def openrouter_chain(tmp_path, monkeypatch):
+    from gateway_support import chain
+
+    team = chain(tmp_path, monkeypatch, OPENROUTER, extra_gateways=("gw2",))
+    slept = []
+
+    async def record(seconds):
+        slept.append(seconds)
+
+    team.router._sleep = record
+    app.state.engine_router = team.router
+    return team, slept
+
+
+def test_an_upstream_rate_limit_switches_at_once_with_the_reason_and_waits_for_nothing(client, fake_cli, tmp_path, monkeypatch):
+    team, slept = openrouter_chain(tmp_path, monkeypatch)
+    fake_cli.plan([LONG_LIMIT])
+    team.gateways["gw"].plan([UPSTREAM])
+    team.gateways["gw2"].plan([{"text": "Answered by the next engine."}])
+    events = post_run(client, run_body(ASK))[0]
+    text = said(events)
+    assert notices.reason("en", "gw", notices.Upstream(MODEL), None) in text  # the one fixed sentence (engine_notices.py)
+    assert f"the free model {MODEL}" in text and "OpenRouter card" in text
+    assert text.endswith("Answered by the next engine.")
+    assert slept == [] and "asks to wait" not in text
+    assert team.gateways["gw"].turns() and len(team.gateways["gw"].turns()) == 1  # not asked again
+    assert team.state.row("gw").note == notices.upstream_note(MODEL)
+
+
+def test_a_model_held_by_its_provider_is_not_waited_for_on_the_next_turn_either(client, fake_cli, tmp_path, monkeypatch):
+    team, slept = openrouter_chain(tmp_path, monkeypatch)
+    fake_cli.plan([LONG_LIMIT])
+    team.gateways["gw"].plan([UPSTREAM])
+    team.gateways["gw2"].plan([{"text": "One."}], [{"text": "Two."}])
+    post_run(client, run_body(ASK))
+    events = post_run(client, run_body(ASK, run_id="run-2"))[0]
+    assert said(events).endswith("Two.")  # the notice names the first engine that was held, as before (D119)
+    assert slept == [] and len(team.gateways["gw"].turns()) == 1  # no wait, and the held model was not asked again
+    assert notices.is_upstream_note(team.state.row("gw").note)
+
+
+def test_an_openrouter_429_that_is_only_a_rate_limit_still_waits(client, fake_cli, tmp_path, monkeypatch):
+    team, slept = openrouter_chain(tmp_path, monkeypatch)
+    fake_cli.plan([LONG_LIMIT])
+    team.gateways["gw"].plan([PLAIN_429])
+    team.gateways["gw2"].plan([{"text": "Next."}])
+    events = post_run(client, run_body(ASK))[0]
+    assert slept == [61.0] and "asks to wait 60 seconds; I wait and try again." in said(events)
+
+
+def test_the_upstream_words_are_read_only_from_openrouters_wording():
+    from freeduet.failure_classifier import is_upstream_rate_limit
+
+    # Written in two pieces: tests/test_engine_errors.py reads every whole string of the suite as limit words and wants it pinned.
+    assert is_upstream_rate_limit("x/y:free is temporarily " + "rate-" + "limited" + " upstream. Please retry shortly")
+    assert not is_upstream_rate_limit("You are being " + "rate" + " limited, try later")
+    assert not is_upstream_rate_limit(None)

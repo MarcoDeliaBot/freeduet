@@ -19,6 +19,27 @@ from .tools_as_text import TOOLS_AS_TEXT
 from .ledger import DAILY, MONTHLY
 
 NONE, TEXT, TOOL = "none", "text", "tool"  # how far the turn got on the engine that stopped
+class Upstream(str):
+    """D121: the kind of an engine whose model the provider behind a router rate-limited (OpenRouter's free models: the
+    provider answers 429 to every request for a while). A string, like ``Held``; ``model`` is the model's id."""
+
+    model: str
+
+    def __new__(cls, model: str):
+        kind = super().__new__(cls, "upstream-limited")
+        kind.model = model
+        return kind
+
+
+def upstream_note(model: str) -> str:
+    """What the Engines page shows beside the engine (English, like the other notes of the router)."""
+    return f"The free model {model} is rate-limited by its provider; choose another model on the OpenRouter card."
+
+
+def is_upstream_note(text: str | None) -> bool:
+    return isinstance(text, str) and text == upstream_note(text.removeprefix("The free model ").split(" is rate-limited")[0])
+
+
 #: A kind of its own for an engine that runs on a key (an `anthropic-compatible` gateway): the key is missing or
 #: refused, which is not a sign-in the person can do in a terminal. Chosen by the router, never by the classifier.
 KEY = "key"
@@ -115,6 +136,10 @@ def _reason(lang: str, label: str, kind: str, until: tuple[str | None, str] | No
     if isinstance(kind, Held):
         return _held(lang, label, kind)
     limited = kind in (RATE_LIMIT, USAGE_LIMIT, CREDITS)
+    if isinstance(kind, Upstream):  # D121
+        if lang == "it":
+            return f"{label}: il modello gratuito {kind.model} è limitato dal suo fornitore (scegli un altro modello nella scheda OpenRouter)"
+        return f"{label}: the free model {kind.model} is rate-limited by its provider (choose another model on the OpenRouter card)"
     if kind == TOOLS_AS_TEXT:  # D116
         if lang == "it":
             return f"{label} ha scritto le chiamate agli strumenti come testo invece di usarle"
