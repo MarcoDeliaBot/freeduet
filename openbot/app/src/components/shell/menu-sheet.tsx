@@ -4,6 +4,7 @@ import { Link, type LinkOptions, useNavigate } from "@tanstack/react-router";
 import { type ReactNode, useId, useRef, useState } from "react";
 import { BotsNavBadge } from "@/components/bot-profile/attention";
 import { ChannelGlyph } from "@/components/duet/channel-look";
+import { showsManageGroup } from "@/freeduet/manage-group";
 import { DuetIcon, type DuetIconName } from "@/components/duet/icons";
 import {
   Sheet,
@@ -326,53 +327,62 @@ export function MenuSheet({
             ) : null}
           </div>
           <div className="mt-2 flex shrink-0 flex-col border-duet-hair border-t pt-2">
-            <h2>
-              <button
-                aria-controls={manage.id}
-                aria-expanded={manage.open}
-                className={ROW}
-                onClick={manage.toggle}
-                type="button"
-              >
-                <DuetIcon
-                  className={cn(
-                    "transition-transform motion-reduce:transition-none",
-                    manage.open && "rotate-90",
-                  )}
-                  name="chevronRight"
-                  size={22}
-                />
-                Manage
-                {/* Closed, the group would hide the Bots badge, so the badge rides on Manage instead. */}
-                {manage.open ? null : <BotsNavBadge />}
-              </button>
-            </h2>
-            <div className="flex flex-col" hidden={!manage.open} id={manage.id}>
-              {MANAGE_PAGES.map((page) => (
-                <Link
-                  activeProps={{ className: "bg-duet-tile" }}
-                  className={ROW}
-                  key={page.label}
-                  onClick={close}
-                  to={page.to}
+            {/* FreeDuet's own package has no Manage group: each page is a row in Settings. */}
+            {showsManageGroup() ? (
+              <>
+                <h2>
+                  <button
+                    aria-controls={manage.id}
+                    aria-expanded={manage.open}
+                    className={ROW}
+                    onClick={manage.toggle}
+                    type="button"
+                  >
+                    <DuetIcon
+                      className={cn(
+                        "transition-transform motion-reduce:transition-none",
+                        manage.open && "rotate-90",
+                      )}
+                      name="chevronRight"
+                      size={22}
+                    />
+                    Manage
+                    {/* Closed, the group would hide the Bots badge, so the badge rides on Manage instead. */}
+                    {manage.open ? null : <BotsNavBadge />}
+                  </button>
+                </h2>
+                <div
+                  className="flex flex-col"
+                  hidden={!manage.open}
+                  id={manage.id}
                 >
-                  <RowIcon name={page.icon} />
-                  {page.label}
-                  {page.badge}
-                </Link>
-              ))}
-              {user?.role === "admin" ? (
-                <Link
-                  activeProps={{ className: "bg-duet-tile" }}
-                  className={ROW}
-                  onClick={close}
-                  to="/admin"
-                >
-                  <RowIcon name="shieldLock" />
-                  Admin
-                </Link>
-              ) : null}
-            </div>
+                  {MANAGE_PAGES.map((page) => (
+                    <Link
+                      activeProps={{ className: "bg-duet-tile" }}
+                      className={ROW}
+                      key={page.label}
+                      onClick={close}
+                      to={page.to}
+                    >
+                      <RowIcon name={page.icon} />
+                      {page.label}
+                      {page.badge}
+                    </Link>
+                  ))}
+                  {user?.role === "admin" ? (
+                    <Link
+                      activeProps={{ className: "bg-duet-tile" }}
+                      className={ROW}
+                      onClick={close}
+                      to="/admin"
+                    >
+                      <RowIcon name="shieldLock" />
+                      Admin
+                    </Link>
+                  ) : null}
+                </div>
+              </>
+            ) : null}
             <Link
               activeProps={{ className: "bg-duet-tile" }}
               className={ROW}

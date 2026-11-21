@@ -4,7 +4,8 @@ import {
   Link,
   type LinkOptions,
 } from "@tanstack/react-router";
-import React from "react";
+import React, { type ReactNode } from "react";
+import { BotsNavBadge } from "@/components/bot-profile/attention";
 import { DuetIcon, type DuetIconName } from "@/components/duet/icons";
 import { Row, Segmented } from "@/components/duet/kit";
 import {
@@ -40,14 +41,19 @@ const APPEARANCE: readonly { value: ThemePreference; label: string }[] = [
   { value: "dark", label: "Dark" },
 ];
 
-/** Every place a person sets something up, one row each, in the order they reach for them. */
-const PLACES: readonly {
+/**
+ * Every place a person sets something up, one row each, in the order they reach for them. The first
+ * five are the sidebar's Manage group (FreeDuet's package hides that group, so these rows carry it).
+ */
+export const SETTINGS_PLACES: readonly {
   label: string;
   icon: DuetIconName;
   to: LinkOptions["to"];
   adminOnly?: boolean;
+  /** The unread badge the sidebar's Bots row showed under Manage. */
+  badge?: ReactNode;
 }[] = [
-  { label: "Bots", icon: "bolt", to: "/bots" },
+  { label: "Bots", icon: "bolt", to: "/bots", badge: <BotsNavBadge /> },
   { label: "Connections", icon: "plug", to: "/connections" },
   { label: "Capabilities", icon: "box", to: "/capabilities" },
   { label: "Routines", icon: "repeat", to: "/routines" },
@@ -89,13 +95,14 @@ function RouteComponent() {
         <ReadAloudSetting />
       </PageSection>
       <nav aria-label="Settings" className="mt-8 flex flex-col gap-0.5">
-        {PLACES.filter(
+        {SETTINGS_PLACES.filter(
           (place) => !place.adminOnly || user?.role === "admin",
         ).map((place) => (
           <Row
             chevron
             key={place.label}
             leading={<DuetIcon name={place.icon} size={22} />}
+            trailing={place.badge}
             link={({ className, children }) => (
               <Link className={className} to={place.to}>
                 {children}
