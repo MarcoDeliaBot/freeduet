@@ -46,7 +46,7 @@
  "fe3h": "Routine programmate",
  "fe3p": "Una routine si ripete secondo un orario, come un riepilogo ogni mattina. Iris ne propone una, la revisione quotidiana, e la crea solo dopo il tuo sì (novità dopo la v0.2.2). Una routine che ha bisogno di uno dei cinque pulsanti ti chiede prima; questa regola è costruita, ma non ancora provata sul campo.",
  "fe5h": "Di default, le tue conversazioni restano sul tuo computer",
- "fe5p": "L'app, il suo archivio e i browser degli assistenti girano sul tuo computer, e di default le conversazioni sono salvate lì. Per pensare, gli assistenti usano il servizio AI a cui hai fatto l'accesso.",
+ "fe5p": "L'app, il suo database e i browser degli assistenti girano sul tuo computer, e per impostazione predefinita le conversazioni vengono salvate lì. Per ragionare, gli assistenti usano il servizio AI con cui hai fatto l'accesso, a meno che nella pagina Motori tu non aggiunga un modello gratuito, che riceve ciò che gli viene inviato.",
  "apTitle": "Inviare questa email?",
  "rt1": "Riepilogo del mattino",
  "signedIn": "Accesso effettuato",
@@ -66,7 +66,7 @@
  "s4p": "Di default, se serve un pulsante grosso (inviare, pagare, firmare, prenotare, cancellare), tutto si ferma e aspetta te.",
  "s5h": "Ricevi un rapporto breve",
  "s5p": "Cosa è stato fatto, cosa no e perché, e qual è il prossimo passo. Niente muri di testo.",
- "flowMore": "…e Gus, Basil, Mark, Cam e Leo",
+ "flowMore": "…e Gus, Basil, Mark, Cam, Rex e Leo",
  "sf_h": "Cinque pulsanti che aspettano il tuo sì",
  "sf_p": "Daresti il portafoglio a un assistente nuovo il primo giorno? Nemmeno noi. Per questo queste cinque azioni aspettano il tuo sì di default. Un interruttore che toglie l'attesa per un solo membro, e che solo tu puoi attivare, è costruito, ma non ancora provato sul campo. Il Full access semplice toglie l'attesa anche per i pagamenti e non esiste ancora un limite di spesa. «Full access senza pagamenti» li lascia in attesa.",
  "b1": "Inviare",
@@ -85,7 +85,7 @@
  "m_p1": "La maggior parte degli strumenti AI ti fa comprare una «chiave API». Funziona come il tassametro di un taxi: ogni parola costa un po', e il conto continua a salire.",
  "m_p2": "Un abbonamento AI mensile somiglia di più a un abbonamento dell'autobus: un prezzo solo, e viaggi quanto l'abbonamento permette. FreeDuet usa l'abbonamento che hai già. L'accesso lo fai tu. Il codice di FreeDuet non legge, non copia e non inoltra mai le tue credenziali: restano sul tuo computer, in un punto che legge solo il programma Claude Code.",
  "m_l1": "Oggi funziona con un abbonamento Claude, attraverso l'app ufficiale Claude Code.",
- "m_l2": "Altri abbonamenti e modelli locali sono in corso, e ognuno viene offerto solo dopo essere stato controllato.",
+ "m_l2": "Altri abbonamenti sono in corso. I modelli locali, i modelli gratuiti di OpenRouter e il tuo router FreeLLMAPI sono costruiti e si possono aggiungere nella pagina Motori. Nessuno di questi passa per primo per un membro, a meno che tu non scelga quell'ordine, e un modello è considerato supportato solo dopo che i test del team sono stati superati con lui.",
  "m_l3": "FreeDuet in sé non costa niente: il codice è pubblico, con licenza MIT.",
  "pass1": "Paghi ogni parola",
  "pass2": "Un abbonamento che hai già",
@@ -102,7 +102,7 @@
  "r_prog": "In corso",
  "r1": "La squadra sul tuo accesso Claude, con approvazioni, collaudi, Gmail e Google Calendar.",
  "r2": "Priorità assoluta: un installer in un file per Windows, macOS e Ubuntu. Oggi ci sono i primi script di installazione per Ubuntu e per Windows con WSL2, e non c'è ancora un installer a doppio clic. Anche un assistente che mette in ordine la tua posta è costruito: il 15 novembre 2026 Otto ha spostato lo spam nella cartella Spam di una casella reale. Le regole permanenti sulla posta sono incluse nella v0.2.2: il 16 novembre 2026 una regola per il dominio di un mittente ha agito da sola sulla posta nuova. Le altre modifiche e regole non sono ancora state provate sul campo. Costruiti, ma non ancora provati sul campo: «Done when» (fatto quando) a ogni passaggio di lavoro, la scheda della routine in chat, un token per il computer di ogni membro, e connessioni verso la rete di casa che si chiudono quando disattivi l'accesso.",
- "r3": "La scelta del motore di ogni membro è in corso: la pagina Motori è costruita, ma non ancora provata sul campo, e il passaggio automatico è stato eseguito solo con motori di prova. Le impostazioni cambiate in chat, con Annulla, sono in corso. Il nome, il tono e la lingua di un membro sono costruiti dopo la v0.2, ma non ancora provati sul campo, e nessun test è stato ancora eseguito su tono e lingua. La delega vera è in programma.",
+ "r3": "La scelta del motore di ogni membro è in corso: la pagina Motori è costruita, ma non ancora provata sul campo. Da lì puoi aggiungere in tre clic un modello locale, i modelli gratuiti di OpenRouter o il tuo router FreeLLMAPI, e scegliere l'ordine dei motori di ogni membro dopo un avviso e una spunta. Un modello gratuito che scrive la sua chiamata a uno strumento come testo non chiude il turno: risponde il motore successivo. Quando un modello gratuito chiede un'attesa breve, FreeDuet attende e riprova. Le impostazioni cambiate in chat, con Annulla, sono in corso. Nome, tono e lingua di un membro sono costruiti dopo la v0.2, ma non ancora provati sul campo, e su tono e lingua non è ancora stato fatto alcun test. La delega vera è pianificata.",
  "r4": "Automazioni scritte in chat, una versione per il telefono e l'accesso da remoto sono in corso. Più app collegate sono in progettazione.",
  "r5": "Voce: la lettura ad alta voce è costruita, ma non ancora provata sul campo, e disattivata di default; le chiamate non sono ancora costruite. Full access e Cam sono costruiti, ma non ancora provati sul campo. Acquisti sicuri: in programma.",
  "r_cloud": "Un FreeDuet ospitato sul web, per chi preferisce non installare, è in programma, con un piccolo abbonamento mensile. Il prezzo non è ancora stabilito. Lì Claude lavorerebbe solo con la tua chiave API. Non prima che siano completati l'installer e il primo avvio. Sul tuo computer, FreeDuet resta gratuito.",
@@ -135,7 +135,7 @@
  "j3p": "FreeDuet è costruito da una persona sola. Una piccola donazione lo tiene in vita.",
  "q_h": "Le domande che fanno tutti per prime",
  "q1": "Cosa è gratis e cosa pago?",
- "a1": "FreeDuet è gratuito e open source con licenza MIT, anche per uso professionale. L'unica cosa che paghi è l'abbonamento AI che usi con lui, che oggi è un piano Claude. Non c'è nessuna chiave API da comprare.",
+ "a1": "FreeDuet è gratuito e open source con licenza MIT, anche per uso professionale. L'unica cosa che paghi è l'abbonamento AI che usi con lui, che oggi è un piano Claude. Nella pagina Motori puoi aggiungere anche modelli gratuiti; i loro fornitori possono conservare ciò che viene loro inviato. Non c'è nessuna chiave API da comprare.",
  "q2": "Cosa mi serve per installarlo?",
  "a2": "Un abbonamento Claude, più Docker, Bash e Bun sul computer. I quattro passi qui sopra sono tutta l'installazione. Mai aperto un terminale? Chiedi a una persona tecnica di installarlo e mostrale questa pagina.",
  "q3": "Funziona su Windows, Mac e Linux?",
@@ -162,7 +162,7 @@
  "team": {
   "iris": [
    "guida la squadra",
-   "Dici a Iris cosa ti serve. Lei lo affida all'assistente giusto, e la risposta torna attraverso di lei.",
+   "Dici a Iris cosa ti serve. Lei lo affida all'assistente giusto, e la risposta torna attraverso di lei. Se gli strumenti di un collega possono fare il lavoro, lei chiede prima a quel collega, e dice di non poterlo fare solo quando nessuno nel team può.",
    "Occupati di tutto quello che è arrivato stamattina."
   ],
   "otto": [
@@ -215,9 +215,14 @@
    "Lavora dietro le quinte. Rifà i conti e ricontrolla i prezzi prima che il lavoro arrivi a te.",
    "(Iris le affida il lavoro importante.)"
   ],
+  "rex": [
+   "formatore di modelli",
+   "Confronta i report di test del team per i motori che puoi usare e propone quale motore va bene per quale membro. Non avvia nessun test e non cambia nessun motore: decidi tu nella pagina Motori. Costruito, non ancora provato sul campo.",
+   "Basil ora gira sul mio modello locale. Va abbastanza bene?"
+  ],
   "leo": [
    "costruisce nuovi assistenti",
-   "Ti serve un assistente che non esiste ancora? Leo lo progetta. Collaudare ogni nuovo membro prima di dichiararlo pronto è in programma.",
+   "Ti serve un assistente che non esiste ancora? Leo lo progetta. Se manca uno strumento, Leo ne propone uno con la sua fonte e la sua licenza, e senza il tuo sì non si installa nulla. Testare ogni nuovo membro prima di dichiararlo pronto è pianificato.",
    "Mi serve qualcuno che controlli le scadenze dei miei domini."
   ]
  },
@@ -277,7 +282,7 @@
  "again": "Ricomincia",
  "bA_cap": "Demo con esempi inventati. La prova dal vivo del 15 novembre 2026 comprendeva 38 casi di sicurezza, che cercano di far infrangere una regola a un membro.",
  "bR_h": "Dodici membri, un compito ciascuno",
- "bR_cap": "Mark e Cam sono stati aggiunti dopo la v0.1. I loro casi sono stati eseguiti negli esami della squadra del 15 novembre 2026. Nessuna prova di certificazione completa è stata superata dopo la v0.1.",
+ "bR_cap": "Mark e Cam sono stati aggiunti dopo la v0.1. I loro casi sono stati eseguiti nei test del team del 15 novembre 2026. Rex, il formatore di modelli, è stato aggiunto dopo la v0.2.2 ed è costruito, ma non ancora provato sul campo. Nessuna certificazione completa è stata superata dopo la v0.1.",
  "bH_h": "Un passaggio con la riga «fatto quando»",
  "bH_from": "Iris a Otto",
  "bH_msg": "Otto, ordina la posta e prepara le risposte che contano.",

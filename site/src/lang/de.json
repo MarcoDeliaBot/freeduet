@@ -44,7 +44,7 @@
  "fe3h": "Routinen nach Zeitplan",
  "fe3p": "Eine Routine wiederholt sich nach Zeitplan, etwa als Zusammenfassung jeden Morgen. Iris bietet eine an, die tägliche Übersicht, und legt sie erst nach deinem Ja an (neu seit v0.2.2). Eine Routine, die einen der fünf Knöpfe braucht, fragt dich vorher; diese Regel ist gebaut, aber noch nicht im Echtbetrieb getestet.",
  "fe5h": "Standardmäßig bleiben deine Unterhaltungen auf deinem Computer",
- "fe5p": "Die App, ihre Datenbank und die Browser der Assistenten laufen auf deinem Computer, und standardmäßig werden die Unterhaltungen dort gespeichert. Zum Denken nutzen die Assistenten den KI-Dienst, bei dem du angemeldet bist.",
+ "fe5p": "Die App, ihre Datenbank und die Browser der Assistenten laufen auf deinem Computer, und standardmäßig werden die Unterhaltungen dort gespeichert. Zum Denken nutzen die Assistenten den KI-Dienst, bei dem du angemeldet bist, außer du fügst auf der Engines-Seite ein kostenloses Modell hinzu; das erhält, was ihm gesendet wird.",
  "apTitle": "Diese E-Mail senden?",
  "rt1": "Morgenzusammenfassung",
  "signedIn": "Angemeldet",
@@ -64,7 +64,7 @@
  "s4p": "Standardmäßig hält alles an und wartet auf dich, wenn für die Aufgabe ein großer Knopf nötig ist (senden, bezahlen, unterschreiben, buchen, löschen).",
  "s5h": "Du bekommst einen kurzen Bericht",
  "s5p": "Was erledigt wurde, was nicht und warum, und wie es weitergeht. Keine Textwüsten.",
- "flowMore": "…und Gus, Basil, Mark, Cam und Leo",
+ "flowMore": "…und Gus, Basil, Mark, Cam, Rex und Leo",
  "sf_h": "Fünf Knöpfe, die auf dein Ja warten",
  "sf_p": "Würdest du einem neuen Assistenten am ersten Tag deinen Geldbeutel anvertrauen? Wir auch nicht. Deshalb warten diese fünf standardmäßig auf dein Ja. Ein Schalter, der das für ein einziges Mitglied aufhebt und den nur du einschalten kannst, ist gebaut, aber noch nicht im Echtbetrieb getestet. Das einfache Full access hebt das Warten auch bei Zahlungen auf, und eine Ausgabengrenze gibt es noch nicht. „Full access ohne Zahlungen“ lässt sie weiter warten.",
  "b1": "Senden",
@@ -83,7 +83,7 @@
  "m_p1": "Die meisten KI-Werkzeuge lassen dich einen „API-Schlüssel“ kaufen. Das funktioniert wie ein Taxameter: Jedes Wort kostet ein bisschen, und die Rechnung wird immer länger.",
  "m_p2": "Ein monatliches KI-Abo ist eher wie eine Monatskarte für den Bus: ein Preis, und du fährst so viel, wie die Karte erlaubt. FreeDuet nutzt das Abo, das du schon hast. Du meldest dich selbst an. Der eigene Code von FreeDuet liest, kopiert oder leitet deine Zugangsdaten nie weiter; sie bleiben auf deinem Computer, an einem Ort, den nur das Programm Claude Code liest.",
  "m_l1": "Heute funktioniert es mit einem Claude-Abo, über die offizielle Claude-Code-App.",
- "m_l2": "Weitere Abos und lokale Modelle sind in Arbeit, und jedes wird erst angeboten, nachdem es geprüft wurde.",
+ "m_l2": "Weitere Abonnements sind in Arbeit. Lokale Modelle, die kostenlosen Modelle von OpenRouter und dein eigener FreeLLMAPI-Router sind gebaut und können auf der Engines-Seite hinzugefügt werden. Keiner davon läuft für ein Mitglied an erster Stelle, außer du wählst diese Reihenfolge, und ein Modell gilt erst als unterstützt, wenn die Tests des Teams damit bestanden sind.",
  "m_l3": "FreeDuet selbst kostet nichts: Der Code ist öffentlich, unter der MIT-Lizenz.",
  "pass1": "Du zahlst für jedes Wort",
  "pass2": "Eine Karte, die du schon hast",
@@ -100,7 +100,7 @@
  "r1": "Das Team mit deiner eigenen Claude-Anmeldung, mit Genehmigungen, Tests, Gmail und Google Calendar.",
  "r_prog": "In Arbeit",
  "r2": "Oberste Priorität: ein Installer in einer Datei für Windows, macOS und Ubuntu. Heute gibt es erste Startskripte für Ubuntu und für Windows über WSL2, aber noch keinen Installer per Doppelklick. Ein Assistent, der dein Postfach aufräumt, ist gebaut: Am 15. November 2026 hat Otto Spam in den Spam-Ordner eines echten Postfachs verschoben. Dauerhafte Postfachregeln sind in v0.2.2 enthalten: Am 16. November 2026 hat eine Regel für die Domain eines Absenders neue Post von selbst bearbeitet. Die übrigen Änderungen und Regeln sind noch nicht im Echtbetrieb getestet. Gebaut, aber noch nicht im Echtbetrieb getestet: „Done when“ („Fertig, wenn“) bei jeder Übergabe, die Karte der Routine im Chat, ein eigenes Token für den Computer jedes Mitglieds und Verbindungen ins Heimnetz, die sich schließen, sobald du den Zugriff abschaltest.",
- "r3": "Die Wahl des KI-Dienstes für jedes Mitglied ist in Arbeit: Die Engines-Seite ist gebaut, aber noch nicht im Echtbetrieb getestet, und die automatische Umschaltung lief bisher nur mit Testdiensten. Einstellungen, die du im Chat änderst, samt Rückgängig, sind in Arbeit. Name, Tonfall und Sprache eines Mitglieds sind nach v0.2 gebaut, noch nicht im Echtbetrieb getestet, und zu Tonfall und Sprache ist noch kein Test gelaufen. Echte Aufgabenverteilung ist geplant.",
+ "r3": "Die Wahl des KI-Dienstes für jedes Mitglied ist in Arbeit: Die Engines-Seite ist gebaut, aber noch nicht im Echtbetrieb getestet. Dort kannst du in drei Klicks ein lokales Modell, die kostenlosen Modelle von OpenRouter oder deinen eigenen FreeLLMAPI-Router hinzufügen und nach einem Warnhinweis und einem Häkchen die Reihenfolge der KI-Dienste jedes Mitglieds festlegen. Ein kostenloses Modell, das seinen Werkzeugaufruf als Text schreibt, beendet den Zug nicht: Dann antwortet der nächste Dienst. Bittet ein kostenloses Modell um eine kurze Wartezeit, wartet FreeDuet und versucht es erneut. Im Chat geänderte Einstellungen samt Rückgängig sind in Arbeit. Name, Tonfall und Sprache eines Mitglieds sind nach v0.2 gebaut, aber noch nicht im Echtbetrieb getestet, und zu Tonfall und Sprache lief noch kein Test. Echte Aufgabenübergabe ist geplant.",
  "r4": "Per Chat geschriebene Automationen, eine Telefon-Version und Fernzugriff sind in Arbeit. Mehr verbundene Apps sind in Gestaltung.",
  "r5": "Stimme: das Vorlesen ist gebaut, aber noch nicht im Echtbetrieb getestet, und standardmäßig aus; Anrufe sind noch nicht gebaut. Full access und Cam sind gebaut, aber noch nicht im Echtbetrieb getestet. Sichere Einkäufe: geplant.",
  "r_cloud": "Eine gehostete Version von FreeDuet, die auf einem Server läuft, für Menschen, die lieber nichts installieren, ist geplant, und zwar als kleines monatliches Abo. Der Preis steht noch nicht fest. Dort würde Claude nur mit deinem eigenen API-Schlüssel arbeiten. Nicht bevor der Installer und der erste Start fertig sind. Auf deinem eigenen Computer bleibt FreeDuet kostenlos.",
@@ -133,7 +133,7 @@
  "j3p": "FreeDuet wird von einer einzigen Person gebaut. Eine kleine Spende hält es am Leben.",
  "q_h": "Die Fragen, die zuerst gestellt werden",
  "q1": "Was ist kostenlos, und wofür zahle ich?",
- "a1": "FreeDuet ist kostenlos und Open Source unter der MIT-Lizenz, auch für die geschäftliche Nutzung. Bezahlen musst du nur das KI-Abo, das du damit nutzt, und das ist heute ein Claude-Tarif. Einen API-Schlüssel musst du nicht kaufen.",
+ "a1": "FreeDuet ist kostenlos und Open Source unter der MIT-Lizenz, auch für den geschäftlichen Einsatz. Das Einzige, was du bezahlst, ist das KI-Abo, das du damit nutzt, und das ist heute ein Claude-Tarif. Auf der Engines-Seite kannst du außerdem kostenlose Modelle hinzufügen; deren Anbieter dürfen behalten, was ihnen gesendet wird. Es gibt keinen API-Schlüssel zu kaufen.",
  "q2": "Was brauche ich für die Installation?",
  "a2": "Ein Claude-Abo sowie Docker, Bash und Bun auf deinem Computer. Die vier Schritte oben sind die ganze Installation. Noch nie ein Terminal geöffnet? Bitte jemanden, der sich auskennt, es einzurichten, und zeig ihm diese Seite.",
  "q3": "Läuft es unter Windows, Mac und Linux?",
@@ -162,7 +162,7 @@
  "team": {
   "iris": [
    "leitet das Team",
-   "Du sagst Iris, was du brauchst. Sie gibt es an den passenden Assistenten weiter, und die Antwort kommt über sie zurück.",
+   "Du sagst Iris, was du brauchst. Sie gibt es dem passenden Assistenten, und die Antwort kommt über sie zurück. Können die Werkzeuge eines Kollegen die Aufgabe erledigen, fragt sie diesen Kollegen zuerst; sie sagt, dass sie etwas nicht kann, nur wenn niemand im Team es kann.",
    "Kümmere dich um alles, was heute Morgen reingekommen ist."
   ],
   "otto": [
@@ -215,9 +215,14 @@
    "Arbeitet im Hintergrund. Sie rechnet nach und öffnet die Preise noch einmal, bevor die Arbeit bei dir ankommt.",
    "(Iris gibt ihr die wichtige Arbeit weiter.)"
   ],
+  "rex": [
+   "Modelltrainer",
+   "Vergleicht die Testberichte des Teams für die KI-Dienste, die du nutzen kannst, und schlägt vor, welcher Dienst zu welchem Mitglied passt. Er startet keinen Testlauf und ändert keinen Dienst: Du entscheidest auf der Engines-Seite. Gebaut, noch nicht im Echtbetrieb getestet.",
+   "Basil läuft jetzt auf meinem lokalen Modell. Reicht das?"
+  ],
   "leo": [
    "baut neue Assistenten",
-   "Du brauchst einen Assistenten, den es noch nicht gibt? Leo entwirft ihn. Jedes neue Mitglied zu testen, bevor es als fertig gilt, ist geplant.",
+   "Brauchst du einen Assistenten, den es noch nicht gibt? Leo entwirft ihn. Fehlt ein Werkzeug, schlägt Leo eines mit Quelle und Lizenz vor, und ohne dein Ja wird nichts installiert. Das Testen jedes neuen Mitglieds, bevor es als fertig gilt, ist geplant.",
    "Ich brauche jemanden, der die Verlängerungen meiner Domains im Blick behält."
   ]
  },
@@ -277,7 +282,7 @@
  "again": "Neu starten",
  "bA_cap": "Demo mit erfundenen Beispielen. Der Live-Lauf vom 15. November 2026 umfasste 38 Sicherheitsfälle, die versuchen, ein Mitglied zum Regelbruch zu bringen.",
  "bR_h": "Zwölf Mitglieder, je eine Aufgabe",
- "bR_cap": "Mark und Cam kamen nach v0.1 dazu. Ihre Fälle liefen in den Team-Evals vom 15. November 2026. Seit v0.1 hat kein vollständiger Zertifizierungslauf bestanden.",
+ "bR_cap": "Mark und Cam sind nach v0.1 hinzugekommen. Ihre Fälle liefen in den Team-Tests vom 15. November 2026. Rex, der Modelltrainer, ist nach v0.2.2 hinzugekommen und gebaut, aber noch nicht im Echtbetrieb getestet. Seit v0.1 hat kein vollständiger Zertifizierungslauf bestanden.",
  "bH_h": "Übergabe mit Fertig-wenn-Zeile",
  "bH_from": "Iris an Otto",
  "bH_msg": "Otto, sortiere die Post und entwirf die wichtigen Antworten.",
