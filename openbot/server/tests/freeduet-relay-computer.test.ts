@@ -9,10 +9,10 @@ import { serverTurnAdmission } from "../src/agents/turn-admission";
 
 /**
  * D22 (docs/M1_PLAN.md): a RELAY turn, the answer coming back to the Bot that asked, runs in the
- * person's own conversation and gets the Bot's computer as an ordinary turn there would. The FORWARD
- * hop runs in a scratch thread nobody sees and gets none (it keeps `tools: []`, so #61's note
- * explains it there). Before this, hand-off delivery passed `tools: []` to both, and a member that
- * went on researching after Iris's answer called a tool the CLI did not list (#61).
+ * person's own conversation and gets the Bot's computer as an ordinary turn there would. Since D130 the
+ * FORWARD hop (the scratch thread where the colleague does the work) gets it too. Before, hand-off
+ * delivery passed `tools: []` to both, and a member that went on researching called a tool the CLI
+ * did not list (#61), and no member could use its browser when a colleague asked.
  */
 
 const FORWARD: HandoffWork = {
@@ -140,14 +140,40 @@ describe("the member's computer in a hand-off turn (D22)", () => {
     expect(names(turn.requests[0]?.input ?? {})).toEqual(["computer_navigate"]);
   });
 
-  test("the forward hop is never asked for a computer and keeps tools: []", async () => {
-    let asked = 0;
-    const turn = deliver(FORWARD, async () => {
-      asked += 1;
+  test("the forward hop is offered the asked member's computer too (D130) and runs it under the headless middleware", async () => {
+    const asked: unknown[] = [];
+    const turn = deliver(FORWARD, async (input) => {
+      asked.push(input);
       return [navigate()];
     });
     await turn.run();
-    expect(asked).toBe(0);
+    expect(names(turn.requests[0]?.input ?? {})).toEqual(["computer_navigate"]);
+    expect(turn.used).toHaveLength(1);
+    expect(turn.used[0]).toBeInstanceOf(HeadlessToolsMiddleware);
+    // For the member asked, as the person, under the hand-off's own initiator (never the person's).
+    expect(asked).toEqual([
+      {
+        ownerUserId: "user-1",
+        agentId: "concierge",
+        initiator: {
+          kind: "handoff",
+          id: "freeduet",
+          origin: { kind: "person" },
+        },
+      },
+    ]);
+  });
+
+  test("a forward hop for a member with no computer to offer keeps tools: []", async () => {
+    const turn = deliver(FORWARD, async () => []);
+    await turn.run();
+    expect(turn.requests[0]?.input.tools).toEqual([]);
+    expect(turn.used).toEqual([]);
+  });
+
+  test("without a computer source, no forward hop gets any tool either", async () => {
+    const turn = deliver(FORWARD);
+    await turn.run();
     expect(turn.requests[0]?.input.tools).toEqual([]);
     expect(turn.used).toEqual([]);
   });

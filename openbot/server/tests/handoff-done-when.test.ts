@@ -812,13 +812,18 @@ const toolNames = (input: Record<string, unknown> | undefined) =>
   ((input?.tools ?? []) as { name: string }[]).map((tool) => tool.name);
 
 describe("D22: a line leaves the delivery's tools as they were", () => {
-  test("guard: a forward hop that carries a line still runs with no tools, and its computer is never asked for", async () => {
-    const turn = delivery({ ...WORK, doneWhen: LINE });
-    await turn.run();
-    expect(turn.requests).toHaveLength(1);
-    expect(toolNames(turn.requests[0])).toEqual([]);
-    expect(turn.used).toEqual([]);
-    expect(turn.asked).toEqual([]);
+  test("guard: a forward hop that carries a line is offered the same computer as one that carries none (D130), and the line adds no tool", async () => {
+    const withLine = delivery({ ...WORK, doneWhen: LINE });
+    await withLine.run();
+    const without = delivery(WORK);
+    await without.run();
+    expect(withLine.requests).toHaveLength(1);
+    expect(toolNames(withLine.requests[0])).toEqual(["computer_navigate"]);
+    expect(toolNames(withLine.requests[0])).toEqual(
+      toolNames(without.requests[0]),
+    );
+    expect(withLine.used).toHaveLength(1);
+    expect(withLine.asked).toEqual(without.asked);
   });
 
   test("guard: the relay of a hop that carried a line speaks in the person's conversation with the member's computer, as any relay does", async () => {

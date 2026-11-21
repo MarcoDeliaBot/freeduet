@@ -46,7 +46,7 @@ const REST = "[\\p{L}\\p{M}]*";
 export function foldWords(text: string): string {
   return text
     .normalize("NFKC")
-    .replace(/[­​-‏⁠﻿]/g, "")
+    .replace(/[\u00ad\u200b-\u200f\u2060\ufeff]/g, "")
     .replace(/[‘’ʼ`´]/g, "'")
     .toLowerCase()
     .normalize("NFD")

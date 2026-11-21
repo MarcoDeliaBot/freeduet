@@ -124,13 +124,13 @@ describe("accents, case and Unicode forms", () => {
     ["ＰＡＳＳＷＯＲＤ", "credentials"],
     ["パスワード", "credentials"],
     ["ﾊﾟｽﾜｰﾄﾞ", "credentials"],
-    ["pass​wort", "credentials"],
-    ["Zahlung­smethode", "payments"],
+    ["pass\u200bwort", "credentials"],
+    ["Zahlung\u00adsmethode", "payments"],
     ["l’achat", "payments"],
     ["Facturación", "payments"],
   ];
   for (const [text, id] of cases)
-    test(`"${text.replace(/[​­]/g, "?")}" is ${id}`, () => {
+    test(`"${text.replace(/[\u200b\u00ad]/g, "?")}" is ${id}`, () => {
       expect(safetyRequirement(writeTool(text))?.id).toBe(id);
     });
 });
