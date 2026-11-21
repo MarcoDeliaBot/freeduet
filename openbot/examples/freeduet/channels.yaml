@@ -62,3 +62,8 @@ channels:
     description: Cam makes and edits your videos, with cuts, subtitles, music and sound in the sizes you need.
     permitted_agents: [video]
     allowed_groups: [all]
+  - id: trainer
+    name: Models
+    description: Rex compares how your engines perform on the team's tests and proposes which engine fits which member.
+    permitted_agents: [trainer]
+    allowed_groups: [all]
