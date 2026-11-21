@@ -331,7 +331,8 @@ def note_usage(health: Health, parser: StreamParser) -> None:
     try:
         used = parser.usage()
         if used is not None:
-            health.usage = Usage(input_tokens=used[0], output_tokens=used[1])
+            cached = parser.cache_usage() or (None, None)
+            health.usage = Usage(input_tokens=used[0], output_tokens=used[1], cache_read_tokens=cached[0], cache_write_tokens=cached[1])
     except Exception:  # noqa: BLE001
         return
 

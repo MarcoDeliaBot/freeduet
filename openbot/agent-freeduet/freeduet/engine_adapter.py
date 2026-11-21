@@ -50,6 +50,9 @@ class Usage:
     output_tokens: int | None = None
     cost: float | None = None
     currency: str | None = None
+    #: The cached part of `input_tokens`, when the engine said (the token counter shows them; the ledger ignores them).
+    cache_read_tokens: int | None = None
+    cache_write_tokens: int | None = None
 
 
 @dataclass

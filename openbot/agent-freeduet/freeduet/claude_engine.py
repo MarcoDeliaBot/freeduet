@@ -10,7 +10,7 @@ from contextlib import suppress
 from . import agui, claude_cli
 from .claude_status import MISSING_SENTENCE
 from .failure_classifier import REJECTED, Failure
-from .engine_adapter import EngineAdapter, Finished, Gate, Health, Outcome, ProbeResult, Sink, TurnContext
+from .engine_adapter import EngineAdapter, Finished, Gate, Health, Outcome, ProbeResult, Sink, TurnContext, Usage
 from .stream_json import MCP_PREFIX, Final, StreamParser
 
 # The log lines keep the segment's logger: they are the ones its operators already grep for.
@@ -54,6 +54,18 @@ def _not_the_engines(failure, pictures):
     the picture or the untested flag combination, so it is reported as a refused request (which moves no
     state, whatever the classifier made of the words). The chat still gets the CLI's own error."""
     return Failure(REJECTED) if pictures and failure is not None else failure
+
+
+def note_usage(health: Health, parser: StreamParser) -> None:
+    """The token counts the CLI printed, as far as it did, go to ``health.usage`` for the token counter (usage_counter.py):
+    numbers only, never a cost. Called however the turn ends. Swallows whatever goes wrong, like ``note_result``."""
+    try:
+        used = parser.usage()
+        if used is not None:
+            cached = parser.cache_usage() or (None, None)
+            health.usage = Usage(input_tokens=used[0], output_tokens=used[1], cache_read_tokens=cached[0], cache_write_tokens=cached[1])
+    except Exception:  # noqa: BLE001
+        return
 
 
 def note_stream_end(health: Health, parser: StreamParser, said: str, exit_code: int | None, pictures=()) -> None:
@@ -188,6 +200,7 @@ class ClaudeEngine(EngineAdapter):
                 f"{claude_cli.LABEL} ended without an answer."
             ))
         finally:
+            note_usage(health, parser)
             await claude_cli.stop(process)
             # The CLI's process group is gone: let its pipes reach end of file, so the subprocess
             # transport closes with the segment rather than some time after it.

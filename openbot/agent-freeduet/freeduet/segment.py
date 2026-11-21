@@ -72,6 +72,7 @@ from . import (
     team_log,
     tool_notes,
     transcript,
+    usage_counter,
 )
 from .agui import RunInput
 from .bridge import ipc
@@ -338,6 +339,7 @@ async def run_segment(run: RunInput, member: Member, notes: SegmentNotes | None 
             await host.close()
             for line in diagnostics.at_close:
                 line()
+            usage_counter.note_turn(member.id, engine.key, diagnostics.health)  # D102: what the engine reported, counts only
 
 
 async def _drive(run: RunInput, offered: set[str], inbox: asyncio.Queue, spawn, failed_exit,

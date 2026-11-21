@@ -97,6 +97,19 @@ def _given(usage) -> int | None:
     return sum(found) if found else None
 
 
+def _cache(usage) -> tuple[int | None, int | None]:
+    """The cached part of one call's input, as the CLI reports it: (read, written), each None when it gave no number.
+    Both are already inside :func:`_given`'s total; they are kept apart only so the token counter can show them."""
+    if not isinstance(usage, dict):
+        return (None, None)
+    return (_count(usage.get("cache_read_input_tokens")), _count(usage.get("cache_creation_input_tokens")))
+
+
+def _sum_known(values) -> int | None:
+    found = [value for value in values if value is not None]
+    return sum(found) if found else None
+
+
 @dataclass
 class StreamParser:
     """Feed it one raw line at a time; it returns the items that line adds, in order.
@@ -136,6 +149,9 @@ class StreamParser:
     _use_by_message: dict = field(default_factory=dict)
     _use_key: str | None = None
     _result_use: tuple | None = None
+    # The cached part of that input, for the token counter (:meth:`cache_usage`): the same sources, read the same way.
+    _cache_by_message: dict = field(default_factory=dict)
+    _result_cache: tuple | None = None
 
     def feed(self, raw: bytes | str) -> list[Item]:
         if self.final is not None:
@@ -303,6 +319,7 @@ class StreamParser:
         wrote = _count(usage.get("output_tokens")) if isinstance(usage, dict) else None
         entry[0] = given if given is not None else entry[0]
         entry[1] = wrote if entry[1] is None else entry[1]  # a placeholder: `message_delta` says the real one
+        self._note_cache(self._use_key, usage)
 
     def _usage_of_delta(self, usage) -> None:
         entry = self._use_by_message.get(self._use_key) if self._use_key is not None else None
@@ -311,6 +328,16 @@ class StreamParser:
         wrote, given = _count(usage.get("output_tokens")), _given(usage)
         entry[1] = wrote if wrote is not None else entry[1]
         entry[0] = given if given is not None else entry[0]
+        if self._use_key is not None:
+            self._note_cache(self._use_key, usage)
+
+    def _note_cache(self, key: str, usage) -> None:
+        read, wrote = _cache(usage)
+        if read is None and wrote is None:
+            return
+        entry = self._cache_by_message.setdefault(key, [None, None])
+        entry[0] = read if read is not None else entry[0]
+        entry[1] = wrote if wrote is not None else entry[1]
 
     def _usage_of_snapshot(self, message) -> None:
         """A message the stream events did not carry (no partial messages): its snapshot's own counts, once."""
@@ -321,6 +348,7 @@ class StreamParser:
         usage = message.get("usage")
         if isinstance(usage, dict):
             self._use_by_message[message["id"]] = [_given(usage), _count(usage.get("output_tokens"))]
+            self._note_cache(message["id"], usage)
 
     def _usage_of_result(self, usage) -> None:
         if not isinstance(usage, dict):
@@ -328,6 +356,18 @@ class StreamParser:
         given, wrote = _given(usage), _count(usage.get("output_tokens"))
         if given is not None or wrote is not None:
             self._result_use = (given, wrote)
+        if any(count is not None for count in _cache(usage)):
+            self._result_cache = _cache(usage)
+
+    def cache_usage(self) -> tuple[int | None, int | None] | None:
+        """The cached part of the input the CLI reported so far: (read, written), each None when it reported no number, or
+        None when it reported nothing. Same rule as :meth:`usage`: the result line's totals, else the sum over the messages."""
+        if self._result_cache is not None:
+            return self._result_cache
+        if not self._cache_by_message:
+            return None
+        entries = list(self._cache_by_message.values())
+        return (_sum_known(entry[0] for entry in entries), _sum_known(entry[1] for entry in entries))
 
     def usage(self) -> tuple[int | None, int | None] | None:
         """What the CLI reported about token use so far: (given, wrote), each None when it reported no number, or None
