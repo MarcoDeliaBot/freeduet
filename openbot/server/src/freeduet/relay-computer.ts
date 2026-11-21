@@ -20,7 +20,9 @@
  * Where the person switched the computer or the browser off, none of it is offered
  * (`computer/offered.ts`), exactly as the app filters its own offer.
  *
- * The forward hop (the scratch thread nobody sees) is never asked: `handoff-delivery.ts`.
+ * The forward hop (the scratch thread where the colleague does the work) is offered the same tools since D130:
+ * a card it raises is drawn in the conversation that asked (D52), and a hop is not the person's own typed turn:
+ * Full access reaches it only when the server traces it to the person's typed message (`full-access.ts`).
  */
 import type { HeadlessTool } from "@openbot/toolkit/headless-tools";
 import { canUseComputer } from "../agents/computer-access";
