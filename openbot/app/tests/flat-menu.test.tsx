@@ -20,7 +20,7 @@ import { BotRoster } from "@/components/bots/bot-roster";
 import { MenuSheet } from "@/components/shell/menu-sheet";
 import { flatMenuEntries, showsManageGroup } from "@/freeduet/manage-group";
 import { Places } from "@/freeduet/wide/team-column";
-import { type AgentProfile } from "@/lib/agents/queries";
+import type { AgentProfile } from "@/lib/agents/queries";
 import { authKeys } from "@/lib/auth/queries";
 import { deploymentKeys } from "@/lib/deployment/queries";
 import { appConfig } from "@/lib/generated/application-config";
