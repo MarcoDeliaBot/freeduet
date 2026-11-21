@@ -13,7 +13,9 @@ cannot be known (freeduet/origin.py). `approvals` holds the approval ids the rep
 names, the string "nothing", or null when the segment had no "Already" line. `report_guard` is null
 when the member wrote its own report or none was due, "added" when the turn ended without one and
 the report guard asked for it (freeduet/report_guard.py), and "failed" when the guard asked and got no
-complete report, so the turn ended without one.
+complete report, so the turn ended without one. `cannot_guard` is present only when the cannot guard
+(freeduet/cannot_guard.py, D128) asked the member again after a refusal of capability: "retried" when
+the second turn made a tool call, "unchanged" when it did not, "failed" when it could not run.
 
 Each line is written whole, with O_APPEND and under a lock, so segments running side by side never
 interleave. Past 10 MB the file moves to `team-log.1.jsonl` (replacing the one before) and a new one
@@ -52,16 +54,19 @@ def _root() -> Path:
 
 
 REPORT_GUARD_VALUES = ("added", "failed")
+CANNOT_GUARD_VALUES = ("retried", "unchanged", "failed")  # cannot_guard.py (D128)
 
 
-def make_entry(*, member, thread, run, outcome, summary, from_iris, approvals, report_guard=None) -> dict:
+def make_entry(*, member, thread, run, outcome, summary, from_iris, approvals, report_guard=None, cannot_guard=None) -> dict:
     if outcome not in LOG_OUTCOMES:
         raise ValueError(f"outcome must be one of {', '.join(LOG_OUTCOMES)}")
     if report_guard is not None and report_guard not in REPORT_GUARD_VALUES:
         raise ValueError(f"report_guard must be null or one of {', '.join(REPORT_GUARD_VALUES)}")
+    if cannot_guard is not None and cannot_guard not in CANNOT_GUARD_VALUES:
+        raise ValueError(f"cannot_guard must be null or one of {', '.join(CANNOT_GUARD_VALUES)}")
     if isinstance(approvals, list):
         approvals = [checkpoints.redact(value) for value in approvals]
-    return {
+    entry = {
         "time": now_iso(),
         "member": str(member)[:MAX_ID],
         "thread": str(thread)[:MAX_ID],
@@ -72,6 +77,9 @@ def make_entry(*, member, thread, run, outcome, summary, from_iris, approvals, r
         "approvals": approvals,
         "report_guard": report_guard,
     }
+    if cannot_guard is not None:  # only when the cannot guard asked again (cannot_guard.py, D128)
+        entry["cannot_guard"] = cannot_guard
+    return entry
 
 
 def append(entry: dict, root: Path | None = None) -> Path:

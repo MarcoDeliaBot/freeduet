@@ -212,14 +212,18 @@ class Story:
     def __init__(self):
         self.messages: list[dict] = []
         self.called = False
+        self._turn = 0  # the cannot guard's second turn must not merge into the first one's message ids
 
     def text(self, message_id: str | None, chunk: str) -> None:
         last = self.messages[-1] if self.messages else None
-        key = f"segment-{message_id or 'text'}"
+        key = f"segment-{f'{self._turn}-' if self._turn else ''}{message_id or 'text'}"
         if last is not None and last.get("id") == key and not last.get("toolCalls"):
             last["content"] += chunk
         else:
             self.messages.append({"id": key, "role": "assistant", "content": chunk})
+
+    def next_turn(self) -> None:
+        self._turn += 1
 
     def call(self, call_id: str, name: str, arguments: dict) -> None:
         self.called = True
