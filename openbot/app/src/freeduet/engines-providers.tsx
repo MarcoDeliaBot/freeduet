@@ -102,6 +102,9 @@ function ProviderCard({
       return (await response.json()) as FreeModels;
     },
   });
+  const sourceLine = freeModels.isPending
+    ? FREE_MODELS_LOADING
+    : freeModelsSourceText(freeModels.data?.source ?? "fallback");
   const freeOptions = [
     ...new Set([
       FREE_ROUTER,
@@ -342,13 +345,9 @@ function ProviderCard({
                   </option>
                 ))}
               </select>
-              <p className="type-label text-duet-ink-2">
-                {freeModels.isPending
-                  ? FREE_MODELS_LOADING
-                  : (freeModelsSourceText(
-                      freeModels.data?.source ?? "fallback",
-                    ) ?? "")}
-              </p>
+              {sourceLine ? (
+                <p className="type-label text-duet-ink-2">{sourceLine}</p>
+              ) : null}
               <p className="type-label text-duet-ink-2">{FREE_MODELS_NOTE}</p>
             </div>
           ) : (
