@@ -196,7 +196,7 @@ export function engineReasonText(reason: EngineReason): string {
 /** The page's title, and the one sentence under it (the approved direction, 14 November 2026). */
 export const ENGINES_TITLE = "Engines";
 export const ENGINES_INTRO =
-  "The engine is what does the thinking for each member. Your own sign-ins always answer first; anything paid stays off until you say so.";
+  "The engine is what does the thinking for each member. Your own sign-ins answer first unless you choose another order; anything paid stays off until you say so.";
 
 /** Said when the list cannot be read at all; the page is not reloaded for the person. */
 export const LOAD_FAILED = "Couldn't load the engines. Reload the page.";
@@ -273,13 +273,14 @@ export const ORDER_BREAK_KINDS: readonly OrderBreakKind[] = [
 ];
 export const ORDER_WARNING_TITLE: Record<OrderBreakKind, string> = {
   free_before_login: "A free engine would answer before your own login",
-  paid_before_free_or_login: "A paid engine would answer first",
+  paid_before_free_or_login:
+    "A paid engine would come before a free engine or a login",
 };
 export const ORDER_WARNING_TEXT: Record<OrderBreakKind, string> = {
   free_before_login:
     "If it is a cloud service, this member's messages go to that provider first and it may keep them. Its answers may also be of lower quality than your login's.",
   paid_before_free_or_login:
-    "Every message may cost money from the first one. A paid engine runs only if you have switched paid engines on, and it then answers before your logins and the free engines.",
+    "A paid engine answers before the engines after it, so what it answers may cost money. If it is first in the list, every message may cost money from the first one. It runs only after you have switched paid engines on and set your limits.",
 };
 export const ORDER_NEW_LABEL = "New order:";
 export const ORDER_TICK = "I understand, use this order";

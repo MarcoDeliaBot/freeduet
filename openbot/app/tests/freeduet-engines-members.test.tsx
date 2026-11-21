@@ -911,9 +911,11 @@ test("a paid-first move says every message may cost money from the first one", a
   const box = await view.findByRole("group", {
     name: "Confirm the new order for Iris",
   });
-  expect(box.textContent).toContain("A paid engine would answer first");
   expect(box.textContent).toContain(
-    "Every message may cost money from the first one",
+    "A paid engine would come before a free engine or a login",
+  );
+  expect(box.textContent).toContain(
+    "every message may cost money from the first one",
   );
   expect(box.textContent).not.toContain("may keep them");
 });

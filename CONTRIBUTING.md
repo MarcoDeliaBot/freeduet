@@ -34,7 +34,7 @@ Use FreeDuet and tell us, with the [I am using it](https://github.com/MarcoDelia
 
 ## Rules that never bend
 
-- **Logins first.** Members run on the person's own subscription logins. A metered API is never first in any chain and never on by default.
+- **Logins first, by default.** Members run on the person's own subscription logins. In every chain the person has not reordered, logins come first, and a metered API is never first and never on by default. The person may confirm another order for one member on the Engines page (D115); nothing paid is switched on by that.
 - **Never read, copy or forward subscription credentials.** Never open the Claude CLI's login or config directories, in any container or volume.
 - **No secrets and no personal data.** Never commit keys, tokens, cookies, browser profiles, real emails, real documents or real customer data. Eval fixtures are invented.
 - **The person's approval stays for real account actions.** Agents do not send email, pay, buy, sign or delete without the person's approval.

@@ -159,7 +159,7 @@ test("the page has one plain title and one sentence under it, and each engine na
   expect(view.getByRole("heading", { level: 1, name: "Engines" })).toBeTruthy();
   expect(
     view.getByText(
-      "The engine is what does the thinking for each member. Your own sign-ins always answer first; anything paid stays off until you say so.",
+      "The engine is what does the thinking for each member. Your own sign-ins answer first unless you choose another order; anything paid stays off until you say so.",
     ),
   ).toBeTruthy();
   expect(

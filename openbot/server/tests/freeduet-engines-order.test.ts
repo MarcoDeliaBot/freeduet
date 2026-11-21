@@ -293,9 +293,9 @@ describe("D115: an order outside the logins-first group needs the person's confi
       confirmed: false,
       ownOrder: false,
     });
-    expect(
-      (events[0]?.payload as Record<string, unknown>).confirmedKind,
-    ).toBeUndefined();
+    expect(Object.keys(events[0]?.payload ?? {})).not.toContain(
+      "confirmedKind",
+    );
   });
 
   test("the same guard: a non-administrator who sends confirmed:true reaches nothing", async () => {
