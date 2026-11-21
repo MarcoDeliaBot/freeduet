@@ -1,0 +1,42 @@
+name: text safety
+
+# Fails when a tracked text file holds a hidden or bidirectional Unicode character, or an absolute path into
+# a person's home folder, outside the allowlist in openbot/scripts/check-text-safety.ts. Such text hides
+# instructions from a reader, and a path names a person on a public repository.
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+# Least privilege by default. The check reads the checkout and writes nothing.
+permissions:
+  contents: read
+
+jobs:
+  text-safety:
+    name: hidden characters and personal paths
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          # Nothing here pushes, so the runner keeps no credential for later steps to read.
+          persist-credentials: false
+
+      - name: Set up Bun
+        uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
+        with:
+          bun-version: 1.4.3
+
+      # The script has no dependencies, so no install step is needed. It reads `git ls-files` from the
+      # repository root, so it runs from the checkout's root.
+      - name: Check tracked text files
+        run: bun openbot/scripts/check-text-safety.ts
