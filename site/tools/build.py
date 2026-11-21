@@ -137,6 +137,9 @@ def get_path(root, path):
 
 # The art is shared with the app, which draws the same faces (D55): one file, `openbot/shared/mascot.json`.
 MASCOT_FILE = Path(__file__).resolve().parents[2] / "openbot" / "shared" / "mascot.json"
+# The member drawings are the app's (approved for the app on 20 November 2026, PR #412 and #417): the site reads the
+# same file, `openbot/app/src/freeduet/wide/mascot-drawn.json`, for its twelve `team` entries.
+MASCOT_DRAWN_FILE = Path(__file__).resolve().parents[2] / "openbot" / "app" / "src" / "freeduet" / "wide" / "mascot-drawn.json"
 MEMBER_IDS = ["iris", "leo", "otto", "portia", "penny", "jules", "wren", "gus", "basil", "vera", "mark", "video"]
 FACE_IDS = ["idle", "listen", "think", "work", "ask", "done"]
 MASCOT = re.compile(r'(<svg\b[^>]*\sdata-mascot="(\w+)"[^>]*>)</svg>')
@@ -150,9 +153,86 @@ def mascot_defs(M):
     return M["defs"] + '<g id="m-headset">' + M["headset"] + "</g>" + symbols
 
 
+INK, PAPER, PINK, BLUSH, TEAL, PURPLE = "#1E2A55", "#F6F8FB", "#B5386A", "#F59DB4", "#2A9FA3", "#8463D0"
+
+
+def _eyes(rx, ry):
+    """Two open eyes of the app's Iris: a dark pupil that follows the pointer (class pu), with its two glints."""
+    out = ""
+    for cx in (80, 120):
+        out += ('<g class="pu"><ellipse cx="%s" cy="104" rx="%s" ry="%s" fill="%s"/><circle cx="%s" cy="98.5" r="4.2" fill="#fff"/>'
+                '<circle cx="%s" cy="109" r="1.8" fill="#fff"/></g>') % (cx, rx, ry, INK, cx + 4, cx - 4)
+    return out
+
+
+def _ticks_arcs():
+    return ('<path d="M68 99 L63 95" stroke="%s" stroke-width="2.5" stroke-linecap="round"/>'
+            '<path d="M132 99 L137 95" stroke="%s" stroke-width="2.5" stroke-linecap="round"/>'
+            '<path d="M72 82 Q80 77 88 82" stroke="%s" stroke-width="3" fill="none" stroke-linecap="round"/>'
+            '<path d="M112 82 Q120 77 128 82" stroke="%s" stroke-width="3" fill="none" stroke-linecap="round"/>') % (INK, INK, TEAL, PURPLE)
+
+
+def _white_eye(cx, cy, rx, ry, px, py, pr):
+    return ('<ellipse cx="%s" cy="%s" rx="%s" ry="%s" fill="%s" stroke="%s" stroke-width="2.6"/>'
+            '<g class="pu"><circle cx="%s" cy="%s" r="%s" fill="%s"/></g>') % (cx, cy, rx, ry, PAPER, INK, px, py, pr, INK)
+
+
+# The six expressions of the big Iris, drawn on the app's Iris face (coordinates inside its translate(10 10)).
+# They keep the states and the blink, pointer and blush of the expressions they replace (the old sphere's faces).
+IRIS_FACES = {
+    "idle": ('<g class="blink" style="animation-delay:-1.4s">' + _eyes(11.5, 13.5) + "</g>" + _ticks_arcs()
+             + '<ellipse cx="66" cy="123" rx="9" ry="5" fill="%s" opacity="0.75"/>'
+               '<ellipse cx="134" cy="123" rx="9" ry="5" fill="%s" opacity="0.75"/>' % (BLUSH, BLUSH)
+             + '<path d="M93 119 Q100 126 107 119" stroke="%s" stroke-width="3" fill="none" stroke-linecap="round"/>' % PINK),
+    "listen": ('<g class="blink" style="animation-delay:-1.6s">' + _eyes(12.5, 14.5) + "</g>" + _ticks_arcs()
+               + '<g class="pu"><ellipse cx="100" cy="134" rx="3.6" ry="4.4" fill="%s"/></g>' % INK),
+    "think": ('<path d="M69.5 107Q78 91 86.5 107Q78 113 69.5 107Z" fill="%s" stroke="%s" stroke-width="2.4" stroke-linejoin="round"/>'
+                '<path d="M113.5 107Q122 91 130.5 107Q122 113 113.5 107Z" fill="%s" stroke="%s" stroke-width="2.4" stroke-linejoin="round"/>'
+                '<g class="pu"><circle cx="80.6" cy="103.6" r="2.9" fill="%s"/><circle cx="124.6" cy="103.6" r="2.9" fill="%s"/></g>'
+                '<path d="M67 92.5H89" stroke="%s" stroke-width="4.2" stroke-linecap="round"/>'
+                '<path d="M111 92.5H133" stroke="%s" stroke-width="4.2" stroke-linecap="round"/>'
+                '<path d="M94.5 133.8Q100 136.4 105.5 133.8" stroke="%s" stroke-width="4.2" fill="none" stroke-linecap="round"/>')
+             % (PAPER, INK, PAPER, INK, INK, INK, TEAL, PURPLE, PINK),
+    "work": (_ticks_arcs()
+             + _white_eye(78, 107.5, 8.2, 7.6, 78, 111.4, 3.8) + _white_eye(122, 107.5, 8.2, 7.6, 122, 111.4, 3.8)
+             + '<path d="M95 132Q100 133.5 105 132" stroke="%s" stroke-width="4" fill="none" stroke-linecap="round"/>' % PINK),
+    "ask": (_white_eye(78, 107, 8.2, 8.8, 78, 105, 4.4) + _white_eye(122, 107, 8.2, 8.8, 122, 105, 4.4)
+            + '<path d="M68 87Q78 80 88 87" stroke="%s" stroke-width="3.6" fill="none" stroke-linecap="round"/>'
+              '<path d="M112 87Q122 80 132 87" stroke="%s" stroke-width="3.6" fill="none" stroke-linecap="round"/>' % (TEAL, PURPLE)
+            + '<path d="M92 130Q100 137 108 130" stroke="%s" stroke-width="4.8" fill="none" stroke-linecap="round"/>' % PINK
+            + '<path d="M160 108Q170 102 173 92" stroke="%s" stroke-width="3.6" fill="none" stroke-linecap="round"/>'
+              '<circle cx="174" cy="90" r="4.6" fill="%s" stroke="%s" stroke-width="2.2"/>' % (INK, PAPER, INK)),
+    "done": ('<path d="M68 112Q78 92 88 112" stroke="%s" stroke-width="6.4" fill="none" stroke-linecap="round"/>' % INK
+             + _ticks_arcs()
+             + '<ellipse cx="122" cy="106" rx="7.6" ry="8" fill="%s" stroke="%s" stroke-width="2.6"/>'
+               '<g class="pu"><circle cx="124.2" cy="105.4" r="4" fill="%s"/><circle cx="125.6" cy="103.8" r="1.3" fill="%s"/></g>' % (PAPER, INK, INK, PAPER)
+             + '<ellipse cx="66" cy="123" rx="9.5" ry="5.5" fill="%s" opacity="0.75"/>'
+               '<ellipse cx="134" cy="123" rx="9.5" ry="5.5" fill="%s" opacity="0.75"/>' % (BLUSH, BLUSH)
+             + '<path d="M88 127Q100 142 112 127" stroke="%s" stroke-width="5.4" fill="none" stroke-linecap="round"/>' % PINK),
+}
+
+
 def big_faces(M):
-    """The six faces of the big Iris, one group per state (app.js shows the one named by data-s)."""
-    return "".join('<g class="bf bf-%s">%s</g>' % (k, M["faces"][k]) for k in FACE_IDS)
+    """The big Iris beside the window, one group per state (app.js shows the one named by data-s): the app's Iris
+    drawing (`team.iris`), split into its body, its face and what is drawn over the face (the emblem, the headset band
+    and the ear cups), with the face of the state in between. The drawing's own clip path is defined once, as hero-iris-clip."""
+    art = M["team"]["iris"]
+    prefix, suffix = '<g transform="translate(10 10)">', "</g>"
+    if not (art.startswith(prefix) and art.endswith(suffix)):
+        raise ValueError("the drawn Iris must be wrapped in translate(10 10)")
+    body = art[len(prefix):-len(suffix)]
+    defs = re.findall(r"<defs>.*?</defs>", body, re.S)
+    if len(defs) != 1 or 'id="fd-iris-clip"' not in defs[0]:
+        raise ValueError("the drawn Iris must hold one clip path fd-iris-clip")
+    head_end = body.index('<ellipse cx="80" cy="104"')
+    face_end = body.index('<path d="M100 150 C92')
+    if body.count('<ellipse cx="80" cy="104"') != 1 or body.count('<path d="M100 150 C92') != 1:
+        raise ValueError("the drawn Iris face has moved")
+    head = body[:head_end].replace(defs[0], "").replace("fd-iris-clip", "hero-iris-clip")
+    tail = body[face_end:]
+    clip = defs[0].replace("fd-iris-clip", "hero-iris-clip")
+    return clip + "".join('<g class="bf bf-%s">%s%s%s%s</g>' % (k, prefix, head, IRIS_FACES[k], tail + suffix)
+                          for k in FACE_IDS)
 
 
 # ---------------------------------------------------------------------------------------------------------------
@@ -173,6 +253,7 @@ class Site:
         self.T = {c: json.loads((src / "lang" / (c + ".json")).read_text(encoding="utf-8")) for c in self.codes}
         self.members = json.loads((src / "members.json").read_text(encoding="utf-8"))
         self.mascot = json.loads(MASCOT_FILE.read_text(encoding="utf-8"))
+        self.mascot["team"] = json.loads(MASCOT_DRAWN_FILE.read_text(encoding="utf-8"))["team"]
         body = (src / "body.html").read_text(encoding="utf-8")
         self.body, n = re.subn(r'<symbol id="i-gh".*?</symbol>', lambda _m: GH_SYMBOL, body, flags=re.S)
         if n != 1:
