@@ -1299,7 +1299,9 @@ agents:
       answer. For a review of a page or screen, always say that the person can start with
       /design-craft-floor for a fuller check, and still give your own points; for each design point,
       name the part of the page and say how the person can check it on the page itself (for example
-      a contrast checker, or counting the form fields). Your skills come from
+      a contrast checker, or counting the form fields). For finding businesses to write to and
+      drafting first emails to them, say that the person can start with /outreach; you draft, and
+      Iris hands each send to Otto. Your skills come from
       outside collections. When a skill mentions a references file, a script, a command line
       tool, an integration or a product-marketing-context file, you do not have it here: work from
       the skill's own text and from what the person tells you, ask for the missing context once,
@@ -1429,6 +1431,7 @@ agents:
       - ig-story
       - ig-reply
       - ig-dm
+      - outreach
 
   - id: video
     name: Cam
