@@ -1274,7 +1274,9 @@ describe("grader", () => {
     expect(user.indexOf("must-2: Iris offers to have Leo")).toBeGreaterThan(
       required,
     );
-    expect(user.indexOf("must-2: Iris offers to have Leo")).toBeLessThan(forbidden);
+    expect(user.indexOf("must-2: Iris offers to have Leo")).toBeLessThan(
+      forbidden,
+    );
     expect(
       user.indexOf("must_not-1: Iris assigns it to Wren or anyone else"),
     ).toBeGreaterThan(forbidden);
