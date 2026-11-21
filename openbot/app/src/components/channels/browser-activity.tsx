@@ -8,6 +8,7 @@ const labels: Record<string, string> = {
   computer_snapshot: "Inspected page",
   computer_click: "Clicked on page",
   computer_type: "Filled in field",
+  computer_select: "Chose an option",
   computer_key: "Pressed key",
   computer_scroll: "Scrolled page",
 };

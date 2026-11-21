@@ -27,6 +27,7 @@ export const COMPUTER_TOOLS = [
   "computer_snapshot",
   "computer_click",
   "computer_type",
+  "computer_select",
   "computer_key",
   "computer_scroll",
   "computer_read_file",
@@ -55,6 +56,8 @@ export const COMPUTER_ACTING_TOOLS = [
   "computer_navigate",
   "computer_click",
   "computer_type",
+  // A native menu or a date field (D123): changes a page field like `computer_type`, so it is decided on.
+  "computer_select",
   "computer_key",
   "computer_scroll",
   "computer_read_file",
@@ -145,6 +148,24 @@ export type SnapshotElement = {
   type?: string;
   disabled?: boolean;
   checked?: boolean;
+  /**
+   * For a native `<select>` (D123): what it offers, so `computer_select` can choose. A label, the value
+   * the page submits when it differs, and whether the option is disabled or selected. Capped; see
+   * `optionsTotal`. Absent for a custom drop-down, which has no list to read.
+   */
+  options?: Array<{
+    label: string;
+    value?: string;
+    disabled?: boolean;
+    selected?: boolean;
+  }>;
+  /** How many options the menu has, when `options` lists fewer. */
+  optionsTotal?: number;
+  /** A menu that takes several options at once: `computer_select` then takes a list. */
+  multiple?: boolean;
+  /** A date or time field's bounds, as the page wrote them (ISO). */
+  min?: string;
+  max?: string;
 };
 
 export type SnapshotResult = {
@@ -174,6 +195,12 @@ export type TypeInput = ActionTarget & {
   /** Press Enter afterwards. How a Bot submits a single-field form without hunting for the button. */
   submit?: boolean;
 };
+/**
+ * `value` is an option's label or value for a menu (a list for a multiple menu; an empty list clears it),
+ * or an ISO date or time for a date field (`2026-03-28`, `14:30`, `2026-03-28T14:30`, `2026-03`,
+ * `2026-W13`; an empty string clears it).
+ */
+export type SelectInput = ActionTarget & { value: string | string[] };
 export type KeyInput = Partial<ActionTarget> & { key: string };
 export type ScrollInput = { deltaY?: number };
 
@@ -186,7 +213,7 @@ export type ScrollInput = { deltaY?: number };
  * secret into two places that keep it. `characters` is enough to confirm the field was filled.
  */
 export type ActionResult = {
-  action: "click" | "type" | "key" | "scroll";
+  action: "click" | "type" | "select" | "key" | "scroll";
   ref?: string;
   /**
    * The label of the element acted on, as the gateway resolved it.
@@ -197,6 +224,17 @@ export type ActionResult = {
   /** For `type`: how much was entered, never what. */
   characters?: number;
   submitted?: boolean;
+  /**
+   * For `select` on a menu: the option(s) the menu shows as chosen after the call. Unlike typed text
+   * this is what the page offered, and a sensitive field is refused before anything is read.
+   */
+  selected?: Array<{ label: string; value: string }>;
+  /** For `select` on a date field: the value the field now holds (ISO), and its type. */
+  value?: string;
+  inputType?: string;
+  /** For a date the page holds but its own min/max rule rejects: kept, and said. */
+  outOfRange?: true;
+  kind?: "select" | "date";
   key?: string;
   deltaY?: number;
   /** Where the page ended up, which is how a Bot notices that its click navigated. */

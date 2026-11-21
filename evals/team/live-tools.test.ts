@@ -242,6 +242,7 @@ describe("the tools offered", () => {
       "computer_read",
       "computer_snapshot",
       "computer_type",
+      "computer_select",
       "computer_click",
       "computer_key",
       "computer_request_secret",
@@ -1118,7 +1119,7 @@ describe("the report", () => {
         "computer_navigate",
       );
       expect(on.markdown).toContain(
-        "Computer tools: offered as the web app offers them (15: computer_navigate,",
+        "Computer tools: offered as the web app offers them (16: computer_navigate,",
       );
       expect(on.markdown).toContain("in 1 of 1 cases run, 0 calls made.");
       expect(off.code).toBe(0);

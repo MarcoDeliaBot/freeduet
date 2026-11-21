@@ -31,6 +31,15 @@ export type HeadlessSignInRequester = {
 export const SIGN_IN_TOOL_DESCRIPTION =
   "Ask the person you work for to sign you in to a website. They get a private sign-in form outside this conversation (or take over the browser), and their login is typed straight into your browser by the computer. You never see the username, password or code, and must never ask for them any other way. Open the site's sign-in page first, then call this with the site's address. This turn pauses until they answer; you are then told only whether it worked.";
 
+/**
+ * What a member is told about `computer_select` (D123, item 2). The app's registration
+ * (`app/src/lib/copilot/computer-tools.tsx`) holds the same text as a literal, because the eval runner
+ * reads the app's descriptions from its source; `computer-select.test.ts` pins the two as equal. It
+ * names the limit: a custom drop-down, built from ordinary elements, is not handled by this tool.
+ */
+export const SELECT_TOOL_DESCRIPTION =
+  "Choose an option in a native drop-down menu (a <select>) or fill a date or time field. Give the ref and snapshotId from your latest snapshot, which lists each menu's options (label and value) and marks the disabled ones. For a menu, value is an option's label or value; for a menu that takes several (multiple: true), a list of them, which replaces the current choice. For a date field (type date, time, datetime-local, month or week) give an ISO value such as 2026-03-28, 14:30, 2026-03-28T14:30, 2026-03 or 2026-W13. Returns what the field now shows. A custom drop-down (a button or div that opens a list) is not a native menu: click it with computer_click, then click its option. Use computer_type for text fields.";
+
 /** Shipped browser/file/command tools, with identity bound before the model supplies arguments. */
 export function createHeadlessComputerTools(options: {
   gateway: ComputerGateway;
@@ -145,6 +154,19 @@ export function createHeadlessComputerTools(options: {
       async (input, { signal }) => ({
         ok: true,
         ...(await gateway.type(botId, actor, input, signal)),
+      }),
+    ),
+    tool(
+      "computer_select",
+      SELECT_TOOL_DESCRIPTION,
+      z.strictObject({
+        ref,
+        snapshotId,
+        value: z.union([z.string(), z.array(z.string()).max(100)]),
+      }),
+      async (input, { signal }) => ({
+        ok: true,
+        ...(await gateway.select(botId, actor, input, signal)),
       }),
     ),
     tool(

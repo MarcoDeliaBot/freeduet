@@ -160,7 +160,7 @@ async function refOf(tab: Page, name: string): Promise<string> {
 }
 const field = async (tab: Page, name: string) =>
   tab.locator(`aria-ref=${await refOf(tab, name)}`);
-const valueOf = (tab: Page, id: string) => tab.locator(`#${id}`).inputValue();
+const valueIn = (tab: Page, id: string) => tab.locator(`#${id}`).inputValue();
 const selectedOf = (tab: Page, id: string) =>
   tab
     .locator(`#${id}`)
@@ -180,7 +180,7 @@ describe.skipIf(!asked)("in a real browser", () => {
       (caught: unknown) => caught,
     );
     expect(String(error)).toMatch(/not an <input>/);
-    expect(await valueOf(tab, "country")).toBe("");
+    expect(await valueIn(tab, "country")).toBe("");
     await tab.close();
   }, 15_000);
 
@@ -191,7 +191,7 @@ describe.skipIf(!asked)("in a real browser", () => {
       kind: "select",
       selected: [{ label: "Italy", value: "it" }],
     });
-    expect(await valueOf(tab, "country")).toBe("it");
+    expect(await valueIn(tab, "country")).toBe("it");
     expect(await chooseOnField(menu, "es", acting)).toMatchObject({
       selected: [{ label: "Spain" }],
     });
@@ -222,7 +222,7 @@ describe.skipIf(!asked)("in a real browser", () => {
     expect(
       (await failure(chooseOnField(menu, ["Italy", "Spain"], acting))).message,
     ).toMatch(/exactly one/);
-    expect(await valueOf(tab, "country")).toBe("it");
+    expect(await valueIn(tab, "country")).toBe("it");
     await tab.close();
   }, 15_000);
 
@@ -255,7 +255,7 @@ describe.skipIf(!asked)("in a real browser", () => {
     ] as const) {
       const result = await chooseOnField(await field(tab, name), value, acting);
       expect(result).toMatchObject({ kind: "date", value });
-      expect(await valueOf(tab, id)).toBe(value);
+      expect(await valueIn(tab, id)).toBe(value);
     }
     const events = (await tab.evaluate(
       () => (window as unknown as { events: string[] }).events,
@@ -279,7 +279,7 @@ describe.skipIf(!asked)("in a real browser", () => {
     expect(
       (await failure(chooseOnField(day, ["2026-03-01"], acting))).message,
     ).toMatch(/one value/);
-    expect(await valueOf(tab, "day")).toBe("2026-03-28");
+    expect(await valueIn(tab, "day")).toBe("2026-03-28");
     expect(
       (
         await failure(
@@ -330,7 +330,7 @@ describe.skipIf(!asked)("in a real browser", () => {
       (caught: unknown) => caught,
     );
     expect(error).toBeInstanceOf(SecretFieldError);
-    expect(await valueOf(tab, "exp")).toBe("01");
+    expect(await valueIn(tab, "exp")).toBe("01");
     // And a menu inside a block the page marks as secret.
     await tab.evaluate(() =>
       document
@@ -342,7 +342,7 @@ describe.skipIf(!asked)("in a real browser", () => {
         chooseOnField(await field(tab, "Country"), "Italy", acting),
       ),
     ).toBeInstanceOf(SecretFieldError);
-    expect(await valueOf(tab, "country")).toBe("");
+    expect(await valueIn(tab, "country")).toBe("");
     await tab.close();
   }, 15_000);
 

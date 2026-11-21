@@ -368,6 +368,52 @@ export function ComputerTools() {
 
   useFrontendTool({
     available: offered.browser,
+    name: "computer_select",
+    description:
+      "Choose an option in a native drop-down menu (a <select>) or fill a date or time field. Give the ref and snapshotId from your latest snapshot, which lists each menu's options (label and value) and marks the disabled ones. For a menu, value is an option's label or value; for a menu that takes several (multiple: true), a list of them, which replaces the current choice. For a date field (type date, time, datetime-local, month or week) give an ISO value such as 2026-03-28, 14:30, 2026-03-28T14:30, 2026-03 or 2026-W13. Returns what the field now shows. A custom drop-down (a button or div that opens a list) is not a native menu: click it with computer_click, then click its option. Use computer_type for text fields.",
+    parameters: z.object({
+      ref: z
+        .string()
+        .describe(
+          "Ref of the menu or date field, from your most recent snapshot",
+        ),
+      snapshotId: z.number().describe("The snapshotId that ref came from"),
+      value: z
+        .union([z.string(), z.array(z.string())])
+        .describe(
+          "An option's label or value (a list for a multiple menu), or an ISO date or time",
+        ),
+    }),
+    handler: async (
+      input: { ref: string; snapshotId: number; value: string | string[] },
+      { signal }: { signal?: AbortSignal } = {},
+    ) =>
+      callComputer(
+        bot.current,
+        "/select",
+        {
+          method: "POST",
+          body: input,
+        },
+        signal,
+      ),
+    render: ({ args, result, status }) => (
+      <ActionLine
+        running={status !== "complete"}
+        label="Chose in"
+        detail={
+          // The element's label, never the ref or the value chosen.
+          labelOf(result) ??
+          (typeof args?.ref === "string" ? args.ref : undefined)
+        }
+        refused={outcomeOf(result).refused === true}
+        failed={didNotWork(outcomeOf(result))}
+      />
+    ),
+  });
+
+  useFrontendTool({
+    available: offered.browser,
     name: "computer_click",
     description:
       "Click something on the page: a button, a link, a checkbox or a radio option. Give the ref " +

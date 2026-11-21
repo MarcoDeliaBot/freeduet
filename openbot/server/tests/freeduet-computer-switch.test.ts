@@ -69,6 +69,7 @@ const BROWSER = [
   "computer_screenshot",
   "computer_click",
   "computer_type",
+  "computer_select",
   "computer_key",
   "computer_scroll",
   "computer_request_help",

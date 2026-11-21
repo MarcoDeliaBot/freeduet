@@ -88,6 +88,7 @@ import type {
   SignInFillResult,
   SnapshotElement,
   SnapshotResult,
+  SelectInput,
   TypeInput,
   WriteFileInput,
   WriteFileResult,
@@ -180,6 +181,12 @@ export interface ComputerGateway {
     botId: string,
     actor: ActionActor,
     input: TypeInput,
+    signal?: AbortSignal,
+  ): Promise<ActionResult>;
+  select(
+    botId: string,
+    actor: ActionActor,
+    input: SelectInput,
     signal?: AbortSignal,
   ): Promise<ActionResult>;
   key(
@@ -1100,6 +1107,39 @@ export function createComputerGateway(
       );
     },
 
+    /**
+     * A native menu or a date field (D123). Typing by another name, so it is governed exactly as
+     * `type` is: the same policy, the same audit row, the same approval gate, effect `write`. The
+     * policy sees intent `type` and the element's own role, name and type; there is no `key`, because
+     * choosing presses nothing, so no form is sent by it.
+     */
+    select(
+      botId: string,
+      actor: ActionActor,
+      input: SelectInput,
+      signal?: AbortSignal,
+    ) {
+      return govern(
+        "computer_select",
+        botId,
+        actor,
+        {
+          ref: input.ref,
+          snapshotId: input.snapshotId,
+          ...(signal ? { signal } : {}),
+        },
+        (address) =>
+          post<ActionResult>(
+            botId,
+            "/select",
+            input,
+            signal,
+            undefined,
+            address,
+          ),
+      );
+    },
+
     key(
       botId: string,
       actor: ActionActor,
@@ -1302,6 +1342,8 @@ export function intentOf(
     case "computer_click":
       return "activate";
     case "computer_key":
+    // A menu or date choice changes a field the way typing does and presses nothing (D123).
+    case "computer_select":
     // A type carrying `submit` ends in Enter, and the same reasoning applies to it: what the
     // keypress does is press whatever the form activates, whichever tool asked for it.
     case "computer_type":
