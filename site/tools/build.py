@@ -137,6 +137,9 @@ def get_path(root, path):
 
 # The art is shared with the app, which draws the same faces (D55): one file, `openbot/shared/mascot.json`.
 MASCOT_FILE = Path(__file__).resolve().parents[2] / "openbot" / "shared" / "mascot.json"
+# The member drawings are the app's (approved for the app on 20 November 2026, PR #412 and #417): the site reads the
+# same file, `openbot/app/src/freeduet/wide/mascot-drawn.json`, for its twelve `team` entries.
+MASCOT_DRAWN_FILE = Path(__file__).resolve().parents[2] / "openbot" / "app" / "src" / "freeduet" / "wide" / "mascot-drawn.json"
 MEMBER_IDS = ["iris", "leo", "otto", "portia", "penny", "jules", "wren", "gus", "basil", "vera", "mark", "video"]
 FACE_IDS = ["idle", "listen", "think", "work", "ask", "done"]
 MASCOT = re.compile(r'(<svg\b[^>]*\sdata-mascot="(\w+)"[^>]*>)</svg>')
@@ -173,6 +176,7 @@ class Site:
         self.T = {c: json.loads((src / "lang" / (c + ".json")).read_text(encoding="utf-8")) for c in self.codes}
         self.members = json.loads((src / "members.json").read_text(encoding="utf-8"))
         self.mascot = json.loads(MASCOT_FILE.read_text(encoding="utf-8"))
+        self.mascot["team"] = json.loads(MASCOT_DRAWN_FILE.read_text(encoding="utf-8"))["team"]
         body = (src / "body.html").read_text(encoding="utf-8")
         self.body, n = re.subn(r'<symbol id="i-gh".*?</symbol>', lambda _m: GH_SYMBOL, body, flags=re.S)
         if n != 1:
