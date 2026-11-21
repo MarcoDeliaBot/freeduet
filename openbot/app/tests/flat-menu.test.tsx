@@ -283,3 +283,64 @@ test("a connected row has no Connect button", async () => {
   await view.findByText("Connected");
   expect(view.queryByRole("button")).toBeNull();
 });
+
+/* A FreeDuet member's row wears its drawn mascot, by the id the member has in agents.yaml, in every section. */
+test("every FreeDuet member row of the Bots list shows its mascot, and another Bot keeps the orb", async () => {
+  const members: [string, string][] = [
+    ["freeduet", "iris"],
+    ["inbox", "otto"],
+    ["creator", "leo"],
+    ["bookkeeper", "penny"],
+  ];
+  const shared = { ...bot("outsider"), mine: false, canManage: false };
+  global.fetch = (async (input: RequestInfo | URL) => {
+    const url = String(input);
+    if (url.includes("/api/bots/attention"))
+      return Response.json({
+        bots: [
+          {
+            agentId: "inbox",
+            name: "inbox",
+            questions: 1,
+            approvals: 0,
+            handoffs: 0,
+            unread: 0,
+            paused: false,
+            notify: {},
+          },
+        ],
+      });
+    return Response.json({
+      agents: url.includes("hidden=true")
+        ? []
+        : [
+            ...members.map(([id]) => bot(id)),
+            shared,
+            { ...bot("sharedmember"), mine: false },
+          ],
+    });
+  }) as unknown as typeof fetch;
+  const router = createRouter({
+    routeTree: createRootRoute({
+      component: () => <BotRoster tenantId="freeduet" />,
+    }),
+    history: createMemoryHistory({ initialEntries: ["/"] }),
+  });
+  const view = render(
+    <QueryClientProvider
+      client={
+        new QueryClient({ defaultOptions: { queries: { retry: false } } })
+      }
+    >
+      <RouterProvider router={router as never} />
+    </QueryClientProvider>,
+  );
+  await view.findByText("outsider");
+  for (const [id, face] of members) {
+    const row = view.getByText(id).closest("a");
+    expect(row?.querySelector(`svg[data-face="${face}"]`)).not.toBeNull();
+  }
+  expect(
+    view.getByText("outsider").closest("a")?.querySelector("svg[data-face]"),
+  ).toBeNull();
+});
