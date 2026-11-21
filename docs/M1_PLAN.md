@@ -1941,10 +1941,23 @@ Built on 21 November 2026 from D110 (section 72), with the maintainer's choice o
 change to the spend ledger and not as a database table. It counts, per UTC day, member and engine, the turns, the turns that
 carried a token count, and the input, output and cached tokens the engine itself reported. An engine that reported nothing is
 shown as "not reported". The Engines page gets a "Tokens" section (today and last seven days; a total per engine), read through
-`GET /api/freeduet/engines/usage` with the authority of the page. No cost is stored and no price is worked out. The design and
+`GET /api/freeduet/engines/usage` with the authority of the page. No cost is stored. The design and
 what is not built are in `docs/design/token-counter.md`. D102's status is now: built, not yet run live (21 November 2026).
+
+Three additions, asked by the maintainer on 21 November 2026 (22:45). (1) **Usage time.** Each engine attempt's wall-clock duration,
+measured by the service from the start of its segment to its end, is added in whole seconds to the same file (a seventh count,
+`seconds`, kept as strict as the others) and shown beside the tokens, also for "not reported" rows; it is never turned into tokens.
+(2) **Tokens saved.** Tokens that went through a free cloud engine (`engines.is_free_cloud`) or a local model (`engines.is_local_model`)
+count as saved; the Claude Code subscription (a flat rate), metered engines and anything not in the engines file do not. A free engine
+that reported no tokens shows its time ("plus 40 min on your own GPU, tokens not reported"). (3) **Money.** "Saved" carries "≈ an
+amount": what those tokens would have cost on one declared paid model at its public list price (Claude Sonnet 5.5, $2 in and $10 out
+per million tokens, read from the vendor's pricing page on 21 November 2026), at one fixed rate (1 EUR = 1.0989 USD, the ECB reference
+rate of 17 November 2026). Both are constants in `app/src/freeduet/engines-tokens-text.ts`, no price or rate is fetched, and the
+reference is printed under the line. The person clicks the amount to switch euros and dollars; the choice stays in that browser's
+`localStorage`, default euros. The unit counted is an engine **attempt**: a retry on the same engine counts again.
 
 | Decision | Options | Recommendation | Reason |
 |---|---|---|---|
 | Free-tier request counter of OpenRouter | Read it from the provider's key endpoint with the saved key; or leave to the provider's own page | Later, as its own change | It would be the first new outbound call that carries a saved key, so it deserves its own review |
+| Reference price and rate | The declared constants (built); or fetch live prices and rates | Constants | A fetch is a new outbound call and a number that moves under the person; a dated constant is honest about its age. Update when a price or the rate changes |
 | Days in the person's time zone | UTC (built); or the browser's zone | UTC for now | The ledger and every notice already say UTC; a second rule would make the two disagree |
