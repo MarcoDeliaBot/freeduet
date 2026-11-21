@@ -31,7 +31,7 @@ import { taskListQueryOptions } from "@/lib/tasks/queries";
 import { cn } from "@/lib/utils";
 import { queryClient } from "@/query-client";
 import type { WideBand } from "./band";
-import { showsManageGroup } from "@/freeduet/manage-group";
+import { flatMenuEntries, showsManageGroup } from "@/freeduet/manage-group";
 import { MemberFace } from "./mascot";
 import { memberStates, memberTarget, orderTeam, STATE_TEXT } from "./team";
 
@@ -428,6 +428,19 @@ export function Places({ onNewChannel }: { onNewChannel: () => void }) {
             </div>
           </>
         ) : null}
+        {/* FreeDuet's package: the pages Manage held, one click each (D129). */}
+        {flatMenuEntries(user?.role === "admin").map((entry) => (
+          <Link
+            activeProps={{ className: "bg-duet-tile" }}
+            className={cn(ROW, FOCUS)}
+            key={entry.to}
+            to={entry.to}
+          >
+            <RowIcon name={entry.icon} />
+            {entry.label}
+            {entry.badge === "bots" ? <BotsNavBadge /> : null}
+          </Link>
+        ))}
         <Link
           activeProps={{ className: "bg-duet-tile" }}
           className={cn(ROW, FOCUS)}
@@ -435,8 +448,6 @@ export function Places({ onNewChannel }: { onNewChannel: () => void }) {
         >
           <RowIcon name="settings" />
           Settings
-          {/* Where Manage is hidden (FreeDuet's package), the Bots badge rides on this row instead. */}
-          {showsManageGroup() ? null : <BotsNavBadge />}
         </Link>
         {capabilities?.localEvaluation === false ? (
           <button

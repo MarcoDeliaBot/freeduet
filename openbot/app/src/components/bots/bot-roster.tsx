@@ -1,4 +1,4 @@
-import { IconChevronRight } from "@tabler/icons-react";
+import { IconChevronRight, IconMessage } from "@tabler/icons-react";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import { Fragment, useState } from "react";
@@ -22,6 +22,7 @@ import {
   ItemTitle,
 } from "@/components/ui/item";
 import { Separator } from "@/components/ui/separator";
+import { isFreeDuetApp } from "@/freeduet/manage-group";
 import { type AgentProfile, agentListQueryOptions } from "@/lib/agents/queries";
 import { groupRoster } from "@/lib/agents/roster";
 import {
@@ -35,11 +36,13 @@ import {
  *
  * This replaces three screens — Bots, Agents and Team Bots — that listed the same Bots three ways.
  */
-export function BotRoster() {
+export function BotRoster({ tenantId }: { tenantId?: string } = {}) {
   const agents = useQuery(agentListQueryOptions());
   const hidden = useQuery(agentListQueryOptions(true));
   const attention = useQuery(botAttentionQueryOptions());
   const byId = new Map((attention.data ?? []).map((bot) => [bot.agentId, bot]));
+  /* FreeDuet's package: each row has a Message button of its own, one click to a conversation (D129). */
+  const message = isFreeDuetApp(tenantId);
 
   if (agents.isPending) return null;
   // Only when nothing ever loaded: a failed background refetch keeps the roster it had.
@@ -64,17 +67,17 @@ export function BotRoster() {
     <>
       {needsYou.length ? (
         <PageSection title="Needs you">
-          <RosterRows agents={needsYou} byId={byId} />
+          <RosterRows agents={needsYou} byId={byId} message={message} />
         </PageSection>
       ) : null}
       {pinned.length ? (
         <PageSection title="Pinned">
-          <RosterRows agents={pinned} byId={byId} />
+          <RosterRows agents={pinned} byId={byId} message={message} />
         </PageSection>
       ) : null}
       <PageSection title="Yours">
         {yours.length ? (
-          <RosterRows agents={yours} byId={byId} />
+          <RosterRows agents={yours} byId={byId} message={message} />
         ) : (
           <PageEmpty>
             {yoursPinned
@@ -87,13 +90,13 @@ export function BotRoster() {
       </PageSection>
       <PageSection title="Shared with you">
         {shared.length ? (
-          <RosterRows agents={shared} byId={byId} />
+          <RosterRows agents={shared} byId={byId} message={message} />
         ) : (
           <PageEmpty>Nobody has shared a Bot with you yet.</PageEmpty>
         )}
       </PageSection>
       {hidden.data?.length ? (
-        <HiddenSection agents={hidden.data} byId={byId} />
+        <HiddenSection agents={hidden.data} byId={byId} message={message} />
       ) : null}
     </>
   );
@@ -106,9 +109,11 @@ export function BotRoster() {
 function HiddenSection({
   agents,
   byId,
+  message,
 }: {
   agents: AgentProfile[];
   byId: Map<string, BotAttention>;
+  message: boolean;
 }) {
   const [open, setOpen] = useState(false);
   return (
@@ -121,7 +126,9 @@ function HiddenSection({
       description={`${agents.length} ${agents.length === 1 ? "Bot" : "Bots"} you hid. Only your list changes.`}
       title="Hidden"
     >
-      {open ? <RosterRows agents={agents} byId={byId} /> : null}
+      {open ? (
+        <RosterRows agents={agents} byId={byId} message={message} />
+      ) : null}
     </PageSection>
   );
 }
@@ -129,9 +136,12 @@ function HiddenSection({
 function RosterRows({
   agents,
   byId,
+  message,
 }: {
   agents: AgentProfile[];
   byId: Map<string, BotAttention>;
+  /** Draw the Message button beside each row (FreeDuet's package). */
+  message: boolean;
 }) {
   return (
     <PageRows>
@@ -142,36 +152,60 @@ function RosterRows({
               .filter(Boolean)
               .join(" · ")
           : "";
+        const row = (
+          <Item
+            className={message ? "min-w-0 flex-1" : undefined}
+            render={<Link params={{ agentId: agent.id }} to="/bots/$agentId" />}
+            size="sm"
+          >
+            <ItemMedia>
+              <AbstractAvatar
+                id={agent.id}
+                name={agent.name}
+                seed={agent.avatarSeed}
+                size={28}
+              />
+            </ItemMedia>
+            <ItemContent>
+              <ItemTitle>{agent.name}</ItemTitle>
+              <ItemDescription>{summary || agent.title}</ItemDescription>
+            </ItemContent>
+            <ItemActions>
+              {state && needsInput(state) > 0 ? (
+                <span className="type-caption grid h-[18px] min-w-[18px] place-items-center rounded-full bg-duet-accent px-1.5 font-medium text-duet-on-accent tabular-nums">
+                  {needsInput(state)}
+                </span>
+              ) : null}
+              <IconChevronRight className="size-4 text-muted-foreground" />
+            </ItemActions>
+          </Item>
+        );
         return (
           <Fragment key={agent.id}>
             {index > 0 ? <Separator /> : null}
-            <Item
-              render={
-                <Link params={{ agentId: agent.id }} to="/bots/$agentId" />
-              }
-              size="sm"
-            >
-              <ItemMedia>
-                <AbstractAvatar
-                  id={agent.id}
-                  name={agent.name}
-                  seed={agent.avatarSeed}
-                  size={28}
-                />
-              </ItemMedia>
-              <ItemContent>
-                <ItemTitle>{agent.name}</ItemTitle>
-                <ItemDescription>{summary || agent.title}</ItemDescription>
-              </ItemContent>
-              <ItemActions>
-                {state && needsInput(state) > 0 ? (
-                  <span className="type-caption grid h-[18px] min-w-[18px] place-items-center rounded-full bg-duet-accent px-1.5 font-medium text-duet-on-accent tabular-nums">
-                    {needsInput(state)}
-                  </span>
-                ) : null}
-                <IconChevronRight className="size-4 text-muted-foreground" />
-              </ItemActions>
-            </Item>
+            {message ? (
+              <div className="flex items-center gap-1">
+                {row}
+                <Button
+                  aria-label={`Message ${agent.name}`}
+                  render={(props) => (
+                    <Link
+                      {...props}
+                      search={{ agent: agent.id }}
+                      to="/channel/new"
+                    />
+                  )}
+                  className="min-h-11 shrink-0"
+                  size="sm"
+                  variant="outline"
+                >
+                  <IconMessage />
+                  Message
+                </Button>
+              </div>
+            ) : (
+              row
+            )}
           </Fragment>
         );
       })}

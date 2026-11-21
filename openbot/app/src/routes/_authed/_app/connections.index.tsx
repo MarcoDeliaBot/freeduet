@@ -6,7 +6,7 @@ import {
   IconPlug,
   IconSearch,
 } from "@tabler/icons-react";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import * as React from "react";
 import {
@@ -27,6 +27,7 @@ import {
   InputGroupAddon,
   InputGroupInput,
 } from "@/components/ui/input-group";
+import { Button } from "@/components/ui/button";
 import {
   Item,
   ItemActions,
@@ -34,6 +35,7 @@ import {
   ItemDescription,
   ItemTitle,
 } from "@/components/ui/item";
+import { isFreeDuetApp } from "@/freeduet/manage-group";
 import { type ConnectionRow, connectionRows } from "@/lib/connections/rows";
 import { appConfig } from "@/lib/generated/application-config";
 import {
@@ -41,6 +43,7 @@ import {
   linkedAccountsQueryOptions,
 } from "@/lib/identity/queries";
 import { keyedLookup } from "@/lib/lookup";
+import { connectAccountMutationOptions } from "@/lib/plugins/mutations";
 import {
   connectionsQueryOptions,
   type PluginServer,
@@ -352,6 +355,10 @@ function RouteComponent() {
     links: links.data ?? [],
     providers: providers.data,
   });
+  /* Apps that connect with one consent screen: only these can start it from the list (D129). */
+  const oauthKeys = new Set(
+    yours.filter((entry) => entry.auth === "user-oauth").map((e) => e.key),
+  );
   const query = search.trim().toLocaleLowerCase();
   const matching = rows.filter((row) =>
     `${row.title} ${row.summary}`.toLocaleLowerCase().includes(query),
@@ -444,7 +451,11 @@ function RouteComponent() {
             ) : (
               <div className="mt-6 grid grid-cols-1 gap-x-6 gap-y-2 @min-[36rem]:grid-cols-2">
                 {matching.map((row) => (
-                  <ConnectionItem key={row.key} row={row} />
+                  <ConnectionItem
+                    key={row.key}
+                    quickConnect={isFreeDuetApp() && oauthKeys.has(row.key)}
+                    row={row}
+                  />
                 ))}
               </div>
             )}
@@ -462,9 +473,38 @@ function RouteComponent() {
   );
 }
 
-/** One connection: its mark, its name, one line, and where it stands. Opens its own page. */
-function ConnectionItem({ row }: { row: ConnectionRow }) {
-  return (
+/**
+ * One connection: its mark, its name, one line, and where it stands. Opens its own page.
+ *
+ * In FreeDuet's package (`quickConnect`), an app that connects with one consent screen has a real
+ * Connect button on its row, which starts that consent without opening the page first (D129).
+ */
+export function ConnectionItem({
+  row,
+  quickConnect = false,
+}: {
+  row: ConnectionRow;
+  quickConnect?: boolean;
+}) {
+  const [problem, setProblem] = React.useState<string | null>(null);
+  const connect = useMutation({
+    ...connectAccountMutationOptions(),
+    onError: (thrown: Error) => setProblem(thrown.message),
+    onSuccess: (authorizationUrl) => {
+      /* The same rule as the app's own page: a 200 with no address is not an address to follow. */
+      if (authorizationUrl === null) {
+        setProblem(
+          "Couldn't start connecting, so nothing was connected. Try again, or ask an admin if it keeps happening.",
+        );
+        return;
+      }
+      window.location.href = authorizationUrl;
+    },
+  });
+  const button =
+    quickConnect &&
+    (row.state === "available" || row.state === "needs_reconnect");
+  const item = (
     <Item
       className="min-w-0 flex-nowrap gap-3 px-2 py-3"
       data-testid={`account-${row.key}`}
@@ -483,10 +523,39 @@ function ConnectionItem({ row }: { row: ConnectionRow }) {
           {row.summary}
         </ItemDescription>
       </ItemContent>
-      <ItemActions className="shrink-0">
-        <ConnectionStateLabel state={row.state} />
-      </ItemActions>
+      {button ? null : (
+        <ItemActions className="shrink-0">
+          <ConnectionStateLabel state={row.state} />
+        </ItemActions>
+      )}
     </Item>
+  );
+  if (!button) return item;
+  return (
+    <div className="min-w-0">
+      <div className="flex items-center gap-1">
+        <div className="min-w-0 flex-1">{item}</div>
+        <Button
+          aria-label={`${row.state === "needs_reconnect" ? "Reconnect" : "Connect"} ${row.title}`}
+          className="min-h-11 shrink-0"
+          disabled={connect.isPending}
+          onClick={() => {
+            setProblem(null);
+            connect.mutate(row.key);
+          }}
+          size="sm"
+          type="button"
+          variant="outline"
+        >
+          {row.state === "needs_reconnect" ? "Reconnect" : "Connect"}
+        </Button>
+      </div>
+      {problem ? (
+        <p className="px-2 text-destructive text-xs" role="alert">
+          {problem}
+        </p>
+      ) : null}
+    </div>
   );
 }
 
