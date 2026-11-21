@@ -155,7 +155,11 @@ describe("the member's computer in a hand-off turn (D22)", () => {
       {
         ownerUserId: "user-1",
         agentId: "concierge",
-        initiator: { kind: "handoff", id: "freeduet" },
+        initiator: {
+          kind: "handoff",
+          id: "freeduet",
+          origin: { kind: "person" },
+        },
       },
     ]);
   });
