@@ -52,6 +52,7 @@ from .engines import (
     EnginesFileError,
     engines_file_path,
     in_hidden_folder,
+    is_local_host,
     order_break,
     ordered_chain,
     parse_engines,
@@ -78,6 +79,10 @@ _HEADER = (
 MAX_BACKUPS = 5
 
 LOCAL, FREE, TRIAL, PAID = "local", "free", "trial", "paid"
+#: D113: a router the person runs on their own computer that passes requests on to free providers (FreeLLMAPI). Its ADDRESS is the
+#: person's own machine (judged by the local-card rules), but what it is sent leaves the computer, so it is handled as a cloud
+#: engine everywhere else: the data warning, "Use for" with no member chosen by default, the `default` chain never gets it.
+ROUTER = "router"
 
 
 @dataclass(frozen=True)
@@ -94,6 +99,7 @@ class Provider:
     address_fixed: bool = False
     address_to_fill: bool = False  # the address holds a part only the person knows (Cloudflare's account)
     free_model_only: bool = False  # OpenRouter: the guard of D107
+    own_address: bool = False  # D113: the address is the person's own machine, whatever the tag (the local-card host rules apply)
 
     @property
     def cloud(self) -> bool:
@@ -114,6 +120,10 @@ PROVIDERS: Mapping[str, Provider] = {
         Provider("ollama", LOCAL, "http://host.docker.internal:11434/v1", False, member_base="http://host.docker.internal:11434"),
         Provider("llamacpp", LOCAL, "http://host.docker.internal:8080/v1", False),
         Provider("lmstudio", LOCAL, "http://host.docker.internal:1234/v1", False),
+        # D113. No default address: FreeLLMAPI's own default port is 3001, which is FreeDuet's, so a local card refuses it and
+        # the person chooses another port. `member_base=""` only says "a member entry exists": its address is the card's own,
+        # without the trailing /v1.
+        Provider("freellmapi", ROUTER, "", True, member_base="", own_address=True),
         Provider("groq", FREE, "https://api.groq.com/openai/v1", True, address_fixed=True),
         Provider("cerebras", TRIAL, "https://api.cerebras.ai/v1", True, blocked="trial_needs_card", address_fixed=True),
         Provider("google", FREE, "https://generativelanguage.googleapis.com/v1beta/openai", True, address_fixed=True),
@@ -473,7 +483,7 @@ def checked_address(provider: Provider, value: Any, environ: Mapping[str, str] |
     host = (parts.hostname or "").lower()
     if parts.username is not None or parts.password is not None or "@" in parts.netloc or parts.query or parts.fragment:
         raise PanelRefused("address_shape")
-    if provider.cloud:
+    if provider.cloud and not provider.own_address:
         expected = urlsplit(provider.base_url)
         if parts.scheme != "https" or host != expected.hostname or port is not None:
             raise PanelRefused("address_host")
@@ -486,6 +496,13 @@ def checked_address(provider: Provider, value: Any, environ: Mapping[str, str] |
         raise PanelRefused("address_host")
     if port is not None and (port in _REFUSED_LOCAL_PORTS or port in own):
         raise PanelRefused("address_host")
+    if provider.own_address:
+        # D113: a router takes a key, and the loader sends a key over plain http only to this machine (`is_local_host`), so any
+        # other host needs https. The address is the OpenAI-format base (it ends in /v1); a member's address is derived from it.
+        if parts.scheme == "http" and not is_local_host(host):
+            raise PanelRefused("address_host")
+        if not parts.path.endswith("/v1"):
+            raise PanelRefused("address_shape")
     return text
 
 
@@ -598,6 +615,8 @@ def apply_change(
         chosen_members = sorted(set(members))
 
     if switched_on:
+        if provider.own_address and not (isinstance(address, str) and address.strip()):
+            raise PanelRefused("address_first")  # D113: a router has no default address
         if not isinstance(chosen_model, str) or not chosen_model.strip() or not _MODEL.fullmatch(chosen_model):
             raise PanelRefused("model_first")
         if provider.address_to_fill and "<" in str(address):
@@ -620,6 +639,9 @@ def apply_change(
     member_address = _member_address(provider, address)
     if member_address is not None:
         member: dict[str, Any] = {"kind": COMPATIBLE_KIND, "base_url": member_address, **shared}
+        if provider.own_address:
+            # D113: a router to cloud models is not a small local model. It gets the full turn, not the light one (D108).
+            member["light"] = False
         if reference:
             member["credential_secret_ref"] = reference
         else:
