@@ -231,3 +231,86 @@ def test_a_file_of_your_own_is_never_touched(data):
         assert caught.value.code == "file_is_yours"
     finally:
         os.environ.pop("FREEDUET_ENGINES_FILE")
+
+
+def test_the_member_entry_is_a_router_not_a_local_model_and_a_free_cloud_engine(data):
+    from freeduet import engines
+
+    panel.save_key("freellmapi", KEY)
+    panel.apply_change("freellmapi", enabled=True, base_url=BASE, model="auto")
+    written = yaml.safe_load((data / "engines.yaml").read_text())["engines"]
+    assert written["freellmapi-member"]["router"] is True and written["freellmapi-assist"]["router"] is True
+    member = load_engines().engines["freellmapi-member"]
+    assert engines.is_local_model(member) is False  # the router's own patience and no "reading" notice
+    assert engines.first_answer_limit(member) is None
+    assert engines.is_light(member) is False
+    assert engines.is_free_cloud(member) is True  # the D101 sentence
+    assert engines.is_free_cloud(load_engines().engines["freellmapi-assist"]) is True
+
+
+def _entry(**over):
+    base = {"kind": "anthropic-compatible", "base_url": "http://localhost:3999", "billing": "free", "tier": "C",
+            "enabled": False, "model": "auto", "credential_secret_ref": "file:/tmp/k"}
+    return {**base, **over}
+
+
+def _config(entry):
+    from freeduet import engines
+
+    document = yaml.safe_load(open(engines.EXAMPLE_ENGINES_FILE, encoding="utf-8"))
+    document["engines"]["x"] = entry
+    return engines.parse_engines(document, source="test")
+
+
+def test_existing_engines_keep_their_behaviour_and_only_the_router_flag_changes_it():
+    from freeduet import engines
+
+    plain = _config(_entry()).engines["x"]  # the same entry without the flag: a local model, as before
+    assert engines.is_local_model(plain) is True and engines.is_free_cloud(plain) is False
+    assert engines.first_answer_limit(plain) == engines.LOCAL_FIRST_ANSWER_SECONDS and engines.is_light(plain) is True
+    flagged = _config(_entry(router=True)).engines["x"]
+    assert engines.is_local_model(flagged) is False and engines.is_free_cloud(flagged) is True
+    keyless = _config(_entry(credential_secret_ref=None, no_key=True)).engines["x"]
+    assert engines.is_local_model(keyless) is True and engines.is_free_cloud(keyless) is False
+    remote = _config(_entry(base_url="https://api.example.com", router=False)).engines["x"]
+    assert engines.is_free_cloud(remote) is True and engines.is_local_model(remote) is False
+
+
+@pytest.mark.parametrize(
+    "over",
+    [
+        {"router": "yes"},
+        {"router": True, "billing": "metered"},
+        {"router": True, "kind": "claude-code", "command": "claude", "credential_secret_ref": None},
+        {"router": True, "credential_secret_ref": None, "no_key": True},
+        {"router": True, "first_answer_seconds": 100},
+    ],
+)
+def test_the_loader_refuses_a_router_flag_that_does_not_fit(over):
+    from freeduet import engines
+
+    with pytest.raises(engines.EnginesFileError):
+        _config(_entry(**over))
+
+
+def test_the_router_flag_is_pinned_in_the_notices_of_the_router_too(data):
+    from freeduet import engines
+
+    panel.save_key("freellmapi", KEY)
+    panel.apply_change("freellmapi", enabled=True, base_url=BASE, model="auto")
+    assert engines.is_free_cloud(load_engines().engines["freellmapi-member"])
+
+
+@pytest.mark.parametrize("port", [2375, 2376])
+@pytest.mark.parametrize("provider", ["llamacpp", "lmstudio", "ollama", "freellmapi"])
+def test_the_docker_api_ports_are_refused_by_every_local_card(data, provider, port):
+    with pytest.raises(panel.PanelRefused) as caught:
+        panel.checked_address(panel.PROVIDERS[provider], f"http://localhost:{port}/v1")
+    assert caught.value.code == "address_host"
+
+
+@pytest.mark.parametrize("path", ["/v1/../x/v1", "/../v1", "/./v1", "/a/./b/v1", "/a/../v1"])
+@pytest.mark.parametrize("provider", ["llamacpp", "freellmapi"])
+def test_a_dot_segment_in_a_local_address_is_refused(data, provider, path):
+    with pytest.raises(panel.PanelRefused):
+        panel.checked_address(panel.PROVIDERS[provider], f"http://localhost:3999{path}")

@@ -146,7 +146,7 @@ export const ROUTER_WARNING =
 export const ROUTER_ADVANCED_NOTE =
   "Advanced option, not a recommended default: the project describes itself as for personal experimentation only. FreeDuet does not install or run it. Your provider keys stay inside it; FreeDuet keeps only the one access token it gives you.";
 export const ROUTER_ADDRESS_NOTE =
-  "Its own default port, 3001, is FreeDuet's. Run it on another port and write the address with /v1 at the end. Outside this computer the address must be https.";
+  "Its own default port, 3001, is FreeDuet's. Run it on another port and write the address with /v1 at the end. On this computer http is fine. Off this computer only your own network is accepted (a LAN address or a .local name), over https. A public host is refused.";
 export const LABELS = {
   address: "Server address",
   model: "Model",

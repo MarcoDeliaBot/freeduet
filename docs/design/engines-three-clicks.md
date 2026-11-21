@@ -47,7 +47,7 @@ the settings. (Decision of the review of PR #414: safety first; the maintainer m
   LAN (10.0.0.0/8, 192.168.0.0/16, unique-local IPv6). It never uses: a link-local address (169.254.0.0/16, which holds a
   cloud's metadata service, and fe80::/10); the Docker networks' ranges (172.16.0.0/12 and 198.18.0.0/15), except the host
   forwarder 198.19.255.1 on port 11435 (the Ollama on the host); a public address; a name with no dot (a service of the
-  compose network); or FreeDuet's own ports (4230, 4231, 3001, 3010, 3101, 3110, 4300 and 4500 for the supervisor, 5432, and the
+  compose network); a path with a `.` or `..` segment; or FreeDuet's own ports and the Docker API's (4230, 4231, 3001, 3010, 3101, 3110, 4300 and 4500 for the supervisor, 5432, 2375 and 2376, and the
   configured `FREEDUET_PORT`, `PORT` and `SUPERVISOR_PORT`).
 - A key is a file `<data>/keys/<provider>` (mode 600, folder 700, made with mode 700 from the start; a link in either place is
   refused and never followed); the engines file holds only `credential_secret_ref:
@@ -199,7 +199,7 @@ providers may keep them." (the warning of D101), and the advanced note.
 **What it writes.** `freellmapi-assist` (`openai-compatible`, the address as typed, for the light assistants) and `freellmapi-member`
 (`anthropic-compatible`, the address without `/v1`, so the CLI reaches `/v1/messages`), both `billing: free`, tier C, the key as
 `credential_secret_ref: file:<data>/keys/freellmapi` (mode 600, folder 700, never returned, section 3). The member entry carries
-`light: false` (D108: a router to cloud models gets the full turn, not the small one meant for a slow local model). Off by default.
+`light: false` (D108: a router to cloud models gets the full turn, not the small one meant for a slow local model) and `router: true`, as does the assistants entry. `router` is a key of the engines file, validated by the loader (a boolean, only for a free `openai-compatible` or `anthropic-compatible` entry with a key and no `first_answer_seconds`): it makes `engines.is_local_model` false (the router's own first-word limit, no "reading your request" notice) and `engines.is_free_cloud` true (the D101 sentence in the switch notice and the ask-first question). An entry without it behaves exactly as before. Off by default.
 Switching on adds the assistant entry to the assistants' chain; the member entry is in NO member's chain until the person ticks
 members under "Use for" (none by default, the `default` chain never gets it), as for OpenRouter. It switches nothing paid on: logins
 first, D115's own order, `metered:` and the caps apply unchanged.
@@ -222,12 +222,10 @@ new route and no new file. The audit row carries the provider id and `engine_pro
 
 **Built so far.** `engine_panel.py` (the provider and its rules), `engines-routes.ts` (the id, the tag, one refusal sentence now
 general: "Write the server address first..."), `engines-providers-text.ts` and `engines-providers.tsx` (the card, the note, the warning,
-the address hint). Tests: `tests/test_engine_panel_freellmapi.py` (54, 54 fail on main), `server/tests/freeduet-engines-providers.test.ts`
+the address hint). Tests: `tests/test_engine_panel_freellmapi.py` (80; all fail on main, and the 26 added after the review fail without the `router` flag, the Docker ports and the dot-segment rule), `server/tests/freeduet-engines-providers.test.ts`
 (4 new), `app/tests/freeduet-engines-providers.test.tsx` (3 new, 1 expectation changed: the list of card names). Screenshots of the card off
 and filled are shown to the maintainer with the pull request.
 
 **Not verified.** No request was sent to a FreeLLMAPI. Whether the router takes the token as a Bearer header on `/v1/messages`, whether it
-accepts `auto` there, and whether a member can use tools through it are not checked. The router sees a FreeLLMAPI member as a local model
-(`engines.is_local_model`): it keeps the 900 s patience, and the free-cloud sentence of D107 is not added in the switch notice
-(decision (g) of `M1_PLAN.md`, section 73). The look is a preview and waits for the maintainer's yes. Run live: run FreeLLMAPI on a
+accepts `auto` there, and whether a member can use tools through it are not checked. The look is a preview and waits for the maintainer's yes. Run live: run FreeLLMAPI on a
 port other than 3001, switch the card on with its token, Test, tick one member, ask that member something.

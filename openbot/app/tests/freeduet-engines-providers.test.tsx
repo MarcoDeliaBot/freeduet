@@ -511,6 +511,7 @@ test("the FreeLLMAPI card is an advanced option with the data warning, no addres
   expect(
     router.getByText(/Its own default port, 3001, is FreeDuet's/),
   ).toBeTruthy();
+  expect(router.getByText(/A public host is refused/)).toBeTruthy();
   expect(
     router.queryByText("Data sent to this service leaves your computer."),
   ).toBeNull();

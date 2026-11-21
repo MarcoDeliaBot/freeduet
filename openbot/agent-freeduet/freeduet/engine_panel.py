@@ -423,8 +423,8 @@ def panel_state(environ: Mapping[str, str] | None = None) -> dict[str, Any]:
 # ── Changing a card ──────────────────────────────────────────────────────────────────────────────
 
 
-#: Ports of FreeDuet's own services, which a local card never points at (the agent itself, the server, the app, the supervisor and its published port, the database).
-_REFUSED_LOCAL_PORTS = frozenset({3001, 3010, 3101, 3110, 4230, 4231, 4300, 4500, 5432})
+#: Ports of FreeDuet's own services, which a local card never points at (the agent itself, the server, the app, the supervisor and its published port, the database, the Docker API on 2375 and 2376).
+_REFUSED_LOCAL_PORTS = frozenset({2375, 2376, 3001, 3010, 3101, 3110, 4230, 4231, 4300, 4500, 5432})
 _ACCOUNT = re.compile(r"[A-Za-z0-9]{8,64}")
 _LOCAL_PATH = re.compile(r"(/[A-Za-z0-9._~\-]*){0,8}")
 
@@ -492,7 +492,12 @@ def checked_address(provider: Provider, value: Any, environ: Mapping[str, str] |
         return text
     env = os.environ if environ is None else environ
     own = {int(v) for v in (env.get("FREEDUET_PORT"), env.get("PORT"), env.get("SUPERVISOR_PORT")) if v and v.strip().isdigit()}
-    if parts.scheme not in ("http", "https") or not _local_host_ok(host, port) or not _LOCAL_PATH.fullmatch(parts.path):
+    if (
+        parts.scheme not in ("http", "https")
+        or not _local_host_ok(host, port)
+        or not _LOCAL_PATH.fullmatch(parts.path)
+        or any(segment in (".", "..") for segment in parts.path.split("/"))
+    ):
         raise PanelRefused("address_host")
     if port is not None and (port in _REFUSED_LOCAL_PORTS or port in own):
         raise PanelRefused("address_host")
@@ -633,6 +638,8 @@ def apply_change(
     if isinstance(chosen_model, str) and chosen_model:
         shared["model"] = chosen_model
     assist: dict[str, Any] = {"kind": "openai-compatible", "base_url": address, **shared}
+    if provider.own_address:
+        assist["router"] = True
     if reference:
         assist["credential_secret_ref"] = reference
     table[provider.assist_id] = assist
@@ -640,7 +647,9 @@ def apply_change(
     if member_address is not None:
         member: dict[str, Any] = {"kind": COMPATIBLE_KIND, "base_url": member_address, **shared}
         if provider.own_address:
-            # D113: a router to cloud models is not a small local model. It gets the full turn, not the light one (D108).
+            # D113: a router to cloud models is not a small local model: the loader reads `router` and gives it the router's
+            # own patience, the cloud notice and the D101 sentence, and the full turn, not the light one (D108).
+            member["router"] = True
             member["light"] = False
         if reference:
             member["credential_secret_ref"] = reference
