@@ -7,11 +7,13 @@
 import { afterEach, describe, expect, test } from "bun:test";
 import { spawnSync } from "node:child_process";
 import {
+  chmodSync,
   copyFileSync,
   existsSync,
   mkdirSync,
   mkdtempSync,
   readdirSync,
+  readFileSync,
   rmSync,
   writeFileSync,
 } from "node:fs";
@@ -37,7 +39,12 @@ afterEach(() => {
     rmSync(tree, { recursive: true, force: true });
 });
 
-/** A temporary repository layout with the script copied in, and an env file if `env` is given. */
+/**
+ * A temporary repository layout with the script copied in, an env file if `env` is given, a stub of
+ * the eval stack script (its reset exits with FAKE_RESET_EXIT), and fake docker, curl and bun on the
+ * PATH of the run: docker is never the real one, curl answers FAKE_CURL_CODE and bun exits with
+ * FAKE_BUN_EXIT.
+ */
 function tree(env?: string): string {
   const root = mkdtempSync(join(tmpdir(), "eval-detached-"));
   trees.push(root);
@@ -51,6 +58,20 @@ function tree(env?: string): string {
     REQUIRE_BASH,
     join(root, "openbot", "scripts", "require-bash.sh"),
   );
+  writeFileSync(
+    join(root, "openbot", "scripts", "freeduet-eval-stack.sh"),
+    'exit "$FAKE_RESET_EXIT"\n',
+  );
+  const bin = join(root, "fake-bin");
+  mkdirSync(bin);
+  writeFileSync(join(bin, "docker"), "exit 0\n");
+  writeFileSync(join(bin, "curl"), 'echo "$FAKE_CURL_CODE"\n');
+  writeFileSync(
+    join(bin, "bun"),
+    'echo "fake bun: runner called" >&2\nexit "$FAKE_BUN_EXIT"\n',
+  );
+  for (const name of ["docker", "curl", "bun"])
+    chmodSync(join(bin, name), 0o755);
   if (env !== undefined) writeFileSync(join(root, "openbot", ".env.eval"), env);
   return root;
 }
@@ -58,13 +79,35 @@ function tree(env?: string): string {
 function run(
   root: string,
   args: string[],
+  extra: Record<string, string> = {},
 ): { code: number; out: string; err: string } {
   const result = spawnSync(
     "bash",
     [join(root, "openbot", "scripts", "freeduet-eval-detached.sh"), ...args],
-    { cwd: root, encoding: "utf8" },
+    {
+      cwd: root,
+      encoding: "utf8",
+      env: {
+        ...process.env,
+        PATH: `${join(root, "fake-bin")}:${process.env.PATH ?? ""}`,
+        FREEDUET_EVAL_WAIT_SECONDS: "0",
+        FAKE_RESET_EXIT: "0",
+        FAKE_CURL_CODE: "200",
+        FAKE_BUN_EXIT: "0",
+        ...extra,
+      },
+    },
   );
   return { code: result.status ?? -1, out: result.stdout, err: result.stderr };
+}
+
+/** The one status file of a tree, read as text. */
+function statusOf(root: string): string {
+  const reports = join(root, "evals", "team", "reports");
+  const files = readdirSync(reports).filter((name) => name.endsWith(".status"));
+  if (files.length !== 1)
+    throw new Error(`expected one status file, got ${files.length}`);
+  return readFileSync(join(reports, files[0]!), "utf8").trim();
 }
 
 describe("dry run", () => {
@@ -138,7 +181,7 @@ describe("refusals", () => {
   });
 
   test("does not mistake another port that ends in 3010 for 3010", () => {
-    const root = tree(GOOD_ENV + "FREEDUET_EVAL_NOTE=13010\n");
+    const root = tree(`${GOOD_ENV}FREEDUET_EVAL_NOTE=13010\n`);
     const result = run(root, ["--dry-run"]);
     expect(result.code).toBe(0);
   });
@@ -215,5 +258,114 @@ describe("status", () => {
     const result = run(root, ["--status"]);
     expect(result.out).toContain("not running");
     expect(existsSync(join(reports, "run-20261121T120000Z.log"))).toBe(true);
+  });
+});
+
+describe("a real start, with fake docker, curl and bun", () => {
+  test("writes FINISHED with the runner's exit and its verdict word", () => {
+    const cases: [number, string][] = [
+      [0, "FINISHED exit=0 (pass)"],
+      [1, "FINISHED exit=1 (FAIL)"],
+      [2, "FINISHED exit=2 (INCOMPLETE)"],
+      [7, "FINISHED exit=7 (other exit)"],
+    ];
+    for (const [exit, line] of cases) {
+      const root = tree(GOOD_ENV);
+      const result = run(root, [], { FAKE_BUN_EXIT: String(exit) });
+      expect(result.code).toBe(exit);
+      expect(statusOf(root)).toStartWith(line);
+    }
+  });
+
+  test("a reset that does not return 0 stops the run as FAILED step=reset, before the runner", () => {
+    const root = tree(GOOD_ENV);
+    const result = run(root, [], { FAKE_RESET_EXIT: "1" });
+    expect(result.code).toBe(1);
+    expect(statusOf(root)).toStartWith("FAILED step=reset");
+    const log = readdirSync(join(root, "evals", "team", "reports")).find(
+      (name) => name.endsWith(".log"),
+    );
+    expect(
+      readFileSync(join(root, "evals", "team", "reports", log ?? ""), "utf8"),
+    ).not.toContain("step 4");
+  });
+
+  test("a server that never answers 200 stops the run as FAILED step=health", () => {
+    const root = tree(GOOD_ENV);
+    const result = run(root, [], { FAKE_CURL_CODE: "000" });
+    expect(result.code).toBe(1);
+    expect(statusOf(root)).toStartWith("FAILED step=health");
+  });
+
+  test("a run whose pid goes away mid-run is FAILED step=runner-crash, through the stale lock", () => {
+    const root = tree(GOOD_ENV);
+    const reports = join(root, "evals", "team", "reports");
+    writeFileSync(
+      join(reports, "run-20261121T120000Z-0000001.status"),
+      "RUNNING pid=999999 step=runner log=run-20261121T120000Z-0000001.log\n",
+    );
+    const result = run(root, [], { FAKE_BUN_EXIT: "0" });
+    expect(result.code).toBe(0);
+    expect(result.out).toContain("cleared a stale lock");
+    expect(
+      readFileSync(
+        join(reports, "run-20261121T120000Z-0000001.status"),
+        "utf8",
+      ),
+    ).toStartWith("FAILED step=runner-crash");
+  });
+
+  test("a stale lock left at step=reset is cleared as FAILED step=reset", () => {
+    const root = tree(GOOD_ENV);
+    const reports = join(root, "evals", "team", "reports");
+    writeFileSync(
+      join(reports, "run-20261121T120000Z-0000002.status"),
+      "RUNNING pid=999999 step=reset log=x.log\n",
+    );
+    run(root, []);
+    expect(
+      readFileSync(
+        join(reports, "run-20261121T120000Z-0000002.status"),
+        "utf8",
+      ),
+    ).toStartWith("FAILED step=reset");
+  });
+
+  test("refuses to start while a run is RUNNING with a live pid, and leaves its file alone", () => {
+    const root = tree(GOOD_ENV);
+    const reports = join(root, "evals", "team", "reports");
+    const held = `RUNNING pid=${process.pid} step=runner log=run-20261121T120000Z-0000003.log\n`;
+    writeFileSync(join(reports, "run-20261121T120000Z-0000003.status"), held);
+    const result = run(root, []);
+    expect(result.code).toBe(1);
+    expect(result.err).toContain("already going");
+    expect(
+      readdirSync(reports).filter((name) => name.endsWith(".status")),
+    ).toEqual(["run-20261121T120000Z-0000003.status"]);
+    expect(
+      readFileSync(
+        join(reports, "run-20261121T120000Z-0000003.status"),
+        "utf8",
+      ),
+    ).toBe(held);
+  });
+
+  test("names each run with its UTC second and pid, so two starts never share a name", () => {
+    const root = tree(GOOD_ENV);
+    run(root, [], { FAKE_BUN_EXIT: "0" });
+    run(root, [], { FAKE_BUN_EXIT: "0" });
+    const names = readdirSync(join(root, "evals", "team", "reports")).filter(
+      (name) => name.endsWith(".status"),
+    );
+    expect(names.length).toBe(2);
+    for (const name of names)
+      expect(name).toMatch(/^run-\d{8}T\d{6}Z-\d{7}\.status$/);
+  });
+
+  test("--status reports the FINISHED line of the newest run", () => {
+    const root = tree(GOOD_ENV);
+    run(root, [], { FAKE_BUN_EXIT: "1" });
+    const result = run(root, ["--status"]);
+    expect(result.out).toContain("FINISHED exit=1 (FAIL)");
   });
 });
