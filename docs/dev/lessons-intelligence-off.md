@@ -23,11 +23,14 @@ Moved out of `CLAUDE.md`. Read it before changing the server's run, stream, appr
   script that starts the server or calls `loadConfig` must say `on` or `off` itself
   (`server/tests/support/environment.ts` says `on`).
 - The desktop app runs the upstream example package, not the FreeDuet team: `openbot/desktop/src-tauri/src/env.rs:790` sets `TENANT_PACKAGE_DIR` to `../examples/fintech`, and `openbot/desktop/src-tauri/src/stack.rs:25` and `:84-95` start no `agent-freeduet`. So D65 and D67 on the desktop decide where conversations are kept, not what the members do (D67, `docs/M1_PLAN.md`, 17 November 2026).
-- Hand-off turns differ on the computer (D22). The RELAY (the answer coming back to the Bot that asked,
-  which runs in the person's own conversation) gets the member's computer tools through
+- Hand-off turns and the computer (D22, D130). Every hop gets the asked member's computer tools through
   `toolsForTurn` in `server/src/agents/handoff-delivery.ts`, built like a routine's
-  (`server/src/freeduet/relay-computer.ts`), approvals unchanged. The FORWARD hop (a scratch thread
-  nobody sees) still runs with `tools: []`. When the person switches the computer or the browser off
+  (`server/src/freeduet/relay-computer.ts`), approvals unchanged: the RELAY (the answer coming back to the
+  Bot that asked, in the person's own conversation) since D22, and the FORWARD hop (the scratch thread where
+  the colleague works) since D130, which had kept `tools: []` and left every member without its browser when
+  a colleague asked (22 November 2026, "the temperature in Rome" through Iris and Jules). A card a forward hop
+  raises is drawn in the asking conversation (D52) and its decision resumes the hop; a hop is not the person's
+  typed turn for Full access or D27. When the person switches the computer or the browser off
   (`cloudComputer`, `cloudBrowser`, `cloudNetwork`, read per person through
   `enterpriseControls().capabilitiesFor`), NO server-run turn is offered the matching computer tools
   (`server/src/computer/offered.ts`, the rule of the app's `computerToolsOffered`); the gateway's
