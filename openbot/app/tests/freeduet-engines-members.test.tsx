@@ -577,8 +577,12 @@ test("a server that keeps no choices gives the read-only page of before: the eng
   await view.findByText("Claude Code");
   expect(view.queryByRole("heading", { name: "Who uses what" })).toBeNull();
   expect(view.container.querySelectorAll(INTERACTIVE).length).toBe(0);
-  // It asks for what it asked for before and nothing more.
-  expect(reads).toEqual(["/api/freeduet/engines"]);
+  // It asks for what it asked for before, plus (D102) the token counts and the names for their table. Nothing that changes anything.
+  expect(reads).toEqual([
+    "/api/freeduet/engines",
+    "/api/freeduet/engines/usage",
+    "/api/agents",
+  ]);
 });
 
 test("with no list to show there is no member section", async () => {

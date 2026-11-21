@@ -138,7 +138,14 @@ test("the table shows today and seven days per member and engine, and says when 
         },
         { member: "creator", engine: "local", today: silent, week: silent },
       ],
-      engines: [{ member: null, engine: "claude-code", today: reported, week: reported }],
+      engines: [
+        {
+          member: null,
+          engine: "claude-code",
+          today: reported,
+          week: reported,
+        },
+      ],
     }),
   };
   const view = draw();
@@ -164,12 +171,16 @@ test("with no turn counted yet the section says so, and with no answer it says i
 
   usage = { status: 200, body: reading({ reason: "unreachable" }) };
   view = draw();
-  await waitFor(() => view.getByText("The token counts are not available now."));
+  await waitFor(() =>
+    view.getByText("The token counts are not available now."),
+  );
   cleanup();
 
   usage = { status: 500, body: {} };
   view = draw();
-  await waitFor(() => view.getByText("The token counts are not available now."));
+  await waitFor(() =>
+    view.getByText("The token counts are not available now."),
+  );
   // The engine cards are still there: the counter never takes the page down.
   expect(view.getByText("Claude Code")).toBeTruthy();
 });

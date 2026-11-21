@@ -70,7 +70,10 @@ function Rows({
           className="border-duet-hair-2 border-t align-top"
           key={`${row.member}/${row.engine}`}
         >
-          <th className="whitespace-nowrap px-3 py-3 text-left font-semibold" scope="row">
+          <th
+            className="whitespace-nowrap px-3 py-3 text-left font-semibold"
+            scope="row"
+          >
             {memberName(row.member)}
           </th>
           <td className="px-3 py-3">{engineName(row.engine)}</td>
@@ -83,12 +86,17 @@ function Rows({
 }
 
 export function EngineTokens({ reading }: { reading: EnginesReading }) {
-  const usage = useQuery({ ...tokensQueryOptions(), refetchInterval: REFRESH_MS });
+  const usage = useQuery({
+    ...tokensQueryOptions(),
+    refetchInterval: REFRESH_MS,
+  });
   const agents = useQuery(agentListQueryOptions());
   const engineName = (id: string) =>
     reading.engines.find((engine) => engine.id === id)?.name ?? id;
   const memberName = (id: string | null) =>
-    id === null ? TOKENS_ALL_ENGINES : (agents.data?.find((agent) => agent.id === id)?.name ?? id);
+    id === null
+      ? TOKENS_ALL_ENGINES
+      : (agents.data?.find((agent) => agent.id === id)?.name ?? id);
   const data = usage.data;
 
   return (
@@ -104,7 +112,10 @@ export function EngineTokens({ reading }: { reading: EnginesReading }) {
       ) : null}
       {data && !data.reason && data.rows.length > 0 ? (
         <DuetCard className="mt-4">
-          <section aria-label={TOKENS_TITLE} className="overflow-x-auto px-4 py-2">
+          <section
+            aria-label={TOKENS_TITLE}
+            className="overflow-x-auto px-4 py-2"
+          >
             <table className="w-full min-w-[36rem] border-collapse text-sm">
               <caption className="sr-only">{TOKENS_TITLE}</caption>
               <thead>
@@ -124,7 +135,11 @@ export function EngineTokens({ reading }: { reading: EnginesReading }) {
                 </tr>
               </thead>
               <tbody>
-                <Rows engineName={engineName} memberName={memberName} rows={data.rows} />
+                <Rows
+                  engineName={engineName}
+                  memberName={memberName}
+                  rows={data.rows}
+                />
               </tbody>
               <tbody className="border-duet-hair border-t-2">
                 <Rows

@@ -51,17 +51,20 @@ afterEach(() => {
 
 function stubAgent(reply: (request: Request) => Response) {
   const seen: Request[] = [];
+  const paths: string[] = [];
   const server = Bun.serve({
     port: 0,
     hostname: "127.0.0.1",
     fetch(request) {
       seen.push(request);
+      paths.push(new URL(request.url).pathname);
       return reply(request);
     },
   });
   const stub = {
     url: `http://127.0.0.1:${server.port}/`,
     seen,
+    paths,
     stop: () => server.stop(true),
   };
   stubs.push(stub);
@@ -174,16 +177,14 @@ describe("GET /api/freeduet/engines/usage: the same authority as the Engines pag
     });
     expect(body.engines[0].engine).toBe("claude-code");
     expect(agent.seen.length).toBe(1);
-    expect(new URL(agent.seen[0].url).pathname).toBe("/engines/usage");
+    expect(agent.paths).toEqual(["/engines/usage"]);
   });
 });
 
 describe("readUsage", () => {
   test("the router off, no agent and an agent that does not answer are one reason each, with no numbers", async () => {
     const agent = stubAgent(answer);
-    const off = await readUsage(
-      reachTo(agent.url, { FREEDUET_ROUTER: "off" }),
-    );
+    const off = await readUsage(reachTo(agent.url, { FREEDUET_ROUTER: "off" }));
     expect(off).toMatchObject({ reason: "off", rows: [] });
     expect(agent.seen.length).toBe(0);
     const notSetUp = await readUsage({
