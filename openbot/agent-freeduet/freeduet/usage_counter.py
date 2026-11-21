@@ -6,6 +6,9 @@ when it said). Counts only: no message, no key, no path, no cost. A turn whose e
 tokens: it adds to ``turns`` and not to ``reported_turns``, so a person is told "not reported" and never shown a zero or a guess.
 A turn that reported nothing and said nothing (it never started as far as anyone saw) is not a turn.
 
+TIME. Each attempt's wall-clock duration (``seconds``, whole seconds) is added too: measured here from the segment's start to its end,
+so it is there even for an engine that reported no tokens. It is never turned into tokens.
+
 THE TIME RULE. Days are UTC, as in the spend ledger (ledger.py) and every notice. The service knows no time zone of the
 person's; "today" and "last 7 days" are the UTC day and the seven UTC days ending with it.
 
@@ -22,12 +25,13 @@ import logging
 import os
 import tempfile
 import threading
+import time
 from collections.abc import Callable
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import Any
 
-from . import checkpoints
+from . import checkpoints, engines
 from .engine_adapter import Health, Usage
 
 log = logging.getLogger("freeduet.usage")
@@ -40,9 +44,20 @@ WINDOW_DAYS = 7
 MAX_FILE_BYTES = 4 * 1024 * 1024
 MAX_COUNT = 10**15
 
-FIELDS = ("turns", "reported_turns", "input_tokens", "output_tokens", "cache_read_tokens", "cache_write_tokens")
+# `turns` counts engine attempts: a retry on the same engine, or a turn that moved to another engine, counts again.
+# `seconds` is the wall-clock time of those attempts, measured by this service, so it exists even when no tokens were reported.
+FIELDS = ("turns", "reported_turns", "input_tokens", "output_tokens", "cache_read_tokens", "cache_write_tokens", "seconds")
 # Tokens that only some turns reported: the sum is over the turns that did, and `reported_turns` says how many.
-_TOKEN_FIELDS = FIELDS[2:]
+_TOKEN_FIELDS = FIELDS[2:6]
+
+# What an engine is, for "tokens saved" (see `engine_class`). Only the first two are saved: a login is a flat rate and a metered
+# engine is paid for, so neither one saves anything.
+SAVED_CLASSES = ("free_cloud", "local")
+CLASSES = (*SAVED_CLASSES, "login", "metered", "other")
+
+#: The clock that times an attempt. A test replaces it with a fake, so no assertion depends on the wall clock.
+monotonic: Callable[[], float] = time.monotonic
+MAX_SECONDS = 7 * 24 * 3600  # one attempt cannot have lasted longer than the segment's own timeout; this is only a sanity bound
 
 
 def usage_file() -> Path:
@@ -87,6 +102,37 @@ def _valid_days(raw: Any) -> dict[str, dict[str, dict[str, dict[str, int]]]] | N
                 if any(_count(counts[name]) is None for name in FIELDS):
                     return None
     return raw
+
+
+def _whole_seconds(value: Any) -> int:
+    """Whole seconds, at least 0; a value that is not a finite number is 0 (a time that cannot be trusted is not added)."""
+    try:
+        number = float(value)
+    except (TypeError, ValueError):
+        return 0
+    if number != number or number < 0:  # NaN, negative
+        return 0
+    return min(int(round(number)), MAX_SECONDS)
+
+
+def engine_class(engine_id: str) -> str:
+    """What this engine is, read from the engines file now (the person may have changed it since the count was made):
+    ``free_cloud`` (``engines.is_free_cloud``) and ``local`` (``engines.is_local_model``) are the ones whose tokens count as
+    saved; ``login`` (a subscription), ``metered`` and ``other`` (not in the file) do not. One classification, the engines
+    module's own: none is made here."""
+    try:
+        engine = engines.load_engines().engines.get(engine_id)
+    except Exception:  # noqa: BLE001 - an engines file that cannot be read classifies nothing
+        return "other"
+    if engine is None:
+        return "other"
+    if engine.billing == "metered":
+        return "metered"
+    if engines.is_local_model(engine):
+        return "local"
+    if engines.is_free_cloud(engine):
+        return "free_cloud"
+    return "login" if engine.billing == "subscription" else "other"
 
 
 class TokenCounter:
@@ -134,9 +180,9 @@ class TokenCounter:
     def problem(self) -> bool:
         return self._problem
 
-    def record(self, member_id: str, engine_id: str, usage: Usage | None, *, at: datetime | None = None) -> None:
-        """A turn of ``member_id`` on ``engine_id`` has ended. ``usage`` is what the engine reported, None when it reported
-        nothing. Never raises: a turn is never failed by its own bookkeeping."""
+    def record(self, member_id: str, engine_id: str, usage: Usage | None, *, at: datetime | None = None, seconds: float = 0) -> None:
+        """An attempt of ``member_id`` on ``engine_id`` has ended after ``seconds`` of wall-clock time. ``usage`` is what the engine
+        reported, None when it reported nothing. Never raises: a turn is never failed by its own bookkeeping."""
         try:
             with self._lock:
                 if self._problem:
@@ -144,6 +190,7 @@ class TokenCounter:
                 moment = self._clock() if at is None else at.astimezone(UTC) if at.tzinfo is not None else at.replace(tzinfo=UTC)
                 counts = self._days.setdefault(moment.strftime("%Y-%m-%d"), {}).setdefault(member_id, {}).setdefault(engine_id, _empty())
                 counts["turns"] += 1
+                counts["seconds"] += _whole_seconds(seconds)
                 given = _count(usage.input_tokens) if usage is not None else None
                 wrote = _count(usage.output_tokens) if usage is not None else None
                 if given is not None or wrote is not None:
@@ -183,7 +230,7 @@ class TokenCounter:
                 except OSError:
                     pass
 
-    def view(self) -> dict[str, Any]:
+    def view(self, classify: Callable[[str], str] | None = None) -> dict[str, Any]:
         """Today and the last seven UTC days, per member and engine, for ``GET /engines/usage``. Numbers only. The file is read
         again first, so a file mended or deleted by hand shows at once."""
         with self._lock:
@@ -201,7 +248,13 @@ class TokenCounter:
                             cell["week"][name] += counts[name]
                             if day == today:
                                 cell["today"][name] += counts[name]
-            rows = [{"member": member, "engine": engine, **cell} for (member, engine), cell in sorted(cells.items())]
+            classify = classify if classify is not None else engine_class
+            kinds: dict[str, str] = {}
+            for _member, engine in cells:
+                if engine not in kinds:
+                    kind = classify(engine)
+                    kinds[engine] = kind if kind in CLASSES else "other"
+            rows = [{"member": member, "engine": engine, "class": kinds[engine], **cell} for (member, engine), cell in sorted(cells.items())]
             by_engine: dict[str, dict[str, dict[str, int]]] = {}
             for row in rows:
                 total = by_engine.setdefault(row["engine"], {"today": _empty(), "week": _empty()})
@@ -213,7 +266,7 @@ class TokenCounter:
                 "today": today,
                 "window_days": WINDOW_DAYS,
                 "rows": rows,
-                "engines": [{"engine": engine, **total} for engine, total in sorted(by_engine.items())],
+                "engines": [{"engine": engine, "class": kinds[engine], **total} for engine, total in sorted(by_engine.items())],
                 "problem": self._problem,
             }
 
@@ -231,12 +284,12 @@ def counter() -> TokenCounter:
     return _counter
 
 
-def note_turn(member_id: str, engine_id: str, health: Health) -> None:
-    """The segment is over: count what the engine reported. A turn that reported nothing and answered nothing is not counted.
+def note_turn(member_id: str, engine_id: str, health: Health, seconds: float = 0) -> None:
+    """The segment is over after ``seconds``: count what the engine reported, and the time. A turn that reported nothing and answered nothing is not counted.
     Never raises."""
     try:
         if health.usage is None and not health.answered:
             return
-        counter().record(member_id, engine_id, health.usage)
+        counter().record(member_id, engine_id, health.usage, seconds=seconds)
     except Exception:  # noqa: BLE001
         log.warning("token counter: a turn was not counted", exc_info=True)

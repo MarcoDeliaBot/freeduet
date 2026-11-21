@@ -51,6 +51,7 @@ def test_a_turn_adds_to_its_member_engine_and_day(tmp_path):
     assert (row["member"], row["engine"]) == ("creator", "claude-code")
     assert row["today"] == {
         "turns": 2, "reported_turns": 2, "input_tokens": 110, "output_tokens": 22, "cache_read_tokens": 30, "cache_write_tokens": 5,
+        "seconds": 0,
     }
     assert row["week"] == row["today"]
 
@@ -123,3 +124,116 @@ def test_a_service_turn_that_reports_no_usage_is_not_reported(client, fake_cli):
 
 def test_the_route_needs_the_server_token(client):
     assert client.get("/engines/usage").status_code == 401
+
+
+# ── D126: the time of each attempt, and what counts as saved ─────────────────────────────────────────────────
+
+
+def test_an_attempt_adds_its_wall_clock_seconds_per_day_member_and_engine(tmp_path):
+    counter = TokenCounter(tmp_path / "u.json", now=lambda: NOON)
+    counter.record("m", "e", Usage(1, 1), seconds=61.4)
+    counter.record("m", "e", None, seconds=120)
+    counter.record("m", "e", Usage(1, 1), seconds=30, at=NOON - timedelta(days=3))
+    counter.record("m", "e", None, seconds=9999, at=NOON - timedelta(days=9))  # outside the week
+    (row,) = counter.view()["rows"]
+    assert row["today"]["seconds"] == 61 + 120 and row["week"]["seconds"] == 61 + 120 + 30
+    (total,) = counter.view()["engines"]
+    assert total["today"]["seconds"] == 181 and total["week"]["seconds"] == 211
+
+
+@pytest.mark.parametrize("bad", [-5, float("nan"), "soon", None])
+def test_a_time_that_cannot_be_trusted_adds_nothing(tmp_path, bad):
+    counter = TokenCounter(tmp_path / "u.json", now=lambda: NOON)
+    counter.record("m", "e", Usage(1, 1), seconds=bad)
+    (row,) = counter.view()["rows"]
+    assert row["today"]["turns"] == 1 and row["today"]["seconds"] == 0
+
+
+def test_the_file_keeps_seconds_and_stays_strict_about_them(tmp_path):
+    path = tmp_path / "u.json"
+    TokenCounter(path, now=lambda: NOON).record("m", "e", None, seconds=42)
+    document = json.loads(path.read_text())
+    assert document["days"]["2026-11-21"]["m"]["e"]["seconds"] == 42
+    for broken in (-1, "42", True, 1.5):
+        document["days"]["2026-11-21"]["m"]["e"]["seconds"] = broken
+        path.write_text(json.dumps(document))
+        assert TokenCounter(path, now=lambda: NOON).problem is True
+    del document["days"]["2026-11-21"]["m"]["e"]["seconds"]  # a count that is missing is a damaged file, not a guess
+    path.write_text(json.dumps(document))
+    assert TokenCounter(path, now=lambda: NOON).problem is True
+
+
+class _Clock:
+    """A fake monotonic clock that moves only when the test says so."""
+
+    def __init__(self):
+        self.now = 1000.0
+
+    def __call__(self):
+        return self.now
+
+
+def test_a_segment_is_timed_from_its_start_to_its_end_with_a_fake_clock(client, fake_cli, monkeypatch):
+    clock = _Clock()
+    monkeypatch.setattr(usage_counter, "monotonic", clock)
+    started = []
+    real = usage_counter.note_turn
+
+    def note(member, engine, health, seconds=0):
+        started.append(seconds)
+        real(member, engine, health, seconds)
+
+    monkeypatch.setattr(usage_counter, "note_turn", note)
+    fake_cli.plan([{"text": "Hello there."}])
+    post_run(client, run_body(ASK))
+    assert started == [0.0]  # the fake clock never moved, whatever the real one did
+    (row,) = client.get("/engines/usage", headers=AUTH).json()["rows"]
+    assert row["today"]["seconds"] == 0 and row["today"]["turns"] == 1
+
+
+def test_the_service_records_the_seconds_the_clock_gave(client, fake_cli, monkeypatch):
+    ticks = iter([1000.0, 1000.0 + 125.0])
+    monkeypatch.setattr(usage_counter, "monotonic", lambda: next(ticks))
+    fake_cli.plan([{"text": "Hello there."}])
+    post_run(client, run_body(ASK))
+    (row,) = client.get("/engines/usage", headers=AUTH).json()["rows"]
+    assert row["today"]["seconds"] == 125 and row["today"]["reported_turns"] == 0  # time, and no tokens made up
+
+
+def _engine(**kw):
+    from freeduet.engines import Engine
+
+    return Engine(**{"id": "x", "kind": "anthropic-compatible", "billing": "free", "tier": "C", **kw})
+
+
+@pytest.mark.parametrize(
+    ("engine", "expected"),
+    [
+        (_engine(base_url="https://openrouter.ai/api", model="vendor/model:free"), "free_cloud"),
+        (_engine(base_url="http://localhost:3002", router=True), "free_cloud"),  # a router such as FreeLLMAPI
+        (_engine(base_url="http://localhost:11434", no_key=True), "local"),  # Ollama
+        (_engine(kind="cli", billing="subscription", base_url=None), "login"),
+        (_engine(base_url="https://gateway.example", billing="metered"), "metered"),
+    ],
+)
+def test_the_class_of_an_engine_is_the_engine_modules_own(monkeypatch, engine, expected):
+    from freeduet import engines as engines_module
+
+    config = engines_module.EnginesConfig(
+        engines={"x": engine}, metered=engines_module.Metered(), chains={}, quality_floor={}, assistants=engines_module.Assistants()
+    )
+    monkeypatch.setattr(engines_module, "load_engines", lambda *a, **k: config)
+    assert usage_counter.engine_class("x") == expected
+    assert usage_counter.engine_class("not-in-the-file") == "other"
+
+
+def test_the_view_carries_the_class_and_an_unknown_class_is_other(tmp_path):
+    counter = TokenCounter(tmp_path / "u.json", now=lambda: NOON)
+    counter.record("m", "ollama", None, seconds=2400)
+    counter.record("m", "plan", Usage(5, 5), seconds=10)
+    kinds = {"ollama": "local", "plan": "surprise"}
+    view = counter.view(classify=kinds.__getitem__)
+    assert {row["engine"]: row["class"] for row in view["rows"]} == {"ollama": "local", "plan": "other"}
+    assert {row["engine"]: row["class"] for row in view["engines"]} == {"ollama": "local", "plan": "other"}
+    (local,) = [row for row in view["rows"] if row["engine"] == "ollama"]
+    assert local["week"]["seconds"] == 2400 and local["week"]["reported_turns"] == 0 and local["week"]["input_tokens"] == 0

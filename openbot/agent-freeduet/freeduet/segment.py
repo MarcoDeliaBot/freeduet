@@ -302,6 +302,7 @@ async def run_segment(run: RunInput, member: Member, notes: SegmentNotes | None 
         run.thread_id, run.run_id, lambda: origin.is_handoff_run(run.messages, run.assertion),
         frozenset(offered), handed_over,
     )
+    attempt_started = usage_counter.monotonic()  # D126: this attempt's wall-clock time, for the usage counter
     with tempfile.TemporaryDirectory(prefix="freeduet-segment-") as folder:
         try:
             directory = Path(folder)
@@ -339,7 +340,7 @@ async def run_segment(run: RunInput, member: Member, notes: SegmentNotes | None 
             await host.close()
             for line in diagnostics.at_close:
                 line()
-            usage_counter.note_turn(member.id, engine.key, diagnostics.health)  # D102: what the engine reported, counts only
+            usage_counter.note_turn(member.id, engine.key, diagnostics.health, usage_counter.monotonic() - attempt_started)  # D102/D126: what the engine reported and the time it took, counts only
 
 
 async def _drive(run: RunInput, offered: set[str], inbox: asyncio.Queue, spawn, failed_exit,
