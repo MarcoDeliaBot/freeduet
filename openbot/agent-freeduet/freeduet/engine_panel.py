@@ -50,6 +50,7 @@ from .engines import (
     EnginesFileError,
     engines_file_path,
     in_hidden_folder,
+    order_break,
     ordered_chain,
     parse_engines,
 )
@@ -132,10 +133,13 @@ class PanelRefused(Exception):
     """A change or a request the card may not make. ``code`` is one word from a closed list the server turns into a
     sentence; it never carries an address, a model or a key."""
 
-    def __init__(self, code: str, status: int = 400):
+    def __init__(self, code: str, status: int = 400, kind: str | None = None):
         super().__init__(code)
         self.code = code
         self.status = status
+        #: D115: for `order_needs_confirmation` only, one of a closed pair of words (`free_before_login`,
+        #: `paid_before_free_or_login`); None everywhere else.
+        self.kind = kind
 
 
 _lock = asyncio.Lock()
@@ -624,28 +628,49 @@ def apply_change(
     return _card(provider, document, environ)
 
 
+def _set_own_order(document: dict[str, Any], member_id: str, on: bool) -> None:
+    """D115: add the member to the file's ``own_order`` list, or drop it (and the whole key when it is then empty)."""
+    raw = document.get("own_order")
+    members = [item for item in raw if isinstance(item, str)] if isinstance(raw, list) else []
+    members = [item for item in members if item != member_id]
+    if on:
+        members.append(member_id)
+    if members:
+        document["own_order"] = members
+    else:
+        document.pop("own_order", None)
+
+
 def apply_order(
     member_id: Any,
     order: Any,
     *,
     current: list[str] | None = None,
+    confirmed: Any = False,
     environ: Mapping[str, str] | None = None,
 ) -> dict[str, Any]:
-    """D112: put one member's engines in a new order, by hand. ``order`` is the member's whole chain as the page shows it
+    """D112, D115: put one member's engines in a new order, by hand. ``order`` is the member's whole chain as the page shows it
     (``current``, else every engine of the member's chain that will run), in the new order. It must be a permutation of
     it: nothing added, nothing dropped, nothing unknown. Engines the chain names that do not run keep their place in the file.
     The same rules as every change here: only the page's own marked file (`file_is_yours`), validated by the loader, a
     backup, written in one step.
 
-    The router puts subscription logins first, then free engines, then metered ones, whatever order the file lists
-    (``engines.order_logins_first``). So an order that this rule would undo, a metered engine before a login or a free engine,
-    is refused (`order_logins_first`) and nothing is written: the page never promises an order the router would not keep.
-    Returns ``{"member", "chain", "changed"}``; nothing is written when the order is the one in use."""
+    By default the router puts subscription logins first, then free engines, then metered ones, whatever order the file lists
+    (``engines.order_logins_first``). The person is free to choose another order (D115), so an order that leaves that group order
+    is written only when ``confirmed`` is exactly ``True``: the member is then added to the file's ``own_order`` list, and the
+    router keeps that member's order as written. Without the confirmation nothing is written and the answer is
+    `order_needs_confirmation` (409) with the kind of break: `free_before_login` or `paid_before_free_or_login`. An order that
+    goes back to the group order drops the member from ``own_order``. A paid engine still runs only when the person has switched
+    it on (``metered``); this changes no switch.
+    Returns ``{"member", "chain", "changed", "ownOrder", "confirmedKind"}``; nothing is written when the order is the one in use.
+    ``confirmedKind`` is the kind the person confirmed in this call (None when the order needed none)."""
     if own_file_in_use(environ):
         raise PanelRefused("file_is_yours", 409)
     if not isinstance(member_id, str) or member_id not in _available_members():
         raise PanelRefused("unknown_member", 404)
     if not isinstance(order, list) or not all(isinstance(item, str) for item in order):
+        raise PanelRefused("order_shape")
+    if not isinstance(confirmed, bool):
         raise PanelRefused("order_shape")
     document = copy.deepcopy(_load_document(environ))
     try:
@@ -661,20 +686,34 @@ def apply_order(
     in_file = list(chains.get(member_id) or chains.get("default") or [])
     if not set(shown) <= set(in_file):
         raise PanelRefused("order_not_permutation")
+    own = member_id in config.own_order
     if order == shown:
-        return {"member": member_id, "chain": shown, "changed": False}
+        return {"member": member_id, "chain": shown, "changed": False, "ownOrder": own, "confirmedKind": None}
     slots = [at for at, engine in enumerate(in_file) if engine in set(shown)]
     for slot, engine in zip(slots, order):
         in_file[slot] = engine
     chains[member_id] = in_file
+    wanted = set(shown)
     try:
-        kept = [engine.id for engine in ordered_chain(member_id, parse_engines(document, source="the engines page")) if engine.id in set(shown)]
+        # First as the router would sort it: the order is in the group order when the sort leaves it as written.
+        _set_own_order(document, member_id, False)
+        sorted_chain = parse_engines(document, source="the engines page")
+        kept = [engine.id for engine in ordered_chain(member_id, sorted_chain) if engine.id in wanted]
+        kind = None
+        if kept != order:
+            kind = order_break(sorted_chain.engines[engine_id] for engine_id in order)
+            if kind is None:  # cannot happen: an order the sort changes is out of group; refuse rather than guess
+                raise PanelRefused("invalid")
+            if confirmed is not True:
+                raise PanelRefused("order_needs_confirmation", 409, kind)
+            _set_own_order(document, member_id, True)
+            own_config = parse_engines(document, source="the engines page")
+            if [engine.id for engine in ordered_chain(member_id, own_config) if engine.id in wanted] != order:
+                raise PanelRefused("invalid")
     except EnginesFileError as error:
         raise PanelRefused("invalid") from error
-    if kept != order:
-        raise PanelRefused("order_logins_first")
     _write_document(document, environ)
-    return {"member": member_id, "chain": order, "changed": True}
+    return {"member": member_id, "chain": order, "changed": True, "ownOrder": kind is not None, "confirmedKind": kind}
 
 
 # ── The two small requests a card makes ──────────────────────────────────────────────────────────

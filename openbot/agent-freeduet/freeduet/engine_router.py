@@ -215,7 +215,7 @@ class Router:
     def overview(self, member_ids) -> list[dict]:
         """What the engines file gives each member, for ``GET /engines`` (docs/design/engines-dashboard.md 3.2).
         Read-only, and a closed vocabulary: engine ids, one word per reason (``engines.exclusion_code``) and the
-        two switching values. The person's own choices are not here: the server holds them and lays them over this.
+        two switching values, and (D115) whether the person ordered the member's engines by hand (``own_order``). The person's own choices are not here: the server holds them and lays them over this.
 
         ``chain`` is the engines that will be tried, in order (logins first, every excluded engine removed, and only
         those this service has an adapter for). ``left_out`` is each engine the member's list names that will not run,
@@ -230,7 +230,7 @@ class Router:
                 engine = self.config.engines.get(engine_id)
                 left_out.append({"id": engine_id, "why": (exclusion_code(engine, self.config) if engine else None) or "not_set_up"})
             choice = switching_for(member_id, self.config)
-            members.append({"id": member_id, "chain": running, "left_out": left_out, "mode": choice.mode, "pin": choice.pin})
+            members.append({"id": member_id, "chain": running, "left_out": left_out, "mode": choice.mode, "pin": choice.pin, "own_order": member_id in self.config.own_order})
         return members
 
     def _is_paid_left_out(self, engine: Engine | None) -> bool:
