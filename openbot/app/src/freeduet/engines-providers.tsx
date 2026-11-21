@@ -28,6 +28,9 @@ import {
   PROVIDERS_DESCRIPTION,
   PROVIDERS_TITLE,
   type ProviderView,
+  ROUTER_ADDRESS_NOTE,
+  ROUTER_ADVANCED_NOTE,
+  ROUTER_WARNING,
   SETTINGS_SAVED,
   TAG_TEXT,
   USE_FOR_NONE,
@@ -263,10 +266,15 @@ function ProviderCard({
       </div>
 
       <p className="type-label text-duet-ink-2">{usersText(card)}</p>
+      {card.tag === "router" ? (
+        <p className="type-label text-duet-ink-2" role="note">
+          {ROUTER_ADVANCED_NOTE}
+        </p>
+      ) : null}
       {card.cloud && card.blocked === null ? (
         <>
           <p className="type-label text-duet-amber" role="note">
-            {CLOUD_WARNING}
+            {card.tag === "router" ? ROUTER_WARNING : CLOUD_WARNING}
           </p>
           {card.tag === "free" ? (
             <p className="type-label text-duet-ink-2">{FREE_NOTE}</p>
@@ -320,9 +328,13 @@ function ProviderCard({
               disabled={locked || card.addressFixed}
               id={`${ids}-address`}
               onChange={(event) => setAddress(event.target.value)}
+              placeholder={text.addressPlaceholder}
               value={address}
             />
           </label>
+          {card.tag === "router" ? (
+            <p className="type-label text-duet-ink-2">{ROUTER_ADDRESS_NOTE}</p>
+          ) : null}
 
           {freeChoice ? (
             <div className="grid gap-1">

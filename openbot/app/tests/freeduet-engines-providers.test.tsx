@@ -56,16 +56,20 @@ function card(id: ProviderId, over: Partial<ProviderView> = {}): ProviderView {
         ? "trial"
         : id === "anthropic-api"
           ? "paid"
-          : "free",
+          : id === "freellmapi"
+            ? "router"
+            : "free",
     enabled: false,
     baseUrl: local
       ? "http://host.docker.internal:11434/v1"
-      : `https://api.${id}.test/v1`,
+      : id === "freellmapi"
+        ? ""
+        : `https://api.${id}.test/v1`,
     model: "",
     keySaved: false,
     needsKey: !local,
     cloud: !local,
-    forMembers: id === "ollama" || id === "openrouter",
+    forMembers: id === "ollama" || id === "openrouter" || id === "freellmapi",
     forAssistants: id !== "cerebras" && id !== "anthropic-api",
     blocked:
       id === "cerebras"
@@ -75,7 +79,7 @@ function card(id: ProviderId, over: Partial<ProviderView> = {}): ProviderView {
           : null,
     addressFixed: id === "openrouter" || id === "groq",
     useFor:
-      id === "openrouter"
+      id === "openrouter" || id === "freellmapi"
         ? { available: ["freeduet", "inbox", "concierge", "chef"], chosen: [] }
         : null,
     ...over,
@@ -188,6 +192,7 @@ test("every provider is a card with its tag, in the order of the design", () => 
     "Ollama",
     "llama.cpp server",
     "LM Studio",
+    "FreeLLMAPI (router on your computer)",
     "Groq",
     "Google AI Studio",
     "Mistral",
@@ -493,4 +498,91 @@ test("a model the file already holds stays choosable and no other card gets a li
   expect(select.value).toBe("old/kept:free");
   expect(cardOf(view, "Groq").getByLabelText("Model").tagName).toBe("INPUT");
   expect(freeCalls).toHaveLength(1);
+});
+
+test("the FreeLLMAPI card is an advanced option with the data warning, no address by default and no member ticked", () => {
+  const view = draw();
+  const router = cardOf(view, "FreeLLMAPI (router on your computer)");
+  expect(router.getByText("Advanced: your own router")).toBeTruthy();
+  expect(router.getByText(/not a recommended default/)).toBeTruthy();
+  expect(router.getByText(/personal experimentation only/)).toBeTruthy();
+  expect(router.getByText(/passes them on to the free providers/)).toBeTruthy();
+  expect(router.getByText(/They leave your computer/)).toBeTruthy();
+  expect(
+    router.getByText(/Its own default port, 3001, is FreeDuet's/),
+  ).toBeTruthy();
+  expect(
+    router.queryByText("Data sent to this service leaves your computer."),
+  ).toBeNull();
+  const address = router.getByLabelText("Server address") as HTMLInputElement;
+  expect(address.value).toBe("");
+  expect(address.placeholder).toBe("http://localhost:3002/v1");
+  expect(
+    (router.getByRole("switch") as HTMLInputElement).getAttribute(
+      "aria-checked",
+    ),
+  ).toBe("false");
+  expect(router.queryByText("Use for")).toBeNull(); // off: no member list yet
+});
+
+test("the FreeLLMAPI card, switched on, offers Use for with nobody ticked, and its key is never drawn back", async () => {
+  cards = cards.map((entry) =>
+    entry.id === "freellmapi"
+      ? {
+          ...entry,
+          enabled: true,
+          keySaved: true,
+          baseUrl: "http://localhost:3002/v1",
+          model: "auto",
+        }
+      : entry,
+  );
+  const view = draw();
+  const router = cardOf(view, "FreeLLMAPI (router on your computer)");
+  expect(router.getByText("Use for")).toBeTruthy();
+  expect(router.getByText(/No member uses it yet/)).toBeTruthy();
+  expect(
+    router
+      .getAllByRole("checkbox")
+      .every((box) => !(box as HTMLInputElement).checked),
+  ).toBe(true);
+  expect(router.getByText("Key saved. It is never shown again.")).toBeTruthy();
+  expect(view.container.innerHTML).not.toContain("freellmapi-");
+});
+
+test("the FreeLLMAPI card suggests the model auto and saves address, model and token without echoing the token", async () => {
+  const user = userEvent.setup({ document });
+  const view = draw();
+  const router = cardOf(view, "FreeLLMAPI (router on your computer)");
+  expect((router.getByLabelText("Model") as HTMLInputElement).value).toBe(
+    "auto",
+  );
+  await user.type(
+    router.getByLabelText("Server address"),
+    "http://localhost:3002/v1",
+  );
+  await user.click(router.getByRole("switch"));
+  await user.type(
+    router.getByLabelText("Key"),
+    "freellmapi-CANARYtoken0123456789",
+  );
+  await user.click(router.getByRole("button", { name: "Save" }));
+  await waitFor(() =>
+    expect(
+      sent.some(
+        (call) =>
+          call.path.endsWith("/freellmapi") &&
+          (call.body as { enabled?: boolean })?.enabled === true,
+      ),
+    ).toBe(true),
+  );
+  const put = sent.find((call) => call.path.endsWith("/freellmapi")) as {
+    body: Record<string, unknown>;
+  };
+  expect(put.body).toMatchObject({
+    enabled: true,
+    baseUrl: "http://localhost:3002/v1",
+    model: "auto",
+  });
+  expect(view.container.innerHTML).not.toContain("CANARYtoken");
 });
