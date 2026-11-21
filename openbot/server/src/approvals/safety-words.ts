@@ -69,6 +69,7 @@ export function foldWords(text: string): string {
  */
 function source(term: string): string {
   return foldWords(term)
+    .replace(/\\w/g, "[\\p{L}\\p{M}]")
     .replace(/ /g, SEP)
     .replace(/~/g, SEP0)
     .replace(/@/g, REST);
@@ -241,9 +242,9 @@ const ES_PAYMENTS: WordList = {
     "compr(?:a|as|ar|ado|ando|e|o)",
     "adquir(?:ir|e|ido)",
     "adquisicion",
-    `(?:confirmar|confirma|confirme|finalizar|finaliza|finalice|realizar|realiza|realice|completar|completa|complete|enviar|envia|envie|hacer|haz|haga|efectuar|efectua|efectue|tramitar|tramita|tramite|formalizar|formaliza|formalice|colocar|coloca|coloque) ${ES_ART}pedido`,
+    `(?:confirmar|confirma|confirme|finalizar|finaliza|finalice|realizar|realiza|realice|completar|completa|complete|enviar|envia|envie|hacer|haz|haga|efectuar|efectua|efectue|tramitar|tramita|tramite|formalizar|formaliza|formalice|colocar|coloca|coloque) ${ES_ART}pedido(?! de (?!compra))`,
     `(?:confirmar|confirma|confirme|finalizar|finaliza|finalice|realizar|realiza|realice|completar|completa|complete|enviar|envia|envie|hacer|haz|haga|efectuar|efectua|efectue|tramitar|tramita|tramite|formalizar|formaliza|formalice|colocar|coloca|coloque) ${ES_ART}orden(?! (?:del dia|alfabetic@|de busqueda|ascendente|descendente))`,
-    "pedido(?! (?:de ayuda|de informacion|de disculpas|de presupuesto))",
+    "pedido(?! de (?!compra))",
     "(?:ir|vaya|vamos|pasar|pasa|proceder|procede|continuar|continua|ve) (?:a|por|hacia) (?:la )?caja(?! de)",
     "transferencia (?:bancaria|electronica|de dinero|de fondos|de pago|inmediata|internacional)",
     "transferir (?:dinero|fondos|el importe|la cantidad|el monto)",
@@ -307,7 +308,7 @@ const ES_SECURITY: WordList = {
 // ─────────────────────────────────────────────────────────────────────────────────────────────────────
 // French
 // ─────────────────────────────────────────────────────────────────────────────────────────────────────
-const FR_ART = "(?:(?:la|le|l'|ma|mon|votre|notre|cette|ce|une|un|ta|ton|mes|vos) ?)*";
+const FR_ART = "(?:(?:la|le|l'|ma|mon|votre|notre|cette|ce|une|un|ta|ton|mes|vos)~)*";
 const FR_PAYMENTS: WordList = {
   words: [
     "paiements?",
@@ -380,7 +381,7 @@ const FR_SECURITY: WordList = {
     "(?:mettre|mets|mettez|passer|passez) en (?:acces )?public",
     "(?:droits?|role|roles|permissions?|privileges?) (?:d')?admin(?:istrateur)?",
     "(?:nommer|nomme|nommez|promouvoir|promeus|promouvez|definir|definissez|donner|donne|donnez|accorder|accorde|accordez|attribuer|attribue|attribuez|rendre|rends|rendez|faire)@? (?:\\w+ ){0,3}(?:administrateur|admin)",
-    "(?:supprimer|supprime|supprimez|effacer|efface|effacez|fermer|ferme|fermez|desactiver|desactive|desactivez|cloturer|cloture|resilier|resilie|resiliez) (?:mon |ton |votre |le |ce |son |la |l')?compte(?! ?-?(?:rendu|a rebours))",
+    "(?:supprimer|supprime|supprimez|effacer|efface|effacez|fermer|ferme|fermez|desactiver|desactive|desactivez|cloturer|cloture|resilier|resilie|resiliez) (?:mon |ton |votre |le |ce |son |la |l')?compte(?!~-?(?:rendu|a rebours))",
   ],
 };
 
@@ -622,7 +623,7 @@ const RU_SECURITY: WordList = {
     "настройк@ (?:безопасности|конфиденциальности|доступа|общего доступа|приватности|разрешений|прав|защиты)",
     "безопасност@ (?:аккаунта|учетной записи)",
     "защит@ аккаунта",
-    "(?:поделиться|делиться|открыть доступ|дать доступ|предоставить доступ|откройте доступ) (?:\\w+ ){0,2}(?:всем|любому|любым|публично|для всех|кому угодно)",
+    "(?:поделиться|делиться|открыть доступ|дать доступ|предоставить доступ|откройте доступ) (?:\\w+ ){0,2}(?:со всеми|всем|любому|любым|публично|для всех|кому угодно)",
     "(?:сделать|сделайте|сделай|делать) (?:\\w+ ){0,2}(?:публичн|общедоступн)@",
     "публичн@ доступ@",
     "общий доступ",
@@ -664,7 +665,7 @@ const TR_PAYMENTS: WordList = {
     ...renew(
       "yenile@",
       "simdi|otomatik",
-      "abonelik|uyelik|lisans|alan adi|domain|hosting|plan|paket|sozlesme",
+      "abonelik|aboneli|uyelik|uyeli|lisans|alan adi|domain|hosting|plan|paket|sozlesme",
     ),
     "bakiye (?:yukle|ekle)@",
     "(?:hesaba|cuzdana|karta) para (?:yukle|ekle|yatir)@",
@@ -813,82 +814,82 @@ const KO_PAYMENTS: WordList = {
     "납부",
     "입금",
     "송금",
-    "계좌 ?이체",
+    "계좌~이체",
     "무통장",
     "구매",
     "구입",
-    "주문 ?(?:을|를)? ?(?:확정|완료|제출|접수|신청|진행)",
-    "주문(?:을|를)? ?확인하",
+    "주문~(?:을|를)?~(?:확정|완료|제출|접수|신청|진행)",
+    "주문(?:을|를)?~확인하",
     "주문하(?:기|다|ㅂ니다|세요|십시오)",
-    "바로 ?구매",
+    "바로~구매",
     "장바구니(?:로| 결제)",
-    "신용 ?카드",
-    "체크 ?카드",
-    "직불 ?카드",
-    "선불 ?카드",
-    "카드 ?번호",
-    "보안 ?코드",
+    "신용~카드",
+    "체크~카드",
+    "직불~카드",
+    "선불~카드",
+    "카드~번호",
+    "보안~코드",
     "cvv",
     "cvc",
     "구독",
-    "정기 ?(?:결제|구독)",
-    "자동 ?갱신",
-    "(?:구독|멤버십|회원권|라이선스|도메인|호스팅|계약|요금제)(?: ?을| ?를)? ?(?:갱신|연장)",
-    "지금 ?갱신",
-    "(?:잔액|포인트|머니|캐시|예치금|지갑|카드|계좌|크레딧) ?충전",
-    "충전 ?금액",
+    "정기~(?:결제|구독)",
+    "자동~갱신",
+    "(?:구독|멤버십|회원권|라이선스|도메인|호스팅|계약|요금제)(?:~을|~를)?~(?:갱신|연장)",
+    "지금~갱신",
+    "(?:잔액|포인트|머니|캐시|예치금|지갑|카드|계좌|크레딧)~충전",
+    "충전~금액",
     "상품권",
-    "기프트 ?카드",
+    "기프트~카드",
     "기프티콘",
-    "청구(?:서)? ?(?:주소|정보)",
+    "청구(?:서)?~(?:주소|정보)",
     "청구지",
   ],
   tools: ["결제", "송금", "구독", "이체"],
 };
 const KO_CREDENTIALS: WordList = {
   parts: [
-    "비밀 ?번호",
+    "비밀~번호",
     "패스워드",
     "암호(?!화)",
     "비번",
-    "인증 ?(?:번호|코드)",
-    "일회용 ?(?:비밀번호|코드|암호|패스워드)",
+    "인증~(?:번호|코드)",
+    "일회용~(?:비밀번호|코드|암호|패스워드)",
     "otp",
-    "(?:2|두|이) ?단계 ?(?:인증|확인|보안)",
-    "이중 ?(?:인증|확인)",
-    "다중 ?인증",
-    "2차 ?인증",
+    "(?:2|두|이)~단계~(?:인증|확인|보안)",
+    "이중~(?:인증|확인)",
+    "다중~인증",
+    "2차~인증",
     "2fa",
-    "복구 ?(?:코드|키|이메일|전화|전화번호|구문)",
-    "보안 ?(?:질문|코드|키|번호)",
-    "자격 ?증명",
-    "로그인 ?(?:정보|방법)",
-    "api ?(?:키|토큰)",
-    "(?:액세스|접근) ?토큰",
-    "(?:비밀|개인) ?키",
-    "시드 ?구문",
-    "핀 ?번호",
-    "pin ?번호",
+    "복구~(?:코드|키|이메일|전화|전화번호|구문)",
+    "보안~(?:질문|코드|키|번호)",
+    "자격~증명",
+    "로그인~(?:정보|방법)",
+    "api~(?:키|토큰)",
+    "(?:액세스|접근)~토큰",
+    "(?:비밀|개인)~키",
+    "시드~구문",
+    "핀~번호",
+    "pin~번호",
   ],
 };
 const KO_SECURITY: WordList = {
   parts: [
-    "보안 ?설정",
-    "계정 ?보안",
-    "공유 ?설정",
-    "개인 ?정보 ?(?:보호 ?)?설정",
-    "프라이버시 ?설정",
-    "권한 ?설정",
-    "접근 ?권한 ?(?:설정|변경)",
-    "모든 ?사람(?:에게)? ?(?:공유|공개)",
-    "누구나 ?(?:볼|접근|편집|열람)",
-    "전체 ?공개",
-    "공개(?:로)? ?(?:설정|변경|전환)",
-    "링크가 있는 ?(?:모든 ?사람|누구나)",
-    "관리자 ?(?:권한|역할)",
-    "관리자(?:로| ?(?:을|를)) ?(?:지정|설정|변경|승격|추가)",
-    "계정 ?(?:을|를)? ?(?:삭제|탈퇴|해지|폐쇄|비활성화)",
-    "회원 ?탈퇴",
+    "보안~설정",
+    "계정~보안",
+    "공유~설정",
+    "개인~정보~(?:보호~)?설정",
+    "프라이버시~설정",
+    "권한~설정",
+    "접근~권한~(?:설정|변경)",
+    "모든~사람(?:에게)?~(?:공유|공개)",
+    "누구나~(?:볼|접근|편집|열람)",
+    "전체~공개",
+    "공개(?:로)?~(?:설정|변경|전환)",
+    "링크가 있는~(?:모든~사람|누구나)",
+    "관리자~(?:권한|역할)",
+    "관리자(?:로|~(?:을|를))~(?:지정|설정|변경|승격|추가)",
+    "계정~(?:을|를)?~(?:삭제|탈퇴|해지|폐쇄|비활성화)",
+    "회원~탈퇴",
   ],
 };
 
@@ -966,7 +967,7 @@ const ZH_CREDENTIALS: WordList = {
     "(?:恢复|恢復)(?:码|碼|密钥|密鑰|邮箱|郵箱|邮件|郵件|电话|電話|手机|手機)",
     "(?:备用|備用)(?:码|碼)",
     "(?:安全问题|安全問題|密保问题|密保問題)",
-    "api(?:密钥|密鑰|密碼| ?key)",
+    "api(?:密钥|密鑰|密碼|~key)",
     "(?:访问|訪問|存取)(?:令牌|权杖|權杖|密钥|密鑰|金鑰)",
     "令牌",
     "凭据",
@@ -975,7 +976,7 @@ const ZH_CREDENTIALS: WordList = {
     "私钥",
     "私鑰",
     "(?:助记词|助記詞)",
-    "pin ?(?:码|碼)",
+    "pin~(?:码|碼)",
   ],
 };
 const ZH_SECURITY: WordList = {
@@ -1031,3 +1032,27 @@ export const CREDENTIALS_OTHER_LANGUAGES = compileWords(
 export const SECURITY_SETTINGS_OTHER_LANGUAGES = compileWords(
   all.map((language) => language.security),
 );
+
+/**
+ * The text of `agent-freeduet/freeduet/safety_words_gen.py`: the compiled words above in Python's regular
+ * expression syntax, for the cannot guard's mirror. `scripts/generate-safety-words-py.ts` writes it and
+ * `tests/approvals-safety-languages.test.ts` fails when the file on disk is not this text.
+ */
+export function renderPythonMirror(): string {
+  const python = (re: RegExp) =>
+    re.source
+      .replace(/\[\\p\{L\}\\p\{M\}\\p\{N\}\]/g, "[^\\W_]")
+      .replace(/\[\\p\{L\}\\p\{M\}\]/g, "[^\\W\\d_]");
+  const group = (name: string, compiled: CompiledWords) =>
+    `${name} = [\n${compiled.inWords.map((re) => `    ${JSON.stringify(python(re))},`).join("\n")}\n]\n`;
+  return (
+    `# Generated by openbot/server/scripts/generate-safety-words-py.ts from approvals/safety-words.ts (D131).\n` +
+    `# Do not edit by hand: run \`bun scripts/generate-safety-words-py.ts\` from openbot/server.\n` +
+    `# Regular expressions for the text folded like \`safety-words.ts\` folds it (see cannot_guard._fold).\n\n` +
+    group("PAYMENTS", PAYMENTS_OTHER_LANGUAGES) +
+    "\n" +
+    group("CREDENTIALS", CREDENTIALS_OTHER_LANGUAGES) +
+    "\n" +
+    group("SECURITY_SETTINGS", SECURITY_SETTINGS_OTHER_LANGUAGES)
+  );
+}

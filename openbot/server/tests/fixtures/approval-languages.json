@@ -1,0 +1,63 @@
+{
+  "_": "D131: phrases for the fixed approval rule in the ten languages added after English and Italian. `payments`, `credentials`, `security` must reach the person; `ordinary` must NOT be stopped. Read by server/tests/approvals-safety-languages.test.ts and by agent-freeduet/tests/test_cannot_guard.py. Every phrase is invented.",
+  "de": {
+    "payments": ["Jetzt bezahlen", "Zahlung bestätigen", "Überweisung tätigen", "Ueberweisung ausführen", "Zahlungspflichtig bestellen", "Jetzt kaufen", "Zur Kasse", "Kreditkartennummer eingeben", "Abonnement abschließen", "Abo verlängern", "Guthaben aufladen", "Geschenkgutschein kaufen"],
+    "credentials": ["Passwort ändern", "Neues Kennwort festlegen", "Zwei-Faktor-Authentifizierung einrichten", "Einmalcode eingeben", "Wiederherstellungscode anzeigen", "Sicherheitsfrage ändern", "API-Schlüssel erzeugen", "Zugangsdaten speichern"],
+    "security": ["Sicherheitseinstellungen öffnen", "Einstellungen zur Privatsphäre", "Mit jedem teilen", "Öffentlich machen", "Administratorrolle vergeben", "Konto löschen", "Zum Administrator ernennen"],
+    "ordinary": ["Die Zahlen im Bericht stimmen nicht", "Zahlen in die Tabelle eintragen", "Verkauf der Altgeräte besprechen", "Einkaufsliste für das Büro", "Ordne die Dateien alphabetisch", "Seite neu laden", "Das Handy aufladen, bevor wir losfahren", "Rechnung an die Kollegen weiterleiten", "Termin am Freitag verschieben", "Der Schlüssel liegt im Büro", "Unbezahlter Urlaub im August", "Bestellungen anzeigen", "Besprechungsnotizen speichern"]
+  },
+  "es": {
+    "payments": ["Pagar ahora", "Realizar el pago", "Confirmar pedido", "Hacer una transferencia bancaria", "Comprar ahora", "Ir a la caja", "Número de tarjeta", "Tarjeta de crédito", "Suscribirse", "Renovar la suscripción", "Recargar saldo", "Tarjeta regalo"],
+    "credentials": ["Cambiar contraseña", "Código de verificación", "Autenticación en dos pasos", "Pregunta de seguridad", "Clave API", "Credenciales de acceso", "Correo de recuperación"],
+    "security": ["Configuración de seguridad", "Compartir con cualquier persona", "Hacer público el documento", "Permisos de administrador", "Eliminar cuenta", "Cerrar mi cuenta"],
+    "ordinary": ["Abrir la página de contacto", "Orden del día de la reunión", "Ordenar los archivos por nombre", "Cerrar la ventana", "Comprender el informe", "Enviar el pedido de ayuda a Ana", "Palabra clave del título", "Cuenta regresiva para el evento", "Guardar las notas de la reunión", "Recargar la página", "Cambiar el color del botón"]
+  },
+  "fr": {
+    "payments": ["Payer maintenant", "Procéder au paiement", "Valider la commande", "Passer commande", "Effectuer un virement", "Acheter", "Passer en caisse", "Numéro de carte", "Carte bancaire", "S'abonner", "Renouveler l'abonnement", "Recharger le compte", "Carte cadeau", "Adresse de facturation"],
+    "credentials": ["Changer le mot de passe", "Code de vérification", "Double authentification", "Question secrète", "Clé API", "Identifiants de connexion", "E-mail de récupération"],
+    "security": ["Paramètres de sécurité", "Partager avec tout le monde", "Rendre publique la page", "Droits d'administrateur", "Supprimer mon compte", "Fermer le compte"],
+    "ordinary": ["Régler les paramètres d'affichage", "Régler la taille de la police", "Compte rendu de la réunion", "Supprimer le compte rendu", "Fiche de paie de mars", "Recharger la page", "Se désabonner de la lettre", "Ouvrir la page des contacts", "Mot clé du titre", "Envoyer le dossier à Paul", "Numéro de carte d'identité", "Commande vocale activée dans la salle"]
+  },
+  "pt": {
+    "payments": ["Pagar agora", "Efetuar o pagamento", "Finalizar pedido", "Fazer uma transferência bancária", "Comprar agora", "Ir ao caixa", "Número do cartão", "Cartão de crédito", "Assinar plano", "Renovar assinatura", "Recarregar saldo", "Vale-presente", "Pagamento via chave Pix"],
+    "credentials": ["Alterar senha", "Código de verificação", "Autenticação em duas etapas", "Pergunta de segurança", "Chave de API", "Credenciais", "E-mail de recuperação"],
+    "security": ["Configurações de segurança", "Compartilhar com qualquer pessoa", "Tornar público o arquivo", "Permissão de administrador", "Excluir conta", "Encerrar minha conta"],
+    "ordinary": ["Abrir a página de contato", "Assinatura do e-mail da empresa", "Pedido de férias para agosto", "Ir para a caixa de entrada", "Assinar o contrato digitalmente", "Palavra-chave do título", "Recarregar a página", "Fechar a janela", "Enviar a encomenda para o cliente", "Enviar relatório à equipe", "Marcar reunião para sexta"]
+  },
+  "pl": {
+    "payments": ["Zapłać teraz", "Przejdź do płatności", "Złóż zamówienie", "Potwierdź zamówienie", "Zamawiam i płacę", "Wykonaj przelew", "Kup teraz", "Numer karty", "Karta kredytowa", "Subskrypcja", "Odnów subskrypcję", "Doładuj konto", "Karta podarunkowa"],
+    "credentials": ["Zmień hasło", "Kod weryfikacyjny", "Uwierzytelnianie dwuskładnikowe", "Pytanie bezpieczeństwa", "Klucz API", "Dane logowania", "Adres e-mail odzyskiwania"],
+    "security": ["Ustawienia bezpieczeństwa", "Udostępnij wszystkim", "Zrób dokument publicznym", "Rola administratora", "Usuń konto", "Zamknij moje konto"],
+    "ordinary": ["Otwórz stronę kontaktową", "Zamów kawę dla zespołu na wtorek", "Płace w tabeli", "Przenieś spotkanie na piątek", "Zapisz notatki ze spotkania", "Odśwież stronę", "Zmień kolor przycisku", "Wyślij raport do Ani", "Kasa chorych nie odpowiada"]
+  },
+  "ru": {
+    "payments": ["Оплатить заказ", "Перейти к оплате", "Оформить заказ", "Подтвердить заказ", "Банковский перевод", "Перевести деньги на карту", "Купить сейчас", "Номер карты", "Кредитная карта", "Оформить подписку", "Продлить подписку", "Пополнить баланс", "Подарочный сертификат"],
+    "credentials": ["Сменить пароль", "Код подтверждения", "Двухфакторная аутентификация", "Контрольный вопрос", "API-ключ", "Учётные данные", "Почта для восстановления"],
+    "security": ["Настройки безопасности", "Поделиться со всеми", "Сделать документ публичным", "Права администратора", "Удалить аккаунт", "Назначить администратором"],
+    "ordinary": ["Перевод текста на английский", "Перевод документа на русский язык", "Открыть страницу контактов", "Материнская плата ноутбука", "Платиновый тариф описан в тексте", "Записать заметки со встречи", "Отправить отчёт Анне", "Перенести встречу на пятницу", "Изменить цвет кнопки", "Закрыть окно"]
+  },
+  "tr": {
+    "payments": ["Şimdi öde", "Ödemeye geç", "Siparişi onayla", "Sipariş ver", "Havale yap", "Satın al", "Kasaya git", "Kredi kartı", "Kart numarası", "Abone ol", "Aboneliği yenile", "Bakiye yükle", "Hediye kartı", "KREDİ KARTI"],
+    "credentials": ["Şifreyi değiştir", "Parolanızı girin", "İki adımlı doğrulama", "Doğrulama kodu", "Güvenlik sorusu", "API anahtarı", "Kurtarma e-postası", "ŞİFRE"],
+    "security": ["Güvenlik ayarları", "Herkesle paylaş", "Herkese açık yap", "Yönetici yetkisi", "Hesabı sil", "Hesabımı kapat"],
+    "ordinary": ["Sayfayı yenile", "Dosyayı şifrele", "Dosyayı yükle", "Toplantı notlarını kaydet", "Raporu Ayşe'ye gönder", "Düğme rengini değiştir", "Toplantıyı cumaya al", "Pencereyi kapat", "İletişim sayfasını aç"]
+  },
+  "ja": {
+    "payments": ["今すぐ支払う", "お支払い方法を追加", "注文を確定する", "銀行振込を実行", "購入手続きへ進む", "カートに進む", "クレジットカード番号", "サブスクリプションに登録", "契約を更新する", "残高にチャージ", "ギフトカードを購入", "ＰＡＹ決済", "ｶｰﾄﾞ番号"],
+    "credentials": ["パスワードを変更", "認証コードを入力", "二段階認証を設定", "秘密の質問", "APIキーを作成", "ログイン情報", "リカバリーコード"],
+    "security": ["セキュリティ設定を開く", "共有設定を変更", "全員に公開する", "管理者権限を付与", "アカウントを削除", "公開に設定"],
+    "ordinary": ["ページを更新する", "会議のメモを保存", "資料を田中さんに送る", "ボタンの色を変える", "金曜日に会議を移す", "ウィンドウを閉じる", "お問い合わせページを開く", "暗号の歴史について調べる", "請求書の下書きを作る", "ブログ記事を公開する"]
+  },
+  "ko": {
+    "payments": ["지금 결제하기", "결제 수단 추가", "주문을 확정합니다", "계좌이체 실행", "바로 구매", "신용카드 번호", "구독 시작", "구독을 갱신", "잔액 충전", "상품권 구매", "카드번호를 입력"],
+    "credentials": ["비밀번호를 변경", "인증번호 입력", "2단계 인증 설정", "보안 질문 변경", "API 키 생성", "로그인 정보", "복구 코드"],
+    "security": ["보안 설정 열기", "공유 설정 변경", "모든 사람에게 공유", "관리자 권한 부여", "계정을 삭제", "회원 탈퇴"],
+    "ordinary": ["페이지를 새로고침", "회의 메모를 저장", "보고서를 민수에게 보내기", "버튼 색을 바꾸기", "금요일로 회의를 옮기기", "창을 닫기", "문의 페이지 열기", "암호화폐 시장에 대한 기사 읽기", "배터리 충전 상태 확인", "파일을 암호화하기"]
+  },
+  "zh": {
+    "payments": ["立即付款", "去结算", "提交订单", "银行转账", "立即购买", "信用卡号", "订阅会员", "续费", "账户充值", "礼品卡", "立即支付", "結帳付款", "轉帳"],
+    "credentials": ["修改密码", "輸入驗證碼", "两步验证", "安全问题", "API密钥", "访问令牌", "恢复邮箱"],
+    "security": ["安全设置", "共享设置", "公开给所有人", "管理员权限", "删除账户", "註銷帳號"],
+    "ordinary": ["刷新页面", "保存会议记录", "把报告发给小王", "更改按钮颜色", "把会议改到周五", "关闭窗口", "打开联系页面", "学习密码学课程笔记", "整理购物清单的文字稿", "把文件发布到博客"]
+  }
+}
