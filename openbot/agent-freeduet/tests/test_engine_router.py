@@ -8,12 +8,14 @@ real engine, login or network.
 from __future__ import annotations
 
 import json
+from datetime import UTC, datetime
 
 import pytest
 
 from freeduet import engine_router
 from freeduet.app import app
-from freeduet.engine_adapter import ProbeResult
+from freeduet.engine_adapter import Health, ProbeResult
+from freeduet.failure_classifier import USAGE_LIMIT, Failure
 from freeduet.engine_breaker import SIGNED_OUT
 from freeduet.engines import EnginesFileError
 from fake_engines import build
@@ -257,6 +259,63 @@ def test_when_every_engine_is_limited_the_person_is_told_when_the_first_is_back(
     events = posted(client, team)
     assert events[-1]["code"] == "FREEDUET_ENGINE_LIMITED"
     assert events[-1]["message"] == f"Every engine is unavailable right now. The earliest is back on {UNTIL}. Your message is kept: send it again later."
+
+
+# ── D119: the notice names only an engine that comes BEFORE the one that answers ──────────────────
+
+
+def limit_now(team, key):
+    """The engine is limited until 2100, as a turn that hit its limit leaves it (no turn is run)."""
+    state = team.router.state
+    state.finish(key, state.begin(key), Health(failure=Failure(USAGE_LIMIT, datetime(2100, 1, 1, tzinfo=UTC))))
+
+
+def own_order(data):
+    data["own_order"] = ["freeduet"]
+    data["chains"] = {"default": ["local", "claude-code", "codex"]}
+
+
+def test_a_limited_engine_after_the_one_that_answers_makes_no_switch_notice(client, fake_cli, tmp_path):
+    team = build(tmp_path, fake_cli, ("claude-code", "codex", "local"), mutate=own_order)
+    limit_now(team, "claude-code")
+    team["local"].plan([{"text": "Local answer."}])
+    events = posted(client, team)
+    assert said(events) == "Local answer."
+    assert team["claude-code"].runs() == 0 and team["codex"].runs() == 0
+
+
+def test_the_recommended_order_still_says_the_limited_first_engine_is_replaced(client, fake_cli, tmp_path):
+    team = build(tmp_path, fake_cli, ("claude-code", "local"))
+    limit_now(team, "claude-code")
+    team["local"].plan([{"text": "Local answer."}])
+    assert said(posted(client, team)) == f"Claude Code reached its limit until {UNTIL}, so Local model is answering instead.Local answer."
+
+
+def test_a_free_engine_first_that_fails_mid_turn_is_named_and_the_walk_reaches_the_next_available(client, fake_cli, tmp_path):
+    team = build(tmp_path, fake_cli, ("claude-code", "codex", "local"), mutate=own_order)
+    limit_now(team, "claude-code")
+    team["local"].plan([LIMIT])
+    team["codex"].plan([{"text": "Codex answer."}])
+    events = said(posted(client, team))
+    assert "Local model reached its limit" in events and "so Codex is answering instead." in events
+    assert "Claude Code reached its limit" not in events and events.endswith("Codex answer.")
+
+
+def test_all_limited_still_lists_the_engines_after_the_chosen_one(client, fake_cli, tmp_path):
+    team = build(tmp_path, fake_cli, ("claude-code", "codex", "local"), mutate=own_order)
+    limit_now(team, "claude-code")
+    limit_now(team, "codex")
+    team["local"].plan([LIMIT])
+    events = posted(client, team)
+    assert events[-1]["code"] == "FREEDUET_ENGINE_LIMITED"
+    assert events[-1]["message"] == f"Every engine is unavailable right now. The earliest is back on {UNTIL}. Your message is kept: send it again later."
+
+
+def test_ask_first_does_not_ask_about_a_limited_engine_after_the_chosen_one(client, fake_cli, tmp_path):
+    team = build(tmp_path, fake_cli, ("claude-code", "codex", "local"), switching={"default": {"mode": "ask-first"}}, mutate=own_order)
+    limit_now(team, "claude-code")
+    team["local"].plan([{"text": "Local answer."}])
+    assert said(posted(client, team)) == "Local answer."
 
 
 # ── notices in the person's language ───────────────────────────────────────────────────────────────

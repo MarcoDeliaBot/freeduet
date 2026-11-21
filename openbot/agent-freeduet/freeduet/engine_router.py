@@ -419,16 +419,18 @@ class Router:
         progress = notices.NONE
         switches = 0
         stopped: tuple[str, str, datetime | None] | None = None  # the engine we are moving on from
+        last_failed: tuple[str, str, datetime | None] | None = None  # the last engine that ran and failed (D119: not blocked[-1])
 
         while True:
             key = self._pick(order, tried, floors, blocked)
             if key is None:
+                reason = last_failed or (blocked[-1] if blocked else None)
                 if choice.pin is not None and blocked:
-                    yield agui.run_error(notices.pinned(lang, *blocked[-1], now=self.state.now()), ENGINE_LIMITED)
+                    yield agui.run_error(notices.pinned(lang, *reason, now=self.state.now()), ENGINE_LIMITED)
                     return
-                if blocked and blocked[-1][1] == TOOLS_AS_TEXT:
+                if reason is not None and reason[1] == TOOLS_AS_TEXT:
                     # D116: the last engine that could answer wrote its tool calls as text: a plain message, not "unavailable".
-                    for event in _say(notices.tools_as_text_stop(lang, blocked[-1][0])):
+                    for event in _say(notices.tools_as_text_stop(lang, reason[0])):
                         yield event
                     yield agui.run_finished(run)
                     return
@@ -581,35 +583,49 @@ class Router:
             until = (row.limited_until if row else None) or failure.retry_at
             stopped = (self.adapters[key].label, self._notice_kind(key, failure.kind), until)
             blocked.append(stopped)
+            last_failed = stopped
 
     def _pick(self, order: list[str], tried: set[str], floors: dict[str, str],
               blocked: list[tuple[str, str, datetime | None]]) -> str | None:
         """The next engine that is available now, preferring ones that meet the quality floor. Looks without
         asking the breaker for a ticket; engines it finds unavailable are noted in `blocked` (once each)."""
-        available: list[str] = []
+        # First look at every engine without recording anything, then record the engines up to the one chosen (and any cap-held one):
+        # a limited engine that stands AFTER the chosen one is not "stopped" (it would not have answered first), and
+        # it is noted when the walk reaches it (D119).
+        looked: list[tuple[str, tuple[str, object, datetime | None] | None]] = []
         for key in order:
             if key in tried:
                 continue
             hold = self.state.hold_of(key)  # what the engine has cost: a limit the person set, or a ledger that cannot tell
             if hold is not None:
-                tried.add(key)
                 # "Back at 00:00 UTC" is only true of a day's limit: a month's is weeks away, and the notices write a time, not a date.
-                blocked.append((self.adapters[key].label, notices.Held(hold.kind, hold.cap_text), hold.until if hold.kind == DAILY else None))
+                looked.append((key, (self.adapters[key].label, notices.Held(hold.kind, hold.cap_text), hold.until if hold.kind == DAILY else None)))
                 continue
             row = self.state.row(key)
             if row is not None and not row.available:
-                tried.add(key)
                 kind = AUTH if row.state == SIGNED_OUT else (row.last_failure_kind or USAGE_LIMIT)
-                blocked.append((self.adapters[key].label, self._notice_kind(key, kind), row.limited_until))
+                looked.append((key, (self.adapters[key].label, self._notice_kind(key, kind), row.limited_until)))
                 continue
-            available.append(key)
-        if not available:
-            return None
-        if floors:
-            for key in available:
-                if all(tier_at_least(self.config.engines[key].tier, t) for t in floors.values()):
-                    return key
-        return available[0]
+            looked.append((key, None))
+        available = [key for key, why in looked if why is None]
+        chosen: str | None = None
+        if available:
+            chosen = available[0]
+            if floors:
+                for key in available:
+                    if all(tier_at_least(self.config.engines[key].tier, t) for t in floors.values()):
+                        chosen = key
+                        break
+        recording = True  # up to the chosen engine; every engine when none is available
+        for key, why in looked:
+            # A cap the person set (Held) is told wherever the engine stands: the notices that say who was skipped for the
+            # cap are pinned by the ledger tests, and that is a decision of the maintainer's, not part of D119.
+            if why is not None and (recording or isinstance(why[1], notices.Held)):
+                tried.add(key)
+                blocked.append(why)
+            if key == chosen:
+                recording = False
+        return chosen
 
 
 class _Produced:
