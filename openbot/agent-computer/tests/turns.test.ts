@@ -153,6 +153,7 @@ describe("which calls take a turn", () => {
   test("everything that reads or acts on the page does", () => {
     for (const [method, path] of [
       ["POST", "/navigate"],
+      ["POST", "/read-page"],
       ["POST", "/snapshot"],
       ["GET", "/read"],
       ["POST", "/click"],

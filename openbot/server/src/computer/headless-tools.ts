@@ -10,6 +10,7 @@ import {
   type ComputerGateway,
   HumanHasControlError,
 } from "./gateway";
+import { READ_PAGES_MAX_URLS } from "./schema";
 import type { ControlState } from "./schema";
 
 /** What the headless sign-in tool needs from the passwords module. See passwords/service.ts. */
@@ -39,6 +40,14 @@ export const SIGN_IN_TOOL_DESCRIPTION =
  */
 export const SELECT_TOOL_DESCRIPTION =
   "Choose an option in a native drop-down menu (a <select>) or fill a date or time field. Give the ref and snapshotId from your latest snapshot, which lists each menu's options (label and value) and marks the disabled ones. For a menu, value is an option's label or value; for a menu that takes several (multiple: true), a list of them, which replaces the current choice. For a date field (type date, time, datetime-local, month or week) give an ISO value such as 2026-03-28, 14:30, 2026-03-28T14:30, 2026-03 or 2026-W13. Returns what the field now shows. A custom drop-down (a button or div that opens a list) is not a native menu: click it with computer_click, then click its option. Use computer_type for text fields.";
+
+/**
+ * What a member is told about `computer_read_pages` (D127). The app's registration holds the same text
+ * as a literal, for the reason `SELECT_TOOL_DESCRIPTION` gives; `computer-read-pages.test.ts` pins the
+ * two as equal and the limits in it to `schema.ts`.
+ */
+export const READ_PAGES_TOOL_DESCRIPTION =
+  "Read up to 5 web pages in one call, one after another in your own browser tab, and get each page's title and readable text back (6,000 characters per page, links included, 30,000 in all). Use it to compare or skim several pages whose addresses you already have, instead of calling computer_navigate once for each. Read only: it clicks and types nothing. A page that fails or is refused does not stop the others; its entry carries an error. A page that needs a human check or the person's approval is not read here: open it with computer_navigate. The tab ends on the last page, so take a new snapshot before acting on it.";
 
 /** Shipped browser/file/command tools, with identity bound before the model supplies arguments. */
 export function createHeadlessComputerTools(options: {
@@ -114,6 +123,15 @@ export function createHeadlessComputerTools(options: {
           });
         return { ok: true, ...result };
       },
+    ),
+    tool(
+      "computer_read_pages",
+      READ_PAGES_TOOL_DESCRIPTION,
+      z.strictObject({ urls: z.array(text).min(1).max(READ_PAGES_MAX_URLS) }),
+      async ({ urls }, { signal }) => ({
+        ok: true,
+        ...(await gateway.readPages(botId, actor, { urls }, signal)),
+      }),
     ),
     tool(
       "computer_read",

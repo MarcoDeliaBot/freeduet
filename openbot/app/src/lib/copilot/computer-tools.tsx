@@ -265,6 +265,36 @@ export function ComputerTools() {
   });
 
   useFrontendTool({
+    available: offered.navigate,
+    name: "computer_read_pages",
+    description:
+      "Read up to 5 web pages in one call, one after another in your own browser tab, and get each page's title and readable text back (6,000 characters per page, links included, 30,000 in all). Use it to compare or skim several pages whose addresses you already have, instead of calling computer_navigate once for each. Read only: it clicks and types nothing. A page that fails or is refused does not stop the others; its entry carries an error. A page that needs a human check or the person's approval is not read here: open it with computer_navigate. The tab ends on the last page, so take a new snapshot before acting on it.",
+    parameters: z.object({
+      urls: z
+        .array(z.string())
+        .min(1)
+        .max(5)
+        .describe("Full web addresses to read, including https://"),
+    }),
+    handler: async (
+      { urls }: { urls: string[] },
+      { signal }: { signal?: AbortSignal } = {},
+    ) => {
+      const computerId = bot.current;
+      const result = await callComputer(
+        computerId,
+        "/read-pages",
+        { method: "POST", body: { urls } },
+        signal,
+      );
+      if (result.ok) noteBrowsed(computerId);
+      return result;
+    },
+    // The activity line says a page was read; the pages themselves are the model's to answer from.
+    render: () => null,
+  });
+
+  useFrontendTool({
     available: offered.browser,
     name: "computer_read",
     description:

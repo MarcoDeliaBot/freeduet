@@ -21,7 +21,8 @@ export type CapabilitiesLookup = (
   userId: string,
 ) => Promise<CapabilitySwitches | undefined>;
 
-const NAVIGATE = new Set(["computer_navigate"]);
+// Opening pages, so the network switch decides as well as the browser one (D127: a batch read opens up to five).
+const NAVIGATE = new Set(["computer_navigate", "computer_read_pages"]);
 const COMPUTER = new Set([
   "computer_list_files",
   "computer_read_file",
