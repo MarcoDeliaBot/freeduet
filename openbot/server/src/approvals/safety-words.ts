@@ -679,7 +679,10 @@ const TR_PAYMENTS: WordList = {
 const TR_CREDENTIALS: WordList = {
   words: [
     "sifre(?:yi|si|m|mi|n|ni|ler|leri|de|den|ye|miz|niz|nizi|miz)?",
-    "parola@",
+    // Bare "parola" is the Italian "word": only forms that carry a Turkish ending, or a Turkish verb or adjective.
+    "parola(?:yi|ya|da|dan|nin|niz|nizi|miz|mi|ni|si|lar|lari|larin)",
+    "(?:yeni|eski|mevcut|gecici|tek kullanimlik) parola",
+    "parola (?:degistir|gir|sifirla|olustur|belirle|ayarla)@",
     "kimlik bilgi@",
     "giris (?:bilgi|yontem)@",
     "oturum acma (?:bilgi|yontem)@",

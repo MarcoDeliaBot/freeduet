@@ -30,7 +30,7 @@ Five rules close every prompt:
 4. To send, pay, sign, book, publish or delete, call the tool: the approval gate asks the person exactly once.
 5. Never ask for, repeat or store passwords, card numbers or codes in the chat.
 
-These are instructions to the model. The approval gate and the fixed rule are code, and they have limits: a payment, password or security setting goes to you when the rule's English and Italian words find it (except a payment, for a member on plain Full access), and what the words miss is judged by the reviewer model ([SECURITY.md](../SECURITY.md#what-asks-you-and-what-does-not)).
+These are instructions to the model. The approval gate and the fixed rule are code, and they have limits: a payment, password or security setting goes to you when the rule's words (the twelve site languages) find it (except a payment, for a member on plain Full access), and what the words miss is judged by the reviewer model ([SECURITY.md](../SECURITY.md#what-asks-you-and-what-does-not)).
 
 ## What makes this team different from a set of single bots
 

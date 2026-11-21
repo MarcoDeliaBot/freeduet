@@ -15,7 +15,7 @@ Markers: `[code: path:line]` read on origin/main. `[repo: path:line]` a reposito
 
 ### 2.1 A payment is a hand-off, not a card
 
-- Payments are one of three built-in safety categories, matched on words in English and Italian and on tool names [code: openbot/server/src/approvals/policy.ts:176, 202-207; PAYMENTS_IT_EN at policy.ts:98-124; MONEY_TOOL_NAMES at policy.ts:164-165].
+- Payments are one of three built-in safety categories, matched on words in the twelve site languages (English and Italian here, the other ten in `safety-words.ts`, D131) and on tool names [code: openbot/server/src/approvals/policy.ts:176, 202-207; PAYMENTS_IT_EN at policy.ts:98-124; MONEY_TOOL_NAMES at policy.ts:164-165].
 - A safety hit returns `hand_off` before any rule or the reviewer runs [code: policy.ts:504-509].
 - A hand-off accepts only "handled" (the person did it) or "deny" [code: openbot/server/src/approvals/store.ts:155-159]. Its card shows no "Always allow" [code: openbot/app/src/components/approvals/approval-card.tsx:194].
 - The reviewer can only add a hand-off [code: policy.ts:545-560]. Its prompt repeats that payments always go to the person [code: policy.ts:428].
