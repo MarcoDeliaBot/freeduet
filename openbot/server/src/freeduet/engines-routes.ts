@@ -156,6 +156,8 @@ export type AgentMember = {
   pin: string | null;
   /** D115: the person ordered this member's engines by hand, so logins are not necessarily first. */
   ownOrder: boolean;
+  /** D115: the same engines with logins first, which "use the recommended order" sends back. */
+  recommendedChain: string[];
 };
 
 /** One member as the page shows it: the file's values with the person's choice of mode laid over. */
@@ -172,6 +174,8 @@ export type MemberSummary = {
   pin: string | null;
   /** D115: the order is the person's own and may leave logins first; the page says so and offers the way back. */
   ownOrder: boolean;
+  /** D115: the recommended order of the same engines, logins first. */
+  recommendedChain: string[];
 };
 
 /** Why the page may not change anything, in one word. The page says the sentence. */
@@ -586,6 +590,7 @@ export function memberOf(row: unknown): AgentMember | null {
     mode: isEngineMode(raw.mode) ? raw.mode : "automatic",
     pin: textOf(raw.pin),
     ownOrder: raw.own_order === true,
+    recommendedChain: ids(raw.recommended_chain),
   };
 }
 
@@ -675,6 +680,7 @@ function viewOf(member: AgentMember, choices: ChoicesSnapshot): MemberSummary {
     chosen: chosen !== undefined,
     pin: member.pin,
     ownOrder: member.ownOrder,
+    recommendedChain: member.recommendedChain,
   };
 }
 

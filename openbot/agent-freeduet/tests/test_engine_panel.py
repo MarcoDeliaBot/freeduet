@@ -704,7 +704,11 @@ def test_the_order_route_forwards_confirmed_only_as_a_boolean_and_answers_the_ki
     assert done.status_code == 200 and done.json()["ownOrder"] is True and done.json()["confirmedKind"] == "free_before_login"
     chef = [m for m in client.get("/engines", headers=AUTH).json()["members"] if m["id"] == "chef"][0]
     assert chef["chain"] == wanted and chef["own_order"] is True
+    assert chef["recommended_chain"] == ["claude-code", "openrouter-member"]  # what "back to the recommended order" sends
     assert app.state.engine_router._runnable("chef") == wanted
+    back = client.put(url, json={"order": chef["recommended_chain"]}, headers=AUTH)
+    assert back.status_code == 200 and back.json()["ownOrder"] is False
+    assert app.state.engine_router._runnable("chef") == ["claude-code", "openrouter-member"]
 
 
 def test_the_order_route_reads_the_chain_inside_the_lock_so_a_card_change_cannot_make_it_stale(client, data, monkeypatch):
