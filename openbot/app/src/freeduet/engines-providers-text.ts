@@ -9,6 +9,7 @@ export type ProviderId =
   | "ollama"
   | "llamacpp"
   | "lmstudio"
+  | "freellmapi"
   | "groq"
   | "cerebras"
   | "google"
@@ -17,7 +18,7 @@ export type ProviderId =
   | "cloudflare"
   | "anthropic-api";
 
-export type ProviderTag = "local" | "free" | "trial" | "paid";
+export type ProviderTag = "local" | "router" | "free" | "trial" | "paid";
 
 /** One card as the server sends it (server/src/freeduet/engines-routes.ts, `ProviderView`). Never a key. */
 export type ProviderView = {
@@ -42,6 +43,7 @@ export const PROVIDER_ORDER: readonly ProviderId[] = [
   "ollama",
   "llamacpp",
   "lmstudio",
+  "freellmapi",
   "groq",
   "google",
   "mistral",
@@ -54,7 +56,13 @@ export const PROVIDER_ORDER: readonly ProviderId[] = [
 /** A model written in the box before the person chooses one, so the three clicks work. It is a suggestion: Test says if it is wrong. */
 export const PROVIDER_TEXT: Record<
   ProviderId,
-  { name: string; blurb: string; suggestedModel: string }
+  {
+    name: string;
+    blurb: string;
+    suggestedModel: string;
+    /** An example in the empty address box, for a card with no default address. */
+    addressPlaceholder?: string;
+  }
 > = {
   ollama: {
     name: "Ollama",
@@ -70,6 +78,13 @@ export const PROVIDER_TEXT: Record<
     name: "LM Studio",
     blurb: "The local server of LM Studio on your own computer.",
     suggestedModel: "",
+  },
+  freellmapi: {
+    name: "FreeLLMAPI (router on your computer)",
+    blurb:
+      "A router you run yourself that pools free tiers from many providers behind one address.",
+    suggestedModel: "auto",
+    addressPlaceholder: "http://localhost:3002/v1",
   },
   groq: {
     name: "Groq",
@@ -115,6 +130,7 @@ export const TAG_TEXT: Record<
   { label: string; tone: "green" | "blue" | "amber" | "neutral" }
 > = {
   local: { label: "Local", tone: "green" },
+  router: { label: "Advanced: your own router", tone: "amber" },
   free: { label: "Free with limits", tone: "blue" },
   trial: { label: "Trial, needs a card", tone: "amber" },
   paid: { label: "Paid", tone: "neutral" },
@@ -124,6 +140,13 @@ export const PROVIDERS_TITLE = "Add an engine";
 export const PROVIDERS_DESCRIPTION =
   "Switch an engine on, paste its key and press Save, then press Test. A change applies from the next message.";
 export const CLOUD_WARNING = "Data sent to this service leaves your computer.";
+/** D113: under the FreeLLMAPI card. The router passes what it is sent on to the free providers the person enabled inside it. */
+export const ROUTER_WARNING =
+  "Your messages go to the router, which passes them on to the free providers you enabled inside it. They leave your computer, and those providers may keep them.";
+export const ROUTER_ADVANCED_NOTE =
+  "Advanced option, not a recommended default: the project describes itself as for personal experimentation only. FreeDuet does not install or run it. Your provider keys stay inside it; FreeDuet keeps only the one access token it gives you.";
+export const ROUTER_ADDRESS_NOTE =
+  "Its own default port, 3001, is FreeDuet's. Run it on another port and write the address with /v1 at the end. On this computer http is fine. Off this computer only your own network is accepted (a LAN address or a .local name), over https. A public host is refused.";
 export const LABELS = {
   address: "Server address",
   model: "Model",

@@ -446,3 +446,102 @@ describe("the free models that support tools (D116)", () => {
     expect(bodies).toEqual([{}, {}, { model: "a/b:free" }]);
   });
 });
+
+describe("the FreeLLMAPI card (D113)", () => {
+  const TOKEN_KEY = "freellmapi-CANARYtoken0123456789";
+  const ROUTER_ADDRESS = "http://localhost:3999/v1";
+  const ROUTER = {
+    ...CARD,
+    id: "freellmapi",
+    tag: "router",
+    baseUrl: ROUTER_ADDRESS,
+    model: "auto",
+    forMembers: true,
+    useFor: { available: ["freeduet", "chef"], chosen: [] },
+  };
+
+  test("is listed with its router tag, and the token is never in the list", async () => {
+    const stub = agent(() =>
+      ok({ editable: true, reason: null, providers: [ROUTER] }),
+    );
+    const text = await (await setup(stub.reach).call("GET", "")).text();
+    const card = JSON.parse(text).providers[0];
+    expect(card).toMatchObject({
+      id: "freellmapi",
+      tag: "router",
+      cloud: true,
+      useFor: { available: ["freeduet", "chef"], chosen: [] },
+    });
+    expect(text).not.toContain(TOKEN_KEY);
+    expect(text).not.toContain("secretPath");
+  });
+
+  test("a change is forwarded, recorded without its address or model, and under the same authority as every card", async () => {
+    const stub = agent(() => ok({ provider: ROUTER }));
+    const { call, events } = setup(stub.reach);
+    const answer = await call("PUT", "/providers/freellmapi", {
+      enabled: true,
+      baseUrl: ROUTER_ADDRESS,
+      model: "auto",
+    });
+    expect(answer.status).toBe(200);
+    expect(JSON.parse(stub.panelCalls()[0]?.body ?? "{}")).toEqual({
+      enabled: true,
+      baseUrl: ROUTER_ADDRESS,
+      model: "auto",
+    });
+    const row = JSON.stringify(events[0]);
+    expect(events[0]).toMatchObject({ targetId: "freellmapi" });
+    expect(row).not.toContain("localhost");
+    expect(row).not.toContain("auto");
+    for (const [options, status] of [
+      [{ role: "user" as const }, 403],
+      [{ audit: false }, 503],
+    ] as const) {
+      const other = agent(() => ok({ provider: ROUTER }));
+      const refused = await setup(other.reach, options).call(
+        "PUT",
+        "/providers/freellmapi",
+        { enabled: true },
+      );
+      expect(refused.status).toBe(status);
+      expect(other.panelCalls()).toHaveLength(0);
+    }
+  });
+
+  test("a tunnel is refused, and a refused address says one sentence from the closed list", async () => {
+    const stub = agent(() => ok({ provider: ROUTER }));
+    const tunnelled = await setup(stub.reach).call(
+      "PUT",
+      "/providers/freellmapi/key",
+      { key: TOKEN_KEY },
+      { "cf-connecting-ip": "203.0.113.9" },
+    );
+    expect(tunnelled.status).toBe(403);
+    expect(stub.panelCalls()).toHaveLength(0);
+    const refusing = agent(() =>
+      Response.json({ error: "address_host" }, { status: 400 }),
+    );
+    const { call, events } = setup(refusing.reach);
+    const answer = await call("PUT", "/providers/freellmapi", {
+      baseUrl: "http://localhost:3001/v1",
+    });
+    const body = await answer.json();
+    expect(answer.status).toBe(400);
+    expect(body.code).toBe("address_host");
+    expect(JSON.stringify(body)).not.toContain("3001");
+    expect(events).toHaveLength(0);
+  });
+
+  test("its token goes to the agent and comes back as saved only, in no audit row", async () => {
+    const stub = agent(() => ok({ keySaved: true, key: TOKEN_KEY }));
+    const { call, events } = setup(stub.reach);
+    const saved = await call("PUT", "/providers/freellmapi/key", {
+      key: TOKEN_KEY,
+    });
+    const text = await saved.text();
+    expect(JSON.parse(text)).toEqual({ keySaved: true });
+    expect(text).not.toContain(TOKEN_KEY);
+    expect(JSON.stringify(events)).not.toContain(TOKEN_KEY);
+  });
+});

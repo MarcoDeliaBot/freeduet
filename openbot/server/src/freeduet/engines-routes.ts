@@ -206,6 +206,7 @@ export const PROVIDER_IDS = [
   "ollama",
   "llamacpp",
   "lmstudio",
+  "freellmapi",
   "groq",
   "cerebras",
   "google",
@@ -215,7 +216,7 @@ export const PROVIDER_IDS = [
   "anthropic-api",
 ] as const;
 export type ProviderId = (typeof PROVIDER_IDS)[number];
-const PROVIDER_TAGS = ["local", "free", "trial", "paid"] as const;
+const PROVIDER_TAGS = ["local", "router", "free", "trial", "paid"] as const;
 const PANEL_PATH = "/engines/panel";
 /** A key is short; anything much longer is not one, and is never read further. */
 const MAX_KEY_BODY_CHARACTERS = 2_048;
@@ -261,7 +262,7 @@ export const PANEL_SENTENCES: Record<string, string> = {
     "Switch the engine on before choosing members. Nothing was changed.",
   model_first: "Choose a model first. Nothing was changed.",
   address_first:
-    "Write your own account in the server address first. Nothing was changed.",
+    "Write the server address first (for Cloudflare, with your own account in it). Nothing was changed.",
   address_shape: "That server address is not valid. Nothing was changed.",
   address_fixed:
     "This provider's address cannot be changed. Nothing was changed.",

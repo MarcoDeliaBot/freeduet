@@ -68,6 +68,7 @@ _ENGINE_KEYS = frozenset(
         "no_key",
         "first_answer_seconds",
         "light",
+        "router",
     }
 )
 _TOP_KEYS = frozenset({"engines", "metered", "chains", "quality_floor", "assistants", "switching", "own_order"})
@@ -113,6 +114,10 @@ class Engine:
     first_answer_seconds: float | None = None
     # D108. True sends this entry the light turn (a much smaller prompt); False never does; None is "yes for a local model".
     light: bool | None = None
+    # D113. True marks an entry that points at a router on this machine which passes requests on to providers elsewhere
+    # (FreeLLMAPI): it is NOT a local model (`is_local_model` is false: the router's own patience, no "reading" notice) and it
+    # IS a free cloud engine (`is_free_cloud`: the D101 sentence). Only a free API entry may say it.
+    router: bool = False
 
 
 @dataclass(frozen=True)
@@ -291,7 +296,11 @@ def _local_endpoint(billing: Any, base_url: str | None, no_key: bool) -> bool:
 def is_local_model(engine: Engine) -> bool:
     """A model that runs on this machine or this network, for free: an `anthropic-compatible` entry that says `billing: free`
     and takes no key, or whose host is loopback or a private address (D108). A cloud engine, a login and a paid gateway are not."""
-    return engine.kind == COMPATIBLE_KIND and _local_endpoint(engine.billing, engine.base_url, engine.no_key)
+    return (
+        engine.kind == COMPATIBLE_KIND
+        and not engine.router
+        and _local_endpoint(engine.billing, engine.base_url, engine.no_key)
+    )
 
 
 def first_answer_limit(engine: Engine) -> float | None:
@@ -511,6 +520,14 @@ def _parse_engine(engine_id: str, entry: Any, problems: list[str]) -> Engine | N
     elif light is not None and kind != COMPATIBLE_KIND:
         problems.append(f"{where}: `light` is only for an `{COMPATIBLE_KIND}` engine")
 
+    router = entry.get("router")
+    if router is not None and not _is_bool(router):
+        problems.append(f"{where}: `router` must be true or false, not {router!r}")
+    elif router is True and (kind not in ("openai-compatible", COMPATIBLE_KIND) or billing != "free"):
+        problems.append(f"{where}: `router` is only for a free `openai-compatible` or `{COMPATIBLE_KIND}` engine")
+    elif router is True and (entry.get("no_key") is True or first_answer is not None):
+        problems.append(f"{where}: a `router` engine takes a key and no `first_answer_seconds`: it is not a local model")
+
     command = _optional_text(entry, "command", where, problems)
     base_url = _optional_text(entry, "base_url", where, problems)
     model = _optional_text(entry, "model", where, problems)
@@ -570,6 +587,7 @@ def _parse_engine(engine_id: str, entry: Any, problems: list[str]) -> Engine | N
         no_key=no_key is True,
         first_answer_seconds=float(first_answer) if first_answer is not None and _is_number(first_answer) else None,
         light=light if _is_bool(light) else None,
+        router=router is True,
     )
 
 
@@ -905,6 +923,8 @@ def is_free_cloud(engine: Engine) -> bool:
     machine, and a free cloud tier may keep it or use it (D101). A login, a local model and a paid engine are not."""
     if engine.billing != "free" or engine.kind not in API_KINDS:
         return False
+    if engine.router:
+        return True  # D113: a router on this machine that passes what it is sent on to providers elsewhere
     try:
         host = urlsplit(engine.base_url or "").hostname
     except ValueError:

@@ -1,6 +1,6 @@
 # A free engine in three clicks (D109)
 
-Status: built and tested in CI on 20 November 2026; not run live. The look is a preview and waits for the maintainer's yes.
+Status: built and tested in CI on 20 November 2026; not run live. Section 10 (D113, the FreeLLMAPI card) was added on 21 November 2026. The look is a preview and waits for the maintainer's yes.
 
 The maintainer's words, 20 November 2026: life must be simple for the users, three simple clicks. On the Engines page
 (`/admin/engines`) a person adds a free engine by switching it on, pasting its key and pressing Save, then pressing Test.
@@ -47,7 +47,7 @@ the settings. (Decision of the review of PR #414: safety first; the maintainer m
   LAN (10.0.0.0/8, 192.168.0.0/16, unique-local IPv6). It never uses: a link-local address (169.254.0.0/16, which holds a
   cloud's metadata service, and fe80::/10); the Docker networks' ranges (172.16.0.0/12 and 198.18.0.0/15), except the host
   forwarder 198.19.255.1 on port 11435 (the Ollama on the host); a public address; a name with no dot (a service of the
-  compose network); or FreeDuet's own ports (4230, 4231, 3001, 3010, 3101, 3110, 4300 and 4500 for the supervisor, 5432, and the
+  compose network); a path with a `.` or `..` segment; or FreeDuet's own ports and the Docker API's (4230, 4231, 3001, 3010, 3101, 3110, 4300 and 4500 for the supervisor, 5432, 2375 and 2376, and the
   configured `FREEDUET_PORT`, `PORT` and `SUPERVISOR_PORT`).
 - A key is a file `<data>/keys/<provider>` (mode 600, folder 700, made with mode 700 from the start; a link in either place is
   refused and never followed); the engines file holds only `credential_secret_ref:
@@ -182,3 +182,50 @@ installation. The look of the warning is shown in screenshots with the pull requ
 switched on later is appended to the end of an own-order member's chain (`_set_chains`), where before the sort would have placed
 it; the person can move it. D100's "a free cloud engine is never first" and D113's "a FreeLLMAPI engine is never first" now hold
 by default only: D115 lets the person confirm otherwise.
+
+## 10. The FreeLLMAPI card (D113, 21 November 2026)
+
+An optional card for a router the person runs on their own computer: FreeLLMAPI (MIT), which pools the free tiers of many providers
+behind one address and offers an OpenAI-format `/v1` and an Anthropic-format `/v1/messages`. Configuration only: FreeDuet ships none
+of its code, copies none of its text and does not install it. The project describes itself as for personal experimentation only, so
+the card is an advanced option (its tag reads "Advanced: your own router"), never a recommended default.
+
+**Where it sits and what it is.** In the group of your own computer, after LM Studio. Its address is the person's own machine, so the
+host rules are the local cards' rules of section 3, exactly; but what it is sent is passed on to providers outside the computer, so
+everywhere else it is handled as a cloud engine (the tag `router` is `cloud` in `engine_panel.py`, with `own_address`). The card says:
+"Your messages go to the router, which passes them on to the free providers you enabled inside it. They leave your computer, and those
+providers may keep them." (the warning of D101), and the advanced note.
+
+**What it writes.** `freellmapi-assist` (`openai-compatible`, the address as typed, for the light assistants) and `freellmapi-member`
+(`anthropic-compatible`, the address without `/v1`, so the CLI reaches `/v1/messages`), both `billing: free`, tier C, the key as
+`credential_secret_ref: file:<data>/keys/freellmapi` (mode 600, folder 700, never returned, section 3). The member entry carries
+`light: false` (D108: a router to cloud models gets the full turn, not the small one meant for a slow local model) and `router: true`, as does the assistants entry. `router` is a key of the engines file, validated by the loader (a boolean, only for a free `openai-compatible` or `anthropic-compatible` entry with a key and no `first_answer_seconds`): it makes `engines.is_local_model` false (the router's own first-word limit, no "reading your request" notice) and `engines.is_free_cloud` true (the D101 sentence in the switch notice and the ask-first question). An entry without it behaves exactly as before. Off by default.
+Switching on adds the assistant entry to the assistants' chain; the member entry is in NO member's chain until the person ticks
+members under "Use for" (none by default, the `default` chain never gets it), as for OpenRouter. It switches nothing paid on: logins
+first, D115's own order, `metered:` and the caps apply unchanged.
+
+**The address.** No default. FreeLLMAPI's own default port is 3001 (its public page, read 21 November 2026), and 3001 is FreeDuet's
+server port, which a local card refuses; so the person runs the router on another port and writes `http://localhost:<port>/v1`. The
+checks are `checked_address` of section 3 and two more: the path must end in `/v1`, and plain `http://` is accepted for this machine
+only (`localhost`, a loopback address, `host.docker.internal`), because the engines loader sends a key over plain http to nowhere else.
+An address on the home network (`192.168.x.x`, `*.local`) must be `https://`. The test never accepts a host or a port that the
+llama.cpp card refuses (`test_the_host_rules_are_the_local_cards_and_never_wider`).
+
+**The model.** A text field, `auto` suggested by the page (the project's page documents `auto`, and `auto:fast` and `auto:smart`, as
+models the router picks). The agent has no default: the page sends what is in the box, checked as safe ASCII (`[@A-Za-z0-9][A-Za-z0-9._:/@-]{0,119}`).
+
+**Test and Load list** are the same two requests as every card, sent to `<address>/chat/completions` (8 tokens) and `<address>/models`
+with the token as a Bearer header; the address is judged again at that moment. The member path (`/v1/messages`) is not what Test calls.
+
+**Who may change it, and what is recorded.** Section 4, unchanged: the route list gains the id `freellmapi` and the tag `router`, no
+new route and no new file. The audit row carries the provider id and `engine_provider_changed`, never the address, the model or the token.
+
+**Built so far.** `engine_panel.py` (the provider and its rules), `engines-routes.ts` (the id, the tag, one refusal sentence now
+general: "Write the server address first..."), `engines-providers-text.ts` and `engines-providers.tsx` (the card, the note, the warning,
+the address hint). Tests: `tests/test_engine_panel_freellmapi.py` (80; all fail on main, and the 26 added after the review fail without the `router` flag, the Docker ports and the dot-segment rule), `server/tests/freeduet-engines-providers.test.ts`
+(4 new), `app/tests/freeduet-engines-providers.test.tsx` (3 new, 1 expectation changed: the list of card names). Screenshots of the card off
+and filled are shown to the maintainer with the pull request.
+
+**Not verified.** No request was sent to a FreeLLMAPI. Whether the router takes the token as a Bearer header on `/v1/messages`, whether it
+accepts `auto` there, and whether a member can use tools through it are not checked. The look is a preview and waits for the maintainer's yes. Run live: run FreeLLMAPI on a
+port other than 3001, switch the card on with its token, Test, tick one member, ask that member something.
