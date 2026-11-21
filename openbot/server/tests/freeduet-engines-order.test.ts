@@ -165,6 +165,7 @@ describe("what is forwarded", () => {
       memberId: "chef",
       chain: ORDER,
       changed: true,
+      ownOrder: false,
     });
     const [sent] = stub.panelCalls();
     expect(sent?.method).toBe("PUT");
@@ -186,6 +187,126 @@ describe("what is forwarded", () => {
     const { call, events } = setup(stub.reach);
     const answer = await call("PUT", URL_ORDER, { order: ORDER });
     expect((await answer.json()).changed).toBe(false);
+    expect(events).toHaveLength(0);
+  });
+});
+
+describe("D115: an order outside the logins-first group needs the person's confirmation", () => {
+  const FREE_FIRST = ["openrouter-member", "claude-code", "ollama-member"];
+
+  test("confirmed is forwarded only as the boolean true, and nothing else is added", async () => {
+    const stub = agent(() => ok({ ...DONE, chain: FREE_FIRST }));
+    const { call } = setup(stub.reach);
+    await call("PUT", URL_ORDER, { order: FREE_FIRST, confirmed: true });
+    await call("PUT", URL_ORDER, { order: FREE_FIRST, confirmed: false });
+    await call("PUT", URL_ORDER, { order: FREE_FIRST });
+    const bodies = stub.panelCalls().map((sent) => JSON.parse(sent.body));
+    expect(bodies).toEqual([
+      { order: FREE_FIRST, confirmed: true },
+      { order: FREE_FIRST },
+      { order: FREE_FIRST },
+    ]);
+  });
+
+  test.each(["true", 1, "yes", [[true]], { a: 1 }, null])(
+    "a confirmed that is %p is refused before it is forwarded",
+    async (confirmed) => {
+      const stub = agent(() => ok(DONE));
+      const { call, events } = setup(stub.reach);
+      const answer = await call("PUT", URL_ORDER, {
+        order: FREE_FIRST,
+        confirmed,
+      });
+      expect(answer.status).toBe(400);
+      expect((await answer.json()).code).toBe("order_shape");
+      expect(stub.panelCalls()).toHaveLength(0);
+      expect(events).toHaveLength(0);
+    },
+  );
+
+  test.each(["free_before_login", "paid_before_free_or_login"])(
+    "an order that needs confirming comes back as 409 with the kind %s and records nothing",
+    async (kind) => {
+      const stub = agent(() =>
+        Response.json(
+          { error: "order_needs_confirmation", kind },
+          { status: 409 },
+        ),
+      );
+      const { call, events } = setup(stub.reach);
+      const answer = await call("PUT", URL_ORDER, { order: FREE_FIRST });
+      expect(answer.status).toBe(409);
+      const body = await answer.json();
+      expect(body.code).toBe("order_needs_confirmation");
+      expect(body.kind).toBe(kind);
+      expect(events).toHaveLength(0);
+    },
+  );
+
+  test("a kind outside the closed pair is not passed on", async () => {
+    const stub = agent(() =>
+      Response.json(
+        { error: "order_needs_confirmation", kind: "<script>" },
+        { status: 409 },
+      ),
+    );
+    const { call } = setup(stub.reach);
+    const body = await (
+      await call("PUT", URL_ORDER, { order: FREE_FIRST })
+    ).json();
+    expect(body.kind).toBeUndefined();
+  });
+
+  test("the audit row says the person confirmed and which kind, as the agent reports it", async () => {
+    const stub = agent(() =>
+      ok({
+        ...DONE,
+        chain: FREE_FIRST,
+        ownOrder: true,
+        confirmedKind: "free_before_login",
+      }),
+    );
+    const { call, events } = setup(stub.reach);
+    const answer = await call("PUT", URL_ORDER, {
+      order: FREE_FIRST,
+      confirmed: true,
+    });
+    expect((await answer.json()).ownOrder).toBe(true);
+    expect(events[0]).toMatchObject({
+      eventType: "configuration.changed",
+      actorUserId: "person-1",
+      payload: {
+        change: "engine_order_changed",
+        newValue: FREE_FIRST,
+        ownOrder: true,
+        confirmed: true,
+        confirmedKind: "free_before_login",
+      },
+    });
+  });
+
+  test("a confirmed:true on an order that needed none is not recorded as a confirmation", async () => {
+    const stub = agent(() => ok(DONE));
+    const { call, events } = setup(stub.reach);
+    await call("PUT", URL_ORDER, { order: ORDER, confirmed: true });
+    expect(events[0]?.payload).toMatchObject({
+      confirmed: false,
+      ownOrder: false,
+    });
+    expect(Object.keys(events[0]?.payload ?? {})).not.toContain(
+      "confirmedKind",
+    );
+  });
+
+  test("the same guard: a non-administrator who sends confirmed:true reaches nothing", async () => {
+    const stub = agent(() => ok(DONE));
+    const { call, events } = setup(stub.reach, { role: "user" });
+    const answer = await call("PUT", URL_ORDER, {
+      order: FREE_FIRST,
+      confirmed: true,
+    });
+    expect(answer.status).toBe(403);
+    expect(stub.panelCalls()).toHaveLength(0);
     expect(events).toHaveLength(0);
   });
 });
@@ -218,7 +339,7 @@ describe("what is refused", () => {
 
   test.each([
     ["order_not_permutation", 400],
-    ["order_logins_first", 400],
+    ["order_needs_confirmation", 409],
     ["unknown_member", 404],
     ["file_is_yours", 409],
   ])(

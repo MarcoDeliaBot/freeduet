@@ -5,7 +5,7 @@ import { DuetCard } from "@/components/duet/kit";
 import { PageSection } from "@/components/layout/page-shell";
 import { Button } from "@/components/ui/button";
 import { agentListQueryOptions } from "@/lib/agents/queries";
-import { client } from "@/lib/client";
+import { client, tryClient } from "@/lib/client";
 import {
   aloneText,
   blockText,
@@ -23,8 +23,23 @@ import {
   modeGroupLabel,
   moveDownLabel,
   moveUpLabel,
+  ORDER_BREAK_KINDS,
+  ORDER_CANCEL,
+  ORDER_CONFIRM,
+  ORDER_NEW_LABEL,
   ORDER_NOTE,
+  ORDER_TICK,
+  ORDER_WARNING_TEXT,
+  ORDER_WARNING_TITLE,
+  type OrderBreakKind,
+  orderCancelLabel,
+  orderConfirmLabel,
+  orderTickLabel,
+  orderWarningGroupLabel,
+  OWN_ORDER_NOTE,
   pinText,
+  RECOMMENDED_ORDER_BUTTON,
+  recommendedOrderLabel,
   SAVED_TEXT,
   sourceText,
   UNDO_BUTTON,
@@ -74,21 +89,50 @@ async function setMode(
 
 type OrderChange = { memberId: string; chain: string[]; changed: boolean };
 
-/** D112: one member's engines in a new order: the whole chain as the page shows it, moved. */
+/** D115: the server did not refuse the order, it asks the person to confirm it, and says which kind of break it is. */
+class OrderNeedsConfirmation extends Error {
+  constructor(readonly kind: OrderBreakKind) {
+    super("The order needs the person's confirmation.");
+  }
+}
+
+/**
+ * D112, D115: one member's engines in a new order: the whole chain as the page shows it, moved. `confirmed` is sent as
+ * the boolean true, and only after the person ticked the box; an order that leaves the group order (logins, then free,
+ * then paid) comes back as `OrderNeedsConfirmation` when it is not.
+ */
 async function setOrder(
   memberId: string,
   order: string[],
+  confirmed: boolean,
 ): Promise<OrderChange> {
-  const response = await client(
+  const response = await tryClient(
     `${ENGINES_PATH}/members/${encodeURIComponent(memberId)}/order`,
     {
       method: "PUT",
-      body: { order },
-      fallback: "The order could not be saved.",
+      body: confirmed ? { order, confirmed: true } : { order },
     },
   );
+  if (!response.ok) {
+    const body = (await response.json().catch(() => null)) as {
+      error?: string;
+      code?: string;
+      kind?: string;
+    } | null;
+    const kind = ORDER_BREAK_KINDS.find((known) => known === body?.kind);
+    if (
+      response.status === 409 &&
+      body?.code === "order_needs_confirmation" &&
+      kind
+    )
+      throw new OrderNeedsConfirmation(kind);
+    throw new Error(body?.error ?? "The order could not be saved.");
+  }
   return response.json();
 }
+
+/** An order waiting for the person's yes: what it would be, what it was, and which kind of break it is. */
+type PendingOrder = { order: string[]; before: string[]; kind: OrderBreakKind };
 
 /** `chain` with the engine at `at` moved one place, or null when there is no such place. */
 function moved(chain: string[], at: number, by: -1 | 1): string[] | null {
@@ -120,6 +164,20 @@ export function EngineMembers({
   const [said, setSaid] = useState<Record<string, string>>({});
   /** The order a member had before its latest move on this page: what Undo puts back (D112). */
   const [orderBefore, setOrderBefore] = useState<Record<string, string[]>>({});
+  /** D115: a move that leaves the group order, shown as a warning in the row until it is confirmed or cancelled. */
+  const [pending, setPending] = useState<Record<string, PendingOrder>>({});
+  /** The "I understand" box of each pending move. It starts empty every time. */
+  const [ticked, setTicked] = useState<Record<string, boolean>>({});
+  const clearPending = (memberId: string) => {
+    setPending((now) => {
+      const { [memberId]: _gone, ...rest } = now;
+      return rest;
+    });
+    setTicked((now) => {
+      const { [memberId]: _gone, ...rest } = now;
+      return rest;
+    });
+  };
 
   const change = useMutation({
     mutationFn: (input: { memberId: string; mode: EngineMode }) =>
@@ -145,8 +203,23 @@ export function EngineMembers({
       order: string[];
       before: string[];
       undoing: boolean;
-    }) => setOrder(input.memberId, input.order),
+      confirmed: boolean;
+    }) => setOrder(input.memberId, input.order, input.confirmed),
+    onError: (error, input) => {
+      if (error instanceof OrderNeedsConfirmation) {
+        setTicked((now) => ({ ...now, [input.memberId]: false }));
+        setPending((now) => ({
+          ...now,
+          [input.memberId]: {
+            order: input.order,
+            before: input.before,
+            kind: error.kind,
+          },
+        }));
+      }
+    },
     onSuccess: (outcome, input) => {
+      clearPending(input.memberId);
       setUndoable((now) => {
         const { [input.memberId]: _mode, ...rest } = now;
         return rest;
@@ -184,7 +257,11 @@ export function EngineMembers({
   const block = reading.cannotChange ?? null;
   const usable = reading.canChange === true;
   const busy = change.isPending || undo.isPending || reorder.isPending;
-  const failure = change.error ?? undo.error ?? reorder.error;
+  // A move that waits for a confirmation is not a failure: it is shown in its row, not as an alert.
+  const failure =
+    change.error ??
+    undo.error ??
+    (reorder.error instanceof OrderNeedsConfirmation ? null : reorder.error);
 
   const engineName = (id: string) =>
     reading.engines.find((engine) => engine.id === id)?.name ?? id;
@@ -203,11 +280,27 @@ export function EngineMembers({
     if (!usable || busy || !order) return;
     change.reset();
     undo.reset();
+    clearPending(member.id);
     reorder.mutate({
       memberId: member.id,
       order,
       before: member.chain,
       undoing: false,
+      confirmed: false,
+    });
+  };
+
+  const goRecommended = (member: MemberSummary) => {
+    if (!usable || busy) return;
+    change.reset();
+    undo.reset();
+    clearPending(member.id);
+    reorder.mutate({
+      memberId: member.id,
+      order: member.recommendedChain,
+      before: member.chain,
+      undoing: false,
+      confirmed: false,
     });
   };
 
@@ -262,6 +355,16 @@ export function EngineMembers({
                 const alone = aloneText(member.chain, engineName);
                 const undoId = undoable[member.id];
                 const backOrder = orderBefore[member.id];
+                const waiting = pending[member.id];
+                // A warning belongs to the chain it was made for: if the list changed meanwhile, it is not shown.
+                const waitingNow =
+                  waiting && waiting.before.join() === member.chain.join()
+                    ? waiting
+                    : undefined;
+                const offRecommended =
+                  member.ownOrder &&
+                  member.recommendedChain.length === member.chain.length &&
+                  member.recommendedChain.join() !== member.chain.join();
                 return (
                   <tr
                     className="border-duet-hair-2 border-t align-top"
@@ -329,6 +432,86 @@ export function EngineMembers({
                           {chainText(member.chain, engineName)}
                         </p>
                       )}
+                      {offRecommended ? (
+                        <p className="mt-2 flex flex-wrap items-center gap-2 text-duet-ink-2 text-sm">
+                          <span>{OWN_ORDER_NOTE}</span>
+                          <Button
+                            aria-label={recommendedOrderLabel(name)}
+                            disabled={!usable || busy}
+                            onClick={() => goRecommended(member)}
+                            size="sm"
+                            variant="outline"
+                          >
+                            {RECOMMENDED_ORDER_BUTTON}
+                          </Button>
+                        </p>
+                      ) : null}
+                      {waitingNow ? (
+                        <fieldset
+                          aria-label={orderWarningGroupLabel(name)}
+                          className="mt-3 min-w-0 rounded-md border border-amber-500/60 bg-amber-500/10 px-3 py-3 text-sm"
+                        >
+                          <p className="font-semibold">
+                            {ORDER_WARNING_TITLE[waitingNow.kind]}
+                          </p>
+                          <p className="mt-1">
+                            {ORDER_WARNING_TEXT[waitingNow.kind]}
+                          </p>
+                          <p className="mt-1 text-duet-ink-2">
+                            {ORDER_NEW_LABEL}{" "}
+                            {waitingNow.order.map(engineName).join(", then ")}
+                          </p>
+                          <label className="mt-2 flex min-h-11 items-start gap-2">
+                            <input
+                              aria-label={orderTickLabel(name)}
+                              checked={ticked[member.id] === true}
+                              className="mt-1 size-4"
+                              disabled={!usable || busy}
+                              onChange={(event) =>
+                                setTicked((now) => ({
+                                  ...now,
+                                  [member.id]: event.target.checked,
+                                }))
+                              }
+                              type="checkbox"
+                            />
+                            <span>{ORDER_TICK}</span>
+                          </label>
+                          <div className="mt-1 flex gap-2">
+                            <Button
+                              aria-label={orderConfirmLabel(name)}
+                              disabled={
+                                !usable || busy || ticked[member.id] !== true
+                              }
+                              onClick={() => {
+                                if (ticked[member.id] !== true) return;
+                                reorder.mutate({
+                                  memberId: member.id,
+                                  order: waitingNow.order,
+                                  before: waitingNow.before,
+                                  undoing: false,
+                                  confirmed: true,
+                                });
+                              }}
+                              size="sm"
+                            >
+                              {ORDER_CONFIRM}
+                            </Button>
+                            <Button
+                              aria-label={orderCancelLabel(name)}
+                              disabled={busy}
+                              onClick={() => {
+                                reorder.reset();
+                                clearPending(member.id);
+                              }}
+                              size="sm"
+                              variant="outline"
+                            >
+                              {ORDER_CANCEL}
+                            </Button>
+                          </div>
+                        </fieldset>
+                      ) : null}
                       {member.leftOut.map((entry) => (
                         <p
                           className="mt-2 text-duet-ink-2 text-sm"
@@ -395,6 +578,7 @@ export function EngineMembers({
                                     order: backOrder,
                                     before: member.chain,
                                     undoing: true,
+                                    confirmed: false,
                                   });
                                   return;
                                 }

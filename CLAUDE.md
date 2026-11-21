@@ -25,8 +25,13 @@ Read these before changing anything:
 
 ## Rules that never bend
 
-- **Logins first.** Members run on the person's subscription logins. A metered API is never first in
-  any chain and never on by default. CopilotKit Intelligence is optional and off in what the install
+- **Logins first, by default.** Members run on the person's subscription logins, and in every chain the
+  person has not reordered the router puts subscription logins first, then free engines, then metered ones
+  (`engines.order_logins_first`). A metered API is never on by default and never first in such a chain. The
+  person is free to choose the order of one member's engines (D115): an order that leaves that group order is
+  written only after the person ticked "I understand, use this order" and pressed Confirm, the server never
+  decides it, and it applies to that member alone (`own_order` in the engines file). It switches nothing on: a
+  paid engine still runs only under the person's own `metered:` words and caps. CopilotKit Intelligence is optional and off in what the install
   scripts write (`FREEDUET_INTELLIGENCE=off`, D20); the server has no default and refuses a missing line (D65).
 - **Third-party gateways are configuration only.** The engine plan is `docs/ENGINES_PLAN.md`: a
   gateway's code is never shipped, and AGPL gateway code is never copied.

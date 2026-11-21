@@ -76,6 +76,10 @@ export type MemberSummary = {
   /** Whether `mode` is the person's own choice. */
   chosen: boolean;
   pin: string | null;
+  /** D115: the person ordered this member's engines by hand, so logins are not necessarily first. */
+  ownOrder: boolean;
+  /** D115: the same engines with logins first, which "Use the recommended order" sends back. */
+  recommendedChain: string[];
 };
 
 /**
@@ -192,7 +196,7 @@ export function engineReasonText(reason: EngineReason): string {
 /** The page's title, and the one sentence under it (the approved direction, 14 November 2026). */
 export const ENGINES_TITLE = "Engines";
 export const ENGINES_INTRO =
-  "The engine is what does the thinking for each member. Your own sign-ins always answer first; anything paid stays off until you say so.";
+  "The engine is what does the thinking for each member. Your own sign-ins answer first unless you choose another order; anything paid stays off until you say so.";
 
 /** Said when the list cannot be read at all; the page is not reloaded for the person. */
 export const LOAD_FAILED = "Couldn't load the engines. Reload the page.";
@@ -260,7 +264,40 @@ export const MEMBERS_DESCRIPTION =
   "The engines each member tries, in the order it tries them, and what happens when one runs out. A change applies from the member's next message, and you can undo it.";
 /** D112: the order by hand. One sentence above the table, and the words a screen reader reads for each arrow. */
 export const ORDER_NOTE =
-  "Use the arrows to move an engine one place. Your own logins always come first, then free engines, then paid ones, so an engine moves only within its group.";
+  "Use the arrows to move an engine one place. Your own logins come first unless you choose otherwise: if a move puts a free or a paid engine before them, you are asked to confirm it first.";
+/** D115: the two ways an order can leave the group order (logins, then free, then paid), as the server names them. */
+export type OrderBreakKind = "free_before_login" | "paid_before_free_or_login";
+export const ORDER_BREAK_KINDS: readonly OrderBreakKind[] = [
+  "free_before_login",
+  "paid_before_free_or_login",
+];
+export const ORDER_WARNING_TITLE: Record<OrderBreakKind, string> = {
+  free_before_login: "A free engine would answer before your own login",
+  paid_before_free_or_login:
+    "A paid engine would come before a free engine or a login",
+};
+export const ORDER_WARNING_TEXT: Record<OrderBreakKind, string> = {
+  free_before_login:
+    "If it is a cloud service, this member's messages go to that provider first and it may keep them. Its answers may also be of lower quality than your login's.",
+  paid_before_free_or_login:
+    "A paid engine answers before the engines after it, so what it answers may cost money. If it is first in the list, every message may cost money from the first one. It runs only after you have switched paid engines on and set your limits.",
+};
+export const ORDER_NEW_LABEL = "New order:";
+export const ORDER_TICK = "I understand, use this order";
+export const ORDER_CONFIRM = "Confirm";
+export const ORDER_CANCEL = "Cancel";
+export const orderTickLabel = (name: string): string =>
+  `I understand, use this order for ${name}`;
+export const orderConfirmLabel = (name: string): string =>
+  `Confirm the new order for ${name}`;
+export const orderCancelLabel = (name: string): string =>
+  `Cancel the new order for ${name}`;
+export const orderWarningGroupLabel = (name: string): string =>
+  `Confirm the new order for ${name}`;
+export const OWN_ORDER_NOTE = "Your order: logins are not first";
+export const RECOMMENDED_ORDER_BUTTON = "Use the recommended order";
+export const recommendedOrderLabel = (name: string): string =>
+  `Use the recommended order for ${name}`;
 export const moveUpLabel = (engine: string, name: string): string =>
   `Move ${engine} up for ${name}`;
 export const moveDownLabel = (engine: string, name: string): string =>

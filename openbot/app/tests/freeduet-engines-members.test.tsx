@@ -16,6 +16,7 @@ import type {
   EngineMode,
   EnginesReading,
   MemberSummary,
+  OrderBreakKind,
 } from "@/freeduet/engines-text";
 import { settleReactWork } from "./settle-react-work";
 
@@ -46,6 +47,8 @@ type Server = {
   reason: EnginesReading["reason"];
   /** What the next PUT or POST answers instead of working, if set. No `error` is an answer with no sentence in it. */
   refuse: { status: number; error?: string } | null;
+  /** D115: the kind of break the next order is judged to be, as the agent would say it. Null: it keeps the group order. */
+  orderBreak: OrderBreakKind | null;
   /** The list of Bots does not answer, so a member is named by its id. */
   agentsDown: boolean;
   nextChange: number;
@@ -96,6 +99,8 @@ function member(over: Partial<MemberSummary> & { id: string }): MemberSummary {
     fileMode: "automatic",
     chosen: false,
     pin: null,
+    ownOrder: false,
+    recommendedChain: over.chain ?? ["claude", "codex"],
     ...over,
   };
 }
@@ -156,6 +161,7 @@ beforeEach(() => {
     withoutMembers: false,
     reason: null,
     refuse: null,
+    orderBreak: null,
     agentsDown: false,
     nextChange: 1,
     changes: {},
@@ -218,8 +224,11 @@ beforeEach(() => {
       );
       if (order && method === "PUT") {
         const memberId = decodeURIComponent(order[1] ?? "");
-        const next = (JSON.parse(String(init?.body)) as { order: string[] })
-          .order;
+        const asked = JSON.parse(String(init?.body)) as {
+          order: string[];
+          confirmed?: unknown;
+        };
+        const next = asked.order;
         const row = server.members.find((entry) => entry.id === memberId);
         if (!row)
           return Response.json({ error: "No such member." }, { status: 404 });
@@ -232,9 +241,29 @@ beforeEach(() => {
             { error: "That order is not accepted." },
             { status: 400 },
           );
+        const breaks =
+          next.join() === row.recommendedChain.join()
+            ? null
+            : server.orderBreak;
+        if (breaks && asked.confirmed !== true)
+          return Response.json(
+            {
+              error:
+                "That order puts a free or paid engine before your own logins. Confirm it to use it. Nothing was changed.",
+              code: "order_needs_confirmation",
+              kind: breaks,
+            },
+            { status: 409 },
+          );
         const changed = next.join() !== row.chain.join();
         row.chain = next;
-        return Response.json({ memberId, chain: next, changed });
+        row.ownOrder = breaks !== null;
+        return Response.json({
+          memberId,
+          chain: next,
+          changed,
+          ownOrder: row.ownOrder,
+        });
       }
       const undo = /^\/api\/freeduet\/engines\/changes\/([^/]+)\/undo$/.exec(
         url,
@@ -755,8 +784,7 @@ test("a move the server refuses is said in its words and the order stays", async
   server.members = [member({ id: "iris", chain: THREE })];
   server.refuse = {
     status: 400,
-    error:
-      "Your own logins always go first, then free engines, then paid ones. That order cannot be kept. Nothing was changed.",
+    error: "That order is not accepted. Nothing was changed.",
   };
   const view = draw();
   await view.findByText("Iris");
@@ -766,7 +794,7 @@ test("a move the server refuses is said in its words and the order stays", async
   );
   await view.findByRole("alert");
   expect(view.getByRole("alert").textContent).toContain(
-    "That order cannot be kept",
+    "That order is not accepted",
   );
   expect(order(view, 0)).toEqual(["Claude Code", "Codex", "A gateway"]);
   expect(view.queryByRole("button", { name: /Undo/ })).toBeNull();
@@ -831,4 +859,201 @@ test("the arrows and Undo stay disabled until the list has been read again after
     ).toBe(false),
   );
   global.fetch = before;
+});
+
+// ── D115: the person's own order, with a warning and a confirmation ─────────────────────────────
+
+const FREE_FIRST = ["gateway", "claude", "codex"];
+
+const warning = (view: View) =>
+  view.getByRole("group", { name: "Confirm the new order for Iris" });
+
+test("a move that leaves the group order shows a warning in the row, not an alert, and nothing is written yet", async () => {
+  server.members = [member({ id: "iris", chain: THREE })];
+  server.orderBreak = "free_before_login";
+  const view = draw();
+  await view.findByText("Iris");
+  const user = userEvent.setup({ document });
+  await user.click(
+    view.getByRole("button", { name: "Move A gateway up for Iris" }),
+  );
+  await view.findByRole("group", { name: "Confirm the new order for Iris" });
+  expect(view.queryByRole("alert")).toBeNull();
+  const box = warning(view);
+  expect(box.textContent).toContain(
+    "A free engine would answer before your own login",
+  );
+  expect(box.textContent).toContain("may keep them");
+  expect(box.textContent).toContain("lower quality");
+  expect(box.textContent).toContain(
+    "New order: Claude Code, then A gateway, then Codex",
+  );
+  // the first request was the plain order, with no confirmation in it
+  expect(sent).toEqual([
+    {
+      method: "PUT",
+      path: "/api/freeduet/engines/members/iris/order",
+      body: { order: ["claude", "gateway", "codex"] },
+    },
+  ]);
+  expect(order(view, 0)).toEqual(["Claude Code", "Codex", "A gateway"]);
+});
+
+test("a paid-first move says every message may cost money from the first one", async () => {
+  server.members = [member({ id: "iris", chain: THREE })];
+  server.orderBreak = "paid_before_free_or_login";
+  const view = draw();
+  await view.findByText("Iris");
+  const user = userEvent.setup({ document });
+  await user.click(
+    view.getByRole("button", { name: "Move A gateway up for Iris" }),
+  );
+  const box = await view.findByRole("group", {
+    name: "Confirm the new order for Iris",
+  });
+  expect(box.textContent).toContain(
+    "A paid engine would come before a free engine or a login",
+  );
+  expect(box.textContent).toContain(
+    "every message may cost money from the first one",
+  );
+  expect(box.textContent).not.toContain("may keep them");
+});
+
+test("Confirm stays disabled until the box is ticked, then sends the same order with confirmed true", async () => {
+  server.members = [member({ id: "iris", chain: THREE })];
+  server.orderBreak = "free_before_login";
+  const view = draw();
+  await view.findByText("Iris");
+  const user = userEvent.setup({ document });
+  await user.click(
+    view.getByRole("button", { name: "Move A gateway up for Iris" }),
+  );
+  await view.findByRole("group", { name: "Confirm the new order for Iris" });
+  const tick = view.getByRole("checkbox", {
+    name: "I understand, use this order for Iris",
+  }) as HTMLInputElement;
+  const confirm = view.getByRole("button", {
+    name: "Confirm the new order for Iris",
+  }) as HTMLButtonElement;
+  expect(tick.checked).toBe(false);
+  expect(confirm.disabled).toBe(true);
+  await user.click(confirm);
+  expect(sent).toHaveLength(1); // a disabled button sends nothing
+  await user.click(tick);
+  expect(confirm.disabled).toBe(false);
+  await user.click(confirm);
+  await waitFor(() => expect(sent).toHaveLength(2));
+  expect(sent[1]).toEqual({
+    method: "PUT",
+    path: "/api/freeduet/engines/members/iris/order",
+    body: { order: ["claude", "gateway", "codex"], confirmed: true },
+  });
+  await view.findByText("Saved. It applies from the member's next message.");
+  await waitFor(() =>
+    expect(order(view, 0)).toEqual(["Claude Code", "A gateway", "Codex"]),
+  );
+  expect(
+    view.queryByRole("group", { name: "Confirm the new order for Iris" }),
+  ).toBeNull();
+});
+
+test("Cancel leaves the order as it was and sends nothing more", async () => {
+  server.members = [member({ id: "iris", chain: THREE })];
+  server.orderBreak = "free_before_login";
+  const view = draw();
+  await view.findByText("Iris");
+  const user = userEvent.setup({ document });
+  await user.click(
+    view.getByRole("button", { name: "Move A gateway up for Iris" }),
+  );
+  await view.findByRole("group", { name: "Confirm the new order for Iris" });
+  await user.click(
+    view.getByRole("checkbox", {
+      name: "I understand, use this order for Iris",
+    }),
+  );
+  await user.click(
+    view.getByRole("button", { name: "Cancel the new order for Iris" }),
+  );
+  expect(
+    view.queryByRole("group", { name: "Confirm the new order for Iris" }),
+  ).toBeNull();
+  expect(sent).toHaveLength(1);
+  expect(order(view, 0)).toEqual(["Claude Code", "Codex", "A gateway"]);
+  // a new move starts with an empty box
+  await user.click(
+    view.getByRole("button", { name: "Move A gateway up for Iris" }),
+  );
+  await view.findByRole("group", { name: "Confirm the new order for Iris" });
+  expect(
+    (
+      view.getByRole("checkbox", {
+        name: "I understand, use this order for Iris",
+      }) as HTMLInputElement
+    ).checked,
+  ).toBe(false);
+});
+
+test("a member on an own order says so and goes back to the recommended order in one press, without a confirmation", async () => {
+  server.members = [
+    member({
+      id: "iris",
+      chain: FREE_FIRST,
+      ownOrder: true,
+      recommendedChain: THREE,
+    }),
+    member({ id: "leo", chain: ["claude"] }),
+  ];
+  server.orderBreak = "free_before_login";
+  const view = draw();
+  await view.findByText("Iris");
+  expect(view.getAllByText("Your order: logins are not first")).toHaveLength(1);
+  const user = userEvent.setup({ document });
+  await user.click(
+    view.getByRole("button", { name: "Use the recommended order for Iris" }),
+  );
+  await waitFor(() => expect(sent).toHaveLength(1));
+  expect(sent[0]?.body).toEqual({ order: THREE });
+  await view.findByText("Saved. It applies from the member's next message.");
+  await waitFor(() =>
+    expect(view.queryByText("Your order: logins are not first")).toBeNull(),
+  );
+  expect(order(view, 0)).toEqual(["Claude Code", "Codex", "A gateway"]);
+});
+
+test("a member whose order is the recommended one shows no own-order note", async () => {
+  server.members = [
+    member({
+      id: "iris",
+      chain: THREE,
+      ownOrder: true,
+      recommendedChain: THREE,
+    }),
+  ];
+  const view = draw();
+  await view.findByText("Iris");
+  expect(view.queryByText("Your order: logins are not first")).toBeNull();
+});
+
+test("away from the computer the warning's controls and the way back are disabled", async () => {
+  server.canChange = false;
+  server.cannotChange = "not_at_the_computer";
+  server.members = [
+    member({
+      id: "iris",
+      chain: FREE_FIRST,
+      ownOrder: true,
+      recommendedChain: THREE,
+    }),
+  ];
+  const view = draw();
+  await view.findByText("Iris");
+  expect(
+    (
+      view.getByRole("button", {
+        name: "Use the recommended order for Iris",
+      }) as HTMLButtonElement
+    ).disabled,
+  ).toBe(true);
 });

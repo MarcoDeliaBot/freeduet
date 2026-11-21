@@ -120,13 +120,11 @@ nothing unknown, no repeat), and a body that is not a list of ids (`order_shape`
 run (left out, or without an adapter) keep their places; a member that uses the `default` chain gets a chain of its own, as
 when a cloud engine is chosen for it.
 
-**Logins first stays.** The router orders every chain subscription, then free, then metered, whatever the file says
-(`engines.order_logins_first`, CLAUDE.md "Logins first"). So moving an engine across a group would be a promise the router
-does not keep. After the move, the agent asks the loader for the member's chain again, and when it differs from the order
-asked for the change is refused (`order_logins_first`) and nothing is written. That covers a metered engine before a login or
-a free engine, and also a free engine before a login. The arrows therefore work inside a group (for example, between two free
-engines such as OpenRouter and the local model); the page says so in one sentence above the table. It does not know an engine's
-billing, so a move across groups is refused by the agent and the sentence is shown, not hidden by the page.
+**Logins first by default (changed by D115, section 9).** The router orders every chain subscription, then free, then metered,
+whatever the file says (`engines.order_logins_first`, CLAUDE.md "Logins first"), for every member the person has not given an
+own order. D112 refused an order that this rule would undo (`order_logins_first`) and the arrows worked only inside a group. D115
+replaced that refusal: an order across groups is now asked for with a confirmation (section 9), and the code
+`order_logins_first` no longer exists.
 
 **Built so far.** `engine_panel.apply_order`, `PUT /engines/panel/members/{member}/order` in agent-freeduet, the server route,
 the arrows and Undo in `app/src/freeduet/engines-members.tsx`. Tests: `tests/test_engine_panel.py` (15 new),
@@ -136,3 +134,51 @@ the arrows and Undo in `app/src/freeduet/engines-members.tsx`. Tests: `tests/tes
 maintainer yet (preview screenshot with the pull request). The order of the engines the router shows is the effective one;
 a pin in the file's `switching:` block is not touched by the order.
 
+## 9. The person's own order (D115, 21 November 2026)
+
+The maintainer moved OpenRouter above Claude Code for Iris and met a red sentence, "Your own logins always go first... That
+order cannot be kept." His decision: "the person is free to choose the order of a member's engines; show a warning and require
+a confirmation tick, never impose our choice."
+
+**The key.** `own_order: [member ids]`, a top-level list in the engines file, validated by the loader: a list of non-empty member
+ids, each once, never `default` (the default chain is always sorted). Absent means empty, so a file without it behaves exactly as
+before. `ordered_chain(member)` returns the file's order, unsorted, for a member in `own_order`, and the sorted order for every
+other member. It changes no switch: `is_allowed` (`metered.enabled`, both caps above 0, the paid-gateway lock) still decides what
+runs, so a paid engine put first still does not run until the person has switched paid engines on.
+
+**The agent** (`engine_panel.apply_order(member, order, current=, confirmed=)`). The new order is first tried without the
+member in `own_order`: if the loader's sort keeps it, it is in the group order, nothing needs asking, and the member is removed
+from `own_order` (going back to the recommended order). If the sort would change it, the order breaks the group order, and the
+agent names the kind (`engines.order_break`): `paid_before_free_or_login` (a paid engine before a free engine or a login; the
+worse, so it wins) or `free_before_login`. Without `confirmed: true` (exactly the boolean true; anything else is `order_shape`)
+it answers 409 `order_needs_confirmation` with `kind`, and nothing is written. With it, the order is written, the member joins
+`own_order`, and the answer carries `ownOrder` and `confirmedKind`. Every rule of D112 and D109 stands: only the page's own marked
+file, permutation check, loader validation, a backup, one atomic write, the lock. A move inside an own order that is itself out
+of the group order is asked again each time; the way back needs none. `GET /engines` adds `own_order` and `recommended_chain`
+(the same engines, logins first) to each member.
+
+**The server** (`engines-routes.ts`). The order route forwards `confirmed` only as the boolean `true` (a string, a number or any
+other value is `order_shape` before anything is forwarded), under the same guard as before (D106). The refusal passes on
+`kind` only from the closed pair. The audit row (`engine_order_changed`) gains `ownOrder`, `confirmed` and `confirmedKind`, taken
+from what the agent says needed confirming, not from what the request claimed, so a bare `confirmed: true` on a sorted order is
+recorded as `confirmed: false`. The member summary gains `ownOrder` and `recommendedChain`.
+
+**The page.** An arrow sends the plain order. When the agent answers `order_needs_confirmation`, the row shows an amber warning
+(not the red alert) for that member: for a free engine before a login, that a free engine would answer first, that if it is a
+cloud service the member's messages go to that provider and it may keep them (D101), and that quality may differ; for a paid
+engine, that every message may cost money from the first one if it is first. A box "I understand, use this order" starts empty;
+Confirm is disabled until it is ticked and then sends the same order with `confirmed: true`; Cancel leaves the order. A member whose
+order differs from the recommended one shows "Your order: logins are not first" and a button "Use the recommended order", which
+sends `recommendedChain` (no confirmation). The page does not know an engine's billing: the agent decides the kind.
+
+**Built so far.** `engines.own_order`, `engines.order_break`, `engine_panel.apply_order` with `confirmed`, `PanelRefused.kind`, the
+overview fields, the server route and member fields, the warning, the tick, the note and the way back in
+`app/src/freeduet/engines-members.tsx`; the "Logins first" rule in CLAUDE.md and CONTRIBUTING.md, `docs/PROVIDERS.md`,
+`docs/ARCHITECTURE.md`, `docs/ENGINES_PLAN.md` and the comments of `engines.example.yaml`; the one approved sentence under the
+page title now reads "answer first unless you choose another order".
+
+**Not verified.** Not run live: a real file with `own_order`, a real turn on a reordered chain, the confirmation on the maintainer's
+installation. The look of the warning is shown in screenshots with the pull request, not yet seen by the maintainer. A card
+switched on later is appended to the end of an own-order member's chain (`_set_chains`), where before the sort would have placed
+it; the person can move it. D100's "a free cloud engine is never first" and D113's "a FreeLLMAPI engine is never first" now hold
+by default only: D115 lets the person confirm otherwise.

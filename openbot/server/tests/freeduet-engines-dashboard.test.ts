@@ -119,6 +119,8 @@ const MEMBER_ROWS = [
     left_out: [{ id: "gateway", why: "paid_gateway", ...KEPT_WHERE_KEYS_LIVE }],
     mode: "automatic",
     pin: null,
+    own_order: false,
+    recommended_chain: ["claude", "codex"],
     ...KEPT_WHERE_KEYS_LIVE,
   },
   {
@@ -127,6 +129,8 @@ const MEMBER_ROWS = [
     left_out: [],
     mode: "ask-first",
     pin: "claude",
+    own_order: false,
+    recommended_chain: ["claude"],
   },
 ];
 
@@ -321,6 +325,8 @@ const MEMBERS_AS_THE_FILE_HAS_THEM = [
     fileMode: "automatic",
     chosen: false,
     pin: null,
+    ownOrder: false,
+    recommendedChain: ["claude", "codex"],
   },
   {
     id: "leo",
@@ -330,6 +336,8 @@ const MEMBERS_AS_THE_FILE_HAS_THEM = [
     fileMode: "ask-first",
     chosen: false,
     pin: "claude",
+    ownOrder: false,
+    recommendedChain: ["claude"],
   },
 ];
 
@@ -403,9 +411,38 @@ describe("GET: the members, the choices, and whether the page may change them", 
       fileMode: "automatic",
       chosen: true,
       pin: null,
+      ownOrder: false,
+      recommendedChain: ["claude", "codex"],
     });
     const leo = (answer.json.members as Record<string, unknown>[])[1];
     expect(leo).toMatchObject({ mode: "ask-first", chosen: false });
+  });
+
+  test("D115: a member whose engines the person ordered by hand says so, with the recommended order; only a true is believed", async () => {
+    const rows = [
+      {
+        ...MEMBER_ROWS[0],
+        chain: ["codex", "claude"],
+        own_order: true,
+        recommended_chain: ["claude", "codex"],
+      },
+      { ...MEMBER_ROWS[1], own_order: "yes", recommended_chain: "claude" },
+    ];
+    const agent = stubAgent(() => agentBody({ members: rows }));
+    stubs.push(agent);
+    const answer = await send(
+      dashboard({}, reachTo(agent), choices),
+      "GET",
+      "",
+      { peer: AT_THE_COMPUTER },
+    );
+    const [iris, leo] = answer.json.members as Record<string, unknown>[];
+    expect(iris).toMatchObject({
+      chain: ["codex", "claude"],
+      ownOrder: true,
+      recommendedChain: ["claude", "codex"],
+    });
+    expect(leo).toMatchObject({ ownOrder: false, recommendedChain: [] });
   });
 
   test("a choice the file does not know a member for is kept and not shown, and shows nothing it should not", async () => {
@@ -1161,6 +1198,8 @@ describe("nothing secret is in any response", () => {
       ],
       mode: "automatic",
       pin: null,
+      ownOrder: false,
+      recommendedChain: [],
     });
     expect(JSON.stringify(row)).not.toContain(CANARY_KEY);
   });
