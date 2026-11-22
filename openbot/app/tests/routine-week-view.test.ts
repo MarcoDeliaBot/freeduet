@@ -231,7 +231,7 @@ test("daylight saving: a run just before midnight stays on its own day after the
     now,
     zone: ROME,
   });
-  expect(model.columns.flatMap((c) => c.blocks.map((b) => c.key))).toEqual([
+  expect(model.columns.flatMap((c) => c.blocks.map(() => c.key))).toEqual([
     "2026-10-21",
     "2026-10-22",
     "2026-10-23",
