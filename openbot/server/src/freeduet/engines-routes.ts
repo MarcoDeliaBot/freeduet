@@ -8,6 +8,9 @@
  *   PUT  /api/freeduet/engines/members/:memberId/mode    the administrator at the computer: automatic or ask first
  *   PUT  /api/freeduet/engines/members/:memberId/order   the administrator at the computer (D112): one member's engines
  *                                                        in a new order, written by agent-freeduet to its own marked file
+ *   PUT  /api/freeduet/engines/members/:memberId/claude  the administrator at the computer (D139): one member's optional
+ *                                                        Claude model and effort, from two closed lists (`CLAUDE_MODELS`,
+ *                                                        `CLAUDE_EFFORTS`), written by agent-freeduet to its own marked file
  *   POST /api/freeduet/engines/changes/:changeId/undo    the administrator at the computer: put the old choice back
  *   POST /api/freeduet/engines/claude/check              the administrator at the computer: check Claude Code now
  *                                                        (docs/design/first-start.md, "Check again"); three facts back
@@ -82,6 +85,8 @@ const MAX_TEXT_CHARACTERS = 120;
 /** agent-freeduet's token counter (D102, usage_counter.py). */
 export const AGENT_USAGE_PATH = "/engines/usage";
 const MAX_USAGE_ROWS = 512;
+const MAX_DAILY_DAYS = 7;
+const MAX_DAILY_MEMBERS = 64;
 
 /** The states the app can say a sentence about. Keep in step with app/src/freeduet/engines-text.ts. */
 export const ENGINE_STATES = [
@@ -154,6 +159,40 @@ export const LEFT_OUT_WHY = [
 ] as const;
 export type LeftOutWhy = (typeof LEFT_OUT_WHY)[number] | "other";
 
+/**
+ * D139: the Claude models and effort levels a member may be given, the words agent-freeduet's claude_choice.py holds. A value
+ * off these lists is refused here before it is forwarded, and again by the agent; none is ever free text. `null` is the
+ * subscription's own default.
+ */
+export const CLAUDE_MODELS = ["haiku", "sonnet", "opus"] as const;
+export const CLAUDE_EFFORTS = [
+  "low",
+  "medium",
+  "high",
+  "xhigh",
+  "max",
+] as const;
+export type ClaudeModel = (typeof CLAUDE_MODELS)[number];
+export type ClaudeEffort = (typeof CLAUDE_EFFORTS)[number];
+export type ClaudeChoice = {
+  model: ClaudeModel | null;
+  effort: ClaudeEffort | null;
+};
+function claudeChoiceOf(value: unknown): ClaudeChoice {
+  const raw = (value && typeof value === "object" ? value : {}) as Record<
+    string,
+    unknown
+  >;
+  return {
+    model: (CLAUDE_MODELS as readonly unknown[]).includes(raw.model)
+      ? (raw.model as ClaudeModel)
+      : null,
+    effort: (CLAUDE_EFFORTS as readonly unknown[]).includes(raw.effort)
+      ? (raw.effort as ClaudeEffort)
+      : null,
+  };
+}
+
 /** One member as agent-freeduet gives it from the engines file, reduced to ids and words (`memberOf`). */
 export type AgentMember = {
   id: string;
@@ -167,6 +206,8 @@ export type AgentMember = {
   ownOrder: boolean;
   /** D115: the same engines with logins first, which "use the recommended order" sends back. */
   recommendedChain: string[];
+  /** D139: the Claude model and effort the person chose for this member; null is the subscription's default. */
+  claude: ClaudeChoice;
 };
 
 /** One member as the page shows it: the file's values with the person's choice of mode laid over. */
@@ -185,6 +226,8 @@ export type MemberSummary = {
   ownOrder: boolean;
   /** D115: the recommended order of the same engines, logins first. */
   recommendedChain: string[];
+  /** D139: the Claude model and effort chosen for this member (Claude Code only); null is the subscription's default. */
+  claude: ClaudeChoice;
 };
 
 /** Why the page may not change anything, in one word. The page says the sentence. */
@@ -288,6 +331,8 @@ export const PANEL_SENTENCES: Record<string, string> = {
     "That order does not hold the same engines as the member has now. Nothing was changed.",
   order_needs_confirmation:
     "That order puts a free or paid engine before your own logins. Confirm it to use it. Nothing was changed.",
+  claude_choice_invalid:
+    "That model or effort is not one of the choices. Nothing was changed.",
 };
 /** D115: the two ways an order can leave the logins-first group order; the agent names one, the page says it in words. */
 export const ORDER_BREAK_KINDS = [
@@ -608,6 +653,7 @@ export function memberOf(row: unknown): AgentMember | null {
     pin: textOf(raw.pin),
     ownOrder: raw.own_order === true,
     recommendedChain: ids(raw.recommended_chain),
+    claude: claudeChoiceOf(raw.claude),
   };
 }
 
@@ -698,6 +744,7 @@ function viewOf(member: AgentMember, choices: ChoicesSnapshot): MemberSummary {
     pin: member.pin,
     ownOrder: member.ownOrder,
     recommendedChain: member.recommendedChain,
+    claude: member.claude,
   };
 }
 
@@ -781,6 +828,21 @@ export type TokenRow = {
   today: TokenCounts;
   week: TokenCounts;
 };
+/** D134: where a run came from. `unknown` is what a day's total holds that no source accounts for (counted before sources were kept). */
+export const TOKEN_SOURCES = [
+  "person",
+  "routine",
+  "handoff",
+  "other",
+  "unknown",
+] as const;
+export type TokenSource = (typeof TOKEN_SOURCES)[number];
+/** D134: one UTC day of the last seven, with its counts per source and per member. */
+export type TokenDay = {
+  day: string;
+  sources: Partial<Record<TokenSource, TokenCounts>>;
+  members: Record<string, TokenCounts>;
+};
 /** D102. Counts by member and engine, today and the last seven days, in UTC. Numbers and ids only: no text, no key. */
 export type TokenUsage = {
   reason: EnginesReason | null;
@@ -788,6 +850,8 @@ export type TokenUsage = {
   windowDays: number;
   rows: TokenRow[];
   engines: TokenRow[];
+  /** D134: the last seven UTC days, oldest first; empty when agent-freeduet is older and sends none. */
+  daily: TokenDay[];
   /** agent-freeduet could not read its own counter file: the numbers may be missing. */
   problem: boolean;
 };
@@ -844,6 +908,40 @@ function usageRowOf(raw: unknown, withMember: boolean): TokenRow | null {
   };
 }
 
+/** D134: the daily series, reduced to a real date, the five source words, member ids and whole counts. Anything else is dropped. */
+function dailyOf(raw: unknown): TokenDay[] {
+  if (!Array.isArray(raw)) return [];
+  const days: TokenDay[] = [];
+  for (const item of raw.slice(0, MAX_DAILY_DAYS)) {
+    if (typeof item !== "object" || item === null) continue;
+    const entry = item as Record<string, unknown>;
+    if (
+      typeof entry.day !== "string" ||
+      !/^\d{4}-\d{2}-\d{2}$/.test(entry.day) ||
+      Number.isNaN(Date.parse(`${entry.day}T00:00:00Z`))
+    )
+      continue;
+    const sources: Partial<Record<TokenSource, TokenCounts>> = {};
+    if (typeof entry.sources === "object" && entry.sources !== null) {
+      for (const source of TOKEN_SOURCES) {
+        const counts = (entry.sources as Record<string, unknown>)[source];
+        if (counts !== undefined) sources[source] = countsOf(counts);
+      }
+    }
+    const members: Record<string, TokenCounts> = {};
+    if (typeof entry.members === "object" && entry.members !== null) {
+      for (const [member, counts] of Object.entries(entry.members).slice(
+        0,
+        MAX_DAILY_MEMBERS,
+      )) {
+        if (MEMBER_ID.test(member)) members[member] = countsOf(counts);
+      }
+    }
+    days.push({ day: entry.day, sources, members });
+  }
+  return days;
+}
+
 /**
  * Ask agent-freeduet for the token counter: one GET, same token and address as `GET /engines`. Never throws. A failure
  * is one of the three reasons and no numbers.
@@ -855,6 +953,7 @@ export async function readUsage(reach: EnginesReach): Promise<TokenUsage> {
     windowDays: 7,
     rows: [],
     engines: [],
+    daily: [],
     problem: false,
   });
   try {
@@ -888,6 +987,7 @@ export async function readUsage(reach: EnginesReach): Promise<TokenUsage> {
         .slice(0, MAX_ENGINES)
         .map((row) => usageRowOf(row, false))
         .filter((row): row is TokenRow => row !== null),
+      daily: dailyOf(body.daily),
       problem: body.problem === true,
     };
   } catch {
@@ -1236,6 +1336,72 @@ export function createEnginesRoutes(
       });
     }
     return context.json({ memberId, chain, changed, ownOrder }, 200, noStore);
+  });
+
+  // D139: one member's optional Claude model and effort. The same guard and the same audit as an order change. Only a word of
+  // the two closed lists (or null, the subscription's default) is forwarded: no free text reaches agent-freeduet, let alone
+  // the command line. Anything else is refused here with the same code the agent uses.
+  routes.put("/members/:memberId/claude", async (context) => {
+    const { refused, viaTunnel } = await mayChange(context);
+    if (refused) return refused;
+    if (!audit) return context.json({ error: NO_AUDIT, code: "no_audit" }, 503);
+    const memberId = context.req.param("memberId");
+    if (!MEMBER_ID_LIST.test(memberId))
+      return context.json(
+        { error: PANEL_SENTENCES.unknown_member, code: "unknown_member" },
+        404,
+      );
+    type Sent = { model?: unknown; effort?: unknown } | null;
+    let sent = null as Sent;
+    try {
+      sent = (await context.req.json()) as Sent;
+    } catch {
+      // Not JSON: nothing is chosen, and the check below says so.
+    }
+    const model = sent?.model ?? null;
+    const effort = sent?.effort ?? null;
+    if (
+      (model !== null &&
+        !(CLAUDE_MODELS as readonly unknown[]).includes(model)) ||
+      (effort !== null &&
+        !(CLAUDE_EFFORTS as readonly unknown[]).includes(effort))
+    )
+      return context.json(
+        {
+          error: PANEL_SENTENCES.claude_choice_invalid,
+          code: "claude_choice_invalid",
+        },
+        400,
+      );
+    const answer = await callPanel(
+      reach(),
+      "PUT",
+      `/members/${memberId}/claude`,
+      { model, effort },
+    );
+    const raw = answer?.body as { changed?: unknown } | null;
+    if (answer?.status !== 200) {
+      const failure = panelRefusal(answer);
+      return context.json(failure.body, failure.status);
+    }
+    // What the agent wrote is read back from its answer, not taken from the request.
+    const choice = claudeChoiceOf(answer.body);
+    const changed = raw?.changed === true;
+    if (changed) {
+      await audit.record({
+        eventType: "configuration.changed",
+        targetType: "engine_member_claude",
+        targetId: memberId,
+        actorUserId: context.var.actor.id,
+        payload: {
+          change: "engine_claude_choice_changed",
+          memberId,
+          newValue: choice,
+          ...(viaTunnel ? { via: "tunnel" } : {}),
+        },
+      });
+    }
+    return context.json({ memberId, ...choice, changed }, 200, noStore);
   });
 
   routes.put("/providers/:providerId/key", async (context) => {

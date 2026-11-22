@@ -9,6 +9,13 @@ A turn that reported nothing and said nothing (it never started as far as anyone
 TIME. Each attempt's wall-clock duration (``seconds``, whole seconds) is added too: measured here from the segment's start to its end,
 so it is there even for an engine that reported no tokens. It is never turned into tokens.
 
+SOURCE (D134). Each attempt also says where the run came from, read from the run's signed statement (``origin.run_claims``, the
+same reading the cannot guard and the report guard use, and read only to label a count, never to trust a run): ``person`` (the
+person's own message, from the browser or a paired phone), ``routine`` (a routine, a check-in or a responsibility), ``handoff``
+(a hop between members) or ``other`` (a deployment, a memory run, or a statement that cannot be read). The counts of a source are
+kept apart from the totals, under ``sources``: a file written before D134 has none, and its days are shown as ``unknown`` (the part
+of a day's total that no source accounts for). Counts only, as before.
+
 THE TIME RULE. Days are UTC, as in the spend ledger (ledger.py) and every notice. The service knows no time zone of the
 person's; "today" and "last 7 days" are the UTC day and the seven UTC days ending with it.
 
@@ -31,7 +38,7 @@ from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import Any
 
-from . import checkpoints, engines
+from . import checkpoints, engines, origin
 from .engine_adapter import Health, Usage
 
 log = logging.getLogger("freeduet.usage")
@@ -49,6 +56,34 @@ MAX_COUNT = 10**15
 FIELDS = ("turns", "reported_turns", "input_tokens", "output_tokens", "cache_read_tokens", "cache_write_tokens", "seconds")
 # Tokens that only some turns reported: the sum is over the turns that did, and `reported_turns` says how many.
 _TOKEN_FIELDS = FIELDS[2:6]
+
+# D134: where a run came from. `unknown` is never stored: it is the part of a day's total that no stored source accounts for (a day
+# counted before sources were kept, or a count whose source was lost), worked out when the view is made.
+SOURCES = ("person", "routine", "handoff", "other")
+UNKNOWN_SOURCE = "unknown"
+_INITIATOR_SOURCE = {
+    "person": "person",
+    "remote": "person",
+    "routine": "routine",
+    "responsibility": "routine",
+    "handoff": "handoff",
+    "deployment": "other",
+    "memory": "other",
+}
+
+
+def source_of(messages: list[dict] | None, assertion: str | None) -> str:
+    """Where this run came from, as one of ``SOURCES``. A hop is a hop whatever else the statement says; otherwise the statement's
+    initiator kind decides, and anything not named, or a statement that cannot be read, is ``other``. Never raises."""
+    try:
+        if origin.is_handoff_run(list(messages or []), assertion or ""):
+            return "handoff"
+        initiator = origin.run_claims(assertion or "").get("initiator")
+        kind = initiator.get("kind") if isinstance(initiator, dict) else None
+        return _INITIATOR_SOURCE.get(kind, "other") if isinstance(kind, str) else "other"
+    except Exception:  # noqa: BLE001 - a label that cannot be worked out is "other", never a failed turn
+        return "other"
+
 
 # What an engine is, for "tokens saved" (see `engine_class`). Only the first two are saved: a login is a flat rate and a metered
 # engine is paid for, so neither one saves anything.
@@ -104,6 +139,29 @@ def _valid_days(raw: Any) -> dict[str, dict[str, dict[str, dict[str, int]]]] | N
     return raw
 
 
+def _valid_sources(raw: Any) -> dict[str, dict[str, dict[str, dict[str, int]]]] | None:
+    """Day -> source -> member -> counts, or None when anything in it is not what this module wrote. Missing is not damaged:
+    a file written before D134 has no ``sources``, and the caller passes ``{}`` for it."""
+    if not isinstance(raw, dict):
+        return None
+    for day, sources in raw.items():
+        try:
+            datetime.strptime(day, "%Y-%m-%d")
+        except (TypeError, ValueError):
+            return None
+        if not isinstance(sources, dict):
+            return None
+        for source, members in sources.items():
+            if source not in SOURCES or not isinstance(members, dict):
+                return None
+            for member, counts in members.items():
+                if not isinstance(member, str) or not isinstance(counts, dict) or set(counts) != set(FIELDS):
+                    return None
+                if any(_count(counts[name]) is None for name in FIELDS):
+                    return None
+    return raw
+
+
 def _whole_seconds(value: Any) -> int:
     """Whole seconds, at least 0; a value that is not a finite number is 0 (a time that cannot be trusted is not added)."""
     try:
@@ -141,6 +199,7 @@ class TokenCounter:
         self._now = now
         self._lock = threading.RLock()
         self._days: dict[str, dict[str, dict[str, dict[str, int]]]] = {}
+        self._sources: dict[str, dict[str, dict[str, dict[str, int]]]] = {}
         self._problem = False
         self._load()
 
@@ -157,6 +216,7 @@ class TokenCounter:
         with self._lock:
             self._problem = False
             self._days = {}
+            self._sources = {}
             try:
                 with open(self._path, "rb") as handle:
                     data = handle.read(MAX_FILE_BYTES + 1)
@@ -170,17 +230,23 @@ class TokenCounter:
             except ValueError:
                 document = None
             days = _valid_days(document.get("days")) if isinstance(document, dict) and document.get("version") == FILE_VERSION else None
-            if days is None:
+            # D134: `sources` is new and optional. Absent (an older file) is empty; present but not what this module wrote is damaged.
+            sources = _valid_sources(document.get("sources", {})) if days is not None else None
+            if days is None or sources is None:
                 self._problem = True
                 log.warning("token counter: %s is damaged or unreadable; nothing is counted until it is mended or deleted", os.path.basename(self._path))
                 return
             self._days = days
+            self._sources = sources
 
     @property
     def problem(self) -> bool:
         return self._problem
 
-    def record(self, member_id: str, engine_id: str, usage: Usage | None, *, at: datetime | None = None, seconds: float = 0) -> None:
+    def record(
+        self, member_id: str, engine_id: str, usage: Usage | None, *, at: datetime | None = None, seconds: float = 0,
+        source: str = "other",
+    ) -> None:
         """An attempt of ``member_id`` on ``engine_id`` has ended after ``seconds`` of wall-clock time. ``usage`` is what the engine
         reported, None when it reported nothing. Never raises: a turn is never failed by its own bookkeeping."""
         try:
@@ -188,17 +254,22 @@ class TokenCounter:
                 if self._problem:
                     return  # never write over a file that could not be read: the person may be mending it
                 moment = self._clock() if at is None else at.astimezone(UTC) if at.tzinfo is not None else at.replace(tzinfo=UTC)
-                counts = self._days.setdefault(moment.strftime("%Y-%m-%d"), {}).setdefault(member_id, {}).setdefault(engine_id, _empty())
-                counts["turns"] += 1
-                counts["seconds"] += _whole_seconds(seconds)
-                given = _count(usage.input_tokens) if usage is not None else None
-                wrote = _count(usage.output_tokens) if usage is not None else None
-                if given is not None or wrote is not None:
-                    counts["reported_turns"] += 1
-                    counts["input_tokens"] += given or 0
-                    counts["output_tokens"] += wrote or 0
-                    counts["cache_read_tokens"] += _count(usage.cache_read_tokens) or 0
-                    counts["cache_write_tokens"] += _count(usage.cache_write_tokens) or 0
+                day = moment.strftime("%Y-%m-%d")
+                source = source if source in SOURCES else "other"
+                for counts in (
+                    self._days.setdefault(day, {}).setdefault(member_id, {}).setdefault(engine_id, _empty()),
+                    self._sources.setdefault(day, {}).setdefault(source, {}).setdefault(member_id, _empty()),
+                ):
+                    counts["turns"] += 1
+                    counts["seconds"] += _whole_seconds(seconds)
+                    given = _count(usage.input_tokens) if usage is not None else None
+                    wrote = _count(usage.output_tokens) if usage is not None else None
+                    if given is not None or wrote is not None:
+                        counts["reported_turns"] += 1
+                        counts["input_tokens"] += given or 0
+                        counts["output_tokens"] += wrote or 0
+                        counts["cache_read_tokens"] += _count(usage.cache_read_tokens) or 0
+                        counts["cache_write_tokens"] += _count(usage.cache_write_tokens) or 0
                 self._prune(moment)
                 self._flush()
         except Exception:  # noqa: BLE001
@@ -206,15 +277,16 @@ class TokenCounter:
 
     def _prune(self, moment: datetime) -> None:
         oldest = (moment - timedelta(days=KEEP_DAYS - 1)).strftime("%Y-%m-%d")
-        for day in [day for day in self._days if day < oldest]:
-            del self._days[day]
+        for store in (self._days, self._sources):
+            for day in [day for day in store if day < oldest]:
+                del store[day]
 
     def _flush(self) -> None:
         directory = os.path.dirname(os.path.abspath(self._path))
         temporary = None
         try:
             os.makedirs(directory, exist_ok=True)
-            payload = json.dumps({"version": FILE_VERSION, "days": self._days}, indent=1, sort_keys=True).encode("utf-8")
+            payload = json.dumps({"version": FILE_VERSION, "days": self._days, "sources": self._sources}, indent=1, sort_keys=True).encode("utf-8")
             descriptor, temporary = tempfile.mkstemp(dir=directory, prefix=".token-usage-", suffix=".tmp")
             with os.fdopen(descriptor, "wb") as handle:
                 handle.write(payload)
@@ -267,8 +339,39 @@ class TokenCounter:
                 "window_days": WINDOW_DAYS,
                 "rows": rows,
                 "engines": [{"engine": engine, "class": kinds[engine], **total} for engine, total in sorted(by_engine.items())],
+                "daily": self._daily(),
                 "problem": self._problem,
             }
+
+    def _daily(self) -> list[dict[str, Any]]:
+        """D134: the seven UTC days ending today, oldest first, each with its counts per source and per member. Per member comes
+        from the totals; per source from ``sources``, plus ``unknown``: what a day's total holds that no source accounts for
+        (a day counted before sources were kept). Always seven entries, so a chart never has a gap to guess at."""
+        end = self._clock()
+        daily: list[dict[str, Any]] = []
+        for back in range(WINDOW_DAYS - 1, -1, -1):
+            day = (end - timedelta(days=back)).strftime("%Y-%m-%d")
+            members: dict[str, dict[str, int]] = {}
+            total = _empty()
+            for member, per_engine in self._days.get(day, {}).items():
+                counts = members.setdefault(member, _empty())
+                for engine_counts in per_engine.values():
+                    for name in FIELDS:
+                        counts[name] += engine_counts[name]
+                        total[name] += engine_counts[name]
+            sources: dict[str, dict[str, int]] = {}
+            attributed = _empty()
+            for source, per_member in self._sources.get(day, {}).items():
+                counts = sources.setdefault(source, _empty())
+                for member_counts in per_member.values():
+                    for name in FIELDS:
+                        counts[name] += member_counts[name]
+                        attributed[name] += member_counts[name]
+            remainder = {name: max(0, total[name] - attributed[name]) for name in FIELDS}
+            if any(remainder.values()):
+                sources[UNKNOWN_SOURCE] = remainder
+            daily.append({"day": day, "sources": sources, "members": members})
+        return daily
 
 
 _counter: TokenCounter | None = None
@@ -284,12 +387,12 @@ def counter() -> TokenCounter:
     return _counter
 
 
-def note_turn(member_id: str, engine_id: str, health: Health, seconds: float = 0) -> None:
+def note_turn(member_id: str, engine_id: str, health: Health, seconds: float = 0, source: str = "other") -> None:
     """The segment is over after ``seconds``: count what the engine reported, and the time. A turn that reported nothing and answered nothing is not counted.
     Never raises."""
     try:
         if health.usage is None and not health.answered:
             return
-        counter().record(member_id, engine_id, health.usage, seconds=seconds)
+        counter().record(member_id, engine_id, health.usage, seconds=seconds, source=source)
     except Exception:  # noqa: BLE001
         log.warning("token counter: a turn was not counted", exc_info=True)

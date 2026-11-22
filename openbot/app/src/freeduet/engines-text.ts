@@ -65,6 +65,14 @@ export type ChangeBlock =
   | "agent_too_old"
   | "choices_unreadable";
 
+/** D139: the words the server accepts, the same closed lists as the server's `CLAUDE_MODELS` and `CLAUDE_EFFORTS`. */
+export type ClaudeModel = "haiku" | "sonnet" | "opus";
+export type ClaudeEffort = "low" | "medium" | "high" | "xhigh" | "max";
+export type ClaudeChoice = {
+  model: ClaudeModel | null;
+  effort: ClaudeEffort | null;
+};
+
 /** One team member as the server describes it: the engines it will try, in order, and its mode. */
 export type MemberSummary = {
   id: string;
@@ -82,6 +90,8 @@ export type MemberSummary = {
   ownOrder: boolean;
   /** D115: the same engines with logins first, which "Use the recommended order" sends back. */
   recommendedChain: string[];
+  /** D139: the Claude model and effort chosen for this member (Claude Code only); null is the subscription's default. */
+  claude?: ClaudeChoice;
 };
 
 /**
@@ -320,6 +330,32 @@ export const moveUpLabel = (engine: string, name: string): string =>
   `Move ${engine} up for ${name}`;
 export const moveDownLabel = (engine: string, name: string): string =>
   `Move ${engine} down for ${name}`;
+/** D139: the id of the subscription Claude Code engine in a member's chain; the model and effort choices show beside it only. */
+export const CLAUDE_ENGINE_ID = "claude-code";
+export const CLAUDE_DEFAULT_OPTION = "Subscription default";
+export const CLAUDE_MODEL_OPTIONS: { value: ClaudeModel; label: string }[] = [
+  { value: "haiku", label: "Haiku" },
+  { value: "sonnet", label: "Sonnet" },
+  { value: "opus", label: "Opus" },
+];
+export const CLAUDE_EFFORT_OPTIONS: { value: ClaudeEffort; label: string }[] = [
+  { value: "low", label: "Low" },
+  { value: "medium", label: "Medium" },
+  { value: "high", label: "High" },
+  { value: "xhigh", label: "Extra high" },
+  { value: "max", label: "Max" },
+];
+export const CLAUDE_MODEL_LABEL = "Model";
+export const CLAUDE_EFFORT_LABEL = "Effort";
+export const CLAUDE_CHOICE_NOTE =
+  "Claude Code only. A model your subscription cannot use ends that turn with Claude Code's own error. Nothing is switched off, and Subscription default undoes the choice.";
+export const claudeModelLabel = (name: string): string =>
+  `Claude model for ${name}`;
+export const claudeEffortLabel = (name: string): string =>
+  `Claude effort for ${name}`;
+export const CLAUDE_SAVED_TEXT =
+  "Claude choice saved. It applies from the next message.";
+
 export const MEMBER_COLUMNS = {
   member: "Member",
   order: "Order of engines",
