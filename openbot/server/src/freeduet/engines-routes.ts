@@ -8,6 +8,9 @@
  *   PUT  /api/freeduet/engines/members/:memberId/mode    the administrator at the computer: automatic or ask first
  *   PUT  /api/freeduet/engines/members/:memberId/order   the administrator at the computer (D112): one member's engines
  *                                                        in a new order, written by agent-freeduet to its own marked file
+ *   PUT  /api/freeduet/engines/members/:memberId/claude  the administrator at the computer (D139): one member's optional
+ *                                                        Claude model and effort, from two closed lists (`CLAUDE_MODELS`,
+ *                                                        `CLAUDE_EFFORTS`), written by agent-freeduet to its own marked file
  *   POST /api/freeduet/engines/changes/:changeId/undo    the administrator at the computer: put the old choice back
  *   POST /api/freeduet/engines/claude/check              the administrator at the computer: check Claude Code now
  *                                                        (docs/design/first-start.md, "Check again"); three facts back
@@ -154,6 +157,34 @@ export const LEFT_OUT_WHY = [
 ] as const;
 export type LeftOutWhy = (typeof LEFT_OUT_WHY)[number] | "other";
 
+/**
+ * D139: the Claude models and effort levels a member may be given, the words agent-freeduet's claude_choice.py holds. A value
+ * off these lists is refused here before it is forwarded, and again by the agent; none is ever free text. `null` is the
+ * subscription's own default.
+ */
+export const CLAUDE_MODELS = ["haiku", "sonnet", "opus"] as const;
+export const CLAUDE_EFFORTS = ["low", "medium", "high", "xhigh", "max"] as const;
+export type ClaudeModel = (typeof CLAUDE_MODELS)[number];
+export type ClaudeEffort = (typeof CLAUDE_EFFORTS)[number];
+export type ClaudeChoice = {
+  model: ClaudeModel | null;
+  effort: ClaudeEffort | null;
+};
+function claudeChoiceOf(value: unknown): ClaudeChoice {
+  const raw = (value && typeof value === "object" ? value : {}) as Record<
+    string,
+    unknown
+  >;
+  return {
+    model: (CLAUDE_MODELS as readonly unknown[]).includes(raw.model)
+      ? (raw.model as ClaudeModel)
+      : null,
+    effort: (CLAUDE_EFFORTS as readonly unknown[]).includes(raw.effort)
+      ? (raw.effort as ClaudeEffort)
+      : null,
+  };
+}
+
 /** One member as agent-freeduet gives it from the engines file, reduced to ids and words (`memberOf`). */
 export type AgentMember = {
   id: string;
@@ -167,6 +198,8 @@ export type AgentMember = {
   ownOrder: boolean;
   /** D115: the same engines with logins first, which "use the recommended order" sends back. */
   recommendedChain: string[];
+  /** D139: the Claude model and effort the person chose for this member; null is the subscription's default. */
+  claude: ClaudeChoice;
 };
 
 /** One member as the page shows it: the file's values with the person's choice of mode laid over. */
@@ -185,6 +218,8 @@ export type MemberSummary = {
   ownOrder: boolean;
   /** D115: the recommended order of the same engines, logins first. */
   recommendedChain: string[];
+  /** D139: the Claude model and effort chosen for this member (Claude Code only); null is the subscription's default. */
+  claude: ClaudeChoice;
 };
 
 /** Why the page may not change anything, in one word. The page says the sentence. */
@@ -288,6 +323,8 @@ export const PANEL_SENTENCES: Record<string, string> = {
     "That order does not hold the same engines as the member has now. Nothing was changed.",
   order_needs_confirmation:
     "That order puts a free or paid engine before your own logins. Confirm it to use it. Nothing was changed.",
+  claude_choice_invalid:
+    "That model or effort is not one of the choices. Nothing was changed.",
 };
 /** D115: the two ways an order can leave the logins-first group order; the agent names one, the page says it in words. */
 export const ORDER_BREAK_KINDS = [
@@ -608,6 +645,7 @@ export function memberOf(row: unknown): AgentMember | null {
     pin: textOf(raw.pin),
     ownOrder: raw.own_order === true,
     recommendedChain: ids(raw.recommended_chain),
+    claude: claudeChoiceOf(raw.claude),
   };
 }
 
@@ -698,6 +736,7 @@ function viewOf(member: AgentMember, choices: ChoicesSnapshot): MemberSummary {
     pin: member.pin,
     ownOrder: member.ownOrder,
     recommendedChain: member.recommendedChain,
+    claude: member.claude,
   };
 }
 
@@ -1236,6 +1275,71 @@ export function createEnginesRoutes(
       });
     }
     return context.json({ memberId, chain, changed, ownOrder }, 200, noStore);
+  });
+
+  // D139: one member's optional Claude model and effort. The same guard and the same audit as an order change. Only a word of
+  // the two closed lists (or null, the subscription's default) is forwarded: no free text reaches agent-freeduet, let alone
+  // the command line. Anything else is refused here with the same code the agent uses.
+  routes.put("/members/:memberId/claude", async (context) => {
+    const { refused, viaTunnel } = await mayChange(context);
+    if (refused) return refused;
+    if (!audit) return context.json({ error: NO_AUDIT, code: "no_audit" }, 503);
+    const memberId = context.req.param("memberId");
+    if (!MEMBER_ID_LIST.test(memberId))
+      return context.json(
+        { error: PANEL_SENTENCES.unknown_member, code: "unknown_member" },
+        404,
+      );
+    let sent: { model?: unknown; effort?: unknown } | null = null;
+    try {
+      sent = (await context.req.json()) as typeof sent;
+    } catch {
+      // Not JSON: nothing is chosen, and the check below says so.
+    }
+    const model = sent?.model ?? null;
+    const effort = sent?.effort ?? null;
+    if (
+      (model !== null &&
+        !(CLAUDE_MODELS as readonly unknown[]).includes(model)) ||
+      (effort !== null &&
+        !(CLAUDE_EFFORTS as readonly unknown[]).includes(effort))
+    )
+      return context.json(
+        {
+          error: PANEL_SENTENCES.claude_choice_invalid,
+          code: "claude_choice_invalid",
+        },
+        400,
+      );
+    const answer = await callPanel(
+      reach(),
+      "PUT",
+      `/members/${memberId}/claude`,
+      { model, effort },
+    );
+    const raw = answer?.body as { changed?: unknown } | null;
+    if (answer?.status !== 200) {
+      const failure = panelRefusal(answer);
+      return context.json(failure.body, failure.status);
+    }
+    // What the agent wrote is read back from its answer, not taken from the request.
+    const choice = claudeChoiceOf(answer.body);
+    const changed = raw?.changed === true;
+    if (changed) {
+      await audit.record({
+        eventType: "configuration.changed",
+        targetType: "engine_member_claude",
+        targetId: memberId,
+        actorUserId: context.var.actor.id,
+        payload: {
+          change: "engine_claude_choice_changed",
+          memberId,
+          newValue: choice,
+          ...(viaTunnel ? { via: "tunnel" } : {}),
+        },
+      });
+    }
+    return context.json({ memberId, ...choice, changed }, 200, noStore);
   });
 
   routes.put("/providers/:providerId/key", async (context) => {
