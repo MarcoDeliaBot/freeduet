@@ -18,9 +18,10 @@ import { appConfig } from "@/lib/generated/application-config";
 import { settleReactWork } from "./settle-react-work";
 
 /*
- * Where the Bots unread badge sits. Manage carries it while the group is drawn; where Manage is
- * hidden (FreeDuet's package), the Bots entry at the top level carries it instead (D129), in the drawer and the wide
- * column alike. The test follows the loaded package, so run it under both generated configs.
+ * Where the Bots unread badge sits. Manage carries it while the group is drawn. Where Manage is
+ * hidden (FreeDuet's package, D133), the Settings row carries it instead, in the drawer and the wide
+ * column alike; there is no Bots row in the menu then. The test follows the loaded package, so run
+ * it under both generated configs.
  */
 
 beforeAll(() => GlobalRegistrator.register({ url: "http://localhost:3010" }));
@@ -92,7 +93,7 @@ function draw(ui: ReactNode) {
 const unreadDot = (scope: HTMLElement) =>
   within(scope).queryByRole("img", { name: "Unread messages" });
 
-test("the Bots unread dot sits on the Bots entry where Manage is hidden, and on Manage where it is drawn", async () => {
+test("the Bots unread dot sits on Settings where Manage is hidden, and on Manage where it is drawn", async () => {
   serving();
   const flat = !showsManageGroup(appConfig.brand.tenantId);
 
@@ -103,19 +104,27 @@ test("the Bots unread dot sits on the Bots entry where Manage is hidden, and on 
   const settings = await within(dialog).findByRole("link", {
     name: /^Settings/,
   });
-  expect(unreadDot(settings)).toBeNull();
-  const bots = within(dialog).queryByRole("link", { name: /^Bots/ });
-  expect(bots === null).toBe(!flat);
-  if (bots) await waitFor(() => expect(unreadDot(bots)).not.toBeNull());
   const manage = within(dialog).queryByRole("button", { name: /^Manage/ });
   expect(manage === null).toBe(flat);
-  if (manage) await waitFor(() => expect(unreadDot(manage)).not.toBeNull());
+  if (flat) {
+    await waitFor(() => expect(unreadDot(settings)).not.toBeNull());
+    /* The Bots entry is gone from the menu, hidden or not. */
+    expect(
+      within(dialog).queryByRole("link", { name: /^Bots/, hidden: true }),
+    ).toBeNull();
+  } else {
+    expect(unreadDot(settings)).toBeNull();
+    await waitFor(() =>
+      expect(unreadDot(manage as HTMLElement)).not.toBeNull(),
+    );
+  }
   drawer.unmount();
 
   const column = draw(<Places onNewChannel={() => {}} />);
   const wideSettings = await column.findByRole("link", { name: /^Settings/ });
-  expect(unreadDot(wideSettings)).toBeNull();
-  const wideBots = column.queryByRole("link", { name: /^Bots/ });
-  expect(wideBots === null).toBe(!flat);
-  if (wideBots) await waitFor(() => expect(unreadDot(wideBots)).not.toBeNull());
+  if (flat) {
+    await waitFor(() => expect(unreadDot(wideSettings)).not.toBeNull());
+  } else {
+    expect(unreadDot(wideSettings)).toBeNull();
+  }
 });
