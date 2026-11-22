@@ -38,6 +38,7 @@ import {
   warningFor,
   usersText,
 } from "./engines-providers-text";
+import { WorkspacePicker } from "./workspace";
 import { blockText, type EnginesReading } from "./engines-text";
 
 /**
@@ -497,10 +498,13 @@ function ProviderCard({
 export function EngineProviders({
   reading,
   onChanged,
+  browse = false,
 }: {
   reading: EnginesReading;
   onChanged: () => void;
+  browse?: boolean;
 }) {
+  const [picked, setPicked] = useState("");
   const cards = reading.providers ?? [];
   const agents = useQuery({
     ...agentListQueryOptions(),
@@ -517,6 +521,10 @@ export function EngineProviders({
     cards.filter((card) => card.id === id),
   );
 
+  const selected =
+    ordered.find((card) => card.id === picked) ??
+    ordered.find((card) => card.enabled) ??
+    ordered[0];
   return (
     <PageSection
       className="mt-0"
@@ -529,9 +537,28 @@ export function EngineProviders({
       {!usable && !locked && block && block !== "choices_unreadable" ? (
         <p className="mt-3 text-duet-ink-2 text-sm">{blockText(block)}</p>
       ) : null}
-      <ul className="mt-4 grid gap-4 lg:grid-cols-2">
+      {browse && selected && (
+        <WorkspacePicker
+          label="Provider"
+          value={selected.id}
+          onChange={setPicked}
+          options={ordered.map((card) => ({
+            id: card.id,
+            label: PROVIDER_TEXT[card.id].name,
+          }))}
+        />
+      )}
+      <ul
+        className={
+          browse ? "fd-provider-list" : "mt-4 grid gap-4 lg:grid-cols-2"
+        }
+      >
         {ordered.map((card) => (
-          <li className="min-w-0" key={card.id}>
+          <li
+            className="min-w-0"
+            key={card.id}
+            hidden={browse && card.id !== selected?.id}
+          >
             <ProviderCard
               canChange={usable}
               card={card}

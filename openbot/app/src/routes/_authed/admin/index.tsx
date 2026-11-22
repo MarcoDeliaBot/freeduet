@@ -32,6 +32,8 @@ import {
   ItemTitle,
 } from "@/components/ui/item";
 import { Separator } from "@/components/ui/separator";
+import { isFreeDuetApp } from "@/freeduet/manage-group";
+import { WorkspaceShell } from "@/freeduet/workspace";
 import { appConfig } from "@/lib/generated/application-config";
 
 export const Route = createFileRoute("/_authed/admin/")({
@@ -170,11 +172,11 @@ const SECTIONS: {
 ];
 
 function RouteComponent() {
-  return (
-    <PageShell
-      description="Settings for everybody in this deployment. A change here affects every person and every Bot."
-      title="Admin"
-    >
+  const workspace = isFreeDuetApp();
+  const description =
+    "Settings for everybody in this deployment. A change here affects every person and every Bot.";
+  const sections = (
+    <>
       {SECTIONS.map((section) => (
         <PageSection
           description={section.description || undefined}
@@ -207,6 +209,15 @@ function RouteComponent() {
           </PageRows>
         </PageSection>
       ))}
+    </>
+  );
+  return workspace ? (
+    <WorkspaceShell title="Admin" icon="shieldLock" description={description}>
+      <div className="fd-admin-grid">{sections}</div>
+    </WorkspaceShell>
+  ) : (
+    <PageShell title="Admin" description={description}>
+      {sections}
     </PageShell>
   );
 }

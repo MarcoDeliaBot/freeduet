@@ -1,8 +1,11 @@
 import { queryOptions, useQuery } from "@tanstack/react-query";
+import { DuetIcon } from "@/components/duet/icons";
 import { DuetCard, OutcomePill } from "@/components/duet/kit";
 import { PageEmpty, PageShell } from "@/components/layout/page-shell";
 import { StaggerItem } from "@/components/layout/stagger";
 import { client } from "@/lib/client";
+import { isFreeDuetApp } from "./manage-group";
+import { WorkspaceShell, WorkspaceTabs } from "./workspace";
 import { EngineMembers } from "./engines-members";
 import { EngineProviders } from "./engines-providers";
 import { EngineTokens } from "./engines-tokens";
@@ -25,15 +28,6 @@ import {
   SPENDING_TEXT,
   SPENDING_TITLE,
 } from "./engines-text";
-
-/**
- * The Engines page, administrators only (docs/ENGINES_PLAN.md section 9.1, slices 6 and 7, and the dashboard of
- * docs/design/engines-dashboard.md): each engine as a card, with one word for its state (the pill) and one sentence
- * below it, the time it waits until in the person's own time zone where it waits. Beside the cards, on a wide screen,
- * the Keys and Spending panels, which hold words only. Below the cards, where the server keeps the person's choices,
- * each member's engines and one choice for what happens when an engine runs out (engines-members.tsx). The provider cards (engines-providers.tsx) are the one place a person switches an engine on and saves its key. Kept in app/src/freeduet/ so the upstream admin page only gains one row and the route
- * file one import (docs/UPSTREAM_TOUCHES.md).
- */
 
 /** How often the page asks again, so a time it shows does not go stale while it stays open. */
 const REFRESH_MS = 30_000;
@@ -82,8 +76,9 @@ export function FreeDuetEngines() {
   // Read at each render: a time that has passed reads as past at the next refresh.
   const now = new Date();
 
-  return (
-    <PageShell description={ENGINES_INTRO} title={ENGINES_TITLE} width="wide">
+  const workspace = isFreeDuetApp();
+  const content = (
+    <>
       {engines.error ? (
         <p
           className="mt-4 rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm"
@@ -92,64 +87,144 @@ export function FreeDuetEngines() {
           {LOAD_FAILED}
         </p>
       ) : null}
-
       {reading?.reason ? (
         <PageEmpty>{engineReasonText(reading.reason)}</PageEmpty>
       ) : null}
-
       {reading && !reading.reason ? (
-        <div className="mt-10 grid gap-10 xl:grid-cols-[minmax(0,1fr)_18rem] xl:items-start">
-          <div className="flex min-w-0 flex-col gap-10">
-            {reading.engines.length === 0 ? (
-              <PageEmpty>{NO_ENGINES}</PageEmpty>
-            ) : (
-              <section>
-                <h2 className="sr-only">{ENGINE_STATES_TITLE}</h2>
-                <ul className="grid gap-4 sm:grid-cols-2">
-                  {reading.engines.map((engine, index) => (
-                    <li className="min-w-0" key={engine.id}>
-                      <StaggerItem className="h-full" index={index}>
-                        <EngineCard engine={engine} now={now} />
-                      </StaggerItem>
-                    </li>
-                  ))}
-                </ul>
-              </section>
-            )}
-
-            <EngineProviders
-              onChanged={() => void engines.refetch()}
-              reading={reading}
-            />
-
-            {(reading.members?.length ?? 0) > 0 ? (
-              <EngineMembers
-                onChanged={() => engines.refetch()}
-                reading={reading}
-              />
-            ) : null}
-
-            <EngineTokens reading={reading} />
-          </div>
-
-          <aside
-            aria-label={ASIDE_LABEL}
-            className="flex min-w-0 flex-col gap-4"
-          >
-            <DuetCard className="p-5">
-              <h2 className="type-body font-semibold">{KEYS_TITLE}</h2>
-              <p className="type-label mt-2 text-duet-ink-2">{KEYS_TEXT}</p>
-              <p className="type-label mt-2 text-duet-ink-2">
-                {KEYS_NOT_BUILT}
-              </p>
-            </DuetCard>
-            <DuetCard className="p-5">
-              <h2 className="type-body font-semibold">{SPENDING_TITLE}</h2>
-              <p className="type-label mt-2 text-duet-ink-2">{SPENDING_TEXT}</p>
-            </DuetCard>
-          </aside>
-        </div>
+        <EngineSections
+          reading={reading}
+          now={now}
+          workspace={workspace}
+          onChanged={() => engines.refetch()}
+        />
       ) : null}
+    </>
+  );
+  return workspace ? (
+    <WorkspaceShell
+      title={ENGINES_TITLE}
+      icon="activity"
+      description={ENGINES_INTRO}
+    >
+      {content}
+    </WorkspaceShell>
+  ) : (
+    <PageShell description={ENGINES_INTRO} title={ENGINES_TITLE} width="wide">
+      {content}
     </PageShell>
+  );
+}
+
+export function EngineSections({
+  reading,
+  now,
+  workspace,
+  onChanged,
+}: {
+  reading: EnginesReading;
+  now: Date;
+  workspace: boolean;
+  onChanged: () => unknown;
+}) {
+  const states =
+    reading.engines.length === 0 ? (
+      <PageEmpty>{NO_ENGINES}</PageEmpty>
+    ) : (
+      <section>
+        <h2 className={workspace ? "fd-section-title" : "sr-only"}>
+          {ENGINE_STATES_TITLE}
+        </h2>
+        <ul
+          className={workspace ? "fd-engine-grid" : "grid gap-4 sm:grid-cols-2"}
+        >
+          {reading.engines.map((engine, index) => (
+            <li className="min-w-0" key={engine.id}>
+              <StaggerItem className="h-full" index={index}>
+                <EngineCard engine={engine} now={now} />
+              </StaggerItem>
+            </li>
+          ))}
+        </ul>
+      </section>
+    );
+  const notes = (
+    <aside aria-label={ASIDE_LABEL} className="flex min-w-0 flex-col gap-4">
+      <DuetCard className="p-5">
+        <h2 className="type-body font-semibold">
+          {workspace && <DuetIcon name="key" size={19} />} {KEYS_TITLE}
+        </h2>
+        <p className="type-label mt-2 text-duet-ink-2">{KEYS_TEXT}</p>
+        <p className="type-label mt-2 text-duet-ink-2">{KEYS_NOT_BUILT}</p>
+      </DuetCard>
+      <DuetCard className="p-5">
+        <h2 className="type-body font-semibold">
+          {workspace && <DuetIcon name="activity" size={19} />} {SPENDING_TITLE}
+        </h2>
+        <p className="type-label mt-2 text-duet-ink-2">{SPENDING_TEXT}</p>
+      </DuetCard>
+    </aside>
+  );
+  const providers = (
+    <EngineProviders
+      reading={reading}
+      onChanged={onChanged}
+      browse={workspace}
+    />
+  );
+  const members = reading.members?.length ? (
+    <EngineMembers reading={reading} onChanged={onChanged} browse={workspace} />
+  ) : null;
+  const usage = <EngineTokens reading={reading} />;
+  if (workspace) {
+    return (
+      <WorkspaceTabs
+        label="Engine sections"
+        views={[
+          {
+            id: "overview",
+            label: "Overview",
+            icon: "dashboard",
+            content: (
+              <div className="fd-overview">
+                {states}
+                {notes}
+              </div>
+            ),
+          },
+          ...(reading.providers?.length
+            ? [
+                {
+                  id: "providers",
+                  label: "Providers",
+                  icon: "plug" as const,
+                  content: providers,
+                },
+              ]
+            : []),
+          ...(reading.members?.length
+            ? [
+                {
+                  id: "members",
+                  label: "Bot assignments",
+                  icon: "bolt" as const,
+                  content: members,
+                },
+              ]
+            : []),
+          { id: "usage", label: "Usage", icon: "activity", content: usage },
+        ]}
+      />
+    );
+  }
+  return (
+    <div className="mt-10 grid gap-10 xl:grid-cols-[minmax(0,1fr)_18rem] xl:items-start">
+      <div className="flex min-w-0 flex-col gap-10">
+        {states}
+        {providers}
+        {members}
+        {usage}
+      </div>
+      {notes}
+    </div>
   );
 }

@@ -43,6 +43,7 @@ export function PageShell({
   children,
   className,
   description,
+  header,
   title,
   width = "prose",
   backButton,
@@ -52,6 +53,8 @@ export function PageShell({
   children: React.ReactNode;
   className?: string;
   description?: React.ReactNode;
+  /** A branded page can supply its own visible heading inside the same scroll and back frame. */
+  header?: React.ReactNode;
   title: string;
   width?: ShellWidth;
   backButton?: {
@@ -133,29 +136,31 @@ export function PageShell({
             className,
           )}
         >
-          <header className="flex flex-col gap-2">
-            <div
-              className={cn(
-                "flex flex-row items-center justify-between gap-4",
-                inChrome && !action && "sr-only",
-              )}
-            >
-              <h1
+          {header ?? (
+            <header className="flex flex-col gap-2">
+              <div
                 className={cn(
-                  "type-display font-semibold",
-                  inChrome && "sr-only",
+                  "flex flex-row items-center justify-between gap-4",
+                  inChrome && !action && "sr-only",
                 )}
               >
-                {title}
-              </h1>
-              {action}
-            </div>
-            {description ? (
-              <p className="type-sub max-w-prose text-pretty text-muted-foreground">
-                {description}
-              </p>
-            ) : null}
-          </header>
+                <h1
+                  className={cn(
+                    "type-display font-semibold",
+                    inChrome && "sr-only",
+                  )}
+                >
+                  {title}
+                </h1>
+                {action}
+              </div>
+              {description ? (
+                <p className="type-sub max-w-prose text-pretty text-muted-foreground">
+                  {description}
+                </p>
+              ) : null}
+            </header>
+          )}
           {children}
         </div>
       </div>

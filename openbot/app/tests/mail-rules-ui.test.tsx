@@ -160,13 +160,13 @@ afterEach(() => {
   global.fetch = originalFetch;
 });
 
-const mount = () => {
+const mount = (browse = false) => {
   const client = new QueryClient({
     defaultOptions: { queries: { retry: false } },
   });
   return render(
     <QueryClientProvider client={client}>
-      <MailRulesSection />
+      <MailRulesSection browse={browse} />
     </QueryClientProvider>,
   );
 };
@@ -212,4 +212,30 @@ test("a rule's last error is shown, and with no rules nothing is drawn at all", 
   const empty = mount();
   await settleReactWork();
   expect(empty.container.textContent).toBe("");
+});
+
+test("the workspace filters rules and keeps a valid page after deleting its last result", async () => {
+  rules = Array.from({ length: 7 }, (_, i) => ({
+    ...RULE,
+    id: `rule-${i + 1}`,
+    inWords: `Example mail rule ${i + 1}`,
+    enabled: i !== 2,
+  }));
+  const view = mount(true);
+  await view.findByText("Example mail rule 1");
+  expect(view.queryByText("Example mail rule 7")).toBeNull();
+  const user = userEvent.setup({ document });
+  await user.click(view.getByRole("button", { name: "Next" }));
+  await user.click(view.getByRole("button", { name: "Delete" }));
+  await view.findByText("Example mail rule 1");
+  expect(sent[0]?.path).toBe("/api/plugins/mail-rules/rule-7");
+  await user.selectOptions(
+    view.getByRole("combobox", { name: "Rule status" }),
+    "off",
+  );
+  expect(view.getByText("Example mail rule 3")).toBeTruthy();
+  expect(view.queryByText("Example mail rule 1")).toBeNull();
+  await user.type(view.getByRole("searchbox"), "unmatched");
+  expect(view.getByText("No rules match these filters.")).toBeTruthy();
+  expect(sent.length).toBe(1);
 });

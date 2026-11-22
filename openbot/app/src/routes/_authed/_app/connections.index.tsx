@@ -35,6 +35,7 @@ import {
   ItemDescription,
   ItemTitle,
 } from "@/components/ui/item";
+import { WorkspaceShell } from "@/freeduet/workspace";
 import { isFreeDuetApp } from "@/freeduet/manage-group";
 import { type ConnectionRow, connectionRows } from "@/lib/connections/rows";
 import { appConfig } from "@/lib/generated/application-config";
@@ -374,8 +375,11 @@ function RouteComponent() {
     links.isPending ||
     providers.isPending;
 
-  return (
-    <PageShell className="@container" title="Connections">
+  const workspace = isFreeDuetApp();
+  const description =
+    "The apps and accounts your Bots use as you. Open one to connect it or change it.";
+  const contents = (
+    <>
       {/*
        * For `?connected=` only the failure is worth saying. A success needs no sentence: the row it
        * came back to now reads "Connected", which is the same news told by the thing it is news
@@ -408,7 +412,8 @@ function RouteComponent() {
         </p>
       ) : null}
       <PageSection
-        description="The apps and accounts your Bots use as you. Open one to connect it or change it."
+        className={workspace ? "fd-accounts" : undefined}
+        description={workspace ? undefined : description}
         title="Your connections"
       >
         {/*
@@ -417,7 +422,13 @@ function RouteComponent() {
          * asserting "Connect" over accounts somebody already has, so either failure is one sentence:
          * nothing is listed rather than a list that may be wrong.
          */}
-        {loading ? null : plugins.error || connections.error ? (
+        {loading ? (
+          workspace ? (
+            <p className="mt-4 text-sm text-muted-foreground" role="status">
+              Loading connections…
+            </p>
+          ) : null
+        ) : plugins.error || connections.error ? (
           <p className="mt-4 text-destructive text-sm" role="alert">
             Couldn't load your connections. Reload the page, or ask an admin if
             it keeps happening.
@@ -449,11 +460,17 @@ function RouteComponent() {
                 Nothing matches “{search.trim()}”.
               </p>
             ) : (
-              <div className="mt-6 grid grid-cols-1 gap-x-6 gap-y-2 @min-[36rem]:grid-cols-2">
+              <div
+                className={
+                  workspace
+                    ? "fd-account-grid"
+                    : "mt-6 grid grid-cols-1 gap-x-6 gap-y-2 @min-[36rem]:grid-cols-2"
+                }
+              >
                 {matching.map((row) => (
                   <ConnectionItem
                     key={row.key}
-                    quickConnect={isFreeDuetApp() && oauthKeys.has(row.key)}
+                    quickConnect={workspace && oauthKeys.has(row.key)}
                     row={row}
                   />
                 ))}
@@ -468,7 +485,16 @@ function RouteComponent() {
           </p>
         ) : null}
       </PageSection>
-      <MailRulesSection />
+      <MailRulesSection browse={workspace} />
+    </>
+  );
+  return workspace ? (
+    <WorkspaceShell title="Connections" icon="plug" description={description}>
+      {contents}
+    </WorkspaceShell>
+  ) : (
+    <PageShell className="@container" title="Connections">
+      {contents}
     </PageShell>
   );
 }
