@@ -33,6 +33,13 @@
  * Turkish "şifreleme" is "encryption", Japanese "更新" is also "update", Portuguese "assinatura" is also a
  * "signature" and "caixa" a "box"), and the reviewer model behind the gate and the person's own approval
  * rules still apply.
+ *
+ * Known limits of D138 (the first-pass review): a lookahead that excludes a harmless context looks at the next
+ * word only, and counts a hyphen, underscore, dot, slash or digit after it as the same word (Russian "быстрый
+ * перевод текста и денег" and "банковский перевод текста 500 евро" pass; Polish "hasło reklamowe do konta bankowego"
+ * and "Hasło reklamowe konta" pass). The Russian sign-in method, card number and public access terms have no such
+ * exclusion on purpose: "способ входа в офис 365" and "номер карты метро-банка" must ask,
+ * and Japanese 払い also asks for a refund (払い戻し), on purpose.
  */
 
 const LETTERS = "\\p{L}\\p{M}\\p{N}";
@@ -135,6 +142,8 @@ const topUp = (verbs: string, objects: string, art = "") => [
 const DE_PAYMENTS: WordList = {
   words: [
     "bezahl(?:en|e|t|st|te|ung|ungen|vorgang)",
+    "begleich(?:en|e|st|t|te|ung)",
+    "beglich(?:en|ene|enen|ener|enes)",
     "zahl(?:e|en|t) (?:jetzt|sofort|ihre rechnung|die rechnung|den betrag)",
     "jetzt zahlen",
     "zahlen sie",
@@ -168,6 +177,8 @@ const DE_PAYMENTS: WordList = {
   ],
   parts: [
     "zahlung",
+    "dauerauftrag",
+    "lastschrift",
     "u(?:e)?berweis(?:en|e|ung|ungen|t)",
     "kreditkarte",
     "debitkarte",
@@ -417,6 +428,8 @@ const PT_PAYMENTS: WordList = {
     "(?:fazer|faca|realizar|efetuar|efectuar|agendar|programar|enviar|envie) (?:uma |a |minha |sua )?transferencia",
     "(?:enviar|mandar|envie|mande) dinheiro",
     "chave pix",
+    "(?:fazer|faca|realizar|realize|efetuar|efetue|efectuar|efectue|enviar|envie|mandar|mande|agendar|programar) (?:um |o |uma |a |meu |seu )?pix",
+    "(?:fazer|faca|realizar|realize|efetuar|efetue|efectuar|efectue|enviar|envie|mandar|mande) (?:uma |a |minha |sua )?ted(?! (?:talk|talks|x))",
     "boleto bancario",
     "cart(?:ao|oes) (?:de )?(?:credito|debito|bancario|pre-?pago|prepago|virtual)",
     "numero (?:do |de )?cartao",
@@ -493,7 +506,15 @@ const PL_PAYMENTS: WordList = {
   words: [
     "platnos(?:c|ci|cia|ciom|ciami|ciach)",
     "(?:za|o)plac(?:ic|e|i|my|cie|ono)?",
-    "zaplat(?:a|y|e|ie)",
+    "placisz|placimy|placicie|placic|placi",
+    "plac(?:e|a) (?:kart|gotowk|blik|przelew|rachun|faktur|zamowien|rat)@",
+    "blik",
+    "numer(?:u)? konta",
+    "numer rachunku bankowego",
+    "wplat(?:a|y|e|ie|ami)",
+    "wplac(?:ic|am|asz|a|my|cie|ac)?",
+    "zaplat(?:a|y|e)",
+    "zaplacie",
     "obowiazkiem zaplaty",
     "zamawiam",
     "kup(?:ic|uj|ie|my|cie|no)?",
@@ -536,9 +557,9 @@ const PL_PAYMENTS: WordList = {
 };
 const PL_CREDENTIALS: WordList = {
   words: [
-    "hasl(?:o|a|e|u|em|om|ach)",
+    "hasl(?:o|a|e|u|em|om|ach)(?! (?:reklam|wyborcz)@(?![a-z0-9_./-]))",
     "hasel",
-    "kod (?:jednorazowy|weryfikacyjny|dostepu|bezpieczenstwa|odzyskiwania|sms|autoryzacyjny|pin)",
+    "kod (?:jednorazowy|weryfikacyjny|potwierdzajac@|dostepu|bezpieczenstwa|odzyskiwania|sms|autoryzacyjny|pin)",
     "jednorazowy kod",
     "uwierzytelnian@ (?:dwuskladnikow@|dwuetapow@|wieloskladnikow@)",
     "(?:weryfikacj@|logowani@) (?:dwuetapow@|dwuskladnikow@)",
@@ -581,7 +602,9 @@ const RU_PAYMENTS: WordList = {
     "приобрет(?:ить|ите|ение|и|ай)",
     "(?:оформ(?:ить|ите|ление|ляю|ляйте)|подтверд(?:ить|ите|ждение|и)|размест(?:ить|ите)|размещение|отправ(?:ить|ьте|ка|ь)|завер(?:шить|шите|шение)|сдел(?:ать|айте)|подать|подайте|сформир(?:овать|уйте)) (?:(?:ваш|ваши|свой|этот|мой|весь|текущий|последний) )*заказ@",
     "(?:к оформлению (?:заказа|покупки)|к оплате|на кассу|к кассе|в кассу)",
-    "(?:банковск|денежн|почтов|платежн|международн|быстр)@ перевод@",
+    "(?:банковск|денежн|почтов|платежн|международн|быстр)@ перевод@(?! (?:текст(?:а|ов|у|ы|е)?|стат(?:ья|ьи|ью|ей|ье)|документ(?:а|ов|у|ы|е)?|файл(?:а|ов|у|ы|е)?|слов(?:а|о|у|ам|ами)?|предложени(?:е|я|й|ю|ям)|фраз(?:а|ы|у|е)?|язык(?:а|ов|у|и|е)?)(?![a-z0-9а-я_./-]))",
+    "списани@ (?:средств|денег|с карты|со счета)",
+    "автоплатеж@",
     "перевод (?:денег|средств|денежных средств|на карту|на счет|с карты|по реквизитам)",
     "(?:перевести|переведи|переведите|переведу|перевожу|перечислить|перечислите|перечисли|перечисление|отправить|отправьте|отправь|пошлите|пошли|переслать) (?:\\w+ ){0,2}(?:деньги|денег|средства|средств|денежные|сумму|платеж@|плату|аванс|рубл@|доллар@|евро)",
     "(?:банковские|платежные) реквизиты",
@@ -673,6 +696,8 @@ const TR_PAYMENTS: WordList = {
     "sepeti (?:onayl|tamamla)@",
     "kasa(?:ya|ye) (?:git|gec|ilerle)@",
     "havale@",
+    "taksit@",
+    "(?:qr|karekod)(?: kod@)? (?:ile )?ode(?:me|mek|yin|yiniz|dim|dik|yorum|yecek)?",
     "eft",
     "para (?:transfer|gonder|yolla|aktar|yatir)@",
     "(?:fon|banka) transfer@",
@@ -713,7 +738,7 @@ const TR_CREDENTIALS: WordList = {
     "tek kullanimlik (?:kod|sifre|parola)@",
     "(?:dogrulama|onay|guvenlik|erisim|kurtarma|sms|giris) kod@",
     "kurtarma (?:e-?posta|telefon|anahtar|numara|adres)@",
-    "guvenlik sor@",
+    "guvenlik (?!sorun(?:lar@|u|un)?(?![a-z0-9_./-]))sor@",
     "api (?:anahtar@|key)",
     "(?:gizli|ozel|erisim) anahtar@",
     "erisim (?:belirte|token)@",
@@ -745,6 +770,9 @@ const JA_PAYMENTS: WordList = {
     "入金",
     "振込",
     "振り込み",
+    "振り込(?:む|ん|め)",
+    "払(?:う|い|っ|わ|え)",
+    "口座番号",
     "送金",
     "購入",
     "買う",
@@ -839,6 +867,9 @@ const KO_PAYMENTS: WordList = {
     "입금",
     "송금",
     "계좌~이체",
+    "자동~이체",
+    "이체(?:하|해|합|한|할|를|됩|되)",
+    "이체~(?:신청|요청|한도)",
     "무통장",
     "구매",
     "구입",
@@ -950,6 +981,7 @@ const ZH_PAYMENTS: WordList = {
     "信用卡",
     "借记卡",
     "借記卡",
+    "(?:银行|銀行)卡",
     "储蓄卡",
     "儲蓄卡",
     "(?:预付|預付)卡",
