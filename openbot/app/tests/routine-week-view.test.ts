@@ -346,6 +346,7 @@ test("a day's summary status: a failure is never hidden, then running, upcoming,
   expect(summaryStatus(["done", "failed", "done"])).toBe("failed");
   expect(summaryStatus(["failed", "upcoming"])).toBe("failed");
   expect(summaryStatus(["done", "running", "upcoming"])).toBe("running");
+  expect(summaryStatus(["done", "pending", "upcoming"])).toBe("pending");
   expect(summaryStatus(["done", "upcoming"])).toBe("upcoming");
   expect(summaryStatus(["done", "done"])).toBe("done");
   expect(summaryStatus(["missed", "done"])).toBe("missed");
