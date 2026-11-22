@@ -33,6 +33,10 @@
  * Turkish "şifreleme" is "encryption", Japanese "更新" is also "update", Portuguese "assinatura" is also a
  * "signature" and "caixa" a "box"), and the reviewer model behind the gate and the person's own approval
  * rules still apply.
+ *
+ * Known limits of D138 (the first-pass review): a lookahead that excludes a harmless context looks at the next
+ * word only (Russian "быстрый перевод текста и денег" passes; Polish "hasło reklamowe do konta bankowego" passes),
+ * and Japanese 払い also asks for a refund (払い戻し), on purpose.
  */
 
 const LETTERS = "\\p{L}\\p{M}\\p{N}";
@@ -136,6 +140,7 @@ const DE_PAYMENTS: WordList = {
   words: [
     "bezahl(?:en|e|t|st|te|ung|ungen|vorgang)",
     "begleich(?:en|e|st|t|te|ung)",
+    "beglich(?:en|ene|enen|ener|enes)",
     "zahl(?:e|en|t) (?:jetzt|sofort|ihre rechnung|die rechnung|den betrag)",
     "jetzt zahlen",
     "zahlen sie",
@@ -498,13 +503,13 @@ const PL_PAYMENTS: WordList = {
   words: [
     "platnos(?:c|ci|cia|ciom|ciami|ciach)",
     "(?:za|o)plac(?:ic|e|i|my|cie|ono)?",
-    "placisz|placimy|placicie|placi",
+    "placisz|placimy|placicie|placic|placi",
     "plac(?:e|a) (?:kart|gotowk|blik|przelew|rachun|faktur|zamowien|rat)@",
     "blik",
     "numer(?:u)? konta",
     "numer rachunku bankowego",
     "wplat(?:a|y|e|ie|ami)",
-    "wplac(?:ic|am|asz|a|my|cie|ac)",
+    "wplac(?:ic|am|asz|a|my|cie|ac)?",
     "zaplat(?:a|y|e)",
     "zaplacie",
     "obowiazkiem zaplaty",
@@ -594,7 +599,7 @@ const RU_PAYMENTS: WordList = {
     "приобрет(?:ить|ите|ение|и|ай)",
     "(?:оформ(?:ить|ите|ление|ляю|ляйте)|подтверд(?:ить|ите|ждение|и)|размест(?:ить|ите)|размещение|отправ(?:ить|ьте|ка|ь)|завер(?:шить|шите|шение)|сдел(?:ать|айте)|подать|подайте|сформир(?:овать|уйте)) (?:(?:ваш|ваши|свой|этот|мой|весь|текущий|последний) )*заказ@",
     "(?:к оформлению (?:заказа|покупки)|к оплате|на кассу|к кассе|в кассу)",
-    "(?:банковск|денежн|почтов|платежн|международн|быстр)@ перевод@(?! (?:текст|стат|документ|файл|слов|предложен|фраз|язык)@)",
+    "(?:банковск|денежн|почтов|платежн|международн|быстр)@ перевод@(?! (?:текст(?:а|ов|у|ы|е)?|стат(?:ья|ьи|ью|ей|ье)|документ(?:а|ов|у|ы|е)?|файл(?:а|ов|у|ы|е)?|слов(?:а|о|у|ам|ами)?|предложени(?:е|я|й|ю|ям)|фраз(?:а|ы|у|е)?|язык(?:а|ов|у|и|е)?)(?![a-z0-9а-я]))",
     "списани@ (?:средств|денег|с карты|со счета)",
     "автоплатеж@",
     "перевод (?:денег|средств|денежных средств|на карту|на счет|с карты|по реквизитам)",
@@ -603,7 +608,7 @@ const RU_PAYMENTS: WordList = {
     "реквизиты (?:для )?(?:оплаты|платежа|перевода|банка|карты|счета)",
     "корреспондентск@ счет",
     "(?:банковск|кредитн|дебетов|предоплачен|виртуальн)@ карт@",
-    "номер (?:банковской )?карты(?! (?:метро|библиотек|лояльност|проездн|транспортн)@)",
+    "номер (?:банковской )?карты(?! (?:метро|библиотек@|лояльност@|проездн@|транспортн@)(?![a-z0-9а-я]))",
     "cvv2?",
     "cvc2?",
     "подписк@",
@@ -651,7 +656,7 @@ const RU_CREDENTIALS: WordList = {
     "(?:сид|seed)-?фраз@",
     "(?:секретн|мнемоническ)@ фраз@",
     "фраз@ восстановления",
-    "(?:способ|метод) входа(?! (?:в|на) (?:здани|помещени|парк|офис|квартир|дом)@)",
+    "(?:способ|метод) входа(?! (?:в|на) (?:здани(?:е|я|ю|и)|помещени(?:е|я|ю|и)|парк(?:е|а|у|и)?|офис(?:е|а|у)?|квартир(?:е|а|у)|дом(?:а|у)?)(?![a-z0-9а-я]))",
     "пин-?код@",
   ],
 };
@@ -662,7 +667,7 @@ const RU_SECURITY: WordList = {
     "защит@ аккаунта",
     "(?:поделиться|делиться|открыть доступ|дать доступ|предоставить доступ|откройте доступ) (?:\\w+ ){0,2}(?:со всеми|всем|любому|любым|публично|для всех|кому угодно)",
     "(?:сделать|сделайте|сделай|делать) (?:\\w+ ){0,2}(?:публичн|общедоступн)@",
-    "публичн@ доступ@(?! к (?:парк|музе|территори|здани)@)",
+    "публичн@ доступ@(?! к (?:парк(?:у|а)?|музе(?:ю|я)|территори(?:и|ю|я)|здани(?:ю|я))(?![a-z0-9а-я]))",
     "общий доступ",
     "доступ (?:для всех|всем|по ссылке)",
     "(?:прав@|роль|роли) администратора",
@@ -730,7 +735,7 @@ const TR_CREDENTIALS: WordList = {
     "tek kullanimlik (?:kod|sifre|parola)@",
     "(?:dogrulama|onay|guvenlik|erisim|kurtarma|sms|giris) kod@",
     "kurtarma (?:e-?posta|telefon|anahtar|numara|adres)@",
-    "guvenlik soru(?:su|sunu|sunun|yu|lar|lari|larini)?",
+    "guvenlik (?!sorun(?:lar@|u|un)?(?![a-z]))sor@",
     "api (?:anahtar@|key)",
     "(?:gizli|ozel|erisim) anahtar@",
     "erisim (?:belirte|token)@",
@@ -763,7 +768,7 @@ const JA_PAYMENTS: WordList = {
     "振込",
     "振り込み",
     "振り込(?:む|ん|め)",
-    "払(?:う|い|っ)",
+    "払(?:う|い|っ|わ|え)",
     "口座番号",
     "送金",
     "購入",
@@ -861,6 +866,7 @@ const KO_PAYMENTS: WordList = {
     "계좌~이체",
     "자동~이체",
     "이체(?:하|해|합|한|할|를|됩|되)",
+    "이체~(?:신청|요청|한도)",
     "무통장",
     "구매",
     "구입",

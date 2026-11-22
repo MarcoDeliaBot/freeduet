@@ -16,7 +16,8 @@
       "Geschenkgutschein kaufen",
       "Rechnung begleichen",
       "Dauerauftrag einrichten",
-      "Lastschrift einrichten"
+      "Lastschrift einrichten",
+      "Die Rechnung wurde beglichen"
     ],
     "credentials": [
       "Passwort ändern",
@@ -220,7 +221,10 @@
       "Wybierz BLIK",
       "Po zapłacie wyślemy paczkę",
       "Wpłata na konto",
-      "Numer konta odbiorcy"
+      "Numer konta odbiorcy",
+      "Chcę płacić kartą",
+      "Wpłać pieniądze",
+      "Wpłać"
     ],
     "credentials": [
       "Zmień hasło",
@@ -280,7 +284,12 @@
       "Контрольный вопрос",
       "API-ключ",
       "Учётные данные",
-      "Почта для восстановления"
+      "Почта для восстановления",
+      "Способ входа в домен",
+      "Способ входа в домашний аккаунт",
+      "Способ входа в офисный аккаунт",
+      "Способ входа в офис365",
+      "Способ входа на парковый портал"
     ],
     "security": [
       "Настройки безопасности",
@@ -335,7 +344,12 @@
       "Güvenlik sorusu",
       "API anahtarı",
       "Kurtarma e-postası",
-      "ŞİFRE"
+      "ŞİFRE",
+      "Güvenlik sorusuna cevap ver",
+      "Güvenlik sorusundan emin ol",
+      "Güvenlik sorularına bak",
+      "Güvenlik sorumu değiştir",
+      "Güvenlik sorunuz nedir"
     ],
     "security": [
       "Güvenlik ayarları",
@@ -355,7 +369,8 @@
       "Toplantıyı cumaya al",
       "Pencereyi kapat",
       "İletişim sayfasını aç",
-      "Güvenlik sorunu bulundu"
+      "Güvenlik sorunu bulundu",
+      "Güvenlik sorunları listelendi"
     ]
   },
   "ja": {
@@ -376,7 +391,9 @@
       "クレカで支払う",
       "お金を払う",
       "代金を振り込む",
-      "口座番号を入力"
+      "口座番号を入力",
+      "料金を払わない",
+      "払えない場合"
     ],
     "credentials": [
       "パスワードを変更",
@@ -427,7 +444,8 @@
       "상품권 구매",
       "카드번호를 입력",
       "자동이체 신청",
-      "이체하기"
+      "이체하기",
+      "이체 신청"
     ],
     "credentials": [
       "비밀번호를 변경",
