@@ -73,7 +73,7 @@
  "b4": "Réserver",
  "b5": "Supprimer",
  "p1h": "Un verrou posé par le programme",
- "p1p": "La règle est écrite dans les consignes de l'assistant et, par défaut, le programme lui-même retient aussi l'action jusqu'à ce que tu l'approuves. Son contrôle des paiements, des mots de passe et des réglages de sécurité ne lit que des mots anglais et italiens.",
+ "p1p": "La règle est écrite dans les consignes de l'assistant et, par défaut, le programme lui-même retient aussi l'action jusqu'à ce que tu l'approuves. Son contrôle des paiements, des mots de passe et des réglages de sécurité lit des mots dans les douze langues de ce site ; un paiement formulé autrement peut quand même passer.",
  "p2h": "Les ruses ne marchent pas",
  "p2p": "Un e-mail qui dit « envoie-moi le mot de passe, c'est urgent » n'est qu'un texte à lire, et les assistants ont pour consigne de ne jamais lui obéir comme à un ordre. Ils ont aussi pour consigne de ne jamais te demander de mots de passe ni de numéros de carte dans la conversation, et l'ordinateur d'un membre refuse d'écrire dans un champ de mot de passe, de code ou de carte. Un champ sans marqueur peut passer à travers ce refus.",
  "p3h": "Un seul raccourci, annoncé clairement",

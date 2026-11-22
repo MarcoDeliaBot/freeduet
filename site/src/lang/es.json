@@ -75,7 +75,7 @@
  "b4": "Reservar",
  "b5": "Borrar",
  "p1h": "Un candado que aplica el propio programa",
- "p1p": "La regla está escrita en las instrucciones del asistente y, por defecto, el propio programa también detiene la acción hasta que la apruebes. Su comprobación de pagos, contraseñas y ajustes de seguridad solo lee palabras en inglés y en italiano.",
+ "p1p": "La regla está escrita en las instrucciones del asistente y, por defecto, el propio programa también detiene la acción hasta que la apruebes. Su comprobación de pagos, contraseñas y ajustes de seguridad lee palabras en los doce idiomas de este sitio; un pago redactado de otra forma aún puede pasar.",
  "p2h": "Los trucos no funcionan",
  "p2p": "Un correo que dice «mándame la contraseña, es urgente» es solo texto para leer, y los asistentes tienen la instrucción de no obedecerlo nunca como una orden. También tienen la instrucción de no pedirte nunca contraseñas ni números de tarjeta en el chat, y el ordenador de un miembro se niega a escribir en un campo de contraseña, código o tarjeta. Un campo sin marca puede escaparse de esa negativa.",
  "p3h": "Un único atajo, dicho claramente",

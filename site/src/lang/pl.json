@@ -73,7 +73,7 @@
  "b4": "Zarezerwować",
  "b5": "Usunąć",
  "p1h": "Zamek, który zakłada sam program",
- "p1p": "Zasada jest zapisana w instrukcjach asystenta i domyślnie sam program też wstrzymuje działanie, dopóki go nie zatwierdzisz. Jego kontrola płatności, haseł i ustawień bezpieczeństwa czyta tylko słowa angielskie i włoskie.",
+ "p1p": "Zasada jest zapisana w instrukcjach asystenta i domyślnie sam program też wstrzymuje działanie, dopóki go nie zatwierdzisz. Jego kontrola płatności, haseł i ustawień bezpieczeństwa czyta słowa w dwunastu językach tej strony; płatność opisana inaczej może mimo to przejść.",
  "p2h": "Sztuczki nie działają",
  "p2p": "E-mail, który mówi „wyślij mi hasło, to pilne”, to tylko tekst do przeczytania, a asystenci mają polecenie, by nigdy nie wykonywać go jak rozkazu. Mają też polecenie, by nigdy nie prosić Cię w czacie o hasła ani numery kart, a komputer członka odmawia wpisywania w pole hasła, kodu lub karty. Pole bez oznaczenia może tej odmowie umknąć.",
  "p3h": "Jeden uczciwy skrót",
