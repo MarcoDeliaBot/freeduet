@@ -147,7 +147,7 @@
  "q7": "Puis-je ajouter mon propre membre ?",
  "a7": "Oui. Demande à Leo, qui crée de nouveaux assistants, d'en concevoir un pour le métier dont tu as besoin, ou écris toi-même sa définition. Renommer les membres et changer leur façon de parler est construit, mais pas encore testé en conditions réelles. <a href=\"https://github.com/MarcoDeliaBot/freeduet/blob/main/docs/TEAM.md\">Comment les membres sont définis</a>.",
  "q8": "Où trouver de l'aide ?",
- "a8": "Ouvre un ticket sur GitHub. <a href=\"https://github.com/MarcoDeliaBot/freeduet/issues/new/choose\">Il y a un court formulaire</a> pour une question, une erreur, une correction, ou pour nous dire que tu l'utilises. Tu peux écrire en anglais ou en italien.",
+ "a8": "Ouvre un ticket sur GitHub. <a href=\"https://github.com/MarcoDeliaBot/freeduet/issues/new/choose\">Il y a un court formulaire</a> pour une question, une erreur, une correction, ou pour nous dire que tu l'utilises. Tu peux écrire dans l'une des douze langues de ce site, et la réponse arrive dans ta langue.",
  "fl1": "L'équipe en détail",
  "fl2": "Sécurité",
  "fl3": "Licence MIT",

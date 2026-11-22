@@ -147,7 +147,7 @@
  "q7": "Czy mogę dodać własnego członka zespołu?",
  "a7": "Tak. Poproś Leo, który buduje nowych asystentów, żeby zaprojektował jednego do zadania, którego potrzebujesz, albo napisz jego definicję sam. Zmiana imion członków i sposobu, w jaki mówią, jest zbudowana, ale jeszcze nie sprawdzona na żywo. <a href=\"https://github.com/MarcoDeliaBot/freeduet/blob/main/docs/TEAM.md\">Jak definiuje się członków zespołu</a>.",
  "q8": "Gdzie znajdę pomoc?",
- "a8": "Otwórz zgłoszenie na GitHubie. <a href=\"https://github.com/MarcoDeliaBot/freeduet/issues/new/choose\">Jest krótki formularz</a> na pytanie, błąd, poprawkę albo na informację, że go używasz. Możesz pisać po angielsku lub po włosku.",
+ "a8": "Otwórz zgłoszenie na GitHubie. <a href=\"https://github.com/MarcoDeliaBot/freeduet/issues/new/choose\">Jest krótki formularz</a> na pytanie, błąd, poprawkę albo na informację, że go używasz. Możesz pisać w dowolnym z dwunastu języków tej strony, a odpowiedź przyjdzie w Twoim języku.",
  "fl1": "Zespół w szczegółach",
  "fl2": "Bezpieczeństwo",
  "fl3": "Licencja MIT",

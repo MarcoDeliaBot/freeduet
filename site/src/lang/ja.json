@@ -147,7 +147,7 @@
  "q7": "自分のメンバーを追加できますか？",
  "a7": "はい。新しいアシスタントを作るLeoに、必要な仕事に合わせて設計してもらうか、ご自身で定義を書いてください。メンバーの名前を変えたり、話し方を変えたりすることは、作成済みですが、実環境ではまだ確認していません。<a href=\"https://github.com/MarcoDeliaBot/freeduet/blob/main/docs/TEAM.md\">メンバーの定義の仕方</a>。",
  "q8": "困ったときはどこで相談できますか？",
- "a8": "GitHubでissueを作成してください。質問、エラー、修正案、「使っています」という報告のために、<a href=\"https://github.com/MarcoDeliaBot/freeduet/issues/new/choose\">短いフォームがあります</a>。英語かイタリア語で書けます。",
+ "a8": "GitHubでissueを作成してください。質問、エラー、修正案、「使っています」という報告のために、<a href=\"https://github.com/MarcoDeliaBot/freeduet/issues/new/choose\">短いフォームがあります</a>。このサイトの12の言語のどれでも書けます。回答はあなたの言語で届きます。",
  "fl1": "チームの詳しい紹介",
  "fl2": "セキュリティ",
  "fl3": "MITライセンス",

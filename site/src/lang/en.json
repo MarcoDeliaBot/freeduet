@@ -147,7 +147,7 @@
  "q7": "Can I add my own team member?",
  "a7": "Yes. Ask Leo, who builds new assistants, to design one for the job you need, or write its definition yourself. Renaming members and changing how they talk is built but not yet run live. <a href=\"https://github.com/MarcoDeliaBot/freeduet/blob/main/docs/TEAM.md\">How the members are defined</a>.",
  "q8": "Where do I get help?",
- "a8": "Open an issue on GitHub. <a href=\"https://github.com/MarcoDeliaBot/freeduet/issues/new/choose\">There is a short form</a> for a question, an error, a fix, or to say you are using it. You can write in English or Italian.",
+ "a8": "Open an issue on GitHub. <a href=\"https://github.com/MarcoDeliaBot/freeduet/issues/new/choose\">There is a short form</a> for a question, an error, a fix, or to say you are using it. You can write in any of the twelve languages of this site, and the answer comes in your language.",
  "fl1": "The team in detail",
  "fl2": "Security",
  "fl3": "MIT licence",

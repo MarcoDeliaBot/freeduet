@@ -147,7 +147,7 @@
  "q7": "我能添加自己的团队成员吗？",
  "a7": "可以。你可以请专门打造新助理的 Leo 为你需要的工作设计一位，也可以自己编写它的定义。给成员改名、换说话方式，已经做好，但还没在真实环境中运行。<a href=\"https://github.com/MarcoDeliaBot/freeduet/blob/main/docs/TEAM.md\">成员是如何定义的</a>。",
  "q8": "去哪里获得帮助？",
- "a8": "在 GitHub 上提一个 issue。<a href=\"https://github.com/MarcoDeliaBot/freeduet/issues/new/choose\">这里有一份简短的表格</a>，可以用来提问、报告错误、提交修复，或者告诉我们你在使用。用英语或意大利语写都可以。",
+ "a8": "在 GitHub 上提一个 issue。<a href=\"https://github.com/MarcoDeliaBot/freeduet/issues/new/choose\">这里有一份简短的表格</a>，可以用来提问、报告错误、提交修复，或者告诉我们你在使用。可以用本站十二种语言中的任何一种来写，回复会以你的语言给出。",
  "fl1": "团队详细介绍",
  "fl2": "安全",
  "fl3": "MIT 许可证",
