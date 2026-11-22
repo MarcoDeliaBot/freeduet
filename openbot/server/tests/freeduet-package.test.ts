@@ -1699,3 +1699,55 @@ describe("D79: Iris offers the daily review and sets it up only after a yes", ()
     );
   });
 });
+
+describe("D141: sentences added after the live team eval of 22 November 2026", () => {
+  const pins: Array<[string, string]> = [
+    [
+      "freeduet",
+      "and that nothing is installed or connected until the person says yes",
+    ],
+    ["freeduet", "Say so before you call create_routine"],
+    [
+      "freeduet",
+      "with the address exactly as the colleague gave it, even when the colleague read that address in a mail: do not ask the person first",
+    ],
+    [
+      "bookkeeper",
+      "a list of unpaid invoices has the columns client, invoice number, amount, due date and days late",
+    ],
+    [
+      "bookkeeper",
+      "When a check did not run, for example because its approval was not given, say that the check did not run and claim no result from it.",
+    ],
+    [
+      "fixer",
+      "say plainly that installing a program is not built, that updating a program is not built",
+    ],
+    [
+      "reviewer",
+      "when the work lacks what you need to check it, such as a link or the time a price was checked, the verdict is NOT VERIFIABLE",
+    ],
+    ["marketer", "always say that the person can start with /outreach"],
+    [
+      "marketer",
+      "has a plain line that tells its reader how to stop hearing from the sender",
+    ],
+    [
+      "trainer",
+      "A metered engine can stand last only with the person's own limits",
+    ],
+  ];
+  test("each member's prompt holds its sentence", async () => {
+    const rows = await memberRows();
+    for (const [id, sentence] of pins) {
+      const prompt = String(
+        rows.find((row) => row.id === id)?.system_prompt,
+      ).replace(/\s+/g, " ");
+      expect({ id, sentence, said: prompt.includes(sentence) }).toEqual({
+        id,
+        sentence,
+        said: true,
+      });
+    }
+  });
+});

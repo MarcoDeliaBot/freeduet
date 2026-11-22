@@ -43,7 +43,8 @@ const APPEARANCE: readonly { value: ThemePreference; label: string }[] = [
 
 /**
  * Every place a person sets something up, one row each, in the order they reach for them. The first
- * five are the sidebar's Manage group (FreeDuet's package hides that group, so these rows carry it).
+ * six are the pages the sidebar's Manage group and the short menu no longer draw in FreeDuet's package
+ * (D133), so these rows carry them: Bots to Approval rules, then Engines for an administrator.
  */
 export const SETTINGS_PLACES: readonly {
   label: string;
@@ -58,6 +59,12 @@ export const SETTINGS_PLACES: readonly {
   { label: "Capabilities", icon: "box", to: "/capabilities" },
   { label: "Routines", icon: "repeat", to: "/routines" },
   { label: "Approval rules", icon: "shieldCheck", to: "/settings/approvals" },
+  {
+    label: "Engines",
+    icon: "wrench",
+    to: "/admin/engines",
+    adminOnly: true,
+  },
   { label: "Notifications", icon: "bell", to: "/settings/notifications" },
   { label: "Passwords", icon: "key", to: "/settings/passwords" },
   { label: "Admin", icon: "shieldLock", to: "/admin", adminOnly: true },

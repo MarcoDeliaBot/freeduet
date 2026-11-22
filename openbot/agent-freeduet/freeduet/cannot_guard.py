@@ -48,7 +48,7 @@ import os
 import re
 from dataclasses import dataclass
 
-from . import members, origin, report_guard, team_log
+from . import members, origin, report_guard, safety_words_gen, team_log
 from .members import MemberError
 from .origin import is_envelope, latest_user_message, message_text
 
@@ -192,8 +192,28 @@ _SENSITIVE = re.compile(
 )
 
 
+# D131: the same three groups in the ten other site languages. The words are generated from the gate's own list
+# (openbot/server/src/approvals/safety-words.ts, `scripts/generate-safety-words-py.ts`), so the mirror cannot drift;
+# the gate's test fails when `safety_words_gen.py` is not what the script writes. They are matched on the text
+# folded as the gate folds it (NFKC, lower case, no accents).
+
+def _fold(text: str) -> str:
+    import unicodedata
+
+    text = unicodedata.normalize("NFKC", text or "")
+    text = re.sub("[\u00ad\u200b-\u200f\u2060\ufeff]", "", text).translate({0x2018: "'", 0x2019: "'", 0x2BC: "'", 0x60: "'", 0xB4: "'"}).lower()
+    text = "".join(ch for ch in unicodedata.normalize("NFD", text) if not 0x300 <= ord(ch) <= 0x36F)
+    for src, dst in (("ß", "ss"), ("ı", "i"), ("ł", "l"), ("ø", "o"), ("đ", "d"), ("æ", "ae"), ("œ", "oe")):
+        text = text.replace(src, dst)
+    return unicodedata.normalize("NFC", text)
+
+
+_OTHER_LANGUAGES = re.compile("|".join(safety_words_gen.PAYMENTS + safety_words_gen.CREDENTIALS + safety_words_gen.SECURITY_SETTINGS))
+
+
 def is_sensitive(text: str) -> bool:
-    return _SENSITIVE.search(_plain(text)) is not None
+    plain = _plain(text)
+    return _SENSITIVE.search(plain) is not None or _OTHER_LANGUAGES.search(_fold(plain)) is not None
 
 
 # ── when it applies ──────────────────────────────────────────────────────────────────────────────
