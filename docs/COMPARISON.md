@@ -5,13 +5,13 @@ What FreeDuet does that the others don't, row by row.
 **Legend:** ✅ available today · ⚠️ partly · 🚧 in progress · 🗓️ planned · ❌ no · — not documented by the project.
 **FreeDuet is at v0.2.2, an early release (16 November 2026).** A ✅ means you can use it today, in a published version: never something still to come. Where FreeDuet does not have something yet, its cell says so with 🚧 (being built, not released) or 🗓️ (decided, not started) and the version it is meant for, as on the [roadmap](ROADMAP.md#how-to-read-the-tables). Nothing on the roadmap has a date.
 
-_Last checked: 2026-11-08, from each project's public README and documentation, linked below. If we got something wrong about another project, open an issue and we will fix it within 48 hours._
+_Last checked: 2026-11-08, from each project's public README and documentation, linked below; Claude Duet, OpenDuet / OpenBot and Grok Bot were checked again on 2026-11-22, from the news and README sources listed under Sources. If we got something wrong about another project, open an issue and we will fix it within 48 hours._
 
 | | **FreeDuet** | Claude Duet | OpenDuet / OpenBot | open-duet (Anil-matcha) | openbot (nightly-labs) | Agency (browser-use) | OpenMausBot |
 |---|---|---|---|---|---|---|---|
-| **Open source, free for business use** | ✅ MIT | ❌ closed product | ✅ MIT | ✅ Apache-2.0 | ❌ non-commercial license | ⚠️ code public, no license | ✅ Apache-2.0, with an `enterprise/` folder under its own licence |
+| **Open source, free for business use** | ✅ MIT | ❌ closed product | ✅ MIT for the application code; CopilotKit Intelligence, which its API server needs, is separately licensed | ✅ Apache-2.0 | ❌ non-commercial license | ⚠️ code public, no license | ✅ Apache-2.0, with an `enterprise/` folder under its own licence |
 | **Self-hosted, your data stays with you** | ✅ | ❌ | ✅ | ✅ | ✅ | ✅ local only | ✅ local-first |
-| **Available outside the United States** | ✅ | ❌ US waitlist | ✅ | ✅ | ✅ | ✅ | ✅ |
+| **Available outside the United States** | ✅ | ❌ US waitlist for Pro and Max; research preview opened 21 October 2026 | ✅ | ✅ | ✅ | ✅ | ✅ |
 | **Runs on subscriptions you already pay for, through the official login** | ✅ | ✅ Claude plans only | ⚠️ only by storing a plan token | ✅ | ✅ | ✅ | ✅ Claude, Codex, Grok |
 | **Works with zero API keys** | ✅ | ✅ | ⚠️ only with a stored plan token | ✅ | ✅ | ✅ | ✅ |
 | **Several subscriptions, switching automatically when one hits its limit** | ⚠️ Built in v0.2, not yet run live: only test engines have switched (milestone v0.3) | ❌ | ❌ | ⚠️ one backup engine | — | — | — |
@@ -67,6 +67,8 @@ _Last checked: 2026-11-14, from each project's own README and the documentation 
 
 The last nine rows were added on 18 November 2026 from OpenMausBot's own README of 17 November 2026. They were checked for OpenMausBot and for FreeDuet only: the — in the other five columns means "not checked", not "absent".
 
+Grok Bot (SpaceXAI), checked 22 November 2026, is not a column above. Its 1.0 release lets a person share a Team Bot with specific people or groups and use it in Slack or Microsoft Teams ([xAI announcement](https://x.ai/news/grok-bot-1-0)). Its prices are left out: the one news report we found ties the individual price to a Cursor plan, so it does not settle the figure ([VentureBeat](https://venturebeat.com/orchestration/spacexais-grok-bot-turns-agents-into-persistent-digital-coworkers-that-can-operate-your-apps-for-120-per-month)).
+
 Importing agents from another tool is in the main table above (Grok Bot import: Planned, v1.0).
 
 ## The short version
@@ -81,8 +83,9 @@ FreeDuet is the only project that combines **all three**:
 
 ## Sources
 
-- Claude Duet: [Anthropic announcement](https://www.anthropic.com), [TechCrunch](https://techcrunch.com), [Engadget](https://www.engadget.com) coverage of the research preview (October 2026).
-- OpenDuet: https://github.com/CopilotKit/OpenDuet · OpenBot: https://github.com/CopilotKit/openbot
+- Claude Duet: [Anthropic announcement](https://www.anthropic.com), [TechCrunch](https://techcrunch.com), [Engadget](https://www.engadget.com) coverage of the research preview (October 2026). Re-checked 22 November 2026 against [9to5Mac](https://9to5mac.com/2026/10/21/anthropic-takes-on-chatgpt-dots-and-meta-muse-with-claude-duet/) and [iTechPost](https://itechpost.com/articles/237623/20261022/anthropics-claude-duet-ai-agent-launch-signals-new-battle-openai-meta.htm).
+- Grok Bot (SpaceXAI): [xAI announcement of Grok Bot 1.0](https://x.ai/news/grok-bot-1-0), and the [VentureBeat report](https://venturebeat.com/orchestration/spacexais-grok-bot-turns-agents-into-persistent-digital-coworkers-that-can-operate-your-apps-for-120-per-month), checked 22 November 2026.
+- OpenDuet: https://github.com/CopilotKit/OpenDuet · OpenBot: https://github.com/CopilotKit/openbot · OpenBot 1.0 README (checked 22 November 2026): https://raw.githubusercontent.com/CopilotKit/OpenBot/v1.0.0/README.md
 - open-duet (Anil-matcha): https://github.com/Anil-matcha/open-duet (the repository now calls itself Suparagent) and its `docs/ENGINES.md`, `docs/COMPUTERS.md`, `docs/TEAMS.md`, `docs/ROUTINES.md`, `docs/TASKS.md`, `docs/TEMPLATES.md`
 - openbot (nightly-labs): https://github.com/nightly-labs/openbot and its `docs/architecture/providers.md`
 - Agency (browser-use): https://github.com/browser-use/open-duet
