@@ -171,9 +171,7 @@ test("unmount clears the 60 s tick and removes the focus and visibility listener
   const removed = spyOn(window, "removeEventListener");
   const docRemoved = spyOn(document, "removeEventListener");
   try {
-    const view = draw(() => (
-      <RoutineWeek routines={[inbox]} zone={ZONE} />
-    ));
+    const view = draw(() => <RoutineWeek routines={[inbox]} zone={ZONE} />);
     await settle();
     const tick = timers.mock.results.length;
     expect(tick).toBeGreaterThan(0);
@@ -203,17 +201,19 @@ test("a run that passes while the tab is open stays on the grid as pending until
   jest.useFakeTimers();
   setSystemTime(MORNING);
   const server = fakeServer();
-  server.calendarRuns = [
-    { routineId: "r1", agentId: "inbox", at: passedAt },
-  ];
+  server.calendarRuns = [{ routineId: "r1", agentId: "inbox", at: passedAt }];
   const view = draw(() => <RoutineWeek routines={[inbox]} zone={ZONE} />);
   await settle();
-  expect(gridNow(view)?.querySelector('[data-status="upcoming"]')).not.toBeNull();
+  expect(
+    gridNow(view)?.querySelector('[data-status="upcoming"]'),
+  ).not.toBeNull();
 
   // The run's time passes; the history does not hold it yet.
   await tickTo("2026-11-18T06:50:00.000Z");
   expect(gridNow(view)?.querySelector('[data-status="upcoming"]')).toBeNull();
-  expect(gridNow(view)?.querySelector('[data-status="pending"]')).not.toBeNull();
+  expect(
+    gridNow(view)?.querySelector('[data-status="pending"]'),
+  ).not.toBeNull();
   expect(gridNow(view)?.textContent).toContain("Inbox");
 
   // The history catches up; a later tick refetches it and the placeholder becomes the recorded run.
@@ -233,7 +233,9 @@ test("a run that passes while the tab is open stays on the grid as pending until
   ];
   await tickTo("2026-11-18T06:51:00.000Z");
   expect(gridNow(view)?.querySelector('[data-status="pending"]')).toBeNull();
-  expect(gridNow(view)?.querySelectorAll('[data-status="done"]').length).toBe(1);
+  expect(gridNow(view)?.querySelectorAll('[data-status="done"]').length).toBe(
+    1,
+  );
 });
 
 test("a history that cannot be loaded keeps a passed run on the grid as pending", async () => {
@@ -241,13 +243,13 @@ test("a history that cannot be loaded keeps a passed run on the grid as pending"
   setSystemTime(MORNING);
   const server = fakeServer();
   server.historyDown = true;
-  server.calendarRuns = [
-    { routineId: "r1", agentId: "inbox", at: passedAt },
-  ];
+  server.calendarRuns = [{ routineId: "r1", agentId: "inbox", at: passedAt }];
   const view = draw(() => <RoutineWeek routines={[inbox]} zone={ZONE} />);
   await settle();
   await tickTo("2026-11-18T06:50:00.000Z");
-  expect(gridNow(view)?.querySelector('[data-status="pending"]')).not.toBeNull();
+  expect(
+    gridNow(view)?.querySelector('[data-status="pending"]'),
+  ).not.toBeNull();
   expect(gridNow(view)?.textContent).toContain("could not be loaded");
 });
 
@@ -274,13 +276,10 @@ test("while a run is pending, each 60 s tick refetches the history", async () =>
   jest.useFakeTimers();
   setSystemTime(MORNING);
   const server = fakeServer();
-  server.calendarRuns = [
-    { routineId: "r1", agentId: "inbox", at: passedAt },
-  ];
+  server.calendarRuns = [{ routineId: "r1", agentId: "inbox", at: passedAt }];
   draw(() => <RoutineWeek routines={[inbox]} zone={ZONE} />);
   await settle();
   const before = server.calls.history;
   await tickTo("2026-11-18T06:50:00.000Z");
   expect(server.calls.history).toBeGreaterThan(before);
 });
-
