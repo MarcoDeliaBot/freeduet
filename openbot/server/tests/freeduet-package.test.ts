@@ -1700,6 +1700,44 @@ describe("D79: Iris offers the daily review and sets it up only after a yes", ()
   });
 });
 
+describe("D143: sentences added after the re-run of 22 November 2026", () => {
+  const pins: Array<[string, string]> = [
+    [
+      "freeduet",
+      "also tell the person in your own reply, in plain words and not only in the instruction you give the tool, what it will do",
+    ],
+    [
+      "freeduet",
+      "Do not ask the person about details that the colleague's finished email already settles",
+    ],
+    [
+      "reviewer",
+      "If any claim lacks its link or its check time, the verdict is NOT VERIFIABLE, never TO FIX for missing evidence.",
+    ],
+    [
+      "marketer",
+      "Say it in your own reply to the person, in plain words, even when you hand part of the work to a sub-task or a colleague",
+    ],
+    [
+      "marketer",
+      "In that same reply say that you draft the emails, that only Otto sends them, and that the person approves each send.",
+    ],
+  ];
+  test("each member's prompt holds its sentence", async () => {
+    const rows = await memberRows();
+    for (const [id, sentence] of pins) {
+      const prompt = String(
+        rows.find((row) => row.id === id)?.system_prompt,
+      ).replace(/\s+/g, " ");
+      expect({ id, sentence, said: prompt.includes(sentence) }).toEqual({
+        id,
+        sentence,
+        said: true,
+      });
+    }
+  });
+});
+
 describe("D141: sentences added after the live team eval of 22 November 2026", () => {
   const pins: Array<[string, string]> = [
     [
