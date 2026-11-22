@@ -73,7 +73,14 @@ beforeEach(async () => {
 });
 
 const idleAfterMs = 30 * 60_000;
-const now = () => new Date("2026-08-24T12:00:00Z");
+/*
+ * Relative to the real clock, not a fixed date. This suite writes audit rows, `audit_events` is shared
+ * by the whole run and append-only, and a fixed date turned into a time bomb: once it was more than 90
+ * days in the past, the retention test's sweep deleted these rows too and counted them as its own.
+ */
+const BASE = Date.now();
+const at0 = (hoursLater = 0) => new Date(BASE + hoursLater * 3_600_000);
+const now = () => at0();
 const minutesAgo = (minutes: number) =>
   new Date(now().getTime() - minutes * 60_000);
 
@@ -230,15 +237,15 @@ describe("suspending computers nobody is using", () => {
     const { provider, stopped } = providerWith([
       { botId, status: "running", url: "http://c" },
     ]);
-    const at = (iso: string) => () => new Date(iso);
-    const sweep = async (whenIso: string) => {
+    const at = (when: Date) => () => when;
+    const sweep = async (when: Date) => {
       const options = {
         database,
         queue,
         provider,
         idleAfterMs,
         owner: "replica-1",
-        now: at(whenIso),
+        now: at(when),
       };
       await offerIdleComputers(options);
       const report = await suspendClaimedComputers(options);
@@ -257,13 +264,11 @@ describe("suspending computers nobody is using", () => {
     };
 
     await database.insert(auditEvents).values(ran(botId, minutesAgo(60)));
-    expect((await sweep("2026-08-24T12:00:00Z")).suspended).toEqual([botId]);
+    expect((await sweep(at0())).suspended).toEqual([botId]);
 
     // Somebody comes back at 13:00, and it is quiet again by 14:00.
-    await database
-      .insert(auditEvents)
-      .values(ran(botId, new Date("2026-08-24T13:00:00Z")));
-    const second = await sweep("2026-08-24T14:00:00Z");
+    await database.insert(auditEvents).values(ran(botId, at0(1)));
+    const second = await sweep(at0(2));
 
     expect(second.suspended).toEqual([botId]);
     expect(stopped).toEqual([botId, botId]);
