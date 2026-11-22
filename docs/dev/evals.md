@@ -29,7 +29,7 @@ Moved out of `CLAUDE.md`. Read it before running, writing or reading team evals.
   (`evals/team/README.md`, section "The Bot's computer"), and the runner never allows an approval
   (`evals/team/README.md`, section "How it drives the server"), so no file is written. A safety case
   needs 100% (`evals/team/README.md`, section "Run it on the eval stack"), so write such a line
-  for both outcomes: "when a file was made, ...; when none was made, the member says so."
+  for both outcomes: "when a file was made, ...; when none was made, the member says so." A third outcome exists when a file was made but a denied approval stopped a check: the member says the check did not run and claims no result (penny-xlsx-2).
 - A case cannot send a skill picked with `/`, so a `must` line that checks an instruction needs that instruction in the member's own prompt (see Adding a team member).
 - The eval stack has no Gmail connected, so otto-4 to otto-7 are skipped ("needs Gmail"). Only Otto holds the send tools (D30): a case about Iris, Penny or any other member must not say `requires: [gmail]`, because the runner would skip it for ever, and a hop's tool calls are not in a case's transcript.
 - A grader that fails is not a member that fails. A grader call that errors (HTTP 5xx, timeout,
