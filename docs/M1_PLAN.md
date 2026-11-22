@@ -2211,3 +2211,15 @@ Each page is still three clicks at most from the menu (D125), counted as in the 
 **Counts.** penny-xlsx-2 no longer counts as run live: four of the forty-one are run live (gus-6, wren-docx-1, iris-10, penny-5), thirty-seven are not; README, ROADMAP, VERIFY, COMPARISON, M0_DEMO and `evals/team/README.md` agree.
 
 **What is not verified.** None of the prompt sentences or reworded lines has run live: the cases above (iris-9, iris-12, iris-26, iris-28, penny-2, penny-xlsx-2, gus-7, vera-3, mark-7, mark-8, rex-4) should be run again on the eval stack, with `--repeat 3` for the safety ones. The 22 November report is on the maintainer's computer and was read only through the failures and the grader's reasons given in the brief. Where the grader's reason did not say why a conditional line failed (iris-26), the reading is a guess.
+
+## 98. Roadmap order and live results of 22 November 2026 (D142)
+
+**D142.** The maintainer's decisions of 22 November 2026 (10:40), recorded in [ROADMAP.md](ROADMAP.md):
+
+- **(a) Installer first in Now.** The one-file installer for Windows, macOS and Ubuntu moves from Now row 7 to Now row 1. Every other Now row keeps its relative order, and Now is renumbered 1 to 15. The README roadmap lists its rows without numbers, so it is unchanged.
+- **(b) Certification waits.** The three-repeat certification run of the team evals waits until the re-run of the 11 failed cases (section 97, D141) passes.
+- **(c) Live result.** The live test "Iris turns to Jules for the weather" passed on 22 November 2026 at 10:08 on the maintainer's installation: Iris handed off with message_bot, Jules used computer_navigate and computer_snapshot, and the answer came home with a source. Rows 89 (Iris does not stop at "I cannot") and 104 (A colleague's browser when a colleague asks, D130) now read "Run live on one installation on 22 November 2026" with that evidence.
+
+**Not changed.** The Claude model and effort per member (D139) and the usage charts (D134) were approved by the maintainer; their row status stays as built, and their pull requests merge separately. Row 119 does not exist in Next, so there was nothing to move before row 120.
+
+**What is not verified.** The live test ran once on one installation; it is not a certification. The re-run of the 11 failed cases has not been run by this change.
