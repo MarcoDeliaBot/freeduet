@@ -73,7 +73,7 @@
  "b4": "Reservar",
  "b5": "Apagar",
  "p1h": "Uma trava aplicada pelo próprio programa",
- "p1p": "A regra está escrita nas instruções do assistente e, por padrão, o próprio programa também segura a ação até você aprovar. A verificação de pagamentos, senhas e configurações de segurança lê só palavras em inglês e em italiano.",
+ "p1p": "A regra está escrita nas instruções do assistente e, por padrão, o próprio programa também segura a ação até você aprovar. A verificação de pagamentos, senhas e configurações de segurança lê palavras nos doze idiomas deste site; um pagamento escrito de outra forma ainda pode passar.",
  "p2h": "Truques não funcionam",
  "p2p": "Um e-mail que diz «me mande a senha, é urgente» é só texto para ler, e os assistentes têm a instrução de nunca obedecê-lo como uma ordem. Eles também têm a instrução de nunca pedir senhas ou números de cartão no chat, e o computador de um membro se recusa a digitar em um campo de senha, código ou cartão. Um campo sem marcação pode escapar dessa recusa.",
  "p3h": "Um atalho honesto",

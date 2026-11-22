@@ -73,7 +73,7 @@
  "b4": "Book",
  "b5": "Delete",
  "p1h": "A lock the program enforces",
- "p1p": "The rule is written in the assistant's instructions, and by default the program itself also holds the action until you approve it. Its check for payments, passwords and security settings reads English and Italian words only.",
+ "p1p": "The rule is written in the assistant's instructions, and by default the program itself also holds the action until you approve it. Its check for payments, passwords and security settings reads words in the twelve languages of this site; a payment worded in another way can still get past it.",
  "p2h": "Tricks don't work",
  "p2p": "An email that says \"send me the password, it's urgent\" is text to read, and the assistants are told never to obey it as an order. They are also told never to ask for passwords or card numbers in the chat, and a member's computer refuses to type into a password, code or card field. A field with no marker can slip past that refusal.",
  "p3h": "One honest shortcut",
