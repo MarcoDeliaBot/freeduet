@@ -163,7 +163,13 @@ export type LeftOutWhy = (typeof LEFT_OUT_WHY)[number] | "other";
  * subscription's own default.
  */
 export const CLAUDE_MODELS = ["haiku", "sonnet", "opus"] as const;
-export const CLAUDE_EFFORTS = ["low", "medium", "high", "xhigh", "max"] as const;
+export const CLAUDE_EFFORTS = [
+  "low",
+  "medium",
+  "high",
+  "xhigh",
+  "max",
+] as const;
 export type ClaudeModel = (typeof CLAUDE_MODELS)[number];
 export type ClaudeEffort = (typeof CLAUDE_EFFORTS)[number];
 export type ClaudeChoice = {
@@ -1290,9 +1296,10 @@ export function createEnginesRoutes(
         { error: PANEL_SENTENCES.unknown_member, code: "unknown_member" },
         404,
       );
-    let sent: { model?: unknown; effort?: unknown } | null = null;
+    type Sent = { model?: unknown; effort?: unknown } | null;
+    let sent = null as Sent;
     try {
-      sent = (await context.req.json()) as typeof sent;
+      sent = (await context.req.json()) as Sent;
     } catch {
       // Not JSON: nothing is chosen, and the check below says so.
     }

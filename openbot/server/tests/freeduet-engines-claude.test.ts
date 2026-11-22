@@ -199,14 +199,19 @@ describe("what is forwarded", () => {
   test("a choice that was already in use writes no audit row", async () => {
     const stub = agent(() => ok({ ...DONE, changed: false }));
     const { call, events } = setup(stub.reach);
-    expect((await (await call("PUT", URL_CLAUDE, { model: "sonnet" })).json()).changed).toBe(false);
+    expect(
+      (await (await call("PUT", URL_CLAUDE, { model: "sonnet" })).json())
+        .changed,
+    ).toBe(false);
     expect(events).toHaveLength(0);
   });
 
   test("a word the agent answers that is off the lists is not passed on", async () => {
     const stub = agent(() => ok({ ...DONE, model: "--evil", effort: "x" }));
     const { call } = setup(stub.reach);
-    const body = await (await call("PUT", URL_CLAUDE, { model: "opus" })).json();
+    const body = await (
+      await call("PUT", URL_CLAUDE, { model: "opus" })
+    ).json();
     expect([body.model, body.effort]).toEqual([null, null]);
   });
 });
@@ -236,7 +241,9 @@ describe("what is refused before it is forwarded", () => {
   test("a member id that is not one is refused", async () => {
     const stub = agent(() => ok(DONE));
     const { call } = setup(stub.reach);
-    expect((await call("PUT", "/members/a%20b/claude", { model: "opus" })).status).toBe(404);
+    expect(
+      (await call("PUT", "/members/a%20b/claude", { model: "opus" })).status,
+    ).toBe(404);
     expect(stub.panelCalls()).toHaveLength(0);
   });
 
@@ -244,17 +251,23 @@ describe("what is refused before it is forwarded", () => {
     ["claude_choice_invalid", 400],
     ["unknown_member", 404],
     ["file_is_yours", 409],
-  ])("the agent's refusal %s is said in one sentence and nothing is recorded", async (code, status) => {
-    const stub = agent(() => Response.json({ error: code }, { status }));
-    const { call, events } = setup(stub.reach);
-    const answer = await call("PUT", URL_CLAUDE, { model: "opus" });
-    expect(answer.status).toBe(status);
-    expect((await answer.json()).code).toBe(code);
-    expect(events).toHaveLength(0);
-  });
+  ])(
+    "the agent's refusal %s is said in one sentence and nothing is recorded",
+    async (code, status) => {
+      const stub = agent(() => Response.json({ error: code }, { status }));
+      const { call, events } = setup(stub.reach);
+      const answer = await call("PUT", URL_CLAUDE, { model: "opus" });
+      expect(answer.status).toBe(status);
+      expect((await answer.json()).code).toBe(code);
+      expect(events).toHaveLength(0);
+    },
+  );
 
   test("an agent that does not answer is said so", async () => {
-    const { call, events } = setup({ environment: {}, managedAgent: undefined });
+    const { call, events } = setup({
+      environment: {},
+      managedAgent: undefined,
+    });
     expect((await call("PUT", URL_CLAUDE, { model: "opus" })).status).toBe(502);
     expect(events).toHaveLength(0);
   });

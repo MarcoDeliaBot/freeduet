@@ -9,6 +9,17 @@ import { client, tryClient } from "@/lib/client";
 import {
   aloneText,
   blockText,
+  CLAUDE_CHOICE_NOTE,
+  CLAUDE_DEFAULT_OPTION,
+  CLAUDE_EFFORT_LABEL,
+  CLAUDE_EFFORT_OPTIONS,
+  CLAUDE_ENGINE_ID,
+  CLAUDE_MODEL_LABEL,
+  CLAUDE_MODEL_OPTIONS,
+  CLAUDE_SAVED_TEXT,
+  type ClaudeChoice,
+  claudeEffortLabel,
+  claudeModelLabel,
   CHOICES_UNREADABLE,
   chainText,
   ENGINE_MODES,
@@ -131,6 +142,24 @@ async function setOrder(
   return response.json();
 }
 
+type ClaudeChange = { memberId: string; changed: boolean } & ClaudeChoice;
+
+/** D139: one member's Claude model and effort. `null` is the subscription's default. The server checks both against its closed lists. */
+async function setClaude(
+  memberId: string,
+  choice: ClaudeChoice,
+): Promise<ClaudeChange> {
+  const response = await client(
+    `${ENGINES_PATH}/members/${encodeURIComponent(memberId)}/claude`,
+    {
+      method: "PUT",
+      body: choice,
+      fallback: "Your choice could not be saved.",
+    },
+  );
+  return response.json();
+}
+
 /** An order waiting for the person's yes: what it would be, what it was, and which kind of break it is. */
 type PendingOrder = { order: string[]; before: string[]; kind: OrderBreakKind };
 
@@ -197,6 +226,14 @@ export function EngineMembers({
       onChanged();
     },
   });
+  const claude = useMutation({
+    mutationFn: (input: { memberId: string; choice: ClaudeChoice }) =>
+      setClaude(input.memberId, input.choice),
+    onSuccess: (outcome) => {
+      setSaid((now) => ({ ...now, [outcome.memberId]: CLAUDE_SAVED_TEXT }));
+      onChanged();
+    },
+  });
   const reorder = useMutation({
     mutationFn: (input: {
       memberId: string;
@@ -256,11 +293,13 @@ export function EngineMembers({
 
   const block = reading.cannotChange ?? null;
   const usable = reading.canChange === true;
-  const busy = change.isPending || undo.isPending || reorder.isPending;
+  const busy =
+    change.isPending || undo.isPending || reorder.isPending || claude.isPending;
   // A move that waits for a confirmation is not a failure: it is shown in its row, not as an alert.
   const failure =
     change.error ??
     undo.error ??
+    claude.error ??
     (reorder.error instanceof OrderNeedsConfirmation ? null : reorder.error);
 
   const engineName = (id: string) =>
@@ -273,6 +312,14 @@ export function EngineMembers({
     undo.reset();
     reorder.reset();
     change.mutate({ memberId: member.id, mode });
+  };
+
+  const chooseClaude = (member: MemberSummary, choice: ClaudeChoice) => {
+    if (!usable || busy) return;
+    change.reset();
+    undo.reset();
+    reorder.reset();
+    claude.mutate({ memberId: member.id, choice });
   };
 
   const move = (member: MemberSummary, at: number, by: -1 | 1) => {
@@ -432,6 +479,77 @@ export function EngineMembers({
                           {chainText(member.chain, engineName)}
                         </p>
                       )}
+                      {member.chain.includes(CLAUDE_ENGINE_ID) ? (
+                        <div className="mt-2 text-sm">
+                          <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+                            <label className="inline-flex items-center gap-2 text-duet-ink-2">
+                              <span>{CLAUDE_MODEL_LABEL}</span>
+                              <select
+                                aria-label={claudeModelLabel(name)}
+                                className="h-8 rounded-md border border-duet-hair bg-duet-tile px-2 text-duet-ink"
+                                disabled={!usable || busy}
+                                onChange={(event) =>
+                                  chooseClaude(member, {
+                                    model:
+                                      CLAUDE_MODEL_OPTIONS.find(
+                                        (option) =>
+                                          option.value === event.target.value,
+                                      )?.value ?? null,
+                                    effort: member.claude?.effort ?? null,
+                                  })
+                                }
+                                value={member.claude?.model ?? ""}
+                              >
+                                <option value="">
+                                  {CLAUDE_DEFAULT_OPTION}
+                                </option>
+                                {CLAUDE_MODEL_OPTIONS.map((option) => (
+                                  <option
+                                    key={option.value}
+                                    value={option.value}
+                                  >
+                                    {option.label}
+                                  </option>
+                                ))}
+                              </select>
+                            </label>
+                            <label className="inline-flex items-center gap-2 text-duet-ink-2">
+                              <span>{CLAUDE_EFFORT_LABEL}</span>
+                              <select
+                                aria-label={claudeEffortLabel(name)}
+                                className="h-8 rounded-md border border-duet-hair bg-duet-tile px-2 text-duet-ink"
+                                disabled={!usable || busy}
+                                onChange={(event) =>
+                                  chooseClaude(member, {
+                                    model: member.claude?.model ?? null,
+                                    effort:
+                                      CLAUDE_EFFORT_OPTIONS.find(
+                                        (option) =>
+                                          option.value === event.target.value,
+                                      )?.value ?? null,
+                                  })
+                                }
+                                value={member.claude?.effort ?? ""}
+                              >
+                                <option value="">
+                                  {CLAUDE_DEFAULT_OPTION}
+                                </option>
+                                {CLAUDE_EFFORT_OPTIONS.map((option) => (
+                                  <option
+                                    key={option.value}
+                                    value={option.value}
+                                  >
+                                    {option.label}
+                                  </option>
+                                ))}
+                              </select>
+                            </label>
+                          </div>
+                          <p className="mt-1 text-duet-ink-2">
+                            {CLAUDE_CHOICE_NOTE}
+                          </p>
+                        </div>
+                      ) : null}
                       {offRecommended ? (
                         <p className="mt-2 flex flex-wrap items-center gap-2 text-duet-ink-2 text-sm">
                           <span>{OWN_ORDER_NOTE}</span>
