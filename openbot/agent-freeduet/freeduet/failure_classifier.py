@@ -111,7 +111,9 @@ _TRANSIENT_WORDS = re.compile(
 # /v1/messages answers with (server_calls.py); the model words come from ask.rs.
 _REJECTED_WORDS = re.compile(
     r"\bmodel_not_found\b|\bunknown model\b|\bdoes not exist or you do not have access\b"
-    r"|\binvalid_request_error\b",
+    r"|\binvalid_request_error\b"
+    # D139: what Claude Code says when the chosen model is not one the subscription can use.
+    r"|issue with the selected model|may not have access to it|is not available with the claude\b",
     re.IGNORECASE,
 )
 

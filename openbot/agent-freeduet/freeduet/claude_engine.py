@@ -142,7 +142,8 @@ class ClaudeEngine(EngineAdapter):
         try:
             config = claude_cli.write_mcp_config(ctx.directory, gate.port, gate.secret)
             command = claude_cli.build_command(
-                self._binary or claude_cli.claude_bin(), config, ctx.system, ctx.directory, bool(pictures)
+                self._binary or claude_cli.claude_bin(), config, ctx.system, ctx.directory, bool(pictures),
+                choice=ctx.claude_choice,
             )
             try:
                 process = await claude_cli.start(command, ctx.work, self.child_env())

@@ -32,6 +32,8 @@ from urllib.parse import urlsplit
 import httpx
 import yaml
 
+from .claude_choice import EFFORTS, MODELS, ClaudeChoice
+
 COMPATIBLE_KIND = "anthropic-compatible"
 KINDS = ("cli", "app-server", "acp", "anthropic-api", "openai-compatible", COMPATIBLE_KIND)
 BILLINGS = ("subscription", "free", "metered")
@@ -72,7 +74,7 @@ _ENGINE_KEYS = frozenset(
         "context_tokens",
     }
 )
-_TOP_KEYS = frozenset({"engines", "metered", "chains", "quality_floor", "assistants", "switching", "own_order"})
+_TOP_KEYS = frozenset({"engines", "metered", "chains", "quality_floor", "assistants", "switching", "own_order", "claude"})
 _SWITCHING_KEYS = frozenset({"mode", "pin"})
 MODES = ("automatic", "ask-first")
 _METERED_KEYS = frozenset({"enabled", "currency", "daily_cap", "monthly_cap", "enforce"})
@@ -163,6 +165,9 @@ class EnginesConfig:
     #: D115: members whose chain the person ordered by hand and confirmed. Their file order is kept as written; every other
     #: chain is sorted logins first (:func:`order_logins_first`). Empty by default.
     own_order: frozenset[str] = frozenset()
+    #: D139: the person's optional Claude model and effort for a member, on the Claude Code engine only. Absent means the
+    #: subscription's own default, with no flag on the command line.
+    claude: Mapping[str, ClaudeChoice] = MappingProxyType({})
 
 
 # ── Loading ──────────────────────────────────────────────────────────────────────────────────────
@@ -213,6 +218,7 @@ def parse_engines(data: Any, source: str = "<memory>") -> EnginesConfig:
     assistants = _parse_assistants(data.get("assistants"), engines, problems)
     switching = _parse_switching(data.get("switching"), engines, problems)
     own_order = _parse_own_order(data.get("own_order"), problems)
+    claude = _parse_claude(data.get("claude"), problems)
 
     if problems:
         raise EnginesFileError(source, problems)
@@ -225,6 +231,7 @@ def parse_engines(data: Any, source: str = "<memory>") -> EnginesConfig:
         source=source,
         switching=MappingProxyType(switching),
         own_order=own_order,
+        claude=MappingProxyType(claude),
     )
 
 
@@ -710,6 +717,42 @@ def _parse_own_order(raw: Any, problems: list[str]) -> frozenset[str]:
         else:
             seen.append(item)
     return frozenset(seen)
+
+
+def _parse_claude(raw: Any, problems: list[str]) -> dict[str, ClaudeChoice]:
+    """D139: ``claude`` maps a member id to ``{model, effort}``, each one word of the closed lists in claude_choice.py. A value
+    off the lists is a problem, never a flag: the file is refused like any other invalid one."""
+    if raw is None:
+        return {}
+    if not isinstance(raw, Mapping):
+        problems.append("`claude` must map member ids to {model, effort}")
+        return {}
+    found: dict[str, ClaudeChoice] = {}
+    for member, entry in raw.items():
+        if not isinstance(member, str) or not member.strip() or member == DEFAULT_CHAIN:
+            problems.append(f"claude: {member!r} is not a member id")
+            continue
+        if not isinstance(entry, Mapping):
+            problems.append(f"claude.{member}: must be a mapping with `model` and/or `effort`")
+            continue
+        for key in sorted(set(entry) - {"model", "effort"}, key=str):
+            problems.append(f"claude.{member}: unknown key `{key}`")
+        model, effort = entry.get("model"), entry.get("effort")
+        if model is not None and model not in MODELS:
+            problems.append(f"claude.{member}.model must be one of {', '.join(MODELS)}")
+            model = None
+        if effort is not None and effort not in EFFORTS:
+            problems.append(f"claude.{member}.effort must be one of {', '.join(EFFORTS)}")
+            effort = None
+        choice = ClaudeChoice(model, effort)
+        if not choice.is_default():
+            found[member] = choice
+    return found
+
+
+def claude_choice_for(member: str, config: "EnginesConfig") -> ClaudeChoice | None:
+    """D139: the member's choice, or None (the subscription's default) when the file holds none."""
+    return config.claude.get(member)
 
 
 def _parse_quality_floor(raw: Any, problems: list[str]) -> dict[str, Mapping[str, str]]:

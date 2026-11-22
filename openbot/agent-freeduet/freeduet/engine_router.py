@@ -87,6 +87,7 @@ from .engines import (
     exclusion_reason,
     is_free_cloud,
     ledger_engine_ids,
+    claude_choice_for,
     order_logins_first,
     ordered_chain,
     paid_gateway_gap,
@@ -300,6 +301,11 @@ class Router:
         running = [e for e in ordered_chain(member_id, self.config) if e.id in self.adapters]
         return [e.id for e in order_logins_first(running)]
 
+    def _claude(self, member_id: str) -> dict:
+        """D139: the member's Claude model and effort as the file has them; ``None`` is the subscription's default."""
+        choice = claude_choice_for(member_id, self.config)
+        return {"model": choice.model if choice else None, "effort": choice.effort if choice else None}
+
     def engaged(self, member_id: str) -> bool:
         """More than one engine to walk, or a pin, or a paid gateway the person put in the chain and switched on, which
         FreeDuet does not run (the turn goes through here then, so that the person is told why that gateway did not
@@ -329,7 +335,7 @@ class Router:
                 engine = self.config.engines.get(engine_id)
                 left_out.append({"id": engine_id, "why": (exclusion_code(engine, self.config) if engine else None) or "not_set_up"})
             choice = switching_for(member_id, self.config)
-            members.append({"id": member_id, "chain": running, "left_out": left_out, "mode": choice.mode, "pin": choice.pin, "own_order": member_id in self.config.own_order, "recommended_chain": self._recommended(member_id)})
+            members.append({"id": member_id, "chain": running, "left_out": left_out, "mode": choice.mode, "pin": choice.pin, "own_order": member_id in self.config.own_order, "recommended_chain": self._recommended(member_id), "claude": self._claude(member_id)})
         return members
 
     def _is_paid_left_out(self, engine: Engine | None) -> bool:
@@ -548,6 +554,7 @@ class Router:
             stream = run_segment(
                 sub, member, notes, attempt, announce=False, extra_notes=tuple(attempt_notes),
                 light=is_light(engine), context_tokens=context_limit(engine),
+                claude_choice=claude_choice_for(member.id, self.config) if self.adapters[key].key == "claude-code" else None,
             )
             held: dict | None = None
             saw_output, finished = False, False
