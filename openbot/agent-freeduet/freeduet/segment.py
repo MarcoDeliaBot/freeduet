@@ -238,7 +238,7 @@ class _InboxSink:
 async def run_segment(run: RunInput, member: Member, notes: SegmentNotes | None = None,
                       engine: EngineAdapter | None = None, *, announce: bool = True,
                       extra_notes: tuple[str, ...] = (), light: bool = False,
-                      context_tokens: int | None = None) -> AsyncIterator[dict]:
+                      context_tokens: int | None = None, claude_choice=None) -> AsyncIterator[dict]:
     """`announce=False` and `extra_notes` are for the engine chain (engine_router.py), which runs this once per
     engine it tries inside one turn: it has already sent RUN_STARTED, and tells the next engine what happened.
     `light` is the light turn of a local model (D108; transcript.py, LIGHT_*): a smaller system text and only the tools of
@@ -321,7 +321,7 @@ async def run_segment(run: RunInput, member: Member, notes: SegmentNotes | None 
             ready = asyncio.get_running_loop().create_future()
             turn = TurnContext(
                 rendered.system, rendered.prompt, directory, work, diagnostics, rendered.pictures, rendered.picture_prompt,
-                light=light,
+                light=light, claude_choice=claude_choice,
             )
             engine_task = asyncio.create_task(engine.run_turn(turn, _InboxSink(inbox, ready), Gate(port, host.secret)))
             await asyncio.wait({engine_task, ready}, return_when=asyncio.FIRST_COMPLETED)
@@ -364,7 +364,7 @@ async def run_segment(run: RunInput, member: Member, notes: SegmentNotes | None 
                         with suppress(asyncio.CancelledError, Exception):
                             await previous
                     second = TurnContext(
-                        again.system, again.prompt, directory, work, diagnostics, (), None, light=light
+                        again.system, again.prompt, directory, work, diagnostics, (), None, light=light, claude_choice=claude_choice
                     )
                     sink = _InboxSink(inbox, asyncio.get_running_loop().create_future(), generation)
 

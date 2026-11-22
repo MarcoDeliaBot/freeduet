@@ -25,7 +25,7 @@ import tempfile
 from contextlib import suppress
 from pathlib import Path
 
-from . import agui
+from . import agui, claude_choice
 from .bridge import ipc
 from .claude_status import MISSING_SENTENCE, NOT_SIGNED_IN_SENTENCE
 from .engine_adapter import COULD_NOT_RUN, NOT_INSTALLED, TIMED_OUT, UNREADABLE, ProbeResult
@@ -162,12 +162,14 @@ PICTURE_INPUT_ARGS = ["--input-format", "stream-json"]
 
 
 def build_command(
-    executable: str, mcp_config: Path, system_text: str, directory: Path, pictures: bool = False, replace_system: bool = False
+    executable: str, mcp_config: Path, system_text: str, directory: Path, pictures: bool = False, replace_system: bool = False,
+    choice: "claude_choice.ClaudeChoice | None" = None,
 ) -> list[str]:
     """A member's segment: the lockdown, the freeduet bridge as the only MCP server. With `pictures` the
-    CLI reads its input as stream-json (D72); without, the command is what it always was."""
+    CLI reads its input as stream-json (D72); without, the command is what it always was. `choice` (D139) adds `--model` and
+    `--effort` for the words of the closed lists only (claude_choice.py); None adds nothing."""
     extra = PICTURE_INPUT_ARGS if pictures else []
-    return [executable, *LOCKDOWN_ARGS, *extra, "--mcp-config", str(mcp_config), *_system_args(system_text, directory, replace_system)]
+    return [executable, *LOCKDOWN_ARGS, *extra, *claude_choice.args(choice), "--mcp-config", str(mcp_config), *_system_args(system_text, directory, replace_system)]
 
 
 def picture_input(prompt: str, pictures) -> bytes:

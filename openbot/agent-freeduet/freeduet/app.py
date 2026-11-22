@@ -23,6 +23,7 @@ from fastapi.responses import JSONResponse, StreamingResponse
 from . import agui, checkpoints, claude_cli, claude_status, engine_choices, engine_panel, engine_router, engine_state, origin, report, team_log, usage_counter
 from .claude_engine import ClaudeEngine
 from .engine_adapter import EngineAdapter
+from .engines import claude_choice_for
 from .members import MemberError, load_prompts, resolve_member
 from .segment import SegmentNotes, run_segment
 
@@ -102,6 +103,14 @@ def _engine_for_a_turn() -> EngineAdapter | None:
         return _engine_state().recorded(ClaudeEngine())
     except Exception:  # noqa: BLE001
         log.warning("engine state unavailable: this turn is not recorded", exc_info=True)
+        return None
+
+
+def _claude_choice(router, member_id: str):
+    """D139: the member's Claude model and effort from the engines file in use; None (no flag) when there is no file or none is set."""
+    try:
+        return claude_choice_for(member_id, router.config) if router is not None else None
+    except Exception:  # noqa: BLE001 - a choice that cannot be read is the subscription's default, never a failed turn
         return None
 
 
@@ -217,6 +226,21 @@ async def engines_panel_order(member: str, request: Request):
             result = engine_panel.apply_order(
                 member, body.get("order"), current=shown, confirmed=body.get("confirmed", False)
             )
+            if result["changed"]:
+                _apply_file_change()
+    except engine_panel.PanelRefused as error:
+        return _refusal(error)
+    return JSONResponse(result, headers={"Cache-Control": "no-store"})
+
+
+@app.put("/engines/panel/members/{member}/claude")
+async def engines_panel_claude(member: str, request: Request):
+    """D139: one member's Claude model and effort. The body is {"model": word|null, "effort": word|null}; a word off the closed
+    lists is refused (claude_choice.py), and null is the subscription's default."""
+    body = await _json_body(request)
+    try:
+        async with engine_panel._lock:
+            result = engine_panel.apply_claude_choice(member, body.get("model"), body.get("effort"))
             if result["changed"]:
                 _apply_file_change()
     except engine_panel.PanelRefused as error:
@@ -402,7 +426,7 @@ async def _events(run: agui.RunInput) -> AsyncIterator[dict]:
     if router is not None and router.engaged(member.id):  # a chain of more than one engine, or a pin (ENGINES_PLAN slice 3)
         stream = router.run(run, member, summary.notes)
     else:  # the default install: Claude Code alone, exactly as before
-        stream = run_segment(run, member, summary.notes, _engine_for_a_turn())
+        stream = run_segment(run, member, summary.notes, _engine_for_a_turn(), claude_choice=_claude_choice(router, member.id))
     try:
         async for event in stream:
             started = started or event["type"] == "RUN_STARTED"
