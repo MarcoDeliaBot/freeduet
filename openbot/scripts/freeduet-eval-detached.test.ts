@@ -180,6 +180,14 @@ describe("refusals", () => {
     expect(result.err).toContain("SERVER_PORT");
   });
 
+  test("ignores 3010 in a comment line, as the example env file has", () => {
+    const root = tree(
+      `${GOOD_ENV}# OPENBOT_APP_URL=http://localhost:3010\n  # PORT=3010\n`,
+    );
+    const result = run(root, ["--dry-run"]);
+    expect(result.code).toBe(0);
+  });
+
   test("does not mistake another port that ends in 3010 for 3010", () => {
     const root = tree(`${GOOD_ENV}FREEDUET_EVAL_NOTE=13010\n`);
     const result = run(root, ["--dry-run"]);
