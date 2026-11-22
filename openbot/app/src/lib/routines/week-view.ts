@@ -37,12 +37,7 @@ export function weekWindow(now: Date): { from: string; to: string } {
   };
 }
 
-export type RunStatus =
-  | "upcoming"
-  | "done"
-  | "failed"
-  | "running"
-  | "missed";
+export type RunStatus = "upcoming" | "done" | "failed" | "running" | "missed";
 
 /** One run to place: an instant the server gave, and what became of it (upcoming for a future one). */
 export type WeekRun = {
@@ -188,8 +183,8 @@ export type WeekModel = {
   showWeekend: boolean;
   firstHour: number;
   lastHour: number;
-  /** Where the "now" line goes: minutes after local midnight, or null when it is outside the grid. */
-  nowMin: number | null;
+  /** Where the "now" line goes: minutes after local midnight. */
+  nowMin: number;
   next: NextRun | null;
   routinesOnGrid: number;
 };
@@ -270,8 +265,11 @@ export function buildWeek(input: {
   for (const group of groups.values()) {
     const items = group.items.sort((a, b) => a.at.getTime() - b.at.getTime());
     const minutes = items.map((item) => item.hour * 60 + item.minute);
-    const gaps = minutes.slice(1).map((minute, i) => minute - (minutes[i] ?? 0));
-    const frequent = items.length >= 2 && Math.min(...gaps) < SUMMARY_GAP_MINUTES;
+    const gaps = minutes
+      .slice(1)
+      .map((minute, i) => minute - (minutes[i] ?? 0));
+    const frequent =
+      items.length >= 2 && Math.min(...gaps) < SUMMARY_GAP_MINUTES;
     const list = blocksByDay.get(group.dayKey);
     if (!list) continue;
     const base = {
@@ -333,15 +331,25 @@ export function buildWeek(input: {
   const showWeekend = columns.some(
     (column) => column.index >= 5 && column.blocks.length > 0,
   );
-  const earliest = Math.min(DEFAULT_FIRST_HOUR * 60, ...all.map((b) => b.startMin));
-  const latest = Math.max(DEFAULT_LAST_HOUR * 60, ...all.map((b) => b.endMin));
-  const firstHour = Math.floor(earliest / 60);
-  const lastHour = Math.min(24, Math.ceil(latest / 60));
-
   const today = partsOf(now, zone);
   const nowMin = today.hour * 60 + today.minute;
+  // The grid grows to hold the "now" line too, so it is never cut off before the first block of the day.
+  const earliest = Math.min(
+    DEFAULT_FIRST_HOUR * 60,
+    nowMin,
+    ...all.map((b) => b.startMin),
+  );
+  const latest = Math.max(
+    DEFAULT_LAST_HOUR * 60,
+    nowMin,
+    ...all.map((b) => b.endMin),
+  );
+  const firstHour = Math.floor(earliest / 60);
+  const lastHour = Math.min(24, Math.ceil(latest / 60));
   const upcoming = runs
-    .filter((run) => run.status === "upcoming" && run.at.getTime() > now.getTime())
+    .filter(
+      (run) => run.status === "upcoming" && run.at.getTime() > now.getTime(),
+    )
     .filter((run) => byId.has(run.routineId))
     .sort((a, b) => a.at.getTime() - b.at.getTime())[0];
   const nextRoutine = upcoming ? byId.get(upcoming.routineId) : undefined;
@@ -351,7 +359,7 @@ export function buildWeek(input: {
     showWeekend,
     firstHour,
     lastHour,
-    nowMin: nowMin >= firstHour * 60 && nowMin <= lastHour * 60 ? nowMin : null,
+    nowMin,
     next:
       upcoming && nextRoutine
         ? { routine: nextRoutine, agentId: upcoming.agentId, at: upcoming.at }
