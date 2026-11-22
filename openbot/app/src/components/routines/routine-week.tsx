@@ -1,7 +1,7 @@
 import { IconAlertTriangle, IconCheck } from "@tabler/icons-react";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
-import { type CSSProperties, useMemo, useState } from "react";
+import { type CSSProperties, useEffect, useMemo, useState } from "react";
 import { PageEmpty } from "@/components/layout/page-shell";
 import type { RoutineRecord } from "@/lib/routines/queries";
 import {
@@ -20,6 +20,7 @@ import {
   routineTitle,
   type WeekBlock,
   type WeekRun,
+  weekDays,
   weekWindow,
 } from "@/lib/routines/week-view";
 import { cn } from "@/lib/utils";
@@ -51,9 +52,27 @@ export function RoutineWeek({
   zone?: string;
 }) {
   const names = useBotNames();
-  // Fixed when the view opens: a window that moved on every render would refetch on every render.
-  const [opened] = useState(() => fixedNow ?? new Date());
   const zone = fixedZone ?? deviceZone();
+  // The clock moves each minute (and when the tab comes back); the window asked for only moves when the
+  // day changes, because a window that moved on every tick would refetch on every tick.
+  const [clock, setClock] = useState(() => fixedNow ?? new Date());
+  const [opened, setOpened] = useState(clock);
+  useEffect(() => {
+    if (fixedNow) return;
+    const tick = () => setClock(new Date());
+    const timer = setInterval(tick, 60_000);
+    window.addEventListener("focus", tick);
+    document.addEventListener("visibilitychange", tick);
+    return () => {
+      clearInterval(timer);
+      window.removeEventListener("focus", tick);
+      document.removeEventListener("visibilitychange", tick);
+    };
+  }, [fixedNow]);
+  useEffect(() => {
+    const day = (at: Date) => weekDays(at, zone).find((d) => d.isToday)?.key;
+    if (day(clock) !== day(opened)) setOpened(clock);
+  }, [clock, opened, zone]);
   const calendar = useQuery(
     routineCalendarQueryOptions({ ...weekWindow(opened), agentId }),
   );
@@ -63,7 +82,7 @@ export function RoutineWeek({
     const list: WeekRun[] = [];
     for (const run of history.data ?? []) {
       const at = new Date(run.startedAt);
-      if (at.getTime() <= opened.getTime()) {
+      if (at.getTime() <= clock.getTime()) {
         list.push({
           routineId: run.routineId,
           agentId: run.agentId,
@@ -75,6 +94,8 @@ export function RoutineWeek({
       }
     }
     for (const run of calendar.data?.runs ?? []) {
+      // Asked for when the day began or the tab opened: one that has since passed is the history's now.
+      if (new Date(run.at).getTime() <= clock.getTime()) continue;
       list.push({
         routineId: run.routineId,
         agentId: run.agentId,
@@ -83,11 +104,11 @@ export function RoutineWeek({
       });
     }
     return list;
-  }, [calendar.data, history.data, opened]);
+  }, [calendar.data, history.data, clock]);
 
   const week = useMemo(
-    () => buildWeek({ runs, routines, now: opened, zone }),
-    [runs, routines, opened, zone],
+    () => buildWeek({ runs, routines, now: clock, zone }),
+    [runs, routines, clock, zone],
   );
 
   if (calendar.isPending) return null;
@@ -247,6 +268,11 @@ export function RoutineWeek({
         <p className="mt-1 text-muted-foreground text-xs">
           Only the first runs in the next days are listed, so a very busy
           routine may not show every day.
+        </p>
+      ) : null}
+      {history.error ? (
+        <p className="mt-1 text-muted-foreground text-xs" role="status">
+          Runs that already happened could not be loaded, so they are not shown.
         </p>
       ) : null}
       <p className="mt-1 text-muted-foreground text-xs">

@@ -9,6 +9,7 @@ import {
   buildWeek,
   readRememberedView,
   rememberView,
+  summaryStatus,
   VIEW_STORAGE_KEY,
   type WeekRun,
   weekDays,
@@ -339,4 +340,47 @@ test("the remembered view: the list unless Week was chosen, and a broken store n
   };
   expect(readRememberedView(broken)).toBe("routines");
   expect(() => rememberView("week", broken)).not.toThrow();
+});
+
+test("a day's summary status: a failure is never hidden, then running, upcoming, done, missed", () => {
+  expect(summaryStatus(["done", "failed", "done"])).toBe("failed");
+  expect(summaryStatus(["failed", "upcoming"])).toBe("failed");
+  expect(summaryStatus(["done", "running", "upcoming"])).toBe("running");
+  expect(summaryStatus(["done", "upcoming"])).toBe("upcoming");
+  expect(summaryStatus(["done", "done"])).toBe("done");
+  expect(summaryStatus(["missed", "done"])).toBe("missed");
+  expect(summaryStatus(["missed", "missed"])).toBe("missed");
+});
+
+test("summary blocks of past runs carry the failed and running status", () => {
+  const runsOf = (statuses: WeekRun["status"][]): WeekRun[] =>
+    statuses.map((status, i) => ({
+      routineId: "busy",
+      agentId: "inbox",
+      at: new Date(Date.UTC(2026, 10, 17, 8, i * 10)),
+      status,
+    }));
+  const build = (statuses: WeekRun["status"][]) =>
+    buildWeek({
+      runs: runsOf(statuses),
+      routines: [routine("busy", "x")],
+      now: NOW,
+      zone: ROME,
+    }).columns.flatMap((c) => c.blocks)[0];
+  expect(build(["failed", "failed", "failed"])?.status).toBe("failed");
+  expect(build(["done", "done", "running"])?.status).toBe("running");
+  expect(build(["done", "done", "done"])?.status).toBe("done");
+});
+
+test("a block never ends after midnight: 23:30 is clamped to 24:00", () => {
+  const model = buildWeek({
+    runs: expand(NOW, { late: "30 23 * * 4" }),
+    routines: [routine("late", "x")],
+    now: NOW,
+    zone: ROME,
+  });
+  const block = dayOf(model, "2026-11-19").blocks[0];
+  expect(block?.startMin).toBe(23 * 60 + 30);
+  expect(block?.endMin).toBe(24 * 60);
+  expect(model.lastHour).toBe(24);
 });

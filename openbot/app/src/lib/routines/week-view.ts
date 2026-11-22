@@ -189,6 +189,17 @@ export type WeekModel = {
   routinesOnGrid: number;
 };
 
+/** One status for a day's many runs: a failure is never hidden by the runs around it. */
+export function summaryStatus(statuses: readonly RunStatus[]): RunStatus {
+  if (statuses.includes("failed")) return "failed";
+  if (statuses.includes("running")) return "running";
+  if (statuses.includes("upcoming")) return "upcoming";
+  if (statuses.every((status) => status === "done")) return "done";
+  return "missed";
+}
+
+const MINUTES_PER_DAY = 24 * 60;
+
 function median(values: number[]): number {
   const sorted = [...values].sort((a, b) => a - b);
   const mid = Math.floor(sorted.length / 2);
@@ -289,16 +300,15 @@ export function buildWeek(input: {
         id: `${group.routine.id}|${group.dayKey}|summary`,
         agentId: first.agentId,
         startMin,
-        endMin: Math.max(lastMin + 1, startMin + BLOCK_MINUTES),
+        endMin: Math.min(
+          MINUTES_PER_DAY,
+          Math.max(lastMin + 1, startMin + BLOCK_MINUTES),
+        ),
         at: first.at,
         kind: "summary",
         count: items.length,
         everyMinutes: Math.max(1, Math.round(median(gaps))),
-        status: items.some((item) => item.status === "upcoming")
-          ? "upcoming"
-          : doneCount === items.length
-            ? "done"
-            : "missed",
+        status: summaryStatus(items.map((item) => item.status)),
         doneCount,
       });
     } else {
@@ -309,7 +319,8 @@ export function buildWeek(input: {
           id: `${group.routine.id}|${group.dayKey}|${startMin}`,
           agentId: item.agentId,
           startMin,
-          endMin: startMin + BLOCK_MINUTES,
+          // A block never runs past midnight into the next day's column.
+          endMin: Math.min(MINUTES_PER_DAY, startMin + BLOCK_MINUTES),
           at: item.at,
           kind: "single",
           count: 1,

@@ -243,3 +243,19 @@ test("empty states: no routines, and none switched on", async () => {
     ),
   ).toBeTruthy();
 });
+
+test("when the history cannot be loaded the week says so instead of staying silent", async () => {
+  serving([inbox], upcoming);
+  const ok = global.fetch;
+  global.fetch = (async (input: RequestInfo | URL, init?: RequestInit) =>
+    String(input).startsWith("/api/routines/runs")
+      ? Response.json({ error: "down" }, { status: 500 })
+      : ok(input, init)) as typeof fetch;
+  const view = draw(() => (
+    <RoutineWeek now={NOW} routines={[inbox]} zone={ZONE} />
+  ));
+  const grid = await view.findByLabelText("This week");
+  await within(grid).findByText(/could not be loaded/);
+  // The upcoming runs are still drawn.
+  expect(within(grid).getByRole("link", { name: /Thu 09:00/ })).toBeTruthy();
+});
