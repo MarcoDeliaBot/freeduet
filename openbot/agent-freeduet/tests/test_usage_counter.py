@@ -7,6 +7,7 @@ never zero. Counts only: no text, no key.
 
 from __future__ import annotations
 
+import base64
 import json
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
@@ -81,7 +82,7 @@ def test_it_survives_a_restart_and_keeps_only_counts(tmp_path):
     path = tmp_path / "u.json"
     TokenCounter(path, now=lambda: NOON).record("m", "e", Usage(7, 3))
     assert TokenCounter(path, now=lambda: NOON).view()["rows"][0]["today"]["input_tokens"] == 7
-    assert set(json.loads(path.read_text())) == {"version", "days"}
+    assert set(json.loads(path.read_text())) == {"version", "days", "sources"}
 
 
 def test_a_damaged_file_is_said_and_never_overwritten(tmp_path):
@@ -179,9 +180,9 @@ def test_a_segment_is_timed_from_its_start_to_its_end_with_a_fake_clock(client, 
     started = []
     real = usage_counter.note_turn
 
-    def note(member, engine, health, seconds=0):
+    def note(member, engine, health, seconds=0, source="other"):
         started.append(seconds)
-        real(member, engine, health, seconds)
+        real(member, engine, health, seconds, source)
 
     monkeypatch.setattr(usage_counter, "note_turn", note)
     fake_cli.plan([{"text": "Hello there."}])
@@ -237,3 +238,109 @@ def test_the_view_carries_the_class_and_an_unknown_class_is_other(tmp_path):
     assert {row["engine"]: row["class"] for row in view["engines"]} == {"ollama": "local", "plan": "other"}
     (local,) = [row for row in view["rows"] if row["engine"] == "ollama"]
     assert local["week"]["seconds"] == 2400 and local["week"]["reported_turns"] == 0 and local["week"]["input_tokens"] == 0
+
+
+# ── D134: where a run came from, and the daily series ───────────────────────────────────────────────────────
+
+def signed(kind=None, **claims):
+    body = dict(claims)
+    if kind is not None:
+        body["initiator"] = {"kind": kind}
+    payload = base64.urlsafe_b64encode(json.dumps(body).encode()).decode().rstrip("=")
+    return f"{payload}.signature"
+
+
+@pytest.mark.parametrize(
+    ("assertion", "expected"),
+    [
+        (signed("person"), "person"),
+        (signed("remote"), "person"),
+        (signed("routine"), "routine"),
+        (signed("responsibility"), "routine"),
+        (signed("handoff"), "handoff"),
+        (signed("person", depth=1), "handoff"),  # a hop is a hop whatever else the statement says
+        (signed("deployment"), "other"),
+        (signed("memory"), "other"),
+        (signed("something-new"), "other"),
+        (signed(), "other"),
+        ("not-a-statement", "other"),
+        ("", "other"),
+    ],
+)
+def test_the_source_is_read_from_the_signed_run_statement(assertion, expected):
+    assert usage_counter.source_of([{"id": "u1", "role": "user", "content": "hi"}], assertion) == expected
+
+
+def test_a_handoff_envelope_is_a_handoff_even_with_a_person_statement():
+    hop = [{"id": "handoff-r1", "role": "user", "content": "freeduet has asked you to help with this, on behalf of the person in this conversation."}]
+    assert usage_counter.source_of(hop, signed("person")) == "handoff"
+    assert usage_counter.source_of(None, None) == "other"
+
+
+def test_each_source_is_counted_apart_and_the_totals_do_not_change(tmp_path):
+    counter = TokenCounter(tmp_path / "u.json", now=lambda: NOON)
+    counter.record("m", "e", Usage(100, 10), source="person", seconds=5)
+    counter.record("m", "e", Usage(50, 5), source="routine")
+    counter.record("n", "e", Usage(7, 1), source="handoff")
+    counter.record("n", "e", None, source="no-such-source")  # an unknown label is "other", never a new key
+    view = counter.view()
+    today = view["daily"][-1]
+    assert today["day"] == "2026-11-21"
+    assert {k: (v["input_tokens"], v["output_tokens"]) for k, v in today["sources"].items()} == {
+        "person": (100, 10), "routine": (50, 5), "handoff": (7, 1), "other": (0, 0),
+    }
+    assert today["sources"]["person"]["seconds"] == 5
+    assert {k: v["input_tokens"] for k, v in today["members"].items()} == {"m": 150, "n": 7}
+    assert sum(row["week"]["input_tokens"] for row in view["rows"]) == 157  # the old totals are the same numbers
+
+
+def test_the_daily_series_is_seven_utc_days_oldest_first_with_empty_days_present(tmp_path):
+    counter = TokenCounter(tmp_path / "u.json", now=lambda: NOON)
+    counter.record("m", "e", Usage(1, 1), at=NOON - timedelta(days=6), source="person")
+    counter.record("m", "e", Usage(9, 9), at=NOON - timedelta(days=7), source="person")  # outside the window
+    daily = counter.view()["daily"]
+    assert [d["day"] for d in daily] == [(NOON - timedelta(days=n)).strftime("%Y-%m-%d") for n in range(6, -1, -1)]
+    assert daily[0]["sources"]["person"]["input_tokens"] == 1
+    assert daily[3] == {"day": "2026-11-18", "sources": {}, "members": {}}
+
+
+def test_a_file_written_before_sources_is_read_and_its_days_are_unknown(tmp_path):
+    path = tmp_path / "u.json"
+    counts = {"turns": 2, "reported_turns": 2, "input_tokens": 30, "output_tokens": 4, "cache_read_tokens": 0, "cache_write_tokens": 0, "seconds": 9}
+    path.write_text(json.dumps({"version": 1, "days": {"2026-11-20": {"m": {"e": counts}}}}))
+    counter = TokenCounter(path, now=lambda: NOON)
+    view = counter.view()
+    assert view["problem"] is False and len(view["rows"]) == 1
+    assert view["daily"][-2]["sources"] == {"unknown": counts}
+    counter.record("m", "e", Usage(5, 1), source="person")  # a new count keeps the old day readable and adds a source
+    again = TokenCounter(path, now=lambda: NOON).view()
+    assert again["problem"] is False
+    assert again["daily"][-2]["sources"] == {"unknown": counts}
+    assert again["daily"][-1]["sources"]["person"]["input_tokens"] == 5
+    assert "unknown" not in again["daily"][-1]["sources"]
+
+
+def test_a_malformed_sources_block_is_damaged_and_never_overwritten(tmp_path):
+    path = tmp_path / "u.json"
+    for bad in ({"2026-11-21": {"stranger": {}}}, {"2026-11-21": {"person": {"m": {"turns": -1}}}}, [], "x"):
+        path.write_text(json.dumps({"version": 1, "days": {}, "sources": bad}))
+        before = path.read_text()
+        counter = TokenCounter(path, now=lambda: NOON)
+        counter.record("m", "e", Usage(1, 1), source="person")
+        assert counter.view()["problem"] is True
+        assert path.read_text() == before
+
+
+def test_a_service_turn_is_counted_under_its_source(client, fake_cli):
+    from helpers import ASSERTION  # noqa: F401 - the default statement is not a readable one: "other"
+
+    fake_cli.plan([{"text": "Hello there."}])
+    post_run(client, run_body(ASK))
+    body = client.get("/engines/usage", headers=AUTH).json()
+    assert list(body["daily"][-1]["sources"]) == ["other"]
+    fake_cli.plan([{"text": "Hello there."}])
+    request = run_body(ASK, run_id="run-2")
+    request["forwardedProps"]["openbotRun"] = signed("person")
+    post_run(client, request)
+    body = client.get("/engines/usage", headers=AUTH).json()
+    assert body["daily"][-1]["sources"]["person"]["turns"] == 1 and body["daily"][-1]["sources"]["other"]["turns"] == 1
