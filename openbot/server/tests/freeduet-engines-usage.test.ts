@@ -231,7 +231,11 @@ describe("GET /api/freeduet/engines/usage: the same authority as the Engines pag
     expect(body.daily[0].sources.person.inputTokens).toBe(1200);
     expect(body.daily[0].sources.routine.inputTokens).toBe(0);
     expect(Object.keys(body.daily[0].members)).toEqual(["creator"]);
-    expect(body.daily[1]).toEqual({ day: "2026-11-21", sources: {}, members: {} });
+    expect(body.daily[1]).toEqual({
+      day: "2026-11-21",
+      sources: {},
+      members: {},
+    });
     expect(text).not.toContain("<b>");
     expect(agent.seen.length).toBe(1);
     expect(agent.paths).toEqual(["/engines/usage"]);

@@ -27,12 +27,29 @@ export type TokenRow = {
   week: TokenCounts;
 };
 
+/** D134: where a run came from. `unknown` is what a day's total holds that no source accounts for (counted before sources were kept). */
+export type TokenSource =
+  | "person"
+  | "routine"
+  | "handoff"
+  | "other"
+  | "unknown";
+
+/** D134: one UTC day of the last seven. */
+export type TokenDay = {
+  day: string;
+  sources: Partial<Record<TokenSource, TokenCounts>>;
+  members: Record<string, TokenCounts>;
+};
+
 export type TokenUsage = {
   reason: "off" | "not_set_up" | "unreachable" | null;
   timezone: "UTC";
   windowDays: number;
   rows: TokenRow[];
   engines: TokenRow[];
+  /** D134: absent from a server that is older than the charts. */
+  daily?: TokenDay[];
   problem: boolean;
 };
 
@@ -206,4 +223,178 @@ export function tokensCell(counts: TokenCounts): {
       ? `${counts.reportedTurns} of ${counts.turns} attempts reported`
       : null;
   return { text, note: partial, time };
+}
+
+// ── D134: the breakdown and the daily chart ───────────────────────────────────────────────────────────────────
+
+export type Breakdown = "source" | "member";
+export type Metric = "tokens" | "time";
+
+export const BREAKDOWN_LABELS: Record<Breakdown, string> = {
+  source: "By source",
+  member: "By member",
+};
+export const METRIC_LABELS: Record<Metric, string> = {
+  tokens: "Tokens",
+  time: "Time",
+};
+export const SOURCE_ORDER: readonly TokenSource[] = [
+  "person",
+  "routine",
+  "handoff",
+  "other",
+  "unknown",
+];
+export const SOURCE_LABELS: Record<TokenSource, string> = {
+  person: "You",
+  routine: "Routines",
+  handoff: "Between members",
+  other: "Other",
+  unknown: "Before sources were recorded",
+};
+export const USAGE_TITLE = "Where the last 7 days went";
+export const USAGE_NOTE =
+  'Shares are of the tokens the engines reported (input plus output); attempts that reported none add time only. "You" is your own messages, "Routines" is routines and check-ins, "Between members" is hand-offs, and "Other" is anything else, such as a deployment\'s own runs.';
+export const USAGE_NOTHING = "Nothing was counted in the last 7 days.";
+export const CHARTS_FAILED =
+  "The usage charts could not be drawn. The table below is not affected.";
+export const REST_MEMBERS = "Other members";
+export const REST_KEY = "~rest";
+/** Said where a weekly gauge would be: the subscription does not tell FreeDuet its limit, so no percentage is shown. */
+export const LIMIT_TITLE = "Plan limits";
+export const LIMIT_NONE = "No engine is held back by a limit right now.";
+export const LIMIT_NOTE =
+  "A percentage of your plan's weekly limit is not shown: the subscription does not report it to FreeDuet. An engine says so only when it has reached a limit, with the time it is expected back.";
+const MAX_MEMBER_SERIES = 5;
+
+export function metricValue(
+  counts: TokenCounts | undefined,
+  metric: Metric,
+): number {
+  if (!counts) return 0;
+  return metric === "tokens"
+    ? counts.inputTokens + counts.outputTokens
+    : counts.seconds;
+}
+
+export type SeriesPart = {
+  key: string;
+  label: string;
+  value: number;
+  /** 0 to 100, of the whole week's total for this metric; 0 when the total is 0. */
+  share: number;
+};
+
+export type UsageView = {
+  keys: { key: string; label: string }[];
+  total: number;
+  parts: SeriesPart[];
+  /** One entry per day, oldest first, with the value of each key. */
+  days: { day: string; values: Record<string, number>; total: number }[];
+};
+
+/**
+ * The week's breakdown and the daily series, for one way of splitting (by source or by member) and one metric. Pure: the same
+ * keys, in the same order, are used by the bar, the legend and the chart, so a colour always means the same thing. By member,
+ * the five busiest stay and the rest are one "Other members" part.
+ */
+export function usageView(
+  daily: TokenDay[],
+  breakdown: Breakdown,
+  metric: Metric,
+  memberName: (id: string) => string,
+): UsageView {
+  const perDay = daily.map((day) => {
+    const values: Record<string, number> = {};
+    const source = breakdown === "source" ? day.sources : day.members;
+    for (const [key, counts] of Object.entries(source)) {
+      const value = metricValue(counts, metric);
+      if (value > 0) values[key] = value;
+    }
+    return { day: day.day, values };
+  });
+  const weekly = new Map<string, number>();
+  for (const day of perDay)
+    for (const [key, value] of Object.entries(day.values))
+      weekly.set(key, (weekly.get(key) ?? 0) + value);
+  let ordered: string[];
+  if (breakdown === "source") {
+    ordered = SOURCE_ORDER.filter((key) => weekly.has(key));
+  } else {
+    ordered = [...weekly.keys()].sort(
+      (a, b) =>
+        (weekly.get(b) ?? 0) - (weekly.get(a) ?? 0) || a.localeCompare(b),
+    );
+  }
+  const kept =
+    breakdown === "member" ? ordered.slice(0, MAX_MEMBER_SERIES) : ordered;
+  const rest = breakdown === "member" ? ordered.slice(MAX_MEMBER_SERIES) : [];
+  const days = perDay.map((day) => {
+    const values: Record<string, number> = {};
+    let restValue = 0;
+    for (const [key, value] of Object.entries(day.values)) {
+      if (kept.includes(key)) values[key] = value;
+      else restValue += value;
+    }
+    if (restValue > 0) values[REST_KEY] = restValue;
+    const total = Object.values(values).reduce((sum, v) => sum + v, 0);
+    return { day: day.day, values, total };
+  });
+  const label = (key: string) =>
+    key === REST_KEY
+      ? REST_MEMBERS
+      : breakdown === "source"
+        ? SOURCE_LABELS[key as TokenSource]
+        : memberName(key);
+  const keys = [...kept, ...(rest.length > 0 ? [REST_KEY] : [])].map((key) => ({
+    key,
+    label: label(key),
+  }));
+  const total = days.reduce((sum, day) => sum + day.total, 0);
+  const parts = keys.map(({ key, label: text }) => {
+    const value = days.reduce((sum, day) => sum + (day.values[key] ?? 0), 0);
+    return {
+      key,
+      label: text,
+      value,
+      share: total > 0 ? (value / total) * 100 : 0,
+    };
+  });
+  return { keys, total, parts, days };
+}
+
+/** "63%", "3.4%", "0.3%" and "under 0.1%": one decimal below ten, none from ten up. */
+export function percentText(share: number): string {
+  if (!(share > 0)) return "0%";
+  if (share < 0.1) return "under 0.1%";
+  if (share < 10) return `${share.toFixed(1).replace(/\.0$/, "")}%`;
+  return `${Math.round(share)}%`;
+}
+
+/** The value of one part, in the unit of the metric: "1.2M tokens" or "3 h 20 min". */
+export function metricText(value: number, metric: Metric): string {
+  if (metric === "tokens") return `${compactTokens(value)} tokens`;
+  return formatDuration(value) ?? "0 min";
+}
+
+/** "Sat 21" for a UTC day, and "Today" for the last one. A day that is not a date is shown as it is. */
+export function dayLabel(day: string, isToday: boolean): string {
+  if (isToday) return "Today";
+  const moment = new Date(`${day}T00:00:00Z`);
+  if (Number.isNaN(moment.getTime())) return day;
+  return new Intl.DateTimeFormat("en-GB", {
+    weekday: "short",
+    day: "numeric",
+    timeZone: "UTC",
+  }).format(moment);
+}
+
+/** A round top for the chart's scale: 1, 2, 2.5 or 5 times a power of ten, never below 1. */
+export function niceMax(value: number): number {
+  if (!(value > 1)) return 1;
+  const power = 10 ** Math.floor(Math.log10(value));
+  for (const step of [1, 2, 2.5, 5, 10]) {
+    if (step * power >= value) return step * power;
+  }
+  return 10 * power;
 }
