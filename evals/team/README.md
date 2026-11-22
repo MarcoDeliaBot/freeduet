@@ -279,3 +279,5 @@ The headline is **Thresholds: PASS, FAIL or INCOMPLETE** (see [Ungraded runs and
 Exit code: **0** when every threshold passes, **1** when one fails (or the command is refused: bad flags, a report it cannot read), **2** when none fails but the run is INCOMPLETE: part of it was not graded, so it is neither a pass nor a failure. `--regrade` exits the same way; `--public` exits 0 when it wrote the files. In fake mode, see above.
 
 The M1 result to commit is the public report of a full run on Claude Code: `reports/<date>-claude-code-public.{json,md}`, made from `reports/<date>-claude-code.json` with `--public`. The full report stays on your computer (see [Public reports](#public-reports)).
+
+**mark-7 after the re-run of 22 November 2026 (D144, `docs/M1_PLAN.md` section 100).** mark-7 passed 1 of 3 (the other runs gave only "on it" and a later list); Mark's prompt now says his own reply holds a first answer. Not run live since; the case line is unchanged.
