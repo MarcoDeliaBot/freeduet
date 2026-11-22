@@ -1843,10 +1843,7 @@ describe("D145: sentences added after the certification of 22 November 2026", ()
       "trainer",
       "say that a run on their Claude plan starts only after their own yes",
     ],
-    [
-      "trainer",
-      "(say all of this, not only the /engine-proposal job)",
-    ],
+    ["trainer", "(say all of this, not only the /engine-proposal job)"],
   ];
   test("each member's prompt holds its sentence", async () => {
     const rows = await memberRows();
