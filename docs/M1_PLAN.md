@@ -2135,3 +2135,13 @@ On a phone each count is one higher, for opening the menu, before and after. Typ
 |---|---|---|---|
 | Pin the agent-freeduet image to a newer Claude Code | Keep 2.1.311; or update the pin to 2.1.323 or later as its own change, tested on the eval stack | Update as its own change, after row 93 is measured | The pin is a change of the image, so it must not hide inside the code-mode option |
 | Reverse-engineering tool in members | Not adopted; or an optional tool the person installs, with Leo and Vera as above | The optional tool, only after the agent-mode question is answered | Keeps the subscription login as the default engine and puts the site-terms check before any generated client is used |
+
+## 91. The short menu: the five pages live in Settings (D133)
+
+**Decided 22 November 2026 by the maintainer:** "the maintainer chose a short menu: the five pages live in Settings". This withdraws the top-level entries of D129 for FreeDuet's package. The Message and Connect buttons of D129 stay.
+
+**D133.** In FreeDuet's own package the side menu (the wide column) and the menu sheet (phone) list none of Bots, Connections, Routines, Approval rules and Engines. Settings lists each of them as a row, in that order, with Engines for an administrator only (`SETTINGS_PLACES` in `app/src/routes/_authed/settings/index.tsx`). The Bots unread badge is back on the Settings row where Manage is hidden, as PR #433 had it, in the drawer and in the wide column. `flatMenuEntries` and `FLAT_MENU_ENTRIES` are removed from `app/src/freeduet/manage-group.ts`. Manage stays hidden in FreeDuet's package and drawn in any other package, as before.
+
+Each page is still three clicks at most from the menu (D125), counted as in the table of D129: Settings, Bots, New Bot: 3 to add a member; Settings, Bots, the row, Message: 3; Settings, Connections, Connect on the row: 3; Settings, Engines, the add control: 3 for an administrator. D129 had these at 2, and before D129 they were 3 to 4.
+
+**Built.** The removal and the badge in `app/src/components/shell/menu-sheet.tsx` and `app/src/freeduet/wide/team-column.tsx`; the Engines row in Settings; tests in `app/tests/flat-menu.test.tsx` (no one of the five pages as a direct link in the menu sheet or the wide column; each of the five listed in Settings; Engines admin-only; the Message and Connect buttons still drawn) and `app/tests/manage-settings-badge.test.tsx` (the badge on Settings in FreeDuet's package, on Manage elsewhere, and no Bots entry in FreeDuet's menu). Not yet run live on a phone or a wide screen; the screenshots of the desktop sidebar and the phone menu are the check that the menu reads well.

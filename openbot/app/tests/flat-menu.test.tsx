@@ -18,22 +18,31 @@ import { cleanup, fireEvent, render, waitFor } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { BotRoster } from "@/components/bots/bot-roster";
 import { MenuSheet } from "@/components/shell/menu-sheet";
-import { flatMenuEntries, showsManageGroup } from "@/freeduet/manage-group";
+import { showsManageGroup } from "@/freeduet/manage-group";
 import { Places } from "@/freeduet/wide/team-column";
 import type { AgentProfile } from "@/lib/agents/queries";
 import { authKeys } from "@/lib/auth/queries";
 import { deploymentKeys } from "@/lib/deployment/queries";
 import { appConfig } from "@/lib/generated/application-config";
 import { ConnectionItem } from "@/routes/_authed/_app/connections.index";
+import { SETTINGS_PLACES } from "@/routes/_authed/settings/index";
 import { settleReactWork } from "./settle-react-work";
 
 /*
- * D129, "three clicks at most": FreeDuet's package lists Bots, Connections, Routines and Approval
- * rules at the top level of the menu (Engines for an administrator), and gives each Bots row a
- * Message button and each one-consent Connections row a Connect button. Any other package keeps
- * Manage and plain rows. The DOM cases follow the loaded package, so run them under both generated
- * configs; the pure cases name the package.
+ * D133, "a short menu": FreeDuet's package draws no Manage group and none of the five pages (Bots,
+ * Connections, Routines, Approval rules, Engines) in the side menu or the phone's menu sheet. They
+ * live in Settings, which lists each one (Engines for an administrator). The Bots and Connections
+ * rows keep their Message and Connect buttons (D129). Any other package keeps Manage and plain rows.
+ * The DOM cases follow the loaded package, so run them under both generated configs.
  */
+
+const FIVE_PAGES = [
+  "/bots",
+  "/connections",
+  "/routines",
+  "/settings/approvals",
+  "/admin/engines",
+];
 
 beforeAll(() => GlobalRegistrator.register({ url: "http://localhost:3010" }));
 afterEach(cleanup);
@@ -47,35 +56,22 @@ afterEach(() => {
   global.fetch = originalFetch;
 });
 
-const labels = (isAdmin: boolean, tenant: string) =>
-  flatMenuEntries(isAdmin, tenant).map((entry) => entry.label);
-
-test("FreeDuet's package gets the four pages at the top level, and Engines only for an administrator", () => {
-  expect(labels(false, "freeduet")).toEqual([
-    "Bots",
-    "Connections",
-    "Routines",
-    "Approval rules",
-  ]);
-  expect(labels(true, "freeduet")).toEqual([
-    "Bots",
-    "Connections",
-    "Routines",
-    "Approval rules",
-    "Engines",
-  ]);
-  const engines = flatMenuEntries(true, "freeduet").find(
-    (entry) => entry.label === "Engines",
-  );
-  expect(engines?.to).toBe("/admin/engines");
-});
-
-test("any other package gets no top-level entries and keeps Manage", () => {
+test("FreeDuet's package keeps Manage hidden, and any other package keeps it", () => {
+  expect(showsManageGroup("freeduet")).toBe(false);
   for (const tenant of ["openduet", "fintech"]) {
-    expect(labels(true, tenant)).toEqual([]);
-    expect(labels(false, tenant)).toEqual([]);
     expect(showsManageGroup(tenant)).toBe(true);
   }
+});
+
+test("Settings lists each of the five pages, and Engines only for an administrator", () => {
+  for (const to of FIVE_PAGES) {
+    expect(SETTINGS_PLACES.some((place) => place.to === to)).toBe(true);
+  }
+  const engines = SETTINGS_PLACES.find(
+    (place) => place.to === "/admin/engines",
+  );
+  expect(engines?.label).toBe("Engines");
+  expect(engines?.adminOnly).toBe(true);
 });
 
 function client(role: "admin" | "user") {
@@ -117,7 +113,7 @@ function draw(ui: ReactNode, queries = client("user")) {
 const flat = !showsManageGroup(appConfig.brand.tenantId);
 
 for (const role of ["user", "admin"] as const) {
-  test(`the phone's menu sheet draws the entries as direct links (${role})`, async () => {
+  test(`the phone's menu sheet draws none of the five pages as a direct link (${role})`, async () => {
     const view = draw(
       <MenuSheet onNewChannel={() => {}} onOpenChange={() => {}} open />,
       client(role),
@@ -126,34 +122,28 @@ for (const role of ["user", "admin"] as const) {
     await waitFor(() =>
       expect(dialog.querySelector('a[href="/settings"]')).not.toBeNull(),
     );
-    const link = (to: string) => dialog.querySelector(`a[href="${to}"]`);
     const manage = [...dialog.querySelectorAll("button")].some((b) =>
       /^Manage/.test(b.textContent ?? ""),
     );
     expect(manage).toBe(!flat);
-    /* Where Manage stays, its pages are behind the button; the flat menu has no such button. */
-    expect(link("/admin/engines") !== null).toBe(flat && role === "admin");
     if (flat) {
-      for (const to of [
-        "/bots",
-        "/connections",
-        "/routines",
-        "/settings/approvals",
-      ])
-        expect(link(to)).not.toBeNull();
+      for (const to of FIVE_PAGES)
+        expect(dialog.querySelector(`a[href="${to}"]`)).toBeNull();
     }
   });
 }
 
-test("the wide column draws the same entries", async () => {
+test("the wide column draws none of the five pages as a direct link", async () => {
   const view = draw(<Places onNewChannel={() => {}} />, client("admin"));
   await view.findByRole("link", { name: /^Settings/ });
-  const has = (to: string) => view.container.querySelector(`a[href="${to}"]`);
-  expect(has("/admin/engines") !== null).toBe(flat);
   const manage = [...view.container.querySelectorAll("button")].some((b) =>
     /^Manage/.test(b.textContent ?? ""),
   );
   expect(manage).toBe(!flat);
+  if (flat) {
+    for (const to of FIVE_PAGES)
+      expect(view.container.querySelector(`a[href="${to}"]`)).toBeNull();
+  }
 });
 
 function bot(id: string): AgentProfile {
