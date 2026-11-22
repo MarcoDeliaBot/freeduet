@@ -85,6 +85,8 @@ const MAX_TEXT_CHARACTERS = 120;
 /** agent-freeduet's token counter (D102, usage_counter.py). */
 export const AGENT_USAGE_PATH = "/engines/usage";
 const MAX_USAGE_ROWS = 512;
+const MAX_DAILY_DAYS = 7;
+const MAX_DAILY_MEMBERS = 64;
 
 /** The states the app can say a sentence about. Keep in step with app/src/freeduet/engines-text.ts. */
 export const ENGINE_STATES = [
@@ -826,6 +828,21 @@ export type TokenRow = {
   today: TokenCounts;
   week: TokenCounts;
 };
+/** D134: where a run came from. `unknown` is what a day's total holds that no source accounts for (counted before sources were kept). */
+export const TOKEN_SOURCES = [
+  "person",
+  "routine",
+  "handoff",
+  "other",
+  "unknown",
+] as const;
+export type TokenSource = (typeof TOKEN_SOURCES)[number];
+/** D134: one UTC day of the last seven, with its counts per source and per member. */
+export type TokenDay = {
+  day: string;
+  sources: Partial<Record<TokenSource, TokenCounts>>;
+  members: Record<string, TokenCounts>;
+};
 /** D102. Counts by member and engine, today and the last seven days, in UTC. Numbers and ids only: no text, no key. */
 export type TokenUsage = {
   reason: EnginesReason | null;
@@ -833,6 +850,8 @@ export type TokenUsage = {
   windowDays: number;
   rows: TokenRow[];
   engines: TokenRow[];
+  /** D134: the last seven UTC days, oldest first; empty when agent-freeduet is older and sends none. */
+  daily: TokenDay[];
   /** agent-freeduet could not read its own counter file: the numbers may be missing. */
   problem: boolean;
 };
@@ -889,6 +908,40 @@ function usageRowOf(raw: unknown, withMember: boolean): TokenRow | null {
   };
 }
 
+/** D134: the daily series, reduced to a real date, the five source words, member ids and whole counts. Anything else is dropped. */
+function dailyOf(raw: unknown): TokenDay[] {
+  if (!Array.isArray(raw)) return [];
+  const days: TokenDay[] = [];
+  for (const item of raw.slice(0, MAX_DAILY_DAYS)) {
+    if (typeof item !== "object" || item === null) continue;
+    const entry = item as Record<string, unknown>;
+    if (
+      typeof entry.day !== "string" ||
+      !/^\d{4}-\d{2}-\d{2}$/.test(entry.day) ||
+      Number.isNaN(Date.parse(`${entry.day}T00:00:00Z`))
+    )
+      continue;
+    const sources: Partial<Record<TokenSource, TokenCounts>> = {};
+    if (typeof entry.sources === "object" && entry.sources !== null) {
+      for (const source of TOKEN_SOURCES) {
+        const counts = (entry.sources as Record<string, unknown>)[source];
+        if (counts !== undefined) sources[source] = countsOf(counts);
+      }
+    }
+    const members: Record<string, TokenCounts> = {};
+    if (typeof entry.members === "object" && entry.members !== null) {
+      for (const [member, counts] of Object.entries(entry.members).slice(
+        0,
+        MAX_DAILY_MEMBERS,
+      )) {
+        if (MEMBER_ID.test(member)) members[member] = countsOf(counts);
+      }
+    }
+    days.push({ day: entry.day, sources, members });
+  }
+  return days;
+}
+
 /**
  * Ask agent-freeduet for the token counter: one GET, same token and address as `GET /engines`. Never throws. A failure
  * is one of the three reasons and no numbers.
@@ -900,6 +953,7 @@ export async function readUsage(reach: EnginesReach): Promise<TokenUsage> {
     windowDays: 7,
     rows: [],
     engines: [],
+    daily: [],
     problem: false,
   });
   try {
@@ -933,6 +987,7 @@ export async function readUsage(reach: EnginesReach): Promise<TokenUsage> {
         .slice(0, MAX_ENGINES)
         .map((row) => usageRowOf(row, false))
         .filter((row): row is TokenRow => row !== null),
+      daily: dailyOf(body.daily),
       problem: body.problem === true,
     };
   } catch {

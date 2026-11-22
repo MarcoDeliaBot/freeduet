@@ -410,7 +410,7 @@ async def run_segment(run: RunInput, member: Member, notes: SegmentNotes | None 
             await host.close()
             for line in diagnostics.at_close:
                 line()
-            usage_counter.note_turn(member.id, engine.key, diagnostics.health, usage_counter.monotonic() - attempt_started)  # D102/D126: what the engine reported and the time it took, counts only
+            usage_counter.note_turn(member.id, engine.key, diagnostics.health, usage_counter.monotonic() - attempt_started, usage_counter.source_of(run.messages, run.assertion))  # D102/D126: what the engine reported and the time it took, counts only
 
 
 async def _drive(run: RunInput, offered: set[str], inbox: asyncio.Queue, spawn, failed_exit,

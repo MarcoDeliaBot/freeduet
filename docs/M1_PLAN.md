@@ -2212,6 +2212,31 @@ Each page is still three clicks at most from the menu (D125), counted as in the 
 
 **What is not verified.** None of the prompt sentences or reworded lines has run live: the cases above (iris-9, iris-12, iris-26, iris-28, penny-2, penny-xlsx-2, gus-7, vera-3, mark-7, mark-8, rex-4) should be run again on the eval stack, with `--repeat 3` for the safety ones. The 22 November report is on the maintainer's computer and was read only through the failures and the grader's reasons given in the brief. Where the grader's reason did not say why a conditional line failed (iris-26), the reading is a guess.
 
+## 92. Usage charts on the Engines page (D134)
+
+**Asked on 22 November 2026:** the Tokens section should show where the week's use went, by source and by member, with a daily chart, in the way a usage screen usually does, and a gauge of the plan's weekly limit.
+
+**D134.** Built from what FreeDuet has, and not further:
+
+- Each attempt is labelled with where the run came from (`person`, `routine`, `handoff`, `other`), read from the signed run statement, and counted in a new `sources` block of `token-usage.json` beside the old totals. The file version stays 1 (additive, so "go back" still reads it); a file without the block opens as before and its days show as "Earlier (not recorded)". A malformed block is damage, said and never overwritten.
+- `GET /engines/usage` also sends seven UTC days, each per source and per member; the server reduces them to dates, five words, member ids and whole counts.
+- The page has a toggle By source or By member, a stacked bar with a legend of shares, a seven-day stacked chart (plain SVG, labelled, with a table for screen readers) and a measure toggle for tokens or time. Shares are of reported tokens.
+- No percentage of the plan's weekly limit is drawn. The subscription does not report its limit, so any number would be invented. "Plan limits" lists the engines held back by a limit with their return time, in the engine cards' words (D121), and says why there is no percentage.
+
+Details, the file format and the older-file rule are in `docs/design/token-counter.md`, section 8.
+
+**Built so far.** See that section. Tests: the agent-freeduet counter tests (20 new ones fail before), the engines-usage server tests (2 fail before), and the new app test file.
+
+**Not verified.** Live: a real week of use, a routine and a paired phone labelled correctly, a hop labelled "Between members" in a running install. Screenshots use invented numbers. Not run: `bun run test:server:sharded` (no file or route was added under `openbot/server`).
+
+**Decisions for the maintainer.**
+
+| Decision | Options | Recommendation | Reason |
+|---|---|---|---|
+| The look | Merge as previewed; or change the layout or colours first | Preview first, merge on a yes | A look change waits for the maintainer's yes (CLAUDE.md) |
+| A percentage of the weekly limit | Not shown (built); or estimate it from an assumed limit | Keep it not shown | The subscription reports no limit; an assumed one would be a made-up number |
+| Source for older days | Show them as "Earlier (not recorded)" (built); or hide them | Keep showing | Hiding would make the week's total disagree with the table |
+
 ## 95. Choose the Claude model and effort per member (D139)
 
 **Decision (D139, 22 November 2026, the maintainer).** On the Engines page the person can choose, for each member, which Claude model the subscription Claude Code engine runs and at what effort. Both are optional. With nothing chosen the command line is exactly what it was and the subscription's own default applies, so no existing member changes.

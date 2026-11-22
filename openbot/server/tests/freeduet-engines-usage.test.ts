@@ -58,6 +58,22 @@ const AGENT_ANSWER = {
   engines: [
     { engine: "claude-code", class: "login", today: COUNTS, week: COUNTS },
   ],
+  daily: [
+    {
+      day: "2026-11-20",
+      sources: {
+        person: COUNTS,
+        routine: { ...COUNTS, input_tokens: -5 },
+        "<b>": COUNTS,
+        unknown: COUNTS,
+      },
+      members: { creator: COUNTS, "../x": COUNTS },
+      text: "a message the person wrote",
+    },
+    { day: "not-a-day", sources: {}, members: {} },
+    { day: "2026-11-21", sources: "x", members: null },
+    "nonsense",
+  ],
   problem: false,
 };
 
@@ -202,6 +218,25 @@ describe("GET /api/freeduet/engines/usage: the same authority as the Engines pag
       },
     });
     expect(body.engines[0].engine).toBe("claude-code");
+    // D134: the daily series keeps real days, the five source words, member ids and whole counts, and nothing else.
+    expect(body.daily.map((d: { day: string }) => d.day)).toEqual([
+      "2026-11-20",
+      "2026-11-21",
+    ]);
+    expect(Object.keys(body.daily[0].sources)).toEqual([
+      "person",
+      "routine",
+      "unknown",
+    ]);
+    expect(body.daily[0].sources.person.inputTokens).toBe(1200);
+    expect(body.daily[0].sources.routine.inputTokens).toBe(0);
+    expect(Object.keys(body.daily[0].members)).toEqual(["creator"]);
+    expect(body.daily[1]).toEqual({
+      day: "2026-11-21",
+      sources: {},
+      members: {},
+    });
+    expect(text).not.toContain("<b>");
     expect(agent.seen.length).toBe(1);
     expect(agent.paths).toEqual(["/engines/usage"]);
   });
@@ -256,5 +291,13 @@ describe("readUsage", () => {
       seconds: 0,
     });
     expect(usage.rows[0].class).toBe("other");
+  });
+
+  test("an agent that sends no daily series (an older one) still reads, with an empty one", async () => {
+    const older = stubAgent(() => Response.json({ rows: [], engines: [] }));
+    expect(await readUsage(reachTo(older.url))).toMatchObject({
+      reason: null,
+      daily: [],
+    });
   });
 });
