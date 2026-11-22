@@ -76,6 +76,12 @@ function source(term: string): string {
 }
 
 export type WordList = {
+  /**
+   * Terms that start with Latin letters or digits ("2fa", "otp", "cvv", "api", "pin") inside a list that is
+   * otherwise matched as substrings: they may not sit inside a run of ASCII letters or digits ("hotpot",
+   * a hexadecimal id), and may be glued to CJK text.
+   */
+  ascii?: readonly string[];
   /** Terms with word edges: not inside a longer word. Spaced scripts. */
   words?: readonly string[];
   /** Terms matched as a substring, for scripts with no spaces, for Korean, and for German compounds. */
@@ -94,12 +100,17 @@ export function compileWords(lists: readonly WordList[]): CompiledWords {
   const words = lists.flatMap((list) => list.words ?? []).map(source);
   const parts = lists.flatMap((list) => list.parts ?? []).map(source);
   const tools = lists.flatMap((list) => list.tools ?? []).map(source);
+  const ascii = lists.flatMap((list) => list.ascii ?? []).map(source);
   const inWords: RegExp[] = [];
   if (words.length)
     inWords.push(
       new RegExp(`${EDGE_START}(?:${words.join("|")})${EDGE_END}`, "u"),
     );
   if (parts.length) inWords.push(new RegExp(`(?:${parts.join("|")})`, "u"));
+  if (ascii.length)
+    inWords.push(
+      new RegExp(`(?<![a-z0-9])(?:${ascii.join("|")})(?![a-z0-9])`, "u"),
+    );
   return {
     inWords,
     inToolName: tools.length ? [new RegExp(`(?:${tools.join("|")})`, "u")] : [],
@@ -196,7 +207,6 @@ const DE_CREDENTIALS: WordList = {
     "2-?faktor",
     "zweistufig",
     "in zwei schritten",
-    "api-?schlussel",
     "(?:wiederherstellungs|geheim|zugriffs|privat)-?schlussel",
     "zugriffstoken",
     "zugangstoken",
@@ -205,9 +215,8 @@ const DE_CREDENTIALS: WordList = {
     "anmeldemethode",
     "anmeldeverfahren",
     "geheimzahl",
-    "pin-?code",
-    "pin-?nummer",
   ],
+  ascii: ["pin-?code", "pin-?nummer", "api-?schlussel"],
 };
 const DE_SECURITY: WordList = {
   parts: [
@@ -574,8 +583,7 @@ const RU_PAYMENTS: WordList = {
     "(?:к оформлению (?:заказа|покупки)|к оплате|на кассу|к кассе|в кассу)",
     "(?:банковск|денежн|почтов|платежн|международн|быстр)@ перевод@",
     "перевод (?:денег|средств|денежных средств|на карту|на счет|с карты|по реквизитам)",
-    "(?:перевести|переведи|переведите|переведу|перевожу|отправить|отправьте|отправь|пошлите|пошли|переслать) (?:\\w+ ){0,2}(?:деньги|денег|средства|средств|денежные|сумму|платеж@|плату|аванс|рубл@|доллар@|евро)",
-    "перечисл@",
+    "(?:перевести|переведи|переведите|переведу|перевожу|перечислить|перечислите|перечисли|перечисление|отправить|отправьте|отправь|пошлите|пошли|переслать) (?:\\w+ ){0,2}(?:деньги|денег|средства|средств|денежные|сумму|платеж@|плату|аванс|рубл@|доллар@|евро)",
     "(?:банковские|платежные) реквизиты",
     "реквизиты (?:для )?(?:оплаты|платежа|перевода|банка|карты|счета)",
     "корреспондентск@ счет",
@@ -619,7 +627,7 @@ const RU_CREDENTIALS: WordList = {
     "одноразов@ (?:код@|парол@|пин@)",
     "код (?:подтверждения|проверки|доступа|безопасности|восстановления|из смс|из sms|авторизации|аутентификации|верификации|активации)",
     "(?:sms|смс)-?(?:код@|парол@)",
-    "(?:двух|двуx|2|много|мульти)-?(?:факторн|этапн|шагов)@",
+    "(?:двух|2|много|мульти)-?(?:факторн|этапн|шагов)@",
     "(?:проверк|верификаци|аутентификаци|подтвержден)@ в (?:два|2) (?:шага|этапа)",
     "(?:контрольн|секретн)@ вопрос@",
     "вопрос безопасности",
@@ -747,11 +755,11 @@ const JA_PAYMENTS: WordList = {
     "(?:カート|レジ)(?:に|へ)進",
     "お会計",
     "クレジットカード",
+    "クレカ",
     "デビットカード",
     "プリペイドカード",
     "カード番号",
     "セキュリティコード",
-    "cvv",
     "サブスクリプション",
     "サブスク(?:を)?(?:購入|登録|申し込み)",
     "定期購入",
@@ -768,6 +776,7 @@ const JA_PAYMENTS: WordList = {
     "請求書払い",
   ],
   tools: ["送金", "振込", "決済", "支払"],
+  ascii: ["cvv"],
 };
 const JA_CREDENTIALS: WordList = {
   parts: [
@@ -783,14 +792,11 @@ const JA_CREDENTIALS: WordList = {
     "(?:二|2)段階認証",
     "(?:二|2)要素認証",
     "多要素認証",
-    "sms認証",
-    "2fa",
     "リカバリー(?:コード|キー|メール|用メール|電話)",
     "復旧(?:コード|キー|用メール|用電話番号)",
     "回復(?:コード|用メール|用電話)",
     "秘密の質問",
     "セキュリティの質問",
-    "api(?:キー|トークン)",
     "アクセストークン",
     "アクセスキー",
     "シークレットキー",
@@ -799,6 +805,7 @@ const JA_CREDENTIALS: WordList = {
     "合言葉",
     "(?:ログイン|サインイン)(?:方法|情報)",
   ],
+  ascii: ["2fa", "sms認証", "api(?:キー|トークン)"],
 };
 const JA_SECURITY: WordList = {
   parts: [
@@ -846,9 +853,7 @@ const KO_PAYMENTS: WordList = {
     "선불~카드",
     "카드~번호",
     "보안~코드",
-    "cvv",
-    "cvc",
-    "구독",
+    "구독(?!자)",
     "정기~(?:결제|구독)",
     "자동~갱신",
     "(?:구독|멤버십|회원권|라이선스|도메인|호스팅|계약|요금제)(?:~을|~를)?~(?:갱신|연장)",
@@ -862,6 +867,7 @@ const KO_PAYMENTS: WordList = {
     "청구지",
   ],
   tools: ["결제", "송금", "구독", "이체"],
+  ascii: ["cvv", "cvc"],
 };
 const KO_CREDENTIALS: WordList = {
   parts: [
@@ -871,23 +877,20 @@ const KO_CREDENTIALS: WordList = {
     "비번",
     "인증~(?:번호|코드)",
     "일회용~(?:비밀번호|코드|암호|패스워드)",
-    "otp",
     "(?:2|두|이)~단계~(?:인증|확인|보안)",
     "이중~(?:인증|확인)",
     "다중~인증",
     "2차~인증",
-    "2fa",
     "복구~(?:코드|키|이메일|전화|전화번호|구문)",
     "보안~(?:질문|코드|키|번호)",
     "자격~증명",
     "로그인~(?:정보|방법)",
-    "api~(?:키|토큰)",
     "(?:액세스|접근)~토큰",
     "(?:비밀|개인)~키",
     "시드~구문",
     "핀~번호",
-    "pin~번호",
   ],
+  ascii: ["otp", "2fa", "api~(?:키|토큰)", "pin~번호"],
 };
 const KO_SECURITY: WordList = {
   parts: [
@@ -916,6 +919,14 @@ const KO_SECURITY: WordList = {
 const ZH_PAYMENTS: WordList = {
   parts: [
     "付款",
+    "结账",
+    "結帳",
+    "买单",
+    "買單",
+    "付钱",
+    "付錢",
+    "收银台",
+    "收銀台",
     "付费",
     "付費",
     "支付",
@@ -946,7 +957,6 @@ const ZH_PAYMENTS: WordList = {
     "卡號",
     "安全码",
     "安全碼",
-    "cvv",
     "订阅",
     "訂閱",
     "续费",
@@ -967,6 +977,7 @@ const ZH_PAYMENTS: WordList = {
     "(?:计费|計費)(?:信息|資訊|地址)",
   ],
   tools: ["转账", "轉帳", "支付", "付款", "订阅"],
+  ascii: ["cvv"],
 };
 const ZH_CREDENTIALS: WordList = {
   parts: [
@@ -980,11 +991,9 @@ const ZH_CREDENTIALS: WordList = {
     "一次性(?:密码|密碼|验证码|驗證碼|口令)",
     "(?:二次|两步|兩步|双重|雙重|多重)(?:验证|驗證)",
     "(?:双|雙|多)(?:因素|因子)",
-    "2fa",
     "(?:恢复|恢復)(?:码|碼|密钥|密鑰|邮箱|郵箱|邮件|郵件|电话|電話|手机|手機)",
     "(?:备用|備用)(?:码|碼)",
     "(?:安全问题|安全問題|密保问题|密保問題)",
-    "api(?:密钥|密鑰|密碼|~key)",
     "(?:访问|訪問|存取)(?:令牌|权杖|權杖|密钥|密鑰|金鑰)",
     "令牌",
     "凭据",
@@ -993,8 +1002,8 @@ const ZH_CREDENTIALS: WordList = {
     "私钥",
     "私鑰",
     "(?:助记词|助記詞)",
-    "pin~(?:码|碼)",
   ],
+  ascii: ["2fa", "api(?:密钥|密鑰|密碼|~key)", "pin~(?:码|碼)"],
 };
 const ZH_SECURITY: WordList = {
   parts: [

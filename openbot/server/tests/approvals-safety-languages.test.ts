@@ -135,6 +135,31 @@ describe("accents, case and Unicode forms", () => {
     });
 });
 
+describe("English and Italian still read the raw text, as on main", () => {
+  for (const text of [
+    "Pay\u0301",
+    "pay\u200bday",
+    "Paga\u0301",
+    "password\u0301",
+  ])
+    test(`"${text.replace(/[\u200b]/g, "?")}" is still found`, () => {
+      expect(safetyRequirement(writeTool(text))).toBeDefined();
+    });
+});
+
+describe("ASCII terms inside CJK and Korean lists need their own edges", () => {
+  for (const text of [
+    "carbon footprint report",
+    "hotpot recipe",
+    "id 3f2fa91c-77aa-4c1e-9d02-5b6e0a1c2fa9",
+    "sha 9a2fab7",
+    "ファイル名 otpad2fa9",
+  ])
+    test(`"${text}" is not a credential`, () => {
+      expect(safetyRequirement(writeTool(text))).toBeUndefined();
+    });
+});
+
 describe("what did not change", () => {
   test("a read is never stopped, in any language", () => {
     for (const phrase of ["Jetzt bezahlen", "支払いを確定", "Сменить пароль"])

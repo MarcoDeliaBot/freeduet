@@ -349,9 +349,15 @@ function safetyEntryMatches(
   // D131: the words are read in NFKC (full-width forms, zero-width characters) for the English and Italian
   // lists too, and folded further for the other languages.
   const words = rawWords.normalize("NFKC").replace(ZERO_WIDTH, "");
+  // English and Italian: the raw text exactly as before (what matched on main still matches), and the NFKC
+  // form with hidden characters dropped (so full-width forms now match as well).
+  const forms = words === rawWords ? [rawWords] : [rawWords, words];
   return (
-    entry.pattern.test(words) ||
-    Boolean(entry.extra?.some((pattern) => pattern.test(words))) ||
+    forms.some(
+      (form) =>
+        entry.pattern.test(form) ||
+        Boolean(entry.extra?.some((pattern) => pattern.test(form))),
+    ) ||
     Boolean(entry.inToolName?.some((pattern) => pattern.test(toolRef))) ||
     otherLanguagesMatch(entry.otherLanguages, words, toolRef)
   );
