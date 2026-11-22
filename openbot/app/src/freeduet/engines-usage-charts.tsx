@@ -32,11 +32,12 @@ import {
  * only way to tell two parts apart.
  */
 
+/** Grey: "Other members" and the days counted before sources were kept are not a series of their own. */
 const REST_COLOUR = "#9ca3af";
 
 /** A part keeps one colour in the bar, the legend and the chart; "Other members" is grey. */
 function colourOf(view: UsageView, key: string): string {
-  if (key === REST_KEY) return REST_COLOUR;
+  if (key === REST_KEY || key === "unknown") return REST_COLOUR;
   const index = view.keys.findIndex((part) => part.key === key);
   return SERIES_COLOURS[index % SERIES_COLOURS.length] as string;
 }
@@ -173,12 +174,15 @@ function StackedBar({ view, metric }: { view: UsageView; metric: Metric }) {
 
 const WIDTH = 560;
 const HEIGHT = 190;
-const LEFT = 46;
+const LEFT = 62;
 const TOP = 10;
 const BOTTOM = 26;
 
 function DailyChart({ view, metric }: { view: UsageView; metric: Metric }) {
-  const top = niceMax(Math.max(0, ...view.days.map((day) => day.total)));
+  const peak = Math.max(0, ...view.days.map((day) => day.total));
+  // Time is scaled in whole minutes, so the gridlines read "50 min", not "47 min".
+  const top =
+    metric === "time" ? niceMax(Math.ceil(peak / 60)) * 60 : niceMax(peak);
   const plotHeight = HEIGHT - TOP - BOTTOM;
   const slot = (WIDTH - LEFT) / Math.max(1, view.days.length);
   const barWidth = Math.min(46, slot * 0.62);

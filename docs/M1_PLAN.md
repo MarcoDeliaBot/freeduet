@@ -2084,3 +2084,29 @@ On a phone each count is one higher, for opening the menu, before and after. Typ
 | Cold email under Full access | Leave as is (built: Full access for Otto lifts the card in the person's own live turn); or lock a send whose address did not come from the person's message to always ask | Lock it, as its own change | It is a change to `approvals/policy.ts`, which this change does not touch; today the card for a cold email depends on a setting the person chose for all of Otto's work |
 | Daily number | 20 drafts a day, changeable in the person's words (built); or a fixed number the person cannot raise | Keep 20 | A person who wants more says so, and the number only limits drafts, not sends |
 | Address-pattern checks | No pattern guessing and no mailbox tests (built); or allow a pattern to be suggested to the person, never used | Keep none | A guessed address is an address nobody published; it would also reach people who never put it on a page |
+
+## 92. Usage charts on the Engines page (D134)
+
+**Asked on 22 November 2026:** the Tokens section should show where the week's use went, by source and by member, with a daily chart, in the way a usage screen usually does, and a gauge of the plan's weekly limit.
+
+**D134.** Built from what FreeDuet has, and not further:
+
+- Each attempt is labelled with where the run came from (`person`, `routine`, `handoff`, `other`), read from the signed run statement, and counted in a new `sources` block of `token-usage.json` beside the old totals. The file version stays 1 (additive, so "go back" still reads it); a file without the block opens as before and its days show as "Earlier (not recorded)". A malformed block is damage, said and never overwritten.
+- `GET /engines/usage` also sends seven UTC days, each per source and per member; the server reduces them to dates, five words, member ids and whole counts.
+- The page has a toggle By source or By member, a stacked bar with a legend of shares, a seven-day stacked chart (plain SVG, labelled, with a table for screen readers) and a measure toggle for tokens or time. Shares are of reported tokens.
+- No percentage of the plan's weekly limit is drawn. The subscription does not report its limit, so any number would be invented. "Plan limits" lists the engines held back by a limit with their return time, in the engine cards' words (D121), and says why there is no percentage.
+
+Details, the file format and the older-file rule are in `docs/design/token-counter.md`, section 8.
+
+**Built so far.** See that section. Tests: the agent-freeduet counter tests (20 new ones fail before), the engines-usage server tests (2 fail before), and the new app test file.
+
+**Not verified.** Live: a real week of use, a routine and a paired phone labelled correctly, a hop labelled "Between members" in a running install. Screenshots use invented numbers. Not run: `bun run test:server:sharded` (no file or route was added under `openbot/server`).
+
+**Decisions for the maintainer.**
+
+| Decision | Options | Recommendation | Reason |
+|---|---|---|---|
+| The look | Merge as previewed; or change the layout or colours first | Preview first, merge on a yes | A look change waits for the maintainer's yes (CLAUDE.md) |
+| A percentage of the weekly limit | Not shown (built); or estimate it from an assumed limit | Keep it not shown | The subscription reports no limit; an assumed one would be a made-up number |
+| Source for older days | Show them as "Earlier (not recorded)" (built); or hide them | Keep showing | Hiding would make the week's total disagree with the table |
+

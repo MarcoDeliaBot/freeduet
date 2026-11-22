@@ -250,11 +250,11 @@ export const SOURCE_LABELS: Record<TokenSource, string> = {
   routine: "Routines",
   handoff: "Between members",
   other: "Other",
-  unknown: "Before sources were recorded",
+  unknown: "Earlier (not recorded)",
 };
 export const USAGE_TITLE = "Where the last 7 days went";
 export const USAGE_NOTE =
-  'Shares are of the tokens the engines reported (input plus output); attempts that reported none add time only. "You" is your own messages, "Routines" is routines and check-ins, "Between members" is hand-offs, and "Other" is anything else, such as a deployment\'s own runs.';
+  'Shares are of the tokens the engines reported (input plus output), or of the time when Time is chosen; attempts that reported no tokens add time only. "You" is your own messages, "Routines" is routines and check-ins, "Between members" is hand-offs, and "Other" is anything else, such as a deployment\'s own runs.';
 export const USAGE_NOTHING = "Nothing was counted in the last 7 days.";
 export const CHARTS_FAILED =
   "The usage charts could not be drawn. The table below is not affected.";
