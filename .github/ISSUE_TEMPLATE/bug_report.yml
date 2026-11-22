@@ -6,7 +6,7 @@ body:
   - type: markdown
     attributes:
       value: |
-        You can write in English.
+        You can write in any of the twelve languages of freeduet.com; the answer comes in your language.
 
         Never paste subscription credentials, or the contents of the Claude login folders.
   - type: textarea
