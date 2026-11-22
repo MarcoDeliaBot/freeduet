@@ -1789,3 +1789,18 @@ describe("D141: sentences added after the live team eval of 22 November 2026", (
     }
   });
 });
+
+describe("D144: Mark's first answer to an outreach request", () => {
+  test("his prompt holds the sentence", async () => {
+    const rows = await memberRows();
+    const prompt = String(
+      rows.find((row) => row.id === "marketer")?.system_prompt,
+    ).replace(/\s+/g, " ");
+    const sentence =
+      'Your own reply to an outreach request always holds a first answer in that same reply, never only "on it" and a list for later';
+    expect(prompt.includes(sentence)).toBe(true);
+    expect(
+      prompt.includes("or at most three questions you need answered first"),
+    ).toBe(true);
+  });
+});

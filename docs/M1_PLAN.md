@@ -2280,6 +2280,14 @@ Verified: the CLI's two flags and their lists (above); the argument list with th
 
 **What is not verified.** None of this has run live: iris-26, mark-7, iris-9 and vera-3 should be run again on the eval stack with `--repeat 3`. The mark-7 reading (the sentence reached only a sub-task) comes from the grader's note, not from the transcript.
 
+## 100. Mark gives a first answer in the same reply (D144)
+
+**D144.** In the re-run of 22 November 2026 (eval stack, `--repeat 3`, after D143 / PR #463) iris-26, iris-9 and vera-3 passed 3 of 3. mark-7 passed 1 of 3: runs 1 and 2 failed the must "Mark still gives a first answer". The grader found that the reply only said it was on it, with a next-step list for later, and gave no selection approach, email content or questions. The case line is fair and is not changed.
+
+**Built.** One sentence in Mark's prompt (`marketer` in `openbot/examples/freeduet/agents.yaml`): his own reply to an outreach request always holds, in that same reply, a first answer (how he would choose the businesses from criteria read on their public pages, a one-line sketch of the first email, or at most three questions he needs answered first), never only "on it" and a list for later. The D141 and D143 sentences are unchanged. One test, `D144: Mark's first answer to an outreach request`, in `openbot/server/tests/freeduet-package.test.ts` pins it. Approvals are unchanged: only Otto sends, and the person approves each send.
+
+**What is not verified.** mark-7 has not run live since this change; run it again on the eval stack with `--repeat 3`. The reading (work started as a sub-task, reply with a later to-do list) comes from the grader's note, not from the transcript.
+
 ## 98. Roadmap order and live results of 22 November 2026 (D142)
 
 **D142.** The maintainer's decisions of 22 November 2026 (10:40), recorded in [ROADMAP.md](ROADMAP.md):
