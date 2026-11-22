@@ -1,12 +1,8 @@
 import { useQuery } from "@tanstack/react-query";
-import {
-  createFileRoute,
-  Link,
-  type LinkOptions,
-} from "@tanstack/react-router";
-import React, { type ReactNode } from "react";
+import { createFileRoute, Link } from "@tanstack/react-router";
+import React from "react";
 import { BotsNavBadge } from "@/components/bot-profile/attention";
-import { DuetIcon, type DuetIconName } from "@/components/duet/icons";
+import { DuetIcon } from "@/components/duet/icons";
 import { Row, Segmented } from "@/components/duet/kit";
 import {
   PageRows,
@@ -25,6 +21,12 @@ import {
   ItemTitle,
 } from "@/components/ui/item";
 import { Separator } from "@/components/ui/separator";
+import {
+  SettingsDirectory,
+  type SettingsPlace,
+} from "@/freeduet/settings-directory";
+import { WorkspaceShell, WorkspaceTabs } from "@/freeduet/workspace";
+import { isFreeDuetApp } from "@/freeduet/manage-group";
 import { FreeDuetAbout } from "@/freeduet/about-section";
 import { currentUserQueryOptions } from "@/lib/auth/queries";
 import { appConfig } from "@/lib/generated/application-config";
@@ -46,48 +48,76 @@ const APPEARANCE: readonly { value: ThemePreference; label: string }[] = [
  * six are the pages the sidebar's Manage group and the short menu no longer draw in FreeDuet's package
  * (D133), so these rows carry them: Bots to Approval rules, then Engines for an administrator.
  */
-export const SETTINGS_PLACES: readonly {
-  label: string;
-  icon: DuetIconName;
-  to: LinkOptions["to"];
-  adminOnly?: boolean;
-  /** The unread badge the sidebar's Bots row showed under Manage. */
-  badge?: ReactNode;
-}[] = [
-  { label: "Bots", icon: "bolt", to: "/bots", badge: <BotsNavBadge /> },
-  { label: "Connections", icon: "plug", to: "/connections" },
-  { label: "Capabilities", icon: "box", to: "/capabilities" },
-  { label: "Routines", icon: "repeat", to: "/routines" },
-  { label: "Approval rules", icon: "shieldCheck", to: "/settings/approvals" },
+export const SETTINGS_PLACES: readonly SettingsPlace[] = [
+  {
+    label: "Bots",
+    icon: "bolt",
+    to: "/bots",
+    group: "featured",
+    detail: "Meet your team and manage each Bot.",
+    badge: <BotsNavBadge />,
+  },
+  {
+    label: "Connections",
+    icon: "plug",
+    to: "/connections",
+    group: "featured",
+    color: "aqua",
+    detail: "Manage accounts, apps and mail rules.",
+  },
+  {
+    label: "Capabilities",
+    icon: "box",
+    to: "/capabilities",
+    group: "operations",
+  },
+  { label: "Routines", icon: "repeat", to: "/routines", group: "operations" },
+  {
+    label: "Approval rules",
+    icon: "shieldCheck",
+    to: "/settings/approvals",
+    group: "operations",
+  },
   {
     label: "Engines",
     icon: "wrench",
     to: "/admin/engines",
+    group: "featured",
+    color: "blue",
+    adminOnly: true,
+    detail: "Set up models and choose who uses them.",
+  },
+  {
+    label: "Notifications",
+    icon: "bell",
+    to: "/settings/notifications",
+    group: "account",
+  },
+  {
+    label: "Passwords",
+    icon: "key",
+    to: "/settings/passwords",
+    group: "account",
+  },
+  {
+    label: "Admin",
+    icon: "shieldLock",
+    to: "/admin",
+    group: "account",
     adminOnly: true,
   },
-  { label: "Notifications", icon: "bell", to: "/settings/notifications" },
-  { label: "Passwords", icon: "key", to: "/settings/passwords" },
-  { label: "Admin", icon: "shieldLock", to: "/admin", adminOnly: true },
 ];
 
-/**
- * Settings, as one page of rows (parity-spec 1.2 and 2.9): how the app looks, then every place a
- * person sets something up, then the instructions every Bot follows. It opens from the avatar disc,
- * under the app's page chrome.
- *
- * What a person never needed is gone: the components gallery and the message list's emphasis in the
- * old sidebar were developer surfaces, and keyboard shortcuts only show where there is a keyboard.
- */
 function RouteComponent() {
   const { preference, setPreference } = useTheme();
   const { data: user } = useQuery(currentUserQueryOptions());
   const product = appConfig.brand.productName;
 
-  return (
-    <PageShell
-      description={`How ${product} looks and works for you.`}
-      title="Settings"
-    >
+  const places = SETTINGS_PLACES.filter(
+    (place) => !place.adminOnly || user?.role === "admin",
+  );
+  const appearanceAndVoice = (
+    <>
       <PageSection title="Appearance">
         <div className="mt-3">
           <Segmented
@@ -101,26 +131,10 @@ function RouteComponent() {
       <PageSection title="Voice">
         <ReadAloudSetting />
       </PageSection>
-      <nav aria-label="Settings" className="mt-8 flex flex-col gap-0.5">
-        {SETTINGS_PLACES.filter(
-          (place) => !place.adminOnly || user?.role === "admin",
-        ).map((place) => (
-          <Row
-            chevron
-            key={place.label}
-            leading={<DuetIcon name={place.icon} size={22} />}
-            trailing={place.badge}
-            link={({ className, children }) => (
-              <Link className={className} to={place.to}>
-                {children}
-              </Link>
-            )}
-            size="nav"
-            title={place.label}
-          />
-        ))}
-      </nav>
-      <StandingInstructions />
+    </>
+  );
+  const devicesAndInfo = (
+    <>
       {/* D49: pair a phone or another browser with the computer. Draws nothing where there is no pairing. */}
       <PairDevicesSection />
       {/*
@@ -155,6 +169,71 @@ function RouteComponent() {
         </PageRows>
       </PageSection>
       <FreeDuetAbout />
+    </>
+  );
+  if (isFreeDuetApp()) {
+    return (
+      <WorkspaceShell
+        title="Settings"
+        icon="iris"
+        description="Manage your team, connected accounts and personal preferences."
+      >
+        <WorkspaceTabs
+          label="Settings sections"
+          views={[
+            {
+              id: "workspace",
+              label: "Workspace",
+              icon: "dashboard",
+              content: <SettingsDirectory places={places} />,
+            },
+            {
+              id: "preferences",
+              label: "Preferences",
+              icon: "settings",
+              content: (
+                <div className="fd-preferences">
+                  {appearanceAndVoice}
+                  <StandingInstructions />
+                </div>
+              ),
+            },
+            {
+              id: "devices",
+              label: "Devices & info",
+              icon: "phone",
+              content: <div className="fd-facts">{devicesAndInfo}</div>,
+            },
+          ]}
+        />
+      </WorkspaceShell>
+    );
+  }
+  return (
+    <PageShell
+      description={`How ${product} looks and works for you.`}
+      title="Settings"
+    >
+      {appearanceAndVoice}
+      <nav aria-label="Settings" className="mt-8 flex flex-col gap-0.5">
+        {places.map((place) => (
+          <Row
+            chevron
+            key={place.label}
+            leading={<DuetIcon name={place.icon} size={22} />}
+            trailing={place.badge}
+            link={({ className, children }) => (
+              <Link className={className} to={place.to}>
+                {children}
+              </Link>
+            )}
+            size="nav"
+            title={place.label}
+          />
+        ))}
+      </nav>
+      <StandingInstructions />
+      {devicesAndInfo}
     </PageShell>
   );
 }

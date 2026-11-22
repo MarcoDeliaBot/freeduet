@@ -1,3 +1,4 @@
+import { WorkspacePicker } from "./workspace";
 import { IconChevronDown, IconChevronUp } from "@tabler/icons-react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useState } from "react";
@@ -182,11 +183,14 @@ async function undoChange(changeId: string): Promise<void> {
 export function EngineMembers({
   reading,
   onChanged,
+  browse = false,
 }: {
   reading: EnginesReading;
+  browse?: boolean;
   /** Called after a change or an Undo went through, so the page reads the list again. */
   onChanged: () => unknown;
 }) {
+  const [picked, setPicked] = useState("");
   const agents = useQuery(agentListQueryOptions());
   /** The latest change of each member made on this page, which is the one an Undo can still take back. */
   const [undoable, setUndoable] = useState<Record<string, string>>({});
@@ -291,6 +295,10 @@ export function EngineMembers({
   const members = reading.members ?? [];
   if (reading.reason || members.length === 0) return null;
 
+  const selected =
+    members.find((member) => member.id === picked) ??
+    members.find((member) => member.id === "freeduet") ??
+    members[0];
   const block = reading.cannotChange ?? null;
   const usable = reading.canChange === true;
   const busy =
@@ -376,7 +384,18 @@ export function EngineMembers({
           {failure.message}
         </p>
       ) : null}
-      <DuetCard className="mt-4">
+      {browse && selected && (
+        <WorkspacePicker
+          label="Bot"
+          value={selected.id}
+          onChange={setPicked}
+          options={members.map((member) => ({
+            id: member.id,
+            label: memberName(member.id),
+          }))}
+        />
+      )}
+      <DuetCard className={browse ? "fd-members mt-4" : "mt-4"}>
         <section
           aria-label={MEMBERS_TITLE}
           className="overflow-x-auto px-4 py-2"
@@ -397,7 +416,7 @@ export function EngineMembers({
               </tr>
             </thead>
             <tbody>
-              {members.map((member) => {
+              {(browse && selected ? [selected] : members).map((member) => {
                 const name = memberName(member.id);
                 const alone = aloneText(member.chain, engineName);
                 const undoId = undoable[member.id];
@@ -423,7 +442,7 @@ export function EngineMembers({
                     >
                       {name}
                     </th>
-                    <td className="px-3 py-4">
+                    <td className="px-3 py-4" data-label={MEMBER_COLUMNS.order}>
                       {member.chain.length > 0 ? (
                         <ol
                           aria-label={chainText(member.chain, engineName)}
@@ -644,7 +663,10 @@ export function EngineMembers({
                         </p>
                       ) : null}
                     </td>
-                    <td className="px-3 py-4">
+                    <td
+                      className="px-3 py-4"
+                      data-label={MEMBER_COLUMNS.switching}
+                    >
                       <fieldset className="flex flex-col gap-2 text-sm">
                         <legend className="sr-only">
                           {modeGroupLabel(name)}

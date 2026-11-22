@@ -1,4 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useState } from "react";
+import { DuetIcon } from "@/components/duet/icons";
 import { PageRows, PageSection } from "@/components/layout/page-shell";
 import { Button } from "@/components/ui/button";
 import {
@@ -14,10 +16,8 @@ import {
   mailRulesQueryOptions,
 } from "@/lib/plugins/mail-rules";
 
-/** "Last run 14 Nov, 9:05: 3 messages." or that it has not run yet. */
-export function mailRuleStatus(rule: MailRule): string {
-  if (!rule.enabled) return "Off";
-  if (!rule.lastRunAt) return "On. Has not run yet.";
+function ruleActivity(rule: MailRule): string {
+  if (!rule.lastRunAt) return "Has not run yet.";
   const when = new Date(rule.lastRunAt).toLocaleString(undefined, {
     day: "numeric",
     month: "short",
@@ -25,68 +25,184 @@ export function mailRuleStatus(rule: MailRule): string {
     minute: "2-digit",
   });
   const n = rule.lastMatched;
-  return `On. Last run ${when}: ${n} ${n === 1 ? "message" : "messages"}. ${rule.totalApplied} in all.`;
+  return `Last run ${when}: ${n} ${n === 1 ? "message" : "messages"}. ${rule.totalApplied} in all.`;
 }
 
-/**
- * The mail rules the person has, in words, each with Switch off or on and Delete. Drawn only when there
- * is at least one: a rule is made in chat, and this list is where it is seen and stopped.
- */
-export function MailRulesSection() {
+export function mailRuleStatus(rule: MailRule): string {
+  return rule.enabled ? `On. ${ruleActivity(rule)}` : "Off";
+}
+
+const PAGE_SIZE = 6;
+
+export function MailRulesSection({ browse = false }: { browse?: boolean }) {
   const queryClient = useQueryClient();
   const rules = useQuery(mailRulesQueryOptions());
   const change = useMutation(changeMailRuleMutationOptions(queryClient));
-  if (!rules.data || rules.data.length === 0) return null;
+  const [search, setSearch] = useState("");
+  const [status, setStatus] = useState("all");
+  const [page, setPage] = useState(0);
+  if (!rules.data?.length) {
+    return browse && rules.isError ? (
+      <p className="mt-4 text-destructive" role="alert">
+        {rules.error.message}
+      </p>
+    ) : null;
+  }
+  const matching = browse
+    ? rules.data.filter(
+        (rule) =>
+          (status === "all" || rule.enabled === (status === "on")) &&
+          rule.inWords
+            .toLocaleLowerCase()
+            .includes(search.trim().toLocaleLowerCase()),
+      )
+    : rules.data;
+  // A refresh or a deletion can remove the last item on the current page.
+  const last = Math.max(0, Math.ceil(matching.length / PAGE_SIZE) - 1);
+  const current = Math.min(page, last);
+  const start = current * PAGE_SIZE;
+  const visible = browse ? matching.slice(start, start + PAGE_SIZE) : matching;
+  const actions = (rule: MailRule) => (
+    <>
+      <Button
+        disabled={change.isPending}
+        onClick={() =>
+          change.mutate({
+            id: rule.id,
+            change: rule.enabled ? "disable" : "enable",
+          })
+        }
+        size="sm"
+        variant="outline"
+      >
+        {rule.enabled ? "Switch off" : "Switch on"}
+      </Button>
+      <Button
+        disabled={change.isPending}
+        onClick={() => change.mutate({ id: rule.id, change: "delete" })}
+        size="sm"
+        variant={browse ? "ghost" : "outline"}
+      >
+        Delete
+      </Button>
+    </>
+  );
+  const error = (rule: MailRule) =>
+    rule.lastError ? (
+      <p className="text-destructive text-sm" role="alert">
+        Last problem: {rule.lastError}
+      </p>
+    ) : null;
   return (
     <PageSection
+      className={browse ? "fd-rules" : undefined}
       description="Standing rules you asked for in chat. Your Bots keep and apply them to new mail every few minutes; they are not Gmail filters. Deleting a rule does not undo what it already did."
       title="Mail rules"
     >
-      <PageRows className="mt-0">
-        {rules.data.map((rule) => (
-          <Item key={rule.id} size="sm" data-mail-rule={rule.id}>
-            <ItemContent>
-              <ItemTitle className="line-clamp-none">{rule.inWords}</ItemTitle>
-              <ItemDescription className="line-clamp-none">
-                {mailRuleStatus(rule)}
-              </ItemDescription>
-              {rule.lastError ? (
-                <p className="text-destructive text-sm" role="alert">
-                  Last problem: {rule.lastError}
-                </p>
-              ) : null}
-            </ItemContent>
-            <ItemActions>
-              <Button
-                disabled={change.isPending}
-                onClick={() =>
-                  change.mutate({
-                    id: rule.id,
-                    change: rule.enabled ? "disable" : "enable",
-                  })
-                }
-                size="sm"
-                variant="outline"
-              >
-                {rule.enabled ? "Switch off" : "Switch on"}
-              </Button>
-              <Button
-                disabled={change.isPending}
-                onClick={() => change.mutate({ id: rule.id, change: "delete" })}
-                size="sm"
-                variant="outline"
-              >
-                Delete
-              </Button>
-            </ItemActions>
-          </Item>
-        ))}
-      </PageRows>
-      {change.isError ? (
+      {browse ? (
+        <>
+          <div className="fd-rules-tools">
+            <label className="fd-search">
+              <DuetIcon name="search" size={18} />
+              <input
+                type="search"
+                aria-label="Search mail rules"
+                placeholder="Search mail rules"
+                value={search}
+                onChange={(event) => {
+                  setSearch(event.target.value);
+                  setPage(0);
+                }}
+              />
+            </label>
+            <select
+              aria-label="Rule status"
+              value={status}
+              onChange={(event) => {
+                setStatus(event.target.value);
+                setPage(0);
+              }}
+            >
+              <option value="all">All statuses</option>
+              <option value="on">Active</option>
+              <option value="off">Paused</option>
+            </select>
+          </div>
+          {visible.length ? (
+            <ul className="fd-rules-list">
+              {visible.map((rule) => (
+                <li key={rule.id} className="fd-rule" data-mail-rule={rule.id}>
+                  <div>
+                    <p className="fd-rule-title">{rule.inWords}</p>
+                    <div className="fd-rule-meta">
+                      <span className="fd-state" data-on={rule.enabled}>
+                        {rule.enabled ? "Active" : "Paused"}
+                      </span>
+                      {ruleActivity(rule)}
+                    </div>
+                    {error(rule)}
+                  </div>
+                  <div className="fd-rule-actions">{actions(rule)}</div>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p role="status" className="text-sm text-muted-foreground">
+              No rules match these filters.
+            </p>
+          )}
+          {matching.length > 0 && (
+            <div className="fd-paging">
+              <span role="status">
+                {start + 1}–{start + visible.length} of {matching.length}{" "}
+                {matching.length === 1 ? "rule" : "rules"}
+              </span>
+              {last > 0 && (
+                <div className="flex gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    disabled={current === 0}
+                    onClick={() => setPage(current - 1)}
+                  >
+                    Previous
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    disabled={current === last}
+                    onClick={() => setPage(current + 1)}
+                  >
+                    Next
+                  </Button>
+                </div>
+              )}
+            </div>
+          )}
+        </>
+      ) : (
+        <PageRows className="mt-0">
+          {visible.map((rule) => (
+            <Item key={rule.id} size="sm" data-mail-rule={rule.id}>
+              <ItemContent>
+                <ItemTitle className="line-clamp-none">
+                  {rule.inWords}
+                </ItemTitle>
+                <ItemDescription className="line-clamp-none">
+                  {mailRuleStatus(rule)}
+                </ItemDescription>
+                {error(rule)}
+              </ItemContent>
+              <ItemActions>{actions(rule)}</ItemActions>
+            </Item>
+          ))}
+        </PageRows>
+      )}
+      {change.isError && (
         <p className="mt-2 text-destructive text-sm" role="alert">
           {change.error.message}
         </p>
-      ) : null}
+      )}
     </PageSection>
   );
 }
