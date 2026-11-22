@@ -2170,3 +2170,20 @@ Each page is still three clicks at most from the menu (D125), counted as in the 
 **Left on purpose (over-asking, one click each).** Portuguese "senha" as a queue ticket, "assinar" as to sign, "pedido" to a boss; Polish "przelej wodę" and "zamawiam taksówkę"; Japanese チャージ for a phone, 退会 for a club; Korean 보안 코드 at a door and a free 구독; Russian and Chinese free subscriptions; Chinese 令牌, 凭据, 注销. Each is the same word as the meaning that must stop, and the gate cannot tell them apart by words.
 
 **What is not verified.** No native speaker has read the new terms (D137 stays open). The reading of each finding is the coordinator's own, from the code and from general knowledge of the languages. Nothing was run live.
+
+## 96. A week calendar of routines (D140)
+
+**D140 (22 November 2026, preview only).** The Routines page gets a Week view: a grid of the current week, Monday first, hours down the side, one coloured block per scheduled run. It is read-only and changes nothing about how routines run.
+
+**Decisions inside it.**
+
+- **Times come from the server, never from a second reader of the cron.** Upcoming runs are the answer of `GET /api/routines/calendar` for a window from now to eight days on (`weekWindow`), which the server expands in each routine's own zone with the library the sweep fires from. Runs that already happened this week come from the run history (`GET /api/routines/runs`, the last 100). `lib/routines/week-view.ts` never parses a cron: it only places an instant on a day and a minute. The routine's `schedule` words are shown verbatim.
+- **The person's zone, by civil dates.** The week is built from calendar dates, not from "now plus 24 hours", so the week a clock change falls in still has seven days and a 09:00 run stays at 09:00 (tests: Europe/Rome, 25 October 2026, against the same instants on UTC).
+- **More often than hourly is one block per day** (two runs closer than 60 minutes), labelled with the count and the usual gap. Hourly and sparser runs stay separate blocks; blocks at the same time sit side by side.
+- **Colour is not the only cue.** Each block is a link to the routine's conversation, as the list's chip is, with an `aria-label` such as "Inbox, Otto, Thu 09:00, Every weekday at 9:00" (done, failed, missed or running appended when it has happened), the same text as its tooltip, and the member's name written in it. A finished run has a tick; a failed one a warning mark; a missed one a dashed edge. Colours come from one hue per member (`memberHue`, the team's thirteen fixed, any other Bot from its id), light and dark values.
+- **The choice is kept per browser** in `localStorage` (`freeduet.routines.view`, "routines" or "week"), read and written inside try/catch; the list is the default, and the other two views (Next runs, History) are not remembered.
+- **A routine's name** is the first line of its instruction (up to 28 characters); a routine has no name field.
+
+**Built so far.** `lib/routines/week-view.ts` (pure model), `components/routines/routine-week.tsx`, the Week button in `routines-list.tsx`; tests `app/tests/routine-week-view.test.ts` (14, with the server's real `upcomingRuns` for daily, weekdays, weekly, monthly, every-15-minutes summary, daylight saving, labels, next run, remembered view) and `app/tests/routine-week.test.tsx` (6: toggle, persistence, storage off, labels and tick, footer, empty states). Screenshots of the light and dark views, with invented routines, are kept outside the repository, for the maintainer to look at (preview first).
+
+**Not verified / left open.** Not run against a real server and a real browser profile. The week is always the current one (no previous or next week); a run that happened earlier this week appears only if it is among the history's last 100 runs; the server's calendar answer holds at most 500 runs, so a routine running every minute can crowd out the later days (the page says so when the answer is truncated). Blocks are narrow where two routines share an hour. The member's mascot is not drawn in a block (the mascots share one colour). Whether the switch should read "List" instead of "Routines" is the maintainer's call.

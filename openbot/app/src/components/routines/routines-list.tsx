@@ -14,6 +14,7 @@ import {
   PageSection,
 } from "@/components/layout/page-shell";
 import { RoutineCalendar } from "@/components/routines/routine-calendar";
+import { RoutineWeek } from "@/components/routines/routine-week";
 import {
   RoutineHistory,
   runStatusOf,
@@ -52,6 +53,7 @@ import {
   routineRunsQueryOptions,
   routinesQueryOptions,
 } from "@/lib/routines/queries";
+import { readRememberedView, rememberView } from "@/lib/routines/week-view";
 import { cn } from "@/lib/utils";
 import { queryClient } from "@/query-client";
 
@@ -207,10 +209,11 @@ function RoutineRuns({ routine }: { routine: RoutineRecord }) {
 }
 
 /** The three ways to read this screen: the standing instructions, the runs coming up, and the runs that ran. */
-type RoutinesView = "routines" | "next-runs" | "history";
+type RoutinesView = "routines" | "week" | "next-runs" | "history";
 
 const VIEWS: { id: RoutinesView; label: string }[] = [
   { id: "routines", label: "Routines" },
+  { id: "week", label: "Week" },
   { id: "next-runs", label: "Next runs" },
   { id: "history", label: "History" },
 ];
@@ -240,7 +243,7 @@ export function RoutinesList({
   /** The routine a delete is being confirmed for, or null. Its own dialog rather than one per row. */
   const [confirmingId, setConfirmingId] = useState<string | null>(null);
   /** Which view is on. The list is the default; the other two only read. */
-  const [view, setView] = useState<RoutinesView>("routines");
+  const [view, setView] = useState<RoutinesView>(() => readRememberedView());
   const rows = (routines.data?.routines ?? []).filter(
     (row) => agentId === undefined || row.agentId === agentId,
   );
@@ -255,7 +258,12 @@ export function RoutinesList({
           <Button
             aria-pressed={view === item.id}
             key={item.id}
-            onClick={() => setView(item.id)}
+            onClick={() => {
+              setView(item.id);
+              // Only the List | Week choice is kept; the two read-only views are visits.
+              if (item.id === "routines" || item.id === "week")
+                rememberView(item.id);
+            }}
             size="sm"
             type="button"
             variant={view === item.id ? "secondary" : "ghost"}
@@ -289,6 +297,8 @@ export function RoutinesList({
         <p className="mt-4 text-destructive text-sm" role="alert">
           Couldn't load your routines. Reload the page.
         </p>
+      ) : view === "week" ? (
+        <RoutineWeek agentId={agentId} routines={rows} />
       ) : view === "next-runs" ? (
         <RoutineCalendar agentId={agentId} routines={rows} />
       ) : view === "history" ? (
