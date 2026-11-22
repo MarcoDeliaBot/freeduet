@@ -44,6 +44,7 @@ from urllib.parse import urlsplit
 import httpx
 import yaml
 
+from .claude_choice import EFFORTS, MODELS, ClaudeChoice
 from .members import load_prompts
 from .engines import (
     COMPATIBLE_KIND,
@@ -770,6 +771,49 @@ def apply_order(
         raise PanelRefused("invalid") from error
     _write_document(document, environ)
     return {"member": member_id, "chain": order, "changed": True, "ownOrder": kind is not None, "confirmedKind": kind}
+
+
+def apply_claude_choice(
+    member_id: Any, model: Any, effort: Any, *, environ: Mapping[str, str] | None = None
+) -> dict[str, Any]:
+    """D139: set one member's optional Claude model and effort (the subscription Claude Code engine only). ``model`` is one word
+    of ``claude_choice.MODELS`` and ``effort`` one of ``claude_choice.EFFORTS``; ``None`` or ``"default"`` means the subscription's
+    own default, which writes no flag. Anything else is refused (`claude_choice_invalid`): no free text is ever stored, so none can
+    reach the command line. The same rules as every change here: only the page's own marked file, validated by the loader, a
+    backup, written in one step. It switches nothing on, changes no order and touches no other engine.
+    Returns ``{"member", "model", "effort", "changed"}``; nothing is written when the choice is the one in the file."""
+    if own_file_in_use(environ):
+        raise PanelRefused("file_is_yours", 409)
+    if not isinstance(member_id, str) or member_id not in _available_members():
+        raise PanelRefused("unknown_member", 404)
+    wanted = []
+    for value, allowed in ((model, MODELS), (effort, EFFORTS)):
+        if value is None or value == "default":
+            wanted.append(None)
+        elif isinstance(value, str) and value in allowed:
+            wanted.append(value)
+        else:
+            raise PanelRefused("claude_choice_invalid")
+    document = copy.deepcopy(_load_document(environ))
+    try:
+        before = parse_engines(document, source="the engines page").claude.get(member_id, ClaudeChoice())
+    except EnginesFileError as error:
+        raise PanelRefused("invalid") from error
+    choice = ClaudeChoice(wanted[0], wanted[1])
+    if choice == before:
+        return {"member": member_id, "model": choice.model, "effort": choice.effort, "changed": False}
+    table = document.get("claude")
+    table = dict(table) if isinstance(table, dict) else {}
+    if choice.is_default():
+        table.pop(member_id, None)
+    else:
+        table[member_id] = {key: value for key, value in (("model", choice.model), ("effort", choice.effort)) if value}
+    if table:
+        document["claude"] = table
+    else:
+        document.pop("claude", None)
+    _write_document(document, environ)
+    return {"member": member_id, "model": choice.model, "effort": choice.effort, "changed": True}
 
 
 # ── The two small requests a card makes ──────────────────────────────────────────────────────────

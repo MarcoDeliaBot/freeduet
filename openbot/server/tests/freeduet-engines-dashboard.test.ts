@@ -327,6 +327,7 @@ const MEMBERS_AS_THE_FILE_HAS_THEM = [
     pin: null,
     ownOrder: false,
     recommendedChain: ["claude", "codex"],
+    claude: { model: null, effort: null },
   },
   {
     id: "leo",
@@ -338,6 +339,7 @@ const MEMBERS_AS_THE_FILE_HAS_THEM = [
     pin: "claude",
     ownOrder: false,
     recommendedChain: ["claude"],
+    claude: { model: null, effort: null },
   },
 ];
 
@@ -413,6 +415,7 @@ describe("GET: the members, the choices, and whether the page may change them", 
       pin: null,
       ownOrder: false,
       recommendedChain: ["claude", "codex"],
+      claude: { model: null, effort: null },
     });
     const leo = (answer.json.members as Record<string, unknown>[])[1];
     expect(leo).toMatchObject({ mode: "ask-first", chosen: false });
@@ -441,6 +444,7 @@ describe("GET: the members, the choices, and whether the page may change them", 
       chain: ["codex", "claude"],
       ownOrder: true,
       recommendedChain: ["claude", "codex"],
+      claude: { model: null, effort: null },
     });
     expect(leo).toMatchObject({ ownOrder: false, recommendedChain: [] });
   });
@@ -1200,6 +1204,7 @@ describe("nothing secret is in any response", () => {
       pin: null,
       ownOrder: false,
       recommendedChain: [],
+      claude: { model: null, effort: null },
     });
     expect(JSON.stringify(row)).not.toContain(CANARY_KEY);
   });

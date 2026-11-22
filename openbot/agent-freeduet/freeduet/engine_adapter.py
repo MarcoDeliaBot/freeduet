@@ -117,6 +117,8 @@ class TurnContext:
     picture_prompt: str | None = field(default=None, repr=False)
     # D108. The light turn of a local model: `system` is the whole system prompt (the CLI's own default is replaced, not added to).
     light: bool = False
+    # D139. The person's choice of Claude model and effort for this member (claude_choice.ClaudeChoice), read by Claude Code only.
+    claude_choice: object = None
 
 
 @dataclass(frozen=True)
