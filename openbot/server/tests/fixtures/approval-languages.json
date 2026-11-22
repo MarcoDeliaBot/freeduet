@@ -13,7 +13,10 @@
       "Abonnement abschließen",
       "Abo verlängern",
       "Guthaben aufladen",
-      "Geschenkgutschein kaufen"
+      "Geschenkgutschein kaufen",
+      "Rechnung begleichen",
+      "Dauerauftrag einrichten",
+      "Lastschrift einrichten"
     ],
     "credentials": [
       "Passwort ändern",
@@ -159,7 +162,10 @@
       "Renovar assinatura",
       "Recarregar saldo",
       "Vale-presente",
-      "Pagamento via chave Pix"
+      "Pagamento via chave Pix",
+      "Fazer um pix agora",
+      "Enviar um Pix para ela",
+      "Fazer uma TED"
     ],
     "credentials": [
       "Alterar senha",
@@ -189,7 +195,8 @@
       "Fechar a janela",
       "Enviar a encomenda para o cliente",
       "Enviar relatório à equipe",
-      "Marcar reunião para sexta"
+      "Marcar reunião para sexta",
+      "Vou enviar o TED Talk para o time"
     ]
   },
   "pl": {
@@ -206,7 +213,14 @@
       "Subskrypcja",
       "Odnów subskrypcję",
       "Doładuj konto",
-      "Karta podarunkowa"
+      "Karta podarunkowa",
+      "Płacisz kartą",
+      "Płacimy przelewem",
+      "Zapłacę kartą",
+      "Wybierz BLIK",
+      "Po zapłacie wyślemy paczkę",
+      "Wpłata na konto",
+      "Numer konta odbiorcy"
     ],
     "credentials": [
       "Zmień hasło",
@@ -215,7 +229,8 @@
       "Pytanie bezpieczeństwa",
       "Klucz API",
       "Dane logowania",
-      "Adres e-mail odzyskiwania"
+      "Adres e-mail odzyskiwania",
+      "Wpisz kod potwierdzający z SMS"
     ],
     "security": [
       "Ustawienia bezpieczeństwa",
@@ -234,7 +249,9 @@
       "Odśwież stronę",
       "Zmień kolor przycisku",
       "Wyślij raport do Ani",
-      "Kasa chorych nie odpowiada"
+      "Kasa chorych nie odpowiada",
+      "Hasło reklamowe tej kampanii jest chwytliwe",
+      "Hasło wyborcze partii jest krótkie"
     ]
   },
   "ru": {
@@ -252,7 +269,9 @@
       "Продлить подписку",
       "Пополнить баланс",
       "Подарочный сертификат",
-      "Перечислить деньги на счёт"
+      "Перечислить деньги на счёт",
+      "Списание средств с карты",
+      "Включить автоплатеж"
     ],
     "credentials": [
       "Сменить пароль",
@@ -282,7 +301,11 @@
       "Перенести встречу на пятницу",
       "Изменить цвет кнопки",
       "Закрыть окно",
-      "Перечисли основные пункты плана"
+      "Перечисли основные пункты плана",
+      "Быстрый перевод текста на другой язык",
+      "Напиши номер карты метро",
+      "Какой способ входа в здание",
+      "Публичный доступ к парку открыт с 9 утра"
     ]
   },
   "tr": {
@@ -300,7 +323,9 @@
       "Aboneliği yenile",
       "Bakiye yükle",
       "Hediye kartı",
-      "KREDİ KARTI"
+      "KREDİ KARTI",
+      "Taksit seçenekleri",
+      "QR kod ile öde"
     ],
     "credentials": [
       "Şifreyi değiştir",
@@ -329,7 +354,8 @@
       "Düğme rengini değiştir",
       "Toplantıyı cumaya al",
       "Pencereyi kapat",
-      "İletişim sayfasını aç"
+      "İletişim sayfasını aç",
+      "Güvenlik sorunu bulundu"
     ]
   },
   "ja": {
@@ -347,7 +373,10 @@
       "ギフトカードを購入",
       "ＰＡＹ決済",
       "ｶｰﾄﾞ番号",
-      "クレカで支払う"
+      "クレカで支払う",
+      "お金を払う",
+      "代金を振り込む",
+      "口座番号を入力"
     ],
     "credentials": [
       "パスワードを変更",
@@ -396,7 +425,9 @@
       "구독을 갱신",
       "잔액 충전",
       "상품권 구매",
-      "카드번호를 입력"
+      "카드번호를 입력",
+      "자동이체 신청",
+      "이체하기"
     ],
     "credentials": [
       "비밀번호를 변경",
@@ -451,7 +482,8 @@
       "轉帳",
       "去结账",
       "買單",
-      "付钱给供应商"
+      "付钱给供应商",
+      "添加银行卡"
     ],
     "credentials": [
       "修改密码",
