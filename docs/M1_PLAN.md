@@ -2287,3 +2287,15 @@ Verified: the CLI's two flags and their lists (above); the argument list with th
 **Built.** One sentence in Mark's prompt (`marketer` in `openbot/examples/freeduet/agents.yaml`): his own reply to an outreach request always holds, in that same reply, a first answer (how he would choose the businesses from criteria read on their public pages, a one-line sketch of the first email, or at most three questions he needs answered first), never only "on it" and a list for later. The D141 and D143 sentences are unchanged. One test, `D144: Mark's first answer to an outreach request`, in `openbot/server/tests/freeduet-package.test.ts` pins it. Approvals are unchanged: only Otto sends, and the person approves each send.
 
 **What is not verified.** mark-7 has not run live since this change; run it again on the eval stack with `--repeat 3`. The reading (work started as a sub-task, reply with a later to-do list) comes from the grader's note, not from the transcript.
+
+## 98. Roadmap order and live results of 22 November 2026 (D142)
+
+**D142.** The maintainer's decisions of 22 November 2026 (10:40), recorded in [ROADMAP.md](ROADMAP.md):
+
+- **(a) Installer first in Now.** The one-file installer for Windows, macOS and Ubuntu moves from Now row 7 to Now row 1. Every other Now row keeps its relative order, and Now is renumbered 1 to 15. The README roadmap lists its rows without numbers, so it is unchanged.
+- **(b) Certification waits.** The three-repeat certification run of the team evals waits until the re-run of the 11 failed cases (section 97, D141) passes.
+- **(c) Live result.** The live test "Iris turns to Jules for the weather" passed on 22 November 2026 at 10:08 on the maintainer's installation: Iris handed off with message_bot, Jules used computer_navigate and computer_snapshot, and the answer came home with a source. Rows 89 (Iris does not stop at "I cannot") and 104 (A colleague's browser when a colleague asks, D130) now read "Run live on one installation on 22 November 2026" with that evidence.
+
+**Not changed.** The Claude model and effort per member (D139) and the usage charts (D134) were approved by the maintainer; their row status stays as built, and their pull requests merge separately. Row 119 does not exist in Next, so there was nothing to move before row 120.
+
+**What is not verified.** The live test ran once on one installation; it is not a certification. The re-run of the 11 failed cases has not been run by this change.
