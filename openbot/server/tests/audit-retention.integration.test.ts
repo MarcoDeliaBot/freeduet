@@ -42,6 +42,14 @@ async function remaining(): Promise<number> {
   return rows.length;
 }
 
+async function remainingIds(): Promise<string[]> {
+  const rows = await database
+    .select({ targetId: auditEvents.targetId })
+    .from(auditEvents)
+    .where(eq(auditEvents.targetType, MARKER));
+  return rows.map((row) => String(row.targetId)).sort();
+}
+
 /*
  * Cleaning up has to obey the same rule as everything else.
  *
@@ -95,8 +103,16 @@ describe("keeping the audit trail to a retention policy", () => {
 
     const { deleted } = await sweepAuditTrail(databaseUrl, 90);
 
-    expect(deleted).toBe(2);
+    /*
+     * `audit_events` is shared by the whole run and the sweep deletes every row older than the
+     * window, not only this test's, so the global count is a floor: another file may have left an
+     * old row (a fixed 2026-08-24 date in the computer culler's tests did, once it passed 90 days).
+     * What this test proves is the fate of its own four rows: the two old ones gone, the two recent
+     * ones kept.
+     */
+    expect(deleted).toBeGreaterThanOrEqual(2);
     expect(await remaining()).toBe(2);
+    expect(await remainingIds()).toEqual([`${MARKER}-3`, `${MARKER}-4`]);
   });
 
   test("keeps everything when no policy is set", async () => {
@@ -306,6 +322,9 @@ describe("keeping the audit trail to a retention policy", () => {
     await event(400, 2);
     const { deleted } = await sweepAuditTrail(databaseUrl, 90);
 
-    expect(deleted).toBe(1);
+    // A number, not null: null is what a sweep that could not take the lock reports. At least one,
+    // because rows from other files count too and only this test's row is certain.
+    expect(deleted).toBeGreaterThanOrEqual(1);
+    expect(await remaining()).toBe(0);
   });
 });
