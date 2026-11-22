@@ -374,3 +374,25 @@ def test_a_stop_during_the_second_turn_ends_cleanly(team):
     left = asyncio.run(go())
     assert engine_box["engine"].cancelled
     assert not [t for t in left if not t.done()]
+
+
+# ── D131: the other ten site languages, from the gate's own phrase fixture ──────────────────────
+
+PHRASES = json.loads((REPO / "server" / "tests" / "fixtures" / "approval-languages.json").read_text(encoding="utf-8"))
+
+
+def test_the_sensitive_words_of_the_ten_other_languages_are_the_gates():
+    for code, groups in PHRASES.items():
+        if code == "_":
+            continue
+        for group in ("payments", "credentials", "security"):
+            for phrase in groups[group]:
+                assert cannot_guard.is_sensitive(f"I can't do this: {phrase}"), (code, group, phrase)
+
+
+def test_ordinary_sentences_of_the_ten_other_languages_are_not_sensitive():
+    for code, groups in PHRASES.items():
+        if code == "_":
+            continue
+        for phrase in groups["ordinary"]:
+            assert not cannot_guard.is_sensitive(phrase), (code, phrase)

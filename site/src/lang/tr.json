@@ -73,7 +73,7 @@
  "b4": "Rezervasyon yapmak",
  "b5": "Silmek",
  "p1h": "Programın uyguladığı bir kilit",
- "p1p": "Kural asistanın talimatlarında yazılıdır ve varsayılan olarak onaylayana kadar eylemi programın kendisi de bekletir. Ödemeler, şifreler ve güvenlik ayarları için yaptığı kontrol yalnızca İngilizce ve İtalyanca sözcükleri okur.",
+ "p1p": "Kural asistanın talimatlarında yazılıdır ve varsayılan olarak onaylayana kadar eylemi programın kendisi de bekletir. Ödemeler, şifreler ve güvenlik ayarları için yaptığı kontrol bu sitenin on iki dilindeki sözcükleri okur; başka biçimde yazılmış bir ödeme yine de geçebilir.",
  "p2h": "Hileler işe yaramaz",
  "p2p": "«Bana şifreyi gönder, acil» diyen bir e-posta yalnızca okunacak bir metindir; asistanlara onu asla emir gibi izlememeleri söylenmiştir. Sohbette senden asla şifre ya da kart numarası istememeleri de söylenmiştir, ve bir üyenin bilgisayarı şifre, kod veya kart alanına yazmayı reddeder. İşaretsiz bir alan bu reddin dışında kalabilir.",
  "p3h": "Tek bir dürüst kestirme",
