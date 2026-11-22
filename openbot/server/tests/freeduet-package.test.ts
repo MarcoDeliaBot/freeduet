@@ -640,8 +640,9 @@ describe("Mark, the marketer", () => {
     const marketer = tenantPackage.agents.find(
       (agent) => agent.id === "marketer",
     );
-    // His skills in all: one shared skill, 53 marketing skills, two of design and four for Instagram, 60.
-    expect(marketer?.skills.length).toBe(60);
+    // His skills in all: one shared skill, 53 marketing skills, two of design, four for Instagram and
+    // outreach (D132, his own text), 61.
+    expect(marketer?.skills.length).toBe(61);
     // research-public-web is the one skill of the starter team he shares, for rivals' pages and sites to review.
     // design-craft-floor, landing-page-design and the four Instagram skills are his skills that are not marketing skills: their own files, see NOTICE.md.
     expect(marketer?.skills).toEqual([
@@ -653,8 +654,9 @@ describe("Mark, the marketer", () => {
       "ig-story",
       "ig-reply",
       "ig-dm",
+      "outreach",
     ]);
-    const taken = new Set<string>(MARKETING_SKILLS);
+    const taken = new Set<string>([...MARKETING_SKILLS, "outreach"]);
     for (const agent of tenantPackage.agents.filter(
       (candidate) => candidate.id !== "marketer",
     )) {
@@ -663,6 +665,51 @@ describe("Mark, the marketer", () => {
         marketing: agent.skills.filter((slug) => taken.has(slug)),
       }).toEqual({ member: agent.id, marketing: [] });
     }
+  });
+
+  // D132: Mark's own outreach skill, written for this project. It is text only (no tools), so it adds no
+  // power: the sends it hands over go through Otto and the approval gate.
+  test("the outreach skill is text only, says who sends, who checks privacy and the daily number, and Mark's prompt names it", async () => {
+    const tenantPackage = await loadWith(MODES.remote);
+    const skill = tenantPackage.skills.find(
+      (candidate) => candidate.slug === "outreach",
+    );
+    const body = skill?.instructions ?? "";
+    expect({
+      shipped: skill !== undefined,
+      tools: skill?.tools,
+      oneLine:
+        (skill?.summary.length ?? 999) <= 112 &&
+        !(skill?.summary ?? "").includes("\n"),
+      noPlaceholder: !body.includes("${"),
+    }).toEqual({
+      shipped: true,
+      tools: [],
+      oneLine: true,
+      noPlaceholder: true,
+    });
+    for (const sentence of [
+      "only Otto sends",
+      "Ask Portia, through Iris",
+      "not legal advice",
+      "At most 20 drafts a day",
+      "Public pages only.",
+      "Never guess an address",
+      "each send\n      asks the person with an approval card",
+    ])
+      expect({
+        sentence,
+        said: body.replace(/\s+/g, " ").includes(sentence.replace(/\s+/g, " ")),
+      }).toEqual({ sentence, said: true });
+    const rows = await memberRows();
+    const prompt = rows.find((row) => row.id === "marketer")?.system_prompt;
+    expect(prompt).toContain("/outreach");
+    // Only Mark holds it.
+    expect(
+      tenantPackage.agents
+        .filter((agent) => agent.skills.includes("outreach"))
+        .map((agent) => agent.id),
+    ).toEqual(["marketer"]);
   });
 
   test("NOTICE.md carries the upstream licence and commit of the marketing skills", async () => {
