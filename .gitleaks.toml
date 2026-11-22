@@ -1,0 +1,62 @@
+# gitleaks configuration for the secret scan (.github/workflows/secret-scan.yml).
+#
+# The default rules stay on. The allowlist names files by exact path, and only the files below. Each
+# group was checked on 22 November 2026: the flagged values are dummy credentials, local or example
+# addresses, or test vectors that the test itself generates. Nothing here is a live credential.
+#
+# Trade-off: an allowlisted path hides every finding in that file, not only the flagged line. A new
+# secret added to one of these files will not fail the scan. Keep this list short, and add a file only
+# after reading its flagged line.
+
+title = "FreeDuet secret scan"
+
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Test fixtures and test vectors (checked 22 November 2026, see docs/dev/ci.md)"
+paths = [
+  # Group 1: dummy credentials that the code under test must recognise and redact, or that a test
+  # puts into a fake configuration. Values such as "ghp_abcdefgh..." and "AKIAABCDEFGH..." are not issued.
+  '''^openbot/agent-freeduet/tests/test_checkpoints\.py$''',
+  '''^openbot/agent-freeduet/tests/test_engine_panel\.py$''',
+  '''^openbot/agent-freeduet/tests/test_engine_members\.py$''',
+  '''^openbot/agent-freeduet/tests/gateway_support\.py$''',
+  '''^openbot/server/tests/enterprise-controls\.test\.ts$''',
+  '''^openbot/server/tests/arcade-adapter-status\.test\.ts$''',
+  '''^openbot/server/tests/organization-auth\.test\.ts$''',
+  '''^openbot/server/tests/freeduet-engines-providers\.test\.ts$''',
+  '''^openbot/app/tests/freeduet-engines-providers\.test\.tsx$''',
+  '''^openbot/supervisor/tests/computer-token\.test\.ts$''',
+  '''^openbot/agent-computer/tests/page-links\.test\.ts$''',
+  '''^openbot/agent-computer/tests/page-links-browser\.test\.ts$''',
+
+  # Group 2: database and service URLs with test users. The hosts are localhost, 127.0.0.1, [::1],
+  # db, db.internal, db.example.test or a .example domain, and the passwords are placeholders.
+  '''^openbot/server/tests/config\.test\.ts$''',
+  '''^openbot/server/tests/learning-config\.test\.ts$''',
+  '''^openbot/server/tests/vault-rekey-command\.integration\.test\.ts$''',
+  '''^openbot/server/tests/passwords-store\.integration\.test\.ts$''',
+  '''^openbot/server/tests/programs-gate\.integration\.test\.ts$''',
+  '''^openbot/server/tests/remote-limits\.integration\.test\.ts$''',
+  '''^openbot/server/tests/openduet-setup\.test\.ts$''',
+  '''^openbot/server/tests/responsibility-triggers\.test\.ts$''',
+  '''^openbot/server/tests/composio-adapter\.test\.ts$''',
+  '''^openbot/server/tests/plugins-page-provider\.test\.ts$''',
+  '''^openbot/server/tests/tool-selection-environment-restoration-driver\.test\.ts$''',
+  '''^openbot/server/tests/programs-single-user\.test\.ts$''',
+  '''^openbot/server/tests/programs-pairing\.test\.ts$''',
+  '''^openbot/server/tests/programs-broker\.test\.ts$''',
+  '''^openbot/server/tests/programs-review\.test\.ts$''',
+  '''^openbot/server/tests/host-guard\.test\.ts$''',
+  '''^openbot/server/tests/single-user-peer\.test\.ts$''',
+  '''^openbot/server/tests/install-secret\.test\.ts$''',
+  '''^openbot/scripts/update\.test\.ts$''',
+  '''^openbot/scripts/start-restart-guard\.test\.ts$''',
+
+  # Group 3: signing test vectors. openbot/scripts/programs-helper/hmac-vectors.json is written by the
+  # server's protocol code (openbot/server/src/programs/protocol.ts) and read back by its test and by the
+  # Windows helper's Pester tests. The key in it is a test key that appears in no production code.
+  '''^openbot/scripts/programs-helper/hmac-vectors\.json$''',
+  '''^openbot/server/tests/programs-helper-vectors\.test\.ts$''',
+]
