@@ -131,7 +131,7 @@ the page does not say "weekly" about it.
 chart logic), `engines-usage-charts.tsx` (new; the cards, bar and chart, with an error boundary so a failure draws one sentence and
 leaves the table), and `engines-tokens.tsx` (one component added). Tests: `tests/test_usage_counter.py` (20 of the new ones fail
 before and pass after), `server/tests/freeduet-engines-usage.test.ts` (2 fail before), `app/tests/freeduet-engines-usage-charts.test.tsx`
-(new). Screenshots, with invented numbers, light and dark, are in the pull request description.
+(new). Screenshots with invented numbers, light and dark, were made for the preview.
 Not verified: a real day's use through a running service (the numbers in the screenshots are made up); a paired phone or a routine
 run labelled live; the look in a narrow window.
 

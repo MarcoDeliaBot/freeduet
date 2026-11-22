@@ -332,8 +332,6 @@ def test_a_malformed_sources_block_is_damaged_and_never_overwritten(tmp_path):
 
 
 def test_a_service_turn_is_counted_under_its_source(client, fake_cli):
-    from helpers import ASSERTION  # noqa: F401 - the default statement is not a readable one: "other"
-
     fake_cli.plan([{"text": "Hello there."}])
     post_run(client, run_body(ASK))
     body = client.get("/engines/usage", headers=AUTH).json()
