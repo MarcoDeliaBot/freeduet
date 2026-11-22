@@ -37,7 +37,17 @@ export function weekWindow(now: Date): { from: string; to: string } {
   };
 }
 
-export type RunStatus = "upcoming" | "done" | "failed" | "running" | "missed";
+/**
+ * `pending` is a run whose time has passed and that the run history does not hold yet: it was due, and the
+ * server's record of it has not arrived. It is not claimed to be running.
+ */
+export type RunStatus =
+  | "upcoming"
+  | "done"
+  | "failed"
+  | "running"
+  | "pending"
+  | "missed";
 
 /** One run to place: an instant the server gave, and what became of it (upcoming for a future one). */
 export type WeekRun = {
@@ -193,6 +203,7 @@ export type WeekModel = {
 export function summaryStatus(statuses: readonly RunStatus[]): RunStatus {
   if (statuses.includes("failed")) return "failed";
   if (statuses.includes("running")) return "running";
+  if (statuses.includes("pending")) return "pending";
   if (statuses.includes("upcoming")) return "upcoming";
   if (statuses.every((status) => status === "done")) return "done";
   return "missed";
@@ -405,6 +416,7 @@ const STATUS_WORDS: Record<RunStatus, string> = {
   done: "done",
   failed: "failed",
   running: "running now",
+  pending: "due, not yet recorded",
   missed: "missed",
 };
 

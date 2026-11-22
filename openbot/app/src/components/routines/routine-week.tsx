@@ -1,7 +1,13 @@
 import { IconAlertTriangle, IconCheck } from "@tabler/icons-react";
-import { useQuery } from "@tanstack/react-query";
+import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
-import { type CSSProperties, useEffect, useMemo, useState } from "react";
+import {
+  type CSSProperties,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { PageEmpty } from "@/components/layout/page-shell";
 import type { RoutineRecord } from "@/lib/routines/queries";
 import {
@@ -25,6 +31,9 @@ import {
 } from "@/lib/routines/week-view";
 import { cn } from "@/lib/utils";
 import { useBotNames } from "./bot-names";
+
+/** How close a recorded start has to be to the time a run was due for the two to be the same run. */
+const RECORDED_WITHIN_MS = 2 * 60_000;
 
 const HISTORY_STATUS: Record<string, RunStatus> = {
   succeeded: "done",
@@ -73,38 +82,63 @@ export function RoutineWeek({
     const day = (at: Date) => weekDays(at, zone).find((d) => d.isToday)?.key;
     if (day(clock) !== day(opened)) setOpened(clock);
   }, [clock, opened, zone]);
-  const calendar = useQuery(
-    routineCalendarQueryOptions({ ...weekWindow(opened), agentId }),
-  );
+  // Kept on screen while the next day's window loads: a midnight must not blank the grid.
+  const calendar = useQuery({
+    ...routineCalendarQueryOptions({ ...weekWindow(opened), agentId }),
+    placeholderData: keepPreviousData,
+  });
   const history = useQuery(routineHistoryQueryOptions(agentId));
+  const refetchHistory = history.refetch;
 
   const runs = useMemo<WeekRun[]>(() => {
     const list: WeekRun[] = [];
-    for (const run of history.data ?? []) {
-      const at = new Date(run.startedAt);
-      if (at.getTime() <= clock.getTime()) {
+    const recorded = history.data ?? [];
+    for (const run of recorded) {
+      list.push({
+        routineId: run.routineId,
+        agentId: run.agentId,
+        at: new Date(run.startedAt),
+        status: run.missed ? "missed" : (HISTORY_STATUS[run.status] ?? "done"),
+      });
+    }
+    for (const run of calendar.data?.runs ?? []) {
+      const at = new Date(run.at);
+      if (at.getTime() > clock.getTime()) {
         list.push({
           routineId: run.routineId,
           agentId: run.agentId,
           at,
-          status: run.missed
-            ? "missed"
-            : (HISTORY_STATUS[run.status] ?? "done"),
+          status: "upcoming",
+        });
+        continue;
+      }
+      // It has passed. Once the history holds its row, that row is the run; until then it is shown as due.
+      const isRecorded = recorded.some(
+        (row) =>
+          row.routineId === run.routineId &&
+          Math.abs(new Date(row.startedAt).getTime() - at.getTime()) <=
+            RECORDED_WITHIN_MS,
+      );
+      if (!isRecorded) {
+        list.push({
+          routineId: run.routineId,
+          agentId: run.agentId,
+          at,
+          status: "pending",
         });
       }
     }
-    for (const run of calendar.data?.runs ?? []) {
-      // Asked for when the day began or the tab opened: one that has since passed is the history's now.
-      if (new Date(run.at).getTime() <= clock.getTime()) continue;
-      list.push({
-        routineId: run.routineId,
-        agentId: run.agentId,
-        at: new Date(run.at),
-        status: "upcoming",
-      });
-    }
     return list;
   }, [calendar.data, history.data, clock]);
+  const hasPending = runs.some((run) => run.status === "pending");
+
+  // A tick that moves a run into the past, or finds one still due, asks the history again.
+  const lastTick = useRef(clock);
+  useEffect(() => {
+    if (lastTick.current === clock) return;
+    lastTick.current = clock;
+    if (hasPending) void refetchHistory();
+  }, [clock, hasPending, refetchHistory]);
 
   const week = useMemo(
     () => buildWeek({ runs, routines, now: clock, zone }),
