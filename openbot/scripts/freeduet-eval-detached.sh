@@ -65,7 +65,8 @@ check_env() {
   project="$(setting COMPOSE_PROJECT_NAME)"
   [ "$project" = "$PROJECT" ] || refuse "openbot/.env.eval names the Compose project '${project:-nothing}', not $PROJECT: this is not the eval stack."
   # Any port or URL that points at 3010 (PORT=3010, SERVER_PORT=3010, http://localhost:3010...).
-  if grep -qE "(PORT=|:)${REAL_PORT}([^0-9]|\$)" "$ENV_FILE"; then
+  # Comment lines are skipped: the example file documents 3010 in comments.
+  if grep -vE '^[[:space:]]*#' "$ENV_FILE" | grep -qE "(PORT=|:)${REAL_PORT}([^0-9]|\$)"; then
     refuse "openbot/.env.eval points at port $REAL_PORT, the port of the person's own FreeDuet."
   fi
   [ -n "$(setting SERVER_PORT)" ] || refuse "SERVER_PORT is not set in openbot/.env.eval."
