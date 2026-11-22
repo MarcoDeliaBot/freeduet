@@ -2226,7 +2226,7 @@ Each page is still three clicks at most from the menu (D125), counted as in the 
 
 **A model the subscription cannot use.** The CLI answers "There's an issue with the selected model ... may not have access to it" or "Claude Opus is not available with the Claude Pro plan". The failure classifier reads these as a refused request (`rejected`), the same kind as an unknown model: the turn ends with the CLI's own sentence, the breaker does not count it (D119, D121), and the engine is not marked down. The router does not move on to another engine for it, because a refused request is not one of the kinds a turn moves on from; the page says so. Choosing "Subscription default" undoes it.
 
-**Look.** Two small selects (Model, Effort) under the engine pills of a member whose chain holds Claude Code, with one sentence. A change to the look of the app: preview screenshots in `/home/claude/preview-model/` (light); not merged before the maintainer's yes.
+**Look.** Two small selects (Model, Effort) under the engine pills of a member whose chain holds Claude Code, with one sentence. A change to the look of the app: preview screenshots in `the preview folder ` (light); not merged before the maintainer's yes.
 
 ### Built so far
 
