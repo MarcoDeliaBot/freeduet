@@ -33,6 +33,7 @@ import {
   type TokenUsage,
   tokensCell,
 } from "./engines-tokens-text";
+import { UsageCharts } from "./engines-usage-charts";
 
 /**
  * The Tokens section of the Engines page (D102): a table of member by engine with today and the last seven days, as each engine
@@ -221,6 +222,13 @@ export function EngineTokens({ reading }: { reading: EnginesReading }) {
       ) : null}
       {data && !data.reason && data.rows.length === 0 ? (
         <p className="type-label mt-4 text-duet-ink-2">{TOKENS_EMPTY}</p>
+      ) : null}
+      {data && !data.reason && data.rows.length > 0 ? (
+        <UsageCharts
+          daily={data.daily ?? []}
+          engines={reading.engines}
+          memberName={memberName}
+        />
       ) : null}
       {data && !data.reason && data.rows.length > 0 ? (
         <DuetCard className="mt-4">

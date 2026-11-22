@@ -1,4 +1,4 @@
-# The token counter (D102, D126)
+# The token counter (D102, D126, D134)
 
 Status: built, not yet run live. Counts are tested against recorded streams; no real engine was asked.
 
@@ -86,6 +86,54 @@ ignored). The amounts are buttons with an accessible name, "€3.64. Show amount
 - Neither was asked live, so whether a real stream carries usage is **not verified**. Run live: one turn through each, then read
   `GET /engines/usage`; a row that says "not reported" with time is the honest result if they send nothing. Time is measured by us, so
   it is there either way.
+
+## 8. Where the use came from, and the charts (D134, 22 November 2026)
+
+Status: built, not yet run live. A look change: it waits for the maintainer's yes on the preview before it merges.
+
+**What the person gets.** Under "Tokens", above the table: a "Plan limits" card, and a card "Where the last 7 days went" with two
+toggles (By source or By member; Tokens or Time), one stacked bar with a legend, and seven stacked days. The legend names each
+part with its share and its amount ("You 63% · 1.8M tokens"), so a colour is never the only way to tell parts apart. The same
+numbers are in each segment's title and in a table for screen readers. Plain SVG; no chart library was added.
+
+**Source.** Each attempt is labelled from the run's signed statement (`origin.run_claims`, the reading the cannot guard and the
+report guard use): `person` (the person's own message, browser or paired phone: shown as "You"), `routine` (a routine, a check-in
+or a responsibility: "Routines"), `handoff` (a hop between members, by any sign `origin.is_handoff_run` reads: "Between members")
+and `other` (a deployment, a memory run, a kind not named, or a statement that cannot be read: "Other"). The label only sorts a
+count; it is never used to trust a run. `usage_counter.source_of` does it and never raises.
+
+**File.** `token-usage.json` keeps its totals (`days`) as before, and a second block, `sources` (day, source, member, the same seven
+counts), is added beside it. The version stays 1 on purpose: the change is additive, so a file from before this opens as it did, and
+an older service (after "go back", see `update-and-go-back.md`) still reads a newer file and ignores the block. A missing `sources`
+is not damage. A `sources` that is there and is not what this module writes (a day that is not a date, a source not in the four,
+a count missing, negative or not whole) is damage, said and never overwritten, as for `days`. Counts only, as before.
+
+**Older days.** A day counted before this has totals and no sources. The view shows the part of a day's total that no stored source
+accounts for as `unknown`, drawn grey and called "Earlier (not recorded)". The totals stay the single truth: the sources are never
+added to them.
+
+**Daily series.** `GET /engines/usage` now also sends `daily`: always seven UTC days, oldest first (empty days present), each with
+the counts per source (and `unknown`) and per member. The server (`readUsage`, `dailyOf`) keeps only a real date, the five source
+words, member ids and whole counts. An older service that sends no `daily` gives an empty list, and the page then shows the table and
+the limits and no chart.
+
+**The weekly limit.** A percentage of the plan's weekly limit is not shown, and none was made up: the subscription does not report
+its limit or what is left of it. The only thing FreeDuet knows is an engine that has reached a limit and when it is expected back
+(`limited` or `out_of_credit` with a time, D121). "Plan limits" lists those engines in the words the engine card already uses
+("Claude Code: Reached its limit until 07:29"), taken from the same engine state the cards read, with no new call; with none held
+it says so, and always says why there is no percentage. The state does not say whether the limit is a weekly or a shorter one, so
+the page does not say "weekly" about it.
+
+**Not built.** A time zone other than UTC; a per-engine split of the chart; a source for the attempts made before this change.
+
+**Built so far (D134).** `agent-freeduet/freeduet/usage_counter.py` (`source_of`, `sources`, `daily`), `segment.py` (one argument to
+`note_turn`), `server/src/freeduet/engines-routes.ts` (`dailyOf`), `app/src/freeduet/engines-tokens-text.ts` (the breakdown and
+chart logic), `engines-usage-charts.tsx` (new; the cards, bar and chart, with an error boundary so a failure draws one sentence and
+leaves the table), and `engines-tokens.tsx` (one component added). Tests: `tests/test_usage_counter.py` (20 of the new ones fail
+before and pass after), `server/tests/freeduet-engines-usage.test.ts` (2 fail before), `app/tests/freeduet-engines-usage-charts.test.tsx`
+(new). Screenshots with invented numbers, light and dark, were made for the preview.
+Not verified: a real day's use through a running service (the numbers in the screenshots are made up); a paired phone or a routine
+run labelled live; the look in a narrow window.
 
 ## Built so far
 
