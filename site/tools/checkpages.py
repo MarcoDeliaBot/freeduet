@@ -478,7 +478,11 @@ def check_app_page(S, R, site_dir, code, html_text):
     R.check(len(re.findall(r"<h1\b", head)) == 0, where, "an H1 in the head")
     ns = re.findall(r"<noscript>(.*?)</noscript>", html_text, flags=re.S)
     R.check(all("<h1" not in x and "<p" not in x for x in ns), where, "a <noscript> text block: the text is prerendered, <noscript> holds only a style")
-    R.check(H.escape(d["faq.a1"], quote=False)[:40] in body, where, "the first FAQ answer is not in the prerendered text")
+    # every FAQ answer must be in the page's own text (collapsed is fine): the FAQPage JSON-LD must match visible content
+    visible = H.unescape(re.sub(r"<[^>]+>", "", re.sub(r"<script.*?</script>", "", body, flags=re.S)))
+    for n, (q, a) in enumerate(want, 1):
+        R.check(re.sub(r"\s+", " ", a) in re.sub(r"\s+", " ", visible), where, "FAQ answer %d is not in the prerendered page text" % n)
+        R.check(re.sub(r"\s+", " ", q) in re.sub(r"\s+", " ", visible), where, "FAQ question %d is not in the prerendered page text" % n)
     R.check(re.search(r'name="robots"', head) is None, where, "the built page must not carry the template's noindex")
     R.check(re.search(r"arena\.site|made with arena", html_text, flags=re.I) is None, where, "a trace of the design tool (Arena) is left in the page")
     R.check(len(html_text.encode("utf-8")) < 400 * 1024, where, "the page is %d KB, expected under 400 KB" % (len(html_text.encode("utf-8")) // 1024))

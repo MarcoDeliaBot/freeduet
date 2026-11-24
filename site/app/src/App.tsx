@@ -478,19 +478,17 @@ export default function App() {
                           <Plus size={18} />
                         </span>
                       </button>
-                      <AnimatePresence initial={false}>
-                        {open && (
-                          <motion.div
-                            className="faq-panel"
-                            initial={motionPaused ? false : { height: 0, opacity: 0 }}
-                            animate={{ height: "auto", opacity: 1 }}
-                            exit={motionPaused ? undefined : { height: 0, opacity: 0 }}
-                            transition={{ duration: 0.26, ease: [0.22, 1, 0.36, 1] }}
-                          >
-                            <p>{t(`faq.a${idx + 1}`)}</p>
-                          </motion.div>
-                        )}
-                      </AnimatePresence>
+                      {/* Every answer stays mounted (collapsed to height 0) so the text is in the prerendered page,
+                          as the FAQPage JSON-LD requires; only the open one is exposed to assistive technology. */}
+                      <motion.div
+                        className="faq-panel"
+                        aria-hidden={!open}
+                        initial={false}
+                        animate={open ? { height: "auto", opacity: 1 } : { height: 0, opacity: 0 }}
+                        transition={{ duration: 0.26, ease: [0.22, 1, 0.36, 1] }}
+                      >
+                        <p>{t(`faq.a${idx + 1}`)}</p>
+                      </motion.div>
                     </div>
                   );
                 })}
