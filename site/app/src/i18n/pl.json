@@ -303,7 +303,7 @@
  "install.copy_label": "Skopiuj polecenia instalacji",
  "install.copied": "Skopiowano",
  "install.copy": "Kopiuj wszystko",
- "install.note": "# aplikacja, zespół i przeglądarki",
+ "install.note": "# app, zespół, przeglądarki",
  "install.then": "Potem otwórz localhost:3010",
  "install.then_sub": "Przywitaj się z Iris i zacznij pierwsze małe zadanie.",
  "install.guide": "Pełny przewodnik",
