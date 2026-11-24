@@ -403,6 +403,34 @@ def strip_marks(x):
     return re.sub(r"\*([^*]+)\*", r"\1", re.sub(r"==([^=]+)==", r"\1", re.sub(r"\*\*([^*]+)\*\*", r"\1", x)))
 
 
+
+def _visible_text(markup):
+    """The page's text outside <script> and <style>, read with a real HTML parser (not a regexp)."""
+    from html.parser import HTMLParser
+
+    class _Text(HTMLParser):
+        def __init__(self):
+            super().__init__(convert_charrefs=True)
+            self.skip = 0
+            self.parts = []
+
+        def handle_starttag(self, tag, attrs):
+            if tag in ("script", "style"):
+                self.skip += 1
+
+        def handle_endtag(self, tag):
+            if tag in ("script", "style") and self.skip:
+                self.skip -= 1
+
+        def handle_data(self, data):
+            if not self.skip:
+                self.parts.append(data)
+
+    t = _Text()
+    t.feed(markup)
+    t.close()
+    return "".join(t.parts)
+
 def check_app_page(S, R, site_dir, code, html_text):
     """The page of a language in the new design (built from site/app, prerendered; see site/app/scripts/build.mjs).
     The markup is drawn from site/app/src/i18n/<code>.json, so the page must carry exactly that dictionary: this is how
@@ -479,7 +507,7 @@ def check_app_page(S, R, site_dir, code, html_text):
     ns = re.findall(r"<noscript>(.*?)</noscript>", html_text, flags=re.S)
     R.check(all("<h1" not in x and "<p" not in x for x in ns), where, "a <noscript> text block: the text is prerendered, <noscript> holds only a style")
     # every FAQ answer must be in the page's own text (collapsed is fine): the FAQPage JSON-LD must match visible content
-    visible = H.unescape(re.sub(r"<[^>]+>", "", re.sub(r"<script\b.*?</script\s*>", "", body, flags=re.S | re.I)))
+    visible = _visible_text(body)
     for n, (q, a) in enumerate(want, 1):
         R.check(re.sub(r"\s+", " ", a) in re.sub(r"\s+", " ", visible), where, "FAQ answer %d is not in the prerendered page text" % n)
         R.check(re.sub(r"\s+", " ", q) in re.sub(r"\s+", " ", visible), where, "FAQ question %d is not in the prerendered page text" % n)
