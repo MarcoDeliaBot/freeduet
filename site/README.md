@@ -13,6 +13,14 @@ The public website: one static page, built once per language, twelve URLs.
 - Check: `node site/tools/checklang.js`. It compares every language file with English, then runs `tools/checkpages.py`, which fails on a missing or stale page, a missing reciprocal hreflang or self canonical, a number of H1 other than one, a skipped heading level, an untranslated `data-i` key, a title that is not brand plus H1 words, JSON-LD that does not parse or a FAQ that differs from the visible one, a sitemap that disagrees with the pages, and a language folder that is not in `site.json`. Both read the same `site.json` as the build. Both need only Node and Python 3, no packages.
 - To add a language: add `src/lang/<code>.json`, add its entry to `site.json`, build, check.
 
+## The English page is the new design (preview, stage 1)
+
+- `index.html` (English) is no longer built by `tools/build.py`. It is built by Vite from `app/` (React 19, Tailwind 4, framer-motion, one file through `vite-plugin-singlefile`): `cd site/app && npm ci && npx vite build` writes `site/index.html`. Commit the result; `app/node_modules` is ignored.
+- `site.json` lists `"hand_built": ["en"]`. `build.py` skips those pages and still writes the other eleven pages and `sitemap.xml`. `checkpages.py` checks the English page with `check_app_page` (canonical, hreflang set, title, description, Open Graph and Twitter tags, the two JSON-LD blocks, the no-script text with one H1, weight under 800 KB, no trace of the design tool) instead of comparing it with a fresh build.
+- The head (title, canonical, hreflang, Open Graph, Twitter, JSON-LD) and the no-script text are written by a small Vite plugin in `app/vite.config.ts`; the FAQ JSON-LD comes from the same `FAQ_ITEMS` the page shows. Texts live in `app/src/data/freeduetData.ts` and `app/src/App.tsx`, `app/src/components/*.tsx`.
+- `app/` is published with the rest of the folder; its `index.html` says `noindex` and `robots.txt` disallows `/app/`.
+- The eleven language pages keep the old design until stage 2.
+
 ## One page per language
 
 - Each page has its own `<html lang>`, title, description, Open Graph and Twitter text, `og:locale`, a canonical link to itself, and the full set of `hreflang` alternates (all twelve plus `x-default`, which is English). The set is the same on every page.

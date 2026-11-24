@@ -1133,7 +1133,7 @@ export function SafetyGateMotion({ paused }: MotionProps) {
                   </span>
                   <span>{item.label}</span>
                   <span className="gate-pill-state">
-                    {active ? (unlockedTest ? "Yes!" : "Held") : "Locked"}
+                    {active ? (unlockedTest ? "Yes!" : "Held") : "Asks first"}
                   </span>
                 </button>
               );
