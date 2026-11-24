@@ -1,4 +1,6 @@
 User-agent: *
 Allow: /
+# site/app holds the source of the English page (built to /index.html); it is not a page
+Disallow: /app/
 
 Sitemap: https://freeduet.com/sitemap.xml

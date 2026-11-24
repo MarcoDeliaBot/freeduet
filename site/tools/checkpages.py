@@ -7,7 +7,9 @@
 every failure is printed on its own line as "[page] what is wrong".
 
 What it checks
-  - every page exists and equals a fresh build of site/src (so nothing is stale or hand-edited), and the site
+  - every page exists and equals a fresh build of site/src (so nothing is stale or hand-edited), except the pages of
+    the languages listed in "hand_built" of site.json (today English: the new design, built from site/app by Vite;
+    see check_app_page for what is checked on it), and the site
     folder holds no language folder that is not in site/src/site.json
   - on each page: <html lang>, a self-referencing canonical, the full reciprocal hreflang set (identical on every
     page, plus x-default), exactly one H1, no skipped heading level, title = brand + the H1 words, meta description,
@@ -395,6 +397,61 @@ def check_page(S, R, site_dir, code, html_text):
     return {"alts": alts, "own": alts.get(code)}
 
 
+def check_app_page(S, R, site_dir, code, html_text):
+    """The page of a language in `hand_built` (today English, the new design built from site/app). It is drawn by
+    scripts, so what can be checked is its head, its no-script text and its weight. Returns the same dict as check_page."""
+    where = S.file(code)
+    url = S.url(code)
+    head = html_text.split("<body", 1)[0]
+    R.check(re.search(r'<html lang="%s"' % code, html_text) is not None, where, "<html lang> is not %r" % code)
+    canon = re.findall(r'<link rel="canonical" href="([^"]*)"', head)
+    R.check(canon == [url], where, "canonical is %r, expected exactly [%r]" % (canon, url))
+    alts = dict(re.findall(r'<link rel="alternate" hreflang="([^"]*)" href="([^"]*)"', head))
+    R.check(len(re.findall(r'<link rel="alternate" hreflang=', head)) == len(alts), where, "the same hreflang appears twice")
+    R.check(alts == expected_alternates(S), where, "hreflang set is not the full reciprocal set: %r" % alts)
+    R.check(len(re.findall(r"<title>", head)) == 1, where, "not exactly one <title>")
+    title = re.search(r"<title>([^<]*)</title>", head)
+    R.check(title is not None and title.group(1).startswith("FreeDuet"), where, "the title does not start with the brand")
+    desc = re.search(r'<meta name="description" content="([^"]*)"', head)
+    R.check(desc is not None and len(desc.group(1)) > 50, where, "no meta description")
+    for prop in ("og:title", "og:description", "og:image", "og:url", "twitter:image", "twitter:description"):
+        R.check(re.search(r'<meta (?:property|name)="%s" content="[^"]+"' % prop, head) is not None, where, "no %s" % prop)
+    R.check(('content="%s/og-image.png"' % S.origin) in head, where, "og:image is not %s/og-image.png" % S.origin)
+    R.check(re.search(r'<meta property="og:url" content="%s"' % re.escape(url), head) is not None, where, "og:url is not %s" % url)
+    for href in re.findall(r'<link rel="(?:icon|apple-touch-icon)"[^>]*href="(/[^"]*)"', head):
+        R.check((site_dir / href.lstrip("/")).is_file(), where, "icon %r does not resolve to a file" % href)
+    blocks = re.findall(r'<script type="application/ld\+json">(.*?)</script>', head, flags=re.S)
+    parsed = []
+    for b in blocks:
+        try:
+            parsed.append(json.loads(b))
+        except ValueError as e:
+            R.check(False, where, "JSON-LD does not parse: %s" % e)
+    kinds = {o.get("@type"): o for o in parsed}
+    R.check(set(kinds) == {"SoftwareApplication", "FAQPage"} and len(parsed) == 2, where, "JSON-LD must hold exactly SoftwareApplication and FAQPage, found %r" % sorted(map(str, kinds)))
+    faq = kinds.get("FAQPage", {}).get("mainEntity", [])
+    R.check(len(faq) >= 1, where, "the FAQPage has no questions")
+    # the visible FAQ is drawn from the same data file at run time, so each answer must be in the page's script as written
+    for q in faq:
+        a = q.get("acceptedAnswer", {}).get("text", "")
+        R.check(len(a) > 20 and a[:40] in html_text, where, "the FAQ answer %r is not in the page text" % a[:40])
+    # the no-script text: one H1, and the page says which scripts it needs
+    ns = re.search(r"<noscript>(.*?)</noscript>", html_text, flags=re.S)
+    R.check(ns is not None and len(re.findall(r"<h1\b", ns.group(1))) == 1, where, "the <noscript> text must hold exactly one H1")
+    R.check(len(re.findall(r"<h1\b", head)) == 0, where, "an H1 in the head")
+    # nothing of the tool that drew the design may be left in the page
+    R.check(re.search(r'name="robots"', head) is None, where, "the built page must not carry the template's noindex")
+    R.check(re.search(r"arena\.site|made with arena", html_text, flags=re.I) is None, where, "a trace of the design tool (Arena) is left in the page")
+    R.check(len(html_text.encode("utf-8")) < 800 * 1024, where, "the page is %d KB, expected under 800 KB" % (len(html_text.encode("utf-8")) // 1024))
+    # root-absolute links that the page text names in href attributes of the no-script block
+    for v in re.findall(r'href="(/[^"]*)"', ns.group(1) if ns else ""):
+        path = site_dir / v.lstrip("/").split("#")[0]
+        if v.endswith("/"):
+            path = path / "index.html"
+        R.check(path.is_file(), where, "href=%r does not resolve to a file" % v)
+    return {"alts": alts, "own": alts.get(code)}
+
+
 def check_sitemap(S, R, site_dir, pages):
     path = site_dir / "sitemap.xml"
     if not R.check(path.is_file(), "sitemap.xml", "missing"):
@@ -453,12 +510,13 @@ def main(argv):
             continue
         R.check(p.read_text(encoding="utf-8") == text, rel, "is not equal to a fresh build: run python3 site/tools/build.py")
     for d in sorted(site_dir.iterdir()):
-        if d.is_dir() and (d / "index.html").is_file() and d.name not in S.codes and d.name not in ("src", "tools", "video"):
+        if d.is_dir() and (d / "index.html").is_file() and d.name not in S.codes and d.name not in ("src", "tools", "video", "app"):
             R.check(False, d.name + "/index.html", "is a page for a language that is not in site/src/site.json")
     pages = {}
     for c in S.codes:
         p = site_dir / S.file(c)
-        pages[c] = check_page(S, R, site_dir, c, p.read_text(encoding="utf-8")) if p.is_file() else None
+        check = check_app_page if c in S.hand_built else check_page
+        pages[c] = check(S, R, site_dir, c, p.read_text(encoding="utf-8")) if p.is_file() else None
     ref = None
     for c in S.codes:
         if pages[c]:

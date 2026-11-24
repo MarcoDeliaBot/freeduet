@@ -6,6 +6,8 @@
 SRC    the source folder (default: site/src, next to this script).
 INDEX  where the English page goes (default: site/index.html). The other pages go to
        <folder of INDEX>/<code>/index.html and the sitemap to <folder of INDEX>/sitemap.xml.
+       While "hand_built" in site.json lists "en", the English page is built from site/app instead
+       (cd site/app && npm ci && npx vite build) and this script does not write INDEX.
 
 Every page is complete in its own language before any script runs: the text of `body.html` is filled in from
 `lang/<code>.json`, and what `app.js` used to draw at run time (the team, the mascots, the big Iris faces and the weekday
@@ -246,6 +248,9 @@ class Site:
         self.origin = cfg["origin"].rstrip("/")
         self.lastmod = cfg["lastmod"]
         self.default = cfg["default"]
+        # Languages whose page is not written by this script. The English page is the new design, built from site/app
+        # (React, Vite) straight to site/index.html; the build here leaves it alone and checkpages.py checks it separately.
+        self.hand_built = cfg.get("hand_built", [])
         self.langs = cfg["languages"]
         self.codes = [l["code"] for l in self.langs]
         self.by_code = {l["code"]: l for l in self.langs}
@@ -417,7 +422,7 @@ def render_sitemap(S):
 def build_files(src):
     """Everything the build writes, as {path relative to the site folder: text}. The checker calls this too."""
     S = Site(src)
-    files = {S.file(c): render_page(S, c) for c in S.codes}
+    files = {S.file(c): render_page(S, c) for c in S.codes if c not in S.hand_built}
     files["sitemap.xml"] = render_sitemap(S)
     return files
 
