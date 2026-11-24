@@ -1,4 +1,12 @@
-import { afterAll, afterEach, beforeAll, expect, test } from "bun:test";
+import {
+  afterAll,
+  afterEach,
+  beforeAll,
+  beforeEach,
+  expect,
+  setSystemTime,
+  test,
+} from "bun:test";
 import { GlobalRegistrator } from "@happy-dom/global-registrator";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import {
@@ -37,6 +45,16 @@ afterEach(() => {
 // Wednesday 18 November 2026, 07:30 in Rome.
 const NOW = new Date("2026-11-18T06:30:00Z");
 const ZONE = "Europe/Rome";
+
+// The list and its toggle read the real clock (`new Date()`) when they open, so the week grid's
+// fixture (the week of NOW) is in the past once the real date moves on. Pin the clock to NOW for every
+// test in this file; `setSystemTime()` with no argument hands the real clock back.
+beforeEach(() => {
+  setSystemTime(NOW);
+});
+afterEach(() => {
+  setSystemTime();
+});
 
 const inbox: RoutineRecord = {
   id: "r1",
