@@ -1,8 +1,7 @@
 {
   "origin": "https://freeduet.com",
-  "lastmod": "2026-11-16",
+  "lastmod": "2026-11-24",
   "default": "en",
-  "hand_built": ["en"],
   "languages": [
     {"code": "en", "name": "English",   "locale": "en_US", "week": ["M","T","W","T","F","S","S"]},
     {"code": "it", "name": "Italiano",  "locale": "it_IT", "week": ["L","M","M","G","V","S","D"]},
