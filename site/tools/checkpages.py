@@ -479,7 +479,7 @@ def check_app_page(S, R, site_dir, code, html_text):
     ns = re.findall(r"<noscript>(.*?)</noscript>", html_text, flags=re.S)
     R.check(all("<h1" not in x and "<p" not in x for x in ns), where, "a <noscript> text block: the text is prerendered, <noscript> holds only a style")
     # every FAQ answer must be in the page's own text (collapsed is fine): the FAQPage JSON-LD must match visible content
-    visible = H.unescape(re.sub(r"<[^>]+>", "", re.sub(r"<script.*?</script>", "", body, flags=re.S)))
+    visible = H.unescape(re.sub(r"<[^>]+>", "", re.sub(r"<script\b.*?</script\s*>", "", body, flags=re.S | re.I)))
     for n, (q, a) in enumerate(want, 1):
         R.check(re.sub(r"\s+", " ", a) in re.sub(r"\s+", " ", visible), where, "FAQ answer %d is not in the prerendered page text" % n)
         R.check(re.sub(r"\s+", " ", q) in re.sub(r"\s+", " ", visible), where, "FAQ question %d is not in the prerendered page text" % n)
