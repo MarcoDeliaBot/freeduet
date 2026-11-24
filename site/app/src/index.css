@@ -52,6 +52,16 @@ h1, h2, h3, h4, p, blockquote, dl, dd, pre, ul, ol {
   margin: 0;
 }
 
+/* Japanese and Korean: break only at phrase or word boundaries, never inside a word (チーム, 받습니다) */
+:lang(ko) {
+  word-break: keep-all;
+  overflow-wrap: break-word;
+}
+
+:lang(ja) {
+  word-break: auto-phrase;
+}
+
 a {
   color: inherit;
   text-decoration: none;
