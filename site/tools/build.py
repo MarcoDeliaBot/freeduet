@@ -6,8 +6,9 @@
 SRC    the source folder (default: site/src, next to this script).
 INDEX  where the English page goes (default: site/index.html). The other pages go to
        <folder of INDEX>/<code>/index.html and the sitemap to <folder of INDEX>/sitemap.xml.
-       While "hand_built" in site.json lists "en", the English page is built from site/app instead
-       (cd site/app && npm ci && npx vite build) and this script does not write INDEX.
+       A language whose src/i18n file in site/app has no "_untranslated" marker is in the new design: its page is
+       built from site/app (cd site/app && npm ci && npm run build) and this script does not write it (English is
+       in that group, so today INDEX is not written). Every other language gets the old-design page from here.
 
 Every page is complete in its own language before any script runs: the text of `body.html` is filled in from
 `lang/<code>.json`, and what `app.js` used to draw at run time (the team, the mascots, the big Iris faces and the weekday
@@ -241,6 +242,18 @@ def big_faces(M):
 # ---------------------------------------------------------------------------------------------------------------
 # the site: sources and per-language pieces
 
+def app_languages(i18n_dir, codes):
+    """The languages in the new design: those with site/app/src/i18n/<code>.json that is not marked "_untranslated".
+    A language is in exactly one build: the new one (site/app) once translated, the old one (this script) until then,
+    so no page ever shows English text under another language's address."""
+    out = []
+    for c in codes:
+        f = Path(i18n_dir) / (c + ".json")
+        if f.is_file() and not json.loads(f.read_text(encoding="utf-8")).get("_untranslated"):
+            out.append(c)
+    return out
+
+
 class Site:
     def __init__(self, src):
         src = Path(src)
@@ -248,9 +261,11 @@ class Site:
         self.origin = cfg["origin"].rstrip("/")
         self.lastmod = cfg["lastmod"]
         self.default = cfg["default"]
-        # Languages whose page is not written by this script. The English page is the new design, built from site/app
-        # (React, Vite) straight to site/index.html; the build here leaves it alone and checkpages.py checks it separately.
-        self.hand_built = cfg.get("hand_built", [])
+        # Languages whose page is not written by this script: the ones translated in the new design (see app_languages).
+        # They are built from site/app (React, Vite, prerendered) to site/index.html and site/<code>/index.html; the
+        # build here leaves them alone and checkpages.py checks them separately.
+        self.i18n_dir = src.parent / "app" / "src" / "i18n"
+        self.hand_built = app_languages(self.i18n_dir, [l["code"] for l in cfg["languages"]])
         self.langs = cfg["languages"]
         self.codes = [l["code"] for l in self.langs]
         self.by_code = {l["code"]: l for l in self.langs}

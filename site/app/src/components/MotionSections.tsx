@@ -21,6 +21,7 @@ import {
   Trash2,
 } from "lucide-react";
 import { FreeDuetMascot } from "./FreeDuetMascot";
+import { useI18n } from "../i18n";
 import type { MascotMood } from "./FreeDuetMascot";
 import {
   REPORT_URL,
@@ -42,74 +43,58 @@ interface MotionProps {
 
 interface OrbitSlot {
   id: MascotId;
-  name: string;
-  role: string;
   accent: string;
   deep: string;
   tint: string;
   x: number;
   y: number;
   beam: string;
-  task: string;
-  tag: string;
 }
+
+// Text keys: orbit.<id>.task|tag, member.<id>.role. Names are not translated.
+const cap = (id: string) => id.charAt(0).toUpperCase() + id.slice(1);
 
 const ORBIT_TEAM: OrbitSlot[] = [
   {
     id: "otto",
-    name: "Otto",
-    role: "Mail",
     accent: "#F4917A",
     deep: "#C6533B",
     tint: "#FFF2EE",
     x: 92,
     y: 110,
     beam: "M 244 218 Q 178 148 124 126",
-    task: "Reply drafted for the plumber",
-    tag: "Waiting for yes",
   },
   {
     id: "portia",
-    name: "Portia",
-    role: "Contracts",
     accent: "#9B7BE0",
     deep: "#6643BC",
     tint: "#F4EFFE",
     x: 468,
     y: 110,
     beam: "M 316 218 Q 382 148 436 126",
-    task: "2 lease clauses highlighted",
-    tag: "Ready to review",
   },
   {
     id: "penny",
-    name: "Penny",
-    role: "Invoices",
     accent: "#F6C955",
     deep: "#9B6F00",
     tint: "#FFF8E1",
     x: 96,
     y: 382,
     beam: "M 242 288 Q 172 346 128 368",
-    task: "Acme invoice sums double-checked",
-    tag: "Held to send",
   },
   {
     id: "jules",
-    name: "Jules",
-    role: "Errands",
     accent: "#6EB8F2",
     deep: "#1B6DB5",
     tint: "#ECF6FF",
     x: 464,
     y: 382,
     beam: "M 318 288 Q 388 346 432 368",
-    task: "Friday table for 4 reserved",
-    tag: "Tap to approve",
   },
 ];
 
 export function HeroOrchestra({ paused }: MotionProps) {
+  const { t } = useI18n();
   const [activeIdx, setActiveIdx] = useState(0);
   const [irisCheer, setIrisCheer] = useState(false);
   const [gaze, setGaze] = useState({ x: 0, y: 0 });
@@ -140,6 +125,7 @@ export function HeroOrchestra({ paused }: MotionProps) {
   const handleMouseLeave = () => setGaze({ x: 0, y: 0 });
 
   const current = ORBIT_TEAM[activeIdx];
+  const currentName = cap(current.id);
 
   return (
     <div
@@ -147,7 +133,7 @@ export function HeroOrchestra({ paused }: MotionProps) {
       className="hero-stage"
       onMouseMove={handleMouseMove}
       onMouseLeave={handleMouseLeave}
-      aria-label="Animated graphic of Iris connecting with Otto, Portia, Penny, and Jules"
+      aria-label={t("hero.stage_aria")}
     >
       {/* Daylight pastel luminous aura blurs */}
       <div className="stage-glow stage-glow-aqua" aria-hidden="true" />
@@ -236,7 +222,7 @@ export function HeroOrchestra({ paused }: MotionProps) {
         onClick={() => setIrisCheer(true)}
         whileHover={paused ? undefined : { scale: 1.05 }}
         whileTap={{ scale: 0.95 }}
-        aria-label="Iris, team coordinator. Click to make Iris wave and smile"
+        aria-label={t("hero.iris_aria")}
       >
         <span className="hero-iris-disc" />
         <FreeDuetMascot
@@ -257,7 +243,7 @@ export function HeroOrchestra({ paused }: MotionProps) {
             <i />
           </span>
           <strong>Iris</strong>
-          <small>{irisCheer ? "Hi there!" : "Chief of Staff"}</small>
+          <small>{irisCheer ? t("hero.iris_hi") : t("hero.iris_tag")}</small>
         </span>
       </motion.button>
 
@@ -280,7 +266,7 @@ export function HeroOrchestra({ paused }: MotionProps) {
             className={`orbit-node ${isActive ? "is-active" : ""}`}
             onClick={() => setActiveIdx(index)}
             aria-pressed={isActive}
-            aria-label={`Spotlight ${slot.name}, ${slot.role}`}
+            aria-label={t("hero.spotlight", { name: cap(slot.id), role: t(`member.${slot.id}.role`) })}
             animate={
               paused
                 ? undefined
@@ -305,8 +291,8 @@ export function HeroOrchestra({ paused }: MotionProps) {
               delay={index * 0.55}
             />
             <span className="orbit-node-label">
-              <b>{slot.name}</b>
-              <small>{slot.role}</small>
+              <b>{cap(slot.id)}</b>
+              <small>{t(`member.${slot.id}.role`)}</small>
             </span>
           </motion.button>
         );
@@ -325,14 +311,14 @@ export function HeroOrchestra({ paused }: MotionProps) {
           >
             <span className="hero-live-dot" style={{ backgroundColor: current.accent }} />
             <span className="hero-live-text">
-              <strong>{current.name}:</strong> {current.task}
+              <strong>{currentName}:</strong> {t(`orbit.${current.id}.task`)}
             </span>
             <span
               className="hero-live-badge"
               style={{ backgroundColor: current.tint, color: current.deep }}
             >
               <ShieldCheck size={12} aria-hidden="true" />
-              {current.tag}
+              {t(`orbit.${current.id}.tag`)}
             </span>
           </motion.div>
         </AnimatePresence>
@@ -345,41 +331,18 @@ export function HeroOrchestra({ paused }: MotionProps) {
    2. WORKFLOW THEATER — Interactive mascot hand-off + approval cards
    ========================================================================== */
 
-const WORKFLOW_STEPS = [
-  {
-    n: "01",
-    title: "Write what you need",
-    body: "Plain words in your own language — just like texting a friend.",
-  },
-  {
-    n: "02",
-    title: "Iris picks your specialist",
-    body: "Routes your task with a done-when line, so you can see what counts as finished.",
-  },
-  {
-    n: "03",
-    title: "Works at its own desk",
-    body: "Searches, reads, and prepares drafts in an isolated browser. Page text is treated as data, not as orders.",
-  },
-  {
-    n: "04",
-    title: "A card asks for your yes",
-    body: "If the task touches Send, Pay, Sign, Book, or Delete, work pauses here for your yes, by default.",
-  },
-  {
-    n: "05",
-    title: "You get a short report",
-    body: "What was done, what was held, and the next step. No walls of text.",
-  },
-];
+// Text keys: how.step<n>.title|body
+const WORKFLOW_STEPS = ["01", "02", "03", "04", "05"];
 
 export function WorkflowTheater({ paused }: MotionProps) {
+  const { t, rich } = useI18n();
   const [scenarioIdx, setScenarioIdx] = useState(0);
   const [phase, setPhase] = useState<number>(4);
   const [decision, setDecision] = useState<"waiting" | "approved" | "held">("waiting");
   const [playNonce, setPlayNonce] = useState(0);
 
   const demo = WORKFLOW_DEMOS[scenarioIdx];
+  const dk = (k: string) => t(`demo.${demo.id}.${k}`);
 
   useEffect(() => {
     if (paused) {
@@ -434,19 +397,15 @@ export function WorkflowTheater({ paused }: MotionProps) {
           <div>
             <p className="eyebrow">
               <span className="eyebrow-dot" style={{ background: "#1B4FD8" }} />
-              Interactive demo
+              {t("how.eyebrow")}
             </p>
-            <h2 id="how-heading">
-              What happens after <span className="accent-text">you press Enter.</span>
-            </h2>
+            <h2 id="how-heading">{rich("how.h2")}</h2>
           </div>
-          <p className="section-lead">
-            Pick any example below to watch Iris hand a job off to a specialist and pause politely at your approval card.
-          </p>
+          <p className="section-lead">{t("how.lead")}</p>
         </div>
 
         {/* Scenario pill tabs */}
-        <div className="scenario-bar" role="tablist" aria-label="Demo task examples">
+        <div className="scenario-bar" role="tablist" aria-label={t("how.scenarios_aria")}>
           {WORKFLOW_DEMOS.map((item, idx) => {
             const active = idx === scenarioIdx;
             return (
@@ -468,7 +427,7 @@ export function WorkflowTheater({ paused }: MotionProps) {
                 <span className="scenario-tab-inner">
                   <FreeDuetMascot id={item.memberId} size={30} animated={false} />
                   <span>
-                    {item.memberName} · {item.label}
+                    {item.memberName} · {t(`demo.${item.id}.label`)}
                   </span>
                 </span>
               </button>
@@ -478,21 +437,21 @@ export function WorkflowTheater({ paused }: MotionProps) {
             type="button"
             className="replay-btn"
             onClick={handleReplay}
-            aria-label="Replay workflow animation"
+            aria-label={t("how.replay_label")}
           >
             <RotateCcw size={14} aria-hidden="true" />
-            Replay
+            {t("how.replay")}
           </button>
         </div>
 
         <div className="workflow-grid">
           <ol className="step-rail">
-            {WORKFLOW_STEPS.map((st, idx) => {
+            {WORKFLOW_STEPS.map((n, idx) => {
               const isCurrent = idx === activeStep;
               const isDone = idx < activeStep || (decision === "approved" && idx <= 4);
               return (
                 <li
-                  key={st.n}
+                  key={n}
                   className={`step-item ${isCurrent ? "is-current" : ""} ${isDone ? "is-done" : ""}`}
                 >
                   <button
@@ -509,11 +468,11 @@ export function WorkflowTheater({ paused }: MotionProps) {
                     }}
                   >
                     <span className="step-badge" aria-hidden="true">
-                      {isDone && !isCurrent ? <Check size={13} strokeWidth={3} /> : st.n}
+                      {isDone && !isCurrent ? <Check size={13} strokeWidth={3} /> : n}
                     </span>
                     <span className="step-copy">
-                      <strong>{st.title}</strong>
-                      <span>{st.body}</span>
+                      <strong>{t(`how.step${idx + 1}.title`)}</strong>
+                      <span>{t(`how.step${idx + 1}.body`)}</span>
                     </span>
                   </button>
                 </li>
@@ -531,7 +490,7 @@ export function WorkflowTheater({ paused }: MotionProps) {
                   </span>
                   <strong>FreeDuet</strong>
                 </div>
-                <span className="demo-chip">Demo · made-up example</span>
+                <span className="demo-chip">{t("how.chip")}</span>
               </div>
 
               {/* Expressive animated relay stage with official character moods */}
@@ -586,14 +545,14 @@ export function WorkflowTheater({ paused }: MotionProps) {
                     style={{ color: decision === "approved" ? "#0F8A64" : demo.deep }}
                   >
                     {decision === "approved"
-                      ? "Approved & done!"
+                      ? t("relay.approved")
                       : phase === 1
-                        ? "Iris listening…"
+                        ? t("relay.listening")
                         : phase === 2
-                          ? `Hand-off → ${demo.memberName}`
+                          ? t("relay.handoff", { name: demo.memberName })
                           : phase === 3
-                            ? demo.deskAction
-                            : "Waiting for your yes"}
+                            ? dk("desk")
+                            : t("relay.waiting")}
                   </span>
                 </div>
 
@@ -619,7 +578,7 @@ export function WorkflowTheater({ paused }: MotionProps) {
                   animate={{ opacity: 1, y: 0, scale: 1 }}
                   transition={{ duration: 0.34 }}
                 >
-                  {demo.userPrompt}
+                  {dk("prompt")}
                 </motion.div>
 
                 {phase >= 2 && (
@@ -632,9 +591,9 @@ export function WorkflowTheater({ paused }: MotionProps) {
                   >
                     <span className="chat-tag tag-iris">Iris</span>
                     <div className="chat-bubble">
-                      <p>{demo.irisLine}</p>
+                      <p>{dk("iris")}</p>
                       <span className="done-when">
-                        <b>Done when:</b> {demo.doneWhen}
+                        <b>{t("chat.done_when")}</b> {dk("done")}
                       </span>
                     </div>
                   </motion.div>
@@ -655,7 +614,7 @@ export function WorkflowTheater({ paused }: MotionProps) {
                       {demo.memberName}
                     </span>
                     <div className="chat-bubble">
-                      <p>{demo.memberReply}</p>
+                      <p>{dk("reply")}</p>
                     </div>
                   </motion.div>
                 )}
@@ -672,19 +631,19 @@ export function WorkflowTheater({ paused }: MotionProps) {
                       <span className="gate-flag">
                         <span className="gate-pulse" aria-hidden="true" />
                         {decision === "approved"
-                          ? "Approved in demo"
+                          ? t("gate.approved_flag")
                           : decision === "held"
-                            ? "Kept on hold"
-                            : `Waiting for your yes · ${demo.gateAction}`}
+                            ? t("gate.held_flag")
+                            : t("gate.waiting", { action: dk("gate_action") })}
                       </span>
                       <ShieldCheck size={16} aria-hidden="true" />
                     </div>
-                    <strong className="gate-title">{demo.gateTitle}</strong>
+                    <strong className="gate-title">{dk("gate_title")}</strong>
                     <dl className="gate-dl">
-                      {demo.gateDetails.map((d) => (
-                        <div key={d.label}>
-                          <dt>{d.label}</dt>
-                          <dd>{d.value}</dd>
+                      {["d1", "d2"].map((d) => (
+                        <div key={d}>
+                          <dt>{dk(`${d}l`)}</dt>
+                          <dd>{dk(`${d}v`)}</dd>
                         </div>
                       ))}
                     </dl>
@@ -697,14 +656,14 @@ export function WorkflowTheater({ paused }: MotionProps) {
                             onClick={() => setDecision("approved")}
                           >
                             <Check size={15} aria-hidden="true" />
-                            Approve
+                            {t("gate.approve")}
                           </button>
                           <button
                             type="button"
                             className="btn btn-soft btn-sm"
                             onClick={() => setDecision("held")}
                           >
-                            Not now
+                            {t("gate.notnow")}
                           </button>
                         </>
                       ) : (
@@ -713,10 +672,10 @@ export function WorkflowTheater({ paused }: MotionProps) {
                             {decision === "approved" ? (
                               <>
                                 <Sparkles size={15} aria-hidden="true" />
-                                {demo.approvedText}
+                                {dk("approved")}
                               </>
                             ) : (
-                              <>Nothing was sent. The draft is kept for you.</>
+                              <>{t("gate.held_msg")}</>
                             )}
                           </span>
                           <button
@@ -724,7 +683,7 @@ export function WorkflowTheater({ paused }: MotionProps) {
                             className="outcome-reset"
                             onClick={() => setDecision("waiting")}
                           >
-                            <RotateCcw size={13} aria-hidden="true" /> Reset
+                            <RotateCcw size={13} aria-hidden="true" /> {t("gate.reset")}
                           </button>
                         </div>
                       )}
@@ -734,7 +693,7 @@ export function WorkflowTheater({ paused }: MotionProps) {
               </div>
             </div>
             <p className="theater-note">
-              Illustration made for this page — every name and message is made up. Nothing is sent.
+              {t("how.note")}
             </p>
           </div>
         </div>
@@ -747,23 +706,13 @@ export function WorkflowTheater({ paused }: MotionProps) {
    3. TEAM SHOWCASE — All 13 real official mascots + live 6-mood animation studio
    ========================================================================== */
 
-const CATEGORY_TABS: { id: TeamCategory; label: string }[] = [
-  { id: "all", label: "All 13" },
-  { id: "daily", label: "Everyday office" },
-  { id: "studio", label: "Creative & growth" },
-  { id: "support", label: "Home & checks" },
-];
+// Text keys: team.cat_<id>, mood.<id>
+const CATEGORY_TABS: TeamCategory[] = ["all", "daily", "studio", "support"];
 
-const MOOD_CONTROLS: { id: MascotMood; label: string }[] = [
-  { id: "idle", label: "Idle" },
-  { id: "listen", label: "Listen" },
-  { id: "think", label: "Think" },
-  { id: "work", label: "Work" },
-  { id: "ask", label: "Ask yes" },
-  { id: "done", label: "Happy" },
-];
+const MOOD_CONTROLS: MascotMood[] = ["idle", "listen", "think", "work", "ask", "done"];
 
 export function TeamShowcase({ paused }: MotionProps) {
+  const { t, rich } = useI18n();
   const [selectedId, setSelectedId] = useState<MascotId>("iris");
   const [category, setCategory] = useState<TeamCategory>("all");
   const [mood, setMood] = useState<MascotMood>("idle");
@@ -806,40 +755,35 @@ export function TeamShowcase({ paused }: MotionProps) {
           <div>
             <p className="eyebrow">
               <span className="eyebrow-dot" style={{ background: "#9B7BE0" }} />
-              Official team · 13 mascots
+              {t("team.eyebrow")}
             </p>
-            <h2 id="team-heading">
-              Meet the crew. <span className="accent-text">One job each.</span>
-            </h2>
+            <h2 id="team-heading">{rich("team.h2")}</h2>
           </div>
-          <p className="section-lead">
-            For the same reason a football team has a goalkeeper: doing one job all day makes you
-            great at it. Click any mascot and preview all six live animation expressions. Out now means it is in the v0.2.2 release; much of it has not yet been run live.
-          </p>
+          <p className="section-lead">{t("team.lead")}</p>
         </div>
 
         {/* Category tabs */}
-        <div className="team-filters" role="group" aria-label="Filter team members">
+        <div className="team-filters" role="group" aria-label={t("team.filters_aria")}>
           {CATEGORY_TABS.map((tab) => {
-            const active = category === tab.id;
+            const active = category === tab;
             return (
               <button
-                key={tab.id}
+                key={tab}
                 type="button"
                 aria-pressed={active}
                 className={`filter-chip ${active ? "is-active" : ""}`}
                 onClick={() => {
-                  setCategory(tab.id);
+                  setCategory(tab);
                   const matching =
-                    tab.id === "all"
+                    tab === "all"
                       ? TEAM_MEMBERS
-                      : TEAM_MEMBERS.filter((m) => m.category === tab.id);
+                      : TEAM_MEMBERS.filter((m) => m.category === tab);
                   if (!matching.some((m) => m.id === selectedId) && matching[0]) {
                     setSelectedId(matching[0].id);
                   }
                 }}
               >
-                {tab.label}
+                {t(`team.cat_${tab}`)}
               </button>
             );
           })}
@@ -887,37 +831,37 @@ export function TeamShowcase({ paused }: MotionProps) {
                     showNotes={!paused}
                     showSparkles={waving || mood === "done"}
                     animated={!paused}
-                    label={`${current.name}, official FreeDuet ${current.role} mascot`}
+                    label={t("team.mascot_label", { name: cap(current.id), role: t(`member.${current.id}.role`) })}
                   />
                 </motion.div>
               </div>
 
               <div className="spotlight-copy">
                 <div className="spotlight-meta">
-                  <span className="spotlight-role">{current.role}</span>
-                  <span className={`status-pill ${current.status === "Out now" ? "is-live" : ""}`}>
-                    {current.status}
+                  <span className="spotlight-role">{t(`member.${current.id}.role`)}</span>
+                  <span className={`status-pill ${current.status === "out" ? "is-live" : ""}`}>
+                    {t(`status.${current.status}`)}
                   </span>
                 </div>
-                <h3>{current.name}</h3>
-                <p className="spotlight-desc">{current.description}</p>
-                <blockquote className="spotlight-quote">“{current.prompt}”</blockquote>
+                <h3>{cap(current.id)}</h3>
+                <p className="spotlight-desc">{t(`member.${current.id}.desc`)}</p>
+                <blockquote className="spotlight-quote">{t("team.quote", { text: t(`member.${current.id}.prompt`) })}</blockquote>
 
                 {/* Live 6-mood expression chips */}
-                <div className="mood-row" role="group" aria-label={`Animate ${current.name} expression`}>
-                  <span className="mood-label">Mood:</span>
+                <div className="mood-row" role="group" aria-label={t("team.mood_aria", { name: cap(current.id) })}>
+                  <span className="mood-label">{t("team.mood_label")}</span>
                   {MOOD_CONTROLS.map((m) => (
                     <button
-                      key={m.id}
+                      key={m}
                       type="button"
-                      className={`mood-chip ${mood === m.id ? "is-active" : ""}`}
-                      aria-pressed={mood === m.id}
+                      className={`mood-chip ${mood === m ? "is-active" : ""}`}
+                      aria-pressed={mood === m}
                       onClick={() => {
-                        setMood(m.id);
-                        if (m.id === "done") setWaving(true);
+                        setMood(m);
+                        if (m === "done") setWaving(true);
                       }}
                     >
-                      {m.label}
+                      {t(`mood.${m}`)}
                     </button>
                   ))}
                 </div>
@@ -925,14 +869,14 @@ export function TeamShowcase({ paused }: MotionProps) {
                 <div className="spotlight-actions">
                   <button type="button" className="btn btn-soft btn-sm" onClick={triggerWave}>
                     <Hand size={15} aria-hidden="true" />
-                    Wave to {current.name}
+                    {t("team.wave", { name: cap(current.id) })}
                   </button>
                   <div className="spotlight-nav">
                     <button
                       type="button"
                       className="icon-btn"
                       onClick={() => stepMember(-1)}
-                      aria-label="Previous teammate"
+                      aria-label={t("team.prev")}
                     >
                       <ArrowLeft size={16} />
                     </button>
@@ -940,7 +884,7 @@ export function TeamShowcase({ paused }: MotionProps) {
                       type="button"
                       className="icon-btn"
                       onClick={() => stepMember(1)}
-                      aria-label="Next teammate"
+                      aria-label={t("team.next")}
                     >
                       <ArrowRight size={16} />
                     </button>
@@ -952,7 +896,7 @@ export function TeamShowcase({ paused }: MotionProps) {
         </div>
 
         {/* All 13 real bouncing official mascots grid */}
-        <div className="roster-grid" aria-label="Choose any of the 13 FreeDuet team mascots">
+        <div className="roster-grid" aria-label={t("team.roster_aria")}>
           {visible.map((member, index) => {
             const selected = member.id === selectedId;
             return (
@@ -982,18 +926,17 @@ export function TeamShowcase({ paused }: MotionProps) {
                   animated={!paused}
                   delay={(index % 6) * 0.42}
                 />
-                <strong className="tile-name">{member.name}</strong>
-                <span className="tile-role">{member.role}</span>
+                <strong className="tile-name">{cap(member.id)}</strong>
+                <span className="tile-role">{t(`member.${member.id}.role`)}</span>
               </motion.button>
             );
           })}
         </div>
 
         <p className="section-footnote">
-          Only where the team begins — ask <strong>Leo</strong> to design a new specialist for any
-          job, with source and licence shown before anything installs.{" "}
+          {rich("team.footnote")}{" "}
           <a href={TEAM_DOCS_URL} target="_blank" rel="noreferrer" className="inline-link">
-            How members are defined <ArrowUpRight size={14} aria-hidden="true" />
+            {t("team.footnote_link")} <ArrowUpRight size={14} aria-hidden="true" />
           </a>
         </p>
       </div>
@@ -1013,10 +956,11 @@ const ACTION_ICONS = {
   delete: Trash2,
 };
 
-const WEEK_DAYS = ["M", "T", "W", "T", "F", "S", "S"];
-const ROLLBACK_STEPS = ["Back up data", "Update", "Health check", "Safe go-back"];
+// Text keys: rb.<n>
+const ROLLBACK_STEPS = ["1", "2", "3", "4"];
 
 function ScoreGauge({ paused }: { paused: boolean }) {
+  const { t } = useI18n();
   const ref = useRef<HTMLDivElement>(null);
   const inView = useInView(ref, { once: true, amount: 0.4 });
   const r = 34;
@@ -1048,18 +992,20 @@ function ScoreGauge({ paused }: { paused: boolean }) {
           </linearGradient>
         </defs>
       </svg>
-      <span>45/45</span>
+      <span>{t("bento.score.ring")}</span>
     </div>
   );
 }
 
 export function SafetyGateMotion({ paused }: MotionProps) {
+  const { t, rich, week } = useI18n();
   const [selectedIdx, setSelectedIdx] = useState(0);
   const [unlockedTest, setUnlockedTest] = useState(false);
   const [activeDays, setActiveDays] = useState<boolean[]>([true, true, true, true, true, false, false]);
   const [rbIdx, setRbIdx] = useState(0);
 
   const action = SAFETY_ACTIONS[selectedIdx];
+  const actionLabel = t(`act.${action.id}`);
 
   useEffect(() => {
     setUnlockedTest(false);
@@ -1095,21 +1041,16 @@ export function SafetyGateMotion({ paused }: MotionProps) {
           <div>
             <p className="eyebrow">
               <span className="eyebrow-dot" style={{ background: "#0F8A64" }} />
-              You stay the boss
+              {t("safety.eyebrow")}
             </p>
-            <h2 id="safety-heading">
-              Five buttons wait <span className="accent-text">for your yes.</span>
-            </h2>
+            <h2 id="safety-heading">{rich("safety.h2")}</h2>
           </div>
-          <p className="section-lead">
-            Would you hand a brand-new assistant your wallet on day one? Neither would we.
-            By default these five ask for your approval card first. A fixed rule and a reviewer model decide when, and neither is perfect.
-          </p>
+          <p className="section-lead">{t("safety.lead")}</p>
         </div>
 
         {/* Interactive kinetic 5-button Safety Gate */}
         <div className="safety-stage">
-          <div className="safety-buttons" role="tablist" aria-label="Five approval-gated actions">
+          <div className="safety-buttons" role="tablist" aria-label={t("safety.tabs_aria")}>
             {SAFETY_ACTIONS.map((item, idx) => {
               const Icon = ACTION_ICONS[item.id];
               const active = idx === selectedIdx;
@@ -1131,9 +1072,9 @@ export function SafetyGateMotion({ paused }: MotionProps) {
                   <span className="gate-pill-icon">
                     <Icon size={17} aria-hidden="true" />
                   </span>
-                  <span>{item.label}</span>
+                  <span>{t(`act.${item.id}`)}</span>
                   <span className="gate-pill-state">
-                    {active ? (unlockedTest ? "Yes!" : "Held") : "Asks first"}
+                    {active ? (unlockedTest ? t("safety.yes") : t("safety.held")) : t("safety.asks")}
                   </span>
                 </button>
               );
@@ -1150,7 +1091,7 @@ export function SafetyGateMotion({ paused }: MotionProps) {
                   wave={unlockedTest}
                   animated={!paused}
                 />
-                <small style={{ color: action.color }}>{action.label} draft</small>
+                <small style={{ color: action.color }}>{t("safety.draft", { label: actionLabel })}</small>
               </div>
 
               <svg className="pipe-svg" viewBox="0 0 180 64" fill="none" aria-hidden="true">
@@ -1215,11 +1156,11 @@ export function SafetyGateMotion({ paused }: MotionProps) {
                 onClick={() => setUnlockedTest((v) => !v)}
                 whileHover={paused ? undefined : { scale: 1.06 }}
                 whileTap={{ scale: 0.94 }}
-                aria-label={unlockedTest ? "Reset safety gate test" : `Test approving ${action.label}`}
+                aria-label={unlockedTest ? t("safety.reset") : t("safety.test", { label: actionLabel })}
               >
                 <span className="pipe-lock-ring" aria-hidden="true" />
                 {unlockedTest ? <Check size={24} strokeWidth={2.8} /> : <Lock size={22} />}
-                <span>{unlockedTest ? "Yes given" : "Tap yes"}</span>
+                <span>{unlockedTest ? t("safety.given") : t("safety.tap")}</span>
               </motion.button>
 
               <div className="pipe-guard">
@@ -1231,7 +1172,7 @@ export function SafetyGateMotion({ paused }: MotionProps) {
                   animated={!paused}
                   delay={0.45}
                 />
-                <small>Vera checks</small>
+                <small>{t("safety.vera")}</small>
               </div>
             </div>
 
@@ -1245,9 +1186,9 @@ export function SafetyGateMotion({ paused }: MotionProps) {
                 transition={{ duration: 0.22 }}
               >
                 <span className="pipe-sample" style={{ color: action.color, background: action.bg }}>
-                  {action.label}: {action.sample}
+                  {t("safety.sample_fmt", { label: actionLabel, sample: t(`safety.${action.id}.sample`) })}
                 </span>
-                <p>{action.rule}</p>
+                <p>{t(`safety.${action.id}.rule`)}</p>
               </motion.div>
             </AnimatePresence>
           </div>
@@ -1261,12 +1202,10 @@ export function SafetyGateMotion({ paused }: MotionProps) {
               <span className="pillar-icon icon-aqua">
                 <Globe size={20} aria-hidden="true" />
               </span>
-              <span className="bento-tag">Today</span>
+              <span className="bento-tag">{t("bento.local.tag")}</span>
             </div>
-            <h3>Local database &amp; no API key</h3>
-            <p>
-              The app, database, and member browsers run on your own computer. It uses your existing Claude plan, so there is no API key to buy. Free and local engines are built, off by default, and not yet proven with a real model.
-            </p>
+            <h3>{t("bento.local.title")}</h3>
+            <p>{t("bento.local.body")}</p>
           </article>
 
           {/* 2. Interactive scheduled morning routine card */}
@@ -1275,16 +1214,16 @@ export function SafetyGateMotion({ paused }: MotionProps) {
               <span className="pillar-icon icon-sun">
                 <Sun size={20} className="sun-spin" aria-hidden="true" />
               </span>
-              <span className="bento-tag">Built · not run live</span>
+              <span className="bento-tag">{t("bento.routines.tag")}</span>
             </div>
-            <h3>Routines on your schedule</h3>
-            <div className="day-strip" role="group" aria-label="Toggle morning summary days">
-              {WEEK_DAYS.map((day, i) => (
+            <h3>{t("bento.routines.title")}</h3>
+            <div className="day-strip" role="group" aria-label={t("bento.routines.aria")}>
+              {week.map((day, i) => (
                 <button
                   key={i}
                   type="button"
                   aria-pressed={activeDays[i]}
-                  aria-label={`Toggle day ${i + 1}`}
+                  aria-label={t("bento.day", { n: i + 1 })}
                   className={`day-btn ${activeDays[i] ? "is-on" : ""}`}
                   onClick={() => toggleDay(i)}
                 >
@@ -1294,10 +1233,10 @@ export function SafetyGateMotion({ paused }: MotionProps) {
             </div>
             <p className="routine-note">
               {countDays === 0
-                ? "Paused — tap a day to try the idea."
+                ? t("bento.routines.none")
                 : countDays === 7
-                  ? "Morning summary every day. A routine that acts on an account still asks."
-                  : `Illustration: ${countDays} morning${countDays > 1 ? "s" : ""} a week. Real routines are set up in chat.`}
+                  ? t("bento.routines.all")
+                  : t(countDays === 1 ? "bento.routines.one" : "bento.routines.other", { count: countDays })}
             </p>
           </article>
 
@@ -1307,20 +1246,18 @@ export function SafetyGateMotion({ paused }: MotionProps) {
               <span className="pillar-icon icon-blue">
                 <RefreshCw size={19} aria-hidden="true" />
               </span>
-              <span className="bento-tag">Released v0.2.1</span>
+              <span className="bento-tag">{t("bento.rollback.tag")}</span>
             </div>
-            <h3>Updates that can go back</h3>
+            <h3>{t("bento.rollback.title")}</h3>
             <div className="rb-track" aria-hidden="true">
-              {ROLLBACK_STEPS.map((label, idx) => (
-                <span key={label} className={`rb-step ${idx === rbIdx ? "is-now" : idx < rbIdx ? "is-past" : ""}`}>
+              {ROLLBACK_STEPS.map((n, idx) => (
+                <span key={n} className={`rb-step ${idx === rbIdx ? "is-now" : idx < rbIdx ? "is-past" : ""}`}>
                   <i />
-                  {label}
+                  {t(`rb.${n}`)}
                 </span>
               ))}
             </div>
-            <p>
-              One command copies your data first, updates, and puts the old version and data back if the new one does not answer. The backup step ran live four times on 15 November 2026; the go-back step is not yet run live.
-            </p>
+            <p>{t("bento.rollback.body")}</p>
           </article>
 
           {/* 4. Animated 45/45 radial gauge — honest public report */}
@@ -1328,19 +1265,17 @@ export function SafetyGateMotion({ paused }: MotionProps) {
             <div className="score-row">
               <ScoreGauge paused={paused} />
               <div>
-                <span className="score-tag">v0.1 safety evals</span>
-                <h3>Tested to catch tricks</h3>
+                <span className="score-tag">{t("bento.score.tag")}</span>
+                <h3>{t("bento.score.title")}</h3>
               </div>
             </div>
-            <p>
-              We try to fool our own team on purpose. v0.1 passed 45 of 45 safety runs. The newest full run, on 22 November 2026 with 107 cases (50 of them safety cases), did not meet our thresholds: 88 of 98 scored cases passed, and safety cases 40 of 47. Always review before you approve.
-            </p>
+            <p>{t("bento.score.body")}</p>
             <div className="pillar-links">
               <a href={REPORT_URL} target="_blank" rel="noreferrer" className="inline-link">
-                Public report <ArrowUpRight size={14} aria-hidden="true" />
+                {t("bento.report")} <ArrowUpRight size={14} aria-hidden="true" />
               </a>
               <a href={SECURITY_URL} target="_blank" rel="noreferrer" className="inline-link">
-                Security rules <ArrowUpRight size={14} aria-hidden="true" />
+                {t("bento.security")} <ArrowUpRight size={14} aria-hidden="true" />
               </a>
             </div>
           </article>

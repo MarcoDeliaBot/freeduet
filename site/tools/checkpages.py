@@ -8,8 +8,9 @@ every failure is printed on its own line as "[page] what is wrong".
 
 What it checks
   - every page exists and equals a fresh build of site/src (so nothing is stale or hand-edited), except the pages of
-    the languages listed in "hand_built" of site.json (today English: the new design, built from site/app by Vite;
-    see check_app_page for what is checked on it), and the site
+    the languages in the new design (a language whose site/app/src/i18n/<code>.json has no "_untranslated" marker;
+    today English: built from site/app by Vite and prerendered; see check_app_page for what is checked on it and
+    check_assets for site/assets), and the site
     folder holds no language folder that is not in site/src/site.json
   - on each page: <html lang>, a self-referencing canonical, the full reciprocal hreflang set (identical on every
     page, plus x-default), exactly one H1, no skipped heading level, title = brand + the H1 words, meta description,
@@ -397,13 +398,51 @@ def check_page(S, R, site_dir, code, html_text):
     return {"alts": alts, "own": alts.get(code)}
 
 
+def strip_marks(x):
+    """The text without the inline marks of the new design's strings (**strong**, *emphasis*, ==accent==)."""
+    return re.sub(r"\*([^*]+)\*", r"\1", re.sub(r"==([^=]+)==", r"\1", re.sub(r"\*\*([^*]+)\*\*", r"\1", x)))
+
+
+
+def _visible_text(markup):
+    """The page's text outside <script> and <style>, read with a real HTML parser (not a regexp)."""
+    from html.parser import HTMLParser
+
+    class _Text(HTMLParser):
+        def __init__(self):
+            super().__init__(convert_charrefs=True)
+            self.skip = 0
+            self.parts = []
+
+        def handle_starttag(self, tag, attrs):
+            if tag in ("script", "style"):
+                self.skip += 1
+
+        def handle_endtag(self, tag):
+            if tag in ("script", "style") and self.skip:
+                self.skip -= 1
+
+        def handle_data(self, data):
+            if not self.skip:
+                self.parts.append(data)
+
+    t = _Text()
+    t.feed(markup)
+    t.close()
+    return "".join(t.parts)
+
 def check_app_page(S, R, site_dir, code, html_text):
-    """The page of a language in `hand_built` (today English, the new design built from site/app). It is drawn by
-    scripts, so what can be checked is its head, its no-script text and its weight. Returns the same dict as check_page."""
+    """The page of a language in the new design (built from site/app, prerendered; see site/app/scripts/build.mjs).
+    The markup is drawn from site/app/src/i18n/<code>.json, so the page must carry exactly that dictionary: this is how
+    a stale page is found without running Vite. Returns the same dict as check_page."""
+    import html as H
     where = S.file(code)
     url = S.url(code)
     head = html_text.split("<body", 1)[0]
-    R.check(re.search(r'<html lang="%s"' % code, html_text) is not None, where, "<html lang> is not %r" % code)
+    body = html_text[len(head):]
+    dict_file = S.i18n_dir / (code + ".json")
+    d = json.loads(dict_file.read_text(encoding="utf-8"))
+    R.check(re.search(r'<html lang="%s"( dir="ltr")?>' % code, html_text) is not None, where, "<html lang> is not %r" % code)
     canon = re.findall(r'<link rel="canonical" href="([^"]*)"', head)
     R.check(canon == [url], where, "canonical is %r, expected exactly [%r]" % (canon, url))
     alts = dict(re.findall(r'<link rel="alternate" hreflang="([^"]*)" href="([^"]*)"', head))
@@ -411,13 +450,17 @@ def check_app_page(S, R, site_dir, code, html_text):
     R.check(alts == expected_alternates(S), where, "hreflang set is not the full reciprocal set: %r" % alts)
     R.check(len(re.findall(r"<title>", head)) == 1, where, "not exactly one <title>")
     title = re.search(r"<title>([^<]*)</title>", head)
+    R.check(title is not None and H.unescape(title.group(1)) == strip_marks(d["meta.title"]), where, "the title is not meta.title of %s.json" % code)
     R.check(title is not None and title.group(1).startswith("FreeDuet"), where, "the title does not start with the brand")
     desc = re.search(r'<meta name="description" content="([^"]*)"', head)
-    R.check(desc is not None and len(desc.group(1)) > 50, where, "no meta description")
-    for prop in ("og:title", "og:description", "og:image", "og:url", "twitter:image", "twitter:description"):
+    R.check(desc is not None and H.unescape(desc.group(1)) == strip_marks(d["meta.desc"]) and len(desc.group(1)) > 50, where, "the meta description is not meta.desc of %s.json" % code)
+    for prop in ("og:title", "og:description", "og:image", "og:url", "og:image:alt", "twitter:image", "twitter:description", "twitter:image:alt"):
         R.check(re.search(r'<meta (?:property|name)="%s" content="[^"]+"' % prop, head) is not None, where, "no %s" % prop)
+    og = re.search(r'<meta property="og:description" content="([^"]*)"', head)
+    R.check(og is not None and H.unescape(og.group(1)) == strip_marks(d["meta.ogdesc"]), where, "og:description is not meta.ogdesc of %s.json" % code)
     R.check(('content="%s/og-image.png"' % S.origin) in head, where, "og:image is not %s/og-image.png" % S.origin)
     R.check(re.search(r'<meta property="og:url" content="%s"' % re.escape(url), head) is not None, where, "og:url is not %s" % url)
+    R.check(re.search(r'<meta property="og:locale" content="%s"' % S.by_code[code]["locale"], head) is not None, where, "og:locale is not %s" % S.by_code[code]["locale"])
     for href in re.findall(r'<link rel="(?:icon|apple-touch-icon)"[^>]*href="(/[^"]*)"', head):
         R.check((site_dir / href.lstrip("/")).is_file(), where, "icon %r does not resolve to a file" % href)
     blocks = re.findall(r'<script type="application/ld\+json">(.*?)</script>', head, flags=re.S)
@@ -429,27 +472,66 @@ def check_app_page(S, R, site_dir, code, html_text):
             R.check(False, where, "JSON-LD does not parse: %s" % e)
     kinds = {o.get("@type"): o for o in parsed}
     R.check(set(kinds) == {"SoftwareApplication", "FAQPage"} and len(parsed) == 2, where, "JSON-LD must hold exactly SoftwareApplication and FAQPage, found %r" % sorted(map(str, kinds)))
+    for o in parsed:
+        R.check(o.get("inLanguage") == code, where, "JSON-LD %s inLanguage is %r, expected %r" % (o.get("@type"), o.get("inLanguage"), code))
     faq = kinds.get("FAQPage", {}).get("mainEntity", [])
-    R.check(len(faq) >= 1, where, "the FAQPage has no questions")
-    # the visible FAQ is drawn from the same data file at run time, so each answer must be in the page's script as written
-    for q in faq:
-        a = q.get("acceptedAnswer", {}).get("text", "")
-        R.check(len(a) > 20 and a[:40] in html_text, where, "the FAQ answer %r is not in the page text" % a[:40])
-    # the no-script text: one H1, and the page says which scripts it needs
-    ns = re.search(r"<noscript>(.*?)</noscript>", html_text, flags=re.S)
-    R.check(ns is not None and len(re.findall(r"<h1\b", ns.group(1))) == 1, where, "the <noscript> text must hold exactly one H1")
+    want = []
+    i = 1
+    while ("faq.q%d" % i) in d:
+        want.append((strip_marks(d["faq.q%d" % i]), strip_marks(d["faq.a%d" % i])))
+        i += 1
+    got = [(q.get("name"), q.get("acceptedAnswer", {}).get("text")) for q in faq]
+    R.check(len(want) >= 1 and got == want, where, "the FAQPage is not the faq.q/faq.a keys of %s.json" % code)
+    # the dictionary the browser hydrates with is the file, so a changed file with an old page is found here
+    m = re.search(r'<script type="application/json" id="fd-i18n">(.*?)</script>', body, flags=re.S)
+    emb = None
+    try:
+        emb = json.loads(m.group(1)) if m else None
+    except ValueError:
+        pass
+    R.check(emb is not None and emb.get("lang") == code, where, "no script#fd-i18n for %r" % code)
+    if emb:
+        file_dict = {k: v for k, v in d.items() if k != "_untranslated"}
+        R.check(emb.get("dict") == file_dict, where, "the embedded dictionary differs from %s.json: run npm run build in site/app" % code)
+    R.check(not d.get("_untranslated"), where, "%s.json is marked _untranslated, so this page must be the old design" % code)
+    # prerendered: one H1, with the words of hero.h1, headings never skip a level, and no no-script copy of the text
+    h1s = re.findall(r"<h1\b[^>]*>(.*?)</h1>", body, flags=re.S)
+    R.check(len(h1s) == 1, where, "expected exactly one H1, found %d" % len(h1s))
+    if len(h1s) == 1:
+        text = re.sub(r"<svg.*?</svg>", "", h1s[0], flags=re.S)
+        text = H.unescape(re.sub(r"<[^>]+>", "", text)).strip()
+        R.check(text == strip_marks(d["hero.h1"]), where, "the H1 %r is not hero.h1 of %s.json" % (text, code))
+    levels = [int(x) for x in re.findall(r"<h([1-6])\b", body)]
+    R.check(all(b - a <= 1 for a, b in zip(levels, levels[1:])), where, "a heading level is skipped: %r" % levels)
     R.check(len(re.findall(r"<h1\b", head)) == 0, where, "an H1 in the head")
-    # nothing of the tool that drew the design may be left in the page
+    ns = re.findall(r"<noscript>(.*?)</noscript>", html_text, flags=re.S)
+    R.check(all("<h1" not in x and "<p" not in x for x in ns), where, "a <noscript> text block: the text is prerendered, <noscript> holds only a style")
+    # every FAQ answer must be in the page's own text (collapsed is fine): the FAQPage JSON-LD must match visible content
+    visible = _visible_text(body)
+    for n, (q, a) in enumerate(want, 1):
+        R.check(re.sub(r"\s+", " ", a) in re.sub(r"\s+", " ", visible), where, "FAQ answer %d is not in the prerendered page text" % n)
+        R.check(re.sub(r"\s+", " ", q) in re.sub(r"\s+", " ", visible), where, "FAQ question %d is not in the prerendered page text" % n)
     R.check(re.search(r'name="robots"', head) is None, where, "the built page must not carry the template's noindex")
     R.check(re.search(r"arena\.site|made with arena", html_text, flags=re.I) is None, where, "a trace of the design tool (Arena) is left in the page")
-    R.check(len(html_text.encode("utf-8")) < 800 * 1024, where, "the page is %d KB, expected under 800 KB" % (len(html_text.encode("utf-8")) // 1024))
-    # root-absolute links that the page text names in href attributes of the no-script block
-    for v in re.findall(r'href="(/[^"]*)"', ns.group(1) if ns else ""):
-        path = site_dir / v.lstrip("/").split("#")[0]
-        if v.endswith("/"):
-            path = path / "index.html"
-        R.check(path.is_file(), where, "href=%r does not resolve to a file" % v)
-    return {"alts": alts, "own": alts.get(code)}
+    R.check(len(html_text.encode("utf-8")) < 400 * 1024, where, "the page is %d KB, expected under 400 KB" % (len(html_text.encode("utf-8")) // 1024))
+    # the shared assets
+    css = re.findall(r'<link rel="stylesheet" href="(/assets/[^"]+)"', head)
+    js = re.findall(r'<script type="module" src="(/assets/[^"]+)"', body)
+    R.check(len(css) == 1 and len(js) == 1, where, "expected one /assets stylesheet and one module script, found %r %r" % (css, js))
+    for v in css + js:
+        R.check((site_dir / v.lstrip("/")).is_file(), where, "%r does not resolve to a file" % v)
+    return {"alts": alts, "own": alts.get(code), "assets": (tuple(css), tuple(js))}
+
+
+def check_assets(S, R, site_dir, pages):
+    """site/assets holds exactly the one script and the one stylesheet that every new-design page names."""
+    used = {a for c, p in pages.items() if p and "assets" in p for grp in p["assets"] for a in grp}
+    groups = {p["assets"] for p in pages.values() if p and "assets" in p}
+    R.check(len(groups) <= 1, "assets", "the new-design pages name different assets: %r" % sorted(map(str, groups)))
+    folder = site_dir / "assets"
+    have = {"/assets/" + f.name for f in folder.iterdir()} if folder.is_dir() else set()
+    if used:
+        R.check(have == used, "assets", "site/assets holds %r, the pages use %r" % (sorted(have), sorted(used)))
 
 
 def check_sitemap(S, R, site_dir, pages):
@@ -510,7 +592,7 @@ def main(argv):
             continue
         R.check(p.read_text(encoding="utf-8") == text, rel, "is not equal to a fresh build: run python3 site/tools/build.py")
     for d in sorted(site_dir.iterdir()):
-        if d.is_dir() and (d / "index.html").is_file() and d.name not in S.codes and d.name not in ("src", "tools", "video", "app"):
+        if d.is_dir() and (d / "index.html").is_file() and d.name not in S.codes and d.name not in ("src", "tools", "video", "app", "assets"):
             R.check(False, d.name + "/index.html", "is a page for a language that is not in site/src/site.json")
     pages = {}
     for c in S.codes:
@@ -524,6 +606,7 @@ def main(argv):
             R.check(pages[c]["alts"] == ref, S.file(c), "its hreflang set differs from the other pages")
     check_source_text(S, R)
     check_sitemap(S, R, site_dir, pages)
+    check_assets(S, R, site_dir, pages)
     check_app(S, R)
     check_og_image(site_dir, R)
     for line in R.failures:

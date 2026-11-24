@@ -15,6 +15,7 @@ import {
   Utensils,
 } from "lucide-react";
 import { FreeDuetMascot } from "./FreeDuetMascot";
+import { useI18n } from "../i18n";
 
 interface MotionReelProps {
   paused: boolean;
@@ -22,44 +23,29 @@ interface MotionReelProps {
 
 const SCENE_MS = 5200;
 
+// Text keys: reel.s<n>.label|title|caption
 const SCENES = [
   {
     id: "split",
     num: "01",
-    label: "One office inside your PC",
-    title: "One sentence replaces forty tabs.",
-    caption:
-      "Tell Iris what is piling up — she quietly routes inbox, leases, invoices, and tables to the right mascot.",
     color: "#1B4FD8",
     bg: "linear-gradient(135deg, #EEFAFA 0%, #F2F6FF 55%, #F5F0FF 100%)",
   },
   {
     id: "desk",
     num: "02",
-    label: "Separate browser desk",
-    title: "Each mascot acts — not just talks.",
-    caption:
-      "Each member works in its own isolated browser, away from yours: comparing details, filling fields, and drafting replies for you to check.",
     color: "#C6533B",
     bg: "linear-gradient(135deg, #FFF5F1 0%, #F4F9FF 55%, #EFFBFA 100%)",
   },
   {
     id: "gate",
     num: "03",
-    label: "You press Approve",
-    title: "The big buttons wait for your yes.",
-    caption:
-      "By default, Send, Pay, Sign, Book, and Delete ask for your yes: a fixed rule and a reviewer model decide when a card appears. Vera re-checks important work, such as invoices and carts, before it reaches you.",
     color: "#0F8A64",
     bg: "linear-gradient(135deg, #ECFBF5 0%, #F1F8FF 52%, #F5F1FE 100%)",
   },
   {
     id: "buspass",
     num: "04",
-    label: "Zero API meter",
-    title: "Like a bus pass, never a taxi meter.",
-    caption:
-      "Runs on your own computer with your own Claude plan: no API key and no per-token bill from FreeDuet. Your plan's own usage limits still apply. Routines, such as a morning summary, are built and not yet run live.",
     color: "#0C8B91",
     bg: "linear-gradient(135deg, #FFF9EB 0%, #EEFBFB 52%, #EEF4FF 100%)",
   },
@@ -71,6 +57,7 @@ const SCENES = [
  * manual scene scrubbing and play/pause controls.
  */
 export function MotionReel({ paused }: MotionReelProps) {
+  const { t, rich, week } = useI18n();
   const [scene, setScene] = useState(0);
   const [reelPaused, setReelPaused] = useState(false);
   const [tick, setTick] = useState(0);
@@ -104,16 +91,11 @@ export function MotionReel({ paused }: MotionReelProps) {
           <div>
             <p className="eyebrow">
               <span className="eyebrow-dot" style={{ background: "#4FD3D6" }} />
-              FreeDuet in motion
+              {t("reel.eyebrow")}
             </p>
-            <h2 id="reel-heading">
-              Too much to do, and <span className="accent-text">only one of you?</span>
-            </h2>
+            <h2 id="reel-heading">{rich("reel.h2")}</h2>
           </div>
-          <p className="section-lead">
-            Emails, invoices, leases, dinner bookings — FreeDuet turns your computer into a calm
-            little studio where each teammate has one job. The scenes below are illustrations with made-up examples.
-          </p>
+          <p className="section-lead">{t("reel.lead")}</p>
         </div>
 
         {/* Light widescreen broadcast motion-graphics canvas */}
@@ -123,17 +105,17 @@ export function MotionReel({ paused }: MotionReelProps) {
             <div className="reel-chrome">
               <span className="reel-chip">
                 <span className="reel-live-dot" style={{ backgroundColor: active.color }} />
-                Scene {active.num} / 04 · {active.label}
+                {t("reel.scene", { num: active.num, label: t(`reel.s${scene + 1}.label`) })}
               </span>
               <button
                 type="button"
                 className="reel-play-btn"
                 onClick={() => setReelPaused((p) => !p)}
                 aria-pressed={reelPaused}
-                aria-label={isStopped ? "Play motion storyboard" : "Pause motion storyboard"}
+                aria-label={isStopped ? t("reel.play_label") : t("reel.pause_label")}
               >
                 {isStopped ? <Play size={14} fill="currentColor" /> : <Pause size={14} />}
-                <span>{isStopped ? "Play" : "Pause"}</span>
+                <span>{isStopped ? t("reel.play") : t("reel.pause")}</span>
               </button>
             </div>
 
@@ -185,7 +167,7 @@ export function MotionReel({ paused }: MotionReelProps) {
                         <FreeDuetMascot id="otto" size={62} mood="work" animated={!isStopped} />
                         <div>
                           <b>Otto</b>
-                          <span><Mail size={12} /> 14 emails triaged</span>
+                          <span><Mail size={12} /> {t("reel.otto_stat")}</span>
                         </div>
                       </motion.div>
                       <motion.div
@@ -197,7 +179,7 @@ export function MotionReel({ paused }: MotionReelProps) {
                         <FreeDuetMascot id="penny" size={62} mood="work" animated={!isStopped} delay={0.3} />
                         <div>
                           <b>Penny</b>
-                          <span><Receipt size={12} /> 2 invoices ready</span>
+                          <span><Receipt size={12} /> {t("reel.penny_stat")}</span>
                         </div>
                       </motion.div>
                     </div>
@@ -208,9 +190,9 @@ export function MotionReel({ paused }: MotionReelProps) {
                       animate={{ scale: 1, opacity: 1 }}
                       transition={{ type: "spring", stiffness: 260, damping: 20 }}
                     >
-                      <div className="split-iris-bubble">“Handle this morning”</div>
+                      <div className="split-iris-bubble">{t("reel.bubble")}</div>
                       <FreeDuetMascot id="iris" size={142} mood="listen" showNotes={!isStopped} animated={!isStopped} />
-                      <span className="split-name">Iris delegates</span>
+                      <span className="split-name">{t("reel.iris_delegates")}</span>
                     </motion.div>
 
                     <div className="split-col">
@@ -223,7 +205,7 @@ export function MotionReel({ paused }: MotionReelProps) {
                         <FreeDuetMascot id="portia" size={62} mood="think" animated={!isStopped} delay={0.2} />
                         <div>
                           <b>Portia</b>
-                          <span><FileText size={12} /> Lease scanned</span>
+                          <span><FileText size={12} /> {t("reel.portia_stat")}</span>
                         </div>
                       </motion.div>
                       <motion.div
@@ -235,7 +217,7 @@ export function MotionReel({ paused }: MotionReelProps) {
                         <FreeDuetMascot id="jules" size={62} mood="work" animated={!isStopped} delay={0.5} />
                         <div>
                           <b>Jules</b>
-                          <span><Utensils size={12} /> Table held · 8 pm</span>
+                          <span><Utensils size={12} /> {t("reel.jules_stat")}</span>
                         </div>
                       </motion.div>
                     </div>
@@ -254,7 +236,7 @@ export function MotionReel({ paused }: MotionReelProps) {
                     <div className="desk-mascot">
                       <FreeDuetMascot id="otto" size={140} mood="work" animated={!isStopped} />
                       <span className="desk-pill" style={{ background: "#FFF1EC", color: "#C6533B" }}>
-                        Otto’s own browser
+                        {t("reel.desk_pill")}
                       </span>
                     </div>
 
@@ -269,12 +251,12 @@ export function MotionReel({ paused }: MotionReelProps) {
                         <span className="mock-url">
                           <Globe size={11} /> isolated-desk://otto/inbox
                         </span>
-                        <span className="mock-tag">Sandboxed</span>
+                        <span className="mock-tag">{t("reel.desk_tag")}</span>
                       </div>
                       <div className="mock-body">
                         <div className="mock-head">
-                          <strong>Re: Kitchen pipe visit</strong>
-                          <span>Plumber · Today</span>
+                          <strong>{t("reel.desk_subject")}</strong>
+                          <span>{t("reel.desk_who")}</span>
                         </div>
                         <div className="mock-draft">
                           <motion.span
@@ -290,14 +272,14 @@ export function MotionReel({ paused }: MotionReelProps) {
                             transition={{ duration: 0.55, delay: 0.45 }}
                           />
                           <span className="mock-typed">
-                            “Good morning, Tuesday at 9 works for me. Thank you!”
+                            {t("reel.desk_typed")}
                           </span>
                         </div>
                         <div className="mock-foot">
                           <span className="mock-btn-hold">
-                            <Lock size={12} /> Draft saved · Send held
+                            <Lock size={12} /> {t("reel.desk_hold")}
                           </span>
-                          <span className="mock-safe-note">Treats page text as data, not orders</span>
+                          <span className="mock-safe-note">{t("reel.desk_safe")}</span>
                         </div>
 
                         {/* Animated vector Studio cursor clicking nicely */}
@@ -339,12 +321,12 @@ export function MotionReel({ paused }: MotionReelProps) {
                   >
                     <div className="gate-reel-mascot">
                       <FreeDuetMascot id="portia" size={118} mood="ask" animated={!isStopped} />
-                      <small>Portia pauses</small>
+                      <small>{t("reel.portia_pauses")}</small>
                     </div>
 
                     <div className="gate-reel-center">
                       <div className="gate-five-row">
-                        {["Send", "Pay", "Sign", "Book", "Delete"].map((word, idx) => (
+                        {["send", "pay", "sign", "book", "delete"].map((word, idx) => (
                           <motion.span
                             key={word}
                             className="gate-word"
@@ -352,7 +334,7 @@ export function MotionReel({ paused }: MotionReelProps) {
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ delay: idx * 0.08 }}
                           >
-                            <Lock size={11} /> {word}
+                            <Lock size={11} /> {t(`act.${word}`)}
                           </motion.span>
                         ))}
                       </div>
@@ -367,22 +349,22 @@ export function MotionReel({ paused }: MotionReelProps) {
                           <ShieldCheck size={22} />
                         </div>
                         <div className="gy-text">
-                          <strong>Asks first, by default</strong>
-                          <span>Payments, sends and deletions wait for your card</span>
+                          <strong>{t("reel.gate_title")}</strong>
+                          <span>{t("reel.gate_sub")}</span>
                         </div>
                         <motion.span
                           className="gy-btn"
                           animate={isStopped ? undefined : { scale: [1, 1.07, 1] }}
                           transition={{ duration: 1.5, repeat: Infinity }}
                         >
-                          <Check size={14} strokeWidth={3} /> Approve
+                          <Check size={14} strokeWidth={3} /> {t("reel.gate_approve")}
                         </motion.span>
                       </motion.div>
                     </div>
 
                     <div className="gate-reel-mascot">
                       <FreeDuetMascot id="vera" size={118} mood="done" showSparkles={!isStopped} animated={!isStopped} delay={0.35} />
-                      <small>Vera double-checks</small>
+                      <small>{t("reel.vera_checks")}</small>
                     </div>
                   </motion.div>
                 )}
@@ -402,9 +384,9 @@ export function MotionReel({ paused }: MotionReelProps) {
                       animate={{ opacity: 1, x: 0 }}
                       transition={{ delay: 0.1 }}
                     >
-                      <span className="pass-kicker">API key (taxi meter)</span>
-                      <strong className="pass-strike">€0.04 → €18 → €64…</strong>
-                      <p>Illustration: every word adds to the bill</p>
+                      <span className="pass-kicker">{t("reel.bad_kicker")}</span>
+                      <strong className="pass-strike">{t("reel.bad_amount")}</strong>
+                      <p>{t("reel.bad_note")}</p>
                     </motion.div>
 
                     <div className="pass-mascot">
@@ -418,16 +400,16 @@ export function MotionReel({ paused }: MotionReelProps) {
                       transition={{ delay: 0.18 }}
                     >
                       <span className="pass-kicker">
-                        <Sparkles size={12} /> Your Claude pass + FreeDuet
+                        <Sparkles size={12} /> {t("reel.good_kicker")}
                       </span>
-                      <strong>€0 software · MIT</strong>
+                      <strong>{t("reel.good_title")}</strong>
                       <div className="mini-week" aria-hidden="true">
                         <Sun size={13} />
-                        {["M", "T", "W", "T", "F", "S", "S"].map((d, i) => (
+                        {week.map((d, i) => (
                           <span key={i}>{d}</span>
                         ))}
                       </div>
-                      <p>Saved on your PC · scheduled routines</p>
+                      <p>{t("reel.good_note")}</p>
                     </motion.div>
                   </motion.div>
                 )}
@@ -445,15 +427,15 @@ export function MotionReel({ paused }: MotionReelProps) {
                   exit={paused ? undefined : { opacity: 0, y: -6 }}
                   transition={{ duration: 0.25 }}
                 >
-                  <h3>{active.title}</h3>
-                  <p>{active.caption}</p>
+                  <h3>{t(`reel.s${scene + 1}.title`)}</h3>
+                  <p>{t(`reel.s${scene + 1}.caption`)}</p>
                 </motion.div>
               </AnimatePresence>
             </div>
           </div>
 
           {/* Smooth auto-advancing 4-chapter studio timeline tabs */}
-          <div className="reel-tabs" role="tablist" aria-label="Storyboard scenes">
+          <div className="reel-tabs" role="tablist" aria-label={t("reel.tabs_aria")}>
             {SCENES.map((item, idx) => {
               const isActive = idx === scene;
               return (
@@ -478,7 +460,7 @@ export function MotionReel({ paused }: MotionReelProps) {
                     )}
                   </span>
                   <span className="reel-tab-num">{item.num}</span>
-                  <span className="reel-tab-label">{item.label}</span>
+                  <span className="reel-tab-label">{t(`reel.s${idx + 1}.label`)}</span>
                 </button>
               );
             })}
