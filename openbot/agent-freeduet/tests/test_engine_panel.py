@@ -875,3 +875,53 @@ def test_the_service_answers_the_free_model_list(fresh_cache, data, monkeypatch)
         answer = client.post("/engines/panel/openrouter/free-models", headers=AUTH)
         assert answer.status_code == 200 and answer.json()["models"] == ["openrouter/free", "a/b:free"]
         assert client.post("/engines/panel/openrouter/free-models").status_code in (401, 403)
+
+
+# ── D147: a card change keeps an engine where the person put it ─────────────────────────────────
+
+
+def _chef_first_by_the_person():
+    _chef_with_two_free_engines()
+    chain = _shown("chef")
+    wanted = ["openrouter-member", *[item for item in chain if item != "openrouter-member"]]
+    panel.apply_order("chef", wanted, confirmed=True)
+    assert _shown("chef") == wanted and wanted[0] == "openrouter-member"
+    return wanted
+
+
+def test_a_model_change_keeps_a_cloud_engine_where_the_person_put_it(data):
+    wanted = _chef_first_by_the_person()
+    panel.apply_change("openrouter", model="meta/llama-3:free")
+    assert _shown("chef") == wanted and load_engines().own_order == frozenset({"chef"})
+
+
+def test_a_members_write_keeps_the_position_where_the_member_stays_and_appends_where_it_joins(data):
+    wanted = _chef_first_by_the_person()
+    panel.apply_change("openrouter", members=["chef", "inbox"])
+    chains = _chef_file()["chains"]
+    assert _shown("chef") == wanted
+    assert chains["inbox"][-1] == "openrouter-member" and chains["inbox"].count("openrouter-member") == 1
+    panel.apply_change("openrouter", members=["chef"])  # inbox is no longer chosen: it loses the engine, chef keeps its place
+    chains = _chef_file()["chains"]
+    assert "openrouter-member" not in chains["inbox"]
+    assert _shown("chef") == wanted
+
+
+def test_switching_a_card_on_again_with_the_same_members_keeps_the_place_but_off_then_on_appends(data):
+    wanted = _chef_first_by_the_person()
+    panel.apply_change("openrouter", enabled=True, model="meta/llama-3:free")  # already on: nothing moves
+    assert _shown("chef") == wanted
+    panel.apply_change("openrouter", enabled=False)  # off takes it out of every chain, by design
+    assert "openrouter-member" not in _chef_file()["chains"]["chef"]
+    panel.apply_change("openrouter", enabled=True, members=["chef"])  # a new join is appended: the person's place is not remembered
+    assert _chef_file()["chains"]["chef"][-1] == "openrouter-member"
+
+
+def test_a_local_engine_card_change_keeps_its_place_and_a_new_chain_gets_it_appended(data):
+    _chef_first_by_the_person()
+    chain = _shown("chef")
+    wanted = ["ollama-member", *[item for item in chain if item != "ollama-member"]]
+    panel.apply_order("chef", wanted, confirmed=True)
+    panel.apply_change("ollama", model="qwen2.5:14b")
+    assert _shown("chef") == wanted
+    assert all("ollama-member" in ids for ids in _chef_file()["chains"].values())

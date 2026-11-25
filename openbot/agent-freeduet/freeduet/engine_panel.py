@@ -571,14 +571,19 @@ def _set_chains(document: dict[str, Any], provider: Provider, on: bool, members:
     if provider.member_base is None or not isinstance(chains, dict):
         return
     chosen = [] if not (on and provider.cloud) else (members if members is not None else _chosen_members(provider, document))
+    # D147: an engine that is already in a chain keeps its index there (the person may have put it first, D112/D115, and for a member
+    # in own_order the router keeps the file's order); it is appended only where it newly joins, and removed where it no longer belongs.
     for name, ids in list(chains.items()):
-        chains[name] = [item for item in (ids or []) if item != provider.member_id]
-        if on and not provider.cloud:
-            chains[name].append(provider.member_id)
+        ids = list(ids or [])
+        belongs = on and (name in chosen if provider.cloud else True)
+        if not belongs:
+            ids = [item for item in ids if item != provider.member_id]
+        elif provider.member_id not in ids:
+            ids.append(provider.member_id)
+        chains[name] = ids
     for member in chosen:
         if member not in chains:
-            chains[member] = list(chains.get("default") or [])
-        chains[member] = [*chains[member], provider.member_id]
+            chains[member] = [*(chains.get("default") or []), provider.member_id]
 
 
 def apply_change(
