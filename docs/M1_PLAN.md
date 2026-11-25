@@ -2972,3 +2972,11 @@ Verified: the CLI's two flags and their lists (above); the argument list with th
 **What is not verified.** No live run: all thirteen cases are not run live and the three members are not certified. The cases grade what a member says, asks and promises; the eval stack has no computer for a build. No Docker image was built. The site was built and checked with `node site/tools/checklang.js`, but not looked at in a browser at all sizes or in all twelve languages by a native reader; the translations are first-pass text. Iris's routing of a game job to the three has one case (iris-29), not run live.
 
 **Decisions left to the maintainer.** (1) Put the site change online (preview first). (2) Add Firefox and WebKit to the agent-computer image so that Ada can check Safari and Firefox engines (about 500 MB more in the image, and the pull request needs the `full-ci` label); recommendation: yes, in a separate pull request. (3) The pack's Ada, Comparator, and Nico, Game developer, in `docs/CATALOG.md`: rename or retire; recommendation: rename the pack's Ada and fold Nico's job into Kai. (4) A licence check of the repositories the brief named, and a search of public skill catalogues for Kai, by a session that can read them; nothing is to be vendored before that.
+
+## 105. One Ada, the pack comparator renamed Hiro, Nico folded into Kai (D149)
+
+**D149.** On 25 November 2026 the maintainer decided the two pack names that clashed with the starter team (section 104). The pack's comparator is renamed Hiro, so that Ada is the team's web developer only. Hiro is short, spelled the same in most languages, and close in sound or spelling to no team member, planned member or pack member. Nico, Game developer, is retired and folded into Kai, the game and app developer: anyone who asks for Nico is given Kai.
+
+**Changed.** `docs/CATALOG.md`; Leo's prompt in `openbot/examples/freeduet/agents.yaml` (9,986 to 9,908 characters, limit 10,000); `evals/team/run.test.ts` (the pack count from 8 to 7); `docs/ROADMAP.md`; `docs/PROJECT.md`, `docs/CONNECTORS.md` and `NOTICE.md` (the names in them).
+
+**Not verified.** No pack member is built, so no pack eval case exists. Kai does not yet run the game-development library that the catalogue lists under Kai; the library is installed only when the member is wired.
