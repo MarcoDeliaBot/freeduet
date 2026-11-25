@@ -18957,3 +18957,121 @@ skills:
       End with the usual work report. In it, give the number of drafts today against the daily number,
       the number handed over, and the number still waiting for the person's card.
     tools: []
+
+  # Ada, Kai and Lumi (D148): two skills each, written for this project, no tools. Nothing from the outside
+  # repositories they point to is copied here: their licences were not checked when these were written
+  # (docs/M1_PLAN.md section 104), so they are only named as references the person may point a member to.
+  - slug: landing-from-mockup
+    title: A landing page from a mockup
+    summary: Turn a mockup into a responsive landing page with a working contact form, on a branch, ready to deploy.
+    instructions: >-
+      Work in this order and say where you are at each step. First, list what the mockup shows (sections,
+      texts, images, fonts, colours, the form's fields) and what is missing; ask for what blocks you in one
+      short list and mark every assumption. Second, set up a Vite project with React and Tailwind on its own
+      branch; keep the colours, type sizes and spacing as tokens in one place. Third, build mobile first and
+      then widen: one column on a phone, the mockup's layout from the width where it fits, nothing that
+      scrolls sideways, tap targets of at least 44 pixels. Fourth, the form: labelled fields, validation in
+      the browser and again on the server side, a hidden field and a time check against spam, a plain success
+      and error message, and the receiving address read from an environment variable that the person sets in
+      the host's settings; never write that address, a key or a token in the code. Fifth, check it with
+      Playwright in Chromium at a phone, a tablet and a desktop size, by keyboard alone, and with the form
+      filled in right and wrong; run the /web-release-check list. Sixth, hand over: the branch, the pull
+      request, the preview address and the checks, each with its result and the ones that did not run. A
+      preview or a production deploy, a push and a pull request are each a tool call that waits for the
+      person's card; say they are ready, never that they are done. Aim to be ready within four hours of
+      working time and say early when you will not be.
+    tools: []
+
+  - slug: web-release-check
+    title: Check a page before it goes out
+    summary: Accessibility, speed, browsers and security checks with numbers, before a release the person approves.
+    instructions: >-
+      Run the checks that your computer can run and report each with its result. Accessibility: every
+      image has a text alternative or is marked decorative, every field has a label, headings go in order,
+      text contrast is at least 4.5 to 1, and every control works by keyboard with a visible focus. Speed:
+      measure load with Lighthouse once the person has agreed that you fetch it, otherwise with
+      Playwright's timings, on a phone size, and give the numbers, the date and the conditions; the
+      largest image and script are named, with what would shrink them. Browsers: Chromium at desktop and
+      phone sizes is what your computer holds; Firefox and Safari engines, and a real phone, are not
+      checked unless a command shows that they are installed, so list them under "did not run". Security:
+      no secret in the code or the history, a content policy and the usual security headers set in the
+      host's configuration, forms that refuse what they should not accept, and packages with a licence
+      that allows reuse and no known open advisory. The person may point you to public checklists, such as
+      github.com/cloudflare/security-audit-skill, github.com/affaan-m/ecc or
+      github.com/nutlope/hallmark: references the person chose, not read or vendored here; check each
+      licence before using anything, and copy nothing from them. End with a table: check, result, how it
+      was measured, and what did not run. Release only through the person's card.
+    tools: []
+
+  - slug: game-build
+    title: Build a small playable game
+    summary: Build the smallest version that plays, with keyboard and touch controls, a score and an installable web build.
+    instructions: >-
+      Start with one sentence for the game and a list of its controls. Build the smallest version that
+      plays, in TypeScript with Canvas or Phaser and Vite; keep game state, drawing and input in separate
+      files so a test can drive the state without a screen. Step the game at a fixed rate and draw from the
+      state, so that speed does not change with the screen. Controls: keyboard and touch both, with the
+      touch areas drawn and large enough for a thumb, and the page must not scroll or zoom while playing.
+      Sound with Web Audio, started by the first tap or key, and a mute control. Score, a game-over state
+      and a restart. For Android, add a web app manifest, icons from Lumi (or plain shapes until they
+      arrive) and a service worker, so that the phone can add the game to its home screen and play it
+      offline. Hand over a single page that opens by double-click, with offer_file, and say that a preview
+      address is a deploy that waits for the person's card. A first Pong has two paddles, a ball that speeds
+      up, a score to a set number and a one-player mode against a simple opponent. Say early when you will
+      miss the eight hours. No store upload, account or signing key, ever, without the person's own yes.
+    tools: []
+
+  - slug: playable-check
+    title: Measure and test a game before handing it over
+    summary: Control tests, a measured frame rate and a controls list, with the conditions of each measurement.
+    instructions: >-
+      Test with Playwright in Chromium. Controls: drive the keyboard, the mouse and touch events, and check
+      that the state changes as the controls list says, one test for each control. Frame rate: run the game
+      for at least thirty seconds in a phone-sized window, count animation frames, and report the average,
+      the lowest second and the length of the run, and say that this computer has no graphics card, so a
+      phone will usually do better but is not measured. Check that the page does not grow in memory over
+      the run, that sound starts only after a tap or key, that resizing and turning the screen keep the
+      game playable, and that the installable build has its manifest, its icons and a service worker that
+      works offline. Report what passed, what failed and what did not run (a real device, a store build,
+      iOS). If a published game-development skill would help, ask Iris to have Leo look: he checks the
+      licence and says what it could reach, and nothing is installed until the person says yes. Record the
+      skill chosen, why, its licence and its number of installs, taken from the source, never from memory.
+    tools: []
+
+  - slug: design-kit
+    title: A first design kit
+    summary: A logo, icons, a background and a palette, as SVG sources, PNG exports and code-ready tokens.
+    instructions: >-
+      Ask for the name, the tone, where it will be used and the sizes, once, in one list, and mark every
+      assumption. Make the palette first: five to eight colours with a name, a hex value and what each is
+      for, checked for contrast on light and dark grounds, written as CSS variables and as a JSON file.
+      Then the logo as a plain SVG with text turned into outlines or a font whose licence allows reuse,
+      then the icons on one grid with one stroke width and one corner style, then the background, kept
+      quiet where text will sit. Keep every source as SVG with named groups and no embedded raster. Export
+      PNG with Chromium through Playwright at the sizes agreed (for example 512, 192 and 64 for a logo or
+      icon, and 1920 by 1080 and 1080 by 1920 for a background) and look at each export at its real size.
+      Use no face, trademark, logo, photo or typeface that is not yours without the person's word that the
+      rights are theirs; label anything an AI made. Figma only if the person has connected an account.
+      The person may point you to public design references (github.com/nutlope/hallmark, github.com/leonxlnx/taste-skill,
+      github.com/pbakaus/impeccable, and interface libraries such as transitions.dev, bencho.dev, boardui.com, horizonx.so, obsidianui.dev,
+      ui.aceternity.com and astryx.atmeta.com): references the person chose, not read or vendored
+      here; check each licence before using anything, learn from them, copy no component or code whose licence
+      you have not read, and name a licence when you use anything. Photos, collages and generated images
+      belong to Mira, a planned colleague who is not on the team yet. Aim to be ready within six hours of
+      working time for a first kit.
+    tools: []
+
+  - slug: design-board
+    title: A board that shows everything
+    summary: One page that shows the palette, the logo, the icons, the sprites and the screens together, on light and dark.
+    instructions: >-
+      Build one HTML page with inline SVG, no outside files and no scripts that load from the network, that
+      shows what you made: the palette with names and hex values, the logo at three sizes, the icons on
+      a grid and at their smallest use, the backgrounds, the sprites or characters and any screens, each
+      on a light and a dark ground, with its file name under it. Add the tokens as a block of CSS that can be
+      copied. Take a screenshot with Playwright at desktop and phone width and look at it before you hand
+      over. Offer the page, the SVG sources and the PNG exports to the person with offer_file, one call for
+      each file or for a single zip; offering is not sending, and nothing is published without the person's
+      card. For a game, show the sprites at one pixel size and at double size, with the animation frames in
+      a row, so that Kai can cut them without asking. Tell Iris what Ada and Kai need from the files.
+    tools: []

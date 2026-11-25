@@ -2,3 +2,7 @@
 node_modules/
 .DS_Store
 .copilotkit/
+
+# Python bytecode
+__pycache__/
+*.pyc

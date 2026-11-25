@@ -466,6 +466,9 @@ const TEAM_HUES: Readonly<Record<string, number>> = {
   marketer: 10,
   video: 280,
   trainer: 120,
+  webdev: 160,
+  gamedev: 95,
+  designer: 245,
   creator: 230,
 };
 

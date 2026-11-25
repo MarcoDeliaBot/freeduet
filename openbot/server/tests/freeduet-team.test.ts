@@ -64,12 +64,15 @@ describe("hub grants (D14)", () => {
       .filter((id) => id !== iris);
     const grants = hubGrants(tenantPackage);
 
-    expect(members.length).toBe(12);
-    expect(grants.length).toBe(24);
-    // Mark, Cam and Rex, added after v0.1, are wired like every other member: nothing names them but the package.
+    expect(members.length).toBe(15);
+    expect(grants.length).toBe(30);
+    // Mark, Cam, Rex, Ada, Kai and Lumi, added after v0.1, are wired like every other member: nothing names them but the package.
     expect(members).toContain("marketer");
     expect(members).toContain("video");
     expect(members).toContain("trainer");
+    expect(members).toContain("webdev");
+    expect(members).toContain("gamedev");
+    expect(members).toContain("designer");
     for (const member of members) {
       expect(grants).toContainEqual({ agentId: iris, ref: member });
       expect(grants).toContainEqual({ agentId: member, ref: iris });

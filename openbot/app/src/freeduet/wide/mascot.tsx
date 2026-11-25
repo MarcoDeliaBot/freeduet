@@ -3,7 +3,7 @@ import { cn } from "@/lib/utils";
 import drawn from "./mascot-drawn.json";
 
 /**
- * The thirteen member faces in the app: the drawings of 18 November 2026 (`./mascot-drawn.json`), one water
+ * The sixteen member faces in the app: the drawings of 18 November 2026 (`./mascot-drawn.json`), one water
  * bubble and one accessory each. The paints and the plain face come from the home page's file
  * (`openbot/shared/mascot.json`, D55), which the site still draws with the round blue bubble. The site does
  * not read the drawings, so the two differ until the maintainer decides D98.
@@ -25,12 +25,15 @@ export const MEMBER_MASCOT: Readonly<Record<string, string>> = {
   marketer: "mark",
   video: "video",
   trainer: "rex",
+  webdev: "ada",
+  gamedev: "kai",
+  designer: "lumi",
 };
 
 /** The drawings, one per member, in the order the file lists them. */
 const TEAM: Readonly<Record<string, string>> = drawn.team;
 
-/** The thirteen art keys of the drawings. */
+/** The sixteen art keys of the drawings. */
 export const MASCOT_KEYS = Object.keys(TEAM);
 
 /** The art key for a member id, or `null` for a member nobody drew (one the person trained). */

@@ -67,3 +67,18 @@ channels:
     description: Rex compares how your engines perform on the team's tests and proposes which engine fits which member.
     permitted_agents: [trainer]
     allowed_groups: [all]
+  - id: webdev
+    name: Web
+    description: Ada builds your sites, landing pages and web apps, with a preview, checks and a release you approve.
+    permitted_agents: [webdev]
+    allowed_groups: [all]
+  - id: gamedev
+    name: Games
+    description: Kai builds browser and mobile games and apps, with a playable build and a measured frame rate.
+    permitted_agents: [gamedev]
+    allowed_groups: [all]
+  - id: designer
+    name: Design
+    description: Lumi designs interfaces, icons, sprites, backgrounds and launch material, with editable sources and exports.
+    permitted_agents: [designer]
+    allowed_groups: [all]

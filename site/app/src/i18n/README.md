@@ -29,7 +29,7 @@ Plurals: `bento.routines.one` and `bento.routines.other` are the singular and pl
 
 ## Glossary rules
 
-- Member names are never translated: Iris, Otto, Portia, Penny, Jules, Wren, Mark, Cam, Rex, Gus, Basil, Vera, Leo. Translate their roles (`member.<id>.role`).
+- Member names are never translated: Iris, Otto, Portia, Penny, Jules, Wren, Mark, Cam, Rex, Ada, Kai, Lumi, Gus, Basil, Vera, Leo. Translate their roles (`member.<id>.role`).
 - `FreeDuet` is never translated. Neither are `Claude`, `Claude Code`, `GitHub`, `Docker`, `Bash`, `Bun`, `WSL2`, `MIT`, `API`, command lines and file names.
 - Keep the honest status wording: "not run live", "built", "not released", "planned" and every date, version number, count and caveat
   must say the same as English (`status.*`, `bento.*`, `faq.*`, `team.lead`). Do not soften, shorten or strengthen a claim.
