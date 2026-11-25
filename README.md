@@ -220,6 +220,10 @@ See [NOTICE.md](NOTICE.md) for attributions and what we deliberately did **not**
 
 Be the first: open an 'I am using it' issue.
 
+## Translators
+
+No translation has been read by a native speaker yet. To be listed here, open a [translation review](https://github.com/MarcoDeliaBot/freeduet/issues/new?template=translation-review.yml) issue and say yes to the credit question; see [docs/TRANSLATORS.md](docs/TRANSLATORS.md).
+
 ## Contributing
 
 - Read [CONTRIBUTING.md](CONTRIBUTING.md) for how to help and how a fix gets in.
