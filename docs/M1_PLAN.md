@@ -2928,3 +2928,19 @@ Verified: the CLI's two flags and their lists (above); the argument list with th
 **What is not verified.** No live run. Re-run vera-1, vera-3, iris-17, iris-19, iris-28, rex-1 and rex-3 with `--repeat 3`; iris-16, otto-13 and otto-15 are next to the changed text.
 
 **Decisions left to the maintainer.** None.
+
+## 103. A card change keeps an engine where the person put it (D147)
+
+**The bug.** On 22 November 2026 the maintainer's install showed `openrouter-member` going from first to last in the chains of chef, video, reviewer and writer (concierge similar) while `own_order` still listed them. Cause, checked in the code: `_set_chains` in `openbot/agent-freeduet/freeduet/engine_panel.py`, called by `apply_change` (the PUT `/engines/panel/{provider}` route) on every switch, model or members change, removed the engine from every chain and appended it again at the end of each chosen member's chain. For a member in `own_order` the router keeps the file's order (`ordered_chain` in `engines.py`), so the move was visible. It was the only writer of `chains:`.
+
+**D147.** An engine already in a chain keeps its index there on any `apply_change`. It is appended only where it newly joins a chain, and removed where it no longer belongs: a cloud engine from a member no longer chosen (or from every chain when the card is switched off), a local engine from every chain when switched off. The same rule applies to a local engine (ollama), which had the same bug for its own place. Not changed: the logins-first sort for members not in `own_order`, the 409 `order_needs_confirmation` flow of `apply_order`, anything about metered engines.
+
+**Decision taken, to be checked.** Switching a card off takes the engine out of every chain (as before), so switching it on again appends it at the end of the chosen members' chains: the person's place is not remembered across off and on. Remembering it would need a stored position and is not built.
+
+**Checked against the code.** "Keeps its index" holds for `apply_change`; `apply_order` (the person's own reordering) and a hand-edited file are unaffected, and a member's chain is created from `default` plus the engine only when the member had no chain.
+
+**Built so far.** The fix and four tests in `openbot/agent-freeduet/tests/test_engine_panel.py` (model change, members write, off then on, local card), all four fail on main and pass now. Unit tests only.
+
+**What is not verified.** No live run on the maintainer's install. His file was already changed by the bug: the order is not restored by this fix (see the pull request).
+
+**Decisions left to the maintainer.** Whether the place should be remembered across switching a card off and on (recommendation: no, it is an explicit act and the order is one click to redo).
