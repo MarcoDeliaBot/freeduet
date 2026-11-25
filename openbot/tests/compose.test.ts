@@ -461,7 +461,7 @@ test("runs migrations after PostgreSQL becomes healthy", () => {
   expect(compose).toContain('"bun", "scripts/migrate.ts"');
 });
 
-test("builds the deployment image with Playwright's Chromium payload only", () => {
+test("builds the deployment image with Playwright's browser payload, Chromium first, then Firefox and WebKit", () => {
   for (const dockerfile of [rootDockerfile(), agentComputerDockerfile()]) {
     expect(dockerfile).toContain(
       "FROM node:24.18.1-bookworm-slim AS node-toolchain",
