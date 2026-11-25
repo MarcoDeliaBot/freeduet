@@ -45,6 +45,9 @@ body:
         - label: Mark
         - label: Cam
         - label: Rex
+        - label: Ada
+        - label: Kai
+        - label: Lumi
   - type: textarea
     id: works
     attributes:

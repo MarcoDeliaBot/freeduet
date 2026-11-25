@@ -2,7 +2,7 @@
 
 Moved out of `CLAUDE.md` so that it is read only when needed. Read it before adding a member to the team or changing a member's prompt, skills or computer.
 
-Mark (id `marketer`) was the first member added after v0.1, Cam (id `video`) the second, Rex (id `trainer`) the third. What a new member touches:
+Mark (id `marketer`) was the first member added after v0.1, Cam (id `video`) the second, Rex (id `trainer`) the third, and Ada (`webdev`), Kai (`gamedev`) and Lumi (`designer`) the fourth to sixth, in one pull request (D148). What a new member touches:
 
 - `openbot/examples/freeduet/agents.yaml`: the entry (copy the shared-rules paragraph from Wren word
   for word, and the "Email." paragraph that stands before it from Penny, D30: only Otto sends email, and

@@ -11,6 +11,9 @@ export type MascotId =
   | "mark"
   | "cam"
   | "rex"
+  | "ada"
+  | "kai"
+  | "lumi"
   | "gus"
   | "basil"
   | "vera"
@@ -53,6 +56,9 @@ export const TEAM_MEMBERS: TeamMember[] = [
   { id: "mark", category: "studio", accent: "#F27272", tint: "#FFF0F0", deep: "#C23B3B", status: "notlive" },
   { id: "cam", category: "studio", accent: "#F38CC2", tint: "#FFF0F7", deep: "#BA3E80", status: "notlive" },
   { id: "rex", category: "support", accent: "#E5484D", tint: "#FFF0F0", deep: "#B7282E", status: "main" },
+  { id: "ada", category: "studio", accent: "#34B37A", tint: "#EAF8F1", deep: "#1F7A52", status: "main" },
+  { id: "kai", category: "studio", accent: "#B8D93A", tint: "#F6FAE3", deep: "#6F8A14", status: "main" },
+  { id: "lumi", category: "studio", accent: "#5B57D6", tint: "#EEEEFC", deep: "#34319A", status: "main" },
   { id: "gus", category: "support", accent: "#9AAABF", tint: "#F2F5F9", deep: "#4B5D75", status: "out" },
   { id: "basil", category: "support", accent: "#8DD46E", tint: "#F0FAEC", deep: "#3B8224", status: "out" },
   { id: "vera", category: "support", accent: "#5F8EF0", tint: "#EFF4FE", deep: "#2454BE", status: "out" },

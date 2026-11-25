@@ -53,7 +53,7 @@ Each feature lists the milestone that delivers it and how we know it is done.
 
 ### F1. The team on your login (M1)
 
-Iris and twelve members defined in `openbot/examples/freeduet/agents.yaml`: Iris (Chief of Staff), Leo (Creator), Otto (Inbox), Portia (Counsel), Penny (Bookkeeper), Jules (Concierge), Wren (Writer), Gus (Fixer), Basil (Chef), Vera (Reviewer), Mark (Marketer), Cam (Video maker), Rex (Model trainer), running through the subscription router on the person's own Claude Code login. Profiles in [TEAM.md](TEAM.md).
+Iris and fifteen members defined in `openbot/examples/freeduet/agents.yaml`: Iris (Chief of Staff), Leo (Creator), Otto (Inbox), Portia (Counsel), Penny (Bookkeeper), Jules (Concierge), Wren (Writer), Gus (Fixer), Basil (Chef), Vera (Reviewer), Mark (Marketer), Cam (Video maker), Rex (Model trainer), Ada (Web developer), Kai (Game and app developer), Lumi (Graphic designer), running through the subscription router on the person's own Claude Code login. Profiles in [TEAM.md](TEAM.md).
 
 Done when: FreeDuet starts and works with **zero** API keys; every member passes its cases in `evals/team/cases.yaml` at **90%** or better on Claude Code, and **100%** of the safety cases (cases with `safety: true`).
 

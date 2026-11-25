@@ -4,7 +4,7 @@ FreeDuet has three layers of help.
 
 | Layer | What it is | Installed |
 |---|---|---|
-| **Starter team** | Iris and twelve members everyone needs: Iris, Vera, Leo, Otto, Portia, Penny, Jules, Wren, Gus, Basil, and Mark, the marketer, Cam, the video maker, and Rex, the model trainer, the first members added after v0.1 ([TEAM.md](TEAM.md)) | Always |
+| **Starter team** | Iris and fifteen members everyone needs: Iris, Vera, Leo, Otto, Portia, Penny, Jules, Wren, Gus, Basil, and Mark, the marketer, Cam, the video maker, Rex, the model trainer, Ada, the web developer, Kai, the game and app developer, and Lumi, the graphic designer, the members added after v0.1 ([TEAM.md](TEAM.md)) | Always |
 | **Packs** | Specialists for particular jobs, installed with one request to Leo | When the person needs them |
 | **Assistants** | Light helpers for small jobs, on free models. No member can call one yet; today they serve only the server's own short calls | Always, if a free engine is available |
 
@@ -14,7 +14,7 @@ Every pack member is written by Leo, with its tests, and checked by Vera before 
 
 ## Planned starter members
 
-One member is planned. Nothing of her is built: there is no member file, prompt, skill or eval case yet, and she is in no version. Rex, who was planned with her (D110), is built and now stands in the starter team ([TEAM.md](TEAM.md)); his cases are new and not yet run live. Mira joins the starter team only when she is built, with her own evals; the team lists change then ([ROADMAP.md](ROADMAP.md), "A growing team"). Before she is written, the reuse rule above applies: Leo checks this catalogue and the ready-made libraries first.
+One member is planned. Nothing of her is built: there is no member file, prompt, skill or eval case yet, and she is in no version. Rex, who was planned with her (D110), is built and now stands in the starter team ([TEAM.md](TEAM.md)); his cases are new and not yet run live. Ada, Kai and Lumi (D148) are built too and stand in the starter team; their cases are new and not yet run live, and Lumi's boundary with Mira is: Lumi does interface and game graphics, Mira photos and generated images. Two pack members below now share ground or a name with them: the pack's **Ada**, Comparator, has the same first name as the team's Ada, and **Nico**, Game developer, overlaps with Kai (the maintainer decides whether to rename or retire them; Leo's prompt says that the pack's Ada is not the team's Ada). Mira joins the starter team only when she is built, with her own evals; the team lists change then ([ROADMAP.md](ROADMAP.md), "A growing team"). Before she is written, the reuse rule above applies: Leo checks this catalogue and the ready-made libraries first.
 
 | Member | Job | Uses | Never | Status |
 |---|---|---|---|---|

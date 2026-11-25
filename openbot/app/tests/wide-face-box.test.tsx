@@ -41,10 +41,13 @@ const EXTENT: Record<string, [number, number, number, number]> = {
   mark: [31.06, 14, 188.94, 209],
   video: [31.06, 14, 188.94, 209],
   rex: [31.06, 14, 188.94, 209],
+  ada: [31.06, 14, 188.94, 209],
+  kai: [31.06, 14, 188.94, 209],
+  lumi: [31.06, 14, 188.94, 209],
 };
 const STROKE = 3;
 /** The drawings, so that a changed drawing makes the table above be measured again. */
-const ART_SHA1 = "c982760a1c08f4f6eb950f0256ef314010b5737d";
+const ART_SHA1 = "1c4e24d81f2b06e070a6efb0f32b51fe7db1cc46";
 
 test("the art is the one the extents were measured on", () => {
   expect(Object.keys(EXTENT).sort()).toEqual(Object.keys(drawn.team).sort());
@@ -53,7 +56,7 @@ test("the art is the one the extents were measured on", () => {
   ).toBe(ART_SHA1);
 });
 
-test("the thirteen faces are the drawings, each with its own clip, and not the round bubble", () => {
+test("the sixteen faces are the drawings, each with its own clip, and not the round bubble", () => {
   const view = render(<MascotSprite />);
   for (const key of Object.keys(drawn.team)) {
     const symbol = view.container.querySelector(

@@ -19,6 +19,9 @@ interface FreeDuetMascotProps {
 }
 
 export const MASCOT_RIGHT_COLOR: Record<MascotId, string> = {
+  ada: "#34B37A",
+  kai: "#B8D93A",
+  lumi: "#5B57D6",
   iris: "#BBA6F0",
   otto: "#F4917A",
   portia: "#9B7BE0",
@@ -35,6 +38,9 @@ export const MASCOT_RIGHT_COLOR: Record<MascotId, string> = {
 };
 
 const RIGHT_BROW_COLOR: Record<MascotId, string> = {
+  ada: "#1F7A52",
+  kai: "#6F8A14",
+  lumi: "#34319A",
   iris: "#8463D0",
   otto: "#C45E46",
   portia: "#6E4BBF",
@@ -67,6 +73,34 @@ function BellyEmblem({ id }: { id: MascotId }) {
   };
 
   switch (id) {
+    case "ada":
+      return (
+        <g>
+          <path d="M90 140 L80 151 L90 162 M110 140 L120 151 L110 162 M104 136 L96 166" {...strokeOut} />
+          <path d="M90 140 L80 151 L90 162 M110 140 L120 151 L110 162 M104 136 L96 166" {...strokeIn} />
+        </g>
+      );
+    case "kai":
+      return (
+        <g>
+          <path d="M86 142 L114 142 Q124 142 124 154 Q124 166 115 164 L108 158 L92 158 L85 164 Q76 166 76 154 Q76 142 86 142 Z" {...strokeOut} />
+          <path d="M88 147 L88 155 M84 151 L92 151" {...strokeOut} />
+          <path d="M86 142 L114 142 Q124 142 124 154 Q124 166 115 164 L108 158 L92 158 L85 164 Q76 166 76 154 Q76 142 86 142 Z" {...strokeIn} />
+          <path d="M88 147 L88 155 M84 151 L92 151" {...strokeIn} />
+          <circle cx="111" cy="149" r="2.5" fill="#FFFFFF" stroke="#1E2A55" strokeWidth="2" />
+          <circle cx="116" cy="154" r="2.5" fill="#FFFFFF" stroke="#1E2A55" strokeWidth="2" />
+        </g>
+      );
+    case "lumi":
+      return (
+        <g>
+          <path d="M100 134 L112 150 L100 168 L88 150 Z" {...strokeOut} />
+          <path d="M100 168 L100 152" {...strokeOut} />
+          <path d="M100 134 L112 150 L100 168 L88 150 Z" {...strokeIn} />
+          <path d="M100 168 L100 152" {...strokeIn} />
+          <circle cx="100" cy="150" r="3" fill="#FFFFFF" stroke="#1E2A55" strokeWidth="2" />
+        </g>
+      );
     case "iris":
       return (
         <g>
