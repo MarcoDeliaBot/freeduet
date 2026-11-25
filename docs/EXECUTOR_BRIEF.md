@@ -7,7 +7,7 @@ Instructions for the coding agent (Claude Code, Codex or a person) that builds F
 ## Working rules
 
 1. **One milestone at a time.** Do not start the next milestone until the current one's "Done when" checks pass and the maintainer has seen the demo.
-2. **Thin fork.** Put FreeDuet code in `openbot/examples/freeduet/`, `openbot/agent-freeduet/`, `openbot/server/src/freeduet/` and `openbot/app/src/freeduet/`. Touch upstream files only to register an extension, and list every such touch in `docs/UPSTREAM_TOUCHES.md` with the reason.
+2. **Keep upstream touches small.** Put FreeDuet code in `openbot/examples/freeduet/`, `openbot/agent-freeduet/`, `openbot/server/src/freeduet/` and `openbot/app/src/freeduet/`. Touch upstream files only to register an extension, and list every such touch in `docs/UPSTREAM_TOUCHES.md` with the reason.
 3. **Stop and ask the maintainer** before: enabling any provider route that PROVIDERS.md marks off; changing an approval behaviour; enabling purchases on a real account; publishing anything (repository visibility, releases, images, posts).
 4. **No secrets in the repository**, ever: no keys, tokens, cookies, browser profiles, real emails or real documents. Fixtures are invented.
 5. **Report progress** at the end of every work session: what is done, what is next, what is blocked, with numbers (tests passed, eval pass rate). Write the report in the maintainer's language.

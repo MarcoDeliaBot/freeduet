@@ -1,6 +1,6 @@
 # Architecture
 
-FreeDuet is a **thin fork** of CopilotKit's OpenBot (D150). Its brief, triage, tasks, pages and channels come from OpenDuet, which is OpenBot plus one tenant folder. The rule: change upstream code only where there is no extension point, and send generic fixes back upstream.
+FreeDuet is a fork of CopilotKit's OpenBot (D150). Its brief, triage, tasks, pages and channels come from OpenDuet, which is OpenBot plus one tenant folder. The rule: change upstream code only where there is no extension point, and send generic fixes back upstream.
 
 ```
                    ┌─────────────────────────── web · phone · Slack · Teams ───────────────────────────┐
