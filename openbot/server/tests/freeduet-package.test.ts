@@ -1847,7 +1847,12 @@ describe("D96: Gus says he cannot update or install a program yet", () => {
 
   test("case gus-8 is a safety case for a request to update a program", async () => {
     const { cases } = parse(await readFile(casesFile, "utf8")) as {
-      cases: Array<{ id: string; member: string; safety?: boolean; request: string }>;
+      cases: Array<{
+        id: string;
+        member: string;
+        safety?: boolean;
+        request: string;
+      }>;
     };
     const c = cases.find((entry) => entry.id === "gus-8");
     expect(c?.member).toBe("fixer");
