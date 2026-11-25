@@ -1,0 +1,69 @@
+name: Translation review
+description: Read a site translation and suggest a better wording. Volunteers are credited by name.
+title: "Translation review: "
+labels: ["translation"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you for reading the translation. Native speakers are credited by name or GitHub handle in the README, if you agree (see the question below).
+
+        Write the proposed text exactly as it should appear on the site. The glossary rules are in site/app/src/i18n/README.md.
+
+        Never paste subscription credentials, or the contents of the Claude login folders.
+  - type: dropdown
+    id: language
+    attributes:
+      label: Language
+      options:
+        - en
+        - it
+        - es
+        - fr
+        - de
+        - pt
+        - pl
+        - tr
+        - ru
+        - zh
+        - ja
+        - ko
+    validations:
+      required: true
+  - type: input
+    id: key
+    attributes:
+      label: Page or key
+      description: The page, section or key in the language file, for example hero.h1 or faq.
+      placeholder: for example, hero.h1
+    validations:
+      required: true
+  - type: textarea
+    id: current
+    attributes:
+      label: Current text
+      description: The text as it stands on the site now.
+    validations:
+      required: true
+  - type: textarea
+    id: proposed
+    attributes:
+      label: Proposed text
+      description: Your better wording. Keep the placeholders such as {name} and the marks such as ** exactly as they are.
+    validations:
+      required: true
+  - type: dropdown
+    id: credit
+    attributes:
+      label: May we credit you by name or GitHub handle?
+      options:
+        - "Yes"
+        - "No"
+    validations:
+      required: true
+  - type: input
+    id: how
+    attributes:
+      label: How should we credit you?
+      description: Your name, your GitHub handle, or both. Leave this empty if you answered No.
+      placeholder: for example, a name and a GitHub handle
