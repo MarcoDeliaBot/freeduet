@@ -5,7 +5,7 @@ What FreeDuet does that the others don't, row by row.
 **Legend:** ✅ available today · ⚠️ partly · 🚧 in progress · 🗓️ planned · ❌ no · — not documented by the project.
 **FreeDuet is at v0.2.2, an early release (16 November 2026).** A ✅ means you can use it today, in a published version: never something still to come. Where FreeDuet does not have something yet, its cell says so with 🚧 (being built, not released) or 🗓️ (decided, not started) and the version it is meant for, as on the [roadmap](ROADMAP.md#how-to-read-the-tables). Nothing on the roadmap has a date.
 
-_Last checked: 2026-11-08, from each project's public README and documentation, linked below; Claude Duet, OpenDuet / OpenBot and Grok Bot were checked again on 2026-11-22, from the news and README sources listed under Sources. If we got something wrong about another project, open an issue and we will fix it within 48 hours._
+_Last checked: 2026-11-08, from each project's public README and documentation, linked below; Claude Duet, OpenDuet / OpenBot and Grok Bot were checked again on 2026-11-22, and OpenDuet's README again on 2026-11-25, from the news and README sources listed under Sources. If we got something wrong about another project, open an issue and we will fix it within 48 hours._
 
 | | **FreeDuet** | Claude Duet | OpenDuet / OpenBot | open-duet (Anil-matcha) | openbot (nightly-labs) | Agency (browser-use) | OpenMausBot |
 |---|---|---|---|---|---|---|---|
@@ -85,7 +85,7 @@ FreeDuet is the only project that combines **all three**:
 
 - Claude Duet: [Anthropic announcement](https://www.anthropic.com), [TechCrunch](https://techcrunch.com), [Engadget](https://www.engadget.com) coverage of the research preview (October 2026). Re-checked 22 November 2026 against [9to5Mac](https://9to5mac.com/2026/10/21/anthropic-takes-on-chatgpt-dots-and-meta-muse-with-claude-duet/) and [iTechPost](https://itechpost.com/articles/237623/20261022/anthropics-claude-duet-ai-agent-launch-signals-new-battle-openai-meta.htm).
 - Grok Bot (SpaceXAI): [xAI announcement of Grok Bot 1.0](https://x.ai/news/grok-bot-1-0), and the [VentureBeat report](https://venturebeat.com/orchestration/spacexais-grok-bot-turns-agents-into-persistent-digital-coworkers-that-can-operate-your-apps-for-120-per-month), checked 22 November 2026.
-- OpenDuet: https://github.com/CopilotKit/OpenDuet · OpenBot: https://github.com/CopilotKit/openbot · OpenBot 1.0 README (checked 22 November 2026): https://raw.githubusercontent.com/CopilotKit/OpenBot/v1.0.0/README.md
+- OpenDuet: https://github.com/CopilotKit/OpenDuet (README checked 25 November 2026: it says OpenDuet "runs today as OpenBot" and is "Built on OpenBot and CopilotKit"; we found no statement there that the project is no longer maintained, so the column does not say so) · OpenBot: https://github.com/CopilotKit/openbot · OpenBot 1.0 README (checked 22 November 2026): https://raw.githubusercontent.com/CopilotKit/OpenBot/v1.0.0/README.md
 - open-duet (Anil-matcha): https://github.com/Anil-matcha/open-duet (the repository now calls itself Suparagent) and its `docs/ENGINES.md`, `docs/COMPUTERS.md`, `docs/TEAMS.md`, `docs/ROUTINES.md`, `docs/TASKS.md`, `docs/TEMPLATES.md`
 - openbot (nightly-labs): https://github.com/nightly-labs/openbot and its `docs/architecture/providers.md`
 - Agency (browser-use): https://github.com/browser-use/open-duet
