@@ -1061,3 +1061,110 @@ test("away from the computer the warning's controls and the way back are disable
     ).disabled,
   ).toBe(true);
 });
+
+const OWN = ["claude", "gateway", "codex"];
+const ORDER_PATH = "/api/freeduet/engines/members/iris/order";
+
+/** A member on an own order goes back to the recommended one (no break), so its Undo would go back into the own order. */
+async function undoIntoOwnOrder() {
+  server.members = [
+    member({ id: "iris", chain: OWN, recommendedChain: THREE, ownOrder: true }),
+  ];
+  server.orderBreak = "free_before_login";
+  const view = draw();
+  await view.findByText("Iris");
+  const user = userEvent.setup({ document });
+  await user.click(
+    view.getByRole("button", { name: "Move A gateway down for Iris" }),
+  );
+  await waitFor(() => expect(order(view, 0)).toEqual(THREE.map(nameOf)));
+  await user.click(
+    await view.findByRole("button", { name: "Undo the change for Iris" }),
+  );
+  await view.findByRole("group", { name: "Confirm the new order for Iris" });
+  return { view, user };
+}
+const nameOf = (id: string) =>
+  ({ claude: "Claude Code", codex: "Codex", gateway: "A gateway" })[
+    id
+  ] as string;
+
+test("Undo back into an out-of-group order asks again: the warning shows, no confirmed is sent, and the order stays", async () => {
+  const { view } = await undoIntoOwnOrder();
+  expect(view.queryByRole("alert")).toBeNull();
+  expect(sent).toHaveLength(2);
+  expect(sent[1]).toEqual({
+    method: "PUT",
+    path: ORDER_PATH,
+    body: { order: OWN },
+  });
+  expect(order(view, 0)).toEqual(THREE.map(nameOf));
+});
+
+test("after the tick and Confirm, the Undo sends confirmed true and says Undone", async () => {
+  const { view, user } = await undoIntoOwnOrder();
+  await user.click(
+    view.getByRole("checkbox", {
+      name: "I understand, use this order for Iris",
+    }),
+  );
+  await user.click(
+    view.getByRole("button", { name: "Confirm the new order for Iris" }),
+  );
+  await waitFor(() => expect(sent).toHaveLength(3));
+  expect(sent[2]).toEqual({
+    method: "PUT",
+    path: ORDER_PATH,
+    body: { order: OWN, confirmed: true },
+  });
+  await view.findByText(
+    "Undone. The previous setting applies from the member's next message.",
+  );
+  await waitFor(() => expect(order(view, 0)).toEqual(OWN.map(nameOf)));
+});
+
+test("Cancel on an Undo's warning leaves the current order and sends nothing more", async () => {
+  const { view, user } = await undoIntoOwnOrder();
+  await user.click(
+    view.getByRole("button", { name: "Cancel the new order for Iris" }),
+  );
+  expect(
+    view.queryByRole("group", { name: "Confirm the new order for Iris" }),
+  ).toBeNull();
+  expect(sent).toHaveLength(2);
+  expect(order(view, 0)).toEqual(THREE.map(nameOf));
+});
+
+test("a 409 with a missing or unknown kind is an ordinary error: the server's sentence, no confirmation warning", async () => {
+  for (const kind of [undefined, "something_new"]) {
+    server.members = [member({ id: "iris", chain: THREE })];
+    const base = global.fetch;
+    global.fetch = Object.assign(
+      async (input: RequestInfo | URL, init?: RequestInit) => {
+        if (
+          String(input).endsWith("/order") &&
+          (init?.method ?? "GET") === "PUT"
+        )
+          return Response.json(
+            { error: "Not saved.", code: "order_needs_confirmation", kind },
+            { status: 409 },
+          );
+        return base(input, init);
+      },
+      { preconnect: originalFetch.preconnect },
+    ) as typeof fetch;
+    const view = draw();
+    await view.findByText("Iris");
+    const user = userEvent.setup({ document });
+    await user.click(
+      view.getByRole("button", { name: "Move A gateway up for Iris" }),
+    );
+    const alert = await view.findByRole("alert");
+    expect(alert.textContent).toContain("Not saved.");
+    expect(
+      view.queryByRole("group", { name: "Confirm the new order for Iris" }),
+    ).toBeNull();
+    view.unmount();
+    global.fetch = base;
+  }
+});
