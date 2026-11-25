@@ -167,7 +167,7 @@ No usage telemetry is collected; adoption is measured only through public number
 |---|---|---|---|
 | A provider tightens its terms | High | High | Kill switch per provider; API fallback; PROVIDERS.md per release; official programs first |
 | "Duet" is Anthropic's product name | Medium | High | Trademark check before launch; a reserve name ready; "not affiliated" everywhere |
-| Upstream OpenBot changes fast | High | Medium | Thin fork, weekly upstream merge, our code in separate folders. Not kept so far: no pull request has merged upstream, and the fork is no longer thin; recorded as an open problem on 18 November 2026 (D89, [ROADMAP.md](ROADMAP.md)) |
+| Upstream OpenBot changes fast | High | Medium | Upstream changes are ported one pull request at a time, by hand (D150), each touched upstream file listed in [UPSTREAM_TOUCHES.md](UPSTREAM_TOUCHES.md); our code in separate folders. Not kept so far: no pull request has merged upstream, and the fork is no longer thin; recorded as an open problem on 18 November 2026 (D89, [ROADMAP.md](ROADMAP.md)) |
 | CopilotKit Intelligence dependency | Medium | Medium | Free plan by default; follow the self-hosted option; isolate memory calls |
 | An agent mistake costs money | Low with controls | High | F7 controls and low default caps (planned for v0.4, not built); red-team suite |
 | Maintainer time | High | Medium | Tight scope per milestone; contributors welcome after M1 |
