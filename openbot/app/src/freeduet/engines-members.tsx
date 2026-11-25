@@ -1,4 +1,3 @@
-import { WorkspacePicker } from "./workspace";
 import { IconChevronDown, IconChevronUp } from "@tabler/icons-react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useState } from "react";
@@ -10,6 +9,7 @@ import { client, tryClient } from "@/lib/client";
 import {
   aloneText,
   blockText,
+  CHOICES_UNREADABLE,
   CLAUDE_CHOICE_NOTE,
   CLAUDE_DEFAULT_OPTION,
   CLAUDE_EFFORT_LABEL,
@@ -19,10 +19,9 @@ import {
   CLAUDE_MODEL_OPTIONS,
   CLAUDE_SAVED_TEXT,
   type ClaudeChoice,
+  chainText,
   claudeEffortLabel,
   claudeModelLabel,
-  CHOICES_UNREADABLE,
-  chainText,
   ENGINE_MODES,
   type EngineMode,
   type EnginesReading,
@@ -44,11 +43,11 @@ import {
   ORDER_WARNING_TEXT,
   ORDER_WARNING_TITLE,
   type OrderBreakKind,
+  OWN_ORDER_NOTE,
   orderCancelLabel,
   orderConfirmLabel,
   orderTickLabel,
   orderWarningGroupLabel,
-  OWN_ORDER_NOTE,
   pinText,
   RECOMMENDED_ORDER_BUTTON,
   recommendedOrderLabel,
@@ -58,6 +57,7 @@ import {
   UNDONE_TEXT,
   undoLabel,
 } from "./engines-text";
+import { WorkspacePicker } from "./workspace";
 
 /**
  * Each member's engines, and what happens when one runs out (docs/design/engines-dashboard.md, slices 7a and the
@@ -162,7 +162,13 @@ async function setClaude(
 }
 
 /** An order waiting for the person's yes: what it would be, what it was, and which kind of break it is. */
-type PendingOrder = { order: string[]; before: string[]; kind: OrderBreakKind };
+type PendingOrder = {
+  order: string[];
+  before: string[];
+  kind: OrderBreakKind;
+  /** True when the move is an Undo: Confirm then still counts as an Undo, not as a new move. */
+  undoing: boolean;
+};
 
 /** `chain` with the engine at `at` moved one place, or null when there is no such place. */
 function moved(chain: string[], at: number, by: -1 | 1): string[] | null {
@@ -255,6 +261,7 @@ export function EngineMembers({
             order: input.order,
             before: input.before,
             kind: error.kind,
+            undoing: input.undoing,
           },
         }));
       }
@@ -626,7 +633,7 @@ export function EngineMembers({
                                   memberId: member.id,
                                   order: waitingNow.order,
                                   before: waitingNow.before,
-                                  undoing: false,
+                                  undoing: waitingNow.undoing,
                                   confirmed: true,
                                 });
                               }}
