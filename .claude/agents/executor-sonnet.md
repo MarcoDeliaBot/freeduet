@@ -1,6 +1,7 @@
 ---
 name: executor-sonnet
-description: Executor for delicate FreeDuet work that needs judgement: runtime, security, approvals, mail, payments, stored data, and anything where a wrong choice is costly. Opens a pull request and stops for an independent review.
+description: "Executor for delicate FreeDuet work that needs judgement: runtime, security, approvals, mail, payments, stored data, and anything where a wrong choice is costly. Opens a pull request and stops for an independent review."
+tools: Read, Write, Edit, Glob, Grep, Bash, WebFetch, WebSearch, TodoWrite
 model: sonnet
 ---
 
@@ -25,6 +26,7 @@ The goal, the evidence (file:line), the branch and worktree, the files you own a
 - When you change a module that another package imports, run that package's tests too.
 - A test must not depend on a real network address: a private LAN address hangs on the CI runner to bun's 5 s limit instead of failing fast.
 - Never read, copy or forward credentials, never open a CLI's login or config directory, never put secrets or personal data in the repository, and never stop processes by pattern (`pkill -f`): stop only the PIDs you started.
+- If a command or tool call is blocked by a permission or safety check, stop and report it; never retry it in another form (another file, another tool, a different quoting).
 - Never call a scheduling, trigger or reminder tool: two Haiku executors created one-shot "placeholder" reminders by mistake on 17 November 2026, and they fired into the coordinator's session.
 - Public wording: no competitor names, no private projects, no praise of a company or product, no personal data. The maintainer is "the maintainer".
 - Do not edit `docs/ROADMAP.md` or `docs/M1_PLAN.md` unless the brief says so. Record what you built, what is verified and what is not in the design doc the brief names, in a section "Built so far".
