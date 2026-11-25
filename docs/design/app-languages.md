@@ -62,7 +62,7 @@ Markers: [code: path:line] is a line of this repository, read or grepped at 021c
 
 **The upstream registry.**
 
-- FreeDuet is a thin fork of OpenDuet [code: docs/UPSTREAM_TOUCHES.md:3]. Every upstream file changed needs a row [code: CLAUDE.md:49]. Nothing is proposed upstream without the maintainer's approval [code: docs/UPSTREAM_TOUCHES.md:5].
+- FreeDuet is a fork of CopilotKit's OpenBot (D150) [code: docs/UPSTREAM_TOUCHES.md:3]. Every upstream file changed needs a row [code: CLAUDE.md:49]. Nothing is proposed upstream without the maintainer's approval [code: docs/UPSTREAM_TOUCHES.md:5].
 - The registry names 21 of the 202 upstream files that hold candidates. The other 181 have no row. A file counts as named when a row contains its path [code: docs/UPSTREAM_TOUCHES.md:1-198].
 - The card work (D26) touched 14 upstream app files in rows 126 to 136, for the 43 card strings [code: docs/UPSTREAM_TOUCHES.md:126-136]. Its rule: no string, order or class of the English render changes [code: docs/UPSTREAM_TOUCHES.md:129].
 
