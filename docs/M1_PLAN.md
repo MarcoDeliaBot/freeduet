@@ -2992,3 +2992,15 @@ The maintainer's decision: upstream changes are ported one pull request at a tim
 **Limits.** The base is estimated by file identity, not a confirmed commit.
 
 **Not verified.** The upstream commit hashes and counts above are taken from the brief for this pull request; they were not re-checked against the upstream repository in this session.
+
+## 108. Mira after v0.2.3; sign-in with no paste; one settings design and a dashboard (D152, D153, D154)
+
+**D152.** Mira, the image member (ROADMAP row 42), is built after v0.2.3. She waits for chat attachments to reach a member's computer (row 41) and for Iris's prompt to fit the light-turn limit: it is at 27,996 of 28,000 characters, as the roadmap records.
+
+**D153.** First start (ROADMAP row 15) finishes the Claude sign-in with no paste, and adds a copy button beside the sign-in code. Both are ported by hand from upstream OpenBot pull requests #2039 (commit b4632913) and #2047 (commit 3fa4768f), under D150. Sign-in is credentials work: a Sonnet executor builds it, an independent review checks it, and the look of the screen is shown to the maintainer as a preview before it goes online. FreeDuet never reads or stores the Claude login.
+
+**D154.** All settings get one simple, coherent design, and the app gets a serious, professional dashboard. The maintainer's words: outside, on the site, FreeDuet is playful; inside the app it is a spaceship cockpit, precise, calm and professional. The Engines page must be reachable in one click from the main screen. The design comes first: a preview for the maintainer's yes before any change goes online, under the rule on the look of the app. The item is ROADMAP row 128, in Next, status "In design".
+
+**Limits.** Nothing of the three is built yet. The 27,996-character figure is copied from the roadmap and was not measured again in this session.
+
+**Not verified.** The upstream pull request numbers and commit hashes in D153 are taken from the brief; they were not checked against the upstream repository in this session.
