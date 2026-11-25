@@ -1225,9 +1225,7 @@ describe("Ada, Kai and Lumi (D148)", () => {
         const own = String(
           rows.find((row) => row.id === member.id)?.system_prompt ?? "",
         );
-        const flat = own
-          .slice(0, emailAt(own))
-          .replace(/\s+/g, " ");
+        const flat = own.slice(0, emailAt(own)).replace(/\s+/g, " ");
         for (const sentence of member.own)
           expect({ sentence, said: flat.includes(sentence) }).toEqual({
             sentence,
@@ -1284,10 +1282,9 @@ describe("Ada, Kai and Lumi (D148)", () => {
       }
     ).skills;
     const text = (slug: string) =>
-      (written.find((skill) => skill.slug === slug)?.instructions ?? "").replace(
-        /\s+/g,
-        " ",
-      );
+      (
+        written.find((skill) => skill.slug === slug)?.instructions ?? ""
+      ).replace(/\s+/g, " ");
     expect(text("landing-from-mockup")).toContain(
       "each a tool call that waits for the person's card",
     );
