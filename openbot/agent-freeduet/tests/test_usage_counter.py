@@ -342,3 +342,31 @@ def test_a_service_turn_is_counted_under_its_source(client, fake_cli):
     post_run(client, request)
     body = client.get("/engines/usage", headers=AUTH).json()
     assert body["daily"][-1]["sources"]["person"]["turns"] == 1 and body["daily"][-1]["sources"]["other"]["turns"] == 1
+
+
+def test_a_missing_file_gives_the_empty_view_and_creates_nothing(tmp_path):
+    path = tmp_path / "missing" / "u.json"
+    view = TokenCounter(path, now=lambda: NOON).view()
+    assert view == {
+        "timezone": "UTC",
+        "today": "2026-11-21",
+        "window_days": 7,
+        "rows": [],
+        "engines": [],
+        "daily": view["daily"],
+        "problem": False,
+    }
+    assert len(view["daily"]) == 7 and all(not entry["members"] for entry in view["daily"])
+    assert not path.exists()
+
+
+@pytest.mark.skip(reason="the file keeps KEEP_DAYS=31 UTC days (usage_counter.py _prune); only view() shows the 7-day window, so the oldest day of eight is kept")
+def test_eight_utc_days_recorded_and_reloaded_drop_the_oldest_day_from_the_file(tmp_path):
+    path = tmp_path / "u.json"
+    days = [NOON - timedelta(days=offset) for offset in range(7, -1, -1)]
+    for moment in days:
+        TokenCounter(path, now=lambda: moment).record("m", "e", Usage(1, 1), at=moment)
+    TokenCounter(path, now=lambda: NOON)
+    stored = json.loads(path.read_text())["days"]
+    assert days[0].strftime("%Y-%m-%d") not in stored
+    assert days[1].strftime("%Y-%m-%d") in stored

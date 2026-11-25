@@ -316,6 +316,33 @@ describe("a change", () => {
   });
 });
 
+describe("a list of members longer than 64", () => {
+  const SIXTY_FIVE = Array.from({ length: 65 }, (_, index) => `m${index}`);
+
+  test("is recorded in the audit row at most 64 members, the first 64", async () => {
+    const stub = agent(() => ok({ provider: CARD }));
+    const { call, events } = setup(stub.reach);
+    const answer = await call("PUT", "/providers/openrouter", {
+      members: SIXTY_FIVE,
+    });
+    expect(answer.status).toBe(200);
+    const recorded = (events[0]?.payload as { members: string[] }).members;
+    expect(recorded).toHaveLength(64);
+    expect(recorded).toEqual(SIXTY_FIVE.slice(0, 64));
+  });
+
+  // Skipped: the route forwards the whole list (65 here), only the audit row is capped at 64 (engines-routes.ts, the provider PUT).
+  test.skip("is forwarded at most 64 members (not yet: the route forwards all 65)", async () => {
+    const stub = agent(() => ok({ provider: CARD }));
+    const { call } = setup(stub.reach);
+    await call("PUT", "/providers/openrouter", { members: SIXTY_FIVE });
+    const sent = JSON.parse(stub.panelCalls()[0]?.body ?? "{}") as {
+      members: string[];
+    };
+    expect(sent.members.length).toBeLessThanOrEqual(64);
+  });
+});
+
 describe("a key", () => {
   test("goes to the agent, comes back as saved only, and is in no audit row", async () => {
     const stub = agent(() => ok({ keySaved: true, key: KEY }));
