@@ -1,6 +1,6 @@
 # Upstream touches
 
-FreeDuet is a thin fork of [OpenBot](https://github.com/CopilotKit/openbot) (D150). Its own code lives in `openbot/examples/freeduet/`, `openbot/agent-freeduet/`, `openbot/server/src/freeduet/` and `openbot/app/src/freeduet/`. Every change to a file that came from upstream is listed here with its reason, so merging upstream stays easy ([EXECUTOR_BRIEF.md](EXECUTOR_BRIEF.md), rule 2).
+FreeDuet is a fork of [OpenBot](https://github.com/CopilotKit/openbot) (D150) with changes to upstream files, each listed below. Its own code lives in `openbot/examples/freeduet/`, `openbot/agent-freeduet/`, `openbot/server/src/freeduet/` and `openbot/app/src/freeduet/`. Every change to a file that came from upstream is listed here with its reason, so merging upstream stays easy ([EXECUTOR_BRIEF.md](EXECUTOR_BRIEF.md), rule 2).
 
 "Upstream?" says whether the change is worth proposing to CopilotKit. Nothing is proposed without the maintainer's approval.
 

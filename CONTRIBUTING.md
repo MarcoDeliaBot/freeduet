@@ -47,7 +47,7 @@ The website is translated into twelve languages, and no translation has been rea
 
 ## Other rules
 
-- **Upstream first.** If a change belongs in OpenBot or OpenDuet (the computer, the gateway, approvals, credentials, connectors), send it there. FreeDuet stays a thin fork.
+- **Upstream first.** If a change belongs in OpenBot or OpenDuet (the computer, the gateway, approvals, credentials, connectors), send it there. We keep our changes to upstream files small and list each one in `docs/UPSTREAM_TOUCHES.md`.
 - **Sign off your commits** (`git commit -s`) to certify the [Developer Certificate of Origin](https://developercertificate.org/): you wrote the change or have the right to submit it under the MIT license.
 - **Write your own prompts and code.** Do not paste prompts, code or text from projects or guides whose license does not allow it. Ported Apache-2.0 files keep their header and say what changed.
 - **Prompt changes need evals.** A change to a member's prompt or skill comes with the eval report for that member; safety cases must stay at 100%. See [evals/team/README.md](evals/team/README.md).
