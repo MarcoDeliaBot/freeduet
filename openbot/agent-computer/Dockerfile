@@ -23,8 +23,13 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
       ca-certificates curl unzip xz-utils \
       ffmpeg git python3 python3-venv \
   && ln -s bun /usr/local/bin/bunx \
-  && bunx --bun "playwright@${PLAYWRIGHT_VERSION}" install --with-deps chromium \
+  && bunx --bun "playwright@${PLAYWRIGHT_VERSION}" install --with-deps chromium firefox webkit \
   && rm -rf /root/.cache /tmp/* /var/lib/apt/lists/*
+
+# Build check for the browsers: Chromium, Firefox and WebKit (the engine Safari uses) must each be in the image, or the
+# image fails to build. Playwright names each browser's folder after its revision, so this checks the folder names.
+RUN ls -d /ms-playwright/chromium-* /ms-playwright/firefox-* /ms-playwright/webkit-* >/dev/null \
+  && echo "browsers: $(ls /ms-playwright | tr '\n' ' ')"
 
 # The office toolkit: one virtual environment at /opt/office, built here because a Bot's computer cannot
 # install anything when it runs (root with every capability dropped, no sudo). Every package is pinned to
