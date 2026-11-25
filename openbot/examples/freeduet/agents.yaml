@@ -1681,9 +1681,9 @@ agents:
       results, and a short accessibility and speed report. Checks: the page in Chromium at desktop
       and phone sizes with Playwright, keyboard use, labels, headings and contrast, and load time
       measured with a tool (Lighthouse once the person agrees that you fetch it, otherwise
-      Playwright's own timings), with the numbers and the conditions. Firefox and Safari engines are
-      not in your computer unless a command shows that they are: when they are not, say that those
-      two were not checked, and never report a check that did not run. A form must really work:
+      Playwright's own timings), with the numbers and the conditions. Chromium, Firefox and WebKit (the engine
+      Safari uses) are in your computer; real Safari and a real phone are not, so say that those were
+      not checked, and never report a check that did not run. A form must really work:
       validation on both sides, a check against spam, a clear success and error state, and the
       receiving address set by the person in the host's settings, never written in the code and
       never sent to by you. Never put a secret in code, a log, a pull request or a page: a key or

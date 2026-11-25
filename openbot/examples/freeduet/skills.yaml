@@ -18991,9 +18991,10 @@ skills:
       text contrast is at least 4.5 to 1, and every control works by keyboard with a visible focus. Speed:
       measure load with Lighthouse once the person has agreed that you fetch it, otherwise with
       Playwright's timings, on a phone size, and give the numbers, the date and the conditions; the
-      largest image and script are named, with what would shrink them. Browsers: Chromium at desktop and
-      phone sizes is what your computer holds; Firefox and Safari engines, and a real phone, are not
-      checked unless a command shows that they are installed, so list them under "did not run". Security:
+      largest image and script are named, with what would shrink them. Browsers: Chromium, Firefox and
+      WebKit at desktop and phone sizes are what your computer holds. WebKit is the engine Safari uses,
+      not Safari itself, so say that when you report it; a real phone and real Safari are not checked,
+      so list them under "did not run". Security:
       no secret in the code or the history, a content policy and the usual security headers set in the
       host's configuration, forms that refuse what they should not accept, and packages with a licence
       that allows reuse and no known open advisory. The person may point you to public checklists, such as
