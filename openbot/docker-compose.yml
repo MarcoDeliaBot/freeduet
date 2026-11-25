@@ -416,7 +416,7 @@ services:
       timeout: 5s
       retries: 5
 
-  # FreeDuet: the subscription router. One AG-UI endpoint for all twelve members, run on the person's
+  # FreeDuet: the subscription router. One AG-UI endpoint for all sixteen members, run on the person's
   # own Claude Code login, plus the Anthropic-format `/v1/messages` the server's own short model
   # calls go to. See docs/M1_PLAN.md and docs/UPSTREAM_TOUCHES.md.
   agent-freeduet:

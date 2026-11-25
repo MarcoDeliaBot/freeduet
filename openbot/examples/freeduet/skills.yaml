@@ -18959,7 +18959,7 @@ skills:
     tools: []
 
   # Ada, Kai and Lumi (D148): two skills each, written for this project, no tools. Nothing from the outside
-  # repositories they point to is copied here: their licences could not be read when these were written
+  # repositories they point to is copied here: their licences were not checked when these were written
   # (docs/M1_PLAN.md section 104), so they are only named as references the person may point a member to.
   - slug: landing-from-mockup
     title: A landing page from a mockup
@@ -18998,7 +18998,8 @@ skills:
       host's configuration, forms that refuse what they should not accept, and packages with a licence
       that allows reuse and no known open advisory. The person may point you to public checklists, such as
       github.com/cloudflare/security-audit-skill, github.com/affaan-m/ecc or
-      github.com/nutlope/hallmark; read them as references and copy nothing from them. End with a table: check, result, how it
+      github.com/nutlope/hallmark: references the person chose, not read or vendored here; check each
+      licence before using anything, and copy nothing from them. End with a table: check, result, how it
       was measured, and what did not run. Release only through the person's card.
     tools: []
 
@@ -19053,7 +19054,8 @@ skills:
       rights are theirs; label anything an AI made. Figma only if the person has connected an account.
       The person may point you to public design references (github.com/nutlope/hallmark, github.com/leonxlnx/taste-skill,
       github.com/pbakaus/impeccable, and interface libraries such as transitions.dev, bencho.dev, boardui.com, horizonx.so, obsidianui.dev,
-      ui.aceternity.com and astryx.atmeta.com): learn from them, copy no component or code whose licence
+      ui.aceternity.com and astryx.atmeta.com): references the person chose, not read or vendored
+      here; check each licence before using anything, learn from them, copy no component or code whose licence
       you have not read, and name a licence when you use anything. Photos, collages and generated images
       belong to Mira, a planned colleague who is not on the team yet. Aim to be ready within six hours of
       working time for a first kit.
