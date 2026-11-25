@@ -44,7 +44,7 @@ FreeDuet is a self-hosted team of AI employees that runs on the AI subscriptions
 | Grok Build CLI driver, team playbooks in Markdown | [OpenMausBot](https://github.com/milind-soni/OpenMausBot) (Apache-2.0) | Port with attribution, once Grok's terms are verified |
 | Importing agents from Grok Bot | New | Build our own, from scratch |
 | One-click decision cards | New | Our own design, later |
-| The team of thirteen | New | Written from scratch for FreeDuet |
+| The team of sixteen (Iris and fifteen members) | New | Written from scratch for FreeDuet |
 | Subscription router, engine chains, savings meter, purchase permits, Engines page | New | Built in this project |
 
 ## 6. Features
@@ -176,7 +176,7 @@ No usage telemetry is collected; adoption is measured only through public number
 
 | Decision | Choice |
 |---|---|
-| Base | OpenDuet (OpenBot inside), forked with history |
+| Base | CopilotKit's OpenBot (`openbot/`), forked with history (D150); OpenDuet's tenant layer on top |
 | Name | FreeDuet (trademark check pending) |
 | License | MIT |
 | Language of the code and docs | English; members reply in the person's language |
