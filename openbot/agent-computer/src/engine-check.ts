@@ -55,7 +55,9 @@ export class EngineUnavailableError extends Error {
 
 type Proxy = { server: string; username?: string; password?: string };
 
-async function launch(engine: OtherEngine, proxy: Proxy): Promise<Browser> {
+type Launcher = (engine: OtherEngine, proxy: Proxy) => Promise<Browser>;
+
+const launchEngine: Launcher = async (engine, proxy) => {
   const options = {
     headless: true,
     timeout: LAUNCH_TIMEOUT_MS,
@@ -70,7 +72,7 @@ async function launch(engine: OtherEngine, proxy: Proxy): Promise<Browser> {
       firefoxUserPrefs: { "media.peerconnection.enabled": false },
     });
   return webkit.launch(options);
-}
+};
 
 /** Removes WebRTC from every document and frame before its own scripts run. */
 const WITHOUT_WEBRTC = `(() => {
@@ -95,6 +97,7 @@ async function newContext(browser: Browser): Promise<BrowserContext> {
  * Returns a reason when it is not.
  */
 async function canary(
+  launch: Launcher,
   engine: OtherEngine,
   proxy: Proxy,
 ): Promise<string | undefined> {
@@ -120,8 +123,7 @@ async function canary(
         .goto(target, { timeout: CANARY_NAV_TIMEOUT_MS })
         .catch(() => null);
       if (
-        !response ||
-        response.status() !== 403 ||
+        response?.status() !== 403 ||
         response.headers()["x-openbot-egress"] !== "refused"
       )
         return `${target} was not refused by the network filter`;
@@ -144,7 +146,10 @@ async function canary(
   }
 }
 
-export function createEngineChecker() {
+export function createEngineChecker(
+  /** Only a test replaces this: to prove the canary refuses a browser that ignores its proxy. */
+  launch: Launcher = launchEngine,
+) {
   // Keyed by the filter this process has now: a filter that restarts is proven again.
   const verdicts = new Map<string, string | null>();
   let line: Promise<unknown> = Promise.resolve();
@@ -158,7 +163,7 @@ export function createEngineChecker() {
       try {
         const canaryProxy = egressFor(CANARY_BOT, process.env);
         const reason = canaryProxy
-          ? await canary(engine, canaryProxy)
+          ? await canary(launch, engine, canaryProxy)
           : "no network filter";
         // A browser that would not start is tried again next time; an engine that bypassed the filter is not.
         if (reason?.startsWith("it could not be started")) {
