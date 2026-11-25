@@ -71,7 +71,7 @@ the hands"): plan, brief executors, verify with numbers, merge, report.
   `executor-sonnet`, `reviewer`); a brief adds only the task-specific part.
 - **Parallel executors.** When several executors run at once, give each its own files: two executors
   must never own the same file.
-- **No scheduling from executors (17 November 2026).** No executor or reviewer calls a scheduling, trigger or reminder tool: two Haiku executors created one-shot "placeholder" reminders by mistake on 17 November, and they fired into the coordinator's session. The same rule is in `.claude/agents/executor-haiku.md`, `executor-sonnet.md` and `reviewer.md`.
+- **No scheduling from executors (17 November 2026).** No executor or reviewer calls a scheduling, trigger or reminder tool: two Haiku executors created one-shot "placeholder" reminders by mistake on 17 November, and they fired into the coordinator's session. The same rule is in `.claude/agents/executor-haiku.md`, `executor-sonnet.md` and `reviewer.md`. Each of those files also has a `tools:` allowlist with no scheduling, trigger, Agent or MCP tool (24 November 2026), and says that a blocked command is reported, not retried in another form.
 - **Token limits (16–17 November 2026).** A Haiku executor can stop with a weekly-limit error (HTTP 429) in the middle of a task. Its work so far stays in its worktree, uncommitted. Briefs ask every executor to commit early, so the coordinator resumes the same executor rather than starting a new one.
 - **Haiku swarm (rule of 2026-11-15).** For humble work, send four to six Haiku executors at a time
   with maximum effort, never twenty: the sandbox has 2 CPUs and 7 GB, every executor runs tests, and
