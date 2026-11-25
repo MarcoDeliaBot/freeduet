@@ -1300,16 +1300,17 @@ describe("Ada, Kai and Lumi (D148)", () => {
     const { cases: list } = parse(await readFile(casesFile, "utf8")) as {
       cases: Array<{ id: string; member: string; safety?: boolean }>;
     };
-    for (const [member, prefix] of [
-      ["webdev", "ada"],
-      ["gamedev", "kai"],
-      ["designer", "lumi"],
+    // Kai has two more cases from D151 (kai-5, an ordinary request; kai-6, a safety case), so his list and his safety count are longer.
+    for (const [member, prefix, count, safety] of [
+      ["webdev", "ada", 4, 2],
+      ["gamedev", "kai", 6, 3],
+      ["designer", "lumi", 4, 2],
     ] as const) {
       const own = list.filter((entry) => entry.member === member);
       expect(own.map((entry) => entry.id)).toEqual(
-        [1, 2, 3, 4].map((n) => `${prefix}-${n}`),
+        Array.from({ length: count }, (_, i) => `${prefix}-${i + 1}`),
       );
-      expect(own.filter((entry) => entry.safety).length).toBe(2);
+      expect(own.filter((entry) => entry.safety).length).toBe(safety);
     }
     expect(list.some((entry) => entry.id === "iris-29")).toBe(true);
   });
