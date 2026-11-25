@@ -219,6 +219,20 @@ function Get-ResourceState {
     return 'ok'
 }
 
+function Get-WindowsDisplayName {
+    # The name to print for this computer's Windows. Windows 11 keeps "Windows 10" in the registry's ProductName, so the
+    # build decides: 22000 and newer are Windows 11. The edition and the display version (for example "Pro 26H2") are kept.
+    param(
+        [AllowNull()][string]$Name,
+        [AllowNull()]$Build
+    )
+    $text = if ($null -eq $Name) { '' } else { [string]$Name }
+    if ($null -ne $Build -and [int]$Build -ge 22000 -and $text -match '^Windows 10(\s|$)') {
+        $text = $text -replace '^Windows 10', 'Windows 11'
+    }
+    return $text.Trim()
+}
+
 function New-ResourceCheck {
     # One disk or memory row for the findings, and a block when it is under the minimum (unless it is ignored).
     param(
@@ -228,8 +242,10 @@ function New-ResourceCheck {
         [Parameter(Mandatory = $true)][int]$Minimum,
         [Parameter(Mandatory = $true)][int]$Recommended,
         [Parameter(Mandatory = $true)][string]$Unit,
-        [bool]$IgnoreResources = $false
+        [bool]$IgnoreResources = $false,
+        [string]$Measure = 'free'
     )
+    # $Measure says what the number is: 'free' for disk space, 'total' for the memory size that install.sh compares.
     $state = Get-ResourceState -Value $Free -Minimum $Minimum -Recommended $Recommended -IgnoreResources $IgnoreResources
     $detail = ''
     $block = $null
@@ -237,17 +253,17 @@ function New-ResourceCheck {
         $detail = "could not read the size of $Where"
     }
     elseif ($state -eq 'STOP') {
-        $detail = "$Free $Unit on $Where; at least $Minimum $Unit are needed ($Recommended $Unit recommended)"
+        $detail = "$Free $Unit $Measure on $Where; at least $Minimum $Unit are needed ($Recommended $Unit recommended)"
         $block = "${Area}: $detail. Free some space, then run this again. To go on anyway, add -IgnoreResources."
     }
     elseif ($state -eq 'LOW' -and $IgnoreResources -and ([double]$Free -lt $Minimum)) {
-        $detail = "$Free $Unit on $Where; at least $Minimum $Unit are needed. Going on because of -IgnoreResources"
+        $detail = "$Free $Unit $Measure on $Where; at least $Minimum $Unit are needed. Going on because of -IgnoreResources"
     }
     elseif ($state -eq 'LOW') {
-        $detail = "$Free $Unit free on $Where; it will fit, but $Recommended $Unit are recommended"
+        $detail = "$Free $Unit $Measure on $Where; it will fit, but $Recommended $Unit are recommended"
     }
     else {
-        $detail = "$Free $Unit free on $Where"
+        $detail = "$Free $Unit $Measure on $Where"
     }
     return @{ State = $state; Detail = $detail; Block = $block }
 }
@@ -288,7 +304,7 @@ function Get-InstallerPlan {
         [void]$findings.Add(@{ Area = 'Windows'; State = 'STOP'; Detail = "build $build is too old" })
     }
     else {
-        [void]$findings.Add(@{ Area = 'Windows'; State = 'ok'; Detail = ("build $build $($Facts.WindowsName)").Trim() })
+        [void]$findings.Add(@{ Area = 'Windows'; State = 'ok'; Detail = ("build $build $(Get-WindowsDisplayName -Name $Facts.WindowsName -Build $build)").Trim() })
     }
 
     if ($Facts.IsElevated) {
@@ -329,7 +345,7 @@ function Get-InstallerPlan {
         [void]$findings.Add(@{ Area = 'Disk'; State = $diskCheckout.State; Detail = $diskCheckout.Detail })
         if ($null -ne $diskCheckout.Block) { [void]$blocks.Add($diskCheckout.Block) }
     }
-    $memory = New-ResourceCheck -Area 'Memory' -Where 'this computer' -Free $Facts.MemoryMiB -Minimum $settings.MemMinMiB -Recommended $settings.MemRecMiB -Unit 'MiB' -IgnoreResources $ignore
+    $memory = New-ResourceCheck -Area 'Memory' -Where 'this computer' -Free $Facts.MemoryMiB -Minimum $settings.MemMinMiB -Recommended $settings.MemRecMiB -Unit 'MiB' -IgnoreResources $ignore -Measure 'total'
     [void]$findings.Add(@{ Area = 'Memory'; State = $memory.State; Detail = $memory.Detail })
     if ($null -ne $memory.Block) { [void]$blocks.Add($memory.Block) }
 

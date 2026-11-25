@@ -117,6 +117,36 @@ Describe 'Text readers and path helpers' {
     }
 }
 
+Describe 'Windows name and memory wording' {
+    It 'names a build 22000 or newer Windows 11, keeping the edition and the display version' {
+        Get-WindowsDisplayName -Name 'Windows 10 Pro 26H2' -Build 26320 | Should -Be 'Windows 11 Pro 26H2'
+        Get-WindowsDisplayName -Name 'Windows 10 Home 23H2' -Build 22631 | Should -Be 'Windows 11 Home 23H2'
+        Get-WindowsDisplayName -Name 'Windows 10 Pro 26H2' -Build 22000 | Should -Be 'Windows 11 Pro 26H2'
+    }
+    It 'keeps Windows 10 below build 22000, and any other name as it is' {
+        Get-WindowsDisplayName -Name 'Windows 10 Pro 22H2' -Build 19045 | Should -Be 'Windows 10 Pro 22H2'
+        Get-WindowsDisplayName -Name 'Windows Server 2025 Datacenter 24H2' -Build 26100 | Should -Be 'Windows Server 2025 Datacenter 24H2'
+        Get-WindowsDisplayName -Name 'Windows 10 Pro 26H2' -Build $null | Should -Be 'Windows 10 Pro 26H2'
+    }
+    It 'prints Windows 11 for a Windows 11 computer in the plan, from the same registry name' {
+        $plan = Get-InstallerPlan -Facts (New-TestFacts @{ WindowsBuild = 26320; WindowsName = 'Windows 10 Pro 26H2' })
+        $row = @($plan.Findings | Where-Object { $_.Area -eq 'Windows' })[0]
+        $row.Detail | Should -Be 'build 26320 Windows 11 Pro 26H2'
+    }
+    It 'says the memory number is total, not free, and keeps the minimum wording' {
+        $plan = Get-InstallerPlan -Facts (New-TestFacts @{ MemoryMiB = 32565 })
+        $row = @($plan.Findings | Where-Object { $_.Area -eq 'Memory' })[0]
+        $row.Detail | Should -Be '32565 MiB total on this computer'
+        $row.Detail | Should -Not -Match 'free'
+        $low = Get-InstallerPlan -Facts (New-TestFacts @{ MemoryMiB = 2000 })
+        ($low.Blocks -join ' ') | Should -Match '2000 MiB total on this computer; at least 3500 MiB are needed'
+    }
+    It 'keeps the disk wording as free space' {
+        $plan = Get-InstallerPlan -Facts (New-TestFacts)
+        @($plan.Findings | Where-Object { $_.Area -eq 'Disk' } | Where-Object { $_.Detail -notmatch 'free' }).Count | Should -Be 0
+    }
+}
+
 Describe 'Resource states' {
     It 'is ok at or above the recommendation' {
         Get-ResourceState -Value 20 -Minimum 7 -Recommended 20 | Should -Be 'ok'
