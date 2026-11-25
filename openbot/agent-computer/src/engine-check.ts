@@ -39,7 +39,8 @@ import { egressFilterRunning, egressFor, setEgressPolicy } from "./egress";
 const VIEWPORT = { width: 1280, height: 800 };
 const LAUNCH_TIMEOUT_MS = 30_000;
 const CANARY_NAV_TIMEOUT_MS = 15_000;
-const CANARY_BOT = "engine-canary";
+// A dot is not allowed in a Bot id (`bot-id.ts`), so no member can have this id and the policy cleared after a canary is never a member's.
+const CANARY_BOT = "engine.canary";
 
 const NAMES: Record<OtherEngine, string> = {
   firefox: "Firefox",
@@ -54,6 +55,21 @@ export class EngineUnavailableError extends Error {
 }
 
 type Proxy = { server: string; username?: string; password?: string };
+
+/** Whether this host can listen on the IPv6 loopback. */
+function hasIpv6Loopback(): boolean {
+  try {
+    const probe = Bun.listen({
+      hostname: "::1",
+      port: 0,
+      socket: { data() {} },
+    });
+    probe.stop(true);
+    return true;
+  } catch {
+    return false;
+  }
+}
 
 type Launcher = (engine: OtherEngine, proxy: Proxy) => Promise<Browser>;
 
@@ -105,29 +121,56 @@ async function canary(
   const server = Bun.serve({
     hostname: "127.0.0.1",
     port: 0,
-    fetch() {
+    fetch(request, bunServer) {
       reached += 1;
+      if (bunServer.upgrade(request)) return undefined;
       return new Response("a service on this computer");
     },
+    websocket: { message() {} },
   });
   let browser: Browser | undefined;
   try {
     browser = await launch(engine, proxy);
     const context = await newContext(browser);
     const page = await context.newPage();
-    for (const target of [
-      `http://127.0.0.1:${server.port}/`,
-      "http://192.168.1.1/",
-    ]) {
-      const response = await page
-        .goto(target, { timeout: CANARY_NAV_TIMEOUT_MS })
-        .catch(() => null);
+    // Loopback first; the next probes only run once it was refused. 10.255.255.1 is private (refused by
+    // the filter as home network) and very unlikely to be a real host. [::1] is skipped on a host
+    // with no IPv6 loopback.
+    const targets = [`http://127.0.0.1:${server.port}/`];
+    if (hasIpv6Loopback()) targets.push(`http://[::1]:${server.port}/`);
+    targets.push("http://10.255.255.1/");
+    for (const target of targets) {
+      let response: Awaited<ReturnType<typeof page.goto>>;
+      try {
+        response = await page.goto(target, { timeout: CANARY_NAV_TIMEOUT_MS });
+      } catch (error) {
+        // No answer at all proves nothing either way: not proven, not banned; tried again next call.
+        return `it could not be started (${target} gave no answer: ${error instanceof Error ? error.message.split("\n")[0] : String(error)})`;
+      }
       if (
         response?.status() !== 403 ||
         response.headers()["x-openbot-egress"] !== "refused"
       )
         return `${target} was not refused by the network filter`;
     }
+    // A WebSocket to this computer must be refused as well.
+    const socket = await page
+      .evaluate(
+        (port) =>
+          new Promise<string>((resolve) => {
+            try {
+              const ws = new WebSocket(`ws://127.0.0.1:${port}/`);
+              ws.onopen = () => resolve("open");
+              ws.onerror = () => resolve("refused");
+              setTimeout(() => resolve("refused"), 8000);
+            } catch {
+              resolve("refused");
+            }
+          }),
+        server.port,
+      )
+      .catch(() => "refused");
+    if (socket === "open") return "a WebSocket to this computer was opened";
     if (reached > 0) return "a service on this computer was reached";
     const webrtc = await page
       .evaluate(

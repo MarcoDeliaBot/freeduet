@@ -27,6 +27,15 @@ import {
  */
 const asked = process.env.OPENBOT_COMPUTER_BROWSER === "1";
 const BOT = "engine-check-test";
+/** Whether this host has an IPv6 loopback; the [::1] case is skipped where it has none. */
+const ipv6 = (() => {
+  try {
+    Bun.listen({ hostname: "::1", port: 0, socket: { data() {} } }).stop(true);
+    return true;
+  } catch {
+    return false;
+  }
+})();
 const blocked: EgressPolicy = { mode: "allow_all", rules: [] };
 const switchedOn: EgressPolicy = {
   mode: "allow_all",
@@ -137,6 +146,7 @@ describe.skipIf(!asked)("Firefox and WebKit page checks", () => {
               `http://localhost:${local.port}/`,
               `http://nas.test:${local.port}/`,
               "http://192.168.1.1/",
+              ...(ipv6 ? [`http://[::1]:${local.port}/`] : []),
               "http://169.254.169.254/latest/meta-data/",
             ]) {
               const outcome = await visit(page, target);
@@ -158,6 +168,23 @@ describe.skipIf(!asked)("Firefox and WebKit page checks", () => {
             });
           }
         }
+        // A WebSocket to this computer is refused too, and never connected.
+        const socket = await checker.check(BOT, engine, async (page) => {
+          await page
+            .goto("http://127.0.0.1:1/", { timeout: 5_000 })
+            .catch(() => null);
+          return page.evaluate(
+            (port) =>
+              new Promise<string>((resolve) => {
+                const ws = new WebSocket(`ws://127.0.0.1:${port}/`);
+                ws.onopen = () => resolve("open");
+                ws.onerror = () => resolve("refused");
+                setTimeout(() => resolve("refused"), 8000);
+              }),
+            local.port,
+          );
+        });
+        expect(socket).toBe("refused");
         expect(local.reached()).toBe(0);
       } finally {
         local.stop();

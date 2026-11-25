@@ -65,4 +65,27 @@ describe.skipIf(!asked)("the engine canary", () => {
     // One canary launch, and no check browser: the second attempt did not even try.
     expect(launches).toBe(1);
   }, 90_000);
+
+  test("a probe that gets no answer at all is not proof of a bypass: refused for that call, tried again on the next", async () => {
+    await startEgressFilter({ env: {} });
+    let launches = 0;
+    const checker = createEngineChecker(() => {
+      launches += 1;
+      return chromium.launch({
+        headless: true,
+        proxy: { server: "http://127.0.0.1:1" },
+      });
+    });
+    for (let attempt = 0; attempt < 2; attempt += 1) {
+      const outcome = await checker
+        .check("canary-test", "firefox", async () => "ran")
+        .then(
+          () => "ran",
+          (error: unknown) => error,
+        );
+      expect(outcome).toBeInstanceOf(EngineUnavailableError);
+      expect((outcome as Error).message).toContain("not available");
+    }
+    expect(launches).toBe(2);
+  }, 90_000);
 });
