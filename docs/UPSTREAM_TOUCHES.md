@@ -1,6 +1,6 @@
 # Upstream touches
 
-FreeDuet is a thin fork of [OpenDuet](https://github.com/CopilotKit/OpenDuet). Its own code lives in `openbot/examples/freeduet/`, `openbot/agent-freeduet/`, `openbot/server/src/freeduet/` and `openbot/app/src/freeduet/`. Every change to a file that came from upstream is listed here with its reason, so merging upstream stays easy ([EXECUTOR_BRIEF.md](EXECUTOR_BRIEF.md), rule 2).
+FreeDuet is a thin fork of [OpenBot](https://github.com/CopilotKit/openbot) (D150). Its own code lives in `openbot/examples/freeduet/`, `openbot/agent-freeduet/`, `openbot/server/src/freeduet/` and `openbot/app/src/freeduet/`. Every change to a file that came from upstream is listed here with its reason, so merging upstream stays easy ([EXECUTOR_BRIEF.md](EXECUTOR_BRIEF.md), rule 2).
 
 "Upstream?" says whether the change is worth proposing to CopilotKit. Nothing is proposed without the maintainer's approval.
 
@@ -623,3 +623,4 @@ FreeDuet's own scripts beside them, not upstream files: `openbot/scripts/freedue
 | `openbot/app/src/components/routines/routines-list.tsx` | A fourth button in the view switch (Week), one branch in the body's chain, and the first view read from the browser's remembered choice (`readRememberedView`, `rememberView`). The list's markup is unchanged. New files beside it: `components/routines/routine-week.tsx`, `lib/routines/week-view.ts`. +14, -2. | A week calendar of the routines the page already holds, beside the list | ROADMAP row 120 (D140) | No |
 | `openbot/app/src/components/layout/page-shell.tsx` | Accepts an optional branded header in its existing scroll container | The workspace pages keep the app's back navigation and one accessible page heading | Workspace redesign | No |
 | `openbot/app/src/routes/_authed/settings/index.tsx`, `openbot/app/src/routes/_authed/admin/index.tsx`, `openbot/app/src/routes/_authed/_app/connections.index.tsx` | Group existing settings, links and accounts in the FreeDuet workspace layout | Faster access to team tools, personal preferences, mail rules and deployment controls | Workspace redesign | No |
+| `.github/workflows/ci.yml` | `bun test` in the `computer (real browser)` job takes `--parallel=8`; the file list is unchanged | Upstream's parallel browser tests (efeb4e7a), ported by hand under D150. The sandbox measured 114 s sequential against 58 s and 57 s parallel, 137 of 137 passing each run | D150 | No |

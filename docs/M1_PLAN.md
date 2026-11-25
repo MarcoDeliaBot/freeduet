@@ -2980,3 +2980,15 @@ Verified: the CLI's two flags and their lists (above); the argument list with th
 **Changed.** `docs/CATALOG.md`; Leo's prompt in `openbot/examples/freeduet/agents.yaml` (9,986 to 9,908 characters, limit 10,000); `evals/team/run.test.ts` (the pack count from 8 to 7); `docs/ROADMAP.md`; `docs/PROJECT.md`, `docs/CONNECTORS.md` and `NOTICE.md` (the names in them).
 
 **Not verified.** No pack member is built, so no pack eval case exists. Kai does not yet run the game-development library that the catalogue lists under Kai; the library is installed only when the member is wired.
+
+## 106. Upstream is OpenBot, taken one change at a time (D150)
+
+**D150.** FreeDuet's `openbot/` tree is CopilotKit's OpenBot, not OpenDuet. By file identity it is closest to OpenBot v1.0.0-rc.1 (8 November 2026): 869 files are identical. On 13 November 2026 upstream commit f71b0f4b (PR #1530) removed the server, worker, toolkit and agent-computer source from the public repository, so a full merge cannot bring server code. The migration numbers have also diverged: upstream has `0077_channel_opening`, FreeDuet has `0077_programs_helper_salts`.
+
+The maintainer's decision: upstream changes are ported one pull request at a time, by hand. Each touched file gets its row in `docs/UPSTREAM_TOUCHES.md`. Upstream migration files are never copied. Server fixes are reimplemented from upstream's changelog.
+
+**First port.** The parallel browser tests (upstream efeb4e7a), in the pull request that adds this section.
+
+**Limits.** The base is estimated by file identity, not a confirmed commit.
+
+**Not verified.** The upstream commit hashes and counts above are taken from the brief for this pull request; they were not re-checked against the upstream repository in this session.

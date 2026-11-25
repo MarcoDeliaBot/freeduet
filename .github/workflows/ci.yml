@@ -154,7 +154,7 @@ jobs:
       # Headless here: these launch through the profile path without the computer's own X server.
       # The headless run of the Web Bot Auth test is also the one that checks the user agent fix.
       - run: >-
-          bun test tests/sign-in.test.ts tests/session-cookies.test.ts tests/follows-popup.test.ts
+          bun test --parallel=8 tests/sign-in.test.ts tests/session-cookies.test.ts tests/follows-popup.test.ts
           tests/demonstration-live.test.ts tests/webrtc-proxy.test.ts tests/web-bot-auth-browser.test.ts
           tests/handoff-page-restore.test.ts tests/page-links-browser.test.ts
           tests/navigation-settle-browser.test.ts tests/private-network-browser.test.ts
