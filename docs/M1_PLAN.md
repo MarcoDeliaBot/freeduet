@@ -3004,3 +3004,21 @@ The maintainer's decision: upstream changes are ported one pull request at a tim
 **Limits.** Nothing of the three is built yet. The 27,996-character figure is copied from the roadmap and was not measured again in this session.
 
 **Not verified.** The upstream pull request numbers and commit hashes in D153 are taken from the brief; they were not checked against the upstream repository in this session.
+
+## 109. Members can check a page in Firefox and WebKit (D156)
+
+Status: built, not yet run with a real Firefox or WebKit (the sandbox cannot download them). Roadmap row 124.
+
+**The gap.** PR #494 installed Firefox and WebKit in the computer image, but the member's browser launches Chromium only and no tool took an engine, so the engines could not be used.
+
+**D156 (25 November 2026).** `computer_read_pages` takes an optional `engine`: `chromium` (the default, the member's own tab), `firefox` or `webkit`. A separate tool was rejected: the read-only tool already has the whole governance path (one `govern` per page under `computer_navigate`, the target floor, the audit rows, the offer rule), so a parameter adds no new tool name to the approvals, the offer lists, the app and the evals.
+
+**What the computer does for another engine.** It launches a fresh browser of that engine for each check, with an in-memory context (no profile directory, no stored cookies, no downloads, no service workers), points it at the network-policy filter as a proxy carrying the Bot's id (the way Chromium is pointed at it), and closes it after the check. Nothing is shared with the Bot's Chromium profile, and the Bot's tab and refs do not move. One check runs at a time.
+
+**Same enforcement, and how it is known.** Chromium is judged by the filter because it is launched with `--proxy-server` set to it (and Playwright forces loopback through it too). How Firefox and WebKit treat a proxy for loopback cannot be read from this code, so an engine is used only after it has proved it in the running process: a canary Bot with the default policy is sent to a server on this computer's loopback and to a home-network address, and the engine is enabled only if the filter refused both (403 with the filter's header) and the server was never reached. An engine that fails stays refused until the process restarts, with the reason in the page's entry. With no filter running there is no check at all. WebRTC is removed from every page before its scripts run (and switched off in Firefox), and the canary checks it is gone.
+
+**What it does not do.** No picture and no click, type or form in these engines: text only. The Web Bot Auth signature and the user-agent fix are not applied to them. A page is read, nothing is written.
+
+**Tests.** `agent-computer/tests/engine-check.test.ts` (engine parser; no filter means refused, no browser started), `engine-canary-browser.test.ts` (the canary, with Chromium standing in: a browser through the filter passes, one that ignores its proxy is refused and stays refused; run here), `engine-check-browser.test.ts` (real Firefox and WebKit: this computer, the home network and metadata refused with the switch off and on and none connected, a public page cannot reach the home network by image, script, redirect or WebRTC, nothing kept between checks; asked for by name, in the CI line `computer (real browser)`, which now installs both engines), and server cases in `computer-read-pages.test.ts`.
+
+**Built so far.** Everything above. **Not verified:** the real-engine tests have not been run (no Firefox or WebKit download in the sandbox); the tool text and Ada's skill sentence are text a model reads and are not run live (cases: ada-1 to ada-3, plus one that asks Ada to check a page in WebKit and report it).

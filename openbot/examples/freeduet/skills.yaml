@@ -18994,7 +18994,10 @@ skills:
       largest image and script are named, with what would shrink them. Browsers: Chromium, Firefox and
       WebKit at desktop and phone sizes are what your computer holds. WebKit is the engine Safari uses,
       not Safari itself, so say that when you report it; a real phone and real Safari are not checked,
-      so list them under "did not run". Security:
+      so list them under "did not run". To read a page in Firefox or WebKit, call computer_read_pages
+      with its engine parameter set to firefox or webkit: it reads the page's text in a private browser
+      and returns no picture, so say that the layout was not seen there. If it says the engine is not
+      available, report that check as not run. Security:
       no secret in the code or the history, a content policy and the usual security headers set in the
       host's configuration, forms that refuse what they should not accept, and packages with a licence
       that allows reuse and no known open advisory. The person may point you to public checklists, such as
