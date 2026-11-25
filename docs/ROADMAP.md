@@ -194,6 +194,18 @@ What a reader can check for themselves about FreeDuet and how it is run, and wha
 | 122 | **Native-speaker review of the twelve site languages, by volunteers** | Volunteers who are native speakers read the site's pages in each language and suggest better wording; each reviewer is credited by name or handle, if they agree. | In progress | Decided 25 November 2026. Ask: [docs/TRANSLATORS.md](TRANSLATORS.md). No translation has been read by a native speaker yet. Credit is in the README "Translators" section; the site footer credits are planned, not built. |
 | 123 | **One Ada, and Nico folds into Kai (D149)** | The pack's comparator is renamed Hiro, so that Ada is the team's web developer only; Nico, the pack's game developer, is retired and anyone who asks for him gets Kai. Catalogue only: no member file, prompt or eval case changes beyond Leo's list and the catalogue. | Decided 25 November 2026 | Decided by the maintainer on 25 November 2026. The pack names are in [CATALOG.md](CATALOG.md). |
 | 124 | **Firefox and WebKit in the members' computer** | The computer image installs Firefox and WebKit (the engine Safari uses) beside Chromium, so Ada can check a page in those engines; a build check and a test fail if one is missing. Real Safari and a real phone are still not checked. | Built; not yet run live (decided 25 November 2026) | Decided 25 November 2026 by the maintainer, who approved the larger image. Ada's web-release-check now says both engines are checked, with WebKit named as the Safari engine. Image size not measured here (no Docker daemon in the sandbox). |
+| 125 | **Kai gets the game library Nico used** | Kai, the game and app developer, gets the game-development library that the retired pack member Nico used. | Planned (decided 25 November 2026) | Decided 25 November 2026 with D149, which folds Nico into Kai (row 123). The library is taken only after its own review, and its licence is checked first. |
+| 126 | **A way in for translation fixes: a label and a first good issue** | A person who wants to correct a translation finds the way in on GitHub: the label `translation` and a `good first issue`. A free hosted translation platform for open-source projects comes later, and only if volunteers come. | Planned (decided 25 November 2026) | The first channel is the GitHub label; the platform is a later step. It goes with row 122, the volunteer review of the twelve site languages, which is in progress. |
+
+## Proposed, not yet decided (25 November 2026)
+
+These came up in talks on 22 to 25 November 2026. None is decided; each waits for the maintainer.
+
+- **Load the team list outside Iris's prompt before adding members.** Iris's prompt is at 27,996 of the 28,000-character limit of a light turn (the cap in `test_local_light_turn.py`, D-numbers in [M1_PLAN.md](M1_PLAN.md)), so every new member forces cuts to her prompt. Proposal: load the team list separately, for example from the team file at run time, before more members are added. Status: Proposed.
+- **Keep a backup on a second disk or another place.** Backups of the person's data would be kept on a second disk or somewhere else, not only on the same disk as the installation. Today the copy the update makes (row 14) and the automatic backups (row 57) both keep their copies on the same computer. Status: Proposed.
+- **Tell a wrong behaviour from a right one said in other words.** Many failures of 22 November 2026 were wording, not behaviour. Proposal: a second grader pass, or checks on behaviour only, so that a right answer said in other words passes the team evals. Status: Proposed.
+- **One number to watch: a first useful job in 15 minutes.** A new person installs FreeDuet and gets a first useful job done within 15 minutes, measured on a clean machine. Status: Proposed.
+- **A plan B if subscription-login rules change.** The free and local engines would already be wired as a working default. The pieces are in row 9 (every engine, chosen per member), row 10 (free cloud models) and row 47 (a visible switch to the backup engine); today the one free cloud route is built and off, and a local model has not yet answered a real turn. Status: Proposed.
 
 ## Later
 
@@ -216,6 +228,8 @@ What a reader can check for themselves about FreeDuet and how it is run, and wha
 
 - Local models and the Engines page ([PROJECT.md](PROJECT.md), F2 and F3) come with the engine work above.
 - The other connectors in the catalogue ([CONNECTORS.md](CONNECTORS.md)) are built one by one, each with the milestone shown there.
+- **Installer on a second Windows PC (25 November 2026), part of row 1.** `install.ps1 -Check` passed there. Two defects were found and are not yet fixed: the script names a Windows 11 build (26320) as "Windows 10", and it prints total memory as free memory. The full run waits for the person, who types the sudo password. Status: check passed; two defects open; the full run waits for the person.
+- **Engine order of Ada, Kai and Lumi (note, 25 November 2026).** The three new members (row 121) have no engine order of their own and use the default chain, with the subscription login first. The person sets their order on the Engines page (rows 2 and 8).
 
 ## What we don't adopt
 
