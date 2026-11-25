@@ -741,6 +741,12 @@ h2 {
   letter-spacing: -0.04em;
 }
 
+/* Spanish and Portuguese: balance the hero lines so the short word "de" does not stand alone on a line */
+:lang(es) .hero-copy h1,
+:lang(pt) .hero-copy h1 {
+  text-wrap: balance;
+}
+
 .hero-highlight {
   position: relative;
   display: inline-block;
