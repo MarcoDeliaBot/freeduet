@@ -16,6 +16,7 @@ from freeduet import compatible_engine as ce
 from freeduet import engine_router, transcript
 from freeduet.app import app
 from freeduet.engines import (
+    DEFAULT_LOCAL_CONTEXT_TOKENS,
     LOCAL_FIRST_ANSWER_SECONDS,
     EnginesFileError,
     first_answer_limit,
@@ -33,6 +34,11 @@ LIMIT = {"replay": "usage_limit.jsonl"}
 LOCAL = {"no_key": True, "base_url": "http://127.0.0.1:11434", "credential_secret_ref": None}
 CLOUD = {"base_url": "https://gateway.example.com", "light": None}
 AGENTS = Path(__file__).resolve().parents[2] / "examples" / "freeduet" / "agents.yaml"
+# The largest personal memory the server sends as plain text, in characters. The server's record budget is 24,000
+# characters (the `remaining = 24_000` in quoteMemoryContext, openbot/server/src/memory/ingestion.ts), and 24,196 is
+# the figure that reaches the prompt as given for this check; it is not re-derived here.
+SERVER_MEMORY_CHARS = 24_196
+MEMORY_PREFIX = "MEMORY "  # the row prefix system_rows() uses, so the row is exactly SERVER_MEMORY_CHARS long
 
 
 def said(events) -> str:
@@ -211,11 +217,19 @@ def test_an_unknown_row_is_kept_not_dropped_by_a_guess():
 
 
 @pytest.mark.parametrize("member", members(), ids=lambda m: m.id)
-def test_every_members_light_prompt_keeps_its_whole_own_prompt_and_stays_under_28000_characters(member):
-    rows = system_rows(member.id, member.system_prompt, memory=6000)  # a normal memory (the light turn never cuts it); a catalog and holdings far larger than a normal turn's
+def test_every_members_light_prompt_keeps_its_whole_own_prompt_and_fits_the_real_budget_with_the_largest_memory(member):
+    # The largest memory the server sends (SERVER_MEMORY_CHARS), kept whole by the light turn (LIGHT_NEVER_CUT_ROWS); a
+    # catalog and holdings far larger than a normal turn's, which the light turn leaves out.
+    rows = system_rows(member.id, member.system_prompt, memory=SERVER_MEMORY_CHARS - len(MEMORY_PREFIX))
+    assert len(rows[2]["content"]) == SERVER_MEMORY_CHARS
     light = transcript.render(member, rows, context_of(rows), notes=[transcript.LIGHT_NOTE], light=True).system
     assert member.system_prompt in light  # the shared rules and every other rule of the member, word for word
-    assert len(light) <= 28_000  # the cap is in characters: 28,000 characters is about 9,300 tokens by transcript.py's CHARS_PER_TOKEN = 3 (an estimate), with the tool list and the question still to add
+    assert rows[2]["content"] in light  # the largest memory arrives whole, so the budget check below is about the real text
+    # The runtime limit (transcript.budget_chars, D121) for a local model that does not say its context size: the
+    # DEFAULT_LOCAL_CONTEXT_TOKENS of engines.py. The light system text and the latest message must fit it together. The
+    # tool list is not counted here: it sits in the margin that budget_chars keeps (CONTEXT_USE, ANSWER_RESERVE_TOKENS).
+    latest_message = ASK[1]["content"]
+    assert len(light) + len(latest_message) <= transcript.budget_chars(DEFAULT_LOCAL_CONTEXT_TOKENS)
     full = transcript.render(member, rows, context_of(rows)).system
     assert len(full) > 60_000  # the shape seen live: 79,521 characters in one system block
 
