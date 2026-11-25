@@ -120,7 +120,7 @@ describe("FreeDuet tenant package", () => {
           (agent) => agent.id === tenantPackage.tenantId,
         )?.name,
       ).toBe("Iris");
-      expect(memberIds.length).toBe(13);
+      expect(memberIds.length).toBe(16);
       expect(tenantPackage.omittedAgentIds).toEqual([]);
       expect(memberIds).toEqual(rows.map((row) => row.id));
 
@@ -1115,6 +1115,206 @@ describe("Rex, the model trainer", () => {
         names: true,
       });
     }
+  });
+});
+
+/**
+ * Ada, Kai and Lumi (D148): the fourth to sixth members added after v0.1. Each holds two skills with no tools, written
+ * here (nothing is copied from the outside repositories they point to), and none has a tool that publishes or uploads:
+ * a deploy, a store upload or a publication goes through the tool that does it, so the approval gate asks.
+ */
+describe("Ada, Kai and Lumi (D148)", () => {
+  const members: Array<{
+    id: string;
+    name: string;
+    title: string;
+    seed: string;
+    skills: string[];
+    names: string;
+    own: string[];
+  }> = [
+    {
+      id: "webdev",
+      name: "Ada",
+      title: "Web developer",
+      seed: "ada",
+      skills: ["landing-from-mockup", "web-release-check"],
+      names: "Ada, web developer",
+      own: [
+        "You never publish, deploy, push a branch, open a pull request, change a domain or a DNS record, or send a form's mail without calling the tool that does it, so that the approval gate asks the person, and you never say that it happened until the tool confirms.",
+        "You never put a secret, a key, a password or a personal address list in code or in the repository.",
+        "You never claim a browser, device or check that you did not run.",
+        "Firefox and Safari engines are not in your computer unless a command shows that they are: when they are not, say that those two were not checked, and never report a check that did not run.",
+        "the receiving address set by the person in the host's settings, never written in the code and never sent to by you",
+        "handed over within four hours of working time",
+        "you create no routine, so when they want them, ask Iris to propose them, and say that each one waits for the person's card and is not on until they allow it",
+      ],
+    },
+    {
+      id: "gamedev",
+      name: "Kai",
+      title: "Game and app developer",
+      seed: "kai",
+      skills: ["game-build", "playable-check"],
+      names: "Kai, game and app developer",
+      own: [
+        "Anything for an app store (an upload, an account, a fee, a signing key, a release) happens only with the person's yes, through the tool that does it, so the approval gate asks",
+        "you never hold or ask for a signing key or a store password",
+        "You never ask for, hold or repeat a signing key, a store password or any key.",
+        "You never use art, sound, music, a name or a level that you do not have the rights to.",
+        "You never invent a measurement: a frame rate comes from a run you did, with its conditions.",
+        "handed over within eight hours of working time",
+        "you create no routine, so when they want them, ask Iris to propose them, and say that each one waits for the person's card and is not on until they allow it",
+      ],
+    },
+    {
+      id: "designer",
+      name: "Lumi",
+      title: "Graphic designer",
+      seed: "lumi",
+      skills: ["design-kit", "design-board"],
+      names: "Lumi, graphic designer",
+      own: [
+        "the person must say they have the rights to it and, for a real person's face or likeness, that this person agrees: ask once per source, and use nothing until they have said so",
+        "You never use a real person's face or likeness, a trademark, a logo, a typeface, a photo or any asset you did not draw without the person's word that the rights are theirs",
+        "Photos, collages and generated images are not your work: a colleague for them, Mira, is planned and is not on the team yet, so say that plainly, never pretend that she exists",
+        "Figma only when the person connects an account, which you do not hold today",
+        "handed over within six hours of working time",
+        "you create no routine, so when they want them, ask Iris to propose them, and say that each one waits for the person's card and is not on until they allow it",
+      ],
+    },
+  ];
+
+  const emailAt = (text: string) =>
+    text.indexOf("Email. You do not send email.");
+
+  for (const member of members) {
+    describe(member.name, () => {
+      test("is a member with a channel of his or her own, and carries Penny's Email paragraph and Wren's shared rules word for word", async () => {
+        const tenantPackage = await loadWith(MODES.remote);
+        expect(
+          tenantPackage.agents.find((agent) => agent.id === member.id),
+        ).toMatchObject({
+          name: member.name,
+          title: member.title,
+          avatarSeed: member.seed,
+        });
+        expect(
+          tenantPackage.channels.filter((channel) =>
+            channel.permittedAgents.includes(member.id),
+          ),
+        ).toMatchObject([{ id: member.id, permittedAgents: [member.id] }]);
+        const rows = await memberRows();
+        const text = (id: string) =>
+          String(rows.find((row) => row.id === id)?.system_prompt ?? "");
+        const prompt = text(member.id);
+        const sharedOf = (value: string) =>
+          value.slice(value.indexOf(SHARED_RULES_START));
+        const emailOf = (value: string) =>
+          value.slice(emailAt(value), value.indexOf(SHARED_RULES_START));
+        expect(sharedOf(prompt).length).toBeGreaterThan(
+          SHARED_RULES_START.length,
+        );
+        expect(sharedOf(prompt)).toBe(sharedOf(text("writer")));
+        expect(emailOf(prompt).length).toBeGreaterThan(0);
+        expect(emailOf(prompt)).toBe(emailOf(text("bookkeeper")));
+      });
+
+      test("says its rules and its first job, in the house style (no em dash)", async () => {
+        const rows = await memberRows();
+        const own = String(
+          rows.find((row) => row.id === member.id)?.system_prompt ?? "",
+        );
+        const flat = own
+          .slice(0, emailAt(own))
+          .replace(/\s+/g, " ");
+        for (const sentence of member.own)
+          expect({ sentence, said: flat.includes(sentence) }).toEqual({
+            sentence,
+            said: true,
+          });
+        expect(own).not.toContain("\u2014");
+      });
+
+      test("holds two skills, written here with no tools, no placeholder and no dash, that nobody else holds, and Iris and Leo name the member", async () => {
+        const tenantPackage = await loadWith(MODES.remote);
+        expect(
+          tenantPackage.agents.find((agent) => agent.id === member.id)?.skills,
+        ).toEqual(member.skills);
+        for (const slug of member.skills) {
+          for (const agent of tenantPackage.agents.filter(
+            (candidate) => candidate.id !== member.id,
+          ))
+            expect({
+              member: agent.id,
+              slug,
+              has: agent.skills.includes(slug),
+            }).toEqual({ member: agent.id, slug, has: false });
+          const shipped = tenantPackage.skills.find(
+            (skill) => skill.slug === slug,
+          );
+          const written = (
+            parse(await readFile(skillsFile, "utf8")) as {
+              skills: { slug: string; instructions: string }[];
+            }
+          ).skills.find((skill) => skill.slug === slug);
+          expect(shipped?.tools).toEqual([]);
+          expect(shipped?.summary.length ?? 999).toBeLessThanOrEqual(112);
+          expect(written?.instructions).not.toContain(PLACEHOLDER_START);
+          expect(written?.instructions).not.toContain("\u2014");
+        }
+        const rows = await memberRows();
+        for (const id of ["freeduet", "creator"]) {
+          const prompt = String(
+            rows.find((row) => row.id === id)?.system_prompt,
+          ).replace(/\s+/g, " ");
+          expect({
+            id,
+            names: prompt.includes(member.names.split(",")[0] + ", "),
+          }).toEqual({ id, names: true });
+        }
+      });
+    });
+  }
+
+  test("a skill that mentions a store, a deploy or a signing key says that it waits for the person", async () => {
+    const written = (
+      parse(await readFile(skillsFile, "utf8")) as {
+        skills: { slug: string; instructions: string }[];
+      }
+    ).skills;
+    const text = (slug: string) =>
+      (written.find((skill) => skill.slug === slug)?.instructions ?? "").replace(
+        /\s+/g,
+        " ",
+      );
+    expect(text("landing-from-mockup")).toContain(
+      "each a tool call that waits for the person's card",
+    );
+    expect(text("game-build")).toContain(
+      "No store upload, account or signing key, ever, without the person's own yes.",
+    );
+    expect(text("design-kit")).toContain(
+      "Use no face, trademark, logo, photo or typeface that is not yours without the person's word that the rights are theirs",
+    );
+  });
+
+  test("the eval cases name the first task of each member and the new routing case", async () => {
+    const { cases: list } = parse(await readFile(casesFile, "utf8")) as {
+      cases: Array<{ id: string; member: string; safety?: boolean }>;
+    };
+    for (const [member, prefix] of [
+      ["webdev", "ada"],
+      ["gamedev", "kai"],
+      ["designer", "lumi"],
+    ] as const) {
+      const own = list.filter((entry) => entry.member === member);
+      expect(own.map((entry) => entry.id)).toEqual(
+        [1, 2, 3, 4].map((n) => `${prefix}-${n}`),
+      );
+      expect(own.filter((entry) => entry.safety).length).toBe(2);
+    }
+    expect(list.some((entry) => entry.id === "iris-29")).toBe(true);
   });
 });
 
