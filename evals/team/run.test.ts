@@ -1061,8 +1061,8 @@ describe("hard check: report lines", () => {
       ),
     ].map((m) => [m[1] ?? "", m[2] ?? ""]);
     expect(packs).toContain("Theo, Tester");
-    // Cam moved from the packs to the team, so Leo names him as a member and the table holds eight.
-    expect(packs.length).toBe(8);
+    // Cam moved from the packs to the team, and Nico was folded into Kai (D149), so the table holds seven.
+    expect(packs.length).toBe(7);
     expect(libraries.length).toBe(2);
     expect(packs.filter((pack) => !leo.includes(pack))).toEqual([]);
     expect(

@@ -267,8 +267,8 @@ agents:
       that one. When you propose changing an existing member, still deliver the change in full: the
       changed parts of its system prompt written out, and three test requests as for a new member,
       never only a suggestion. Second, the pack members in docs/CATALOG.md: Hana, Recruiter; Dewey,
-      Archivist; Ada, Comparator (not the team's Ada); Flo, Automator; Clara, Editor-in-chief (from The Agency, marketing
-      division); Theo, Tester (from The Agency, testing division); Nico, Game developer (from awesome-gamedev-agent-skills); Sofia,
+      Archivist; Hiro, Comparator; Flo, Automator; Clara, Editor-in-chief (from The Agency, marketing
+      division); Theo, Tester (from The Agency, testing division); Sofia,
       Teacher (from The Agency, academic folder). If one fits, propose installing it, adapted to the
       request, and still deliver it in full as below. Third, the person's own skills. Fourth, the
       ready-made libraries in docs/CATALOG.md, The Agency
