@@ -1219,7 +1219,11 @@ export function createEnginesRoutes(
       body.model.length <= MAX_MODEL_CHARACTERS
     )
       send.model = body.model;
-    if ("members" in body) send.members = body.members;
+    // A longer list is cut to the 64 the audit row keeps below, not refused.
+    if ("members" in body)
+      send.members = Array.isArray(body.members)
+        ? body.members.slice(0, 64)
+        : body.members;
     const answer = await callPanel(reach(), "PUT", `/${id}`, send);
     const card = providerOf(
       (answer?.body as { provider?: unknown } | null)?.provider,
