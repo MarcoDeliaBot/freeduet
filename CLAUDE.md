@@ -6,7 +6,7 @@ session learns something the next one would otherwise rediscover the hard way, a
 ## What this repository is
 
 FreeDuet is a self-hosted team of AI employees: Iris (the head) and fifteen members (Leo, Otto, Portia,
-Penny, Jules, Wren, Gus, Basil, Vera, and, added after v0.1, Mark, the marketer, Cam, the video maker, Rex, the model trainer, Ada, the web developer, Kai, the game and app developer, and Lumi, the graphic designer). It is a thin fork of CopilotKit's OpenBot (under `openbot/`)
+Penny, Jules, Wren, Gus, Basil, Vera, and, added after v0.1, Mark, the marketer, Cam, the video maker, Rex, the model trainer, Ada, the web developer, Kai, the game and app developer, and Lumi, the graphic designer). It is a fork of CopilotKit's OpenBot (D150) that has changed many upstream files, each listed in docs/UPSTREAM_TOUCHES.md (under `openbot/`)
 plus `openbot/agent-freeduet/`, a Python service (port 4230) that runs each member on the person's own
 subscription login through a locked-down `claude -p`, with an MCP bridge for tools.
 

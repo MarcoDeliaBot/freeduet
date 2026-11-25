@@ -1,6 +1,6 @@
 # Upstream touches
 
-FreeDuet is a thin fork of [OpenBot](https://github.com/CopilotKit/openbot) (D150). Its own code lives in `openbot/examples/freeduet/`, `openbot/agent-freeduet/`, `openbot/server/src/freeduet/` and `openbot/app/src/freeduet/`. Every change to a file that came from upstream is listed here with its reason, so merging upstream stays easy ([EXECUTOR_BRIEF.md](EXECUTOR_BRIEF.md), rule 2).
+FreeDuet is a fork of [OpenBot](https://github.com/CopilotKit/openbot) (D150) with changes to upstream files, each listed below. Its own code lives in `openbot/examples/freeduet/`, `openbot/agent-freeduet/`, `openbot/server/src/freeduet/` and `openbot/app/src/freeduet/`. Every change to a file that came from upstream is listed here with its reason, so merging upstream stays easy ([EXECUTOR_BRIEF.md](EXECUTOR_BRIEF.md), rule 2).
 
 "Upstream?" says whether the change is worth proposing to CopilotKit. Nothing is proposed without the maintainer's approval.
 
@@ -624,3 +624,6 @@ FreeDuet's own scripts beside them, not upstream files: `openbot/scripts/freedue
 | `openbot/app/src/components/layout/page-shell.tsx` | Accepts an optional branded header in its existing scroll container | The workspace pages keep the app's back navigation and one accessible page heading | Workspace redesign | No |
 | `openbot/app/src/routes/_authed/settings/index.tsx`, `openbot/app/src/routes/_authed/admin/index.tsx`, `openbot/app/src/routes/_authed/_app/connections.index.tsx` | Group existing settings, links and accounts in the FreeDuet workspace layout | Faster access to team tools, personal preferences, mail rules and deployment controls | Workspace redesign | No |
 | `.github/workflows/ci.yml` | `bun test` in the `computer (real browser)` job takes `--parallel=8`; the file list is unchanged | Upstream's parallel browser tests (efeb4e7a), ported by hand under D150. The sandbox measured 114 s sequential against 58 s and 57 s parallel, 137 of 137 passing each run | D150 | No |
+| `openbot/agent-mastra/bun.lock` | New lock file, written by bun 1.4.3 from the unchanged `*` ranges of `package.json`; `bun install --frozen-lockfile` in CI and in the Dockerfile reads it | The Mastra Bot installed the newest `@ai-sdk` packages on every run, so two CI runs on 25 November 2026 failed when one was just published; the same versions now install every time | CI | No |
+| `openbot/agent-mastra/Dockerfile` | `COPY` takes `bun.lock` beside `package.json`; `RUN bun install --frozen-lockfile` | The image installs from the same lock file as CI | CI | No |
+| `.github/workflows/ci.yml` | The `agent-mastra` install step is `bun install --frozen-lockfile` (was `bun install`) | The same lock file as the Dockerfile; the step fails rather than re-resolving | CI | No |
