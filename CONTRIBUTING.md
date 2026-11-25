@@ -32,6 +32,10 @@ Issues with the label `good first issue` are a good place to start.
 
 Use FreeDuet and tell us, with the [I am using it](https://github.com/MarcoDeliaBot/freeduet/issues/new?template=it_works.yml) form. Testers who agree are listed in the README.
 
+## Translations
+
+The website is translated into twelve languages, and no translation has been read by a native speaker yet. If you are a native speaker, read the pages and suggest better wording: see [docs/TRANSLATORS.md](docs/TRANSLATORS.md). Reviewers are credited by name if they agree.
+
 ## Rules that never bend
 
 - **Logins first, by default.** Members run on the person's own subscription logins. In every chain the person has not reordered, logins come first, and a metered API is never first and never on by default. The person may confirm another order for one member on the Engines page (D115); nothing paid is switched on by that.
