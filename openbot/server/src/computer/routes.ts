@@ -24,6 +24,7 @@ import {
   WorkspaceTooLargeError,
 } from "./gateway";
 import type { PageFrameStore } from "./page-frames";
+import type { ReadPagesEngine } from "./schema";
 import { dryRunAgainstHistory, REPLAYABLE_EVENT_TYPES } from "./policy-dry-run";
 import { type PolicyStore, parseActionPolicy } from "./policy-store";
 
@@ -320,6 +321,7 @@ export function createComputerRoutes(
   routes.post("/:botId/read-pages", async (context) => {
     const body = (await context.req.json().catch(() => null)) as {
       urls?: unknown;
+      engine?: unknown;
     } | null;
     if (
       !Array.isArray(body?.urls) ||
@@ -341,7 +343,12 @@ export function createComputerRoutes(
               ? {}
               : { userId: context.var.actor.id }),
           },
-          { urls: body.urls },
+          {
+            urls: body.urls,
+            ...(body.engine !== undefined
+              ? { engine: body.engine as ReadPagesEngine }
+              : {}),
+          },
           context.req.raw.signal,
         ),
       );

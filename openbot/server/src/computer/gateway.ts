@@ -101,6 +101,7 @@ import type {
 import {
   READ_PAGES_BUDGET_MS,
   READ_PAGES_MAX_URLS,
+  READ_PAGES_ENGINES,
   readPagesLimit,
 } from "./schema";
 import {
@@ -1105,6 +1106,12 @@ export function createComputerGateway(
           "Give a list of web addresses to read, each one a non-empty string.",
         );
       }
+      const engine = input?.engine === undefined ? "chromium" : input.engine;
+      if (!(READ_PAGES_ENGINES as readonly string[]).includes(engine)) {
+        throw new WorkspaceRequestError(
+          `The engine is one of ${READ_PAGES_ENGINES.join(", ")}.`,
+        );
+      }
       if (urls.length > READ_PAGES_MAX_URLS) {
         throw new WorkspaceRequestError(
           `At most ${READ_PAGES_MAX_URLS} pages can be read in one call, and ${urls.length} were given. Read them in groups, or open one with computer_navigate.`,
@@ -1137,7 +1144,14 @@ export function createComputerGateway(
             actor,
             { targetUrl: url, ...(signal ? { signal } : {}) },
             async () =>
-              transport.readPage(await locate(botId), botId, url, room, signal),
+              transport.readPage(
+                await locate(botId),
+                botId,
+                url,
+                room,
+                signal,
+                engine,
+              ),
           );
           if (page.notRead) {
             pages.push({ url, finalUrl: page.url, error: page.notRead });
