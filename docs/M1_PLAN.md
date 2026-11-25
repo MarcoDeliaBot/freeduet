@@ -2992,3 +2992,13 @@ The maintainer's decision: upstream changes are ported one pull request at a tim
 **Limits.** The base is estimated by file identity, not a confirmed commit.
 
 **Not verified.** The upstream commit hashes and counts above are taken from the brief for this pull request; they were not re-checked against the upstream repository in this session.
+
+## 109. Connect your AI: OpenBot's sign-in, any provider or none (D155)
+
+Added on 2026-11-25 (22:07), from the maintainer's decision typed in the chat after he was told the account risk. Design: [design/connect-your-ai.md](design/connect-your-ai.md). Design only; no code is built.
+
+| Decision | Text | Why |
+|---|---|---|
+| D155 | **FreeDuet adopts OpenBot's sign-in method.** A person signs in to a Claude or ChatGPT plan (and, later, xAI) with no paste where the browser is on the same computer as the server, and FreeDuet's server keeps the resulting sign-in on the person's own server, as OpenBot keeps it: never sent to the browser, a log, the chat or a member's prompt, encrypted at rest under the installation's secret, one login per person. **The first start offers Claude, ChatGPT, Gemini, Grok (xAI), GLM, or nothing**; with nothing, FreeDuet starts on free engines (OpenRouter's free models, or Ollama on the person's computer) at no cost. FreeDuet is not a Claude add-on. **Supersedes** the decision of 16 November 2026 to wait for Anthropic's written answer (ROADMAP row 15) and D5 of `design/first-start.md` (the desktop app's plan sign-in is no longer removed), and amends rule 1 of `PROVIDERS.md` (D54's option b stays as the way that needs no sign-in code). **Unchanged:** every approval rule, logins first (D115), metered keys off until the person's own `metered:` words and caps, D6 (hosted FreeDuet is told apart and refuses plan sign-in unless the maintainer decides otherwise), D106's authority for who may sign in. The rule in `CLAUDE.md` that a coding session never opens a login directory is about the maintainer's machines and stays. | 99.9% of people have no Claude plan, and a first start that needs one is not for them. The maintainer took the account risk knowingly (provider terms may forbid third-party use of a consumer plan; the design says it once, plainly, on the sign-in screen). Free engines make the first minute cost nothing. |
+
+**Built so far.** Nothing: this section and the design were written, no code and no test. **Not verified:** every flow, the provider endpoints today, how a plan token reaches `claude -p` and Codex, and upstream's server half (not in the clone; MIT licence, so what exists may be ported with a `NOTICE.md` line). **Decisions for the maintainer:** the six rows of section 11 of the design; each has a recommendation.
