@@ -69,6 +69,16 @@ ENV APP_DIST_DIR=/app/app/dist
 
 USER openbot:openbot
 
+# FreeDuet (D162): which build this is, shown in the app. The image has no git history, so the build passes
+# `--build-arg FREEDUET_BUILD_VERSION=0.2.2 --build-arg FREEDUET_BUILD_COMMIT=$(git rev-parse --short=8 HEAD)`
+# (and optionally FREEDUET_BUILD_TIME, an ISO time). Left empty, the server falls back to package.json and
+# the time it started (server/src/freeduet/build-info.ts).
+ARG FREEDUET_BUILD_VERSION=
+ARG FREEDUET_BUILD_COMMIT=
+ARG FREEDUET_BUILD_TIME=
+ENV FREEDUET_BUILD_VERSION=$FREEDUET_BUILD_VERSION
+ENV FREEDUET_BUILD_COMMIT=$FREEDUET_BUILD_COMMIT
+ENV FREEDUET_BUILD_TIME=$FREEDUET_BUILD_TIME
 ENV NODE_ENV=production
 ENV PORT=3001
 # Every interface, inside the container. Without it a single-user server listens on loopback

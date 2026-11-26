@@ -2559,3 +2559,14 @@ New case iris-30 in `evals/team/cases.yaml`: a direct request for a playable pas
 **Sizes (the reader's measure: author text, Email paragraph, shared rules).** Kai 9,986 before, 9,997 after (limit 10,000; margin 3, so the next sentence for Kai must come with a cut). Jules 14,422 before, 14,855 after (already over, still in the pinned list; unchanged list). Cam 8,239 before, 8,522 after.
 
 **Built so far.** The prompt sentences above and `freeduet-package.test.ts` pins for each (describe "D161"). Not verified: not run live. Run jules-2, jules-4, cam-5, cam-8, kai-2, kai-4, kai-5 and kai-6 in the team evals (three runs each) and the neighbours (jules-3, jules-5, kai-1, kai-3, cam-6).
+
+## 116. A build label in the app (D162)
+
+**Decision (the maintainer, 26 November 2026).** "We must put an internal version number so I know the new work is online." The person sees in the running app which build is online: release version, commit, and when it started.
+
+**Findings.** The release tags (v0.2, v0.2.1, v0.2.2) exist, but none is an ancestor of main (no merge base: the public history starts after them), so `git describe --tags` finds nothing from HEAD. `openbot/package.json` says 0.2.0 and is not the release number: v0.2.2 is the latest release (README, 16 November 2026). Release numbering is not changed here.
+
+**Built (preview).** `server/src/freeduet/build-info.ts` works the line out once, at server start: version from `FREEDUET_BUILD_VERSION`, else `git describe --tags --abbrev=0`, else the newest `v*` tag, else `package.json`; commit from `FREEDUET_BUILD_COMMIT`, else `git rev-parse --short=8 HEAD`; time from `FREEDUET_BUILD_TIME`, else the server's start. A git answer that is not a plain tag or hex commit is dropped. On the maintainer's computer the stack runs from a git checkout under `freeduet.service`, so the git commands answer and a restart (the update) moves the time. In Docker the image has no git history: `server/Dockerfile` takes build arguments `FREEDUET_BUILD_VERSION`, `FREEDUET_BUILD_COMMIT`, `FREEDUET_BUILD_TIME` and sets them as environment; left empty, the line falls back to `package.json` and the start time. `GET /api/freeduet/build` (`build-info-routes.ts`) sits behind `requireUser` like the app's other settings reads, answers `{ build: { version, commit, builtAt, label } }` with `Cache-Control: private, no-store`, and holds no secret, path or host name. The app (`app/src/freeduet/build-label.tsx`) draws the label under Sign out in the wide sidebar and the phone menu, and as "This build" in Settings > About.
+
+**Built so far / not verified.** Tests: `server/tests/freeduet-build-info.test.ts`, `app/tests/build-label.test.tsx`. Not run live. The label looks like the app's other grey captions; the look waits for the maintainer's yes (preview PNGs in the pull request).
+

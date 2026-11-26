@@ -95,6 +95,7 @@ import { mountDesktopConnectionFailure } from "./desktop-connection-failure";
 import { createTranscriptionProvider } from "./dictation/provider";
 import { createDictationRoutes } from "./dictation/routes";
 import { threadReaderClient } from "./freeduet/backend";
+import { createBuildInfoRoutes } from "./freeduet/build-info-routes";
 import { isHosted } from "./freeduet/deployment";
 import type { EngineChoices } from "./freeduet/engine-choices";
 import { createEnginesRoutes } from "./freeduet/engines-routes";
@@ -815,6 +816,8 @@ export function createApp(
       "/api/freeduet/import",
       createImportPreviewRoutes(requireUser, coworker.memory.store),
     );
+  // D162: which build is running (version, commit, time). Signed in, read-only.
+  app.route("/api/freeduet/build", createBuildInfoRoutes(requireUser));
   // The team file export (docs/design/team-file.md, slice S2): administrators only, read-only.
   app.route("/api/freeduet/team-file", createTeamFileRoutes(requireUser));
   app.on(["PUT", "PATCH", "DELETE"], "/api/auth/scim/*", (context) =>
