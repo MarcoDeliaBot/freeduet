@@ -2572,3 +2572,17 @@ New case iris-30 in `evals/team/cases.yaml`: a direct request for a playable pas
 
 **Built so far / not verified.** Tests: `server/tests/freeduet-build-info.test.ts`, `app/tests/build-label.test.tsx`. Not run live. The label looks like the app's other grey captions; the look waits for the maintainer's yes (preview PNGs in the pull request).
 
+
+## 117. A computer follows the image, and says so (D163)
+
+**Found live (26 November 2026).** On the maintainer's installation the Bots' computers dated from 20-22 November and held five older images, while the current `freeduet-agent-computer:latest` was newer; one had `soffice` (D85), a fresh container from the current image did not. The image changes of D85, D151 and D156 had not reached running members.
+
+**What was already there.** `ensure` in `openbot/supervisor/src/docker.ts` (called by `POST /computers/:botId/ensure` before every action) already replaces an owned container whose image id differs from the id of the configured image (`runsCurrentImage`), with `remove({ force: true, v: false })`, so the named volumes stay. It was never covered by a unit test, and a failed inspect of the current image kept the old container with no sign anywhere. That silent keep is the likeliest reason for what was seen: the supervisor compares against its own `COMPUTER_IMAGE` (default `openbot-agent-computer:latest`), and when that tag is missing or is not the one that was rebuilt, it keeps every computer unseen. Not confirmed here, there is no Docker daemon in the sandbox.
+
+**D163. Every replacement and every kept-because-unanswerable is one log line.** `Replacing the computer for <bot>: image <old 12> -> <new 12>`, and `Computer image not inspected for <bot> (<image>): <error>; the existing computer is kept.` Never replaced when the current image cannot be inspected or has no id. No switch: the rule already existed and has no natural place for one.
+
+**Idle rule.** The supervisor cannot know whether a turn runs on a computer. It replaces at the moment `ensure` is asked, before the computer is handed over, once per image change; afterwards the ids match. A turn already running on the old computer when the first `ensure` after a rebuild arrives loses its open page.
+
+**What persists and what is lost.** Persist (named volumes `<ns>-profile-<bot>` at `/profiles`, `<ns>-workspace-<bot>` at `/workspace`; the read-only documents bind is recreated from the label). Lost: anything in the container's writable layer outside those paths (packages installed by hand, `/tmp`), the open browser page and an outstanding hand-over request.
+
+**Built so far / not verified.** Log lines and `supervisor/tests/image-refresh.test.ts` (replaced on mismatch with volumes, labels and binds carried; left alone on a match; kept with a logged reason on inspect failure). Not run against a real Docker stack. To check live: `docker exec <supervisor> printenv COMPUTER_IMAGE` against the tag that was rebuilt, then the supervisor's log after the next message to a Bot.

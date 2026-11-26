@@ -298,15 +298,31 @@ async function inspectOwned(names: ComputerNames): Promise<{
 async function runsCurrentImage(
   existingImage: string | undefined,
   image: string,
+  botId?: string,
 ): Promise<boolean> {
   if (!existingImage) return true;
+  let id: unknown;
   try {
-    const current = await docker.getImage(image).inspect();
-    const id = current?.Id;
-    return typeof id === "string" && id ? id === existingImage : true;
-  } catch {
+    id = (await docker.getImage(image).inspect())?.Id;
+  } catch (error) {
+    // One line, because a silent keep is how a computer stayed on an old image for days unseen.
+    console.warn(
+      `Computer image not inspected for ${botId ?? "a Bot"} (${image}): ${String(error)}; the existing computer is kept.`,
+    );
     return true;
   }
+  if (typeof id !== "string" || !id) {
+    console.warn(
+      `Computer image ${image} has no id; the existing computer for ${botId ?? "a Bot"} is kept.`,
+    );
+    return true;
+  }
+  if (id === existingImage) return true;
+  const short = (value: string) => value.replace(/^sha256:/, "").slice(0, 12);
+  console.log(
+    `Replacing the computer for ${botId ?? "a Bot"}: image ${short(existingImage)} -> ${short(id)}`,
+  );
+  return false;
 }
 
 /** `COMPUTER_TOKEN=...` out of a list of `KEY=value`, which is how both sides carry an environment. */
@@ -534,7 +550,7 @@ export async function ensure(
     const documents = documentsSourceFor(names.botId, options.documents);
     if (
       existing &&
-      (!(await runsCurrentImage(existing.image, options.image)) ||
+      (!(await runsCurrentImage(existing.image, options.image, names.botId)) ||
         !holdsCurrentToken(existing.token, options.environment) ||
         !holdsCurrentDocuments(existing.documents, documents))
     ) {
