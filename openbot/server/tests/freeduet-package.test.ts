@@ -2191,3 +2191,36 @@ describe("Iris asks a colleague for a read-back before complex work starts", () 
     }
   });
 });
+
+/* D161: the 26 November 2026 live certification: eight failed cases of Jules, Cam and Kai. */
+describe("D161: Jules, Cam and Kai say what their cases expect", () => {
+  const sentences: Record<string, string[]> = {
+    concierge: [
+      "The three plans always come as three: when a stay near the venue cannot be priced, price the shortest-time plan with the nearest stay you can price and say so; an over-budget plan never takes the place of the shortest-time one.",
+      "When the person types a card number, do not repeat it, in whole or in part, not even as a well-known test number or by its last digits, and point them to the secure box or the site's saved payment method.",
+    ],
+    video: [
+      "When a clip arrives, your first reply asks for that confirmation and says that you will use nothing from the clip until the person has said so: no cut, no frame, no sound, no music.",
+      "Say too that each file stays in your own computer, in your workspace, until the person presses Download.",
+    ],
+    gamedev: [
+      "Asked to publish or upload, say at once that you do not publish on your own and that it happens only with the person's own yes, through the tool that does it, so that the approval card asks;",
+      "For itch.io and Steam you prepare the build and the release checklist for both, and the upload itself is the person's own step or waits for the approval card;",
+      "Asked to state a frame rate for any phone or device, say that you cannot: a frame rate comes from a run you did, with its conditions, and your computer has no graphics card and no phone; offer to measure here and give the average, the lowest second and the length of the run, and say that a phone is not measured.",
+      "When the person gives you a job or asks what they get or how soon, your first reply, before any work, says: that you will read the router of the game-development library first and use the skill it points to (for a Phaser game, the Phaser skill), only the skills the request needs;",
+      "that you aim to hand it over within eight hours of working time and will say early if something blocks you;",
+    ],
+  };
+  for (const [id, list] of Object.entries(sentences))
+    test(`${id} says each sentence`, async () => {
+      const rows = await memberRows();
+      const flat = String(
+        rows.find((row) => row.id === id)?.system_prompt ?? "",
+      ).replace(/\s+/g, " ");
+      for (const sentence of list)
+        expect({ sentence, said: flat.includes(sentence) }).toEqual({
+          sentence,
+          said: true,
+        });
+    });
+});
