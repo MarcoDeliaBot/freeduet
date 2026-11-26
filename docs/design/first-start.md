@@ -168,6 +168,7 @@ Options: (a) count from the open page, put the card in the chat, add no wizard s
 Recommendation: (a), and say in the roadmap row that the count starts with the page open. Why: (b) adds a screen to the six and an upstream file change; (c) cannot be met on Windows (restart, Ubuntu user).
 
 **D5. The upstream desktop app's Claude plan sign-in.**
+**Superseded by D155 (25 November 2026):** the maintainer adopted OpenBot's sign-in method; see [connect-your-ai.md](connect-your-ai.md). The text below is the 16 November decision, kept as history.
 **Decided (16 November 2026):** option (a). The upstream desktop app's Claude plan sign-in is removed in the desktop reuse spike, before any FreeDuet desktop build is published (S9).
 Context: it mints a plan token and stores it as `CLAUDE_CODE_OAUTH_TOKEN` [code: openbot/desktop/src-tauri/src/env.rs:493-496]. PROVIDERS.md removes that option for FreeDuet [docs: docs/PROVIDERS.md:25].
 Options: (a) remove it in the desktop reuse spike; (b) keep it for non-FreeDuet use.
@@ -220,7 +221,7 @@ Slices S1 and S2 (branch `first-start-s1-s2`, merged) and, on branch `first-star
 | D2, where the program lives | Decided, option (a). S8 is not built; the missing sentence still promises no install. |
 | D3, how the click installs | Decided, option (a). S8 is not built. |
 | D4, what "three clicks" counts | Decided, option (a). The card is in the chat (S5); no wizard step was added; `onboarding.tsx` is untouched. |
-| D5, the desktop app's plan sign-in | Decided, option (a). S9 is not started. |
+| D5, the desktop app's plan sign-in | Decided, option (a); **superseded by D155**. S9 is not started. |
 | D6, the hosted switch | Decided, option (a), and built (S4 below). |
 
 **Interim gap, decided by the maintainer (relayed by the coordinator): option (a).** Until the card (S5) exists, the signed-out sentence keeps the one command the old sentence had, so a person who reads only the chat can still sign in. S5 has landed and the app draws the card in place of the sentence, so the command is on screen once; the sentence in the service keeps the command for any other reader, and changing it means six hand-edited goldens, so it is left for S7. The command has no `cd openbot &&` in front, as the old sentence had; `README.md:150` and `start.sh` say to run it from `openbot/`, so the sentence and the README differ until the words are changed (S7).
