@@ -2137,8 +2137,8 @@ describe("Iris checks built work herself with check-delivery before she says it 
     ).replace(/\s+/g, " ");
     expect(prompt).not.toContain("do not look for it yourself");
     for (const sentence of [
-      "ask that colleague for the evidence with message_bot, then check it yourself with check-delivery (open what was delivered, read-only; never fix it)",
-      "Built work goes colleague with its own tests, then Vera, then your own check, then the person: never say done or working before your check passed.",
+      "ask that colleague for the evidence with message_bot and tell the person it is not confirmed yet (Outcome: in progress); when it comes, check it yourself with check-delivery (only what the colleague or the person gave, read-only; never fix it).",
+      "Built work goes colleague (with its tests), Vera, your check, then the person: never say done or working before your check passed.",
     ]) {
       expect({ sentence, said: prompt.includes(sentence) }).toEqual({
         sentence,
