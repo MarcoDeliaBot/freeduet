@@ -166,8 +166,16 @@ describe("the computer's own process", () => {
         if (OUTBOUND.test(line)) found.push(`${file}: ${line.trim()}`);
       }
     }
-    // The one match is the computer's own HTTP server answering its callers (the API server, the
-    // supervisor, a health check), which is inbound.
-    expect(found).toEqual(["index.ts: async fetch(request, server) {"]);
+    // The matches are the computer's own HTTP server answering its callers (the API server, the
+    // supervisor, a health check), which is inbound, and the two in engine-check.ts (D156), each
+    // named exactly below: any third match in that file, or any other, still fails this.
+    // Sorted: the order in which the directory is read is not fixed.
+    expect([...found].sort()).toEqual([
+      // Constructed inside `page.evaluate`, so it runs in the browser whose traffic the filter judges.
+      `engine-check.ts: const ws = new WebSocket(\`ws://127.0.0.1:\${port}/\`);`,
+      // The canary's listener on 127.0.0.1 that the browser under test is pointed at: inbound.
+      "engine-check.ts: fetch(request, bunServer) {",
+      "index.ts: async fetch(request, server) {",
+    ]);
   });
 });

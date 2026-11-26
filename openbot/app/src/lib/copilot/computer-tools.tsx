@@ -268,23 +268,27 @@ export function ComputerTools() {
     available: offered.navigate,
     name: "computer_read_pages",
     description:
-      "Read up to 5 web pages in one call, one after another in your own browser tab, and get each page's title and readable text back (at most 6,000 characters per page, links included, and 24,000 in all, so five pages get 4,800 each). Use it to compare or skim several pages whose addresses you already have, instead of calling computer_navigate once for each. Read only: it clicks and types nothing. A page that fails or is refused does not stop the others; its entry carries an error. A page that needs a human check or the person's approval is not read here: open it with computer_navigate. The tab ends on the last page, so take a new snapshot before acting on it.",
+      "Read up to 5 web pages in one call, one after another in your own browser tab, and get each page's title and readable text back (at most 6,000 characters per page, links included, and 24,000 in all, so five pages get 4,800 each). Use it to compare or skim several pages whose addresses you already have, instead of calling computer_navigate once for each. Read only: it clicks and types nothing. A page that fails or is refused does not stop the others; its entry carries an error. A page that needs a human check or the person's approval is not read here: open it with computer_navigate. The tab ends on the last page, so take a new snapshot before acting on it. To see how a page reads in another browser engine, pass the engine parameter as firefox or webkit (the engine Safari uses): each page then opens in a private browser that shares nothing with your tab, is read only, and goes through the same network rules; your tab does not move. If that engine is not available on this computer, the entry says so.",
     parameters: z.object({
       urls: z
         .array(z.string())
         .min(1)
         .max(5)
         .describe("Full web addresses to read, including https://"),
+      engine: z
+        .enum(["chromium", "firefox", "webkit"])
+        .optional()
+        .describe("Browser engine to read in. Default chromium, your own tab."),
     }),
     handler: async (
-      { urls }: { urls: string[] },
+      { urls, engine }: { urls: string[]; engine?: string },
       { signal }: { signal?: AbortSignal } = {},
     ) => {
       const computerId = bot.current;
       const result = await callComputer(
         computerId,
         "/read-pages",
-        { method: "POST", body: { urls } },
+        { method: "POST", body: { urls, ...(engine ? { engine } : {}) } },
         signal,
       );
       if (result.ok) noteBrowsed(computerId);
