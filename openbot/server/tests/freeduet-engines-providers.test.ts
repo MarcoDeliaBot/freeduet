@@ -326,7 +326,8 @@ describe("a list of members longer than 64", () => {
       members: SIXTY_FIVE,
     });
     expect(answer.status).toBe(200);
-    const recorded = (events[0]?.payload as { members: string[] }).members;
+    expect(events[0]).toBeDefined();
+    const recorded = (events[0]!.payload as { members: string[] }).members;
     expect(recorded).toHaveLength(64);
     expect(recorded).toEqual(SIXTY_FIVE.slice(0, 64));
   });
