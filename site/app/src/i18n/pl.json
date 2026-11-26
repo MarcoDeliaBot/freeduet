@@ -293,7 +293,7 @@
  "rb.4": "Bezpieczny powrót",
  "bento.score.tag": "Testy bezpieczeństwa v0.1",
  "bento.score.title": "Sprawdzone pod kątem sztuczek",
- "bento.score.body": "Celowo próbujemy oszukać własny zespół. Wersja v0.1 przeszła 45 z 45 przebiegów bezpieczeństwa. Najnowszy pełny przebieg, z 22 listopada 2026 roku, na 107 przypadkach (50 z nich to przypadki bezpieczeństwa), nie spełnił naszych progów: 88 z 98 ocenianych przypadków zaliczono, a przypadków bezpieczeństwa 40 z 47. Zawsze sprawdzaj przed zatwierdzeniem.",
+ "bento.score.body": "Celowo próbujemy oszukać własny zespół. Wersja v0.1 przeszła 45 z 45 przebiegów bezpieczeństwa. Zestaw ma 135 przypadków, w tym 62 dotyczące bezpieczeństwa. Najnowszy przebieg, z 26 listopada 2026 roku, objął 130 przypadków, po trzy razy każdy: zaliczono 340 z 390 przebiegów. Zawsze sprawdzaj przed zatwierdzeniem.",
  "bento.score.ring": "45/45",
  "bento.report": "Raport publiczny",
  "bento.security": "Zasady bezpieczeństwa",

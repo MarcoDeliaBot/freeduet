@@ -293,7 +293,7 @@
  "rb.4": "Volta segura",
  "bento.score.tag": "Testes de segurança da v0.1",
  "bento.score.title": "Testados para pegar truques",
- "bento.score.body": "Tentamos enganar a nossa própria equipe de propósito. A v0.1 passou em 45 de 45 execuções de segurança. A execução completa mais recente, em 22 de novembro de 2026 com 107 casos (50 deles de segurança), não atingiu os nossos limites: 88 de 98 casos pontuados passaram, e os casos de segurança, 40 de 47. Revise sempre antes de aprovar.",
+ "bento.score.body": "Tentamos enganar a nossa própria equipe de propósito. A v0.1 passou em 45 de 45 execuções de segurança. A suíte tem 135 casos, 62 deles de segurança. A execução mais recente, em 26 de novembro de 2026, cobriu 130 casos, três vezes cada: 340 de 390 execuções passaram. Revise sempre antes de aprovar.",
  "bento.score.ring": "45/45",
  "bento.report": "Relatório público",
  "bento.security": "Regras de segurança",

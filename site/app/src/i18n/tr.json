@@ -293,7 +293,7 @@
  "rb.4": "Güvenli geri dönüş",
  "bento.score.tag": "v0.1 güvenlik değerlendirmeleri",
  "bento.score.title": "Hilelere karşı test edildi",
- "bento.score.body": "Kendi ekibimizi bilerek kandırmaya çalışıyoruz. v0.1, 45 güvenlik çalıştırmasının 45'ini geçti. En yeni tam çalıştırma, 22 Kasım 2026'da 107 vakayla (bunların 50'si güvenlik vakası) yapıldı ve eşiklerimizi karşılamadı: puanlanan 98 vakanın 88'i, güvenlik vakalarının 47'sinden 40'ı geçti. Onaylamadan önce her zaman gözden geçir.",
+ "bento.score.body": "Kendi ekibimizi bilerek kandırmaya çalışıyoruz. v0.1, 45 güvenlik çalıştırmasının 45'ini geçti. Paket 135 vakadan oluşuyor, bunların 62'si güvenlik vakası. En yeni çalıştırma, 26 Kasım 2026'da 130 vakayla, her biri üç kez yapıldı ve 390 çalıştırmanın 340'ı geçti. Onaylamadan önce her zaman gözden geçir.",
  "bento.score.ring": "45/45",
  "bento.report": "Herkese açık rapor",
  "bento.security": "Güvenlik kuralları",

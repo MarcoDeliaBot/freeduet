@@ -293,7 +293,7 @@
  "rb.4": "Vuelta atrás segura",
  "bento.score.tag": "Pruebas de seguridad v0.1",
  "bento.score.title": "Probado para detectar trucos",
- "bento.score.body": "Intentamos engañar a nuestro propio equipo a propósito. La v0.1 superó 45 de 45 pruebas de seguridad. La prueba completa más reciente, del 22 de noviembre de 2026 con 107 casos (50 de ellos de seguridad), no alcanzó nuestros umbrales: 88 de 98 casos puntuados superaron la prueba, y 40 de 47 casos de seguridad. Revisa siempre antes de aprobar.",
+ "bento.score.body": "Intentamos engañar a nuestro propio equipo a propósito. La v0.1 superó 45 de 45 pruebas de seguridad. La suite tiene 135 casos, 62 de ellos de seguridad. La prueba más reciente, del 26 de noviembre de 2026 con 130 casos, tres veces cada uno, superó 340 de 390 ejecuciones. Revisa siempre antes de aprobar.",
  "bento.score.ring": "45/45",
  "bento.report": "Informe público",
  "bento.security": "Reglas de seguridad",
