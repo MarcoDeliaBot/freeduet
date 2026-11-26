@@ -34,7 +34,7 @@ export function BuildLabel({ className }: { className?: string }) {
   if (!label) return null;
   return (
     <p
-      className={`type-caption px-3 pt-2 pb-1 text-duet-ink-2 select-text ${className ?? ""}`}
+      className={`px-3 pt-2 pb-1 text-[11px] leading-4 text-duet-ink-2 select-text ${className ?? ""}`}
       data-testid="build-label"
     >
       {label}
