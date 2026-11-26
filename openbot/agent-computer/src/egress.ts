@@ -74,6 +74,11 @@ export function egressFor(
   return upstreamFor(botId, env);
 }
 
+/** Whether the network-policy filter is running, so that a browser sent to it is really judged by it (D156). */
+export function egressFilterRunning(): boolean {
+  return filter !== null;
+}
+
 /** The configured upstream proxy for a Bot, ignoring the filter. */
 export function upstreamFor(
   botId: string,

@@ -10,7 +10,7 @@ import {
   type ComputerGateway,
   HumanHasControlError,
 } from "./gateway";
-import { READ_PAGES_MAX_URLS } from "./schema";
+import { READ_PAGES_ENGINES, READ_PAGES_MAX_URLS } from "./schema";
 import type { ControlState } from "./schema";
 
 /** What the headless sign-in tool needs from the passwords module. See passwords/service.ts. */
@@ -47,7 +47,7 @@ export const SELECT_TOOL_DESCRIPTION =
  * two as equal and the limits in it to `schema.ts`.
  */
 export const READ_PAGES_TOOL_DESCRIPTION =
-  "Read up to 5 web pages in one call, one after another in your own browser tab, and get each page's title and readable text back (at most 6,000 characters per page, links included, and 24,000 in all, so five pages get 4,800 each). Use it to compare or skim several pages whose addresses you already have, instead of calling computer_navigate once for each. Read only: it clicks and types nothing. A page that fails or is refused does not stop the others; its entry carries an error. A page that needs a human check or the person's approval is not read here: open it with computer_navigate. The tab ends on the last page, so take a new snapshot before acting on it.";
+  "Read up to 5 web pages in one call, one after another in your own browser tab, and get each page's title and readable text back (at most 6,000 characters per page, links included, and 24,000 in all, so five pages get 4,800 each). Use it to compare or skim several pages whose addresses you already have, instead of calling computer_navigate once for each. Read only: it clicks and types nothing. A page that fails or is refused does not stop the others; its entry carries an error. A page that needs a human check or the person's approval is not read here: open it with computer_navigate. The tab ends on the last page, so take a new snapshot before acting on it. To see how a page reads in another browser engine, pass the engine parameter as firefox or webkit (the engine Safari uses): each page then opens in a private browser that shares nothing with your tab, is read only, and goes through the same network rules; your tab does not move. If that engine is not available on this computer, the entry says so.";
 
 /** Shipped browser/file/command tools, with identity bound before the model supplies arguments. */
 export function createHeadlessComputerTools(options: {
@@ -127,10 +127,18 @@ export function createHeadlessComputerTools(options: {
     tool(
       "computer_read_pages",
       READ_PAGES_TOOL_DESCRIPTION,
-      z.strictObject({ urls: z.array(text).min(1).max(READ_PAGES_MAX_URLS) }),
-      async ({ urls }, { signal }) => ({
+      z.strictObject({
+        urls: z.array(text).min(1).max(READ_PAGES_MAX_URLS),
+        engine: z.enum(READ_PAGES_ENGINES).optional(),
+      }),
+      async ({ urls, engine }, { signal }) => ({
         ok: true,
-        ...(await gateway.readPages(botId, actor, { urls }, signal)),
+        ...(await gateway.readPages(
+          botId,
+          actor,
+          { urls, ...(engine ? { engine } : {}) },
+          signal,
+        )),
       }),
     ),
     tool(
