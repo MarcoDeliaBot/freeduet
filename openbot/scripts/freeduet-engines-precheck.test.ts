@@ -77,7 +77,9 @@ describe("no secret is printed", () => {
 
   test("the secret and token are read only through a pipe from .env into a mode-600 curl config", () => {
     expect(CODE).toMatch(/header_from_env Cookie FREEDUET_INSTALL_SECRET/);
-    expect(CODE).toMatch(/header_from_env x-openbot-agent-token MANAGED_AGENT_TOKEN/);
+    expect(CODE).toMatch(
+      /header_from_env x-openbot-agent-token MANAGED_AGENT_TOKEN/,
+    );
     expect(CODE).toMatch(/chmod 600 "\$CFG"/);
     expect(CODE).not.toMatch(/\bcurl\b[^\n]*-H\s/);
   });
@@ -127,7 +129,10 @@ function tree(): string {
 describe("a run prints no secret and exits non-zero when checks fail", () => {
   test("the made-up secrets never reach the output, and the run fails", () => {
     const root = tree();
-    chmodSync(join(root, "openbot", "scripts", "freeduet-engines-precheck.sh"), 0o755);
+    chmodSync(
+      join(root, "openbot", "scripts", "freeduet-engines-precheck.sh"),
+      0o755,
+    );
     const result = spawnSync(
       "bash",
       [join(root, "openbot", "scripts", "freeduet-engines-precheck.sh")],
