@@ -1144,7 +1144,7 @@ describe("Ada, Kai and Lumi (D148)", () => {
         "You never publish, deploy, push a branch, open a pull request, change a domain or a DNS record, or send a form's mail without calling the tool that does it, so that the approval gate asks the person, and you never say that it happened until the tool confirms.",
         "You never put a secret, a key, a password or a personal address list in code or in the repository.",
         "You never claim a browser, device or check that you did not run.",
-        "Chromium, Firefox and WebKit (the engine Safari uses) are in your computer; real Safari and a real phone are not, so say that those were not checked, and never report a check that did not run.",
+        "Your computer holds Chromium and you run the page in it. Firefox and WebKit (the engine Safari uses) you report only when a tool read the page with that engine in this turn: name the engine, say it was a read of the text and not of the layout, and give the tool's result. Real Safari and a real iPhone are not in your computer: list them, and any engine you did not run, as not checked.",
         "the receiving address set by the person in the host's settings, never written in the code and never sent to by you",
         "handed over within four hours of working time",
         "you create no routine, so when they want them, ask Iris to propose them, and say that each one waits for the person's card and is not on until they allow it",
@@ -1300,16 +1300,17 @@ describe("Ada, Kai and Lumi (D148)", () => {
     const { cases: list } = parse(await readFile(casesFile, "utf8")) as {
       cases: Array<{ id: string; member: string; safety?: boolean }>;
     };
-    for (const [member, prefix] of [
-      ["webdev", "ada"],
-      ["gamedev", "kai"],
-      ["designer", "lumi"],
+    // Kai has two more cases from D151 (kai-5, an ordinary request; kai-6, a safety case), so his list and his safety count are longer.
+    for (const [member, prefix, count, safety] of [
+      ["webdev", "ada", 4, 2],
+      ["gamedev", "kai", 6, 3],
+      ["designer", "lumi", 4, 2],
     ] as const) {
       const own = list.filter((entry) => entry.member === member);
       expect(own.map((entry) => entry.id)).toEqual(
-        [1, 2, 3, 4].map((n) => `${prefix}-${n}`),
+        Array.from({ length: count }, (_, i) => `${prefix}-${i + 1}`),
       );
-      expect(own.filter((entry) => entry.safety).length).toBe(2);
+      expect(own.filter((entry) => entry.safety).length).toBe(safety);
     }
     expect(list.some((entry) => entry.id === "iris-29")).toBe(true);
   });
@@ -1823,6 +1824,40 @@ describe("D83: prompt sentences for gus-6 and for LibreOffice", () => {
     const sentence =
       "Start it only through office-convert, never with soffice or libreoffice yourself: a direct start skips the inspector's refusals, the throwaway profile with macros off and the time limit.";
     expect(flat.split(sentence).length - 1).toBe(2);
+  });
+});
+
+// D96 (docs/M1_PLAN.md, section 1600 row): Gus can list installed programs and available updates, but
+// cannot yet install or update one. He tells the person how to do it at their own computer, in one line.
+// This pins the sentence in Gus's prompt only, and that case gus-8 exists as a safety case. Not yet run live.
+describe("D96: Gus says he cannot update or install a program yet", () => {
+  const sentence =
+    "Then say in one line that the person can update or install it at their own computer, through that program's own menu.";
+
+  test("the sentence is in the fixer's prompt only", async () => {
+    const rows = await memberRows();
+    for (const row of rows) {
+      const prompt = String(row.system_prompt).replace(/\s+/g, " ");
+      expect({ id: row.id, has: prompt.includes(sentence) }).toEqual({
+        id: row.id,
+        has: row.id === "fixer",
+      });
+    }
+  });
+
+  test("case gus-8 is a safety case for a request to update a program", async () => {
+    const { cases } = parse(await readFile(casesFile, "utf8")) as {
+      cases: Array<{
+        id: string;
+        member: string;
+        safety?: boolean;
+        request: string;
+      }>;
+    };
+    const c = cases.find((entry) => entry.id === "gus-8");
+    expect(c?.member).toBe("fixer");
+    expect(c?.safety).toBe(true);
+    expect(c?.request).toMatch(/update/i);
   });
 });
 

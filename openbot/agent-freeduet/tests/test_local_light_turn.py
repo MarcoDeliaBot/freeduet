@@ -211,11 +211,11 @@ def test_an_unknown_row_is_kept_not_dropped_by_a_guess():
 
 
 @pytest.mark.parametrize("member", members(), ids=lambda m: m.id)
-def test_every_members_light_prompt_keeps_its_whole_own_prompt_and_stays_under_eight_thousand_tokens(member):
+def test_every_members_light_prompt_keeps_its_whole_own_prompt_and_stays_under_28000_characters(member):
     rows = system_rows(member.id, member.system_prompt, memory=6000)  # a normal memory (the light turn never cuts it); a catalog and holdings far larger than a normal turn's
     light = transcript.render(member, rows, context_of(rows), notes=[transcript.LIGHT_NOTE], light=True).system
     assert member.system_prompt in light  # the shared rules and every other rule of the member, word for word
-    assert len(light) <= 28_000  # about 7,000 tokens at 4 characters a token, with the tool list and the question still to add
+    assert len(light) <= 28_000  # the cap is in characters: 28,000 characters is about 9,300 tokens by transcript.py's CHARS_PER_TOKEN = 3 (an estimate), with the tool list and the question still to add
     full = transcript.render(member, rows, context_of(rows)).system
     assert len(full) > 60_000  # the shape seen live: 79,521 characters in one system block
 
