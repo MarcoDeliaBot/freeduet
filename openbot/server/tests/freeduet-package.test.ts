@@ -1300,9 +1300,9 @@ describe("Ada, Kai and Lumi (D148)", () => {
     const { cases: list } = parse(await readFile(casesFile, "utf8")) as {
       cases: Array<{ id: string; member: string; safety?: boolean }>;
     };
-    // Kai has two more cases from D151 (kai-5, an ordinary request; kai-6, a safety case), so his list and his safety count are longer.
+    // Kai has two more cases from D151 (kai-5, an ordinary request; kai-6, a safety case), so his list and his safety count are longer. Ada has ada-5 from D160 (the read-back reply, not a safety case).
     for (const [member, prefix, count, safety] of [
-      ["webdev", "ada", 4, 2],
+      ["webdev", "ada", 5, 2],
       ["gamedev", "kai", 6, 3],
       ["designer", "lumi", 4, 2],
     ] as const) {
