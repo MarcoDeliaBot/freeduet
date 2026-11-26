@@ -82,6 +82,26 @@ RUN /usr/lib/libreoffice/program/soffice --headless --version \
   && office-python -c "import openpyxl; v = openpyxl.load_workbook('t.recalculated.xlsx', data_only=True).active['A3'].value; assert v == 42.5, v; assert open('t.pdf', 'rb').read(5) == b'%PDF-'" \
   && cd / && rm -rf /tmp/lo-smoke /root/.cache
 
+# The game-development library for Kai (docs/M1_PLAN.md section 107, D151): awesome-gamedev-agent-skills
+# (Apache-2.0), fetched at one pinned commit, unmodified, into /opt/gamedev-skills. Only `router/`, `skills/`,
+# LICENSE and NOTICE are kept (its repo-level scripts, tests, docs and .git are not shipped). The build fails if the
+# fetched commit is not the pinned one or if LICENSE or NOTICE differ from the text that was reviewed on 25 November 2026.
+# Only Kai's prompt names this folder. Moving the pin needs the same review again.
+ARG GAMEDEV_SKILLS_SHA=c6ca6c41c839b68319ffc08430b99ab768debc32
+ARG GAMEDEV_SKILLS_LICENSE_SHA256=6f82dcfeb95a1c0a0452180a3b16f21bf82111780018fed59d95a052b5b75f6c
+ARG GAMEDEV_SKILLS_NOTICE_SHA256=2dcb65b1c5be24e5ba11e937f3996100f4e980d8cf8ac5b30ba1d70dae6c40f8
+RUN git init -q /tmp/gamedev-src \
+  && git -C /tmp/gamedev-src fetch -q --depth 1 https://github.com/gamedev-skills/awesome-gamedev-agent-skills "${GAMEDEV_SKILLS_SHA}" \
+  && git -C /tmp/gamedev-src checkout -q FETCH_HEAD \
+  && test "$(git -C /tmp/gamedev-src rev-parse HEAD)" = "${GAMEDEV_SKILLS_SHA}" \
+  && cd /tmp/gamedev-src \
+  && echo "${GAMEDEV_SKILLS_LICENSE_SHA256}  LICENSE" | sha256sum -c - \
+  && echo "${GAMEDEV_SKILLS_NOTICE_SHA256}  NOTICE" | sha256sum -c - \
+  && mkdir -p /opt/gamedev-skills \
+  && cp -r router skills LICENSE NOTICE /opt/gamedev-skills/ \
+  && chmod -R a-w /opt/gamedev-skills \
+  && cd / && rm -rf /tmp/gamedev-src /root/.cache
+
 WORKDIR /app
 # The lockfile as well as the manifest: `--frozen-lockfile` with no lockfile present resolves afresh
 # and exits 0, so the file has to be here for the flag to mean anything.
