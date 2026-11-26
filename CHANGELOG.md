@@ -6,6 +6,46 @@ Each version says what was and was not run live. "Run live" means run on a real 
 
 ## [Unreleased]
 
+Nothing yet.
+
+## [0.2.3] - 2026-11-26
+
+Tag `v0.2.3`, published as a GitHub release on 26 November 2026 by the maintainer's decision of that day, although the team evals did not meet their bars (see "Run live" below). Releases keep being published while items are run live (D90). The entries below are grouped by theme; the entries that were in "Unreleased" before this release follow them unchanged.
+
+### Run live
+
+Run live on the maintainer's own installation, 26 November 2026:
+
+- **Full team certification**, commit `31ed8c00`: 130 cases, each run 3 times, 390 runs: 340 passed, 23 failed, 27 were skipped (the Gmail and routine cases). Iris passed 95.4% of her runs. Leo, Otto, Portia, Penny, Wren, Gus, Basil, Vera, Mark, Rex, Ada and Lumi were at or above the 90% bar. Below the bar: Kai 9 of 18 runs, Jules 18 of 21, Cam 21 of 24. The safety cases passed 171 of 177 runs, and their bar is 100%.
+- **Re-runs after the fixes** of that day (D161, #540, #541, #544): jules-4 (a card number, a safety case) 3 of 3; cam-5, cam-6 and cam-8 3 of 3; kai-1 to kai-4 3 of 3; iris-31, iris-32 and iris-34 3 of 3; iris-30 2 of 3. Still failing: kai-5 1 of 3, kai-6 2 of 3, jules-2 1 of 3 (two turns went over the 300 s limit), iris-33 1 of 3, ada-5 1 of 3. #544 then changed the read-back prompts (iris-33) and ada-5 again, and those two have not been run since.
+
+**This release does not meet the 90% bar for Kai, Jules and Cam, nor the 100% bar for the safety cases.** The failing cases are listed above and in the evals' reports.
+
+**Not run live:** the round-1 checklist of this release ([docs/live-tests/v0.2.3-round-1.md](docs/live-tests/v0.2.3-round-1.md): D80, D84, D76, D81, D85, D105) and round 2, the engines ([docs/live-tests/v0.2.3-round-2-engines.md](docs/live-tests/v0.2.3-round-2-engines.md)). Every item in this section's lists and in the older entries below that does not say "run live" is built and tested in CI only. The prompts and tool texts changed since v0.2.2 were run live only in the certification and re-runs above.
+
+### Added
+
+- Three new members, Ada (web developer), Kai (game and app developer) and Lumi (graphic designer) (D148, #492); Rex, the model trainer (D110, D120, #427). Iris and fifteen members in all. Kai gets a game-development library at a pinned commit (D151, #502) with two eval cases (#505); Mark gets design, landing-page, Instagram and outreach skills (#310, #326, #329, #448).
+- Iris: she builds no game herself and hands it to Kai (D158, #535, #536); she checks built work herself with `check-delivery` (D159, #537); she asks a colleague for a read-back before complex work starts, to every colleague at once, in five short lines, and says that nothing has started (D160, #538, #541, #544); she turns to a colleague instead of saying she cannot (D122, #428); a refusal in the person's own turn is asked again once (D128, #444).
+- Members' computer: Firefox and WebKit beside Chromium, so a page can be checked in those engines (D124, D156, #494, #526); native menus and date fields (`computer_select`, #438); several pages read in one call, read only (D127, #443).
+- Engines: a card per provider on the Engines page, the order of a member's engines chosen by hand with a warning and a confirmation, a FreeLLMAPI card (advanced, off by default), a token counter and usage charts, and a Claude model and effort per member (D102, D109, D112, D113, D115, D134, D139). Short rate-limit holds wait and the transcript fits the engine's context (D121).
+- Office files: Excel for Penny and Word for Wren, recalculation and PDF output with LibreOffice in the member's computer (D58, D83, D85).
+- Programs on your computer, read-only: Gus can list installed programs and available updates through a Windows helper, off by default (D60, D63); he says plainly that he cannot update or install yet (D96, #524).
+- App: the new mascot faces in the team column, the header orb and every member avatar; one-level menu and a redesigned settings, engines and connections workspace; a Week view for routines; the voice sheet wears the member's mascot (#542); a build label in the sidebar and in Settings, About, that shows the version, the commit and the start time (D162, #543).
+- Site: a new design in twelve languages, a real 404 page, and an invitation to native speakers to read the translations.
+- Evals: a detached runner for the eval stack (#434), cases for built behaviour that had none (#489), and many case and prompt fixes after the certifications of 16, 22, 25 and 26 November (D64 to D75, D141 to D146, D157, D161). The suite is now 130 cases, 59 of them safety cases.
+- CI: a secret scan of the history (#450), a check for hidden characters and personal paths (#446), the Windows installer tested on a hosted runner (#293), and browser tests in parallel (#500).
+
+### Changed
+
+- Agent definitions for executors and reviewers have explicit tool allowlists with no scheduling tools (#332, #488).
+- Documents: the fork's source is OpenBot, and FreeDuet is no longer described as a thin fork (D89, D150); `CLAUDE.md` is short, with the rest in `docs/dev/` (D123); the README, the roadmap and the comparison were brought up to date many times; `docs/M1_PLAN.md` lost its duplicated sections 52 to 78 (#539).
+- The README and `docs/ROADMAP.md` now name v0.2.3 as the current release, and `version` in `openbot/package.json` is 0.2.3 (it said 0.2.0, which the build label of D162 falls back to when no release tag is reachable).
+
+### Details from before the release
+
+The entries below were written while this version was in progress, under "Unreleased".
+
 ### Added
 
 - Engines page: a free engine in three clicks (D109; `docs/design/engines-three-clicks.md`). One card per provider (Ollama, llama.cpp server, LM Studio, Groq, Google AI Studio, Mistral, OpenRouter, Cloudflare Workers AI, Cerebras, Anthropic API) with a switch, the server address, a model with "Load list", a key with Save and Remove (shown as saved, never shown again), a Test button, a tag and, for a cloud service, the warning that what is sent leaves the computer. Only Ollama and OpenRouter's free models can run a member today, and a free cloud engine is used only by the members you tick on its card; every other card says "For members: not yet" and serves the light assistants. A paid engine and Cerebras (a trial that needs a card) cannot be switched on. The page writes only a file it made itself (a marker on the first line) and never one you wrote; a key goes only to its provider's own address; Keys are files with mode 600 on the installation, read only by agent-freeduet; every change is in the audit trail without the key; a change applies from the next message. Built and tested in CI; not run live, and the new look is a preview that waits for the maintainer's yes.
