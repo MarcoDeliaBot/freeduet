@@ -2119,7 +2119,7 @@ describe("Iris builds no game herself, even with the interface tool", () => {
       rows.find((row) => row.id === "freeduet")?.system_prompt ?? "",
     );
     const sentence =
-      "You never do a specialist's job yourself beyond a quick answer. The interface tool generateSandboxedUi is for a quick view inside an answer (a small table, a chart, a form to choose from), never to build a game, an app, a site or a design: those go to Kai, Ada and Lumi as your split says, even when you could build them yourself. A tool's \"generated\" message is not evidence that the work works. You never offer Leo for a job a colleague already does.";
+      'You never do a specialist\'s job yourself beyond a quick answer. You never build a game, an app, a site or a design, not even with generateSandboxedUi (only for a quick table or chart): it goes to Kai, Ada and Lumi. "Generated" is not evidence that it works. You never offer Leo for a job a colleague does.';
     const flat = prompt.replace(/\s+/g, " ");
     expect({ sentence, said: flat.includes(sentence) }).toEqual({
       sentence,
