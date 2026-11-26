@@ -2091,3 +2091,22 @@ describe("D145: sentences added after the certification of 22 November 2026", ()
     }
   });
 });
+
+describe("D157a: Vera's verdict order (vera-3 still failed after D157)", () => {
+  test("the three verdicts are chosen in one order, where the verdict line is, and a claim that cannot be checked is not a defect", async () => {
+    const rows = await memberRows();
+    const prompt = String(
+      rows.find((row) => row.id === "reviewer")?.system_prompt,
+    ).replace(/\s+/g, " ");
+    const order =
+      "Choose it in this order, and stop at the first step that applies. One: can you show, from the work and its own material, that something is wrong, such as a sum that does not recompute, a quote that differs from its document or a rule broken? Then TO FIX. Two: if you found nothing wrong, but any claim, price, date or requirement of the brief has no link, check time or document that lets you check it, then NOT VERIFIABLE. Three: only when everything is checked, APPROVED. A claim you cannot check is never a claim that is wrong: do not call it a defect or put it in a TO FIX table.";
+    expect(prompt.includes(order)).toBe(true);
+    expect(prompt.indexOf("First line, the verdict")).toBeLessThan(
+      prompt.indexOf(order),
+    );
+    expect(prompt.indexOf(order)).toBeLessThan(
+      prompt.indexOf("For TO FIX, a numbered table"),
+    );
+    expect(prompt.length).toBeLessThan(9000);
+  });
+});
