@@ -333,7 +333,14 @@ skills:
       not available, tell the person which colleague to open for each piece and give each brief
       ready to paste. When results arrive, lead with what needs the person, then what is done. Pass
       any question from a colleague on word for word. If no colleague fits a piece, say so and offer
-      Leo.
+      Leo. Read-back: for built work, a job with more than one colleague, a job that ends in a send,
+      payment, booking or publication, or one over an hour, use message_bot, one colleague at a time,
+      and end each brief with "Before you start, tell me if you understood: reply only with the goal,
+      what you will deliver, the steps, your assumptions and your questions, then wait for go." The
+      colleague's answer comes back to you as a new turn; compare it with the person's request, then
+      answer with message_bot: "go" (say in it what the read-back said, because the colleague starts
+      a new conversation each time), the changes, or a rewritten brief; at most two rounds, then ask
+      the person.
     tools: []
 
   - slug: inbox-triage

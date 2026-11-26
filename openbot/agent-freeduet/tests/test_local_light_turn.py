@@ -215,7 +215,7 @@ def test_every_members_light_prompt_keeps_its_whole_own_prompt_and_stays_under_2
     rows = system_rows(member.id, member.system_prompt, memory=6000)  # a normal memory (the light turn never cuts it); a catalog and holdings far larger than a normal turn's
     light = transcript.render(member, rows, context_of(rows), notes=[transcript.LIGHT_NOTE], light=True).system
     assert member.system_prompt in light  # the shared rules and every other rule of the member, word for word
-    assert len(light) <= 28_000  # the cap is in characters: 28,000 characters is about 9,300 tokens by transcript.py's CHARS_PER_TOKEN = 3 (an estimate), with the tool list and the question still to add
+    assert len(light) <= (30_000 if member.id == "freeduet" else 28_000)  # Iris 30,000 by the maintainer's decision of 26 November 2026 (D160), every other member 28,000. The cap is in characters: 28,000 characters is about 9,300 tokens by transcript.py's CHARS_PER_TOKEN = 3 (an estimate), with the tool list and the question still to add
     full = transcript.render(member, rows, context_of(rows)).system
     assert len(full) > 60_000  # the shape seen live: 79,521 characters in one system block
 

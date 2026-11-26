@@ -2172,3 +2172,22 @@ describe("Iris checks built work herself with check-delivery before she says it 
     ).toEqual(["freeduet"]);
   });
 });
+
+/* D160: Iris asks for a read-back before a complex job starts. */
+describe("Iris asks a colleague for a read-back before complex work starts", () => {
+  test("her prompt names the threshold, the request, go / change / rewrite, two rounds and the quick exception", async () => {
+    const rows = await memberRows();
+    const prompt = String(
+      rows.find((row) => row.id === "freeduet")?.system_prompt ?? "",
+    ).replace(/\s+/g, " ");
+    for (const sentence of [
+      'goes with message_bot, never the delegate tool, and its brief ends with "Before you start, tell me if you understood: reply only with the goal, what you will deliver, the steps, your assumptions and your questions, then wait for go."',
+      'answer that colleague with message_bot: "go", what to change, or a rewritten brief; after two rounds, ask the person. Say the work has started only after "go". Quick things need no read-back.',
+    ]) {
+      expect({ sentence, said: prompt.includes(sentence) }).toEqual({
+        sentence,
+        said: true,
+      });
+    }
+  });
+});
