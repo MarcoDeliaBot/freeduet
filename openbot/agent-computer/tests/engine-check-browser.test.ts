@@ -176,9 +176,14 @@ describe.skipIf(!asked)("Firefox and WebKit page checks", () => {
           return page.evaluate(
             (port) =>
               new Promise<string>((resolve) => {
-                const ws = new WebSocket(`ws://127.0.0.1:${port}/`);
-                ws.onopen = () => resolve("open");
-                ws.onerror = () => resolve("refused");
+                // A browser may refuse to even construct it; that is a refusal too.
+                try {
+                  const ws = new WebSocket(`ws://127.0.0.1:${port}/`);
+                  ws.onopen = () => resolve("open");
+                  ws.onerror = () => resolve("refused");
+                } catch {
+                  resolve("refused");
+                }
                 setTimeout(() => resolve("refused"), 8000);
               }),
             local.port,
