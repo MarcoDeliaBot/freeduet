@@ -332,8 +332,7 @@ describe("a list of members longer than 64", () => {
     expect(recorded).toEqual(SIXTY_FIVE.slice(0, 64));
   });
 
-  // Skipped: the route forwards the whole list (65 here), only the audit row is capped at 64 (engines-routes.ts, the provider PUT).
-  test.skip("is forwarded at most 64 members (not yet: the route forwards all 65)", async () => {
+  test("is forwarded at most 64 members", async () => {
     const stub = agent(() => ok({ provider: CARD }));
     const { call } = setup(stub.reach);
     await call("PUT", "/providers/openrouter", { members: SIXTY_FIVE });
