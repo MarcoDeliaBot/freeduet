@@ -356,6 +356,17 @@ describe("what is refused", () => {
     },
   );
 
+  test("an order one longer than the most engines a member may hold (33) is refused before it is forwarded", async () => {
+    const stub = agent(() => ok(DONE));
+    const { call, events } = setup(stub.reach);
+    const order = Array.from({ length: 33 }, (_, index) => `engine-${index}`);
+    const answer = await call("PUT", URL_ORDER, { order });
+    expect(answer.status).toBe(400);
+    expect((await answer.json()).code).toBe("order_shape");
+    expect(stub.panelCalls()).toHaveLength(0);
+    expect(events).toHaveLength(0);
+  });
+
   test("an agent that does not answer is said so", async () => {
     const { call, events } = setup({
       environment: {},
