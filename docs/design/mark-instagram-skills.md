@@ -13,7 +13,7 @@ Four new `/` chips in Mark's menu: `/ig-carousel`, `/ig-story`, `/ig-reply` and 
 - Each body is the upstream `SKILL.md` from its first heading to its last line, word for word. The package test pins each one by length and SHA-256 (`openbot/server/tests/freeduet-package.test.ts`, `INSTAGRAM_SKILLS`).
 - No body contains `${`, the loader's placeholder start.
 - The summary is one line of 112 characters or fewer, cut from the upstream description. The "Use when" lists of the front matter are not carried: a `/` chip has no automatic matching.
-- Mark holds 60 skills (56 before). The count is pinned in the package test and stated in `docs/TEAM.md`; CLAUDE.md gives the bytes his skill bodies add (852,457).
+- Mark holds 61 skills (measured 26 November 2026). The count is pinned in the package test and stated in `docs/TEAM.md`; CLAUDE.md gives the bytes his skill bodies add (852,457).
 
 ## What is not built
 
