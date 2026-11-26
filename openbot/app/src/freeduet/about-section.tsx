@@ -7,6 +7,7 @@ import {
   ItemTitle,
 } from "@/components/ui/item";
 import { Separator } from "@/components/ui/separator";
+import { useBuildLabel } from "./build-label";
 
 /**
  * FreeDuet's About rows on the Settings page: what FreeDuet is, what it is built on, and that it is an
@@ -32,10 +33,14 @@ const ABOUT: readonly { title: string; description: string }[] = [
 ];
 
 export function FreeDuetAbout() {
+  const build = useBuildLabel();
+  const rows = build
+    ? [...ABOUT, { title: "This build", description: build }]
+    : ABOUT;
   return (
     <PageSection title="About">
       <PageRows>
-        {ABOUT.map((row, index) => (
+        {rows.map((row, index) => (
           <React.Fragment key={row.title}>
             <Item size="sm">
               <ItemContent>
@@ -43,7 +48,7 @@ export function FreeDuetAbout() {
                 <ItemDescription>{row.description}</ItemDescription>
               </ItemContent>
             </Item>
-            {index !== ABOUT.length - 1 && <Separator />}
+            {index !== rows.length - 1 && <Separator />}
           </React.Fragment>
         ))}
       </PageRows>

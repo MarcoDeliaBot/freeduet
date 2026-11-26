@@ -4,7 +4,6 @@ import { Link, type LinkOptions, useNavigate } from "@tanstack/react-router";
 import { type ReactNode, useId, useRef, useState } from "react";
 import { BotsNavBadge } from "@/components/bot-profile/attention";
 import { ChannelGlyph } from "@/components/duet/channel-look";
-import { showsManageGroup } from "@/freeduet/manage-group";
 import { DuetIcon, type DuetIconName } from "@/components/duet/icons";
 import {
   Sheet,
@@ -13,6 +12,8 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
+import { BuildLabel } from "@/freeduet/build-label";
+import { showsManageGroup } from "@/freeduet/manage-group";
 import { useOnScreen } from "@/hooks/use-on-screen";
 import { signOutMutationOptions } from "@/lib/auth/mutations";
 import { currentUserQueryOptions } from "@/lib/auth/queries";
@@ -409,6 +410,7 @@ export function MenuSheet({
                 Sign out
               </button>
             ) : null}
+            <BuildLabel />
           </div>
         </nav>
       </SheetContent>

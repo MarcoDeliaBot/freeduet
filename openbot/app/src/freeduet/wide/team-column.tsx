@@ -16,6 +16,8 @@ import {
   useRememberedGroup,
 } from "@/components/shell/menu-sheet";
 import { type ShellTab, TABS } from "@/components/shell/tab-bar";
+import { BuildLabel } from "@/freeduet/build-label";
+import { showsManageGroup } from "@/freeduet/manage-group";
 import { primaryBot } from "@/lib/agents/primary-bot";
 import { agentListQueryOptions } from "@/lib/agents/queries";
 import { approvalInboxOptions } from "@/lib/approvals";
@@ -31,7 +33,6 @@ import { taskListQueryOptions } from "@/lib/tasks/queries";
 import { cn } from "@/lib/utils";
 import { queryClient } from "@/query-client";
 import type { WideBand } from "./band";
-import { showsManageGroup } from "@/freeduet/manage-group";
 import { MemberFace } from "./mascot";
 import { memberStates, memberTarget, orderTeam, STATE_TEXT } from "./team";
 
@@ -452,6 +453,7 @@ export function Places({ onNewChannel }: { onNewChannel: () => void }) {
             Sign out
           </button>
         ) : null}
+        <BuildLabel />
       </div>
     </div>
   );
