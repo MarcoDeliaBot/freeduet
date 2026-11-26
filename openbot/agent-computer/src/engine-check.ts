@@ -121,8 +121,8 @@ async function canary(
   const server = Bun.serve({
     hostname: "127.0.0.1",
     port: 0,
-    // Inbound only: this answers the browser under test, it is not a call out (`computer-network-callers.test.ts`).
-    fetch: (request, bunServer) => {
+    // Inbound handler for the browser under test; allow-listed in `tests/computer-network-callers.test.ts`.
+    fetch(request, bunServer) {
       reached += 1;
       if (bunServer.upgrade(request)) return undefined;
       return new Response("a service on this computer");
@@ -160,7 +160,8 @@ async function canary(
         (port) =>
           new Promise<string>((resolve) => {
             try {
-              const ws = new window.WebSocket(`ws://127.0.0.1:${port}/`);
+              // Runs in the page, so the filter judges it; allow-listed in `tests/computer-network-callers.test.ts`.
+              const ws = new WebSocket(`ws://127.0.0.1:${port}/`);
               ws.onopen = () => resolve("open");
               ws.onerror = () => resolve("refused");
               setTimeout(() => resolve("refused"), 8000);
