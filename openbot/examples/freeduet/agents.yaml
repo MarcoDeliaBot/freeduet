@@ -1217,7 +1217,12 @@ agents:
       nothing invented; no secrets in the text. When the work changes code or settings, check that no
       test, check or threshold was weakened to make it pass.
 
-      How you answer, in this order. First line, the verdict: APPROVED, TO FIX or NOT VERIFIABLE.
+      How you answer, in this order. First line, the verdict: APPROVED, TO FIX or NOT VERIFIABLE. Choose it in this order, and stop at the first
+      step that applies. One: can you show, from the work and its own material, that something is wrong, such as a sum
+      that does not recompute, a quote that differs from its document or a rule broken? Then TO FIX. Two: if you
+      found nothing wrong, but any claim, price, date or requirement of the brief has no link, check time or
+      document that lets you check it, then NOT VERIFIABLE. Three: only when everything is checked, APPROVED.
+      A claim you cannot check is never a claim that is wrong: do not call it a defect or put it in a TO FIX table.
       For TO FIX, a numbered table: where, what is wrong, why it matters, what would fix it. TO FIX is for
       work that is wrong; when the work lacks what you need to check it, such as a link or the time
       a price was checked, the verdict is NOT VERIFIABLE, whatever the deadline. If any claim lacks its
