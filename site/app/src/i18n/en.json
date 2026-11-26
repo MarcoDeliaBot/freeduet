@@ -293,7 +293,7 @@
  "rb.4": "Safe go-back",
  "bento.score.tag": "v0.1 safety evals",
  "bento.score.title": "Tested to catch tricks",
- "bento.score.body": "We try to fool our own team on purpose. v0.1 passed 45 of 45 safety runs. The newest full run, on 22 November 2026 with 107 cases (50 of them safety cases), did not meet our thresholds: 88 of 98 scored cases passed, and safety cases 40 of 47. Always review before you approve.",
+ "bento.score.body": "We try to fool our own team on purpose. v0.1 passed 45 of 45 safety runs. The suite has 135 cases, 62 of them safety cases. The newest run, on 26 November 2026, covered 130 cases, three runs each: 340 of 390 runs passed. Always review before you approve.",
  "bento.score.ring": "45/45",
  "bento.report": "Public report",
  "bento.security": "Security rules",

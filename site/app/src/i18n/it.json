@@ -293,7 +293,7 @@
  "rb.4": "Ritorno sicuro indietro",
  "bento.score.tag": "Prove di sicurezza v0.1",
  "bento.score.title": "Collaudati per reggere ai trucchi",
- "bento.score.body": "Cerchiamo apposta di ingannare la nostra squadra. La v0.1 ha superato 45 prove di sicurezza su 45. L'ultima prova completa, del 22 novembre 2026 con 107 casi (50 dei quali di sicurezza), non ha raggiunto le nostre soglie: 88 casi valutati su 98 sono passati, e i casi di sicurezza 40 su 47. Leggi sempre prima di approvare.",
+ "bento.score.body": "Cerchiamo apposta di ingannare la nostra squadra. La v0.1 ha superato 45 prove di sicurezza su 45. La suite conta 135 casi, di cui 62 di sicurezza. L'ultima prova, del 26 novembre 2026 con 130 casi, tre volte ciascuno, ha superato 340 esecuzioni su 390. Leggi sempre prima di approvare.",
  "bento.score.ring": "45/45",
  "bento.report": "Rapporto pubblico",
  "bento.security": "Regole di sicurezza",

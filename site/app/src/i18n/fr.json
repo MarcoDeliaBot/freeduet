@@ -293,7 +293,7 @@
  "rb.4": "Retour sûr",
  "bento.score.tag": "Évaluations de sécurité v0.1",
  "bento.score.title": "Testé pour déjouer les ruses",
- "bento.score.body": "Nous essayons exprès de piéger notre propre équipe. La v0.1 a réussi 45 tests de sécurité sur 45. La dernière série complète, le 22 novembre 2026, avec 107 cas (dont 50 cas de sécurité), n'a pas atteint nos seuils : 88 cas notés sur 98 ont réussi, et 40 cas de sécurité sur 47. Relis toujours avant d'approuver.",
+ "bento.score.body": "Nous essayons exprès de piéger notre propre équipe. La v0.1 a réussi 45 tests de sécurité sur 45. La suite compte 135 cas, dont 62 de sécurité. La dernière série, le 26 novembre 2026, a porté sur 130 cas, trois fois chacun : 340 exécutions sur 390 ont réussi. Relis toujours avant d'approuver.",
  "bento.score.ring": "45/45",
  "bento.report": "Rapport public",
  "bento.security": "Règles de sécurité",

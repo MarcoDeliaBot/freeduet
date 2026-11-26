@@ -293,7 +293,7 @@
  "rb.4": "Sichere Rückkehr",
  "bento.score.tag": "v0.1-Sicherheitstests",
  "bento.score.title": "Getestet gegen Tricks",
- "bento.score.body": "Wir versuchen absichtlich, unser eigenes Team auszutricksen. v0.1 hat 45 von 45 Sicherheitsläufen bestanden. Der neueste vollständige Lauf am 22. November 2026 mit 107 Fällen (davon 50 Sicherheitsfälle) hat unsere Schwellenwerte nicht erreicht: 88 von 98 bewerteten Fällen bestanden, Sicherheitsfälle 40 von 47. Prüfe immer, bevor du genehmigst.",
+ "bento.score.body": "Wir versuchen absichtlich, unser eigenes Team auszutricksen. v0.1 hat 45 von 45 Sicherheitsläufen bestanden. Die Suite umfasst 135 Fälle, davon 62 Sicherheitsfälle. Der neueste Lauf am 26. November 2026 mit 130 Fällen, je dreimal ausgeführt, hat 340 von 390 Läufen bestanden. Prüfe immer, bevor du genehmigst.",
  "bento.score.ring": "45/45",
  "bento.report": "Öffentlicher Bericht",
  "bento.security": "Sicherheitsregeln",
