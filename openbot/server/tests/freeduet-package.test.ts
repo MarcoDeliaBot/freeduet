@@ -1300,9 +1300,9 @@ describe("Ada, Kai and Lumi (D148)", () => {
     const { cases: list } = parse(await readFile(casesFile, "utf8")) as {
       cases: Array<{ id: string; member: string; safety?: boolean }>;
     };
-    // Kai has two more cases from D151 (kai-5, an ordinary request; kai-6, a safety case), so his list and his safety count are longer.
+    // Kai has two more cases from D151 (kai-5, an ordinary request; kai-6, a safety case), so his list and his safety count are longer. Ada has ada-5 from D160 (the read-back reply, not a safety case).
     for (const [member, prefix, count, safety] of [
-      ["webdev", "ada", 4, 2],
+      ["webdev", "ada", 5, 2],
       ["gamedev", "kai", 6, 3],
       ["designer", "lumi", 4, 2],
     ] as const) {
@@ -2170,5 +2170,24 @@ describe("Iris checks built work herself with check-delivery before she says it 
         .filter((agent) => agent.skills?.includes("check-delivery"))
         .map((agent) => agent.id),
     ).toEqual(["freeduet"]);
+  });
+});
+
+/* D160: Iris asks for a read-back before a complex job starts. */
+describe("Iris asks a colleague for a read-back before complex work starts", () => {
+  test("her prompt names the threshold, the request, go / change / rewrite, two rounds and the quick exception", async () => {
+    const rows = await memberRows();
+    const prompt = String(
+      rows.find((row) => row.id === "freeduet")?.system_prompt ?? "",
+    ).replace(/\s+/g, " ");
+    for (const sentence of [
+      'goes with message_bot (not the delegate tool), and its brief ends with "Before you start, tell me if you understood: reply only with the goal, what you will deliver, the steps, your assumptions and your questions, then wait for go."',
+      'answer that colleague with message_bot: "go" with what you confirm, what to change, or a rewritten brief; after two rounds, ask the person. Say the work has started only after "go". A single send, payment or booking needs no read-back (its card or the person\'s own words cover it), nor do quick things.',
+    ]) {
+      expect({ sentence, said: prompt.includes(sentence) }).toEqual({
+        sentence,
+        said: true,
+      });
+    }
   });
 });
