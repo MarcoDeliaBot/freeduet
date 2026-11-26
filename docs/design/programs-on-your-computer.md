@@ -323,7 +323,7 @@ Sizes are for one executor. S = under a day, M = a day or two, L = more. "Review
 
 ## 10. Open decisions for the maintainer
 
-Each one stands on its own. Decided since this note was written: Q1 to Q3 by D60 (M1_PLAN section 40), and Q4 by D63 (section 43): Gus alone holds the capability. Q5 is still open, and slice S4 waits for it.
+Each one stands on its own. Decided since this note was written: Q1 to Q3 by D60 ([M1_PLAN.md](../M1_PLAN.md) section 40, "Programs on the person's own computer: the server core and four decisions (D60)"), and Q4 by D63 ([M1_PLAN.md](../M1_PLAN.md) section 43, "Programs on the person's own computer: the members' words (D63)"): Gus alone holds the capability. Q5 is still open, and slice S4 waits for it.
 
 **Q1. How the helper and the server talk.**
 - Context: the server runs in WSL on this installation, the helper on Windows. A helper that listens on loopback needs the server to reach it, which from WSL is not loopback [verify]; a helper that polls needs the server's port to be reachable from Windows, which WSL publishes by default [verify].
@@ -388,7 +388,7 @@ Each one stands on its own. Decided since this note was written: Q1 to Q3 by D60
 
 ## Built so far
 
-Slice S1, the server core, on the branch `programs-s1-server-core`. Decisions Q1, Q2, Q3 and Q7 are recorded as D60 in `docs/M1_PLAN.md` (section 40). **Nothing ran on a real PC. The independent review of PR #318 is recorded: its findings are the rows marked review in D60 (`docs/M1_PLAN.md`, section 40)** (section 9 marks S1 "Yes").
+Slice S1, the server core, on the branch `programs-s1-server-core`. Decisions Q1, Q2, Q3 and Q7 are recorded as D60 in [`docs/M1_PLAN.md`](../M1_PLAN.md) (section 40, "Programs on the person's own computer: the server core and four decisions (D60)"). **Nothing ran on a real PC. The independent review of PR #318 is recorded: its findings are the rows marked review in D60 ([`docs/M1_PLAN.md`](../M1_PLAN.md), section 40, "Programs on the person's own computer: the server core and four decisions (D60)")** (section 9 marks S1 "Yes").
 
 What exists (all under `openbot/server/`):
 
@@ -419,7 +419,7 @@ Not verified: the helper side of the protocol (S2) beyond a stand-in written fro
 
 ## Built so far: slice S2, the Windows helper (read-only), on the branch `programs-s2-windows-helper`
 
-Decisions Q1 (the helper polls), Q6 (a readable script, unsigned for now) and Q8 (a toast per action) are recorded as D62 in `docs/M1_PLAN.md` (section 42). **Nothing ran on a real PC. PowerShell could not be run in the sandbox where this was written. The helper and its Pester tests are built and tested in CI, in the `installer-windows` job; its first Windows run found a parse error, fixed in PR #322 (`docs/M1_PLAN.md`, section 42). The independent security review of PR #322 was done before the merge, and its findings are the row marked review in D62 (section 42)** (section 9 marks S2 "Yes").
+Decisions Q1 (the helper polls), Q6 (a readable script, unsigned for now) and Q8 (a toast per action) are recorded as D62 in [`docs/M1_PLAN.md`](../M1_PLAN.md) (section 42, "Programs on the person's own computer: the Windows helper, read-only (D62)"). **Nothing ran on a real PC. PowerShell could not be run in the sandbox where this was written. The helper and its Pester tests are built and tested in CI, in the `installer-windows` job; its first Windows run found a parse error, fixed in PR #322 ([`docs/M1_PLAN.md`](../M1_PLAN.md), section 42, "Programs on the person's own computer: the Windows helper, read-only (D62)"). The independent security review of PR #322 was done before the merge, and its findings are the row marked review in D62 ([M1_PLAN.md](../M1_PLAN.md) section 42, "Programs on the person's own computer: the Windows helper, read-only (D62)")** (section 9 marks S2 "Yes").
 
 | Piece | File | What it does |
 |---|---|---|
@@ -483,7 +483,7 @@ Look at: the task `FreeDuet Programs Helper` in Task Scheduler (it must say it r
 
 ## Built so far: slice S5a, Gus's words and four fixes, on the branch `programs-s5a-gus-and-fixes`
 
-Decision D63 in `docs/M1_PLAN.md` (section 43). **Nothing ran on a real PC; the prompts and the new eval cases are not yet run live; PowerShell is not in the sandbox where this was written, so every PowerShell change below is proved first by Pester in the `installer-windows` job of CI. An independent security review of the PowerShell and pairing changes is required before merge.**
+Decision D63 in [`docs/M1_PLAN.md`](../M1_PLAN.md) (section 43, "Programs on the person's own computer: the members' words (D63)"). **Nothing ran on a real PC; the prompts and the new eval cases are not yet run live; PowerShell is not in the sandbox where this was written, so every PowerShell change below is proved first by Pester in the `installer-windows` job of CI. An independent security review of the PowerShell and pairing changes is required before merge.**
 
 Part A, the members' words (no app screen: that needs a preview and the maintainer's yes):
 
