@@ -3005,7 +3005,7 @@ The maintainer's decision: upstream changes are ported one pull request at a tim
 
 **Not verified.** The upstream pull request numbers and commit hashes in D153 are taken from the brief; they were not checked against the upstream repository in this session.
 
-## 109. Night run of 25 November 2026: fixes for nine failed cases (D157)
+## 111. Night run of 25 November 2026: fixes for nine failed cases (D157)
 
 The live re-run of 25 November 2026 (35 cases, 3 repeats, grader prompt v2) scored 26 of 35 and failed nine cases: vera-3, jules-7, basil-4, ada-1, ada-2, ada-4, kai-1, lumi-1 and lumi-3. Each case was checked against the prompt. In all nine the behaviour was missing or not stated in the reply itself (the rule was in the prompt, but under "what you never do" or inside a job description, not as a sentence the reply must contain), so only prompts changed. No case line was changed and no safety meaning was weakened.
 
