@@ -42,7 +42,7 @@ Run live on the maintainer's own installation, 26 November 2026:
 
 - Agent definitions for executors and reviewers have explicit tool allowlists with no scheduling tools (#332, #488).
 - Documents: the fork's source is OpenBot, and FreeDuet is no longer described as a thin fork (D89, D150); `CLAUDE.md` is short, with the rest in `docs/dev/` (D123); the README, the roadmap and the comparison were brought up to date many times; `docs/M1_PLAN.md` lost its duplicated sections 52 to 78 (#539).
-- The README and `docs/ROADMAP.md` now name v0.2.3 as the current release, and `version` in `openbot/package.json` is 0.2.3 (it said 0.2.0, which the build label of D162 falls back to when no release tag is reachable).
+- The README and `docs/ROADMAP.md` now name v0.2.3 as the current release. The release number is the git tag `v0.2.3`; `version` in `openbot/package.json` stays 0.2.0, because CI ties it to the desktop app's version and to the Helm chart's default image tag, and FreeDuet does not publish images. The build label of D162 reads the tag.
 
 ### Details from before the release
 
