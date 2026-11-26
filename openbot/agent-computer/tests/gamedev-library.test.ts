@@ -28,6 +28,7 @@ test("the library is fetched at the pinned commit, and the build checks it", () 
     "https://github.com/gamedev-skills/awesome-gamedev-agent-skills",
   );
   expect(dockerfile).toContain(
+    // biome-ignore lint/suspicious/noTemplateCurlyInString: a shell variable in the Dockerfile, not a template
     'test "$(git -C /tmp/gamedev-src rev-parse HEAD)" = "${GAMEDEV_SKILLS_SHA}"',
   );
 });
