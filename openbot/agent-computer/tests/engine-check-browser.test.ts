@@ -89,6 +89,11 @@ async function internet(localPort: number) {
       response.writeHead(302, { location: "http://192.168.1.1/admin" }).end();
       return;
     }
+    // Plain text and not sniffed, so a reflected request value is never read as HTML.
+    response.writeHead(200, {
+      "content-type": "text/plain; charset=utf-8",
+      "x-content-type-options": "nosniff",
+    });
     if (url === "http://public.test/cookie")
       response.end(`cookie:${request.headers.cookie ?? "none"}`);
     else response.end(`the internet answered ${url}`);
