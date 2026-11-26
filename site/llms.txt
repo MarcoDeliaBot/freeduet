@@ -2,7 +2,7 @@
 
 > FreeDuet is a self-hosted team of AI assistants, free and open source under the MIT licence. Iris, the Chief of Staff, hands each part of a request to the right specialist, and each member has its own computer and browser. Members run on your own Claude subscription through the official Claude Code app, with no API key. By default they ask before they send, pay, sign, book or delete anything.
 
-FreeDuet is an early release (version 0.2.2, published 16 November 2026) built and used by one maintainer. Its README says the team is Iris, the Chief of Staff, and fifteen members, and that anything marked v0.3 or later is planned, not built; where part of an item is built, the roadmap says so.
+FreeDuet is an early release (version 0.2.3, published 26 November 2026) built and used by one maintainer. Its README says the team is Iris, the Chief of Staff, and fifteen members, and that anything marked v0.3 or later is planned, not built; where part of an item is built, the roadmap says so.
 
 ## Start here
 
