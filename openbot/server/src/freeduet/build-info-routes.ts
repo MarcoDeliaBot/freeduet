@@ -11,6 +11,8 @@ export function createBuildInfoRoutes(
   requireUser: MiddlewareHandler<{ Variables: AppVariables }>,
   read: () => BuildInfo = buildInfo,
 ) {
+  // Read once now, while the server starts, so no request pays for the git calls.
+  read();
   const routes = new Hono<{ Variables: AppVariables }>();
   routes.use("*", requireUser);
   routes.get("/", (context) => {

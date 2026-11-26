@@ -101,6 +101,8 @@ function runGit(args: string[]): string | null {
       stdout: "pipe",
       stderr: "ignore",
       stdin: "ignore",
+      // A git that hangs never holds the server: two seconds, then this step is skipped.
+      timeout: 2000,
     });
     if (result.exitCode !== 0) return null;
     return result.stdout.toString().trim().split("\n")[0] || null;
@@ -126,7 +128,7 @@ function readPackageVersion(): string | null {
 
 let cached: BuildInfo | null = null;
 
-/** Computed on first use (server start reads it at boot) and kept for the life of the process. */
+/** Computed once, when the routes are made at server start, and kept for the life of the process. */
 export function buildInfo(): BuildInfo {
   cached ??= computeBuildInfo({
     env: process.env,

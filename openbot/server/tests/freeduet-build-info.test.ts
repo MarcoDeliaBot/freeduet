@@ -67,7 +67,10 @@ describe("computeBuildInfo", () => {
     const info = computeBuildInfo(
       base({
         env: { FREEDUET_BUILD_COMMIT: "not a sha" },
-        git: gitSays({ describe: "fatal: /home/x/repo", "rev-parse": "/etc" }),
+        git: gitSays({
+          describe: "fatal: not a git repository",
+          "rev-parse": "/etc",
+        }),
         packageVersion: null,
       }),
     );
