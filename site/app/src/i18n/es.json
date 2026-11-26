@@ -28,7 +28,7 @@
  "mnav.play": "Reproducir movimiento",
  "mnav.pause": "Pausar movimiento",
  "mnav.installbtn": "Instalar",
- "hero.pill": "Código abierto · v0.2.2 · Funciona en tu ordenador",
+ "hero.pill": "Código abierto · v0.2.3 · Funciona en tu ordenador",
  "hero.h1": "Tu propio equipo de ==asistentes de IA.==",
  "hero.lead": "Una mascota gestiona tu correo, otra lee los contratos, otra controla las facturas y otra reserva el restaurante. Dile a **Iris** lo que necesitas: por defecto, ellos *piden tu sí antes de enviar, pagar, firmar, reservar o borrar*.",
  "hero.cta": "Consigue FreeDuet gratis",
@@ -177,7 +177,7 @@
  "orbit.jules.tag": "Toca para aprobar",
  "team.eyebrow": "Equipo oficial · 16 mascotas",
  "team.h2": "Conoce al equipo. ==Un trabajo cada uno.==",
- "team.lead": "Igual que un equipo de fútbol tiene portero, hacer un solo trabajo todo el día te hace muy bueno en él. Pulsa cualquier mascota y prueba en vivo sus seis expresiones de animación. «Disponible ya» significa que está en la versión v0.2.2; buena parte aún no se ha probado en uso real.",
+ "team.lead": "Igual que un equipo de fútbol tiene portero, hacer un solo trabajo todo el día te hace muy bueno en él. Pulsa cualquier mascota y prueba en vivo sus seis expresiones de animación. «Disponible ya» significa que está en la versión v0.2.3; buena parte aún no se ha probado en uso real.",
  "team.filters_aria": "Filtrar miembros del equipo",
  "team.cat_all": "Las 16",
  "team.cat_daily": "Oficina del día a día",
@@ -355,7 +355,7 @@
  "footer.c2": "Apoyar FreeDuet",
  "footer.lang_aria": "Idioma",
  "footer.lang": "Idioma",
- "footer.legal": "Licencia MIT de código abierto · Versión temprana v0.2.2 · freeduet.com",
+ "footer.legal": "Licencia MIT de código abierto · Versión temprana v0.2.3 · freeduet.com",
  "footer.warning": "Los asistentes pueden seguir equivocándose: revisa cada tarjeta antes de aprobarla.",
  "team.quote": "“{text}”"
 }

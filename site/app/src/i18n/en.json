@@ -28,7 +28,7 @@
  "mnav.play": "Play motion",
  "mnav.pause": "Pause motion",
  "mnav.installbtn": "Install",
- "hero.pill": "Open source · v0.2.2 · Runs on your computer",
+ "hero.pill": "Open source · v0.2.3 · Runs on your computer",
  "hero.h1": "Your own team of ==AI assistants.==",
  "hero.lead": "One mascot handles your mail, one reads contracts, one tracks invoices, one books the restaurant. Say what you need to **Iris** — and by default they *ask for your yes before they send, pay, sign, book, or delete*.",
  "hero.cta": "Get FreeDuet free",
@@ -177,7 +177,7 @@
  "orbit.jules.tag": "Tap to approve",
  "team.eyebrow": "Official team · 16 mascots",
  "team.h2": "Meet the crew. ==One job each.==",
- "team.lead": "For the same reason a football team has a goalkeeper: doing one job all day makes you great at it. Click any mascot and preview all six live animation expressions. Out now means it is in the v0.2.2 release; much of it has not yet been run live.",
+ "team.lead": "For the same reason a football team has a goalkeeper: doing one job all day makes you great at it. Click any mascot and preview all six live animation expressions. Out now means it is in the v0.2.3 release; much of it has not yet been run live.",
  "team.filters_aria": "Filter team members",
  "team.cat_all": "All 16",
  "team.cat_daily": "Everyday office",
@@ -355,7 +355,7 @@
  "footer.c2": "Sponsor FreeDuet",
  "footer.lang_aria": "Language",
  "footer.lang": "Language",
- "footer.legal": "MIT open-source licence · Early release v0.2.2 · freeduet.com",
+ "footer.legal": "MIT open-source licence · Early release v0.2.3 · freeduet.com",
  "footer.warning": "Assistants can still make mistakes — review every card before you approve it.",
  "team.quote": "“{text}”"
 }

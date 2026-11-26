@@ -28,7 +28,7 @@
  "mnav.play": "Avvia animazione",
  "mnav.pause": "Pausa animazione",
  "mnav.installbtn": "Installa",
- "hero.pill": "Open source · v0.2.2 · Gira sul tuo computer",
+ "hero.pill": "Open source · v0.2.3 · Gira sul tuo computer",
  "hero.h1": "La tua squadra di ==assistenti AI.==",
  "hero.lead": "Una mascotte gestisce la posta, una legge i contratti, una tiene d'occhio le fatture, una prenota il ristorante. Dì a **Iris** cosa ti serve — e di default loro *chiedono il tuo sì prima di inviare, pagare, firmare, prenotare o eliminare*.",
  "hero.cta": "Scarica FreeDuet gratis",
@@ -177,7 +177,7 @@
  "orbit.jules.tag": "Tocca per approvare",
  "team.eyebrow": "Squadra ufficiale · 16 mascotte",
  "team.h2": "Conosci la squadra. ==Un lavoro a testa.==",
- "team.lead": "Come una squadra di calcio ha un portiere: fare un solo lavoro tutto il giorno ti rende bravo a farlo. Clicca su una mascotte e prova in diretta tutte e sei le espressioni animate. «Disponibile ora» vuol dire che è nella versione v0.2.2; gran parte non è ancora stata provata sul campo.",
+ "team.lead": "Come una squadra di calcio ha un portiere: fare un solo lavoro tutto il giorno ti rende bravo a farlo. Clicca su una mascotte e prova in diretta tutte e sei le espressioni animate. «Disponibile ora» vuol dire che è nella versione v0.2.3; gran parte non è ancora stata provata sul campo.",
  "team.filters_aria": "Filtra i membri della squadra",
  "team.cat_all": "Tutti i 16",
  "team.cat_daily": "Ufficio di tutti i giorni",
@@ -355,7 +355,7 @@
  "footer.c2": "Sostieni FreeDuet",
  "footer.lang_aria": "Lingua",
  "footer.lang": "Lingua",
- "footer.legal": "Licenza open source MIT · Rilascio iniziale v0.2.2 · freeduet.com",
+ "footer.legal": "Licenza open source MIT · Rilascio iniziale v0.2.3 · freeduet.com",
  "footer.warning": "Gli assistenti possono comunque sbagliare: controlla ogni scheda prima di approvarla.",
  "team.quote": "“{text}”"
 }

@@ -28,7 +28,7 @@
  "mnav.play": "Odtwórz ruch",
  "mnav.pause": "Wstrzymaj ruch",
  "mnav.installbtn": "Zainstaluj",
- "hero.pill": "Open source · v0.2.2 · Działa na Twoim komputerze",
+ "hero.pill": "Open source · v0.2.3 · Działa na Twoim komputerze",
  "hero.h1": "Twój własny zespół ==asystentów AI.==",
  "hero.lead": "Jedna maskotka zajmuje się pocztą, inna czyta umowy, kolejna pilnuje faktur, a jeszcze inna rezerwuje stolik w restauracji. Powiedz **Iris**, czego potrzebujesz — a domyślnie oni *czekają na Twoje „tak”, zanim wyślą, zapłacą, podpiszą, zarezerwują lub usuną*.",
  "hero.cta": "Pobierz FreeDuet za darmo",
@@ -177,7 +177,7 @@
  "orbit.jules.tag": "Dotknij, by zatwierdzić",
  "team.eyebrow": "Oficjalny zespół · 16 maskotek",
  "team.h2": "Poznaj ekipę. ==Każdy ma jedno zadanie.==",
- "team.lead": "Z tego samego powodu drużyna piłkarska ma bramkarza: kto cały dzień robi jedną rzecz, staje się w niej naprawdę dobry. Kliknij dowolną maskotkę, aby na żywo obejrzeć wszystkie sześć animowanych min. „Dostępne teraz” znaczy, że jest w wydaniu v0.2.2; duża część nie została jeszcze sprawdzona na żywo.",
+ "team.lead": "Z tego samego powodu drużyna piłkarska ma bramkarza: kto cały dzień robi jedną rzecz, staje się w niej naprawdę dobry. Kliknij dowolną maskotkę, aby na żywo obejrzeć wszystkie sześć animowanych min. „Dostępne teraz” znaczy, że jest w wydaniu v0.2.3; duża część nie została jeszcze sprawdzona na żywo.",
  "team.filters_aria": "Filtruj członków zespołu",
  "team.cat_all": "Wszyscy 16",
  "team.cat_daily": "Codzienne biuro",
@@ -355,7 +355,7 @@
  "footer.c2": "Wesprzyj FreeDuet",
  "footer.lang_aria": "Język",
  "footer.lang": "Język",
- "footer.legal": "Licencja open source MIT · Wczesne wydanie v0.2.2 · freeduet.com",
+ "footer.legal": "Licencja open source MIT · Wczesne wydanie v0.2.3 · freeduet.com",
  "footer.warning": "Asystenci nadal mogą się mylić — przeczytaj każdą kartę, zanim ją zatwierdzisz.",
  "team.quote": "„{text}”"
 }
