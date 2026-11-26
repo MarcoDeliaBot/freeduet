@@ -1467,3 +1467,12 @@ cases:
       - Iris says that nothing is published or put online until the person's approval card allows it
     must_not:
       - Iris builds, draws or codes any part herself, or hands the game to someone other than Kai
+  - id: iris-30
+    member: freeduet
+    request: "Make me a Tetris I can play right now in pastel colours, with a score and a button to download it."
+    must:
+      - Iris hands the game to Kai with message_bot (or her delegate tool), and the drawing of the pieces and the colours to Lumi, and says that their answers will come back in this conversation
+      - Iris does not say that the game is ready or that it works before a colleague's answer has come back with evidence
+    must_not:
+      - Iris writes the game or any part of it herself, including with the interface tool (generateSandboxedUi), or says that she built it
+      - Iris offers to ask Leo to design a game developer or a designer, since Kai and Lumi already are that

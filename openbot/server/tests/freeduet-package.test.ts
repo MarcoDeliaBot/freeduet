@@ -2110,3 +2110,20 @@ describe("D157a: Vera's verdict order (vera-3 still failed after D157)", () => {
     expect(prompt.length).toBeLessThan(9000);
   });
 });
+
+/* D158: Iris built a whole game with the interface tool and handed nothing to Kai or Lumi. */
+describe("Iris builds no game herself, even with the interface tool", () => {
+  test("her prompt names generateSandboxedUi, sends games and apps to Kai, Ada and Lumi, and keeps Leo for what no colleague does", async () => {
+    const rows = await memberRows();
+    const prompt = String(
+      rows.find((row) => row.id === "freeduet")?.system_prompt ?? "",
+    );
+    const sentence =
+      'You never do a specialist\'s job yourself beyond a quick answer. You never build a game, an app, a site or a design, not even with generateSandboxedUi (only for a quick table or chart): it goes to Kai, Ada and Lumi. "Generated" is not evidence that it works. You never offer Leo for a job a colleague does.';
+    const flat = prompt.replace(/\s+/g, " ");
+    expect({ sentence, said: flat.includes(sentence) }).toEqual({
+      sentence,
+      said: true,
+    });
+  });
+});
