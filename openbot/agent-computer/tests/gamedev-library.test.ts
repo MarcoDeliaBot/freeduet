@@ -13,7 +13,10 @@ const LICENSE_SHA256 =
 const NOTICE_SHA256 =
   "2dcb65b1c5be24e5ba11e937f3996100f4e980d8cf8ac5b30ba1d70dae6c40f8";
 
-const dockerfile = readFileSync(join(import.meta.dir, "..", "Dockerfile"), "utf8");
+const dockerfile = readFileSync(
+  join(import.meta.dir, "..", "Dockerfile"),
+  "utf8",
+);
 const agentsYaml = readFileSync(
   join(import.meta.dir, "..", "..", "examples", "freeduet", "agents.yaml"),
   "utf8",
@@ -30,8 +33,12 @@ test("the library is fetched at the pinned commit, and the build checks it", () 
 });
 
 test("LICENSE and NOTICE are checked by hash and ship with the library", () => {
-  expect(dockerfile).toContain(`ARG GAMEDEV_SKILLS_LICENSE_SHA256=${LICENSE_SHA256}`);
-  expect(dockerfile).toContain(`ARG GAMEDEV_SKILLS_NOTICE_SHA256=${NOTICE_SHA256}`);
+  expect(dockerfile).toContain(
+    `ARG GAMEDEV_SKILLS_LICENSE_SHA256=${LICENSE_SHA256}`,
+  );
+  expect(dockerfile).toContain(
+    `ARG GAMEDEV_SKILLS_NOTICE_SHA256=${NOTICE_SHA256}`,
+  );
   expect(dockerfile).toContain("sha256sum -c -");
   expect(dockerfile).toContain(
     "cp -r router skills LICENSE NOTICE /opt/gamedev-skills/",
@@ -54,6 +61,9 @@ test("only Kai's prompt names the library path", () => {
 });
 
 test("no other file in the computer package mentions the library path", () => {
-  const src = readFileSync(join(import.meta.dir, "..", "src", "index.ts"), "utf8");
+  const src = readFileSync(
+    join(import.meta.dir, "..", "src", "index.ts"),
+    "utf8",
+  );
   expect(src).not.toContain("gamedev-skills");
 });
