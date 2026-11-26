@@ -1,4 +1,5 @@
 import { afterAll, afterEach, beforeAll, expect, spyOn, test } from "bun:test";
+import type { ReactNode } from "react";
 import { GlobalRegistrator } from "@happy-dom/global-registrator";
 import {
   act,
@@ -10,6 +11,7 @@ import {
 import { Composer } from "@/components/channels/composer/composer";
 import { deploymentKeys } from "@/lib/deployment/queries";
 import * as recording from "@/lib/dictation/recording";
+import { ActiveBotProvider, useActiveBot } from "@/lib/copilot/active-bot";
 import { queryClient } from "@/query-client";
 import { settleReactWork } from "./settle-react-work";
 
@@ -270,4 +272,42 @@ test("while Stop holds the send arrow's place, the mic opens the sheet instead",
   fireEvent.click(view.getByRole("button", { name: "Dictate a message" }));
   await view.findByRole("dialog", { name: "Say everything you need to do" });
   expect(dictation.start).toHaveBeenCalledTimes(1);
+});
+
+function Declaring({
+  botId,
+  children,
+}: {
+  botId: string;
+  children: ReactNode;
+}) {
+  useActiveBot(botId);
+  return <>{children}</>;
+}
+
+/** Counts, not elements, for the reason `hasButton` gives. */
+function orbs(botId: string) {
+  stubDictation();
+  const view = render(
+    <ActiveBotProvider>
+      <Declaring botId={botId}>
+        <Composer compact glass onSubmit={() => {}} />
+      </Declaring>
+    </ActiveBotProvider>,
+  );
+  return view;
+}
+
+test("a team member's voice sheet shows the member's mascot, not the mic orb", async () => {
+  const view = orbs("freeduet");
+  const sheet = await openSheet(view);
+  expect(sheet.querySelectorAll("[data-face='freeduet']").length).toBe(1);
+  expect(sheet.querySelectorAll("canvas").length).toBe(0);
+});
+
+test("another Bot's voice sheet keeps the mic orb", async () => {
+  const view = orbs("travel");
+  const sheet = await openSheet(view);
+  expect(sheet.querySelectorAll("[data-face]").length).toBe(0);
+  expect(sheet.querySelectorAll("canvas").length).toBe(1);
 });
