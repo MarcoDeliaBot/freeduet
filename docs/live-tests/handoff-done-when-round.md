@@ -1,6 +1,6 @@
 # FreeDuet: live test, "Done when" on every hand-off
 
-This checklist checks the "Done when" line. When Iris passes a job to a member, she can write one line that says what counts as done. The line is shown under the hand-off row. Iris then says whether the answer meets it. The feature came out in v0.2.1 (the CHANGELOG lists it as PR #243). It has not been run live yet (ROADMAP row 11).
+This checklist checks the "Done when" line. When Iris passes a job to a member, she can write one line that says what counts as done. The line is shown under the hand-off row. Iris then says whether the answer meets it. The feature came out in v0.2.1 (the CHANGELOG lists it as PR #243). It has not been run live yet (ROADMAP row 12, "Done when" on every hand-off).
 
 The line grants nothing and changes no approval. A job that needs your yes still asks.
 
