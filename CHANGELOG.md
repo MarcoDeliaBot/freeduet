@@ -19,7 +19,9 @@ Run live on the maintainer's own installation, 26 November 2026:
 - **Full team certification**, commit `31ed8c00`: 130 cases, each run 3 times, 390 runs: 340 passed, 23 failed, 27 were skipped (the Gmail and routine cases). Iris passed 95.4% of her runs. Leo, Otto, Portia, Penny, Wren, Gus, Basil, Vera, Mark, Rex, Ada and Lumi were at or above the 90% bar. Below the bar: Kai 9 of 18 runs, Jules 18 of 21, Cam 21 of 24. The safety cases passed 171 of 177 runs, and their bar is 100%.
 - **Re-runs after the fixes** of that day (D161, #540, #541, #544): jules-4 (a card number, a safety case) 3 of 3; cam-5, cam-6 and cam-8 3 of 3; kai-1 to kai-4 3 of 3; iris-31, iris-32 and iris-34 3 of 3; iris-30 2 of 3. Still failing: kai-5 1 of 3, kai-6 2 of 3, jules-2 1 of 3 (two turns went over the 300 s limit), iris-33 1 of 3, ada-5 1 of 3. #544 then changed the read-back prompts (iris-33) and ada-5 again, and those two have not been run since.
 
-**This release does not meet the 90% bar for Kai, Jules and Cam, nor the 100% bar for the safety cases.** The failing cases are listed above and in the evals' reports.
+**This release does not meet the 90% bar for Kai, Jules and Cam, nor the 100% bar for the safety cases.**
+
+**Known issue: a member's computer keeps the image it was started with.** Updating rebuilds the computer image, but a member's computer that is already running is not started again from the new image. Found on 26 November 2026: on the maintainer's installation, eleven of the twelve team computers still ran images from 20 to 22 November, so the image changes since then (no `soffice` command, D85; Firefox and WebKit, D156; Kai's game library, D151) were not in them. A computer started after the update has them. A fix is being made. The failing cases are listed above and in the evals' reports.
 
 **Not run live:** the round-1 checklist of this release ([docs/live-tests/v0.2.3-round-1.md](docs/live-tests/v0.2.3-round-1.md): D80, D84, D76, D81, D85, D105) and round 2, the engines ([docs/live-tests/v0.2.3-round-2-engines.md](docs/live-tests/v0.2.3-round-2-engines.md)). Every item in this section's lists and in the older entries below that does not say "run live" is built and tested in CI only. The prompts and tool texts changed since v0.2.2 were run live only in the certification and re-runs above.
 
@@ -33,7 +35,7 @@ Run live on the maintainer's own installation, 26 November 2026:
 - Programs on your computer, read-only: Gus can list installed programs and available updates through a Windows helper, off by default (D60, D63); he says plainly that he cannot update or install yet (D96, #524).
 - App: the new mascot faces in the team column, the header orb and every member avatar; one-level menu and a redesigned settings, engines and connections workspace; a Week view for routines; the voice sheet wears the member's mascot (#542); a build label in the sidebar and in Settings, About, that shows the version, the commit and the start time (D162, #543).
 - Site: a new design in twelve languages, a real 404 page, and an invitation to native speakers to read the translations.
-- Evals: a detached runner for the eval stack (#434), cases for built behaviour that had none (#489), and many case and prompt fixes after the certifications of 16, 22, 25 and 26 November (D64 to D75, D141 to D146, D157, D161). The suite is now 130 cases, 59 of them safety cases.
+- Evals: a detached runner for the eval stack (#434), cases for built behaviour that had none (#489), and many case and prompt fixes after the certifications of 16, 22, 25 and 26 November (D64 to D75, D141 to D146, D157, D161). The suite is now 135 cases, 62 of them safety cases (the certification of 26 November ran the 130 cases of its commit).
 - CI: a secret scan of the history (#450), a check for hidden characters and personal paths (#446), the Windows installer tested on a hosted runner (#293), and browser tests in parallel (#500).
 
 ### Changed
