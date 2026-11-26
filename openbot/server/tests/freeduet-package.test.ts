@@ -2181,8 +2181,8 @@ describe("Iris asks a colleague for a read-back before complex work starts", () 
       rows.find((row) => row.id === "freeduet")?.system_prompt ?? "",
     ).replace(/\s+/g, " ");
     for (const sentence of [
-      'goes with message_bot, never the delegate tool, and its brief ends with "Before you start, tell me if you understood: reply only with the goal, what you will deliver, the steps, your assumptions and your questions, then wait for go."',
-      'answer that colleague with message_bot: "go", what to change, or a rewritten brief; after two rounds, ask the person. Say the work has started only after "go". Quick things need no read-back.',
+      'goes with message_bot (not the delegate tool), and its brief ends with "Before you start, tell me if you understood: reply only with the goal, what you will deliver, the steps, your assumptions and your questions, then wait for go."',
+      'answer that colleague with message_bot: "go" with what you confirm, what to change, or a rewritten brief; after two rounds, ask the person. Say the work has started only after "go". A single send, payment or booking needs no read-back (its card or the person\'s own words cover it), nor do quick things.',
     ]) {
       expect({ sentence, said: prompt.includes(sentence) }).toEqual({
         sentence,
