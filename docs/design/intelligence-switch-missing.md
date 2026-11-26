@@ -1,6 +1,6 @@
 # A missing FREEDUET_INTELLIGENCE is refused (D65)
 
-Written on 17 November 2026. Decision D65, section 45 at the end of `docs/M1_PLAN.md`. Built and tested here; not yet run on a real installation, a desktop app or a cluster.
+Written on 17 November 2026. Decision D65, section 45 ("A missing FREEDUET_INTELLIGENCE is refused (D65)") at the end of [`docs/M1_PLAN.md`](../M1_PLAN.md). Built and tested here; not yet run on a real installation, a desktop app or a cluster.
 
 ## 1. The problem
 
@@ -62,4 +62,4 @@ How the desktop reads the file, checked against Bun in a scratch folder: an opti
 
 ## Update (D67, 17 November 2026): the desktop default is `off`
 
-The maintainer chose option (b) of the table above for the value only: `compose` in `openbot/desktop/src-tauri/src/env.rs` writes `FREEDUET_INTELLIGENCE=off` when the file holds no value for the key, in any form Bun reads. Nothing else in `write` changed: an existing value, `off`, `on` or a typo, is never overwritten, and the same tests guard it. The desktop's `on` from D65 cannot be told from a person's own `on`, so it stays. The setup screen and a migration for installs with no line are not built (section 47 of `docs/M1_PLAN.md`). The sentences above that say the desktop writes `on` describe D65 and are history.
+The maintainer chose option (b) of the table above for the value only: `compose` in `openbot/desktop/src-tauri/src/env.rs` writes `FREEDUET_INTELLIGENCE=off` when the file holds no value for the key, in any form Bun reads. Nothing else in `write` changed: an existing value, `off`, `on` or a typo, is never overwritten, and the same tests guard it. The desktop's `on` from D65 cannot be told from a person's own `on`, so it stays. The setup screen and a migration for installs with no line are not built (section 47 ("The desktop app is off unless the person writes `on` (D67)") of [`docs/M1_PLAN.md`](../M1_PLAN.md)). The sentences above that say the desktop writes `on` describe D65 and are history.

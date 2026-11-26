@@ -1,6 +1,6 @@
 # Connecting from the chat in three steps, and tools an update adds
 
-Written 2026-11-15 on origin/main 2d49770. Decisions D44 and D45 in `docs/M1_PLAN.md`, section 27. Product rule: "Three steps at most" (`docs/ROADMAP.md`). Code paths start at `openbot/`.
+Written 2026-11-15 on origin/main 2d49770. Decisions D44 and D45 in [`docs/M1_PLAN.md`](../M1_PLAN.md), section 27 ("Connecting from the chat in three steps, and tools an update adds (D44, D45)"). Product rule: "Three steps at most" (`docs/ROADMAP.md`). Code paths start at `openbot/`.
 
 ## 1. What the person sees
 

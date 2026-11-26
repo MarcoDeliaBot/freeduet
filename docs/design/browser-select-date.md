@@ -1,6 +1,6 @@
 # Native menus and date fields in a member's browser (D123, item 2)
 
-Status: built, not yet run live. Roadmap row 92, `docs/M1_PLAN.md` section 81.
+Status: built, not yet run live. Roadmap row 92, [`docs/M1_PLAN.md`](../M1_PLAN.md) section 81 ("Eight items from two research reports, in Next (D123)").
 
 ## The gap
 

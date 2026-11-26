@@ -1,6 +1,6 @@
 # Connect your AI: OpenBot's sign-in, any provider or none
 
-Design for decision D155 ([M1_PLAN.md](../M1_PLAN.md), section 109). Written 2026-11-25. **Design only: no runtime code, nothing built, nothing run.** It supersedes the 16 November 2026 decision (wait for Anthropic's written answer) in [ROADMAP.md](../ROADMAP.md) row 15 and D5 of [first-start.md](first-start.md).
+Design for decision D155 ([M1_PLAN.md](../M1_PLAN.md), section 109 ("Connect your AI: OpenBot's sign-in, any provider or none (D155)")). Written 2026-11-25. **Design only: no runtime code, nothing built, nothing run.** It supersedes the 16 November 2026 decision (wait for Anthropic's written answer) in [ROADMAP.md](../ROADMAP.md) row 15 and D5 of [first-start.md](first-start.md).
 
 Markers. **[up: ref]** read in the bare clone of upstream OpenBot (MIT), by commit and path. **[code: path]** read on `origin/main` at 9005392d. **[assumed]** my inference; nothing marked so may be built on as if true. **[not verified]** I could not check it.
 
