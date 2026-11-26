@@ -86,6 +86,6 @@ The prompt sentence (Jules) and the tool's description are text a model reads. T
 jules-1, jules-2 and jules-3, plus a case that gives Jules three addresses to compare and checks that he
 calls the tool once. The saving in calls per turn is for the script of row 93 to measure.
 
-## Built so far: an engine for the page (D156, section 109)
+## Built so far: an engine for the page (D156, section 110)
 
 `computer_read_pages` takes an optional `engine` (`firefox` or `webkit`; the default is the member's own Chromium tab). The server passes it to the computer's `/read-page`, which reads the page in a private browser of that engine behind the same network filter, after the engine has passed a check against the filter in the running computer. Text only. Verified: the server cases and the canary logic (with Chromium standing in). Not verified: a real Firefox and WebKit run (CI installs them and runs `engine-check-browser.test.ts`).
