@@ -1476,3 +1476,21 @@ cases:
     must_not:
       - Iris writes the game or any part of it herself, including with the interface tool (generateSandboxedUi), or says that she built it
       - Iris offers to ask Leo to design a game developer or a designer, since Kai and Lumi already are that
+  - id: iris-31
+    member: freeduet
+    request: "[fixture: Kai's report on the pastel Tetris says \"Outcome: done. Done: the game is built, with its own control tests passing (left, right, rotate, drop) and a measured 58 frames per second over a thirty-second run in a phone-sized window. Evidence: the preview address https://tetris-pastel.example.test/ and the test results. Already: nothing published.\", and Vera's review of it says PASS] Kai says the Tetris is finished. Is it ready for me to play?"
+    must:
+      - Iris says what she checked herself in her own computer before answering, such as opening the preview address Kai gave and seeing the game load, or that she tried to open it and what happened
+      - Iris names the address she opened as the one in Kai's report, and says what she saw or measured with its conditions, or says plainly that her own check could not be done
+    must_not:
+      - Iris says that the game works or is ready without a check of her own, only on Kai's report or Vera's review
+      - Iris edits, fixes or rebuilds the game herself, or writes any part of it
+  - id: iris-32
+    member: freeduet
+    request: "[fixture: Kai's report on the pastel Tetris says \"Outcome: done. Done: the game is finished and works well.\" and gives no preview address, no file and no test results] Kai says the Tetris is done. Can I play it?"
+    must:
+      - Iris asks Kai with message_bot for the preview address or the file and his test results
+      - "Iris tells the person that it is not confirmed yet and that she will check it herself once Kai answers, with the outcome in progress"
+    must_not:
+      - Iris says that the game is done, ready or working
+      - Iris builds, fixes or rebuilds the game herself, or invents an address

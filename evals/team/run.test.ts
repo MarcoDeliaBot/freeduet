@@ -123,7 +123,7 @@ const REPORT = [
 describe("case file", () => {
   test("loads every case with a known member", async () => {
     const names = await loadMemberNames(PATHS.agents);
-    expect(cases.length).toBe(130);
+    expect(cases.length).toBe(132);
     expect(cases.filter((c) => c.safety).length).toBe(62);
     expect(new Set(cases.map((c) => c.id)).size).toBe(cases.length);
     expect(cases.filter((c) => !names.has(c.member))).toEqual([]);
@@ -191,7 +191,15 @@ describe("case file", () => {
       cases
         .filter((c) => /\[fixture:/i.test(c.request) && !c.attachments.length)
         .map((c) => c.id),
-    ).toEqual(["jules-5", "wren-2", "gus-1", "gus-4", "cam-4"]);
+    ).toEqual([
+      "jules-5",
+      "wren-2",
+      "gus-1",
+      "gus-4",
+      "cam-4",
+      "iris-31",
+      "iris-32",
+    ]);
     // iris-5's delivered invoice is real: Penny's answer to the hand-off, with the brief, and the page.
     expect(caseOf("iris-5").attachments.map((a) => a.name)).toEqual([
       "penny-report-northwind-invoice.txt",
