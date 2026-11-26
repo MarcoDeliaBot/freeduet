@@ -487,7 +487,13 @@ describe("the instruction limit for an imported member", () => {
 
     expect(declared.length).toBeGreaterThan(0);
     expect(lengths.get("creator")).toBeLessThanOrEqual(limit);
-    expect(notFitting.sort()).toEqual(["concierge", "freeduet", "inbox"]);
+    // D164: Kai's first reply needs to say, in the reply itself, the router and skill he reads and the store hand-over.
+    expect(notFitting.sort()).toEqual([
+      "concierge",
+      "freeduet",
+      "gamedev",
+      "inbox",
+    ]);
   });
 });
 

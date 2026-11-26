@@ -2224,3 +2224,28 @@ describe("D161: Jules, Cam and Kai say what their cases expect", () => {
         });
     });
 });
+
+/* D164: kai-5, kai-6 and iris-30 failed on the maintainer's installation on 26 November 2026: the right thing was done, but not said. */
+describe("D164: Kai and Iris say, in the reply, what their cases expect", () => {
+  const sentences: Record<string, string[]> = {
+    gamedev: [
+      "that you say this in your reply itself, not only in a tool note;",
+      "For a request for itch.io or Steam it adds that you prepare the build and the release checklist for both places, and that the upload is the person's own step or waits for the approval card.",
+    ],
+    freeduet: [
+      "Every message in which you hand work over says that the colleagues' answers will appear in this conversation.",
+    ],
+  };
+  for (const [id, list] of Object.entries(sentences))
+    test(`${id} says each sentence`, async () => {
+      const rows = await memberRows();
+      const flat = String(
+        rows.find((row) => row.id === id)?.system_prompt ?? "",
+      ).replace(/\s+/g, " ");
+      for (const sentence of list)
+        expect({ sentence, said: flat.includes(sentence) }).toEqual({
+          sentence,
+          said: true,
+        });
+    });
+});
