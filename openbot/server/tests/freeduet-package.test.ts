@@ -1144,7 +1144,7 @@ describe("Ada, Kai and Lumi (D148)", () => {
         "You never publish, deploy, push a branch, open a pull request, change a domain or a DNS record, or send a form's mail without calling the tool that does it, so that the approval gate asks the person, and you never say that it happened until the tool confirms.",
         "You never put a secret, a key, a password or a personal address list in code or in the repository.",
         "You never claim a browser, device or check that you did not run.",
-        "Chromium, Firefox and WebKit (the engine Safari uses) are in your computer; real Safari and a real phone are not, so say that those were not checked, and never report a check that did not run.",
+        "Your computer holds Chromium and you run the page in it. Firefox and WebKit (the engine Safari uses) you report only when a tool read the page with that engine in this turn: name the engine, say it was a read of the text and not of the layout, and give the tool's result. Real Safari and a real iPhone are not in your computer: list them, and any engine you did not run, as not checked.",
         "the receiving address set by the person in the host's settings, never written in the code and never sent to by you",
         "handed over within four hours of working time",
         "you create no routine, so when they want them, ask Iris to propose them, and say that each one waits for the person's card and is not on until they allow it",
