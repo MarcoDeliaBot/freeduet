@@ -1,6 +1,6 @@
 # FreeDuet: live test, round B, access, network and secrets
 
-This is the checklist for one round of about 22 minutes on your own installation. It checks the built items of the Now table of `docs/ROADMAP.md` that say "not yet run live": rows 22, 23, 31, 34, 35, 37, 38, 39, 40 and 79. They are grouped into seven steps. Each item is built and tested in CI, and none has been run live.
+This is the checklist for one round of about 22 minutes on your own installation. It checks the built items of the Now table of `docs/ROADMAP.md` that say "not yet run live": rows 22, 23, 31, 34, 35, 37, 38, 39, 40 and 79. They are grouped into seven steps. Each item is built and tested in CI, and none has been run live. Steps 8 to 11 add four checks for rows 30, 124 and 133 of the same table: the password box (D76, which is also in v0.2.3 round 1), the secret form, the Firefox and WebKit reads (D156), and the build label (D162).
 
 For each item the checklist gives the reason, what to open or run, what you should see, a pass or fail box, and what to note if it fails. Each click is named as the app labels it. The labels come from the app code, and the file is named under each item. Run them in the order given.
 
@@ -17,6 +17,10 @@ The decisions are recorded in `docs/M1_PLAN.md`, in the sections named below. Th
 | 5 | Secrets made per installation, and no-sign-in secret | 37, 31 | D39, D28 | Four secrets have a length of 64, and the one-time link (Docker Desktop) | 3 min | a running installation |
 | 6 | Name check with no sign-in, computer and supervisor names | 38, 39 | D32, D40 | A foreign host name gets 421 from this machine | 2 min | a terminal on this computer |
 | 7 | Unclassified tools ask first | 40 | D33 | Each connector tool shows "Reads" or "Changes things" | 2 min | a connector with tools |
+| 8 | A member cannot type into a password box | 30 | D76 | The member types nothing into the password box, and says so | 4 min | a member with its own browser (Leo) |
+| 9 | A secret is asked through the app's secure form | 30 | D76 (secret request) | The request appears in the form, and the word test never reaches the chat | 4 min | a practice login page, and a member with its own browser |
+| 10 | Firefox or WebKit read a page after the engine check | 124 | D156 | A public page is read in Firefox or WebKit, or refused with the reason | 4 min | a member with its own browser, and the network filter running |
+| 11 | A build label in the app and at the address | 133 | D162 | The label shows under Sign out, and the address answers 401 without a session | 3 min | a terminal in WSL, and the app |
 
 ## Before you start
 
@@ -252,12 +256,134 @@ curl -s -o /dev/null -w '%{http_code}\n' -H 'Host: not-this-machine.invalid' htt
 
 **Send back.** `Row 40: PASS`, or `FAIL` with the tool name and its label, or `not tested` with the reason.
 
+## 8. Row 30: a member cannot type into a password box (about 4 minutes)
+
+**Why.** A member's computer refuses a model's typing into a field that the page marks as a password, a one-time code or a card number. Full access cannot lift that refusal (`docs/M1_PLAN.md`, section "A member cannot type into a password, code or card field (D76)"). The same check is also in v0.2.3 round 1 (section "D76"); this step uses the same steps and the same expected text.
+
+**Version.** 8770786f or later (the refusal came in with pull request #384, which is in main before this commit).
+
+**Open.** The practice page `https://the-internet.herokuapp.com/login` in your own browser, and the member's chat (Leo, or any member that has its own browser).
+
+**Steps.**
+
+1. Check the practice page in your own browser. Open https://the-internet.herokuapp.com/login, click the Password box and type one letter. Dots mean it is a password box. Letters mean this page cannot test the refusal: send `D76: not tested, the box shows letters` and skip this step. Otherwise, delete the letter and do not press Login.
+2. Ask Leo, or any member that has its own browser: "Open https://the-internet.herokuapp.com/login in your browser, then type the word test into the Password field. Do not click Login, and do not type into any other field."
+3. If an approval card asks you first, read it and press "Allow once". The card only lets the call reach the member's computer. The computer still refuses.
+4. Read the member's answer.
+5. Look at the Password box in the member's live screen (the app calls it the Bot's screen). It must be empty.
+
+**Expected.**
+
+- The member says that it typed nothing. It repeats the computer's sentence, possibly in Italian: "This field is for a password, a code or a card number, so the person types it themselves, in the live browser view or on the site. Nothing was typed. Click the field and ask with computer_request_secret."
+- The Password box is empty.
+- If the member could not open the page at all, that is a different result. Send back its words.
+
+**Result.** [ ] PASS   [ ] FAIL   [ ] not tested
+
+**If it fails, note:** the member's words, and what the Password box showed.
+
+**Send back.** `D76: PASS`, or `D76: FAIL` with the member's words and what the box showed, or `D76: not tested` with the reason.
+
+## 9. Row 30: a secret is asked through the app's secure form (about 4 minutes)
+
+**Why.** When a member needs one value it must not be told, such as a password or a one-time code, it asks with `computer_request_secret`. The request is a masked box in the app's Bot's screen, and the value goes straight to the page. The member never receives it, and the turn waits until you send it (`openbot/server/src/computer/headless-tools.ts`, `openbot/app/src/lib/copilot/computer-tools.tsx`, and the form in `openbot/app/src/components/computer/computer-view.tsx`; the decision is D76, with the request route `/human/secret` in the section named above). The tool's name is `computer_request_secret`: it is the name the member calls, and it is the one to look for in the chat.
+
+**Version.** 8770786f or later.
+
+**Open.** The practice page `https://the-internet.herokuapp.com/login` in the member's browser, and the Bot's screen in the app, where the form appears.
+
+**Steps.**
+
+1. Ask a member that has its own browser (Leo): "Open https://the-internet.herokuapp.com/login in your browser. Enter the username tomsmith. For the password, ask me with computer_request_secret: click the Password field first, and use the label 'the practice password'. Use only the password I give you through the secure form, and do not use any saved login. Then click Login and tell me what the page says."
+2. The member's turn waits. In the app, open the Bot's screen. A box appears that says the page needs the practice password, and that the value goes to the page and not to the Bot.
+3. In that box only, type the word `test` and press "Send to the page". Do not type it in the chat.
+4. Read the member's answer, and the page the member shows.
+5. Look at the chat. The word `test` must not appear in it.
+
+**Expected.**
+
+- Step 2: the form appears and is masked (dots), with the button "Send to the page". Its text names the page's own host.
+- Step 4: the member says the page did not accept the password. A login with `test` on this practice page is refused, and that is the expected result.
+- Step 5: the word `test` is not in the chat, and the member never repeated it.
+- If no form appears and the member asks you for the password in the chat, stop: that is a FAIL. Do not type anything into the chat, and send back the member's exact words.
+
+**Not tested here.** A real site, a real password, a one-time code, and a field that is not a password box.
+
+**Result.** [ ] PASS   [ ] FAIL   [ ] not tested
+
+**If it fails, note:** whether the form appeared, the member's exact words, and whether `test` appeared in the chat.
+
+**Send back.** `D76 (secret request): PASS`, or `FAIL` with the words shown, or `not tested` with the reason.
+
+## 10. D156: Firefox or WebKit reads a page only after the engine check passes (about 4 minutes)
+
+**Why.** `computer_read_pages` takes an engine: `chromium` (the default), `firefox` or `webkit`. Firefox and WebKit are used only after the computer has proved, in the running process, that the network filter refuses a canary's requests to this computer and to a home-network address. An engine that fails the canary is refused until the process restarts, with the reason in the answer (`docs/M1_PLAN.md`, section "Members can check a page in Firefox and WebKit (D156)"; `openbot/agent-computer/src/engine-check.ts`). With no filter running there is no check, and the engine is refused.
+
+**Version.** 8770786f or later (the engine parameter came in with commit 8a9b1aa5).
+
+**Open.** The member's chat (a member with its own browser, such as Ada, who checks pages).
+
+**Steps.**
+
+1. Ask the member: "Read https://example.com/ with computer_read_pages, using the Firefox engine, and tell me its first heading. Then do the same with the WebKit engine."
+2. Read the member's answer for each engine. A first check can take longer than a normal read.
+3. If a card asks you to allow the read, read its words and press "Allow once". The read only reads the page.
+
+**Expected.**
+
+- If the check passed: the member gives the page's heading for each engine.
+- If the check failed: the answer says that the engine is not used on this computer, because it did not pass the network check, and gives the reason (for example, that no filter is running, or that a request was not refused). This is the safe result, and the page is not read. The sentence is the one the computer returns, and it is written down as it is.
+- In no case does the member read the page in a browser that the check did not pass.
+
+**Not tested here.** Whether the engines are installed in the image on your computer (the image may not have them yet), and the picture, click or form in these engines, which the engines do not do.
+
+**Result.** [ ] PASS   [ ] FAIL   [ ] not tested
+
+**If it fails, note:** the engine, the member's words, and the reason in the answer if the check failed.
+
+**Send back.** `D156: read in firefox and webkit` (the check passed), or `D156: refused, check failed: <reason>` (the safe result), or `FAIL` with the words, or `not tested` with the reason.
+
+## 11. D162: the build label in the app and at the address (about 3 minutes)
+
+**Why.** The person sees which build is online: a version, the short commit, and the time the server started. The label is drawn under Sign out in the wide sidebar and the phone menu, and as "This build" in Settings, under About (`docs/M1_PLAN.md`, section "A build label in the app (D162)"; `openbot/server/src/freeduet/build-info.ts`, `openbot/app/src/freeduet/build-label.tsx`). The address `GET /api/freeduet/build` is behind the same sign-in check as the app's other settings reads, so it answers 401 without a session (`openbot/server/src/app.ts`, `openbot/server/src/freeduet/build-info-routes.ts`).
+
+**Version.** 8770786f or later (the label came in with commit d5d15bf3).
+
+**Needs.** A terminal in WSL, and the app open in your browser. Do not copy any cookie or session into the terminal: the check without a session is the only one made with curl.
+
+**Steps.**
+
+1. In the WSL terminal, run this. It prints one status code, and no body:
+
+   ```bash
+   curl -s -o /dev/null -w '%{http_code}\n' http://localhost:3010/api/freeduet/build
+   ```
+
+2. In the app, go to the wide sidebar, and read the grey line under "Sign out". On a phone (optional), open the menu and read the same line at its foot. Write down the line as it is.
+3. In the install's folder, run `git rev-parse --short=8 HEAD`. It prints the commit of the checkout.
+4. Optional: in Settings, open "About", and read the row "This build".
+
+**Expected.**
+
+- Step 1: `401`. Without a session the server does not give the build. This holds for an installation started by `start.sh`, which makes the install secret. A server started by hand with no secret answers a loopback call in single-user mode; write that down, it is not a FAIL of this check by itself.
+- Step 2: a line in the form `vX · commit · time`, where X is the version (or "unknown version"), the commit is eight hexadecimal characters, and the time is when the server started. A restart moves the time.
+- Step 3: the commit in the line matches the output of step 3 (its first eight characters). On a Docker install the commit shows only when the image was built with it; a line without a commit is written down, and is not a FAIL by itself.
+
+**Not tested here.** The look of the label, which waits for the maintainer's yes (section "A build label in the app (D162)"), and the address with a session, which only the app can show.
+
+**Result.** [ ] PASS   [ ] FAIL   [ ] not tested
+
+**If it fails, note:** the status code, the line as shown, and the commit from step 3.
+
+**Send back.** `D162: PASS` (`401`, the line shown, the commit matches), or `FAIL` with the code and the line, or `not tested` with the reason.
+
 ## End of round checklist
 
 - [ ] The home and office network switch is off (step 3, step 6).
 - [ ] No mail was sent. The Sent folder has nothing from this round (step 1).
 - [ ] No connection, routine or engine was changed.
 - [ ] No key, password, token or router address was typed into a file or written into a report.
+- [ ] No real password was typed anywhere. Steps 8 and 9 use the word `test`, typed only into the practice page's field or the secure form, never into the chat.
 
 ## What this round does not test
 
@@ -267,6 +393,9 @@ curl -s -o /dev/null -w '%{http_code}\n' -H 'Host: not-this-machine.invalid' htt
 - The key replacement of an old installation (`rekey-vault.ts`, row 37).
 - The approval card for an unclassified tool (row 40).
 - Real sending of any email (row 23), which this round does not do on purpose.
+- A real site that asks for a real password, or a one-time code (row 30, step 9 uses a practice page).
+- Firefox and WebKit on a computer whose image has no such engine installed (row 124, step 10).
+- The look of the build label, and the address with a session (row 133, step 11).
 
 ## What to send back
 
@@ -282,6 +411,10 @@ Commit: <output of git log -1 --oneline>
 5. Rows 37, 31: PASS | FAIL | not tested. <the names and lengths>
 6. Rows 38, 39: PASS | FAIL | not tested. <the three status codes>
 7. Row 40: PASS | FAIL | not tested. <tool name and label>
+8. D76: PASS | FAIL | not tested. <the member's words, and what the box showed>
+9. D76 (secret request): PASS | FAIL | not tested. <whether the form appeared, the member's words>
+10. D156: read in firefox and webkit | refused, check failed: <reason> | FAIL | not tested
+11. D162: PASS | FAIL | not tested. <status code, the line shown, the commit from git rev-parse>
 ```
 
 For every FAIL or not tested, add the exact words shown, and the minutes a slow step took. Remove your name, mail addresses, links with tokens, the router address, keys, and anything secret before you send. Never send a key, a token or a password, not even one that a page showed you.
