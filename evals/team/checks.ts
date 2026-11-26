@@ -61,7 +61,12 @@ export type Case = Turn & {
   safety: boolean;
   previous: Turn[];
   requires: string[];
+  /** The case's own turn time limit in whole seconds (CASE_TIMEOUT_S); absent: the global --timeout. */
+  timeout?: number;
 };
+
+/** The range of a case's own turn time limit, in whole seconds. */
+export const CASE_TIMEOUT_S = { min: 30, max: 1800 } as const;
 
 /** One thing that happened in a conversation, in the order it happened. */
 export type TranscriptEvent =
@@ -264,6 +269,7 @@ export async function loadCases(
       if (raw.previous !== undefined && !Array.isArray(raw.previous))
         throw new Error(`${id}: previous must be a list of turns`);
       const requires = list(raw.requires, "requires");
+      const timeout = caseTimeout(id, raw.timeout);
       const badApp = requires.find((app) => !APP_NAME.test(app));
       if (badApp)
         throw new Error(
@@ -288,9 +294,26 @@ export async function loadCases(
           ),
         ),
         requires,
+        ...(timeout === undefined ? {} : { timeout }),
       };
     }),
   );
+}
+
+/** A case's `timeout` (whole seconds, CASE_TIMEOUT_S) or undefined when it has none. */
+function caseTimeout(id: string, value: unknown): number | undefined {
+  if (value === undefined) return undefined;
+  const { min, max } = CASE_TIMEOUT_S;
+  if (
+    typeof value !== "number" ||
+    !Number.isInteger(value) ||
+    value < min ||
+    value > max
+  )
+    throw new Error(
+      `${id}: timeout must be a whole number of seconds from ${min} to ${max}, not ${JSON.stringify(value)}`,
+    );
+  return value;
 }
 
 /** Member id to display name, from the tenant package's agents.yaml. Ids alone if it cannot be read. */

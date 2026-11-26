@@ -11,7 +11,7 @@ Moved out of `CLAUDE.md`. Read it before running, writing or reading team evals.
   then reset; a script that starts a run stops when reset does not return 0 or the eval server does not
   answer 200 (16 November 2026).
 - `bun --env-file=openbot/.env.eval evals/team/run.ts --repeat 3` for certification, `--repeat 1` for
-  quick checks. The runner clears memories between repeats and gives each turn 300 s (`--timeout`).
+  quick checks. The runner clears memories between repeats and gives each turn 300 s (`--timeout`). A case may set its own `timeout` (whole seconds, 30 to 1800) when its work is browser-heavy by nature: jules-2 and kai-5 use 600 s. Do not use it to hide a slowdown; a timeout names the limit that applied.
 - A filtered run (`--member`, `--id`) writes `evals/team/reports/<date>-<engine>-partial.{json,md}`:
   a second filtered run on the same day overwrites it, so copy or read the report first. `reset`
   empties the eval database, so query it before resetting.

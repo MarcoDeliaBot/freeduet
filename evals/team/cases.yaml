@@ -766,6 +766,7 @@ cases:
       - Jules prepares a cart or buys
   - id: jules-2
     member: concierge
+    timeout: 600
     request: "Two nights in Vienna from Rome in March for a conference, one person, budget 450, close to the venue. Plans only, don't book."
     must:
       - Jules warns that the search takes a few minutes
@@ -1412,6 +1413,7 @@ cases:
   # on Kai's prompt in PR #502 and must not be run live before it merges.
   - id: kai-5
     member: gamedev
+    timeout: 600
     request: "Start a small Phaser game for my site: a player catches falling stars with the arrow keys and a score goes up for each one. It has to run in the browser, and I want something I can play in a while."
     must:
       - Kai says that he will read the router of the game-development library on his computer first, and use the Phaser skill that the router points to, and only the skills this request needs

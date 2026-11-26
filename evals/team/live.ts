@@ -96,6 +96,22 @@ export const REQUEST_TIMEOUT_MS = 60_000;
 /** A duration as the runner names it in a message: "300 s", "0.3 s". */
 export const seconds = (ms: number) => `${Number((ms / 1000).toFixed(3))} s`;
 
+/**
+ * The time limit for each turn of a case: the case's own `timeout` when it has one, else the global
+ * `--timeout`. `source` names which one, as the timeout message and the report say it.
+ */
+export function turnLimit(
+  c: Pick<Case, "id" | "timeout">,
+  globalMs: number,
+): { ms: number; source: string } {
+  if (c.timeout !== undefined)
+    return {
+      ms: c.timeout * 1000,
+      source: `case timeout ${seconds(c.timeout * 1000)}`,
+    };
+  return { ms: globalMs, source: `--timeout ${seconds(globalMs)}` };
+}
+
 /** A conversation as `GET /api/channels` lists it, in the fields the guard reads. */
 export type ListedConversation = {
   name?: unknown;
@@ -113,7 +129,8 @@ export type LiveOptions = {
   cookie?: string;
   /**
    * The time limit for each turn of a case, from its message to the end of its answer, the run's
-   * streamed answer included. A turn still running at the limit ends as a timeout.
+   * streamed answer included. A turn still running at the limit ends as a timeout. A case's own
+   * `timeout` replaces it (turnLimit).
    */
   timeoutMs: number;
   /** How long a request may take to answer its headers (REQUEST_TIMEOUT_MS). Tests shorten it. */
@@ -1180,9 +1197,10 @@ export async function runCaseLive(
       }
     };
     const turns = turnsOf(c);
+    const limit = turnLimit(c, options.timeoutMs);
     for (const [index, turn] of turns.entries()) {
       // Every turn gets the whole time limit: an earlier turn may be a long search of its own.
-      const deadline = Date.now() + options.timeoutMs;
+      const deadline = Date.now() + limit.ms;
       if (turns.length > 1)
         log(
           `  turn ${index + 1}/${turns.length}: ${turn.request.slice(0, 60)}`,
@@ -1353,7 +1371,7 @@ export async function runCaseLive(
       }
       if (timedOut) {
         transcript.status = "timeout";
-        transcript.error = `turn ${index + 1} of ${turns.length} did not finish within ${seconds(options.timeoutMs)}, the time limit for each turn (--timeout)`;
+        transcript.error = `turn ${index + 1} of ${turns.length} did not finish within ${seconds(limit.ms)}, the time limit for each turn (${limit.source})`;
         break;
       }
     }
