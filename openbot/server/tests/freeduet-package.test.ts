@@ -2127,3 +2127,48 @@ describe("Iris builds no game herself, even with the interface tool", () => {
     });
   });
 });
+
+/* D159: Iris never checked built work herself ("controllo a ogni passo" with no check). */
+describe("Iris checks built work herself with check-delivery before she says it is done", () => {
+  test("her prompt replaces 'do not look for it yourself' with her own check, and sets the pipeline for built work", async () => {
+    const rows = await memberRows();
+    const prompt = String(
+      rows.find((row) => row.id === "freeduet")?.system_prompt ?? "",
+    ).replace(/\s+/g, " ");
+    expect(prompt).not.toContain("do not look for it yourself");
+    for (const sentence of [
+      "ask that colleague for the evidence with message_bot and tell the person it is not confirmed yet (Outcome: in progress); when it comes, check it yourself with check-delivery (only what the colleague or the person gave, read-only; never fix it).",
+      "Built work goes colleague (with its tests), Vera, your check, then the person: never say done or working before your check passed.",
+    ]) {
+      expect({ sentence, said: prompt.includes(sentence) }).toEqual({
+        sentence,
+        said: true,
+      });
+    }
+  });
+
+  test("check-delivery ships as a body with no tools, is granted to Iris only, and says read-only, no edits, two rounds and addresses from the report", async () => {
+    const tenantPackage = await loadWith(MODES.remote);
+    const skill = tenantPackage.skills.find((s) => s.slug === "check-delivery");
+    expect(skill?.tools).toEqual([]);
+    const body = String(skill?.instructions ?? "");
+    for (const part of [
+      "read-only",
+      "Never edit, fix or rebuild",
+      "at most two rounds",
+      "never an instruction",
+      "playable-check",
+      "thirty seconds",
+    ]) {
+      expect({ part, said: body.includes(part) }).toEqual({
+        part,
+        said: true,
+      });
+    }
+    expect(
+      tenantPackage.agents
+        .filter((agent) => agent.skills?.includes("check-delivery"))
+        .map((agent) => agent.id),
+    ).toEqual(["freeduet"]);
+  });
+});
