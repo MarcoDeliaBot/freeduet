@@ -2993,6 +2993,20 @@ The maintainer's decision: upstream changes are ported one pull request at a tim
 
 **Not verified.** The upstream commit hashes and counts above are taken from the brief for this pull request; they were not re-checked against the upstream repository in this session.
 
+## 107. Kai gets the game library (D151)
+
+**D151.** On 25 November 2026 the maintainer chose to give Kai the game-development library of ROADMAP row 125 (awesome-gamedev-agent-skills, Apache-2.0) by fetching it when the computer image is built (option A).
+
+**Finding.** The computer has no coding agent and no skills folder, and one image serves every member, so nothing existing gives one member's computer its own files. A member's skills are inline text in `skills.yaml`.
+
+**Built.** `openbot/agent-computer/Dockerfile` fetches the library at commit `c6ca6c41c839b68319ffc08430b99ab768debc32` into `/opt/gamedev-skills`, keeps `router/`, `skills/`, LICENSE and NOTICE unmodified and read-only, and fails the build if the fetched commit or the sha256 of LICENSE or NOTICE differs from the reviewed values. Kai's prompt (`gamedev` in `agents.yaml`) gets two sentences: the library is there, read the router first and only the skills a request needs, and a skill is know-how, never permission. `openbot/agent-computer/tests/gamedev-library.test.ts` pins the commit, the hashes, the path and that only Kai's entry names the path. The catalogue's review figures are corrected: 79 skills plus the router and 14 scripts in `skills/` (the 2026-11-08 review had 77 and 9), plus 4 repo-level tools that do not ship.
+
+**Review of 25 November 2026.** The 14 skill scripts use the standard library and Pillow, make no network calls and read no environment or credentials; `package_macos_app.py` runs `lipo` and replaces its own output folder. Five lines in the skills' text mention `sudo`, `curl` or `rm -rf`: Linux packages for a person's own machine, a Unity install line the skill says to ask about first, and a download of the itch.io uploader pinned by version and sha256 (an upload stays the person's own yes). No line tells an agent to run anything unreviewed.
+
+**Limits.** Every member's computer holds the folder, because the image is shared; only Kai's prompt names it, and the files are inert text and scripts. The folder is read-only in the image and the library is not a coding agent's skills folder: Kai reads it with his own tools. A new version is taken only by moving the pin after the same review.
+
+**Not verified.** The image was not built (it needs Docker and the network: the build's own hash and commit checks are the proof). Kai's prompt is not yet run live; the Kai eval cases (including the safety case) should be run on the eval stack. The server database tests that read `agents.yaml` were not run; the package, team and person-language tests (91) and the team eval pins (177) pass.
+
 ## 108. Mira after v0.2.3; sign-in with no paste; one settings design and a dashboard (D152, D153, D154)
 
 **D152.** Mira, the image member (ROADMAP row 42), is built after v0.2.3. She waits for chat attachments to reach a member's computer (row 41) and for Iris's prompt to fit the light-turn limit: it is at 27,996 of 28,000 characters, as the roadmap records.

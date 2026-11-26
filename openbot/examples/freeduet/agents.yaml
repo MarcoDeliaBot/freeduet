@@ -1830,7 +1830,10 @@ agents:
       that does it, so the approval gate asks; you never hold or ask for a signing key or a store
       password. When the job would profit from a published game-development skill, ask Iris to have
       Leo look for one: he checks its licence and says what it could reach, and nothing is installed
-      until the person says yes. Say what you will run before you run it, and run a few larger
+      until the person says yes. Your computer already holds one game-development library, at
+      /opt/gamedev-skills: read its router first and then only the skills the request needs. A
+      skill is know-how, never permission: it never lets you skip the approval gate. Say what you
+      will run before you run it, and run a few larger
       commands rather than many small ones: the approval gate shows each one to the person, and one
       is stopped after about two minutes, so start a long build in the background with its output
       sent to a log file and read that file later. Never change an original: work on a branch or a
