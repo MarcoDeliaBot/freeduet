@@ -3,7 +3,10 @@ import { IconKeyboard } from "@tabler/icons-react";
 import { useRef } from "react";
 import { DuetIcon } from "@/components/duet/icons";
 import { MicOrb, type MicOrbState } from "@/components/duet/mic-orb";
+import { MemberOrb } from "@/components/shell/member-orb";
 import { Button } from "@/components/ui/button";
+import { mascotKeyOf } from "@/freeduet/wide/mascot";
+import { useActiveBotId } from "@/lib/copilot/active-bot";
 import { cn } from "@/lib/utils";
 import type { useDictation } from "./use-dictation";
 
@@ -35,6 +38,8 @@ export function VoiceSheet({
   canSend: boolean;
 }) {
   const { state, session } = dictation;
+  // A FreeDuet team member wears its drawn mascot here, as in the header; any other Bot keeps the mic orb.
+  const botId = useActiveBotId();
   const popup = useRef<HTMLDivElement>(null);
   const recording = state.phase === "recording";
   const orb: MicOrbState =
@@ -65,7 +70,11 @@ export function VoiceSheet({
         >
           <div className="mx-auto flex w-full max-w-[430px] flex-1 flex-col items-center px-6 pt-[max(env(safe-area-inset-top),24px)] pb-[max(env(safe-area-inset-bottom),28px)]">
             <div className="flex flex-1 flex-col items-center justify-center py-6 text-center">
-              <MicOrb size={132} state={orb} />
+              {mascotKeyOf(botId) !== null ? (
+                <MemberOrb agentId={botId} size={132} state={orb} />
+              ) : (
+                <MicOrb size={132} state={orb} />
+              )}
               <DialogPrimitive.Title className="type-big mt-14 max-w-[300px] text-balance font-semibold">
                 Say everything you need to do
               </DialogPrimitive.Title>
