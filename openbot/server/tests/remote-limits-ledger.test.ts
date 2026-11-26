@@ -249,6 +249,7 @@ describe("what a remote session may reach", () => {
         "POST /api/approvals/questions/:id/respond",
         "GET /api/openduet/channels",
         "GET /api/settings/preferences",
+        "GET /api/freeduet/build",
       ].sort(),
     );
   });

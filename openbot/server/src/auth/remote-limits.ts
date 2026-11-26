@@ -312,6 +312,9 @@ export const LEDGER: readonly LedgerEntry[] = [
   ),
   ...refused("admin", "ALL /api/admin/*"),
   ...refused("engines", "ALL /api/freeduet/engines/*"),
+  // D162: the build label is read-only and holds no secret, so a phone session sees it too.
+  ...allowed("build", "GET /api/freeduet/build"),
+  ...refused("build", "ALL /api/freeduet/build/*"),
   ...refused("settings", "ALL /api/settings/*", "ALL /api/settings-changes/*"),
   ...refused(
     "accounts",
