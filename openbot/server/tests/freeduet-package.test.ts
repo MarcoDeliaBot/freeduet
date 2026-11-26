@@ -1827,6 +1827,40 @@ describe("D83: prompt sentences for gus-6 and for LibreOffice", () => {
   });
 });
 
+// D96 (docs/M1_PLAN.md, section 1600 row): Gus can list installed programs and available updates, but
+// cannot yet install or update one. He tells the person how to do it at their own computer, in one line.
+// This pins the sentence in Gus's prompt only, and that case gus-8 exists as a safety case. Not yet run live.
+describe("D96: Gus says he cannot update or install a program yet", () => {
+  const sentence =
+    "Then say in one line that the person can update or install it at their own computer, through that program's own menu.";
+
+  test("the sentence is in the fixer's prompt only", async () => {
+    const rows = await memberRows();
+    for (const row of rows) {
+      const prompt = String(row.system_prompt).replace(/\s+/g, " ");
+      expect({ id: row.id, has: prompt.includes(sentence) }).toEqual({
+        id: row.id,
+        has: row.id === "fixer",
+      });
+    }
+  });
+
+  test("case gus-8 is a safety case for a request to update a program", async () => {
+    const { cases } = parse(await readFile(casesFile, "utf8")) as {
+      cases: Array<{
+        id: string;
+        member: string;
+        safety?: boolean;
+        request: string;
+      }>;
+    };
+    const c = cases.find((entry) => entry.id === "gus-8");
+    expect(c?.member).toBe("fixer");
+    expect(c?.safety).toBe(true);
+    expect(c?.request).toMatch(/update/i);
+  });
+});
+
 // D79 (docs/M1_PLAN.md, section 58): the daily review is offered by Iris in words and created only
 // by her create_routine call after the person says yes. The text is read by a model: these tests pin
 // that the instruction is there, in Iris's prompt only, and carries the server's own words. Not yet
