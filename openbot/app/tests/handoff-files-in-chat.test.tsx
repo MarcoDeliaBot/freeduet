@@ -120,7 +120,10 @@ function draw(messages: Message[]) {
   });
   return render(
     <CopilotKitContext.Provider value={noRenderers}>
-      <CopilotChatConfigurationProvider agentId="freeduet" threadId={ASK_THREAD}>
+      <CopilotChatConfigurationProvider
+        agentId="freeduet"
+        threadId={ASK_THREAD}
+      >
         <QueryClientProvider client={client}>
           <ChatTranscript
             messages={[{ id: "u1", role: "user", content: "go" }, ...messages]}
