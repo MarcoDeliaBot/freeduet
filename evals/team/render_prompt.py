@@ -34,7 +34,9 @@ TOOLS_NOTE = (
 
 
 HANDOFF_SOURCE = SERVICE.parent / "server" / "src" / "agents" / "handoff-tool.ts"
-HANDOFF_DESCRIPTION = re.compile(r'description:\s*((?:"[^"\n]*"\s*\+?\s*)+),\s*parameters,')
+# One literal, then any number of `+ "…"` continuations: each repetition needs its own `+`, so the match
+# cannot backtrack exponentially (CodeQL py/redos on the earlier `(?:"…"\s*\+?\s*)+`).
+HANDOFF_DESCRIPTION = re.compile(r'description:\s*("[^"\n]*"(?:\s*\+\s*"[^"\n]*")*)\s*,\s*parameters,')
 
 
 def handoff_description() -> str:
