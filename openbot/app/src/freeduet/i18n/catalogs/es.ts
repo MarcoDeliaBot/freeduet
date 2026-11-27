@@ -10,6 +10,25 @@ import type { EN } from "./en";
  * Product names stay as they are.
  */
 export const es: Catalog<typeof EN> = {
+  "sign.title": "Inicia sesión en {product}",
+  "sign.continueWith": "Continuar con {provider}",
+  "sign.opening": "Abriendo {provider}…",
+  "sign.openError":
+    "No se pudo abrir el inicio de sesión con {provider}. Inténtalo de nuevo.",
+  "sign.ssoRequired":
+    "Tu organización requiere que inicies sesión con tu cuenta de empresa.",
+  "sign.pairLead":
+    "Este navegador aún no está emparejado con {product}. En el ordenador donde corre, lanza",
+  "sign.pairTail": ": se abre {product} aquí, listo para usar.",
+  "sign.notSetUp":
+    "El inicio de sesión aún no está configurado. Un administrador debe configurarlo primero.",
+  "sign.or": "o",
+  "sign.emailPlaceholder": "tu@empresa.com",
+  "sign.openingCompany": "Abriendo…",
+  "sign.continueCompany": "Continuar con tu cuenta de empresa",
+  "sign.adminSignIn": "Inicio de sesión de administrador",
+  "sign.noCompany":
+    "No hay un inicio de sesión de empresa configurado para esa dirección.",
   "shell.menu": "Menú",
   "shell.everything": "Todo",
   "shell.everythingLine": "Todo el contexto de los chats, en todos los canales",

@@ -11,6 +11,25 @@ import type { EN } from "./en";
  * selects only "other". Not yet checked by a person who reads Japanese.
  */
 export const ja: Catalog<typeof EN> = {
+  "sign.title": "{product} にログイン",
+  "sign.continueWith": "{provider}で続行",
+  "sign.opening": "{provider}を開いています…",
+  "sign.openError":
+    "{provider}のログインを開けませんでした。もう一度お試しください。",
+  "sign.ssoRequired":
+    "組織の方針により、会社のアカウントでログインする必要があります。",
+  "sign.pairLead":
+    "このブラウザはまだ{product}とペアリングされていません。{product}が動いているコンピューターで",
+  "sign.pairTail":
+    "を実行してください。{product}がここで開き、すぐに使えます。",
+  "sign.notSetUp":
+    "ログインはまだ設定されていません。先に管理者が設定する必要があります。",
+  "sign.or": "または",
+  "sign.emailPlaceholder": "you@company.com",
+  "sign.openingCompany": "開いています…",
+  "sign.continueCompany": "会社のアカウントで続行",
+  "sign.adminSignIn": "管理者のログイン",
+  "sign.noCompany": "このアドレスには会社のログインが設定されていません。",
   "shell.menu": "メニュー",
   "shell.everything": "すべて",
   "shell.everythingLine": "すべてのチャンネルにまたがるチャットの内容",

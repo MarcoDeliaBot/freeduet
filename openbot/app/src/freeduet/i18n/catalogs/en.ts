@@ -9,6 +9,22 @@ import type { Entries } from "../translate";
  * (the prefix before the first dot).
  */
 export const EN = {
+  "sign.title": "Sign in to {product}",
+  "sign.continueWith": "Continue with {provider}",
+  "sign.opening": "Opening {provider}…",
+  "sign.openError": "Couldn't open {provider} sign-in. Try again.",
+  "sign.ssoRequired":
+    "Your organization requires you to sign in with your company account.",
+  "sign.pairLead":
+    "This browser is not paired with {product} yet. On the computer it runs on, run",
+  "sign.pairTail": ": it opens {product} here, ready to use.",
+  "sign.notSetUp": "Sign-in isn't set up yet. An admin has to set it up first.",
+  "sign.or": "or",
+  "sign.emailPlaceholder": "you@company.com",
+  "sign.openingCompany": "Opening…",
+  "sign.continueCompany": "Continue with your company account",
+  "sign.adminSignIn": "Admin sign-in",
+  "sign.noCompany": "No company sign-in is set up for that address.",
   "shell.menu": "Menu",
   "shell.everything": "Everything",
   "shell.everythingLine": "All chat context across every channel",

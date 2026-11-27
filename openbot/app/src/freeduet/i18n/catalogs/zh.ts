@@ -11,6 +11,20 @@ import type { EN } from "./en";
  * by a person who reads Simplified Chinese.
  */
 export const zh: Catalog<typeof EN> = {
+  "sign.title": "登录 {product}",
+  "sign.continueWith": "使用 {provider} 继续",
+  "sign.opening": "正在打开 {provider}…",
+  "sign.openError": "无法打开 {provider} 登录，请重试。",
+  "sign.ssoRequired": "你的组织要求你使用公司账户登录。",
+  "sign.pairLead": "此浏览器尚未与 {product} 配对。请在运行该应用的电脑上执行",
+  "sign.pairTail": "：{product} 会在这里打开，可以直接使用。",
+  "sign.notSetUp": "登录尚未设置。需要管理员先进行设置。",
+  "sign.or": "或",
+  "sign.emailPlaceholder": "you@company.com",
+  "sign.openingCompany": "正在打开…",
+  "sign.continueCompany": "使用公司账户继续",
+  "sign.adminSignIn": "管理员登录",
+  "sign.noCompany": "该地址尚未设置公司账户登录。",
   "shell.menu": "菜单",
   "shell.everything": "全部",
   "shell.everythingLine": "所有频道里的全部聊天内容",

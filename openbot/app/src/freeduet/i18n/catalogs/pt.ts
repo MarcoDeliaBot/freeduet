@@ -11,6 +11,25 @@ import type { EN } from "./en";
  * Portuguese has checked it.
  */
 export const pt: Catalog<typeof EN> = {
+  "sign.title": "Entrar no {product}",
+  "sign.continueWith": "Continuar com {provider}",
+  "sign.opening": "Abrindo {provider}…",
+  "sign.openError":
+    "Não foi possível abrir o login com {provider}. Tente de novo.",
+  "sign.ssoRequired":
+    "Sua organização exige que você entre com a conta da empresa.",
+  "sign.pairLead":
+    "Este navegador ainda não está pareado com {product}. No computador em que o aplicativo roda, execute",
+  "sign.pairTail": ": {product} abre aqui, pronto para usar.",
+  "sign.notSetUp":
+    "O login ainda não está configurado. Um administrador precisa configurá-lo antes.",
+  "sign.or": "ou",
+  "sign.emailPlaceholder": "voce@empresa.com",
+  "sign.openingCompany": "Abrindo…",
+  "sign.continueCompany": "Continuar com a conta da empresa",
+  "sign.adminSignIn": "Login de administrador",
+  "sign.noCompany":
+    "Nenhum login de empresa está configurado para este endereço.",
   "shell.menu": "Menu",
   "shell.everything": "Tudo",
   "shell.everythingLine": "Todo o contexto das conversas, em todos os canais",

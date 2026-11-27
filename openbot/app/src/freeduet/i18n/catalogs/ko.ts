@@ -11,6 +11,23 @@ import type { EN } from "./en";
  * person who reads Korean.
  */
 export const ko: Catalog<typeof EN> = {
+  "sign.title": "{product}에 로그인",
+  "sign.continueWith": "{provider} 계정으로 계속하기",
+  "sign.opening": "{provider} 여는 중…",
+  "sign.openError": "{provider} 로그인을 열 수 없습니다. 다시 시도하세요.",
+  "sign.ssoRequired": "조직에서 회사 계정으로 로그인하도록 요구합니다.",
+  "sign.pairLead":
+    "이 브라우저는 아직 {product}에 페어링되지 않았습니다. 앱이 실행 중인 컴퓨터에서",
+  "sign.pairTail":
+    "을 실행하세요. 여기서 {product} 앱이 열려 바로 사용할 수 있습니다.",
+  "sign.notSetUp":
+    "로그인이 아직 설정되지 않았습니다. 관리자가 먼저 설정해야 합니다.",
+  "sign.or": "또는",
+  "sign.emailPlaceholder": "you@company.com",
+  "sign.openingCompany": "여는 중…",
+  "sign.continueCompany": "회사 계정으로 계속하기",
+  "sign.adminSignIn": "관리자 로그인",
+  "sign.noCompany": "이 주소에는 회사 로그인이 설정되어 있지 않습니다.",
   "shell.menu": "메뉴",
   "shell.everything": "전체",
   "shell.everythingLine": "모든 채널의 채팅 맥락 전체",

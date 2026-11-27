@@ -1,12 +1,18 @@
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, redirect } from "@tanstack/react-router";
 import { motion, useReducedMotion } from "motion/react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { MicOrb } from "@/components/duet/mic-orb";
 import { ProviderLogo } from "@/components/auth/provider-logo";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
+import {
+  AppLanguageValue,
+  useAppLanguage,
+  useT,
+} from "@/freeduet/i18n/provider";
+import { readStoredChoice } from "@/freeduet/i18n/stored-choice";
 import {
   providerName,
   signInWith,
@@ -73,7 +79,25 @@ export const Route = createFileRoute("/sign")({
   component: SignScreen,
 });
 
+/*
+ * The sign-in page is outside `_authed`, where `AppLanguageProvider` is mounted, so it chooses its own
+ * language (D181): the one saved in this browser, else the browser's, else English. Nobody is signed
+ * in here, so there is no saved copy on the server to wait for.
+ */
 function SignScreen() {
+  return (
+    <AppLanguageValue language={readStoredChoice() ?? "auto"}>
+      <SignPage />
+    </AppLanguageValue>
+  );
+}
+
+function SignPage() {
+  const t = useT();
+  const { language } = useAppLanguage();
+  useEffect(() => {
+    document.documentElement.lang = language;
+  }, [language]);
   const { flow_id: flowId } = Route.useSearch();
   // Which provider is being opened, rather than whether one is: with three buttons, a single
   // boolean would put "Opening…" on all of them.
@@ -104,7 +128,7 @@ function SignScreen() {
       setError(
         caughtError instanceof Error
           ? caughtError.message
-          : "No company sign-in is set up for that address.",
+          : t("sign.noCompany"),
       );
       setOpening(null);
     }
@@ -124,7 +148,7 @@ function SignScreen() {
       setError(
         caughtError instanceof Error
           ? caughtError.message
-          : `Couldn't open ${providerName(provider)} sign-in. Try again.`,
+          : t("sign.openError", { provider: providerName(provider) }),
       );
       setOpening(null);
     }
@@ -153,8 +177,8 @@ function SignScreen() {
           {/* Centred against the button, not against the space left of the mark. */}
           <span className="flex-1 text-center">
             {opening === provider
-              ? `Opening ${providerName(provider)}…`
-              : `Continue with ${providerName(provider)}`}
+              ? t("sign.opening", { provider: providerName(provider) })
+              : t("sign.continueWith", { provider: providerName(provider) })}
           </span>
           {/* Balances the mark so the label sits in the middle of the button. */}
           <span aria-hidden="true" className="size-[18px]" />
@@ -196,7 +220,7 @@ function SignScreen() {
           transition={{ duration: ENTRANCE_SECONDS, ease: EASE_OUT }}
           variants={{ hidden, shown }}
         >
-          Sign in to {appConfig.brand.productName}
+          {t("sign.title", { product: appConfig.brand.productName })}
         </motion.h1>
         <motion.div
           className="mt-8 w-full"
@@ -205,8 +229,7 @@ function SignScreen() {
         >
           {options?.ssoRequired ? (
             <p className="mb-3 text-center text-sm text-muted-foreground">
-              Your organization requires you to sign in with your company
-              account.
+              {t("sign.ssoRequired")}
             </p>
           ) : null}
           {providers.length > 0 && !options?.ssoRequired ? (
@@ -218,14 +241,13 @@ function SignScreen() {
              * pairing with this installation, which only the computer it runs on can start.
              */
             <p className="text-center text-sm text-muted-foreground">
-              This browser is not paired with {appConfig.brand.productName} yet.
-              On the computer it runs on, run{" "}
-              <code className="font-mono">bash scripts/open.sh</code>: it opens{" "}
-              {appConfig.brand.productName} here, ready to use.
+              {t("sign.pairLead", { product: appConfig.brand.productName })}{" "}
+              <code className="font-mono">bash scripts/open.sh</code>
+              {t("sign.pairTail", { product: appConfig.brand.productName })}
             </p>
           ) : (
             <p className="text-center text-sm text-muted-foreground">
-              Sign-in isn't set up yet. An admin has to set it up first.
+              {t("sign.notSetUp")}
             </p>
           )}
           {/*
@@ -239,14 +261,16 @@ function SignScreen() {
               {providers.length > 0 ? (
                 <div className="mb-3 flex items-center gap-3">
                   <Separator className="flex-1" />
-                  <span className="text-muted-foreground text-xs">or</span>
+                  <span className="text-muted-foreground text-xs">
+                    {t("sign.or")}
+                  </span>
                   <Separator className="flex-1" />
                 </div>
               ) : null}
               <Input
                 autoComplete="email"
                 onChange={(event) => setEmail(event.target.value)}
-                placeholder="you@company.com"
+                placeholder={t("sign.emailPlaceholder")}
                 required
                 type="email"
                 value={email}
@@ -259,8 +283,8 @@ function SignScreen() {
                 variant="outline"
               >
                 {opening === "sso"
-                  ? "Opening…"
-                  : "Continue with your company account"}
+                  ? t("sign.openingCompany")
+                  : t("sign.continueCompany")}
               </Button>
             </form>
           ) : null}
@@ -268,7 +292,7 @@ function SignScreen() {
           {options?.ssoRequired && providers.length > 0 ? (
             <details className="mt-4 text-sm">
               <summary className="cursor-pointer text-center text-muted-foreground">
-                Admin sign-in
+                {t("sign.adminSignIn")}
               </summary>
               <div className="mt-3">{providerButtons}</div>
             </details>
