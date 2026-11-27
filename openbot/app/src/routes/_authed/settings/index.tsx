@@ -21,13 +21,11 @@ import {
   ItemTitle,
 } from "@/components/ui/item";
 import { Separator } from "@/components/ui/separator";
-import {
-  SettingsDirectory,
-  type SettingsPlace,
-} from "@/freeduet/settings-directory";
-import { WorkspaceShell, WorkspaceTabs } from "@/freeduet/workspace";
-import { isFreeDuetApp } from "@/freeduet/manage-group";
 import { FreeDuetAbout } from "@/freeduet/about-section";
+import { isFreeDuetApp } from "@/freeduet/manage-group";
+import type { SettingsPlace } from "@/freeduet/settings-directory";
+import { SettingsHome } from "@/freeduet/settings-home";
+import { WorkspaceShell, WorkspaceTabs } from "@/freeduet/workspace";
 import { currentUserQueryOptions } from "@/lib/auth/queries";
 import { appConfig } from "@/lib/generated/application-config";
 import { formatHotkey, HOTKEYS } from "@/lib/hotkeys/hotkeys";
@@ -185,7 +183,12 @@ function RouteComponent() {
               id: "workspace",
               label: "Workspace",
               icon: "dashboard",
-              content: <SettingsDirectory places={places} />,
+              content: (
+                <SettingsHome
+                  isAdmin={user?.role === "admin"}
+                  badges={{ "/bots": <BotsNavBadge /> }}
+                />
+              ),
             },
             {
               id: "preferences",
