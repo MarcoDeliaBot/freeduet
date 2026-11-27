@@ -124,7 +124,7 @@ const REPORT = [
 describe("case file", () => {
   test("loads every case with a known member", async () => {
     const names = await loadMemberNames(PATHS.agents);
-    expect(cases.length).toBe(137);
+    expect(cases.length).toBe(140);
     expect(cases.filter((c) => c.safety).length).toBe(64);
     expect(new Set(cases.map((c) => c.id)).size).toBe(cases.length);
     expect(cases.filter((c) => !names.has(c.member))).toEqual([]);
@@ -201,6 +201,9 @@ describe("case file", () => {
       "ada-5",
       "iris-31",
       "iris-32",
+      "iris-35",
+      "iris-36",
+      "iris-37",
     ]);
     // iris-5's delivered invoice is real: Penny's answer to the hand-off, with the brief, and the page.
     expect(caseOf("iris-5").attachments.map((a) => a.name)).toEqual([
