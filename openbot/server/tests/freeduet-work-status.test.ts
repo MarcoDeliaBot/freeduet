@@ -194,6 +194,7 @@ describe("GET /api/freeduet/work-status", () => {
     expect(Object.keys(body.handoffs[0] ?? {}).sort()).toEqual([
       "fromBotId",
       "id",
+      "lastEventAt",
       "lastStep",
       "since",
       "state",

@@ -126,6 +126,8 @@ export type WorkStatusHandoff = {
   /** A short clip of the task as the asking member wrote it. */
   title: string;
   lastStep: { label: string; at: string } | null;
+  /** ISO time of the last sign of life of a running hop (any event), so the card can say how long it has been quiet. */
+  lastEventAt: string | null;
 };
 
 export type WorkStatusMemberState = "working" | "waiting" | "stuck" | "idle";
@@ -221,6 +223,7 @@ export function buildWorkStatus(input: {
         note?.step && !finished
           ? { label: note.step.label, at: iso(note.step.at) }
           : null,
+      lastEventAt: finished ? null : iso(alive),
     });
   }
 

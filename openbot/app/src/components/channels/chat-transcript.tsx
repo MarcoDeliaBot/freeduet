@@ -53,13 +53,14 @@ import {
   useMessageScroller,
 } from "@/components/ui/message-scroller";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ClaudeConnectCard } from "@/freeduet/claude-connect-card";
 import { claudeProblemOf } from "@/freeduet/claude-connect";
+import { ClaudeConnectCard } from "@/freeduet/claude-connect-card";
 import { type CardLanguage, cardTime } from "@/freeduet/person-language/cards";
 import {
   useCardLanguage,
   useCardText,
 } from "@/freeduet/person-language/use-card-text";
+import { HandoffWorkCard } from "@/freeduet/work-status/work-card";
 import { approvalInboxOptions } from "@/lib/approvals";
 import { currentUserQueryOptions } from "@/lib/auth/queries";
 import { attachmentUrl } from "@/lib/channels/attachments";
@@ -1755,6 +1756,7 @@ const TranscriptToolCall = memo(function TranscriptToolCall({
          * Tasks. The card is the stored request, drawn by the same component and decided through the same
          * route as everywhere else.
          */}
+        {handoffCards ? <HandoffWorkCard bot={handoffTarget(args)} /> : null}
         {handoffCards ? <HandoffApprovals bot={handoffTarget(args)} /> : null}
       </ToolRenderBoundary>
     </Arriving>
