@@ -1105,7 +1105,7 @@ describe("a hop stops for silence, not for time (D170)", () => {
       },
       runner: {
         run: (request) =>
-          new Observable<BaseEvent>((subscriber) => {
+          new Observable<BaseEvent>(() => {
             void (request.agent as unknown as typeof agent).runAgent({}, {});
             if (everyMs !== null)
               timers.push(
