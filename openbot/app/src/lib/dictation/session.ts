@@ -6,6 +6,8 @@ export type DictationState = {
   seconds: number;
   error?: string;
   canRetry: boolean;
+  /** Set on an idle state when the recording stopped by itself with nothing said: a hint, never an error. */
+  notice?: string;
   stream?: MediaStream;
 };
 
@@ -99,6 +101,13 @@ export class DictationSession {
               : "Could not start recording. Check your microphone and try again.",
       });
     }
+  };
+
+  /** Stop listening because nothing was said: no transcription and no error, only `notice` for the person to read. */
+  stopWithNotice = (notice: string) => {
+    if (this.state.phase !== "recording") return;
+    this.cancel();
+    this.update({ ...idle, notice });
   };
 
   finish = async (
