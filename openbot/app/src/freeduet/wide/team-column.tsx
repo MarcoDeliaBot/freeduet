@@ -20,6 +20,7 @@ import { BuildLabel } from "@/freeduet/build-label";
 import { showsManageGroup } from "@/freeduet/manage-group";
 import {
   dotState,
+  justDone,
   dotTooltip,
   workStatusQueryOptions,
 } from "@/freeduet/work-status/status";
@@ -197,7 +198,12 @@ function Team({ full }: { full: boolean }) {
         const target = memberTarget(agent, primaryId, channels);
         const state = states.get(agent.id) ?? null;
         const working = workByMember.get(agent.id);
-        const dot = dotState(working, state === "waiting", state === "working");
+        let dot = dotState(working, state === "waiting", state === "working");
+        if (
+          dot === "idle" &&
+          justDone(work.data?.handoffs ?? [], agent.id, Date.now())
+        )
+          dot = "done";
         const tip = dotTooltip(dot, working);
         const line =
           dot === "stuck" || (dot === "working" && working?.title)

@@ -9,6 +9,7 @@ import { readFile } from "node:fs/promises";
 import { join, resolve } from "node:path";
 import { loadCases, requestText } from "./checks";
 import { GRADER_SYSTEM } from "./grader";
+import { messageBotTool } from "./render-case";
 
 const ROOT = resolve(import.meta.dir, "../..");
 const MARKER = "## GRADER ONLY";
@@ -76,5 +77,47 @@ describe("render-case: one Iris case for the subagent simulation", () => {
     expect(below).toContain(GRADER_SYSTEM.slice(0, 60));
     for (const line of [...c.must, ...c.must_not])
       expect(below).toContain(line);
+  });
+
+  test("each tool shows its real parameters: message_bot's required names come from the server source", async () => {
+    // Read from handoff-tool.ts through messageBotTool(), not written here: a renamed argument fails this test.
+    const schema = (await messageBotTool()).inputSchema;
+    const required = schema.required ?? [];
+    expect(required.length).toBeGreaterThan(0);
+    const names = Object.keys(schema.properties ?? {});
+    expect(names).toEqual(expect.arrayContaining(required));
+
+    const { code, out, err } = await renderCase("iris-35");
+    expect(err).toBe("");
+    expect(code).toBe(0);
+
+    const start = out.indexOf("## 2. Tools the member is offered");
+    const end = out.indexOf("## 3. The conversation");
+    expect(start).toBeGreaterThan(0);
+    expect(end).toBeGreaterThan(start);
+    const tools = out.slice(start, end);
+    expect(tools).toContain("- `message_bot`:");
+    for (const name of required)
+      expect(tools).toContain(`\`${name}\` (string, required)`);
+    for (const name of names) expect(tools).toContain(`\`${name}\``);
+
+    // The TOOL_CALL instruction and the colleague ids of the team file.
+    expect(tools).toContain(
+      'TOOL_CALL {"name": "<exact tool name>", "args": {...}}',
+    );
+    const agents = Bun.YAML.parse(
+      await readFile(
+        join(ROOT, "openbot/examples/freeduet/agents.yaml"),
+        "utf8",
+      ),
+    ) as { agents: { id: string }[] };
+    for (const row of agents.agents)
+      if (row.id !== "freeduet") expect(tools).toContain(row.id);
+
+    // The schema lines are the member's view: above the marker, none of them below it.
+    const at = out.indexOf(MARKER);
+    expect(out.split(MARKER).length).toBe(2);
+    expect(out.slice(0, at)).toContain("`bot` (string, required)");
+    expect(out.slice(at)).not.toContain("TOOL_CALL");
   });
 });
