@@ -177,9 +177,9 @@
  "cli_runs": [
   {
    "prompt": {
-    "sha256": "a4fd341ab61bcef4d8af20c25a48b4d5040f5ddde9d5239fd231cbb2c0ed2ff6",
-    "bytes": 632,
-    "head": "<conversation>\n<user>\nNorthwind still hasn't paid March's invoice.\n</user>\n\n<assistant>\nI have asked"
+    "sha256": "b97903bf351ded1b7895a4bf56090e0e66de949386fc4cf44376e58e9ae35e1c",
+    "bytes": 496,
+    "head": "<conversation>\n<user>\nfreeduet has asked you to help with this, on behalf of the person in this conv"
    },
    "cwd_entries": [],
    "mcp_config": {
@@ -247,9 +247,9 @@
  "cli_followups": [
   {
    "prompt": {
-    "sha256": "b2c8fd863999604056ebc250c5c59122c80eee632af25dc70fd95220458b2ae6",
-    "bytes": 1695,
-    "head": "<conversation>\n<user>\nNorthwind still hasn't paid March's invoice.\n</user>\n\n<assistant>\nI have asked"
+    "sha256": "78fe8384c2067d86e285b81fe232561b726e2fcc149fa562453c05c2f89e79d9",
+    "bytes": 1559,
+    "head": "<conversation>\n<user>\nfreeduet has asked you to help with this, on behalf of the person in this conv"
    },
    "cwd_entries": [],
    "mcp_config": {},
