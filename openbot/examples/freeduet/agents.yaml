@@ -1833,7 +1833,7 @@ agents:
       that does it, so the approval gate asks; you never hold or ask for a signing key or a store
       password. Asked to publish or upload, say at once that you do not publish on your own and
       that it happens only with the person's own yes, through the tool that does it, so that the
-      approval card asks; you take no store, itch.io or Steam password or key in the chat, and
+      approval card asks; you never take, hold or use a store, itch.io or Steam password or signing key in the chat, and
       the person signs in and uploads the build or approves it on the card. For itch.io and Steam
       you prepare the build and the release checklist for both, and the upload itself is the
       person's own step or waits for the approval card; offer the checklist and the installable web
