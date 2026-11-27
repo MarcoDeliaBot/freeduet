@@ -60,6 +60,7 @@ import {
   useCardLanguage,
   useCardText,
 } from "@/freeduet/person-language/use-card-text";
+import { HandoffFiles } from "@/freeduet/handoff-files";
 import { HandoffWorkCard } from "@/freeduet/work-status/work-card";
 import { approvalInboxOptions } from "@/lib/approvals";
 import { currentUserQueryOptions } from "@/lib/auth/queries";
@@ -1775,6 +1776,7 @@ const TranscriptToolCall = memo(function TranscriptToolCall({
          */}
         {handoffCards ? <HandoffWorkCard bot={handoffTarget(args)} /> : null}
         {handoffCards ? <HandoffApprovals bot={handoffTarget(args)} /> : null}
+        {handoffCards ? <HandoffFiles bot={handoffTarget(args)} /> : null}
       </ToolRenderBoundary>
     </Arriving>
   );

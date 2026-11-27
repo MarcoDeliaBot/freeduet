@@ -55,6 +55,11 @@ import {
 } from "./freeduet/engine-choices";
 import { useTeamFile } from "./freeduet/team-file-routes";
 import { createFullAccess, withFullAccess } from "./freeduet/full-access";
+import {
+  createHandoffFileStore,
+  handoffFileRecorder,
+  offeredNote,
+} from "./freeduet/handoff-files";
 import { memberFileTools } from "./freeduet/member-files";
 import { relayComputerTools } from "./freeduet/relay-computer";
 import {
@@ -1634,6 +1639,16 @@ const memberFiles = memberFileTools({
   capabilitiesOf,
 });
 
+// FreeDuet (D177): a file a colleague offered during a hand-off reaches the person's conversation and the asker.
+const handoffFileStore = createHandoffFileStore(database);
+const recordHandoffFile = handoffFileRecorder({
+  computerGateway,
+  agentProfileStore,
+  actorFor,
+  capabilitiesOf,
+  store: handoffFileStore,
+});
+
 const loadToolsForActor =
   (actorId: string, initiator: AuditInitiator = PERSON_INITIATOR) =>
   async (botId: string) => [
@@ -2653,6 +2668,16 @@ if (config.handoff.maxDepth > 0 && config.handoff.maxPerRun > 0) {
     channelStore,
     // FreeDuet (D22): a relay turn gets the computer an ordinary turn of that Bot would.
     toolsForTurn: serverRunComputerTools,
+    offeredFiles: async ({ work, files }) => {
+      const recorded = [];
+      for (const file of files) {
+        const done = await recordHandoffFile({ work, file });
+        if (done) recorded.push(done);
+      }
+      return recorded.length > 0
+        ? offeredNote(work.toName ?? work.toBotId, recorded)
+        : null;
+    },
   });
 }
 
@@ -3009,6 +3034,7 @@ const app = createApp(
     },
     groups: groupConversations,
     teamBots,
+    handoffFiles: handoffFileStore,
     lifecycle: {
       lifecycle: createBotLifecycleStore(database),
       reset: createBotReset({

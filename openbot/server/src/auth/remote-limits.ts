@@ -318,6 +318,12 @@ export const LEDGER: readonly LedgerEntry[] = [
   // D168: who is working and on what is read-only, narrowed to the person, with no argument or secret.
   ...allowed("work-status", "GET /api/freeduet/work-status"),
   ...refused("work-status", "ALL /api/freeduet/work-status/*"),
+  // D177: a colleague's offered files are drawn next to a Download that the computer route refuses remotely.
+  ...refused(
+    "handoff-files",
+    "ALL /api/freeduet/handoff-files",
+    "ALL /api/freeduet/handoff-files/*",
+  ),
   ...refused("settings", "ALL /api/settings/*", "ALL /api/settings-changes/*"),
   ...refused(
     "accounts",
