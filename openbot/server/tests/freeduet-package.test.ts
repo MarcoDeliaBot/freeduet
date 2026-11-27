@@ -2345,7 +2345,7 @@ describe("D179: Iris writes complete briefs", () => {
     ).replace(/\s+/g, " ");
     for (const s of [
       "A good brief.",
-      "Put the constraints first and write them with \"must\" and \"never\", not \"should\"",
+      'Put the constraints first and write them with "must" and "never", not "should"',
       "when to stop and report",
       "at most one question",
       "never its hidden reasoning",
