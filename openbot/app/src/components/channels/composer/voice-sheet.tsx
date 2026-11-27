@@ -6,6 +6,7 @@ import { DuetIcon } from "@/components/duet/icons";
 import { MicOrb, type MicOrbState } from "@/components/duet/mic-orb";
 import { MemberOrb } from "@/components/shell/member-orb";
 import { Button } from "@/components/ui/button";
+import { useAutoStop } from "@/freeduet/voice/auto-stop";
 import { LevelMeter } from "@/freeduet/voice/level-meter";
 import { useMicLevel } from "@/freeduet/voice/use-mic-level";
 import { mascotKeyOf } from "@/freeduet/wide/mascot";
@@ -50,6 +51,15 @@ export function VoiceSheet({
   const popup = useRef<HTMLDivElement>(null);
   const recording = state.phase === "recording";
   const mic = useMicLevel(recording ? state.stream : undefined);
+  const notice = state.notice;
+  // Pausing after speaking puts the words in the message box (never sent); saying nothing stops quietly.
+  useAutoStop(recording, mic, {
+    onSilence: () => void session.finish("draft", { quiet: true }),
+    onNoSpeech: () =>
+      session.stopWithNotice(
+        "I didn't hear anything. Tap the microphone to try again, or type.",
+      ),
+  });
   const reduced = useReducedMotion() ?? false;
   const typeInstead = () => {
     // Nothing was heard: there is nothing to write down, so no transcription and no error.
@@ -62,7 +72,7 @@ export function VoiceSheet({
   const orb: MicOrbState =
     state.phase === "transcribing"
       ? "thinking"
-      : state.phase === "error"
+      : state.phase === "error" || notice !== undefined
         ? "idle"
         : "listening";
   return (
@@ -116,7 +126,7 @@ export function VoiceSheet({
                 />
               ) : null}
             </div>
-            <Status dictation={dictation} />
+            <Status dictation={dictation} heard={mic.heard()} />
             <div className="mt-7 flex items-center justify-center gap-8 transition-transform duration-[var(--duet-dur-sheet)] motion-safe:group-data-starting-style:translate-y-3">
               <Button
                 aria-label="Discard"
@@ -130,12 +140,16 @@ export function VoiceSheet({
                 <DuetIcon className="size-[22px]" name="x" size={22} />
               </Button>
               <Button
-                aria-label="Stop and send"
+                aria-label={
+                  notice ? "Start dictation" : "Stop dictation and send"
+                }
                 className="size-[68px] rounded-full bg-duet-black p-0 text-duet-on-black hover:bg-duet-black hover:brightness-125 disabled:opacity-30"
-                disabled={!recording || !canSend}
-                onClick={() => void session.finish("send")}
+                disabled={notice ? false : !recording || !canSend}
+                onClick={() =>
+                  notice ? void session.start() : void session.finish("send")
+                }
                 size="icon"
-                title="Stop and send"
+                title={notice ? "Start dictation" : "Stop dictation and send"}
                 type="button"
               >
                 <DuetIcon
@@ -148,8 +162,8 @@ export function VoiceSheet({
               <Button
                 aria-label="Type instead"
                 className={SIDE_CONTROL}
-                disabled={!recording}
-                onClick={typeInstead}
+                disabled={!recording && !notice}
+                onClick={notice ? onType : typeInstead}
                 size="icon"
                 title="Type instead"
                 type="button"
@@ -170,7 +184,13 @@ export function VoiceSheet({
 }
 
 /** The glass pill over the controls: what the sheet is doing, or what went wrong and what to do. */
-function Status({ dictation }: { dictation: Dictation }) {
+function Status({
+  dictation,
+  heard,
+}: {
+  dictation: Dictation;
+  heard: boolean;
+}) {
   const { state, session } = dictation;
   const pill =
     "duet-glass type-label flex min-h-10 max-w-full items-center gap-2.5 rounded-[20px] px-4 py-2.5 shadow-duet-glass animate-in fade-in duration-[var(--duet-dur-swap)]";
@@ -194,15 +214,23 @@ function Status({ dictation }: { dictation: Dictation }) {
       </div>
     );
   }
-  const message =
-    state.phase === "transcribing"
-      ? "Writing it down…"
+  const message = state.notice
+    ? state.notice
+    : state.phase === "transcribing"
+      ? "Writing what you said…"
       : state.phase === "recording"
-        ? "I'm listening, just start talking"
+        ? heard
+          ? "Listening… I'll stop when you pause"
+          : "I'm listening, just start talking"
         : "Waiting for microphone permission…";
   // The live region stays put and only its words change, so a screen reader hears each change.
   return (
-    <div className={cn(pill, "text-duet-ink-2")} role="status">
+    <div
+      aria-atomic="true"
+      aria-live="polite"
+      className={cn(pill, "text-duet-ink-2")}
+      role="status"
+    >
       <span
         className="flex items-center gap-2.5 animate-in fade-in duration-[var(--duet-dur-swap)]"
         key={state.phase}

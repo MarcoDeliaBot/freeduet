@@ -197,7 +197,7 @@ test("while listening the central button is a microphone that stops and sends", 
   stubAnalyser();
   stubDictation({ stream: fakeStream });
   const view = await openSheet();
-  const button = view.getByRole("button", { name: "Stop and send" });
+  const button = view.getByRole("button", { name: "Stop dictation and send" });
   expect(button.querySelector("svg") !== null).toBe(true);
   expect(view.queryByText("Tap the microphone when you're done") !== null).toBe(
     true,
