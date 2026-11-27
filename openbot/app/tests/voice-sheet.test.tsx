@@ -1,5 +1,4 @@
 import { afterAll, afterEach, beforeAll, expect, spyOn, test } from "bun:test";
-import type { ReactNode } from "react";
 import { GlobalRegistrator } from "@happy-dom/global-registrator";
 import {
   act,
@@ -8,10 +7,11 @@ import {
   render,
   waitFor,
 } from "@testing-library/react";
+import type { ReactNode } from "react";
 import { Composer } from "@/components/channels/composer/composer";
+import { ActiveBotProvider, useActiveBot } from "@/lib/copilot/active-bot";
 import { deploymentKeys } from "@/lib/deployment/queries";
 import * as recording from "@/lib/dictation/recording";
-import { ActiveBotProvider, useActiveBot } from "@/lib/copilot/active-bot";
 import { queryClient } from "@/query-client";
 import { settleReactWork } from "./settle-react-work";
 
@@ -150,7 +150,9 @@ test("opening the sheet starts recording", async () => {
   const sheet = await openSheet(view);
   expect(dictation.start).toHaveBeenCalledTimes(1);
   expect(sheet.getAttribute("aria-modal")).toBe("true");
-  expect(view.queryByText("Tap ↑ when you're done") !== null).toBe(true);
+  expect(view.queryByText("Tap the microphone when you're done") !== null).toBe(
+    true,
+  );
   // The sheet carries the recording; the composer under it does not swap in a second set of controls.
   expect(hasButton(view, "Cancel dictation")).toBe(false);
 });
@@ -167,7 +169,7 @@ test("× throws the words away, even once they were being written down", async (
   expect(message(view).textContent).toBe("");
 
   await openSheet(view);
-  fireEvent.click(view.getByRole("button", { name: "Send" }));
+  fireEvent.click(view.getByRole("button", { name: "Stop and send" }));
   await waitFor(() =>
     expect(view.getByRole("status").textContent).toBe("Writing it down…"),
   );
@@ -183,7 +185,7 @@ test("↑ sends the words as the person's message, once", async () => {
   const dictation = stubDictation();
   const { view, sent } = renderChatComposer();
   await openSheet(view);
-  fireEvent.click(view.getByRole("button", { name: "Send" }));
+  fireEvent.click(view.getByRole("button", { name: "Stop and send" }));
   await waitFor(() =>
     expect(view.getByRole("status").textContent).toBe("Writing it down…"),
   );
@@ -207,7 +209,7 @@ test("↑ parks the words behind a turn in flight, through the composer's own qu
     },
   });
   await openSheet(view);
-  fireEvent.click(view.getByRole("button", { name: "Send" }));
+  fireEvent.click(view.getByRole("button", { name: "Stop and send" }));
   await dictation.land();
   await waitFor(() => expect(queued).toEqual([WORDS]));
   expect(sent).toEqual([]);

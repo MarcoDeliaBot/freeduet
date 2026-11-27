@@ -1717,6 +1717,10 @@ export function Composer({
           <VoiceSheet
             canSend={canSendRecording}
             dictation={dictation}
+            onType={() => {
+              editAfterSheet.current = true;
+              dictation.session.cancel();
+            }}
             open={voiceSheet}
           />
         ) : null}

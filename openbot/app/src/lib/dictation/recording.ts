@@ -12,6 +12,11 @@ export interface Recording {
   cancel(): void;
 }
 
+/** The recording held no words. Its message is meant to be shown as it is, or kept quiet when the person only wanted to type. */
+export class NoSpeechError extends Error {
+  override name = "NoSpeechError";
+}
+
 export function recordingSupported(): boolean {
   return (
     typeof MediaRecorder !== "undefined" &&
@@ -172,7 +177,7 @@ export async function transcribeRecording(
     typeof result.text !== "string" ||
     !result.text.trim()
   ) {
-    throw new Error("No speech was detected. Try recording again.");
+    throw new NoSpeechError("No speech was detected. Try recording again.");
   }
   return result.text.trim();
 }
