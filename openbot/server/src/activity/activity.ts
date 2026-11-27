@@ -81,7 +81,7 @@ export type BotAttention = {
   approvals: number;
   handoffs: number;
   unread: number;
-  /** D171: the stalled hand-offs behind `handoffs`, newest first, at most five. */
+  /** D171: the stalled hand-offs behind `handoffs`, newest first. */
   stalled: StalledHandoff[];
   /** D171: the conversation with the newest unread reply, so the row can open it. */
   unreadChannelId: string | null;
@@ -636,14 +636,14 @@ export function createActivityStore(database: Database) {
         if (!work.fromBotId) continue;
         const mine = entry(work.fromBotId);
         mine.handoffs += 1;
-        if (mine.stalled.length < 5)
-          mine.stalled.push({
-            id: row.key,
-            toName: work.toName ?? work.toBotId ?? "The Bot",
-            task: clip(work.task, 120) ?? "A delegated task",
-            reason: plainStalledReason(row.lastError),
-            channelId: stalledChannels.get(work.threadId ?? "") ?? null,
-          });
+        // No cap: the list is the same set the badge counts, so the two cannot disagree.
+        mine.stalled.push({
+          id: row.key,
+          toName: work.toName ?? work.toBotId ?? "The Bot",
+          task: clip(work.task, 120) ?? "A delegated task",
+          reason: plainStalledReason(row.lastError),
+          channelId: stalledChannels.get(work.threadId ?? "") ?? null,
+        });
       }
 
       // The same rule as the roster's unread dot: a Bot spoke after this person last looked.

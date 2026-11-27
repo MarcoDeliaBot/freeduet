@@ -739,7 +739,8 @@ describe("a stalled hand-off (D171)", () => {
     await database.insert(workItems).values(
       hop("timeout", {
         attempts: 5,
-        lastError: "AbortError: the operation timed out after 300000 ms",
+        lastError:
+          "kai did not finish within 300s after 7 events, the last tool_result",
       }),
     );
     try {
@@ -827,6 +828,24 @@ describe("a stalled hand-off (D171)", () => {
       await database
         .delete(workItems)
         .where(sql`${workItems.key} like ${`${prefix}-d171-%`}`);
+    }
+  });
+
+  test("the stalled rows are the same set the badge counts, however many", async () => {
+    const names = Array.from({ length: 7 }, (_, i) => `many${i}`);
+    await database
+      .insert(workItems)
+      .values(names.map((name) => hop(name, { attempts: 5 })));
+    try {
+      const mine = (await activity.attention(owner)).find(
+        (e) => e.agentId === bot,
+      );
+      expect(mine?.stalled.length).toBe(mine?.handoffs ?? -1);
+      expect(mine?.stalled.length).toBeGreaterThanOrEqual(7);
+    } finally {
+      await database
+        .delete(workItems)
+        .where(sql`${workItems.key} like ${`${prefix}-d171-many%`}`);
     }
   });
 
