@@ -7,6 +7,24 @@ import type { EN } from "./en";
  * Not yet checked by a person who reads German.
  */
 export const de: Catalog<typeof EN> = {
+  "sign.title": "Bei {product} anmelden",
+  "sign.continueWith": "Weiter mit {provider}",
+  "sign.opening": "{provider} wird geöffnet…",
+  "sign.openError":
+    "Die Anmeldung mit {provider} konnte nicht geöffnet werden. Versuch es erneut.",
+  "sign.ssoRequired":
+    "Deine Organisation verlangt, dass du dich mit deinem Firmenkonto anmeldest.",
+  "sign.pairLead":
+    "Dieser Browser ist noch nicht mit {product} gekoppelt. Führe auf dem Computer, auf dem die App läuft,",
+  "sign.pairTail": " aus: {product} öffnet sich hier, einsatzbereit.",
+  "sign.notSetUp":
+    "Die Anmeldung ist noch nicht eingerichtet. Ein Administrator muss sie zuerst einrichten.",
+  "sign.or": "oder",
+  "sign.emailPlaceholder": "du@firma.com",
+  "sign.openingCompany": "Wird geöffnet…",
+  "sign.continueCompany": "Weiter mit deinem Firmenkonto",
+  "sign.adminSignIn": "Administrator-Anmeldung",
+  "sign.noCompany": "Für diese Adresse ist keine Firmenanmeldung eingerichtet.",
   "shell.menu": "Menü",
   "shell.everything": "Alles",
   "shell.everythingLine": "Der gesamte Chat-Kontext aus allen Kanälen",

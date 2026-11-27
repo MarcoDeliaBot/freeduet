@@ -11,6 +11,22 @@ import type { EN } from "./en";
  * text. Not yet checked by a person who reads Turkish.
  */
 export const tr: Catalog<typeof EN> = {
+  "sign.title": "Giriş yap: {product}",
+  "sign.continueWith": "{provider} ile devam et",
+  "sign.opening": "{provider} açılıyor…",
+  "sign.openError": "{provider} girişi açılamadı. Tekrar dene.",
+  "sign.ssoRequired": "Kuruluşun, şirket hesabınla giriş yapmanı istiyor.",
+  "sign.pairLead":
+    "Bu tarayıcı henüz {product} ile eşleştirilmedi. Uygulamanın çalıştığı bilgisayarda",
+  "sign.pairTail":
+    " komutunu çalıştır: {product} burada açılır, hemen kullanıma hazır olur.",
+  "sign.notSetUp": "Giriş henüz ayarlanmadı. Önce bir yönetici ayarlamalı.",
+  "sign.or": "veya",
+  "sign.emailPlaceholder": "sen@sirket.com",
+  "sign.openingCompany": "Açılıyor…",
+  "sign.continueCompany": "Şirket hesabınla devam et",
+  "sign.adminSignIn": "Yönetici girişi",
+  "sign.noCompany": "Bu adres için şirket girişi ayarlanmamış.",
   "shell.menu": "Menü",
   "shell.everything": "Her şey",
   "shell.everythingLine": "Her kanaldaki tüm sohbet bağlamı",

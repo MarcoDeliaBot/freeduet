@@ -8,6 +8,24 @@ import type { EN } from "./en";
  * Not yet checked by a person who reads Polish; approval labels need the native review D50 asks for.
  */
 export const pl: Catalog<typeof EN> = {
+  "sign.title": "Zaloguj się do {product}",
+  "sign.continueWith": "Kontynuuj z {provider}",
+  "sign.opening": "Otwieranie {provider}…",
+  "sign.openError":
+    "Nie udało się otworzyć logowania przez {provider}. Spróbuj ponownie.",
+  "sign.ssoRequired": "Twoja organizacja wymaga logowania na konto firmowe.",
+  "sign.pairLead":
+    "Ta przeglądarka nie jest jeszcze sparowana z {product}. Na komputerze, na którym działa aplikacja, uruchom",
+  "sign.pairTail": ": {product} otworzy się tutaj, gotowy do użycia.",
+  "sign.notSetUp":
+    "Logowanie nie jest jeszcze skonfigurowane. Najpierw musi je ustawić administrator.",
+  "sign.or": "lub",
+  "sign.emailPlaceholder": "ty@firma.com",
+  "sign.openingCompany": "Otwieranie…",
+  "sign.continueCompany": "Kontynuuj z kontem firmowym",
+  "sign.adminSignIn": "Logowanie administratora",
+  "sign.noCompany":
+    "Dla tego adresu nie jest skonfigurowane logowanie firmowe.",
   "shell.menu": "Menu",
   "shell.everything": "Wszystko",
   "shell.everythingLine": "Cały kontekst czatów we wszystkich kanałach",

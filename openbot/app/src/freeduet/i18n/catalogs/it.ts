@@ -7,6 +7,25 @@ import type { EN } from "./en";
  * "Bot" is).
  */
 export const it: Catalog<typeof EN> = {
+  "sign.title": "Accedi a {product}",
+  "sign.continueWith": "Continua con {provider}",
+  "sign.opening": "Apro {provider}…",
+  "sign.openError":
+    "Non è stato possibile aprire l'accesso con {provider}. Riprova.",
+  "sign.ssoRequired":
+    "La tua organizzazione richiede di accedere con l'account aziendale.",
+  "sign.pairLead":
+    "Questo browser non è ancora abbinato a {product}. Sul computer su cui gira, esegui",
+  "sign.pairTail": ": si apre {product} qui, pronto all'uso.",
+  "sign.notSetUp":
+    "L'accesso non è ancora configurato. Un amministratore deve configurarlo prima.",
+  "sign.or": "oppure",
+  "sign.emailPlaceholder": "tu@azienda.com",
+  "sign.openingCompany": "Apro…",
+  "sign.continueCompany": "Continua con l'account aziendale",
+  "sign.adminSignIn": "Accesso amministratore",
+  "sign.noCompany":
+    "Per quell'indirizzo non è configurato un accesso aziendale.",
   "shell.menu": "Menu",
   "shell.everything": "Tutto",
   "shell.everythingLine": "Tutto il contesto delle chat, in ogni canale",
