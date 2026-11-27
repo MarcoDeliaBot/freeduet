@@ -681,4 +681,185 @@ export const it: Catalog<typeof EN> = {
   "bot.page.setupPurpose": "Chi è questo Bot, chi può trovarlo e dove gira.",
   "bot.page.sharingPurpose":
     "Chi altro può usare questo Bot. Le conversazioni di ogni persona con lui sono private.",
+  // Stage 2e (D181): the Bot sub-pages' contents, the summaries and the time phrases.
+  "bot.choose": "Scegli un Bot",
+  "memory.addSource": "Aggiungi fonte",
+  "memory.title": "Fonti delle app",
+  "memory.description":
+    "Qui compaiono le app collegate che questo Bot può leggere, e puoi aggiungerne altre. Le fonti si aggiornano ogni 15 minuti. Solo questo Bot vede ciò che contengono.",
+  "memory.empty":
+    "Non c'è ancora nessuna fonte. Aggiungine una con Aggiungi fonte.",
+  "memory.upToDate": "Aggiornata",
+  "memory.off": "Disattivata",
+  "memory.lastRead": "Ultima lettura {when}",
+  "memory.syncNow": "Sincronizza ora",
+  "memory.readNamed": "Leggi {name}",
+  "memory.addTitle": "Aggiungi una fonte",
+  "memory.addDescription":
+    "{product} la legge subito, poi ogni 15 minuti finché è attiva.",
+  "memory.enterNumber": "Inserisci un numero per {name}.",
+  "memory.cantShow":
+    "Questa ha impostazioni che {product} non sa mostrare. Scegline un'altra.",
+  "memory.checkSettings": "Controlla le impostazioni della fonte.",
+  "memory.whatToRead": "Cosa leggere",
+  "memory.chooseWhat": "Scegli cosa leggere",
+  "memory.sourceName": "Nome della fonte",
+  "memory.chooseValue": "Scegli un valore",
+  "memory.reading": "Leggo la fonte…",
+  "memory.addAndSync": "Aggiungi e sincronizza la fonte",
+  "suggestions.everyHour": "Ogni ora",
+  "suggestions.every4Hours": "Ogni 4 ore",
+  "suggestions.twiceDay": "Due volte al giorno",
+  "suggestions.onceDay": "Una volta al giorno",
+  "suggestions.everyMinutes": {
+    one: "Ogni {count} minuto",
+    other: "Ogni {count} minuti",
+  },
+  "suggestions.yourBot": "Il tuo Bot",
+  "suggestions.title": "Passi successivi suggeriti",
+  "suggestions.from": "Da {app}",
+  "suggestions.connectedApp": "un'app collegata",
+  "suggestions.openRecord": "Apri la scheda",
+  "suggestions.startTask": "Avvia come attività",
+  "suggestions.empty":
+    "Nessun suggerimento per ora. I Bot con la ricerca in secondo piano attiva suggeriranno qui i passi successivi.",
+  "suggestions.turnOnResearch": "Attiva la ricerca",
+  "suggestions.researchDescription":
+    "Spenta finché non la attivi per questo Bot, a meno che il tuo amministratore non l'abbia attivata per tutti. Quando è attiva, ogni quattro ore guarda nelle app che può già leggere, prepara ricordi da rivedere con te e suggerisce i passi successivi. Può solo leggere: non può inviare messaggi, cambiare nulla in un'app, né usare un browser o un computer. Se la disattivi o la rimuovi, resta così.",
+  "suggestions.researchTitle": "Ricerca in secondo piano",
+  "suggestions.researchOff": "La ricerca in secondo piano è spenta.",
+  "suggestions.turnOnDialog": "Attiva la ricerca in secondo piano",
+  "suggestions.turnOnDescription":
+    "Legge a orari prestabiliti e consegna i suggerimenti in un canale in cui si trova.",
+  "suggestions.deliverTo": "Consegna i suggerimenti a",
+  "suggestions.chooseChannel": "Scegli un canale",
+  "suggestions.howOften": "Con che frequenza",
+  "suggestions.focus": "Cosa cercare (facoltativo)",
+  "suggestions.off": "Spenta",
+  "suggestions.researchingNow": "Ricerca in corso",
+  "suggestions.lastRan": "Ultima esecuzione {when}",
+  "suggestions.turnOff": "Disattiva",
+  "reaching.linkSlack": "Collega Slack",
+  "reaching.linkTeams": "Collega Microsoft Teams",
+  "reaching.connectPhone": "Collega un telefono",
+  "reaching.sumSlack": "Continua una conversazione da Slack.",
+  "reaching.sumTeams": "Continua una conversazione da Microsoft Teams.",
+  "reaching.sumSms": "Continua una conversazione con un messaggio di testo.",
+  "reaching.codeOnWay":
+    "Un codice di verifica è in arrivo. Inseriscilo per finire.",
+  "reaching.linkReady":
+    "Il tuo codice di collegamento è pronto da inviare. Aprilo per rivederlo.",
+  "reaching.smsNotSet":
+    "I messaggi di testo non sono ancora configurati. Un amministratore deve attivarli prima.",
+  "reaching.notSet":
+    "Non ancora configurato. Un amministratore deve attivare prima Slack e Teams.",
+  "reaching.pointerBefore":
+    "I tuoi dispositivi, le consegne recenti e dove arriva ogni tipo di aggiornamento sono in",
+  "reaching.connected": "Destinazioni collegate",
+  "reaching.noDestinations": "Nessuna destinazione collegata.",
+  "reaching.optedOut": "Hai inviato STOP. Invia START per riprendere.",
+  "reaching.disconnect": "Scollega",
+  "reaching.channelNote":
+    "In un canale Slack o Teams che altri possono leggere, il Bot ti risponde in un messaggio diretto.",
+  "reaching.connectTitle": "Collega una conversazione",
+  "reaching.oneAtATime":
+    "Ogni account o numero di telefono funziona con una conversazione alla volta. Collegarlo qui lo sposta da quella a cui è collegato ora.",
+  "reaching.conversation": "Conversazione",
+  "reaching.chooseConversation": "Scegli una conversazione",
+  "reaching.loadMore": "Carica altre conversazioni",
+  "reaching.phoneNumber": "Numero di telefono",
+  "reaching.sendCode": "Invia il codice di verifica",
+  "reaching.verificationCode": "Codice di verifica",
+  "reaching.confirmPhone": "Conferma il telefono",
+  "reaching.linkExpires": {
+    one: "Invia questo messaggio all'app {product} su {platform} entro {count} minuto. Collega quell'account a questa conversazione e a questo Bot.",
+    other:
+      "Invia questo messaggio all'app {product} su {platform} entro {count} minuti. Collega quell'account a questa conversazione e a questo Bot.",
+  },
+  "responsibilities.new": "Nuova responsabilità",
+  "responsibilities.title": "Obiettivi",
+  "responsibilities.empty":
+    "Non hai ancora responsabilità. Aggiungine una con Nuova responsabilità.",
+  "responsibilities.emptyBot":
+    "Questo Bot non ha ancora responsabilità. Aggiungine una con Nuova responsabilità.",
+  "routines.neverRun": "Non ancora eseguita",
+  "routines.running": "In esecuzione…",
+  "routines.missed": "Mancata {when}",
+  "routines.failed": "Fallita {when}",
+  "routines.skipped": "Saltata {when}",
+  "routines.ran": "Eseguita {when}",
+  "routines.finished": "Terminata {when}",
+  "routines.noRuns": "Nessuna esecuzione ancora.",
+  "routines.runNow": "Esegui ora",
+  "routines.triggered": "Attivata",
+  "routines.scheduled": "Pianificata",
+  "routines.sweepChecked":
+    "{product} le ha controllate l'ultima volta {when}. Nessuna partirà finché il servizio non riprende. Chiedi a un amministratore se succede ancora.",
+  "routines.sweepNever":
+    "{product} non ha ancora avviato le routine, quindi nessuna di queste partirà. Chiedi a un amministratore di configurarlo.",
+  "routines.notRunning": "Le routine non sono in esecuzione.",
+  "routines.loadError":
+    "Impossibile caricare le tue routine. Ricarica la pagina.",
+  "routines.emptyBot":
+    'Questo Bot non ha ancora routine. Chiedigli qualcosa come "ogni giorno feriale alle 9, mandami…" e comparirà qui.',
+  "routines.empty":
+    'Non hai ancora routine. Chiedi a un Bot qualcosa come "ogni giorno feriale alle 9, mandami…" e comparirà qui.',
+  "routines.enableAria": "Attiva la routine pianificata {schedule}",
+  "routines.channelGone": "Conversazione eliminata",
+  "routines.untitledChannel": "Conversazione senza titolo",
+  "routines.due": "In ritardo",
+  "routines.next": "Prossima: {when}",
+  "routines.runNowTitle":
+    "La esegue adesso, davvero. Il Bot fa il lavoro e pubblica nella conversazione.",
+  "routines.pausedTurnOn": "Questa routine è in pausa. Attivala prima.",
+  "routines.runNowAria": "Esegui adesso la routine pianificata {schedule}",
+  "routines.historyAria":
+    "Cronologia delle esecuzioni della routine pianificata {schedule}",
+  "routines.history": "Cronologia",
+  "routines.deleteAria": "Elimina la routine pianificata {schedule}",
+  "routines.deleteTitle": 'Eliminare "{schedule}"?',
+  "routines.deleteDescription":
+    "Questa routine si ferma per sempre. Non puoi annullare l'operazione.",
+  "routines.week": "Settimana",
+  "routines.nextRuns": "Prossime esecuzioni",
+  "routines.viewAria": "Vista",
+  "summary.nothingGranted": "Niente concesso",
+  "summary.skills": {
+    one: "{count} competenza",
+    other: "{count} competenze",
+  },
+  "summary.apps": {
+    one: "{count} app",
+    other: "{count} app",
+  },
+  "summary.everyonePublic": "Tutti (pubblico)",
+  "summary.notShared": "Non condiviso",
+  "summary.specificPeople": "Persone e gruppi specifici",
+  "summary.onlyIn": "Solo in {product}",
+  "summary.nothingConnected": "Niente collegato",
+  "summary.sources": {
+    one: "{count} fonte",
+    other: "{count} fonti",
+  },
+  "summary.researchOn": "Ricerca in secondo piano attiva",
+  "summary.researchOnAfter": "ricerca in secondo piano attiva",
+  "time.justNow": "poco fa",
+  "time.minutesAgo": {
+    one: "{count} min fa",
+    other: "{count} min fa",
+  },
+  "time.hoursAgo": {
+    one: "{count} h fa",
+    other: "{count} h fa",
+  },
+  "time.yesterday": "ieri",
+  "time.daysAgo": {
+    one: "{count} giorno fa",
+    other: "{count} giorni fa",
+  },
+  "time.weeksAgo": {
+    one: "{count} sett. fa",
+    other: "{count} sett. fa",
+  },
+  "time.recently": "di recente",
 };
