@@ -70,7 +70,13 @@ function runnerFor(delivered: HandoffWork[], messages: string[], fail?: Error) {
     sign: () => "signed",
     auditStore: silent,
     delivery: {
-      deliver: async ({ work, message }) => {
+      deliver: async ({
+        work,
+        message,
+      }: {
+        work: HandoffWork;
+        message: string;
+      }) => {
         delivered.push(work);
         messages.push(message);
         if (fail) throw fail;

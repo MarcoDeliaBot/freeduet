@@ -1,5 +1,7 @@
 import { useEffect } from "react";
-import type { VisibleChatItem } from "@/components/channels/chat-messages";
+
+/** What this needs of a transcript item: its kind, its id and, for text, who said it. */
+export type UnreadItem = { kind: string; id: string; role?: string };
 
 /**
  * D172: "Read newest" opens the conversation at the first message the person has not read, not at
@@ -11,9 +13,7 @@ import type { VisibleChatItem } from "@/components/channels/chat-messages";
  * theirs at all, the newest message is the target (the scroller's own default, the end).
  */
 export function firstUnreadItemId(
-  items: ReadonlyArray<
-    Pick<VisibleChatItem, "kind" | "id"> & { role?: string }
-  >,
+  items: ReadonlyArray<UnreadItem>,
 ): string | null {
   const lastOwn = items.findLastIndex(
     (item) =>
@@ -52,9 +52,7 @@ export type UnreadScroller = {
  * once per click: the flag is taken only when there are items to land on and the restore has ended.
  */
 export function useFirstUnreadScroll(
-  items: ReadonlyArray<
-    Pick<VisibleChatItem, "kind" | "id"> & { role?: string }
-  >,
+  items: ReadonlyArray<UnreadItem>,
   restoring: boolean,
   scroller: UnreadScroller,
 ): void {

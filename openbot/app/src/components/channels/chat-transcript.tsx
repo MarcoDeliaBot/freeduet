@@ -70,7 +70,10 @@ import {
   readCheckIn,
 } from "@/lib/channels/check-in";
 import { readFirstDay } from "@/lib/channels/first-day";
-import { useFirstUnreadScroll } from "@/lib/channels/first-unread";
+import {
+  type UnreadItem,
+  useFirstUnreadScroll,
+} from "@/lib/channels/first-unread";
 import { readMorningBrief } from "@/lib/channels/morning-brief";
 import { readResponsibilityTurn } from "@/lib/channels/responsibility-turn";
 import { readFiring } from "@/lib/channels/routine-firing";
@@ -104,7 +107,6 @@ import {
   repliesLast,
   type SentAttachment,
   toVisibleChatItems,
-  type VisibleChatItem,
 } from "./chat-messages";
 import { splitChatOrigin } from "./chat-origin";
 import type { QueuedMessage } from "./composer";
@@ -508,9 +510,7 @@ function ScrollToFirstUnread({
   items,
   restoring,
 }: {
-  items: ReadonlyArray<
-    Pick<VisibleChatItem, "kind" | "id"> & { role?: string }
-  >;
+  items: ReadonlyArray<UnreadItem>;
   restoring: boolean;
 }) {
   const { scrollToEnd, scrollToMessage } = useMessageScroller();
