@@ -20,6 +20,8 @@ export type WorkHandoff = {
   title: string;
   lastStep: { label: string; at: string } | null;
   lastEventAt: string | null;
+  /** D172: the hop gave up and waits on the person; the plain reason, as the Bots page says it. */
+  stalled?: { reason: string } | null;
 };
 
 export type WorkMember = {
@@ -78,6 +80,7 @@ export function elapsedText(sinceIso: string, now: number): string {
 /** The card's one line, in the order the maintainer asked: member, how long, last step. */
 export function cardLine(hop: WorkHandoff, now: number): string {
   const who = hop.toName;
+  if (hop.stalled) return `${who} · did not finish`;
   switch (hop.state) {
     case "done":
       return `${who} · done`;

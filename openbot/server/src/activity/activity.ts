@@ -502,6 +502,9 @@ export function createActivityStore(database: Database) {
           runAt: sql`now()`,
           lastError: null,
           updatedAt: sql`now()`,
+          // D172: only the count of the person's retries is added, so the colleague is told this is another
+          // try. The task and the person's `request` stay as they were, byte for byte.
+          payload: sql`${workItems.payload} || jsonb_build_object('retries', coalesce((${workItems.payload}->>'retries')::int, 0) + 1)`,
         })
         .where(
           and(
@@ -520,6 +523,46 @@ export function createActivityStore(database: Database) {
       await database.execute(
         sql`select pg_notify(${WORK_OFFERED_TOPIC}, ${HANDOFF_KIND})`,
       );
+      return {
+        key: row.key,
+        toBotId: (row.payload as HandoffPayload).toBotId ?? null,
+      };
+    },
+
+    /**
+     * D172: the person turns a stalled or capped hand-off away. Finished for them, as "Stopped by the
+     * person", so it leaves "Needs you", the badge and the work card. The same scoping and atomic rule as the
+     * retry: only the person's own hop that ran out of attempts and is not running now matches; anything
+     * else comes back null.
+     */
+    async dismissHandoff(
+      ownerUserId: string,
+      agentId: string,
+      key: string,
+    ): Promise<{ key: string; toBotId: string | null } | null> {
+      const [row] = await database
+        .update(workItems)
+        .set({
+          finishedAt: sql`now()`,
+          claimedBy: null,
+          leaseUntil: null,
+          lastError: "Stopped by the person",
+          updatedAt: sql`now()`,
+        })
+        .where(
+          and(
+            handoffsFor(ownerUserId, agentId),
+            eq(workItems.key, key),
+            isNull(workItems.finishedAt),
+            gte(workItems.attempts, DEFAULT_MAX_ATTEMPTS),
+            or(
+              isNull(workItems.leaseUntil),
+              sql`${workItems.leaseUntil} <= now()`,
+            ),
+          ),
+        )
+        .returning({ key: workItems.key, payload: workItems.payload });
+      if (!row) return null;
       return {
         key: row.key,
         toBotId: (row.payload as HandoffPayload).toBotId ?? null,

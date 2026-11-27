@@ -30,6 +30,7 @@ import {
   type BotAttention,
   botAttentionQueryOptions,
 } from "@/lib/bot-lifecycle/queries";
+import { wantFirstUnread } from "@/lib/channels/first-unread";
 
 /**
  * Every Bot the person can reach, in the one place they are listed: pinned first, then their own,
@@ -235,6 +236,7 @@ function RosterRows({
                   render={(props) => (
                     <Link
                       {...props}
+                      onClick={() => wantFirstUnread()}
                       params={{ channelId: unreadChannel }}
                       to="/channel/$channelId"
                     />

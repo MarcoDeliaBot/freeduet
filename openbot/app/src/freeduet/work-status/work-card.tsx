@@ -1,7 +1,10 @@
 import { useCopilotChatConfiguration } from "@copilotkit/react-core/v2";
+import { IconAlertTriangle, IconMessage } from "@tabler/icons-react";
 import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
+import { StalledActions } from "@/components/bot-profile/stalled-handoff";
+import { Button } from "@/components/ui/button";
 import { memberTarget } from "@/freeduet/wide/team";
 import { primaryBot } from "@/lib/agents/primary-bot";
 import { agentListQueryOptions } from "@/lib/agents/queries";
@@ -67,6 +70,54 @@ export function WorkCard({
       {target ? <span className="fd-ws-open">Open</span> : null}
     </>
   );
+  if (hop.stalled) {
+    // D172: a hand-off that gave up has no live line to read; it says why and offers the same buttons as
+    // the Bots page (one component), with "Open conversation" going to the member that was asked.
+    const open = target ? (
+      <Button
+        render={(props) =>
+          target.to === "/" ? (
+            <Link {...props} to="/" />
+          ) : target.to === "/channel/$channelId" ? (
+            <Link
+              {...props}
+              params={{ channelId: target.channelId }}
+              to="/channel/$channelId"
+            />
+          ) : (
+            <Link
+              {...props}
+              search={{ agent: target.agent }}
+              to="/channel/new"
+            />
+          )
+        }
+        size="sm"
+        variant="ghost"
+      >
+        <IconMessage />
+        Open conversation
+      </Button>
+    ) : null;
+    return (
+      <div
+        className="fd-ws fd-ws-card flex flex-wrap items-center gap-3"
+        data-handoff={hop.id}
+        data-state={hop.state}
+        data-testid="work-card"
+      >
+        <IconAlertTriangle aria-hidden className="size-4 text-duet-accent" />
+        <span className="fd-ws-text min-w-0 flex-1">
+          <span aria-live="polite">{line}</span>
+          <span className="fd-ws-title">{hop.title}</span>
+          <span className="fd-ws-title" data-testid="work-card-reason">
+            Why: {hop.stalled.reason}.
+          </span>
+        </span>
+        <StalledActions agentId={hop.fromBotId} id={hop.id} open={open} />
+      </div>
+    );
+  }
   const common = {
     className: "fd-ws fd-ws-card",
     "data-state": hop.state,

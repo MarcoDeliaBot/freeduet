@@ -91,6 +91,20 @@ export function retryHandoffMutationOptions(queryClient: QueryClient) {
   });
 }
 
+/** D172: "Dismiss" on a stalled hand-off: the server finishes it for the person, so it leaves every list. */
+export function dismissHandoffMutationOptions(queryClient: QueryClient) {
+  return mutationOptions({
+    mutationFn: async (variables: { agentId: string; id: string }) => {
+      await client(`${botPath(variables.agentId)}/activity/handoffs/dismiss`, {
+        method: "POST",
+        body: { id: variables.id },
+        fallback: "Could not dismiss that",
+      });
+    },
+    onSuccess: () => invalidateLifecycle(queryClient),
+  });
+}
+
 export function cancelFollowUpMutationOptions(queryClient: QueryClient) {
   return mutationOptions({
     mutationFn: async (variables: { agentId: string; id: string }) => {
