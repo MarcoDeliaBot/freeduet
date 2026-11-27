@@ -55,7 +55,7 @@ export function WorkCard({
   const target = member
     ? memberTarget(member, primaryBot(agents.data)?.id, roster.data)
     : null;
-  const now = fixedNow ?? (tick, Date.now());
+  const now = fixedNow ?? Date.now();
   const line = cardLine(hop, now);
   const body = (
     <>
