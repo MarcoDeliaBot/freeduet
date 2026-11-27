@@ -1,0 +1,118 @@
+/*
+ * The settings home, in the light design approved on 27 November 2026 (D154). The tokens are set here
+ * and scoped to `.fdh`; the dashboard (stage 1) carries the same values in its own file, and a later
+ * change extracts both into one shared file.
+ */
+.fdh {
+  --fdh-bg: #f6f7fb;
+  --fdh-card: #ffffff;
+  --fdh-line: #e2e8f0;
+  --fdh-ink: #1e293b;
+  --fdh-ink-2: #475569;
+  --fdh-ink-3: #64748b;
+  --fdh-accent: #6430ab;
+  --fdh-accent-ink: #4c1d95;
+  --fdh-accent-soft: #f0ebfa;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  padding: 1rem;
+  border-radius: 1rem;
+  background: var(--fdh-bg);
+  color: var(--fdh-ink);
+  font-family: "Plus Jakarta Sans", system-ui, sans-serif;
+  font-size: 0.875rem;
+}
+.fdh a {
+  text-decoration: none;
+  color: inherit;
+}
+.fdh-engines {
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+  padding: 1rem 1.1rem;
+  border: 1px solid #d9c9f0;
+  border-radius: 0.75rem;
+  background: var(--fdh-accent-soft);
+  color: var(--fdh-accent-ink);
+  min-height: 3rem;
+}
+.fdh-engines:hover {
+  border-color: var(--fdh-accent);
+}
+.fdh-engines-copy {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 0.15rem;
+  min-width: 0;
+}
+.fdh-engines-copy strong {
+  font-size: 1rem;
+  font-weight: 700;
+}
+.fdh-engines-copy small {
+  color: var(--fdh-ink-2);
+  font-size: 0.8125rem;
+}
+.fdh-groups {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 20rem), 1fr));
+  gap: 1rem;
+}
+.fdh-group {
+  padding: 0.6rem;
+  border: 1px solid var(--fdh-line);
+  border-radius: 0.75rem;
+  background: var(--fdh-card);
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+}
+.fdh-title {
+  margin: 0.4rem 0.5rem 0.4rem;
+  color: var(--fdh-ink-3);
+  font-family: "JetBrains Mono", ui-monospace, monospace;
+  font-size: 0.6875rem;
+  font-weight: 400;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+.fdh-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  min-height: 2.75rem;
+  padding: 0.55rem 0.6rem;
+  border-radius: 0.5rem;
+  color: #334155;
+}
+.fdh-row:hover {
+  background: var(--fdh-accent-soft);
+  color: var(--fdh-accent-ink);
+}
+.fdh-row-copy {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+}
+.fdh-row-copy b {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 600;
+}
+.fdh-row-copy small {
+  color: var(--fdh-ink-3);
+  font-size: 0.75rem;
+}
+.fdh-icon {
+  display: inline-grid;
+  flex: none;
+  place-items: center;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 0.5rem;
+  background: var(--fdh-accent-soft);
+  color: var(--fdh-accent);
+}

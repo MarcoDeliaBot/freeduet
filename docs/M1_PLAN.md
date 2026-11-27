@@ -2596,3 +2596,13 @@ New case iris-30 in `evals/team/cases.yaml`: a direct request for a playable pas
 **Limit.** Kai's text goes from 9,995 to 10,187 characters of author text (by the reader's measure from 9,997 to about 10,189), over the 10,000 of the imported-member measure, so `gamedev` joins the pinned list in `freeduet-team-file.test.ts` (the list is the record of who does not fit). Iris is 19,560 of the 30,000 light cap (D160).
 
 **Built so far.** The prompt sentences and pins in `freeduet-package.test.ts` (describe "D164"; they fail on the prompts of main). Not verified: not run live. Run kai-5, kai-6 and iris-30 (three runs each) and the neighbours kai-1 to kai-4, iris-31.
+
+## 120. Settings, stage 2 (D154)
+
+D154 (maintainer, 27 November 2026): one simple, coherent design for all settings, Engines one click away, in the light design approved the same day. Stage 1 is the dashboard (its own pull request); this stage is the settings home.
+
+**Built so far.** `openbot/app/src/freeduet/settings-home.tsx` and `settings-home.css`: a home in the light design (Plus Jakarta Sans, accent #6430AB, background #F6F7FB) with an Engines banner on top (administrator only, `/admin/engines`) and five groups, each row a link to an existing page: Team (Bots, Capabilities), Connections (accounts, apps and mail rules; setup checklist), Safety (approval rules and Full access; passwords), Jobs (routines; notifications), System (Admin, administrator only). It replaces `SettingsDirectory` in the Workspace tab of `/settings` (one touch, `docs/UPSTREAM_TOUCHES.md`). No route is added, moved or removed; `/settings/memory` still redirects. Test: `openbot/app/tests/settings-home.test.tsx` (every group, links, Engines link, a non-administrator sees neither Engines nor Admin, every row of the old list is still reachable).
+
+**Safety.** The home only links. Approval rules, Full access and credentials stay on their own guarded pages; nothing that a setting does changed.
+
+**Not done.** The inner pages keep their old look (stages after this one). The Preferences and Devices & info tabs of `/settings` are tabs, not routes, so the home has no rows for them. The tokens are in `settings-home.css` because the dashboard's file was not on main yet; one shared file is a later step. The Engines link on the dashboard belongs to stage 1. The old `settings-directory.tsx` is now unused by FreeDuet's package and kept for the moment. Not run live; the PNG previews use mocked data.
