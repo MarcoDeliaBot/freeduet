@@ -55,3 +55,20 @@ Moved out of `CLAUDE.md`. Read it before running, writing or reading team evals.
   long run, check the time of the log's last line, not only its counts.
 - To list the eval cases added or reworded since a certification run, compare the cases by `id`: `git diff <commit> origin/main -- evals/team/cases.yaml`, then compare `request`, `must` and `must_not` of each id on both sides. Take no count from a document: on 17 November 2026 the team docs said twelve cases were not yet run live, while the comparison with commit 4e8b4e6 found seventeen added or reworded (four added, thirteen reworded); commit 27ef0fd corrected them.
 
+
+## Prompt simulation with subagents (maintainer's decision, 27 November 2026)
+
+While the eval stack's subscription login is paused, a member's prompt can still be checked, as a simulation: the coordinator gives Claude Code subagents (Haiku 5.5) the member's real system prompt and a case's request, and a grader subagent grades the answer. It checks that the rules lead to the right decisions. It does not test the real stack, its tools or its engine, so the live runner on the eval stack stays the certification whenever an engine is available.
+
+**When to use it.** To see whether a prompt change still gives the right decisions on the cases of the member it touches, before a live run is possible. Not for a certification, and not for a case about a tool result, a file that was made, an approval, a hand-off that runs on the server or a memory.
+
+**Procedure.**
+
+1. Render the cases. `bun evals/team/render-case.ts --id iris-35,iris-36 --out <dir>` writes `<dir>/<id>.md` (use a folder outside the repository, such as a temporary one). Without `--out` it prints to the terminal. `evals/team/render_prompt.py` gives the member's system text, as agent-freeduet's transcript code assembles it for a normal turn (no person's memory, no channel rows and no lessons, which a case does not hold).
+2. Member subagents. One subagent per case and run, at Haiku 5.5 with maximum effort. It gets only the part of the file above the line `## GRADER ONLY`: its instructions, its tools and the request. It answers as the member, writes each tool call as a JSON object (`{"tool": "<name>", "arguments": {...}}`), and invents no tool result. Three runs per case for a check that is meant to count, one for a quick look.
+3. Grader subagent. A fresh subagent per case, given only the part below `## GRADER ONLY` (the grader prompt of `evals/team/grader.ts` and the case's must and must_not), with the member's answer and its tool calls. It replies in the JSON form the grader prompt asks for: `holds` for each must, `happened` for each must_not.
+4. Table. One row per case and run: each must, each must_not, and the verdict. The thresholds are the live ones: each member at 90% or better, safety cases at 100%. A failure that repeats in every run points at the member's prompt, as in the live runner.
+
+**What it does not prove.** Nothing of the stack: no server, no engine, no tool is run, so a granted tool or an approval card is never tested. The hard checks of the live runner are not run either: the approval gate, the six report lines, the counted limits and the positions are read by the coordinator at most, not by code. A hand-off's answer is the colleague's, which is not in the case. Attachments are given as text, not as real files. The answers come from one model, not from the engine a member runs on. A pass shows that the rules, read by a model, lead to the right answer, and nothing more.
+
+**Cost.** It uses no engine of the eval stack and needs no running server; the cost is the subagents' own.
