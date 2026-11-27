@@ -1,10 +1,9 @@
 import { useCopilotChatConfiguration } from "@copilotkit/react-core/v2";
-import { useQuery } from "@tanstack/react-query";
+import { queryOptions, useQuery } from "@tanstack/react-query";
 import { MemberFileCard } from "@/freeduet/member-file-card";
 import { agentListQueryOptions } from "@/lib/agents/queries";
 import { membersNamed } from "@/lib/approvals";
 import { client } from "@/lib/client";
-import { isActive, workStatusQueryOptions } from "./work-status/status";
 
 /*
  * D177: under a hand-off line, the files the colleague offered while it worked, as the same card as
@@ -30,37 +29,32 @@ export type HandoffFileRow = {
 };
 
 const POLL_MS = 5_000;
+/** About thirty minutes of asking after the conversation opens; a hop is over long before that, and a focus asks again. */
+const POLL_TIMES = 360;
 
-export function handoffFilesQueryOptions(
-  threadId: string | undefined,
-  active: boolean,
-) {
-  return {
-    queryKey: ["freeduet", "handoff-files", threadId ?? "", active],
+export function handoffFilesQueryOptions(threadId: string | undefined) {
+  return queryOptions({
+    queryKey: ["freeduet", "handoff-files", threadId ?? ""],
     enabled: threadId !== undefined,
     queryFn: () =>
-      client<{ files: HandoffFileRow[] }>(
+      client<HandoffFileRow[]>(
         `/api/freeduet/handoff-files?thread=${encodeURIComponent(threadId ?? "")}`,
-        "handoff-files",
+        "files",
         { fallback: "Could not read the files." },
       ),
-    refetchInterval: active ? POLL_MS : (false as const),
+    refetchInterval: (query) =>
+      query.state.dataUpdateCount < POLL_TIMES ? POLL_MS : false,
     retry: false,
-  };
+  });
 }
 
 /** The cards of the files the member this line asked offered in this conversation. */
 export function HandoffFiles({ bot }: { bot: string | undefined }) {
   const threadId = useCopilotChatConfiguration()?.threadId;
   const roster = useQuery(agentListQueryOptions());
-  const status = useQuery(workStatusQueryOptions());
-  const files = useQuery(
-    handoffFilesQueryOptions(threadId, isActive(status.data)),
-  );
+  const files = useQuery(handoffFilesQueryOptions(threadId));
   const asked = membersNamed(bot, roster.data);
-  const mine = (files.data?.files ?? []).filter((file) =>
-    asked.has(file.memberBotId),
-  );
+  const mine = (files.data ?? []).filter((file) => asked.has(file.memberBotId));
   if (mine.length === 0) return null;
   return (
     <div className="mt-3 space-y-3" data-handoff-files>

@@ -31,8 +31,8 @@ import { randomUUID } from "node:crypto";
 import { type OfferedFile, savedFileName } from "@openbot/shared/member-file";
 import { and, asc, eq } from "drizzle-orm";
 import { Hono, type MiddlewareHandler } from "hono";
-import { isCommandOrScriptWrite } from "../approvals/policy";
 import type { HandoffWork } from "../agents/handoff-runner";
+import { isCommandOrScriptWrite } from "../approvals/policy";
 import { handoffInitiator } from "../audit";
 import type { AppVariables } from "../auth/guards";
 import type { ComputerGateway } from "../computer/gateway";
@@ -320,7 +320,8 @@ export function createHandoffFileRoutes(
   routes.get("/", async (context) => {
     const thread = context.req.query("thread")?.trim() ?? "";
     context.header("Cache-Control", "private, no-store");
-    if (thread === "" || thread.length > 200) return context.json({ files: [] });
+    if (thread === "" || thread.length > 200)
+      return context.json({ files: [] });
     return context.json({
       files: await store.list(context.var.actor.id, thread),
     });

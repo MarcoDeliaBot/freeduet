@@ -1,6 +1,13 @@
 import { afterAll, beforeAll, describe, expect, test } from "bun:test";
 import { randomUUID } from "node:crypto";
-import { mkdir, mkdtemp, readdir, readFile, rm, writeFile } from "node:fs/promises";
+import {
+  mkdir,
+  mkdtemp,
+  readdir,
+  readFile,
+  rm,
+  writeFile,
+} from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import type { AbstractAgent, BaseEvent } from "@ag-ui/client";
@@ -13,8 +20,8 @@ import { createHandoffDelivery } from "../src/agents/handoff-delivery";
 import type { HandoffWork } from "../src/agents/handoff-runner";
 import { createAgentProfileStore } from "../src/agents/profile-store";
 import { serverTurnAdmission } from "../src/agents/turn-admission";
-import { createRequireUser, createRoleRepository } from "../src/auth/guards";
 import type { AuthService } from "../src/auth/guards";
+import { createRequireUser, createRoleRepository } from "../src/auth/guards";
 import type { ComputerGateway } from "../src/computer/gateway";
 import { createDatabase } from "../src/db/client";
 import {
@@ -110,7 +117,12 @@ function hop(extra: Partial<HandoffWork> = {}): HandoffWork {
 
 /** An agent whose run emits these events through the delivery's own hook, like a member that offered files. */
 function memberThatOffers(
-  offers: Array<{ name?: string; botId?: string; path: string; bytes?: number }>,
+  offers: Array<{
+    name?: string;
+    botId?: string;
+    path: string;
+    bytes?: number;
+  }>,
   words = "Built it.",
 ): AbstractAgent {
   const events: unknown[] = [];
@@ -253,9 +265,9 @@ beforeAll(async () => {
   await database
     .insert(users)
     .values(people.map((id) => ({ id, email: `${id}@example.test` })));
-  await database.insert(userRoles).values(
-    people.map((userId) => ({ userId, role: "user" as const })),
-  );
+  await database
+    .insert(userRoles)
+    .values(people.map((userId) => ({ userId, role: "user" as const })));
   await database.insert(agents).values(
     botIds.map((id) => ({
       id,
@@ -346,7 +358,9 @@ describe("a file offered in a hand-off reaches the person's conversation", () =>
     const work = hop();
     await deliver(work, [{ path: "out/mattoncini-pastello.html" }]);
     await deliver(work, [{ path: "out/mattoncini-pastello.html" }]);
-    const same = (await rows()).filter((row) => row.createdAt && row.path.endsWith("pastello.html"));
+    const same = (await rows()).filter(
+      (row) => row.createdAt && row.path.endsWith("pastello.html"),
+    );
     // The first test's hop plus this one hop, however often it was delivered.
     expect(same).toHaveLength(2);
   });
@@ -359,9 +373,9 @@ describe("the asking Bot reads a copy in its own computer, and nothing else of t
     ]);
     const copy = copyPathFor(kaiId, "mattoncini-pastello.html");
     expect(answer).toContain(`in your own computer at ${copy}`);
-    expect(
-      await readFile(join(dirs.get(irisId) as string, copy), "utf8"),
-    ).toBe(GAME);
+    expect(await readFile(join(dirs.get(irisId) as string, copy), "utf8")).toBe(
+      GAME,
+    );
     const [saved] = await rows(owner, `${threadId}-copy`);
     expect(saved?.copyPath).toBe(copy);
   });
@@ -373,8 +387,16 @@ describe("the asking Bot reads a copy in its own computer, and nothing else of t
       expect(
         await readFile(join(dirs.get(irisId) as string, file), "utf8"),
       ).not.toContain(KAI_SECRET);
-    expect(calls.filter((call) => call.botId === irisId).every((c) => c.op === "write")).toBe(true);
-    expect(calls.filter((call) => call.botId === kaiId).every((c) => c.op === "download")).toBe(true);
+    expect(
+      calls
+        .filter((call) => call.botId === irisId)
+        .every((c) => c.op === "write"),
+    ).toBe(true);
+    expect(
+      calls
+        .filter((call) => call.botId === kaiId)
+        .every((c) => c.op === "download"),
+    ).toBe(true);
     // Only paths the member offered were ever asked of its computer.
     const asked = new Set(
       calls.filter((call) => call.botId === kaiId).map((call) => call.path),

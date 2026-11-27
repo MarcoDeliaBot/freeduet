@@ -41,7 +41,10 @@ export const handoffFileOffers = pgTable(
       .defaultNow(),
   },
   (table) => [
-    index("handoff_file_offers_thread_idx").on(table.ownerUserId, table.threadId),
+    index("handoff_file_offers_thread_idx").on(
+      table.ownerUserId,
+      table.threadId,
+    ),
     uniqueIndex("handoff_file_offers_once").on(
       table.ownerUserId,
       table.threadId,
