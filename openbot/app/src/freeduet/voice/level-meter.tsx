@@ -29,6 +29,7 @@ export function LevelMeter({
   ];
   return (
     <div className="mt-6 flex w-full max-w-[300px] flex-col items-center gap-2">
+      {/* biome-ignore lint/a11y/useSemanticElements: a native <meter> cannot hold the bars drawn inside it */}
       <div
         aria-label="Microphone level"
         aria-valuemax={100}
@@ -36,7 +37,6 @@ export function LevelMeter({
         aria-valuenow={percent}
         className="flex h-10 w-full items-center justify-center gap-[3px]"
         data-testid="voice-level"
-        // biome-ignore lint/a11y/useSemanticElements: a native <meter> cannot hold the bars drawn inside it
         role="meter"
       >
         {reduced ? (

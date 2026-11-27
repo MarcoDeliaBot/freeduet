@@ -2630,3 +2630,23 @@ Not verified: not run against a live stack, only against mocked reads (screensho
 **Limit.** Kai's text goes from 10,187 to 10,213 characters (measured with the `yaml` parser on `agents.yaml`). He was already over the 10,000 measure and stays on the pinned not-fitting list of `freeduet-team-file.test.ts`, which passes unchanged.
 
 **Built so far.** The sentence in Kai's prompt and the pin in `freeduet-package.test.ts` (describe "D165"; it fails on the prompt of main: 0 pass, 1 fail, then 1 pass after the change). Tests run: `freeduet-team-file` and `freeduet-package` 141 pass before, 142 pass after; `evals/team/run.test.ts` 181 pass; `agent-freeduet` `test_local_light_turn.py` 40 passed. Not verified: not run live. Run kai-6 three times on the maintainer's installation, and kai-1 to kai-5 once for the neighbours.
+
+---
+
+## 123. The voice sheet shows it is listening (D167)
+
+**Decision (D167, maintainer, 27 November 2026).** Everything must be friendly and one click from the goal. Three things on the voice sheet (chat's "Say everything you need to do").
+
+**The bug and its cause.** Opening the sheet and pressing the keyboard before speaking showed "No speech was detected. Try recording again." with Retry. The keyboard sent the empty recording to the transcription (`finish("draft")`); the server returned no words and `transcribeRecording` threw that sentence, which the session shows as an error. Fix: the keyboard is "go and type", not "write this down". With nothing heard, the sheet cancels the recording (no transcription at all) and the composer puts the caret in the box (`onType`). When the page cannot measure the volume, or something was heard, the keyboard still transcribes, with `finish("draft", { quiet: true })`: an empty result (new `NoSpeechError`) then closes the sheet with no error and no words. Inline dictation ("Stop and transcribe") is unchanged and still shows the sentence. × and Esc never transcribed and show no error.
+
+**Built.**
+- The central button is a microphone (was an up arrow), named "Stop and send"; the hint reads "Tap the microphone when you're done".
+- While recording the sheet shows a level meter (bars that follow the volume, read with a Web Audio `AnalyserNode` on the stream the dictation already holds; no second microphone, only the analysing context is closed), a timer (0:07) from the session's seconds, and the member's orb swelling slightly with the level (`MemberOrb` takes no level, so the sheet scales a wrapper; not done for the mic orb).
+- Reduced motion: no bars and no swelling; one still bar with the current level, and the timer stays.
+- Files: `app/src/freeduet/voice/` (`use-mic-level.ts`, `level-meter.tsx`), `voice-sheet.tsx`, `composer.tsx` (`onType`), `session.ts` and `recording.ts` (the quiet finish, `NoSpeechError`).
+
+**Not built.** Partial text under the title: the dictation gives none (the recording is transcribed once, at the end).
+
+**Verified.** `app/tests/voice-sheet-listening.test.tsx`: the keyboard with nothing said (no error, caret in the box, no transcription), with no analyser and an empty transcript (no error), after speech (words kept), ×, the microphone button's name, the meter following a mocked analyser on the same stream, the timer with fake timers. Without the change 6 of 8 fail. Screenshots are previews: they go online after the maintainer's yes.
+
+**Not verified.** Not run on a real microphone or a phone; the speech threshold (0.12 of the scale) is a guess to check live.

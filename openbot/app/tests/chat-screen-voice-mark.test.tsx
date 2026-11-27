@@ -13,8 +13,8 @@ import {
   act,
   cleanup,
   fireEvent,
-  render,
   type RenderResult,
+  render,
   waitFor,
 } from "@testing-library/react";
 import * as ChannelChatModule from "@/components/channels/channel-chat";
@@ -201,7 +201,7 @@ async function withDictation(
  */
 async function speakAndSend(view: RenderResult, transcribed: () => number) {
   fireEvent.click(await view.findByRole("button", { name: "Speak a message" }));
-  const send = await view.findByRole("button", { name: "Send" });
+  const send = await view.findByRole("button", { name: "Stop and send" });
   await waitFor(() => expect(send.hasAttribute("disabled")).toBe(false));
   fireEvent.click(send);
   await waitFor(() => expect(transcribed()).toBe(1));
