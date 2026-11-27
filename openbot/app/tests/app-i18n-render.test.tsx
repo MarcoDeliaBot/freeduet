@@ -203,9 +203,9 @@ test("the person's saved choice wins over the browser, and is kept for the first
   browserLanguages(["it-IT"]);
   preferences = { appLanguage: "de" };
   const view = drawProvider();
-  // German has no words yet: it reads English, never a key.
+  // German has its own words now: the probe reads the German word for Settings.
   await waitFor(() => expect(document.documentElement.lang).toBe("de"));
-  expect(view.getByTestId("probe").textContent).toBe("Settings");
+  expect(view.getByTestId("probe").textContent).toBe("Einstellungen");
   expect(window.localStorage.getItem(STORED_APP_LANGUAGE_KEY)).toBe("de");
 });
 

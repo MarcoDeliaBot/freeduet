@@ -112,7 +112,13 @@ test("Italian is translated: no key of it reads as the English by accident, exce
 
 test("a missing or empty value reads as English, never as a key or a blank", () => {
   const t = createTranslator(SOURCE, CATALOGS, "de");
-  expect(t("shell.newChannel")).toBe("New channel");
+  // German has words now, so the gap is made here: one empty German value reads as English.
+  const gap = createTranslator(
+    SOURCE,
+    { de: { ...CATALOGS.de, "shell.newChannel": "" } as never },
+    "de",
+  );
+  expect(gap("shell.newChannel")).toBe("New channel");
   const italian = createTranslator(
     SOURCE,
     { it: { ...CATALOGS.it, "shell.newChannel": "" } as never },
