@@ -123,3 +123,28 @@ test("saves the self-host banner dismissal without touching message list emphasi
     },
   });
 });
+
+test("saves the app language (D181) for one person: a code or auto, nothing else", async () => {
+  const { appFor, state } = fixture();
+  const alice = appFor("alice");
+  for (const appLanguage of ["it", "ko", "auto"]) {
+    const saved = await alice.request(path, patch({ appLanguage }));
+    expect(saved.status).toBe(200);
+    expect(state.get("alice")?.appLanguage).toBe(appLanguage);
+  }
+  await alice.request(path, patch({ appLanguage: "it" }));
+  expect(state.get("alice")?.messageListEmphasis).toBe("thread");
+  for (const appLanguage of ["xx", "IT", "", 5, null]) {
+    expect((await alice.request(path, patch({ appLanguage }))).status).toBe(
+      400,
+    );
+  }
+  // Another person's language is their own.
+  expect(
+    (
+      (await (await appFor("bob").request(path)).json()) as {
+        preferences: UserPreferences;
+      }
+    ).preferences.appLanguage,
+  ).toBeUndefined();
+});
