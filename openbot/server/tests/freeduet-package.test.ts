@@ -2326,3 +2326,30 @@ describe("D169: members say where the person types a secret", () => {
     });
   });
 });
+
+/* D179: Iris checks a brief for the nine points before she hands work over. */
+describe("D179: Iris writes complete briefs", () => {
+  test("her prompt has the check and her delegate-work skill has the nine points", async () => {
+    const rows = await memberRows();
+    const prompt = String(
+      rows.find((row) => row.id === "freeduet")?.system_prompt ?? "",
+    ).replace(/\s+/g, " ");
+    expect(prompt).toContain(
+      "ask for conclusions and evidence, never hidden reasoning",
+    );
+    const skills = (
+      await readFile(
+        new URL("../../examples/freeduet/skills.yaml", import.meta.url),
+        "utf8",
+      )
+    ).replace(/\s+/g, " ");
+    for (const s of [
+      "A good brief.",
+      'Put the constraints first and write them with "must" and "never", not "should"',
+      "when to stop and report",
+      "at most one question",
+      "never its hidden reasoning",
+    ])
+      expect({ s, said: skills.includes(s) }).toEqual({ s, said: true });
+  });
+});
