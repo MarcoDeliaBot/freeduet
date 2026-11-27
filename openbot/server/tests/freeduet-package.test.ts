@@ -641,8 +641,8 @@ describe("Mark, the marketer", () => {
       (agent) => agent.id === "marketer",
     );
     // His skills in all: one shared skill, 53 marketing skills, two of design, four for Instagram and
-    // outreach (D132, his own text), 61.
-    expect(marketer?.skills.length).toBe(61);
+    // outreach (D132, his own text), and the read-only Agent Reach skill (D182), 62.
+    expect(marketer?.skills.length).toBe(62);
     // research-public-web is the one skill of the starter team he shares, for rivals' pages and sites to review.
     // design-craft-floor, landing-page-design and the four Instagram skills are his skills that are not marketing skills: their own files, see NOTICE.md.
     expect(marketer?.skills).toEqual([
@@ -655,8 +655,13 @@ describe("Mark, the marketer", () => {
       "ig-reply",
       "ig-dm",
       "outreach",
+      "agent-reach-readonly",
     ]);
-    const taken = new Set<string>([...MARKETING_SKILLS, "outreach"]);
+    const taken = new Set<string>([
+      ...MARKETING_SKILLS,
+      "outreach",
+      "agent-reach-readonly",
+    ]);
     for (const agent of tenantPackage.agents.filter(
       (candidate) => candidate.id !== "marketer",
     )) {
@@ -710,6 +715,83 @@ describe("Mark, the marketer", () => {
         .filter((agent) => agent.skills.includes("outreach"))
         .map((agent) => agent.id),
     ).toEqual(["marketer"]);
+  });
+
+  // D182: Mark's read-only Agent Reach pilot. Text only (no tools); the allowed list and the forbidden list
+  // are in the skill, one line in Mark's prompt points at it, and only Mark holds it.
+  test("the Agent Reach skill is text only, lists the allowed commands and the forbidden ones, and only Mark holds it", async () => {
+    const tenantPackage = await loadWith(MODES.remote);
+    const skill = tenantPackage.skills.find(
+      (candidate) => candidate.slug === "agent-reach-readonly",
+    );
+    const body = (skill?.instructions ?? "").replace(/\s+/g, " ");
+    expect({
+      shipped: skill !== undefined,
+      tools: skill?.tools,
+      oneLine:
+        (skill?.summary.length ?? 999) <= 112 &&
+        !(skill?.summary ?? "").includes("\n"),
+      noPlaceholder: !body.includes("${"),
+    }).toEqual({
+      shipped: true,
+      tools: [],
+      oneLine: true,
+      noPlaceholder: true,
+    });
+    for (const sentence of [
+      "/workspace/ar/bin/agent-reach",
+      "--require-hashes --no-build-isolation",
+      "web search",
+      "web read",
+      "github search",
+      "youtube subtitle",
+      "r.jina.ai",
+      "mcp.exa.ai",
+      "never send a private address",
+      "youtube transcribe",
+      "login, logout, setup, add, remove, update, configure, doctor, check",
+      "twitter",
+      "Reddit, Instagram, Facebook, LinkedIn",
+      "opencli, bili, gh, yt-dlp",
+    ])
+      expect({ sentence, said: body.includes(sentence) }).toEqual({
+        sentence,
+        said: true,
+      });
+    const rows = await memberRows();
+    const prompt = String(
+      rows.find((row) => row.id === "marketer")?.system_prompt,
+    );
+    expect(prompt).toContain("/agent-reach-readonly");
+    expect(
+      tenantPackage.agents
+        .filter((agent) => agent.skills.includes("agent-reach-readonly"))
+        .map((agent) => agent.id),
+    ).toEqual(["marketer"]);
+    const pinned = await readFile(
+      fileURLToPath(
+        new URL(
+          "../../examples/freeduet/agent-reach/requirements.txt",
+          import.meta.url,
+        ),
+      ),
+      "utf8",
+    );
+    expect(pinned).toContain(
+      "archive/8d9ecc1f5521fe7d223cde782aaa4005695e2671.zip",
+    );
+    // Every requirement line carries a hash: --require-hashes refuses the file otherwise.
+    const lines = pinned
+      .split("\n")
+      .filter(
+        (line) => line.trim() && !line.startsWith("#") && !line.startsWith(" "),
+      );
+    expect(lines.length).toBeGreaterThan(10);
+    for (const line of lines)
+      expect({ line, hashed: line.endsWith("\\") }).toEqual({
+        line,
+        hashed: true,
+      });
   });
 
   test("NOTICE.md carries the upstream licence and commit of the marketing skills", async () => {
