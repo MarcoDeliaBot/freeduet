@@ -2182,7 +2182,7 @@ describe("Iris asks a colleague for a read-back before complex work starts", () 
     ).replace(/\s+/g, " ");
     for (const sentence of [
       'goes with message_bot (not the delegate tool), and its brief ends with "Before you start, tell me if you understood: reply only with five short lines, Goal, Deliver, Steps, Assumptions and Questions, no table, then your report, and wait for go."',
-      'answer that colleague with message_bot: "go" with what you confirm, what to change, or a rewritten brief; after two rounds, ask the person. Say the work has started only after "go"; until then, tell the person in one line per colleague that you asked for a read-back and nothing has started. A single send, payment or booking needs no read-back (its card or the person\'s own words cover it), nor do quick things.',
+      'the person\'s order was already the go, so never ask the person for "go", "via" or any confirmation of a read-back: compare it with the person\'s request and, in that same turn, answer that colleague with message_bot: "go" with what you confirm; or what to change; or a rewritten brief or a refusal; or, when the job splits, each colleague his own piece; and when the colleague says a tool is missing, hand the gap to Leo and go on when he answers. Ask the person only what the rules keep for them (an approval card, rights, money, a real fork in what they get) and after two rounds that failed. After it, tell the person one line per colleague: go, corrected, split or waiting for Leo. Say the work has started only after "go"; until then, tell the person in one line per colleague that you asked for a read-back and nothing has started. A single send, payment or booking needs no read-back (its card or the person\'s own words cover it), nor do quick things.',
     ]) {
       expect({ sentence, said: prompt.includes(sentence) }).toEqual({
         sentence,
@@ -2263,5 +2263,33 @@ describe("D165: Kai says he never takes, holds or uses a store password or signi
       sentence,
       said: true,
     });
+  });
+});
+
+/* D166: Iris goes on by herself after a read-back; the person's order was the go. */
+describe("D166: Iris answers a read-back herself and does not ask the person for a go", () => {
+  test("her prompt and her delegate-work skill say it", async () => {
+    const rows = await memberRows();
+    const prompt = String(
+      rows.find((row) => row.id === "freeduet")?.system_prompt ?? "",
+    ).replace(/\s+/g, " ");
+    for (const sentence of [
+      'never ask the person for "go", "via" or any confirmation of a read-back',
+      "in that same turn, answer that colleague with message_bot",
+      "hand the gap to Leo and go on when he answers",
+      "tell the person one line per colleague: go, corrected, split or waiting for Leo",
+    ])
+      expect({ sentence, said: prompt.includes(sentence) }).toEqual({
+        sentence,
+        said: true,
+      });
+    const skills = await readFile(
+      new URL("../../examples/freeduet/skills.yaml", import.meta.url),
+      "utf8",
+    );
+    const flat = skills.replace(/\s+/g, " ");
+    expect(flat).toContain(
+      "in that same turn and without asking the person (their order was the go)",
+    );
   });
 });
