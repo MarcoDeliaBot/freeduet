@@ -1,4 +1,5 @@
-# The Bot's computer installs the Playwright browser it launches, plus the command-line tools the video
+# The Bot's computer installs the Playwright browsers (Chromium, Firefox, WebKit) and, for the member's shell, the
+# `playwright` package at the same version (D175), plus the command-line tools the video
 # maker (Cam) works with: ffmpeg, git and python3 with venv, plus the office toolkit (python-docx,
 # openpyxl, python-pptx, pypdf, reportlab, pdfplumber, defusedxml) in its own virtual environment,
 # `office-inspect`, our own read-only inspector (docs/design/office-files.md, slices S1 and S2), and headless
@@ -30,6 +31,23 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 # image fails to build. Playwright names each browser's folder after its revision, so this checks the folder names.
 RUN ls -d /ms-playwright/chromium-* /ms-playwright/firefox-* /ms-playwright/webkit-* >/dev/null \
   && echo "browsers: $(ls /ms-playwright | tr '\n' ' ')"
+
+# D175: the `playwright` package for the member's shell, at EXACTLY the version that installed the browsers above
+# (the same ARG, never a second number), global (Bun puts it in $BUN_INSTALL/install/global/node_modules and the
+# `playwright` command in /usr/local/bin) so that `require('playwright')`, `playwright --version` and `playwright test`
+# find it with no network. `@playwright/test` is the same version, for tests written against it. `--ignore-scripts`
+# says what Bun does anyway for dependencies (it runs no lifecycle script of a package); the browsers come from the
+# install above, never from here. PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD comes after the browsers are installed (it would
+# skip that install too): a `playwright install` a member types then downloads nothing and says why. NODE_PATH and these
+# two variables are passed to the shell by `environmentForCommand` (src/shell.ts).
+RUN bun install -g --ignore-scripts "playwright@${PLAYWRIGHT_VERSION}" "@playwright/test@${PLAYWRIGHT_VERSION}" \
+  && rm -rf /usr/local/install/cache /root/.cache /tmp/*
+ENV NODE_PATH=/usr/local/install/global/node_modules
+ENV PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1
+COPY agent-computer/image-check/playwright-ready.cjs /opt/image-check/playwright-ready.cjs
+# Build check: the package version and the /ms-playwright revisions must agree, and the package must load.
+RUN node /opt/image-check/playwright-ready.cjs --expect "${PLAYWRIGHT_VERSION}" \
+  && playwright --version
 
 # The office toolkit: one virtual environment at /opt/office, built here because a Bot's computer cannot
 # install anything when it runs (root with every capability dropped, no sudo). Every package is pinned to

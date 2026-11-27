@@ -65,6 +65,16 @@ export type ShellResult = {
 const PATH_NAMES = ["PATH"] as const;
 const LOCALE_NAMES = ["LANG", "LANGUAGE"] as const;
 const TERMINAL_NAMES = ["TERM", "TERMINFO", "COLORTERM"] as const;
+/**
+ * Where the image put its tools (D175): the global node modules, the preinstalled browsers, and the switch
+ * that makes a stray `playwright install` download nothing. None is a secret. Without them `npx playwright`
+ * in a member's shell cannot find the browsers the image carries and asks to download a newer set.
+ */
+const TOOLING_NAMES = [
+  "NODE_PATH",
+  "PLAYWRIGHT_BROWSERS_PATH",
+  "PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD",
+] as const;
 const PROXY_NAMES = [
   "HTTP_PROXY",
   "HTTPS_PROXY",
@@ -103,6 +113,7 @@ export function environmentForCommand(
     if (LOCALE_CATEGORY.test(name)) copy(name);
   }
   for (const name of TERMINAL_NAMES) copy(name);
+  for (const name of TOOLING_NAMES) copy(name);
   for (const name of PROXY_NAMES) copyProxy(name);
   for (const name of extraShellEnvNames(source.COMPUTER_SHELL_ENV)) copy(name);
 

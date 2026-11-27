@@ -158,6 +158,7 @@ jobs:
           tests/demonstration-live.test.ts tests/webrtc-proxy.test.ts tests/web-bot-auth-browser.test.ts
           tests/handoff-page-restore.test.ts tests/page-links-browser.test.ts
           tests/navigation-settle-browser.test.ts tests/private-network-browser.test.ts
+          tests/playwright-ready.test.ts
           tests/secret-field-write.test.ts tests/select-field.test.ts tests/read-page-browser.test.ts
           tests/engine-check-browser.test.ts tests/engine-canary-browser.test.ts
         working-directory: openbot/agent-computer
