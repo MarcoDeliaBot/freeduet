@@ -26,20 +26,55 @@ export function hopOwnMessages(messages: readonly Message[]): Message[] {
 
 const size = (message: Message): number => JSON.stringify(message).length;
 
-/** The newest messages that fit `max` characters; always at least the last one. */
+type Toolish = Message & {
+  toolCalls?: readonly { id: string }[];
+  toolCallId?: string;
+};
+
+/**
+ * The newest messages that fit `max` characters, as a request a provider accepts: system messages
+ * always stay (in front), the last message (the pending tool call) always stays, and after the cut
+ * no `tool` result is left without its assistant call and no assistant call without its results.
+ */
 export function boundResumeMessages(
   messages: readonly Message[],
   max: number = MAX_RESUME_INPUT_CHARS,
 ): Message[] {
-  let total = 0;
-  let from = messages.length;
+  const system = messages.filter((message) => message.role === "system");
+  const rest = messages.filter((message) => message.role !== "system");
+  let budget = max - system.reduce((sum, message) => sum + size(message), 0);
+  let from = rest.length;
   while (from > 0) {
-    const next = total + size(messages[from - 1] as Message);
-    if (next > max && from < messages.length) break;
-    total = next;
+    const next = size(rest[from - 1] as Message);
+    if (next > budget && from < rest.length) break;
+    budget -= next;
     from -= 1;
   }
-  return messages.slice(from);
+  if (from === 0) return [...messages];
+  let kept = rest.slice(from) as Toolish[];
+  // A kept tool result whose assistant call was cut cannot be sent: advance past it.
+  const calls = new Set(
+    kept.flatMap((message) => (message.toolCalls ?? []).map((call) => call.id)),
+  );
+  kept = kept.filter(
+    (message) =>
+      !(message.role === "tool" && !calls.has(message.toolCallId ?? "")),
+  );
+  // An assistant call whose results were cut is dropped too, except the last one: the pending call.
+  const answered = new Set(
+    kept.flatMap((message) =>
+      message.role === "tool" ? [message.toolCallId ?? ""] : [],
+    ),
+  );
+  kept = kept.filter(
+    (message, index) =>
+      index === kept.length - 1 ||
+      !(
+        message.role === "assistant" &&
+        (message.toolCalls ?? []).some((call) => !answered.has(call.id))
+      ),
+  );
+  return [...system, ...kept];
 }
 
 /**

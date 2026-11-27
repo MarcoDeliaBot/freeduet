@@ -67,7 +67,8 @@ export function createHandoffDelivery(options: {
     initiator?: AuditInitiator;
   }) => Promise<AbstractAgent | null>;
   /**
-   * The conversation so far, so the addressed Bot is not answering out of context.
+   * The conversation so far, read only for a BACKWARDS hop (a relay or a notice), which speaks into the
+   * thread it reads. A forward hop reads none of the asking conversation (D176).
    *
    * PASSED THROUGH UNTOUCHED, which is why its shape is the reader's rather than named here. The
    * platform holds a thread's messages in its own type and takes them back in the same one; sitting

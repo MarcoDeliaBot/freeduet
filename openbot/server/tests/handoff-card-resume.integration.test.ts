@@ -43,7 +43,10 @@ import {
 import { signHandoffDeliveryRun } from "../src/agents/handoff-signing";
 import { serverTurnAdmission } from "../src/agents/turn-admission";
 import { createApprovedActionExecutor } from "../src/approvals/execute";
-import { guardedSnapshot } from "../src/approvals/resume-input-guard";
+import {
+  boundResumeMessages,
+  guardedSnapshot,
+} from "../src/approvals/resume-input-guard";
 import { createApprovalResumeTick } from "../src/approvals/resume-sweep";
 import { createApprovalRoutes } from "../src/approvals/routes";
 import { ALREADY_WAITING, isApprovalRecheck } from "../src/approvals/service";
@@ -684,6 +687,44 @@ describe("a hand-off resumed after a card sees only its own thread (D176)", () =
     });
     expect(kept.messages.map((m) => m.id)).toEqual(["u2"]);
     expect(logged[0]).toMatchObject({ reason: "over-size-limit", dropped: 1 });
+  });
+});
+
+describe("the size limit keeps a request a provider accepts (D176)", () => {
+  const big = (id: string, role: string, extra: object = {}) =>
+    ({ id, role, content: "x".repeat(200), ...extra }) as never;
+
+  test("a cut never leaves a tool result without its call, nor a call without its results; system stays", () => {
+    const messages = [
+      big("sys", "system"),
+      big("a1", "assistant", { toolCalls: [{ id: "c1" }] }),
+      big("t1", "tool", { toolCallId: "c1" }),
+      big("u2", "user"),
+      big("a2", "assistant", { toolCalls: [{ id: "c2" }] }),
+      big("t2", "tool", { toolCallId: "c2" }),
+      big("u3", "user"),
+      big("pending", "assistant", { toolCalls: [{ id: "c3" }] }),
+    ];
+    // Room for the system message and about the last three: the cut falls on t2, a1 and t1 are gone.
+    const kept = boundResumeMessages(messages, 800);
+    const ids = kept.map((m) => m.id);
+    expect(ids[0]).toBe("sys");
+    expect(ids.at(-1)).toBe("pending");
+    expect(ids).not.toContain("t2");
+    expect(ids).not.toContain("a2");
+    for (const m of kept as { role: string; toolCallId?: string }[])
+      if (m.role === "tool") throw new Error("orphan tool result kept");
+  });
+
+  test("the call being resumed stays even when it alone is over the limit", () => {
+    const kept = boundResumeMessages(
+      [
+        big("u1", "user"),
+        big("pending", "assistant", { toolCalls: [{ id: "c" }] }),
+      ],
+      10,
+    );
+    expect(kept.map((m) => m.id)).toEqual(["pending"]);
   });
 });
 

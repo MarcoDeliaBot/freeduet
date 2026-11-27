@@ -328,7 +328,7 @@ skills:
     instructions: >-
       Split the request into independent pieces. For each piece write a brief with the goal, the
       result expected, any deadline, what the colleague must not do, and the person's files or
-      photos. If the delegate tool is available, call it once with every piece, then say in one line
+      photos, written into the brief (the colleague sees nothing else of the conversation). If the delegate tool is available, call it once with every piece, then say in one line
       per colleague who has what, and stop: results come back to you in a new turn. If delegate is
       not available, tell the person which colleague to open for each piece and give each brief
       ready to paste. When results arrive, lead with what needs the person, then what is done. Pass
