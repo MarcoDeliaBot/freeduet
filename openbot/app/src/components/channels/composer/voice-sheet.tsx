@@ -1,10 +1,13 @@
 import { Dialog as DialogPrimitive } from "@base-ui/react/dialog";
 import { IconKeyboard } from "@tabler/icons-react";
+import { useReducedMotion } from "motion/react";
 import { useRef } from "react";
 import { DuetIcon } from "@/components/duet/icons";
 import { MicOrb, type MicOrbState } from "@/components/duet/mic-orb";
 import { MemberOrb } from "@/components/shell/member-orb";
 import { Button } from "@/components/ui/button";
+import { LevelMeter } from "@/freeduet/voice/level-meter";
+import { useMicLevel } from "@/freeduet/voice/use-mic-level";
 import { mascotKeyOf } from "@/freeduet/wide/mascot";
 import { useActiveBotId } from "@/lib/copilot/active-bot";
 import { cn } from "@/lib/utils";
@@ -19,7 +22,8 @@ const SIDE_CONTROL =
 /**
  * A brain dump, spoken. Chat's composer opens this over the whole screen and starts recording; the
  * person says everything they need to do and then picks what happens to the words: × throws them
- * away, ↑ sends them as their message, and the keyboard puts them in the composer to edit first.
+ * away, the microphone stops and sends them as their message, and the keyboard puts them in the
+ * composer to edit first (with nothing said, it just closes and leaves the caret in the box).
  *
  * It drives the composer's own dictation session rather than one of its own, so the words reach the
  * conversation through exactly the path inline dictation uses: appended to the draft, and sent
@@ -31,17 +35,30 @@ export function VoiceSheet({
   dictation,
   open,
   canSend,
+  onType,
 }: {
   dictation: Dictation;
   open: boolean;
   /** Whether the words could be sent now, or parked behind the turn in flight. */
   canSend: boolean;
+  /** The keyboard with nothing said: close the sheet and put the caret in the box. */
+  onType: () => void;
 }) {
   const { state, session } = dictation;
   // A FreeDuet team member wears its drawn mascot here, as in the header; any other Bot keeps the mic orb.
   const botId = useActiveBotId();
   const popup = useRef<HTMLDivElement>(null);
   const recording = state.phase === "recording";
+  const mic = useMicLevel(recording ? state.stream : undefined);
+  const reduced = useReducedMotion() ?? false;
+  const typeInstead = () => {
+    // Nothing was heard: there is nothing to write down, so no transcription and no error.
+    if (mic.measuring && !mic.heard()) {
+      onType();
+      return;
+    }
+    void session.finish("draft", { quiet: true });
+  };
   const orb: MicOrbState =
     state.phase === "transcribing"
       ? "thinking"
@@ -71,7 +88,17 @@ export function VoiceSheet({
           <div className="mx-auto flex w-full max-w-[430px] flex-1 flex-col items-center px-6 pt-[max(env(safe-area-inset-top),24px)] pb-[max(env(safe-area-inset-bottom),28px)]">
             <div className="flex flex-1 flex-col items-center justify-center py-6 text-center">
               {mascotKeyOf(botId) !== null ? (
-                <MemberOrb agentId={botId} size={132} state={orb} />
+                <span
+                  className="inline-flex transition-transform duration-100 ease-out"
+                  data-testid="voice-orb"
+                  style={
+                    reduced || !recording
+                      ? undefined
+                      : { transform: `scale(${1 + mic.level * 0.14})` }
+                  }
+                >
+                  <MemberOrb agentId={botId} size={132} state={orb} />
+                </span>
               ) : (
                 <MicOrb size={132} state={orb} />
               )}
@@ -79,8 +106,15 @@ export function VoiceSheet({
                 Say everything you need to do
               </DialogPrimitive.Title>
               <DialogPrimitive.Description className="type-sub mt-2 text-duet-ink-2">
-                Tap ↑ when you're done
+                Tap the microphone when you're done
               </DialogPrimitive.Description>
+              {recording ? (
+                <LevelMeter
+                  history={mic.history}
+                  level={mic.level}
+                  seconds={state.seconds}
+                />
+              ) : null}
             </div>
             <Status dictation={dictation} />
             <div className="mt-7 flex items-center justify-center gap-8 transition-transform duration-[var(--duet-dur-sheet)] motion-safe:group-data-starting-style:translate-y-3">
@@ -96,26 +130,26 @@ export function VoiceSheet({
                 <DuetIcon className="size-[22px]" name="x" size={22} />
               </Button>
               <Button
-                aria-label="Send"
+                aria-label="Stop and send"
                 className="size-[68px] rounded-full bg-duet-black p-0 text-duet-on-black hover:bg-duet-black hover:brightness-125 disabled:opacity-30"
                 disabled={!recording || !canSend}
                 onClick={() => void session.finish("send")}
                 size="icon"
-                title="Send"
+                title="Stop and send"
                 type="button"
               >
                 <DuetIcon
-                  className="size-[26px]"
-                  name="arrowUp"
-                  size={26}
-                  stroke={2.4}
+                  className="size-[28px]"
+                  name="mic"
+                  size={28}
+                  stroke={2.2}
                 />
               </Button>
               <Button
                 aria-label="Type instead"
                 className={SIDE_CONTROL}
                 disabled={!recording}
-                onClick={() => void session.finish("draft")}
+                onClick={typeInstead}
                 size="icon"
                 title="Type instead"
                 type="button"
