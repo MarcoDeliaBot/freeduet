@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import type * as React from "react";
 import { PageShell } from "@/components/layout/page-shell";
+import { useT } from "@/freeduet/i18n/provider";
 import { type AgentProfile, agentQueryOptions } from "@/lib/agents/queries";
 
 /**
@@ -20,11 +21,12 @@ export function BotSubpage({
   description: string;
   children: (agent: AgentProfile) => React.ReactNode;
 }) {
+  const t = useT();
   const agent = useQuery(agentQueryOptions(agentId));
   return (
     <PageShell
       backButton={{
-        label: agent.data?.name ?? "Bot",
+        label: agent.data?.name ?? t("botPage.fallbackTitle"),
         linkProps: { params: { agentId }, to: "/bots/$agentId" },
       }}
       description={description}
@@ -32,7 +34,7 @@ export function BotSubpage({
     >
       {agent.isPending ? null : agent.error ? (
         <p className="mt-6 text-destructive text-sm" role="alert">
-          Couldn't open this Bot. It may not be shared with you.
+          {t("botPage.openError")}
         </p>
       ) : (
         children(agent.data)

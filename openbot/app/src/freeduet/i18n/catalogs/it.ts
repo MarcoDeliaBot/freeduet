@@ -463,4 +463,222 @@ export const it: Catalog<typeof EN> = {
   "settings.lastSeen": "visto l'ultima volta {when}",
   "settings.rename": "Rinomina",
   "settings.revoke": "Revoca",
+  // The Bot pages (D181 stage 2d): a Bot's activity, settings, access, Manage, Setup and Sharing,
+  // and the descriptions of its sub-pages (`bot.page.*`). Shared words reuse their existing keys.
+  "bot.activity.kindRoutine": "Routine",
+  "bot.activity.kindResponsibility": "Responsabilità",
+  "bot.activity.kindHandoff": "Attività delegata",
+  "bot.activity.kindApproval": "Approvazione",
+  "bot.activity.kindQuestion": "Domanda",
+  "bot.activity.kindFollowUp": "Sollecito",
+  "bot.activity.needsYou": "ha bisogno di te",
+  "bot.activity.stop": "Ferma",
+  "bot.activity.stopping": "Fermo…",
+  "bot.activity.cancelling": "Annullo…",
+  "bot.activity.open": "Apri",
+  "bot.activity.title": "Attività",
+  "bot.activity.scheduled": "In programma",
+  "bot.activity.completed": "Completati",
+  "bot.activity.emptyInProgress": "Non c'è nulla in corso né in attesa di te.",
+  "bot.activity.emptyScheduled": "Non c'è nulla in programma.",
+  "bot.activity.emptyCompleted": "Non è ancora finito nulla.",
+  "bot.activity.loadError":
+    "Non sono riuscito a caricare l'attività di questo Bot. Ricarica la pagina.",
+  "bot.settings.heading": "Impostazioni di questo Bot",
+  "bot.area.responsibilities": "Responsabilità",
+  "bot.area.reaching": "Come ti raggiunge",
+  "bot.area.memory": "Memoria",
+  "bot.area.access": "Competenze e accessi",
+  "bot.area.sharing": "Condivisione",
+  "bot.settings.activeCount": {
+    one: "{count} attiva",
+    other: "{count} attive",
+  },
+  "bot.settings.noneActive": "Nessuna attiva",
+  "bot.settings.ruleCount": { one: "{count} regola", other: "{count} regole" },
+  "bot.settings.noRules": "Nessuna regola",
+  "bot.settings.routineCount": {
+    one: "{count} routine",
+    other: "{count} routine",
+  },
+  "bot.settings.noRoutines": "Nessuna routine",
+  "bot.access.skillsDescription":
+    "Attiva una competenza per usarla con questo Bot. Scrivi / in una conversazione per eseguirla.",
+  "bot.access.yourSkills": "Le tue competenze",
+  "bot.access.skillsError":
+    "Non sono riuscito a caricare le tue competenze. Ricarica la pagina.",
+  "bot.access.noSkills": "Ancora nessuna competenza.",
+  "bot.access.writeOne": "Scrivine una",
+  "bot.access.title": "Cosa può usare",
+  "bot.access.grantedDescription":
+    "Le app e le competenze che questo Bot può usare, e se ogni app è pronta per te. Non può usare altro.",
+  "bot.access.grantedError":
+    "Non sono riuscito a caricare ciò che questo Bot può usare. Ricarica la pagina.",
+  "bot.access.readyError":
+    "Non sono riuscito a verificare se ogni app è pronta per te. Ricarica la pagina.",
+  "bot.access.noApps":
+    "Ancora nessuna app. Un amministratore deve aggiungerle. Fino ad allora questo Bot può solo parlare con te.",
+  "bot.access.toolsAndMore": "{list} e altri {count}",
+  "bot.access.toolCount": {
+    one: "{count} strumento",
+    other: "{count} strumenti",
+  },
+  "bot.access.skillLabel": "Competenza",
+  "bot.access.manageNamed": "Gestisci {title} su questo Bot",
+  "bot.reset.conversations": {
+    one: "{count} conversazione",
+    other: "{count} conversazioni",
+  },
+  "bot.reset.memorySources": {
+    one: "{count} fonte di memoria",
+    other: "{count} fonti di memoria",
+  },
+  "bot.reset.memories": {
+    one: "{count} memoria importata",
+    other: "{count} memorie importate",
+  },
+  "bot.reset.routines": { one: "{count} routine", other: "{count} routine" },
+  "bot.reset.responsibilities": {
+    one: "{count} responsabilità",
+    other: "{count} responsabilità",
+  },
+  "bot.reset.followUps": {
+    one: "{count} sollecito programmato",
+    other: "{count} solleciti programmati",
+  },
+  "bot.reset.formedMemories": {
+    one: "{count} memoria creata dal Bot",
+    other: "{count} memorie create dal Bot",
+  },
+  "bot.reset.research": {
+    one: "{count} ricerca in background",
+    other: "{count} ricerche in background",
+  },
+  "bot.reset.standing": {
+    one: "{count} permesso permanente",
+    other: "{count} permessi permanenti",
+  },
+  "bot.reset.title": "Reimpostare {name}?",
+  "bot.reset.description":
+    "Elimina ciò che {name} ha con te. Le conversazioni e i dati di altre persone restano. Non si può annullare.",
+  "bot.reset.planError":
+    "Non sono riuscito a verificare cosa eliminerebbe la reimpostazione. Riprova.",
+  "bot.reset.done": "Fatto. {name} ricomincia da zero con te.",
+  "bot.reset.nothing": "Non c'è niente di tuo da eliminare.",
+  "bot.reset.willDelete": "Verrà eliminato:",
+  "bot.reset.sharedKept": {
+    one: "{count} conversazione è condivisa con altre persone o altri Bot e verrà mantenuta.",
+    other:
+      "{count} conversazioni sono condivise con altre persone o altri Bot e verranno mantenute.",
+  },
+  "bot.reset.memoriesKept":
+    "Restano le memorie che hai raccontato tu stesso a un Bot.",
+  "bot.reset.resetting": "Reimposto…",
+  "bot.reset.submit": "Elimina e reimposta",
+  "bot.manage.pinnedAssigned":
+    "Un amministratore te l'ha assegnato. Resta in cima al tuo elenco di Bot.",
+  "bot.manage.pinnedOn":
+    "In cima al tuo elenco di Bot. Cambia solo il tuo elenco.",
+  "bot.manage.pinnedOff":
+    "Tienilo in cima al tuo elenco di Bot. Cambia solo il tuo elenco.",
+  "bot.manage.hiddenAssigned":
+    "Un amministratore te l'ha assegnato. Non puoi nasconderlo.",
+  "bot.manage.hiddenOn":
+    "Sotto «Nascosti» nel tuo elenco di Bot. Cambia solo il tuo elenco.",
+  "bot.manage.hiddenOff":
+    "Toglilo dal tuo elenco di Bot. Cambia solo il tuo elenco.",
+  "bot.manage.duplicate": "Duplica",
+  "bot.manage.duplicateDescription":
+    "Crea una copia tua. Le sue conversazioni e le sue chiavi non vengono copiate.",
+  "bot.manage.resetDescription":
+    "Elimina le tue conversazioni con questo Bot, ciò che ricorda per te e il suo lavoro programmato. Prima vedrai l'elenco.",
+  "bot.manage.delete": "Elimina",
+  "bot.manage.deleteDescription": "Lo elimina per tutti. Non si può annullare.",
+  "bot.manage.deleteTitle": "Eliminare {name}?",
+  "bot.manage.deleteConfirm":
+    "Viene eliminato per tutti. Non si può annullare.",
+  "bot.manage.deleting": "Elimino…",
+  "bot.setup.title": "Titolo",
+  "bot.setup.whatItDoes": "Cosa fa",
+  "bot.setup.identity": "Identità",
+  "bot.setup.systemOwned": "Di sistema",
+  "bot.setup.systemOwnedDescription":
+    "Arriva con {product}. Non appartiene a nessuna persona.",
+  "bot.setup.visibility": "Visibilità",
+  "bot.setup.visiblePrivate":
+    "Solo tu puoi vederlo e avviare conversazioni con lui.",
+  "bot.setup.visiblePublic": "Chiunque su {product} può trovarlo e usarlo.",
+  "bot.setup.private": "Privato",
+  "bot.setup.public": "Pubblico",
+  "bot.setup.saveError": "Non sono riuscito a salvare. Riprova.",
+  "bot.setup.checkField": "Controlla questo campo e riprova.",
+  "bot.setup.connection": "Connessione",
+  "bot.setup.builtIn": "Integrato",
+  "bot.setup.agentUrl": "URL dell'agente",
+  "bot.setup.builtInDescription":
+    "Gira dentro {product}. Non c'è niente da collegare.",
+  "bot.sharing.published": "Pubblicato",
+  "bot.sharing.toWholeTeam": "A tutto il team",
+  "bot.sharing.toPeople": "A {who}",
+  "bot.sharing.groupNamed": "gruppo {name}",
+  "bot.sharing.teamPrivate":
+    "Le conversazioni di ogni persona con lui sono private.",
+  "bot.sharing.notVisibleYet":
+    "I membri del team non lo vedono finché non ha un nome e una descrizione veri.",
+  "bot.sharing.unpublish": "Annulla la pubblicazione",
+  "bot.sharing.link": "Collegamento",
+  "bot.sharing.linkDescription": "Apre una conversazione privata con lui.",
+  "bot.sharing.copyLink": "Copia il collegamento",
+  "bot.sharing.publicNotPublished":
+    "Non pubblicato al team. È pubblico, quindi chiunque su {product} può già usarlo.",
+  "bot.sharing.onlyYouCanUse": "Non pubblicato. Solo tu puoi usarlo.",
+  "bot.sharing.notPublished": "Non pubblicato.",
+  "bot.sharing.whoPublishedTo": "A chi è pubblicato",
+  "bot.sharing.publish": "Pubblica",
+  "bot.sharing.publishNote":
+    "Pubblicarlo non cambia la sua visibilità. Puoi annullarne la pubblicazione in qualsiasi momento.",
+  "bot.sharing.audience": "Destinatari",
+  "bot.sharing.notPublishedSummary": "Non pubblicato",
+  "bot.sharing.theWholeTeam": "Tutto il team",
+  "bot.sharing.specificPeople": "Persone o gruppi specifici",
+  "bot.sharing.peopleCount": {
+    one: "{count} persona",
+    other: "{count} persone",
+  },
+  "bot.sharing.groupCount": { one: "{count} gruppo", other: "{count} gruppi" },
+  "bot.sharing.assignToGroups": "Assegna a gruppi",
+  "bot.sharing.assignDescription":
+    "Fissa questo Bot in cima all'elenco dei Bot di ogni membro del gruppo. Usa * per tutto il team.",
+  "bot.sharing.publishedTo": "Pubblicato a",
+  "bot.sharing.peopleByEmail": "Persone, per email",
+  "bot.sharing.commaSeparated": "Separati da virgole",
+  "bot.sharing.groups": "Gruppi",
+  "bot.sharing.update": "Aggiorna",
+  "bot.sharing.publishToTeam": "Pubblica al team",
+  "bot.sharing.assignNamed": "Assegna {name} a un gruppo",
+  "bot.sharing.assignNote":
+    "Viene fissato in cima all'elenco dei Bot di ogni membro.",
+  "bot.sharing.groupOrStar": "Gruppo, o *",
+  "bot.sharing.wholeTeamPlaceholder": "* per tutto il team",
+  "bot.sharing.assign": "Assegna",
+  "bot.sharing.removeNamed": "Rimuovi {name}",
+  "bot.sharing.wholeTeam": "Tutto il team",
+  "bot.sharing.notAssigned": "Non assegnato a nessun gruppo.",
+  "bot.sharing.assignRow": "Assegna a un gruppo",
+  "bot.page.accessPurpose":
+    "Le competenze, le app e gli altri Bot che questo Bot può usare.",
+  "bot.page.approvalsPurpose":
+    "Cosa può fare questo Bot senza chiederti prima.",
+  "bot.page.memoryPurpose":
+    "Le app da cui questo Bot impara e le ricerche che fa per te in background.",
+  "bot.page.memoryPointer": "Quello che i tuoi Bot ricordano di te è in",
+  "bot.page.reachPurpose":
+    "Continua una conversazione con questo Bot su Slack, Microsoft Teams o via SMS.",
+  "bot.page.responsibilitiesPurpose":
+    "Obiettivi continui su cui questo Bot lavora per te. Vedi cosa ha avviato ogni esecuzione e cosa ha trovato.",
+  "bot.page.routinesPurpose":
+    "Cosa fa questo Bot per te secondo un programma. Disattivane una, eseguila ora o eliminala.",
+  "bot.page.setupPurpose": "Chi è questo Bot, chi può trovarlo e dove gira.",
+  "bot.page.sharingPurpose":
+    "Chi altro può usare questo Bot. Le conversazioni di ogni persona con lui sono private.",
 };

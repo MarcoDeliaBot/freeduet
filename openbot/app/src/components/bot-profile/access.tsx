@@ -24,6 +24,7 @@ import {
 } from "@/components/ui/item";
 import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
+import { type T, useT } from "@/freeduet/i18n/provider";
 import type { AgentProfile } from "@/lib/agents/queries";
 import { botAppsQueryOptions } from "@/lib/app-access/queries";
 import { currentUserQueryOptions } from "@/lib/auth/queries";
@@ -93,6 +94,7 @@ export function AccessSections({ agent }: { agent: AgentProfile }) {
  * skill on a Bot they own, and neither half alone is enough.
  */
 function YourSkills({ agentId }: { agentId: string }) {
+  const t = useT();
   const me = useQuery(currentUserQueryOptions()).data;
   const page = useQuery(pluginsPageQueryOptions());
   const grant = useMutation(setPluginGrantMutationOptions(queryClient));
@@ -101,8 +103,8 @@ function YourSkills({ agentId }: { agentId: string }) {
   );
   return (
     <PageSection
-      description="Turn on a skill to use it with this Bot. Type / in a conversation to run it."
-      title="Your skills"
+      description={t("bot.access.skillsDescription")}
+      title={t("bot.access.yourSkills")}
     >
       {grant.error ? (
         <p className="mt-4 text-destructive text-sm" role="alert">
@@ -111,16 +113,16 @@ function YourSkills({ agentId }: { agentId: string }) {
       ) : null}
       {page.isPending ? null : page.error ? (
         <p className="mt-4 text-destructive text-sm" role="alert">
-          Couldn't load your skills. Reload the page.
+          {t("bot.access.skillsError")}
         </p>
       ) : skills.length === 0 ? (
         <PageEmpty>
-          No skills yet.{" "}
+          {t("bot.access.noSkills")}{" "}
           <Link
             className="underline underline-offset-4"
             to="/capabilities/skills"
           >
-            Write one
+            {t("bot.access.writeOne")}
           </Link>
           .
         </PageEmpty>
@@ -177,6 +179,7 @@ function YourSkills({ agentId }: { agentId: string }) {
  * connected what.
  */
 function Granted({ agentId }: { agentId: string }) {
+  const t = useT();
   const me = useQuery(currentUserQueryOptions()).data;
   const plugins = useQuery(agentPluginsQueryOptions(agentId));
   const apps = useQuery(botAppsQueryOptions(agentId));
@@ -185,7 +188,7 @@ function Granted({ agentId }: { agentId: string }) {
   if (!plugins.data) {
     return (
       <p className="mt-6 text-destructive text-sm" role="alert">
-        Couldn't load what this Bot can use. Reload the page.
+        {t("bot.access.grantedError")}
       </p>
     );
   }
@@ -203,19 +206,16 @@ function Granted({ agentId }: { agentId: string }) {
   const count = states.length + rest.length + skills.length;
   return (
     <PageSection
-      description="The apps and skills this Bot can use, and whether each app is ready for you. It can't use anything else."
-      title="What it can use"
+      description={t("bot.access.grantedDescription")}
+      title={t("bot.access.title")}
     >
       {apps.error ? (
         <p className="mt-4 text-destructive text-sm" role="alert">
-          Couldn't check whether each app is ready for you. Reload the page.
+          {t("bot.access.readyError")}
         </p>
       ) : null}
       {count === 0 ? (
-        <PageEmpty>
-          No apps yet. An admin has to add them. Until then this Bot can only
-          talk with you.
-        </PageEmpty>
+        <PageEmpty>{t("bot.access.noApps")}</PageEmpty>
       ) : (
         <PageRows>
           {states.map((app, index) => {
@@ -236,7 +236,9 @@ function Granted({ agentId }: { agentId: string }) {
                     <ItemDescription className="line-clamp-none">
                       {app.state === "ready"
                         ? [appAccessSentence(app)]
-                            .concat(labels.length > 0 ? [toolList(labels)] : [])
+                            .concat(
+                              labels.length > 0 ? [toolList(labels, t)] : [],
+                            )
                             .join(" ")
                         : appAccessSentence(app)}
                     </ItemDescription>
@@ -274,7 +276,7 @@ function Granted({ agentId }: { agentId: string }) {
                 </ItemMedia>
                 <ItemContent>
                   <ItemTitle>{connectorName(key)}</ItemTitle>
-                  <ItemDescription>{toolList(labels)}</ItemDescription>
+                  <ItemDescription>{toolList(labels, t)}</ItemDescription>
                 </ItemContent>
                 <ItemActions>
                   <ToolCount count={labels.length} />
@@ -301,7 +303,9 @@ function Granted({ agentId }: { agentId: string }) {
                   <ItemDescription>{skill.summary}</ItemDescription>
                 </ItemContent>
                 <ItemActions>
-                  <span className="text-muted-foreground text-sm">Skill</span>
+                  <span className="text-muted-foreground text-sm">
+                    {t("bot.access.skillLabel")}
+                  </span>
                 </ItemActions>
               </Item>
             </Fragment>
@@ -313,14 +317,18 @@ function Granted({ agentId }: { agentId: string }) {
 }
 
 /** The first few tool labels, and how many more. */
-function toolList(labels: string[]): string {
-  return `${labels.slice(0, 4).join(", ")}${labels.length > 4 ? ` and ${labels.length - 4} more` : ""}`;
+function toolList(labels: string[], t: T): string {
+  const first = labels.slice(0, 4).join(", ");
+  return labels.length > 4
+    ? t("bot.access.toolsAndMore", { list: first, count: labels.length - 4 })
+    : first;
 }
 
 function ToolCount({ count }: { count: number }) {
+  const t = useT();
   return (
     <span className="text-muted-foreground text-sm tabular-nums">
-      {count} {count === 1 ? "tool" : "tools"}
+      {t("bot.access.toolCount", { count })}
     </span>
   );
 }
@@ -341,9 +349,10 @@ function ManageLink({
   appKey: string;
   title: string;
 }) {
+  const t = useT();
   return (
     <Button
-      aria-label={`Manage ${title} on this Bot`}
+      aria-label={t("bot.access.manageNamed", { title })}
       render={
         <Link
           params={{ agentId, key: appKey }}
