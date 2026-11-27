@@ -18,6 +18,12 @@ import {
 import { type ShellTab, TABS } from "@/components/shell/tab-bar";
 import { BuildLabel } from "@/freeduet/build-label";
 import { showsManageGroup } from "@/freeduet/manage-group";
+import {
+  dotState,
+  dotTooltip,
+  workStatusQueryOptions,
+} from "@/freeduet/work-status/status";
+import { WorkDot } from "@/freeduet/work-status/work-dot";
 import { primaryBot } from "@/lib/agents/primary-bot";
 import { agentListQueryOptions } from "@/lib/agents/queries";
 import { approvalInboxOptions } from "@/lib/approvals";
@@ -172,6 +178,11 @@ function Team({ full }: { full: boolean }) {
   const channels = roster.data;
   const primaryId = primaryBot(agents.data)?.id;
   const states = memberStates(inbox.data, channels);
+  // D168: one dot per member from the server's read of the hop queue.
+  const work = useQuery(workStatusQueryOptions());
+  const workByMember = new Map(
+    (work.data?.members ?? []).map((member) => [member.agentId, member]),
+  );
   const team = orderTeam(agents.data ?? []);
   return (
     <ul
@@ -185,17 +196,20 @@ function Team({ full }: { full: boolean }) {
       {team.map((agent) => {
         const target = memberTarget(agent, primaryId, channels);
         const state = states.get(agent.id) ?? null;
-        const line = state ? STATE_TEXT[state] : agent.title;
+        const working = workByMember.get(agent.id);
+        const dot = dotState(working, state === "waiting", state === "working");
+        const tip = dotTooltip(dot, working);
+        const line =
+          dot === "stuck" || (dot === "working" && working?.title)
+            ? tip
+            : state
+              ? STATE_TEXT[state]
+              : agent.title;
         const body = (
           <>
             <span className="relative">
               <MemberFace agentId={agent.id} size={40} />
-              {state === "waiting" ? (
-                <span
-                  aria-hidden
-                  className="absolute right-0 bottom-0 size-3 rounded-full border-2 border-duet-card bg-[var(--wide-coral)]"
-                />
-              ) : null}
+              <WorkDot state={dot} title={tip} />
             </span>
             {full ? (
               <span className="min-w-0 flex-1 text-left">
@@ -205,7 +219,7 @@ function Team({ full }: { full: boolean }) {
                 <span
                   className={cn(
                     "block truncate text-[13px] leading-4",
-                    state === "waiting"
+                    state === "waiting" || dot === "stuck"
                       ? "font-semibold text-[var(--wide-coral)]"
                       : "text-duet-ink-2",
                   )}

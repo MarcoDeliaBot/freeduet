@@ -1,0 +1,104 @@
+/* Who is working (D168): light tokens of their own, like dashboard.css, so the card and the dots read the same wherever they sit. */
+.fd-ws {
+  --w-card: #fff;
+  --w-line: #e2e8f0;
+  --w-ink: #1e293b;
+  --w-ink2: #475569;
+  --w-working: #147a3a;
+  --w-wait: #b45309;
+  --w-idle: #94a3b8;
+  --w-stuck: #c8402a;
+}
+.fd-ws-card {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 12px;
+  padding: 10px 14px;
+  border: 1px solid var(--w-line);
+  border-radius: 14px;
+  background: var(--w-card);
+  color: var(--w-ink);
+  font-size: 14px;
+  line-height: 20px;
+  text-decoration: none;
+  min-height: 44px;
+}
+a.fd-ws-card:hover {
+  border-color: #c5cfdd;
+}
+a.fd-ws-card:focus-visible {
+  outline: 3px solid rgba(100, 48, 171, 0.35);
+  outline-offset: 2px;
+}
+.fd-ws-card[data-state="stuck"] {
+  border-color: #f0b7ab;
+}
+.fd-ws-card[data-state="waiting"] {
+  border-color: #f5d08a;
+}
+.fd-ws-text {
+  flex: 1;
+  min-width: 0;
+}
+.fd-ws-title {
+  display: block;
+  color: var(--w-ink2);
+  font-size: 12px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.fd-ws-open {
+  color: var(--w-ink2);
+  font-size: 12px;
+  white-space: nowrap;
+}
+.fd-ws-dot {
+  display: inline-block;
+  flex: none;
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
+  background: var(--w-idle);
+}
+.fd-ws-dot[data-state="working"] {
+  background: var(--w-working);
+  animation: fd-ws-pulse 1.8s ease-in-out infinite;
+}
+.fd-ws-dot[data-state="waiting"] {
+  background: var(--w-wait);
+}
+.fd-ws-dot[data-state="stuck"] {
+  background: var(--w-stuck);
+}
+.fd-ws-dot[data-state="done"] {
+  background: var(--w-working);
+}
+.fd-ws-dot[data-state="queued"] {
+  background: var(--w-idle);
+}
+.fd-ws-dot[data-on-face] {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  width: 12px;
+  height: 12px;
+  border: 2px solid #fff;
+  box-sizing: content-box;
+  margin: -2px;
+}
+@keyframes fd-ws-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.45;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .fd-ws-dot[data-state="working"] {
+    animation: none;
+  }
+}

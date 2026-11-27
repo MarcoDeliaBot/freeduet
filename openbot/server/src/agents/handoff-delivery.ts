@@ -21,6 +21,7 @@ import { keepLease } from "@openbot/toolkit/lease";
 import type { ThreadLock, TurnAdmission } from "@openbot/toolkit/ports";
 import type { Observable } from "rxjs";
 import { type AuditInitiator, handoffInitiator } from "../audit";
+import { handoffNoteKey, workNotes } from "../freeduet/work-status";
 import type { HandoffDelivery } from "./handoff-runner";
 import { textOf } from "./message-text";
 
@@ -268,6 +269,14 @@ export function createHandoffDelivery(options: {
                 seen.count += 1;
                 const type = String(emitted?.event?.type ?? "");
                 seen.last = type;
+                // D168: a sign of life, and the last tool step by its NAME only, for the work-status card.
+                if (!work.answerIn)
+                  workNotes.event(
+                    handoffNoteKey(work),
+                    type,
+                    (emitted?.event as { toolCallName?: unknown } | undefined)
+                      ?.toolCallName,
+                  );
                 if (type === "TEXT_MESSAGE_START") saying = "";
                 if (type === "TEXT_MESSAGE_CONTENT")
                   saying += String(emitted?.event?.delta ?? "");
@@ -304,6 +313,7 @@ export function createHandoffDelivery(options: {
        * addressed Bot thinking, off-screen, on behalf of a channel the person is watching.
        */
       const lightsAskingChannel = !work.answerIn;
+      if (lightsAskingChannel) workNotes.begin(handoffNoteKey(work));
       const busyOwner = `handoff:${crypto.randomUUID()}`;
       if (lightsAskingChannel) {
         await setBusy?.({
@@ -519,6 +529,7 @@ export function createHandoffDelivery(options: {
         }
       } finally {
         if (lightsAskingChannel) {
+          workNotes.end(handoffNoteKey(work));
           await setBusy?.({
             threadId: work.threadId,
             runId: busyOwner,

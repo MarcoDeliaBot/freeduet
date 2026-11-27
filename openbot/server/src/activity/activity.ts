@@ -453,6 +453,39 @@ export function createActivityStore(database: Database) {
       };
     },
 
+    /**
+     * The person's forward hops that are not finished, or finished within `sinceMs`, newest first, for the
+     * "who is working" card and dots (D168). Rows as the queue holds them; `freeduet/work-status.ts` reads
+     * their state. Never a relay or a notice, never another person's.
+     */
+    async workStatusRows(ownerUserId: string, sinceMs: number) {
+      return database
+        .select({
+          key: workItems.key,
+          payload: workItems.payload,
+          attempts: workItems.attempts,
+          claimedBy: workItems.claimedBy,
+          leaseUntil: workItems.leaseUntil,
+          finishedAt: workItems.finishedAt,
+          lastError: workItems.lastError,
+          updatedAt: workItems.updatedAt,
+        })
+        .from(workItems)
+        .where(
+          and(
+            eq(workItems.kind, HANDOFF_KIND),
+            sql`${workItems.payload}->>'actorId' = ${ownerUserId}`,
+            sql`${workItems.payload}->>'answerIn' is null`,
+            or(
+              isNull(workItems.finishedAt),
+              gte(workItems.finishedAt, new Date(Date.now() - sinceMs)),
+            ),
+          ),
+        )
+        .orderBy(desc(workItems.createdAt))
+        .limit(50);
+    },
+
     /** Per Bot: how many things wait on this person, and how many conversations have unread replies. */
     async attention(ownerUserId: string): Promise<BotAttention[]> {
       const byBot = new Map<string, BotAttention>();
