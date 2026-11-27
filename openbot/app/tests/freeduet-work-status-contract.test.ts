@@ -4,10 +4,12 @@
  * app got `undefined` for every poll, so the card could never show.
  */
 import { afterEach, expect, test } from "bun:test";
-import { Hono } from "hono";
-import { workStatusQueryOptions } from "../../app/src/freeduet/work-status/status";
-import { createWorkNotes, type HopRow } from "../src/freeduet/work-status";
-import { createWorkStatusRoutes } from "../src/freeduet/work-status-routes";
+import { workStatusQueryOptions } from "@/freeduet/work-status/status";
+import {
+  createWorkNotes,
+  type HopRow,
+} from "../../server/src/freeduet/work-status";
+import { createWorkStatusRoutes } from "../../server/src/freeduet/work-status-routes";
 
 const NOW = Date.parse("2026-11-27T10:00:00Z");
 const realFetch = globalThis.fetch;
@@ -35,23 +37,20 @@ const hop: HopRow = {
 };
 
 test("the app's reader gets the handoffs and members the route sends", async () => {
-  const root = new Hono();
-  root.route(
-    "/api/freeduet/work-status",
-    createWorkStatusRoutes(
-      async (context, next) => {
-        context.set("actor", { id: "p1" } as never);
-        return next();
-      },
-      { hops: async () => [hop], attention: async () => [] },
-      createWorkNotes(() => NOW),
-      () => NOW,
-    ),
+  // The route as the server mounts it: the app's path is what it answers, `/` inside the route.
+  const routes = createWorkStatusRoutes(
+    async (context, next) => {
+      context.set("actor", { id: "p1" } as never);
+      return next();
+    },
+    { hops: async () => [hop], attention: async () => [] },
+    createWorkNotes(() => NOW),
+    () => NOW,
   );
   const requested: string[] = [];
   globalThis.fetch = (async (input: RequestInfo | URL, init?: RequestInit) => {
     requested.push(String(input));
-    return root.request(String(input), init);
+    return routes.request("/", init);
   }) as unknown as typeof fetch;
 
   const queryFn = workStatusQueryOptions().queryFn as unknown as () => Promise<{
