@@ -408,10 +408,7 @@ export function Places({ onNewChannel }: { onNewChannel: () => void }) {
               ))}
             </ul>
             {earlier.length > 0 && archived.open ? (
-              <ul
-                aria-label={t("shell.earlier")}
-                className="flex flex-col"
-              >
+              <ul aria-label={t("shell.earlier")} className="flex flex-col">
                 {earlier.map((conversation) => (
                   <li key={conversation.id}>
                     <EarlierLink conversation={conversation} onOpen={none} />
