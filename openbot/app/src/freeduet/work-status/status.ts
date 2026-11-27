@@ -95,7 +95,7 @@ export function cardLine(hop: WorkHandoff, now: number): string {
   }
 }
 
-export type DotState = "working" | "waiting" | "idle" | "stuck";
+export type DotState = "working" | "waiting" | "idle" | "stuck" | "done";
 
 /** One dot per member: stuck beats waiting for you, which beats working, which beats idle. */
 export function dotState(
@@ -114,7 +114,24 @@ export const DOT_TEXT: Record<DotState, string> = {
   waiting: "Waiting for you",
   idle: "Idle",
   stuck: "Stuck: no sign of life",
+  done: "Done",
 };
+
+/** D180: a member whose latest hand-off just finished and who has nothing else going on shows a green ring for a moment. */
+export const DONE_RING_WINDOW_MS = 15_000;
+export function justDone(
+  handoffs: WorkHandoff[],
+  agentId: string,
+  now: number,
+): boolean {
+  return handoffs.some(
+    (hop) =>
+      hop.toBotId === agentId &&
+      hop.state === "done" &&
+      now - new Date(hop.lastEventAt ?? hop.since).getTime() <=
+        DONE_RING_WINDOW_MS,
+  );
+}
 
 /** What a hover or a screen reader says about a dot. */
 export function dotTooltip(state: DotState, work: WorkMember | undefined) {

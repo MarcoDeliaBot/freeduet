@@ -1,3 +1,4 @@
+import { readFileSync } from "node:fs";
 import { afterAll, afterEach, beforeAll, expect, test } from "bun:test";
 import { GlobalRegistrator } from "@happy-dom/global-registrator";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -12,6 +13,7 @@ import { cleanup, render, waitFor } from "@testing-library/react";
 import {
   cardLine,
   dotState,
+  justDone,
   dotTooltip,
   elapsedText,
   type WorkHandoff,
@@ -95,11 +97,41 @@ test("a dot is stuck, waiting, working or idle, in that order of weight", () => 
   expect(dotTooltip("idle", undefined)).toBe("Idle");
 });
 
-test("the dot draws its state and says it in the tooltip", () => {
-  const view = render(<WorkDot state="stuck" title="Stuck: no sign of life" />);
-  const dot = view.getByTestId("work-dot");
-  expect(dot.getAttribute("data-state")).toBe("stuck");
-  expect(dot.getAttribute("title")).toBe("Stuck: no sign of life");
+test("idle draws no ring, every other state draws one with its state (D180)", () => {
+  expect(
+    render(<WorkDot state="idle" title="Idle" />).queryByTestId("work-dot"),
+  ).toBeNull();
+  cleanup();
+  for (const state of ["working", "waiting", "stuck", "done"] as const) {
+    const view = render(<WorkDot state={state} title={`t ${state}`} />);
+    const ring = view.getByTestId("work-dot");
+    expect(ring.getAttribute("data-state")).toBe(state);
+    expect(ring.getAttribute("title")).toBe(`t ${state}`);
+    expect(ring.getAttribute("aria-hidden")).toBe("true");
+    expect(ring.className).toContain("fd-ws-ring");
+    cleanup();
+  }
+});
+
+test("a recently finished hand-off gives the member a done ring, an old one does not", () => {
+  const recent = hop({ state: "done", lastEventAt: ago(0) });
+  expect(justDone([recent], "gamedev", NOW)).toBe(true);
+  expect(justDone([recent], "other", NOW)).toBe(false);
+  expect(
+    justDone([hop({ state: "done", lastEventAt: ago(5) })], "gamedev", NOW),
+  ).toBe(false);
+});
+
+test("the ring css animates, has a reduced-motion fallback and no gray dot on faces", () => {
+  const css = readFileSync(
+    new URL("../src/freeduet/work-status/work-status.css", import.meta.url),
+    "utf8",
+  );
+  expect(css).toContain("prefers-reduced-motion");
+  expect(css).toMatch(
+    /reduce\) \{[\s\S]*\.fd-ws-ring\[data-state="working"\][\s\S]*animation: none/,
+  );
+  expect(css).not.toContain("data-on-face");
 });
 
 test("polling runs every 5 s while something is open and stops when idle", () => {
