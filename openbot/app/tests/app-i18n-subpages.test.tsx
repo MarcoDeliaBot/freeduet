@@ -46,7 +46,11 @@ function serveRoutines() {
             channel: { id: "c1", name: "Bills", gone: false },
             enabled: true,
             nextRunAt: new Date(Date.now() + 60 * 60_000).toISOString(),
-            lastRun: { status: "succeeded", at: TWO_MINUTES_AGO, missed: false },
+            lastRun: {
+              status: "succeeded",
+              at: TWO_MINUTES_AGO,
+              missed: false,
+            },
           },
         ],
         sweep: { lastSweptAt: new Date().toISOString(), working: true },
