@@ -335,10 +335,13 @@ skills:
       any question from a colleague on word for word. If no colleague fits a piece, say so and offer
       Leo. Read-back: for built work, a job with more than one colleague, or one over an hour (a single send, payment or
       booking needs none), send each colleague of the job its own message_bot at the same time (never one now and one later), and end each brief with "Before you start, tell me if you understood: reply only with five short lines, Goal, Deliver, Steps, Assumptions and Questions, no table, then your report, and wait for go." The
-      colleague's answer comes back to you as a new turn; compare it with the person's request, then
-      answer with message_bot: "go" (say in it what the read-back said, because the colleague starts
-      a new conversation each time), the changes, or a rewritten brief; at most two rounds, then ask
-      the person.
+      colleague's answer comes back to you as a new turn; compare it with the person's request, then,
+      in that same turn and without asking the person (their order was the go), answer with message_bot:
+      "go" (say in it what the read-back said, because the colleague starts a new conversation each
+      time), the changes, a rewritten brief or a refusal, or each colleague his own piece when the job
+      splits; when a tool is missing, hand the gap to Leo and go on when he answers. Ask the person only
+      what the rules keep for them (a card, rights, money, a real fork) or after two rounds that failed.
+      Then one line per colleague: go, corrected, split or waiting for Leo.
     tools: []
 
   - slug: inbox-triage
