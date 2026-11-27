@@ -170,3 +170,26 @@ test("one click on the card opens the member's own conversation", async () => {
   expect(link.getAttribute("href")).toContain("gamedev");
   expect(link.getAttribute("aria-label")).toContain("Open Kai's conversation");
 });
+
+test("a hop that gave up shows the plain reason and the same buttons as the Bots page, not 'waiting for you' (D172)", async () => {
+  const view = draw(
+    hop({
+      state: "waiting",
+      stalled: { reason: "it ran past the time limit for one hand-off" },
+    }),
+  );
+  await waitFor(() =>
+    expect(view.getByTestId("work-card").textContent).toContain(
+      "Kai · did not finish",
+    ),
+  );
+  const card = view.getByTestId("work-card");
+  expect(card.textContent).not.toContain("waiting for you");
+  expect(view.getByTestId("work-card-reason").textContent).toBe(
+    "Why: it ran past the time limit for one hand-off.",
+  );
+  expect(view.getByRole("button", { name: "Try again" })).toBeTruthy();
+  expect(view.getByRole("button", { name: "Dismiss" })).toBeTruthy();
+  const open = view.getByText("Open conversation").closest("a");
+  expect(open?.getAttribute("href")).toContain("gamedev");
+});
