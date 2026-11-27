@@ -1,6 +1,6 @@
 /*
  * The settings home, in the light design approved on 27 November 2026 (D154). The tokens are set here
- * and scoped to `.fdh`; the dashboard (stage 1) carries the same values in its own file, and a later
+ * and scoped to `.fdh`; the dashboard (stage 1, `dashboard.css`) carries the same values in its own file, and a later
  * change extracts both into one shared file.
  */
 .fdh {

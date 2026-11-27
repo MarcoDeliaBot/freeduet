@@ -384,6 +384,18 @@ export function MenuSheet({
                 </div>
               </>
             ) : null}
+            {/* D154: the dashboard, one row above Settings, in FreeDuet's own package only. */}
+            {showsManageGroup() ? null : (
+              <Link
+                activeProps={{ className: "bg-duet-tile" }}
+                className={ROW}
+                onClick={close}
+                to="/dashboard"
+              >
+                <RowIcon name="layout" />
+                Dashboard
+              </Link>
+            )}
             <Link
               activeProps={{ className: "bg-duet-tile" }}
               className={ROW}
