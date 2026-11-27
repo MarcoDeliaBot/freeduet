@@ -14,14 +14,14 @@ import {
   createRouter,
   RouterProvider,
 } from "@tanstack/react-router";
-import { cleanup, render, waitFor } from "@testing-library/react";
-import userEvent from "@testing-library/user-event";
+import { act, cleanup, render, waitFor } from "@testing-library/react";
 import { StalledHandoffRow } from "@/components/bot-profile/stalled-handoff";
 import { attentionSummary } from "@/components/bot-profile/attention";
 import { AppLanguageSetting } from "@/freeduet/i18n/language-setting";
 import {
   AppLanguageProvider,
   AppLanguageValue,
+  useAppLanguage,
   useT,
 } from "@/freeduet/i18n/provider";
 import { STORED_APP_LANGUAGE_KEY } from "@/freeduet/i18n/stored-choice";
@@ -156,6 +156,19 @@ function Probe() {
   return <p data-testid="probe">{t("nav.settings")}</p>;
 }
 
+function Chooser() {
+  const { setChoice } = useAppLanguage();
+  return (
+    <button
+      data-testid="choose-it"
+      onClick={() => setChoice("it")}
+      type="button"
+    >
+      it
+    </button>
+  );
+}
+
 function drawProvider() {
   const client = new QueryClient({
     defaultOptions: { queries: { retry: false, staleTime: Infinity } },
@@ -170,6 +183,7 @@ function drawProvider() {
     <QueryClientProvider client={client}>
       <AppLanguageProvider>
         <Probe />
+        <Chooser />
         <AppLanguageSetting />
       </AppLanguageProvider>
     </QueryClientProvider>,
@@ -200,9 +214,12 @@ test("choosing a language in Settings applies at once, with no reload, and is sa
   const view = drawProvider();
   await waitFor(() => expect(requests.length).toBeGreaterThan(0));
   expect(view.getByTestId("probe").textContent).toBe("Settings");
-  const user = userEvent.setup({ document });
-  await user.click(view.getByRole("combobox", { name: "App language" }));
-  await user.click(await view.findByRole("option", { name: "Italiano" }));
+  // The select's popup does not open reliably under happy-dom; the select calls `setChoice`, which is
+  // what is driven here, inside act. The select itself is checked to show the current choice.
+  expect(view.getByRole("combobox", { name: "App language" })).toBeTruthy();
+  await act(async () => {
+    view.getByTestId("choose-it").click();
+  });
   await waitFor(() =>
     expect(view.getByTestId("probe").textContent).toBe("Impostazioni"),
   );

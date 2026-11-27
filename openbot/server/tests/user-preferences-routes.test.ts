@@ -130,7 +130,9 @@ test("saves the app language (D181) for one person: a code or auto, nothing else
   for (const appLanguage of ["it", "ko", "auto"]) {
     const saved = await alice.request(path, patch({ appLanguage }));
     expect(saved.status).toBe(200);
-    expect(state.get("alice")?.appLanguage).toBe(appLanguage);
+    expect<string | undefined>(state.get("alice")?.appLanguage).toBe(
+      appLanguage,
+    );
   }
   await alice.request(path, patch({ appLanguage: "it" }));
   expect(state.get("alice")?.messageListEmphasis).toBe("thread");
