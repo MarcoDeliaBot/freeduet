@@ -2631,6 +2631,16 @@ Not verified: not run against a live stack, only against mocked reads (screensho
 
 **Built so far.** The sentence in Kai's prompt and the pin in `freeduet-package.test.ts` (describe "D165"; it fails on the prompt of main: 0 pass, 1 fail, then 1 pass after the change). Tests run: `freeduet-team-file` and `freeduet-package` 141 pass before, 142 pass after; `evals/team/run.test.ts` 181 pass; `agent-freeduet` `test_local_light_turn.py` 40 passed. Not verified: not run live. Run kai-6 three times on the maintainer's installation, and kai-1 to kai-5 once for the neighbours.
 
+## 120. Settings, stage 2 (D154)
+
+D154 (maintainer, 27 November 2026): one simple, coherent design for all settings, Engines one click away, in the light design approved the same day. Stage 1 is the dashboard (its own pull request); this stage is the settings home.
+
+**Built so far.** `openbot/app/src/freeduet/settings-home.tsx` and `settings-home.css`: a home in the light design (Plus Jakarta Sans, accent #6430AB, background #F6F7FB) with an Engines banner on top (administrator only, `/admin/engines`) and five groups, each row a link to an existing page: Team (Bots, Capabilities), Connections (accounts, apps and mail rules; setup checklist), Safety (approval rules and Full access; passwords), Jobs (routines; notifications), System (Admin, administrator only). It replaces `SettingsDirectory` in the Workspace tab of `/settings` (one touch, `docs/UPSTREAM_TOUCHES.md`). No route is added, moved or removed; `/settings/memory` still redirects. Test: `openbot/app/tests/settings-home.test.tsx` (every group, links, Engines link, a non-administrator sees neither Engines nor Admin, every row of the old list is still reachable).
+
+**Safety.** The home only links. Approval rules, Full access and credentials stay on their own guarded pages; nothing that a setting does changed.
+
+**Not done.** The inner pages keep their old look (stages after this one). The Preferences and Devices & info tabs of `/settings` are tabs, not routes, so the home has no rows for them. The tokens are copied into `settings-home.css` (scoped to `.fdh`) from the dashboard's `dashboard.css`; one shared file is a later step. The dashboard already links Engines (stage 1). The old `settings-directory.tsx` is now unused by FreeDuet's package and kept for the moment. Not run live; the PNG previews use mocked data.
+
 ---
 
 ## 123. The voice sheet shows it is listening (D167)
