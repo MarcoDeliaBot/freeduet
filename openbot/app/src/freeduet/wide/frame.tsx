@@ -4,6 +4,7 @@ import type { ReactNode } from "react";
 import { DuetIcon } from "@/components/duet/icons";
 import { ChatOrb, ChatStep, initialOf } from "@/components/shell/header";
 import type { ShellTab } from "@/components/shell/tab-bar";
+import { useT } from "@/freeduet/i18n/provider";
 import { currentUserQueryOptions } from "@/lib/auth/queries";
 import { appConfig } from "@/lib/generated/application-config";
 import { type WideBand, WideProvider } from "./band";
@@ -56,10 +57,11 @@ export function WideFrame({
  */
 export function WideTopBar() {
   const { data: user } = useQuery(currentUserQueryOptions());
+  const t = useT();
   return (
     <header className="duet-face flex h-16 shrink-0 items-center gap-3 border-duet-hair border-b bg-duet-surface px-6">
       <Link
-        aria-label={`${appConfig.brand.productName} chat`}
+        aria-label={t("header.chat", { product: appConfig.brand.productName })}
         className="grid size-12 shrink-0 place-items-center rounded-full transition-transform focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-duet-accent/50 active:scale-95"
         to="/"
       >
@@ -69,7 +71,7 @@ export function WideTopBar() {
         <ChatStep />
       </div>
       <Link
-        aria-label="Your settings"
+        aria-label={t("header.settings")}
         className="duet-glass grid size-11 shrink-0 place-items-center rounded-full text-duet-ink shadow-duet-glass focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-duet-accent/50"
         to="/settings"
       >

@@ -4,6 +4,14 @@ import { Streamdown } from "streamdown";
 import { PendingApprovals } from "@/components/approvals/inline-approval";
 import { DuetIcon, type DuetIconName } from "@/components/duet/icons";
 import { RoutineCreatedCard } from "@/components/routines/routine-chat-card";
+import type { MessageId } from "@/freeduet/i18n/catalogs";
+import {
+  englishT,
+  type T,
+  useAppLanguage,
+  useT,
+} from "@/freeduet/i18n/provider";
+import { formatNumber } from "@/freeduet/i18n/translate";
 import { markdownComponents } from "@/lib/markdown";
 import {
   humanise,
@@ -29,6 +37,21 @@ import type { VisibleChatItem } from "./chat-messages";
 import { ToolLine } from "./tool-line";
 
 type ToolItem = Extract<VisibleChatItem, { kind: "tool" }>;
+
+/**
+ * The app's words and numbers for the functions below (D181). The component passes the person's;
+ * a plain call, such as a test's, reads English.
+ */
+type Words = { t: T; number: (value: number) => string };
+const ENGLISH: Words = {
+  t: englishT,
+  number: (value) => formatNumber(value, "en"),
+};
+
+/** A count in words: the plural form picked by `count`, and the number written in the app's language. */
+function counted(words: Words, id: MessageId, count: number): string {
+  return words.t(id, { count, amount: words.number(count) });
+}
 
 /** Adjacent things a Bot did, drawn as one line that opens to each of them. */
 export type ToolGroup = {
@@ -217,6 +240,11 @@ function inputValue(value: unknown): string {
 }
 
 export function stepDetails(step: ToolItem): StepDetails {
+  return stepDetailsIn(ENGLISH, step);
+}
+
+/** One step, named in the person's language (D181); `stepDetails` is this in English. */
+export function stepDetailsIn(words: Words, step: ToolItem): StepDetails {
   const args = objectOf(step.toolCall.function.arguments);
   const inputs = Object.entries(args).map(
     ([key, value]) => [key, inputValue(value)] as [string, string],
@@ -226,7 +254,7 @@ export function stepDetails(step: ToolItem): StepDetails {
     return {
       id: step.id,
       kind: "browser",
-      label: browser.label ?? "Used the browser",
+      label: browser.label ?? words.t("chat.usedBrowser"),
       ...(browser.title ? { detail: browser.title } : {}),
       ...(browser.href ? { href: browser.href } : {}),
       pending: browser.pending,
@@ -302,7 +330,10 @@ export function stepDetails(step: ToolItem): StepDetails {
       ...(first
         ? {
             detail: more.length
-              ? `${hostOf(first)} and ${more.length} more`
+              ? words.t("chat.hostAndMore", {
+                  host: hostOf(first),
+                  amount: words.number(more.length),
+                })
               : hostOf(first),
           }
         : {}),
@@ -337,13 +368,12 @@ function personOf(
   return person ? { person } : {};
 }
 
-function joinPhrases(phrases: string[]): string {
+function joinPhrases(phrases: string[], t: T): string {
   if (phrases.length <= 1) return phrases[0] ?? "";
-  return `${phrases.slice(0, -1).join(", ")} and ${phrases.at(-1)}`;
-}
-
-function plural(count: number, one: string, many: string): string {
-  return `${count} ${count === 1 ? one : many}`;
+  return t("chat.andJoin", {
+    head: phrases.slice(0, -1).join(", "),
+    last: phrases.at(-1) ?? "",
+  });
 }
 
 /**
@@ -353,7 +383,11 @@ function plural(count: number, one: string, many: string): string {
  * never attributed to a provider; a connector is named, because which system was reached is the
  * person's own fact.
  */
-export function summarise(steps: readonly StepDetails[]): string {
+export function summarise(
+  steps: readonly StepDetails[],
+  words: Words = ENGLISH,
+): string {
+  const { t } = words;
   /*
    * Only what happened. A step that was refused or failed is counted as an issue beside the line,
    * and one that never finished is not called done; a send waiting on its card is named by its
@@ -364,13 +398,13 @@ export function summarise(steps: readonly StepDetails[]): string {
   );
   const of = (kind: StepKind) => finished.filter((step) => step.kind === kind);
   const phrases: string[] = [];
-  if (of("search").length) phrases.push("searched the web");
+  if (of("search").length) phrases.push(t("chat.searchedWeb"));
   const read = of("fetch").reduce((sum, step) => sum + step.pages, 0);
-  if (read) phrases.push(`read ${plural(read, "page", "pages")}`);
+  if (read) phrases.push(counted(words, "chat.readPages", read));
   const browser = of("browser");
   const browsed = browser.reduce((sum, step) => sum + step.pages, 0);
-  if (browsed) phrases.push(`browsed ${plural(browsed, "page", "pages")}`);
-  else if (browser.length) phrases.push("used the browser");
+  if (browsed) phrases.push(counted(words, "chat.browsedPages", browsed));
+  else if (browser.length) phrases.push(t("chat.usedBrowserPhrase"));
   // What happened to the person's own things, in their words: "searched your email".
   for (const person of new Set(
     finished.flatMap((step) => (step.person ? [step.person] : [])),
@@ -383,16 +417,16 @@ export function summarise(steps: readonly StepDetails[]): string {
         .map((step) => step.connector ?? ""),
     ),
   ].filter(Boolean);
-  if (connectors.length === 1) phrases.push(`used ${connectors[0]}`);
+  const [onlyConnector] = connectors;
+  if (connectors.length === 1 && onlyConnector)
+    phrases.push(t("chat.usedNamed", { name: onlyConnector }));
   else if (connectors.length > 1)
-    phrases.push(
-      `used ${plural(connectors.length, "connector", "connectors")}`,
-    );
+    phrases.push(counted(words, "chat.usedConnectors", connectors.length));
   const tools = of("tool").filter((step) => !step.person).length;
-  if (tools) phrases.push(`used ${plural(tools, "tool", "tools")}`);
+  if (tools) phrases.push(counted(words, "chat.usedTools", tools));
   // Nothing finished: the first step, named plainly, with its issue beside it.
   if (phrases.length === 0) return steps[0]?.label ?? "";
-  const sentence = joinPhrases(phrases);
+  const sentence = joinPhrases(phrases, t);
   return sentence.charAt(0).toUpperCase() + sentence.slice(1);
 }
 
@@ -433,28 +467,32 @@ function IconStack({ kinds }: { kinds: StepKind[] }) {
 }
 
 function StepStatus({ step, active }: { step: StepDetails; active: boolean }) {
+  const t = useT();
   if (step.pending)
     return (
       <span className="shrink-0 text-muted-foreground">
         {active
-          ? "In progress"
+          ? t("chat.inProgress")
           : step.waiting
-            ? "Waiting for you"
-            : "Not completed"}
+            ? t("chat.waitingForYou")
+            : t("chat.notCompleted")}
       </span>
     );
   if (step.refused)
-    return <span className="shrink-0 text-destructive">Blocked</span>;
+    return (
+      <span className="shrink-0 text-destructive">{t("chat.blocked")}</span>
+    );
   if (step.failed)
     return (
       <span className="shrink-0 text-amber-600 dark:text-amber-500">
-        Didn't work
+        {t("chat.didntWork")}
       </span>
     );
   return null;
 }
 
 function StepRow({ step, active }: { step: StepDetails; active: boolean }) {
+  const t = useT();
   const line = (
     <span className="flex min-w-0 items-center gap-2">
       <StepIcon kind={step.kind} />
@@ -480,7 +518,7 @@ function StepRow({ step, active }: { step: StepDetails; active: boolean }) {
   const reason =
     step.failed && step.kind === "browser" ? (
       <p className="mt-0.5 pl-6 text-destructive">
-        {step.reason ?? "Couldn't finish this step."}
+        {step.reason ?? t("chat.couldntFinishStep")}
       </p>
     ) : null;
   // A browser step says everything it has in its line. Anything else opens to what it was given
@@ -536,7 +574,9 @@ export function ToolActivity({
   /** This is the newest row of a turn still in flight, so a step without a result is running. */
   active: boolean;
 }) {
-  const steps = group.steps.map(stepDetails);
+  const app = useAppLanguage();
+  const words: Words = { t: app.t, number: app.number };
+  const steps = group.steps.map((step) => stepDetailsIn(words, step));
   const running = active && steps.some((step) => step.pending);
   const current = steps.find((step) => step.pending);
   const issues = steps.filter((step) => step.failed || step.refused).length;
@@ -546,8 +586,10 @@ export function ToolActivity({
     <>
       <ToolLine
         icon={<IconStack kinds={kinds} />}
-        label={running && current ? `${current.label}…` : summarise(steps)}
-        detail={issues ? plural(issues, "issue", "issues") : undefined}
+        label={
+          running && current ? `${current.label}…` : summarise(steps, words)
+        }
+        detail={issues ? counted(words, "chat.issues", issues) : undefined}
         running={running}
       >
         <ol className="space-y-2 py-1">

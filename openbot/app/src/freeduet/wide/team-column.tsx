@@ -17,6 +17,7 @@ import {
 } from "@/components/shell/menu-sheet";
 import { type ShellTab, TABS } from "@/components/shell/tab-bar";
 import { BuildLabel } from "@/freeduet/build-label";
+import { useT } from "@/freeduet/i18n/provider";
 import { showsManageGroup } from "@/freeduet/manage-group";
 import {
   dotState,
@@ -41,7 +42,7 @@ import { cn } from "@/lib/utils";
 import { queryClient } from "@/query-client";
 import type { WideBand } from "./band";
 import { MemberFace } from "./mascot";
-import { memberStates, memberTarget, orderTeam, STATE_TEXT } from "./team";
+import { memberStates, memberTarget, orderTeam } from "./team";
 
 const FOCUS =
   "focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-duet-accent/50";
@@ -64,9 +65,10 @@ export function TeamColumn({
   onNewChannel: () => void;
 }) {
   const full = band === "full";
+  const t = useT();
   return (
     <aside
-      aria-label="Your team"
+      aria-label={t("wide.yourTeam")}
       className={cn(
         "duet-face flex min-h-0 shrink-0 flex-col border-duet-hair border-r bg-duet-card text-duet-ink",
         full ? "w-[clamp(248px,19vw,300px)]" : "w-[76px]",
@@ -81,7 +83,7 @@ export function TeamColumn({
       ) : (
         <div className="flex shrink-0 flex-col items-center border-duet-hair border-t py-2">
           <button
-            aria-label="Menu"
+            aria-label={t("shell.menu")}
             className={cn(
               "grid size-11 place-items-center rounded-full text-duet-ink-2 transition-colors hover:bg-duet-tile hover:text-duet-ink",
               FOCUS,
@@ -122,9 +124,10 @@ function MainLinks({
   const inbox = useQuery(approvalInboxOptions());
   const tasks = useQuery(taskListQueryOptions());
   const waiting = needsInputCount(tasks.data, inbox.data);
+  const t = useT();
   return (
     <nav
-      aria-label="Main"
+      aria-label={t("tab.main")}
       className={cn(
         "flex shrink-0 flex-col gap-0.5",
         full ? "px-3 py-2" : "items-center px-2 py-3",
@@ -137,7 +140,11 @@ function MainLinks({
           <Link
             activeOptions={{ exact: tab.id === "chat" }}
             aria-current={on ? "page" : undefined}
-            aria-label={badge ? `${tab.label}, ${badge} waiting` : tab.label}
+            aria-label={
+              badge
+                ? t("tab.waiting", { tab: t(tab.key18n), badge })
+                : t(tab.key18n)
+            }
             className={cn(
               "type-nav relative flex items-center rounded-[22px] font-medium transition-colors",
               full ? "min-h-11 gap-3 px-3" : "size-11 justify-center",
@@ -147,11 +154,11 @@ function MainLinks({
               FOCUS,
             )}
             key={tab.id}
-            title={full ? undefined : tab.label}
+            title={full ? undefined : t(tab.key18n)}
             to={tab.to}
           >
             <DuetIcon name={tab.icon} size={22} stroke={on ? 2.1 : 1.9} />
-            {full ? <span>{tab.label}</span> : null}
+            {full ? <span>{t(tab.key18n)}</span> : null}
             {badge ? (
               <span
                 aria-hidden
@@ -185,9 +192,10 @@ function Team({ full }: { full: boolean }) {
     (work.data?.members ?? []).map((member) => [member.agentId, member]),
   );
   const team = orderTeam(agents.data ?? []);
+  const t = useT();
   return (
     <ul
-      aria-label="Team"
+      aria-label={t("wide.team")}
       className={cn(
         "flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto overscroll-contain border-duet-hair border-t",
         full ? "px-3 py-3" : "items-center px-2 py-3",
@@ -209,7 +217,9 @@ function Team({ full }: { full: boolean }) {
           dot === "stuck" || (dot === "working" && working?.title)
             ? tip
             : state
-              ? STATE_TEXT[state]
+              ? state === "waiting"
+                ? t("wide.stateWaiting")
+                : t("wide.stateWorking")
               : agent.title;
         const body = (
           <>
@@ -241,7 +251,7 @@ function Team({ full }: { full: boolean }) {
           full ? "min-h-12 gap-3 px-2 py-1" : "size-12 justify-center",
           FOCUS,
         );
-        const label = `${agent.name}, ${line}`;
+        const label = t("wide.memberLabel", { name: agent.name, line });
         return (
           <li key={agent.id}>
             {target.to === "/" ? (
@@ -290,6 +300,7 @@ function Team({ full }: { full: boolean }) {
  */
 export function Places({ onNewChannel }: { onNewChannel: () => void }) {
   const navigate = useNavigate();
+  const t = useT();
   const { data: user } = useQuery(currentUserQueryOptions());
   const { data: capabilities } = useQuery(deploymentCapabilitiesQueryOptions());
   const signOut = useMutation(signOutMutationOptions(queryClient));
@@ -319,7 +330,11 @@ export function Places({ onNewChannel }: { onNewChannel: () => void }) {
       data-testid="column-places"
     >
       {current.length > 0 ? (
-        <ul aria-label="Channels" className="flex flex-col" id={channelsId}>
+        <ul
+          aria-label={t("shell.channels")}
+          className="flex flex-col"
+          id={channelsId}
+        >
           {current.map((channel) => (
             <li key={channel.id}>
               <ChannelLink channel={channel} onOpen={none} />
@@ -334,7 +349,7 @@ export function Places({ onNewChannel }: { onNewChannel: () => void }) {
           type="button"
         >
           <RowIcon name="plus" />
-          New channel
+          {t("shell.newChannel")}
         </button>
       ) : null}
       {away.length > 0 || earlier.length > 0 ? (
@@ -348,7 +363,7 @@ export function Places({ onNewChannel }: { onNewChannel: () => void }) {
               type="button"
             >
               <IconArchive />
-              Archived
+              {t("shell.archived")}
               <IconChevronRight
                 aria-hidden
                 className={cn(
@@ -359,7 +374,10 @@ export function Places({ onNewChannel }: { onNewChannel: () => void }) {
             </button>
           </h2>
           <div hidden={!archived.open} id={archived.id}>
-            <ul aria-label="Archived channels" className="flex flex-col">
+            <ul
+              aria-label={t("shell.archivedChannels")}
+              className="flex flex-col"
+            >
               {away.map((channel) => (
                 <li className="flex items-center gap-1" key={channel.id}>
                   <ChannelLink
@@ -368,7 +386,9 @@ export function Places({ onNewChannel }: { onNewChannel: () => void }) {
                     onOpen={none}
                   />
                   <button
-                    aria-label={`Unarchive ${channel.name}`}
+                    aria-label={t("shell.unarchiveNamed", {
+                      name: channel.name,
+                    })}
                     className={cn(
                       "type-label shrink-0 rounded-full px-3 py-1.5 font-semibold text-duet-ink-2 transition-colors hover:bg-duet-tile disabled:opacity-50",
                       FOCUS,
@@ -382,13 +402,13 @@ export function Places({ onNewChannel }: { onNewChannel: () => void }) {
                     }
                     type="button"
                   >
-                    Unarchive
+                    {t("shell.unarchive")}
                   </button>
                 </li>
               ))}
             </ul>
             {earlier.length > 0 && archived.open ? (
-              <ul aria-label="Earlier conversations" className="flex flex-col">
+              <ul aria-label={t("shell.earlier")} className="flex flex-col">
                 {earlier.map((conversation) => (
                   <li key={conversation.id}>
                     <EarlierLink conversation={conversation} onOpen={none} />
@@ -419,7 +439,7 @@ export function Places({ onNewChannel }: { onNewChannel: () => void }) {
                   name="chevronRight"
                   size={22}
                 />
-                Manage
+                {t("shell.manage")}
                 {manage.open ? null : <BotsNavBadge />}
               </button>
             </h2>
@@ -432,7 +452,7 @@ export function Places({ onNewChannel }: { onNewChannel: () => void }) {
                   to={page.to}
                 >
                   <RowIcon name={page.icon} />
-                  {page.label}
+                  {page.key18n ? t(page.key18n) : page.label}
                   {page.badge}
                 </Link>
               ))}
@@ -443,7 +463,7 @@ export function Places({ onNewChannel }: { onNewChannel: () => void }) {
                   to="/admin"
                 >
                   <RowIcon name="shieldLock" />
-                  Admin
+                  {t("nav.admin")}
                 </Link>
               ) : null}
             </div>
@@ -455,7 +475,7 @@ export function Places({ onNewChannel }: { onNewChannel: () => void }) {
           to="/settings"
         >
           <RowIcon name="settings" />
-          Settings
+          {t("nav.settings")}
           {/* Where Manage is hidden (FreeDuet's package), the Bots badge rides on this row (D133). */}
           {showsManageGroup() ? null : <BotsNavBadge />}
         </Link>
@@ -470,7 +490,7 @@ export function Places({ onNewChannel }: { onNewChannel: () => void }) {
             type="button"
           >
             <RowIcon name="logout" />
-            Sign out
+            {t("shell.signOut")}
           </button>
         ) : null}
         <BuildLabel />
