@@ -2713,6 +2713,7 @@ D154 (maintainer, 27 November 2026): one simple, coherent design for all setting
 **Built so far.** The change and tests in `agent-handoff-delivery.test.ts` (an active run is not stopped, a silent one is, a run at the cap is, scaled to milliseconds) and `agent-handoff-runner.test.ts` (a cap stop is finished, not released, and the notice names the cap).
 
 **Not verified.** Not run live with a real build; a retry after silence still re-runs the whole job (no resume). Open decision for the maintainer: the cap of 25 minutes (raise it only together with the engine's segment limit).
+
 ## 127. A stalled hand-off says what happened and fixes in one click (D171)
 
 **Why.** The maintainer saw a badge "1" on Settings › Bots, "Iris · 1 stalled hand-off, 7 unread" on the Bots page and a delegated task marked "needs you" on Iris's page, and could not tell what to do or what to read (27 November 2026). The cause of that stall (a hop stopped at the time limit five times) is D170; this is the part the person sees. **D171:** wherever a hand-off is stalled, say what happened, why in one line, and offer one button that solves it.
