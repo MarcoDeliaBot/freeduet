@@ -319,6 +319,12 @@ export const MOVE: readonly MoveEntry[] = [
 
   move("Pages and tasks", "pages", "openduet_pages", "owner_user_id"),
   move("Pages and tasks", "tasks", "openduet_tasks", "owner_user_id"),
+  move(
+    "Conversations",
+    "files a colleague offered in a hand-off",
+    "handoff_file_offers",
+    "owner_user_id",
+  ),
 
   move("Usage", "model usage", "model_usage", "user_id"),
 ];
@@ -476,6 +482,7 @@ export const IDENTITY: readonly NoteEntry[] = [
 /** Names that look like a person and are not one. */
 export const REVIEWED: readonly NoteEntry[] = [
   note("sessions", "user_agent", "a browser's name"),
+  note("handoff_file_offers", "member_bot_id", "the id of a team member, a Bot"),
   note("saved_logins", "username", "the person's name at a website"),
   note("scim_users", "user_name", "a directory name"),
   note("scim_users", "user_name_key", "a directory name"),

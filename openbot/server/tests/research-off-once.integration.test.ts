@@ -45,7 +45,9 @@ describe("migration 0079 against a database at 0078", () => {
     const journal = JSON.parse(await readFile(journalPath, "utf8")) as {
       entries: { idx: number; tag: string }[];
     };
-    expect(journal.entries.at(-1)?.tag).toBe("0079_research_off_once");
+    expect(journal.entries.find((entry) => entry.idx === 79)?.tag).toBe(
+      "0079_research_off_once",
+    );
     journal.entries = journal.entries.filter((entry) => entry.idx <= 78);
     await writeFile(journalPath, JSON.stringify(journal));
   });
