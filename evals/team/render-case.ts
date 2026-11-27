@@ -82,14 +82,14 @@ export async function messageBotTool(): Promise<{
   };
 }
 
-/** The colleagues' ids from the team file, as `id (name)`: the ids are what message_bot's `bot` takes. */
+/** The colleagues from the team file, as `Name (id)`: message_bot's `bot` takes the name, the lesson tools' `member` the id. */
 async function colleagueIds(): Promise<string[]> {
   const agents = Bun.YAML.parse(await readFile(AGENTS, "utf8")) as {
     agents: { id: string; name?: string }[];
   };
   return agents.agents
     .filter((row) => row.id !== IRIS)
-    .map((row) => (row.name ? `${row.id} (${row.name})` : row.id));
+    .map((row) => (row.name ? `${row.name} (${row.id})` : row.id));
 }
 
 async function memberPart(member: string, request: string): Promise<Rendered> {
@@ -187,7 +187,7 @@ export async function renderOne(c: Case, today: Date): Promise<string> {
     const ids = (await colleagueIds()).join(", ");
     lines.push(
       "",
-      `To call a tool, write one line \`TOOL_CALL {"name": "<exact tool name>", "args": {...}}\`, using exactly the argument names listed above. For message_bot's \`bot\`, write the colleague's id, not the name; the ids are: ${ids}.`,
+      `To call a tool, write one line \`TOOL_CALL {"name": "<exact tool name>", "args": {...}}\`, using exactly the argument names listed above. For message_bot's \`bot\`, write the colleague's name as the roster gives it (for example Kai); for the lesson tools' \`member\`, the id. The colleagues, as Name (id): ${ids}.`,
     );
   }
   lines.push("", member.toolsNote, "");
