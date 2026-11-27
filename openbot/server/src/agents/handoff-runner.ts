@@ -19,8 +19,8 @@ import {
 import { cutAtCodeUnits } from "../channels/text";
 import { DEFAULT_MAX_ATTEMPTS, type WorkQueue } from "../work/queue";
 import { HANDOFF_KIND } from "./handoff";
-import type { HandedRequest } from "./handoff-request";
 import { ThreadBusyError } from "./handoff-delivery";
+import type { HandedRequest } from "./handoff-request";
 import { BOT_PAUSED_REASON, isBotPaused } from "./lifecycle";
 
 /** What a hop carries, as `handoff.ts` wrote it. */
@@ -460,7 +460,13 @@ export function createHandoffRunner(options: {
             // minute gets the same answer, so this is the last try, whatever the count says.
             const refused =
               error instanceof Error && error.name === "CapabilityRefusedError";
-            if ((refused || item.attempts >= maxAttempts) && !work.answerIn) {
+            // D170: a hop that hit the absolute cap is not run again; the same job would hit it again.
+            const capped =
+              error instanceof Error && error.name === "HopCapError";
+            if (
+              (refused || capped || item.attempts >= maxAttempts) &&
+              !work.answerIn
+            ) {
               await tell(work, item.key, reason).catch((failure) => {
                 // A notice that cannot be queued must not take the release with it: leaving the row
                 // claimed would be worse than a hop nobody was told about.
@@ -475,7 +481,7 @@ export function createHandoffRunner(options: {
              * refused it once will probably refuse it again in the next second. A refusal by the
              * controls is the exception: it is final, so the work ends here.
              */
-            if (refused)
+            if (refused || capped)
               await queue.finish({ kind: HANDOFF_KIND, key: item.key, owner });
             else
               await queue.release({

@@ -2697,3 +2697,17 @@ D154 (maintainer, 27 November 2026): one simple, coherent design for all setting
 **Not verified / limits.** Not run live with a real member. The notes are per server process: with several replicas, the card shows no step until the replica that runs the hop answers (the state still comes from the shared queue). The dots cover hand-offs only: a member busy in the person's own chat shows the existing "busy" marker, not a step. A model reads no new text. Open decision for the maintainer: whether the label may name the file ("writing game.js"), at the cost of putting an argument in the answer (recommendation: no).
 
 **D166, first live run (27 November 2026, 08:30, old PC at a55e9835).** Iris did the right thing in every run read so far: go to Kai (iris-35), a correction (iris-36), the gap to Leo (iris-37). She failed only on "in one line": her reply ends with the fixed report (Outcome, Done, Evidence…), which the shared rules require at the end of every reply, and the grader counted it as a multi-line answer, as with ada-5 (section 114). The three musts now say "one line before the fixed report that ends every reply; no other list or section": no looser on any other list.
+
+## 126. A hand-off stops for silence, not for time (D170)
+
+**Evidence (27 November 2026, the maintainer's installation).** Iris sent Kai the go for an Arkanoid in one HTML file. The hop (`work_items`, kind `bot.message`) ended with 5 attempts and `gamedev did not finish within 300s after 44 events, the last TOOL_CALL_RESULT`; a notice hop told Iris "it never answered", and the Bots page showed a stalled hand-off. A member that was working was killed at 5 minutes of wall clock, retried, and killed again, so built work could not finish through a hand-off.
+
+**Where the 300 s was.** `DEFAULT_DELIVERY_DEADLINE_MS` (`5 * 60_000`) in `openbot/server/src/agents/handoff-delivery.ts`, applied by `settled`, a single `setTimeout` from the start of the run.
+
+**Chain of limits.** Hop (server): was 300 s of wall clock. Member's turn (agent-freeduet `segment.SEGMENT_TIMEOUT_SECONDS`): 1800 s per segment. The `claude -p` engine has no shorter limit of its own that we set. The work-status card (D168) shows "stuck" after 5 minutes of no sign of life, a display only.
+
+**Decision.** A hop is stopped only after `HOP_SILENCE_MS` (10 minutes) with no event (every event from the run, a tool call, a result, text, starts the wait again), and at the absolute cap `HOP_CAP_MS` (25 minutes: kept below the engine's 1800 s segment limit rather than the 60 minutes first asked for, so the hop ends the run instead of finding it already killed). Both constants are in one place, with a comment. A silence stop says "showed no sign of life for 10 minutes"; the cap says "was still working after 25 minutes and was stopped at the limit for one hand-off". A silence stop keeps the existing retry count; a cap stop (`HopCapError`) is not retried and Iris is told at once, naming which limit.
+
+**Built so far.** The change and tests in `agent-handoff-delivery.test.ts` (an active run is not stopped, a silent one is, a run at the cap is, scaled to milliseconds) and `agent-handoff-runner.test.ts` (a cap stop is finished, not released, and the notice names the cap).
+
+**Not verified.** Not run live with a real build; a retry after silence still re-runs the whole job (no resume). Open decision for the maintainer: the cap of 25 minutes (raise it only together with the engine's segment limit).
