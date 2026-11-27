@@ -17,6 +17,7 @@ import {
   ItemTitle,
 } from "@/components/ui/item";
 import { Separator } from "@/components/ui/separator";
+import { useAppLanguage } from "@/freeduet/i18n/provider";
 import { authKeys, currentUserQueryOptions } from "@/lib/auth/queries";
 import {
   type BrowserPairing,
@@ -74,6 +75,7 @@ export function PairDevicesSection() {
 /** The phone's side: a code from the link or typed, and a name, then one press. */
 export function PairThisBrowser() {
   const queryClient = useQueryClient();
+  const { t } = useAppLanguage();
   const [code, setCode] = useState("");
   const [label, setLabel] = useState("");
   const [fromLink, setFromLink] = useState(false);
@@ -101,12 +103,12 @@ export function PairThisBrowser() {
 
   return (
     <PageSection
-      description="On the computer FreeDuet runs on, open Settings, press Make a code under Pair a phone or another browser, then open the link it shows or type the code here."
-      title="Pair this browser"
+      description={t("settings.pairThisDescription")}
+      title={t("settings.pairThisTitle")}
     >
       {done ? (
         <p className="mt-4 text-sm" role="status">
-          This browser is paired with the computer.
+          {t("settings.pairedDone")}
         </p>
       ) : (
         <form
@@ -117,14 +119,12 @@ export function PairThisBrowser() {
           }}
         >
           {fromLink ? (
-            <p className="text-sm">
-              The link brought a code. Name this browser and press Pair.
-            </p>
+            <p className="text-sm">{t("settings.linkBroughtCode")}</p>
           ) : null}
           <div className="flex flex-col gap-1 text-sm">
-            <span aria-hidden>Code</span>
+            <span aria-hidden>{t("settings.code")}</span>
             <Input
-              aria-label="Code"
+              aria-label={t("settings.code")}
               autoCapitalize="characters"
               autoComplete="off"
               onChange={(event) => setCode(event.target.value)}
@@ -133,18 +133,18 @@ export function PairThisBrowser() {
             />
           </div>
           <div className="flex flex-col gap-1 text-sm">
-            <span aria-hidden>Name</span>
+            <span aria-hidden>{t("settings.name")}</span>
             <Input
-              aria-label="Name"
+              aria-label={t("settings.name")}
               autoComplete="off"
               maxLength={60}
               onChange={(event) => setLabel(event.target.value)}
-              placeholder="Phone"
+              placeholder={t("settings.phone")}
               value={label}
             />
           </div>
           <Button disabled={pair.isPending || !code.trim()} type="submit">
-            Pair this browser
+            {t("settings.pairThisTitle")}
           </Button>
           {pair.error ? (
             <p className="text-destructive text-sm" role="alert">
@@ -160,6 +160,7 @@ export function PairThisBrowser() {
 /** The computer's side: the code, the link, the QR, and the list with Revoke. */
 export function PairedBrowsers() {
   const queryClient = useQueryClient();
+  const { t } = useAppLanguage();
   const list = useQuery(pairingsQueryOptions());
   const [code, setCode] = useState<{ made: PairingCode; until: number } | null>(
     null,
@@ -211,8 +212,8 @@ export function PairedBrowsers() {
 
   return (
     <PageSection
-      description="A phone or another browser that is paired works like this one. Revoke one and it is cut off at its next request and signed out."
-      title="Pair a phone or another browser"
+      description={t("settings.pairedDescription")}
+      title={t("settings.pairedTitle")}
     >
       {canPair ? (
         <div className="mt-4">
@@ -221,37 +222,31 @@ export function PairedBrowsers() {
             onClick={() => mint.mutate()}
             variant="outline"
           >
-            Make a code
+            {t("settings.makeCode")}
           </Button>
         </div>
       ) : (
-        <PageEmpty>
-          A code is made in the browser paired at the computer. This one cannot
-          make one.
-        </PageEmpty>
+        <PageEmpty>{t("settings.cannotMakeCode")}</PageEmpty>
       )}
       {code && secondsLeft > 0 && link ? (
         <div className="mt-4 flex flex-col gap-3 rounded-lg border border-border p-4">
           <p className="text-sm">
-            On the phone, signed in as you, scan this or open the link, or open
-            Settings and type the code. It works once and runs out in{" "}
-            {Math.floor(secondsLeft / 60)}:
-            {String(secondsLeft % 60).padStart(2, "0")}.
+            {t("settings.runsOut", {
+              time: `${Math.floor(secondsLeft / 60)}:${String(secondsLeft % 60).padStart(2, "0")}`,
+            })}
           </p>
-          <QrCode label="QR code with the pairing link" text={link} />
+          <QrCode label={t("settings.qrLabel")} text={link} />
           <p className="font-mono text-lg tracking-wider">{code.made.code}</p>
           <p className="break-all text-muted-foreground text-xs">{link}</p>
           {isLocalAddress(link) ? (
             <p className="text-muted-foreground text-sm" role="note">
-              This address only works on this computer. A phone needs the
-              address FreeDuet is reached at from outside; open that on the
-              phone and type the code in Settings.
+              {t("settings.localAddress")}
             </p>
           ) : null}
         </div>
       ) : code ? (
         <p className="mt-4 text-muted-foreground text-sm" role="status">
-          That code has run out. Make a new one.
+          {t("settings.codeRanOut")}
         </p>
       ) : null}
       {error ? (
@@ -303,6 +298,7 @@ function PairingRow({
   onCancel: () => void;
   onRevoke: () => void;
 }) {
+  const { t } = useAppLanguage();
   return (
     <Item size="sm">
       <ItemMedia variant="icon">
@@ -315,7 +311,7 @@ function PairingRow({
       <ItemContent>
         {editing !== null ? (
           <Input
-            aria-label="Name"
+            aria-label={t("settings.name")}
             autoFocus
             maxLength={60}
             onChange={(event) => onEdit(event.target.value)}
@@ -324,13 +320,17 @@ function PairingRow({
         ) : (
           <ItemTitle>
             {pairing.label}
-            {pairing.current ? " (this browser)" : ""}
+            {pairing.current ? ` ${t("settings.thisBrowserTag")}` : ""}
           </ItemTitle>
         )}
         <ItemDescription>
-          {pairing.kind === "computer" ? "Computer" : "Phone or other browser"}
-          {" · "}made {whenWords(pairing.createdAt)}
-          {" · "}last seen {whenWords(pairing.lastSeenAt)}
+          {pairing.kind === "computer"
+            ? t("settings.computer")
+            : t("settings.phoneOrBrowser")}
+          {" · "}
+          {t("settings.madeWhen", { when: whenWords(pairing.createdAt) })}
+          {" · "}
+          {t("settings.lastSeen", { when: whenWords(pairing.lastSeenAt) })}
         </ItemDescription>
       </ItemContent>
       {canManage ? (
@@ -342,10 +342,10 @@ function PairingRow({
                 onClick={onSave}
                 size="sm"
               >
-                Save
+                {t("settings.save")}
               </Button>
               <Button onClick={onCancel} size="sm" variant="outline">
-                Cancel
+                {t("settings.cancel")}
               </Button>
             </>
           ) : (
@@ -356,7 +356,7 @@ function PairingRow({
                 size="sm"
                 variant="outline"
               >
-                Rename
+                {t("settings.rename")}
               </Button>
               <Button
                 disabled={busy}
@@ -364,7 +364,7 @@ function PairingRow({
                 size="sm"
                 variant="outline"
               >
-                Revoke
+                {t("settings.revoke")}
               </Button>
             </>
           )}

@@ -293,4 +293,155 @@ export const it: Catalog<typeof EN> = {
     one: "{amount} problema",
     other: "{amount} problemi",
   },
+  "settings.changesTitle": "Modifiche fatte in chat",
+  "settings.changesDescription":
+    "Impostazioni che un Bot ha cambiato dalla chat. Annulla rimette il valore precedente per sette giorni, e solo finché l'impostazione mantiene il valore impostato dalla modifica.",
+  "settings.changesLoading": "Carico le modifiche…",
+  "settings.changesEmpty": "Nessuna modifica fatta in chat finora.",
+  "settings.undoFailed": "Non sono riuscito ad annullare la modifica. Riprova.",
+  "settings.levelAll": "tutto",
+  "settings.levelNeedsInput": "solo quando ha bisogno di te",
+  "settings.memberAdded": "{member} è stato aggiunto al tuo team",
+  "settings.nameChanged":
+    "{bot}: il tuo nome per lui è passato da {from} a {to}",
+  "settings.nameOwn": "il suo nome",
+  "settings.languageChanged":
+    "La tua lingua per il team è passata da {from} a {to}",
+  "settings.deploymentOwn": "quella dell'installazione",
+  "settings.toneChanged": "{bot}: il tono è passato da {from} a {to}",
+  "settings.notifyChanged": "{bot}: le notifiche sono passate da {from} a {to}",
+  "settings.undone": "Annullata",
+  "settings.undoGone": "Annullare non è più possibile",
+  "settings.undoing": "Annullo…",
+  "settings.undo": "Annulla",
+  "settings.devicesTitle": "I tuoi dispositivi",
+  "settings.devicesDescription":
+    "Accedi all'app {product} sul telefono e attiva le notifiche per aggiungerlo qui.",
+  "settings.devicesEmpty": "Nessun dispositivo ancora.",
+  "settings.deliveriesTitle": "Invii recenti",
+  "settings.deliveriesEmpty": "Nessun invio ancora.",
+  "settings.repositories": "Repository",
+  "settings.repositoriesDescription":
+    "Aggiungi qui un repository, poi aggiungi in GitHub un webhook con l'indirizzo qui sotto e lo stesso segreto. I suoi eventi, come issues.opened, possono poi avviare una responsabilità.",
+  "settings.addRepository": "Aggiungi un repository",
+  "settings.repositoriesEmpty":
+    "Nessun repository ancora. Aggiungine uno con «Aggiungi un repository».",
+  "settings.repository": "Repository",
+  "settings.webhookSecret": "Segreto del webhook",
+  "settings.disconnect": "Disconnetti",
+  "settings.sameSecret":
+    "Usa lo stesso segreto quando aggiungi il webhook in GitHub.",
+  "settings.cancel": "Annulla",
+  "settings.connectEvents": "Collega gli eventi",
+  "settings.needsReconnect": "Da ricollegare",
+  "settings.needsReconnectHandle": "Da ricollegare · @{handle}",
+  "settings.linked": "Collegato",
+  "settings.yourAccount": "Il tuo account",
+  "settings.cantLink":
+    "Non puoi ancora collegare un account {provider}. Prima un amministratore deve configurarlo.",
+  "settings.loadAccountError":
+    "Non sono riuscito a caricare il tuo account: {error}",
+  "settings.checkLinkError":
+    "Non sono riuscito a verificare se puoi collegare questo account: {error}",
+  "settings.slackCodeError":
+    "Non sono riuscito a creare un codice Slack: {error}",
+  "settings.githubConnectError":
+    "Non sono riuscito a collegare GitHub: {error}",
+  "settings.linkSlack": "Collega il tuo account Slack",
+  "settings.copied": "Copiato",
+  "settings.copy": "Copia",
+  "settings.copyFailed":
+    "Non sono riuscito a copiare. Seleziona il codice e copialo tu.",
+  "settings.codeExpires":
+    "Il codice funziona una sola volta e scade tra 10 minuti.",
+  "settings.done": "Fatto",
+  "settings.notLinked": "Non collegato",
+  "settings.connect": "Collega",
+  "settings.connectNamed": "Collega {name}",
+  "settings.disconnectNamed": "Disconnetti {name}",
+  "settings.disconnectError":
+    "Non sono riuscito a disconnettere {name}: {error}",
+  "settings.githubLinked": "Il tuo account GitHub è collegato.",
+  "settings.githubLinkFailed":
+    "Non sono riuscito a collegare il tuo account GitHub. Riprova.",
+  "settings.githubTaken":
+    "Quell'account GitHub è collegato a un'altra persona in {product}. Accedi a GitHub con un altro account e riprova, oppure chiedi a un amministratore.",
+  "settings.emphasisTitle": "Evidenza nell'elenco dei messaggi",
+  "settings.emphasisDescription":
+    "Scegli quale riga risalta nella barra laterale.",
+  "settings.emphasisBot": "Nome del Bot",
+  "settings.emphasisConversation": "Titolo della conversazione",
+  "settings.loading": "Carico…",
+  "settings.saving": "Salvo…",
+  "settings.emphasisPreview": "Anteprima dell'elenco dei messaggi",
+  "settings.sampleBot": "Assistente generale",
+  "settings.sampleTitle": "Pianifica la settimana prossima",
+  "settings.readAloudTitle": "Leggi le risposte ad alta voce",
+  "settings.readAloudDescription":
+    "Aggiunge un pulsante Leggi ad alta voce sotto ogni risposta di un Bot. Usa una voce di questo computer soltanto, e non viene inviato nulla altrove.",
+  "settings.noItalianVoice":
+    "Su questo computer non c'è una voce italiana locale, quindi qui le risposte non possono essere lette ad alta voce.",
+  "settings.general": "Generali",
+  "settings.setup": "Configurazione",
+  "settings.approvals": "Approvazioni",
+  "settings.componentsGallery": "Galleria dei componenti",
+  "settings.backToApp": "Torna all'app",
+  "settings.standingTitle": "Istruzioni permanenti",
+  "settings.standingDescription":
+    "Vale per ogni Bot in ogni conversazione. Il ruolo di un Bot dice cosa fa. Questo dice come vuoi che lo faccia, come il tuo stile di scrittura.",
+  "settings.charactersOf": "{used} caratteri su {limit}",
+  "settings.saved": "Salvato",
+  "settings.save": "Salva",
+  "settings.sharedBots": "Bot condivisi",
+  "settings.sharedBotsDescription":
+    "Un Bot condiviso con te usa le app del suo proprietario. Usa le tue solo dove hai detto di sì in una conversazione.",
+  "settings.appsSharedBots": "App che lasci usare ai Bot condivisi",
+  "settings.resetDone": "Reimpostato. Ogni Bot condiviso chiederà di nuovo.",
+  "settings.resetDescription":
+    "Dimentica ogni risposta, così ogni Bot condiviso chiede di nuovo.",
+  "settings.reset": "Reimposta",
+  "settings.kindProgress": "Avanzamento",
+  "settings.kindProgressDescription":
+    "Risposte e risultati di lavori che non stavi seguendo.",
+  "settings.kindDecision": "Decisioni",
+  "settings.kindDecisionDescription":
+    "Approvazioni di cui un Bot ha bisogno prima di agire.",
+  "settings.kindQuestion": "Domande",
+  "settings.kindQuestionDescription":
+    "Cose che un Bot ti ha chiesto e per cui sta aspettando.",
+  "settings.switchLabel": "{kind} tramite {transport}",
+  "settings.notSetUp": "Non configurato",
+  "settings.routingDescription":
+    "Dove va ogni tipo di aggiornamento quando sei via. {product} sul web mostra sempre tutto.",
+  "settings.routingTitle": "Dove arrivano gli aggiornamenti",
+  "settings.routingError":
+    "Non sono riuscito a caricare dove arrivano i tuoi aggiornamenti. Ricarica la pagina.",
+  "settings.qrLabel": "Codice QR con il link di abbinamento",
+  "settings.pairThisTitle": "Abbina questo browser",
+  "settings.pairThisDescription":
+    "Sul computer su cui gira FreeDuet apri Impostazioni, premi Crea un codice sotto Abbina un telefono o un altro browser, poi apri il link che mostra oppure scrivi qui il codice.",
+  "settings.pairedDone": "Questo browser è abbinato al computer.",
+  "settings.linkBroughtCode":
+    "Il link ha portato un codice. Dai un nome a questo browser e premi Abbina.",
+  "settings.code": "Codice",
+  "settings.name": "Nome",
+  "settings.phone": "Telefono",
+  "settings.pairedDescription":
+    "Un telefono o un altro browser abbinato funziona come questo. Revocane uno e alla sua prossima richiesta viene escluso e disconnesso.",
+  "settings.pairedTitle": "Abbina un telefono o un altro browser",
+  "settings.makeCode": "Crea un codice",
+  "settings.cannotMakeCode":
+    "Il codice si crea nel browser abbinato al computer. Questo non può crearne uno.",
+  "settings.runsOut":
+    "Sul telefono, con il tuo accesso, inquadra questo codice o apri il link, oppure apri Impostazioni e scrivi il codice. Funziona una sola volta e scade tra {time}.",
+  "settings.codeRanOut": "Quel codice è scaduto. Creane uno nuovo.",
+  "settings.localAddress":
+    "Questo indirizzo funziona solo su questo computer. Un telefono ha bisogno dell'indirizzo con cui FreeDuet è raggiungibile dall'esterno: aprilo sul telefono e scrivi il codice in Impostazioni.",
+  "settings.thisBrowserTag": "(questo browser)",
+  "settings.computer": "Computer",
+  "settings.phoneOrBrowser": "Telefono o altro browser",
+  "settings.madeWhen": "creato {when}",
+  "settings.lastSeen": "visto l'ultima volta {when}",
+  "settings.rename": "Rinomina",
+  "settings.revoke": "Revoca",
 };

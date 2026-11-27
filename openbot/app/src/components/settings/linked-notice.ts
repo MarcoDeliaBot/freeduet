@@ -1,25 +1,33 @@
+import { englishT, type T } from "@/freeduet/i18n/provider";
 import { appConfig } from "@/lib/generated/application-config";
 
 export type LinkedNotice = { tone: "success" | "error"; text: string };
 
 /**
  * What the connected accounts page says about the `?linked=` the GitHub callback redirected back
- * with. Only the three values the callback sends have a sentence; anything else says nothing.
+ * with. Only the three values the callback sends have a sentence; anything else says nothing. The
+ * sentence follows the translator it is given (English when none is given, so existing callers are
+ * unchanged).
  */
-export function linkedNotice(value: string | undefined): LinkedNotice | null {
+export function linkedNotice(
+  value: string | undefined,
+  t: T = englishT,
+): LinkedNotice | null {
   if (value === "github") {
-    return { tone: "success", text: "Your GitHub account is linked." };
+    return { tone: "success", text: t("settings.githubLinked") };
   }
   if (value === "failed") {
     return {
       tone: "error",
-      text: "Couldn't link your GitHub account. Try again.",
+      text: t("settings.githubLinkFailed"),
     };
   }
   if (value === "github-taken") {
     return {
       tone: "error",
-      text: `That GitHub account is linked to someone else in ${appConfig.brand.productName}. Sign in to GitHub with another account and try again, or ask an admin.`,
+      text: t("settings.githubTaken", {
+        product: appConfig.brand.productName,
+      }),
     };
   }
   return null;
