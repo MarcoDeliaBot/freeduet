@@ -15,6 +15,7 @@ import {
   cardTextIn,
 } from "./cards";
 import { readStoredLanguage, storeLanguage } from "./stored-language";
+import { useAppLanguage } from "../i18n/provider";
 
 /**
  * The language the cards draw in, for everything below it (docs/M1_PLAN.md D26 amendment).
@@ -59,6 +60,8 @@ export function PersonLanguageProvider({ children }: { children: ReactNode }) {
   const { data } = useQuery(deploymentCapabilitiesQueryOptions());
   // Read once, when the provider mounts: it is only for the first paint.
   const [remembered] = useState(readStoredLanguage);
+  // D181: with no team language that has a card table, the cards follow the app's own language.
+  const app = useAppLanguage().language;
   const answered = data !== undefined;
   const served = data?.personLanguage;
   useEffect(() => {
@@ -66,7 +69,9 @@ export function PersonLanguageProvider({ children }: { children: ReactNode }) {
   }, [answered, served]);
   return (
     <CardLanguageProvider
-      language={cardLanguageOf(answered ? served : remembered)}
+      language={
+        cardLanguageOf(answered ? served : remembered) ?? cardLanguageOf(app)
+      }
     >
       {children}
     </CardLanguageProvider>

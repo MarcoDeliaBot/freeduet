@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { setBotPausedMutationOptions } from "@/lib/bot-lifecycle/mutations";
 import { botLifecycleQueryOptions } from "@/lib/bot-lifecycle/queries";
 import { queryClient } from "@/query-client";
+import { useT } from "@/freeduet/i18n/provider";
 
 /**
  * "Paused, tap to resume", wherever a paused Bot is shown.
@@ -12,6 +13,7 @@ import { queryClient } from "@/query-client";
  * above a conversation or a profile without deciding anything itself.
  */
 export function BotPausedBanner({ agentId }: { agentId: string }) {
+  const t = useT();
   const lifecycle = useQuery(botLifecycleQueryOptions(agentId));
   const resume = useMutation(setBotPausedMutationOptions(queryClient));
   if (!lifecycle.data?.paused) return null;
@@ -23,7 +25,7 @@ export function BotPausedBanner({ agentId }: { agentId: string }) {
       variant="secondary"
     >
       <IconPlayerPause />
-      {resume.isPending ? "Resuming…" : "Paused. Resume"}
+      {resume.isPending ? t("bots.resuming") : t("bots.pausedResume")}
     </Button>
   );
 }

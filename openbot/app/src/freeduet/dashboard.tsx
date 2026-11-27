@@ -7,31 +7,27 @@ import { routinesQueryOptions } from "@/lib/routines/queries";
 import "./light/tokens.css";
 import "./dashboard.css";
 import {
-  COUNTS_UNAVAILABLE,
-  DASHBOARD_TITLE,
-  ENGINES_LINK,
   engineLines,
   headline,
   memberTiles,
   memberUsage,
-  NOT_AVAILABLE,
   nextRoutine,
   savedToday,
-  TEAM_LINK,
-  TOKENS_NOT_COUNTED,
   tokensToday,
   usageState,
   waitingFor,
 } from "./dashboard-model";
 import { enginesQueryOptions } from "./engines-section";
 import { readCurrency, tokensQueryOptions } from "./engines-tokens";
+import { useAppLanguage, useT } from "./i18n/provider";
 
 const REFRESH_MS = 30_000;
 
-function NotAvailable({ children = NOT_AVAILABLE }: { children?: string }) {
+function NotAvailable({ children }: { children?: string }) {
+  const t = useT();
   return (
     <p className="fd-dash-na" data-testid="not-available">
-      {children}
+      {children ?? t("dash.notAvailable")}
     </p>
   );
 }
@@ -64,6 +60,7 @@ function Kpi({
  * click away. Every number is read from what the app already asks the server for; a card whose read failed says "not available".
  */
 export function FreeDuetDashboard() {
+  const { t, language, number } = useAppLanguage();
   const agents = useQuery(agentListQueryOptions());
   const attention = useQuery(botAttentionQueryOptions());
   const usage = useQuery({
@@ -77,26 +74,30 @@ export function FreeDuetDashboard() {
   const routines = useQuery(routinesQueryOptions());
   const now = new Date();
 
-  const tiles = memberTiles(agents.data, attention.data);
-  const waiting = waitingFor(attention.data);
+  const tiles = memberTiles(agents.data, attention.data, t);
+  const waiting = waitingFor(attention.data, t);
   const state = usageState(usage.data, usage.isError);
   const usageData =
     state === "ok" || state === "empty" ? usage.data : undefined;
-  const lines = engineLines(engines.data, usageData);
-  const next = nextRoutine(routines.data, agents.data, now);
+  const lines = engineLines(engines.data, usageData, t);
+  // English keeps the day-month order and 24-hour clock it always had; the other languages use their own.
+  const dateLocale = language === "en" ? "en-GB" : language;
+  const next = nextRoutine(routines.data, agents.data, now, dateLocale);
   const nameOf = (id: string) =>
     agents.data?.find((agent) => agent.id === id)?.name ?? id;
-  const today = usageData && state === "ok" ? tokensToday(usageData) : null;
+  const today = usageData && state === "ok" ? tokensToday(usageData, t) : null;
   const saved =
-    usageData && state === "ok" ? savedToday(usageData, readCurrency()) : null;
+    usageData && state === "ok"
+      ? savedToday(usageData, readCurrency(), t)
+      : null;
   const perMember =
     usageData && state === "ok" ? memberUsage(usageData, nameOf) : [];
-  const date = new Intl.DateTimeFormat("en-GB", {
+  const date = new Intl.DateTimeFormat(dateLocale, {
     weekday: "long",
     day: "numeric",
     month: "long",
   }).format(now);
-  const clock = new Intl.DateTimeFormat("en-GB", {
+  const clock = new Intl.DateTimeFormat(dateLocale, {
     hour: "2-digit",
     minute: "2-digit",
     hourCycle: "h23",
@@ -106,16 +107,16 @@ export function FreeDuetDashboard() {
   return (
     <PageShell
       className="max-w-[1360px]"
-      title={DASHBOARD_TITLE}
+      title={t("dash.title")}
       width="wide"
-      header={<h1 className="sr-only">{DASHBOARD_TITLE}</h1>}
+      header={<h1 className="sr-only">{t("dash.title")}</h1>}
     >
       <div className="fd-dash">
         <div className="fd-dash-inner">
           <div className="fd-dash-head">
             <div>
               <div className="fd-dash-eyebrow d-mono">
-                {DASHBOARD_TITLE} · {date} · {clock}
+                {t("dash.title")} · {date} · {clock}
               </div>
               <p
                 className="fd-dash-headline"
@@ -126,33 +127,33 @@ export function FreeDuetDashboard() {
                   lineHeight: 1.2,
                 }}
               >
-                {headline(waiting ? waiting.total : null)}
+                {headline(waiting ? waiting.total : null, t)}
               </p>
             </div>
             {tiles ? (
               <div className="fd-dash-pill" data-testid="members-pill">
                 <i />
-                {tiles.length === 1 ? "1 member" : `${tiles.length} members`}
+                {t("dash.members", { count: tiles.length })}
               </div>
             ) : null}
           </div>
 
-          <section aria-label="Indicators" className="fd-dash-kpis">
-            <Kpi label="Tokens today" testId="card-tokens">
+          <section aria-label={t("dash.indicators")} className="fd-dash-kpis">
+            <Kpi label={t("dash.tokensToday")} testId="card-tokens">
               {today ? (
                 <>
                   <div className="fd-dash-big d-mono">
-                    {today.total.toLocaleString("en-GB")}
+                    {number(today.total)}
                   </div>
                   <div className="fd-dash-sub">{today.note}</div>
                 </>
               ) : unavailable ? (
-                <NotAvailable>{COUNTS_UNAVAILABLE}</NotAvailable>
+                <NotAvailable>{t("dash.countsUnavailable")}</NotAvailable>
               ) : state === "empty" ? (
-                <NotAvailable>{TOKENS_NOT_COUNTED}</NotAvailable>
+                <NotAvailable>{t("dash.tokensNotCounted")}</NotAvailable>
               ) : null}
             </Kpi>
-            <Kpi label="Saved with free engines today" testId="card-saved">
+            <Kpi label={t("dash.savedToday")} testId="card-saved">
               {saved ? (
                 <>
                   <div
@@ -164,13 +165,13 @@ export function FreeDuetDashboard() {
                   <div className="fd-dash-sub">{saved.detail}</div>
                 </>
               ) : unavailable ? (
-                <NotAvailable>{COUNTS_UNAVAILABLE}</NotAvailable>
+                <NotAvailable>{t("dash.countsUnavailable")}</NotAvailable>
               ) : state === "empty" ? (
-                <NotAvailable>{TOKENS_NOT_COUNTED}</NotAvailable>
+                <NotAvailable>{t("dash.tokensNotCounted")}</NotAvailable>
               ) : null}
             </Kpi>
             <Kpi
-              label="Waiting for you"
+              label={t("dash.waitingForYou")}
               testId="card-waiting"
               wait={!!waiting && waiting.total > 0}
             >
@@ -185,21 +186,21 @@ export function FreeDuetDashboard() {
                   <div className="fd-dash-sub">
                     {waiting.lines.length > 0
                       ? waiting.lines.join(" · ")
-                      : "Questions, approvals and stalled hand-offs"}
+                      : t("dash.waitingSub")}
                   </div>
                 </>
               ) : attention.isError ? (
                 <NotAvailable />
               ) : null}
             </Kpi>
-            <Kpi label="Next routine" testId="card-routine">
+            <Kpi label={t("dash.nextRoutine")} testId="card-routine">
               {next && next !== "none" ? (
                 <>
                   <div className="fd-dash-big d-mono">{next.time}</div>
                   <div className="fd-dash-sub">{next.detail}</div>
                 </>
               ) : next === "none" ? (
-                <NotAvailable>No routine is scheduled.</NotAvailable>
+                <NotAvailable>{t("dash.noRoutine")}</NotAvailable>
               ) : routines.isError ? (
                 <NotAvailable />
               ) : null}
@@ -208,13 +209,13 @@ export function FreeDuetDashboard() {
 
           <div className="fd-dash-row">
             <section
-              aria-label="Team"
+              aria-label={t("dash.team")}
               className="fd-dash-card d-pad fd-dash-main"
               data-testid="card-team"
             >
               <div className="fd-dash-cardhead">
-                <h2>Team</h2>
-                <Link to="/bots">{TEAM_LINK}</Link>
+                <h2>{t("dash.team")}</h2>
+                <Link to="/bots">{t("dash.teamLink")}</Link>
               </div>
               {tiles ? (
                 <ul className="fd-dash-team">
@@ -236,14 +237,14 @@ export function FreeDuetDashboard() {
             </section>
 
             <section
-              aria-label="Engines"
+              aria-label={t("dash.engines")}
               className="fd-dash-card d-pad fd-dash-side"
               data-testid="card-engines"
             >
               <div className="fd-dash-cardhead">
-                <h2>Engines</h2>
+                <h2>{t("dash.engines")}</h2>
                 <Link data-testid="engines-link" to="/admin/engines">
-                  {ENGINES_LINK}
+                  {t("dash.enginesLink")}
                 </Link>
               </div>
               {lines ? (
@@ -268,7 +269,7 @@ export function FreeDuetDashboard() {
                     </div>
                   ))
                 ) : (
-                  <NotAvailable>No engine is set up yet.</NotAvailable>
+                  <NotAvailable>{t("dash.noEngine")}</NotAvailable>
                 )
               ) : engines.isError || engines.data?.reason ? (
                 <NotAvailable />
@@ -277,12 +278,12 @@ export function FreeDuetDashboard() {
           </div>
 
           <section
-            aria-label="Tokens per member"
+            aria-label={t("dash.perMemberAria")}
             className="fd-dash-card d-pad"
             data-testid="card-usage"
           >
             <div className="fd-dash-cardhead">
-              <h2>Tokens per member, today</h2>
+              <h2>{t("dash.perMember")}</h2>
             </div>
             {perMember.length > 0 ? (
               perMember.map((row) => (
@@ -295,16 +296,13 @@ export function FreeDuetDashboard() {
                 </div>
               ))
             ) : unavailable ? (
-              <NotAvailable>{COUNTS_UNAVAILABLE}</NotAvailable>
+              <NotAvailable>{t("dash.countsUnavailable")}</NotAvailable>
             ) : state === "ok" || state === "empty" ? (
-              <NotAvailable>{TOKENS_NOT_COUNTED}</NotAvailable>
+              <NotAvailable>{t("dash.tokensNotCounted")}</NotAvailable>
             ) : null}
           </section>
 
-          <p className="fd-dash-foot">
-            Counts are what each engine reported, in UTC days. A recent-activity
-            log and a plan-limit gauge are not available yet.
-          </p>
+          <p className="fd-dash-foot">{t("dash.foot")}</p>
         </div>
       </div>
     </PageShell>

@@ -8,6 +8,8 @@ import { useReducedMotionPreference } from "@/lib/reduced-motion";
 import { needsInputCount } from "@/lib/tasks/groups";
 import { taskListQueryOptions } from "@/lib/tasks/queries";
 import { cn } from "@/lib/utils";
+import type { MessageId } from "@/freeduet/i18n/catalogs";
+import { useT } from "@/freeduet/i18n/provider";
 
 export type ShellTab = "chat" | "tasks" | "make";
 
@@ -16,10 +18,24 @@ export const TABS: {
   to: "/" | "/tasks" | "/make";
   icon: DuetIconName;
   label: string;
+  /** The id of the tab's name in the app's message catalogues (D181); `label` stays the English. */
+  key18n: MessageId;
 }[] = [
-  { id: "chat", to: "/", icon: "chat", label: "Chat" },
-  { id: "tasks", to: "/tasks", icon: "tasks", label: "Tasks" },
-  { id: "make", to: "/make", icon: "sparkle", label: "Make" },
+  { id: "chat", to: "/", icon: "chat", label: "Chat", key18n: "tab.chat" },
+  {
+    id: "tasks",
+    to: "/tasks",
+    icon: "tasks",
+    label: "Tasks",
+    key18n: "tab.tasks",
+  },
+  {
+    id: "make",
+    to: "/make",
+    icon: "sparkle",
+    label: "Make",
+    key18n: "tab.make",
+  },
 ];
 
 /**
@@ -55,11 +71,12 @@ export function tabForPath(pathname: string): ShellTab | null {
 export function TabBar({ current }: { current: ShellTab }) {
   const inbox = useQuery(approvalInboxOptions());
   const tasks = useQuery(taskListQueryOptions());
+  const t = useT();
   const waiting = needsInputCount(tasks.data, inbox.data);
   const reduced = useReducedMotionPreference();
   return (
     <nav
-      aria-label="Main"
+      aria-label={t("tab.main")}
       className="duet-face duet-glass absolute inset-x-0 bottom-[22px] z-20 mx-auto flex h-16 w-[344px] max-w-[calc(100%-32px)] gap-0.5 rounded-[32px] p-[5px] shadow-duet-glass"
     >
       {TABS.map((tab) => {
@@ -75,7 +92,11 @@ export function TabBar({ current }: { current: ShellTab }) {
              */
             activeOptions={{ exact: tab.id === "chat" }}
             aria-current={on ? "page" : undefined}
-            aria-label={badge ? `${tab.label}, ${badge} waiting` : tab.label}
+            aria-label={
+              badge
+                ? t("tab.waiting", { tab: t(tab.key18n), badge })
+                : t(tab.key18n)
+            }
             className={cn(
               "relative isolate flex flex-1 flex-col items-center justify-center gap-px rounded-[27px] transition-colors focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-duet-accent/40",
               on ? "text-duet-ink" : "text-duet-ink-2 hover:text-duet-ink",
@@ -99,7 +120,7 @@ export function TabBar({ current }: { current: ShellTab }) {
                 on ? "font-semibold" : "font-medium",
               )}
             >
-              {tab.label}
+              {t(tab.key18n)}
             </span>
             <AnimatePresence initial={false}>
               {badge ? (

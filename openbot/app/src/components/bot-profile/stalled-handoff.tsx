@@ -7,10 +7,15 @@ import {
   dismissHandoffMutationOptions,
   retryHandoffMutationOptions,
 } from "@/lib/bot-lifecycle/mutations";
+import { englishT, type T, useT } from "@/freeduet/i18n/provider";
 
 /** The words for a stalled hand-off, in one place so every screen says the same thing (D171). */
-export function stalledWhat(toName: string, task: string): string {
-  return `${toName} did not finish: ${task}`;
+export function stalledWhat(
+  toName: string,
+  task: string,
+  t: T = englishT,
+): string {
+  return t("stalled.what", { name: toName, task });
 }
 
 /**
@@ -28,6 +33,7 @@ export function StalledActions({
   id: string;
   open: ReactNode;
 }) {
+  const t = useT();
   const queryClient = useQueryClient();
   const retry = useMutation(retryHandoffMutationOptions(queryClient));
   const dismiss = useMutation(dismissHandoffMutationOptions(queryClient));
@@ -36,9 +42,7 @@ export function StalledActions({
     <>
       {retry.isError || dismiss.isError ? (
         <p className="basis-full text-destructive text-sm" role="alert">
-          {retry.isError
-            ? "Could not try again. It may already be running."
-            : "Could not dismiss it. It may already be running."}
+          {retry.isError ? t("stalled.retryError") : t("stalled.dismissError")}
         </p>
       ) : null}
       <div className="flex flex-wrap items-center gap-2">
@@ -50,10 +54,10 @@ export function StalledActions({
           variant="outline"
         >
           {dismiss.isPending
-            ? "Dismissing…"
+            ? t("stalled.dismissing")
             : dismiss.isSuccess
-              ? "Dismissed"
-              : "Dismiss"}
+              ? t("stalled.dismissed")
+              : t("stalled.dismiss")}
         </Button>
         <Button
           disabled={busy || dismiss.isSuccess}
@@ -61,10 +65,10 @@ export function StalledActions({
           size="sm"
         >
           {retry.isPending
-            ? "Trying again…"
+            ? t("stalled.retrying")
             : retry.isSuccess
-              ? "Queued again"
-              : "Try again"}
+              ? t("stalled.queued")
+              : t("stalled.retry")}
         </Button>
       </div>
     </>
@@ -91,6 +95,7 @@ export function StalledHandoffRow({
   reason: string;
   channelId: string | null;
 }) {
+  const t = useT();
   return (
     <div
       className="flex flex-wrap items-center gap-3 px-3 py-2.5"
@@ -98,8 +103,10 @@ export function StalledHandoffRow({
     >
       <IconAlertTriangle aria-hidden className="size-4 text-duet-accent" />
       <div className="min-w-0 flex-1">
-        <p className="font-medium text-sm">{stalledWhat(toName, task)}</p>
-        <p className="text-muted-foreground text-sm">Why: {reason}.</p>
+        <p className="font-medium text-sm">{stalledWhat(toName, task, t)}</p>
+        <p className="text-muted-foreground text-sm">
+          {t("stalled.why", { reason })}
+        </p>
       </div>
       <StalledActions
         agentId={agentId}
@@ -118,7 +125,7 @@ export function StalledHandoffRow({
               variant="ghost"
             >
               <IconMessage />
-              Open conversation
+              {t("stalled.open")}
             </Button>
           ) : null
         }
