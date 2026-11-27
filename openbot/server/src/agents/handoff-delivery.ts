@@ -132,7 +132,8 @@ export function createHandoffDelivery(options: {
   }) => Promise<void>;
   newRunId: () => string;
   /**
-   * How long one delivery may take before it is given up on.
+   * How long one delivery may go with no event at all before it is given up on (D170: silence, not
+   * wall-clock time; every event from the run starts the wait again; see `HOP_SILENCE_MS`).
    *
    * A HOP MUST BE BOUNDED, because nothing else bounds it. The addressed Bot's run is an ordinary
    * agent turn: a model that stops mid-stream, a tool waiting on something that never arrives, a
@@ -142,6 +143,11 @@ export function createHandoffDelivery(options: {
    * conversation it was asked in locked against them for as long as the process lives.
    */
   deadlineMs?: number;
+  /**
+   * D170: the longest one hop may run in total, however lively. Overridden by tests; see
+   * `HOP_CAP_MS`. A hop that reaches it fails with a `HopCapError`, which the runner does not retry.
+   */
+  capMs?: number;
   /** How often the lock is renewed while the Bot works. Overridden by tests; see `LOCK_RENEW_EVERY_MS`. */
   renewEveryMs?: number;
   /**
@@ -179,7 +185,8 @@ export function createHandoffDelivery(options: {
     announce,
     setBusy,
     newRunId,
-    deadlineMs = DEFAULT_DELIVERY_DEADLINE_MS,
+    deadlineMs = HOP_SILENCE_MS,
+    capMs = HOP_CAP_MS,
     renewEveryMs = LOCK_RENEW_EVERY_MS,
     lockLifetimeMs = THREAD_LOCK_TTL_SECONDS * 1000,
     toolsForTurn,
@@ -229,6 +236,8 @@ export function createHandoffDelivery(options: {
        * calls its methods, and a stand-in that proxies them is a second thing to keep in step.
        */
       const seen = { count: 0, last: "" };
+      // D170: when the run last showed a sign of life; `settled` stops a hop for silence, not for time.
+      const life = { at: Date.now() };
       /*
        * What the addressed Bot said, gathered from the stream as it goes past.
        *
@@ -267,6 +276,7 @@ export function createHandoffDelivery(options: {
                 };
               }) => {
                 seen.count += 1;
+                life.at = Date.now();
                 const type = String(emitted?.event?.type ?? "");
                 seen.last = type;
                 // D168: a sign of life, and the last tool step by its NAME only, for the work-status card.
@@ -480,19 +490,22 @@ export function createHandoffDelivery(options: {
                 forwardedProps: { openbotRun: assertion },
               },
             }),
-            deadlineMs,
+            { silenceMs: deadlineMs, capMs, life },
             AbortSignal.any([paused, lockLost.signal]),
             () => {
               void runner
                 .stop?.({ threadId: where.threadId, runId })
                 .catch(() => undefined);
             },
-            () =>
-              `${work.toBotId} did not finish within ${Math.round(deadlineMs / 1000)}s ${
+            (why) => {
+              const progress =
                 seen.count === 0
                   ? "and never reached its model"
-                  : `after ${seen.count} events, the last ${seen.last}`
-              }`,
+                  : `after ${seen.count} events, the last ${seen.last}`;
+              return why === "cap"
+                ? `${work.toBotId} was still working after ${plainMinutes(capMs)} and was stopped at the limit for one hand-off ${progress}`
+                : `${work.toBotId} showed no sign of life for ${plainMinutes(deadlineMs)} ${progress}`;
+            },
           );
           /*
            * Only once the run is on record, and only when it said something: a conversation lifted to
@@ -599,15 +612,32 @@ const RELAY_CONTEXT_MESSAGES = 6;
 const LOCK_RENEW_EVERY_MS = 30_000;
 
 /**
- * How long one hop may run for by default.
+ * D170: a hop is stopped for SILENCE, not for wall-clock time. Both limits live here.
  *
- * Long enough for a real answer and short enough to be a wait rather than a hang. A Bot that reads a
- * corpus, drives a browser and writes a paragraph is minutes, not seconds, so a tight bound would
- * cut off working deliveries; but a person who has been told their question was handed on will not
- * wait a quarter of an hour to be told it was not, and the conversation stays locked for every
- * second of it.
+ * Built work (a game, a site, a design) takes longer than any fixed wall-clock bound that is also
+ * short enough to catch a hang: a member busy for ten minutes was killed at five, retried, and
+ * killed again five times. So a hop runs for as long as events keep coming (tool calls, results,
+ * text) and is stopped only after `HOP_SILENCE_MS` with none. `HOP_CAP_MS` is the absolute limit so
+ * nothing runs for ever. It is below the engine's own turn limit (`SEGMENT_TIMEOUT_SECONDS`, 1800 s,
+ * in agent-freeduet's segment.py) on purpose: the hop must end the run, not find it already killed.
+ * The work-status card's "stuck" state (D168, 5 minutes) is a display and comes earlier than both.
  */
-const DEFAULT_DELIVERY_DEADLINE_MS = 5 * 60_000;
+export const HOP_SILENCE_MS = 10 * 60_000;
+export const HOP_CAP_MS = 25 * 60_000;
+
+/** A hop that hit `HOP_CAP_MS`. Not retried: the same job would run into the same limit. */
+export class HopCapError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "HopCapError";
+  }
+}
+
+function plainMinutes(ms: number): string {
+  if (ms < 60_000) return `${Math.max(1, Math.round(ms / 1000))} seconds`;
+  const minutes = Math.round(ms / 60_000);
+  return `${minutes} minute${minutes === 1 ? "" : "s"}`;
+}
 
 /**
  * Wait for the run to be over, and fail if it failed.
@@ -619,15 +649,15 @@ const DEFAULT_DELIVERY_DEADLINE_MS = 5 * 60_000;
  */
 function settled(
   events: Observable<BaseEvent>,
-  deadlineMs: number,
+  limits: { silenceMs: number; capMs: number; life: { at: number } },
   /**
    * Aborts when the person pauses the Bot or the conversation's lock is lost; the run is stopped and
    * the hop fails with the reason.
    */
   paused: AbortSignal,
   stop: () => void,
-  /** Written when the deadline passes, so it can say how far the run had got by then. */
-  timedOut: () => string,
+  /** Written when a limit passes, so it can say which one and how far the run had got by then. */
+  timedOut: (why: "silence" | "cap") => string,
 ): Promise<void> {
   return new Promise((resolve, reject) => {
     let failure: Error | undefined;
@@ -650,14 +680,32 @@ function settled(
     const finish = (settle: () => void) => {
       if (done) return;
       done = true;
-      clearTimeout(timer);
+      if (timer) clearTimeout(timer);
       paused.removeEventListener("abort", onPause);
       subscription?.unsubscribe();
       settle();
     };
-    const timer = setTimeout(() => {
-      finish(() => reject(new Error(timedOut())));
-    }, deadlineMs);
+    /*
+     * D170: checked again at whichever limit is nearer, counted from the run's last event, so a run
+     * that keeps working keeps the wait from ending and a silent one ends it on time.
+     */
+    const startedAt = Date.now();
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const check = () => {
+      const now = Date.now();
+      const capLeft = startedAt + limits.capMs - now;
+      if (capLeft <= 0) {
+        finish(() => reject(new HopCapError(timedOut("cap"))));
+        return;
+      }
+      const silentLeft = limits.life.at + limits.silenceMs - now;
+      if (silentLeft <= 0) {
+        finish(() => reject(new Error(timedOut("silence"))));
+        return;
+      }
+      timer = setTimeout(check, Math.min(capLeft, silentLeft));
+    };
+    timer = setTimeout(check, Math.min(limits.capMs, limits.silenceMs));
     if (paused.aborted) {
       onPause();
       return;
@@ -665,6 +713,7 @@ function settled(
     paused.addEventListener("abort", onPause, { once: true });
     subscription = events.subscribe({
       next: (event) => {
+        limits.life.at = Date.now();
         // Compared as a string rather than through the enum: `@ag-ui/client` re-exports the types
         // this file needs and not that value, and adding a second AG-UI package for one constant
         // would be a dependency to keep in step for no gain.

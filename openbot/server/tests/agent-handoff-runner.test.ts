@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import { readRunAssertion } from "../src/agents/callback-token";
-import { ThreadBusyError } from "../src/agents/handoff-delivery";
+import { HopCapError, ThreadBusyError } from "../src/agents/handoff-delivery";
 import {
   createHandoffRunner,
   type HandoffWork,
@@ -372,6 +372,34 @@ describe("a hop that failed for good", () => {
       initiator: { kind: "routine", id: "routine_7" },
     });
     expect(offered[0]?.task).toContain("did not finish within 300s");
+  });
+
+  test("a hop that hit the absolute cap is not retried, and the notice names the cap (D170)", async () => {
+    const {
+      runner: sweeper,
+      offered,
+      calls,
+    } = runner({
+      claimed: [
+        {
+          kind: "bot.message",
+          key: "run-1:abc",
+          payload: { ...WORK },
+          attempts: 1,
+        },
+      ] as unknown as WorkItem[],
+      deliver: async () => {
+        throw new HopCapError(
+          "researcher was still working after 25 minutes and was stopped at the limit for one hand-off",
+        );
+      },
+    });
+
+    await sweeper.sweep();
+
+    expect(offered[0]?.task).toContain("limit for one hand-off");
+    expect(calls.filter((c) => c.verb === "release")).toHaveLength(0);
+    expect(calls.filter((c) => c.verb === "finish")).toHaveLength(1);
   });
 
   test("a hop the deployment's controls refuse ends on its first try, and the person is told", async () => {
