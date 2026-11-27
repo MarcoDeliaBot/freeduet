@@ -132,10 +132,18 @@ async function statusFor(actorId: string) {
   const text = await response.text();
   return {
     text,
-    body: JSON.parse(text) as {
-      handoffs: Array<{ id: string; title: string; toBotId: string }>;
-      members: Array<{ agentId: string; state: string; title: string | null }>;
-    },
+    body: (
+      JSON.parse(text) as {
+        "work-status": {
+          handoffs: Array<{ id: string; title: string; toBotId: string }>;
+          members: Array<{
+            agentId: string;
+            state: string;
+            title: string | null;
+          }>;
+        };
+      }
+    )["work-status"],
   };
 }
 

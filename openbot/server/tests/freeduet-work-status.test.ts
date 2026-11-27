@@ -208,11 +208,15 @@ describe("GET /api/freeduet/work-status", () => {
     const response = await app(true).request("/api/freeduet/work-status");
     expect(response.status).toBe(200);
     expect(response.headers.get("cache-control")).toContain("no-store");
-    const body = (await response.json()) as {
-      handoffs: Array<Record<string, unknown>>;
-      members: Array<Record<string, unknown>>;
-      at: string;
+    const envelope = (await response.json()) as {
+      "work-status": {
+        handoffs: Array<Record<string, unknown>>;
+        members: Array<Record<string, unknown>>;
+        at: string;
+      };
     };
+    const body = envelope["work-status"];
+    expect(Object.keys(envelope)).toEqual(["work-status"]);
     expect(Object.keys(body).sort()).toEqual(["at", "handoffs", "members"]);
     expect(Object.keys(body.handoffs[0] ?? {}).sort()).toEqual([
       "fromBotId",

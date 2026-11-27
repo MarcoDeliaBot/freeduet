@@ -2698,6 +2698,8 @@ D154 (maintainer, 27 November 2026): one simple, coherent design for all setting
 
 **Not verified / limits.** Not run live with a real member. The notes are per server process: with several replicas, the card shows no step until the replica that runs the hop answers (the state still comes from the shared queue). The dots cover hand-offs only: a member busy in the person's own chat shows the existing "busy" marker, not a step. A model reads no new text. Open decision for the maintainer: whether the label may name the file ("writing game.js"), at the cost of putting an argument in the answer (recommendation: no).
 
+**Envelope fix (27 November 2026).** The route answered `{ handoffs, members, at }` while the app read the key `work-status`, so the card could never show. The route now answers `{ "work-status": { handoffs, members, at } }`, and `server/tests/freeduet-work-status-contract.test.ts` runs the app's real `workStatusQueryOptions().queryFn` on the route's real response (failed before the fix, passes after).
+
 **D166, first live run (27 November 2026, 08:30, old PC at a55e9835).** Iris did the right thing in every run read so far: go to Kai (iris-35), a correction (iris-36), the gap to Leo (iris-37). She failed only on "in one line": her reply ends with the fixed report (Outcome, Done, Evidence…), which the shared rules require at the end of every reply, and the grader counted it as a multi-line answer, as with ada-5 (section 114). The three musts now say "one line before the fixed report that ends every reply; no other list or section": no looser on any other list.
 
 ## 126. A hand-off stops for silence, not for time (D170)
