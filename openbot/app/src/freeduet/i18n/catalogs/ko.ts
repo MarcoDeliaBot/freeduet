@@ -679,7 +679,7 @@ export const ko: Catalog<typeof EN> = {
     "이 비서를 또 누가 사용할 수 있는지 보여 줍니다. 사람마다 이 비서와 나누는 대화는 비공개입니다.",
   // The Bot sub-pages' contents (D181 stage 2e): memory sources, suggestions, reaching you, responsibilities
   // and routines, the summaries of lib/agents/bot-summaries.ts and the time phrases of lib/relative-time.ts.
-  // Shared words reuse their existing keys; `bot.label` and `bot.choose` are "Bot" and "Choose a Bot".
+  // Shared words reuse their existing keys (`botPage.fallbackTitle` is "Bot"); `bot.choose` is "Choose a Bot".
   "bot.choose": "",
   "memory.addSource": "",
   "memory.title": "",

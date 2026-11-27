@@ -673,7 +673,7 @@ export const tr: Catalog<typeof EN> = {
     "Bu asistanı başka kimler kullanabilir. Herkesin bu asistanla olan konuşmaları özeldir.",
   // The Bot sub-pages' contents (D181 stage 2e): memory sources, suggestions, reaching you, responsibilities
   // and routines, the summaries of lib/agents/bot-summaries.ts and the time phrases of lib/relative-time.ts.
-  // Shared words reuse their existing keys; `bot.label` and `bot.choose` are "Bot" and "Choose a Bot".
+  // Shared words reuse their existing keys (`botPage.fallbackTitle` is "Bot"); `bot.choose` is "Choose a Bot".
   "bot.choose": "",
   "memory.addSource": "",
   "memory.title": "",

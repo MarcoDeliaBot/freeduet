@@ -702,7 +702,7 @@ export const ja: Catalog<typeof EN> = {
     "ほかに誰がこのアシスタントを使えるか。それぞれの人がこのアシスタントと行う会話は非公開です。",
   // The Bot sub-pages' contents (D181 stage 2e): memory sources, suggestions, reaching you, responsibilities
   // and routines, the summaries of lib/agents/bot-summaries.ts and the time phrases of lib/relative-time.ts.
-  // Shared words reuse their existing keys; `bot.label` and `bot.choose` are "Bot" and "Choose a Bot".
+  // Shared words reuse their existing keys (`botPage.fallbackTitle` is "Bot"); `bot.choose` is "Choose a Bot".
   "bot.choose": "",
   "memory.addSource": "",
   "memory.title": "",
