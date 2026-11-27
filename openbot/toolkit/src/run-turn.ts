@@ -836,7 +836,7 @@ export function createTurnRunner(options: {
             onToolCallResultEvent: ({
               event,
             }: {
-              event: { toolCallId: string; content: string };
+              event: { toolCallId: string; content: unknown };
             }) => {
               const name = callNames.get(event.toolCallId);
               if (name === undefined || typeof event.content !== "string")

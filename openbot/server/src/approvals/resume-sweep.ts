@@ -1,7 +1,4 @@
-import {
-  type OfferedFile,
-  readOfferedFile,
-} from "@openbot/shared/member-file";
+import { type OfferedFile, readOfferedFile } from "@openbot/shared/member-file";
 import type { ApprovalContinuation } from "@openbot/toolkit/continuation";
 import { HeadlessToolSuspension } from "@openbot/toolkit/headless-tools";
 import type { TurnRunner } from "@openbot/toolkit/run-turn";

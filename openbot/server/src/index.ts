@@ -48,10 +48,7 @@ import { createAgentFetch } from "./agents/endpoint";
 import { createHandoffDesk } from "./agents/handoff";
 import { createHandedRequestLoader } from "./agents/handoff-request";
 import { createForwardHopCheck, createHopRelay } from "./agents/handoff-resume";
-import {
-  createHandoffRunner,
-  type HandoffWork,
-} from "./agents/handoff-runner";
+import { createHandoffRunner, type HandoffWork } from "./agents/handoff-runner";
 import { startHandoffDelivery } from "./agents/handoff-wiring";
 import {
   createEngineChoices,

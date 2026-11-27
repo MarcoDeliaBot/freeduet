@@ -530,7 +530,12 @@ describe("a file offered after a card in a hand-off", () => {
     const hop = waiting?.payload as unknown as HandoffWork;
     await record({
       work: { ...hop, fromBotId: IRIS, toBotId: KAI },
-      file: { botId: KAI, path: PATH, name: "mattoncini-pastello.html", bytes: 1 },
+      file: {
+        botId: KAI,
+        path: PATH,
+        name: "mattoncini-pastello.html",
+        bytes: 1,
+      },
     });
     expect(await offers()).toHaveLength(1);
     await stack.service.decide(PERSON, cardId, "allow_once");
@@ -548,7 +553,9 @@ describe("a file offered after a card in a hand-off", () => {
   });
 
   test("a result that names another member's computer records nothing", async () => {
-    const { stack, cardId } = await stoppedOnCard([{ path: PATH, botId: IRIS }]);
+    const { stack, cardId } = await stoppedOnCard([
+      { path: PATH, botId: IRIS },
+    ]);
     await stack.service.decide(PERSON, cardId, "allow_once");
     await stack.sweep(cardId);
     expect(await offers()).toEqual([]);

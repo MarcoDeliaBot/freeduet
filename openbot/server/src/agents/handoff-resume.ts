@@ -101,10 +101,7 @@ export function createHopRelay(deps: {
       kind: HANDOFF_KIND,
       // One relay per decision: the sweep that carried this decision out may run its tail twice.
       key: `relay:${run.handoff.key}:card:${input.approvalId}`,
-      payload: relayPayload(work, answer) as unknown as Record<
-        string,
-        unknown
-      >,
+      payload: relayPayload(work, answer) as unknown as Record<string, unknown>,
     });
     return true;
   };
