@@ -474,6 +474,7 @@ export const auditEventTypes = [
   "bot.follow_up_scheduled",
   "bot.follow_up_cancelled",
   "bot.handoff_stopped",
+  "bot.handoff_retried",
 
   /*
    * One Bot handing work to another.

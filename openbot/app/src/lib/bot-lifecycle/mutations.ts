@@ -77,6 +77,20 @@ export function stopHandoffMutationOptions(queryClient: QueryClient) {
   });
 }
 
+/** D171: "Try again" on a stalled hand-off: the server puts that same hop back on the queue once. */
+export function retryHandoffMutationOptions(queryClient: QueryClient) {
+  return mutationOptions({
+    mutationFn: async (variables: { agentId: string; id: string }) => {
+      await client(`${botPath(variables.agentId)}/activity/handoffs/retry`, {
+        method: "POST",
+        body: { id: variables.id },
+        fallback: "Could not try that again",
+      });
+    },
+    onSuccess: () => invalidateLifecycle(queryClient),
+  });
+}
+
 export function cancelFollowUpMutationOptions(queryClient: QueryClient) {
   return mutationOptions({
     mutationFn: async (variables: { agentId: string; id: string }) => {

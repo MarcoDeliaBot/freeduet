@@ -10,6 +10,7 @@ import {
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import { Fragment } from "react";
+import { StalledHandoffRow } from "@/components/bot-profile/stalled-handoff";
 import {
   PageEmpty,
   PageRows,
@@ -74,7 +75,29 @@ function linkFor(item: ActivityItem, agentId: string) {
   }
 }
 
+/** D171: a hand-off that gave up gets the plain "did not finish" row with Try again; the rest as before. */
 function ActivityRow({
+  agentId,
+  item,
+}: {
+  agentId: string;
+  item: ActivityItem;
+}) {
+  if (item.stalled)
+    return (
+      <StalledHandoffRow
+        agentId={agentId}
+        channelId={item.channelId}
+        id={item.id}
+        reason={item.stalled.reason}
+        task={item.title}
+        toName={item.stalled.toName}
+      />
+    );
+  return <PlainActivityRow agentId={agentId} item={item} />;
+}
+
+function PlainActivityRow({
   agentId,
   item,
 }: {

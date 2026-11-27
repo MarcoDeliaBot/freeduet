@@ -14,6 +14,15 @@ export type BotLifecycle = {
   notify: BotNotify;
 };
 
+/** D171: one hand-off that gave up: who did not finish what, and why in plain words. */
+export type StalledHandoff = {
+  id: string;
+  toName: string;
+  task: string;
+  reason: string;
+  channelId: string | null;
+};
+
 /** What waits on the signed-in person from one Bot, as the sidebar draws it. */
 export type BotAttention = {
   agentId: string;
@@ -22,6 +31,10 @@ export type BotAttention = {
   approvals: number;
   handoffs: number;
   unread: number;
+  /** D171: the stalled hand-offs behind `handoffs`, with a plain reason each. */
+  stalled?: StalledHandoff[];
+  /** D171: the conversation with the newest unread reply. */
+  unreadChannelId?: string | null;
   paused: boolean;
   notify: BotNotify;
 };
@@ -47,6 +60,8 @@ export type ActivityItem = {
   stoppable: boolean;
   /** A follow-up the server says can still be cancelled. */
   cancellable: boolean;
+  /** D171: set on a hand-off that gave up. */
+  stalled?: { toName: string; reason: string; retryable: boolean } | null;
 };
 
 export type BotActivity = {

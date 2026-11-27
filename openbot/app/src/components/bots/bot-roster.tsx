@@ -7,6 +7,7 @@ import {
   attentionSummary,
   needsInput,
 } from "@/components/bot-profile/attention";
+import { StalledHandoffRow } from "@/components/bot-profile/stalled-handoff";
 import {
   PageEmpty,
   PageRows,
@@ -180,6 +181,8 @@ function RosterRows({
             </ItemActions>
           </Item>
         );
+        const stalled = state?.stalled ?? [];
+        const unreadChannel = state?.unread ? state.unreadChannelId : null;
         return (
           <Fragment key={agent.id}>
             {index > 0 ? <Separator /> : null}
@@ -206,6 +209,43 @@ function RosterRows({
             ) : (
               row
             )}
+            {stalled.map((hop) => (
+              <StalledHandoffRow
+                agentId={agent.id}
+                channelId={hop.channelId}
+                id={hop.id}
+                key={hop.id}
+                reason={hop.reason}
+                task={hop.task}
+                toName={hop.toName}
+              />
+            ))}
+            {unreadChannel && state ? (
+              <div
+                className="flex flex-wrap items-center gap-3 px-3 py-2.5"
+                data-testid="unread-row"
+              >
+                <IconMessage aria-hidden className="size-4 text-duet-accent" />
+                <p className="min-w-0 flex-1 text-sm">
+                  {agent.name} wrote in {state.unread}{" "}
+                  {state.unread === 1 ? "conversation" : "conversations"} you
+                  have not read.
+                </p>
+                <Button
+                  render={(props) => (
+                    <Link
+                      {...props}
+                      params={{ channelId: unreadChannel }}
+                      to="/channel/$channelId"
+                    />
+                  )}
+                  size="sm"
+                  variant="outline"
+                >
+                  Read newest
+                </Button>
+              </div>
+            ) : null}
           </Fragment>
         );
       })}
