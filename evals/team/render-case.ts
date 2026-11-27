@@ -13,9 +13,10 @@
  * live runner adds from a running server (the person's memory, the channel's rows, the tools the server
  * grants) is listed as left out in the file, not guessed.
  */
-import { mkdir, writeFile } from "node:fs/promises";
+import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { join, resolve } from "node:path";
 import { parseArgs } from "node:util";
+import { handoffTool } from "../../openbot/server/src/agents/handoff-tool";
 import { type Attachment, type Case, loadCases, requestText } from "./checks";
 import { renderDates } from "./dates";
 import { GRADER_SYSTEM } from "./grader";
@@ -23,19 +24,79 @@ import { GRADER_SYSTEM } from "./grader";
 const HERE = import.meta.dir;
 const ROOT = resolve(HERE, "../..");
 const CASES = join(HERE, "cases.yaml");
+const AGENTS = join(ROOT, "openbot/examples/freeduet/agents.yaml");
+const SERVER_AGENTS_DIR = join(ROOT, "openbot/server/src/agents");
 const PYTHON_RENDER = join(HERE, "render_prompt.py");
+const IRIS = "freeduet";
 export const GRADER_MARKER = "## GRADER ONLY";
+
+/** One JSON Schema property, as zod and iris_tools.py write it (only the keys this file shows). */
+type JsonProp = {
+  type?: string;
+  description?: string;
+  enum?: unknown[];
+  minimum?: number;
+  maximum?: number;
+  maxLength?: number;
+  default?: unknown;
+};
+export type JsonSchema = {
+  properties?: Record<string, JsonProp>;
+  required?: string[];
+  additionalProperties?: boolean;
+};
+export type ToolShape = {
+  name: string;
+  description: string;
+  inputSchema: JsonSchema;
+};
 
 type Rendered = {
   system: string;
-  tools: { name: string; description: string }[];
+  tools: ToolShape[];
   toolsNote: string;
 };
 
+/**
+ * message_bot as the server defines it: its description and its parameters, from the same handoff-tool.ts
+ * the server imports. The tool object is built with a desk that is never called (the description and the
+ * schema are fixed at construction), and its zod parameters become JSON Schema with the server's own zod.
+ */
+export async function messageBotTool(): Promise<{
+  description: string;
+  inputSchema: JsonSchema;
+}> {
+  const tool = handoffTool({
+    desk: {} as never,
+    from: { depth: 0 } as never,
+    hasSomebodyToAsk: true,
+    maxDepth: 1,
+    maxPerRun: 1,
+  });
+  if (!tool)
+    throw new Error("handoffTool returned no tool for a run with depth 1");
+  const { z } = await import(Bun.resolveSync("zod", SERVER_AGENTS_DIR));
+  return {
+    description: tool.description,
+    inputSchema: z.toJSONSchema(tool.parameters) as JsonSchema,
+  };
+}
+
+/** The colleagues' ids from the team file, as `id (name)`: the ids are what message_bot's `bot` takes. */
+async function colleagueIds(): Promise<string[]> {
+  const agents = Bun.YAML.parse(await readFile(AGENTS, "utf8")) as {
+    agents: { id: string; name?: string }[];
+  };
+  return agents.agents
+    .filter((row) => row.id !== IRIS)
+    .map((row) => (row.name ? `${row.id} (${row.name})` : row.id));
+}
+
 async function memberPart(member: string, request: string): Promise<Rendered> {
+  const handoff = await messageBotTool();
   const proc = Bun.spawn(["python3", "-I", PYTHON_RENDER], {
     cwd: ROOT,
-    stdin: new Blob([JSON.stringify({ member, request })]),
+    stdin: new Blob([JSON.stringify({ member, request, handoff })]),
     stdout: "pipe",
     stderr: "pipe",
   });
@@ -47,6 +108,36 @@ async function memberPart(member: string, request: string): Promise<Rendered> {
   if (code !== 0)
     throw new Error(`render_prompt.py failed (exit ${code}): ${err.trim()}`);
   return JSON.parse(out) as Rendered;
+}
+
+/** One indented line per argument: its name, type, required or optional, limits, enum values and description. */
+export function argumentLines(schema: JsonSchema): string[] {
+  const required = new Set(schema.required ?? []);
+  const properties = schema.properties ?? {};
+  const names = Object.keys(properties);
+  if (names.length === 0) return ["  Arguments: none."];
+  const lines = names.map((name) => {
+    const prop = properties[name] as JsonProp;
+    const facts = [
+      prop.type ?? "value",
+      required.has(name) ? "required" : "optional",
+    ];
+    if (prop.enum)
+      facts.push(
+        `one of ${prop.enum.map((v) => JSON.stringify(v)).join(", ")}`,
+      );
+    if (prop.minimum !== undefined) facts.push(`minimum ${prop.minimum}`);
+    if (prop.maximum !== undefined) facts.push(`maximum ${prop.maximum}`);
+    if (prop.maxLength !== undefined)
+      facts.push(`at most ${prop.maxLength} characters`);
+    if (prop.default !== undefined)
+      facts.push(`default ${JSON.stringify(prop.default)}`);
+    const said = prop.description ? `: ${prop.description}` : "";
+    return `  - \`${name}\` (${facts.join(", ")})${said}`;
+  });
+  if (schema.additionalProperties === false)
+    lines.push("  No other argument names are accepted.");
+  return lines;
 }
 
 function fence(text: string): string {
@@ -88,8 +179,17 @@ export async function renderOne(c: Case, today: Date): Promise<string> {
   lines.push("## 2. Tools the member is offered", "");
   if (member.tools.length === 0)
     lines.push("None that the freeduet server serves itself.", "");
-  for (const tool of member.tools)
+  for (const tool of member.tools) {
     lines.push(`- \`${tool.name}\`: ${tool.description}`);
+    lines.push(...argumentLines(tool.inputSchema));
+  }
+  if (member.tools.length > 0) {
+    const ids = (await colleagueIds()).join(", ");
+    lines.push(
+      "",
+      `To call a tool, write one line \`TOOL_CALL {"name": "<exact tool name>", "args": {...}}\`, using exactly the argument names listed above. For message_bot's \`bot\`, write the colleague's id, not the name; the ids are: ${ids}.`,
+    );
+  }
   lines.push("", member.toolsNote, "");
 
   lines.push("## 3. The conversation", "");
