@@ -482,7 +482,11 @@ export const IDENTITY: readonly NoteEntry[] = [
 /** Names that look like a person and are not one. */
 export const REVIEWED: readonly NoteEntry[] = [
   note("sessions", "user_agent", "a browser's name"),
-  note("handoff_file_offers", "member_bot_id", "the id of a team member, a Bot"),
+  note(
+    "handoff_file_offers",
+    "member_bot_id",
+    "the id of a team member, a Bot",
+  ),
   note("saved_logins", "username", "the person's name at a website"),
   note("scim_users", "user_name", "a directory name"),
   note("scim_users", "user_name_key", "a directory name"),
