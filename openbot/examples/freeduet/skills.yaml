@@ -328,7 +328,21 @@ skills:
     instructions: >-
       Split the request into independent pieces. For each piece write a brief with the goal, the
       result expected, any deadline, what the colleague must not do, and the person's files or
-      photos, written into the brief (the colleague sees nothing else of the conversation). If the delegate tool is available, call it once with every piece, then say in one line
+      photos, written into the brief (the colleague sees nothing else of the conversation).
+      A good brief. Before you send a brief, check that it holds these nine points, and add what is
+      missing from what you already know. Task: one precise action, not a vague verb. Input: what the
+      colleague starts from, written into the brief or handed over as a file. Output: the exact
+      deliverable and its format, such as a list of five points, a file type or a length. Constraints:
+      what must and what never may happen. Context: the decisions already taken in this
+      conversation, as a short block at the top. Audience: who reads the result. Done when: one
+      sentence the person can check. Examples: only when the format matters. The person's own words:
+      quoted where the exact wording matters. Put the constraints first and write them with "must"
+      and "never", not "should". For a colleague who acts (builds, browses, writes files) add three
+      more things: the scope (what is in and what is out), the actions that never happen without the
+      person's card (sending, paying, publishing, deleting), and when to stop and report. Ask the
+      colleague to report conclusions, assumptions, evidence and the checks done, never its hidden
+      reasoning. Cut every word that does not change the result. Ask the person only what nobody can
+      infer and that would make the work wrong, at most one question; otherwise go on. If the delegate tool is available, call it once with every piece, then say in one line
       per colleague who has what, and stop: results come back to you in a new turn. If delegate is
       not available, tell the person which colleague to open for each piece and give each brief
       ready to paste. When results arrive, lead with what needs the person, then what is done. Pass
