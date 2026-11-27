@@ -27,6 +27,7 @@ import {
   ItemTitle,
 } from "@/components/ui/item";
 import { Separator } from "@/components/ui/separator";
+import { useAppLanguage } from "@/freeduet/i18n/provider";
 import {
   createGithubBindingMutationOptions,
   githubBindingsQueryOptions,
@@ -45,17 +46,18 @@ export function GithubSources() {
   const bindings = useQuery(githubBindingsQueryOptions());
   const remove = useMutation(removeGithubBindingMutationOptions(queryClient));
   const [adding, setAdding] = useState(false);
+  const { t } = useAppLanguage();
   const error = bindings.error ?? remove.error;
   return (
     <PageSection
       action={
         <Button onClick={() => setAdding(true)} size="sm" variant="ghost">
           <IconPlus />
-          Add a repository
+          {t("settings.addRepository")}
         </Button>
       }
-      description="Add a repository here, then add a webhook in GitHub with the address below and the same secret. Its events, like issues.opened, can then start a responsibility."
-      title="Repositories"
+      description={t("settings.repositoriesDescription")}
+      title={t("settings.repositories")}
     >
       {error ? (
         <p className="mt-4 text-destructive text-sm" role="alert">
@@ -64,9 +66,7 @@ export function GithubSources() {
       ) : null}
       {bindings.isPending || !bindings.data ? null : bindings.data.length ===
         0 ? (
-        <PageEmpty>
-          No repositories yet. Add one with Add a repository.
-        </PageEmpty>
+        <PageEmpty>{t("settings.repositoriesEmpty")}</PageEmpty>
       ) : (
         <PageRows>
           {bindings.data.map((binding, index) => (
@@ -89,7 +89,7 @@ export function GithubSources() {
                     size="sm"
                     variant="outline"
                   >
-                    Disconnect
+                    {t("settings.disconnect")}
                   </Button>
                 </ItemActions>
               </Item>
@@ -107,6 +107,7 @@ export function GithubSources() {
  */
 function AddRepositoryDialog({ onClose }: { onClose: () => void }) {
   const formId = useId();
+  const { t } = useAppLanguage();
   const [repository, setRepository] = useState("");
   const [secret, setSecret] = useState("");
   const create = useMutation(createGithubBindingMutationOptions(queryClient));
@@ -114,10 +115,8 @@ function AddRepositoryDialog({ onClose }: { onClose: () => void }) {
     <Dialog onOpenChange={(next) => !next && onClose()} open>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Add a repository</DialogTitle>
-          <DialogDescription>
-            Use the same secret when you add the webhook in GitHub.
-          </DialogDescription>
+          <DialogTitle>{t("settings.addRepository")}</DialogTitle>
+          <DialogDescription>{t("settings.sameSecret")}</DialogDescription>
         </DialogHeader>
         <DialogBody className="mt-4">
           {/* The submit button is in the footer and reaches this form by id, so DialogBody stays a
@@ -141,7 +140,7 @@ function AddRepositoryDialog({ onClose }: { onClose: () => void }) {
             <FieldGroup>
               <Field>
                 <FieldLabel htmlFor={`${formId}-repository`}>
-                  Repository
+                  {t("settings.repository")}
                 </FieldLabel>
                 <Input
                   autoFocus
@@ -154,7 +153,7 @@ function AddRepositoryDialog({ onClose }: { onClose: () => void }) {
               </Field>
               <Field>
                 <FieldLabel htmlFor={`${formId}-secret`}>
-                  Webhook secret
+                  {t("settings.webhookSecret")}
                 </FieldLabel>
                 <Input
                   autoComplete="new-password"
@@ -175,7 +174,7 @@ function AddRepositoryDialog({ onClose }: { onClose: () => void }) {
         </DialogBody>
         <DialogFooter className="mt-4">
           <Button onClick={onClose} size="sm" variant="outline">
-            Cancel
+            {t("settings.cancel")}
           </Button>
           <Button
             disabled={create.isPending}
@@ -183,7 +182,7 @@ function AddRepositoryDialog({ onClose }: { onClose: () => void }) {
             size="sm"
             type="submit"
           >
-            Connect events
+            {t("settings.connectEvents")}
           </Button>
         </DialogFooter>
       </DialogContent>

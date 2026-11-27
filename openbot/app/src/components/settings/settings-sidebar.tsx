@@ -19,6 +19,8 @@ import {
   SidebarMenuItem,
   SidebarRail,
 } from "@/components/ui/sidebar";
+import type { MessageId } from "@/freeduet/i18n/catalogs";
+import { useAppLanguage } from "@/freeduet/i18n/provider";
 
 const appLinkOptions = { to: "/" } satisfies LinkOptions;
 
@@ -32,10 +34,10 @@ const ITEMS: {
   exact?: boolean;
   icon: React.ComponentType<{ className?: string }>;
   linkOptions: LinkOptions;
-  title: string;
+  label: MessageId;
 }[] = [
   {
-    title: "General",
+    label: "settings.general",
     icon: IconSettings,
     /* `/settings` prefixes every other route here, and would otherwise light up on all of them. */
     exact: true,
@@ -43,31 +45,31 @@ const ITEMS: {
   },
   {
     /* The checklist onboarding ends on: what is set up, and what still needs doing. */
-    title: "Setup",
+    label: "settings.setup",
     icon: IconListCheck,
     linkOptions: { to: "/settings/setup" },
   },
   {
     /* Where updates go for every Bot at once; how much each Bot sends is on that Bot's page. */
-    title: "Notifications",
+    label: "profile.notifications",
     icon: IconBell,
     linkOptions: { to: "/settings/notifications" },
   },
   {
     /* Whether Bots ask first, and rules for every Bot. Team settings are an administrator's. */
-    title: "Approvals",
+    label: "settings.approvals",
     icon: IconChecks,
     linkOptions: { to: "/settings/approvals" },
   },
   {
     /* Logins saved from a Bot's private sign-in form. */
-    title: "Passwords",
+    label: "home.passwordsLabel",
     icon: IconKey,
     linkOptions: { to: "/settings/passwords" },
   },
   {
     /* The same mark Admin gives UI Components. It is the same subject seen from the other side. */
-    title: "Components gallery",
+    label: "settings.componentsGallery",
     icon: IconLayoutGrid,
     linkOptions: { to: "/settings/components-gallery" },
   },
@@ -76,6 +78,7 @@ const ITEMS: {
 export function SettingsSidebar({
   ...props
 }: React.ComponentProps<typeof Sidebar>) {
+  const { t } = useAppLanguage();
   return (
     <Sidebar {...props}>
       {/* Matched to the app sidebar's header, as Admin's is. See admin-sidebar.tsx. */}
@@ -86,7 +89,7 @@ export function SettingsSidebar({
               render={(props) => (
                 <Link {...appLinkOptions} {...props}>
                   <IconArrowLeft className="mr-2 h-4 w-4" />
-                  Back to app
+                  {t("settings.backToApp")}
                 </Link>
               )}
             />
@@ -101,7 +104,7 @@ export function SettingsSidebar({
         <SidebarGroup>
           <SidebarMenu className="gap-px">
             {ITEMS.map((option) => (
-              <SidebarMenuItem key={option.title}>
+              <SidebarMenuItem key={option.label}>
                 <SidebarMenuButton
                   render={(props) => (
                     <Link
@@ -111,7 +114,7 @@ export function SettingsSidebar({
                       {...props}
                     >
                       <option.icon className="mr-2 h-4 w-4" />
-                      {option.title}
+                      {t(option.label)}
                     </Link>
                   )}
                 />

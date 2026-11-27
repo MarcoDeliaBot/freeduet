@@ -13,6 +13,8 @@ import {
 } from "@/components/ui/item";
 import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
+import type { MessageId } from "@/freeduet/i18n/catalogs";
+import { useAppLanguage } from "@/freeduet/i18n/provider";
 import { setUpdateRoutingMutationOptions } from "@/lib/bot-lifecycle/mutations";
 import { deliveryQueryOptions } from "@/lib/delivery";
 import {
@@ -22,18 +24,21 @@ import {
 } from "@/lib/bot-lifecycle/queries";
 import { queryClient } from "@/query-client";
 
-const KIND_LABEL: Record<UpdateKind, { title: string; description: string }> = {
+const KIND_LABEL: Record<
+  UpdateKind,
+  { title: MessageId; description: MessageId }
+> = {
   progress: {
-    title: "Progress",
-    description: "Replies and results from work you weren't watching.",
+    title: "settings.kindProgress",
+    description: "settings.kindProgressDescription",
   },
   decision: {
-    title: "Decisions",
-    description: "Approvals a Bot needs before it acts.",
+    title: "settings.kindDecision",
+    description: "settings.kindDecisionDescription",
   },
   question: {
-    title: "Questions",
-    description: "Things a Bot asked you and is waiting on.",
+    title: "settings.kindQuestion",
+    description: "settings.kindQuestionDescription",
   },
 };
 
@@ -52,6 +57,7 @@ export function UpdateRoutingSection() {
   const routing = useQuery(updateRoutingQueryOptions());
   const reach = useQuery(deliveryQueryOptions());
   const save = useMutation(setUpdateRoutingMutationOptions(queryClient));
+  const { t } = useAppLanguage();
   /*
    * A channel this deployment has not set up can carry nothing, so its switch is off and disabled
    * whatever the stored preference says, rather than on beside a channel that delivers nothing. The
@@ -63,12 +69,14 @@ export function UpdateRoutingSection() {
     reach.data ? reach.data.available[transport] : true;
   return (
     <PageSection
-      description={`Where each kind of update goes when you're away. ${appConfig.brand.productName} on the web always shows everything.`}
-      title="Where updates go"
+      description={t("settings.routingDescription", {
+        product: appConfig.brand.productName,
+      })}
+      title={t("settings.routingTitle")}
     >
       {routing.isPending || reach.isPending ? null : routing.error ? (
         <p className="mt-4 text-destructive text-sm" role="alert">
-          Couldn't load where your updates go. Reload the page.
+          {t("settings.routingError")}
         </p>
       ) : (
         <PageRows>
@@ -84,9 +92,9 @@ export function UpdateRoutingSection() {
                     <IconRoute />
                   </ItemMedia>
                   <ItemContent>
-                    <ItemTitle>{KIND_LABEL[kind].title}</ItemTitle>
+                    <ItemTitle>{t(KIND_LABEL[kind].title)}</ItemTitle>
                     <ItemDescription>
-                      {KIND_LABEL[kind].description}
+                      {t(KIND_LABEL[kind].description)}
                     </ItemDescription>
                   </ItemContent>
                   <ItemFooter className="flex-wrap justify-start gap-x-6 gap-y-3 pl-8">
@@ -96,7 +104,10 @@ export function UpdateRoutingSection() {
                         key={transport.id}
                       >
                         <Switch
-                          aria-label={`${KIND_LABEL[kind].title} by ${transport.label}`}
+                          aria-label={t("settings.switchLabel", {
+                            kind: t(KIND_LABEL[kind].title),
+                            transport: transport.label,
+                          })}
                           checked={
                             configured(transport.id) && allowed(transport.id)
                           }
@@ -120,7 +131,7 @@ export function UpdateRoutingSection() {
                           {transport.label}
                           {configured(transport.id) ? null : (
                             <span className="text-muted-foreground text-xs">
-                              Not set up
+                              {t("settings.notSetUp")}
                             </span>
                           )}
                         </span>

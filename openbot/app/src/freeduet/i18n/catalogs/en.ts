@@ -287,6 +287,148 @@ export const EN = {
     one: "{amount} issue",
     other: "{amount} issues",
   },
+  "settings.changesTitle": "Changes made in chat",
+  "settings.changesDescription":
+    "Settings a Bot changed from chat. Undo puts the old value back for seven days, and only while the setting still holds the value the change set.",
+  "settings.changesLoading": "Loading changes…",
+  "settings.changesEmpty": "No changes made in chat yet.",
+  "settings.undoFailed": "Couldn't undo the change. Try again.",
+  "settings.levelAll": "everything",
+  "settings.levelNeedsInput": "only when it needs you",
+  "settings.memberAdded": "{member} was added to your team",
+  "settings.nameChanged": "{bot}: your name for it went from {from} to {to}",
+  "settings.nameOwn": "its own name",
+  "settings.languageChanged":
+    "Your language for the team went from {from} to {to}",
+  "settings.deploymentOwn": "the deployment's own",
+  "settings.toneChanged": "{bot}: tone went from {from} to {to}",
+  "settings.notifyChanged": "{bot}: notifications went from {from} to {to}",
+  "settings.undone": "Undone",
+  "settings.undoGone": "Undo is no longer possible",
+  "settings.undoing": "Undoing…",
+  "settings.undo": "Undo",
+  "settings.devicesTitle": "Your devices",
+  "settings.devicesDescription":
+    "Sign in to the {product} app on your phone and turn on notifications to add it here.",
+  "settings.devicesEmpty": "No devices yet.",
+  "settings.deliveriesTitle": "Recent deliveries",
+  "settings.deliveriesEmpty": "No deliveries yet.",
+  "settings.repositories": "Repositories",
+  "settings.repositoriesDescription":
+    "Add a repository here, then add a webhook in GitHub with the address below and the same secret. Its events, like issues.opened, can then start a responsibility.",
+  "settings.addRepository": "Add a repository",
+  "settings.repositoriesEmpty":
+    "No repositories yet. Add one with Add a repository.",
+  "settings.repository": "Repository",
+  "settings.webhookSecret": "Webhook secret",
+  "settings.disconnect": "Disconnect",
+  "settings.sameSecret":
+    "Use the same secret when you add the webhook in GitHub.",
+  "settings.cancel": "Cancel",
+  "settings.connectEvents": "Connect events",
+  "settings.needsReconnect": "Needs reconnecting",
+  "settings.needsReconnectHandle": "Needs reconnecting · @{handle}",
+  "settings.linked": "Linked",
+  "settings.yourAccount": "Your account",
+  "settings.cantLink":
+    "You can't link a {provider} account yet. An admin has to set it up first.",
+  "settings.loadAccountError": "Couldn't load your account: {error}",
+  "settings.checkLinkError":
+    "Couldn't check whether you can link this account: {error}",
+  "settings.slackCodeError": "Couldn't create a Slack code: {error}",
+  "settings.githubConnectError": "Couldn't connect GitHub: {error}",
+  "settings.linkSlack": "Link your Slack account",
+  "settings.copied": "Copied",
+  "settings.copy": "Copy",
+  "settings.copyFailed": "Couldn't copy. Select the code and copy it yourself.",
+  "settings.codeExpires": "The code works once and expires in 10 minutes.",
+  "settings.done": "Done",
+  "settings.notLinked": "Not linked",
+  "settings.connect": "Connect",
+  "settings.connectNamed": "Connect {name}",
+  "settings.disconnectNamed": "Disconnect {name}",
+  "settings.disconnectError": "Couldn't disconnect {name}: {error}",
+  "settings.githubLinked": "Your GitHub account is linked.",
+  "settings.githubLinkFailed": "Couldn't link your GitHub account. Try again.",
+  "settings.githubTaken":
+    "That GitHub account is linked to someone else in {product}. Sign in to GitHub with another account and try again, or ask an admin.",
+  "settings.emphasisTitle": "Message list emphasis",
+  "settings.emphasisDescription":
+    "Choose which line stands out in the sidebar.",
+  "settings.emphasisBot": "Bot name",
+  "settings.emphasisConversation": "Conversation title",
+  "settings.loading": "Loading…",
+  "settings.saving": "Saving…",
+  "settings.emphasisPreview": "Message list preview",
+  "settings.sampleBot": "General Assistant",
+  "settings.sampleTitle": "Plan next week",
+  "settings.readAloudTitle": "Read replies aloud",
+  "settings.readAloudDescription":
+    "Adds a Read aloud button under each Bot reply. It uses a voice on this computer only, and nothing is sent elsewhere.",
+  "settings.noItalianVoice":
+    "No local Italian voice on this computer, so replies cannot be read aloud here.",
+  "settings.general": "General",
+  "settings.setup": "Setup",
+  "settings.approvals": "Approvals",
+  "settings.componentsGallery": "Components gallery",
+  "settings.backToApp": "Back to app",
+  "settings.standingTitle": "Standing instructions",
+  "settings.standingDescription":
+    "Applies to every Bot in every conversation. A Bot's role says what it does. This says how you want it done, like your writing style.",
+  "settings.charactersOf": "{used} of {limit} characters",
+  "settings.saved": "Saved",
+  "settings.save": "Save",
+  "settings.sharedBots": "Shared Bots",
+  "settings.sharedBotsDescription":
+    "A Bot shared with you uses its owner's apps. It uses yours only where you said yes in a conversation.",
+  "settings.appsSharedBots": "Apps you let shared Bots use",
+  "settings.resetDone": "Reset. Each shared Bot will ask again.",
+  "settings.resetDescription":
+    "Forget every answer, so each shared Bot asks again.",
+  "settings.reset": "Reset",
+  "settings.kindProgress": "Progress",
+  "settings.kindProgressDescription":
+    "Replies and results from work you weren't watching.",
+  "settings.kindDecision": "Decisions",
+  "settings.kindDecisionDescription": "Approvals a Bot needs before it acts.",
+  "settings.kindQuestion": "Questions",
+  "settings.kindQuestionDescription":
+    "Things a Bot asked you and is waiting on.",
+  "settings.switchLabel": "{kind} by {transport}",
+  "settings.notSetUp": "Not set up",
+  "settings.routingDescription":
+    "Where each kind of update goes when you're away. {product} on the web always shows everything.",
+  "settings.routingTitle": "Where updates go",
+  "settings.routingError":
+    "Couldn't load where your updates go. Reload the page.",
+  "settings.qrLabel": "QR code with the pairing link",
+  "settings.pairThisTitle": "Pair this browser",
+  "settings.pairThisDescription":
+    "On the computer FreeDuet runs on, open Settings, press Make a code under Pair a phone or another browser, then open the link it shows or type the code here.",
+  "settings.pairedDone": "This browser is paired with the computer.",
+  "settings.linkBroughtCode":
+    "The link brought a code. Name this browser and press Pair.",
+  "settings.code": "Code",
+  "settings.name": "Name",
+  "settings.phone": "Phone",
+  "settings.pairedDescription":
+    "A phone or another browser that is paired works like this one. Revoke one and it is cut off at its next request and signed out.",
+  "settings.pairedTitle": "Pair a phone or another browser",
+  "settings.makeCode": "Make a code",
+  "settings.cannotMakeCode":
+    "A code is made in the browser paired at the computer. This one cannot make one.",
+  "settings.runsOut":
+    "On the phone, signed in as you, scan this or open the link, or open Settings and type the code. It works once and runs out in {time}.",
+  "settings.codeRanOut": "That code has run out. Make a new one.",
+  "settings.localAddress":
+    "This address only works on this computer. A phone needs the address FreeDuet is reached at from outside; open that on the phone and type the code in Settings.",
+  "settings.thisBrowserTag": "(this browser)",
+  "settings.computer": "Computer",
+  "settings.phoneOrBrowser": "Phone or other browser",
+  "settings.madeWhen": "made {when}",
+  "settings.lastSeen": "last seen {when}",
+  "settings.rename": "Rename",
+  "settings.revoke": "Revoke",
 } satisfies Entries;
 
 export type MessageId = keyof typeof EN;

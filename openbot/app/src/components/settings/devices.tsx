@@ -17,6 +17,7 @@ import {
   ItemTitle,
 } from "@/components/ui/item";
 import { Separator } from "@/components/ui/separator";
+import { useAppLanguage } from "@/freeduet/i18n/provider";
 import {
   deliveryQueryOptions,
   removePushDeviceMutationOptions,
@@ -28,15 +29,28 @@ const PLATFORM: Record<"ios" | "android", string> = {
   android: "Android",
 };
 
+/** Local time to the second, as `Date.prototype.toLocaleString()` drew it, in the app's language. */
+const DATE_TIME: Intl.DateTimeFormatOptions = {
+  year: "numeric",
+  month: "numeric",
+  day: "numeric",
+  hour: "numeric",
+  minute: "2-digit",
+  second: "2-digit",
+};
+
 /** The phones that receive push notifications for every one of the person's Bots. */
 export function NativeDevices() {
   const reach = useQuery(deliveryQueryOptions());
   const remove = useMutation(removePushDeviceMutationOptions(queryClient));
+  const { t } = useAppLanguage();
   const error = reach.error ?? remove.error;
   return (
     <PageSection
-      description={`Sign in to the ${appConfig.brand.productName} app on your phone and turn on notifications to add it here.`}
-      title="Your devices"
+      description={t("settings.devicesDescription", {
+        product: appConfig.brand.productName,
+      })}
+      title={t("settings.devicesTitle")}
     >
       {error ? (
         <p className="mt-4 text-destructive text-sm" role="alert">
@@ -45,7 +59,7 @@ export function NativeDevices() {
       ) : null}
       {reach.isPending || !reach.data ? null : reach.data.devices.length ===
         0 ? (
-        <PageEmpty>No devices yet.</PageEmpty>
+        <PageEmpty>{t("settings.devicesEmpty")}</PageEmpty>
       ) : (
         <PageRows>
           {reach.data.devices.map((device, index) => (
@@ -65,7 +79,7 @@ export function NativeDevices() {
                     size="sm"
                     variant="outline"
                   >
-                    Remove
+                    {t("chat.remove")}
                   </Button>
                 </ItemActions>
               </Item>
@@ -80,8 +94,9 @@ export function NativeDevices() {
 /** What was sent to the person outside the web app, most recent first, with any failure. */
 export function RecentDeliveries() {
   const reach = useQuery(deliveryQueryOptions());
+  const { t, date } = useAppLanguage();
   return (
-    <PageSection title="Recent deliveries">
+    <PageSection title={t("settings.deliveriesTitle")}>
       {reach.error ? (
         <p className="mt-4 text-destructive text-sm" role="alert">
           {reach.error.message}
@@ -89,7 +104,7 @@ export function RecentDeliveries() {
       ) : null}
       {reach.isPending || !reach.data ? null : reach.data.deliveries.length ===
         0 ? (
-        <PageEmpty>No deliveries yet.</PageEmpty>
+        <PageEmpty>{t("settings.deliveriesEmpty")}</PageEmpty>
       ) : (
         <PageRows>
           {reach.data.deliveries.map((delivery, index) => (
@@ -105,7 +120,7 @@ export function RecentDeliveries() {
                   </ItemTitle>
                   <ItemDescription>
                     {delivery.state} ·{" "}
-                    {new Date(delivery.createdAt).toLocaleString()}
+                    {date(new Date(delivery.createdAt), DATE_TIME)}
                   </ItemDescription>
                   {delivery.error ? (
                     <ItemDescription className="line-clamp-none text-destructive">

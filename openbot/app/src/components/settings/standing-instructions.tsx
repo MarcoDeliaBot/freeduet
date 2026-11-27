@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { PageSection } from "@/components/layout/page-shell";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { useAppLanguage } from "@/freeduet/i18n/provider";
 import { saveInstructionsMutationOptions } from "@/lib/settings/mutations";
 import {
   INSTRUCTIONS_LIMIT,
@@ -22,6 +23,7 @@ import { queryClient } from "@/query-client";
 export function StandingInstructions() {
   const stored = useQuery(instructionsQueryOptions());
   const save = useMutation(saveInstructionsMutationOptions(queryClient));
+  const { t, number } = useAppLanguage();
 
   const [draft, setDraft] = useState<string | null>(null);
   const [problem, setProblem] = useState<string | null>(null);
@@ -57,8 +59,8 @@ export function StandingInstructions() {
 
   return (
     <PageSection
-      description="Applies to every Bot in every conversation. A Bot's role says what it does. This says how you want it done, like your writing style."
-      title="Standing instructions"
+      description={t("settings.standingDescription")}
+      title={t("settings.standingTitle")}
     >
       {stored.isPending ? null : stored.error ? (
         <p className="mt-4 text-destructive text-sm" role="alert">
@@ -67,7 +69,7 @@ export function StandingInstructions() {
       ) : (
         <div className="mt-4 flex flex-col gap-2">
           <Textarea
-            aria-label="Standing instructions"
+            aria-label={t("settings.standingTitle")}
             className="min-h-40"
             disabled={save.isPending}
             onChange={(event) => {
@@ -85,7 +87,10 @@ export function StandingInstructions() {
                   : "text-muted-foreground text-xs"
               }
             >
-              {text.trim().length} of {INSTRUCTIONS_LIMIT} characters
+              {t("settings.charactersOf", {
+                used: number(text.trim().length),
+                limit: number(INSTRUCTIONS_LIMIT),
+              })}
             </p>
             <div className="flex flex-row items-center gap-3">
               {/*
@@ -97,14 +102,16 @@ export function StandingInstructions() {
                   {problem}
                 </span>
               ) : saved ? (
-                <span className="text-muted-foreground text-xs">Saved</span>
+                <span className="text-muted-foreground text-xs">
+                  {t("settings.saved")}
+                </span>
               ) : null}
               <Button
                 disabled={save.isPending || over || unchanged}
                 onClick={submit}
                 size="sm"
               >
-                Save
+                {t("settings.save")}
               </Button>
             </div>
           </div>
