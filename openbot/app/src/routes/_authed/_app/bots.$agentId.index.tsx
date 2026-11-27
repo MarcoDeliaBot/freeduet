@@ -3,7 +3,7 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { ManageSection } from "@/components/bot-profile/manage";
 import { BotProfile } from "@/components/bot-profile/profile";
 import { BotSettingsRows } from "@/components/bot-profile/settings-rows";
-import { PageShell } from "@/components/layout/page-shell";
+import { LightPageShell } from "@/freeduet/light/light-page";
 import { agentQueryOptions } from "@/lib/agents/queries";
 
 export const Route = createFileRoute("/_authed/_app/bots/$agentId/")({
@@ -16,9 +16,10 @@ function BotProfilePage() {
   const agent = useQuery(agentQueryOptions(agentId));
   const toRoster = () => void navigate({ to: "/bots" });
   return (
-    <PageShell
+    <LightPageShell
       backButton={{ label: "Bots", linkProps: { to: "/bots" } }}
-      description="What this Bot is doing for you and how it's set up."
+      crumbs={[{ label: "Bots", to: "/bots" }]}
+      purpose="What this Bot is doing for you and how it's set up."
       title={agent.data?.name ?? "Bot"}
     >
       {agent.isPending ? null : agent.error ? (
@@ -44,6 +45,6 @@ function BotProfilePage() {
           settings={<BotSettingsRows agent={agent.data} />}
         />
       )}
-    </PageShell>
+    </LightPageShell>
   );
 }

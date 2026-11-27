@@ -1,7 +1,7 @@
 import { Link, type LinkOptions, useMatchRoute } from "@tanstack/react-router";
 import type * as React from "react";
-import { PageShell } from "@/components/layout/page-shell";
 import { Button } from "@/components/ui/button";
+import { LightPageShell } from "@/freeduet/light/light-page";
 
 /**
  * What a person gives their own Bots beyond the apps they connect: the skills they write and what
@@ -52,9 +52,13 @@ export function CapabilitiesTabs() {
  */
 export function CapabilitiesShell({ children }: { children: React.ReactNode }) {
   return (
-    <PageShell className="@container" title="Capabilities">
+    <LightPageShell
+      className="@container"
+      purpose="What your Bots know how to do, and what they remember about you."
+      title="Capabilities"
+    >
       <CapabilitiesTabs />
       {children}
-    </PageShell>
+    </LightPageShell>
   );
 }

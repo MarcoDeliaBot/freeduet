@@ -1,18 +1,18 @@
 /* The Dashboard (D154, stage 1). Light cockpit: plain CSS of its own so the page reads the same wherever it sits. */
 .fd-dash {
-  --d-bg: #f6f7fb;
-  --d-card: #fff;
-  --d-line: #e2e8f0;
-  --d-line2: #eef2f7;
-  --d-ink: #1e293b;
-  --d-ink2: #475569;
-  --d-mute: #64748b;
-  --d-accent: #6430ab;
-  --d-accent-soft: #f0ebfa;
-  --d-ok: #147a3a;
-  --d-ok-soft: #e6f4ea;
-  --d-wait: #a34a06;
-  --d-wait-line: #f5d08a;
+  --d-bg: var(--fdl-bg);
+  --d-card: var(--fdl-card);
+  --d-line: var(--fdl-line);
+  --d-line2: var(--fdl-line-2);
+  --d-ink: var(--fdl-ink);
+  --d-ink2: var(--fdl-ink-2);
+  --d-mute: var(--fdl-ink-3);
+  --d-accent: var(--fdl-accent);
+  --d-accent-soft: var(--fdl-accent-soft);
+  --d-ok: var(--fdl-ok);
+  --d-ok-soft: var(--fdl-ok-soft);
+  --d-wait: var(--fdl-wait);
+  --d-wait-line: var(--fdl-wait-line);
   background: var(--d-bg);
   color: var(--d-ink);
   font-family:
