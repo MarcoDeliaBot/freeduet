@@ -2597,6 +2597,28 @@ New case iris-30 in `evals/team/cases.yaml`: a direct request for a playable pas
 
 **Built so far.** The prompt sentences and pins in `freeduet-package.test.ts` (describe "D164"; they fail on the prompts of main). Not verified: not run live. Run kai-5, kai-6 and iris-30 (three runs each) and the neighbours kai-1 to kai-4, iris-31.
 
+## 119. Dashboard, stage 1 (D154)
+
+**Decision (D154, section 108).** The maintainer approved the light design previews on 27 November 2026 (Plus Jakarta Sans, accent #6430AB, background #F6F7FB). This is stage 1 of three: the dashboard page only.
+
+**Built so far.** A page at `/dashboard` (`app/src/freeduet/dashboard.tsx`, numbers in `dashboard-model.ts`, styles in `dashboard.css`, route `routes/_authed/_app/dashboard.tsx`) and a "Dashboard" row in the menu above Settings, in FreeDuet's package only. Engines is one click away: the Engines card's "Manage engines" link opens `/admin/engines`. Every number comes from a read the app already makes:
+
+| Card | Source | When the source fails |
+|---|---|---|
+| Headline, "Waiting for you" | `GET /api/bots/attention`: questions, approvals and stalled hand-offs, as the menu badge counts them | "Not available yet" |
+| Members pill, Team | `GET /api/agents`; a member is "Waiting for you" when the attention read says so, "Paused" when paused, else "Available" (this is not a health check) | "Not available yet" |
+| Tokens today | `GET /api/freeduet/engines/usage`, the per-engine totals' today, input plus output | the token counts are not available |
+| Saved with free engines today | same read, `savedFor` (free cloud and local classes) at the D126 reference price | same |
+| Next routine | `GET /api/routines`: the earliest enabled `nextRunAt` | "Not available yet" |
+| Engines | `GET /api/freeduet/engines` (state words of the Engines page) and the usage read for today's tokens per engine; "first for N members" is the count of members whose chain starts with that engine | "Not available yet" |
+| Tokens per member, today | usage rows summed per member, six busiest, bar is the share of the busiest | same as tokens |
+
+**Left out, because no real source exists today.** The design's "percent of the limit" bar and reset time (the subscription does not report its limit, see `LIMIT_NOTE`); "Registro di bordo" (a recent-activity log: no read gives a person's team log); a per-member live state such as "Writes" or "Measures models" (no read gives it). The page says in one line that the log and the gauge are not available yet. App strings are English, as the rest of the app's pages are.
+
+**Left for stage 2.** One settings design (the Impostazioni artboard), Engines in one click from Settings, a Dashboard tab on the phone's tab bar if the maintainer wants one. **Stage 3.** Connect your AI (D155, the Collega artboard).
+
+Not verified: not run against a live stack, only against mocked reads (screenshots of 27 November 2026). The look is a preview: it goes online after the maintainer's yes.
+
 ---
 
 ## 121. Kai says the person signs in and uploads (D165)
