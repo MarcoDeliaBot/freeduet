@@ -21,7 +21,10 @@ export function attentionSummary(bot: BotAttention): string {
     parts.push(
       `${bot.handoffs} stalled hand-off${bot.handoffs === 1 ? "" : "s"}`,
     );
-  if (bot.unread) parts.push(`${bot.unread} unread`);
+  if (bot.unread)
+    parts.push(
+      `${bot.unread} unread conversation${bot.unread === 1 ? "" : "s"}`,
+    );
   return parts.join(", ");
 }
 
@@ -84,8 +87,32 @@ export function BotsNavBadge() {
   const bots = attention.data ?? [];
   const waiting = bots.reduce((total, bot) => total + needsInput(bot), 0);
   if (waiting > 0) {
+    // D171: the tooltip says what the number counts: only things this person can act on, never unread.
+    const total = bots.reduce(
+      (sum, bot) => ({
+        agentId: "",
+        name: "",
+        questions: sum.questions + bot.questions,
+        approvals: sum.approvals + bot.approvals,
+        handoffs: sum.handoffs + bot.handoffs,
+        unread: 0,
+        paused: false,
+        notify: "all" as const,
+      }),
+      {
+        agentId: "",
+        name: "",
+        questions: 0,
+        approvals: 0,
+        handoffs: 0,
+        unread: 0,
+        paused: false,
+        notify: "all" as const,
+      },
+    );
     return (
       <span
+        title={`${attentionSummary(total)}. Open Bots to deal with them.`}
         aria-label={`${waiting} ${waiting === 1 ? "thing needs" : "things need"} you`}
         className="type-caption ml-auto grid h-[18px] min-w-[18px] place-items-center rounded-full bg-duet-accent px-1.5 font-medium text-duet-on-accent tabular-nums"
         role="img"

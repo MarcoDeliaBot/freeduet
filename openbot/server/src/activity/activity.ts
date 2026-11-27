@@ -27,7 +27,8 @@ import {
   routines,
   workItems,
 } from "../db/schema";
-import { DEFAULT_MAX_ATTEMPTS } from "../work/queue";
+import { DEFAULT_MAX_ATTEMPTS, WORK_OFFERED_TOPIC } from "../work/queue";
+import { plainStalledReason } from "./stalled-reason";
 
 export type ActivityKind =
   | "routine"
@@ -55,6 +56,17 @@ export type ActivityItem = {
   stoppable: boolean;
   /** A follow-up that can still be cancelled. */
   cancellable: boolean;
+  /** D171: a hand-off that gave up, for the "did not finish" row: who, and why in plain words. */
+  stalled: { toName: string; reason: string; retryable: boolean } | null;
+};
+
+/** D171: one stalled hand-off, as the Bots page names it. */
+export type StalledHandoff = {
+  id: string;
+  toName: string;
+  task: string;
+  reason: string;
+  channelId: string | null;
 };
 
 export type BotActivity = {
@@ -69,6 +81,10 @@ export type BotAttention = {
   approvals: number;
   handoffs: number;
   unread: number;
+  /** D171: the stalled hand-offs behind `handoffs`, newest first, at most five. */
+  stalled: StalledHandoff[];
+  /** D171: the conversation with the newest unread reply, so the row can open it. */
+  unreadChannelId: string | null;
 };
 
 const COMPLETED_LIMIT = 25;
@@ -157,6 +173,7 @@ export function createActivityStore(database: Database) {
             needsYou: false,
             stoppable: false,
             cancellable: false,
+            stalled: null,
           });
       if (ownedRoutines.length > 0) {
         const byId = new Map(
@@ -182,6 +199,7 @@ export function createActivityStore(database: Database) {
             needsYou: run.status === "waiting",
             stoppable: false,
             cancellable: false,
+            stalled: null,
           };
           if (run.status === null || run.status === "waiting")
             activity.inProgress.push(item);
@@ -214,6 +232,7 @@ export function createActivityStore(database: Database) {
             needsYou: false,
             stoppable: false,
             cancellable: false,
+            stalled: null,
           });
       if (goals.length > 0) {
         const byId = new Map(goals.map((goal) => [goal.id, goal]));
@@ -246,6 +265,7 @@ export function createActivityStore(database: Database) {
             needsYou: run.status === "waiting",
             stoppable: false,
             cancellable: false,
+            stalled: null,
           };
           if (run.status === "queued") activity.scheduled.push(item);
           else if (run.status === "running" || run.status === "waiting")
@@ -297,6 +317,13 @@ export function createActivityStore(database: Database) {
           needsYou: gaveUp,
           stoppable: !hop.finishedAt && !gaveUp,
           cancellable: false,
+          stalled: gaveUp
+            ? {
+                toName: work.toName ?? work.toBotId ?? "The Bot",
+                reason: plainStalledReason(hop.lastError),
+                retryable: true,
+              }
+            : null,
         };
         if (hop.finishedAt) activity.completed.push(item);
         else if (running || gaveUp) activity.inProgress.push(item);
@@ -331,6 +358,7 @@ export function createActivityStore(database: Database) {
           needsYou: true,
           stoppable: false,
           cancellable: false,
+          stalled: null,
         });
 
       // Questions this Bot asked this person and is waiting on.
@@ -364,6 +392,7 @@ export function createActivityStore(database: Database) {
           needsYou: true,
           stoppable: false,
           cancellable: false,
+          stalled: null,
         });
       }
 
@@ -404,6 +433,7 @@ export function createActivityStore(database: Database) {
           needsYou: false,
           stoppable: false,
           cancellable: !row.finishedAt && !running,
+          stalled: null,
         };
         if (row.finishedAt) activity.completed.push(item);
         else if (running) activity.inProgress.push(item);
@@ -447,6 +477,49 @@ export function createActivityStore(database: Database) {
         )
         .returning({ key: workItems.key, payload: workItems.payload });
       if (!row) return null;
+      return {
+        key: row.key,
+        toBotId: (row.payload as HandoffPayload).toBotId ?? null,
+      };
+    },
+
+    /**
+     * D171: put one of the person's stalled hops back on the queue as the original, once. Only a hop that
+     * ran out of attempts and is not running now: a hop already running, finished, queued or another
+     * person's matches nothing and comes back null, so a second click cannot make a second run.
+     */
+    async retryHandoff(
+      ownerUserId: string,
+      agentId: string,
+      key: string,
+    ): Promise<{ key: string; toBotId: string | null } | null> {
+      const [row] = await database
+        .update(workItems)
+        .set({
+          attempts: 0,
+          claimedBy: null,
+          leaseUntil: null,
+          runAt: sql`now()`,
+          lastError: null,
+          updatedAt: sql`now()`,
+        })
+        .where(
+          and(
+            handoffsFor(ownerUserId, agentId),
+            eq(workItems.key, key),
+            isNull(workItems.finishedAt),
+            gte(workItems.attempts, DEFAULT_MAX_ATTEMPTS),
+            or(
+              isNull(workItems.leaseUntil),
+              sql`${workItems.leaseUntil} <= now()`,
+            ),
+          ),
+        )
+        .returning({ key: workItems.key, payload: workItems.payload });
+      if (!row) return null;
+      await database.execute(
+        sql`select pg_notify(${WORK_OFFERED_TOPIC}, ${HANDOFF_KIND})`,
+      );
       return {
         key: row.key,
         toBotId: (row.payload as HandoffPayload).toBotId ?? null,
@@ -498,6 +571,8 @@ export function createActivityStore(database: Database) {
             approvals: 0,
             handoffs: 0,
             unread: 0,
+            stalled: [],
+            unreadChannelId: null,
           };
           byBot.set(agentId, found);
         }
@@ -534,10 +609,11 @@ export function createActivityStore(database: Database) {
         if (row.agentId) entry(row.agentId).approvals += row.total;
 
       // A delegated task that ran out of attempts: the chain stopped and only the person can pick it up.
-      const handoffs = await database
+      const stalledRows = await database
         .select({
-          agentId: sql<string>`${workItems.payload}->>'fromBotId'`,
-          total: sql<number>`count(*)::int`,
+          payload: workItems.payload,
+          key: workItems.key,
+          lastError: workItems.lastError,
         })
         .from(workItems)
         .where(
@@ -549,15 +625,35 @@ export function createActivityStore(database: Database) {
             sql`${workItems.payload}->>'answerIn' is null`,
           ),
         )
-        .groupBy(sql`${workItems.payload}->>'fromBotId'`);
-      for (const row of handoffs)
-        if (row.agentId) entry(row.agentId).handoffs += row.total;
+        .orderBy(desc(workItems.updatedAt));
+      const stalledChannels = await channelsForThreads(
+        stalledRows.map(
+          (row) => (row.payload as HandoffPayload).threadId ?? "",
+        ),
+      );
+      for (const row of stalledRows) {
+        const work = row.payload as HandoffPayload;
+        if (!work.fromBotId) continue;
+        const mine = entry(work.fromBotId);
+        mine.handoffs += 1;
+        if (mine.stalled.length < 5)
+          mine.stalled.push({
+            id: row.key,
+            toName: work.toName ?? work.toBotId ?? "The Bot",
+            task: clip(work.task, 120) ?? "A delegated task",
+            reason: plainStalledReason(row.lastError),
+            channelId: stalledChannels.get(work.threadId ?? "") ?? null,
+          });
+      }
 
       // The same rule as the roster's unread dot: a Bot spoke after this person last looked.
       const unread = await database
         .select({
           agentId: channelAgents.agentId,
           total: sql<number>`count(distinct ${channels.id})::int`,
+          newest: sql<
+            string | null
+          >`(array_agg(${channels.id} order by ${channels.lastMessageAt} desc))[1]`,
         })
         .from(channels)
         .innerJoin(
@@ -579,7 +675,10 @@ export function createActivityStore(database: Database) {
           ),
         )
         .groupBy(channelAgents.agentId);
-      for (const row of unread) entry(row.agentId).unread += row.total;
+      for (const row of unread) {
+        entry(row.agentId).unread += row.total;
+        entry(row.agentId).unreadChannelId = row.newest;
+      }
 
       return [...byBot.values()];
     },
