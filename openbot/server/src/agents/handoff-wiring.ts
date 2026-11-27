@@ -40,6 +40,8 @@ export async function startHandoffDelivery(deps: {
   channelStore: ChannelStore;
   /** The computer a relay turn gets (FreeDuet, D22); absent, no hop gets one. */
   toolsForTurn?: Parameters<typeof createHandoffDelivery>[0]["toolsForTurn"];
+  /** D177: records the files a colleague offered in a forward hop; see `freeduet/handoff-files.ts`. */
+  offeredFiles?: Parameters<typeof createHandoffDelivery>[0]["offeredFiles"];
 }): Promise<WorkOfferedListener> {
   const {
     config,
@@ -51,6 +53,7 @@ export async function startHandoffDelivery(deps: {
     groupConversations,
     channelStore,
     toolsForTurn,
+    offeredFiles,
   } = deps;
   const runner = createHandoffRunner({
     queue: createWorkQueue(database),
@@ -65,6 +68,7 @@ export async function startHandoffDelivery(deps: {
     delivery: createHandoffDelivery({
       admission: serverTurnAdmission,
       ...(toolsForTurn ? { toolsForTurn } : {}),
+      ...(offeredFiles ? { offeredFiles } : {}),
       /*
        * Built as the person, WITH THEIR ROLE. The desk resolved it to decide the hop was allowed; a
        * delivery that then rebuilt them as an ordinary user could not find the Bot the desk had just

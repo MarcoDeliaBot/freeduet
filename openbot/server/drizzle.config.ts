@@ -44,6 +44,7 @@ export default defineConfig({
     "./src/db/schema/identity.ts",
     "./src/db/schema/openduet.ts",
     "./src/db/schema/browser-pairings.ts",
+    "./src/db/schema/handoff-files.ts",
     "./src/db/schema/programs.ts",
   ],
   out: "./drizzle",

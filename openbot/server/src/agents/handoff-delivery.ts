@@ -19,11 +19,19 @@ import {
 } from "@openbot/toolkit/headless-tools";
 import { keepLease } from "@openbot/toolkit/lease";
 import type { ThreadLock, TurnAdmission } from "@openbot/toolkit/ports";
+import {
+  OFFER_FILE_TOOL,
+  type OfferedFile,
+  readOfferedFile,
+} from "@openbot/shared/member-file";
 import type { Observable } from "rxjs";
 import { type AuditInitiator, handoffInitiator } from "../audit";
 import { handoffNoteKey, workNotes } from "../freeduet/work-status";
-import type { HandoffDelivery } from "./handoff-runner";
+import type { HandoffDelivery, HandoffWork } from "./handoff-runner";
 import { textOf } from "./message-text";
+
+/** D177: the most `offer_file` results one hop records. A run that offers more is not a delivery. */
+export const MAX_OFFERS_PER_HOP = 10;
 
 /** Whatever runs an agent against a thread and records what it did. */
 
@@ -175,6 +183,17 @@ export function createHandoffDelivery(options: {
     agentId: string;
     initiator: AuditInitiator;
   }) => Promise<readonly HeadlessTool[]>;
+  /**
+   * D177: the files the addressed member offered with `offer_file` during a FORWARD hop, read from the
+   * tool's own results as they went past (never from what the model said). Records them for the person's
+   * conversation and for the asking Bot (`freeduet/handoff-files.ts`) and returns the server's note that
+   * goes in front of the answer, or null. Never called for a relay or a notice. A throw is swallowed: the
+   * turn happened, and the answer still goes back.
+   */
+  offeredFiles?: (input: {
+    work: HandoffWork;
+    files: readonly OfferedFile[];
+  }) => Promise<string | null>;
 }): HandoffDelivery {
   const {
     admission,
@@ -191,6 +210,7 @@ export function createHandoffDelivery(options: {
     renewEveryMs = LOCK_RENEW_EVERY_MS,
     lockLifetimeMs = THREAD_LOCK_TTL_SECONDS * 1000,
     toolsForTurn,
+    offeredFiles,
   } = options;
 
   return {
@@ -255,6 +275,10 @@ export function createHandoffDelivery(options: {
        */
       let waiting = 0;
       let saying = "";
+      // D177: `offer_file` results of this run, by the call that made them. The server's own tool made
+      // each text; the member can name a path but cannot write the result.
+      const calls = new Map<string, string>();
+      const offered: OfferedFile[] = [];
       const runAgent =
         typeof agent.runAgent === "function"
           ? agent.runAgent.bind(agent)
@@ -288,6 +312,35 @@ export function createHandoffDelivery(options: {
                     (emitted?.event as { toolCallName?: unknown } | undefined)
                       ?.toolCallName,
                   );
+                if (offeredFiles && !work.answerIn) {
+                  const event = emitted?.event as
+                    | {
+                        toolCallId?: unknown;
+                        toolCallName?: unknown;
+                        content?: unknown;
+                      }
+                    | undefined;
+                  if (
+                    type === "TOOL_CALL_START" &&
+                    typeof event?.toolCallId === "string" &&
+                    typeof event.toolCallName === "string"
+                  )
+                    calls.set(event.toolCallId, event.toolCallName);
+                  if (
+                    type === "TOOL_CALL_RESULT" &&
+                    typeof event?.toolCallId === "string" &&
+                    (calls.get(event.toolCallId) ?? "").split("__").pop() ===
+                      OFFER_FILE_TOOL
+                  ) {
+                    const file = readOfferedFile(event.content);
+                    if (
+                      file &&
+                      offered.length < MAX_OFFERS_PER_HOP &&
+                      !offered.some((each) => each.path === file.path)
+                    )
+                      offered.push(file);
+                  }
+                }
                 if (type === "TEXT_MESSAGE_START") saying = "";
                 if (type === "TEXT_MESSAGE_CONTENT")
                   saying += String(emitted?.event?.delta ?? "");
@@ -553,6 +606,14 @@ export function createHandoffDelivery(options: {
             busy: false,
           }).catch(() => {});
         }
+      }
+
+      // D177: the files offered in this forward hop reach the person's conversation and the asker.
+      if (offeredFiles && !work.answerIn && offered.length > 0) {
+        const fileNote = await offeredFiles({ work, files: offered }).catch(
+          () => null,
+        );
+        if (fileNote) said.unshift(fileNote);
       }
 
       /*
