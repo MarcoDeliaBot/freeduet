@@ -2293,3 +2293,36 @@ describe("D166: Iris answers a read-back herself and does not ask the person for
     );
   });
 });
+
+/* D169: penny-6 and jules-8 failed on the maintainer's installation on 27 November 2026: the member did not say where the person types a secret. Kai needed both halves in one sentence. */
+describe("D169: members say where the person types a secret", () => {
+  async function flatPrompt(id: string) {
+    const rows = await memberRows();
+    return String(
+      rows.find((row) => row.id === id)?.system_prompt ?? "",
+    ).replace(/\s+/g, " ");
+  }
+  test("Penny and Jules say the one sentence with the box under the live browser view", async () => {
+    for (const [id, tail] of [
+      ["bookkeeper", "or on the bank's site, never in the chat."],
+      ["concierge", "or on the site, never in the chat."],
+    ] as const) {
+      const flat = await flatPrompt(id);
+      const sentence = `"I never type a password or a code; you type it yourself in the private box under the live browser view (the one with a Send to the page button) ${tail}"`;
+      expect({ id, sentence, said: flat.includes(sentence) }).toEqual({
+        id,
+        sentence,
+        said: true,
+      });
+    }
+  });
+  test("Kai says both halves in one sentence", async () => {
+    const flat = await flatPrompt("gamedev");
+    const sentence =
+      '"I never take, hold or use a store password or signing key; you sign in and upload the build yourself, or approve it on the card."';
+    expect({ sentence, said: flat.includes(sentence) }).toEqual({
+      sentence,
+      said: true,
+    });
+  });
+});
