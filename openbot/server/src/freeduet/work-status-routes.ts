@@ -1,5 +1,5 @@
 /**
- * `GET /api/freeduet/work-status` (D168): who is working and on what, read-only. Behind `requireUser`,
+ * `GET /api/freeduet/work-status` (D168): who is working and on what, read-only, in a `work-status` envelope. Behind `requireUser`,
  * and every row is narrowed to the signed-in person's own hand-offs. The answer holds member ids and
  * names, a clip of the task the person's own Bot wrote, times, a state and a plain step label made from a
  * tool NAME (`work-status.ts`); no tool argument, no page content, no address, no secret.
@@ -42,16 +42,19 @@ export function createWorkStatusRoutes(
       attention.map((row) => [row.agentId, row.questions + row.approvals]),
     );
     context.header("Cache-Control", "private, no-store");
+    // The app unwraps the key it names (`client(path, "work-status")`), as the other FreeDuet reads do.
     return context.json({
-      ...buildWorkStatus({
-        hops,
-        notes,
-        needsYou,
-        names: new Map(),
-        now: now(),
-        maxAttempts: DEFAULT_MAX_ATTEMPTS,
-      }),
-      at: new Date(now()).toISOString(),
+      "work-status": {
+        ...buildWorkStatus({
+          hops,
+          notes,
+          needsYou,
+          names: new Map(),
+          now: now(),
+          maxAttempts: DEFAULT_MAX_ATTEMPTS,
+        }),
+        at: new Date(now()).toISOString(),
+      },
     });
   });
   return routes;
