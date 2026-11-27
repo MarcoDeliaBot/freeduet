@@ -28,7 +28,7 @@ import { useDuetChannels } from "@/lib/duet-channels/use-channel";
 import { appConfig } from "@/lib/generated/application-config";
 import { cn } from "@/lib/utils";
 import { queryClient } from "@/query-client";
-import { type MessageId } from "@/freeduet/i18n/catalogs";
+import type { MessageId } from "@/freeduet/i18n/catalogs";
 import { useT } from "@/freeduet/i18n/provider";
 
 type Page = {

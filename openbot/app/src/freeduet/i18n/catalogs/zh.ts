@@ -184,4 +184,5 @@ export const zh: Catalog<typeof EN> = {
   "language.title": "",
   "language.description": "",
   "language.auto": "",
+  "settings.descriptionPlain": "",
 };

@@ -231,4 +231,5 @@ export const it: Catalog<typeof EN> = {
   "language.description":
     "La lingua di menu e pulsanti. Il tuo team ti scrive nella lingua impostata in chat.",
   "language.auto": "Automatica (browser)",
+  "settings.descriptionPlain": "Come {product} appare e funziona per te.",
 };

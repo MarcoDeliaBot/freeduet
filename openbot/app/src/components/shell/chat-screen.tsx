@@ -206,7 +206,7 @@ function FirstMessage({
         {
           method: "POST",
           body: input,
-          fallback: "Couldn't start the conversation. Try again.",
+          fallback: t("chat.startError"),
         },
       ),
   });

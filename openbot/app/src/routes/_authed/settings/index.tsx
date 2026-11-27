@@ -31,7 +31,7 @@ import { appConfig } from "@/lib/generated/application-config";
 import { formatHotkey, HOTKEYS } from "@/lib/hotkeys/hotkeys";
 import type { ThemePreference } from "@/lib/theme";
 import { AppLanguageSetting } from "@/freeduet/i18n/language-setting";
-import { type MessageId } from "@/freeduet/i18n/catalogs";
+import type { MessageId } from "@/freeduet/i18n/catalogs";
 import { useT } from "@/freeduet/i18n/provider";
 
 export const Route = createFileRoute("/_authed/settings/")({
@@ -113,6 +113,19 @@ export const SETTINGS_PLACES: readonly SettingsPlace[] = [
   },
 ];
 
+/** The ids of each place's name in the app's message catalogues (D181), by route; `label` stays the English. */
+const PLACE_LABEL: Record<string, MessageId> = {
+  "/bots": "nav.bots",
+  "/connections": "nav.connections",
+  "/capabilities": "nav.capabilities",
+  "/routines": "nav.routines",
+  "/settings/approvals": "nav.approvalRules",
+  "/admin/engines": "dash.engines",
+  "/settings/notifications": "profile.notifications",
+  "/settings/passwords": "home.passwordsLabel",
+  "/admin": "nav.admin",
+};
+
 function RouteComponent() {
   const t = useT();
   const { preference, setPreference } = useTheme();
@@ -136,6 +149,11 @@ function RouteComponent() {
             value={preference}
           />
         </div>
+      </PageSection>
+      <PageSection title={t("language.section")}>
+        <PageRows>
+          <AppLanguageSetting />
+        </PageRows>
       </PageSection>
       <PageSection title={t("settings.voice")}>
         <ReadAloudSetting />
@@ -208,11 +226,6 @@ function RouteComponent() {
               content: (
                 <div className="fd-preferences">
                   {appearanceAndVoice}
-                  <PageSection title={t("language.section")}>
-                    <PageRows>
-                      <AppLanguageSetting />
-                    </PageRows>
-                  </PageSection>
                   <StandingInstructions />
                 </div>
               ),
@@ -230,8 +243,8 @@ function RouteComponent() {
   }
   return (
     <PageShell
-      description={`How ${product} looks and works for you.`}
-      title="Settings"
+      description={t("settings.descriptionPlain", { product })}
+      title={t("nav.settings")}
     >
       {appearanceAndVoice}
       <nav aria-label="Settings" className="mt-8 flex flex-col gap-0.5">
@@ -247,7 +260,11 @@ function RouteComponent() {
               </Link>
             )}
             size="nav"
-            title={place.label}
+            title={
+              PLACE_LABEL[place.to as string]
+                ? t(PLACE_LABEL[place.to as string])
+                : place.label
+            }
           />
         ))}
       </nav>

@@ -8,7 +8,7 @@ import { useReducedMotionPreference } from "@/lib/reduced-motion";
 import { needsInputCount } from "@/lib/tasks/groups";
 import { taskListQueryOptions } from "@/lib/tasks/queries";
 import { cn } from "@/lib/utils";
-import { type MessageId } from "@/freeduet/i18n/catalogs";
+import type { MessageId } from "@/freeduet/i18n/catalogs";
 import { useT } from "@/freeduet/i18n/provider";
 
 export type ShellTab = "chat" | "tasks" | "make";

@@ -225,6 +225,7 @@ export const EN = {
   "language.description":
     "The language of menus and buttons. Your team writes to you in the language set in chat.",
   "language.auto": "Automatic (browser)",
+  "settings.descriptionPlain": "How {product} looks and works for you.",
 } satisfies Entries;
 
 export type MessageId = keyof typeof EN;

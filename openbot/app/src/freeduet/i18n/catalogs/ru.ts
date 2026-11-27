@@ -184,4 +184,5 @@ export const ru: Catalog<typeof EN> = {
   "language.title": "",
   "language.description": "",
   "language.auto": "",
+  "settings.descriptionPlain": "",
 };

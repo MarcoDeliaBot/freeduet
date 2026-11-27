@@ -3,7 +3,7 @@ import type { ReactNode } from "react";
 import { DuetIcon, type DuetIconName } from "@/components/duet/icons";
 import "./light/tokens.css";
 import "./settings-home.css";
-import { type MessageId } from "./i18n/catalogs";
+import type { MessageId } from "./i18n/catalogs";
 import { useT } from "./i18n/provider";
 
 /** One row of the settings home: a link to a page that already exists. Nothing here changes a setting. */
