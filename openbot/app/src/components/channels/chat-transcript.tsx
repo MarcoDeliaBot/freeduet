@@ -479,6 +479,19 @@ function Queued({
   );
 }
 
+/** D172: "Read newest" opens the conversation at its first unread message; see `lib/channels/first-unread`. */
+function ScrollToFirstUnread({
+  items,
+  restoring,
+}: {
+  items: ReadonlyArray<UnreadItem>;
+  restoring: boolean;
+}) {
+  const { scrollToEnd, scrollToMessage } = useMessageScroller();
+  useFirstUnreadScroll(items, restoring, { scrollToEnd, scrollToMessage });
+  return null;
+}
+
 /**
  * Put the newest queued message where the person who just typed it can see it.
  *
@@ -505,19 +518,6 @@ function Queued({
  * alternative is threading a ref out through three components with no other reason to know a
  * scroller exists.
  */
-/** D172: "Read newest" opens the conversation at its first unread message; see `lib/channels/first-unread`. */
-function ScrollToFirstUnread({
-  items,
-  restoring,
-}: {
-  items: ReadonlyArray<UnreadItem>;
-  restoring: boolean;
-}) {
-  const { scrollToEnd, scrollToMessage } = useMessageScroller();
-  useFirstUnreadScroll(items, restoring, { scrollToEnd, scrollToMessage });
-  return null;
-}
-
 function ScrollNewestQueuedIntoView({ newest }: { newest: string | null }) {
   const { scrollToEnd } = useMessageScroller();
 
