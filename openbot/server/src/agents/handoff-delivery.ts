@@ -30,6 +30,16 @@ import { handoffNoteKey, workNotes } from "../freeduet/work-status";
 import type { HandoffDelivery, HandoffWork } from "./handoff-runner";
 import { textOf } from "./message-text";
 
+/**
+ * D177: the only names `offer_file` arrives under: plain, and with the one prefix FreeDuet registers its
+ * server tools by (`mcp__freeduet__<name>`, agent-freeduet `transcript.py`). A tool of another server that
+ * ends in `__offer_file` is not it.
+ */
+const OFFER_FILE_NAMES: ReadonlySet<string> = new Set([
+  OFFER_FILE_TOOL,
+  `mcp__freeduet__${OFFER_FILE_TOOL}`,
+]);
+
 /** D177: the most `offer_file` results one hop records. A run that offers more is not a delivery. */
 export const MAX_OFFERS_PER_HOP = 10;
 
@@ -329,8 +339,7 @@ export function createHandoffDelivery(options: {
                   if (
                     type === "TOOL_CALL_RESULT" &&
                     typeof event?.toolCallId === "string" &&
-                    (calls.get(event.toolCallId) ?? "").split("__").pop() ===
-                      OFFER_FILE_TOOL
+                    OFFER_FILE_NAMES.has(calls.get(event.toolCallId) ?? "")
                   ) {
                     const file = readOfferedFile(event.content);
                     if (
