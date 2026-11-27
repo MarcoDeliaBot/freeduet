@@ -12,6 +12,11 @@
  * the work over, the second says it answered, and no row anywhere agrees.
  */
 import type { AbstractAgent, BaseEvent } from "@ag-ui/client";
+import {
+  OFFER_FILE_TOOL,
+  type OfferedFile,
+  readOfferedFile,
+} from "@openbot/shared/member-file";
 import { THREAD_LOCK_TTL_SECONDS } from "@openbot/toolkit/copilotkit/thread-lock";
 import {
   type HeadlessTool,
@@ -19,11 +24,6 @@ import {
 } from "@openbot/toolkit/headless-tools";
 import { keepLease } from "@openbot/toolkit/lease";
 import type { ThreadLock, TurnAdmission } from "@openbot/toolkit/ports";
-import {
-  OFFER_FILE_TOOL,
-  type OfferedFile,
-  readOfferedFile,
-} from "@openbot/shared/member-file";
 import type { Observable } from "rxjs";
 import { type AuditInitiator, handoffInitiator } from "../audit";
 import { handoffNoteKey, workNotes } from "../freeduet/work-status";
@@ -35,7 +35,7 @@ import { textOf } from "./message-text";
  * server tools by (`mcp__freeduet__<name>`, agent-freeduet `transcript.py`). A tool of another server that
  * ends in `__offer_file` is not it.
  */
-const OFFER_FILE_NAMES: ReadonlySet<string> = new Set([
+export const OFFER_FILE_NAMES: ReadonlySet<string> = new Set([
   OFFER_FILE_TOOL,
   `mcp__freeduet__${OFFER_FILE_TOOL}`,
 ]);

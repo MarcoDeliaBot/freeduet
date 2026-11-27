@@ -11,6 +11,7 @@
  * Which hop it was comes from the signed run the deployment minted for the delivery, kept in the
  * saved call. Nothing a model wrote is read.
  */
+import type { OfferedFile } from "@openbot/shared/member-file";
 import type { ApprovalContinuation } from "@openbot/toolkit/continuation";
 import { and, eq } from "drizzle-orm";
 import type { Database } from "../db/client";
@@ -26,13 +27,23 @@ export function createHopRelay(deps: {
   readRun: (signed: unknown) => RunAssertion | null;
   /** The Bot of the conversation a hop was asked in, for a hop whose row has been swept away. */
   askerOf: (run: RunAssertion) => Promise<string | null>;
+  /**
+   * D178: records the files the member offered in the resumed run, as the first run's are (D177), and
+   * returns the server's note for the front of the answer, or null. A throw is swallowed.
+   */
+  offeredFiles?: (input: {
+    work: HandoffWork;
+    files: readonly OfferedFile[];
+  }) => Promise<string | null>;
 }) {
-  const { queue, database, readRun, askerOf } = deps;
+  const { queue, database, readRun, askerOf, offeredFiles } = deps;
   /** True when the saved call was a hop's and its answer was queued for the Bot that asked. */
   return async (input: {
     snapshot: ApprovalContinuation;
     approvalId: string;
     answer: string;
+    /** D178: `offer_file` results of the resumed run (the sweep read them from the run's own events). */
+    files?: readonly OfferedFile[];
   }): Promise<boolean> => {
     const forwarded = input.snapshot.forwardedProps;
     const run =
@@ -78,14 +89,19 @@ export function createHopRelay(deps: {
         task: "a job from earlier in this conversation",
       };
     }
+    // D178: the same recorder as the first run's, for this hop's own member only.
+    let answer = input.answer;
+    if (offeredFiles && input.files && input.files.length > 0) {
+      const note = await offeredFiles({ work, files: input.files }).catch(
+        () => null,
+      );
+      if (note) answer = `${note}\n\n${answer}`;
+    }
     await queue.offer({
       kind: HANDOFF_KIND,
       // One relay per decision: the sweep that carried this decision out may run its tail twice.
       key: `relay:${run.handoff.key}:card:${input.approvalId}`,
-      payload: relayPayload(work, input.answer) as unknown as Record<
-        string,
-        unknown
-      >,
+      payload: relayPayload(work, answer) as unknown as Record<string, unknown>,
     });
     return true;
   };

@@ -19,6 +19,7 @@ import { guardThreadRoutes } from "./freeduet/thread-routes";
 import type { AbstractAgent } from "@ag-ui/client";
 import { COMPUTER_GUIDANCE } from "@openbot/shared/bot-prompt";
 import { LISTEN_HOST_VARIABLE } from "@openbot/shared/listen-host";
+import type { OfferedFile } from "@openbot/shared/member-file";
 import { workOwner } from "@openbot/shared/work-owner";
 import { createTurnRunner } from "@openbot/toolkit/run-turn";
 import { and, eq, isNull, ne, sql } from "drizzle-orm";
@@ -47,7 +48,7 @@ import { createAgentFetch } from "./agents/endpoint";
 import { createHandoffDesk } from "./agents/handoff";
 import { createHandedRequestLoader } from "./agents/handoff-request";
 import { createForwardHopCheck, createHopRelay } from "./agents/handoff-resume";
-import { createHandoffRunner } from "./agents/handoff-runner";
+import { createHandoffRunner, type HandoffWork } from "./agents/handoff-runner";
 import { startHandoffDelivery } from "./agents/handoff-wiring";
 import {
   createEngineChoices,
@@ -1648,6 +1649,23 @@ const recordHandoffFile = handoffFileRecorder({
   capabilitiesOf,
   store: handoffFileStore,
 });
+// D177, and D178 for a hop resumed after a card: the same recorder, and the note for the asker.
+const recordOfferedFiles = async ({
+  work,
+  files,
+}: {
+  work: HandoffWork;
+  files: readonly OfferedFile[];
+}) => {
+  const recorded = [];
+  for (const file of files) {
+    const done = await recordHandoffFile({ work, file });
+    if (done) recorded.push(done);
+  }
+  return recorded.length > 0
+    ? offeredNote(work.toName ?? work.toBotId, recorded)
+    : null;
+};
 
 const loadToolsForActor =
   (actorId: string, initiator: AuditInitiator = PERSON_INITIATOR) =>
@@ -2303,6 +2321,7 @@ const approvalSweep = repeatAfterEach(
         readApprovedRunAssertion(value, config.keyEncryptionKey),
       askerOf: async (run) =>
         (await sourceForCoordinationRun(run))?.botId ?? null,
+      offeredFiles: recordOfferedFiles,
     }),
     forwardHop: createForwardHopCheck({
       database,
@@ -2668,16 +2687,7 @@ if (config.handoff.maxDepth > 0 && config.handoff.maxPerRun > 0) {
     channelStore,
     // FreeDuet (D22): a relay turn gets the computer an ordinary turn of that Bot would.
     toolsForTurn: serverRunComputerTools,
-    offeredFiles: async ({ work, files }) => {
-      const recorded = [];
-      for (const file of files) {
-        const done = await recordHandoffFile({ work, file });
-        if (done) recorded.push(done);
-      }
-      return recorded.length > 0
-        ? offeredNote(work.toName ?? work.toBotId, recorded)
-        : null;
-    },
+    offeredFiles: recordOfferedFiles,
   });
 }
 
