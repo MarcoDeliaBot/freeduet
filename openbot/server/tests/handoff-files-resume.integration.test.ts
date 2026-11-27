@@ -139,7 +139,7 @@ type Offer = { path: string; tool?: string; botId?: string };
 /** Everything the deployment builds, built from nothing but the database. */
 function build() {
   /** What Kai's resumed run offers, in order. */
-  const resumed: { offers: Offer[] } = { offers: [] };
+  const resumed: { offers: Offer[]; stopAgain?: boolean } = { offers: [] };
   const service = createServerApprovalService({
     storedApprovals: createApprovalStore(database),
     config: { keyEncryptionKey: KEY },
@@ -204,6 +204,11 @@ function build() {
             `note ${index}`,
           ),
         });
+    if (resumed.stopAgain)
+      throw new HeadlessToolSuspension("Waiting on a second card.", {
+        kind: "approval",
+        requestId: "second-card",
+      } as never);
     return {
       replyText: continuation.result.error
         ? `Not done: ${continuation.result.error}`
@@ -559,5 +564,20 @@ describe("a file offered after a card in a hand-off", () => {
     await stack.service.decide(PERSON, cardId, "allow_once");
     await stack.sweep(cardId);
     expect(await offers()).toEqual([]);
+  });
+
+  test("a file offered before the resumed run stops on a second card is recorded once, with its copy and note", async () => {
+    const { stack, key, cardId } = await stoppedOnCard([{ path: PATH }]);
+    stack.resumed.stopAgain = true;
+    await stack.service.decide(PERSON, cardId, "allow_once");
+    await stack.sweep(cardId);
+    const mine = await offers();
+    expect(mine).toHaveLength(1);
+    expect(mine[0]?.copyPath).toBe(`in/${KAI}/mattoncini-pastello.html`);
+    const home = await relaysOf(`${key}:card:${cardId}`);
+    expect(home).toHaveLength(1);
+    const text = JSON.stringify(home[0]?.payload);
+    expect(text).toContain("Server note");
+    expect(text).toContain("stopped again on another card");
   });
 });
