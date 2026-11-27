@@ -401,8 +401,7 @@ export const de: Catalog<typeof EN> = {
   "settings.makeCode": "Code erstellen",
   "settings.memberAdded": "{member} wurde deinem Team hinzugefügt.",
   "settings.name": "Name",
-  "settings.nameChanged":
-    "{bot}: dein Name für ihn: vorher {from}, jetzt {to}.",
+  "settings.nameChanged": "{bot}: dein Name für ihn vorher {from}, jetzt {to}.",
   "settings.nameOwn": "sein eigener Name",
   "settings.needsReconnect": "Muss neu verbunden werden",
   "settings.needsReconnectHandle": "Muss neu verbunden werden · @{handle}",
@@ -443,7 +442,7 @@ export const de: Catalog<typeof EN> = {
     "Wohin deine Neuigkeiten gehen, konnte nicht geladen werden. Lade die Seite neu.",
   "settings.routingTitle": "Wohin Neuigkeiten gehen",
   "settings.runsOut":
-    "Auf dem Handy, als du angemeldet, scanne das hier oder öffne den Link, oder öffne die Einstellungen und gib den Code ein. Er funktioniert nur einmal und läuft in {time} ab.",
+    "Auf dem Handy, bei dir angemeldet: scanne das hier oder öffne den Link, oder öffne die Einstellungen und gib den Code ein. Er funktioniert nur einmal und läuft in {time} ab.",
   "settings.sameSecret":
     "Verwende dasselbe Geheimnis, wenn du den Webhook in GitHub hinzufügst.",
   "settings.sampleBot": "Allgemeiner Assistent",
