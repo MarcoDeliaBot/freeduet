@@ -110,7 +110,7 @@ export const pl: Catalog<typeof EN> = {
   "bots.hidden": "Ukryte",
   "bots.hiddenDescription": {
     one: "{count} asystent ukryty przez Ciebie. Zmienia się tylko Twoja lista.",
-    few: "{count} asystentów ukrytych przez Ciebie. Zmienia się tylko Twoja lista.",
+    few: "{count} asystenci ukryci przez Ciebie. Zmienia się tylko Twoja lista.",
     many: "{count} asystentów ukrytych przez Ciebie. Zmienia się tylko Twoja lista.",
     other:
       "{count} asystentów ukrytych przez Ciebie. Zmienia się tylko Twoja lista.",
@@ -189,7 +189,7 @@ export const pl: Catalog<typeof EN> = {
   },
   "dash.members": {
     one: "{count} członek",
-    few: "{count} członków",
+    few: "{count} członkowie",
     many: "{count} członków",
     other: "{count} członków",
   },
