@@ -51,6 +51,20 @@ describe("what a command inherits", () => {
     expect(env.HTTPS_PROXY).toBe(allowed.HTTPS_PROXY);
   });
 
+  test("the image's tool locations pass: node modules, browsers folder, no-download switch (D175)", () => {
+    const env = environmentForCommand(
+      source({
+        NODE_PATH: "/usr/local/lib/node_modules",
+        PLAYWRIGHT_BROWSERS_PATH: "/ms-playwright",
+        PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: "1",
+      }),
+      workspaceHome,
+    );
+    expect(env.NODE_PATH).toBe("/usr/local/lib/node_modules");
+    expect(env.PLAYWRIGHT_BROWSERS_PATH).toBe("/ms-playwright");
+    expect(env.PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD).toBe("1");
+  });
+
   test("a secret sitting in the process environment does not", () => {
     const env = environmentForCommand(source(), workspaceHome);
     expect(env).not.toHaveProperty("KEY_ENCRYPTION_KEY");

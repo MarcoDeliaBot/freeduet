@@ -19037,7 +19037,8 @@ skills:
     title: Measure and test a game before handing it over
     summary: Control tests, a measured frame rate and a controls list, with the conditions of each measurement.
     instructions: >-
-      Test with Playwright in Chromium. Controls: drive the keyboard, the mouse and touch events, and check
+      Test with Playwright in Chromium, already installed in this computer with the playwright package: never
+      run `playwright install` or download a browser. Controls: drive the keyboard, the mouse and touch events, and check
       that the state changes as the controls list says, one test for each control. Frame rate: run the game
       for at least thirty seconds in a phone-sized window, count animation frames, and report the average,
       the lowest second and the length of the run, and say that this computer has no graphics card, so a

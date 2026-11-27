@@ -31,6 +31,21 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 RUN ls -d /ms-playwright/chromium-* /ms-playwright/firefox-* /ms-playwright/webkit-* >/dev/null \
   && echo "browsers: $(ls /ms-playwright | tr '\n' ' ')"
 
+# D175: the `playwright` package for the member's shell, at EXACTLY the version that installed the browsers above
+# (the same ARG, never a second number), global so that `require('playwright')`, `npx playwright --version` and
+# `npx playwright test` find it with no network. `@playwright/test` is the same version, for tests written against it.
+# PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD comes after the browsers are installed (it would skip that install too): a
+# `playwright install` a member types then downloads nothing and says why. NODE_PATH and these two variables are
+# passed to the shell by `environmentForCommand` (src/shell.ts).
+RUN npm install -g --no-audit --no-fund "playwright@${PLAYWRIGHT_VERSION}" "@playwright/test@${PLAYWRIGHT_VERSION}" \
+  && rm -rf /root/.npm /tmp/*
+ENV NODE_PATH=/usr/local/lib/node_modules
+ENV PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1
+COPY agent-computer/image-check/playwright-ready.cjs /opt/image-check/playwright-ready.cjs
+# Build check: the package version and the /ms-playwright revisions must agree, and the package must load.
+RUN node /opt/image-check/playwright-ready.cjs --expect "${PLAYWRIGHT_VERSION}" \
+  && npx --no-install playwright --version
+
 # The office toolkit: one virtual environment at /opt/office, built here because a Bot's computer cannot
 # install anything when it runs (root with every capability dropped, no sudo). Every package is pinned to
 # an exact version and to its release files' hashes; `--no-deps` and `--only-binary` mean pip installs
