@@ -2845,3 +2845,17 @@ Built: the recorder, store and route (`server/src/freeduet/handoff-files.ts`), t
 Built: `onToolResult` in `toolkit/src/run-turn.ts`; collection in `approvals/resume-sweep.ts`; `offeredFiles` in `createHopRelay` (`agents/handoff-resume.ts`); `index.ts` wires the one recorder function to both. Tests: `server/tests/handoff-files-resume.integration.test.ts` (6, real Postgres, real workspaces, the real delivery, approval service, sweep and relay; the member's resumed turn is a stand-in that reports tool results through `onToolResult`): allowed, a card row, a read-only copy at `in/<member>/<name>` and the note in front of the relayed answer; refused, nothing; the same file twice, and a file the first run recorded, one row; `mcp__x__offer_file`, nothing; a result naming another member, nothing. Two of them fail without the change. `server/tests/routine-run-turn.test.ts` has one more case: results are reported with the call name matched by call id.
 
 **Not verified.** Not run live: that a real resumed run's `TOOL_CALL_START` and `TOOL_CALL_RESULT` reach `agent.subscribe` for a server tool as they do for text (the test drives the subscriber's hooks directly, as the other cases of that file do). Not run live with a real hop and card. Prompts are unchanged.
+
+## 135. Iris writes complete briefs (D179)
+
+**The gap.** A colleague sees nothing of the conversation, only the task Iris writes (D160, D166, D176). The `delegate-work` skill listed five things for a brief; a brief could leave out the input, the exact deliverable, the decisions already taken, or the stop conditions.
+
+**Decision D179.** On 27 November 2026 the maintainer asked that Iris use the public prompt-master skill. By the go-with-recommendation rule the skill is not imported: it is about 4,900 words, activates only when a person asks for a prompt for a named tool, outputs a copyable block, asks up to three questions (and always for some tools, which conflicts with D166), and mostly routes to image and video tools Iris never uses. Only these ideas are adapted, in our own words: a brief holds nine points (task, input, output, constraints, context, audience, done-when, examples, the person's words); constraints first, with "must" and "never"; for a colleague who acts, scope, forbidden actions and stop conditions; ask for conclusions, assumptions, evidence and checks, never hidden reasoning; cut words that change nothing; ask the person at most one question, only what nobody can infer. Credited in `NOTICE.md` (MIT, ideas only, no text copied).
+
+*Where.* The bulk is a new paragraph "A good brief." in the `delegate-work` skill (a skill with `tools: []` reaches a run only as a `/` chip), and one sentence in Iris's prompt, in the read-back paragraph after "hand the file over so the colleague can open it". The read-back flow, the one-hand-off rules and every approval sentence (D27, D27a) are untouched.
+
+### Built so far
+
+Built: the skill paragraph and the prompt sentence; `NOTICE.md` row; ROADMAP row 145. Test: `freeduet-package.test.ts`, D179. Before/after numbers on briefs: pending (simulated by the coordinator).
+
+**Not verified.** Not run live. Name the team eval cases that hand work over (Iris read-back and hand-off cases) for the next live run.
