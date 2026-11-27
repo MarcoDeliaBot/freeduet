@@ -2869,3 +2869,17 @@ Built: `onToolResult` in `toolkit/src/run-turn.ts`; collection in `approvals/res
 **Not done, left for stage 2.** The desktop team column and `chat-transcript.tsx` (another executor owned them); the rest of Settings and Admin; the other roughly 2,000 lines of literal text (see "Built so far" in `docs/design/app-languages.md` for the list by area); strings that come from the server or from hooks (the dictation errors, the stalled reason, engine pill labels); the ten other catalogues (machine drafts need a reader of each language; the approval wording keeps its own native-review rule, D50). Not run live in a real browser by the person: a preview was rendered with mocked API answers.
 
 **Limits.** English is still what the Bot's server sentences use unless the team language is set (D26). The select lists languages that are not translated yet; they read English until stage 2.
+
+## 135. Iris writes complete briefs (D179)
+
+**The gap.** A colleague sees nothing of the conversation, only the task Iris writes (D160, D166, D176). The `delegate-work` skill listed five things for a brief; a brief could leave out the input, the exact deliverable, the decisions already taken, or the stop conditions.
+
+**Decision D179.** On 27 November 2026 the maintainer asked that Iris use the public prompt-master skill. By the go-with-recommendation rule the skill is not imported: it is about 4,900 words, activates only when a person asks for a prompt for a named tool, outputs a copyable block, asks up to three questions (and always for some tools, which conflicts with D166), and mostly routes to image and video tools Iris never uses. Only these ideas are adapted, in our own words: a brief holds nine points (task, input, output, constraints, context, audience, done-when, examples, the person's words); constraints first, with "must" and "never"; for a colleague who acts, scope, forbidden actions and stop conditions; ask for conclusions, assumptions, evidence and checks, never hidden reasoning; cut words that change nothing; ask the person at most one question, only what nobody can infer. Credited in `NOTICE.md` (MIT, ideas only, no text copied).
+
+*Where.* The bulk is a new paragraph "A good brief." in the `delegate-work` skill (a skill with `tools: []` reaches a run only as a `/` chip), and the same points, compact, in Iris's prompt (read-back paragraph, after "hand the file over so the colleague can open it"), because she never holds the skill unless the person picks its chip. To stay under the 30,000-character light-prompt cap (not raised) three redundant wordings were trimmed: the list of brief contents under "How you work" (now covered by the new sentence), a repeated "compare it with the person's request" in the read-back paragraph, and the example in the done_when sentence. The read-back flow, the one-hand-off rules and every approval sentence (D27, D27a) are untouched.
+
+### Built so far
+
+Built: the skill paragraph and the prompt sentence (the nine points in full); `NOTICE.md` row; ROADMAP row 145. Test: `freeduet-package.test.ts`, D179. Before/after numbers on briefs: pending (simulated by the coordinator).
+
+**Not verified.** Not run live. Name the team eval cases that hand work over (Iris read-back and hand-off cases) for the next live run.
