@@ -184,11 +184,12 @@ export function buildWorkStatus(input: {
     const work = hop.payload as Payload;
     if (!work.toBotId || !work.fromBotId) continue;
     const note = input.notes.get(handoffNoteKey(work));
-    const finished = hop.finishedAt !== null;
+    const finishedAt = hop.finishedAt;
+    const finished = finishedAt !== null;
     const stopped = hop.lastError === "Stopped by the person";
     if (
       finished &&
-      (stopped || input.now - hop.finishedAt!.getTime() > DONE_VISIBLE_MS)
+      (stopped || input.now - finishedAt.getTime() > DONE_VISIBLE_MS)
     )
       continue;
     const running =
@@ -217,7 +218,7 @@ export function buildWorkStatus(input: {
       toName: work.toName ?? input.names.get(work.toBotId) ?? work.toBotId,
       threadId: work.threadId ?? null,
       state,
-      since: iso(finished ? hop.finishedAt!.getTime() : startedAt),
+      since: iso(finishedAt !== null ? finishedAt.getTime() : startedAt),
       title: clip(work.task),
       lastStep:
         note?.step && !finished
