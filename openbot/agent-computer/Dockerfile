@@ -1,4 +1,5 @@
-# The Bot's computer installs the Playwright browser it launches, plus the command-line tools the video
+# The Bot's computer installs the Playwright browsers (Chromium, Firefox, WebKit) and, for the member's shell, the
+# `playwright` package at the same version (D175), plus the command-line tools the video
 # maker (Cam) works with: ffmpeg, git and python3 with venv, plus the office toolkit (python-docx,
 # openpyxl, python-pptx, pypdf, reportlab, pdfplumber, defusedxml) in its own virtual environment,
 # `office-inspect`, our own read-only inspector (docs/design/office-files.md, slices S1 and S2), and headless
@@ -37,7 +38,7 @@ RUN ls -d /ms-playwright/chromium-* /ms-playwright/firefox-* /ms-playwright/webk
 # PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD comes after the browsers are installed (it would skip that install too): a
 # `playwright install` a member types then downloads nothing and says why. NODE_PATH and these two variables are
 # passed to the shell by `environmentForCommand` (src/shell.ts).
-RUN npm install -g --no-audit --no-fund "playwright@${PLAYWRIGHT_VERSION}" "@playwright/test@${PLAYWRIGHT_VERSION}" \
+RUN npm install -g --no-audit --no-fund --ignore-scripts "playwright@${PLAYWRIGHT_VERSION}" "@playwright/test@${PLAYWRIGHT_VERSION}" \
   && rm -rf /root/.npm /tmp/*
 ENV NODE_PATH=/usr/local/lib/node_modules
 ENV PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1
