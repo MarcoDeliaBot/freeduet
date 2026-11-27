@@ -95,6 +95,11 @@ export type TurnRunner = (input: {
   depth?: number;
   /** The reply so far, each time more of it arrives, for a surface that shows a turn in progress. */
   onText?: (text: string) => void;
+  /**
+   * D178: each tool result of this run, with the NAME of the call that made it (matched by call id from
+   * the run's own events, never from text a model wrote). Read-only: a thrown callback is ignored.
+   */
+  onToolResult?: (result: { name: string; content: string }) => void;
 }) => Promise<{
   replyText: string;
   components?: DrawnComponent[];
@@ -674,6 +679,7 @@ export function createTurnRunner(options: {
     runId: suppliedRunId,
     depth,
     onText,
+    onToolResult,
   }) => {
     if (signal?.aborted) throw new Error("The headless turn was cancelled.");
     // A paused Bot or a refused capability throws here; a pause mid-turn aborts the returned signal.
@@ -816,7 +822,33 @@ export function createTurnRunner(options: {
      */
     const before = new Set(agent.messages.map((message) => message.id));
     const chunks: string[] = [];
+    const callNames = new Map<string, string>();
     const spoken = agent.subscribe({
+      ...(onToolResult
+        ? {
+            onToolCallStartEvent: ({
+              event,
+            }: {
+              event: { toolCallId: string; toolCallName: string };
+            }) => {
+              callNames.set(event.toolCallId, event.toolCallName);
+            },
+            onToolCallResultEvent: ({
+              event,
+            }: {
+              event: { toolCallId: string; content: string };
+            }) => {
+              const name = callNames.get(event.toolCallId);
+              if (name === undefined || typeof event.content !== "string")
+                return;
+              try {
+                onToolResult({ name, content: event.content });
+              } catch {
+                // A reader of results never fails the turn.
+              }
+            },
+          }
+        : {}),
       onTextMessageEndEvent: ({ textMessageBuffer }) => {
         if (textMessageBuffer.length > 0) chunks.push(textMessageBuffer);
       },

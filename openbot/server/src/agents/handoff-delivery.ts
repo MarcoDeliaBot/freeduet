@@ -35,7 +35,7 @@ import { textOf } from "./message-text";
  * server tools by (`mcp__freeduet__<name>`, agent-freeduet `transcript.py`). A tool of another server that
  * ends in `__offer_file` is not it.
  */
-const OFFER_FILE_NAMES: ReadonlySet<string> = new Set([
+export const OFFER_FILE_NAMES: ReadonlySet<string> = new Set([
   OFFER_FILE_TOOL,
   `mcp__freeduet__${OFFER_FILE_TOOL}`,
 ]);
