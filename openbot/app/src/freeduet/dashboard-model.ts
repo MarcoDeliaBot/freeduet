@@ -24,6 +24,7 @@ import {
   type TokenRow,
   type TokenUsage,
 } from "./engines-tokens-text";
+import { englishT, type T } from "@/freeduet/i18n/provider";
 
 export const DASHBOARD_TITLE = "Dashboard";
 export const NOT_AVAILABLE = "Not available yet";
@@ -54,31 +55,40 @@ export type MemberTile = {
 export function memberTiles(
   agents: AgentProfile[] | undefined,
   attention: BotAttention[] | undefined,
+  t: T = englishT,
 ): MemberTile[] | null {
   if (!agents) return null;
   const byId = new Map((attention ?? []).map((bot) => [bot.agentId, bot]));
   return agents.map((agent) => {
     const bot = byId.get(agent.id);
     if (bot?.paused)
-      return { id: agent.id, name: agent.name, state: "Paused", tone: "idle" };
+      return {
+        id: agent.id,
+        name: agent.name,
+        state: t("bots.paused"),
+        tone: "idle",
+      };
     if (bot && needsInput(bot) > 0)
       return {
         id: agent.id,
         name: agent.name,
-        state: "Waiting for you",
+        state: t("dash.waitingForYou"),
         tone: "wait",
       };
     return {
       id: agent.id,
       name: agent.name,
-      state: "Available",
+      state: t("dash.available"),
       tone: "ready",
     };
   });
 }
 
 /** What waits on the person: questions, approvals and stalled hand-offs, as the sidebar badge counts them. */
-export function waitingFor(attention: BotAttention[] | undefined): {
+export function waitingFor(
+  attention: BotAttention[] | undefined,
+  t: T = englishT,
+): {
   total: number;
   lines: string[];
 } | null {
@@ -87,17 +97,15 @@ export function waitingFor(attention: BotAttention[] | undefined): {
   return {
     total: waiting.reduce((sum, bot) => sum + needsInput(bot), 0),
     lines: waiting.map(
-      (bot) => `${bot.name}: ${attentionSummary({ ...bot, unread: 0 })}`,
+      (bot) => `${bot.name}: ${attentionSummary({ ...bot, unread: 0 }, t)}`,
     ),
   };
 }
 
-export function headline(waiting: number | null): string {
-  if (waiting === null) return "Loading your team…";
-  if (waiting === 0) return "Nothing waits for you.";
-  return waiting === 1
-    ? "1 thing waits for you."
-    : `${waiting} things wait for you.`;
+export function headline(waiting: number | null, t: T = englishT): string {
+  if (waiting === null) return t("dash.loading");
+  if (waiting === 0) return t("dash.nothingWaits");
+  return t("dash.thingsWait", { count: waiting });
 }
 
 const tokensOf = (counts: TokenCounts) =>
@@ -116,7 +124,10 @@ export function usageState(
 }
 
 /** Today's tokens, every engine, as the engines reported them. Null when no turn reported a count. */
-export function tokensToday(usage: TokenUsage): {
+export function tokensToday(
+  usage: TokenUsage,
+  t: T = englishT,
+): {
   total: number;
   note: string | null;
 } {
@@ -128,12 +139,16 @@ export function tokensToday(usage: TokenUsage): {
     total,
     note:
       turns > reported
-        ? `${reported} of ${turns} attempts reported a count`
-        : "Input plus output, as each engine reported it",
+        ? t("dash.partialCount", { reported, turns })
+        : t("dash.inputPlusOutput"),
   };
 }
 
-export function savedToday(usage: TokenUsage, currency: Currency = "eur") {
+export function savedToday(
+  usage: TokenUsage,
+  currency: Currency = "eur",
+  t: T = englishT,
+) {
   const saved = savedFor(usage.rows, "today");
   const tokens = saved.inputTokens + saved.outputTokens;
   return {
@@ -142,9 +157,7 @@ export function savedToday(usage: TokenUsage, currency: Currency = "eur") {
       currency,
     ),
     detail:
-      savedTokensText(saved) ??
-      savedTimeText(saved) ??
-      "Nothing went through a free engine yet today",
+      savedTokensText(saved) ?? savedTimeText(saved) ?? t("dash.nothingSaved"),
     any: tokens > 0,
   };
 }
@@ -154,6 +167,7 @@ export function nextRoutine(
   page: RoutinesPage | undefined,
   agents: AgentProfile[] | undefined,
   now: Date,
+  locale = "en-GB",
 ): { time: string; detail: string } | "none" | null {
   if (!page) return null;
   const upcoming = page.routines
@@ -164,13 +178,13 @@ export function nextRoutine(
     .sort((a, b) => Date.parse(a.nextRunAt) - Date.parse(b.nextRunAt))[0];
   if (!upcoming) return "none";
   const at = new Date(upcoming.nextRunAt);
-  const clock = new Intl.DateTimeFormat("en-GB", {
+  const clock = new Intl.DateTimeFormat(locale, {
     hour: "2-digit",
     minute: "2-digit",
     hourCycle: "h23",
   }).format(at);
   const sameDay = at.toDateString() === now.toDateString();
-  const day = new Intl.DateTimeFormat("en-GB", {
+  const day = new Intl.DateTimeFormat(locale, {
     weekday: "short",
     day: "numeric",
     month: "short",
@@ -195,6 +209,7 @@ export type EngineLine = {
 export function engineLines(
   reading: EnginesReading | undefined,
   usage: TokenUsage | undefined,
+  t: T = englishT,
 ): EngineLine[] | null {
   if (!reading || reading.reason) return null;
   return reading.engines.map((engine) => {
@@ -210,7 +225,7 @@ export function engineLines(
         ? compactTokens(tokensOf(counts))
         : "—";
     const firstNote =
-      first > 0 ? ` · first for ${first} member${first === 1 ? "" : "s"}` : "";
+      first > 0 ? ` · ${t("dash.firstFor", { count: first })}` : "";
     return {
       id: engine.id,
       name: engine.name,

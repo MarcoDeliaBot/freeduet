@@ -38,6 +38,7 @@ import {
 import { routeMessage } from "@/lib/channels/route";
 import { startWithChosen } from "@/lib/channels/start";
 import { newId } from "@/lib/new-id";
+import { useT } from "@/freeduet/i18n/provider";
 
 /**
  * The Chat tab: the person's one ongoing conversation with the product's own Bot.
@@ -47,6 +48,7 @@ import { newId } from "@/lib/new-id";
  * no channel yet, the first message makes one and the conversation carries on in place.
  */
 export function ChatScreen() {
+  const t = useT();
   const agents = useQuery(agentListQueryOptions());
   const bot = primaryBot(agents.data);
   const channels = useInfiniteQuery(channelListQueryOptions());
@@ -70,18 +72,10 @@ export function ChatScreen() {
   // Nothing while the first answers load: a placeholder inside a local round trip is a flicker.
   if (agents.isPending || channels.isPending) return null;
   if (!agents.data)
-    return (
-      <ScreenNotice alert>
-        Couldn't load your Bots. Reload the page.
-      </ScreenNotice>
-    );
-  if (!bot) return <ScreenNotice>There are no Bots yet.</ScreenNotice>;
+    return <ScreenNotice alert>{t("chat.botsError")}</ScreenNotice>;
+  if (!bot) return <ScreenNotice>{t("chat.noBots")}</ScreenNotice>;
   if (!channels.data)
-    return (
-      <ScreenNotice alert>
-        Couldn't load your conversation. Reload the page.
-      </ScreenNotice>
-    );
+    return <ScreenNotice alert>{t("chat.conversationError")}</ScreenNotice>;
   /*
    * A conversation that has never had a message is still the first day: one made only to hold the
    * Bot's background research, say. The greeting then goes into it rather than into a second
@@ -198,6 +192,7 @@ function FirstMessage({
   bot: AgentProfile;
   onStarted: (channel: AgentChannel) => void;
 }) {
+  const t = useT();
   const queryClient = useQueryClient();
   const createChannel = useMutation({
     mutationFn: (input: {
@@ -211,7 +206,7 @@ function FirstMessage({
         {
           method: "POST",
           body: input,
-          fallback: "Couldn't start the conversation. Try again.",
+          fallback: t("chat.startError"),
         },
       ),
   });
@@ -236,10 +231,7 @@ function FirstMessage({
     greeting?: FirstDayGreeting,
     voice = false,
   ) => {
-    if (startingRef.current)
-      throw new Error(
-        "The conversation is still starting. Try again in a moment.",
-      );
+    if (startingRef.current) throw new Error(t("chat.stillStarting"));
     startingRef.current = true;
     setStarting(true);
     begun.current = true;
@@ -274,11 +266,7 @@ function FirstMessage({
       startingRef.current = false;
       setStarting(false);
       setSent(null);
-      setError(
-        caught instanceof Error
-          ? caught.message
-          : "Couldn't start the conversation. Try again.",
-      );
+      setError(caught instanceof Error ? caught.message : t("chat.startError"));
       throw caught;
     }
   };
@@ -323,7 +311,7 @@ function FirstMessage({
         // words from the microphone when the channel sends it (docs/design/voice.md, D7 and D8).
         onSubmit={(draft) => start(draft.text, undefined, draft.voice === true)}
         pending={starting}
-        placeholder={`Message ${bot.name}`}
+        placeholder={t("composer.messageNamed", { name: bot.name })}
       />
     </>
   );

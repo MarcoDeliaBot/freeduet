@@ -13,6 +13,7 @@ import { mascotKeyOf } from "@/freeduet/wide/mascot";
 import { useActiveBotId } from "@/lib/copilot/active-bot";
 import { cn } from "@/lib/utils";
 import type { useDictation } from "./use-dictation";
+import { useT } from "@/freeduet/i18n/provider";
 
 type Dictation = ReturnType<typeof useDictation>;
 
@@ -45,6 +46,7 @@ export function VoiceSheet({
   /** The keyboard with nothing said: close the sheet and put the caret in the box. */
   onType: () => void;
 }) {
+  const t = useT();
   const { state, session } = dictation;
   // A FreeDuet team member wears its drawn mascot here, as in the header; any other Bot keeps the mic orb.
   const botId = useActiveBotId();
@@ -55,10 +57,7 @@ export function VoiceSheet({
   // Pausing after speaking puts the words in the message box (never sent); saying nothing stops quietly.
   useAutoStop(recording, mic, {
     onSilence: () => void session.finish("draft", { quiet: true }),
-    onNoSpeech: () =>
-      session.stopWithNotice(
-        "I didn't hear anything. Tap the microphone to try again, or type.",
-      ),
+    onNoSpeech: () => session.stopWithNotice(t("voice.heardNothing")),
   });
   const reduced = useReducedMotion() ?? false;
   const typeInstead = () => {
@@ -113,10 +112,10 @@ export function VoiceSheet({
                 <MicOrb size={132} state={orb} />
               )}
               <DialogPrimitive.Title className="type-big mt-14 max-w-[300px] text-balance font-semibold">
-                Say everything you need to do
+                {t("composer.dictateTitle")}
               </DialogPrimitive.Title>
               <DialogPrimitive.Description className="type-sub mt-2 text-duet-ink-2">
-                Tap the microphone when you're done
+                {t("voice.tapWhenDone")}
               </DialogPrimitive.Description>
               {recording ? (
                 <LevelMeter
@@ -129,27 +128,25 @@ export function VoiceSheet({
             <Status dictation={dictation} heard={mic.heard()} />
             <div className="mt-7 flex items-center justify-center gap-8 transition-transform duration-[var(--duet-dur-sheet)] motion-safe:group-data-starting-style:translate-y-3">
               <Button
-                aria-label="Discard"
+                aria-label={t("voice.discard")}
                 className={SIDE_CONTROL}
                 onClick={session.cancel}
                 size="icon"
-                title="Discard"
+                title={t("voice.discard")}
                 type="button"
                 variant="ghost"
               >
                 <DuetIcon className="size-[22px]" name="x" size={22} />
               </Button>
               <Button
-                aria-label={
-                  notice ? "Start dictation" : "Stop dictation and send"
-                }
+                aria-label={notice ? t("voice.start") : t("voice.stopAndSend")}
                 className="size-[68px] rounded-full bg-duet-black p-0 text-duet-on-black hover:bg-duet-black hover:brightness-125 disabled:opacity-30"
                 disabled={notice ? false : !recording || !canSend}
                 onClick={() =>
                   notice ? void session.start() : void session.finish("send")
                 }
                 size="icon"
-                title={notice ? "Start dictation" : "Stop dictation and send"}
+                title={notice ? t("voice.start") : t("voice.stopAndSend")}
                 type="button"
               >
                 <DuetIcon
@@ -160,12 +157,12 @@ export function VoiceSheet({
                 />
               </Button>
               <Button
-                aria-label="Type instead"
+                aria-label={t("voice.typeInstead")}
                 className={SIDE_CONTROL}
                 disabled={!recording && !notice}
                 onClick={notice ? onType : typeInstead}
                 size="icon"
-                title="Type instead"
+                title={t("voice.typeInstead")}
                 type="button"
                 variant="ghost"
               >
@@ -191,6 +188,7 @@ function Status({
   dictation: Dictation;
   heard: boolean;
 }) {
+  const t = useT();
   const { state, session } = dictation;
   const pill =
     "duet-glass type-label flex min-h-10 max-w-full items-center gap-2.5 rounded-[20px] px-4 py-2.5 shadow-duet-glass animate-in fade-in duration-[var(--duet-dur-swap)]";
@@ -209,7 +207,7 @@ function Status({
           type="button"
           variant="ghost"
         >
-          {state.canRetry ? "Retry" : "Record again"}
+          {state.canRetry ? t("voice.retry") : t("voice.recordAgain")}
         </Button>
       </div>
     );
@@ -217,12 +215,12 @@ function Status({
   const message = state.notice
     ? state.notice
     : state.phase === "transcribing"
-      ? "Writing what you said…"
+      ? t("voice.writing")
       : state.phase === "recording"
         ? heard
-          ? "Listening… I'll stop when you pause"
-          : "I'm listening, just start talking"
-        : "Waiting for microphone permission…";
+          ? t("voice.listeningStop")
+          : t("voice.listening")
+        : t("voice.permission");
   // The live region stays put and only its words change, so a screen reader hears each change.
   return (
     <div

@@ -21,6 +21,7 @@ import {
 } from "./chat-presence";
 import { MemberOrb } from "./member-orb";
 import { usePageChromeState } from "./page-chrome";
+import { useT } from "@/freeduet/i18n/provider";
 
 const DISC =
   "duet-glass grid shrink-0 place-items-center rounded-full text-duet-ink shadow-duet-glass transition-transform duration-[var(--duet-dur-tap)] focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-duet-accent/40 active:scale-95";
@@ -52,6 +53,7 @@ export function ShellHeader({
   menuOpen: boolean;
   onMenu: () => void;
 }) {
+  const t = useT();
   const { data: user } = useQuery(currentUserQueryOptions());
   const side = SIDE;
   const centre = floating ? 62 : 48;
@@ -66,7 +68,7 @@ export function ShellHeader({
     >
       <Disc
         aria-expanded={menuOpen}
-        aria-label="Menu"
+        aria-label={t("shell.menu")}
         className={floating ? "mt-2" : undefined}
         onClick={onMenu}
         size={side}
@@ -76,7 +78,9 @@ export function ShellHeader({
       {/* The span between the discs, so the pill under the orb can never reach under either. */}
       <div className="flex min-w-0 flex-1 flex-col items-center gap-1 px-2">
         <Link
-          aria-label={`${appConfig.brand.productName} chat`}
+          aria-label={t("header.chat", {
+            product: appConfig.brand.productName,
+          })}
           className="pointer-events-auto grid shrink-0 place-items-center rounded-full transition-transform focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-duet-accent/40 active:scale-95"
           style={{ width: centre, height: centre }}
           to="/"
@@ -86,7 +90,7 @@ export function ShellHeader({
         {floating ? <ChatStep /> : null}
       </div>
       <Link
-        aria-label="Your settings"
+        aria-label={t("header.settings")}
         className={cn(DISC, "pointer-events-auto", floating && "mt-2")}
         style={{ width: side, height: side }}
         to="/settings"
@@ -152,11 +156,12 @@ export function ChatStep() {
  * to Chat.
  */
 export function PageHeader() {
+  const t = useT();
   const chrome = usePageChromeState();
   const back = useBack();
   return (
     <header className="duet-face pointer-events-none absolute inset-x-0 top-0 z-20 flex h-[88px] items-start gap-2 bg-[linear-gradient(var(--duet-surface)_58%,transparent)] px-4 pt-3">
-      <Disc aria-label="Back" onClick={back} size={SIDE}>
+      <Disc aria-label={t("header.back")} onClick={back} size={SIDE}>
         <DuetIcon name="chevronLeft" size={22} />
       </Disc>
       <div className="flex min-w-0 flex-1 justify-center">
@@ -234,8 +239,9 @@ function TitlePill({
 
 /** The "…" disc on a page's right, for what belongs to the page but not on it. */
 export function MoreDisc(props: ComponentProps<"button">) {
+  const t = useT();
   return (
-    <Disc aria-label="More" size={SIDE} {...props}>
+    <Disc aria-label={t("header.more")} size={SIDE} {...props}>
       <DuetIcon name="more" size={22} stroke={2.4} />
     </Disc>
   );

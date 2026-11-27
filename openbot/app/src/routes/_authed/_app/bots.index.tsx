@@ -6,6 +6,7 @@ import { BotRoster } from "@/components/bots/bot-roster";
 import { Button } from "@/components/ui/button";
 import { LightPageShell } from "@/freeduet/light/light-page";
 import { TeamFileButton } from "@/freeduet/team-file-button";
+import { useT } from "@/freeduet/i18n/provider";
 
 /** Just longer than the sheet's 200ms exit, so it has finished sliding away before the page changes. */
 const SHEET_CLOSE_MS = 240;
@@ -17,6 +18,7 @@ export const Route = createFileRoute("/_authed/_app/bots/")({
 });
 
 function BotsPage() {
+  const t = useT();
   const { new: creating } = Route.useSearch();
   const navigate = Route.useNavigate();
   return (
@@ -32,12 +34,12 @@ function BotsPage() {
             variant="ghost"
           >
             <IconPlus />
-            New Bot
+            {t("bots.new")}
           </Button>
         </>
       }
-      purpose="Your Bots and the ones shared with you. See what each is doing and what it needs from you."
-      title="Bots"
+      purpose={t("bots.purpose")}
+      title={t("nav.bots")}
     >
       <BotRoster />
       <NewBotSheet

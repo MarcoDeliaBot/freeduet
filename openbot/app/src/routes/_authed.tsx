@@ -1,5 +1,6 @@
 import { createFileRoute, Outlet, redirect } from "@tanstack/react-router";
 import { ApprovalLanguageProvider } from "../freeduet/person-language/approval-language";
+import { AppLanguageProvider } from "../freeduet/i18n/provider";
 import { PersonLanguageProvider } from "../freeduet/person-language/use-card-text";
 import { currentUserQueryOptions, needsOnboarding } from "../lib/auth/queries";
 import { CopilotProvider } from "../lib/copilot/provider";
@@ -25,13 +26,15 @@ export const Route = createFileRoute("/_authed")({
   // Mounted INSIDE the authed boundary, not at the root: the runtime endpoint requires a session, so
   // a provider above the sign-in gate would open a run for a visitor who has not signed in yet.
   component: () => (
-    <PersonLanguageProvider>
-      <ApprovalLanguageProvider>
-        <CopilotProvider>
-          <AppHotkeys />
-          <Outlet />
-        </CopilotProvider>
-      </ApprovalLanguageProvider>
-    </PersonLanguageProvider>
+    <AppLanguageProvider>
+      <PersonLanguageProvider>
+        <ApprovalLanguageProvider>
+          <CopilotProvider>
+            <AppHotkeys />
+            <Outlet />
+          </CopilotProvider>
+        </ApprovalLanguageProvider>
+      </PersonLanguageProvider>
+    </AppLanguageProvider>
   ),
 });

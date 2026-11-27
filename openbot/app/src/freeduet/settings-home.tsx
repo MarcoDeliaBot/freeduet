@@ -3,6 +3,8 @@ import type { ReactNode } from "react";
 import { DuetIcon, type DuetIconName } from "@/components/duet/icons";
 import "./light/tokens.css";
 import "./settings-home.css";
+import type { MessageId } from "./i18n/catalogs";
+import { useT } from "./i18n/provider";
 
 /** One row of the settings home: a link to a page that already exists. Nothing here changes a setting. */
 export type SettingsHomeItem = {
@@ -123,6 +125,40 @@ export const ENGINES_ITEM: SettingsHomeItem = {
   adminOnly: true,
 };
 
+/** The ids of each row's words in the app's message catalogues (D181), by route; the literals above stay the English. */
+const HOME_TEXT: Record<string, { label: MessageId; detail: MessageId }> = {
+  "/bots": { label: "nav.bots", detail: "home.bots" },
+  "/capabilities": { label: "nav.capabilities", detail: "home.capabilities" },
+  "/connections": {
+    label: "home.connectionsLabel",
+    detail: "home.connections",
+  },
+  "/settings/setup": { label: "home.setupLabel", detail: "home.setup" },
+  "/settings/approvals": {
+    label: "home.approvalsLabel",
+    detail: "home.approvals",
+  },
+  "/settings/passwords": {
+    label: "home.passwordsLabel",
+    detail: "home.passwords",
+  },
+  "/routines": { label: "nav.routines", detail: "home.routines" },
+  "/settings/notifications": {
+    label: "profile.notifications",
+    detail: "home.notifications",
+  },
+  "/admin": { label: "nav.admin", detail: "home.admin" },
+  "/admin/engines": { label: "dash.engines", detail: "home.engines" },
+};
+
+const GROUP_TITLE: Record<SettingsHomeGroup["id"], MessageId> = {
+  team: "dash.team",
+  connections: "nav.connections",
+  security: "home.safety",
+  jobs: "home.jobs",
+  system: "home.system",
+};
+
 export function SettingsHome({
   isAdmin,
   badges = {},
@@ -131,12 +167,21 @@ export function SettingsHome({
   /** A badge per route, such as the unread count on Bots. */
   badges?: Partial<Record<string, ReactNode>>;
 }) {
+  const t = useT();
+  const labelOf = (item: SettingsHomeItem) => {
+    const text = HOME_TEXT[item.to as string];
+    return text ? t(text.label) : item.label;
+  };
+  const detailOf = (item: SettingsHomeItem) => {
+    const text = HOME_TEXT[item.to as string];
+    return text ? t(text.detail) : item.detail;
+  };
   const groups = SETTINGS_HOME_GROUPS.map((group) => ({
     ...group,
     items: group.items.filter((item) => !item.adminOnly || isAdmin),
   })).filter((group) => group.items.length > 0);
   return (
-    <nav aria-label="Settings" className="fdh">
+    <nav aria-label={t("nav.settings")} className="fdh">
       {isAdmin && (
         <Link
           to={ENGINES_ITEM.to}
@@ -147,8 +192,8 @@ export function SettingsHome({
             <DuetIcon name={ENGINES_ITEM.icon} size={22} />
           </span>
           <span className="fdh-engines-copy">
-            <strong>{ENGINES_ITEM.label}</strong>
-            <small>{ENGINES_ITEM.detail}</small>
+            <strong>{labelOf(ENGINES_ITEM)}</strong>
+            <small>{detailOf(ENGINES_ITEM)}</small>
           </span>
           <DuetIcon name="chevronRight" size={16} />
         </Link>
@@ -162,7 +207,7 @@ export function SettingsHome({
             data-group={group.id}
           >
             <h2 id={`fdh-${group.id}`} className="fdh-title">
-              {group.title}
+              {t(GROUP_TITLE[group.id])}
             </h2>
             {group.items.map((item) => (
               <Link key={item.to} to={item.to} className="fdh-row">
@@ -171,10 +216,10 @@ export function SettingsHome({
                 </span>
                 <span className="fdh-row-copy">
                   <b>
-                    {item.label}
+                    {labelOf(item)}
                     {badges[item.to as string]}
                   </b>
-                  <small>{item.detail}</small>
+                  <small>{detailOf(item)}</small>
                 </span>
                 <DuetIcon name="chevronRight" size={15} />
               </Link>
