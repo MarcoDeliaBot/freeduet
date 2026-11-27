@@ -1,18 +1,17 @@
 /*
- * The settings home, in the light design approved on 27 November 2026 (D154). The tokens are set here
- * and scoped to `.fdh`; the dashboard (stage 1, `dashboard.css`) carries the same values in its own file, and a later
- * change extracts both into one shared file.
+ * The settings home, in the light design approved on 27 November 2026 (D154). Its tokens come from the
+ * one shared file, `light/tokens.css`, which the dashboard and the inner pages use too (D174).
  */
 .fdh {
-  --fdh-bg: #f6f7fb;
-  --fdh-card: #ffffff;
-  --fdh-line: #e2e8f0;
-  --fdh-ink: #1e293b;
-  --fdh-ink-2: #475569;
-  --fdh-ink-3: #64748b;
-  --fdh-accent: #6430ab;
-  --fdh-accent-ink: #4c1d95;
-  --fdh-accent-soft: #f0ebfa;
+  --fdh-bg: var(--fdl-bg);
+  --fdh-card: var(--fdl-card);
+  --fdh-line: var(--fdl-line);
+  --fdh-ink: var(--fdl-ink);
+  --fdh-ink-2: var(--fdl-ink-2);
+  --fdh-ink-3: var(--fdl-ink-3);
+  --fdh-accent: var(--fdl-accent);
+  --fdh-accent-ink: var(--fdl-accent-ink);
+  --fdh-accent-soft: var(--fdl-accent-soft);
   display: flex;
   flex-direction: column;
   gap: 1rem;

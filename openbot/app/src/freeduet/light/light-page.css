@@ -1,0 +1,132 @@
+/*
+ * Inner settings pages in the light design (D154, D174). `.fdl` sits on the page's column: it sets the
+ * shared tokens (`tokens.css`), and points the app's own colour variables at them, so the page's
+ * existing cards, buttons, fields and pills draw in the light design without being replaced.
+ */
+.fdl {
+  --background: #ffffff;
+  --foreground: var(--fdl-ink);
+  --card: #ffffff;
+  --card-foreground: var(--fdl-ink);
+  --popover: #ffffff;
+  --popover-foreground: var(--fdl-ink);
+  --primary: var(--fdl-accent);
+  --primary-foreground: #ffffff;
+  --secondary: var(--fdl-accent-soft);
+  --secondary-foreground: var(--fdl-accent-ink);
+  --muted: var(--fdl-line-2);
+  --muted-foreground: var(--fdl-ink-3);
+  --accent: var(--fdl-accent-soft);
+  --accent-foreground: var(--fdl-accent-ink);
+  --border: var(--fdl-line);
+  --input: var(--fdl-line);
+  --ring: var(--fdl-accent);
+  --duet-surface: var(--fdl-bg);
+  --duet-card: #ffffff;
+  --duet-ink: var(--fdl-ink);
+  --duet-ink-2: var(--fdl-ink-2);
+  --duet-ink-3: var(--fdl-ink-3);
+  --duet-hair: var(--fdl-line);
+  --duet-hair-2: var(--fdl-line-2);
+  --duet-tile: var(--fdl-line-2);
+  --duet-accent: var(--fdl-accent);
+  --duet-accent-soft: var(--fdl-accent-soft);
+  --duet-shadow-card: 0 1px 2px rgba(15, 23, 42, 0.04);
+  --duet-shadow-raised: 0 1px 2px rgba(15, 23, 42, 0.06);
+  --duet-radius-card: 12px;
+  color-scheme: light;
+  gap: 1rem;
+  margin-block: 0.75rem;
+  padding: 1rem;
+  border-radius: 1rem;
+  background: var(--fdl-bg);
+  color: var(--fdl-ink);
+  font-family: var(--fdl-font);
+  font-size: 0.875rem;
+}
+.fdl h2,
+.fdl h3 {
+  color: var(--fdl-ink);
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+.fdl .fd-section-title {
+  font-size: 1rem;
+}
+.fdl a {
+  text-decoration: none;
+}
+.fdl-head {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+.fdl-crumbs {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  min-height: 2rem;
+  color: var(--fdl-ink-3);
+  font-size: 0.8125rem;
+}
+.fdl-back {
+  display: inline-flex;
+  align-items: center;
+  min-height: 2rem;
+  padding-inline: 0.65rem;
+  border: 1px solid var(--fdl-line);
+  border-radius: 999px;
+  background: var(--fdl-card);
+  color: var(--fdl-accent);
+  font-weight: 600;
+}
+.fdl-back:hover {
+  border-color: var(--fdl-accent);
+  color: var(--fdl-accent-ink);
+}
+.fdl-crumb {
+  color: var(--fdl-ink-2);
+}
+.fdl-crumb:hover {
+  color: var(--fdl-accent);
+}
+.fdl-head-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+.fdl-title {
+  margin: 0;
+  color: var(--fdl-ink);
+  font-size: 1.5rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+}
+.fdl-action {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+}
+.fdl-purpose {
+  max-width: 60ch;
+  margin: 0;
+  color: var(--fdl-ink-2);
+  font-size: 0.9375rem;
+  line-height: 1.5;
+}
+/* The primary action: the page's one filled button; the others stay quiet. */
+.fdl-action [data-slot="button"][data-variant="default"],
+.fdl-action [data-slot="button"]:last-child {
+  background: var(--fdl-accent);
+  color: #fff;
+}
+.fdl-action [data-slot="button"]:last-child:hover {
+  background: var(--fdl-accent-ink);
+}
+.fdl [data-slot="button"] {
+  min-height: 2.5rem;
+}

@@ -1,14 +1,11 @@
 import { queryOptions, useQuery } from "@tanstack/react-query";
 import { DuetIcon } from "@/components/duet/icons";
 import { DuetCard, OutcomePill } from "@/components/duet/kit";
-import { PageEmpty, PageShell } from "@/components/layout/page-shell";
+import { PageEmpty } from "@/components/layout/page-shell";
 import { StaggerItem } from "@/components/layout/stagger";
 import { client } from "@/lib/client";
-import { isFreeDuetApp } from "./manage-group";
-import { WorkspaceShell, WorkspaceTabs } from "./workspace";
 import { EngineMembers } from "./engines-members";
 import { EngineProviders } from "./engines-providers";
-import { EngineTokens } from "./engines-tokens";
 import {
   ASIDE_LABEL,
   ENGINE_STATES_TITLE,
@@ -28,6 +25,10 @@ import {
   SPENDING_TEXT,
   SPENDING_TITLE,
 } from "./engines-text";
+import { EngineTokens } from "./engines-tokens";
+import { LightPageShell } from "./light/light-page";
+import { isFreeDuetApp } from "./manage-group";
+import { WorkspaceTabs } from "./workspace";
 
 /** How often the page asks again, so a time it shows does not go stale while it stays open. */
 const REFRESH_MS = 30_000;
@@ -100,18 +101,16 @@ export function FreeDuetEngines() {
       ) : null}
     </>
   );
-  return workspace ? (
-    <WorkspaceShell
+  // The light design (D174): a header with a way back to the settings home, one sentence, the same sections.
+  return (
+    <LightPageShell
+      className={workspace ? "fd-workspace" : undefined}
+      purpose={ENGINES_INTRO}
       title={ENGINES_TITLE}
-      icon="activity"
-      description={ENGINES_INTRO}
+      width="wide"
     >
       {content}
-    </WorkspaceShell>
-  ) : (
-    <PageShell description={ENGINES_INTRO} title={ENGINES_TITLE} width="wide">
-      {content}
-    </PageShell>
+    </LightPageShell>
   );
 }
 

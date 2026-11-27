@@ -1,6 +1,7 @@
 import { Link, type LinkOptions } from "@tanstack/react-router";
 import type { ReactNode } from "react";
 import { DuetIcon, type DuetIconName } from "@/components/duet/icons";
+import "./light/tokens.css";
 import "./settings-home.css";
 
 /** One row of the settings home: a link to a page that already exists. Nothing here changes a setting. */

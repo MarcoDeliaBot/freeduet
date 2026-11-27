@@ -4,6 +4,7 @@ import { PageShell } from "@/components/layout/page-shell";
 import { agentListQueryOptions } from "@/lib/agents/queries";
 import { botAttentionQueryOptions } from "@/lib/bot-lifecycle/queries";
 import { routinesQueryOptions } from "@/lib/routines/queries";
+import "./light/tokens.css";
 import "./dashboard.css";
 import {
   COUNTS_UNAVAILABLE,

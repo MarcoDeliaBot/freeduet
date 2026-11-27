@@ -321,8 +321,9 @@ const selected = (view: View, name: string) =>
     (label) => radio(view, label, name).checked,
   );
 
+// The "← Settings" back link of the light header (D174) is not one of the page's settings controls.
 const INTERACTIVE =
-  'button, a, input, select, textarea, [role="button"], [role="link"], [role="switch"], [role="checkbox"], [role="radio"], [role="menuitem"], [contenteditable]';
+  'button, a:not([data-testid="back-to-settings"]), input, select, textarea, [role="button"], [role="link"], [role="switch"], [role="checkbox"], [role="radio"], [role="menuitem"], [contenteditable]';
 
 test("each member is a row: its engines in order by name, what is left out and why, and two answers with one sentence each", async () => {
   const view = draw();
@@ -623,7 +624,12 @@ test("the only controls on the page are the two answers for each member, the arr
   expect(view.container.querySelector('input[type="password"]')).toBeNull();
   expect(view.container.querySelector('input[type="text"]')).toBeNull();
   expect(view.container.querySelector("textarea")).toBeNull();
-  expect(view.container.querySelector("a")).toBeNull();
+  // The only link is the light header's way back to the settings home (D174).
+  expect(
+    Array.from(view.container.querySelectorAll("a")).map((link) =>
+      link.getAttribute("data-testid"),
+    ),
+  ).toEqual(["back-to-settings"]);
 });
 
 test("the engine cards stay as they were: nothing in them can be clicked", async () => {
