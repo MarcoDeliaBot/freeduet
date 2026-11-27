@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { BotSubpage } from "@/components/bot-profile/bot-subpage";
 import { BotResponsibilities } from "@/components/responsibilities/responsibilities";
+import { useT } from "@/freeduet/i18n/provider";
 
 export const Route = createFileRoute(
   "/_authed/_app/bots/$agentId/responsibilities",
@@ -9,12 +10,13 @@ export const Route = createFileRoute(
 });
 
 function ResponsibilitiesPage() {
+  const t = useT();
   const { agentId } = Route.useParams();
   return (
     <BotSubpage
       agentId={agentId}
-      description="Ongoing goals this Bot works on for you. See what started each run and what it found."
-      title="Responsibilities"
+      description={t("bot.page.responsibilitiesPurpose")}
+      title={t("bot.area.responsibilities")}
     >
       {(agent) => <BotResponsibilities agentId={agent.id} />}
     </BotSubpage>

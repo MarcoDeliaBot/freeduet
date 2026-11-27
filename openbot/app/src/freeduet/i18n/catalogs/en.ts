@@ -445,6 +445,212 @@ export const EN = {
   "settings.lastSeen": "last seen {when}",
   "settings.rename": "Rename",
   "settings.revoke": "Revoke",
+  // The Bot pages (D181 stage 2d): a Bot's activity, settings, access, Manage, Setup and Sharing,
+  // and the descriptions of its sub-pages (`bot.page.*`). Shared words reuse their existing keys.
+  "bot.activity.kindRoutine": "Routine",
+  "bot.activity.kindResponsibility": "Responsibility",
+  "bot.activity.kindHandoff": "Delegated task",
+  "bot.activity.kindApproval": "Approval",
+  "bot.activity.kindQuestion": "Question",
+  "bot.activity.kindFollowUp": "Follow-up",
+  "bot.activity.needsYou": "needs you",
+  "bot.activity.stop": "Stop",
+  "bot.activity.stopping": "Stopping…",
+  "bot.activity.cancelling": "Cancelling…",
+  "bot.activity.open": "Open",
+  "bot.activity.title": "Activity",
+  "bot.activity.scheduled": "Scheduled",
+  "bot.activity.completed": "Completed",
+  "bot.activity.emptyInProgress": "Nothing is running or waiting on you.",
+  "bot.activity.emptyScheduled": "Nothing is scheduled.",
+  "bot.activity.emptyCompleted": "Nothing has finished yet.",
+  "bot.activity.loadError":
+    "Couldn't load this Bot's activity. Reload the page.",
+  "bot.settings.heading": "Settings for this Bot",
+  "bot.area.responsibilities": "Responsibilities",
+  "bot.area.reaching": "Reaching you",
+  "bot.area.memory": "Memory",
+  "bot.area.access": "Skills and access",
+  "bot.area.sharing": "Sharing",
+  "bot.settings.activeCount": {
+    one: "{count} active",
+    other: "{count} active",
+  },
+  "bot.settings.noneActive": "None active",
+  "bot.settings.ruleCount": { one: "{count} rule", other: "{count} rules" },
+  "bot.settings.noRules": "No rules",
+  "bot.settings.routineCount": {
+    one: "{count} routine",
+    other: "{count} routines",
+  },
+  "bot.settings.noRoutines": "No routines",
+  "bot.access.skillsDescription":
+    "Turn on a skill to use it with this Bot. Type / in a conversation to run it.",
+  "bot.access.yourSkills": "Your skills",
+  "bot.access.skillsError": "Couldn't load your skills. Reload the page.",
+  "bot.access.noSkills": "No skills yet.",
+  "bot.access.writeOne": "Write one",
+  "bot.access.title": "What it can use",
+  "bot.access.grantedDescription":
+    "The apps and skills this Bot can use, and whether each app is ready for you. It can't use anything else.",
+  "bot.access.grantedError":
+    "Couldn't load what this Bot can use. Reload the page.",
+  "bot.access.readyError":
+    "Couldn't check whether each app is ready for you. Reload the page.",
+  "bot.access.noApps":
+    "No apps yet. An admin has to add them. Until then this Bot can only talk with you.",
+  "bot.access.toolsAndMore": "{list} and {count} more",
+  "bot.access.toolCount": { one: "{count} tool", other: "{count} tools" },
+  "bot.access.skillLabel": "Skill",
+  "bot.access.manageNamed": "Manage {title} on this Bot",
+  "bot.reset.conversations": {
+    one: "{count} conversation",
+    other: "{count} conversations",
+  },
+  "bot.reset.memorySources": {
+    one: "{count} memory source",
+    other: "{count} memory sources",
+  },
+  "bot.reset.memories": {
+    one: "{count} imported memory",
+    other: "{count} imported memories",
+  },
+  "bot.reset.routines": { one: "{count} routine", other: "{count} routines" },
+  "bot.reset.responsibilities": {
+    one: "{count} responsibility",
+    other: "{count} responsibilities",
+  },
+  "bot.reset.followUps": {
+    one: "{count} scheduled follow-up",
+    other: "{count} scheduled follow-ups",
+  },
+  "bot.reset.formedMemories": {
+    one: "{count} memory it formed",
+    other: "{count} memories it formed",
+  },
+  "bot.reset.research": {
+    one: "{count} background research",
+    other: "{count} background research",
+  },
+  "bot.reset.standing": {
+    one: "{count} standing permission",
+    other: "{count} standing permissions",
+  },
+  "bot.reset.title": "Reset {name}?",
+  "bot.reset.description":
+    "This deletes what {name} has with you. Other people's conversations and data stay. You can't undo this.",
+  "bot.reset.planError": "Couldn't check what a reset would delete. Try again.",
+  "bot.reset.done": "Done. {name} starts fresh with you.",
+  "bot.reset.nothing": "There's nothing of yours to delete.",
+  "bot.reset.willDelete": "This will delete:",
+  "bot.reset.sharedKept": {
+    one: "{count} conversation is shared with other people or Bots and will be kept.",
+    other:
+      "{count} conversations are shared with other people or Bots and will be kept.",
+  },
+  "bot.reset.memoriesKept": "Memories you told a Bot yourself are kept.",
+  "bot.reset.resetting": "Resetting…",
+  "bot.reset.submit": "Delete and reset",
+  "bot.manage.pinnedAssigned":
+    "An admin assigned it to you. It stays at the top of your Bots list.",
+  "bot.manage.pinnedOn":
+    "At the top of your Bots list. Only your list changes.",
+  "bot.manage.pinnedOff":
+    "Keep it at the top of your Bots list. Only your list changes.",
+  "bot.manage.hiddenAssigned":
+    "An admin assigned it to you. You can't hide it.",
+  "bot.manage.hiddenOn":
+    "Under Hidden on your Bots list. Only your list changes.",
+  "bot.manage.hiddenOff": "Take it off your Bots list. Only your list changes.",
+  "bot.manage.duplicate": "Duplicate",
+  "bot.manage.duplicateDescription":
+    "Make your own copy. Its conversations and keys aren't copied.",
+  "bot.manage.resetDescription":
+    "Delete your conversations with it, what it remembers for you, and its scheduled work. You'll see the list first.",
+  "bot.manage.delete": "Delete",
+  "bot.manage.deleteDescription":
+    "Deletes it for everyone. You can't undo this.",
+  "bot.manage.deleteTitle": "Delete {name}?",
+  "bot.manage.deleteConfirm": "It's deleted for everyone. You can't undo this.",
+  "bot.manage.deleting": "Deleting…",
+  "bot.setup.title": "Title",
+  "bot.setup.whatItDoes": "What it does",
+  "bot.setup.identity": "Identity",
+  "bot.setup.systemOwned": "System owned",
+  "bot.setup.systemOwnedDescription":
+    "Comes with {product}. It doesn't belong to a person.",
+  "bot.setup.visibility": "Visibility",
+  "bot.setup.visiblePrivate":
+    "Only you can see it and start conversations with it.",
+  "bot.setup.visiblePublic": "Everyone on {product} can find and use it.",
+  "bot.setup.private": "Private",
+  "bot.setup.public": "Public",
+  "bot.setup.saveError": "Couldn't save. Try again.",
+  "bot.setup.checkField": "Check this field and try again.",
+  "bot.setup.connection": "Connection",
+  "bot.setup.builtIn": "Built in",
+  "bot.setup.agentUrl": "Agent URL",
+  "bot.setup.builtInDescription":
+    "Runs inside {product}. There's nothing to connect.",
+  "bot.sharing.published": "Published",
+  "bot.sharing.toWholeTeam": "To the whole team",
+  "bot.sharing.toPeople": "To {who}",
+  "bot.sharing.groupNamed": "group {name}",
+  "bot.sharing.teamPrivate": "Each person's conversations with it are private.",
+  "bot.sharing.notVisibleYet":
+    "Teammates can't see it until it has a real name and a description.",
+  "bot.sharing.unpublish": "Unpublish",
+  "bot.sharing.link": "Link",
+  "bot.sharing.linkDescription": "Opens a private conversation with it.",
+  "bot.sharing.copyLink": "Copy link",
+  "bot.sharing.publicNotPublished":
+    "Not published to the team. It's public, so everyone on {product} can already use it.",
+  "bot.sharing.onlyYouCanUse": "Not published. Only you can use it.",
+  "bot.sharing.notPublished": "Not published.",
+  "bot.sharing.whoPublishedTo": "Who it is published to",
+  "bot.sharing.publish": "Publish",
+  "bot.sharing.publishNote":
+    "Publishing doesn't change its visibility. You can unpublish at any time.",
+  "bot.sharing.audience": "Audience",
+  "bot.sharing.notPublishedSummary": "Not published",
+  "bot.sharing.theWholeTeam": "The whole team",
+  "bot.sharing.specificPeople": "Specific people or groups",
+  "bot.sharing.peopleCount": { one: "{count} person", other: "{count} people" },
+  "bot.sharing.groupCount": { one: "{count} group", other: "{count} groups" },
+  "bot.sharing.assignToGroups": "Assign to groups",
+  "bot.sharing.assignDescription":
+    "Pins this Bot at the top of every group member's Bots list. Use * for the whole team.",
+  "bot.sharing.publishedTo": "Published to",
+  "bot.sharing.peopleByEmail": "People, by email",
+  "bot.sharing.commaSeparated": "Comma separated",
+  "bot.sharing.groups": "Groups",
+  "bot.sharing.update": "Update",
+  "bot.sharing.publishToTeam": "Publish to team",
+  "bot.sharing.assignNamed": "Assign {name} to a group",
+  "bot.sharing.assignNote":
+    "It's pinned at the top of every member's Bots list.",
+  "bot.sharing.groupOrStar": "Group, or *",
+  "bot.sharing.wholeTeamPlaceholder": "* for the whole team",
+  "bot.sharing.assign": "Assign",
+  "bot.sharing.removeNamed": "Remove {name}",
+  "bot.sharing.wholeTeam": "Whole team",
+  "bot.sharing.notAssigned": "Not assigned to any group.",
+  "bot.sharing.assignRow": "Assign to a group",
+  "bot.page.accessPurpose": "The skills, apps and other Bots this Bot can use.",
+  "bot.page.approvalsPurpose": "What this Bot can do without asking you first.",
+  "bot.page.memoryPurpose":
+    "The apps this Bot learns from, and the research it does for you in the background.",
+  "bot.page.memoryPointer": "What your Bots remember about you is in",
+  "bot.page.reachPurpose":
+    "Continue a conversation with this Bot in Slack, Microsoft Teams, or by text message.",
+  "bot.page.responsibilitiesPurpose":
+    "Ongoing goals this Bot works on for you. See what started each run and what it found.",
+  "bot.page.routinesPurpose":
+    "What this Bot does for you on a schedule. Turn one off, run it now, or delete it.",
+  "bot.page.setupPurpose":
+    "Who this Bot is, who can find it, and where it runs.",
+  "bot.page.sharingPurpose":
+    "Who else can use this Bot. Each person's conversations with it are private.",
 } satisfies Entries;
 
 export type MessageId = keyof typeof EN;
