@@ -695,11 +695,13 @@ function settled(
       const now = Date.now();
       const capLeft = startedAt + limits.capMs - now;
       if (capLeft <= 0) {
+        stop();
         finish(() => reject(new HopCapError(timedOut("cap"))));
         return;
       }
       const silentLeft = limits.life.at + limits.silenceMs - now;
       if (silentLeft <= 0) {
+        stop();
         finish(() => reject(new Error(timedOut("silence"))));
         return;
       }

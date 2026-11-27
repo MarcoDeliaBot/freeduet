@@ -1120,7 +1120,9 @@ describe("a hop stops for silence, not for time (D170)", () => {
               for (const t of timers) clearInterval(t);
             };
           }),
-        stop: async () => {},
+        stop: async () => {
+          stopped.push("stop");
+        },
       },
     });
     return { d, stopped };
@@ -1153,5 +1155,14 @@ describe("a hop stops for silence, not for time (D170)", () => {
     expect(error.name).toBe("HopCapError");
     expect(error.message).toContain("still working");
     expect(error.message).toContain("limit for one hand-off");
+  });
+
+  test("a silence stop and a cap stop both stop the run itself", async () => {
+    const silent = lively(null, { capMs: 10_000 });
+    await run(silent.d).catch(() => undefined);
+    expect(silent.stopped).toContain("stop");
+    const capped = lively(30, { capMs: 300 });
+    await run(capped.d).catch(() => undefined);
+    expect(capped.stopped).toContain("stop");
   });
 });
