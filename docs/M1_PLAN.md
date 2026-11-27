@@ -2846,6 +2846,12 @@ Built: `onToolResult` in `toolkit/src/run-turn.ts`; collection in `approvals/res
 
 **Not verified.** Not run live: that a real resumed run's `TOOL_CALL_START` and `TOOL_CALL_RESULT` reach `agent.subscribe` for a server tool as they do for text (the test drives the subscriber's hooks directly, as the other cases of that file do). Not run live with a real hop and card. Prompts are unchanged.
 
+## 136. A ring, not a dot, shows who is working (D180)
+
+**Why.** The gray dot on every mascot in the team column spoiled the mascots' look (the maintainer, 27 November 2026). **D180:** nothing is drawn on an idle member. While a member works, a thin ring (2 px line, 5 px gap, outside the face, never covering it) turns slowly in the accent purple `#6430AB` fading into the mascot's turquoise `#1FB5B0`. Waiting for the person: amber ring, gentle pulse. Stuck: red dashed ring, static. Done: green ring that fades out in 4 s, shown only when the member's latest hand-off finished within 15 s. Queued is not drawn (it maps to idle). With `prefers-reduced-motion` nothing spins or pulses and the working ring is a static gradient. The ring is `aria-hidden` and keeps its title tooltip; the row's label still says the state. `WorkDot` is used only in the team column (`wide/team-column.tsx`).
+
+**Built so far.** `work-dot.tsx` (ring, null when idle), `work-status.css` (`.fd-ws-ring`), `status.ts` (`done` state, `justDone`), the placement in `team-column.tsx`; render tests per state and a reduced-motion CSS test. Verified with app tests and previews of the real component. Not verified: the look on the maintainer's screen (a preview comes first); the done ring replays if the column remounts within 15 s of a finished hand-off.
+
 ## 135. Iris writes complete briefs (D179)
 
 **The gap.** A colleague sees nothing of the conversation, only the task Iris writes (D160, D166, D176). The `delegate-work` skill listed five things for a brief; a brief could leave out the input, the exact deliverable, the decisions already taken, or the stop conditions.
