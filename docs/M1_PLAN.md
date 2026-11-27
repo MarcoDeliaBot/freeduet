@@ -2727,3 +2727,25 @@ D154 (maintainer, 27 November 2026): one simple, coherent design for all setting
 **Verified.** `server/tests/bot-lifecycle.integration.test.ts` (real Postgres: plain reason, re-queue once, other person's, running, finished and not-stalled hops refused, count drops, newest unread channel), `server/tests/bot-lifecycle-routes.test.ts` (400, 404, audit, unreachable Bot, 401), `server/tests/stalled-reason.test.ts`, `app/tests/stalled-handoff-row.test.tsx` (row text and buttons, unread link, retry request then row and badge gone, Bot page row).
 
 **Not verified / left open.** "Open at the first unread" opens the conversation; scrolling to the first unread message inside it is not built. The D168 work card still says "waiting for you" for a hop that ran out of attempts, without the reason or the button (it reads a different model). Not run in the live app by the person.
+
+---
+
+## 129. The voice sheet shows the words and stops by itself (D173)
+
+**Decision (D173, maintainer, 27 November 2026).** Everything must be friendly and one click from the goal. After D167 the voice sheet still lacked three things other dictation apps have: live words, stopping on its own, and announced state.
+
+**How dictation works.** The browser records with `MediaRecorder` (`app/src/lib/dictation/recording.ts`) and uploads the whole recording once, at the end, to `POST /api/audio/transcriptions`; the server runs the person's configured transcription (a local service by default). There is no stream of partial text: the engine is not asked for any.
+
+**Partial words: not built, not faked.** The sheet shows the real state instead: "I'm listening, just start talking" until the microphone level reaches speech height, then "Listening… I'll stop when you pause", then "Writing what you said…" while the transcription runs. Real partials would need a streaming transcription path (audio sent in pieces over a socket to a local streaming engine, or the browser's own speech recognition, which sends audio to the browser vendor's servers and so is not a local or login-first path). No paid engine is added (`docs/PROVIDERS.md`, logins first). Open decision for the maintainer: whether to build a local streaming engine.
+
+**Stop rules** (constants in `app/src/freeduet/voice/auto-stop.ts`, no setting yet):
+- After speech, 3 s below speech height (first written as 2 s; raised by the coordinator because the sheet asks the person to say everything they need, and a pause to think is longer than 2 s): the recording stops and the words go into the message box (`finish("draft", { quiet: true })`). They are never sent; the person presses Send.
+- Nothing said for 8 s: stops quietly (`session.stopWithNotice`), no transcription, no error. The sheet stays with "I didn't hear anything. Tap the microphone to try again, or type." and the button now reads "Start dictation".
+- Longest recording: `MAX_DICTATION_SECONDS` (120 s, already enforced by the session), words into the box.
+- When the page cannot measure the volume, only the length limit applies.
+
+**Accessibility.** The status is an `aria-live="polite"` region; the microphone button is named "Stop dictation and send" while recording and "Start dictation" after a quiet stop (was "Stop and send"); all controls are buttons, so they work with the keyboard.
+
+**Files.** `app/src/freeduet/voice/auto-stop.ts` (new), `use-mic-level.ts` (`silentMs`, `listenedMs`), `voice-sheet.tsx`, `composer.tsx` (keeps the sheet open on a notice), `session.ts` (`notice`, `stopWithNotice`).
+
+**Built so far.** Tests in `app/tests/voice-sheet-autostop.test.tsx` (fake level stream and fake timers): the verdict function, speech then 3 s of silence puts the words in the box and sends nothing, 8 s with no speech gives a quiet hint and the mic starts again, the 120 s limit, aria-live and labels, the state text. Existing voice tests updated for the new names. Not verified: on a real microphone or phone; the 3 s and 8 s values and the 0.12 speech level are to be tuned live; a noisy room may never count as silence. The preview is a screenshot and goes online after the maintainer's yes.

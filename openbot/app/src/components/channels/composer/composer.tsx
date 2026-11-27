@@ -392,7 +392,9 @@ export function Composer({
     },
     disabled || voiceCall?.active === true,
   );
-  if (voiceSheet && !dictation.busy) setVoiceSheet(false);
+  // A quiet stop with nothing said leaves a hint on the sheet, so it stays until the person acts.
+  if (voiceSheet && !dictation.busy && !dictation.state.notice)
+    setVoiceSheet(false);
   /** `autoFocus` has been honoured once, and is not owed again for the life of this composer. */
   const claimedAutoFocus = useRef(false);
   /**

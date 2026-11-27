@@ -169,9 +169,11 @@ test("× throws the words away, even once they were being written down", async (
   expect(message(view).textContent).toBe("");
 
   await openSheet(view);
-  fireEvent.click(view.getByRole("button", { name: "Stop and send" }));
+  fireEvent.click(
+    view.getByRole("button", { name: "Stop dictation and send" }),
+  );
   await waitFor(() =>
-    expect(view.getByRole("status").textContent).toBe("Writing it down…"),
+    expect(view.getByRole("status").textContent).toBe("Writing what you said…"),
   );
   fireEvent.click(view.getByRole("button", { name: "Discard" }));
   await waitFor(() => expect(sheetOpen(view)).toBe(false));
@@ -185,9 +187,11 @@ test("↑ sends the words as the person's message, once", async () => {
   const dictation = stubDictation();
   const { view, sent } = renderChatComposer();
   await openSheet(view);
-  fireEvent.click(view.getByRole("button", { name: "Stop and send" }));
+  fireEvent.click(
+    view.getByRole("button", { name: "Stop dictation and send" }),
+  );
   await waitFor(() =>
-    expect(view.getByRole("status").textContent).toBe("Writing it down…"),
+    expect(view.getByRole("status").textContent).toBe("Writing what you said…"),
   );
   expect(sent).toEqual([]);
   await dictation.land();
@@ -209,7 +213,9 @@ test("↑ parks the words behind a turn in flight, through the composer's own qu
     },
   });
   await openSheet(view);
-  fireEvent.click(view.getByRole("button", { name: "Stop and send" }));
+  fireEvent.click(
+    view.getByRole("button", { name: "Stop dictation and send" }),
+  );
   await dictation.land();
   await waitFor(() => expect(queued).toEqual([WORDS]));
   expect(sent).toEqual([]);
@@ -221,7 +227,7 @@ test("Type instead puts the words in the draft to edit, and sends nothing", asyn
   await openSheet(view);
   fireEvent.click(view.getByRole("button", { name: "Type instead" }));
   await waitFor(() =>
-    expect(view.getByRole("status").textContent).toBe("Writing it down…"),
+    expect(view.getByRole("status").textContent).toBe("Writing what you said…"),
   );
   await dictation.land();
   await waitFor(() => expect(sheetOpen(view)).toBe(false));

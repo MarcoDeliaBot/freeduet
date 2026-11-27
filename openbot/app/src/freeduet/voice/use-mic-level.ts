@@ -23,6 +23,10 @@ export type MicLevel = {
   history: number[];
   /** Whether the level was ever at speech height since this stream began. Read it when the person acts. */
   heard: () => boolean;
+  /** Milliseconds since the level was last at speech height; null while nobody has spoken yet. */
+  silentMs: () => number | null;
+  /** Milliseconds since this stream began being measured. */
+  listenedMs: () => number;
   /** False when this page cannot analyse the stream: nothing can then be said about whether anyone spoke. */
   measuring: boolean;
 };
@@ -40,8 +44,12 @@ export function useMicLevel(stream: MediaStream | undefined): MicLevel {
   });
   const [measuring, setMeasuring] = useState(false);
   const peak = useRef(0);
+  const lastSpeech = useRef<number | null>(null);
+  const began = useRef(Date.now());
   useEffect(() => {
     peak.current = 0;
+    lastSpeech.current = null;
+    began.current = Date.now();
     setState({ level: 0, history: [] });
     setMeasuring(false);
     const Context: typeof AudioContext | undefined =
@@ -63,6 +71,7 @@ export function useMicLevel(stream: MediaStream | undefined): MicLevel {
         analyser.getByteTimeDomainData(samples);
         const level = levelOf(samples);
         peak.current = Math.max(peak.current, level);
+        if (level >= SPEECH_LEVEL) lastSpeech.current = Date.now();
         setState((previous) => ({
           level,
           history: [...previous.history, level].slice(-HISTORY),
@@ -81,6 +90,9 @@ export function useMicLevel(stream: MediaStream | undefined): MicLevel {
     level: state.level,
     history: state.history,
     heard: () => peak.current >= SPEECH_LEVEL,
+    silentMs: () =>
+      lastSpeech.current === null ? null : Date.now() - lastSpeech.current,
+    listenedMs: () => Date.now() - began.current,
     measuring,
   };
 }

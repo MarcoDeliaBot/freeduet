@@ -244,7 +244,7 @@ for (const variant of ["compact", "default"] as const) {
  */
 async function speak(
   view: RenderResult,
-  press: "Stop and send" | "Type instead",
+  press: "Stop dictation and send" | "Type instead",
   transcribed: () => number,
 ) {
   fireEvent.click(await view.findByRole("button", { name: "Speak a message" }));
@@ -266,7 +266,7 @@ test('the spoken message sheet: its "Send" is one press, and is marked as words 
         }}
       />,
     );
-    await speak(view, "Stop and send", transcribed);
+    await speak(view, "Stop dictation and send", transcribed);
     await waitFor(() => expect(sent).toHaveLength(1));
     expect(sent[0]?.text).toBe("dictated words");
     expect(sent[0]?.voice).toBe(true);
