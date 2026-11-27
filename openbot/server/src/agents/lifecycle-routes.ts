@@ -290,6 +290,35 @@ export function createBotLifecycleRoutes(
     },
   );
 
+  // D172: "Dismiss" on a stalled or capped hand-off the person does not want any more. Same guard, scoping
+  // and 404 rule as the retry; audited.
+  routes.post(
+    "/:agentId/activity/handoffs/dismiss",
+    requireUser,
+    async (context) => {
+      const agent = await reachable(context);
+      if (agent instanceof Response) return agent;
+      const { id } = await body(context);
+      if (typeof id !== "string" || !id)
+        return context.json({ error: "Which delegated task?" }, 400);
+      const dismissed = await activity.dismissHandoff(
+        context.var.actor.id,
+        agent.id,
+        id,
+      );
+      if (!dismissed)
+        return context.json(
+          { error: "That delegated task is not stalled." },
+          404,
+        );
+      await record(context, "bot.handoff_dismissed", agent.id, {
+        hop: dismissed.key,
+        to: dismissed.toBotId,
+      });
+      return context.json({ dismissed: true });
+    },
+  );
+
   routes.post("/:agentId/follow-ups/cancel", requireUser, async (context) => {
     const agent = await reachable(context);
     if (agent instanceof Response) return agent;

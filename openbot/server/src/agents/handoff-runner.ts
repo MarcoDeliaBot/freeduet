@@ -59,6 +59,12 @@ export type HandoffWork = {
    * the asking Bot, which is why it can speak in it at all.
    */
   answerIn?: string;
+  /**
+   * D172: how many times the person pressed "Try again" on this hop. Written only by the server's retry
+   * route, never by a model; it makes the colleague's message say that this is another try. The person's
+   * request (`request`) is never touched by it.
+   */
+  retries?: number;
 };
 
 export type HandoffDelivery = {
@@ -481,8 +487,23 @@ export function createHandoffRunner(options: {
              * refused it once will probably refuse it again in the next second. A refusal by the
              * controls is the exception: it is final, so the work ends here.
              */
-            if (refused || capped)
+            if (refused || (capped && work.answerIn))
               await queue.finish({ kind: HANDOFF_KIND, key: item.key, owner });
+            else if (capped)
+              /*
+               * D172: a forward hop that hit the cap is not finished. It stays on the queue at the
+               * attempt limit with its reason, so the person sees it like any other stalled hop (Bots
+               * "Needs you", the Bot page, the badge) and can try it again or dismiss it. At the limit
+               * `claim` never hands it out again, so nothing runs it by itself.
+               */
+              await queue.release({
+                kind: HANDOFF_KIND,
+                key: item.key,
+                owner,
+                delayMs: 0,
+                reason,
+                giveUpAt: maxAttempts,
+              });
             else
               await queue.release({
                 kind: HANDOFF_KIND,
@@ -612,6 +633,10 @@ function forThePerson(reason: string): string {
   return reason;
 }
 
+/** D172: the one sentence a colleague is told when the person pressed "Try again" on its hand-off. */
+export const RETRY_NOTE =
+  "This is another try of the same job. Files from the earlier try are still in your computer, so check them and continue from there instead of starting over.";
+
 /**
  * What the addressed Bot is shown.
  *
@@ -653,6 +678,10 @@ function attribute(work: HandoffWork): string {
     "",
     "Answer in this conversation as yourself. The person can see it, so write it for them rather than for the Bot that asked.",
   );
+  // D172: said by the server, in the hop's own framing and outside the task text; the person's quoted words
+  // and `payload.request` are never edited.
+  if (typeof work.retries === "number" && work.retries > 0)
+    lines.push("", RETRY_NOTE);
   return lines.join("\n");
 }
 

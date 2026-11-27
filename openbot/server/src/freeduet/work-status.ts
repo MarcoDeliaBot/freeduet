@@ -12,6 +12,7 @@
  * NO ARGUMENTS, EVER. The label comes from the tool's NAME alone, through `stepLabel`: not a path, not a
  * page address, not a command, not a word of the task.
  */
+import { plainStalledReason } from "../activity/stalled-reason";
 
 /** A running hop with no event for this long is shown as stuck. One place; the server decides, the app only draws. */
 export const STUCK_AFTER_MS = 5 * 60 * 1000;
@@ -128,6 +129,12 @@ export type WorkStatusHandoff = {
   lastStep: { label: string; at: string } | null;
   /** ISO time of the last sign of life of a running hop (any event), so the card can say how long it has been quiet. */
   lastEventAt: string | null;
+  /**
+   * D172: set when the hop gave up (ran out of attempts, or hit the time cap) and waits on the person:
+   * the plain reason, from the same words the Bots page uses. The app draws "Try again", "Dismiss" and
+   * "Open conversation" from it.
+   */
+  stalled: { reason: string } | null;
 };
 
 export type WorkStatusMemberState = "working" | "waiting" | "stuck" | "idle";
@@ -225,6 +232,7 @@ export function buildWorkStatus(input: {
           ? { label: note.step.label, at: iso(note.step.at) }
           : null,
       lastEventAt: finished ? null : iso(alive),
+      stalled: gaveUp ? { reason: plainStalledReason(hop.lastError) } : null,
     });
   }
 

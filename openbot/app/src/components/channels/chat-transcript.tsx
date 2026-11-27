@@ -70,6 +70,10 @@ import {
   readCheckIn,
 } from "@/lib/channels/check-in";
 import { readFirstDay } from "@/lib/channels/first-day";
+import {
+  type UnreadItem,
+  useFirstUnreadScroll,
+} from "@/lib/channels/first-unread";
 import { readMorningBrief } from "@/lib/channels/morning-brief";
 import { readResponsibilityTurn } from "@/lib/channels/responsibility-turn";
 import { readFiring } from "@/lib/channels/routine-firing";
@@ -501,6 +505,19 @@ function Queued({
  * alternative is threading a ref out through three components with no other reason to know a
  * scroller exists.
  */
+/** D172: "Read newest" opens the conversation at its first unread message; see `lib/channels/first-unread`. */
+function ScrollToFirstUnread({
+  items,
+  restoring,
+}: {
+  items: ReadonlyArray<UnreadItem>;
+  restoring: boolean;
+}) {
+  const { scrollToEnd, scrollToMessage } = useMessageScroller();
+  useFirstUnreadScroll(items, restoring, { scrollToEnd, scrollToMessage });
+  return null;
+}
+
 function ScrollNewestQueuedIntoView({ newest }: { newest: string | null }) {
   const { scrollToEnd } = useMessageScroller();
 
@@ -2347,6 +2364,7 @@ export function ChatTranscript({
         {/* A floating disc, like the shell's own controls. */}
         <MessageScrollerButton className="size-11 rounded-full border-0 bg-duet-card text-duet-ink shadow-duet-float hover:bg-duet-card hover:text-duet-ink data-[direction=end]:bottom-[calc(var(--duet-dock,0px)+16px)]" />
         <ScrollNewestQueuedIntoView newest={queued.at(-1)?.id ?? null} />
+        <ScrollToFirstUnread items={items} restoring={restoring} />
       </MessageScroller>
     </MessageScrollerProvider>
   );

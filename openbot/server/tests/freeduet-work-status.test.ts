@@ -141,6 +141,29 @@ describe("states with a fake clock", () => {
     ).toBe("waiting");
   });
 
+  test("a hop that gave up (or hit the cap) carries the plain reason; a live one carries none (D172)", () => {
+    const notes = createWorkNotes(() => NOW);
+    const gaveUp = build(
+      [
+        hop({
+          claimedBy: null,
+          leaseUntil: null,
+          attempts: 3,
+          lastError:
+            "kai was still working after 25 minutes and was stopped at the limit for one hand-off, after 9 events",
+        }),
+      ],
+      notes,
+      NOW,
+    ).handoffs[0];
+    expect(gaveUp?.stalled).toEqual({
+      reason: "it ran past the time limit for one hand-off",
+    });
+    expect(
+      build([hop({ attempts: 1 })], notes, NOW).handoffs[0]?.stalled,
+    ).toBeNull();
+  });
+
   test("the label never carries an argument, a path or the task", () => {
     const notes = createWorkNotes(() => NOW);
     const key = handoffNoteKey(work);
@@ -197,6 +220,7 @@ describe("GET /api/freeduet/work-status", () => {
       "lastEventAt",
       "lastStep",
       "since",
+      "stalled",
       "state",
       "threadId",
       "title",

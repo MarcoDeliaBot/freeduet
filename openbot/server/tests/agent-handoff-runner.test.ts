@@ -4,6 +4,7 @@ import { HopCapError, ThreadBusyError } from "../src/agents/handoff-delivery";
 import {
   createHandoffRunner,
   type HandoffWork,
+  RETRY_NOTE,
 } from "../src/agents/handoff-runner";
 import { signHandoffDeliveryRun } from "../src/agents/handoff-signing";
 import type { AuditStore } from "../src/audit";
@@ -48,6 +49,7 @@ function runner(options?: {
   const delivered: Array<{ message: string; assertion: string }> = [];
   const offered: HandoffWork[] = [];
   const delays: number[] = [];
+  const releases: Array<{ giveUpAt: number; reason?: string }> = [];
 
   const queue = {
     claim: async () =>
@@ -63,11 +65,16 @@ function runner(options?: {
       key,
       owner,
       delayMs,
+      reason,
+      giveUpAt,
     }: {
       key: string;
       owner: string;
       delayMs: number;
+      reason?: string;
+      giveUpAt?: number;
     }) => {
+      if (giveUpAt !== undefined) releases.push({ giveUpAt, reason });
       calls.push({ verb: "release", key, owner });
       delays.push(delayMs);
       return true;
@@ -96,6 +103,7 @@ function runner(options?: {
 
   return {
     calls,
+    releases,
     events,
     written,
     delivered,
@@ -374,11 +382,12 @@ describe("a hop that failed for good", () => {
     expect(offered[0]?.task).toContain("did not finish within 300s");
   });
 
-  test("a hop that hit the absolute cap is not retried, and the notice names the cap (D170)", async () => {
+  test("a hop that hit the absolute cap is kept at the attempt limit for the person, not finished or retried (D170, D172)", async () => {
     const {
       runner: sweeper,
       offered,
       calls,
+      releases,
     } = runner({
       claimed: [
         {
@@ -398,8 +407,17 @@ describe("a hop that failed for good", () => {
     await sweeper.sweep();
 
     expect(offered[0]?.task).toContain("limit for one hand-off");
-    expect(calls.filter((c) => c.verb === "release")).toHaveLength(0);
-    expect(calls.filter((c) => c.verb === "finish")).toHaveLength(1);
+    // D172: released at the attempt limit (the queue never offers it again) with its reason, not finished,
+    // so it stays on the person's "Needs you" until they retry or dismiss it.
+    expect(calls.filter((c) => c.verb === "finish")).toHaveLength(0);
+    expect(calls.filter((c) => c.verb === "release")).toHaveLength(1);
+    expect(releases).toEqual([
+      {
+        giveUpAt: 5,
+        reason:
+          "researcher was still working after 25 minutes and was stopped at the limit for one hand-off",
+      },
+    ]);
   });
 
   test("a hop the deployment's controls refuse ends on its first try, and the person is told", async () => {
@@ -680,5 +698,44 @@ describe("what a notice shows", () => {
     expect(shownTexts[0]).toBe(
       "Assistant asked Researcher for this on your behalf: find the outage window",
     );
+  });
+});
+
+describe("a retried hop is told so by the server (D172)", () => {
+  test("the sentence is in the hop's own framing only when the person retried, and the task text is untouched", async () => {
+    const first = runner({
+      claimed: [
+        {
+          kind: "bot.message",
+          key: "run-1:abc",
+          payload: { ...WORK },
+          attempts: 1,
+        },
+      ] as unknown as WorkItem[],
+    });
+    await first.runner.sweep();
+    const retried = runner({
+      claimed: [
+        {
+          kind: "bot.message",
+          key: "run-1:abc",
+          payload: { ...WORK, retries: 1 },
+          attempts: 1,
+        },
+      ] as unknown as WorkItem[],
+    });
+    await retried.runner.sweep();
+
+    expect(first.delivered[0]?.message).not.toContain("another try");
+    const message = retried.delivered[0]?.message ?? "";
+    expect(message).toContain(RETRY_NOTE);
+    expect(message).toContain("Task: find the outage window");
+    // Outside the task line, after the hop's own framing.
+    expect(message.indexOf(RETRY_NOTE)).toBeGreaterThan(
+      message.indexOf("Task: find the outage window"),
+    );
+    expect(
+      message.split("\n").filter((line) => line.startsWith("Task:")),
+    ).toEqual(["Task: find the outage window"]);
   });
 });

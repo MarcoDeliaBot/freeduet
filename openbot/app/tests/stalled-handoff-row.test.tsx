@@ -20,6 +20,7 @@ import { BotActivitySections } from "@/components/bot-profile/activity";
 import { BotsNavBadge } from "@/components/bot-profile/attention";
 import { BotRoster } from "@/components/bots/bot-roster";
 import type { AgentProfile } from "@/lib/agents/queries";
+import { takeFirstUnread } from "@/lib/channels/first-unread";
 import { settleReactWork } from "./settle-react-work";
 
 /**
@@ -166,6 +167,7 @@ test("the Bots page row says what happened, why, and has Try again and Open conv
     view.getByText("Why: it took longer than the time limit."),
   ).toBeTruthy();
   expect(view.getByRole("button", { name: "Try again" })).toBeTruthy();
+  expect(view.getByRole("button", { name: "Dismiss" })).toBeTruthy();
   const open = view.getByText("Open conversation").closest("a") as HTMLElement;
   expect(open.getAttribute("href")).toBe("/channel/chan-iris");
   // No raw error code anywhere on the row.
@@ -205,6 +207,45 @@ test("Try again asks the server to re-queue that hop, then the row and the badge
   await waitFor(() =>
     expect(view.queryByRole("img", { name: /need/ })).toBeNull(),
   );
+});
+
+test("Dismiss asks the server to let that hop go (not retry it), then the row and the badge are gone (D172)", async () => {
+  const view = draw(() => (
+    <>
+      <BotsNavBadge />
+      <BotRoster />
+    </>
+  ));
+  fireEvent.click(await view.findByRole("button", { name: "Dismiss" }));
+  await waitFor(() =>
+    expect(sent).toEqual([
+      {
+        url: "/api/bots/iris/activity/handoffs/dismiss",
+        body: { id: "hop-1" },
+      },
+    ]),
+  );
+  await waitFor(() =>
+    expect(
+      view.queryByText("Kai did not finish: Build an Arkanoid"),
+    ).toBeNull(),
+  );
+  await waitFor(() =>
+    expect(view.queryByRole("img", { name: /need/ })).toBeNull(),
+  );
+});
+
+test("Read newest asks the conversation to open at its first unread message (D172)", async () => {
+  takeFirstUnread();
+  const view = draw(() => <BotRoster />);
+  const read = (await view.findByText("Read newest")).closest(
+    "a",
+  ) as HTMLElement;
+  expect(takeFirstUnread()).toBe(false);
+  fireEvent.click(read);
+  expect(takeFirstUnread()).toBe(true);
+  // Once per click.
+  expect(takeFirstUnread()).toBe(false);
 });
 
 test("the Bot's own page shows the same row under In progress", async () => {
