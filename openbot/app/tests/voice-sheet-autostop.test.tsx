@@ -108,7 +108,7 @@ const advance = (ms: number) =>
 const box = (view: ReturnType<typeof render>) =>
   view.getByRole("textbox", { name: "Message" });
 
-test("the verdict: speech then 2 s of quiet stops, never before speech, 8 s with no speech gives up", () => {
+test("the verdict: speech then 3 s of quiet stops, never before speech, 8 s with no speech gives up", () => {
   expect(autoStopVerdict(null, FIRST_SPEECH_TIMEOUT_MS - 1)).toBe("keep");
   expect(autoStopVerdict(null, FIRST_SPEECH_TIMEOUT_MS)).toBe("no-speech");
   expect(autoStopVerdict(SILENCE_STOP_MS - 1, 20_000)).toBe("keep");
@@ -117,14 +117,14 @@ test("the verdict: speech then 2 s of quiet stops, never before speech, 8 s with
   expect(autoStopVerdict(null, 5000)).toBe("keep");
 });
 
-test("speech then 2 s of silence stops by itself and puts the words in the box without sending", async () => {
+test("speech then 3 s of silence stops by itself and puts the words in the box without sending", async () => {
   const level = stubAnalyser();
   const { transcribe } = stubDictation("Call Leo");
   const { view, submitted } = await openSheet();
   level.amplitude = 0.4;
   await advance(1000);
   level.amplitude = 0;
-  await advance(1500);
+  await advance(SILENCE_STOP_MS - 500);
   expect(view.queryByRole("dialog") !== null).toBe(true);
   expect(transcribe).not.toHaveBeenCalled();
   await advance(1000);

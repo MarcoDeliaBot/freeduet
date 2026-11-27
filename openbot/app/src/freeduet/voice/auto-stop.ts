@@ -9,7 +9,7 @@ import type { MicLevel } from "./use-mic-level";
  * which the session already enforces by finishing the recording into the message box.
  */
 /** Quiet for this long after the person has spoken: stop and put the words in the message box. */
-export const SILENCE_STOP_MS = 2000;
+export const SILENCE_STOP_MS = 3000;
 /** Nothing said at all for this long: stop quietly and say so, with no error. */
 export const FIRST_SPEECH_TIMEOUT_MS = 8000;
 /** How often the rules are checked, in ms. */
