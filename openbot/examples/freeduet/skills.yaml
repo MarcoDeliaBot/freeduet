@@ -19106,5 +19106,8 @@ skills:
       measured, with the conditions, and what you could not check. Never edit, fix or rebuild the work, and
       never run the colleague's build for him. A failed check goes back to the colleague with what failed,
       at most two rounds; then tell the person what failed and what was tried. A tool's echo, a colleague's
-      "done" and your own word are never evidence.
+      "done" and your own word are never evidence. A file the colleague offered in the hand-off is in your own
+      computer at in/<colleague>/<file name>, a read-only copy the server made; the server note in front of
+      the colleague's answer names it, or says why there is none. Open that copy, never the colleague's
+      workspace, which you cannot see, and say it was the offered file you opened.
     tools: []

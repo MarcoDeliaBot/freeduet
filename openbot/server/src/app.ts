@@ -101,6 +101,10 @@ import type { EngineChoices } from "./freeduet/engine-choices";
 import { createEnginesRoutes } from "./freeduet/engines-routes";
 import { createImportPreviewRoutes } from "./freeduet/import/preview-routes";
 import { createTeamFileRoutes } from "./freeduet/team-file-routes";
+import {
+  createHandoffFileRoutes,
+  type HandoffFileStore,
+} from "./freeduet/handoff-files";
 import { createWorkStatusRoutes } from "./freeduet/work-status-routes";
 import type { HostAccessBroker } from "./host-access/broker";
 import { createHostAccessRoutes } from "./host-access/routes";
@@ -479,6 +483,8 @@ export function createApp(
     lifecycle?: BotLifecycleServices;
     /** Settings in chat (docs/design/settings-in-chat.md, slice 1): the person's Undo of a change from chat. */
     settingChanges?: SettingChanges;
+    /** D177: the files a colleague offered during a hand-off, drawn under the hand-off line. */
+    handoffFiles?: Pick<HandoffFileStore, "list">;
     /** The person's engine choices, changed from the Engines page (docs/design/engines-dashboard.md). */
     engineChoices?: EngineChoices;
     /** D60: programs on the person's own computer (docs/design/programs-on-your-computer.md). Absent: no routes. */
@@ -1832,6 +1838,12 @@ export function createApp(
         hops: coworker.lifecycle.activity.workStatusRows,
         attention: coworker.lifecycle.activity.attention,
       }),
+    );
+  // D177: a colleague's offered files, narrowed to the signed-in person; the Download itself is the computer route.
+  if (coworker?.handoffFiles)
+    app.route(
+      "/api/freeduet/handoff-files",
+      createHandoffFileRoutes(requireUser, coworker.handoffFiles),
     );
   if (coworker?.settingChanges)
     app.route(

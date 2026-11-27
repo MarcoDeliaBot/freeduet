@@ -94,7 +94,7 @@ function refusalFor(error: unknown, path: string): string {
   return `${REFUSAL_MARKER} The file could not be checked just now, so nothing was offered. Try again in a moment, or tell the person where the file is.`;
 }
 
-type Dependencies = {
+export type Dependencies = {
   /** Absent when the deployment has no computer. */
   computerGateway: Pick<ComputerGateway, "downloadFile"> | undefined;
   agentProfileStore: Pick<AgentProfileStore, "get">;
@@ -109,7 +109,7 @@ type Dependencies = {
  * Loading a Bot's tools must never fail a run: no actor, no profile and no switches read all mean the
  * tool is not offered.
  */
-async function personWhoMayUse(
+export async function personWhoMayUse(
   deps: Dependencies,
   ownerUserId: string,
   agentId: string,

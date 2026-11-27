@@ -39,7 +39,7 @@ All of it is still in the database, attached to `dev-local-user`, a person nobod
 ### 2.1 How a person is named
 
 - By `users.id`, a text column. For this person it is the literal `dev-local-user`. [code: server/src/auth/dev-actor.ts:30]
-- By a foreign key to `users.id` in 55 columns [proved: `server/tests/single-user-adoption-registry.test.ts` reads them from the live schema].
+- By a foreign key to `users.id` in 56 columns [proved: `server/tests/single-user-adoption-registry.test.ts` reads them from the live schema].
 - By a plain text column with no foreign key, such as `composio_connections.user_id` or `learning_thread_bindings.user_id`.
 - Inside `jsonb`: the payload of a work item (`actorId`, `ownerUserId`, a nested `question.actorId`) and the member list of a shared-use request.
 - In a derived key. Two exist:
@@ -78,6 +78,7 @@ Every column below, written as its table and its column joined by a dot, is a li
 | Approvals, inside the request | `approval_requests.action` | Special handler: every JSON string equal to the id, at any depth. The request is stored whole, and its `actorId` names who it was asked of; the column that owns the row moves, and this keeps the two saying the same person. A request that was started and not finished is moved the same way. [code: server/src/approvals/service.ts, `resume`] |
 | Work and Activity | `work_items.payload` | Special handler: every JSON string equal to the id, at any depth. The Activity list, wake-ups and waiting questions all read it by the id. [code: server/src/activity/activity.ts:122, 377, 515], [code: server/src/approvals/questions.ts:74-96] |
 | Pages and tasks | `openduet_pages.owner_user_id`, `openduet_tasks.owner_user_id` | |
+| Conversations (hand-off files) | `handoff_file_offers.owner_user_id` | Files a colleague offered in a hand-off (D177): the card's facts, no content. |
 | Usage | `model_usage.user_id` | The administrator's usage summary counts distinct people; left alone it would count one person twice. |
 | Shared use | `shared_use_requests.proposed_members` | Special handler: the `jsonb` list, where an entry names the user. |
 | Credentials | `credentials.key_id` | Special handler: only the kinds `mcp_user_token` and `mcp_user_secret`, where the key is the user id. The ciphertext is AES-GCM with no data bound to the key, so it still opens. [code: server/src/credentials.ts:143-195] |
@@ -98,7 +99,7 @@ Every column below, written as its table and its column joined by a dot, is a li
 
 **Reviewed: looks like a person, is not**
 
-`sessions.user_agent` (a browser's name), `saved_logins.username` (the person's name at a website), `scim_users.user_name`, `scim_users.user_name_key`, `scim_users.connection_user_key`, `scim_group_members.membership_key`, `scim_group_members.scim_user_id`, `scim_projection_grants.scim_user_id`, `scim_connection_bindings.decommission_cursor_user_id`, `identity_links.subject` (the other service's id), `routine_sweeps.owner` (a replica's name), `components.published_description`, `sandboxed_components.published_css`, `sandboxed_components.published_description`, `sandboxed_components.published_html`, `sandboxed_components.published_js_functions`, `sandboxed_components.published_argument_schema`, `brokered_connections.holder`, `pending_authorizations.holder` (the words `person` and `deployment`), `audit_events.initiator_kind`.
+`sessions.user_agent` (a browser's name), `handoff_file_offers.member_bot_id` (the id of a team member, a Bot), `saved_logins.username` (the person's name at a website), `scim_users.user_name`, `scim_users.user_name_key`, `scim_users.connection_user_key`, `scim_group_members.membership_key`, `scim_group_members.scim_user_id`, `scim_projection_grants.scim_user_id`, `scim_connection_bindings.decommission_cursor_user_id`, `identity_links.subject` (the other service's id), `routine_sweeps.owner` (a replica's name), `components.published_description`, `sandboxed_components.published_css`, `sandboxed_components.published_description`, `sandboxed_components.published_html`, `sandboxed_components.published_js_functions`, `sandboxed_components.published_argument_schema`, `brokered_connections.holder`, `pending_authorizations.holder` (the words `person` and `deployment`), `audit_events.initiator_kind`.
 
 ### 2.3 What the tool does not trust the list for
 
