@@ -1,7 +1,9 @@
 """The member's system text for the subagent simulation, as agent-freeduet assembles it for a normal turn.
 
-Called by render-case.ts with one JSON object on stdin ({"member": id, "request": text}) and answers one
-JSON object on stdout ({"system": text, "tools": [{"name", "description"}], "toolsNote": text}). It reads the
+Called by render-case.ts with one JSON object on stdin ({"member": id, "request": text, "handoff": {"description",
+"inputSchema"}}, where handoff is message_bot as the TypeScript side reads it from the server's handoff-tool.ts)
+and answers one JSON object on stdout ({"system": text, "tools": [{"name", "description", "inputSchema"}],
+"toolsNote": text}); inputSchema is the JSON Schema of each tool's real parameters. It reads the
 real code of openbot/agent-freeduet (members.resolve_member, transcript.render, tool_notes, the person's
 language and tone notes, Iris's local tools) and the real team file (openbot/examples/freeduet/agents.yaml).
 Nothing is re-implemented here. Run it isolated (python3 -I), so no file next to it can be imported.
@@ -12,7 +14,6 @@ TypeScript side writes them under the request), and the tools the server grants 
 """
 
 import json
-import re
 import sys
 from pathlib import Path
 
@@ -33,20 +34,6 @@ TOOLS_NOTE = (
 )
 
 
-HANDOFF_SOURCE = SERVICE.parent / "server" / "src" / "agents" / "handoff-tool.ts"
-# One literal, then any number of `+ "…"` continuations: each repetition needs its own `+`, so the match
-# cannot backtrack exponentially (CodeQL py/redos on the earlier `(?:"…"\s*\+?\s*)+`).
-HANDOFF_DESCRIPTION = re.compile(r'description:\s*("[^"\n]*"(?:\s*\+\s*"[^"\n]*")*)\s*,\s*parameters,')
-
-
-def handoff_description() -> str:
-    """message_bot's description, read from the server's handoff-tool.ts (the string literals joined)."""
-    found = HANDOFF_DESCRIPTION.search(HANDOFF_SOURCE.read_text(encoding="utf-8"))
-    if not found:
-        raise SystemExit("render_prompt: message_bot's description was not found in handoff-tool.ts")
-    return "".join(re.findall(r'"([^"\n]*)"', found.group(1)))
-
-
 def first_sentence(text: str) -> str:
     cut = text.find(". ")
     return (text if cut < 0 else text[: cut + 1]).strip()
@@ -56,15 +43,18 @@ def main() -> None:
     body = json.loads(sys.stdin.read())
     bot_id = str(body["member"])
     request = str(body["request"])
+    handoff = body["handoff"]
     messages = [{"role": "user", "id": "eval-request", "content": request}]
 
     member = members.resolve_member(bot_id, messages, AGENTS)
     tools = []
     if bot_id == IRIS:
-        tools = [{"name": name, "description": first_sentence(iris_tools.DEFINITIONS[name]["description"])}
+        tools = [{"name": name, "description": first_sentence(iris_tools.DEFINITIONS[name]["description"]),
+                  "inputSchema": iris_tools.DEFINITIONS[name]["inputSchema"]}
                  for name in sorted(iris_tools.NAMES)]
         # The server's own hand-off tool, offered when the deployment's hand-off desk is on (handoff-tool.ts).
-        tools.insert(0, {"name": "message_bot", "description": first_sentence(handoff_description())})
+        tools.insert(0, {"name": "message_bot", "description": first_sentence(handoff["description"]),
+                         "inputSchema": handoff["inputSchema"]})
     # The run is told which tools the server offers (the same names the tool list above shows), so the
     # notes do not say a tool is missing that the member is offered.
     offered = [{"name": tool["name"]} for tool in tools if tool["name"] not in iris_tools.NAMES]
