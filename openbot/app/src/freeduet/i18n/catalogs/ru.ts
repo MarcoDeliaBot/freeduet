@@ -3,13 +3,13 @@ import type { EN } from "./en";
 
 /*
  * Russian (D181, stage 2): natural and short, "ты", the same tone as the Russian approval cards
- * (approval-text-ru.ts) and the Russian site page. Terms: "помощник" for Bot and for member, as the site
- * page has it (the approval cards still say "Bot", so the cards and the app differ on that word until the
- * maintainer decides); "Full access" and "Одобрить" as the site page has them; "движок" for an engine,
- * "рутина" for a routine, "передача" for a hand-off, "чат" for chat; "запрос на одобрение" for an approval;
- * "Обзор" for the dashboard, a word neither the site page nor the cards use. Names (FreeDuet, Iris, Leo and
- * the others) are kept and not declined. Plurals take one, few, many and other, as Russian rules have them.
- * Not yet checked by a person who reads Russian.
+ * (openbot/shared/approval-text-ru.ts) and the Russian site page. Where the site's Russian page has a word
+ * for a thing, the app uses it: "помощник" for a Bot and for a member, "движок" for an engine, "рутина" for
+ * a routine, "передача" for a hand-off, "чат" for chat. "Full access" stays as the site and the cards have
+ * it. "запрос на одобрение" is an approval, and "Обзор" is the dashboard, a word neither the site page nor
+ * the cards use. The approval cards still say "Bot": a mismatch to settle, not a choice made here. Product
+ * and member names are placeholders, kept as they are and not declined. Plurals take one, few, many and
+ * other, as Russian rules have them. Not yet checked by a person who reads Russian.
  */
 export const ru: Catalog<typeof EN> = {
   "shell.menu": "Меню",
