@@ -740,7 +740,9 @@ describe("Mark, the marketer", () => {
     });
     for (const sentence of [
       "/workspace/ar/bin/agent-reach",
-      "--require-hashes --no-build-isolation",
+      "--require-hashes -r",
+      "--require-hashes --no-build-isolation -r",
+      "build-requirements.txt",
       "web search",
       "web read",
       "github search",

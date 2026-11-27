@@ -19136,11 +19136,12 @@ skills:
       Use this only for public material. It reads; it never posts, logs in or changes anything.
 
       ## Install, once
-      Nothing is installed until the person approves each card. Ask for these two commands, one card each, and say what they do:
+      Nothing is installed until the person approves each card. Ask for these three commands, one card each, and say what they do:
       1. python3 -m venv /workspace/ar
-      2. /workspace/ar/bin/pip install --require-hashes --no-build-isolation -r <path of the pinned file>
+      2. /workspace/ar/bin/pip install --require-hashes -r <path of build-requirements.txt>
+      3. /workspace/ar/bin/pip install --require-hashes --no-build-isolation -r <path of requirements.txt>
 
-      The pinned file is openbot/examples/freeduet/agent-reach/requirements.txt of the FreeDuet repository. If you cannot reach it in your workspace, say so and ask the person to put a copy there. Never install any other way (no uv, no curl script, no "latest" download), and never upgrade.
+      The pinned files are build-requirements.txt and requirements.txt in openbot/examples/freeduet/agent-reach/ of the FreeDuet repository. If you cannot reach them in your workspace, say so and ask the person to put a copy there. Never install any other way (no uv, no curl script, no "latest" download), and never upgrade.
 
       ## The only commands you may run
       Always the full path /workspace/ar/bin/agent-reach, and no option except --limit and --timeout. Every answer is JSON.

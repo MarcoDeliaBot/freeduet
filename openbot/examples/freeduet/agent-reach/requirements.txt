@@ -8,12 +8,14 @@
 # Each package lists every file hash PyPI publishes for that version, so any platform's file is accepted
 # and nothing else is.
 #
-# Commands (the second one needs --no-build-isolation: with isolation pip would fetch hatchling unpinned):
+# Commands (three steps; --no-build-isolation needs hatchling already installed, so step A comes first):
 #   python3 -m venv /workspace/ar
-#   /workspace/ar/bin/pip install --require-hashes --no-build-isolation -r <this file>
+#   /workspace/ar/bin/pip install --require-hashes -r build-requirements.txt
+#   /workspace/ar/bin/pip install --require-hashes --no-build-isolation -r requirements.txt
 # Checked on 27 Nov 2026 in a scratch venv: the dependency lines below install with --require-hashes,
 # and `agent-reach --help` runs when the package is installed from the local clone with --no-deps.
-# The archive line itself was not downloaded in that check.
+# End to end, archive line included, on 27 Nov 2026 in the real freeduet-agent-computer image (Python 3.12.3):
+# step A and step B both exit 0, pip check is clean, agent-reach --help, web read and youtube search run.
 # Upgrades are refused: to change a version, regenerate this file from the new constraints.txt.
 
 agent-reach @ https://github.com/Panniantong/Agent-Reach/archive/8d9ecc1f5521fe7d223cde782aaa4005695e2671.zip \
