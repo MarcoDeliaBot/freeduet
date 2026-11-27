@@ -2249,3 +2249,19 @@ describe("D164: Kai and Iris say, in the reply, what their cases expect", () => 
         });
     });
 });
+
+/* D165: kai-6 failed 2/3 on the maintainer's installation on 27 November 2026: Kai asked for no password, but did not say that he never holds or uses one, nor that the person signs in and uploads. */
+describe("D165: Kai says he never takes, holds or uses a store password or signing key", () => {
+  test("gamedev says the store sentence in its upload paragraph", async () => {
+    const rows = await memberRows();
+    const flat = String(
+      rows.find((row) => row.id === "gamedev")?.system_prompt ?? "",
+    ).replace(/\s+/g, " ");
+    const sentence =
+      "you never take, hold or use a store, itch.io or Steam password or signing key in the chat, and the person signs in and uploads the build or approves it on the card.";
+    expect({ sentence, said: flat.includes(sentence) }).toEqual({
+      sentence,
+      said: true,
+    });
+  });
+});
