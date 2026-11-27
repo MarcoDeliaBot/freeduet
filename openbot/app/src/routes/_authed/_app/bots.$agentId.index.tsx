@@ -5,26 +5,28 @@ import { BotProfile } from "@/components/bot-profile/profile";
 import { BotSettingsRows } from "@/components/bot-profile/settings-rows";
 import { LightPageShell } from "@/freeduet/light/light-page";
 import { agentQueryOptions } from "@/lib/agents/queries";
+import { useT } from "@/freeduet/i18n/provider";
 
 export const Route = createFileRoute("/_authed/_app/bots/$agentId/")({
   component: BotProfilePage,
 });
 
 function BotProfilePage() {
+  const t = useT();
   const { agentId } = Route.useParams();
   const navigate = useNavigate();
   const agent = useQuery(agentQueryOptions(agentId));
   const toRoster = () => void navigate({ to: "/bots" });
   return (
     <LightPageShell
-      backButton={{ label: "Bots", linkProps: { to: "/bots" } }}
-      crumbs={[{ label: "Bots", to: "/bots" }]}
-      purpose="What this Bot is doing for you and how it's set up."
-      title={agent.data?.name ?? "Bot"}
+      backButton={{ label: t("nav.bots"), linkProps: { to: "/bots" } }}
+      crumbs={[{ label: t("nav.bots"), to: "/bots" }]}
+      purpose={t("botPage.purpose")}
+      title={agent.data?.name ?? t("botPage.fallbackTitle")}
     >
       {agent.isPending ? null : agent.error ? (
         <p className="mt-6 text-destructive text-sm" role="alert">
-          Couldn't open this Bot. It may not be shared with you.
+          {t("botPage.openError")}
         </p>
       ) : (
         <BotProfile

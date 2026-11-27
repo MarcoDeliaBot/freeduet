@@ -28,12 +28,16 @@ import { useDuetChannels } from "@/lib/duet-channels/use-channel";
 import { appConfig } from "@/lib/generated/application-config";
 import { cn } from "@/lib/utils";
 import { queryClient } from "@/query-client";
+import { type MessageId } from "@/freeduet/i18n/catalogs";
+import { useT } from "@/freeduet/i18n/provider";
 
 type Page = {
   label: string;
   to: LinkOptions["to"];
   icon: DuetIconName;
   badge?: ReactNode;
+  /** The id of the page's name in the app's message catalogues (D181); `label` stays the English. */
+  key18n?: MessageId;
 };
 
 /**
@@ -41,11 +45,37 @@ type Page = {
  * and comes back rarely, so these wait under Manage, closed until somebody opens it.
  */
 export const MANAGE_PAGES: Page[] = [
-  { label: "Bots", to: "/bots", icon: "bolt", badge: <BotsNavBadge /> },
-  { label: "Connections", to: "/connections", icon: "plug" },
-  { label: "Capabilities", to: "/capabilities", icon: "box" },
-  { label: "Routines", to: "/routines", icon: "repeat" },
-  { label: "Approval rules", to: "/settings/approvals", icon: "shieldCheck" },
+  {
+    key18n: "nav.bots",
+    label: "Bots",
+    to: "/bots",
+    icon: "bolt",
+    badge: <BotsNavBadge />,
+  },
+  {
+    key18n: "nav.connections",
+    label: "Connections",
+    to: "/connections",
+    icon: "plug",
+  },
+  {
+    key18n: "nav.capabilities",
+    label: "Capabilities",
+    to: "/capabilities",
+    icon: "box",
+  },
+  {
+    key18n: "nav.routines",
+    label: "Routines",
+    to: "/routines",
+    icon: "repeat",
+  },
+  {
+    key18n: "nav.approvalRules",
+    label: "Approval rules",
+    to: "/settings/approvals",
+    icon: "shieldCheck",
+  },
 ];
 
 /** Whether Manage was left open, kept in this browser between visits. */
@@ -126,6 +156,7 @@ export function MenuSheet({
   /** New channel was pressed: close the drawer and open the sheet. Absent, the row is not drawn. */
   onNewChannel?: () => void;
 }) {
+  const t = useT();
   const navigate = useNavigate();
   const { data: user } = useQuery(currentUserQueryOptions());
   const { data: capabilities } = useQuery(deploymentCapabilitiesQueryOptions());
@@ -180,7 +211,7 @@ export function MenuSheet({
           </SheetDescription>
         </SheetHeader>
         <nav
-          aria-label="Menu"
+          aria-label={t("shell.menu")}
           className="flex min-h-0 flex-1 flex-col px-3 pb-4"
         >
           {/* Exact, as on the tab bar, so Everything is marked current on Chat alone. */}
@@ -197,7 +228,11 @@ export function MenuSheet({
             >
               <IconStack2 size={24} stroke={1.9} />
             </span>
-            <RowText line={EVERYTHING_LINE} name="Everything" wrap />
+            <RowText
+              line={t("shell.everythingLine")}
+              name={t("shell.everything")}
+              wrap
+            />
           </Link>
           {/*
            * Only the channels scroll (parity-spec 1.1), and Archived's rows once it is open. New
@@ -211,7 +246,7 @@ export function MenuSheet({
             >
               {bot === undefined || list.isPending ? null : list.error ? (
                 <p className="type-sub px-3 py-2 text-duet-red" role="alert">
-                  Couldn't load your channels. Reload the page.
+                  {t("shell.channelsError")}
                 </p>
               ) : current.length > 0 ? (
                 /*
@@ -219,7 +254,7 @@ export function MenuSheet({
                  * Everything's icon: these are the parts of the one thread, not threads beside it.
                  */
                 <ul
-                  aria-label="Channels"
+                  aria-label={t("shell.channels")}
                   className="ml-[21px] flex flex-col border-duet-ink-3/40 border-l pl-1.5"
                 >
                   {current.map((channel) => (
@@ -237,7 +272,7 @@ export function MenuSheet({
                 type="button"
               >
                 <RowIcon name="plus" />
-                New channel
+                {t("shell.newChannel")}
               </button>
             ) : null}
             {away.length > 0 || earlier.length > 0 ? (
@@ -251,7 +286,7 @@ export function MenuSheet({
                     type="button"
                   >
                     <IconArchive />
-                    Archived
+                    {t("shell.archived")}
                     <IconChevronRight
                       aria-hidden
                       className={cn(
@@ -266,7 +301,10 @@ export function MenuSheet({
                   hidden={!archived.open}
                   id={archived.id}
                 >
-                  <ul aria-label="Archived channels" className="flex flex-col">
+                  <ul
+                    aria-label={t("shell.archivedChannels")}
+                    className="flex flex-col"
+                  >
                     {away.map((channel) => (
                       <li className="flex items-center gap-1" key={channel.id}>
                         <ChannelLink
@@ -275,7 +313,9 @@ export function MenuSheet({
                           onOpen={close}
                         />
                         <button
-                          aria-label={`Unarchive ${channel.name}`}
+                          aria-label={t("shell.unarchiveNamed", {
+                            name: channel.name,
+                          })}
                           className="type-label shrink-0 rounded-full px-3 py-1.5 font-semibold text-duet-ink-2 outline-none transition-colors hover:bg-duet-tile focus-visible:ring-3 focus-visible:ring-duet-violet/40 disabled:opacity-50"
                           disabled={
                             unarchive.isPending &&
@@ -289,7 +329,7 @@ export function MenuSheet({
                           }
                           type="button"
                         >
-                          Unarchive
+                          {t("shell.unarchive")}
                         </button>
                       </li>
                     ))}
@@ -301,10 +341,10 @@ export function MenuSheet({
                         aria-hidden
                         className="type-label mt-2 px-3 pb-1 font-medium text-duet-ink-2"
                       >
-                        Earlier conversations
+                        {t("shell.earlier")}
                       </p>
                       <ul
-                        aria-label="Earlier conversations"
+                        aria-label={t("shell.earlier")}
                         className="flex flex-col"
                       >
                         {earlier.map((conversation) => (
@@ -347,7 +387,7 @@ export function MenuSheet({
                       name="chevronRight"
                       size={22}
                     />
-                    Manage
+                    {t("shell.manage")}
                     {/* Closed, the group would hide the Bots badge, so the badge rides on Manage instead. */}
                     {manage.open ? null : <BotsNavBadge />}
                   </button>
@@ -366,7 +406,7 @@ export function MenuSheet({
                       to={page.to}
                     >
                       <RowIcon name={page.icon} />
-                      {page.label}
+                      {page.key18n ? t(page.key18n) : page.label}
                       {page.badge}
                     </Link>
                   ))}
@@ -378,7 +418,7 @@ export function MenuSheet({
                       to="/admin"
                     >
                       <RowIcon name="shieldLock" />
-                      Admin
+                      {t("nav.admin")}
                     </Link>
                   ) : null}
                 </div>
@@ -393,7 +433,7 @@ export function MenuSheet({
                 to="/dashboard"
               >
                 <RowIcon name="layout" />
-                Dashboard
+                {t("nav.dashboard")}
               </Link>
             )}
             <Link
@@ -403,7 +443,7 @@ export function MenuSheet({
               to="/settings"
             >
               <RowIcon name="settings" />
-              Settings
+              {t("nav.settings")}
               {/* Where Manage is hidden (FreeDuet's package), the Bots badge rides on this row (D133). */}
               {showsManageGroup() ? null : <BotsNavBadge />}
             </Link>
@@ -419,7 +459,7 @@ export function MenuSheet({
                 type="button"
               >
                 <RowIcon name="logout" />
-                Sign out
+                {t("shell.signOut")}
               </button>
             ) : null}
             <BuildLabel />
