@@ -1,5 +1,5 @@
 import { MAX_DICTATION_SECONDS } from "@openbot/shared/dictation";
-import type { Recording } from "./recording";
+import { NoSpeechError, type Recording } from "./recording";
 
 export type DictationState = {
   phase: "idle" | "requesting" | "recording" | "transcribing" | "error";
@@ -23,6 +23,8 @@ export class DictationSession {
   private abort?: AbortController;
   private timer?: ReturnType<typeof setInterval>;
   private intent: DictationIntent = "draft";
+  /** The person asked only to move on to typing: a recording with no words is then not an error. */
+  private quiet = false;
 
   constructor(
     private readonly deps: {
@@ -55,6 +57,7 @@ export class DictationSession {
     this.abort?.abort();
     this.audio = undefined;
     this.intent = "draft";
+    this.quiet = false;
     this.update(idle);
   };
 
@@ -98,10 +101,14 @@ export class DictationSession {
     }
   };
 
-  finish = async (intent: DictationIntent = "draft") => {
+  finish = async (
+    intent: DictationIntent = "draft",
+    options: { quiet?: boolean } = {},
+  ) => {
     if (this.state.phase !== "recording" || !this.recording) return;
     this.clearTimer();
     this.intent = intent;
+    this.quiet = options.quiet === true;
     const generation = this.generation;
     this.update({ ...this.state, phase: "transcribing", stream: undefined });
     try {
@@ -148,6 +155,14 @@ export class DictationSession {
       this.deps.onTranscript(transcript, intent);
     } catch (error) {
       if (generation !== this.generation) return;
+      if (error instanceof NoSpeechError && this.quiet) {
+        // Nothing was said and the person is going on to type: close without an error, with no words.
+        this.audio = undefined;
+        this.quiet = false;
+        this.update(idle);
+        this.deps.onTranscript("", this.intent);
+        return;
+      }
       this.update({
         ...this.state,
         phase: "error",
