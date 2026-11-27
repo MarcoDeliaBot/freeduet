@@ -4,8 +4,8 @@ import type { EN } from "./en";
 /*
  * Spanish: a machine draft, to review. It stays a draft until a reader of Spanish has checked it
  * (docs/design/app-languages.md, decision 5). "Tú", as the site's Spanish page writes to the reader.
- * The words are the ones the site's Spanish page and the approval cards use: "asistente" for a Bot,
- * "miembro", "equipo", "motores", "traspaso", "rutina", "ajustes", "Aprobar". The Spanish approval cards
+ * Where the site's Spanish page has a word for a thing, the app uses it: "asistente" for a Bot,
+ * "miembro", "equipo", "motores", "traspaso", "rutina", "ajustes". The Spanish approval cards
  * (openbot/shared/approval-text-es.ts) still say "Bot": a mismatch to settle, not a choice made here.
  * Product names stay as they are.
  */
