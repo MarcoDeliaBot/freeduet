@@ -22,9 +22,14 @@ const { check } = require("../image-check/playwright-ready.cjs") as {
   };
 };
 
-const dockerfile = readFileSync(join(import.meta.dir, "..", "Dockerfile"), "utf8");
+const dockerfile = readFileSync(
+  join(import.meta.dir, "..", "Dockerfile"),
+  "utf8",
+);
 const here = join(import.meta.dir, "..", "node_modules");
-const corePkg = require.resolve("playwright-core/package.json", { paths: [here] });
+const corePkg = require.resolve("playwright-core/package.json", {
+  paths: [here],
+});
 const browsersJson = JSON.parse(
   readFileSync(join(dirname(corePkg), "browsers.json"), "utf8"),
 ).browsers as { name: string; revision: string }[];
@@ -73,19 +78,26 @@ describe("playwright package and browsers agree", () => {
   });
 });
 
+// Built in pieces so that the linter does not read the Dockerfile's own placeholder as a mistaken template.
+const V = "$" + "{PLAYWRIGHT_VERSION}";
+
 describe("the Dockerfile wires it (D175)", () => {
   test("installs the package from the same ARG that installs the browsers, then checks", () => {
-    expect(dockerfile).toContain('"playwright@${PLAYWRIGHT_VERSION}" "@playwright/test@${PLAYWRIGHT_VERSION}"');
-    expect(dockerfile).toContain("ENV NODE_PATH=/usr/local/lib/node_modules");
+    expect(dockerfile).toContain(`"playwright@${V}" "@playwright/test@${V}"`);
+    expect(dockerfile).toContain(
+      "ENV NODE_PATH=/usr/local/install/global/node_modules",
+    );
     expect(dockerfile).toContain("ENV PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1");
     expect(dockerfile).toContain(
-      'node /opt/image-check/playwright-ready.cjs --expect "${PLAYWRIGHT_VERSION}"',
+      `node /opt/image-check/playwright-ready.cjs --expect "${V}"`,
     );
     expect(dockerfile.match(/PLAYWRIGHT_VERSION=/g)).toHaveLength(1);
   });
 
   test("the skip switch is set after the browsers are installed", () => {
-    expect(dockerfile.indexOf("PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1")).toBeGreaterThan(
+    expect(
+      dockerfile.indexOf("PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1"),
+    ).toBeGreaterThan(
       dockerfile.indexOf("install --with-deps chromium firefox webkit"),
     );
   });
@@ -94,7 +106,8 @@ describe("the Dockerfile wires it (D175)", () => {
 // The `computer (real browser)` job installs the three browsers with this very package version. Where a
 // browsers folder with browsers in it exists, the script must agree with it: the real thing, not a fake folder.
 const realBrowsers =
-  process.env.PLAYWRIGHT_BROWSERS_PATH ?? join(homedir(), ".cache", "ms-playwright");
+  process.env.PLAYWRIGHT_BROWSERS_PATH ??
+  join(homedir(), ".cache", "ms-playwright");
 const haveReal =
   existsSync(realBrowsers) &&
   ["chromium-", "firefox-", "webkit-"].every((p) =>
@@ -104,6 +117,8 @@ const haveReal =
 test.skipIf(!haveReal)(
   "the browsers the installer put in the browsers folder match the package",
   () => {
-    expect(check({ modules: here, browsers: realBrowsers }).version).toBe(version);
+    expect(check({ modules: here, browsers: realBrowsers }).version).toBe(
+      version,
+    );
   },
 );

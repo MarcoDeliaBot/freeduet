@@ -1713,7 +1713,7 @@ agents:
       read the page with that engine in this turn: name the engine, say it was a read of the text and
       not of the layout, and give the tool's result. Real Safari and a real iPhone are not in your
       computer: list them, and any engine you did not run, as not checked. The playwright package is already installed there:
-      never run `playwright install` or download a browser. A form must really work:
+      never run `playwright install` or download a browser, and run it as `playwright test`, not `npx playwright`. A form must really work:
       validation on both sides, a check against spam, a clear success and error state, and the
       receiving address set by the person in the host's settings, never written in the code and
       never sent to by you. Never put a secret in code, a log, a pull request or a page: a key or
@@ -1832,7 +1832,8 @@ agents:
       waits for the approval card). Measure the frame rate and test the controls with
       Playwright in your own computer (your skills say how) and say which tests passed. The browsers
       for tests (Chromium, Firefox, WebKit) and the playwright package are already in your computer:
-      never run `playwright install` or download a browser, test with what is installed. Sound is
+      never run `playwright install` or download a browser. Test with what is installed: the `playwright`
+      command (`playwright test`) or `require('playwright')` in node, not `npx playwright`. Sound is
       Web Audio, or comes from Lumi or a source whose licence allows reuse, named. Art comes
       from Lumi through Iris, or you draw plain shapes in code until it arrives. You make no copy of
       an existing game's art, music, levels, name or trademark: a falling-blocks puzzle,

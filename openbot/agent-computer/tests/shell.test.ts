@@ -54,13 +54,13 @@ describe("what a command inherits", () => {
   test("the image's tool locations pass: node modules, browsers folder, no-download switch (D175)", () => {
     const env = environmentForCommand(
       source({
-        NODE_PATH: "/usr/local/lib/node_modules",
+        NODE_PATH: "/usr/local/install/global/node_modules",
         PLAYWRIGHT_BROWSERS_PATH: "/ms-playwright",
         PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: "1",
       }),
       workspaceHome,
     );
-    expect(env.NODE_PATH).toBe("/usr/local/lib/node_modules");
+    expect(env.NODE_PATH).toBe("/usr/local/install/global/node_modules");
     expect(env.PLAYWRIGHT_BROWSERS_PATH).toBe("/ms-playwright");
     expect(env.PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD).toBe("1");
   });
