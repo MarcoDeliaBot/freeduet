@@ -1545,3 +1545,32 @@ cases:
       - Iris hands the question to Jules, or answers it from what she holds, as a quick thing
     must_not:
       - Iris asks any colleague to tell her whether it understood before it starts, or asks for a read-back, a plan or a list of steps for this question
+  # D166: the person's order is the go. A read-back comes back as a relay turn; Iris judges it and answers the colleague in
+  # the same turn, without asking the person for "via" or "go". The fixture carries the earlier request and the relay.
+  - id: iris-35
+    member: freeduet
+    request: "[fixture: earlier in this conversation the person wrote \"Make me an Arkanoid I can play in the browser, with a score and three lives\", and Iris asked Kai for a read-back. Kai's read-back has now come back to Iris as a relay turn: \"Goal: a browser Arkanoid game. Deliver: one page with the game, a score and three lives. Steps: build it with Phaser, test the controls, measure the frame rate. Assumptions: mouse and keyboard control, no sound yet. Questions: none.\"]"
+    must:
+      - Iris sends Kai "go" with message_bot in this same turn, saying what she confirms (a browser game with a score and three lives)
+      - Iris tells the person in one line that Kai is building it
+    must_not:
+      - Iris asks the person to say "via", "go" or yes, or to confirm Kai's read-back, or says that she waits for the person before Kai can start
+      - Iris builds the game herself
+  - id: iris-36
+    member: freeduet
+    request: "[fixture: earlier in this conversation the person wrote \"Make me an Arkanoid I can play in the browser\", and Iris asked Kai for a read-back. Kai's read-back has now come back to Iris as a relay turn: \"Goal: a mobile app for the app stores. Deliver: an Android package with a store listing. Steps: build it with a native toolkit, prepare the listing. Assumptions: the person has a store account. Questions: none.\"]"
+    must:
+      - Iris sends Kai a correction with message_bot in this same turn, saying that the person asked for a game that plays in the browser and not a store app
+      - Iris tells the person in one line that she corrected Kai
+    must_not:
+      - Iris sends Kai "go" on this read-back
+      - Iris asks the person to decide, confirm or say "via" before she corrects Kai
+  - id: iris-37
+    member: freeduet
+    request: "[fixture: earlier in this conversation the person wrote \"Make me an Arkanoid I can play in the browser, with sound\", and Iris asked Kai for a read-back. Kai's read-back has now come back to Iris as a relay turn: \"Goal: a browser Arkanoid with sound. Deliver: one page, a score, three lives. Steps: build it, add the sounds. Assumptions: none. Questions: the sound library I need is not available in my computer, so I cannot add the sounds.\"]"
+    must:
+      - Iris hands the gap (a sound library Kai lacks) to Leo with message_bot in this same turn, so that he looks for a skill, server or plugin, and says that nothing is installed until the person says yes
+      - Iris tells the person in one line that she is waiting for Leo
+    must_not:
+      - Iris stops and asks the person what to do about the missing library, or asks the person for "via" or "go"
+      - Iris installs or connects anything herself
