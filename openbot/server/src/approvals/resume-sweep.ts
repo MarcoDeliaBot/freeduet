@@ -19,6 +19,7 @@ import { PRIVATE_SHARE_TOOL_REF } from "../proactive/private-share";
 import { recordTaskContinuation } from "../proactive/store";
 import type { ResponsibilityStore } from "../responsibilities/types";
 import { DEFAULT_MAX_ATTEMPTS, type WorkQueue } from "../work/queue";
+import { guardedSnapshot } from "./resume-input-guard";
 import type { ApprovalResumeDependencies, ApprovalService } from "./service";
 
 /**
@@ -48,6 +49,8 @@ export function createApprovalResumeTick(deps: {
     approvalId: string;
     answer: string;
   }) => Promise<boolean>;
+  /** D176: true when the saved call was a forward hop's (`agents/handoff-resume.ts`). */
+  forwardHop?: (snapshot: ApprovalContinuation) => Promise<boolean>;
   notify: (
     scope: DeliveryScope,
     input: { id: string; text: string; kind: "reply" },
@@ -99,12 +102,16 @@ export function createApprovalResumeTick(deps: {
           carriedOutByContinuation: (action) =>
             action.toolRef === PRIVATE_SHARE_TOOL_REF,
           continue: async ({
-            continuation: snapshot,
+            continuation: savedSnapshot,
             result,
             messageId,
             approvalId,
             answered = [{ approvalId, result }],
           }) => {
+            // D176: a resume is fed the run's own messages, within a size limit.
+            const snapshot = guardedSnapshot(savedSnapshot, {
+              forwardHop: (await deps.forwardHop?.(savedSnapshot)) ?? false,
+            });
             // The run waits on the first decision its step stopped on, which need not be this one.
             const decided = answered.map((entry) => entry.approvalId);
             const waitingOn = sql<string>`${responsibilityRuns.waiting}->>'approvalId'`;

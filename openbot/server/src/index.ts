@@ -46,7 +46,7 @@ import { wireCoordination } from "./agents/coordination-wiring";
 import { createAgentFetch } from "./agents/endpoint";
 import { createHandoffDesk } from "./agents/handoff";
 import { createHandedRequestLoader } from "./agents/handoff-request";
-import { createHopRelay } from "./agents/handoff-resume";
+import { createForwardHopCheck, createHopRelay } from "./agents/handoff-resume";
 import { createHandoffRunner } from "./agents/handoff-runner";
 import { startHandoffDelivery } from "./agents/handoff-wiring";
 import {
@@ -2288,6 +2288,11 @@ const approvalSweep = repeatAfterEach(
         readApprovedRunAssertion(value, config.keyEncryptionKey),
       askerOf: async (run) =>
         (await sourceForCoordinationRun(run))?.botId ?? null,
+    }),
+    forwardHop: createForwardHopCheck({
+      database,
+      readRun: (value) =>
+        readApprovedRunAssertion(value, config.keyEncryptionKey),
     }),
     // Assigned further down, once delivery is wired.
     notify: (scope, input) => deliveryNotifications(scope, input),
