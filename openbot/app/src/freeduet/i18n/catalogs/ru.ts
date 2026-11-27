@@ -12,6 +12,24 @@ import type { EN } from "./en";
  * other, as Russian rules have them. Not yet checked by a person who reads Russian.
  */
 export const ru: Catalog<typeof EN> = {
+  "sign.title": "Вход в {product}",
+  "sign.continueWith": "Продолжить с {provider}",
+  "sign.opening": "Открываем {provider}…",
+  "sign.openError":
+    "Не удалось открыть вход через {provider}. Попробуй ещё раз.",
+  "sign.ssoRequired":
+    "Твоя организация требует входа с корпоративной учётной записью.",
+  "sign.pairLead":
+    "Этот браузер ещё не связан с {product}. На компьютере, где работает приложение, выполни",
+  "sign.pairTail": ": откроется {product}, готовый к работе.",
+  "sign.notSetUp":
+    "Вход ещё не настроен. Сначала его должен настроить администратор.",
+  "sign.or": "или",
+  "sign.emailPlaceholder": "you@company.com",
+  "sign.openingCompany": "Открываем…",
+  "sign.continueCompany": "Продолжить с корпоративной учётной записью",
+  "sign.adminSignIn": "Вход для администратора",
+  "sign.noCompany": "Для этого адреса корпоративный вход не настроен.",
   "shell.menu": "Меню",
   "shell.everything": "Всё",
   "shell.everythingLine": "Весь контекст чатов во всех каналах",

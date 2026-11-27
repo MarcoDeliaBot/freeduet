@@ -8,6 +8,25 @@ import type { EN } from "./en";
  * them. Not yet checked by a person who reads French.
  */
 export const fr: Catalog<typeof EN> = {
+  "sign.title": "Se connecter à {product}",
+  "sign.continueWith": "Continuer avec {provider}",
+  "sign.opening": "Ouverture de {provider}…",
+  "sign.openError":
+    "Impossible d'ouvrir la connexion avec {provider}. Réessaie.",
+  "sign.ssoRequired":
+    "Ton organisation exige que tu te connectes avec ton compte professionnel.",
+  "sign.pairLead":
+    "Ce navigateur n'est pas encore associé à {product}. Sur l'ordinateur où tourne l'application, exécute",
+  "sign.pairTail": " : {product} s'ouvre ici, prêt à l'emploi.",
+  "sign.notSetUp":
+    "La connexion n'est pas encore configurée. Un administrateur doit d'abord la configurer.",
+  "sign.or": "ou",
+  "sign.emailPlaceholder": "toi@entreprise.com",
+  "sign.openingCompany": "Ouverture…",
+  "sign.continueCompany": "Continuer avec ton compte professionnel",
+  "sign.adminSignIn": "Connexion administrateur",
+  "sign.noCompany":
+    "Aucune connexion professionnelle n'est configurée pour cette adresse.",
   "shell.menu": "Menu",
   "shell.everything": "Tout",
   "shell.everythingLine": "Tout le contexte des chats, tous canaux confondus",
