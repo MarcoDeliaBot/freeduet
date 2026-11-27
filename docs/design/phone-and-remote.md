@@ -211,6 +211,7 @@ The table gives every route family the app registers, in `createApp` and `http-s
 | `memory` | `/api/memory/*` | refused | What the assistants remember. |
 | `import` | `/api/freeduet/import/*` | refused | The preview of an import compares what is pasted with what the assistants remember about the person and says which lines they already hold, so it reads the memory like `/api/memory/*` does. Bringing the person's facts in from another tool is done at the computer. |
 | `build` | `GET /api/freeduet/build` | partly | Which build is running (version, commit, start time, D162): read-only, signed in, no secret, so a phone session sees it too. Nothing else under that path is served. |
+| `work-status` | `GET /api/freeduet/work-status` | partly | Who is working and on what (D168): the person's own hand-offs, a state, times and a plain step label made from a tool name (never an argument). Read-only, signed in, no secret, so a phone session sees it too. Nothing else under that path is served. |
 | `team-file` | `/api/freeduet/team-file/*` | refused | A team file is the administrator's team written out as a download, so it leaves the installation. A remote session, which is a browser not paired with the computer, never asks for one. |
 | `team` | `/api/team-bots/*` | refused | Publishing a Bot to a team is sharing. |
 | `voice` | `POST /api/audio/transcriptions`, `/api/voice/*` | refused | Not one of the three powers. Decision G. |

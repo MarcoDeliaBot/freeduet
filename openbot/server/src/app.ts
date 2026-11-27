@@ -101,6 +101,7 @@ import type { EngineChoices } from "./freeduet/engine-choices";
 import { createEnginesRoutes } from "./freeduet/engines-routes";
 import { createImportPreviewRoutes } from "./freeduet/import/preview-routes";
 import { createTeamFileRoutes } from "./freeduet/team-file-routes";
+import { createWorkStatusRoutes } from "./freeduet/work-status-routes";
 import type { HostAccessBroker } from "./host-access/broker";
 import { createHostAccessRoutes } from "./host-access/routes";
 import { identityRoutes } from "./identity/routes";
@@ -1822,6 +1823,15 @@ export function createApp(
     app.route(
       "/api/bots",
       createBotLifecycleRoutes(coworker.lifecycle, requireUser),
+    );
+  // D168: who is working and on what, read from the hop queue; signed in, read-only.
+  if (coworker?.lifecycle)
+    app.route(
+      "/api/freeduet/work-status",
+      createWorkStatusRoutes(requireUser, {
+        hops: coworker.lifecycle.activity.workStatusRows,
+        attention: coworker.lifecycle.activity.attention,
+      }),
     );
   if (coworker?.settingChanges)
     app.route(

@@ -250,6 +250,7 @@ describe("what a remote session may reach", () => {
         "GET /api/openduet/channels",
         "GET /api/settings/preferences",
         "GET /api/freeduet/build",
+        "GET /api/freeduet/work-status",
       ].sort(),
     );
   });
