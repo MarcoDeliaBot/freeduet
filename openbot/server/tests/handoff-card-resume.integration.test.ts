@@ -32,7 +32,10 @@ import {
 } from "../src/agents/callback-token";
 import { HANDOFF_KIND } from "../src/agents/handoff";
 import { createHandoffDelivery } from "../src/agents/handoff-delivery";
-import { createHopRelay } from "../src/agents/handoff-resume";
+import {
+  createForwardHopCheck,
+  createHopRelay,
+} from "../src/agents/handoff-resume";
 import {
   createHandoffRunner,
   type HandoffWork,
@@ -40,6 +43,7 @@ import {
 import { signHandoffDeliveryRun } from "../src/agents/handoff-signing";
 import { serverTurnAdmission } from "../src/agents/turn-admission";
 import { createApprovedActionExecutor } from "../src/approvals/execute";
+import { guardedSnapshot } from "../src/approvals/resume-input-guard";
 import { createApprovalResumeTick } from "../src/approvals/resume-sweep";
 import { createApprovalRoutes } from "../src/approvals/routes";
 import { ALREADY_WAITING, isApprovalRecheck } from "../src/approvals/service";
@@ -67,6 +71,8 @@ const CHANNEL = `cr-channel-${suite}`;
 const ASK_THREAD = `cr-ask-${suite}`;
 const TOOL = "google-imap/gmail_create_label";
 const TARGET = { serverId: "google-imap", toolName: "gmail_create_label" };
+/** What the person said to Iris, which a hop must never be shown (D176). */
+const PRIVATE_TEXT = "PRIVATE-CONVERSATION-WITH-IRIS";
 const OTTO_DONE = "The label GitHub is created.";
 
 const queue = createWorkQueue(database);
@@ -86,10 +92,16 @@ function build() {
   /** What really ran at the connector. */
   const labels: string[] = [];
   /** The member runs the approval sweep started again from a saved call. */
-  const continued: { threadId: string; resultContent: string }[] = [];
+  const continued: {
+    threadId: string;
+    resultContent: string;
+    messages: { id: string; content?: unknown }[];
+  }[] = [];
   const notices: string[] = [];
   /** The label the next hop's member tries to create. */
   const next = { label: "GitHub" };
+  /** D176: messages a card saved BEFORE the fix carried in front of the hop's own (another thread's). */
+  const legacy: { id: string; role: "user"; content: string }[] = [];
 
   const service = createServerApprovalService({
     storedApprovals: createApprovalStore(database),
@@ -146,7 +158,11 @@ function build() {
   /** Otto, run again from the saved call: he says what became of it. */
   const otto: TurnRunner = async ({ threadId, continuation }) => {
     if (!continuation) throw new Error("Only continuations run here.");
-    continued.push({ threadId, resultContent: continuation.result.content });
+    continued.push({
+      threadId,
+      resultContent: continuation.result.content,
+      messages: continuation.snapshot.messages as never,
+    });
     return {
       replyText: continuation.result.error
         ? `Not done: ${continuation.result.error}`
@@ -192,6 +208,10 @@ function build() {
         readRun: (value) => readApprovedRunAssertion(value, KEY),
         askerOf: async (run) => (await sourceFor(run))?.botId ?? null,
       }),
+      forwardHop: createForwardHopCheck({
+        database,
+        readRun: (value) => readApprovedRunAssertion(value, KEY),
+      }),
       notify: async () => undefined,
     })();
   }
@@ -227,7 +247,7 @@ function build() {
           toolCallId: `call-${randomUUID()}`,
           toolName: "gmail_create_label",
           args,
-          messages: input.messages,
+          messages: [...legacy, ...input.messages],
           state: {},
           context: [],
           forwardedProps: input.forwardedProps,
@@ -290,9 +310,7 @@ function build() {
                 config: { onEvent: (emitted: { event: object }) => void },
               ) => config.onEvent({ event: { type: "RUN_FINISHED" } }),
             } as unknown as AbstractAgent),
-      history: async () => [
-        { id: "m1", role: "user", content: "Make a label called GitHub." },
-      ],
+      history: async () => [{ id: "m1", role: "user", content: PRIVATE_TEXT }],
       lock: {
         acquire: async () => ({ runId: `platform-${randomUUID()}` }),
         renew: async () => undefined,
@@ -340,6 +358,7 @@ function build() {
     continued,
     notices,
     next,
+    legacy,
     service,
     sweep,
     hops,
@@ -552,6 +571,119 @@ describe("a card raised inside a hand-off", () => {
     await stack.hops.sweep();
 
     expect(await cards()).toHaveLength(2);
+  });
+});
+
+describe("a hand-off resumed after a card sees only its own thread (D176)", () => {
+  const fresh = async () => {
+    await clean();
+    await database
+      .insert(users)
+      .values({ id: PERSON, email: `${PERSON}@example.test` });
+    return build();
+  };
+  const everything = (messages: { content?: unknown }[]) =>
+    JSON.stringify(messages);
+
+  test("allowed once: the resumed run has the hop's framing and the decision, none of the person's conversation", async () => {
+    const stack = await fresh();
+    const key = await handOver();
+    await stack.hops.sweep();
+    const [card] = await cards();
+    await stack.service.decide(PERSON, card?.id as string, "allow_once");
+    await stack.sweep(card?.id as string);
+
+    const resumed = stack.continued[0];
+    expect(resumed?.messages.map((m) => m.id)).toEqual([
+      expect.stringMatching(/^handoff-/),
+    ]);
+    expect(everything(resumed?.messages ?? [])).not.toContain(PRIVATE_TEXT);
+    expect(resumed?.resultContent).toContain("ok");
+    // The relay carries the resumed run's own answer.
+    const [home] = await relaysOf(`${key}:card:${card?.id}`);
+    expect(JSON.stringify(home?.payload)).toContain(OTTO_DONE);
+  });
+
+  test("denied: the same, and the refusal is what the resumed run is told", async () => {
+    const stack = await fresh();
+    await handOver();
+    await stack.hops.sweep();
+    const [card] = await cards();
+    await stack.service.decide(PERSON, card?.id as string, "deny");
+    await stack.sweep(card?.id as string);
+
+    const resumed = stack.continued[0];
+    expect(everything(resumed?.messages ?? [])).not.toContain(PRIVATE_TEXT);
+    expect(stack.labels).toEqual([]);
+    expect(resumed?.resultContent.length).toBeGreaterThan(0);
+  });
+
+  test("a card saved before the fix, with the asker's messages in front, is trimmed at the resume", async () => {
+    const stack = await fresh();
+    stack.legacy.push(
+      { id: "old-1", role: "user", content: PRIVATE_TEXT },
+      { id: "old-2", role: "user", content: "x".repeat(50_000) },
+    );
+    await handOver();
+    await stack.hops.sweep();
+    const [card] = await cards();
+    await stack.service.decide(PERSON, card?.id as string, "allow_once");
+    await stack.sweep(card?.id as string);
+
+    const resumed = stack.continued[0];
+    expect(resumed?.messages.map((m) => m.id)).toEqual([
+      expect.stringMatching(/^handoff-/),
+    ]);
+    expect(everything(resumed?.messages ?? [])).not.toContain(PRIVATE_TEXT);
+  });
+
+  test("an ordinary card in the person's own conversation resumes with its messages unchanged", () => {
+    const messages = [
+      { id: "u1", role: "user", content: PRIVATE_TEXT },
+      { id: "a1", role: "assistant", content: "ok" },
+    ] as never[];
+    const snapshot = {
+      runId: "r",
+      threadId: "t",
+      toolCallId: "c",
+      toolName: "n",
+      args: {},
+      messages,
+      state: {},
+      context: [],
+      forwardedProps: {},
+    };
+    const kept = guardedSnapshot(snapshot, {
+      forwardHop: false,
+      log: () => {},
+    });
+    expect(kept).toBe(snapshot);
+  });
+
+  test("a resume over the size limit drops the oldest messages and says why", () => {
+    const logged: Record<string, unknown>[] = [];
+    const messages = [
+      { id: "big", role: "user", content: "x".repeat(300) },
+      { id: "u2", role: "user", content: "short" },
+    ] as never[];
+    const snapshot = {
+      runId: "r",
+      threadId: "t",
+      toolCallId: "c",
+      toolName: "n",
+      args: {},
+      messages,
+      state: {},
+      context: [],
+      forwardedProps: {},
+    };
+    const kept = guardedSnapshot(snapshot, {
+      forwardHop: false,
+      max: 100,
+      log: (line) => logged.push(line),
+    });
+    expect(kept.messages.map((m) => m.id)).toEqual(["u2"]);
+    expect(logged[0]).toMatchObject({ reason: "over-size-limit", dropped: 1 });
   });
 });
 

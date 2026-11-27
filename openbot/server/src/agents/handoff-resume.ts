@@ -90,3 +90,36 @@ export function createHopRelay(deps: {
     return true;
   };
 }
+
+/**
+ * D176: whether a saved call was a FORWARD hop's, so that its resume is fed only the hop's own
+ * messages (`approvals/resume-input-guard.ts`). A relay or a notice back to the asking Bot runs in
+ * the asking thread itself and keeps its own tail. A hop whose row has been swept away counts as
+ * forward: its saved messages are checked by the framing message, which a relay's tail precedes
+ * only with its own conversation.
+ */
+export function createForwardHopCheck(deps: {
+  database: Database;
+  readRun: (signed: unknown) => RunAssertion | null;
+}) {
+  return async (snapshot: ApprovalContinuation): Promise<boolean> => {
+    const forwarded = snapshot.forwardedProps;
+    const run =
+      forwarded && typeof forwarded === "object" && "openbotRun" in forwarded
+        ? deps.readRun((forwarded as { openbotRun?: unknown }).openbotRun)
+        : null;
+    if (!run?.handoff) return false;
+    const [row] = await deps.database
+      .select({ payload: workItems.payload })
+      .from(workItems)
+      .where(
+        and(
+          eq(workItems.kind, HANDOFF_KIND),
+          eq(workItems.key, run.handoff.key),
+        ),
+      )
+      .limit(1);
+    const work = row?.payload as unknown as HandoffWork | undefined;
+    return work ? work.answerIn === undefined : true;
+  };
+}

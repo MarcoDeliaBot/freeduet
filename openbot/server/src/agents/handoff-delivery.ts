@@ -334,19 +334,22 @@ export function createHandoffDelivery(options: {
       }
       try {
         /*
-         * The conversation that ASKED, not the one it is answering in. The addressed Bot is joining
-         * something already in progress and has to have read it; its own conversation is new and
-         * empty, and reading that would tell it nothing.
+         * D176: what the addressed Bot is shown beforehand.
          *
-         * READ BEFORE THE LOCK IS TAKEN, deliberately. The lock is on `where.threadId` and this read
-         * is of `work.threadId` — a conversation the lock never protected — and the read is the one
-         * call here that throws on a platform error. Thrown while holding the lock it would leak it
-         * until the TTL: on a relay that lock is the asking conversation itself, so the person could
-         * not type for two minutes and the retry would collide with the hop's own leftover hold.
+         * A FORWARD hop is shown nothing of the conversation that asked: that is the person's
+         * private conversation with another Bot, and the hop was handed a task, not that
+         * conversation (a hand-off must not widen what a member reads). It gets its framing
+         * message and nothing before it, so the task has to carry what the member needs. The
+         * conversation was read whole until 27 November 2026, and a hop resumed after a card then
+         * replayed it (a 6.5 MB input on the person's subscription, and an answer built on the
+         * asker's stale lines). A BACKWARDS hop runs in the asking thread itself, so its tail is
+         * its own conversation: the tail is kept, as before.
          */
-        const prior = conversationOnly(
-          await history({ threadId: work.threadId, actorId: work.actorId }),
-        );
+        const prior = work.answerIn
+          ? conversationOnly(
+              await history({ threadId: work.threadId, actorId: work.actorId }),
+            )
+          : [];
 
         /*
          * The hop's computer, resolved before the lock is taken so a failure here leaks nothing. The
@@ -407,7 +410,7 @@ export function createHandoffDelivery(options: {
            * the longer the conversation that wanted it. A few recent turns keep the voice and the
            * pronouns right; the rest is weight.
            */
-          ...(work.answerIn ? prior.slice(-RELAY_CONTEXT_MESSAGES) : prior),
+          ...prior.slice(-RELAY_CONTEXT_MESSAGES),
           { id: `handoff-${runId}`, role: "user", content: message },
         ];
         agent.threadId = where.threadId;
