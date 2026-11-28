@@ -10,6 +10,8 @@ import { MotionConfig, motion, useReducedMotion } from "motion/react";
 import { useEffect, useRef, useState } from "react";
 import { HarnessMark } from "@/components/agents/harness-mark";
 import { MicOrb } from "@/components/duet/mic-orb";
+import type { MessageId } from "@/freeduet/i18n/catalogs";
+import { useT } from "@/freeduet/i18n/provider";
 import { Button } from "@/components/ui/button";
 import {
   Field,
@@ -65,6 +67,7 @@ export function NewBotSheet({
   /** The new Bot's id, so the caller can take the person to it. */
   onCreated: (agentId: string) => void;
 }) {
+  const t = useT();
   return (
     <Sheet
       onOpenChange={(next) => {
@@ -78,7 +81,7 @@ export function NewBotSheet({
         side="right"
         variant="inset"
       >
-        <SheetTitle className="sr-only">New Bot</SheetTitle>
+        <SheetTitle className="sr-only">{t("newbot.title")}</SheetTitle>
         {/* Inside the popup, so it unmounts on close and a reopened sheet starts empty. */}
         <NewBotFlow onCreated={onCreated} />
       </SheetContent>
@@ -141,6 +144,7 @@ function defaultInstructions(name: string, runtime: Runtime): string {
  * `min-h-0` and no overflow of its own shrinks and paints over the footer instead.
  */
 function NewBotFlow({ onCreated }: { onCreated: (agentId: string) => void }) {
+  const t = useT();
   const createAgent = useMutation(createAgentMutationOptions(queryClient));
   /*
    * Assumed available while the answer loads, so the common deployment never sees the option flash
@@ -196,7 +200,7 @@ function NewBotFlow({ onCreated }: { onCreated: (agentId: string) => void }) {
   const named = name.trim() !== "";
   const endpointIssue =
     endpoint.trim() === ""
-      ? "Enter your agent's address."
+      ? t("newbot.addressMissing")
       : agentFormSchema.shape.endpoint.safeParse(endpoint).error?.issues[0]
           ?.message;
   const busy = checking || createAgent.isPending;
@@ -385,7 +389,7 @@ function NewBotFlow({ onCreated }: { onCreated: (agentId: string) => void }) {
           <SheetClose
             render={<Button className="px-4" size="lg" variant="ghost" />}
           >
-            Cancel
+            {t("newbot.cancel")}
           </SheetClose>
         ) : (
           <Button
@@ -396,7 +400,7 @@ function NewBotFlow({ onCreated }: { onCreated: (agentId: string) => void }) {
             type="button"
             variant="ghost"
           >
-            Back
+            {t("newbot.back")}
           </Button>
         )}
         <Button
@@ -406,12 +410,12 @@ function NewBotFlow({ onCreated }: { onCreated: (agentId: string) => void }) {
           type="submit"
         >
           {checking
-            ? "Checking…"
+            ? t("newbot.checking")
             : createAgent.isPending
-              ? "Creating…"
+              ? t("newbot.creating")
               : step === "about"
-                ? "Create"
-                : "Continue"}
+                ? t("newbot.create")
+                : t("newbot.continue")}
         </Button>
       </SheetFooter>
     </form>
@@ -436,6 +440,7 @@ const ORB_LAYOUT_ID = "new-bot-orb";
  * and on the roster, which is the same place the hand-over would have led.
  */
 function CreatedView({ name }: { name: string }) {
+  const t = useT();
   return (
     <div
       aria-live="polite"
@@ -469,9 +474,11 @@ function CreatedView({ name }: { name: string }) {
         transition={{ delay: 0.3, duration: 0.35, ease: "easeOut" }}
       >
         <h2 className="break-words font-semibold text-xl tracking-tight">
-          {name} is ready
+          {t("newbot.ready", { name })}
         </h2>
-        <p className="mt-1 text-muted-foreground text-sm">Taking you to it…</p>
+        <p className="mt-1 text-muted-foreground text-sm">
+          {t("newbot.takingYou")}
+        </p>
       </motion.div>
     </div>
   );
@@ -482,20 +489,20 @@ type Visibility = AgentFormValues["visibility"];
 /** The two ways a Bot can be seen, in the words the old wizard used for them. */
 const VISIBILITY_OPTIONS: Array<{
   value: Visibility;
-  title: string;
-  description: string;
+  title: MessageId;
+  description: MessageId;
   icon: typeof IconLock;
 }> = [
   {
     value: "private",
-    title: "Private",
-    description: "Only you can see it and talk to it.",
+    title: "newbot.private",
+    description: "newbot.privateLine",
     icon: IconLock,
   },
   {
     value: "public",
-    title: "Public",
-    description: `Everyone in your ${appConfig.brand.productName} can find and use it.`,
+    title: "newbot.public",
+    description: "newbot.publicLine",
     icon: IconUsers,
   },
 ];
@@ -537,58 +544,65 @@ function AboutStep({
   onInstructions: (value: string) => void;
   onVisibility: (value: Visibility) => void;
 }) {
+  const t = useT();
   const runsHere = runtime.kind === "builtin";
   return (
     <FieldGroup>
       <Field>
-        <FieldLabel htmlFor="new-bot-name">Name</FieldLabel>
+        <FieldLabel htmlFor="new-bot-name">{t("newbot.name")}</FieldLabel>
         <Input
           autoComplete="off"
           autoFocus
           id="new-bot-name"
           maxLength={80}
           onChange={(event) => onName(event.target.value)}
-          placeholder="Expense Review"
+          placeholder={t("newbot.namePlaceholder")}
           value={name}
         />
       </Field>
       <Field>
         <FieldLabel htmlFor="new-bot-title">
-          Title
-          <span className="font-normal text-muted-foreground">Optional</span>
+          {t("newbot.titleLabel")}
+          <span className="font-normal text-muted-foreground">
+            {t("newbot.optional")}
+          </span>
         </FieldLabel>
         <Input
           autoComplete="off"
           id="new-bot-title"
           maxLength={120}
           onChange={(event) => onTitle(event.target.value)}
-          placeholder={runsHere ? "Finance Operations" : defaultTitle(runtime)}
+          placeholder={
+            runsHere ? t("newbot.titlePlaceholder") : defaultTitle(runtime)
+          }
           value={title}
         />
-        <FieldDescription>A few words shown under its name.</FieldDescription>
+        <FieldDescription>{t("newbot.titleHelp")}</FieldDescription>
       </Field>
       <Field>
         <FieldLabel htmlFor="new-bot-instructions">
-          {runsHere ? "Instructions" : "Role"}
-          <span className="font-normal text-muted-foreground">Optional</span>
+          {runsHere ? t("newbot.instructions") : t("newbot.role")}
+          <span className="font-normal text-muted-foreground">
+            {t("newbot.optional")}
+          </span>
         </FieldLabel>
         <Textarea
           autoComplete="off"
           id="new-bot-instructions"
           maxLength={1000}
           onChange={(event) => onInstructions(event.target.value)}
-          placeholder="Review receipts, categorize expenses, and prepare reimbursement reports."
+          placeholder={t("newbot.instructionsPlaceholder")}
           rows={5}
           value={instructions}
         />
         <FieldDescription>
           {runsHere
-            ? "How it should work. Leave it blank and it helps with anything."
-            : "Added to your agent's own instructions."}
+            ? t("newbot.instructionsHelpHere")
+            : t("newbot.instructionsHelpOther")}
         </FieldDescription>
       </Field>
       <FieldSet>
-        <FieldLegend variant="label">Who can see it</FieldLegend>
+        <FieldLegend variant="label">{t("newbot.whoCanSee")}</FieldLegend>
         <div className="grid gap-2 sm:grid-cols-2">
           {VISIBILITY_OPTIONS.map((option) => {
             const Icon = option.icon;
@@ -603,10 +617,12 @@ function AboutStep({
                 <Icon className="size-5 shrink-0 text-muted-foreground" />
                 <span className="min-w-0">
                   <span className="block font-medium text-sm">
-                    {option.title}
+                    {t(option.title)}
                   </span>
                   <span className="block text-pretty text-muted-foreground text-xs">
-                    {option.description}
+                    {t(option.description, {
+                      product: appConfig.brand.productName,
+                    })}
                   </span>
                 </span>
               </button>
@@ -660,6 +676,7 @@ function RuntimeStep({
   runtime: Runtime | null;
   onChoose: (runtime: Runtime) => void;
 }) {
+  const t = useT();
   const heading = useRef<HTMLHeadingElement>(null);
   useEffect(() => heading.current?.focus(), []);
 
@@ -670,7 +687,7 @@ function RuntimeStep({
         ref={heading}
         tabIndex={-1}
       >
-        Where will your Bot run?
+        {t("newbot.whereRun")}
       </h2>
 
       <button
@@ -684,18 +701,20 @@ function RuntimeStep({
           <IconSparkles className="size-6 text-foreground" />
         </span>
         <span className="min-w-0 pt-0.5">
-          <span className="block font-semibold text-base">Run it here</span>
+          <span className="block font-semibold text-base">
+            {t("newbot.runHere")}
+          </span>
           <span className="mt-1 block text-pretty text-muted-foreground text-sm">
             {builtInAvailable
-              ? `${appConfig.brand.productName} runs it for you. Nothing to set up, and it can start right away.`
-              : "Not available yet. An admin has to turn this on first."}
+              ? t("newbot.runHereLine", { product: appConfig.brand.productName })
+              : t("newbot.runHereOff")}
           </span>
         </span>
       </button>
 
       <div className="flex items-center gap-2 py-1 text-muted-foreground text-xs">
         <span className="h-px flex-1 bg-border" />
-        or connect one you run
+        {t("newbot.orConnect")}
         <span className="h-px flex-1 bg-border" />
       </div>
 
@@ -752,6 +771,7 @@ function EndpointStep({
   onEndpoint: (value: string) => void;
   onKey: (value: string) => void;
 }) {
+  const t = useT();
   const chosen = WEB_HARNESSES.find((entry) => entry.id === harness);
 
   return (
@@ -764,13 +784,15 @@ function EndpointStep({
           </span>
         ) : null}
         <h2 className="break-words font-semibold text-lg tracking-tight">
-          Where can it be reached?
+          {t("newbot.whereReached")}
         </h2>
       </div>
 
       <FieldGroup>
         <Field data-invalid={endpointError ? true : undefined}>
-          <FieldLabel htmlFor="new-bot-endpoint">Agent address</FieldLabel>
+          <FieldLabel htmlFor="new-bot-endpoint">
+            {t("newbot.address")}
+          </FieldLabel>
           <Input
             aria-invalid={endpointError ? true : undefined}
             autoComplete="off"
@@ -788,16 +810,16 @@ function EndpointStep({
             />
           ) : (
             <FieldDescription>
-              Any agent that speaks AG-UI works. {appConfig.brand.productName}{" "}
-              connects to it, so it has to be reachable from{" "}
-              {appConfig.brand.productName}'s server.
+              {t("newbot.addressHelp", { product: appConfig.brand.productName })}
             </FieldDescription>
           )}
         </Field>
         <Field>
           <FieldLabel htmlFor="new-bot-key">
-            Key
-            <span className="font-normal text-muted-foreground">Optional</span>
+            {t("newbot.key")}
+            <span className="font-normal text-muted-foreground">
+              {t("newbot.optional")}
+            </span>
           </FieldLabel>
           <Input
             autoComplete="off"
@@ -808,8 +830,13 @@ function EndpointStep({
             value={secret}
           />
           <FieldDescription>
-            Sent as an <code>Authorization</code> header with every request, and
-            stored encrypted.
+            {t("newbot.keyHelp", { header: "\u0000" })
+              .split("\u0000")
+              .flatMap((piece, index) =>
+                index === 0
+                  ? [piece]
+                  : [<code key="header">Authorization</code>, piece],
+              )}
           </FieldDescription>
         </Field>
       </FieldGroup>

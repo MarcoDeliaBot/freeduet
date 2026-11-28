@@ -1,5 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Fragment, useState } from "react";
+import { Fragment, type ReactNode, useState } from "react";
+import { englishT, type T, useT } from "@/freeduet/i18n/provider";
+import { englishT, type T, useT } from "@/freeduet/i18n/provider";
 import { GmailLogo, GoogleCalendarLogo } from "@/components/duet/google-logos";
 import type { DuetIconName } from "@/components/duet/icons";
 import { DuetCard, OutcomePill, Tile } from "@/components/duet/kit";
@@ -62,10 +64,12 @@ export function SetupChecklist({
   /** Said above the list, such as a connection that came back failed. */
   notice?: string;
 }) {
+  const t = useT();
+  const t = useT();
   const queryClient = useQueryClient();
   const checklist = useQuery(setupChecklistQueryOptions());
   const recheck = useMutation(recheckSetupMutationOptions(queryClient));
-  const notifications = useNotificationsRow();
+  const notifications = useNotificationsRow(t);
   const [dismissed, setDismissed] = useState<SetupRowId[]>([]);
   const [problem, setProblem] = useState<string | null>(null);
   const connect = useMutation({
@@ -73,7 +77,7 @@ export function SetupChecklist({
     onError: (error: Error) => setProblem(error.message),
     onSuccess: (url) => {
       if (url === null) {
-        setProblem("Couldn't start connecting. Try again.");
+        setProblem(t("onboarding.checklist.noStart"));
         return;
       }
       leaveFor(url);
@@ -99,13 +103,15 @@ export function SetupChecklist({
       }}
       type="button"
     >
-      {checking ? "Checking…" : "Check again"}
+      {checking
+        ? t("onboarding.checklist.checking")
+        : t("onboarding.checklist.checkAgain")}
     </button>
   );
 
   const said =
     problem ??
-    (recheck.error ? "Couldn't check again. Try again." : null) ??
+    (recheck.error ? t("onboarding.checklist.recheckFailed") : null) ??
     notice;
   const rows = checklist.data
     ? withNotifications(checklist.data.rows, notifications.row)
@@ -121,18 +127,17 @@ export function SetupChecklist({
       {checklist.isPending ? null : checklist.error ? (
         <>
           <p className="type-sub px-1 text-duet-red" role="alert">
-            Couldn't check your setup. Check again, or carry on and look later
-            in Settings.
+            {t("onboarding.checklist.readFailed")}
           </p>
           {checkAgain}
         </>
       ) : (
         <>
           <p className="type-sub px-1 text-duet-ink-2" role="status">
-            {summaryOf(rows)}
+            {summaryOf(rows, t)}
           </p>
           <DuetCard>
-            <ul aria-label="Setup">
+            <ul aria-label={t("onboarding.checklist.aria")}>
               {rows.map((row) => (
                 <SetupItem
                   connecting={connect.isPending}
@@ -159,23 +164,28 @@ export function SetupChecklist({
 }
 
 /** One line over the card, so the state of the whole list is said before its rows are read. */
-function summaryOf(rows: SetupRow[]): string {
+function summaryOf(rows: SetupRow[], t: T = englishT): string {
   const gaps = rows.filter((row) => row.status === "needs_setup");
   const unchecked = rows.filter((row) => row.status === "not_checked").length;
   const notChecked =
     unchecked === 0
       ? null
-      : unchecked === 1
-        ? "1 thing isn't checked yet."
-        : `${unchecked} things aren't checked yet.`;
-  if (gaps.length === 0) return notChecked ?? "Everything is set up.";
+      : t("onboarding.checklist.unchecked", { count: unchecked });
+  if (gaps.length === 0)
+    return notChecked ?? t("onboarding.checklist.allSet");
   const required = gaps.filter((row) => row.required).length;
-  const things =
-    gaps.length === 1 ? "1 thing needs" : `${gaps.length} things need`;
+  const things = t("onboarding.checklist.gaps", { count: gaps.length });
   const needs =
     required > 0
-      ? `${things} setup, and ${required === 1 ? "1 is" : `${required} are`} required.`
-      : `${things} setup. ${PRODUCT} works without ${gaps.length === 1 ? "it" : "them"}.`;
+      ? t("onboarding.checklist.gapsRequired", {
+          gaps: things,
+          required: t("onboarding.checklist.required", { count: required }),
+        })
+      : t("onboarding.checklist.optional", {
+          count: gaps.length,
+          gaps: things,
+          product: PRODUCT,
+        });
   return notChecked ? `${needs} ${notChecked}` : needs;
 }
 
@@ -194,7 +204,7 @@ function withNotifications(rows: SetupRow[], notifications: SetupRow) {
  * (`GET /api/delivery`). Otherwise its fix is the Get notified step's button again. Blocked and
  * unsupported say so, since no button here can change either.
  */
-function useNotificationsRow(): { row: SetupRow; refetch: () => unknown } {
+function useNotificationsRow(t: T = englishT): { row: SetupRow; refetch: () => unknown } {
   const permission = useNotificationPermission();
   const delivery = useQuery({
     ...deliveryQueryOptions(),
@@ -204,7 +214,7 @@ function useNotificationsRow(): { row: SetupRow; refetch: () => unknown } {
   const phone =
     delivery.data?.devices.some((device) => device.enabled) === true;
   return {
-    row: notificationsRow(permission, phone),
+    row: notificationsRow(permission, phone, t),
     refetch: delivery.refetch,
   };
 }
@@ -212,11 +222,12 @@ function useNotificationsRow(): { row: SetupRow; refetch: () => unknown } {
 export function notificationsRow(
   permission: NotificationPermissionState,
   phone: boolean,
+  t: T = englishT,
 ): SetupRow {
   const row = {
     id: "notifications" as const,
     scope: "person" as const,
-    title: "Notifications",
+    title: t("onboarding.checklist.notifTitle"),
     required: false,
   };
   if (permission === "granted" || phone)
@@ -226,8 +237,8 @@ export function notificationsRow(
       ready: true,
       detail:
         permission === "granted"
-          ? `${PRODUCT} tells you in this browser when it needs your input.`
-          : `${PRODUCT} tells you on your phone when it needs your input.`,
+          ? t("onboarding.checklist.notifBrowser", { product: PRODUCT })
+          : t("onboarding.checklist.notifPhone", { product: PRODUCT }),
       fix: null,
     };
   return {
@@ -236,10 +247,10 @@ export function notificationsRow(
     ready: false,
     detail:
       permission === "denied"
-        ? "Blocked for this site. Allow notifications in your browser's site settings."
+        ? t("onboarding.checklist.notifBlocked")
         : permission === "unsupported"
-          ? "This browser can't show notifications."
-          : "Without them, you see what needs you only when you look.",
+          ? t("onboarding.checklist.notifUnsupported")
+          : t("onboarding.checklist.notifWithout"),
     fix: permission === "default" ? { kind: "notify" } : null,
   };
 }
@@ -259,6 +270,7 @@ function SetupItem({
   onDismiss: () => void;
   openPage: (path: string) => void;
 }) {
+  const t = useT();
   const tone =
     row.status === "ready"
       ? "green"
@@ -292,15 +304,17 @@ function SetupItem({
               {row.title}
             </h3>
             {row.required ? (
-              <p className="type-label text-duet-ink-3">Required</p>
+              <p className="type-label text-duet-ink-3">
+                {t("onboarding.checklist.requiredTag")}
+              </p>
             ) : null}
           </div>
           <OutcomePill icon={row.ready ? "check" : null} tone={tone}>
             {row.status === "ready"
-              ? "Ready"
+              ? t("onboarding.checklist.ready")
               : row.status === "not_checked"
-                ? "Not checked"
-                : "Needs setup"}
+                ? t("onboarding.checklist.notChecked")
+                : t("onboarding.checklist.needsSetup")}
           </OutcomePill>
         </div>
         <p className="type-sub mt-1 text-duet-ink-2 [overflow-wrap:anywhere]">
@@ -340,6 +354,19 @@ function Fix({
   onDismiss: () => void;
   openPage: (path: string) => void;
 }) {
+  const t = useT();
+  const around = (id: "openPage" | "orAdd", node: ReactNode) => {
+    const [before = "", after = ""] = t(`onboarding.checklist.${id}`, {
+      link: "\u0000",
+    }).split("\u0000");
+    return (
+      <>
+        {before}
+        {node}
+        {after}
+      </>
+    );
+  };
   const page = (target: { label: string; path: string }) => (
     <a
       className={LINK}
@@ -354,7 +381,7 @@ function Fix({
   );
   const guide = (url: string) => (
     <a className={LINK} href={url} rel="noopener noreferrer" target="_blank">
-      Setup guide
+      {t("onboarding.checklist.guide")}
     </a>
   );
 
@@ -362,7 +389,7 @@ function Fix({
     if (dismissed) {
       return (
         <p className="type-sub mt-2 text-duet-ink-3">
-          You can connect it later in Connections.
+          {t("onboarding.checklist.later")}
         </p>
       );
     }
@@ -374,14 +401,16 @@ function Fix({
           onClick={() => onConnect(fix.serverId)}
           type="button"
         >
-          {connecting ? "Connecting…" : "Connect"}
+          {connecting
+            ? t("onboarding.checklist.connecting")
+            : t("onboarding.checklist.connect")}
         </button>
         <button
           className="type-label h-9 rounded-full px-4 font-semibold text-duet-ink shadow-[inset_0_0_0_1px_var(--duet-hair)] outline-none transition-colors hover:bg-duet-tile focus-visible:ring-3 focus-visible:ring-duet-violet/40"
           onClick={onDismiss}
           type="button"
         >
-          Not now
+          {t("onboarding.notNow")}
         </button>
       </div>
     );
@@ -395,7 +424,7 @@ function Fix({
           onClick={() => void requestNotificationPermission()}
           type="button"
         >
-          Turn on
+          {t("onboarding.checklist.turnOn")}
         </button>
       </div>
     );
@@ -404,24 +433,41 @@ function Fix({
   if (fix.kind === "page") {
     return (
       <p className="type-sub mt-2 text-duet-ink-2">
-        Open {page(fix)}. {fix.docsUrl ? guide(fix.docsUrl) : null}
+        {around("openPage", page(fix))}{" "}
+        {fix.docsUrl ? guide(fix.docsUrl) : null}
       </p>
     );
   }
 
   return (
     <p className="type-sub mt-2 text-duet-ink-2">
-      Set{" "}
-      {fix.names.map((name, at) => (
-        <Fragment key={name}>
-          {at > 0 ? (at === fix.names.length - 1 ? " and " : ", ") : null}
-          <code className="rounded-md bg-duet-tile px-1.5 py-0.5 font-mono text-[0.85em] text-duet-ink [overflow-wrap:anywhere]">
-            {name}
-          </code>
-        </Fragment>
-      ))}
-      , then restart {PRODUCT}.
-      {fix.page ? <> Or add one in {page(fix.page)}.</> : null}{" "}
+      {t("onboarding.checklist.setNames", {
+        names: "\u0000",
+        product: PRODUCT,
+      })
+        .split("\u0000")
+        .flatMap((piece, index) =>
+          index === 0
+            ? [piece]
+            : [
+                <Fragment key="names">
+                  {fix.names.map((name, at) => (
+                    <Fragment key={name}>
+                      {at > 0
+                        ? at === fix.names.length - 1
+                          ? t("onboarding.checklist.and")
+                          : ", "
+                        : null}
+                      <code className="rounded-md bg-duet-tile px-1.5 py-0.5 font-mono text-[0.85em] text-duet-ink [overflow-wrap:anywhere]">
+                        {name}
+                      </code>
+                    </Fragment>
+                  ))}
+                </Fragment>,
+                piece,
+              ],
+        )}
+      {fix.page ? <> {around("orAdd", page(fix.page))}</> : null}{" "}
       {guide(fix.docsUrl)}
     </p>
   );
