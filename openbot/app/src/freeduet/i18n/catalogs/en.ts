@@ -1756,6 +1756,88 @@ export const EN = {
     one: "{quiet}, after {count} chunk",
     other: "{quiet}, after {count} chunks",
   },
+  // stage-2j begin
+  "admin.computers.description":
+    "Each Bot's browser and the profile it keeps. The profile keeps a Bot signed in. Resetting it signs the Bot out of everything.",
+  "admin.computers.loadError": "Couldn't load the computers. Reload the page.",
+  "admin.computers.shared.lead": "Every Bot is sharing one computer.",
+  "admin.computers.shared.before":
+    "They share its logins, files and session. A Bot can reach what another signed into. Set",
+  "admin.computers.shared.after": "to give each Bot its own.",
+  "admin.computers.perBot":
+    "Each Bot has its own computer, with its own container, files and browser profile.",
+  "admin.computers.list.title": "Computers in this deployment",
+  "admin.computers.list.error": "Couldn't load the list.",
+  "admin.computers.list.empty":
+    "No computers yet. One shows up the first time a Bot opens a page.",
+  "admin.computers.running": "Browser running since {time}",
+  "admin.computers.notRunning":
+    "No browser running. It starts when the Bot next needs it.",
+  "admin.computers.egress.unknown": "Egress not reported",
+  "admin.computers.egress.direct": "Leaves directly",
+  "admin.computers.egress.via": "Leaves through {egress}",
+  "admin.computers.updateAvailable": "Update available",
+  "admin.computers.update": "Update computer",
+  "admin.computers.working": "Working…",
+  "admin.computers.stop": "Stop browser",
+  "admin.computers.reset": "Reset",
+  "admin.computers.resetTitle": "Reset {name}'s computer?",
+  "admin.computers.resetDesc":
+    "Its profile is deleted. The Bot is signed out of every service and starts clean. You can't undo this.",
+  "admin.computers.resetting": "Resetting…",
+  "admin.computers.resetIt": "Reset it",
+  "admin.computers.updateTitle": "Update {name}'s computer?",
+  "admin.computers.updateDesc":
+    "It moves to the computer image this deployment now runs. Its files and sign-ins are kept. If it's running, it restarts and stops what it's doing.",
+  "admin.computers.updating": "Updating…",
+  "admin.computers.updateIt": "Update it",
+  "admin.computers.foot.stopLead": "Stop",
+  "admin.computers.foot.stopRest":
+    "closes the browser and keeps its logins. It starts again the next time the Bot needs it.",
+  "admin.computers.foot.resetLead": "Reset",
+  "admin.computers.foot.resetRest":
+    "deletes the profile and signs the Bot out of everything.",
+  "admin.computers.foot.updateLead": "Update computer",
+  "admin.computers.foot.updateRest":
+    "shows when a computer runs an older image. It moves the computer to the new one and keeps its files and sign-ins.",
+  "admin.computers.foot.audit": "All three show in",
+  "admin.computers.host.description":
+    "Choose folders a Bot can read on this computer. The desktop app asks before each edit or command. Access ends when you stop {product}.",
+  "admin.computers.host.title": "Folders on this computer",
+  "admin.computers.host.offline":
+    "The desktop app is offline. Open it to approve folders or run commands.",
+  "admin.computers.host.noBots":
+    "No Bots yet. Create one, then choose its folders.",
+  "admin.computers.host.choose": "Choose folder",
+  "admin.computers.host.waiting": "Waiting…",
+  "admin.computers.host.readOnlyNote":
+    "Folders are read-only. When a Bot needs to write, the desktop app asks you first.",
+  "admin.computers.host.stopAccess": "Stop folder access",
+  "admin.computers.host.stopping": "Stopping…",
+  "admin.computers.host.viewAudit": "View audit",
+  "admin.computers.host.readOnly": "Read-only",
+  "admin.computers.host.revoke": "Revoke",
+  "admin.computers.host.revoking": "Revoking…",
+  "admin.computers.host.pendingFrom": "{label} from {owner}.",
+  "admin.computers.host.pendingFromFor": "{label} from {owner} for {name}.",
+  "admin.computers.host.folders": {
+    one: "{count} read-only folder",
+    other: "{count} read-only folders",
+  },
+  "admin.computers.host.requests": {
+    one: "{count} pending request",
+    other: "{count} pending requests",
+  },
+  "admin.computers.host.none": "No folders approved.",
+  "admin.computers.host.owner": "the desktop owner",
+  "admin.computers.host.p.write":
+    "File change waiting for approval or to finish",
+  "admin.computers.host.p.run": "Command waiting for approval or to finish",
+  "admin.computers.host.p.list": "Listing files",
+  "admin.computers.host.p.read": "Reading a file",
+  "admin.computers.host.p.stop": "Stopping folder work",
+  "admin.computers.host.p.default": "Folder access waiting for approval",
+  // stage-2j end
 } satisfies Entries;
 
 export type MessageId = keyof typeof EN;

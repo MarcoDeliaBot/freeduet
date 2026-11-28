@@ -1836,4 +1836,89 @@ export const it: Catalog<typeof EN> = {
     one: "{quiet}, dopo {count} frammento",
     other: "{quiet}, dopo {count} frammenti",
   },
+  // stage-2j begin
+  "admin.computers.description":
+    "Il browser di ogni Bot e il profilo che conserva. Il profilo tiene il Bot connesso. Reimpostarlo disconnette il Bot da tutto.",
+  "admin.computers.loadError":
+    "Non è stato possibile caricare i computer. Ricarica la pagina.",
+  "admin.computers.shared.lead": "Tutti i Bot condividono un solo computer.",
+  "admin.computers.shared.before":
+    "Ne condividono accessi, file e sessione. Un Bot può raggiungere ciò a cui ne ha effettuato l'accesso un altro. Imposta",
+  "admin.computers.shared.after": "per dare a ogni Bot il proprio.",
+  "admin.computers.perBot":
+    "Ogni Bot ha il proprio computer, con il proprio container, i propri file e il proprio profilo del browser.",
+  "admin.computers.list.title": "Computer in questa installazione",
+  "admin.computers.list.error": "Non è stato possibile caricare l'elenco.",
+  "admin.computers.list.empty":
+    "Ancora nessun computer. Ne compare uno la prima volta che un Bot apre una pagina.",
+  "admin.computers.running": "Browser in esecuzione dalle {time}",
+  "admin.computers.notRunning":
+    "Nessun browser in esecuzione. Parte quando serve di nuovo al Bot.",
+  "admin.computers.egress.unknown": "Uscita non indicata",
+  "admin.computers.egress.direct": "Esce direttamente",
+  "admin.computers.egress.via": "Esce tramite {egress}",
+  "admin.computers.updateAvailable": "Aggiornamento disponibile",
+  "admin.computers.update": "Aggiorna il computer",
+  "admin.computers.working": "Un attimo…",
+  "admin.computers.stop": "Ferma il browser",
+  "admin.computers.reset": "Reimposta",
+  "admin.computers.resetTitle": "Reimpostare il computer di {name}?",
+  "admin.computers.resetDesc":
+    "Il suo profilo viene eliminato. Il Bot viene disconnesso da ogni servizio e riparte da zero. Non puoi annullare questa azione.",
+  "admin.computers.resetting": "Reimposto…",
+  "admin.computers.resetIt": "Reimposta",
+  "admin.computers.updateTitle": "Aggiornare il computer di {name}?",
+  "admin.computers.updateDesc":
+    "Passa all'immagine del computer che questa installazione usa ora. I suoi file e i suoi accessi restano. Se è in esecuzione, si riavvia e interrompe ciò che sta facendo.",
+  "admin.computers.updating": "Aggiorno…",
+  "admin.computers.updateIt": "Aggiorna",
+  "admin.computers.foot.stopLead": "Ferma",
+  "admin.computers.foot.stopRest":
+    "chiude il browser e ne conserva gli accessi. Riparte la prossima volta che serve al Bot.",
+  "admin.computers.foot.resetLead": "Reimposta",
+  "admin.computers.foot.resetRest":
+    "elimina il profilo e disconnette il Bot da tutto.",
+  "admin.computers.foot.updateLead": "Aggiorna il computer",
+  "admin.computers.foot.updateRest":
+    "compare quando un computer usa un'immagine più vecchia. Porta il computer a quella nuova e ne conserva file e accessi.",
+  "admin.computers.foot.audit": "Tutte e tre compaiono in",
+  "admin.computers.host.description":
+    "Scegli le cartelle che un Bot può leggere su questo computer. L'app desktop chiede prima di ogni modifica o comando. L'accesso finisce quando fermi {product}.",
+  "admin.computers.host.title": "Cartelle su questo computer",
+  "admin.computers.host.offline":
+    "L'app desktop non è in linea. Aprila per approvare cartelle o eseguire comandi.",
+  "admin.computers.host.noBots":
+    "Ancora nessun Bot. Creane uno, poi scegli le sue cartelle.",
+  "admin.computers.host.choose": "Scegli una cartella",
+  "admin.computers.host.waiting": "In attesa…",
+  "admin.computers.host.readOnlyNote":
+    "Le cartelle sono di sola lettura. Quando un Bot deve scrivere, l'app desktop te lo chiede prima.",
+  "admin.computers.host.stopAccess": "Interrompi l'accesso alle cartelle",
+  "admin.computers.host.stopping": "Interrompo…",
+  "admin.computers.host.viewAudit": "Apri il registro",
+  "admin.computers.host.readOnly": "Sola lettura",
+  "admin.computers.host.revoke": "Revoca",
+  "admin.computers.host.revoking": "Revoco…",
+  "admin.computers.host.pendingFrom": "{label} da {owner}.",
+  "admin.computers.host.pendingFromFor": "{label} da {owner} per {name}.",
+  "admin.computers.host.folders": {
+    one: "{count} cartella di sola lettura",
+    other: "{count} cartelle di sola lettura",
+  },
+  "admin.computers.host.requests": {
+    one: "{count} richiesta in attesa",
+    other: "{count} richieste in attesa",
+  },
+  "admin.computers.host.none": "Nessuna cartella approvata.",
+  "admin.computers.host.owner": "il proprietario del desktop",
+  "admin.computers.host.p.write":
+    "Modifica di file in attesa di approvazione o di essere completata",
+  "admin.computers.host.p.run":
+    "Comando in attesa di approvazione o di essere completato",
+  "admin.computers.host.p.list": "Elenco dei file",
+  "admin.computers.host.p.read": "Lettura di un file",
+  "admin.computers.host.p.stop": "Interruzione del lavoro sulle cartelle",
+  "admin.computers.host.p.default":
+    "Accesso alle cartelle in attesa di approvazione",
+  // stage-2j end
 };
