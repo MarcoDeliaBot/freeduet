@@ -19,6 +19,7 @@ import {
 import { stopHandoffMutationOptions } from "@/lib/bot-lifecycle/mutations";
 import { botActivityQueryOptions } from "@/lib/bot-lifecycle/queries";
 import { channelListQueryOptions } from "@/lib/channels/queries";
+import { useT } from "@/freeduet/i18n/provider";
 import { agoShort } from "@/lib/relative-time";
 import {
   type ActiveGroup,
@@ -283,10 +284,11 @@ function Group({
   onToggle: () => void;
   drawItem: (item: ActiveItem<ActivityRow>) => ReactNode;
 }) {
+  const t = useT();
   const resolved = group.id === "resolved";
   const stamp = updated ? (
     <span className="type-sub ml-auto shrink-0 text-duet-ink-2">
-      Updated {agoShort(group.updatedAt, now)}
+      {t("tasks.updated", { ago: agoShort(group.updatedAt, now, t) })}
     </span>
   ) : null;
   return (

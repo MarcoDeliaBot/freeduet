@@ -12,6 +12,7 @@ import {
   ItemTitle,
 } from "@/components/ui/item";
 import { Separator } from "@/components/ui/separator";
+import { useT } from "@/freeduet/i18n/provider";
 import { currentUserQueryOptions } from "@/lib/auth/queries";
 import {
   decideSharedUseMutationOptions,
@@ -20,13 +21,12 @@ import {
   sharedUseRequestsQueryOptions,
 } from "@/lib/plugins/shared-use";
 
-const WHY: Record<SharedUseRequestReason, string> = {
-  refused_call:
-    "An action was blocked. This Bot reaches more people than approved.",
-  publish: "Its owner widened who can reach it.",
-  trigger: "Its owner added a trigger that lets outside messages steer it.",
-  grant: "It was given the app's actions.",
-};
+const WHY = {
+  refused_call: "approvals.shared.why.refusedCall",
+  publish: "approvals.shared.why.publish",
+  trigger: "approvals.shared.why.trigger",
+  grant: "approvals.shared.why.grant",
+} as const satisfies Record<SharedUseRequestReason, string>;
 
 /**
  * Requests to use a shared account, for an administrator to approve or decline: one row each,
@@ -34,6 +34,7 @@ const WHY: Record<SharedUseRequestReason, string> = {
  * for anyone else, or when nothing is waiting.
  */
 export function SharedUseRequests() {
+  const t = useT();
   const queryClient = useQueryClient();
   const me = useQuery(currentUserQueryOptions()).data;
   const isAdmin = me?.role === "admin";
@@ -42,7 +43,7 @@ export function SharedUseRequests() {
   if (!isAdmin || !requests.data?.length) return null;
 
   return (
-    <PageSection title="Shared account requests">
+    <PageSection title={t("approvals.shared.title")}>
       {decide.error ? (
         <p className="mt-4 text-destructive text-sm" role="alert">
           {decide.error.message}
@@ -58,20 +59,25 @@ export function SharedUseRequests() {
               </ItemMedia>
               <ItemContent>
                 <ItemTitle className="line-clamp-none">
-                  {request.botName} wants the shared {request.title} account
+                  {t("approvals.shared.wants", {
+                    bot: request.botName,
+                    account: request.title,
+                  })}
                 </ItemTitle>
                 <ItemDescription className="line-clamp-none">
-                  {WHY[request.reason as SharedUseRequestReason] ??
-                    request.reason}
+                  {WHY[request.reason as SharedUseRequestReason]
+                    ? t(WHY[request.reason as SharedUseRequestReason])
+                    : request.reason}
                 </ItemDescription>
                 <p className="text-sm">
-                  Now:{" "}
+                  {t("approvals.shared.now")}{" "}
                   {request.current
                     ? describeApproval(request.current)
-                    : "Not approved"}
+                    : t("approvals.shared.notApproved")}
                 </p>
                 <p className="text-sm">
-                  Asked: {describeApproval(request.proposed)}
+                  {t("approvals.shared.asked")}{" "}
+                  {describeApproval(request.proposed)}
                 </p>
               </ItemContent>
               <ItemFooter className="justify-start">
@@ -82,7 +88,7 @@ export function SharedUseRequests() {
                   }
                   size="sm"
                 >
-                  Approve
+                  {t("approvals.shared.approve")}
                 </Button>
                 <Button
                   disabled={decide.isPending}
@@ -92,7 +98,7 @@ export function SharedUseRequests() {
                   size="sm"
                   variant="outline"
                 >
-                  Decline
+                  {t("approvals.shared.decline")}
                 </Button>
               </ItemFooter>
             </Item>

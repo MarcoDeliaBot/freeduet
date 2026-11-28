@@ -27,7 +27,7 @@ import {
 } from "@/components/ui/item";
 import { Separator } from "@/components/ui/separator";
 import type { MessageId } from "@/freeduet/i18n/catalogs";
-import { useT } from "@/freeduet/i18n/provider";
+import { useAppLanguage, useT } from "@/freeduet/i18n/provider";
 import {
   cancelFollowUpMutationOptions,
   stopHandoffMutationOptions,
@@ -107,11 +107,12 @@ function PlainActivityRow({
   item: ActivityItem;
 }) {
   const t = useT();
+  const { language } = useAppLanguage();
   const stop = useMutation(stopHandoffMutationOptions(queryClient));
   const cancel = useMutation(cancelFollowUpMutationOptions(queryClient));
   const Icon = ICONS[item.kind];
   const link = linkFor(item, agentId);
-  const when = relativeTime(item.at);
+  const when = relativeTime(item.at, language);
   const control = item.stoppable ? (
     <Button
       disabled={stop.isPending}

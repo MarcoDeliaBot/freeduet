@@ -12,6 +12,7 @@ import {
   channelListQueryOptions,
 } from "@/lib/channels/queries";
 import { EASE_OUT, ENTRANCE_SECONDS } from "@/lib/motion";
+import { useAppLanguage } from "@/freeduet/i18n/provider";
 import { relativeTime } from "@/lib/relative-time";
 import {
   type MessageListEmphasis,
@@ -126,6 +127,7 @@ function ChannelRow({
   emphasis: MessageListEmphasis;
 }) {
   const shouldReduceMotion = useReducedMotion();
+  const { language } = useAppLanguage();
   // Whether this row is unread, as a boolean, for the same reason `Channel` computes `isOpen`
   // that way: navigating re-renders the rows whose answer changed, not the whole roster.
   const unread = useParams({
@@ -155,7 +157,7 @@ function ChannelRow({
         said={channel.lastMessageAt !== null}
         lastMessageAt={
           channel.lastMessageAt
-            ? relativeTime(channel.lastMessageAt)
+            ? relativeTime(channel.lastMessageAt, language)
             : undefined
         }
         pinned={channel.pinned}

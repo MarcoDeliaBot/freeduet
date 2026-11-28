@@ -3,6 +3,8 @@ import { Link } from "@tanstack/react-router";
 import { Fragment } from "react";
 import { PageEmpty, PageRows } from "@/components/layout/page-shell";
 import { Separator } from "@/components/ui/separator";
+import type { MessageId } from "@/freeduet/i18n/catalogs";
+import { useT } from "@/freeduet/i18n/provider";
 import type { RoutineRecord, RoutineRunRecord } from "@/lib/routines/queries";
 import {
   type OwnedRunRecord,
@@ -18,33 +20,41 @@ import { useBotNames } from "./bot-names";
  */
 export const RUN_STATUS: Record<
   RoutineRunRecord["status"],
-  { text: string; dot: string; className: string }
+  { key: MessageId; dot: string; className: string }
 > = {
   running: {
-    text: "Running",
+    key: "routines.status.running",
     dot: "animate-pulse bg-muted-foreground",
     className: "",
   },
-  succeeded: { text: "Succeeded", dot: "bg-emerald-500", className: "" },
+  succeeded: {
+    key: "routines.status.succeeded",
+    dot: "bg-emerald-500",
+    className: "",
+  },
   failed: {
-    text: "Failed",
+    key: "routines.status.failed",
     dot: "bg-destructive",
     className: "text-destructive",
   },
   skipped: {
-    text: "Skipped",
+    key: "routines.status.skipped",
     dot: "bg-amber-500",
     className: "text-amber-600 dark:text-amber-500",
   },
-  waiting: { text: "Waiting for you", dot: "bg-sky-500", className: "" },
+  waiting: {
+    key: "routines.status.waiting",
+    dot: "bg-sky-500",
+    className: "",
+  },
 };
 
 /**
  * A firing the server did not run. It is stored as `skipped`, which reads like a choice, so it has its
  * own word: nobody skipped it; the server reached it too late to run it.
  */
-const MISSED_STATUS = {
-  text: "Missed",
+const MISSED_STATUS: { key: MessageId; dot: string; className: string } = {
+  key: "routines.status.missed",
   dot: "bg-amber-500",
   className: "text-amber-600 dark:text-amber-500",
 };
@@ -53,15 +63,15 @@ const MISSED_STATUS = {
 export function runStatusOf(run: {
   status: RoutineRunRecord["status"];
   missed: boolean;
-}): { text: string; dot: string; className: string } {
+}): { key: MessageId; dot: string; className: string } {
   if (run.missed) return MISSED_STATUS;
   return RUN_STATUS[run.status] ?? RUN_STATUS.skipped;
 }
 
-const SOURCE_TEXT: Record<OwnedRunRecord["source"], string> = {
-  schedule: "Scheduled",
-  run_now: "Run now",
-  trigger: "Triggered",
+const SOURCE_KEY: Record<OwnedRunRecord["source"], MessageId> = {
+  schedule: "routines.scheduled",
+  run_now: "routines.runNow",
+  trigger: "routines.triggered",
 };
 
 /** The rows the server keeps before it says "the latest". Matches the limit the history asks for. */
@@ -80,6 +90,7 @@ export function RoutineHistory({
   agentId?: string;
   routines: RoutineRecord[];
 }) {
+  const t = useT();
   const names = useBotNames();
   const history = useQuery(routineHistoryQueryOptions(agentId));
   if (history.isPending) return null;
@@ -92,12 +103,7 @@ export function RoutineHistory({
   }
   const runs = history.data;
   if (runs.length === 0) {
-    return (
-      <PageEmpty>
-        No runs yet. A run appears here once a routine has fired, or after you
-        press Run now.
-      </PageEmpty>
-    );
+    return <PageEmpty>{t("routines.history.empty")}</PageEmpty>;
   }
   const byId = routinesById(routines);
   return (
@@ -107,7 +113,7 @@ export function RoutineHistory({
           <Fragment key={run.id}>
             {index > 0 ? <Separator /> : null}
             <HistoryRow
-              memberName={names.get(run.agentId) ?? "A Bot"}
+              memberName={names.get(run.agentId) ?? t("routines.history.aBot")}
               routine={byId.get(run.routineId)}
               run={run}
             />
@@ -116,7 +122,7 @@ export function RoutineHistory({
       </PageRows>
       {runs.length === HISTORY_LIMIT ? (
         <p className="mt-4 text-muted-foreground text-xs">
-          Showing the latest {HISTORY_LIMIT} runs.
+          {t("routines.history.latest", { count: HISTORY_LIMIT })}
         </p>
       ) : null}
     </>
@@ -132,6 +138,7 @@ function HistoryRow({
   routine: RoutineRecord | undefined;
   memberName: string;
 }) {
+  const t = useT();
   const status = runStatusOf(run);
   return (
     <div className="flex flex-col gap-1 py-3">
@@ -140,10 +147,10 @@ function HistoryRow({
           className={cn("inline-flex items-center gap-1.5", status.className)}
         >
           <span className={cn("size-1.5 rounded-full", status.dot)} />
-          {status.text}
+          {t(status.key)}
         </span>
         <span className="text-muted-foreground">
-          {stampOf(new Date(run.startedAt))} · {SOURCE_TEXT[run.source]} ·{" "}
+          {stampOf(new Date(run.startedAt))} · {t(SOURCE_KEY[run.source])} ·{" "}
           {memberName}
         </span>
       </div>
@@ -162,12 +169,12 @@ function HistoryRow({
         </div>
       ) : (
         <p className="text-muted-foreground text-sm">
-          A routine that has since been deleted
+          {t("routines.history.deleted")}
         </p>
       )}
       {run.status === "waiting" ? (
         <p className="text-muted-foreground text-xs">
-          Waiting for your approval. Open the conversation to answer it.
+          {t("routines.history.waitingNote")}
         </p>
       ) : null}
       {run.error ? (
@@ -180,7 +187,7 @@ function HistoryRow({
           params={{ channelId: run.channelId }}
           to="/channel/$channelId"
         >
-          Open conversation
+          {t("stalled.open")}
         </Link>
       ) : null}
     </div>

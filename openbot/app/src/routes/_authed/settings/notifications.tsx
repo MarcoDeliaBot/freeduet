@@ -3,6 +3,7 @@ import { PageShell } from "@/components/layout/page-shell";
 import { ChatChangesSection } from "@/components/settings/chat-changes";
 import { NativeDevices, RecentDeliveries } from "@/components/settings/devices";
 import { UpdateRoutingSection } from "@/components/settings/update-routing";
+import { useT } from "@/freeduet/i18n/provider";
 
 export const Route = createFileRoute("/_authed/settings/notifications")({
   component: NotificationsPage,
@@ -10,10 +11,11 @@ export const Route = createFileRoute("/_authed/settings/notifications")({
 
 /** Where your Bots' updates reach you, for all of your Bots at once. Each Bot's own page says how much. */
 function NotificationsPage() {
+  const t = useT();
   return (
     <PageShell
-      description="Where your Bots' updates reach you when you're away. Set how much each Bot sends on its own page."
-      title="Notifications"
+      description={t("settings.notificationsPage")}
+      title={t("profile.notifications")}
     >
       <UpdateRoutingSection />
       <NativeDevices />
