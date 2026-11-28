@@ -1166,8 +1166,8 @@ export const fr: Catalog<typeof EN> = {
   "passwords.saveTo": "Enregistrer dans Mots de passe",
   "responsibilities.run.waitKind.approval": "ton approbation",
   "responsibilities.run.waitKind.question": "ta réponse",
-  "responsibilities.run.waitKind.handoff": "que tu prennes le relais",
-  "responsibilities.run.waitKind.signIn": "que tu te connectes",
+  "responsibilities.run.waitKind.handoff": "ta prise de relais",
+  "responsibilities.run.waitKind.signIn": "ta connexion",
   "responsibilities.run.waitKind.other": "toi",
   "responsibilities.new.description":
     "Un objectif continu. Le Bot y travaille dans la conversation que tu choisis.",
