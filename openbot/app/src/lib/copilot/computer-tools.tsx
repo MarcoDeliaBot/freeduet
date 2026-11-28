@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 import { z } from "zod";
 import { ToolLine } from "@/components/channels/tool-line";
-import { type MessageId } from "@/freeduet/i18n/catalogs";
+import type { MessageId } from "@/freeduet/i18n/catalogs";
 import { useT } from "@/freeduet/i18n/provider";
 import type { MessageParams } from "@/freeduet/i18n/translate";
 import { CommandOutput } from "@/components/computer/command-output";
