@@ -76,6 +76,7 @@ from . import (
     iris_tools,
     lessons,
     origin,
+    open_handoffs,
     person_language,
     person_tone,
     cannot_guard,
@@ -261,7 +262,7 @@ async def run_segment(run: RunInput, member: Member, notes: SegmentNotes | None 
     if light:
         run = dataclasses.replace(run, tools=[tool for tool in run.tools if tool.get("name") in transcript.LIGHT_TOOLS])
     # Written after the light filter, so no note describes a tool this turn does not offer.
-    run_notes = [*tool_notes.notes_for(run, member), *person_language.notes_for(run), *person_tone.notes_for(run), *extra_notes]
+    run_notes = [*tool_notes.notes_for(run, member), *person_language.notes_for(run), *person_tone.notes_for(run), *open_handoffs.notes_for(run, member), *extra_notes]
     if light:
         run_notes.append(transcript.LIGHT_NOTE)
     offered = {tool["name"] for tool in run.tools}
