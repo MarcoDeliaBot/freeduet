@@ -1321,7 +1321,7 @@ export const pt: Catalog<typeof EN> = {
     "Nada é parado. Cada correspondência é registrada como se tivesse sido recusada.",
   "admin.boundaries.neverTitle": "Os assistentes nunca podem",
   "admin.boundaries.neverLead":
-    "Verificadas primeiro. Uma correspondência para a ação, e o assistente é informado de qual regra a recusou. As regras são em CEL. Elas podem verificar",
+    "Verificadas primeiro. Uma correspondência interrompe a ação, e o assistente é informado de qual regra a recusou. As regras são em CEL. Elas podem verificar",
   "admin.boundaries.neverMid1": ", o elemento, a tecla",
   "admin.boundaries.neverMid2": "pressionada, o arquivo, o",
   "admin.boundaries.neverMid3": "executado e",

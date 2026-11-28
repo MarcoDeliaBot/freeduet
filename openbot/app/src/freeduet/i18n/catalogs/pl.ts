@@ -1428,7 +1428,7 @@ export const pl: Catalog<typeof EN> = {
   "admin.people.nobody":
     "Nikt jeszcze się nie zalogował. Osoby pojawią się tutaj, gdy to zrobią.",
   "admin.people.lastSignedIn": "ostatnie logowanie {date}",
-  "admin.people.neverSignedIn": "nigdy się nie zalogowano",
+  "admin.people.neverSignedIn": "brak logowania",
   "admin.people.noProvider": "brak dostawcy",
   "admin.people.accessRemoved": "Dostęp odebrany",
   "admin.people.adminByConfig": "Administrator z konfiguracji",

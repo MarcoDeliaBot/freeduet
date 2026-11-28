@@ -228,7 +228,7 @@ export const ko: Catalog<typeof EN> = {
   "home.passwords": "팀이 쓸 수 있는 비밀번호.",
   "home.routines": "스스로 반복되는 작업과 주간 보기.",
   "home.notifications": "업데이트를 받는 곳.",
-  "home.admin": "컴퓨터, 인증 정보, 접근 범위, 사람, 감사 기록.",
+  "home.admin": "컴퓨터, 인증 정보, 제한, 사람, 감사 기록.",
   "home.engines":
     "비서마다 누가 답하는지, 어떤 순서인지, 오늘 얼마나 썼는지 보여 줍니다. 순서를 직접 바꾸기 전까지는 내 구독이 가장 먼저 쓰입니다.",
   "home.safety": "안전",
@@ -1226,7 +1226,7 @@ export const ko: Catalog<typeof EN> = {
   "routines.card.send": "변경 보내기",
   "routines.card.writeBelow": "변경할 내용을 아래 메시지 상자에 쓰세요.",
   "routines.card.close": "닫기",
-  "admin.boundaries.title": "접근 범위",
+  "admin.boundaries.title": "제한",
   "admin.boundaries.descLead":
     "비서가 자기 컴퓨터로 할 수 있는 일과 할 수 없는 일입니다. 모든 동작은 실행되기 전에 확인됩니다. 거부된 동작은 거부한 규칙과 함께",
   "admin.boundaries.descAudit": "감사",
@@ -1376,7 +1376,7 @@ export const ko: Catalog<typeof EN> = {
   "admin.idp.addShort": "추가",
   "admin.audit.decision.bot.declined": "비서가 거절했습니다",
   "admin.audit.decision.agent.stream_stalled": "비서가 응답을 멈췄습니다",
-  "admin.audit.decision.computer.policy_loaded": "시작 시의 접근 범위",
+  "admin.audit.decision.computer.policy_loaded": "시작 시의 제한",
   "admin.audit.decision.computer.isolation_loaded": "시작 시의 격리",
   "admin.audit.decision.computer.control_taken": "사람이 제어를 넘겨받았습니다",
   "admin.audit.decision.computer.control_released":
@@ -1467,7 +1467,7 @@ export const ko: Catalog<typeof EN> = {
   "admin.nav.in": "들어올 수 있는 사람",
   "admin.nav.happened": "일어난 일",
   "admin.nav.credentials": "인증 정보",
-  "admin.nav.boundaries": "접근 범위",
+  "admin.nav.boundaries": "제한",
   "admin.nav.approvals": "승인",
   "admin.nav.computers": "컴퓨터",
   "admin.nav.plugins": "플러그인",
