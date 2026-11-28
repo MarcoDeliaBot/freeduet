@@ -1836,4 +1836,384 @@ export const it: Catalog<typeof EN> = {
     one: "{quiet}, dopo {count} frammento",
     other: "{quiet}, dopo {count} frammenti",
   },
+  "admin.compDetail.title": "Componenti",
+  "admin.compDetail.noSuch.title": "Componente non trovato",
+  "admin.compDetail.noSuch.description":
+    "Non esiste alcun componente con quel nome.",
+  "admin.compDetail.noSuch.hint":
+    "Potrebbe essere stato rinominato, oppure questa installazione non lo include più.",
+  "admin.compDetail.back": "Torna ai componenti",
+  "admin.compDetail.grant.noBots": "Ancora nessun Bot",
+  "admin.compDetail.grant.all": {
+    one: "Tutti i Bot ({count})",
+    other: "Tutti i {count} Bot",
+  },
+  "admin.compDetail.grant.none": "Nessun Bot",
+  "admin.compDetail.grant.some": "{granted} Bot su {total}",
+  "admin.compDetail.fn.none": "Questa installazione non ha funzioni dati",
+  "admin.compDetail.fn.nothing":
+    "Niente. Mostra solo ciò che il Bot gli passa.",
+  "admin.compDetail.notPublished": "Non pubblicato. Nessun Bot può vederlo.",
+  "admin.compDetail.config.title": "Configurazione",
+  "admin.compDetail.config.description":
+    "A che cosa serve questo componente e quali Bot possono rispondere con esso.",
+  "admin.compDetail.notInBuild.title": "Non presente in questa versione",
+  "admin.compDetail.notInBuild.description":
+    "{product} non riesce a mostrarlo. Le impostazioni qui sotto non hanno effetto.",
+  "admin.compDetail.published": "Pubblicato",
+  "admin.compDetail.published.on": "I Bot possono rispondere con esso.",
+  "admin.compDetail.published.off": "Nessun Bot può usarlo.",
+  "admin.compDetail.published.changes":
+    "La descrizione ha modifiche non pubblicate.",
+  "admin.compDetail.description": "Descrizione",
+  "admin.compDetail.nothingYet": "Ancora niente",
+  "admin.compDetail.availableTo": "Disponibile per",
+  "admin.compDetail.canRead": "Può leggere",
+  "admin.compDetail.details": "Dettagli",
+  "admin.compDetail.kind": "Tipo",
+  "admin.compDetail.calledAs": "Richiamato come",
+  "admin.compDetail.lastChanged": "Ultima modifica",
+  "admin.compDetail.by": "da {name}",
+  "admin.compDetail.descDlg.description":
+    "Ciò che il modello legge quando decide di usarlo. Non ha effetto finché il componente non è pubblicato.",
+  "admin.compDetail.grantsDlg.description":
+    "Disattiva un Bot e non verrà mai a sapere che questo componente esiste. Le modifiche valgono subito.",
+  "admin.compDetail.grantsDlg.empty": "Ancora nessun Bot.",
+  "admin.compDetail.fnDlg.description":
+    "I dati che questo componente può recuperare per mostrarsi. È separato da Disponibile per. Con tutti disattivati, mostra solo ciò che il Bot gli passa. Ogni lettura compare nel Registro. Le modifiche valgono subito.",
+  "admin.compDetail.fnDlg.empty": "Questa installazione non ha funzioni dati.",
+  "admin.computers.description":
+    "Il browser di ogni Bot e il profilo che conserva. Il profilo tiene il Bot connesso. Reimpostarlo disconnette il Bot da tutto.",
+  "admin.computers.loadError":
+    "Non è stato possibile caricare i computer. Ricarica la pagina.",
+  "admin.computers.shared.lead": "Tutti i Bot condividono un solo computer.",
+  "admin.computers.shared.before":
+    "Ne condividono accessi, file e sessione. Un Bot può raggiungere ciò a cui ne ha effettuato l'accesso un altro. Imposta",
+  "admin.computers.shared.after": "per dare a ogni Bot il proprio.",
+  "admin.computers.perBot":
+    "Ogni Bot ha il proprio computer, con il proprio container, i propri file e il proprio profilo del browser.",
+  "admin.computers.list.title": "Computer in questa installazione",
+  "admin.computers.list.error": "Non è stato possibile caricare l'elenco.",
+  "admin.computers.list.empty":
+    "Ancora nessun computer. Ne compare uno la prima volta che un Bot apre una pagina.",
+  "admin.computers.running": "Browser in esecuzione dalle {time}",
+  "admin.computers.notRunning":
+    "Nessun browser in esecuzione. Parte quando serve di nuovo al Bot.",
+  "admin.computers.egress.unknown": "Uscita non indicata",
+  "admin.computers.egress.direct": "Esce direttamente",
+  "admin.computers.egress.via": "Esce tramite {egress}",
+  "admin.computers.updateAvailable": "Aggiornamento disponibile",
+  "admin.computers.update": "Aggiorna il computer",
+  "admin.computers.working": "Un attimo…",
+  "admin.computers.stop": "Ferma il browser",
+  "admin.computers.reset": "Reimposta",
+  "admin.computers.resetTitle": "Reimpostare il computer di {name}?",
+  "admin.computers.resetDesc":
+    "Il suo profilo viene eliminato. Il Bot viene disconnesso da ogni servizio e riparte da zero. Non puoi annullare questa azione.",
+  "admin.computers.resetting": "Reimposto…",
+  "admin.computers.resetIt": "Reimposta",
+  "admin.computers.updateTitle": "Aggiornare il computer di {name}?",
+  "admin.computers.updateDesc":
+    "Passa all'immagine del computer che questa installazione usa ora. I suoi file e i suoi accessi restano. Se è in esecuzione, si riavvia e interrompe ciò che sta facendo.",
+  "admin.computers.updating": "Aggiorno…",
+  "admin.computers.updateIt": "Aggiorna",
+  "admin.computers.foot.stopLead": "Ferma",
+  "admin.computers.foot.stopRest":
+    "chiude il browser e ne conserva gli accessi. Riparte la prossima volta che serve al Bot.",
+  "admin.computers.foot.resetLead": "Reimposta",
+  "admin.computers.foot.resetRest":
+    "elimina il profilo e disconnette il Bot da tutto.",
+  "admin.computers.foot.updateLead": "Aggiorna il computer",
+  "admin.computers.foot.updateRest":
+    "compare quando un computer usa un'immagine più vecchia. Porta il computer a quella nuova e ne conserva file e accessi.",
+  "admin.computers.foot.audit": "Tutte e tre compaiono in",
+  "admin.computers.host.description":
+    "Scegli le cartelle che un Bot può leggere su questo computer. L'app desktop chiede prima di ogni modifica o comando. L'accesso finisce quando fermi {product}.",
+  "admin.computers.host.title": "Cartelle su questo computer",
+  "admin.computers.host.offline":
+    "L'app desktop non è in linea. Aprila per approvare cartelle o eseguire comandi.",
+  "admin.computers.host.noBots":
+    "Ancora nessun Bot. Creane uno, poi scegli le sue cartelle.",
+  "admin.computers.host.choose": "Scegli una cartella",
+  "admin.computers.host.waiting": "In attesa…",
+  "admin.computers.host.readOnlyNote":
+    "Le cartelle sono di sola lettura. Quando un Bot deve scrivere, l'app desktop te lo chiede prima.",
+  "admin.computers.host.stopAccess": "Interrompi l'accesso alle cartelle",
+  "admin.computers.host.stopping": "Interrompo…",
+  "admin.computers.host.viewAudit": "Apri il registro",
+  "admin.computers.host.readOnly": "Sola lettura",
+  "admin.computers.host.revoke": "Revoca",
+  "admin.computers.host.revoking": "Revoco…",
+  "admin.computers.host.pendingFrom": "{label} da {owner}.",
+  "admin.computers.host.pendingFromFor": "{label} da {owner} per {name}.",
+  "admin.computers.host.folders": {
+    one: "{count} cartella di sola lettura",
+    other: "{count} cartelle di sola lettura",
+  },
+  "admin.computers.host.requests": {
+    one: "{count} richiesta in attesa",
+    other: "{count} richieste in attesa",
+  },
+  "admin.computers.host.none": "Nessuna cartella approvata.",
+  "admin.computers.host.owner": "il proprietario del desktop",
+  "admin.computers.host.p.write":
+    "Modifica di file in attesa di approvazione o di essere completata",
+  "admin.computers.host.p.run":
+    "Comando in attesa di approvazione o di essere completato",
+  "admin.computers.host.p.list": "Elenco dei file",
+  "admin.computers.host.p.read": "Lettura di un file",
+  "admin.computers.host.p.stop": "Interruzione del lavoro sulle cartelle",
+  "admin.computers.host.p.default":
+    "Accesso alle cartelle in attesa di approvazione",
+  "admin.learning.description":
+    "Impara dalle conversazioni concluse, rivedi le skill che Intelligence propone e dai ai Bot le skill pubblicate.",
+  "admin.learning.auto.assigned":
+    '{product} ha assegnato automaticamente il container "{container}" di questo progetto Intelligence. Puoi cambiarlo qui.',
+  "admin.learning.auto.absent":
+    'Questo progetto Intelligence non ha ancora un container Learning "{container}". Non viene raccolto nulla.',
+  "admin.learning.auto.notEntitled":
+    "Il piano di questo progetto Intelligence non include Learning. Non è stato assegnato alcun container.",
+  "admin.learning.auto.unavailable":
+    "Non è stato possibile raggiungere Intelligence per trovare il container Learning di questo progetto. {product} riproverà.",
+  "admin.learning.target.container": "ID del container: {label}",
+  "admin.learning.target.revision": "Revisione esatta (facoltativa)",
+  "admin.learning.target.revisionAria": "Revisione: {label}",
+  "admin.learning.target.latest": "Ultima pubblicata",
+  "admin.learning.create.busy": "Creo…",
+  "admin.learning.create.button": "Crea il container {container}",
+  "admin.learning.create.note":
+    "Usa la credenziale di questa installazione, non la chiave di esecuzione.",
+  "admin.learning.create.how": "Per crearlo: ",
+  "admin.learning.part.title": "Partecipazione",
+  "admin.learning.part.description":
+    "Le modifiche ai container valgono per le nuove conversazioni. Quelle esistenti tengono il primo container. I container devono esistere già nello stesso progetto Intelligence. Finché non salvi qui, {product} usa il container openbot di quel progetto.",
+  "admin.learning.part.loading": "Carico le impostazioni di Learning…",
+  "admin.learning.part.turnOn":
+    "Attiva l'apprendimento automatico e la consegna delle skill",
+  "admin.learning.part.default": "Predefinito",
+  "admin.learning.part.hint":
+    "Senza un predefinito, i Bot senza un container proprio restano esclusi. Gli ID sono da 1 a 64 lettere minuscole, numeri e trattini singoli. Lascia vuota la revisione per usare le ultime skill pubblicate.",
+  "admin.learning.part.perBot": "Partecipazione per Bot",
+  "admin.learning.part.botListError":
+    "Non è stato possibile caricare l'elenco dei Bot. Qui sotto trovi le impostazioni salvate per ogni Bot.",
+  "admin.learning.part.botAria": "Partecipazione di {name}",
+  "admin.learning.part.inherit": "Usa il predefinito dell'installazione",
+  "admin.learning.part.exclude": "Escludi da Learning",
+  "admin.learning.part.container": "Usa un container specifico",
+  "admin.learning.part.saving": "Salvo…",
+  "admin.learning.part.save": "Salva le impostazioni di Learning",
+  "admin.learning.part.saved": "Impostazioni salvate.",
+  "admin.learning.rev.title": "Rivedi e pubblica",
+  "admin.learning.rev.description":
+    "Intelligence studia le conversazioni concluse e propone skill. Rivedile e pubblicale in Intelligence. I Bot usano solo le skill pubblicate.",
+  "admin.learning.rev.showFor": "Mostra il container di",
+  "admin.learning.rev.default": "Predefinito dell'installazione",
+  "admin.learning.rev.checking": "Controllo Intelligence…",
+  "admin.learning.rev.invalid":
+    "Il container selezionato o la sua strumentazione non è disponibile.",
+  "admin.learning.rev.selection":
+    "Scegli un Bot oppure imposta un container predefinito.",
+  "admin.learning.rev.none": "Nessun container Learning assegnato.",
+  "admin.learning.rev.threads": "Conversazioni pronte",
+  "admin.learning.rev.candidates": "Candidate da rivedere",
+  "admin.learning.rev.published": "Skill pubblicate",
+  "admin.learning.rev.insights": "Approfondimenti",
+  "admin.learning.rev.running": "Un'analisi è in corso.",
+  "admin.learning.rev.latest": "Ultima analisi: {status}.",
+  "admin.learning.rev.noRun": "Nessuna analisi è ancora stata eseguita.",
+  "admin.learning.rev.manage": "Gestisci Learning in Intelligence",
+  "admin.learning.rev.reviewCandidates": "Rivedi le skill candidate",
+  "admin.learning.rev.viewRuns": "Vedi le analisi eseguite",
+  "admin.learning.del.title": "Consegna delle skill",
+  "admin.learning.del.checking": "Controllo la consegna…",
+  "admin.learning.del.off": "La consegna è disattivata per questo Bot.",
+  "admin.learning.del.waiting":
+    "In attesa del primo snapshot verificato delle skill.",
+  "admin.learning.del.stale":
+    "Uso l'ultimo snapshot verificato. Un aggiornamento è in attesa.",
+  "admin.learning.del.ok": "È disponibile uno snapshot verificato.",
+  "admin.learning.del.revision": "Revisione caricata: {revision}",
+  "admin.learning.del.lastChecked": "Ultimo controllo:",
+  "admin.learning.rev.refresh": "Aggiorna lo stato",
+  "admin.learning.rev.footer":
+    "Gestire Learning richiede il tuo account Intelligence e l'accesso al progetto. {product} tiene le credenziali del progetto sul server. Disattivare Learning qui conserva le impostazioni e le assegnazioni delle conversazioni. Pianificazioni e pubblicazione restano in Intelligence.",
+  "admin.playground.validJson": "{label} deve essere un JSON valido: {reason}",
+  "admin.playground.invalidJson": "JSON non valido",
+  "admin.playground.notObject":
+    "{label} deve essere un oggetto JSON, non {kind}.",
+  "admin.playground.schemaLabel": "Argomenti (JSON Schema)",
+  "admin.playground.sampleLabel": "Argomenti di esempio",
+  "admin.playground.fixBeforeSave": "Correggi i campi JSON prima di salvare.",
+  "admin.playground.draftSaved": "Bozza salvata.",
+  "admin.playground.published": "Pubblicato.",
+  "admin.playground.description":
+    "Scrivi un componente e pubblicalo senza rifare il deploy. Le tue modifiche sono una bozza. Le conversazioni mostrano solo ciò che è pubblicato.",
+  "admin.playground.saveDraft": "Salva la bozza",
+  "admin.playground.publish": "Pubblica",
+  "admin.playground.title": "Titolo",
+  "admin.playground.titlePlaceholder": "Scheda rimborso",
+  "admin.playground.told": "Che cosa viene detto al modello",
+  "admin.playground.toldPlaceholder":
+    "Mostra un rimborso con importo, motivo e stato.",
+  "admin.playground.preview": "Anteprima",
+  "admin.playground.noSample": "Gli argomenti di esempio non sono disponibili.",
+  "admin.playground.fixBeforePreview":
+    "Correggi i campi JSON prima dell'anteprima.",
+  "admin.playground.saved.title": "Salvati qui",
+  "admin.playground.saved.empty":
+    "Ancora niente di salvato. Salva una bozza per vederla qui.",
+  "admin.playground.saved.published": "pubblicato, revisione {revision}",
+  "admin.playground.saved.draftOnly": "solo bozza, nessun Bot può mostrarlo",
+  "admin.playground.saved.edited": "modificato dopo la pubblicazione",
+  "admin.playground.open": "Apri",
+  "admin.playground.delete": "Elimina",
+  "admin.playground.saved.note":
+    "Pubblicare lo rende disponibile a ogni Bot. Puoi disattivarlo per un solo Bot nella pagina Componenti dell'interfaccia.",
+  "admin.playground.del.title": "Eliminare {name}?",
+  "admin.playground.del.description":
+    "Viene rimosso da questa installazione e nessun Bot può più mostrarlo. Non puoi annullare questa azione.",
+  "admin.playground.del.confirm": "Elimina",
+  "admin.plugins.tool.title": "Strumento",
+  "admin.plugins.tool.noTool":
+    "Questo connettore non ha alcuno strumento con quel nome.",
+  "admin.plugins.tool.removed":
+    "Potrebbe essere stato rimosso dall'ultimo aggiornamento dell'elenco degli strumenti.",
+  "admin.plugins.tool.notOn": "Questo connettore non è attivo.",
+  "admin.plugins.tool.noDesc": "Questo strumento non ha una descrizione.",
+  "admin.plugins.tool.writeDesc":
+    "Questo strumento modifica qualcosa presso il fornitore. I limiti sulle scritture valgono per lui.",
+  "admin.plugins.tool.readDesc":
+    "Questo strumento si limita a leggere. I limiti sulle scritture non valgono per lui.",
+  "admin.plugins.tool.what": "Che cosa fa",
+  "admin.plugins.tool.effect": "Effetto",
+  "admin.plugins.tool.effectDesc":
+    "Lo stabilisce il connettore, non il nome dello strumento. Ciò che non è noto conta come una scrittura.",
+  "admin.plugins.tool.bots.title": "Assistenti",
+  "admin.plugins.tool.bots.description":
+    "Un assistente può chiamare questo strumento solo finché il suo interruttore è attivo. Disattivarlo vale dalla chiamata successiva.",
+  "admin.plugins.tool.bots.empty":
+    "Ancora nessun assistente. Creane uno per dargli questo strumento.",
+  "admin.plugins.tool.hidden": "Nascosto dal tuo elenco.",
+  "admin.plugins.tool.canCall":
+    "Può chiamare questo strumento. Ogni chiamata viene comunque controllata rispetto ai limiti e registrata in Audit.",
+  "admin.plugins.tool.noToken":
+    "Consentito, ma questo assistente non ha un token di richiamo. Ogni chiamata viene rifiutata. Emettine uno nella sua pagina oppure imposta AGENT_TOOL_TOKEN.",
+  "admin.plugins.tool.cantCall":
+    "Non può chiamare questo strumento. L'assistente non lo vede mai.",
+  "admin.plugins.tool.aria": "Lascia che {bot} chiami {tool}",
+  "admin.plugins.bot.title": "Assistente",
+  "admin.plugins.bot.notOn": "Nessuna app con quel nome è attiva.",
+  "admin.plugins.bot.nothing": "Qui non c'è nulla da dare a un assistente.",
+  "admin.plugins.bot.notBot.title": "Non è un assistente",
+  "admin.plugins.bot.notBot.description":
+    "Non esiste alcun assistente con quel nome.",
+  "admin.plugins.bot.notBot.hint":
+    "Potrebbe essere stato eliminato dopo che hai aperto questa pagina.",
+  "admin.plugins.bot.noDesc": "Questa azione non ha una descrizione.",
+  "admin.plugins.bot.destroys": "distrugge cose",
+  "admin.plugins.bot.description":
+    "Quali azioni di {app} può chiamare {bot}. Disattivarne una vale dalla chiamata successiva.",
+  "admin.plugins.bot.pageTitle": "{bot} e {app}",
+  "admin.plugins.bot.noActions":
+    "{app} non elenca alcuna azione. Aggiorna i suoi strumenti per ricontrollare.",
+  "admin.plugins.bot.searchAria": "Cerca tra le azioni di {app}",
+  "admin.plugins.bot.searchPlaceholder": "Cerca per nome dell'azione",
+  "admin.plugins.bot.wouldHold": {
+    one: "Questo assistente avrebbe allora {count} strumento di questa app.",
+    other: "Questo assistente avrebbe allora {count} strumenti di questa app.",
+  },
+  "admin.plugins.bot.turnOnReads": "Attiva ogni azione di sola lettura",
+  "admin.plugins.bot.reads.title": "Letture",
+  "admin.plugins.bot.reads.description":
+    "Queste azioni si limitano a leggere. I limiti sulle scritture non valgono per loro.",
+  "admin.plugins.bot.reads.noMatch":
+    'Nessuna azione di sola lettura corrisponde a "{query}".',
+  "admin.plugins.bot.reads.none": "{app} non ha azioni di sola lettura.",
+  "admin.plugins.bot.writes.title": "Apporta modifiche",
+  "admin.plugins.bot.writes.description":
+    "Queste azioni modificano qualcosa presso il fornitore. I limiti sulle scritture valgono per loro.",
+  "admin.plugins.bot.writes.noMatch":
+    'Nessuna azione che apporta modifiche corrisponde a "{query}".',
+  "admin.plugins.bot.writes.none":
+    "{app} non ha azioni che apportano modifiche.",
+  "admin.plugins.bot.shared.title":
+    "Consentire a {bot} di usare l'account {app} condiviso?",
+  "admin.plugins.bot.allowing": "Consento…",
+  "admin.plugins.bot.allow": "Consenti",
+  "admin.shared.sentence.write":
+    "Chiunque possa usare questo assistente può farlo con l'account condiviso.",
+  "admin.shared.sentence.read":
+    "Chiunque possa usare questo assistente può leggere ciò che questo account può leggere.",
+  "admin.shared.owner": "Solo il suo proprietario",
+  "admin.shared.named": "Persone indicate: {who}",
+  "admin.shared.team": "Tutti",
+  "admin.shared.legend":
+    "Chi può usare l'account condiviso tramite questo assistente",
+  "admin.shared.outside":
+    "I messaggi dall'esterno (email, Slack, webhook) possono usarlo",
+  "admin.shared.skipped": {
+    one: "Un'azione elencata da questa app è stata esclusa, perché il nome di uno strumento può usare solo lettere, cifre, trattini bassi e trattini: ",
+    other:
+      "{count} azioni elencate da questa app sono state escluse, perché il nome di uno strumento può usare solo lettere, cifre, trattini bassi e trattini: ",
+  },
+  "admin.vocab.browse": "Sfoglia {name}",
+  "admin.vocab.dirDesc.composio":
+    "Qualche centinaio di app. Ogni persona collega il proprio account.",
+  "admin.vocab.dirDesc.arcade":
+    "App che nessuno qui ha verificato. Ogni persona collega il proprio account.",
+  "admin.vocab.readFailure":
+    "Non è stato possibile caricare l'elenco delle app di {name}. Ricarica la pagina.",
+  "admin.vocab.moreApps": "App di {name}. Nessuno qui le ha verificate.",
+  "admin.vocab.notSetUp":
+    "Non configurato. Imposta {envVar} su questa installazione per sfogliarne le app.",
+  "admin.vocab.connection":
+    "Raggiunta tramite {name}, che conserva l'account di ogni persona.",
+  "admin.vocab.reach.description":
+    "L'account è conservato da {name}. Questa installazione invia una chiave e chi sta chiedendo. Ogni persona collega il proprio e un assistente vede solo ciò che vede quella persona. Non c'è alcun token da incollare.",
+  "admin.vocab.reach.badge": "Tramite {name}",
+  "admin.vocab.disconnect": "Scollegare termina anche l'account presso {name}.",
+  "admin.vocab.trip.stem":
+    "{name} approva un'azione alla volta, quindi non c'è nulla da collegare per l'intera app.",
+  "admin.vocab.trip.below": "Autorizza qui sotto le azioni che vuoi.",
+  "admin.vocab.trip.settings": "Autorizzale da Connessioni.",
+  "admin.vocab.keyMissing":
+    "Imposta {envVar} su questa installazione. Finché non lo fai, questo account non può essere collegato né scollegato da qui. L'app resta attiva e le concessioni dei suoi strumenti restano valide.",
+  "admin.vocab.siblings": {
+    one: "Scollegare termina anche il tuo accesso a {names}, che condivide questa connessione.",
+    other:
+      "Scollegare termina anche il tuo accesso a {names}, che condividono questa connessione.",
+  },
+  "admin.vocab.unansweredMore": {
+    one: "{count} altra app non ha potuto essere controllata e potrebbe essere interessata anch'essa.",
+    other:
+      "{count} altre app non hanno potuto essere controllate e potrebbero essere interessate anch'esse.",
+  },
+  "admin.vocab.unansweredOnly": {
+    one: "{count} app su questa connessione non ha potuto essere controllata, quindi scollegare potrebbe terminare anche quella.",
+    other:
+      "{count} app su questa connessione non hanno potuto essere controllate, quindi scollegare potrebbe terminare anche quelle.",
+  },
+  "admin.vocab.join2": "{a} e {b}",
+  "admin.vocab.joinMany": "{list} e {last}",
+  "admin.skills.write": "Scrivi una skill",
+  "admin.skills.description":
+    "Istruzioni con un nome che chiunque può avviare con /. Una skill non aggiunge alcun accesso. Può solo chiedere a un Bot di usare ciò che ha già.",
+  "admin.skills.installed.title": "Installate",
+  "admin.skills.installed.description":
+    "Per tutti in questa installazione. Ognuno scrive le proprie nella sua pagina Skill.",
+  "admin.skills.loadError":
+    "Non è stato possibile caricare le skill. Ricarica la pagina.",
+  "admin.skills.empty":
+    "Ancora nessuna skill. Scrivine una con Scrivi una skill.",
+  "admin.skills.dlg.title": "Scrivi una skill per tutti",
+  "admin.skills.dlg.description":
+    "Le persone scrivono lo slug dopo /. Il Bot poi segue le istruzioni. Tutti possono usarla e tu scegli quali Bot ce l'hanno.",
+  "admin.skills.slug": "Identificativo (slug)",
+  "admin.skills.title": "Titolo",
+  "admin.skills.summary": "Riepilogo",
+  "admin.skills.summaryPlaceholder": "Una riga",
+  "admin.skills.instructions": "Istruzioni",
+  "admin.skills.instructionsPlaceholder":
+    "Che cosa deve fare il Bot quando questa skill viene usata.",
+  "admin.skills.install": "Installa la skill",
 };

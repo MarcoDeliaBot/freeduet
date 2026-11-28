@@ -689,7 +689,7 @@ function RouteComponent() {
                   ? t("admin.plugins.key.conn.builtin")
                   : auth === "brokered"
                     ? /* The row below says how, at length. This says whose account it is, which is the part that decides what an admin has to do here — which is nothing. */
-                      brokeredConnectionDescription(provider)
+                      brokeredConnectionDescription(provider, t)
                     : t("admin.plugins.key.conn.bearer")
           }
           title={t("admin.plugins.key.conn.title")}
@@ -768,12 +768,12 @@ function RouteComponent() {
                 <ItemContent>
                   <ItemTitle>{t("admin.plugins.key.reach.title")}</ItemTitle>
                   <ItemDescription>
-                    {brokeredReach(provider).description}
+                    {brokeredReach(provider, t).description}
                   </ItemDescription>
                 </ItemContent>
                 <ItemActions>
                   <span className="text-muted-foreground text-xs">
-                    {brokeredReach(provider).badge}
+                    {brokeredReach(provider, t).badge}
                   </span>
                 </ItemActions>
               </Item>
@@ -890,7 +890,7 @@ function RouteComponent() {
                         who: `${sharedConnection?.displayName ? t("admin.plugins.key.team.as", { name: sharedConnection.displayName }) : ""}${sharedConnection?.connectedBy ? t("admin.plugins.key.team.by", { name: sharedConnection.connectedBy }) : ""}`,
                       },
                     )}
-                    disconnectedDescription={`${t("admin.plugins.key.team.disconnected")}${perActionGrants ? ` ${brokeredPerActionTrip(provider, "settings")}` : ""}`}
+                    disconnectedDescription={`${t("admin.plugins.key.team.disconnected")}${perActionGrants ? ` ${brokeredPerActionTrip(provider, "settings", t)}` : ""}`}
                     heading={t("admin.plugins.key.team.heading")}
                     notice={t("admin.plugins.key.team.notice")}
                     provider={provider}
@@ -906,12 +906,12 @@ function RouteComponent() {
                       "admin.plugins.key.mine.connected",
                       {
                         title,
-                        note: brokeredDisconnectNote(provider),
+                        note: brokeredDisconnectNote(provider, t),
                       },
                     )}
                     disconnectedDescription={
                       perActionGrants
-                        ? `${brokeredPerActionTrip(provider, "settings")} ${reassurance}`
+                        ? `${brokeredPerActionTrip(provider, "settings", t)} ${reassurance}`
                         : t("admin.plugins.key.mine.tryConnect", {
                             note: reassurance,
                           })
