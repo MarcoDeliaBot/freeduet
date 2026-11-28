@@ -43,6 +43,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
+import { useAppLanguage } from "@/freeduet/i18n/provider";
 import {
   type CredentialFormValues,
   credentialFormSchema,
@@ -62,6 +63,7 @@ export const Route = createFileRoute("/_authed/admin/credentials")({
 });
 
 function CredentialsPage() {
+  const { t } = useAppLanguage();
   const [adding, setAdding] = useState(false);
   const formId = useId();
   const queryClient = useQueryClient();
@@ -93,11 +95,13 @@ function CredentialsPage() {
       action={
         <Button onClick={() => setAdding(true)} size="sm" variant="ghost">
           <IconPlus />
-          Add credential
+          {t("admin.credentials.add")}
         </Button>
       }
-      description={`Keys and tokens for this deployment. ${appConfig.brand.productName} never shows a secret after it is saved.`}
-      title="Credentials"
+      description={t("admin.credentials.desc", {
+        product: appConfig.brand.productName,
+      })}
+      title={t("admin.credentials.title")}
     >
       {/*
        * THE FORM IS NOT ON THE PAGE. A credential is added once and then lived with, so a permanent
@@ -107,9 +111,9 @@ function CredentialsPage() {
       <Dialog onOpenChange={setAdding} open={adding}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Add credential</DialogTitle>
+            <DialogTitle>{t("admin.credentials.add")}</DialogTitle>
             <DialogDescription>
-              Saved for this deployment. You won't see the secret again.
+              {t("admin.credentials.dialogDesc")}
             </DialogDescription>
           </DialogHeader>
           <DialogBody className="mt-4">
@@ -130,7 +134,9 @@ function CredentialsPage() {
                       field.state.meta.isTouched && !field.state.meta.isValid;
                     return (
                       <Field data-invalid={isInvalid}>
-                        <FieldLabel htmlFor={field.name}>Type</FieldLabel>
+                        <FieldLabel htmlFor={field.name}>
+                          {t("admin.credentials.type")}
+                        </FieldLabel>
                         <Select
                           onValueChange={(value) =>
                             field.handleChange(value as "model" | "connector")
@@ -145,9 +151,11 @@ function CredentialsPage() {
                           </SelectTrigger>
                           <SelectContent>
                             <SelectGroup>
-                              <SelectItem value="model">Model</SelectItem>
+                              <SelectItem value="model">
+                                {t("admin.credentials.model")}
+                              </SelectItem>
                               <SelectItem value="connector">
-                                Connector
+                                {t("admin.credentials.connector")}
                               </SelectItem>
                             </SelectGroup>
                           </SelectContent>
@@ -165,7 +173,9 @@ function CredentialsPage() {
                       field.state.meta.isTouched && !field.state.meta.isValid;
                     return (
                       <Field data-invalid={isInvalid}>
-                        <FieldLabel htmlFor={field.name}>Provider</FieldLabel>
+                        <FieldLabel htmlFor={field.name}>
+                          {t("admin.credentials.provider")}
+                        </FieldLabel>
                         <Input
                           aria-invalid={isInvalid}
                           id={field.name}
@@ -190,7 +200,9 @@ function CredentialsPage() {
                       field.state.meta.isTouched && !field.state.meta.isValid;
                     return (
                       <Field data-invalid={isInvalid}>
-                        <FieldLabel htmlFor={field.name}>Key ID</FieldLabel>
+                        <FieldLabel htmlFor={field.name}>
+                          {t("admin.credentials.keyId")}
+                        </FieldLabel>
                         <Input
                           aria-invalid={isInvalid}
                           id={field.name}
@@ -215,7 +227,9 @@ function CredentialsPage() {
                       field.state.meta.isTouched && !field.state.meta.isValid;
                     return (
                       <Field data-invalid={isInvalid}>
-                        <FieldLabel htmlFor={field.name}>Secret</FieldLabel>
+                        <FieldLabel htmlFor={field.name}>
+                          {t("admin.credentials.secret")}
+                        </FieldLabel>
                         <Input
                           aria-invalid={isInvalid}
                           autoComplete="off"
@@ -256,15 +270,14 @@ function CredentialsPage() {
               {([kind, provider, keyId]) =>
                 liveCredentialFor(credentials.data, kind, provider, keyId) ? (
                   <p className="text-amber-600 text-sm dark:text-amber-500">
-                    This key already has an active credential. Saving replaces
-                    it and revokes the old one.
+                    {t("admin.credentials.replaces")}
                   </p>
                 ) : null
               }
             </form.Subscribe>
             {createCredential.error ? (
               <p className="text-destructive text-sm" role="alert">
-                Couldn't save the credential. Try again.
+                {t("admin.credentials.saveError")}
               </p>
             ) : null}
           </DialogBody>
@@ -275,7 +288,7 @@ function CredentialsPage() {
               type="button"
               variant="ghost"
             >
-              Cancel
+              {t("admin.credentials.cancel")}
             </Button>
             <form.Subscribe
               selector={(state) => [state.canSubmit, state.isSubmitting]}
@@ -290,8 +303,8 @@ function CredentialsPage() {
                   type="submit"
                 >
                   {isSubmitting || createCredential.isPending
-                    ? "Saving…"
-                    : "Save credential"}
+                    ? t("admin.credentials.saving")
+                    : t("admin.credentials.save")}
                 </Button>
               )}
             </form.Subscribe>
@@ -299,15 +312,13 @@ function CredentialsPage() {
         </DialogContent>
       </Dialog>
 
-      <PageSection title="Saved credentials">
+      <PageSection title={t("admin.credentials.savedTitle")}>
         {credentials.isPending ? null : credentials.error ? (
           <p className="mt-4 text-destructive text-sm" role="alert">
-            Couldn't load credentials. Reload the page.
+            {t("admin.credentials.loadError")}
           </p>
         ) : credentials.data?.length === 0 ? (
-          <PageEmpty>
-            No credentials yet. Add one with Add credential.
-          </PageEmpty>
+          <PageEmpty>{t("admin.credentials.empty")}</PageEmpty>
         ) : (
           <PageRows>
             {credentials.data?.map((credential, index) => (
@@ -317,7 +328,9 @@ function CredentialsPage() {
                     <ItemTitle>{credential.provider}</ItemTitle>
                     <ItemDescription>
                       {credential.kind} · {credential.keyId} ·{" "}
-                      {credential.revokedAt ? "revoked" : "active"}
+                      {credential.revokedAt
+                        ? t("admin.credentials.revoked")
+                        : t("admin.credentials.active")}
                     </ItemDescription>
                   </ItemContent>
                   <ItemActions>
@@ -330,7 +343,7 @@ function CredentialsPage() {
                       size="sm"
                       variant="outline"
                     >
-                      Revoke
+                      {t("admin.credentials.revoke")}
                     </Button>
                   </ItemActions>
                 </Item>

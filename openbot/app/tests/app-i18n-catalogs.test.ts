@@ -106,8 +106,8 @@ test("Italian is translated: no key of it reads as the English by accident, exce
       JSON.stringify(CATALOGS.it?.[id as keyof typeof SOURCE]) ===
       JSON.stringify(SOURCE[id as keyof typeof SOURCE]),
   );
-  // Product words that are the same in both ("Chat", "Dashboard", "Team", "Bot", "Menu").
-  expect(same.length).toBeLessThan(12);
+  // Product words that are the same in both ("Chat", "Dashboard", "Team", "Bot", "Menu"; the audit table's Bot column is one more).
+  expect(same.length).toBeLessThan(13);
 });
 
 test("a missing or empty value reads as English, never as a key or a blank", () => {

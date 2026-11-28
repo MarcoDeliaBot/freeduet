@@ -21,6 +21,7 @@ import {
 } from "@/components/ui/item";
 import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
+import { useAppLanguage } from "@/freeduet/i18n/provider";
 import { currentUserQueryOptions } from "@/lib/auth/queries";
 import { terminateMemberComputersMutationOptions } from "@/lib/enterprise/mutations";
 import {
@@ -47,23 +48,31 @@ const PROVIDER_NAMES: Record<string, string> = {
  * The address is the title, so this is everything else worth knowing at a glance while deciding
  * whether somebody should still have access.
  */
-function describe(person: Person): string {
+function describe(
+  person: Person,
+  t: ReturnType<typeof useAppLanguage>["t"],
+  date: ReturnType<typeof useAppLanguage>["date"],
+): string {
   const providers = person.providers
     .map((provider) => PROVIDER_NAMES[provider] ?? provider)
     .join(", ");
   const when = person.lastSignedInAt
-    ? `last signed in ${new Date(person.lastSignedInAt).toLocaleDateString()}`
-    : "never signed in";
+    ? t("admin.people.lastSignedIn", {
+        date: date(new Date(person.lastSignedInAt)),
+      })
+    : t("admin.people.neverSignedIn");
+  const via = providers || t("admin.people.noProvider");
 
   if (person.revoked)
-    return `Access removed · ${providers || "no provider"} · ${when}`;
+    return `${t("admin.people.accessRemoved")} · ${via} · ${when}`;
   if (person.configuredAdmin) {
-    return `Admin by configuration · ${when}`;
+    return `${t("admin.people.adminByConfig")} · ${when}`;
   }
-  return `${providers || "no provider"} · ${when}`;
+  return `${via} · ${when}`;
 }
 
 function PeoplePage() {
+  const { t, date } = useAppLanguage();
   const [search, setSearch] = useState("");
   /*
    * Debounced, so typing a name is one request rather than one per keystroke against an aggregate
@@ -89,12 +98,12 @@ function PeoplePage() {
 
   return (
     <PageShell
-      description="Everybody who has signed in. Admins can open these screens. Everybody else talks to Bots."
-      title="People"
+      description={t("admin.people.desc")}
+      title={t("admin.people.title")}
     >
       <PageSection
-        description="Addresses in INITIAL_ADMIN_EMAILS are always admins. You can't change them here."
-        title="Who is here"
+        description={t("admin.people.whoDesc")}
+        title={t("admin.people.whoTitle")}
       >
         {failure ? (
           <p className="mt-4 text-destructive text-sm" role="alert">
@@ -103,12 +112,15 @@ function PeoplePage() {
         ) : null}
         {terminate.data ? (
           <p className="mt-4 text-muted-foreground text-sm" role="status">
-            Stopped {terminate.data.stopped.length}{" "}
-            {terminate.data.stopped.length === 1 ? "computer" : "computers"}
+            {t("admin.people.stopped", {
+              count: terminate.data.stopped.length,
+            })}
             {terminate.data.failed.length > 0
-              ? `. ${terminate.data.failed.length} couldn't be stopped`
+              ? t("admin.people.stoppedFailed", {
+                  failed: terminate.data.failed.length,
+                })
               : ""}
-            . Their disks are kept.
+            {t("admin.people.disksKept")}
           </p>
         ) : null}
         {/*
@@ -116,22 +128,22 @@ function PeoplePage() {
           is the opposite of what somebody looking for a colleague needs.
         */}
         <Input
-          aria-label="Search people"
+          aria-label={t("admin.people.searchLabel")}
           className="mt-4"
           onChange={(event) => setSearch(event.target.value)}
-          placeholder="Search by name or address"
+          placeholder={t("admin.people.searchPlaceholder")}
           value={search}
         />
 
         {people.isPending ? null : people.error ? (
           <p className="mt-4 text-destructive text-sm" role="alert">
-            Couldn't load people. Reload the page.
+            {t("admin.people.loadError")}
           </p>
         ) : rows.length === 0 ? (
           <PageEmpty>
             {query
-              ? `Nobody matches "${query}".`
-              : "Nobody has signed in yet. People show here once they do."}
+              ? t("admin.people.noMatch", { query })
+              : t("admin.people.nobody")}
           </PageEmpty>
         ) : (
           <PageRows>
@@ -155,7 +167,7 @@ function PeoplePage() {
                       <ItemTitle>{person.name ?? person.email}</ItemTitle>
                       <ItemDescription>
                         {person.name ? `${person.email} · ` : ""}
-                        {describe(person)}
+                        {describe(person, t, date)}
                       </ItemDescription>
                     </ItemContent>
                     <ItemActions>
@@ -170,7 +182,7 @@ function PeoplePage() {
                         size="sm"
                         variant="outline"
                       >
-                        Stop computers
+                        {t("admin.people.stopComputers")}
                       </Button>
                       <Button
                         disabled={busy || isSelf || person.configuredAdmin}
@@ -183,10 +195,14 @@ function PeoplePage() {
                         size="sm"
                         variant={person.revoked ? "outline" : "destructive"}
                       >
-                        {person.revoked ? "Restore" : "Remove"}
+                        {person.revoked
+                          ? t("admin.people.restore")
+                          : t("admin.people.remove")}
                       </Button>
                       <Switch
-                        aria-label={`Admin: ${person.email}`}
+                        aria-label={t("admin.people.adminSwitch", {
+                          email: person.email,
+                        })}
                         checked={person.role === "admin"}
                         disabled={busy || person.configuredAdmin || isSelf}
                         onCheckedChange={(checked) =>
@@ -217,7 +233,9 @@ function PeoplePage() {
             size="sm"
             variant="outline"
           >
-            {people.isFetchingNextPage ? "Loading…" : "Show more"}
+            {people.isFetchingNextPage
+              ? t("admin.people.loading")
+              : t("admin.people.showMore")}
           </Button>
         ) : null}
       </PageSection>

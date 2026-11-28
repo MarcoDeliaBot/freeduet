@@ -1241,4 +1241,259 @@ export const it: Catalog<typeof EN> = {
   "routines.card.writeBelow":
     "Scrivi la modifica nella casella dei messaggi qui sotto.",
   "routines.card.close": "Chiudi",
+  "admin.boundaries.title": "Limiti",
+  "admin.boundaries.descLead":
+    "Che cosa può e non può fare un Bot con il suo computer. Ogni azione viene controllata prima che avvenga. I rifiuti compaiono in",
+  "admin.boundaries.descAudit": "Registro",
+  "admin.boundaries.descTail": "con la regola che li ha rifiutati.",
+  "admin.boundaries.whenTitle": "Quando una regola corrisponde",
+  "admin.boundaries.whenDesc":
+    "Blocca l'azione, oppure registrala e lasciala passare. Registrare ti permette di provare una regola sull'attività reale prima che rifiuti qualcosa.",
+  "admin.boundaries.modeEnforce": "Blocca l'azione",
+  "admin.boundaries.modeRecord": "Registrala e permettila",
+  "admin.boundaries.modeEnforceNote":
+    "Il Bot viene fermato e gli viene detto quale regola l'ha rifiutato.",
+  "admin.boundaries.modeRecordNote":
+    "Niente viene fermato. Ogni corrispondenza viene registrata come se fosse stata rifiutata.",
+  "admin.boundaries.neverTitle": "I Bot non possono mai",
+  "admin.boundaries.neverLead":
+    "Controllate per prime. Una corrispondenza ferma l'azione e al Bot viene detto quale regola l'ha rifiutata. Le regole sono in CEL. Possono controllare",
+  "admin.boundaries.neverMid1": ", l'elemento, il tasto",
+  "admin.boundaries.neverMid2": "premuto, il file, il",
+  "admin.boundaries.neverMid3": "eseguito, e",
+  "admin.boundaries.neverMid4": "per gli strumenti esterni.",
+  "admin.boundaries.neverMid5": "dice che cosa ha avviato l'esecuzione:",
+  "admin.boundaries.neverTail":
+    "Un'esecuzione programmata agisce come il suo proprietario, quindi",
+  "admin.boundaries.neverTail2":
+    "da solo non te lo dice. Una regola che non si può valutare conta come una corrispondenza. Un errore di battitura non lascia mai passare un'azione.",
+  "admin.boundaries.or": "oppure",
+  "admin.boundaries.noRules":
+    "Nessuna regola. Ogni azione è permessa e registrata.",
+  "admin.boundaries.remove": "Rimuovi",
+  "admin.boundaries.ruleLabel": "Una regola, scritta in CEL",
+  "admin.boundaries.testing": "Prova in corso…",
+  "admin.boundaries.testFirst": "Prova prima",
+  "admin.boundaries.addRule": "Aggiungi regola",
+  "admin.boundaries.preset.form": "Non inviare mai un modulo",
+  "admin.boundaries.preset.formCost":
+    "Impedisce al Bot di premere Invio anche altrove. Un modulo può partire da Invio in qualsiasi campo. Non copre la scelta in un menu o in un campo data, la cui modifica può inviare un modulo da sola.",
+  "admin.boundaries.preset.password": "Non scrivere mai in un campo password",
+  "admin.boundaries.preset.passwordCost":
+    "Un campo password con un'etichetta diversa non è coperto. La regola guarda l'etichetta.",
+  "admin.boundaries.preset.social": "Stai lontano dai social network",
+  "admin.boundaries.preset.socialCost":
+    "Solo questi due host. Un link che ci porta da un altro sito è permesso.",
+  "admin.boundaries.otherwiseTitle": "Altrimenti possono",
+  "admin.boundaries.otherwiseDesc":
+    "Vale per tutto ciò che l'elenco qui sopra non ha preso. Un elenco vuoto qui non permette nulla, e ogni azione viene rifiutata.",
+  "admin.boundaries.allowAll": "true, tutto ciò che non è rifiutato sopra",
+  "admin.boundaries.saved":
+    "Salvato. Vale dalla prossima azione di qualsiasi Bot.",
+  "admin.boundaries.footer":
+    "Le modifiche valgono dalla prossima azione di qualsiasi Bot. Restano dopo un riavvio.",
+  "admin.boundaries.dry.none":
+    "Non ci sono ancora azioni del computer registrate su cui provare. La regola è valida. Vedrai che cosa corrisponde quando i Bot avranno agito.",
+  "admin.boundaries.dry.zero":
+    "Provata sulle ultime {scanned} azioni registrate. Questa regola non ne avrebbe rifiutata nessuna. Potrebbe comunque corrispondere a quelle future.",
+  "admin.boundaries.dry.some":
+    "Provata sulle ultime {scanned} azioni registrate. Questa regola ne avrebbe rifiutate {refused}.",
+  "admin.boundaries.dry.wouldRefuse": "Rifiuterebbe",
+  "admin.boundaries.dry.wouldAllow": "Ora permetterebbe",
+  "admin.boundaries.dry.on": "su «{name}»",
+  "admin.boundaries.dry.running": "eseguendo",
+  "admin.boundaries.dry.touching": "toccando {file}",
+  "admin.boundaries.dry.first":
+    "Mostro i primi {shown}. Il conteggio qui sopra riguarda tutto ciò che è stato controllato.",
+  "admin.people.title": "Persone",
+  "admin.people.desc":
+    "Tutti quelli che hanno effettuato l'accesso. Gli amministratori possono aprire queste schermate. Tutti gli altri parlano con i Bot.",
+  "admin.people.whoTitle": "Chi c'è",
+  "admin.people.whoDesc":
+    "Gli indirizzi in INITIAL_ADMIN_EMAILS sono sempre amministratori. Qui non puoi modificarli.",
+  "admin.people.stopped": {
+    one: "Fermato {count} computer",
+    other: "Fermati {count} computer",
+  },
+  "admin.people.stoppedFailed": ". {failed} non si sono potuti fermare",
+  "admin.people.disksKept": ". I loro dischi vengono conservati.",
+  "admin.people.searchLabel": "Cerca persone",
+  "admin.people.searchPlaceholder": "Cerca per nome o indirizzo",
+  "admin.people.loadError":
+    "Non è stato possibile caricare le persone. Ricarica la pagina.",
+  "admin.people.noMatch": 'Nessuno corrisponde a "{query}".',
+  "admin.people.nobody":
+    "Nessuno ha ancora effettuato l'accesso. Le persone compariranno qui quando lo faranno.",
+  "admin.people.lastSignedIn": "ultimo accesso {date}",
+  "admin.people.neverSignedIn": "mai effettuato l'accesso",
+  "admin.people.noProvider": "nessun provider",
+  "admin.people.accessRemoved": "Accesso rimosso",
+  "admin.people.adminByConfig": "Amministratore per configurazione",
+  "admin.people.stopComputers": "Ferma i computer",
+  "admin.people.restore": "Ripristina",
+  "admin.people.remove": "Rimuovi",
+  "admin.people.adminSwitch": "Amministratore: {email}",
+  "admin.people.loading": "Caricamento…",
+  "admin.people.showMore": "Mostra altro",
+  "admin.boundaries.and": "e",
+  "admin.credentials.title": "Credenziali",
+  "admin.credentials.add": "Aggiungi credenziale",
+  "admin.credentials.desc":
+    "Chiavi e token di questa installazione. {product} non mostra mai un segreto dopo che è stato salvato.",
+  "admin.credentials.dialogDesc":
+    "Salvata per questa installazione. Non vedrai più il segreto.",
+  "admin.credentials.type": "Tipo",
+  "admin.credentials.model": "Modello",
+  "admin.credentials.connector": "Connettore",
+  "admin.credentials.provider": "Fornitore",
+  "admin.credentials.keyId": "ID della chiave",
+  "admin.credentials.secret": "Segreto",
+  "admin.credentials.replaces":
+    "Questa chiave ha già una credenziale attiva. Salvando la sostituisci e quella vecchia viene revocata.",
+  "admin.credentials.saveError":
+    "Non è stato possibile salvare la credenziale. Riprova.",
+  "admin.credentials.cancel": "Annulla",
+  "admin.credentials.saving": "Salvataggio…",
+  "admin.credentials.save": "Salva la credenziale",
+  "admin.credentials.savedTitle": "Credenziali salvate",
+  "admin.credentials.loadError":
+    "Non è stato possibile caricare le credenziali. Ricarica la pagina.",
+  "admin.credentials.empty":
+    "Ancora nessuna credenziale. Aggiungine una con «Aggiungi credenziale».",
+  "admin.credentials.revoked": "revocata",
+  "admin.credentials.active": "attiva",
+  "admin.credentials.revoke": "Revoca",
+  "admin.idp.title": "Provider di identità",
+  "admin.idp.add": "Aggiungi un provider",
+  "admin.idp.desc":
+    "Il provider SAML o OpenID Connect della tua azienda. Le persone accedono con la loro email, e il dominio dell'email sceglie il provider.",
+  "admin.idp.registeredTitle": "Registrati",
+  "admin.idp.registeredDesc":
+    "Google, Microsoft e Okta si impostano nell'ambiente. Qui non compaiono.",
+  "admin.idp.loadError":
+    "Non è stato possibile caricare i provider di identità. Ricarica la pagina.",
+  "admin.idp.empty":
+    "Ancora nessun provider di identità. Aggiungine uno con i metadati che ti dà il tuo team di identità.",
+  "admin.idp.remove": "Rimuovi",
+  "admin.idp.dialogTitle": "Aggiungi un provider di identità",
+  "admin.idp.name": "Nome",
+  "admin.idp.domain": "Dominio email",
+  "admin.idp.domainNote":
+    "Chiunque abbia un indirizzo su questo dominio accede da qui. Separa più domini con delle virgole.",
+  "admin.idp.issuer": "Emittente",
+  "admin.idp.signOnUrl": "URL di accesso",
+  "admin.idp.metadata": "Metadati XML",
+  "admin.idp.metadataNote":
+    "Il file che ti dà il tuo team di identità. Include il certificato di firma.",
+  "admin.idp.clientId": "ID client",
+  "admin.idp.clientSecret": "Segreto del client",
+  "admin.idp.cancel": "Annulla",
+  "admin.idp.adding": "Aggiunta in corso…",
+  "admin.idp.addShort": "Aggiungi",
+  "admin.audit.decision.bot.declined": "Il Bot ha rifiutato",
+  "admin.audit.decision.agent.stream_stalled": "Il Bot ha smesso di rispondere",
+  "admin.audit.decision.computer.policy_loaded": "Limiti all'avvio",
+  "admin.audit.decision.computer.isolation_loaded": "Isolamento all'avvio",
+  "admin.audit.decision.computer.control_taken":
+    "Una persona ha preso il controllo",
+  "admin.audit.decision.computer.control_released":
+    "Il controllo è tornato al Bot",
+  "admin.audit.decision.computer.help_requested": "Il Bot ha chiesto aiuto",
+  "admin.audit.decision.computer.secret_requested":
+    "Il Bot ha chiesto un segreto",
+  "admin.audit.decision.computer.secret_supplied":
+    "Una persona ha fornito un segreto",
+  "admin.audit.decision.computer.reset": "Il computer è stato reimpostato",
+  "admin.audit.decision.computer.updated": "Il computer è stato aggiornato",
+  "admin.audit.decision.computer.stopped": "Una persona ha premuto stop",
+  "admin.audit.decision.component.granted": "Concesso a questo Bot",
+  "admin.audit.decision.component.revoked": "Tolto a questo Bot",
+  "admin.audit.decision.component.published": "Pubblicato. Ogni Bot può usarlo",
+  "admin.audit.decision.component.unpublished":
+    "Ritirato. Nessun Bot può usarlo",
+  "admin.audit.decision.component.draft_saved":
+    "Bozza salvata, non ancora pubblicata",
+  "admin.audit.decision.component.refused": "Rifiutato",
+  "admin.audit.decision.component.function_granted": "Può leggerlo",
+  "admin.audit.decision.component.function_revoked": "Non può più leggerlo",
+  "admin.audit.decision.component.function_called": "Ha letto dati reali",
+  "admin.audit.decision.component.function_refused": "Rifiutato",
+  "admin.audit.decision.component.function_failed": "Non è riuscito a leggerlo",
+  "admin.audit.decision.mcp.tools_discovered":
+    "Strumenti offerti per un'esecuzione",
+  "admin.audit.decision.mcp.call_succeeded": "Chiamato per conto di questo Bot",
+  "admin.audit.decision.mcp.call_rejected": "Bloccato",
+  "admin.audit.decision.mcp.call_failed": "Il server non ha risposto",
+  "admin.audit.decision.mcp.callback_refused":
+    "Non è stato possibile confermare quale Bot fosse",
+  "admin.audit.decision.configuration.changed": "Configurazione modificata",
+  "admin.audit.decision.credential.created": "Credenziale salvata",
+  "admin.audit.discovery.under-floor":
+    "Pochi strumenti, quindi sono stati offerti tutti",
+  "admin.audit.discovery.nothing-declared":
+    "Nessuna skill dichiara uno di questi strumenti",
+  "admin.audit.discovery.unavailable":
+    "Non è stato possibile scegliere, quindi sono stati offerti tutti",
+  "admin.audit.discovery.nothing-chosen":
+    "Nessuna skill applicata, quindi sono stati offerti tutti",
+  "admin.audit.discovery.selected": "Scelti in base alla skill",
+  "admin.audit.title": "Registro",
+  "admin.audit.desc":
+    "Ogni azione compiuta da un Bot e ogni azione che la policy di questa installazione ha rifiutato.",
+  "admin.audit.export": "Esporta CSV",
+  "admin.audit.exporting": "Esportazione…",
+  "admin.audit.refresh": "Aggiorna",
+  "admin.audit.exportFailed":
+    "Non è stato possibile esportare gli eventi. Riprova.",
+  "admin.audit.filter.all": "Tutto",
+  "admin.audit.filter.computer": "Azioni del computer",
+  "admin.audit.filter.blocked": "Bloccate",
+  "admin.audit.filter.didNot": "Non avvenute",
+  "admin.audit.filter.nobody": "Senza nessuno a guardare",
+  "admin.audit.capped":
+    "Il file contiene i {count} eventi più recenti, non tutti. Restringi il filtro o le date per esportare il resto.",
+  "admin.audit.loadError":
+    "Non è stato possibile caricare il registro. Ricarica la pagina.",
+  "admin.audit.empty": "Ancora nessun evento corrisponde a questo filtro.",
+  "admin.audit.col.when": "Quando",
+  "admin.audit.col.what": "Che cosa",
+  "admin.audit.col.on": "Su",
+  "admin.audit.col.bot": "Bot",
+  "admin.audit.col.startedBy": "Avviata da",
+  "admin.audit.col.decision": "Decisione",
+  "admin.audit.by.routine": "Una routine",
+  "admin.audit.by.handedOnBy": "Passata da {name}",
+  "admin.audit.by.handedOn": "Passata",
+  "admin.audit.by.memory": "Una fonte di memoria",
+  "admin.audit.by.responsibility": "Una responsabilità",
+  "admin.audit.by.deployment": "Questa installazione",
+  "admin.audit.by.remote": "Un browser non abbinato al computer",
+  "admin.audit.by.person": "Una persona",
+  "admin.audit.routed.mention": "La persona ha scelto questo Bot",
+  "admin.audit.routed.default": "Inviata al Bot predefinito",
+  "admin.audit.routed.meant": "Inviata al Bot a cui era destinata",
+  "admin.audit.toolsOf": "{offered} strumenti su {granted}",
+  "admin.audit.blocked": "Bloccata",
+  "admin.audit.didNot": "Non avvenuta",
+  "admin.audit.allowed": "Permessa",
+  "admin.audit.reportedByBot": ", segnalato dal Bot stesso",
+  "admin.audit.dryRun": "prova: registrata, non applicata",
+  "admin.nav.back": "Torna all'app",
+  "admin.nav.overview": "Panoramica",
+  "admin.nav.reach": "A che cosa possono accedere i Bot",
+  "admin.nav.do": "Che cosa possono fare i Bot",
+  "admin.nav.in": "Chi può entrare",
+  "admin.nav.happened": "Che cosa è successo",
+  "admin.nav.credentials": "Credenziali",
+  "admin.nav.boundaries": "Limiti",
+  "admin.nav.approvals": "Approvazioni",
+  "admin.nav.computers": "Computer",
+  "admin.nav.plugins": "Plugin",
+  "admin.nav.skills": "Skill",
+  "admin.nav.learning": "Apprendimento automatico",
+  "admin.nav.components": "Componenti dell'interfaccia",
+  "admin.nav.playground": "Area di prova",
+  "admin.nav.people": "Persone",
+  "admin.nav.idp": "Provider di identità",
+  "admin.nav.audit": "Registro",
 };
