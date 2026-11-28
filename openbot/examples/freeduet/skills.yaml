@@ -19155,6 +19155,8 @@ skills:
       ## Privacy
       Page addresses and queries leave the computer for third parties (r.jina.ai, mcp.exa.ai). So never send a private address, a client's page, a login page, or a query that holds names, prices or plans of the person or a client. When in doubt, ask the person first.
 
+      The five sites X, Reddit, Instagram, Facebook and LinkedIn are not read with this tool: Mark reads them with his own browser (computer_navigate, computer_read_pages) after the person signs in with the secondary account through computer_request_sign_in (D183).
+
       ## Forbidden
       - Any other agent-reach command: login, logout, setup, add, remove, update, configure, doctor, check, browser, skill, uninstall, read <url> (use web read), and any --backend option.
       - youtube transcribe (it needs a key and uploads audio).
