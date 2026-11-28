@@ -2353,7 +2353,7 @@ export const ja: Catalog<typeof EN> = {
   "engines.chain.many": "{list}を試します。",
   "engines.chain.then": "、次に",
   "engines.pin":
-    "この環境のファイルによって{engine}に固定されています。他のエンジンには切り替わりません。",
+    "この環境のファイルによって{engine}に固定されています。他のエンジンに切り替わることは決してありません。",
   "engines.alone":
     "このメンバーには{engine}だけが設定されているため、切り替え先はまだありません。選択は、切り替え先ができたときのために保持されます。",
   "engines.source.yours": "あなたの選択です。この環境のファイルでは：{mode}。",

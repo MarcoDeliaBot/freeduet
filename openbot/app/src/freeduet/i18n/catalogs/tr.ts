@@ -2300,7 +2300,7 @@ export const tr: Catalog<typeof EN> = {
   "engines.pin":
     "Kurulumun dosyası tarafından {engine} motoruna sabitlendi: asla başka bir motora geçmez.",
   "engines.alone":
-    "Bu üye için yalnızca {engine} ayarlı, bu yüzden henüz geçilecek bir şey yok. Seçimin, geçilecek bir şey olduğu zamana kadar korunur.",
+    "Bu üye için yalnızca {engine} ayarlı, bu yüzden henüz geçilecek bir şey yok. Seçimin, geçilecek bir şey olunca kullanılmak üzere saklanır.",
   "engines.source.yours":
     "Senin seçimin. Kurulumun dosyası şunu söylüyor: {mode}.",
   "engines.source.file": "Kurulumun dosyasından.",
@@ -2348,7 +2348,7 @@ export const tr: Catalog<typeof EN> = {
   "engines.providers.routerWarning":
     "Mesajların yönlendiriciye gider; yönlendirici bunları içinde açtığın ücretsiz sağlayıcılara iletir. Mesajlar bilgisayarından çıkar ve bu sağlayıcılar onları saklayabilir.",
   "engines.providers.routerAdvanced":
-    "Gelişmiş seçenek, önerilen bir varsayılan değil: proje kendini yalnızca kişisel deneyler için olarak tanımlıyor. FreeDuet onu kurmaz ya da çalıştırmaz. Sağlayıcı anahtarların onun içinde kalır; FreeDuet yalnızca onun sana verdiği tek erişim belirtecini saklar.",
+    "Gelişmiş seçenek, önerilen bir varsayılan değil: proje kendini yalnızca kişisel deneme amaçlı olarak tanımlıyor. FreeDuet onu kurmaz ya da çalıştırmaz. Sağlayıcı anahtarların onun içinde kalır; FreeDuet yalnızca onun sana verdiği tek erişim belirtecini saklar.",
   "engines.providers.routerAddress":
     "Kendi varsayılan portu olan 3001, FreeDuet'in portudur. Onu başka bir portta çalıştır ve adresi sonunda /v1 olacak şekilde yaz. Bu bilgisayarda http yeterlidir. Bu bilgisayarın dışında yalnızca kendi ağın kabul edilir (bir LAN adresi ya da bir .local adı) ve https ile. Herkese açık bir ana makine reddedilir.",
   "engines.providers.address": "Sunucu adresi",
@@ -2565,7 +2565,7 @@ export const tr: Catalog<typeof EN> = {
   "connections.app.allowed": "İzin verildi",
   "connections.app.vendorDidntSay": "{vendor} söylemedi.",
   "connections.identity.toolsDesc":
-    "Asistanlarının depolarını senin adına okumasını ve değiştirmesini sağlar. Bunu yukarıdaki hesabından ayrı olarak bağlarsın.",
+    "Asistanlarının, senin depolarını senin adına okumasına ve değiştirmesine izin verir. Bunu yukarıdaki hesabından ayrı olarak bağlarsın.",
   "connections.identity.tools": "Araçlar",
   "connections.identity.githubTools": "GitHub araçları",
   "connections.identity.notConnected": "Bağlı değil",
@@ -2640,7 +2640,8 @@ export const tr: Catalog<typeof EN> = {
   "connections.secret.calendarHint":
     "Bu adrese sahip olan herkes takvimini okuyabilir, bu yüzden parola kadar dikkatle saklanır.",
   "connections.secret.checking": "Gmail ile kontrol ediliyor…",
-  "connections.secret.canDoTitle": "Bu, asistanlarına ne yaptırır",
+  "connections.secret.canDoTitle":
+    "Bu, asistanlarının neler yapmasına izin verir",
   "connections.secret.canDoDesc":
     "Bir uygulama parolası tüm posta kutunu açar, bu yüzden bunun ne yaptığını bilmekte fayda var.",
   "connections.secret.canDo":
@@ -2660,7 +2661,7 @@ export const tr: Catalog<typeof EN> = {
     "Bu uygulamayla bir asistan kullanan herkes bu tek hesap olarak davranacak.",
   "connections.cancel": "İptal",
   "connections.dir.description":
-    "{name} uygulama dizini. Asistanların araçlarını kullanılabilir kılmak için bir uygulama ekle. Her kişi bir şey okunmadan önce yine de kendi hesabını bağlar.",
+    "{name} uygulama dizini. Araçlarını asistanların kullanımına açmak için bir uygulama ekle. Her kişi, uygulama bir şey okumadan önce yine de kendi hesabını bağlar.",
   "connections.dir.appsTitle": "Uygulamalar",
   "connections.dir.appsDesc":
     "Ada göre ara. Burada kimse bu uygulamaları incelemedi.",

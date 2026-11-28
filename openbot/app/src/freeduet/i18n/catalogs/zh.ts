@@ -2128,7 +2128,7 @@ export const zh: Catalog<typeof EN> = {
   "engines.chain.one": "只尝试 {engine}。",
   "engines.chain.many": "尝试 {list}。",
   "engines.chain.then": "，然后 ",
-  "engines.pin": "已被安装的文件固定为 {engine}：它不会切换到其他引擎。",
+  "engines.pin": "已被安装的文件固定为 {engine}：它绝不会切换到其他引擎。",
   "engines.alone":
     "这位成员只设置了 {engine}，所以暂时没有可切换的对象。你的选择会保留，等有可切换的对象时再生效。",
   "engines.source.yours": "你的选择。安装的文件说明：{mode}。",
@@ -2436,13 +2436,13 @@ export const zh: Catalog<typeof EN> = {
     "。将它命名为 {product}，并复制那十六个字母。",
   "connections.secret.step2Lead":
     "如果也想让你的助理看到你的日历：在 Google 日历中打开设置，选择你的日历，然后复制它的",
-  "connections.secret.step2Link": "iCal 格式的私人地址",
+  "connections.secret.step2Link": "iCal 格式的私密地址",
   "connections.secret.step2Tail": "。这一步是可选的。",
   "connections.secret.address": "你的 Gmail 地址",
   "connections.secret.password": "应用专用密码",
   "connections.secret.passwordHint":
     "Google 给你的十六个字母，带不带空格都可以。不是你平时用的密码。",
-  "connections.secret.calendar": "日历私人地址（可选）",
+  "connections.secret.calendar": "日历私密地址（可选）",
   "connections.secret.calendarHint":
     "任何拥有这个地址的人都可以读取你的日历，所以它会像密码一样被小心保管。",
   "connections.secret.checking": "正在与 Gmail 核对…",

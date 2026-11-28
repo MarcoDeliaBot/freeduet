@@ -2290,7 +2290,7 @@ export const ko: Catalog<typeof EN> = {
   "engines.chain.many": "{list}을(를) 시도합니다.",
   "engines.chain.then": ", 그다음 ",
   "engines.pin":
-    "설치의 파일에 의해 {engine}에 고정되어 있습니다. 다른 엔진으로 전환되지 않습니다.",
+    "설치의 파일에 의해 {engine}에 고정되어 있습니다. 다른 엔진으로 절대 전환되지 않습니다.",
   "engines.alone":
     "이 멤버에는 {engine}만 설정되어 있어 아직 전환할 대상이 없습니다. 내 선택은 전환할 대상이 생길 때를 위해 보관됩니다.",
   "engines.source.yours":
