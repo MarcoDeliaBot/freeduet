@@ -3115,7 +3115,7 @@ export const it: Catalog<typeof EN> = {
     one: "1 è obbligatoria",
     other: "{count} sono obbligatorie",
   },
-  "onboarding.checklist.gapsRequired": "{gaps}, e {required}.",
+  "onboarding.checklist.gapsRequired": "{gaps} e {required}.",
   "onboarding.checklist.optional": {
     one: "{gaps}. {product} funziona anche senza.",
     other: "{gaps}. {product} funziona anche senza di esse.",

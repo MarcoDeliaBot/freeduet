@@ -86,7 +86,7 @@ export function RoutineWeek({
   }, [clock, opened, zone]);
   // Kept on screen while the next day's window loads: a midnight must not blank the grid.
   const calendar = useQuery({
-    ...routineCalendarQueryOptions({ ...weekWindow(opened), agentId }),
+    ...routineCalendarQueryOptions({ ...weekWindow(opened), agentId }, t),
     placeholderData: keepPreviousData,
   });
   const history = useQuery(routineHistoryQueryOptions(agentId, t));
