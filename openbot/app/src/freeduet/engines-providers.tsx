@@ -8,38 +8,20 @@ import { Switch } from "@/components/ui/switch";
 import { agentListQueryOptions } from "@/lib/agents/queries";
 import { client } from "@/lib/client";
 import {
-  CLOUD_WARNING,
   checkText,
-  FREE_MODELS_LOADING,
-  FREE_MODELS_NOTE,
-  FREE_NOTE,
-  FREE_ROUTER_LABEL,
   freeModelsSourceText,
-  KEY_PLACEHOLDER,
-  KEY_REMOVED,
-  KEY_SAVED,
-  LABELS,
-  LOCKED_OWN_FILE,
   modelsLoadedText,
-  NOT_ON_YET_KEY,
-  NOT_ON_YET_SETTINGS,
   PROVIDER_ORDER,
   PROVIDER_TEXT,
-  PROVIDERS_DESCRIPTION,
-  PROVIDERS_TITLE,
   type ProviderView,
-  ROUTER_ADDRESS_NOTE,
-  ROUTER_ADVANCED_NOTE,
-  ROUTER_WARNING,
-  SETTINGS_SAVED,
-  TAG_TEXT,
-  USE_FOR_NONE,
-  USE_FOR_TITLE,
-  warningFor,
+  providerBlurb,
+  tagText,
   usersText,
+  warningFor,
 } from "./engines-providers-text";
 import { WorkspacePicker } from "./workspace";
 import { blockText, type EnginesReading } from "./engines-text";
+import { useAppLanguage } from "./i18n/provider";
 
 /**
  * The provider cards of the Engines page (D109, docs/design/engines-three-clicks.md): one card per provider, with a switch, the
@@ -79,8 +61,9 @@ function ProviderCard({
   memberName: (id: string) => string;
   onChanged: () => void;
 }) {
+  const { t } = useAppLanguage();
   const text = PROVIDER_TEXT[card.id];
-  const tag = TAG_TEXT[card.tag];
+  const tag = tagText(card.tag, t);
   const ids = useId();
   const locked = !canChange || card.blocked !== null;
   const [address, setAddress] = useState(card.baseUrl);
@@ -101,14 +84,14 @@ function ProviderCard({
     queryFn: async (): Promise<FreeModels> => {
       const response = await client(
         `${PROVIDERS_PATH}/${encodeURIComponent(card.id)}/free-models`,
-        { method: "POST", fallback: "The list could not be loaded." },
+        { method: "POST", fallback: t("engines.providers.listFailed") },
       );
       return (await response.json()) as FreeModels;
     },
   });
   const sourceLine = freeModels.isPending
-    ? FREE_MODELS_LOADING
-    : freeModelsSourceText(freeModels.data?.source ?? "fallback");
+    ? t("engines.providers.freeModelsLoading")
+    : freeModelsSourceText(freeModels.data?.source ?? "fallback", t);
   const freeOptions = [
     ...new Set([
       FREE_ROUTER,
@@ -137,23 +120,28 @@ function ProviderCard({
         card.id,
         "",
         { enabled: on, ...(on ? settings : {}) },
-        "That could not be changed.",
+        t("engines.providers.changeFailed"),
       );
       setWantOn(false);
-      done(SETTINGS_SAVED);
+      done(t("engines.providers.settingsSaved"));
     },
   });
   const saveKey = useMutation({
     mutationFn: async () => {
       const value = key;
       setKey("");
-      await put(card.id, "/key", { key: value }, "The key could not be saved.");
+      await put(
+        card.id,
+        "/key",
+        { key: value },
+        t("engines.providers.keySaveFailed"),
+      );
       if (wantOn && model.trim()) {
         await put(
           card.id,
           "",
           { enabled: true, ...settings },
-          "That could not be changed.",
+          t("engines.providers.changeFailed"),
         );
         setWantOn(false);
       }
@@ -165,10 +153,10 @@ function ProviderCard({
     mutationFn: async () => {
       await client(`${PROVIDERS_PATH}/${encodeURIComponent(card.id)}/key`, {
         method: "DELETE",
-        fallback: "The key could not be removed.",
+        fallback: t("engines.providers.keyRemoveFailed"),
       });
       setWantOn(false);
-      done(KEY_REMOVED);
+      done(t("engines.providers.keyRemoved"));
     },
   });
   const saveSettings = useMutation({
@@ -178,30 +166,30 @@ function ProviderCard({
         card.id,
         "",
         { enabled: on, ...settings },
-        "That could not be saved.",
+        t("engines.providers.saveFailed"),
       );
       if (on) setWantOn(false);
-      done(SETTINGS_SAVED);
+      done(t("engines.providers.settingsSaved"));
     },
   });
   const choose = useMutation({
     mutationFn: async (members: string[]) => {
-      await put(card.id, "", { members }, "That could not be changed.");
-      done(SETTINGS_SAVED);
+      await put(card.id, "", { members }, t("engines.providers.changeFailed"));
+      done(t("engines.providers.settingsSaved"));
     },
   });
   const load = useMutation({
     mutationFn: async () => {
       const response = await client(
         `${PROVIDERS_PATH}/${encodeURIComponent(card.id)}/models`,
-        { method: "POST", fallback: "The list could not be loaded." },
+        { method: "POST", fallback: t("engines.providers.listFailed") },
       );
       return (await response.json()) as Check & { models: string[] };
     },
     onSuccess: (result) => {
       setModels(result.models);
       setCheck(result.ok ? null : result);
-      setSaid(result.ok ? modelsLoadedText(result.models.length) : null);
+      setSaid(result.ok ? modelsLoadedText(result.models.length, t) : null);
     },
   });
   const test = useMutation({
@@ -209,7 +197,7 @@ function ProviderCard({
       setCheck(null);
       const response = await client(
         `${PROVIDERS_PATH}/${encodeURIComponent(card.id)}/test`,
-        { method: "POST", fallback: "The test could not be run." },
+        { method: "POST", fallback: t("engines.providers.testFailed") },
       );
       return (await response.json()) as Check;
     },
@@ -250,10 +238,12 @@ function ProviderCard({
               {tag.label}
             </OutcomePill>
           </div>
-          <p className="type-label mt-1 text-duet-ink-2">{text.blurb}</p>
+          <p className="type-label mt-1 text-duet-ink-2">
+            {providerBlurb(card.id, t)}
+          </p>
         </div>
         <Switch
-          aria-label={`Switch on ${text.name}`}
+          aria-label={t("engines.providers.switchOn", { name: text.name })}
           checked={on}
           disabled={locked || busy}
           onCheckedChange={(next) => {
@@ -266,30 +256,34 @@ function ProviderCard({
         />
       </div>
 
-      <p className="type-label text-duet-ink-2">{usersText(card)}</p>
+      <p className="type-label text-duet-ink-2">{usersText(card, t)}</p>
       {card.tag === "router" ? (
         <p className="type-label text-duet-ink-2" role="note">
-          {ROUTER_ADVANCED_NOTE}
+          {t("engines.providers.routerAdvanced")}
         </p>
       ) : null}
       {card.cloud && card.blocked === null ? (
         <>
           <p className="type-label text-duet-amber" role="note">
-            {card.tag === "router" ? ROUTER_WARNING : CLOUD_WARNING}
+            {card.tag === "router"
+              ? t("engines.providers.routerWarning")
+              : t("engines.providers.cloudWarning")}
           </p>
           {card.tag === "free" ? (
-            <p className="type-label text-duet-ink-2">{FREE_NOTE}</p>
+            <p className="type-label text-duet-ink-2">
+              {t("engines.providers.freeNote")}
+            </p>
           ) : null}
         </>
       ) : null}
       {card.useFor && card.enabled ? (
         <fieldset className="grid gap-1.5" disabled={locked || busy}>
           <legend className="type-label text-duet-ink-2">
-            {USE_FOR_TITLE}
+            {t("engines.providers.useFor")}
           </legend>
           {card.useFor.available.map((id) => {
             const ticked = card.useFor?.chosen.includes(id) ?? false;
-            const warning = ticked ? warningFor(id) : null;
+            const warning = ticked ? warningFor(id, t) : null;
             return (
               <div key={id}>
                 <label className="type-label flex items-center gap-2">
@@ -316,7 +310,9 @@ function ProviderCard({
             );
           })}
           {card.useFor.chosen.length === 0 ? (
-            <p className="type-label text-duet-ink-2">{USE_FOR_NONE}</p>
+            <p className="type-label text-duet-ink-2">
+              {t("engines.providers.useForNone")}
+            </p>
           ) : null}
         </fieldset>
       ) : null}
@@ -324,7 +320,9 @@ function ProviderCard({
       {card.blocked === null ? (
         <div className="grid gap-3">
           <label className="grid gap-1" htmlFor={`${ids}-address`}>
-            <span className="type-label text-duet-ink-2">{LABELS.address}</span>
+            <span className="type-label text-duet-ink-2">
+              {t("engines.providers.address")}
+            </span>
             <Input
               disabled={locked || card.addressFixed}
               id={`${ids}-address`}
@@ -334,7 +332,9 @@ function ProviderCard({
             />
           </label>
           {card.tag === "router" ? (
-            <p className="type-label text-duet-ink-2">{ROUTER_ADDRESS_NOTE}</p>
+            <p className="type-label text-duet-ink-2">
+              {t("engines.providers.routerAddress")}
+            </p>
           ) : null}
 
           {freeChoice ? (
@@ -343,7 +343,7 @@ function ProviderCard({
                 className="type-label text-duet-ink-2"
                 htmlFor={`${ids}-model`}
               >
-                {LABELS.model}
+                {t("admin.credentials.model")}
               </label>
               <select
                 className="h-9 w-full min-w-0 rounded-lg border border-input bg-transparent px-2.5 py-1 text-base outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm dark:bg-input/30"
@@ -354,14 +354,18 @@ function ProviderCard({
               >
                 {freeOptions.map((name) => (
                   <option key={name} value={name}>
-                    {name === FREE_ROUTER ? FREE_ROUTER_LABEL : name}
+                    {name === FREE_ROUTER
+                      ? t("engines.providers.freeRouterLabel")
+                      : name}
                   </option>
                 ))}
               </select>
               {sourceLine ? (
                 <p className="type-label text-duet-ink-2">{sourceLine}</p>
               ) : null}
-              <p className="type-label text-duet-ink-2">{FREE_MODELS_NOTE}</p>
+              <p className="type-label text-duet-ink-2">
+                {t("engines.providers.freeModelsNote")}
+              </p>
             </div>
           ) : (
             <div className="grid gap-1">
@@ -369,7 +373,7 @@ function ProviderCard({
                 className="type-label text-duet-ink-2"
                 htmlFor={`${ids}-model`}
               >
-                {LABELS.model}
+                {t("admin.credentials.model")}
               </label>
               <div className="flex gap-2">
                 <Input
@@ -389,7 +393,7 @@ function ProviderCard({
                   onClick={() => load.mutate()}
                   variant="outline"
                 >
-                  {LABELS.loadList}
+                  {t("engines.providers.loadList")}
                 </Button>
               </div>
             </div>
@@ -401,17 +405,19 @@ function ProviderCard({
                 className="type-label text-duet-ink-2"
                 htmlFor={`${ids}-key`}
               >
-                {LABELS.key}
+                {t("triggers.key")}
               </label>
               {card.keySaved ? (
                 <div className="flex items-center justify-between gap-2">
-                  <p className="type-label text-duet-green">{KEY_SAVED}</p>
+                  <p className="type-label text-duet-green">
+                    {t("engines.providers.keySaved")}
+                  </p>
                   <Button
                     disabled={locked || busy}
                     onClick={() => removeKey.mutate()}
                     variant="outline"
                   >
-                    {LABELS.remove}
+                    {t("admin.boundaries.remove")}
                   </Button>
                 </div>
               ) : (
@@ -421,7 +427,7 @@ function ProviderCard({
                     disabled={locked}
                     id={`${ids}-key`}
                     onChange={(event) => setKey(event.target.value)}
-                    placeholder={KEY_PLACEHOLDER}
+                    placeholder={t("engines.providers.keyPlaceholder")}
                     spellCheck={false}
                     type="password"
                     value={key}
@@ -430,7 +436,7 @@ function ProviderCard({
                     disabled={locked || busy || key.trim() === ""}
                     onClick={() => saveKey.mutate()}
                   >
-                    {LABELS.save}
+                    {t("settings.save")}
                   </Button>
                 </div>
               )}
@@ -441,12 +447,12 @@ function ProviderCard({
 
       {needsKeyNow ? (
         <p className="type-label text-duet-ink-2" role="status">
-          {NOT_ON_YET_KEY}
+          {t("engines.providers.notOnKey")}
         </p>
       ) : null}
       {needsSettingsNow ? (
         <p className="type-label text-duet-ink-2" role="status">
-          {NOT_ON_YET_SETTINGS}
+          {t("engines.providers.notOnSettings")}
         </p>
       ) : null}
       {said ? (
@@ -467,7 +473,7 @@ function ProviderCard({
               disabled={locked || busy || model.trim() === ""}
               onClick={() => saveSettings.mutate()}
             >
-              {LABELS.saveSettings}
+              {t("engines.providers.saveSettings")}
             </Button>
           ) : null}
           <Button
@@ -475,7 +481,7 @@ function ProviderCard({
             onClick={() => test.mutate()}
             variant="outline"
           >
-            {LABELS.test}
+            {t("engines.providers.test")}
           </Button>
           {check ? (
             <p
@@ -486,7 +492,7 @@ function ProviderCard({
               }
               role="status"
             >
-              {checkText(check.code)}
+              {checkText(check.code, t)}
             </p>
           ) : null}
         </div>
@@ -504,6 +510,7 @@ export function EngineProviders({
   onChanged: () => void;
   browse?: boolean;
 }) {
+  const { t } = useAppLanguage();
   const [picked, setPicked] = useState("");
   const cards = reading.providers ?? [];
   const agents = useQuery({
@@ -528,18 +535,20 @@ export function EngineProviders({
   return (
     <PageSection
       className="mt-0"
-      description={PROVIDERS_DESCRIPTION}
-      title={PROVIDERS_TITLE}
+      description={t("engines.providers.description")}
+      title={t("engines.providers.title")}
     >
       {locked ? (
-        <p className="mt-3 text-duet-ink-2 text-sm">{LOCKED_OWN_FILE}</p>
+        <p className="mt-3 text-duet-ink-2 text-sm">
+          {t("engines.providers.lockedOwnFile")}
+        </p>
       ) : null}
       {!usable && !locked && block && block !== "choices_unreadable" ? (
-        <p className="mt-3 text-duet-ink-2 text-sm">{blockText(block)}</p>
+        <p className="mt-3 text-duet-ink-2 text-sm">{blockText(block, t)}</p>
       ) : null}
       {browse && selected && (
         <WorkspacePicker
-          label="Provider"
+          label={t("engines.providers.pickerLabel")}
           value={selected.id}
           onChange={setPicked}
           options={ordered.map((card) => ({
