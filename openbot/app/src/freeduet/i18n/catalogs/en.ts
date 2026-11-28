@@ -3230,6 +3230,44 @@ export const EN = {
   "claude.copied": "Copied",
   "claude.copy": "Copy the command",
   // onboarding-end
+  // working-start (D188)
+  "working.region": "Working now",
+  "working.nobody": "Working now: nobody",
+  "working.for": "working for {duration}",
+  "working.underMinute": "under a minute",
+  "working.minutes": { one: "{count} min", other: "{count} min" },
+  "working.hours": { one: "{count} h", other: "{count} h" },
+  "working.hoursMinutes": "{hours} h {minutes} min",
+  "working.seconds": "{seconds} s",
+  "working.signAgo": "last sign of life {duration} ago",
+  "working.justStarted": "just started",
+  "working.lastStep": "last step: {step}",
+  "working.queued": "waiting to start",
+  "working.waiting": "waiting for you",
+  "working.stuck": "stuck: no sign of life for {duration}",
+  "working.didNotFinish": "did not finish",
+  "working.tryAgain": "Try again",
+  "working.ringWaiting": "{name} is waiting for a colleague: {minutes} min",
+  "working.ringStuck":
+    "{name} is waiting for a colleague and it looks stuck: {minutes} min",
+  "working.step.writing": "writing a file",
+  "working.step.reading": "reading files",
+  "working.step.command": "running a command",
+  "working.step.readPage": "reading a page",
+  "working.step.usePage": "using a page",
+  "working.step.searching": "searching",
+  "working.step.mail": "working on mail",
+  "working.step.calendar": "checking the calendar",
+  "working.step.asking": "asking a colleague",
+  "working.step.notes": "using its notes",
+  "working.step.picture": "working on a picture",
+  "working.step.video": "working on a video",
+  "working.step.working": "working",
+  "working.checking": "Checking who is working…",
+  "working.cantTell": "Can't tell who is working right now",
+  "working.ringElsewhere":
+    "{name} is waiting for a colleague (maybe from another conversation): {minutes} min",
+  // working-end
 } satisfies Entries;
 
 export type MessageId = keyof typeof EN;

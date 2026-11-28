@@ -26,6 +26,7 @@ import {
   workStatusQueryOptions,
 } from "@/freeduet/work-status/status";
 import { WorkDot } from "@/freeduet/work-status/work-dot";
+import { useIrisWait, WaitingRing } from "@/freeduet/work-status/work-strip";
 import { primaryBot } from "@/lib/agents/primary-bot";
 import { agentListQueryOptions } from "@/lib/agents/queries";
 import { approvalInboxOptions } from "@/lib/approvals";
@@ -192,6 +193,8 @@ function Team({ full }: { full: boolean }) {
     (work.data?.members ?? []).map((member) => [member.agentId, member]),
   );
   const team = orderTeam(agents.data ?? []);
+  // D188: Iris's waiting ring while she has a hand-off open.
+  const iris = useIrisWait();
   const t = useT();
   return (
     <ul
@@ -226,6 +229,13 @@ function Team({ full }: { full: boolean }) {
             <span className="relative">
               <MemberFace agentId={agent.id} size={40} />
               <WorkDot state={dot} title={tip} />
+              {agent.id === iris.irisId ? (
+                <WaitingRing
+                  anyThread={iris.anyThread}
+                  name={agent.name}
+                  wait={iris.wait}
+                />
+              ) : null}
             </span>
             {full ? (
               <span className="min-w-0 flex-1 text-left">

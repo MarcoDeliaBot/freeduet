@@ -139,3 +139,69 @@ export function dotTooltip(state: DotState, work: WorkMember | undefined) {
     return `${DOT_TEXT[state]}: ${work.title}`;
   return DOT_TEXT[state];
 }
+
+/**
+ * D188: a running hand-off with no sign of life for this long is stuck. The SERVER decides (`STUCK_AFTER_MS` in
+ * server/src/freeduet/work-status.ts); the app does not import server code, so this is the same number, pinned equal by
+ * `app/tests/freeduet-working-now.test.tsx`. It only sets how far a waiting ring fills; "stuck" itself is the server's word.
+ */
+export const STUCK_AFTER_MS = 5 * 60 * 1000;
+
+/** The open hand-offs asked from one conversation (`threadId`), or, with none, asked by one member (`fromBotId`). Never "done". */
+export function openHandoffs(
+  data: WorkStatus | undefined,
+  where: { threadId?: string | null; fromBotId?: string | null },
+): WorkHandoff[] {
+  return (data?.handoffs ?? []).filter(
+    (hop) =>
+      hop.state !== "done" &&
+      (where.threadId
+        ? hop.threadId === where.threadId
+        : where.fromBotId
+          ? hop.fromBotId === where.fromBotId
+          : false),
+  );
+}
+
+/** How far a waiting ring is filled, 0 to 1: full at the stuck threshold. */
+export function ringFill(elapsedMs: number): number {
+  return Math.min(1, Math.max(0, elapsedMs / STUCK_AFTER_MS));
+}
+
+/** The ring's state from the open hand-offs: how long the oldest has waited, and whether the server says any is stuck. */
+export function waitOf(
+  hops: readonly WorkHandoff[],
+  now: number,
+): { elapsedMs: number; stuck: boolean } | null {
+  if (hops.length === 0) return null;
+  const oldest = Math.min(...hops.map((hop) => new Date(hop.since).getTime()));
+  return {
+    elapsedMs: Math.max(0, now - oldest),
+    stuck: hops.some((hop) => hop.state === "stuck"),
+  };
+}
+
+export const TASK_CLIP = 120;
+
+/** The task as the strip shows it: at most 120 characters. */
+export function clipTask(title: string): string {
+  const text = title.trim();
+  return text.length <= TASK_CLIP ? text : `${text.slice(0, TASK_CLIP - 1)}…`;
+}
+
+/** The server's fixed step labels (`stepLabel` in server/src/freeduet/work-status.ts) and the catalogue key that says each in the app language. */
+export const STEP_KEYS = {
+  "writing a file": "working.step.writing",
+  "reading files": "working.step.reading",
+  "running a command": "working.step.command",
+  "reading a page": "working.step.readPage",
+  "using a page": "working.step.usePage",
+  searching: "working.step.searching",
+  "working on mail": "working.step.mail",
+  "checking the calendar": "working.step.calendar",
+  "asking a colleague": "working.step.asking",
+  "using its notes": "working.step.notes",
+  "working on a picture": "working.step.picture",
+  "working on a video": "working.step.video",
+  working: "working.step.working",
+} as const;
