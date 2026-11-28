@@ -69,6 +69,7 @@ import type {
   ComputerStatus,
   ControlState,
   DownloadFileInput,
+  FinishedFilesResult,
   HumanInput,
   HumanInputResult,
   KeyInput,
@@ -243,6 +244,11 @@ export interface ComputerGateway {
     actor: ActionActor,
     input: ListFilesInput,
   ): Promise<ListFilesResult>;
+  listFinishedFiles(
+    botId: string,
+    actor: ActionActor,
+    signal?: AbortSignal,
+  ): Promise<FinishedFilesResult>;
   runCommand(
     botId: string,
     actor: ActionActor,
@@ -560,6 +566,52 @@ export function createComputerGateway(
   }
 
   /**
+   * The context a rule is evaluated against, one shape for every call (see the comments in `govern`:
+   * every field is bound, present or not). Shared so the finished-work listing can ask what a
+   * download of each listed file would be told (D194) with exactly the context a download builds.
+   */
+  function policyContextOf(
+    toolName: string,
+    botId: string,
+    actor: ActionActor,
+    subject: { key?: string; command?: string },
+    filePath: string | undefined,
+    intent: ReturnType<typeof intentOf>,
+    element:
+      | { ref: string; role: string; name: string; type?: string }
+      | undefined,
+    pageUrl: string,
+  ): PolicyContext {
+    return {
+      tool: { name: toolName },
+      bot: { id: botId },
+      actor: { id: actor.id },
+      page: { url: pageUrl, host: hostOf(pageUrl) },
+      ...(intent ? { intent } : {}),
+      key: subject.key ?? "",
+      element: element
+        ? {
+            ref: element.ref,
+            role: element.role,
+            name: element.name,
+            type: element.type ?? "",
+          }
+        : { ref: "", role: "", name: "", type: "" },
+      file: filePath
+        ? describeFile(filePath)
+        : { path: "", name: "", extension: "" },
+      command: subject.command ?? "",
+      initiator: policyInitiator(actor.initiator),
+      // Neutral, like the fields above: this is not an MCP call, but a `deny: mcp.effect == "write"`
+      // names `mcp`, and cel-js throws on an unbound identifier — which fails closed and would refuse
+      // every browser action the moment an operator wrote a rule about their tools. Empty server and
+      // tool and an empty effect match no MCP rule, so a boundary drawn around MCP leaves the browser
+      // alone. The MCP context carries the browser fields empty for the mirror of this reason.
+      mcp: { server: "", tool: "", effect: "" },
+    };
+  }
+
+  /**
    * Decide, record, then act.
    *
    * The audit row is written before the action runs, not after it succeeds. An allowed action that
@@ -632,33 +684,16 @@ export function createComputerGateway(
      * "is this click running rm -rf". The audit row below still omits what did not happen, because a
      * trail should not claim a click had a command.
      */
-    const context: PolicyContext = {
-      tool: { name: toolName },
-      bot: { id: botId },
-      actor: { id: actor.id },
-      page: { url: pageUrl, host: hostOf(pageUrl) },
-      ...(intent ? { intent } : {}),
-      key: subject.key ?? "",
-      element: element
-        ? {
-            ref: element.ref,
-            role: element.role,
-            name: element.name,
-            type: element.type ?? "",
-          }
-        : { ref: "", role: "", name: "", type: "" },
-      file: filePath
-        ? describeFile(filePath)
-        : { path: "", name: "", extension: "" },
-      command: subject.command ?? "",
-      initiator: policyInitiator(actor.initiator),
-      // Neutral, like the fields above: this is not an MCP call, but a `deny: mcp.effect == "write"`
-      // names `mcp`, and cel-js throws on an unbound identifier — which fails closed and would refuse
-      // every browser action the moment an operator wrote a rule about their tools. Empty server and
-      // tool and an empty effect match no MCP rule, so a boundary drawn around MCP leaves the browser
-      // alone. The MCP context carries the browser fields empty for the mirror of this reason.
-      mcp: { server: "", tool: "", effect: "" },
-    };
+    const context = policyContextOf(
+      toolName,
+      botId,
+      actor,
+      subject,
+      filePath,
+      intent,
+      element,
+      pageUrl,
+    );
 
     const decision = evaluateActionPolicy(options.policy(), context);
     await write(auditStore, {
@@ -1363,6 +1398,48 @@ export function createComputerGateway(
           };
         },
       );
+    },
+
+    /**
+     * The member's folder of finished work, for the person's Files panel (D194).
+     *
+     * One decision and one audit row for the listing, as `computer_download_file` / `download_file` on
+     * the path `out`. Then every listed file is judged again as the download of that path would be, with
+     * the same context (`policyContextOf`), and a file the download would refuse is left out of the
+     * answer: a rule on a path (`out/secret/`) or an extension (`.pdf`) hides the name, size and time as
+     * well as the bytes. No row per file: the single row is the listing's. Names, sizes and times only.
+     */
+    async listFinishedFiles(
+      botId: string,
+      actor: ActionActor,
+      signal?: AbortSignal,
+    ) {
+      const listed = await govern(
+        "computer_download_file",
+        botId,
+        actor,
+        { filePath: "out", ...(signal ? { signal } : {}) },
+        () => post<FinishedFilesResult>(botId, "/files/finished", {}, signal),
+      );
+      const pageUrl = (await snapshots.load(botId))?.url ?? "";
+      const intent = intentOf("computer_download_file", undefined);
+      const files = (listed.files ?? []).filter(
+        (file) =>
+          evaluateActionPolicy(
+            options.policy(),
+            policyContextOf(
+              "computer_download_file",
+              botId,
+              actor,
+              {},
+              file.path,
+              intent,
+              undefined,
+              pageUrl,
+            ),
+          ).forward,
+      );
+      return { ...listed, files };
     },
 
     /**

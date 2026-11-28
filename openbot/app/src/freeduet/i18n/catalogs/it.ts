@@ -3419,4 +3419,26 @@ export const it: Catalog<typeof EN> = {
   "working.ringElsewhere":
     "{name} aspetta un collega (forse da un'altra conversazione): {minutes} min",
   // working-end
+  // files-start
+  "files.title": "File",
+  "files.lead":
+    "Il lavoro finito che {name} ha salvato nella sua cartella out. Qui puoi solo leggerlo e scaricarlo.",
+  "files.rowDescription":
+    "Il lavoro finito che {name} ha salvato, con Scarica per ogni file",
+  "files.empty":
+    "Ancora niente. Il lavoro finito compare qui quando {name} lo salva nella sua cartella out.",
+  "files.refresh": "Aggiorna",
+  "files.refreshing": "Aggiorno…",
+  "files.download": "Scarica",
+  "files.downloading": "Scarico…",
+  "files.loading": "Carico i file…",
+  "files.loadError": "Non sono riuscito a caricare i file.",
+  "files.downloadError": "Non sono riuscito a scaricare quel file.",
+  "files.more":
+    "Altri file non sono mostrati. Sono elencati solo i primi {count}.",
+  "files.size": "Dimensione {size}",
+  "files.modified": "Modificato {when}",
+  "files.purpose":
+    "Sola lettura: il lavoro finito che questo collega ha salvato.",
+  // files-end
 };

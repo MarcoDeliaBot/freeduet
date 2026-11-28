@@ -1,6 +1,7 @@
 import {
   IconBell,
   IconChevronRight,
+  IconFiles,
   IconMessage,
   IconPlayerPause,
 } from "@tabler/icons-react";
@@ -220,6 +221,29 @@ export function BotProfile({
                 </ItemTitle>
                 <ItemDescription>
                   {t("profile.startConversation")}
+                </ItemDescription>
+              </ItemContent>
+              <ItemActions>
+                <IconChevronRight className="size-4 text-muted-foreground" />
+              </ItemActions>
+            </Item>
+            <Separator />
+            <Item
+              render={
+                <Link
+                  params={{ agentId: agent.id }}
+                  to="/bots/$agentId/files"
+                />
+              }
+              size="sm"
+            >
+              <ItemMedia variant="icon">
+                <IconFiles />
+              </ItemMedia>
+              <ItemContent>
+                <ItemTitle>{t("files.title")}</ItemTitle>
+                <ItemDescription>
+                  {t("files.rowDescription", { name: agent.name })}
                 </ItemDescription>
               </ItemContent>
               <ItemActions>

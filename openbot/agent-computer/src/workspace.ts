@@ -90,6 +90,21 @@ export type WorkspaceEntry = {
   bytes?: number;
 };
 
+/** One finished file in the out folder (D194). Names, sizes and times only: no content. */
+export type FinishedFile = {
+  /** Relative to the workspace root and always starting with `out/`, so a download link can use it as it is. */
+  path: string;
+  name: string;
+  bytes: number;
+  /** Last change, milliseconds since 1970. */
+  modifiedMs: number;
+};
+
+/** The folder of finished work, relative to the workspace root (D194). */
+export const FINISHED_FOLDER = "out";
+/** How many levels below the out folder the listing goes. */
+const FINISHED_DEPTH = 8;
+
 export const DEFAULT_WORKSPACE_LIMITS: WorkspaceLimits = {
   readBytes: 64_000,
   writeBytes: 1_000_000,
@@ -255,6 +270,77 @@ export function createWorkspace(
 
       await walk(start);
       return { path: requested, entries, truncated };
+    },
+
+    /**
+     * The finished work (D194): the files under `out/`, read only, for the person's Files panel.
+     *
+     * Only `out/` and below. The folder is resolved with `realpath` and must still be inside the
+     * workspace, so an `out` that is a link to somewhere else is refused. A link met inside the folder
+     * is never followed: it is left out of the listing, because a `Dirent` that is a link is neither a
+     * file nor a folder here. Names that start with a dot are left out, folders included. Names, sizes
+     * and times only, never content. Capped at `listEntries`, and `truncated` says so. A missing
+     * folder is an empty list, not an error: nothing has been saved yet.
+     */
+    async listFinished(): Promise<{
+      files: FinishedFile[];
+      truncated: boolean;
+    }> {
+      const root = await realpath(rootPath);
+      const folder = join(root, FINISHED_FOLDER);
+      // A link at `out` itself must be seen before it is followed.
+      const own = await lstat(folder).catch(() => null);
+      if (!own) return { files: [], truncated: false };
+      // A link at `out`, even one that stays inside the workspace, is not the folder of finished work.
+      if (own.isSymbolicLink()) {
+        throw new WorkspacePathError(
+          `${FINISHED_FOLDER} is a link, not a folder inside your workspace.`,
+        );
+      }
+      const realFolder = await realpath(folder).catch(() => null);
+      if (!realFolder) return { files: [], truncated: false };
+      assertInside(root, realFolder, FINISHED_FOLDER);
+      if (realFolder === root || !(await stat(realFolder)).isDirectory()) {
+        throw new WorkspacePathError(
+          `${FINISHED_FOLDER} is not a folder inside your workspace.`,
+        );
+      }
+
+      const files: FinishedFile[] = [];
+      let truncated = false;
+      const walk = async (dir: string, depth: number): Promise<void> => {
+        if (truncated) return;
+        const found = await readdir(dir, { withFileTypes: true });
+        found.sort((a, b) => a.name.localeCompare(b.name));
+        for (const item of found) {
+          if (item.name.startsWith(".")) continue;
+          const full = `${dir}/${item.name}`;
+          if (item.isDirectory()) {
+            // Looked at again just before going in: a folder swapped for a link since `readdir` is skipped.
+            const now = await lstat(full).catch(() => null);
+            if (!now?.isDirectory()) continue;
+            if (depth < FINISHED_DEPTH) await walk(full, depth + 1);
+            if (truncated) return;
+            continue;
+          }
+          if (!item.isFile()) continue;
+          if (files.length >= limits.listEntries) {
+            truncated = true;
+            return;
+          }
+          const info = await lstat(full).catch(() => null);
+          if (!info?.isFile()) continue;
+          files.push({
+            path: full.slice(root.length + 1),
+            name: item.name,
+            bytes: info.size,
+            modifiedMs: Math.round(info.mtimeMs),
+          });
+        }
+      };
+      await walk(realFolder, 0);
+      files.sort((a, b) => b.modifiedMs - a.modifiedMs);
+      return { files, truncated };
     },
 
     /** Read a text file. Bounded, and it says when it gave you less than the whole thing. */

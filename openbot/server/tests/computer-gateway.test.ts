@@ -882,6 +882,99 @@ describe("the computer gateway", () => {
     );
   });
 
+  describe("the finished-work listing (D194)", () => {
+    const FINISHED = {
+      files: [{ path: "out/a.pdf", name: "a.pdf", bytes: 3, modifiedMs: 5 }],
+      truncated: false,
+    };
+
+    test("is decided and audited as a download of out, and asks the computer for names only", async () => {
+      const { gateway, rows, requests } = await gatewayWith(PERMISSIVE, {
+        token: "computer-secret",
+        routes: { "/files/finished": () => Response.json(FINISHED) },
+      });
+
+      await expect(gateway.listFinishedFiles("bot-1", ACTOR)).resolves.toEqual(
+        FINISHED,
+      );
+
+      expect(rows[0]?.eventType).toBe("computer.action_allowed");
+      expect(rows[0]?.payload).toMatchObject({
+        action: "computer_download_file",
+        bot: "bot-1",
+        file: "out",
+      });
+      const request = requests.find(({ url }) =>
+        url.includes("/files/finished"),
+      );
+      expect(request?.init?.method).toBe("POST");
+      expect(request?.init?.headers).toMatchObject({
+        "x-openbot-bot-id": "bot-1",
+        "x-openbot-computer-token": "computer-secret",
+      });
+    });
+
+    test("a rule that keeps downloads out keeps the listing out, and the computer is not asked", async () => {
+      const denied = await gatewayWith({
+        ...PERMISSIVE,
+        deny: ['intent == "download_file"'],
+      });
+      await expect(
+        denied.gateway.listFinishedFiles("bot-1", ACTOR),
+      ).rejects.toThrow(ActionRefusedError);
+      expect(
+        denied.requests.some(({ url }) => url.includes("/files/finished")),
+      ).toBe(false);
+      expect(denied.rows[0]?.eventType).toBe("computer.action_refused");
+      expect(denied.rows[0]?.payload.action).toBe("computer_download_file");
+    });
+
+    test("a path rule and an extension rule hide the files a download would refuse, with one audit row", async () => {
+      const many = {
+        files: [
+          { path: "out/ok.txt", name: "ok.txt", bytes: 1, modifiedMs: 1 },
+          {
+            path: "out/secret/key.txt",
+            name: "key.txt",
+            bytes: 1,
+            modifiedMs: 1,
+          },
+          {
+            path: "out/report.pdf",
+            name: "report.pdf",
+            bytes: 1,
+            modifiedMs: 1,
+          },
+        ],
+        truncated: false,
+      };
+      const { gateway, rows } = await gatewayWith(
+        {
+          ...PERMISSIVE,
+          deny: [
+            'intent == "download_file" && contains(file.path, "out/secret/")',
+            'intent == "download_file" && file.extension == "pdf"',
+          ],
+        },
+        { routes: { "/files/finished": () => Response.json(many) } },
+      );
+      const answer = await gateway.listFinishedFiles("bot-1", ACTOR);
+      expect(answer.files.map((file) => file.path)).toEqual(["out/ok.txt"]);
+      expect(rows.length).toBe(1);
+      expect(rows[0]?.payload).toMatchObject({ file: "out" });
+    });
+
+    test("an absent policy refuses it", async () => {
+      const { gateway, requests } = await gatewayWith(undefined);
+      await expect(gateway.listFinishedFiles("bot-1", ACTOR)).rejects.toThrow(
+        ActionRefusedError,
+      );
+      expect(requests.some(({ url }) => url.includes("/files/finished"))).toBe(
+        false,
+      );
+    });
+  });
+
   test("an absent policy refuses a download before the computer is asked", async () => {
     const { gateway, calls, rows } = await gatewayWith(undefined);
 

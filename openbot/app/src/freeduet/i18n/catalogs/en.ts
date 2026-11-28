@@ -3268,6 +3268,26 @@ export const EN = {
   "working.ringElsewhere":
     "{name} is waiting for a colleague (maybe from another conversation): {minutes} min",
   // working-end
+  // files-start
+  "files.title": "Files",
+  "files.lead":
+    "Finished work {name} saved to its out folder. You can only read and download it here.",
+  "files.rowDescription":
+    "The finished work {name} saved, with a Download for each file",
+  "files.empty":
+    "Nothing here yet. Finished work appears here when {name} saves it to its out folder.",
+  "files.refresh": "Refresh",
+  "files.refreshing": "Refreshing…",
+  "files.download": "Download",
+  "files.downloading": "Downloading…",
+  "files.loading": "Loading the files…",
+  "files.loadError": "Couldn't load the files.",
+  "files.downloadError": "Couldn't download that file.",
+  "files.more": "More files are not shown. Only the first {count} are listed.",
+  "files.size": "Size {size}",
+  "files.modified": "Changed {when}",
+  "files.purpose": "Read only: the finished work this colleague saved.",
+  // files-end
 } satisfies Entries;
 
 export type MessageId = keyof typeof EN;
