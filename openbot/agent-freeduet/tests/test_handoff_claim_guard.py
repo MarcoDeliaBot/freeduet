@@ -305,3 +305,131 @@ def test_iriss_prompt_says_that_writing_the_go_sends_nothing():
     prompt = " ".join(members.load_prompts(TEAM_FILE)["freeduet"].split())
     assert 'Say the work has started only after your message_bot call with "go" returned' in prompt
     assert '(writing "go" in the chat sends nothing)' in prompt
+
+
+# ── six more languages: Polish, Turkish, Russian, Chinese, Japanese, Korean (amendment of D184) ──
+
+MORE_CLAIMS = [
+    # Polish
+    ("Kai dostaje zielone światło i zaczyna.", "Kai"),
+    ("Przekazałem to Kai, pracuje nad tym.", "Kai"),
+    ("Kai: gra.\nWynik: w toku", "Kai"),
+    # Turkish
+    ("Kai go'yu aldı ve şimdi çalışıyor.", "Kai"),
+    ("Kai'ye ilettim, işe başladı.", "Kai"),
+    ("Kai: oyun.\nDurum: devam ediyor", "Kai"),
+    # Russian (й and ё are folded to и and е)
+    ("Kai получает команду и работает над этим.", "Kai"),
+    ("Я передал задачу Kai, он приступил.", "Kai"),
+    ("Kai: игра.\nИсход: в работе", "Kai"),
+    # Chinese
+    ("Kai收到了“go”，正在处理。", "Kai"),
+    ("我已经把任务交给Kai。", "Kai"),
+    ("Kai：游戏。\n结果：进行中", "Kai"),
+    # Japanese
+    ("Kaiはゴーサインを受け取り、作業中です。", "Kai"),
+    ("Kaiに依頼しました。作業を開始しています。", "Kai"),
+    ("Kai：ゲーム\n結果：進行中", "Kai"),
+    # Korean
+    ("Kai가 go 신호를 받았고 작업 중입니다.", "Kai"),
+    ("Kai에게 전달했습니다. 작업을 시작했습니다.", "Kai"),
+    ("Kai: 게임\n결과: 진행 중", "Kai"),
+]
+
+
+@pytest.mark.parametrize("reply, name", MORE_CLAIMS)
+def test_a_claim_in_one_of_the_six_more_languages_is_found(reply, name):
+    assert claimed(reply) == [name]
+
+
+MORE_NOT_CLAIMS = [
+    # Polish: negation, question, condition
+    "Nie przekazałem nic Kai.",
+    "Czy Kai już pracuje nad tym?",
+    "Gdy powiesz go, Kai zaczyna pracować nad tym.",
+    # Turkish
+    "Kai'ye hiçbir şey iletmedim, henüz çalışmıyor.",
+    "Kai şimdi çalışıyor mu?",
+    "İstersen Kai çalışmaya başlayacak.",
+    "Eğer onaylarsan Kai çalışıyor olur.",
+    # Russian
+    "Я ничего не передал Kai, он не работает над этим.",
+    "Kai уже работает над этим?",
+    "Когда ты скажешь go, Kai приступит к работе.",
+    "Если хочешь, Kai работает над этим.",
+    # Chinese
+    "我没有把任务交给Kai。",
+    "Kai正在处理吗？",
+    "如果你说go，Kai就会开始工作。",
+    "Kai还没开始工作。",
+    # Japanese
+    "Kaiにはまだ何も依頼していません。",
+    "Kaiは作業中ですか。",
+    "goと言ったら、Kaiが作業を開始します。",
+    "もしよければKaiに依頼しました。",
+    # Korean
+    "Kai에게 아직 아무것도 전달하지 않았습니다.",
+    "Kai가 작업 중인가요?",
+    "go라고 하면 Kai가 작업을 시작하겠습니다.",
+    "Kai가 작업 중입니까?",
+]
+
+
+@pytest.mark.parametrize("reply", MORE_NOT_CLAIMS)
+def test_a_denial_a_question_or_a_condition_in_the_six_more_languages_is_not_a_claim(reply):
+    assert claimed(reply) == []
+
+
+@pytest.mark.parametrize("reply", [
+    "Iris pracuje nad tym.", "Iris çalışıyor.", "Iris работает над этим.", "Iris正在处理。", "Irisは作業中です。", "Iris가 작업 중입니다.",
+])
+def test_the_member_itself_is_never_the_colleague_in_the_six_more_languages(reply):
+    assert claimed(reply) == []
+    assert guard.claimed_colleagues(reply, "freeduet", PROMPTS) == []
+
+
+def test_what_the_fold_does_to_the_six_more_scripts():
+    fold = cannot_guard._fold
+    assert fold("Zlecił łódź") == "zlecil lodz"  # Polish: diacritics and ł
+    assert fold("Çalışıyor İş") == "calisiyor is"  # Turkish: ı, ş, ç, dotted İ
+    assert fold("Исход Ёлка Йод") == "исход елка иод"  # Russian: й -> и, ё -> е
+    assert fold("카이가 진행 중") == "카이가 진행 중"  # Hangul is recomposed, not left as jamo
+    assert fold("ガギグ") == "ガギグ"  # kana with voiced marks are recomposed
+    assert fold("结果：进行中。好！") == "结果:进行中。好!"  # full-width marks become ASCII, 。 stays
+
+
+def test_chinese_and_japanese_sentences_end_without_a_space():
+    parts = guard._sentences(cannot_guard._fold("凯已完成。Kai正在处理！好吗？是；否：行"))
+    assert parts[0] == "凯已完成。" and "kai正在处理!" in parts and "好吗?" in parts
+    assert len(parts) >= 5
+    # the ASCII rule is unchanged: a mark inside a word or a URL does not split
+    assert guard._sentences("see a?b=1 and x.y. next") == ["see a?b=1 and x.y.", "next"]
+
+
+def test_a_claim_next_to_a_question_in_cjk_is_read_sentence_by_sentence():
+    assert claimed("Kai正在处理。你要我再确认吗？") == ["Kai"]
+    assert claimed("Kaiは作業中です。続けますか。") == ["Kai"]
+    assert claimed("Kai가 작업 중입니다. 계속할까요?") == ["Kai"]
+
+
+def test_a_name_inside_cjk_text_is_found_but_not_inside_a_longer_latin_word():
+    assert claimed("Kaiが作業中です。") == ["Kai"]
+    assert claimed("Kaiserは作業中です。") == []
+
+
+def test_the_six_more_languages_apply_like_the_first_six():
+    assert applies("Kai收到了“go”，正在处理。") == ("game", "Kai", False)
+    assert applies("Kai가 작업 중입니다.", story=[call_to("Kai")]) is None
+    assert applies("Kai работает над этим.", messages=conversation(call_to("Kai"), result())) is None
+
+
+@pytest.mark.parametrize("reply", [
+    "Kai уже работает.", "Kai взял это в работу.", "Kai正在准备素材。", "Kaiはまだ作業中です。",
+])
+def test_review_fixes_these_claims_are_found(reply):
+    assert claimed(reply) == ["Kai"]
+
+
+@pytest.mark.parametrize("reply", ["Kai未开始工作。", "Kai不曾开始制作。", "Kaiはまだ依頼していません。", "Kai准备好了就开始了吗。"])
+def test_review_fixes_these_are_not_claims(reply):
+    assert claimed(reply) == []
