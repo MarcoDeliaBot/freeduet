@@ -115,8 +115,8 @@ export const fr: Catalog<typeof EN> = {
   "bots.yours": "Les tiens",
   "bots.shared": "Partagés avec toi",
   "bots.allPinned": "Tous tes Bots sont épinglés plus haut.",
-  "bots.allNeedYou": "Tous tes Bots sont sous « Attend ta réponse ».",
-  "bots.none": "Tu n'as pas encore de Bot. Crées-en un avec « Nouveau Bot ».",
+  "bots.allNeedYou": "Tous tes Bots sont sous « Attend ta réponse ».",
+  "bots.none": "Tu n'as pas encore de Bot. Crées-en un avec « Nouveau Bot ».",
   "bots.nobodyShared": "Personne ne t'a encore partagé de Bot.",
   "bots.hide": "Masquer",
   "bots.show": "Afficher",
@@ -443,7 +443,7 @@ export const fr: Catalog<typeof EN> = {
   "settings.repositoriesDescription":
     "Ajoute ici un dépôt, puis ajoute un webhook dans GitHub avec l'adresse ci-dessous et le même secret. Ses événements, comme issues.opened, peuvent ensuite lancer une responsabilité.",
   "settings.repositoriesEmpty":
-    "Aucun dépôt pour l'instant. Ajoutes-en un avec « Ajouter un dépôt ».",
+    "Aucun dépôt pour l'instant. Ajoutes-en un avec « Ajouter un dépôt ».",
   "settings.repository": "Dépôt",
   "settings.reset": "Réinitialiser",
   "settings.resetDescription":
@@ -734,7 +734,7 @@ export const fr: Catalog<typeof EN> = {
   "memory.description":
     "Les applis que tu as connectées et que ce Bot peut lire apparaissent ici, et tu peux en ajouter. Les sources se mettent à jour toutes les 15 minutes. Seul ce Bot voit ce qu'elles contiennent.",
   "memory.empty":
-    "Aucune source pour l'instant. Ajoutes-en une avec « Ajouter une source ».",
+    "Aucune source pour l'instant. Ajoutes-en une avec « Ajouter une source ».",
   "memory.upToDate": "À jour",
   "memory.off": "Désactivée",
   "memory.lastRead": "Dernière lecture {when}",
@@ -827,9 +827,9 @@ export const fr: Catalog<typeof EN> = {
   "responsibilities.new": "Nouvelle responsabilité",
   "responsibilities.title": "Objectifs",
   "responsibilities.empty":
-    "Aucune responsabilité pour l'instant. Ajoutes-en une avec « Nouvelle responsabilité ».",
+    "Aucune responsabilité pour l'instant. Ajoutes-en une avec « Nouvelle responsabilité ».",
   "responsibilities.emptyBot":
-    "Aucune responsabilité pour ce Bot pour l'instant. Ajoutes-en une avec « Nouvelle responsabilité ».",
+    "Aucune responsabilité pour ce Bot pour l'instant. Ajoutes-en une avec « Nouvelle responsabilité ».",
   "routines.neverRun": "Pas encore exécutée",
   "routines.running": "En cours…",
   "routines.missed": "Manquée {when}",
@@ -848,9 +848,9 @@ export const fr: Catalog<typeof EN> = {
   "routines.notRunning": "Les routines ne tournent pas.",
   "routines.loadError": "Impossible de charger tes routines. Recharge la page.",
   "routines.emptyBot":
-    "Aucune routine pour ce Bot pour l'instant. Demande-lui quelque chose comme « chaque jour ouvrable à 9 h, envoie-moi… » et elle apparaît ici.",
+    "Aucune routine pour ce Bot pour l'instant. Demande-lui quelque chose comme « chaque jour ouvrable à 9 h, envoie-moi… » et elle apparaît ici.",
   "routines.empty":
-    "Aucune routine pour l'instant. Demande à un Bot quelque chose comme « chaque jour ouvrable à 9 h, envoie-moi… » et elle apparaît ici.",
+    "Aucune routine pour l'instant. Demande à un Bot quelque chose comme « chaque jour ouvrable à 9 h, envoie-moi… » et elle apparaît ici.",
   "routines.enableAria": "Activer la routine planifiée {schedule}",
   "routines.channelGone": "Conversation supprimée",
   "routines.untitledChannel": "Conversation sans titre",
@@ -864,7 +864,7 @@ export const fr: Catalog<typeof EN> = {
     "Historique des exécutions de la routine planifiée {schedule}",
   "routines.history": "Historique",
   "routines.deleteAria": "Supprimer la routine planifiée {schedule}",
-  "routines.deleteTitle": "Supprimer « {schedule} » ?",
+  "routines.deleteTitle": "Supprimer « {schedule} » ?",
   "routines.deleteDescription":
     "Cette routine s'arrête définitivement. Tu ne peux pas annuler cette action.",
   "routines.week": "Semaine",
@@ -945,7 +945,7 @@ export const fr: Catalog<typeof EN> = {
   "approvals.rulesOff":
     "Un administrateur a désactivé les règles personnelles. Les tiennes sont conservées, mais ne s'appliquent pas.",
   "approvals.bot.lead":
-    "La règle la plus stricte qui correspond l'emporte. Une règle « demander » l'emporte sur une règle « autoriser ». Les règles de tous les Bots sont dans",
+    "La règle la plus stricte qui correspond l'emporte. Une règle « demander » l'emporte sur une règle « autoriser ». Les règles de tous les Bots sont dans",
   "approvals.bot.settingsLink": "Réglages → Approbations",
   "approvals.bot.title": "Règles",
   "approvals.bot.empty": "Aucune règle pour ce Bot.",
@@ -962,11 +962,11 @@ export const fr: Catalog<typeof EN> = {
     "Avant qu'un Bot fasse quelque chose qui pourrait toucher à tes comptes ou partager des informations, {product} le vérifie par rapport à ta demande et à tes règles. Si ce n'est pas clair, {product} te le demande.",
   "approvals.before.hostTitle": "Commandes sur ton ordinateur",
   "approvals.before.hostLimited":
-    "Un administrateur limite cela à « {limit} ».",
+    "Un administrateur limite cela à « {limit} ».",
   "approvals.before.hostLine":
     "L'appli de bureau {product} te montre quand même chaque commande avant qu'elle s'exécute.",
   "approvals.every.lead":
-    "La règle la plus stricte qui correspond l'emporte. Une règle « demander » l'emporte sur une règle « autoriser ». Les règles d'équipe sont verrouillées. Les mots de passe et les réglages de sécurité te reviennent toujours. Les paiements aussi, sauf si tu actives Full access pour un Bot ci-dessous. Les règles d'un Bot sont sur",
+    "La règle la plus stricte qui correspond l'emporte. Une règle « demander » l'emporte sur une règle « autoriser ». Les règles d'équipe sont verrouillées. Les mots de passe et les réglages de sécurité te reviennent toujours. Les paiements aussi, sauf si tu actives Full access pour un Bot ci-dessous. Les règles d'un Bot sont sur",
   "approvals.every.botPage": "la page de ce Bot",
   "approvals.every.title": "Règles de tous les Bots",
   "approvals.every.empty": "Pas encore de règle.",
@@ -1013,7 +1013,7 @@ export const fr: Catalog<typeof EN> = {
   "routines.status.waiting": "En attente de toi",
   "routines.status.missed": "Manquée",
   "routines.history.empty":
-    "Aucune exécution pour l'instant. Une exécution apparaît ici dès qu'une routine s'est déclenchée, ou après que tu as appuyé sur « Lancer maintenant ».",
+    "Aucune exécution pour l'instant. Une exécution apparaît ici dès qu'une routine s'est déclenchée, ou après que tu as appuyé sur « Lancer maintenant ».",
   "routines.history.aBot": "Un Bot",
   "routines.history.latest": {
     one: "Affichage de la dernière exécution.",
@@ -1061,7 +1061,7 @@ export const fr: Catalog<typeof EN> = {
   "passwords.off":
     "Un administrateur a désactivé les mots de passe enregistrés. Tes identifiants sont conservés, mais ne seront pas proposés.",
   "passwords.empty":
-    "Aucun identifiant enregistré. Choisis « Enregistrer dans Mots de passe » quand tu connectes un Bot à un site web.",
+    "Aucun identifiant enregistré. Choisis « Enregistrer dans Mots de passe » quand tu connectes un Bot à un site web.",
   "passwords.lastUsed": "utilisé pour la dernière fois {date}",
   "passwords.neverUsed": "jamais utilisé",
   "passwords.deleteAria": "Supprimer l'identifiant pour {origin}",
@@ -1367,7 +1367,7 @@ export const fr: Catalog<typeof EN> = {
     "Testée sur les {scanned} dernières actions enregistrées. Cette règle en aurait refusé {refused}.",
   "admin.boundaries.dry.wouldRefuse": "Refuserait",
   "admin.boundaries.dry.wouldAllow": "Autoriserait maintenant",
-  "admin.boundaries.dry.on": "sur « {name} »",
+  "admin.boundaries.dry.on": "sur « {name} »",
   "admin.boundaries.dry.running": "exécute",
   "admin.boundaries.dry.touching": "touche {file}",
   "admin.boundaries.dry.first":
@@ -1389,7 +1389,7 @@ export const fr: Catalog<typeof EN> = {
   "admin.people.searchPlaceholder": "Rechercher par nom ou adresse",
   "admin.people.loadError":
     "Impossible de charger les personnes. Recharge la page.",
-  "admin.people.noMatch": "Personne ne correspond à « {query} ».",
+  "admin.people.noMatch": "Personne ne correspond à « {query} ».",
   "admin.people.nobody":
     "Personne ne s'est encore connecté. Les personnes apparaîtront ici dès qu'elles le feront.",
   "admin.people.lastSignedIn": "dernière connexion {date}",
@@ -1960,7 +1960,7 @@ export const fr: Catalog<typeof EN> = {
     "Désactive un Bot et il ne saura jamais que ce composant existe. Les changements s'appliquent tout de suite.",
   "admin.compDetail.grantsDlg.empty": "Aucun Bot pour l'instant.",
   "admin.compDetail.fnDlg.description":
-    "Les données que ce composant peut aller chercher pour s'afficher. C'est distinct de « Disponible pour ». Si tout est désactivé, il n'affiche que ce que le Bot lui transmet. Chaque lecture apparaît dans l'Audit. Les changements s'appliquent tout de suite.",
+    "Les données que ce composant peut aller chercher pour s'afficher. C'est distinct de « Disponible pour ». Si tout est désactivé, il n'affiche que ce que le Bot lui transmet. Chaque lecture apparaît dans l'Audit. Les changements s'appliquent tout de suite.",
   "admin.compDetail.fnDlg.empty":
     "Ce déploiement n'a aucune fonction de données.",
   "admin.computers.description":
@@ -2050,9 +2050,9 @@ export const fr: Catalog<typeof EN> = {
   "admin.learning.description":
     "Apprendre des conversations terminées, passer en revue les compétences proposées par Intelligence et donner les compétences publiées aux Bots.",
   "admin.learning.auto.assigned":
-    "{product} a attribué automatiquement le conteneur « {container} » à ce projet Intelligence. Tu peux le changer ici.",
+    "{product} a attribué automatiquement le conteneur « {container} » à ce projet Intelligence. Tu peux le changer ici.",
   "admin.learning.auto.absent":
-    "Ce projet Intelligence n'a pas encore de conteneur Learning « {container} ». Rien n'est collecté.",
+    "Ce projet Intelligence n'a pas encore de conteneur Learning « {container} ». Rien n'est collecté.",
   "admin.learning.auto.notEntitled":
     "L'offre de ce projet Intelligence n'inclut pas Learning. Aucun conteneur n'a été attribué.",
   "admin.learning.auto.unavailable":
@@ -2210,13 +2210,13 @@ export const fr: Catalog<typeof EN> = {
   "admin.plugins.bot.reads.description":
     "Celles-ci ne font que lire. Les limites sur les écritures ne s'y appliquent pas.",
   "admin.plugins.bot.reads.noMatch":
-    "Aucune action de lecture seule ne correspond à « {query} ».",
+    "Aucune action de lecture seule ne correspond à « {query} ».",
   "admin.plugins.bot.reads.none": "{app} n'a aucune action en lecture seule.",
   "admin.plugins.bot.writes.title": "Modifie des choses",
   "admin.plugins.bot.writes.description":
     "Celles-ci modifient quelque chose chez le fournisseur. Les limites sur les écritures s'y appliquent.",
   "admin.plugins.bot.writes.noMatch":
-    "Aucune action qui modifie des choses ne correspond à « {query} ».",
+    "Aucune action qui modifie des choses ne correspond à « {query} ».",
   "admin.plugins.bot.writes.none":
     "{app} n'a aucune action qui modifie des choses.",
   "admin.plugins.bot.shared.title":
@@ -2342,12 +2342,12 @@ export const fr: Catalog<typeof EN> = {
   "engines.state.gatewayKey":
     "Sa passerelle n'a pas accepté la clé. Vérifie la clé que tu lui as donnée.",
   "engines.state.signedOut":
-    "Déconnecté : reconnecte-toi avec la connexion propre au moteur",
-  "engines.state.refusedWhy": "Non exécuté : {reason}",
-  "engines.state.refused": "Non exécuté : le motif n'est pas connu.",
+    "Déconnecté : reconnecte-toi avec la connexion propre au moteur",
+  "engines.state.refusedWhy": "Non exécuté : {reason}",
+  "engines.state.refused": "Non exécuté : le motif n'est pas connu.",
   "engines.state.unknown": "État inconnu",
   "engines.state.toolsAsText":
-    "Sa dernière réponse a écrit ses appels d'outils sous forme de texte au lieu de les utiliser : choisis un modèle qui gère les outils",
+    "Sa dernière réponse a écrit ses appels d'outils sous forme de texte au lieu de les utiliser : choisis un modèle qui gère les outils",
   "engines.pill.working": "Fonctionne",
   "engines.pill.checking": "Vérification",
   "engines.pill.limited": "Limité",
@@ -2363,7 +2363,7 @@ export const fr: Catalog<typeof EN> = {
   "engines.members.col.order": "Ordre des moteurs",
   "engines.members.col.switching": "Quand un moteur est épuisé",
   "engines.order.note":
-    "Utilise les flèches pour déplacer un moteur d'un cran. Tes propres connexions passent en premier sauf si tu choisis autrement : si un déplacement place un moteur gratuit ou payant avant elles, on te demande d'abord de le confirmer.",
+    "Utilise les flèches pour déplacer un moteur d'un cran. Tes propres connexions passent en premier sauf si tu choisis autrement : si un déplacement place un moteur gratuit ou payant avant elles, on te demande d'abord de le confirmer.",
   "engines.order.warnTitle.free_before_login":
     "Un moteur gratuit répondrait avant ta propre connexion",
   "engines.order.warnTitle.paid_before_free_or_login":
@@ -2372,13 +2372,13 @@ export const fr: Catalog<typeof EN> = {
     "Si c'est un service cloud, les messages de ce membre vont d'abord à ce fournisseur, qui peut les conserver. Ses réponses peuvent aussi être de moindre qualité que celles de ta connexion.",
   "engines.order.warnText.paid_before_free_or_login":
     "Un moteur payant répond avant les moteurs qui le suivent, donc ce à quoi il répond peut coûter de l'argent. S'il est en tête de liste, chaque message peut coûter de l'argent dès le premier. Il ne tourne qu'après que tu as activé les moteurs payants et fixé tes limites.",
-  "engines.order.newLabel": "Nouvel ordre :",
+  "engines.order.newLabel": "Nouvel ordre :",
   "engines.order.tick": "J'ai compris, utiliser cet ordre",
   "engines.order.confirm": "Confirmer",
   "engines.order.tickLabel": "J'ai compris, utiliser cet ordre pour {name}",
   "engines.order.confirmLabel": "Confirmer le nouvel ordre pour {name}",
   "engines.order.cancelLabel": "Annuler le nouvel ordre pour {name}",
-  "engines.order.own": "Ton ordre : les connexions ne passent pas en premier",
+  "engines.order.own": "Ton ordre : les connexions ne passent pas en premier",
   "engines.order.recommended": "Utiliser l'ordre recommandé",
   "engines.order.recommendedLabel": "Utiliser l'ordre recommandé pour {name}",
   "engines.order.moveUp": "Monter {engine} pour {name}",
@@ -2392,7 +2392,7 @@ export const fr: Catalog<typeof EN> = {
   "engines.claude.effort.max": "Maximum",
   "engines.claude.effortLabel": "Effort",
   "engines.claude.note":
-    "Claude Code uniquement. Un modèle que ton abonnement ne peut pas utiliser termine ce tour avec l'erreur propre à Claude Code. Rien n'est désactivé, et « Par défaut de l'abonnement » annule le choix.",
+    "Claude Code uniquement. Un modèle que ton abonnement ne peut pas utiliser termine ce tour avec l'erreur propre à Claude Code. Rien n'est désactivé, et « Par défaut de l'abonnement » annule le choix.",
   "engines.claude.modelAria": "Modèle Claude pour {name}",
   "engines.claude.effortAria": "Effort de Claude pour {name}",
   "engines.claude.saved":
@@ -2407,8 +2407,8 @@ export const fr: Catalog<typeof EN> = {
     "Quand un moteur est épuisé, le suivant répond et on te dit lequel.",
   "engines.mode.askFirst.label": "Me demander d'abord",
   "engines.mode.askFirst.effect":
-    "Quand un moteur est épuisé, on te demande : changer, attendre ou nommer un autre moteur.",
-  "engines.leftOut.line": "Non utilisé : {engine}, parce que {why}.",
+    "Quand un moteur est épuisé, on te demande : changer, attendre ou nommer un autre moteur.",
+  "engines.leftOut.line": "Non utilisé : {engine}, parce que {why}.",
   "engines.leftOut.locked": "le fichier de l'installation ne l'autorise pas",
   "engines.leftOut.disabled": "il est désactivé",
   "engines.leftOut.paid_gateway":
@@ -2423,16 +2423,16 @@ export const fr: Catalog<typeof EN> = {
   "engines.chain.many": "Essaie {list}.",
   "engines.chain.then": ", puis ",
   "engines.pin":
-    "Fixé sur {engine} par le fichier de l'installation : il ne passe jamais à un autre moteur.",
+    "Fixé sur {engine} par le fichier de l'installation : il ne passe jamais à un autre moteur.",
   "engines.alone":
     "Seul {engine} est configuré pour ce membre, il n'y a donc encore rien vers quoi basculer. Ton choix est conservé pour le jour où il y en aura.",
   "engines.source.yours":
-    "Ton choix. Le fichier de l'installation dit : {mode}.",
+    "Ton choix. Le fichier de l'installation dit : {mode}.",
   "engines.source.file": "Du fichier de l'installation.",
   "engines.block.not_at_the_computer":
     "Change ces réglages sur l'ordinateur où tourne FreeDuet.",
   "engines.block.not_paired_with_the_computer":
-    "Associe d'abord ce navigateur à l'ordinateur où tourne FreeDuet : lance-y `bash scripts/open.sh` et ouvre le lien ici.",
+    "Associe d'abord ce navigateur à l'ordinateur où tourne FreeDuet : lance-y `bash scripts/open.sh` et ouvre le lien ici.",
   "engines.block.agent_too_old": "Mets FreeDuet à jour pour changer cela.",
   "engines.block.choices_unreadable":
     "Tes choix n'ont pas pu être lus, ce sont donc les réglages de l'installation qui sont utilisés. Rien de ce que tu as choisi n'est perdu.",
@@ -2459,14 +2459,14 @@ export const fr: Catalog<typeof EN> = {
   "engines.providers.blurb.mistral":
     "Des modèles Mistral dans l'offre gratuite, avec des limites.",
   "engines.providers.blurb.openrouter":
-    "Uniquement des modèles qui ne coûtent rien : un id qui se termine par :free, ou openrouter/free.",
+    "Uniquement des modèles qui ne coûtent rien : un id qui se termine par :free, ou openrouter/free.",
   "engines.providers.blurb.cloudflare":
     "Des modèles ouverts sur Cloudflare, gratuits avec un quota quotidien. Mets ton propre compte dans l'adresse.",
   "engines.providers.blurb.cerebras": "Des modèles ouverts très rapides.",
   "engines.providers.blurb.anthropic-api":
     "Claude avec des crédits payés à l'usage.",
   "engines.providers.tag.local": "Local",
-  "engines.providers.tag.router": "Avancé : ton propre routeur",
+  "engines.providers.tag.router": "Avancé : ton propre routeur",
   "engines.providers.tag.free": "Gratuit avec limites",
   "engines.providers.tag.trial": "Essai, carte requise",
   "engines.providers.tag.paid": "Payant",
@@ -2475,7 +2475,7 @@ export const fr: Catalog<typeof EN> = {
   "engines.providers.routerWarning":
     "Tes messages vont au routeur, qui les transmet aux fournisseurs gratuits que tu as activés à l'intérieur. Ils quittent ton ordinateur, et ces fournisseurs peuvent les conserver.",
   "engines.providers.routerAdvanced":
-    "Option avancée, pas un réglage par défaut recommandé : le projet se décrit lui-même comme réservé à l'expérimentation personnelle. FreeDuet ne l'installe pas et ne le fait pas tourner. Les clés de tes fournisseurs restent à l'intérieur ; FreeDuet ne conserve que le seul jeton d'accès qu'il te donne.",
+    "Option avancée, pas un réglage par défaut recommandé : le projet se décrit lui-même comme réservé à l'expérimentation personnelle. FreeDuet ne l'installe pas et ne le fait pas tourner. Les clés de tes fournisseurs restent à l'intérieur ; FreeDuet ne conserve que le seul jeton d'accès qu'il te donne.",
   "engines.providers.routerAddress":
     "Son port par défaut, 3001, est celui de FreeDuet. Lance-le sur un autre port et écris l'adresse avec /v1 à la fin. Sur cet ordinateur, http convient. En dehors de cet ordinateur, seul ton propre réseau est accepté (une adresse LAN ou un nom .local), en https. Un hôte public est refusé.",
   "engines.providers.address": "Adresse du serveur",
@@ -2509,9 +2509,9 @@ export const fr: Catalog<typeof EN> = {
   "engines.providers.users.trial":
     "Son offre gratuite est un essai qui demande une carte, donc FreeDuet ne la propose pas comme gratuite. Il reste désactivé.",
   "engines.providers.users.members":
-    "Pour les membres : oui, après leur connexion à Claude. Pour les assistants légers : oui.",
+    "Pour les membres : oui, après leur connexion à Claude. Pour les assistants légers : oui.",
   "engines.providers.users.notYet":
-    "Pour les membres : pas encore. Pour les assistants légers : oui.",
+    "Pour les membres : pas encore. Pour les assistants légers : oui.",
   "engines.providers.check.ok": "Il a répondu. Ça fonctionne.",
   "engines.providers.check.key_rejected":
     "La clé n'a pas été acceptée. Vérifie-la et enregistre-la de nouveau.",
@@ -2522,7 +2522,7 @@ export const fr: Catalog<typeof EN> = {
   "engines.providers.check.other":
     "Rien n'a répondu, ou la réponse n'a pas été comprise.",
   "engines.providers.freeNote":
-    "« Gratuit » est l'étiquette de FreeDuet, tirée des conditions du fournisseur. Certains fournisseurs (Google, par exemple) te facturent si la facturation est activée pour ton projet.",
+    "« Gratuit » est l'étiquette de FreeDuet, tirée des conditions du fournisseur. Certains fournisseurs (Google, par exemple) te facturent si la facturation est activée pour ton projet.",
   "engines.providers.useFor": "Utiliser pour",
   "engines.providers.useForNone":
     "Aucun membre ne l'utilise encore. Les assistants légers, si. Coche les membres qui peuvent envoyer leur travail à ce service.",
@@ -2556,14 +2556,14 @@ export const fr: Catalog<typeof EN> = {
   "engines.tokens.col.week": "7 derniers jours",
   "engines.tokens.allMembers": "Tous les membres",
   "engines.tokens.note":
-    "L'entrée compte chaque jeton donné au modèle, y compris ceux du cache. Chaque ligne compte des tentatives du moteur : un nouvel essai sur le même moteur compte de nouveau. Une tentative dont le moteur n'a rien signalé ajoute son temps et aucun jeton. Le temps est mesuré ici, du début à la fin de chaque tentative.",
+    "L'entrée compte chaque jeton donné au modèle, y compris ceux du cache. Chaque ligne compte des tentatives du moteur : un nouvel essai sur le même moteur compte de nouveau. Une tentative dont le moteur n'a rien signalé ajoute son temps et aucun jeton. Le temps est mesuré ici, du début à la fin de chaque tentative.",
   "engines.tokens.savedWeek": "Économisé sur les 7 derniers jours",
   "engines.tokens.savedNote":
     "Économisé désigne les jetons passés par des moteurs gratuits, dans le cloud ou sur ton propre ordinateur. Ton abonnement à Claude Code est au forfait et les moteurs payants coûtent de l'argent, donc ni l'un ni l'autre ne comptent.",
   "engines.tokens.currencyHelp":
     "Clique sur un montant pour passer des euros aux dollars.",
   "engines.tokens.reference":
-    "Aux prix catalogue de {model} ({input} en entrée, {output} en sortie par million de jetons, {date}) ; {euro} = {rate} ({rateDate}).",
+    "Aux prix catalogue de {model} ({input} en entrée, {output} en sortie par million de jetons, {date}) ; {euro} = {rate} ({rateDate}).",
   "engines.tokens.under": "moins de {amount}",
   "engines.tokens.nothingYet": "rien pour l'instant",
   "engines.tokens.plus": "plus {time}",
@@ -2589,7 +2589,7 @@ export const fr: Catalog<typeof EN> = {
   "engines.usage.source.unknown": "Avant (non enregistré)",
   "engines.usage.title": "Où sont passés les 7 derniers jours",
   "engines.usage.note":
-    "Les parts portent sur les jetons signalés par les moteurs (entrée plus sortie), ou sur le temps quand « Temps » est choisi ; les tentatives qui n'ont signalé aucun jeton n'ajoutent que du temps. « Toi » désigne tes propres messages, « Routines » les routines et les relances, « Entre membres » les passations, et « Autre » tout le reste, comme les exécutions propres à un déploiement.",
+    "Les parts portent sur les jetons signalés par les moteurs (entrée plus sortie), ou sur le temps quand « Temps » est choisi ; les tentatives qui n'ont signalé aucun jeton n'ajoutent que du temps. « Toi » désigne tes propres messages, « Routines » les routines et les relances, « Entre membres » les passations, et « Autre » tout le reste, comme les exécutions propres à un déploiement.",
   "engines.usage.nothing": "Rien n'a été compté sur les 7 derniers jours.",
   "engines.usage.chartsFailed":
     "Les graphiques d'utilisation n'ont pas pu être dessinés. Le tableau ci-dessous n'est pas touché.",
@@ -2598,12 +2598,12 @@ export const fr: Catalog<typeof EN> = {
   "engines.usage.limitNone":
     "Aucun moteur n'est retenu par une limite pour le moment.",
   "engines.usage.limitNote":
-    "Un pourcentage de la limite hebdomadaire de ton forfait n'est pas affiché : l'abonnement ne le communique pas à FreeDuet. Un moteur ne le signale que lorsqu'il a atteint une limite, avec l'heure à laquelle il est attendu de nouveau.",
+    "Un pourcentage de la limite hebdomadaire de ton forfait n'est pas affiché : l'abonnement ne le communique pas à FreeDuet. Un moteur ne le signale que lorsqu'il a atteint une limite, avec l'heure à laquelle il est attendu de nouveau.",
   "engines.usage.range": "du {from} au {to}, jours UTC",
   "engines.usage.splitBy": "Répartir par",
   "engines.usage.measure": "Mesure",
-  "engines.usage.perDay": "{title} : {metric} par jour",
-  "engines.usage.perDayUtc": "{title} : {metric} par jour, UTC",
+  "engines.usage.perDay": "{title} : {metric} par jour",
+  "engines.usage.perDayUtc": "{title} : {metric} par jour, UTC",
   "engines.usage.day": "Jour",
   // connections-begin
   "connections.connect": "Connecter",
@@ -2652,7 +2652,7 @@ export const fr: Catalog<typeof EN> = {
     "Rien à connecter pour l'instant. Les applis apparaissent ici une fois qu'un administrateur les active.",
   "connections.list.count": "{inUse} en cours d'utilisation · {total} au total",
   "connections.list.search": "Rechercher des connexions",
-  "connections.list.noMatch": "Rien ne correspond à « {query} ».",
+  "connections.list.noMatch": "Rien ne correspond à « {query} ».",
   "connections.list.linksError":
     "Impossible de charger GitHub et Slack, ils ne sont donc pas listés. Recharge la page.",
   "connections.list.connectNamed": "Connecter {title}",
@@ -2703,18 +2703,18 @@ export const fr: Catalog<typeof EN> = {
   "connections.identity.notConnected": "Non connecté",
   "connections.mail.neverRun": "Ne s'est pas encore exécutée.",
   "connections.mail.lastRun": {
-    one: "Dernière exécution {when} : {count} message. {total} au total.",
-    many: "Dernière exécution {when} : {count} de messages. {total} au total.",
-    other: "Dernière exécution {when} : {count} messages. {total} au total.",
+    one: "Dernière exécution {when} : {count} message. {total} au total.",
+    many: "Dernière exécution {when} : {count} de messages. {total} au total.",
+    other: "Dernière exécution {when} : {count} messages. {total} au total.",
   },
   "connections.mail.on": "Activée. {activity}",
   "connections.mail.off": "Désactivée",
   "connections.mail.switchOff": "Désactiver",
   "connections.mail.switchOn": "Activer",
   "connections.mail.delete": "Supprimer",
-  "connections.mail.lastProblem": "Dernier problème : {error}",
+  "connections.mail.lastProblem": "Dernier problème : {error}",
   "connections.mail.description":
-    "Des règles permanentes que tu as demandées dans le chat. Tes Bots les conservent et les appliquent au nouveau courrier toutes les quelques minutes ; ce ne sont pas des filtres Gmail. Supprimer une règle n'annule pas ce qu'elle a déjà fait.",
+    "Des règles permanentes que tu as demandées dans le chat. Tes Bots les conservent et les appliquent au nouveau courrier toutes les quelques minutes ; ce ne sont pas des filtres Gmail. Supprimer une règle n'annule pas ce qu'elle a déjà fait.",
   "connections.mail.title": "Règles de courrier",
   "connections.mail.search": "Rechercher des règles de courrier",
   "connections.mail.statusLabel": "État de la règle",
@@ -2764,7 +2764,7 @@ export const fr: Catalog<typeof EN> = {
   "connections.secret.step1Tail":
     ". Nomme-le {product} et copie les seize lettres.",
   "connections.secret.step2Lead":
-    "Pour que tes Bots voient aussi ton agenda : dans Google Agenda, ouvre les Paramètres, choisis ton agenda et copie son",
+    "Pour que tes Bots voient aussi ton agenda : dans Google Agenda, ouvre les Paramètres, choisis ton agenda et copie son",
   "connections.secret.step2Link": "Adresse secrète au format iCal",
   "connections.secret.step2Tail": ". Cette étape est facultative.",
   "connections.secret.address": "Ton adresse Gmail",
@@ -2789,9 +2789,9 @@ export const fr: Catalog<typeof EN> = {
   },
   "connections.mode.makeShared": "Rendre {title} partagé",
   "connections.mode.makePersonal": "Rendre {title} personnel",
-  "connections.mode.titleShared": "Partager un seul compte {title} ?",
+  "connections.mode.titleShared": "Partager un seul compte {title} ?",
   "connections.mode.titlePersonal":
-    "Donner à chacun son propre compte {title} ?",
+    "Donner à chacun son propre compte {title} ?",
   "connections.mode.checking": "Vérification de ce que cela changerait…",
   "connections.mode.everyone":
     "Toute personne qui utilise un Bot avec cette appli agira avec ce seul compte.",
@@ -2804,7 +2804,7 @@ export const fr: Catalog<typeof EN> = {
   "connections.dir.searchAria": "Rechercher dans les applis de {name}",
   "connections.dir.searchPlaceholder": "Rechercher par nom d'appli",
   "connections.dir.noMatch":
-    "Aucune appli de {name} ne correspond à « {query} ».",
+    "Aucune appli de {name} ne correspond à « {query} ».",
   "connections.dir.none": "{name} n'a renvoyé aucune appli.",
   "connections.dir.actions": {
     one: "{count} action",
@@ -2853,7 +2853,7 @@ export const fr: Catalog<typeof EN> = {
   "connections.row.noAuth":
     "{title} n'a pas besoin de compte. Les Bots qui l'ont peuvent l'utiliser tel quel.",
   "connections.row.verified":
-    "Connecté avec ta clé. Dernière vérification : {date}.",
+    "Connecté avec ta clé. Dernière vérification : {date}.",
   "connections.row.failedCheck":
     "Ta clé n'a pas passé une vérification auprès de {title}. Cela peut venir de la clé, ou de {title} lui-même. Ton compte est toujours connecté. Appuie sur Revérifier pour réessayer, ou déconnecte puis connecte avec une nouvelle clé.",
   "connections.row.noSafeCheck":
