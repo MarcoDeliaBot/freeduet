@@ -6,34 +6,23 @@ import { agentListQueryOptions } from "@/lib/agents/queries";
 import { client } from "@/lib/client";
 import type { EnginesReading } from "./engines-text";
 import {
-  CURRENCY_HELP,
   CURRENCY_STORAGE_KEY,
   type Currency,
   DEFAULT_CURRENCY,
   formatMoney,
   listPriceUsd,
   referenceLine,
-  SAVED_LABELS,
-  SAVED_NOTE,
   type Saved,
   savedFor,
   savedTimeText,
   savedTokensText,
-  TOKENS_ALL_ENGINES,
-  TOKENS_COLUMNS,
-  TOKENS_DESCRIPTION,
-  TOKENS_EMPTY,
-  TOKENS_FALLBACK,
-  TOKENS_NOTE,
-  TOKENS_PROBLEM,
-  TOKENS_TITLE,
-  TOKENS_UNAVAILABLE,
   type TokenCounts,
   type TokenRow,
   type TokenUsage,
   tokensCell,
 } from "./engines-tokens-text";
 import { UsageCharts } from "./engines-usage-charts";
+import { englishT, type T, useAppLanguage } from "./i18n/provider";
 
 /**
  * The Tokens section of the Engines page (D102): a table of member by engine with today and the last seven days, as each engine
@@ -71,21 +60,28 @@ function SavedPart({
   currency: Currency;
   onToggle: () => void;
 }) {
-  const tokens = savedTokensText(saved);
-  const time = savedTimeText(saved);
-  if (!tokens && !time) return <>nothing yet</>;
+  const { t, language } = useAppLanguage();
+  const tokens = savedTokensText(saved, t, language);
+  const time = savedTimeText(saved, t);
+  if (!tokens && !time) return <>{t("engines.tokens.nothingYet")}</>;
   const amount = formatMoney(
     listPriceUsd(saved.inputTokens, saved.outputTokens),
     currency,
+    t,
+    language,
   );
-  const other = currency === "eur" ? "dollars" : "euros";
   return (
     <>
       {tokens ? (
         <>
           {tokens} ≈{" "}
           <button
-            aria-label={`${amount}. Show amounts in ${other}`}
+            aria-label={t(
+              currency === "eur"
+                ? "engines.tokens.toDollars"
+                : "engines.tokens.toEuros",
+              { amount },
+            )}
             className="font-semibold underline decoration-dotted underline-offset-2"
             onClick={onToggle}
             type="button"
@@ -95,17 +91,13 @@ function SavedPart({
         </>
       ) : null}
       {tokens && time ? ", " : null}
-      {time ? (
-        <>
-          {tokens ? "plus " : ""}
-          {time}
-        </>
-      ) : null}
+      {time ? <>{tokens ? t("engines.tokens.plus", { time }) : time}</> : null}
     </>
   );
 }
 
 function SavedLine({ rows }: { rows: TokenRow[] }) {
+  const { t, language } = useAppLanguage();
   const [currency, setCurrency] = useState<Currency>(readCurrency);
   const toggle = () => {
     const next: Currency = currency === "eur" ? "usd" : "eur";
@@ -115,14 +107,14 @@ function SavedLine({ rows }: { rows: TokenRow[] }) {
   return (
     <div className="mt-3 text-sm" data-testid="tokens-saved">
       <p>
-        <span className="font-semibold">{SAVED_LABELS.week}:</span>{" "}
+        <span className="font-semibold">{t("engines.tokens.savedWeek")}:</span>{" "}
         <SavedPart
           currency={currency}
           onToggle={toggle}
           saved={savedFor(rows, "week")}
         />
         {". "}
-        <span className="text-duet-ink-2">{SAVED_LABELS.today}:</span>{" "}
+        <span className="text-duet-ink-2">{t("engines.today")}:</span>{" "}
         <SavedPart
           currency={currency}
           onToggle={toggle}
@@ -131,21 +123,23 @@ function SavedLine({ rows }: { rows: TokenRow[] }) {
         {"."}
       </p>
       <p className="type-label mt-1 text-duet-ink-2">
-        {referenceLine()} {CURRENCY_HELP}
+        {referenceLine(t, language)} {t("engines.tokens.currencyHelp")}
       </p>
-      <p className="type-label mt-1 text-duet-ink-2">{SAVED_NOTE}</p>
+      <p className="type-label mt-1 text-duet-ink-2">
+        {t("engines.tokens.savedNote")}
+      </p>
     </div>
   );
 }
 
 export const tokensKeys = { all: ["freeduet", "engines", "usage"] as const };
 
-export function tokensQueryOptions() {
+export function tokensQueryOptions(t: T = englishT) {
   return {
     queryKey: tokensKeys.all,
     queryFn: async (): Promise<TokenUsage> => {
       const response = await client("/api/freeduet/engines/usage", {
-        fallback: TOKENS_FALLBACK,
+        fallback: t("engines.tokens.fallback"),
       });
       return response.json();
     },
@@ -153,7 +147,8 @@ export function tokensQueryOptions() {
 }
 
 function Cell({ counts }: { counts: TokenCounts }) {
-  const cell = tokensCell(counts);
+  const { t, language } = useAppLanguage();
+  const cell = tokensCell(counts, t, language);
   return (
     <td className="px-3 py-3 tabular-nums">
       <span className="whitespace-nowrap">{cell.text}</span>
@@ -199,8 +194,9 @@ function Rows({
 }
 
 export function EngineTokens({ reading }: { reading: EnginesReading }) {
+  const { t } = useAppLanguage();
   const usage = useQuery({
-    ...tokensQueryOptions(),
+    ...tokensQueryOptions(t),
     refetchInterval: REFRESH_MS,
   });
   const agents = useQuery(agentListQueryOptions());
@@ -208,20 +204,29 @@ export function EngineTokens({ reading }: { reading: EnginesReading }) {
     reading.engines.find((engine) => engine.id === id)?.name ?? id;
   const memberName = (id: string | null) =>
     id === null
-      ? TOKENS_ALL_ENGINES
+      ? t("engines.tokens.allMembers")
       : (agents.data?.find((agent) => agent.id === id)?.name ?? id);
   const data = usage.data;
 
   return (
-    <PageSection description={TOKENS_DESCRIPTION} title={TOKENS_TITLE}>
+    <PageSection
+      description={t("engines.tokens.description")}
+      title={t("engines.tokens.title")}
+    >
       {usage.error || data?.reason ? (
-        <p className="type-label mt-4 text-duet-ink-2">{TOKENS_UNAVAILABLE}</p>
+        <p className="type-label mt-4 text-duet-ink-2">
+          {t("engines.tokens.unavailable")}
+        </p>
       ) : null}
       {data?.problem ? (
-        <p className="type-label mt-4 text-duet-ink-2">{TOKENS_PROBLEM}</p>
+        <p className="type-label mt-4 text-duet-ink-2">
+          {t("engines.tokens.problem")}
+        </p>
       ) : null}
       {data && !data.reason && data.rows.length === 0 ? (
-        <p className="type-label mt-4 text-duet-ink-2">{TOKENS_EMPTY}</p>
+        <p className="type-label mt-4 text-duet-ink-2">
+          {t("engines.tokens.empty")}
+        </p>
       ) : null}
       {data && !data.reason && data.rows.length > 0 ? (
         <UsageCharts
@@ -233,24 +238,24 @@ export function EngineTokens({ reading }: { reading: EnginesReading }) {
       {data && !data.reason && data.rows.length > 0 ? (
         <DuetCard className="mt-4">
           <section
-            aria-label={TOKENS_TITLE}
+            aria-label={t("engines.tokens.title")}
             className="overflow-x-auto px-4 py-2"
           >
             <table className="w-full min-w-[36rem] border-collapse text-sm">
-              <caption className="sr-only">{TOKENS_TITLE}</caption>
+              <caption className="sr-only">{t("engines.tokens.title")}</caption>
               <thead>
                 <tr className="text-left text-duet-ink-2">
                   <th className="px-3 py-3 font-medium" scope="col">
-                    {TOKENS_COLUMNS.member}
+                    {t("engines.members.col.member")}
                   </th>
                   <th className="px-3 py-3 font-medium" scope="col">
-                    {TOKENS_COLUMNS.engine}
+                    {t("engines.tokens.col.engine")}
                   </th>
                   <th className="px-3 py-3 font-medium" scope="col">
-                    {TOKENS_COLUMNS.today}
+                    {t("engines.today")}
                   </th>
                   <th className="px-3 py-3 font-medium" scope="col">
-                    {TOKENS_COLUMNS.week}
+                    {t("engines.tokens.col.week")}
                   </th>
                 </tr>
               </thead>
@@ -276,7 +281,9 @@ export function EngineTokens({ reading }: { reading: EnginesReading }) {
         <SavedLine rows={data.rows} />
       ) : null}
       {data && !data.reason && data.rows.length > 0 ? (
-        <p className="type-label mt-2 text-duet-ink-2">{TOKENS_NOTE}</p>
+        <p className="type-label mt-2 text-duet-ink-2">
+          {t("engines.tokens.note")}
+        </p>
       ) : null}
     </PageSection>
   );

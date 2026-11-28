@@ -5,6 +5,11 @@
  * nothing is "not reported", never zero and never a guess. Days are UTC, as the server counts them.
  */
 
+import { timeLocale } from "./engines-text";
+import type { MessageId } from "./i18n/catalogs";
+import { englishT, type T } from "./i18n/provider";
+import { formatDate, formatNumber } from "./i18n/translate";
+
 export type TokenCounts = {
   turns: number;
   reportedTurns: number;
@@ -53,28 +58,25 @@ export type TokenUsage = {
   problem: boolean;
 };
 
-export const TOKENS_TITLE = "Tokens";
-export const TOKENS_DESCRIPTION =
-  "What each member used on each engine, as the engine itself reported it. Days are counted in UTC.";
-export const TOKENS_FALLBACK = "The token counts could not be loaded.";
-export const TOKENS_EMPTY = "No turn has been counted yet.";
-export const TOKENS_UNAVAILABLE = "The token counts are not available now.";
-export const TOKENS_PROBLEM =
-  "The file that keeps the counts could not be read, so some numbers may be missing.";
-export const NOT_REPORTED = "not reported";
+export const TOKENS_TITLE = englishT("engines.tokens.title");
+export const TOKENS_DESCRIPTION = englishT("engines.tokens.description");
+export const TOKENS_FALLBACK = englishT("engines.tokens.fallback");
+export const TOKENS_EMPTY = englishT("engines.tokens.empty");
+export const TOKENS_UNAVAILABLE = englishT("engines.tokens.unavailable");
+export const TOKENS_PROBLEM = englishT("engines.tokens.problem");
+export const NOT_REPORTED = englishT("engines.tokens.notReported");
 export const NOTHING = "—";
 export const TOKENS_COLUMNS = {
-  member: "Member",
-  engine: "Engine",
-  today: "Today",
-  week: "Last 7 days",
+  member: englishT("engines.members.col.member"),
+  engine: englishT("engines.tokens.col.engine"),
+  today: englishT("engines.today"),
+  week: englishT("engines.tokens.col.week"),
 } as const;
-export const TOKENS_ALL_ENGINES = "All members";
-export const TOKENS_NOTE =
-  "Input counts every token the model was given, cached ones included. Each row counts engine attempts: a retry on the same engine counts again. An attempt whose engine reported nothing adds its time and no tokens. Time is measured here, from the start to the end of each attempt.";
+export const TOKENS_ALL_ENGINES = englishT("engines.tokens.allMembers");
+export const TOKENS_NOTE = englishT("engines.tokens.note");
 
 /** A space that does not break, so "in · out" never wraps with "out" alone on the next line. */
-const NBSP = "\u00a0";
+const NBSP = " ";
 
 /**
  * D126. The reference for "what these tokens would have cost on a paid model": ONE declared model and its public list price,
@@ -85,6 +87,9 @@ export const REFERENCE_MODEL = "Claude Sonnet 5.5";
 export const REFERENCE_INPUT_USD_PER_MILLION = 2;
 export const REFERENCE_OUTPUT_USD_PER_MILLION = 10;
 export const REFERENCE_PRICE_DATE = "21 Nov 2026";
+/** The same two dates as calendar days, so each language writes them its own way. */
+const REFERENCE_PRICE_DAY = "2026-11-21";
+const USD_PER_EUR_DAY = "2026-11-17";
 export const REFERENCE_PRICE_SOURCE =
   "https://platform.claude.com/docs/en/about-claude/pricing";
 /** How many US dollars one euro bought: the ECB euro reference rate of 17 November 2026 (as published by the Banca d'Italia). */
@@ -98,26 +103,62 @@ export const DEFAULT_CURRENCY: Currency = "eur";
 export const CURRENCY_STORAGE_KEY = "freeduet.tokens.currency";
 
 export const SAVED_LABELS = {
-  week: "Saved in the last 7 days",
-  today: "Today",
+  week: englishT("engines.tokens.savedWeek"),
+  today: englishT("engines.today"),
 } as const;
-export const SAVED_NOTE =
-  "Saved means tokens that went through free engines, in the cloud or on your own computer. Your Claude Code subscription is a flat rate and paid engines cost money, so neither counts.";
-export const CURRENCY_HELP =
-  "Click an amount to switch between euros and dollars.";
+export const SAVED_NOTE = englishT("engines.tokens.savedNote");
+export const CURRENCY_HELP = englishT("engines.tokens.currencyHelp");
+
+/** A calendar day in the language's own way ("21 Nov 2026" in English), in UTC so it never moves with the time zone. */
+function dayText(day: string, language: string): string {
+  return formatDate(new Date(`${day}T00:00:00Z`), timeLocale(language), {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+    timeZone: "UTC",
+  });
+}
+
+/** An amount of money with its symbol, without a fixed number of decimals. */
+function priceText(
+  amount: number,
+  currency: "EUR" | "USD",
+  language: string,
+): string {
+  return formatNumber(amount, language, {
+    style: "currency",
+    currency,
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 4,
+  });
+}
 
 /** The reference under the saved line, in small text. */
-export function referenceLine(): string {
-  return `At ${REFERENCE_MODEL} list prices ($${REFERENCE_INPUT_USD_PER_MILLION} in, $${REFERENCE_OUTPUT_USD_PER_MILLION} out per million tokens, ${REFERENCE_PRICE_DATE}); €1 = $${USD_PER_EUR} (${USD_PER_EUR_DATE}).`;
+export function referenceLine(t: T = englishT, language = "en"): string {
+  return t("engines.tokens.reference", {
+    model: REFERENCE_MODEL,
+    input: priceText(REFERENCE_INPUT_USD_PER_MILLION, "USD", language),
+    output: priceText(REFERENCE_OUTPUT_USD_PER_MILLION, "USD", language),
+    date: dayText(REFERENCE_PRICE_DAY, language),
+    euro: priceText(1, "EUR", language),
+    rate: priceText(USD_PER_EUR, "USD", language),
+    rateDate: dayText(USD_PER_EUR_DAY, language),
+  });
 }
 
 /** "18 min", "2 h 05 min", "under 1 min"; null for no time. Whole minutes, rounded, so it never reads "60 min". */
-export function formatDuration(seconds: number): string | null {
+export function formatDuration(
+  seconds: number,
+  t: T = englishT,
+): string | null {
   if (!Number.isFinite(seconds) || seconds <= 0) return null;
   const minutes = Math.round(seconds / 60);
-  if (minutes < 1) return "under 1 min";
-  if (minutes < 60) return `${minutes} min`;
-  return `${Math.floor(minutes / 60)} h ${String(minutes % 60).padStart(2, "0")} min`;
+  if (minutes < 1) return t("engines.dur.under");
+  if (minutes < 60) return t("engines.dur.min", { minutes });
+  return t("engines.dur.hourMin", {
+    hours: Math.floor(minutes / 60),
+    minutes: String(minutes % 60).padStart(2, "0"),
+  });
 }
 
 /** What the tokens would have cost at the reference list price, in US dollars. */
@@ -132,11 +173,24 @@ export function listPriceUsd(
 }
 
 /** "€3.40" or "$3.72"; "under €0.01" for a positive amount below a cent, "€0.00" for none. */
-export function formatMoney(usd: number, currency: Currency): string {
-  const symbol = currency === "eur" ? "€" : "$";
+export function formatMoney(
+  usd: number,
+  currency: Currency,
+  t: T = englishT,
+  language = "en",
+): string {
+  const code = currency === "eur" ? "EUR" : "USD";
   const amount = currency === "eur" ? usd / USD_PER_EUR : usd;
-  if (amount > 0 && amount < 0.005) return `under ${symbol}0.01`;
-  return `${symbol}${amount.toFixed(2)}`;
+  const money = (value: number) =>
+    formatNumber(value, language, {
+      style: "currency",
+      currency: code,
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    });
+  if (amount > 0 && amount < 0.005)
+    return t("engines.tokens.under", { amount: money(0.01) });
+  return money(amount);
 }
 
 export type Saved = {
@@ -170,57 +224,80 @@ export function savedFor(rows: TokenRow[], period: "today" | "week"): Saved {
 }
 
 /** "1.2M tokens", or null when nothing was saved in tokens. */
-export function savedTokensText(saved: Saved): string | null {
+export function savedTokensText(
+  saved: Saved,
+  t: T = englishT,
+  language = "en",
+): string | null {
   const total = saved.inputTokens + saved.outputTokens;
-  return total > 0 ? `${compactTokens(total)} tokens` : null;
-}
-
-/** "plus 40 min on your own GPU, tokens not reported" (and the same for a free cloud engine), or null. */
-export function savedTimeText(saved: Saved): string | null {
-  const parts: string[] = [];
-  const local = formatDuration(saved.localUnreportedSeconds);
-  if (local) parts.push(`${local} on your own GPU`);
-  const cloud = formatDuration(saved.cloudUnreportedSeconds);
-  if (cloud) parts.push(`${cloud} on a free cloud engine`);
-  return parts.length > 0
-    ? `${parts.join(" and ")}, tokens not reported`
+  return total > 0
+    ? t("engines.tokens.amount", { amount: compactTokens(total, language) })
     : null;
 }
 
-/** 1234 -> "1.2k", 1500000 -> "1.5M"; below a thousand the plain number. */
-export function compactTokens(value: number): string {
-  if (value < 1_000) return String(value);
-  if (value < 1_000_000) return `${trim(value / 1_000)}k`;
-  return `${trim(value / 1_000_000)}M`;
+/** "plus 40 min on your own GPU, tokens not reported" (and the same for a free cloud engine), or null. */
+export function savedTimeText(saved: Saved, t: T = englishT): string | null {
+  const parts: string[] = [];
+  const local = formatDuration(saved.localUnreportedSeconds, t);
+  if (local) parts.push(t("engines.tokens.timeLocal", { time: local }));
+  const cloud = formatDuration(saved.cloudUnreportedSeconds, t);
+  if (cloud) parts.push(t("engines.tokens.timeCloud", { time: cloud }));
+  return parts.length > 0
+    ? t("engines.tokens.timeTail", {
+        parts: parts.join(t("engines.tokens.and")),
+      })
+    : null;
 }
 
-function trim(value: number): string {
-  const text = value >= 100 ? value.toFixed(0) : value.toFixed(1);
-  return text.replace(/\.0$/, "");
+/** 1234 -> "1.2k", 1500000 -> "1.5M"; below a thousand the plain number. The decimal mark follows the language. */
+export function compactTokens(value: number, language = "en"): string {
+  if (value < 1_000) return String(value);
+  if (value < 1_000_000) return `${trim(value / 1_000, language)}k`;
+  return `${trim(value / 1_000_000, language)}M`;
+}
+
+function trim(value: number, language: string): string {
+  const digits = value >= 100 ? 0 : 1;
+  return formatNumber(Number(value.toFixed(digits)), language, {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: digits,
+    useGrouping: false,
+  });
 }
 
 /** The cell for one period: a dash for no turn, "not reported" when none carried a count, else in and out. */
-export function tokensCell(counts: TokenCounts): {
+export function tokensCell(
+  counts: TokenCounts,
+  t: T = englishT,
+  language = "en",
+): {
   text: string;
   note: string | null;
   time: string | null;
 } {
   if (counts.turns === 0) return { text: NOTHING, note: null, time: null };
-  const time = formatDuration(counts.seconds);
+  const time = formatDuration(counts.seconds, t);
+  const notReported = t("engines.tokens.notReported");
   // "not reported" keeps its time on the same line: "not reported · 12 min".
   if (counts.reportedTurns === 0)
     return {
       text: time
-        ? `${NOT_REPORTED}${NBSP}·${NBSP}${time.replace(/ /g, NBSP)}`
-        : NOT_REPORTED,
+        ? `${notReported.replace(/ /g, NBSP)}${NBSP}·${NBSP}${time.replace(/ /g, NBSP)}`
+        : notReported,
       note: null,
       time: null,
     };
   // "in · out" stays together on one line: the spaces do not break.
-  const text = `${compactTokens(counts.inputTokens)}${NBSP}in${NBSP}·${NBSP}${compactTokens(counts.outputTokens)}${NBSP}out`;
+  const text = t("engines.tokens.cell", {
+    input: compactTokens(counts.inputTokens, language),
+    output: compactTokens(counts.outputTokens, language),
+  });
   const partial =
     counts.reportedTurns < counts.turns
-      ? `${counts.reportedTurns} of ${counts.turns} attempts reported`
+      ? t("engines.tokens.partial", {
+          reported: counts.reportedTurns,
+          total: counts.turns,
+        })
       : null;
   return { text, note: partial, time };
 }
@@ -230,14 +307,27 @@ export function tokensCell(counts: TokenCounts): {
 export type Breakdown = "source" | "member";
 export type Metric = "tokens" | "time";
 
-export const BREAKDOWN_LABELS: Record<Breakdown, string> = {
-  source: "By source",
-  member: "By member",
+const BREAKDOWN_IDS: Record<Breakdown, MessageId> = {
+  source: "engines.usage.bySource",
+  member: "engines.usage.byMember",
 };
-export const METRIC_LABELS: Record<Metric, string> = {
-  tokens: "Tokens",
-  time: "Time",
+const METRIC_IDS: Record<Metric, MessageId> = {
+  tokens: "engines.tokens.title",
+  time: "engines.usage.time",
 };
+/** The words for each choice in the app's language; the values are what the page keeps. */
+export const breakdownLabels = (
+  t: T = englishT,
+): Record<Breakdown, string> => ({
+  source: t(BREAKDOWN_IDS.source),
+  member: t(BREAKDOWN_IDS.member),
+});
+export const metricLabels = (t: T = englishT): Record<Metric, string> => ({
+  tokens: t(METRIC_IDS.tokens),
+  time: t(METRIC_IDS.time),
+});
+export const BREAKDOWN_LABELS: Record<Breakdown, string> = breakdownLabels();
+export const METRIC_LABELS: Record<Metric, string> = metricLabels();
 export const SOURCE_ORDER: readonly TokenSource[] = [
   "person",
   "routine",
@@ -245,26 +335,31 @@ export const SOURCE_ORDER: readonly TokenSource[] = [
   "other",
   "unknown",
 ];
-export const SOURCE_LABELS: Record<TokenSource, string> = {
-  person: "You",
-  routine: "Routines",
-  handoff: "Between members",
-  other: "Other",
-  unknown: "Earlier (not recorded)",
+const SOURCE_IDS: Record<TokenSource, MessageId> = {
+  person: "engines.usage.source.person",
+  routine: "engines.usage.source.routine",
+  handoff: "engines.usage.source.handoff",
+  other: "engines.usage.source.other",
+  unknown: "engines.usage.source.unknown",
 };
-export const USAGE_TITLE = "Where the last 7 days went";
-export const USAGE_NOTE =
-  'Shares are of the tokens the engines reported (input plus output), or of the time when Time is chosen; attempts that reported no tokens add time only. "You" is your own messages, "Routines" is routines and check-ins, "Between members" is hand-offs, and "Other" is anything else, such as a deployment\'s own runs.';
-export const USAGE_NOTHING = "Nothing was counted in the last 7 days.";
-export const CHARTS_FAILED =
-  "The usage charts could not be drawn. The table below is not affected.";
-export const REST_MEMBERS = "Other members";
+export const sourceLabels = (t: T = englishT): Record<TokenSource, string> => ({
+  person: t(SOURCE_IDS.person),
+  routine: t(SOURCE_IDS.routine),
+  handoff: t(SOURCE_IDS.handoff),
+  other: t(SOURCE_IDS.other),
+  unknown: t(SOURCE_IDS.unknown),
+});
+export const SOURCE_LABELS: Record<TokenSource, string> = sourceLabels();
+export const USAGE_TITLE = englishT("engines.usage.title");
+export const USAGE_NOTE = englishT("engines.usage.note");
+export const USAGE_NOTHING = englishT("engines.usage.nothing");
+export const CHARTS_FAILED = englishT("engines.usage.chartsFailed");
+export const REST_MEMBERS = englishT("engines.usage.restMembers");
 export const REST_KEY = "~rest";
 /** Said where a weekly gauge would be: the subscription does not tell FreeDuet its limit, so no percentage is shown. */
-export const LIMIT_TITLE = "Plan limits";
-export const LIMIT_NONE = "No engine is held back by a limit right now.";
-export const LIMIT_NOTE =
-  "A percentage of your plan's weekly limit is not shown: the subscription does not report it to FreeDuet. An engine says so only when it has reached a limit, with the time it is expected back.";
+export const LIMIT_TITLE = englishT("engines.usage.limitTitle");
+export const LIMIT_NONE = englishT("engines.usage.limitNone");
+export const LIMIT_NOTE = englishT("engines.usage.limitNote");
 const MAX_MEMBER_SERIES = 5;
 
 export function metricValue(
@@ -303,6 +398,7 @@ export function usageView(
   breakdown: Breakdown,
   metric: Metric,
   memberName: (id: string) => string,
+  t: T = englishT,
 ): UsageView {
   const perDay = daily.map((day) => {
     const values: Record<string, number> = {};
@@ -342,9 +438,9 @@ export function usageView(
   });
   const label = (key: string) =>
     key === REST_KEY
-      ? REST_MEMBERS
+      ? t("engines.usage.restMembers")
       : breakdown === "source"
-        ? SOURCE_LABELS[key as TokenSource]
+        ? t(SOURCE_IDS[key as TokenSource])
         : memberName(key);
   const keys = [...kept, ...(rest.length > 0 ? [REST_KEY] : [])].map((key) => ({
     key,
@@ -364,29 +460,53 @@ export function usageView(
 }
 
 /** "63%", "3.4%", "0.3%" and "under 0.1%": one decimal below ten, none from ten up. */
-export function percentText(share: number): string {
+export function percentText(
+  share: number,
+  t: T = englishT,
+  language = "en",
+): string {
+  const percent = (value: number, digits: number) =>
+    `${formatNumber(value, language, {
+      minimumFractionDigits: 0,
+      maximumFractionDigits: digits,
+      useGrouping: false,
+    })}%`;
   if (!(share > 0)) return "0%";
-  if (share < 0.1) return "under 0.1%";
-  if (share < 10) return `${share.toFixed(1).replace(/\.0$/, "")}%`;
-  return `${Math.round(share)}%`;
+  if (share < 0.1)
+    return t("engines.tokens.under", { amount: percent(0.1, 1) });
+  if (share < 10) return percent(Number(share.toFixed(1)), 1);
+  return percent(Math.round(share), 0);
 }
 
 /** The value of one part, in the unit of the metric: "1.2M tokens" or "3 h 20 min". */
-export function metricText(value: number, metric: Metric): string {
-  if (metric === "tokens") return `${compactTokens(value)} tokens`;
-  return formatDuration(value) ?? "0 min";
+export function metricText(
+  value: number,
+  metric: Metric,
+  t: T = englishT,
+  language = "en",
+): string {
+  if (metric === "tokens")
+    return t("engines.tokens.amount", {
+      amount: compactTokens(value, language),
+    });
+  return formatDuration(value, t) ?? t("engines.dur.min", { minutes: 0 });
 }
 
 /** "Sat 21" for a UTC day, and "Today" for the last one. A day that is not a date is shown as it is. */
-export function dayLabel(day: string, isToday: boolean): string {
-  if (isToday) return "Today";
+export function dayLabel(
+  day: string,
+  isToday: boolean,
+  t: T = englishT,
+  language = "en",
+): string {
+  if (isToday) return t("engines.today");
   const moment = new Date(`${day}T00:00:00Z`);
   if (Number.isNaN(moment.getTime())) return day;
-  return new Intl.DateTimeFormat("en-GB", {
+  return formatDate(moment, timeLocale(language), {
     weekday: "short",
     day: "numeric",
     timeZone: "UTC",
-  }).format(moment);
+  });
 }
 
 /** A round top for the chart's scale: 1, 2, 2.5 or 5 times a power of ten, never below 1. */

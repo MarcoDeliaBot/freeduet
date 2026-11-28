@@ -2216,6 +2216,307 @@ export const it: Catalog<typeof EN> = {
   "admin.skills.instructionsPlaceholder":
     "Che cosa deve fare il Bot quando questa skill viene usata.",
   "admin.skills.install": "Installa la skill",
+  "engines.intro":
+    "Il motore è ciò che pensa per ogni membro. I tuoi accessi rispondono per primi, a meno che tu non scelga un altro ordine; tutto ciò che è a pagamento resta spento finché non lo dici tu.",
+  "engines.loadFailed":
+    "Non è stato possibile caricare i motori. Ricarica la pagina.",
+  "engines.fallback": "Non è stato possibile elencare i motori.",
+  "engines.noEngines": "Nessun motore è stato ancora segnalato.",
+  "engines.statesTitle": "I motori e il loro stato",
+  "engines.sectionsLabel": "Sezioni dei motori",
+  "engines.tab.overview": "Panoramica",
+  "engines.tab.providers": "Fornitori",
+  "engines.tab.members": "Assegnazioni dei Bot",
+  "engines.tab.usage": "Utilizzo",
+  "engines.asideLabel": "Chiavi e spesa",
+  "engines.keys.title": "Chiavi",
+  "engines.keys.text":
+    "Qui verranno conservate solo le chiavi dei gateway. I tuoi accessi a Claude e ChatGPT non vengono mai memorizzati da FreeDuet.",
+  "engines.keys.notBuilt":
+    "Una chiave si aggiunge sulla scheda del suo motore. Viene conservata su questa installazione e non viene mai più mostrata.",
+  "engines.spending.title": "Spesa",
+  "engines.spending.text":
+    "La spesa non è ancora mostrata in questa pagina. Un motore a pagamento viene eseguito solo se questa installazione lo consente.",
+  "engines.today": "Oggi",
+  "engines.reason.off":
+    "I motori sono disattivati su questa installazione (FREEDUET_ROUTER=off), quindi non c'è nulla da mostrare.",
+  "engines.reason.not_set_up":
+    "Su questa installazione non è configurato alcun agente FreeDuet, quindi non ci sono motori da mostrare.",
+  "engines.reason.unreachable":
+    "L'agente FreeDuet non ha risposto, quindi al momento non è possibile leggere i motori. Questa pagina riprova ogni 30 secondi.",
+  "engines.state.ready": "Pronto",
+  "engines.state.degraded": "Pronto, ma ha avuto errori recenti",
+  "engines.state.limitedAt": "Ha raggiunto il limite fino a {at}",
+  "engines.state.limited": "Ha raggiunto il limite per ora",
+  "engines.state.outOfCreditAt": "Credito esaurito, nuovo tentativo: {at}",
+  "engines.state.outOfCredit": "Credito esaurito",
+  "engines.state.notAnsweringAt": "Non risponde, nuovo tentativo: {at}",
+  "engines.state.notAnswering": "Non risponde per ora",
+  "engines.state.checking": "Verifica se risponde di nuovo",
+  "engines.state.gatewayKey":
+    "Il suo gateway non ha accettato la chiave. Controlla la chiave che gli hai dato.",
+  "engines.state.signedOut":
+    "Disconnesso: accedi di nuovo con l'accesso del motore stesso",
+  "engines.state.refusedWhy": "Non eseguito: {reason}",
+  "engines.state.refused": "Non eseguito: il motivo non è noto.",
+  "engines.state.unknown": "Stato non noto",
+  "engines.state.toolsAsText":
+    "La sua ultima risposta ha scritto le chiamate agli strumenti come testo invece di usarle: scegli un modello che supporti gli strumenti",
+  "engines.pill.working": "Funziona",
+  "engines.pill.checking": "Verifica",
+  "engines.pill.limited": "Limitato",
+  "engines.pill.outOfCredit": "Credito esaurito",
+  "engines.pill.notAnswering": "Non risponde",
+  "engines.pill.signedOut": "Disconnesso",
+  "engines.pill.locked": "Bloccato",
+  "engines.pill.unknown": "Non noto",
+  "engines.members.title": "Chi usa cosa",
+  "engines.members.description":
+    "I motori che ogni membro prova, nell'ordine in cui li prova, e che cosa succede quando uno si esaurisce. Una modifica vale dal prossimo messaggio del membro e puoi annullarla.",
+  "engines.members.col.member": "Membro",
+  "engines.members.col.order": "Ordine dei motori",
+  "engines.members.col.switching": "Quando un motore si esaurisce",
+  "engines.order.note":
+    "Usa le frecce per spostare un motore di una posizione. I tuoi accessi vengono per primi a meno che tu non scelga diversamente: se uno spostamento mette un motore gratuito o a pagamento prima di loro, ti viene chiesto di confermarlo prima.",
+  "engines.order.warnTitle.free_before_login":
+    "Un motore gratuito risponderebbe prima del tuo accesso",
+  "engines.order.warnTitle.paid_before_free_or_login":
+    "Un motore a pagamento verrebbe prima di un motore gratuito o di un accesso",
+  "engines.order.warnText.free_before_login":
+    "Se è un servizio cloud, i messaggi di questo membro vanno prima a quel provider, che potrebbe conservarli. Le sue risposte potrebbero anche essere di qualità inferiore a quelle del tuo accesso.",
+  "engines.order.warnText.paid_before_free_or_login":
+    "Un motore a pagamento risponde prima dei motori che lo seguono, quindi ciò a cui risponde può costare denaro. Se è il primo dell'elenco, ogni messaggio può costare denaro fin dal primo. Viene eseguito solo dopo che hai attivato i motori a pagamento e impostato i tuoi limiti.",
+  "engines.order.newLabel": "Nuovo ordine:",
+  "engines.order.tick": "Ho capito, usa questo ordine",
+  "engines.order.confirm": "Conferma",
+  "engines.order.tickLabel": "Ho capito, usa questo ordine per {name}",
+  "engines.order.confirmLabel": "Conferma il nuovo ordine per {name}",
+  "engines.order.cancelLabel": "Annulla il nuovo ordine per {name}",
+  "engines.order.own": "Il tuo ordine: gli accessi non sono i primi",
+  "engines.order.recommended": "Usa l'ordine consigliato",
+  "engines.order.recommendedLabel": "Usa l'ordine consigliato per {name}",
+  "engines.order.moveUp": "Sposta {engine} su per {name}",
+  "engines.order.moveDown": "Sposta {engine} giù per {name}",
+  "engines.order.saveFailed": "Non è stato possibile salvare l'ordine.",
+  "engines.claude.default": "Predefinito dell'abbonamento",
+  "engines.claude.effort.low": "Basso",
+  "engines.claude.effort.medium": "Medio",
+  "engines.claude.effort.high": "Alto",
+  "engines.claude.effort.xhigh": "Molto alto",
+  "engines.claude.effort.max": "Massimo",
+  "engines.claude.effortLabel": "Impegno",
+  "engines.claude.note":
+    "Solo Claude Code. Un modello che il tuo abbonamento non può usare fa terminare quel turno con l'errore di Claude Code. Nulla viene disattivato e «Predefinito dell'abbonamento» annulla la scelta.",
+  "engines.claude.modelAria": "Modello Claude per {name}",
+  "engines.claude.effortAria": "Impegno di Claude per {name}",
+  "engines.claude.saved":
+    "Scelta di Claude salvata. Vale dal prossimo messaggio.",
+  "engines.members.saveFailed": "Non è stato possibile salvare la tua scelta.",
+  "engines.members.undoFailed":
+    "Non è stato possibile annullare quella modifica.",
+  "engines.mode.groupLabel": "Quando un motore si esaurisce, per {name}",
+  "engines.mode.controlLabel": "{label} per {name}",
+  "engines.mode.undoLabel": "Annulla la modifica per {name}",
+  "engines.mode.automatic.label": "Passa in automatico",
+  "engines.mode.automatic.effect":
+    "Quando un motore si esaurisce, risponde il successivo e ti viene detto quale.",
+  "engines.mode.askFirst.label": "Chiedimi prima",
+  "engines.mode.askFirst.effect":
+    "Quando un motore si esaurisce, ti viene chiesto: passare al successivo, aspettare o indicare un altro motore.",
+  "engines.leftOut.line": "Non usato: {engine}, perché {why}.",
+  "engines.leftOut.locked": "il file dell'installazione non lo consente",
+  "engines.leftOut.disabled": "è disattivato",
+  "engines.leftOut.paid_gateway":
+    "è un gateway a pagamento, che FreeDuet non esegue ancora",
+  "engines.leftOut.metered_off": "i motori a pagamento sono disattivati",
+  "engines.leftOut.cap_zero": "il suo tetto di spesa è zero",
+  "engines.leftOut.not_set_up": "non è configurato su questa installazione",
+  "engines.leftOut.other": "non verrà eseguito",
+  "engines.chain.none":
+    "Nessun motore può rispondere per questo membro in questo momento.",
+  "engines.chain.one": "Prova solo {engine}.",
+  "engines.chain.many": "Prova {list}.",
+  "engines.chain.then": ", poi ",
+  "engines.pin":
+    "Fissato su {engine} dal file dell'installazione: non passa mai a un altro motore.",
+  "engines.alone":
+    "Per questo membro è configurato solo {engine}, quindi non c'è ancora nulla a cui passare. La tua scelta resta salvata per quando ci sarà.",
+  "engines.source.yours":
+    "Scelta tua. Il file dell'installazione dice: {mode}.",
+  "engines.source.file": "Dal file dell'installazione.",
+  "engines.block.not_at_the_computer":
+    "Modifica queste impostazioni sul computer su cui gira FreeDuet.",
+  "engines.block.not_paired_with_the_computer":
+    "Prima abbina questo browser al computer su cui gira FreeDuet: lì esegui `bash scripts/open.sh` e apri qui il link.",
+  "engines.block.agent_too_old": "Aggiorna FreeDuet per modificarlo.",
+  "engines.block.choices_unreadable":
+    "Non è stato possibile leggere le tue scelte, quindi sono in uso le impostazioni dell'installazione. Nulla di ciò che hai scelto va perso.",
+  "engines.saved": "Salvato. Vale dal prossimo messaggio del membro.",
+  "engines.undone":
+    "Annullato. L'impostazione precedente vale dal prossimo messaggio del membro.",
+  "engines.providers.title": "Aggiungi un motore",
+  "engines.providers.description":
+    "Attiva un motore, incolla la sua chiave e premi Salva, poi premi Prova. Una modifica vale dal prossimo messaggio.",
+  "engines.providers.pickerLabel": "Fornitore",
+  "engines.providers.blurb.ollama": "Modelli che girano sul tuo computer.",
+  "engines.providers.blurb.llamacpp":
+    "Un server llama.cpp sul tuo computer o sulla tua rete.",
+  "engines.providers.blurb.lmstudio":
+    "Il server locale di LM Studio sul tuo computer.",
+  "engines.providers.blurb.freellmapi":
+    "Un router che gestisci tu e che raccoglie i piani gratuiti di molti provider dietro un solo indirizzo.",
+  "engines.providers.blurb.groq":
+    "Modelli aperti veloci, gratuiti con limiti giornalieri.",
+  "engines.providers.blurb.google": "Modelli Gemini, gratuiti con limiti.",
+  "engines.providers.blurb.mistral":
+    "Modelli Mistral nel piano gratuito, con limiti.",
+  "engines.providers.blurb.openrouter":
+    "Solo modelli che non costano nulla: un id che termina con :free, oppure openrouter/free.",
+  "engines.providers.blurb.cloudflare":
+    "Modelli aperti su Cloudflare, gratuiti con una quota giornaliera. Metti il tuo account nell'indirizzo.",
+  "engines.providers.blurb.cerebras": "Modelli aperti velocissimi.",
+  "engines.providers.blurb.anthropic-api": "Claude con crediti a consumo.",
+  "engines.providers.tag.local": "Locale",
+  "engines.providers.tag.router": "Avanzato: il tuo router",
+  "engines.providers.tag.free": "Gratuito con limiti",
+  "engines.providers.tag.trial": "Periodo di prova, richiede una carta",
+  "engines.providers.tag.paid": "A pagamento",
+  "engines.providers.cloudWarning":
+    "I dati inviati a questo servizio lasciano il tuo computer.",
+  "engines.providers.routerWarning":
+    "I tuoi messaggi vanno al router, che li inoltra ai provider gratuiti che hai abilitato al suo interno. Lasciano il tuo computer e quei provider potrebbero conservarli.",
+  "engines.providers.routerAdvanced":
+    "Opzione avanzata, non un'impostazione predefinita consigliata: il progetto stesso si descrive come destinato solo alla sperimentazione personale. FreeDuet non lo installa né lo esegue. Le chiavi dei tuoi provider restano al suo interno; FreeDuet conserva solo l'unico token di accesso che ti fornisce.",
+  "engines.providers.routerAddress":
+    "La sua porta predefinita, la 3001, è quella di FreeDuet. Avvialo su un'altra porta e scrivi l'indirizzo con /v1 alla fine. Su questo computer va bene http. Fuori da questo computer è accettata solo la tua rete (un indirizzo LAN o un nome .local), tramite https. Un host pubblico viene rifiutato.",
+  "engines.providers.address": "Indirizzo del server",
+  "engines.providers.loadList": "Carica l'elenco",
+  "engines.providers.saveSettings": "Salva le impostazioni",
+  "engines.providers.test": "Prova",
+  "engines.providers.freeModelsNote":
+    "I modelli gratuiti cambiano spesso e potrebbero conservare ciò che invii.",
+  "engines.providers.freeModelsLoading":
+    "Caricamento dei modelli gratuiti che possono usare strumenti.",
+  "engines.providers.freeModelsStale":
+    "Non è stato possibile raggiungere OpenRouter in questo momento. Questo è l'ultimo elenco caricato.",
+  "engines.providers.freeModelsFallback":
+    "Non è stato possibile raggiungere OpenRouter in questo momento. Viene offerto solo il router gratuito.",
+  "engines.providers.freeRouterLabel":
+    "openrouter/free (OpenRouter sceglie un modello gratuito)",
+  "engines.providers.keySaved": "Chiave salvata. Non viene mai più mostrata.",
+  "engines.providers.keyPlaceholder": "Incolla qui la chiave",
+  "engines.providers.notOnKey":
+    "Non ancora attivo. Incolla la chiave e premi Salva.",
+  "engines.providers.notOnSettings":
+    "Non ancora attivo. Scegli un modello e premi Salva le impostazioni.",
+  "engines.providers.settingsSaved": "Salvato. Vale dal prossimo messaggio.",
+  "engines.providers.keyRemoved": "Chiave rimossa. Il motore è spento.",
+  "engines.providers.lockedOwnFile":
+    "Hai scritto un tuo file dei motori, quindi queste schede lo mostrano soltanto. Modificalo lì.",
+  "engines.providers.users.paid":
+    "Spento finché non esistono i tetti di spesa. FreeDuet non permetterà a un motore a pagamento di funzionare prima di allora.",
+  "engines.providers.users.trial":
+    "Il suo piano gratuito è una prova che richiede una carta, quindi FreeDuet non lo offre come gratuito. Resta spento.",
+  "engines.providers.users.members":
+    "Per i membri: sì, dopo il loro accesso a Claude. Per gli assistenti leggeri: sì.",
+  "engines.providers.users.notYet":
+    "Per i membri: non ancora. Per gli assistenti leggeri: sì.",
+  "engines.providers.check.ok": "Ha risposto. Funziona.",
+  "engines.providers.check.key_rejected":
+    "La chiave non è stata accettata. Controllala e salvala di nuovo.",
+  "engines.providers.check.model_missing":
+    "Il server non conosce quel modello. Controlla il nome del modello.",
+  "engines.providers.check.rate_limited":
+    "Il limite o il credito è esaurito per ora. Riprova più tardi.",
+  "engines.providers.check.other":
+    "Nessuno ha risposto, oppure la risposta non è stata capita.",
+  "engines.providers.freeNote":
+    "\u201cGratuito\u201d è l'etichetta di FreeDuet, presa dai termini del provider. Alcuni provider (Google, per esempio) ti fatturano se la fatturazione è attiva per il tuo progetto.",
+  "engines.providers.useFor": "Usa per",
+  "engines.providers.useForNone":
+    "Nessun membro lo usa ancora. Lo usano gli assistenti leggeri. Seleziona i membri che possono inviare il proprio lavoro a questo servizio.",
+  "engines.providers.warn.inbox": "Invia la tua posta a questo servizio.",
+  "engines.providers.warn.concierge":
+    "Invia le tue prenotazioni a questo servizio.",
+  "engines.providers.modelsEmpty":
+    "L'elenco è vuoto. Scrivi il nome del modello.",
+  "engines.providers.modelsLoaded": {
+    one: "{count} modello caricato. Sceglilo nella casella.",
+    other: "{count} modelli caricati. Scegline uno nella casella.",
+  },
+  "engines.providers.switchOn": "Attiva {name}",
+  "engines.providers.changeFailed": "Non è stato possibile modificarlo.",
+  "engines.providers.keySaveFailed": "Non è stato possibile salvare la chiave.",
+  "engines.providers.listFailed": "Non è stato possibile caricare l'elenco.",
+  "engines.providers.keyRemoveFailed":
+    "Non è stato possibile rimuovere la chiave.",
+  "engines.providers.saveFailed": "Non è stato possibile salvarlo.",
+  "engines.providers.testFailed": "Non è stato possibile eseguire la prova.",
+  "engines.tokens.title": "Token",
+  "engines.tokens.description":
+    "Che cosa ha usato ogni membro su ogni motore, come l'ha riportato il motore stesso. I giorni sono contati in UTC.",
+  "engines.tokens.fallback":
+    "Non è stato possibile caricare i conteggi dei token.",
+  "engines.tokens.empty": "Nessun turno è stato ancora contato.",
+  "engines.tokens.unavailable":
+    "I conteggi dei token non sono disponibili in questo momento.",
+  "engines.tokens.problem":
+    "Non è stato possibile leggere il file che conserva i conteggi, quindi alcuni numeri potrebbero mancare.",
+  "engines.tokens.notReported": "non riportato",
+  "engines.tokens.col.engine": "Motore",
+  "engines.tokens.col.week": "Ultimi 7 giorni",
+  "engines.tokens.allMembers": "Tutti i membri",
+  "engines.tokens.note":
+    "L'input conta ogni token dato al modello, compresi quelli in cache. Ogni riga conta i tentativi del motore: un nuovo tentativo sullo stesso motore conta di nuovo. Un tentativo il cui motore non ha riportato nulla aggiunge il suo tempo e nessun token. Il tempo è misurato qui, dall'inizio alla fine di ogni tentativo.",
+  "engines.tokens.savedWeek": "Risparmiato negli ultimi 7 giorni",
+  "engines.tokens.savedNote":
+    "«Risparmiato» indica i token passati da motori gratuiti, nel cloud o sul tuo computer. Il tuo abbonamento a Claude Code è a tariffa fissa e i motori a pagamento costano denaro, quindi nessuno dei due conta.",
+  "engines.tokens.currencyHelp":
+    "Clicca su un importo per passare da euro a dollari.",
+  "engines.tokens.reference":
+    "Ai prezzi di listino di {model} ({input} in ingresso, {output} in uscita per milione di token, {date}); {euro} = {rate} ({rateDate}).",
+  "engines.tokens.under": "meno di {amount}",
+  "engines.tokens.nothingYet": "ancora nulla",
+  "engines.tokens.plus": "più {time}",
+  "engines.tokens.toDollars": "{amount}. Mostra gli importi in dollari",
+  "engines.tokens.toEuros": "{amount}. Mostra gli importi in euro",
+  "engines.tokens.amount": "{amount} token",
+  "engines.tokens.timeLocal": "{time} sulla tua GPU",
+  "engines.tokens.timeCloud": "{time} su un motore cloud gratuito",
+  "engines.tokens.and": " e ",
+  "engines.tokens.timeTail": "{parts}, token non riportati",
+  "engines.tokens.cell":
+    "{input}\u00a0ingresso\u00a0·\u00a0{output}\u00a0uscita",
+  "engines.tokens.partial": "{reported} tentativi su {total} riportati",
+  "engines.dur.under": "meno di 1 min",
+  "engines.dur.min": "{minutes}\u00a0min",
+  "engines.dur.hourMin": "{hours}\u00a0h {minutes}\u00a0min",
+  "engines.usage.bySource": "Per origine",
+  "engines.usage.byMember": "Per membro",
+  "engines.usage.time": "Tempo",
+  "engines.usage.source.person": "Tu",
+  "engines.usage.source.routine": "Routine",
+  "engines.usage.source.handoff": "Tra membri",
+  "engines.usage.source.other": "Altro",
+  "engines.usage.source.unknown": "Prima (non registrato)",
+  "engines.usage.title": "Dove sono andati gli ultimi 7 giorni",
+  "engines.usage.note":
+    "Le quote riguardano i token riportati dai motori (input più output) oppure il tempo quando è scelto «Tempo»; i tentativi che non hanno riportato token aggiungono solo tempo. «Tu» sono i tuoi messaggi, «Routine» sono le routine e i check-in, «Tra membri» sono i passaggi di consegne e «Altro» è tutto il resto, come le esecuzioni proprie di un'installazione.",
+  "engines.usage.nothing": "Negli ultimi 7 giorni non è stato contato nulla.",
+  "engines.usage.chartsFailed":
+    "Non è stato possibile disegnare i grafici di utilizzo. La tabella qui sotto non è interessata.",
+  "engines.usage.restMembers": "Altri membri",
+  "engines.usage.limitTitle": "Limiti del piano",
+  "engines.usage.limitNone":
+    "Nessun motore è trattenuto da un limite in questo momento.",
+  "engines.usage.limitNote":
+    "Non viene mostrata una percentuale del limite settimanale del tuo piano: l'abbonamento non la comunica a FreeDuet. Un motore lo segnala solo quando ha raggiunto un limite, con l'ora in cui è atteso di nuovo.",
+  "engines.usage.range": "da {from} a {to}, giorni UTC",
+  "engines.usage.splitBy": "Dividi per",
+  "engines.usage.measure": "Misura",
+  "engines.usage.perDay": "{title}: {metric} al giorno",
+  "engines.usage.perDayUtc": "{title}: {metric} al giorno, UTC",
+  "engines.usage.day": "Giorno",
   // connections-begin
   "connections.connect": "Collega",
   "connections.reconnect": "Ricollega",

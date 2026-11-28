@@ -5,6 +5,9 @@
  * it in English. The facts that never change (a provider's name, what it is, a suggested model) live here.
  */
 
+import type { MessageId } from "./i18n/catalogs";
+import { englishT, type T } from "./i18n/provider";
+
 export type ProviderId =
   | "ollama"
   | "llamacpp"
@@ -58,6 +61,7 @@ export const PROVIDER_TEXT: Record<
   ProviderId,
   {
     name: string;
+    /** The English sentence; the page reads `providerBlurb`. */
     blurb: string;
     suggestedModel: string;
     /** An example in the empty address box, for a card with no default address. */
@@ -66,171 +70,185 @@ export const PROVIDER_TEXT: Record<
 > = {
   ollama: {
     name: "Ollama",
-    blurb: "Models that run on your own computer.",
+    blurb: englishT("engines.providers.blurb.ollama"),
     suggestedModel: "",
   },
   llamacpp: {
     name: "llama.cpp server",
-    blurb: "A llama.cpp server on your own computer or network.",
+    blurb: englishT("engines.providers.blurb.llamacpp"),
     suggestedModel: "",
   },
   lmstudio: {
     name: "LM Studio",
-    blurb: "The local server of LM Studio on your own computer.",
+    blurb: englishT("engines.providers.blurb.lmstudio"),
     suggestedModel: "",
   },
   freellmapi: {
     name: "FreeLLMAPI (router on your computer)",
-    blurb:
-      "A router you run yourself that pools free tiers from many providers behind one address.",
+    blurb: englishT("engines.providers.blurb.freellmapi"),
     suggestedModel: "auto",
     addressPlaceholder: "http://localhost:3002/v1",
   },
   groq: {
     name: "Groq",
-    blurb: "Fast open models, free with daily limits.",
+    blurb: englishT("engines.providers.blurb.groq"),
     suggestedModel: "llama-3.1-8b-instant",
   },
   google: {
     name: "Google AI Studio",
-    blurb: "Gemini models, free with limits.",
+    blurb: englishT("engines.providers.blurb.google"),
     suggestedModel: "gemini-2.0-flash",
   },
   mistral: {
     name: "Mistral",
-    blurb: "Mistral models on the free plan, with limits.",
+    blurb: englishT("engines.providers.blurb.mistral"),
     suggestedModel: "mistral-small-latest",
   },
   openrouter: {
     name: "OpenRouter",
-    blurb:
-      "Only models that cost nothing: an id ending in :free, or openrouter/free.",
+    blurb: englishT("engines.providers.blurb.openrouter"),
     suggestedModel: "openrouter/free",
   },
   cloudflare: {
     name: "Cloudflare Workers AI",
-    blurb:
-      "Open models on Cloudflare, free with a daily allowance. Put your own account in the address.",
+    blurb: englishT("engines.providers.blurb.cloudflare"),
     suggestedModel: "@cf/meta/llama-3.1-8b-instruct",
   },
   cerebras: {
     name: "Cerebras",
-    blurb: "Very fast open models.",
+    blurb: englishT("engines.providers.blurb.cerebras"),
     suggestedModel: "",
   },
   "anthropic-api": {
     name: "Anthropic API",
-    blurb: "Claude on pay-as-you-go credits.",
+    blurb: englishT("engines.providers.blurb.anthropic-api"),
     suggestedModel: "",
   },
 };
 
-export const TAG_TEXT: Record<
-  ProviderTag,
-  { label: string; tone: "green" | "blue" | "amber" | "neutral" }
-> = {
-  local: { label: "Local", tone: "green" },
-  router: { label: "Advanced: your own router", tone: "amber" },
-  free: { label: "Free with limits", tone: "blue" },
-  trial: { label: "Trial, needs a card", tone: "amber" },
-  paid: { label: "Paid", tone: "neutral" },
+/** A provider's one-line description in the app's language. Its name is a product name and is never translated. */
+export function providerBlurb(id: ProviderId, t: T = englishT): string {
+  return t(`engines.providers.blurb.${id}`);
+}
+
+const TAG_IDS: Record<ProviderTag, MessageId> = {
+  local: "engines.providers.tag.local",
+  router: "engines.providers.tag.router",
+  free: "engines.providers.tag.free",
+  trial: "engines.providers.tag.trial",
+  paid: "engines.providers.tag.paid",
+};
+const TAG_TONES: Record<ProviderTag, "green" | "blue" | "amber" | "neutral"> = {
+  local: "green",
+  router: "amber",
+  free: "blue",
+  trial: "amber",
+  paid: "neutral",
 };
 
-export const PROVIDERS_TITLE = "Add an engine";
-export const PROVIDERS_DESCRIPTION =
-  "Switch an engine on, paste its key and press Save, then press Test. A change applies from the next message.";
-export const CLOUD_WARNING = "Data sent to this service leaves your computer.";
+export const TAG_TEXT = Object.fromEntries(
+  (Object.keys(TAG_IDS) as ProviderTag[]).map((tag) => [
+    tag,
+    { label: englishT(TAG_IDS[tag]), tone: TAG_TONES[tag] },
+  ]),
+) as Record<
+  ProviderTag,
+  { label: string; tone: "green" | "blue" | "amber" | "neutral" }
+>;
+
+/** A tag's word and tone in the app's language. */
+export function tagText(
+  tag: ProviderTag,
+  t: T = englishT,
+): { label: string; tone: "green" | "blue" | "amber" | "neutral" } {
+  return { label: t(TAG_IDS[tag]), tone: TAG_TONES[tag] };
+}
+
+export const PROVIDERS_TITLE = englishT("engines.providers.title");
+export const PROVIDERS_DESCRIPTION = englishT("engines.providers.description");
+export const CLOUD_WARNING = englishT("engines.providers.cloudWarning");
 /** D113: under the FreeLLMAPI card. The router passes what it is sent on to the free providers the person enabled inside it. */
-export const ROUTER_WARNING =
-  "Your messages go to the router, which passes them on to the free providers you enabled inside it. They leave your computer, and those providers may keep them.";
-export const ROUTER_ADVANCED_NOTE =
-  "Advanced option, not a recommended default: the project describes itself as for personal experimentation only. FreeDuet does not install or run it. Your provider keys stay inside it; FreeDuet keeps only the one access token it gives you.";
-export const ROUTER_ADDRESS_NOTE =
-  "Its own default port, 3001, is FreeDuet's. Run it on another port and write the address with /v1 at the end. On this computer http is fine. Off this computer only your own network is accepted (a LAN address or a .local name), over https. A public host is refused.";
+export const ROUTER_WARNING = englishT("engines.providers.routerWarning");
+export const ROUTER_ADVANCED_NOTE = englishT(
+  "engines.providers.routerAdvanced",
+);
+export const ROUTER_ADDRESS_NOTE = englishT("engines.providers.routerAddress");
 export const LABELS = {
-  address: "Server address",
-  model: "Model",
-  key: "Key",
-  loadList: "Load list",
-  save: "Save",
-  saveSettings: "Save settings",
-  remove: "Remove",
-  test: "Test",
+  address: englishT("engines.providers.address"),
+  model: englishT("admin.credentials.model"),
+  key: englishT("triggers.key"),
+  loadList: englishT("engines.providers.loadList"),
+  save: englishT("settings.save"),
+  saveSettings: englishT("engines.providers.saveSettings"),
+  remove: englishT("admin.boundaries.remove"),
+  test: englishT("engines.providers.test"),
 } as const;
 /** D116: under the OpenRouter model choice. One line: the free list changes often, and a free service may keep what it is sent (D101). */
-export const FREE_MODELS_NOTE =
-  "Free models change often and may keep what you send.";
-export const FREE_MODELS_LOADING =
-  "Loading the free models that can use tools.";
+export const FREE_MODELS_NOTE = englishT("engines.providers.freeModelsNote");
+export const FREE_MODELS_LOADING = englishT(
+  "engines.providers.freeModelsLoading",
+);
 /** Where the list came from, when it is not a fresh one. The router `openrouter/free` is always in it. */
-export function freeModelsSourceText(source: string): string | null {
-  if (source === "stale")
-    return "Could not reach OpenRouter just now. This is the last list that was loaded.";
-  if (source === "fallback")
-    return "Could not reach OpenRouter just now. Only the free router is offered.";
+export function freeModelsSourceText(
+  source: string,
+  t: T = englishT,
+): string | null {
+  if (source === "stale") return t("engines.providers.freeModelsStale");
+  if (source === "fallback") return t("engines.providers.freeModelsFallback");
   return null;
 }
-export const FREE_ROUTER_LABEL =
-  "openrouter/free (OpenRouter picks a free model)";
-export const KEY_SAVED = "Key saved. It is never shown again.";
-export const KEY_PLACEHOLDER = "Paste the key here";
-export const NOT_ON_YET_KEY = "Not on yet. Paste the key and press Save.";
-export const NOT_ON_YET_SETTINGS =
-  "Not on yet. Choose a model and press Save settings.";
-export const SETTINGS_SAVED = "Saved. It applies from the next message.";
-export const KEY_REMOVED = "Key removed. The engine is off.";
-export const LOCKED_OWN_FILE =
-  "You wrote an engines file of your own, so these cards only show it. Change it there.";
+export const FREE_ROUTER_LABEL = englishT("engines.providers.freeRouterLabel");
+export const KEY_SAVED = englishT("engines.providers.keySaved");
+export const KEY_PLACEHOLDER = englishT("engines.providers.keyPlaceholder");
+export const NOT_ON_YET_KEY = englishT("engines.providers.notOnKey");
+export const NOT_ON_YET_SETTINGS = englishT("engines.providers.notOnSettings");
+export const SETTINGS_SAVED = englishT("engines.providers.settingsSaved");
+export const KEY_REMOVED = englishT("engines.providers.keyRemoved");
+export const LOCKED_OWN_FILE = englishT("engines.providers.lockedOwnFile");
 
 /** What the card says about who can use it. Members run only on Claude Code and on Anthropic-format engines today. */
 export function usersText(
   card: Pick<ProviderView, "blocked" | "forMembers" | "forAssistants">,
+  t: T = englishT,
 ): string {
-  if (card.blocked === "paid") {
-    return "Off until spending caps exist. FreeDuet will not let a paid engine run before then.";
-  }
-  if (card.blocked === "trial_needs_card") {
-    return "Its free tier is a trial that needs a card, so FreeDuet does not offer it as free. It stays off.";
-  }
-  if (card.forMembers) {
-    return "For members: yes, after their Claude login. For the light assistants: yes.";
-  }
-  return "For members: not yet. For the light assistants: yes.";
+  if (card.blocked === "paid") return t("engines.providers.users.paid");
+  if (card.blocked === "trial_needs_card")
+    return t("engines.providers.users.trial");
+  if (card.forMembers) return t("engines.providers.users.members");
+  return t("engines.providers.users.notYet");
 }
 
 /** The outcome of Test or Load list, in one sentence, from the closed list the server sends. Never the key, a number or the provider's own words. */
-export function checkText(code: string): string {
+export function checkText(code: string, t: T = englishT): string {
   switch (code) {
     case "ok":
-      return "It answered. It works.";
+      return t("engines.providers.check.ok");
     case "key_rejected":
-      return "The key was not accepted. Check it and save it again.";
+      return t("engines.providers.check.key_rejected");
     case "model_missing":
-      return "The server does not know that model. Check the model name.";
+      return t("engines.providers.check.model_missing");
     case "rate_limited":
-      return "The limit or the credit is used up for now. Try again later.";
+      return t("engines.providers.check.rate_limited");
     default:
-      return "Nothing answered, or the answer was not understood.";
+      return t("engines.providers.check.other");
   }
 }
 
-export const FREE_NOTE =
-  "\u201cFree\u201d is FreeDuet's label, taken from the provider's terms. Some providers (Google, for one) bill you if billing is switched on for your project.";
-export const USE_FOR_TITLE = "Use for";
-export const USE_FOR_NONE =
-  "No member uses it yet. The light assistants do. Tick the members who may send their work to this service.";
+export const FREE_NOTE = englishT("engines.providers.freeNote");
+export const USE_FOR_TITLE = englishT("engines.providers.useFor");
+export const USE_FOR_NONE = englishT("engines.providers.useForNone");
 
 /** What a ticked member sends to a free cloud service. Only the two members whose work is mail or bookings say more. */
-export function warningFor(memberId: string): string | null {
-  if (memberId === "inbox") return "Sends your mail to this service.";
-  if (memberId === "concierge") return "Sends your bookings to this service.";
+export function warningFor(memberId: string, t: T = englishT): string | null {
+  if (memberId === "inbox") return t("engines.providers.warn.inbox");
+  if (memberId === "concierge") return t("engines.providers.warn.concierge");
   return null;
 }
 
-export function modelsLoadedText(count: number): string {
+export function modelsLoadedText(count: number, t: T = englishT): string {
   return count === 0
-    ? "The list is empty. Type the model name."
-    : `${count} ${count === 1 ? "model" : "models"} loaded. Pick one in the box.`;
+    ? t("engines.providers.modelsEmpty")
+    : t("engines.providers.modelsLoaded", { count });
 }
 
 export function cardLabel(name: string, what: string): string {

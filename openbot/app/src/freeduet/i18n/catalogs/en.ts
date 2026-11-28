@@ -2120,6 +2120,294 @@ export const EN = {
   "admin.skills.instructionsPlaceholder":
     "What the Bot should do when this skill is used.",
   "admin.skills.install": "Install skill",
+  "engines.intro":
+    "The engine is what does the thinking for each member. Your own sign-ins answer first unless you choose another order; anything paid stays off until you say so.",
+  "engines.loadFailed": "Couldn't load the engines. Reload the page.",
+  "engines.fallback": "The engines could not be listed.",
+  "engines.noEngines": "No engines are reported yet.",
+  "engines.statesTitle": "Engines and their state",
+  "engines.sectionsLabel": "Engine sections",
+  "engines.tab.overview": "Overview",
+  "engines.tab.providers": "Providers",
+  "engines.tab.members": "Bot assignments",
+  "engines.tab.usage": "Usage",
+  "engines.asideLabel": "Keys and spending",
+  "engines.keys.title": "Keys",
+  "engines.keys.text":
+    "Only keys for gateways will be kept here. Your Claude and ChatGPT sign-ins are never stored by FreeDuet.",
+  "engines.keys.notBuilt":
+    "A key is added on its engine's card. It is kept on this installation and never shown again.",
+  "engines.spending.title": "Spending",
+  "engines.spending.text":
+    "Spending is not shown on this page yet. A paid engine runs only if this installation allows it.",
+  "engines.today": "Today",
+  "engines.reason.off":
+    "The engines are switched off on this installation (FREEDUET_ROUTER=off), so there is nothing to show.",
+  "engines.reason.not_set_up":
+    "No FreeDuet agent is set up on this installation, so there are no engines to show.",
+  "engines.reason.unreachable":
+    "The FreeDuet agent did not answer, so the engines cannot be read right now. This page asks again every 30 seconds.",
+  "engines.state.ready": "Ready",
+  "engines.state.degraded": "Ready, but it has had recent errors",
+  "engines.state.limitedAt": "Reached its limit until {at}",
+  "engines.state.limited": "Reached its limit for now",
+  "engines.state.outOfCreditAt": "Out of credit, trying again at {at}",
+  "engines.state.outOfCredit": "Out of credit",
+  "engines.state.notAnsweringAt": "Not answering, trying again at {at}",
+  "engines.state.notAnswering": "Not answering for now",
+  "engines.state.checking": "Checking whether it answers again",
+  "engines.state.gatewayKey":
+    "Its gateway did not accept the key. Check the key you gave it.",
+  "engines.state.signedOut":
+    "Signed out: sign in again with the engine's own login",
+  "engines.state.refusedWhy": "Not run: {reason}",
+  "engines.state.refused": "Not run: the reason is not known.",
+  "engines.state.unknown": "State not known",
+  "engines.state.toolsAsText":
+    "Its last answer wrote its tool calls as text instead of using them: choose a model that supports tools",
+  "engines.pill.working": "Working",
+  "engines.pill.checking": "Checking",
+  "engines.pill.limited": "Limited",
+  "engines.pill.outOfCredit": "Out of credit",
+  "engines.pill.notAnswering": "Not answering",
+  "engines.pill.signedOut": "Signed out",
+  "engines.pill.locked": "Locked",
+  "engines.pill.unknown": "Not known",
+  "engines.members.title": "Who uses what",
+  "engines.members.description":
+    "The engines each member tries, in the order it tries them, and what happens when one runs out. A change applies from the member's next message, and you can undo it.",
+  "engines.members.col.member": "Member",
+  "engines.members.col.order": "Order of engines",
+  "engines.members.col.switching": "When an engine runs out",
+  "engines.order.note":
+    "Use the arrows to move an engine one place. Your own logins come first unless you choose otherwise: if a move puts a free or a paid engine before them, you are asked to confirm it first.",
+  "engines.order.warnTitle.free_before_login":
+    "A free engine would answer before your own login",
+  "engines.order.warnTitle.paid_before_free_or_login":
+    "A paid engine would come before a free engine or a login",
+  "engines.order.warnText.free_before_login":
+    "If it is a cloud service, this member's messages go to that provider first and it may keep them. Its answers may also be of lower quality than your login's.",
+  "engines.order.warnText.paid_before_free_or_login":
+    "A paid engine answers before the engines after it, so what it answers may cost money. If it is first in the list, every message may cost money from the first one. It runs only after you have switched paid engines on and set your limits.",
+  "engines.order.newLabel": "New order:",
+  "engines.order.tick": "I understand, use this order",
+  "engines.order.confirm": "Confirm",
+  "engines.order.tickLabel": "I understand, use this order for {name}",
+  "engines.order.confirmLabel": "Confirm the new order for {name}",
+  "engines.order.cancelLabel": "Cancel the new order for {name}",
+  "engines.order.own": "Your order: logins are not first",
+  "engines.order.recommended": "Use the recommended order",
+  "engines.order.recommendedLabel": "Use the recommended order for {name}",
+  "engines.order.moveUp": "Move {engine} up for {name}",
+  "engines.order.moveDown": "Move {engine} down for {name}",
+  "engines.order.saveFailed": "The order could not be saved.",
+  "engines.claude.default": "Subscription default",
+  "engines.claude.effort.low": "Low",
+  "engines.claude.effort.medium": "Medium",
+  "engines.claude.effort.high": "High",
+  "engines.claude.effort.xhigh": "Extra high",
+  "engines.claude.effort.max": "Max",
+  "engines.claude.effortLabel": "Effort",
+  "engines.claude.note":
+    "Claude Code only. A model your subscription cannot use ends that turn with Claude Code's own error. Nothing is switched off, and Subscription default undoes the choice.",
+  "engines.claude.modelAria": "Claude model for {name}",
+  "engines.claude.effortAria": "Claude effort for {name}",
+  "engines.claude.saved":
+    "Claude choice saved. It applies from the next message.",
+  "engines.members.saveFailed": "Your choice could not be saved.",
+  "engines.members.undoFailed": "That change could not be undone.",
+  "engines.mode.groupLabel": "When an engine runs out, for {name}",
+  "engines.mode.controlLabel": "{label} for {name}",
+  "engines.mode.undoLabel": "Undo the change for {name}",
+  "engines.mode.automatic.label": "Switch automatically",
+  "engines.mode.automatic.effect":
+    "When an engine runs out, the next one answers and you are told which.",
+  "engines.mode.askFirst.label": "Ask me first",
+  "engines.mode.askFirst.effect":
+    "When an engine runs out, you are asked: switch, wait, or name another engine.",
+  "engines.leftOut.line": "Not used: {engine}, because {why}.",
+  "engines.leftOut.locked": "the installation's file does not allow it",
+  "engines.leftOut.disabled": "it is switched off",
+  "engines.leftOut.paid_gateway":
+    "it is a paid gateway, which FreeDuet does not run yet",
+  "engines.leftOut.metered_off": "paid engines are switched off",
+  "engines.leftOut.cap_zero": "its spending cap is zero",
+  "engines.leftOut.not_set_up": "it is not set up on this installation",
+  "engines.leftOut.other": "it will not run",
+  "engines.chain.none": "No engine can answer for this member now.",
+  "engines.chain.one": "Tries only {engine}.",
+  "engines.chain.many": "Tries {list}.",
+  "engines.chain.then": ", then ",
+  "engines.pin":
+    "Pinned to {engine} by the installation's file: it never switches to another engine.",
+  "engines.alone":
+    "Only {engine} is set up for this member, so there is nothing to switch to yet. Your choice is kept for when there is.",
+  "engines.source.yours": "Your choice. The installation's file says: {mode}.",
+  "engines.source.file": "From the installation's file.",
+  "engines.block.not_at_the_computer":
+    "Change these on the computer FreeDuet runs on.",
+  "engines.block.not_paired_with_the_computer":
+    "Pair this browser with the computer FreeDuet runs on first: run `bash scripts/open.sh` there and open the link here.",
+  "engines.block.agent_too_old": "Update FreeDuet to change this.",
+  "engines.block.choices_unreadable":
+    "Your choices could not be read, so the installation's settings are in use. Nothing you chose is lost.",
+  "engines.saved": "Saved. It applies from the member's next message.",
+  "engines.undone":
+    "Undone. The previous setting applies from the member's next message.",
+  "engines.providers.title": "Add an engine",
+  "engines.providers.description":
+    "Switch an engine on, paste its key and press Save, then press Test. A change applies from the next message.",
+  "engines.providers.pickerLabel": "Provider",
+  "engines.providers.blurb.ollama": "Models that run on your own computer.",
+  "engines.providers.blurb.llamacpp":
+    "A llama.cpp server on your own computer or network.",
+  "engines.providers.blurb.lmstudio":
+    "The local server of LM Studio on your own computer.",
+  "engines.providers.blurb.freellmapi":
+    "A router you run yourself that pools free tiers from many providers behind one address.",
+  "engines.providers.blurb.groq": "Fast open models, free with daily limits.",
+  "engines.providers.blurb.google": "Gemini models, free with limits.",
+  "engines.providers.blurb.mistral":
+    "Mistral models on the free plan, with limits.",
+  "engines.providers.blurb.openrouter":
+    "Only models that cost nothing: an id ending in :free, or openrouter/free.",
+  "engines.providers.blurb.cloudflare":
+    "Open models on Cloudflare, free with a daily allowance. Put your own account in the address.",
+  "engines.providers.blurb.cerebras": "Very fast open models.",
+  "engines.providers.blurb.anthropic-api": "Claude on pay-as-you-go credits.",
+  "engines.providers.tag.local": "Local",
+  "engines.providers.tag.router": "Advanced: your own router",
+  "engines.providers.tag.free": "Free with limits",
+  "engines.providers.tag.trial": "Trial, needs a card",
+  "engines.providers.tag.paid": "Paid",
+  "engines.providers.cloudWarning":
+    "Data sent to this service leaves your computer.",
+  "engines.providers.routerWarning":
+    "Your messages go to the router, which passes them on to the free providers you enabled inside it. They leave your computer, and those providers may keep them.",
+  "engines.providers.routerAdvanced":
+    "Advanced option, not a recommended default: the project describes itself as for personal experimentation only. FreeDuet does not install or run it. Your provider keys stay inside it; FreeDuet keeps only the one access token it gives you.",
+  "engines.providers.routerAddress":
+    "Its own default port, 3001, is FreeDuet's. Run it on another port and write the address with /v1 at the end. On this computer http is fine. Off this computer only your own network is accepted (a LAN address or a .local name), over https. A public host is refused.",
+  "engines.providers.address": "Server address",
+  "engines.providers.loadList": "Load list",
+  "engines.providers.saveSettings": "Save settings",
+  "engines.providers.test": "Test",
+  "engines.providers.freeModelsNote":
+    "Free models change often and may keep what you send.",
+  "engines.providers.freeModelsLoading":
+    "Loading the free models that can use tools.",
+  "engines.providers.freeModelsStale":
+    "Could not reach OpenRouter just now. This is the last list that was loaded.",
+  "engines.providers.freeModelsFallback":
+    "Could not reach OpenRouter just now. Only the free router is offered.",
+  "engines.providers.freeRouterLabel":
+    "openrouter/free (OpenRouter picks a free model)",
+  "engines.providers.keySaved": "Key saved. It is never shown again.",
+  "engines.providers.keyPlaceholder": "Paste the key here",
+  "engines.providers.notOnKey": "Not on yet. Paste the key and press Save.",
+  "engines.providers.notOnSettings":
+    "Not on yet. Choose a model and press Save settings.",
+  "engines.providers.settingsSaved": "Saved. It applies from the next message.",
+  "engines.providers.keyRemoved": "Key removed. The engine is off.",
+  "engines.providers.lockedOwnFile":
+    "You wrote an engines file of your own, so these cards only show it. Change it there.",
+  "engines.providers.users.paid":
+    "Off until spending caps exist. FreeDuet will not let a paid engine run before then.",
+  "engines.providers.users.trial":
+    "Its free tier is a trial that needs a card, so FreeDuet does not offer it as free. It stays off.",
+  "engines.providers.users.members":
+    "For members: yes, after their Claude login. For the light assistants: yes.",
+  "engines.providers.users.notYet":
+    "For members: not yet. For the light assistants: yes.",
+  "engines.providers.check.ok": "It answered. It works.",
+  "engines.providers.check.key_rejected":
+    "The key was not accepted. Check it and save it again.",
+  "engines.providers.check.model_missing":
+    "The server does not know that model. Check the model name.",
+  "engines.providers.check.rate_limited":
+    "The limit or the credit is used up for now. Try again later.",
+  "engines.providers.check.other":
+    "Nothing answered, or the answer was not understood.",
+  "engines.providers.freeNote":
+    "\u201cFree\u201d is FreeDuet's label, taken from the provider's terms. Some providers (Google, for one) bill you if billing is switched on for your project.",
+  "engines.providers.useFor": "Use for",
+  "engines.providers.useForNone":
+    "No member uses it yet. The light assistants do. Tick the members who may send their work to this service.",
+  "engines.providers.warn.inbox": "Sends your mail to this service.",
+  "engines.providers.warn.concierge": "Sends your bookings to this service.",
+  "engines.providers.modelsEmpty": "The list is empty. Type the model name.",
+  "engines.providers.modelsLoaded": {
+    one: "{count} model loaded. Pick one in the box.",
+    other: "{count} models loaded. Pick one in the box.",
+  },
+  "engines.providers.switchOn": "Switch on {name}",
+  "engines.providers.changeFailed": "That could not be changed.",
+  "engines.providers.keySaveFailed": "The key could not be saved.",
+  "engines.providers.listFailed": "The list could not be loaded.",
+  "engines.providers.keyRemoveFailed": "The key could not be removed.",
+  "engines.providers.saveFailed": "That could not be saved.",
+  "engines.providers.testFailed": "The test could not be run.",
+  "engines.tokens.title": "Tokens",
+  "engines.tokens.description":
+    "What each member used on each engine, as the engine itself reported it. Days are counted in UTC.",
+  "engines.tokens.fallback": "The token counts could not be loaded.",
+  "engines.tokens.empty": "No turn has been counted yet.",
+  "engines.tokens.unavailable": "The token counts are not available now.",
+  "engines.tokens.problem":
+    "The file that keeps the counts could not be read, so some numbers may be missing.",
+  "engines.tokens.notReported": "not reported",
+  "engines.tokens.col.engine": "Engine",
+  "engines.tokens.col.week": "Last 7 days",
+  "engines.tokens.allMembers": "All members",
+  "engines.tokens.note":
+    "Input counts every token the model was given, cached ones included. Each row counts engine attempts: a retry on the same engine counts again. An attempt whose engine reported nothing adds its time and no tokens. Time is measured here, from the start to the end of each attempt.",
+  "engines.tokens.savedWeek": "Saved in the last 7 days",
+  "engines.tokens.savedNote":
+    "Saved means tokens that went through free engines, in the cloud or on your own computer. Your Claude Code subscription is a flat rate and paid engines cost money, so neither counts.",
+  "engines.tokens.currencyHelp":
+    "Click an amount to switch between euros and dollars.",
+  "engines.tokens.reference":
+    "At {model} list prices ({input} in, {output} out per million tokens, {date}); {euro} = {rate} ({rateDate}).",
+  "engines.tokens.under": "under {amount}",
+  "engines.tokens.nothingYet": "nothing yet",
+  "engines.tokens.plus": "plus {time}",
+  "engines.tokens.toDollars": "{amount}. Show amounts in dollars",
+  "engines.tokens.toEuros": "{amount}. Show amounts in euros",
+  "engines.tokens.amount": "{amount} tokens",
+  "engines.tokens.timeLocal": "{time} on your own GPU",
+  "engines.tokens.timeCloud": "{time} on a free cloud engine",
+  "engines.tokens.and": " and ",
+  "engines.tokens.timeTail": "{parts}, tokens not reported",
+  "engines.tokens.cell": "{input}\u00a0in\u00a0·\u00a0{output}\u00a0out",
+  "engines.tokens.partial": "{reported} of {total} attempts reported",
+  "engines.dur.under": "under 1 min",
+  "engines.dur.min": "{minutes} min",
+  "engines.dur.hourMin": "{hours} h {minutes} min",
+  "engines.usage.bySource": "By source",
+  "engines.usage.byMember": "By member",
+  "engines.usage.time": "Time",
+  "engines.usage.source.person": "You",
+  "engines.usage.source.routine": "Routines",
+  "engines.usage.source.handoff": "Between members",
+  "engines.usage.source.other": "Other",
+  "engines.usage.source.unknown": "Earlier (not recorded)",
+  "engines.usage.title": "Where the last 7 days went",
+  "engines.usage.note":
+    "Shares are of the tokens the engines reported (input plus output), or of the time when Time is chosen; attempts that reported no tokens add time only. \u201cYou\u201d is your own messages, \u201cRoutines\u201d is routines and check-ins, \u201cBetween members\u201d is hand-offs, and \u201cOther\u201d is anything else, such as a deployment's own runs.",
+  "engines.usage.nothing": "Nothing was counted in the last 7 days.",
+  "engines.usage.chartsFailed":
+    "The usage charts could not be drawn. The table below is not affected.",
+  "engines.usage.restMembers": "Other members",
+  "engines.usage.limitTitle": "Plan limits",
+  "engines.usage.limitNone": "No engine is held back by a limit right now.",
+  "engines.usage.limitNote":
+    "A percentage of your plan's weekly limit is not shown: the subscription does not report it to FreeDuet. An engine says so only when it has reached a limit, with the time it is expected back.",
+  "engines.usage.range": "{from} to {to}, UTC days",
+  "engines.usage.splitBy": "Split by",
+  "engines.usage.measure": "Measure",
+  "engines.usage.perDay": "{title}: {metric} per day",
+  "engines.usage.perDayUtc": "{title}: {metric} per day, UTC",
+  "engines.usage.day": "Day",
   // connections-begin
   "connections.connect": "Connect",
   "connections.reconnect": "Reconnect",
