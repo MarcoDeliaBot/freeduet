@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { AdminComponentPreview } from "@/components/component-preview";
 import { PageShell } from "@/components/layout/page-shell";
+import { useAppLanguage } from "@/freeduet/i18n/provider";
 import { SettingsItemBackground } from "@/components/settings/background";
 import {
   Empty,
@@ -22,12 +23,13 @@ export const Route = createFileRoute("/_authed/admin/components/")({
 });
 
 function RouteComponent() {
+  const { t } = useAppLanguage();
   const components = useQuery(componentListQueryOptions());
 
   return (
     <PageShell
-      description="What each Bot can answer with. Every published component is on for every Bot. Turn one off and that Bot never sees it. Changes and refusals show in Audit."
-      title="UI components"
+      description={t("admin.components.description")}
+      title={t("admin.nav.components")}
     >
       {/*
        * Pending, error, empty, rows — in that order. Pending draws nothing rather than a
@@ -36,14 +38,14 @@ function RouteComponent() {
        */}
       {components.isPending ? null : components.error ? (
         <p className="mt-12 text-destructive text-sm" role="alert">
-          Couldn't load components. Reload the page.
+          {t("admin.components.loadError")}
         </p>
       ) : components.data?.length === 0 ? (
         <Empty className="mt-12 min-h-[30dvh] border border-dashed">
           <EmptyHeader>
-            <EmptyTitle>No components yet</EmptyTitle>
+            <EmptyTitle>{t("admin.components.emptyTitle")}</EmptyTitle>
             <EmptyDescription className="text-pretty">
-              Components your Bots can use will show here.
+              {t("admin.components.emptyDesc")}
             </EmptyDescription>
           </EmptyHeader>
         </Empty>

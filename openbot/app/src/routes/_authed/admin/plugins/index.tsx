@@ -109,10 +109,7 @@ function summaryFor(
   const bots = new Set(server.tools.flatMap((tool) => tool.grantedTo)).size;
   const tools = t("admin.plugins.sum.tools", { count: server.tools.length });
   if (bots === 0) return t("admin.plugins.sum.toolsNoBots", { tools });
-  return t("admin.plugins.sum.toolsBots", {
-    tools,
-    bots: t("admin.plugins.sum.bots", { count: bots }),
-  });
+  return `${tools} · ${t("admin.plugins.sum.bots", { count: bots })}`;
 }
 
 function RouteComponent() {

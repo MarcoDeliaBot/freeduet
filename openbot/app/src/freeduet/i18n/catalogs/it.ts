@@ -1641,7 +1641,6 @@ export const it: Catalog<typeof EN> = {
     other: "{count} strumenti",
   },
   "admin.plugins.sum.toolsNoBots": "{tools} · nessun assistente",
-  "admin.plugins.sum.toolsBots": "{tools} · {bots}",
   "admin.plugins.sum.bots": {
     one: "{count} assistente",
     other: "{count} assistenti",
@@ -1666,7 +1665,6 @@ export const it: Catalog<typeof EN> = {
     "{product} non ha ricevuto nessun link di consenso, quindi non è stato collegato nulla. Riprova o controlla la configurazione di questo connettore se continua.",
   "admin.plugins.key.reassurance":
     "La configurazione è completa anche senza, e raggiunge solo i tuoi documenti.",
-  "admin.plugins.key.pluginTitle": "Plugin",
   "admin.plugins.key.notPlugin.description":
     "Non esiste nessun plugin con quel nome, né qui né nel catalogo.",
   "admin.plugins.key.notPlugin.title": "Non è un plugin",
@@ -1791,5 +1789,51 @@ export const it: Catalog<typeof EN> = {
   "admin.plugins.key.gr.changing": {
     one: "{count} apporta modifiche.",
     other: "{count} apportano modifiche.",
+  },
+  "admin.home.reach.desc":
+    "Cosa può toccare un assistente fuori da {product}, e i limiti che ha.",
+  "admin.home.credentials.desc": "Chiavi e token di questa installazione.",
+  "admin.home.boundaries.desc": "Cose che nessun assistente può mai fare.",
+  "admin.home.approvals.desc":
+    "Cosa devono chiedere gli assistenti dei membri prima di agire.",
+  "admin.home.computers.desc":
+    "Le macchine su cui gli assistenti eseguono gli strumenti.",
+  "admin.home.do.desc":
+    "App, skill e pezzi di interfaccia che ogni assistente può usare.",
+  "admin.home.plugins.desc":
+    "I servizi che {product} può raggiungere e quali assistenti possono usarli.",
+  "admin.home.skills.desc":
+    "Istruzioni con un nome che chiunque può eseguire con /.",
+  "admin.home.learning.desc":
+    "Impara dalle conversazioni concluse e rivedi le skill che propone.",
+  "admin.home.components.desc":
+    "Pezzi personalizzati che un assistente può disegnare in una conversazione.",
+  "admin.home.playground.desc":
+    "Scrivi un componente e guardalo comparire mentre digiti.",
+  "admin.home.engines.desc":
+    "I motori AI su cui girano i membri e se ognuno può rispondere adesso.",
+  "admin.home.people.desc":
+    "Tutti quelli che hanno effettuato l'accesso, chi sono gli amministratori e a chi è stato tolto l'accesso.",
+  "admin.home.enterprise.desc":
+    "Ruoli e gruppi, SSO obbligatorio, SCIM, policy di rete, liste consentiti per MCP e modelli, registrazione delle azioni.",
+  "admin.home.idp.desc":
+    "Il provider SAML o OpenID Connect della tua azienda, abbinato per dominio email.",
+  "admin.home.audit.desc": "Ogni azione compiuta in {product} e da chi.",
+  "admin.home.description":
+    "Impostazioni per tutti in questa installazione. Una modifica qui riguarda ogni persona e ogni assistente.",
+  "admin.plugins.directoryError":
+    "Non sono riuscito a caricare le impostazioni dei plugin. Ricarica la pagina.",
+  "admin.components.description":
+    "Con cosa può rispondere ogni assistente. Ogni componente pubblicato è attivo per ogni assistente. Disattivane uno e quell'assistente non lo vede mai. Modifiche e rifiuti compaiono in Audit.",
+  "admin.components.loadError":
+    "Non sono riuscito a caricare i componenti. Ricarica la pagina.",
+  "admin.components.emptyTitle": "Ancora nessun componente",
+  "admin.components.emptyDesc":
+    "I componenti che i tuoi assistenti possono usare compariranno qui.",
+  "admin.audit.silence.quiet": "Silenzioso per {seconds}s",
+  "admin.audit.silence.nothing": "{quiet}, senza aver detto nulla",
+  "admin.audit.silence.after": {
+    one: "{quiet}, dopo {count} frammento",
+    other: "{quiet}, dopo {count} frammenti",
   },
 };

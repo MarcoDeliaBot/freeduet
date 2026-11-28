@@ -1571,7 +1571,6 @@ export const EN = {
   "admin.plugins.sum.noTools": "No tools yet",
   "admin.plugins.sum.tools": { one: "{count} tool", other: "{count} tools" },
   "admin.plugins.sum.toolsNoBots": "{tools} · no Bots",
-  "admin.plugins.sum.toolsBots": "{tools} · {bots}",
   "admin.plugins.sum.bots": { one: "{count} Bot", other: "{count} Bots" },
   "admin.plugins.requests": {
     one: "{count} request",
@@ -1593,7 +1592,6 @@ export const EN = {
     "{product} got no consent link back, so nothing was connected. Try again, or check this connector's setup if it keeps happening.",
   "admin.plugins.key.reassurance":
     "Setup is complete without it, and it reaches your documents only.",
-  "admin.plugins.key.pluginTitle": "Plugin",
   "admin.plugins.key.notPlugin.description":
     "There is no plugin with that name, here or in the catalogue.",
   "admin.plugins.key.notPlugin.title": "Not a plugin",
@@ -1717,6 +1715,46 @@ export const EN = {
   "admin.plugins.key.gr.changing": {
     one: "{count} changes things.",
     other: "{count} change things.",
+  },
+  "admin.home.reach.desc":
+    "What a Bot can touch outside {product}, and the limits on it.",
+  "admin.home.credentials.desc": "Keys and tokens for this deployment.",
+  "admin.home.boundaries.desc": "Things no Bot may ever do.",
+  "admin.home.approvals.desc": "What members' Bots must ask before they act.",
+  "admin.home.computers.desc": "The machines Bots run tools on.",
+  "admin.home.do.desc": "Apps, skills and interface pieces every Bot can use.",
+  "admin.home.plugins.desc":
+    "The services {product} can reach, and which Bots can use them.",
+  "admin.home.skills.desc": "Named instructions anybody can run with /.",
+  "admin.home.learning.desc":
+    "Learn from finished conversations and review the skills it proposes.",
+  "admin.home.components.desc":
+    "Custom pieces a Bot can draw in a conversation.",
+  "admin.home.playground.desc":
+    "Write a component and watch it render as you type.",
+  "admin.home.engines.desc":
+    "The AI engines members run on, and whether each one can answer now.",
+  "admin.home.people.desc":
+    "Everybody who has signed in, who the admins are, and whose access was removed.",
+  "admin.home.enterprise.desc":
+    "Roles and groups, required SSO, SCIM, network policy, MCP and model allowlists, Action Recording.",
+  "admin.home.idp.desc":
+    "Your company's SAML or OpenID Connect provider, matched by email domain.",
+  "admin.home.audit.desc": "Every action taken in {product}, and who took it.",
+  "admin.home.description":
+    "Settings for everybody in this deployment. A change here affects every person and every Bot.",
+  "admin.plugins.directoryError":
+    "Couldn't load the plugin settings. Reload the page.",
+  "admin.components.description":
+    "What each Bot can answer with. Every published component is on for every Bot. Turn one off and that Bot never sees it. Changes and refusals show in Audit.",
+  "admin.components.loadError": "Couldn't load components. Reload the page.",
+  "admin.components.emptyTitle": "No components yet",
+  "admin.components.emptyDesc": "Components your Bots can use will show here.",
+  "admin.audit.silence.quiet": "Silent for {seconds}s",
+  "admin.audit.silence.nothing": "{quiet}, having said nothing at all",
+  "admin.audit.silence.after": {
+    one: "{quiet}, after {count} chunk",
+    other: "{quiet}, after {count} chunks",
   },
 } satisfies Entries;
 

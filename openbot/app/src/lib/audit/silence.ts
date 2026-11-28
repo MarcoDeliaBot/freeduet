@@ -1,3 +1,5 @@
+import { englishT, type T } from "@/freeduet/i18n/provider";
+
 /**
  * How a stalled turn reads on the audit page.
  *
@@ -15,7 +17,10 @@
  * before this was recorded should show nothing, not "0 chunks", which would be a claim about a Bot
  * that nobody ever measured.
  */
-export function silenceOf(payload: Record<string, unknown>): string | null {
+export function silenceOf(
+  payload: Record<string, unknown>,
+  t: T = englishT,
+): string | null {
   const silentForMs = payload.silentForMs;
   const chunks = payload.chunks;
   if (typeof silentForMs !== "number" || typeof chunks !== "number") {
@@ -23,7 +28,7 @@ export function silenceOf(payload: Record<string, unknown>): string | null {
   }
 
   const seconds = Math.max(1, Math.round(silentForMs / 1000));
-  const quiet = `Silent for ${seconds}s`;
-  if (chunks === 0) return `${quiet}, having said nothing at all`;
-  return `${quiet}, after ${chunks} ${chunks === 1 ? "chunk" : "chunks"}`;
+  const quiet = t("admin.audit.silence.quiet", { seconds });
+  if (chunks === 0) return t("admin.audit.silence.nothing", { quiet });
+  return t("admin.audit.silence.after", { quiet, count: chunks });
 }

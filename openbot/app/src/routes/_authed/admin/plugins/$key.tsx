@@ -518,9 +518,7 @@ function RouteComponent() {
    * connected this". The personal screen had the identical gap; see its own note.
    */
   if (plugins.isPending || connections.isPending) {
-    return (
-      <PageShell title={t("admin.plugins.key.pluginTitle")}>{null}</PageShell>
-    );
+    return <PageShell title="Plugin">{null}</PageShell>;
   }
   /*
    * Gated on the plugin list having ARRIVED, the guard the per-Bot grant screen already keeps
