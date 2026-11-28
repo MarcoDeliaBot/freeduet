@@ -2379,7 +2379,7 @@ export const it: Catalog<typeof EN> = {
   "engines.providers.tag.local": "Locale",
   "engines.providers.tag.router": "Avanzato: il tuo router",
   "engines.providers.tag.free": "Gratuito con limiti",
-  "engines.providers.tag.trial": "Prova, richiede una carta",
+  "engines.providers.tag.trial": "Periodo di prova, richiede una carta",
   "engines.providers.tag.paid": "A pagamento",
   "engines.providers.cloudWarning":
     "I dati inviati a questo servizio lasciano il tuo computer.",
