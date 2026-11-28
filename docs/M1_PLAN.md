@@ -2965,3 +2965,30 @@ The retry's last line says that the member wrote that <colleague> has the work, 
 **Decision D186 (the maintainer, 28 November 2026, 10:04, his words: "togliere dal suo prompt l'elenco della squadra e caricarlo a parte e alzare il tetto a 31.000, poi fare un controllo con la skill https://github.com/dietrichgebert/ponytail che verifichi che non ci siano cose in eccesso o inutili per il lavoro di iris").** Three parts: (1) the paragraph that lists the team in Iris's prompt (`openbot/examples/freeduet/agents.yaml`, member `freeduet`, "Your team: ...") is no longer written by hand in her prompt: it is built from the members file and given to her at run time, so a new member does not need a cut in her prompt; (2) her light-turn cap goes from 30,000 to 31,000 characters (`test_local_light_turn.py`, D160); (3) her prompt is then reviewed against the text of the ponytail skill (its SKILL.md at a pinned commit, read as a checklist for what is in excess or useless for her work, nothing installed), and every cut it proposes is shown to the maintainer before it is made, with what it removes and why.
 
 **To build (after D185, same files).** Not started.
+
+## 143. The maintainer's answers of 28 November 2026 (D187 to D202)
+
+**Why.** The maintainer asked for the list of proposals that had waited for him (his rule of the same day, CLAUDE.md: a narrowed or open idea gets its own line and a question). The coordinator sent twenty, each with context, a recommendation and an alternative; he answered at 10:20 and 10:26 ("accetto il tuo consiglio" unless noted). The decisions:
+
+| D | Decision | Status |
+|---|---|---|
+| D187 | The word for Bot in every language: The app uses the site's word for a team member in each language, and "light assistants" become "lite" so the two no longer read alike. | Decided; to build in the next translation round |
+| D188 | A Working now strip, Iris's waiting ring, and a notice from the server: Above the message box a strip lists the colleagues working for this conversation, or says nobody is; Iris's mascot fills a ring while she waits; after 5 minutes with no sign of life the server shows a notice instead of Iris polling; Iris says so when she hands work over. | Decided; app strip and ring in progress |
+| D189 | A one-way mirror on a colleague's work: A read-only view of a hand-off (its steps and its computer), opened from the strip, the work card or the colleague's chat, with no message box. | Decided; to build after row 152 |
+| D190 | A whiteboard per task: The colleague writes the plan first and keeps it current: understand, plan, split, test each part, join, test again, deliver with evidence; shown in the mirror and on the work card. | Decided; to build after row 153 |
+| D191 | A dashboard of the team's work: Work per member, how approvals were resolved, time to finish, a filterable task table, an operations feed and the behaviour evals; no data from other installations. | Decided; to build after row 154 |
+| D192 | Builders hand files over, never a path in their computer: Kai, Ada, Lumi and Cam offer every finished file with the Download card, also from a hand-off, and never send the person to a folder of their own computer. | Decided; in progress |
+| D193 | A new landing page, preview first: A stronger home page for freeduet.com, prepared on a branch and shown to the maintainer before it goes online (the old preview, PR #271, is closed). | Decided; to prepare |
+| D194 | The files of each colleague, in the app: A read-only panel per member lists the folder of finished work in that member's computer, with Download, so the person never needs a path. | Decided; to build (Sonnet and a review) |
+| D195 | Night evals on the local model only: A scheduled run at night uses only the local Qwen model, which costs no tokens; Haiku 5.5 may grade or read the results. | Decided; to set up |
+| D196 | The routines tab is called List: The routines page's first tab reads "List" ("Elenco" in Italian) beside "Week". | Decided; to build |
+| D197 | Signing in to a site without pasting a password: The first of the improvements from the OpenBot comparison of 25 November 2026, with a preview first. | Decided; to design |
+| D198 | A local streaming speech engine, after v0.3: Live words while the person speaks, from a local engine; planned after v0.3. | Decided; later |
+| D199 | Backups also on a second disk: Besides the copy on the installation's own disk, backups go to a second disk or place the person picks, in a folder whose name says what it is. | Decided; on the maintainer's PC it waits for a disk in D: |
+| D200 | Evals tell a wrong behaviour from a right one in other words: A grader pass or behaviour checks so a right answer worded differently passes. | Decided; to build |
+| D201 | v0.3 goal: a first useful job in 15 minutes: A new person installs FreeDuet and gets a first useful job done within 15 minutes, measured on a clean machine. | Decided; the v0.3 goal |
+| D202 | Plan B: a real turn on the local model: At least one real member turn answered by the local Qwen model, so the free and local engines are proven working if subscription-login rules change. | Decided; to run |
+
+**Also answered, no new number.** The engine order: subscription logins first by default, and the person can always change a member's order (D115, his words "ok, ma l'ordine deve sempre potersi cambiare"). Native-speaker review of the site: a double review by AI first, then a request for volunteers on GitHub (row 122, decided before). The light-turn budget test branch gets its pull request (his yes). PR #514 (/app/ redirect) is merged on his yes. Waiting for him: the Dependabot choice (accept until Expo 58, or update now, explained on 28 November), the n8n move (his specifications), and the "Continue with Google" check (a reminder is scheduled for the evening).
+
+**Order.** D192 and D188 (app part) were already started; then D194, D196, D187 with the next translation round, D189, D190, D191, D193, D197, D199, D200, D195, D202; D198 after v0.3. Each gets its own section when it is built.
