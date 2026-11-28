@@ -3263,6 +3263,10 @@ export const EN = {
   "working.step.picture": "working on a picture",
   "working.step.video": "working on a video",
   "working.step.working": "working",
+  "working.checking": "Checking who is working…",
+  "working.cantTell": "Can't tell who is working right now",
+  "working.ringElsewhere":
+    "{name} is waiting for a colleague (maybe from another conversation): {minutes} min",
   // working-end
 } satisfies Entries;
 

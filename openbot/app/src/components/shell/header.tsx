@@ -128,7 +128,9 @@ export function ChatOrb({ size }: { size: number }) {
 function IrisWaitRing({ botId }: { botId: string }) {
   const iris = useIrisWait();
   if (botId !== iris.irisId) return null;
-  return <WaitingRing name={iris.name} wait={iris.wait} />;
+  return (
+    <WaitingRing anyThread={iris.anyThread} name={iris.name} wait={iris.wait} />
+  );
 }
 
 /**

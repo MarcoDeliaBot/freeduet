@@ -95,9 +95,12 @@ export function stripWords(hop: WorkHandoff, now: number, say: Say): string {
 export function WorkStrip({
   hops,
   now,
+  load = "ready",
 }: {
   hops: readonly WorkHandoff[];
   now: number;
+  /** "nobody" is said only when the server answered; while asking, or when it could not answer, the line says so. */
+  load?: "ready" | "loading" | "error";
 }) {
   const { t, number } = useAppLanguage();
   const say: Say = { t, number: (value) => number(value) };
@@ -108,7 +111,11 @@ export function WorkStrip({
       data-testid="working-now"
       role="status"
     >
-      {hops.length === 0 ? (
+      {load !== "ready" ? (
+        <span className="fd-ws-strip-none" data-testid="working-now-unknown">
+          {t(load === "loading" ? "working.checking" : "working.cantTell")}
+        </span>
+      ) : hops.length === 0 ? (
         <span className="fd-ws-strip-none" data-testid="working-now-none">
           {t("working.nobody")}
         </span>
@@ -195,7 +202,10 @@ function Mounted({
   const hops = openHandoffs(status.data, { threadId });
   const withIris = botId !== undefined && botId === primaryBot(agents.data)?.id;
   if (!withIris && hops.length === 0) return null;
-  return <WorkStrip hops={hops} now={now} />;
+  const load = status.data ? "ready" : status.isError ? "error" : "loading";
+  return (
+    <WorkStrip hops={load === "ready" ? hops : []} load={load} now={now} />
+  );
 }
 
 /** The open hand-offs Iris has asked, for her ring: this conversation's when there is one, else any of hers. */
@@ -209,7 +219,13 @@ export function useIrisWait(fixedNow?: number) {
     threadId,
     fromBotId: irisId ?? null,
   });
-  return { irisId, name: irisName(agents.data), wait: waitOf(hops, now) };
+  return {
+    irisId,
+    name: irisName(agents.data),
+    wait: waitOf(hops, now),
+    /** No conversation is known here, so the hand-off may be from another one. */
+    anyThread: !threadId,
+  };
 }
 
 function irisName(agents: Parameters<typeof primaryBot>[0]): string {
@@ -224,6 +240,7 @@ function irisName(agents: Parameters<typeof primaryBot>[0]): string {
 export function WaitingRing({
   name,
   wait,
+  anyThread = false,
 }: {
   name: string;
   wait: { elapsedMs: number; stuck: boolean } | null;
@@ -236,11 +253,19 @@ export function WaitingRing({
   const minutes = number(Math.floor(wait.elapsedMs / 60_000));
   return (
     <svg
-      aria-label={t(wait.stuck ? "working.ringStuck" : "working.ringWaiting", {
-        name,
-        minutes,
-      })}
+      aria-label={t(
+        anyThread
+          ? "working.ringElsewhere"
+          : wait.stuck
+            ? "working.ringStuck"
+            : "working.ringWaiting",
+        {
+          name,
+          minutes,
+        },
+      )}
       className="fd-ws-fill"
+      data-scope={anyThread ? "any" : "thread"}
       data-fill={fill.toFixed(3)}
       data-limit={STUCK_AFTER_MS}
       data-state={wait.stuck ? "stuck" : "waiting"}

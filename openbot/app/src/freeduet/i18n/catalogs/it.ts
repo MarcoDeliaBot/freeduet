@@ -3394,7 +3394,7 @@ export const it: Catalog<typeof EN> = {
   "working.justStarted": "appena iniziato",
   "working.lastStep": "ultimo passo: {step}",
   "working.queued": "in attesa di partire",
-  "working.waiting": "aspetta te",
+  "working.waiting": "aspetta una tua risposta",
   "working.stuck": "bloccato: nessun segno di vita da {duration}",
   "working.didNotFinish": "non ha finito",
   "working.tryAgain": "Riprova",
@@ -3414,5 +3414,9 @@ export const it: Catalog<typeof EN> = {
   "working.step.picture": "lavorando su un'immagine",
   "working.step.video": "lavorando su un video",
   "working.step.working": "al lavoro",
+  "working.checking": "Controllo chi sta lavorando…",
+  "working.cantTell": "Al momento non riesco a dire chi sta lavorando",
+  "working.ringElsewhere":
+    "{name} aspetta un collega (forse da un'altra conversazione): {minutes} min",
   // working-end
 };

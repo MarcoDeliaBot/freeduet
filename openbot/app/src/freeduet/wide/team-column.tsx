@@ -228,11 +228,14 @@ function Team({ full }: { full: boolean }) {
           <>
             <span className="relative">
               <MemberFace agentId={agent.id} size={40} />
-              {agent.id === iris.irisId && iris.wait ? (
-                <WaitingRing name={agent.name} wait={iris.wait} />
-              ) : (
-                <WorkDot state={dot} title={tip} />
-              )}
+              <WorkDot state={dot} title={tip} />
+              {agent.id === iris.irisId ? (
+                <WaitingRing
+                  anyThread={iris.anyThread}
+                  name={agent.name}
+                  wait={iris.wait}
+                />
+              ) : null}
             </span>
             {full ? (
               <span className="min-w-0 flex-1 text-left">

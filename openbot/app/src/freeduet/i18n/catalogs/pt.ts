@@ -3352,5 +3352,8 @@ export const pt: Catalog<typeof EN> = {
   "working.step.picture": "",
   "working.step.video": "",
   "working.step.working": "",
+  "working.checking": "",
+  "working.cantTell": "",
+  "working.ringElsewhere": "",
   // working-end
 };

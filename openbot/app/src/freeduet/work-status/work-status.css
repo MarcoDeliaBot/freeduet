@@ -249,3 +249,7 @@ a.fd-ws-card:focus-visible {
     transition: none;
   }
 }
+/* With no conversation known (the team column) the ring sits outside Iris's own dot ring, so both stay readable. */
+.fd-ws-fill[data-scope="any"] {
+  --r-gap: 11px;
+}

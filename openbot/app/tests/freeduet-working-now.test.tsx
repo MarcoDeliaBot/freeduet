@@ -1,7 +1,7 @@
 import { afterAll, afterEach, beforeAll, expect, test } from "bun:test";
 import { GlobalRegistrator } from "@happy-dom/global-registrator";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { cleanup, render } from "@testing-library/react";
+import { cleanup, render, waitFor } from "@testing-library/react";
 import { readFileSync } from "node:fs";
 import { STUCK_AFTER_MS as SERVER_STUCK_AFTER_MS } from "../../server/src/freeduet/work-status";
 import { AppLanguageValue } from "@/freeduet/i18n/provider";
@@ -200,4 +200,64 @@ test("every label the server can send has a step word", () => {
   expect(labels.length).toBeGreaterThan(10);
   for (const label of [...labels, "working"])
     expect(Object.keys(STEP_KEYS)).toContain(label);
+});
+
+test("while asking, or when the server cannot be asked, the strip never says nobody", () => {
+  const loading = draw(<WorkStrip hops={[]} load="loading" now={NOW} />);
+  expect(loading.queryByTestId("working-now-none")).toBeNull();
+  expect(loading.getByTestId("working-now-unknown").textContent).toBe(
+    "Checking who is working…",
+  );
+  cleanup();
+  const failed = draw(<WorkStrip hops={[]} load="error" now={NOW} />, "it");
+  expect(failed.queryByTestId("working-now-none")).toBeNull();
+  expect(failed.getByTestId("working-now-unknown").textContent).toContain(
+    "non riesco",
+  );
+});
+
+test("the mounted strip: a pending query and a rejected query never say nobody", async () => {
+  const { WorkingNowStrip } = await import("@/freeduet/work-status/work-strip");
+  const { CopilotChatConfigurationProvider } = await import(
+    "@copilotkit/react-core/v2"
+  );
+  const mount = (fetcher: () => Promise<Response>) => {
+    global.fetch = (async (input: RequestInfo | URL) =>
+      String(input) === "/api/agents"
+        ? Response.json({ agents: [{ id: "freeduet", name: "Iris" }] })
+        : fetcher()) as unknown as typeof fetch;
+    const client = new QueryClient({
+      defaultOptions: { queries: { retry: false } },
+    });
+    return render(
+      <QueryClientProvider client={client}>
+        <AppLanguageValue language="en">
+          <CopilotChatConfigurationProvider threadId="t1">
+            <WorkingNowStrip botId="freeduet" now={NOW} />
+          </CopilotChatConfigurationProvider>
+        </AppLanguageValue>
+      </QueryClientProvider>,
+    );
+  };
+  const pending = mount(() => new Promise<Response>(() => {}));
+  await waitFor(() =>
+    expect(pending.getByTestId("working-now-unknown")).not.toBeNull(),
+  );
+  expect(pending.queryByTestId("working-now-none")).toBeNull();
+  cleanup();
+  const failed = mount(async () => new Response("no", { status: 500 }));
+  await waitFor(() =>
+    expect(failed.getByTestId("working-now-unknown").textContent).toBe(
+      "Can't tell who is working right now",
+    ),
+  );
+  expect(failed.queryByTestId("working-now-none")).toBeNull();
+});
+
+test("a ring with no conversation known says it may be from another one", () => {
+  const wait = waitOf([hop({ since: ago(120) })], NOW);
+  const ring = draw(
+    <WaitingRing anyThread name="Iris" wait={wait} />,
+  ).getByTestId("waiting-ring");
+  expect(ring.getAttribute("aria-label")).toContain("another conversation");
 });
