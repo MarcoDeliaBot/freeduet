@@ -74,13 +74,13 @@ export function UpNextView({
   query: string;
 }) {
   const t = useT();
-  const suggestions = useQuery(proactiveSuggestionsQueryOptions());
-  const settings = useQuery(proactiveSettingsQueryOptions());
+  const suggestions = useQuery(proactiveSuggestionsQueryOptions(t));
+  const settings = useQuery(proactiveSettingsQueryOptions(t));
   const activity = useQuery({
     ...botActivityQueryOptions(bot?.id ?? ""),
     enabled: Boolean(bot),
   });
-  const act = useMutation(resolveSuggestionMutationOptions(queryClient));
+  const act = useMutation(resolveSuggestionMutationOptions(queryClient, t));
   const reduced = useReducedMotionPreference();
   const cancel = useMutation(cancelFollowUpMutationOptions(queryClient));
   // Who took the last started suggestion, said once it has gone from the list.
@@ -383,12 +383,12 @@ function TakeOffYourPlate({ bot }: { bot: AgentProfile }) {
   const [look, setLook] = useState<Look | null>(null);
   const looking = look?.kind === "looking" ? look : null;
   const poll = looking ? { refetchInterval: LOOKING_POLL_MS } : {};
-  const settings = useQuery({ ...proactiveSettingsQueryOptions(), ...poll });
+  const settings = useQuery({ ...proactiveSettingsQueryOptions(t), ...poll });
   // Read as often while looking, so suggestions that arrive replace this card at once.
-  useQuery({ ...proactiveSuggestionsQueryOptions(), ...poll });
-  const turnOn = useMutation(turnOnResearchMutationOptions(queryClient));
+  useQuery({ ...proactiveSuggestionsQueryOptions(t), ...poll });
+  const turnOn = useMutation(turnOnResearchMutationOptions(queryClient, t));
   const change = useMutation(
-    changeProactiveSettingMutationOptions(queryClient),
+    changeProactiveSettingMutationOptions(queryClient, t),
   );
   const chat = useChatChannel(bot, t);
   const setting = settings.data?.find((row) => row.agentId === bot.id);
@@ -527,7 +527,7 @@ function ResearchOptIn({
 }) {
   const t = useT();
   const chat = useChatChannel(bot, t);
-  const turnOn = useMutation(turnOnResearchMutationOptions(queryClient));
+  const turnOn = useMutation(turnOnResearchMutationOptions(queryClient, t));
   return (
     <div className="flex gap-[13px] px-4 py-3">
       <Tile icon="bulb" tone="violet" />

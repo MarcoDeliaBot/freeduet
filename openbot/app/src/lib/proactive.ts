@@ -3,6 +3,7 @@ import {
   type QueryClient,
   queryOptions,
 } from "@tanstack/react-query";
+import { englishT, type T } from "@/freeduet/i18n/provider";
 import { client } from "@/lib/client";
 import { taskKeys } from "@/lib/tasks/queries";
 
@@ -44,21 +45,21 @@ export const proactiveKeys = {
   suggestions: ["proactive", "suggestions"] as const,
 };
 
-export const proactiveSettingsQueryOptions = () =>
+export const proactiveSettingsQueryOptions = (t: T = englishT) =>
   queryOptions({
     queryKey: proactiveKeys.settings,
     queryFn: (): Promise<ProactiveSetting[]> =>
       client("/api/proactive/settings", "settings", {
-        fallback: "Could not load background research",
+        fallback: t("proactive.err.settings"),
       }),
     refetchInterval: 30_000,
   });
-export const proactiveSuggestionsQueryOptions = () =>
+export const proactiveSuggestionsQueryOptions = (t: T = englishT) =>
   queryOptions({
     queryKey: proactiveKeys.suggestions,
     queryFn: (): Promise<ProactiveSuggestion[]> =>
       client("/api/proactive/suggestions", "suggestions", {
-        fallback: "Could not load suggestions",
+        fallback: t("proactive.err.suggestions"),
       }),
     refetchInterval: 30_000,
   });
@@ -67,46 +68,53 @@ export const proactiveSuggestionsQueryOptions = () =>
  * One suggestion, whatever became of it: how a card in Chat knows it was started or hidden. Under
  * the list's key, so starting or hiding it anywhere refreshes both.
  */
-export const proactiveSuggestionQueryOptions = (id: string) =>
+export const proactiveSuggestionQueryOptions = (
+  id: string,
+  t: T = englishT,
+) =>
   queryOptions({
     queryKey: [...proactiveKeys.suggestions, id] as const,
     queryFn: (): Promise<ProactiveSuggestion> =>
       client(
         `/api/proactive/suggestions/${encodeURIComponent(id)}`,
         "suggestion",
-        { fallback: "Could not load this suggestion" },
+        { fallback: t("proactive.err.suggestion") },
       ),
   });
 
-export const createProactiveSetting = (input: {
-  agentId: string;
-  channelId: string;
-  focus: string;
-  intervalMinutes: number;
-}) =>
+export const createProactiveSetting = (
+  input: {
+    agentId: string;
+    channelId: string;
+    focus: string;
+    intervalMinutes: number;
+  },
+  t: T = englishT,
+) =>
   client("/api/proactive/settings", {
     method: "POST",
     body: input,
-    fallback: "Could not turn on background research",
+    fallback: t("proactive.err.turnOn"),
   });
 export const updateProactiveSetting = (
   id: string,
   input: { enabled?: boolean; intervalMinutes?: number; focus?: string },
+  t: T = englishT,
 ) =>
   client(`/api/proactive/settings/${encodeURIComponent(id)}`, {
     method: "PATCH",
     body: input,
-    fallback: "Could not change background research",
+    fallback: t("proactive.err.change"),
   });
-export const runProactiveNow = (id: string) =>
+export const runProactiveNow = (id: string, t: T = englishT) =>
   client(`/api/proactive/settings/${encodeURIComponent(id)}/run`, {
     method: "POST",
-    fallback: "Could not start background research",
+    fallback: t("proactive.err.run"),
   });
-export const removeProactiveSetting = (id: string) =>
+export const removeProactiveSetting = (id: string, t: T = englishT) =>
   client(`/api/proactive/settings/${encodeURIComponent(id)}`, {
     method: "DELETE",
-    fallback: "Could not remove background research",
+    fallback: t("proactive.err.remove"),
   });
 /**
  * Start a suggestion, which opens it as a task in a conversation of its own, or hide it. A Start
@@ -116,14 +124,15 @@ export const resolveSuggestion = (
   id: string,
   action: "start" | "dismiss",
   from?: "check_in",
+  t: T = englishT,
 ) =>
   client(`/api/proactive/suggestions/${encodeURIComponent(id)}/${action}`, {
     method: "POST",
     ...(from ? { body: { from } } : {}),
     fallback:
       action === "start"
-        ? "Could not start this suggestion"
-        : "Could not dismiss this suggestion",
+        ? t("proactive.err.start")
+        : t("proactive.err.dismiss"),
   });
 
 /**
@@ -138,7 +147,10 @@ const settleProactive = (queryClient: QueryClient) => () =>
   ]);
 
 /** Start a suggested next step as a task, or dismiss it. */
-export const resolveSuggestionMutationOptions = (queryClient: QueryClient) =>
+export const resolveSuggestionMutationOptions = (
+  queryClient: QueryClient,
+  t: T = englishT,
+) =>
   mutationOptions({
     mutationFn: ({
       id,
@@ -148,15 +160,17 @@ export const resolveSuggestionMutationOptions = (queryClient: QueryClient) =>
       id: string;
       action: "start" | "dismiss";
       from?: "check_in";
-    }) => resolveSuggestion(id, action, from),
+    }) => resolveSuggestion(id, action, from, t),
     onSuccess: settleProactive(queryClient),
   });
 
 export const createProactiveSettingMutationOptions = (
   queryClient: QueryClient,
+  t: T = englishT,
 ) =>
   mutationOptions({
-    mutationFn: createProactiveSetting,
+    mutationFn: (input: Parameters<typeof createProactiveSetting>[0]) =>
+      createProactiveSetting(input, t),
     onSuccess: settleProactive(queryClient),
   });
 
@@ -173,7 +187,10 @@ export const DEFAULT_RESEARCH_INTERVAL_MINUTES = 60;
  * conversation `channelId` resolves to. That is only asked for here, because finding or starting the
  * conversation is work a setting that already exists does not need.
  */
-export const turnOnResearchMutationOptions = (queryClient: QueryClient) =>
+export const turnOnResearchMutationOptions = (
+  queryClient: QueryClient,
+  t: T = englishT,
+) =>
   mutationOptions({
     mutationFn: async (input: {
       setting: Pick<ProactiveSetting, "id"> | undefined;
@@ -182,13 +199,16 @@ export const turnOnResearchMutationOptions = (queryClient: QueryClient) =>
       channelId: () => Promise<string>;
     }) =>
       input.setting
-        ? updateProactiveSetting(input.setting.id, { enabled: true })
-        : createProactiveSetting({
-            agentId: input.agentId,
-            channelId: await input.channelId(),
-            focus: input.focus,
-            intervalMinutes: DEFAULT_RESEARCH_INTERVAL_MINUTES,
-          }),
+        ? updateProactiveSetting(input.setting.id, { enabled: true }, t)
+        : createProactiveSetting(
+            {
+              agentId: input.agentId,
+              channelId: await input.channelId(),
+              focus: input.focus,
+              intervalMinutes: DEFAULT_RESEARCH_INTERVAL_MINUTES,
+            },
+            t,
+          ),
     onSuccess: settleProactive(queryClient),
   });
 
@@ -201,6 +221,7 @@ export type ProactiveChange =
 
 export const changeProactiveSettingMutationOptions = (
   queryClient: QueryClient,
+  t: T = englishT,
 ) =>
   mutationOptions({
     mutationFn: ({
@@ -211,14 +232,15 @@ export const changeProactiveSettingMutationOptions = (
       change: ProactiveChange;
     }) =>
       change.kind === "run"
-        ? runProactiveNow(setting.id)
+        ? runProactiveNow(setting.id, t)
         : change.kind === "remove"
-          ? removeProactiveSetting(setting.id)
+          ? removeProactiveSetting(setting.id, t)
           : updateProactiveSetting(
               setting.id,
               change.kind === "toggle"
                 ? { enabled: !setting.enabled }
                 : { intervalMinutes: change.minutes },
+              t,
             ),
     onSuccess: settleProactive(queryClient),
   });

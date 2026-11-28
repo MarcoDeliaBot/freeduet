@@ -77,7 +77,7 @@ function ScheduleSkill({
         timezone,
         ...(channelId ? { channelId } : {}),
         ...(inputs.trim() ? { inputs } : {}),
-      }),
+      }, t),
     onSuccess: async (routine) => {
       setScheduled(routine);
       await queryClient.invalidateQueries({ queryKey: routineKeys.all });
@@ -200,7 +200,7 @@ export function DemonstrationRecorder({
   const [draft, setDraft] = useState<DemonstrationDraft | null>(null);
   const [savedSlug, setSavedSlug] = useState("");
   const [saveError, setSaveError] = useState<Error | null>(null);
-  const recordings = useQuery(demonstrationsQueryOptions(botId));
+  const recordings = useQuery(demonstrationsQueryOptions(botId, t));
   const active = recordings.data?.find(
     (recording) => recording.status === "recording",
   );
@@ -227,21 +227,21 @@ export function DemonstrationRecorder({
       });
   }, [secondsLeft, botId]);
   const start = useMutation({
-    mutationFn: () => startDemonstration(botId, title),
+    mutationFn: () => startDemonstration(botId, title, t),
     onSuccess: async () => {
       await refresh();
       onRecordingChange();
     },
   });
   const stop = useMutation({
-    mutationFn: (recordingId: string) => stopDemonstration(recordingId),
+    mutationFn: (recordingId: string) => stopDemonstration(recordingId, t),
     onSuccess: async () => {
       await refresh();
       onRecordingChange();
     },
   });
   const generate = useMutation({
-    mutationFn: draftDemonstration,
+    mutationFn: (recordingId: string) => draftDemonstration(recordingId, t),
     onSuccess: async (value) => {
       setDraft(value);
       setSavedSlug("");
@@ -250,7 +250,7 @@ export function DemonstrationRecorder({
     },
   });
   const remove = useMutation({
-    mutationFn: deleteDemonstration,
+    mutationFn: (recordingId: string) => deleteDemonstration(recordingId, t),
     onSuccess: async () => {
       await refresh();
       onRecordingChange();
@@ -437,6 +437,7 @@ export function DemonstrationRecorder({
                 await publishDemonstration(
                   draft.sourceRecordingId,
                   values.slug,
+                  t,
                 );
                 await invalidatePlugins(queryClient);
                 await refresh();
