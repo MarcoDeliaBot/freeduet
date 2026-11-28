@@ -938,6 +938,7 @@ export const it: Catalog<typeof EN> = {
   "routines.deleteDescription":
     "Questa routine si ferma per sempre. Non puoi annullare l'operazione.",
   "routines.week": "Settimana",
+  "routines.list": "Elenco",
   "routines.nextRuns": "Prossime esecuzioni",
   "routines.viewAria": "Vista",
   "summary.nothingGranted": "Niente concesso",

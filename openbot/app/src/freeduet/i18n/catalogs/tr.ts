@@ -886,6 +886,7 @@ export const tr: Catalog<typeof EN> = {
   "routines.deleteDescription":
     "Bu rutin kalıcı olarak durur. Bunu geri alamazsın.",
   "routines.week": "Hafta",
+  "routines.list": "Liste",
   "routines.nextRuns": "Sonraki çalıştırmalar",
   "routines.viewAria": "Görüntüle",
   "summary.nothingGranted": "Hiçbir şey verilmedi",

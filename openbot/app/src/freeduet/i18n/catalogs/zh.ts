@@ -850,6 +850,7 @@ export const zh: Catalog<typeof EN> = {
   "routines.deleteTitle": "删除“{schedule}”？",
   "routines.deleteDescription": "这个例行任务将永久停止。此操作无法撤销。",
   "routines.week": "一周",
+  "routines.list": "列表",
   "routines.nextRuns": "接下来的运行",
   "routines.viewAria": "查看",
   "summary.nothingGranted": "未授予任何内容",

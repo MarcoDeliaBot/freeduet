@@ -223,7 +223,7 @@ function RoutineRuns({ routine }: { routine: RoutineRecord }) {
 type RoutinesView = "routines" | "week" | "next-runs" | "history";
 
 const VIEWS: { id: RoutinesView; label: MessageId }[] = [
-  { id: "routines", label: "nav.routines" },
+  { id: "routines", label: "routines.list" },
   { id: "week", label: "routines.week" },
   { id: "next-runs", label: "routines.nextRuns" },
   { id: "history", label: "routines.history" },

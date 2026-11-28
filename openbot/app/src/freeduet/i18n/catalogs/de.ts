@@ -920,6 +920,7 @@ export const de: Catalog<typeof EN> = {
   "routines.deleteDescription":
     "Diese Routine wird endgültig beendet. Das kannst du nicht rückgängig machen.",
   "routines.week": "Woche",
+  "routines.list": "Liste",
   "routines.nextRuns": "Nächste Läufe",
   "routines.viewAria": "Ansehen",
   "summary.nothingGranted": "Nichts freigegeben",

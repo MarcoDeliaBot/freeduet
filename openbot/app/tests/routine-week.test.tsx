@@ -157,7 +157,7 @@ test("the list is the default view, and Week is one press away", async () => {
   const switcher = view.getByRole("group", { name: "View" });
   expect(
     within(switcher)
-      .getByRole("button", { name: "Routines" })
+      .getByRole("button", { name: "List" })
       .getAttribute("aria-pressed"),
   ).toBe("true");
   fireEvent.click(within(switcher).getByRole("button", { name: "Week" }));
@@ -182,7 +182,7 @@ test("the choice is kept per browser: Week reopens on Week, List writes the list
   expect(
     second.getByRole("button", { name: "Week" }).getAttribute("aria-pressed"),
   ).toBe("true");
-  fireEvent.click(second.getByRole("button", { name: "Routines" }));
+  fireEvent.click(second.getByRole("button", { name: "List" }));
   expect(localStorage.getItem(VIEW_STORAGE_KEY)).toBe("routines");
 });
 
