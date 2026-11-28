@@ -651,6 +651,186 @@ export const EN = {
     "Who this Bot is, who can find it, and where it runs.",
   "bot.page.sharingPurpose":
     "Who else can use this Bot. Each person's conversations with it are private.",
+  // The Bot sub-pages' contents (D181 stage 2e): memory sources, suggestions, reaching you, responsibilities
+  // and routines, the summaries of lib/agents/bot-summaries.ts and the time phrases of lib/relative-time.ts.
+  // Shared words reuse their existing keys (`botPage.fallbackTitle` is "Bot"); `bot.choose` is "Choose a Bot".
+  "bot.choose": "Choose a Bot",
+  "memory.addSource": "Add source",
+  "memory.title": "App sources",
+  "memory.description":
+    "Apps you connected that this Bot can read show up here, and you can add more. Sources refresh every 15 minutes. Only this Bot sees what they hold.",
+  "memory.empty": "No sources yet. Add one with Add source.",
+  "memory.upToDate": "Up to date",
+  "memory.off": "Turned off",
+  "memory.lastRead": "Last read {when}",
+  "memory.syncNow": "Sync now",
+  "memory.readNamed": "Read {name}",
+  "memory.addTitle": "Add a source",
+  "memory.addDescription":
+    "{product} reads it now, then every 15 minutes while it's on.",
+  "memory.enterNumber": "Enter a number for {name}.",
+  "memory.cantShow":
+    "This one has settings {product} can't show. Choose another.",
+  "memory.checkSettings": "Check the source settings.",
+  "memory.whatToRead": "What to read",
+  "memory.chooseWhat": "Choose what to read",
+  "memory.sourceName": "Source name",
+  "memory.chooseValue": "Choose a value",
+  "memory.reading": "Reading source…",
+  "memory.addAndSync": "Add and sync source",
+  "suggestions.everyHour": "Every hour",
+  "suggestions.every4Hours": "Every 4 hours",
+  "suggestions.twiceDay": "Twice a day",
+  "suggestions.onceDay": "Once a day",
+  "suggestions.everyMinutes": {
+    one: "Every {count} minute",
+    other: "Every {count} minutes",
+  },
+  "suggestions.yourBot": "Your Bot",
+  "suggestions.title": "Suggested next steps",
+  "suggestions.from": "From {app}",
+  "suggestions.connectedApp": "a connected app",
+  "suggestions.openRecord": "Open record",
+  "suggestions.startTask": "Start as task",
+  "suggestions.empty":
+    "No suggestions right now. Bots with background research on will suggest next steps here.",
+  "suggestions.turnOnResearch": "Turn on research",
+  "suggestions.researchDescription":
+    "Off until you turn it on for this Bot, unless your administrator turned it on for everyone. When it is on, it looks through the apps it can already read every four hours, forms memories for you to review and suggests next steps. It can only read: it cannot send messages, change anything in an app, or use a browser or computer. Turn it off or remove it and it stays that way.",
+  "suggestions.researchTitle": "Background research",
+  "suggestions.researchOff": "Background research is off.",
+  "suggestions.turnOnDialog": "Turn on background research",
+  "suggestions.turnOnDescription":
+    "It reads on a schedule and delivers what it suggests to a channel it is in.",
+  "suggestions.deliverTo": "Deliver suggestions to",
+  "suggestions.chooseChannel": "Choose a channel",
+  "suggestions.howOften": "How often",
+  "suggestions.focus": "What to look for (optional)",
+  "suggestions.off": "Off",
+  "suggestions.researchingNow": "Researching now",
+  "suggestions.lastRan": "Last ran {when}",
+  "suggestions.turnOff": "Turn off",
+  "reaching.linkSlack": "Link Slack",
+  "reaching.linkTeams": "Link Microsoft Teams",
+  "reaching.connectPhone": "Connect a phone",
+  "reaching.sumSlack": "Continue a conversation from Slack.",
+  "reaching.sumTeams": "Continue a conversation from Microsoft Teams.",
+  "reaching.sumSms": "Continue a conversation by text message.",
+  "reaching.codeOnWay":
+    "A verification code is on its way. Enter it to finish.",
+  "reaching.linkReady":
+    "Your link code is ready to send. Open this to see it again.",
+  "reaching.smsNotSet":
+    "Text messages aren't set up yet. An admin has to turn them on first.",
+  "reaching.notSet":
+    "Not set up yet. An admin has to turn on Slack and Teams first.",
+  "reaching.pointerBefore":
+    "Your devices, recent deliveries, and where each kind of update goes are in",
+  "reaching.connected": "Connected destinations",
+  "reaching.noDestinations": "No destinations connected.",
+  "reaching.optedOut": "You texted STOP. Text START to resume.",
+  "reaching.disconnect": "Disconnect",
+  "reaching.channelNote":
+    "In a Slack or Teams channel that others can read, the Bot replies to you in a direct message.",
+  "reaching.connectTitle": "Connect a conversation",
+  "reaching.oneAtATime":
+    "Each account or phone number works with one conversation at a time. Linking it here moves it from the one it's linked to now.",
+  "reaching.conversation": "Conversation",
+  "reaching.chooseConversation": "Choose a conversation",
+  "reaching.loadMore": "Load more conversations",
+  "reaching.phoneNumber": "Phone number",
+  "reaching.sendCode": "Send verification code",
+  "reaching.verificationCode": "Verification code",
+  "reaching.confirmPhone": "Confirm phone",
+  "reaching.linkExpires": {
+    one: "Send this message to the {product} app in {platform} within {count} minute. It links that account to this conversation and Bot.",
+    other:
+      "Send this message to the {product} app in {platform} within {count} minutes. It links that account to this conversation and Bot.",
+  },
+  "responsibilities.new": "New responsibility",
+  "responsibilities.title": "Goals",
+  "responsibilities.empty":
+    "No responsibilities yet. Add one with New responsibility.",
+  "responsibilities.emptyBot":
+    "No responsibilities for this Bot yet. Add one with New responsibility.",
+  "routines.neverRun": "Hasn't run yet",
+  "routines.running": "Running…",
+  "routines.missed": "Missed {when}",
+  "routines.failed": "Failed {when}",
+  "routines.skipped": "Skipped {when}",
+  "routines.ran": "Ran {when}",
+  "routines.finished": "Finished {when}",
+  "routines.noRuns": "No runs yet.",
+  "routines.runNow": "Run now",
+  "routines.triggered": "Triggered",
+  "routines.scheduled": "Scheduled",
+  "routines.sweepChecked":
+    "{product} last checked them {when}. None will run until it starts again. Ask an admin if this keeps happening.",
+  "routines.sweepNever":
+    "{product} hasn't started running routines yet, so none of these will run. Ask an admin to set this up.",
+  "routines.notRunning": "Routines aren't running.",
+  "routines.loadError": "Couldn't load your routines. Reload the page.",
+  "routines.emptyBot":
+    'No routines for this Bot yet. Ask it something like "every weekday at 9, send me…" and it shows up here.',
+  "routines.empty":
+    'No routines yet. Ask a Bot something like "every weekday at 9, send me…" and it shows up here.',
+  "routines.enableAria": "Enable the routine scheduled {schedule}",
+  "routines.channelGone": "Conversation deleted",
+  "routines.untitledChannel": "Untitled conversation",
+  "routines.due": "Due",
+  "routines.next": "Next {when}",
+  "routines.runNowTitle":
+    "Runs it now, for real. The Bot does the work and posts in the conversation.",
+  "routines.pausedTurnOn": "This routine is paused. Turn it on first.",
+  "routines.runNowAria": "Run the routine scheduled {schedule} now",
+  "routines.historyAria": "Run history for the routine scheduled {schedule}",
+  "routines.history": "History",
+  "routines.deleteAria": "Delete the routine scheduled {schedule}",
+  "routines.deleteTitle": 'Delete "{schedule}"?',
+  "routines.deleteDescription":
+    "This routine stops for good. You can't undo this.",
+  "routines.week": "Week",
+  "routines.nextRuns": "Next runs",
+  "routines.viewAria": "View",
+  "summary.nothingGranted": "Nothing granted",
+  "summary.skills": {
+    one: "{count} skill",
+    other: "{count} skills",
+  },
+  "summary.apps": {
+    one: "{count} app",
+    other: "{count} apps",
+  },
+  "summary.everyonePublic": "Everyone (public)",
+  "summary.notShared": "Not shared",
+  "summary.specificPeople": "Specific people and groups",
+  "summary.onlyIn": "Only in {product}",
+  "summary.nothingConnected": "Nothing connected",
+  "summary.sources": {
+    one: "{count} source",
+    other: "{count} sources",
+  },
+  "summary.researchOn": "Background research on",
+  "summary.researchOnAfter": "background research on",
+  "time.justNow": "just now",
+  "time.minutesAgo": {
+    one: "{count} min ago",
+    other: "{count} min ago",
+  },
+  "time.hoursAgo": {
+    one: "{count} hr ago",
+    other: "{count} hr ago",
+  },
+  "time.yesterday": "yesterday",
+  "time.daysAgo": {
+    one: "{count} day ago",
+    other: "{count} days ago",
+  },
+  "time.weeksAgo": {
+    one: "{count} wk ago",
+    other: "{count} wk ago",
+  },
+  "time.recently": "recently",
 } satisfies Entries;
 
 export type MessageId = keyof typeof EN;

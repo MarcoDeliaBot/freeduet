@@ -16,6 +16,7 @@ import {
   ItemTitle,
 } from "@/components/ui/item";
 import { Separator } from "@/components/ui/separator";
+import { useT } from "@/freeduet/i18n/provider";
 import {
   type ResponsibilityRecord,
   responsibilitiesQueryOptions,
@@ -38,6 +39,7 @@ import {
  * many values and a settings screen that edits many values in place turns back into a form.
  */
 export function BotResponsibilities({ agentId }: { agentId?: string }) {
+  const t = useT();
   const goals = useQuery(responsibilitiesQueryOptions());
   const [creating, setCreating] = useState(false);
   const [openId, setOpenId] = useState<string | null>(null);
@@ -51,10 +53,10 @@ export function BotResponsibilities({ agentId }: { agentId?: string }) {
       action={
         <Button onClick={() => setCreating(true)} size="sm" variant="ghost">
           <IconPlus />
-          New responsibility
+          {t("responsibilities.new")}
         </Button>
       }
-      title="Goals"
+      title={t("responsibilities.title")}
     >
       {/* Pending, error, empty, rows — pending first, so no sentence asserts anything mid-fetch. */}
       {goals.isPending ? null : goals.error ? (
@@ -64,8 +66,8 @@ export function BotResponsibilities({ agentId }: { agentId?: string }) {
       ) : shown.length === 0 ? (
         <PageEmpty>
           {agentId
-            ? "No responsibilities for this Bot yet. Add one with New responsibility."
-            : "No responsibilities yet. Add one with New responsibility."}
+            ? t("responsibilities.emptyBot")
+            : t("responsibilities.empty")}
         </PageEmpty>
       ) : (
         <PageRows>

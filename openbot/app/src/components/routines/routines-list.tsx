@@ -40,6 +40,8 @@ import {
 } from "@/components/ui/item";
 import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
+import type { MessageId } from "@/freeduet/i18n/catalogs";
+import { type T, useAppLanguage } from "@/freeduet/i18n/provider";
 import { appConfig } from "@/lib/generated/application-config";
 import { relativeTime } from "@/lib/relative-time";
 import {
@@ -65,7 +67,11 @@ import { queryClient } from "@/query-client";
  * right now" — which is also what a run stuck open after repeated dispatch failures looks like from
  * here. Neither is a failure, so neither gets the destructive tone; only `status: "failed"` does.
  */
-function lastRunLabel(lastRun: RoutineRecord["lastRun"]): {
+function lastRunLabel(
+  lastRun: RoutineRecord["lastRun"],
+  t: T,
+  language: string,
+): {
   text: string;
   className: string;
   /** The chip's dot, which carries the tone so the text can stay readable. */
@@ -73,44 +79,46 @@ function lastRunLabel(lastRun: RoutineRecord["lastRun"]): {
 } {
   if (lastRun === null) {
     return {
-      text: "Hasn't run yet",
+      text: t("routines.neverRun"),
       className: "text-muted-foreground",
       dot: "bg-muted-foreground/40",
     };
   }
   if (lastRun.status === null) {
     return {
-      text: "Running…",
+      text: t("routines.running"),
       className: "text-muted-foreground",
       dot: "animate-pulse bg-muted-foreground",
     };
   }
-  const when = lastRun.at ? relativeTime(lastRun.at) : "recently";
+  const when = lastRun.at
+    ? relativeTime(lastRun.at, language)
+    : t("time.recently");
   // Before the skip: a missed firing is stored as skipped, and the list must not call it a choice.
   if (lastRun.missed) {
     return {
-      text: `Missed ${when}`,
+      text: t("routines.missed", { when }),
       className: "text-amber-600 dark:text-amber-500",
       dot: "bg-amber-500",
     };
   }
   if (lastRun.status === "failed") {
     return {
-      text: `Failed ${when}`,
+      text: t("routines.failed", { when }),
       className: "text-destructive",
       dot: "bg-destructive",
     };
   }
   if (lastRun.status === "skipped") {
     return {
-      text: `Skipped ${when}`,
+      text: t("routines.skipped", { when }),
       className: "text-amber-600 dark:text-amber-500",
       dot: "bg-amber-500",
     };
   }
   if (lastRun.status === "succeeded") {
     return {
-      text: `Ran ${when}`,
+      text: t("routines.ran", { when }),
       className: "text-muted-foreground",
       dot: "bg-emerald-500",
     };
@@ -119,7 +127,7 @@ function lastRunLabel(lastRun: RoutineRecord["lastRun"]): {
   // success — the contract typing (`RoutineRunOutcome | null`) makes a fourth outcome a build-time
   // error, but this is the runtime fallback if that ever slips through.
   return {
-    text: `Finished ${when}`,
+    text: t("routines.finished", { when }),
     className: "text-muted-foreground",
     dot: "bg-muted-foreground/40",
   };
@@ -150,6 +158,7 @@ function Chip({
 
 /** Every firing of one routine, newest first, each linking to the thread it ran in. */
 function RoutineRuns({ routine }: { routine: RoutineRecord }) {
+  const { t, language } = useAppLanguage();
   const runs = useQuery(routineRunsQueryOptions(routine.id));
   // Pending renders nothing: "No runs yet." would otherwise flash for the fetch.
   if (runs.isPending) return null;
@@ -160,7 +169,9 @@ function RoutineRuns({ routine }: { routine: RoutineRecord }) {
       </p>
     );
   if (!runs.data?.length)
-    return <p className="text-muted-foreground text-xs">No runs yet.</p>;
+    return (
+      <p className="text-muted-foreground text-xs">{t("routines.noRuns")}</p>
+    );
   return (
     <ul className="flex w-full flex-col gap-1.5">
       {runs.data.map((run) => {
@@ -181,11 +192,11 @@ function RoutineRuns({ routine }: { routine: RoutineRecord }) {
             </span>
             <span className="text-muted-foreground">
               {run.source === "run_now"
-                ? "Run now"
+                ? t("routines.runNow")
                 : run.source === "trigger"
-                  ? "Triggered"
-                  : "Scheduled"}{" "}
-              · {relativeTime(run.startedAt)}
+                  ? t("routines.triggered")
+                  : t("routines.scheduled")}{" "}
+              · {relativeTime(run.startedAt, language)}
             </span>
             {run.channelId ? (
               <Link
@@ -193,7 +204,7 @@ function RoutineRuns({ routine }: { routine: RoutineRecord }) {
                 params={{ channelId: run.channelId }}
                 to="/channel/$channelId"
               >
-                Open conversation
+                {t("stalled.open")}
               </Link>
             ) : null}
             {run.error ? (
@@ -211,11 +222,11 @@ function RoutineRuns({ routine }: { routine: RoutineRecord }) {
 /** The three ways to read this screen: the standing instructions, the runs coming up, and the runs that ran. */
 type RoutinesView = "routines" | "week" | "next-runs" | "history";
 
-const VIEWS: { id: RoutinesView; label: string }[] = [
-  { id: "routines", label: "Routines" },
-  { id: "week", label: "Week" },
-  { id: "next-runs", label: "Next runs" },
-  { id: "history", label: "History" },
+const VIEWS: { id: RoutinesView; label: MessageId }[] = [
+  { id: "routines", label: "nav.routines" },
+  { id: "week", label: "routines.week" },
+  { id: "next-runs", label: "routines.nextRuns" },
+  { id: "history", label: "routines.history" },
 ];
 
 /**
@@ -234,6 +245,7 @@ export function RoutinesList({
   /** Where the page section's own top margin is somebody else's spacing. */
   embedded?: boolean;
 } = {}) {
+  const { t, language } = useAppLanguage();
   const routines = useQuery(routinesQueryOptions());
   const setEnabled = useMutation(setRoutineEnabledMutationOptions(queryClient));
   const deleteRoutine = useMutation(deleteRoutineMutationOptions(queryClient));
@@ -253,7 +265,10 @@ export function RoutinesList({
 
   return (
     <PageSection className={embedded ? "mt-0" : undefined}>
-      <fieldset aria-label="View" className="mt-4 flex flex-wrap gap-1">
+      <fieldset
+        aria-label={t("routines.viewAria")}
+        className="mt-4 flex flex-wrap gap-1"
+      >
         {VIEWS.map((item) => (
           <Button
             aria-pressed={view === item.id}
@@ -268,7 +283,7 @@ export function RoutinesList({
             type="button"
             variant={view === item.id ? "secondary" : "ghost"}
           >
-            {item.label}
+            {t(item.label)}
           </Button>
         ))}
       </fieldset>
@@ -283,11 +298,16 @@ export function RoutinesList({
       {noWorker ? (
         <p className="mt-4 text-muted-foreground text-sm" role="alert">
           <span className="font-medium text-amber-600 dark:text-amber-500">
-            Routines aren't running.
+            {t("routines.notRunning")}
           </span>{" "}
           {sweep?.lastSweptAt
-            ? `${appConfig.brand.productName} last checked them ${relativeTime(sweep.lastSweptAt)}. None will run until it starts again. Ask an admin if this keeps happening.`
-            : `${appConfig.brand.productName} hasn't started running routines yet, so none of these will run. Ask an admin to set this up.`}
+            ? t("routines.sweepChecked", {
+                product: appConfig.brand.productName,
+                when: relativeTime(sweep.lastSweptAt, language),
+              })
+            : t("routines.sweepNever", {
+                product: appConfig.brand.productName,
+              })}
         </p>
       ) : null}
 
@@ -295,7 +315,7 @@ export function RoutinesList({
           other two views wait for the same list, because their rows name each routine. */}
       {routines.isPending ? null : routines.error ? (
         <p className="mt-4 text-destructive text-sm" role="alert">
-          Couldn't load your routines. Reload the page.
+          {t("routines.loadError")}
         </p>
       ) : view === "week" ? (
         <RoutineWeek agentId={agentId} routines={rows} />
@@ -305,14 +325,12 @@ export function RoutinesList({
         <RoutineHistory agentId={agentId} routines={rows} />
       ) : rows.length === 0 ? (
         <PageEmpty>
-          {agentId
-            ? 'No routines for this Bot yet. Ask it something like "every weekday at 9, send me…" and it shows up here.'
-            : 'No routines yet. Ask a Bot something like "every weekday at 9, send me…" and it shows up here.'}
+          {agentId ? t("routines.emptyBot") : t("routines.empty")}
         </PageEmpty>
       ) : (
         <PageRows>
           {rows.map((routine, index) => {
-            const lastRun = lastRunLabel(routine.lastRun);
+            const lastRun = lastRunLabel(routine.lastRun, t, language);
             return (
               <Fragment key={routine.id}>
                 {index > 0 ? <Separator /> : null}
@@ -338,7 +356,9 @@ export function RoutinesList({
                      * page uses for its per-Bot grant switches.
                      */}
                     <Switch
-                      aria-label={`Enable the routine scheduled ${routine.schedule}`}
+                      aria-label={t("routines.enableAria", {
+                        schedule: routine.schedule,
+                      })}
                       checked={routine.enabled}
                       disabled={
                         setEnabled.isPending &&
@@ -360,7 +380,7 @@ export function RoutinesList({
                     >
                       {routine.channel.gone ? (
                         <Chip className="border-destructive/40 text-destructive">
-                          Conversation deleted
+                          {t("routines.channelGone")}
                         </Chip>
                       ) : (
                         // Where it posts is a place, so the chip goes there.
@@ -369,7 +389,8 @@ export function RoutinesList({
                           to="/channel/$channelId"
                         >
                           <Chip className="text-muted-foreground transition-colors hover:text-foreground">
-                            {routine.channel.name ?? "Untitled conversation"}
+                            {routine.channel.name ??
+                              t("routines.untitledChannel")}
                           </Chip>
                         </Link>
                       )}
@@ -386,7 +407,9 @@ export function RoutinesList({
                        * takes its place, so the switch's state has a word as well as a position.
                        */}
                       {!routine.enabled ? (
-                        <Chip className="text-muted-foreground">Paused</Chip>
+                        <Chip className="text-muted-foreground">
+                          {t("bots.paused")}
+                        </Chip>
                       ) : new Date(routine.nextRunAt).getTime() <=
                         Date.now() ? (
                         /*
@@ -395,11 +418,13 @@ export function RoutinesList({
                          */
                         <Chip className="text-amber-600 dark:text-amber-500">
                           <span className="size-1.5 animate-pulse rounded-full bg-amber-500" />
-                          Due
+                          {t("routines.due")}
                         </Chip>
                       ) : (
                         <Chip className="text-muted-foreground">
-                          Next {relativeTime(routine.nextRunAt)}
+                          {t("routines.next", {
+                            when: relativeTime(routine.nextRunAt, language),
+                          })}
                         </Chip>
                       )}
                     </div>
@@ -410,7 +435,9 @@ export function RoutinesList({
                        * on, because a paused routine never runs.
                        */}
                       <Button
-                        aria-label={`Run the routine scheduled ${routine.schedule} now`}
+                        aria-label={t("routines.runNowAria", {
+                          schedule: routine.schedule,
+                        })}
                         disabled={
                           !routine.enabled ||
                           (runNow.isPending && runNow.variables === routine.id)
@@ -423,18 +450,20 @@ export function RoutinesList({
                         size="sm"
                         title={
                           routine.enabled
-                            ? "Runs it now, for real. The Bot does the work and posts in the conversation."
-                            : "This routine is paused. Turn it on first."
+                            ? t("routines.runNowTitle")
+                            : t("routines.pausedTurnOn")
                         }
                         type="button"
                         variant="outline"
                       >
                         <IconPlayerPlay />
-                        Run now
+                        {t("routines.runNow")}
                       </Button>
                       <Button
                         aria-expanded={historyId === routine.id}
-                        aria-label={`Run history for the routine scheduled ${routine.schedule}`}
+                        aria-label={t("routines.historyAria", {
+                          schedule: routine.schedule,
+                        })}
                         onClick={() =>
                           setHistoryId(
                             historyId === routine.id ? null : routine.id,
@@ -445,10 +474,12 @@ export function RoutinesList({
                         variant="ghost"
                       >
                         <IconHistory />
-                        History
+                        {t("routines.history")}
                       </Button>
                       <Button
-                        aria-label={`Delete the routine scheduled ${routine.schedule}`}
+                        aria-label={t("routines.deleteAria", {
+                          schedule: routine.schedule,
+                        })}
                         onClick={() => {
                           deleteRoutine.reset();
                           setConfirmingId(routine.id);
@@ -458,7 +489,7 @@ export function RoutinesList({
                         variant="ghost"
                       >
                         <IconTrash />
-                        Delete
+                        {t("bot.manage.delete")}
                       </Button>
                     </div>
                   </ItemFooter>
@@ -490,9 +521,13 @@ export function RoutinesList({
             UI would otherwise render a nested dialog with no backdrop at all. */}
         <DialogContent overlayClassName="bg-black/20 supports-backdrop-filter:backdrop-blur-sm">
           <DialogHeader>
-            <DialogTitle>Delete "{confirming?.schedule}"?</DialogTitle>
+            <DialogTitle>
+              {t("routines.deleteTitle", {
+                schedule: confirming?.schedule ?? "",
+              })}
+            </DialogTitle>
             <DialogDescription>
-              This routine stops for good. You can't undo this.
+              {t("routines.deleteDescription")}
             </DialogDescription>
           </DialogHeader>
           {deleteRoutine.error ? (
@@ -509,7 +544,7 @@ export function RoutinesList({
               type="button"
               variant="outline"
             >
-              Cancel
+              {t("settings.cancel")}
             </Button>
             <Button
               disabled={deleteRoutine.isPending}
@@ -523,7 +558,9 @@ export function RoutinesList({
               type="button"
               variant="destructive"
             >
-              {deleteRoutine.isPending ? "Deleting…" : "Delete"}
+              {deleteRoutine.isPending
+                ? t("bot.manage.deleting")
+                : t("bot.manage.delete")}
             </Button>
           </DialogFooter>
         </DialogContent>

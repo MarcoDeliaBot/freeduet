@@ -40,6 +40,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
+import type { MessageId } from "@/freeduet/i18n/catalogs";
+import { useT } from "@/freeduet/i18n/provider";
 import { agentListQueryOptions } from "@/lib/agents/queries";
 import { conversationLabel } from "@/lib/channels/label";
 import { channelListQueryOptions } from "@/lib/channels/queries";
@@ -91,22 +93,22 @@ type HeldLink = ChatLink & {
 
 const TRANSPORT: Record<
   Transport,
-  { link: string; icon: typeof IconBrandSlack; summary: string }
+  { link: MessageId; icon: typeof IconBrandSlack; summary: MessageId }
 > = {
   slack: {
-    link: "Link Slack",
+    link: "reaching.linkSlack",
     icon: IconBrandSlack,
-    summary: "Continue a conversation from Slack.",
+    summary: "reaching.sumSlack",
   },
   teams: {
-    link: "Link Microsoft Teams",
+    link: "reaching.linkTeams",
     icon: IconBrandTeams,
-    summary: "Continue a conversation from Microsoft Teams.",
+    summary: "reaching.sumTeams",
   },
   sms: {
-    link: "Connect a phone",
+    link: "reaching.connectPhone",
     icon: IconDeviceMobileMessage,
-    summary: "Continue a conversation by text message.",
+    summary: "reaching.sumSms",
   },
 };
 
@@ -119,6 +121,7 @@ const TRANSPORT: Record<
  * a phone number — and the answer is a code to send back.
  */
 export function ReachingYou({ agentId: fixedBot }: { agentId?: string }) {
+  const t = useT();
   const reach = useQuery(deliveryQueryOptions());
   const bots = useQuery(agentListQueryOptions());
   // People read Bots by name; the id is what the list used to show.
@@ -157,40 +160,37 @@ export function ReachingYou({ agentId: fixedBot }: { agentId?: string }) {
     (transport === "sms" && challengeId !== "");
   const summary = (transport: Transport) => {
     if (transport === "sms" && challengeId) {
-      return "A verification code is on its way. Enter it to finish.";
+      return t("reaching.codeOnWay");
     }
     if (heldLink(transport)) {
-      return "Your link code is ready to send. Open this to see it again.";
+      return t("reaching.linkReady");
     }
-    if (open(transport)) return TRANSPORT[transport].summary;
-    return transport === "sms"
-      ? "Text messages aren't set up yet. An admin has to turn them on first."
-      : "Not set up yet. An admin has to turn on Slack and Teams first.";
+    if (open(transport)) return t(TRANSPORT[transport].summary);
+    return transport === "sms" ? t("reaching.smsNotSet") : t("reaching.notSet");
   };
 
   return (
     <>
       {fixedBot === undefined ? (
         <p className="mt-6 text-muted-foreground text-sm">
-          Your devices, recent deliveries, and where each kind of update goes
-          are in{" "}
+          {t("reaching.pointerBefore")}{" "}
           <Link
             className="underline underline-offset-4"
             to="/settings/notifications"
           >
-            Settings → Notifications
+            {t("nav.settings")} → {t("profile.notifications")}
           </Link>
           .
         </p>
       ) : null}
-      <PageSection title="Connected destinations">
+      <PageSection title={t("reaching.connected")}>
         {listError ? (
           <p className="mt-4 text-destructive text-sm" role="alert">
             {listError.message}
           </p>
         ) : null}
         {reach.isPending || !destinations ? null : destinations.length === 0 ? (
-          <PageEmpty>No destinations connected.</PageEmpty>
+          <PageEmpty>{t("reaching.noDestinations")}</PageEmpty>
         ) : (
           <PageRows>
             {destinations.map((binding, index) => {
@@ -213,7 +213,7 @@ export function ReachingYou({ agentId: fixedBot }: { agentId?: string }) {
                       <ItemDescription>
                         {botName(binding.agentId)}
                         {binding.optedOutAt
-                          ? " · You texted STOP. Text START to resume."
+                          ? ` · ${t("reaching.optedOut")}`
                           : null}
                       </ItemDescription>
                     </ItemContent>
@@ -224,7 +224,7 @@ export function ReachingYou({ agentId: fixedBot }: { agentId?: string }) {
                         size="sm"
                         variant="outline"
                       >
-                        Disconnect
+                        {t("reaching.disconnect")}
                       </Button>
                     </ItemActions>
                   </Item>
@@ -235,8 +235,8 @@ export function ReachingYou({ agentId: fixedBot }: { agentId?: string }) {
         )}
       </PageSection>
       <PageSection
-        description="In a Slack or Teams channel that others can read, the Bot replies to you in a direct message."
-        title="Connect a conversation"
+        description={t("reaching.channelNote")}
+        title={t("reaching.connectTitle")}
       >
         {reach.data ? (
           <PageRows>
@@ -261,7 +261,7 @@ export function ReachingYou({ agentId: fixedBot }: { agentId?: string }) {
                       <Icon />
                     </ItemMedia>
                     <ItemContent>
-                      <ItemTitle>{TRANSPORT[transport].link}</ItemTitle>
+                      <ItemTitle>{t(TRANSPORT[transport].link)}</ItemTitle>
                       <ItemDescription>{summary(transport)}</ItemDescription>
                     </ItemContent>
                     {opens ? (
@@ -322,6 +322,7 @@ function ConnectDialog({
   onLinked: (link: HeldLink) => void;
   onClose: () => void;
 }) {
+  const t = useT();
   const formId = useId();
   const channels = useInfiniteQuery(channelListQueryOptions());
   // Reopened with a link message still held, the dialog shows the conversation it links.
@@ -363,16 +364,13 @@ function ConnectDialog({
     <Dialog onOpenChange={(next) => !next && onClose()} open>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>{TRANSPORT[transport].link}</DialogTitle>
-          <DialogDescription>
-            Each account or phone number works with one conversation at a time.
-            Linking it here moves it from the one it's linked to now.
-          </DialogDescription>
+          <DialogTitle>{t(TRANSPORT[transport].link)}</DialogTitle>
+          <DialogDescription>{t("reaching.oneAtATime")}</DialogDescription>
         </DialogHeader>
         <DialogBody className="mt-4 grid gap-4 overflow-y-auto">
           <Field>
             <FieldLabel htmlFor={`${formId}-conversation`}>
-              Conversation
+              {t("reaching.conversation")}
             </FieldLabel>
             <Select
               items={Object.fromEntries(
@@ -388,7 +386,7 @@ function ConnectDialog({
               value={channelId || null}
             >
               <SelectTrigger className="w-full" id={`${formId}-conversation`}>
-                <SelectValue placeholder="Choose a conversation" />
+                <SelectValue placeholder={t("reaching.chooseConversation")} />
               </SelectTrigger>
               <SelectContent>
                 {conversations.map((channel) => (
@@ -401,7 +399,9 @@ function ConnectDialog({
           </Field>
           {fixedBot === undefined ? (
             <Field>
-              <FieldLabel htmlFor={`${formId}-bot`}>Bot</FieldLabel>
+              <FieldLabel htmlFor={`${formId}-bot`}>
+                {t("botPage.fallbackTitle")}
+              </FieldLabel>
               <Select
                 items={Object.fromEntries(
                   (selected?.agentIds ?? []).map((id) => [id, botName(id)]),
@@ -412,7 +412,7 @@ function ConnectDialog({
                 value={pickedBot || null}
               >
                 <SelectTrigger className="w-full" id={`${formId}-bot`}>
-                  <SelectValue placeholder="Choose a Bot" />
+                  <SelectValue placeholder={t("bot.choose")} />
                 </SelectTrigger>
                 <SelectContent>
                   {selected?.agentIds.map((id) => (
@@ -431,7 +431,7 @@ function ConnectDialog({
               size="sm"
               variant="outline"
             >
-              Load more conversations
+              {t("reaching.loadMore")}
             </Button>
           ) : null}
           {transport === "sms" ? (
@@ -447,7 +447,7 @@ function ConnectDialog({
               >
                 <Field>
                   <FieldLabel htmlFor={`${formId}-phone`}>
-                    Phone number
+                    {t("reaching.phoneNumber")}
                   </FieldLabel>
                   <div className="flex items-center gap-2">
                     <Input
@@ -465,7 +465,7 @@ function ConnectDialog({
                       type="submit"
                       variant={challengeId ? "outline" : "default"}
                     >
-                      Send verification code
+                      {t("reaching.sendCode")}
                     </Button>
                   </div>
                 </Field>
@@ -488,7 +488,7 @@ function ConnectDialog({
                 >
                   <Field>
                     <FieldLabel htmlFor={`${formId}-code`}>
-                      Verification code
+                      {t("reaching.verificationCode")}
                     </FieldLabel>
                     <div className="flex items-center gap-2">
                       <Input
@@ -503,7 +503,7 @@ function ConnectDialog({
                         size="sm"
                         type="submit"
                       >
-                        Confirm phone
+                        {t("reaching.confirmPhone")}
                       </Button>
                     </div>
                   </Field>
@@ -514,10 +514,12 @@ function ConnectDialog({
             <Item size="sm" variant="muted">
               <ItemContent>
                 <ItemDescription className="line-clamp-none">
-                  Send this message to the {appConfig.brand.productName} app in{" "}
-                  {linked.platform === "teams" ? "Microsoft Teams" : "Slack"}{" "}
-                  within {Math.ceil((linked.expiresAt - Date.now()) / 60_000)}{" "}
-                  minutes. It links that account to this conversation and Bot.
+                  {t("reaching.linkExpires", {
+                    product: appConfig.brand.productName,
+                    platform:
+                      linked.platform === "teams" ? "Microsoft Teams" : "Slack",
+                    count: Math.ceil((linked.expiresAt - Date.now()) / 60_000),
+                  })}
                 </ItemDescription>
                 <ItemTitle className="break-all font-mono">
                   {linked.command}
@@ -532,7 +534,7 @@ function ConnectDialog({
                   size="sm"
                   variant="outline"
                 >
-                  {copied ? "Copied" : "Copy"}
+                  {copied ? t("settings.copied") : t("settings.copy")}
                 </Button>
               </ItemActions>
             </Item>
@@ -545,7 +547,7 @@ function ConnectDialog({
         </DialogBody>
         <DialogFooter className="mt-4">
           <Button onClick={onClose} size="sm" variant="outline">
-            Close
+            {t("chat.close")}
           </Button>
           {/* A phone's two steps each submit their own field, beside it. */}
           {transport === "sms" ? null : (
@@ -554,7 +556,7 @@ function ConnectDialog({
               onClick={() => startLink(transport)}
               size="sm"
             >
-              {TRANSPORT[transport].link}
+              {t(TRANSPORT[transport].link)}
             </Button>
           )}
         </DialogFooter>
