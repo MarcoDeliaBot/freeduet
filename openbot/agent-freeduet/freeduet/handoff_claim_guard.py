@@ -404,10 +404,13 @@ def is_live_person_turn(messages: list[dict], assertion: str) -> bool:
 
 def applies(
     messages: list[dict], story_messages: list[dict], reply: str, assertion: str, offered: set[str] | frozenset[str],
-    member_id: str, prompts: dict[str, str] | None = None,
+    member_id: str, prompts: dict[str, str] | None = None, server_open: frozenset[str] | None = None,
 ) -> tuple[str, str, bool] | None:
     """(member id, name, answered) of the colleague to name when the turn that ends with `reply` gets the retry, else
-    None. `answered` is True when an earlier hand-off to that colleague in this conversation was already closed."""
+    None. `answered` is True when an earlier hand-off to that colleague in this conversation was already closed.
+    `server_open` (D185) is the member ids the server's hop queue says have an open hand-off for this conversation:
+    when it is not None it replaces the transcript's reading of "open"; None (the server sent nothing usable) falls
+    back to the transcript."""
     if not is_live_person_turn(messages, assertion) or HANDOFF_TOOL not in offered:
         return None
     latest = latest_user_message(messages)
@@ -421,6 +424,9 @@ def applies(
     if not claimed:
         return None
     open_now, answered = handoff_states(messages, member_id, prompts)
+    if server_open is not None:
+        open_now = set(server_open)
+        answered = answered - open_now
     for other, name in claimed:
         if other not in open_now:
             return other, name, other in answered

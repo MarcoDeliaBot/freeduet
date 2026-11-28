@@ -150,8 +150,9 @@ def test_an_open_handoff_is_a_call_not_refused_and_not_closed_by_an_answer():
     assert guard.open_handoffs(conversation(call_to("Kai"), result(), never), "freeduet", PROMPTS) == set()
 
 
-def applies(reply, messages=None, story=(), offered=frozenset({"message_bot"}), kind="person"):
-    return guard.applies(messages or conversation(), list(story), reply, assertion(kind), offered, "freeduet", PROMPTS)
+def applies(reply, messages=None, story=(), offered=frozenset({"message_bot"}), kind="person", server_open=None):
+    return guard.applies(messages or conversation(), list(story), reply, assertion(kind), offered, "freeduet", PROMPTS,
+                         server_open=server_open)
 
 
 def test_the_claim_with_no_handoff_applies():
@@ -165,6 +166,23 @@ def test_a_handoff_made_in_the_turn_does_not_apply():
 
 def test_a_claim_with_an_open_handoff_does_not_apply():
     assert applies(LIVE_CLAIM, messages=conversation(call_to("Kai"), result())) is None
+
+
+def test_the_server_says_the_colleague_is_open_so_no_retry_even_with_no_call_in_the_transcript():
+    assert applies(LIVE_CLAIM, server_open=frozenset({"game"})) is None
+
+
+def test_the_server_says_none_is_open_so_the_claim_applies_even_when_the_transcript_reads_open():
+    assert applies(LIVE_CLAIM, messages=conversation(call_to("Kai"), result()), server_open=frozenset()) == ("game", "Kai", False)
+
+
+def test_the_server_open_set_of_another_colleague_does_not_cover_the_claimed_one():
+    assert applies(LIVE_CLAIM, server_open=frozenset({"concierge"})) == ("game", "Kai", False)
+
+
+def test_without_a_server_value_the_transcript_decides_as_before():
+    assert applies(LIVE_CLAIM, messages=conversation(call_to("Kai"), result()), server_open=None) is None
+    assert applies(LIVE_CLAIM, server_open=None) == ("game", "Kai", False)
 
 
 def test_a_claim_about_a_closed_handoff_applies_again():
@@ -433,3 +451,19 @@ def test_review_fixes_these_claims_are_found(reply):
 @pytest.mark.parametrize("reply", ["Kai未开始工作。", "Kai不曾开始制作。", "Kaiはまだ依頼していません。", "Kai准备好了就开始了吗。"])
 def test_review_fixes_these_are_not_claims(reply):
     assert claimed(reply) == []
+
+
+def test_the_segment_uses_the_servers_open_hand_offs(client, team):
+    from freeduet import open_handoffs
+    at = "2026-11-28T10:10:00Z"
+    value = {"version": 1, "at": at, "handoffs": [
+        {"to": "game", "state": "working", "since": at, "lastEventAt": at}]}
+    run = body(conversation())
+    run["forwardedProps"][open_handoffs.PROP] = value
+    team.plan([{"text": LIVE_CLAIM}], [{"text": "never played"}])
+    post_run(client, run)
+    assert runs(team) == 1  # the server says Kai has it: no retry
+    run["forwardedProps"][open_handoffs.PROP] = {**value, "handoffs": []}
+    team.plan([{"text": LIVE_CLAIM}], HONEST)
+    post_run(client, run)
+    assert runs(team) >= 2
