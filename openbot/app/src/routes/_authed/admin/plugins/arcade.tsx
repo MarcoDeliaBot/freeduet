@@ -1,4 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
+import { useAppLanguage } from "@/freeduet/i18n/provider";
 import { createFileRoute, Navigate } from "@tanstack/react-router";
 import { BrokerDirectory } from "@/components/plugins/broker-directory";
 import { directoryRouteDecision } from "@/lib/plugins/provider-vocabulary";
@@ -28,6 +29,7 @@ export const Route = createFileRoute("/_authed/admin/plugins/arcade")({
  * provider this is.
  */
 function RouteComponent() {
+  const { t } = useAppLanguage();
   const plugins = useQuery(pluginsPageQueryOptions());
   /*
    * `data` stays undefined PERMANENTLY on a failed read, not only while loading, so the gate below
@@ -37,7 +39,7 @@ function RouteComponent() {
   if (plugins.isError) {
     return (
       <p className="m-4 text-destructive text-sm" role="alert">
-        Couldn't load the plugin settings. Reload the page.
+        {t("admin.plugins.directoryError")}
       </p>
     );
   }

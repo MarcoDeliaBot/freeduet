@@ -74,6 +74,9 @@ import {
   botSharedAppsQueryOptions,
   describeApproval,
 } from "@/lib/plugins/shared-use";
+import { useAppLanguage } from "@/freeduet/i18n/provider";
+import type { MessageId } from "@/freeduet/i18n/catalogs";
+import type { Translator } from "@/freeduet/i18n/translate";
 
 /**
  * One vendor: what it needs from this deployment, and which Bots hold its tools.
@@ -107,10 +110,17 @@ function toggled(
  * reading — nothing holds this, or everything does — so they are named, and the middle is the only
  * case that gets a number.
  */
-function grantSummary(held: number, total: number): string {
-  if (held === 0) return "No Bots";
-  if (held === total) return total === 1 ? "1 Bot" : "All Bots";
-  return `${held} of ${total} Bots`;
+function grantSummary(
+  held: number,
+  total: number,
+  t: Translator<MessageId>,
+): string {
+  if (held === 0) return t("admin.plugins.key.grant.none");
+  if (held === total)
+    return total === 1
+      ? t("admin.plugins.key.grant.one")
+      : t("admin.plugins.key.grant.all");
+  return t("admin.plugins.key.grant.some", { held, total });
 }
 
 /**
@@ -120,10 +130,17 @@ function grantSummary(held: number, total: number): string {
  * this app. Named ends rather than a fraction, for the reason recorded above: "0/167" reads as a
  * score, and the two answers worth recognising without reading are none of it and all of it.
  */
-function heldSummary(held: number, total: number): string {
-  if (held === 0) return "No tools";
-  if (held === total) return total === 1 ? "1 tool" : "Every tool";
-  return `${held} of ${total} tools`;
+function heldSummary(
+  held: number,
+  total: number,
+  t: Translator<MessageId>,
+): string {
+  if (held === 0) return t("admin.plugins.key.held.none");
+  if (held === total)
+    return total === 1
+      ? t("admin.plugins.key.held.one")
+      : t("admin.plugins.key.held.all");
+  return t("admin.plugins.key.held.some", { held, total });
 }
 
 /**
@@ -142,12 +159,15 @@ function BotApprovalText({
   botId: string;
   serverId: string;
 }) {
+  const { t } = useAppLanguage();
   const exposure = useQuery(botSharedAppsQueryOptions(botId));
   const app = exposure.data?.apps.find((one) => one.serverId === serverId);
   if (!app) return null;
   return (
     <span className="text-muted-foreground text-xs">
-      {app.approval ? describeApproval(app.approval) : "Not approved"}
+      {app.approval
+        ? describeApproval(app.approval)
+        : t("admin.plugins.key.notApproved")}
     </span>
   );
 }
@@ -194,13 +214,13 @@ export function connectionKindFor(
  * not left to notice their absence.
  */
 function ConnectionStateUnreadable() {
+  const { t } = useAppLanguage();
   return (
     <Item size="sm">
       <ItemContent>
-        <ItemTitle>Your account</ItemTitle>
+        <ItemTitle>{t("admin.plugins.key.unreadableTitle")}</ItemTitle>
         <ItemDescription role="alert">
-          Couldn't load whether you've connected an account here. Reload the
-          page, or check this deployment's logs if it keeps happening.
+          {t("admin.plugins.key.unreadable")}
         </ItemDescription>
       </ItemContent>
     </Item>
@@ -209,6 +229,7 @@ function ConnectionStateUnreadable() {
 
 function RouteComponent() {
   const { key } = useParams({ from: "/_authed/admin/plugins/$key" });
+  const { t } = useAppLanguage();
   const queryClient = useQueryClient();
   const plugins = useQuery(pluginsPageQueryOptions());
   const provider = pluginsProvider(plugins.data);
@@ -322,7 +343,9 @@ function RouteComponent() {
        */
       if (authorizationUrl === null) {
         setError(
-          `${appConfig.brand.productName} got no consent link back, so nothing was connected. Try again, or check this connector's setup if it keeps happening.`,
+          t("admin.plugins.key.noConsent", {
+            product: appConfig.brand.productName,
+          }),
         );
         return;
       }
@@ -366,8 +389,7 @@ function RouteComponent() {
 
   /* Bound once because the brokered row below is told it twice — once inside the whole
      disconnected sentence and once on its own — and two copies of it would drift. */
-  const reassurance =
-    "Setup is complete without it, and it reaches your documents only.";
+  const reassurance = t("admin.plugins.key.reassurance");
 
   /*
    * A SHARED APP'S ROW IS THE TEAM ACCOUNT, NOT THIS ADMINISTRATOR'S.
@@ -509,11 +531,14 @@ function RouteComponent() {
   if (!plugins.data) {
     return (
       <PageShell
-        backButton={{ label: "Plugins", linkProps: { to: "/admin/plugins" } }}
-        title="Plugins"
+        backButton={{
+          label: t("admin.plugins.title"),
+          linkProps: { to: "/admin/plugins" },
+        }}
+        title={t("admin.plugins.title")}
       >
         <p className="mt-12 text-destructive text-sm" role="alert">
-          Couldn't load plugins. Reload the page.
+          {t("admin.plugins.loadError")}
         </p>
       </PageShell>
     );
@@ -521,11 +546,14 @@ function RouteComponent() {
   if (!(entry || server)) {
     return (
       <PageShell
-        backButton={{ label: "Plugins", linkProps: { to: "/admin/plugins" } }}
-        description="There is no plugin with that name, here or in the catalogue."
-        title="Not a plugin"
+        backButton={{
+          label: t("admin.plugins.title"),
+          linkProps: { to: "/admin/plugins" },
+        }}
+        description={t("admin.plugins.key.notPlugin.description")}
+        title={t("admin.plugins.key.notPlugin.title")}
       >
-        <PageEmpty>Nothing to configure.</PageEmpty>
+        <PageEmpty>{t("admin.plugins.key.notPlugin.empty")}</PageEmpty>
       </PageShell>
     );
   }
@@ -542,7 +570,10 @@ function RouteComponent() {
 
   return (
     <PageShell
-      backButton={{ label: "Plugins", linkProps: { to: "/admin/plugins" } }}
+      backButton={{
+        label: t("admin.plugins.title"),
+        linkProps: { to: "/admin/plugins" },
+      }}
       description={entry?.summary ?? server?.summary}
       title={title}
     >
@@ -570,16 +601,16 @@ function RouteComponent() {
            */}
           <Item size="sm">
             <ItemContent>
-              <ItemTitle>Enable for this deployment</ItemTitle>
+              <ItemTitle>{t("admin.plugins.key.enable.title")}</ItemTitle>
               <ItemDescription>
                 {server
-                  ? "Bots can be given its tools. Turning this off removes it and every Bot's access to its tools."
-                  : "No Bot can reach this vendor. Turn it on to set it up and give Bots its tools."}
+                  ? t("admin.plugins.key.enable.on")
+                  : t("admin.plugins.key.enable.off")}
               </ItemDescription>
             </ItemContent>
             <ItemActions>
               <Switch
-                aria-label={`Enable ${title} for this deployment`}
+                aria-label={t("admin.plugins.key.enable.aria", { title })}
                 checked={server !== undefined}
                 onCheckedChange={(next) => {
                   setError(null);
@@ -602,11 +633,11 @@ function RouteComponent() {
               <Separator />
               <Item size="sm">
                 <ItemContent>
-                  <ItemTitle>Whose account</ItemTitle>
+                  <ItemTitle>{t("admin.plugins.key.whose.title")}</ItemTitle>
                   <ItemDescription>
                     {server.accountMode === "shared"
-                      ? "One shared account for everyone."
-                      : "Each person connects their own."}
+                      ? t("admin.plugins.key.whose.shared")
+                      : t("admin.plugins.key.whose.personal")}
                   </ItemDescription>
                 </ItemContent>
                 <ItemActions>
@@ -621,8 +652,8 @@ function RouteComponent() {
                     variant="outline"
                   >
                     {server.accountMode === "shared"
-                      ? "Make personal"
-                      : "Make shared"}
+                      ? t("admin.plugins.key.whose.makePersonal")
+                      : t("admin.plugins.key.whose.makeShared")}
                   </Button>
                 </ItemActions>
               </Item>
@@ -651,17 +682,17 @@ function RouteComponent() {
         <PageSection
           description={
             auth === "user-oauth"
-              ? "This vendor answers as whoever is asking. The deployment registers an OAuth client, and each person connects their own account. A Bot only sees what that person can see."
+              ? t("admin.plugins.key.conn.oauth")
               : auth === "user-secret"
-                ? "This vendor answers as whoever is asking. Each person pastes their own app password on their Connections page. There is nothing to register here, and the deployment keeps no password of its own."
+                ? t("admin.plugins.key.conn.secret")
                 : auth === "builtin"
-                  ? "Built into this deployment. There is no vendor to reach and no credential to keep. A call runs as whoever asked."
+                  ? t("admin.plugins.key.conn.builtin")
                   : auth === "brokered"
                     ? /* The row below says how, at length. This says whose account it is, which is the part that decides what an admin has to do here — which is nothing. */
                       brokeredConnectionDescription(provider)
-                    : "What this deployment sends to the vendor. One credential for everybody."
+                    : t("admin.plugins.key.conn.bearer")
           }
-          title="Connection"
+          title={t("admin.plugins.key.conn.title")}
         >
           {/*
            * Rows that DO something, and nothing else — with two admitted exceptions. The layout
@@ -694,15 +725,14 @@ function RouteComponent() {
                */
               <Item size="sm">
                 <ItemContent>
-                  <ItemTitle>Connection</ItemTitle>
+                  <ItemTitle>{t("admin.plugins.key.conn.title")}</ItemTitle>
                   <ItemDescription>
-                    Nothing to set up. These tools run inside this deployment,
-                    on its own data.
+                    {t("admin.plugins.key.builtin.desc")}
                   </ItemDescription>
                 </ItemContent>
                 <ItemActions>
                   <span className="text-muted-foreground text-xs">
-                    Built in
+                    {t("admin.plugins.key.builtin.badge")}
                   </span>
                 </ItemActions>
               </Item>
@@ -715,16 +745,14 @@ function RouteComponent() {
                */
               <Item size="sm">
                 <ItemContent>
-                  <ItemTitle>App password</ItemTitle>
+                  <ItemTitle>{t("admin.plugins.key.secret.title")}</ItemTitle>
                   <ItemDescription>
-                    Each person makes their own at Google and pastes it on their
-                    Connections page. It reaches their whole mailbox, so what
-                    Bots may do is decided by the tools you grant below.
+                    {t("admin.plugins.key.secret.desc")}
                   </ItemDescription>
                 </ItemContent>
                 <ItemActions>
                   <span className="text-muted-foreground text-xs">
-                    Per person
+                    {t("admin.plugins.key.secret.badge")}
                   </span>
                 </ItemActions>
               </Item>
@@ -738,7 +766,7 @@ function RouteComponent() {
                */
               <Item size="sm">
                 <ItemContent>
-                  <ItemTitle>How this is reached</ItemTitle>
+                  <ItemTitle>{t("admin.plugins.key.reach.title")}</ItemTitle>
                   <ItemDescription>
                     {brokeredReach(provider).description}
                   </ItemDescription>
@@ -759,14 +787,16 @@ function RouteComponent() {
                 size="sm"
               >
                 <ItemContent>
-                  <ItemTitle>Access token</ItemTitle>
+                  <ItemTitle>{t("admin.plugins.key.token.title")}</ItemTitle>
                   <ItemDescription>
-                    Sent with every call to this vendor.
+                    {t("admin.plugins.key.token.desc")}
                   </ItemDescription>
                 </ItemContent>
                 <ItemActions>
                   <span className="text-muted-foreground text-xs">
-                    {server?.hasCredential ? "Saved" : "Not set"}
+                    {server?.hasCredential
+                      ? t("admin.plugins.key.saved")
+                      : t("admin.plugins.key.notSet")}
                   </span>
                   <IconChevronRight className="size-4 shrink-0 text-muted-foreground" />
                 </ItemActions>
@@ -781,15 +811,14 @@ function RouteComponent() {
                */
               <Item size="sm">
                 <ItemContent>
-                  <ItemTitle>OAuth client</ItemTitle>
+                  <ItemTitle>{t("admin.plugins.key.client.title")}</ItemTitle>
                   <ItemDescription>
-                    This deployment registers itself with the vendor on first
-                    connect. There is nothing to paste.
+                    {t("admin.plugins.key.client.selfDesc")}
                   </ItemDescription>
                 </ItemContent>
                 <ItemActions>
                   <span className="text-muted-foreground text-xs">
-                    Self-registered
+                    {t("admin.plugins.key.client.selfBadge")}
                   </span>
                 </ItemActions>
               </Item>
@@ -803,15 +832,16 @@ function RouteComponent() {
                 size="sm"
               >
                 <ItemContent>
-                  <ItemTitle>OAuth client</ItemTitle>
+                  <ItemTitle>{t("admin.plugins.key.client.title")}</ItemTitle>
                   <ItemDescription>
-                    Identifies this deployment to the vendor. On its own, it
-                    can't reach anyone's documents.
+                    {t("admin.plugins.key.client.desc")}
                   </ItemDescription>
                 </ItemContent>
                 <ItemActions>
                   <span className="text-muted-foreground text-xs">
-                    {server?.hasCredential ? "Registered" : "Not registered"}
+                    {server?.hasCredential
+                      ? t("admin.plugins.key.client.registered")
+                      : t("admin.plugins.key.client.notRegistered")}
                   </span>
                   <IconChevronRight className="size-4 shrink-0 text-muted-foreground" />
                 </ItemActions>
@@ -854,10 +884,15 @@ function RouteComponent() {
                 ) : shared ? (
                   <BrokeredAccountRow
                     account={brokeredAccount}
-                    connectedDescription={`Connected${sharedConnection?.displayName ? ` as ${sharedConnection.displayName}` : ""}${sharedConnection?.connectedBy ? ` by ${sharedConnection.connectedBy}` : ""}. Every Bot with these tools acts as this account.`}
-                    disconnectedDescription={`No team account is connected. Bots with these tools are refused.${perActionGrants ? ` ${brokeredPerActionTrip(provider, "settings")}` : ""}`}
-                    heading="Team account"
-                    notice="Sign in as the team account, not your own."
+                    connectedDescription={t(
+                      "admin.plugins.key.team.connected",
+                      {
+                        who: `${sharedConnection?.displayName ? t("admin.plugins.key.team.as", { name: sharedConnection.displayName }) : ""}${sharedConnection?.connectedBy ? t("admin.plugins.key.team.by", { name: sharedConnection.connectedBy }) : ""}`,
+                      },
+                    )}
+                    disconnectedDescription={`${t("admin.plugins.key.team.disconnected")}${perActionGrants ? ` ${brokeredPerActionTrip(provider, "settings")}` : ""}`}
+                    heading={t("admin.plugins.key.team.heading")}
+                    notice={t("admin.plugins.key.team.notice")}
                     provider={provider}
                     title={title}
                   />
@@ -867,11 +902,19 @@ function RouteComponent() {
                     /* Said beside the button rather than after it: disconnecting ends the account
                        at Composio, so what it undoes is not the row here but the grant on this
                        person's mailbox, and connecting again is a fresh consent. */
-                    connectedDescription={`Connected. A Bot with these tools uses your ${title} as you. ${brokeredDisconnectNote(provider)}`}
+                    connectedDescription={t(
+                      "admin.plugins.key.mine.connected",
+                      {
+                        title,
+                        note: brokeredDisconnectNote(provider),
+                      },
+                    )}
                     disconnectedDescription={
                       perActionGrants
                         ? `${brokeredPerActionTrip(provider, "settings")} ${reassurance}`
-                        : `Connect your own account to try this connector. ${reassurance}`
+                        : t("admin.plugins.key.mine.tryConnect", {
+                            note: reassurance,
+                          })
                     }
                     /* The half of the line above that is true whichever way this app connects.
                        An app whose key somebody types gets a different first sentence from the
@@ -895,11 +938,15 @@ function RouteComponent() {
                 ) : (
                   <Item size="sm">
                     <ItemContent>
-                      <ItemTitle>Your account</ItemTitle>
+                      <ItemTitle>
+                        {t("admin.plugins.key.unreadableTitle")}
+                      </ItemTitle>
                       <ItemDescription>
                         {youConnected
-                          ? `Connected. A Bot with these tools uses your ${title} as you. Everybody else connects their own.`
-                          : "Connect your own account to try this connector. Setup is complete without it, and it reaches your documents only."}
+                          ? t("admin.plugins.key.oauthAcct.connected", {
+                              title,
+                            })
+                          : t("admin.plugins.key.oauthAcct.connect")}
                       </ItemDescription>
                     </ItemContent>
                     <ItemActions>
@@ -911,7 +958,7 @@ function RouteComponent() {
                             className="size-1.5 rounded-full bg-emerald-500"
                           />
                           <span className="text-muted-foreground text-xs">
-                            Connected
+                            {t("admin.plugins.key.connected")}
                           </span>
                         </>
                       ) : (
@@ -926,7 +973,7 @@ function RouteComponent() {
                           type="button"
                           variant="outline"
                         >
-                          Connect
+                          {t("admin.plugins.key.connect")}
                           <IconArrowUpRight />
                         </Button>
                       )}
@@ -949,15 +996,16 @@ function RouteComponent() {
                   size="sm"
                 >
                   <ItemContent>
-                    <ItemTitle>Instance host</ItemTitle>
+                    <ItemTitle>
+                      {t("admin.plugins.key.instance.title")}
+                    </ItemTitle>
                     <ItemDescription>
-                      This vendor gives every customer their own hostname. It is
-                      checked against the vendor's pattern before it is saved.
+                      {t("admin.plugins.key.instance.desc")}
                     </ItemDescription>
                   </ItemContent>
                   <ItemActions>
                     <span className="text-muted-foreground text-xs">
-                      {server?.url ?? "Not set"}
+                      {server?.url ?? t("admin.plugins.key.notSet")}
                     </span>
                     <IconChevronRight className="size-4 shrink-0 text-muted-foreground" />
                   </ItemActions>
@@ -977,13 +1025,13 @@ function RouteComponent() {
                   <ItemContent>
                     <ItemTitle>
                       {auth === "builtin"
-                        ? "Documentation"
-                        : "Vendor documentation"}
+                        ? t("admin.plugins.key.docs.builtin")
+                        : t("admin.plugins.key.docs.vendor")}
                     </ItemTitle>
                     <ItemDescription>
                       {auth === "builtin"
-                        ? "What these tools offer, from the people who maintain them."
-                        : "What this server offers, from the people who maintain it."}
+                        ? t("admin.plugins.key.docs.builtinDesc")
+                        : t("admin.plugins.key.docs.vendorDesc")}
                     </ItemDescription>
                   </ItemContent>
                   <ItemActions>
@@ -998,21 +1046,20 @@ function RouteComponent() {
             <div className="mt-3 p-3">
               {server?.dynamicClient ? (
                 <p className="text-muted-foreground text-sm">
-                  The deployment registers its redirect URI itself. There is
-                  nothing to add at the vendor.
+                  {t("admin.plugins.key.redirect.dynamic")}
                 </p>
               ) : (
                 <p className="text-muted-foreground text-sm">
-                  Add this to the client's authorised redirect URIs at the
-                  vendor, exactly as written. One wrong character fails there,
-                  with an error that doesn't mention{" "}
-                  {appConfig.brand.productName}.
+                  {t("admin.plugins.key.redirect.manual", {
+                    product: appConfig.brand.productName,
+                  })}
                 </p>
               )}
               {!plugins.data?.redirectUri ? (
                 <p className="mt-3 text-destructive text-sm" role="alert">
-                  This deployment has no public URL, so nobody can finish
-                  connecting. Set OPENBOT_PUBLIC_URL.
+                  {t("admin.plugins.key.redirect.noUrl", {
+                    env: "OPENBOT_PUBLIC_URL",
+                  })}
                 </p>
               ) : server?.dynamicClient ? null : (
                 /* Selectable and monospaced: it is copied by hand into somebody else's console. */
@@ -1041,7 +1088,7 @@ function RouteComponent() {
                 type="button"
                 variant="ghost"
               >
-                Refresh tools
+                {t("admin.plugins.key.tools.refresh")}
               </Button>
               {/*
                * Outline where refresh is ghost: granting is the thing an administrator came to
@@ -1059,19 +1106,18 @@ function RouteComponent() {
                   type="button"
                   variant="outline"
                 >
-                  Grant tools…
+                  {t("admin.plugins.key.tools.grant")}
                 </Button>
               ) : null}
             </div>
           }
-          description="A Bot only sees the tools it has been given. Each call is checked when it happens, so removing access applies from the next call."
-          title="Tools"
+          description={t("admin.plugins.key.tools.description")}
+          title={t("admin.plugins.key.tools.title")}
         >
           <SkippedToolsNotice names={server.skippedTools ?? []} />
           {server.tools.length === 0 ? (
             <PageEmpty>
-              {server.lastError ??
-                "No tools listed. Refresh tools to check again."}
+              {server.lastError ?? t("admin.plugins.key.tools.empty")}
             </PageEmpty>
           ) : (
             <PageRows>
@@ -1103,7 +1149,7 @@ function RouteComponent() {
                        * one at a time.
                        */}
                       <span className="text-muted-foreground text-xs">
-                        {grantSummary(tool.grantedTo.length, bots.length)}
+                        {grantSummary(tool.grantedTo.length, bots.length, t)}
                       </span>
                       {/*
                        * The effect, not a description. It is what a boundary written about writes
@@ -1116,7 +1162,9 @@ function RouteComponent() {
                             : "text-muted-foreground text-xs"
                         }
                       >
-                        {tool.effect === "write" ? "changes things" : "reads"}
+                        {tool.effect === "write"
+                          ? t("admin.plugins.key.tools.writes")
+                          : t("admin.plugins.key.tools.reads")}
                       </span>
                       <IconChevronRight className="size-4 shrink-0 text-muted-foreground" />
                     </ItemActions>
@@ -1138,7 +1186,9 @@ function RouteComponent() {
            */}
           {server.tools.length > 0 && bots.length > 0 ? (
             <>
-              <p className="mt-8 font-medium text-sm">By Bot</p>
+              <p className="mt-8 font-medium text-sm">
+                {t("admin.plugins.key.byBot")}
+              </p>
               <PageRows>
                 {bots.map((bot, index) => (
                   <React.Fragment key={bot.id}>
@@ -1156,8 +1206,8 @@ function RouteComponent() {
                         <ItemTitle>{bot.name}</ItemTitle>
                         <ItemDescription>
                           {bot.hidden
-                            ? "Hidden from your roster. Turn this app's actions on or off one at a time."
-                            : "Turn this app's actions on or off one at a time."}
+                            ? t("admin.plugins.key.byBot.hidden")
+                            : t("admin.plugins.key.byBot.shown")}
                         </ItemDescription>
                       </ItemContent>
                       <ItemActions>
@@ -1174,6 +1224,7 @@ function RouteComponent() {
                               tool.grantedTo.includes(bot.id),
                             ).length,
                             server.tools.length,
+                            t,
                           )}
                         </span>
                         <IconChevronRight className="size-4 shrink-0 text-muted-foreground" />
@@ -1198,8 +1249,8 @@ function RouteComponent() {
        */}
       {server && server.withdrawn.length > 0 ? (
         <PageSection
-          description="This vendor no longer lists these. No Bot sees them, and none can call them. The access is still saved, and comes back if the vendor lists the tool again. To remove it, use the Bot's own page."
-          title="Given but no longer listed"
+          description={t("admin.plugins.key.gone.description")}
+          title={t("admin.plugins.key.gone.title")}
         >
           <PageRows>
             {server.withdrawn.map((held, index) => (
@@ -1210,14 +1261,17 @@ function RouteComponent() {
                       {held.name}
                     </ItemTitle>
                     <ItemDescription>
-                      Not listed by {title}
-                      {server.toolsRefreshedAt ? ` as of the last refresh` : ""}
-                      .
+                      {t("admin.plugins.key.gone.row", {
+                        title,
+                        asOf: server.toolsRefreshedAt
+                          ? t("admin.plugins.key.gone.asOf")
+                          : "",
+                      })}
                     </ItemDescription>
                   </ItemContent>
                   <ItemActions>
                     <span className="text-muted-foreground text-xs">
-                      {grantSummary(held.grantedTo.length, bots.length)}
+                      {grantSummary(held.grantedTo.length, bots.length, t)}
                     </span>
                   </ItemActions>
                 </Item>
@@ -1236,17 +1290,17 @@ function RouteComponent() {
           <DialogHeader>
             <DialogTitle>
               {dialog === "client"
-                ? `OAuth client for ${title}`
+                ? t("admin.plugins.key.dlg.client", { title })
                 : dialog === "instance"
-                  ? `Instance host for ${title}`
-                  : `Access token for ${title}`}
+                  ? t("admin.plugins.key.dlg.instance", { title })
+                  : t("admin.plugins.key.dlg.token", { title })}
             </DialogTitle>
             <DialogDescription>
               {dialog === "client"
-                ? "From the vendor's console. The secret is saved in this deployment's vault and never shown again."
+                ? t("admin.plugins.key.dlg.clientDesc")
                 : dialog === "instance"
-                  ? "Your own hostname with this vendor. It is checked against the vendor's pattern before it is saved."
-                  : "Saved in this deployment's vault and never shown again."}
+                  ? t("admin.plugins.key.dlg.instanceDesc")
+                  : t("admin.plugins.key.dlg.tokenDesc")}
             </DialogDescription>
           </DialogHeader>
           <DialogBody className="mt-4">
@@ -1254,7 +1308,9 @@ function RouteComponent() {
               {dialog === "client" ? (
                 <>
                   <Field>
-                    <FieldLabel htmlFor="client-id">Client ID</FieldLabel>
+                    <FieldLabel htmlFor="client-id">
+                      {t("admin.plugins.key.dlg.clientId")}
+                    </FieldLabel>
                     <Input
                       id="client-id"
                       onChange={(event) =>
@@ -1268,7 +1324,7 @@ function RouteComponent() {
                   </Field>
                   <Field>
                     <FieldLabel htmlFor="client-secret">
-                      Client secret
+                      {t("admin.plugins.key.dlg.clientSecret")}
                     </FieldLabel>
                     <Input
                       id="client-secret"
@@ -1285,7 +1341,9 @@ function RouteComponent() {
                 </>
               ) : dialog === "instance" ? (
                 <Field>
-                  <FieldLabel htmlFor="instance-host">Instance host</FieldLabel>
+                  <FieldLabel htmlFor="instance-host">
+                    {t("admin.plugins.key.instance.title")}
+                  </FieldLabel>
                   <Input
                     id="instance-host"
                     onChange={(event) => setInstanceHost(event.target.value)}
@@ -1295,7 +1353,9 @@ function RouteComponent() {
                 </Field>
               ) : (
                 <Field>
-                  <FieldLabel htmlFor="access-token">Access token</FieldLabel>
+                  <FieldLabel htmlFor="access-token">
+                    {t("admin.plugins.key.token.title")}
+                  </FieldLabel>
                   <Input
                     id="access-token"
                     onChange={(event) => setToken(event.target.value)}
@@ -1308,7 +1368,7 @@ function RouteComponent() {
           </DialogBody>
           <DialogFooter className="mt-4">
             <Button onClick={() => setDialog(null)} size="sm" variant="ghost">
-              Cancel
+              {t("settings.cancel")}
             </Button>
             <Button
               onClick={() => {
@@ -1323,7 +1383,7 @@ function RouteComponent() {
               }}
               size="sm"
             >
-              Save
+              {t("settings.save")}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -1341,10 +1401,9 @@ function RouteComponent() {
         >
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>Grant tools</DialogTitle>
+              <DialogTitle>{t("admin.plugins.key.gr.title")}</DialogTitle>
               <DialogDescription>
-                Each grant is its own row in Audit. Tools that change things are
-                still checked against the boundaries on every call.
+                {t("admin.plugins.key.gr.description")}
               </DialogDescription>
             </DialogHeader>
             <DialogBody className="mt-4 space-y-5">
@@ -1361,7 +1420,7 @@ function RouteComponent() {
                */}
               <fieldset aria-labelledby="grant-to-heading" className="min-w-0">
                 <p className="mb-2 font-medium text-sm" id="grant-to-heading">
-                  To
+                  {t("admin.plugins.key.gr.to")}
                 </p>
                 <div className="space-y-2">
                   {bots.map((bot) => (
@@ -1396,7 +1455,7 @@ function RouteComponent() {
                         className="font-medium text-sm"
                         id="grant-reads-heading"
                       >
-                        Reads
+                        {t("admin.plugins.key.gr.reads")}
                       </p>
                       <Button
                         onClick={() =>
@@ -1410,7 +1469,7 @@ function RouteComponent() {
                         type="button"
                         variant="ghost"
                       >
-                        Select all
+                        {t("admin.plugins.key.gr.selectAll")}
                       </Button>
                     </div>
                     <div className="space-y-2">
@@ -1446,7 +1505,7 @@ function RouteComponent() {
                         className="font-medium text-amber-600 text-sm dark:text-amber-500"
                         id="grant-writes-heading"
                       >
-                        Changes things
+                        {t("admin.plugins.key.gr.writes")}
                       </p>
                       <Button
                         onClick={() =>
@@ -1460,7 +1519,7 @@ function RouteComponent() {
                         type="button"
                         variant="ghost"
                       >
-                        Select all
+                        {t("admin.plugins.key.gr.selectAll")}
                       </Button>
                     </div>
                     <div className="space-y-2">
@@ -1492,19 +1551,17 @@ function RouteComponent() {
               {/* What is about to happen, in one sentence, before it does. */}
               {selectedRefs.size > 0 && chosenNames.length > 0 ? (
                 <p className="flex-1 text-muted-foreground text-xs">
-                  {`Grant ${selectedRefs.size} ${
-                    selectedRefs.size === 1 ? "tool" : "tools"
-                  } to ${chosenNames.join(", ")}.${
-                    chosenWrites > 0
-                      ? ` ${chosenWrites} ${
-                          chosenWrites === 1 ? "changes" : "change"
-                        } things.`
-                      : ""
-                  }`}
+                  {t("admin.plugins.key.gr.summary", {
+                    count: selectedRefs.size,
+                    names: chosenNames.join(", "),
+                  })}
+                  {chosenWrites > 0
+                    ? ` ${t("admin.plugins.key.gr.changing", { count: chosenWrites })}`
+                    : ""}
                 </p>
               ) : null}
               <Button onClick={() => setDialog(null)} size="sm" variant="ghost">
-                Cancel
+                {t("settings.cancel")}
               </Button>
               <Button
                 disabled={
@@ -1517,8 +1574,11 @@ function RouteComponent() {
               >
                 {/* The one in flight, not the ones finished: a count that starts at zero of twelve reads as nothing happening. */}
                 {granting
-                  ? `Granting ${Math.min(granting.done + 1, granting.total)} of ${granting.total}…`
-                  : "Grant"}
+                  ? t("admin.plugins.key.gr.progress", {
+                      current: Math.min(granting.done + 1, granting.total),
+                      total: granting.total,
+                    })
+                  : t("admin.plugins.key.gr.button")}
               </Button>
             </DialogFooter>
           </DialogContent>

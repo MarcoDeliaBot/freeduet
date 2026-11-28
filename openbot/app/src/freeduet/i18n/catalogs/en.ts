@@ -1438,6 +1438,324 @@ export const EN = {
   "admin.nav.people": "People",
   "admin.nav.idp": "Identity providers",
   "admin.nav.audit": "Audit",
+  "admin.enterprise.mode.allow_all": "Allow all network access",
+  "admin.enterprise.mode.defaults_plus_allowlist":
+    "Defaults plus team allowlist",
+  "admin.enterprise.mode.allowlist_only": "Team allowlist only",
+  "admin.enterprise.noPolicy":
+    "No policy. Bot computers can reach anything the cluster allows",
+  "admin.enterprise.locked": " · locked",
+  "admin.enterprise.loadError":
+    "Couldn't load enterprise controls. Reload the page.",
+  "admin.enterprise.title": "Enterprise controls",
+  "admin.enterprise.description":
+    "What members can use, how Bot computers reach the network, and what is recorded. Every change shows in Audit.",
+  "admin.enterprise.signin.description":
+    "Addresses in {env} can always use social sign-in as an emergency way in. Each of those sign-ins shows in Audit.",
+  "admin.enterprise.signin.title": "Sign-in",
+  "admin.enterprise.sso.title": "Require SSO",
+  "admin.enterprise.sso.on":
+    "People can only sign in through a registered SAML or OpenID Connect provider.",
+  "admin.enterprise.sso.off":
+    "People can also sign in with Google, Microsoft or Okta.",
+  "admin.enterprise.scim.title": "SCIM provisioning",
+  "admin.enterprise.scim.on":
+    "Directory base URL {url} with the {env} bearer token. Deprovisioning ends sessions, blocks the address, retires connector credentials and stops their computers.",
+  "admin.enterprise.scim.unsetUrl": "(set BETTER_AUTH_URL)",
+  "admin.enterprise.scim.off":
+    "Off. Set {env} to accept provisioning from Okta, Entra or another directory.",
+  "admin.enterprise.on": "On",
+  "admin.enterprise.off": "Off",
+  "admin.enterprise.cap.description":
+    "Each switch applies to the whole organization. A role can override it, and a directory group can get a capability the organization has off.",
+  "admin.enterprise.cap.title": "Capabilities",
+  "admin.enterprise.cap.offFor":
+    "Off for everybody, unless a role or group turns it on.",
+  "admin.enterprise.over.title": "Role and group overrides",
+  "admin.enterprise.over.none": "None. Everybody gets the switches above",
+  "admin.enterprise.over.set": "{count} set",
+  "admin.enterprise.net.description":
+    "Where Bot computers can connect. Changes reach running computers within seconds, without a restart. A group policy replaces the organization's unless it is locked.",
+  "admin.enterprise.net.title": "Network",
+  "admin.enterprise.net.org": "Organization",
+  "admin.enterprise.net.group": "Group: {name}",
+  "admin.enterprise.net.addGroup": "Add a group policy",
+  "admin.enterprise.mcp.description":
+    "With the allowlist on, Bots can only call tools on the MCP servers approved here. Calls to any other server are refused.",
+  "admin.enterprise.mcp.title": "MCP servers",
+  "admin.enterprise.mcp.only": "Only approved servers",
+  "admin.enterprise.mcp.approved": "{count} approved",
+  "admin.enterprise.mcp.offDesc":
+    "Off. Bots can use any registered server they have access to.",
+  "admin.enterprise.mcp.onlyAria": "Only approved MCP servers",
+  "admin.enterprise.mcp.approveAria": "Approve {name}",
+  "admin.enterprise.models.description":
+    "The built-in Bot runs on {model}. A remote Bot chooses its own, and the model it reports is recorded.",
+  "admin.enterprise.models.configured": "the deployment's configured model",
+  "admin.enterprise.models.title": "Models",
+  "admin.enterprise.models.allowlist": "Model allowlist",
+  "admin.enterprise.models.allowlistOn":
+    "A built-in Bot on an unlisted model is refused before it runs.",
+  "admin.enterprise.models.allowlistOff": "Off. Any model can be used.",
+  "admin.enterprise.models.allowed": "Allowed models",
+  "admin.enterprise.models.none": "None listed",
+  "admin.enterprise.models.listDesc":
+    "One model per line, as provider/model, for example {example}.",
+  "admin.enterprise.rec.description":
+    "Set {env} to stream audit events and Bot actions to your OpenTelemetry collector or SIEM. They are tagged {tag}.",
+  "admin.enterprise.rec.title": "Recording and export",
+  "admin.enterprise.rec.action": "Action Recording",
+  "admin.enterprise.rec.actionOn":
+    "Shell commands Bots run are recorded with secrets removed, and kept {days} days.",
+  "admin.enterprise.rec.actionOff": "Off. Commands show in Audit only.",
+  "admin.enterprise.rec.otel": "OpenTelemetry export",
+  "admin.enterprise.rec.otelOn": "Exporting over OTLP/HTTP.",
+  "admin.enterprise.rec.otelOff": "Not set up. Set {env} on the server.",
+  "admin.enterprise.comp.description":
+    "Stopping a computer ends its running Bots and keeps its disk. The Bot gets a fresh computer next session. To stop one person's computers, go to People.",
+  "admin.enterprise.comp.title": "Computers",
+  "admin.enterprise.comp.stopInactive": "Stop inactive computers",
+  "admin.enterprise.comp.afterDays": "After {days} days without use",
+  "admin.enterprise.usage.error": "Couldn't load model usage. Reload the page.",
+  "admin.enterprise.usage.empty": "No Bot runs in the last 30 days.",
+  "admin.enterprise.usage.runs": "{runs} runs by {people} {who} in 30 days",
+  "admin.enterprise.usage.person": "person",
+  "admin.enterprise.usage.people": "people",
+  "admin.enterprise.usage.refused": " · {count} off the allowlist",
+  "admin.enterprise.recorded.error":
+    "Couldn't load recorded actions. Reload the page.",
+  "admin.enterprise.recorded.empty": "No commands recorded yet.",
+  "admin.enterprise.recorded.local": "Member's machine",
+  "admin.enterprise.recorded.bot": "Bot {id}",
+  "admin.enterprise.sweep.stopping": "Stopping…",
+  "admin.enterprise.sweep.now": "Stop inactive computers now",
+  "admin.enterprise.sweep.stopped": "Stopped {count}.",
+  "admin.enterprise.ov.admins": "Admins",
+  "admin.enterprise.ov.members": "Members",
+  "admin.enterprise.ov.group": "Group: {name}",
+  "admin.enterprise.ov.scope": "Scope",
+  "admin.enterprise.ov.groupNote":
+    "A group can only add. Grant gives its members the capability even when the organization has it off.",
+  "admin.enterprise.ov.roleNote":
+    "A role's setting replaces the organization switch for everybody with that role.",
+  "admin.enterprise.ov.forScope": "{title} for {scope}",
+  "admin.enterprise.ov.inherit": "Inherit",
+  "admin.enterprise.ov.grant": "Grant",
+  "admin.enterprise.netd.org": "Organization network policy",
+  "admin.enterprise.netd.group": "Group network policy",
+  "admin.enterprise.netd.groupLabel": "Group",
+  "admin.enterprise.netd.mode": "Mode",
+  "admin.enterprise.netd.allowlist": "Allowlist",
+  "admin.enterprise.netd.help":
+    "One per line. A domain covers its subdomains. *.name covers only subdomains. An IP range can list ports. Defaults are {first} and {more} more package and source hosts.",
+  "admin.enterprise.netd.lock": "Lock so groups can't replace this policy",
+  "admin.enterprise.netd.remove": "Remove policy",
+  "admin.enterprise.days.label": "Days without use",
+  "admin.enterprise.days.help": "0 turns it off. Checked hourly.",
+  "admin.plugins.title": "Plugins",
+  "admin.plugins.description":
+    "What this deployment can reach, and which Bots can use it. A plugin you add is for everybody. Choose which Bots get its tools on its page.",
+  "admin.plugins.loadError": "Couldn't load plugins. Reload the page.",
+  "admin.plugins.connected.description":
+    "Added for everybody. Open one to set it up and choose which Bots get its tools.",
+  "admin.plugins.connected.title": "Connected",
+  "admin.plugins.connected.empty":
+    "Nothing connected yet. Pick one from the list below.",
+  "admin.plugins.explore.description":
+    "Reviewed, first-party servers. Open one to add it.",
+  "admin.plugins.explore.title": "Explore plugins",
+  "admin.plugins.explore.empty": "Every plugin in the catalogue is connected.",
+  "admin.plugins.notAdded": "Not added",
+  "admin.plugins.more.title": "More apps",
+  "admin.plugins.sum.notConnected": "Not connected",
+  "admin.plugins.sum.noTools": "No tools yet",
+  "admin.plugins.sum.tools": { one: "{count} tool", other: "{count} tools" },
+  "admin.plugins.sum.toolsNoBots": "{tools} · no Bots",
+  "admin.plugins.sum.bots": { one: "{count} Bot", other: "{count} Bots" },
+  "admin.plugins.requests": {
+    one: "{count} request",
+    other: "{count} requests",
+  },
+  "admin.plugins.key.grant.none": "No Bots",
+  "admin.plugins.key.grant.one": "1 Bot",
+  "admin.plugins.key.grant.all": "All Bots",
+  "admin.plugins.key.grant.some": "{held} of {total} Bots",
+  "admin.plugins.key.held.none": "No tools",
+  "admin.plugins.key.held.one": "1 tool",
+  "admin.plugins.key.held.all": "Every tool",
+  "admin.plugins.key.held.some": "{held} of {total} tools",
+  "admin.plugins.key.notApproved": "Not approved",
+  "admin.plugins.key.unreadableTitle": "Your account",
+  "admin.plugins.key.unreadable":
+    "Couldn't load whether you've connected an account here. Reload the page, or check this deployment's logs if it keeps happening.",
+  "admin.plugins.key.noConsent":
+    "{product} got no consent link back, so nothing was connected. Try again, or check this connector's setup if it keeps happening.",
+  "admin.plugins.key.reassurance":
+    "Setup is complete without it, and it reaches your documents only.",
+  "admin.plugins.key.notPlugin.description":
+    "There is no plugin with that name, here or in the catalogue.",
+  "admin.plugins.key.notPlugin.title": "Not a plugin",
+  "admin.plugins.key.notPlugin.empty": "Nothing to configure.",
+  "admin.plugins.key.enable.title": "Enable for this deployment",
+  "admin.plugins.key.enable.on":
+    "Bots can be given its tools. Turning this off removes it and every Bot's access to its tools.",
+  "admin.plugins.key.enable.off":
+    "No Bot can reach this vendor. Turn it on to set it up and give Bots its tools.",
+  "admin.plugins.key.enable.aria": "Enable {title} for this deployment",
+  "admin.plugins.key.whose.title": "Whose account",
+  "admin.plugins.key.whose.shared": "One shared account for everyone.",
+  "admin.plugins.key.whose.personal": "Each person connects their own.",
+  "admin.plugins.key.whose.makePersonal": "Make personal",
+  "admin.plugins.key.whose.makeShared": "Make shared",
+  "admin.plugins.key.conn.oauth":
+    "This vendor answers as whoever is asking. The deployment registers an OAuth client, and each person connects their own account. A Bot only sees what that person can see.",
+  "admin.plugins.key.conn.secret":
+    "This vendor answers as whoever is asking. Each person pastes their own app password on their Connections page. There is nothing to register here, and the deployment keeps no password of its own.",
+  "admin.plugins.key.conn.builtin":
+    "Built into this deployment. There is no vendor to reach and no credential to keep. A call runs as whoever asked.",
+  "admin.plugins.key.conn.bearer":
+    "What this deployment sends to the vendor. One credential for everybody.",
+  "admin.plugins.key.conn.title": "Connection",
+  "admin.plugins.key.builtin.desc":
+    "Nothing to set up. These tools run inside this deployment, on its own data.",
+  "admin.plugins.key.builtin.badge": "Built in",
+  "admin.plugins.key.secret.title": "App password",
+  "admin.plugins.key.secret.desc":
+    "Each person makes their own at Google and pastes it on their Connections page. It reaches their whole mailbox, so what Bots may do is decided by the tools you grant below.",
+  "admin.plugins.key.secret.badge": "Per person",
+  "admin.plugins.key.reach.title": "How this is reached",
+  "admin.plugins.key.token.title": "Access token",
+  "admin.plugins.key.token.desc": "Sent with every call to this vendor.",
+  "admin.plugins.key.saved": "Saved",
+  "admin.plugins.key.notSet": "Not set",
+  "admin.plugins.key.client.title": "OAuth client",
+  "admin.plugins.key.client.selfDesc":
+    "This deployment registers itself with the vendor on first connect. There is nothing to paste.",
+  "admin.plugins.key.client.selfBadge": "Self-registered",
+  "admin.plugins.key.client.desc":
+    "Identifies this deployment to the vendor. On its own, it can't reach anyone's documents.",
+  "admin.plugins.key.client.registered": "Registered",
+  "admin.plugins.key.client.notRegistered": "Not registered",
+  "admin.plugins.key.team.connected":
+    "Connected{who}. Every Bot with these tools acts as this account.",
+  "admin.plugins.key.team.as": " as {name}",
+  "admin.plugins.key.team.by": " by {name}",
+  "admin.plugins.key.team.disconnected":
+    "No team account is connected. Bots with these tools are refused.",
+  "admin.plugins.key.team.heading": "Team account",
+  "admin.plugins.key.team.notice": "Sign in as the team account, not your own.",
+  "admin.plugins.key.mine.connected":
+    "Connected. A Bot with these tools uses your {title} as you. {note}",
+  "admin.plugins.key.mine.tryConnect":
+    "Connect your own account to try this connector. {note}",
+  "admin.plugins.key.oauthAcct.connected":
+    "Connected. A Bot with these tools uses your {title} as you. Everybody else connects their own.",
+  "admin.plugins.key.oauthAcct.connect":
+    "Connect your own account to try this connector. Setup is complete without it, and it reaches your documents only.",
+  "admin.plugins.key.connected": "Connected",
+  "admin.plugins.key.connect": "Connect",
+  "admin.plugins.key.instance.title": "Instance host",
+  "admin.plugins.key.instance.desc":
+    "This vendor gives every customer their own hostname. It is checked against the vendor's pattern before it is saved.",
+  "admin.plugins.key.docs.builtin": "Documentation",
+  "admin.plugins.key.docs.vendor": "Vendor documentation",
+  "admin.plugins.key.docs.builtinDesc":
+    "What these tools offer, from the people who maintain them.",
+  "admin.plugins.key.docs.vendorDesc":
+    "What this server offers, from the people who maintain it.",
+  "admin.plugins.key.redirect.dynamic":
+    "The deployment registers its redirect URI itself. There is nothing to add at the vendor.",
+  "admin.plugins.key.redirect.manual":
+    "Add this to the client's authorised redirect URIs at the vendor, exactly as written. One wrong character fails there, with an error that doesn't mention {product}.",
+  "admin.plugins.key.redirect.noUrl":
+    "This deployment has no public URL, so nobody can finish connecting. Set {env}.",
+  "admin.plugins.key.tools.refresh": "Refresh tools",
+  "admin.plugins.key.tools.grant": "Grant tools…",
+  "admin.plugins.key.tools.description":
+    "A Bot only sees the tools it has been given. Each call is checked when it happens, so removing access applies from the next call.",
+  "admin.plugins.key.tools.title": "Tools",
+  "admin.plugins.key.tools.empty":
+    "No tools listed. Refresh tools to check again.",
+  "admin.plugins.key.tools.writes": "changes things",
+  "admin.plugins.key.tools.reads": "reads",
+  "admin.plugins.key.byBot": "By Bot",
+  "admin.plugins.key.byBot.hidden":
+    "Hidden from your roster. Turn this app's actions on or off one at a time.",
+  "admin.plugins.key.byBot.shown":
+    "Turn this app's actions on or off one at a time.",
+  "admin.plugins.key.gone.description":
+    "This vendor no longer lists these. No Bot sees them, and none can call them. The access is still saved, and comes back if the vendor lists the tool again. To remove it, use the Bot's own page.",
+  "admin.plugins.key.gone.title": "Given but no longer listed",
+  "admin.plugins.key.gone.row": "Not listed by {title}{asOf}.",
+  "admin.plugins.key.gone.asOf": " as of the last refresh",
+  "admin.plugins.key.dlg.client": "OAuth client for {title}",
+  "admin.plugins.key.dlg.instance": "Instance host for {title}",
+  "admin.plugins.key.dlg.token": "Access token for {title}",
+  "admin.plugins.key.dlg.clientDesc":
+    "From the vendor's console. The secret is saved in this deployment's vault and never shown again.",
+  "admin.plugins.key.dlg.instanceDesc":
+    "Your own hostname with this vendor. It is checked against the vendor's pattern before it is saved.",
+  "admin.plugins.key.dlg.tokenDesc":
+    "Saved in this deployment's vault and never shown again.",
+  "admin.plugins.key.dlg.clientId": "Client ID",
+  "admin.plugins.key.dlg.clientSecret": "Client secret",
+  "admin.plugins.key.gr.title": "Grant tools",
+  "admin.plugins.key.gr.description":
+    "Each grant is its own row in Audit. Tools that change things are still checked against the boundaries on every call.",
+  "admin.plugins.key.gr.to": "To",
+  "admin.plugins.key.gr.reads": "Reads",
+  "admin.plugins.key.gr.writes": "Changes things",
+  "admin.plugins.key.gr.selectAll": "Select all",
+  "admin.plugins.key.gr.button": "Grant",
+  "admin.plugins.key.gr.progress": "Granting {current} of {total}…",
+  "admin.plugins.key.gr.summary": {
+    one: "Grant {count} tool to {names}.",
+    other: "Grant {count} tools to {names}.",
+  },
+  "admin.plugins.key.gr.changing": {
+    one: "{count} changes things.",
+    other: "{count} change things.",
+  },
+  "admin.home.reach.desc":
+    "What a Bot can touch outside {product}, and the limits on it.",
+  "admin.home.credentials.desc": "Keys and tokens for this deployment.",
+  "admin.home.boundaries.desc": "Things no Bot may ever do.",
+  "admin.home.approvals.desc": "What members' Bots must ask before they act.",
+  "admin.home.computers.desc": "The machines Bots run tools on.",
+  "admin.home.do.desc": "Apps, skills and interface pieces every Bot can use.",
+  "admin.home.plugins.desc":
+    "The services {product} can reach, and which Bots can use them.",
+  "admin.home.skills.desc": "Named instructions anybody can run with /.",
+  "admin.home.learning.desc":
+    "Learn from finished conversations and review the skills it proposes.",
+  "admin.home.components.desc":
+    "Custom pieces a Bot can draw in a conversation.",
+  "admin.home.playground.desc":
+    "Write a component and watch it render as you type.",
+  "admin.home.engines.desc":
+    "The AI engines members run on, and whether each one can answer now.",
+  "admin.home.people.desc":
+    "Everybody who has signed in, who the admins are, and whose access was removed.",
+  "admin.home.enterprise.desc":
+    "Roles and groups, required SSO, SCIM, network policy, MCP and model allowlists, Action Recording.",
+  "admin.home.idp.desc":
+    "Your company's SAML or OpenID Connect provider, matched by email domain.",
+  "admin.home.audit.desc": "Every action taken in {product}, and who took it.",
+  "admin.home.description":
+    "Settings for everybody in this deployment. A change here affects every person and every Bot.",
+  "admin.plugins.directoryError":
+    "Couldn't load the plugin settings. Reload the page.",
+  "admin.components.description":
+    "What each Bot can answer with. Every published component is on for every Bot. Turn one off and that Bot never sees it. Changes and refusals show in Audit.",
+  "admin.components.loadError": "Couldn't load components. Reload the page.",
+  "admin.components.emptyTitle": "No components yet",
+  "admin.components.emptyDesc": "Components your Bots can use will show here.",
+  "admin.audit.silence.quiet": "Silent for {seconds}s",
+  "admin.audit.silence.nothing": "{quiet}, having said nothing at all",
+  "admin.audit.silence.after": {
+    one: "{quiet}, after {count} chunk",
+    other: "{quiet}, after {count} chunks",
+  },
 } satisfies Entries;
 
 export type MessageId = keyof typeof EN;

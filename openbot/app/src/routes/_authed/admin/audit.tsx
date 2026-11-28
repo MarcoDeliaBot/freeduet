@@ -324,7 +324,7 @@ function Row({
   // asked and the answer never arrived. Colour is how this table is read, and a row left in the
   // muted foreground reads as "Allowed", which a turn nobody ever got an answer to was not.
   const failed = outcome === "did-not-happen";
-  const silence = stalled ? silenceOf(payload) : null;
+  const silence = stalled ? silenceOf(payload, t) : null;
 
   return (
     <tr className="border-border border-t align-top">
