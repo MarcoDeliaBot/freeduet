@@ -2820,7 +2820,7 @@ export const it: Catalog<typeof EN> = {
   "computer.activity.refused": "Un limite l'ha rifiutato.",
   "computer.activity.empty":
     "Ancora niente. Qui compaiono i comandi che il Bot esegue e i file che legge.",
-  "computer.control.handBack": "Restituisci",
+  "computer.control.handBack": "Restituisci al Bot",
   "computer.control.take": "Prendi il controllo",
   "computer.control.finishing": "Sto finendo l'azione in corso…",
   "computer.control.close": "Chiudi il Computer",
