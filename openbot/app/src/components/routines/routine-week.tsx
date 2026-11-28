@@ -372,7 +372,7 @@ function Block({
         <span className="text-muted-foreground">
           {t("routines.week.summary", {
             count: block.count ?? 0,
-            minutes: block.everyMinutes,
+            minutes: block.everyMinutes ?? 0,
           })}
         </span>
       ) : null}

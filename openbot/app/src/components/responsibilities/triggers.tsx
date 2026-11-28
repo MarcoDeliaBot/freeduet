@@ -63,15 +63,26 @@ import {
 } from "@/lib/responsibilities";
 import { queryClient } from "@/query-client";
 
-export const KIND_LABEL: Record<TriggerKind, MessageId> = {
-  webhook: "triggers.kind.webhook",
-  github: "triggers.kind.github",
-  linear: "triggers.kind.linear",
-  sentry: "triggers.kind.sentry",
-  pagerduty: "triggers.kind.pagerduty",
-  email: "triggers.kind.email",
-  slack: "triggers.kind.slack",
+/** Product names stay as they are; only "Email" is a word of the app's own. */
+const BRAND_LABEL: Record<Exclude<TriggerKind, "email">, string> = {
+  webhook: "Webhook",
+  github: "GitHub",
+  linear: "Linear",
+  sentry: "Sentry",
+  pagerduty: "PagerDuty",
+  slack: "Slack",
 };
+export const kindLabel = (kind: TriggerKind, t: T = englishT): string =>
+  kind === "email" ? t("triggers.kind.email") : BRAND_LABEL[kind];
+const KIND_KEYS: TriggerKind[] = [
+  "webhook",
+  "github",
+  "linear",
+  "sentry",
+  "pagerduty",
+  "email",
+  "slack",
+];
 const KIND_ICON: Record<TriggerKind, typeof IconWebhook> = {
   webhook: IconWebhook,
   github: IconBrandGithub,
@@ -304,7 +315,7 @@ function TriggerRow({
         <Icon />
       </ItemMedia>
       <ItemContent>
-        <ItemTitle>{t(KIND_LABEL[trigger.kind])}</ItemTitle>
+        <ItemTitle>{kindLabel(trigger.kind, t)}</ItemTitle>
         <ItemDescription className="line-clamp-none">
           {describeFilter(trigger.config, t)}
           {trigger.enabled ? "" : ` · ${t("bots.paused")}`}
@@ -340,7 +351,7 @@ function TriggerRow({
             </Button>
             <Switch
               aria-label={t("triggers.runOnAria", {
-                kind: t(KIND_LABEL[trigger.kind]),
+                kind: kindLabel(trigger.kind, t),
               })}
               checked={trigger.enabled}
               disabled={toggle.isPending}
@@ -576,14 +587,11 @@ function NewTriggerDialog({
             <FieldGroup>
               <Field>
                 <FieldLabel htmlFor={`${id}-kind`}>
-                  {t("triggers.trigger")}
+                  {t("triggers.title")}
                 </FieldLabel>
                 <Select
                   items={Object.fromEntries(
-                    Object.entries(KIND_LABEL).map(([key, labelId]) => [
-                      key,
-                      t(labelId),
-                    ]),
+                    KIND_KEYS.map((key) => [key, kindLabel(key, t)]),
                   )}
                   onValueChange={(value) => {
                     if (value) setKind(value as TriggerKind);
@@ -594,9 +602,9 @@ function NewTriggerDialog({
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    {(Object.keys(KIND_LABEL) as TriggerKind[]).map((value) => (
+                    {KIND_KEYS.map((value) => (
                       <SelectItem key={value} value={value}>
-                        {t(KIND_LABEL[value])}
+                        {kindLabel(value, t)}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -783,7 +791,7 @@ function NewTriggerDialog({
           >
             {create.isPending
               ? t("triggers.adding")
-              : t("triggers.addKind", { kind: t(KIND_LABEL[kind]) })}
+              : t("triggers.addKind", { kind: kindLabel(kind, t) })}
           </Button>
         </DialogFooter>
       </DialogContent>

@@ -50,7 +50,7 @@ import {
   updateResponsibilityMutationOptions,
 } from "@/lib/responsibilities";
 import { queryClient } from "@/query-client";
-import { KIND_LABEL, Triggers } from "./triggers";
+import { kindLabel, Triggers } from "./triggers";
 
 type Status = ResponsibilityRecord["status"];
 type Source = ResponsibilityRecord["subscriptions"][number]["source"];
@@ -117,7 +117,7 @@ export function summaryFor(
       .filter((trigger) => trigger.enabled)
       .map((trigger) =>
         t("responsibilities.summary.trigger", {
-          kind: t(KIND_LABEL[trigger.kind]),
+          kind: kindLabel(trigger.kind, t),
         }),
       ),
   ];

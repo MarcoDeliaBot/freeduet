@@ -2,7 +2,7 @@ import { useInfiniteQuery, useMutation, useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import { useId, useState } from "react";
 import type { MessageId } from "@/freeduet/i18n/catalogs";
-import { useT } from "@/freeduet/i18n/provider";
+import { type T, useT } from "@/freeduet/i18n/provider";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -42,11 +42,16 @@ type Source = "none" | ResponsibilityRecord["subscriptions"][number]["source"];
 /** The event sources a new responsibility can subscribe to, in the order they are offered. */
 const SOURCES = {
   none: "responsibilities.new.source.none",
-  github: "responsibilities.new.source.github",
-  slack: "responsibilities.new.source.slack",
+  github: null,
+  slack: null,
   connector: "responsibilities.source.connector",
   schedule: "responsibilities.source.schedule",
-} as const satisfies Partial<Record<Source, MessageId>>;
+} as const satisfies Partial<Record<Source, MessageId | null>>;
+/** A product name stays as it is (`null` above); every other source has a catalogue key. */
+const sourceName = (value: keyof typeof SOURCES, t: T): string => {
+  const id = SOURCES[value];
+  return id === null ? (value === "github" ? "GitHub" : "Slack") : t(id);
+};
 
 /**
  * A new responsibility: where it runs, what it is for, and what — if anything — starts it on its
@@ -241,7 +246,9 @@ export function NewResponsibilityDialog({
                   </FieldLabel>
                   <Select
                     items={Object.fromEntries(
-                      Object.entries(SOURCES).map(([key, id]) => [key, t(id)]),
+                      (Object.keys(SOURCES) as (keyof typeof SOURCES)[]).map(
+                        (key) => [key, sourceName(key, t)],
+                      ),
                     )}
                     onValueChange={(value) => {
                       if (value && value in SOURCES) setSource(value as Source);
@@ -255,7 +262,7 @@ export function NewResponsibilityDialog({
                       {(Object.keys(SOURCES) as (keyof typeof SOURCES)[]).map(
                         (value) => (
                           <SelectItem key={value} value={value}>
-                            {t(SOURCES[value])}
+                            {sourceName(value, t)}
                           </SelectItem>
                         ),
                       )}

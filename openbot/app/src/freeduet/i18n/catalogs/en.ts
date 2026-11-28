@@ -1074,20 +1074,12 @@ export const EN = {
     "The report contains the current quarter's graph and a source link.",
   "responsibilities.new.eventSource": "Event source",
   "responsibilities.new.source.none": "Run when asked",
-  "responsibilities.new.source.github": "GitHub",
-  "responsibilities.new.source.slack": "Slack",
   "responsibilities.new.githubHelp":
     "Events come from the repositories you connected in {link}.",
   "responsibilities.new.eventType": "Event type",
   "responsibilities.new.creating": "Creating…",
   "responsibilities.new.create": "Create responsibility",
-  "triggers.kind.webhook": "Webhook",
-  "triggers.kind.github": "GitHub",
-  "triggers.kind.linear": "Linear",
-  "triggers.kind.sentry": "Sentry",
-  "triggers.kind.pagerduty": "PagerDuty",
   "triggers.kind.email": "Email",
-  "triggers.kind.slack": "Slack",
   "triggers.help.webhook":
     "POST JSON to this URL with the Authorization header, or with Standard Webhooks signature headers. A 200 means it was received, not that the run finished.",
   "triggers.help.github":
@@ -1147,7 +1139,6 @@ export const EN = {
   "triggers.saveSecret": "Save secret",
   "triggers.addDescription":
     "Something outside {product} that starts this responsibility.",
-  "triggers.trigger": "Trigger",
   "triggers.slackTeam": "Slack team ID",
   "triggers.fireOn": "Fire on",
   "triggers.phrases": "Phrases (comma separated)",
