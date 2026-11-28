@@ -15,7 +15,8 @@ segment, on the same engine, with the same tools:
 - the turn made no `message_bot` call (this segment, or since the person's message);
 - the final answer claims that a named colleague has the work now (`claimed_colleagues`): an in-progress outcome
   line, or words such as "receives the go", "I passed it to", "is working", "riceve il via", "sta lavorando",
-  "gliel'ho passato", in English, Italian, Spanish, French, German and Portuguese, in a sentence that is not a
+  "gliel'ho passato", in English, Italian, Spanish, French, German, Portuguese, Polish, Turkish, Russian, Chinese,
+  Japanese and Korean, in a sentence that is not a
   question, not a negation and not a condition or a promise ("when you say go, Kai starts"). The colleague names
   are read from the members' own prompts ("You are <Name>,"); the member itself is never one;
 - no hand-off to that colleague is open in this conversation (`open_handoffs`).
@@ -114,29 +115,136 @@ _CLAIMS = (
     r"\b(?:passei|repassei|entreguei|encaminhei) (?:o|a|isso|tudo|para|ao|a)\b",
     r"\b(?:comecou|iniciou)\b",
 )
-_CLAIM = re.compile("|".join(f"(?:{phrase})" for phrase in _CLAIMS))
+
+# Six more languages (amendment of D184): Polish, Turkish, Russian, Chinese, Japanese, Korean. What the fold does to
+# them (tests/test_handoff_claim_guard.py pins it): Latin-script Polish and Turkish lose their diacritics as the six
+# above do (ł -> l, ı -> i, ş -> s); Cyrillic loses the breve and the diaeresis (й -> и, ё -> е); Chinese, Japanese and
+# Korean are kept as they are (Hangul is recomposed, kana with a voiced mark are recomposed) except that full-width
+# punctuation becomes ASCII (：-> :, ？ -> ?, ！ -> !, ；-> ;) and 。 stays. So these phrases are written naturally and
+# folded once here, with the same function, so a pattern can never disagree with the text it meets. Chinese, Japanese
+# and Korean have no spaces between words, so they carry no \b. The wording reuses the app's own catalogues
+# ("wide.stateWorking", "chat.inProgress", "admin.audit.by.handedOn"). The colleague is named in Latin letters.
+_CLAIMS_MORE = (
+    # Polish
+    r"\b(?:dostaje|dostal|dostala|otrzymuje|otrzymal|otrzymala) (?:ode mnie |moje |twoje |juz )?[\"'«»“”]?(?:go|zielone swiatlo|sygnal|start|zgode)\b",
+    r"\b(?:pracuje|pracuja) (?:juz |teraz |obecnie )?(?:nad|przy)\b",
+    r"\bzajmuje sie (?:tym|juz|teraz)\b",
+    r"\bjest w trakcie\b",
+    r"\b(?:przekazalem|przekazalam|zleciłem|zleciłam|powierzylem|powierzylam|delegowalem|delegowalam|przeslalem|przeslalam)\b",
+    r"\b(?:juz )?(?:zaczal|zaczela|rozpoczal|rozpoczela|przystapil|przystapila)\b",
+    # Turkish
+    r"(?:go|yesil isik|sinyal|baslama emri)\w*(?:'\w+)? (?:aldi|aldilar|verildi|geldi)\b",
+    r"\b(?:calisiyor|calisiyorlar|ugrasiyor|ilgileniyor|calismaya basladi)\b",
+    r"\b(?:ilettim|devrettim|aktardim|yonlendirdim|havale ettim|emanet ettim|iletildi|devredildi)\b",
+    r"\b(?:basladi|baslamis|baslandi|ise koyuldu)\b",
+    r"\bile (?:ilerliyorum|devam ediyorum)\b",
+    # Russian
+    r"(?<![а-я])(?:получает|получил|получила|получили) (?:мое |твое |ваше |от меня )?[\"'«»“”]?(?:go|го|команду|сигнал|зеленый свет|добро|старт)",
+    r"(?<![а-я])(?:работает|работают) (?:уже |сейчас |теперь )?(?:над|уже|сейчас|теперь)(?![а-я])",
+    r"(?<![а-я])(?:уже |сейчас )работает(?![а-я])",
+    r"(?<![а-я])занимается (?:этим|задачей|проектом|уже|сейчас)",
+    r"(?<![а-я])(?:взял|взяла)(?: [а-я]+)? в работу",
+    r"(?<![а-я])я (?:уже )?(?:передал|передала|поручил|поручила|делегировал|делегировала|переслал|переслала|отдал|отдала)(?![а-я])",
+    r"(?<![а-я])(?:передал|передала|поручил|поручила|делегировал|делегировала) (?:ему|ей|им|это|эту|задачу|задание|работу|все|его|ее)(?![а-я])",
+    r"(?<![а-я])(?:приступил|приступила|стартовал|стартовала|взялся|взялась)(?![а-я])",
+    r"(?<![а-я])нач(?:ал|ала|али) (?:уже )?(?:работ|делать|писать|строить|собирать)",
+    r"(?<![а-я])продолжаю с(?![а-я])",
+    # Chinese
+    r"(?:收到|接到|得到|拿到|获得|獲得)(?:了)?(?:你的|您的|我的)?[\"'“”「」«»]?(?:go|开始|開始|指令|信号|信號|绿灯|綠燈|许可|許可|确认|確認)",
+    r"(?:正在|已经在|已經在|现在在|現在在|目前在)(?:工作|处理|處理|制作|製作|构建|構建|开发|開發|编写|編寫|搭建|设计|設計|准备|準備|着手|著手)",
+    r"(?:已经|已經|已|刚刚|剛剛|我把|我已).{0,24}?(?:交给|交給|转给|轉給|转交|轉交|委托|委託|分配给|分配給|转发|轉發)",
+    r"(?:开始了|開始了|已开始|已開始|已经开始|已經開始|着手了|著手了|开始工作|開始工作|开始处理|開始處理|开始制作|開始製作|开始构建|開始構建)",
+    # Japanese
+    r"(?:ゴーサイン|ゴー|go|合図|青信号|開始指示|承認|許可)(?:の?指示)?を(?:受け取|受領|受け|もらい|もらっ)",
+    r"(?:作業|対応|制作|製作|開発|執筆|構築|準備|処理|編集|実装|設計)(?:中|して(?:い(?:ま|る)|お(?:り|る))|を進めて)",
+    r"(?:取り組んで|取りかかって|着手して)(?:い|お)",
+    r"(?:依頼し|引き継ぎ|引継ぎ|任せ|渡し|回し|託し|委任し|割り当て|転送し)(?:ました|た(?!い)|てあります|ておきました)",
+    r"(?:開始し(?:ま[しす]?た|て(?:い|お)ま)|始めま[しす]た|始めて(?:い|お)ま|スタートしま[しす]た|着手しまし?た)",
+    # Korean
+    r"(?:go|시작 ?신호|시작 ?지시|출발 ?신호|신호|지시|승인|허가|그린 ?라이트|사인|오케이)[\"'“”」]?\s?(?:를|을)?\s?(?:받았|받고|받아)",
+    r"[\"'“”「]고[\"'“”」]\s?(?:를|을)?\s?받",
+    r"(?:작업|처리|제작|개발|구축|작성|준비|편집|구현|설계|진행)\s?(?:중(?:이|입|에|인)|하고 ?있)",
+    r"일하고 ?있",
+    r"(?:에게|한테|께)\s?(?:[^\s.!?]+\s){0,4}?(?:전달|위임|인계|배정|이관|넘겼|넘겨|맡겼|맡겨)",
+    r"(?:시작했|시작됐|시작되었|시작하였|착수했|착수하였|돌입했)",
+)
+_CLAIM = re.compile("|".join(f"(?:{phrase})" for phrase in (*_CLAIMS, *(cannot_guard._fold(p) for p in _CLAIMS_MORE))))
 
 # An in-progress outcome line, the report format's own ("Outcome: in progress", "Esito: in corso").
 _OUTCOME_IN_PROGRESS = re.compile(
     r"(?:^|\n)\W*(?:outcome|esito|resultado|resultat|ergebnis|estado|statut|status)\W*[:\-]\W*"
     r"(?:in progress|in corso|en curso|en cours|in arbeit|in bearbeitung|em andamento|em curso)"
 )
+# The same line in the six more languages (see _CLAIMS_MORE); the colon is ASCII after the fold. [^\w], not \W: the
+# fold lower-cases the pattern, and a lower-case \w would mean the opposite.
+_OUTCOME_IN_PROGRESS_MORE = re.compile(
+    cannot_guard._fold(
+        r"(?:^|\n)[^\w]*(?:wynik|rezultat|efekt|stan|status|sonuc|durum|исход|результат|итог|статус|состояние|"
+        r"结果|結果|状态|狀態|进度|進度|进展|進展|状況|ステータス|状態|進捗|결과|상태|진행 ?상황|현황)"
+        r"[^\w]*[:\-][^\w]*"
+        r"(?:w toku|w trakcie|w realizacji|devam ediyor|devam etmekte|surecte|islemde|в работе|в процессе|выполняется|"
+        r"进行中|進行中|处理中|處理中|执行中|執行中|作業中|対応中|処理中|実行中|진행 ?중|작업 ?중|처리 ?중)"
+    )
+)
 
 # A sentence that denies, asks, conditions or promises is not a claim that the work is with the colleague.
 _NEGATION = re.compile(
     r"(?<![\w'])(?:not|never|no|non|mai|nessun\w*|nada|nunca|jamais|pas|ne|nicht|kein\w*|nie|nao|ainda nao|"
-    r"haven't|hasn't|didn't|isn't|aren't|wasn't|don't|doesn't|cannot|can't|nothing)(?![\w])|n't\b"
+    r"haven't|hasn't|didn't|isn't|aren't|wasn't|don't|doesn't|cannot|can't|nothing|"
+    r"nigdy|nic|zadn\w*|brak|degil|yok|hic|asla|henuz|hicbir|нет|никогда|ничего|никто|"
+    + cannot_guard._fold(r"не|ни|ещё не")
+    + r")(?![\w])|n't\b"
 )
 _NOT_NOW = re.compile(
     r"(?<![\w'])(?:if|once|when|whenever|unless|as soon as|after you|will|would|could|can|shall|"
     r"want me|do you want|should i|quando|appena|vuoi che|se vuoi|se dici|se confermi|posso|potrei|faro|passero|"
     r"cuando|en cuanto|quieres que|puedo|pasare|quand|des que|lorsque|veux-tu|voulez-vous|je pourrais|"
-    r"wenn|sobald|soll ich|moechtest du|quando voce|assim que|quer que|posso|passarei|vou)(?![\w])|'ll\b"
+    r"wenn|sobald|soll ich|moechtest du|quando voce|assim que|quer que|posso|passarei|vou|"
+    r"jesli|gdy|kiedy|gdyby|bede|bedzie|beda|moge|mozesz|chcesz|czy mam|czy|zrobie|przekaze|"
+    r"eger|istersen|ister misin|istiyor musun|onaylarsan|dersen|olursa|ne zaman|"
+    + cannot_guard._fold(r"если|когда|как только|после того как|буду|будет|будут|смогу|могу|хочешь|хотите|нужно ли|стоит ли|давай|собираюсь|"
+                         r"передам|поручу")
+    + r")(?![\w])|'ll\b|\b\w{2,}(?:acak|ecek|acagim|ecegim)\b"
 )
+
+# Chinese, Japanese and Korean have no spaces between words, so these have no word boundary: each is a short, specific
+# fragment. A negation, a question or a condition anywhere in the sentence makes it not a claim, as above.
+_NEGATION_CJK = re.compile(
+    r"没有(?!问题|問題)|沒有(?!問題)|没(?!问题|關係|关系|有)|沒(?!問題|有)|尚未|未(?!来|來)|不曾|还未|還未|并未|並未|未曾|从未|從未|不是|不会|不會|不能|不再|无法|無法|并没|並沒|"
+    r"ません|ていない|てない|なかった|(?<!問題)(?<!間違い)ない|まだ(?![^。]{0,12}(?:中|ています|ております))|未だ|いません|"
+    r"않|아니|없|아직|전혀|결코|(?<!\S)못\s?|(?<!\S)안\s"
+)
+_NOT_NOW_CJK = re.compile(
+    r"如果|若是|要是|假如|一旦|等你|等到|当你|當你|(?<![机機])会(?!议|議|话|話)|將會|将会|即将|即將|就将|就將|"
+    r"可以|能否|是否|吗|嗎|需要我|想让我|想讓我|要我|由我来|由我來|准备(?:好|要|去|把|将|將)|準備(?:好|要|去|把|将|將)|打算|"
+    r"もし|なら|たら|れば|場合|とき|時(?!点|間)|際|次第|予定|つもり|ましょう|でしょう|だろう|ください|ほしい|たい|"
+    r"ませんか|ますか|ですか|でしょうか|てもよ|良ければ|"
+    r"만약|만일|경우|때(?!문)|겠|(?<![화표지단])면(?:\s|,|$)|까요|나요|습니까|입니까|합니까|인가요|예정|려고|려면"
+)
+_QUESTION_END_CJK = re.compile(r"(?:か|ですか|ますか|吗|嗎|呢)[。.]?$")
+
+
+def _not_a_claim(sentence: str) -> bool:
+    """The sentence asks, denies, conditions or promises (any language here)."""
+    return bool(
+        sentence.endswith("?")
+        or _QUESTION_END_CJK.search(sentence)
+        or _NEGATION.search(sentence)
+        or _NOT_NOW.search(sentence)
+        or _NEGATION_CJK.search(sentence)
+        or _NOT_NOW_CJK.search(sentence)
+    )
+
+
+def _in_progress(text: str) -> bool:
+    return _OUTCOME_IN_PROGRESS.search(text) is not None or _OUTCOME_IN_PROGRESS_MORE.search(text) is not None
 
 
 def _sentences(folded: str) -> list[str]:
-    return [part.strip() for part in re.split(r"(?<=[.!?:;])\s+|\n+", folded) if part.strip()]
+    # Chinese and Japanese end a sentence with 。 or a full-width mark that the fold made ASCII (！？：；), and put no
+    # space after it: so a mark after a CJK character, or 。, also ends a sentence.
+    parts = re.split(r"(?<=[.!?:;])\s+|(?<=。)\s*|(?<=[\u3000-\u9fff\uac00-\ud7af][!?:;])\s*|\n+", folded)
+    return [part.strip() for part in parts if part and part.strip()]
 
 
 def _names_of(prompts: dict[str, str]) -> dict[str, str]:
@@ -166,30 +274,30 @@ def claimed_colleagues(reply: str, member_id: str, prompts: dict[str, str] | Non
     folded = cannot_guard._fold(reply)
     sentences = _sentences(folded)
     found: dict[str, str] = {}
-    outcome_in_progress = _OUTCOME_IN_PROGRESS.search(folded) is not None
+    outcome_in_progress = _in_progress(folded)
     if outcome_in_progress:
         # The report's outcome line is split at its colon like any sentence, so it is read here as a line: a colleague
         # named in that line, in the line just before it, or in a later line of the same report, in a line that is not
         # a denial, a question or a condition.
         lines = [line.strip() for line in folded.split("\n") if line.strip()]
-        start = next((i for i, line in enumerate(lines) if _OUTCOME_IN_PROGRESS.search("\n" + line)), None)
+        start = next((i for i, line in enumerate(lines) if _in_progress("\n" + line)), None)
         if start is not None:
             for line in lines[max(0, start - 1):]:
-                if line.endswith("?") or _NEGATION.search(line) or _NOT_NOW.search(line):
+                if _not_a_claim(line):
                     continue
                 for name, other in names.items():
-                    if re.search(rf"(?<!\w){re.escape(name)}(?!\w)", line):
+                    if re.search(rf"(?<![a-z0-9_]){re.escape(name)}(?![a-z0-9_])", line):
                         found.setdefault(other, name)
     for index, sentence in enumerate(sentences):
-        if sentence.endswith("?") or _NEGATION.search(sentence) or _NOT_NOW.search(sentence):
+        if _not_a_claim(sentence):
             continue
-        if not (_CLAIM.search(sentence) or (outcome_in_progress and _OUTCOME_IN_PROGRESS.search(sentence))):
+        if not (_CLAIM.search(sentence) or (outcome_in_progress and _in_progress(sentence))):
             continue
         # The colleague is named in this sentence or in the one before it ("Kai has it. He is working on it.").
-        here = [(name, other) for name, other in names.items() if re.search(rf"(?<!\w){re.escape(name)}(?!\w)", sentence)]
+        here = [(name, other) for name, other in names.items() if re.search(rf"(?<![a-z0-9_]){re.escape(name)}(?![a-z0-9_])", sentence)]
         if not here and index > 0:
             before = sentences[index - 1]
-            here = [(name, other) for name, other in names.items() if re.search(rf"(?<!\w){re.escape(name)}(?!\w)", before)]
+            here = [(name, other) for name, other in names.items() if re.search(rf"(?<![a-z0-9_]){re.escape(name)}(?![a-z0-9_])", before)]
         for name, other in here:
             found.setdefault(other, name)
     display = {other: cannot_guard._name_of(prompts.get(other, "")) or name for other, name in found.items()}
