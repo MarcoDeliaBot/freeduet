@@ -46,6 +46,7 @@ import {
 import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
+import { type T, useAppLanguage } from "@/freeduet/i18n/provider";
 import { agentListQueryOptions } from "@/lib/agents/queries";
 import {
   saveComponentDraftMutationOptions,
@@ -68,16 +69,19 @@ import { queryClient } from "@/query-client";
  * and which data functions it may read.
  */
 /** The same way back from every state this route can be in. */
-const BACK = {
-  label: "UI components",
-  linkProps: { to: "/admin/components" },
-} as const;
+const backFor = (t: T) =>
+  ({
+    label: t("admin.nav.components"),
+    linkProps: { to: "/admin/components" },
+  }) as const;
 
 export const Route = createFileRoute("/_authed/admin/components/$name")({
   component: RouteComponent,
 });
 
 function RouteComponent() {
+  const { t } = useAppLanguage();
+  const BACK = backFor(t);
   const { name } = Route.useParams();
   const components = useQuery(componentListQueryOptions());
   const agents = useQuery(agentListQueryOptions());
@@ -106,9 +110,9 @@ function RouteComponent() {
 
   if (components.error) {
     return (
-      <PageShell backButton={BACK} title="Components">
+      <PageShell backButton={BACK} title={t("admin.compDetail.title")}>
         <p className="mt-8 text-destructive text-sm" role="alert">
-          Couldn't load components. Reload the page.
+          {t("admin.components.loadError")}
         </p>
       </PageShell>
     );
@@ -122,14 +126,14 @@ function RouteComponent() {
     return (
       <PageShell
         backButton={BACK}
-        description="There is no component with that name."
-        title="No such component"
+        description={t("admin.compDetail.noSuch.description")}
+        title={t("admin.compDetail.noSuch.title")}
       >
         <Empty className="mt-12 min-h-[30dvh] border border-dashed">
           <EmptyHeader>
             <EmptyTitle>{name}</EmptyTitle>
             <EmptyDescription className="text-pretty">
-              It may have been renamed, or this deployment no longer ships it.
+              {t("admin.compDetail.noSuch.hint")}
             </EmptyDescription>
           </EmptyHeader>
           <Button
@@ -137,7 +141,7 @@ function RouteComponent() {
             size="sm"
             variant="outline"
           >
-            Back to components
+            {t("admin.compDetail.back")}
           </Button>
         </Empty>
       </PageShell>
@@ -262,6 +266,8 @@ function ComponentDetail({
   onPublish: (published: boolean) => void;
   onSaveDraft: (description: string) => void;
 }) {
+  const { t, date } = useAppLanguage();
+  const BACK = backFor(t);
   const [sheet, setSheet] = useState<Sheet>(null);
   const [draft, setDraft] = useState(component.draftDescription);
   const withheld = new Set(component.withheldFrom);
@@ -274,25 +280,28 @@ function ComponentDetail({
 
   const grantSummary =
     bots.length === 0
-      ? "No Bots yet"
+      ? t("admin.compDetail.grant.noBots")
       : granted.length === bots.length
-        ? `All ${bots.length} Bots`
+        ? t("admin.compDetail.grant.all", { count: bots.length })
         : granted.length === 0
-          ? "No Bots"
-          : `${granted.length} of ${bots.length} Bots`;
+          ? t("admin.compDetail.grant.none")
+          : t("admin.compDetail.grant.some", {
+              granted: granted.length,
+              total: bots.length,
+            });
 
   const functionSummary =
     dataFunctions.length === 0
-      ? "This deployment has no data functions"
+      ? t("admin.compDetail.fn.none")
       : held.length === 0
-        ? "Nothing. It shows only what the Bot passes it."
+        ? t("admin.compDetail.fn.nothing")
         : held.map((fn) => fn.name).join(", ");
 
   return (
     <PageShell
       backButton={BACK}
       description={
-        component.publishedDescription ?? "Not published. No Bot can see it."
+        component.publishedDescription ?? t("admin.compDetail.notPublished")
       }
       title={component.title}
     >
@@ -310,8 +319,8 @@ function ComponentDetail({
       </div>
 
       <PageSection
-        description="What this component is for, and which Bots can answer with it."
-        title="Configuration"
+        description={t("admin.compDetail.config.description")}
+        title={t("admin.compDetail.config.title")}
       >
         <PageRows>
           {/*
@@ -325,10 +334,13 @@ function ComponentDetail({
                   <IconAlertTriangle className="text-amber-600 dark:text-amber-400" />
                 </ItemMedia>
                 <ItemContent>
-                  <ItemTitle>Not in this build</ItemTitle>
+                  <ItemTitle>
+                    {t("admin.compDetail.notInBuild.title")}
+                  </ItemTitle>
                   <ItemDescription>
-                    {appConfig.brand.productName} can't draw it. The settings
-                    below have no effect.
+                    {t("admin.compDetail.notInBuild.description", {
+                      product: appConfig.brand.productName,
+                    })}
                   </ItemDescription>
                 </ItemContent>
               </Item>
@@ -341,19 +353,19 @@ function ComponentDetail({
               <IconWorld />
             </ItemMedia>
             <ItemContent>
-              <ItemTitle>Published</ItemTitle>
+              <ItemTitle>{t("admin.compDetail.published")}</ItemTitle>
               <ItemDescription>
                 {component.published
-                  ? "Bots can answer with it."
-                  : "No Bot can use it."}
+                  ? t("admin.compDetail.published.on")
+                  : t("admin.compDetail.published.off")}
                 {component.hasUnpublishedChanges
-                  ? " The description has unpublished changes."
+                  ? ` ${t("admin.compDetail.published.changes")}`
                   : null}
               </ItemDescription>
             </ItemContent>
             <ItemActions>
               <Switch
-                aria-label="Published"
+                aria-label={t("admin.compDetail.published")}
                 checked={component.published}
                 data-testid={`publish-${component.name}`}
                 onCheckedChange={onPublish}
@@ -365,9 +377,11 @@ function ComponentDetail({
 
           <SheetRow
             icon={<IconFileText />}
-            label="Description"
+            label={t("admin.compDetail.description")}
             onOpen={() => setSheet("description")}
-            summary={component.draftDescription || "Nothing yet"}
+            summary={
+              component.draftDescription || t("admin.compDetail.nothingYet")
+            }
             testId={`description-${component.name}`}
           />
 
@@ -375,7 +389,7 @@ function ComponentDetail({
 
           <SheetRow
             icon={<IconUsers />}
-            label="Available to"
+            label={t("admin.compDetail.availableTo")}
             onOpen={() => setSheet("grants")}
             summary={grantSummary}
             testId={`grants-${component.name}`}
@@ -385,7 +399,7 @@ function ComponentDetail({
 
           <SheetRow
             icon={<IconDatabase />}
-            label="Can read"
+            label={t("admin.compDetail.canRead")}
             onOpen={() => setSheet("functions")}
             summary={functionSummary}
             testId={`functions-${component.name}`}
@@ -393,21 +407,29 @@ function ComponentDetail({
         </PageRows>
       </PageSection>
 
-      <PageSection title="Details">
+      <PageSection title={t("admin.compDetail.details")}>
         <PageRows>
-          <FactRow icon={<IconTag />} label="Kind">
+          <FactRow icon={<IconTag />} label={t("admin.compDetail.kind")}>
             {component.kind}
           </FactRow>
           <Separator />
-          <FactRow icon={<IconCode />} label="Called as">
+          <FactRow icon={<IconCode />} label={t("admin.compDetail.calledAs")}>
             <code className="rounded bg-foreground/5 px-1.5 py-0.5 text-xs">
               {component.name}
             </code>
           </FactRow>
           <Separator />
-          <FactRow icon={<IconClock />} label="Last changed">
-            {new Date(component.updatedAt).toLocaleString()}
-            {component.updatedBy ? ` by ${component.updatedBy}` : null}
+          <FactRow
+            icon={<IconClock />}
+            label={t("admin.compDetail.lastChanged")}
+          >
+            {date(new Date(component.updatedAt), {
+              dateStyle: "short",
+              timeStyle: "medium",
+            })}
+            {component.updatedBy
+              ? ` ${t("admin.compDetail.by", { name: component.updatedBy })}`
+              : null}
           </FactRow>
         </PageRows>
       </PageSection>
@@ -428,15 +450,14 @@ function ComponentDetail({
       >
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Description</DialogTitle>
+            <DialogTitle>{t("admin.compDetail.description")}</DialogTitle>
             <DialogDescription>
-              What the model reads when it decides to use this. It has no effect
-              until the component is published.
+              {t("admin.compDetail.descDlg.description")}
             </DialogDescription>
           </DialogHeader>
           <DialogBody className="mt-4">
             <Textarea
-              aria-label="Description"
+              aria-label={t("admin.compDetail.description")}
               onChange={(event) => setDraft(event.target.value)}
               rows={6}
               value={draft}
@@ -451,7 +472,7 @@ function ComponentDetail({
               size="sm"
               variant="ghost"
             >
-              Cancel
+              {t("settings.cancel")}
             </Button>
             <Button
               onClick={() => {
@@ -460,7 +481,7 @@ function ComponentDetail({
               }}
               size="sm"
             >
-              Save
+              {t("settings.save")}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -473,15 +494,16 @@ function ComponentDetail({
       >
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Available to</DialogTitle>
+            <DialogTitle>{t("admin.compDetail.availableTo")}</DialogTitle>
             <DialogDescription>
-              Turn a Bot off and it never learns this component exists. Changes
-              apply right away.
+              {t("admin.compDetail.grantsDlg.description")}
             </DialogDescription>
           </DialogHeader>
           <DialogBody className="mt-4">
             {bots.length === 0 ? (
-              <p className="text-muted-foreground text-sm">No Bots yet.</p>
+              <p className="text-muted-foreground text-sm">
+                {t("admin.compDetail.grantsDlg.empty")}
+              </p>
             ) : (
               <div className="flex flex-col">
                 {bots.map((bot, index) => {
@@ -510,7 +532,7 @@ function ComponentDetail({
           </DialogBody>
           <DialogFooter className="mt-4">
             <Button onClick={() => setSheet(null)} size="sm">
-              Done
+              {t("settings.done")}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -522,18 +544,15 @@ function ComponentDetail({
       >
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Can read</DialogTitle>
+            <DialogTitle>{t("admin.compDetail.canRead")}</DialogTitle>
             <DialogDescription>
-              The data this component can fetch to draw itself. This is separate
-              from Available to. With all of these off, it shows only what the
-              Bot passes it. Every read shows in Audit. Changes apply right
-              away.
+              {t("admin.compDetail.fnDlg.description")}
             </DialogDescription>
           </DialogHeader>
           <DialogBody className="mt-4">
             {dataFunctions.length === 0 ? (
               <p className="text-muted-foreground text-sm">
-                This deployment has no data functions.
+                {t("admin.compDetail.fnDlg.empty")}
               </p>
             ) : (
               <div className="flex flex-col">
@@ -566,7 +585,7 @@ function ComponentDetail({
           </DialogBody>
           <DialogFooter className="mt-4">
             <Button onClick={() => setSheet(null)} size="sm">
-              Done
+              {t("settings.done")}
             </Button>
           </DialogFooter>
         </DialogContent>

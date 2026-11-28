@@ -1837,17 +1837,69 @@ export const it: Catalog<typeof EN> = {
     other: "{quiet}, dopo {count} frammenti",
   },
   // stage-2j begin
-  "admin.computers.description": "Il browser di ogni Bot e il profilo che conserva. Il profilo tiene il Bot connesso. Reimpostarlo disconnette il Bot da tutto.",
-  "admin.computers.loadError": "Non è stato possibile caricare i computer. Ricarica la pagina.",
+  "admin.compDetail.title": "Componenti",
+  "admin.compDetail.noSuch.title": "Componente non trovato",
+  "admin.compDetail.noSuch.description":
+    "Non esiste alcun componente con quel nome.",
+  "admin.compDetail.noSuch.hint":
+    "Potrebbe essere stato rinominato, oppure questa installazione non lo include più.",
+  "admin.compDetail.back": "Torna ai componenti",
+  "admin.compDetail.grant.noBots": "Ancora nessun Bot",
+  "admin.compDetail.grant.all": {
+    one: "Tutti i Bot ({count})",
+    other: "Tutti i {count} Bot",
+  },
+  "admin.compDetail.grant.none": "Nessun Bot",
+  "admin.compDetail.grant.some": "{granted} Bot su {total}",
+  "admin.compDetail.fn.none": "Questa installazione non ha funzioni dati",
+  "admin.compDetail.fn.nothing":
+    "Niente. Mostra solo ciò che il Bot gli passa.",
+  "admin.compDetail.notPublished": "Non pubblicato. Nessun Bot può vederlo.",
+  "admin.compDetail.config.title": "Configurazione",
+  "admin.compDetail.config.description":
+    "A che cosa serve questo componente e quali Bot possono rispondere con esso.",
+  "admin.compDetail.notInBuild.title": "Non presente in questa versione",
+  "admin.compDetail.notInBuild.description":
+    "{product} non riesce a mostrarlo. Le impostazioni qui sotto non hanno effetto.",
+  "admin.compDetail.published": "Pubblicato",
+  "admin.compDetail.published.on": "I Bot possono rispondere con esso.",
+  "admin.compDetail.published.off": "Nessun Bot può usarlo.",
+  "admin.compDetail.published.changes":
+    "La descrizione ha modifiche non pubblicate.",
+  "admin.compDetail.description": "Descrizione",
+  "admin.compDetail.nothingYet": "Ancora niente",
+  "admin.compDetail.availableTo": "Disponibile per",
+  "admin.compDetail.canRead": "Può leggere",
+  "admin.compDetail.details": "Dettagli",
+  "admin.compDetail.kind": "Tipo",
+  "admin.compDetail.calledAs": "Richiamato come",
+  "admin.compDetail.lastChanged": "Ultima modifica",
+  "admin.compDetail.by": "da {name}",
+  "admin.compDetail.descDlg.description":
+    "Ciò che il modello legge quando decide di usarlo. Non ha effetto finché il componente non è pubblicato.",
+  "admin.compDetail.grantsDlg.description":
+    "Disattiva un Bot e non verrà mai a sapere che questo componente esiste. Le modifiche valgono subito.",
+  "admin.compDetail.grantsDlg.empty": "Ancora nessun Bot.",
+  "admin.compDetail.fnDlg.description":
+    "I dati che questo componente può recuperare per mostrarsi. È separato da Disponibile per. Con tutti disattivati, mostra solo ciò che il Bot gli passa. Ogni lettura compare nel Registro. Le modifiche valgono subito.",
+  "admin.compDetail.fnDlg.empty": "Questa installazione non ha funzioni dati.",
+  "admin.computers.description":
+    "Il browser di ogni Bot e il profilo che conserva. Il profilo tiene il Bot connesso. Reimpostarlo disconnette il Bot da tutto.",
+  "admin.computers.loadError":
+    "Non è stato possibile caricare i computer. Ricarica la pagina.",
   "admin.computers.shared.lead": "Tutti i Bot condividono un solo computer.",
-  "admin.computers.shared.before": "Ne condividono accessi, file e sessione. Un Bot può raggiungere ciò a cui ne ha effettuato l'accesso un altro. Imposta",
+  "admin.computers.shared.before":
+    "Ne condividono accessi, file e sessione. Un Bot può raggiungere ciò a cui ne ha effettuato l'accesso un altro. Imposta",
   "admin.computers.shared.after": "per dare a ogni Bot il proprio.",
-  "admin.computers.perBot": "Ogni Bot ha il proprio computer, con il proprio container, i propri file e il proprio profilo del browser.",
+  "admin.computers.perBot":
+    "Ogni Bot ha il proprio computer, con il proprio container, i propri file e il proprio profilo del browser.",
   "admin.computers.list.title": "Computer in questa installazione",
   "admin.computers.list.error": "Non è stato possibile caricare l'elenco.",
-  "admin.computers.list.empty": "Ancora nessun computer. Ne compare uno la prima volta che un Bot apre una pagina.",
+  "admin.computers.list.empty":
+    "Ancora nessun computer. Ne compare uno la prima volta che un Bot apre una pagina.",
   "admin.computers.running": "Browser in esecuzione dalle {time}",
-  "admin.computers.notRunning": "Nessun browser in esecuzione. Parte quando serve di nuovo al Bot.",
+  "admin.computers.notRunning":
+    "Nessun browser in esecuzione. Parte quando serve di nuovo al Bot.",
   "admin.computers.egress.unknown": "Uscita non indicata",
   "admin.computers.egress.direct": "Esce direttamente",
   "admin.computers.egress.via": "Esce tramite {egress}",
@@ -1857,27 +1909,36 @@ export const it: Catalog<typeof EN> = {
   "admin.computers.stop": "Ferma il browser",
   "admin.computers.reset": "Reimposta",
   "admin.computers.resetTitle": "Reimpostare il computer di {name}?",
-  "admin.computers.resetDesc": "Il suo profilo viene eliminato. Il Bot viene disconnesso da ogni servizio e riparte da zero. Non puoi annullare questa azione.",
+  "admin.computers.resetDesc":
+    "Il suo profilo viene eliminato. Il Bot viene disconnesso da ogni servizio e riparte da zero. Non puoi annullare questa azione.",
   "admin.computers.resetting": "Reimposto…",
   "admin.computers.resetIt": "Reimposta",
   "admin.computers.updateTitle": "Aggiornare il computer di {name}?",
-  "admin.computers.updateDesc": "Passa all'immagine del computer che questa installazione usa ora. I suoi file e i suoi accessi restano. Se è in esecuzione, si riavvia e interrompe ciò che sta facendo.",
+  "admin.computers.updateDesc":
+    "Passa all'immagine del computer che questa installazione usa ora. I suoi file e i suoi accessi restano. Se è in esecuzione, si riavvia e interrompe ciò che sta facendo.",
   "admin.computers.updating": "Aggiorno…",
   "admin.computers.updateIt": "Aggiorna",
   "admin.computers.foot.stopLead": "Ferma",
-  "admin.computers.foot.stopRest": "chiude il browser e ne conserva gli accessi. Riparte la prossima volta che serve al Bot.",
+  "admin.computers.foot.stopRest":
+    "chiude il browser e ne conserva gli accessi. Riparte la prossima volta che serve al Bot.",
   "admin.computers.foot.resetLead": "Reimposta",
-  "admin.computers.foot.resetRest": "elimina il profilo e disconnette il Bot da tutto.",
+  "admin.computers.foot.resetRest":
+    "elimina il profilo e disconnette il Bot da tutto.",
   "admin.computers.foot.updateLead": "Aggiorna il computer",
-  "admin.computers.foot.updateRest": "compare quando un computer usa un'immagine più vecchia. Porta il computer a quella nuova e ne conserva file e accessi.",
+  "admin.computers.foot.updateRest":
+    "compare quando un computer usa un'immagine più vecchia. Porta il computer a quella nuova e ne conserva file e accessi.",
   "admin.computers.foot.audit": "Tutte e tre compaiono in",
-  "admin.computers.host.description": "Scegli le cartelle che un Bot può leggere su questo computer. L'app desktop chiede prima di ogni modifica o comando. L'accesso finisce quando fermi {product}.",
+  "admin.computers.host.description":
+    "Scegli le cartelle che un Bot può leggere su questo computer. L'app desktop chiede prima di ogni modifica o comando. L'accesso finisce quando fermi {product}.",
   "admin.computers.host.title": "Cartelle su questo computer",
-  "admin.computers.host.offline": "L'app desktop non è in linea. Aprila per approvare cartelle o eseguire comandi.",
-  "admin.computers.host.noBots": "Ancora nessun Bot. Creane uno, poi scegli le sue cartelle.",
+  "admin.computers.host.offline":
+    "L'app desktop non è in linea. Aprila per approvare cartelle o eseguire comandi.",
+  "admin.computers.host.noBots":
+    "Ancora nessun Bot. Creane uno, poi scegli le sue cartelle.",
   "admin.computers.host.choose": "Scegli una cartella",
   "admin.computers.host.waiting": "In attesa…",
-  "admin.computers.host.readOnlyNote": "Le cartelle sono di sola lettura. Quando un Bot deve scrivere, l'app desktop te lo chiede prima.",
+  "admin.computers.host.readOnlyNote":
+    "Le cartelle sono di sola lettura. Quando un Bot deve scrivere, l'app desktop te lo chiede prima.",
   "admin.computers.host.stopAccess": "Interrompi l'accesso alle cartelle",
   "admin.computers.host.stopping": "Interrompo…",
   "admin.computers.host.viewAudit": "Apri il registro",
@@ -1886,37 +1947,56 @@ export const it: Catalog<typeof EN> = {
   "admin.computers.host.revoking": "Revoco…",
   "admin.computers.host.pendingFrom": "{label} da {owner}.",
   "admin.computers.host.pendingFromFor": "{label} da {owner} per {name}.",
-  "admin.computers.host.folders": { one: "{count} cartella di sola lettura", other: "{count} cartelle di sola lettura" },
-  "admin.computers.host.requests": { one: "{count} richiesta in attesa", other: "{count} richieste in attesa" },
+  "admin.computers.host.folders": {
+    one: "{count} cartella di sola lettura",
+    other: "{count} cartelle di sola lettura",
+  },
+  "admin.computers.host.requests": {
+    one: "{count} richiesta in attesa",
+    other: "{count} richieste in attesa",
+  },
   "admin.computers.host.none": "Nessuna cartella approvata.",
   "admin.computers.host.owner": "il proprietario del desktop",
-  "admin.computers.host.p.write": "Modifica di file in attesa di approvazione o di essere completata",
-  "admin.computers.host.p.run": "Comando in attesa di approvazione o di essere completato",
+  "admin.computers.host.p.write":
+    "Modifica di file in attesa di approvazione o di essere completata",
+  "admin.computers.host.p.run":
+    "Comando in attesa di approvazione o di essere completato",
   "admin.computers.host.p.list": "Elenco dei file",
   "admin.computers.host.p.read": "Lettura di un file",
   "admin.computers.host.p.stop": "Interruzione del lavoro sulle cartelle",
-  "admin.computers.host.p.default": "Accesso alle cartelle in attesa di approvazione",
-  "admin.learning.description": "Impara dalle conversazioni concluse, rivedi le skill che Intelligence propone e dai ai Bot le skill pubblicate.",
-  "admin.learning.auto.assigned": "{product} ha assegnato automaticamente il container \"{container}\" di questo progetto Intelligence. Puoi cambiarlo qui.",
-  "admin.learning.auto.absent": "Questo progetto Intelligence non ha ancora un container Learning \"{container}\". Non viene raccolto nulla.",
-  "admin.learning.auto.notEntitled": "Il piano di questo progetto Intelligence non include Learning. Non è stato assegnato alcun container.",
-  "admin.learning.auto.unavailable": "Non è stato possibile raggiungere Intelligence per trovare il container Learning di questo progetto. {product} riproverà.",
+  "admin.computers.host.p.default":
+    "Accesso alle cartelle in attesa di approvazione",
+  "admin.learning.description":
+    "Impara dalle conversazioni concluse, rivedi le skill che Intelligence propone e dai ai Bot le skill pubblicate.",
+  "admin.learning.auto.assigned":
+    '{product} ha assegnato automaticamente il container "{container}" di questo progetto Intelligence. Puoi cambiarlo qui.',
+  "admin.learning.auto.absent":
+    'Questo progetto Intelligence non ha ancora un container Learning "{container}". Non viene raccolto nulla.',
+  "admin.learning.auto.notEntitled":
+    "Il piano di questo progetto Intelligence non include Learning. Non è stato assegnato alcun container.",
+  "admin.learning.auto.unavailable":
+    "Non è stato possibile raggiungere Intelligence per trovare il container Learning di questo progetto. {product} riproverà.",
   "admin.learning.target.container": "ID del container: {label}",
   "admin.learning.target.revision": "Revisione esatta (facoltativa)",
   "admin.learning.target.revisionAria": "Revisione: {label}",
   "admin.learning.target.latest": "Ultima pubblicata",
   "admin.learning.create.busy": "Creo…",
   "admin.learning.create.button": "Crea il container {container}",
-  "admin.learning.create.note": "Usa la credenziale di questa installazione, non la chiave di esecuzione.",
+  "admin.learning.create.note":
+    "Usa la credenziale di questa installazione, non la chiave di esecuzione.",
   "admin.learning.create.how": "Per crearlo: ",
   "admin.learning.part.title": "Partecipazione",
-  "admin.learning.part.description": "Le modifiche ai container valgono per le nuove conversazioni. Quelle esistenti tengono il primo container. I container devono esistere già nello stesso progetto Intelligence. Finché non salvi qui, {product} usa il container openbot di quel progetto.",
+  "admin.learning.part.description":
+    "Le modifiche ai container valgono per le nuove conversazioni. Quelle esistenti tengono il primo container. I container devono esistere già nello stesso progetto Intelligence. Finché non salvi qui, {product} usa il container openbot di quel progetto.",
   "admin.learning.part.loading": "Carico le impostazioni di Learning…",
-  "admin.learning.part.turnOn": "Attiva l'apprendimento automatico e la consegna delle skill",
+  "admin.learning.part.turnOn":
+    "Attiva l'apprendimento automatico e la consegna delle skill",
   "admin.learning.part.default": "Predefinito",
-  "admin.learning.part.hint": "Senza un predefinito, i Bot senza un container proprio restano esclusi. Gli ID sono da 1 a 64 lettere minuscole, numeri e trattini singoli. Lascia vuota la revisione per usare le ultime skill pubblicate.",
+  "admin.learning.part.hint":
+    "Senza un predefinito, i Bot senza un container proprio restano esclusi. Gli ID sono da 1 a 64 lettere minuscole, numeri e trattini singoli. Lascia vuota la revisione per usare le ultime skill pubblicate.",
   "admin.learning.part.perBot": "Partecipazione per Bot",
-  "admin.learning.part.botListError": "Non è stato possibile caricare l'elenco dei Bot. Qui sotto trovi le impostazioni salvate per ogni Bot.",
+  "admin.learning.part.botListError":
+    "Non è stato possibile caricare l'elenco dei Bot. Qui sotto trovi le impostazioni salvate per ogni Bot.",
   "admin.learning.part.botAria": "Partecipazione di {name}",
   "admin.learning.part.inherit": "Usa il predefinito dell'installazione",
   "admin.learning.part.exclude": "Escludi da Learning",
@@ -1925,12 +2005,15 @@ export const it: Catalog<typeof EN> = {
   "admin.learning.part.save": "Salva le impostazioni di Learning",
   "admin.learning.part.saved": "Impostazioni salvate.",
   "admin.learning.rev.title": "Rivedi e pubblica",
-  "admin.learning.rev.description": "Intelligence studia le conversazioni concluse e propone skill. Rivedile e pubblicale in Intelligence. I Bot usano solo le skill pubblicate.",
+  "admin.learning.rev.description":
+    "Intelligence studia le conversazioni concluse e propone skill. Rivedile e pubblicale in Intelligence. I Bot usano solo le skill pubblicate.",
   "admin.learning.rev.showFor": "Mostra il container di",
   "admin.learning.rev.default": "Predefinito dell'installazione",
   "admin.learning.rev.checking": "Controllo Intelligence…",
-  "admin.learning.rev.invalid": "Il container selezionato o la sua strumentazione non è disponibile.",
-  "admin.learning.rev.selection": "Scegli un Bot oppure imposta un container predefinito.",
+  "admin.learning.rev.invalid":
+    "Il container selezionato o la sua strumentazione non è disponibile.",
+  "admin.learning.rev.selection":
+    "Scegli un Bot oppure imposta un container predefinito.",
   "admin.learning.rev.none": "Nessun container Learning assegnato.",
   "admin.learning.rev.threads": "Conversazioni pronte",
   "admin.learning.rev.candidates": "Candidate da rivedere",
@@ -1945,56 +2028,72 @@ export const it: Catalog<typeof EN> = {
   "admin.learning.del.title": "Consegna delle skill",
   "admin.learning.del.checking": "Controllo la consegna…",
   "admin.learning.del.off": "La consegna è disattivata per questo Bot.",
-  "admin.learning.del.waiting": "In attesa del primo snapshot verificato delle skill.",
-  "admin.learning.del.stale": "Uso l'ultimo snapshot verificato. Un aggiornamento è in attesa.",
+  "admin.learning.del.waiting":
+    "In attesa del primo snapshot verificato delle skill.",
+  "admin.learning.del.stale":
+    "Uso l'ultimo snapshot verificato. Un aggiornamento è in attesa.",
   "admin.learning.del.ok": "È disponibile uno snapshot verificato.",
   "admin.learning.del.revision": "Revisione caricata: {revision}",
   "admin.learning.del.lastChecked": "Ultimo controllo:",
   "admin.learning.rev.refresh": "Aggiorna lo stato",
-  "admin.learning.rev.footer": "Gestire Learning richiede il tuo account Intelligence e l'accesso al progetto. {product} tiene le credenziali del progetto sul server. Disattivare Learning qui conserva le impostazioni e le assegnazioni delle conversazioni. Pianificazioni e pubblicazione restano in Intelligence.",
+  "admin.learning.rev.footer":
+    "Gestire Learning richiede il tuo account Intelligence e l'accesso al progetto. {product} tiene le credenziali del progetto sul server. Disattivare Learning qui conserva le impostazioni e le assegnazioni delle conversazioni. Pianificazioni e pubblicazione restano in Intelligence.",
   "admin.playground.validJson": "{label} deve essere un JSON valido: {reason}",
   "admin.playground.invalidJson": "JSON non valido",
-  "admin.playground.notObject": "{label} deve essere un oggetto JSON, non {kind}.",
+  "admin.playground.notObject":
+    "{label} deve essere un oggetto JSON, non {kind}.",
   "admin.playground.schemaLabel": "Argomenti (JSON Schema)",
   "admin.playground.sampleLabel": "Argomenti di esempio",
   "admin.playground.fixBeforeSave": "Correggi i campi JSON prima di salvare.",
   "admin.playground.draftSaved": "Bozza salvata.",
   "admin.playground.published": "Pubblicato.",
-  "admin.playground.description": "Scrivi un componente e pubblicalo senza rifare il deploy. Le tue modifiche sono una bozza. Le conversazioni mostrano solo ciò che è pubblicato.",
+  "admin.playground.description":
+    "Scrivi un componente e pubblicalo senza rifare il deploy. Le tue modifiche sono una bozza. Le conversazioni mostrano solo ciò che è pubblicato.",
   "admin.playground.saveDraft": "Salva la bozza",
   "admin.playground.publish": "Pubblica",
   "admin.playground.title": "Titolo",
   "admin.playground.titlePlaceholder": "Scheda rimborso",
   "admin.playground.told": "Che cosa viene detto al modello",
-  "admin.playground.toldPlaceholder": "Mostra un rimborso con importo, motivo e stato.",
+  "admin.playground.toldPlaceholder":
+    "Mostra un rimborso con importo, motivo e stato.",
   "admin.playground.preview": "Anteprima",
   "admin.playground.noSample": "Gli argomenti di esempio non sono disponibili.",
-  "admin.playground.fixBeforePreview": "Correggi i campi JSON prima dell'anteprima.",
+  "admin.playground.fixBeforePreview":
+    "Correggi i campi JSON prima dell'anteprima.",
   "admin.playground.saved.title": "Salvati qui",
-  "admin.playground.saved.empty": "Ancora niente di salvato. Salva una bozza per vederla qui.",
+  "admin.playground.saved.empty":
+    "Ancora niente di salvato. Salva una bozza per vederla qui.",
   "admin.playground.saved.published": "pubblicato, revisione {revision}",
   "admin.playground.saved.draftOnly": "solo bozza, nessun Bot può mostrarlo",
   "admin.playground.saved.edited": "modificato dopo la pubblicazione",
   "admin.playground.open": "Apri",
   "admin.playground.delete": "Elimina",
-  "admin.playground.saved.note": "Pubblicare lo rende disponibile a ogni Bot. Puoi disattivarlo per un solo Bot nella pagina Componenti dell'interfaccia.",
+  "admin.playground.saved.note":
+    "Pubblicare lo rende disponibile a ogni Bot. Puoi disattivarlo per un solo Bot nella pagina Componenti dell'interfaccia.",
   "admin.playground.del.title": "Eliminare {name}?",
-  "admin.playground.del.description": "Viene rimosso da questa installazione e nessun Bot può più mostrarlo. Non puoi annullare questa azione.",
+  "admin.playground.del.description":
+    "Viene rimosso da questa installazione e nessun Bot può più mostrarlo. Non puoi annullare questa azione.",
   "admin.playground.del.confirm": "Elimina",
   "admin.skills.write": "Scrivi una skill",
-  "admin.skills.description": "Istruzioni con un nome che chiunque può avviare con /. Una skill non aggiunge alcun accesso. Può solo chiedere a un Bot di usare ciò che ha già.",
+  "admin.skills.description":
+    "Istruzioni con un nome che chiunque può avviare con /. Una skill non aggiunge alcun accesso. Può solo chiedere a un Bot di usare ciò che ha già.",
   "admin.skills.installed.title": "Installate",
-  "admin.skills.installed.description": "Per tutti in questa installazione. Ognuno scrive le proprie nella sua pagina Skill.",
-  "admin.skills.loadError": "Non è stato possibile caricare le skill. Ricarica la pagina.",
-  "admin.skills.empty": "Ancora nessuna skill. Scrivine una con Scrivi una skill.",
+  "admin.skills.installed.description":
+    "Per tutti in questa installazione. Ognuno scrive le proprie nella sua pagina Skill.",
+  "admin.skills.loadError":
+    "Non è stato possibile caricare le skill. Ricarica la pagina.",
+  "admin.skills.empty":
+    "Ancora nessuna skill. Scrivine una con Scrivi una skill.",
   "admin.skills.dlg.title": "Scrivi una skill per tutti",
-  "admin.skills.dlg.description": "Le persone scrivono lo slug dopo /. Il Bot poi segue le istruzioni. Tutti possono usarla e tu scegli quali Bot ce l'hanno.",
+  "admin.skills.dlg.description":
+    "Le persone scrivono lo slug dopo /. Il Bot poi segue le istruzioni. Tutti possono usarla e tu scegli quali Bot ce l'hanno.",
   "admin.skills.slug": "Slug",
   "admin.skills.title": "Titolo",
   "admin.skills.summary": "Riepilogo",
   "admin.skills.summaryPlaceholder": "Una riga",
   "admin.skills.instructions": "Istruzioni",
-  "admin.skills.instructionsPlaceholder": "Che cosa deve fare il Bot quando questa skill viene usata.",
+  "admin.skills.instructionsPlaceholder":
+    "Che cosa deve fare il Bot quando questa skill viene usata.",
   "admin.skills.install": "Installa la skill",
   // stage-2j end
 };

@@ -1757,17 +1757,68 @@ export const EN = {
     other: "{quiet}, after {count} chunks",
   },
   // stage-2j begin
-  "admin.computers.description": "Each Bot's browser and the profile it keeps. The profile keeps a Bot signed in. Resetting it signs the Bot out of everything.",
+  "admin.compDetail.title": "Components",
+  "admin.compDetail.noSuch.title": "No such component",
+  "admin.compDetail.noSuch.description":
+    "There is no component with that name.",
+  "admin.compDetail.noSuch.hint":
+    "It may have been renamed, or this deployment no longer ships it.",
+  "admin.compDetail.back": "Back to components",
+  "admin.compDetail.grant.noBots": "No Bots yet",
+  "admin.compDetail.grant.all": {
+    one: "All {count} Bots",
+    other: "All {count} Bots",
+  },
+  "admin.compDetail.grant.none": "No Bots",
+  "admin.compDetail.grant.some": "{granted} of {total} Bots",
+  "admin.compDetail.fn.none": "This deployment has no data functions",
+  "admin.compDetail.fn.nothing":
+    "Nothing. It shows only what the Bot passes it.",
+  "admin.compDetail.notPublished": "Not published. No Bot can see it.",
+  "admin.compDetail.config.title": "Configuration",
+  "admin.compDetail.config.description":
+    "What this component is for, and which Bots can answer with it.",
+  "admin.compDetail.notInBuild.title": "Not in this build",
+  "admin.compDetail.notInBuild.description":
+    "{product} can't draw it. The settings below have no effect.",
+  "admin.compDetail.published": "Published",
+  "admin.compDetail.published.on": "Bots can answer with it.",
+  "admin.compDetail.published.off": "No Bot can use it.",
+  "admin.compDetail.published.changes":
+    "The description has unpublished changes.",
+  "admin.compDetail.description": "Description",
+  "admin.compDetail.nothingYet": "Nothing yet",
+  "admin.compDetail.availableTo": "Available to",
+  "admin.compDetail.canRead": "Can read",
+  "admin.compDetail.details": "Details",
+  "admin.compDetail.kind": "Kind",
+  "admin.compDetail.calledAs": "Called as",
+  "admin.compDetail.lastChanged": "Last changed",
+  "admin.compDetail.by": "by {name}",
+  "admin.compDetail.descDlg.description":
+    "What the model reads when it decides to use this. It has no effect until the component is published.",
+  "admin.compDetail.grantsDlg.description":
+    "Turn a Bot off and it never learns this component exists. Changes apply right away.",
+  "admin.compDetail.grantsDlg.empty": "No Bots yet.",
+  "admin.compDetail.fnDlg.description":
+    "The data this component can fetch to draw itself. This is separate from Available to. With all of these off, it shows only what the Bot passes it. Every read shows in Audit. Changes apply right away.",
+  "admin.compDetail.fnDlg.empty": "This deployment has no data functions.",
+  "admin.computers.description":
+    "Each Bot's browser and the profile it keeps. The profile keeps a Bot signed in. Resetting it signs the Bot out of everything.",
   "admin.computers.loadError": "Couldn't load the computers. Reload the page.",
   "admin.computers.shared.lead": "Every Bot is sharing one computer.",
-  "admin.computers.shared.before": "They share its logins, files and session. A Bot can reach what another signed into. Set",
+  "admin.computers.shared.before":
+    "They share its logins, files and session. A Bot can reach what another signed into. Set",
   "admin.computers.shared.after": "to give each Bot its own.",
-  "admin.computers.perBot": "Each Bot has its own computer, with its own container, files and browser profile.",
+  "admin.computers.perBot":
+    "Each Bot has its own computer, with its own container, files and browser profile.",
   "admin.computers.list.title": "Computers in this deployment",
   "admin.computers.list.error": "Couldn't load the list.",
-  "admin.computers.list.empty": "No computers yet. One shows up the first time a Bot opens a page.",
+  "admin.computers.list.empty":
+    "No computers yet. One shows up the first time a Bot opens a page.",
   "admin.computers.running": "Browser running since {time}",
-  "admin.computers.notRunning": "No browser running. It starts when the Bot next needs it.",
+  "admin.computers.notRunning":
+    "No browser running. It starts when the Bot next needs it.",
   "admin.computers.egress.unknown": "Egress not reported",
   "admin.computers.egress.direct": "Leaves directly",
   "admin.computers.egress.via": "Leaves through {egress}",
@@ -1777,27 +1828,36 @@ export const EN = {
   "admin.computers.stop": "Stop browser",
   "admin.computers.reset": "Reset",
   "admin.computers.resetTitle": "Reset {name}'s computer?",
-  "admin.computers.resetDesc": "Its profile is deleted. The Bot is signed out of every service and starts clean. You can't undo this.",
+  "admin.computers.resetDesc":
+    "Its profile is deleted. The Bot is signed out of every service and starts clean. You can't undo this.",
   "admin.computers.resetting": "Resetting…",
   "admin.computers.resetIt": "Reset it",
   "admin.computers.updateTitle": "Update {name}'s computer?",
-  "admin.computers.updateDesc": "It moves to the computer image this deployment now runs. Its files and sign-ins are kept. If it's running, it restarts and stops what it's doing.",
+  "admin.computers.updateDesc":
+    "It moves to the computer image this deployment now runs. Its files and sign-ins are kept. If it's running, it restarts and stops what it's doing.",
   "admin.computers.updating": "Updating…",
   "admin.computers.updateIt": "Update it",
   "admin.computers.foot.stopLead": "Stop",
-  "admin.computers.foot.stopRest": "closes the browser and keeps its logins. It starts again the next time the Bot needs it.",
+  "admin.computers.foot.stopRest":
+    "closes the browser and keeps its logins. It starts again the next time the Bot needs it.",
   "admin.computers.foot.resetLead": "Reset",
-  "admin.computers.foot.resetRest": "deletes the profile and signs the Bot out of everything.",
+  "admin.computers.foot.resetRest":
+    "deletes the profile and signs the Bot out of everything.",
   "admin.computers.foot.updateLead": "Update computer",
-  "admin.computers.foot.updateRest": "shows when a computer runs an older image. It moves the computer to the new one and keeps its files and sign-ins.",
+  "admin.computers.foot.updateRest":
+    "shows when a computer runs an older image. It moves the computer to the new one and keeps its files and sign-ins.",
   "admin.computers.foot.audit": "All three show in",
-  "admin.computers.host.description": "Choose folders a Bot can read on this computer. The desktop app asks before each edit or command. Access ends when you stop {product}.",
+  "admin.computers.host.description":
+    "Choose folders a Bot can read on this computer. The desktop app asks before each edit or command. Access ends when you stop {product}.",
   "admin.computers.host.title": "Folders on this computer",
-  "admin.computers.host.offline": "The desktop app is offline. Open it to approve folders or run commands.",
-  "admin.computers.host.noBots": "No Bots yet. Create one, then choose its folders.",
+  "admin.computers.host.offline":
+    "The desktop app is offline. Open it to approve folders or run commands.",
+  "admin.computers.host.noBots":
+    "No Bots yet. Create one, then choose its folders.",
   "admin.computers.host.choose": "Choose folder",
   "admin.computers.host.waiting": "Waiting…",
-  "admin.computers.host.readOnlyNote": "Folders are read-only. When a Bot needs to write, the desktop app asks you first.",
+  "admin.computers.host.readOnlyNote":
+    "Folders are read-only. When a Bot needs to write, the desktop app asks you first.",
   "admin.computers.host.stopAccess": "Stop folder access",
   "admin.computers.host.stopping": "Stopping…",
   "admin.computers.host.viewAudit": "View audit",
@@ -1806,37 +1866,53 @@ export const EN = {
   "admin.computers.host.revoking": "Revoking…",
   "admin.computers.host.pendingFrom": "{label} from {owner}.",
   "admin.computers.host.pendingFromFor": "{label} from {owner} for {name}.",
-  "admin.computers.host.folders": { one: "{count} read-only folder", other: "{count} read-only folders" },
-  "admin.computers.host.requests": { one: "{count} pending request", other: "{count} pending requests" },
+  "admin.computers.host.folders": {
+    one: "{count} read-only folder",
+    other: "{count} read-only folders",
+  },
+  "admin.computers.host.requests": {
+    one: "{count} pending request",
+    other: "{count} pending requests",
+  },
   "admin.computers.host.none": "No folders approved.",
   "admin.computers.host.owner": "the desktop owner",
-  "admin.computers.host.p.write": "File change waiting for approval or to finish",
+  "admin.computers.host.p.write":
+    "File change waiting for approval or to finish",
   "admin.computers.host.p.run": "Command waiting for approval or to finish",
   "admin.computers.host.p.list": "Listing files",
   "admin.computers.host.p.read": "Reading a file",
   "admin.computers.host.p.stop": "Stopping folder work",
   "admin.computers.host.p.default": "Folder access waiting for approval",
-  "admin.learning.description": "Learn from finished conversations, review the skills Intelligence proposes, and give published skills to Bots.",
-  "admin.learning.auto.assigned": "{product} assigned this Intelligence project's \"{container}\" container automatically. You can change it here.",
-  "admin.learning.auto.absent": "This Intelligence project has no \"{container}\" Learning container yet. Nothing is collected.",
-  "admin.learning.auto.notEntitled": "This Intelligence project's plan doesn't include Learning. No container was assigned.",
-  "admin.learning.auto.unavailable": "Couldn't reach Intelligence to find this project's Learning container. {product} will try again.",
+  "admin.learning.description":
+    "Learn from finished conversations, review the skills Intelligence proposes, and give published skills to Bots.",
+  "admin.learning.auto.assigned":
+    '{product} assigned this Intelligence project\'s "{container}" container automatically. You can change it here.',
+  "admin.learning.auto.absent":
+    'This Intelligence project has no "{container}" Learning container yet. Nothing is collected.',
+  "admin.learning.auto.notEntitled":
+    "This Intelligence project's plan doesn't include Learning. No container was assigned.",
+  "admin.learning.auto.unavailable":
+    "Couldn't reach Intelligence to find this project's Learning container. {product} will try again.",
   "admin.learning.target.container": "{label} container ID",
   "admin.learning.target.revision": "Exact revision (optional)",
   "admin.learning.target.revisionAria": "{label} revision",
   "admin.learning.target.latest": "Latest published",
   "admin.learning.create.busy": "Creating…",
   "admin.learning.create.button": "Create the {container} container",
-  "admin.learning.create.note": "Uses this deployment's credential, not the runtime key.",
+  "admin.learning.create.note":
+    "Uses this deployment's credential, not the runtime key.",
   "admin.learning.create.how": "To create it: ",
   "admin.learning.part.title": "Participation",
-  "admin.learning.part.description": "Container changes apply to new conversations. Existing ones keep their first container. Containers must already exist in the same Intelligence project. Until you save here, {product} uses that project's openbot container.",
+  "admin.learning.part.description":
+    "Container changes apply to new conversations. Existing ones keep their first container. Containers must already exist in the same Intelligence project. Until you save here, {product} uses that project's openbot container.",
   "admin.learning.part.loading": "Loading Learning settings…",
   "admin.learning.part.turnOn": "Turn on automatic learning and skill delivery",
   "admin.learning.part.default": "Default",
-  "admin.learning.part.hint": "With no default, Bots without their own container are left out. IDs are 1 to 64 lowercase letters, numbers and single hyphens. Leave revision empty to use the latest published skills.",
+  "admin.learning.part.hint":
+    "With no default, Bots without their own container are left out. IDs are 1 to 64 lowercase letters, numbers and single hyphens. Leave revision empty to use the latest published skills.",
   "admin.learning.part.perBot": "Per-Bot participation",
-  "admin.learning.part.botListError": "Couldn't load the Bot list. Saved settings for each Bot are below.",
+  "admin.learning.part.botListError":
+    "Couldn't load the Bot list. Saved settings for each Bot are below.",
   "admin.learning.part.botAria": "{name} participation",
   "admin.learning.part.inherit": "Use deployment default",
   "admin.learning.part.exclude": "Leave out of Learning",
@@ -1845,11 +1921,13 @@ export const EN = {
   "admin.learning.part.save": "Save Learning settings",
   "admin.learning.part.saved": "Settings saved.",
   "admin.learning.rev.title": "Review and publish",
-  "admin.learning.rev.description": "Intelligence studies finished conversations and proposes skills. Review and publish them in Intelligence. Bots only use published skills.",
+  "admin.learning.rev.description":
+    "Intelligence studies finished conversations and proposes skills. Review and publish them in Intelligence. Bots only use published skills.",
   "admin.learning.rev.showFor": "Show the container for",
   "admin.learning.rev.default": "Deployment default",
   "admin.learning.rev.checking": "Checking Intelligence…",
-  "admin.learning.rev.invalid": "The selected container or its instrumentation isn't available.",
+  "admin.learning.rev.invalid":
+    "The selected container or its instrumentation isn't available.",
   "admin.learning.rev.selection": "Choose a Bot, or set a default container.",
   "admin.learning.rev.none": "No Learning container is assigned.",
   "admin.learning.rev.threads": "Threads ready",
@@ -1865,13 +1943,16 @@ export const EN = {
   "admin.learning.del.title": "Skill delivery",
   "admin.learning.del.checking": "Checking delivery…",
   "admin.learning.del.off": "Delivery is off for this Bot.",
-  "admin.learning.del.waiting": "Waiting for the first verified skill snapshot.",
-  "admin.learning.del.stale": "Using the last verified snapshot. A refresh is pending.",
+  "admin.learning.del.waiting":
+    "Waiting for the first verified skill snapshot.",
+  "admin.learning.del.stale":
+    "Using the last verified snapshot. A refresh is pending.",
   "admin.learning.del.ok": "A verified snapshot is available.",
   "admin.learning.del.revision": "Loaded revision: {revision}",
   "admin.learning.del.lastChecked": "Last checked:",
   "admin.learning.rev.refresh": "Refresh status",
-  "admin.learning.rev.footer": "Managing Learning needs your Intelligence account and project access. {product} keeps project credentials on the server. Turning Learning off here keeps settings and conversation assignments. Schedules and publishing stay in Intelligence.",
+  "admin.learning.rev.footer":
+    "Managing Learning needs your Intelligence account and project access. {product} keeps project credentials on the server. Turning Learning off here keeps settings and conversation assignments. Schedules and publishing stay in Intelligence.",
   "admin.playground.validJson": "{label} must be valid JSON: {reason}",
   "admin.playground.invalidJson": "invalid JSON",
   "admin.playground.notObject": "{label} must be a JSON object, not {kind}.",
@@ -1880,41 +1961,50 @@ export const EN = {
   "admin.playground.fixBeforeSave": "Fix the JSON fields before saving.",
   "admin.playground.draftSaved": "Draft saved.",
   "admin.playground.published": "Published.",
-  "admin.playground.description": "Write a component and publish it without redeploying. Your edits are a draft. Conversations only show what is published.",
+  "admin.playground.description":
+    "Write a component and publish it without redeploying. Your edits are a draft. Conversations only show what is published.",
   "admin.playground.saveDraft": "Save draft",
   "admin.playground.publish": "Publish",
   "admin.playground.title": "Title",
   "admin.playground.titlePlaceholder": "Refund card",
   "admin.playground.told": "What the model is told about it",
-  "admin.playground.toldPlaceholder": "Show a refund with its amount, reason and status.",
+  "admin.playground.toldPlaceholder":
+    "Show a refund with its amount, reason and status.",
   "admin.playground.preview": "Preview",
   "admin.playground.noSample": "The sample arguments aren't available.",
   "admin.playground.fixBeforePreview": "Fix the JSON fields before previewing.",
   "admin.playground.saved.title": "Saved here",
-  "admin.playground.saved.empty": "Nothing saved yet. Save a draft to see it here.",
+  "admin.playground.saved.empty":
+    "Nothing saved yet. Save a draft to see it here.",
   "admin.playground.saved.published": "published, revision {revision}",
   "admin.playground.saved.draftOnly": "draft only, no Bot can draw it",
   "admin.playground.saved.edited": "edited since publishing",
   "admin.playground.open": "Open",
   "admin.playground.delete": "Delete",
-  "admin.playground.saved.note": "Publishing makes it available to every Bot. Turn it off for one Bot on the UI components page.",
+  "admin.playground.saved.note":
+    "Publishing makes it available to every Bot. Turn it off for one Bot on the UI components page.",
   "admin.playground.del.title": "Delete {name}?",
-  "admin.playground.del.description": "It's removed from this deployment, and no Bot can draw it. You can't undo this.",
+  "admin.playground.del.description":
+    "It's removed from this deployment, and no Bot can draw it. You can't undo this.",
   "admin.playground.del.confirm": "Delete it",
   "admin.skills.write": "Write a skill",
-  "admin.skills.description": "Named instructions anybody can run with /. A skill adds no access. It can only ask a Bot to use what it already has.",
+  "admin.skills.description":
+    "Named instructions anybody can run with /. A skill adds no access. It can only ask a Bot to use what it already has.",
   "admin.skills.installed.title": "Installed",
-  "admin.skills.installed.description": "For everybody in this deployment. People write their own on their Skills page.",
+  "admin.skills.installed.description":
+    "For everybody in this deployment. People write their own on their Skills page.",
   "admin.skills.loadError": "Couldn't load skills. Reload the page.",
   "admin.skills.empty": "No skills yet. Write one with Write a skill.",
   "admin.skills.dlg.title": "Write a skill for everybody",
-  "admin.skills.dlg.description": "People type the slug after /. The Bot then follows the instructions. Everybody can use it, and you choose which Bots have it.",
+  "admin.skills.dlg.description":
+    "People type the slug after /. The Bot then follows the instructions. Everybody can use it, and you choose which Bots have it.",
   "admin.skills.slug": "Slug",
   "admin.skills.title": "Title",
   "admin.skills.summary": "Summary",
   "admin.skills.summaryPlaceholder": "One line",
   "admin.skills.instructions": "Instructions",
-  "admin.skills.instructionsPlaceholder": "What the Bot should do when this skill is used.",
+  "admin.skills.instructionsPlaceholder":
+    "What the Bot should do when this skill is used.",
   "admin.skills.install": "Install skill",
   // stage-2j end
 } satisfies Entries;
