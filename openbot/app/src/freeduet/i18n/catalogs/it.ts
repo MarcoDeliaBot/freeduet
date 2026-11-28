@@ -1618,4 +1618,178 @@ export const it: Catalog<typeof EN> = {
   "admin.enterprise.netd.remove": "Rimuovi la policy",
   "admin.enterprise.days.label": "Giorni senza uso",
   "admin.enterprise.days.help": "0 la disattiva. Controllo ogni ora.",
+  "admin.plugins.title": "Plugin",
+  "admin.plugins.description":
+    "Cosa può raggiungere questa installazione e quali assistenti possono usarlo. Un plugin che aggiungi è per tutti. Scegli quali assistenti ricevono i suoi strumenti nella sua pagina.",
+  "admin.plugins.loadError":
+    "Non sono riuscito a caricare i plugin. Ricarica la pagina.",
+  "admin.plugins.connected.description":
+    "Aggiunti per tutti. Aprine uno per configurarlo e scegliere quali assistenti ricevono i suoi strumenti.",
+  "admin.plugins.connected.title": "Collegati",
+  "admin.plugins.connected.empty":
+    "Ancora niente di collegato. Scegline uno dall'elenco qui sotto.",
+  "admin.plugins.explore.description":
+    "Server ufficiali e verificati. Aprine uno per aggiungerlo.",
+  "admin.plugins.explore.title": "Scopri i plugin",
+  "admin.plugins.explore.empty": "Ogni plugin del catalogo è collegato.",
+  "admin.plugins.notAdded": "Non aggiunto",
+  "admin.plugins.more.title": "Altre app",
+  "admin.plugins.sum.notConnected": "Non collegato",
+  "admin.plugins.sum.noTools": "Ancora nessuno strumento",
+  "admin.plugins.sum.tools": {
+    one: "{count} strumento",
+    other: "{count} strumenti",
+  },
+  "admin.plugins.sum.toolsNoBots": "{tools} · nessun assistente",
+  "admin.plugins.sum.toolsBots": "{tools} · {bots}",
+  "admin.plugins.sum.bots": {
+    one: "{count} assistente",
+    other: "{count} assistenti",
+  },
+  "admin.plugins.requests": {
+    one: "{count} richiesta",
+    other: "{count} richieste",
+  },
+  "admin.plugins.key.grant.none": "Nessun assistente",
+  "admin.plugins.key.grant.one": "1 assistente",
+  "admin.plugins.key.grant.all": "Tutti gli assistenti",
+  "admin.plugins.key.grant.some": "{held} di {total} assistenti",
+  "admin.plugins.key.held.none": "Nessuno strumento",
+  "admin.plugins.key.held.one": "1 strumento",
+  "admin.plugins.key.held.all": "Ogni strumento",
+  "admin.plugins.key.held.some": "{held} di {total} strumenti",
+  "admin.plugins.key.notApproved": "Non approvato",
+  "admin.plugins.key.unreadableTitle": "Il tuo account",
+  "admin.plugins.key.unreadable":
+    "Non sono riuscito a caricare se hai collegato un account qui. Ricarica la pagina o controlla i log di questa installazione se continua.",
+  "admin.plugins.key.noConsent":
+    "{product} non ha ricevuto nessun link di consenso, quindi non è stato collegato nulla. Riprova o controlla la configurazione di questo connettore se continua.",
+  "admin.plugins.key.reassurance":
+    "La configurazione è completa anche senza, e raggiunge solo i tuoi documenti.",
+  "admin.plugins.key.pluginTitle": "Plugin",
+  "admin.plugins.key.notPlugin.description":
+    "Non esiste nessun plugin con quel nome, né qui né nel catalogo.",
+  "admin.plugins.key.notPlugin.title": "Non è un plugin",
+  "admin.plugins.key.notPlugin.empty": "Niente da configurare.",
+  "admin.plugins.key.enable.title": "Attiva per questa installazione",
+  "admin.plugins.key.enable.on":
+    "Gli assistenti possono ricevere i suoi strumenti. Disattivandolo lo rimuovi, insieme all'accesso di ogni assistente ai suoi strumenti.",
+  "admin.plugins.key.enable.off":
+    "Nessun assistente può raggiungere questo fornitore. Attivalo per configurarlo e dare agli assistenti i suoi strumenti.",
+  "admin.plugins.key.enable.aria": "Attiva {title} per questa installazione",
+  "admin.plugins.key.whose.title": "Di chi è l'account",
+  "admin.plugins.key.whose.shared": "Un solo account condiviso per tutti.",
+  "admin.plugins.key.whose.personal": "Ognuno collega il proprio.",
+  "admin.plugins.key.whose.makePersonal": "Rendilo personale",
+  "admin.plugins.key.whose.makeShared": "Rendilo condiviso",
+  "admin.plugins.key.conn.oauth":
+    "Questo fornitore risponde come chi chiede. L'installazione registra un client OAuth e ogni persona collega il proprio account. Un assistente vede solo ciò che vede quella persona.",
+  "admin.plugins.key.conn.secret":
+    "Questo fornitore risponde come chi chiede. Ogni persona incolla la propria password per le app nella propria pagina Connessioni. Qui non c'è nulla da registrare e l'installazione non conserva nessuna password propria.",
+  "admin.plugins.key.conn.builtin":
+    "Integrato in questa installazione. Non c'è nessun fornitore da raggiungere e nessuna credenziale da conservare. Una chiamata viene eseguita come chi l'ha richiesta.",
+  "admin.plugins.key.conn.bearer":
+    "Ciò che questa installazione invia al fornitore. Una sola credenziale per tutti.",
+  "admin.plugins.key.conn.title": "Connessione",
+  "admin.plugins.key.builtin.desc":
+    "Niente da configurare. Questi strumenti girano dentro questa installazione, sui suoi dati.",
+  "admin.plugins.key.builtin.badge": "Integrato",
+  "admin.plugins.key.secret.title": "Password per le app",
+  "admin.plugins.key.secret.desc":
+    "Ognuno crea la propria su Google e la incolla nella propria pagina Connessioni. Raggiunge tutta la sua casella di posta, quindi ciò che gli assistenti possono fare lo decidono gli strumenti che concedi qui sotto.",
+  "admin.plugins.key.secret.badge": "Per persona",
+  "admin.plugins.key.reach.title": "Come viene raggiunto",
+  "admin.plugins.key.token.title": "Token di accesso",
+  "admin.plugins.key.token.desc": "Inviato a ogni chiamata a questo fornitore.",
+  "admin.plugins.key.saved": "Salvato",
+  "admin.plugins.key.notSet": "Non impostato",
+  "admin.plugins.key.client.title": "Client OAuth",
+  "admin.plugins.key.client.selfDesc":
+    "Questa installazione si registra da sola presso il fornitore al primo collegamento. Non c'è nulla da incollare.",
+  "admin.plugins.key.client.selfBadge": "Autoregistrato",
+  "admin.plugins.key.client.desc":
+    "Identifica questa installazione presso il fornitore. Da solo non può raggiungere i documenti di nessuno.",
+  "admin.plugins.key.client.registered": "Registrato",
+  "admin.plugins.key.client.notRegistered": "Non registrato",
+  "admin.plugins.key.team.connected":
+    "Collegato{who}. Ogni assistente con questi strumenti agisce come questo account.",
+  "admin.plugins.key.team.as": " come {name}",
+  "admin.plugins.key.team.by": " da {name}",
+  "admin.plugins.key.team.disconnected":
+    "Nessun account del team è collegato. Gli assistenti con questi strumenti vengono rifiutati.",
+  "admin.plugins.key.team.heading": "Account del team",
+  "admin.plugins.key.team.notice":
+    "Accedi come account del team, non con il tuo.",
+  "admin.plugins.key.mine.connected":
+    "Collegato. Un assistente con questi strumenti usa il tuo {title} come te. {note}",
+  "admin.plugins.key.mine.tryConnect":
+    "Collega il tuo account per provare questo connettore. {note}",
+  "admin.plugins.key.oauthAcct.connected":
+    "Collegato. Un assistente con questi strumenti usa il tuo {title} come te. Tutti gli altri collegano il proprio.",
+  "admin.plugins.key.oauthAcct.connect":
+    "Collega il tuo account per provare questo connettore. La configurazione è completa anche senza, e raggiunge solo i tuoi documenti.",
+  "admin.plugins.key.connected": "Collegato",
+  "admin.plugins.key.connect": "Collega",
+  "admin.plugins.key.instance.title": "Host dell'istanza",
+  "admin.plugins.key.instance.desc":
+    "Questo fornitore dà a ogni cliente un proprio nome host. Viene controllato rispetto al modello del fornitore prima di essere salvato.",
+  "admin.plugins.key.docs.builtin": "Documentazione",
+  "admin.plugins.key.docs.vendor": "Documentazione del fornitore",
+  "admin.plugins.key.docs.builtinDesc":
+    "Cosa offrono questi strumenti, da chi li mantiene.",
+  "admin.plugins.key.docs.vendorDesc":
+    "Cosa offre questo server, da chi lo mantiene.",
+  "admin.plugins.key.redirect.dynamic":
+    "L'installazione registra da sola il proprio URI di reindirizzamento. Non c'è nulla da aggiungere presso il fornitore.",
+  "admin.plugins.key.redirect.manual":
+    "Aggiungilo agli URI di reindirizzamento autorizzati del client presso il fornitore, esattamente come scritto. Un carattere sbagliato fa fallire lì, con un errore che non nomina {product}.",
+  "admin.plugins.key.redirect.noUrl":
+    "Questa installazione non ha un URL pubblico, quindi nessuno può completare il collegamento. Imposta {env}.",
+  "admin.plugins.key.tools.refresh": "Aggiorna gli strumenti",
+  "admin.plugins.key.tools.grant": "Concedi strumenti…",
+  "admin.plugins.key.tools.description":
+    "Un assistente vede solo gli strumenti che gli sono stati concessi. Ogni chiamata viene controllata quando avviene, quindi togliere l'accesso vale dalla chiamata successiva.",
+  "admin.plugins.key.tools.title": "Strumenti",
+  "admin.plugins.key.tools.empty":
+    "Nessuno strumento in elenco. Aggiorna gli strumenti per ricontrollare.",
+  "admin.plugins.key.tools.writes": "apporta modifiche",
+  "admin.plugins.key.tools.reads": "legge",
+  "admin.plugins.key.byBot": "Per assistente",
+  "admin.plugins.key.byBot.hidden":
+    "Nascosto dal tuo elenco. Attiva o disattiva una per una le azioni di questa app.",
+  "admin.plugins.key.byBot.shown":
+    "Attiva o disattiva una per una le azioni di questa app.",
+  "admin.plugins.key.gone.description":
+    "Questo fornitore non li elenca più. Nessun assistente li vede e nessuno può chiamarli. L'accesso è ancora salvato e torna se il fornitore elenca di nuovo lo strumento. Per rimuoverlo, usa la pagina dell'assistente.",
+  "admin.plugins.key.gone.title": "Concessi ma non più elencati",
+  "admin.plugins.key.gone.row": "Non elencato da {title}{asOf}.",
+  "admin.plugins.key.gone.asOf": " all'ultimo aggiornamento",
+  "admin.plugins.key.dlg.client": "Client OAuth per {title}",
+  "admin.plugins.key.dlg.instance": "Host dell'istanza per {title}",
+  "admin.plugins.key.dlg.token": "Token di accesso per {title}",
+  "admin.plugins.key.dlg.clientDesc":
+    "Dalla console del fornitore. Il segreto viene salvato nel vault di questa installazione e non viene mostrato più.",
+  "admin.plugins.key.dlg.instanceDesc":
+    "Il tuo nome host presso questo fornitore. Viene controllato rispetto al modello del fornitore prima di essere salvato.",
+  "admin.plugins.key.dlg.tokenDesc":
+    "Salvato nel vault di questa installazione e non mostrato più.",
+  "admin.plugins.key.dlg.clientId": "ID client",
+  "admin.plugins.key.dlg.clientSecret": "Segreto del client",
+  "admin.plugins.key.gr.title": "Concedi strumenti",
+  "admin.plugins.key.gr.description":
+    "Ogni concessione è una riga a sé in Audit. Gli strumenti che apportano modifiche vengono comunque controllati rispetto ai limiti a ogni chiamata.",
+  "admin.plugins.key.gr.to": "A",
+  "admin.plugins.key.gr.reads": "Legge",
+  "admin.plugins.key.gr.writes": "Apporta modifiche",
+  "admin.plugins.key.gr.selectAll": "Seleziona tutti",
+  "admin.plugins.key.gr.button": "Concedi",
+  "admin.plugins.key.gr.progress": "Concessione {current} di {total}…",
+  "admin.plugins.key.gr.summary": {
+    one: "Concedi {count} strumento a {names}.",
+    other: "Concedi {count} strumenti a {names}.",
+  },
+  "admin.plugins.key.gr.changing": {
+    one: "{count} apporta modifiche.",
+    other: "{count} apportano modifiche.",
+  },
 };

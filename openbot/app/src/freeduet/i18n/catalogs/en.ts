@@ -1552,6 +1552,172 @@ export const EN = {
   "admin.enterprise.netd.remove": "Remove policy",
   "admin.enterprise.days.label": "Days without use",
   "admin.enterprise.days.help": "0 turns it off. Checked hourly.",
+  "admin.plugins.title": "Plugins",
+  "admin.plugins.description":
+    "What this deployment can reach, and which Bots can use it. A plugin you add is for everybody. Choose which Bots get its tools on its page.",
+  "admin.plugins.loadError": "Couldn't load plugins. Reload the page.",
+  "admin.plugins.connected.description":
+    "Added for everybody. Open one to set it up and choose which Bots get its tools.",
+  "admin.plugins.connected.title": "Connected",
+  "admin.plugins.connected.empty":
+    "Nothing connected yet. Pick one from the list below.",
+  "admin.plugins.explore.description":
+    "Reviewed, first-party servers. Open one to add it.",
+  "admin.plugins.explore.title": "Explore plugins",
+  "admin.plugins.explore.empty": "Every plugin in the catalogue is connected.",
+  "admin.plugins.notAdded": "Not added",
+  "admin.plugins.more.title": "More apps",
+  "admin.plugins.sum.notConnected": "Not connected",
+  "admin.plugins.sum.noTools": "No tools yet",
+  "admin.plugins.sum.tools": { one: "{count} tool", other: "{count} tools" },
+  "admin.plugins.sum.toolsNoBots": "{tools} · no Bots",
+  "admin.plugins.sum.toolsBots": "{tools} · {bots}",
+  "admin.plugins.sum.bots": { one: "{count} Bot", other: "{count} Bots" },
+  "admin.plugins.requests": {
+    one: "{count} request",
+    other: "{count} requests",
+  },
+  "admin.plugins.key.grant.none": "No Bots",
+  "admin.plugins.key.grant.one": "1 Bot",
+  "admin.plugins.key.grant.all": "All Bots",
+  "admin.plugins.key.grant.some": "{held} of {total} Bots",
+  "admin.plugins.key.held.none": "No tools",
+  "admin.plugins.key.held.one": "1 tool",
+  "admin.plugins.key.held.all": "Every tool",
+  "admin.plugins.key.held.some": "{held} of {total} tools",
+  "admin.plugins.key.notApproved": "Not approved",
+  "admin.plugins.key.unreadableTitle": "Your account",
+  "admin.plugins.key.unreadable":
+    "Couldn't load whether you've connected an account here. Reload the page, or check this deployment's logs if it keeps happening.",
+  "admin.plugins.key.noConsent":
+    "{product} got no consent link back, so nothing was connected. Try again, or check this connector's setup if it keeps happening.",
+  "admin.plugins.key.reassurance":
+    "Setup is complete without it, and it reaches your documents only.",
+  "admin.plugins.key.pluginTitle": "Plugin",
+  "admin.plugins.key.notPlugin.description":
+    "There is no plugin with that name, here or in the catalogue.",
+  "admin.plugins.key.notPlugin.title": "Not a plugin",
+  "admin.plugins.key.notPlugin.empty": "Nothing to configure.",
+  "admin.plugins.key.enable.title": "Enable for this deployment",
+  "admin.plugins.key.enable.on":
+    "Bots can be given its tools. Turning this off removes it and every Bot's access to its tools.",
+  "admin.plugins.key.enable.off":
+    "No Bot can reach this vendor. Turn it on to set it up and give Bots its tools.",
+  "admin.plugins.key.enable.aria": "Enable {title} for this deployment",
+  "admin.plugins.key.whose.title": "Whose account",
+  "admin.plugins.key.whose.shared": "One shared account for everyone.",
+  "admin.plugins.key.whose.personal": "Each person connects their own.",
+  "admin.plugins.key.whose.makePersonal": "Make personal",
+  "admin.plugins.key.whose.makeShared": "Make shared",
+  "admin.plugins.key.conn.oauth":
+    "This vendor answers as whoever is asking. The deployment registers an OAuth client, and each person connects their own account. A Bot only sees what that person can see.",
+  "admin.plugins.key.conn.secret":
+    "This vendor answers as whoever is asking. Each person pastes their own app password on their Connections page. There is nothing to register here, and the deployment keeps no password of its own.",
+  "admin.plugins.key.conn.builtin":
+    "Built into this deployment. There is no vendor to reach and no credential to keep. A call runs as whoever asked.",
+  "admin.plugins.key.conn.bearer":
+    "What this deployment sends to the vendor. One credential for everybody.",
+  "admin.plugins.key.conn.title": "Connection",
+  "admin.plugins.key.builtin.desc":
+    "Nothing to set up. These tools run inside this deployment, on its own data.",
+  "admin.plugins.key.builtin.badge": "Built in",
+  "admin.plugins.key.secret.title": "App password",
+  "admin.plugins.key.secret.desc":
+    "Each person makes their own at Google and pastes it on their Connections page. It reaches their whole mailbox, so what Bots may do is decided by the tools you grant below.",
+  "admin.plugins.key.secret.badge": "Per person",
+  "admin.plugins.key.reach.title": "How this is reached",
+  "admin.plugins.key.token.title": "Access token",
+  "admin.plugins.key.token.desc": "Sent with every call to this vendor.",
+  "admin.plugins.key.saved": "Saved",
+  "admin.plugins.key.notSet": "Not set",
+  "admin.plugins.key.client.title": "OAuth client",
+  "admin.plugins.key.client.selfDesc":
+    "This deployment registers itself with the vendor on first connect. There is nothing to paste.",
+  "admin.plugins.key.client.selfBadge": "Self-registered",
+  "admin.plugins.key.client.desc":
+    "Identifies this deployment to the vendor. On its own, it can't reach anyone's documents.",
+  "admin.plugins.key.client.registered": "Registered",
+  "admin.plugins.key.client.notRegistered": "Not registered",
+  "admin.plugins.key.team.connected":
+    "Connected{who}. Every Bot with these tools acts as this account.",
+  "admin.plugins.key.team.as": " as {name}",
+  "admin.plugins.key.team.by": " by {name}",
+  "admin.plugins.key.team.disconnected":
+    "No team account is connected. Bots with these tools are refused.",
+  "admin.plugins.key.team.heading": "Team account",
+  "admin.plugins.key.team.notice": "Sign in as the team account, not your own.",
+  "admin.plugins.key.mine.connected":
+    "Connected. A Bot with these tools uses your {title} as you. {note}",
+  "admin.plugins.key.mine.tryConnect":
+    "Connect your own account to try this connector. {note}",
+  "admin.plugins.key.oauthAcct.connected":
+    "Connected. A Bot with these tools uses your {title} as you. Everybody else connects their own.",
+  "admin.plugins.key.oauthAcct.connect":
+    "Connect your own account to try this connector. Setup is complete without it, and it reaches your documents only.",
+  "admin.plugins.key.connected": "Connected",
+  "admin.plugins.key.connect": "Connect",
+  "admin.plugins.key.instance.title": "Instance host",
+  "admin.plugins.key.instance.desc":
+    "This vendor gives every customer their own hostname. It is checked against the vendor's pattern before it is saved.",
+  "admin.plugins.key.docs.builtin": "Documentation",
+  "admin.plugins.key.docs.vendor": "Vendor documentation",
+  "admin.plugins.key.docs.builtinDesc":
+    "What these tools offer, from the people who maintain them.",
+  "admin.plugins.key.docs.vendorDesc":
+    "What this server offers, from the people who maintain it.",
+  "admin.plugins.key.redirect.dynamic":
+    "The deployment registers its redirect URI itself. There is nothing to add at the vendor.",
+  "admin.plugins.key.redirect.manual":
+    "Add this to the client's authorised redirect URIs at the vendor, exactly as written. One wrong character fails there, with an error that doesn't mention {product}.",
+  "admin.plugins.key.redirect.noUrl":
+    "This deployment has no public URL, so nobody can finish connecting. Set {env}.",
+  "admin.plugins.key.tools.refresh": "Refresh tools",
+  "admin.plugins.key.tools.grant": "Grant tools…",
+  "admin.plugins.key.tools.description":
+    "A Bot only sees the tools it has been given. Each call is checked when it happens, so removing access applies from the next call.",
+  "admin.plugins.key.tools.title": "Tools",
+  "admin.plugins.key.tools.empty":
+    "No tools listed. Refresh tools to check again.",
+  "admin.plugins.key.tools.writes": "changes things",
+  "admin.plugins.key.tools.reads": "reads",
+  "admin.plugins.key.byBot": "By Bot",
+  "admin.plugins.key.byBot.hidden":
+    "Hidden from your roster. Turn this app's actions on or off one at a time.",
+  "admin.plugins.key.byBot.shown":
+    "Turn this app's actions on or off one at a time.",
+  "admin.plugins.key.gone.description":
+    "This vendor no longer lists these. No Bot sees them, and none can call them. The access is still saved, and comes back if the vendor lists the tool again. To remove it, use the Bot's own page.",
+  "admin.plugins.key.gone.title": "Given but no longer listed",
+  "admin.plugins.key.gone.row": "Not listed by {title}{asOf}.",
+  "admin.plugins.key.gone.asOf": " as of the last refresh",
+  "admin.plugins.key.dlg.client": "OAuth client for {title}",
+  "admin.plugins.key.dlg.instance": "Instance host for {title}",
+  "admin.plugins.key.dlg.token": "Access token for {title}",
+  "admin.plugins.key.dlg.clientDesc":
+    "From the vendor's console. The secret is saved in this deployment's vault and never shown again.",
+  "admin.plugins.key.dlg.instanceDesc":
+    "Your own hostname with this vendor. It is checked against the vendor's pattern before it is saved.",
+  "admin.plugins.key.dlg.tokenDesc":
+    "Saved in this deployment's vault and never shown again.",
+  "admin.plugins.key.dlg.clientId": "Client ID",
+  "admin.plugins.key.dlg.clientSecret": "Client secret",
+  "admin.plugins.key.gr.title": "Grant tools",
+  "admin.plugins.key.gr.description":
+    "Each grant is its own row in Audit. Tools that change things are still checked against the boundaries on every call.",
+  "admin.plugins.key.gr.to": "To",
+  "admin.plugins.key.gr.reads": "Reads",
+  "admin.plugins.key.gr.writes": "Changes things",
+  "admin.plugins.key.gr.selectAll": "Select all",
+  "admin.plugins.key.gr.button": "Grant",
+  "admin.plugins.key.gr.progress": "Granting {current} of {total}…",
+  "admin.plugins.key.gr.summary": {
+    one: "Grant {count} tool to {names}.",
+    other: "Grant {count} tools to {names}.",
+  },
+  "admin.plugins.key.gr.changing": {
+    one: "{count} changes things.",
+    other: "{count} change things.",
+  },
 } satisfies Entries;
 
 export type MessageId = keyof typeof EN;
