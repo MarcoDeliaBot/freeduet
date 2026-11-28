@@ -2992,3 +2992,38 @@ The retry's last line says that the member wrote that <colleague> has the work, 
 **Also answered, no new number.** The engine order: subscription logins first by default, and the person can always change a member's order (D115, his words "ok, ma l'ordine deve sempre potersi cambiare"). Native-speaker review of the site: a double review by AI first, then a request for volunteers on GitHub (row 122, decided before). The light-turn budget test branch gets its pull request (his yes). PR #514 (/app/ redirect) is merged on his yes. Waiting for him: the Dependabot choice (accept until Expo 58, or update now, explained on 28 November), the n8n move (his specifications), and the "Continue with Google" check (a reminder is scheduled for the evening).
 
 **Order.** D192 and D188 (app part) were already started; then D194, D196, D187 with the next translation round, D189, D190, D191, D193, D197, D199, D200, D195, D202; D198 after v0.3. Each gets its own section when it is built.
+
+## 144. The files of each colleague, in the app (D194)
+
+**Why.** On 28 November 2026 the maintainer said: "devi darmi modo di raggiungere la cartella /workspace/out/". A member had told him to fetch files from `/workspace/out` in its own computer, which he cannot reach. D192 makes builders offer every finished file; D194 gives the person a durable way besides the card: a read-only Files panel per member.
+
+**Built so far.**
+
+- **The computer lists the folder.** `workspace.listFinished()` (`openbot/agent-computer/src/workspace.ts`) walks `out/` of the workspace and answers `{ files: [{ path, name, bytes, modifiedMs }], truncated }`, newest first. `POST /files/finished` in `openbot/agent-computer/src/index.ts` serves it. A missing `out/` is an empty list.
+- **The server asks through the gateway.** `gateway.listFinishedFiles` (`openbot/server/src/computer/gateway.ts`) is decided and audited as `computer_download_file` (action `download_file`) on the path `out`. No new intent: a rule that keeps downloads out keeps the list out, never the reverse. The route is `GET /api/computers/:botId/files/finished` (`openbot/server/src/computer/routes.ts`); it filters once more every path that is not under `out/`, holds `..` or a hidden part, answers `cache-control: private, no-store`, and returns names, sizes and times, never content.
+- **Who may list.** The same check as the download: the `/:botId/*` middleware of `routes.ts` (`canUseBot`), which `app.ts` builds as `computerAccessCheck` (`openbot/server/src/agents/computer-access.ts`, `canUseComputer`): an administrator, the owner, or anyone for a public member; anyone else gets the answer a member that does not exist gets (404). Then the gateway's policy decision. Nothing weaker was added.
+- **The app.** `openbot/app/src/freeduet/member-files-panel.tsx`: name, size, change time and Download for each file, an empty state ("Finished work appears here when {name} saves it to its out folder"), a Refresh, and a line when the list was capped. Download reuses the file card's way (`GET /api/computers/:botId/files/download`, the bytes read as a blob and saved, never opened in the app's origin). It is the page `/bots/$agentId/files`, reached from a Files row in the member's profile and a Files button in the header of a thread with that member (`channel-screen.tsx`). From the work card: not now (it waits for the mirror, row 153). Words: keys `files.*` in `en.ts` and `it.ts`, the other ten catalogues empty (they read English).
+
+**Path rules, and where each is tested.**
+
+| Rule | Where it holds | Test |
+|---|---|---|
+| Only `out/` and below; the folder is resolved with `realpath` and must stay in the workspace; an `out` that is a link out is refused | `workspace.ts` `listFinished` | `agent-computer/tests/workspace-finished.test.ts` ("refuses an out folder that is itself a link") |
+| Links inside the folder are never followed (a link to a file or a folder is left out) | same | same ("never follows a link out of the folder") |
+| Hidden files and folders are left out | same, and again in the route | same; `server/tests/computer-finished-files-routes.test.ts` |
+| At most 500 entries (`listEntries`), `truncated` says so | same | same ("stops at the cap", "the default cap is 500") |
+| No `..`, no absolute path, nothing outside `out/` comes from the client | The listing takes no path from the client at all; the route drops any returned path that is not under `out/` | `computer-finished-files-routes.test.ts` |
+| Who may list | `/:botId/*` middleware | same file (owner, administrator, public member allowed; a stranger gets 404 and the gateway is not asked) |
+| Same decision and audit as a download | gateway | `server/tests/computer-gateway.test.ts` ("the finished-work listing"): audited as `computer_download_file`, refused by a download rule or an absent policy, and the computer is not asked |
+| The panel offers Download only for `out/` paths | `isFinishedPath` | `app/tests/freeduet-member-files.test.tsx` |
+
+The download route keeps its own rules unchanged (it can still be asked for any workspace path by a person who may download, as before).
+
+**Every "never" and "only" checked.** "No new intent" is true: `COMPUTER_ACTING_TOOLS` is unchanged. "Never content": `listFinished` calls `readdir` and `lstat` only. "Never follows links": a `Dirent` that is a link is neither a file nor a folder, so it is skipped; `out` itself is checked with `lstat` and `realpath`. "Only `out/`": `listFinished` reads nothing else; the route filter is a second line, not the first. The listing is not a download: it is decided as one but moves no bytes.
+
+**Limits.** The list is flat across subfolders (path shown by name only), depth 8, newest first among the first 500 found (when more exist, the newest of the rest may be missing and the panel says more is not shown). A rule written against `file.path` of a download (for example `out/secret/`) does not match the listing's path `out`, so the listing can show a name the download would then refuse. The panel shows only what the computer has on disk now; a computer that is switched off or not started answers with the gateway's own sentence. No preview and no delete.
+
+**Off switch.** `cloudComputer` off, or a computer policy that refuses `download_file`, hides the list as well as the download. No new setting.
+
+**Not verified.** Not run live on a real computer with a real member's `out/`. The panel's look is built on the D154/D174 light tokens and has had no preview (it goes with the next app preview). Italian wording is not read by a native speaker. The server suite is reported in the pull request. Needs an independent security review before the merge.
+
