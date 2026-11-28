@@ -169,3 +169,87 @@ a.fd-ws-card:focus-visible {
     animation: none;
   }
 }
+
+/* D188: the "Working now" strip above the message box, and the waiting ring on Iris's face. Same tokens as the card. */
+.fd-ws-strip {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 8px;
+  padding: 8px 12px;
+  border: 1px solid var(--w-line);
+  border-radius: 14px;
+  background: var(--w-card);
+  color: var(--w-ink);
+  font-size: 13px;
+  line-height: 18px;
+}
+.fd-ws-strip-none {
+  color: var(--w-ink2);
+}
+.fd-ws-strip-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  min-height: 36px;
+}
+.fd-ws-strip-row[data-state="stuck"] {
+  color: var(--w-stuck);
+}
+.fd-ws-strip-face {
+  position: relative;
+  display: inline-grid;
+  flex: none;
+  width: 28px;
+  height: 28px;
+  margin: 0 6px;
+}
+.fd-ws-strip-text {
+  flex: 1;
+  min-width: 0;
+}
+.fd-ws-strip-name {
+  font-weight: 600;
+}
+.fd-ws-strip-sub {
+  display: block;
+  color: var(--w-ink2);
+  font-size: 12px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.fd-ws-fill {
+  --r-gap: 5px;
+  position: absolute;
+  inset: calc(var(--r-gap) * -1);
+  width: calc(100% + var(--r-gap) * 2);
+  height: calc(100% + var(--r-gap) * 2);
+  pointer-events: none;
+  transform: rotate(-90deg);
+}
+.fd-ws-fill circle {
+  fill: none;
+  stroke-width: 2;
+}
+.fd-ws-fill .fd-ws-fill-track {
+  stroke: var(--w-line);
+}
+.fd-ws-fill .fd-ws-fill-arc {
+  stroke: #6430ab;
+  stroke-linecap: round;
+  transition: stroke-dashoffset 0.6s ease-out;
+}
+.fd-ws-fill[data-state="stuck"] .fd-ws-fill-arc {
+  stroke: #c8402a;
+}
+@media (prefers-reduced-motion: reduce) {
+  .fd-ws-fill .fd-ws-fill-arc {
+    transition: none;
+  }
+}
+/* With no conversation known (the team column) the ring sits outside Iris's own dot ring, so both stay readable. */
+.fd-ws-fill[data-scope="any"] {
+  --r-gap: 11px;
+}

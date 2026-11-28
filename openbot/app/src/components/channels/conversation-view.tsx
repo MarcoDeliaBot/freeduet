@@ -10,6 +10,8 @@ import {
   useState,
 } from "react";
 import { ChatTranscript } from "@/components/channels/chat-transcript";
+import { WorkingNowStrip } from "@/freeduet/work-status/work-strip";
+import { useActiveBotId } from "@/lib/copilot/active-bot";
 import {
   type AgentOption,
   type CommandOption,
@@ -144,6 +146,7 @@ export function ConversationView({
   folded?: boolean;
 }) {
   // D55: the width of the conversation on a wide screen; `off` below 1024 px and outside the frame.
+  const activeBotId = useActiveBotId();
   const wide = useWideBand() !== "off";
   /*
    * THE QUEUE LIVES HERE BECAUSE BOTH HALVES OF IT DO.
@@ -657,6 +660,8 @@ export function ConversationView({
           </p>
         ) : null}
         {notice}
+        {/* D188: who is working now, fixed above the message box. */}
+        <WorkingNowStrip botId={activeBotId} />
         <Composer
           agents={agents}
           autoFocus={autoFocus}
