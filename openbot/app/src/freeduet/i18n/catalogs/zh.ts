@@ -2283,7 +2283,7 @@ export const zh: Catalog<typeof EN> = {
   "engines.usage.measure": "指标",
   "engines.usage.perDay": "{title}：每天的{metric}",
   "engines.usage.perDayUtc": "{title}：每天的{metric}，UTC",
-  "engines.usage.day": "日",
+  "engines.usage.day": "日期",
   // connections-begin
   "connections.connect": "连接",
   "connections.reconnect": "重新连接",
