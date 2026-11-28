@@ -258,3 +258,9 @@ def test_the_cannot_guard_and_this_one_share_one_retry(client, team, callback_se
     assert runs(team) == 2  # one retry in all, whichever guard asked
     last = team_log_of(team)[-1]
     assert last.get("cannot_guard") and "handoff_claim_guard" not in last
+
+
+def test_iriss_prompt_says_that_writing_the_go_sends_nothing():
+    prompt = " ".join(members.load_prompts(TEAM_FILE)["freeduet"].split())
+    assert "Writing that a colleague has the go sends nothing" in prompt
+    assert "call message_bot first, and say the work has started only after the call has returned" in prompt
