@@ -247,8 +247,12 @@ export function RoutinesList({
 } = {}) {
   const { t, language } = useAppLanguage();
   const routines = useQuery(routinesQueryOptions(t));
-  const setEnabled = useMutation(setRoutineEnabledMutationOptions(queryClient, t));
-  const deleteRoutine = useMutation(deleteRoutineMutationOptions(queryClient, t));
+  const setEnabled = useMutation(
+    setRoutineEnabledMutationOptions(queryClient, t),
+  );
+  const deleteRoutine = useMutation(
+    deleteRoutineMutationOptions(queryClient, t),
+  );
   const runNow = useMutation(runRoutineNowMutationOptions(queryClient, t));
   /** Which routine's run history is open. One at a time keeps the list scannable. */
   const [historyId, setHistoryId] = useState<string | null>(null);

@@ -9,7 +9,7 @@ import {
   useState,
 } from "react";
 import { PageEmpty } from "@/components/layout/page-shell";
-import { useAppLanguage, useT } from "@/freeduet/i18n/provider";
+import { useAppLanguage } from "@/freeduet/i18n/provider";
 import type { RoutineRecord } from "@/lib/routines/queries";
 import {
   routineCalendarQueryOptions,

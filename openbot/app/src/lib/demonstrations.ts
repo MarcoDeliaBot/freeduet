@@ -39,10 +39,7 @@ export const demonstrationKeys = {
   all: ["demonstrations"] as const,
   bot: (botId: string) => ["demonstrations", botId] as const,
 };
-export const demonstrationsQueryOptions = (
-  botId: string,
-  t: T = englishT,
-) =>
+export const demonstrationsQueryOptions = (botId: string, t: T = englishT) =>
   queryOptions({
     queryKey: demonstrationKeys.bot(botId),
     queryFn: (): Promise<Demonstration[]> =>

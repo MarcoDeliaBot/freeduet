@@ -706,7 +706,9 @@ function RuntimeStep({
           </span>
           <span className="mt-1 block text-pretty text-muted-foreground text-sm">
             {builtInAvailable
-              ? t("newbot.runHereLine", { product: appConfig.brand.productName })
+              ? t("newbot.runHereLine", {
+                  product: appConfig.brand.productName,
+                })
               : t("newbot.runHereOff")}
           </span>
         </span>
@@ -810,7 +812,9 @@ function EndpointStep({
             />
           ) : (
             <FieldDescription>
-              {t("newbot.addressHelp", { product: appConfig.brand.productName })}
+              {t("newbot.addressHelp", {
+                product: appConfig.brand.productName,
+              })}
             </FieldDescription>
           )}
         </Field>

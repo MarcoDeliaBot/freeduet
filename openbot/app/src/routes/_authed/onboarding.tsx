@@ -711,9 +711,7 @@ function RouteComponent() {
         <SetupStep
           finished={finishedTo !== null}
           notice={
-            failedOn === "setup"
-              ? t("onboarding.gmailFailed")
-              : undefined
+            failedOn === "setup" ? t("onboarding.gmailFailed") : undefined
           }
           // Onboarding cannot stay open behind another page, so opening one finishes it first.
           openPage={(path) => finish(path)}

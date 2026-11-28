@@ -169,8 +169,7 @@ function summaryOf(rows: SetupRow[], t: T = englishT): string {
     unchecked === 0
       ? null
       : t("onboarding.checklist.unchecked", { count: unchecked });
-  if (gaps.length === 0)
-    return notChecked ?? t("onboarding.checklist.allSet");
+  if (gaps.length === 0) return notChecked ?? t("onboarding.checklist.allSet");
   const required = gaps.filter((row) => row.required).length;
   const things = t("onboarding.checklist.gaps", { count: gaps.length });
   const needs =
@@ -202,7 +201,10 @@ function withNotifications(rows: SetupRow[], notifications: SetupRow) {
  * (`GET /api/delivery`). Otherwise its fix is the Get notified step's button again. Blocked and
  * unsupported say so, since no button here can change either.
  */
-function useNotificationsRow(t: T = englishT): { row: SetupRow; refetch: () => unknown } {
+function useNotificationsRow(t: T = englishT): {
+  row: SetupRow;
+  refetch: () => unknown;
+} {
   const permission = useNotificationPermission();
   const delivery = useQuery({
     ...deliveryQueryOptions(),

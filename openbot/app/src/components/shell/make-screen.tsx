@@ -351,9 +351,7 @@ export function MakeScreen() {
       }
     >
       <ScreenTitle title={t("tab.make")}>
-        {name
-          ? t("make.byName", { name })
-          : t("make.byBots")}
+        {name ? t("make.byName", { name }) : t("make.byBots")}
       </ScreenTitle>
       {saved ? (
         <p className="type-sub mb-3 px-1 text-duet-ink-2" role="status">

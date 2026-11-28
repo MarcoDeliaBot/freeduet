@@ -72,12 +72,16 @@ function ScheduleSkill({
   const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
   const schedule = useMutation({
     mutationFn: () =>
-      scheduleDemonstration(recording.id, {
-        cron: cron === "custom" ? custom : cron,
-        timezone,
-        ...(channelId ? { channelId } : {}),
-        ...(inputs.trim() ? { inputs } : {}),
-      }, t),
+      scheduleDemonstration(
+        recording.id,
+        {
+          cron: cron === "custom" ? custom : cron,
+          timezone,
+          ...(channelId ? { channelId } : {}),
+          ...(inputs.trim() ? { inputs } : {}),
+        },
+        t,
+      ),
     onSuccess: async (routine) => {
       setScheduled(routine);
       await queryClient.invalidateQueries({ queryKey: routineKeys.all });

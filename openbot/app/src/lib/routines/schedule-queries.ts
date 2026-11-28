@@ -71,10 +71,7 @@ export function routineCalendarQueryOptions(
   });
 }
 
-export function routineHistoryQueryOptions(
-  agentId?: string,
-  t: T = englishT,
-) {
+export function routineHistoryQueryOptions(agentId?: string, t: T = englishT) {
   const params = new URLSearchParams({ limit: "100" });
   if (agentId) params.set("agentId", agentId);
   return queryOptions({

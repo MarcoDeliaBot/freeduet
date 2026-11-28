@@ -68,10 +68,7 @@ export const proactiveSuggestionsQueryOptions = (t: T = englishT) =>
  * One suggestion, whatever became of it: how a card in Chat knows it was started or hidden. Under
  * the list's key, so starting or hiding it anywhere refreshes both.
  */
-export const proactiveSuggestionQueryOptions = (
-  id: string,
-  t: T = englishT,
-) =>
+export const proactiveSuggestionQueryOptions = (id: string, t: T = englishT) =>
   queryOptions({
     queryKey: [...proactiveKeys.suggestions, id] as const,
     queryFn: (): Promise<ProactiveSuggestion> =>

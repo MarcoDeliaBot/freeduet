@@ -3050,7 +3050,8 @@ export const it: Catalog<typeof EN> = {
   // computer-end
   // onboarding-begin (D181 stage 2o)
   "onboarding.welcome": "Ti diamo il benvenuto in {product}",
-  "onboarding.welcomeLabel": "Una casella di messaggio dove affidi i compiti ai tuoi Bot",
+  "onboarding.welcomeLabel":
+    "Una casella di messaggio dove affidi i compiti ai tuoi Bot",
   "onboarding.welcomeHandOff": "Affida i compiti alla tua squadra di Bot",
   "onboarding.computerTitle": "Ogni Bot ha il suo computer",
   "onboarding.rosterTitle": "Scegli un Bot o creane uno tuo",
@@ -3060,45 +3061,76 @@ export const it: Catalog<typeof EN> = {
   "onboarding.exampleTag": "Esempio",
   "onboarding.ownBot": "Un Bot tuo",
   "onboarding.localTitle": "Dove sono i tuoi dati",
-  "onboarding.localKeptIntelligence": "Le conversazioni e la memoria sono conservate in CopilotKit Intelligence, nel cloud di CopilotKit a meno che tu non lo ospiti da te.",
-  "onboarding.localKeptDatabase": "Le conversazioni e la memoria restano nello stesso database. Non viene inviato nulla a un servizio di memoria esterno.",
-  "onboarding.localBody": "I tuoi Bot e le impostazioni restano nel database di questa installazione. {kept} Quello che chiedi va al tuo modello di IA.",
-  "onboarding.telemetryOff": "CopilotKit non riceve eventi d'uso da questa installazione, perché qui la telemetria è disattivata.",
-  "onboarding.telemetryOn": "CopilotKit riceve anche eventi d'uso. Imposta DO_NOT_TRACK=1 per disattivarli.",
+  "onboarding.localKeptIntelligence":
+    "Le conversazioni e la memoria sono conservate in CopilotKit Intelligence, nel cloud di CopilotKit a meno che tu non lo ospiti da te.",
+  "onboarding.localKeptDatabase":
+    "Le conversazioni e la memoria restano nello stesso database. Non viene inviato nulla a un servizio di memoria esterno.",
+  "onboarding.localBody":
+    "I tuoi Bot e le impostazioni restano nel database di questa installazione. {kept} Quello che chiedi va al tuo modello di IA.",
+  "onboarding.telemetryOff":
+    "CopilotKit non riceve eventi d'uso da questa installazione, perché qui la telemetria è disattivata.",
+  "onboarding.telemetryOn":
+    "CopilotKit riceve anche eventi d'uso. Imposta DO_NOT_TRACK=1 per disattivarli.",
   "onboarding.agentsTitle": "Porta gli agenti che hai già",
-  "onboarding.agentsBody": "Qualsiasi agente AG-UI può entrare come Bot. Aggiungine uno da Bot, poi Nuovo Bot.",
+  "onboarding.agentsBody":
+    "Qualsiasi agente AG-UI può entrare come Bot. Aggiungine uno da Bot, poi Nuovo Bot.",
   "onboarding.frameworksLabel": "Framework che funzionano come Bot: {list}",
-  "onboarding.moreOpenBot": "L'assistente self-hosted su cui è costruito {product}.",
-  "onboarding.moreOpenMuse": "Un agente personale con il suo browser e i suoi file, su iOS, Android e web.",
-  "onboarding.moreOpenDots": "Colleghi sempre attivi per messaggi, chiamate e Slack.",
+  "onboarding.moreOpenBot":
+    "L'assistente self-hosted su cui è costruito {product}.",
+  "onboarding.moreOpenMuse":
+    "Un agente personale con il suo browser e i suoi file, su iOS, Android e web.",
+  "onboarding.moreOpenDots":
+    "Colleghi sempre attivi per messaggi, chiamate e Slack.",
   "onboarding.orgTitle": "Installalo per la tua organizzazione",
-  "onboarding.orgBody": "Esegui una sola immagine container, oppure un chart Helm per EKS, GKE o AKS. Le tue persone accedono con Google, Microsoft o Okta. Le installazioni per le aziende sono disponibili ora in accesso anticipato.",
+  "onboarding.orgBody":
+    "Esegui una sola immagine container, oppure un chart Helm per EKS, GKE o AKS. Le tue persone accedono con Google, Microsoft o Okta. Le installazioni per le aziende sono disponibili ora in accesso anticipato.",
   "onboarding.earlyAccess": "Richiedi l'accesso anticipato",
   "onboarding.moreFrom": "Altro da CopilotKit",
   "onboarding.setupTitle": "Controlla la configurazione",
   "onboarding.setupBody": "Guarda cosa è pronto e cosa resta da configurare.",
   "onboarding.continue": "Continua",
   "onboarding.notNow": "Non ora",
-  "onboarding.gmailFailed": "Non sono riuscito a collegare Gmail e Calendar. Riprova.",
+  "onboarding.gmailFailed":
+    "Non sono riuscito a collegare Gmail e Calendar. Riprova.",
   "onboarding.start": "Inizia a usare {product}",
-  "onboarding.checklist.noStart": "Non sono riuscito ad avviare il collegamento. Riprova.",
+  "onboarding.checklist.noStart":
+    "Non sono riuscito ad avviare il collegamento. Riprova.",
   "onboarding.checklist.checking": "Controllo in corso…",
   "onboarding.checklist.checkAgain": "Controlla di nuovo",
-  "onboarding.checklist.recheckFailed": "Non sono riuscito a controllare di nuovo. Riprova.",
-  "onboarding.checklist.readFailed": "Non sono riuscito a controllare la configurazione. Controlla di nuovo, oppure vai avanti e guarda più tardi in Impostazioni.",
+  "onboarding.checklist.recheckFailed":
+    "Non sono riuscito a controllare di nuovo. Riprova.",
+  "onboarding.checklist.readFailed":
+    "Non sono riuscito a controllare la configurazione. Controlla di nuovo, oppure vai avanti e guarda più tardi in Impostazioni.",
   "onboarding.checklist.aria": "Configurazione",
-  "onboarding.checklist.unchecked": { one: "1 cosa non è ancora stata controllata.", other: "{count} cose non sono ancora state controllate." },
+  "onboarding.checklist.unchecked": {
+    one: "1 cosa non è ancora stata controllata.",
+    other: "{count} cose non sono ancora state controllate.",
+  },
   "onboarding.checklist.allSet": "Tutto è configurato.",
-  "onboarding.checklist.gaps": { one: "1 cosa richiede configurazione", other: "{count} cose richiedono configurazione" },
-  "onboarding.checklist.required": { one: "1 è obbligatoria", other: "{count} sono obbligatorie" },
+  "onboarding.checklist.gaps": {
+    one: "1 cosa richiede configurazione",
+    other: "{count} cose richiedono configurazione",
+  },
+  "onboarding.checklist.required": {
+    one: "1 è obbligatoria",
+    other: "{count} sono obbligatorie",
+  },
   "onboarding.checklist.gapsRequired": "{gaps}, e {required}.",
-  "onboarding.checklist.optional": { one: "{gaps}. {product} funziona anche senza.", other: "{gaps}. {product} funziona anche senza di esse." },
+  "onboarding.checklist.optional": {
+    one: "{gaps}. {product} funziona anche senza.",
+    other: "{gaps}. {product} funziona anche senza di esse.",
+  },
   "onboarding.checklist.notifTitle": "Notifiche",
-  "onboarding.checklist.notifBrowser": "{product} ti avvisa in questo browser quando ha bisogno di te.",
-  "onboarding.checklist.notifPhone": "{product} ti avvisa sul telefono quando ha bisogno di te.",
-  "onboarding.checklist.notifBlocked": "Bloccate per questo sito. Consenti le notifiche nelle impostazioni del sito del tuo browser.",
-  "onboarding.checklist.notifUnsupported": "Questo browser non può mostrare le notifiche.",
-  "onboarding.checklist.notifWithout": "Senza notifiche, vedi cosa ha bisogno di te solo quando guardi.",
+  "onboarding.checklist.notifBrowser":
+    "{product} ti avvisa in questo browser quando ha bisogno di te.",
+  "onboarding.checklist.notifPhone":
+    "{product} ti avvisa sul telefono quando ha bisogno di te.",
+  "onboarding.checklist.notifBlocked":
+    "Bloccate per questo sito. Consenti le notifiche nelle impostazioni del sito del tuo browser.",
+  "onboarding.checklist.notifUnsupported":
+    "Questo browser non può mostrare le notifiche.",
+  "onboarding.checklist.notifWithout":
+    "Senza notifiche, vedi cosa ha bisogno di te solo quando guardi.",
   "onboarding.checklist.requiredTag": "Obbligatorio",
   "onboarding.checklist.ready": "Pronto",
   "onboarding.checklist.notChecked": "Non controllato",
@@ -3134,28 +3166,35 @@ export const it: Catalog<typeof EN> = {
   "newbot.titleHelp": "Poche parole mostrate sotto il suo nome.",
   "newbot.instructions": "Istruzioni",
   "newbot.role": "Ruolo",
-  "newbot.instructionsPlaceholder": "Controlla le ricevute, classifica le spese e prepara i resoconti dei rimborsi.",
-  "newbot.instructionsHelpHere": "Come deve lavorare. Se lo lasci vuoto, aiuta con qualsiasi cosa.",
-  "newbot.instructionsHelpOther": "Aggiunto alle istruzioni dell'agente stesso.",
+  "newbot.instructionsPlaceholder":
+    "Controlla le ricevute, classifica le spese e prepara i resoconti dei rimborsi.",
+  "newbot.instructionsHelpHere":
+    "Come deve lavorare. Se lo lasci vuoto, aiuta con qualsiasi cosa.",
+  "newbot.instructionsHelpOther":
+    "Aggiunto alle istruzioni dell'agente stesso.",
   "newbot.whoCanSee": "Chi può vederlo",
   "newbot.whereRun": "Dove girerà il tuo Bot?",
   "newbot.runHere": "Fallo girare qui",
-  "newbot.runHereLine": "{product} lo fa girare per te. Non c'è nulla da configurare e può partire subito.",
-  "newbot.runHereOff": "Non ancora disponibile. Prima un amministratore deve attivarlo.",
+  "newbot.runHereLine":
+    "{product} lo fa girare per te. Non c'è nulla da configurare e può partire subito.",
+  "newbot.runHereOff":
+    "Non ancora disponibile. Prima un amministratore deve attivarlo.",
   "newbot.orConnect": "oppure collegane uno che gestisci tu",
   "newbot.whereReached": "Dove si può raggiungere?",
   "newbot.address": "Indirizzo dell'agente",
-  "newbot.addressHelp": "Funziona qualsiasi agente che parla AG-UI. {product} si collega all'agente, quindi deve essere raggiungibile dal server di {product}.",
+  "newbot.addressHelp":
+    "Funziona qualsiasi agente che parla AG-UI. {product} si collega all'agente, quindi deve essere raggiungibile dal server di {product}.",
   "newbot.key": "Chiave",
-  "newbot.keyHelp": "Inviata come intestazione {header} a ogni richiesta e conservata cifrata.",
-  "make.kind.design-system": "Design System",
-  "make.plain.design-system": "design system",
+  "newbot.keyHelp":
+    "Inviata come intestazione {header} a ogni richiesta e conservata cifrata.",
+  "make.kind.design-system": "Sistema di design",
+  "make.plain.design-system": "sistema di design",
   "make.starter.design-system": "Crea un design system per …",
-  "make.kind.design": "Design",
-  "make.plain.design": "design",
+  "make.kind.design": "Progetto grafico",
+  "make.plain.design": "progetto grafico",
   "make.starter.design": "Crea un design per …",
-  "make.kind.dashboard": "Dashboard",
-  "make.plain.dashboard": "dashboard",
+  "make.kind.dashboard": "Pannello",
+  "make.plain.dashboard": "pannello",
   "make.starter.dashboard": "Crea una dashboard di …",
   "make.kind.slides": "Presentazioni",
   "make.plain.slides": "presentazioni",
@@ -3170,11 +3209,14 @@ export const it: Catalog<typeof EN> = {
   "make.byName": "Quello che {name} ha creato per te.",
   "make.byBots": "Quello che i tuoi Bot hanno creato per te.",
   "make.savedUpNext": "Salvato in «Prossime» nelle Attività.",
-  "make.loadError": "Non sono riuscito a caricare quello che è stato creato. Ricarica la pagina.",
+  "make.loadError":
+    "Non sono riuscito a caricare quello che è stato creato. Ricarica la pagina.",
   "make.empty": "Ancora niente di creato.",
-  "make.emptyHelp": "Tocca + per scegliere cosa creare. Quello che crea {name} compare qui.",
+  "make.emptyHelp":
+    "Tocca + per scegliere cosa creare. Quello che crea {name} compare qui.",
   "make.yourBot": "il tuo Bot",
-  "make.noneOfKind": "Per ora non c'è niente in «{kind}». Tocca + per crearne uno.",
+  "make.noneOfKind":
+    "Per ora non c'è niente in «{kind}». Tocca + per crearne uno.",
   "make.listAria": "Creato per te",
   "make.question": "Cosa deve creare {name}?",
   "make.show": "Mostra",
@@ -3189,10 +3231,12 @@ export const it: Catalog<typeof EN> = {
   "upnext.cancelNamed": "Annulla {title}",
   "upnext.aria": "Prossime",
   "upnext.comingUp": "In arrivo",
-  "upnext.loadError": "Non sono riuscito a caricare «Prossime». Ricarica la pagina.",
+  "upnext.loadError":
+    "Non sono riuscito a caricare «Prossime». Ricarica la pagina.",
   "upnext.noMatch": "Nessun risultato per «{query}».",
   "upnext.started": "Avviato. {name} se ne sta occupando.",
-  "upnext.activityError": "Non sono riuscito a caricare quello che {name} ha in programma. Ricarica la pagina.",
+  "upnext.activityError":
+    "Non sono riuscito a caricare quello che {name} ha in programma. Ricarica la pagina.",
   "upnext.fromApp": "Da {app}",
   "upnext.aConnectedApp": "un'app collegata",
   "upnext.youAsked": "Me l'hai chiesto tu",
@@ -3200,9 +3244,11 @@ export const it: Catalog<typeof EN> = {
   "upnext.startNamed": "Avvia {title}",
   "upnext.hide": "Nascondi",
   "upnext.start": "Avvia",
-  "upnext.conversationsError": "Non sono riuscito a caricare le tue conversazioni. Ricarica la pagina.",
+  "upnext.conversationsError":
+    "Non sono riuscito a caricare le tue conversazioni. Ricarica la pagina.",
   "upnext.plateTitle": "Cosa posso toglierti dalle mani?",
-  "upnext.plateBody": "Do un'occhiata alla tua posta e al tuo calendario per cercare cose che posso gestire.",
+  "upnext.plateBody":
+    "Do un'occhiata alla tua posta e al tuo calendario per cercare cose che posso gestire.",
   "upnext.checks": "Cosa controlla",
   "upnext.looking": "Sto guardando…",
   "upnext.showMe": "Fammi vedere",
@@ -3210,11 +3256,13 @@ export const it: Catalog<typeof EN> = {
   "upnext.checkFailed": "Non sono riuscito a controllare adesso. Riprova.",
   "upnext.slow": "Ci sta mettendo un po'. Le nuove attività compaiono qui.",
   "upnext.suggestTitle": "Lascia che {name} ti suggerisca delle attività",
-  "upnext.suggestBody": "Controlla le tue app collegate ogni ora e ti scrive quando qualcosa ha bisogno di te. Può solo leggere.",
+  "upnext.suggestBody":
+    "Controlla le tue app collegate ogni ora e ti scrive quando qualcosa ha bisogno di te. Può solo leggere.",
   "upnext.turnOn": "Attiva",
   "memory.err.load": "Non sono riuscito a caricare la memoria",
   "memory.err.sources": "Non sono riuscito a caricare le fonti della memoria",
-  "memory.err.actions": "Non sono riuscito a caricare le azioni delle app collegate",
+  "memory.err.actions":
+    "Non sono riuscito a caricare le azioni delle app collegate",
   "memory.err.create": "Non sono riuscito a ricordare questo fatto",
   "memory.err.update": "Non sono riuscito ad aggiornare la memoria",
   "memory.err.delete": "Non sono riuscito a dimenticare questo ricordo",
@@ -3228,7 +3276,8 @@ export const it: Catalog<typeof EN> = {
   "memory.fact.remember": "Ricorda",
   "memory.list.title": "I tuoi ricordi",
   "memory.list.yourBot": "il tuo Bot",
-  "memory.list.empty": "Ancora nessun ricordo. Aggiungine uno con «Ricorda un fatto».",
+  "memory.list.empty":
+    "Ancora nessun ricordo. Aggiungine uno con «Ricorda un fatto».",
   "memory.list.inIntelligence": "Conservato in Intelligence",
   "memory.list.off": "Disattivato",
   "memory.list.formedBy": "Formato da {name}",
@@ -3248,61 +3297,82 @@ export const it: Catalog<typeof EN> = {
   "memory.list.save": "Salva",
   "routines.day.today": "Oggi",
   "routines.day.tomorrow": "Domani",
-  "routines.untitled": "Routine",
+  "routines.untitled": "Routine senza titolo",
   "routines.blk.done": "completata",
   "routines.blk.failed": "non riuscita",
   "routines.blk.running": "in esecuzione ora",
   "routines.blk.pending": "scaduta, non ancora registrata",
   "routines.blk.missed": "persa",
-  "routines.blk.summary": "{count} esecuzioni: {day}, circa ogni {minutes} minuti",
+  "routines.blk.summary":
+    "{count} esecuzioni: {day}, circa ogni {minutes} minuti",
   "routines.blk.doneOf": "{done} di {count} completate",
   "routines.nextRun": "Prossima esecuzione: {when} ({zone}).",
-  "routines.nextRunHere": "{line} Nel tuo fuso orario ({zone}) corrisponde a {when}.",
-  "routines.err.runs": "Non è stato possibile caricare le esecuzioni di questa routine.",
+  "routines.nextRunHere":
+    "{line} Nel tuo fuso orario ({zone}) corrisponde a {when}.",
+  "routines.err.runs":
+    "Non è stato possibile caricare le esecuzioni di questa routine.",
   "routines.err.list": "Non è stato possibile caricare le tue routine.",
   "routines.err.change": "Non è stato possibile modificare questa routine.",
   "routines.err.start": "Non è stato possibile avviare questa routine.",
-  "routines.err.calendar": "Non è stato possibile caricare le tue prossime esecuzioni.",
-  "routines.err.history": "Non è stato possibile caricare la cronologia delle esecuzioni.",
-  "proactive.err.settings": "Non sono riuscito a caricare la ricerca in background",
+  "routines.err.calendar":
+    "Non è stato possibile caricare le tue prossime esecuzioni.",
+  "routines.err.history":
+    "Non è stato possibile caricare la cronologia delle esecuzioni.",
+  "proactive.err.settings":
+    "Non sono riuscito a caricare la ricerca in background",
   "proactive.err.suggestions": "Non sono riuscito a caricare i suggerimenti",
-  "proactive.err.suggestion": "Non sono riuscito a caricare questo suggerimento",
-  "proactive.err.turnOn": "Non sono riuscito ad attivare la ricerca in background",
-  "proactive.err.change": "Non sono riuscito a modificare la ricerca in background",
+  "proactive.err.suggestion":
+    "Non sono riuscito a caricare questo suggerimento",
+  "proactive.err.turnOn":
+    "Non sono riuscito ad attivare la ricerca in background",
+  "proactive.err.change":
+    "Non sono riuscito a modificare la ricerca in background",
   "proactive.err.run": "Non sono riuscito ad avviare la ricerca in background",
-  "proactive.err.remove": "Non sono riuscito a rimuovere la ricerca in background",
+  "proactive.err.remove":
+    "Non sono riuscito a rimuovere la ricerca in background",
   "proactive.err.start": "Non sono riuscito ad avviare questo suggerimento",
   "proactive.err.dismiss": "Non sono riuscito a scartare questo suggerimento",
   "demo.err.load": "Non sono riuscito a caricare le dimostrazioni",
   "demo.err.start": "Non sono riuscito ad avviare la registrazione",
   "demo.err.stop": "Non sono riuscito a fermare la registrazione",
   "demo.err.draft": "Non sono riuscito a preparare una bozza di skill",
-  "demo.err.publish": "La skill è stata salvata, ma non è stato possibile collegarla alla sua dimostrazione",
+  "demo.err.publish":
+    "La skill è stata salvata, ma non è stato possibile collegarla alla sua dimostrazione",
   "demo.err.delete": "Non sono riuscito a eliminare la dimostrazione",
   "demo.err.schedule": "Non sono riuscito a pianificare questa skill",
   "resp.err.load": "Non sono riuscito a caricare le responsabilità",
-  "resp.err.runs": "Non sono riuscito a caricare le esecuzioni della responsabilità",
+  "resp.err.runs":
+    "Non sono riuscito a caricare le esecuzioni della responsabilità",
   "resp.err.github": "Non sono riuscito a caricare le fonti di eventi GitHub",
   "resp.err.create": "Non sono riuscito a creare la responsabilità",
   "resp.err.update": "Non sono riuscito ad aggiornare la responsabilità",
   "resp.err.change": "Non sono riuscito a modificare la responsabilità",
   "resp.err.connectGithub": "Non sono riuscito a collegare gli eventi GitHub",
-  "resp.err.disconnectGithub": "Non sono riuscito a scollegare gli eventi GitHub",
+  "resp.err.disconnectGithub":
+    "Non sono riuscito a scollegare gli eventi GitHub",
   "resp.err.triggers": "Non sono riuscito a caricare i trigger",
   "resp.err.addTrigger": "Non sono riuscito ad aggiungere il trigger",
-  "resp.err.secretChange": "Non sono riuscito a cambiare il segreto del trigger",
+  "resp.err.secretChange":
+    "Non sono riuscito a cambiare il segreto del trigger",
   "resp.err.secretRead": "Non sono riuscito a leggere il segreto del trigger",
   "resp.err.removeTrigger": "Non sono riuscito a rimuovere il trigger",
   "resp.err.changeTrigger": "Non sono riuscito a modificare il trigger",
   "claude.notConnected.title": "Claude non è ancora collegato",
-  "claude.notConnected.body": "Accedi sulla pagina di Claude; FreeDuet non vede mai la tua password. Esegui questo comando una volta in un terminale sul computer su cui gira FreeDuet, accedi lì, poi premi «Controlla di nuovo».",
-  "claude.notInstalled.title": "Claude non è ancora installato su questo computer",
-  "claude.notInstalled.body": "Ricostruisci il servizio in un terminale sul computer su cui gira FreeDuet, poi premi «Controlla di nuovo».",
-  "claude.outcome.connected": "Claude è collegato. Invia di nuovo il tuo messaggio.",
+  "claude.notConnected.body":
+    "Accedi sulla pagina di Claude; FreeDuet non vede mai la tua password. Esegui questo comando una volta in un terminale sul computer su cui gira FreeDuet, accedi lì, poi premi «Controlla di nuovo».",
+  "claude.notInstalled.title":
+    "Claude non è ancora installato su questo computer",
+  "claude.notInstalled.body":
+    "Ricostruisci il servizio in un terminale sul computer su cui gira FreeDuet, poi premi «Controlla di nuovo».",
+  "claude.outcome.connected":
+    "Claude è collegato. Invia di nuovo il tuo messaggio.",
   "claude.outcome.notConnected": "FreeDuet non vede ancora l'accesso.",
-  "claude.outcome.notInstalled": "Claude non è ancora installato su questo computer.",
-  "claude.outcome.waiting": "FreeDuet non ha ancora potuto capirlo. Riprova tra un momento.",
-  "claude.outcome.elsewhere": "Il collegamento di Claude si fa dal computer su cui gira FreeDuet.",
+  "claude.outcome.notInstalled":
+    "Claude non è ancora installato su questo computer.",
+  "claude.outcome.waiting":
+    "FreeDuet non ha ancora potuto capirlo. Riprova tra un momento.",
+  "claude.outcome.elsewhere":
+    "Il collegamento di Claude si fa dal computer su cui gira FreeDuet.",
   "claude.outcome.hosted": "Questo FreeDuet non collega un piano Claude.",
   "claude.outcome.noEngine": "Il motore di FreeDuet non è in esecuzione.",
   "claude.aria": "Collega il tuo piano Claude",

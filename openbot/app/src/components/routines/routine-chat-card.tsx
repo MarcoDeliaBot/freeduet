@@ -54,7 +54,9 @@ export function RoutineChatCard({
   const { t, language } = useAppLanguage();
   const queryClient = useQueryClient();
   const routines = useQuery(routinesQueryOptions(t));
-  const setEnabled = useMutation(setRoutineEnabledMutationOptions(queryClient, t));
+  const setEnabled = useMutation(
+    setRoutineEnabledMutationOptions(queryClient, t),
+  );
   const remove = useMutation(deleteRoutineMutationOptions(queryClient, t));
   const conversation = useConversationSend();
   const [confirming, setConfirming] = useState(false);

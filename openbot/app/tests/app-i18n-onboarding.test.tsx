@@ -72,7 +72,9 @@ beforeEach(() => {
           },
         });
       if (path === "/api/agents")
-        return Response.json({ agents: [{ id: "openduet", name: "OpenDuet" }] });
+        return Response.json({
+          agents: [{ id: "openduet", name: "OpenDuet" }],
+        });
       if (path === "/api/agents/capabilities")
         return Response.json({ capabilities: { builtInAvailable: true } });
       if (path === "/api/capabilities")
@@ -112,7 +114,9 @@ function openOnboarding(language: "it" | "en") {
   });
   const router = createRouter({
     routeTree: rootRoute.addChildren([authedRoute.addChildren([wired])]),
-    history: createMemoryHistory({ initialEntries: ["/onboarding?step=roster"] }),
+    history: createMemoryHistory({
+      initialEntries: ["/onboarding?step=roster"],
+    }),
     context: { queryClient },
   });
   return render(

@@ -234,7 +234,11 @@ export function UpNextView({
         </p>
       ) : null}
       {upcoming.length ? (
-        <ActivityCard rows={upcoming} showTime={false} title={t("upnext.comingUp")} />
+        <ActivityCard
+          rows={upcoming}
+          showTime={false}
+          title={t("upnext.comingUp")}
+        />
       ) : null}
     </div>
   );
@@ -447,9 +451,7 @@ function TakeOffYourPlate({ bot }: { bot: AgentProfile }) {
       <h2 className="type-title font-semibold text-duet-ink">
         {t("upnext.plateTitle")}
       </h2>
-      <p className="type-sub mt-1.5 text-duet-ink-2">
-        {t("upnext.plateBody")}
-      </p>
+      <p className="type-sub mt-1.5 text-duet-ink-2">{t("upnext.plateBody")}</p>
       <ul aria-label={t("upnext.checks")} className="mt-5 flex gap-3">
         <AppMark icon="mail" name="Gmail" tone="red" />
         <AppMark icon="calendar" name="Calendar" tone="blue" />
@@ -535,9 +537,7 @@ function ResearchOptIn({
         <p className="type-row font-semibold text-duet-ink">
           {t("upnext.suggestTitle", { name: bot.name })}
         </p>
-        <p className="type-sub text-duet-ink-2">
-          {t("upnext.suggestBody")}
-        </p>
+        <p className="type-sub text-duet-ink-2">{t("upnext.suggestBody")}</p>
         {turnOn.error ? (
           <p className="type-label mt-1 text-duet-red" role="alert">
             {turnOn.error.message}

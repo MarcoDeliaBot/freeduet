@@ -11,7 +11,6 @@ import { routineKeys } from "./queries";
  * `server/src/routines/routes.ts` for the full reasoning.
  */
 
-
 function invalidateRoutines(queryClient: QueryClient) {
   return queryClient.invalidateQueries({ queryKey: routineKeys.all });
 }

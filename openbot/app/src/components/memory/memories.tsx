@@ -142,7 +142,8 @@ export function MemoryList({
   const memories = useQuery(memoriesQueryOptions(t));
   const agents = useQuery(agentListQueryOptions());
   const botName = (id: string | null) =>
-    agents.data?.find((agent) => agent.id === id)?.name ?? t("memory.list.yourBot");
+    agents.data?.find((agent) => agent.id === id)?.name ??
+    t("memory.list.yourBot");
   return (
     <PageSection
       action={action}
@@ -287,7 +288,9 @@ function MemoryRow({
         <ItemActions>
           {/* Binary and immediate: Bots stop or start using it when switched. */}
           <Switch
-            aria-label={t("memory.list.useAria", { text: clip(memory.content) })}
+            aria-label={t("memory.list.useAria", {
+              text: clip(memory.content),
+            })}
             checked={memory.enabled}
             disabled={save.isPending}
             onCheckedChange={(enabled) => update({ enabled })}

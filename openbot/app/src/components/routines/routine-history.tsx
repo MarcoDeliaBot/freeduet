@@ -150,8 +150,8 @@ function HistoryRow({
           {t(status.key)}
         </span>
         <span className="text-muted-foreground">
-          {stampOf(new Date(run.startedAt), language)} · {t(SOURCE_KEY[run.source])} ·{" "}
-          {memberName}
+          {stampOf(new Date(run.startedAt), language)} ·{" "}
+          {t(SOURCE_KEY[run.source])} · {memberName}
         </span>
       </div>
       {routine ? (

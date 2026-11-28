@@ -86,7 +86,11 @@ export function groupByDay<T>(
     if (last && last.key === key) {
       last.items.push(item);
     } else {
-      groups.push({ key, heading: dayHeading(when, now, t, language), items: [item] });
+      groups.push({
+        key,
+        heading: dayHeading(when, now, t, language),
+        items: [item],
+      });
     }
   }
   return groups;

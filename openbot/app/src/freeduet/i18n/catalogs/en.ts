@@ -2924,7 +2924,8 @@ export const EN = {
   // computer-end
   // onboarding-begin (D181 stage 2o)
   "onboarding.welcome": "Welcome to {product}",
-  "onboarding.welcomeLabel": "A message box where you hand off tasks to your Bots",
+  "onboarding.welcomeLabel":
+    "A message box where you hand off tasks to your Bots",
   "onboarding.welcomeHandOff": "Hand off tasks to your team of Bots",
   "onboarding.computerTitle": "Each Bot has its own computer",
   "onboarding.rosterTitle": "Pick a Bot or make your own",
@@ -2934,45 +2935,72 @@ export const EN = {
   "onboarding.exampleTag": "Example",
   "onboarding.ownBot": "Your own Bot",
   "onboarding.localTitle": "Where your data lives",
-  "onboarding.localKeptIntelligence": "Conversations and memory are kept in CopilotKit Intelligence, in CopilotKit's cloud unless you host it yourself.",
-  "onboarding.localKeptDatabase": "Conversations and memory stay in that same database. Nothing is sent to a hosted memory service.",
-  "onboarding.localBody": "Your Bots and settings stay in this install's database. {kept} What you ask goes to your AI model.",
-  "onboarding.telemetryOff": "CopilotKit gets no usage events from this install, because telemetry is switched off here.",
-  "onboarding.telemetryOn": "CopilotKit also receives usage events. Set DO_NOT_TRACK=1 to turn them off.",
+  "onboarding.localKeptIntelligence":
+    "Conversations and memory are kept in CopilotKit Intelligence, in CopilotKit's cloud unless you host it yourself.",
+  "onboarding.localKeptDatabase":
+    "Conversations and memory stay in that same database. Nothing is sent to a hosted memory service.",
+  "onboarding.localBody":
+    "Your Bots and settings stay in this install's database. {kept} What you ask goes to your AI model.",
+  "onboarding.telemetryOff":
+    "CopilotKit gets no usage events from this install, because telemetry is switched off here.",
+  "onboarding.telemetryOn":
+    "CopilotKit also receives usage events. Set DO_NOT_TRACK=1 to turn them off.",
   "onboarding.agentsTitle": "Bring the agents you already have",
-  "onboarding.agentsBody": "Any AG-UI agent can join as a Bot. Add one from Bots, then New Bot.",
+  "onboarding.agentsBody":
+    "Any AG-UI agent can join as a Bot. Add one from Bots, then New Bot.",
   "onboarding.frameworksLabel": "Frameworks that work as Bots: {list}",
   "onboarding.moreOpenBot": "The self-hosted assistant {product} is built on.",
-  "onboarding.moreOpenMuse": "A personal agent with its own browser and files, on iOS, Android and web.",
+  "onboarding.moreOpenMuse":
+    "A personal agent with its own browser and files, on iOS, Android and web.",
   "onboarding.moreOpenDots": "Always-on coworkers for text, calls and Slack.",
   "onboarding.orgTitle": "Deploy it for your organization",
-  "onboarding.orgBody": "Run one container image, or a Helm chart for EKS, GKE or AKS. Your people sign in with Google, Microsoft or Okta. Enterprise deployments are available now in early access.",
+  "onboarding.orgBody":
+    "Run one container image, or a Helm chart for EKS, GKE or AKS. Your people sign in with Google, Microsoft or Okta. Enterprise deployments are available now in early access.",
   "onboarding.earlyAccess": "Get early access",
   "onboarding.moreFrom": "More from CopilotKit",
   "onboarding.setupTitle": "Check your setup",
   "onboarding.setupBody": "See what's ready and what needs setting up.",
   "onboarding.continue": "Continue",
   "onboarding.notNow": "Not now",
-  "onboarding.gmailFailed": "Couldn't connect your Gmail and Calendar. Try again.",
+  "onboarding.gmailFailed":
+    "Couldn't connect your Gmail and Calendar. Try again.",
   "onboarding.start": "Start using {product}",
   "onboarding.checklist.noStart": "Couldn't start connecting. Try again.",
   "onboarding.checklist.checking": "Checking…",
   "onboarding.checklist.checkAgain": "Check again",
   "onboarding.checklist.recheckFailed": "Couldn't check again. Try again.",
-  "onboarding.checklist.readFailed": "Couldn't check your setup. Check again, or carry on and look later in Settings.",
+  "onboarding.checklist.readFailed":
+    "Couldn't check your setup. Check again, or carry on and look later in Settings.",
   "onboarding.checklist.aria": "Setup",
-  "onboarding.checklist.unchecked": { one: "1 thing isn't checked yet.", other: "{count} things aren't checked yet." },
+  "onboarding.checklist.unchecked": {
+    one: "1 thing isn't checked yet.",
+    other: "{count} things aren't checked yet.",
+  },
   "onboarding.checklist.allSet": "Everything is set up.",
-  "onboarding.checklist.gaps": { one: "1 thing needs setup", other: "{count} things need setup" },
-  "onboarding.checklist.required": { one: "1 is required", other: "{count} are required" },
+  "onboarding.checklist.gaps": {
+    one: "1 thing needs setup",
+    other: "{count} things need setup",
+  },
+  "onboarding.checklist.required": {
+    one: "1 is required",
+    other: "{count} are required",
+  },
   "onboarding.checklist.gapsRequired": "{gaps}, and {required}.",
-  "onboarding.checklist.optional": { one: "{gaps}. {product} works without it.", other: "{gaps}. {product} works without them." },
+  "onboarding.checklist.optional": {
+    one: "{gaps}. {product} works without it.",
+    other: "{gaps}. {product} works without them.",
+  },
   "onboarding.checklist.notifTitle": "Notifications",
-  "onboarding.checklist.notifBrowser": "{product} tells you in this browser when it needs your input.",
-  "onboarding.checklist.notifPhone": "{product} tells you on your phone when it needs your input.",
-  "onboarding.checklist.notifBlocked": "Blocked for this site. Allow notifications in your browser's site settings.",
-  "onboarding.checklist.notifUnsupported": "This browser can't show notifications.",
-  "onboarding.checklist.notifWithout": "Without them, you see what needs you only when you look.",
+  "onboarding.checklist.notifBrowser":
+    "{product} tells you in this browser when it needs your input.",
+  "onboarding.checklist.notifPhone":
+    "{product} tells you on your phone when it needs your input.",
+  "onboarding.checklist.notifBlocked":
+    "Blocked for this site. Allow notifications in your browser's site settings.",
+  "onboarding.checklist.notifUnsupported":
+    "This browser can't show notifications.",
+  "onboarding.checklist.notifWithout":
+    "Without them, you see what needs you only when you look.",
   "onboarding.checklist.requiredTag": "Required",
   "onboarding.checklist.ready": "Ready",
   "onboarding.checklist.notChecked": "Not checked",
@@ -3008,20 +3036,25 @@ export const EN = {
   "newbot.titleHelp": "A few words shown under its name.",
   "newbot.instructions": "Instructions",
   "newbot.role": "Role",
-  "newbot.instructionsPlaceholder": "Review receipts, categorize expenses, and prepare reimbursement reports.",
-  "newbot.instructionsHelpHere": "How it should work. Leave it blank and it helps with anything.",
+  "newbot.instructionsPlaceholder":
+    "Review receipts, categorize expenses, and prepare reimbursement reports.",
+  "newbot.instructionsHelpHere":
+    "How it should work. Leave it blank and it helps with anything.",
   "newbot.instructionsHelpOther": "Added to your agent's own instructions.",
   "newbot.whoCanSee": "Who can see it",
   "newbot.whereRun": "Where will your Bot run?",
   "newbot.runHere": "Run it here",
-  "newbot.runHereLine": "{product} runs it for you. Nothing to set up, and it can start right away.",
+  "newbot.runHereLine":
+    "{product} runs it for you. Nothing to set up, and it can start right away.",
   "newbot.runHereOff": "Not available yet. An admin has to turn this on first.",
   "newbot.orConnect": "or connect one you run",
   "newbot.whereReached": "Where can it be reached?",
   "newbot.address": "Agent address",
-  "newbot.addressHelp": "Any agent that speaks AG-UI works. {product} connects to it, so it has to be reachable from {product}'s server.",
+  "newbot.addressHelp":
+    "Any agent that speaks AG-UI works. {product} connects to it, so it has to be reachable from {product}'s server.",
   "newbot.key": "Key",
-  "newbot.keyHelp": "Sent as an {header} header with every request, and stored encrypted.",
+  "newbot.keyHelp":
+    "Sent as an {header} header with every request, and stored encrypted.",
   "make.kind.design-system": "Design System",
   "make.plain.design-system": "design system",
   "make.starter.design-system": "Make a design system for …",
@@ -3046,7 +3079,8 @@ export const EN = {
   "make.savedUpNext": "Saved for Up next on Tasks.",
   "make.loadError": "Couldn't load what was made. Reload the page.",
   "make.empty": "Nothing made yet.",
-  "make.emptyHelp": "Tap + to choose what to make. What {name} makes shows up here.",
+  "make.emptyHelp":
+    "Tap + to choose what to make. What {name} makes shows up here.",
   "make.yourBot": "your Bot",
   "make.noneOfKind": "No {kind} yet. Tap + to make one.",
   "make.listAria": "Made for you",
@@ -3066,7 +3100,8 @@ export const EN = {
   "upnext.loadError": "Couldn't load Up next. Reload the page.",
   "upnext.noMatch": "Nothing matches “{query}”.",
   "upnext.started": "Started. {name} is on it.",
-  "upnext.activityError": "Couldn't load what {name} has lined up. Reload the page.",
+  "upnext.activityError":
+    "Couldn't load what {name} has lined up. Reload the page.",
   "upnext.fromApp": "From {app}",
   "upnext.aConnectedApp": "a connected app",
   "upnext.youAsked": "You asked",
@@ -3074,9 +3109,11 @@ export const EN = {
   "upnext.startNamed": "Start {title}",
   "upnext.hide": "Hide",
   "upnext.start": "Start",
-  "upnext.conversationsError": "Couldn't load your conversations. Reload the page.",
+  "upnext.conversationsError":
+    "Couldn't load your conversations. Reload the page.",
   "upnext.plateTitle": "What can I take off your plate?",
-  "upnext.plateBody": "I'll look through your mail and calendar for things I can handle.",
+  "upnext.plateBody":
+    "I'll look through your mail and calendar for things I can handle.",
   "upnext.checks": "What it checks",
   "upnext.looking": "Looking…",
   "upnext.showMe": "Show me",
@@ -3084,7 +3121,8 @@ export const EN = {
   "upnext.checkFailed": "Couldn't check just now. Try again.",
   "upnext.slow": "This is taking a while. New tasks show up here.",
   "upnext.suggestTitle": "Let {name} suggest tasks",
-  "upnext.suggestBody": "It checks your connected apps every hour and writes to you when something needs you. It can only read.",
+  "upnext.suggestBody":
+    "It checks your connected apps every hour and writes to you when something needs you. It can only read.",
   "upnext.turnOn": "Turn on",
   "memory.err.load": "Could not load memory",
   "memory.err.sources": "Could not load memory sources",
@@ -3128,7 +3166,8 @@ export const EN = {
   "routines.blk.running": "running now",
   "routines.blk.pending": "due, not yet recorded",
   "routines.blk.missed": "missed",
-  "routines.blk.summary": "{count} runs on {day}, about every {minutes} minutes",
+  "routines.blk.summary":
+    "{count} runs on {day}, about every {minutes} minutes",
   "routines.blk.doneOf": "{done} of {count} done",
   "routines.nextRun": "Next run: {when} ({zone}).",
   "routines.nextRunHere": "{line} In your time zone ({zone}) that is {when}.",
@@ -3151,7 +3190,8 @@ export const EN = {
   "demo.err.start": "Could not start recording",
   "demo.err.stop": "Could not stop recording",
   "demo.err.draft": "Could not draft a skill",
-  "demo.err.publish": "The skill was saved, but its demonstration could not be linked",
+  "demo.err.publish":
+    "The skill was saved, but its demonstration could not be linked",
   "demo.err.delete": "Could not delete the demonstration",
   "demo.err.schedule": "Could not schedule this skill",
   "resp.err.load": "Could not load responsibilities",
@@ -3169,14 +3209,19 @@ export const EN = {
   "resp.err.removeTrigger": "Could not remove the trigger",
   "resp.err.changeTrigger": "Could not change the trigger",
   "claude.notConnected.title": "Claude is not connected yet",
-  "claude.notConnected.body": "You sign in on Claude's own page; FreeDuet never sees your password. Run this once in a terminal on the computer FreeDuet runs on, sign in there, then press Check again.",
+  "claude.notConnected.body":
+    "You sign in on Claude's own page; FreeDuet never sees your password. Run this once in a terminal on the computer FreeDuet runs on, sign in there, then press Check again.",
   "claude.notInstalled.title": "Claude is not installed on this computer yet",
-  "claude.notInstalled.body": "Rebuild the service in a terminal on the computer FreeDuet runs on, then press Check again.",
+  "claude.notInstalled.body":
+    "Rebuild the service in a terminal on the computer FreeDuet runs on, then press Check again.",
   "claude.outcome.connected": "Claude is connected. Send your message again.",
   "claude.outcome.notConnected": "FreeDuet cannot see the sign-in yet.",
-  "claude.outcome.notInstalled": "Claude is still not installed on this computer.",
-  "claude.outcome.waiting": "FreeDuet could not tell yet. Try again in a moment.",
-  "claude.outcome.elsewhere": "Connecting Claude is done at the computer FreeDuet runs on.",
+  "claude.outcome.notInstalled":
+    "Claude is still not installed on this computer.",
+  "claude.outcome.waiting":
+    "FreeDuet could not tell yet. Try again in a moment.",
+  "claude.outcome.elsewhere":
+    "Connecting Claude is done at the computer FreeDuet runs on.",
   "claude.outcome.hosted": "This FreeDuet does not connect a Claude plan.",
   "claude.outcome.noEngine": "FreeDuet's engine is not running.",
   "claude.aria": "Connect your Claude plan",
