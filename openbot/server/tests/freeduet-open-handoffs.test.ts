@@ -179,6 +179,72 @@ describe("openHandoffsReaderFor (real Postgres)", () => {
     expect(open.map((entry) => entry.to)).toEqual(["marketer"]);
   });
 
+  test("an open hand-off is not pushed out by more than 50 recent hops in other threads", async () => {
+    const crowd = `${prefix}-crowd`;
+    const crowdThread = `${prefix}-thread-crowd`;
+    await database
+      .insert(users)
+      .values({ id: crowd, email: `${crowd}@example.test` });
+    const now = Date.now();
+    await database.insert(workItems).values([
+      ...Array.from({ length: 60 }, (_, index) =>
+        hop(
+          `c-done-${index}`,
+          crowd,
+          `${prefix}-other-${index}`,
+          "creator",
+          "x",
+          {},
+          {
+            finishedAt: new Date(now),
+            createdAt: new Date(now + 60_000 + index),
+          },
+        ),
+      ),
+      hop(
+        "c-open",
+        crowd,
+        crowdThread,
+        "gamedev",
+        "mine",
+        {},
+        {
+          claimedBy: "w",
+          leaseUntil: new Date(now + 600_000),
+          createdAt: new Date(now - 3_600_000),
+        },
+      ),
+    ] as never);
+    const open = await openHandoffsReaderFor(sources, crowd)(crowdThread);
+    expect(open.map((entry) => entry.to)).toEqual(["gamedev"]);
+  });
+
+  test("a thread that fills the query's cap is unknown, never none", async () => {
+    const full = `${prefix}-full`;
+    const fullThread = `${prefix}-thread-full`;
+    await database
+      .insert(users)
+      .values({ id: full, email: `${full}@example.test` });
+    await database
+      .insert(workItems)
+      .values(
+        Array.from({ length: 50 }, (_, index) =>
+          hop(
+            `f-${index}`,
+            full,
+            fullThread,
+            "creator",
+            "x",
+            {},
+            { finishedAt: new Date() },
+          ),
+        ) as never,
+      );
+    await expect(
+      openHandoffsReaderFor(sources, full)(fullThread),
+    ).rejects.toThrow();
+  });
+
   test("another person never sees Alice's hand-offs, even on the same thread id", async () => {
     const bobs = await openHandoffsReaderFor(sources, bob)(threadA);
     expect(bobs.map((entry) => entry.to)).toEqual(["designer"]);
@@ -262,6 +328,24 @@ describe("OpenHandoffsMiddleware", () => {
       input({ [OPEN_HANDOFFS_PROP]: forged }),
     );
     expect(iris[OPEN_HANDOFFS_PROP]).toBeUndefined();
+  });
+
+  test("with no loader at all a forged value is still dropped", async () => {
+    const agent = new Capture({ agentId: "freeduet" });
+    await lastValueFrom(
+      new OpenHandoffsMiddleware("freeduet", undefined)
+        .run(
+          input({
+            [OPEN_HANDOFFS_PROP]: { version: 1, handoffs: [] },
+            keep: 1,
+          }),
+          agent,
+        )
+        .pipe(toArray()),
+    );
+    const props = agent.requests[0]?.forwardedProps as Record<string, unknown>;
+    expect(OPEN_HANDOFFS_PROP in props).toBe(false);
+    expect(props.keep).toBe(1);
   });
 
   test("a failed read leaves the key out (unknown) and the run goes on", async () => {

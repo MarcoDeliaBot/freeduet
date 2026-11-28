@@ -16,7 +16,11 @@ import {
 } from "./work-status";
 
 export type WorkStatusSources = {
-  hops: (ownerUserId: string, sinceMs: number) => Promise<readonly HopRow[]>;
+  hops: (
+    ownerUserId: string,
+    sinceMs: number,
+    threadId?: string,
+  ) => Promise<readonly HopRow[]>;
   attention: (
     ownerUserId: string,
   ) => Promise<

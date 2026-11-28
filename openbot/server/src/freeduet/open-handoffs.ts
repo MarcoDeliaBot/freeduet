@@ -41,6 +41,9 @@ export const OPEN_HANDOFFS_PROP = "openbotOpenHandoffs";
 /** The member whose runs carry it: Iris, the head of the team. */
 export const OPEN_HANDOFFS_MEMBER = "freeduet";
 
+/** The row cap of `ActivityStore.workStatusRows`. */
+const HOPS_CAP = 50;
+
 export type OpenHandoff = {
   /** The asked member's id. */
   to: string;
@@ -75,7 +78,7 @@ function isObject(value: unknown): value is Record<string, unknown> {
 export class OpenHandoffsMiddleware extends Middleware {
   constructor(
     private readonly botId: string,
-    private readonly load: LoadOpenHandoffs,
+    private readonly load: LoadOpenHandoffs | undefined,
     private readonly now: () => number = Date.now,
   ) {
     super();
@@ -86,12 +89,13 @@ export class OpenHandoffsMiddleware extends Middleware {
       isObject(input.forwardedProps) ? input.forwardedProps : {},
     );
     // Only Iris is told, and only for a thread that has a name.
-    if (this.botId !== OPEN_HANDOFFS_MEMBER || !input.threadId)
+    const load = this.load;
+    if (!load || this.botId !== OPEN_HANDOFFS_MEMBER || !input.threadId)
       return this.runNext({ ...input, forwardedProps: forwarded }, next);
     return defer(() =>
       // A failed read costs a note, not a conversation: the key stays out and the run reads it as unknown.
       from(
-        this.load(input.threadId).then(
+        load(input.threadId).then(
           (handoffs): OpenHandoffsValue | null => ({
             version: 1,
             handoffs,
@@ -128,9 +132,11 @@ export function openHandoffsReaderFor(
 ): LoadOpenHandoffs {
   return async (threadId) => {
     const [hops, attention] = await Promise.all([
-      sources.hops(ownerUserId, DONE_VISIBLE_MS),
+      sources.hops(ownerUserId, DONE_VISIBLE_MS, threadId),
       sources.attention(ownerUserId),
     ]);
+    // The query's own cap (50 rows): a full answer may have cut an open hop off, so it is unknown, never "none".
+    if (hops.length >= HOPS_CAP) throw new Error("open hand-offs: cap reached");
     const { handoffs } = buildWorkStatus({
       hops,
       notes: workNotes,

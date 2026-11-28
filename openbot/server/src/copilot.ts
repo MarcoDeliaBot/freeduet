@@ -663,8 +663,8 @@ export async function buildAgents(
           built.use(new PersonToneMiddleware(agent.id, loadPersonTone));
         if (loadPersonLanguage)
           built.use(new PersonLanguageMiddleware(loadPersonLanguage));
-        if (loadOpenHandoffs)
-          built.use(new OpenHandoffsMiddleware(agent.id, loadOpenHandoffs));
+        // Always: with no loader it only drops a forged key (D185).
+        built.use(new OpenHandoffsMiddleware(agent.id, loadOpenHandoffs));
         return [agent.id, built];
       }),
     ),
