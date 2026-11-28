@@ -73,7 +73,7 @@ function RouteComponent() {
   const tool = server?.tools.find((row) => row.name === toolName);
 
   const back = {
-    label: server?.title ?? t("admin.plugins.tool.backFallback"),
+    label: server?.title ?? t("admin.plugins.title"),
     linkProps: {
       params: { key },
       to: "/admin/plugins/$key" as const,

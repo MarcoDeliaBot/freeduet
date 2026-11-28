@@ -1836,7 +1836,6 @@ export const it: Catalog<typeof EN> = {
     one: "{quiet}, dopo {count} frammento",
     other: "{quiet}, dopo {count} frammenti",
   },
-  // stage-2j begin
   "admin.compDetail.title": "Componenti",
   "admin.compDetail.noSuch.title": "Componente non trovato",
   "admin.compDetail.noSuch.description":
@@ -2074,7 +2073,6 @@ export const it: Catalog<typeof EN> = {
   "admin.playground.del.description":
     "Viene rimosso da questa installazione e nessun Bot può più mostrarlo. Non puoi annullare questa azione.",
   "admin.playground.del.confirm": "Elimina",
-  "admin.plugins.tool.backFallback": "Plugin",
   "admin.plugins.tool.title": "Strumento",
   "admin.plugins.tool.noTool":
     "Questo connettore non ha alcuno strumento con quel nome.",
@@ -2210,7 +2208,7 @@ export const it: Catalog<typeof EN> = {
   "admin.skills.dlg.title": "Scrivi una skill per tutti",
   "admin.skills.dlg.description":
     "Le persone scrivono lo slug dopo /. Il Bot poi segue le istruzioni. Tutti possono usarla e tu scegli quali Bot ce l'hanno.",
-  "admin.skills.slug": "Slug",
+  "admin.skills.slug": "Identificativo (slug)",
   "admin.skills.title": "Titolo",
   "admin.skills.summary": "Riepilogo",
   "admin.skills.summaryPlaceholder": "Una riga",
@@ -2218,5 +2216,4 @@ export const it: Catalog<typeof EN> = {
   "admin.skills.instructionsPlaceholder":
     "Che cosa deve fare il Bot quando questa skill viene usata.",
   "admin.skills.install": "Installa la skill",
-  // stage-2j end
 };

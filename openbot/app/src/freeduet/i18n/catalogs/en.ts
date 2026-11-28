@@ -1756,7 +1756,6 @@ export const EN = {
     one: "{quiet}, after {count} chunk",
     other: "{quiet}, after {count} chunks",
   },
-  // stage-2j begin
   "admin.compDetail.title": "Components",
   "admin.compDetail.noSuch.title": "No such component",
   "admin.compDetail.noSuch.description":
@@ -1987,7 +1986,6 @@ export const EN = {
   "admin.playground.del.description":
     "It's removed from this deployment, and no Bot can draw it. You can't undo this.",
   "admin.playground.del.confirm": "Delete it",
-  "admin.plugins.tool.backFallback": "Plugin",
   "admin.plugins.tool.title": "Tool",
   "admin.plugins.tool.noTool": "This connector has no tool with that name.",
   "admin.plugins.tool.removed":
@@ -2122,7 +2120,6 @@ export const EN = {
   "admin.skills.instructionsPlaceholder":
     "What the Bot should do when this skill is used.",
   "admin.skills.install": "Install skill",
-  // stage-2j end
 } satisfies Entries;
 
 export type MessageId = keyof typeof EN;

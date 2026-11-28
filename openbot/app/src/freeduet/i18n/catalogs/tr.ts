@@ -1802,7 +1802,6 @@ export const tr: Catalog<typeof EN> = {
     one: "{quiet}, {count} parçadan sonra",
     other: "{quiet}, {count} parçadan sonra",
   },
-  // stage-2j begin
   "admin.compDetail.title": "",
   "admin.compDetail.noSuch.title": "",
   "admin.compDetail.noSuch.description": "",
@@ -1981,7 +1980,6 @@ export const tr: Catalog<typeof EN> = {
   "admin.playground.del.title": "",
   "admin.playground.del.description": "",
   "admin.playground.del.confirm": "",
-  "admin.plugins.tool.backFallback": "",
   "admin.plugins.tool.title": "",
   "admin.plugins.tool.noTool": "",
   "admin.plugins.tool.removed": "",
@@ -2068,5 +2066,4 @@ export const tr: Catalog<typeof EN> = {
   "admin.skills.instructions": "",
   "admin.skills.instructionsPlaceholder": "",
   "admin.skills.install": "",
-  // stage-2j end
 };

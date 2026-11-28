@@ -1901,7 +1901,6 @@ export const es: Catalog<typeof EN> = {
     other: "{quiet}, tras {count} fragmentos",
     many: "{quiet}, tras {count} de fragmentos",
   },
-  // stage-2j begin
   "admin.compDetail.title": "",
   "admin.compDetail.noSuch.title": "",
   "admin.compDetail.noSuch.description": "",
@@ -2080,7 +2079,6 @@ export const es: Catalog<typeof EN> = {
   "admin.playground.del.title": "",
   "admin.playground.del.description": "",
   "admin.playground.del.confirm": "",
-  "admin.plugins.tool.backFallback": "",
   "admin.plugins.tool.title": "",
   "admin.plugins.tool.noTool": "",
   "admin.plugins.tool.removed": "",
@@ -2167,5 +2165,4 @@ export const es: Catalog<typeof EN> = {
   "admin.skills.instructions": "",
   "admin.skills.instructionsPlaceholder": "",
   "admin.skills.install": "",
-  // stage-2j end
 };
