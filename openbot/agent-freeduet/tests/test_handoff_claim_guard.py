@@ -421,3 +421,15 @@ def test_the_six_more_languages_apply_like_the_first_six():
     assert applies("Kai收到了“go”，正在处理。") == ("game", "Kai", False)
     assert applies("Kai가 작업 중입니다.", story=[call_to("Kai")]) is None
     assert applies("Kai работает над этим.", messages=conversation(call_to("Kai"), result())) is None
+
+
+@pytest.mark.parametrize("reply", [
+    "Kai уже работает.", "Kai взял это в работу.", "Kai正在准备素材。", "Kaiはまだ作業中です。",
+])
+def test_review_fixes_these_claims_are_found(reply):
+    assert claimed(reply) == ["Kai"]
+
+
+@pytest.mark.parametrize("reply", ["Kai未开始工作。", "Kai不曾开始制作。", "Kaiはまだ依頼していません。", "Kai准备好了就开始了吗。"])
+def test_review_fixes_these_are_not_claims(reply):
+    assert claimed(reply) == []
