@@ -51,8 +51,7 @@ export async function startRecording(
   const mimeType = ["audio/webm;codecs=opus", "audio/mp4", "audio/webm"].find(
     (type) => MediaRecorder.isTypeSupported(type),
   );
-  if (!mimeType)
-    throw new Error(t("dictation.recording.noFormat"));
+  if (!mimeType) throw new Error(t("dictation.recording.noFormat"));
   const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
   const release = () => {
     for (const track of stream.getTracks()) track.stop();

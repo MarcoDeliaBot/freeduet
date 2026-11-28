@@ -64,11 +64,7 @@ export const connectWebRtc: ConnectVoice = async ({
       const output = streams[0] ?? new MediaStream([track]);
       player.srcObject = output;
       onOutput(output);
-      void player
-        .play()
-        .catch(() =>
-          fail(t("voice.webrtc.playback")),
-        );
+      void player.play().catch(() => fail(t("voice.webrtc.playback")));
     };
     peer.onconnectionstatechange = () => {
       if (
@@ -80,8 +76,7 @@ export const connectWebRtc: ConnectVoice = async ({
     };
     for (const track of stream.getAudioTracks()) {
       peer.addTrack(track, stream);
-      track.onended = () =>
-        fail(t("voice.webrtc.micGone"));
+      track.onended = () => fail(t("voice.webrtc.micGone"));
     }
     channel = peer.createDataChannel("oai-events");
     channel.onopen = () => ready.resolve();

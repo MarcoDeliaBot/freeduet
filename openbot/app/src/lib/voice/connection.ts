@@ -12,8 +12,7 @@ export function voiceSupported(): boolean {
 
 export const connectVoice: ConnectVoice = async (options) => {
   const t = options.t ?? englishT;
-  if (!voiceSupported())
-    throw new Error(t("voice.connection.unsupported"));
+  if (!voiceSupported()) throw new Error(t("voice.connection.unsupported"));
   const response = await fetch("/api/voice/config", {
     credentials: "include",
     signal: options.signal,

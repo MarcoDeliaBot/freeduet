@@ -123,8 +123,7 @@ export class VoiceSession {
     this.abort = abort;
     this.update({ phase: "connecting" });
     this.deadline = setTimeout(() => {
-      if (current())
-        this.fail(this.t("voice.session.slow"));
+      if (current()) this.fail(this.t("voice.session.slow"));
     }, 30_000);
     try {
       const context = await this.deps.context();
@@ -213,9 +212,7 @@ export class VoiceSession {
       return true;
     } catch (error) {
       this.fail(
-        error instanceof Error
-          ? error.message
-          : this.t("voice.session.lost"),
+        error instanceof Error ? error.message : this.t("voice.session.lost"),
       );
       return false;
     }

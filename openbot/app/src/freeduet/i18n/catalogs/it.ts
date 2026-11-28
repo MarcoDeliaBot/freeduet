@@ -247,7 +247,8 @@ export const it: Catalog<typeof EN> = {
   "voice.session.muteFailed":
     "Non è stato possibile cambiare lo stato del microfono. Chiama di nuovo.",
   "voice.session.lost": "La connessione vocale si è interrotta.",
-  "voice.session.startFailed": "Non è stato possibile avviare la chiamata vocale.",
+  "voice.session.startFailed":
+    "Non è stato possibile avviare la chiamata vocale.",
   "voice.session.transcriptLimit":
     "Questa chiamata ha raggiunto il limite della trascrizione. Avvia una nuova chiamata per continuare.",
   "voice.session.responseFailed":
@@ -264,7 +265,8 @@ export const it: Catalog<typeof EN> = {
     "Il microfono si è disconnesso. Controllalo e chiama di nuovo.",
   "voice.webrtc.channelFailed":
     "La connessione vocale non è riuscita. Chiama di nuovo.",
-  "voice.webrtc.ended": "La chiamata vocale è terminata. Puoi chiamare di nuovo.",
+  "voice.webrtc.ended":
+    "La chiamata vocale è terminata. Puoi chiamare di nuovo.",
   "voice.webrtc.unreadable":
     "Il servizio vocale ha inviato un evento illeggibile. Chiama di nuovo.",
   "voice.webrtc.connectFailed":
@@ -274,9 +276,11 @@ export const it: Catalog<typeof EN> = {
   "voice.webrtc.notConnected": "La chiamata vocale non è più connessa.",
   "voice.websocket.audio":
     "Questo browser non è riuscito ad avviare l'audio della chiamata. Consenti l'audio e riprova.",
-  "voice.websocket.config": "Configurazione della connessione vocale non valida.",
+  "voice.websocket.config":
+    "Configurazione della connessione vocale non valida.",
   "voice.websocket.address": "Indirizzo del servizio vocale non supportato.",
-  "voice.websocket.startFailed": "Non è stato possibile avviare la chiamata vocale.",
+  "voice.websocket.startFailed":
+    "Non è stato possibile avviare la chiamata vocale.",
   "voice.websocket.connect":
     "Non è stato possibile collegarsi a Grok Voice. Controlla la connessione e riprova.",
   "voice.websocket.closed":
@@ -308,14 +312,16 @@ export const it: Catalog<typeof EN> = {
     "Questo browser non sa registrare l'audio. Prova con una versione aggiornata di Chrome, Edge, Firefox o Safari.",
   "dictation.recording.noFormat":
     "Questo browser non sa registrare un formato audio supportato.",
-  "dictation.recording.tooLarge": "La registrazione è troppo grande. Prova con un messaggio più breve.",
+  "dictation.recording.tooLarge":
+    "La registrazione è troppo grande. Prova con un messaggio più breve.",
   "dictation.recording.stopped":
     "Il microfono ha smesso di registrare. Riprova.",
   "dictation.recording.interrupted":
     "La registrazione è stata interrotta. Riprova.",
   "dictation.recording.empty":
     "La registrazione è vuota o non supportata. Registra di nuovo.",
-  "dictation.recording.noSpeech": "Non è stato rilevato nessun parlato. Prova a registrare di nuovo.",
+  "dictation.recording.noSpeech":
+    "Non è stato rilevato nessun parlato. Prova a registrare di nuovo.",
   "dictation.recording.failed": "La trascrizione non è riuscita. Riprova.",
   "dictation.session.denied":
     "L'accesso al microfono è stato negato. Consentilo nel browser e riprova.",
@@ -323,7 +329,8 @@ export const it: Catalog<typeof EN> = {
     "Non è stato possibile avviare la registrazione. Controlla il microfono e riprova.",
   "dictation.session.finishFailed":
     "Non è stato possibile terminare la registrazione. Registra di nuovo.",
-  "dictation.session.transcribeFailed": "La trascrizione non è riuscita. Riprova.",
+  "dictation.session.transcribeFailed":
+    "La trascrizione non è riuscita. Riprova.",
   "home.bots": "Conosci il tuo team e gestisci ogni Bot.",
   "home.capabilities": "Competenze e memoria.",
   "home.connectionsLabel": "Account, app e regole per la posta",

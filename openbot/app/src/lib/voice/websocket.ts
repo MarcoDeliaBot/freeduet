@@ -276,8 +276,7 @@ export const connectWebSocket: ConnectVoice = async ({
       send({ type: "input_audio_buffer.append", audio: encodePcm(data) });
     };
     for (const track of stream.getAudioTracks())
-      track.onended = () =>
-        fail(t("voice.websocket.micGone"));
+      track.onended = () => fail(t("voice.websocket.micGone"));
     await ready.promise;
     signal.throwIfAborted();
     const microphone = stream;

@@ -230,8 +230,7 @@ export const EN = {
   "voice.widget.youNamed": "{name} (you)",
   "voice.widget.mute": "Mute your microphone",
   "voice.widget.unmute": "Unmute your microphone",
-  "voice.widget.muteTitle":
-    "Mute your microphone · you’ll still hear the Bot",
+  "voice.widget.muteTitle": "Mute your microphone · you’ll still hear the Bot",
   "voice.session.slow":
     "The call took too long to connect. Check microphone permission and try again.",
   "voice.session.timeLimit":
@@ -254,7 +253,8 @@ export const EN = {
     "The voice connection was lost. Your chat is still available. Call again to reconnect.",
   "voice.webrtc.micGone":
     "The microphone disconnected. Check it and call again.",
-  "voice.webrtc.channelFailed": "The voice connection failed. Please call again.",
+  "voice.webrtc.channelFailed":
+    "The voice connection failed. Please call again.",
   "voice.webrtc.ended": "The voice call ended. You can call again.",
   "voice.webrtc.unreadable":
     "The voice service returned an unreadable event. Please call again.",
@@ -299,14 +299,16 @@ export const EN = {
     "This browser cannot record audio. Try an up-to-date Chrome, Edge, Firefox or Safari.",
   "dictation.recording.noFormat":
     "This browser cannot record a supported audio format.",
-  "dictation.recording.tooLarge": "Recording is too large. Try a shorter message.",
+  "dictation.recording.tooLarge":
+    "Recording is too large. Try a shorter message.",
   "dictation.recording.stopped":
     "The microphone stopped recording. Please try again.",
   "dictation.recording.interrupted":
     "Recording was interrupted. Please try again.",
   "dictation.recording.empty":
     "The recording is empty or unsupported. Please record again.",
-  "dictation.recording.noSpeech": "No speech was detected. Try recording again.",
+  "dictation.recording.noSpeech":
+    "No speech was detected. Try recording again.",
   "dictation.recording.failed": "Transcription failed. Please retry.",
   "dictation.session.denied":
     "Microphone access was denied. Allow it in your browser and try again.",

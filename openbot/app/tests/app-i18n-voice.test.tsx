@@ -82,7 +82,9 @@ test("the voice call widget reads Italian with the language it, English with en"
     </AppLanguageValue>,
   );
   expect(italian.getByRole("status").textContent).toBe("Pronto quando vuoi");
-  expect(labelled(italian.container, "Disattiva il tuo microfono")).not.toBeNull();
+  expect(
+    labelled(italian.container, "Disattiva il tuo microfono"),
+  ).not.toBeNull();
   expect(labelled(italian.container, "Mute your microphone")).toBeNull();
   cleanup();
 
@@ -120,9 +122,9 @@ test("the dictation controls read Italian with the language it, English with en"
 
 test("a dictation error comes out in the language asked for, and English without one", async () => {
   const signal = new AbortController().signal;
-  await expect(
-    transcribeRecording(new Blob([]), signal, itT),
-  ).rejects.toThrow("La registrazione è vuota o non supportata. Registra di nuovo.");
+  await expect(transcribeRecording(new Blob([]), signal, itT)).rejects.toThrow(
+    "La registrazione è vuota o non supportata. Registra di nuovo.",
+  );
   await expect(transcribeRecording(new Blob([]), signal)).rejects.toThrow(
     "The recording is empty or unsupported. Please record again.",
   );
