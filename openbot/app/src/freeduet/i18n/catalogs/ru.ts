@@ -972,6 +972,7 @@ export const ru: Catalog<typeof EN> = {
   "routines.deleteDescription":
     "Эта рутина перестанет работать навсегда. Это нельзя отменить.",
   "routines.week": "Неделя",
+  "routines.list": "Список",
   "routines.nextRuns": "Ближайшие запуски",
   "routines.viewAria": "Вид",
   "summary.nothingGranted": "Ничего не разрешено",

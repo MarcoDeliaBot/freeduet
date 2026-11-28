@@ -918,6 +918,7 @@ export const ja: Catalog<typeof EN> = {
   "routines.deleteDescription":
     "このルーティンは完全に停止します。この操作は元に戻せません。",
   "routines.week": "週",
+  "routines.list": "一覧",
   "routines.nextRuns": "次の実行",
   "routines.viewAria": "表示",
   "summary.nothingGranted": "許可されたものはありません",

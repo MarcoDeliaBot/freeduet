@@ -936,6 +936,7 @@ export const es: Catalog<typeof EN> = {
   "routines.deleteDescription":
     "Esta rutina se detiene para siempre. No se puede deshacer.",
   "routines.week": "Semana",
+  "routines.list": "Lista",
   "routines.nextRuns": "Próximas ejecuciones",
   "routines.viewAria": "Ver",
   "summary.nothingGranted": "Nada concedido",

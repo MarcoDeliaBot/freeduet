@@ -974,6 +974,7 @@ export const pl: Catalog<typeof EN> = {
   "routines.deleteDescription":
     "Ta rutyna zostaje zatrzymana na dobre. Nie da się tego cofnąć.",
   "routines.week": "Tydzień",
+  "routines.list": "Lista",
   "routines.nextRuns": "Następne uruchomienia",
   "routines.viewAria": "Zobacz",
   "summary.nothingGranted": "Nic nie przyznano",

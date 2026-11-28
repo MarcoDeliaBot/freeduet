@@ -170,7 +170,7 @@ test("the list opens first, and the other two views are one press away", async (
   const switcher = view.getByRole("group", { name: "View" });
   expect(
     within(switcher)
-      .getByRole("button", { name: "Routines" })
+      .getByRole("button", { name: "List" })
       .getAttribute("aria-pressed"),
   ).toBe("true");
   fireEvent.click(within(switcher).getByRole("button", { name: "Next runs" }));
