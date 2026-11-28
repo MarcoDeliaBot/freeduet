@@ -1438,6 +1438,120 @@ export const EN = {
   "admin.nav.people": "People",
   "admin.nav.idp": "Identity providers",
   "admin.nav.audit": "Audit",
+  "admin.enterprise.mode.allow_all": "Allow all network access",
+  "admin.enterprise.mode.defaults_plus_allowlist":
+    "Defaults plus team allowlist",
+  "admin.enterprise.mode.allowlist_only": "Team allowlist only",
+  "admin.enterprise.noPolicy":
+    "No policy. Bot computers can reach anything the cluster allows",
+  "admin.enterprise.locked": " · locked",
+  "admin.enterprise.loadError":
+    "Couldn't load enterprise controls. Reload the page.",
+  "admin.enterprise.title": "Enterprise controls",
+  "admin.enterprise.description":
+    "What members can use, how Bot computers reach the network, and what is recorded. Every change shows in Audit.",
+  "admin.enterprise.signin.description":
+    "Addresses in {env} can always use social sign-in as an emergency way in. Each of those sign-ins shows in Audit.",
+  "admin.enterprise.signin.title": "Sign-in",
+  "admin.enterprise.sso.title": "Require SSO",
+  "admin.enterprise.sso.on":
+    "People can only sign in through a registered SAML or OpenID Connect provider.",
+  "admin.enterprise.sso.off":
+    "People can also sign in with Google, Microsoft or Okta.",
+  "admin.enterprise.scim.title": "SCIM provisioning",
+  "admin.enterprise.scim.on":
+    "Directory base URL {url} with the {env} bearer token. Deprovisioning ends sessions, blocks the address, retires connector credentials and stops their computers.",
+  "admin.enterprise.scim.unsetUrl": "(set BETTER_AUTH_URL)",
+  "admin.enterprise.scim.off":
+    "Off. Set {env} to accept provisioning from Okta, Entra or another directory.",
+  "admin.enterprise.on": "On",
+  "admin.enterprise.off": "Off",
+  "admin.enterprise.cap.description":
+    "Each switch applies to the whole organization. A role can override it, and a directory group can get a capability the organization has off.",
+  "admin.enterprise.cap.title": "Capabilities",
+  "admin.enterprise.cap.offFor":
+    "Off for everybody, unless a role or group turns it on.",
+  "admin.enterprise.over.title": "Role and group overrides",
+  "admin.enterprise.over.none": "None. Everybody gets the switches above",
+  "admin.enterprise.over.set": "{count} set",
+  "admin.enterprise.net.description":
+    "Where Bot computers can connect. Changes reach running computers within seconds, without a restart. A group policy replaces the organization's unless it is locked.",
+  "admin.enterprise.net.title": "Network",
+  "admin.enterprise.net.org": "Organization",
+  "admin.enterprise.net.group": "Group: {name}",
+  "admin.enterprise.net.addGroup": "Add a group policy",
+  "admin.enterprise.mcp.description":
+    "With the allowlist on, Bots can only call tools on the MCP servers approved here. Calls to any other server are refused.",
+  "admin.enterprise.mcp.title": "MCP servers",
+  "admin.enterprise.mcp.only": "Only approved servers",
+  "admin.enterprise.mcp.approved": "{count} approved",
+  "admin.enterprise.mcp.offDesc":
+    "Off. Bots can use any registered server they have access to.",
+  "admin.enterprise.mcp.onlyAria": "Only approved MCP servers",
+  "admin.enterprise.mcp.approveAria": "Approve {name}",
+  "admin.enterprise.models.description":
+    "The built-in Bot runs on {model}. A remote Bot chooses its own, and the model it reports is recorded.",
+  "admin.enterprise.models.configured": "the deployment's configured model",
+  "admin.enterprise.models.title": "Models",
+  "admin.enterprise.models.allowlist": "Model allowlist",
+  "admin.enterprise.models.allowlistOn":
+    "A built-in Bot on an unlisted model is refused before it runs.",
+  "admin.enterprise.models.allowlistOff": "Off. Any model can be used.",
+  "admin.enterprise.models.allowed": "Allowed models",
+  "admin.enterprise.models.none": "None listed",
+  "admin.enterprise.models.listDesc":
+    "One model per line, as provider/model, for example {example}.",
+  "admin.enterprise.rec.description":
+    "Set {env} to stream audit events and Bot actions to your OpenTelemetry collector or SIEM. They are tagged {tag}.",
+  "admin.enterprise.rec.title": "Recording and export",
+  "admin.enterprise.rec.action": "Action Recording",
+  "admin.enterprise.rec.actionOn":
+    "Shell commands Bots run are recorded with secrets removed, and kept {days} days.",
+  "admin.enterprise.rec.actionOff": "Off. Commands show in Audit only.",
+  "admin.enterprise.rec.otel": "OpenTelemetry export",
+  "admin.enterprise.rec.otelOn": "Exporting over OTLP/HTTP.",
+  "admin.enterprise.rec.otelOff": "Not set up. Set {env} on the server.",
+  "admin.enterprise.comp.description":
+    "Stopping a computer ends its running Bots and keeps its disk. The Bot gets a fresh computer next session. To stop one person's computers, go to People.",
+  "admin.enterprise.comp.title": "Computers",
+  "admin.enterprise.comp.stopInactive": "Stop inactive computers",
+  "admin.enterprise.comp.afterDays": "After {days} days without use",
+  "admin.enterprise.usage.error": "Couldn't load model usage. Reload the page.",
+  "admin.enterprise.usage.empty": "No Bot runs in the last 30 days.",
+  "admin.enterprise.usage.runs": "{runs} runs by {people} {who} in 30 days",
+  "admin.enterprise.usage.person": "person",
+  "admin.enterprise.usage.people": "people",
+  "admin.enterprise.usage.refused": " · {count} off the allowlist",
+  "admin.enterprise.recorded.error":
+    "Couldn't load recorded actions. Reload the page.",
+  "admin.enterprise.recorded.empty": "No commands recorded yet.",
+  "admin.enterprise.recorded.local": "Member's machine",
+  "admin.enterprise.recorded.bot": "Bot {id}",
+  "admin.enterprise.sweep.stopping": "Stopping…",
+  "admin.enterprise.sweep.now": "Stop inactive computers now",
+  "admin.enterprise.sweep.stopped": "Stopped {count}.",
+  "admin.enterprise.ov.admins": "Admins",
+  "admin.enterprise.ov.members": "Members",
+  "admin.enterprise.ov.group": "Group: {name}",
+  "admin.enterprise.ov.scope": "Scope",
+  "admin.enterprise.ov.groupNote":
+    "A group can only add. Grant gives its members the capability even when the organization has it off.",
+  "admin.enterprise.ov.roleNote":
+    "A role's setting replaces the organization switch for everybody with that role.",
+  "admin.enterprise.ov.forScope": "{title} for {scope}",
+  "admin.enterprise.ov.inherit": "Inherit",
+  "admin.enterprise.ov.grant": "Grant",
+  "admin.enterprise.netd.org": "Organization network policy",
+  "admin.enterprise.netd.group": "Group network policy",
+  "admin.enterprise.netd.groupLabel": "Group",
+  "admin.enterprise.netd.mode": "Mode",
+  "admin.enterprise.netd.allowlist": "Allowlist",
+  "admin.enterprise.netd.help":
+    "One per line. A domain covers its subdomains. *.name covers only subdomains. An IP range can list ports. Defaults are {first} and {more} more package and source hosts.",
+  "admin.enterprise.netd.lock": "Lock so groups can't replace this policy",
+  "admin.enterprise.netd.remove": "Remove policy",
+  "admin.enterprise.days.label": "Days without use",
+  "admin.enterprise.days.help": "0 turns it off. Checked hourly.",
 } satisfies Entries;
 
 export type MessageId = keyof typeof EN;

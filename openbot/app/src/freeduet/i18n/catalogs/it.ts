@@ -1496,4 +1496,126 @@ export const it: Catalog<typeof EN> = {
   "admin.nav.people": "Persone",
   "admin.nav.idp": "Provider di identità",
   "admin.nav.audit": "Registro",
+  "admin.enterprise.mode.allow_all": "Consenti tutto l'accesso alla rete",
+  "admin.enterprise.mode.defaults_plus_allowlist":
+    "Predefiniti più lista consentiti del team",
+  "admin.enterprise.mode.allowlist_only": "Solo lista consentiti del team",
+  "admin.enterprise.noPolicy":
+    "Nessuna policy. I computer degli assistenti raggiungono tutto ciò che il cluster consente",
+  "admin.enterprise.locked": " · bloccata",
+  "admin.enterprise.loadError":
+    "Non sono riuscito a caricare i controlli aziendali. Ricarica la pagina.",
+  "admin.enterprise.title": "Controlli aziendali",
+  "admin.enterprise.description":
+    "Cosa possono usare i membri, come i computer degli assistenti raggiungono la rete e cosa viene registrato. Ogni modifica compare in Audit.",
+  "admin.enterprise.signin.description":
+    "Gli indirizzi in {env} possono sempre accedere con l'accesso social come via d'emergenza. Ognuno di questi accessi compare in Audit.",
+  "admin.enterprise.signin.title": "Accesso",
+  "admin.enterprise.sso.title": "Richiedi SSO",
+  "admin.enterprise.sso.on":
+    "Le persone possono accedere solo tramite un provider SAML o OpenID Connect registrato.",
+  "admin.enterprise.sso.off":
+    "Le persone possono accedere anche con Google, Microsoft o Okta.",
+  "admin.enterprise.scim.title": "Provisioning SCIM",
+  "admin.enterprise.scim.on":
+    "URL base della directory {url} con il bearer token {env}. La rimozione dell'utente termina le sessioni, blocca l'indirizzo, ritira le credenziali dei connettori e ferma i suoi computer.",
+  "admin.enterprise.scim.unsetUrl": "(imposta BETTER_AUTH_URL)",
+  "admin.enterprise.scim.off":
+    "Disattivato. Imposta {env} per accettare il provisioning da Okta, Entra o un'altra directory.",
+  "admin.enterprise.on": "Attivo",
+  "admin.enterprise.off": "Disattivato",
+  "admin.enterprise.cap.description":
+    "Ogni interruttore vale per tutta l'organizzazione. Un ruolo può sostituirlo e un gruppo della directory può ottenere una funzione che l'organizzazione ha disattivata.",
+  "admin.enterprise.cap.title": "Funzioni",
+  "admin.enterprise.cap.offFor":
+    "Disattivata per tutti, a meno che un ruolo o un gruppo la attivi.",
+  "admin.enterprise.over.title": "Eccezioni per ruolo e gruppo",
+  "admin.enterprise.over.none":
+    "Nessuna. Tutti ricevono gli interruttori qui sopra",
+  "admin.enterprise.over.set": "{count} impostate",
+  "admin.enterprise.net.description":
+    "Dove possono connettersi i computer degli assistenti. Le modifiche raggiungono i computer in esecuzione in pochi secondi, senza riavvio. La policy di un gruppo sostituisce quella dell'organizzazione, a meno che sia bloccata.",
+  "admin.enterprise.net.title": "Rete",
+  "admin.enterprise.net.org": "Organizzazione",
+  "admin.enterprise.net.group": "Gruppo: {name}",
+  "admin.enterprise.net.addGroup": "Aggiungi una policy di gruppo",
+  "admin.enterprise.mcp.description":
+    "Con la lista consentiti attiva, gli assistenti possono chiamare strumenti solo sui server MCP approvati qui. Le chiamate a qualsiasi altro server vengono rifiutate.",
+  "admin.enterprise.mcp.title": "Server MCP",
+  "admin.enterprise.mcp.only": "Solo server approvati",
+  "admin.enterprise.mcp.approved": "{count} approvati",
+  "admin.enterprise.mcp.offDesc":
+    "Disattivato. Gli assistenti possono usare qualsiasi server registrato a cui hanno accesso.",
+  "admin.enterprise.mcp.onlyAria": "Solo server MCP approvati",
+  "admin.enterprise.mcp.approveAria": "Approva {name}",
+  "admin.enterprise.models.description":
+    "L'assistente integrato usa {model}. Un assistente remoto sceglie il proprio, e il modello che dichiara viene registrato.",
+  "admin.enterprise.models.configured":
+    "il modello configurato nell'installazione",
+  "admin.enterprise.models.title": "Modelli",
+  "admin.enterprise.models.allowlist": "Lista dei modelli consentiti",
+  "admin.enterprise.models.allowlistOn":
+    "Un assistente integrato con un modello non in elenco viene rifiutato prima di partire.",
+  "admin.enterprise.models.allowlistOff":
+    "Disattivata. Si può usare qualsiasi modello.",
+  "admin.enterprise.models.allowed": "Modelli consentiti",
+  "admin.enterprise.models.none": "Nessuno in elenco",
+  "admin.enterprise.models.listDesc":
+    "Un modello per riga, come provider/modello, per esempio {example}.",
+  "admin.enterprise.rec.description":
+    "Imposta {env} per inviare gli eventi di audit e le azioni degli assistenti al tuo collector OpenTelemetry o SIEM. Sono etichettati {tag}.",
+  "admin.enterprise.rec.title": "Registrazione ed esportazione",
+  "admin.enterprise.rec.action": "Registrazione delle azioni",
+  "admin.enterprise.rec.actionOn":
+    "I comandi di shell eseguiti dagli assistenti vengono registrati senza i segreti e conservati {days} giorni.",
+  "admin.enterprise.rec.actionOff":
+    "Disattivata. I comandi compaiono solo in Audit.",
+  "admin.enterprise.rec.otel": "Esportazione OpenTelemetry",
+  "admin.enterprise.rec.otelOn": "Esportazione via OTLP/HTTP.",
+  "admin.enterprise.rec.otelOff": "Non configurata. Imposta {env} sul server.",
+  "admin.enterprise.comp.description":
+    "Fermare un computer termina gli assistenti in esecuzione e ne conserva il disco. La sessione successiva l'assistente riceve un computer nuovo. Per fermare i computer di una sola persona, vai su Persone.",
+  "admin.enterprise.comp.title": "Computer",
+  "admin.enterprise.comp.stopInactive": "Ferma i computer inattivi",
+  "admin.enterprise.comp.afterDays": "Dopo {days} giorni senza uso",
+  "admin.enterprise.usage.error":
+    "Non sono riuscito a caricare l'uso dei modelli. Ricarica la pagina.",
+  "admin.enterprise.usage.empty":
+    "Nessuna esecuzione di assistenti negli ultimi 30 giorni.",
+  "admin.enterprise.usage.runs":
+    "{runs} esecuzioni di {people} {who} in 30 giorni",
+  "admin.enterprise.usage.person": "persona",
+  "admin.enterprise.usage.people": "persone",
+  "admin.enterprise.usage.refused": " · {count} fuori dalla lista",
+  "admin.enterprise.recorded.error":
+    "Non sono riuscito a caricare le azioni registrate. Ricarica la pagina.",
+  "admin.enterprise.recorded.empty": "Ancora nessun comando registrato.",
+  "admin.enterprise.recorded.local": "Computer del membro",
+  "admin.enterprise.recorded.bot": "Assistente {id}",
+  "admin.enterprise.sweep.stopping": "Fermo in corso…",
+  "admin.enterprise.sweep.now": "Ferma ora i computer inattivi",
+  "admin.enterprise.sweep.stopped": "Fermati: {count}.",
+  "admin.enterprise.ov.admins": "Amministratori",
+  "admin.enterprise.ov.members": "Membri",
+  "admin.enterprise.ov.group": "Gruppo: {name}",
+  "admin.enterprise.ov.scope": "Ambito",
+  "admin.enterprise.ov.groupNote":
+    "Un gruppo può solo aggiungere. «Concedi» dà ai suoi membri la funzione anche quando l'organizzazione l'ha disattivata.",
+  "admin.enterprise.ov.roleNote":
+    "L'impostazione di un ruolo sostituisce l'interruttore dell'organizzazione per tutti quelli con quel ruolo.",
+  "admin.enterprise.ov.forScope": "{title} per {scope}",
+  "admin.enterprise.ov.inherit": "Eredita",
+  "admin.enterprise.ov.grant": "Concedi",
+  "admin.enterprise.netd.org": "Policy di rete dell'organizzazione",
+  "admin.enterprise.netd.group": "Policy di rete del gruppo",
+  "admin.enterprise.netd.groupLabel": "Gruppo",
+  "admin.enterprise.netd.mode": "Modalità",
+  "admin.enterprise.netd.allowlist": "Lista consentiti",
+  "admin.enterprise.netd.help":
+    "Uno per riga. Un dominio copre i suoi sottodomini. *.nome copre solo i sottodomini. Un intervallo IP può indicare le porte. I predefiniti sono {first} e altri {more} host di pacchetti e sorgenti.",
+  "admin.enterprise.netd.lock":
+    "Blocca così i gruppi non possono sostituire questa policy",
+  "admin.enterprise.netd.remove": "Rimuovi la policy",
+  "admin.enterprise.days.label": "Giorni senza uso",
+  "admin.enterprise.days.help": "0 la disattiva. Controllo ogni ora.",
 };
