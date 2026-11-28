@@ -2323,15 +2323,15 @@ export const es: Catalog<typeof EN> = {
   "engines.state.degraded": "Listo, pero ha tenido errores recientes",
   "engines.state.limitedAt": "Ha llegado a su límite hasta {at}",
   "engines.state.limited": "Ha llegado a su límite por ahora",
-  "engines.state.outOfCreditAt": "Sin crédito, se reintentará a las {at}",
+  "engines.state.outOfCreditAt": "Sin crédito, nuevo intento: {at}",
   "engines.state.outOfCredit": "Sin crédito",
-  "engines.state.notAnsweringAt": "No responde, se reintentará a las {at}",
+  "engines.state.notAnsweringAt": "No responde, nuevo intento: {at}",
   "engines.state.notAnswering": "No responde por ahora",
   "engines.state.checking": "Comprobando si vuelve a responder",
   "engines.state.gatewayKey":
     "Su gateway no aceptó la clave. Revisa la clave que le diste.",
   "engines.state.signedOut":
-    "Sesión cerrada: vuelve a iniciar sesión con el acceso propio del motor",
+    "Sesión cerrada: vuelve a entrar con el inicio de sesión propio del motor",
   "engines.state.refusedWhy": "No se ejecutó: {reason}",
   "engines.state.refused": "No se ejecutó: no se conoce el motivo.",
   "engines.state.unknown": "Estado desconocido",

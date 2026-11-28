@@ -2378,9 +2378,9 @@ export const pl: Catalog<typeof EN> = {
   "engines.state.degraded": "Gotowy, ale ostatnio występowały błędy",
   "engines.state.limitedAt": "Osiągnął swój limit do {at}",
   "engines.state.limited": "Osiągnął swój limit na razie",
-  "engines.state.outOfCreditAt": "Brak środków, kolejna próba o {at}",
+  "engines.state.outOfCreditAt": "Brak środków, kolejna próba: {at}",
   "engines.state.outOfCredit": "Brak środków",
-  "engines.state.notAnsweringAt": "Nie odpowiada, kolejna próba o {at}",
+  "engines.state.notAnsweringAt": "Nie odpowiada, kolejna próba: {at}",
   "engines.state.notAnswering": "Na razie nie odpowiada",
   "engines.state.checking": "Sprawdzanie, czy znowu odpowiada",
   "engines.state.gatewayKey":

@@ -2282,9 +2282,9 @@ export const de: Catalog<typeof EN> = {
   "engines.state.limitedAt": "Hat ihr Limit erreicht, bis {at}",
   "engines.state.limited": "Hat ihr Limit vorerst erreicht",
   "engines.state.outOfCreditAt":
-    "Guthaben aufgebraucht, nächster Versuch um {at}",
+    "Guthaben aufgebraucht, nächster Versuch: {at}",
   "engines.state.outOfCredit": "Guthaben aufgebraucht",
-  "engines.state.notAnsweringAt": "Antwortet nicht, nächster Versuch um {at}",
+  "engines.state.notAnsweringAt": "Antwortet nicht, nächster Versuch: {at}",
   "engines.state.notAnswering": "Antwortet vorerst nicht",
   "engines.state.checking": "Es wird geprüft, ob sie wieder antwortet",
   "engines.state.gatewayKey":
@@ -2317,7 +2317,7 @@ export const de: Catalog<typeof EN> = {
   "engines.order.warnTitle.paid_before_free_or_login":
     "Eine kostenpflichtige Engine käme vor einer kostenlosen Engine oder einer Anmeldung",
   "engines.order.warnText.free_before_login":
-    "Wenn es ein Cloud-Dienst ist, gehen die Nachrichten dieses Mitglieds zuerst an diesen Anbieter, und er darf sie möglicherweise behalten. Seine Antworten können außerdem von geringerer Qualität sein als die deiner Anmeldung.",
+    "Wenn es ein Cloud-Dienst ist, gehen die Nachrichten dieses Mitglieds zuerst an diesen Anbieter, und er könnte sie behalten. Seine Antworten können außerdem von geringerer Qualität sein als die deiner Anmeldung.",
   "engines.order.warnText.paid_before_free_or_login":
     "Eine kostenpflichtige Engine antwortet vor den Engines, die ihr folgen, daher kann es Geld kosten, was sie beantwortet. Steht sie an erster Stelle der Liste, kann jede Nachricht von der ersten an Geld kosten. Sie läuft erst, nachdem du kostenpflichtige Engines eingeschaltet und deine Limits gesetzt hast.",
   "engines.order.newLabel": "Neue Reihenfolge:",
@@ -2427,7 +2427,7 @@ export const de: Catalog<typeof EN> = {
   "engines.providers.cloudWarning":
     "Daten, die an diesen Dienst gesendet werden, verlassen deinen Computer.",
   "engines.providers.routerWarning":
-    "Deine Nachrichten gehen an den Router, der sie an die kostenlosen Anbieter weitergibt, die du darin aktiviert hast. Sie verlassen deinen Computer, und diese Anbieter dürfen sie möglicherweise behalten.",
+    "Deine Nachrichten gehen an den Router, der sie an die kostenlosen Anbieter weitergibt, die du darin aktiviert hast. Sie verlassen deinen Computer, und diese Anbieter könnten sie behalten.",
   "engines.providers.routerAdvanced":
     "Fortgeschrittene Option, keine empfohlene Voreinstellung: Das Projekt beschreibt sich selbst als nur für persönliches Experimentieren gedacht. FreeDuet installiert oder betreibt es nicht. Die Schlüssel deiner Anbieter bleiben darin; FreeDuet behält nur das eine Zugriffstoken, das er dir gibt.",
   "engines.providers.routerAddress":

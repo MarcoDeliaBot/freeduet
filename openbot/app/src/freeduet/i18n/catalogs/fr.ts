@@ -2334,9 +2334,9 @@ export const fr: Catalog<typeof EN> = {
   "engines.state.degraded": "Prêt, mais il a eu des erreurs récentes",
   "engines.state.limitedAt": "A atteint sa limite jusqu'à {at}",
   "engines.state.limited": "A atteint sa limite pour le moment",
-  "engines.state.outOfCreditAt": "Crédit épuisé, nouvel essai à {at}",
+  "engines.state.outOfCreditAt": "Crédit épuisé, nouvel essai : {at}",
   "engines.state.outOfCredit": "Crédit épuisé",
-  "engines.state.notAnsweringAt": "Ne répond pas, nouvel essai à {at}",
+  "engines.state.notAnsweringAt": "Ne répond pas, nouvel essai : {at}",
   "engines.state.notAnswering": "Ne répond pas pour le moment",
   "engines.state.checking": "Vérification de sa reprise de réponse",
   "engines.state.gatewayKey":
