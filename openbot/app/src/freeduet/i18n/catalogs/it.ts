@@ -2269,7 +2269,7 @@ export const it: Catalog<typeof EN> = {
   "connections.list.connectNamed": "Collega {title}",
   "connections.list.reconnectNamed": "Ricollega {title}",
   "connections.app.landed": "Hai appena autorizzato {action}.",
-  "connections.app.pendingTitle": "Account",
+  "connections.app.pendingTitle": "L'account",
   "connections.app.loadError":
     "Non sono riuscito a caricare questa connessione. Ricarica la pagina, oppure chiedi a un amministratore se continua a succedere.",
   "connections.app.appLoadError":
