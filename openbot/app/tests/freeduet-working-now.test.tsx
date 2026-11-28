@@ -125,8 +125,8 @@ test("queued, waiting, stuck and a hand-off that gave up each say it", () => {
 test("the strip reads Italian", () => {
   const view = draw(<WorkStrip hops={[hop()]} now={NOW} />, "it");
   const text = view.getByTestId("working-now").textContent ?? "";
-  expect(text).toContain("lavora da 4 min");
-  expect(text).toContain("ultimo segno di vita 20 s fa");
+  expect(text).toContain("lavora da 4 minuti");
+  expect(text).toContain("ultimo segno di vita 20 sec fa");
   cleanup();
   const none = draw(<WorkStrip hops={[]} now={NOW} />, "it");
   expect(none.getByTestId("working-now-none").textContent).toBe(

@@ -7,6 +7,7 @@ import {
   test,
 } from "bun:test";
 import { GlobalRegistrator } from "@happy-dom/global-registrator";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { cleanup, render } from "@testing-library/react";
 import type { MicOrbState } from "@/components/duet/mic-orb";
 import { ChatOrb } from "@/components/shell/header";
@@ -35,10 +36,12 @@ function Declare({ id }: { id: string }) {
 
 function orbFor(botId: string) {
   return render(
-    <ActiveBotProvider>
-      <Declare id={botId} />
-      <ChatOrb size={48} />
-    </ActiveBotProvider>,
+    <QueryClientProvider client={new QueryClient()}>
+      <ActiveBotProvider>
+        <Declare id={botId} />
+        <ChatOrb size={48} />
+      </ActiveBotProvider>
+    </QueryClientProvider>,
   );
 }
 

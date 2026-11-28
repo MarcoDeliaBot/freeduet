@@ -35,8 +35,7 @@ export function durationText(ms: number, say: Say): string {
   const seconds = Math.max(0, Math.floor(ms / 1000));
   const minutes = Math.floor(seconds / 60);
   if (minutes < 1) return say.t("working.underMinute");
-  if (minutes < 60)
-    return say.t("working.minutes", { minutes: say.number(minutes) });
+  if (minutes < 60) return say.t("working.minutes", { count: minutes });
   const hours = Math.floor(minutes / 60);
   const rest = minutes % 60;
   return rest
@@ -44,7 +43,7 @@ export function durationText(ms: number, say: Say): string {
         hours: say.number(hours),
         minutes: say.number(rest),
       })
-    : say.t("working.hours", { hours: say.number(hours) });
+    : say.t("working.hours", { count: hours });
 }
 
 /** "20 s" under a minute, else the minutes. */

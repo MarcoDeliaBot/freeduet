@@ -113,18 +113,22 @@ export function ShellHeader({
 export function ChatOrb({ size }: { size: number }) {
   const { state, keystrokes } = useChatOrb();
   const botId = useActiveBotId();
-  const iris = useIrisWait();
   if (mascotKeyOf(botId) !== null)
     return (
       <span className="relative inline-grid shrink-0">
         <MemberOrb agentId={botId} size={size} state={state} />
         {/* D188: Iris's own waiting ring, only while she has a hand-off open. */}
-        {botId === iris.irisId ? (
-          <WaitingRing name={iris.name} wait={iris.wait} />
-        ) : null}
+        <IrisWaitRing botId={botId} />
       </span>
     );
   return <MicOrb keystrokes={keystrokes} size={size} state={state} />;
+}
+
+/** D188: the waiting ring, for Iris's own orb only; it reads the work status, so it is its own component. */
+function IrisWaitRing({ botId }: { botId: string }) {
+  const iris = useIrisWait();
+  if (botId !== iris.irisId) return null;
+  return <WaitingRing name={iris.name} wait={iris.wait} />;
 }
 
 /**
