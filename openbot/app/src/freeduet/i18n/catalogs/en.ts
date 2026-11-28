@@ -2665,6 +2665,152 @@ export const EN = {
   "connections.row.noNeeds":
     "Couldn't find out what this app needs. Close this and try again.",
   // connections-end
+  // computer-begin
+  "computer.tool.readPage": "Read the page",
+  "computer.tool.readPageCount": {
+    one: "{count} thing it can act on",
+    other: "{count} things it can act on",
+  },
+  "computer.tool.filledIn": "Filled in",
+  "computer.tool.choseIn": "Chose in",
+  "computer.tool.clicked": "Clicked",
+  "computer.tool.pressed": "Pressed",
+  "computer.tool.listedFiles": "Listed files",
+  "computer.tool.itemsInWorkspace": {
+    one: "{count} item in the workspace",
+    other: "{count} items in the workspace",
+  },
+  "computer.tool.nothingSaved": "nothing saved yet",
+  "computer.tool.readFile": "Read file",
+  "computer.tool.ranCommand": "Ran a command",
+  "computer.tool.addedToFile": "Added to file",
+  "computer.tool.savedFile": "Saved file",
+  "computer.tool.scrolled": "Scrolled",
+  "computer.signIn.waiting": "Waiting for you to sign in",
+  "computer.signIn.signedIn": "Signed in",
+  "computer.signIn.failed": "Sign-in did not complete",
+  "computer.signIn.open": "Open private sign-in",
+  "computer.signIn.dialogTitle": "Sign in to {site}",
+  "computer.signIn.dialogBody":
+    "Goes to your Bot's browser, not into this conversation.",
+  "computer.output.truncated":
+    "The output was too long. This is the end of it.",
+  "computer.output.nothing": "It printed nothing.",
+  "computer.output.timedOut": "It ran too long and was stopped.",
+  "computer.output.exitCode": "Exit code {code}.",
+  "computer.activity.ran": "Ran",
+  "computer.activity.read": "Read",
+  "computer.activity.saved": "Saved",
+  "computer.activity.listed": "Listed",
+  "computer.activity.workspace": "the workspace",
+  "computer.activity.refused": "A boundary refused it.",
+  "computer.activity.empty":
+    "Nothing yet. Commands the Bot runs and files it reads appear here.",
+  "computer.control.handBack": "Hand back",
+  "computer.control.take": "Take control",
+  "computer.control.finishing": "Finishing the current action…",
+  "computer.control.close": "Close Computer",
+  "computer.control.open": "Open Computer",
+  "computer.panel.sidebar": "Computer sidebar",
+  "computer.live.cantShow": "Couldn't show the screen.",
+  "computer.live.drivingLabel":
+    "The Bot's screen. You have control. Click and type here.",
+  "computer.live.label": "The Bot's screen, live",
+  "computer.view.aPage": "A page",
+  "computer.view.openedDuring":
+    "Opened during this turn. The screen has moved on since.",
+  "computer.view.noPage": "This turn did not open a page.",
+  "computer.view.cantShow": "Can't show the screen right now",
+  "computer.view.cantShowHelp":
+    "The Bot may still be working. If this keeps happening, ask an admin to check its Computer.",
+  "computer.view.blank": "The Bot hasn't opened a page yet.",
+  "computer.view.waiting": "Waiting for the Bot's screen…",
+  "computer.view.unavailable": "The screen isn't available right now.",
+  "computer.view.alt": "What the Bot is looking at",
+  "computer.view.open": "Open the Bot's screen full size",
+  "computer.view.youHaveControl": "You have control",
+  "computer.view.botNeedsYou": "The Bot needs you.",
+  "computer.view.cancelRequest": "Cancel request",
+  "computer.view.finishingBot":
+    "Finishing the Bot's current action before giving you control…",
+  "computer.view.recovery":
+    "The Computer stopped while you had control. Take control to check the page, then hand it back to the Bot.",
+  "computer.view.interrupted":
+    "The Computer stopped before anyone took control. The Bot will ask again if it still needs you.",
+  "computer.view.secretNeedsHost": "{host} needs {what}",
+  "computer.view.secretNeedsPage": "The page needs {what}",
+  "computer.view.secretType": "Type it here and it goes into the page.",
+  "computer.view.secretPlaceholder": "Never shown to the Bot",
+  "computer.view.secretGoesHost":
+    "Goes straight to {host}. {product} never sees it.",
+  "computer.view.secretGoesPage":
+    "Goes straight to the page. {product} never sees it.",
+  "computer.view.sending": "Sending…",
+  "computer.view.send": "Send to the page",
+  "computer.view.checking": "Checking who has control…",
+  "computer.view.drivingOpen":
+    "You have control. Open the screen to click and type.",
+  "computer.view.botHas": "The Bot has control.",
+  "computer.view.dialog": "The Bot's screen",
+  "computer.view.close": "Close the Bot's screen",
+  "computer.view.turnAlt": "What this turn had open",
+  "computer.view.finishingYou":
+    "Finishing the current action before giving you control…",
+  "computer.view.drivingClick": "You have control. Click and type on the page.",
+  "computer.handoff.noCall":
+    "The handoff's tool call is not in this conversation.",
+  "computer.handoff.answered": "This tool call is already answered.",
+  "computer.handoff.running": "This task is already running.",
+  "computer.handoff.unreachable":
+    "The computer could not be reached. Retry to resume.",
+  "computer.handoff.couldntResume": "Couldn't resume the task.",
+  "computer.handoff.waiting": "Waiting for this browser handoff to finish.",
+  "computer.handoff.paused": "A browser task is paused in this conversation.",
+  "computer.handoff.stopWaiting": "Stop waiting",
+  "computer.handoff.resume": "Resume task",
+  "computer.demo.everyWeekday": "Every weekday at 09:00",
+  "computer.demo.everyDay": "Every day at 09:00",
+  "computer.demo.everyMonday": "Every Monday at 09:00",
+  "computer.demo.everyHour": "Every hour",
+  "computer.demo.scheduled": "Scheduled. /{slug} next runs {when}.",
+  "computer.demo.seeRoutines": "See routines",
+  "computer.demo.when": "When it runs ({timezone})",
+  "computer.demo.custom": "Custom cron expression",
+  "computer.demo.cron": "Cron (minute hour day month weekday)",
+  "computer.demo.reportIn": "Report in",
+  "computer.demo.onlyConversation": "This Bot's only conversation",
+  "computer.demo.inputs": "Inputs for each run (optional)",
+  "computer.demo.title": "Teach a browser workflow",
+  "computer.demo.intro":
+    "Take control, record the steps, then review the skill it drafts. Typed values and images aren't recorded. Recording stops after ten minutes.",
+  "computer.demo.recording": {
+    one: "Recording {title} · {count} step",
+    other: "Recording {title} · {count} steps",
+  },
+  "computer.demo.left": "{time} left",
+  "computer.demo.limitReached": "Time limit reached. Stopping…",
+  "computer.demo.stop": "Stop recording",
+  "computer.demo.name": "Workflow name",
+  "computer.demo.namePlaceholder": "Find an invoice",
+  "computer.demo.record": "Record your steps",
+  "computer.demo.takeControl":
+    "Take control of the browser to start recording.",
+  "computer.demo.entry": {
+    one: "{title} · {count} step",
+    other: "{title} · {count} steps",
+  },
+  "computer.demo.stoppedAtLimit": "stopped at the ten-minute limit",
+  "computer.demo.edit": "Edit /{slug}",
+  "computer.demo.runSchedule": "Run on a schedule",
+  "computer.demo.reviewDraft": "Review skill draft",
+  "computer.demo.reviewTitle": "Review and edit the skill",
+  "computer.demo.reviewHelp":
+    "Rename the inputs and say what the result should be.",
+  "computer.demo.saveUse": "Save and use with this Bot",
+  "computer.demo.couldntSave": "Couldn't save the skill.",
+  "computer.demo.ready":
+    "/{slug} is ready on this Bot. Type it in the conversation with your inputs, or choose Run on a schedule to make it a routine.",
+  // computer-end
 } satisfies Entries;
 
 export type MessageId = keyof typeof EN;
