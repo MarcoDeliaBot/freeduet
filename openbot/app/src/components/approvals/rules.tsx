@@ -285,12 +285,12 @@ export function RuleForm({
                 {field(
                   "toolRef",
                   t("approvals.field.tool"),
-                  t("approvals.field.toolHint"),
+                  "mcp/gmail/*, computer_click, host/*",
                 )}
                 {field(
                   "effect",
                   t("approvals.field.effect"),
-                  t("approvals.field.effectHint"),
+                  "* , write, read, delegate",
                 )}
                 {field(
                   "scope",

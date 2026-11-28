@@ -847,9 +847,7 @@ export const EN = {
   "approvals.formHelp":
     "Use * to match anything. mcp/gmail/* means every Gmail tool. A target of *.example.com means every page on that site.",
   "approvals.field.tool": "Tool or app",
-  "approvals.field.toolHint": "mcp/gmail/*, computer_click, host/*",
   "approvals.field.effect": "Kind of action",
-  "approvals.field.effectHint": "* , write, read, delegate",
   "approvals.field.scope": "Target",
   "approvals.field.scopeHint": "*, a site, a folder, a Bot name",
   "approvals.field.bot": "Bot",

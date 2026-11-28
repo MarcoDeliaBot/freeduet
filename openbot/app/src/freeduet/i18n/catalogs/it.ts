@@ -880,12 +880,10 @@ export const it: Catalog<typeof EN> = {
   "approvals.formHelp":
     "Usa * per indicare qualsiasi valore. mcp/gmail/* indica ogni strumento di Gmail. Una destinazione *.example.com indica ogni pagina di quel sito.",
   "approvals.field.tool": "Strumento o app",
-  "approvals.field.toolHint": "mcp/gmail/*, computer_click, host/*",
   "approvals.field.effect": "Tipo di azione",
-  "approvals.field.effectHint": "* , write, read, delegate",
   "approvals.field.scope": "Destinazione",
   "approvals.field.scopeHint": "*, un sito, una cartella, il nome di un Bot",
-  "approvals.field.bot": "Bot",
+  "approvals.field.bot": "Bot a cui si applica",
   "approvals.field.botHint": "* per ogni Bot",
   "approvals.field.behaviour": "Comportamento",
   "approvals.saveRule": "Salva la regola",
