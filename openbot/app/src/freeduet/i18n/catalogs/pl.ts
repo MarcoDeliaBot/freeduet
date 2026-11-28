@@ -833,7 +833,7 @@ export const pl: Catalog<typeof EN> = {
     "Twoje urządzenia, ostatnie dostawy i to, dokąd trafia każdy rodzaj aktualizacji, są w",
   "reaching.connected": "Połączone miejsca docelowe",
   "reaching.noDestinations": "Nie połączono żadnych miejsc docelowych.",
-  "reaching.optedOut": "Wysłano STOP. Wyślij START, aby wznowić.",
+  "reaching.optedOut": "Wysłano SMS-em STOP. Wyślij SMS-em START, aby wznowić.",
   "reaching.disconnect": "Rozłącz",
   "reaching.channelNote":
     "Na kanale Slack lub Teams, który mogą czytać inni, asystent odpowiada Ci w wiadomości prywatnej.",
@@ -1034,7 +1034,7 @@ export const pl: Catalog<typeof EN> = {
   "approvals.shared.why.grant": "Przyznano mu działania aplikacji.",
   "approvals.shared.now": "Teraz:",
   "approvals.shared.notApproved": "Niezatwierdzone",
-  "approvals.shared.asked": "Zapytano:",
+  "approvals.shared.asked": "Poproszono o:",
   "approvals.shared.approve": "Zatwierdź",
   "approvals.shared.decline": "Odrzuć",
   "tasks.updated": "Zaktualizowano {ago}",
